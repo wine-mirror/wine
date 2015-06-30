@@ -38,6 +38,7 @@ typedef struct {
     EventTarget event_target;
     IHTMLXMLHttpRequest IHTMLXMLHttpRequest_iface;
     LONG ref;
+    nsIXMLHttpRequest *nsxhr;
 } HTMLXMLHttpRequest;
 
 static inline HTMLXMLHttpRequest *impl_from_IHTMLXMLHttpRequest(IHTMLXMLHttpRequest *iface)
@@ -88,6 +89,7 @@ static ULONG WINAPI HTMLXMLHttpRequest_Release(IHTMLXMLHttpRequest *iface)
 
     if(!ref) {
         release_dispex(&This->event_target.dispex);
+        nsIXMLHttpRequest_Release(This->nsxhr);
         heap_free(This);
     }
 
@@ -378,12 +380,20 @@ static HRESULT WINAPI HTMLXMLHttpRequestFactory_create(IHTMLXMLHttpRequestFactor
 {
     HTMLXMLHttpRequestFactory *This = impl_from_IHTMLXMLHttpRequestFactory(iface);
     HTMLXMLHttpRequest        *ret;
+    nsIXMLHttpRequest         *nsxhr;
 
     TRACE("(%p)->(%p)\n", This, p);
 
+    nsxhr = create_nsxhr(This->window->base.outer_window->nswindow);
+    if(!nsxhr)
+        return E_FAIL;
+
     ret = heap_alloc_zero(sizeof(*ret));
-    if(!ret)
+    if(!ret) {
+        nsIXMLHttpRequest_Release(nsxhr);
         return E_OUTOFMEMORY;
+    }
+    ret->nsxhr = nsxhr;
 
     ret->IHTMLXMLHttpRequest_iface.lpVtbl = &HTMLXMLHttpRequestVtbl;
     init_dispex(&ret->event_target.dispex, (IUnknown*)&ret->IHTMLXMLHttpRequest_iface,
@@ -426,6 +436,7 @@ HRESULT HTMLXMLHttpRequestFactory_Create(HTMLInnerWindow* window, HTMLXMLHttpReq
 
     ret->IHTMLXMLHttpRequestFactory_iface.lpVtbl = &HTMLXMLHttpRequestFactoryVtbl;
     ret->ref = 1;
+    ret->window = window;
 
     init_dispex(&ret->dispex, (IUnknown*)&ret->IHTMLXMLHttpRequestFactory_iface,
             &HTMLXMLHttpRequestFactory_dispex);

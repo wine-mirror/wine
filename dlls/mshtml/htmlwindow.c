@@ -256,8 +256,9 @@ static void release_inner_window(HTMLInnerWindow *This)
         IHTMLOptionElementFactory_Release(&This->option_factory->IHTMLOptionElementFactory_iface);
     }
 
-    if(This->xml_factory) {
-        IHTMLXMLHttpRequestFactory_Release(&This->xml_factory->IHTMLXMLHttpRequestFactory_iface);
+    if(This->xhr_factory) {
+        This->xhr_factory->window = NULL;
+        IHTMLXMLHttpRequestFactory_Release(&This->xhr_factory->IHTMLXMLHttpRequestFactory_iface);
     }
 
     if(This->screen)
@@ -1973,16 +1974,17 @@ static HRESULT WINAPI HTMLWindow5_get_XMLHttpRequest(IHTMLWindow5 *iface, VARIAN
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    if(!window->xml_factory) {
+    if(!window->xhr_factory) {
         HRESULT hres;
 
-        hres = HTMLXMLHttpRequestFactory_Create(window, &window->xml_factory);
-        if(FAILED(hres))
+        hres = HTMLXMLHttpRequestFactory_Create(window, &window->xhr_factory);
+        if(FAILED(hres)) {
             return hres;
+        }
     }
 
     V_VT(p) = VT_DISPATCH;
-    V_DISPATCH(p) = (IDispatch*)&window->xml_factory->IHTMLXMLHttpRequestFactory_iface;
+    V_DISPATCH(p) = (IDispatch*)&window->xhr_factory->IHTMLXMLHttpRequestFactory_iface;
     IDispatch_AddRef(V_DISPATCH(p));
 
     return S_OK;

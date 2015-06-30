@@ -196,6 +196,14 @@ typedef nsISupports nsIDOMPkcs11;
 typedef nsISupports nsIDocShellTreeOwner;
 typedef nsISupports nsIArray;
 typedef nsISupports nsILoadInfo;
+typedef nsISupports nsIContentSecurityPolicy;
+typedef nsISupports nsIXMLHttpRequestUpload;
+typedef nsISupports nsIClassInfo;
+typedef nsISupports nsILoadContext;
+typedef nsISupports nsIDomainPolicy;
+typedef nsISupports nsIScriptContext;
+typedef nsISupports nsIObjectInputStream;
+typedef nsISupports nsIObjectOutputStream;
 
 typedef void *JSContext;
 typedef void *JSObject;
@@ -4013,6 +4021,83 @@ interface nsIContentUtils : nsISupports
 interface nsIPluginInstance : nsISupports
 {
     nsresult GetDOMElement(nsIDOMElement **aDOMElement);
+}
+
+[
+    object,
+    uuid(e2538ded-13ef-4f4d-946b-65d333b4f03c),
+    local
+]
+interface nsIGlobalObject : nsISupports
+{
+}
+
+[
+    object,
+    uuid(2e91e088-e9fa-4ba4-9887-2a0b7cf27a3e),
+    local
+]
+interface nsIXMLHttpRequest : nsISupports
+{
+    nsresult GetChannel(nsIChannel **aChannel);
+    nsresult GetResponseXML(nsIDOMDocument **aResponseXML);
+    nsresult GetResponseText(nsAString *aResponseText);
+    nsresult GetResponseType(nsAString *aResponseType);
+    nsresult SetResponseType(const nsAString *aResponseType);
+    nsresult GetResponse(JSContext*cx, int /*JS::MutableHandleValue*/ aResponse);
+    nsresult GetStatus(uint32_t *aStatus);
+    nsresult GetStatusText(nsACString *aStatusText);
+    nsresult SlowAbort();
+    nsresult GetAllResponseHeaders(nsACString *_retval);
+    nsresult GetResponseHeader(const nsACString *header, nsACString *_retval);
+    nsresult Open(const nsACString *method, const nsACString *url, bool async, const nsAString *user, const nsAString *password, uint8_t _argc);
+    nsresult Send(nsIVariant *body);
+    nsresult SendAsBinary(const nsAString *body);
+    nsresult SetRequestHeader(const nsACString *header, const nsACString *value);
+    nsresult GetTimeout(uint32_t *aTimeout);
+    nsresult SetTimeout(uint32_t aTimeout);
+    nsresult GetReadyState(uint16_t *aReadyState);
+    nsresult SlowOverrideMimeType(const nsAString *mimetype);
+    nsresult GetMozBackgroundRequest(bool *aMozBackgroundRequest);
+    nsresult SetMozBackgroundRequest(bool aMozBackgroundRequest);
+    nsresult GetWithCredentials(bool *aWithCredentials);
+    nsresult SetWithCredentials(bool aWithCredentials);
+    nsresult Init(nsIPrincipal *principal, nsIScriptContext *scriptContext, nsIGlobalObject *globalObject, nsIURI *baseURI);
+    nsresult GetUpload(nsIXMLHttpRequestUpload **aUpload);
+    nsresult GetOnreadystatechange(JSContext*cx, int /*JS::MutableHandleValue*/ aOnreadystatechange);
+    nsresult SetOnreadystatechange(JSContext*cx, int /*JS::HandleValue*/ aOnreadystatechange);
+    nsresult GetMozAnon(bool *aMozAnon);
+    nsresult GetMozSystem(bool *aMozSystem);
+}
+
+[
+    object,
+    uuid(f649959d-dae3-4027-83fd-5b7f8c8a8815),
+    local
+]
+interface nsIScriptSecurityManager : nsISupports {
+    nsresult CanCreateWrapper(JSContext *aJSContext, const nsIID *aIID, nsISupports *aObj, nsIClassInfo *aClassInfo);
+    nsresult CanCreateInstance(JSContext *aJSContext, const nsCID *aCID);
+    nsresult CanGetService(JSContext *aJSContext, const nsCID *aCID);
+    nsresult CheckLoadURIFromScript(JSContext *cx, nsIURI *uri);
+    nsresult CheckLoadURIWithPrincipal(nsIPrincipal *aPrincipal, nsIURI *uri, uint32_t flags);
+    nsresult CheckLoadURIStrWithPrincipal(nsIPrincipal *aPrincipal, const nsACString *uri, uint32_t flags);
+    nsresult ScriptAllowed(JSObject *aGlobal);
+    nsresult GetSystemPrincipal(nsIPrincipal **_retval);
+    nsresult GetSimpleCodebasePrincipal(nsIURI *aURI, nsIPrincipal **_retval);
+    nsresult GetAppCodebasePrincipal(nsIURI *uri, uint32_t appId, bool inMozBrowser, nsIPrincipal **_retval);
+    nsresult GetLoadContextCodebasePrincipal(nsIURI *uri, nsILoadContext *loadContext, nsIPrincipal **_retval);
+    nsresult GetDocShellCodebasePrincipal(nsIURI *uri, nsIDocShell *docShell, nsIPrincipal **_retval);
+    nsresult GetNoAppCodebasePrincipal(nsIURI *uri, nsIPrincipal **_retval);
+    nsresult GetCodebasePrincipal(nsIURI *uri, nsIPrincipal **_retval);
+    nsresult CheckSameOriginURI(nsIURI *aSourceURI, nsIURI *aTargetURI, bool reportError);
+    nsresult GetChannelResultPrincipal(nsIChannel *aChannel, nsIPrincipal **_retval);
+    nsresult GetChannelURIPrincipal(nsIChannel *aChannel, nsIPrincipal **_retval);
+    nsresult IsSystemPrincipal(nsIPrincipal *aPrincipal, bool *_retval);
+    nsresult GetJarPrefix(uint32_t appId, bool inMozBrowser, nsACString *_retval);
+    nsresult ActivateDomainPolicy(nsIDomainPolicy **_retval);
+    nsresult GetDomainPolicyActive(bool *aDomainPolicyActive);
+    nsresult PolicyAllowsScript(nsIURI *aDomain, bool *_retval);
 }
 
 cpp_quote("DEFINE_GUID(IID_nsCycleCollectionISupports, 0xc61eac14,0x5f7a,0x4481,0x96,0x5e,0x7e,0xaa,0x6e,0xff,0xa8,0x5f);")

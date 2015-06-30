@@ -48,6 +48,8 @@ WINE_DECLARE_DEBUG_CHANNEL(gecko);
 #define NS_PREFERENCES_CONTRACTID "@mozilla.org/preferences;1"
 #define NS_VARIANT_CONTRACTID "@mozilla.org/variant;1"
 #define NS_CATEGORYMANAGER_CONTRACTID "@mozilla.org/categorymanager;1"
+#define NS_XMLHTTPREQUEST_CONTRACTID "@mozilla.org/xmlextras/xmlhttprequest;1"
+#define NS_SCRIPTSECURITYMANAGER_CONTRACTID "@mozilla.org/scriptsecuritymanager;1"
 
 #define PR_UINT32_MAX 0xffffffff
 
@@ -2159,4 +2161,52 @@ void NSContainer_Release(NSContainer *This)
     }
 
     nsIWebBrowserChrome_Release(&This->nsIWebBrowserChrome_iface);
+}
+
+nsIXMLHttpRequest *create_nsxhr(nsIDOMWindow *nswindow)
+{
+    nsIScriptSecurityManager *secman;
+    nsIPrincipal             *nspri;
+    nsIGlobalObject          *nsglo;
+    nsIXMLHttpRequest        *nsxhr;
+    nsresult                  nsres;
+
+    nsres = nsIServiceManager_GetServiceByContractID(pServMgr,
+            NS_SCRIPTSECURITYMANAGER_CONTRACTID,
+            &IID_nsIScriptSecurityManager, (void**)&secman);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get sec manager service: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIScriptSecurityManager_GetSystemPrincipal(secman, &nspri);
+    nsIScriptSecurityManager_Release(secman);
+    if(NS_FAILED(nsres)) {
+        ERR("GetSystemPrincipal failed: %08x\n", nsres);
+        return NULL;
+    }
+
+    nsres = nsIDOMWindow_QueryInterface(nswindow, &IID_nsIGlobalObject, (void **)&nsglo);
+    assert(nsres == NS_OK);
+
+    nsres = nsIComponentManager_CreateInstanceByContractID(pCompMgr,
+            NS_XMLHTTPREQUEST_CONTRACTID, NULL, &IID_nsIXMLHttpRequest,
+            (void**)&nsxhr);
+    if(NS_FAILED(nsres)) {
+        ERR("Could not get nsIXMLHttpRequest: %08x\n", nsres);
+        nsISupports_Release(nspri);
+        nsIGlobalObject_Release(nsglo);
+        return NULL;
+    }
+
+    nsres = nsIXMLHttpRequest_Init(nsxhr, nspri, NULL, nsglo, NULL);
+
+    nsISupports_Release(nspri);
+    nsIGlobalObject_Release(nsglo);
+    if(NS_FAILED(nsres)) {
+        ERR("nsIXMLHttpRequest_Init failed: %08x\n", nsres);
+        nsIXMLHttpRequest_Release(nsxhr);
+        return NULL;
+    }
+    return nsxhr;
 }
