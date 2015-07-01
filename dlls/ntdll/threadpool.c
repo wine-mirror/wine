@@ -171,6 +171,7 @@ struct threadpool_object
     struct threadpool       *pool;
     struct threadpool_group *group;
     PVOID                   userdata;
+    PTP_CLEANUP_GROUP_CANCEL_CALLBACK group_cancel_callback;
     /* information about the group, locked via .group->cs */
     struct list             group_entry;
     BOOL                    is_group_member;
@@ -1370,6 +1371,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
     object->pool                    = pool;
     object->group                   = NULL;
     object->userdata                = userdata;
+    object->group_cancel_callback   = NULL;
 
     memset( &object->group_entry, 0, sizeof(object->group_entry) );
     object->is_group_member         = FALSE;
@@ -1385,6 +1387,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
             FIXME( "unsupported environment version %u\n", environment->Version );
 
         object->group = impl_from_TP_CLEANUP_GROUP( environment->CleanupGroup );
+        object->group_cancel_callback   = environment->CleanupGroupCancelCallback;
 
         WARN( "environment not fully implemented yet\n" );
     }
@@ -1467,7 +1470,7 @@ static void tp_object_submit( struct threadpool_object *object )
  *
  * Cancels all currently pending callbacks for a specific object.
  */
-static void tp_object_cancel( struct threadpool_object *object )
+static void tp_object_cancel( struct threadpool_object *object, BOOL group_cancel, PVOID userdata )
 {
     struct threadpool *pool = object->pool;
     LONG pending_callbacks = 0;
@@ -1480,6 +1483,14 @@ static void tp_object_cancel( struct threadpool_object *object )
         list_remove( &object->pool_entry );
     }
     RtlLeaveCriticalSection( &pool->cs );
+
+    /* Execute group cancellation callback if defined, and if this was actually a group cancel. */
+    if (pending_callbacks && group_cancel && object->group_cancel_callback)
+    {
+        TRACE( "executing group cancel callback %p(%p, %p)\n", object->group_cancel_callback, object, userdata );
+        object->group_cancel_callback( object, userdata );
+        TRACE( "callback %p returned\n", object->group_cancel_callback );
+    }
 
     while (pending_callbacks--)
         tp_object_release( object );
@@ -1766,7 +1777,7 @@ VOID WINAPI TpReleaseCleanupGroupMembers( TP_CLEANUP_GROUP *group, BOOL cancel_p
     {
         LIST_FOR_EACH_ENTRY( object, &members, struct threadpool_object, group_entry )
         {
-            tp_object_cancel( object );
+            tp_object_cancel( object, TRUE, userdata );
         }
     }
 
@@ -1894,6 +1905,6 @@ VOID WINAPI TpWaitForWork( TP_WORK *work, BOOL cancel_pending )
     TRACE( "%p %u\n", work, cancel_pending );
 
     if (cancel_pending)
-        tp_object_cancel( this );
+        tp_object_cancel( this, FALSE, NULL );
     tp_object_wait( this );
 }
