@@ -210,6 +210,7 @@ struct threadpool_instance
         HANDLE              semaphore;
         LONG                semaphore_count;
         HANDLE              event;
+        HMODULE             library;
     } cleanup;
 };
 
@@ -1644,6 +1645,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
             instance.cleanup.semaphore          = NULL;
             instance.cleanup.semaphore_count    = 0;
             instance.cleanup.event              = NULL;
+            instance.cleanup.library            = NULL;
 
             switch (object->type)
             {
@@ -1696,7 +1698,12 @@ static void CALLBACK threadpool_worker_proc( void *param )
             }
             if (instance.cleanup.event)
             {
-                NtSetEvent( instance.cleanup.event, NULL );
+                status = NtSetEvent( instance.cleanup.event, NULL );
+                if (status != STATUS_SUCCESS) goto skip_cleanup;
+            }
+            if (instance.cleanup.library)
+            {
+                LdrUnloadDll( instance.cleanup.library );
             }
 
         skip_cleanup:
@@ -1890,6 +1897,19 @@ VOID WINAPI TpCallbackSetEventOnCompletion( TP_CALLBACK_INSTANCE *instance, HAND
 
     if (!this->cleanup.event)
         this->cleanup.event = event;
+}
+
+/***********************************************************************
+ *           TpCallbackUnloadDllOnCompletion    (NTDLL.@)
+ */
+VOID WINAPI TpCallbackUnloadDllOnCompletion( TP_CALLBACK_INSTANCE *instance, HMODULE module )
+{
+    struct threadpool_instance *this = impl_from_TP_CALLBACK_INSTANCE( instance );
+
+    TRACE( "%p %p\n", instance, module );
+
+    if (!this->cleanup.library)
+        this->cleanup.library = module;
 }
 
 /***********************************************************************

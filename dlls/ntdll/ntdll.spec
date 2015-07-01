@@ -978,6 +978,7 @@
 @ stdcall TpCallbackReleaseMutexOnCompletion(ptr long)
 @ stdcall TpCallbackReleaseSemaphoreOnCompletion(ptr long long)
 @ stdcall TpCallbackSetEventOnCompletion(ptr long)
+@ stdcall TpCallbackUnloadDllOnCompletion(ptr ptr)
 @ stdcall TpPostWork(ptr)
 @ stdcall TpReleaseCleanupGroup(ptr)
 @ stdcall TpReleaseCleanupGroupMembers(ptr long ptr)
