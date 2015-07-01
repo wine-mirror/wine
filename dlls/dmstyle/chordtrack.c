@@ -376,9 +376,14 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *pS
 static HRESULT WINAPI IPersistStreamImpl_Save(IPersistStream *iface, IStream *stream,
         BOOL cleardirty)
 {
-  IDirectMusicChordTrack *This = impl_from_IPersistStream(iface);
-  FIXME("(%p): Saving not implemented yet\n", This);
-  return E_NOTIMPL;
+    IDirectMusicChordTrack *This = impl_from_IPersistStream(iface);
+
+    FIXME("(%p, %p, %d): stub\n", This, stream, cleardirty);
+
+    if (!stream)
+        return E_POINTER;
+
+    return E_NOTIMPL;
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {

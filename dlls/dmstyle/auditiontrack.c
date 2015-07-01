@@ -242,6 +242,11 @@ static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
     IDirectMusicTrack8Impl_Join
 };
 
+static inline IDirectMusicAuditionTrack * impl_from_IPersistStream(IPersistStream *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicAuditionTrack, dmobj.IPersistStream_iface);
+}
+
 static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *stream)
 {
 	FIXME(": Loading not implemented yet\n");
@@ -251,7 +256,14 @@ static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *st
 static HRESULT WINAPI IPersistStreamImpl_Save(IPersistStream *iface, IStream *stream,
         BOOL cleardirty)
 {
-	return E_NOTIMPL;
+    IDirectMusicAuditionTrack *This = impl_from_IPersistStream(iface);
+
+    FIXME("(%p, %p, %d): stub\n", This, stream, cleardirty);
+
+    if (!stream)
+        return E_POINTER;
+
+    return E_NOTIMPL;
 }
 
 static const IPersistStreamVtbl persiststream_vtbl = {

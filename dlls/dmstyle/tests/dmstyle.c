@@ -339,7 +339,7 @@ static void test_track(void)
 
         hr = IPersistStream_Save(ps, NULL, TRUE);
         if (class[i].has_save)
-            todo_wine ok(hr == E_POINTER, "IPersistStream_Save failed: %08x\n", hr);
+            ok(hr == E_POINTER, "IPersistStream_Save failed: %08x\n", hr);
         else
             ok(hr == E_NOTIMPL, "IPersistStream_Save failed: %08x\n", hr);
 
