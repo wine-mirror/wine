@@ -1481,6 +1481,41 @@ VOID WINAPI TpSetPoolMaxThreads( TP_POOL *pool, DWORD maximum )
 }
 
 /***********************************************************************
+ *           TpSetPoolMinThreads    (NTDLL.@)
+ */
+BOOL WINAPI TpSetPoolMinThreads( TP_POOL *pool, DWORD minimum )
+{
+    struct threadpool *this = impl_from_TP_POOL( pool );
+    NTSTATUS status = STATUS_SUCCESS;
+
+    TRACE( "%p %u\n", pool, minimum );
+
+    RtlEnterCriticalSection( &this->cs );
+
+    while (this->num_workers < minimum)
+    {
+        HANDLE thread;
+        status = RtlCreateUserThread( GetCurrentProcess(), NULL, FALSE, NULL, 0, 0,
+                                      threadpool_worker_proc, this, &thread, NULL );
+        if (status != STATUS_SUCCESS)
+            break;
+
+        interlocked_inc( &this->refcount );
+        this->num_workers++;
+        NtClose( thread );
+    }
+
+    if (status == STATUS_SUCCESS)
+    {
+        this->min_workers = minimum;
+        this->max_workers = max( this->min_workers, this->max_workers );
+    }
+
+    RtlLeaveCriticalSection( &this->cs );
+    return !status;
+}
+
+/***********************************************************************
  *           TpSimpleTryPost    (NTDLL.@)
  */
 NTSTATUS WINAPI TpSimpleTryPost( PTP_SIMPLE_CALLBACK callback, PVOID userdata,
