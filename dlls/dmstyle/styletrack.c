@@ -279,8 +279,9 @@ static HRESULT WINAPI IDirectMusicStyleTrack_IPersistStream_IsDirty (LPPERSISTST
   return S_FALSE;
 }
 
-static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-  ICOM_THIS_MULTI(IDirectMusicStyleTrack, PersistStreamVtbl, iface);
+static HRESULT parse_style_ref(IDirectMusicStyleTrack *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -325,7 +326,8 @@ static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (LPPERSISTSTR
 	 */
       case DMUS_FOURCC_REF_LIST: {
 	FIXME_(dmfile)(": DMRF (DM References) list, not yet handled\n");
-	hr = IDirectMusicUtils_IPersistStream_ParseReference (iface,  &Chunk, pStm, &pObject);
+        hr = IDirectMusicUtils_IPersistStream_ParseReference((IPersistStream*)&This->PersistStreamVtbl,
+                &Chunk, pStm, &pObject);
 	if (FAILED(hr)) {
 	  ERR(": could not load Reference\n");
 	  return hr;
@@ -361,9 +363,9 @@ static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (LPPERSISTSTR
   return S_OK;
 }
 
-static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleTrackList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-
-  /*ICOM_THIS_MULTI(IDirectMusicStyleTrack, PersistStreamVtbl, iface);*/
+static HRESULT parse_styletrack_list(IDirectMusicStyleTrack *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -390,7 +392,7 @@ static HRESULT IDirectMusicStyleTrack_IPersistStream_ParseStyleTrackList (LPPERS
       switch (Chunk.fccID) { 
       case DMUS_FOURCC_STYLE_REF_LIST: {
 	TRACE_(dmfile)(": STYLE_REF list\n"); 
-	hr = IDirectMusicStyleTrack_IPersistStream_ParseStyleRef (iface, &Chunk, pStm);
+        hr = parse_style_ref(This, &Chunk, pStm);
 	if (FAILED(hr)) return hr;	
 	break;
       }
@@ -434,7 +436,7 @@ static HRESULT WINAPI IDirectMusicStyleTrack_IPersistStream_Load (LPPERSISTSTREA
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_STYLE_TRACK_LIST: {
       TRACE_(dmfile)(": Chord track list\n");
-      hr = IDirectMusicStyleTrack_IPersistStream_ParseStyleTrackList (iface, &Chunk, pStm);
+      hr = parse_styletrack_list(This, &Chunk, pStm);
       if (FAILED(hr)) return hr;
       break;    
     }

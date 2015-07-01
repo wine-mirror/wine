@@ -277,9 +277,9 @@ static HRESULT WINAPI IDirectMusicChordTrack_IPersistStream_IsDirty (LPPERSISTST
   return S_FALSE;
 }
 
-static HRESULT IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (LPPERSISTSTREAM iface, DMUS_PRIVATE_CHUNK* pChunk, IStream* pStm) {
-
-  ICOM_THIS_MULTI(IDirectMusicChordTrack, PersistStreamVtbl, iface);
+static HRESULT parse_chordtrack_list(IDirectMusicChordTrack *This, DMUS_PRIVATE_CHUNK *pChunk,
+        IStream *pStm)
+{
   DMUS_PRIVATE_CHUNK Chunk;
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
@@ -371,7 +371,7 @@ static HRESULT WINAPI IDirectMusicChordTrack_IPersistStream_Load (LPPERSISTSTREA
     switch (Chunk.fccID) { 
     case DMUS_FOURCC_CHORDTRACK_LIST: {
       TRACE_(dmfile)(": Chord track list\n");
-      hr = IDirectMusicChordTrack_IPersistStream_ParseChordTrackList (iface, &Chunk, pStm);
+      hr = parse_chordtrack_list(This, &Chunk, pStm);
       if (FAILED(hr)) return hr;
       break;    
     }
