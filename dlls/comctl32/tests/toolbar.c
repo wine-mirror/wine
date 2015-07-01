@@ -195,10 +195,10 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
             }
             else
             {
-                ok( restore->tbButton.iBitmap == -1, "got %08x\n", restore->tbButton.iBitmap );
                 ok( *restore->pCurrent == 0xcafe0000 + restore->iItem, "got %08x\n", *restore->pCurrent );
                 if (restore->iItem < 7 || restore->iItem == 10)
                 {
+                    ok( restore->tbButton.iBitmap == -1, "got %08x\n", restore->tbButton.iBitmap );
                     if (restore->iItem < 7)
                         ok( restore->tbButton.idCommand == restore->iItem * 2 + 1, "%d: got %08x\n", restore->iItem, restore->tbButton.idCommand );
                     else
@@ -208,6 +208,7 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
                 }
                 else
                 {
+                    ok( restore->tbButton.iBitmap == 8, "got %08x\n", restore->tbButton.iBitmap );
                     ok( restore->tbButton.idCommand == 0, "%d: got %08x\n", restore->iItem, restore->tbButton.idCommand );
                     if (restore->iItem == 7)
                         ok( restore->tbButton.fsState == 0, "%d: got %02x\n", restore->iItem, restore->tbButton.fsState );

@@ -4201,8 +4201,9 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
                 if (*nmtbr.pCurrent & 0x80000000)
                 {
                     /* separator */
+                    nmtbr.tbButton.iBitmap = SEPARATOR_WIDTH;
                     nmtbr.tbButton.idCommand = 0;
-                    nmtbr.tbButton.fsStyle = TBSTYLE_SEP;
+                    nmtbr.tbButton.fsStyle = BTNS_SEP;
                     if (*nmtbr.pCurrent != (DWORD)-1)
                         nmtbr.tbButton.fsState = TBSTATE_HIDDEN;
                 }
