@@ -307,6 +307,121 @@ static void test_tp_work_scheduler(void)
     pTpReleasePool(pool);
 }
 
+static DWORD group_cancel_tid;
+
+static void CALLBACK group_cancel_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+{
+    HANDLE *semaphores = userdata;
+    DWORD result;
+    trace("Running group cancel callback\n");
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+}
+
+static void CALLBACK group_cancel_cleanup_release_cb(void *object, void *userdata)
+{
+    HANDLE *semaphores = userdata;
+    trace("Running group cancel cleanup release callback\n");
+    group_cancel_tid = GetCurrentThreadId();
+    ReleaseSemaphore(semaphores[0], 1, NULL);
+}
+
+static void CALLBACK group_cancel_cleanup_increment_cb(void *object, void *userdata)
+{
+    trace("Running group cancel cleanup increment callback\n");
+    group_cancel_tid = GetCurrentThreadId();
+    InterlockedIncrement((LONG *)userdata);
+}
+
+static void CALLBACK unexpected_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+{
+    ok(0, "Unexpected callback\n");
+}
+
+static void test_tp_group_cancel(void)
+{
+    TP_CALLBACK_ENVIRON environment;
+    TP_CLEANUP_GROUP *group;
+    LONG userdata, userdata2;
+    HANDLE semaphores[2];
+    NTSTATUS status;
+    TP_WORK *work;
+    TP_POOL *pool;
+    DWORD result;
+    int i;
+
+    semaphores[0] = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(semaphores[0] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+    semaphores[1] = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(semaphores[1] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    /* allocate new threadpool with only one thread */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+    pTpSetPoolMaxThreads(pool, 1);
+
+    /* allocate a cleanup group */
+    group = NULL;
+    status = pTpAllocCleanupGroup(&group);
+    ok(!status, "TpAllocCleanupGroup failed with status %x\n", status);
+    ok(group != NULL, "expected pool != NULL\n");
+
+    /* test execution of cancellation callback */
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    status = pTpSimpleTryPost(group_cancel_cb, semaphores, &environment);
+    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    environment.CleanupGroupCancelCallback = group_cancel_cleanup_release_cb;
+    status = pTpSimpleTryPost(unexpected_cb, NULL, &environment);
+    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+
+    group_cancel_tid = 0xdeadbeef;
+    pTpReleaseCleanupGroupMembers(group, TRUE, semaphores);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(group_cancel_tid == GetCurrentThreadId(), "expected tid %x, got %x\n",
+       GetCurrentThreadId(), group_cancel_tid);
+
+    /* test cancellation callback for objects with multiple instances */
+    work = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    environment.CleanupGroupCancelCallback = group_cancel_cleanup_increment_cb;
+    status = pTpAllocWork(&work, work_cb, &userdata, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work != NULL, "expected work != NULL\n");
+
+    /* post 10 identical work items at once */
+    userdata = userdata2 = 0;
+    for (i = 0; i < 10; i++)
+        pTpPostWork(work);
+
+    /* check if we get multiple cancellation callbacks */
+    group_cancel_tid = 0xdeadbeef;
+    pTpReleaseCleanupGroupMembers(group, TRUE, &userdata2);
+    ok(userdata <= 8, "expected userdata <= 8, got %u\n", userdata);
+    ok(userdata2 == 1, "expected only one cancellation callback, got %u\n", userdata2);
+    ok(group_cancel_tid == GetCurrentThreadId(), "expected tid %x, got %x\n",
+       GetCurrentThreadId(), group_cancel_tid);
+
+    /* cleanup */
+    pTpReleaseCleanupGroup(group);
+    pTpReleasePool(pool);
+    CloseHandle(semaphores[0]);
+    CloseHandle(semaphores[1]);
+}
+
 START_TEST(threadpool)
 {
     if (!init_threadpool())
@@ -315,4 +430,5 @@ START_TEST(threadpool)
     test_tp_simple();
     test_tp_work();
     test_tp_work_scheduler();
+    test_tp_group_cancel();
 }
