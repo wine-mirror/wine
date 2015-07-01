@@ -949,35 +949,6 @@ static void X11DRV_UnmapNotify( HWND hwnd, XEvent *event )
 
 
 /***********************************************************************
- *     is_net_wm_state_maximized
- */
-static BOOL is_net_wm_state_maximized( Display *display, struct x11drv_win_data *data )
-{
-    Atom type, *state;
-    int format, ret = 0;
-    unsigned long i, count, remaining;
-
-    if (!data->whole_window) return FALSE;
-
-    if (!XGetWindowProperty( display, data->whole_window, x11drv_atom(_NET_WM_STATE), 0,
-                             65536/sizeof(CARD32), False, XA_ATOM, &type, &format, &count,
-                             &remaining, (unsigned char **)&state ))
-    {
-        if (type == XA_ATOM && format == 32)
-        {
-            for (i = 0; i < count; i++)
-            {
-                if (state[i] == x11drv_atom(_NET_WM_STATE_MAXIMIZED_VERT) ||
-                    state[i] == x11drv_atom(_NET_WM_STATE_MAXIMIZED_HORZ))
-                    ret++;
-            }
-        }
-        XFree( state );
-    }
-    return (ret == 2);
-}
-
-/***********************************************************************
  *           reparent_notify
  */
 static void reparent_notify( Display *display, HWND hwnd, Window xparent, int x, int y )
@@ -1132,7 +1103,8 @@ void X11DRV_ConfigureNotify( HWND hwnd, XEvent *xev )
     style = GetWindowLongW( data->hwnd, GWL_STYLE );
     if ((style & WS_CAPTION) == WS_CAPTION)
     {
-        if (is_net_wm_state_maximized( event->display, data ))
+        read_net_wm_states( event->display, data );
+        if ((data->net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))
         {
             if (!(style & WS_MAXIMIZE))
             {
@@ -1267,7 +1239,8 @@ static void handle_wm_state_notify( HWND hwnd, XPropertyEvent *event, BOOL updat
     if (data->iconic && data->wm_state == NormalState)  /* restore window */
     {
         data->iconic = FALSE;
-        if ((style & WS_CAPTION) == WS_CAPTION && is_net_wm_state_maximized( event->display, data ))
+        read_net_wm_states( event->display, data );
+        if ((style & WS_CAPTION) == WS_CAPTION && (data->net_wm_state & (1 << NET_WM_STATE_MAXIMIZED)))
         {
             if ((style & WS_MAXIMIZEBOX) && !(style & WS_DISABLED))
             {
