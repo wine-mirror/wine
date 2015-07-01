@@ -203,6 +203,10 @@ struct threadpool_instance
     struct threadpool_object *object;
     DWORD                   threadid;
     BOOL                    may_run_long;
+    struct
+    {
+        CRITICAL_SECTION    *critical_section;
+    } cleanup;
 };
 
 /* internal threadpool group representation */
@@ -1630,6 +1634,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
             instance.object                     = object;
             instance.threadid                   = GetCurrentThreadId();
             instance.may_run_long               = object->may_run_long;
+            instance.cleanup.critical_section   = NULL;
 
             switch (object->type)
             {
@@ -1663,6 +1668,12 @@ static void CALLBACK threadpool_worker_proc( void *param )
                        object->finalization_callback, callback_instance, object->userdata );
                 object->finalization_callback( callback_instance, object->userdata );
                 TRACE( "callback %p returned\n", object->finalization_callback );
+            }
+
+            /* Execute cleanup tasks. */
+            if (instance.cleanup.critical_section)
+            {
+                RtlLeaveCriticalSection( instance.cleanup.critical_section );
             }
 
             RtlEnterCriticalSection( &pool->cs );
@@ -1750,6 +1761,19 @@ NTSTATUS WINAPI TpAllocWork( TP_WORK **out, PTP_WORK_CALLBACK callback, PVOID us
 
     *out = (TP_WORK *)object;
     return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           TpCallbackLeaveCriticalSectionOnCompletion    (NTDLL.@)
+ */
+VOID WINAPI TpCallbackLeaveCriticalSectionOnCompletion( TP_CALLBACK_INSTANCE *instance, CRITICAL_SECTION *crit )
+{
+    struct threadpool_instance *this = impl_from_TP_CALLBACK_INSTANCE( instance );
+
+    TRACE( "%p %p\n", instance, crit );
+
+    if (!this->cleanup.critical_section)
+        this->cleanup.critical_section = crit;
 }
 
 /***********************************************************************
