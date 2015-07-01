@@ -1130,6 +1130,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             FLOAT descent, trailingspacewidth;
 
             if (!overflow) {
+                width += layout->clustermetrics[i].width;
                 metrics.length += layout->clustermetrics[i].length;
                 last_cluster = i;
             }

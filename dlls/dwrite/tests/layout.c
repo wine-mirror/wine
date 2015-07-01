@@ -2468,10 +2468,14 @@ static void test_GetMetrics(void)
 {
     static const WCHAR str2W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
+    static const WCHAR str3W[] = {'a',0};
+    DWRITE_CLUSTER_METRICS clusters[4];
     DWRITE_TEXT_METRICS metrics;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
+    UINT32 count, i;
+    FLOAT width;
     HRESULT hr;
 
     factory = create_factory();
@@ -2483,13 +2487,21 @@ static void test_GetMetrics(void)
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 500.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 4, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 4, "got %u\n", count);
+    for (i = 0, width = 0.0; i < count; i++)
+        width += clusters[i].width;
+
     memset(&metrics, 0xcc, sizeof(metrics));
     hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
     ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
-    ok(metrics.width > 0.0, "got %.2f\n", metrics.width);
-    ok(metrics.widthIncludingTrailingWhitespace > 0.0, "got %.2f\n", metrics.widthIncludingTrailingWhitespace);
+    ok(metrics.width == width, "got %.2f, expected %.2f\n", metrics.width, width);
+    ok(metrics.widthIncludingTrailingWhitespace == width, "got %.2f, expected %.2f\n",
+        metrics.widthIncludingTrailingWhitespace, width);
     ok(metrics.height > 0.0, "got %.2f\n", metrics.height);
     ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
     ok(metrics.layoutHeight == 1000.0, "got %.2f\n", metrics.layoutHeight);
@@ -2517,6 +2529,29 @@ todo_wine
     ok(metrics.maxBidiReorderingDepth > 1, "got %u\n", metrics.maxBidiReorderingDepth);
     ok(metrics.lineCount == 1, "got %u\n", metrics.lineCount);
 
+    IDWriteTextLayout_Release(layout);
+
+    /* single cluster layout */
+    hr = IDWriteFactory_CreateTextLayout(factory, str3W, 1, format, 500.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    memset(&metrics, 0xcc, sizeof(metrics));
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
+    ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
+    ok(metrics.width == clusters[0].width, "got %.2f, expected %.2f\n", metrics.width, clusters[0].width);
+    ok(metrics.widthIncludingTrailingWhitespace == clusters[0].width, "got %.2f\n", metrics.widthIncludingTrailingWhitespace);
+    ok(metrics.height > 0.0, "got %.2f\n", metrics.height);
+    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
+    ok(metrics.layoutHeight == 1000.0, "got %.2f\n", metrics.layoutHeight);
+    ok(metrics.maxBidiReorderingDepth == 1, "got %u\n", metrics.maxBidiReorderingDepth);
+    ok(metrics.lineCount == 1, "got %u\n", metrics.lineCount);
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
