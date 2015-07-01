@@ -4195,18 +4195,15 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
                 nmtbr.tbButton.iBitmap = -1;
                 nmtbr.tbButton.fsState = 0;
                 nmtbr.tbButton.fsStyle = 0;
-                nmtbr.tbButton.idCommand = 0;
-                if (*nmtbr.pCurrent == (DWORD)-1)
+
+                if (*nmtbr.pCurrent & 0x80000000)
                 {
                     /* separator */
+                    nmtbr.tbButton.idCommand = 0;
                     nmtbr.tbButton.fsStyle = TBSTYLE_SEP;
-                    /* when inserting separators, iBitmap controls its size.
-                       0 sets default size (width) */
-                    nmtbr.tbButton.iBitmap = 0;
+                    if (*nmtbr.pCurrent != (DWORD)-1)
+                        nmtbr.tbButton.fsState = TBSTATE_HIDDEN;
                 }
-                else if (*nmtbr.pCurrent == (DWORD)-2)
-                    /* hidden button */
-                    nmtbr.tbButton.fsState = TBSTATE_HIDDEN;
                 else
                     nmtbr.tbButton.idCommand = (int)*nmtbr.pCurrent;
 

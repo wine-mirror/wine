@@ -150,7 +150,7 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
             NMTBSAVE *save = (NMTBSAVE *)lParam;
             if (save->iItem == -1)
             {
-                save->cbData = save->cbData * 2 + sizeof(DWORD);
+                save->cbData = save->cbData * 2 + 11 * sizeof(DWORD);
                 save->pData = HeapAlloc( GetProcessHeap(), 0, save->cbData );
                 save->pData[0] = 0xcafe;
                 save->pCurrent = save->pData + 1;
@@ -160,6 +160,22 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
                 save->pCurrent[0] = 0xcafe0000 + save->iItem;
                 save->pCurrent++;
             }
+
+            /* Add on 5 more pseudo buttons. */
+            if (save->iItem == save->cButtons - 1)
+            {
+                save->pCurrent[0] = 0xffffffff;
+                save->pCurrent[1] = 0xcafe0007;
+                save->pCurrent[2] = 0xfffffffe;
+                save->pCurrent[3] = 0xcafe0008;
+                save->pCurrent[4] = 0x80000000;
+                save->pCurrent[5] = 0xcafe0009;
+                save->pCurrent[6] = 0x7fffffff;
+                save->pCurrent[7] = 0xcafe000a;
+                save->pCurrent[8] = 0x100;
+                save->pCurrent[9] = 0xcafe000b;
+            }
+
             /* Return value is ignored */
             return 1;
         }
@@ -169,21 +185,37 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
 
             if (restore->iItem == -1)
             {
-                ok( restore->cButtons == 15, "got %d\n", restore->cButtons );
+                ok( restore->cButtons == 25, "got %d\n", restore->cButtons );
                 ok( *restore->pCurrent == 0xcafe, "got %08x\n", *restore->pCurrent );
                 /* Skip the last one */
-                restore->cButtons = 6;
+                restore->cButtons = 11;
                 restore->pCurrent++;
                 /* BytesPerRecord is ignored */
                 restore->cbBytesPerRecord = 10;
             }
             else
             {
-                ok( *restore->pCurrent == 0xcafe0000 + restore->iItem, "got %08x\n", *restore->pCurrent );
                 ok( restore->tbButton.iBitmap == -1, "got %08x\n", restore->tbButton.iBitmap );
-                ok( restore->tbButton.idCommand == restore->iItem * 2 + 1, "got %08x\n", restore->tbButton.idCommand );
-                ok( restore->tbButton.fsState == 0, "got %02x\n", restore->tbButton.fsState );
-                ok( restore->tbButton.fsStyle == 0, "got %02x\n", restore->tbButton.fsStyle );
+                ok( *restore->pCurrent == 0xcafe0000 + restore->iItem, "got %08x\n", *restore->pCurrent );
+                if (restore->iItem < 7 || restore->iItem == 10)
+                {
+                    if (restore->iItem < 7)
+                        ok( restore->tbButton.idCommand == restore->iItem * 2 + 1, "%d: got %08x\n", restore->iItem, restore->tbButton.idCommand );
+                    else
+                        ok( restore->tbButton.idCommand == 0x7fffffff, "%d: got %08x\n", restore->iItem, restore->tbButton.idCommand );
+                    ok( restore->tbButton.fsState == 0, "%d: got %02x\n", restore->iItem, restore->tbButton.fsState );
+                    ok( restore->tbButton.fsStyle == 0, "%d: got %02x\n", restore->iItem, restore->tbButton.fsStyle );
+                }
+                else
+                {
+                    ok( restore->tbButton.idCommand == 0, "%d: got %08x\n", restore->iItem, restore->tbButton.idCommand );
+                    if (restore->iItem == 7)
+                        ok( restore->tbButton.fsState == 0, "%d: got %02x\n", restore->iItem, restore->tbButton.fsState );
+                    else
+                        ok( restore->tbButton.fsState == TBSTATE_HIDDEN, "%d: got %02x\n", restore->iItem, restore->tbButton.fsState );
+                    ok( restore->tbButton.fsStyle == BTNS_SEP, "%d: got %02x\n", restore->iItem, restore->tbButton.fsStyle );
+                }
+
                 ok( restore->tbButton.dwData == 0, "got %08lx\n", restore->tbButton.dwData );
                 ok( restore->tbButton.iString == 0, "got %08lx\n", restore->tbButton.iString );
 
@@ -2176,7 +2208,9 @@ static void test_save(void)
             {0, 13, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 0, -1}
         };
     static const DWORD expect[] = {0xcafe, 1, 0xcafe0000, 3, 0xcafe0001, 5, 0xcafe0002, 7, 0xcafe0003,
-                                   9, 0xcafe0004, 11, 0xcafe0005, 13, 0xcafe0006 };
+                                   9, 0xcafe0004, 11, 0xcafe0005, 13, 0xcafe0006, 0xffffffff, 0xcafe0007,
+                                   0xfffffffe, 0xcafe0008, 0x80000000, 0xcafe0009, 0x7fffffff, 0xcafe000a,
+                                   0x100, 0xcafe000b};
 
     params.hkr = HKEY_CURRENT_USER;
     params.pszSubKey = subkey;
@@ -2206,7 +2240,7 @@ static void test_save(void)
     res = SendMessageW( wnd, TB_SAVERESTOREW, FALSE, (LPARAM)&params );
     ok( res, "restoring failed\n" );
     res = SendMessageW( wnd, TB_BUTTONCOUNT, 0, 0 );
-    ok( res == 6, "got %d\n", res );
+    ok( res == 11, "got %d\n", res );
 
     DestroyWindow( wnd );
     RegOpenKeyW( HKEY_CURRENT_USER, subkey, &key );
