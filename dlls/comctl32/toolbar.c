@@ -353,6 +353,12 @@ static void set_stringT( TBUTTON_INFO *btn, const WCHAR *str, BOOL unicode )
     set_string_index( btn, (DWORD_PTR)str, unicode );
 }
 
+static void free_string( TBUTTON_INFO *btn )
+{
+    set_string_index( btn, 0, TRUE );
+
+}
+
 /***********************************************************************
 * 		TOOLBAR_CheckStyle
 *
@@ -3224,8 +3230,7 @@ TOOLBAR_DeleteButton (TOOLBAR_INFO *infoPtr, INT nIndex)
 
     if (infoPtr->nNumButtons == 1) {
 	TRACE(" simple delete!\n");
-	if (TOOLBAR_ButtonHasString(infoPtr->buttons))
-	    Free((LPWSTR)infoPtr->buttons[0].iString);
+        free_string( infoPtr->buttons );
 	Free (infoPtr->buttons);
 	infoPtr->buttons = NULL;
 	infoPtr->nNumButtons = 0;
@@ -3246,8 +3251,7 @@ TOOLBAR_DeleteButton (TOOLBAR_INFO *infoPtr, INT nIndex)
                     (infoPtr->nNumButtons - nIndex) * sizeof(TBUTTON_INFO));
         }
 
-        if (TOOLBAR_ButtonHasString(&oldButtons[nIndex]))
-            Free((LPWSTR)oldButtons[nIndex].iString);
+        free_string( oldButtons + nIndex );
 	Free (oldButtons);
     }
 
@@ -5227,8 +5231,7 @@ TOOLBAR_Destroy (TOOLBAR_INFO *infoPtr)
 
     /* delete button data */
     for (i = 0; i < infoPtr->nNumButtons; i++)
-        if (TOOLBAR_ButtonHasString(&infoPtr->buttons[i]))
-            Free ((LPWSTR)infoPtr->buttons[i].iString);
+        free_string( infoPtr->buttons + i );
     Free (infoPtr->buttons);
 
     /* delete strings */
