@@ -172,6 +172,7 @@ struct threadpool_object
     struct threadpool_group *group;
     PVOID                   userdata;
     PTP_CLEANUP_GROUP_CANCEL_CALLBACK group_cancel_callback;
+    PTP_SIMPLE_CALLBACK     finalization_callback;
     /* information about the group, locked via .group->cs */
     struct list             group_entry;
     BOOL                    is_group_member;
@@ -1372,6 +1373,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
     object->group                   = NULL;
     object->userdata                = userdata;
     object->group_cancel_callback   = NULL;
+    object->finalization_callback   = NULL;
 
     memset( &object->group_entry, 0, sizeof(object->group_entry) );
     object->is_group_member         = FALSE;
@@ -1388,6 +1390,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
 
         object->group = impl_from_TP_CLEANUP_GROUP( environment->CleanupGroup );
         object->group_cancel_callback   = environment->CleanupGroupCancelCallback;
+        object->finalization_callback   = environment->FinalizationCallback;
 
         WARN( "environment not fully implemented yet\n" );
     }
@@ -1614,6 +1617,15 @@ static void CALLBACK threadpool_worker_proc( void *param )
                 default:
                     assert(0);
                     break;
+            }
+
+            /* Execute finalization callback. */
+            if (object->finalization_callback)
+            {
+                TRACE( "executing finalization callback %p(NULL, %p)\n",
+                       object->finalization_callback, object->userdata );
+                object->finalization_callback( NULL, object->userdata );
+                TRACE( "callback %p returned\n", object->finalization_callback );
             }
 
             RtlEnterCriticalSection( &pool->cs );
