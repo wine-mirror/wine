@@ -1466,6 +1466,21 @@ VOID WINAPI TpReleasePool( TP_POOL *pool )
 }
 
 /***********************************************************************
+ *           TpSetPoolMaxThreads    (NTDLL.@)
+ */
+VOID WINAPI TpSetPoolMaxThreads( TP_POOL *pool, DWORD maximum )
+{
+    struct threadpool *this = impl_from_TP_POOL( pool );
+
+    TRACE( "%p %u\n", pool, maximum );
+
+    RtlEnterCriticalSection( &this->cs );
+    this->max_workers = max( maximum, 1 );
+    this->min_workers = min( this->min_workers, this->max_workers );
+    RtlLeaveCriticalSection( &this->cs );
+}
+
+/***********************************************************************
  *           TpSimpleTryPost    (NTDLL.@)
  */
 NTSTATUS WINAPI TpSimpleTryPost( PTP_SIMPLE_CALLBACK callback, PVOID userdata,

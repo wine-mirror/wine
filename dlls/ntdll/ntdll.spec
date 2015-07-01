@@ -972,6 +972,7 @@
 @ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
 @ stdcall TpAllocPool(ptr ptr)
 @ stdcall TpReleasePool(ptr)
+@ stdcall TpSetPoolMaxThreads(ptr long)
 @ stdcall TpSimpleTryPost(ptr ptr ptr)
 @ stdcall -ret64 VerSetConditionMask(int64 long long)
 @ stdcall WinSqmIsOptedIn()
