@@ -207,6 +207,8 @@ struct threadpool_instance
     {
         CRITICAL_SECTION    *critical_section;
         HANDLE              mutex;
+        HANDLE              semaphore;
+        LONG                semaphore_count;
     } cleanup;
 };
 
@@ -1608,6 +1610,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
     struct threadpool *pool = param;
     LARGE_INTEGER timeout;
     struct list *ptr;
+    NTSTATUS status;
 
     TRACE( "starting worker thread for pool %p\n", pool );
 
@@ -1637,6 +1640,8 @@ static void CALLBACK threadpool_worker_proc( void *param )
             instance.may_run_long               = object->may_run_long;
             instance.cleanup.critical_section   = NULL;
             instance.cleanup.mutex              = NULL;
+            instance.cleanup.semaphore          = NULL;
+            instance.cleanup.semaphore_count    = 0;
 
             switch (object->type)
             {
@@ -1679,9 +1684,15 @@ static void CALLBACK threadpool_worker_proc( void *param )
             }
             if (instance.cleanup.mutex)
             {
-                NtReleaseMutant( instance.cleanup.mutex, NULL );
+                status = NtReleaseMutant( instance.cleanup.mutex, NULL );
+                if (status != STATUS_SUCCESS) goto skip_cleanup;
+            }
+            if (instance.cleanup.semaphore)
+            {
+                NtReleaseSemaphore( instance.cleanup.semaphore, instance.cleanup.semaphore_count, NULL );
             }
 
+        skip_cleanup:
             RtlEnterCriticalSection( &pool->cs );
             pool->num_busy_workers--;
             object->num_running_callbacks--;
@@ -1843,6 +1854,22 @@ VOID WINAPI TpCallbackReleaseMutexOnCompletion( TP_CALLBACK_INSTANCE *instance, 
 
     if (!this->cleanup.mutex)
         this->cleanup.mutex = mutex;
+}
+
+/***********************************************************************
+ *           TpCallbackReleaseSemaphoreOnCompletion    (NTDLL.@)
+ */
+VOID WINAPI TpCallbackReleaseSemaphoreOnCompletion( TP_CALLBACK_INSTANCE *instance, HANDLE semaphore, DWORD count )
+{
+    struct threadpool_instance *this = impl_from_TP_CALLBACK_INSTANCE( instance );
+
+    TRACE( "%p %p %u\n", instance, semaphore, count );
+
+    if (!this->cleanup.semaphore)
+    {
+        this->cleanup.semaphore = semaphore;
+        this->cleanup.semaphore_count = count;
+    }
 }
 
 /***********************************************************************
