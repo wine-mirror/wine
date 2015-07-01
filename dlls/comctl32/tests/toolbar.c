@@ -54,6 +54,18 @@ static const struct message ttgetdispinfo_parent_seq[] = {
     { 0 }
 };
 
+static const struct message save_parent_seq[] = {
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_SAVE, -1 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_SAVE, 0 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_SAVE, 1 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_SAVE, 2 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_SAVE, 3 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_SAVE, 4 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_SAVE, 5 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_SAVE, 6 },
+    { 0 }
+};
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -133,6 +145,25 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
             compare(nmdisp->dwMask, g_dwExpectedDispInfoMask, "%x");
             ok(nmdisp->pszText == NULL, "pszText is not NULL\n");
         break;
+        case TBN_SAVE:
+        {
+            NMTBSAVE *save = (NMTBSAVE *)lParam;
+            if (save->iItem == -1)
+            {
+                save->cbData = save->cbData * 2 + sizeof(DWORD);
+                save->pData = HeapAlloc( GetProcessHeap(), 0, save->cbData );
+                save->pData[0] = 0xcafe;
+                save->pCurrent = save->pData + 1;
+            }
+            else
+            {
+                save->pCurrent[0] = 0xcafe0000 + save->iItem;
+                save->pCurrent++;
+            }
+            /* Return value is ignored */
+            return 1;
+        }
+
     }
     return 0;
 }
@@ -148,7 +179,19 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
     if (defwndproc_counter) msg.flags |= defwinproc;
     msg.wParam = wParam;
     msg.lParam = lParam;
-    if (message == WM_NOTIFY && lParam) msg.id = ((NMHDR*)lParam)->code;
+    if (message == WM_NOTIFY && lParam)
+    {
+        msg.id = ((NMHDR*)lParam)->code;
+        switch (msg.id)
+        {
+        case TBN_SAVE:
+        {
+            NMTBSAVE *save = (NMTBSAVE *)lParam;
+            msg.stage = save->iItem;
+        }
+        break;
+        }
+    }
 
     /* log system messages, except for painting */
     if (message < WM_USER &&
@@ -2079,6 +2122,49 @@ static void test_noresize(void)
 
 }
 
+static void test_save(void)
+{
+    HWND wnd = NULL;
+    TBSAVEPARAMSW params;
+    static const WCHAR subkey[] = {'S','o','f','t','w','a','r','e','\\','W','i','n','e','T','e','s','t',0};
+    static const WCHAR value[] = {'t','o','o','l','b','a','r','t','e','s','t',0};
+    LONG res;
+    HKEY key;
+    BYTE data[100];
+    DWORD size = sizeof(data), type;
+    static const TBBUTTON more_btns[2] =
+        {
+            {0, 11, TBSTATE_HIDDEN, BTNS_BUTTON, {0}, 0, -1},
+            {0, 13, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 0, -1}
+        };
+    static const DWORD expect[] = {0xcafe, 1, 0xcafe0000, 3, 0xcafe0001, 5, 0xcafe0002, 7, 0xcafe0003,
+                                   9, 0xcafe0004, 11, 0xcafe0005, 13, 0xcafe0006 };
+
+    params.hkr = HKEY_CURRENT_USER;
+    params.pszSubKey = subkey;
+    params.pszValueName = value;
+
+    rebuild_toolbar_with_buttons( &wnd );
+    SendMessageW( wnd, TB_ADDBUTTONSW, sizeof(more_btns) / sizeof(more_btns[0]), (LPARAM)more_btns );
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    res = SendMessageW( wnd, TB_SAVERESTOREW, TRUE, (LPARAM)&params );
+    ok( res, "saving failed\n" );
+    ok_sequence(sequences, PARENT_SEQ_INDEX, save_parent_seq, "save", FALSE);
+    DestroyWindow( wnd );
+
+    res = RegOpenKeyW( HKEY_CURRENT_USER, subkey, &key );
+    ok( !res, "got %08x\n", res );
+    res = RegQueryValueExW( key, value, NULL, &type, data, &size );
+    ok( !res, "got %08x\n", res );
+    ok( type == REG_BINARY, "got %08x\n", type );
+    ok( size == sizeof(expect), "got %08x\n", size );
+    ok( !memcmp( data, expect, size ), "mismatch\n" );
+
+    RegDeleteValueW( key, value );
+    RegCloseKey( key );
+}
+
 START_TEST(toolbar)
 {
     WNDCLASSA wc;
@@ -2122,6 +2208,7 @@ START_TEST(toolbar)
     test_create();
     test_TB_GET_SET_EXTENDEDSTYLE();
     test_noresize();
+    test_save();
 
     PostQuitMessage(0);
     while(GetMessageA(&msg,0,0,0)) {

@@ -4071,12 +4071,55 @@ TOOLBAR_ReplaceBitmap (TOOLBAR_INFO *infoPtr, const TBREPLACEBITMAP *lpReplace)
 
 /* helper for TOOLBAR_SaveRestoreW */
 static BOOL
-TOOLBAR_Save(const TBSAVEPARAMSW *lpSave)
+TOOLBAR_Save(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *params)
 {
-    FIXME("save to %s %s\n", debugstr_w(lpSave->pszSubKey),
-        debugstr_w(lpSave->pszValueName));
+    NMTBSAVE save;
+    INT ret, i;
+    BOOL alloced = FALSE;
+    HKEY key;
 
-    return FALSE;
+    TRACE( "save to %s %s\n", debugstr_w(params->pszSubKey), debugstr_w(params->pszValueName) );
+
+    memset( &save, 0, sizeof(save) );
+    save.cbData = infoPtr->nNumButtons * sizeof(DWORD);
+    save.iItem = -1;
+    save.cButtons = infoPtr->nNumButtons;
+    save.tbButton.idCommand = -1;
+    TOOLBAR_SendNotify( &save.hdr, infoPtr, TBN_SAVE );
+
+    if (!save.pData)
+    {
+        save.pData = Alloc( save.cbData );
+        if (!save.pData) return FALSE;
+        alloced = TRUE;
+    }
+    if (!save.pCurrent) save.pCurrent = save.pData;
+
+    for (i = 0; i < infoPtr->nNumButtons; i++)
+    {
+        save.iItem = i;
+        save.tbButton.iBitmap = infoPtr->buttons[i].iBitmap;
+        save.tbButton.idCommand = infoPtr->buttons[i].idCommand;
+        save.tbButton.fsState = infoPtr->buttons[i].fsState;
+        save.tbButton.fsStyle = infoPtr->buttons[i].fsStyle;
+        memset( save.tbButton.bReserved, 0, sizeof(save.tbButton.bReserved) );
+        save.tbButton.dwData = infoPtr->buttons[i].dwData;
+        save.tbButton.iString = infoPtr->buttons[i].iString;
+
+        *save.pCurrent++ = save.tbButton.idCommand;
+
+        TOOLBAR_SendNotify( &save.hdr, infoPtr, TBN_SAVE );
+    }
+
+    ret = RegCreateKeyW( params->hkr, params->pszSubKey, &key );
+    if (ret == ERROR_SUCCESS)
+    {
+        ret = RegSetValueExW( key, params->pszValueName, 0, REG_BINARY, (BYTE *)save.pData, save.cbData );
+        RegCloseKey( key );
+    }
+
+    if (alloced) Free( save.pData );
+    return !ret;
 }
 
 
@@ -4211,7 +4254,7 @@ TOOLBAR_SaveRestoreW (TOOLBAR_INFO *infoPtr, WPARAM wParam, const TBSAVEPARAMSW 
     if (lpSave == NULL) return 0;
 
     if (wParam)
-        return TOOLBAR_Save(lpSave);
+        return TOOLBAR_Save(infoPtr, lpSave);
     else
         return TOOLBAR_Restore(infoPtr, lpSave);
 }
