@@ -222,7 +222,17 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
                 restore->tbButton.iBitmap = 0;
                 restore->tbButton.fsState = TBSTATE_ENABLED;
                 restore->tbButton.fsStyle = 0;
-                restore->tbButton.iString = -1;
+                restore->tbButton.dwData = restore->iItem;
+
+                if (restore->iItem == 0)
+                {
+                    restore->tbButton.iString = (INT_PTR)HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 8 );
+                    strcpy( (char *)restore->tbButton.iString, "foo" );
+                }
+                else if (restore->iItem == 1)
+                    restore->tbButton.iString = 2;
+                else
+                    restore->tbButton.iString = -1;
 
                 restore->pCurrent++;
                 /* Altering cButtons after the 1st call makes no difference. */
@@ -2201,7 +2211,8 @@ static void test_save(void)
     LONG res;
     HKEY key;
     BYTE data[100];
-    DWORD size = sizeof(data), type;
+    DWORD size = sizeof(data), type, i, count;
+    TBBUTTON tb;
     static const TBBUTTON more_btns[2] =
         {
             {0, 11, TBSTATE_HIDDEN, BTNS_BUTTON, {0}, 0, -1},
@@ -2211,6 +2222,20 @@ static void test_save(void)
                                    9, 0xcafe0004, 11, 0xcafe0005, 13, 0xcafe0006, 0xffffffff, 0xcafe0007,
                                    0xfffffffe, 0xcafe0008, 0x80000000, 0xcafe0009, 0x7fffffff, 0xcafe000a,
                                    0x100, 0xcafe000b};
+    static const TBBUTTON expect_btns[] =
+    {
+        {0, 1, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 0, 0},
+        {0, 3, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 1, 2},
+        {0, 5, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 2, 0},
+        {0, 7, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 3, 0},
+        {0, 9, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 4, 0},
+        {0, 11, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 5, 0},
+        {0, 13, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 6, 0},
+        {0, 0, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 7, 0},
+        {0, 0, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 8, 0},
+        {0, 0, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 9, 0},
+        {0, 0x7fffffff, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 0xa, 0},
+    };
 
     params.hkr = HKEY_CURRENT_USER;
     params.pszSubKey = subkey;
@@ -2239,8 +2264,21 @@ static void test_save(void)
     rebuild_toolbar( &wnd );
     res = SendMessageW( wnd, TB_SAVERESTOREW, FALSE, (LPARAM)&params );
     ok( res, "restoring failed\n" );
-    res = SendMessageW( wnd, TB_BUTTONCOUNT, 0, 0 );
-    ok( res == 11, "got %d\n", res );
+    count = SendMessageW( wnd, TB_BUTTONCOUNT, 0, 0 );
+    ok( count == sizeof(expect_btns) / sizeof(expect_btns[0]), "got %d\n", count );
+
+    for (i = 0; i < count; i++)
+    {
+        res = SendMessageW( wnd, TB_GETBUTTON, i, (LPARAM)&tb );
+        ok( res, "got %d\n", res );
+
+        ok( tb.iBitmap == expect_btns[i].iBitmap, "%d: got %d\n", i, tb.iBitmap );
+        ok( tb.idCommand == expect_btns[i].idCommand, "%d: got %d\n", i, tb.idCommand );
+        ok( tb.fsState == expect_btns[i].fsState, "%d: got %02x\n", i, tb.fsState );
+        ok( tb.fsStyle == expect_btns[i].fsStyle, "%d: got %02x\n", i, tb.fsStyle );
+        ok( tb.dwData == expect_btns[i].dwData, "%d: got %lx\n", i, tb.dwData );
+        ok( tb.iString == expect_btns[i].iString, "%d: got %lx\n", i, tb.iString );
+    }
 
     DestroyWindow( wnd );
     RegOpenKeyW( HKEY_CURRENT_USER, subkey, &key );

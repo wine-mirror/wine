@@ -4195,6 +4195,8 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
                 nmtbr.tbButton.iBitmap = -1;
                 nmtbr.tbButton.fsState = 0;
                 nmtbr.tbButton.fsStyle = 0;
+                nmtbr.tbButton.dwData = 0;
+                nmtbr.tbButton.iString = 0;
 
                 if (*nmtbr.pCurrent & 0x80000000)
                 {
@@ -4211,8 +4213,7 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
                 
                 TOOLBAR_SendNotify(&nmtbr.hdr, infoPtr, TBN_RESTORE);
 
-                /* can't contain real string as we don't know whether
-                 * the client put an ANSI or Unicode string in there */
+                /* All returned ptrs and -1 are ignored */
                 if (!IS_INTRESOURCE(nmtbr.tbButton.iString))
                     nmtbr.tbButton.iString = 0;
 
