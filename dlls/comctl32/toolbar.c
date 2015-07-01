@@ -4183,13 +4183,13 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
 
         if (!TOOLBAR_SendNotify(&nmtbr.hdr, infoPtr, TBN_RESTORE))
         {
-            INT i;
+            INT i, count = nmtbr.cButtons;
 
             /* remove all existing buttons as this function is designed to
              * restore the toolbar to a previously saved state */
             TOOLBAR_DeleteAllButtons(infoPtr);
 
-            for (i = 0; i < nmtbr.cButtons; i++)
+            for (i = 0; i < count; i++)
             {
                 nmtbr.iItem = i;
                 nmtbr.tbButton.iBitmap = -1;

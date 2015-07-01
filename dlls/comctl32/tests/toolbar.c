@@ -163,7 +163,45 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
             /* Return value is ignored */
             return 1;
         }
+        case TBN_RESTORE:
+        {
+            NMTBRESTORE *restore = (NMTBRESTORE *)lParam;
 
+            if (restore->iItem == -1)
+            {
+                ok( restore->cButtons == 15, "got %d\n", restore->cButtons );
+                ok( *restore->pCurrent == 0xcafe, "got %08x\n", *restore->pCurrent );
+                /* Skip the last one */
+                restore->cButtons = 6;
+                restore->pCurrent++;
+                /* BytesPerRecord is ignored */
+                restore->cbBytesPerRecord = 10;
+            }
+            else
+            {
+                ok( *restore->pCurrent == 0xcafe0000 + restore->iItem, "got %08x\n", *restore->pCurrent );
+                ok( restore->tbButton.iBitmap == -1, "got %08x\n", restore->tbButton.iBitmap );
+                ok( restore->tbButton.idCommand == restore->iItem * 2 + 1, "got %08x\n", restore->tbButton.idCommand );
+                ok( restore->tbButton.fsState == 0, "got %02x\n", restore->tbButton.fsState );
+                ok( restore->tbButton.fsStyle == 0, "got %02x\n", restore->tbButton.fsStyle );
+                ok( restore->tbButton.dwData == 0, "got %08lx\n", restore->tbButton.dwData );
+                ok( restore->tbButton.iString == 0, "got %08lx\n", restore->tbButton.iString );
+
+                restore->tbButton.iBitmap = 0;
+                restore->tbButton.fsState = TBSTATE_ENABLED;
+                restore->tbButton.fsStyle = 0;
+                restore->tbButton.iString = -1;
+
+                restore->pCurrent++;
+                /* Altering cButtons after the 1st call makes no difference. */
+                restore->cButtons--;
+            }
+
+            /* Returning non-zero from the 1st call aborts the restore,
+               otherwise the return value is ignored. */
+            if (restore->iItem == -1) return 0;
+            return 1;
+        }
     }
     return 0;
 }
@@ -2161,6 +2199,17 @@ static void test_save(void)
     ok( size == sizeof(expect), "got %08x\n", size );
     ok( !memcmp( data, expect, size ), "mismatch\n" );
 
+    RegCloseKey( key );
+
+    wnd = NULL;
+    rebuild_toolbar( &wnd );
+    res = SendMessageW( wnd, TB_SAVERESTOREW, FALSE, (LPARAM)&params );
+    ok( res, "restoring failed\n" );
+    res = SendMessageW( wnd, TB_BUTTONCOUNT, 0, 0 );
+    ok( res == 6, "got %d\n", res );
+
+    DestroyWindow( wnd );
+    RegOpenKeyW( HKEY_CURRENT_USER, subkey, &key );
     RegDeleteValueW( key, value );
     RegCloseKey( key );
 }
