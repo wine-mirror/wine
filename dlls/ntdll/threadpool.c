@@ -209,6 +209,7 @@ struct threadpool_instance
         HANDLE              mutex;
         HANDLE              semaphore;
         LONG                semaphore_count;
+        HANDLE              event;
     } cleanup;
 };
 
@@ -1642,6 +1643,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
             instance.cleanup.mutex              = NULL;
             instance.cleanup.semaphore          = NULL;
             instance.cleanup.semaphore_count    = 0;
+            instance.cleanup.event              = NULL;
 
             switch (object->type)
             {
@@ -1689,7 +1691,12 @@ static void CALLBACK threadpool_worker_proc( void *param )
             }
             if (instance.cleanup.semaphore)
             {
-                NtReleaseSemaphore( instance.cleanup.semaphore, instance.cleanup.semaphore_count, NULL );
+                status = NtReleaseSemaphore( instance.cleanup.semaphore, instance.cleanup.semaphore_count, NULL );
+                if (status != STATUS_SUCCESS) goto skip_cleanup;
+            }
+            if (instance.cleanup.event)
+            {
+                NtSetEvent( instance.cleanup.event, NULL );
             }
 
         skip_cleanup:
@@ -1870,6 +1877,19 @@ VOID WINAPI TpCallbackReleaseSemaphoreOnCompletion( TP_CALLBACK_INSTANCE *instan
         this->cleanup.semaphore = semaphore;
         this->cleanup.semaphore_count = count;
     }
+}
+
+/***********************************************************************
+ *           TpCallbackSetEventOnCompletion    (NTDLL.@)
+ */
+VOID WINAPI TpCallbackSetEventOnCompletion( TP_CALLBACK_INSTANCE *instance, HANDLE event )
+{
+    struct threadpool_instance *this = impl_from_TP_CALLBACK_INSTANCE( instance );
+
+    TRACE( "%p %p\n", instance, event );
+
+    if (!this->cleanup.event)
+        this->cleanup.event = event;
 }
 
 /***********************************************************************
