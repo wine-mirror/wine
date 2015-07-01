@@ -29,6 +29,7 @@ static VOID     (WINAPI *pTpReleaseCleanupGroup)(TP_CLEANUP_GROUP *);
 static VOID     (WINAPI *pTpReleaseCleanupGroupMembers)(TP_CLEANUP_GROUP *,BOOL,PVOID);
 static VOID     (WINAPI *pTpReleasePool)(TP_POOL *);
 static VOID     (WINAPI *pTpReleaseWork)(TP_WORK *);
+static VOID     (WINAPI *pTpSetPoolMaxThreads)(TP_POOL *,DWORD);
 static NTSTATUS (WINAPI *pTpSimpleTryPost)(PTP_SIMPLE_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 static VOID     (WINAPI *pTpWaitForWork)(TP_WORK *,BOOL);
 
@@ -57,6 +58,7 @@ static BOOL init_threadpool(void)
     NTDLL_GET_PROC(TpReleaseCleanupGroupMembers);
     NTDLL_GET_PROC(TpReleasePool);
     NTDLL_GET_PROC(TpReleaseWork);
+    NTDLL_GET_PROC(TpSetPoolMaxThreads);
     NTDLL_GET_PROC(TpSimpleTryPost);
     NTDLL_GET_PROC(TpWaitForWork);
 
@@ -182,6 +184,13 @@ static void CALLBACK work_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_
     InterlockedIncrement((LONG *)userdata);
 }
 
+static void CALLBACK work2_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
+{
+    trace("Running work2 callback\n");
+    Sleep(10);
+    InterlockedExchangeAdd((LONG *)userdata, 0x10000);
+}
+
 static void test_tp_work(void)
 {
     TP_CALLBACK_ENVIRON environment;
@@ -225,6 +234,79 @@ static void test_tp_work(void)
     pTpReleasePool(pool);
 }
 
+static void test_tp_work_scheduler(void)
+{
+    TP_CALLBACK_ENVIRON environment;
+    TP_CLEANUP_GROUP *group;
+    TP_WORK *work, *work2;
+    TP_POOL *pool;
+    NTSTATUS status;
+    LONG userdata;
+    int i;
+
+    /* allocate new threadpool */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+
+    /* we limit the pool to a single thread */
+    pTpSetPoolMaxThreads(pool, 1);
+
+    /* create a cleanup group */
+    group = NULL;
+    status = pTpAllocCleanupGroup(&group);
+    ok(!status, "TpAllocCleanupGroup failed with status %x\n", status);
+    ok(group != NULL, "expected pool != NULL\n");
+
+    /* the first work item has no cleanup group associated */
+    work = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    status = pTpAllocWork(&work, work_cb, &userdata, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work != NULL, "expected work != NULL\n");
+
+    /* allocate a second work item with a cleanup group */
+    work2 = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    status = pTpAllocWork(&work2, work2_cb, &userdata, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work2 != NULL, "expected work2 != NULL\n");
+
+    /* the 'work' callbacks are not blocking execution of 'work2' callbacks */
+    userdata = 0;
+    for (i = 0; i < 10; i++)
+        pTpPostWork(work);
+    for (i = 0; i < 10; i++)
+        pTpPostWork(work2);
+    Sleep(30);
+    pTpWaitForWork(work, TRUE);
+    pTpWaitForWork(work2, TRUE);
+    ok(userdata & 0xffff, "expected userdata & 0xffff != 0, got %u\n", userdata & 0xffff);
+    ok(userdata >> 16, "expected userdata >> 16 != 0, got %u\n", userdata >> 16);
+
+    /* test TpReleaseCleanupGroupMembers on a work item */
+    userdata = 0;
+    for (i = 0; i < 100; i++)
+        pTpPostWork(work);
+    for (i = 0; i < 10; i++)
+        pTpPostWork(work2);
+    pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
+    pTpWaitForWork(work, TRUE);
+    ok((userdata & 0xffff) < 100, "expected userdata & 0xffff < 100, got %u\n", userdata & 0xffff);
+    ok((userdata >> 16) == 10, "expected userdata >> 16 == 10, got %u\n", userdata >> 16);
+
+    /* cleanup */
+    pTpReleaseWork(work);
+    pTpReleaseCleanupGroup(group);
+    pTpReleasePool(pool);
+}
+
 START_TEST(threadpool)
 {
     if (!init_threadpool())
@@ -232,4 +314,5 @@ START_TEST(threadpool)
 
     test_tp_simple();
     test_tp_work();
+    test_tp_work_scheduler();
 }
