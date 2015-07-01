@@ -1633,8 +1633,29 @@ HRESULT WINAPI DrawThemeIcon(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
  *      DrawThemeText                                       (UXTHEME.@)
  */
 HRESULT WINAPI DrawThemeText(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
-                             LPCWSTR pszText, int iCharCount, DWORD dwTextFlags,
-                             DWORD dwTextFlags2, const RECT *pRect)
+                             LPCWSTR pszText, int iCharCount, DWORD flags,
+                             DWORD flags2, const RECT *pRect)
+{
+    DTTOPTS opts;
+    RECT rt;
+
+    TRACE("%d %d\n", iPartId, iStateId);
+
+    CopyRect(&rt, pRect);
+
+    opts.dwSize = sizeof(opts);
+    if (flags2 & DTT_GRAYED) {
+        opts.dwFlags = DTT_TEXTCOLOR;
+        opts.crText = GetSysColor(COLOR_GRAYTEXT);
+    }
+    return DrawThemeTextEx(hTheme, hdc, iPartId, iStateId, pszText, iCharCount, flags, &rt, &opts);
+}
+
+/***********************************************************************
+ *      DrawThemeTextEx                                     (UXTHEME.@)
+ */
+HRESULT WINAPI DrawThemeTextEx(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
+    LPCWSTR pszText, int iCharCount, DWORD flags, RECT *rect, const DTTOPTS *options)
 {
     HRESULT hr;
     HFONT hFont = NULL;
@@ -1643,11 +1664,15 @@ HRESULT WINAPI DrawThemeText(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
     COLORREF textColor;
     COLORREF oldTextColor;
     int oldBkMode;
-    RECT rt;
-    
-    TRACE("%d %d: stub\n", iPartId, iStateId);
+
+    TRACE("%p %p %d %d %s:%d 0x%08x %p %p\n", hTheme, hdc, iPartId, iStateId,
+        debugstr_wn(pszText, iCharCount), iCharCount, flags, rect, options);
+
     if(!hTheme)
         return E_HANDLE;
+
+    if (options->dwFlags & ~DTT_TEXTCOLOR)
+        FIXME("unsupported flags 0x%08x\n", options->dwFlags);
     
     hr = GetThemeFont(hTheme, hdc, iPartId, iStateId, TMT_FONT, &logfont);
     if(SUCCEEDED(hr)) {
@@ -1655,19 +1680,19 @@ HRESULT WINAPI DrawThemeText(HTHEME hTheme, HDC hdc, int iPartId, int iStateId,
         if(!hFont)
             TRACE("Failed to create font\n");
     }
-    CopyRect(&rt, pRect);
+
     if(hFont)
         oldFont = SelectObject(hdc, hFont);
-        
-    if(dwTextFlags2 & DTT_GRAYED)
-        textColor = GetSysColor(COLOR_GRAYTEXT);
+
+    if (options->dwFlags & DTT_TEXTCOLOR)
+        textColor = options->crText;
     else {
         if(FAILED(GetThemeColor(hTheme, iPartId, iStateId, TMT_TEXTCOLOR, &textColor)))
             textColor = GetTextColor(hdc);
     }
     oldTextColor = SetTextColor(hdc, textColor);
     oldBkMode = SetBkMode(hdc, TRANSPARENT);
-    DrawTextW(hdc, pszText, iCharCount, &rt, dwTextFlags);
+    DrawTextW(hdc, pszText, iCharCount, rect, flags);
     SetBkMode(hdc, oldBkMode);
     SetTextColor(hdc, oldTextColor);
 

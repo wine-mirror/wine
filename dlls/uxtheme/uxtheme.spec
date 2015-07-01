@@ -58,6 +58,7 @@
 @ stdcall DrawThemeIcon(ptr ptr long long ptr ptr long)
 @ stdcall DrawThemeParentBackground(ptr ptr ptr)
 @ stdcall DrawThemeText(ptr ptr long long wstr long long long ptr)
+@ stdcall DrawThemeTextEx(ptr ptr long long wstr long long ptr ptr)
 @ stdcall EnableThemeDialogTexture(ptr long)
 @ stdcall EnableTheming(long)
 @ stdcall EndBufferedAnimation(ptr long)
