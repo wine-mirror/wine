@@ -173,6 +173,7 @@ struct threadpool_object
     PVOID                   userdata;
     PTP_CLEANUP_GROUP_CANCEL_CALLBACK group_cancel_callback;
     PTP_SIMPLE_CALLBACK     finalization_callback;
+    HMODULE                 race_dll;
     /* information about the group, locked via .group->cs */
     struct list             group_entry;
     BOOL                    is_group_member;
@@ -1374,6 +1375,7 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
     object->userdata                = userdata;
     object->group_cancel_callback   = NULL;
     object->finalization_callback   = NULL;
+    object->race_dll                = NULL;
 
     memset( &object->group_entry, 0, sizeof(object->group_entry) );
     object->is_group_member         = FALSE;
@@ -1391,9 +1393,13 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
         object->group = impl_from_TP_CLEANUP_GROUP( environment->CleanupGroup );
         object->group_cancel_callback   = environment->CleanupGroupCancelCallback;
         object->finalization_callback   = environment->FinalizationCallback;
+        object->race_dll                = environment->RaceDll;
 
         WARN( "environment not fully implemented yet\n" );
     }
+
+    if (object->race_dll)
+        LdrAddRefDll( 0, object->race_dll );
 
     TRACE( "allocated object %p of type %u\n", object, object->type );
 
@@ -1559,6 +1565,9 @@ static BOOL tp_object_release( struct threadpool_object *object )
     }
 
     tp_threadpool_unlock( object->pool );
+
+    if (object->race_dll)
+        LdrUnloadDll( object->race_dll );
 
     RtlFreeHeap( GetProcessHeap(), 0, object );
     return TRUE;
