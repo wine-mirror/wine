@@ -21,7 +21,10 @@
 #include "ntdll_test.h"
 
 static HMODULE hntdll = 0;
+static NTSTATUS (WINAPI *pTpAllocCleanupGroup)(TP_CLEANUP_GROUP **);
 static NTSTATUS (WINAPI *pTpAllocPool)(TP_POOL **,PVOID);
+static VOID     (WINAPI *pTpReleaseCleanupGroup)(TP_CLEANUP_GROUP *);
+static VOID     (WINAPI *pTpReleaseCleanupGroupMembers)(TP_CLEANUP_GROUP *,BOOL,PVOID);
 static VOID     (WINAPI *pTpReleasePool)(TP_POOL *);
 static NTSTATUS (WINAPI *pTpSimpleTryPost)(PTP_SIMPLE_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 
@@ -42,7 +45,10 @@ static BOOL init_threadpool(void)
         return FALSE;
     }
 
+    NTDLL_GET_PROC(TpAllocCleanupGroup);
     NTDLL_GET_PROC(TpAllocPool);
+    NTDLL_GET_PROC(TpReleaseCleanupGroup);
+    NTDLL_GET_PROC(TpReleaseCleanupGroupMembers);
     NTDLL_GET_PROC(TpReleasePool);
     NTDLL_GET_PROC(TpSimpleTryPost);
 
@@ -65,13 +71,23 @@ static void CALLBACK simple_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
     ReleaseSemaphore(semaphore, 1, NULL);
 }
 
+static void CALLBACK simple2_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+{
+    trace("Running simple2 callback\n");
+    Sleep(50);
+    InterlockedIncrement((LONG *)userdata);
+}
+
 static void test_tp_simple(void)
 {
     TP_CALLBACK_ENVIRON environment;
+    TP_CLEANUP_GROUP *group;
     HANDLE semaphore;
     NTSTATUS status;
     TP_POOL *pool;
+    LONG userdata;
     DWORD result;
+    int i;
 
     semaphore = CreateSemaphoreA(NULL, 0, 1, NULL);
     ok(semaphore != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
@@ -114,7 +130,39 @@ static void test_tp_simple(void)
         ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
     }
 
+    /* allocate a cleanup group for synchronization */
+    group = NULL;
+    status = pTpAllocCleanupGroup(&group);
+    ok(!status, "TpAllocCleanupGroup failed with status %x\n", status);
+    ok(group != NULL, "expected pool != NULL\n");
+
+    /* use cleanup group to wait for a simple callback */
+    userdata = 0;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    status = pTpSimpleTryPost(simple2_cb, &userdata, &environment);
+    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+    pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
+    ok(userdata == 1, "expected userdata = 1, got %u\n", userdata);
+
+    /* test cancellation of pending simple callbacks */
+    userdata = 0;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    for (i = 0; i < 100; i++)
+    {
+        status = pTpSimpleTryPost(simple2_cb, &userdata, &environment);
+        ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+    }
+    pTpReleaseCleanupGroupMembers(group, TRUE, NULL);
+    ok(userdata < 100, "expected userdata < 100, got %u\n", userdata);
+
     /* cleanup */
+    pTpReleaseCleanupGroup(group);
     pTpReleasePool(pool);
     CloseHandle(semaphore);
 }
