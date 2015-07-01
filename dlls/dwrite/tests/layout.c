@@ -2485,7 +2485,6 @@ static void test_GetMetrics(void)
 
     memset(&metrics, 0xcc, sizeof(metrics));
     hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
     ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
@@ -2496,7 +2495,7 @@ todo_wine {
     ok(metrics.layoutHeight == 1000.0, "got %.2f\n", metrics.layoutHeight);
     ok(metrics.maxBidiReorderingDepth == 1, "got %u\n", metrics.maxBidiReorderingDepth);
     ok(metrics.lineCount == 1, "got %u\n", metrics.lineCount);
-}
+
     IDWriteTextLayout_Release(layout);
 
     /* a string with more complex bidi sequence */
@@ -2506,7 +2505,6 @@ todo_wine {
     memset(&metrics, 0xcc, sizeof(metrics));
     metrics.maxBidiReorderingDepth = 0;
     hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
     ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
@@ -2515,9 +2513,10 @@ todo_wine {
     ok(metrics.height > 0.0, "got %.2f\n", metrics.height);
     ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
     ok(metrics.layoutHeight == 1000.0, "got %.2f\n", metrics.layoutHeight);
+todo_wine
     ok(metrics.maxBidiReorderingDepth > 1, "got %u\n", metrics.maxBidiReorderingDepth);
     ok(metrics.lineCount == 1, "got %u\n", metrics.lineCount);
-}
+
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);

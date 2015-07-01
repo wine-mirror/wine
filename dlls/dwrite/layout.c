@@ -248,6 +248,8 @@ struct dwrite_textlayout {
     UINT32 line_count;
     UINT32 line_alloc;
 
+    DWRITE_TEXT_METRICS1 metrics;
+
     /* gdi-compatible layout specifics */
     BOOL   gdicompatible;
     FLOAT  pixels_per_dip;
@@ -1125,7 +1127,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             i == layout->cluster_count - 1) /* end of the text */ {
 
             UINT32 strlength, last_cluster = i, index;
-            FLOAT descent;
+            FLOAT descent, trailingspacewidth;
 
             if (!overflow) {
                 metrics.length += layout->clustermetrics[i].length;
@@ -1145,6 +1147,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
                trailing properties for current line */
             strlength = metrics.length;
             index = last_cluster;
+            trailingspacewidth = 0.0;
             while (strlength) {
                 DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
 
@@ -1156,8 +1159,10 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
                     metrics.newlineLength += cluster->length;
                 }
 
-                if (cluster->isWhitespace)
+                if (cluster->isWhitespace) {
                     metrics.trailingWhitespaceLength += cluster->length;
+                    trailingspacewidth += cluster->width;
+                }
 
                 strlength -= cluster->length;
                 index--;
@@ -1184,6 +1189,11 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             }
             metrics.height = descent + metrics.baseline;
 
+            if (width > layout->metrics.widthIncludingTrailingWhitespace)
+                layout->metrics.widthIncludingTrailingWhitespace = width;
+            if (width - trailingspacewidth > layout->metrics.width)
+                layout->metrics.width = width - trailingspacewidth;
+
             metrics.isTrimmed = width > layout->maxwidth;
             hr = layout_set_line_metrics(layout, &metrics, &line);
             if (FAILED(hr))
@@ -1202,6 +1212,12 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         s[0] = s[1];
         textpos += layout->clustermetrics[i].length;
     }
+
+    layout->metrics.left = layout->metrics.top = 0.0;
+    layout->metrics.layoutWidth = layout->maxwidth;
+    layout->metrics.layoutHeight = layout->maxheight;
+    layout->metrics.maxBidiReorderingDepth = 1; /* FIXME */
+    layout->metrics.lineCount = layout->line_count;
 
     /* Now all line info is here, update effective runs positions in flow direction */
     erun = layout_get_next_erun(layout, NULL);
@@ -1227,7 +1243,11 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             if (!inrun)
                 break;
         }
+
+        layout->metrics.height += layout->lines[line].height;
     }
+
+    layout->metrics.heightIncludingTrailingWhitespace = layout->metrics.height; /* FIXME: not true for vertical text */
 
     layout->recompute &= ~RECOMPUTE_EFFECTIVE_RUNS;
     return hr;
@@ -2775,8 +2795,16 @@ static HRESULT WINAPI dwritetextlayout1_GetCharacterSpacing(IDWriteTextLayout2 *
 static HRESULT WINAPI dwritetextlayout2_GetMetrics(IDWriteTextLayout2 *iface, DWRITE_TEXT_METRICS1 *metrics)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%p): stub\n", This, metrics);
-    return E_NOTIMPL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, metrics);
+
+    hr = layout_compute_effective_runs(This);
+    if (FAILED(hr))
+        return hr;
+
+    *metrics = This->metrics;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout2_SetVerticalGlyphOrientation(IDWriteTextLayout2 *iface, DWRITE_VERTICAL_GLYPH_ORIENTATION orientation)
@@ -3542,6 +3570,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     list_init(&layout->effects);
     list_init(&layout->spacing);
     memset(&layout->format, 0, sizeof(layout->format));
+    memset(&layout->metrics, 0, sizeof(layout->metrics));
 
     layout->gdicompatible = FALSE;
     layout->pixels_per_dip = 0.0;
