@@ -328,6 +328,31 @@ TOOLBAR_ButtonHasString(const TBUTTON_INFO *btnPtr)
     return HIWORD(btnPtr->iString) && btnPtr->iString != -1;
 }
 
+static void set_string_index( TBUTTON_INFO *btn, INT_PTR str, BOOL unicode )
+{
+    if (!IS_INTRESOURCE( str ) && str != -1)
+    {
+        if (!TOOLBAR_ButtonHasString( btn )) btn->iString = 0;
+
+        if (unicode)
+            Str_SetPtrW( (WCHAR **)&btn->iString, (WCHAR *)str );
+        else
+            Str_SetPtrAtoW( (WCHAR **)&btn->iString, (char *)str );
+    }
+    else
+    {
+        if (TOOLBAR_ButtonHasString( btn )) Free( (WCHAR *)btn->iString );
+
+        btn->iString  = str;
+    }
+}
+
+static void set_stringT( TBUTTON_INFO *btn, const WCHAR *str, BOOL unicode )
+{
+    if (IS_INTRESOURCE( (DWORD_PTR)str ) || (DWORD_PTR)str == -1) return;
+    set_string_index( btn, (DWORD_PTR)str, unicode );
+}
+
 /***********************************************************************
 * 		TOOLBAR_CheckStyle
 *
@@ -1817,6 +1842,7 @@ TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButto
     /* insert new buttons data */
     for (iButton = 0; iButton < nAddButtons; iButton++) {
         TBUTTON_INFO *btnPtr = &infoPtr->buttons[iIndex + iButton];
+        INT_PTR str;
 
         TOOLBAR_DumpTBButton(lpTbb + iButton, fUnicode);
 
@@ -1827,18 +1853,13 @@ TOOLBAR_InternalInsertButtonsT(TOOLBAR_INFO *infoPtr, INT iIndex, UINT nAddButto
         btnPtr->fsState   = lpTbb[iButton].fsState;
         btnPtr->fsStyle   = lpTbb[iButton].fsStyle;
         btnPtr->dwData    = lpTbb[iButton].dwData;
+
         if (btnPtr->fsStyle & BTNS_SEP)
-            btnPtr->iString = -1;
-        else if(!IS_INTRESOURCE(lpTbb[iButton].iString) && lpTbb[iButton].iString != -1)
-        {
-            if (fUnicode)
-                Str_SetPtrW((LPWSTR*)&btnPtr->iString, (LPWSTR)lpTbb[iButton].iString );
-            else
-                Str_SetPtrAtoW((LPWSTR*)&btnPtr->iString, (LPSTR)lpTbb[iButton].iString);
-            fHasString = TRUE;
-        }
+            str = -1;
         else
-            btnPtr->iString   = lpTbb[iButton].iString;
+            str = lpTbb[iButton].iString;
+        set_string_index( btnPtr, str, fUnicode );
+        fHasString |= TOOLBAR_ButtonHasString( btnPtr );
 
         TOOLBAR_TooltipAddTool(infoPtr, btnPtr);
     }
@@ -4320,15 +4341,8 @@ TOOLBAR_SetButtonInfo (TOOLBAR_INFO *infoPtr, INT Id,
     if (lptbbi->dwMask & TBIF_STYLE)
 	btnPtr->fsStyle = lptbbi->fsStyle;
 
-    if ((lptbbi->dwMask & TBIF_TEXT) && ((INT_PTR)lptbbi->pszText != -1)) {
-        /* iString is index, zero it to make Str_SetPtr succeed */
-        if (!TOOLBAR_ButtonHasString(btnPtr)) btnPtr->iString = 0;
-
-        if (isW)
-            Str_SetPtrW ((LPWSTR *)&btnPtr->iString, lptbbi->pszText);
-        else
-            Str_SetPtrAtoW ((LPWSTR *)&btnPtr->iString, (LPSTR)lptbbi->pszText);
-    }
+    if (lptbbi->dwMask & TBIF_TEXT)
+        set_stringT( btnPtr, lptbbi->pszText, isW );
 
     /* save the button rect to see if we need to redraw the whole toolbar */
     oldBtnRect = btnPtr->rect;
