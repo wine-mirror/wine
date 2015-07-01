@@ -66,6 +66,28 @@ static const struct message save_parent_seq[] = {
     { 0 }
 };
 
+static const struct message restore_parent_seq[] = {
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, -1 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 0 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 1 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 2 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 3 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 4 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 5 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 6 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 7 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 8 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 9 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_RESTORE, 0xa },
+    { WM_NOTIFY, sent|id, 0, 0, TBN_BEGINADJUST },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_GETBUTTONINFOA, 0 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_GETBUTTONINFOA, 1 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_GETBUTTONINFOA, 2 },
+    { WM_NOTIFY, sent|id|custdraw, 0, 0, TBN_GETBUTTONINFOA, 3 },
+    { WM_NOTIFY, sent|id, 0, 0, TBN_ENDADJUST },
+    { 0 }
+};
+
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
 
@@ -104,6 +126,8 @@ static void MakeButton(TBBUTTON *p, int idCommand, int fsStyle, int nString) {
   p->fsStyle = fsStyle;
   p->iString = nString;
 }
+
+static void *alloced_str;
 
 static LRESULT parent_wnd_notify(LPARAM lParam)
 {
@@ -245,6 +269,35 @@ static LRESULT parent_wnd_notify(LPARAM lParam)
             if (restore->iItem == -1) return 0;
             return 1;
         }
+        case TBN_GETBUTTONINFOA:
+        {
+            NMTOOLBARA *tb = (NMTOOLBARA *)lParam;
+            tb->tbButton.iBitmap = 0;
+            tb->tbButton.fsState = 0;
+            tb->tbButton.fsStyle = 0;
+            tb->tbButton.dwData = 0;
+            ok( tb->cchText == 128, "got %d\n", tb->cchText );
+            switch (tb->iItem)
+            {
+            case 0:
+                tb->tbButton.idCommand = 7;
+                alloced_str = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 8 );
+                strcpy( alloced_str, "foo" );
+                tb->tbButton.iString = (INT_PTR)alloced_str;
+                return 1;
+            case 1:
+                tb->tbButton.idCommand = 9;
+                tb->tbButton.iString = 0;
+                /* tb->pszText is ignored */
+                strcpy( tb->pszText, "foo" );
+                return 1;
+           case 2:
+                tb->tbButton.idCommand = 11;
+                tb->tbButton.iString = 3;
+                return 1;
+            }
+            return 0;
+        }
     }
     return 0;
 }
@@ -269,6 +322,18 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
         {
             NMTBSAVE *save = (NMTBSAVE *)lParam;
             msg.stage = save->iItem;
+        }
+        break;
+        case TBN_RESTORE:
+        {
+            NMTBRESTORE *restore = (NMTBRESTORE *)lParam;
+            msg.stage = restore->iItem;
+        }
+        break;
+        case TBN_GETBUTTONINFOA:
+        {
+            NMTOOLBARA *tb = (NMTOOLBARA *)lParam;
+            msg.stage = tb->iItem;
         }
         break;
         }
@@ -2228,9 +2293,9 @@ static void test_save(void)
         {0, 1, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 0, 0},
         {0, 3, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 1, 2},
         {0, 5, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 2, 0},
-        {0, 7, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 3, 0},
-        {0, 9, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 4, 0},
-        {0, 11, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 5, 0},
+        {0, 7, 0, BTNS_BUTTON, {0}, 0, (INT_PTR)"foo"},
+        {0, 9, 0, BTNS_BUTTON, {0}, 0, 0},
+        {0, 11, 0, BTNS_BUTTON, {0}, 0, 3},
         {0, 13, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 6, 0},
         {0, 0, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 7, 0},
         {0, 0, TBSTATE_ENABLED, BTNS_BUTTON, {0}, 8, 0},
@@ -2263,8 +2328,11 @@ static void test_save(void)
 
     wnd = NULL;
     rebuild_toolbar( &wnd );
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
     res = SendMessageW( wnd, TB_SAVERESTOREW, FALSE, (LPARAM)&params );
     ok( res, "restoring failed\n" );
+    ok_sequence(sequences, PARENT_SEQ_INDEX, restore_parent_seq, "restore", FALSE);
     count = SendMessageW( wnd, TB_BUTTONCOUNT, 0, 0 );
     ok( count == sizeof(expect_btns) / sizeof(expect_btns[0]), "got %d\n", count );
 
@@ -2278,7 +2346,15 @@ static void test_save(void)
         ok( tb.fsState == expect_btns[i].fsState, "%d: got %02x\n", i, tb.fsState );
         ok( tb.fsStyle == expect_btns[i].fsStyle, "%d: got %02x\n", i, tb.fsStyle );
         ok( tb.dwData == expect_btns[i].dwData, "%d: got %lx\n", i, tb.dwData );
-        ok( tb.iString == expect_btns[i].iString, "%d: got %lx\n", i, tb.iString );
+        if (IS_INTRESOURCE(expect_btns[i].iString))
+            ok( tb.iString == expect_btns[i].iString, "%d: got %lx\n", i, tb.iString );
+        else
+            ok( !strcmp( (char *)tb.iString, (char *)expect_btns[i].iString ),
+                "%d: got %s\n", i, (char *)tb.iString );
+
+        /* In fact the ptr value set in TBN_GETBUTTONINFOA is simply copied */
+        if (tb.idCommand == 7)
+            ok( tb.iString == (INT_PTR)alloced_str, "string not set\n");
     }
 
     DestroyWindow( wnd );

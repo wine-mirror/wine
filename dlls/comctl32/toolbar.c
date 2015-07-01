@@ -247,6 +247,8 @@ static LRESULT TOOLBAR_AutoSize(TOOLBAR_INFO *infoPtr);
 static void TOOLBAR_CheckImageListIconSize(TOOLBAR_INFO *infoPtr);
 static void TOOLBAR_TooltipAddTool(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *button);
 static void TOOLBAR_TooltipSetRect(const TOOLBAR_INFO *infoPtr, const TBUTTON_INFO *button);
+static LRESULT TOOLBAR_SetButtonInfo(TOOLBAR_INFO *infoPtr, INT Id,
+                                     const TBBUTTONINFOW *lptbbi, BOOL isW);
 
 
 static inline int default_top_margin(const TOOLBAR_INFO *infoPtr)
@@ -4151,6 +4153,7 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
     DWORD dwType;
     DWORD dwSize = 0;
     NMTBRESTORE nmtbr;
+    NMHDR hdr;
 
     /* restore toolbar information */
     TRACE("restore from %s %s\n", debugstr_w(lpSave->pszSubKey),
@@ -4221,13 +4224,44 @@ TOOLBAR_Restore(TOOLBAR_INFO *infoPtr, const TBSAVEPARAMSW *lpSave)
                 TOOLBAR_InsertButtonT(infoPtr, -1, &nmtbr.tbButton, TRUE);
             }
 
-            /* do legacy notifications */
-            if (infoPtr->iVersion < 5)
+            TOOLBAR_SendNotify( &hdr, infoPtr, TBN_BEGINADJUST );
+            for (i = 0; ; i++)
             {
-                /* FIXME: send TBN_BEGINADJUST */
-                FIXME("send TBN_GETBUTTONINFO for each button\n");
-                /* FIXME: send TBN_ENDADJUST */
+                NMTOOLBARW tb;
+                TBBUTTONINFOW bi;
+                WCHAR buf[128];
+                UINT code = infoPtr->bUnicode ? TBN_GETBUTTONINFOW : TBN_GETBUTTONINFOA;
+                INT idx;
+
+                memset( &tb, 0, sizeof(tb) );
+                tb.iItem = i;
+                tb.cchText = sizeof(buf) / sizeof(buf[0]);
+                tb.pszText = buf;
+
+                /* Use the same struct for both A and W versions since the layout is the same. */
+                if (!TOOLBAR_SendNotify( &tb.hdr, infoPtr, code ))
+                    break;
+
+                idx = TOOLBAR_GetButtonIndex( infoPtr, tb.tbButton.idCommand, FALSE );
+                if (idx == -1) continue;
+
+                /* tb.pszText is ignored - the string comes from tb.tbButton.iString, which may
+                   be an index or a ptr.  Either way it is simply copied.  There is no api to change
+                   the string index, so we set it manually.  The other properties can be set with SetButtonInfo. */
+                free_string( infoPtr->buttons + idx );
+                infoPtr->buttons[idx].iString = tb.tbButton.iString;
+
+                memset( &bi, 0, sizeof(bi) );
+                bi.cbSize = sizeof(bi);
+                bi.dwMask = TBIF_IMAGE | TBIF_STATE | TBIF_STYLE | TBIF_LPARAM;
+                bi.iImage = tb.tbButton.iBitmap;
+                bi.fsState = tb.tbButton.fsState;
+                bi.fsStyle = tb.tbButton.fsStyle;
+                bi.lParam = tb.tbButton.dwData;
+
+                TOOLBAR_SetButtonInfo( infoPtr, tb.tbButton.idCommand, &bi, TRUE );
             }
+            TOOLBAR_SendNotify( &hdr, infoPtr, TBN_ENDADJUST );
 
             /* remove all uninitialised buttons
              * note: loop backwards to avoid having to fixup i on a
