@@ -206,6 +206,7 @@ struct threadpool_instance
     struct
     {
         CRITICAL_SECTION    *critical_section;
+        HANDLE              mutex;
     } cleanup;
 };
 
@@ -1635,6 +1636,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
             instance.threadid                   = GetCurrentThreadId();
             instance.may_run_long               = object->may_run_long;
             instance.cleanup.critical_section   = NULL;
+            instance.cleanup.mutex              = NULL;
 
             switch (object->type)
             {
@@ -1674,6 +1676,10 @@ static void CALLBACK threadpool_worker_proc( void *param )
             if (instance.cleanup.critical_section)
             {
                 RtlLeaveCriticalSection( instance.cleanup.critical_section );
+            }
+            if (instance.cleanup.mutex)
+            {
+                NtReleaseMutant( instance.cleanup.mutex, NULL );
             }
 
             RtlEnterCriticalSection( &pool->cs );
@@ -1824,6 +1830,19 @@ NTSTATUS WINAPI TpCallbackMayRunLong( TP_CALLBACK_INSTANCE *instance )
     RtlLeaveCriticalSection( &pool->cs );
     this->may_run_long = TRUE;
     return status;
+}
+
+/***********************************************************************
+ *           TpCallbackReleaseMutexOnCompletion    (NTDLL.@)
+ */
+VOID WINAPI TpCallbackReleaseMutexOnCompletion( TP_CALLBACK_INSTANCE *instance, HANDLE mutex )
+{
+    struct threadpool_instance *this = impl_from_TP_CALLBACK_INSTANCE( instance );
+
+    TRACE( "%p %p\n", instance, mutex );
+
+    if (!this->cleanup.mutex)
+        this->cleanup.mutex = mutex;
 }
 
 /***********************************************************************

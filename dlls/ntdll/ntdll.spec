@@ -975,6 +975,7 @@
 @ stdcall TpAllocWork(ptr ptr ptr ptr)
 @ stdcall TpCallbackLeaveCriticalSectionOnCompletion(ptr ptr)
 @ stdcall TpCallbackMayRunLong(ptr)
+@ stdcall TpCallbackReleaseMutexOnCompletion(ptr long)
 @ stdcall TpPostWork(ptr)
 @ stdcall TpReleaseCleanupGroup(ptr)
 @ stdcall TpReleaseCleanupGroupMembers(ptr long ptr)
