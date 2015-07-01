@@ -973,6 +973,7 @@
 @ stdcall TpAllocCleanupGroup(ptr)
 @ stdcall TpAllocPool(ptr ptr)
 @ stdcall TpAllocWork(ptr ptr ptr ptr)
+@ stdcall TpCallbackMayRunLong(ptr)
 @ stdcall TpPostWork(ptr)
 @ stdcall TpReleaseCleanupGroup(ptr)
 @ stdcall TpReleaseCleanupGroupMembers(ptr long ptr)

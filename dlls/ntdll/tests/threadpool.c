@@ -24,6 +24,7 @@ static HMODULE hntdll = 0;
 static NTSTATUS (WINAPI *pTpAllocCleanupGroup)(TP_CLEANUP_GROUP **);
 static NTSTATUS (WINAPI *pTpAllocPool)(TP_POOL **,PVOID);
 static NTSTATUS (WINAPI *pTpAllocWork)(TP_WORK **,PTP_WORK_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
+static NTSTATUS (WINAPI *pTpCallbackMayRunLong)(TP_CALLBACK_INSTANCE *);
 static VOID     (WINAPI *pTpPostWork)(TP_WORK *);
 static VOID     (WINAPI *pTpReleaseCleanupGroup)(TP_CLEANUP_GROUP *);
 static VOID     (WINAPI *pTpReleaseCleanupGroupMembers)(TP_CLEANUP_GROUP *,BOOL,PVOID);
@@ -53,6 +54,7 @@ static BOOL init_threadpool(void)
     NTDLL_GET_PROC(TpAllocCleanupGroup);
     NTDLL_GET_PROC(TpAllocPool);
     NTDLL_GET_PROC(TpAllocWork);
+    NTDLL_GET_PROC(TpCallbackMayRunLong);
     NTDLL_GET_PROC(TpPostWork);
     NTDLL_GET_PROC(TpReleaseCleanupGroup);
     NTDLL_GET_PROC(TpReleaseCleanupGroupMembers);
@@ -312,8 +314,15 @@ static DWORD group_cancel_tid;
 static void CALLBACK group_cancel_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
 {
     HANDLE *semaphores = userdata;
+    NTSTATUS status;
     DWORD result;
+
     trace("Running group cancel callback\n");
+
+    status = pTpCallbackMayRunLong(instance);
+    ok(status == STATUS_TOO_MANY_THREADS || broken(status == 1) /* Win Vista / 2008 */,
+       "expected STATUS_TOO_MANY_THREADS, got %08x\n", status);
+
     result = WaitForSingleObject(semaphores[0], 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
     ReleaseSemaphore(semaphores[1], 1, NULL);
