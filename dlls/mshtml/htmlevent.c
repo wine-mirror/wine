@@ -256,7 +256,7 @@ static eventid_t attr_to_eid(LPCWSTR str)
     return EVENTID_LAST;
 }
 
-typedef struct {
+struct HTMLEventObj {
     DispatchEx dispex;
     IHTMLEventObj IHTMLEventObj_iface;
 
@@ -268,7 +268,7 @@ typedef struct {
     VARIANT return_value;
     BOOL prevent_default;
     BOOL cancel_bubble;
-} HTMLEventObj;
+};
 
 static inline HTMLEventObj *impl_from_IHTMLEventObj(IHTMLEventObj *iface)
 {
@@ -966,7 +966,7 @@ static BOOL is_cp_event(cp_static_data_t *data, DISPID dispid)
     return FALSE;
 }
 
-static void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, EventTarget *event_target,
+void call_event_handlers(HTMLDocumentNode *doc, HTMLEventObj *event_obj, EventTarget *event_target,
         ConnectionPointContainer *cp_container, eventid_t eid, IDispatch *this_obj)
 {
     event_target_t *data = get_event_target_data(event_target, FALSE);

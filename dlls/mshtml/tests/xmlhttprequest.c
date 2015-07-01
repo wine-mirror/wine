@@ -504,7 +504,7 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
     SET_EXPECT(xmlhttprequest_onreadystatechange_opened);
     hres = IHTMLXMLHttpRequest_open(xhr, method, url, vbool, vempty, vempty);
     ok(hres == S_OK, "open failed: %08x\n", hres);
-    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
+    CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
 
     SysFreeString(method);
     SysFreeString(url);
