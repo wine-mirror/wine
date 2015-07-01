@@ -25,6 +25,7 @@ static NTSTATUS (WINAPI *pTpAllocCleanupGroup)(TP_CLEANUP_GROUP **);
 static NTSTATUS (WINAPI *pTpAllocPool)(TP_POOL **,PVOID);
 static NTSTATUS (WINAPI *pTpAllocWork)(TP_WORK **,PTP_WORK_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 static NTSTATUS (WINAPI *pTpCallbackMayRunLong)(TP_CALLBACK_INSTANCE *);
+static VOID     (WINAPI *pTpCallbackReleaseSemaphoreOnCompletion)(TP_CALLBACK_INSTANCE *,HANDLE,DWORD);
 static VOID     (WINAPI *pTpPostWork)(TP_WORK *);
 static VOID     (WINAPI *pTpReleaseCleanupGroup)(TP_CLEANUP_GROUP *);
 static VOID     (WINAPI *pTpReleaseCleanupGroupMembers)(TP_CLEANUP_GROUP *,BOOL,PVOID);
@@ -55,6 +56,7 @@ static BOOL init_threadpool(void)
     NTDLL_GET_PROC(TpAllocPool);
     NTDLL_GET_PROC(TpAllocWork);
     NTDLL_GET_PROC(TpCallbackMayRunLong);
+    NTDLL_GET_PROC(TpCallbackReleaseSemaphoreOnCompletion);
     NTDLL_GET_PROC(TpPostWork);
     NTDLL_GET_PROC(TpReleaseCleanupGroup);
     NTDLL_GET_PROC(TpReleaseCleanupGroupMembers);
@@ -431,6 +433,71 @@ static void test_tp_group_cancel(void)
     CloseHandle(semaphores[1]);
 }
 
+static void CALLBACK instance_semaphore_completion_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+{
+    HANDLE *semaphores = userdata;
+    trace("Running instance completion callback\n");
+    pTpCallbackReleaseSemaphoreOnCompletion(instance, semaphores[0], 1);
+}
+
+static void CALLBACK instance_finalization_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+{
+    HANDLE *semaphores = userdata;
+    DWORD result;
+
+    trace("Running instance finalization callback\n");
+
+    result = WaitForSingleObject(semaphores[0], 100);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+}
+
+static void test_tp_instance(void)
+{
+    TP_CALLBACK_ENVIRON environment;
+    HANDLE semaphores[2];
+    NTSTATUS status;
+    TP_POOL *pool;
+    DWORD result;
+
+    semaphores[0] = CreateSemaphoreW(NULL, 0, 1, NULL);
+    ok(semaphores[0] != NULL, "failed to create semaphore\n");
+    semaphores[1] = CreateSemaphoreW(NULL, 0, 1, NULL);
+    ok(semaphores[1] != NULL, "failed to create semaphore\n");
+
+    /* allocate new threadpool */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+
+    /* test for TpCallbackReleaseSemaphoreOnCompletion */
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    status = pTpSimpleTryPost(instance_semaphore_completion_cb, semaphores, &environment);
+    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    /* test for finalization callback */
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.FinalizationCallback = instance_finalization_cb;
+    status = pTpSimpleTryPost(instance_semaphore_completion_cb, semaphores, &environment);
+    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    /* cleanup */
+    pTpReleasePool(pool);
+    CloseHandle(semaphores[0]);
+    CloseHandle(semaphores[1]);
+}
+
 START_TEST(threadpool)
 {
     if (!init_threadpool())
@@ -440,4 +507,5 @@ START_TEST(threadpool)
     test_tp_work();
     test_tp_work_scheduler();
     test_tp_group_cancel();
+    test_tp_instance();
 }
