@@ -48,7 +48,7 @@ static BOOL init_threadpool(void)
 
     if (!pTpAllocPool)
     {
-        skip("Threadpool functions not supported, skipping tests\n");
+        win_skip("Threadpool functions not supported, skipping tests\n");
         return FALSE;
     }
 
@@ -105,6 +105,7 @@ static void test_tp_simple(void)
     environment.Version = 9999;
     environment.Pool = pool;
     status = pTpSimpleTryPost(simple_cb, semaphore, &environment);
+    todo_wine
     ok(status == STATUS_INVALID_PARAMETER || broken(!status) /* Vista/2008 */,
        "TpSimpleTryPost unexpectedly returned status %x\n", status);
     if (!status)
