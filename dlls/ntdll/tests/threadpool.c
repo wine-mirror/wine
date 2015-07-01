@@ -23,10 +23,14 @@
 static HMODULE hntdll = 0;
 static NTSTATUS (WINAPI *pTpAllocCleanupGroup)(TP_CLEANUP_GROUP **);
 static NTSTATUS (WINAPI *pTpAllocPool)(TP_POOL **,PVOID);
+static NTSTATUS (WINAPI *pTpAllocWork)(TP_WORK **,PTP_WORK_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
+static VOID     (WINAPI *pTpPostWork)(TP_WORK *);
 static VOID     (WINAPI *pTpReleaseCleanupGroup)(TP_CLEANUP_GROUP *);
 static VOID     (WINAPI *pTpReleaseCleanupGroupMembers)(TP_CLEANUP_GROUP *,BOOL,PVOID);
 static VOID     (WINAPI *pTpReleasePool)(TP_POOL *);
+static VOID     (WINAPI *pTpReleaseWork)(TP_WORK *);
 static NTSTATUS (WINAPI *pTpSimpleTryPost)(PTP_SIMPLE_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
+static VOID     (WINAPI *pTpWaitForWork)(TP_WORK *,BOOL);
 
 #define NTDLL_GET_PROC(func) \
     do \
@@ -47,10 +51,14 @@ static BOOL init_threadpool(void)
 
     NTDLL_GET_PROC(TpAllocCleanupGroup);
     NTDLL_GET_PROC(TpAllocPool);
+    NTDLL_GET_PROC(TpAllocWork);
+    NTDLL_GET_PROC(TpPostWork);
     NTDLL_GET_PROC(TpReleaseCleanupGroup);
     NTDLL_GET_PROC(TpReleaseCleanupGroupMembers);
     NTDLL_GET_PROC(TpReleasePool);
+    NTDLL_GET_PROC(TpReleaseWork);
     NTDLL_GET_PROC(TpSimpleTryPost);
+    NTDLL_GET_PROC(TpWaitForWork);
 
     if (!pTpAllocPool)
     {
@@ -167,10 +175,61 @@ static void test_tp_simple(void)
     CloseHandle(semaphore);
 }
 
+static void CALLBACK work_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
+{
+    trace("Running work callback\n");
+    Sleep(10);
+    InterlockedIncrement((LONG *)userdata);
+}
+
+static void test_tp_work(void)
+{
+    TP_CALLBACK_ENVIRON environment;
+    TP_WORK *work;
+    TP_POOL *pool;
+    NTSTATUS status;
+    LONG userdata;
+    int i;
+
+    /* allocate new threadpool */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+
+    /* allocate new work item */
+    work = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    status = pTpAllocWork(&work, work_cb, &userdata, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work != NULL, "expected work != NULL\n");
+
+    /* post 10 identical work items at once */
+    userdata = 0;
+    for (i = 0; i < 10; i++)
+        pTpPostWork(work);
+    pTpWaitForWork(work, FALSE);
+    ok(userdata == 10, "expected userdata = 10, got %u\n", userdata);
+
+    /* add more tasks and cancel them immediately */
+    userdata = 0;
+    for (i = 0; i < 10; i++)
+        pTpPostWork(work);
+    pTpWaitForWork(work, TRUE);
+    ok(userdata < 10, "expected userdata < 10, got %u\n", userdata);
+
+    /* cleanup */
+    pTpReleaseWork(work);
+    pTpReleasePool(pool);
+}
+
 START_TEST(threadpool)
 {
     if (!init_threadpool())
         return;
 
     test_tp_simple();
+    test_tp_work();
 }
