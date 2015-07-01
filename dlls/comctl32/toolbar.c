@@ -4088,6 +4088,7 @@ TOOLBAR_DeleteAllButtons(TOOLBAR_INFO *infoPtr)
 
     for (i = 0; i < infoPtr->nNumButtons; i++)
     {
+        free_string( infoPtr->buttons + i );
         TOOLBAR_TooltipDelTool(infoPtr, &infoPtr->buttons[i]);
     }
 
