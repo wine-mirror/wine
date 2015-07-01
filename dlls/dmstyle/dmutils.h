@@ -27,8 +27,6 @@ typedef struct _DMUS_PRIVATE_CHUNK {
 	DWORD dwSize; /* size of the chunk */
 } DMUS_PRIVATE_CHUNK, *LPDMUS_PRIVATE_CHUNK;
 
-#define ICOM_THIS_MULTI(impl,field,iface)  impl* const This=(impl*)((char*)(iface) - offsetof(impl,field))
-
 /**
  * Parsing utilities
  */
