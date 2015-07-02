@@ -501,7 +501,7 @@ static void test_track(void)
         { X(DirectMusicSeqTrack), TRUE },
         { X(DirectMusicSysExTrack), TRUE },
         { X(DirectMusicTempoTrack), FALSE },
-        { X(DirectMusicTimeSigTrack), TRUE },
+        { X(DirectMusicTimeSigTrack), FALSE },
         { X(DirectMusicWaveTrack), TRUE }
     };
 #undef X

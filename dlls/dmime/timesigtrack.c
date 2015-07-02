@@ -18,6 +18,7 @@
  */
 
 #include "dmime_private.h"
+#include "dmobject.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dmime);
 
@@ -26,9 +27,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
  */
 typedef struct IDirectMusicTimeSigTrack {
     IDirectMusicTrack IDirectMusicTrack_iface;
-    const IPersistStreamVtbl *PersistStreamVtbl;
+    struct dmobject dmobj;  /* IPersistStream only */
     LONG ref;
-    DMUS_OBJECTDESC *pDesc;
 } IDirectMusicTimeSigTrack;
 
 /* IDirectMusicTimeSigTrack IDirectMusicTrack8 part: */
@@ -49,7 +49,7 @@ static HRESULT WINAPI IDirectMusicTrackImpl_QueryInterface(IDirectMusicTrack *if
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicTrack))
         *ret_iface = iface;
     else if (IsEqualIID(riid, &IID_IPersistStream))
-        *ret_iface = &This->PersistStreamVtbl;
+        *ret_iface = &This->dmobj.IPersistStream_iface;
     else {
         WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
         return E_NOINTERFACE;
@@ -189,52 +189,21 @@ static const IDirectMusicTrackVtbl dmtack_vtbl = {
     IDirectMusicTrackImpl_Clone
 };
 
-/* IDirectMusicTimeSigTrack IPersistStream part: */
-static HRESULT WINAPI IDirectMusicTimeSigTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicTimeSigTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTrack_QueryInterface(&This->IDirectMusicTrack_iface, riid, ppobj);
-}
-
-static ULONG WINAPI IDirectMusicTimeSigTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicTimeSigTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTrack_AddRef(&This->IDirectMusicTrack_iface);
-}
-
-static ULONG WINAPI IDirectMusicTimeSigTrack_IPersistStream_Release (LPPERSISTSTREAM iface) {
-	ICOM_THIS_MULTI(IDirectMusicTimeSigTrack, PersistStreamVtbl, iface);
-	return IDirectMusicTrack_Release(&This->IDirectMusicTrack_iface);
-}
-
-static HRESULT WINAPI IDirectMusicTimeSigTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicTimeSigTrack_IPersistStream_IsDirty (LPPERSISTSTREAM iface) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicTimeSigTrack_IPersistStream_Load (LPPERSISTSTREAM iface, IStream* pStm) {
+static HRESULT WINAPI IPersistStreamImpl_Load(IPersistStream *iface, IStream *stream)
+{
 	FIXME(": Loading not implemented yet\n");
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicTimeSigTrack_IPersistStream_Save (LPPERSISTSTREAM iface, IStream* pStm, BOOL fClearDirty) {
-	return E_NOTIMPL;
-}
-
-static HRESULT WINAPI IDirectMusicTimeSigTrack_IPersistStream_GetSizeMax (LPPERSISTSTREAM iface, ULARGE_INTEGER* pcbSize) {
-	return E_NOTIMPL;
-}
-
-static const IPersistStreamVtbl DirectMusicTimeSigTrack_PersistStream_Vtbl = {
-	IDirectMusicTimeSigTrack_IPersistStream_QueryInterface,
-	IDirectMusicTimeSigTrack_IPersistStream_AddRef,
-	IDirectMusicTimeSigTrack_IPersistStream_Release,
-	IDirectMusicTimeSigTrack_IPersistStream_GetClassID,
-	IDirectMusicTimeSigTrack_IPersistStream_IsDirty,
-	IDirectMusicTimeSigTrack_IPersistStream_Load,
-	IDirectMusicTimeSigTrack_IPersistStream_Save,
-	IDirectMusicTimeSigTrack_IPersistStream_GetSizeMax
+static const IPersistStreamVtbl persiststream_vtbl = {
+    dmobj_IPersistStream_QueryInterface,
+    dmobj_IPersistStream_AddRef,
+    dmobj_IPersistStream_Release,
+    dmobj_IPersistStream_GetClassID,
+    unimpl_IPersistStream_IsDirty,
+    IPersistStreamImpl_Load,
+    unimpl_IPersistStream_Save,
+    unimpl_IPersistStream_GetSizeMax
 };
 
 /* for ClassFactory */
@@ -249,12 +218,10 @@ HRESULT WINAPI create_dmtimesigtrack(REFIID lpcGUID, void **ppobj)
         return E_OUTOFMEMORY;
     }
     track->IDirectMusicTrack_iface.lpVtbl = &dmtack_vtbl;
-	track->PersistStreamVtbl = &DirectMusicTimeSigTrack_PersistStream_Vtbl;
-	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
-	DM_STRUCT_INIT(track->pDesc);
-	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
-	track->pDesc->guidClass = CLSID_DirectMusicTimeSigTrack;
     track->ref = 1;
+    dmobject_init(&track->dmobj, &CLSID_DirectMusicTimeSigTrack,
+                  (IUnknown *)&track->IDirectMusicTrack_iface);
+    track->dmobj.IPersistStream_iface.lpVtbl = &persiststream_vtbl;
 
     DMIME_LockModule();
     hr = IDirectMusicTrack_QueryInterface(&track->IDirectMusicTrack_iface, lpcGUID, ppobj);
