@@ -972,6 +972,7 @@
 @ stdcall RtlxUnicodeStringToOemSize(ptr) RtlUnicodeStringToOemSize
 @ stdcall TpAllocCleanupGroup(ptr)
 @ stdcall TpAllocPool(ptr ptr)
+@ stdcall TpAllocTimer(ptr ptr ptr ptr)
 @ stdcall TpAllocWork(ptr ptr ptr ptr)
 @ stdcall TpCallbackLeaveCriticalSectionOnCompletion(ptr ptr)
 @ stdcall TpCallbackMayRunLong(ptr)
@@ -984,6 +985,7 @@
 @ stdcall TpReleaseCleanupGroup(ptr)
 @ stdcall TpReleaseCleanupGroupMembers(ptr long ptr)
 @ stdcall TpReleasePool(ptr)
+@ stdcall TpReleaseTimer(ptr)
 @ stdcall TpReleaseWork(ptr)
 @ stdcall TpSetPoolMaxThreads(ptr long)
 @ stdcall TpSetPoolMinThreads(ptr long)

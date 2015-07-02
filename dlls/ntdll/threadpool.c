@@ -158,7 +158,8 @@ struct threadpool
 enum threadpool_objtype
 {
     TP_OBJECT_TYPE_SIMPLE,
-    TP_OBJECT_TYPE_WORK
+    TP_OBJECT_TYPE_WORK,
+    TP_OBJECT_TYPE_TIMER
 };
 
 /* internal threadpool object representation */
@@ -196,6 +197,10 @@ struct threadpool_object
         {
             PTP_WORK_CALLBACK callback;
         } work;
+        struct
+        {
+            PTP_TIMER_CALLBACK callback;
+        } timer;
     } u;
 };
 
@@ -236,6 +241,13 @@ static inline struct threadpool_object *impl_from_TP_WORK( TP_WORK *work )
 {
     struct threadpool_object *object = (struct threadpool_object *)work;
     assert( object->type == TP_OBJECT_TYPE_WORK );
+    return object;
+}
+
+static inline struct threadpool_object *impl_from_TP_TIMER( TP_TIMER *timer )
+{
+    struct threadpool_object *object = (struct threadpool_object *)timer;
+    assert( object->type == TP_OBJECT_TYPE_TIMER );
     return object;
 }
 
@@ -1683,6 +1695,15 @@ static void CALLBACK threadpool_worker_proc( void *param )
                     break;
                 }
 
+                case TP_OBJECT_TYPE_TIMER:
+                {
+                    TRACE( "executing timer callback %p(%p, %p, %p)\n",
+                           object->u.timer.callback, callback_instance, object->userdata, object );
+                    object->u.timer.callback( callback_instance, object->userdata, (TP_TIMER *)object );
+                    TRACE( "callback %p returned\n", object->u.timer.callback );
+                    break;
+                }
+
                 default:
                     assert(0);
                     break;
@@ -1786,6 +1807,37 @@ NTSTATUS WINAPI TpAllocPool( TP_POOL **out, PVOID reserved )
         FIXME( "reserved argument is nonzero (%p)", reserved );
 
     return tp_threadpool_alloc( (struct threadpool **)out );
+}
+
+/***********************************************************************
+ *           TpAllocTimer    (NTDLL.@)
+ */
+NTSTATUS WINAPI TpAllocTimer( TP_TIMER **out, PTP_TIMER_CALLBACK callback, PVOID userdata,
+                              TP_CALLBACK_ENVIRON *environment )
+{
+    struct threadpool_object *object;
+    struct threadpool *pool;
+    NTSTATUS status;
+
+    TRACE( "%p %p %p %p\n", out, callback, userdata, environment );
+
+    object = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*object) );
+    if (!object)
+        return STATUS_NO_MEMORY;
+
+    status = tp_threadpool_lock( &pool, environment );
+    if (status)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, object );
+        return status;
+    }
+
+    object->type = TP_OBJECT_TYPE_TIMER;
+    object->u.timer.callback = callback;
+    tp_object_initialize( object, pool, userdata, environment );
+
+    *out = (TP_TIMER *)object;
+    return STATUS_SUCCESS;
 }
 
 /***********************************************************************
@@ -2065,6 +2117,19 @@ VOID WINAPI TpReleasePool( TP_POOL *pool )
 
     tp_threadpool_shutdown( this );
     tp_threadpool_release( this );
+}
+
+/***********************************************************************
+ *           TpReleaseTimer     (NTDLL.@)
+ */
+VOID WINAPI TpReleaseTimer( TP_TIMER *timer )
+{
+    struct threadpool_object *this = impl_from_TP_TIMER( timer );
+
+    TRACE( "%p\n", timer );
+
+    tp_object_shutdown( this );
+    tp_object_release( this );
 }
 
 /***********************************************************************
