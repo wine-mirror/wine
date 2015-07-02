@@ -1072,6 +1072,9 @@ static void shader_glsl_ffp_vertex_normalmatrix_uniform(const struct wined3d_con
     struct wined3d_matrix mv;
     unsigned int i, j;
 
+    if (prog->vs.normal_matrix_location == -1)
+        return;
+
     get_modelview_matrix(context, state, 0, &mv);
     if (context->swapchain->device->wined3d->flags & WINED3D_LEGACY_FFP_LIGHTING)
         invert_matrix_3d(&mv, &mv);
@@ -5671,6 +5674,8 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
         }
     }
 
+    shader_addline(buffer, "ffp_attrib_blendweight[%u] = 1.0;\n", settings->vertexblends);
+
     if (settings->transformed)
     {
         shader_addline(buffer, "vec4 ec_pos = vec4(ffp_attrib_position.xyz, 1.0);\n");
@@ -5679,7 +5684,6 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     }
     else
     {
-        shader_addline(buffer, "ffp_attrib_blendweight[%u] = 1.0;\n", settings->vertexblends);
         for (i = 0; i < settings->vertexblends; ++i)
             shader_addline(buffer, "ffp_attrib_blendweight[%u] -= ffp_attrib_blendweight[%u];\n", settings->vertexblends, i);
 
@@ -5693,12 +5697,22 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
         shader_addline(buffer, "ec_pos /= ec_pos.w;\n");
     }
 
-    if (!settings->normal)
-        shader_addline(buffer, "vec3 normal = vec3(0.0);\n");
-    else if (settings->normalize)
-        shader_addline(buffer, "vec3 normal = normalize(ffp_normal_matrix * ffp_attrib_normal);\n");
-    else
-        shader_addline(buffer, "vec3 normal = ffp_normal_matrix * ffp_attrib_normal;\n");
+    shader_addline(buffer, "vec3 normal = vec3(0.0);\n");
+    if (settings->normal)
+    {
+        if (!settings->vertexblends)
+        {
+            shader_addline(buffer, "normal = ffp_normal_matrix * ffp_attrib_normal;\n");
+        }
+        else
+        {
+            for (i = 0; i < settings->vertexblends + 1; ++i)
+                shader_addline(buffer, "normal += ffp_attrib_blendweight[%u] * (mat3(ffp_modelview_matrix[%u]) * ffp_attrib_normal);\n", i, i);
+        }
+
+        if (settings->normalize)
+            shader_addline(buffer, "normal = normalize(normal);\n");
+    }
 
     shader_glsl_ffp_vertex_lighting(buffer, settings, legacy_lighting);
 
