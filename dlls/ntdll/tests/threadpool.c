@@ -26,6 +26,7 @@ static NTSTATUS (WINAPI *pTpAllocPool)(TP_POOL **,PVOID);
 static NTSTATUS (WINAPI *pTpAllocWork)(TP_WORK **,PTP_WORK_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 static NTSTATUS (WINAPI *pTpCallbackMayRunLong)(TP_CALLBACK_INSTANCE *);
 static VOID     (WINAPI *pTpCallbackReleaseSemaphoreOnCompletion)(TP_CALLBACK_INSTANCE *,HANDLE,DWORD);
+static VOID     (WINAPI *pTpDisassociateCallback)(TP_CALLBACK_INSTANCE *);
 static VOID     (WINAPI *pTpPostWork)(TP_WORK *);
 static VOID     (WINAPI *pTpReleaseCleanupGroup)(TP_CLEANUP_GROUP *);
 static VOID     (WINAPI *pTpReleaseCleanupGroupMembers)(TP_CLEANUP_GROUP *,BOOL,PVOID);
@@ -57,6 +58,7 @@ static BOOL init_threadpool(void)
     NTDLL_GET_PROC(TpAllocWork);
     NTDLL_GET_PROC(TpCallbackMayRunLong);
     NTDLL_GET_PROC(TpCallbackReleaseSemaphoreOnCompletion);
+    NTDLL_GET_PROC(TpDisassociateCallback);
     NTDLL_GET_PROC(TpPostWork);
     NTDLL_GET_PROC(TpReleaseCleanupGroup);
     NTDLL_GET_PROC(TpReleaseCleanupGroupMembers);
@@ -498,6 +500,152 @@ static void test_tp_instance(void)
     CloseHandle(semaphores[1]);
 }
 
+static void CALLBACK disassociate_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
+{
+    HANDLE *semaphores = userdata;
+    DWORD result;
+
+    trace("Running disassociate callback\n");
+
+    pTpDisassociateCallback(instance);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+}
+
+static void CALLBACK disassociate2_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WORK *work)
+{
+    HANDLE *semaphores = userdata;
+    DWORD result;
+
+    trace("Running disassociate2 callback\n");
+
+    pTpDisassociateCallback(instance);
+    result = WaitForSingleObject(semaphores[0], 100);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+}
+
+static void CALLBACK disassociate3_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
+{
+    HANDLE *semaphores = userdata;
+    DWORD result;
+
+    trace("Running disassociate3 callback\n");
+
+    pTpDisassociateCallback(instance);
+    result = WaitForSingleObject(semaphores[0], 100);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+}
+
+static void test_tp_disassociate(void)
+{
+    TP_CALLBACK_ENVIRON environment;
+    TP_CLEANUP_GROUP *group;
+    HANDLE semaphores[2];
+    NTSTATUS status;
+    TP_POOL *pool;
+    TP_WORK *work;
+    DWORD result;
+
+    semaphores[0] = CreateSemaphoreW(NULL, 0, 1, NULL);
+    ok(semaphores[0] != NULL, "failed to create semaphore\n");
+    semaphores[1] = CreateSemaphoreW(NULL, 0, 1, NULL);
+    ok(semaphores[1] != NULL, "failed to create semaphore\n");
+
+    /* allocate new threadpool and cleanup group */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+
+    group = NULL;
+    status = pTpAllocCleanupGroup(&group);
+    ok(!status, "TpAllocCleanupGroup failed with status %x\n", status);
+    ok(group != NULL, "expected pool != NULL\n");
+
+    /* test TpDisassociateCallback on work objects without group */
+    work = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    status = pTpAllocWork(&work, disassociate_cb, semaphores, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work != NULL, "expected work != NULL\n");
+
+    pTpPostWork(work);
+    pTpWaitForWork(work, FALSE);
+
+    result = WaitForSingleObject(semaphores[1], 100);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    ReleaseSemaphore(semaphores[0], 1, NULL);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    pTpReleaseWork(work);
+
+    /* test TpDisassociateCallback on work objects with group (1) */
+    work = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    status = pTpAllocWork(&work, disassociate_cb, semaphores, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work != NULL, "expected work != NULL\n");
+
+    pTpPostWork(work);
+    pTpWaitForWork(work, FALSE);
+
+    result = WaitForSingleObject(semaphores[1], 100);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    ReleaseSemaphore(semaphores[0], 1, NULL);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
+
+    /* test TpDisassociateCallback on work objects with group (2) */
+    work = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    status = pTpAllocWork(&work, disassociate2_cb, semaphores, &environment);
+    ok(!status, "TpAllocWork failed with status %x\n", status);
+    ok(work != NULL, "expected work != NULL\n");
+
+    pTpPostWork(work);
+    pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
+
+    ReleaseSemaphore(semaphores[0], 1, NULL);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    /* test TpDisassociateCallback on simple callbacks */
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    environment.CleanupGroup = group;
+    status = pTpSimpleTryPost(disassociate3_cb, semaphores, &environment);
+    ok(!status, "TpSimpleTryPost failed with status %x\n", status);
+
+    pTpReleaseCleanupGroupMembers(group, FALSE, NULL);
+
+    ReleaseSemaphore(semaphores[0], 1, NULL);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    /* cleanup */
+    pTpReleaseCleanupGroup(group);
+    pTpReleasePool(pool);
+    CloseHandle(semaphores[0]);
+    CloseHandle(semaphores[1]);
+}
+
 START_TEST(threadpool)
 {
     if (!init_threadpool())
@@ -508,4 +656,5 @@ START_TEST(threadpool)
     test_tp_work_scheduler();
     test_tp_group_cancel();
     test_tp_instance();
+    test_tp_disassociate();
 }
