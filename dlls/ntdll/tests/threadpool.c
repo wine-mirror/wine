@@ -23,17 +23,22 @@
 static HMODULE hntdll = 0;
 static NTSTATUS (WINAPI *pTpAllocCleanupGroup)(TP_CLEANUP_GROUP **);
 static NTSTATUS (WINAPI *pTpAllocPool)(TP_POOL **,PVOID);
+static NTSTATUS (WINAPI *pTpAllocTimer)(TP_TIMER **,PTP_TIMER_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 static NTSTATUS (WINAPI *pTpAllocWork)(TP_WORK **,PTP_WORK_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
 static NTSTATUS (WINAPI *pTpCallbackMayRunLong)(TP_CALLBACK_INSTANCE *);
 static VOID     (WINAPI *pTpCallbackReleaseSemaphoreOnCompletion)(TP_CALLBACK_INSTANCE *,HANDLE,DWORD);
 static VOID     (WINAPI *pTpDisassociateCallback)(TP_CALLBACK_INSTANCE *);
+static BOOL     (WINAPI *pTpIsTimerSet)(TP_TIMER *);
 static VOID     (WINAPI *pTpPostWork)(TP_WORK *);
 static VOID     (WINAPI *pTpReleaseCleanupGroup)(TP_CLEANUP_GROUP *);
 static VOID     (WINAPI *pTpReleaseCleanupGroupMembers)(TP_CLEANUP_GROUP *,BOOL,PVOID);
 static VOID     (WINAPI *pTpReleasePool)(TP_POOL *);
+static VOID     (WINAPI *pTpReleaseTimer)(TP_TIMER *);
 static VOID     (WINAPI *pTpReleaseWork)(TP_WORK *);
 static VOID     (WINAPI *pTpSetPoolMaxThreads)(TP_POOL *,DWORD);
+static VOID     (WINAPI *pTpSetTimer)(TP_TIMER *,LARGE_INTEGER *,LONG,LONG);
 static NTSTATUS (WINAPI *pTpSimpleTryPost)(PTP_SIMPLE_CALLBACK,PVOID,TP_CALLBACK_ENVIRON *);
+static VOID     (WINAPI *pTpWaitForTimer)(TP_TIMER *,BOOL);
 static VOID     (WINAPI *pTpWaitForWork)(TP_WORK *,BOOL);
 
 #define NTDLL_GET_PROC(func) \
@@ -55,17 +60,22 @@ static BOOL init_threadpool(void)
 
     NTDLL_GET_PROC(TpAllocCleanupGroup);
     NTDLL_GET_PROC(TpAllocPool);
+    NTDLL_GET_PROC(TpAllocTimer);
     NTDLL_GET_PROC(TpAllocWork);
     NTDLL_GET_PROC(TpCallbackMayRunLong);
     NTDLL_GET_PROC(TpCallbackReleaseSemaphoreOnCompletion);
     NTDLL_GET_PROC(TpDisassociateCallback);
+    NTDLL_GET_PROC(TpIsTimerSet);
     NTDLL_GET_PROC(TpPostWork);
     NTDLL_GET_PROC(TpReleaseCleanupGroup);
     NTDLL_GET_PROC(TpReleaseCleanupGroupMembers);
     NTDLL_GET_PROC(TpReleasePool);
+    NTDLL_GET_PROC(TpReleaseTimer);
     NTDLL_GET_PROC(TpReleaseWork);
     NTDLL_GET_PROC(TpSetPoolMaxThreads);
+    NTDLL_GET_PROC(TpSetTimer);
     NTDLL_GET_PROC(TpSimpleTryPost);
+    NTDLL_GET_PROC(TpWaitForTimer);
     NTDLL_GET_PROC(TpWaitForWork);
 
     if (!pTpAllocPool)
@@ -646,6 +656,140 @@ static void test_tp_disassociate(void)
     CloseHandle(semaphores[1]);
 }
 
+static void CALLBACK timer_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_TIMER *timer)
+{
+    HANDLE semaphore = userdata;
+    trace("Running timer callback\n");
+    ReleaseSemaphore(semaphore, 1, NULL);
+}
+
+static void test_tp_timer(void)
+{
+    TP_CALLBACK_ENVIRON environment;
+    DWORD result, ticks;
+    LARGE_INTEGER when;
+    HANDLE semaphore;
+    NTSTATUS status;
+    TP_TIMER *timer;
+    TP_POOL *pool;
+    BOOL success;
+    int i;
+
+    semaphore = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(semaphore != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    /* allocate new threadpool */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+
+    /* allocate new timer */
+    timer = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    status = pTpAllocTimer(&timer, timer_cb, semaphore, &environment);
+    ok(!status, "TpAllocTimer failed with status %x\n", status);
+    ok(timer != NULL, "expected timer != NULL\n");
+
+    success = pTpIsTimerSet(timer);
+    ok(!success, "TpIsTimerSet returned TRUE\n");
+
+    /* test timer with a relative timeout */
+    when.QuadPart = (ULONGLONG)200 * -10000;
+    pTpSetTimer(timer, &when, 0, 0);
+    success = pTpIsTimerSet(timer);
+    ok(success, "TpIsTimerSet returned FALSE\n");
+
+    pTpWaitForTimer(timer, FALSE);
+
+    result = WaitForSingleObject(semaphore, 100);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    result = WaitForSingleObject(semaphore, 200);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    success = pTpIsTimerSet(timer);
+    ok(success, "TpIsTimerSet returned FALSE\n");
+
+    /* test timer with an absolute timeout */
+    NtQuerySystemTime( &when );
+    when.QuadPart += (ULONGLONG)200 * 10000;
+    pTpSetTimer(timer, &when, 0, 0);
+    success = pTpIsTimerSet(timer);
+    ok(success, "TpIsTimerSet returned FALSE\n");
+
+    pTpWaitForTimer(timer, FALSE);
+
+    result = WaitForSingleObject(semaphore, 100);
+    ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    result = WaitForSingleObject(semaphore, 200);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    success = pTpIsTimerSet(timer);
+    ok(success, "TpIsTimerSet returned FALSE\n");
+
+    /* test timer with zero timeout */
+    when.QuadPart = 0;
+    pTpSetTimer(timer, &when, 0, 0);
+    success = pTpIsTimerSet(timer);
+    ok(success, "TpIsTimerSet returned FALSE\n");
+
+    pTpWaitForTimer(timer, FALSE);
+
+    result = WaitForSingleObject(semaphore, 50);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    success = pTpIsTimerSet(timer);
+    ok(success, "TpIsTimerSet returned FALSE\n");
+
+    /* unset the timer */
+    pTpSetTimer(timer, NULL, 0, 0);
+    success = pTpIsTimerSet(timer);
+    ok(!success, "TpIsTimerSet returned TRUE\n");
+    pTpWaitForTimer(timer, TRUE);
+
+    pTpReleaseTimer(timer);
+    CloseHandle(semaphore);
+
+    semaphore = CreateSemaphoreA(NULL, 0, 3, NULL);
+    ok(semaphore != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    /* allocate a new timer */
+    timer = NULL;
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+    status = pTpAllocTimer(&timer, timer_cb, semaphore, &environment);
+    ok(!status, "TpAllocTimer failed with status %x\n", status);
+    ok(timer != NULL, "expected timer != NULL\n");
+
+    /* test a relative timeout repeated periodically */
+    when.QuadPart = (ULONGLONG)200 * -10000;
+    pTpSetTimer(timer, &when, 200, 0);
+    success = pTpIsTimerSet(timer);
+    ok(success, "TpIsTimerSet returned FALSE\n");
+
+    /* wait until the timer was triggered three times */
+    ticks = GetTickCount();
+    for (i = 0; i < 3; i++)
+    {
+        result = WaitForSingleObject(semaphore, 1000);
+        ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    }
+    ticks = GetTickCount() - ticks;
+    ok(ticks >= 500 && (ticks <= 700 || broken(ticks <= 750)) /* Win 7 */,
+       "expected approximately 600 ticks, got %u\n", ticks);
+
+    /* unset the timer */
+    pTpSetTimer(timer, NULL, 0, 0);
+    success = pTpIsTimerSet(timer);
+    ok(!success, "TpIsTimerSet returned TRUE\n");
+    pTpWaitForTimer(timer, TRUE);
+
+    /* cleanup */
+    pTpReleaseTimer(timer);
+    pTpReleasePool(pool);
+    CloseHandle(semaphore);
+}
+
 START_TEST(threadpool)
 {
     if (!init_threadpool())
@@ -657,4 +801,5 @@ START_TEST(threadpool)
     test_tp_group_cancel();
     test_tp_instance();
     test_tp_disassociate();
+    test_tp_timer();
 }
