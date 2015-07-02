@@ -860,3 +860,23 @@ BOOL WINAPI GetThreadPreferredUILanguages( DWORD flags, PULONG count, PCZZWSTR b
     *buffersize = 0;
     return TRUE;
 }
+
+/***********************************************************************
+ *              CreateThreadpoolCleanupGroup (KERNEL32.@)
+ */
+PTP_CLEANUP_GROUP WINAPI CreateThreadpoolCleanupGroup( void )
+{
+    TP_CLEANUP_GROUP *group;
+    NTSTATUS status;
+
+    TRACE( "\n" );
+
+    status = TpAllocCleanupGroup( &group );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
+
+    return group;
+}

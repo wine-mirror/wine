@@ -229,8 +229,8 @@
 @ stdcall CloseProfileUserMapping()
 @ stub CloseSystemHandle
 # @ stub CloseThreadpool
-# @ stub CloseThreadpoolCleanupGroup
-# @ stub CloseThreadpoolCleanupGroupMembers
+@ stdcall CloseThreadpoolCleanupGroup(ptr) ntdll.TpReleaseCleanupGroup
+@ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) ntdll.TpReleaseCleanupGroupMembers
 # @ stub CloseThreadpoolIo
 # @ stub CloseThreadpoolTimer
 # @ stub CloseThreadpoolWait
@@ -332,7 +332,7 @@
 @ stdcall CreateTapePartition(long long long long)
 @ stdcall CreateThread(ptr long ptr long long ptr)
 # @ stub CreateThreadpool
-# @ stub CreateThreadpoolCleanupGroup
+@ stdcall CreateThreadpoolCleanupGroup()
 # @ stub CreateThreadpoolIo
 # @ stub CreateThreadpoolTimer
 # @ stub CreateThreadpoolWait

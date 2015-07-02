@@ -2616,6 +2616,12 @@ NTSYSAPI LONGLONG  WINAPI RtlLargeIntegerSubtract(LONGLONG,LONGLONG);
 NTSYSAPI NTSTATUS  WINAPI RtlLargeIntegerToChar(const ULONGLONG *,ULONG,ULONG,PCHAR);
 #endif
 
+/* Threadpool functions */
+
+NTSYSAPI NTSTATUS  WINAPI TpAllocCleanupGroup(TP_CLEANUP_GROUP **);
+NTSYSAPI void      WINAPI TpReleaseCleanupGroup(TP_CLEANUP_GROUP *);
+NTSYSAPI void      WINAPI TpReleaseCleanupGroupMembers(TP_CLEANUP_GROUP *,BOOL,PVOID);
+
 /* Wine internal functions */
 
 NTSYSAPI NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRING *unix_name_ret,
