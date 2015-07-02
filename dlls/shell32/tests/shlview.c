@@ -676,6 +676,10 @@ if (0)
     ok(hr == S_OK, "got (0x%08x)\n", hr);
     IDropTarget_Release(dt);
 
+    hr = IShellView_DestroyViewWindow(view);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(!IsWindow(hwnd_view), "hwnd %p still valid\n", hwnd_view);
+
     IShellView_Release(view);
     IShellFolder_Release(desktop);
 }
@@ -834,6 +838,10 @@ if (0)
     if (hr != S_OK)
         win_skip("IFolderView2 is not supported.\n");
     if (fv2) IFolderView2_Release(fv2);
+
+    hr = IShellView_DestroyViewWindow(view);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    ok(!IsWindow(hwnd_view), "hwnd %p still valid\n", hwnd_view);
 
     IShellBrowser_Release(browser);
     IFolderView_Release(fv);
