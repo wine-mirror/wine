@@ -136,6 +136,11 @@ static void test_EnumProcessModules(void)
     ok(ret == 1, "failed with %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
+    ret = pEnumProcessModules(hpQV, NULL, sizeof(HMODULE), &cbNeeded);
+    ok(!ret, "succeeded\n");
+    ok(GetLastError() == ERROR_NOACCESS, "expected error=ERROR_NOACCESS but got %d\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
     ret = pEnumProcessModules(hpQV, &hMod, sizeof(HMODULE), &cbNeeded);
     if(ret != 1)
         return;
