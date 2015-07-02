@@ -3247,6 +3247,9 @@ const char *debug_d3dtstype(enum wined3d_transform_state tstype)
     TSTYPE_TO_STR(WINED3D_TS_TEXTURE6);
     TSTYPE_TO_STR(WINED3D_TS_TEXTURE7);
     TSTYPE_TO_STR(WINED3D_TS_WORLD_MATRIX(0));
+    TSTYPE_TO_STR(WINED3D_TS_WORLD_MATRIX(1));
+    TSTYPE_TO_STR(WINED3D_TS_WORLD_MATRIX(2));
+    TSTYPE_TO_STR(WINED3D_TS_WORLD_MATRIX(3));
 #undef TSTYPE_TO_STR
     default:
         if (tstype > 256 && tstype < 512)
@@ -3468,12 +3471,13 @@ void get_identity_matrix(struct wined3d_matrix *mat)
     *mat = identity;
 }
 
-void get_modelview_matrix(const struct wined3d_context *context, const struct wined3d_state *state, struct wined3d_matrix *mat)
+void get_modelview_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
+        unsigned int index, struct wined3d_matrix *mat)
 {
     if (context->last_was_rhw)
         get_identity_matrix(mat);
     else
-        multiply_matrix(mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(0)]);
+        multiply_matrix(mat, &state->transforms[WINED3D_TS_VIEW], &state->transforms[WINED3D_TS_WORLD_MATRIX(index)]);
 }
 
 void get_projection_matrix(const struct wined3d_context *context, const struct wined3d_state *state,
@@ -4530,6 +4534,19 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
             settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
         }
         return;
+    }
+
+    switch (state->render_states[WINED3D_RS_VERTEXBLEND])
+    {
+        case WINED3D_VBF_DISABLE:
+        case WINED3D_VBF_1WEIGHTS:
+        case WINED3D_VBF_2WEIGHTS:
+        case WINED3D_VBF_3WEIGHTS:
+            settings->vertexblends = state->render_states[WINED3D_RS_VERTEXBLEND];
+            break;
+        default:
+            FIXME("Unsupported vertex blending: %d\n", state->render_states[WINED3D_RS_VERTEXBLEND]);
+            break;
     }
 
     settings->transformed = 0;

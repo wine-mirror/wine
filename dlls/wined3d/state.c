@@ -3686,7 +3686,7 @@ static void transform_world(struct wined3d_context *context, const struct wined3
     gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
     checkGLcall("glMatrixMode");
 
-    get_modelview_matrix(context, state, &mat);
+    get_modelview_matrix(context, state, 0, &mat);
 
     gl_info->gl_ops.gl.p_glLoadMatrixf((GLfloat *)&mat);
     checkGLcall("glLoadMatrixf");
@@ -5757,7 +5757,7 @@ static void prune_invalid_states(struct StateEntry *state_table, const struct wi
         state_table[i].apply = state_undefined;
     }
 
-    start = STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(gl_info->limits.blends));
+    start = STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(d3d_info->limits.ffp_vertex_blend_matrices));
     last = STATE_TRANSFORM(WINED3D_TS_WORLD_MATRIX(255));
     for (i = start; i <= last; ++i)
     {
