@@ -3580,28 +3580,16 @@ static nsresult NSAPI nsIOService_NewFileURI(nsIIOService *iface, nsIFile *aFile
     return nsIIOService_NewFileURI(nsio, aFile, _retval);
 }
 
-static nsresult NSAPI nsIOService_NewChannelFromURI2(nsIIOService *iface, nsIURI *aURI,
-        nsIDOMNode *aLoadingNode, nsIPrincipal *aLoadingPrincipal, nsIPrincipal *aTriggeringPrincipal,
-        UINT32 aSecurityFlags, UINT32 aContentPolicyType, nsIChannel **_retval)
-{
-    FIXME("(%p %p %p %p %x %d %p)\n", aURI, aLoadingNode, aLoadingPrincipal, aTriggeringPrincipal,
-          aSecurityFlags, aContentPolicyType, _retval);
-    return NS_ERROR_NOT_IMPLEMENTED;
-}
-
-static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI *aURI,
-                                                     nsIChannel **_retval)
+static nsresult new_channel_from_uri(nsIURI *uri, nsIChannel **_retval)
 {
     nsWineURI *wine_uri;
     nsChannel *ret;
     nsresult nsres;
 
-    TRACE("(%p %p)\n", aURI, _retval);
-
-    nsres = nsIURI_QueryInterface(aURI, &IID_nsWineURI, (void**)&wine_uri);
+    nsres = nsIURI_QueryInterface(uri, &IID_nsWineURI, (void**)&wine_uri);
     if(NS_FAILED(nsres)) {
         TRACE("Could not get nsWineURI: %08x\n", nsres);
-        return nsIIOService_NewChannelFromURI(nsio, aURI, _retval);
+        return nsIIOService_NewChannelFromURI(nsio, uri, _retval);
     }
 
     nsres = create_nschannel(wine_uri, &ret);
@@ -3609,11 +3597,27 @@ static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI 
     if(NS_FAILED(nsres))
         return nsres;
 
-    nsIURI_AddRef(aURI);
-    ret->original_uri = aURI;
+    nsIURI_AddRef(uri);
+    ret->original_uri = uri;
 
     *_retval = (nsIChannel*)&ret->nsIHttpChannel_iface;
     return NS_OK;
+}
+
+static nsresult NSAPI nsIOService_NewChannelFromURI2(nsIIOService *iface, nsIURI *aURI,
+        nsIDOMNode *aLoadingNode, nsIPrincipal *aLoadingPrincipal, nsIPrincipal *aTriggeringPrincipal,
+        UINT32 aSecurityFlags, UINT32 aContentPolicyType, nsIChannel **_retval)
+{
+    FIXME("(%p %p %p %p %x %d %p) semi-stub\n", aURI, aLoadingNode, aLoadingPrincipal, aTriggeringPrincipal,
+          aSecurityFlags, aContentPolicyType, _retval);
+    return new_channel_from_uri(aURI, _retval);
+}
+
+static nsresult NSAPI nsIOService_NewChannelFromURI(nsIIOService *iface, nsIURI *aURI,
+        nsIChannel **_retval)
+{
+    TRACE("(%p %p)\n", aURI, _retval);
+    return new_channel_from_uri(aURI, _retval);
 }
 
 static nsresult NSAPI nsIOService_NewChannel2(nsIIOService *iface, const nsACString *aSpec,
