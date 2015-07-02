@@ -181,8 +181,10 @@ struct threadpool_object
     /* information about the pool, locked via .pool->cs */
     struct list             pool_entry;
     RTL_CONDITION_VARIABLE  finished_event;
+    RTL_CONDITION_VARIABLE  group_finished_event;
     LONG                    num_pending_callbacks;
     LONG                    num_running_callbacks;
+    LONG                    num_associated_callbacks;
     /* arguments for callback */
     union
     {
@@ -202,6 +204,7 @@ struct threadpool_instance
 {
     struct threadpool_object *object;
     DWORD                   threadid;
+    BOOL                    associated;
     BOOL                    may_run_long;
     struct
     {
@@ -1406,8 +1409,10 @@ static void tp_object_initialize( struct threadpool_object *object, struct threa
 
     memset( &object->pool_entry, 0, sizeof(object->pool_entry) );
     RtlInitializeConditionVariable( &object->finished_event );
+    RtlInitializeConditionVariable( &object->group_finished_event );
     object->num_pending_callbacks   = 0;
     object->num_running_callbacks   = 0;
+    object->num_associated_callbacks = 0;
 
     if (environment)
     {
@@ -1540,13 +1545,21 @@ static void tp_object_cancel( struct threadpool_object *object, BOOL group_cance
  * Waits until all pending and running callbacks of a specific object
  * have been processed.
  */
-static void tp_object_wait( struct threadpool_object *object )
+static void tp_object_wait( struct threadpool_object *object, BOOL group_wait )
 {
     struct threadpool *pool = object->pool;
 
     RtlEnterCriticalSection( &pool->cs );
-    while (object->num_pending_callbacks || object->num_running_callbacks)
-        RtlSleepConditionVariableCS( &object->finished_event, &pool->cs, NULL );
+    if (group_wait)
+    {
+        while (object->num_pending_callbacks || object->num_running_callbacks)
+            RtlSleepConditionVariableCS( &object->group_finished_event, &pool->cs, NULL );
+    }
+    else
+    {
+        while (object->num_pending_callbacks || object->num_associated_callbacks)
+            RtlSleepConditionVariableCS( &object->finished_event, &pool->cs, NULL );
+    }
     RtlLeaveCriticalSection( &pool->cs );
 }
 
@@ -1576,6 +1589,7 @@ static BOOL tp_object_release( struct threadpool_object *object )
     assert( object->shutdown );
     assert( !object->num_pending_callbacks );
     assert( !object->num_running_callbacks );
+    assert( !object->num_associated_callbacks );
 
     /* release reference to the group */
     if (object->group)
@@ -1631,6 +1645,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
                 list_add_tail( &pool->pool, &object->pool_entry );
 
             /* Leave critical section and do the actual callback. */
+            object->num_associated_callbacks++;
             object->num_running_callbacks++;
             pool->num_busy_workers++;
             RtlLeaveCriticalSection( &pool->cs );
@@ -1639,6 +1654,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
             callback_instance = (TP_CALLBACK_INSTANCE *)&instance;
             instance.object                     = object;
             instance.threadid                   = GetCurrentThreadId();
+            instance.associated                 = TRUE;
             instance.may_run_long               = object->may_run_long;
             instance.cleanup.critical_section   = NULL;
             instance.cleanup.mutex              = NULL;
@@ -1709,9 +1725,18 @@ static void CALLBACK threadpool_worker_proc( void *param )
         skip_cleanup:
             RtlEnterCriticalSection( &pool->cs );
             pool->num_busy_workers--;
+
             object->num_running_callbacks--;
             if (!object->num_pending_callbacks && !object->num_running_callbacks)
-                RtlWakeAllConditionVariable( &object->finished_event );
+                RtlWakeAllConditionVariable( &object->group_finished_event );
+
+            if (instance.associated)
+            {
+                object->num_associated_callbacks--;
+                if (!object->num_pending_callbacks && !object->num_associated_callbacks)
+                    RtlWakeAllConditionVariable( &object->finished_event );
+            }
+
             tp_object_release( object );
         }
 
@@ -1913,6 +1938,37 @@ VOID WINAPI TpCallbackUnloadDllOnCompletion( TP_CALLBACK_INSTANCE *instance, HMO
 }
 
 /***********************************************************************
+ *           TpDisassociateCallback    (NTDLL.@)
+ */
+VOID WINAPI TpDisassociateCallback( TP_CALLBACK_INSTANCE *instance )
+{
+    struct threadpool_instance *this = impl_from_TP_CALLBACK_INSTANCE( instance );
+    struct threadpool_object *object = this->object;
+    struct threadpool *pool;
+
+    TRACE( "%p\n", instance );
+
+    if (this->threadid != GetCurrentThreadId())
+    {
+        ERR("called from wrong thread, ignoring\n");
+        return;
+    }
+
+    if (!this->associated)
+        return;
+
+    pool = object->pool;
+    RtlEnterCriticalSection( &pool->cs );
+
+    object->num_associated_callbacks--;
+    if (!object->num_pending_callbacks && !object->num_associated_callbacks)
+        RtlWakeAllConditionVariable( &object->finished_event );
+
+    RtlLeaveCriticalSection( &pool->cs );
+    this->associated = FALSE;
+}
+
+/***********************************************************************
  *           TpPostWork    (NTDLL.@)
  */
 VOID WINAPI TpPostWork( TP_WORK *work )
@@ -1993,7 +2049,7 @@ VOID WINAPI TpReleaseCleanupGroupMembers( TP_CLEANUP_GROUP *group, BOOL cancel_p
     /* Wait for remaining callbacks to finish */
     LIST_FOR_EACH_ENTRY_SAFE( object, next, &members, struct threadpool_object, group_entry )
     {
-        tp_object_wait( object );
+        tp_object_wait( object, TRUE );
         tp_object_release( object );
     }
 }
@@ -2115,5 +2171,5 @@ VOID WINAPI TpWaitForWork( TP_WORK *work, BOOL cancel_pending )
 
     if (cancel_pending)
         tp_object_cancel( this, FALSE, NULL );
-    tp_object_wait( this );
+    tp_object_wait( this, FALSE );
 }

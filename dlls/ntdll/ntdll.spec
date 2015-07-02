@@ -979,6 +979,7 @@
 @ stdcall TpCallbackReleaseSemaphoreOnCompletion(ptr long long)
 @ stdcall TpCallbackSetEventOnCompletion(ptr long)
 @ stdcall TpCallbackUnloadDllOnCompletion(ptr ptr)
+@ stdcall TpDisassociateCallback(ptr)
 @ stdcall TpPostWork(ptr)
 @ stdcall TpReleaseCleanupGroup(ptr)
 @ stdcall TpReleaseCleanupGroupMembers(ptr long ptr)
