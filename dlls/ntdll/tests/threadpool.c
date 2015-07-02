@@ -790,6 +790,122 @@ static void test_tp_timer(void)
     CloseHandle(semaphore);
 }
 
+struct window_length_info
+{
+    HANDLE semaphore;
+    DWORD ticks;
+};
+
+static void CALLBACK window_length_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_TIMER *timer)
+{
+    struct window_length_info *info = userdata;
+    trace("Running window length callback\n");
+    info->ticks = GetTickCount();
+    ReleaseSemaphore(info->semaphore, 1, NULL);
+}
+
+static void test_tp_window_length(void)
+{
+    struct window_length_info info1, info2;
+    TP_CALLBACK_ENVIRON environment;
+    TP_TIMER *timer1, *timer2;
+    LARGE_INTEGER when;
+    HANDLE semaphore;
+    NTSTATUS status;
+    TP_POOL *pool;
+    DWORD result;
+
+    semaphore = CreateSemaphoreA(NULL, 0, 2, NULL);
+    ok(semaphore != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    /* allocate new threadpool */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+
+    /* allocate two identical timers */
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+
+    timer1 = NULL;
+    info1.semaphore = semaphore;
+    status = pTpAllocTimer(&timer1, window_length_cb, &info1, &environment);
+    ok(!status, "TpAllocTimer failed with status %x\n", status);
+    ok(timer1 != NULL, "expected timer1 != NULL\n");
+
+    timer2 = NULL;
+    info2.semaphore = semaphore;
+    status = pTpAllocTimer(&timer2, window_length_cb, &info2, &environment);
+    ok(!status, "TpAllocTimer failed with status %x\n", status);
+    ok(timer2 != NULL, "expected timer2 != NULL\n");
+
+    /* choose parameters so that timers are not merged */
+    info1.ticks = 0;
+    info2.ticks = 0;
+
+    NtQuerySystemTime( &when );
+    when.QuadPart += (ULONGLONG)250 * 10000;
+    pTpSetTimer(timer2, &when, 0, 0);
+    Sleep(50);
+    when.QuadPart -= (ULONGLONG)150 * 10000;
+    pTpSetTimer(timer1, &when, 0, 75);
+
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info1.ticks != 0 && info2.ticks != 0, "expected that ticks are nonzero\n");
+    ok(info2.ticks >= info1.ticks + 75 || broken(info2.ticks < info1.ticks + 75) /* Win 2008 */,
+       "expected that timers are not merged\n");
+
+    /* timers will be merged */
+    info1.ticks = 0;
+    info2.ticks = 0;
+
+    NtQuerySystemTime( &when );
+    when.QuadPart += (ULONGLONG)250 * 10000;
+    pTpSetTimer(timer2, &when, 0, 0);
+    Sleep(50);
+    when.QuadPart -= (ULONGLONG)150 * 10000;
+    pTpSetTimer(timer1, &when, 0, 200);
+
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info1.ticks != 0 && info2.ticks != 0, "expected that ticks are nonzero\n");
+    ok(info2.ticks >= info1.ticks - 50 && info2.ticks <= info1.ticks + 50,
+       "expected that timers are merged\n");
+
+    /* on Windows the timers also get merged in this case */
+    info1.ticks = 0;
+    info2.ticks = 0;
+
+    NtQuerySystemTime( &when );
+    when.QuadPart += (ULONGLONG)100 * 10000;
+    pTpSetTimer(timer1, &when, 0, 200);
+    Sleep(50);
+    when.QuadPart += (ULONGLONG)150 * 10000;
+    pTpSetTimer(timer2, &when, 0, 0);
+
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    ok(info1.ticks != 0 && info2.ticks != 0, "expected that ticks are nonzero\n");
+    todo_wine
+    ok(info2.ticks >= info1.ticks - 50 && info2.ticks <= info1.ticks + 50,
+       "expected that timers are merged\n");
+
+    /* cleanup */
+    pTpReleaseTimer(timer1);
+    pTpReleaseTimer(timer2);
+    pTpReleasePool(pool);
+    CloseHandle(semaphore);
+}
+
 START_TEST(threadpool)
 {
     if (!init_threadpool())
@@ -802,4 +918,5 @@ START_TEST(threadpool)
     test_tp_instance();
     test_tp_disassociate();
     test_tp_timer();
+    test_tp_window_length();
 }
