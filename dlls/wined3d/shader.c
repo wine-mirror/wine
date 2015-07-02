@@ -409,16 +409,10 @@ static unsigned int shader_get_float_offset(enum wined3d_shader_register_type re
 
 static void shader_delete_constant_list(struct list *clist)
 {
-    struct wined3d_shader_lconst *constant;
-    struct list *ptr;
+    struct wined3d_shader_lconst *constant, *constant_next;
 
-    ptr = list_head(clist);
-    while (ptr)
-    {
-        constant = LIST_ENTRY(ptr, struct wined3d_shader_lconst, entry);
-        ptr = list_next(clist, ptr);
+    LIST_FOR_EACH_ENTRY_SAFE(constant, constant_next, clist, struct wined3d_shader_lconst, entry)
         HeapFree(GetProcessHeap(), 0, constant);
-    }
     list_init(clist);
 }
 
@@ -2046,6 +2040,11 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     TRACE("shader %p, byte_code %p, output_signature %p, float_const_count %u.\n",
             shader, byte_code, output_signature, float_const_count);
 
+    list_init(&shader->constantsF);
+    list_init(&shader->constantsB);
+    list_init(&shader->constantsI);
+    shader->lconst_inf_or_nan = FALSE;
+
     fe = shader_select_frontend(*byte_code);
     if (!fe)
     {
@@ -2063,12 +2062,6 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     /* First pass: trace shader. */
     if (TRACE_ON(d3d_shader))
         shader_trace_init(fe, shader->frontend_data, byte_code);
-
-    /* Initialize immediate constant lists. */
-    list_init(&shader->constantsF);
-    list_init(&shader->constantsB);
-    list_init(&shader->constantsI);
-    shader->lconst_inf_or_nan = FALSE;
 
     /* Second pass: figure out which registers are used, what the semantics are, etc. */
     if (FAILED(hr = shader_get_registers_used(shader, fe, reg_maps, &shader->input_signature,
