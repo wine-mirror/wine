@@ -184,10 +184,6 @@ static void test_COM_track(void)
         /* Same refcount for all DirectMusicTrack interfaces */
         hr = CoCreateInstance(class[i].clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicTrack8,
                 (void**)&dmt8);
-        if (hr == E_NOINTERFACE && !dmt8) {
-            skip("%s not created with CoCreateInstance()\n", class[i].name);
-            continue;
-        }
         ok(hr == S_OK, "%s create failed: %08x, expected S_OK\n", class[i].name, hr);
         refcount = IDirectMusicTrack8_AddRef(dmt8);
         ok(refcount == 2, "refcount == %u, expected 2\n", refcount);
@@ -267,10 +263,6 @@ static void test_track(void)
         trace("Testing %s\n", class[i].name);
         hr = CoCreateInstance(class[i].clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicTrack8,
                 (void**)&dmt8);
-        if (hr == E_NOINTERFACE && !dmt8) {
-            skip("%s not created with CoCreateInstance()\n", class[i].name);
-            continue;
-        }
         ok(hr == S_OK, "%s create failed: %08x, expected S_OK\n", class[i].name, hr);
 
         /* IDirectMusicTrack8 */
