@@ -4882,8 +4882,9 @@ HRESULT CDECL wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapte
 
     if (!gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO])
     {
-        caps->TextureCaps  |= WINED3DPTEXTURECAPS_POW2 |
-                              WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
+        caps->TextureCaps |= WINED3DPTEXTURECAPS_POW2;
+        if (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT] || gl_info->supported[ARB_TEXTURE_RECTANGLE])
+            caps->TextureCaps |= WINED3DPTEXTURECAPS_NONPOW2CONDITIONAL;
     }
 
     if (gl_info->supported[EXT_TEXTURE3D])
