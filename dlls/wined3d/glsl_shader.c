@@ -2710,13 +2710,8 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
         const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
         fixup = priv->cur_ps_args->color_fixup[sampler];
 
-        if(priv->cur_ps_args->np2_fixup & (1 << sampler)) {
-            if(bias) {
-                FIXME("Biased sampling from NP2 textures is unsupported\n");
-            } else {
-                np2_fixup = TRUE;
-            }
-        }
+        if (priv->cur_ps_args->np2_fixup & (1 << sampler))
+            np2_fixup = TRUE;
     }
     else
     {
@@ -2739,25 +2734,42 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
             break;
     }
 
-    if(bias) {
-        shader_addline(ins->ctx->buffer, ", %s)%s);\n", bias, dst_swizzle);
-    } else {
-        if (np2_fixup) {
-            const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
-            const unsigned char idx = priv->cur_np2fixup_info->idx[sampler];
+    if (np2_fixup)
+    {
+        const struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+        const unsigned char idx = priv->cur_np2fixup_info->idx[sampler];
 
-            shader_addline(ins->ctx->buffer, " * ps_samplerNP2Fixup[%u].%s)%s);\n", idx >> 1,
-                           (idx % 2) ? "zw" : "xy", dst_swizzle);
-        } else if(dx && dy) {
-            shader_addline(ins->ctx->buffer, ", %s, %s)%s);\n", dx, dy, dst_swizzle);
-        } else {
-            shader_addline(ins->ctx->buffer, ")%s);\n", dst_swizzle);
+        switch (shader_glsl_get_write_mask_size(sample_function->coord_mask))
+        {
+            case 1:
+                shader_addline(ins->ctx->buffer, " * ps_samplerNP2Fixup[%u].%s",
+                        idx >> 1, (idx % 2) ? "z" : "x");
+                break;
+            case 2:
+                shader_addline(ins->ctx->buffer, " * ps_samplerNP2Fixup[%u].%s",
+                        idx >> 1, (idx % 2) ? "zw" : "xy");
+                break;
+            case 3:
+                shader_addline(ins->ctx->buffer, " * vec3(ps_samplerNP2Fixup[%u].%s, 1.0)",
+                        idx >> 1, (idx % 2) ? "zw" : "xy");
+                break;
+            case 4:
+                shader_addline(ins->ctx->buffer, " * vec4(ps_samplerNP2Fixup[%u].%s, 1.0, 1.0)",
+                        idx >> 1, (idx % 2) ? "zw" : "xy");
+                break;
         }
     }
+    if (dx && dy)
+        shader_addline(ins->ctx->buffer, ", %s, %s)", dx, dy);
+    else if (bias)
+        shader_addline(ins->ctx->buffer, ", %s)", bias);
+    else
+        shader_addline(ins->ctx->buffer, ")");
 
-    if(!is_identity_fixup(fixup)) {
+    shader_addline(ins->ctx->buffer, "%s);\n", dst_swizzle);
+
+    if (!is_identity_fixup(fixup))
         shader_glsl_color_correction(ins, fixup);
-    }
 }
 
 /*****************************************************************************
@@ -3989,6 +4001,7 @@ static void shader_glsl_tex(const struct wined3d_shader_instruction *ins)
 
     shader_glsl_get_sample_function(ins->ctx, resource_idx, sample_flags, &sample_function);
     mask |= sample_function.coord_mask;
+    sample_function.coord_mask = mask;
 
     if (shader_version < WINED3D_SHADER_VERSION(2,0)) swizzle = WINED3DSP_NOSWIZZLE;
     else swizzle = ins->src[1].swizzle;
