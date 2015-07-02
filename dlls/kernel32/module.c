@@ -1226,7 +1226,7 @@ BOOL WINAPI K32EnumProcessModules(HANDLE process, HMODULE *lphModule,
     if (!init_module_iterator(&iter, process))
         return FALSE;
 
-    if (!needed)
+    if ((cb && !lphModule) || !needed)
     {
         SetLastError(ERROR_NOACCESS);
         return FALSE;
