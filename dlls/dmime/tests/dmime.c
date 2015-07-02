@@ -495,7 +495,7 @@ static void test_track(void)
         BOOL todo;
     } class[] = {
         { X(DirectMusicLyricsTrack), TRUE },
-        { X(DirectMusicMarkerTrack), TRUE },
+        { X(DirectMusicMarkerTrack), FALSE },
         { X(DirectMusicParamControlTrack), TRUE },
         { X(DirectMusicSegmentTriggerTrack), FALSE },
         { X(DirectMusicSeqTrack), TRUE },
