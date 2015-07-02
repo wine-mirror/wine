@@ -234,7 +234,7 @@
 # @ stub CloseThreadpoolIo
 # @ stub CloseThreadpoolTimer
 # @ stub CloseThreadpoolWait
-# @ stub CloseThreadpoolWork
+@ stdcall CloseThreadpoolWork(ptr) ntdll.TpReleaseWork
 @ stdcall CmdBatNotification(long)
 @ stdcall CommConfigDialogA(str long ptr)
 @ stdcall CommConfigDialogW(wstr long ptr)
@@ -336,7 +336,7 @@
 # @ stub CreateThreadpoolIo
 # @ stub CreateThreadpoolTimer
 # @ stub CreateThreadpoolWait
-# @ stub CreateThreadpoolWork
+@ stdcall CreateThreadpoolWork(ptr ptr ptr)
 @ stdcall CreateTimerQueue ()
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long)
 @ stdcall CreateToolhelp32Snapshot(long long)
@@ -1482,7 +1482,7 @@
 # @ stub SortCloseHandle
 # @ stub SortGetHandle
 # @ stub StartThreadpoolIo
-# @ stub SubmitThreadpoolWork
+@ stdcall SubmitThreadpoolWork(ptr) ntdll.TpPostWork
 @ stdcall SuspendThread(long)
 @ stdcall SwitchToFiber(ptr)
 @ stdcall SwitchToThread()
@@ -1573,7 +1573,7 @@
 # @ stub WaitForThreadpoolIoCallbacks
 # @ stub WaitForThreadpoolTimerCallbacks
 # @ stub WaitForThreadpoolWaitCallbacks
-# @ stub WaitForThreadpoolWorkCallbacks
+@ stdcall WaitForThreadpoolWorkCallbacks(ptr long) ntdll.TpWaitForWork
 @ stdcall WaitNamedPipeA (str long)
 @ stdcall WaitNamedPipeW (wstr long)
 @ stdcall WakeAllConditionVariable(ptr) ntdll.RtlWakeAllConditionVariable

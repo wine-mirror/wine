@@ -880,3 +880,24 @@ PTP_CLEANUP_GROUP WINAPI CreateThreadpoolCleanupGroup( void )
 
     return group;
 }
+
+/***********************************************************************
+ *              CreateThreadpoolWork (KERNEL32.@)
+ */
+PTP_WORK WINAPI CreateThreadpoolWork( PTP_WORK_CALLBACK callback, PVOID userdata,
+                                      TP_CALLBACK_ENVIRON *environment )
+{
+    TP_WORK *work;
+    NTSTATUS status;
+
+    TRACE( "%p, %p, %p\n", callback, userdata, environment );
+
+    status = TpAllocWork( &work, callback, userdata, environment );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
+
+    return work;
+}
