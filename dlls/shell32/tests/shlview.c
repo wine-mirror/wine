@@ -667,7 +667,7 @@ if (0)
     hwnd2 = (HWND)0xdeadbeef;
     hr = IShellView_CreateViewWindow(view, NULL, &settings, &test_shellbrowser, &r, &hwnd2);
     ok(hr == E_UNEXPECTED, "got (0x%08x)\n", hr);
-    ok(hwnd2 == NULL, "got %p\n", hwnd_view);
+    ok(hwnd2 == NULL, "got %p\n", hwnd2);
 
     /* ::DragLeave without drag operation */
     hr = IShellView_QueryInterface(view, &IID_IDropTarget, (void**)&dt);
