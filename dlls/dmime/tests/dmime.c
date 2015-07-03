@@ -499,7 +499,7 @@ static void test_track(void)
         { X(DirectMusicParamControlTrack), TRUE },
         { X(DirectMusicSegmentTriggerTrack), FALSE },
         { X(DirectMusicSeqTrack), FALSE },
-        { X(DirectMusicSysExTrack), TRUE },
+        { X(DirectMusicSysExTrack), FALSE },
         { X(DirectMusicTempoTrack), FALSE },
         { X(DirectMusicTimeSigTrack), FALSE },
         { X(DirectMusicWaveTrack), TRUE }
