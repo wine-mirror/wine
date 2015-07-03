@@ -25,67 +25,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dmime);
  * IDirectMusicSeqTrack implementation
  */
 typedef struct IDirectMusicSeqTrack {
-    const IUnknownVtbl *UnknownVtbl;
     IDirectMusicTrack8 IDirectMusicTrack8_iface;
     const IPersistStreamVtbl *PersistStreamVtbl;
     LONG ref;
     DMUS_OBJECTDESC *pDesc;
 } IDirectMusicSeqTrack;
-
-/* IDirectMusicSeqTrack IUnknown part: */
-static HRESULT WINAPI IDirectMusicSeqTrack_IUnknown_QueryInterface (LPUNKNOWN iface, REFIID riid, LPVOID *ppobj) {
-	ICOM_THIS_MULTI(IDirectMusicSeqTrack, UnknownVtbl, iface);
-
-	TRACE("(%p, %s,%p)\n", This, debugstr_dmguid(riid), ppobj);
-	if (IsEqualIID (riid, &IID_IUnknown)) {
-		*ppobj = &This->UnknownVtbl;
-		IUnknown_AddRef (iface);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IDirectMusicTrack)
-	  || IsEqualIID (riid, &IID_IDirectMusicTrack8)) {
-		*ppobj = &This->IDirectMusicTrack8_iface;
-		IUnknown_AddRef (iface);
-		return S_OK;
-	} else if (IsEqualIID (riid, &IID_IPersistStream)) {
-		*ppobj = &This->PersistStreamVtbl;
-		IUnknown_AddRef (iface);
-		return S_OK;
-	}
-	
-	WARN("(%p, %s,%p): not found\n", This, debugstr_dmguid(riid), ppobj);
-	return E_NOINTERFACE;
-}
-
-static ULONG WINAPI IDirectMusicSeqTrack_IUnknown_AddRef (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicSeqTrack, UnknownVtbl, iface);
-        ULONG ref = InterlockedIncrement(&This->ref);
-
-	TRACE("(%p): AddRef from %d\n", This, ref - 1);
-
-	DMIME_LockModule();
-
-	return ref;
-}
-
-static ULONG WINAPI IDirectMusicSeqTrack_IUnknown_Release (LPUNKNOWN iface) {
-	ICOM_THIS_MULTI(IDirectMusicSeqTrack, UnknownVtbl, iface);
-	ULONG ref = InterlockedDecrement(&This->ref);
-	TRACE("(%p): ReleaseRef to %d\n", This, ref);
-	
-	if (ref == 0) {
-		HeapFree(GetProcessHeap(), 0, This);
-	}
-
-	DMIME_UnlockModule();
-	
-	return ref;
-}
-
-static const IUnknownVtbl DirectMusicSeqTrack_Unknown_Vtbl = {
-	IDirectMusicSeqTrack_IUnknown_QueryInterface,
-	IDirectMusicSeqTrack_IUnknown_AddRef,
-	IDirectMusicSeqTrack_IUnknown_Release
-};
 
 /* IDirectMusicSeqTrack IDirectMusicTrack8 part: */
 static inline IDirectMusicSeqTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
@@ -94,22 +38,51 @@ static inline IDirectMusicSeqTrack *impl_from_IDirectMusicTrack8(IDirectMusicTra
 }
 
 static HRESULT WINAPI IDirectMusicTrack8Impl_QueryInterface(IDirectMusicTrack8 *iface, REFIID riid,
-        void **ppobj)
+        void **ret_iface)
 {
     IDirectMusicSeqTrack *This = impl_from_IDirectMusicTrack8(iface);
-	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_dmguid(riid), ret_iface);
+
+    *ret_iface = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDirectMusicTrack) ||
+            IsEqualIID(riid, &IID_IDirectMusicTrack8))
+        *ret_iface = iface;
+    else if (IsEqualIID(riid, &IID_IPersistStream))
+        *ret_iface = &This->PersistStreamVtbl;
+    else {
+        WARN("(%p, %s, %p): not found\n", This, debugstr_dmguid(riid), ret_iface);
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ret_iface);
+    return S_OK;
 }
 
 static ULONG WINAPI IDirectMusicTrack8Impl_AddRef(IDirectMusicTrack8 *iface)
 {
     IDirectMusicSeqTrack *This = impl_from_IDirectMusicTrack8(iface);
-	return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    return ref;
 }
 
 static ULONG WINAPI IDirectMusicTrack8Impl_Release(IDirectMusicTrack8 *iface)
 {
     IDirectMusicSeqTrack *This = impl_from_IDirectMusicTrack8(iface);
-	return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%d\n", This, ref);
+
+    if (!ref) {
+        HeapFree(GetProcessHeap(), 0, This);
+        DMIME_UnlockModule();
+    }
+
+    return ref;
 }
 
 static HRESULT WINAPI IDirectMusicTrack8Impl_Init(IDirectMusicTrack8 *iface,
@@ -272,17 +245,17 @@ static const IDirectMusicTrack8Vtbl dmtrack8_vtbl = {
 /* IDirectMusicSeqTrack IPersistStream part: */
 static HRESULT WINAPI IDirectMusicSeqTrack_IPersistStream_QueryInterface (LPPERSISTSTREAM iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicSeqTrack, PersistStreamVtbl, iface);
-	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
+	return IDirectMusicTrack8_QueryInterface(&This->IDirectMusicTrack8_iface, riid, ppobj);
 }
 
 static ULONG WINAPI IDirectMusicSeqTrack_IPersistStream_AddRef (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicSeqTrack, PersistStreamVtbl, iface);
-	return IUnknown_AddRef ((LPUNKNOWN)&This->UnknownVtbl);
+	return IDirectMusicTrack8_AddRef(&This->IDirectMusicTrack8_iface);
 }
 
 static ULONG WINAPI IDirectMusicSeqTrack_IPersistStream_Release (LPPERSISTSTREAM iface) {
 	ICOM_THIS_MULTI(IDirectMusicSeqTrack, PersistStreamVtbl, iface);
-	return IUnknown_Release ((LPUNKNOWN)&This->UnknownVtbl);
+	return IDirectMusicTrack8_Release(&This->IDirectMusicTrack8_iface);
 }
 
 static HRESULT WINAPI IDirectMusicSeqTrack_IPersistStream_GetClassID (LPPERSISTSTREAM iface, CLSID* pClassID) {
@@ -320,21 +293,25 @@ static const IPersistStreamVtbl DirectMusicSeqTrack_PersistStream_Vtbl = {
 /* for ClassFactory */
 HRESULT WINAPI create_dmseqtrack(REFIID lpcGUID, void **ppobj)
 {
-	IDirectMusicSeqTrack* track;
-	
-	track = HeapAlloc (GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(IDirectMusicSeqTrack));
-	if (NULL == track) {
-		*ppobj = NULL;
-		return E_OUTOFMEMORY;
-	}
-	track->UnknownVtbl = &DirectMusicSeqTrack_Unknown_Vtbl;
+    IDirectMusicSeqTrack *track;
+    HRESULT hr;
+
+    track = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*track));
+    if (!track) {
+        *ppobj = NULL;
+        return E_OUTOFMEMORY;
+    }
     track->IDirectMusicTrack8_iface.lpVtbl = &dmtrack8_vtbl;
 	track->PersistStreamVtbl = &DirectMusicSeqTrack_PersistStream_Vtbl;
 	track->pDesc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(DMUS_OBJECTDESC));
 	DM_STRUCT_INIT(track->pDesc);
 	track->pDesc->dwValidData |= DMUS_OBJ_CLASS;
 	track->pDesc->guidClass = CLSID_DirectMusicSeqTrack;
-	track->ref = 0; /* will be inited by QueryInterface */
+    track->ref = 1;
 
-	return IDirectMusicSeqTrack_IUnknown_QueryInterface ((LPUNKNOWN)&track->UnknownVtbl, lpcGUID, ppobj);
+    DMIME_LockModule();
+    hr = IDirectMusicTrack8_QueryInterface(&track->IDirectMusicTrack8_iface, lpcGUID, ppobj);
+    IDirectMusicTrack8_Release(&track->IDirectMusicTrack8_iface);
+
+    return hr;
 }
