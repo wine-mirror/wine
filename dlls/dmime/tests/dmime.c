@@ -496,7 +496,7 @@ static void test_track(void)
     } class[] = {
         { X(DirectMusicLyricsTrack), FALSE },
         { X(DirectMusicMarkerTrack), FALSE },
-        { X(DirectMusicParamControlTrack), TRUE },
+        { X(DirectMusicParamControlTrack), FALSE },
         { X(DirectMusicSegmentTriggerTrack), FALSE },
         { X(DirectMusicSeqTrack), FALSE },
         { X(DirectMusicSysExTrack), FALSE },
