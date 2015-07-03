@@ -862,6 +862,25 @@ BOOL WINAPI GetThreadPreferredUILanguages( DWORD flags, PULONG count, PCZZWSTR b
 }
 
 /***********************************************************************
+ *              CallbackMayRunLong (KERNEL32.@)
+ */
+BOOL WINAPI CallbackMayRunLong( TP_CALLBACK_INSTANCE *instance )
+{
+    NTSTATUS status;
+
+    TRACE( "%p\n", instance );
+
+    status = TpCallbackMayRunLong( instance );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/***********************************************************************
  *              CreateThreadpoolCleanupGroup (KERNEL32.@)
  */
 PTP_CLEANUP_GROUP WINAPI CreateThreadpoolCleanupGroup( void )

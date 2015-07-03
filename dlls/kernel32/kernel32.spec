@@ -204,7 +204,7 @@
 @ stdcall BuildCommDCBAndTimeoutsA(str ptr ptr)
 @ stdcall BuildCommDCBAndTimeoutsW(wstr ptr ptr)
 @ stdcall BuildCommDCBW(wstr ptr)
-# @ stub CallbackMayRunLong
+@ stdcall CallbackMayRunLong(ptr)
 @ stdcall CallNamedPipeA(str ptr long ptr long ptr long)
 @ stdcall CallNamedPipeW(wstr ptr long ptr long ptr long)
 @ stub CancelDeviceWakeupRequest
@@ -369,7 +369,7 @@
 @ stdcall DeleteFileW(wstr)
 # @ stub DeleteProcThreadAttributeList
 # @ stub DisableThreadProfiling
-# @ stub DisassociateCurrentThreadFromCallback
+@ stdcall DisassociateCurrentThreadFromCallback(ptr) ntdll.TpDisassociateCallback
 @ stdcall DeleteTimerQueue(long)
 @ stdcall DeleteTimerQueueEx (long long)
 @ stdcall DeleteTimerQueueTimer(long long long)
@@ -495,7 +495,6 @@
 @ stdcall FindFirstVolumeMountPointA(str ptr long)
 @ stdcall FindFirstVolumeMountPointW(wstr ptr long)
 @ stdcall FindFirstVolumeW(ptr long)
-# @ stub FreeLibraryWhenCallbackReturns
 @ stdcall FindNextChangeNotification(long)
 @ stdcall FindNextFileA(long ptr)
 # @ stub FindNextFileNameW
@@ -533,6 +532,7 @@
 @ stub -i386 FreeLSCallback
 @ stdcall FreeLibrary(long)
 @ stdcall FreeLibraryAndExitThread(long long)
+@ stdcall FreeLibraryWhenCallbackReturns(ptr ptr) ntdll.TpCallbackUnloadDllOnCompletion
 @ stdcall FreeResource(long)
 @ stdcall -i386 -private FreeSLCallback(long) krnl386.exe16.FreeSLCallback
 @ stub FreeUserPhysicalPages
@@ -1035,7 +1035,7 @@
 @ stdcall LZSeek(long long long)
 @ stdcall LZStart()
 @ stdcall LeaveCriticalSection(ptr) ntdll.RtlLeaveCriticalSection
-# @ stub LeaveCriticalSectionWhenCallbackReturns
+@ stdcall LeaveCriticalSectionWhenCallbackReturns(ptr ptr) ntdll.TpCallbackLeaveCriticalSectionOnCompletion
 # @ stub LoadAppInitDlls
 @ stdcall LoadLibraryA(str)
 @ stdcall LoadLibraryExA( str long long)
@@ -1252,9 +1252,9 @@
 @ stdcall ReinitializeCriticalSection(ptr)
 @ stdcall ReleaseActCtx(ptr)
 @ stdcall ReleaseMutex(long)
-# @ stub ReleaseMutexWhenCallbackReturns
+@ stdcall ReleaseMutexWhenCallbackReturns(ptr long) ntdll.TpCallbackReleaseMutexOnCompletion
 @ stdcall ReleaseSemaphore(long long ptr)
-# @ stub ReleaseSemaphoreWhenCallbackReturns
+@ stdcall ReleaseSemaphoreWhenCallbackReturns(ptr long long) ntdll.TpCallbackReleaseSemaphoreOnCompletion
 @ stdcall ReleaseSRWLockExclusive(ptr) ntdll.RtlReleaseSRWLockExclusive
 @ stdcall ReleaseSRWLockShared(ptr) ntdll.RtlReleaseSRWLockShared
 @ stdcall RemoveDirectoryA(str)
@@ -1385,7 +1385,7 @@
 @ stdcall SetEnvironmentVariableW(wstr wstr)
 @ stdcall SetErrorMode(long)
 @ stdcall SetEvent(long)
-# @ stub SetEventWhenCallbackReturns
+@ stdcall SetEventWhenCallbackReturns(ptr long) ntdll.TpCallbackSetEventOnCompletion
 @ stdcall SetFileApisToANSI()
 @ stdcall SetFileApisToOEM()
 @ stdcall SetFileAttributesA(str long)
