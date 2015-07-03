@@ -86,6 +86,7 @@ static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
 static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
 static void   (WINAPI *pReleaseActCtx)(HANDLE);
 static PTP_POOL (WINAPI *pCreateThreadpool)(PVOID);
+static void (WINAPI *pCloseThreadpool)(PTP_POOL);
 static PTP_WORK (WINAPI *pCreateThreadpoolWork)(PTP_WORK_CALLBACK,PVOID,PTP_CALLBACK_ENVIRON);
 static void (WINAPI *pSubmitThreadpoolWork)(PTP_WORK);
 static void (WINAPI *pWaitForThreadpoolWorkCallbacks)(PTP_WORK,BOOL);
@@ -1641,6 +1642,7 @@ static void test_threadpool(void)
 
     pool = pCreateThreadpool(NULL);
     ok (pool != NULL, "CreateThreadpool failed\n");
+    pCloseThreadpool(pool);
 }
 
 static void test_reserved_tls(void)
@@ -1705,6 +1707,7 @@ static void init_funcs(void)
     X(ReleaseActCtx);
 
     X(CreateThreadpool);
+    X(CloseThreadpool);
     X(CreateThreadpoolWork);
     X(SubmitThreadpoolWork);
     X(WaitForThreadpoolWorkCallbacks);
