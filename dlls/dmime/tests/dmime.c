@@ -492,17 +492,16 @@ static void test_track(void)
     const struct {
         REFCLSID clsid;
         const char *name;
-        BOOL todo;
     } class[] = {
-        { X(DirectMusicLyricsTrack), FALSE },
-        { X(DirectMusicMarkerTrack), FALSE },
-        { X(DirectMusicParamControlTrack), FALSE },
-        { X(DirectMusicSegmentTriggerTrack), FALSE },
-        { X(DirectMusicSeqTrack), FALSE },
-        { X(DirectMusicSysExTrack), FALSE },
-        { X(DirectMusicTempoTrack), FALSE },
-        { X(DirectMusicTimeSigTrack), FALSE },
-        { X(DirectMusicWaveTrack), TRUE }
+        { X(DirectMusicLyricsTrack) },
+        { X(DirectMusicMarkerTrack) },
+        { X(DirectMusicParamControlTrack) },
+        { X(DirectMusicSegmentTriggerTrack) },
+        { X(DirectMusicSeqTrack) },
+        { X(DirectMusicSysExTrack) },
+        { X(DirectMusicTempoTrack) },
+        { X(DirectMusicTimeSigTrack) },
+        { X(DirectMusicWaveTrack) }
     };
 #undef X
     unsigned int i;
@@ -517,21 +516,11 @@ static void test_track(void)
         hr = IDirectMusicTrack_QueryInterface(dmt, &IID_IPersistStream, (void**)&ps);
         ok(hr == S_OK, "QueryInterface for IID_IPersistStream failed: %08x\n", hr);
         hr = IPersistStream_GetClassID(ps, &classid);
-        if (class[i].todo) {
-            todo_wine {
-                ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
-                ok(IsEqualGUID(&classid, class[i].clsid),
-                        "Expected class %s got %s\n", class[i].name, wine_dbgstr_guid(&classid));
-                hr = IPersistStream_IsDirty(ps);
-                ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
-            }
-        } else {
-            ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
-            ok(IsEqualGUID(&classid, class[i].clsid),
-                    "Expected class %s got %s\n", class[i].name, wine_dbgstr_guid(&classid));
-            hr = IPersistStream_IsDirty(ps);
-            ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
-        }
+        ok(hr == S_OK, "IPersistStream_GetClassID failed: %08x\n", hr);
+        ok(IsEqualGUID(&classid, class[i].clsid),
+                "Expected class %s got %s\n", class[i].name, wine_dbgstr_guid(&classid));
+        hr = IPersistStream_IsDirty(ps);
+        ok(hr == S_FALSE, "IPersistStream_IsDirty failed: %08x\n", hr);
 
         /* Unimplemented IPersistStream methods */
         hr = IPersistStream_GetSizeMax(ps, &size);
