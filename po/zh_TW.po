@@ -9407,7 +9407,7 @@ msgstr "處理參照時產生迴圈"
 msgid "Referral hop limit exceeded"
 msgstr "超出了參照躍點限制"
 
-#: attrib.rc:30 cmd.rc:327
+#: attrib.rc:30 cmd.rc:361
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9415,7 +9415,7 @@ msgstr ""
 "尚未實作\n"
 "\n"
 
-#: attrib.rc:31 cmd.rc:330
+#: attrib.rc:31 cmd.rc:364
 msgid "%1: File Not Found\n"
 msgstr "%1: 找不到檔案\n"
 
@@ -9496,11 +9496,20 @@ msgid "Clock"
 msgstr "時鐘"
 
 #: cmd.rc:40
+#, fuzzy
+#| msgid ""
+#| "CALL <batchfilename> is used within a batch file to execute commands\n"
+#| "from another batch file. When the batch file exits, control returns to\n"
+#| "the file which called it. The CALL command may supply parameters to the\n"
+#| "called procedure.\n"
+#| "\n"
+#| "Changes to default directory, environment variables etc made within a\n"
+#| "called procedure are inherited by the caller.\n"
 msgid ""
-"CALL <batchfilename> is used within a batch file to execute commands\n"
-"from another batch file. When the batch file exits, control returns to\n"
-"the file which called it. The CALL command may supply parameters to the\n"
-"called procedure.\n"
+"CALL <batchfilename> is used within a batch file to execute commands from\n"
+"another batch file. When the batch file exits, control returns to the file\n"
+"which called it. The CALL command may supply parameters to the called\n"
+"procedure.\n"
 "\n"
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
@@ -9513,7 +9522,7 @@ msgstr ""
 "在被呼叫的程序中變更預設目錄、環境變數等動作，\n"
 "將會由呼叫者所繼承。\n"
 
-#: cmd.rc:43
+#: cmd.rc:44
 #, fuzzy
 #| msgid ""
 #| "CD <dir> is the short version of CHDIR. It changes the current\n"
@@ -9525,42 +9534,52 @@ msgstr ""
 "CD <目錄> 是 CHDIR 的簡短版本。它會變更目前的\n"
 "預設目錄。\n"
 
-#: cmd.rc:44
+#: cmd.rc:47
 #, fuzzy
 #| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <目錄> 變更目前的預設目錄。\n"
 
-#: cmd.rc:46
+#: cmd.rc:50
 msgid "CLS clears the console screen.\n"
 msgstr "CLS 清空主控臺螢幕。\n"
 
-#: cmd.rc:48
+#: cmd.rc:53
 msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <檔名> 複製檔案。\n"
 
-#: cmd.rc:49
+#: cmd.rc:56
 msgid "CTTY changes the input/output device.\n"
 msgstr "CTTY 變更輸入/輸出裝置。\n"
 
-#: cmd.rc:50
+#: cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE 顯示或變更系統日期。\n"
 
-#: cmd.rc:51
+#: cmd.rc:62
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <檔名> 刪除檔案或一組檔案。\n"
 
-#: cmd.rc:52
+#: cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR 列出目錄的內容。\n"
 
-#: cmd.rc:62
+#: cmd.rc:75
+#, fuzzy
+#| msgid ""
+#| "ECHO <string> displays <string> on the current terminal device.\n"
+#| "\n"
+#| "ECHO ON causes all subsequent commands in a batch file to be displayed\n"
+#| "on the terminal device before they are executed.\n"
+#| "\n"
+#| "ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
+#| "default). The ECHO OFF command can be prevented from displaying by\n"
+#| "preceding it with an @ sign.\n"
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
-"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
-"on the terminal device before they are executed.\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed on\n"
+"the terminal device before they are executed.\n"
 "\n"
 "ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
 "default). The ECHO OFF command can be prevented from displaying by\n"
@@ -9575,11 +9594,11 @@ msgstr ""
 "OFF)。ECHO OFF 命令本身可以藉由前置 @ 符號\n"
 "來防止它被顯示。\n"
 
-#: cmd.rc:64
+#: cmd.rc:78
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <檔名> 刪除一個檔案或一組檔案。\n"
 
-#: cmd.rc:71
+#: cmd.rc:85
 #, fuzzy
 #| msgid ""
 #| "The FOR command is used to execute a command for each of a set of files.\n"
@@ -9596,16 +9615,28 @@ msgstr ""
 "\n"
 "語法：FOR %變數 IN (集合) DO 命令\n"
 
-#: cmd.rc:83
+#: cmd.rc:97
+#, fuzzy
+#| msgid ""
+#| "The GOTO command transfers execution to another statement within a\n"
+#| "batch file.\n"
+#| "\n"
+#| "The label which is the target of a GOTO may be up to 255 characters\n"
+#| "long but may not include spaces (this is different from other operating\n"
+#| "systems). If two or more identical labels exist in a batch file the\n"
+#| "first one will always be executed. Attempting to GOTO a nonexistent\n"
+#| "label terminates the batch file execution.\n"
+#| "\n"
+#| "GOTO has no effect when used interactively.\n"
 msgid ""
-"The GOTO command transfers execution to another statement within a\n"
-"batch file.\n"
+"The GOTO command transfers execution to another statement within a batch\n"
+"file.\n"
 "\n"
-"The label which is the target of a GOTO may be up to 255 characters\n"
-"long but may not include spaces (this is different from other operating\n"
-"systems). If two or more identical labels exist in a batch file the\n"
-"first one will always be executed. Attempting to GOTO a nonexistent\n"
-"label terminates the batch file execution.\n"
+"The label which is the target of a GOTO may be up to 255 characters long\n"
+"but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the first\n"
+"one will always be executed. Attempting to GOTO a nonexistent label\n"
+"terminates the batch file execution.\n"
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
@@ -9620,7 +9651,7 @@ msgstr ""
 "\n"
 "GOTO 用於互動模式中將沒有任何效果。\n"
 
-#: cmd.rc:86
+#: cmd.rc:101
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9628,7 +9659,7 @@ msgstr ""
 "HELP <命令> 顯示關於某一主題的簡明細節。\n"
 "HELP 不加引數時將顯示 CMD 所有的內建命令。\n"
 
-#: cmd.rc:96
+#: cmd.rc:111
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9648,7 +9679,7 @@ msgstr ""
 "在命令的第二種形式中，字串一和字串二必須位於雙引號之中。\n"
 "比較的動作是不分大小寫的。\n"
 
-#: cmd.rc:102
+#: cmd.rc:118
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9662,21 +9693,31 @@ msgstr ""
 "命令將向您提示詢問新的卷冊標貼用於給定的儲存裝置。\n"
 "您可以利用 VOL 命令來顯示磁碟卷冊標貼。\n"
 
-#: cmd.rc:105
+#: cmd.rc:121
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <名稱> 是 MKDIR 的縮寫版本。它會建立子目錄。\n"
 
-#: cmd.rc:106
+#: cmd.rc:123
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <名稱> 建立子目錄。\n"
 
-#: cmd.rc:113
+#: cmd.rc:131
+#, fuzzy
+#| msgid ""
+#| "MOVE relocates a file or directory to a new point within the file "
+#| "system.\n"
+#| "\n"
+#| "If the item being moved is a directory then all the files and "
+#| "subdirectories\n"
+#| "below the item are moved as well.\n"
+#| "\n"
+#| "MOVE fails if the old and new locations are on different DOS drive "
+#| "letters.\n"
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
-"If the item being moved is a directory then all the files and "
-"subdirectories\n"
-"below the item are moved as well.\n"
+"If the item being moved is a directory then all the files and\n"
+"subdirectories below the item are moved as well.\n"
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
@@ -9687,13 +9728,24 @@ msgstr ""
 "\n"
 "如果舊的和新的位置在不同的 DOS 儲存裝置代號之上，MOVE 將會失敗。\n"
 
-#: cmd.rc:124
+#: cmd.rc:142
+#, fuzzy
+#| msgid ""
+#| "PATH displays or changes the cmd search path.\n"
+#| "\n"
+#| "Entering PATH will display the current PATH setting (initially taken\n"
+#| "from the registry). To change the setting follow the\n"
+#| "PATH command with the new value.\n"
+#| "\n"
+#| "It is also possible to modify the PATH by using the PATH environment\n"
+#| "variable, for example:\n"
+#| "PATH %PATH%;c:\\temp\n"
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
-"Entering PATH will display the current PATH setting (initially taken\n"
-"from the registry). To change the setting follow the\n"
-"PATH command with the new value.\n"
+"Entering PATH will display the current PATH setting (initially taken from\n"
+"the registry). To change the setting follow the PATH command with the new\n"
+"value.\n"
 "\n"
 "It is also possible to modify the PATH by using the PATH environment\n"
 "variable, for example:\n"
@@ -9709,19 +9761,49 @@ msgstr ""
 "舉例來說：\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:130
+#: cmd.rc:148
+#, fuzzy
+#| msgid ""
+#| "PAUSE displays a message on the screen asking the user to press a key.\n"
+#| "\n"
+#| "It is mainly useful in batch files to allow the user to read the output\n"
+#| "of a previous command before it scrolls off the screen.\n"
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
-"It is mainly useful in batch files to allow the user to read the output\n"
-"of a previous command before it scrolls off the screen.\n"
+"It is mainly useful in batch files to allow the user to read the output of\n"
+"a previous command before it scrolls off the screen.\n"
 msgstr ""
 "PAUSE 在螢幕上顯示訊息以要求使用者按下一個鍵。\n"
 "\n"
 "主要用於批次檔中，以允許使用者在前一個命令的\n"
 "輸出捲動離開螢幕之前能夠去讀取它。\n"
 
-#: cmd.rc:151
+#: cmd.rc:169
+#, fuzzy
+#| msgid ""
+#| "PROMPT sets the command-line prompt.\n"
+#| "\n"
+#| "The string following the PROMPT command (and the space immediately "
+#| "after)\n"
+#| "appears at the beginning of the line when cmd is waiting for input.\n"
+#| "\n"
+#| "The following character strings have the special meaning shown:\n"
+#| "\n"
+#| "$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
+#| "$d    Current date        $e    Escape              $g    > sign\n"
+#| "$l    < sign              $n    Current drive       $p    Current path\n"
+#| "$q    Equal sign          $t    Current time        $v    cmd version\n"
+#| "\n"
+#| "Note that entering the PROMPT command without a prompt-string resets the\n"
+#| "prompt to the default, which is the current directory (which includes "
+#| "the\n"
+#| "current drive letter) followed by a greater-than (>) sign.\n"
+#| "(like a command PROMPT $p$g).\n"
+#| "\n"
+#| "The prompt can also be changed by altering the PROMPT environment "
+#| "variable,\n"
+#| "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9762,35 +9844,57 @@ msgstr ""
 "提示字串也可以經由改變 PROMPT 環境變數而變更，\n"
 "因此命令 SET PROMPT=text 與 PROMPT text 具有相同的效果。\n"
 
-#: cmd.rc:155
+#: cmd.rc:173
+#, fuzzy
+#| msgid ""
+#| "A command line beginning with REM (followed by a space) performs no\n"
+#| "action, and can therefore be used as a comment in a batch file.\n"
 msgid ""
-"A command line beginning with REM (followed by a space) performs no\n"
-"action, and can therefore be used as a comment in a batch file.\n"
+"A command line beginning with REM (followed by a space) performs no action,\n"
+"and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "以 REM 起始的命令列 (之後緊接空格) 不會進行任何\n"
 "動作，因而可以做為批次檔中的註釋。\n"
 
-#: cmd.rc:158
+#: cmd.rc:176
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <檔名> 是 RENAME 的簡短版本。它會重新命名檔案。\n"
 
-#: cmd.rc:159
+#: cmd.rc:178
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <檔名> 重新命名檔案。\n"
 
-#: cmd.rc:161
+#: cmd.rc:181
 #, fuzzy
 #| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <目錄> 是 RMDIR 的簡短版本。它會刪除子目錄。\n"
 
-#: cmd.rc:162
+#: cmd.rc:183
 #, fuzzy
 #| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <目錄> 刪除子目錄。\n"
 
-#: cmd.rc:206
+#: cmd.rc:229
+#, fuzzy
+#| msgid ""
+#| "SET displays or changes the cmd environment variables.\n"
+#| "\n"
+#| "SET without parameters shows all of the current environment.\n"
+#| "\n"
+#| "To create or modify an environment variable the syntax is:\n"
+#| "\n"
+#| "SET <variable>=<value>\n"
+#| "\n"
+#| "where <variable> and <value> are character strings. There must be no\n"
+#| "space before the equals sign, nor can the variable name\n"
+#| "have embedded spaces.\n"
+#| "\n"
+#| "Under Wine, the environment of the underlying operating system is\n"
+#| "included into the Win32 environment, there will generally therefore be\n"
+#| "many more values than in a native Win32 implementation. Note that it is\n"
+#| "not possible to affect the operating system environment from within cmd.\n"
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9800,14 +9904,13 @@ msgid ""
 "\n"
 "SET <variable>=<value>\n"
 "\n"
-"where <variable> and <value> are character strings. There must be no\n"
-"space before the equals sign, nor can the variable name\n"
-"have embedded spaces.\n"
+"where <variable> and <value> are character strings. There must be no space\n"
+"before the equals sign, nor can the variable name have embedded spaces.\n"
 "\n"
-"Under Wine, the environment of the underlying operating system is\n"
-"included into the Win32 environment, there will generally therefore be\n"
-"many more values than in a native Win32 implementation. Note that it is\n"
-"not possible to affect the operating system environment from within cmd.\n"
+"Under Wine, the environment of the underlying operating system is included\n"
+"into the Win32 environment, there will generally therefore be many more\n"
+"values than in a native Win32 implementation. Note that it is not possible\n"
+"to affect the operating system environment from within cmd.\n"
 msgstr ""
 "SET 顯示或變更 cmd 的環境變數。\n"
 "\n"
@@ -9825,44 +9928,79 @@ msgstr ""
 "還要多出更多變數值。要注意的是，從 cmd 之中是不可能\n"
 "去影響作業系統的環境。\n"
 
-#: cmd.rc:211
+#: cmd.rc:234
+#, fuzzy
+#| msgid ""
+#| "SHIFT is used in a batch file to remove one parameter from the head of\n"
+#| "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
+#| "if called from the command line.\n"
 msgid ""
-"SHIFT is used in a batch file to remove one parameter from the head of\n"
-"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
-"if called from the command line.\n"
+"SHIFT is used in a batch file to remove one parameter from the head of the\n"
+"list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
+"called from the command line.\n"
 msgstr ""
 "SHIFT 在批次檔中用來從參數列表的前端移除一個\n"
 "參數，因此參數 2 會成為參數 1... 等等。如果從命令列呼叫它，\n"
 "將不會有任何效果。\n"
 
-#: cmd.rc:188 start.rc:53
+#: cmd.rc:212 start.rc:56
+#, fuzzy
+#| msgid ""
+#| "Start a program, or open a document in the program normally used for "
+#| "files with that suffix.\n"
+#| "Usage:\n"
+#| "start [options] program_filename [...]\n"
+#| "start [options] document_filename\n"
+#| "\n"
+#| "Options:\n"
+#| "\"title\"      Specifies the title of the child windows.\n"
+#| "/d directory Start the program in the specified directory.\n"
+#| "/b           Don't create a new console for the program.\n"
+#| "/i           Start the program with fresh environment variables.\n"
+#| "/min         Start the program minimized.\n"
+#| "/max         Start the program maximized.\n"
+#| "/low         Start the program in the idle priority class.\n"
+#| "/normal      Start the program in the normal priority class.\n"
+#| "/high        Start the program in the high priority class.\n"
+#| "/realtime    Start the program in the realtime priority class.\n"
+#| "/abovenormal Start the program in the abovenormal priority class.\n"
+#| "/belownormal Start the program in the belownormal priority class.\n"
+#| "/node n      Start the program on the specified NUMA node.\n"
+#| "/affinity mask Start the program with the specified affinity mask.\n"
+#| "/wait        Wait for the started program to finish, then exit with its "
+#| "exit code.\n"
+#| "/unix        Use a Unix filename and start the file like windows "
+#| "explorer.\n"
+#| "/ProgIDOpen  Open a document using the specified progID.\n"
+#| "/?           Display this help and exit.\n"
 msgid ""
-"Start a program, or open a document in the program normally used for files "
+"Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
 "Usage:\n"
 "start [options] program_filename [...]\n"
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"\"title\"      Specifies the title of the child windows.\n"
-"/d directory Start the program in the specified directory.\n"
-"/b           Don't create a new console for the program.\n"
-"/i           Start the program with fresh environment variables.\n"
-"/min         Start the program minimized.\n"
-"/max         Start the program maximized.\n"
-"/low         Start the program in the idle priority class.\n"
-"/normal      Start the program in the normal priority class.\n"
-"/high        Start the program in the high priority class.\n"
-"/realtime    Start the program in the realtime priority class.\n"
-"/abovenormal Start the program in the abovenormal priority class.\n"
-"/belownormal Start the program in the belownormal priority class.\n"
-"/node n      Start the program on the specified NUMA node.\n"
+"\"title\"        Specifies the title of the child windows.\n"
+"/d directory   Start the program in the specified directory.\n"
+"/b             Don't create a new console for the program.\n"
+"/i             Start the program with fresh environment variables.\n"
+"/min           Start the program minimized.\n"
+"/max           Start the program maximized.\n"
+"/low           Start the program in the idle priority class.\n"
+"/normal        Start the program in the normal priority class.\n"
+"/high          Start the program in the high priority class.\n"
+"/realtime      Start the program in the realtime priority class.\n"
+"/abovenormal   Start the program in the abovenormal priority class.\n"
+"/belownormal   Start the program in the belownormal priority class.\n"
+"/node n        Start the program on the specified NUMA node.\n"
 "/affinity mask Start the program with the specified affinity mask.\n"
-"/wait        Wait for the started program to finish, then exit with its exit "
-"code.\n"
-"/unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the specified progID.\n"
-"/?           Display this help and exit.\n"
+"/wait          Wait for the started program to finish, then exit with its\n"
+"exit code.\n"
+"/unix          Use a Unix filename and start the file like windows\n"
+"explorer.\n"
+"/ProgIDOpen    Open a document using the specified progID.\n"
+"/?             Display this help and exit.\n"
 msgstr ""
 "啟始一個程式，或是利用關聯該檔案字尾的程式來開啟文件。\n"
 "用法：\n"
@@ -9889,23 +10027,27 @@ msgstr ""
 "/ProgIDOpen  使用指定的 progID 開啟文件。\n"
 "/?           顯示這份說明然後離開。\n"
 
-#: cmd.rc:213
+#: cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME 設定或顯示目前的系統時間。\n"
 
-#: cmd.rc:215
+#: cmd.rc:240
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <字串> 設定 cmd 視窗的視窗標題。\n"
 
-#: cmd.rc:219
+#: cmd.rc:244
+#, fuzzy
+#| msgid ""
+#| "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
+#| "if redirected). No check is made that the file is readable text.\n"
 msgid ""
-"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
-"if redirected). No check is made that the file is readable text.\n"
+"TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
+"redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <檔名> 將 <檔名> 的內容複製到主控臺裝置 (或是其他被\n"
 "重新導向的地方)。不會檢查該檔案是否為可讀的文字。\n"
 
-#: cmd.rc:228
+#: cmd.rc:253
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9923,23 +10065,27 @@ msgstr ""
 "\n"
 "驗證旗標在 Wine 中沒有任何功能。\n"
 
-#: cmd.rc:231
+#: cmd.rc:256
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER 顯示您正在執行的 cmd 版本。\n"
 
-#: cmd.rc:233
+#: cmd.rc:259
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL 顯示磁碟裝置的卷冊標貼。\n"
 
-#: cmd.rc:237
+#: cmd.rc:263
+#, fuzzy
+#| msgid ""
+#| "ENDLOCAL ends localization of environment changes in a batch file\n"
+#| "which were introduced by a preceding SETLOCAL.\n"
 msgid ""
-"ENDLOCAL ends localization of environment changes in a batch file\n"
-"which were introduced by a preceding SETLOCAL.\n"
+"ENDLOCAL ends localization of environment changes in a batch file which\n"
+"were introduced by a preceding SETLOCAL.\n"
 msgstr ""
 "ENDLOCAL 在批次檔中結束本地的環境變更\n"
 "而這些是由之前的 SETLOCAL 所引入。\n"
 
-#: cmd.rc:245
+#: cmd.rc:271
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9955,23 +10101,33 @@ msgstr ""
 "的結束，取決於誰先出現)，前一個環境的設定值\n"
 "則於該點被儲存。\n"
 
-#: cmd.rc:248
+#: cmd.rc:275
 #, fuzzy
 #| msgid ""
 #| "PUSHD <directoryname> saves the current directory onto a\n"
 #| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
-"PUSHD <directory> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
+"PUSHD <directory> saves the current directory onto a stack, and then\n"
+"changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <目錄名> 儲存目前的目錄到\n"
 "堆疊中，然後變更現行目錄到所給定的目錄。\n"
 
-#: cmd.rc:250
+#: cmd.rc:278
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD 變更現行目錄到上一個利用 PUSHD 儲存的目錄。\n"
 
-#: cmd.rc:258
+#: cmd.rc:288
+#, fuzzy
+#| msgid ""
+#| "ASSOC shows or modifies file extension associations.\n"
+#| "\n"
+#| "Syntax: ASSOC [.ext[=[fileType]]]\n"
+#| "\n"
+#| "ASSOC without parameters displays current file associations.\n"
+#| "If used with only a file extension, displays the current association.\n"
+#| "Specifying no file type after the equal sign removes the current "
+#| "association, if any.\n"
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -9979,7 +10135,7 @@ msgid ""
 "\n"
 "ASSOC without parameters displays current file associations.\n"
 "If used with only a file extension, displays the current association.\n"
-"Specifying no file type after the equal sign removes the current "
+"Specifying no file type after the equal sign removes the current\n"
 "association, if any.\n"
 msgstr ""
 "ASSOC 顯示或修改副檔名的關聯。\n"
@@ -9990,17 +10146,29 @@ msgstr ""
 "如果只使用副檔名，則顯示它目前的關聯。\n"
 "在等號之號如果沒有指定檔案類型就移除目前的任何關聯。\n"
 
-#: cmd.rc:269
+#: cmd.rc:300
+#, fuzzy
+#| msgid ""
+#| "FTYPE shows or modifies open commands associated with file types.\n"
+#| "\n"
+#| "Syntax: FTYPE [fileType[=[openCommand]]]\n"
+#| "\n"
+#| "Without parameters, shows the file types for which open command strings "
+#| "are currently defined.\n"
+#| "If used with only a file type, displays the associated open command "
+#| "string, if any.\n"
+#| "Specifying no open command after the equal sign removes the command "
+#| "string associated to the specified file type.\n"
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
 "Syntax: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
-"Without parameters, shows the file types for which open command strings are "
+"Without parameters, shows the file types for which open command strings are\n"
 "currently defined.\n"
-"If used with only a file type, displays the associated open command string, "
+"If used with only a file type, displays the associated open command string,\n"
 "if any.\n"
-"Specifying no open command after the equal sign removes the command string "
+"Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
 "FTYPE 顯示或修改開啟命令所關聯的檔案類型。\n"
@@ -10011,29 +10179,38 @@ msgstr ""
 "如果只使用檔案類型，則顯示關聯的任何開啟命令字串。\n"
 "在等號之號如果沒有指定檔案類型就移除對於給定檔案型態的任何關聯命令字串。\n"
 
-#: cmd.rc:271
+#: cmd.rc:303
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE 以分頁的方式顯示檔案的輸出或管線的輸入。\n"
 
-#: cmd.rc:275
+#: cmd.rc:308
+#, fuzzy
+#| msgid ""
+#| "CHOICE displays a text and waits, until the User\n"
+#| "presses an allowed Key from a selectable list.\n"
+#| "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgid ""
-"CHOICE displays a text and waits, until the User\n"
-"presses an allowed Key from a selectable list.\n"
+"CHOICE displays a text and waits, until the User presses an allowed Key\n"
+"from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 "CHOICE 顯示文字並等待，直到使用者\n"
 "從可選取的清單中按下允許的鍵。\n"
 "CHOICE 主要用來在批次檔中建構選單選擇。\n"
 
-#: cmd.rc:279
+#: cmd.rc:312
+#, fuzzy
+#| msgid ""
+#| "EXIT terminates the current command session and returns\n"
+#| "to the operating system or shell from which you invoked cmd.\n"
 msgid ""
-"EXIT terminates the current command session and returns\n"
-"to the operating system or shell from which you invoked cmd.\n"
+"EXIT terminates the current command session and returns to the operating\n"
+"system or shell from which you invoked cmd.\n"
 msgstr ""
 "EXIT 終止目前的命令作業階段並回到\n"
 "您從其調用 cmd 的作業系統或命令殼。\n"
 
-#: cmd.rc:317
+#: cmd.rc:351
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10113,110 +10290,110 @@ msgstr ""
 "\n"
 "輸入 HELP <命令> 以獲得關於以上任何命令的進一步資訊。\n"
 
-#: cmd.rc:319
+#: cmd.rc:353
 msgid "Are you sure?"
 msgstr "您確定嗎？"
 
-#: cmd.rc:320 xcopy.rc:43
+#: cmd.rc:354 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "Y"
 
-#: cmd.rc:321 xcopy.rc:44
+#: cmd.rc:355 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:322
+#: cmd.rc:356
 msgid "File association missing for extension %1\n"
 msgstr "缺少用於延伸檔名 %1 的檔案關聯\n"
 
-#: cmd.rc:323
+#: cmd.rc:357
 msgid "No open command associated with file type '%1'\n"
 msgstr "沒有與檔案類型 %1 相關聯的開啟命令\n"
 
-#: cmd.rc:324
+#: cmd.rc:358
 msgid "Overwrite %1?"
 msgstr "覆寫 %1？"
 
-#: cmd.rc:325
+#: cmd.rc:359
 msgid "More..."
 msgstr "更多..."
 
-#: cmd.rc:326
+#: cmd.rc:360
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "命令列於批次處理時可能會被截斷。使用：\n"
 
-#: cmd.rc:328
+#: cmd.rc:362
 msgid "Argument missing\n"
 msgstr "缺少引數\n"
 
-#: cmd.rc:329
+#: cmd.rc:363
 msgid "Syntax error\n"
 msgstr "語法錯誤\n"
 
-#: cmd.rc:331
+#: cmd.rc:365
 msgid "No help available for %1\n"
 msgstr "沒有關於 %1 的說明\n"
 
-#: cmd.rc:332
+#: cmd.rc:366
 msgid "Target to GOTO not found\n"
 msgstr "找不到 GOTO 的目標\n"
 
-#: cmd.rc:333
+#: cmd.rc:367
 msgid "Current Date is %1\n"
 msgstr "今天是 %1\n"
 
-#: cmd.rc:334
+#: cmd.rc:368
 msgid "Current Time is %1\n"
 msgstr "現在時間是 %1\n"
 
-#: cmd.rc:335
+#: cmd.rc:369
 msgid "Enter new date: "
 msgstr "輸入新日期："
 
-#: cmd.rc:336
+#: cmd.rc:370
 msgid "Enter new time: "
 msgstr "輸入新時間："
 
-#: cmd.rc:337
+#: cmd.rc:371
 msgid "Environment variable %1 not defined\n"
 msgstr "環境變數 %1 未定義\n"
 
-#: cmd.rc:338 xcopy.rc:41
+#: cmd.rc:372 xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "開啟 %1 失敗\n"
 
-#: cmd.rc:339
+#: cmd.rc:373
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "無法呼叫批次命令稿外部的批次標貼\n"
 
-#: cmd.rc:340 xcopy.rc:45
+#: cmd.rc:374 xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:341
+#: cmd.rc:375
 msgid "Delete %1?"
 msgstr "刪除 %1？"
 
-#: cmd.rc:342
+#: cmd.rc:376
 msgid "Echo is %1\n"
 msgstr "回應為 %1\n"
 
-#: cmd.rc:343
+#: cmd.rc:377
 msgid "Verify is %1\n"
 msgstr "驗證為 %1\n"
 
-#: cmd.rc:344
+#: cmd.rc:378
 msgid "Verify must be ON or OFF\n"
 msgstr "驗證必須為 ON 或 OFF\n"
 
-#: cmd.rc:345
+#: cmd.rc:379
 msgid "Parameter error\n"
 msgstr "參數錯誤\n"
 
-#: cmd.rc:346
+#: cmd.rc:380
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10224,74 +10401,74 @@ msgstr ""
 "卷冊序號是 %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:347
+#: cmd.rc:381
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "卷冊標貼 (11 個字元，<Enter> 表示沒有)？"
 
-#: cmd.rc:348
+#: cmd.rc:382
 msgid "PATH not found\n"
 msgstr "找不到 PATH\n"
 
-#: cmd.rc:349
+#: cmd.rc:383
 msgid "Press any key to continue... "
 msgstr "按下任何鍵繼續... "
 
-#: cmd.rc:350
+#: cmd.rc:384
 msgid "Wine Command Prompt"
 msgstr "Wine 命令提示符號"
 
-#: cmd.rc:351
+#: cmd.rc:385
 msgid "Microsoft Windows %1!S!\n"
 msgstr ""
 
-#: cmd.rc:352
+#: cmd.rc:386
 msgid "More? "
 msgstr "更多？"
 
-#: cmd.rc:353
+#: cmd.rc:387
 msgid "The input line is too long.\n"
 msgstr "輸入列太長。\n"
 
-#: cmd.rc:354
+#: cmd.rc:388
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "位於儲存裝置 %1!c! 的卷冊為 %2\n"
 
-#: cmd.rc:355
+#: cmd.rc:389
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "位於儲存裝置 %1!c! 的卷冊沒有任何標貼。\n"
 
-#: cmd.rc:356
+#: cmd.rc:390
 #, fuzzy
 msgid " (Yes|No)"
 msgstr " (是|否)"
 
-#: cmd.rc:357
+#: cmd.rc:391
 #, fuzzy
 msgid " (Yes|No|All)"
 msgstr " (是|否|全部)"
 
-#: cmd.rc:358
+#: cmd.rc:392
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "無法識別 %1 為內部、外部命令或是批次命令稿。\n"
 
-#: cmd.rc:359
+#: cmd.rc:393
 msgid "Division by zero error.\n"
 msgstr "被零除的錯誤。\n"
 
-#: cmd.rc:360
+#: cmd.rc:394
 msgid "Expected an operand.\n"
 msgstr "預期為一個運算元。\n"
 
-#: cmd.rc:361
+#: cmd.rc:395
 msgid "Expected an operator.\n"
 msgstr "預期為一個運算子。\n"
 
-#: cmd.rc:362
+#: cmd.rc:396
 msgid "Mismatch in parentheses.\n"
 msgstr "小括號不匹配。\n"
 
-#: cmd.rc:363
+#: cmd.rc:397
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -11901,7 +12078,7 @@ msgstr ""
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr ""
 
-#: start.rc:55
+#: start.rc:58
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11910,7 +12087,7 @@ msgstr ""
 "無法啟始應用程式，或是沒有與指定檔案關聯的應用程式。\n"
 "ShellExecuteEx 失敗"
 
-#: start.rc:57
+#: start.rc:60
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "無法翻譯指定的 Unix 檔名到 DOS 檔名。"
 

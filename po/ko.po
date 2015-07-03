@@ -9513,7 +9513,7 @@ msgstr "리퍼럴을 다루는 동안의 루프"
 msgid "Referral hop limit exceeded"
 msgstr "리퍼럴 홉 제한에 도달했습니다"
 
-#: attrib.rc:30 cmd.rc:327
+#: attrib.rc:30 cmd.rc:361
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9521,7 +9521,7 @@ msgstr ""
 "아직 구현되지 않았습니다\n"
 "\n"
 
-#: attrib.rc:31 cmd.rc:330
+#: attrib.rc:31 cmd.rc:364
 msgid "%1: File Not Found\n"
 msgstr "%1:파일을 찾을 수 없습니다\n"
 
@@ -9602,11 +9602,20 @@ msgid "Clock"
 msgstr "시계"
 
 #: cmd.rc:40
+#, fuzzy
+#| msgid ""
+#| "CALL <batchfilename> is used within a batch file to execute commands\n"
+#| "from another batch file. When the batch file exits, control returns to\n"
+#| "the file which called it. The CALL command may supply parameters to the\n"
+#| "called procedure.\n"
+#| "\n"
+#| "Changes to default directory, environment variables etc made within a\n"
+#| "called procedure are inherited by the caller.\n"
 msgid ""
-"CALL <batchfilename> is used within a batch file to execute commands\n"
-"from another batch file. When the batch file exits, control returns to\n"
-"the file which called it. The CALL command may supply parameters to the\n"
-"called procedure.\n"
+"CALL <batchfilename> is used within a batch file to execute commands from\n"
+"another batch file. When the batch file exits, control returns to the file\n"
+"which called it. The CALL command may supply parameters to the called\n"
+"procedure.\n"
 "\n"
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
@@ -9619,7 +9628,7 @@ msgstr ""
 "된\n"
 "과정에만 적용됩니다.\n"
 
-#: cmd.rc:43
+#: cmd.rc:44
 #, fuzzy
 #| msgid ""
 #| "CD <dir> is the short version of CHDIR. It changes the current\n"
@@ -9631,42 +9640,52 @@ msgstr ""
 "CD <디렉토리> 는  CHDIR의 단축버젼입니다. 현재 기본 디렉토리를\n"
 "바꿉니다.\n"
 
-#: cmd.rc:44
+#: cmd.rc:47
 #, fuzzy
 #| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <디렉토리> 는 현재 기본 디렉토리를 바꿉니다.\n"
 
-#: cmd.rc:46
+#: cmd.rc:50
 msgid "CLS clears the console screen.\n"
 msgstr "CLS는 콘솔 화면을 깨끗하게 합니다.\n"
 
-#: cmd.rc:48
+#: cmd.rc:53
 msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <파일이름> 은 파일을 복사합니다.\n"
 
-#: cmd.rc:49
+#: cmd.rc:56
 msgid "CTTY changes the input/output device.\n"
 msgstr "CTTY 는 입력/출력 장치를 바꿉니다.\n"
 
-#: cmd.rc:50
+#: cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE 는 시스템 날짜를 보여주거나 바꿉니다.\n"
 
-#: cmd.rc:51
+#: cmd.rc:62
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <파일이름> 은 하나의 파일이나 여러 파일을 지웁니다.\n"
 
-#: cmd.rc:52
+#: cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR 는 디렉토리의 내용을 보여줍니다.\n"
 
-#: cmd.rc:62
+#: cmd.rc:75
+#, fuzzy
+#| msgid ""
+#| "ECHO <string> displays <string> on the current terminal device.\n"
+#| "\n"
+#| "ECHO ON causes all subsequent commands in a batch file to be displayed\n"
+#| "on the terminal device before they are executed.\n"
+#| "\n"
+#| "ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
+#| "default). The ECHO OFF command can be prevented from displaying by\n"
+#| "preceding it with an @ sign.\n"
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
-"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
-"on the terminal device before they are executed.\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed on\n"
+"the terminal device before they are executed.\n"
 "\n"
 "ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
 "default). The ECHO OFF command can be prevented from displaying by\n"
@@ -9680,11 +9699,11 @@ msgstr ""
 "ECHO OFF 는 ECHO ON과 반대의 일을 합니다. (ECHO 는 OFF가 기본)\n"
 "ECHO OFF 명령은  신호가 진행되는 걸 보여주는걸 막습니다.\n"
 
-#: cmd.rc:64
+#: cmd.rc:78
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <파일이름>은 하나의 파일이냐 여러 파일을 지웁니다.\n"
 
-#: cmd.rc:71
+#: cmd.rc:85
 #, fuzzy
 #| msgid ""
 #| "The FOR command is used to execute a command for each of a set of files.\n"
@@ -9701,16 +9720,28 @@ msgstr ""
 "\n"
 "문법: FOR 변수 IN (set) DO 명령\n"
 
-#: cmd.rc:83
+#: cmd.rc:97
+#, fuzzy
+#| msgid ""
+#| "The GOTO command transfers execution to another statement within a\n"
+#| "batch file.\n"
+#| "\n"
+#| "The label which is the target of a GOTO may be up to 255 characters\n"
+#| "long but may not include spaces (this is different from other operating\n"
+#| "systems). If two or more identical labels exist in a batch file the\n"
+#| "first one will always be executed. Attempting to GOTO a nonexistent\n"
+#| "label terminates the batch file execution.\n"
+#| "\n"
+#| "GOTO has no effect when used interactively.\n"
 msgid ""
-"The GOTO command transfers execution to another statement within a\n"
-"batch file.\n"
+"The GOTO command transfers execution to another statement within a batch\n"
+"file.\n"
 "\n"
-"The label which is the target of a GOTO may be up to 255 characters\n"
-"long but may not include spaces (this is different from other operating\n"
-"systems). If two or more identical labels exist in a batch file the\n"
-"first one will always be executed. Attempting to GOTO a nonexistent\n"
-"label terminates the batch file execution.\n"
+"The label which is the target of a GOTO may be up to 255 characters long\n"
+"but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the first\n"
+"one will always be executed. Attempting to GOTO a nonexistent label\n"
+"terminates the batch file execution.\n"
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
@@ -9724,7 +9755,7 @@ msgstr ""
 "\n"
 "GOTO는 대화식으로 사용될 경우 아무 일도 안합니다.\n"
 
-#: cmd.rc:86
+#: cmd.rc:101
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9732,7 +9763,7 @@ msgstr ""
 "HELP <명령>은  주제의 간단한 도움말 정보를 보여줍니 다.\n"
 "아무 매개변수가 없는 HELP눈 CMD의 모든 내장 명령을 보여줍니다.\n"
 
-#: cmd.rc:96
+#: cmd.rc:111
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9752,7 +9783,7 @@ msgstr ""
 "명령의 두번째 형식에서, string1 과 string2는 반드시 2개의 따옴표로\n"
 "둘려놓아야 합니다.이 비교는 대소문자를 구분하지 않습니다.\n"
 
-#: cmd.rc:102
+#: cmd.rc:118
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9766,22 +9797,32 @@ msgstr ""
 "이 명령은 당신이 주어진 드라이브에 새 볼륨 라벨울 넣을수 있도록 할것이다.\n"
 "VOL 명령으로 디스크 볼륨 라벨을 볼 수 있다.\n"
 
-#: cmd.rc:105
+#: cmd.rc:121
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr ""
 "MD <아름> 운 MKDIR의 단축 버젼입니다. 이것은 하위 디렉토리를 만듭니다 .\n"
 
-#: cmd.rc:106
+#: cmd.rc:123
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <명령> 운 하위 디렉토리를 만듭니다.\n"
 
-#: cmd.rc:113
+#: cmd.rc:131
+#, fuzzy
+#| msgid ""
+#| "MOVE relocates a file or directory to a new point within the file "
+#| "system.\n"
+#| "\n"
+#| "If the item being moved is a directory then all the files and "
+#| "subdirectories\n"
+#| "below the item are moved as well.\n"
+#| "\n"
+#| "MOVE fails if the old and new locations are on different DOS drive "
+#| "letters.\n"
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
-"If the item being moved is a directory then all the files and "
-"subdirectories\n"
-"below the item are moved as well.\n"
+"If the item being moved is a directory then all the files and\n"
+"subdirectories below the item are moved as well.\n"
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
@@ -9792,13 +9833,24 @@ msgstr ""
 "MOVE는 만약 오래되고 새로운 파일이 다른 도스 드라이브 문자를 가지고 있다면\n"
 "실패합니다.\n"
 
-#: cmd.rc:124
+#: cmd.rc:142
+#, fuzzy
+#| msgid ""
+#| "PATH displays or changes the cmd search path.\n"
+#| "\n"
+#| "Entering PATH will display the current PATH setting (initially taken\n"
+#| "from the registry). To change the setting follow the\n"
+#| "PATH command with the new value.\n"
+#| "\n"
+#| "It is also possible to modify the PATH by using the PATH environment\n"
+#| "variable, for example:\n"
+#| "PATH %PATH%;c:\\temp\n"
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
-"Entering PATH will display the current PATH setting (initially taken\n"
-"from the registry). To change the setting follow the\n"
-"PATH command with the new value.\n"
+"Entering PATH will display the current PATH setting (initially taken from\n"
+"the registry). To change the setting follow the PATH command with the new\n"
+"value.\n"
 "\n"
 "It is also possible to modify the PATH by using the PATH environment\n"
 "variable, for example:\n"
@@ -9814,19 +9866,49 @@ msgstr ""
 ",예를 들어:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:130
+#: cmd.rc:148
+#, fuzzy
+#| msgid ""
+#| "PAUSE displays a message on the screen asking the user to press a key.\n"
+#| "\n"
+#| "It is mainly useful in batch files to allow the user to read the output\n"
+#| "of a previous command before it scrolls off the screen.\n"
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
-"It is mainly useful in batch files to allow the user to read the output\n"
-"of a previous command before it scrolls off the screen.\n"
+"It is mainly useful in batch files to allow the user to read the output of\n"
+"a previous command before it scrolls off the screen.\n"
 msgstr ""
 "PAUSE 는 사용자가 아무 키나 누르라는 메세지를 화면에 보여줍니다.\n"
 "\n"
 "사용자가 화면에서 스크롤 하기 전에 이전 명령의 결과를 읽을 수 있도록\n"
 "배치파일에서 주로 유용하게 사용합니다.\n"
 
-#: cmd.rc:151
+#: cmd.rc:169
+#, fuzzy
+#| msgid ""
+#| "PROMPT sets the command-line prompt.\n"
+#| "\n"
+#| "The string following the PROMPT command (and the space immediately "
+#| "after)\n"
+#| "appears at the beginning of the line when cmd is waiting for input.\n"
+#| "\n"
+#| "The following character strings have the special meaning shown:\n"
+#| "\n"
+#| "$$    Dollar sign         $_    Linefeed            $b    Pipe sign (|)\n"
+#| "$d    Current date        $e    Escape              $g    > sign\n"
+#| "$l    < sign              $n    Current drive       $p    Current path\n"
+#| "$q    Equal sign          $t    Current time        $v    cmd version\n"
+#| "\n"
+#| "Note that entering the PROMPT command without a prompt-string resets the\n"
+#| "prompt to the default, which is the current directory (which includes "
+#| "the\n"
+#| "current drive letter) followed by a greater-than (>) sign.\n"
+#| "(like a command PROMPT $p$g).\n"
+#| "\n"
+#| "The prompt can also be changed by altering the PROMPT environment "
+#| "variable,\n"
+#| "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9868,38 +9950,60 @@ msgstr ""
 "이 프롬프트는 PROMPT 환경 변수 값의 변경에 의해 바뀔 수 있습니다,\n"
 "그래서 명령 'SET PROMPT=텍스트'는 'PROMPT 텍스트와 같은 일을 합니다.\n"
 
-#: cmd.rc:155
+#: cmd.rc:173
+#, fuzzy
+#| msgid ""
+#| "A command line beginning with REM (followed by a space) performs no\n"
+#| "action, and can therefore be used as a comment in a batch file.\n"
 msgid ""
-"A command line beginning with REM (followed by a space) performs no\n"
-"action, and can therefore be used as a comment in a batch file.\n"
+"A command line beginning with REM (followed by a space) performs no action,\n"
+"and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "REM으로 시작하는 명령 라인 (공백뒤에 오는) 은 아무일도 안합니다\n"
 ", 그러므로 배치 파일에서 주석으로 사용됩니다.\n"
 
-#: cmd.rc:158
+#: cmd.rc:176
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <파일이름> 은    REANME의 단축 버젼입니다.이것은 파일의 이름을 바꿉니"
 "다.\n"
 
-#: cmd.rc:159
+#: cmd.rc:178
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <파일이름> 은 파일의 이름을 바꿈.\n"
 
-#: cmd.rc:161
+#: cmd.rc:181
 #, fuzzy
 #| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr ""
 "RD <디렉토리> 는 RMDIR의 단축버젼입니다. 이것은 하위 디렉토리를 지웁니다.\n"
 
-#: cmd.rc:162
+#: cmd.rc:183
 #, fuzzy
 #| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <디렉토리>는 하위 디렉토리를 지움.\n"
 
-#: cmd.rc:206
+#: cmd.rc:229
+#, fuzzy
+#| msgid ""
+#| "SET displays or changes the cmd environment variables.\n"
+#| "\n"
+#| "SET without parameters shows all of the current environment.\n"
+#| "\n"
+#| "To create or modify an environment variable the syntax is:\n"
+#| "\n"
+#| "SET <variable>=<value>\n"
+#| "\n"
+#| "where <variable> and <value> are character strings. There must be no\n"
+#| "space before the equals sign, nor can the variable name\n"
+#| "have embedded spaces.\n"
+#| "\n"
+#| "Under Wine, the environment of the underlying operating system is\n"
+#| "included into the Win32 environment, there will generally therefore be\n"
+#| "many more values than in a native Win32 implementation. Note that it is\n"
+#| "not possible to affect the operating system environment from within cmd.\n"
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9909,14 +10013,13 @@ msgid ""
 "\n"
 "SET <variable>=<value>\n"
 "\n"
-"where <variable> and <value> are character strings. There must be no\n"
-"space before the equals sign, nor can the variable name\n"
-"have embedded spaces.\n"
+"where <variable> and <value> are character strings. There must be no space\n"
+"before the equals sign, nor can the variable name have embedded spaces.\n"
 "\n"
-"Under Wine, the environment of the underlying operating system is\n"
-"included into the Win32 environment, there will generally therefore be\n"
-"many more values than in a native Win32 implementation. Note that it is\n"
-"not possible to affect the operating system environment from within cmd.\n"
+"Under Wine, the environment of the underlying operating system is included\n"
+"into the Win32 environment, there will generally therefore be many more\n"
+"values than in a native Win32 implementation. Note that it is not possible\n"
+"to affect the operating system environment from within cmd.\n"
 msgstr ""
 "SET은 cmd 환경 변수 보여주거나 바꿉니다.\n"
 "\n"
@@ -9934,44 +10037,79 @@ msgstr ""
 "의미합니다. 이것은 cmd안에서 운영체제 환경의 영향을 미치는 것은\n"
 "가능하지 않다는 것을 기억하시오.\n"
 
-#: cmd.rc:211
+#: cmd.rc:234
+#, fuzzy
+#| msgid ""
+#| "SHIFT is used in a batch file to remove one parameter from the head of\n"
+#| "the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
+#| "if called from the command line.\n"
 msgid ""
-"SHIFT is used in a batch file to remove one parameter from the head of\n"
-"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
-"if called from the command line.\n"
+"SHIFT is used in a batch file to remove one parameter from the head of the\n"
+"list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
+"called from the command line.\n"
 msgstr ""
 "SHIFT 는 배치파일에서 매개변수의 첫번째 것을 지우는데 사용한다,\n"
 "그래서 매개변수 2가 매개변수 1이 된다. 이것은 명령 라인에서 사용했을\n"
 "경우 아무 일도 안 합니다.\n"
 
-#: cmd.rc:188 start.rc:53
+#: cmd.rc:212 start.rc:56
+#, fuzzy
+#| msgid ""
+#| "Start a program, or open a document in the program normally used for "
+#| "files with that suffix.\n"
+#| "Usage:\n"
+#| "start [options] program_filename [...]\n"
+#| "start [options] document_filename\n"
+#| "\n"
+#| "Options:\n"
+#| "\"title\"      Specifies the title of the child windows.\n"
+#| "/d directory Start the program in the specified directory.\n"
+#| "/b           Don't create a new console for the program.\n"
+#| "/i           Start the program with fresh environment variables.\n"
+#| "/min         Start the program minimized.\n"
+#| "/max         Start the program maximized.\n"
+#| "/low         Start the program in the idle priority class.\n"
+#| "/normal      Start the program in the normal priority class.\n"
+#| "/high        Start the program in the high priority class.\n"
+#| "/realtime    Start the program in the realtime priority class.\n"
+#| "/abovenormal Start the program in the abovenormal priority class.\n"
+#| "/belownormal Start the program in the belownormal priority class.\n"
+#| "/node n      Start the program on the specified NUMA node.\n"
+#| "/affinity mask Start the program with the specified affinity mask.\n"
+#| "/wait        Wait for the started program to finish, then exit with its "
+#| "exit code.\n"
+#| "/unix        Use a Unix filename and start the file like windows "
+#| "explorer.\n"
+#| "/ProgIDOpen  Open a document using the specified progID.\n"
+#| "/?           Display this help and exit.\n"
 msgid ""
-"Start a program, or open a document in the program normally used for files "
+"Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
 "Usage:\n"
 "start [options] program_filename [...]\n"
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"\"title\"      Specifies the title of the child windows.\n"
-"/d directory Start the program in the specified directory.\n"
-"/b           Don't create a new console for the program.\n"
-"/i           Start the program with fresh environment variables.\n"
-"/min         Start the program minimized.\n"
-"/max         Start the program maximized.\n"
-"/low         Start the program in the idle priority class.\n"
-"/normal      Start the program in the normal priority class.\n"
-"/high        Start the program in the high priority class.\n"
-"/realtime    Start the program in the realtime priority class.\n"
-"/abovenormal Start the program in the abovenormal priority class.\n"
-"/belownormal Start the program in the belownormal priority class.\n"
-"/node n      Start the program on the specified NUMA node.\n"
+"\"title\"        Specifies the title of the child windows.\n"
+"/d directory   Start the program in the specified directory.\n"
+"/b             Don't create a new console for the program.\n"
+"/i             Start the program with fresh environment variables.\n"
+"/min           Start the program minimized.\n"
+"/max           Start the program maximized.\n"
+"/low           Start the program in the idle priority class.\n"
+"/normal        Start the program in the normal priority class.\n"
+"/high          Start the program in the high priority class.\n"
+"/realtime      Start the program in the realtime priority class.\n"
+"/abovenormal   Start the program in the abovenormal priority class.\n"
+"/belownormal   Start the program in the belownormal priority class.\n"
+"/node n        Start the program on the specified NUMA node.\n"
 "/affinity mask Start the program with the specified affinity mask.\n"
-"/wait        Wait for the started program to finish, then exit with its exit "
-"code.\n"
-"/unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the specified progID.\n"
-"/?           Display this help and exit.\n"
+"/wait          Wait for the started program to finish, then exit with its\n"
+"exit code.\n"
+"/unix          Use a Unix filename and start the file like windows\n"
+"explorer.\n"
+"/ProgIDOpen    Open a document using the specified progID.\n"
+"/?             Display this help and exit.\n"
 msgstr ""
 "프로그램을 시작하거나, 파일 확장자에서 보통 사용하는 프로그램으로 문서를 엽니"
 "다\n"
@@ -10001,23 +10139,27 @@ msgstr ""
 "/ProgIDOpen  지정한 progID를 사용해서 문서를 엽니다.\n"
 "/?           도움말을 보여주고 끝냅니다.\n"
 
-#: cmd.rc:213
+#: cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME 은 현재 시스템 시간을 보여 줍니다.\n"
 
-#: cmd.rc:215
+#: cmd.rc:240
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <문자열>은 cmd창의 창 제목을 설정합니다.\n"
 
-#: cmd.rc:219
+#: cmd.rc:244
+#, fuzzy
+#| msgid ""
+#| "TYPE <filename> copies <filename> to the console device (or elsewhere\n"
+#| "if redirected). No check is made that the file is readable text.\n"
 msgid ""
-"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
-"if redirected). No check is made that the file is readable text.\n"
+"TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
+"redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <파일이름>  <파일 이름>를 콘솔 장치로 복사 (만약 방향이 재정의 된다면\n"
 "어디나). 아무 오류가 없으면 그 파일을 읽을 수 있는 텍스트입니다.\n"
 
-#: cmd.rc:228
+#: cmd.rc:253
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -10036,23 +10178,27 @@ msgstr ""
 "\n"
 "이 검증 플래그는 Wine에서는 아무 기능을 안함.\n"
 
-#: cmd.rc:231
+#: cmd.rc:256
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER  당신이 실행시킨 cmd 버젼 보여줌.\n"
 
-#: cmd.rc:233
+#: cmd.rc:259
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL 은 디스크 장치의 볼륨 라벨을 보여줍니다.\n"
 
-#: cmd.rc:237
+#: cmd.rc:263
+#, fuzzy
+#| msgid ""
+#| "ENDLOCAL ends localization of environment changes in a batch file\n"
+#| "which were introduced by a preceding SETLOCAL.\n"
 msgid ""
-"ENDLOCAL ends localization of environment changes in a batch file\n"
-"which were introduced by a preceding SETLOCAL.\n"
+"ENDLOCAL ends localization of environment changes in a batch file which\n"
+"were introduced by a preceding SETLOCAL.\n"
 msgstr ""
 "ENDLOCAL은  배치파일에서 바꾼 지역 환경변수를 끝냅니다\n"
 "이것은 이전의 SETLOCAL로 시작되었습니다.\n"
 
-#: cmd.rc:245
+#: cmd.rc:271
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -10067,23 +10213,33 @@ msgstr ""
 "다음 ENDLOCAL이 나올 때까지만 보존되고(아니면 파일의 끝이든지,\n"
 "어느 똑이든 먼저 오는 지점이),이전의 환경 설정이 복원되는 지정입니다.\n"
 
-#: cmd.rc:248
+#: cmd.rc:275
 #, fuzzy
 #| msgid ""
 #| "PUSHD <directoryname> saves the current directory onto a\n"
 #| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
-"PUSHD <directory> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
+"PUSHD <directory> saves the current directory onto a stack, and then\n"
+"changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <디렉토리 이름> 은 현재 디렉토리를 스택에 저장한다.\n"
 "그리고 현재 디렉토리를 요청한 디렉토리로 바꾼다.\n"
 
-#: cmd.rc:250
+#: cmd.rc:278
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr "POPD는 현재 디렉토리를 PUSH로 마지막으로 저장했던 것으로 바꿉니다.\n"
 
-#: cmd.rc:258
+#: cmd.rc:288
+#, fuzzy
+#| msgid ""
+#| "ASSOC shows or modifies file extension associations.\n"
+#| "\n"
+#| "Syntax: ASSOC [.ext[=[fileType]]]\n"
+#| "\n"
+#| "ASSOC without parameters displays current file associations.\n"
+#| "If used with only a file extension, displays the current association.\n"
+#| "Specifying no file type after the equal sign removes the current "
+#| "association, if any.\n"
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -10091,7 +10247,7 @@ msgid ""
 "\n"
 "ASSOC without parameters displays current file associations.\n"
 "If used with only a file extension, displays the current association.\n"
-"Specifying no file type after the equal sign removes the current "
+"Specifying no file type after the equal sign removes the current\n"
 "association, if any.\n"
 msgstr ""
 "ASSOC는 파일 확장자 연결을 보여주거나 고칩니다.\n"
@@ -10103,17 +10259,29 @@ msgstr ""
 "등호(=) 다음에 파일 종류가 지정되지 않으면 현재 연결상태에 가능한 것을 제거합"
 "니다.\n"
 
-#: cmd.rc:269
+#: cmd.rc:300
+#, fuzzy
+#| msgid ""
+#| "FTYPE shows or modifies open commands associated with file types.\n"
+#| "\n"
+#| "Syntax: FTYPE [fileType[=[openCommand]]]\n"
+#| "\n"
+#| "Without parameters, shows the file types for which open command strings "
+#| "are currently defined.\n"
+#| "If used with only a file type, displays the associated open command "
+#| "string, if any.\n"
+#| "Specifying no open command after the equal sign removes the command "
+#| "string associated to the specified file type.\n"
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
 "Syntax: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
-"Without parameters, shows the file types for which open command strings are "
+"Without parameters, shows the file types for which open command strings are\n"
 "currently defined.\n"
-"If used with only a file type, displays the associated open command string, "
+"If used with only a file type, displays the associated open command string,\n"
 "if any.\n"
-"Specifying no open command after the equal sign removes the command string "
+"Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
 "FTYPE은 파일 형식과 관련한 열기 명령을 보여주거나 고침\n"
@@ -10126,30 +10294,39 @@ msgstr ""
 "등호(=) 다음에 열기 명령이 지정되지 않으면 지정된 파일 형식에 연결된 명령어 "
 "문자열을 제거 합니다.\n"
 
-#: cmd.rc:271
+#: cmd.rc:303
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr ""
 "MORE는 파일 출력을 보여주거나 페이지의 파이프로도 된 입력을 보여준다.\n"
 
-#: cmd.rc:275
+#: cmd.rc:308
+#, fuzzy
+#| msgid ""
+#| "CHOICE displays a text and waits, until the User\n"
+#| "presses an allowed Key from a selectable list.\n"
+#| "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgid ""
-"CHOICE displays a text and waits, until the User\n"
-"presses an allowed Key from a selectable list.\n"
+"CHOICE displays a text and waits, until the User presses an allowed Key\n"
+"from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
 "CHOICE는 텍스트를 보여주고, 사용자가 선택된 목록에서\n"
 "허용하는 키를 누를 때까지 기다립니다.\n"
 "CHOICE는 주로 배치 파일에서 메뉴 선택을 넣는 데 사용됩니다.\n"
 
-#: cmd.rc:279
+#: cmd.rc:312
+#, fuzzy
+#| msgid ""
+#| "EXIT terminates the current command session and returns\n"
+#| "to the operating system or shell from which you invoked cmd.\n"
 msgid ""
-"EXIT terminates the current command session and returns\n"
-"to the operating system or shell from which you invoked cmd.\n"
+"EXIT terminates the current command session and returns to the operating\n"
+"system or shell from which you invoked cmd.\n"
 msgstr ""
 "EXIT는 현재 명령 세션을 중단시키고 운영체제로 돌아가거나 cmd를\n"
 "호출한 셀로 돌아갑니다.\n"
 
-#: cmd.rc:317
+#: cmd.rc:351
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10229,110 +10406,110 @@ msgstr ""
 "\n"
 "HELP <명령>을 치면 그 명령의 상세한 정보를 보여줍니다.\n"
 
-#: cmd.rc:319
+#: cmd.rc:353
 msgid "Are you sure?"
 msgstr "당신은 확신합니까?"
 
-#: cmd.rc:320 xcopy.rc:43
+#: cmd.rc:354 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "예"
 
-#: cmd.rc:321 xcopy.rc:44
+#: cmd.rc:355 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "아니오"
 
-#: cmd.rc:322
+#: cmd.rc:356
 msgid "File association missing for extension %1\n"
 msgstr "이 파일확장자 %1에 연결된 풀그림이 없습니다\n"
 
-#: cmd.rc:323
+#: cmd.rc:357
 msgid "No open command associated with file type '%1'\n"
 msgstr "이 파일 형식 '%1'과 연결된 어떠한 명령도 없습니다'\n"
 
-#: cmd.rc:324
+#: cmd.rc:358
 msgid "Overwrite %1?"
 msgstr "%1을(를) 덮어쓰겠습니까?"
 
-#: cmd.rc:325
+#: cmd.rc:359
 msgid "More..."
 msgstr "더 많이..."
 
-#: cmd.rc:326
+#: cmd.rc:360
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "배치 작업의 줄은 아마도 불완전한 것 같습니다. 사용법:\n"
 
-#: cmd.rc:328
+#: cmd.rc:362
 msgid "Argument missing\n"
 msgstr "인수가 없습니다\n"
 
-#: cmd.rc:329
+#: cmd.rc:363
 msgid "Syntax error\n"
 msgstr "문법 오류\n"
 
-#: cmd.rc:331
+#: cmd.rc:365
 msgid "No help available for %1\n"
 msgstr "%1를 위한 어떠한 도움말도 찾을 수 없습니다\n"
 
-#: cmd.rc:332
+#: cmd.rc:366
 msgid "Target to GOTO not found\n"
 msgstr "GOTO 타겟을 찾을 수 없습니다\n"
 
-#: cmd.rc:333
+#: cmd.rc:367
 msgid "Current Date is %1\n"
 msgstr "현재 날짜는 %1임\n"
 
-#: cmd.rc:334
+#: cmd.rc:368
 msgid "Current Time is %1\n"
 msgstr "현재 시간은 %1임\n"
 
-#: cmd.rc:335
+#: cmd.rc:369
 msgid "Enter new date: "
 msgstr "새 날짜 입력: "
 
-#: cmd.rc:336
+#: cmd.rc:370
 msgid "Enter new time: "
 msgstr "새 시간 입력: "
 
-#: cmd.rc:337
+#: cmd.rc:371
 msgid "Environment variable %1 not defined\n"
 msgstr "환경 변수 %1 는 정의되지 않았습니다\n"
 
-#: cmd.rc:338 xcopy.rc:41
+#: cmd.rc:372 xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "'%1' 열기 실패\n"
 
-#: cmd.rc:339
+#: cmd.rc:373
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "배치 스크립트 밖의 배치 라벨은 불러올수 없습니다\n"
 
-#: cmd.rc:340 xcopy.rc:45
+#: cmd.rc:374 xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "모두"
 
-#: cmd.rc:341
+#: cmd.rc:375
 msgid "Delete %1?"
 msgstr "%1을(를) 지우겠습니까?"
 
-#: cmd.rc:342
+#: cmd.rc:376
 msgid "Echo is %1\n"
 msgstr "에코(Echo)는 %1임\n"
 
-#: cmd.rc:343
+#: cmd.rc:377
 msgid "Verify is %1\n"
 msgstr "검증(Verify)은 %1임\n"
 
-#: cmd.rc:344
+#: cmd.rc:378
 msgid "Verify must be ON or OFF\n"
 msgstr "검증(Verify)은 반드시 ON 이나 OFF가 되어야 합니다\n"
 
-#: cmd.rc:345
+#: cmd.rc:379
 msgid "Parameter error\n"
 msgstr "매개변수 오류\n"
 
-#: cmd.rc:346
+#: cmd.rc:380
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10340,72 +10517,72 @@ msgstr ""
 "볼륨 시리얼 번호는 %1!04x!-%2!04x!임\n"
 "\n"
 
-#: cmd.rc:347
+#: cmd.rc:381
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "볼륨 라벨 (11 글자, ENTER는 없음과 같음)?"
 
-#: cmd.rc:348
+#: cmd.rc:382
 msgid "PATH not found\n"
 msgstr "PATH를 찾을 수 없습니다\n"
 
-#: cmd.rc:349
+#: cmd.rc:383
 msgid "Press any key to continue... "
 msgstr "아무 키나 누르면 진행함... "
 
-#: cmd.rc:350
+#: cmd.rc:384
 msgid "Wine Command Prompt"
 msgstr "Wine 명령 프롬프트"
 
-#: cmd.rc:351
+#: cmd.rc:385
 msgid "Microsoft Windows %1!S!\n"
 msgstr ""
 
-#: cmd.rc:352
+#: cmd.rc:386
 msgid "More? "
 msgstr "더? "
 
-#: cmd.rc:353
+#: cmd.rc:387
 msgid "The input line is too long.\n"
 msgstr "이 출력 줄은 너무 깁니다.\n"
 
-#: cmd.rc:354
+#: cmd.rc:388
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "드라이브 %1!c!의 볼륨은 %2임\n"
 
-#: cmd.rc:355
+#: cmd.rc:389
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "드라이브 %1!c!는 라벨을 가지고 있지 않습니다.\n"
 
-#: cmd.rc:356
+#: cmd.rc:390
 msgid " (Yes|No)"
 msgstr "(예(Y)|아니오(N))"
 
-#: cmd.rc:357
+#: cmd.rc:391
 msgid " (Yes|No|All)"
 msgstr "(예(Y)|아니오(N)|모두(A))"
 
-#: cmd.rc:358
+#: cmd.rc:392
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "'%1'을 내부나 외부 명령어,나 배치 스크립트로 인식할 수 없습니다.\n"
 
-#: cmd.rc:359
+#: cmd.rc:393
 msgid "Division by zero error.\n"
 msgstr "0으로 나눈 에러가 발생했습니다.\n"
 
-#: cmd.rc:360
+#: cmd.rc:394
 msgid "Expected an operand.\n"
 msgstr "피연산자가 요구됩니다.\n"
 
-#: cmd.rc:361
+#: cmd.rc:395
 msgid "Expected an operator.\n"
 msgstr "연산자가 요구됩니다.\n"
 
-#: cmd.rc:362
+#: cmd.rc:396
 msgid "Mismatch in parentheses.\n"
 msgstr "괄호가 일치하지 않습니다.\n"
 
-#: cmd.rc:363
+#: cmd.rc:397
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -12016,7 +12193,7 @@ msgstr ""
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr ""
 
-#: start.rc:55
+#: start.rc:58
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -12025,7 +12202,7 @@ msgstr ""
 "프로그램을 실행할 수 없거나, 지정된 파일에 연결된 프로그램이 없습니다.\n"
 "ShellExecuteEx 실패"
 
-#: start.rc:57
+#: start.rc:60
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "지정된 Unix 파일명을 DOS 파일명으로 바꿀 수 없습니다."
 

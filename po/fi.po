@@ -9445,7 +9445,7 @@ msgstr "Silmukka viittauksissa"
 msgid "Referral hop limit exceeded"
 msgstr "Liian monta peräkkäistä viittausta"
 
-#: attrib.rc:30 cmd.rc:327
+#: attrib.rc:30 cmd.rc:361
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9453,7 +9453,7 @@ msgstr ""
 "Ei vielä toteutettu\n"
 "\n"
 
-#: attrib.rc:31 cmd.rc:330
+#: attrib.rc:31 cmd.rc:364
 msgid "%1: File Not Found\n"
 msgstr "%1: Tiedostoa ei löydy\n"
 
@@ -9537,10 +9537,10 @@ msgstr "Kello"
 
 #: cmd.rc:40
 msgid ""
-"CALL <batchfilename> is used within a batch file to execute commands\n"
-"from another batch file. When the batch file exits, control returns to\n"
-"the file which called it. The CALL command may supply parameters to the\n"
-"called procedure.\n"
+"CALL <batchfilename> is used within a batch file to execute commands from\n"
+"another batch file. When the batch file exits, control returns to the file\n"
+"which called it. The CALL command may supply parameters to the called\n"
+"procedure.\n"
 "\n"
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
@@ -9553,7 +9553,7 @@ msgstr ""
 "Muutokset työhakemistoon, ympäristömuuttujiin jne. periytyvät kutsutusta\n"
 "tiedostosta takaisin kutsujalle.\n"
 
-#: cmd.rc:43
+#: cmd.rc:44
 msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
@@ -9561,40 +9561,40 @@ msgstr ""
 "CD <hakemisto> on CHDIR-komennon lyhenne. Se vaihtaa tämänhetkisen\n"
 "oletushakemiston.\n"
 
-#: cmd.rc:44
+#: cmd.rc:47
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <hakemisto> vaihtaa tämänhetkisen oletushakemiston.\n"
 
-#: cmd.rc:46
+#: cmd.rc:50
 msgid "CLS clears the console screen.\n"
 msgstr "CLS tyhjentää konsolin ruudun.\n"
 
-#: cmd.rc:48
+#: cmd.rc:53
 msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <tiedostonimi> kopioi tiedoston.\n"
 
-#: cmd.rc:49
+#: cmd.rc:56
 msgid "CTTY changes the input/output device.\n"
 msgstr "CTTY vaihtaa I/O-laitetta.\n"
 
-#: cmd.rc:50
+#: cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE näyttää ja muuttaa järjestelmän aikaa.\n"
 
-#: cmd.rc:51
+#: cmd.rc:62
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <tiedostonimi> poistaa tiedoston tai tiedostot.\n"
 
-#: cmd.rc:52
+#: cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR listaa hakemiston sisällön.\n"
 
-#: cmd.rc:62
+#: cmd.rc:75
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
-"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
-"on the terminal device before they are executed.\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed on\n"
+"the terminal device before they are executed.\n"
 "\n"
 "ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
 "default). The ECHO OFF command can be prevented from displaying by\n"
@@ -9602,18 +9602,18 @@ msgid ""
 msgstr ""
 "ECHO <merkkijono> näyttää tekstin <merkkijono> nykyisessä päätteessä.\n"
 "\n"
-"ECHO ON -komentoa seuraavat komennot tiedostossa näytetään päätteessä\n"
-"ennen suorittamista.\n"
+"ECHO ON -komentoa seuraavat komennot tiedostossa näytetään päätteessä ennen\n"
+"suorittamista.\n"
 "\n"
 "ECHO OFF poistaa edellä olevan ECHO ON -komennon vaikutuksen (ECHO on\n"
 "oletusarvoisesti OFF). ECHO OFF -komentoa voi estää näkymästä laittamalla\n"
 "sen alkuun @-merkin.\n"
 
-#: cmd.rc:64
+#: cmd.rc:78
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <tiedostonimi> poistaa tiedoston tai joukon tiedostoja.\n"
 
-#: cmd.rc:71
+#: cmd.rc:85
 msgid ""
 "The FOR command is used to execute a command for each of a set of files.\n"
 "\n"
@@ -9627,16 +9627,16 @@ msgstr ""
 "\n"
 "Kun FOR esiintyy komentojonotiedostossa, %-merkki täytyy kahdentaa.\n"
 
-#: cmd.rc:83
+#: cmd.rc:97
 msgid ""
-"The GOTO command transfers execution to another statement within a\n"
-"batch file.\n"
+"The GOTO command transfers execution to another statement within a batch\n"
+"file.\n"
 "\n"
-"The label which is the target of a GOTO may be up to 255 characters\n"
-"long but may not include spaces (this is different from other operating\n"
-"systems). If two or more identical labels exist in a batch file the\n"
-"first one will always be executed. Attempting to GOTO a nonexistent\n"
-"label terminates the batch file execution.\n"
+"The label which is the target of a GOTO may be up to 255 characters long\n"
+"but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the first\n"
+"one will always be executed. Attempting to GOTO a nonexistent label\n"
+"terminates the batch file execution.\n"
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
@@ -9649,7 +9649,7 @@ msgstr ""
 "\n"
 "Interaktiivisella komentorivillä GOTO ei tee mitään.\n"
 
-#: cmd.rc:86
+#: cmd.rc:101
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9657,7 +9657,7 @@ msgstr ""
 "HELP <komento> näyttää lyhyitä aiheeseen liittyviä yksityiskohtia.\n"
 "HELP ilman argumenttia näyttää kaikki CMD:n sisäänrakennetut komennot.\n"
 
-#: cmd.rc:96
+#: cmd.rc:111
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9677,7 +9677,7 @@ msgstr ""
 "Komennon toisessa muodossa merkkijonojen on oltava lainausmerkeissä.\n"
 "Vertailu ei huomioi isoja ja pieniä kirjaimia.\n"
 
-#: cmd.rc:102
+#: cmd.rc:118
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9690,25 +9690,24 @@ msgstr ""
 "Syntaksi: LABEL [asema:]\n"
 "Komento kysyy uutta osion nimeä. Aiemman nimen näkee komennolla VOL.\n"
 
-#: cmd.rc:105
+#: cmd.rc:121
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <nimi> on MKDIR-komennon lyhenne. Se luo alihakemiston.\n"
 
-#: cmd.rc:106
+#: cmd.rc:123
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <name> luo alihakemiston.\n"
 
-#: cmd.rc:113
+#: cmd.rc:131
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
-"If the item being moved is a directory then all the files and "
-"subdirectories\n"
-"below the item are moved as well.\n"
+"If the item being moved is a directory then all the files and\n"
+"subdirectories below the item are moved as well.\n"
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
-"MOVE siirtää tiedoston tai hakemiston uuteen paikkaan "
+"MOVE siirtää tiedoston tai hakemiston uuteen paikkaan\n"
 "tiedostojärjestelmässä.\n"
 "\n"
 "Hakemistoa siirrettäessä myös kaikki sen sisältämät tiedostot ja\n"
@@ -9716,13 +9715,13 @@ msgstr ""
 "\n"
 "MOVE epäonnistuu, jos lähde ja kohde ovat eri DOS-asemilla.\n"
 
-#: cmd.rc:124
+#: cmd.rc:142
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
-"Entering PATH will display the current PATH setting (initially taken\n"
-"from the registry). To change the setting follow the\n"
-"PATH command with the new value.\n"
+"Entering PATH will display the current PATH setting (initially taken from\n"
+"the registry). To change the setting follow the PATH command with the new\n"
+"value.\n"
 "\n"
 "It is also possible to modify the PATH by using the PATH environment\n"
 "variable, for example:\n"
@@ -9737,20 +9736,20 @@ msgstr ""
 "esimerkiksi seuraavasti:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:130
+#: cmd.rc:148
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
-"It is mainly useful in batch files to allow the user to read the output\n"
-"of a previous command before it scrolls off the screen.\n"
+"It is mainly useful in batch files to allow the user to read the output of\n"
+"a previous command before it scrolls off the screen.\n"
 msgstr ""
 "PAUSE näyttää viestin, joka kehottaa käyttäjää painamaan näppäintä.\n"
 "\n"
 "Se on hyödyllinen lähinnä komentojonotiedostoissa antamaan käyttäjälle\n"
-"mahdollisuuden lukea edellisen komennon tuloste, ennen kuin se vierii\n"
-"pois ruudulta.\n"
+"mahdollisuuden lukea edellisen komennon tuloste, ennen kuin se vierii pois\n"
+"ruudulta.\n"
 
-#: cmd.rc:151
+#: cmd.rc:169
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9774,8 +9773,8 @@ msgid ""
 msgstr ""
 "PROMPT asettaa komentorivikehotteen.\n"
 "\n"
-"PROMPT-komentoa seuraava merkkijono (ja heti sen perässä oleva väli)\n"
-"näkyy rivin alussa, kun cmd odottaa syötettä.\n"
+"PROMPT-komentoa seuraava merkkijono (ja heti sen perässä oleva väli) näkyy\n"
+"rivin alussa, kun cmd odottaa syötettä.\n"
 "\n"
 "Seuraavilla merkkijonoilla on seuraava erityismerkitys:\n"
 "\n"
@@ -9792,33 +9791,33 @@ msgstr ""
 "Kehotetta voi muuttaa myös PROMPT-ympäristömuuttujalla, joten komento\n"
 "'SET PROMPT=teksti' tekee saman kuin 'PROMPT teksti'.\n"
 
-#: cmd.rc:155
+#: cmd.rc:173
 msgid ""
-"A command line beginning with REM (followed by a space) performs no\n"
-"action, and can therefore be used as a comment in a batch file.\n"
+"A command line beginning with REM (followed by a space) performs no action,\n"
+"and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"Rivi, joka alkaa REM (jota seuraa välilyönti) ei tee mitään, ja sitä\n"
-"voi siis käyttää kommenttina komentojonotiedostossa.\n"
+"Rivi, joka alkaa REM (jota seuraa välilyönti) ei tee mitään, ja sitä voi\n"
+"siis käyttää kommenttina komentojonotiedostossa.\n"
 
-#: cmd.rc:158
+#: cmd.rc:176
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr ""
 "REN <tiedostonimi> on RENAME-komennon lyhenne. Se nimeää tiedoston\n"
 "uudelleen.\n"
 
-#: cmd.rc:159
+#: cmd.rc:178
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <tiedostonimi> nimeää tiedoston uudelleen.\n"
 
-#: cmd.rc:161
+#: cmd.rc:181
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD <hakemisto> on RMDIR-komennon lyhenne. Se poistaa hakemiston.\n"
 
-#: cmd.rc:162
+#: cmd.rc:183
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <hakemisto> poistaa hakemiston.\n"
 
-#: cmd.rc:206
+#: cmd.rc:229
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -9828,14 +9827,13 @@ msgid ""
 "\n"
 "SET <variable>=<value>\n"
 "\n"
-"where <variable> and <value> are character strings. There must be no\n"
-"space before the equals sign, nor can the variable name\n"
-"have embedded spaces.\n"
+"where <variable> and <value> are character strings. There must be no space\n"
+"before the equals sign, nor can the variable name have embedded spaces.\n"
 "\n"
-"Under Wine, the environment of the underlying operating system is\n"
-"included into the Win32 environment, there will generally therefore be\n"
-"many more values than in a native Win32 implementation. Note that it is\n"
-"not possible to affect the operating system environment from within cmd.\n"
+"Under Wine, the environment of the underlying operating system is included\n"
+"into the Win32 environment, there will generally therefore be many more\n"
+"values than in a native Win32 implementation. Note that it is not possible\n"
+"to affect the operating system environment from within cmd.\n"
 msgstr ""
 "SET näyttää tai muuttaa cmd:n ympäristömuuttujia.\n"
 "\n"
@@ -9845,99 +9843,101 @@ msgstr ""
 "\n"
 "SET <muuttuja>=<arvo>\n"
 "\n"
-"missä <muuttuja> ja <arvo> ovat merkkijonoja. Ennen yhtäsuuruusmerkkiä\n"
-"ei saa olla välilyöntiä, eikä muuttujan nimessä saa olla välilyöntejä.\n"
+"missä <muuttuja> ja <arvo> ovat merkkijonoja. Ennen yhtäsuuruusmerkkiä ei\n"
+"saa olla välilyöntiä, eikä muuttujan nimessä saa olla välilyöntejä.\n"
 "\n"
-"Winessä käyttöjärjestelmän ympäristömuuttujat on sisällytetty\n"
-"Win32-ympäristöön, joten arvoja on yleensä huomattavasti enemmän kuin\n"
-"natiivissa Win32-toteutuksessa. Käyttöjärjestelmän ympäristöä ei voi\n"
-"muuttaa cmd:n sisältä.\n"
+"Winessä käyttöjärjestelmän ympäristömuuttujat on sisällytetty Win32-\n"
+"ympäristöön, joten arvoja on yleensä huomattavasti enemmän kuin natiivissa\n"
+"Win32-toteutuksessa. Käyttöjärjestelmän ympäristöä ei voi muuttaa cmd:n\n"
+"sisältä.\n"
 
-#: cmd.rc:211
+#: cmd.rc:234
 msgid ""
-"SHIFT is used in a batch file to remove one parameter from the head of\n"
-"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
-"if called from the command line.\n"
+"SHIFT is used in a batch file to remove one parameter from the head of the\n"
+"list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
+"called from the command line.\n"
 msgstr ""
-"SHIFT-komentoa käytetään komentojonotiedostossa yhden parametrin "
-"poistamiseen\n"
-"listan alusta, joten parametrista 2 tulee parametri 1 ja niin edelleen.\n"
-"Se ei vaikuta mihinkään, jos sitä kutsutaan komentoriviltä.\n"
+"SHIFT-komentoa käytetään komentojonotiedostossa yhden parametrin\n"
+"poistamiseen listan alusta, joten parametrista 2 tulee parametri 1 ja niin\n"
+"edelleen. Se ei vaikuta mihinkään, jos sitä kutsutaan komentoriviltä.\n"
 
-#: cmd.rc:188 start.rc:53
+#: cmd.rc:212 start.rc:56
 msgid ""
-"Start a program, or open a document in the program normally used for files "
+"Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
 "Usage:\n"
 "start [options] program_filename [...]\n"
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"\"title\"      Specifies the title of the child windows.\n"
-"/d directory Start the program in the specified directory.\n"
-"/b           Don't create a new console for the program.\n"
-"/i           Start the program with fresh environment variables.\n"
-"/min         Start the program minimized.\n"
-"/max         Start the program maximized.\n"
-"/low         Start the program in the idle priority class.\n"
-"/normal      Start the program in the normal priority class.\n"
-"/high        Start the program in the high priority class.\n"
-"/realtime    Start the program in the realtime priority class.\n"
-"/abovenormal Start the program in the abovenormal priority class.\n"
-"/belownormal Start the program in the belownormal priority class.\n"
-"/node n      Start the program on the specified NUMA node.\n"
+"\"title\"        Specifies the title of the child windows.\n"
+"/d directory   Start the program in the specified directory.\n"
+"/b             Don't create a new console for the program.\n"
+"/i             Start the program with fresh environment variables.\n"
+"/min           Start the program minimized.\n"
+"/max           Start the program maximized.\n"
+"/low           Start the program in the idle priority class.\n"
+"/normal        Start the program in the normal priority class.\n"
+"/high          Start the program in the high priority class.\n"
+"/realtime      Start the program in the realtime priority class.\n"
+"/abovenormal   Start the program in the abovenormal priority class.\n"
+"/belownormal   Start the program in the belownormal priority class.\n"
+"/node n        Start the program on the specified NUMA node.\n"
 "/affinity mask Start the program with the specified affinity mask.\n"
-"/wait        Wait for the started program to finish, then exit with its exit "
-"code.\n"
-"/unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the specified progID.\n"
-"/?           Display this help and exit.\n"
+"/wait          Wait for the started program to finish, then exit with its\n"
+"exit code.\n"
+"/unix          Use a Unix filename and start the file like windows\n"
+"explorer.\n"
+"/ProgIDOpen    Open a document using the specified progID.\n"
+"/?             Display this help and exit.\n"
 msgstr ""
-"Käynnistä ohjelma tai avaa dokumentti ohjelmalla, jota yleensä käytetään "
+"Käynnistä ohjelma tai avaa dokumentti ohjelmalla, jota yleensä käytetään\n"
 "kyseiseen tiedostopäätteeseen.\n"
 "Käyttö:\n"
 "start [valitsimet] ohjelman_tiedostonimi [...]\n"
 "start [valitsimet] dokumentin_tiedostonimi\n"
 "\n"
 "Valitsimet:\n"
-"\"otsikko\"    Asettaa lapsi-ikkunoiden otsikon.\n"
-"/d hakemisto Käynnistä ohjelma määrätyssä hakemistossa.\n"
-"/b           Älä luo uutta konsolia ohjelmalle.\n"
-"/i           Käynnistä ohjelma tuoreilla ympäristömuuttujilla.\n"
-"/min         Käynnistä ohjelma pienennettynä.\n"
-"/max         Käynnistä ohjelma suurennettuna.\n"
-"/low         Käynnistä ohjelma matalassa prioriteettiluokassa.\n"
-"/normal      Käynnistä ohjelma normaalissa prioriteettiluokassa.\n"
-"/high        Käynnistä ohjelma korkeassa prioriteettiluokassa.\n"
-"/realtime    Käynnistä ohjelma reaaliaikaisessa prioriteettiluokassa.\n"
-"/abovenormal Käynnistä ohjelma normaalia korkeammassa prioriteettiluokassa.\n"
-"/belownormal Käynnistä ohjelma normaalia matalammassa prioriteettiluokassa.\n"
-"/node n      Käynnistä ohjelma määrätyllä NUMA-solmulla.\n"
+"\"otsikko\"       Asettaa lapsi-ikkunoiden otsikon.\n"
+"/d hakemisto    Käynnistä ohjelma määrätyssä hakemistossa.\n"
+"/b              Älä luo uutta konsolia ohjelmalle.\n"
+"/i              Käynnistä ohjelma tuoreilla ympäristömuuttujilla.\n"
+"/min            Käynnistä ohjelma pienennettynä.\n"
+"/max            Käynnistä ohjelma suurennettuna.\n"
+"/low            Käynnistä ohjelma matalassa prioriteettiluokassa.\n"
+"/normal         Käynnistä ohjelma normaalissa prioriteettiluokassa.\n"
+"/high           Käynnistä ohjelma korkeassa prioriteettiluokassa.\n"
+"/realtime       Käynnistä ohjelma reaaliaikaisessa prioriteettiluokassa.\n"
+"/abovenormal    Käynnistä ohjelma normaalia korkeammassa\n"
+"                prioriteettiluokassa.\n"
+"/belownormal    Käynnistä ohjelma normaalia matalammassa\n"
+"                prioriteettiluokassa.\n"
+"/node n         Käynnistä ohjelma määrätyllä NUMA-solmulla.\n"
 "/affinity peite Käynnistä ohjelma määrätyllä affiniteettipeitteellä.\n"
-"/wait        Odota, että ohjelma sulkeutuu, ja palauta sen paluuarvo.\n"
-"/unix        Käytä Unix-tiedostonimeä ja avaa tiedosto siten, kuin Windows "
-"Explorer avaisi sen.\n"
-"/ProgIDOpen  Avaa dokumentti määrätyllä progID:llä.\n"
-"/?           Näytä tämä ohje ja lopeta.\n"
+"/wait           Odota, että ohjelma sulkeutuu, ja palauta sen paluuarvo.\n"
+"/unix           Käytä Unix-tiedostonimeä ja avaa tiedosto siten, kuin\n"
+"                Windows Explorer avaisi sen.\n"
+"/ProgIDOpen     Avaa dokumentti määrätyllä progID:llä.\n"
+"/?              Näytä tämä ohje ja lopeta.\n"
 
-#: cmd.rc:213
+#: cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME asettaa ja näyttää järjestelmän nykyisen ajan.\n"
 
-#: cmd.rc:215
+#: cmd.rc:240
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "TITLE <merkkijono> asettaa CMD-ikkunan otsikon.\n"
 
-#: cmd.rc:219
+#: cmd.rc:244
 msgid ""
-"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
-"if redirected). No check is made that the file is readable text.\n"
+"TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
+"redirected). No check is made that the file is readable text.\n"
 msgstr ""
-"TYPE <tiedostonimi> kopioi tiedoston <tiedostonimi> konsolilaitteeseen\n"
-"(tai muualle, jos ohjataan muualle). Sitä, onko tiedosto luettavissa,\n"
-"ei tarkisteta.\n"
+"TYPE <tiedostonimi> kopioi tiedoston <tiedostonimi> konsolilaitteeseen (tai\n"
+"muualle, jos ohjataan muualle). Sitä, onko tiedosto luettavissa, ei\n"
+"tarkisteta.\n"
 
-#: cmd.rc:228
+#: cmd.rc:253
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -9956,23 +9956,23 @@ msgstr ""
 "\n"
 "Verify-lippu ei tee mitään Winessä.\n"
 
-#: cmd.rc:231
+#: cmd.rc:256
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER näyttää, mitä cmd:n versio on.\n"
 
-#: cmd.rc:233
+#: cmd.rc:259
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL näyttää levyn osion nimen.\n"
 
-#: cmd.rc:237
+#: cmd.rc:263
 msgid ""
-"ENDLOCAL ends localization of environment changes in a batch file\n"
-"which were introduced by a preceding SETLOCAL.\n"
+"ENDLOCAL ends localization of environment changes in a batch file which\n"
+"were introduced by a preceding SETLOCAL.\n"
 msgstr ""
 "ENDLOCAL lopettaa komentojonotiedoston ympäristömuutosten paikallisuuden,\n"
 "jonka SETLOCAL on aloittanut.\n"
 
-#: cmd.rc:245
+#: cmd.rc:271
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -9988,21 +9988,21 @@ msgstr ""
 "(tai tiedoston loppuun, jos komentoa ei ole), minkä jälkeen aiemmat\n"
 "ympäristöasetukset palautetaan.\n"
 
-#: cmd.rc:248
+#: cmd.rc:275
 msgid ""
-"PUSHD <directory> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
+"PUSHD <directory> saves the current directory onto a stack, and then\n"
+"changes the current directory to the supplied one.\n"
 msgstr ""
 "PUSHD <hakemisto> tallentaa nykyisen hakemiston pinoon ja muuttaa sitten\n"
 "nykyisen hakemiston annetuksi.\n"
 
-#: cmd.rc:250
+#: cmd.rc:278
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
 "POPD muuttaa nykyisen hakemiston siksi, joka on viimeksi tallennettu\n"
 "PUSHD-komennolla.\n"
 
-#: cmd.rc:258
+#: cmd.rc:288
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -10010,7 +10010,7 @@ msgid ""
 "\n"
 "ASSOC without parameters displays current file associations.\n"
 "If used with only a file extension, displays the current association.\n"
-"Specifying no file type after the equal sign removes the current "
+"Specifying no file type after the equal sign removes the current\n"
 "association, if any.\n"
 msgstr ""
 "ASSOC näyttää tai muuttaa tiedostopäätteiden kytkentöjä.\n"
@@ -10019,56 +10019,56 @@ msgstr ""
 "\n"
 "ASSOC ilman parametreja näyttää nykyiset tiedostokytkennät.\n"
 "Pelkän tiedostopäätteen kanssa ASSOC näyttää kyseisen päätteen kytkennän.\n"
-"Jos annetaan yhtäsuuruusmerkki mutta ei tyyppiä, ASSOC poistaa "
+"Jos annetaan yhtäsuuruusmerkki mutta ei tyyppiä, ASSOC poistaa\n"
 "tiedostopäätteen nykyisen kytkennän.\n"
 
-#: cmd.rc:269
+#: cmd.rc:300
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
 "Syntax: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
-"Without parameters, shows the file types for which open command strings are "
+"Without parameters, shows the file types for which open command strings are\n"
 "currently defined.\n"
-"If used with only a file type, displays the associated open command string, "
+"If used with only a file type, displays the associated open command string,\n"
 "if any.\n"
-"Specifying no open command after the equal sign removes the command string "
+"Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
 "FTYPE näyttää tai muuttaa tiedostotyyppeihin liitettyjä avauskomentoja\n"
 "\n"
 "Syntaksi: FTYPE [tiedostotyyppi[=[avauskomento]]]\n"
 "\n"
-"Ilman parametreja komento näyttää tiedostotyypit, joihin avauskomentoja on "
+"Ilman parametreja komento näyttää tiedostotyypit, joihin avauskomentoja on\n"
 "nykyisellään määritelty.\n"
-"Jos komentoa käytetään vain tiedostotyypin kanssa, se näyttää siihen "
+"Jos komentoa käytetään vain tiedostotyypin kanssa, se näyttää siihen\n"
 "liittyvät komennot, jos niitä on.\n"
-"Jos yhtäsuuruusmerkin jälkeen ei määritellä mitään komentoa, kyseiseen "
+"Jos yhtäsuuruusmerkin jälkeen ei määritellä mitään komentoa, kyseiseen\n"
 "tiedostotyyppiin liitetty komento poistetaan.\n"
 
-#: cmd.rc:271
+#: cmd.rc:303
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE näyttää tiedostojen tulosteen tai putkitetun syötteen sivuina.\n"
 
-#: cmd.rc:275
+#: cmd.rc:308
 msgid ""
-"CHOICE displays a text and waits, until the User\n"
-"presses an allowed Key from a selectable list.\n"
+"CHOICE displays a text and waits, until the User presses an allowed Key\n"
+"from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
-"CHOICE näyttää tekstin ja odottaa, kunnes käyttäjä painaa\n"
-"sallittua näppäintä, joka on listassa.\n"
+"CHOICE näyttää tekstin ja odottaa, kunnes käyttäjä painaa sallittua\n"
+"näppäintä, joka on listassa.\n"
 "CHOICE-komentoa käytetään lähinnä valikkoihin komentojonotiedostoissa.\n"
 
-#: cmd.rc:279
+#: cmd.rc:312
 msgid ""
-"EXIT terminates the current command session and returns\n"
-"to the operating system or shell from which you invoked cmd.\n"
+"EXIT terminates the current command session and returns to the operating\n"
+"system or shell from which you invoked cmd.\n"
 msgstr ""
 "EXIT päättää nykyisen komentoistunnon ja palaa käyttöjärjestelmään tai\n"
 "komentoriville, jolta kutsuit cmd:tä.\n"
 
-#: cmd.rc:317
+#: cmd.rc:351
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10148,110 +10148,110 @@ msgstr ""
 "\n"
 "Kirjoita HELP <komento>, niin saat lisätietoa yllä olevasta komennosta.\n"
 
-#: cmd.rc:319
+#: cmd.rc:353
 msgid "Are you sure?"
 msgstr "Oletko varma?"
 
-#: cmd.rc:320 xcopy.rc:43
+#: cmd.rc:354 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "K"
 
-#: cmd.rc:321 xcopy.rc:44
+#: cmd.rc:355 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "E"
 
-#: cmd.rc:322
+#: cmd.rc:356
 msgid "File association missing for extension %1\n"
 msgstr "Päätteellä %1 ei ole tiedostokytkentää\n"
 
-#: cmd.rc:323
+#: cmd.rc:357
 msgid "No open command associated with file type '%1'\n"
 msgstr "Tiedostotyyppiin '%1' ei ole liitetty avauskomentoa\n"
 
-#: cmd.rc:324
+#: cmd.rc:358
 msgid "Overwrite %1?"
 msgstr "Kirjoita tiedoston %1 yli?"
 
-#: cmd.rc:325
+#: cmd.rc:359
 msgid "More..."
 msgstr "Lisää..."
 
-#: cmd.rc:326
+#: cmd.rc:360
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Rivi komentojonossa on mahdollisesti katkennut. Käytetään:\n"
 
-#: cmd.rc:328
+#: cmd.rc:362
 msgid "Argument missing\n"
 msgstr "Argumentti puuttuu\n"
 
-#: cmd.rc:329
+#: cmd.rc:363
 msgid "Syntax error\n"
 msgstr "Syntaksivirhe\n"
 
-#: cmd.rc:331
+#: cmd.rc:365
 msgid "No help available for %1\n"
 msgstr "Apua ei saatavilla %1:lle\n"
 
-#: cmd.rc:332
+#: cmd.rc:366
 msgid "Target to GOTO not found\n"
 msgstr "GOTO-komennolle ei löytynyt kohdetta\n"
 
-#: cmd.rc:333
+#: cmd.rc:367
 msgid "Current Date is %1\n"
 msgstr "Nykyinen päiväys on %1\n"
 
-#: cmd.rc:334
+#: cmd.rc:368
 msgid "Current Time is %1\n"
 msgstr "Nykyinen aika on %1\n"
 
-#: cmd.rc:335
+#: cmd.rc:369
 msgid "Enter new date: "
 msgstr "Syötä uusi päiväys: "
 
-#: cmd.rc:336
+#: cmd.rc:370
 msgid "Enter new time: "
 msgstr "Syötä uusi aika: "
 
-#: cmd.rc:337
+#: cmd.rc:371
 msgid "Environment variable %1 not defined\n"
 msgstr "Ympäristömuuttujaa %1 ei määritelty\n"
 
-#: cmd.rc:338 xcopy.rc:41
+#: cmd.rc:372 xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "'%1' ei auennut\n"
 
-#: cmd.rc:339
+#: cmd.rc:373
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Komentojonon nimiötä ei voi kutsua komentojonon ulkopuolelta\n"
 
-#: cmd.rc:340 xcopy.rc:45
+#: cmd.rc:374 xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "A"
 
-#: cmd.rc:341
+#: cmd.rc:375
 msgid "Delete %1?"
 msgstr "Poista %1?"
 
-#: cmd.rc:342
+#: cmd.rc:376
 msgid "Echo is %1\n"
 msgstr "Echo on %1\n"
 
-#: cmd.rc:343
+#: cmd.rc:377
 msgid "Verify is %1\n"
 msgstr "Verify on %1\n"
 
-#: cmd.rc:344
+#: cmd.rc:378
 msgid "Verify must be ON or OFF\n"
 msgstr "Verify-lipun täytyy olla ON tai OFF\n"
 
-#: cmd.rc:345
+#: cmd.rc:379
 msgid "Parameter error\n"
 msgstr "Parametrivirhe\n"
 
-#: cmd.rc:346
+#: cmd.rc:380
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10259,72 +10259,72 @@ msgstr ""
 "Osion sarjanumero on %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:347
+#: cmd.rc:381
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Osion nimi (11 merkkiä, <Enter> tarkoittaa tyhjää)?"
 
-#: cmd.rc:348
+#: cmd.rc:382
 msgid "PATH not found\n"
 msgstr "PATH puuttuu\n"
 
-#: cmd.rc:349
+#: cmd.rc:383
 msgid "Press any key to continue... "
 msgstr "Paina mitä tahansa näppäintä jatkaaksesi... "
 
-#: cmd.rc:350
+#: cmd.rc:384
 msgid "Wine Command Prompt"
 msgstr "Winen komentokehote"
 
-#: cmd.rc:351
+#: cmd.rc:385
 msgid "Microsoft Windows %1!S!\n"
 msgstr "Microsoft Windows %1!S!\n"
 
-#: cmd.rc:352
+#: cmd.rc:386
 msgid "More? "
 msgstr "Lisää? "
 
-#: cmd.rc:353
+#: cmd.rc:387
 msgid "The input line is too long.\n"
 msgstr "Syöterivi on liian pitkä.\n"
 
-#: cmd.rc:354
+#: cmd.rc:388
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Osio asemassa %1!c! on %2\n"
 
-#: cmd.rc:355
+#: cmd.rc:389
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Osiolla asemassa %1!c! ei ole nimeä.\n"
 
-#: cmd.rc:356
+#: cmd.rc:390
 msgid " (Yes|No)"
 msgstr " (Kyllä|Ei)"
 
-#: cmd.rc:357
+#: cmd.rc:391
 msgid " (Yes|No|All)"
 msgstr " (Kyllä|Ei|kAikki)"
 
-#: cmd.rc:358
+#: cmd.rc:392
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr "'%1' ei ole sisäinen eikä ulkoinen komento eikä komentojono.\n"
 
-#: cmd.rc:359
+#: cmd.rc:393
 msgid "Division by zero error.\n"
 msgstr "Virheellinen jako nollalla.\n"
 
-#: cmd.rc:360
+#: cmd.rc:394
 msgid "Expected an operand.\n"
 msgstr "Odotettiin operandia.\n"
 
-#: cmd.rc:361
+#: cmd.rc:395
 msgid "Expected an operator.\n"
 msgstr "Odotettiin operaattoria.\n"
 
-#: cmd.rc:362
+#: cmd.rc:396
 msgid "Mismatch in parentheses.\n"
 msgstr "Sulut eivät täsmää.\n"
 
-#: cmd.rc:363
+#: cmd.rc:397
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -11948,7 +11948,7 @@ msgstr "regsvr32: DLL:n '%1' asennuksen purku epäonnistui\n"
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr "regsvr32: DLL:n '%1' asennus purettu\n"
 
-#: start.rc:55
+#: start.rc:58
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -11958,7 +11958,7 @@ msgstr ""
 "ohjelmaa.\n"
 "ShellExecuteEx epäonnistui"
 
-#: start.rc:57
+#: start.rc:60
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Unix-tiedostonimeä ei voitu kääntää DOS-tiedostonimeksi."
 

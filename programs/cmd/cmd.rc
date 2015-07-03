@@ -30,37 +30,51 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE
 {
   WCMD_CALL,
-"CALL <batchfilename> is used within a batch file to execute commands\n\
-from another batch file. When the batch file exits, control returns to\n\
-the file which called it. The CALL command may supply parameters to the\n\
-called procedure.\n\
+"CALL <batchfilename> is used within a batch file to execute commands from\n\
+another batch file. When the batch file exits, control returns to the file\n\
+which called it. The CALL command may supply parameters to the called\n\
+procedure.\n\
 \n\
 Changes to default directory, environment variables etc made within a\n\
 called procedure are inherited by the caller.\n"
 
-  WCMD_CD,     "CD <directory> is the short version of CHDIR. It changes the current\n\
+  WCMD_CD,
+"CD <directory> is the short version of CHDIR. It changes the current\n\
 default directory.\n"
-  WCMD_CHDIR,  "CHDIR <directory> changes the current default directory.\n"
 
-  WCMD_CLS,    "CLS clears the console screen.\n"
+  WCMD_CHDIR,
+"CHDIR <directory> changes the current default directory.\n"
 
-  WCMD_COPY,   "COPY <filename> copies a file.\n"
-  WCMD_CTTY,   "CTTY changes the input/output device.\n"
-  WCMD_DATE,   "DATE shows or changes the system date.\n"
-  WCMD_DEL,    "DEL <filename> deletes a file or set of files.\n"
-  WCMD_DIR,    "DIR lists the contents of a directory.\n"
+  WCMD_CLS,
+"CLS clears the console screen.\n"
+
+  WCMD_COPY,
+"COPY <filename> copies a file.\n"
+
+  WCMD_CTTY,
+"CTTY changes the input/output device.\n"
+
+  WCMD_DATE,
+"DATE shows or changes the system date.\n"
+
+  WCMD_DEL,
+"DEL <filename> deletes a file or set of files.\n"
+
+  WCMD_DIR,
+"DIR lists the contents of a directory.\n"
 
   WCMD_ECHO,
 "ECHO <string> displays <string> on the current terminal device.\n\
 \n\
-ECHO ON causes all subsequent commands in a batch file to be displayed\n\
-on the terminal device before they are executed.\n\
+ECHO ON causes all subsequent commands in a batch file to be displayed on\n\
+the terminal device before they are executed.\n\
 \n\
 ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n\
 default). The ECHO OFF command can be prevented from displaying by\n\
 preceding it with an @ sign.\n"
 
-  WCMD_ERASE,  "ERASE <filename> deletes a file or set of files.\n"
+  WCMD_ERASE,
+"ERASE <filename> deletes a file or set of files.\n"
 
   WCMD_FOR,
 "The FOR command is used to execute a command for each of a set of files.\n\
@@ -70,18 +84,19 @@ Usage: FOR %variable IN (set) DO command\n\
 The % sign must be doubled when using FOR in a batch file.\n"
 
   WCMD_GOTO,
-"The GOTO command transfers execution to another statement within a\n\
-batch file.\n\
+"The GOTO command transfers execution to another statement within a batch\n\
+file.\n\
 \n\
-The label which is the target of a GOTO may be up to 255 characters\n\
-long but may not include spaces (this is different from other operating\n\
-systems). If two or more identical labels exist in a batch file the\n\
-first one will always be executed. Attempting to GOTO a nonexistent\n\
-label terminates the batch file execution.\n\
+The label which is the target of a GOTO may be up to 255 characters long\n\
+but may not include spaces (this is different from other operating\n\
+systems). If two or more identical labels exist in a batch file the first\n\
+one will always be executed. Attempting to GOTO a nonexistent label\n\
+terminates the batch file execution.\n\
 \n\
 GOTO has no effect when used interactively.\n"
 
-  WCMD_HELP,   "HELP <command> shows brief help details on a topic.\n\
+  WCMD_HELP,
+"HELP <command> shows brief help details on a topic.\n\
 HELP without an argument shows all CMD built-in commands.\n"
 
   WCMD_IF,
@@ -94,7 +109,8 @@ Syntax: IF [NOT] EXIST filename command\n\
 In the second form of the command, string1 and string2 must be in double\n\
 quotes. The comparison is not case-sensitive.\n"
 
-  WCMD_LABEL,  "LABEL is used to set a disk volume label.\n\
+  WCMD_LABEL,
+"LABEL is used to set a disk volume label.\n\
 \n\
 Syntax: LABEL [drive:]\n\
 The command will prompt you for the new volume label for the given drive.\n\
@@ -102,21 +118,23 @@ You can display the disk volume label with the VOL command.\n"
 
   WCMD_MD,
 "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
+
   WCMD_MKDIR,  "MKDIR <name> creates a subdirectory.\n"
+
   WCMD_MOVE,
 "MOVE relocates a file or directory to a new point within the file system.\n\
 \n\
-If the item being moved is a directory then all the files and subdirectories\n\
-below the item are moved as well.\n\
+If the item being moved is a directory then all the files and\n\
+subdirectories below the item are moved as well.\n\
 \n\
 MOVE fails if the old and new locations are on different DOS drive letters.\n"
 
   WCMD_PATH,
 "PATH displays or changes the cmd search path.\n\
 \n\
-Entering PATH will display the current PATH setting (initially taken\n\
-from the registry). To change the setting follow the\n\
-PATH command with the new value.\n\
+Entering PATH will display the current PATH setting (initially taken from\n\
+the registry). To change the setting follow the PATH command with the new\n\
+value.\n\
 \n\
 It is also possible to modify the PATH by using the PATH environment\n\
 variable, for example:\n\
@@ -125,8 +143,8 @@ variable, for example:\n\
   WCMD_PAUSE,
 "PAUSE displays a message on the screen asking the user to press a key.\n\
 \n\
-It is mainly useful in batch files to allow the user to read the output\n\
-of a previous command before it scrolls off the screen.\n"
+It is mainly useful in batch files to allow the user to read the output of\n\
+a previous command before it scrolls off the screen.\n"
 
   WCMD_PROMPT,
 "PROMPT sets the command-line prompt.\n\
@@ -150,41 +168,47 @@ The prompt can also be changed by altering the PROMPT environment variable,\n\
 so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 
   WCMD_REM,
-"A command line beginning with REM (followed by a space) performs no\n\
-action, and can therefore be used as a comment in a batch file.\n"
+"A command line beginning with REM (followed by a space) performs no action,\n\
+and can therefore be used as a comment in a batch file.\n"
 
   WCMD_REN,
 "REN <filename> is the short version of RENAME. It renames a file.\n"
+
   WCMD_RENAME, "RENAME <filename> renames a file.\n"
+
   WCMD_RD,
 "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
+
   WCMD_RMDIR,  "RMDIR <directory> deletes a directory.\n"
 
   WCMD_START,
-"Start a program, or open a document in the program normally used for files with that suffix.\n\
+"Start a program, or open a document in the program normally used for files\n\
+with that suffix.\n\
 Usage:\n\
 start [options] program_filename [...]\n\
 start [options] document_filename\n\
 \n\
 Options:\n\
-\"title\"      Specifies the title of the child windows.\n\
-/d directory Start the program in the specified directory.\n\
-/b           Don't create a new console for the program.\n\
-/i           Start the program with fresh environment variables.\n\
-/min         Start the program minimized.\n\
-/max         Start the program maximized.\n\
-/low         Start the program in the idle priority class.\n\
-/normal      Start the program in the normal priority class.\n\
-/high        Start the program in the high priority class.\n\
-/realtime    Start the program in the realtime priority class.\n\
-/abovenormal Start the program in the abovenormal priority class.\n\
-/belownormal Start the program in the belownormal priority class.\n\
-/node n      Start the program on the specified NUMA node.\n\
+\"title\"        Specifies the title of the child windows.\n\
+/d directory   Start the program in the specified directory.\n\
+/b             Don't create a new console for the program.\n\
+/i             Start the program with fresh environment variables.\n\
+/min           Start the program minimized.\n\
+/max           Start the program maximized.\n\
+/low           Start the program in the idle priority class.\n\
+/normal        Start the program in the normal priority class.\n\
+/high          Start the program in the high priority class.\n\
+/realtime      Start the program in the realtime priority class.\n\
+/abovenormal   Start the program in the abovenormal priority class.\n\
+/belownormal   Start the program in the belownormal priority class.\n\
+/node n        Start the program on the specified NUMA node.\n\
 /affinity mask Start the program with the specified affinity mask.\n\
-/wait        Wait for the started program to finish, then exit with its exit code.\n\
-/unix        Use a Unix filename and start the file like windows explorer.\n\
-/ProgIDOpen  Open a document using the specified progID.\n\
-/?           Display this help and exit.\n"
+/wait          Wait for the started program to finish, then exit with its\n\
+               exit code.\n\
+/unix          Use a Unix filename and start the file like windows\n\
+               explorer.\n\
+/ProgIDOpen    Open a document using the specified progID.\n\
+/?             Display this help and exit.\n"
 
   WCMD_SET,
 "SET displays or changes the cmd environment variables.\n\
@@ -195,27 +219,28 @@ To create or modify an environment variable the syntax is:\n\
 \n\
       SET <variable>=<value>\n\
 \n\
-where <variable> and <value> are character strings. There must be no\n\
-space before the equals sign, nor can the variable name\n\
-have embedded spaces.\n\
+where <variable> and <value> are character strings. There must be no space\n\
+before the equals sign, nor can the variable name have embedded spaces.\n\
 \n\
-Under Wine, the environment of the underlying operating system is\n\
-included into the Win32 environment, there will generally therefore be\n\
-many more values than in a native Win32 implementation. Note that it is\n\
-not possible to affect the operating system environment from within cmd.\n"
+Under Wine, the environment of the underlying operating system is included\n\
+into the Win32 environment, there will generally therefore be many more\n\
+values than in a native Win32 implementation. Note that it is not possible\n\
+to affect the operating system environment from within cmd.\n"
 
   WCMD_SHIFT,
-"SHIFT is used in a batch file to remove one parameter from the head of\n\
-the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n\
-if called from the command line.\n"
+"SHIFT is used in a batch file to remove one parameter from the head of the\n\
+list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n\
+called from the command line.\n"
 
-  WCMD_TIME,   "TIME sets or shows the current system time.\n"
+  WCMD_TIME,
+"TIME sets or shows the current system time.\n"
 
-  WCMD_TITLE,  "TITLE <string> sets the window title for the cmd window.\n"
+  WCMD_TITLE,
+"TITLE <string> sets the window title for the cmd window.\n"
 
   WCMD_TYPE,
-"TYPE <filename> copies <filename> to the console device (or elsewhere\n\
-if redirected). No check is made that the file is readable text.\n"
+"TYPE <filename> copies <filename> to the console device (or elsewhere if\n\
+redirected). No check is made that the file is readable text.\n"
 
   WCMD_VERIFY,
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n\
@@ -229,11 +254,12 @@ The verify flag has no function in Wine.\n"
   WCMD_VER,
 "VER displays the version of cmd you are running.\n"
 
-  WCMD_VOL,    "VOL shows the volume label of a disk device.\n"
+  WCMD_VOL,
+"VOL shows the volume label of a disk device.\n"
 
   WCMD_ENDLOCAL,
-"ENDLOCAL ends localization of environment changes in a batch file\n\
-which were introduced by a preceding SETLOCAL.\n"
+"ENDLOCAL ends localization of environment changes in a batch file which\n\
+were introduced by a preceding SETLOCAL.\n"
 
   WCMD_SETLOCAL,
 "SETLOCAL starts localization of environment changes in a batch file.\n\
@@ -243,41 +269,49 @@ are preserved until the next ENDLOCAL is encountered (or at the end of the\n\
 file, whichever comes first), at which point the previous environment\n\
 settings are restored.\n"
 
-  WCMD_PUSHD,  "PUSHD <directory> saves the current directory onto a\n\
-stack, and then changes the current directory to the supplied one.\n"
+  WCMD_PUSHD,
+"PUSHD <directory> saves the current directory onto a stack, and then\n\
+changes the current directory to the supplied one.\n"
 
-  WCMD_POPD,   "POPD changes current directory to the last one saved with PUSHD.\n"
+  WCMD_POPD,
+"POPD changes current directory to the last one saved with PUSHD.\n"
 
-  WCMD_ASSOC,   "ASSOC shows or modifies file extension associations.\n\
+  WCMD_ASSOC,
+"ASSOC shows or modifies file extension associations.\n\
 \n\
 Syntax: ASSOC [.ext[=[fileType]]]\n\
 \n\
 ASSOC without parameters displays current file associations.\n\
 If used with only a file extension, displays the current association.\n\
-Specifying no file type after the equal sign removes the current association, if any.\n"
+Specifying no file type after the equal sign removes the current\n\
+association, if any.\n"
 
-  WCMD_FTYPE,   "FTYPE shows or modifies open commands associated with file types.\n\
+  WCMD_FTYPE,
+"FTYPE shows or modifies open commands associated with file types.\n\
 \n\
 Syntax: FTYPE [fileType[=[openCommand]]]\n\
 \n\
-Without parameters, shows the file types for which open command strings \
-are currently defined.\n\
-If used with only a file type, displays the associated open command string, \
+Without parameters, shows the file types for which open command strings are\n\
+currently defined.\n\
+If used with only a file type, displays the associated open command string,\n\
 if any.\n\
-Specifying no open command after the equal sign removes the command string \
+Specifying no open command after the equal sign removes the command string\n\
 associated to the specified file type.\n"
 
-  WCMD_MORE,   "MORE displays output of files or piped input in pages.\n"
+  WCMD_MORE,
+"MORE displays output of files or piped input in pages.\n"
 
-  WCMD_CHOICE, "CHOICE displays a text and waits, until the User\n\
-presses an allowed Key from a selectable list.\n\
+  WCMD_CHOICE,
+"CHOICE displays a text and waits, until the User presses an allowed Key\n\
+from a selectable list.\n\
 CHOICE is mainly used to build a menu selection in a batch file.\n"
 
   WCMD_EXIT,
-"EXIT terminates the current command session and returns\n\
-to the operating system or shell from which you invoked cmd.\n"
+"EXIT terminates the current command session and returns to the operating\n\
+system or shell from which you invoked cmd.\n"
 
-  WCMD_ALLHELP, "CMD built-in commands are:\n\
+  WCMD_ALLHELP,
+"CMD built-in commands are:\n\
 ASSOC\t\tShow or modify file extension associations\n\
 ATTRIB\t\tShow or change DOS file attributes\n\
 CALL\t\tInvoke a batch file from inside another\n\

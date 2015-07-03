@@ -9620,7 +9620,7 @@ msgstr "Kroži v zanki med upravljanjem napotiteljev"
 msgid "Referral hop limit exceeded"
 msgstr "Meja preskoka napotitev je bila presežena"
 
-#: attrib.rc:30 cmd.rc:327
+#: attrib.rc:30 cmd.rc:361
 msgid ""
 "Not Yet Implemented\n"
 "\n"
@@ -9628,7 +9628,7 @@ msgstr ""
 "Ni še podprto\n"
 "\n"
 
-#: attrib.rc:31 cmd.rc:330
+#: attrib.rc:31 cmd.rc:364
 msgid "%1: File Not Found\n"
 msgstr "%1: datoteke ni mogoče najti\n"
 
@@ -9710,26 +9710,25 @@ msgstr "Ura"
 
 #: cmd.rc:40
 msgid ""
-"CALL <batchfilename> is used within a batch file to execute commands\n"
-"from another batch file. When the batch file exits, control returns to\n"
-"the file which called it. The CALL command may supply parameters to the\n"
-"called procedure.\n"
+"CALL <batchfilename> is used within a batch file to execute commands from\n"
+"another batch file. When the batch file exits, control returns to the file\n"
+"which called it. The CALL command may supply parameters to the called\n"
+"procedure.\n"
 "\n"
 "Changes to default directory, environment variables etc made within a\n"
 "called procedure are inherited by the caller.\n"
 msgstr ""
-"CALL <ime_paketne_datoteke> se uporablja v paketni datoteki,\n"
-"kadar želimo izvršiti ukaze iz druge paketne datoteke. Ko klicana paketna\n"
-"datoteka preneha z izvajanjem, vrne nadzor nadrejeni datoteki (klicatelju).\n"
-"Ukazu CALL je mogoče posredovati tudi parametre, ki naj bodo posredovani "
-"klicani\n"
+"CALL <ime_paketne_datoteke> se uporablja v paketni datoteki, kadar želimo\n"
+"izvršiti ukaze iz druge paketne datoteke. Ko klicana paketna datoteka\n"
+"preneha z izvajanjem, vrne nadzor nadrejeni datoteki (klicatelju). Ukazu\n"
+"CALL je mogoče posredovati tudi parametre, ki naj bodo posredovani klicani\n"
 "paketni datoteki.\n"
 "\n"
-"Spremembe trenutne mape, okoljskih spremenljivk, itd., ki so napravljene "
-"znotraj\n"
-"klicane paketne datoteke, so posredovane klicatelju (nadrejeni datoteki).\n"
+"Spremembe trenutne mape, okoljskih spremenljivk, itd., ki so napravljene\n"
+"znotraj klicane paketne datoteke, so posredovane klicatelju (nadrejeni\n"
+"datoteki).\n"
 
-#: cmd.rc:43
+#: cmd.rc:44
 #, fuzzy
 #| msgid ""
 #| "CD <dir> is the short version of CHDIR. It changes the current\n"
@@ -9738,45 +9737,44 @@ msgid ""
 "CD <directory> is the short version of CHDIR. It changes the current\n"
 "default directory.\n"
 msgstr ""
-"CD <mapa> je kratka različica CHDIR. Spremeni trenutno privzeto\n"
-"mapo.\n"
+"CD <mapa> je kratka različica CHDIR. Spremeni trenutno privzeto mapo.\n"
 
-#: cmd.rc:44
+#: cmd.rc:47
 #, fuzzy
 #| msgid "CHDIR <dir> changes the current default directory.\n"
 msgid "CHDIR <directory> changes the current default directory.\n"
 msgstr "CHDIR <mapa> spremeni trenutno privzeto mapo.\n"
 
-#: cmd.rc:46
+#: cmd.rc:50
 msgid "CLS clears the console screen.\n"
 msgstr "CLS počisti zaslon konzole.\n"
 
-#: cmd.rc:48
+#: cmd.rc:53
 msgid "COPY <filename> copies a file.\n"
 msgstr "COPY <datoteka> kopira datoteko.\n"
 
-#: cmd.rc:49
+#: cmd.rc:56
 msgid "CTTY changes the input/output device.\n"
 msgstr "CTTY spremeni vhodno/izhodno napravo.\n"
 
-#: cmd.rc:50
+#: cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
 msgstr "DATE prikaže ali spremeni sistemski datum.\n"
 
-#: cmd.rc:51
+#: cmd.rc:62
 msgid "DEL <filename> deletes a file or set of files.\n"
 msgstr "DEL <filename> izbriše datoteko ali več datotek.\n"
 
-#: cmd.rc:52
+#: cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
 msgstr "DIR izpiše vsebino mape.\n"
 
-#: cmd.rc:62
+#: cmd.rc:75
 msgid ""
 "ECHO <string> displays <string> on the current terminal device.\n"
 "\n"
-"ECHO ON causes all subsequent commands in a batch file to be displayed\n"
-"on the terminal device before they are executed.\n"
+"ECHO ON causes all subsequent commands in a batch file to be displayed on\n"
+"the terminal device before they are executed.\n"
 "\n"
 "ECHO OFF reverses the effect of a previous ECHO ON (ECHO is OFF by\n"
 "default). The ECHO OFF command can be prevented from displaying by\n"
@@ -9790,11 +9788,11 @@ msgstr ""
 "ECHO OFF izključi učinek ukaza ECHO ON (privzeta vrednost za ECHO je OFF).\n"
 "Izpis ukaza ECHO OFF je mogoče preprečiti z dodajanjem znaka @ pred njim.\n"
 
-#: cmd.rc:64
+#: cmd.rc:78
 msgid "ERASE <filename> deletes a file or set of files.\n"
 msgstr "ERASE <filename> izbriše datoteko ali več datotek.\n"
 
-#: cmd.rc:71
+#: cmd.rc:85
 #, fuzzy
 #| msgid ""
 #| "The FOR command is used to execute a command for each of a set of files.\n"
@@ -9807,37 +9805,35 @@ msgid ""
 "\n"
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
-"Ukaz FOR se uporablja za izvrševanje ukaza za vsako datoteko iz podanega "
+"Ukaz FOR se uporablja za izvrševanje ukaza za vsako datoteko iz podanega\n"
 "niza datotek.\n"
 "\n"
 "Skladnja: FOR %spremenljivka IN (niz) DO ukaz\n"
 
-#: cmd.rc:83
+#: cmd.rc:97
 msgid ""
-"The GOTO command transfers execution to another statement within a\n"
-"batch file.\n"
+"The GOTO command transfers execution to another statement within a batch\n"
+"file.\n"
 "\n"
-"The label which is the target of a GOTO may be up to 255 characters\n"
-"long but may not include spaces (this is different from other operating\n"
-"systems). If two or more identical labels exist in a batch file the\n"
-"first one will always be executed. Attempting to GOTO a nonexistent\n"
-"label terminates the batch file execution.\n"
+"The label which is the target of a GOTO may be up to 255 characters long\n"
+"but may not include spaces (this is different from other operating\n"
+"systems). If two or more identical labels exist in a batch file the first\n"
+"one will always be executed. Attempting to GOTO a nonexistent label\n"
+"terminates the batch file execution.\n"
 "\n"
 "GOTO has no effect when used interactively.\n"
 msgstr ""
 "Ukaz GOTO premakne izvrševanje na drugo izjavo v paketni datoteki.\n"
 "\n"
-"Ciljna oznaka za ukaz GOTO je lahko dolga največ 255 znakov, vendar za "
-"razliko\n"
-"od ostalih operacijskih sistemov ne sme vsebovati presledkov. Če v paketni\n"
-"datoteki obstajata dve enaki oznaki, bo vedno izvršena le prva. Poskus "
-"uporabe\n"
-"ukaza GOTO z neobstoječo oznako povzroči konec izvrševanja paketne "
-"datoteke.\n"
+"Ciljna oznaka za ukaz GOTO je lahko dolga največ 255 znakov, vendar za\n"
+"razliko od ostalih operacijskih sistemov ne sme vsebovati presledkov. Če v\n"
+"paketni datoteki obstajata dve enaki oznaki, bo vedno izvršena le prva.\n"
+"Poskus uporabe ukaza GOTO z neobstoječo oznako povzroči konec izvrševanja\n"
+"paketne datoteke.\n"
 "\n"
 "V vzajemnem načinu ukaz GOTO nima nobenega učinka.\n"
 
-#: cmd.rc:86
+#: cmd.rc:101
 msgid ""
 "HELP <command> shows brief help details on a topic.\n"
 "HELP without an argument shows all CMD built-in commands.\n"
@@ -9845,7 +9841,7 @@ msgstr ""
 "HELP <ukaz> pokaže kratke podrobnosti pomoči o temi.\n"
 "HELP brez argumentov pokaže vse vgrajene ukaze CMD.\n"
 
-#: cmd.rc:96
+#: cmd.rc:111
 msgid ""
 "IF is used to conditionally execute a command.\n"
 "\n"
@@ -9865,7 +9861,7 @@ msgstr ""
 "V drugem primeru zgoraj morata biti niz1 in niz2 v dvojnih navedkih.\n"
 "Primerjava ni občutljiva na velikost črk.\n"
 
-#: cmd.rc:102
+#: cmd.rc:118
 msgid ""
 "LABEL is used to set a disk volume label.\n"
 "\n"
@@ -9879,39 +9875,39 @@ msgstr ""
 "Ukaz vas pozove po novi oznaki nosilca za želeni pogon.\n"
 "Trenutno oznako diskovnega nosilca lahko prikažete z ukazom VOL.\n"
 
-#: cmd.rc:105
+#: cmd.rc:121
 msgid "MD <name> is the short version of MKDIR. It creates a subdirectory.\n"
 msgstr "MD <ime> je kratko ime za MKDIR. Ustvari podmapo.\n"
 
-#: cmd.rc:106
+#: cmd.rc:123
 msgid "MKDIR <name> creates a subdirectory.\n"
 msgstr "MKDIR <mapa> ustvari podmapo.\n"
 
-#: cmd.rc:113
+#: cmd.rc:131
 msgid ""
 "MOVE relocates a file or directory to a new point within the file system.\n"
 "\n"
-"If the item being moved is a directory then all the files and "
-"subdirectories\n"
-"below the item are moved as well.\n"
+"If the item being moved is a directory then all the files and\n"
+"subdirectories below the item are moved as well.\n"
 "\n"
 "MOVE fails if the old and new locations are on different DOS drive letters.\n"
 msgstr ""
 "MOVE premakne datoteko ali mapo na novo mesto v datotečnem sistemu.\n"
 "\n"
-"Če premikate mapo, bo premaknjena tudi vsa njena vsebina (datoteke in "
+"Če premikate mapo, bo premaknjena tudi vsa njena vsebina (datoteke in\n"
 "podmape).\n"
 "\n"
-"MOVE ne more premikati datotek ali map med mesti na pogonih z različnimi "
+"MOVE ne more premikati datotek ali map med mesti na pogonih z različnimi\n"
 "črkami DOS.\n"
 
-#: cmd.rc:124
+#: cmd.rc:142
+#, fuzzy
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
-"Entering PATH will display the current PATH setting (initially taken\n"
-"from the registry). To change the setting follow the\n"
-"PATH command with the new value.\n"
+"Entering PATH will display the current PATH setting (initially taken from\n"
+"the registry). To change the setting follow the PATH command with the new\n"
+"value.\n"
 "\n"
 "It is also possible to modify the PATH by using the PATH environment\n"
 "variable, for example:\n"
@@ -9920,28 +9916,26 @@ msgstr ""
 "PATH prikaže oz. spremeni iskalno pot za cmd.\n"
 "\n"
 "Sam ukaz PATH prikaže trenutno nastavitev PATH (v osnovi je le-ta enaka\n"
-"vrednosti, ki je podana v datoteki wine.conf). Če želite spremeniti "
-"nastavitev,\n"
-"podajte novo vrednost kot parameter ukaza PATH.\n"
+"vrednosti, ki je podana v datoteki wine.conf). Če želite spremeniti\n"
+"nastavitev, podajte novo vrednost kot parameter ukaza PATH.\n"
 "\n"
-"Nastavitev PATH je prav tako mogoče spremeniti z uporabo okoljske "
-"spremenljivke\n"
-"PATH. Na primer:\n"
+"Nastavitev PATH je prav tako mogoče spremeniti z uporabo okoljske\n"
+"spremenljivke PATH. Na primer:\n"
 "PATH %PATH%;c:\\temp\n"
 
-#: cmd.rc:130
+#: cmd.rc:148
 msgid ""
 "PAUSE displays a message on the screen asking the user to press a key.\n"
 "\n"
-"It is mainly useful in batch files to allow the user to read the output\n"
-"of a previous command before it scrolls off the screen.\n"
+"It is mainly useful in batch files to allow the user to read the output of\n"
+"a previous command before it scrolls off the screen.\n"
 msgstr ""
 "PAUSE izpiše na zaslonu sporočilo, da naj uporabnik pritisnite na tipko.\n"
 "\n"
-"Ukaz je uporaben v paketnih datotekah, ko želimo uporabniku omogočiti,\n"
-"da prebere izhodna sporočila predhodnega ukaza, preden izginejo z zaslona.\n"
+"Ukaz je uporaben v paketnih datotekah, ko želimo uporabniku omogočiti, da\n"
+"prebere izhodna sporočila predhodnega ukaza, preden izginejo z zaslona.\n"
 
-#: cmd.rc:151
+#: cmd.rc:169
 msgid ""
 "PROMPT sets the command-line prompt.\n"
 "\n"
@@ -9965,8 +9959,8 @@ msgid ""
 msgstr ""
 "PROMPT spremeni ukazni poziv ukazne vrstice.\n"
 "\n"
-"Niz, ki sledi ukazu PROMPT (vključno s presledkom, ki mu sledi)\n"
-"se pojavi na začetku vrstice, ko cmd čaka na vnos.\n"
+"Niz, ki sledi ukazu PROMPT (vključno s presledkom, ki mu sledi) se pojavi\n"
+"na začetku vrstice, ko cmd čaka na vnos.\n"
 "\n"
 "Naslednji nizi imajo poseben pomen:\n"
 "\n"
@@ -9975,44 +9969,43 @@ msgstr ""
 "$l    Znak <              $n    Trenutni pogon      $p    Trenutna pot\n"
 "$q    Enačaj              $t    Trenutni čas        $v    različica cmd\n"
 "\n"
-"Ukaz PROMPT brez niza za nov poziv povzroči ponastavitev ukaznega poziva\n"
-"na privzetega. Le-ta je sestavljen iz poti trenutne mape (vključno s črko "
-"pogona),\n"
-"ki ji sledi znak > (enakovredno ukazu PROMPT $p$g).\n"
+"Ukaz PROMPT brez niza za nov poziv povzroči ponastavitev ukaznega poziva na\n"
+"privzetega. Le-ta je sestavljen iz poti trenutne mape (vključno s črko\n"
+"pogona), ki ji sledi znak > (enakovredno ukazu PROMPT $p$g).\n"
 "\n"
-"Ukazni poziv je prav tako mogoče spremeniti z uporabo okoljske spremenljivke "
-"PROMPT;\n"
-"ukaz 'SET PROMPT=text' ima enak učinek kot 'PROMPT text'.\n"
+"Ukazni poziv je prav tako mogoče spremeniti z uporabo okoljske\n"
+"spremenljivke PROMPT; ukaz 'SET PROMPT=text' ima enak učinek kot\n"
+"'PROMPT text'.\n"
 
-#: cmd.rc:155
+#: cmd.rc:173
 msgid ""
-"A command line beginning with REM (followed by a space) performs no\n"
-"action, and can therefore be used as a comment in a batch file.\n"
+"A command line beginning with REM (followed by a space) performs no action,\n"
+"and can therefore be used as a comment in a batch file.\n"
 msgstr ""
 "Vrstica, ki se začenja z REM (kateremu sledi presledek), se ne izvede in jo\n"
 "zato lahko uporabimo kot opombo v paketni datoteki.\n"
 
-#: cmd.rc:158
+#: cmd.rc:176
 msgid "REN <filename> is the short version of RENAME. It renames a file.\n"
 msgstr "REN <ime_datoteke> je kratka različice RENAME. Preimenuje datoteko.\n"
 
-#: cmd.rc:159
+#: cmd.rc:178
 msgid "RENAME <filename> renames a file.\n"
 msgstr "RENAME <ime datoteke> preimenuje datoteke.\n"
 
-#: cmd.rc:161
+#: cmd.rc:181
 #, fuzzy
 #| msgid "RD <dir> is the short version of RMDIR. It deletes a subdirectory.\n"
 msgid "RD <directory> is the short version of RMDIR. It deletes a directory.\n"
 msgstr "RD je kratka različica RMDIR. Izbriše podmapo.\n"
 
-#: cmd.rc:162
+#: cmd.rc:183
 #, fuzzy
 #| msgid "RMDIR <dir> deletes a subdirectory.\n"
 msgid "RMDIR <directory> deletes a directory.\n"
 msgstr "RMDIR <mapa> izbriše podmapo.\n"
 
-#: cmd.rc:206
+#: cmd.rc:229
 msgid ""
 "SET displays or changes the cmd environment variables.\n"
 "\n"
@@ -10022,14 +10015,13 @@ msgid ""
 "\n"
 "SET <variable>=<value>\n"
 "\n"
-"where <variable> and <value> are character strings. There must be no\n"
-"space before the equals sign, nor can the variable name\n"
-"have embedded spaces.\n"
+"where <variable> and <value> are character strings. There must be no space\n"
+"before the equals sign, nor can the variable name have embedded spaces.\n"
 "\n"
-"Under Wine, the environment of the underlying operating system is\n"
-"included into the Win32 environment, there will generally therefore be\n"
-"many more values than in a native Win32 implementation. Note that it is\n"
-"not possible to affect the operating system environment from within cmd.\n"
+"Under Wine, the environment of the underlying operating system is included\n"
+"into the Win32 environment, there will generally therefore be many more\n"
+"values than in a native Win32 implementation. Note that it is not possible\n"
+"to affect the operating system environment from within cmd.\n"
 msgstr ""
 "SET prikaže oz. nastavi vrednost okoljskih spremenljivk.\n"
 "\n"
@@ -10040,74 +10032,73 @@ msgstr ""
 "SET <spremenljivka>=<vrednost>\n"
 "\n"
 "kjer sta tako <spremenljivka> kot <vrednost> znakovna niza. Pred enačajem\n"
-"ne sme biti presledka. Ime spremenljivke prav tako ne sme vsebovati "
+"ne sme biti presledka. Ime spremenljivke prav tako ne sme vsebovati\n"
 "presledkov.\n"
 "\n"
-"Pri Wine-u je okolje matičnega operacijskega sistema vključeno v okolje "
-"Win32,\n"
-"zato v splošnem le-to vsebuje več okoljskih spremenljivk kot jih resnično\n"
-"okolje Win32. S programom cmd ni mogoče vplivati na okolje matičnega\n"
-"operacijskega sistema.\n"
+"Pri Wine-u je okolje matičnega operacijskega sistema vključeno v okolje\n"
+"Win32, zato v splošnem le-to vsebuje več okoljskih spremenljivk kot jih\n"
+"resnično okolje Win32. S programom cmd ni mogoče vplivati na okolje\n"
+"matičnega operacijskega sistema.\n"
 
-#: cmd.rc:211
+#: cmd.rc:234
 msgid ""
-"SHIFT is used in a batch file to remove one parameter from the head of\n"
-"the list, so parameter 2 becomes parameter 1 and so on. It has no effect\n"
-"if called from the command line.\n"
+"SHIFT is used in a batch file to remove one parameter from the head of the\n"
+"list, so parameter 2 becomes parameter 1 and so on. It has no effect if\n"
+"called from the command line.\n"
 msgstr ""
-"SHIFT se uporablja v paketni datoteki za odstranitev prvega parametra s "
-"seznama\n"
-"parametrov; parameter 2 tako postane parameter 1, itd. Ukaz nima nobenega\n"
-"učinka pri uporabi iz ukazne vrstice.\n"
+"SHIFT se uporablja v paketni datoteki za odstranitev prvega parametra s\n"
+"seznama parametrov; parameter 2 tako postane parameter 1, itd. Ukaz nima\n"
+"nobenega učinka pri uporabi iz ukazne vrstice.\n"
 
-#: cmd.rc:188 start.rc:53
+#: cmd.rc:212 start.rc:56
 msgid ""
-"Start a program, or open a document in the program normally used for files "
+"Start a program, or open a document in the program normally used for files\n"
 "with that suffix.\n"
 "Usage:\n"
 "start [options] program_filename [...]\n"
 "start [options] document_filename\n"
 "\n"
 "Options:\n"
-"\"title\"      Specifies the title of the child windows.\n"
-"/d directory Start the program in the specified directory.\n"
-"/b           Don't create a new console for the program.\n"
-"/i           Start the program with fresh environment variables.\n"
-"/min         Start the program minimized.\n"
-"/max         Start the program maximized.\n"
-"/low         Start the program in the idle priority class.\n"
-"/normal      Start the program in the normal priority class.\n"
-"/high        Start the program in the high priority class.\n"
-"/realtime    Start the program in the realtime priority class.\n"
-"/abovenormal Start the program in the abovenormal priority class.\n"
-"/belownormal Start the program in the belownormal priority class.\n"
-"/node n      Start the program on the specified NUMA node.\n"
+"\"title\"        Specifies the title of the child windows.\n"
+"/d directory   Start the program in the specified directory.\n"
+"/b             Don't create a new console for the program.\n"
+"/i             Start the program with fresh environment variables.\n"
+"/min           Start the program minimized.\n"
+"/max           Start the program maximized.\n"
+"/low           Start the program in the idle priority class.\n"
+"/normal        Start the program in the normal priority class.\n"
+"/high          Start the program in the high priority class.\n"
+"/realtime      Start the program in the realtime priority class.\n"
+"/abovenormal   Start the program in the abovenormal priority class.\n"
+"/belownormal   Start the program in the belownormal priority class.\n"
+"/node n        Start the program on the specified NUMA node.\n"
 "/affinity mask Start the program with the specified affinity mask.\n"
-"/wait        Wait for the started program to finish, then exit with its exit "
-"code.\n"
-"/unix        Use a Unix filename and start the file like windows explorer.\n"
-"/ProgIDOpen  Open a document using the specified progID.\n"
-"/?           Display this help and exit.\n"
+"/wait          Wait for the started program to finish, then exit with its\n"
+"exit code.\n"
+"/unix          Use a Unix filename and start the file like windows\n"
+"explorer.\n"
+"/ProgIDOpen    Open a document using the specified progID.\n"
+"/?             Display this help and exit.\n"
 msgstr ""
 
-#: cmd.rc:213
+#: cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
 msgstr "TIME nastavi ali prikaže trenutni sistemski čas.\n"
 
-#: cmd.rc:215
+#: cmd.rc:240
 msgid "TITLE <string> sets the window title for the cmd window.\n"
 msgstr "Nastavi naslov za okno cmd. Skladnja je: TITLE <niz>.\n"
 
-#: cmd.rc:219
+#: cmd.rc:244
 msgid ""
-"TYPE <filename> copies <filename> to the console device (or elsewhere\n"
-"if redirected). No check is made that the file is readable text.\n"
+"TYPE <filename> copies <filename> to the console device (or elsewhere if\n"
+"redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <ime_datoteke> prikaže vsebino datoteke <ime_datoteke> na zaslonu (ali\n"
 "drugje, če gre za preusmeritev). Ukaz ne preveri, ali je vsebina datoteke v\n"
 "resnici berljivo besedilo.\n"
 
-#: cmd.rc:228
+#: cmd.rc:253
 msgid ""
 "VERIFY is used to set, clear or test the verify flag. Valid forms are:\n"
 "\n"
@@ -10126,23 +10117,23 @@ msgstr ""
 "\n"
 "Zastavica preverjanja v Wine nima nobene zmožnosti.\n"
 
-#: cmd.rc:231
+#: cmd.rc:256
 msgid "VER displays the version of cmd you are running.\n"
 msgstr "VER prikaže različico cmd, ki jo poganjate.\n"
 
-#: cmd.rc:233
+#: cmd.rc:259
 msgid "VOL shows the volume label of a disk device.\n"
 msgstr "VOL pokaže oznako nosilca diskovne naprave.\n"
 
-#: cmd.rc:237
+#: cmd.rc:263
 msgid ""
-"ENDLOCAL ends localization of environment changes in a batch file\n"
-"which were introduced by a preceding SETLOCAL.\n"
+"ENDLOCAL ends localization of environment changes in a batch file which\n"
+"were introduced by a preceding SETLOCAL.\n"
 msgstr ""
-"ENDLOCAL konča lokaliziranje okoljskih sprememb v paketni datoteki,\n"
-"ki so bile uvedene z vnosom  SETLOCAL.\n"
+"ENDLOCAL konča lokaliziranje okoljskih sprememb v paketni datoteki, ki so\n"
+"bile uvedene z vnosom SETLOCAL.\n"
 
-#: cmd.rc:245
+#: cmd.rc:271
 msgid ""
 "SETLOCAL starts localization of environment changes in a batch file.\n"
 "\n"
@@ -10158,25 +10149,25 @@ msgstr ""
 "karkoli je prej). Takrat so obnovljene predhodne nastavitve\n"
 "okolja.\n"
 
-#: cmd.rc:248
+#: cmd.rc:275
 #, fuzzy
 #| msgid ""
 #| "PUSHD <directoryname> saves the current directory onto a\n"
 #| "stack, and then changes the current directory to the supplied one.\n"
 msgid ""
-"PUSHD <directory> saves the current directory onto a\n"
-"stack, and then changes the current directory to the supplied one.\n"
+"PUSHD <directory> saves the current directory onto a stack, and then\n"
+"changes the current directory to the supplied one.\n"
 msgstr ""
-"PUSHD <ime_mape> shrani trenutno mapo v sklad in se nato\n"
-"preseli v navedeno mapo.\n"
+"PUSHD <ime_mape> shrani trenutno mapo v sklad in se nato preseli v navedeno\n"
+"mapo.\n"
 
-#: cmd.rc:250
+#: cmd.rc:278
 msgid "POPD changes current directory to the last one saved with PUSHD.\n"
 msgstr ""
-"POPD se preseli iz trenutne mape v mapo, ki je bila nazadnje\n"
-"shranjena z ukazom PUSHD.\n"
+"POPD se preseli iz trenutne mape v mapo, ki je bila nazadnje shranjena z\n"
+"ukazom PUSHD.\n"
 
-#: cmd.rc:258
+#: cmd.rc:288
 msgid ""
 "ASSOC shows or modifies file extension associations.\n"
 "\n"
@@ -10184,7 +10175,7 @@ msgid ""
 "\n"
 "ASSOC without parameters displays current file associations.\n"
 "If used with only a file extension, displays the current association.\n"
-"Specifying no file type after the equal sign removes the current "
+"Specifying no file type after the equal sign removes the current\n"
 "association, if any.\n"
 msgstr ""
 "ASSOC pokaže ali spremeni povezave pripon datotek\n"
@@ -10193,58 +10184,57 @@ msgstr ""
 "\n"
 "ASSOC brez parametrov prikaže trenutne povezave datoteke.\n"
 "Če se uporablja samo s pripono datoteke, prikaže trenutno povezavo.\n"
-"Če za enačajem ne določite vrste datoteke, so morebitne povezave datotek "
+"Če za enačajem ne določite vrste datoteke, so morebitne povezave datotek\n"
 "odstranjene.\n"
 
-#: cmd.rc:269
+#: cmd.rc:300
 msgid ""
 "FTYPE shows or modifies open commands associated with file types.\n"
 "\n"
 "Syntax: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
-"Without parameters, shows the file types for which open command strings are "
+"Without parameters, shows the file types for which open command strings are\n"
 "currently defined.\n"
-"If used with only a file type, displays the associated open command string, "
+"If used with only a file type, displays the associated open command string,\n"
 "if any.\n"
-"Specifying no open command after the equal sign removes the command string "
+"Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
 "FTYPE pokaže ali spremeni odprte ukaze povezane z vrstami datotek\n"
 "\n"
 "Skladnja: FTYPE [fileType[=[openCommand]]]\n"
 "\n"
-"Brez parametrov pokaže vrste datotek za katere so odprti nizi ukazov "
+"Brez parametrov pokaže vrste datotek za katere so odprti nizi ukazov\n"
 "trenutno določeni.\n"
-"Če se uporablja samo z vrsto datoteke, prikaže povezan niz ukaza odprtja, če "
-"obstaja.\n"
-"Če ukaza odpiranja ne določite ukaz za enačajem odstrani ukazni niz, ki je "
+"Če se uporablja samo z vrsto datoteke, prikaže povezan niz ukaza odprtja,\n"
+"če obstaja.\n"
+"Če ukaza odpiranja ne določite ukaz za enačajem odstrani ukazni niz, ki je\n"
 "povezan z določeno vrsto datoteke.\n"
 
-#: cmd.rc:271
+#: cmd.rc:303
 msgid "MORE displays output of files or piped input in pages.\n"
 msgstr "MORE prikaže vsebino datotek ali preusmerjenega vnosa v straneh.\n"
 
-#: cmd.rc:275
+#: cmd.rc:308
 msgid ""
-"CHOICE displays a text and waits, until the User\n"
-"presses an allowed Key from a selectable list.\n"
+"CHOICE displays a text and waits, until the User presses an allowed Key\n"
+"from a selectable list.\n"
 "CHOICE is mainly used to build a menu selection in a batch file.\n"
 msgstr ""
-"CHOICE prikazuje besedilo in čaka dokler uporabnik\n"
-"ne pritisne omogočene tipke iz izberljivega seznama.\n"
-"CHOICE se uporablja predvsem za izgradnjo izberljivega menija v paketni "
+"CHOICE prikazuje besedilo in čaka dokler uporabnik ne pritisne omogočene\n"
+"tipke iz izberljivega seznama.\n"
+"CHOICE se uporablja predvsem za izgradnjo izberljivega menija v paketni\n"
 "datoteki.\n"
 
-#: cmd.rc:279
+#: cmd.rc:312
 msgid ""
-"EXIT terminates the current command session and returns\n"
-"to the operating system or shell from which you invoked cmd.\n"
+"EXIT terminates the current command session and returns to the operating\n"
+"system or shell from which you invoked cmd.\n"
 msgstr ""
-"EXIT konča trenutno ukazno sejo in vrne ustrezno stanje operacijskemu "
-"sistemu\n"
-"ali ukazni lupini, iz katere ste priklicali cmd.\n"
+"EXIT konča trenutno ukazno sejo in vrne ustrezno stanje operacijskemu\n"
+"sistemu ali ukazni lupini, iz katere ste priklicali cmd.\n"
 
-#: cmd.rc:317
+#: cmd.rc:351
 msgid ""
 "CMD built-in commands are:\n"
 "ASSOC\t\tShow or modify file extension associations\n"
@@ -10299,7 +10289,8 @@ msgstr ""
 "DIR\t\tIzpiše vsebino mape\n"
 "ECHO\t\tPrikaže besedilo v konzoli\n"
 "ENDLOCAL\tKonča prevednost sprememb okolja v paketni datoteki\n"
-"FTYPE\t\tPokaže ali spremeni odprte ukaze, ki so povezani z vrstami datotek\n"
+"FTYPE\t\tPokaže ali spremeni odprte ukaze, ki so povezani z vrstami\n"
+"\t\tdatotek\n"
 "HELP\t\tPrikaže kratko besedilo s pomočjo o želeni temi\n"
 "MD (MKDIR)\tUstvari podmapo\n"
 "MORE\t\tIzpiše besedilo po straneh\n"
@@ -10325,110 +10316,110 @@ msgstr ""
 "Uporabite HELP <ukaz> za več podrobnosti o kateremkoli od zgoraj navedenih\n"
 "ukazov.\n"
 
-#: cmd.rc:319
+#: cmd.rc:353
 msgid "Are you sure?"
 msgstr "Ali ste prepričani?"
 
-#: cmd.rc:320 xcopy.rc:43
+#: cmd.rc:354 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "D"
 
-#: cmd.rc:321 xcopy.rc:44
+#: cmd.rc:355 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "N"
 
-#: cmd.rc:322
+#: cmd.rc:356
 msgid "File association missing for extension %1\n"
 msgstr "Manjka povezava datoteke za pripono %1\n"
 
-#: cmd.rc:323
+#: cmd.rc:357
 msgid "No open command associated with file type '%1'\n"
 msgstr "Noben ukaz za odprtje ni povezan z vrsto datotek '%1'\n"
 
-#: cmd.rc:324
+#: cmd.rc:358
 msgid "Overwrite %1?"
 msgstr "Prepiši %1?"
 
-#: cmd.rc:325
+#: cmd.rc:359
 msgid "More..."
 msgstr "Več ..."
 
-#: cmd.rc:326
+#: cmd.rc:360
 msgid "Line in Batch processing possibly truncated. Using:\n"
 msgstr "Vrstica v paketni datoteki je morda skrajšana. Uporaba:\n"
 
-#: cmd.rc:328
+#: cmd.rc:362
 msgid "Argument missing\n"
 msgstr "Argument manjka\n"
 
-#: cmd.rc:329
+#: cmd.rc:363
 msgid "Syntax error\n"
 msgstr "Napaka skladnje\n"
 
-#: cmd.rc:331
+#: cmd.rc:365
 msgid "No help available for %1\n"
 msgstr "Za %1 ni pomoči na voljo\n"
 
-#: cmd.rc:332
+#: cmd.rc:366
 msgid "Target to GOTO not found\n"
 msgstr "Cilja ukaza GOTO ni mogoče najti\n"
 
-#: cmd.rc:333
+#: cmd.rc:367
 msgid "Current Date is %1\n"
 msgstr "Trenutni datum je %1\n"
 
-#: cmd.rc:334
+#: cmd.rc:368
 msgid "Current Time is %1\n"
 msgstr "Trenutni čas je %1\n"
 
-#: cmd.rc:335
+#: cmd.rc:369
 msgid "Enter new date: "
 msgstr "Vnesite nov datum: "
 
-#: cmd.rc:336
+#: cmd.rc:370
 msgid "Enter new time: "
 msgstr "Vnesite nov čas: "
 
-#: cmd.rc:337
+#: cmd.rc:371
 msgid "Environment variable %1 not defined\n"
 msgstr "Okoljska spremenljivka %1 ni določena\n"
 
-#: cmd.rc:338 xcopy.rc:41
+#: cmd.rc:372 xcopy.rc:41
 msgid "Failed to open '%1'\n"
 msgstr "Odpiranje '%1' je spodletelo\n"
 
-#: cmd.rc:339
+#: cmd.rc:373
 msgid "Cannot call batch label outside of a batch script\n"
 msgstr "Klic paketne oznake zunaj paketnega skripta ni mogoč\n"
 
-#: cmd.rc:340 xcopy.rc:45
+#: cmd.rc:374 xcopy.rc:45
 msgctxt "All key"
 msgid "A"
 msgstr "V"
 
-#: cmd.rc:341
+#: cmd.rc:375
 msgid "Delete %1?"
 msgstr "Izbriši %1?"
 
-#: cmd.rc:342
+#: cmd.rc:376
 msgid "Echo is %1\n"
 msgstr "Odmev je %1\n"
 
-#: cmd.rc:343
+#: cmd.rc:377
 msgid "Verify is %1\n"
 msgstr "Preverjanje je %1\n"
 
-#: cmd.rc:344
+#: cmd.rc:378
 msgid "Verify must be ON or OFF\n"
 msgstr "Vrednost zastavice preverjanja mora biti ON ali OFF\n"
 
-#: cmd.rc:345
+#: cmd.rc:379
 msgid "Parameter error\n"
 msgstr "Napaka parametra\n"
 
-#: cmd.rc:346
+#: cmd.rc:380
 msgid ""
 "Volume Serial Number is %1!04x!-%2!04x!\n"
 "\n"
@@ -10436,74 +10427,74 @@ msgstr ""
 "Zaporedna št. nosilca je %1!04x!-%2!04x!\n"
 "\n"
 
-#: cmd.rc:347
+#: cmd.rc:381
 msgid "Volume label (11 characters, <Enter> for none)?"
 msgstr "Oznaka nosilca (11 znakov, <Enter> za brez)?"
 
-#: cmd.rc:348
+#: cmd.rc:382
 msgid "PATH not found\n"
 msgstr "POTI ni mogoče najti\n"
 
-#: cmd.rc:349
+#: cmd.rc:383
 msgid "Press any key to continue... "
 msgstr "Pritisnite katerokoli tipko za nadaljevanje ... "
 
-#: cmd.rc:350
+#: cmd.rc:384
 msgid "Wine Command Prompt"
 msgstr "Ukazni poziv Wine"
 
-#: cmd.rc:351
+#: cmd.rc:385
 msgid "Microsoft Windows %1!S!\n"
 msgstr ""
 
-#: cmd.rc:352
+#: cmd.rc:386
 msgid "More? "
 msgstr "Več? "
 
-#: cmd.rc:353
+#: cmd.rc:387
 msgid "The input line is too long.\n"
 msgstr "Vhodna vrstica je predolga.\n"
 
-#: cmd.rc:354
+#: cmd.rc:388
 msgid "Volume in drive %1!c! is %2\n"
 msgstr "Nosilec v pogonu %1!c! je %2\n"
 
-#: cmd.rc:355
+#: cmd.rc:389
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "Nosilec v pogonu %1!c! nima oznake.\n"
 
-#: cmd.rc:356
+#: cmd.rc:390
 msgid " (Yes|No)"
 msgstr " (Da|Ne)"
 
-#: cmd.rc:357
+#: cmd.rc:391
 msgid " (Yes|No|All)"
 msgstr " (Da|Ne|Vse)"
 
-#: cmd.rc:358
+#: cmd.rc:392
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
 
-#: cmd.rc:359
+#: cmd.rc:393
 msgid "Division by zero error.\n"
 msgstr ""
 
-#: cmd.rc:360
+#: cmd.rc:394
 msgid "Expected an operand.\n"
 msgstr ""
 
-#: cmd.rc:361
+#: cmd.rc:395
 #, fuzzy
 #| msgid "Unexpected network error.\n"
 msgid "Expected an operator.\n"
 msgstr "Nepričakovana napaka omrežja.\n"
 
-#: cmd.rc:362
+#: cmd.rc:396
 msgid "Mismatch in parentheses.\n"
 msgstr ""
 
-#: cmd.rc:363
+#: cmd.rc:397
 msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
@@ -12157,7 +12148,7 @@ msgstr ""
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
 msgstr ""
 
-#: start.rc:55
+#: start.rc:58
 msgid ""
 "Application could not be started, or no application associated with the "
 "specified file.\n"
@@ -12167,7 +12158,7 @@ msgstr ""
 "program.\n"
 "Ukaz ShellExecuteEx ni uspel"
 
-#: start.rc:57
+#: start.rc:60
 msgid "Could not translate the specified Unix filename to a DOS filename."
 msgstr "Navedenega imena datoteke Unix ni mogoče prevesti v DOS ime datoteke."
 
