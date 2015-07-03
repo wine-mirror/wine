@@ -88,6 +88,11 @@ static const IUnknownVtbl DirectMusicParamControlTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicParamControlTrack IDirectMusicTrack8 part: */
+static inline IDirectMusicParamControlTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicParamControlTrack, TrackVtbl);
+}
+
 static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, TrackVtbl, iface);
 	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
@@ -152,16 +157,22 @@ static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_IsParamSup
 	return DMUS_E_TYPE_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
-	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, TrackVtbl, iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_AddNotificationType(IDirectMusicTrack8 *iface,
+        REFGUID notiftype)
+{
+    IDirectMusicParamControlTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_RemoveNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
-	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, TrackVtbl, iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_RemoveNotificationType(IDirectMusicTrack8 *iface,
+        REFGUID notiftype)
+{
+    IDirectMusicParamControlTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack) {
@@ -191,16 +202,23 @@ static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_SetParamEx
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+        DWORD trackgroup, IDirectMusicTrack **track)
+{
+    IDirectMusicParamControlTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicParamControlTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicParamControlTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Join(IDirectMusicTrack8 *iface,
+        IDirectMusicTrack *newtrack, MUSIC_TIME join, IUnknown *context, DWORD trackgroup,
+        IDirectMusicTrack **resulttrack)
+{
+    IDirectMusicParamControlTrack *This = impl_from_IDirectMusicTrack8(iface);
+    TRACE("(%p, %p, %d, %p, %d, %p): method not implemented\n", This, newtrack, join, context,
+            trackgroup, resulttrack);
+    return E_NOTIMPL;
 }
 
 static const IDirectMusicTrack8Vtbl DirectMusicParamControlTrack_Track_Vtbl = {
@@ -214,14 +232,14 @@ static const IDirectMusicTrack8Vtbl DirectMusicParamControlTrack_Track_Vtbl = {
 	IDirectMusicParamControlTrack_IDirectMusicTrack_GetParam,
 	IDirectMusicParamControlTrack_IDirectMusicTrack_SetParam,
 	IDirectMusicParamControlTrack_IDirectMusicTrack_IsParamSupported,
-	IDirectMusicParamControlTrack_IDirectMusicTrack_AddNotificationType,
-	IDirectMusicParamControlTrack_IDirectMusicTrack_RemoveNotificationType,
+    IDirectMusicTrack8Impl_AddNotificationType,
+    IDirectMusicTrack8Impl_RemoveNotificationType,
 	IDirectMusicParamControlTrack_IDirectMusicTrack_Clone,
 	IDirectMusicParamControlTrack_IDirectMusicTrack_PlayEx,
 	IDirectMusicParamControlTrack_IDirectMusicTrack_GetParamEx,
 	IDirectMusicParamControlTrack_IDirectMusicTrack_SetParamEx,
-	IDirectMusicParamControlTrack_IDirectMusicTrack_Compose,
-	IDirectMusicParamControlTrack_IDirectMusicTrack_Join
+    IDirectMusicTrack8Impl_Compose,
+    IDirectMusicTrack8Impl_Join
 };
 
 /* IDirectMusicParamControlTrack IPersistStream part: */
