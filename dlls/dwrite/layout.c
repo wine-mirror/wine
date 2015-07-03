@@ -223,8 +223,6 @@ struct dwrite_textlayout {
     WCHAR *str;
     UINT32 len;
     struct dwrite_textformat_data format;
-    FLOAT  maxwidth;
-    FLOAT  maxheight;
     struct list strike_ranges;
     struct list effects;
     struct list spacing;
@@ -1120,7 +1118,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         }
 
         overflow = layout->clustermetrics[i].canWrapLineAfter &&
-            (width + layout->clustermetrics[i].width > layout->maxwidth);
+            (width + layout->clustermetrics[i].width > layout->metrics.layoutWidth);
         /* check if we got new */
         if (overflow ||
             layout->clustermetrics[i].isNewline || /* always wrap on new line */
@@ -1195,7 +1193,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             if (width - trailingspacewidth > layout->metrics.width)
                 layout->metrics.width = width - trailingspacewidth;
 
-            metrics.isTrimmed = width > layout->maxwidth;
+            metrics.isTrimmed = width > layout->metrics.layoutWidth;
             hr = layout_set_line_metrics(layout, &metrics, &line);
             if (FAILED(hr))
                 return hr;
@@ -1215,8 +1213,6 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     }
 
     layout->metrics.left = layout->metrics.top = 0.0;
-    layout->metrics.layoutWidth = layout->maxwidth;
-    layout->metrics.layoutHeight = layout->maxheight;
     layout->metrics.maxBidiReorderingDepth = 1; /* FIXME */
     layout->metrics.lineCount = layout->line_count;
 
@@ -2139,24 +2135,26 @@ static HRESULT WINAPI dwritetextlayout_GetLocaleName(IDWriteTextLayout2 *iface, 
 static HRESULT WINAPI dwritetextlayout_SetMaxWidth(IDWriteTextLayout2 *iface, FLOAT maxWidth)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    TRACE("(%p)->(%.1f)\n", This, maxWidth);
+
+    TRACE("(%p)->(%.2f)\n", This, maxWidth);
 
     if (maxWidth < 0.0)
         return E_INVALIDARG;
 
-    This->maxwidth = maxWidth;
+    This->metrics.layoutWidth = maxWidth;
     return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_SetMaxHeight(IDWriteTextLayout2 *iface, FLOAT maxHeight)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    TRACE("(%p)->(%.1f)\n", This, maxHeight);
+
+    TRACE("(%p)->(%.2f)\n", This, maxHeight);
 
     if (maxHeight < 0.0)
         return E_INVALIDARG;
 
-    This->maxheight = maxHeight;
+    This->metrics.layoutHeight = maxHeight;
     return S_OK;
 }
 
@@ -2318,14 +2316,14 @@ static FLOAT WINAPI dwritetextlayout_GetMaxWidth(IDWriteTextLayout2 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
     TRACE("(%p)\n", This);
-    return This->maxwidth;
+    return This->metrics.layoutWidth;
 }
 
 static FLOAT WINAPI dwritetextlayout_GetMaxHeight(IDWriteTextLayout2 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
     TRACE("(%p)\n", This);
-    return This->maxheight;
+    return This->metrics.layoutHeight;
 }
 
 static HRESULT WINAPI dwritetextlayout_layout_GetFontCollection(IDWriteTextLayout2 *iface, UINT32 position,
@@ -3550,8 +3548,6 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->IDWriteTextAnalysisSource_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
     layout->ref = 1;
     layout->len = len;
-    layout->maxwidth = maxwidth;
-    layout->maxheight = maxheight;
     layout->recompute = RECOMPUTE_EVERYTHING;
     layout->nominal_breakpoints = NULL;
     layout->actual_breakpoints = NULL;
@@ -3572,6 +3568,8 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     list_init(&layout->spacing);
     memset(&layout->format, 0, sizeof(layout->format));
     memset(&layout->metrics, 0, sizeof(layout->metrics));
+    layout->metrics.layoutWidth = maxwidth;
+    layout->metrics.layoutHeight = maxheight;
 
     layout->gdicompatible = FALSE;
     layout->pixels_per_dip = 0.0;
