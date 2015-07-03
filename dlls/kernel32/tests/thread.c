@@ -1627,8 +1627,8 @@ static void test_threadpool(void)
     int workcalled = 0;
 
     if (!pCreateThreadpool) {
-        todo_wine win_skip("thread pool apis not supported.\n");
-	return;
+        win_skip("thread pool apis not supported.\n");
+        return;
     }
 
     work = pCreateThreadpoolWork(threadpool_workcallback, &workcalled, NULL);
@@ -1640,7 +1640,7 @@ static void test_threadpool(void)
     ok (workcalled == 1, "expected work to be called once, got %d\n", workcalled);
 
     pool = pCreateThreadpool(NULL);
-    todo_wine ok (pool != NULL, "CreateThreadpool failed\n");
+    ok (pool != NULL, "CreateThreadpool failed\n");
 }
 
 static void test_reserved_tls(void)

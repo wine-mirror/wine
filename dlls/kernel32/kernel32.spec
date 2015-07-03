@@ -228,7 +228,7 @@
 # @ stub ClosePrivateNamespace
 @ stdcall CloseProfileUserMapping()
 @ stub CloseSystemHandle
-# @ stub CloseThreadpool
+@ stdcall CloseThreadpool(ptr) ntdll.TpReleasePool
 @ stdcall CloseThreadpoolCleanupGroup(ptr) ntdll.TpReleaseCleanupGroup
 @ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) ntdll.TpReleaseCleanupGroupMembers
 # @ stub CloseThreadpoolIo
@@ -331,7 +331,7 @@
 @ stdcall CreateSymbolicLinkW(wstr wstr long)
 @ stdcall CreateTapePartition(long long long long)
 @ stdcall CreateThread(ptr long ptr long long ptr)
-# @ stub CreateThreadpool
+@ stdcall CreateThreadpool(ptr)
 @ stdcall CreateThreadpoolCleanupGroup()
 # @ stub CreateThreadpoolIo
 @ stdcall CreateThreadpoolTimer(ptr ptr ptr)
@@ -1454,8 +1454,8 @@
 # @ stub SetThreadToken
 @ stdcall SetThreadUILanguage(long)
 # @ stub SetThreadpoolStackInformation
-# @ stub SetThreadpoolThreadMaximum
-# @ stub SetThreadpoolThreadMinimum
+@ stdcall SetThreadpoolThreadMaximum(ptr long) ntdll.TpSetPoolMaxThreads
+@ stdcall SetThreadpoolThreadMinimum(ptr long) ntdll.TpSetPoolMinThreads
 @ stdcall SetThreadpoolTimer(ptr ptr long long)
 # @ stub SetThreadpoolWait
 @ stdcall SetTimeZoneInformation(ptr)
@@ -1509,7 +1509,7 @@
 @ stdcall TryAcquireSRWLockExclusive(ptr) ntdll.RtlTryAcquireSRWLockExclusive
 @ stdcall TryAcquireSRWLockShared(ptr) ntdll.RtlTryAcquireSRWLockShared
 @ stdcall TryEnterCriticalSection(ptr) ntdll.RtlTryEnterCriticalSection
-# @ stub TrySubmitThreadpoolCallback
+@ stdcall TrySubmitThreadpoolCallback(ptr ptr ptr)
 @ stdcall TzSpecificLocalTimeToSystemTime(ptr ptr ptr)
 # @ stub TzSpecificLocalTimeToSystemTimeEx
 # @ stub -arch=x86_64 uaw_lstrcmpW

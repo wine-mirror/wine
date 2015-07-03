@@ -881,6 +881,26 @@ BOOL WINAPI CallbackMayRunLong( TP_CALLBACK_INSTANCE *instance )
 }
 
 /***********************************************************************
+ *              CreateThreadpool (KERNEL32.@)
+ */
+PTP_POOL WINAPI CreateThreadpool( PVOID reserved )
+{
+    TP_POOL *pool;
+    NTSTATUS status;
+
+    TRACE( "%p\n", reserved );
+
+    status = TpAllocPool( &pool, reserved );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
+
+    return pool;
+}
+
+/***********************************************************************
  *              CreateThreadpoolCleanupGroup (KERNEL32.@)
  */
 PTP_CLEANUP_GROUP WINAPI CreateThreadpoolCleanupGroup( void )
@@ -959,4 +979,24 @@ VOID WINAPI SetThreadpoolTimer( TP_TIMER *timer, FILETIME *due_time,
     }
 
     TpSetTimer( timer, due_time ? &timeout : NULL, period, window_length );
+}
+
+/***********************************************************************
+ *              TrySubmitThreadpoolCallback (KERNEL32.@)
+ */
+BOOL WINAPI TrySubmitThreadpoolCallback( PTP_SIMPLE_CALLBACK callback, PVOID userdata,
+                                         TP_CALLBACK_ENVIRON *environment )
+{
+    NTSTATUS status;
+
+    TRACE( "%p, %p, %p\n", callback, userdata, environment );
+
+    status = TpSimpleTryPost( callback, userdata, environment );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    return TRUE;
 }
