@@ -1215,6 +1215,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     layout->metrics.left = layout->metrics.top = 0.0;
     layout->metrics.maxBidiReorderingDepth = 1; /* FIXME */
     layout->metrics.lineCount = layout->line_count;
+    layout->metrics.height = 0.0;
 
     /* Now all line info is here, update effective runs positions in flow direction */
     erun = layout_get_next_erun(layout, NULL);
