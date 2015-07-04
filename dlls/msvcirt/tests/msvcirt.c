@@ -23,6 +23,31 @@
 
 typedef void (*vtable_ptr)(void);
 
+typedef enum {
+    IOSTATE_goodbit   = 0x0,
+    IOSTATE_eofbit    = 0x1,
+    IOSTATE_failbit   = 0x2,
+    IOSTATE_badbit    = 0x4
+} ios_io_state;
+
+typedef enum {
+    FLAGS_skipws     = 0x1,
+    FLAGS_left       = 0x2,
+    FLAGS_right      = 0x4,
+    FLAGS_internal   = 0x8,
+    FLAGS_dec        = 0x10,
+    FLAGS_oct        = 0x20,
+    FLAGS_hex        = 0x40,
+    FLAGS_showbase   = 0x80,
+    FLAGS_showpoint  = 0x100,
+    FLAGS_uppercase  = 0x200,
+    FLAGS_showpos    = 0x400,
+    FLAGS_scientific = 0x800,
+    FLAGS_fixed      = 0x1000,
+    FLAGS_unitbuf    = 0x2000,
+    FLAGS_stdio      = 0x4000
+} ios_flags;
+
 /* class streambuf */
 typedef struct {
     const vtable_ptr *vtable;
@@ -41,12 +66,36 @@ typedef struct {
     CRITICAL_SECTION lock;
 } streambuf;
 
+/* class ios */
+struct _ostream;
+typedef struct {
+    const vtable_ptr *vtable;
+    streambuf *sb;
+    ios_io_state state;
+    int special[4];
+    int delbuf;
+    struct _ostream *tie;
+    ios_flags flags;
+    int precision;
+    char fill;
+    int width;
+    int do_lock;
+    CRITICAL_SECTION lock;
+} ios;
+
+/* class ostream */
+typedef struct _ostream {
+    const vtable_ptr *vtable;
+} ostream;
+
 #undef __thiscall
 #ifdef __i386__
 #define __thiscall __stdcall
 #else
 #define __thiscall __cdecl
 #endif
+
+static void* (__cdecl *p_operator_new)(unsigned int);
 
 /* streambuf */
 static streambuf* (*__thiscall p_streambuf_reserve_ctor)(streambuf*, char*, int);
@@ -71,6 +120,14 @@ static int (*__thiscall p_streambuf_sync)(streambuf*);
 static void (*__thiscall p_streambuf_unlock)(streambuf*);
 static int (*__thiscall p_streambuf_xsgetn)(streambuf*, char*, int);
 static int (*__thiscall p_streambuf_xsputn)(streambuf*, const char*, int);
+
+/* ios */
+static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
+static ios* (*__thiscall p_ios_ctor)(ios*);
+static ios* (*__thiscall p_ios_sb_ctor)(ios*, streambuf*);
+static ios* (*__thiscall p_ios_assign)(ios*, const ios*);
+static void (*__thiscall p_ios_init)(ios*, streambuf*);
+static void (*__thiscall p_ios_dtor)(ios*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -129,11 +186,12 @@ static void init_thiscall_thunk(void)
 
 #endif /* __i386__ */
 
-static HMODULE msvcirt;
+static HMODULE msvcrt, msvcirt;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcirt,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
 static BOOL init(void)
 {
+    msvcrt = LoadLibraryA("msvcrt.dll");
     msvcirt = LoadLibraryA("msvcirt.dll");
     if(!msvcirt) {
         win_skip("msvcirt.dll not installed\n");
@@ -141,6 +199,8 @@ static BOOL init(void)
     }
 
     if(sizeof(void*) == 8) { /* 64-bit initialization */
+        p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPEAX_K@Z");
+
         SET(p_streambuf_reserve_ctor, "??0streambuf@@IEAA@PEADH@Z");
         SET(p_streambuf_ctor, "??0streambuf@@IEAA@XZ");
         SET(p_streambuf_dtor, "??1streambuf@@UEAA@XZ");
@@ -163,7 +223,16 @@ static BOOL init(void)
         SET(p_streambuf_unlock, "?unlock@streambuf@@QEAAXXZ");
         SET(p_streambuf_xsgetn, "?xsgetn@streambuf@@UEAAHPEADH@Z");
         SET(p_streambuf_xsputn, "?xsputn@streambuf@@UEAAHPEBDH@Z");
+
+        SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
+        SET(p_ios_ctor, "??0ios@@IEAA@XZ");
+        SET(p_ios_sb_ctor, "??0ios@@QEAA@PEAVstreambuf@@@Z");
+        SET(p_ios_assign, "??4ios@@IEAAAEAV0@AEBV0@@Z");
+        SET(p_ios_init, "?init@ios@@IEAAXPEAVstreambuf@@@Z");
+        SET(p_ios_dtor, "??1ios@@UEAA@XZ");
     } else {
+        p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
+
         SET(p_streambuf_reserve_ctor, "??0streambuf@@IAE@PADH@Z");
         SET(p_streambuf_ctor, "??0streambuf@@IAE@XZ");
         SET(p_streambuf_dtor, "??1streambuf@@UAE@XZ");
@@ -186,6 +255,13 @@ static BOOL init(void)
         SET(p_streambuf_unlock, "?unlock@streambuf@@QAEXXZ");
         SET(p_streambuf_xsgetn, "?xsgetn@streambuf@@UAEHPADH@Z");
         SET(p_streambuf_xsputn, "?xsputn@streambuf@@UAEHPBDH@Z");
+
+        SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
+        SET(p_ios_ctor, "??0ios@@IAE@XZ");
+        SET(p_ios_sb_ctor, "??0ios@@QAE@PAVstreambuf@@@Z");
+        SET(p_ios_assign, "??4ios@@IAEAAV0@ABV0@@Z");
+        SET(p_ios_init, "?init@ios@@IAEXPAVstreambuf@@@Z");
+        SET(p_ios_dtor, "??1ios@@UAE@XZ");
     }
 
     init_thiscall_thunk();
@@ -729,12 +805,119 @@ static void test_streambuf(void)
     CloseHandle(thread);
 }
 
+static void test_ios(void)
+{
+    ios ios_obj, ios_obj2;
+    streambuf *psb;
+
+    memset(&ios_obj, 0xab, sizeof(ios));
+    memset(&ios_obj2, 0xab, sizeof(ios));
+    psb = p_operator_new(sizeof(streambuf));
+    if (psb)
+        call_func1(p_streambuf_ctor, psb);
+
+    /* constructor/destructor */
+    call_func2(p_ios_sb_ctor, &ios_obj, NULL);
+todo_wine {
+    ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
+    ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
+    ok(ios_obj.special[0] == 0, "expected 0 got %d\n", ios_obj.special[0]);
+    ok(ios_obj.special[1] == 0, "expected 0 got %d\n", ios_obj.special[1]);
+    ok(ios_obj.delbuf == 0, "expected 0 got %d\n", ios_obj.delbuf);
+    ok(ios_obj.tie == NULL, "expected %p got %p\n", NULL, ios_obj.tie);
+    ok(ios_obj.flags == 0, "expected 0 got %x\n", ios_obj.flags);
+    ok(ios_obj.precision == 6, "expected 6 got %d\n", ios_obj.precision);
+    ok(ios_obj.fill == ' ', "expected ' ' got %d\n", ios_obj.fill);
+    ok(ios_obj.width == 0, "expected 0 got %d\n", ios_obj.width);
+    ok(ios_obj.do_lock == -1, "expected -1 got %d\n", ios_obj.do_lock);
+    ok(ios_obj.lock.LockCount == -1, "expected -1 got %d\n", ios_obj.lock.LockCount);
+    ios_obj.state = 0x8;
+    call_func1(p_ios_dtor, &ios_obj);
+    ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
+    ios_obj.state = 0x8;
+    call_func2(p_ios_sb_ctor, &ios_obj, psb);
+    ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
+    ok(ios_obj.state == IOSTATE_goodbit, "expected %x got %x\n", IOSTATE_goodbit, ios_obj.state);
+    ok(ios_obj.delbuf == 0, "expected 0 got %d\n", ios_obj.delbuf);
+    ios_obj.state = 0x8;
+    call_func1(p_ios_dtor, &ios_obj);
+    ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
+    ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
+    ios_obj.sb = psb;
+    ios_obj.state = 0x8;
+    call_func1(p_ios_ctor, &ios_obj);
+    ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
+    ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
+}
+
+    /* init */
+    ios_obj.state |= 0x8;
+    call_func2(p_ios_init, &ios_obj, psb);
+    ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
+    ok(ios_obj.state == 0x8, "expected %x got %x\n", 0x8, ios_obj.state);
+    call_func2(p_ios_init, &ios_obj, NULL);
+todo_wine {
+    ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
+    ok(ios_obj.state == (0x8|IOSTATE_badbit), "expected %x got %x\n", (0x8|IOSTATE_badbit), ios_obj.state);
+}
+    ios_obj.sb = psb;
+    ios_obj.delbuf = 1;
+    call_func2(p_ios_init, &ios_obj, psb);
+    ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
+    ok(ios_obj.state == 0x8, "expected %x got %x\n", 0x8, ios_obj.state);
+
+    /* copy constructor */
+    call_func2(p_ios_copy_ctor, &ios_obj, &ios_obj2);
+todo_wine {
+    ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
+    ok(ios_obj.state == (ios_obj2.state|IOSTATE_badbit), "expected %x got %x\n", (ios_obj2.state|IOSTATE_badbit), ios_obj.state);
+    ok(ios_obj.delbuf == 0, "expected 0 got %d\n", ios_obj.delbuf);
+}
+    ok(ios_obj.tie == ios_obj2.tie, "expected %p got %p\n", ios_obj2.tie, ios_obj.tie);
+    ok(ios_obj.flags == ios_obj2.flags, "expected %x got %x\n", ios_obj2.flags, ios_obj.flags);
+    todo_wine ok(ios_obj.precision == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.precision);
+    ok(ios_obj.fill == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.fill);
+todo_wine {
+    ok(ios_obj.width == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.width);
+    ok(ios_obj.do_lock == -1, "expected -1 got %d\n", ios_obj.do_lock);
+}
+
+    /* assignment */
+    ios_obj.state = 0x8;
+    ios_obj.delbuf = 2;
+    ios_obj.tie = NULL;
+    ios_obj.flags = 0;
+    ios_obj.precision = 6;
+    ios_obj.fill = ' ';
+    ios_obj.width = 0;
+    ios_obj.do_lock = 2;
+    call_func2(p_ios_assign, &ios_obj, &ios_obj2);
+todo_wine {
+    ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
+    ok(ios_obj.state == (ios_obj2.state|IOSTATE_badbit), "expected %x got %x\n", (ios_obj2.state|IOSTATE_badbit), ios_obj.state);
+}
+    ok(ios_obj.delbuf == 2, "expected 2 got %d\n", ios_obj.delbuf);
+todo_wine {
+    ok(ios_obj.tie == ios_obj2.tie, "expected %p got %p\n", ios_obj2.tie, ios_obj.tie);
+    ok(ios_obj.flags == ios_obj2.flags, "expected %x got %x\n", ios_obj2.flags, ios_obj.flags);
+    ok(ios_obj.precision == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.precision);
+    ok(ios_obj.fill == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.fill);
+    ok(ios_obj.width == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.width);
+}
+    ok(ios_obj.do_lock == 2, "expected 2 got %d\n", ios_obj.do_lock);
+    ios_obj.delbuf = 0;
+    call_func1(p_ios_dtor, &ios_obj);
+    todo_wine ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
+}
+
 START_TEST(msvcirt)
 {
     if(!init())
         return;
 
     test_streambuf();
+    test_ios();
 
+    FreeLibrary(msvcrt);
     FreeLibrary(msvcirt);
 }
