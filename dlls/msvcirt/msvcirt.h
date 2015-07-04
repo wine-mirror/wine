@@ -24,10 +24,35 @@ typedef LONG streamoff;
 typedef LONG streampos;
 
 typedef enum {
+    IOSTATE_goodbit   = 0x0,
+    IOSTATE_eofbit    = 0x1,
+    IOSTATE_failbit   = 0x2,
+    IOSTATE_badbit    = 0x4
+} ios_io_state;
+
+typedef enum {
     SEEKDIR_beg = 0,
     SEEKDIR_cur = 1,
     SEEKDIR_end = 2
 } ios_seek_dir;
+
+typedef enum {
+    FLAGS_skipws     = 0x1,
+    FLAGS_left       = 0x2,
+    FLAGS_right      = 0x4,
+    FLAGS_internal   = 0x8,
+    FLAGS_dec        = 0x10,
+    FLAGS_oct        = 0x20,
+    FLAGS_hex        = 0x40,
+    FLAGS_showbase   = 0x80,
+    FLAGS_showpoint  = 0x100,
+    FLAGS_uppercase  = 0x200,
+    FLAGS_showpos    = 0x400,
+    FLAGS_scientific = 0x800,
+    FLAGS_fixed      = 0x1000,
+    FLAGS_unitbuf    = 0x2000,
+    FLAGS_stdio      = 0x4000
+} ios_flags;
 
 extern void* (__cdecl *MSVCRT_operator_new)(SIZE_T);
 extern void (__cdecl *MSVCRT_operator_delete)(void*);
