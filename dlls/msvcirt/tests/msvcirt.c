@@ -818,7 +818,6 @@ static void test_ios(void)
 
     /* constructor/destructor */
     call_func2(p_ios_sb_ctor, &ios_obj, NULL);
-todo_wine {
     ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
     ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
     ok(ios_obj.special[0] == 0, "expected 0 got %d\n", ios_obj.special[0]);
@@ -848,7 +847,6 @@ todo_wine {
     call_func1(p_ios_ctor, &ios_obj);
     ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
     ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
-}
 
     /* init */
     ios_obj.state |= 0x8;
@@ -856,10 +854,8 @@ todo_wine {
     ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
     ok(ios_obj.state == 0x8, "expected %x got %x\n", 0x8, ios_obj.state);
     call_func2(p_ios_init, &ios_obj, NULL);
-todo_wine {
     ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
     ok(ios_obj.state == (0x8|IOSTATE_badbit), "expected %x got %x\n", (0x8|IOSTATE_badbit), ios_obj.state);
-}
     ios_obj.sb = psb;
     ios_obj.delbuf = 1;
     call_func2(p_ios_init, &ios_obj, psb);
@@ -868,19 +864,15 @@ todo_wine {
 
     /* copy constructor */
     call_func2(p_ios_copy_ctor, &ios_obj, &ios_obj2);
-todo_wine {
     ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
     ok(ios_obj.state == (ios_obj2.state|IOSTATE_badbit), "expected %x got %x\n", (ios_obj2.state|IOSTATE_badbit), ios_obj.state);
     ok(ios_obj.delbuf == 0, "expected 0 got %d\n", ios_obj.delbuf);
-}
     ok(ios_obj.tie == ios_obj2.tie, "expected %p got %p\n", ios_obj2.tie, ios_obj.tie);
     ok(ios_obj.flags == ios_obj2.flags, "expected %x got %x\n", ios_obj2.flags, ios_obj.flags);
-    todo_wine ok(ios_obj.precision == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.precision);
+    ok(ios_obj.precision == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.precision);
     ok(ios_obj.fill == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.fill);
-todo_wine {
     ok(ios_obj.width == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.width);
     ok(ios_obj.do_lock == -1, "expected -1 got %d\n", ios_obj.do_lock);
-}
 
     /* assignment */
     ios_obj.state = 0x8;
@@ -892,22 +884,18 @@ todo_wine {
     ios_obj.width = 0;
     ios_obj.do_lock = 2;
     call_func2(p_ios_assign, &ios_obj, &ios_obj2);
-todo_wine {
     ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
     ok(ios_obj.state == (ios_obj2.state|IOSTATE_badbit), "expected %x got %x\n", (ios_obj2.state|IOSTATE_badbit), ios_obj.state);
-}
     ok(ios_obj.delbuf == 2, "expected 2 got %d\n", ios_obj.delbuf);
-todo_wine {
     ok(ios_obj.tie == ios_obj2.tie, "expected %p got %p\n", ios_obj2.tie, ios_obj.tie);
     ok(ios_obj.flags == ios_obj2.flags, "expected %x got %x\n", ios_obj2.flags, ios_obj.flags);
     ok(ios_obj.precision == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.precision);
     ok(ios_obj.fill == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.fill);
     ok(ios_obj.width == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.width);
-}
     ok(ios_obj.do_lock == 2, "expected 2 got %d\n", ios_obj.do_lock);
     ios_obj.delbuf = 0;
     call_func1(p_ios_dtor, &ios_obj);
-    todo_wine ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
+    ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
 }
 
 START_TEST(msvcirt)

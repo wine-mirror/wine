@@ -71,6 +71,8 @@ typedef struct {
     CRITICAL_SECTION lock;
 } ios;
 
+ios* __thiscall ios_assign(ios*, const ios*);
+
 /* class ostream */
 typedef struct _ostream {
     const vtable_ptr *vtable;
@@ -707,7 +709,32 @@ void __thiscall streambuf_dbp(streambuf *this)
 DEFINE_THISCALL_WRAPPER(ios_copy_ctor, 8)
 ios* __thiscall ios_copy_ctor(ios *this, const ios *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
+    TRACE("(%p %p)\n", this, copy);
+    this->vtable = &MSVCP_ios_vtable;
+    this->sb = NULL;
+    this->delbuf = 0;
+    InitializeCriticalSection(&this->lock);
+    return ios_assign(this, copy);
+}
+
+/* ??0ios@@QAE@PAVstreambuf@@@Z */
+/* ??0ios@@QEAA@PEAVstreambuf@@@Z */
+DEFINE_THISCALL_WRAPPER(ios_sb_ctor, 8)
+ios* __thiscall ios_sb_ctor(ios *this, streambuf *sb)
+{
+    TRACE("(%p %p)\n", this, sb);
+    this->vtable = &MSVCP_ios_vtable;
+    this->sb = sb;
+    this->state = sb ? IOSTATE_goodbit : IOSTATE_badbit;
+    this->special[0] = this->special[1] = 0;
+    this->delbuf = 0;
+    this->tie = NULL;
+    this->flags = 0;
+    this->precision = 6;
+    this->fill = ' ';
+    this->width = 0;
+    this->do_lock = -1;
+    InitializeCriticalSection(&this->lock);
     return this;
 }
 
@@ -716,17 +743,7 @@ ios* __thiscall ios_copy_ctor(ios *this, const ios *copy)
 DEFINE_THISCALL_WRAPPER(ios_ctor, 4)
 ios* __thiscall ios_ctor(ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return this;
-}
-
-/* ??0ios@@QAE@PAVstreambuf@@@Z */
-/* ??0ios@@QEAA@PEAVstreambuf@@@Z */
-DEFINE_THISCALL_WRAPPER(ios_sb_ctor, 8)
-ios* __thiscall ios_sb_ctor(ios *this, streambuf *sb)
-{
-    FIXME("(%p %p) stub\n", this, sb);
-    return this;
+    return ios_sb_ctor(this, NULL);
 }
 
 /* ??1ios@@UAE@XZ */
@@ -734,7 +751,12 @@ ios* __thiscall ios_sb_ctor(ios *this, streambuf *sb)
 DEFINE_THISCALL_WRAPPER(ios_dtor, 4)
 void __thiscall ios_dtor(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    if (this->delbuf && this->sb)
+        MSVCRT_operator_delete(this->sb);
+    this->sb = NULL;
+    this->state = IOSTATE_badbit;
+    DeleteCriticalSection(&this->lock);
 }
 
 /* ??4ios@@IAEAAV0@ABV0@@Z */
@@ -742,7 +764,15 @@ void __thiscall ios_dtor(ios *this)
 DEFINE_THISCALL_WRAPPER(ios_assign, 8)
 ios* __thiscall ios_assign(ios *this, const ios *rhs)
 {
-    FIXME("(%p %p) stub\n", this, rhs);
+    TRACE("(%p %p)\n", this, rhs);
+    this->state = rhs->state;
+    if (!this->sb)
+        this->state |= IOSTATE_badbit;
+    this->tie = rhs->tie;
+    this->flags = rhs->flags;
+    this->precision = (char) rhs->precision;
+    this->fill = rhs->fill;
+    this->width = (char) rhs->width;
     return this;
 }
 
@@ -926,7 +956,14 @@ ios* __cdecl ios_hex(ios *this)
 DEFINE_THISCALL_WRAPPER(ios_init, 8)
 void __thiscall ios_init(ios *this, streambuf *sb)
 {
-    FIXME("(%p %p) stub\n", this, sb);
+    TRACE("(%p %p)\n", this, sb);
+    if (this->delbuf && this->sb)
+        MSVCRT_operator_delete(this->sb);
+    this->sb = sb;
+    if (sb == NULL)
+        this->state |= IOSTATE_badbit;
+    else
+        this->state &= ~IOSTATE_badbit;
 }
 
 /* ?iword@ios@@QBEAAJH@Z */
