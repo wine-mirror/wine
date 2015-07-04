@@ -2453,6 +2453,9 @@ static DWORD OLEDD_GetButtonState(void)
   if ( (keyboardState[VK_CONTROL] & 0x80) !=0)
     keyMask |= MK_CONTROL;
 
+  if ( (keyboardState[VK_MENU] & 0x80) !=0)
+    keyMask |= MK_ALT;
+
   if ( (keyboardState[VK_LBUTTON] & 0x80) !=0)
     keyMask |= MK_LBUTTON;
 
