@@ -1528,6 +1528,46 @@ static void CALLBACK waitqueue_thread_proc( void *param )
                 tp_object_release( wait );
             }
         }
+
+        /* Try to merge bucket with other threads. */
+        if (waitqueue.num_buckets > 1 && bucket->objcount &&
+            bucket->objcount <= MAXIMUM_WAITQUEUE_OBJECTS * 1 / 3)
+        {
+            struct waitqueue_bucket *other_bucket;
+            LIST_FOR_EACH_ENTRY( other_bucket, &waitqueue.buckets, struct waitqueue_bucket, bucket_entry )
+            {
+                if (other_bucket != bucket && other_bucket->objcount &&
+                    other_bucket->objcount + bucket->objcount <= MAXIMUM_WAITQUEUE_OBJECTS * 2 / 3)
+                {
+                    other_bucket->objcount += bucket->objcount;
+                    bucket->objcount = 0;
+
+                    /* Update reserved list. */
+                    LIST_FOR_EACH_ENTRY( wait, &bucket->reserved, struct threadpool_object, u.wait.wait_entry )
+                    {
+                        assert( wait->type == TP_OBJECT_TYPE_WAIT );
+                        wait->u.wait.bucket = other_bucket;
+                    }
+                    list_move_tail( &other_bucket->reserved, &bucket->reserved );
+
+                    /* Update waiting list. */
+                    LIST_FOR_EACH_ENTRY( wait, &bucket->waiting, struct threadpool_object, u.wait.wait_entry )
+                    {
+                        assert( wait->type == TP_OBJECT_TYPE_WAIT );
+                        wait->u.wait.bucket = other_bucket;
+                    }
+                    list_move_tail( &other_bucket->waiting, &bucket->waiting );
+
+                    /* Move bucket to the end, to keep the probability of
+                     * newly added wait objects as small as possible. */
+                    list_remove( &bucket->bucket_entry );
+                    list_add_tail( &waitqueue.buckets, &bucket->bucket_entry );
+
+                    NtSetEvent( other_bucket->update_event, NULL );
+                    break;
+                }
+            }
+        }
     }
 
     /* Remove this bucket from the list. */
