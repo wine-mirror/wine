@@ -91,6 +91,11 @@ static const IUnknownVtbl DirectMusicSegTriggerTrack_Unknown_Vtbl = {
 };
 
 /* IDirectMusicSegTriggerTrack IDirectMusicTrack8 part: */
+static inline IDirectMusicSegTriggerTrack *impl_from_IDirectMusicTrack8(IDirectMusicTrack8 *iface)
+{
+    return CONTAINING_RECORD(iface, IDirectMusicSegTriggerTrack, TrackVtbl);
+}
+
 static HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_QueryInterface (LPDIRECTMUSICTRACK8 iface, REFIID riid, LPVOID *ppobj) {
 	ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, TrackVtbl, iface);
 	return IUnknown_QueryInterface ((LPUNKNOWN)&This->UnknownVtbl, riid, ppobj);
@@ -155,16 +160,22 @@ static HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_IsParamSuppo
 	return DMUS_E_TYPE_UNSUPPORTED;
 }
 
-static HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_AddNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
-	ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, TrackVtbl, iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_AddNotificationType(IDirectMusicTrack8 *iface,
+        REFGUID notiftype)
+{
+    IDirectMusicSegTriggerTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_RemoveNotificationType (LPDIRECTMUSICTRACK8 iface, REFGUID rguidNotificationType) {
-	ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, TrackVtbl, iface);
-	FIXME("(%p, %s): stub\n", This, debugstr_dmguid(rguidNotificationType));
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_RemoveNotificationType(IDirectMusicTrack8 *iface,
+        REFGUID notiftype)
+{
+    IDirectMusicSegTriggerTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %s): method not implemented\n", This, debugstr_dmguid(notiftype));
+    return E_NOTIMPL;
 }
 
 static HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_Clone (LPDIRECTMUSICTRACK8 iface, MUSIC_TIME mtStart, MUSIC_TIME mtEnd, IDirectMusicTrack** ppTrack) {
@@ -194,16 +205,23 @@ static HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_SetParamEx (
 	return S_OK;
 }
 
-static HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_Compose (LPDIRECTMUSICTRACK8 iface, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p): stub\n", This, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Compose(IDirectMusicTrack8 *iface, IUnknown *context,
+        DWORD trackgroup, IDirectMusicTrack **track)
+{
+    IDirectMusicSegTriggerTrack *This = impl_from_IDirectMusicTrack8(iface);
+
+    TRACE("(%p, %p, %d, %p): method not implemented\n", This, context, trackgroup, track);
+    return E_NOTIMPL;
 }
 
-static HRESULT WINAPI IDirectMusicSegTriggerTrack_IDirectMusicTrack_Join (LPDIRECTMUSICTRACK8 iface, IDirectMusicTrack* pNewTrack, MUSIC_TIME mtJoin, IUnknown* pContext, DWORD dwTrackGroup, IDirectMusicTrack** ppResultTrack) {
-	ICOM_THIS_MULTI(IDirectMusicSegTriggerTrack, TrackVtbl, iface);
-	FIXME("(%p, %p, %d, %p, %d, %p): stub\n", This, pNewTrack, mtJoin, pContext, dwTrackGroup, ppResultTrack);
-	return S_OK;
+static HRESULT WINAPI IDirectMusicTrack8Impl_Join(IDirectMusicTrack8 *iface,
+        IDirectMusicTrack *newtrack, MUSIC_TIME join, IUnknown *context, DWORD trackgroup,
+        IDirectMusicTrack **resulttrack)
+{
+    IDirectMusicSegTriggerTrack *This = impl_from_IDirectMusicTrack8(iface);
+    TRACE("(%p, %p, %d, %p, %d, %p): method not implemented\n", This, newtrack, join, context,
+            trackgroup, resulttrack);
+    return E_NOTIMPL;
 }
 
 static const IDirectMusicTrack8Vtbl DirectMusicSegTriggerTrack_Track_Vtbl = {
@@ -217,14 +235,14 @@ static const IDirectMusicTrack8Vtbl DirectMusicSegTriggerTrack_Track_Vtbl = {
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_GetParam,
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_SetParam,
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_IsParamSupported,
-	IDirectMusicSegTriggerTrack_IDirectMusicTrack_AddNotificationType,
-	IDirectMusicSegTriggerTrack_IDirectMusicTrack_RemoveNotificationType,
+    IDirectMusicTrack8Impl_AddNotificationType,
+    IDirectMusicTrack8Impl_RemoveNotificationType,
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_Clone,
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_PlayEx,
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_GetParamEx,
 	IDirectMusicSegTriggerTrack_IDirectMusicTrack_SetParamEx,
-	IDirectMusicSegTriggerTrack_IDirectMusicTrack_Compose,
-	IDirectMusicSegTriggerTrack_IDirectMusicTrack_Join
+    IDirectMusicTrack8Impl_Compose,
+    IDirectMusicTrack8Impl_Join
 };
 
 /* IDirectMusicSegTriggerTrack IPersistStream part: */
