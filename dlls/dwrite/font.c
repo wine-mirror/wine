@@ -1853,8 +1853,8 @@ static ULONG WINAPI systemfontfileenumerator_Release(IDWriteFontFileEnumerator *
 static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFileEnumerator *iface, IDWriteFontFile **file)
 {
     struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
-    DWORD ret, type, count;
-    WCHAR *filename;
+    DWORD ret, type, val_count, count;
+    WCHAR *value, *filename;
     HRESULT hr;
 
     *file = NULL;
@@ -1862,14 +1862,22 @@ static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFil
     if (enumerator->index < 0)
         return E_FAIL;
 
-    if (RegEnumValueW(enumerator->hkey, enumerator->index, NULL, NULL, NULL, &type, NULL, &count))
+    ret = RegQueryInfoKeyW(enumerator->hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &val_count, &count, NULL, NULL);
+    if (ret != ERROR_SUCCESS)
         return E_FAIL;
 
-    if (!(filename = heap_alloc(count)))
+    val_count++;
+    value = heap_alloc( val_count * sizeof(value[0]) );
+    filename = heap_alloc(count);
+    if (!value || !filename) {
+        heap_free(value);
+        heap_free(filename);
         return E_OUTOFMEMORY;
+    }
 
-    ret = RegEnumValueW(enumerator->hkey, enumerator->index, NULL, NULL, NULL, &type, (BYTE*)filename, &count);
+    ret = RegEnumValueW(enumerator->hkey, enumerator->index, value, &val_count, NULL, &type, (BYTE*)filename, &count);
     if (ret) {
+        heap_free(value);
         heap_free(filename);
         return E_FAIL;
     }
@@ -1888,6 +1896,7 @@ static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFil
     else
         hr = IDWriteFactory2_CreateFontFileReference(enumerator->factory, filename, NULL, file);
 
+    heap_free(value);
     heap_free(filename);
     return hr;
 }
@@ -1895,14 +1904,25 @@ static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFil
 static HRESULT WINAPI systemfontfileenumerator_MoveNext(IDWriteFontFileEnumerator *iface, BOOL *current)
 {
     struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
+    DWORD ret, max_val_count;
+    WCHAR *value;
 
     *current = FALSE;
     enumerator->index++;
 
+    ret = RegQueryInfoKeyW(enumerator->hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &max_val_count, NULL, NULL, NULL);
+    if (ret != ERROR_SUCCESS)
+        return E_FAIL;
+
+    max_val_count++;
+    if (!(value = heap_alloc( max_val_count * sizeof(value[0]) )))
+        return E_OUTOFMEMORY;
+
     /* iterate until we find next string value */
     while (1) {
-        DWORD type = 0, count;
-        if (RegEnumValueW(enumerator->hkey, enumerator->index, NULL, NULL, NULL, &type, NULL, &count))
+        DWORD type = 0, count, val_count;
+        val_count = max_val_count;
+        if (RegEnumValueW(enumerator->hkey, enumerator->index, value, &val_count, NULL, &type, NULL, &count))
             break;
         if (type == REG_SZ) {
             *current = TRUE;
@@ -1912,6 +1932,7 @@ static HRESULT WINAPI systemfontfileenumerator_MoveNext(IDWriteFontFileEnumerato
     }
 
     TRACE("index = %d, current = %d\n", enumerator->index, *current);
+    heap_free(value);
     return S_OK;
 }
 
