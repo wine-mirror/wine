@@ -23,6 +23,7 @@
 #include "winbase.h"
 #include "winternl.h"
 #include "wine/debug.h"
+#include "winsta.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winsta);
 
@@ -68,7 +69,7 @@ BOOLEAN WINAPI WinStationRegisterConsoleNotification( HANDLE server, HWND hwnd, 
 }
 
 BOOLEAN WINAPI WinStationGetAllProcesses( HANDLE server, ULONG level,
-                                          ULONG *process_count, void *info )
+                                          ULONG *process_count, PTS_ALL_PROCESSES_INFO *info )
 {
     FIXME( "%p %u %p %p\n", server, level, process_count, info );
     *process_count = 0;
@@ -76,10 +77,10 @@ BOOLEAN WINAPI WinStationGetAllProcesses( HANDLE server, ULONG level,
     return FALSE;
 }
 
-BOOL WINAPI WinStationGetProcessSid( PVOID a, HANDLE server, DWORD process_id, PFILETIME process_start_time,
-                                     PBYTE process_user_sid, PDWORD sid_size)
+BOOLEAN WINAPI WinStationGetProcessSid( HANDLE server, ULONG process_id, FILETIME *process_start_time,
+                                        PVOID process_user_sid, PULONG sid_size )
 {
-    FIXME( "(%p, %p, %d, %p, %p, %p): stub\n", a, server, process_id, process_start_time, process_user_sid, sid_size);
+    FIXME( "(%p, %d, %p, %p, %p): stub\n", server, process_id, process_start_time, process_user_sid, sid_size);
     SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
     return FALSE;
 }
