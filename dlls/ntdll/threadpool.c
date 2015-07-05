@@ -2836,6 +2836,67 @@ VOID WINAPI TpSetTimer( TP_TIMER *timer, LARGE_INTEGER *timeout, LONG period, LO
 }
 
 /***********************************************************************
+ *           TpSetWait    (NTDLL.@)
+ */
+VOID WINAPI TpSetWait( TP_WAIT *wait, HANDLE handle, LARGE_INTEGER *timeout )
+{
+    struct threadpool_object *this = impl_from_TP_WAIT( wait );
+    ULONGLONG timestamp = TIMEOUT_INFINITE;
+    BOOL submit_wait = FALSE;
+
+    TRACE( "%p %p %p\n", wait, handle, timeout );
+
+    RtlEnterCriticalSection( &waitqueue.cs );
+
+    assert( this->u.wait.bucket );
+    this->u.wait.handle = handle;
+
+    if (handle || this->u.wait.wait_pending)
+    {
+        struct waitqueue_bucket *bucket = this->u.wait.bucket;
+        list_remove( &this->u.wait.wait_entry );
+
+        /* Convert relative timeout to absolute timestamp. */
+        if (handle && timeout)
+        {
+            timestamp = timeout->QuadPart;
+            if ((LONGLONG)timestamp < 0)
+            {
+                LARGE_INTEGER now;
+                NtQuerySystemTime( &now );
+                timestamp = now.QuadPart - timestamp;
+            }
+            else if (!timestamp)
+            {
+                submit_wait = TRUE;
+                handle = NULL;
+            }
+        }
+
+        /* Add wait object back into one of the queues. */
+        if (handle)
+        {
+            list_add_tail( &bucket->waiting, &this->u.wait.wait_entry );
+            this->u.wait.wait_pending = TRUE;
+            this->u.wait.timeout = timestamp;
+        }
+        else
+        {
+            list_add_tail( &bucket->reserved, &this->u.wait.wait_entry );
+            this->u.wait.wait_pending = FALSE;
+        }
+
+        /* Wake up the wait queue thread. */
+        NtSetEvent( bucket->update_event, NULL );
+    }
+
+    RtlLeaveCriticalSection( &waitqueue.cs );
+
+    if (submit_wait)
+        tp_object_submit( this, FALSE );
+}
+
+/***********************************************************************
  *           TpSimpleTryPost    (NTDLL.@)
  */
 NTSTATUS WINAPI TpSimpleTryPost( PTP_SIMPLE_CALLBACK callback, PVOID userdata,
@@ -2873,6 +2934,20 @@ VOID WINAPI TpWaitForTimer( TP_TIMER *timer, BOOL cancel_pending )
     struct threadpool_object *this = impl_from_TP_TIMER( timer );
 
     TRACE( "%p %d\n", timer, cancel_pending );
+
+    if (cancel_pending)
+        tp_object_cancel( this, FALSE, NULL );
+    tp_object_wait( this, FALSE );
+}
+
+/***********************************************************************
+ *           TpWaitForWait    (NTDLL.@)
+ */
+VOID WINAPI TpWaitForWait( TP_WAIT *wait, BOOL cancel_pending )
+{
+    struct threadpool_object *this = impl_from_TP_WAIT( wait );
+
+    TRACE( "%p %d\n", wait, cancel_pending );
 
     if (cancel_pending)
         tp_object_cancel( this, FALSE, NULL );
