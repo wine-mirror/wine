@@ -159,7 +159,8 @@ enum threadpool_objtype
 {
     TP_OBJECT_TYPE_SIMPLE,
     TP_OBJECT_TYPE_WORK,
-    TP_OBJECT_TYPE_TIMER
+    TP_OBJECT_TYPE_TIMER,
+    TP_OBJECT_TYPE_WAIT
 };
 
 /* internal threadpool object representation */
@@ -209,6 +210,10 @@ struct threadpool_object
             LONG            period;
             LONG            window_length;
         } timer;
+        struct
+        {
+            PTP_WAIT_CALLBACK callback;
+        } wait;
     } u;
 };
 
@@ -283,6 +288,13 @@ static inline struct threadpool_object *impl_from_TP_TIMER( TP_TIMER *timer )
 {
     struct threadpool_object *object = (struct threadpool_object *)timer;
     assert( object->type == TP_OBJECT_TYPE_TIMER );
+    return object;
+}
+
+static inline struct threadpool_object *impl_from_TP_WAIT( TP_WAIT *wait )
+{
+    struct threadpool_object *object = (struct threadpool_object *)wait;
+    assert( object->type == TP_OBJECT_TYPE_WAIT );
     return object;
 }
 
@@ -1907,6 +1919,15 @@ static void CALLBACK threadpool_worker_proc( void *param )
                     break;
                 }
 
+                case TP_OBJECT_TYPE_WAIT:
+                {
+                    TRACE( "executing wait callback %p(%p, %p, %p, %u)\n",
+                           object->u.wait.callback, callback_instance, object->userdata, object, WAIT_OBJECT_0 );
+                    object->u.wait.callback( callback_instance, object->userdata, (TP_WAIT *)object, WAIT_OBJECT_0 );
+                    TRACE( "callback %p returned\n", object->u.wait.callback );
+                    break;
+                }
+
                 default:
                     assert(0);
                     break;
@@ -2048,6 +2069,37 @@ NTSTATUS WINAPI TpAllocTimer( TP_TIMER **out, PTP_TIMER_CALLBACK callback, PVOID
     tp_object_initialize( object, pool, userdata, environment );
 
     *out = (TP_TIMER *)object;
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           TpAllocWait     (NTDLL.@)
+ */
+NTSTATUS WINAPI TpAllocWait( TP_WAIT **out, PTP_WAIT_CALLBACK callback, PVOID userdata,
+                             TP_CALLBACK_ENVIRON *environment )
+{
+    struct threadpool_object *object;
+    struct threadpool *pool;
+    NTSTATUS status;
+
+    TRACE( "%p %p %p %p\n", out, callback, userdata, environment );
+
+    object = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*object) );
+    if (!object)
+        return STATUS_NO_MEMORY;
+
+    status = tp_threadpool_lock( &pool, environment );
+    if (status)
+    {
+        RtlFreeHeap( GetProcessHeap(), 0, object );
+        return status;
+    }
+
+    object->type = TP_OBJECT_TYPE_WAIT;
+    object->u.wait.callback = callback;
+    tp_object_initialize( object, pool, userdata, environment );
+
+    *out = (TP_WAIT *)object;
     return STATUS_SUCCESS;
 }
 
@@ -2350,6 +2402,19 @@ VOID WINAPI TpReleaseTimer( TP_TIMER *timer )
     struct threadpool_object *this = impl_from_TP_TIMER( timer );
 
     TRACE( "%p\n", timer );
+
+    tp_object_shutdown( this );
+    tp_object_release( this );
+}
+
+/***********************************************************************
+ *           TpReleaseWait    (NTDLL.@)
+ */
+VOID WINAPI TpReleaseWait( TP_WAIT *wait )
+{
+    struct threadpool_object *this = impl_from_TP_WAIT( wait );
+
+    TRACE( "%p\n", wait );
 
     tp_object_shutdown( this );
     tp_object_release( this );
