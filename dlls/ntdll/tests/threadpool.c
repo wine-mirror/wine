@@ -1171,6 +1171,125 @@ static void test_tp_wait(void)
     CloseHandle(semaphores[1]);
 }
 
+static struct
+{
+    HANDLE semaphore;
+    DWORD result;
+} multi_wait_info;
+
+static void CALLBACK multi_wait_cb(TP_CALLBACK_INSTANCE *instance, void *userdata, TP_WAIT *wait, TP_WAIT_RESULT result)
+{
+    DWORD index = (DWORD)(DWORD_PTR)userdata;
+
+    if (result == WAIT_OBJECT_0)
+        multi_wait_info.result = index;
+    else if (result == WAIT_TIMEOUT)
+        multi_wait_info.result = 0x10000 | index;
+    else
+        ok(0, "unexpected result %u\n", result);
+    ReleaseSemaphore(multi_wait_info.semaphore, 1, NULL);
+}
+
+static void test_tp_multi_wait(void)
+{
+    TP_CALLBACK_ENVIRON environment;
+    HANDLE semaphores[512];
+    TP_WAIT *waits[512];
+    LARGE_INTEGER when;
+    HANDLE semaphore;
+    NTSTATUS status;
+    TP_POOL *pool;
+    DWORD result;
+    int i;
+
+    semaphore = CreateSemaphoreW(NULL, 0, 512, NULL);
+    ok(semaphore != NULL, "failed to create semaphore\n");
+    multi_wait_info.semaphore = semaphore;
+
+    /* allocate new threadpool */
+    pool = NULL;
+    status = pTpAllocPool(&pool, NULL);
+    ok(!status, "TpAllocPool failed with status %x\n", status);
+    ok(pool != NULL, "expected pool != NULL\n");
+
+    memset(&environment, 0, sizeof(environment));
+    environment.Version = 1;
+    environment.Pool = pool;
+
+    /* create semaphores and corresponding wait objects */
+    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    {
+        semaphores[i] = CreateSemaphoreW(NULL, 0, 1, NULL);
+        ok(semaphores[i] != NULL, "failed to create semaphore %i\n", i);
+
+        waits[i] = NULL;
+        status = pTpAllocWait(&waits[i], multi_wait_cb, (void *)(DWORD_PTR)i, &environment);
+        ok(!status, "TpAllocWait failed with status %x\n", status);
+        ok(waits[i] != NULL, "expected waits[%d] != NULL\n", i);
+
+        pTpSetWait(waits[i], semaphores[i], NULL);
+    }
+
+    /* release all semaphores and wait for callback */
+    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    {
+        multi_wait_info.result = 0;
+        ReleaseSemaphore(semaphores[i], 1, NULL);
+
+        result = WaitForSingleObject(semaphore, 100);
+        ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+        ok(multi_wait_info.result == i, "expected result %d, got %u\n", i, multi_wait_info.result);
+
+        pTpSetWait(waits[i], semaphores[i], NULL);
+    }
+
+    /* repeat the same test in reverse order */
+    for (i = sizeof(semaphores)/sizeof(semaphores[0]) - 1; i >= 0; i--)
+    {
+        multi_wait_info.result = 0;
+        ReleaseSemaphore(semaphores[i], 1, NULL);
+
+        result = WaitForSingleObject(semaphore, 100);
+        ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+        ok(multi_wait_info.result == i, "expected result %d, got %u\n", i, multi_wait_info.result);
+
+        pTpSetWait(waits[i], semaphores[i], NULL);
+    }
+
+    /* test timeout of wait objects */
+    multi_wait_info.result = 0;
+    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    {
+        when.QuadPart = (ULONGLONG)50 * -10000;
+        pTpSetWait(waits[i], semaphores[i], &when);
+    }
+
+    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    {
+        result = WaitForSingleObject(semaphore, 150);
+        ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    }
+
+    ok(multi_wait_info.result >> 16, "expected multi_wait_info.result >> 16 != 0\n");
+
+    /* destroy the wait objects and semaphores while waiting */
+    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    {
+        pTpSetWait(waits[i], semaphores[i], NULL);
+    }
+
+    Sleep(50);
+
+    for (i = 0; i < sizeof(semaphores)/sizeof(semaphores[0]); i++)
+    {
+        pTpReleaseWait(waits[i]);
+        NtClose(semaphores[i]);
+    }
+
+    pTpReleasePool(pool);
+    CloseHandle(semaphore);
+}
+
 START_TEST(threadpool)
 {
     if (!init_threadpool())
@@ -1185,4 +1304,5 @@ START_TEST(threadpool)
     test_tp_timer();
     test_tp_window_length();
     test_tp_wait();
+    test_tp_multi_wait();
 }
