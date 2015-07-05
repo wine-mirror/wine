@@ -942,6 +942,27 @@ PTP_TIMER WINAPI CreateThreadpoolTimer( PTP_TIMER_CALLBACK callback, PVOID userd
 }
 
 /***********************************************************************
+ *              CreateThreadpoolWait (KERNEL32.@)
+ */
+PTP_WAIT WINAPI CreateThreadpoolWait( PTP_WAIT_CALLBACK callback, PVOID userdata,
+                                      TP_CALLBACK_ENVIRON *environment )
+{
+    TP_WAIT *wait;
+    NTSTATUS status;
+
+    TRACE( "%p, %p, %p\n", callback, userdata, environment );
+
+    status = TpAllocWait( &wait, callback, userdata, environment );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return NULL;
+    }
+
+    return wait;
+}
+
+/***********************************************************************
  *              CreateThreadpoolWork (KERNEL32.@)
  */
 PTP_WORK WINAPI CreateThreadpoolWork( PTP_WORK_CALLBACK callback, PVOID userdata,
@@ -979,6 +1000,28 @@ VOID WINAPI SetThreadpoolTimer( TP_TIMER *timer, FILETIME *due_time,
     }
 
     TpSetTimer( timer, due_time ? &timeout : NULL, period, window_length );
+}
+
+/***********************************************************************
+ *              SetThreadpoolWait (KERNEL32.@)
+ */
+VOID WINAPI SetThreadpoolWait( TP_WAIT *wait, HANDLE handle, FILETIME *due_time )
+{
+    LARGE_INTEGER timeout;
+
+    TRACE( "%p, %p, %p\n", wait, handle, due_time );
+
+    if (!handle)
+    {
+        due_time = NULL;
+    }
+    else if (due_time)
+    {
+        timeout.u.LowPart = due_time->dwLowDateTime;
+        timeout.u.HighPart = due_time->dwHighDateTime;
+    }
+
+    TpSetWait( wait, handle, due_time ? &timeout : NULL );
 }
 
 /***********************************************************************

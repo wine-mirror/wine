@@ -233,7 +233,7 @@
 @ stdcall CloseThreadpoolCleanupGroupMembers(ptr long ptr) ntdll.TpReleaseCleanupGroupMembers
 # @ stub CloseThreadpoolIo
 @ stdcall CloseThreadpoolTimer(ptr) ntdll.TpReleaseTimer
-# @ stub CloseThreadpoolWait
+@ stdcall CloseThreadpoolWait(ptr) ntdll.TpReleaseWait
 @ stdcall CloseThreadpoolWork(ptr) ntdll.TpReleaseWork
 @ stdcall CmdBatNotification(long)
 @ stdcall CommConfigDialogA(str long ptr)
@@ -335,7 +335,7 @@
 @ stdcall CreateThreadpoolCleanupGroup()
 # @ stub CreateThreadpoolIo
 @ stdcall CreateThreadpoolTimer(ptr ptr ptr)
-# @ stub CreateThreadpoolWait
+@ stdcall CreateThreadpoolWait(ptr ptr ptr)
 @ stdcall CreateThreadpoolWork(ptr ptr ptr)
 @ stdcall CreateTimerQueue ()
 @ stdcall CreateTimerQueueTimer(ptr long ptr ptr long long long)
@@ -1457,7 +1457,7 @@
 @ stdcall SetThreadpoolThreadMaximum(ptr long) ntdll.TpSetPoolMaxThreads
 @ stdcall SetThreadpoolThreadMinimum(ptr long) ntdll.TpSetPoolMinThreads
 @ stdcall SetThreadpoolTimer(ptr ptr long long)
-# @ stub SetThreadpoolWait
+@ stdcall SetThreadpoolWait(ptr long ptr)
 @ stdcall SetTimeZoneInformation(ptr)
 @ stub SetTimerQueueTimer
 # @ stub -arch=x86_64 SetUmsThreadInformation
@@ -1572,7 +1572,7 @@
 @ stdcall WaitForSingleObjectEx(long long long)
 # @ stub WaitForThreadpoolIoCallbacks
 @ stdcall WaitForThreadpoolTimerCallbacks(ptr long) ntdll.TpWaitForTimer
-# @ stub WaitForThreadpoolWaitCallbacks
+@ stdcall WaitForThreadpoolWaitCallbacks(ptr long) ntdll.TpWaitForWait
 @ stdcall WaitForThreadpoolWorkCallbacks(ptr long) ntdll.TpWaitForWork
 @ stdcall WaitNamedPipeA (str long)
 @ stdcall WaitNamedPipeW (wstr long)
