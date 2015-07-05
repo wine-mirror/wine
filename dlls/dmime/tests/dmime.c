@@ -484,6 +484,7 @@ static void test_segment(void)
 static void test_track(void)
 {
     IDirectMusicTrack *dmt;
+    IDirectMusicTrack8 *dmt8;
     IPersistStream *ps;
     CLSID classid;
     ULARGE_INTEGER size;
@@ -492,16 +493,17 @@ static void test_track(void)
     const struct {
         REFCLSID clsid;
         const char *name;
+        BOOL has_param;
     } class[] = {
-        { X(DirectMusicLyricsTrack) },
-        { X(DirectMusicMarkerTrack) },
-        { X(DirectMusicParamControlTrack) },
-        { X(DirectMusicSegmentTriggerTrack) },
-        { X(DirectMusicSeqTrack) },
-        { X(DirectMusicSysExTrack) },
-        { X(DirectMusicTempoTrack) },
-        { X(DirectMusicTimeSigTrack) },
-        { X(DirectMusicWaveTrack) }
+        { X(DirectMusicLyricsTrack), TRUE },
+        { X(DirectMusicMarkerTrack), TRUE },
+        { X(DirectMusicParamControlTrack), TRUE },
+        { X(DirectMusicSegmentTriggerTrack), TRUE },
+        { X(DirectMusicSeqTrack), FALSE },
+        { X(DirectMusicSysExTrack), FALSE },
+        { X(DirectMusicTempoTrack), TRUE },
+        { X(DirectMusicTimeSigTrack), TRUE },
+        { X(DirectMusicWaveTrack), TRUE }
     };
 #undef X
     unsigned int i;
@@ -511,6 +513,46 @@ static void test_track(void)
         hr = CoCreateInstance(class[i].clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IDirectMusicTrack,
                 (void**)&dmt);
         ok(hr == S_OK, "%s create failed: %08x, expected S_OK\n", class[i].name, hr);
+
+        /* IDirectMusicTrack */
+        if (!class[i].has_param) {
+            hr = IDirectMusicTrack_GetParam(dmt, NULL, 0, NULL, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack_GetParam failed: %08x\n", hr);
+            hr = IDirectMusicTrack_SetParam(dmt, NULL, 0, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack_SetParam failed: %08x\n", hr);
+            hr = IDirectMusicTrack_IsParamSupported(dmt, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack_IsParamSupported failed: %08x\n", hr);
+        }
+        if (class[i].clsid != &CLSID_DirectMusicMarkerTrack &&
+                class[i].clsid != &CLSID_DirectMusicTimeSigTrack) {
+            hr = IDirectMusicTrack_AddNotificationType(dmt, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack_AddNotificationType failed: %08x\n", hr);
+            hr = IDirectMusicTrack_RemoveNotificationType(dmt, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack_RemoveNotificationType failed: %08x\n", hr);
+        }
+        hr = IDirectMusicTrack_Clone(dmt, 0, 0, NULL);
+        todo_wine ok(hr == E_POINTER, "IDirectMusicTrack_Clone failed: %08x\n", hr);
+
+        /* IDirectMusicTrack8 */
+        hr = IDirectMusicTrack_QueryInterface(dmt, &IID_IDirectMusicTrack8, (void**)&dmt8);
+        if (hr == S_OK) {
+            hr = IDirectMusicTrack8_PlayEx(dmt8, NULL, 0, 0, 0, 0, NULL, NULL, 0);
+            todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_PlayEx failed: %08x\n", hr);
+            if (!class[i].has_param) {
+                hr = IDirectMusicTrack8_GetParamEx(dmt8, NULL, 0, NULL, NULL, NULL, 0);
+                ok(hr == E_NOTIMPL, "IDirectMusicTrack8_GetParamEx failed: %08x\n", hr);
+                hr = IDirectMusicTrack8_SetParamEx(dmt8, NULL, 0, NULL, NULL, 0);
+                ok(hr == E_NOTIMPL, "IDirectMusicTrack8_SetParamEx failed: %08x\n", hr);
+            }
+            hr = IDirectMusicTrack8_Compose(dmt8, NULL, 0, NULL);
+            ok(hr == E_NOTIMPL, "IDirectMusicTrack8_Compose failed: %08x\n", hr);
+            hr = IDirectMusicTrack8_Join(dmt8, NULL, 0, NULL, 0, NULL);
+            if (class[i].clsid == &CLSID_DirectMusicTempoTrack)
+                todo_wine ok(hr == E_POINTER, "IDirectMusicTrack8_Join failed: %08x\n", hr);
+            else
+                ok(hr == E_NOTIMPL, "IDirectMusicTrack8_Join failed: %08x\n", hr);
+            IDirectMusicTrack8_Release(dmt8);
+        }
 
         /* IPersistStream */
         hr = IDirectMusicTrack_QueryInterface(dmt, &IID_IPersistStream, (void**)&ps);
