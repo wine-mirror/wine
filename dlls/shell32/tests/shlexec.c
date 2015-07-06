@@ -127,6 +127,8 @@ static INT_PTR shell_execute(LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR
         if (wait_rc == WAIT_TIMEOUT)
         {
             HWND wnd = FindWindowA("#32770", "Windows");
+            if (!wnd)
+                wnd = FindWindowA("Shell_Flyout", "");
             if (wnd != NULL)
             {
                 SendMessageA(wnd, WM_CLOSE, 0, 0);
