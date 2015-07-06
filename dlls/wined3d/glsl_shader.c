@@ -2516,18 +2516,23 @@ static const char *shader_glsl_get_rel_op(enum wined3d_shader_rel_op op)
 static void shader_glsl_get_sample_function(const struct wined3d_shader_context *ctx,
         DWORD resource_idx, DWORD flags, struct glsl_sample_function *sample_function)
 {
-    static const unsigned int type_coord_size[] =
+    static const struct
     {
-        0, /* WINED3D_SHADER_RESOURCE_NONE */
-        1, /* WINED3D_SHADER_RESOURCE_BUFFER */
-        1, /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
-        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
-        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
-        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_3D */
-        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBE */
-        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY */
-        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY */
-        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY */
+        unsigned int coord_size;
+        const char *type_part;
+    }
+    resource_types[] =
+    {
+        {0, ""},     /* WINED3D_SHADER_RESOURCE_NONE */
+        {1, ""},     /* WINED3D_SHADER_RESOURCE_BUFFER */
+        {1, "1D"},   /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
+        {2, "2D"},   /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
+        {2, ""},     /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
+        {3, "3D"},   /* WINED3D_SHADER_RESOURCE_TEXTURE_3D */
+        {3, "Cube"}, /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBE */
+        {2, ""},     /* WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY */
+        {3, ""},     /* WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY */
+        {3, ""},     /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY */
     };
     struct shader_glsl_ctx_priv *priv = ctx->backend_data;
     enum wined3d_shader_resource_type resource_type = ctx->reg_maps->resource_info[resource_idx].type;
@@ -2543,6 +2548,12 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
 
     sample_function->data_type = ctx->reg_maps->resource_info[resource_idx].data_type;
 
+    if (resource_type >= ARRAY_SIZE(resource_types))
+    {
+        ERR("Unexpected resource type %#x.\n", resource_type);
+        resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
+    }
+
     /* Note that there's no such thing as a projected cube texture. */
     if (resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
         projected = FALSE;
@@ -2550,26 +2561,11 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     if (shadow)
         base = "shadow";
 
-    switch (resource_type)
-    {
-        case WINED3D_SHADER_RESOURCE_TEXTURE_1D:
-            type_part = "1D";
-            break;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_2D:
-            if (texrect)
-                type_part = "2DRect";
-            else
-                type_part = "2D";
-            break;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_3D:
-            type_part = "3D";
-            break;
-        case WINED3D_SHADER_RESOURCE_TEXTURE_CUBE:
-            type_part = "Cube";
-            break;
-        default:
-            FIXME("Unhandled resource type %#x.\n", resource_type);
-    }
+    type_part = resource_types[resource_type].type_part;
+    if (resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2D && texrect)
+        type_part = "2DRect";
+    if (!type_part[0])
+        FIXME("Unhandled resource type %#x.\n", resource_type);
 
     if (!lod && grad && !gl_info->supported[EXT_GPU_SHADER4])
     {
@@ -2583,12 +2579,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     string_buffer_sprintf(sample_function->name, "%s%s%s%s%s", base, type_part, projected ? "Proj" : "",
             lod ? "Lod" : grad ? "Grad" : "", suffix);
 
-    if (resource_type >= ARRAY_SIZE(type_coord_size))
-    {
-        ERR("Unexpected resource type %#x.\n", resource_type);
-        resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
-    }
-    coord_size = type_coord_size[resource_type];
+    coord_size = resource_types[resource_type].coord_size;
     if (shadow)
         ++coord_size;
     sample_function->coord_mask = (1 << coord_size) - 1;
