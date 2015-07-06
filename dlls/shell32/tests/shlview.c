@@ -634,6 +634,7 @@ static void test_CreateViewWindow(void)
     IDropTarget *dt;
     HRESULT hr;
     RECT r = {0};
+    ULONG ref1, ref2;
 
     hr = SHGetDesktopFolder(&desktop);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
@@ -676,11 +677,29 @@ if (0)
     ok(hr == S_OK, "got (0x%08x)\n", hr);
     IDropTarget_Release(dt);
 
+    IShellView_AddRef(view);
+    ref1 = IShellView_Release(view);
     hr = IShellView_DestroyViewWindow(view);
     ok(hr == S_OK, "got (0x%08x)\n", hr);
     ok(!IsWindow(hwnd_view), "hwnd %p still valid\n", hwnd_view);
+    ref2 = IShellView_Release(view);
+    ok(ref1 > ref2, "expected %u > %u\n", ref1, ref2);
+    ref1 = ref2;
 
-    IShellView_Release(view);
+    /* Show that releasing the shell view does not destroy the window */
+    hr = IShellFolder_CreateViewObject(desktop, NULL, &IID_IShellView, (void**)&view);
+    ok(hr == S_OK, "got (0x%08x)\n", hr);
+    hwnd_view = NULL;
+    hr = IShellView_CreateViewWindow(view, NULL, &settings, &test_shellbrowser, &r, &hwnd_view);
+    ok(hr == S_OK || broken(hr == S_FALSE), "got (0x%08x)\n", hr);
+    ok(hwnd_view != NULL, "got %p\n", hwnd_view);
+    ok(IsWindow(hwnd_view), "hwnd %p still valid\n", hwnd_view);
+    ref2 = IShellView_Release(view);
+    ok(ref2 != 0, "ref2 = %u\n", ref2);
+    ok(ref2 > ref1, "expected %u > %u\n", ref2, ref1);
+    ok(IsWindow(hwnd_view), "hwnd %p still valid\n", hwnd_view);
+    DestroyWindow(hwnd_view);
+
     IShellFolder_Release(desktop);
 }
 
