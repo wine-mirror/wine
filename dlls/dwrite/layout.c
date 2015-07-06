@@ -243,7 +243,6 @@ struct dwrite_textlayout {
     FLOAT  minwidth;
 
     DWRITE_LINE_METRICS *lines;
-    UINT32 line_count;
     UINT32 line_alloc;
 
     DWRITE_TEXT_METRICS1 metrics;
@@ -1028,7 +1027,7 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
             return E_OUTOFMEMORY;
     }
 
-    if (layout->line_count == layout->line_alloc) {
+    if (layout->metrics.lineCount == layout->line_alloc) {
         DWRITE_LINE_METRICS *l = heap_realloc(layout->lines, layout->line_alloc*2*sizeof(*layout->lines));
         if (!l)
             return E_OUTOFMEMORY;
@@ -1037,7 +1036,7 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
     }
 
     layout->lines[*line] = *metrics;
-    layout->line_count += 1;
+    layout->metrics.lineCount += 1;
     *line += 1;
     return S_OK;
 }
@@ -1094,7 +1093,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     if (FAILED(hr))
         return hr;
 
-    layout->line_count = 0;
+    layout->metrics.lineCount = 0;
     origin_x = 0.0;
     line = 0;
     run = layout->clusters[0].run;
@@ -1214,7 +1213,6 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
     layout->metrics.left = layout->metrics.top = 0.0;
     layout->metrics.maxBidiReorderingDepth = 1; /* FIXME */
-    layout->metrics.lineCount = layout->line_count;
     layout->metrics.height = 0.0;
 
     /* Now all line info is here, update effective runs positions in flow direction */
@@ -1222,7 +1220,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     inrun = layout_get_next_inline_run(layout, NULL);
 
     origin_y = 0.0;
-    for (line = 0; line < layout->line_count; line++) {
+    for (line = 0; line < layout->metrics.lineCount; line++) {
 
         origin_y += layout->lines[line].baseline;
 
@@ -2599,10 +2597,10 @@ static HRESULT WINAPI dwritetextlayout_GetLineMetrics(IDWriteTextLayout2 *iface,
         return hr;
 
     if (metrics)
-        memcpy(metrics, This->lines, sizeof(DWRITE_LINE_METRICS)*min(max_count, This->line_count));
+        memcpy(metrics, This->lines, sizeof(*metrics)*min(max_count, This->metrics.lineCount));
 
-    *count = This->line_count;
-    return max_count >= This->line_count ? S_OK : E_NOT_SUFFICIENT_BUFFER;
+    *count = This->metrics.lineCount;
+    return max_count >= This->metrics.lineCount ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
 static HRESULT WINAPI dwritetextlayout_GetMetrics(IDWriteTextLayout2 *iface, DWRITE_TEXT_METRICS *metrics)
@@ -3556,7 +3554,6 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->clustermetrics = NULL;
     layout->clusters = NULL;
     layout->lines = NULL;
-    layout->line_count = 0;
     layout->line_alloc = 0;
     layout->minwidth = 0.0;
     list_init(&layout->eruns);
