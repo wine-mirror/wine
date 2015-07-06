@@ -1,0 +1,7 @@
+MODULE    = hidclass.sys
+IMPORTLIB = hidclass
+IMPORTS   = ntoskrnl.exe
+DELAYIMPORTS = setupapi hid
+
+C_SRCS = \
+	main.c
