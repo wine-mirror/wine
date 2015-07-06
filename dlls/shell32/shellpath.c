@@ -5334,7 +5334,11 @@ static HRESULT WINAPI knownfolder_GetFolderDefinition(
     hr = HRESULT_FROM_WIN32(RegGetValueW(HKEY_LOCAL_MACHINE, knownfolder->registryPath, szParentFolder,
                 RRF_RT_REG_SZ, NULL, parentGuid, &dwSize));
     if(SUCCEEDED(hr))
-        IIDFromString(parentGuid, &pKFD->fidParent);
+    {
+        hr = IIDFromString(parentGuid, &pKFD->fidParent);
+        if(FAILED(hr))
+            return hr;
+    }
 
     get_known_folder_dword(knownfolder->registryPath, szAttributes, &pKFD->dwAttributes);
 
