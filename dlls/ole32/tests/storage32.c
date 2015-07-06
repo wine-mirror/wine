@@ -57,6 +57,194 @@ static int strcmp_ww(LPCWSTR strw1, LPCWSTR strw2)
     return lstrcmpA(stra1, stra2);
 }
 
+typedef struct TestLockBytes {
+    ILockBytes ILockBytes_iface;
+    LONG ref;
+    BYTE* contents;
+    ULONG size;
+    ULONG buffer_size;
+} TestLockBytes;
+
+static inline TestLockBytes *impl_from_ILockBytes(ILockBytes *iface)
+{
+    return CONTAINING_RECORD(iface, TestLockBytes, ILockBytes_iface);
+}
+
+static HRESULT WINAPI TestLockBytes_QueryInterface(ILockBytes *iface, REFIID iid,
+    void **ppv)
+{
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+
+    if (!ppv) return E_INVALIDARG;
+
+    if (IsEqualIID(&IID_IUnknown, iid) ||
+        IsEqualIID(&IID_ILockBytes, iid))
+        *ppv = &This->ILockBytes_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI TestLockBytes_AddRef(ILockBytes *iface)
+{
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    return ref;
+}
+
+static ULONG WINAPI TestLockBytes_Release(ILockBytes *iface)
+{
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    return ref;
+}
+
+static HRESULT WINAPI TestLockBytes_ReadAt(ILockBytes *iface,
+    ULARGE_INTEGER ulOffset, void *pv, ULONG cb, ULONG *pcbRead)
+{
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+    ULONG dummy;
+
+    if (!pv) return E_INVALIDARG;
+
+    if (!pcbRead) pcbRead = &dummy;
+
+    if (ulOffset.QuadPart >= This->size)
+    {
+        *pcbRead = 0;
+        return S_OK;
+    }
+
+    cb = min(cb, This->size - ulOffset.QuadPart);
+
+    *pcbRead = cb;
+    memcpy(pv, &This->contents[ulOffset.QuadPart], cb);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI TestLockBytes_WriteAt(ILockBytes *iface,
+    ULARGE_INTEGER ulOffset, const void *pv, ULONG cb, ULONG *pcbWritten)
+{
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+    HRESULT hr;
+    ULONG dummy;
+
+    if (!pv) return E_INVALIDARG;
+
+    if (!pcbWritten) pcbWritten = &dummy;
+
+    if (ulOffset.QuadPart + cb > This->size)
+    {
+        ULARGE_INTEGER new_size;
+        new_size.QuadPart = ulOffset.QuadPart + cb;
+        hr = ILockBytes_SetSize(iface, new_size);
+        if (FAILED(hr)) return hr;
+    }
+
+    *pcbWritten = cb;
+    memcpy(&This->contents[ulOffset.QuadPart], pv, cb);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI TestLockBytes_Flush(ILockBytes *iface)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI TestLockBytes_SetSize(ILockBytes *iface,
+    ULARGE_INTEGER cb)
+{
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+
+    if (This->buffer_size < cb.QuadPart)
+    {
+        ULONG new_buffer_size = max(This->buffer_size * 2, cb.QuadPart);
+        BYTE* new_buffer = HeapAlloc(GetProcessHeap(), 0, new_buffer_size);
+        if (!new_buffer) return E_OUTOFMEMORY;
+        memcpy(new_buffer, This->contents, This->size);
+        HeapFree(GetProcessHeap(), 0, This->contents);
+        This->contents = new_buffer;
+    }
+
+    if (cb.QuadPart > This->size)
+        memset(&This->contents[This->size], 0, cb.QuadPart - This->size);
+
+    This->size = cb.QuadPart;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI TestLockBytes_LockRegion(ILockBytes *iface,
+    ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI TestLockBytes_UnlockRegion(ILockBytes *iface,
+    ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI TestLockBytes_Stat(ILockBytes *iface,
+    STATSTG *pstatstg, DWORD grfStatFlag)
+{
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+    static const WCHAR dummy_name[] = {'d','u','m','m','y',0};
+
+    if (!pstatstg) return E_INVALIDARG;
+
+    memset(pstatstg, 0, sizeof(STATSTG));
+
+    if (!(grfStatFlag & STATFLAG_NONAME))
+    {
+        pstatstg->pwcsName = CoTaskMemAlloc(sizeof(dummy_name));
+        if (!pstatstg->pwcsName) return E_OUTOFMEMORY;
+        memcpy(pstatstg->pwcsName, dummy_name, sizeof(dummy_name));
+    }
+
+    pstatstg->type = STGTY_LOCKBYTES;
+    pstatstg->cbSize.QuadPart = This->size;
+
+    return S_OK;
+}
+
+static const ILockBytesVtbl TestLockBytes_Vtbl = {
+    TestLockBytes_QueryInterface,
+    TestLockBytes_AddRef,
+    TestLockBytes_Release,
+    TestLockBytes_ReadAt,
+    TestLockBytes_WriteAt,
+    TestLockBytes_Flush,
+    TestLockBytes_SetSize,
+    TestLockBytes_LockRegion,
+    TestLockBytes_UnlockRegion,
+    TestLockBytes_Stat
+};
+
+static void CreateTestLockBytes(TestLockBytes **This)
+{
+    *This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(**This));
+
+    if (*This)
+    {
+        (*This)->ILockBytes_iface.lpVtbl = &TestLockBytes_Vtbl;
+        (*This)->ref = 1;
+    }
+}
+
+static void DeleteTestLockBytes(TestLockBytes *This)
+{
+    ok(This->ILockBytes_iface.lpVtbl == &TestLockBytes_Vtbl, "test lock bytes %p deleted with incorrect vtable\n", This);
+    ok(This->ref == 1, "test lock bytes %p deleted with %i references instead of 1\n", This, This->ref);
+    HeapFree(GetProcessHeap(), 0, This->contents);
+    HeapFree(GetProcessHeap(), 0, This);
+}
+
 static void test_hglobal_storage_stat(void)
 {
     ILockBytes *ilb = NULL;
@@ -3645,6 +3833,31 @@ static void test_overwrite(void)
     DeleteFileA(filenameA);
 }
 
+static void test_custom_lockbytes(void)
+{
+    static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    TestLockBytes* lockbytes;
+    HRESULT hr;
+    IStorage* stg;
+    IStream* stm;
+
+    CreateTestLockBytes(&lockbytes);
+
+    hr = StgCreateDocfileOnILockBytes(&lockbytes->ILockBytes_iface, STGM_CREATE|STGM_READWRITE|STGM_TRANSACTED, 0, &stg);
+    ok(hr==S_OK, "StgCreateDocfileOnILockBytes failed %x\n", hr);
+
+    hr = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &stm);
+    ok(hr==S_OK, "IStorage_CreateStream failed %x\n", hr);
+
+    IStream_Release(stm);
+
+    hr = IStorage_Commit(stg, 0);
+
+    IStorage_Release(stg);
+
+    DeleteTestLockBytes(lockbytes);
+}
+
 START_TEST(storage32)
 {
     CHAR temp[MAX_PATH];
@@ -3693,4 +3906,5 @@ START_TEST(storage32)
     test_locking();
     test_transacted_shared();
     test_overwrite();
+    test_custom_lockbytes();
 }
