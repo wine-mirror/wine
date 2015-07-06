@@ -2168,8 +2168,8 @@ static void get_font_hfont(GpGraphics *graphics, GDIPCONST GpFont *font,
         GpMatrix xform = *matrix;
         GdipTransformMatrixPoints(&xform, pt, 3);
     }
-    if (graphics)
-        GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
+
+    GdipTransformPoints(graphics, CoordinateSpaceDevice, CoordinateSpaceWorld, pt, 3);
     angle = -gdiplus_atan2((pt[1].Y - pt[0].Y), (pt[1].X - pt[0].X));
     rel_width = sqrt((pt[1].Y-pt[0].Y)*(pt[1].Y-pt[0].Y)+
                      (pt[1].X-pt[0].X)*(pt[1].X-pt[0].X));
