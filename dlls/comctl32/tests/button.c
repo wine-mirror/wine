@@ -316,6 +316,7 @@ static const struct message setstyle_seq[] =
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|defwinproc|optional }, /* FIXME: Wine sends it */
     { WM_ERASEBKGND, sent|defwinproc|optional },
+    { WM_PAINT, sent|optional },
     { 0 }
 };
 
@@ -363,6 +364,7 @@ static const struct message setstate_seq[] =
     { WM_PAINT, sent },
     { WM_NCPAINT, sent|optional }, /* FIXME: Wine sends it */
     { WM_ERASEBKGND, sent|defwinproc|optional },
+    { WM_PAINT, sent|optional },
     { 0 }
 };
 
@@ -424,6 +426,7 @@ static const struct message setcheck_ignored_seq[] =
 {
     { BM_SETCHECK, sent },
     { WM_APP, sent|wparam|lparam, 0, 0 },
+    { WM_PAINT, sent|optional },
     { 0 }
 };
 
