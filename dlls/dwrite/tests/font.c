@@ -3525,19 +3525,107 @@ static BOOL get_vdmx_size(const struct VDMX_group *group, int emsize, int *a, in
     return FALSE;
 }
 
+static void test_metrics_cmp(FLOAT emsize, const DWRITE_FONT_METRICS *metrics, const DWRITE_FONT_METRICS1 *expected)
+{
+    ok(metrics->designUnitsPerEm == expected->designUnitsPerEm, "%.2f: emsize: got %u expect %u\n",
+           emsize, metrics->designUnitsPerEm, expected->designUnitsPerEm);
+    ok(metrics->ascent == expected->ascent, "%.2f a: got %u expect %u\n",
+           emsize, metrics->ascent, expected->ascent);
+    ok(metrics->descent == expected->descent, "%.2f d: got %u expect %u\n",
+           emsize, metrics->descent, expected->descent);
+    ok(metrics->lineGap == expected->lineGap, "%.2f lg: got %d expect %d\n",
+           emsize, metrics->lineGap, expected->lineGap);
+    ok(metrics->capHeight == expected->capHeight, "%.2f capH: got %u expect %u\n",
+           emsize, metrics->capHeight, expected->capHeight);
+    ok(metrics->xHeight == expected->xHeight, "%.2f xH: got %u expect %u\n",
+           emsize, metrics->xHeight, expected->xHeight);
+    ok(metrics->underlinePosition == expected->underlinePosition, "%.2f ulP: got %d expect %d\n",
+            emsize, metrics->underlinePosition, expected->underlinePosition);
+    ok(metrics->underlineThickness == expected->underlineThickness, "%.2f ulTh: got %u expect %u\n",
+           emsize, metrics->underlineThickness, expected->underlineThickness);
+    ok(metrics->strikethroughPosition == expected->strikethroughPosition, "%.2f stP: got %d expect %d\n",
+           emsize, metrics->strikethroughPosition, expected->strikethroughPosition);
+    ok(metrics->strikethroughThickness == expected->strikethroughThickness, "%.2f stTh: got %u expect %u\n",
+           emsize, metrics->strikethroughThickness, expected->strikethroughThickness);
+}
+
+static void test_metrics1_cmp(FLOAT emsize, const DWRITE_FONT_METRICS1 *metrics, const DWRITE_FONT_METRICS1 *expected)
+{
+    ok(metrics->designUnitsPerEm == expected->designUnitsPerEm, "%.2f: emsize: got %u expect %u\n",
+           emsize, metrics->designUnitsPerEm, expected->designUnitsPerEm);
+    ok(metrics->ascent == expected->ascent, "%.2f a: got %u expect %u\n",
+           emsize, metrics->ascent, expected->ascent);
+    ok(metrics->descent == expected->descent, "%.2f d: got %u expect %u\n",
+           emsize, metrics->descent, expected->descent);
+    ok(metrics->lineGap == expected->lineGap, "%.2f lg: got %d expect %d\n",
+           emsize, metrics->lineGap, expected->lineGap);
+    ok(metrics->capHeight == expected->capHeight, "%.2f capH: got %u expect %u\n",
+           emsize, metrics->capHeight, expected->capHeight);
+    ok(metrics->xHeight == expected->xHeight, "%.2f xH: got %u expect %u\n",
+           emsize, metrics->xHeight, expected->xHeight);
+    ok(metrics->underlinePosition == expected->underlinePosition, "%.2f ulP: got %d expect %d\n",
+            emsize, metrics->underlinePosition, expected->underlinePosition);
+    ok(metrics->underlineThickness == expected->underlineThickness, "%.2f ulTh: got %u expect %u\n",
+           emsize, metrics->underlineThickness, expected->underlineThickness);
+    ok(metrics->strikethroughPosition == expected->strikethroughPosition, "%.2f stP: got %d expect %d\n",
+           emsize, metrics->strikethroughPosition, expected->strikethroughPosition);
+    ok(metrics->strikethroughThickness == expected->strikethroughThickness, "%.2f stTh: got %u expect %u\n",
+           emsize, metrics->strikethroughThickness, expected->strikethroughThickness);
+    ok(metrics->glyphBoxLeft == expected->glyphBoxLeft, "%.2f box left: got %d expect %d\n",
+           emsize, metrics->glyphBoxLeft, expected->glyphBoxLeft);
+if (0) { /* this is not consistent */
+    ok(metrics->glyphBoxTop == expected->glyphBoxTop, "%.2f box top: got %d expect %d\n",
+           emsize, metrics->glyphBoxTop, expected->glyphBoxTop);
+    ok(metrics->glyphBoxRight == expected->glyphBoxRight, "%.2f box right: got %d expect %d\n",
+           emsize, metrics->glyphBoxRight, expected->glyphBoxRight);
+}
+    ok(metrics->glyphBoxBottom == expected->glyphBoxBottom, "%.2f box bottom: got %d expect %d\n",
+           emsize, metrics->glyphBoxBottom, expected->glyphBoxBottom);
+    ok(metrics->subscriptPositionX == expected->subscriptPositionX, "%.2f subX: got %d expect %d\n",
+           emsize, metrics->subscriptPositionX, expected->subscriptPositionX);
+    ok(metrics->subscriptPositionY == expected->subscriptPositionY, "%.2f subY: got %d expect %d\n",
+           emsize, metrics->subscriptPositionY, expected->subscriptPositionY);
+    ok(metrics->subscriptSizeX == expected->subscriptSizeX, "%.2f subsizeX: got %d expect %d\n",
+           emsize, metrics->subscriptSizeX, expected->subscriptSizeX);
+    ok(metrics->subscriptPositionY == expected->subscriptPositionY, "%.2f subsizeY: got %d expect %d\n",
+           emsize, metrics->subscriptSizeY, expected->subscriptSizeY);
+    ok(metrics->superscriptPositionX == expected->superscriptPositionX, "%.2f supX: got %d expect %d\n",
+           emsize, metrics->superscriptPositionX, expected->superscriptPositionX);
+if (0)
+    ok(metrics->superscriptPositionY == expected->superscriptPositionY, "%.2f supY: got %d expect %d\n",
+           emsize, metrics->superscriptPositionY, expected->superscriptPositionY);
+    ok(metrics->superscriptSizeX == expected->superscriptSizeX, "%.2f supsizeX: got %d expect %d\n",
+           emsize, metrics->superscriptSizeX, expected->superscriptSizeX);
+    ok(metrics->superscriptSizeY == expected->superscriptSizeY, "%.2f supsizeY: got %d expect %d\n",
+           emsize, metrics->superscriptSizeY, expected->superscriptSizeY);
+    ok(metrics->hasTypographicMetrics == expected->hasTypographicMetrics, "%.2f hastypo: got %d expect %d\n",
+           emsize, metrics->hasTypographicMetrics, expected->hasTypographicMetrics);
+}
+
 static void test_GetGdiCompatibleMetrics_face(IDWriteFontFace *face)
 {
+    IDWriteFontFace1 *fontface1 = NULL;
     HRESULT hr;
-    DWRITE_FONT_METRICS design_metrics, comp_metrics;
+    DWRITE_FONT_METRICS design_metrics;
+    DWRITE_FONT_METRICS1 design_metrics1;
     FLOAT emsize, scale;
-    int ascent, descent, expect;
+    int ascent, descent;
     const struct VDMX_Header *vdmx;
     UINT32 vdmx_len;
     void *vdmx_ctx;
     BOOL exists;
     const struct VDMX_group *vdmx_group = NULL;
 
-    IDWriteFontFace_GetMetrics(face, &design_metrics);
+    hr = IDWriteFontFace_QueryInterface(face, &IID_IDWriteFontFace1, (void**)&fontface1);
+    if (hr != S_OK)
+        win_skip("gdi compatible DWRITE_FONT_METRICS1 are not supported.\n");
+
+    if (fontface1) {
+        IDWriteFontFace1_GetMetrics(fontface1, &design_metrics1);
+        memcpy(&design_metrics, &design_metrics1, sizeof(design_metrics));
+    }
+    else
+        IDWriteFontFace_GetMetrics(face, &design_metrics);
 
     hr = IDWriteFontFace_TryGetFontTable(face, MS_VDMX_TAG, (const void **)&vdmx,
                                          &vdmx_len, &vdmx_ctx, &exists);
@@ -3548,57 +3636,66 @@ static void test_GetGdiCompatibleMetrics_face(IDWriteFontFace *face)
 
     for (emsize = 5; emsize <= design_metrics.designUnitsPerEm; emsize++)
     {
-        scale = emsize / design_metrics.designUnitsPerEm;
-        hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, emsize, 1.0, NULL, &comp_metrics);
-todo_wine
-        ok(hr == S_OK, "got %08x\n", hr);
-        if (hr != S_OK) return;
+        DWRITE_FONT_METRICS1 comp_metrics1, expected;
+        DWRITE_FONT_METRICS comp_metrics;
 
+        if (fontface1) {
+            hr = IDWriteFontFace1_GetGdiCompatibleMetrics(fontface1, emsize, 1.0, NULL, &comp_metrics1);
+        todo_wine
+            ok(hr == S_OK, "got %08x\n", hr);
+            if (hr != S_OK) return;
+        }
+        else {
+            hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, emsize, 1.0, NULL, &comp_metrics);
+            ok(hr == S_OK, "got %08x\n", hr);
+        }
+
+        scale = emsize / design_metrics.designUnitsPerEm;
         if (!get_vdmx_size(vdmx_group, emsize, &ascent, &descent))
         {
             ascent = round(design_metrics.ascent * scale);
             descent = round(design_metrics.descent * scale);
         }
 
-        ok(comp_metrics.designUnitsPerEm == design_metrics.designUnitsPerEm,
-           "%.2f: emsize: got %d expect %d\n",
-           emsize, comp_metrics.designUnitsPerEm, design_metrics.designUnitsPerEm);
+        expected.designUnitsPerEm = design_metrics.designUnitsPerEm;
+        expected.ascent = round(ascent / scale );
+        expected.descent = round(descent / scale );
+        expected.lineGap = round(round(design_metrics.lineGap * scale) / scale);
+        expected.capHeight = round(round(design_metrics.capHeight * scale) / scale);
+        expected.xHeight = round(round(design_metrics.xHeight * scale) / scale);
+        expected.underlinePosition = round(round(design_metrics.underlinePosition * scale) / scale);
+        expected.underlineThickness = round(round(design_metrics.underlineThickness * scale) / scale);
+        expected.strikethroughPosition = round(round(design_metrics.strikethroughPosition * scale) / scale);
+        expected.strikethroughThickness = round(round(design_metrics.strikethroughThickness * scale) / scale);
 
-        ok(comp_metrics.ascent == round(ascent / scale), "%.2f a: got %d expect %d\n",
-           emsize, comp_metrics.ascent, round(ascent / scale));
+        if (fontface1) {
+            expected.glyphBoxLeft = round(round(design_metrics1.glyphBoxLeft * scale) / scale);
 
-        ok(comp_metrics.descent == round(descent / scale), "%.2f d: got %d expect %d\n",
-           emsize, comp_metrics.descent, round(descent / scale));
+        if (0) { /* those two fail on Tahoma and Win7 */
+            expected.glyphBoxTop = round(round(design_metrics1.glyphBoxTop * scale) / scale);
+            expected.glyphBoxRight = round(round(design_metrics1.glyphBoxRight * scale) / scale);
+        }
+            expected.glyphBoxBottom = round(round(design_metrics1.glyphBoxBottom * scale) / scale);
+            expected.subscriptPositionX = round(round(design_metrics1.subscriptPositionX * scale) / scale);
+            expected.subscriptPositionY = round(round(design_metrics1.subscriptPositionY * scale) / scale);
+            expected.subscriptSizeX = round(round(design_metrics1.subscriptSizeX * scale) / scale);
+            expected.subscriptSizeY = round(round(design_metrics1.subscriptSizeY * scale) / scale);
+            expected.superscriptPositionX = round(round(design_metrics1.superscriptPositionX * scale) / scale);
+        if (0) /* this fails for 3 emsizes, Tahoma from [5, 2048] range */
+            expected.superscriptPositionY = round(round(design_metrics1.superscriptPositionY * scale) / scale);
+            expected.superscriptSizeX = round(round(design_metrics1.superscriptSizeX * scale) / scale);
+            expected.superscriptSizeY = round(round(design_metrics1.superscriptSizeY * scale) / scale);
+            expected.hasTypographicMetrics = design_metrics1.hasTypographicMetrics;
 
-        expect = round(round(design_metrics.lineGap * scale) / scale);
-        ok(comp_metrics.lineGap == expect, "%.2f lg: got %d expect %d\n",
-           emsize, comp_metrics.lineGap, expect);
+            test_metrics1_cmp(emsize, &comp_metrics1, &expected);
+        }
+        else
+            test_metrics_cmp(emsize, &comp_metrics, &expected);
 
-        expect = round(round(design_metrics.capHeight * scale) / scale);
-        ok(comp_metrics.capHeight == expect, "%.2f capH: got %d expect %d\n",
-           emsize, comp_metrics.capHeight, expect);
-
-        expect = round(round(design_metrics.xHeight * scale) / scale);
-        ok(comp_metrics.xHeight == expect, "%.2f xH: got %d expect %d\n",
-           emsize, comp_metrics.xHeight, expect);
-
-        expect = round(round(design_metrics.underlinePosition * scale) / scale);
-        ok(comp_metrics.underlinePosition == expect, "%.2f ulP: got %d expect %d\n",
-            emsize, comp_metrics.underlinePosition, expect);
-
-        expect = round(round(design_metrics.underlineThickness * scale) / scale);
-        ok(comp_metrics.underlineThickness == expect, "%.2f ulTh: got %d expect %d\n",
-           emsize, comp_metrics.underlineThickness, expect);
-
-        expect = round(round(design_metrics.strikethroughPosition * scale) / scale);
-        ok(comp_metrics.strikethroughPosition == expect, "%.2f stP: got %d expect %d\n",
-           emsize, comp_metrics.strikethroughPosition, expect);
-
-        expect = round(round(design_metrics.strikethroughThickness * scale) / scale);
-        ok(comp_metrics.strikethroughThickness == expect, "%.2f stTh: got %d expect %d\n",
-           emsize, comp_metrics.strikethroughThickness, expect);
     }
 
+    if (fontface1)
+        IDWriteFontFace1_Release(fontface1);
     if (vdmx) IDWriteFontFace_ReleaseFontTable(face, vdmx_ctx);
 }
 
