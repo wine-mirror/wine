@@ -1454,8 +1454,8 @@
 @ stub _mblen_l
 @ cdecl _mbsbtype(str long)
 @ stub _mbsbtype_l
-@ stub _mbscat_s
-@ stub _mbscat_s_l
+@ cdecl _mbscat_s(ptr long str)
+@ cdecl _mbscat_s_l(ptr long str ptr)
 @ cdecl _mbschr(str long)
 @ stub _mbschr_l
 @ cdecl _mbscmp(str str)

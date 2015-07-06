@@ -1053,6 +1053,56 @@ unsigned char * CDECL _mbscat( unsigned char *dst, const unsigned char *src )
 }
 
 /*********************************************************************
+ *		_mbscat_s_l (MSVCRT.@)
+ */
+int CDECL _mbscat_s_l( unsigned char *dst, MSVCRT_size_t size,
+        const unsigned char *src, MSVCRT__locale_t locale )
+{
+    MSVCRT_size_t i, j;
+    int ret = 0;
+
+    if(!MSVCRT_CHECK_PMT(dst != NULL)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(src != NULL)) return MSVCRT_EINVAL;
+
+    for(i=0; i<size; i++)
+        if(!dst[i]) break;
+    if(i == size) {
+        MSVCRT_INVALID_PMT("dst is not NULL-terminated", MSVCRT_EINVAL);
+        if(size) dst[0] = 0;
+        return MSVCRT_EINVAL;
+    }
+
+    if(i && _ismbblead_l(dst[i-1], locale)) {
+        ret = MSVCRT_EILSEQ;
+        i--;
+    }
+
+    for(j=0; src[j] && i+j<size; j++)
+        dst[i+j] = src[j];
+    if(i+j == size) {
+        MSVCRT_INVALID_PMT("dst buffer is to small", MSVCRT_ERANGE);
+        dst[0] = 0;
+        return MSVCRT_ERANGE;
+    }
+
+    if(j && _ismbblead_l(src[j-1], locale)) {
+        ret = MSVCRT_EILSEQ;
+        j--;
+    }
+
+    dst[i+j] = 0;
+    return ret;
+}
+
+/*********************************************************************
+ *		_mbscat_s (MSVCRT.@)
+ */
+int CDECL _mbscat_s( unsigned char *dst, MSVCRT_size_t size, const unsigned char *src )
+{
+    return _mbscat_s_l(dst, size, src, NULL);
+}
+
+/*********************************************************************
  *		_mbscpy (MSVCRT.@)
  */
 unsigned char* CDECL _mbscpy( unsigned char *dst, const unsigned char *src )

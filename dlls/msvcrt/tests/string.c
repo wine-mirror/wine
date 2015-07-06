@@ -58,6 +58,7 @@ static int (__cdecl *p_memmove_s)(void *, size_t, const void *, size_t);
 static int* (__cdecl *pmemcmp)(void *, const void *, size_t n);
 static int (__cdecl *pstrcpy_s)(char *dst, size_t len, const char *src);
 static int (__cdecl *pstrcat_s)(char *dst, size_t len, const char *src);
+static int (__cdecl *p_mbscat_s)(unsigned char *dst, size_t size, const unsigned char *src);
 static int (__cdecl *p_mbsnbcat_s)(unsigned char *dst, size_t size, const unsigned char *src, size_t count);
 static int (__cdecl *p_mbsnbcpy_s)(unsigned char * dst, size_t size, const unsigned char * src, size_t count);
 static int (__cdecl *p__mbscpy_s)(unsigned char*, size_t, const unsigned char*);
@@ -730,6 +731,86 @@ static void test_strcat_s(void)
 
     ret = pstrcat_s(NULL, sizeof(dest), small);
     ok(ret == EINVAL, "strcat_s: Writing to a NULL string returned %d, expected EINVAL\n", ret);
+}
+
+static void test__mbscat_s(void)
+{
+    unsigned char dst[8], src[4];
+    int err;
+    int prev_cp = _getmbcp();
+
+    if(!p_mbscat_s)
+    {
+        win_skip("_mbscat_s not found\n");
+        return;
+    }
+
+
+    src[0] = dst[0] = 0;
+    err = p_mbscat_s(NULL, sizeof(dst), src);
+    ok(err == EINVAL, "_mbscat_s returned %d\n", err);
+
+    err = p_mbscat_s(dst, sizeof(dst), NULL);
+    ok(err == EINVAL, "_mbscat_s returned %d\n", err);
+
+    dst[0] = 'a';
+    err = p_mbscat_s(dst, 1, src);
+    ok(err == EINVAL, "_mbscat_s returned %d\n", err);
+
+    memset(dst, 'a', sizeof(dst));
+    dst[6] = 0;
+    src[0] = 'b';
+    src[1] = 0;
+
+    err = p_mbscat_s(dst, sizeof(dst), src);
+    ok(err == 0, "_mbscat_s returned %d\n", err);
+    ok(!memcmp(dst, "aaaaaab", 8), "dst = %s\n", dst);
+
+    err = p_mbscat_s(dst, sizeof(dst), src);
+    ok(err == ERANGE, "_mbscat_s returned %d\n", err);
+    ok(!dst[0], "dst[0] = %c\n", dst[0]);
+    ok(dst[1] == 'a', "dst[1] = %c\n", dst[1]);
+
+    _setmbcp(932);
+    /* test invalid str in dst */
+    dst[0] = 0x81;
+    dst[1] = 0x81;
+    dst[2] = 0x52;
+    dst[3] = 0;
+    src[0] = 'a';
+    src[1] = 0;
+    err = p_mbscat_s(dst, sizeof(dst), src);
+    ok(err == 0, "_mbscat_s returned %d\n", err);
+
+    /* test invalid str in src */
+    dst[0] = 0;
+    src[0] = 0x81;
+    src[1] = 0x81;
+    src[2] = 0x52;
+    src[3] = 0;
+    err = p_mbscat_s(dst, sizeof(dst), src);
+    ok(err == 0, "_mbscat_s returned %d\n", err);
+
+    /* test dst with leading byte on the end of buffer */
+    dst[0] = 'a';
+    dst[1] = 0x81;
+    dst[2] = 0;
+    src[0] = 'R';
+    src[1] = 0;
+    err = p_mbscat_s(dst, sizeof(dst), src);
+    ok(err == EILSEQ, "_mbscat_s returned %d\n", err);
+    ok(!memcmp(dst, "aR", 3), "dst = %s\n", dst);
+
+    /* test src with leading byte on the end of buffer */
+    dst[0] = 'a';
+    dst[1] = 0;
+    src[0] = 'b';
+    src[1] = 0x81;
+    src[2] = 0;
+    err = p_mbscat_s(dst, sizeof(dst), src);
+    ok(err == EILSEQ, "_mbscat_s returned %d\n", err);
+    ok(!memcmp(dst, "ab", 3), "dst = %s\n", dst);
+    _setmbcp(prev_cp);
 }
 
 static void test__mbsnbcpy_s(void)
@@ -2984,6 +3065,7 @@ START_TEST(string)
     SET(p__mb_cur_max,"__mb_cur_max");
     pstrcpy_s = (void *)GetProcAddress( hMsvcrt,"strcpy_s" );
     pstrcat_s = (void *)GetProcAddress( hMsvcrt,"strcat_s" );
+    p_mbscat_s = (void*)GetProcAddress( hMsvcrt, "_mbscat_s" );
     p_mbsnbcat_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcat_s" );
     p_mbsnbcpy_s = (void *)GetProcAddress( hMsvcrt,"_mbsnbcpy_s" );
     p__mbscpy_s = (void *)GetProcAddress( hMsvcrt,"_mbscpy_s" );
@@ -3037,6 +3119,7 @@ START_TEST(string)
     test_memcpy_s();
     test_memmove_s();
     test_strcat_s();
+    test__mbscat_s();
     test__mbsnbcpy_s();
     test__mbscpy_s();
     test_mbcjisjms();

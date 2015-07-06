@@ -1009,6 +1009,7 @@ int _setmbcp_l(int, LCID, MSVCRT_pthreadmbcinfo) DECLSPEC_HIDDEN;
 int            __cdecl MSVCRT__write(int,const void*,unsigned int);
 int            __cdecl _getch(void);
 int            __cdecl _ismbblead(unsigned int);
+int            __cdecl _ismbblead_l(unsigned int, MSVCRT__locale_t);
 int            __cdecl _ismbclegal(unsigned int c);
 int            __cdecl _ismbstrail(const unsigned char* start, const unsigned char* str);
 int            __cdecl MSVCRT_mbtowc(MSVCRT_wchar_t*,const char*,MSVCRT_size_t);
