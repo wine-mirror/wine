@@ -2523,7 +2523,12 @@ static void init_test(void)
            "unable to find argv0!\n");
     }
 
-    GetTempPathA(sizeof(filename), filename);
+    /* Older versions (win 2k) fail tests if there is a space in
+       the path. */
+    if (dllver.dwMajorVersion <= 5)
+        strcpy(filename, "c:\\");
+    else
+        GetTempPathA(sizeof(filename), filename);
     GetTempFileNameA(filename, "wt", 0, tmpdir);
     GetLongPathNameA(tmpdir, tmpdir, sizeof(tmpdir));
     DeleteFileA( tmpdir );
