@@ -1269,6 +1269,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_LUMINANCE_ALPHA,         GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_COMPRESSED,
+            EXT_TEXTURE_COMPRESSION_RGTC, NULL},
+    {WINED3DFMT_ATI2N,                  GL_COMPRESSED_RG_RGTC2,           GL_COMPRESSED_RG_RGTC2,                 0,
+            GL_RG,                      GL_UNSIGNED_BYTE,                 0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_COMPRESSED,
             ARB_TEXTURE_COMPRESSION_RGTC, NULL},
     {WINED3DFMT_INTZ,                   GL_DEPTH24_STENCIL8_EXT,          GL_DEPTH24_STENCIL8_EXT,                0,
             GL_DEPTH_STENCIL_EXT,       GL_UNSIGNED_INT_24_8_EXT,         0,
@@ -2381,7 +2386,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W);
     }
 
-    if (gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC])
+    if (gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] || gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
     {
         idx = getFmtIdx(WINED3DFMT_ATI1N);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(

@@ -3465,10 +3465,20 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         TRACE(" IMPLIED: ARB_vertex_array_bgra support (by EXT_vertex_array_bgra).\n");
         gl_info->supported[ARB_VERTEX_ARRAY_BGRA] = TRUE;
     }
+    if (!gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC] && gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC])
+    {
+        TRACE(" IMPLIED: EXT_texture_compression_rgtc support (by ARB_texture_compression_rgtc).\n");
+        gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC] = TRUE;
+    }
     if (!gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] && gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
     {
         TRACE(" IMPLIED: ARB_texture_compression_rgtc support (by EXT_texture_compression_rgtc).\n");
         gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] = TRUE;
+    }
+    if (gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] && !gl_info->supported[ARB_TEXTURE_RG])
+    {
+        TRACE("ARB_texture_rg not supported, disabling ARB_texture_compression_rgtc.\n");
+        gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] = FALSE;
     }
     if (gl_info->supported[NV_TEXTURE_SHADER2])
     {
