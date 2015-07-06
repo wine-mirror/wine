@@ -1389,16 +1389,12 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         while (erun && erun->line == line) {
             erun->origin_y = origin_y;
             erun = layout_get_next_erun(layout, erun);
-            if (!erun)
-                break;
         }
 
         /* Same for inline runs */
         while (inrun && inrun->line == line) {
             inrun->origin_y = origin_y;
             inrun = layout_get_next_inline_run(layout, inrun);
-            if (!inrun)
-                break;
         }
 
         layout->metrics.height += layout->lines[line].height;
