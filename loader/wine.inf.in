@@ -445,6 +445,8 @@ HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be1031
 HKLM,System\CurrentControlSet\Control\Class\{4d36e978-e325-11ce-bfc1-08002be10318},"Class",,"Ports"
 HKLM,System\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092f},,,"Imaging devices"
 HKLM,System\CurrentControlSet\Control\Class\{6bdd1fc6-810f-11d0-bec7-08002be2092f},"Class",,"Image"
+HKLM,System\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57da},,,"Human Interface Devices"
+HKLM,System\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57da},"Class",,"HIDClass"
 
 [CurrentVersion]
 HKLM,%CurrentVersion%,"CommonFilesDir",,"%16427%"
