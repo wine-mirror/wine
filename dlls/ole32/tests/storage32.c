@@ -63,6 +63,9 @@ typedef struct TestLockBytes {
     BYTE* contents;
     ULONG size;
     ULONG buffer_size;
+    HRESULT lock_hr;
+    ULONG locks_supported;
+    ULONG lock_called;
 } TestLockBytes;
 
 static inline TestLockBytes *impl_from_ILockBytes(ILockBytes *iface)
@@ -181,13 +184,16 @@ static HRESULT WINAPI TestLockBytes_SetSize(ILockBytes *iface,
 static HRESULT WINAPI TestLockBytes_LockRegion(ILockBytes *iface,
     ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-    return S_OK;
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+    This->lock_called++;
+    return This->lock_hr;
 }
 
 static HRESULT WINAPI TestLockBytes_UnlockRegion(ILockBytes *iface,
     ULARGE_INTEGER libOffset, ULARGE_INTEGER cb, DWORD dwLockType)
 {
-    return S_OK;
+    TestLockBytes *This = impl_from_ILockBytes(iface);
+    return This->lock_hr;
 }
 
 static HRESULT WINAPI TestLockBytes_Stat(ILockBytes *iface,
@@ -209,6 +215,7 @@ static HRESULT WINAPI TestLockBytes_Stat(ILockBytes *iface,
 
     pstatstg->type = STGTY_LOCKBYTES;
     pstatstg->cbSize.QuadPart = This->size;
+    pstatstg->grfLocksSupported = This->locks_supported;
 
     return S_OK;
 }
@@ -3854,6 +3861,29 @@ static void test_custom_lockbytes(void)
     hr = IStorage_Commit(stg, 0);
 
     IStorage_Release(stg);
+
+    ok(!lockbytes->lock_called, "unexpected call to LockRegion\n");
+
+    lockbytes->locks_supported = LOCK_WRITE|LOCK_EXCLUSIVE|LOCK_ONLYONCE;
+
+    hr = StgCreateDocfileOnILockBytes(&lockbytes->ILockBytes_iface, STGM_CREATE|STGM_READWRITE|STGM_TRANSACTED, 0, &stg);
+    ok(hr==S_OK, "StgCreateDocfileOnILockBytes failed %x\n", hr);
+
+    hr = IStorage_CreateStream(stg, stmname, STGM_SHARE_EXCLUSIVE|STGM_READWRITE, 0, 0, &stm);
+    ok(hr==S_OK, "IStorage_CreateStream failed %x\n", hr);
+
+    IStream_Release(stm);
+
+    hr = IStorage_Commit(stg, 0);
+
+    IStorage_Release(stg);
+
+    ok(lockbytes->lock_called, "expected LockRegion to be called\n");
+
+    lockbytes->lock_hr = STG_E_INVALIDFUNCTION;
+
+    hr = StgCreateDocfileOnILockBytes(&lockbytes->ILockBytes_iface, STGM_CREATE|STGM_READWRITE|STGM_TRANSACTED, 0, &stg);
+    ok(hr==STG_E_INVALIDFUNCTION, "StgCreateDocfileOnILockBytes failed %x\n", hr);
 
     DeleteTestLockBytes(lockbytes);
 }

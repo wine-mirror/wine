@@ -386,6 +386,8 @@ static HRESULT WINAPI FileLockBytesImpl_Stat(ILockBytes* iface,
     pstatstg->cbSize.u.LowPart = GetFileSize(This->hfile, &pstatstg->cbSize.u.HighPart);
     /* FIXME: If the implementation is exported, we'll need to set other fields. */
 
+    pstatstg->grfLocksSupported = LOCK_EXCLUSIVE|LOCK_ONLYONCE|WINE_LOCK_READ;
+
     return S_OK;
 }
 

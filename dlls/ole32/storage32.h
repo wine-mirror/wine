@@ -411,6 +411,8 @@ struct StorageImpl
   BlockChainStream* blockChainCache[BLOCKCHAIN_CACHE_SIZE];
   UINT blockChainToEvict;
 
+  ULONG locks_supported;
+
   ILockBytes* lockBytes;
 
   ULONG locked_bytes[8];
@@ -516,6 +518,9 @@ StgStreamImpl* StgStreamImpl_Construct(
 #define RANGELOCK_TRANSACTION_LAST      RANGELOCK_CHECKLOCKS
 #define RANGELOCK_FIRST                 RANGELOCK_UNK1_FIRST
 #define RANGELOCK_LAST                  RANGELOCK_UNK2_LAST
+
+/* internal value for LockRegion/UnlockRegion */
+#define WINE_LOCK_READ                  0x80000000
 
 
 /******************************************************************************
