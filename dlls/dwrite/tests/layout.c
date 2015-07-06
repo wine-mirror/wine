@@ -2863,6 +2863,65 @@ todo_wine {
     IDWriteFactory_Release(factory);
 }
 
+static void test_SetTextAlignment(void)
+{
+    static const WCHAR strW[] = {'a','b','c','d',0};
+    IDWriteTextFormat1 *format1;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_TEXT_ALIGNMENT v;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextFormat_GetTextAlignment(format);
+    ok(v == DWRITE_TEXT_ALIGNMENT_LEADING, "got %d\n", v);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 300.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextLayout_GetTextAlignment(layout);
+    ok(v == DWRITE_TEXT_ALIGNMENT_LEADING, "got %d\n", v);
+
+    hr = IDWriteTextLayout_SetTextAlignment(layout, DWRITE_TEXT_ALIGNMENT_TRAILING);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextFormat_GetTextAlignment(format);
+    ok(v == DWRITE_TEXT_ALIGNMENT_LEADING, "got %d\n", v);
+
+    v = IDWriteTextLayout_GetTextAlignment(layout);
+    ok(v == DWRITE_TEXT_ALIGNMENT_TRAILING, "got %d\n", v);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat1, (void**)&format1);
+    if (hr == S_OK) {
+        hr = IDWriteTextFormat1_SetTextAlignment(format1, DWRITE_TEXT_ALIGNMENT_CENTER);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        v = IDWriteTextFormat_GetTextAlignment(format);
+        ok(v == DWRITE_TEXT_ALIGNMENT_LEADING, "got %d\n", v);
+
+        v = IDWriteTextLayout_GetTextAlignment(layout);
+        ok(v == DWRITE_TEXT_ALIGNMENT_CENTER, "got %d\n", v);
+
+        v = IDWriteTextFormat1_GetTextAlignment(format1);
+        ok(v == DWRITE_TEXT_ALIGNMENT_CENTER, "got %d\n", v);
+
+        IDWriteTextFormat1_Release(format1);
+    }
+    else
+        win_skip("IDWriteTextFormat1 is not supported\n");
+
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -2903,6 +2962,7 @@ START_TEST(layout)
     test_SetFlowDirection();
     test_SetDrawingEffect();
     test_GetLineMetrics();
+    test_SetTextAlignment();
 
     IDWriteFactory_Release(factory);
 }

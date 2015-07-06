@@ -328,6 +328,14 @@ static inline const char *debugstr_run(const struct regular_layout_run *run)
         run->descr.stringLength);
 }
 
+static inline HRESULT format_set_textalignment(struct dwrite_textformat_data *format, DWRITE_TEXT_ALIGNMENT alignment)
+{
+    if ((UINT32)alignment > DWRITE_TEXT_ALIGNMENT_JUSTIFIED)
+        return E_INVALIDARG;
+    format->textalignment = alignment;
+    return S_OK;
+}
+
 static HRESULT get_fontfallback_from_format(const struct dwrite_textformat_data *format, IDWriteFontFallback **fallback)
 {
     *fallback = format->fallback;
@@ -1955,7 +1963,6 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout2 *iface)
 static HRESULT WINAPI dwritetextlayout_SetTextAlignment(IDWriteTextLayout2 *iface, DWRITE_TEXT_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    TRACE("(%p)->(%d)\n", This, alignment);
     return IDWriteTextFormat1_SetTextAlignment(&This->IDWriteTextFormat1_iface, alignment);
 }
 
@@ -2013,7 +2020,6 @@ static HRESULT WINAPI dwritetextlayout_SetLineSpacing(IDWriteTextLayout2 *iface,
 static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextlayout_GetTextAlignment(IDWriteTextLayout2 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    TRACE("(%p)\n", This);
     return IDWriteTextFormat1_GetTextAlignment(&This->IDWriteTextFormat1_iface);
 }
 
@@ -2972,8 +2978,8 @@ static ULONG WINAPI dwritetextformat1_layout_Release(IDWriteTextFormat1 *iface)
 static HRESULT WINAPI dwritetextformat1_layout_SetTextAlignment(IDWriteTextFormat1 *iface, DWRITE_TEXT_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d): stub\n", This, alignment);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, alignment);
+    return format_set_textalignment(&This->format, alignment);
 }
 
 static HRESULT WINAPI dwritetextformat1_layout_SetParagraphAlignment(IDWriteTextFormat1 *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
@@ -3846,14 +3852,8 @@ static ULONG WINAPI dwritetextformat_Release(IDWriteTextFormat1 *iface)
 static HRESULT WINAPI dwritetextformat_SetTextAlignment(IDWriteTextFormat1 *iface, DWRITE_TEXT_ALIGNMENT alignment)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-
     TRACE("(%p)->(%d)\n", This, alignment);
-
-    if ((UINT32)alignment > DWRITE_TEXT_ALIGNMENT_JUSTIFIED)
-        return E_INVALIDARG;
-
-    This->format.textalignment = alignment;
-    return S_OK;
+    return format_set_textalignment(&This->format, alignment);
 }
 
 static HRESULT WINAPI dwritetextformat_SetParagraphAlignment(IDWriteTextFormat1 *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
