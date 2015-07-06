@@ -411,10 +411,8 @@ static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop *ifa
     IDWriteLocalizedStrings *familynames;
     DWRITE_FONT_SIMULATIONS simulations;
     DWRITE_FONT_FACE_TYPE face_type;
+    struct dwrite_font_props props;
     IDWriteFontFileStream *stream;
-    DWRITE_FONT_STRETCH stretch;
-    DWRITE_FONT_STYLE style;
-    DWRITE_FONT_WEIGHT weight;
     IDWriteFontFile *file = NULL;
     UINT32 index;
     BOOL exists;
@@ -437,7 +435,7 @@ static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop *ifa
 
     index = IDWriteFontFace_GetIndex(fontface);
     face_type = IDWriteFontFace_GetType(fontface);
-    opentype_get_font_properties(stream, face_type, index, &stretch, &weight, &style);
+    opentype_get_font_properties(stream, face_type, index, &props);
     hr = get_family_names_from_stream(stream, index, face_type, &familynames);
     IDWriteFontFile_Release(file);
     IDWriteFontFileStream_Release(stream);
@@ -447,8 +445,8 @@ static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop *ifa
     simulations = IDWriteFontFace_GetSimulations(fontface);
 
     logfont->lfCharSet = DEFAULT_CHARSET;
-    logfont->lfWeight = weight;
-    logfont->lfItalic = style == DWRITE_FONT_STYLE_ITALIC || (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE);
+    logfont->lfWeight = props.weight;
+    logfont->lfItalic = props.style == DWRITE_FONT_STYLE_ITALIC || (simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE);
     logfont->lfOutPrecision = OUT_OUTLINE_PRECIS;
     logfont->lfFaceName[0] = 0;
 

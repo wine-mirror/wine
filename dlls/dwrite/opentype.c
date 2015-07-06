@@ -954,7 +954,7 @@ void opentype_get_font_metrics(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_T
 }
 
 void opentype_get_font_properties(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_TYPE type, UINT32 index,
-    DWRITE_FONT_STRETCH *stretch, DWRITE_FONT_WEIGHT *weight, DWRITE_FONT_STYLE *style)
+    struct dwrite_font_props *props)
 {
     void *os2_context, *head_context;
     const TT_OS2_V2 *tt_os2;
@@ -964,23 +964,26 @@ void opentype_get_font_properties(IDWriteFontFileStream *stream, DWRITE_FONT_FAC
     opentype_get_font_table(stream, type, index, MS_HEAD_TAG, (const void**)&tt_head, &head_context, NULL, NULL);
 
     /* default stretch, weight and style to normal */
-    *stretch = DWRITE_FONT_STRETCH_NORMAL;
-    *weight = DWRITE_FONT_WEIGHT_NORMAL;
-    *style = DWRITE_FONT_STYLE_NORMAL;
+    props->stretch = DWRITE_FONT_STRETCH_NORMAL;
+    props->weight = DWRITE_FONT_WEIGHT_NORMAL;
+    props->style = DWRITE_FONT_STYLE_NORMAL;
+    memset(&props->panose, 0, sizeof(props->panose));
 
     /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
     if (tt_os2) {
         if (GET_BE_WORD(tt_os2->usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
-            *stretch = GET_BE_WORD(tt_os2->usWidthClass);
+            props->stretch = GET_BE_WORD(tt_os2->usWidthClass);
 
-        *weight = GET_BE_WORD(tt_os2->usWeightClass);
-        TRACE("stretch=%d, weight=%d\n", *stretch, *weight);
+        props->weight = GET_BE_WORD(tt_os2->usWeightClass);
+        memcpy(&props->panose, &tt_os2->panose, sizeof(props->panose));
+
+        TRACE("stretch=%d, weight=%d\n", props->stretch, props->weight);
     }
 
     if (tt_head) {
         USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
         if (macStyle & 0x0002)
-            *style = DWRITE_FONT_STYLE_ITALIC;
+            props->style = DWRITE_FONT_STYLE_ITALIC;
     }
 
     if (tt_os2)

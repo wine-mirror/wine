@@ -3634,6 +3634,55 @@ static void test_GetGdiCompatibleMetrics(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_GetPanose(void)
+{
+    IDWriteFactory *factory;
+    IDWriteFont1 *font1;
+    IDWriteFont *font;
+    HRESULT hr;
+
+    factory = create_factory();
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_NORMAL);
+
+    hr = IDWriteFont_QueryInterface(font, &IID_IDWriteFont1, (void**)&font1);
+    IDWriteFont_Release(font);
+    if (hr == S_OK) {
+        DWRITE_PANOSE panose;
+
+    if (0) /* crashes on native */
+        IDWriteFont1_GetPanose(font1, NULL);
+
+        memset(&panose, 0, sizeof(panose));
+        IDWriteFont1_GetPanose(font1, &panose);
+        ok(panose.familyKind == DWRITE_PANOSE_FAMILY_TEXT_DISPLAY,
+            "got %u\n", panose.familyKind);
+        ok(panose.text.serifStyle == DWRITE_PANOSE_SERIF_STYLE_NORMAL_SANS,
+            "got %u\n", panose.text.serifStyle);
+        ok(panose.text.weight == DWRITE_PANOSE_WEIGHT_MEDIUM,
+            "got %u\n", panose.text.weight);
+        ok(panose.text.proportion == DWRITE_PANOSE_PROPORTION_EVEN_WIDTH,
+            "got %u\n", panose.text.proportion);
+        ok(panose.text.contrast == DWRITE_PANOSE_CONTRAST_VERY_LOW,
+            "got %u\n", panose.text.contrast);
+        ok(panose.text.strokeVariation == DWRITE_PANOSE_STROKE_VARIATION_GRADUAL_VERTICAL,
+            "got %u\n", panose.text.strokeVariation);
+        ok(panose.text.armStyle == DWRITE_PANOSE_ARM_STYLE_STRAIGHT_ARMS_VERTICAL,
+            "got %u\n", panose.text.armStyle);
+        ok(panose.text.letterform == DWRITE_PANOSE_LETTERFORM_NORMAL_BOXED,
+            "got %u\n", panose.text.letterform);
+        ok(panose.text.midline == DWRITE_PANOSE_MIDLINE_STANDARD_TRIMMED,
+            "got %u\n", panose.text.midline);
+        ok(panose.text.xHeight == DWRITE_PANOSE_XHEIGHT_CONSTANT_LARGE,
+            "got %u\n", panose.text.xHeight);
+
+        IDWriteFont1_Release(font1);
+    }
+    else
+        win_skip("GetPanose() is not supported.\n");
+
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -3678,6 +3727,7 @@ START_TEST(font)
     test_CreateRenderingParams();
     test_CreateGlyphRunAnalysis();
     test_GetGdiCompatibleMetrics();
+    test_GetPanose();
 
     IDWriteFactory_Release(factory);
 }

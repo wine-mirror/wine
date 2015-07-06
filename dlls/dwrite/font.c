@@ -39,6 +39,7 @@ struct dwrite_font_data {
     DWRITE_FONT_STYLE style;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
+    DWRITE_PANOSE panose;
     DWRITE_FONT_METRICS1 metrics;
     IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
 
@@ -1094,7 +1095,8 @@ static void WINAPI dwritefont1_GetMetrics(IDWriteFont2 *iface, DWRITE_FONT_METRI
 static void WINAPI dwritefont1_GetPanose(IDWriteFont2 *iface, DWRITE_PANOSE *panose)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    FIXME("(%p)->(%p): stub\n", This, panose);
+    TRACE("(%p)->(%p)\n", This, panose);
+    *panose = This->data->panose;
 }
 
 static HRESULT WINAPI dwritefont1_GetUnicodeRanges(IDWriteFont2 *iface, UINT32 max_count, DWRITE_UNICODE_RANGE *ranges, UINT32 *count)
@@ -1631,6 +1633,7 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, U
 {
     void *os2_context, *head_context;
     const void *tt_os2 = NULL, *tt_head = NULL;
+    struct dwrite_font_props props;
     struct dwrite_font_data *data;
     HRESULT hr;
 
@@ -1655,8 +1658,13 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, U
     opentype_get_font_table(*stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
     opentype_get_font_table(*stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
 
-    opentype_get_font_properties(*stream, face_type, face_index, &data->stretch, &data->weight, &data->style);
+    opentype_get_font_properties(*stream, face_type, face_index, &props);
     opentype_get_font_metrics(*stream, face_type, face_index, &data->metrics, NULL);
+
+    data->style = props.style;
+    data->stretch = props.stretch;
+    data->weight = props.weight;
+    data->panose = props.panose;
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(*stream, os2_context);
