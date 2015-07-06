@@ -700,7 +700,7 @@ static void test_streambuf(void)
     ret = (int) call_func2(p_streambuf_pbackfail, &sb, EOF);
     ok(ret == EOF, "expected EOF got '%c'\n", ret);
     ok(sb.gptr == sb.eback + 1, "wrong get pointer, expected %p got %p\n", sb.eback + 1, sb.gptr);
-    ok(*sb.gptr == EOF, "expected EOF in the get area, got %c\n", *sb.gptr);
+    ok((signed char)*sb.gptr == EOF, "expected EOF in the get area, got %c\n", *sb.gptr);
     sb.gptr = sb.eback;
     ret = (int) call_func2(p_streambuf_pbackfail, &sb, 'Z');
     ok(ret == EOF, "expected EOF got '%c'\n", ret);
