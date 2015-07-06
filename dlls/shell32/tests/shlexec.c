@@ -1219,7 +1219,7 @@ static void test_commandline2argv(void)
 
     *strW = 0;
     args = CommandLineToArgvW(strW, &numargs);
-    ok(numargs == 1, "expected 1 args, got %d\n", numargs);
+    ok(numargs == 1 || broken(numargs > 1), "expected 1 args, got %d\n", numargs);
     ok(!args || (!args[numargs] || broken(args[numargs] != NULL) /* before Vista */),
        "expected NULL-terminated list of commandline arguments\n");
     if (numargs == 1)
