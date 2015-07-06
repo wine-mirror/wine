@@ -2972,6 +2972,100 @@ static void test_SetTextAlignment(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_SetParagraphAlignment(void)
+{
+    static const WCHAR strW[] = {'a',0};
+    DWRITE_TEXT_METRICS metrics;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_PARAGRAPH_ALIGNMENT v;
+    DWRITE_LINE_METRICS lines[1];
+    UINT32 count;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextFormat_GetParagraphAlignment(format);
+    ok(v == DWRITE_PARAGRAPH_ALIGNMENT_NEAR, "got %d\n", v);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextLayout_GetParagraphAlignment(layout);
+    ok(v == DWRITE_PARAGRAPH_ALIGNMENT_NEAR, "got %d\n", v);
+
+    hr = IDWriteTextLayout_SetParagraphAlignment(layout, DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_SetParagraphAlignment(layout, DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextFormat_GetParagraphAlignment(format);
+    ok(v == DWRITE_PARAGRAPH_ALIGNMENT_NEAR, "got %d\n", v);
+
+    v = IDWriteTextLayout_GetParagraphAlignment(layout);
+    ok(v == DWRITE_PARAGRAPH_ALIGNMENT_FAR, "got %d\n", v);
+
+    hr = IDWriteTextLayout_SetParagraphAlignment(layout, DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextLayout_GetParagraphAlignment(layout);
+    ok(v == DWRITE_PARAGRAPH_ALIGNMENT_CENTER, "got %d\n", v);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, lines, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    /* maxheight is 100, near alignment */
+    hr = IDWriteTextLayout_SetParagraphAlignment(layout, DWRITE_PARAGRAPH_ALIGNMENT_NEAR);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
+    ok(metrics.height == lines[0].height, "got %.2f\n", metrics.height);
+    ok(metrics.layoutHeight == 100.0, "got %.2f\n", metrics.layoutHeight);
+    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+
+    /* maxwidth is 100, far alignment */
+    hr = IDWriteTextLayout_SetParagraphAlignment(layout, DWRITE_PARAGRAPH_ALIGNMENT_FAR);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(metrics.top == metrics.layoutHeight - metrics.height, "got %.2f\n", metrics.top);
+    ok(metrics.height == lines[0].height, "got %.2f\n", metrics.height);
+    ok(metrics.layoutHeight == 100.0, "got %.2f\n", metrics.layoutHeight);
+    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+    IDWriteTextLayout_Release(layout);
+
+    /* initially created with centered alignment */
+    hr = IDWriteTextFormat_SetParagraphAlignment(format, DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(metrics.top == (metrics.layoutHeight - lines[0].height) / 2, "got %.2f\n", metrics.top);
+    ok(metrics.height == lines[0].height, "got %.2f\n", metrics.height);
+    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -3013,6 +3107,7 @@ START_TEST(layout)
     test_SetDrawingEffect();
     test_GetLineMetrics();
     test_SetTextAlignment();
+    test_SetParagraphAlignment();
 
     IDWriteFactory_Release(factory);
 }

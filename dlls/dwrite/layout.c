@@ -342,6 +342,16 @@ static inline HRESULT format_set_textalignment(struct dwrite_textformat_data *fo
     return S_OK;
 }
 
+static inline HRESULT format_set_paralignment(struct dwrite_textformat_data *format,
+    DWRITE_PARAGRAPH_ALIGNMENT alignment, BOOL *changed)
+{
+    if ((UINT32)alignment > DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
+        return E_INVALIDARG;
+    if (changed) *changed = format->paralign != alignment;
+    format->paralign = alignment;
+    return S_OK;
+}
+
 static HRESULT get_fontfallback_from_format(const struct dwrite_textformat_data *format, IDWriteFontFallback **fallback)
 {
     *fallback = format->fallback;
@@ -1182,6 +1192,50 @@ static void layout_apply_text_alignment(struct dwrite_textlayout *layout)
     }
 }
 
+static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
+{
+    struct layout_effective_inline *inrun;
+    struct layout_effective_run *erun;
+    FLOAT origin_y = 0.0;
+    UINT32 line;
+
+    /* alignment mode defines origin, after that all run origins are updated
+       the same way */
+
+    switch (layout->format.paralign)
+    {
+    case DWRITE_PARAGRAPH_ALIGNMENT_NEAR:
+        origin_y = 0.0;
+        break;
+    case DWRITE_PARAGRAPH_ALIGNMENT_FAR:
+        origin_y = layout->metrics.layoutHeight - layout->metrics.height;
+        break;
+    case DWRITE_PARAGRAPH_ALIGNMENT_CENTER:
+        origin_y = (layout->metrics.layoutHeight - layout->metrics.height) / 2.0;
+        break;
+    default:
+        ;
+    }
+
+    layout->metrics.top = origin_y;
+
+    erun = layout_get_next_erun(layout, NULL);
+    inrun = layout_get_next_inline_run(layout, NULL);
+    for (line = 0; line < layout->metrics.lineCount; line++) {
+        origin_y += layout->lines[line].baseline;
+
+        while (erun && erun->line == line) {
+            erun->origin_y = origin_y;
+            erun = layout_get_next_erun(layout, erun);
+        }
+
+        while (inrun && inrun->line == line) {
+            inrun->origin_y = origin_y;
+            inrun = layout_get_next_inline_run(layout, inrun);
+        }
+    }
+}
+
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
     struct layout_effective_inline *inrun;
@@ -1353,6 +1407,10 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     /* initial alignment is always leading */
     if (layout->format.textalignment != DWRITE_TEXT_ALIGNMENT_LEADING)
         layout_apply_text_alignment(layout);
+
+    /* initial paragraph alignment is always near */
+    if (layout->format.paralign != DWRITE_PARAGRAPH_ALIGNMENT_NEAR)
+        layout_apply_par_alignment(layout);
 
     layout->metrics.heightIncludingTrailingWhitespace = layout->metrics.height; /* FIXME: not true for vertical text */
 
@@ -2072,7 +2130,6 @@ static HRESULT WINAPI dwritetextlayout_SetTextAlignment(IDWriteTextLayout2 *ifac
 static HRESULT WINAPI dwritetextlayout_SetParagraphAlignment(IDWriteTextLayout2 *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    TRACE("(%p)->(%d)\n", This, alignment);
     return IDWriteTextFormat1_SetParagraphAlignment(&This->IDWriteTextFormat1_iface, alignment);
 }
 
@@ -3100,8 +3157,20 @@ static HRESULT WINAPI dwritetextformat1_layout_SetTextAlignment(IDWriteTextForma
 static HRESULT WINAPI dwritetextformat1_layout_SetParagraphAlignment(IDWriteTextFormat1 *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d): stub\n", This, alignment);
-    return E_NOTIMPL;
+    BOOL changed;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d)\n", This, alignment);
+
+    hr = format_set_paralignment(&This->format, alignment, &changed);
+    if (FAILED(hr))
+        return hr;
+
+    /* if layout is not ready there's nothing to align */
+    if (changed && !(This->recompute & RECOMPUTE_EFFECTIVE_RUNS))
+        layout_apply_par_alignment(This);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat1_layout_SetWordWrapping(IDWriteTextFormat1 *iface, DWRITE_WORD_WRAPPING wrapping)
@@ -3974,14 +4043,8 @@ static HRESULT WINAPI dwritetextformat_SetTextAlignment(IDWriteTextFormat1 *ifac
 static HRESULT WINAPI dwritetextformat_SetParagraphAlignment(IDWriteTextFormat1 *iface, DWRITE_PARAGRAPH_ALIGNMENT alignment)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-
     TRACE("(%p)->(%d)\n", This, alignment);
-
-    if ((UINT32)alignment > DWRITE_PARAGRAPH_ALIGNMENT_CENTER)
-        return E_INVALIDARG;
-
-    This->format.paralign = alignment;
-    return S_OK;
+    return format_set_paralignment(&This->format, alignment, NULL);
 }
 
 static HRESULT WINAPI dwritetextformat_SetWordWrapping(IDWriteTextFormat1 *iface, DWRITE_WORD_WRAPPING wrapping)
