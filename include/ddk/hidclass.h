@@ -22,6 +22,8 @@
 extern "C" {
 #endif
 
+#define HID_REVISION 1
+
 DEFINE_GUID (GUID_DEVINTERFACE_HID, \
   0x4D1E55B2L, 0xF16F, 0x11CF, 0x88, 0xCB, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30);
 
@@ -64,6 +66,12 @@ typedef struct _HID_COLLECTION_INFORMATION {
     USHORT  ProductID;
     USHORT  VersionNumber;
 } HID_COLLECTION_INFORMATION, *PHID_COLLECTION_INFORMATION;
+
+typedef struct _HID_XFER_PACKET {
+  PUCHAR reportBuffer;
+  ULONG  reportBufferLen;
+  UCHAR  reportId;
+} HID_XFER_PACKET, *PHID_XFER_PACKET;
 
 #ifdef __cplusplus
 }
