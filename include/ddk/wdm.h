@@ -269,6 +269,11 @@ typedef struct _WAIT_CONTEXT_BLOCK {
 #define IRP_MN_SURPRISE_REMOVAL             0x17
 #define IRP_MN_QUERY_LEGACY_BUS_INFORMATION 0x18
 
+#define IRP_MN_WAIT_WAKE                    0x00
+#define IRP_MN_POWER_SEQUENCE               0x01
+#define IRP_MN_SET_POWER                    0x02
+#define IRP_MN_QUERY_POWER                  0x03
+
 #define IRP_QUOTA_CHARGED               0x01
 #define IRP_ALLOCATED_MUST_SUCCEED      0x02
 #define IRP_ALLOCATED_FIXED_SIZE        0x04
