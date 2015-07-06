@@ -1374,12 +1374,28 @@ int CDECL _ismbckata(unsigned int c)
   return 0;
 }
 
+
+/*********************************************************************
+ *		_ismbblead_l(MSVCRT.@)
+ */
+int CDECL _ismbblead_l(unsigned int c, MSVCRT__locale_t locale)
+{
+    MSVCRT_pthreadmbcinfo mbcinfo;
+
+    if(!locale)
+        mbcinfo = get_mbcinfo();
+    else
+        mbcinfo = locale->mbcinfo;
+
+    return (mbcinfo->mbctype[(c&0xff) + 1] & _M1) != 0;
+}
+
 /*********************************************************************
  *		_ismbblead(MSVCRT.@)
  */
 int CDECL _ismbblead(unsigned int c)
 {
-  return (get_mbcinfo()->mbctype[(c&0xff) + 1] & _M1) != 0;
+    return _ismbblead_l(c, NULL);
 }
 
 

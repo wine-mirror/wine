@@ -1219,7 +1219,7 @@
 @ cdecl _ismbbkpunct(long) msvcr120._ismbbkpunct
 @ stub _ismbbkpunct_l
 @ cdecl _ismbblead(long) msvcr120._ismbblead
-@ stub _ismbblead_l
+@ cdecl _ismbblead_l(long ptr) msvcr120._ismbblead_l
 @ cdecl _ismbbprint(long) msvcr120._ismbbprint
 @ stub _ismbbprint_l
 @ cdecl _ismbbpunct(long) msvcr120._ismbbpunct

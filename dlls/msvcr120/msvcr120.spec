@@ -1314,7 +1314,7 @@
 @ stub _ismbbkpunct(long)
 @ stub _ismbbkpunct_l
 @ cdecl _ismbblead(long)
-@ stub _ismbblead_l
+@ cdecl _ismbblead_l(long ptr)
 @ stub _ismbbprint(long)
 @ stub _ismbbprint_l
 @ stub _ismbbpunct(long)
