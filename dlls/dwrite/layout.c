@@ -1165,12 +1165,39 @@ static void layout_apply_trailing_alignment(struct dwrite_textlayout *layout)
         }
 
         while (inrun && inrun->line == line) {
-            erun->align_dx = shift;
+            inrun->align_dx = shift;
             inrun = layout_get_next_inline_run(layout, inrun);
         }
     }
 
     layout->metrics.left = layout->metrics.layoutWidth - layout->metrics.width;
+}
+
+static void layout_apply_centered_alignment(struct dwrite_textlayout *layout)
+{
+    struct layout_effective_inline *inrun;
+    struct layout_effective_run *erun;
+    UINT32 line;
+
+    erun = layout_get_next_erun(layout, NULL);
+    inrun = layout_get_next_inline_run(layout, NULL);
+
+    for (line = 0; line < layout->metrics.lineCount; line++) {
+        FLOAT width = layout_get_line_width(layout, erun, inrun, line);
+        FLOAT shift = (layout->metrics.layoutWidth - width) / 2.0;
+
+        while (erun && erun->line == line) {
+            erun->align_dx = shift;
+            erun = layout_get_next_erun(layout, erun);
+        }
+
+        while (inrun && inrun->line == line) {
+            inrun->align_dx = shift;
+            inrun = layout_get_next_inline_run(layout, inrun);
+        }
+    }
+
+    layout->metrics.left = (layout->metrics.layoutWidth - layout->metrics.width) / 2.0;
 }
 
 static void layout_apply_text_alignment(struct dwrite_textlayout *layout)
@@ -1183,8 +1210,10 @@ static void layout_apply_text_alignment(struct dwrite_textlayout *layout)
     case DWRITE_TEXT_ALIGNMENT_TRAILING:
         layout_apply_trailing_alignment(layout);
         break;
-    case DWRITE_TEXT_ALIGNMENT_JUSTIFIED:
     case DWRITE_TEXT_ALIGNMENT_CENTER:
+        layout_apply_centered_alignment(layout);
+        break;
+    case DWRITE_TEXT_ALIGNMENT_JUSTIFIED:
         FIXME("alignment %d not implemented\n", layout->format.textalignment);
         break;
     default:

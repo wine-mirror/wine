@@ -2889,6 +2889,7 @@ todo_wine {
 
 static void test_SetTextAlignment(void)
 {
+    static const WCHAR str2W[] = {'a','a','a','a','a',0};
     static const WCHAR strW[] = {'a',0};
     DWRITE_CLUSTER_METRICS clusters[1];
     DWRITE_TEXT_METRICS metrics;
@@ -2990,6 +2991,35 @@ static void test_SetTextAlignment(void)
     ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);
     ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
     ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+    IDWriteTextLayout_Release(layout);
+
+    /* max width less than total run width, trailing alignment */
+    hr = IDWriteTextFormat_SetWordWrapping(format, DWRITE_WORD_WRAPPING_NO_WRAP);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 5, format, 2*clusters[0].width, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
+todo_wine
+    ok(metrics.width == 5*clusters[0].width, "got %.2f\n", metrics.width);
+    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+    IDWriteTextLayout_Release(layout);
+
+    /* maxwidth is 500, centered */
+    hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_CENTER);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 5, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(metrics.left == (metrics.layoutWidth - metrics.width) / 2.0, "got %.2f\n", metrics.left);
+    ok(metrics.width == 5*clusters[0].width, "got %.2f\n", metrics.width);
+    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+
     IDWriteTextLayout_Release(layout);
 
     IDWriteTextFormat_Release(format);
