@@ -1839,13 +1839,15 @@ if (0) /* crashes on native */
 
 static void test_SetPairKerning(void)
 {
-    static const WCHAR strW[] = {'a','b','c','d',0};
+    static const WCHAR strW[] = {'a','e',0x0300,'d',0}; /* accent grave */
+    DWRITE_CLUSTER_METRICS clusters[4];
     IDWriteTextLayout1 *layout1;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
     IDWriteFactory *factory;
     BOOL kerning;
+    UINT32 count;
     HRESULT hr;
 
     factory = create_factory();
@@ -1881,9 +1883,22 @@ if (0) { /* crashes on native */
     hr = IDWriteTextLayout1_GetPairKerning(layout1, 0, &kerning, &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!kerning, "got %d\n", kerning);
+    ok(range.length == ~0u, "got %u\n", range.length);
 
+    count = 0;
+    hr = IDWriteTextLayout1_GetClusterMetrics(layout1, clusters, 4, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 3, "got %u\n", count);
+if (count == 3) {
+    ok(clusters[0].length == 1, "got %u\n", clusters[0].length);
+    ok(clusters[1].length == 2, "got %u\n", clusters[1].length);
+    ok(clusters[2].length == 1, "got %u\n", clusters[2].length);
+}
+    /* pair kerning flag participates in itemization - combining characters
+       breaks */
     range.startPosition = 0;
-    range.length = 1;
+    range.length = 2;
     hr = IDWriteTextLayout1_SetPairKerning(layout1, 2, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -1891,6 +1906,15 @@ if (0) { /* crashes on native */
     hr = IDWriteTextLayout1_GetPairKerning(layout1, 0, &kerning, &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(kerning == TRUE, "got %d\n", kerning);
+
+    count = 0;
+    hr = IDWriteTextLayout1_GetClusterMetrics(layout1, clusters, 4, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 4, "got %u\n", count);
+    ok(clusters[0].length == 1, "got %u\n", clusters[0].length);
+    ok(clusters[1].length == 1, "got %u\n", clusters[1].length);
+    ok(clusters[2].length == 1, "got %u\n", clusters[2].length);
+    ok(clusters[3].length == 1, "got %u\n", clusters[3].length);
 
     IDWriteTextLayout1_Release(layout1);
     IDWriteFactory_Release(factory);
