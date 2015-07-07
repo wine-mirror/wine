@@ -45,6 +45,75 @@ static inline BOOL heap_free(void *mem)
     return HeapFree(GetProcessHeap(), 0, mem);
 }
 
+typedef enum tid_t {
+    IScriptControl_tid,
+    LAST_tid
+} tid_t;
+
+static ITypeLib *typelib;
+static ITypeInfo *typeinfos[LAST_tid];
+
+static REFIID tid_ids[] = {
+    &IID_IScriptControl
+};
+
+static HRESULT load_typelib(void)
+{
+    HRESULT hres;
+    ITypeLib *tl;
+
+    hres = LoadRegTypeLib(&LIBID_MSScriptControl, 1, 0, LOCALE_SYSTEM_DEFAULT, &tl);
+    if(FAILED(hres)) {
+        ERR("LoadRegTypeLib failed: %08x\n", hres);
+        return hres;
+    }
+
+    if(InterlockedCompareExchangePointer((void**)&typelib, tl, NULL))
+        ITypeLib_Release(tl);
+    return hres;
+}
+
+static HRESULT get_typeinfo(tid_t tid, ITypeInfo **typeinfo)
+{
+    HRESULT hres;
+
+    if (!typelib)
+        hres = load_typelib();
+    if (!typelib)
+        return hres;
+
+    if(!typeinfos[tid]) {
+        ITypeInfo *ti;
+
+        hres = ITypeLib_GetTypeInfoOfGuid(typelib, tid_ids[tid], &ti);
+        if(FAILED(hres)) {
+            ERR("GetTypeInfoOfGuid(%s) failed: %08x\n", debugstr_guid(tid_ids[tid]), hres);
+            return hres;
+        }
+
+        if(InterlockedCompareExchangePointer((void**)(typeinfos+tid), ti, NULL))
+            ITypeInfo_Release(ti);
+    }
+
+    *typeinfo = typeinfos[tid];
+    ITypeInfo_AddRef(typeinfos[tid]);
+    return S_OK;
+}
+
+static void release_typelib(void)
+{
+    unsigned i;
+
+    if(!typelib)
+        return;
+
+    for(i=0; i < sizeof(typeinfos)/sizeof(*typeinfos); i++)
+        if(typeinfos[i])
+            ITypeInfo_Release(typeinfos[i]);
+
+    ITypeLib_Release(typelib);
+}
+
 static inline ScriptControl *impl_from_IScriptControl(IScriptControl *iface)
 {
     return CONTAINING_RECORD(iface, ScriptControl, IScriptControl_iface);
@@ -99,24 +168,35 @@ static ULONG WINAPI ScriptControl_Release(IScriptControl *iface)
 static HRESULT WINAPI ScriptControl_GetTypeInfoCount(IScriptControl *iface, UINT *pctinfo)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, pctinfo);
+    *pctinfo = 1;
+    return S_OK;
 }
 
 static HRESULT WINAPI ScriptControl_GetTypeInfo(IScriptControl *iface, UINT iTInfo,
         LCID lcid, ITypeInfo **ppTInfo)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%u %u %p)\n", This, iTInfo, lcid, ppTInfo);
+    return get_typeinfo(IScriptControl_tid, ppTInfo);
 }
 
 static HRESULT WINAPI ScriptControl_GetIDsOfNames(IScriptControl *iface, REFIID riid,
         LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    ITypeInfo *typeinfo;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %p %u %u %p)\n", This, debugstr_guid(riid), rgszNames, cNames, lcid, rgDispId);
+
+    hres = get_typeinfo(IScriptControl_tid, &typeinfo);
+    if(SUCCEEDED(hres)) {
+        hres = ITypeInfo_GetIDsOfNames(typeinfo, rgszNames, cNames, rgDispId);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI ScriptControl_Invoke(IScriptControl *iface, DISPID dispIdMember,
@@ -124,8 +204,20 @@ static HRESULT WINAPI ScriptControl_Invoke(IScriptControl *iface, DISPID dispIdM
         EXCEPINFO *pExcepInfo, UINT *puArgErr)
 {
     ScriptControl *This = impl_from_IScriptControl(iface);
-    FIXME("(%p)\n", This);
-    return E_NOTIMPL;
+    ITypeInfo *typeinfo;
+    HRESULT hres;
+
+    TRACE("(%p)->(%d %s %d %d %p %p %p %p)\n", This, dispIdMember, debugstr_guid(riid),
+           lcid, wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+
+    hres = get_typeinfo(IScriptControl_tid, &typeinfo);
+    if(SUCCEEDED(hres)) {
+        hres = ITypeInfo_Invoke(typeinfo, iface, dispIdMember, wFlags,
+                pDispParams, pVarResult, pExcepInfo, puArgErr);
+        ITypeInfo_Release(typeinfo);
+    }
+
+    return hres;
 }
 
 static HRESULT WINAPI ScriptControl_get_Language(IScriptControl *iface, BSTR *p)
@@ -344,9 +436,9 @@ static HRESULT WINAPI ScriptControl_CreateInstance(IClassFactory *iface, IUnknow
 /******************************************************************
  *              DllMain (msscript.ocx.@)
  */
-BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID lpv)
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
-    TRACE("(%p %d %p)\n", instance, reason, lpv);
+    TRACE("(%p %d %p)\n", instance, reason, reserved);
 
     switch(reason) {
     case DLL_WINE_PREATTACH:
@@ -354,6 +446,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID lpv)
     case DLL_PROCESS_ATTACH:
         msscript_instance = instance;
         DisableThreadLibraryCalls(instance);
+        break;
+    case DLL_PROCESS_DETACH:
+        if(!reserved)
+            release_typelib();
         break;
     }
 

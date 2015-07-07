@@ -1,6 +1,7 @@
 MODULE    = msscript.ocx
 RC_SRCS   = msscript.rc
 IDL_SRCS  = msscript.idl
+IMPORTS   = oleaut32
 
 C_SRCS = \
 	msscript.c
