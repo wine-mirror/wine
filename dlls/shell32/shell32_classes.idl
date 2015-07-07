@@ -45,7 +45,7 @@ coclass ExplorerBrowser { interface IExplorerBrowser; }
 
 [
     helpstring("Known Folder Manager"),
-    threading(apartment),
+    threading(both),
     uuid(4df0c730-df9d-4ae3-9153-aa6b82e9795a)
 ]
 coclass KnownFolderManager { interface IKnownFolderManager; }
@@ -99,7 +99,7 @@ coclass KnownFolderManager { interface IKnownFolderManager; }
 
 [
     helpstring("Shortcut"),
-    threading(apartment),
+    threading(both),
     uuid(00021401-0000-0000-c000-000000000046)
 ] coclass ShellLink { interface IShellLinkW; }
 
