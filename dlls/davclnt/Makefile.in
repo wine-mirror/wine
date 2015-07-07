@@ -1,0 +1,4 @@
+MODULE    = davclnt.dll
+
+C_SRCS = \
+	main.c
