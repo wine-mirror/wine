@@ -639,11 +639,8 @@ static HRESULT parse_pattern_list(IDirectMusicStyle8Impl *This, DMUS_PRIVATE_CHU
   DWORD ListSize[3], ListCount[3];
   LARGE_INTEGER liMove; /* used when skipping chunks */
 
-  DMUS_OBJECTDESC desc;
   IDirectMusicBand* pBand = NULL;
   LPDMUS_PRIVATE_STYLE_MOTIF pNewMotif = NULL;
-
-  DM_STRUCT_INIT(&desc);
 
   if (pChunk->fccID != DMUS_FOURCC_PATTERN_LIST) {
     ERR_(dmfile)(": %s chunk should be a PATTERN list\n", debugstr_fourcc (pChunk->fccID));
