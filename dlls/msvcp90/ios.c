@@ -14284,6 +14284,17 @@ MSVCP_bool __cdecl tr2_sys__Remove_dir(char const* path)
     return RemoveDirectoryA(path) != 0;
 }
 
+/* ?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z */
+/* ?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z */
+int __cdecl tr2_sys__Copy_file(char const* source, char const* dest, MSVCP_bool fail_if_exists)
+{
+    TRACE("(%s %s %x)\n", debugstr_a(source), debugstr_a(dest), fail_if_exists);
+
+    if(CopyFileA(source, dest, fail_if_exists))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64

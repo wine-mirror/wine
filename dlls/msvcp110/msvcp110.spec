@@ -1163,8 +1163,8 @@
 @ extern -arch=win64 ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA locale__Locimp__Clocptr
 @ stub -arch=win32 ?_Close_dir@sys@tr2@std@@YAXPAX@Z
 @ stub -arch=win64 ?_Close_dir@sys@tr2@std@@YAXPEAX@Z
-@ stub -arch=win32 ?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z
-@ stub -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z
+@ cdecl -arch=win32 ?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z(str str long) tr2_sys__Copy_file
+@ cdecl -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z(str str long) tr2_sys__Copy_file
 @ stub -arch=win32 ?_Copy_file@sys@tr2@std@@YAHPB_W0_N@Z
 @ stub -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEB_W0_N@Z
 @ cdecl -arch=win32 ?_Current_get@sys@tr2@std@@YAPADPAD@Z(ptr) tr2_sys__Current_get

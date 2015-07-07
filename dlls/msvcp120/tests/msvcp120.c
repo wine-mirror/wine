@@ -66,6 +66,7 @@ static char* (__cdecl *p_tr2_sys__Current_get)(char *);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
 static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
+static int (__cdecl *p_tr2_sys__Copy_file)(char const*, char const*, MSVCP_bool);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -106,6 +107,8 @@ static BOOL init(void)
                 "?_Make_dir@sys@tr2@std@@YAHPEBD@Z");
         SET(p_tr2_sys__Remove_dir,
                 "?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z");
+        SET(p_tr2_sys__Copy_file,
+                "?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -119,6 +122,8 @@ static BOOL init(void)
                 "?_Make_dir@sys@tr2@std@@YAHPBD@Z");
         SET(p_tr2_sys__Remove_dir,
                 "?_Remove_dir@sys@tr2@std@@YA_NPBD@Z");
+        SET(p_tr2_sys__Copy_file,
+                "?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -329,11 +334,12 @@ static void test_tr2_sys__File_size(void)
 {
     ULONGLONG val;
     HANDLE file;
-    LARGE_INTEGER file_size = {{7, 0}};
+    LARGE_INTEGER file_size;
     CreateDirectoryA("tr2_test_dir", NULL);
 
     file = CreateFileA("tr2_test_dir/f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
     ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 7;
     ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
     ok(SetEndOfFile(file), "SetEndOfFile failed\n");
     CloseHandle(file);
@@ -526,6 +532,60 @@ static void test_tr2_sys__Remove_dir(void)
     }
 }
 
+static void test_tr2_sys__Copy_file(void)
+{
+    HANDLE file;
+    int ret, i;
+    LARGE_INTEGER file_size;
+    struct {
+        char const *source;
+        char const *dest;
+        MSVCP_bool fail_if_exists;
+        int last_error;
+        MSVCP_bool is_todo;
+    } tests[] = {
+        { "f1", "f1_copy", TRUE, ERROR_SUCCESS, FALSE },
+        { "f1", "tr2_test_dir\\f1_copy", TRUE, ERROR_SUCCESS, FALSE },
+        { "f1", "tr2_test_dir\\f1_copy", TRUE, ERROR_FILE_EXISTS, FALSE },
+        { "f1", "tr2_test_dir\\f1_copy", FALSE, ERROR_SUCCESS, FALSE },
+        { "f1", "tr2_test_dir", TRUE, ERROR_ACCESS_DENIED, TRUE },
+        { "tr2_test_dir", "f1", TRUE, ERROR_ACCESS_DENIED, FALSE },
+        { "tr2_test_dir", "tr2_test_dir_copy", TRUE, ERROR_ACCESS_DENIED, FALSE },
+        { NULL, "f1", TRUE, ERROR_INVALID_PARAMETER, TRUE },
+        { "f1", NULL, TRUE, ERROR_INVALID_PARAMETER, TRUE },
+        { "not_exist", "tr2_test_dir", TRUE, ERROR_FILE_NOT_FOUND, FALSE },
+        { "f1", "not_exist_dir\\f1_copy", TRUE, ERROR_PATH_NOT_FOUND, FALSE }
+    };
+
+    ret = p_tr2_sys__Make_dir("tr2_test_dir");
+    ok(ret == 1, "test_tr2_sys__Make_dir(): expect 1 got %d\n", ret);
+    file = CreateFileA("f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 7;
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        errno = 0xdeadbeef;
+        ret = p_tr2_sys__Copy_file(tests[i].source, tests[i].dest, tests[i].fail_if_exists);
+        if(tests[i].is_todo)
+            todo_wine ok(ret == tests[i].last_error, "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n", i+1, tests[i].last_error, ret);
+        else
+            ok(ret == tests[i].last_error, "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n", i+1, tests[i].last_error, ret);
+        ok(errno == 0xdeadbeef, "test_tr2_sys__Copy_file(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
+        if(ret == ERROR_SUCCESS)
+            ok(p_tr2_sys__File_size(tests[i].source) == p_tr2_sys__File_size(tests[i].dest),
+                    "test_tr2_sys__Copy_file(): test %d failed, two files' size are not equal\n", i+1);
+    }
+
+    ok(DeleteFileA("f1"), "expect f1 to exist\n");
+    ok(DeleteFileA("f1_copy"), "expect f1_copy to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f1_copy"), "expect tr2_test_dir/f1 to exist\n");
+    ret = p_tr2_sys__Remove_dir("tr2_test_dir");
+    ok(ret == 1, "test_tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -541,5 +601,6 @@ START_TEST(msvcp120)
     test_tr2_sys__Current_set();
     test_tr2_sys__Make_dir();
     test_tr2_sys__Remove_dir();
+    test_tr2_sys__Copy_file();
     FreeLibrary(msvcp);
 }
