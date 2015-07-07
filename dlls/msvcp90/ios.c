@@ -14295,6 +14295,20 @@ int __cdecl tr2_sys__Copy_file(char const* source, char const* dest, MSVCP_bool 
     return GetLastError();
 }
 
+/* ?_Rename@sys@tr2@std@@YAHPBD0@Z */
+/* ?_Rename@sys@tr2@std@@YAHPEBD0@Z */
+int __cdecl tr2_sys__Rename(char const* old_path, char const* new_path)
+{
+    TRACE("(%s %s)\n", debugstr_a(old_path), debugstr_a(new_path));
+
+    if(!old_path || !new_path)
+        return ERROR_INVALID_PARAMETER;
+
+    if(MoveFileExA(old_path, new_path, MOVEFILE_COPY_ALLOWED))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64

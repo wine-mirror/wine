@@ -67,6 +67,7 @@ static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
 static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
 static int (__cdecl *p_tr2_sys__Copy_file)(char const*, char const*, MSVCP_bool);
+static int (__cdecl *p_tr2_sys__Rename)(char const*, char const*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -109,6 +110,8 @@ static BOOL init(void)
                 "?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z");
         SET(p_tr2_sys__Copy_file,
                 "?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z");
+        SET(p_tr2_sys__Rename,
+                "?_Rename@sys@tr2@std@@YAHPEBD0@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -124,6 +127,8 @@ static BOOL init(void)
                 "?_Remove_dir@sys@tr2@std@@YA_NPBD@Z");
         SET(p_tr2_sys__Copy_file,
                 "?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z");
+        SET(p_tr2_sys__Rename,
+                "?_Rename@sys@tr2@std@@YAHPBD0@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -586,6 +591,83 @@ static void test_tr2_sys__Copy_file(void)
     ok(ret == 1, "test_tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
 }
 
+static void test_tr2_sys__Rename(void)
+{
+    int ret, i;
+    HANDLE file, h1, h2;
+    BY_HANDLE_FILE_INFORMATION info1, info2;
+    char temp_path[MAX_PATH], current_path[MAX_PATH];
+    LARGE_INTEGER file_size;
+    struct {
+        char const *old_path;
+        char const *new_path;
+        int val;
+    } tests[] = {
+        { "tr2_test_dir\\f1", "tr2_test_dir\\f1_rename", ERROR_SUCCESS },
+        { "tr2_test_dir\\f1", NULL, ERROR_INVALID_PARAMETER },
+        { "tr2_test_dir\\f1", "tr2_test_dir\\f1_rename", ERROR_FILE_NOT_FOUND },
+        { NULL, "tr2_test_dir\\NULL_rename", ERROR_INVALID_PARAMETER },
+        { "tr2_test_dir\\f1_rename", "tr2_test_dir\\??invalid_name>>", ERROR_INVALID_NAME },
+        { "tr2_test_dir\\not_exist_file", "tr2_test_dir\\not_exist_rename", ERROR_FILE_NOT_FOUND }
+    };
+
+    memset(current_path, 0, MAX_PATH);
+    GetCurrentDirectoryA(MAX_PATH, current_path);
+    memset(temp_path, 0, MAX_PATH);
+    GetTempPathA(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
+    ret = p_tr2_sys__Make_dir("tr2_test_dir");
+
+    ok(ret == 1, "test_tr2_sys__Make_dir(): expect 1 got %d\n", ret);
+    file = CreateFileA("tr2_test_dir\\f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+
+    ret = p_tr2_sys__Rename("tr2_test_dir\\f1", "tr2_test_dir\\f1");
+    todo_wine ok(ERROR_SUCCESS == ret, "test_tr2_sys__Rename(): expect: ERROR_SUCCESS, got %d\n", ret);
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        errno = 0xdeadbeef;
+        if(tests[i].val == ERROR_SUCCESS) {
+            h1 = CreateFileA(tests[i].old_path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    NULL, OPEN_EXISTING, 0, 0);
+            ok(h1 != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+            ok(GetFileInformationByHandle(h1, &info1), "GetFileInformationByHandle failed\n");
+            CloseHandle(h1);
+        }
+        SetLastError(0xdeadbeef);
+        ret = p_tr2_sys__Rename(tests[i].old_path, tests[i].new_path);
+        ok(ret == tests[i].val, "test_tr2_sys__Rename(): test %d expect: %d, got %d\n", i+1, tests[i].val, ret);
+        ok(errno == 0xdeadbeef, "test_tr2_sys__Rename(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
+        if(ret == ERROR_SUCCESS) {
+            h2 = CreateFileA(tests[i].new_path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+                    NULL, OPEN_EXISTING, 0, 0);
+            ok(h2 != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+            ok(GetFileInformationByHandle(h2, &info2), "GetFileInformationByHandle failed\n");
+            CloseHandle(h2);
+            ok(info1.nFileIndexHigh == info2.nFileIndexHigh
+                    && info1.nFileIndexLow == info2.nFileIndexLow,
+                    "test_tr2_sys__Rename(): test %d expect two files equivalent\n", i+1);
+        }
+    }
+
+    file = CreateFileA("tr2_test_dir\\f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 7;
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+    ret = p_tr2_sys__Rename("tr2_test_dir\\f1", "tr2_test_dir\\f1_rename");
+    ok(ret == ERROR_ALREADY_EXISTS, "test_tr2_sys__Rename(): expect: ERROR_ALREADY_EXISTS, got %d\n", ret);
+    ok(p_tr2_sys__File_size("tr2_test_dir\\f1") == 7, "test_tr2_sys__Rename(): expect: 7, got %s\n", debugstr_longlong(p_tr2_sys__File_size("tr2_test_dir\\f1")));
+    ok(p_tr2_sys__File_size("tr2_test_dir\\f1_rename") == 0, "test_tr2_sys__Rename(): expect: 0, got %s\n",debugstr_longlong(p_tr2_sys__File_size("tr2_test_dir\\f1_rename")));
+
+    ok(DeleteFileA("tr2_test_dir\\f1"), "expect f1 to exist\n");
+    ok(DeleteFileA("tr2_test_dir\\f1_rename"), "expect f1_rename to exist\n");
+    ret = p_tr2_sys__Remove_dir("tr2_test_dir");
+    ok(ret == 1, "test_tr2_sys__Remove_dir(): expect %d got %d\n", 1, ret);
+    ok(SetCurrentDirectoryA(current_path), "SetCurrentDirectoryA failed\n");
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -602,5 +684,6 @@ START_TEST(msvcp120)
     test_tr2_sys__Make_dir();
     test_tr2_sys__Remove_dir();
     test_tr2_sys__Copy_file();
+    test_tr2_sys__Rename();
     FreeLibrary(msvcp);
 }
