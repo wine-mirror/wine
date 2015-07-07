@@ -405,8 +405,28 @@ static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR b
 static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIANT varBody)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&varBody));
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&varBody));
+
+    switch(V_VT(&varBody)) {
+        case VT_NULL:
+        case VT_EMPTY:
+        case VT_ERROR:
+            break;
+        default:
+            FIXME("varBody(%s) unsupported\n", debugstr_variant(&varBody));
+            return E_FAIL;
+    }
+
+    nsres = nsIXMLHttpRequest_Send(This->nsxhr, NULL);
+
+    if(NS_FAILED(nsres)) {
+        ERR("nsIXMLHttpRequest_Send failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_getAllResponseHeaders(IHTMLXMLHttpRequest *iface, BSTR *p)

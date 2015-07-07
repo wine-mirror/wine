@@ -613,13 +613,13 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
     SET_EXPECT(xmlhttprequest_onreadystatechange_done);
     hres = IHTMLXMLHttpRequest_send(xhr, vempty);
 
-    todo_wine ok(hres == S_OK, "send failed: %08x\n", hres);
+    ok(hres == S_OK, "send failed: %08x\n", hres);
     if(SUCCEEDED(hres))
         pump_msgs(&called_xmlhttprequest_onreadystatechange_done);
     todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_opened);
-    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_headers_received);
-    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_loading);
-    todo_wine CHECK_CALLED(xmlhttprequest_onreadystatechange_done);
+    CHECK_CALLED(xmlhttprequest_onreadystatechange_headers_received);
+    CHECK_CALLED(xmlhttprequest_onreadystatechange_loading);
+    CHECK_CALLED(xmlhttprequest_onreadystatechange_done);
 
     if(FAILED(hres)) {
         IHTMLXMLHttpRequest_Release(xhr);
@@ -629,26 +629,27 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
-    ok(hres == S_OK, "get_status failed: %08x\n", hres);
+    todo_wine ok(hres == S_OK, "get_status failed: %08x\n", hres);
     todo_wine ok(val == 200, "Expect 200, got %d\n", val);
 
+    text = NULL;
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
-    ok(hres == S_OK, "get_statusText failed: %08x\n", hres);
+    todo_wine ok(hres == S_OK, "get_statusText failed: %08x\n", hres);
     todo_wine ok(text != NULL, "text == NULL\n");
-    todo_wine ok(!strcmp_wa(text, "OK"),
-        "Expected \"OK\", got %s\n", wine_dbgstr_w(text));
+    todo_wine ok(!strcmp_wa(text, "OK"), "Expected \"OK\", got %s\n", wine_dbgstr_w(text));
     SysFreeString(text);
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, &val);
     ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
-    todo_wine ok(val == 4, "Expect DONE, got %d\n", val);
+    ok(val == 4, "Expect DONE, got %d\n", val);
 
+    text = NULL;
     hres = IHTMLXMLHttpRequest_get_responseText(xhr, &text);
-    ok(hres == S_OK, "get_responseText failed: %08x\n", hres);
-    ok(text != NULL, "test == NULL\n");
-    ok(!strcmp_wa(text, EXPECT_RESPONSE_TEXT), "expect %s, got %s\n",
-            EXPECT_RESPONSE_TEXT, wine_dbgstr_w(text));
+    todo_wine ok(hres == S_OK, "get_responseText failed: %08x\n", hres);
+    todo_wine ok(text != NULL, "test == NULL\n");
+    todo_wine ok(!strcmp_wa(text, EXPECT_RESPONSE_TEXT), "expect %s, got %s\n",
+        EXPECT_RESPONSE_TEXT, wine_dbgstr_w(text));
     SysFreeString(text);
 
     IHTMLXMLHttpRequest_Release(xhr);
