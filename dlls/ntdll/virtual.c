@@ -1067,6 +1067,8 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     IMAGE_SECTION_HEADER sections[96];
     IMAGE_SECTION_HEADER *sec;
     IMAGE_DATA_DIRECTORY *imports;
+    IMAGE_LOAD_CONFIG_DIRECTORY *loadcfg;
+    ULONG loadcfg_size;
     NTSTATUS status = STATUS_CONFLICTING_ADDRESSES;
     int i;
     off_t pos;
@@ -1275,6 +1277,24 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
                                              (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
                                              (USHORT *)(rel + 1), delta );
             if (!rel) goto error;
+        }
+    }
+
+    /* randomize security cookie */
+
+    loadcfg = RtlImageDirectoryEntryToData( (HMODULE)ptr, TRUE,
+                                            IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &loadcfg_size );
+    if (loadcfg && loadcfg_size >= sizeof(*loadcfg))
+    {
+        static ULONG seed;
+        ULONG_PTR *cookie = (ULONG_PTR *)loadcfg->SecurityCookie;
+
+        if (!seed) seed = NtGetTickCount() ^ GetCurrentProcessId();
+        if (cookie)
+        {
+            *cookie = RtlRandom( &seed );
+            if (sizeof(ULONG_PTR) > sizeof(ULONG)) /* fill up, but keep the highest word clear */
+                *cookie ^= (ULONG_PTR)RtlRandom( &seed ) << 16;
         }
     }
 
