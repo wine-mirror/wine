@@ -279,6 +279,84 @@ static IDispatchExVtbl xmlhttprequest_onreadystatechangeFuncVtbl = {
 };
 static IDispatchEx xmlhttprequest_onreadystatechange_obj = { &xmlhttprequest_onreadystatechangeFuncVtbl };
 
+static BOOL doc_complete;
+static IHTMLDocument2 *notif_doc;
+
+static HRESULT WINAPI PropertyNotifySink_QueryInterface(IPropertyNotifySink *iface,
+        REFIID riid, void**ppv)
+{
+    if(IsEqualGUID(&IID_IPropertyNotifySink, riid)) {
+        *ppv = iface;
+        return S_OK;
+    }
+
+    ok(0, "unexpected call\n");
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI PropertyNotifySink_AddRef(IPropertyNotifySink *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI PropertyNotifySink_Release(IPropertyNotifySink *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI PropertyNotifySink_OnChanged(IPropertyNotifySink *iface, DISPID dispID)
+{
+    if(dispID == DISPID_READYSTATE){
+        BSTR state;
+        HRESULT hres;
+
+        hres = IHTMLDocument2_get_readyState(notif_doc, &state);
+        ok(hres == S_OK, "get_readyState failed: %08x\n", hres);
+
+        if(!strcmp_wa(state, "complete"))
+            doc_complete = TRUE;
+
+        SysFreeString(state);
+    }
+
+    return S_OK;
+}
+
+static HRESULT WINAPI PropertyNotifySink_OnRequestEdit(IPropertyNotifySink *iface, DISPID dispID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
+    PropertyNotifySink_QueryInterface,
+    PropertyNotifySink_AddRef,
+    PropertyNotifySink_Release,
+    PropertyNotifySink_OnChanged,
+    PropertyNotifySink_OnRequestEdit
+};
+
+static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
+
+static void do_advise(IUnknown *unk, REFIID riid, IUnknown *unk_advise)
+{
+    IConnectionPointContainer *container;
+    IConnectionPoint *cp;
+    DWORD cookie;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IConnectionPointContainer, (void**)&container);
+    ok(hres == S_OK, "QueryInterface(IID_IConnectionPointContainer) failed: %08x\n", hres);
+
+    hres = IConnectionPointContainer_FindConnectionPoint(container, riid, &cp);
+    IConnectionPointContainer_Release(container);
+    ok(hres == S_OK, "FindConnectionPoint failed: %08x\n", hres);
+
+    hres = IConnectionPoint_Advise(cp, unk_advise, &cookie);
+    IConnectionPoint_Release(cp);
+    ok(hres == S_OK, "Advise failed: %08x\n", hres);
+}
+
 static void pump_msgs(BOOL *b)
 {
     MSG msg;
@@ -610,6 +688,11 @@ static IHTMLDocument2 *create_doc_from_url(const char *start_url)
     IMoniker_Release(url_mon);
     IBindCtx_Release(bc);
     SysFreeString(url);
+
+    doc_complete = FALSE;
+    notif_doc = doc;
+    do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
+    pump_msgs(&doc_complete);
 
     return doc;
 }
