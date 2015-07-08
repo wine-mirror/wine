@@ -968,6 +968,7 @@ static void WINAPI timer_queue_thread_proc(LPVOID p)
     RtlDeleteCriticalSection(&q->cs);
     q->magic = 0;
     RtlFreeHeap(GetProcessHeap(), 0, q);
+    RtlExitUserThread( 0 );
 }
 
 static void queue_destroy_timer(struct queue_timer *t)
@@ -1361,6 +1362,7 @@ static void CALLBACK timerqueue_thread_proc( void *param )
     RtlLeaveCriticalSection( &timerqueue.cs );
 
     TRACE( "terminating timer queue thread\n" );
+    RtlExitUserThread( 0 );
 }
 
 /***********************************************************************
@@ -1585,6 +1587,7 @@ static void CALLBACK waitqueue_thread_proc( void *param )
     NtClose( bucket->update_event );
 
     RtlFreeHeap( GetProcessHeap(), 0, bucket );
+    RtlExitUserThread( 0 );
 }
 
 /***********************************************************************
@@ -2312,6 +2315,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
 
     TRACE( "terminating worker thread for pool %p\n", pool );
     tp_threadpool_release( pool );
+    RtlExitUserThread( 0 );
 }
 
 /***********************************************************************
