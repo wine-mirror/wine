@@ -131,14 +131,6 @@ static HANDLE get_device_manager(void)
 static NTSTATUS dispatch_irp( DEVICE_OBJECT *device, IRP *irp )
 {
     LARGE_INTEGER count;
-    FILE_OBJECT file;
-
-    irp->RequestorMode = UserMode;
-    irp->Tail.Overlay.OriginalFileObject = &file;
-
-    memset( &file, 0x88, sizeof(file) );
-    file.FsContext = NULL;
-    file.FsContext2 = NULL;
 
     KeQueryTickCount( &count );  /* update the global KeTickCount */
 
@@ -185,6 +177,7 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irpsp->Parameters.Create.EaLength = 0;
 
     irp->Tail.Overlay.OriginalFileObject = file;
+    irp->RequestorMode = UserMode;
     irp->AssociatedIrp.SystemBuffer = NULL;
     irp->UserBuffer = NULL;
     irp->UserIosb = irp_handle; /* note: we abuse UserIosb to store the server irp handle */
@@ -227,6 +220,7 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irpsp->Parameters.Create.EaLength = 0;
 
     irp->Tail.Overlay.OriginalFileObject = file;
+    irp->RequestorMode = UserMode;
     irp->AssociatedIrp.SystemBuffer = NULL;
     irp->UserBuffer = NULL;
     irp->UserIosb = irp_handle; /* note: we abuse UserIosb to store the server irp handle */
@@ -247,11 +241,15 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
     void *out_buff;
     LARGE_INTEGER offset;
     IO_STACK_LOCATION *irpsp;
-    DEVICE_OBJECT *device = wine_server_get_ptr( params->read.device );
+    DEVICE_OBJECT *device;
+    FILE_OBJECT *file = wine_server_get_ptr( params->read.file );
 
+    if (!file) return STATUS_INVALID_HANDLE;
+
+    device = file->DeviceObject;
     if (!device->DriverObject->MajorFunction[IRP_MJ_READ]) return STATUS_NOT_SUPPORTED;
 
-    TRACE( "device %p size %u\n", device, out_size );
+    TRACE( "device %p file %p size %u\n", device, file, out_size );
 
     if (!(out_buff = HeapAlloc( GetProcessHeap(), 0, out_size ))) return STATUS_NO_MEMORY;
 
@@ -264,6 +262,9 @@ static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG 
         HeapFree( GetProcessHeap(), 0, out_buff );
         return STATUS_NO_MEMORY;
     }
+
+    irp->Tail.Overlay.OriginalFileObject = file;
+    irp->RequestorMode = UserMode;
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->Parameters.Read.Key = params->read.key;
@@ -278,11 +279,15 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
     IRP *irp;
     LARGE_INTEGER offset;
     IO_STACK_LOCATION *irpsp;
-    DEVICE_OBJECT *device = wine_server_get_ptr( params->write.device );
+    DEVICE_OBJECT *device;
+    FILE_OBJECT *file = wine_server_get_ptr( params->write.file );
 
+    if (!file) return STATUS_INVALID_HANDLE;
+
+    device = file->DeviceObject;
     if (!device->DriverObject->MajorFunction[IRP_MJ_WRITE]) return STATUS_NOT_SUPPORTED;
 
-    TRACE( "device %p size %u\n", device, in_size );
+    TRACE( "device %p file %p size %u\n", device, file, in_size );
 
     offset.QuadPart = params->write.pos;
 
@@ -290,6 +295,9 @@ static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_WRITE, device, in_buff, in_size,
                                               &offset, NULL, irp_handle )))
         return STATUS_NO_MEMORY;
+
+    irp->Tail.Overlay.OriginalFileObject = file;
+    irp->RequestorMode = UserMode;
 
     irpsp = IoGetNextIrpStackLocation( irp );
     irpsp->Parameters.Write.Key = params->write.key;
@@ -302,16 +310,23 @@ static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG
                                 ULONG out_size, HANDLE irp_handle )
 {
     IRP *irp;
-    DEVICE_OBJECT *device = wine_server_get_ptr( params->flush.device );
+    DEVICE_OBJECT *device;
+    FILE_OBJECT *file = wine_server_get_ptr( params->flush.file );
 
+    if (!file) return STATUS_INVALID_HANDLE;
+
+    device = file->DeviceObject;
     if (!device->DriverObject->MajorFunction[IRP_MJ_FLUSH_BUFFERS]) return STATUS_NOT_SUPPORTED;
 
-    TRACE( "device %p\n", device );
+    TRACE( "device %p file %p\n", device, file );
 
     /* note: we abuse UserIosb to store the server irp handle */
     if (!(irp = IoBuildSynchronousFsdRequest( IRP_MJ_FLUSH_BUFFERS, device, in_buff, in_size,
                                               NULL, NULL, irp_handle )))
         return STATUS_NO_MEMORY;
+
+    irp->Tail.Overlay.OriginalFileObject = file;
+    irp->RequestorMode = UserMode;
 
     return dispatch_irp( device, irp );
 }
@@ -322,11 +337,16 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
 {
     IRP *irp;
     void *out_buff = NULL;
-    DEVICE_OBJECT *device = wine_server_get_ptr( params->ioctl.device );
+    DEVICE_OBJECT *device;
+    FILE_OBJECT *file = wine_server_get_ptr( params->ioctl.file );
 
+    if (!file) return STATUS_INVALID_HANDLE;
+
+    device = file->DeviceObject;
     if (!device->DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL]) return STATUS_NOT_SUPPORTED;
 
-    TRACE( "ioctl %x device %p in_size %u out_size %u\n", params->ioctl.code, device, in_size, out_size );
+    TRACE( "ioctl %x device %p file %p in_size %u out_size %u\n",
+           params->ioctl.code, device, file, in_size, out_size );
 
     if ((params->ioctl.code & 3) == METHOD_BUFFERED) out_size = max( in_size, out_size );
 
@@ -348,6 +368,10 @@ static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG
         HeapFree( GetProcessHeap(), 0, out_buff );
         return STATUS_NO_MEMORY;
     }
+
+    irp->Tail.Overlay.OriginalFileObject = file;
+    irp->RequestorMode = UserMode;
+
     return dispatch_irp( device, irp );
 }
 

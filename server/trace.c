@@ -330,24 +330,24 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
     case IRP_MJ_READ:
         fprintf( stderr, "%s{major=READ,key=%08x", prefix, data->read.key );
         dump_uint64( ",pos=", &data->read.pos );
-        dump_uint64( ",device=", &data->read.device );
+        dump_uint64( ",file=", &data->read.file );
         fputc( '}', stderr );
         break;
     case IRP_MJ_WRITE:
         fprintf( stderr, "%s{major=WRITE,key=%08x", prefix, data->write.key );
         dump_uint64( ",pos=", &data->write.pos );
-        dump_uint64( ",device=", &data->write.device );
+        dump_uint64( ",file=", &data->write.file );
         fputc( '}', stderr );
         break;
     case IRP_MJ_FLUSH_BUFFERS:
         fprintf( stderr, "%s{major=FLUSH_BUFFERS", prefix );
-        dump_uint64( ",device=", &data->flush.device );
+        dump_uint64( ",file=", &data->flush.file );
         fputc( '}', stderr );
         break;
     case IRP_MJ_DEVICE_CONTROL:
         fprintf( stderr, "%s{major=DEVICE_CONTROL", prefix );
         dump_ioctl_code( ",code=", &data->ioctl.code );
-        dump_uint64( ",device=", &data->ioctl.device );
+        dump_uint64( ",file=", &data->ioctl.file );
         fputc( '}', stderr );
         break;
     case IRP_MJ_MAXIMUM_FUNCTION + 1: /* invalid */

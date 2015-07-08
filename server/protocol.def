@@ -668,27 +668,27 @@ typedef union
     {
         unsigned int     major;     /* IRP_MJ_READ */
         unsigned int     key;       /* driver key */
-        client_ptr_t     device;    /* opaque ptr for the device */
+        client_ptr_t     file;      /* opaque ptr for the file object */
         file_pos_t       pos;       /* file position */
     } read;
     struct
     {
         unsigned int     major;     /* IRP_MJ_WRITE */
         unsigned int     key;       /* driver key */
-        client_ptr_t     device;    /* opaque ptr for the device */
+        client_ptr_t     file;      /* opaque ptr for the file object */
         file_pos_t       pos;       /* file position */
     } write;
     struct
     {
         unsigned int     major;     /* IRP_MJ_FLUSH_BUFFERS */
         int              __pad;
-        client_ptr_t     device;    /* opaque ptr for the device */
+        client_ptr_t     file;      /* opaque ptr for the file object */
     } flush;
     struct
     {
         unsigned int     major;     /* IRP_MJ_DEVICE_CONTROL */
         ioctl_code_t     code;      /* ioctl code */
-        client_ptr_t     device;    /* opaque ptr for the device */
+        client_ptr_t     file;      /* opaque ptr for the file object */
     } ioctl;
 } irp_params_t;
 

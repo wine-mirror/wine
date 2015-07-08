@@ -652,27 +652,27 @@ typedef union
     {
         unsigned int     major;
         unsigned int     key;
-        client_ptr_t     device;
+        client_ptr_t     file;
         file_pos_t       pos;
     } read;
     struct
     {
         unsigned int     major;
         unsigned int     key;
-        client_ptr_t     device;
+        client_ptr_t     file;
         file_pos_t       pos;
     } write;
     struct
     {
         unsigned int     major;
         int              __pad;
-        client_ptr_t     device;
+        client_ptr_t     file;
     } flush;
     struct
     {
         unsigned int     major;
         ioctl_code_t     code;
-        client_ptr_t     device;
+        client_ptr_t     file;
     } ioctl;
 } irp_params_t;
 
@@ -6096,6 +6096,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 480
+#define SERVER_PROTOCOL_VERSION 481
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
