@@ -51,4 +51,18 @@ typedef struct tagMPEG2VIDEOINFO {
     DWORD dwSequenceHeader[1];
 } MPEG2VIDEOINFO;
 
+#define AMINTERLACE_IsInterlaced          0x0001
+#define AMINTERLACE_1FieldPerSample       0x0002
+#define AMINTERLACE_Field1First           0x0004
+#define AMINTERLACE_UNUSED                0x0008
+#define AMINTERLACE_FieldPatField1Only    0x0000
+#define AMINTERLACE_FieldPatField2Only    0x0010
+#define AMINTERLACE_FieldPatBothRegular   0x0020
+#define AMINTERLACE_FieldPatBothIrregular 0x0030
+#define AMINTERLACE_FieldPatternMask      0x0030
+#define AMINTERLACE_DisplayModeBobOnly    0x0000
+#define AMINTERLACE_DisplayModeWeaveOnly  0x0040
+#define AMINTERLACE_DisplayModeBobOrWeave 0x0080
+#define AMINTERLACE_DisplayModeMask       0x00c0
+
 #endif /* __DVDMEDIA_H__ */
