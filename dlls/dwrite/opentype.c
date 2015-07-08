@@ -238,6 +238,35 @@ typedef struct {
     TT_NameRecord nameRecord[1];
 } TT_NAME_V0;
 
+struct VDMX_Header
+{
+    WORD version;
+    WORD numRecs;
+    WORD numRatios;
+};
+
+struct VDMX_Ratio
+{
+    BYTE bCharSet;
+    BYTE xRatio;
+    BYTE yStartRatio;
+    BYTE yEndRatio;
+};
+
+struct VDMX_group
+{
+    WORD recs;
+    BYTE startsz;
+    BYTE endsz;
+};
+
+struct VDMX_vTable
+{
+    WORD yPelHeight;
+    SHORT yMax;
+    SHORT yMin;
+};
+
 typedef struct {
     CHAR FeatureTag[4];
     WORD Feature;
@@ -1287,4 +1316,64 @@ HRESULT opentype_get_typographic_features(IDWriteFontFace *fontface, UINT32 scri
     }
 
     return *count > max_tagcount ? E_NOT_SUFFICIENT_BUFFER : S_OK;
+}
+
+static const struct VDMX_group *find_vdmx_group(const struct VDMX_Header *hdr)
+{
+    WORD num_ratios, i, group_offset = 0;
+    struct VDMX_Ratio *ratios = (struct VDMX_Ratio*)(hdr + 1);
+    BYTE dev_x_ratio = 1, dev_y_ratio = 1;
+
+    num_ratios = GET_BE_WORD(hdr->numRatios);
+
+    for (i = 0; i < num_ratios; i++) {
+
+        if (!ratios[i].bCharSet) continue;
+
+        if ((ratios[i].xRatio == 0 && ratios[i].yStartRatio == 0 &&
+             ratios[i].yEndRatio == 0) ||
+	   (ratios[i].xRatio == dev_x_ratio && ratios[i].yStartRatio <= dev_y_ratio &&
+            ratios[i].yEndRatio >= dev_y_ratio))
+        {
+            group_offset = GET_BE_WORD(*((WORD *)(ratios + num_ratios) + i));
+            break;
+        }
+    }
+    if (group_offset)
+        return (const struct VDMX_group *)((BYTE *)hdr + group_offset);
+    return NULL;
+}
+
+BOOL opentype_get_vdmx_size(const void *data, INT emsize, UINT16 *ascent, UINT16 *descent)
+{
+    const struct VDMX_Header *hdr = (const struct VDMX_Header*)data;
+    const struct VDMX_group *group = find_vdmx_group(hdr);
+    const struct VDMX_vTable *tables;
+    WORD recs, i;
+
+    if (!data)
+        return FALSE;
+
+    group = find_vdmx_group(hdr);
+    if (!group)
+        return FALSE;
+
+    recs = GET_BE_WORD(group->recs);
+    if (emsize < group->startsz || emsize >= group->endsz) return FALSE;
+
+    tables = (const struct VDMX_vTable *)(group + 1);
+    for (i = 0; i < recs; i++) {
+        WORD ppem = GET_BE_WORD(tables[i].yPelHeight);
+        if (ppem > emsize) {
+            FIXME("interpolate %d\n", emsize);
+            return FALSE;
+        }
+
+        if (ppem == emsize) {
+            *ascent = (SHORT)GET_BE_WORD(tables[i].yMax);
+            *descent = -(SHORT)GET_BE_WORD(tables[i].yMin);
+            return TRUE;
+        }
+    }
+    return FALSE;
 }

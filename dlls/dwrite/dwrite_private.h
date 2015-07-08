@@ -139,6 +139,7 @@ extern void opentype_get_font_properties(IDWriteFontFileStream*,DWRITE_FONT_FACE
 extern void opentype_get_font_metrics(IDWriteFontFileStream*,DWRITE_FONT_FACE_TYPE,UINT32,DWRITE_FONT_METRICS1*,DWRITE_CARET_METRICS*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_strings_from_id(const void*,DWRITE_INFORMATIONAL_STRING_ID,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_typographic_features(IDWriteFontFace*,UINT32,UINT32,UINT32,UINT32*,DWRITE_FONT_FEATURE_TAG*) DECLSPEC_HIDDEN;
+extern BOOL opentype_get_vdmx_size(const void*,INT,UINT16*,UINT16*) DECLSPEC_HIDDEN;
 
 /* BiDi helpers */
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;
