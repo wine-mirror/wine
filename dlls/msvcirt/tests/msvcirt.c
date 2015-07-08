@@ -813,8 +813,8 @@ static void test_ios(void)
     memset(&ios_obj, 0xab, sizeof(ios));
     memset(&ios_obj2, 0xab, sizeof(ios));
     psb = p_operator_new(sizeof(streambuf));
-    if (psb)
-        call_func1(p_streambuf_ctor, psb);
+    ok(psb != NULL, "failed to allocate streambuf object\n");
+    call_func1(p_streambuf_ctor, psb);
 
     /* constructor/destructor */
     call_func2(p_ios_sb_ctor, &ios_obj, NULL);
@@ -857,10 +857,12 @@ static void test_ios(void)
     ok(ios_obj.sb == NULL, "expected %p got %p\n", NULL, ios_obj.sb);
     ok(ios_obj.state == (0x8|IOSTATE_badbit), "expected %x got %x\n", (0x8|IOSTATE_badbit), ios_obj.state);
     ios_obj.sb = psb;
-    ios_obj.delbuf = 1;
+    ios_obj.delbuf = 0;
     call_func2(p_ios_init, &ios_obj, psb);
     ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
     ok(ios_obj.state == 0x8, "expected %x got %x\n", 0x8, ios_obj.state);
+    ios_obj.delbuf = 1;
+    call_func1(p_ios_dtor, &ios_obj);
 
     /* copy constructor */
     call_func2(p_ios_copy_ctor, &ios_obj, &ios_obj2);

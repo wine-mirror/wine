@@ -172,6 +172,8 @@ streambuf* __thiscall streambuf_assign(streambuf *this, const streambuf *rhs)
 
 /* ??_Estreambuf@@UAEPAXI@Z */
 DEFINE_THISCALL_WRAPPER(streambuf_vector_dtor, 8)
+#define call_streambuf_vector_dtor(this, flags) CALL_VTBL_FUNC(this, 0,\
+        streambuf*, (streambuf*, unsigned int), (this, flags))
 streambuf* __thiscall streambuf_vector_dtor(streambuf *this, unsigned int flags)
 {
     TRACE("(%p %x)\n", this, flags);
@@ -753,7 +755,7 @@ void __thiscall ios_dtor(ios *this)
 {
     TRACE("(%p)\n", this);
     if (this->delbuf && this->sb)
-        MSVCRT_operator_delete(this->sb);
+        call_streambuf_vector_dtor(this->sb, 1);
     this->sb = NULL;
     this->state = IOSTATE_badbit;
     DeleteCriticalSection(&this->lock);
@@ -958,7 +960,7 @@ void __thiscall ios_init(ios *this, streambuf *sb)
 {
     TRACE("(%p %p)\n", this, sb);
     if (this->delbuf && this->sb)
-        MSVCRT_operator_delete(this->sb);
+        call_streambuf_vector_dtor(this->sb, 1);
     this->sb = sb;
     if (sb == NULL)
         this->state |= IOSTATE_badbit;
