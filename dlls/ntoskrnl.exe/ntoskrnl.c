@@ -152,13 +152,16 @@ static NTSTATUS dispatch_irp( DEVICE_OBJECT *device, IRP *irp )
 }
 
 /* process a read request for a given device */
-static NTSTATUS dispatch_read( DEVICE_OBJECT *device, const irp_params_t *params,
-                               void *in_buff, ULONG in_size, ULONG out_size, HANDLE irp_handle )
+static NTSTATUS dispatch_read( const irp_params_t *params, void *in_buff, ULONG in_size,
+                               ULONG out_size, HANDLE irp_handle )
 {
     IRP *irp;
     void *out_buff;
     LARGE_INTEGER offset;
     IO_STACK_LOCATION *irpsp;
+    DEVICE_OBJECT *device = wine_server_get_ptr( params->read.device );
+
+    if (!device->DriverObject->MajorFunction[IRP_MJ_READ]) return STATUS_NOT_SUPPORTED;
 
     TRACE( "device %p size %u\n", device, out_size );
 
@@ -181,12 +184,15 @@ static NTSTATUS dispatch_read( DEVICE_OBJECT *device, const irp_params_t *params
 }
 
 /* process a write request for a given device */
-static NTSTATUS dispatch_write( DEVICE_OBJECT *device, const irp_params_t *params,
-                                void *in_buff, ULONG in_size, ULONG out_size, HANDLE irp_handle )
+static NTSTATUS dispatch_write( const irp_params_t *params, void *in_buff, ULONG in_size,
+                                ULONG out_size, HANDLE irp_handle )
 {
     IRP *irp;
     LARGE_INTEGER offset;
     IO_STACK_LOCATION *irpsp;
+    DEVICE_OBJECT *device = wine_server_get_ptr( params->write.device );
+
+    if (!device->DriverObject->MajorFunction[IRP_MJ_WRITE]) return STATUS_NOT_SUPPORTED;
 
     TRACE( "device %p size %u\n", device, in_size );
 
@@ -204,10 +210,13 @@ static NTSTATUS dispatch_write( DEVICE_OBJECT *device, const irp_params_t *param
 }
 
 /* process a flush request for a given device */
-static NTSTATUS dispatch_flush( DEVICE_OBJECT *device, const irp_params_t *params,
-                                void *in_buff, ULONG in_size, ULONG out_size, HANDLE irp_handle )
+static NTSTATUS dispatch_flush( const irp_params_t *params, void *in_buff, ULONG in_size,
+                                ULONG out_size, HANDLE irp_handle )
 {
     IRP *irp;
+    DEVICE_OBJECT *device = wine_server_get_ptr( params->flush.device );
+
+    if (!device->DriverObject->MajorFunction[IRP_MJ_FLUSH_BUFFERS]) return STATUS_NOT_SUPPORTED;
 
     TRACE( "device %p\n", device );
 
@@ -220,11 +229,14 @@ static NTSTATUS dispatch_flush( DEVICE_OBJECT *device, const irp_params_t *param
 }
 
 /* process an ioctl request for a given device */
-static NTSTATUS dispatch_ioctl( DEVICE_OBJECT *device, const irp_params_t *params,
-                                void *in_buff, ULONG in_size, ULONG out_size, HANDLE irp_handle )
+static NTSTATUS dispatch_ioctl( const irp_params_t *params, void *in_buff, ULONG in_size,
+                                ULONG out_size, HANDLE irp_handle )
 {
     IRP *irp;
     void *out_buff = NULL;
+    DEVICE_OBJECT *device = wine_server_get_ptr( params->ioctl.device );
+
+    if (!device->DriverObject->MajorFunction[IRP_MJ_DEVICE_CONTROL]) return STATUS_NOT_SUPPORTED;
 
     TRACE( "ioctl %x device %p in_size %u out_size %u\n", params->ioctl.code, device, in_size, out_size );
 
@@ -251,8 +263,8 @@ static NTSTATUS dispatch_ioctl( DEVICE_OBJECT *device, const irp_params_t *param
     return dispatch_irp( device, irp );
 }
 
-typedef NTSTATUS (*dispatch_func)( DEVICE_OBJECT *device, const irp_params_t *params,
-                                   void *in_buff, ULONG in_size, ULONG out_size, HANDLE irp_handle );
+typedef NTSTATUS (*dispatch_func)( const irp_params_t *params, void *in_buff, ULONG in_size,
+                                   ULONG out_size, HANDLE irp_handle );
 
 static const dispatch_func dispatch_funcs[IRP_MJ_MAXIMUM_FUNCTION + 1] =
 {
@@ -297,7 +309,6 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
     NTSTATUS status = STATUS_SUCCESS;
     irp_params_t irp_params;
     void *in_buff;
-    DEVICE_OBJECT *device = NULL;
     ULONG in_size = 4096, out_size = 0;
     HANDLE handles[2];
 
@@ -323,7 +334,6 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
             if (!(status = wine_server_call( req )))
             {
                 irp        = wine_server_ptr_handle( reply->next );
-                device     = wine_server_get_ptr( reply->user_ptr );
                 irp_params = reply->params;
                 client_tid = reply->client_tid;
                 client_pid = reply->client_pid;
@@ -342,16 +352,13 @@ NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event )
         switch(status)
         {
         case STATUS_SUCCESS:
-            if (irp_params.major > IRP_MJ_MAXIMUM_FUNCTION ||
-                !dispatch_funcs[irp_params.major] ||
-                !device->DriverObject->MajorFunction[irp_params.major])
+            if (irp_params.major > IRP_MJ_MAXIMUM_FUNCTION || !dispatch_funcs[irp_params.major])
             {
                 WARN( "unsupported request %u\n", irp_params.major );
                 status = STATUS_NOT_SUPPORTED;
                 break;
             }
-            status = dispatch_funcs[irp_params.major]( device, &irp_params,
-                                                       in_buff, in_size, out_size, irp );
+            status = dispatch_funcs[irp_params.major]( &irp_params, in_buff, in_size, out_size, irp );
             if (status == STATUS_SUCCESS) irp = 0;  /* status reported by IoCompleteRequest */
             break;
         case STATUS_BUFFER_OVERFLOW:

@@ -319,19 +319,24 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
     case IRP_MJ_READ:
         fprintf( stderr, "%s{major=READ,key=%08x", prefix, data->read.key );
         dump_uint64( ",pos=", &data->read.pos );
+        dump_uint64( ",device=", &data->read.device );
         fputc( '}', stderr );
         break;
     case IRP_MJ_WRITE:
         fprintf( stderr, "%s{major=WRITE,key=%08x", prefix, data->write.key );
         dump_uint64( ",pos=", &data->write.pos );
+        dump_uint64( ",device=", &data->write.device );
         fputc( '}', stderr );
         break;
     case IRP_MJ_FLUSH_BUFFERS:
-        fprintf( stderr, "%s{major=FLUSH_BUFFERS}", prefix );
+        fprintf( stderr, "%s{major=FLUSH_BUFFERS", prefix );
+        dump_uint64( ",device=", &data->flush.device );
+        fputc( '}', stderr );
         break;
     case IRP_MJ_DEVICE_CONTROL:
         fprintf( stderr, "%s{major=DEVICE_CONTROL", prefix );
         dump_ioctl_code( ",code=", &data->ioctl.code );
+        dump_uint64( ",device=", &data->ioctl.device );
         fputc( '}', stderr );
         break;
     default:
@@ -3998,8 +4003,7 @@ static void dump_get_next_device_request_request( const struct get_next_device_r
 
 static void dump_get_next_device_request_reply( const struct get_next_device_request_reply *req )
 {
-    dump_uint64( " user_ptr=", &req->user_ptr );
-    dump_irp_params( ", params=", &req->params );
+    dump_irp_params( " params=", &req->params );
     fprintf( stderr, ", next=%04x", req->next );
     fprintf( stderr, ", client_pid=%04x", req->client_pid );
     fprintf( stderr, ", client_tid=%04x", req->client_tid );

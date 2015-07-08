@@ -654,18 +654,27 @@ typedef union
     {
         unsigned int     major;     /* IRP_MJ_READ */
         unsigned int     key;       /* driver key */
+        client_ptr_t     device;    /* opaque ptr for the device */
         file_pos_t       pos;       /* file position */
     } read;
     struct
     {
         unsigned int     major;     /* IRP_MJ_WRITE */
         unsigned int     key;       /* driver key */
+        client_ptr_t     device;    /* opaque ptr for the device */
         file_pos_t       pos;       /* file position */
     } write;
     struct
     {
+        unsigned int     major;     /* IRP_MJ_FLUSH_BUFFERS */
+        int              __pad;
+        client_ptr_t     device;    /* opaque ptr for the device */
+    } flush;
+    struct
+    {
         unsigned int     major;     /* IRP_MJ_DEVICE_CONTROL */
         ioctl_code_t     code;      /* ioctl code */
+        client_ptr_t     device;    /* opaque ptr for the device */
     } ioctl;
 } irp_params_t;
 
@@ -3392,7 +3401,6 @@ enum coords_relative
     obj_handle_t prev;            /* handle to the previous irp */
     unsigned int status;          /* status of the previous irp */
 @REPLY
-    client_ptr_t user_ptr;        /* opaque ptr for the device */
     irp_params_t params;          /* irp parameters */
     obj_handle_t next;            /* handle to the next irp */
     process_id_t client_pid;      /* pid of process calling irp */

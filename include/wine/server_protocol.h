@@ -638,18 +638,27 @@ typedef union
     {
         unsigned int     major;
         unsigned int     key;
+        client_ptr_t     device;
         file_pos_t       pos;
     } read;
     struct
     {
         unsigned int     major;
         unsigned int     key;
+        client_ptr_t     device;
         file_pos_t       pos;
     } write;
     struct
     {
         unsigned int     major;
+        int              __pad;
+        client_ptr_t     device;
+    } flush;
+    struct
+    {
+        unsigned int     major;
         ioctl_code_t     code;
+        client_ptr_t     device;
     } ioctl;
 } irp_params_t;
 
@@ -4882,7 +4891,6 @@ struct get_next_device_request_request
 struct get_next_device_request_reply
 {
     struct reply_header __header;
-    client_ptr_t user_ptr;
     irp_params_t params;
     obj_handle_t next;
     process_id_t client_pid;
@@ -6073,6 +6081,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 476
+#define SERVER_PROTOCOL_VERSION 477
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

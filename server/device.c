@@ -446,9 +446,10 @@ static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_d
     obj_handle_t handle;
     irp_params_t params;
 
-    params.major = IRP_MJ_READ;
-    params.read.key = 0;
-    params.read.pos = pos;
+    params.read.major  = IRP_MJ_READ;
+    params.read.key    = 0;
+    params.read.pos    = pos;
+    params.read.device = file->device->user_ptr;
 
     irp = create_irp( file, &params, NULL, 0, get_reply_max_size() );
     if (!irp) return 0;
@@ -466,9 +467,10 @@ static obj_handle_t device_file_write( struct fd *fd, const async_data_t *async_
     obj_handle_t handle;
     irp_params_t params;
 
-    params.major = IRP_MJ_WRITE;
-    params.write.key = 0;
-    params.write.pos = pos;
+    params.write.major  = IRP_MJ_WRITE;
+    params.write.key    = 0;
+    params.write.pos    = pos;
+    params.write.device = file->device->user_ptr;
 
     irp = create_irp( file, &params, get_req_data(), get_req_data_size(), 0 );
     if (!irp) return 0;
@@ -485,7 +487,8 @@ static obj_handle_t device_file_flush( struct fd *fd, const async_data_t *async_
     obj_handle_t handle;
     irp_params_t params;
 
-    params.major = IRP_MJ_FLUSH_BUFFERS;
+    params.flush.major  = IRP_MJ_FLUSH_BUFFERS;
+    params.flush.device = file->device->user_ptr;
 
     irp = create_irp( file, &params, NULL, 0, 0 );
     if (!irp) return 0;
@@ -503,8 +506,9 @@ static obj_handle_t device_file_ioctl( struct fd *fd, ioctl_code_t code, const a
     obj_handle_t handle;
     irp_params_t params;
 
-    params.major = IRP_MJ_DEVICE_CONTROL;
-    params.ioctl.code = code;
+    params.ioctl.major  = IRP_MJ_DEVICE_CONTROL;
+    params.ioctl.code   = code;
+    params.ioctl.device = file->device->user_ptr;
 
     irp = create_irp( file, &params, get_req_data(), get_req_data_size(),
                       get_reply_max_size() );
@@ -698,7 +702,6 @@ DECL_HANDLER(get_next_device_request)
     {
         irp = LIST_ENTRY( ptr, struct irp_call, mgr_entry );
         reply->params = irp->params;
-        reply->user_ptr = irp->file->device->user_ptr;
         reply->client_pid = get_process_id( irp->thread->process );
         reply->client_tid = get_thread_id( irp->thread );
         reply->in_size = irp->in_size;
