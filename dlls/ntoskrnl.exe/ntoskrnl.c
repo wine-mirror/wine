@@ -183,6 +183,8 @@ static NTSTATUS dispatch_create( const irp_params_t *params, void *in_buff, ULON
     irp->UserIosb = irp_handle; /* note: we abuse UserIosb to store the server irp handle */
     irp->UserEvent = NULL;
 
+    if (device->DriverObject->MajorFunction[IRP_MJ_CREATE]) return dispatch_irp( device, irp );
+
     irp->IoStatus.u.Status = STATUS_SUCCESS;
     IoCompleteRequest( irp, IO_NO_INCREMENT );
     return STATUS_SUCCESS;
@@ -226,8 +228,12 @@ static NTSTATUS dispatch_close( const irp_params_t *params, void *in_buff, ULONG
     irp->UserIosb = irp_handle; /* note: we abuse UserIosb to store the server irp handle */
     irp->UserEvent = NULL;
 
-    irp->IoStatus.u.Status = STATUS_SUCCESS;
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    if (!device->DriverObject->MajorFunction[IRP_MJ_CLOSE])
+    {
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+    else dispatch_irp( device, irp );
 
     HeapFree( GetProcessHeap(), 0, file );  /* FIXME: async close processing not supported */
     return STATUS_SUCCESS;
