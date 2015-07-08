@@ -645,6 +645,12 @@ typedef union
     struct
     {
         unsigned int     major;
+        int              __pad;
+        client_ptr_t     device;
+    } close;
+    struct
+    {
+        unsigned int     major;
         unsigned int     key;
         client_ptr_t     device;
         file_pos_t       pos;
@@ -6089,6 +6095,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 478
+#define SERVER_PROTOCOL_VERSION 479
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

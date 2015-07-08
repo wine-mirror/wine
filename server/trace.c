@@ -322,6 +322,11 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
         dump_uint64( ",device=", &data->create.device );
         fputc( '}', stderr );
         break;
+    case IRP_MJ_CLOSE:
+        fprintf( stderr, "%s{major=CLOSE", prefix );
+        dump_uint64( ",device=", &data->close.device );
+        fputc( '}', stderr );
+        break;
     case IRP_MJ_READ:
         fprintf( stderr, "%s{major=READ,key=%08x", prefix, data->read.key );
         dump_uint64( ",pos=", &data->read.pos );

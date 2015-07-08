@@ -170,6 +170,7 @@ struct device_file
 
 static void device_file_dump( struct object *obj, int verbose );
 static struct fd *device_file_get_fd( struct object *obj );
+static int device_file_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void device_file_destroy( struct object *obj );
 static enum server_fd_type device_file_get_fd_type( struct fd *fd );
 static obj_handle_t device_file_read( struct fd *fd, const async_data_t *async_data, int blocking,
@@ -196,7 +197,7 @@ static const struct object_ops device_file_ops =
     default_set_sd,                   /* set_sd */
     no_lookup_name,                   /* lookup_name */
     no_open_file,                     /* open_file */
-    no_close_handle,                  /* close_handle */
+    device_file_close_handle,         /* close_handle */
     device_file_destroy               /* destroy */
 };
 
@@ -407,6 +408,27 @@ static struct fd *device_file_get_fd( struct object *obj )
     struct device_file *file = (struct device_file *)obj;
 
     return (struct fd *)grab_object( file->fd );
+}
+
+static int device_file_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
+{
+    struct device_file *file = (struct device_file *)obj;
+
+    if (file->device->manager && obj->handle_count == 1)  /* last handle */
+    {
+        struct irp_call *irp;
+        irp_params_t params;
+
+        params.close.major  = IRP_MJ_CLOSE;
+        params.close.device = file->device->user_ptr;
+
+        if ((irp = create_irp( file, &params, NULL, 0, 0 )))
+        {
+            add_irp_to_queue( file, irp );
+            release_object( irp );
+        }
+    }
+    return 1;
 }
 
 static void device_file_destroy( struct object *obj )

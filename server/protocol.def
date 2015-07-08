@@ -660,6 +660,12 @@ typedef union
     } create;
     struct
     {
+        unsigned int     major;     /* IRP_MJ_CLOSE */
+        int              __pad;
+        client_ptr_t     device;    /* opaque ptr for the device */
+    } close;
+    struct
+    {
         unsigned int     major;     /* IRP_MJ_READ */
         unsigned int     key;       /* driver key */
         client_ptr_t     device;    /* opaque ptr for the device */
