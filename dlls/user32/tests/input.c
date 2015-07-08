@@ -2437,7 +2437,6 @@ static DWORD WINAPI get_key_state_thread(void *arg)
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
 
     result = GetKeyState('X');
-    todo_wine
     ok((result & 0x8000) || broken(!(result & 0x8000)), /* > Win 2003 */
        "expected that highest bit is set, got %x\n", result);
 

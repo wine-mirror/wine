@@ -2851,13 +2851,26 @@ DECL_HANDLER(get_key_state)
     }
     else
     {
+        unsigned char *keystate;
         if (!(thread = get_thread_from_id( req->tid ))) return;
         if (thread->queue)
         {
             if (req->key >= 0) reply->state = thread->queue->input->keystate[req->key & 0xff];
             set_reply_data( thread->queue->input->keystate, size );
+            release_object( thread );
+            return;
         }
         release_object( thread );
+
+        /* fallback to desktop keystate */
+        if (!(desktop = get_thread_desktop( current, 0 ))) return;
+        if (req->key >= 0) reply->state = desktop->keystate[req->key & 0xff] & ~0x40;
+        if ((keystate = set_reply_data_size( size )))
+        {
+            unsigned int i;
+            for (i = 0; i < size; i++) keystate[i] = desktop->keystate[i] & ~0x40;
+        }
+        release_object( desktop );
     }
 }
 
