@@ -164,6 +164,7 @@ struct device_file
     struct object          obj;           /* object header */
     struct device         *device;        /* device for this file */
     struct fd             *fd;            /* file descriptor for irp */
+    client_ptr_t           user_ptr;      /* opaque ptr for client side */
     struct list            entry;         /* entry in device list */
     struct list            requests;      /* list of pending irp requests */
 };
@@ -358,6 +359,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
     if (!(file = alloc_object( &device_file_ops ))) return NULL;
 
     file->device = (struct device *)grab_object( device );
+    file->user_ptr = 0;
     list_init( &file->requests );
     list_add_tail( &device->files, &file->entry );
     if (device->unix_path)
@@ -419,8 +421,8 @@ static int device_file_close_handle( struct object *obj, struct process *process
         struct irp_call *irp;
         irp_params_t params;
 
-        params.close.major  = IRP_MJ_CLOSE;
-        params.close.device = file->device->user_ptr;
+        params.close.major = IRP_MJ_CLOSE;
+        params.close.file  = file->user_ptr;
 
         if ((irp = create_irp( file, &params, NULL, 0, 0 )))
         {
@@ -456,6 +458,25 @@ static struct irp_call *find_irp_call( struct device_file *file, struct thread *
 
     set_error( STATUS_INVALID_PARAMETER );
     return NULL;
+}
+
+static void set_file_user_ptr( struct device_file *file, client_ptr_t ptr )
+{
+    struct irp_call *irp;
+
+    if (file->user_ptr == ptr) return;  /* nothing to do */
+
+    file->user_ptr = ptr;
+
+    /* update already queued irps */
+
+    LIST_FOR_EACH_ENTRY( irp, &file->requests, struct irp_call, dev_entry )
+    {
+        switch (irp->params.major)
+        {
+        case IRP_MJ_CLOSE:          irp->params.close.file = ptr; break;
+        }
+    }
 }
 
 /* queue an irp to the device */
@@ -780,6 +801,7 @@ DECL_HANDLER(set_irp_result)
 
     if ((irp = (struct irp_call *)get_handle_obj( current->process, req->handle, 0, &irp_call_ops )))
     {
+        if (irp->file) set_file_user_ptr( irp->file, req->file_ptr );
         set_irp_result( irp, req->status, get_req_data(), get_req_data_size(), req->size );
         close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
         release_object( irp );

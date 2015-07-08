@@ -324,7 +324,7 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
         break;
     case IRP_MJ_CLOSE:
         fprintf( stderr, "%s{major=CLOSE", prefix );
-        dump_uint64( ",device=", &data->close.device );
+        dump_uint64( ",file=", &data->close.file );
         fputc( '}', stderr );
         break;
     case IRP_MJ_READ:
@@ -2826,6 +2826,7 @@ static void dump_set_irp_result_request( const struct set_irp_result_request *re
     fprintf( stderr, " manager=%04x", req->manager );
     fprintf( stderr, ", handle=%04x", req->handle );
     fprintf( stderr, ", status=%08x", req->status );
+    dump_uint64( ", file_ptr=", &req->file_ptr );
     fprintf( stderr, ", size=%u", req->size );
     dump_varargs_bytes( ", data=", cur_size );
 }

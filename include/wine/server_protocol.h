@@ -646,7 +646,7 @@ typedef union
     {
         unsigned int     major;
         int              __pad;
-        client_ptr_t     device;
+        client_ptr_t     file;
     } close;
     struct
     {
@@ -3216,9 +3216,10 @@ struct set_irp_result_request
     obj_handle_t manager;
     obj_handle_t handle;
     unsigned int status;
+    client_ptr_t file_ptr;
     data_size_t  size;
     /* VARARG(data,bytes); */
-    char __pad_28[4];
+    char __pad_36[4];
 };
 struct set_irp_result_reply
 {
@@ -6095,6 +6096,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 479
+#define SERVER_PROTOCOL_VERSION 480
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

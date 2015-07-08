@@ -662,7 +662,7 @@ typedef union
     {
         unsigned int     major;     /* IRP_MJ_CLOSE */
         int              __pad;
-        client_ptr_t     device;    /* opaque ptr for the device */
+        client_ptr_t     file;      /* opaque ptr for the file object */
     } close;
     struct
     {
@@ -2338,6 +2338,7 @@ enum message_type
     obj_handle_t manager;         /* handle to the device manager */
     obj_handle_t handle;          /* handle to the irp */
     unsigned int status;          /* status of the irp */
+    client_ptr_t file_ptr;        /* opaque pointer to the file object */
     data_size_t  size;            /* result size (input or output depending on the operation) */
     VARARG(data,bytes);           /* output data of the irp */
 @END
