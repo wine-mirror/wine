@@ -2240,6 +2240,27 @@ static void DumpFontList(void)
     }
 }
 
+static BOOL map_font_family(const WCHAR *orig, const WCHAR *repl)
+{
+    Family *family = find_family_from_any_name(repl);
+    if (family != NULL)
+    {
+        Family *new_family = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_family));
+        if (new_family != NULL)
+        {
+            TRACE("mapping %s to %s\n", debugstr_w(repl), debugstr_w(orig));
+            new_family->FamilyName = strdupW(orig);
+            new_family->EnglishName = NULL;
+            list_init(&new_family->faces);
+            new_family->replacement = &family->faces;
+            list_add_tail(&font_list, &new_family->entry);
+            return TRUE;
+        }
+    }
+    TRACE("%s is not available. Skip this replacement.\n", debugstr_w(repl));
+    return FALSE;
+}
+
 /***********************************************************
  * The replacement list is a way to map an entire font
  * family onto another family.  For example adding
@@ -2276,30 +2297,10 @@ static void LoadReplaceList(void)
 	    TRACE("Got %s=%s\n", debugstr_w(value), debugstr_w(data));
             /* "NewName"="Oldname" */
             if(!find_family_from_any_name(value))
-            {
-                Family * const family = find_family_from_any_name(data);
-                if (family != NULL)
-                {
-                    Family * const new_family = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_family));
-                    if (new_family != NULL)
-                    {
-                        TRACE("mapping %s to %s\n", debugstr_w(data), debugstr_w(value));
-                        new_family->FamilyName = strdupW(value);
-                        new_family->EnglishName = NULL;
-                        list_init(&new_family->faces);
-                        new_family->replacement = &family->faces;
-                        list_add_tail(&font_list, &new_family->entry);
-                    }
-                }
-                else
-                {
-	            TRACE("%s is not available. Skip this replacement.\n", debugstr_w(data));
-                }
-            }
+                map_font_family(value, data);
             else
-            {
 	        TRACE("%s is available. Skip this replacement.\n", debugstr_w(value));
-            }
+
 	    /* reset dlen and vlen */
 	    dlen = datalen;
 	    vlen = valuelen;
