@@ -297,7 +297,9 @@ static const char *shader_glsl_get_prefix(enum wined3d_shader_type type)
 static const char *shader_glsl_get_version(const struct wined3d_gl_info *gl_info,
         const struct wined3d_shader_version *version)
 {
-    if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30) && version->major >= 4)
+    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        return "#version 150";
+    else if (gl_info->glsl_version >= MAKEDWORD_VERSION(1, 30) && version && version->major >= 4)
         return "#version 130";
     else
         return "#version 120";
@@ -5594,8 +5596,7 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
 
     string_buffer_clear(buffer);
 
-    shader_addline(buffer, "#version 120\n");
-    shader_addline(buffer, "\n");
+    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, NULL));
 
     for (i = 0; i < WINED3D_FFP_ATTRIBS_COUNT; ++i)
     {
@@ -6112,7 +6113,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     }
     lowest_disabled_stage = stage;
 
-    shader_addline(buffer, "#version 120\n");
+    shader_addline(buffer, "%s\n", shader_glsl_get_version(gl_info, NULL));
 
     if (gl_info->supported[ARB_TEXTURE_RECTANGLE])
         shader_addline(buffer, "#extension GL_ARB_texture_rectangle : enable\n");
