@@ -351,10 +351,10 @@ static void swapchain_blit(const struct wined3d_swapchain *swapchain,
 
         if (backbuffer->container->flags & WINED3D_TEXTURE_NORMALIZED_COORDS)
         {
-            tex_left /= src_w;
-            tex_right /= src_w;
-            tex_top /= src_h;
-            tex_bottom /= src_h;
+            tex_left /= backbuffer->pow2Width;
+            tex_right /= backbuffer->pow2Width;
+            tex_top /= backbuffer->pow2Height;
+            tex_bottom /= backbuffer->pow2Height;
         }
 
         if (is_complex_fixup(backbuffer->resource.format->color_fixup))
