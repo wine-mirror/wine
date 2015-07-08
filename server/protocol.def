@@ -652,6 +652,14 @@ typedef union
     unsigned int         major;     /* irp major function */
     struct
     {
+        unsigned int     major;     /* IRP_MJ_CREATE */
+        unsigned int     access;    /* access rights */
+        unsigned int     sharing;   /* sharing flags */
+        unsigned int     options;   /* file options */
+        client_ptr_t     device;    /* opaque ptr for the device */
+    } create;
+    struct
+    {
         unsigned int     major;     /* IRP_MJ_READ */
         unsigned int     key;       /* driver key */
         client_ptr_t     device;    /* opaque ptr for the device */

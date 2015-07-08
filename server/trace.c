@@ -316,6 +316,12 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
 {
     switch (data->major)
     {
+    case IRP_MJ_CREATE:
+        fprintf( stderr, "%s{major=CREATE,access=%08x,sharing=%08x,options=%08x",
+                 prefix, data->create.access, data->create.sharing, data->create.options );
+        dump_uint64( ",device=", &data->create.device );
+        fputc( '}', stderr );
+        break;
     case IRP_MJ_READ:
         fprintf( stderr, "%s{major=READ,key=%08x", prefix, data->read.key );
         dump_uint64( ",pos=", &data->read.pos );
@@ -338,6 +344,9 @@ static void dump_irp_params( const char *prefix, const irp_params_t *data )
         dump_ioctl_code( ",code=", &data->ioctl.code );
         dump_uint64( ",device=", &data->ioctl.device );
         fputc( '}', stderr );
+        break;
+    case IRP_MJ_MAXIMUM_FUNCTION + 1: /* invalid */
+        fprintf( stderr, "%s{}", prefix );
         break;
     default:
         fprintf( stderr, "%s{major=%u}", prefix, data->major );
