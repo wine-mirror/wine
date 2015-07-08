@@ -2427,6 +2427,70 @@ static void test_attach_input(void)
     DestroyWindow(Wnd2);
 }
 
+static DWORD WINAPI get_key_state_thread(void *arg)
+{
+    HANDLE *semaphores = arg;
+    DWORD result;
+
+    ReleaseSemaphore(semaphores[0], 1, NULL);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    result = GetKeyState('X');
+    todo_wine
+    ok((result & 0x8000) || broken(!(result & 0x8000)), /* > Win 2003 */
+       "expected that highest bit is set, got %x\n", result);
+
+    ReleaseSemaphore(semaphores[0], 1, NULL);
+    result = WaitForSingleObject(semaphores[1], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    result = GetKeyState('X');
+    ok(!(result & 0x8000), "expected that highest bit is unset, got %x\n", result);
+
+    return 0;
+}
+
+static void test_GetKeyState(void)
+{
+    HANDLE semaphores[2];
+    HANDLE thread;
+    DWORD result;
+    HWND hwnd;
+
+    semaphores[0] = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(semaphores[0] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+    semaphores[1] = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(semaphores[1] != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    hwnd = CreateWindowA("static", "Title", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                         10, 10, 200, 200, NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindowA failed %u\n", GetLastError());
+
+    thread = CreateThread(NULL, 0, get_key_state_thread, semaphores, 0, NULL);
+    ok(thread != NULL, "CreateThread failed %u\n", GetLastError());
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    SetFocus(hwnd);
+    keybd_event('X', 0, 0, 0);
+
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+    result = WaitForSingleObject(semaphores[0], 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    keybd_event('X', 0, KEYEVENTF_KEYUP, 0);
+
+    ReleaseSemaphore(semaphores[1], 1, NULL);
+    result = WaitForSingleObject(thread, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    CloseHandle(thread);
+
+    DestroyWindow(hwnd);
+    CloseHandle(semaphores[0]);
+    CloseHandle(semaphores[1]);
+}
+
 START_TEST(input)
 {
     init_function_pointers();
@@ -2449,6 +2513,7 @@ START_TEST(input)
     test_keyboard_layout_name();
     test_key_names();
     test_attach_input();
+    test_GetKeyState();
 
     if(pGetMouseMovePointsEx)
         test_GetMouseMovePointsEx();
