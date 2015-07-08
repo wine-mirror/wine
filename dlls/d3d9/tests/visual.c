@@ -19288,6 +19288,339 @@ done:
     DestroyWindow(window);
 }
 
+static void test_updatetexture(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d9;
+    HWND window;
+    HRESULT hr;
+    IDirect3DBaseTexture9 *src, *dst;
+    unsigned int t, i, f, l, x, y, z;
+    D3DLOCKED_RECT locked_rect;
+    D3DLOCKED_BOX locked_box;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    D3DCOLOR color;
+    BOOL ati2n_supported, do_visual_test;
+    static const struct
+    {
+        struct vec3 pos;
+        struct vec2 texcoord;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, {0.0f, 1.0f}},
+        {{-1.0f,  1.0f, 0.0f}, {0.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, 1.0f}},
+        {{ 1.0f,  1.0f, 0.0f}, {1.0f, 0.0f}},
+    };
+    static const struct
+    {
+        struct vec3 pos;
+        struct vec3 texcoord;
+    }
+    quad_cube_tex[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}, {1.0f, -0.5f,  0.5f}},
+        {{-1.0f,  1.0f, 0.0f}, {1.0f,  0.5f,  0.5f}},
+        {{ 1.0f, -1.0f, 0.0f}, {1.0f, -0.5f, -0.5f}},
+        {{ 1.0f,  1.0f, 0.0f}, {1.0f,  0.5f, -0.5f}},
+    };
+    static const struct
+    {
+        UINT src_width, src_height;
+        UINT dst_width, dst_height;
+        UINT src_levels, dst_levels;
+        D3DFORMAT src_format, dst_format;
+        BOOL broken;
+    }
+    tests[] =
+    {
+        {8, 8, 8, 8, 0, 0, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 0 */
+        {8, 8, 8, 8, 4, 4, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 1 */
+        {8, 8, 8, 8, 2, 2, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 2 */
+        {8, 8, 8, 8, 1, 1, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 3 */
+        {8, 8, 8, 8, 4, 0, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 4 */
+        {8, 8, 2, 2, 4, 2, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 5 */
+        /* The WARP renderer doesn't handle these cases correctly. */
+        {8, 8, 8, 8, 4, 2, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, TRUE}, /* 6 */
+        {8, 8, 4, 4, 4, 2, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, TRUE}, /* 7 */
+        /* Not clear what happens here on Windows, it doesn't make much sense
+         * though (on Nvidia it seems to upload the 4x4 surface into the 7x7
+         * one or something like that). */
+        /* {8, 8, 7, 7, 4, 2, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, */
+        {8, 8, 8, 8, 1, 4, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 8 */
+        {4, 4, 8, 8, 1, 1, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 9 */
+        /* This one causes weird behavior on Windows (it probably writes out
+         * of the texture memory). */
+        /* {8, 8, 4, 4, 1, 1, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, */
+        {8, 4, 4, 2, 4, 2, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 10 */
+        {8, 4, 2, 4, 4, 2, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 11 */
+        {8, 8, 8, 8, 4, 4, D3DFMT_A8R8G8B8, D3DFMT_X8R8G8B8, FALSE}, /* 12 */
+        {8, 8, 8, 8, 4, 4, D3DFMT_X8R8G8B8, D3DFMT_A8R8G8B8, FALSE}, /* 13 */
+        /* The data is converted correctly on AMD, on Nvidia nothing happens
+         * (it draws a black quad). */
+        {8, 8, 8, 8, 4, 4, D3DFMT_A8R8G8B8, D3DFMT_R5G6B5, TRUE}, /* 14 */
+        /* Here the data is converted on AMD, just copied and "reinterpreted" as
+         * a 32 bit float on Nvidia (specifically the tested value becomes a
+         * very small float number which we get as 0 in the test). */
+        {8, 8, 8, 8, 4, 4, D3DFMT_A8R8G8B8, D3DFMT_R32F, TRUE}, /* 15 */
+        /* This one doesn't seem to give the expected results on AMD. */
+        /* {8, 8, 8, 8, 4, 4, D3DFMT_A8R8G8B8, D3DFMT_Q8W8V8U8, FALSE}, */
+        {8, 8, 8, 8, 4, 4, MAKEFOURCC('A','T','I','2'), MAKEFOURCC('A','T','I','2'), FALSE}, /* 16 */
+        {8, 8, 8, 8, 4, 2, MAKEFOURCC('A','T','I','2'), MAKEFOURCC('A','T','I','2'), FALSE}, /* 17 */
+        {8, 8, 2, 2, 4, 2, MAKEFOURCC('A','T','I','2'), MAKEFOURCC('A','T','I','2'), FALSE}, /* 18 */
+    };
+    static const struct
+    {
+        D3DRESOURCETYPE type;
+        DWORD fvf;
+        const void *quad;
+        unsigned int vertex_size;
+        DWORD cap;
+        const char *name;
+    }
+    texture_types[] =
+    {
+        {D3DRTYPE_TEXTURE, D3DFVF_XYZ | D3DFVF_TEX1,
+         quad, sizeof(*quad), D3DPTEXTURECAPS_MIPMAP, "2D mipmapped"},
+
+        {D3DRTYPE_CUBETEXTURE, D3DFVF_XYZ | D3DFVF_TEX1 | D3DFVF_TEXCOORDSIZE3(0),
+         quad_cube_tex, sizeof(*quad_cube_tex), D3DPTEXTURECAPS_CUBEMAP, "Cube"},
+
+        {D3DRTYPE_VOLUMETEXTURE, D3DFVF_XYZ | D3DFVF_TEX1,
+         quad, sizeof(*quad), D3DPTEXTURECAPS_VOLUMEMAP, "Volume"}
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d9, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d9, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
+    ok(SUCCEEDED(hr), "Failed to set texture filtering state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+    ok(SUCCEEDED(hr), "Failed to set texture clamping state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
+    ok(SUCCEEDED(hr), "Failed to set texture clamping state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_ADDRESSW, D3DTADDRESS_CLAMP);
+    ok(SUCCEEDED(hr), "Failed to set texture clamping state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
+    ok(hr == D3D_OK, "Failed to set texture stage state, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TEXTURE);
+    ok(hr == D3D_OK, "Failed to set texture stage state, hr %#x.\n", hr);
+
+    for (t = 0; t < sizeof(texture_types) / sizeof(*texture_types); ++t)
+    {
+        if (!(caps.TextureCaps & texture_types[t].cap))
+        {
+            skip("%s textures not supported, skipping some tests.\n", texture_types[t].name);
+            continue;
+        }
+
+        if (FAILED(IDirect3D9_CheckDeviceFormat(d3d9, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, 0, texture_types[t].type, MAKEFOURCC('A','T','I','2'))))
+        {
+            skip("%s ATI2N textures are not supported, skipping some tests.\n", texture_types[t].name);
+            ati2n_supported = FALSE;
+        }
+        else
+        {
+            ati2n_supported = TRUE;
+        }
+
+        hr = IDirect3DDevice9_SetFVF(device, texture_types[t].fvf);
+        ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+
+        for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+        {
+            if (tests[i].src_format == MAKEFOURCC('A','T','I','2') && !ati2n_supported)
+                continue;
+
+            switch (texture_types[t].type)
+            {
+                case D3DRTYPE_TEXTURE:
+                    hr = IDirect3DDevice9_CreateTexture(device,
+                            tests[i].src_width, tests[i].src_height,
+                            tests[i].src_levels, 0, tests[i].src_format, D3DPOOL_SYSTEMMEM,
+                            (IDirect3DTexture9 **)&src, NULL);
+                    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, case %u, %u.\n", hr, t, i);
+                    hr = IDirect3DDevice9_CreateTexture(device,
+                            tests[i].dst_width, tests[i].dst_height,
+                            tests[i].dst_levels, 0, tests[i].dst_format, D3DPOOL_DEFAULT,
+                            (IDirect3DTexture9 **)&dst, NULL);
+                    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, case %u, %u.\n", hr, t, i);
+                    break;
+                case D3DRTYPE_CUBETEXTURE:
+                    hr = IDirect3DDevice9_CreateCubeTexture(device,
+                            tests[i].src_width,
+                            tests[i].src_levels, 0, tests[i].src_format, D3DPOOL_SYSTEMMEM,
+                            (IDirect3DCubeTexture9 **)&src, NULL);
+                    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, case %u, %u.\n", hr, t, i);
+                    hr = IDirect3DDevice9_CreateCubeTexture(device,
+                            tests[i].dst_width,
+                            tests[i].dst_levels, 0, tests[i].dst_format, D3DPOOL_DEFAULT,
+                            (IDirect3DCubeTexture9 **)&dst, NULL);
+                    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, case %u, %u.\n", hr, t, i);
+                    break;
+                case D3DRTYPE_VOLUMETEXTURE:
+                    hr = IDirect3DDevice9_CreateVolumeTexture(device,
+                            tests[i].src_width, tests[i].src_height, tests[i].src_width,
+                            tests[i].src_levels, 0, tests[i].src_format, D3DPOOL_SYSTEMMEM,
+                            (IDirect3DVolumeTexture9 **)&src, NULL);
+                    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, case %u, %u.\n", hr, t, i);
+                    hr = IDirect3DDevice9_CreateVolumeTexture(device,
+                            tests[i].dst_width, tests[i].dst_height, tests[i].dst_width,
+                            tests[i].dst_levels, 0, tests[i].dst_format, D3DPOOL_DEFAULT,
+                            (IDirect3DVolumeTexture9 **)&dst, NULL);
+                    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x, case %u, %u.\n", hr, t, i);
+                    break;
+                default:
+                    trace("Unexpected resource type.\n");
+            }
+
+            /* Skip the visual part of the test for ATI2N (laziness) and cases that
+             * give a different (and unlikely to be useful) result. */
+            do_visual_test = (tests[i].src_format == D3DFMT_A8R8G8B8 || tests[i].src_format == D3DFMT_X8R8G8B8)
+                && tests[i].src_levels != 0
+                && tests[i].src_width >= tests[i].dst_width && tests[i].src_height >= tests[i].dst_height
+                && !(tests[i].src_width > tests[i].src_height && tests[i].dst_width < tests[i].dst_height);
+
+            if (do_visual_test)
+            {
+                DWORD *ptr = NULL;
+                unsigned int width, height, depth, row_pitch = 0, slice_pitch = 0;
+
+                for (f = 0; f < (texture_types[t].type == D3DRTYPE_CUBETEXTURE ? 6 : 1); ++f)
+                {
+                    width = tests[i].src_width;
+                    height = texture_types[t].type != D3DRTYPE_CUBETEXTURE ? tests[i].src_height : tests[i].src_width;
+                    depth = texture_types[t].type == D3DRTYPE_VOLUMETEXTURE ? width : 1;
+
+                    for (l = 0; l < tests[i].src_levels; ++l)
+                    {
+                        switch (texture_types[t].type)
+                        {
+                            case D3DRTYPE_TEXTURE:
+                                hr = IDirect3DTexture9_LockRect((IDirect3DTexture9 *)src,
+                                        l, &locked_rect, NULL, 0);
+                                ptr = locked_rect.pBits;
+                                row_pitch = locked_rect.Pitch / sizeof(*ptr);
+                                break;
+                            case D3DRTYPE_CUBETEXTURE:
+                                hr = IDirect3DCubeTexture9_LockRect((IDirect3DCubeTexture9 *)src,
+                                        f, l, &locked_rect, NULL, 0);
+                                ptr = locked_rect.pBits;
+                                row_pitch = locked_rect.Pitch / sizeof(*ptr);
+                                break;
+                            case D3DRTYPE_VOLUMETEXTURE:
+                                hr = IDirect3DVolumeTexture9_LockBox((IDirect3DVolumeTexture9 *)src,
+                                        l, &locked_box, NULL, 0);
+                                ptr = locked_box.pBits;
+                                row_pitch = locked_box.RowPitch / sizeof(*ptr);
+                                slice_pitch = locked_box.SlicePitch / sizeof(*ptr);
+                                break;
+                            default:
+                                trace("Unexpected resource type.\n");
+                        }
+                        ok(SUCCEEDED(hr), "Failed to lock texture, hr %#x.\n", hr);
+
+                        for (z = 0; z < depth; ++z)
+                        {
+                            for (y = 0; y < height; ++y)
+                            {
+                                for (x = 0; x < width; ++x)
+                                {
+                                    ptr[z * slice_pitch + y * row_pitch + x] = 0xff000000
+                                            | (DWORD)(x / (width - 1.0f) * 255.0f) << 16
+                                            | (DWORD)(y / (height - 1.0f) * 255.0f) << 8;
+                                }
+                            }
+                        }
+
+                        switch (texture_types[t].type)
+                        {
+                            case D3DRTYPE_TEXTURE:
+                                hr = IDirect3DTexture9_UnlockRect((IDirect3DTexture9 *)src, l);
+                                break;
+                            case D3DRTYPE_CUBETEXTURE:
+                                hr = IDirect3DCubeTexture9_UnlockRect((IDirect3DCubeTexture9 *)src, f, l);
+                                break;
+                            case D3DRTYPE_VOLUMETEXTURE:
+                                hr = IDirect3DVolumeTexture9_UnlockBox((IDirect3DVolumeTexture9 *)src, l);
+                                break;
+                            default:
+                                trace("Unexpected resource type.\n");
+                        }
+                        ok(SUCCEEDED(hr), "Failed to unlock texture, hr %#x.\n", hr);
+
+                        width >>= 1;
+                        if (!width)
+                            width = 1;
+                        height >>= 1;
+                        if (!height)
+                            height = 1;
+                        depth >>= 1;
+                        if (!depth)
+                            depth = 1;
+                    }
+                }
+            }
+
+            hr = IDirect3DDevice9_UpdateTexture(device, src, dst);
+            if (FAILED(hr))
+            {
+                todo_wine ok(SUCCEEDED(hr), "Failed to update texture, hr %#x, case %u, %u.\n", hr, t, i);
+                IDirect3DBaseTexture9_Release(src);
+                IDirect3DBaseTexture9_Release(dst);
+                continue;
+            }
+            ok(SUCCEEDED(hr), "Failed to update texture, hr %#x, case %u, %u.\n", hr, t, i);
+
+            if (do_visual_test)
+            {
+                hr = IDirect3DDevice9_SetTexture(device, 0, dst);
+                ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+
+                hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 1.0f, 0);
+                ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+                hr = IDirect3DDevice9_BeginScene(device);
+                ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+                hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2,
+                        texture_types[t].quad, texture_types[t].vertex_size);
+                ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+                hr = IDirect3DDevice9_EndScene(device);
+                ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+                color = getPixelColor(device, 320, 240);
+                ok (color_match(color, 0x007f7f00, 2) || broken(tests[i].broken)
+                        || broken(color == 0xdeadbeec), /* WARP device often just breaks down. */
+                        "Got unexpected color 0x%08x, case %u, %u.\n", color, t, i);
+            }
+
+            IDirect3DBaseTexture9_Release(src);
+            IDirect3DBaseTexture9_Release(dst);
+        }
+    }
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -19404,4 +19737,5 @@ START_TEST(visual)
     test_multisample_mismatch();
     test_texcoordindex();
     test_vertex_blending();
+    test_updatetexture();
 }
