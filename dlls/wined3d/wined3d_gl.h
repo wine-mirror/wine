@@ -162,6 +162,7 @@ enum wined3d_gl_extension
     /* Internally used */
     WINED3D_GL_BLEND_EQUATION,
     WINED3D_GL_NORMALIZED_TEXRECT,
+    WINED3D_GL_LEGACY_CONTEXT,
     WINED3D_GL_VERSION_2_0,
 
     WINED3D_GL_EXT_COUNT,

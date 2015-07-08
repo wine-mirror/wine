@@ -262,9 +262,7 @@ static inline float float_24_to_32(DWORD in)
  * values in wined3d_main.c as well. */
 struct wined3d_settings
 {
-    /* Ideally, we don't want the user to have to request GLSL. If the
-     * hardware supports GLSL, we should use it. However, until it's fully
-     * implemented, we'll leave it as a registry setting for developers. */
+    DWORD max_gl_version;
     BOOL glslRequested;
     int offscreen_rendering_mode;
     unsigned short pci_vendor_id;
@@ -1402,7 +1400,7 @@ void context_bind_texture(struct wined3d_context *context, GLenum target, GLuint
 void context_check_fbo_status(const struct wined3d_context *context, GLenum target) DECLSPEC_HIDDEN;
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain, struct wined3d_surface *target,
         const struct wined3d_format *ds_format) DECLSPEC_HIDDEN;
-BOOL context_debug_output_enabled(const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+HGLRC context_create_wgl_attribs(const struct wined3d_gl_info *gl_info, HDC hdc, HGLRC share_ctx) DECLSPEC_HIDDEN;
 void context_destroy(struct wined3d_device *device, struct wined3d_context *context) DECLSPEC_HIDDEN;
 void context_free_event_query(struct wined3d_event_query *query) DECLSPEC_HIDDEN;
 void context_free_occlusion_query(struct wined3d_occlusion_query *query) DECLSPEC_HIDDEN;
@@ -1713,6 +1711,7 @@ struct wined3d_gl_limits
 
 struct wined3d_gl_info
 {
+    DWORD selected_gl_version;
     DWORD glsl_version;
     struct wined3d_gl_limits limits;
     DWORD reserved_glsl_constants, reserved_arb_constants;

@@ -1376,7 +1376,7 @@ static void bind_dummy_textures(const struct wined3d_device *device, const struc
     }
 }
 
-BOOL context_debug_output_enabled(const struct wined3d_gl_info *gl_info)
+static BOOL context_debug_output_enabled(const struct wined3d_gl_info *gl_info)
 {
     return gl_info->supported[ARB_DEBUG_OUTPUT]
             && (ERR_ON(d3d) || FIXME_ON(d3d) || WARN_ON(d3d_perf));
@@ -1405,6 +1405,40 @@ static void WINE_GLAPI wined3d_debug_callback(GLenum source, GLenum type, GLuint
             FIXME("ctx %p, type %#x: %s.\n", ctx, type, debugstr_an(message, length));
             break;
     }
+}
+
+HGLRC context_create_wgl_attribs(const struct wined3d_gl_info *gl_info, HDC hdc, HGLRC share_ctx)
+{
+    HGLRC ctx;
+    unsigned int ctx_attrib_idx = 0;
+    GLint ctx_attribs[7], ctx_flags = 0;
+
+    if (context_debug_output_enabled(gl_info))
+        ctx_flags = WGL_CONTEXT_DEBUG_BIT_ARB;
+    ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_MAJOR_VERSION_ARB;
+    ctx_attribs[ctx_attrib_idx++] = gl_info->selected_gl_version >> 16;
+    ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_MINOR_VERSION_ARB;
+    ctx_attribs[ctx_attrib_idx++] = gl_info->selected_gl_version & 0xffff;
+    if (gl_info->selected_gl_version >= MAKEDWORD_VERSION(3, 2))
+        ctx_flags |= WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+    if (ctx_flags)
+    {
+        ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_FLAGS_ARB;
+        ctx_attribs[ctx_attrib_idx++] = ctx_flags;
+    }
+    ctx_attribs[ctx_attrib_idx] = 0;
+
+    if (!(ctx = gl_info->p_wglCreateContextAttribsARB(hdc, share_ctx, ctx_attribs)))
+    {
+        if (ctx_flags & WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB)
+        {
+            ctx_attribs[ctx_attrib_idx - 1] &= ~WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB;
+            if (!(ctx = gl_info->p_wglCreateContextAttribsARB(hdc, share_ctx, ctx_attribs)))
+                WARN("Failed to create a WGL context with wglCreateContextAttribsARB, last error %#x.\n",
+                        GetLastError());
+        }
+    }
+    return ctx;
 }
 
 struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
@@ -1557,22 +1591,8 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     share_ctx = device->context_count ? device->contexts[0]->glCtx : NULL;
     if (gl_info->p_wglCreateContextAttribsARB)
     {
-        unsigned int ctx_attrib_idx = 0;
-        GLint ctx_attribs[3];
-
-        if (context_debug_output_enabled(gl_info))
-        {
-            ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_FLAGS_ARB;
-            ctx_attribs[ctx_attrib_idx++] = WGL_CONTEXT_DEBUG_BIT_ARB;
-        }
-        ctx_attribs[ctx_attrib_idx] = 0;
-
-        if (!(ctx = gl_info->p_wglCreateContextAttribsARB(hdc, share_ctx, ctx_attribs)))
-        {
-            ERR("Failed to create a WGL context.\n");
-            context_release(ret);
+        if (!(ctx = context_create_wgl_attribs(gl_info, hdc, share_ctx)))
             goto out;
-        }
     }
     else
     {

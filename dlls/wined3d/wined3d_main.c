@@ -72,6 +72,7 @@ static CRITICAL_SECTION wined3d_wndproc_cs = {&wined3d_wndproc_cs_debug, -1, 0, 
  * where appropriate. */
 struct wined3d_settings wined3d_settings =
 {
+    MAKEDWORD_VERSION(1, 0), /* Default to legacy OpenGL */
     TRUE,           /* Use of GLSL enabled by default */
     ORM_FBO,        /* Use FBOs to do offscreen rendering */
     PCI_VENDOR_NONE,/* PCI Vendor ID */
@@ -199,6 +200,15 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
 
     if (hkey || appkey)
     {
+        if (!get_config_key_dword(hkey, appkey, "MaxVersionGL", &tmpvalue))
+        {
+            if (tmpvalue != wined3d_settings.max_gl_version)
+            {
+                ERR_(winediag)("Setting maximum allowed wined3d GL version to %u.%u.\n",
+                        tmpvalue >> 16, tmpvalue & 0xffff);
+                wined3d_settings.max_gl_version = tmpvalue;
+            }
+        }
         if ( !get_config_key( hkey, appkey, "UseGLSL", buffer, size) )
         {
             if (!strcmp(buffer,"disabled"))
