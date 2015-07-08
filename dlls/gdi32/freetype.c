@@ -2292,12 +2292,24 @@ static void LoadReplaceList(void)
 
 	dlen = datalen;
 	vlen = valuelen;
-	while(RegEnumValueW(hkey, i++, value, &vlen, NULL, &type, data,
-			    &dlen) == ERROR_SUCCESS) {
-	    TRACE("Got %s=%s\n", debugstr_w(value), debugstr_w(data));
+        while(RegEnumValueW(hkey, i++, value, &vlen, NULL, &type, data, &dlen) == ERROR_SUCCESS)
+        {
             /* "NewName"="Oldname" */
             if(!find_family_from_any_name(value))
-                map_font_family(value, data);
+            {
+                if (type == REG_MULTI_SZ)
+                {
+                    WCHAR *replace = data;
+                    while(*replace)
+                    {
+                        if (map_font_family(value, replace))
+                            break;
+                        replace += strlenW(replace) + 1;
+                    }
+                }
+                else
+                    map_font_family(value, data);
+            }
             else
 	        TRACE("%s is available. Skip this replacement.\n", debugstr_w(value));
 
