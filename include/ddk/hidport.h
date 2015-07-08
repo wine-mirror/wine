@@ -19,7 +19,7 @@
 #ifndef __HIDPORT_H__
 #define __HIDPORT_H__
 
-#include <hidclass.h>
+#include <ddk/hidclass.h>
 
 typedef struct _HID_MINIDRIVER_REGISTRATION
 {

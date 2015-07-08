@@ -19,8 +19,8 @@
 #ifndef __WINE_HIDSDI_H
 #define __WINE_HIDSDI_H
 
-#include "hidusage.h"
-#include "hidpi.h"
+#include <hidusage.h>
+#include <ddk/hidpi.h>
 
 #ifndef WINE_NTSTATUS_DECLARED
 #define WINE_NTSTATUS_DECLARED
