@@ -1314,9 +1314,13 @@ static ULONG STDMETHODCALLTYPE d2d_text_renderer_Release(IDWriteTextRenderer *if
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_IsPixelSnappingDisabled(IDWriteTextRenderer *iface,
         void *ctx, BOOL *disabled)
 {
-    FIXME("iface %p, ctx %p, disabled %p stub!\n", iface, ctx, disabled);
+    struct d2d_draw_text_layout_ctx *context = ctx;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, ctx %p, disabled %p.\n", iface, ctx, disabled);
+
+    *disabled = context->options & D2D1_DRAW_TEXT_OPTIONS_NO_SNAP;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetCurrentTransform(IDWriteTextRenderer *iface,
@@ -1351,7 +1355,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
         FIXME("Ignoring glyph run description %p.\n", desc);
     if (effect)
         FIXME("Ignoring effect %p.\n", effect);
-    if (context->options)
+    if (context->options & ~D2D1_DRAW_TEXT_OPTIONS_NO_SNAP)
         FIXME("Ignoring options %#x.\n", context->options);
 
     TRACE("%s\n", debugstr_wn(desc->string, desc->stringLength));
