@@ -1326,9 +1326,13 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_IsPixelSnappingDisabled(IDWri
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetCurrentTransform(IDWriteTextRenderer *iface,
         void *ctx, DWRITE_MATRIX *transform)
 {
-    FIXME("iface %p, ctx %p, transform %p stub!\n", iface, ctx, transform);
+    struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, ctx %p, transform %p.\n", iface, ctx, transform);
+
+    ID2D1RenderTarget_GetTransform(&render_target->ID2D1RenderTarget_iface, (D2D1_MATRIX_3X2_F *)transform);
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetPixelsPerDip(IDWriteTextRenderer *iface, void *ctx, float *ppd)
