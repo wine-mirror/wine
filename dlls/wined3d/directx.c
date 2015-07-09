@@ -2898,6 +2898,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glBeginQuery)               /* OpenGL 1.5 */
     USE_GL_FUNC(glBindAttribLocation)       /* OpenGL 2.0 */
     USE_GL_FUNC(glBindBuffer)               /* OpenGL 1.5 */
+    USE_GL_FUNC(glBindVertexArray)          /* OpenGL 3.0 */
     USE_GL_FUNC(glBlendColor)               /* OpenGL 1.4 */
     USE_GL_FUNC(glBlendEquation)            /* OpenGL 1.4 */
     USE_GL_FUNC(glBlendEquationSeparate)    /* OpenGL 2.0 */
@@ -2916,6 +2917,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glDeleteProgram)            /* OpenGL 2.0 */
     USE_GL_FUNC(glDeleteQueries)            /* OpenGL 1.5 */
     USE_GL_FUNC(glDeleteShader)             /* OpenGL 2.0 */
+    USE_GL_FUNC(glDeleteVertexArrays)       /* OpenGL 3.0 */
     USE_GL_FUNC(glDetachShader)             /* OpenGL 2.0 */
     USE_GL_FUNC(glDisableVertexAttribArray) /* OpenGL 2.0 */
     USE_GL_FUNC(glDrawArraysInstanced)      /* OpenGL 3.1 */
@@ -2925,6 +2927,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     USE_GL_FUNC(glEndQuery)                 /* OpenGL 1.5 */
     USE_GL_FUNC(glGenBuffers)               /* OpenGL 1.5 */
     USE_GL_FUNC(glGenQueries)               /* OpenGL 1.5 */
+    USE_GL_FUNC(glGenVertexArrays)          /* OpenGL 3.0 */
     USE_GL_FUNC(glGetActiveUniform)         /* OpenGL 2.0 */
     USE_GL_FUNC(glGetAttachedShaders)       /* OpenGL 2.0 */
     USE_GL_FUNC(glGetAttribLocation)        /* OpenGL 2.0 */
@@ -3787,6 +3790,15 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     adapter->d3d_info.valid_rt_mask = 0;
     for (i = 0; i < gl_info->limits.buffers; ++i)
         adapter->d3d_info.valid_rt_mask |= (1 << i);
+
+    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    {
+        GLuint vao;
+
+        GL_EXTCALL(glGenVertexArrays(1, &vao));
+        GL_EXTCALL(glBindVertexArray(vao));
+        checkGLcall("creating VAO");
+    }
 
     fixup_extensions(gl_info, gl_renderer_str, gl_vendor, card_vendor, device);
     init_driver_info(driver_info, card_vendor, device);

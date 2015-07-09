@@ -1735,6 +1735,15 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     checkGLcall("glPixelStorei(GL_UNPACK_ALIGNMENT, device->surface_alignment);");
 
+    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    {
+        GLuint vao;
+
+        GL_EXTCALL(glGenVertexArrays(1, &vao));
+        GL_EXTCALL(glBindVertexArray(vao));
+        checkGLcall("creating VAO");
+    }
+
     if (gl_info->supported[ARB_VERTEX_BLEND])
     {
         /* Direct3D always uses n-1 weights for n world matrices and uses
