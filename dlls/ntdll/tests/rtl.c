@@ -1623,14 +1623,10 @@ static void test_RtlCompressBuffer(void)
     compress_workspace = decompress_workspace = 0xdeadbeef;
     status = pRtlGetCompressionWorkSpaceSize(COMPRESSION_FORMAT_LZNT1, &compress_workspace,
                                              &decompress_workspace);
-    todo_wine
     ok(status == STATUS_SUCCESS, "got wrong status 0x%08x\n", status);
     ok(compress_workspace != 0, "got wrong compress_workspace %u\n", compress_workspace);
-    if (status == STATUS_SUCCESS)
-    {
-        workspace = HeapAlloc(GetProcessHeap(), 0, compress_workspace);
-        ok(workspace != NULL, "HeapAlloc failed %d\n", GetLastError());
-    }
+    workspace = HeapAlloc(GetProcessHeap(), 0, compress_workspace);
+    ok(workspace != NULL, "HeapAlloc failed %d\n", GetLastError());
 
     /* test compression format / engine */
     final_size = 0xdeadbeef;
@@ -1699,35 +1695,28 @@ static void test_RtlGetCompressionWorkSpaceSize(void)
     /* test invalid format / engine */
     status = pRtlGetCompressionWorkSpaceSize(COMPRESSION_FORMAT_NONE, &compress_workspace,
                                              &decompress_workspace);
-    todo_wine
     ok(status == STATUS_INVALID_PARAMETER, "got wrong status 0x%08x\n", status);
 
     status = pRtlGetCompressionWorkSpaceSize(COMPRESSION_FORMAT_DEFAULT, &compress_workspace,
                                              &decompress_workspace);
-    todo_wine
     ok(status == STATUS_INVALID_PARAMETER, "got wrong status 0x%08x\n", status);
 
     status = pRtlGetCompressionWorkSpaceSize(0xFF, &compress_workspace, &decompress_workspace);
-    todo_wine
     ok(status == STATUS_UNSUPPORTED_COMPRESSION, "got wrong status 0x%08x\n", status);
 
     /* test LZNT1 with normal and maximum compression */
     compress_workspace = decompress_workspace = 0xdeadbeef;
     status = pRtlGetCompressionWorkSpaceSize(COMPRESSION_FORMAT_LZNT1, &compress_workspace,
                                              &decompress_workspace);
-    todo_wine
     ok(status == STATUS_SUCCESS, "got wrong status 0x%08x\n", status);
     ok(compress_workspace != 0, "got wrong compress_workspace %u\n", compress_workspace);
-    todo_wine
     ok(decompress_workspace == 0x1000, "got wrong decompress_workspace %u\n", decompress_workspace);
 
     compress_workspace = decompress_workspace = 0xdeadbeef;
     status = pRtlGetCompressionWorkSpaceSize(COMPRESSION_FORMAT_LZNT1 | COMPRESSION_ENGINE_MAXIMUM,
                                              &compress_workspace, &decompress_workspace);
-    todo_wine
     ok(status == STATUS_SUCCESS, "got wrong status 0x%08x\n", status);
     ok(compress_workspace != 0, "got wrong compress_workspace %u\n", compress_workspace);
-    todo_wine
     ok(decompress_workspace == 0x1000, "got wrong decompress_workspace %u\n", decompress_workspace);
 }
 
