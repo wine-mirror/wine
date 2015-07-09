@@ -1337,9 +1337,13 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetCurrentTransform(IDWriteTe
 
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_GetPixelsPerDip(IDWriteTextRenderer *iface, void *ctx, float *ppd)
 {
-    FIXME("iface %p, ctx %p, ppd %p stub!\n", iface, ctx, ppd);
+    struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, ctx %p, ppd %p.\n", iface, ctx, ppd);
+
+    *ppd = render_target->dpi_y / 96.0f;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRenderer *iface, void *ctx,
