@@ -942,11 +942,17 @@ static inline IUnknown *layout_get_effect_from_pos(struct dwrite_textlayout *lay
     return ((struct layout_range_effect*)h)->effect;
 }
 
+static inline BOOL layout_is_erun_rtl(const struct layout_effective_run *erun)
+{
+    return erun->run->u.regular.run.bidiLevel & 1;
+}
+
 /* Effective run is built from consecutive clusters of a single nominal run, 'first_cluster' is 0 based cluster index,
    'cluster_count' indicates how many clusters to add, including first one. */
 static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 first_cluster,
     UINT32 cluster_count, UINT32 line, FLOAT origin_x, BOOL strikethrough)
 {
+    BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     UINT32 i, start, length, last_cluster;
     struct layout_effective_run *run;
 
@@ -958,10 +964,11 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
             return E_OUTOFMEMORY;
 
         inlineobject->object = r->u.object.object;
-        inlineobject->origin_x = origin_x;
-        inlineobject->origin_y = 0.0; /* FIXME */
-        inlineobject->align_dx = 0.0;
         inlineobject->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
+        inlineobject->origin_x = is_rtl ? origin_x - inlineobject->width : origin_x;
+        inlineobject->origin_y = 0.0; /* set after line is built */
+        inlineobject->align_dx = 0.0;
+
         /* It's not clear how these two are set, possibly directionality
            is derived from surrounding text (replaced text could have
            different ranges which differ in reading direction). */
@@ -995,10 +1002,17 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     run->run = r;
     run->start = start = layout->clusters[first_cluster].position;
     run->length = length;
-    run->origin_x = origin_x;
+    run->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
+
+    /* Check if run direction matches paragraph direction, if it doesn't adjust by
+       run width */
+    if (layout_is_erun_rtl(run) ^ is_rtl)
+        run->origin_x = is_rtl ? origin_x - run->width : origin_x + run->width;
+    else
+        run->origin_x = origin_x;
+
     run->origin_y = 0.0; /* set after line is built */
     run->align_dx = 0.0;
-    run->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
     run->line = line;
 
     if (r->u.regular.run.glyphCount) {
@@ -1304,7 +1318,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         return hr;
 
     layout->metrics.lineCount = 0;
-    origin_x = 0.0;
+    origin_x = is_rtl ? layout->metrics.layoutWidth : 0.0;
     line = 0;
     run = layout->clusters[0].run;
     memset(&metrics, 0, sizeof(metrics));
@@ -1321,7 +1335,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, s[0]);
             if (FAILED(hr))
                 return hr;
-            origin_x += get_cluster_range_width(layout, start, i);
+            origin_x += is_rtl ? -get_cluster_range_width(layout, start, i) :
+                                  get_cluster_range_width(layout, start, i);
             run = layout->clusters[i].run;
             start = i;
         }
@@ -1409,7 +1424,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
             width = layout->clustermetrics[i].width;
             memset(&metrics, 0, sizeof(metrics));
-            origin_x = 0.0;
+            origin_x = is_rtl ? layout->metrics.layoutWidth : 0.0;
             start = i;
         }
         else {
