@@ -3168,7 +3168,6 @@ static void test_SetReadingDirection(void)
     hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-todo_wine
     ok(metrics.left == metrics.layoutWidth - clusters[0].width, "got %.2f\n", metrics.left);
     ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
     ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);
@@ -3184,7 +3183,6 @@ todo_wine
     hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-todo_wine
     ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
     ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
     ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);

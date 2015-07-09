@@ -1137,6 +1137,7 @@ static FLOAT layout_get_line_width(struct dwrite_textlayout *layout,
 
 static void layout_apply_leading_alignment(struct dwrite_textlayout *layout)
 {
+    BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_effective_inline *inrun;
     struct layout_effective_run *erun;
 
@@ -1153,11 +1154,12 @@ static void layout_apply_leading_alignment(struct dwrite_textlayout *layout)
         inrun = layout_get_next_inline_run(layout, inrun);
     }
 
-    layout->metrics.left = 0;
+    layout->metrics.left = is_rtl ? layout->metrics.layoutWidth - layout->metrics.width : 0.0;
 }
 
 static void layout_apply_trailing_alignment(struct dwrite_textlayout *layout)
 {
+    BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_effective_inline *inrun;
     struct layout_effective_run *erun;
     UINT32 line;
@@ -1168,6 +1170,9 @@ static void layout_apply_trailing_alignment(struct dwrite_textlayout *layout)
     for (line = 0; line < layout->metrics.lineCount; line++) {
         FLOAT width = layout_get_line_width(layout, erun, inrun, line);
         FLOAT shift = layout->metrics.layoutWidth - width;
+
+        if (is_rtl)
+            shift *= -1.0;
 
         while (erun && erun->line == line) {
             erun->align_dx = shift;
@@ -1180,11 +1185,12 @@ static void layout_apply_trailing_alignment(struct dwrite_textlayout *layout)
         }
     }
 
-    layout->metrics.left = layout->metrics.layoutWidth - layout->metrics.width;
+    layout->metrics.left = is_rtl ? 0.0 : layout->metrics.layoutWidth - layout->metrics.width;
 }
 
 static void layout_apply_centered_alignment(struct dwrite_textlayout *layout)
 {
+    BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_effective_inline *inrun;
     struct layout_effective_run *erun;
     UINT32 line;
@@ -1195,6 +1201,9 @@ static void layout_apply_centered_alignment(struct dwrite_textlayout *layout)
     for (line = 0; line < layout->metrics.lineCount; line++) {
         FLOAT width = layout_get_line_width(layout, erun, inrun, line);
         FLOAT shift = (layout->metrics.layoutWidth - width) / 2.0;
+
+        if (is_rtl)
+            shift *= -1.0;
 
         while (erun && erun->line == line) {
             erun->align_dx = shift;
@@ -1277,6 +1286,7 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
 
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
+    BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_effective_inline *inrun;
     struct layout_effective_run *erun;
     const struct layout_run *run;
@@ -1411,7 +1421,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         textpos += layout->clustermetrics[i].length;
     }
 
-    layout->metrics.left = layout->metrics.top = 0.0;
+    layout->metrics.left = is_rtl ? layout->metrics.layoutWidth - layout->metrics.width : 0;
+    layout->metrics.top = 0.0;
     layout->metrics.maxBidiReorderingDepth = 1; /* FIXME */
     layout->metrics.height = 0.0;
 
