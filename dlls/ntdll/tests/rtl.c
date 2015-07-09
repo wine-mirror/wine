@@ -92,6 +92,9 @@ static NTSTATUS  (WINAPI *pRtlIpv4StringToAddressA)(PCSTR, BOOLEAN, PCSTR *, IN_
 static NTSTATUS  (WINAPI *pLdrAddRefDll)(ULONG, HMODULE);
 static NTSTATUS  (WINAPI *pLdrLockLoaderLock)(ULONG, ULONG*, ULONG_PTR*);
 static NTSTATUS  (WINAPI *pLdrUnlockLoaderLock)(ULONG, ULONG_PTR);
+static NTSTATUS  (WINAPI *pRtlGetCompressionWorkSpaceSize)(USHORT, PULONG, PULONG);
+static NTSTATUS  (WINAPI *pRtlDecompressBuffer)(USHORT, PUCHAR, ULONG, const UCHAR*, ULONG, PULONG);
+static NTSTATUS  (WINAPI *pRtlCompressBuffer)(USHORT, const UCHAR*, ULONG, PUCHAR, ULONG, ULONG, PULONG, PVOID);
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -139,6 +142,9 @@ static void InitFunctionPtrs(void)
         pLdrAddRefDll = (void *)GetProcAddress(hntdll, "LdrAddRefDll");
         pLdrLockLoaderLock = (void *)GetProcAddress(hntdll, "LdrLockLoaderLock");
         pLdrUnlockLoaderLock = (void *)GetProcAddress(hntdll, "LdrUnlockLoaderLock");
+        pRtlGetCompressionWorkSpaceSize = (void *)GetProcAddress(hntdll, "RtlGetCompressionWorkSpaceSize");
+        pRtlDecompressBuffer = (void *)GetProcAddress(hntdll, "RtlDecompressBuffer");
+        pRtlCompressBuffer = (void *)GetProcAddress(hntdll, "RtlCompressBuffer");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -1599,6 +1605,92 @@ static void test_LdrLockLoaderLock(void)
     pLdrUnlockLoaderLock(0, magic);
 }
 
+static void test_RtlCompressBuffer(void)
+{
+    ULONG compress_workspace, decompress_workspace;
+    static const UCHAR test_buffer[] = "WineWineWine";
+    static UCHAR buf1[0x1000], buf2[0x1000];
+    ULONG final_size, buf_size;
+    UCHAR *workspace = NULL;
+    NTSTATUS status;
+
+    if (!pRtlCompressBuffer || !pRtlDecompressBuffer || !pRtlGetCompressionWorkSpaceSize)
+    {
+        win_skip("skipping RtlCompressBuffer tests, required functions not available\n");
+        return;
+    }
+
+    compress_workspace = decompress_workspace = 0xdeadbeef;
+    status = pRtlGetCompressionWorkSpaceSize(COMPRESSION_FORMAT_LZNT1, &compress_workspace,
+                                             &decompress_workspace);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "got wrong status 0x%08x\n", status);
+    ok(compress_workspace != 0, "got wrong compress_workspace %u\n", compress_workspace);
+    if (status == STATUS_SUCCESS)
+    {
+        workspace = HeapAlloc(GetProcessHeap(), 0, compress_workspace);
+        ok(workspace != NULL, "HeapAlloc failed %d\n", GetLastError());
+    }
+
+    /* test compression format / engine */
+    final_size = 0xdeadbeef;
+    status = pRtlCompressBuffer(COMPRESSION_FORMAT_NONE, test_buffer, sizeof(test_buffer),
+                                buf1, sizeof(buf1) - 1, 4096, &final_size, workspace);
+    todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "got wrong status 0x%08x\n", status);
+    ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
+
+    final_size = 0xdeadbeef;
+    status = pRtlCompressBuffer(COMPRESSION_FORMAT_DEFAULT, test_buffer, sizeof(test_buffer),
+                                buf1, sizeof(buf1) - 1, 4096, &final_size, workspace);
+    todo_wine
+    ok(status == STATUS_INVALID_PARAMETER, "got wrong status 0x%08x\n", status);
+    ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
+
+    final_size = 0xdeadbeef;
+    status = pRtlCompressBuffer(0xFF, test_buffer, sizeof(test_buffer),
+                                buf1, sizeof(buf1) - 1, 4096, &final_size, workspace);
+    todo_wine
+    ok(status == STATUS_UNSUPPORTED_COMPRESSION, "got wrong status 0x%08x\n", status);
+    ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
+
+    /* test compression */
+    final_size = 0xdeadbeef;
+    memset(buf1, 0x11, sizeof(buf1));
+    status = pRtlCompressBuffer(COMPRESSION_FORMAT_LZNT1, test_buffer, sizeof(test_buffer),
+                                buf1, sizeof(buf1), 4096, &final_size, workspace);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "got wrong status 0x%08x\n", status);
+    todo_wine
+    ok((*(WORD *)buf1 & 0x7000) == 0x3000, "no chunk signature found %04x\n", *(WORD *)buf1);
+    todo_wine
+    ok(final_size < sizeof(test_buffer), "got wrong final_size %u\n", final_size);
+
+    /* test decompression */
+    buf_size = final_size;
+    final_size = 0xdeadbeef;
+    memset(buf2, 0x11, sizeof(buf2));
+    status = pRtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, buf2, sizeof(buf2),
+                                  buf1, buf_size, &final_size);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "got wrong status 0x%08x\n", status);
+    todo_wine
+    ok(final_size == sizeof(test_buffer), "got wrong final_size %u\n", final_size);
+    todo_wine
+    ok(!memcmp(buf2, test_buffer, sizeof(test_buffer)), "got wrong decoded data\n");
+    ok(buf2[sizeof(test_buffer)] == 0x11, "too many bytes written\n");
+
+    /* buffer too small */
+    final_size = 0xdeadbeef;
+    memset(buf1, 0x11, sizeof(buf1));
+    status = pRtlCompressBuffer(COMPRESSION_FORMAT_LZNT1, test_buffer, sizeof(test_buffer),
+                                buf1, 4, 4096, &final_size, workspace);
+    todo_wine
+    ok(status == STATUS_BUFFER_TOO_SMALL, "got wrong status 0x%08x\n", status);
+
+    HeapFree(GetProcessHeap(), 0, workspace);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -1625,4 +1717,5 @@ START_TEST(rtl)
     test_RtlIpv4StringToAddress();
     test_LdrAddRefDll();
     test_LdrLockLoaderLock();
+    test_RtlCompressBuffer();
 }
