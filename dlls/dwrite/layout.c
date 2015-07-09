@@ -352,6 +352,16 @@ static inline HRESULT format_set_paralignment(struct dwrite_textformat_data *for
     return S_OK;
 }
 
+static inline HRESULT format_set_readingdirection(struct dwrite_textformat_data *format,
+    DWRITE_READING_DIRECTION direction, BOOL *changed)
+{
+    if ((UINT32)direction > DWRITE_READING_DIRECTION_BOTTOM_TO_TOP)
+        return E_INVALIDARG;
+    if (changed) *changed = format->readingdir != direction;
+    format->readingdir = direction;
+    return S_OK;
+}
+
 static HRESULT get_fontfallback_from_format(const struct dwrite_textformat_data *format, IDWriteFontFallback **fallback)
 {
     *fallback = format->fallback;
@@ -2168,7 +2178,6 @@ static HRESULT WINAPI dwritetextlayout_SetWordWrapping(IDWriteTextLayout2 *iface
 static HRESULT WINAPI dwritetextlayout_SetReadingDirection(IDWriteTextLayout2 *iface, DWRITE_READING_DIRECTION direction)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    TRACE("(%p)->(%d)\n", This, direction);
     return IDWriteTextFormat1_SetReadingDirection(&This->IDWriteTextFormat1_iface, direction);
 }
 
@@ -3208,8 +3217,19 @@ static HRESULT WINAPI dwritetextformat1_layout_SetWordWrapping(IDWriteTextFormat
 static HRESULT WINAPI dwritetextformat1_layout_SetReadingDirection(IDWriteTextFormat1 *iface, DWRITE_READING_DIRECTION direction)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d): stub\n", This, direction);
-    return E_NOTIMPL;
+    BOOL changed;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d)\n", This, direction);
+
+    hr = format_set_readingdirection(&This->format, direction, &changed);
+    if (FAILED(hr))
+        return hr;
+
+    if (changed)
+        This->recompute = RECOMPUTE_EVERYTHING;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat1_layout_SetFlowDirection(IDWriteTextFormat1 *iface, DWRITE_FLOW_DIRECTION direction)
@@ -4088,14 +4108,8 @@ static HRESULT WINAPI dwritetextformat_SetWordWrapping(IDWriteTextFormat1 *iface
 static HRESULT WINAPI dwritetextformat_SetReadingDirection(IDWriteTextFormat1 *iface, DWRITE_READING_DIRECTION direction)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-
     TRACE("(%p)->(%d)\n", This, direction);
-
-    if ((UINT32)direction > DWRITE_READING_DIRECTION_BOTTOM_TO_TOP)
-        return E_INVALIDARG;
-
-    This->format.readingdir = direction;
-    return S_OK;
+    return format_set_readingdirection(&This->format, direction, NULL);
 }
 
 static HRESULT WINAPI dwritetextformat_SetFlowDirection(IDWriteTextFormat1 *iface, DWRITE_FLOW_DIRECTION direction)

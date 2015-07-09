@@ -3120,6 +3120,100 @@ static void test_SetParagraphAlignment(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_SetReadingDirection(void)
+{
+    static const WCHAR strW[] = {'a',0};
+    DWRITE_CLUSTER_METRICS clusters[1];
+    DWRITE_TEXT_METRICS metrics;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_READING_DIRECTION v;
+    DWRITE_LINE_METRICS lines[1];
+    UINT32 count;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextFormat_GetReadingDirection(format);
+    ok(v == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT, "got %d\n", v);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextLayout_GetReadingDirection(layout);
+    ok(v == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT, "got %d\n", v);
+
+    v = IDWriteTextFormat_GetReadingDirection(format);
+    ok(v == DWRITE_READING_DIRECTION_LEFT_TO_RIGHT, "got %d\n", v);
+
+    hr = IDWriteTextLayout_SetReadingDirection(layout, DWRITE_READING_DIRECTION_RIGHT_TO_LEFT);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, lines, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+
+    /* leading alignment, RTL */
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+todo_wine
+    ok(metrics.left == metrics.layoutWidth - clusters[0].width, "got %.2f\n", metrics.left);
+    ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
+    ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);
+    ok(metrics.height == lines[0].height, "got %.2f\n", metrics.height);
+    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
+    ok(metrics.layoutHeight == 100.0, "got %.2f\n", metrics.layoutHeight);
+    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+
+    /* trailing alignment, RTL */
+    hr = IDWriteTextLayout_SetTextAlignment(layout, DWRITE_TEXT_ALIGNMENT_TRAILING);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+todo_wine
+    ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
+    ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
+    ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);
+    ok(metrics.height == lines[0].height, "got %.2f\n", metrics.height);
+    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
+    ok(metrics.layoutHeight == 100.0, "got %.2f\n", metrics.layoutHeight);
+    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+
+    /* centered alignment, RTL */
+    hr = IDWriteTextLayout_SetTextAlignment(layout, DWRITE_TEXT_ALIGNMENT_CENTER);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ok(metrics.left == (metrics.layoutWidth - clusters[0].width) / 2.0, "got %.2f\n", metrics.left);
+    ok(metrics.top == 0.0, "got %.2f\n", metrics.top);
+    ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);
+    ok(metrics.height == lines[0].height, "got %.2f\n", metrics.height);
+    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
+    ok(metrics.layoutHeight == 100.0, "got %.2f\n", metrics.layoutHeight);
+    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -3162,6 +3256,7 @@ START_TEST(layout)
     test_GetLineMetrics();
     test_SetTextAlignment();
     test_SetParagraphAlignment();
+    test_SetReadingDirection();
 
     IDWriteFactory_Release(factory);
 }
