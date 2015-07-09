@@ -1234,19 +1234,61 @@ NTSTATUS WINAPI RtlGetCompressionWorkSpaceSize(USHORT CompressionFormatAndEngine
     return STATUS_NOT_IMPLEMENTED;
 }
 
+/* compress data using LZNT1, currently only a stub */
+static NTSTATUS lznt1_compress(UCHAR *src, ULONG src_size, UCHAR *dst, ULONG dst_size,
+                               ULONG chunk_size, ULONG *final_size, UCHAR *workspace)
+{
+    UCHAR *src_cur = src, *src_end = src + src_size;
+    UCHAR *dst_cur = dst, *dst_end = dst + dst_size;
+    ULONG block_size;
+
+    while (src_cur < src_end)
+    {
+        /* determine size of current chunk */
+        block_size = min(0x1000, src_end - src_cur);
+        if (dst_cur + sizeof(WORD) + block_size > dst_end)
+            return STATUS_BUFFER_TOO_SMALL;
+
+        /* write (uncompressed) chunk header */
+        *(WORD *)dst_cur = 0x3000 | (block_size - 1);
+        dst_cur += sizeof(WORD);
+
+        /* write chunk content */
+        memcpy(dst_cur, src_cur, block_size);
+        dst_cur += block_size;
+        src_cur += block_size;
+    }
+
+    if (final_size)
+        *final_size = dst_cur - dst;
+
+    return STATUS_SUCCESS;
+}
+
 /******************************************************************************
  *  RtlCompressBuffer		[NTDLL.@]
  */
-NTSTATUS WINAPI RtlCompressBuffer(USHORT CompressionFormatAndEngine, PUCHAR UncompressedBuffer,
-                                  ULONG UncompressedBufferSize, PUCHAR CompressedBuffer,
-                                  ULONG CompressedBufferSize, ULONG UncompressedChunkSize,
-                                  PULONG FinalCompressedSize, PVOID WorkSpace)
+NTSTATUS WINAPI RtlCompressBuffer(USHORT format, PUCHAR uncompressed, ULONG uncompressed_size,
+                                  PUCHAR compressed, ULONG compressed_size, ULONG chunk_size,
+                                  PULONG final_size, PVOID workspace)
 {
-    FIXME("0x%04x, %p, %u, %p, %u, %u, %p, %p :stub\n", CompressionFormatAndEngine, UncompressedBuffer,
-         UncompressedBufferSize, CompressedBuffer, CompressedBufferSize, UncompressedChunkSize,
-         FinalCompressedSize, WorkSpace);
+    FIXME("0x%04x, %p, %u, %p, %u, %u, %p, %p: semi-stub\n", format, uncompressed,
+          uncompressed_size, compressed, compressed_size, chunk_size, final_size, workspace);
 
-    return STATUS_NOT_IMPLEMENTED;
+    switch (format & ~COMPRESSION_ENGINE_MAXIMUM)
+    {
+        case COMPRESSION_FORMAT_LZNT1:
+            return lznt1_compress(uncompressed, uncompressed_size, compressed,
+                                  compressed_size, chunk_size, final_size, workspace);
+
+        case COMPRESSION_FORMAT_NONE:
+        case COMPRESSION_FORMAT_DEFAULT:
+            return STATUS_INVALID_PARAMETER;
+
+        default:
+            FIXME("format %u not implemented\n", format);
+            return STATUS_UNSUPPORTED_COMPRESSION;
+    }
 }
 
 /******************************************************************************

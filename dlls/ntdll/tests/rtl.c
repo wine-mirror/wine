@@ -1636,21 +1636,18 @@ static void test_RtlCompressBuffer(void)
     final_size = 0xdeadbeef;
     status = pRtlCompressBuffer(COMPRESSION_FORMAT_NONE, test_buffer, sizeof(test_buffer),
                                 buf1, sizeof(buf1) - 1, 4096, &final_size, workspace);
-    todo_wine
     ok(status == STATUS_INVALID_PARAMETER, "got wrong status 0x%08x\n", status);
     ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
 
     final_size = 0xdeadbeef;
     status = pRtlCompressBuffer(COMPRESSION_FORMAT_DEFAULT, test_buffer, sizeof(test_buffer),
                                 buf1, sizeof(buf1) - 1, 4096, &final_size, workspace);
-    todo_wine
     ok(status == STATUS_INVALID_PARAMETER, "got wrong status 0x%08x\n", status);
     ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
 
     final_size = 0xdeadbeef;
     status = pRtlCompressBuffer(0xFF, test_buffer, sizeof(test_buffer),
                                 buf1, sizeof(buf1) - 1, 4096, &final_size, workspace);
-    todo_wine
     ok(status == STATUS_UNSUPPORTED_COMPRESSION, "got wrong status 0x%08x\n", status);
     ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
 
@@ -1659,9 +1656,7 @@ static void test_RtlCompressBuffer(void)
     memset(buf1, 0x11, sizeof(buf1));
     status = pRtlCompressBuffer(COMPRESSION_FORMAT_LZNT1, test_buffer, sizeof(test_buffer),
                                 buf1, sizeof(buf1), 4096, &final_size, workspace);
-    todo_wine
     ok(status == STATUS_SUCCESS, "got wrong status 0x%08x\n", status);
-    todo_wine
     ok((*(WORD *)buf1 & 0x7000) == 0x3000, "no chunk signature found %04x\n", *(WORD *)buf1);
     todo_wine
     ok(final_size < sizeof(test_buffer), "got wrong final_size %u\n", final_size);
@@ -1685,7 +1680,6 @@ static void test_RtlCompressBuffer(void)
     memset(buf1, 0x11, sizeof(buf1));
     status = pRtlCompressBuffer(COMPRESSION_FORMAT_LZNT1, test_buffer, sizeof(test_buffer),
                                 buf1, 4, 4096, &final_size, workspace);
-    todo_wine
     ok(status == STATUS_BUFFER_TOO_SMALL, "got wrong status 0x%08x\n", status);
 
     HeapFree(GetProcessHeap(), 0, workspace);
