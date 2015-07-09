@@ -826,8 +826,53 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
         D2D1_POINT_2F baseline_origin, const DWRITE_GLYPH_RUN *glyph_run, ID2D1Brush *brush,
         DWRITE_MEASURING_MODE measuring_mode)
 {
-    FIXME("iface %p, baseline_origin {%.8e, %.8e}, glyph_run %p, brush %p, measuring_mode %#x stub!\n",
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    D2D1_MATRIX_3X2_F *transform, prev_transform;
+    ID2D1PathGeometry *geometry;
+    ID2D1GeometrySink *sink;
+    HRESULT hr;
+
+    TRACE("iface %p, baseline_origin {%.8e, %.8e}, glyph_run %p, brush %p, measuring_mode %#x.\n",
             iface, baseline_origin.x, baseline_origin.y, glyph_run, brush, measuring_mode);
+
+    if (measuring_mode)
+        FIXME("Ignoring measuring mode %#x.\n", measuring_mode);
+
+    if (FAILED(hr = ID2D1Factory_CreatePathGeometry(render_target->factory, &geometry)))
+    {
+        ERR("Failed to create geometry, hr %#x.\n", hr);
+        return;
+    }
+
+    if (FAILED(hr = ID2D1PathGeometry_Open(geometry, &sink)))
+    {
+        ERR("Failed to open geometry sink, hr %#x.\n", hr);
+        ID2D1PathGeometry_Release(geometry);
+        return;
+    }
+
+    if (FAILED(hr = IDWriteFontFace_GetGlyphRunOutline(glyph_run->fontFace, glyph_run->fontEmSize,
+            glyph_run->glyphIndices, glyph_run->glyphAdvances, glyph_run->glyphOffsets, glyph_run->glyphCount,
+            glyph_run->isSideways, glyph_run->bidiLevel & 1, (IDWriteGeometrySink *)sink)))
+    {
+        ERR("Failed to get glyph run outline, hr %#x.\n", hr);
+        ID2D1GeometrySink_Release(sink);
+        ID2D1PathGeometry_Release(geometry);
+        return;
+    }
+
+    if (FAILED(hr = ID2D1GeometrySink_Close(sink)))
+        ERR("Failed to close geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+
+    transform = &render_target->drawing_state.transform;
+    prev_transform = *transform;
+    transform->_31 += baseline_origin.x * transform->_11 + baseline_origin.y * transform->_21;
+    transform->_32 += baseline_origin.x * transform->_12 + baseline_origin.y * transform->_22;
+    ID2D1RenderTarget_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
+    *transform = prev_transform;
+
+    ID2D1PathGeometry_Release(geometry);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_SetTransform(ID2D1RenderTarget *iface,
