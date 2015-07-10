@@ -61,6 +61,12 @@ WINE_DECLARE_DEBUG_CHANNEL(module);
 #define MAP_NORESERVE 0
 #endif
 
+#ifdef _WIN64
+#define DEFAULT_SECURITY_COOKIE_64  (((ULONGLONG)0x00002b99 << 32) | 0x2ddfa232)
+#endif
+#define DEFAULT_SECURITY_COOKIE_32  0xbb40e64e
+#define DEFAULT_SECURITY_COOKIE_16  (DEFAULT_SECURITY_COOKIE_32 >> 16)
+
 /* File view */
 struct file_view
 {
@@ -1053,6 +1059,36 @@ static NTSTATUS stat_mapping_file( struct file_view *view, struct stat *st )
     return status;
 }
 
+/***********************************************************************
+ *           set_security_cookie
+ *
+ * Create a random security cookie for buffer overflow protection. Make
+ * sure it does not accidentally match the default cookie value.
+ */
+static void set_security_cookie(ULONG_PTR *cookie)
+{
+    static ULONG seed;
+
+    if (!cookie) return;
+    if (!seed) seed = NtGetTickCount() ^ GetCurrentProcessId();
+    while (1)
+    {
+        if (*cookie == DEFAULT_SECURITY_COOKIE_16)
+            *cookie = RtlRandom( &seed ) >> 16; /* leave the high word clear */
+        else if (*cookie == DEFAULT_SECURITY_COOKIE_32)
+            *cookie = RtlRandom( &seed );
+#ifdef DEFAULT_SECURITY_COOKIE_64
+        else if (*cookie == DEFAULT_SECURITY_COOKIE_64)
+        {
+            *cookie = RtlRandom( &seed );
+            /* fill up, but keep the highest word clear */
+            *cookie ^= (ULONG_PTR)RtlRandom( &seed ) << 16;
+        }
+#endif
+        else
+            break;
+    }
+}
 
 /***********************************************************************
  *           map_image
@@ -1285,18 +1321,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     loadcfg = RtlImageDirectoryEntryToData( (HMODULE)ptr, TRUE,
                                             IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &loadcfg_size );
     if (loadcfg && loadcfg_size >= sizeof(*loadcfg))
-    {
-        static ULONG seed;
-        ULONG_PTR *cookie = (ULONG_PTR *)loadcfg->SecurityCookie;
-
-        if (!seed) seed = NtGetTickCount() ^ GetCurrentProcessId();
-        if (cookie)
-        {
-            *cookie = RtlRandom( &seed );
-            if (sizeof(ULONG_PTR) > sizeof(ULONG)) /* fill up, but keep the highest word clear */
-                *cookie ^= (ULONG_PTR)RtlRandom( &seed ) << 16;
-        }
-    }
+        set_security_cookie((ULONG_PTR *)loadcfg->SecurityCookie);
 
     /* set the image protections */
 
