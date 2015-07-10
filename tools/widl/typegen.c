@@ -1142,7 +1142,7 @@ static unsigned char get_func_oi2_flags( const var_t *func )
 static unsigned int write_new_procformatstring_type(FILE *file, int indent, const var_t *var,
                                                     int is_return, unsigned int *stack_offset)
 {
-    char buffer[64];
+    char buffer[128];
     unsigned int stack_size, typestring_offset;
     unsigned short flags;
     unsigned char fc = get_parameter_fc( var, is_return, &flags, &stack_size, &typestring_offset );
