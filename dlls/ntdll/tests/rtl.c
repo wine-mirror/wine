@@ -1663,11 +1663,8 @@ static void test_RtlCompressBuffer(void)
     memset(buf2, 0x11, sizeof(buf2));
     status = pRtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, buf2, sizeof(buf2),
                                   buf1, buf_size, &final_size);
-    todo_wine
     ok(status == STATUS_SUCCESS, "got wrong status 0x%08x\n", status);
-    todo_wine
     ok(final_size == sizeof(test_buffer), "got wrong final_size %u\n", final_size);
-    todo_wine
     ok(!memcmp(buf2, test_buffer, sizeof(test_buffer)), "got wrong decoded data\n");
     ok(buf2[sizeof(test_buffer)] == 0x11, "too many bytes written\n");
 
