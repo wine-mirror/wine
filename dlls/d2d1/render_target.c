@@ -44,6 +44,12 @@ static void d2d_matrix_multiply(D2D_MATRIX_3X2_F *a, const D2D_MATRIX_3X2_F *b)
     a->_32 = tmp._31 * b->_12 + tmp._32 * b->_22 + b->_32;
 }
 
+static void d2d_point_set(D2D1_POINT_2F *dst, float x, float y)
+{
+    dst->x = x;
+    dst->y = y;
+}
+
 static void d2d_point_transform(D2D1_POINT_2F *dst, const D2D1_MATRIX_3X2_F *matrix, float x, float y)
 {
     dst->x = x * matrix->_11 + y * matrix->_21 + matrix->_31;
@@ -798,10 +804,38 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawText(ID2D1RenderTarget *
         const WCHAR *string, UINT32 string_len, IDWriteTextFormat *text_format, const D2D1_RECT_F *layout_rect,
         ID2D1Brush *brush, D2D1_DRAW_TEXT_OPTIONS options, DWRITE_MEASURING_MODE measuring_mode)
 {
-    FIXME("iface %p, string %s, string_len %u, text_format %p, layout_rect %p, "
-            "brush %p, options %#x, measuring_mode %#x stub!\n",
+    IDWriteTextLayout *text_layout;
+    IDWriteFactory *dwrite_factory;
+    D2D1_POINT_2F origin;
+    HRESULT hr;
+
+    TRACE("iface %p, string %s, string_len %u, text_format %p, layout_rect %p, "
+            "brush %p, options %#x, measuring_mode %#x.\n",
             iface, debugstr_wn(string, string_len), string_len, text_format, layout_rect,
             brush, options, measuring_mode);
+
+    if (measuring_mode != DWRITE_MEASURING_MODE_NATURAL)
+        FIXME("Ignoring measuring mode %#x.\n", measuring_mode);
+
+    if (FAILED(hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
+            &IID_IDWriteFactory, (IUnknown **)&dwrite_factory)))
+    {
+        ERR("Failed to create dwrite factory, hr %#x.\n", hr);
+        return;
+    }
+
+    hr = IDWriteFactory_CreateTextLayout(dwrite_factory, string, string_len, text_format,
+            layout_rect->right - layout_rect->left, layout_rect->bottom - layout_rect->top, &text_layout);
+    IDWriteFactory_Release(dwrite_factory);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create text layout, hr %#x.\n", hr);
+        return;
+    }
+
+    d2d_point_set(&origin, layout_rect->left, layout_rect->top);
+    ID2D1RenderTarget_DrawTextLayout(iface, origin, text_layout, brush, options);
+    IDWriteTextLayout_Release(text_layout);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawTextLayout(ID2D1RenderTarget *iface,
