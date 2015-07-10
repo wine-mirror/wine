@@ -189,11 +189,20 @@ void d2d_state_block_init(struct d2d_state_block *state_block, const D2D1_DRAWIN
         IDWriteRenderingParams *text_rendering_params) DECLSPEC_HIDDEN;
 struct d2d_state_block *unsafe_impl_from_ID2D1DrawingStateBlock(ID2D1DrawingStateBlock *iface) DECLSPEC_HIDDEN;
 
+enum d2d_geometry_state
+{
+    D2D_GEOMETRY_STATE_INITIAL = 0,
+    D2D_GEOMETRY_STATE_OPEN,
+    D2D_GEOMETRY_STATE_CLOSED,
+};
+
 struct d2d_geometry
 {
     ID2D1Geometry ID2D1Geometry_iface;
     ID2D1GeometrySink ID2D1GeometrySink_iface;
     LONG refcount;
+
+    enum d2d_geometry_state state;
 };
 
 void d2d_path_geometry_init(struct d2d_geometry *geometry) DECLSPEC_HIDDEN;

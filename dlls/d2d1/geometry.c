@@ -101,9 +101,15 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
 
 static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    if (geometry->state != D2D_GEOMETRY_STATE_OPEN)
+        return D2DERR_WRONG_STATE;
+    geometry->state = D2D_GEOMETRY_STATE_CLOSED;
+
+    return S_OK;
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_AddLine(ID2D1GeometrySink *iface, D2D1_POINT_2F point)
@@ -336,8 +342,13 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Open(ID2D1PathGeometry *iface
 
     TRACE("iface %p, sink %p.\n", iface, sink);
 
+    if (geometry->state != D2D_GEOMETRY_STATE_INITIAL)
+        return D2DERR_WRONG_STATE;
+
     *sink = &geometry->ID2D1GeometrySink_iface;
     ID2D1GeometrySink_AddRef(*sink);
+
+    geometry->state = D2D_GEOMETRY_STATE_OPEN;
 
     return S_OK;
 }
