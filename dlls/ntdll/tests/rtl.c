@@ -1717,6 +1717,366 @@ static void test_RtlGetCompressionWorkSpaceSize(void)
     ok(decompress_workspace == 0x1000, "got wrong decompress_workspace %u\n", decompress_workspace);
 }
 
+/* helper for test_RtlDecompressBuffer, checks if a chunk is incomplete */
+static BOOL is_incomplete_chunk(const UCHAR *compressed, ULONG compressed_size, BOOL check_all)
+{
+    ULONG chunk_size;
+
+    if (compressed_size <= sizeof(WORD))
+        return TRUE;
+
+    while (compressed_size >= sizeof(WORD))
+    {
+        chunk_size = (*(WORD *)compressed & 0xFFF) + 1;
+        if (compressed_size < sizeof(WORD) + chunk_size)
+            return TRUE;
+        if (!check_all)
+            break;
+        compressed      += sizeof(WORD) + chunk_size;
+        compressed_size -= sizeof(WORD) + chunk_size;
+    }
+
+    return FALSE;
+}
+
+#define DECOMPRESS_BROKEN_FRAGMENT     1 /* < Win 7 */
+#define DECOMPRESS_BROKEN_TRUNCATED    2 /* broken on all machines */
+
+static void test_RtlDecompressBuffer(void)
+{
+    static const struct
+    {
+        UCHAR compressed[32];
+        ULONG compressed_size;
+        NTSTATUS status;
+        UCHAR uncompressed[32];
+        ULONG uncompressed_size;
+        DWORD broken_flags;
+    }
+    test_lznt[] =
+    {
+        /* 4 byte uncompressed chunk */
+        {
+            {0x03, 0x30, 'W', 'i', 'n', 'e'},
+            6,
+            STATUS_SUCCESS,
+            "Wine",
+            4,
+            DECOMPRESS_BROKEN_FRAGMENT
+        },
+        /* 8 byte uncompressed chunk */
+        {
+            {0x07, 0x30, 'W', 'i', 'n', 'e', 'W', 'i', 'n', 'e'},
+            10,
+            STATUS_SUCCESS,
+            "WineWine",
+            8,
+            DECOMPRESS_BROKEN_FRAGMENT
+        },
+        /* 4 byte compressed chunk */
+        {
+            {0x04, 0xB0, 0x00, 'W', 'i', 'n', 'e'},
+            7,
+            STATUS_SUCCESS,
+            "Wine",
+            4
+        },
+        /* 8 byte compressed chunk */
+        {
+            {0x08, 0xB0, 0x00, 'W', 'i', 'n', 'e', 'W', 'i', 'n', 'e'},
+            11,
+            STATUS_SUCCESS,
+            "WineWine",
+            8
+        },
+        /* compressed chunk using backwards reference */
+        {
+            {0x06, 0xB0, 0x10, 'W', 'i', 'n', 'e', 0x01, 0x30},
+            9,
+            STATUS_SUCCESS,
+            "WineWine",
+            8,
+            DECOMPRESS_BROKEN_TRUNCATED
+        },
+        /* compressed chunk using backwards reference with length > bytes_read */
+        {
+            {0x06, 0xB0, 0x10, 'W', 'i', 'n', 'e', 0x05, 0x30},
+            9,
+            STATUS_SUCCESS,
+            "WineWineWine",
+            12,
+            DECOMPRESS_BROKEN_TRUNCATED
+        },
+        /* same as above, but unused bits != 0 */
+        {
+            {0x06, 0xB0, 0x30, 'W', 'i', 'n', 'e', 0x01, 0x30},
+            9,
+            STATUS_SUCCESS,
+            "WineWine",
+            8,
+            DECOMPRESS_BROKEN_TRUNCATED
+        },
+        /* compressed chunk without backwards reference and unused bits != 0 */
+        {
+            {0x01, 0xB0, 0x02, 'W'},
+            4,
+            STATUS_SUCCESS,
+            "W",
+            1
+        },
+        /* termination sequence after first chunk */
+        {
+            {0x03, 0x30, 'W', 'i', 'n', 'e', 0x00, 0x00, 0x03, 0x30, 'W', 'i', 'n', 'e'},
+            14,
+            STATUS_SUCCESS,
+            "Wine",
+            4,
+            DECOMPRESS_BROKEN_FRAGMENT
+        },
+        /* compressed chunk using backwards reference with 4 bit offset, 12 bit length */
+        {
+            {0x14, 0xB0, 0x00, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                         0x00, 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                         0x01, 0x01, 0xF0},
+            23,
+            STATUS_SUCCESS,
+            "ABCDEFGHIJKLMNOPABCD",
+            20,
+            DECOMPRESS_BROKEN_TRUNCATED
+        },
+        /* compressed chunk using backwards reference with 5 bit offset, 11 bit length */
+        {
+            {0x15, 0xB0, 0x00, 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+                         0x00, 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P',
+                         0x02, 'A', 0x00, 0x78},
+            24,
+            STATUS_SUCCESS,
+            "ABCDEFGHIJKLMNOPABCD",
+            20,
+            DECOMPRESS_BROKEN_TRUNCATED
+        },
+        /* uncompressed chunk with invalid magic */
+        {
+            {0x03, 0x20, 'W', 'i', 'n', 'e'},
+            6,
+            STATUS_SUCCESS,
+            "Wine",
+            4,
+            DECOMPRESS_BROKEN_FRAGMENT
+        },
+        /* compressed chunk with invalid magic */
+        {
+            {0x04, 0xA0, 0x00, 'W', 'i', 'n', 'e'},
+            7,
+            STATUS_SUCCESS,
+            "Wine",
+            4
+        },
+        /* garbage byte after end of buffer */
+        {
+            {0x00, 0xB0, 0x02, 0x01},
+            4,
+            STATUS_SUCCESS,
+            "",
+            0
+        },
+        /* empty compressed chunk */
+        {
+            {0x00, 0xB0, 0x00},
+            3,
+            STATUS_SUCCESS,
+            "",
+            0
+        },
+        /* empty compressed chunk with unused bits != 0 */
+        {
+            {0x00, 0xB0, 0x01},
+            3,
+            STATUS_SUCCESS,
+            "",
+            0
+        },
+        /* empty input buffer */
+        {
+            {},
+            0,
+            STATUS_BAD_COMPRESSION_BUFFER,
+        },
+        /* incomplete chunk header */
+        {
+            {0x01},
+            1,
+            STATUS_BAD_COMPRESSION_BUFFER
+        },
+        /* incomplete chunk header */
+        {
+            {0x00, 0x30},
+            2,
+            STATUS_BAD_COMPRESSION_BUFFER
+        },
+        /* compressed chunk with invalid backwards reference */
+        {
+            {0x06, 0xB0, 0x10, 'W', 'i', 'n', 'e', 0x05, 0x40},
+            9,
+            STATUS_BAD_COMPRESSION_BUFFER
+        },
+        /* compressed chunk with incomplete backwards reference */
+        {
+            {0x05, 0xB0, 0x10, 'W', 'i', 'n', 'e', 0x05},
+            8,
+            STATUS_BAD_COMPRESSION_BUFFER
+        },
+        /* incomplete uncompressed chunk */
+        {
+            {0x07, 0x30, 'W', 'i', 'n', 'e'},
+            6,
+            STATUS_BAD_COMPRESSION_BUFFER
+        },
+        /* incomplete compressed chunk */
+        {
+            {0x08, 0xB0, 0x00, 'W', 'i', 'n', 'e'},
+            7,
+            STATUS_BAD_COMPRESSION_BUFFER
+        },
+        /* two compressed chunks, the second one incomplete */
+        {
+            {0x00, 0xB0, 0x02, 0x00, 0xB0},
+            5,
+            STATUS_BAD_COMPRESSION_BUFFER,
+        }
+    };
+
+    static UCHAR buf[0x2000];
+    NTSTATUS status;
+    ULONG final_size;
+    int i;
+
+    if (!pRtlDecompressBuffer)
+    {
+        win_skip("RtlDecompressBuffer is not available\n");
+        return;
+    }
+
+    /* test compression format / engine */
+    final_size = 0xdeadbeef;
+    status = pRtlDecompressBuffer(COMPRESSION_FORMAT_NONE, buf, sizeof(buf), test_lznt[0].compressed,
+                                  test_lznt[0].compressed_size, &final_size);
+    ok(status == STATUS_INVALID_PARAMETER, "got wrong status 0x%08x\n", status);
+    ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
+
+    final_size = 0xdeadbeef;
+    status = pRtlDecompressBuffer(COMPRESSION_FORMAT_DEFAULT, buf, sizeof(buf), test_lznt[0].compressed,
+                                  test_lznt[0].compressed_size, &final_size);
+    ok(status == STATUS_INVALID_PARAMETER, "got wrong status 0x%08x\n", status);
+    ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
+
+    final_size = 0xdeadbeef;
+    status = pRtlDecompressBuffer(0xFF, buf, sizeof(buf), test_lznt[0].compressed,
+                                  test_lznt[0].compressed_size, &final_size);
+    ok(status == STATUS_UNSUPPORTED_COMPRESSION, "got wrong status 0x%08x\n", status);
+    ok(final_size == 0xdeadbeef, "got wrong final_size %u\n", final_size);
+
+    /* regular tests for RtlDecompressBuffer */
+    for (i = 0; i < sizeof(test_lznt) / sizeof(test_lznt[0]); i++)
+    {
+        trace("Running test %d (compressed_size=%u, uncompressed_size=%u, status=0x%08x)\n",
+              i, test_lznt[i].compressed_size, test_lznt[i].uncompressed_size, test_lznt[i].status);
+
+        /* test with very big buffer */
+        final_size = 0xdeadbeef;
+        memset(buf, 0x11, sizeof(buf));
+        status = pRtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, buf, sizeof(buf), test_lznt[i].compressed,
+                                      test_lznt[i].compressed_size, &final_size);
+        ok(status == test_lznt[i].status || broken(status == STATUS_BAD_COMPRESSION_BUFFER &&
+           (test_lznt[i].broken_flags & DECOMPRESS_BROKEN_FRAGMENT)), "%d: got wrong status 0x%08x\n", i, status);
+        if (!status)
+        {
+            ok(final_size == test_lznt[i].uncompressed_size,
+               "%d: got wrong final_size %u\n", i, final_size);
+            ok(!memcmp(buf, test_lznt[i].uncompressed, test_lznt[i].uncompressed_size),
+               "%d: got wrong decoded data\n", i);
+            ok(buf[test_lznt[i].uncompressed_size] == 0x11,
+               "%d: buf[%u] was modified\n", i, test_lznt[i].uncompressed_size);
+        }
+
+        /* test that modifier for compression engine is ignored */
+        final_size = 0xdeadbeef;
+        memset(buf, 0x11, sizeof(buf));
+        status = pRtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1 | COMPRESSION_ENGINE_MAXIMUM, buf, sizeof(buf),
+                                      test_lznt[i].compressed, test_lznt[i].compressed_size, &final_size);
+        ok(status == test_lznt[i].status || broken(status == STATUS_BAD_COMPRESSION_BUFFER &&
+           (test_lznt[i].broken_flags & DECOMPRESS_BROKEN_FRAGMENT)), "%d: got wrong status 0x%08x\n", i, status);
+        if (!status)
+        {
+            ok(final_size == test_lznt[i].uncompressed_size,
+               "%d: got wrong final_size %u\n", i, final_size);
+            ok(!memcmp(buf, test_lznt[i].uncompressed, test_lznt[i].uncompressed_size),
+               "%d: got wrong decoded data\n", i);
+            ok(buf[test_lznt[i].uncompressed_size] == 0x11,
+               "%d: buf[%u] was modified\n", i, test_lznt[i].uncompressed_size);
+        }
+
+        /* test with expected output size */
+        if (test_lznt[i].uncompressed_size > 0)
+        {
+            final_size = 0xdeadbeef;
+            memset(buf, 0x11, sizeof(buf));
+            status = pRtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, buf, test_lznt[i].uncompressed_size,
+                                          test_lznt[i].compressed, test_lznt[i].compressed_size, &final_size);
+            ok(status == test_lznt[i].status, "%d: got wrong status 0x%08x\n", i, status);
+            if (!status)
+            {
+                ok(final_size == test_lznt[i].uncompressed_size,
+                   "%d: got wrong final_size %u\n", i, final_size);
+                ok(!memcmp(buf, test_lznt[i].uncompressed, test_lznt[i].uncompressed_size),
+                   "%d: got wrong decoded data\n", i);
+                ok(buf[test_lznt[i].uncompressed_size] == 0x11,
+                   "%d: buf[%u] was modified\n", i, test_lznt[i].uncompressed_size);
+            }
+        }
+
+        /* test with smaller output size */
+        if (test_lznt[i].uncompressed_size > 1)
+        {
+            final_size = 0xdeadbeef;
+            memset(buf, 0x11, sizeof(buf));
+            status = pRtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, buf, test_lznt[i].uncompressed_size - 1,
+                                          test_lznt[i].compressed, test_lznt[i].compressed_size, &final_size);
+            if (test_lznt[i].broken_flags & DECOMPRESS_BROKEN_TRUNCATED)
+                todo_wine
+                ok(status == STATUS_BAD_COMPRESSION_BUFFER, "%d: got wrong status 0x%08x\n", i, status);
+            else
+                ok(status == test_lznt[i].status, "%d: got wrong status 0x%08x\n", i, status);
+            if (!status)
+            {
+                ok(final_size == test_lznt[i].uncompressed_size - 1,
+                   "%d: got wrong final_size %u\n", i, final_size);
+                ok(!memcmp(buf, test_lznt[i].uncompressed, test_lznt[i].uncompressed_size - 1),
+                   "%d: got wrong decoded data\n", i);
+                ok(buf[test_lznt[i].uncompressed_size - 1] == 0x11,
+                   "%d: buf[%u] was modified\n", i, test_lznt[i].uncompressed_size - 1);
+            }
+        }
+
+        /* test with zero output size */
+        final_size = 0xdeadbeef;
+        memset(buf, 0x11, sizeof(buf));
+        status = pRtlDecompressBuffer(COMPRESSION_FORMAT_LZNT1, buf, 0, test_lznt[i].compressed,
+                                      test_lznt[i].compressed_size, &final_size);
+        if (is_incomplete_chunk(test_lznt[i].compressed, test_lznt[i].compressed_size, FALSE))
+            ok(status == STATUS_BAD_COMPRESSION_BUFFER, "%d: got wrong status 0x%08x\n", i, status);
+        else
+        {
+            ok(status == STATUS_SUCCESS, "%d: got wrong status 0x%08x\n", i, status);
+            ok(final_size == 0, "%d: got wrong final_size %u\n", i, final_size);
+            ok(buf[0] == 0x11, "%d: buf[0] was modified\n", i);
+        }
+    }
+}
+
+#undef DECOMPRESS_BROKEN_FRAGMENT
+#undef DECOMPRESS_BROKEN_TRUNCATED
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -1745,4 +2105,5 @@ START_TEST(rtl)
     test_LdrLockLoaderLock();
     test_RtlCompressBuffer();
     test_RtlGetCompressionWorkSpaceSize();
+    test_RtlDecompressBuffer();
 }
