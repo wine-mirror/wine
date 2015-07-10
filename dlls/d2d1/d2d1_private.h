@@ -205,6 +205,7 @@ struct d2d_geometry
     LONG refcount;
 
     enum d2d_geometry_state state;
+    UINT32 figure_count;
 };
 
 void d2d_path_geometry_init(struct d2d_geometry *geometry) DECLSPEC_HIDDEN;

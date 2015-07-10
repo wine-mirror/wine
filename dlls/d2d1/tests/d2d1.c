@@ -884,6 +884,7 @@ static void test_path_geometry(void)
     IDXGISurface *surface;
     ID2D1Factory *factory;
     ULONG refcount;
+    UINT32 count;
     HWND window;
     HRESULT hr;
 
@@ -904,13 +905,23 @@ static void test_path_geometry(void)
     /* Close() when closed. */
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get figure count, hr %#x.\n", hr);
+    ok(!count, "Got unexpected figure count %u.\n", count);
     hr = ID2D1GeometrySink_Close(sink);
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     ID2D1GeometrySink_Release(sink);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get figure count, hr %#x.\n", hr);
+    ok(!count, "Got unexpected figure count %u.\n", count);
     ID2D1PathGeometry_Release(geometry);
 
     /* Open() when closed. */
@@ -923,6 +934,9 @@ static void test_path_geometry(void)
     ID2D1GeometrySink_Release(sink);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get figure count, hr %#x.\n", hr);
+    ok(!count, "Got unexpected figure count %u.\n", count);
     ID2D1PathGeometry_Release(geometry);
 
     /* Open() when open. */
@@ -935,6 +949,9 @@ static void test_path_geometry(void)
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
     ID2D1GeometrySink_Release(sink);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get figure count, hr %#x.\n", hr);
+    ok(!count, "Got unexpected figure count %u.\n", count);
     ID2D1PathGeometry_Release(geometry);
 
     /* BeginFigure() without EndFigure(). */
@@ -949,6 +966,8 @@ static void test_path_geometry(void)
     hr = ID2D1GeometrySink_Close(sink);
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     ID2D1GeometrySink_Release(sink);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
     /* EndFigure() without BeginFigure(). */
@@ -960,6 +979,8 @@ static void test_path_geometry(void)
     hr = ID2D1GeometrySink_Close(sink);
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     ID2D1GeometrySink_Release(sink);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     ID2D1PathGeometry_Release(geometry);
 
     /* BeginFigure()/EndFigure() mismatch. */
@@ -989,6 +1010,23 @@ static void test_path_geometry(void)
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     ID2D1GeometrySink_AddLine(sink, point);
     ID2D1GeometrySink_Release(sink);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+    ID2D1PathGeometry_Release(geometry);
+
+    /* Empty figure. */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get figure count, hr %#x.\n", hr);
+    ok(count == 1, "Got unexpected figure count %u.\n", count);
     ID2D1PathGeometry_Release(geometry);
 
     ID2D1RenderTarget_Release(rt);

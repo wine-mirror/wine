@@ -89,6 +89,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
         return;
     }
     geometry->state = D2D_GEOMETRY_STATE_FIGURE;
+    ++geometry->figure_count;
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_AddLines(ID2D1GeometrySink *iface,
@@ -411,9 +412,16 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetSegmentCount(ID2D1PathGeom
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetFigureCount(ID2D1PathGeometry *iface, UINT32 *count)
 {
-    FIXME("iface %p, count %p stub!\n", iface, count);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, count %p.\n", iface, count);
+
+    if (geometry->state != D2D_GEOMETRY_STATE_CLOSED)
+        return D2DERR_WRONG_STATE;
+
+    *count = geometry->figure_count;
+
+    return S_OK;
 }
 
 static const struct ID2D1PathGeometryVtbl d2d_path_geometry_vtbl =
