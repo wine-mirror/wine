@@ -876,6 +876,7 @@ static void test_bitmap_brush(void)
 static void test_path_geometry(void)
 {
     ID2D1GeometrySink *sink, *tmp_sink;
+    D2D1_POINT_2F point = {0.0f, 0.0f};
     ID2D1PathGeometry *geometry;
     IDXGISwapChain *swapchain;
     ID2D1RenderTarget *rt;
@@ -933,6 +934,60 @@ static void test_path_geometry(void)
     ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+    ID2D1PathGeometry_Release(geometry);
+
+    /* BeginFigure() without EndFigure(). */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+    ID2D1PathGeometry_Release(geometry);
+
+    /* EndFigure() without BeginFigure(). */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+    ID2D1PathGeometry_Release(geometry);
+
+    /* BeginFigure()/EndFigure() mismatch. */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_Release(sink);
+    ID2D1PathGeometry_Release(geometry);
+
+    /* AddLine() outside BeginFigure()/EndFigure(). */
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    ID2D1GeometrySink_AddLine(sink, point);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#x.\n", hr);
+    ID2D1GeometrySink_AddLine(sink, point);
     ID2D1GeometrySink_Release(sink);
     ID2D1PathGeometry_Release(geometry);
 
