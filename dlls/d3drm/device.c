@@ -63,31 +63,7 @@ static HRESULT WINAPI d3drm_device2_QueryInterface(IDirect3DRMDevice2 *iface, RE
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice2(iface);
 
-    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
-
-    if (IsEqualGUID(riid, &IID_IDirect3DRMDevice2)
-            || IsEqualGUID(riid, &IID_IDirect3DRMDevice)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        *out = &device->IDirect3DRMDevice2_iface;
-    }
-    else if (IsEqualGUID(riid, &IID_IDirect3DRMDevice3))
-    {
-        *out = &device->IDirect3DRMDevice3_iface;
-    }
-    else if (IsEqualGUID(riid, &IID_IDirect3DRMWinDevice))
-    {
-        *out = &device->IDirect3DRMWinDevice_iface;
-    }
-    else
-    {
-        *out = NULL;
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown *)*out);
-    return S_OK;
+    return IDirect3DRMDevice3_QueryInterface(&device->IDirect3DRMDevice3_iface, riid, out);
 }
 
 static ULONG WINAPI d3drm_device2_AddRef(IDirect3DRMDevice2 *iface)
@@ -437,7 +413,31 @@ static HRESULT WINAPI d3drm_device3_QueryInterface(IDirect3DRMDevice3 *iface, RE
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
 
-    return d3drm_device2_QueryInterface(&device->IDirect3DRMDevice2_iface, riid, out);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(riid, &IID_IDirect3DRMDevice2)
+            || IsEqualGUID(riid, &IID_IDirect3DRMDevice)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *out = &device->IDirect3DRMDevice2_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMDevice3))
+    {
+        *out = &device->IDirect3DRMDevice3_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMWinDevice))
+    {
+        *out = &device->IDirect3DRMWinDevice_iface;
+    }
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static ULONG WINAPI d3drm_device3_AddRef(IDirect3DRMDevice3 *iface)
@@ -858,7 +858,7 @@ static HRESULT WINAPI d3drm_device_win_QueryInterface(IDirect3DRMWinDevice *ifac
 {
     struct d3drm_device *device = impl_from_IDirect3DRMWinDevice(iface);
 
-    return d3drm_device2_QueryInterface(&device->IDirect3DRMDevice2_iface, riid, out);
+    return d3drm_device3_QueryInterface(&device->IDirect3DRMDevice3_iface, riid, out);
 }
 
 static ULONG WINAPI d3drm_device_win_AddRef(IDirect3DRMWinDevice *iface)
