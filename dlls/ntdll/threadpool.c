@@ -1598,7 +1598,7 @@ static NTSTATUS tp_waitqueue_lock( struct threadpool_object *wait )
     struct waitqueue_bucket *bucket;
     NTSTATUS status;
     HANDLE thread;
-    assert( wait->type = TP_OBJECT_TYPE_WAIT );
+    assert( wait->type == TP_OBJECT_TYPE_WAIT );
 
     wait->u.wait.signaled       = 0;
     wait->u.wait.bucket         = NULL;
