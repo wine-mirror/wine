@@ -100,14 +100,8 @@ static ULONG WINAPI d3drm_device2_AddRef(IDirect3DRMDevice2 *iface)
 static ULONG WINAPI d3drm_device2_Release(IDirect3DRMDevice2 *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice2(iface);
-    ULONG refcount = InterlockedDecrement(&device->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
-
-    if (!refcount)
-        HeapFree(GetProcessHeap(), 0, device);
-
-    return refcount;
+    return IDirect3DRMDevice3_Release(&device->IDirect3DRMDevice3_iface);
 }
 
 static HRESULT WINAPI d3drm_device2_Clone(IDirect3DRMDevice2 *iface,
@@ -459,8 +453,14 @@ static ULONG WINAPI d3drm_device3_AddRef(IDirect3DRMDevice3 *iface)
 static ULONG WINAPI d3drm_device3_Release(IDirect3DRMDevice3 *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
+    ULONG refcount = InterlockedDecrement(&device->ref);
 
-    return d3drm_device2_Release(&device->IDirect3DRMDevice2_iface);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+        HeapFree(GetProcessHeap(), 0, device);
+
+    return refcount;
 }
 
 static HRESULT WINAPI d3drm_device3_Clone(IDirect3DRMDevice3 *iface,
@@ -872,7 +872,7 @@ static ULONG WINAPI d3drm_device_win_Release(IDirect3DRMWinDevice *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMWinDevice(iface);
 
-    return d3drm_device2_Release(&device->IDirect3DRMDevice2_iface);
+    return d3drm_device3_Release(&device->IDirect3DRMDevice3_iface);
 }
 
 static HRESULT WINAPI d3drm_device_win_Clone(IDirect3DRMWinDevice *iface,
