@@ -93,11 +93,8 @@ static HRESULT WINAPI d3drm_device2_QueryInterface(IDirect3DRMDevice2 *iface, RE
 static ULONG WINAPI d3drm_device2_AddRef(IDirect3DRMDevice2 *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice2(iface);
-    ULONG refcount = InterlockedIncrement(&device->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
-
-    return refcount;
+    return IDirect3DRMDevice3_AddRef(&device->IDirect3DRMDevice3_iface);
 }
 
 static ULONG WINAPI d3drm_device2_Release(IDirect3DRMDevice2 *iface)
@@ -452,8 +449,11 @@ static HRESULT WINAPI d3drm_device3_QueryInterface(IDirect3DRMDevice3 *iface, RE
 static ULONG WINAPI d3drm_device3_AddRef(IDirect3DRMDevice3 *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
+    ULONG refcount = InterlockedIncrement(&device->ref);
 
-    return d3drm_device2_AddRef(&device->IDirect3DRMDevice2_iface);
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
 }
 
 static ULONG WINAPI d3drm_device3_Release(IDirect3DRMDevice3 *iface)
@@ -865,7 +865,7 @@ static ULONG WINAPI d3drm_device_win_AddRef(IDirect3DRMWinDevice *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMWinDevice(iface);
 
-    return d3drm_device2_AddRef(&device->IDirect3DRMDevice2_iface);
+    return d3drm_device3_AddRef(&device->IDirect3DRMDevice3_iface);
 }
 
 static ULONG WINAPI d3drm_device_win_Release(IDirect3DRMWinDevice *iface)
