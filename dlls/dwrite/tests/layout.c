@@ -980,6 +980,7 @@ static const struct drawcall_entry drawellipsis_seq[] = {
 
 static void test_CreateEllipsisTrimmingSign(void)
 {
+    DWRITE_INLINE_OBJECT_METRICS metrics;
     DWRITE_BREAK_CONDITION before, after;
     IDWriteTextFormat *format;
     IDWriteInlineObject *sign;
@@ -1001,8 +1002,21 @@ static void test_CreateEllipsisTrimmingSign(void)
     hr = IDWriteInlineObject_QueryInterface(sign, &IID_IDWriteTextLayout, (void**)&unk);
     ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
 
-if (0) /* crashes on native */
+if (0) {/* crashes on native */
     hr = IDWriteInlineObject_GetBreakConditions(sign, NULL, NULL);
+    hr = IDWriteInlineObject_GetMetrics(sign, NULL);
+}
+    metrics.width = 0.0;
+    metrics.height = 123.0;
+    metrics.baseline = 123.0;
+    metrics.supportsSideways = TRUE;
+    hr = IDWriteInlineObject_GetMetrics(sign, &metrics);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(metrics.width > 0.0, "got %.2f\n", metrics.width);
+    ok(metrics.height == 0.0, "got %.2f\n", metrics.height);
+    ok(metrics.baseline == 0.0, "got %.2f\n", metrics.baseline);
+    ok(!metrics.supportsSideways, "got %d\n", metrics.supportsSideways);
 
     before = after = DWRITE_BREAK_CONDITION_CAN_BREAK;
     hr = IDWriteInlineObject_GetBreakConditions(sign, &before, &after);

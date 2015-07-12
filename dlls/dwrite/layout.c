@@ -4042,11 +4042,24 @@ static HRESULT WINAPI dwritetrimmingsign_Draw(IDWriteInlineObject *iface, void *
     return IDWriteTextLayout_Draw(This->layout, context, renderer, originX, originY);
 }
 
-static HRESULT WINAPI dwritetrimmingsign_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *metrics)
+static HRESULT WINAPI dwritetrimmingsign_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *ret)
 {
     struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
-    FIXME("(%p)->(%p): stub\n", This, metrics);
-    memset(metrics, 0, sizeof(*metrics));
+    DWRITE_TEXT_METRICS metrics;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p)\n", This, ret);
+
+    hr = IDWriteTextLayout_GetMetrics(This->layout, &metrics);
+    if (FAILED(hr)) {
+        memset(ret, 0, sizeof(*ret));
+        return hr;
+    }
+
+    ret->width = metrics.width;
+    ret->height = 0.0;
+    ret->baseline = 0.0;
+    ret->supportsSideways = FALSE;
     return S_OK;
 }
 
