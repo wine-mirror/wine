@@ -363,6 +363,16 @@ static inline HRESULT format_set_readingdirection(struct dwrite_textformat_data 
     return S_OK;
 }
 
+static inline HRESULT format_set_wordwrapping(struct dwrite_textformat_data *format,
+    DWRITE_WORD_WRAPPING wrapping, BOOL *changed)
+{
+    if ((UINT32)wrapping > DWRITE_WORD_WRAPPING_CHARACTER)
+        return E_INVALIDARG;
+    if (changed) *changed = format->wrapping != wrapping;
+    format->wrapping = wrapping;
+    return S_OK;
+}
+
 static HRESULT get_fontfallback_from_format(const struct dwrite_textformat_data *format, IDWriteFontFallback **fallback)
 {
     *fallback = format->fallback;
@@ -2199,7 +2209,6 @@ static HRESULT WINAPI dwritetextlayout_SetParagraphAlignment(IDWriteTextLayout2 
 static HRESULT WINAPI dwritetextlayout_SetWordWrapping(IDWriteTextLayout2 *iface, DWRITE_WORD_WRAPPING wrapping)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    TRACE("(%p)->(%d)\n", This, wrapping);
     return IDWriteTextFormat1_SetWordWrapping(&This->IDWriteTextFormat1_iface, wrapping);
 }
 
@@ -3296,8 +3305,19 @@ static HRESULT WINAPI dwritetextformat1_layout_SetParagraphAlignment(IDWriteText
 static HRESULT WINAPI dwritetextformat1_layout_SetWordWrapping(IDWriteTextFormat1 *iface, DWRITE_WORD_WRAPPING wrapping)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d): stub\n", This, wrapping);
-    return E_NOTIMPL;
+    BOOL changed;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d)\n", This, wrapping);
+
+    hr = format_set_wordwrapping(&This->format, wrapping, &changed);
+    if (FAILED(hr))
+        return hr;
+
+    if (changed)
+        This->recompute |= RECOMPUTE_EFFECTIVE_RUNS;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat1_layout_SetReadingDirection(IDWriteTextFormat1 *iface, DWRITE_READING_DIRECTION direction)
@@ -4181,14 +4201,8 @@ static HRESULT WINAPI dwritetextformat_SetParagraphAlignment(IDWriteTextFormat1 
 static HRESULT WINAPI dwritetextformat_SetWordWrapping(IDWriteTextFormat1 *iface, DWRITE_WORD_WRAPPING wrapping)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-
     TRACE("(%p)->(%d)\n", This, wrapping);
-
-    if ((UINT32)wrapping > DWRITE_WORD_WRAPPING_CHARACTER)
-        return E_INVALIDARG;
-
-    This->format.wrapping = wrapping;
-    return S_OK;
+    return format_set_wordwrapping(&This->format, wrapping, NULL);
 }
 
 static HRESULT WINAPI dwritetextformat_SetReadingDirection(IDWriteTextFormat1 *iface, DWRITE_READING_DIRECTION direction)

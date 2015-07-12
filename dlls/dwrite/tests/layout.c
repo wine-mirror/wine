@@ -3396,6 +3396,44 @@ static void test_pixelsnapping(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_SetWordWrapping(void)
+{
+    static const WCHAR strW[] = {'a',0};
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    IDWriteFactory *factory;
+    DWRITE_WORD_WRAPPING v;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextFormat_GetWordWrapping(format);
+    ok(v == DWRITE_WORD_WRAPPING_WRAP, "got %d\n", v);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextLayout_GetWordWrapping(layout);
+    ok(v == DWRITE_WORD_WRAPPING_WRAP, "got %d\n", v);
+
+    hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_NO_WRAP);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_NO_WRAP);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    v = IDWriteTextFormat_GetWordWrapping(format);
+    ok(v == DWRITE_WORD_WRAPPING_WRAP, "got %d\n", v);
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -3440,6 +3478,7 @@ START_TEST(layout)
     test_SetParagraphAlignment();
     test_SetReadingDirection();
     test_pixelsnapping();
+    test_SetWordWrapping();
 
     IDWriteFactory_Release(factory);
 }
