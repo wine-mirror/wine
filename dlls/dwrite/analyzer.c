@@ -1090,7 +1090,12 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
         return hr;
     }
 
-    IDWriteFontFace_GetGdiCompatibleMetrics(fontface, emSize, pixels_per_dip, transform, &metrics);
+    hr = IDWriteFontFace_GetGdiCompatibleMetrics(fontface, emSize, pixels_per_dip, transform, &metrics);
+    if (FAILED(hr)) {
+        IDWriteFontFace1_Release(fontface1);
+        WARN("failed to get compat metrics, 0x%08x\n", hr);
+        return hr;
+    }
     for (i = 0; i < glyph_count; i++) {
         INT32 a;
 

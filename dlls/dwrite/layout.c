@@ -828,12 +828,13 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
         /* baseline derived from font metrics */
         if (layout->gdicompatible) {
-            /* FIXME: check return value when it's actually implemented */
-            IDWriteFontFace_GetGdiCompatibleMetrics(run->run.fontFace,
+            hr = IDWriteFontFace_GetGdiCompatibleMetrics(run->run.fontFace,
                 run->run.fontEmSize,
                 layout->pixels_per_dip,
                 &layout->transform,
                 &fontmetrics);
+            if (FAILED(hr))
+                WARN("failed to get compat metrics, 0x%08x\n", hr);
         }
         else
             IDWriteFontFace_GetMetrics(run->run.fontFace, &fontmetrics);
