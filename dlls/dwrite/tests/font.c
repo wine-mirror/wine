@@ -3602,6 +3602,33 @@ if (0)
            emsize, metrics->hasTypographicMetrics, expected->hasTypographicMetrics);
 }
 
+struct compatmetrics_test {
+    DWRITE_MATRIX m;
+    FLOAT ppdip;
+    FLOAT emsize;
+};
+
+static struct compatmetrics_test compatmetrics_tests[] = {
+    { { 0.0, 0.0, 0.0,  1.0, 0.0, 0.0 }, 1.0, 5.0 },
+    { { 0.0, 0.0, 0.0, -1.0, 0.0, 0.0 }, 1.0, 5.0 },
+    { { 0.0, 0.0, 0.0, -1.0, 0.0, 0.0 }, 2.0, 5.0 },
+    { { 0.0, 0.0, 0.0,  3.0, 0.0, 0.0 }, 2.0, 5.0 },
+    { { 0.0, 0.0, 0.0, -3.0, 0.0, 0.0 }, 2.0, 5.0 },
+    { { 1.0, 0.0, 0.0,  1.0, 0.0, 0.0 }, 2.0, 5.0 },
+    { { 1.0, 0.0, 0.0,  1.0, 5.0, 0.0 }, 2.0, 5.0 },
+    { { 1.0, 0.0, 0.0,  1.0, 0.0, 5.0 }, 2.0, 5.0 },
+};
+
+static void get_expected_metrics(IDWriteFontFace *fontface, struct compatmetrics_test *ptr,
+    DWRITE_FONT_METRICS *expected)
+{
+    HRESULT hr;
+
+    memset(expected, 0, sizeof(*expected));
+    hr = IDWriteFontFace_GetGdiCompatibleMetrics(fontface, ptr->ppdip * fabsf(ptr->m.m22) * ptr->emsize, 1.0, NULL, expected);
+    ok(hr == S_OK, "got %08x\n", hr);
+}
+
 static void test_GetGdiCompatibleMetrics_face(IDWriteFontFace *face)
 {
     IDWriteFontFace1 *fontface1 = NULL;
@@ -3615,7 +3642,7 @@ static void test_GetGdiCompatibleMetrics_face(IDWriteFontFace *face)
     void *vdmx_ctx;
     BOOL exists;
     const struct VDMX_group *vdmx_group = NULL;
-    DWRITE_MATRIX m;
+    int i;
 
     hr = IDWriteFontFace_QueryInterface(face, &IID_IDWriteFontFace1, (void**)&fontface1);
     if (hr != S_OK)
@@ -3635,6 +3662,20 @@ static void test_GetGdiCompatibleMetrics_face(IDWriteFontFace *face)
     else
         vdmx_group = find_vdmx_group(vdmx);
 
+    /* negative emsize */
+    memset(&comp_metrics, 0xcc, sizeof(comp_metrics));
+    memset(&expected, 0, sizeof(expected));
+    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, -10.0, 1.0, NULL, &comp_metrics);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    test_metrics_cmp(0.0, &comp_metrics, &expected);
+
+    /* zero emsize */
+    memset(&comp_metrics, 0xcc, sizeof(comp_metrics));
+    memset(&expected, 0, sizeof(expected));
+    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 0.0, 1.0, NULL, &comp_metrics);
+    ok(hr == E_INVALIDARG, "got %08x\n", hr);
+    test_metrics_cmp(0.0, &comp_metrics, &expected);
+
     /* zero pixels per dip */
     memset(&comp_metrics, 0xcc, sizeof(comp_metrics));
     memset(&expected, 0, sizeof(expected));
@@ -3647,39 +3688,14 @@ static void test_GetGdiCompatibleMetrics_face(IDWriteFontFace *face)
     ok(hr == E_INVALIDARG, "got %08x\n", hr);
     test_metrics_cmp(5.0, &comp_metrics, &expected);
 
-    memset(&m, 0, sizeof(m));
-    /* zero matrix m22 */
-    m.m22 = 1.0;
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 5.0, 1.0, NULL, (DWRITE_FONT_METRICS*)&expected);
-    ok(hr == S_OK, "got %08x\n", hr);
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 5.0, 1.0, &m, &comp_metrics);
-    ok(hr == S_OK, "got %08x\n", hr);
-    test_metrics_cmp(5.0, &comp_metrics, &expected);
+    for (i = 0; i < sizeof(compatmetrics_tests)/sizeof(compatmetrics_tests[0]); i++) {
+        struct compatmetrics_test *ptr = &compatmetrics_tests[i];
 
-    m.m22 = -1.0;
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 5.0, 1.0, &m, &comp_metrics);
-    ok(hr == S_OK, "got %08x\n", hr);
-    test_metrics_cmp(5.0, &comp_metrics, &expected);
-
-    /* pixels per dip == 2 */
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 10.0, 1.0, NULL, (DWRITE_FONT_METRICS*)&expected);
-    ok(hr == S_OK, "got %08x\n", hr);
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 5.0, 2.0, NULL, &comp_metrics);
-    ok(hr == S_OK, "got %08x\n", hr);
-    test_metrics_cmp(5.0, &comp_metrics, &expected);
-
-    /* pixels per dip == 2, m22 == 3.0 */
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 30.0, 1.0, NULL, (DWRITE_FONT_METRICS*)&expected);
-    ok(hr == S_OK, "got %08x\n", hr);
-
-    m.m22 = 3.0;
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 5.0, 2.0, &m, &comp_metrics);
-    ok(hr == S_OK, "got %08x\n", hr);
-    test_metrics_cmp(5.0, &comp_metrics, &expected);
-    m.m22 = -3.0;
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, 5.0, 2.0, &m, &comp_metrics);
-    ok(hr == S_OK, "got %08x\n", hr);
-    test_metrics_cmp(5.0, &comp_metrics, &expected);
+        get_expected_metrics(face, ptr, (DWRITE_FONT_METRICS*)&expected);
+        hr = IDWriteFontFace_GetGdiCompatibleMetrics(face, ptr->emsize, ptr->ppdip, &ptr->m, &comp_metrics);
+        ok(hr == S_OK, "got %08x\n", hr);
+        test_metrics_cmp(ptr->emsize, &comp_metrics, &expected);
+    }
 
     for (emsize = 5; emsize <= design_metrics.designUnitsPerEm; emsize++)
     {

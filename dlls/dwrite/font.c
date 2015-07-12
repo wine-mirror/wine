@@ -632,7 +632,7 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleMetrics(IDWriteFontFace2 *
 
     TRACE("(%p)->(%.2f %.2f %p %p)\n", This, em_size, pixels_per_dip, m, metrics);
 
-    if (pixels_per_dip <= 0.0) {
+    if (em_size <= 0.0 || pixels_per_dip <= 0.0) {
         memset(metrics, 0, sizeof(*metrics));
         return E_INVALIDARG;
     }
