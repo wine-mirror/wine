@@ -1347,7 +1347,7 @@ static const struct VDMX_group *find_vdmx_group(const struct VDMX_Header *hdr)
 BOOL opentype_get_vdmx_size(const void *data, INT emsize, UINT16 *ascent, UINT16 *descent)
 {
     const struct VDMX_Header *hdr = (const struct VDMX_Header*)data;
-    const struct VDMX_group *group = find_vdmx_group(hdr);
+    const struct VDMX_group *group;
     const struct VDMX_vTable *tables;
     WORD recs, i;
 
