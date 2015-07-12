@@ -21,6 +21,7 @@
 #define COBJMACROS
 
 #include <stdarg.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -2732,13 +2733,42 @@ static HRESULT WINAPI dwritetextlayout_layout_GetLocaleName(IDWriteTextLayout2 *
     return get_string_attribute_value(This, LAYOUT_RANGE_ATTR_LOCALE, position, locale, length, r);
 }
 
+static inline FLOAT renderer_apply_snapping(FLOAT coord, BOOL skiptransform, FLOAT ppdip, FLOAT det,
+    const DWRITE_MATRIX *m)
+{
+    FLOAT vec[2], vec2[2];
+
+    if (!skiptransform) {
+        /* apply transform */
+        vec[0] = 0.0;
+        vec[1] = coord;
+
+        vec2[0] = m->m11 * vec[0] + m->m12 * vec[1] + m->dx;
+        vec2[1] = m->m21 * vec[0] + m->m22 * vec[1] + m->dy;
+
+        /* snap */
+        vec2[0] = floorf(vec2[0] * ppdip + 0.5f) / ppdip;
+        vec2[1] = floorf(vec2[1] * ppdip + 0.5f) / ppdip;
+
+        /* apply inverted transform, we don't care about X component at this point */
+        vec[1] = (-m->m21 * vec2[0] + m->m11 * vec2[1] - (m->m11 * m->dy - m->m12 * m->dx)) / det;
+    }
+    else
+        vec[1] = floorf(coord * ppdip + 0.5f) / ppdip;
+
+    return vec[1];
+}
+
 static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     void *context, IDWriteTextRenderer* renderer, FLOAT origin_x, FLOAT origin_y)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
+    BOOL disabled = FALSE, skiptransform = FALSE;
     struct layout_effective_inline *inlineobject;
     struct layout_effective_run *run;
     struct layout_strikethrough *s;
+    FLOAT det = 0.0, ppdip = 0.0;
+    DWRITE_MATRIX m = { 0 };
     HRESULT hr;
 
     TRACE("(%p)->(%p %p %.2f %.2f)\n", This, context, renderer, origin_x, origin_y);
@@ -2747,6 +2777,34 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     if (FAILED(hr))
         return hr;
 
+    hr = IDWriteTextRenderer_IsPixelSnappingDisabled(renderer, context, &disabled);
+    if (FAILED(hr))
+        return hr;
+
+    if (!disabled) {
+        hr = IDWriteTextRenderer_GetPixelsPerDip(renderer, context, &ppdip);
+        if (FAILED(hr))
+            return hr;
+
+        hr = IDWriteTextRenderer_GetCurrentTransform(renderer, context, &m);
+        if (FAILED(hr))
+            return hr;
+
+        /* it's only allowed to have a diagonal/antidiagonal transform matrix */
+        if (ppdip <= 0.0 ||
+            (m.m11 * m.m22 != 0.0 && (m.m12 != 0.0 || m.m21 != 0.0)) ||
+            (m.m12 * m.m21 != 0.0 && (m.m11 != 0.0 || m.m22 != 0.0)))
+            disabled = TRUE;
+        else {
+            det = m.m11 * m.m22 - m.m12 * m.m21;
+
+            /* on certain conditions we can skip transform */
+            if (!memcmp(&m, &identity, sizeof(m)) || fabsf(det) <= 1e-10f)
+                skiptransform = TRUE;
+        }
+    }
+
+#define SNAP_COORD(x) renderer_apply_snapping((x), skiptransform, ppdip, det, &m)
     /* 1. Regular runs */
     LIST_FOR_EACH_ENTRY(run, &This->eruns, struct layout_effective_run, entry) {
         const struct regular_layout_run *regular = &run->run->u.regular;
@@ -2776,7 +2834,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
         IDWriteTextRenderer_DrawGlyphRun(renderer,
             context,
             run->origin_x + run->align_dx + origin_x,
-            run->origin_y + origin_y,
+            disabled ? run->origin_y + origin_y : SNAP_COORD(run->origin_y + origin_y),
             DWRITE_MEASURING_MODE_NATURAL,
             &glyph_run,
             &descr,
@@ -2788,7 +2846,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
         IDWriteTextRenderer_DrawInlineObject(renderer,
             context,
             inlineobject->origin_x + inlineobject->align_dx + origin_x,
-            inlineobject->origin_y + origin_y,
+            disabled ? inlineobject->origin_y + origin_y : SNAP_COORD(inlineobject->origin_y + origin_y),
             inlineobject->object,
             inlineobject->is_sideways,
             inlineobject->is_rtl,
@@ -2802,10 +2860,11 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
         IDWriteTextRenderer_DrawStrikethrough(renderer,
             context,
             s->run->origin_x,
-            s->run->origin_y,
+            disabled ? s->run->origin_y : SNAP_COORD(s->run->origin_y),
             &s->s,
             NULL);
     }
+#undef SNAP_COORD
 
     return S_OK;
 }

@@ -21,6 +21,7 @@
 #define COBJMACROS
 
 #include <assert.h>
+#include <math.h>
 
 #include "windows.h"
 #include "dwrite.h"
@@ -417,29 +418,44 @@ static ULONG WINAPI testrenderer_Release(IDWriteTextRenderer *iface)
     return 1;
 }
 
+struct renderer_context {
+    BOOL snapping_disabled;
+    DWRITE_MATRIX m;
+    FLOAT ppdip;
+    FLOAT originX;
+    FLOAT originY;
+};
+
 static HRESULT WINAPI testrenderer_IsPixelSnappingDisabled(IDWriteTextRenderer *iface,
-    void *client_drawingcontext, BOOL *disabled)
+    void *context, BOOL *disabled)
 {
-    *disabled = TRUE;
+    struct renderer_context *ctxt = (struct renderer_context*)context;
+    if (ctxt)
+        *disabled = ctxt->snapping_disabled;
+    else
+        *disabled = TRUE;
     return S_OK;
 }
 
 static HRESULT WINAPI testrenderer_GetCurrentTransform(IDWriteTextRenderer *iface,
-    void *client_drawingcontext, DWRITE_MATRIX *transform)
+    void *context, DWRITE_MATRIX *m)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    struct renderer_context *ctxt = (struct renderer_context*)context;
+    ok(!ctxt->snapping_disabled, "expected enabled snapping\n");
+    *m = ctxt->m;
+    return S_OK;
 }
 
 static HRESULT WINAPI testrenderer_GetPixelsPerDip(IDWriteTextRenderer *iface,
-    void *client_drawingcontext, FLOAT *pixels_per_dip)
+    void *context, FLOAT *pixels_per_dip)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    struct renderer_context *ctxt = (struct renderer_context*)context;
+    *pixels_per_dip = ctxt->ppdip;
+    return S_OK;
 }
 
 static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
-    void* client_drawingcontext,
+    void *context,
     FLOAT baselineOriginX,
     FLOAT baselineOriginY,
     DWRITE_MEASURING_MODE mode,
@@ -447,8 +463,14 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     DWRITE_GLYPH_RUN_DESCRIPTION const *descr,
     IUnknown *effect)
 {
+    struct renderer_context *ctxt = (struct renderer_context*)context;
     struct drawcall_entry entry;
     DWRITE_SCRIPT_ANALYSIS sa;
+
+    if (ctxt) {
+        ctxt->originX = baselineOriginX;
+        ctxt->originY = baselineOriginY;
+    }
 
     ok(descr->stringLength < sizeof(entry.string)/sizeof(WCHAR), "string is too long\n");
     if (descr->stringLength && descr->stringLength < sizeof(entry.string)/sizeof(WCHAR)) {
@@ -3212,6 +3234,168 @@ static void test_SetReadingDirection(void)
     IDWriteFactory_Release(factory);
 }
 
+static inline FLOAT get_scaled_font_metric(UINT32 metric, FLOAT emSize, const DWRITE_FONT_METRICS *metrics)
+{
+    return (FLOAT)metric * emSize / (FLOAT)metrics->designUnitsPerEm;
+}
+
+static FLOAT snap_coord(const DWRITE_MATRIX *m, FLOAT ppdip, FLOAT coord)
+{
+    FLOAT vec[2], det, vec2[2];
+    BOOL transform;
+
+    /* has to be a diagonal matrix */
+    if ((ppdip <= 0.0) ||
+        (m->m11 * m->m22 != 0.0 && (m->m12 != 0.0 || m->m21 != 0.0)) ||
+        (m->m12 * m->m21 != 0.0 && (m->m11 != 0.0 || m->m22 != 0.0)))
+        return coord;
+
+    det = m->m11 * m->m22 - m->m12 * m->m21;
+    transform = fabsf(det) > 1e-10;
+
+    if (transform) {
+        /* apply transform */
+        vec[0] = 0.0;
+        vec[1] = coord;
+
+        vec2[0] = m->m11 * vec[0] + m->m12 * vec[1] + m->dx;
+        vec2[1] = m->m21 * vec[0] + m->m22 * vec[1] + m->dy;
+
+        /* snap */
+        vec2[0] = floorf(vec2[0] * ppdip + 0.5f) / ppdip;
+        vec2[1] = floorf(vec2[1] * ppdip + 0.5f) / ppdip;
+
+        /* apply inverted transform */
+        vec[1] = (-m->m21 * vec2[0] + m->m11 * vec2[1] - (m->m11 * m->dy - m->m12 * m->dx)) / det;
+    }
+    else
+        vec[1] = floorf(coord * ppdip + 0.5f) / ppdip;
+    return vec[1];
+}
+
+static inline BOOL float_eq(FLOAT left, FLOAT right)
+{
+    return fabsf(left - right) < 1e-6f;
+}
+
+struct snapping_test {
+    DWRITE_MATRIX m;
+    FLOAT ppdip;
+};
+
+static struct snapping_test snapping_tests[] = {
+    { {  0.0,  1.0,  2.0,  0.0, 0.2, 0.3 },   1.0 },
+    { {  0.0,  1.0,  2.0,  0.0, 0.0, 0.0 },   1.0 },
+    { {  1.0,  0.0,  0.0,  1.0, 0.0, 0.0 },   1.0 }, /* identity transform */
+    { {  1.0,  0.0,  0.0,  1.0, 0.0, 0.0 },   0.9 },
+    { {  1.0,  0.0,  0.0,  1.0, 0.0, 0.0 },  -1.0 },
+    { {  1.0,  0.0,  0.0,  1.0, 0.0, 0.0 },   0.0 },
+    { {  1.0,  0.0,  0.0,  1.0, 0.0, 0.3 },   1.0 }, /* simple Y shift */
+    { {  1.0,  0.0,  0.0,  1.0, 0.0, 0.0 },  10.0 }, /* identity, 10 ppdip */
+    { {  1.0,  0.0,  0.0, 10.0, 0.0, 0.0 },  10.0 },
+    { {  0.0,  1.0,  1.0,  0.0, 0.2, 0.6 },   1.0 },
+    { {  0.0,  2.0,  2.0,  0.0, 0.2, 0.6 },   1.0 },
+    { {  0.0,  0.5, -0.5,  0.0, 0.2, 0.6 },   1.0 },
+    { {  1.0,  2.0,  0.0,  1.0, 0.2, 0.6 },   1.0 },
+    { {  1.0,  1.0,  0.0,  1.0, 0.2, 0.6 },   1.0 },
+    { {  0.5,  0.5, -0.5,  0.5, 0.2, 0.6 },   1.0 }, /*  45 degrees rotation */
+    { {  0.5,  0.5, -0.5,  0.5, 0.0, 0.0 }, 100.0 }, /*  45 degrees rotation */
+    { {  1.0,  0.0,  0.0,  1.0, 0.0, 0.0 }, 100.0 },
+    { {  0.0,  1.0, -1.0,  0.0, 0.2, 0.6 },   1.0 }, /*  90 degrees rotation */
+    { { -1.0,  0.0,  0.0, -1.0, 0.2, 0.6 },   1.0 }, /* 180 degrees rotation */
+    { {  0.0, -1.0,  1.0,  0.0, 0.2, 0.6 },   1.0 }, /* 270 degrees rotation */
+    { {  0.0,  2.0,  1.0,  0.0, 0.2, 0.6 },   1.0 },
+    { {  0.0,  0.0,  1.0,  0.0, 0.0, 0.0 },   1.0 },
+};
+
+static DWRITE_MATRIX compattransforms[] = {
+    { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 },
+    { 1.0, 0.0, 0.0, 1.0, 0.2, 0.3 },
+    { 2.0, 0.0, 0.0, 2.0, 0.2, 0.3 },
+    { 2.0, 1.0, 2.0, 2.0, 0.2, 0.3 },
+};
+
+static void test_pixelsnapping(void)
+{
+    static const WCHAR strW[] = {'a',0};
+    IDWriteTextLayout *layout, *layout2;
+    struct renderer_context ctxt;
+    DWRITE_FONT_METRICS metrics;
+    IDWriteTextFormat *format;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    FLOAT baseline, originX;
+    HRESULT hr;
+    int i, j;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    fontface = get_fontface_from_format(format);
+    IDWriteFontFace_GetMetrics(fontface, &metrics);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* disabled snapping */
+    ctxt.snapping_disabled = TRUE;
+    ctxt.ppdip = 1.0f;
+    memset(&ctxt.m, 0, sizeof(ctxt.m));
+    ctxt.m.m11 = ctxt.m.m22 = 1.0;
+    originX = 0.1;
+
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, originX, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    baseline = get_scaled_font_metric(metrics.ascent, 12.0, &metrics);
+    ok(ctxt.originX == originX, "got %f, originX %f\n", ctxt.originX, originX);
+    ok(ctxt.originY == baseline, "got %f, baseline %f\n", ctxt.originY, baseline);
+    ok(floor(baseline) != baseline, "got %f\n", baseline);
+
+    ctxt.snapping_disabled = FALSE;
+
+    for (i = 0; i < sizeof(snapping_tests)/sizeof(snapping_tests[0]); i++) {
+        struct snapping_test *ptr = &snapping_tests[i];
+        FLOAT expectedY;
+
+        ctxt.m = ptr->m;
+        ctxt.ppdip = ptr->ppdip;
+        ctxt.originX = 678.9;
+        ctxt.originY = 678.9;
+
+        expectedY = snap_coord(&ctxt.m, ctxt.ppdip, baseline);
+        hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, originX, 0.0);
+        ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+        ok(ctxt.originX == originX, "%d: got %f, originX %f\n", i, ctxt.originX, originX);
+        ok(float_eq(ctxt.originY, expectedY), "%d: got %f, expected %f, baseline %f\n",
+            i, ctxt.originY, expectedY, baseline);
+
+        /* gdicompat layout transform doesn't affect snapping */
+        for (j = 0; j < sizeof(compattransforms)/sizeof(compattransforms[0]); j++) {
+            hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 500.0, 100.0,
+                1.0, &compattransforms[j], FALSE, &layout2);
+            ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+
+            expectedY = snap_coord(&ctxt.m, ctxt.ppdip, baseline);
+            hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, originX, 0.0);
+            ok(hr == S_OK, "%d: got 0x%08x\n", i, hr);
+            ok(ctxt.originX == originX, "%d: got %f, originX %f\n", i, ctxt.originX, originX);
+            ok(float_eq(ctxt.originY, expectedY), "%d: got %f, expected %f, baseline %f\n",
+                i, ctxt.originY, expectedY, baseline);
+
+            IDWriteTextLayout_Release(layout2);
+        }
+    }
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+    IDWriteFontFace_Release(fontface);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -3255,6 +3439,7 @@ START_TEST(layout)
     test_SetTextAlignment();
     test_SetParagraphAlignment();
     test_SetReadingDirection();
+    test_pixelsnapping();
 
     IDWriteFactory_Release(factory);
 }
