@@ -297,12 +297,6 @@ static void get_cubic_glyph_outline(const FT_Outline *outline, short point, shor
     cubic_control[2].y += (cubic_control[3].y + 1) / 3;
 }
 
-static inline void set_outline_end_tag(short point, short endpoint, UINT8 *tag)
-{
-    if (point == endpoint)
-        *tag |= OUTLINE_POINT_END;
-}
-
 static short get_outline_data(const FT_Outline *outline, struct glyph_outline *ret)
 {
     short contour, point = 0, first_pt, count;
@@ -312,6 +306,8 @@ static short get_outline_data(const FT_Outline *outline, struct glyph_outline *r
         if (ret) {
             ft_vector_to_d2d_point(&outline->points[point], &ret->points[count]);
             ret->tags[count] = OUTLINE_POINT_START;
+            if (count)
+                ret->tags[count-1] |= OUTLINE_POINT_END;
         }
 
         point++;
@@ -323,7 +319,6 @@ static short get_outline_data(const FT_Outline *outline, struct glyph_outline *r
                     if (ret) {
                         ft_vector_to_d2d_point(&outline->points[point], &ret->points[count]);
                         ret->tags[count] |= OUTLINE_POINT_LINE;
-                        set_outline_end_tag(point, outline->contours[contour], &ret->tags[count]);
                     }
 
                     point++;
@@ -341,7 +336,6 @@ static short get_outline_data(const FT_Outline *outline, struct glyph_outline *r
                         ret->tags[count] = OUTLINE_POINT_BEZIER;
                         ret->tags[count+1] = OUTLINE_POINT_BEZIER;
                         ret->tags[count+2] = OUTLINE_POINT_BEZIER;
-                        set_outline_end_tag(point, outline->contours[contour], &ret->tags[count+2]);
                     }
 
                     count += 3;
@@ -360,6 +354,9 @@ static short get_outline_data(const FT_Outline *outline, struct glyph_outline *r
             }
         }
     }
+
+    if (ret)
+        ret->tags[count-1] |= OUTLINE_POINT_END;
 
     return count;
 }
