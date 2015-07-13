@@ -242,7 +242,7 @@ static void irp_call_destroy( struct object *obj )
         release_object( irp->async );
     }
     if (irp->file) release_object( irp->file );
-    release_object( irp->thread );
+    if (irp->thread) release_object( irp->thread );
 }
 
 static struct irp_call *create_irp( struct device_file *file, const irp_params_t *params,
@@ -337,14 +337,14 @@ static void device_destroy( struct object *obj )
     if (device->manager) list_remove( &device->entry );
 }
 
-static void add_irp_to_queue( struct device_file *file, struct irp_call *irp )
+static void add_irp_to_queue( struct device_file *file, struct irp_call *irp, struct thread *thread )
 {
     struct device_manager *manager = file->device->manager;
 
     assert( manager );
 
     grab_object( irp );  /* grab reference for queued irp */
-    irp->thread = (struct thread *)grab_object( current );
+    irp->thread = thread ? (struct thread *)grab_object( thread ) : NULL;
     list_add_tail( &file->requests, &irp->dev_entry );
     list_add_tail( &manager->requests, &irp->mgr_entry );
     if (list_head( &manager->requests ) == &irp->mgr_entry) wake_up( &manager->obj, 0 );  /* first one */
@@ -391,7 +391,7 @@ static struct object *device_open_file( struct object *obj, unsigned int access,
 
         if ((irp = create_irp( file, &params, NULL, 0, 0 )))
         {
-            add_irp_to_queue( file, irp );
+            add_irp_to_queue( file, irp, NULL );
             release_object( irp );
         }
     }
@@ -426,7 +426,7 @@ static int device_file_close_handle( struct object *obj, struct process *process
 
         if ((irp = create_irp( file, &params, NULL, 0, 0 )))
         {
-            add_irp_to_queue( file, irp );
+            add_irp_to_queue( file, irp, NULL );
             release_object( irp );
         }
     }
@@ -497,7 +497,7 @@ static obj_handle_t queue_irp( struct device_file *file, struct irp_call *irp,
         return 0;
     }
     irp->user_arg = async_data->arg;
-    add_irp_to_queue( file, irp );
+    add_irp_to_queue( file, irp, current );
     set_error( STATUS_PENDING );
     return handle;
 }
@@ -772,9 +772,12 @@ DECL_HANDLER(get_next_device_request)
     if ((ptr = list_head( &manager->requests )))
     {
         irp = LIST_ENTRY( ptr, struct irp_call, mgr_entry );
+        if (irp->thread)
+        {
+            reply->client_pid = get_process_id( irp->thread->process );
+            reply->client_tid = get_thread_id( irp->thread );
+        }
         reply->params = irp->params;
-        reply->client_pid = get_process_id( irp->thread->process );
-        reply->client_tid = get_thread_id( irp->thread );
         reply->in_size = irp->in_size;
         reply->out_size = irp->out_size;
         if (irp->in_size > get_reply_max_size()) set_error( STATUS_BUFFER_OVERFLOW );
