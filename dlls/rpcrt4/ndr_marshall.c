@@ -452,7 +452,7 @@ static inline BOOL IsConformanceOrVariancePresent(PFORMAT_STRING pFormat)
 
 static inline PFORMAT_STRING SkipConformance(const PMIDL_STUB_MESSAGE pStubMsg, const PFORMAT_STRING pFormat)
 {
-    return pStubMsg->fHasNewCorrDesc ? pFormat + 6 : pFormat + 4;
+    return pFormat + 4 + pStubMsg->CorrDespIncrement;
 }
 
 static PFORMAT_STRING ReadConformance(MIDL_STUB_MESSAGE *pStubMsg, PFORMAT_STRING pFormat)
