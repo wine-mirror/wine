@@ -128,6 +128,8 @@ static ios* (*__thiscall p_ios_sb_ctor)(ios*, streambuf*);
 static ios* (*__thiscall p_ios_assign)(ios*, const ios*);
 static void (*__thiscall p_ios_init)(ios*, streambuf*);
 static void (*__thiscall p_ios_dtor)(ios*);
+static void (*__cdecl p_ios_clrlock)(ios*);
+static void (*__cdecl p_ios_setlock)(ios*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -230,6 +232,8 @@ static BOOL init(void)
         SET(p_ios_assign, "??4ios@@IEAAAEAV0@AEBV0@@Z");
         SET(p_ios_init, "?init@ios@@IEAAXPEAVstreambuf@@@Z");
         SET(p_ios_dtor, "??1ios@@UEAA@XZ");
+        SET(p_ios_clrlock, "?clrlock@ios@@QEAAXXZ");
+        SET(p_ios_setlock, "?setlock@ios@@QEAAXXZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
 
@@ -262,6 +266,8 @@ static BOOL init(void)
         SET(p_ios_assign, "??4ios@@IAEAAV0@ABV0@@Z");
         SET(p_ios_init, "?init@ios@@IAEXPAVstreambuf@@@Z");
         SET(p_ios_dtor, "??1ios@@UAE@XZ");
+        SET(p_ios_clrlock, "?clrlock@ios@@QAAXXZ");
+        SET(p_ios_setlock, "?setlock@ios@@QAAXXZ");
     }
 
     init_thiscall_thunk();
@@ -861,7 +867,6 @@ static void test_ios(void)
     call_func2(p_ios_init, &ios_obj, psb);
     ok(ios_obj.sb == psb, "expected %p got %p\n", psb, ios_obj.sb);
     ok(ios_obj.state == 0x8, "expected %x got %x\n", 0x8, ios_obj.state);
-    ios_obj.delbuf = 1;
     call_func1(p_ios_dtor, &ios_obj);
 
     /* copy constructor */
@@ -895,7 +900,27 @@ static void test_ios(void)
     ok(ios_obj.fill == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.fill);
     ok(ios_obj.width == (char)0xab, "expected %d got %d\n", (char)0xab, ios_obj.width);
     ok(ios_obj.do_lock == 2, "expected 2 got %d\n", ios_obj.do_lock);
-    ios_obj.delbuf = 0;
+
+    /* locking */
+    ios_obj.sb = psb;
+    ios_obj.do_lock = 1;
+    ios_obj.sb->do_lock = 0;
+    p_ios_clrlock(&ios_obj);
+    ok(ios_obj.do_lock == 1, "expected 1 got %d\n", ios_obj.do_lock);
+    ok(ios_obj.sb->do_lock == 1, "expected 1 got %d\n", ios_obj.sb->do_lock);
+    ios_obj.do_lock = 0;
+    p_ios_clrlock(&ios_obj);
+    ok(ios_obj.do_lock == 1, "expected 1 got %d\n", ios_obj.do_lock);
+    ok(ios_obj.sb->do_lock == 1, "expected 1 got %d\n", ios_obj.sb->do_lock);
+    p_ios_setlock(&ios_obj);
+    ok(ios_obj.do_lock == 0, "expected 0 got %d\n", ios_obj.do_lock);
+    ok(ios_obj.sb->do_lock == 0, "expected 0 got %d\n", ios_obj.sb->do_lock);
+    ios_obj.do_lock = -1;
+    p_ios_setlock(&ios_obj);
+    ok(ios_obj.do_lock == -2, "expected -2 got %d\n", ios_obj.do_lock);
+    ok(ios_obj.sb->do_lock == -1, "expected -1 got %d\n", ios_obj.sb->do_lock);
+
+    ios_obj.delbuf = 1;
     call_func1(p_ios_dtor, &ios_obj);
     ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
 }

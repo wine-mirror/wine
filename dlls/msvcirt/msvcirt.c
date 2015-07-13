@@ -854,7 +854,11 @@ void __thiscall ios_clear(ios *this, int state)
 /* ?clrlock@ios@@QEAAXXZ */
 void __cdecl ios_clrlock(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    if (this->do_lock <= 0)
+        this->do_lock++;
+    if (this->sb)
+        streambuf_clrlock(this->sb);
 }
 
 /* ?delbuf@ios@@QAEXH@Z */
@@ -1002,8 +1006,8 @@ void __cdecl ios_lockc(void)
 DEFINE_THISCALL_WRAPPER(ios_lockptr, 4)
 CRITICAL_SECTION* __thiscall ios_lockptr(ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return &this->lock;
 }
 
 /* ?oct@@YAAAVios@@AAV1@@Z */
@@ -1081,7 +1085,10 @@ LONG __thiscall ios_setf_mask(ios *this, LONG flags, LONG mask)
 /* ?setlock@ios@@QEAAXXZ */
 void __cdecl ios_setlock(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    this->do_lock--;
+    if (this->sb)
+        streambuf_setlock(this->sb);
 }
 
 /* ?sync_with_stdio@ios@@SAXXZ */
