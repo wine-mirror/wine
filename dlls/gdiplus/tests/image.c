@@ -4544,6 +4544,91 @@ static void test_CloneBitmapArea(void)
     GdipDisposeImage((GpImage *)bitmap);
 }
 
+static BOOL get_encoder_clsid(LPCWSTR mime, GUID *format, CLSID *clsid)
+{
+    GpStatus status;
+    UINT n_codecs, info_size, i;
+    ImageCodecInfo *info;
+    BOOL ret = FALSE;
+
+    status = GdipGetImageEncodersSize(&n_codecs, &info_size);
+    expect(Ok, status);
+
+    info = GdipAlloc(info_size);
+
+    status = GdipGetImageEncoders(n_codecs, info_size, info);
+    expect(Ok, status);
+
+    for (i = 0; i < n_codecs; i++)
+    {
+        if (!lstrcmpW(info[i].MimeType, mime))
+        {
+            *format = info[i].FormatID;
+            *clsid = info[i].Clsid;
+            ret = TRUE;
+            break;
+        }
+    }
+
+    GdipFree(info);
+    return ret;
+}
+
+static void test_supported_encoders(void)
+{
+    static const WCHAR bmp_mimetype[] = { 'i', 'm', 'a','g', 'e', '/', 'b', 'm', 'p',0 };
+    static const WCHAR jpeg_mimetype[] = { 'i','m','a','g','e','/','j','p','e','g',0 };
+    static const WCHAR gif_mimetype[] = { 'i','m','a','g','e','/','g','i','f',0 };
+    static const WCHAR tiff_mimetype[] = { 'i','m','a','g','e','/','t','i','f','f',0 };
+    static const WCHAR png_mimetype[] = { 'i','m','a','g','e','/','p','n','g',0 };
+    static const struct test_data
+    {
+        LPCWSTR mime;
+        const GUID *format;
+        BOOL todo;
+    } td[] =
+    {
+        { bmp_mimetype, &ImageFormatBMP, FALSE },
+        { jpeg_mimetype, &ImageFormatJPEG, FALSE },
+        { gif_mimetype, &ImageFormatGIF, TRUE },
+        { tiff_mimetype, &ImageFormatTIFF, FALSE },
+        { png_mimetype, &ImageFormatPNG, FALSE }
+    };
+    GUID format, clsid;
+    BOOL ret;
+    HRESULT hr;
+    GpStatus status;
+    GpBitmap *bm;
+    IStream *stream;
+    HGLOBAL hmem;
+    int i;
+
+    status = GdipCreateBitmapFromScan0(1, 1, 0, PixelFormat24bppRGB, NULL, &bm);
+    ok(status == Ok, "GdipCreateBitmapFromScan0 error %d\n", status);
+
+    for (i = 0; i < sizeof(td)/sizeof(td[0]); i++)
+    {
+        ret = get_encoder_clsid(td[i].mime, &format, &clsid);
+        ok(ret, "%s encoder is not in the list\n", wine_dbgstr_w(td[i].mime));
+        expect_guid(td[i].format, &format, __LINE__, FALSE);
+
+        hmem = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD, 16);
+
+        hr = CreateStreamOnHGlobal(hmem, TRUE, &stream);
+        ok(hr == S_OK, "CreateStreamOnHGlobal error %#x\n", hr);
+
+        status = GdipSaveImageToStream((GpImage *)bm, stream, &clsid, NULL);
+        if (td[i].todo)
+            todo_wine ok(status == Ok, "GdipSaveImageToStream error %d\n", status);
+        else
+            ok(status == Ok, "GdipSaveImageToStream error %d\n", status);
+
+        IStream_Release(stream);
+    }
+
+    GdipDisposeImage((GpImage *)bm);
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -4556,6 +4641,7 @@ START_TEST(image)
 
     GdiplusStartup(&gdiplusToken, &gdiplusStartupInput, NULL);
 
+    test_supported_encoders();
     test_CloneBitmapArea();
     test_ARGB_conversion();
     test_DrawImage_scale();
