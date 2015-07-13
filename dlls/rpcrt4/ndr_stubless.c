@@ -1344,8 +1344,7 @@ LONG WINAPI NdrStubCall2(
         if (ext_flags.HasNewCorrDesc)
         {
             /* initialize extra correlation package */
-            FIXME("new correlation description not implemented\n");
-            stubMsg.fHasNewCorrDesc = TRUE;
+            NdrCorrelationInitialize(&stubMsg, NdrCorrCache, sizeof(NdrCorrCache), 0);
         }
     }
     else
@@ -1432,7 +1431,7 @@ LONG WINAPI NdrStubCall2(
     if (ext_flags.HasNewCorrDesc)
     {
         /* free extra correlation package */
-        /* NdrCorrelationFree(&stubMsg); */
+        NdrCorrelationFree(&stubMsg);
     }
 
     if (Oif_flags.HasPipes)
