@@ -994,7 +994,8 @@ void __cdecl ios_lock(ios *this)
 /* ?lockbuf@ios@@QEAAXXZ */
 void __cdecl ios_lockbuf(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    streambuf_lock(this->sb);
 }
 
 /* ?lockc@ios@@KAXXZ */
@@ -1130,7 +1131,8 @@ void __cdecl ios_unlock(ios *this)
 /* ?unlockbuf@ios@@QEAAXXZ */
 void __cdecl ios_unlockbuf(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    streambuf_unlock(this->sb);
 }
 
 /* ?unlockc@ios@@KAXXZ */
