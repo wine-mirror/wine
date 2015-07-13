@@ -13759,40 +13759,44 @@ msgid "&Large"
 msgstr "M&are"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "Control"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "Meniu popup"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "&Control"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "S&hift"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "Editare rapidă"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "activ&ează"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "Istoric comenzi"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "Zonă tampon"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "Elimină dublu&rile"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "Meniu popup"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "&Control"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "&Număr de comenzi reapelate:"
+msgid "S&hift"
+msgstr "S&hift"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "În&chide consola"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "Elimină dublu&rile"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "Editare rapidă"
 
 #: wineconsole.rc:87
 msgid "&Font"

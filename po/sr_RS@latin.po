@@ -13790,45 +13790,40 @@ msgid "&Large"
 msgstr "Veliki"
 
 #: wineconsole.rc:68
-#, fuzzy
-msgid "Control"
-msgstr "Dodaj kontrolu"
+msgid "Command history"
+msgstr ""
 
 #: wineconsole.rc:69
+msgid "&Buffer size:"
+msgstr ""
+
+#: wineconsole.rc:72
+#, fuzzy
+msgid "&Remove duplicates"
+msgstr "&Ukloni..."
+
+#: wineconsole.rc:74
 #, fuzzy
 msgid "Popup menu"
 msgstr "iskačući meni"
 
-#: wineconsole.rc:70
+#: wineconsole.rc:75
 #, fuzzy
 msgid "&Control"
 msgstr "Dodaj kontrolu"
 
-#: wineconsole.rc:71
+#: wineconsole.rc:76
 msgid "S&hift"
 msgstr ""
 
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr ""
-
-#: wineconsole.rc:73
+#: wineconsole.rc:78
 #, fuzzy
-msgid "&enable"
-msgstr "&Tabela"
-
-#: wineconsole.rc:75
-msgid "Command history"
-msgstr ""
-
-#: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr ""
+msgid "Console"
+msgstr "prozor"
 
 #: wineconsole.rc:79
-#, fuzzy
-msgid "&Remove doubles"
-msgstr "&Ukloni..."
+msgid "&Quick Edit mode"
+msgstr ""
 
 #: wineconsole.rc:87
 #, fuzzy

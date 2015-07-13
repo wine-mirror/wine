@@ -13624,40 +13624,44 @@ msgid "&Large"
 msgstr "&Gran"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "Control"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "Menú emergent"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "&Control"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "&Maj"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "Edició ràpida"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "&habilita"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "Historial d'ordres"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "Zona de memòria intermèdia"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "&Elimina dobles"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "Menú emergent"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "&Control"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "&Nombre d'ordres cancel·lats:"
+msgid "S&hift"
+msgstr "&Maj"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "&Tanca la consola"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "&Elimina dobles"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "Edició ràpida"
 
 #: wineconsole.rc:87
 msgid "&Font"

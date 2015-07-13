@@ -13568,41 +13568,44 @@ msgid "&Large"
 msgstr "&גדול"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "שליטה"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "התפריט הקובץ"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "&Control"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "S&hift"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "עריכה מהירה"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "ה&פעלה"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "היסטוריית הפקודות"
 
-#: wineconsole.rc:76
+#: wineconsole.rc:69
 #, fuzzy
-msgid "&Number of recalled commands:"
-msgstr "&מספר הפקודות שנשמרות :"
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "אזור האגירה"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "ה&סרת כפולים"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "התפריט הקובץ"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "&Control"
+
+#: wineconsole.rc:76
+msgid "S&hift"
+msgstr "S&hift"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "סגירת ה&מסוף"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "ה&סרת כפולים"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "עריכה מהירה"
 
 #: wineconsole.rc:87
 msgid "&Font"

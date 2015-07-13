@@ -13203,40 +13203,44 @@ msgid "&Large"
 msgstr "&Veliki"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "Kontrola"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "Iskočni izbornik"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "Kont&rola"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "Po&mak"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "Brzo editiranje"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "uklju&či"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "Povijest naredbi"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "Tampon zona"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "&Ukloni duplikate"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "Iskočni izbornik"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "Kont&rola"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "Broj povučen&ih naredbi:"
+msgid "S&hift"
+msgstr "Po&mak"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "&Zatvori konzolu"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "&Ukloni duplikate"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "Brzo editiranje"
 
 #: wineconsole.rc:87
 msgid "&Font"

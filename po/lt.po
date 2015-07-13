@@ -13508,40 +13508,44 @@ msgid "&Large"
 msgstr "&Didelis"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "Valdymas"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "Iškylantis meniu"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "&Control"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "S&hift"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "Greitas redagavimas"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "įjun&gti"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "Komandų istorija"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "Buferio dydis"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "&Šalinti vienodas"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "Iškylantis meniu"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "&Control"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "Prisimintų &komandų skaičius:"
+msgid "S&hift"
+msgstr "S&hift"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "Už&daryti pultą"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "&Šalinti vienodas"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "Greitas redagavimas"
 
 #: wineconsole.rc:87
 msgid "&Font"

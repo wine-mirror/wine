@@ -13757,40 +13757,44 @@ msgid "&Large"
 msgstr "&Grande"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "Controlli"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "Menù a comparsa"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "&Controlla"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "Sco&rri"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "Modifica rapida"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "&abilita"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "Cronologia"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "Zona del buffer"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "&Rimuovi doppioni"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "Menù a comparsa"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "&Controlla"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "&Numero di comandi richiamati:"
+msgid "S&hift"
+msgstr "Sco&rri"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "&Chiudi console"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "&Rimuovi doppioni"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "Modifica rapida"
 
 #: wineconsole.rc:87
 msgid "&Font"

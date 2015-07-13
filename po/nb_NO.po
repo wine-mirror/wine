@@ -13564,40 +13564,44 @@ msgid "&Large"
 msgstr "&Stor"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "Kontroll"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "Hurtigmeny"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "&Kontroll"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "S&kift"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "Rask redigering"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "aktiv&er"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "Kommandohistorikk"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "Hurtigminnesone"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "Fje&rn doble"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "Hurtigmeny"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "&Kontroll"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "A&ntall huskede kommandoer:"
+msgid "S&hift"
+msgstr "S&kift"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "&Lukk konsoll"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "Fje&rn doble"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "Rask redigering"
 
 #: wineconsole.rc:87
 msgid "&Font"

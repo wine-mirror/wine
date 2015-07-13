@@ -13662,40 +13662,44 @@ msgid "&Large"
 msgstr "&Nagy"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "Irányítás"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "Előbukkanó menü"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "&Vezérlés"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "S&hift"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "Gyors szerkesztés"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "&engedélyez"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "Parancs előzmény"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "Puffer zóna"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "Kettőzések &eltávolítása"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "Előbukkanó menü"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "&Vezérlés"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "&Visszahívható parancsok száma:"
+msgid "S&hift"
+msgstr "S&hift"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "&Konsol bezárása"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "Kettőzések &eltávolítása"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "Gyors szerkesztés"
 
 #: wineconsole.rc:87
 msgid "&Font"

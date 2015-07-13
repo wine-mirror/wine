@@ -13682,40 +13682,44 @@ msgid "&Large"
 msgstr "大(&L)"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "コントロール"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "ポップアップ メニュー"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "コントロール(&C)"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "シフト(&H)"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "簡易編集"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "有効(&E)"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "コマンド履歴"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "バッファ サイズ"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "重複を削除(&R)"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "ポップアップ メニュー"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "コントロール(&C)"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "記憶するコマンド数(&N):"
+msgid "S&hift"
+msgstr "シフト(&H)"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "コンソールを閉じる(&C)"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "重複を削除(&R)"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "簡易編集"
 
 #: wineconsole.rc:87
 msgid "&Font"

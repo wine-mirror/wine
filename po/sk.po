@@ -13150,41 +13150,37 @@ msgid "&Large"
 msgstr ""
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr ""
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr ""
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr ""
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr ""
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr ""
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr ""
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr ""
 
+#: wineconsole.rc:69
+msgid "&Buffer size:"
+msgstr ""
+
+#: wineconsole.rc:72
+#, fuzzy
+msgid "&Remove duplicates"
+msgstr "&Skomentovať..."
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr ""
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr ""
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
+msgid "S&hift"
+msgstr ""
+
+#: wineconsole.rc:78
+msgid "Console"
 msgstr ""
 
 #: wineconsole.rc:79
-#, fuzzy
-msgid "&Remove doubles"
-msgstr "&Skomentovať..."
+msgid "&Quick Edit mode"
+msgstr ""
 
 #: wineconsole.rc:87
 #, fuzzy

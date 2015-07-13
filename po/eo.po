@@ -12984,40 +12984,44 @@ msgid "&Large"
 msgstr "&Larĝa"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "Regado"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "Ŝprucmenuo"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "&Stirklavo"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "&Registrumo"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "Rapida Redaktado"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "&aktivigi"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "Kronologio"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "Bufro"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "&Forigi duoblaĵojn"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "Ŝprucmenuo"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "&Stirklavo"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "&Nombro da revokitaj komandoj:"
+msgid "S&hift"
+msgstr "&Registrumo"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "&Fermi terminalon"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "&Forigi duoblaĵojn"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "Rapida Redaktado"
 
 #: wineconsole.rc:87
 msgid "&Font"

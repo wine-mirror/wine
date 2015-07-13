@@ -13723,40 +13723,44 @@ msgid "&Large"
 msgstr "크게(&L)"
 
 #: wineconsole.rc:68
-msgid "Control"
-msgstr "컨트롤"
-
-#: wineconsole.rc:69
-msgid "Popup menu"
-msgstr "팝업 메뉴"
-
-#: wineconsole.rc:70
-msgid "&Control"
-msgstr "컨트롤(&C)"
-
-#: wineconsole.rc:71
-msgid "S&hift"
-msgstr "쉬프트(&H)"
-
-#: wineconsole.rc:72
-msgid "Quick edit"
-msgstr "빠른 편집"
-
-#: wineconsole.rc:73
-msgid "&enable"
-msgstr "가능(&E)"
-
-#: wineconsole.rc:75
 msgid "Command history"
 msgstr "명령 히스토리"
 
+#: wineconsole.rc:69
+#, fuzzy
+#| msgid "Buffer zone"
+msgid "&Buffer size:"
+msgstr "버퍼 존"
+
+#: wineconsole.rc:72
+#, fuzzy
+#| msgid "&Remove doubles"
+msgid "&Remove duplicates"
+msgstr "두번 제거(&R)"
+
+#: wineconsole.rc:74
+msgid "Popup menu"
+msgstr "팝업 메뉴"
+
+#: wineconsole.rc:75
+msgid "&Control"
+msgstr "컨트롤(&C)"
+
 #: wineconsole.rc:76
-msgid "&Number of recalled commands:"
-msgstr "다시 부르는 명령의 갯수(&N):"
+msgid "S&hift"
+msgstr "쉬프트(&H)"
+
+#: wineconsole.rc:78
+#, fuzzy
+#| msgid "&Close console"
+msgid "Console"
+msgstr "콘솔 닫기(&C)"
 
 #: wineconsole.rc:79
-msgid "&Remove doubles"
-msgstr "두번 제거(&R)"
+#, fuzzy
+#| msgid "Quick edit"
+msgid "&Quick Edit mode"
+msgstr "빠른 편집"
 
 #: wineconsole.rc:87
 msgid "&Font"
