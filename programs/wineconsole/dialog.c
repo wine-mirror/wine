@@ -76,6 +76,8 @@ static INT_PTR WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
 	SetDlgItemInt(hDlg, IDC_OPT_HIST_SIZE, di->config.history_size,  FALSE);
         SendDlgItemMessageW(hDlg, IDC_OPT_HIST_NODOUBLE, BM_SETCHECK,
                             (di->config.history_nodup) ? BST_CHECKED : BST_UNCHECKED, 0);
+        SendDlgItemMessageW(hDlg, IDC_OPT_INSERT_MODE, BM_SETCHECK,
+                            (di->config.insert_mode) ? BST_CHECKED : BST_UNCHECKED, 0);
         SendDlgItemMessageW(hDlg, IDC_OPT_CONF_CTRL, BM_SETCHECK,
                             (di->config.menu_mask & MK_CONTROL) ? BST_CHECKED : BST_UNCHECKED, 0);
         SendDlgItemMessageW(hDlg, IDC_OPT_CONF_SHIFT, BM_SETCHECK,
@@ -120,6 +122,9 @@ static INT_PTR WINAPI WCUSER_OptionDlgProc(HWND hDlg, UINT msg, WPARAM wParam, L
 
             val = (IsDlgButtonChecked(hDlg, IDC_OPT_HIST_NODOUBLE) & BST_CHECKED) != 0;
             di->config.history_nodup = val;
+
+            val = (IsDlgButtonChecked(hDlg, IDC_OPT_INSERT_MODE) & BST_CHECKED) != 0;
+            di->config.insert_mode = val;
 
             val = 0;
             if (IsDlgButtonChecked(hDlg, IDC_OPT_CONF_CTRL) & BST_CHECKED)  val |= MK_CONTROL;

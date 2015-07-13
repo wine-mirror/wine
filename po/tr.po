@@ -69,7 +69,7 @@ msgstr "Destek Bilgileri"
 #: oleview.rc:175 progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158
 #: progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258
 #: regedit.rc:271 regedit.rc:287 regedit.rc:300 regedit.rc:313 taskmgr.rc:442
-#: taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224 wineconsole.rc:134
+#: taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135
 #: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:71
 #: winemine.rc:81 winemine.rc:95 wordpad.rc:207 wordpad.rc:218 wordpad.rc:236
 #: wordpad.rc:249
@@ -152,7 +152,7 @@ msgstr "&Kur"
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
 #: progman.rc:217 regedit.rc:248 regedit.rc:259 regedit.rc:272 regedit.rc:288
 #: regedit.rc:301 regedit.rc:314 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
-#: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:135 winefile.rc:132
+#: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:132
 #: winefile.rc:155 winefile.rc:185 winemine.rc:96 wordpad.rc:208
 #: wordpad.rc:219 wordpad.rc:237 wordpad.rc:250
 msgid "Cancel"
@@ -530,7 +530,7 @@ msgstr "Bo&yut"
 msgid "&Source"
 msgstr "&Kaynak"
 
-#: comdlg32.rc:249 wineconsole.rc:84
+#: comdlg32.rc:249 wineconsole.rc:85
 msgid "Font"
 msgstr "Yazı Tipi"
 
@@ -8568,7 +8568,7 @@ msgstr "&Geri Yükle"
 msgid "&Move"
 msgstr "&Taşı"
 
-#: user32.rc:32 user32.rc:45 wineconsole.rc:92
+#: user32.rc:32 user32.rc:45 wineconsole.rc:93
 msgid "&Size"
 msgstr "&Boyutlandır"
 
@@ -13553,63 +13553,69 @@ msgstr "&Konsolu kapat"
 msgid "&Quick Edit mode"
 msgstr "Hızlı düzenle"
 
-#: wineconsole.rc:87
+#: wineconsole.rc:80
+#, fuzzy
+#| msgid "&Expert mode"
+msgid "&Insert mode"
+msgstr "&Uzman modu"
+
+#: wineconsole.rc:88
 msgid "&Font"
 msgstr "&Yazı Tipi"
 
-#: wineconsole.rc:89
+#: wineconsole.rc:90
 msgid "&Color"
 msgstr "&Renk"
 
-#: wineconsole.rc:100
+#: wineconsole.rc:101
 msgid "Configuration"
 msgstr "Yapılandırma"
 
-#: wineconsole.rc:103
+#: wineconsole.rc:104
 msgid "Buffer zone"
 msgstr "Tampon bölge"
 
-#: wineconsole.rc:104
+#: wineconsole.rc:105
 msgid "&Width:"
 msgstr "&Genişlik :"
 
-#: wineconsole.rc:107
+#: wineconsole.rc:108
 msgid "&Height:"
 msgstr "&Yükseklik :"
 
-#: wineconsole.rc:111
+#: wineconsole.rc:112
 msgid "Window size"
 msgstr "Pencere boyutu"
 
-#: wineconsole.rc:112
+#: wineconsole.rc:113
 msgid "W&idth:"
 msgstr "&Genişlik :"
 
-#: wineconsole.rc:115
+#: wineconsole.rc:116
 msgid "H&eight:"
 msgstr "&Yükseklik :"
 
-#: wineconsole.rc:119
+#: wineconsole.rc:120
 msgid "End of program"
 msgstr "Program sonu"
 
-#: wineconsole.rc:120
+#: wineconsole.rc:121
 msgid "&Close console"
 msgstr "&Konsolu kapat"
 
-#: wineconsole.rc:122
+#: wineconsole.rc:123
 msgid "Edition"
 msgstr "Yayın"
 
-#: wineconsole.rc:128
+#: wineconsole.rc:129
 msgid "Console parameters"
 msgstr "Konsol Ayarları"
 
-#: wineconsole.rc:131
+#: wineconsole.rc:132
 msgid "Retain these settings for later sessions"
 msgstr "Sonraki oturumlar için sakla"
 
-#: wineconsole.rc:132
+#: wineconsole.rc:133
 msgid "Modify only current session"
 msgstr "Sadece geçerli oturuma uygula"
 

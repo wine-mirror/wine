@@ -76,6 +76,7 @@ FONT 8, "MS Shell Dlg"
 
         GROUPBOX "Console", -1, 80, 61, 120, 42, BS_GROUPBOX
         AUTOCHECKBOX "&Quick Edit mode", IDC_OPT_QUICK_EDIT, 84, 74, 70, 10, WS_TABSTOP
+        AUTOCHECKBOX "&Insert mode", IDC_OPT_INSERT_MODE, 84, 86, 70, 10, WS_TABSTOP
 }
 
 IDD_FONT DIALOG 36, 24, 140, 109

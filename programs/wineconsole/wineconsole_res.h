@@ -70,6 +70,7 @@
 #define IDC_OPT_CONF_CTRL       0x0107
 #define IDC_OPT_CONF_SHIFT      0x0108
 #define IDC_OPT_QUICK_EDIT      0x0109
+#define IDC_OPT_INSERT_MODE     0x0110
 
 #define IDC_FNT_LIST_FONT	0x0201
 #define IDC_FNT_LIST_SIZE	0x0202

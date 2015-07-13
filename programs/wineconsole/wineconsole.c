@@ -150,6 +150,23 @@ static BOOL WINECON_SetHistoryMode(HANDLE hConIn, int mode)
 }
 
 /******************************************************************
+ *              WINECON_SetInsertMode
+ *
+ *
+ */
+static void WINECON_SetInsertMode(HANDLE hConIn, unsigned int enable)
+{
+    DWORD mode;
+
+    GetConsoleMode(hConIn, &mode);
+    if (enable)
+        mode |= ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS;
+    else
+        mode &= ~ENABLE_INSERT_MODE;
+    SetConsoleMode(hConIn, mode);
+}
+
+/******************************************************************
  *		WINECON_GetConsoleTitle
  *
  *
@@ -397,6 +414,11 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
         data->curcfg.history_nodup = cfg->history_nodup;
         WINECON_SetHistoryMode(data->hConIn, cfg->history_nodup);
     }
+    if (data->curcfg.insert_mode != cfg->insert_mode)
+    {
+        data->curcfg.insert_mode = cfg->insert_mode;
+        WINECON_SetInsertMode(data->hConIn, cfg->insert_mode);
+    }
     data->curcfg.menu_mask = cfg->menu_mask;
     data->curcfg.quick_edit = cfg->quick_edit;
     if (1 /* FIXME: font info has changed */)
@@ -533,7 +555,8 @@ static void WINECON_Delete(struct inner_data* data)
  */
 static BOOL WINECON_GetServerConfig(struct inner_data* data)
 {
-    BOOL        ret;
+    BOOL  ret;
+    DWORD mode;
 
     SERVER_START_REQ(get_console_input_info)
     {
@@ -545,6 +568,11 @@ static BOOL WINECON_GetServerConfig(struct inner_data* data)
     }
     SERVER_END_REQ;
     if (!ret) return FALSE;
+
+    GetConsoleMode(data->hConIn, &mode);
+    data->curcfg.insert_mode = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==
+                                       (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS);
+
     SERVER_START_REQ(get_console_output_info)
     {
         req->handle = wine_server_obj_handle( data->hConOut );
