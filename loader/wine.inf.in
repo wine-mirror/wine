@@ -490,6 +490,7 @@ HKLM,%CurrentVersionNT%\Hotfix\Q246009,"Installed",,"1"
 HKLM,%CurrentVersionNT%\Image File Execution Options,,16
 HKLM,%CurrentVersionNT%\Language Pack,,16
 HKLM,%CurrentVersionNT%\NetworkCards,,16
+HKLM,%CurrentVersionNT%\OpenGLDrivers,,16
 HKLM,%CurrentVersionNT%\Perflib,,16
 HKLM,%CurrentVersionNT%\Ports,,16
 HKLM,%CurrentVersionNT%\Print,,16
