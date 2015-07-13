@@ -130,6 +130,8 @@ static void (*__thiscall p_ios_init)(ios*, streambuf*);
 static void (*__thiscall p_ios_dtor)(ios*);
 static void (*__cdecl p_ios_clrlock)(ios*);
 static void (*__cdecl p_ios_setlock)(ios*);
+static void (*__cdecl p_ios_lock)(ios*);
+static void (*__cdecl p_ios_unlock)(ios*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -234,6 +236,8 @@ static BOOL init(void)
         SET(p_ios_dtor, "??1ios@@UEAA@XZ");
         SET(p_ios_clrlock, "?clrlock@ios@@QEAAXXZ");
         SET(p_ios_setlock, "?setlock@ios@@QEAAXXZ");
+        SET(p_ios_lock, "?lock@ios@@QEAAXXZ");
+        SET(p_ios_unlock, "?unlock@ios@@QEAAXXZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
 
@@ -268,6 +272,8 @@ static BOOL init(void)
         SET(p_ios_dtor, "??1ios@@UAE@XZ");
         SET(p_ios_clrlock, "?clrlock@ios@@QAAXXZ");
         SET(p_ios_setlock, "?setlock@ios@@QAAXXZ");
+        SET(p_ios_lock, "?lock@ios@@QAAXXZ");
+        SET(p_ios_unlock, "?unlock@ios@@QAAXXZ");
     }
 
     init_thiscall_thunk();
@@ -811,10 +817,30 @@ static void test_streambuf(void)
     CloseHandle(thread);
 }
 
+struct ios_lock_arg
+{
+    ios *ios_obj;
+    HANDLE lock;
+    HANDLE release;
+};
+
+static DWORD WINAPI lock_ios(void *arg)
+{
+    struct ios_lock_arg *lock_arg = arg;
+    p_ios_lock(lock_arg->ios_obj);
+    SetEvent(lock_arg->lock);
+    WaitForSingleObject(lock_arg->release, INFINITE);
+    p_ios_unlock(lock_arg->ios_obj);
+    return 0;
+}
+
 static void test_ios(void)
 {
     ios ios_obj, ios_obj2;
     streambuf *psb;
+    struct ios_lock_arg lock_arg;
+    HANDLE thread;
+    BOOL locked;
 
     memset(&ios_obj, 0xab, sizeof(ios));
     memset(&ios_obj2, 0xab, sizeof(ios));
@@ -920,9 +946,27 @@ static void test_ios(void)
     ok(ios_obj.do_lock == -2, "expected -2 got %d\n", ios_obj.do_lock);
     ok(ios_obj.sb->do_lock == -1, "expected -1 got %d\n", ios_obj.sb->do_lock);
 
+    lock_arg.ios_obj = &ios_obj;
+    lock_arg.lock = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(lock_arg.lock != NULL, "CreateEventW failed\n");
+    lock_arg.release = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(lock_arg.release != NULL, "CreateEventW failed\n");
+    thread = CreateThread(NULL, 0, lock_ios, (void*)&lock_arg, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    WaitForSingleObject(lock_arg.lock, INFINITE);
+
+    locked = TryEnterCriticalSection(&ios_obj.lock);
+    ok(locked == 0, "the ios object was not locked before\n");
+
+    SetEvent(lock_arg.release);
+    WaitForSingleObject(thread, INFINITE);
+
     ios_obj.delbuf = 1;
     call_func1(p_ios_dtor, &ios_obj);
     ok(ios_obj.state == IOSTATE_badbit, "expected %x got %x\n", IOSTATE_badbit, ios_obj.state);
+    CloseHandle(lock_arg.lock);
+    CloseHandle(lock_arg.release);
+    CloseHandle(thread);
 }
 
 START_TEST(msvcirt)

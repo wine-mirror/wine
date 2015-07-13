@@ -985,7 +985,9 @@ LONG* __thiscall ios_iword(const ios *this, int index)
 /* ?lock@ios@@QEAAXXZ */
 void __cdecl ios_lock(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    if (this->do_lock < 0)
+        EnterCriticalSection(&this->lock);
 }
 
 /* ?lockbuf@ios@@QAAXXZ */
@@ -1119,7 +1121,9 @@ ostream* __thiscall ios_tie_get(const ios *this)
 /* ?unlock@ios@@QEAAXXZ */
 void __cdecl ios_unlock(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    if (this->do_lock < 0)
+        LeaveCriticalSection(&this->lock);
 }
 
 /* ?unlockbuf@ios@@QAAXXZ */
