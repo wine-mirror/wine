@@ -53,8 +53,10 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
-
 #include "ungif.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(wincodecs);
 
 static void *ungif_alloc( size_t sz )
 {
@@ -491,7 +493,10 @@ DGifGetLine(GifFileType * GifFile,
              * image until empty block (size 0) detected. We use GetCodeNext. */
             do
                 if (DGifGetCodeNext(GifFile, &Dummy) == GIF_ERROR)
-                    return GIF_ERROR;
+                {
+                    WARN("GIF is not properly terminated\n");
+                    break;
+                }
             while (Dummy != NULL) ;
         }
         return GIF_OK;

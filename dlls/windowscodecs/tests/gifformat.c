@@ -459,43 +459,34 @@ static void test_truncated_gif(void)
     stream = create_stream(gif_with_trailer_2, sizeof(gif_with_trailer_2));
     if (!stream) return;
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
-todo_wine
     ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
-if (hr != S_OK) goto skip_1;
     hr = IWICBitmapDecoder_GetContainerFormat(decoder, &format);
     ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
     ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
        "wrong container format %s\n", wine_dbgstr_guid(&format));
     IWICBitmapDecoder_Release(decoder);
-skip_1:
     IStream_Release(stream);
 
     stream = create_stream(gif_without_trailer_1, sizeof(gif_without_trailer_1));
     if (!stream) return;
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
-todo_wine
     ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
-if (hr != S_OK) goto skip_2;
     hr = IWICBitmapDecoder_GetContainerFormat(decoder, &format);
     ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
     ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
        "wrong container format %s\n", wine_dbgstr_guid(&format));
     IWICBitmapDecoder_Release(decoder);
-skip_2:
     IStream_Release(stream);
 
     stream = create_stream(gif_without_trailer_2, sizeof(gif_without_trailer_2));
     if (!stream) return;
     hr = IWICImagingFactory_CreateDecoderFromStream(factory, stream, NULL, 0, &decoder);
-todo_wine
     ok(hr == S_OK, "CreateDecoderFromStream error %#x\n", hr);
-if (hr != S_OK) goto skip_3;
     hr = IWICBitmapDecoder_GetContainerFormat(decoder, &format);
     ok(hr == S_OK, "GetContainerFormat error %#x\n", hr);
     ok(IsEqualGUID(&format, &GUID_ContainerFormatGif),
        "wrong container format %s\n", wine_dbgstr_guid(&format));
     IWICBitmapDecoder_Release(decoder);
-skip_3:
     IStream_Release(stream);
 }
 
