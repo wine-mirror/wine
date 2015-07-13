@@ -2468,6 +2468,27 @@ if (status == RPC_S_OK)
     ok(status == RPC_S_OK, "got %d\n", status);
 }
 
+static void test_NdrCorrelationInitialize(void)
+{
+    MIDL_STUB_MESSAGE stub_msg;
+    BYTE buf[256];
+
+    memset( &stub_msg, 0, sizeof(stub_msg) );
+    memset( buf, 0, sizeof(buf) );
+
+    NdrCorrelationInitialize( &stub_msg, buf, sizeof(buf), 0 );
+    ok( stub_msg.CorrDespIncrement == 2 ||
+        broken(stub_msg.CorrDespIncrement == 0), /* <= Win 2003 */
+        "got %d\n", stub_msg.CorrDespIncrement );
+
+    memset( &stub_msg, 0, sizeof(stub_msg) );
+    memset( buf, 0, sizeof(buf) );
+
+    stub_msg.CorrDespIncrement = 1;
+    NdrCorrelationInitialize( &stub_msg, buf, sizeof(buf), 0 );
+    ok( stub_msg.CorrDespIncrement == 1, "got %d\n", stub_msg.CorrDespIncrement );
+}
+
 START_TEST( ndr_marshall )
 {
     determine_pointer_marshalling_style();
@@ -2489,4 +2510,5 @@ START_TEST( ndr_marshall )
     test_NdrMapCommAndFaultStatus();
     test_NdrGetUserMarshalInfo();
     test_MesEncodeFixedBufferHandleCreate();
+    test_NdrCorrelationInitialize();
 }
