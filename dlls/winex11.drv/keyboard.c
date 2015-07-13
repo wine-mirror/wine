@@ -1233,6 +1233,7 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
         WORD vkey;
         BOOL pressed;
     } modifiers[6]; /* VK_LSHIFT through VK_RMENU are contiguous */
+    BOOL lwin_pressed = FALSE, rwin_pressed = FALSE;
 
     if (!get_async_key_state( keystate )) return;
 
@@ -1264,6 +1265,12 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
                 if (!modifiers[m].vkey) modifiers[m].vkey = vkey;
                 if (event->xkeymap.key_vector[i] & (1<<j)) modifiers[m].pressed = TRUE;
                 break;
+            case VK_LWIN:
+                if (event->xkeymap.key_vector[i] & (1<<j)) lwin_pressed = TRUE;
+                break;
+            case VK_RWIN:
+                if (event->xkeymap.key_vector[i] & (1<<j)) rwin_pressed = TRUE;
+                break;
             }
         }
     }
@@ -1281,12 +1288,27 @@ void X11DRV_KeymapNotify( HWND hwnd, XEvent *event )
         }
     }
 
+    if (!(keystate[VK_LWIN] & 0x80) != !lwin_pressed)
+    {
+        TRACE( "Adjusting state for VK_LWIN. State before %#.2x\n", keystate[VK_LWIN]);
+        update_key_state( keystate, VK_LWIN, lwin_pressed );
+        changed = TRUE;
+    }
+    if (!(keystate[VK_RWIN] & 0x80) != !rwin_pressed)
+    {
+        TRACE( "Adjusting state for VK_RWIN. State before %#.2x\n", keystate[VK_RWIN]);
+        update_key_state( keystate, VK_RWIN, rwin_pressed );
+        changed = TRUE;
+    }
+
     LeaveCriticalSection( &kbd_section );
     if (!changed) return;
 
     update_key_state( keystate, VK_CONTROL, (keystate[VK_LCONTROL] | keystate[VK_RCONTROL]) & 0x80 );
     update_key_state( keystate, VK_MENU, (keystate[VK_LMENU] | keystate[VK_RMENU]) & 0x80 );
     update_key_state( keystate, VK_SHIFT, (keystate[VK_LSHIFT] | keystate[VK_RSHIFT]) & 0x80 );
+    update_key_state( keystate, VK_LWIN, keystate[VK_LWIN] & 0x80 );
+    update_key_state( keystate, VK_RWIN, keystate[VK_RWIN] & 0x80 );
     set_async_key_state( keystate );
 }
 
