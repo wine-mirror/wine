@@ -2335,6 +2335,12 @@ static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
     __asm__(".byte 0x65\n\tmovq (0x30),%0" : "=r" (teb));
     return teb;
 }
+#elif defined(__x86_64__) && defined(_MSC_VER)
+#pragma intrinsic(__readgsqword)
+static FORCEINLINE struct _TEB * WINAPI NtCurrentTeb(void)
+{
+    return (struct _TEB *)__readgsqword(FIELD_OFFSET(NT_TIB, Self));
+}
 #else
 extern struct _TEB * WINAPI NtCurrentTeb(void);
 #endif
