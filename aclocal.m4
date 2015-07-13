@@ -42,6 +42,7 @@ dnl Usage: WINE_PATH_PKG_CONFIG
 dnl
 AC_DEFUN([WINE_PATH_SONAME_TOOLS],
 [AC_PATH_PROG(LDD,ldd,true,/sbin:/usr/sbin:$PATH)
+AC_CHECK_TOOL(OTOOL,otool,otool)
 AC_CHECK_TOOL(READELF,[readelf],true)])
 
 AC_DEFUN([WINE_PATH_PKG_CONFIG],
@@ -62,7 +63,7 @@ LIBS="-l$1 $5 $LIBS"
   AC_LINK_IFELSE([AC_LANG_CALL([], [$2])],
   [case "$LIBEXT" in
     dll) AS_VAR_SET(ac_Lib,[`$ac_cv_path_LDD conftest.exe | grep "$1" | sed -e "s/dll.*/dll/"';2,$d'`]) ;;
-    dylib) AS_VAR_SET(ac_Lib,[`otool -L conftest$ac_exeext | grep "ac_lib_pattern\\.[[0-9A-Za-z.]]*dylib" | sed -e "s/^.*\/\(ac_lib_pattern\.[[0-9A-Za-z.]]*dylib\).*$/\1/"';2,$d'`]) ;;
+    dylib) AS_VAR_SET(ac_Lib,[`$OTOOL -L conftest$ac_exeext | grep "ac_lib_pattern\\.[[0-9A-Za-z.]]*dylib" | sed -e "s/^.*\/\(ac_lib_pattern\.[[0-9A-Za-z.]]*dylib\).*$/\1/"';2,$d'`]) ;;
     *) AS_VAR_SET(ac_Lib,[`$READELF -d conftest$ac_exeext | grep "NEEDED.*ac_lib_pattern\\.$LIBEXT" | sed -e "s/^.*\\m4_dquote(\\(ac_lib_pattern\\.$LIBEXT[[^	 ]]*\\)\\).*$/\1/"';2,$d'`])
        AS_VAR_IF([ac_Lib],[],
              [AS_VAR_SET(ac_Lib,[`$LDD conftest$ac_exeext | grep "ac_lib_pattern\\.$LIBEXT" | sed -e "s/^.*\(ac_lib_pattern\.$LIBEXT[[^	 ]]*\).*$/\1/"';2,$d'`])]) ;;
