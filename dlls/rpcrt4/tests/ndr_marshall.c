@@ -1320,9 +1320,9 @@ todo_wine
     ok(stubMsg.ReuseBuffer == 0 ||
        broken(stubMsg.ReuseBuffer == 1), /* win2k */
        "stubMsg.ReuseBuffer should have been set to zero instead of %d\n", stubMsg.ReuseBuffer);
-    ok(stubMsg.CorrDespIncrement == 0xcc ||
-       stubMsg.CorrDespIncrement == 0,
-       "CorrDespIncrement should have been unset instead of 0x%x\n", stubMsg.CorrDespIncrement);
+    ok(stubMsg.CorrDespIncrement == 0 ||
+       broken(stubMsg.CorrDespIncrement == 0xcc), /* <= Win 2003 */
+       "CorrDespIncrement should have been set to zero instead of 0x%x\n", stubMsg.CorrDespIncrement);
     ok(stubMsg.FullPtrXlatTables == 0, "stubMsg.BufferLength should have been 0 instead of %p\n", stubMsg.FullPtrXlatTables);
 }
 
