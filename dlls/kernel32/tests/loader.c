@@ -375,6 +375,16 @@ static void test_Loader(void)
           1,
           0,
           { ERROR_SUCCESS, ERROR_BAD_EXE_FORMAT } /* vista is more strict */
+        },
+        /* Minimal PE image that Windows7 is able to load: 268 bytes */
+        { 0x04,
+          0, 0xf0, /* optional header size just forces 0xf0 bytes to be written,
+                      0 or another number don't change the behaviour, what really
+                      matters is file size regardless of values in the headers */
+          0x04 /* also serves as e_lfanew in the truncated MZ header */, 0x04,
+          0x40, /* minimal image size that Windows7 accepts */
+          0,
+          { ERROR_SUCCESS }
         }
     };
     int i;
