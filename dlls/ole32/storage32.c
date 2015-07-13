@@ -9183,7 +9183,10 @@ static HRESULT STREAM_ReadString( IStream *stm, LPWSTR *string )
     count = 0;
     r = IStream_Read( stm, str, len, &count );
     if( FAILED( r ) )
+    {
+        CoTaskMemFree( str );
         return r;
+    }
     if( count != len )
     {
         CoTaskMemFree( str );
