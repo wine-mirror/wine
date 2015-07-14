@@ -215,6 +215,7 @@ struct d2d_geometry
     size_t vertex_count;
 
     struct d2d_face *faces;
+    size_t faces_size;
     size_t face_count;
 
     union
@@ -223,8 +224,12 @@ struct d2d_geometry
         {
             ID2D1GeometrySink ID2D1GeometrySink_iface;
 
+            struct d2d_figure *figures;
+            size_t figures_size;
+            size_t figure_count;
+
             enum d2d_geometry_state state;
-            UINT32 figure_count, segment_count;
+            UINT32 segment_count;
         } path;
         struct
         {

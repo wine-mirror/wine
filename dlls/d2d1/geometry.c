@@ -23,6 +23,896 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+#define D2D_CDT_EDGE_FLAG_FREED         0x80000000u
+#define D2D_CDT_EDGE_FLAG_VISITED(r)    (1u << (r))
+
+enum d2d_cdt_edge_next
+{
+    D2D_EDGE_NEXT_ORIGIN = 0,
+    D2D_EDGE_NEXT_ROT = 1,
+    D2D_EDGE_NEXT_SYM = 2,
+    D2D_EDGE_NEXT_TOR = 3,
+};
+
+struct d2d_figure
+{
+    D2D1_POINT_2F *vertices;
+    size_t vertices_size;
+    size_t vertex_count;
+};
+
+struct d2d_cdt_edge_ref
+{
+    size_t idx;
+    enum d2d_cdt_edge_next r;
+};
+
+struct d2d_cdt_edge
+{
+    struct d2d_cdt_edge_ref next[4];
+    size_t vertex[2];
+    unsigned int flags;
+};
+
+struct d2d_cdt
+{
+    struct d2d_cdt_edge *edges;
+    size_t edges_size;
+    size_t edge_count;
+    size_t free_edge;
+
+    const D2D1_POINT_2F *vertices;
+};
+
+static void d2d_point_subtract(D2D1_POINT_2F *out,
+        const D2D1_POINT_2F *a, const D2D1_POINT_2F *b)
+{
+    out->x = a->x - b->x;
+    out->y = a->y - b->y;
+}
+
+static BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t element_count, size_t element_size)
+{
+    size_t new_capacity, max_capacity;
+    void *new_elements;
+
+    if (element_count <= *capacity)
+        return TRUE;
+
+    max_capacity = ~(size_t)0 / element_size;
+    if (max_capacity < element_count)
+        return FALSE;
+
+    new_capacity = max(*capacity, 4);
+    while (new_capacity < element_count && new_capacity <= max_capacity / 2)
+        new_capacity *= 2;
+
+    if (new_capacity < element_count)
+        new_capacity = max_capacity;
+
+    if (*elements)
+        new_elements = HeapReAlloc(GetProcessHeap(), 0, *elements, new_capacity * element_size);
+    else
+        new_elements = HeapAlloc(GetProcessHeap(), 0, new_capacity * element_size);
+
+    if (!new_elements)
+        return FALSE;
+
+    *elements = new_elements;
+    *capacity = new_capacity;
+    return TRUE;
+}
+
+static BOOL d2d_figure_insert_vertex(struct d2d_figure *figure, size_t idx, D2D1_POINT_2F vertex)
+{
+    if (!d2d_array_reserve((void **)&figure->vertices, &figure->vertices_size,
+            figure->vertex_count + 1, sizeof(*figure->vertices)))
+    {
+        ERR("Failed to grow vertices array.\n");
+        return FALSE;
+    }
+
+    memmove(&figure->vertices[idx + 1], &figure->vertices[idx],
+            (figure->vertex_count - idx) * sizeof(*figure->vertices));
+    figure->vertices[idx] = vertex;
+    ++figure->vertex_count;
+    return TRUE;
+}
+
+static BOOL d2d_figure_add_vertex(struct d2d_figure *figure, D2D1_POINT_2F vertex)
+{
+    if (!d2d_array_reserve((void **)&figure->vertices, &figure->vertices_size,
+            figure->vertex_count + 1, sizeof(*figure->vertices)))
+    {
+        ERR("Failed to grow vertices array.\n");
+        return FALSE;
+    }
+
+    figure->vertices[figure->vertex_count] = vertex;
+    ++figure->vertex_count;
+    return TRUE;
+}
+
+static void d2d_cdt_edge_rot(struct d2d_cdt_edge_ref *dst, const struct d2d_cdt_edge_ref *src)
+{
+    dst->idx = src->idx;
+    dst->r = (src->r + D2D_EDGE_NEXT_ROT) & 3;
+}
+
+static void d2d_cdt_edge_sym(struct d2d_cdt_edge_ref *dst, const struct d2d_cdt_edge_ref *src)
+{
+    dst->idx = src->idx;
+    dst->r = (src->r + D2D_EDGE_NEXT_SYM) & 3;
+}
+
+static void d2d_cdt_edge_tor(struct d2d_cdt_edge_ref *dst, const struct d2d_cdt_edge_ref *src)
+{
+    dst->idx = src->idx;
+    dst->r = (src->r + D2D_EDGE_NEXT_TOR) & 3;
+}
+
+static void d2d_cdt_edge_next_left(const struct d2d_cdt *cdt,
+        struct d2d_cdt_edge_ref *dst, const struct d2d_cdt_edge_ref *src)
+{
+    d2d_cdt_edge_rot(dst, &cdt->edges[src->idx].next[(src->r + D2D_EDGE_NEXT_TOR) & 3]);
+}
+
+static void d2d_cdt_edge_next_origin(const struct d2d_cdt *cdt,
+        struct d2d_cdt_edge_ref *dst, const struct d2d_cdt_edge_ref *src)
+{
+    *dst = cdt->edges[src->idx].next[src->r];
+}
+
+static void d2d_cdt_edge_prev_origin(const struct d2d_cdt *cdt,
+        struct d2d_cdt_edge_ref *dst, const struct d2d_cdt_edge_ref *src)
+{
+    d2d_cdt_edge_rot(dst, &cdt->edges[src->idx].next[(src->r + D2D_EDGE_NEXT_ROT) & 3]);
+}
+
+static size_t d2d_cdt_edge_origin(const struct d2d_cdt *cdt, const struct d2d_cdt_edge_ref *e)
+{
+    return cdt->edges[e->idx].vertex[e->r >> 1];
+}
+
+static size_t d2d_cdt_edge_destination(const struct d2d_cdt *cdt, const struct d2d_cdt_edge_ref *e)
+{
+    return cdt->edges[e->idx].vertex[!(e->r >> 1)];
+}
+
+static void d2d_cdt_edge_set_origin(const struct d2d_cdt *cdt,
+        const struct d2d_cdt_edge_ref *e, size_t vertex)
+{
+    cdt->edges[e->idx].vertex[e->r >> 1] = vertex;
+}
+
+static void d2d_cdt_edge_set_destination(const struct d2d_cdt *cdt,
+        const struct d2d_cdt_edge_ref *e, size_t vertex)
+{
+    cdt->edges[e->idx].vertex[!(e->r >> 1)] = vertex;
+}
+
+static float d2d_cdt_ccw(const struct d2d_cdt *cdt, size_t a, size_t b, size_t c)
+{
+    D2D1_POINT_2F ab, ac;
+
+    d2d_point_subtract(&ab, &cdt->vertices[b], &cdt->vertices[a]);
+    d2d_point_subtract(&ac, &cdt->vertices[c], &cdt->vertices[a]);
+
+    return ab.x * ac.y - ab.y * ac.x;
+}
+
+static BOOL d2d_cdt_rightof(const struct d2d_cdt *cdt, size_t p, const struct d2d_cdt_edge_ref *e)
+{
+    return d2d_cdt_ccw(cdt, p, d2d_cdt_edge_destination(cdt, e), d2d_cdt_edge_origin(cdt, e)) > 0.0f;
+}
+
+static BOOL d2d_cdt_leftof(const struct d2d_cdt *cdt, size_t p, const struct d2d_cdt_edge_ref *e)
+{
+    return d2d_cdt_ccw(cdt, p, d2d_cdt_edge_origin(cdt, e), d2d_cdt_edge_destination(cdt, e)) > 0.0f;
+}
+
+/* Determine if point D is inside or outside the circle defined by points A,
+ * B, C. As explained in the paper by Guibas and Stolfi, this is equivalent to
+ * calculating the signed volume of the tetrahedron defined by projecting the
+ * points onto the paraboloid of revolution x = x² + y²,
+ * λ:(x, y) → (x, y, x² + y²). I.e., D is inside the cirlce if
+ *
+ * |λ(A) 1|
+ * |λ(B) 1| > 0
+ * |λ(C) 1|
+ * |λ(D) 1|
+ *
+ * After translating D to the origin, that becomes:
+ *
+ * |λ(A-D)|
+ * |λ(B-D)| > 0
+ * |λ(C-D)| */
+static BOOL d2d_cdt_incircle(const struct d2d_cdt *cdt, size_t a, size_t b, size_t c, size_t d)
+{
+    const D2D1_POINT_2F *p = cdt->vertices;
+    const struct
+    {
+        double x, y;
+    }
+    da = {p[a].x - p[d].x, p[a].y - p[d].y},
+    db = {p[b].x - p[d].x, p[b].y - p[d].y},
+    dc = {p[c].x - p[d].x, p[c].y - p[d].y};
+
+    return (da.x * da.x + da.y * da.y) * (db.x * dc.y - db.y * dc.x)
+            + (db.x * db.x + db.y * db.y) * (dc.x * da.y - dc.y * da.x)
+            + (dc.x * dc.x + dc.y * dc.y) * (da.x * db.y - da.y * db.x) > 0.0;
+}
+
+static void d2d_cdt_splice(const struct d2d_cdt *cdt, const struct d2d_cdt_edge_ref *a,
+        const struct d2d_cdt_edge_ref *b)
+{
+    struct d2d_cdt_edge_ref ta, tb, alpha, beta;
+
+    ta = cdt->edges[a->idx].next[a->r];
+    tb = cdt->edges[b->idx].next[b->r];
+    cdt->edges[a->idx].next[a->r] = tb;
+    cdt->edges[b->idx].next[b->r] = ta;
+
+    d2d_cdt_edge_rot(&alpha, &ta);
+    d2d_cdt_edge_rot(&beta, &tb);
+
+    ta = cdt->edges[alpha.idx].next[alpha.r];
+    tb = cdt->edges[beta.idx].next[beta.r];
+    cdt->edges[alpha.idx].next[alpha.r] = tb;
+    cdt->edges[beta.idx].next[beta.r] = ta;
+}
+
+static BOOL d2d_cdt_create_edge(struct d2d_cdt *cdt, struct d2d_cdt_edge_ref *e)
+{
+    struct d2d_cdt_edge *edge;
+
+    if (cdt->free_edge != ~0u)
+    {
+        e->idx = cdt->free_edge;
+        cdt->free_edge = cdt->edges[e->idx].next[D2D_EDGE_NEXT_ORIGIN].idx;
+    }
+    else
+    {
+        if (!d2d_array_reserve((void **)&cdt->edges, &cdt->edges_size, cdt->edge_count + 1, sizeof(*cdt->edges)))
+        {
+            ERR("Failed to grow edges array.\n");
+            return FALSE;
+        }
+        e->idx = cdt->edge_count++;
+    }
+    e->r = 0;
+
+    edge = &cdt->edges[e->idx];
+    edge->next[D2D_EDGE_NEXT_ORIGIN] = *e;
+    d2d_cdt_edge_tor(&edge->next[D2D_EDGE_NEXT_ROT], e);
+    d2d_cdt_edge_sym(&edge->next[D2D_EDGE_NEXT_SYM], e);
+    d2d_cdt_edge_rot(&edge->next[D2D_EDGE_NEXT_TOR], e);
+    edge->flags = 0;
+
+    return TRUE;
+}
+
+static void d2d_cdt_destroy_edge(struct d2d_cdt *cdt, const struct d2d_cdt_edge_ref *e)
+{
+    struct d2d_cdt_edge_ref next, sym, prev;
+
+    d2d_cdt_edge_next_origin(cdt, &next, e);
+    if (next.idx != e->idx || next.r != e->r)
+    {
+        d2d_cdt_edge_prev_origin(cdt, &prev, e);
+        d2d_cdt_splice(cdt, e, &prev);
+    }
+
+    d2d_cdt_edge_sym(&sym, e);
+
+    d2d_cdt_edge_next_origin(cdt, &next, &sym);
+    if (next.idx != sym.idx || next.r != sym.r)
+    {
+        d2d_cdt_edge_prev_origin(cdt, &prev, &sym);
+        d2d_cdt_splice(cdt, &sym, &prev);
+    }
+
+    cdt->edges[e->idx].flags |= D2D_CDT_EDGE_FLAG_FREED;
+    cdt->edges[e->idx].next[D2D_EDGE_NEXT_ORIGIN].idx = cdt->free_edge;
+    cdt->free_edge = e->idx;
+}
+
+static BOOL d2d_cdt_connect(struct d2d_cdt *cdt, struct d2d_cdt_edge_ref *e,
+        const struct d2d_cdt_edge_ref *a, const struct d2d_cdt_edge_ref *b)
+{
+    struct d2d_cdt_edge_ref tmp;
+
+    if (!d2d_cdt_create_edge(cdt, e))
+        return FALSE;
+    d2d_cdt_edge_set_origin(cdt, e, d2d_cdt_edge_destination(cdt, a));
+    d2d_cdt_edge_set_destination(cdt, e, d2d_cdt_edge_origin(cdt, b));
+    d2d_cdt_edge_next_left(cdt, &tmp, a);
+    d2d_cdt_splice(cdt, e, &tmp);
+    d2d_cdt_edge_sym(&tmp, e);
+    d2d_cdt_splice(cdt, &tmp, b);
+
+    return TRUE;
+}
+
+static BOOL d2d_cdt_merge(struct d2d_cdt *cdt, struct d2d_cdt_edge_ref *left_outer,
+        struct d2d_cdt_edge_ref *left_inner, struct d2d_cdt_edge_ref *right_inner,
+        struct d2d_cdt_edge_ref *right_outer)
+{
+    struct d2d_cdt_edge_ref base_edge, tmp;
+
+    /* Create the base edge between both parts. */
+    for (;;)
+    {
+        if (d2d_cdt_leftof(cdt, d2d_cdt_edge_origin(cdt, right_inner), left_inner))
+        {
+            d2d_cdt_edge_next_left(cdt, left_inner, left_inner);
+        }
+        else if (d2d_cdt_rightof(cdt, d2d_cdt_edge_origin(cdt, left_inner), right_inner))
+        {
+            d2d_cdt_edge_sym(&tmp, right_inner);
+            d2d_cdt_edge_next_origin(cdt, right_inner, &tmp);
+        }
+        else
+        {
+            break;
+        }
+    }
+
+    d2d_cdt_edge_sym(&tmp, right_inner);
+    if (!d2d_cdt_connect(cdt, &base_edge, &tmp, left_inner))
+        return FALSE;
+    if (d2d_cdt_edge_origin(cdt, left_inner) == d2d_cdt_edge_origin(cdt, left_outer))
+        d2d_cdt_edge_sym(left_outer, &base_edge);
+    if (d2d_cdt_edge_origin(cdt, right_inner) == d2d_cdt_edge_origin(cdt, right_outer))
+        *right_outer = base_edge;
+
+    for (;;)
+    {
+        struct d2d_cdt_edge_ref left_candidate, right_candidate, sym_base_edge;
+        BOOL left_valid, right_valid;
+
+        /* Find the left candidate. */
+        d2d_cdt_edge_sym(&sym_base_edge, &base_edge);
+        d2d_cdt_edge_next_origin(cdt, &left_candidate, &sym_base_edge);
+        if ((left_valid = d2d_cdt_leftof(cdt, d2d_cdt_edge_destination(cdt, &left_candidate), &sym_base_edge)))
+        {
+            d2d_cdt_edge_next_origin(cdt, &tmp, &left_candidate);
+            while (d2d_cdt_edge_destination(cdt, &tmp) != d2d_cdt_edge_destination(cdt, &sym_base_edge)
+                    && d2d_cdt_incircle(cdt,
+                    d2d_cdt_edge_origin(cdt, &sym_base_edge), d2d_cdt_edge_destination(cdt, &sym_base_edge),
+                    d2d_cdt_edge_destination(cdt, &left_candidate), d2d_cdt_edge_destination(cdt, &tmp)))
+            {
+                d2d_cdt_destroy_edge(cdt, &left_candidate);
+                left_candidate = tmp;
+                d2d_cdt_edge_next_origin(cdt, &tmp, &left_candidate);
+            }
+        }
+        d2d_cdt_edge_sym(&left_candidate, &left_candidate);
+
+        /* Find the right candidate. */
+        d2d_cdt_edge_prev_origin(cdt, &right_candidate, &base_edge);
+        if ((right_valid = d2d_cdt_rightof(cdt, d2d_cdt_edge_destination(cdt, &right_candidate), &base_edge)))
+        {
+            d2d_cdt_edge_prev_origin(cdt, &tmp, &right_candidate);
+            while (d2d_cdt_edge_destination(cdt, &tmp) != d2d_cdt_edge_destination(cdt, &base_edge)
+                    && d2d_cdt_incircle(cdt,
+                    d2d_cdt_edge_origin(cdt, &sym_base_edge), d2d_cdt_edge_destination(cdt, &sym_base_edge),
+                    d2d_cdt_edge_destination(cdt, &right_candidate), d2d_cdt_edge_destination(cdt, &tmp)))
+            {
+                d2d_cdt_destroy_edge(cdt, &right_candidate);
+                right_candidate = tmp;
+                d2d_cdt_edge_prev_origin(cdt, &tmp, &right_candidate);
+            }
+        }
+
+        if (!left_valid && !right_valid)
+            break;
+
+        /* Connect the appropriate candidate with the base edge. */
+        if (!left_valid || (right_valid && d2d_cdt_incircle(cdt,
+                d2d_cdt_edge_origin(cdt, &left_candidate), d2d_cdt_edge_destination(cdt, &left_candidate),
+                d2d_cdt_edge_origin(cdt, &right_candidate), d2d_cdt_edge_destination(cdt, &right_candidate))))
+        {
+            if (!d2d_cdt_connect(cdt, &base_edge, &right_candidate, &sym_base_edge))
+                return FALSE;
+        }
+        else
+        {
+            if (!d2d_cdt_connect(cdt, &base_edge, &sym_base_edge, &left_candidate))
+                return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+/* Create a Delaunay triangulation from a set of vertices. This is an
+ * implementation of the divide-and-conquer algorithm described by Guibas and
+ * Stolfi. Should be called with at least two vertices. */
+static BOOL d2d_cdt_triangulate(struct d2d_cdt *cdt, size_t start_vertex, size_t vertex_count,
+        struct d2d_cdt_edge_ref *left_edge, struct d2d_cdt_edge_ref *right_edge)
+{
+    struct d2d_cdt_edge_ref left_inner, left_outer, right_inner, right_outer, tmp;
+    size_t cut;
+
+    /* Only two vertices, create a single edge. */
+    if (vertex_count == 2)
+    {
+        struct d2d_cdt_edge_ref a;
+
+        if (!d2d_cdt_create_edge(cdt, &a))
+            return FALSE;
+        d2d_cdt_edge_set_origin(cdt, &a, start_vertex);
+        d2d_cdt_edge_set_destination(cdt, &a, start_vertex + 1);
+
+        *left_edge = a;
+        d2d_cdt_edge_sym(right_edge, &a);
+
+        return TRUE;
+    }
+
+    /* Three vertices, create a triangle. */
+    if (vertex_count == 3)
+    {
+        struct d2d_cdt_edge_ref a, b, c;
+        float det;
+
+        if (!d2d_cdt_create_edge(cdt, &a))
+            return FALSE;
+        if (!d2d_cdt_create_edge(cdt, &b))
+            return FALSE;
+        d2d_cdt_edge_sym(&tmp, &a);
+        d2d_cdt_splice(cdt, &tmp, &b);
+
+        d2d_cdt_edge_set_origin(cdt, &a, start_vertex);
+        d2d_cdt_edge_set_destination(cdt, &a, start_vertex + 1);
+        d2d_cdt_edge_set_origin(cdt, &b, start_vertex + 1);
+        d2d_cdt_edge_set_destination(cdt, &b, start_vertex + 2);
+
+        det = d2d_cdt_ccw(cdt, start_vertex, start_vertex + 1, start_vertex + 2);
+        if (det != 0.0f && !d2d_cdt_connect(cdt, &c, &b, &a))
+            return FALSE;
+
+        if (det < 0.0f)
+        {
+            d2d_cdt_edge_sym(left_edge, &c);
+            *right_edge = c;
+        }
+        else
+        {
+            *left_edge = a;
+            d2d_cdt_edge_sym(right_edge, &b);
+        }
+
+        return TRUE;
+    }
+
+    /* More than tree vertices, divide. */
+    cut = vertex_count / 2;
+    if (!d2d_cdt_triangulate(cdt, start_vertex, cut, &left_outer, &left_inner))
+        return FALSE;
+    if (!d2d_cdt_triangulate(cdt, start_vertex + cut, vertex_count - cut, &right_inner, &right_outer))
+        return FALSE;
+    /* Merge the left and right parts. */
+    if (!d2d_cdt_merge(cdt, &left_outer, &left_inner, &right_inner, &right_outer))
+        return FALSE;
+
+    *left_edge = left_outer;
+    *right_edge = right_outer;
+    return TRUE;
+}
+
+static int d2d_cdt_compare_vertices(const void *a, const void *b)
+{
+    const D2D1_POINT_2F *p0 = a;
+    const D2D1_POINT_2F *p1 = b;
+    float diff = p0->x - p1->x;
+
+    if (diff == 0.0f)
+        diff = p0->y - p1->y;
+
+    return diff == 0.0f ? 0 : (diff > 0.0f ? 1 : -1);
+}
+
+/* Determine whether a given point is inside the geometry, using the even-odd
+ * rule. */
+static BOOL d2d_path_geometry_point_inside(const struct d2d_geometry *geometry, const D2D1_POINT_2F *probe)
+{
+    const D2D1_POINT_2F *p0, *p1;
+    D2D1_POINT_2F v_p, v_probe;
+    unsigned int score;
+    size_t i, j;
+
+    for (i = 0, score = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        const struct d2d_figure *figure = &geometry->u.path.figures[i];
+
+        p0 = &figure->vertices[figure->vertex_count - 1];
+        for (j = 0; j < figure->vertex_count; p0 = p1, ++j)
+        {
+            p1 = &figure->vertices[j];
+            d2d_point_subtract(&v_p, p1, p0);
+            d2d_point_subtract(&v_probe, probe, p0);
+
+            if ((probe->y < p0->y) != (probe->y < p1->y) && v_probe.x < v_p.x * (v_probe.y / v_p.y))
+                ++score;
+        }
+    }
+
+    return score & 1;
+}
+
+static BOOL d2d_path_geometry_add_face(struct d2d_geometry *geometry, const struct d2d_cdt *cdt,
+        const struct d2d_cdt_edge_ref *base_edge)
+{
+    struct d2d_cdt_edge_ref tmp;
+    struct d2d_face *face;
+    D2D1_POINT_2F probe;
+
+    if (cdt->edges[base_edge->idx].flags & D2D_CDT_EDGE_FLAG_VISITED(base_edge->r))
+        return TRUE;
+
+    if (!d2d_array_reserve((void **)&geometry->faces, &geometry->faces_size,
+            geometry->face_count + 1, sizeof(*geometry->faces)))
+    {
+        ERR("Failed to grow faces array.\n");
+        return FALSE;
+    }
+
+    face = &geometry->faces[geometry->face_count];
+
+    /* It may seem tempting to use the center of the face as probe origin, but
+     * multiplying by powers of two works much better for preserving accuracy. */
+
+    tmp = *base_edge;
+    cdt->edges[tmp.idx].flags |= D2D_CDT_EDGE_FLAG_VISITED(tmp.r);
+    face->v[0] = d2d_cdt_edge_origin(cdt, &tmp);
+    probe.x = cdt->vertices[d2d_cdt_edge_origin(cdt, &tmp)].x * 0.25f;
+    probe.y = cdt->vertices[d2d_cdt_edge_origin(cdt, &tmp)].y * 0.25f;
+
+    d2d_cdt_edge_next_left(cdt, &tmp, &tmp);
+    cdt->edges[tmp.idx].flags |= D2D_CDT_EDGE_FLAG_VISITED(tmp.r);
+    face->v[1] = d2d_cdt_edge_origin(cdt, &tmp);
+    probe.x += cdt->vertices[d2d_cdt_edge_origin(cdt, &tmp)].x * 0.25f;
+    probe.y += cdt->vertices[d2d_cdt_edge_origin(cdt, &tmp)].y * 0.25f;
+
+    d2d_cdt_edge_next_left(cdt, &tmp, &tmp);
+    cdt->edges[tmp.idx].flags |= D2D_CDT_EDGE_FLAG_VISITED(tmp.r);
+    face->v[2] = d2d_cdt_edge_origin(cdt, &tmp);
+    probe.x += cdt->vertices[d2d_cdt_edge_origin(cdt, &tmp)].x * 0.50f;
+    probe.y += cdt->vertices[d2d_cdt_edge_origin(cdt, &tmp)].y * 0.50f;
+
+    d2d_cdt_edge_next_left(cdt, &tmp, &tmp);
+    if (tmp.idx == base_edge->idx && d2d_path_geometry_point_inside(geometry, &probe))
+        ++geometry->face_count;
+
+    return TRUE;
+}
+
+static BOOL d2d_cdt_generate_faces(const struct d2d_cdt *cdt, struct d2d_geometry *geometry)
+{
+    struct d2d_cdt_edge_ref base_edge;
+    size_t i;
+
+    for (i = 0; i < cdt->edge_count; ++i)
+    {
+        if (cdt->edges[i].flags & D2D_CDT_EDGE_FLAG_FREED)
+            continue;
+
+        base_edge.idx = i;
+        base_edge.r = 0;
+        if (!d2d_path_geometry_add_face(geometry, cdt, &base_edge))
+            goto fail;
+        d2d_cdt_edge_sym(&base_edge, &base_edge);
+        if (!d2d_path_geometry_add_face(geometry, cdt, &base_edge))
+            goto fail;
+    }
+
+    return TRUE;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, geometry->faces);
+    geometry->faces = NULL;
+    geometry->faces_size = 0;
+    geometry->face_count = 0;
+    return FALSE;
+}
+
+static BOOL d2d_cdt_fixup(struct d2d_cdt *cdt, const struct d2d_cdt_edge_ref *base_edge)
+{
+    struct d2d_cdt_edge_ref candidate, next, new_base;
+    unsigned int count = 0;
+
+    d2d_cdt_edge_next_left(cdt, &next, base_edge);
+    if (next.idx == base_edge->idx)
+    {
+        ERR("Degenerate face.\n");
+        return FALSE;
+    }
+
+    candidate = next;
+    while (d2d_cdt_edge_destination(cdt, &next) != d2d_cdt_edge_origin(cdt, base_edge))
+    {
+        if (d2d_cdt_incircle(cdt, d2d_cdt_edge_origin(cdt, base_edge), d2d_cdt_edge_destination(cdt, base_edge),
+                d2d_cdt_edge_destination(cdt, &candidate), d2d_cdt_edge_destination(cdt, &next)))
+            candidate = next;
+        d2d_cdt_edge_next_left(cdt, &next, &next);
+        ++count;
+    }
+
+    if (count > 1)
+    {
+        if (!d2d_cdt_connect(cdt, &new_base, &candidate, base_edge))
+            return FALSE;
+        if (!d2d_cdt_fixup(cdt, &new_base))
+            return FALSE;
+        d2d_cdt_edge_sym(&new_base, &new_base);
+        if (!d2d_cdt_fixup(cdt, &new_base))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+static void d2d_cdt_cut_edges(struct d2d_cdt *cdt, struct d2d_cdt_edge_ref *end_edge,
+        const struct d2d_cdt_edge_ref *base_edge, size_t start_vertex, size_t end_vertex)
+{
+    struct d2d_cdt_edge_ref next;
+
+    d2d_cdt_edge_next_left(cdt, &next, base_edge);
+    if (d2d_cdt_edge_destination(cdt, &next) == end_vertex)
+    {
+        *end_edge = next;
+        return;
+    }
+
+    if (d2d_cdt_ccw(cdt, d2d_cdt_edge_destination(cdt, &next), end_vertex, start_vertex) > 0.0f)
+        d2d_cdt_edge_next_left(cdt, &next, &next);
+
+    d2d_cdt_edge_sym(&next, &next);
+    d2d_cdt_cut_edges(cdt, end_edge, &next, start_vertex, end_vertex);
+    d2d_cdt_destroy_edge(cdt, &next);
+}
+
+static BOOL d2d_cdt_insert_segment(struct d2d_cdt *cdt, struct d2d_geometry *geometry,
+        const struct d2d_cdt_edge_ref *origin, size_t end_vertex)
+{
+    struct d2d_cdt_edge_ref base_edge, current, next, target;
+
+    for (current = *origin;; current = next)
+    {
+        d2d_cdt_edge_next_origin(cdt, &next, &current);
+
+        if (d2d_cdt_edge_destination(cdt, &current) == end_vertex)
+            return TRUE;
+
+        if (d2d_cdt_rightof(cdt, end_vertex, &next) && d2d_cdt_leftof(cdt, end_vertex, &current))
+        {
+            d2d_cdt_edge_next_left(cdt, &base_edge, &current);
+
+            d2d_cdt_edge_sym(&base_edge, &base_edge);
+            d2d_cdt_cut_edges(cdt, &target, &base_edge, d2d_cdt_edge_origin(cdt, origin), end_vertex);
+            d2d_cdt_destroy_edge(cdt, &base_edge);
+
+            if (!d2d_cdt_connect(cdt, &base_edge, &target, &current))
+                return FALSE;
+            if (!d2d_cdt_fixup(cdt, &base_edge))
+                return FALSE;
+            d2d_cdt_edge_sym(&base_edge, &base_edge);
+            if (!d2d_cdt_fixup(cdt, &base_edge))
+                return FALSE;
+
+            return TRUE;
+        }
+
+        if (next.idx == origin->idx)
+        {
+            ERR("Triangle not found.\n");
+            return FALSE;
+        }
+    }
+}
+
+static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *geometry)
+{
+    size_t start_vertex, end_vertex, i, j, k;
+    const struct d2d_figure *figure;
+    struct d2d_cdt_edge_ref edge;
+    const D2D1_POINT_2F *p;
+
+    for (i = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        figure = &geometry->u.path.figures[i];
+
+        p = bsearch(&figure->vertices[figure->vertex_count - 1], cdt->vertices,
+                geometry->vertex_count, sizeof(*p), d2d_cdt_compare_vertices);
+        start_vertex = p - cdt->vertices;
+
+        for (j = 0; j < figure->vertex_count; start_vertex = end_vertex, ++j)
+        {
+            p = bsearch(&figure->vertices[j], cdt->vertices,
+                    geometry->vertex_count, sizeof(*p), d2d_cdt_compare_vertices);
+            end_vertex = p - cdt->vertices;
+
+            if (start_vertex == end_vertex)
+                continue;
+
+            for (k = 0; k < cdt->edge_count; ++k)
+            {
+                if (cdt->edges[k].flags & D2D_CDT_EDGE_FLAG_FREED)
+                    continue;
+
+                edge.idx = k;
+                edge.r = 0;
+
+                if (d2d_cdt_edge_origin(cdt, &edge) == start_vertex)
+                {
+                    if (!d2d_cdt_insert_segment(cdt, geometry, &edge, end_vertex))
+                        return FALSE;
+                    break;
+                }
+                d2d_cdt_edge_sym(&edge, &edge);
+                if (d2d_cdt_edge_origin(cdt, &edge) == start_vertex)
+                {
+                    if (!d2d_cdt_insert_segment(cdt, geometry, &edge, end_vertex))
+                        return FALSE;
+                    break;
+                }
+            }
+        }
+    }
+
+    return TRUE;
+}
+
+/* Intersect the geometry's segments with themselves. This uses the
+ * straightforward approach of testing everything against everything, but
+ * there certainly exist more scalable algorithms for this. */
+static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
+{
+    D2D1_POINT_2F p0, p1, q0, q1, v_p, v_q, v_qp, intersection;
+    struct d2d_figure *figure_p, *figure_q;
+    size_t i, j, k, l, limit;
+    float s, t, det;
+
+    for (i = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        figure_p = &geometry->u.path.figures[i];
+        p0 = figure_p->vertices[figure_p->vertex_count - 1];
+        for (k = 0; k < figure_p->vertex_count; p0 = p1, ++k)
+        {
+            p1 = figure_p->vertices[k];
+            d2d_point_subtract(&v_p, &p1, &p0);
+            for (j = 0; j < i || (j == i && k); ++j)
+            {
+                figure_q = &geometry->u.path.figures[j];
+                limit = j == i ? k - 1 : figure_q->vertex_count;
+                q0 = figure_q->vertices[figure_q->vertex_count - 1];
+                for (l = 0; l < limit; q0 = q1, ++l)
+                {
+                    q1 = figure_q->vertices[l];
+                    d2d_point_subtract(&v_q, &q1, &q0);
+                    d2d_point_subtract(&v_qp, &p0, &q0);
+
+                    det = v_p.x * v_q.y - v_p.y * v_q.x;
+                    if (det == 0.0f)
+                        continue;
+
+                    s = (v_q.x * v_qp.y - v_q.y * v_qp.x) / det;
+                    t = (v_p.x * v_qp.y - v_p.y * v_qp.x) / det;
+
+                    if (s < 0.0f || s > 1.0f || t < 0.0f || t > 1.0f)
+                        continue;
+
+                    intersection.x = p0.x + v_p.x * s;
+                    intersection.y = p0.y + v_p.y * s;
+
+                    if (t > 0.0f && t < 1.0f)
+                    {
+                        if (!d2d_figure_insert_vertex(figure_q, l, intersection))
+                            return FALSE;
+                        if (j == i)
+                            ++k;
+                        ++limit;
+                        ++l;
+                    }
+
+                    if (s > 0.0f && s < 1.0f)
+                    {
+                        if (!d2d_figure_insert_vertex(figure_p, k, intersection))
+                            return FALSE;
+                        p1 = intersection;
+                        d2d_point_subtract(&v_p, &p1, &p0);
+                    }
+                }
+            }
+        }
+    }
+
+    return TRUE;
+}
+
+static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
+{
+    struct d2d_cdt_edge_ref left_edge, right_edge;
+    size_t vertex_count, i, j;
+    struct d2d_cdt cdt = {0};
+    D2D1_POINT_2F *vertices;
+
+    for (i = 0, vertex_count = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        vertex_count += geometry->u.path.figures[i].vertex_count;
+    }
+
+    if (vertex_count < 3)
+    {
+        WARN("Geometry has %u vertices.\n", vertex_count);
+        return S_OK;
+    }
+
+    if (!(vertices = HeapAlloc(GetProcessHeap(), 0, vertex_count * sizeof(*vertices))))
+        return E_OUTOFMEMORY;
+
+    for (i = 0, j = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        memcpy(&vertices[j], geometry->u.path.figures[i].vertices,
+                geometry->u.path.figures[i].vertex_count * sizeof(*vertices));
+        j += geometry->u.path.figures[i].vertex_count;
+    }
+
+    /* Sort vertices, eliminate duplicates. */
+    qsort(vertices, vertex_count, sizeof(*vertices), d2d_cdt_compare_vertices);
+    for (i = 1; i < vertex_count; ++i)
+    {
+        if (!memcmp(&vertices[i - 1], &vertices[i], sizeof(*vertices)))
+        {
+            --vertex_count;
+            memmove(&vertices[i], &vertices[i + 1], (vertex_count - i) * sizeof(*vertices));
+            --i;
+        }
+    }
+
+    geometry->vertices = vertices;
+    geometry->vertex_count = vertex_count;
+
+    cdt.free_edge = ~0u;
+    cdt.vertices = vertices;
+    if (!d2d_cdt_triangulate(&cdt, 0, vertex_count, &left_edge, &right_edge))
+        goto fail;
+    if (!d2d_cdt_insert_segments(&cdt, geometry))
+        goto fail;
+    if (!d2d_cdt_generate_faces(&cdt, geometry))
+        goto fail;
+
+    HeapFree(GetProcessHeap(), 0, cdt.edges);
+    return S_OK;
+
+fail:
+    geometry->vertices = NULL;
+    geometry->vertex_count = 0;
+    HeapFree(GetProcessHeap(), 0, vertices);
+    HeapFree(GetProcessHeap(), 0, cdt.edges);
+    return E_FAIL;
+}
+
+static BOOL d2d_path_geometry_add_figure(struct d2d_geometry *geometry)
+{
+    struct d2d_figure *figure;
+
+    if (!d2d_array_reserve((void **)&geometry->u.path.figures, &geometry->u.path.figures_size,
+            geometry->u.path.figure_count + 1, sizeof(*geometry->u.path.figures)))
+    {
+        ERR("Failed to grow figures array.\n");
+        return FALSE;
+    }
+
+    figure = &geometry->u.path.figures[geometry->u.path.figure_count];
+    memset(figure, 0, sizeof(*figure));
+
+    ++geometry->u.path.figure_count;
+    return TRUE;
+}
+
 static void d2d_geometry_destroy(struct d2d_geometry *geometry)
 {
     HeapFree(GetProcessHeap(), 0, geometry->faces);
@@ -93,7 +983,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
 
-    FIXME("iface %p, start_point {%.8e, %.8e}, figure_begin %#x stub!\n",
+    TRACE("iface %p, start_point {%.8e, %.8e}, figure_begin %#x.\n",
             iface, start_point.x, start_point.y, figure_begin);
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_OPEN)
@@ -101,8 +991,21 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_BeginFigure(ID2D1GeometrySink *i
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
         return;
     }
+
+    if (figure_begin != D2D1_FIGURE_BEGIN_FILLED)
+        FIXME("Ignoring figure_begin %#x.\n", figure_begin);
+
+    if (!d2d_path_geometry_add_figure(geometry))
+    {
+        ERR("Failed to add figure.\n");
+        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        return;
+    }
+
+    if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], start_point))
+        ERR("Failed to add vertex.\n");
+
     geometry->u.path.state = D2D_GEOMETRY_STATE_FIGURE;
-    ++geometry->u.path.figure_count;
     ++geometry->u.path.segment_count;
 }
 
@@ -110,13 +1013,23 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddLines(ID2D1GeometrySink *ifac
         const D2D1_POINT_2F *points, UINT32 count)
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+    unsigned int i;
 
-    FIXME("iface %p, points %p, count %u stub!\n", iface, points, count);
+    TRACE("iface %p, points %p, count %u.\n", iface, points, count);
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
         return;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], points[i]))
+        {
+            ERR("Failed to add vertex.\n");
+            return;
+        }
     }
 
     geometry->u.path.segment_count += count;
@@ -126,6 +1039,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
         const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+    unsigned int i;
 
     FIXME("iface %p, beziers %p, count %u stub!\n", iface, beziers, count);
 
@@ -135,6 +1049,15 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
         return;
     }
 
+    for (i = 0; i < count; ++i)
+    {
+        if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], beziers[i].point3))
+        {
+            ERR("Failed to add vertex.\n");
+            return;
+        }
+    }
+
     geometry->u.path.segment_count += count;
 }
 
@@ -142,19 +1065,40 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_EndFigure(ID2D1GeometrySink *ifa
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
 
-    FIXME("iface %p, figure_end %#x stub!\n", iface, figure_end);
+    TRACE("iface %p, figure_end %#x.\n", iface, figure_end);
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
         return;
     }
+
+    if (figure_end != D2D1_FIGURE_END_CLOSED)
+        FIXME("Ignoring figure_end %#x.\n", figure_end);
+
     geometry->u.path.state = D2D_GEOMETRY_STATE_OPEN;
+}
+
+static void d2d_path_geometry_free_figures(struct d2d_geometry *geometry)
+{
+    size_t i;
+
+    if (!geometry->u.path.figures)
+        return;
+
+    for (i = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        HeapFree(GetProcessHeap(), 0, geometry->u.path.figures[i].vertices);
+    }
+    HeapFree(GetProcessHeap(), 0, geometry->u.path.figures);
+    geometry->u.path.figures = NULL;
+    geometry->u.path.figures_size = 0;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *iface)
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+    HRESULT hr = E_FAIL;
 
     TRACE("iface %p.\n", iface);
 
@@ -166,7 +1110,15 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
     }
     geometry->u.path.state = D2D_GEOMETRY_STATE_CLOSED;
 
-    return S_OK;
+    if (!d2d_geometry_intersect_self(geometry))
+        goto done;
+    hr = d2d_path_geometry_triangulate(geometry);
+
+done:
+    d2d_path_geometry_free_figures(geometry);
+    if (FAILED(hr))
+        geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_AddLine(ID2D1GeometrySink *iface, D2D1_POINT_2F point)
@@ -195,6 +1147,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
         const D2D1_QUADRATIC_BEZIER_SEGMENT *beziers, UINT32 bezier_count)
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+    unsigned int i;
 
     FIXME("iface %p, beziers %p, bezier_count %u stub!\n", iface, beziers, bezier_count);
 
@@ -202,6 +1155,15 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
     {
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
         return;
+    }
+
+    for (i = 0; i < bezier_count; ++i)
+    {
+        if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], beziers[i].point2))
+        {
+            ERR("Failed to add vertex.\n");
+            return;
+        }
     }
 
     geometry->u.path.segment_count += bezier_count;
@@ -216,6 +1178,12 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddArc(ID2D1GeometrySink *iface,
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
         geometry->u.path.state = D2D_GEOMETRY_STATE_ERROR;
+        return;
+    }
+
+    if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], arc->point))
+    {
+        ERR("Failed to add vertex.\n");
         return;
     }
 
@@ -284,7 +1252,10 @@ static ULONG STDMETHODCALLTYPE d2d_path_geometry_Release(ID2D1PathGeometry *ifac
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        d2d_path_geometry_free_figures(geometry);
         d2d_geometry_destroy(geometry);
+    }
 
     return refcount;
 }
@@ -710,7 +1681,7 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, const D2D1_RE
     if (!(geometry->vertices = HeapAlloc(GetProcessHeap(), 0, 4 * sizeof(*geometry->vertices))))
         return E_OUTOFMEMORY;
     geometry->vertex_count = 4;
-    if (!(geometry->faces = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(*geometry->faces))))
+    if (!d2d_array_reserve((void **)&geometry->faces, &geometry->faces_size, 2, sizeof(*geometry->faces)))
     {
         HeapFree(GetProcessHeap(), 0, geometry->vertices);
         return E_OUTOFMEMORY;
