@@ -1396,8 +1396,10 @@ LANGID WINAPI GetSystemDefaultUILanguage(void)
 LCID WINAPI LocaleNameToLCID( LPCWSTR name, DWORD flags )
 {
     struct locale_name locale_name;
+    static int once;
 
-    if (flags) FIXME( "unsupported flags %x\n", flags );
+    if (flags && !once++)
+        FIXME( "unsupported flags %x\n", flags );
 
     if (name == LOCALE_NAME_USER_DEFAULT)
         return GetUserDefaultLCID();
@@ -1427,7 +1429,8 @@ LCID WINAPI LocaleNameToLCID( LPCWSTR name, DWORD flags )
  */
 INT WINAPI LCIDToLocaleName( LCID lcid, LPWSTR name, INT count, DWORD flags )
 {
-    if (flags) FIXME( "unsupported flags %x\n", flags );
+    static int once;
+    if (flags && !once++) FIXME( "unsupported flags %x\n", flags );
 
     return GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, name, count );
 }
