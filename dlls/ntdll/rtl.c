@@ -1489,7 +1489,7 @@ out:
 /******************************************************************************
  *  RtlDecompressFragment	[NTDLL.@]
  */
-NTSTATUS RtlDecompressFragment(USHORT format, PUCHAR uncompressed, ULONG uncompressed_size,
+NTSTATUS WINAPI RtlDecompressFragment(USHORT format, PUCHAR uncompressed, ULONG uncompressed_size,
                                PUCHAR compressed, ULONG compressed_size, ULONG offset,
                                PULONG final_size, PVOID workspace)
 {
