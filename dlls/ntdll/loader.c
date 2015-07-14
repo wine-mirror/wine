@@ -94,7 +94,7 @@ static struct builtin_load_info *builtin_load_info = &default_load_info;
 
 static HANDLE main_exe_file;
 static UINT tls_module_count;      /* number of modules with TLS directory */
-static const IMAGE_TLS_DIRECTORY **tls_dirs;  /* array of TLS directories */
+static IMAGE_TLS_DIRECTORY *tls_dirs;  /* array of TLS directories */
 LIST_ENTRY tls_links = { &tls_links, &tls_links };
 
 static RTL_CRITICAL_SECTION loader_section;
@@ -772,7 +772,12 @@ static SHORT alloc_tls_slot( LDR_MODULE *mod )
     size = dir->EndAddressOfRawData - dir->StartAddressOfRawData;
     if (!size && !dir->SizeOfZeroFill && !dir->AddressOfCallBacks) return -1;
 
-    for (i = 0; i < tls_module_count; i++) if (!tls_dirs[i]) break;
+    for (i = 0; i < tls_module_count; i++)
+    {
+        if (!tls_dirs[i].StartAddressOfRawData && !tls_dirs[i].EndAddressOfRawData &&
+            !tls_dirs[i].SizeOfZeroFill && !tls_dirs[i].AddressOfCallBacks)
+            break;
+    }
 
     TRACE( "module %p data %p-%p zerofill %u index %p callback %p flags %x -> slot %u\n", mod->BaseAddress,
            (void *)dir->StartAddressOfRawData, (void *)dir->EndAddressOfRawData, dir->SizeOfZeroFill,
@@ -824,7 +829,7 @@ static SHORT alloc_tls_slot( LDR_MODULE *mod )
     }
 
     *(DWORD *)dir->AddressOfIndex = i;
-    tls_dirs[i] = dir;
+    tls_dirs[i] = *dir;
     return i;
 }
 
@@ -841,7 +846,7 @@ static void free_tls_slot( LDR_MODULE *mod )
 
     if (mod->TlsIndex == -1) return;
     assert( i < tls_module_count );
-    tls_dirs[i] = NULL;
+    memset( &tls_dirs[i], 0, sizeof(tls_dirs[i]) );
 }
 
 
@@ -987,7 +992,7 @@ static NTSTATUS alloc_thread_tls(void)
 
     for (i = 0; i < tls_module_count; i++)
     {
-        const IMAGE_TLS_DIRECTORY *dir = tls_dirs[i];
+        const IMAGE_TLS_DIRECTORY *dir = &tls_dirs[i];
 
         if (!dir) continue;
         size = dir->EndAddressOfRawData - dir->StartAddressOfRawData;
