@@ -735,3 +735,12 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, const D2D1_RE
 
     return S_OK;
 }
+
+struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl
+            || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
+    return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);
+}

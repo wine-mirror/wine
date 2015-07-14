@@ -55,6 +55,7 @@ struct d2d_d3d_render_target
     ID3D10RenderTargetView *view;
     ID3D10StateBlock *stateblock;
     ID3D10InputLayout *il;
+    ID3D10Buffer *ib;
     unsigned int vb_stride;
     ID3D10Buffer *vb;
     ID3D10VertexShader *vs;
@@ -234,6 +235,7 @@ struct d2d_geometry
 
 void d2d_path_geometry_init(struct d2d_geometry *geometry) DECLSPEC_HIDDEN;
 HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, const D2D1_RECT_F *rect) DECLSPEC_HIDDEN;
+struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface) DECLSPEC_HIDDEN;
 
 static inline void d2d_matrix_multiply(D2D_MATRIX_3X2_F *a, const D2D_MATRIX_3X2_F *b)
 {
