@@ -29,6 +29,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(vcomp);
 
+static int     vcomp_max_threads;
+static int     vcomp_num_threads;
+
 int CDECL omp_get_dynamic(void)
 {
     TRACE("stub\n");
@@ -37,8 +40,8 @@ int CDECL omp_get_dynamic(void)
 
 int CDECL omp_get_max_threads(void)
 {
-    TRACE("stub\n");
-    return 1;
+    TRACE("()\n");
+    return vcomp_max_threads;
 }
 
 int CDECL omp_get_nested(void)
@@ -83,7 +86,9 @@ void CDECL omp_set_nested(int nested)
 
 void CDECL omp_set_num_threads(int num_threads)
 {
-    TRACE("(%d): stub\n", num_threads);
+    TRACE("(%d)\n", num_threads);
+    if (num_threads >= 1)
+        vcomp_num_threads = num_threads;
 }
 
 void CDECL _vcomp_barrier(void)
@@ -107,17 +112,25 @@ void CDECL _vcomp_single_end(void)
     TRACE("stub\n");
 }
 
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
-    TRACE("(0x%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(%p, %d, %p)\n", instance, reason, reserved);
 
-    switch (fdwReason)
+    switch (reason)
     {
         case DLL_WINE_PREATTACH:
             return FALSE;    /* prefer native version */
+
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
+        {
+            SYSTEM_INFO sysinfo;
+            DisableThreadLibraryCalls(instance);
+
+            GetSystemInfo(&sysinfo);
+            vcomp_max_threads = sysinfo.dwNumberOfProcessors;
+            vcomp_num_threads = sysinfo.dwNumberOfProcessors;
             break;
+        }
     }
 
     return TRUE;
