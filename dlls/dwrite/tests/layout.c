@@ -1482,6 +1482,7 @@ static void test_Draw(void)
     ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 10", FALSE);
     IDWriteTextLayout_Release(layout);
 
+    IDWriteInlineObject_Release(inlineobj);
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
