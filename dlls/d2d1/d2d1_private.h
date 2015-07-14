@@ -142,6 +142,8 @@ HRESULT d2d_bitmap_brush_init(struct d2d_brush *brush, struct d2d_d3d_render_tar
         ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc) DECLSPEC_HIDDEN;
 void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target) DECLSPEC_HIDDEN;
+HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target,
+        ID3D10Buffer **ps_cb) DECLSPEC_HIDDEN;
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;
 
 struct d2d_stroke_style
@@ -232,5 +234,17 @@ struct d2d_geometry
 
 void d2d_path_geometry_init(struct d2d_geometry *geometry) DECLSPEC_HIDDEN;
 HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, const D2D1_RECT_F *rect) DECLSPEC_HIDDEN;
+
+static inline void d2d_matrix_multiply(D2D_MATRIX_3X2_F *a, const D2D_MATRIX_3X2_F *b)
+{
+    D2D_MATRIX_3X2_F tmp = *a;
+
+    a->_11 = tmp._11 * b->_11 + tmp._12 * b->_21;
+    a->_12 = tmp._11 * b->_12 + tmp._12 * b->_22;
+    a->_21 = tmp._21 * b->_11 + tmp._22 * b->_21;
+    a->_22 = tmp._21 * b->_12 + tmp._22 * b->_22;
+    a->_31 = tmp._31 * b->_11 + tmp._32 * b->_21 + b->_31;
+    a->_32 = tmp._31 * b->_12 + tmp._32 * b->_22 + b->_32;
+}
 
 #endif /* __WINE_D2D1_PRIVATE_H */

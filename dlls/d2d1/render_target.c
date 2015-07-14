@@ -32,18 +32,6 @@ struct d2d_draw_text_layout_ctx
     D2D1_DRAW_TEXT_OPTIONS options;
 };
 
-static void d2d_matrix_multiply(D2D_MATRIX_3X2_F *a, const D2D_MATRIX_3X2_F *b)
-{
-    D2D_MATRIX_3X2_F tmp = *a;
-
-    a->_11 = tmp._11 * b->_11 + tmp._12 * b->_21;
-    a->_12 = tmp._11 * b->_12 + tmp._12 * b->_22;
-    a->_21 = tmp._21 * b->_11 + tmp._22 * b->_21;
-    a->_22 = tmp._21 * b->_12 + tmp._22 * b->_22;
-    a->_31 = tmp._31 * b->_11 + tmp._32 * b->_21 + b->_31;
-    a->_32 = tmp._31 * b->_12 + tmp._32 * b->_22 + b->_32;
-}
-
 static void d2d_point_set(D2D1_POINT_2F *dst, float x, float y)
 {
     dst->x = x;
@@ -550,7 +538,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Buffer *vs_cb, *ps_cb;
-    D2D1_COLOR_F color;
     float tmp_x, tmp_y;
     HRESULT hr;
     struct
@@ -609,64 +596,9 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
         return;
     }
 
-    if (brush_impl->type == D2D_BRUSH_TYPE_BITMAP)
+    if (FAILED(hr = d2d_brush_get_ps_cb(brush_impl, render_target, &ps_cb)))
     {
-        struct d2d_bitmap *bitmap = brush_impl->u.bitmap.bitmap;
-        D2D_MATRIX_3X2_F w, b;
-        float dpi_scale, d;
-
-        /* Scale for dpi. */
-        w = render_target->drawing_state.transform;
-        dpi_scale = render_target->dpi_x / 96.0f;
-        w._11 *= dpi_scale;
-        w._21 *= dpi_scale;
-        w._31 *= dpi_scale;
-        dpi_scale = render_target->dpi_y / 96.0f;
-        w._12 *= dpi_scale;
-        w._22 *= dpi_scale;
-        w._32 *= dpi_scale;
-
-        /* Scale for bitmap size and dpi. */
-        b = brush_impl->transform;
-        dpi_scale = bitmap->pixel_size.width * (bitmap->dpi_x / 96.0f);
-        b._11 *= dpi_scale;
-        b._21 *= dpi_scale;
-        dpi_scale = bitmap->pixel_size.height * (bitmap->dpi_y / 96.0f);
-        b._12 *= dpi_scale;
-        b._22 *= dpi_scale;
-
-        d2d_matrix_multiply(&b, &w);
-
-        /* Invert the matrix. (Because the matrix is applied to the sampling
-         * coordinates. I.e., to scale the bitmap by 2 we need to divide the
-         * coordinates by 2.) */
-        d = b._11 * b._22 - b._21 * b._12;
-        if (d != 0.0f)
-        {
-            transform._11 = b._22 / d;
-            transform._21 = -b._21 / d;
-            transform._31 = (b._21 * b._32 - b._31 * b._22) / d;
-            transform._12 = -b._12 / d;
-            transform._22 = b._11 / d;
-            transform._32 = -(b._11 * b._32 - b._31 * b._12) / d;
-        }
-        transform.pad1 = brush_impl->opacity;
-
-        buffer_desc.ByteWidth = sizeof(transform);
-        buffer_data.pSysMem = &transform;
-    }
-    else
-    {
-        color = brush_impl->u.solid.color;
-        color.a *= brush_impl->opacity;
-
-        buffer_desc.ByteWidth = sizeof(color);
-        buffer_data.pSysMem = &color;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ps_cb)))
-    {
-        WARN("Failed to create constant buffer, hr %#x.\n", hr);
+        WARN("Failed to get ps constant buffer, hr %#x.\n", hr);
         ID3D10Buffer_Release(vs_cb);
         return;
     }
