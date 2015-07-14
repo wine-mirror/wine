@@ -31,6 +31,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vcomp);
 
 static int     vcomp_max_threads;
 static int     vcomp_num_threads;
+static BOOL    vcomp_nested_fork = FALSE;
 
 int CDECL omp_get_dynamic(void)
 {
@@ -47,7 +48,7 @@ int CDECL omp_get_max_threads(void)
 int CDECL omp_get_nested(void)
 {
     TRACE("stub\n");
-    return 0;
+    return vcomp_nested_fork;
 }
 
 int CDECL omp_get_num_procs(void)
@@ -81,7 +82,8 @@ void CDECL omp_set_dynamic(int val)
 
 void CDECL omp_set_nested(int nested)
 {
-    TRACE("(%d): stub\n", nested);
+    TRACE("(%d)\n", nested);
+    vcomp_nested_fork = (nested != 0);
 }
 
 void CDECL omp_set_num_threads(int num_threads)
