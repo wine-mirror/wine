@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-05-21 20:22+0300\n"
+"PO-Revision-Date: 2015-07-14 16:31+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -13512,16 +13512,12 @@ msgid "Command history"
 msgstr "Komandų istorija"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Buferio dydis"
+msgstr "&Buferio dydis:"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "&Šalinti vienodas"
+msgstr "&Šalinti dublikatus"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -13536,22 +13532,16 @@ msgid "S&hift"
 msgstr "S&hift"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "Už&daryti pultą"
+msgstr "Pultas"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Greitas redagavimas"
+msgstr "&Greitas redagavimas"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "&Eksperto režimas"
+msgstr "Į&terpimo režimas"
 
 #: wineconsole.rc:88
 msgid "&Font"
