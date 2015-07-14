@@ -198,16 +198,39 @@ enum d2d_geometry_state
     D2D_GEOMETRY_STATE_FIGURE,
 };
 
+struct d2d_face
+{
+    UINT16 v[3];
+};
+
 struct d2d_geometry
 {
     ID2D1Geometry ID2D1Geometry_iface;
-    ID2D1GeometrySink ID2D1GeometrySink_iface;
     LONG refcount;
 
-    enum d2d_geometry_state state;
-    UINT32 figure_count, segment_count;
+    D2D1_POINT_2F *vertices;
+    size_t vertex_count;
+
+    struct d2d_face *faces;
+    size_t face_count;
+
+    union
+    {
+        struct
+        {
+            ID2D1GeometrySink ID2D1GeometrySink_iface;
+
+            enum d2d_geometry_state state;
+            UINT32 figure_count, segment_count;
+        } path;
+        struct
+        {
+            D2D1_RECT_F rect;
+        } rectangle;
+    } u;
 };
 
 void d2d_path_geometry_init(struct d2d_geometry *geometry) DECLSPEC_HIDDEN;
+HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, const D2D1_RECT_F *rect) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_D2D1_PRIVATE_H */

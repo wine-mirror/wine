@@ -94,9 +94,25 @@ static void STDMETHODCALLTYPE d2d_factory_GetDesktopDpi(ID2D1Factory *iface, flo
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRectangleGeometry(ID2D1Factory *iface,
         const D2D1_RECT_F *rect, ID2D1RectangleGeometry **geometry)
 {
-    FIXME("iface %p, rect %p, geometry %p stub!\n", iface, rect, geometry);
+    struct d2d_geometry *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, rect %p, geometry %p.\n", iface, rect, geometry);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_rectangle_geometry_init(object, rect)))
+    {
+        WARN("Failed to initialize rectangle geometry, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created rectangle geometry %p.\n", object);
+    *geometry = (ID2D1RectangleGeometry *)&object->ID2D1Geometry_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRoundedRectangleGeometry(ID2D1Factory *iface,
