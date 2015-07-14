@@ -445,8 +445,9 @@ static void bidi_resolve_explicit(UINT8 baselevel, UINT8 *classes, UINT8 *levels
                 pop_stack();
             break;
 
-        /* X8: Nothing */
+        /* X8 */
         default:
+            levels[i] = baselevel;
             break;
         }
     }
