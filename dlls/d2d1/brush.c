@@ -709,12 +709,20 @@ static D3D10_TEXTURE_ADDRESS_MODE texture_addres_mode_from_extend_mode(D2D1_EXTE
     }
 }
 
-void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device)
+void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target)
 {
+    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    ID3D10Device *device = render_target->device;
     HRESULT hr;
 
-    if (brush->type == D2D_BRUSH_TYPE_BITMAP)
+    ID3D10Device_OMSetBlendState(device, render_target->bs, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    if (brush->type == D2D_BRUSH_TYPE_SOLID)
     {
+        ID3D10Device_PSSetShader(device, render_target->rect_solid_ps);
+    }
+    else if (brush->type == D2D_BRUSH_TYPE_BITMAP)
+    {
+        ID3D10Device_PSSetShader(device, render_target->rect_bitmap_ps);
         ID3D10Device_PSSetShaderResources(device, 0, 1, &brush->u.bitmap.bitmap->view);
         if (!brush->u.bitmap.sampler_state)
         {
@@ -742,5 +750,9 @@ void d2d_brush_bind_resources(struct d2d_brush *brush, ID3D10Device *device)
                 ERR("Failed to create sampler state, hr %#x.\n", hr);
         }
         ID3D10Device_PSSetSamplers(device, 0, 1, &brush->u.bitmap.sampler_state);
+    }
+    else
+    {
+        FIXME("Unhandled brush type %#x.\n", brush->type);
     }
 }

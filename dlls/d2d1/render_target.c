@@ -140,13 +140,12 @@ static void d2d_clip_stack_pop(struct d2d_clip_stack *stack)
 }
 
 static void d2d_draw(struct d2d_d3d_render_target *render_target, ID3D10Buffer *vs_cb,
-        ID3D10PixelShader *ps, ID3D10Buffer *ps_cb, struct d2d_brush *brush)
+        ID3D10Buffer *ps_cb, struct d2d_brush *brush)
 {
     ID3D10Device *device = render_target->device;
     unsigned int offset;
     D3D10_VIEWPORT vp;
     HRESULT hr;
-    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
     vp.TopLeftX = 0;
     vp.TopLeftY = 0;
@@ -171,7 +170,6 @@ static void d2d_draw(struct d2d_d3d_render_target *render_target, ID3D10Buffer *
     ID3D10Device_VSSetConstantBuffers(device, 0, 1, &vs_cb);
     ID3D10Device_VSSetShader(device, render_target->vs);
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &ps_cb);
-    ID3D10Device_PSSetShader(device, ps);
     ID3D10Device_RSSetViewports(device, 1, &vp);
     if (render_target->clip_stack.count)
     {
@@ -188,10 +186,9 @@ static void d2d_draw(struct d2d_d3d_render_target *render_target, ID3D10Buffer *
     }
     ID3D10Device_OMSetRenderTargets(device, 1, &render_target->view, NULL);
     if (brush)
-    {
-        ID3D10Device_OMSetBlendState(device, render_target->bs, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
-        d2d_brush_bind_resources(brush, device);
-    }
+        d2d_brush_bind_resources(brush, render_target);
+    else
+        ID3D10Device_PSSetShader(device, render_target->rect_solid_ps);
 
     ID3D10Device_Draw(device, 4, 0);
 
@@ -553,7 +550,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Buffer *vs_cb, *ps_cb;
-    ID3D10PixelShader *ps;
     D2D1_COLOR_F color;
     float tmp_x, tmp_y;
     HRESULT hr;
@@ -619,8 +615,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
         D2D_MATRIX_3X2_F w, b;
         float dpi_scale, d;
 
-        ps = render_target->rect_bitmap_ps;
-
         /* Scale for dpi. */
         w = render_target->drawing_state.transform;
         dpi_scale = render_target->dpi_x / 96.0f;
@@ -663,8 +657,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
     }
     else
     {
-        ps = render_target->rect_solid_ps;
-
         color = brush_impl->u.solid.color;
         color.a *= brush_impl->opacity;
 
@@ -679,7 +671,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
         return;
     }
 
-    d2d_draw(render_target, vs_cb, ps, ps_cb, brush_impl);
+    d2d_draw(render_target, vs_cb, ps_cb, brush_impl);
 
     ID3D10Buffer_Release(ps_cb);
     ID3D10Buffer_Release(vs_cb);
@@ -1145,7 +1137,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
         return;
     }
 
-    d2d_draw(render_target, vs_cb, render_target->rect_solid_ps, ps_cb, NULL);
+    d2d_draw(render_target, vs_cb, ps_cb, NULL);
 
     ID3D10Buffer_Release(ps_cb);
     ID3D10Buffer_Release(vs_cb);
