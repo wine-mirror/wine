@@ -22,6 +22,7 @@
 
 #include <assert.h>
 #include <math.h>
+#include <limits.h>
 
 #include "windows.h"
 #include "dwrite.h"
@@ -3271,17 +3272,18 @@ static FLOAT snap_coord(const DWRITE_MATRIX *m, FLOAT ppdip, FLOAT coord)
     if (transform) {
         /* apply transform */
         vec[0] = 0.0;
-        vec[1] = coord;
+        vec[1] = coord * ppdip;
 
-        vec2[0] = m->m11 * vec[0] + m->m12 * vec[1] + m->dx;
-        vec2[1] = m->m21 * vec[0] + m->m22 * vec[1] + m->dy;
+        vec2[0] = m->m11 * vec[0] + m->m21 * vec[1] + m->dx;
+        vec2[1] = m->m12 * vec[0] + m->m22 * vec[1] + m->dy;
 
         /* snap */
-        vec2[0] = floorf(vec2[0] * ppdip + 0.5f) / ppdip;
-        vec2[1] = floorf(vec2[1] * ppdip + 0.5f) / ppdip;
+        vec2[0] = floorf(vec2[0] + 0.5f);
+        vec2[1] = floorf(vec2[1] + 0.5f);
 
         /* apply inverted transform */
-        vec[1] = (-m->m21 * vec2[0] + m->m11 * vec2[1] - (m->m11 * m->dy - m->m12 * m->dx)) / det;
+        vec[1] = (-m->m12 * vec2[0] + m->m11 * vec2[1] - (m->m11 * m->dy - m->m12 * m->dx)) / det;
+        vec[1] /= ppdip;
     }
     else
         vec[1] = floorf(coord * ppdip + 0.5f) / ppdip;
@@ -3290,7 +3292,15 @@ static FLOAT snap_coord(const DWRITE_MATRIX *m, FLOAT ppdip, FLOAT coord)
 
 static inline BOOL float_eq(FLOAT left, FLOAT right)
 {
-    return fabsf(left - right) < 1e-6f;
+    int x = *(int *)&left;
+    int y = *(int *)&right;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    return abs(x - y) <= 16;
 }
 
 struct snapping_test {
@@ -3319,8 +3329,14 @@ static struct snapping_test snapping_tests[] = {
     { {  0.0,  1.0, -1.0,  0.0, 0.2, 0.6 },   1.0 }, /*  90 degrees rotation */
     { { -1.0,  0.0,  0.0, -1.0, 0.2, 0.6 },   1.0 }, /* 180 degrees rotation */
     { {  0.0, -1.0,  1.0,  0.0, 0.2, 0.6 },   1.0 }, /* 270 degrees rotation */
+    { {  1.0,  0.0,  0.0,  1.0,-0.1, 0.2 },   1.0 },
+    { {  0.0,  1.0, -1.0,  0.0,-0.2,-0.3 },   1.0 }, /*  90 degrees rotation */
+    { { -1.0,  0.0,  0.0, -1.0,-0.3,-1.6 },   1.0 }, /* 180 degrees rotation */
+    { {  0.0, -1.0,  1.0,  0.0,-0.7, 0.6 },  10.0 }, /* 270 degrees rotation */
     { {  0.0,  2.0,  1.0,  0.0, 0.2, 0.6 },   1.0 },
     { {  0.0,  0.0,  1.0,  0.0, 0.0, 0.0 },   1.0 },
+    { {  3.0,  0.0,  0.0,  5.0, 0.2,-0.3 },  10.0 },
+    { {  0.0, -3.0,  5.0,  0.0,-0.1, 0.7 },  10.0 },
 };
 
 static DWRITE_MATRIX compattransforms[] = {
