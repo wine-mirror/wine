@@ -2973,13 +2973,17 @@ static void delete_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path )
     access |= get_registry_view( comp );
 
     if (!(subkey = strdupW( path ))) return;
-    for (;;)
+    do
     {
-        if ((p = strrchrW( subkey, '\\' ))) *p = 0;
-        hkey = open_key( comp, root, subkey, FALSE );
-        if (!hkey) break;
-        if (p && p[1])
+        if ((p = strrchrW( subkey, '\\' )))
+        {
+            *p = 0;
+            if (!p[1]) continue; /* trailing backslash */
+            hkey = open_key( comp, root, subkey, FALSE );
+            if (!hkey) break;
             res = RegDeleteKeyExW( hkey, p + 1, access, 0 );
+            RegCloseKey( hkey );
+        }
         else
             res = RegDeleteKeyExW( root, subkey, access, 0 );
         if (res)
@@ -2987,9 +2991,7 @@ static void delete_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path )
             TRACE("failed to delete key %s (%d)\n", debugstr_w(subkey), res);
             break;
         }
-        if (p && p[1]) RegCloseKey( hkey );
-        else break;
-    }
+    } while (p);
     msi_free( subkey );
 }
 
