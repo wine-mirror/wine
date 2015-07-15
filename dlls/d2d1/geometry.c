@@ -846,7 +846,7 @@ static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
 
     if (vertex_count < 3)
     {
-        WARN("Geometry has %u vertices.\n", vertex_count);
+        WARN("Geometry has %lu vertices.\n", (long)vertex_count);
         return S_OK;
     }
 
