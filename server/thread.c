@@ -601,6 +601,7 @@ static int wait_on( const select_op_t *select_op, unsigned int count, struct obj
     wait->count   = count;
     wait->flags   = flags;
     wait->select  = select_op->op;
+    wait->cookie  = 0;
     wait->user    = NULL;
     wait->timeout = timeout;
     wait->abandoned = 0;
@@ -719,7 +720,7 @@ int wake_thread( struct thread *thread )
         cookie = thread->wait->cookie;
         if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d\n", thread->id, signaled );
         end_wait( thread );
-        if (send_thread_wakeup( thread, cookie, signaled ) == -1) /* error */
+        if (cookie && send_thread_wakeup( thread, cookie, signaled ) == -1) /* error */
         {
             if (!count) count = -1;
             break;
@@ -749,7 +750,7 @@ int wake_thread_queue_entry( struct wait_queue_entry *entry )
     if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=%d\n", thread->id, signaled );
     end_wait( thread );
 
-    if (send_thread_wakeup( thread, cookie, signaled ) != -1)
+    if (!cookie || send_thread_wakeup( thread, cookie, signaled ) != -1)
         wake_thread( thread );  /* check other waits too */
 
     return 1;
@@ -768,6 +769,8 @@ static void thread_timeout( void *ptr )
 
     if (debug_level) fprintf( stderr, "%04x: *wakeup* signaled=TIMEOUT\n", thread->id );
     end_wait( thread );
+
+    assert( cookie );
     if (send_thread_wakeup( thread, cookie, STATUS_TIMEOUT ) == -1) return;
     /* check if other objects have become signaled in the meantime */
     wake_thread( thread );
@@ -1429,6 +1432,12 @@ DECL_HANDLER(select)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
+    if (!req->cookie)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
     op_size = min( get_req_data_size() - sizeof(*result), sizeof(select_op) );
     memset( &select_op, 0, sizeof(select_op) );
     memcpy( &select_op, result + 1, op_size );
