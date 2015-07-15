@@ -13474,16 +13474,12 @@ msgid "Command history"
 msgstr "Komentohistoria"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Puskurivyöhyke"
+msgstr "P&uskurin koko:"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "&Poista toistuvat"
+msgstr "P&oista toistuvat"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -13495,25 +13491,19 @@ msgstr "&Control"
 
 #: wineconsole.rc:76
 msgid "S&hift"
-msgstr "&Shift"
+msgstr "S&hift"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "&Sulje konsoli"
+msgstr "Konsoli"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Pikamuokkaus"
+msgstr "Pika&muokkaustila"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "&Tehokäyttäjä"
+msgstr "&Lisäystila"
 
 #: wineconsole.rc:88
 msgid "&Font"
