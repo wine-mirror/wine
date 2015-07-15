@@ -1554,7 +1554,6 @@ static void do_error_dialog( UINT_PTR retval, HWND hwnd )
  */
 static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
 {
-    static const WCHAR wSpace[] = {' ',0};
     static const WCHAR wWww[] = {'w','w','w',0};
     static const WCHAR wHttp[] = {'h','t','t','p',':','/','/',0};
     static const DWORD unsupportedFlags =
@@ -1763,7 +1762,7 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     TRACE("execute:%s,%s,%s\n", debugstr_w(wszApplicationName), debugstr_w(wszParameters), debugstr_w(wszDir));
     lpFile = sei_tmp.lpFile;
     wcmd = wcmdBuffer;
-    len = lstrlenW(wszApplicationName) + 1;
+    len = lstrlenW(wszApplicationName) + 3;
     if (sei_tmp.lpParameters[0])
         len += 1 + lstrlenW(wszParameters);
     if (len > wcmdLen)
@@ -1771,10 +1770,14 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         wcmd = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
         wcmdLen = len;
     }
-    strcpyW(wcmd, wszApplicationName);
+    wcmd[0] = '\"';
+    len = lstrlenW(wszApplicationName);
+    memcpy(wcmd+1, wszApplicationName, len * sizeof(WCHAR));
+    len++;
+    wcmd[len++] = '\"';
     if (sei_tmp.lpParameters[0]) {
-        strcatW(wcmd, wSpace);
-        strcatW(wcmd, wszParameters);
+        wcmd[len++] = ' ';
+        strcpyW(wcmd+len, wszParameters);
     }
 
     retval = execfunc(wcmd, NULL, FALSE, &sei_tmp, sei);
