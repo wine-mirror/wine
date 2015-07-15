@@ -902,7 +902,7 @@ static filename_tests_t filename_tests[]=
     {"QuotedUpperL", "%s\\test file.shlexec",   0x0, 33},
 
     /* Test file masked due to space */
-    {NULL,           "%s\\masked file.shlexec",   0x1, 33},
+    {NULL,           "%s\\masked file.shlexec",   0x0, 33},
     /* Test if quoting prevents the masking */
     {NULL,           "%s\\masked file.shlexec",   0x40, 33},
 
@@ -933,7 +933,7 @@ static void test_lpFile_parsed(void)
     /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on wine */
     sprintf(fileA, "%s\\drawback_file.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    todo_wine ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
 
     /* if quoted, existing "drawback_file.noassoc" not prevents finding "drawback_file.noassoc foo.shlexec" on wine */
     sprintf(fileA, "\"%s\\drawback_file.noassoc foo.shlexec\"", tmpdir);
@@ -1542,18 +1542,10 @@ static void test_filename(void)
         }
         if (rc > 32)
             rc=33;
-        if ((test->todo & 0x1)==0)
-        {
-            ok(rc==test->rc ||
-               broken(quotedfile && rc == SE_ERR_FNF), /* NT4 */
-               "%s failed: rc=%ld err=%u\n", shell_call,
-               rc, GetLastError());
-        }
-        else todo_wine
-        {
-            ok(rc==test->rc, "%s failed: rc=%ld err=%u\n", shell_call,
-               rc, GetLastError());
-        }
+        ok(rc==test->rc ||
+           broken(quotedfile && rc == SE_ERR_FNF), /* NT4 */
+           "%s failed: rc=%ld err=%u\n", shell_call,
+           rc, GetLastError());
         if (rc == 33)
         {
             const char* verb;
