@@ -3554,7 +3554,9 @@ static UINT ACTION_ProcessComponents(MSIPACKAGE *package)
                 if (!comp->KeyPath || !(file = msi_get_loaded_file(package, comp->KeyPath)))
                     continue;
 
-                row = MSI_QueryGetRecord(package->db, query, file->Sequence);
+                if (!(row = MSI_QueryGetRecord(package->db, query, file->Sequence)))
+                    return ERROR_FUNCTION_FAILED;
+
                 sprintfW(source, fmt, MSI_RecordGetInteger(row, 1));
                 ptr2 = strrchrW(source, '\\') + 1;
                 msiobj_release(&row->hdr);
