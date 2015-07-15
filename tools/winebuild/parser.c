@@ -603,6 +603,7 @@ static int parse_spec_ordinal( int ordinal, DLLSPEC *spec )
     {
         if (!strcmp( odp->name, "DllRegisterServer" ) ||
             !strcmp( odp->name, "DllUnregisterServer" ) ||
+            !strcmp( odp->name, "DllMain" ) ||
             !strcmp( odp->name, "DllGetClassObject" ) ||
             !strcmp( odp->name, "DllGetVersion" ) ||
             !strcmp( odp->name, "DllInstall" ) ||

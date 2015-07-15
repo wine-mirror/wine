@@ -21,6 +21,6 @@
 @ stub CPSetProvParam
 @ stub CPSignHash
 @ stub CPVerifySignature
-@ stdcall DllMain(ptr long ptr)
+@ stdcall -private DllMain(ptr long ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
