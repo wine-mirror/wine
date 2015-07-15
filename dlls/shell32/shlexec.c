@@ -1592,14 +1592,13 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
         wszApplicationName = HeapAlloc(GetProcessHeap(), 0, dwApplicationNameLen*sizeof(WCHAR));
         *wszApplicationName = '\0';
     }
-    else if (*sei_tmp.lpFile == '\"')
+    else if (*sei_tmp.lpFile == '\"' && sei_tmp.lpFile[(len = strlenW(sei_tmp.lpFile))-1] == '\"')
     {
-        DWORD l = strlenW(sei_tmp.lpFile+1);
-        if(l >= dwApplicationNameLen) dwApplicationNameLen = l+1;
+        if(len-1 >= dwApplicationNameLen) dwApplicationNameLen = len;
         wszApplicationName = HeapAlloc(GetProcessHeap(), 0, dwApplicationNameLen*sizeof(WCHAR));
-        memcpy(wszApplicationName, sei_tmp.lpFile+1, (l+1)*sizeof(WCHAR));
-        if (wszApplicationName[l-1] == '\"')
-            wszApplicationName[l-1] = '\0';
+        memcpy(wszApplicationName, sei_tmp.lpFile+1, len*sizeof(WCHAR));
+        if(len > 2)
+            wszApplicationName[len-2] = '\0';
         TRACE("wszApplicationName=%s\n",debugstr_w(wszApplicationName));
     } else {
         DWORD l = strlenW(sei_tmp.lpFile)+1;

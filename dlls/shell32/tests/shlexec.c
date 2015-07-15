@@ -905,6 +905,8 @@ static filename_tests_t filename_tests[]=
     {NULL,           "%s\\masked file.shlexec",   0x0, 33},
     /* Test if quoting prevents the masking */
     {NULL,           "%s\\masked file.shlexec",   0x40, 33},
+    /* Test with incorrect quote */
+    {NULL,           "\"%s\\masked file.shlexec",   0x0, SE_ERR_FNF},
 
     {NULL, NULL, 0}
 };
@@ -2114,6 +2116,15 @@ static void test_exes(void)
     {
         win_skip("Skipping shellexecute of file with unassociated extension\n");
     }
+
+    /* test combining executable and parameters */
+    sprintf(filename, "%s shlexec \"%s\" Exec", argv0, child_file);
+    rc = shell_execute(NULL, filename, NULL, NULL);
+    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+
+    sprintf(filename, "\"%s\" shlexec \"%s\" Exec", argv0, child_file);
+    rc = shell_execute(NULL, filename, NULL, NULL);
+    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
 }
 
 typedef struct
