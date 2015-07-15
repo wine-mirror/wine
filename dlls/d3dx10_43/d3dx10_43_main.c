@@ -21,6 +21,8 @@
 
 #include "config.h"
 #include "wine/port.h"
+#include "wine/debug.h"
+#include "wine/unicode.h"
 
 #include <stdarg.h>
 
@@ -32,6 +34,9 @@
 #include "objbase.h"
 
 #include "d3d10.h"
+#include "d3dx10core.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -58,4 +63,30 @@ BOOL WINAPI D3DX10CheckVersion(UINT d3dsdkvers, UINT d3dxsdkvers)
         return TRUE;
 
     return FALSE;
+}
+
+HRESULT WINAPI D3DX10CreateEffectFromFileA(const char *filename, const D3D10_SHADER_MACRO *defines,
+        ID3D10Include *include, const char *profile, UINT hlslflags, UINT fxflags, ID3D10Device *device,
+        ID3D10EffectPool *effectpool, ID3DX10ThreadPump *pump, ID3D10Effect **effect, ID3D10Blob **errors,
+        HRESULT *hresult)
+{
+    FIXME("filename %s, defines %p, include %p, profile %s, hlslflags %#x, fxflags %#x, "
+            "device %p, effectpool %p, pump %p, effect %p, errors %p, hresult %p\n",
+            debugstr_a(filename), defines, include, debugstr_a(profile), hlslflags, fxflags,
+            device, effectpool, pump, effect, errors, hresult);
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DX10CreateEffectFromFileW(const WCHAR *filename, const D3D10_SHADER_MACRO *defines,
+        ID3D10Include *include, const char *profile, UINT hlslflags, UINT fxflags, ID3D10Device *device,
+        ID3D10EffectPool *effectpool, ID3DX10ThreadPump *pump, ID3D10Effect **effect, ID3D10Blob **errors,
+        HRESULT *hresult)
+{
+    FIXME("filename %s, defines %p, include %p, profile %s, hlslflags %#x, fxflags %#x, "
+            "device %p, effectpool %p, pump %p, effect %p, errors %p, hresult %p\n",
+            debugstr_w(filename), defines, include, debugstr_a(profile), hlslflags, fxflags, device,
+            effectpool, pump, effect, errors, hresult);
+
+    return E_NOTIMPL;
 }
