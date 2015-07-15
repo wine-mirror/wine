@@ -50,6 +50,8 @@ static BOOL (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
 
 static INSTALLSTATE (WINAPI *pMsiGetComponentPathA)
     (LPCSTR, LPCSTR, LPSTR, DWORD*);
+static INSTALLSTATE (WINAPI *pMsiGetComponentPathExA)
+    (LPCSTR, LPCSTR, LPCSTR, MSIINSTALLCONTEXT, LPSTR, LPDWORD);
 static INSTALLSTATE (WINAPI *pMsiProvideComponentA)
     (LPCSTR, LPCSTR, LPCSTR, DWORD, LPSTR, LPDWORD);
 static INSTALLSTATE (WINAPI *pMsiProvideComponentW)
@@ -92,6 +94,7 @@ static void init_functionpointers(void)
       trace("GetProcAddress(%s) failed\n", #func);
 
     GET_PROC(hmsi, MsiGetComponentPathA)
+    GET_PROC(hmsi, MsiGetComponentPathExA);
     GET_PROC(hmsi, MsiProvideComponentA)
     GET_PROC(hmsi, MsiProvideComponentW)
     GET_PROC(hmsi, MsiGetFileHashA)
@@ -14425,7 +14428,8 @@ START_TEST(msi)
     test_lastusedsource();
     test_setpropertyfolder();
     test_sourcedir_props();
-    test_concurrentinstall();
+    if (pMsiGetComponentPathExA)
+        test_concurrentinstall();
     test_command_line_parsing();
 
     SetCurrentDirectoryA(prev_path);
