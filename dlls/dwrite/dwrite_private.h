@@ -92,6 +92,13 @@ static inline const char *debugstr_range(const DWRITE_TEXT_RANGE *range)
     return wine_dbg_sprintf("%u:%u", range->startPosition, range->length);
 }
 
+static inline const char *debugstr_matrix(const DWRITE_MATRIX *m)
+{
+    if (!m) return "(null)";
+    return wine_dbg_sprintf("{%.2f,%.2f,%.2f,%.2f,%.2f,%.2f}", m->m11, m->m12, m->m21, m->m22,
+        m->dx, m->dy);
+}
+
 static inline unsigned short get_table_entry(const unsigned short *table, WCHAR ch)
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];

@@ -619,7 +619,7 @@ static void WINAPI dwritefontface1_GetMetrics(IDWriteFontFace2 *iface, DWRITE_FO
 
 static inline int round_metric(FLOAT metric)
 {
-    return (int)floor(metric + 0.5);
+    return (int)floorf(metric + 0.5f);
 }
 
 static HRESULT WINAPI dwritefontface1_GetGdiCompatibleMetrics(IDWriteFontFace2 *iface, FLOAT em_size, FLOAT pixels_per_dip,
@@ -729,13 +729,33 @@ static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace2 *i
 }
 
 static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontFace2 *iface,
-    FLOAT em_size, FLOAT pixels_per_dip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural,
-    BOOL is_sideways, UINT32 glyph_count, UINT16 const *indices, INT32 *advances)
+    FLOAT em_size, FLOAT ppdip, const DWRITE_MATRIX *m, BOOL use_gdi_natural,
+    BOOL is_sideways, UINT32 glyph_count, UINT16 const *glyphs, INT32 *advances)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p)->(%f %f %p %d %d %u %p %p): stub\n", This, em_size, pixels_per_dip, transform,
-        use_gdi_natural, is_sideways, glyph_count, indices, advances);
-    return E_NOTIMPL;
+    HRESULT hr;
+    UINT32 i;
+
+    TRACE("(%p)->(%.2f %.2f %p %d %d %u %p %p)\n", This, em_size, ppdip, m,
+        use_gdi_natural, is_sideways, glyph_count, glyphs, advances);
+
+    if (m && memcmp(m, &identity, sizeof(*m)))
+        FIXME("transform is not supported, %s\n", debugstr_matrix(m));
+
+    for (i = 0; i < glyph_count; i++) {
+        FLOAT scale;
+
+        hr = IDWriteFontFace2_GetDesignGlyphAdvances(iface, 1, glyphs + i, advances + i, is_sideways);
+        if (FAILED(hr))
+            return hr;
+
+        scale = em_size * ppdip / This->metrics.designUnitsPerEm;
+#define SCALE_METRIC(x) x = round_metric(round_metric((x) * scale) / scale)
+        SCALE_METRIC(advances[i]);
+#undef  SCALE_METRIC
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefontface1_GetKerningPairAdjustments(IDWriteFontFace2 *iface, UINT32 count,
