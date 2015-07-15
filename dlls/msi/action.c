@@ -2633,9 +2633,8 @@ static inline REGSAM get_registry_view( const MSICOMPONENT *comp )
     return view;
 }
 
-static HKEY open_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path, BOOL create )
+static HKEY open_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path, BOOL create, REGSAM access )
 {
-    REGSAM access = KEY_ALL_ACCESS;
     WCHAR *subkey, *p, *q;
     HKEY hkey, ret = NULL;
     LONG res;
@@ -2657,7 +2656,7 @@ static HKEY open_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path, BO
     }
     if (q && q[1])
     {
-        ret = open_key( comp, hkey, q + 1, create );
+        ret = open_key( comp, hkey, q + 1, create, access );
         RegCloseKey( hkey );
     }
     else ret = hkey;
@@ -2882,7 +2881,7 @@ static UINT ITERATE_WriteRegistryValues(MSIRECORD *row, LPVOID param)
     strcpyW(uikey,szRoot);
     strcatW(uikey,deformated);
 
-    if (!(hkey = open_key( comp, root_key, deformated, TRUE )))
+    if (!(hkey = open_key( comp, root_key, deformated, TRUE, KEY_QUERY_VALUE | KEY_SET_VALUE )))
     {
         ERR("Could not create key %s\n", debugstr_w(deformated));
         msi_free(uikey);
@@ -2979,7 +2978,7 @@ static void delete_key( const MSICOMPONENT *comp, HKEY root, const WCHAR *path )
         {
             *p = 0;
             if (!p[1]) continue; /* trailing backslash */
-            hkey = open_key( comp, root, subkey, FALSE );
+            hkey = open_key( comp, root, subkey, FALSE, access );
             if (!hkey) break;
             res = RegDeleteKeyExW( hkey, p + 1, access, 0 );
             RegCloseKey( hkey );
@@ -3001,7 +3000,7 @@ static void delete_value( const MSICOMPONENT *comp, HKEY root, const WCHAR *path
     HKEY hkey;
     DWORD num_subkeys, num_values;
 
-    if ((hkey = open_key( comp, root, path, FALSE )))
+    if ((hkey = open_key( comp, root, path, FALSE, KEY_SET_VALUE | KEY_QUERY_VALUE )))
     {
         if ((res = RegDeleteValueW( hkey, value )))
             TRACE("failed to delete value %s (%d)\n", debugstr_w(value), res);
@@ -3022,7 +3021,7 @@ static void delete_tree( const MSICOMPONENT *comp, HKEY root, const WCHAR *path 
     LONG res;
     HKEY hkey;
 
-    if (!(hkey = open_key( comp, root, path, FALSE ))) return;
+    if (!(hkey = open_key( comp, root, path, FALSE, KEY_ALL_ACCESS ))) return;
     res = RegDeleteTreeW( hkey, NULL );
     if (res) TRACE("failed to delete subtree of %s (%d)\n", debugstr_w(path), res);
     delete_key( comp, root, path );
