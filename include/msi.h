@@ -703,6 +703,7 @@ UINT WINAPI MsiBeginTransactionA(LPCSTR, DWORD, MSIHANDLE *, HANDLE *);
 UINT WINAPI MsiBeginTransactionW(LPCWSTR, DWORD, MSIHANDLE *, HANDLE *);
 #define     MsiBeginTransaction WINELIB_NAME_AW(MsiBeginTransaction)
 
+UINT WINAPI MsiJoinTransaction(MSIHANDLE, DWORD, HANDLE *);
 UINT WINAPI MsiEndTransaction(DWORD);
 
 /* Non Unicode */
