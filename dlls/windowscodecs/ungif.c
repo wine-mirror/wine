@@ -932,9 +932,17 @@ DGifSlurp(GifFileType * GifFile) {
 
               Extensions->Function = Function;
 
-              /* Create an extension block with our data */
-              if (AddExtensionBlock(Extensions, ExtData[0], &ExtData[1]) == GIF_ERROR)
-                  return (GIF_ERROR);
+              if (ExtData)
+              {
+                  /* Create an extension block with our data */
+                  if (AddExtensionBlock(Extensions, ExtData[0], &ExtData[1]) == GIF_ERROR)
+                      return (GIF_ERROR);
+              }
+              else /* Empty extension block */
+              {
+                  if (AddExtensionBlock(Extensions, 0, NULL) == GIF_ERROR)
+                      return (GIF_ERROR);
+              }
 
               while (ExtData != NULL) {
                   int Len;
