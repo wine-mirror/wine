@@ -32,6 +32,7 @@ PUBLIC_IDL_H_SRCS = \
 	d3d11_1.idl \
 	d3d11sdklayers.idl \
 	d3dcommon.idl \
+	d3dx10core.idl \
 	ddstream.idl \
 	devicetopology.idl \
 	dimm.idl \
