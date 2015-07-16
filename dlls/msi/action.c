@@ -5876,8 +5876,8 @@ static UINT ITERATE_InstallService(MSIRECORD *rec, LPVOID param)
 
     if (image_path != file->TargetPath) msi_free(image_path);
 done:
-    CloseServiceHandle(service);
-    CloseServiceHandle(hscm);
+    if (service) CloseServiceHandle(service);
+    if (hscm) CloseServiceHandle(hscm);
     msi_free(name);
     msi_free(disp);
     msi_free(sd.lpDescription);
@@ -6051,8 +6051,8 @@ done:
     msi_ui_actiondata( package, szStartServices, uirow );
     msiobj_release( &uirow->hdr );
 
-    CloseServiceHandle(service);
-    CloseServiceHandle(scm);
+    if (service) CloseServiceHandle(service);
+    if (scm) CloseServiceHandle(scm);
 
     msi_free(name);
     msi_free(args);
@@ -6161,8 +6161,8 @@ static UINT stop_service( LPCWSTR name )
         WARN("Failed to stop service (%s): %d\n", debugstr_w(name), GetLastError());
 
 done:
-    CloseServiceHandle(service);
-    CloseServiceHandle(scm);
+    if (service) CloseServiceHandle(service);
+    if (scm) CloseServiceHandle(scm);
 
     return ERROR_SUCCESS;
 }
@@ -6299,8 +6299,8 @@ done:
     msi_ui_actiondata( package, szDeleteServices, uirow );
     msiobj_release( &uirow->hdr );
 
-    CloseServiceHandle( service );
-    CloseServiceHandle( scm );
+    if (service) CloseServiceHandle( service );
+    if (scm) CloseServiceHandle( scm );
     msi_free( name );
     msi_free( display_name );
 
