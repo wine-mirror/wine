@@ -319,7 +319,8 @@ static LRESULT LISTBOX_SetTopItem( LB_DESCR *descr, INT index, BOOL scroll )
         ScrollWindowEx( descr->self, 0, diff, NULL, NULL, 0, NULL,
                         SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
     }
-    if (!scroll) InvalidateRect( descr->self, NULL, TRUE );
+    else
+        InvalidateRect( descr->self, NULL, TRUE );
     descr->top_item = index;
     LISTBOX_UpdateScroll( descr );
     return LB_OKAY;
