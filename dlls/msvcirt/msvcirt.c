@@ -82,6 +82,8 @@ typedef struct {
 } ios;
 
 ios* __thiscall ios_assign(ios*, const ios*);
+void __cdecl ios_lock(ios*);
+void __cdecl ios_unlock(ios*);
 
 /* class ostream */
 typedef struct _ostream {
@@ -1086,8 +1088,14 @@ int __thiscall ios_rdstate(const ios *this)
 DEFINE_THISCALL_WRAPPER(ios_setf, 8)
 LONG __thiscall ios_setf(ios *this, LONG flags)
 {
-    FIXME("(%p %x) stub\n", this, flags);
-    return 0;
+    LONG prev = this->flags;
+
+    TRACE("(%p %x)\n", this, flags);
+
+    ios_lock(this);
+    this->flags |= flags;
+    ios_unlock(this);
+    return prev;
 }
 
 /* ?setf@ios@@QAEJJJ@Z */
@@ -1095,8 +1103,14 @@ LONG __thiscall ios_setf(ios *this, LONG flags)
 DEFINE_THISCALL_WRAPPER(ios_setf_mask, 12)
 LONG __thiscall ios_setf_mask(ios *this, LONG flags, LONG mask)
 {
-    FIXME("(%p %x %x) stub\n", this, flags, mask);
-    return 0;
+    LONG prev = this->flags;
+
+    TRACE("(%p %x %x)\n", this, flags, mask);
+
+    ios_lock(this);
+    this->flags = (this->flags & (~mask)) | (flags & mask);
+    ios_unlock(this);
+    return prev;
 }
 
 /* ?setlock@ios@@QAAXXZ */
