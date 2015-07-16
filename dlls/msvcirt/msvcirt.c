@@ -31,6 +31,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcirt);
 
 #define RESERVE_SIZE 512
 
+/* ?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A */
+extern CRITICAL_SECTION ios_static_lock;
+CRITICAL_SECTION_DEBUG ios_static_lock_debug =
+{
+    0, 0, &ios_static_lock,
+    { &ios_static_lock_debug.ProcessLocksList, &ios_static_lock_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": ios_static_lock") }
+};
+CRITICAL_SECTION ios_static_lock = { &ios_static_lock_debug, -1, 0, 0, 0, 0 };
+
 /* class streambuf */
 typedef struct {
     const vtable_ptr *vtable;
@@ -1001,7 +1011,8 @@ void __cdecl ios_lockbuf(ios *this)
 /* ?lockc@ios@@KAXXZ */
 void __cdecl ios_lockc(void)
 {
-    FIXME("() stub\n");
+    TRACE("()\n");
+    EnterCriticalSection(&ios_static_lock);
 }
 
 /* ?lockptr@ios@@IAEPAU_CRT_CRITICAL_SECTION@@XZ */
@@ -1138,7 +1149,8 @@ void __cdecl ios_unlockbuf(ios *this)
 /* ?unlockc@ios@@KAXXZ */
 void __cdecl ios_unlockc(void)
 {
-    FIXME("() stub\n");
+    TRACE("()\n");
+    LeaveCriticalSection(&ios_static_lock);
 }
 
 /* ?unsetf@ios@@QAEJJ@Z */

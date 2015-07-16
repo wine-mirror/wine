@@ -777,7 +777,7 @@
 @ stub -arch=win32 ?ws@@YAAAVistream@@AAV1@@Z  # class istream & __cdecl ws(class istream &)
 @ stub -arch=win64 ?ws@@YAAEAVistream@@AEAV1@@Z
 # @ extern ?x_curindex@ios@@0HA  # static int ios::x_curindex
-# @ extern ?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A  # static struct _CRT_CRITICAL_SECTION ios::x_lockc
+@ extern ?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A ios_static_lock
 # @ extern ?x_maxbit@ios@@0JA  # static long ios::x_maxbit
 # @ extern ?x_statebuf@ios@@0PAJA  # static long * ios::x_statebuf
 @ cdecl ?xalloc@ios@@SAHXZ() ios_xalloc
