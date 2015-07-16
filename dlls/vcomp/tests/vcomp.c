@@ -33,6 +33,8 @@ static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 
 static void  (CDECL   *p_vcomp_barrier)(void);
 static void  (WINAPIV *p_vcomp_fork)(BOOL ifval, int nargs, void *wrapper, ...);
+static void  (CDECL   *p_vcomp_sections_init)(int n);
+static int   (CDECL   *p_vcomp_sections_next)(void);
 static void  (CDECL   *p_vcomp_set_num_threads)(int num_threads);
 static int   (CDECL   *pomp_get_max_threads)(void);
 static int   (CDECL   *pomp_get_nested)(void);
@@ -169,6 +171,8 @@ static BOOL init_vcomp(void)
 
     VCOMP_GET_PROC(_vcomp_barrier);
     VCOMP_GET_PROC(_vcomp_fork);
+    VCOMP_GET_PROC(_vcomp_sections_init);
+    VCOMP_GET_PROC(_vcomp_sections_next);
     VCOMP_GET_PROC(_vcomp_set_num_threads);
     VCOMP_GET_PROC(omp_get_max_threads);
     VCOMP_GET_PROC(omp_get_nested);
@@ -342,6 +346,52 @@ static void test_vcomp_fork(void)
     pomp_set_num_threads(max_threads);
 }
 
+static void CDECL section_cb(LONG *a, LONG *b, LONG *c)
+{
+    int i;
+
+    p_vcomp_sections_init(20);
+    while ((i = p_vcomp_sections_next()) != -1)
+    {
+        InterlockedIncrement(a);
+        Sleep(1);
+    }
+
+    p_vcomp_sections_init(30);
+    while ((i = p_vcomp_sections_next()) != -1)
+    {
+        InterlockedIncrement(b);
+        Sleep(1);
+    }
+
+    p_vcomp_sections_init(40);
+    while ((i = p_vcomp_sections_next()) != -1)
+    {
+        InterlockedIncrement(c);
+        Sleep(1);
+    }
+}
+
+static void test_vcomp_sections_init(void)
+{
+    LONG a, b, c;
+    int max_threads = pomp_get_max_threads();
+    int i;
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+
+        a = b = c = 0;
+        p_vcomp_fork(TRUE, 3, section_cb, &a, &b, &c);
+        ok(a == 20, "expected a = 20, got %d\n", a);
+        ok(b == 30, "expected b = 30, got %d\n", b);
+        ok(c == 40, "expected c = 40, got %d\n", c);
+    }
+
+    pomp_set_num_threads(max_threads);
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
@@ -350,6 +400,7 @@ START_TEST(vcomp)
     test_omp_get_num_threads(FALSE);
     test_omp_get_num_threads(TRUE);
     test_vcomp_fork();
+    test_vcomp_sections_init();
 
     release_vcomp();
 }
