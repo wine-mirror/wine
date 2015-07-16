@@ -2855,7 +2855,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     case LB_SETCURSEL:
         if (IS_MULTISELECT(descr)) return LB_ERR;
-        LISTBOX_SetCaretIndex( descr, wParam, FALSE );
+        LISTBOX_SetCaretIndex( descr, wParam, TRUE );
         ret = LISTBOX_SetSelection( descr, wParam, TRUE, FALSE );
 	if (ret != LB_ERR) ret = descr->selected_item;
 	return ret;

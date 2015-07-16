@@ -349,7 +349,7 @@ static void test_ownerdraw(void)
   ok(exp.caret == got.caret, "expected caret %d, got %d\n", exp.caret, got.caret); \
   ok(exp.selcount == got.selcount, "expected selcount %d, got %d\n", exp.selcount, got.selcount);
 
-static void test_selection(void)
+static void test_LB_SELITEMRANGE(void)
 {
     static const struct listbox_stat test_nosel = { 0, LB_ERR, 0, 0 };
     static const struct listbox_stat test_1 = { 0, LB_ERR, 0, 2 };
@@ -425,6 +425,34 @@ static void test_selection(void)
     ok(ret == LB_OKAY, "LB_SELITEMRANGE returned %d instead of LB_OKAY\n", ret);
     listbox_query(hLB, &answer);
     listbox_test_query(test_2, answer);
+
+    DestroyWindow(hLB);
+}
+
+static void test_LB_SETCURSEL(void)
+{
+    HWND parent, hLB;
+    INT ret;
+
+    trace("testing LB_SETCURSEL\n");
+
+    parent = create_parent();
+    assert(parent);
+
+    hLB = create_listbox(LBS_NOINTEGRALHEIGHT | WS_CHILD, parent);
+    assert(hLB);
+
+    SendMessageA(hLB, LB_SETITEMHEIGHT, 0, 32);
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 2, 0);
+    ok(ret == 2, "LB_SETCURSEL returned %d instead of 2\n", ret);
+    ret = GetScrollPos(hLB, SB_VERT);
+    ok(ret == 0, "expected vscroll 0, got %d\n", ret);
+
+    ret = SendMessageA(hLB, LB_SETCURSEL, 3, 0);
+    ok(ret == 3, "LB_SETCURSEL returned %d instead of 3\n", ret);
+    ret = GetScrollPos(hLB, SB_VERT);
+    ok(ret == 1, "expected vscroll 1, got %d\n", ret);
 
     DestroyWindow(hLB);
 }
@@ -1766,7 +1794,8 @@ START_TEST(listbox)
 
   check_item_height();
   test_ownerdraw();
-  test_selection();
+  test_LB_SELITEMRANGE();
+  test_LB_SETCURSEL();
   test_listbox_height();
   test_itemfrompoint();
   test_listbox_item_data();
