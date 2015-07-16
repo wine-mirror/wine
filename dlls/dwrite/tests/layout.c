@@ -785,6 +785,16 @@ static void test_CreateTextLayout(void)
     IDWriteFactory_Release(factory);
 }
 
+static DWRITE_MATRIX layoutcreate_transforms[] = {
+    { 1.0, 0.0, 0.0, 1.0, 0.0, 0.0 },
+    { 1.0, 0.0, 0.0, 1.0, 0.3, 0.2 },
+    { 1.0, 0.0, 0.0, 1.0,-0.3,-0.2 },
+
+    { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+    { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0 },
+    { 1.0, 2.0, 0.5, 1.0, 0.0, 0.0 },
+};
+
 static void test_CreateGdiCompatibleTextLayout(void)
 {
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
@@ -793,6 +803,7 @@ static void test_CreateGdiCompatibleTextLayout(void)
     IDWriteFactory *factory;
     FLOAT dimension;
     HRESULT hr;
+    int i;
 
     factory = create_factory();
 
@@ -839,6 +850,24 @@ static void test_CreateGdiCompatibleTextLayout(void)
     ok(dimension == 100.0, "got %f\n", dimension);
 
     IDWriteTextLayout_Release(layout);
+
+    /* negative, zero ppdip */
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 100.0, 100.0, -1.0, NULL, FALSE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextLayout_Release(layout);
+
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 100.0, 100.0, 0.0, NULL, FALSE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextLayout_Release(layout);
+
+    /* transforms */
+    for (i = 0; i < sizeof(layoutcreate_transforms)/sizeof(layoutcreate_transforms[0]); i++) {
+        hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 1, format, 100.0, 100.0, 1.0,
+            &layoutcreate_transforms[i], FALSE, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteTextLayout_Release(layout);
+    }
+
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
