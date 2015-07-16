@@ -21,6 +21,8 @@
 
 #define COBJMACROS
 
+#include <math.h>
+
 #include "dwrite_private.h"
 #include "scripts.h"
 
@@ -1066,7 +1068,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
 static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWriteTextAnalyzer2 *iface,
     WCHAR const* text, UINT16 const* clustermap, DWRITE_SHAPING_TEXT_PROPERTIES* props,
     UINT32 text_len, UINT16 const* glyphs, DWRITE_SHAPING_GLYPH_PROPERTIES const* glyph_props,
-    UINT32 glyph_count, IDWriteFontFace *fontface, FLOAT emSize, FLOAT pixels_per_dip,
+    UINT32 glyph_count, IDWriteFontFace *fontface, FLOAT emSize, FLOAT ppdip,
     DWRITE_MATRIX const* transform, BOOL use_gdi_natural, BOOL is_sideways, BOOL is_rtl,
     DWRITE_SCRIPT_ANALYSIS const* analysis, WCHAR const* locale, DWRITE_TYPOGRAPHIC_FEATURES const** features,
     UINT32 const* feature_range_lengths, UINT32 feature_ranges, FLOAT *advances, DWRITE_GLYPH_OFFSET *offsets)
@@ -1077,7 +1079,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     UINT32 i;
 
     TRACE("(%s %p %p %u %p %p %u %p %.2f %.2f %p %d %d %d %p %s %p %p %u %p %p)\n", debugstr_wn(text, text_len),
-        clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, pixels_per_dip,
+        clustermap, props, text_len, glyphs, glyph_props, glyph_count, fontface, emSize, ppdip,
         transform, use_gdi_natural, is_sideways, is_rtl, analysis, debugstr_w(locale), features, feature_range_lengths,
         feature_ranges, advances, offsets);
 
@@ -1090,7 +1092,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
         return hr;
     }
 
-    hr = IDWriteFontFace_GetGdiCompatibleMetrics(fontface, emSize, pixels_per_dip, transform, &metrics);
+    hr = IDWriteFontFace_GetGdiCompatibleMetrics(fontface, emSize, ppdip, transform, &metrics);
     if (FAILED(hr)) {
         IDWriteFontFace1_Release(fontface1);
         WARN("failed to get compat metrics, 0x%08x\n", hr);
@@ -1099,12 +1101,12 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
     for (i = 0; i < glyph_count; i++) {
         INT32 a;
 
-        hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, emSize, pixels_per_dip,
+        hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, emSize, ppdip,
             transform, use_gdi_natural, is_sideways, 1, &glyphs[i], &a);
         if (FAILED(hr))
-            a = 0;
-
-        advances[i] = get_scaled_advance_width(a, emSize, &metrics);
+            advances[i] = 0.0;
+        else
+            advances[i] = floorf(a * emSize * ppdip / metrics.designUnitsPerEm + 0.5f) / ppdip;
         offsets[i].advanceOffset = 0.0;
         offsets[i].ascenderOffset = 0.0;
     }
