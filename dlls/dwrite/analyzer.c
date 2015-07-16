@@ -1507,22 +1507,8 @@ static HRESULT WINAPI dwritetextanalyzer2_GetGlyphOrientationTransform(IDWriteTe
     /* shift components represent transform necessary to get from original point to
        rotated one in new coordinate system */
     if ((originX != 0.0 || originY != 0.0) && angle != DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES) {
-        const DWRITE_MATRIX *p;
-
-        switch (angle) {
-        case DWRITE_GLYPH_ORIENTATION_ANGLE_90_DEGREES:
-            angle = DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES;
-            break;
-        case DWRITE_GLYPH_ORIENTATION_ANGLE_270_DEGREES:
-            angle = DWRITE_GLYPH_ORIENTATION_ANGLE_90_DEGREES;
-            break;
-        default:
-            ;
-        }
-
-        p = &transforms[angle];
-        m->dx = originX - (p->m11 * originX + p->m12 * originY);
-        m->dy = originY - (p->m21 * originX + p->m22 * originY);
+        m->dx = originX - (m->m11 * originX + m->m21 * originY);
+        m->dy = originY - (m->m12 * originX + m->m22 * originY);
     }
 
     return S_OK;
