@@ -83,8 +83,8 @@
 @ stub _vcomp_reduction_u2
 @ stub _vcomp_reduction_u4
 @ stub _vcomp_reduction_u8
-@ stub _vcomp_sections_init
-@ stub _vcomp_sections_next
+@ cdecl _vcomp_sections_init(long) vcomp._vcomp_sections_init
+@ cdecl _vcomp_sections_next() vcomp._vcomp_sections_next
 @ cdecl _vcomp_set_num_threads(long) vcomp._vcomp_set_num_threads
 @ cdecl _vcomp_single_begin(long) vcomp._vcomp_single_begin
 @ cdecl _vcomp_single_end() vcomp._vcomp_single_end

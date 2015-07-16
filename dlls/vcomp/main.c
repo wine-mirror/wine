@@ -58,6 +58,9 @@ struct vcomp_thread_data
     /* only used for concurrent tasks */
     struct list             entry;
     CONDITION_VARIABLE      cond;
+
+    /* section */
+    unsigned int            section;
 };
 
 struct vcomp_team_data
@@ -74,6 +77,11 @@ struct vcomp_team_data
     /* barrier */
     unsigned int            barrier;
     int                     barrier_count;
+
+    /* section */
+    unsigned int            section;
+    int                     num_sections;
+    int                     section_index;
 };
 
 #if defined(__i386__)
@@ -301,6 +309,42 @@ void CDECL _vcomp_single_end(void)
     TRACE("stub\n");
 }
 
+void CDECL _vcomp_sections_init(int n)
+{
+    struct vcomp_thread_data *thread_data = vcomp_get_thread_data();
+    struct vcomp_team_data *team_data = thread_data->team;
+
+    TRACE("(%d)\n", n);
+
+    EnterCriticalSection(&vcomp_section);
+    thread_data->section++;
+    if ((int)(thread_data->section - team_data->section) > 0)
+    {
+        team_data->section       = thread_data->section;
+        team_data->num_sections  = n;
+        team_data->section_index = 0;
+    }
+    LeaveCriticalSection(&vcomp_section);
+}
+
+int CDECL _vcomp_sections_next(void)
+{
+    struct vcomp_thread_data *thread_data = vcomp_get_thread_data();
+    struct vcomp_team_data *team_data = thread_data->team;
+    int i = -1;
+
+    TRACE("()\n");
+
+    EnterCriticalSection(&vcomp_section);
+    if (thread_data->section == team_data->section &&
+        team_data->section_index != team_data->num_sections)
+    {
+        i = team_data->section_index++;
+    }
+    LeaveCriticalSection(&vcomp_section);
+    return i;
+}
+
 static DWORD WINAPI _vcomp_fork_worker(void *param)
 {
     struct vcomp_thread_data *thread_data = param;
@@ -368,10 +412,12 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     __ms_va_start(team_data.valist, wrapper);
     team_data.barrier           = 0;
     team_data.barrier_count     = 0;
+    team_data.section           = 0;
 
     thread_data.team            = &team_data;
     thread_data.thread_num      = 0;
     thread_data.fork_threads    = 0;
+    thread_data.section         = 1;
     list_init(&thread_data.entry);
     InitializeConditionVariable(&thread_data.cond);
 
@@ -387,6 +433,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             data->team          = &team_data;
             data->thread_num    = team_data.num_threads++;
             data->fork_threads  = 0;
+            data->section       = 1;
             list_remove(&data->entry);
             list_add_tail(&thread_data.entry, &data->entry);
             WakeAllConditionVariable(&data->cond);
@@ -405,6 +452,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             data->team          = &team_data;
             data->thread_num    = team_data.num_threads;
             data->fork_threads  = 0;
+            data->section       = 1;
             InitializeConditionVariable(&data->cond);
 
             thread = CreateThread(NULL, 0, _vcomp_fork_worker, data, 0, NULL);
