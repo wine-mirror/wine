@@ -220,8 +220,11 @@ static BOOL StopService(SC_HANDLE SCManager, SC_HANDLE serviceHandle)
             {
                 output_string(STRING_STOP_DEP, dependencies[counter].lpDisplayName);
                 dependent_serviceHandle = OpenServiceW(SCManager, dependencies[counter].lpServiceName, SC_MANAGER_ALL_ACCESS);
-                if(dependent_serviceHandle) result = StopService(SCManager, dependent_serviceHandle);
-                CloseServiceHandle(dependent_serviceHandle);
+                if(dependent_serviceHandle)
+                {
+                    result = StopService(SCManager, dependent_serviceHandle);
+                    CloseServiceHandle(dependent_serviceHandle);
+                }
                 if(!result) output_string(STRING_CANT_STOP, dependencies[counter].lpDisplayName);
            }
         }
