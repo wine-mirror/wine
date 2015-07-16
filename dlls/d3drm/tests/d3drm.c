@@ -1999,10 +1999,14 @@ static void test_create_device_from_clipper(void)
 
     hr = IDirect3DRM2_CreateDeviceFromClipper(d3drm2, clipper, &driver, 0, 0, &device2);
     todo_wine ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
+    if (SUCCEEDED(hr))
+        IDirect3DRMDevice2_Release(device2);
 
     /* If NULL is passed for clipper, CreateDeviceFromClipper returns D3DRMERR_BADVALUE */
     hr = IDirect3DRM2_CreateDeviceFromClipper(d3drm2, NULL, &driver, 0, 0, &device2);
     todo_wine ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
+    if (SUCCEEDED(hr))
+        IDirect3DRMDevice2_Release(device2);
 
     hr = IDirect3DRM2_CreateDeviceFromClipper(d3drm2, clipper, &driver, 300, 200, &device2);
     ok(hr == D3DRM_OK, "Cannot create IDirect3DRMDevice2 interface (hr = %x).\n", hr);
@@ -2197,6 +2201,8 @@ static void test_create_device_from_surface(void)
     hr = IDirect3DRM2_CreateDeviceFromSurface(d3drm2, &driver, ddraw, surface, &device2);
     todo_wine ok(hr == DDERR_INVALIDCAPS, "Expected hr == DDERR_INVALIDCAPS, got %x.\n", hr);
     IDirectDrawSurface_Release(surface);
+    if (SUCCEEDED(hr))
+        IDirect3DRMDevice2_Release(device2);
 
     desc.ddsCaps.dwCaps |= DDSCAPS_3DDEVICE;
     hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
