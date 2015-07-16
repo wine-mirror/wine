@@ -64,7 +64,7 @@
 @ stub _vcomp_for_static_init_i8
 @ stub _vcomp_for_static_simple_init
 @ stub _vcomp_for_static_simple_init_i8
-@ stub _vcomp_fork
+@ varargs _vcomp_fork(long long ptr) vcomp._vcomp_fork
 @ stub _vcomp_get_thread_num
 @ stub _vcomp_leave_critsect
 @ stub _vcomp_master_barrier
