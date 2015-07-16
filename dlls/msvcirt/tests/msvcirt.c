@@ -141,6 +141,7 @@ static LONG (*__thiscall p_ios_flags_set)(ios*, LONG);
 static LONG (*__thiscall p_ios_flags_get)(const ios*);
 static LONG (*__thiscall p_ios_setf)(ios*, LONG);
 static LONG (*__thiscall p_ios_setf_mask)(ios*, LONG, LONG);
+static LONG (*__thiscall p_ios_unsetf)(ios*, LONG);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -253,6 +254,7 @@ static BOOL init(void)
         SET(p_ios_flags_get, "?flags@ios@@QEBAJXZ");
         SET(p_ios_setf, "?setf@ios@@QEAAJJ@Z");
         SET(p_ios_setf_mask, "?setf@ios@@QEAAJJJ@Z");
+        SET(p_ios_unsetf, "?unsetf@ios@@QEAAJJ@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
 
@@ -295,6 +297,7 @@ static BOOL init(void)
         SET(p_ios_flags_get, "?flags@ios@@QBEJXZ");
         SET(p_ios_setf, "?setf@ios@@QAEJJ@Z");
         SET(p_ios_setf_mask, "?setf@ios@@QAEJJJ@Z");
+        SET(p_ios_unsetf, "?unsetf@ios@@QAEJJ@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -1020,6 +1023,14 @@ static void test_ios(void)
     ret = (LONG) call_func3(p_ios_setf_mask, &ios_obj, 0x111, 0x105);
     ok(ret == 0x8444, "expected %x got %x\n", 0x8444, ret);
     ok(ios_obj.flags == 0x8541, "expected %x got %x\n", 0x8541, ios_obj.flags);
+
+    /* unsetf */
+    ret = (LONG) call_func2(p_ios_unsetf, &ios_obj, 0x1111);
+    ok(ret == 0x8541, "expected %x got %x\n", 0x8541, ret);
+    ok(ios_obj.flags == 0x8440, "expected %x got %x\n", 0x8440, ios_obj.flags);
+    ret = (LONG) call_func2(p_ios_unsetf, &ios_obj, 0x8008);
+    ok(ret == 0x8440, "expected %x got %x\n", 0x8440, ret);
+    ok(ios_obj.flags == 0x440, "expected %x got %x\n", 0x440, ios_obj.flags);
     ios_obj.do_lock = -1;
 
     SetEvent(lock_arg.release[0]);

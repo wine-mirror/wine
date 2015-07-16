@@ -1176,8 +1176,14 @@ void __cdecl ios_unlockc(void)
 DEFINE_THISCALL_WRAPPER(ios_unsetf, 8)
 LONG __thiscall ios_unsetf(ios *this, LONG flags)
 {
-    FIXME("(%p %x) stub\n", this, flags);
-    return 0;
+    LONG prev = this->flags;
+
+    TRACE("(%p %x)\n", this, flags);
+
+    ios_lock(this);
+    this->flags &= ~flags;
+    ios_unlock(this);
+    return prev;
 }
 
 /* ?width@ios@@QAEHH@Z */
