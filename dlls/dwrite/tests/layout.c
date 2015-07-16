@@ -420,6 +420,8 @@ static ULONG WINAPI testrenderer_Release(IDWriteTextRenderer *iface)
 }
 
 struct renderer_context {
+    BOOL gdicompat;
+    BOOL use_gdi_natural;
     BOOL snapping_disabled;
     DWRITE_MATRIX m;
     FLOAT ppdip;
@@ -455,6 +457,19 @@ static HRESULT WINAPI testrenderer_GetPixelsPerDip(IDWriteTextRenderer *iface,
     return S_OK;
 }
 
+#define TEST_MEASURING_MODE(ctxt, mode) test_measuring_mode(ctxt, mode, __LINE__)
+static void test_measuring_mode(const struct renderer_context *ctxt, DWRITE_MEASURING_MODE mode, int line)
+{
+    if (ctxt->gdicompat) {
+        if (ctxt->use_gdi_natural)
+            ok_(__FILE__, line)(mode == DWRITE_MEASURING_MODE_GDI_NATURAL, "got %d\n", mode);
+        else
+            ok_(__FILE__, line)(mode == DWRITE_MEASURING_MODE_GDI_CLASSIC, "got %d\n", mode);
+    }
+    else
+        ok_(__FILE__, line)(mode == DWRITE_MEASURING_MODE_NATURAL, "got %d\n", mode);
+}
+
 static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     void *context,
     FLOAT baselineOriginX,
@@ -469,6 +484,7 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
     DWRITE_SCRIPT_ANALYSIS sa;
 
     if (ctxt) {
+        TEST_MEASURING_MODE(ctxt, mode);
         ctxt->originX = baselineOriginX;
         ctxt->originY = baselineOriginY;
     }
@@ -503,13 +519,18 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
 }
 
 static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
-    void *client_drawingcontext,
+    void *context,
     FLOAT baselineOriginX,
     FLOAT baselineOriginY,
     DWRITE_UNDERLINE const* underline,
     IUnknown *effect)
 {
+    struct renderer_context *ctxt = (struct renderer_context*)context;
     struct drawcall_entry entry;
+
+    if (ctxt)
+        TEST_MEASURING_MODE(ctxt, underline->measuringMode);
+
     entry.kind = DRAW_UNDERLINE;
     if (effect)
         entry.kind |= DRAW_EFFECT;
@@ -518,13 +539,18 @@ static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
 }
 
 static HRESULT WINAPI testrenderer_DrawStrikethrough(IDWriteTextRenderer *iface,
-    void *client_drawingcontext,
+    void *context,
     FLOAT baselineOriginX,
     FLOAT baselineOriginY,
     DWRITE_STRIKETHROUGH const* strikethrough,
     IUnknown *effect)
 {
+    struct renderer_context *ctxt = (struct renderer_context*)context;
     struct drawcall_entry entry;
+
+    if (ctxt)
+        TEST_MEASURING_MODE(ctxt, strikethrough->measuringMode);
+
     entry.kind = DRAW_STRIKETHROUGH;
     if (effect)
         entry.kind |= DRAW_EFFECT;
@@ -533,7 +559,7 @@ static HRESULT WINAPI testrenderer_DrawStrikethrough(IDWriteTextRenderer *iface,
 }
 
 static HRESULT WINAPI testrenderer_DrawInlineObject(IDWriteTextRenderer *iface,
-    void *client_drawingcontext,
+    void *context,
     FLOAT originX,
     FLOAT originY,
     IDWriteInlineObject *object,
@@ -1342,6 +1368,7 @@ static void test_Draw(void)
     static const WCHAR str2W[] = {0x202a,0x202c,'a','b',0};
     static const WCHAR ruW[] = {'r','u',0};
     IDWriteInlineObject *inlineobj;
+    struct renderer_context ctxt;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
@@ -1350,6 +1377,10 @@ static void test_Draw(void)
     HRESULT hr;
 
     factory = create_factory();
+
+    ctxt.gdicompat = FALSE;
+    ctxt.use_gdi_natural = FALSE;
+    ctxt.snapping_disabled = TRUE;
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, ruW, &format);
@@ -1382,7 +1413,7 @@ static void test_Draw(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq, "draw test", TRUE);
     IDWriteTextLayout_Release(layout);
@@ -1391,7 +1422,7 @@ static void test_Draw(void)
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 5.0, 100.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq2, "draw test 2", TRUE);
     IDWriteTextLayout_Release(layout);
@@ -1400,7 +1431,7 @@ static void test_Draw(void)
     hr = IDWriteFactory_CreateTextLayout(factory, str2W, 4, format, 500.0, 100.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq3, "draw test 3", TRUE);
     IDWriteTextLayout_Release(layout);
@@ -1416,7 +1447,7 @@ static void test_Draw(void)
     hr = IDWriteTextLayout_SetStrikethrough(layout, TRUE, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq4, "draw test 4", FALSE);
     IDWriteTextLayout_Release(layout);
@@ -1431,7 +1462,7 @@ static void test_Draw(void)
     hr = IDWriteTextLayout_SetStrikethrough(layout, TRUE, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_seq5, "draw test 5", FALSE);
     IDWriteTextLayout_Release(layout);
@@ -1441,44 +1472,56 @@ static void test_Draw(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, empty_seq, "draw test 6", FALSE);
     IDWriteTextLayout_Release(layout);
+
+    ctxt.gdicompat = TRUE;
+    ctxt.use_gdi_natural = TRUE;
 
     /* different parameter combinations with gdi-compatible layout */
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, TRUE, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 7", FALSE);
     IDWriteTextLayout_Release(layout);
 
+    ctxt.gdicompat = TRUE;
+    ctxt.use_gdi_natural = FALSE;
+
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 8", FALSE);
     IDWriteTextLayout_Release(layout);
+
+    ctxt.gdicompat = TRUE;
+    ctxt.use_gdi_natural = TRUE;
 
     m.m11 = m.m22 = 2.0;
     m.m12 = m.m21 = m.dx = m.dy = 0.0;
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, &m, TRUE, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 9", FALSE);
     IDWriteTextLayout_Release(layout);
+
+    ctxt.gdicompat = TRUE;
+    ctxt.use_gdi_natural = FALSE;
 
     m.m11 = m.m22 = 2.0;
     m.m12 = m.m21 = m.dx = m.dy = 0.0;
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, &m, FALSE, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     flush_sequence(sequences, RENDERER_ID);
-    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 10", FALSE);
     IDWriteTextLayout_Release(layout);
@@ -3373,6 +3416,8 @@ static void test_pixelsnapping(void)
 
     /* disabled snapping */
     ctxt.snapping_disabled = TRUE;
+    ctxt.gdicompat = FALSE;
+    ctxt.use_gdi_natural = FALSE;
     ctxt.ppdip = 1.0f;
     memset(&ctxt.m, 0, sizeof(ctxt.m));
     ctxt.m.m11 = ctxt.m.m22 = 1.0;

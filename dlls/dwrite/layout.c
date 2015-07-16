@@ -252,10 +252,10 @@ struct dwrite_textlayout {
 
     DWRITE_TEXT_METRICS1 metrics;
 
+    DWRITE_MEASURING_MODE measuringmode;
+
     /* gdi-compatible layout specifics */
-    BOOL   gdicompatible;
     FLOAT  pixels_per_dip;
-    BOOL   use_gdi_natural;
     DWRITE_MATRIX transform;
 };
 
@@ -331,6 +331,11 @@ static inline const char *debugstr_run(const struct regular_layout_run *run)
 {
     return wine_dbg_sprintf("[%u,%u)", run->descr.textPosition, run->descr.textPosition +
         run->descr.stringLength);
+}
+
+static inline BOOL is_layout_gdi_compatible(struct dwrite_textlayout *layout)
+{
+    return layout->measuringmode != DWRITE_MEASURING_MODE_NATURAL;
 }
 
 static inline HRESULT format_set_textalignment(struct dwrite_textformat_data *format, DWRITE_TEXT_ALIGNMENT alignment,
@@ -808,12 +813,12 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             goto memerr;
 
         /* now set advances and offsets */
-        if (layout->gdicompatible)
+        if (is_layout_gdi_compatible(layout))
             hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap,
                 text_props, run->descr.stringLength, run->run.glyphIndices, glyph_props, run->glyphcount,
-                run->run.fontFace, run->run.fontEmSize, layout->pixels_per_dip, &layout->transform, layout->use_gdi_natural,
-                run->run.isSideways, run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL, NULL, 0,
-                run->advances, run->offsets);
+                run->run.fontFace, run->run.fontEmSize, layout->pixels_per_dip, &layout->transform,
+                layout->measuringmode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->run.isSideways,
+                run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL, NULL, 0, run->advances, run->offsets);
         else
             hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap, text_props,
                 run->descr.stringLength, run->run.glyphIndices, glyph_props, run->glyphcount, run->run.fontFace,
@@ -837,7 +842,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             run->run.glyphCount = run->glyphcount;
 
         /* baseline derived from font metrics */
-        if (layout->gdicompatible) {
+        if (is_layout_gdi_compatible(layout)) {
             hr = IDWriteFontFace_GetGdiCompatibleMetrics(run->run.fontFace,
                 run->run.fontEmSize,
                 layout->pixels_per_dip,
@@ -1054,7 +1059,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         if (!s)
             return E_OUTOFMEMORY;
 
-        if (layout->gdicompatible) {
+        if (is_layout_gdi_compatible(layout)) {
             HRESULT hr = IDWriteFontFace_GetGdiCompatibleMetrics(
                 r->u.regular.run.fontFace,
                 r->u.regular.run.fontEmSize,
@@ -1073,7 +1078,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         s->s.readingDirection = layout->format.readingdir;
         s->s.flowDirection = layout->format.flow;
         s->s.localeName = r->u.regular.descr.localeName;
-        s->s.measuringMode = DWRITE_MEASURING_MODE_NATURAL; /* FIXME */
+        s->s.measuringMode = layout->measuringmode;
         s->run = run;
 
         list_add_tail(&layout->strikethrough, &s->entry);
@@ -2830,7 +2835,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             context,
             run->origin_x + run->align_dx + origin_x,
             disabled ? run->origin_y + origin_y : SNAP_COORD(run->origin_y + origin_y),
-            DWRITE_MEASURING_MODE_NATURAL,
+            This->measuringmode,
             &glyph_run,
             &descr,
             NULL);
@@ -3894,10 +3899,9 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     memset(&layout->metrics, 0, sizeof(layout->metrics));
     layout->metrics.layoutWidth = maxwidth;
     layout->metrics.layoutHeight = maxheight;
+    layout->measuringmode = DWRITE_MEASURING_MODE_NATURAL;
 
-    layout->gdicompatible = FALSE;
     layout->pixels_per_dip = 0.0;
-    layout->use_gdi_natural = FALSE;
     memset(&layout->transform, 0, sizeof(layout->transform));
 
     layout->str = heap_strdupnW(str, len);
@@ -3964,10 +3968,10 @@ HRESULT create_gdicompat_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFor
 
     hr = init_textlayout(str, len, format, maxwidth, maxheight, layout);
     if (hr == S_OK) {
+        layout->measuringmode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
+
         /* set gdi-specific properties */
-        layout->gdicompatible = TRUE;
         layout->pixels_per_dip = pixels_per_dip;
-        layout->use_gdi_natural = use_gdi_natural;
         layout->transform = transform ? *transform : identity;
 
         *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout2_iface;
