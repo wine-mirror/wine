@@ -431,8 +431,10 @@ static inline DWORD get_security_service( LPWSTR full_service_name, DWORD access
 
     err = SERV_OpenSCManagerW( NULL, NULL, access, (SC_HANDLE *)&manager );
     if (err == ERROR_SUCCESS)
+    {
         err = SERV_OpenServiceW( manager, full_service_name, access, (SC_HANDLE *)service );
-    CloseServiceHandle( manager );
+        CloseServiceHandle( manager );
+    }
     return err;
 }
 
