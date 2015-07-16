@@ -1,6 +1,7 @@
 /*
  * Unit test suite for vcomp
  *
+ * Copyright 2012 Dan Kegel
  * Copyright 2015 Sebastian Lackner
  *
  * This library is free software; you can redistribute it and/or
@@ -278,6 +279,69 @@ static void test_omp_get_num_threads(BOOL nested)
     pomp_set_nested(FALSE);
 }
 
+static void CDECL fork_ptr_cb(LONG *a, LONG *b, LONG *c, LONG *d, LONG *e)
+{
+    InterlockedIncrement(a);
+    InterlockedIncrement(b);
+    InterlockedIncrement(c);
+    InterlockedIncrement(d);
+    InterlockedIncrement(e);
+}
+
+static void CDECL fork_uintptr_cb(UINT_PTR a, UINT_PTR b, UINT_PTR c, UINT_PTR d, UINT_PTR e)
+{
+    ok(a == 1, "expected a == 1, got %p\n", (void *)a);
+    ok(b == MAXUINT_PTR - 2, "expected b == MAXUINT_PTR - 2, got %p\n", (void *)b);
+    ok(c == 3, "expected c == 3, got %p\n", (void *)c);
+    ok(d == MAXUINT_PTR - 4, "expected d == MAXUINT_PTR - 4, got %p\n", (void *)d);
+    ok(e == 5, "expected e == 5, got %p\n", (void *)e);
+}
+
+static void CDECL fork_float_cb(float a, float b, float c, float d, float e)
+{
+    ok(1.4999 < a && a < 1.5001, "expected a == 1.5, got %f\n", a);
+    ok(2.4999 < b && b < 2.5001, "expected b == 2.5, got %f\n", b);
+    ok(3.4999 < c && c < 3.5001, "expected c == 3.5, got %f\n", c);
+    ok(4.4999 < d && d < 4.5001, "expected d == 4.5, got %f\n", d);
+    ok(5.4999 < e && e < 5.5001, "expected e == 5.5, got %f\n", e);
+}
+
+static void test_vcomp_fork(void)
+{
+    LONG a, b, c, d, e;
+    int max_threads = pomp_get_max_threads();
+    pomp_set_num_threads(4);
+
+    a = 0; b = 1; c = 2; d = 3; e = 4;
+    p_vcomp_fork(FALSE, 5, fork_ptr_cb, &a, &b, &c, &d, &e);
+    ok(a == 1, "expected a == 1, got %d\n", a);
+    ok(b == 2, "expected b == 2, got %d\n", b);
+    ok(c == 3, "expected c == 3, got %d\n", c);
+    ok(d == 4, "expected d == 4, got %d\n", d);
+    ok(e == 5, "expected e == 5, got %d\n", e);
+
+    a = 0; b = 1; c = 2; d = 3; e = 4;
+    p_vcomp_fork(TRUE, 5, fork_ptr_cb, &a, &b, &c, &d, &e);
+    ok(a == 4, "expected a == 4, got %d\n", a);
+    ok(b == 5, "expected b == 5, got %d\n", b);
+    ok(c == 6, "expected c == 6, got %d\n", c);
+    ok(d == 7, "expected d == 7, got %d\n", d);
+    ok(e == 8, "expected e == 8, got %d\n", e);
+
+    p_vcomp_fork(TRUE, 5, fork_uintptr_cb, (UINT_PTR)1, (UINT_PTR)(MAXUINT_PTR - 2),
+        (UINT_PTR)3, (UINT_PTR)(MAXUINT_PTR - 4), (UINT_PTR)5);
+
+    if (sizeof(int) < sizeof(void *))
+        skip("skipping float test on x86_64\n");
+    else
+    {
+        void (CDECL *func)(BOOL, int, void *, float, float, float, float, float) = (void *)p_vcomp_fork;
+        func(TRUE, 5, fork_float_cb, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f);
+    }
+
+    pomp_set_num_threads(max_threads);
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
@@ -285,6 +349,7 @@ START_TEST(vcomp)
 
     test_omp_get_num_threads(FALSE);
     test_omp_get_num_threads(TRUE);
+    test_vcomp_fork();
 
     release_vcomp();
 }
