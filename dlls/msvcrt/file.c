@@ -1197,8 +1197,6 @@ void msvcrt_free_io(void)
 
     for(i=0; i<sizeof(MSVCRT_fstream)/sizeof(MSVCRT_fstream[0]); i++)
         MSVCRT_free(MSVCRT_fstream[i]);
-
-    DeleteCriticalSection(&MSVCRT_file_cs);
 }
 
 /*********************************************************************
