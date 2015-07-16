@@ -17719,6 +17719,7 @@ wine_fn_config_test dlls/uxtheme/tests uxtheme_test
 wine_fn_config_dll vbscript enable_vbscript clean
 wine_fn_config_test dlls/vbscript/tests vbscript_test clean
 wine_fn_config_dll vcomp enable_vcomp
+wine_fn_config_test dlls/vcomp/tests vcomp_test
 wine_fn_config_dll vcomp100 enable_vcomp100
 wine_fn_config_dll vcomp90 enable_vcomp90
 wine_fn_config_dll vdhcp.vxd enable_win16
