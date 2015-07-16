@@ -137,6 +137,8 @@ static void (*__cdecl p_ios_unlockbuf)(ios*);
 static CRITICAL_SECTION *p_ios_static_lock;
 static void (*__cdecl p_ios_lockc)(void);
 static void (*__cdecl p_ios_unlockc)(void);
+static LONG (*__thiscall p_ios_flags_set)(ios*, LONG);
+static LONG (*__thiscall p_ios_flags_get)(const ios*);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -245,6 +247,8 @@ static BOOL init(void)
         SET(p_ios_unlock, "?unlock@ios@@QEAAXXZ");
         SET(p_ios_lockbuf, "?lockbuf@ios@@QEAAXXZ");
         SET(p_ios_unlockbuf, "?unlockbuf@ios@@QEAAXXZ");
+        SET(p_ios_flags_set, "?flags@ios@@QEAAJJ@Z");
+        SET(p_ios_flags_get, "?flags@ios@@QEBAJXZ");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
 
@@ -283,6 +287,8 @@ static BOOL init(void)
         SET(p_ios_unlock, "?unlock@ios@@QAAXXZ");
         SET(p_ios_lockbuf, "?lockbuf@ios@@QAAXXZ");
         SET(p_ios_unlockbuf, "?unlockbuf@ios@@QAAXXZ");
+        SET(p_ios_flags_set, "?flags@ios@@QAEJJ@Z");
+        SET(p_ios_flags_get, "?flags@ios@@QBEJXZ");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -859,6 +865,7 @@ static void test_ios(void)
     struct ios_lock_arg lock_arg;
     HANDLE thread;
     BOOL locked;
+    LONG ret;
 
     memset(&ios_obj, 0xab, sizeof(ios));
     memset(&ios_obj2, 0xab, sizeof(ios));
@@ -983,6 +990,17 @@ static void test_ios(void)
     ok(locked == 0, "the streambuf was not locked before\n");
     locked = TryEnterCriticalSection(p_ios_static_lock);
     ok(locked == 0, "the static critical section was not locked before\n");
+
+    /* flags */
+    ios_obj.flags = 0x8000;
+    ret = (LONG) call_func1(p_ios_flags_get, &ios_obj);
+    ok(ret == 0x8000, "expected %x got %x\n", 0x8000, ret);
+    ret = (LONG) call_func2(p_ios_flags_set, &ios_obj, 0x444);
+    ok(ret == 0x8000, "expected %x got %x\n", 0x8000, ret);
+    ok(ios_obj.flags == 0x444, "expected %x got %x\n", 0x444, ios_obj.flags);
+    ret = (LONG) call_func2(p_ios_flags_set, &ios_obj, 0);
+    ok(ret == 0x444, "expected %x got %x\n", 0x444, ret);
+    ok(ios_obj.flags == 0, "expected %x got %x\n", 0, ios_obj.flags);
 
     SetEvent(lock_arg.release[0]);
     SetEvent(lock_arg.release[1]);

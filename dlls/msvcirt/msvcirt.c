@@ -937,8 +937,12 @@ char __thiscall ios_fill_get(const ios *this)
 DEFINE_THISCALL_WRAPPER(ios_flags_set, 8)
 LONG __thiscall ios_flags_set(ios *this, LONG flags)
 {
-    FIXME("(%p %x) stub\n", this, flags);
-    return 0;
+    LONG prev = this->flags;
+
+    TRACE("(%p %x)\n", this, flags);
+
+    this->flags = flags;
+    return prev;
 }
 
 /* ?flags@ios@@QBEJXZ */
@@ -946,8 +950,8 @@ LONG __thiscall ios_flags_set(ios *this, LONG flags)
 DEFINE_THISCALL_WRAPPER(ios_flags_get, 4)
 LONG __thiscall ios_flags_get(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->flags;
 }
 
 /* ?good@ios@@QBEHXZ */
