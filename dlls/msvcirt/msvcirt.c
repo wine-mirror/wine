@@ -1047,8 +1047,12 @@ ios* __cdecl ios_oct(ios *this)
 DEFINE_THISCALL_WRAPPER(ios_precision_set, 8)
 int __thiscall ios_precision_set(ios *this, int prec)
 {
-    FIXME("(%p %d) stub\n", this, prec);
-    return 0;
+    int prev = this->precision;
+
+    TRACE("(%p %d)\n", this, prec);
+
+    this->precision = prec;
+    return prev;
 }
 
 /* ?precision@ios@@QBEHXZ */
@@ -1056,8 +1060,8 @@ int __thiscall ios_precision_set(ios *this, int prec)
 DEFINE_THISCALL_WRAPPER(ios_precision_get, 4)
 int __thiscall ios_precision_get(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->precision;
 }
 
 /* ?pword@ios@@QBEAAPAXH@Z */
