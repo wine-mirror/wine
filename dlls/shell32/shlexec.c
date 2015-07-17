@@ -1774,6 +1774,7 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     memcpy(wcmd+1, wszApplicationName, len * sizeof(WCHAR));
     len++;
     wcmd[len++] = '\"';
+    wcmd[len] = 0;
     if (sei_tmp.lpParameters[0]) {
         wcmd[len++] = ' ';
         strcpyW(wcmd+len, wszParameters);
