@@ -115,7 +115,7 @@ static void set_status_text(BindStatusCallback *This, ULONG statuscode, LPCWSTR 
     }
 
     V_VT(&arg) = VT_BSTR;
-    V_BSTR(&arg) = str ? SysAllocString(buffer) : NULL;
+    V_BSTR(&arg) = str ? SysAllocString(buffer) : SysAllocString(emptyW);
     TRACE("=> %s\n", debugstr_w(V_BSTR(&arg)));
 
     call_sink(This->doc_host->cps.wbe2, DISPID_STATUSTEXTCHANGE, &dispparams);

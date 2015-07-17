@@ -833,6 +833,7 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         ok(pDispParams->cArgs == 1, "cArgs=%d, expected 1\n", pDispParams->cArgs);
         ok(V_VT(pDispParams->rgvarg) == VT_BSTR, "V_VT(pDispParams->rgvarg)=%d, expected VT_BSTR\n",
            V_VT(pDispParams->rgvarg));
+        ok(V_BSTR(pDispParams->rgvarg) != NULL, "V_BSTR(pDispParams->rgvarg) is NULL\n");
         /* TODO: Check text */
         break;
 
