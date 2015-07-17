@@ -1274,6 +1274,8 @@ void CDECL macdrv_DestroyWindow(HWND hwnd)
 
     if (!(data = get_win_data(hwnd))) return;
 
+    if (hwnd == GetCapture()) macdrv_SetCapture(0, 0);
+
     if (data->gl_view) macdrv_dispose_view(data->gl_view);
     destroy_cocoa_window(data);
 
