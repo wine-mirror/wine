@@ -191,6 +191,10 @@ struct WebBrowser {
     IOleContainer *container;
     IOleInPlaceSiteEx *inplace;
 
+    IAdviseSink *sink;
+    DWORD sink_aspects;
+    DWORD sink_flags;
+
     /* window context */
 
     HWND frame_hwnd;

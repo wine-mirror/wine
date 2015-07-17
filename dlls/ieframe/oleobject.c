@@ -288,6 +288,11 @@ static void release_client_site(WebBrowser *This)
         IOleClientSite_Release(This->client);
         This->client = NULL;
     }
+
+    if(This->sink) {
+        IAdviseSink_Release(This->sink);
+        This->sink = NULL;
+    }
 }
 
 typedef struct {

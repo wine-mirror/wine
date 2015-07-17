@@ -92,16 +92,36 @@ static HRESULT WINAPI ViewObject_SetAdvise(IViewObject2 *iface, DWORD aspects, D
         IAdviseSink *pAdvSink)
 {
     WebBrowser *This = impl_from_IViewObject2(iface);
-    FIXME("(%p)->(%d %08x %p)\n", This, aspects, advf, pAdvSink);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%d %08x %p)\n", This, aspects, advf, pAdvSink);
+
+    if (aspects || advf) FIXME("aspects and/or flags not supported yet\n");
+
+    This->sink_aspects = aspects;
+    This->sink_flags = advf;
+    if (This->sink) IAdviseSink_Release(This->sink);
+    This->sink = pAdvSink;
+    if (This->sink) IAdviseSink_AddRef(This->sink);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ViewObject_GetAdvise(IViewObject2 *iface, DWORD *pAspects,
         DWORD *pAdvf, IAdviseSink **ppAdvSink)
 {
     WebBrowser *This = impl_from_IViewObject2(iface);
-    FIXME("(%p)->(%p %p %p)\n", This, pAspects, pAdvf, ppAdvSink);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p %p)\n", This, pAspects, pAdvf, ppAdvSink);
+
+    if (pAspects) *pAspects = This->sink_aspects;
+    if (pAdvf) *pAdvf = This->sink_flags;
+    if (ppAdvSink)
+    {
+        *ppAdvSink = This->sink;
+        if (*ppAdvSink) IAdviseSink_AddRef(*ppAdvSink);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI ViewObject_GetExtent(IViewObject2 *iface, DWORD dwAspect, LONG lindex,

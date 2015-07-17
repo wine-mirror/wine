@@ -3841,6 +3841,126 @@ static void test_FileProtocol(void)
         DeleteFileA(file_path);
 }
 
+struct sink
+{
+    IAdviseSink IAdviseSink_iface;
+};
+
+static inline struct sink *impl_from_IAdviseSink(IAdviseSink *iface)
+{
+    return CONTAINING_RECORD(iface, struct sink, IAdviseSink_iface);
+}
+
+static HRESULT WINAPI sink_QueryInterface( IAdviseSink *iface, REFIID riid, void **obj)
+{
+    struct sink *sink = impl_from_IAdviseSink(iface);
+
+    trace("%p, %p, %p\n", iface, riid, obj);
+
+    if (IsEqualGUID(riid, &IID_IAdviseSink) || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *obj = &sink->IAdviseSink_iface;
+    }
+    else
+    {
+        return E_NOINTERFACE;
+    }
+    IAdviseSink_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI sink_AddRef(IAdviseSink *iface)
+{
+    trace("%p\n", iface);
+    return 2;
+}
+
+static ULONG WINAPI sink_Release(IAdviseSink *iface)
+{
+    trace("%p\n", iface);
+    return 1;
+}
+
+static void WINAPI sink_OnDataChange(IAdviseSink *iface, FORMATETC *format, STGMEDIUM *medium)
+{
+    trace("%p, %p, %p\n", iface, format, medium);
+}
+
+static void WINAPI sink_OnViewChange(IAdviseSink *iface, DWORD aspect, LONG index)
+{
+    trace("%p, %08x, %d\n", iface, aspect, index);
+}
+
+static void WINAPI sink_OnRename(IAdviseSink *iface, IMoniker *moniker)
+{
+    trace("%p, %p\n", iface, moniker);
+}
+
+static void WINAPI sink_OnSave(IAdviseSink *iface)
+{
+    trace("%p\n", iface);
+}
+
+static void WINAPI sink_OnClose(IAdviseSink *iface)
+{
+    trace("%p\n", iface);
+}
+
+static const IAdviseSinkVtbl sink_vtbl =
+{
+    sink_QueryInterface,
+    sink_AddRef,
+    sink_Release,
+    sink_OnDataChange,
+    sink_OnViewChange,
+    sink_OnRename,
+    sink_OnSave,
+    sink_OnClose
+};
+
+static IAdviseSink test_sink = { &sink_vtbl };
+
+static void test_SetAdvise(void)
+{
+    HRESULT hr;
+    IWebBrowser2 *browser;
+    IViewObject2 *view;
+    IAdviseSink *sink;
+    DWORD aspects, flags;
+
+    if (!(browser = create_webbrowser())) return;
+    init_test(browser, 0);
+
+    hr = IWebBrowser2_QueryInterface(browser, &IID_IViewObject2, (void **)&view);
+    ok(hr == S_OK, "got %08x\n", hr);
+    if (FAILED(hr)) return;
+
+    aspects = flags = 0xdeadbeef;
+    sink = (IAdviseSink *)0xdeadbeef;
+    hr = IViewObject2_GetAdvise(view, &aspects, &flags, &sink);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(!aspects, "got %08x\n", aspects);
+    ok(!flags, "got %08x\n", aspects);
+    ok(sink == NULL, "got %p\n", sink);
+
+    hr = IViewObject2_SetAdvise(view, DVASPECT_CONTENT, 0, (IAdviseSink *)&test_sink);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    aspects = flags = 0xdeadbeef;
+    sink = (IAdviseSink *)0xdeadbeef;
+    hr = IViewObject2_GetAdvise(view, &aspects, &flags, &sink);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(aspects == DVASPECT_CONTENT, "got %08x\n", aspects);
+    ok(!flags, "got %08x\n", aspects);
+    ok(sink == &test_sink, "got %p\n", sink);
+
+    hr = IViewObject2_SetAdvise(view, 0, 0, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    IViewObject2_Release(view);
+    IWebBrowser2_Release(browser);
+}
+
 START_TEST(webbrowser)
 {
     OleInitialize(NULL);
@@ -3867,6 +3987,7 @@ START_TEST(webbrowser)
     trace("Testing WebBrowserV1...\n");
     test_WebBrowserV1();
     test_FileProtocol();
+    test_SetAdvise();
 
     OleUninitialize();
 }
