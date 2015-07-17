@@ -921,8 +921,12 @@ int __thiscall ios_fail(const ios *this)
 DEFINE_THISCALL_WRAPPER(ios_fill_set, 8)
 char __thiscall ios_fill_set(ios *this, char fill)
 {
-    FIXME("(%p %d) stub\n", this, fill);
-    return EOF;
+    char prev = this->fill;
+
+    TRACE("(%p %d)\n", this, fill);
+
+    this->fill = fill;
+    return prev;
 }
 
 /* ?fill@ios@@QBEDXZ */
@@ -930,8 +934,8 @@ char __thiscall ios_fill_set(ios *this, char fill)
 DEFINE_THISCALL_WRAPPER(ios_fill_get, 4)
 char __thiscall ios_fill_get(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return EOF;
+    TRACE("(%p)\n", this);
+    return this->fill;
 }
 
 /* ?flags@ios@@QAEJJ@Z */
