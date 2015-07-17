@@ -14202,7 +14202,7 @@ ULONGLONG __cdecl tr2_sys__File_size(const char* path)
 {
     WIN32_FILE_ATTRIBUTE_DATA fad;
 
-    TRACE("(%p)\n", path);
+    TRACE("(%s)\n", debugstr_a(path));
     if(!GetFileAttributesExA(path, GetFileExInfoStandard, &fad))
         return 0;
     if(fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
@@ -14218,7 +14218,7 @@ int __cdecl tr2_sys__Equivalent(char const* path1, char const* path2)
     HANDLE h1, h2;
     int ret;
     BY_HANDLE_FILE_INFORMATION info1, info2;
-    TRACE("(%p %p)\n", path1, path2);
+    TRACE("(%s %s)\n", debugstr_a(path1), debugstr_a(path2));
 
     h1 = CreateFileA(path1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
             NULL, OPEN_EXISTING, 0, 0);
@@ -14251,7 +14251,7 @@ int __cdecl tr2_sys__Equivalent(char const* path1, char const* path2)
 /* ?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z */
 char* __cdecl tr2_sys__Current_get(char *current_path)
 {
-    TRACE("(%p)\n", current_path);
+    TRACE("(%s)\n", debugstr_a(current_path));
 
     if(!GetCurrentDirectoryA(MAX_PATH, current_path))
         return NULL;
@@ -14262,7 +14262,7 @@ char* __cdecl tr2_sys__Current_get(char *current_path)
 /* ?_Current_set@sys@tr2@std@@YA_NPEBD@Z */
 MSVCP_bool __cdecl tr2_sys__Current_set(char const* path)
 {
-    TRACE("(%p)\n", path);
+    TRACE("(%s)\n", debugstr_a(path));
     return SetCurrentDirectoryA(path) != 0;
 }
 
@@ -14270,7 +14270,7 @@ MSVCP_bool __cdecl tr2_sys__Current_set(char const* path)
 /* ?_Make_dir@sys@tr2@std@@YAHPEBD@Z */
 int __cdecl tr2_sys__Make_dir(char const* path)
 {
-    TRACE("(%p)\n", path);
+    TRACE("(%s)\n", debugstr_a(path));
 
     if(!CreateDirectoryA(path, NULL)) {
         if(GetLastError() == ERROR_ALREADY_EXISTS)
@@ -14286,7 +14286,7 @@ int __cdecl tr2_sys__Make_dir(char const* path)
 /* ?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z */
 MSVCP_bool __cdecl tr2_sys__Remove_dir(char const* path)
 {
-    TRACE("(%p)\n", path);
+    TRACE("(%s)\n", debugstr_a(path));
     return RemoveDirectoryA(path) != 0;
 }
 
