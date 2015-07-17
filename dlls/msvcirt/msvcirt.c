@@ -1078,8 +1078,8 @@ void** __thiscall ios_pword(const ios *this, int index)
 DEFINE_THISCALL_WRAPPER(ios_rdbuf, 4)
 streambuf* __thiscall ios_rdbuf(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return this->sb;
 }
 
 /* ?rdstate@ios@@QBEHXZ */
