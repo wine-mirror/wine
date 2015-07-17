@@ -3384,28 +3384,49 @@ static void test_CreateRenderingParams(void)
 
 static void test_CreateGlyphRunAnalysis(void)
 {
+    static const DWRITE_RENDERING_MODE rendermodes[] = {
+        DWRITE_RENDERING_MODE_ALIASED,
+        DWRITE_RENDERING_MODE_GDI_CLASSIC,
+        DWRITE_RENDERING_MODE_GDI_NATURAL,
+        DWRITE_RENDERING_MODE_NATURAL,
+        DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC,
+    };
+
     IDWriteGlyphRunAnalysis *analysis;
     IDWriteFactory *factory;
     DWRITE_GLYPH_RUN run;
     IDWriteFontFace *face;
-    UINT16 index;
+    UINT16 glyph;
     FLOAT advance;
     HRESULT hr;
     UINT32 ch;
+    RECT rect;
+    DWRITE_GLYPH_OFFSET offset;
+    DWRITE_GLYPH_METRICS metrics;
+    int i;
 
     factory = create_factory();
     face = create_fontface(factory);
 
     ch = 'A';
-    hr = IDWriteFontFace_GetGlyphIndices(face, &ch, 1, &index);
+    glyph = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(face, &ch, 1, &glyph);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(glyph > 0, "got %u\n", glyph);
+
+    hr = IDWriteFontFace_GetDesignGlyphMetrics(face, &glyph, 1, &metrics, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    advance = metrics.advanceWidth;
+
+    offset.advanceOffset = 0.0;
+    offset.ascenderOffset = 0.0;
 
     run.fontFace = face;
     run.fontEmSize = 24.0;
     run.glyphCount = 1;
-    run.glyphIndices = &index;
+    run.glyphIndices = &glyph;
     run.glyphAdvances = &advance;
-    run.glyphOffsets = NULL;
+    run.glyphOffsets = &offset;
     run.isSideways = FALSE;
     run.bidiLevel = 0;
 
@@ -3422,10 +3443,54 @@ static void test_CreateGlyphRunAnalysis(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
-        DWRITE_RENDERING_MODE_GDI_CLASSIC, DWRITE_MEASURING_MODE_NATURAL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
         0.0, 0.0, &analysis);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* invalid texture type */
+    memset(&rect, 0xcc, sizeof(rect));
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1+1, &rect);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(rect.left == 0 && rect.right == 0 &&
+       rect.top == 0 && rect.bottom == 0, "unexpected rect\n");
     IDWriteGlyphRunAnalysis_Release(analysis);
+
+    for (i = 0; i < sizeof(rendermodes)/sizeof(rendermodes[0]); i++) {
+        hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+            rendermodes[i], DWRITE_MEASURING_MODE_NATURAL,
+            0.0, 0.0, &analysis);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        if (rendermodes[i] == DWRITE_RENDERING_MODE_ALIASED) {
+            memset(&rect, 0, sizeof(rect));
+            hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+        todo_wine {
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(!IsRectEmpty(&rect), "got empty rect\n");
+        }
+            rect.left = rect.top = 0;
+            rect.bottom = rect.right = 1;
+            hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(IsRectEmpty(&rect), "unexpected empty rect\n");
+        }
+        else {
+            rect.left = rect.top = 0;
+            rect.bottom = rect.right = 1;
+            hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(IsRectEmpty(&rect), "got empty rect\n");
+
+            memset(&rect, 0, sizeof(rect));
+            hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
+        todo_wine {
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(!IsRectEmpty(&rect), "got empty rect\n");
+        }
+        }
+
+        IDWriteGlyphRunAnalysis_Release(analysis);
+    }
 
     IDWriteFontFace_Release(face);
     IDWriteFactory_Release(factory);

@@ -104,6 +104,8 @@ struct dwrite_fonttable {
 struct dwrite_glyphrunanalysis {
     IDWriteGlyphRunAnalysis IDWriteGlyphRunAnalysis_iface;
     LONG ref;
+
+    DWRITE_RENDERING_MODE rendering_mode;
 };
 
 #define GLYPH_BLOCK_SHIFT 8
@@ -2774,7 +2776,20 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
 static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type, RECT* bounds)
 {
     struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+
     FIXME("(%p)->(%d %p): stub\n", This, type, bounds);
+
+    if ((UINT32)type > DWRITE_TEXTURE_CLEARTYPE_3x1) {
+        memset(bounds, 0, sizeof(*bounds));
+        return E_INVALIDARG;
+    }
+
+    if ((type == DWRITE_TEXTURE_ALIASED_1x1 && This->rendering_mode != DWRITE_RENDERING_MODE_ALIASED) ||
+        (type == DWRITE_TEXTURE_CLEARTYPE_3x1 && This->rendering_mode == DWRITE_RENDERING_MODE_ALIASED)) {
+        memset(bounds, 0, sizeof(*bounds));
+        return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -2819,6 +2834,7 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, IDWriteGly
 
     analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
     analysis->ref = 1;
+    analysis->rendering_mode = rendering_mode;
 
     *ret = &analysis->IDWriteGlyphRunAnalysis_iface;
     return S_OK;
