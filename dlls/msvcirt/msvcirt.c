@@ -90,6 +90,7 @@ typedef struct {
 ios* __thiscall ios_assign(ios*, const ios*);
 int __thiscall ios_fail(const ios*);
 void __cdecl ios_lock(ios*);
+LONG __thiscall ios_setf_mask(ios*, LONG, LONG);
 void __cdecl ios_unlock(ios*);
 
 /* class ostream */
@@ -905,7 +906,8 @@ int __thiscall ios_delbuf_get(const ios *this)
 /* ?dec@@YAAEAVios@@AEAV1@@Z */
 ios* __cdecl ios_dec(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    ios_setf_mask(this, FLAGS_dec, ios_basefield);
     return this;
 }
 
@@ -984,7 +986,8 @@ int __thiscall ios_good(const ios *this)
 /* ?hex@@YAAEAVios@@AEAV1@@Z */
 ios* __cdecl ios_hex(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    ios_setf_mask(this, FLAGS_hex, ios_basefield);
     return this;
 }
 
@@ -1049,7 +1052,8 @@ CRITICAL_SECTION* __thiscall ios_lockptr(ios *this)
 /* ?oct@@YAAEAVios@@AEAV1@@Z */
 ios* __cdecl ios_oct(ios *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    ios_setf_mask(this, FLAGS_oct, ios_basefield);
     return this;
 }
 
