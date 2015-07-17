@@ -1850,6 +1850,8 @@ static void test_height( HDC hdc, const struct font_data *fd )
         }
 
         SelectObject(hdc, old_hfont);
+        /* force GDI to use new font, otherwise Windows leaks the font reference */
+        GetTextMetricsA(hdc, &tm);
         DeleteObject(hfont);
     }
 }
@@ -2002,6 +2004,7 @@ static void test_height_selection_vdmx( HDC hdc )
     BYTE *ratio_rec;
     char ttf_name[MAX_PATH];
     void *res, *copy;
+    BOOL ret;
 
     if (!pAddFontResourceExA)
     {
@@ -2034,7 +2037,9 @@ static void test_height_selection_vdmx( HDC hdc )
             test_height( hdc, data[i].fd );
             pRemoveFontResourceExA( ttf_name, FR_PRIVATE, 0 );
         }
-        DeleteFileA( ttf_name );
+        ret = DeleteFileA( ttf_name );
+        ok(ret || broken(!ret && GetLastError() == ERROR_ACCESS_DENIED),
+           "DeleteFile error %d\n", GetLastError());
     }
 }
 
@@ -3917,19 +3922,24 @@ static void test_nonexistent_font(void)
         { "Times New Roman Greek", 161 },
         { "Times New Roman TUR", 162 }
     };
+    static const struct
+    {
+        const char *name;
+        int charset;
+    } shell_subst[] =
+    {
+        { "MS Shell Dlg", 186 },
+        { "MS Shell Dlg", 238 },
+        { "MS Shell Dlg", 204 },
+        { "MS Shell Dlg", 161 },
+        { "MS Shell Dlg", 162 }
+    };
     LOGFONTA lf;
     HDC hdc;
     HFONT hfont;
     CHARSETINFO csi;
-    INT cs, expected_cs, i;
+    INT cs, expected_cs, i, ret;
     char buf[LF_FACESIZE];
-
-    if (!is_truetype_font_installed("Arial") ||
-        !is_truetype_font_installed("Times New Roman"))
-    {
-        skip("Arial or Times New Roman not installed\n");
-        return;
-    }
 
     expected_cs = GetACP();
     if (!TranslateCharsetInfo(ULongToPtr(expected_cs), &csi, TCI_SRCCODEPAGE))
@@ -3940,7 +3950,48 @@ static void test_nonexistent_font(void)
     expected_cs = csi.ciCharset;
     trace("ACP %d -> charset %d\n", GetACP(), expected_cs);
 
-    hdc = GetDC(0);
+    hdc = CreateCompatibleDC(0);
+
+    for (i = 0; i < sizeof(shell_subst)/sizeof(shell_subst[0]); i++)
+    {
+        ret = is_font_installed(shell_subst[i].name);
+        ok(ret || broken(!ret) /* win2000 */, "%s should be enumerated\n", shell_subst[i].name);
+        ret = is_truetype_font_installed(shell_subst[i].name);
+        ok(ret || broken(!ret) /* win2000 */, "%s should be enumerated\n", shell_subst[i].name);
+
+        memset(&lf, 0, sizeof(lf));
+        lf.lfHeight = -13;
+        lf.lfWeight = FW_REGULAR;
+        strcpy(lf.lfFaceName, shell_subst[i].name);
+        hfont = CreateFontIndirectA(&lf);
+        hfont = SelectObject(hdc, hfont);
+        GetTextFaceA(hdc, sizeof(buf), buf);
+        ok(!lstrcmpiA(buf, shell_subst[i].name), "expected %s, got %s\n", shell_subst[i].name, buf);
+        cs = GetTextCharset(hdc);
+        ok(cs == ANSI_CHARSET, "expected ANSI_CHARSET, got %d for font %s\n", cs, shell_subst[i].name);
+
+        DeleteObject(SelectObject(hdc, hfont));
+
+        memset(&lf, 0, sizeof(lf));
+        lf.lfHeight = -13;
+        lf.lfWeight = FW_DONTCARE;
+        strcpy(lf.lfFaceName, shell_subst[i].name);
+        hfont = CreateFontIndirectA(&lf);
+        hfont = SelectObject(hdc, hfont);
+        GetTextFaceA(hdc, sizeof(buf), buf);
+        ok(!lstrcmpiA(buf, shell_subst[i].name), "expected %s, got %s\n", shell_subst[i].name, buf);
+        cs = GetTextCharset(hdc);
+        ok(cs == expected_cs || cs == ANSI_CHARSET, "expected %d, got %d for font %s\n", expected_cs, cs, shell_subst[i].name);
+        DeleteObject(SelectObject(hdc, hfont));
+    }
+
+    if (!is_truetype_font_installed("Arial") ||
+        !is_truetype_font_installed("Times New Roman"))
+    {
+        DeleteDC(hdc);
+        skip("Arial or Times New Roman not installed\n");
+        return;
+    }
 
     memset(&lf, 0, sizeof(lf));
     lf.lfHeight = 100;
@@ -3999,6 +4050,15 @@ todo_wine /* Wine uses Arial for all substitutions */
 
     for (i = 0; i < sizeof(font_subst)/sizeof(font_subst[0]); i++)
     {
+        ret = is_font_installed(font_subst[i].name);
+todo_wine
+        ok(ret || broken(!ret && !i) /* win2000 doesn't have Times New Roman Baltic substitution */,
+           "%s should be enumerated\n", font_subst[i].name);
+        ret = is_truetype_font_installed(font_subst[i].name);
+todo_wine
+        ok(ret || broken(!ret && !i) /* win2000 doesn't have Times New Roman Baltic substitution */,
+           "%s should be enumerated\n", font_subst[i].name);
+
         memset(&lf, 0, sizeof(lf));
         lf.lfHeight = -13;
         lf.lfWeight = FW_REGULAR;
@@ -4038,7 +4098,7 @@ todo_wine /* Wine uses Arial for all substitutions */
         DeleteObject(SelectObject(hdc, hfont));
     }
 
-    ReleaseDC(0, hdc);
+    DeleteDC(hdc);
 }
 
 static void test_GdiRealizationInfo(void)
@@ -4868,7 +4928,6 @@ static void test_EnumFonts(void)
     int ret;
     LOGFONTA lf;
     HDC hdc;
-    struct enum_fullname_data efnd;
 
     if (!is_truetype_font_installed("Arial"))
     {
@@ -4929,26 +4988,95 @@ static void test_EnumFonts(void)
     ret = EnumFontFamiliesA(hdc, NULL, enum_all_fonts_proc, (LPARAM)&lf);
     ok(ret, "font Arial Italic Bold should not be enumerated\n");
 
-    /* MS Shell Dlg and MS Shell Dlg 2 must exist */
+    DeleteDC(hdc);
+}
+
+static INT CALLBACK enum_ms_shell_dlg_proc(const LOGFONTA *lf, const TEXTMETRICA *ntm, DWORD type, LPARAM lParam)
+{
+    struct enum_fullname_data *efnd = (struct enum_fullname_data *)lParam;
+
+if (0) /* Disabled to limit console spam */
+    trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
+          lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+    if (strcmp(lf->lfFaceName, "MS Shell Dlg") != 0) return 1;
+
+    efnd->elf[efnd->total++] = *(ENUMLOGFONTA *)lf;
+    return 0;
+}
+
+static INT CALLBACK enum_ms_shell_dlg2_proc(const LOGFONTA *lf, const TEXTMETRICA *ntm, DWORD type, LPARAM lParam)
+{
+    struct enum_fullname_data *efnd = (struct enum_fullname_data *)lParam;
+
+if (0) /* Disabled to limit console spam */
+    trace("enumed font \"%s\", charset %d, height %d, weight %d, italic %d\n",
+          lf->lfFaceName, lf->lfCharSet, lf->lfHeight, lf->lfWeight, lf->lfItalic);
+
+    if (type != TRUETYPE_FONTTYPE) return 1;
+    if (strcmp(lf->lfFaceName, "MS Shell Dlg 2") != 0) return 1;
+
+    efnd->elf[efnd->total++] = *(ENUMLOGFONTA *)lf;
+    return 0;
+}
+
+static void test_EnumFonts_subst(void)
+{
+    int ret;
+    LOGFONTA lf;
+    HDC hdc;
+    struct enum_fullname_data efnd;
+
+    ret = is_font_installed("MS Shell Dlg");
+    ok(ret, "MS Shell Dlg should be enumerated\n");
+    ret = is_truetype_font_installed("MS Shell Dlg");
+    ok(ret, "MS Shell Dlg should be enumerated as a TrueType font\n");
+
+    ret = is_font_installed("MS Shell Dlg 2");
+    ok(ret, "MS Shell Dlg 2 should be enumerated\n");
+    ret = is_truetype_font_installed("MS Shell Dlg 2");
+    ok(ret, "MS Shell Dlg 2 should be enumerated as a TrueType font\n");
+
+    hdc = CreateCompatibleDC(0);
+
+    memset(&efnd, 0, sizeof(efnd));
+    ret = EnumFontFamiliesExA(hdc, NULL, enum_ms_shell_dlg_proc, (LPARAM)&efnd, 0);
+    ok(ret, "MS Shell Dlg should not be enumerated\n");
+    ok(!efnd.total, "MS Shell Dlg should not be enumerated\n");
+
     memset(&lf, 0, sizeof(lf));
     lf.lfCharSet = DEFAULT_CHARSET;
 
     memset(&efnd, 0, sizeof(efnd));
     strcpy(lf.lfFaceName, "MS Shell Dlg");
-    ret = EnumFontFamiliesExA(hdc, &lf, enum_fullname_data_proc, (LPARAM)&efnd, 0);
-    ok(ret, "font MS Shell Dlg is not enumerated\n");
-    ret = strcmp((char*)efnd.elf[0].elfLogFont.lfFaceName, "MS Shell Dlg");
-    todo_wine ok(!ret, "expected MS Shell Dlg got %s\n", efnd.elf[0].elfLogFont.lfFaceName);
-    ret = strcmp((char*)efnd.elf[0].elfFullName, "MS Shell Dlg");
+    ret = EnumFontFamiliesExA(hdc, &lf, enum_ms_shell_dlg_proc, (LPARAM)&efnd, 0);
+todo_wine
+    ok(!ret, "MS Shell Dlg should be enumerated\n");
+todo_wine
+    ok(efnd.total > 0, "MS Shell Dlg should be enumerated\n");
+    ret = strcmp((const char *)efnd.elf[0].elfLogFont.lfFaceName, "MS Shell Dlg");
+todo_wine
+    ok(!ret, "expected MS Shell Dlg, got %s\n", efnd.elf[0].elfLogFont.lfFaceName);
+    ret = strcmp((const char *)efnd.elf[0].elfFullName, "MS Shell Dlg");
     ok(ret, "did not expect MS Shell Dlg\n");
 
     memset(&efnd, 0, sizeof(efnd));
+    ret = EnumFontFamiliesExA(hdc, NULL, enum_ms_shell_dlg2_proc, (LPARAM)&efnd, 0);
+    ok(ret, "MS Shell Dlg 2 should not be enumerated\n");
+    ok(!efnd.total, "MS Shell Dlg 2 should not be enumerated\n");
+
+    memset(&efnd, 0, sizeof(efnd));
     strcpy(lf.lfFaceName, "MS Shell Dlg 2");
-    ret = EnumFontFamiliesExA(hdc, &lf, enum_fullname_data_proc, (LPARAM)&efnd, 0);
-    ok(ret, "font MS Shell Dlg 2 is not enumerated\n");
-    ret = strcmp((char*)efnd.elf[0].elfLogFont.lfFaceName, "MS Shell Dlg 2");
-    todo_wine ok(!ret, "expected MS Shell Dlg 2 got %s\n", efnd.elf[0].elfLogFont.lfFaceName);
-    ret = strcmp((char*)efnd.elf[0].elfFullName, "MS Shell Dlg 2");
+    ret = EnumFontFamiliesExA(hdc, &lf, enum_ms_shell_dlg2_proc, (LPARAM)&efnd, 0);
+todo_wine
+    ok(!ret, "MS Shell Dlg 2 should be enumerated\n");
+todo_wine
+    ok(efnd.total > 0, "MS Shell Dlg 2 should be enumerated\n");
+    ret = strcmp((const char *)efnd.elf[0].elfLogFont.lfFaceName, "MS Shell Dlg 2");
+todo_wine
+    ok(!ret, "expected MS Shell Dlg 2, got %s\n", efnd.elf[0].elfLogFont.lfFaceName);
+    ret = strcmp((const char *)efnd.elf[0].elfFullName, "MS Shell Dlg 2");
     ok(ret, "did not expect MS Shell Dlg 2\n");
 
     DeleteDC(hdc);
@@ -6229,6 +6357,7 @@ START_TEST(font)
     test_height_selection();
     test_AddFontMemResource();
     test_EnumFonts();
+    test_EnumFonts_subst();
 
     /* On Windows Arial has a lot of default charset aliases such as Arial Cyr,
      * I'd like to avoid them in this test.
