@@ -5051,12 +5051,9 @@ static void test_EnumFonts_subst(void)
     memset(&efnd, 0, sizeof(efnd));
     strcpy(lf.lfFaceName, "MS Shell Dlg");
     ret = EnumFontFamiliesExA(hdc, &lf, enum_ms_shell_dlg_proc, (LPARAM)&efnd, 0);
-todo_wine
     ok(!ret, "MS Shell Dlg should be enumerated\n");
-todo_wine
     ok(efnd.total > 0, "MS Shell Dlg should be enumerated\n");
     ret = strcmp((const char *)efnd.elf[0].elfLogFont.lfFaceName, "MS Shell Dlg");
-todo_wine
     ok(!ret, "expected MS Shell Dlg, got %s\n", efnd.elf[0].elfLogFont.lfFaceName);
     ret = strcmp((const char *)efnd.elf[0].elfFullName, "MS Shell Dlg");
     ok(ret, "did not expect MS Shell Dlg\n");
@@ -5069,12 +5066,9 @@ todo_wine
     memset(&efnd, 0, sizeof(efnd));
     strcpy(lf.lfFaceName, "MS Shell Dlg 2");
     ret = EnumFontFamiliesExA(hdc, &lf, enum_ms_shell_dlg2_proc, (LPARAM)&efnd, 0);
-todo_wine
     ok(!ret, "MS Shell Dlg 2 should be enumerated\n");
-todo_wine
     ok(efnd.total > 0, "MS Shell Dlg 2 should be enumerated\n");
     ret = strcmp((const char *)efnd.elf[0].elfLogFont.lfFaceName, "MS Shell Dlg 2");
-todo_wine
     ok(!ret, "expected MS Shell Dlg 2, got %s\n", efnd.elf[0].elfLogFont.lfFaceName);
     ret = strcmp((const char *)efnd.elf[0].elfFullName, "MS Shell Dlg 2");
     ok(ret, "did not expect MS Shell Dlg 2\n");

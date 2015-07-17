@@ -630,11 +630,15 @@ GpStatus WINGDIPAPI GdipGetFontHeightGivenDPI(GDIPCONST GpFont *font, REAL dpi, 
 static INT CALLBACK is_font_installed_proc(const LOGFONTW *elf,
                             const TEXTMETRICW *ntm, DWORD type, LPARAM lParam)
 {
+    const ENUMLOGFONTW *elfW = (const ENUMLOGFONTW *)elf;
+    LOGFONTW *lf = (LOGFONTW *)lParam;
+
     if (type & RASTER_FONTTYPE)
         return 1;
 
-    *(LOGFONTW *)lParam = *elf;
-
+    *lf = *elf;
+    /* replace substituted font name by a real one */
+    lstrcpynW(lf->lfFaceName, elfW->elfFullName, LF_FACESIZE);
     return 0;
 }
 
@@ -655,8 +659,6 @@ static BOOL get_font_metrics(HDC hdc, struct font_metrics *fm)
 
     otm.otmSize = sizeof(otm);
     if (!GetOutlineTextMetricsW(hdc, otm.otmSize, &otm)) return FALSE;
-
-    GetTextFaceW(hdc, LF_FACESIZE, fm->facename);
 
     fm->em_height = otm.otmEMSquare;
     fm->dpi = GetDeviceCaps(hdc, LOGPIXELSY);
@@ -705,6 +707,8 @@ static GpStatus find_installed_font(const WCHAR *name, struct font_metrics *fm)
     if(!EnumFontFamiliesW(hdc, name, is_font_installed_proc, (LPARAM)&lf))
     {
         HFONT hfont, old_font;
+
+        strcpyW(fm->facename, lf.lfFaceName);
 
         hfont = CreateFontIndirectW(&lf);
         old_font = SelectObject(hdc, hfont);

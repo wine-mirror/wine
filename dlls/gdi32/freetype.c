@@ -5774,7 +5774,7 @@ static BOOL face_matches(const WCHAR *family_name, Face *face, const WCHAR *face
 }
 
 static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_charset_list *list,
-                               FONTENUMPROCW proc, LPARAM lparam)
+                               FONTENUMPROCW proc, LPARAM lparam, const WCHAR *subst)
 {
     ENUMLOGFONTEXW elf;
     NEWTEXTMETRICEXW ntm;
@@ -5808,6 +5808,8 @@ static BOOL enum_face_charsets(const Family *family, Face *face, struct enum_cha
             else
                 strcpyW(elf.elfFullName, family->FamilyName);
         }
+        if (subst)
+            strcpyW(elf.elfLogFont.lfFaceName, subst);
         TRACE("enuming face %s full %s style %s charset = %d type %d script %s it %d weight %d ntmflags %08x\n",
               debugstr_w(elf.elfLogFont.lfFaceName),
               debugstr_w(elf.elfFullName), debugstr_w(elf.elfStyle),
@@ -5862,14 +5864,14 @@ static BOOL freetype_EnumFonts( PHYSDEV dev, LPLOGFONTW plf, FONTENUMPROCW proc,
             face_list = get_face_list_from_family(family);
             LIST_FOR_EACH_ENTRY( face, face_list, Face, entry ) {
                 if (!face_matches(family->FamilyName, face, face_name)) continue;
-                if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam)) return FALSE;
+                if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam, psub ? psub->from.name : NULL)) return FALSE;
 	    }
 	}
     } else {
         LIST_FOR_EACH_ENTRY( family, &font_list, Family, entry ) {
             face_list = get_face_list_from_family(family);
             face = LIST_ENTRY(list_head(face_list), Face, entry);
-            if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam)) return FALSE;
+            if (!enum_face_charsets(family, face, &enum_charsets, proc, lparam, NULL)) return FALSE;
 	}
     }
     LeaveCriticalSection( &freetype_cs );
