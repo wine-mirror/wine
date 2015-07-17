@@ -149,6 +149,11 @@ static int (*__thiscall p_ios_fail)(const ios*);
 static void (*__thiscall p_ios_clear)(ios*, int);
 static LONG *p_ios_maxbit;
 static LONG (*__cdecl p_ios_bitalloc)(void);
+static int *p_ios_curindex;
+static LONG *p_ios_statebuf;
+static LONG* (*__thiscall p_ios_iword)(const ios*, int);
+static void** (*__thiscall p_ios_pword)(const ios*, int);
+static int (*__cdecl p_ios_xalloc)(void);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -267,6 +272,8 @@ static BOOL init(void)
         SET(p_ios_eof, "?eof@ios@@QEBAHXZ");
         SET(p_ios_fail, "?fail@ios@@QEBAHXZ");
         SET(p_ios_clear, "?clear@ios@@QEAAXH@Z");
+        SET(p_ios_iword, "?iword@ios@@QEBAAEAJH@Z");
+        SET(p_ios_pword, "?pword@ios@@QEBAAEAPEAXH@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
 
@@ -315,12 +322,17 @@ static BOOL init(void)
         SET(p_ios_eof, "?eof@ios@@QBEHXZ");
         SET(p_ios_fail, "?fail@ios@@QBEHXZ");
         SET(p_ios_clear, "?clear@ios@@QAEXH@Z");
+        SET(p_ios_iword, "?iword@ios@@QBEAAJH@Z");
+        SET(p_ios_pword, "?pword@ios@@QBEAAPAXH@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
     SET(p_ios_unlockc, "?unlockc@ios@@KAXXZ");
     SET(p_ios_maxbit, "?x_maxbit@ios@@0JA");
     SET(p_ios_bitalloc, "?bitalloc@ios@@SAJXZ");
+    SET(p_ios_curindex, "?x_curindex@ios@@0HA");
+    SET(p_ios_statebuf, "?x_statebuf@ios@@0PAJA");
+    SET(p_ios_xalloc, "?xalloc@ios@@SAHXZ");
 
     init_thiscall_thunk();
     return TRUE;
@@ -893,7 +905,8 @@ static void test_ios(void)
     struct ios_lock_arg lock_arg;
     HANDLE thread;
     BOOL locked;
-    LONG expected, ret;
+    LONG *pret, expected, ret;
+    void **pret2;
     int i;
 
     memset(&ios_obj, 0xab, sizeof(ios));
@@ -1098,6 +1111,24 @@ static void test_ios(void)
         ok(*p_ios_maxbit == expected, "expected %x got %x\n", expected, *p_ios_maxbit);
         expected <<= 1;
     }
+
+    /* xalloc/pword/iword */
+    ok(*p_ios_curindex == -1, "expected -1 got %d\n", *p_ios_curindex);
+    expected = 0;
+    for (i = 0; i < 8; i++) {
+        ret = p_ios_xalloc();
+        ok(ret == expected, "expected %d got %d\n", expected, ret);
+        ok(*p_ios_curindex == expected, "expected %d got %d\n", expected, *p_ios_curindex);
+        pret = (LONG*) call_func2(p_ios_iword, &ios_obj, ret);
+        ok(pret == &p_ios_statebuf[ret], "expected %p got %p\n", &p_ios_statebuf[ret], pret);
+        ok(*pret == 0, "expected 0 got %d\n", *pret);
+        pret2 = (void**) call_func2(p_ios_pword, &ios_obj, ret);
+        ok(pret2 == (void**)&p_ios_statebuf[ret], "expected %p got %p\n", (void**)&p_ios_statebuf[ret], pret2);
+        expected++;
+    }
+    ret = p_ios_xalloc();
+    ok(ret == -1, "expected -1 got %d\n", ret);
+    ok(*p_ios_curindex == 7, "expected 7 got %d\n", *p_ios_curindex);
 
     SetEvent(lock_arg.release[1]);
     SetEvent(lock_arg.release[2]);

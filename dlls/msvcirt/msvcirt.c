@@ -30,6 +30,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msvcirt);
 
 #define RESERVE_SIZE 512
+#define STATEBUF_SIZE 8
 
 /* ?adjustfield@ios@@2JB */
 const LONG ios_adjustfield = FLAGS_left | FLAGS_right | FLAGS_internal;
@@ -48,6 +49,10 @@ CRITICAL_SECTION_DEBUG ios_static_lock_debug =
 CRITICAL_SECTION ios_static_lock = { &ios_static_lock_debug, -1, 0, 0, 0, 0 };
 /* ?x_maxbit@ios@@0JA */
 LONG ios_maxbit = 0x8000;
+/* ?x_curindex@ios@@0HA */
+int ios_curindex = -1;
+/* ?x_statebuf@ios@@0PAJA */
+LONG ios_statebuf[STATEBUF_SIZE] = {0};
 
 /* class streambuf */
 typedef struct {
@@ -1018,8 +1023,8 @@ void __thiscall ios_init(ios *this, streambuf *sb)
 DEFINE_THISCALL_WRAPPER(ios_iword, 8)
 LONG* __thiscall ios_iword(const ios *this, int index)
 {
-    FIXME("(%p %d) stub\n", this, index);
-    return NULL;
+    TRACE("(%p %d)\n", this, index);
+    return &ios_statebuf[index];
 }
 
 /* ?lock@ios@@QAAXXZ */
@@ -1091,8 +1096,8 @@ int __thiscall ios_precision_get(const ios *this)
 DEFINE_THISCALL_WRAPPER(ios_pword, 8)
 void** __thiscall ios_pword(const ios *this, int index)
 {
-    FIXME("(%p %d) stub\n", this, index);
-    return NULL;
+    TRACE("(%p %d)\n", this, index);
+    return (void**)&ios_statebuf[index];
 }
 
 /* ?rdbuf@ios@@QBEPAVstreambuf@@XZ */
@@ -1245,8 +1250,14 @@ int __thiscall ios_width_get(const ios *this)
 /* ?xalloc@ios@@SAHXZ */
 int __cdecl ios_xalloc(void)
 {
-    FIXME("() stub\n");
-    return 0;
+    int ret;
+
+    TRACE("()\n");
+
+    ios_lockc();
+    ret = (ios_curindex < STATEBUF_SIZE-1) ? ++ios_curindex : -1;
+    ios_unlockc();
+    return ret;
 }
 
 /******************************************************************
