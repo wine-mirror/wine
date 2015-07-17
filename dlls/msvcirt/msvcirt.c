@@ -38,6 +38,9 @@ const LONG ios_adjustfield = FLAGS_left | FLAGS_right | FLAGS_internal;
 const LONG ios_basefield = FLAGS_dec | FLAGS_oct | FLAGS_hex;
 /* ?floatfield@ios@@2JB */
 const LONG ios_floatfield = FLAGS_scientific | FLAGS_fixed;
+/* ?fLockcInit@ios@@0HA */
+/* FIXME: should be initialized to 0 and increased on construction of cin, cout, cerr and clog */
+int ios_fLockcInit = 4;
 /* ?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A */
 extern CRITICAL_SECTION ios_static_lock;
 CRITICAL_SECTION_DEBUG ios_static_lock_debug =
@@ -741,6 +744,7 @@ DEFINE_THISCALL_WRAPPER(ios_copy_ctor, 8)
 ios* __thiscall ios_copy_ctor(ios *this, const ios *copy)
 {
     TRACE("(%p %p)\n", this, copy);
+    ios_fLockcInit++;
     this->vtable = &MSVCP_ios_vtable;
     this->sb = NULL;
     this->delbuf = 0;
@@ -754,6 +758,7 @@ DEFINE_THISCALL_WRAPPER(ios_sb_ctor, 8)
 ios* __thiscall ios_sb_ctor(ios *this, streambuf *sb)
 {
     TRACE("(%p %p)\n", this, sb);
+    ios_fLockcInit++;
     this->vtable = &MSVCP_ios_vtable;
     this->sb = sb;
     this->state = sb ? IOSTATE_goodbit : IOSTATE_badbit;
@@ -783,6 +788,7 @@ DEFINE_THISCALL_WRAPPER(ios_dtor, 4)
 void __thiscall ios_dtor(ios *this)
 {
     TRACE("(%p)\n", this);
+    ios_fLockcInit--;
     if (this->delbuf && this->sb)
         call_streambuf_vector_dtor(this->sb, 1);
     this->sb = NULL;

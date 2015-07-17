@@ -518,7 +518,7 @@
 @ cdecl -arch=win64 ?eof@ios@@QEBAHXZ(ptr) msvcirt.?eof@ios@@QEBAHXZ
 @ thiscall -arch=win32 ?epptr@streambuf@@IBEPADXZ(ptr) msvcirt.?epptr@streambuf@@IBEPADXZ
 @ cdecl -arch=win64 ?epptr@streambuf@@IEBAPEADXZ(ptr) msvcirt.?epptr@streambuf@@IEBAPEADXZ
-# @ extern ?fLockcInit@ios@@0HA
+@ extern ?fLockcInit@ios@@0HA msvcirt.?fLockcInit@ios@@0HA
 @ thiscall -arch=win32 ?fail@ios@@QBEHXZ(ptr) msvcirt.?fail@ios@@QBEHXZ
 @ cdecl -arch=win64 ?fail@ios@@QEBAHXZ(ptr) msvcirt.?fail@ios@@QEBAHXZ
 @ stub -arch=win32 ?fd@filebuf@@QBEHXZ

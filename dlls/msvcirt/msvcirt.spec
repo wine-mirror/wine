@@ -465,7 +465,7 @@
 @ cdecl -arch=win64 ?eof@ios@@QEBAHXZ(ptr) ios_eof
 @ thiscall -arch=win32 ?epptr@streambuf@@IBEPADXZ(ptr) streambuf_epptr
 @ cdecl -arch=win64 ?epptr@streambuf@@IEBAPEADXZ(ptr) streambuf_epptr
-# @ extern ?fLockcInit@ios@@0HA  # static int ios::fLockcInit
+@ extern ?fLockcInit@ios@@0HA ios_fLockcInit
 @ thiscall -arch=win32 ?fail@ios@@QBEHXZ(ptr) ios_fail
 @ cdecl -arch=win64 ?fail@ios@@QEBAHXZ(ptr) ios_fail
 @ stub -arch=win32 ?fd@filebuf@@QBEHXZ  # int __thiscall filebuf::fd(void)const 
