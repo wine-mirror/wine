@@ -621,6 +621,20 @@ static inline int get_display_dpi(void)
     return display_dpi;
 }
 
+static INT CALLBACK real_fontname_proc(const LOGFONTW *lf, const TEXTMETRICW *ntm, DWORD type, LPARAM lparam)
+{
+    const ENUMLOGFONTW *elf = (const ENUMLOGFONTW *)lf;
+    LOGFONTW *lfW = (LOGFONTW *)lparam;
+
+    lstrcpynW(lfW->lfFaceName, elf->elfFullName, LF_FACESIZE);
+    return 0;
+}
+
+static void get_real_fontname(LOGFONTW *lf)
+{
+    EnumFontFamiliesExW(get_display_dc(), lf, real_fontname_proc, (LPARAM)lf, 0);
+}
+
 /* adjust some of the raw values found in the registry */
 static void normalize_nonclientmetrics( NONCLIENTMETRICSW *pncm)
 {
@@ -633,10 +647,16 @@ static void normalize_nonclientmetrics( NONCLIENTMETRICSW *pncm)
     /* adjust some heights to the corresponding font */
     get_text_metr_size( get_display_dc(), &pncm->lfMenuFont, &tm, NULL);
     pncm->iMenuHeight = max( pncm->iMenuHeight, 2 + tm.tmHeight + tm.tmExternalLeading );
+    get_real_fontname( &pncm->lfMenuFont );
     get_text_metr_size( get_display_dc(), &pncm->lfCaptionFont, &tm, NULL);
     pncm->iCaptionHeight = max( pncm->iCaptionHeight, 2 + tm.tmHeight);
+    get_real_fontname( &pncm->lfCaptionFont );
     get_text_metr_size( get_display_dc(), &pncm->lfSmCaptionFont, &tm, NULL);
     pncm->iSmCaptionHeight = max( pncm->iSmCaptionHeight, 2 + tm.tmHeight);
+    get_real_fontname( &pncm->lfSmCaptionFont );
+
+    get_real_fontname( &pncm->lfStatusFont );
+    get_real_fontname( &pncm->lfMessageFont );
 }
 
 static BOOL CALLBACK enum_monitors( HMONITOR monitor, HDC hdc, LPRECT rect, LPARAM lp )
