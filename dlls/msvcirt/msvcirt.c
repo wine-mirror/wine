@@ -1142,8 +1142,12 @@ void __cdecl ios_sync_with_stdio(void)
 DEFINE_THISCALL_WRAPPER(ios_tie_set, 8)
 ostream* __thiscall ios_tie_set(ios *this, ostream *ostr)
 {
-    FIXME("(%p %p) stub\n", this, ostr);
-    return NULL;
+    ostream *prev = this->tie;
+
+    TRACE("(%p %p)\n", this, ostr);
+
+    this->tie = ostr;
+    return prev;
 }
 
 /* ?tie@ios@@QBEPAVostream@@XZ */
@@ -1151,8 +1155,8 @@ ostream* __thiscall ios_tie_set(ios *this, ostream *ostr)
 DEFINE_THISCALL_WRAPPER(ios_tie_get, 4)
 ostream* __thiscall ios_tie_get(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return this->tie;
 }
 
 /* ?unlock@ios@@QAAXXZ */
