@@ -766,7 +766,7 @@
 @ stub -arch=win64 ?ws@@YAAEAVistream@@AEAV1@@Z
 # @ extern ?x_curindex@ios@@0HA
 @ extern ?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A msvcirt.?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A
-# @ extern ?x_maxbit@ios@@0JA
+@ extern ?x_maxbit@ios@@0JA msvcirt.?x_maxbit@ios@@0JA
 # @ extern ?x_statebuf@ios@@0QAJA
 @ cdecl ?xalloc@ios@@SAHXZ() msvcirt.?xalloc@ios@@SAHXZ
 @ thiscall -arch=win32 ?xsgetn@streambuf@@UAEHPADH@Z(ptr ptr long) msvcirt.?xsgetn@streambuf@@UAEHPADH@Z

@@ -46,6 +46,8 @@ CRITICAL_SECTION_DEBUG ios_static_lock_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": ios_static_lock") }
 };
 CRITICAL_SECTION ios_static_lock = { &ios_static_lock_debug, -1, 0, 0, 0, 0 };
+/* ?x_maxbit@ios@@0JA */
+LONG ios_maxbit = 0x8000;
 
 /* class streambuf */
 typedef struct {
@@ -90,8 +92,10 @@ typedef struct {
 ios* __thiscall ios_assign(ios*, const ios*);
 int __thiscall ios_fail(const ios*);
 void __cdecl ios_lock(ios*);
+void __cdecl ios_lockc(void);
 LONG __thiscall ios_setf_mask(ios*, LONG, LONG);
 void __cdecl ios_unlock(ios*);
+void __cdecl ios_unlockc(void);
 
 /* class ostream */
 typedef struct _ostream {
@@ -858,8 +862,11 @@ int __thiscall ios_bad(const ios *this)
 /* ?bitalloc@ios@@SAJXZ */
 LONG __cdecl ios_bitalloc(void)
 {
-    FIXME("() stub\n");
-    return 0;
+    TRACE("()\n");
+    ios_lockc();
+    ios_maxbit <<= 1;
+    ios_unlockc();
+    return ios_maxbit;
 }
 
 /* ?clear@ios@@QAEXH@Z */

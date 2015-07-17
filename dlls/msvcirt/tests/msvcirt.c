@@ -147,6 +147,8 @@ static int (*__thiscall p_ios_bad)(const ios*);
 static int (*__thiscall p_ios_eof)(const ios*);
 static int (*__thiscall p_ios_fail)(const ios*);
 static void (*__thiscall p_ios_clear)(ios*, int);
+static LONG *p_ios_maxbit;
+static LONG (*__cdecl p_ios_bitalloc)(void);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -317,6 +319,8 @@ static BOOL init(void)
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
     SET(p_ios_unlockc, "?unlockc@ios@@KAXXZ");
+    SET(p_ios_maxbit, "?x_maxbit@ios@@0JA");
+    SET(p_ios_bitalloc, "?bitalloc@ios@@SAJXZ");
 
     init_thiscall_thunk();
     return TRUE;
@@ -889,7 +893,8 @@ static void test_ios(void)
     struct ios_lock_arg lock_arg;
     HANDLE thread;
     BOOL locked;
-    LONG ret;
+    LONG expected, ret;
+    int i;
 
     memset(&ios_obj, 0xab, sizeof(ios));
     memset(&ios_obj2, 0xab, sizeof(ios));
@@ -1084,6 +1089,16 @@ static void test_ios(void)
     ios_obj.do_lock = -1;
 
     SetEvent(lock_arg.release[0]);
+
+    /* bitalloc */
+    expected = 0x10000;
+    for (i = 0; i < 20; i++) {
+        ret = p_ios_bitalloc();
+        ok(ret == expected, "expected %x got %x\n", expected, ret);
+        ok(*p_ios_maxbit == expected, "expected %x got %x\n", expected, *p_ios_maxbit);
+        expected <<= 1;
+    }
+
     SetEvent(lock_arg.release[1]);
     SetEvent(lock_arg.release[2]);
     WaitForSingleObject(thread, INFINITE);
