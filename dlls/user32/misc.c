@@ -721,6 +721,15 @@ HPOWERNOTIFY WINAPI RegisterPowerSettingNotification(HANDLE recipient, const GUI
 }
 
 /**********************************************************************
+ * UnregisterPowerSettingNotification [USER32.@]
+ */
+BOOL WINAPI UnregisterPowerSettingNotification(HPOWERNOTIFY handle)
+{
+    FIXME("(%p): stub\n", handle);
+    return TRUE;
+}
+
+/**********************************************************************
  * SetGestureConfig [USER32.@]
  */
 BOOL WINAPI SetGestureConfig( HWND hwnd, DWORD reserved, UINT id, PGESTURECONFIG config, UINT size )

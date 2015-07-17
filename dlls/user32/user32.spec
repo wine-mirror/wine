@@ -736,6 +736,7 @@
 @ stdcall UnregisterDeviceNotification(long)
 @ stdcall UnregisterHotKey(long long)
 # @ stub UnregisterMessagePumpHook
+@ stdcall UnregisterPowerSettingNotification(ptr)
 # @ stub UnregisterUserApiHook
 @ stdcall UpdateLayeredWindow(long long ptr ptr long ptr long ptr long)
 @ stdcall UpdateLayeredWindowIndirect(long ptr)
