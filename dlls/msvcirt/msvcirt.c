@@ -878,7 +878,8 @@ void __cdecl ios_clrlock(ios *this)
 DEFINE_THISCALL_WRAPPER(ios_delbuf_set, 8)
 void __thiscall ios_delbuf_set(ios *this, int delete)
 {
-    FIXME("(%p %d) stub\n", this, delete);
+    TRACE("(%p %d)\n", this, delete);
+    this->delbuf = delete;
 }
 
 /* ?delbuf@ios@@QBEHXZ */
@@ -886,8 +887,8 @@ void __thiscall ios_delbuf_set(ios *this, int delete)
 DEFINE_THISCALL_WRAPPER(ios_delbuf_get, 4)
 int __thiscall ios_delbuf_get(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->delbuf;
 }
 
 /* ?dec@@YAAAVios@@AAV1@@Z */
