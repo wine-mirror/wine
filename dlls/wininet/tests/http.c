@@ -2888,7 +2888,7 @@ static void test_header_handling_order(int port)
     data_len = sizeof(data);
     memset(data, 'a', sizeof(data));
     ret = HttpSendRequestA(request, connection, ~0u, data, data_len);
-    ok(ret, "HttpSendRequest failed\n");
+    ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
 
     status = 0;
     size = sizeof(status);
