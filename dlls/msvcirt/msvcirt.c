@@ -31,6 +31,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcirt);
 
 #define RESERVE_SIZE 512
 
+/* ?adjustfield@ios@@2JB */
+const LONG ios_adjustfield = FLAGS_left | FLAGS_right | FLAGS_internal;
+/* ?basefield@ios@@2JB */
+const LONG ios_basefield = FLAGS_dec | FLAGS_oct | FLAGS_hex;
+/* ?floatfield@ios@@2JB */
+const LONG ios_floatfield = FLAGS_scientific | FLAGS_fixed;
 /* ?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A */
 extern CRITICAL_SECTION ios_static_lock;
 CRITICAL_SECTION_DEBUG ios_static_lock_debug =

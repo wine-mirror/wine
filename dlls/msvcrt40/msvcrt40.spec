@@ -450,7 +450,7 @@
 @ cdecl ?_set_new_mode@@YAHH@Z(long) msvcrt.?_set_new_mode@@YAHH@Z
 @ cdecl -arch=win32 ?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) msvcrt.?_set_se_translator@@YAP6AXIPAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
 @ cdecl -arch=win64 ?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z(ptr) msvcrt.?_set_se_translator@@YAP6AXIPEAU_EXCEPTION_POINTERS@@@ZP6AXI0@Z@Z
-# @ extern ?adjustfield@ios@@2JB
+@ extern ?adjustfield@ios@@2JB msvcirt.?adjustfield@ios@@2JB
 @ thiscall -arch=win32 ?allocate@streambuf@@IAEHXZ(ptr) msvcirt.?allocate@streambuf@@IAEHXZ
 @ cdecl -arch=win64 ?allocate@streambuf@@IEAAHXZ(ptr) msvcirt.?allocate@streambuf@@IEAAHXZ
 @ stub -arch=win32 ?attach@filebuf@@QAEPAV1@H@Z
@@ -465,7 +465,7 @@
 @ cdecl -arch=win64 ?bad@ios@@QEBAHXZ(ptr) msvcirt.?bad@ios@@QEBAHXZ
 @ thiscall -arch=win32 ?base@streambuf@@IBEPADXZ(ptr) msvcirt.?base@streambuf@@IBEPADXZ
 @ cdecl -arch=win64 ?base@streambuf@@IEBAPEADXZ(ptr) msvcirt.?base@streambuf@@IEBAPEADXZ
-# @ extern ?basefield@ios@@2JB
+@ extern ?basefield@ios@@2JB msvcirt.?basefield@ios@@2JB
 @ thiscall -arch=i386 ?before@type_info@@QBEHABV1@@Z(ptr ptr) msvcrt.?before@type_info@@QBEHABV1@@Z
 @ cdecl -arch=win64 ?before@type_info@@QEBAHAEBV1@@Z(ptr ptr) msvcrt.?before@type_info@@QEBAHAEBV1@@Z
 # @ extern ?binary@filebuf@@2HB
@@ -537,7 +537,7 @@
 @ cdecl -arch=win64 ?flags@ios@@QEAAJJ@Z(ptr long) msvcirt.?flags@ios@@QEAAJJ@Z
 @ thiscall -arch=win32 ?flags@ios@@QBEJXZ(ptr) msvcirt.?flags@ios@@QBEJXZ
 @ cdecl -arch=win64 ?flags@ios@@QEBAJXZ(ptr) msvcirt.?flags@ios@@QEBAJXZ
-# @ extern ?floatfield@ios@@2JB
+@ extern ?floatfield@ios@@2JB msvcirt.?floatfield@ios@@2JB
 @ stub -arch=win32 ?flush@@YAAAVostream@@AAV1@@Z
 @ stub -arch=win64 ?flush@@YAAEAVostream@@AEAV1@@Z
 @ stub -arch=win32 ?flush@ostream@@QAEAAV1@XZ

@@ -399,7 +399,7 @@
 @ thiscall -arch=win32 ??_Gstreambuf@@UAEPAXI@Z(ptr long) streambuf_scalar_dtor
 @ stub -arch=win32 ??_Gstrstream@@UAEPAXI@Z  # virtual void * __thiscall strstream::`scalar deleting destructor'(unsigned int)
 @ stub -arch=win32 ??_Gstrstreambuf@@UAEPAXI@Z  # virtual void * __thiscall strstreambuf::`scalar deleting destructor'(unsigned int)
-# @ extern ?adjustfield@ios@@2JB  # static long const ios::adjustfield
+@ extern ?adjustfield@ios@@2JB ios_adjustfield
 @ thiscall -arch=win32 ?allocate@streambuf@@IAEHXZ(ptr) streambuf_allocate
 @ cdecl -arch=win64 ?allocate@streambuf@@IEAAHXZ(ptr) streambuf_allocate
 @ stub -arch=win32 ?attach@filebuf@@QAEPAV1@H@Z  # class filebuf * __thiscall filebuf::attach(int)
@@ -414,7 +414,7 @@
 @ cdecl -arch=win64 ?bad@ios@@QEBAHXZ(ptr) ios_bad
 @ thiscall -arch=win32 ?base@streambuf@@IBEPADXZ(ptr) streambuf_base
 @ cdecl -arch=win64 ?base@streambuf@@IEBAPEADXZ(ptr) streambuf_base
-# @ extern ?basefield@ios@@2JB  # static long const ios::basefield
+@ extern ?basefield@ios@@2JB ios_basefield
 # @ extern ?binary@filebuf@@2HB  # static int const filebuf::binary
 @ cdecl ?bitalloc@ios@@SAJXZ() ios_bitalloc
 @ thiscall -arch=win32 ?blen@streambuf@@IBEHXZ(ptr) streambuf_blen
@@ -484,7 +484,7 @@
 @ cdecl -arch=win64 ?flags@ios@@QEAAJJ@Z(ptr long) ios_flags_set
 @ thiscall -arch=win32 ?flags@ios@@QBEJXZ(ptr) ios_flags_get
 @ cdecl -arch=win64 ?flags@ios@@QEBAJXZ(ptr) ios_flags_get
-# @ extern ?floatfield@ios@@2JB  # static long const ios::floatfield
+@ extern ?floatfield@ios@@2JB ios_floatfield
 @ stub -arch=win32 ?flush@@YAAAVostream@@AAV1@@Z  # class ostream & __cdecl flush(class ostream &)
 @ stub -arch=win64 ?flush@@YAAEAVostream@@AEAV1@@Z
 @ stub -arch=win32 ?flush@ostream@@QAEAAV1@XZ  # class ostream & __thiscall ostream::flush(void)
