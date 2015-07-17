@@ -848,7 +848,7 @@ static unsigned int token_access_check( struct token *token,
     /* fail if desired_access contains generic rights */
     if (desired_access & (GENERIC_READ|GENERIC_WRITE|GENERIC_EXECUTE|GENERIC_ALL))
     {
-        *priv_count = 0;
+        if (priv_count) *priv_count = 0;
         return STATUS_GENERIC_NOT_MAPPED;
     }
 
@@ -856,14 +856,14 @@ static unsigned int token_access_check( struct token *token,
     owner = sd_get_owner( sd );
     if (!owner || !sd_get_group( sd ))
     {
-        *priv_count = 0;
+        if (priv_count) *priv_count = 0;
         return STATUS_INVALID_SECURITY_DESCR;
     }
 
     /* 1: Grant desired access if the object is unprotected */
     if (!dacl_present || !dacl)
     {
-        *priv_count = 0;
+        if (priv_count) *priv_count = 0;
         *granted_access = desired_access;
         return *status = STATUS_SUCCESS;
     }
@@ -899,7 +899,7 @@ static unsigned int token_access_check( struct token *token,
         }
         else
         {
-            *priv_count = 0;
+            if (priv_count) *priv_count = 0;
             *status = STATUS_PRIVILEGE_NOT_HELD;
             return STATUS_SUCCESS;
         }
@@ -1002,8 +1002,7 @@ int check_object_access(struct object *obj, unsigned int *access)
 {
     GENERIC_MAPPING mapping;
     struct token *token = current->token ? current->token : current->process->token;
-    LUID_AND_ATTRIBUTES priv;
-    unsigned int status, priv_count = 1;
+    unsigned int status;
     int res;
 
     mapping.GenericAll = obj->ops->map_access( obj, GENERIC_ALL );
@@ -1019,7 +1018,7 @@ int check_object_access(struct object *obj, unsigned int *access)
     mapping.GenericWrite = obj->ops->map_access( obj, GENERIC_WRITE );
     mapping.GenericExecute = obj->ops->map_access( obj, GENERIC_EXECUTE );
 
-    res = token_access_check( token, obj->sd, *access, &priv, &priv_count,
+    res = token_access_check( token, obj->sd, *access, NULL, NULL,
                               &mapping, access, &status ) == STATUS_SUCCESS &&
           status == STATUS_SUCCESS;
 
