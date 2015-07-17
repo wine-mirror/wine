@@ -1199,8 +1199,12 @@ LONG __thiscall ios_unsetf(ios *this, LONG flags)
 DEFINE_THISCALL_WRAPPER(ios_width_set, 8)
 int __thiscall ios_width_set(ios *this, int width)
 {
-    FIXME("(%p %d) stub\n", this, width);
-    return 0;
+    int prev = this->width;
+
+    TRACE("(%p %d)\n", this, width);
+
+    this->width = width;
+    return prev;
 }
 
 /* ?width@ios@@QBEHXZ */
@@ -1208,8 +1212,8 @@ int __thiscall ios_width_set(ios *this, int width)
 DEFINE_THISCALL_WRAPPER(ios_width_get, 4)
 int __thiscall ios_width_get(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->width;
 }
 
 /* ?xalloc@ios@@SAHXZ */
