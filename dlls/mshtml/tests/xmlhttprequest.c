@@ -395,6 +395,7 @@ static void create_xmlhttprequest(IHTMLDocument2 *doc)
         return;
     }
 
+    VariantInit(&var);
     hres = IHTMLWindow5_get_XMLHttpRequest(window5, &var);
     IHTMLWindow5_Release(window5);
     ok(hres == S_OK, "get_XMLHttpRequest failed: %08x\n", hres);
