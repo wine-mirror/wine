@@ -142,6 +142,11 @@ static LONG (*__thiscall p_ios_flags_get)(const ios*);
 static LONG (*__thiscall p_ios_setf)(ios*, LONG);
 static LONG (*__thiscall p_ios_setf_mask)(ios*, LONG, LONG);
 static LONG (*__thiscall p_ios_unsetf)(ios*, LONG);
+static int (*__thiscall p_ios_good)(const ios*);
+static int (*__thiscall p_ios_bad)(const ios*);
+static int (*__thiscall p_ios_eof)(const ios*);
+static int (*__thiscall p_ios_fail)(const ios*);
+static void (*__thiscall p_ios_clear)(ios*, int);
 
 /* Emulate a __thiscall */
 #ifdef __i386__
@@ -255,6 +260,11 @@ static BOOL init(void)
         SET(p_ios_setf, "?setf@ios@@QEAAJJ@Z");
         SET(p_ios_setf_mask, "?setf@ios@@QEAAJJJ@Z");
         SET(p_ios_unsetf, "?unsetf@ios@@QEAAJJ@Z");
+        SET(p_ios_good, "?good@ios@@QEBAHXZ");
+        SET(p_ios_bad, "?bad@ios@@QEBAHXZ");
+        SET(p_ios_eof, "?eof@ios@@QEBAHXZ");
+        SET(p_ios_fail, "?fail@ios@@QEBAHXZ");
+        SET(p_ios_clear, "?clear@ios@@QEAAXH@Z");
     } else {
         p_operator_new = (void*)GetProcAddress(msvcrt, "??2@YAPAXI@Z");
 
@@ -298,6 +308,11 @@ static BOOL init(void)
         SET(p_ios_setf, "?setf@ios@@QAEJJ@Z");
         SET(p_ios_setf_mask, "?setf@ios@@QAEJJJ@Z");
         SET(p_ios_unsetf, "?unsetf@ios@@QAEJJ@Z");
+        SET(p_ios_good, "?good@ios@@QBEHXZ");
+        SET(p_ios_bad, "?bad@ios@@QBEHXZ");
+        SET(p_ios_eof, "?eof@ios@@QBEHXZ");
+        SET(p_ios_fail, "?fail@ios@@QBEHXZ");
+        SET(p_ios_clear, "?clear@ios@@QAEXH@Z");
     }
     SET(p_ios_static_lock, "?x_lockc@ios@@0U_CRT_CRITICAL_SECTION@@A");
     SET(p_ios_lockc, "?lockc@ios@@KAXXZ");
@@ -1031,6 +1046,41 @@ static void test_ios(void)
     ret = (LONG) call_func2(p_ios_unsetf, &ios_obj, 0x8008);
     ok(ret == 0x8440, "expected %x got %x\n", 0x8440, ret);
     ok(ios_obj.flags == 0x440, "expected %x got %x\n", 0x440, ios_obj.flags);
+    ios_obj.do_lock = -1;
+
+    /* state */
+    ios_obj.state = 0x8;
+    ret = (LONG) call_func1(p_ios_good, &ios_obj);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ios_obj.state = IOSTATE_goodbit;
+    ret = (LONG) call_func1(p_ios_good, &ios_obj);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ret = (LONG) call_func1(p_ios_bad, &ios_obj);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ios_obj.state = (IOSTATE_eofbit|IOSTATE_badbit);
+    ret = (LONG) call_func1(p_ios_bad, &ios_obj);
+    ok(ret == IOSTATE_badbit, "expected 4 got %d\n", ret);
+    ret = (LONG) call_func1(p_ios_eof, &ios_obj);
+    ok(ret == IOSTATE_eofbit, "expected 1 got %d\n", ret);
+    ios_obj.state = 0x8;
+    ret = (LONG) call_func1(p_ios_eof, &ios_obj);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ret = (LONG) call_func1(p_ios_fail, &ios_obj);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ios_obj.state = IOSTATE_badbit;
+    ret = (LONG) call_func1(p_ios_fail, &ios_obj);
+    ok(ret == IOSTATE_badbit, "expected 4 got %d\n", ret);
+    ios_obj.state = (IOSTATE_eofbit|IOSTATE_failbit);
+    ret = (LONG) call_func1(p_ios_fail, &ios_obj);
+    ok(ret == IOSTATE_failbit, "expected 2 got %d\n", ret);
+    ios_obj.state = (IOSTATE_eofbit|IOSTATE_failbit|IOSTATE_badbit);
+    ret = (LONG) call_func1(p_ios_fail, &ios_obj);
+    ok(ret == (IOSTATE_failbit|IOSTATE_badbit), "expected 6 got %d\n", ret);
+    ios_obj.do_lock = 0;
+    call_func2(p_ios_clear, &ios_obj, 0);
+    ok(ios_obj.state == IOSTATE_goodbit, "expected 0 got %d\n", ios_obj.state);
+    call_func2(p_ios_clear, &ios_obj, 0x8|IOSTATE_eofbit);
+    ok(ios_obj.state == (0x8|IOSTATE_eofbit), "expected 9 got %d\n", ios_obj.state);
     ios_obj.do_lock = -1;
 
     SetEvent(lock_arg.release[0]);

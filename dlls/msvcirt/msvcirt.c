@@ -843,8 +843,8 @@ ios* __thiscall ios_scalar_dtor(ios *this, unsigned int flags)
 DEFINE_THISCALL_WRAPPER(ios_bad, 4)
 int __thiscall ios_bad(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return (this->state & IOSTATE_badbit);
 }
 
 /* ?bitalloc@ios@@SAJXZ */
@@ -859,7 +859,10 @@ LONG __cdecl ios_bitalloc(void)
 DEFINE_THISCALL_WRAPPER(ios_clear, 8)
 void __thiscall ios_clear(ios *this, int state)
 {
-    FIXME("(%p %d) stub\n", this, state);
+    TRACE("(%p %d)\n", this, state);
+    ios_lock(this);
+    this->state = state;
+    ios_unlock(this);
 }
 
 /* ?clrlock@ios@@QAAXXZ */
@@ -904,8 +907,8 @@ ios* __cdecl ios_dec(ios *this)
 DEFINE_THISCALL_WRAPPER(ios_eof, 4)
 int __thiscall ios_eof(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return (this->state & IOSTATE_eofbit);
 }
 
 /* ?fail@ios@@QBEHXZ */
@@ -913,8 +916,8 @@ int __thiscall ios_eof(const ios *this)
 DEFINE_THISCALL_WRAPPER(ios_fail, 4)
 int __thiscall ios_fail(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return (this->state & (IOSTATE_failbit|IOSTATE_badbit));
 }
 
 /* ?fill@ios@@QAEDD@Z */
@@ -966,8 +969,8 @@ LONG __thiscall ios_flags_get(const ios *this)
 DEFINE_THISCALL_WRAPPER(ios_good, 4)
 int __thiscall ios_good(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->state == IOSTATE_goodbit;
 }
 
 /* ?hex@@YAAAVios@@AAV1@@Z */
@@ -1088,8 +1091,8 @@ streambuf* __thiscall ios_rdbuf(const ios *this)
 DEFINE_THISCALL_WRAPPER(ios_rdstate, 4)
 int __thiscall ios_rdstate(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->state;
 }
 
 /* ?setf@ios@@QAEJJ@Z */
