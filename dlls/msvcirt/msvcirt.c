@@ -82,6 +82,7 @@ typedef struct {
 } ios;
 
 ios* __thiscall ios_assign(ios*, const ios*);
+int __thiscall ios_fail(const ios*);
 void __cdecl ios_lock(ios*);
 void __cdecl ios_unlock(ios*);
 
@@ -795,8 +796,8 @@ ios* __thiscall ios_assign(ios *this, const ios *rhs)
 DEFINE_THISCALL_WRAPPER(ios_op_not, 4)
 int __thiscall ios_op_not(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return ios_fail(this);
 }
 
 /* ??Bios@@QBEPAXXZ */
@@ -804,8 +805,8 @@ int __thiscall ios_op_not(const ios *this)
 DEFINE_THISCALL_WRAPPER(ios_op_void, 4)
 void* __thiscall ios_op_void(const ios *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return ios_fail(this) ? NULL : (void*)this;
 }
 
 /* ??_Eios@@UAEPAXI@Z */
