@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-02-12 14:55+0100\n"
+"PO-Revision-Date: 2015-07-18 09:12+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -7493,10 +7493,8 @@ msgid "Add Control"
 msgstr "Ajouter un contrôle"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "&Police..."
+msgstr "&Convertir..."
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8960,10 +8958,6 @@ msgstr ""
 "assez d'espace disque ou que vous êtes toujours connecté au réseau."
 
 #: winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
@@ -9300,10 +9294,8 @@ msgid "Wine Sound Mapper"
 msgstr "Programme d'installation de Mono pour Wine"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "colonne"
+msgstr "Volume"
 
 #: winmm.rc:138
 msgid "Master Volume"
@@ -13662,14 +13654,10 @@ msgid "Command history"
 msgstr "Historique des commandes"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Taille mémoire tampon écran"
+msgstr "&Taille mém. tampon :"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
 msgstr "&Supprimer les doublons"
 
@@ -13683,25 +13671,19 @@ msgstr "&Contrôle"
 
 #: wineconsole.rc:76
 msgid "S&hift"
-msgstr "Ma&j"
+msgstr "M&aj"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "&Fermer la console"
+msgstr "Console"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Édition rapide"
+msgstr "Mode é&dition rapide"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "Mode &expert"
+msgstr "Mode &insertion"
 
 #: wineconsole.rc:88
 msgid "&Font"
