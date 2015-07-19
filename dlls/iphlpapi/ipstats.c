@@ -1989,7 +1989,7 @@ static unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entri
                 int len;
 
                 sprintf( link, "/proc/%u/fd/%s", map[i].unix_pid, dirent->d_name );
-                if ((len = readlink( link, name, 32 )) > 0) name[len] = 0;
+                if ((len = readlink( link, name, sizeof(name) - 1 )) > 0) name[len] = 0;
                 if (len == len_socket && !strcmp( socket, name ))
                 {
                     closedir( dirfd );
