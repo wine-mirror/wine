@@ -655,10 +655,9 @@ static DWORD MCICDA_Info(UINT wDevID, DWORD dwFlags, LPMCI_INFO_PARMSW lpParms)
     if (!ret) {
 	TRACE("=> %s\n", debugstr_w(str));
 	if (lpParms->dwRetSize) {
-	    WCHAR zero = 0;
 	    /* FIXME? Since NT, mciwave, mciseq and mcicda set dwRetSize
 	     *        to the number of characters written, excluding \0. */
-	    lstrcpynW(lpParms->lpstrReturn, str ? str : &zero, lpParms->dwRetSize);
+	    lstrcpynW(lpParms->lpstrReturn, str, lpParms->dwRetSize);
 	} else ret = MCIERR_PARAM_OVERFLOW;
     }
     if (MMSYSERR_NOERROR==ret && (dwFlags & MCI_NOTIFY))
