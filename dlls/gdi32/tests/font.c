@@ -2147,6 +2147,11 @@ static void test_GetOutlineTextMetrics(void)
     }
     ok(otm->otmpFullName == unset_ptr, "expected %p got %p\n", unset_ptr, otm->otmpFullName);
 
+    /* check handling of NULL pointer */
+    SetLastError(0xdeadbeef);
+    ret = GetOutlineTextMetricsA(hdc, otm_size, NULL);
+    ok(ret == otm_size, "expected %u, got %u, error %d\n", otm_size, ret, GetLastError());
+
     HeapFree(GetProcessHeap(), 0, otm);
 
     SelectObject(hdc, hfont_old);

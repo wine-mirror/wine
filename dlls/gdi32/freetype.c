@@ -7722,7 +7722,7 @@ static UINT freetype_GetOutlineTextMetrics( PHYSDEV dev, UINT cbSize, OUTLINETEX
 
     if (physdev->font->potm || get_outline_text_metrics( physdev->font ))
     {
-        if(cbSize >= physdev->font->potm->otmSize)
+        if(potm && cbSize >= physdev->font->potm->otmSize)
         {
 	    memcpy(potm, physdev->font->potm, physdev->font->potm->otmSize);
             scale_outline_font_metrics(physdev->font, potm);
