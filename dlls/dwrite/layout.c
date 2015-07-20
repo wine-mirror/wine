@@ -255,7 +255,7 @@ struct dwrite_textlayout {
     DWRITE_MEASURING_MODE measuringmode;
 
     /* gdi-compatible layout specifics */
-    FLOAT  pixels_per_dip;
+    FLOAT ppdip;
     DWRITE_MATRIX transform;
 };
 
@@ -279,6 +279,11 @@ struct dwrite_typography {
     DWRITE_FONT_FEATURE *features;
     UINT32 allocated;
     UINT32 count;
+};
+
+struct dwrite_vec {
+    FLOAT x;
+    FLOAT y;
 };
 
 static const IDWriteTextFormat1Vtbl dwritetextformatvtbl;
@@ -816,7 +821,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         if (is_layout_gdi_compatible(layout))
             hr = IDWriteTextAnalyzer_GetGdiCompatibleGlyphPlacements(analyzer, run->descr.string, run->descr.clusterMap,
                 text_props, run->descr.stringLength, run->run.glyphIndices, glyph_props, run->glyphcount,
-                run->run.fontFace, run->run.fontEmSize, layout->pixels_per_dip, &layout->transform,
+                run->run.fontFace, run->run.fontEmSize, layout->ppdip, &layout->transform,
                 layout->measuringmode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->run.isSideways,
                 run->run.bidiLevel & 1, &run->sa, run->descr.localeName, NULL, NULL, 0, run->advances, run->offsets);
         else
@@ -845,7 +850,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         if (is_layout_gdi_compatible(layout)) {
             hr = IDWriteFontFace_GetGdiCompatibleMetrics(run->run.fontFace,
                 run->run.fontEmSize,
-                layout->pixels_per_dip,
+                layout->ppdip,
                 &layout->transform,
                 &fontmetrics);
             if (FAILED(hr))
@@ -1063,7 +1068,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
             HRESULT hr = IDWriteFontFace_GetGdiCompatibleMetrics(
                 r->u.regular.run.fontFace,
                 r->u.regular.run.fontEmSize,
-                layout->pixels_per_dip,
+                layout->ppdip,
                 &layout->transform,
                 &metrics);
             if (FAILED(hr))
@@ -1166,6 +1171,43 @@ static FLOAT layout_get_line_width(struct dwrite_textlayout *layout,
     return width;
 }
 
+static inline BOOL should_skip_transform(const DWRITE_MATRIX *m, FLOAT *det)
+{
+    *det = m->m11 * m->m22 - m->m12 * m->m21;
+    /* on certain conditions we can skip transform */
+    return (!memcmp(m, &identity, sizeof(*m)) || fabsf(*det) <= 1e-10f);
+}
+
+static inline void layout_apply_snapping(struct dwrite_vec *vec, BOOL skiptransform, FLOAT ppdip,
+    const DWRITE_MATRIX *m, FLOAT det)
+{
+    if (!skiptransform) {
+        FLOAT vec2[2];
+
+        /* apply transform */
+        vec->x *= ppdip;
+        vec->y *= ppdip;
+
+        vec2[0] = m->m11 * vec->x + m->m21 * vec->y + m->dx;
+        vec2[1] = m->m12 * vec->x + m->m22 * vec->y + m->dy;
+
+        /* snap */
+        vec2[0] = floorf(vec2[0] + 0.5f);
+        vec2[1] = floorf(vec2[1] + 0.5f);
+
+        /* apply inverted transform, we don't care about X component at this point */
+        vec->x = (m->m22 * vec2[0] - m->m21 * vec2[1] + m->m21 * m->dy - m->m22 * m->dx) / det;
+        vec->x /= ppdip;
+
+        vec->y = (-m->m12 * vec2[0] + m->m11 * vec2[1] - (m->m11 * m->dy - m->m12 * m->dx)) / det;
+        vec->y /= ppdip;
+    }
+    else {
+        vec->x = floorf(vec->x * ppdip + 0.5f) / ppdip;
+        vec->y = floorf(vec->y * ppdip + 0.5f) / ppdip;
+    }
+}
+
 static void layout_apply_leading_alignment(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
@@ -1219,19 +1261,35 @@ static void layout_apply_trailing_alignment(struct dwrite_textlayout *layout)
     layout->metrics.left = is_rtl ? 0.0 : layout->metrics.layoutWidth - layout->metrics.width;
 }
 
+static inline FLOAT layout_get_centered_shift(struct dwrite_textlayout *layout, BOOL skiptransform,
+    FLOAT width, FLOAT det)
+{
+    if (is_layout_gdi_compatible(layout)) {
+        struct dwrite_vec vec = { layout->metrics.layoutWidth - width, 0.0 };
+        layout_apply_snapping(&vec, skiptransform, layout->ppdip, &layout->transform, det);
+        return floorf(vec.x / 2.0f);
+    }
+    else
+        return (layout->metrics.layoutWidth - width) / 2.0f;
+}
+
 static void layout_apply_centered_alignment(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_effective_inline *inrun;
     struct layout_effective_run *erun;
+    BOOL skiptransform;
     UINT32 line;
+    FLOAT det;
 
     erun = layout_get_next_erun(layout, NULL);
     inrun = layout_get_next_inline_run(layout, NULL);
 
+    skiptransform = should_skip_transform(&layout->transform, &det);
+
     for (line = 0; line < layout->metrics.lineCount; line++) {
         FLOAT width = layout_get_line_width(layout, erun, inrun, line);
-        FLOAT shift = (layout->metrics.layoutWidth - width) / 2.0;
+        FLOAT shift = layout_get_centered_shift(layout, skiptransform, width, det);
 
         if (is_rtl)
             shift *= -1.0;
@@ -2795,13 +2853,8 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             (m.m11 * m.m22 != 0.0 && (m.m12 != 0.0 || m.m21 != 0.0)) ||
             (m.m12 * m.m21 != 0.0 && (m.m11 != 0.0 || m.m22 != 0.0)))
             disabled = TRUE;
-        else {
-            det = m.m11 * m.m22 - m.m12 * m.m21;
-
-            /* on certain conditions we can skip transform */
-            if (!memcmp(&m, &identity, sizeof(m)) || fabsf(det) <= 1e-10f)
-                skiptransform = TRUE;
-        }
+        else
+            skiptransform = should_skip_transform(&m, &det);
     }
 
 #define SNAP_COORD(x) renderer_apply_snapping((x), skiptransform, ppdip, det, &m)
@@ -3901,7 +3954,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->metrics.layoutHeight = maxheight;
     layout->measuringmode = DWRITE_MEASURING_MODE_NATURAL;
 
-    layout->pixels_per_dip = 0.0;
+    layout->ppdip = 0.0;
     memset(&layout->transform, 0, sizeof(layout->transform));
 
     layout->str = heap_strdupnW(str, len);
@@ -3956,7 +4009,7 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
 }
 
 HRESULT create_gdicompat_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight,
-    FLOAT pixels_per_dip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural, IDWriteTextLayout **ret)
+    FLOAT ppdip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural, IDWriteTextLayout **ret)
 {
     struct dwrite_textlayout *layout;
     HRESULT hr;
@@ -3971,7 +4024,7 @@ HRESULT create_gdicompat_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFor
         layout->measuringmode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
 
         /* set gdi-specific properties */
-        layout->pixels_per_dip = pixels_per_dip;
+        layout->ppdip = ppdip;
         layout->transform = transform ? *transform : identity;
 
         *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout2_iface;

@@ -1402,6 +1402,7 @@ static void test_Draw(void)
     IDWriteTextLayout *layout;
     DWRITE_TEXT_RANGE range;
     IDWriteFactory *factory;
+    DWRITE_TEXT_METRICS tm;
     DWRITE_MATRIX m;
     HRESULT hr;
 
@@ -1516,6 +1517,24 @@ static void test_Draw(void)
     hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 7", FALSE);
+
+    /* text alignment keeps pixel-aligned origin */
+    hr = IDWriteTextLayout_GetMetrics(layout, &tm);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(tm.width == floorf(tm.width), "got %f\n", tm.width);
+
+    hr = IDWriteTextLayout_SetMaxWidth(layout, tm.width + 3.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteTextLayout_SetTextAlignment(layout, DWRITE_TEXT_ALIGNMENT_CENTER);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ctxt.originX = ctxt.originY = 0.0;
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_single_run_seq, "draw test 7", FALSE);
+    ok(ctxt.originX != 0.0 && ctxt.originX == floorf(ctxt.originX), "got %f\n", ctxt.originX);
+
     IDWriteTextLayout_Release(layout);
 
     ctxt.gdicompat = TRUE;
@@ -1871,6 +1890,31 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 1, "got %u\n", count);
     ok(metrics[0].canWrapLineAfter == 1, "got %d\n", metrics[0].canWrapLineAfter);
+
+    IDWriteTextLayout_Release(layout);
+
+    /* compare natural cluster width with gdi layout */
+    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 1, format, 100.0, 100.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+    ok(metrics[0].width != floorf(metrics[0].width), "got %f\n", metrics[0].width);
+
+    IDWriteTextLayout_Release(layout);
+
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, str4W, 1, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 1, "got %u\n", count);
+    ok(metrics[0].width == floorf(metrics[0].width), "got %f\n", metrics[0].width);
 
     IDWriteTextLayout_Release(layout);
 
