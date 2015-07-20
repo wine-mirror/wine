@@ -395,25 +395,25 @@ static void update_travellog(DocHost *This)
 {
     travellog_entry_t *new_entry;
 
+    if(!This->travellog.log) {
+        This->travellog.log = heap_alloc(4 * sizeof(*This->travellog.log));
+        if(!This->travellog.log)
+            return;
+
+        This->travellog.size = 4;
+    }else if(This->travellog.size < This->travellog.position+1) {
+        travellog_entry_t *new_travellog;
+
+        new_travellog = heap_realloc(This->travellog.log, This->travellog.size*2*sizeof(*This->travellog.log));
+        if(!new_travellog)
+            return;
+
+        This->travellog.log = new_travellog;
+        This->travellog.size *= 2;
+    }
+
     if(This->travellog.loading_pos == -1) {
         /* Clear forward history. */
-        if(!This->travellog.log) {
-            This->travellog.log = heap_alloc(4 * sizeof(*This->travellog.log));
-            if(!This->travellog.log)
-                return;
-
-            This->travellog.size = 4;
-        }else if(This->travellog.size < This->travellog.position+1) {
-            travellog_entry_t *new_travellog;
-
-            new_travellog = heap_realloc(This->travellog.log, This->travellog.size*2*sizeof(*This->travellog.log));
-            if(!new_travellog)
-                return;
-
-            This->travellog.log = new_travellog;
-            This->travellog.size *= 2;
-        }
-
         while(This->travellog.length > This->travellog.position)
             free_travellog_entry(This->travellog.log + --This->travellog.length);
     }
