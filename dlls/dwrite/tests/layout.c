@@ -1630,12 +1630,14 @@ static void test_typography(void)
 
 static void test_GetClusterMetrics(void)
 {
+    static const WCHAR str5W[] = {'a','\r','b','\n','c','\n','\r','d','\r','\n','e',0xb,'f',0xc,
+        'g',0x0085,'h',0x2028,'i',0x2029,0};
     static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     static const WCHAR str4W[] = {'a',' ',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
-    DWRITE_CLUSTER_METRICS metrics[4];
+    DWRITE_CLUSTER_METRICS metrics[20];
     IDWriteTextLayout1 *layout1;
     IDWriteInlineObject *trimm;
     IDWriteTextFormat *format;
@@ -1915,6 +1917,44 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 1, "got %u\n", count);
     ok(metrics[0].width == floorf(metrics[0].width), "got %f\n", metrics[0].width);
+
+    IDWriteTextLayout_Release(layout);
+
+    /* isNewline tests */
+    hr = IDWriteFactory_CreateTextLayout(factory, str5W, 20, format, 100.0, 200.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 20, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 20, "got %u\n", count);
+
+todo_wine {
+    ok(metrics[1].isNewline == 1, "got %d\n", metrics[1].isNewline);
+    ok(metrics[3].isNewline == 1, "got %d\n", metrics[3].isNewline);
+    ok(metrics[5].isNewline == 1, "got %d\n", metrics[5].isNewline);
+    ok(metrics[6].isNewline == 1, "got %d\n", metrics[6].isNewline);
+    ok(metrics[9].isNewline == 1, "got %d\n", metrics[9].isNewline);
+    ok(metrics[11].isNewline == 1, "got %d\n", metrics[11].isNewline);
+    ok(metrics[13].isNewline == 1, "got %d\n", metrics[13].isNewline);
+    ok(metrics[15].isNewline == 1, "got %d\n", metrics[15].isNewline);
+    ok(metrics[17].isNewline == 1, "got %d\n", metrics[17].isNewline);
+    ok(metrics[19].isNewline == 1, "got %d\n", metrics[19].isNewline);
+}
+    ok(metrics[0].isNewline == 0, "got %d\n", metrics[0].isNewline);
+    ok(metrics[2].isNewline == 0, "got %d\n", metrics[2].isNewline);
+    ok(metrics[4].isNewline == 0, "got %d\n", metrics[4].isNewline);
+    ok(metrics[7].isNewline == 0, "got %d\n", metrics[7].isNewline);
+    ok(metrics[8].isNewline == 0, "got %d\n", metrics[8].isNewline);
+    ok(metrics[10].isNewline == 0, "got %d\n", metrics[10].isNewline);
+    ok(metrics[12].isNewline == 0, "got %d\n", metrics[12].isNewline);
+    ok(metrics[14].isNewline == 0, "got %d\n", metrics[14].isNewline);
+    ok(metrics[16].isNewline == 0, "got %d\n", metrics[16].isNewline);
+    ok(metrics[18].isNewline == 0, "got %d\n", metrics[18].isNewline);
+
+    for (i = 0; i < count; i++)
+        ok(metrics[i].length == 1, "%d: got %d\n", i, metrics[i].length);
 
     IDWriteTextLayout_Release(layout);
 
@@ -2975,10 +3015,11 @@ static IDWriteFontFace *get_fontface_from_format(IDWriteTextFormat *format)
 
 static void test_GetLineMetrics(void)
 {
+    static const WCHAR str3W[] = {'a','\r','b','\n','c','\n','\r','d','\r','\n',0};
     static const WCHAR strW[] = {'a','b','c','d',' ',0};
     static const WCHAR str2W[] = {'a','b','\r','c','d',0};
     DWRITE_FONT_METRICS fontmetrics;
-    DWRITE_LINE_METRICS metrics[2];
+    DWRITE_LINE_METRICS metrics[6];
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFontFace *fontface;
@@ -3035,9 +3076,42 @@ todo_wine {
         metrics[1].baseline);
 }
     IDWriteTextLayout_Release(layout);
-
-    IDWriteFontFace_Release(fontface);
     IDWriteTextFormat_Release(format);
+
+    /* line breaks */
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 12.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, str3W, 10, format, 100.0, 300.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(metrics, 0xcc, sizeof(metrics));
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 6, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 6, "got %u\n", count);
+
+todo_wine {
+    ok(metrics[0].length == 2, "got %u\n", metrics[0].length);
+    ok(metrics[1].length == 2, "got %u\n", metrics[1].length);
+    ok(metrics[2].length == 2, "got %u\n", metrics[2].length);
+    ok(metrics[3].length == 1, "got %u\n", metrics[3].length);
+    ok(metrics[4].length == 3, "got %u\n", metrics[4].length);
+    ok(metrics[5].length == 0, "got %u\n", metrics[5].length);
+}
+
+todo_wine {
+    ok(metrics[0].newlineLength == 1, "got %u\n", metrics[0].newlineLength);
+    ok(metrics[1].newlineLength == 1, "got %u\n", metrics[1].newlineLength);
+    ok(metrics[2].newlineLength == 1, "got %u\n", metrics[2].newlineLength);
+    ok(metrics[3].newlineLength == 1, "got %u\n", metrics[3].newlineLength);
+    ok(metrics[4].newlineLength == 2, "got %u\n", metrics[4].newlineLength);
+    ok(metrics[5].newlineLength == 0, "got %u\n", metrics[5].newlineLength);
+}
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+    IDWriteFontFace_Release(fontface);
     IDWriteFactory_Release(factory);
 }
 
