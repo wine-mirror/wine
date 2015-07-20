@@ -98,7 +98,7 @@
 @ cdecl omp_get_thread_num() vcomp.omp_get_thread_num
 @ stub omp_get_wtick
 @ cdecl omp_get_wtime() vcomp.omp_get_wtime
-@ stub omp_in_parallel
+@ cdecl omp_in_parallel() vcomp.omp_in_parallel
 @ stub omp_init_lock
 @ stub omp_init_nest_lock
 @ cdecl omp_set_dynamic(long) vcomp.omp_set_dynamic

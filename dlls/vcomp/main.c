@@ -361,6 +361,12 @@ int CDECL _vcomp_sections_next(void)
     return i;
 }
 
+int CDECL omp_in_parallel(void)
+{
+    TRACE("()\n");
+    return vcomp_init_thread_data()->parallel;
+}
+
 static DWORD WINAPI _vcomp_fork_worker(void *param)
 {
     struct vcomp_thread_data *thread_data = param;

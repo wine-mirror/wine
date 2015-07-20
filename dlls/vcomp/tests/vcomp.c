@@ -40,6 +40,7 @@ static int   (CDECL   *pomp_get_max_threads)(void);
 static int   (CDECL   *pomp_get_nested)(void);
 static int   (CDECL   *pomp_get_num_threads)(void);
 static int   (CDECL   *pomp_get_thread_num)(void);
+static int   (CDECL   *pomp_in_parallel)(void);
 static void  (CDECL   *pomp_set_nested)(int nested);
 static void  (CDECL   *pomp_set_num_threads)(int num_threads);
 
@@ -178,6 +179,7 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(omp_get_nested);
     VCOMP_GET_PROC(omp_get_num_threads);
     VCOMP_GET_PROC(omp_get_thread_num);
+    VCOMP_GET_PROC(omp_in_parallel);
     VCOMP_GET_PROC(omp_set_nested);
     VCOMP_GET_PROC(omp_set_num_threads);
 
@@ -186,14 +188,17 @@ static BOOL init_vcomp(void)
 
 #undef VCOMP_GET_PROC
 
-static void CDECL num_threads_cb2(LONG *count)
+static void CDECL num_threads_cb2(int parallel, LONG *count)
 {
+    int is_parallel = pomp_in_parallel();
+    ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
+
     InterlockedIncrement(count);
 }
 
-static void CDECL num_threads_cb(BOOL nested, int nested_threads, LONG *count)
+static void CDECL num_threads_cb(BOOL nested, int parallel, int nested_threads, LONG *count)
 {
-    int num_threads, thread_num;
+    int is_parallel, num_threads, thread_num;
     LONG thread_count;
 
     InterlockedIncrement(count);
@@ -205,29 +210,41 @@ static void CDECL num_threads_cb(BOOL nested, int nested_threads, LONG *count)
     ok(thread_num >= 0 && thread_num < num_threads,
        "expected thread_num in range [0, %d], got %d\n", num_threads - 1, thread_num);
 
+    is_parallel = pomp_in_parallel();
+    ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
+
     thread_count = 0;
-    p_vcomp_fork(TRUE, 1, num_threads_cb2, &thread_count);
+    p_vcomp_fork(TRUE, 2, num_threads_cb2, TRUE, &thread_count);
     if (nested)
         ok(thread_count == nested_threads, "expected %d threads, got %d\n", nested_threads, thread_count);
     else
         ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
 
+    is_parallel = pomp_in_parallel();
+    ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
+
     thread_count = 0;
-    p_vcomp_fork(FALSE, 1, num_threads_cb2, &thread_count);
+    p_vcomp_fork(FALSE, 2, num_threads_cb2, parallel, &thread_count);
     ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
+
+    is_parallel = pomp_in_parallel();
+    ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
 
     p_vcomp_set_num_threads(4);
     thread_count = 0;
-    p_vcomp_fork(TRUE, 1, num_threads_cb2, &thread_count);
+    p_vcomp_fork(TRUE, 2, num_threads_cb2, TRUE, &thread_count);
     if (nested)
         ok(thread_count == 4, "expected 4 threads, got %d\n", thread_count);
     else
         ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
+
+    is_parallel = pomp_in_parallel();
+    ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
 }
 
 static void test_omp_get_num_threads(BOOL nested)
 {
-    int is_nested, max_threads, num_threads, thread_num;
+    int is_nested, is_parallel, max_threads, num_threads, thread_num;
     LONG thread_count;
 
     pomp_set_nested(nested);
@@ -239,61 +256,73 @@ static void test_omp_get_num_threads(BOOL nested)
     thread_num = pomp_get_thread_num();
     ok(thread_num == 0, "expected thread_num == 0, got %d\n", thread_num);
 
-    num_threads = pomp_get_num_threads();
-    ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
-    thread_count = 0;
-    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, max_threads, &thread_count);
-    ok(thread_count == max_threads, "expected %d threads, got %d\n", max_threads, thread_count);
+    is_parallel = pomp_in_parallel();
+    ok(is_parallel == FALSE, "expected FALSE, got %d\n", is_parallel);
 
     num_threads = pomp_get_num_threads();
     ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
     thread_count = 0;
-    p_vcomp_fork(FALSE, 3, num_threads_cb, TRUE, max_threads, &thread_count);
+    p_vcomp_fork(TRUE, 4, num_threads_cb, nested, TRUE, max_threads, &thread_count);
+    ok(thread_count == max_threads, "expected %d threads, got %d\n", max_threads, thread_count);
+
+    is_parallel = pomp_in_parallel();
+    ok(is_parallel == FALSE, "expected FALSE, got %d\n", is_parallel);
+
+    num_threads = pomp_get_num_threads();
+    ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
+    thread_count = 0;
+    p_vcomp_fork(FALSE, 4, num_threads_cb, TRUE, FALSE, max_threads, &thread_count);
     ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
+
+    is_parallel = pomp_in_parallel();
+    ok(is_parallel == FALSE, "expected FALSE, got %d\n", is_parallel);
 
     pomp_set_num_threads(1);
     num_threads = pomp_get_num_threads();
     ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
     thread_count = 0;
-    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, 1, &thread_count);
+    p_vcomp_fork(TRUE, 4, num_threads_cb, nested, TRUE, 1, &thread_count);
     ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
+
+    is_parallel = pomp_in_parallel();
+    ok(is_parallel == FALSE, "expected FALSE, got %d\n", is_parallel);
 
     pomp_set_num_threads(2);
     num_threads = pomp_get_num_threads();
     ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
     thread_count = 0;
-    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, 2, &thread_count);
+    p_vcomp_fork(TRUE, 4, num_threads_cb, nested, TRUE, 2, &thread_count);
     ok(thread_count == 2, "expected 2 threads, got %d\n", thread_count);
 
     pomp_set_num_threads(4);
     num_threads = pomp_get_num_threads();
     ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
     thread_count = 0;
-    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, 4, &thread_count);
+    p_vcomp_fork(TRUE, 4, num_threads_cb, nested, TRUE, 4, &thread_count);
     ok(thread_count == 4, "expected 4 threads, got %d\n", thread_count);
 
     p_vcomp_set_num_threads(8);
     num_threads = pomp_get_num_threads();
     ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
     thread_count = 0;
-    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, 4, &thread_count);
+    p_vcomp_fork(TRUE, 4, num_threads_cb, nested, TRUE, 4, &thread_count);
     ok(thread_count == 8, "expected 8 threads, got %d\n", thread_count);
     thread_count = 0;
-    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, 4, &thread_count);
+    p_vcomp_fork(TRUE, 4, num_threads_cb, nested, TRUE, 4, &thread_count);
     ok(thread_count == 4, "expected 4 threads, got %d\n", thread_count);
 
     p_vcomp_set_num_threads(0);
     num_threads = pomp_get_num_threads();
     ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
     thread_count = 0;
-    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, 4, &thread_count);
+    p_vcomp_fork(TRUE, 4, num_threads_cb, nested, TRUE, 4, &thread_count);
     ok(thread_count == 4, "expected 4 threads, got %d\n", thread_count);
 
     pomp_set_num_threads(0);
     num_threads = pomp_get_num_threads();
     ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
     thread_count = 0;
-    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, 4, &thread_count);
+    p_vcomp_fork(TRUE, 4, num_threads_cb, nested, TRUE, 4, &thread_count);
     ok(thread_count == 4, "expected 4 threads, got %d\n", thread_count);
 
     pomp_set_num_threads(max_threads);
