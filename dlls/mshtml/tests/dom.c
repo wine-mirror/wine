@@ -30,6 +30,7 @@
 #include "mshtmcid.h"
 #include "mshtmhst.h"
 #include "docobj.h"
+#include "hlink.h"
 #include "dispex.h"
 #include "mshtml_test.h"
 #include "objsafe.h"
@@ -9071,6 +9072,22 @@ static void check_strict_mode(IHTMLDocument2 *doc)
     test_compatmode(doc, "CSS1Compat");
 }
 
+static void test_quirks_mode_offsetHeight(IHTMLDocument2 *doc)
+{
+    IHTMLElement *elem;
+    HRESULT hres;
+    LONG oh;
+
+    hres = IHTMLDocument2_get_body(doc, &elem);
+    ok(hres == S_OK, "get_body fauled: %08x\n", hres);
+
+    /* body.offsetHeight value depends on window size in quirks mode */
+    hres = IHTMLElement_get_offsetHeight(elem, &oh);
+    ok(hres == S_OK, "get_offsetHeight failed: %08x\n", hres);
+    todo_wine ok(oh == 500, "offsetHeight = %d\n", oh);
+    IHTMLElement_Release(elem);
+}
+
 static IHTMLDocument2 *notif_doc;
 static BOOL doc_complete;
 
@@ -9130,6 +9147,395 @@ static IPropertyNotifySinkVtbl PropertyNotifySinkVtbl = {
 
 static IPropertyNotifySink PropertyNotifySink = { &PropertyNotifySinkVtbl };
 
+static HRESULT cs_qi(REFIID,void **);
+static IOleDocumentView *view;
+static HWND container_hwnd;
+
+static HRESULT WINAPI InPlaceFrame_QueryInterface(IOleInPlaceFrame *iface, REFIID riid, void **ppv)
+{
+    static const GUID undocumented_frame_iid = {0xfbece6c9,0x48d7,0x4a37,{0x8f,0xe3,0x6a,0xd4,0x27,0x2f,0xdd,0xac}};
+
+    if(!IsEqualGUID(&undocumented_frame_iid, riid))
+        ok(0, "unexpected riid %s\n", wine_dbgstr_guid(riid));
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI InPlaceFrame_AddRef(IOleInPlaceFrame *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InPlaceFrame_Release(IOleInPlaceFrame *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InPlaceFrame_GetWindow(IOleInPlaceFrame *iface, HWND *phwnd)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_ContextSensitiveHelp(IOleInPlaceFrame *iface, BOOL fEnterMode)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_GetBorder(IOleInPlaceFrame *iface, LPRECT lprectBorder)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_RequestBorderSpace(IOleInPlaceFrame *iface,
+        LPCBORDERWIDTHS pborderwidths)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetBorderSpace(IOleInPlaceFrame *iface,
+        LPCBORDERWIDTHS pborderwidths)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetActiveObject(IOleInPlaceFrame *iface,
+        IOleInPlaceActiveObject *pActiveObject, LPCOLESTR pszObjName)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceFrame_InsertMenus(IOleInPlaceFrame *iface, HMENU hmenuShared,
+        LPOLEMENUGROUPWIDTHS lpMenuWidths)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetMenu(IOleInPlaceFrame *iface, HMENU hmenuShared,
+        HOLEMENU holemenu, HWND hwndActiveObject)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_RemoveMenus(IOleInPlaceFrame *iface, HMENU hmenuShared)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_SetStatusText(IOleInPlaceFrame *iface, LPCOLESTR pszStatusText)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceFrame_EnableModeless(IOleInPlaceFrame *iface, BOOL fEnable)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceFrame_TranslateAccelerator(IOleInPlaceFrame *iface, LPMSG lpmsg, WORD wID)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceFrameVtbl InPlaceFrameVtbl = {
+    InPlaceFrame_QueryInterface,
+    InPlaceFrame_AddRef,
+    InPlaceFrame_Release,
+    InPlaceFrame_GetWindow,
+    InPlaceFrame_ContextSensitiveHelp,
+    InPlaceFrame_GetBorder,
+    InPlaceFrame_RequestBorderSpace,
+    InPlaceFrame_SetBorderSpace,
+    InPlaceFrame_SetActiveObject,
+    InPlaceFrame_InsertMenus,
+    InPlaceFrame_SetMenu,
+    InPlaceFrame_RemoveMenus,
+    InPlaceFrame_SetStatusText,
+    InPlaceFrame_EnableModeless,
+    InPlaceFrame_TranslateAccelerator
+};
+
+static IOleInPlaceFrame InPlaceFrame = { &InPlaceFrameVtbl };
+
+static HRESULT WINAPI InPlaceSite_QueryInterface(IOleInPlaceSite *iface, REFIID riid, void **ppv)
+{
+    return cs_qi(riid, ppv);
+}
+
+static ULONG WINAPI InPlaceSite_AddRef(IOleInPlaceSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI InPlaceSite_Release(IOleInPlaceSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI InPlaceSite_GetWindow(IOleInPlaceSite *iface, HWND *phwnd)
+{
+    *phwnd = container_hwnd;
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_ContextSensitiveHelp(IOleInPlaceSite *iface, BOOL fEnterMode)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_CanInPlaceActivate(IOleInPlaceSite *iface)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_OnInPlaceActivate(IOleInPlaceSite *iface)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_OnUIActivate(IOleInPlaceSite *iface)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_GetWindowContext(IOleInPlaceSite *iface,
+        IOleInPlaceFrame **ppFrame, IOleInPlaceUIWindow **ppDoc, LPRECT lprcPosRect,
+                LPRECT lprcClipRect, LPOLEINPLACEFRAMEINFO lpFrameInfo)
+{
+    static const RECT rect = {0,0,500,500};
+
+    *ppFrame = &InPlaceFrame;
+    *ppDoc = NULL;
+    *lprcPosRect = rect;
+    *lprcClipRect = rect;
+
+    lpFrameInfo->fMDIApp = FALSE;
+    lpFrameInfo->hwndFrame = container_hwnd;
+    lpFrameInfo->haccel = NULL;
+    lpFrameInfo->cAccelEntries = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_Scroll(IOleInPlaceSite *iface, SIZE scrollExtant)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnUIDeactivate(IOleInPlaceSite *iface, BOOL fUndoable)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_OnInPlaceDeactivate(IOleInPlaceSite *iface)
+{
+    return S_OK;
+}
+
+static HRESULT WINAPI InPlaceSite_DiscardUndoState(IOleInPlaceSite *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_DeactivateAndUndo(IOleInPlaceSite *iface)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI InPlaceSite_OnPosRectChange(IOleInPlaceSite *iface, LPCRECT lprcPosRect)
+{
+    return E_NOTIMPL;
+}
+
+static const IOleInPlaceSiteVtbl InPlaceSiteVtbl = {
+    InPlaceSite_QueryInterface,
+    InPlaceSite_AddRef,
+    InPlaceSite_Release,
+    InPlaceSite_GetWindow,
+    InPlaceSite_ContextSensitiveHelp,
+    InPlaceSite_CanInPlaceActivate,
+    InPlaceSite_OnInPlaceActivate,
+    InPlaceSite_OnUIActivate,
+    InPlaceSite_GetWindowContext,
+    InPlaceSite_Scroll,
+    InPlaceSite_OnUIDeactivate,
+    InPlaceSite_OnInPlaceDeactivate,
+    InPlaceSite_DiscardUndoState,
+    InPlaceSite_DeactivateAndUndo,
+    InPlaceSite_OnPosRectChange,
+};
+
+static IOleInPlaceSite InPlaceSite = { &InPlaceSiteVtbl };
+
+static HRESULT WINAPI ClientSite_QueryInterface(IOleClientSite *iface, REFIID riid, void **ppv)
+{
+    return cs_qi(riid, ppv);
+}
+
+static ULONG WINAPI ClientSite_AddRef(IOleClientSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI ClientSite_Release(IOleClientSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI ClientSite_SaveObject(IOleClientSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_GetMoniker(IOleClientSite *iface, DWORD dwAssign, DWORD dwWhichMoniker,
+        IMoniker **ppmon)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_GetContainer(IOleClientSite *iface, IOleContainer **ppContainer)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_ShowObject(IOleClientSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_OnShowWindow(IOleClientSite *iface, BOOL fShow)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI ClientSite_RequestNewObjectLayout(IOleClientSite *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleClientSiteVtbl ClientSiteVtbl = {
+    ClientSite_QueryInterface,
+    ClientSite_AddRef,
+    ClientSite_Release,
+    ClientSite_SaveObject,
+    ClientSite_GetMoniker,
+    ClientSite_GetContainer,
+    ClientSite_ShowObject,
+    ClientSite_OnShowWindow,
+    ClientSite_RequestNewObjectLayout
+};
+
+static IOleClientSite ClientSite = { &ClientSiteVtbl };
+
+static HRESULT WINAPI DocumentSite_QueryInterface(IOleDocumentSite *iface, REFIID riid, void **ppv)
+{
+    return cs_qi(riid, ppv);
+}
+
+static ULONG WINAPI DocumentSite_AddRef(IOleDocumentSite *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI DocumentSite_Release(IOleDocumentSite *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI DocumentSite_ActivateMe(IOleDocumentSite *iface, IOleDocumentView *pViewToActivate)
+{
+    RECT rect = {0,0,500,500};
+    IOleDocument *document;
+    HRESULT hres;
+
+    hres = IOleDocumentView_QueryInterface(pViewToActivate, &IID_IOleDocument, (void**)&document);
+    ok(hres == S_OK, "could not get IOleDocument: %08x\n", hres);
+
+    hres = IOleDocument_CreateView(document, &InPlaceSite, NULL, 0, &view);
+    IOleDocument_Release(document);
+    ok(hres == S_OK, "CreateView failed: %08x\n", hres);
+
+    hres = IOleDocumentView_SetInPlaceSite(view, &InPlaceSite);
+    ok(hres == S_OK, "SetInPlaceSite failed: %08x\n", hres);
+
+    hres = IOleDocumentView_UIActivate(view, TRUE);
+    ok(hres == S_OK, "UIActivate failed: %08x\n", hres);
+
+    hres = IOleDocumentView_SetRect(view, &rect);
+    ok(hres == S_OK, "SetRect failed: %08x\n", hres);
+
+    hres = IOleDocumentView_Show(view, TRUE);
+    ok(hres == S_OK, "Show failed: %08x\n", hres);
+
+    return S_OK;
+}
+
+static const IOleDocumentSiteVtbl DocumentSiteVtbl = {
+    DocumentSite_QueryInterface,
+    DocumentSite_AddRef,
+    DocumentSite_Release,
+    DocumentSite_ActivateMe
+};
+
+static IOleDocumentSite DocumentSite = { &DocumentSiteVtbl };
+
+static HRESULT cs_qi(REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+
+    if(IsEqualGUID(&IID_IUnknown, riid) || IsEqualGUID(&IID_IOleClientSite, riid))
+        *ppv = &ClientSite;
+    else if(IsEqualGUID(&IID_IOleDocumentSite, riid))
+        *ppv = &DocumentSite;
+    else if(IsEqualGUID(&IID_IOleWindow, riid) || IsEqualGUID(&IID_IOleInPlaceSite, riid))
+        *ppv = &InPlaceSite;
+
+    return *ppv ? S_OK : E_NOINTERFACE;
+}
+
+static void set_client_site(IHTMLDocument2 *doc, BOOL set)
+{
+    IOleObject *oleobj;
+    HRESULT hres;
+
+    if(!set && view) {
+        IOleDocumentView_Show(view, FALSE);
+        IOleDocumentView_CloseView(view, 0);
+        IOleDocumentView_SetInPlaceSite(view, NULL);
+        IOleDocumentView_Release(view);
+        view = NULL;
+    }
+
+    hres = IHTMLDocument2_QueryInterface(doc, &IID_IOleObject, (void**)&oleobj);
+    ok(hres == S_OK, "Could not et IOleObject: %08x\n", hres);
+
+    hres = IOleObject_SetClientSite(oleobj, set ? &ClientSite : NULL);
+    ok(hres == S_OK, "SetClientSite failed: %08x\n", hres);
+
+    if(set) {
+        IHlinkTarget *hlink;
+
+        hres = IOleObject_QueryInterface(oleobj, &IID_IHlinkTarget, (void**)&hlink);
+        ok(hres == S_OK, "Could not get IHlinkTarget iface: %08x\n", hres);
+
+        hres = IHlinkTarget_Navigate(hlink, 0, NULL);
+        ok(hres == S_OK, "Navgate failed: %08x\n", hres);
+
+        IHlinkTarget_Release(hlink);
+    }
+
+    IOleObject_Release(oleobj);
+}
+
 static IHTMLDocument2 *create_doc_with_string(const char *str)
 {
     IPersistStreamInit *init;
@@ -9188,6 +9594,7 @@ static void run_domtest(const char *str, domtest_t test)
     if(!doc)
         return;
 
+    set_client_site(doc, TRUE);
     do_advise((IUnknown*)doc, &IID_IPropertyNotifySink, (IUnknown*)&PropertyNotifySink);
 
     while(!doc_complete && GetMessageW(&msg, NULL, 0, 0)) {
@@ -9197,6 +9604,7 @@ static void run_domtest(const char *str, domtest_t test)
 
     test(doc);
 
+    set_client_site(doc, FALSE);
     ref = IHTMLDocument2_Release(doc);
     ok(!ref || broken(ref == 1), /* Vista */
        "ref = %d\n", ref);
@@ -9207,6 +9615,7 @@ static void test_quirks_mode(void)
     run_domtest("<html></html>", check_quirks_mode);
     run_domtest("<!DOCTYPE html>\n<html></html>", check_strict_mode);
     run_domtest("<!-- comment --><!DOCTYPE html>\n<html></html>", check_quirks_mode);
+    run_domtest("<html><body></body></html>", test_quirks_mode_offsetHeight);
 }
 
 START_TEST(dom)
@@ -9216,6 +9625,8 @@ START_TEST(dom)
     pGetUserDefaultUILanguage = (void*)GetProcAddress(hkernel32, "GetUserDefaultUILanguage");
 
     CoInitialize(NULL);
+    container_hwnd = CreateWindowA("static", NULL, WS_POPUP|WS_VISIBLE,
+            CW_USEDEFAULT, CW_USEDEFAULT, 500, 500, NULL, NULL, NULL, NULL);
 
     run_domtest(doc_str1, test_doc_elem);
     run_domtest(doc_str1, test_get_set_attr);
@@ -9241,5 +9652,6 @@ START_TEST(dom)
 
     test_quirks_mode();
 
+    DestroyWindow(container_hwnd);
     CoUninitialize();
 }
