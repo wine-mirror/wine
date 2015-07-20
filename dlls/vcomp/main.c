@@ -412,6 +412,69 @@ void CDECL _vcomp_for_static_simple_init(unsigned int first, unsigned int last, 
     *end   = *begin + (per_thread - 1) * step;
 }
 
+void CDECL _vcomp_for_static_init(int first, int last, int step, int chunksize, unsigned int *loops,
+                                  int *begin, int *end, int *next, int *lastchunk)
+{
+    unsigned int iterations, num_chunks, per_thread, remaining;
+    struct vcomp_thread_data *thread_data = vcomp_init_thread_data();
+    struct vcomp_team_data *team_data = thread_data->team;
+    int num_threads = team_data ? team_data->num_threads : 1;
+    int thread_num = thread_data->thread_num;
+
+    TRACE("(%d, %d, %d, %d, %p, %p, %p, %p, %p)\n",
+          first, last, step, chunksize, loops, begin, end, next, lastchunk);
+
+    if (num_threads == 1 && chunksize != 1)
+    {
+        *loops      = 1;
+        *begin      = first;
+        *end        = last;
+        *next       = 0;
+        *lastchunk  = first;
+        return;
+    }
+
+    if (first == last)
+    {
+        *loops = !thread_num;
+        if (!thread_num)
+        {
+            *begin      = first;
+            *end        = last;
+            *next       = 0;
+            *lastchunk  = first;
+        }
+        return;
+    }
+
+    if (step <= 0)
+    {
+        *loops = 0;
+        return;
+    }
+
+    if (first < last)
+        iterations = 1 + (last - first) / step;
+    else
+    {
+        iterations = 1 + (first - last) / step;
+        step *= -1;
+    }
+
+    if (chunksize < 1)
+        chunksize = 1;
+
+    num_chunks  = ((DWORD64)iterations + chunksize - 1) / chunksize;
+    per_thread  = num_chunks / num_threads;
+    remaining   = num_chunks - per_thread * num_threads;
+
+    *loops      = per_thread + (thread_num < remaining);
+    *begin      = first + thread_num * chunksize * step;
+    *end        = *begin + (chunksize - 1) * step;
+    *next       = chunksize * num_threads * step;
+    *lastchunk  = first + (num_chunks - 1) * chunksize * step;
+}
+
 void CDECL _vcomp_for_static_end(void)
 {
     TRACE("()\n");
