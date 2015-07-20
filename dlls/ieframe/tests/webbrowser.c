@@ -3842,43 +3842,24 @@ static void test_FileProtocol(void)
         DeleteFileA(file_path);
 }
 
-struct sink
-{
-    IAdviseSink IAdviseSink_iface;
-};
-
-static inline struct sink *impl_from_IAdviseSink(IAdviseSink *iface)
-{
-    return CONTAINING_RECORD(iface, struct sink, IAdviseSink_iface);
-}
-
 static HRESULT WINAPI sink_QueryInterface( IAdviseSink *iface, REFIID riid, void **obj)
 {
-    struct sink *sink = impl_from_IAdviseSink(iface);
-
-    trace("%p, %p, %p\n", iface, riid, obj);
-
-    if (IsEqualGUID(riid, &IID_IAdviseSink) || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        *obj = &sink->IAdviseSink_iface;
+    if (IsEqualGUID(riid, &IID_IAdviseSink) || IsEqualGUID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        return S_OK;
     }
-    else
-    {
-        return E_NOINTERFACE;
-    }
-    IAdviseSink_AddRef(iface);
-    return S_OK;
+
+    ok(0, "unexpected call QI(%s)\n", wine_dbgstr_guid(riid));
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI sink_AddRef(IAdviseSink *iface)
 {
-    trace("%p\n", iface);
     return 2;
 }
 
 static ULONG WINAPI sink_Release(IAdviseSink *iface)
 {
-    trace("%p\n", iface);
     return 1;
 }
 
