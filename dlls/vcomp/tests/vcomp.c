@@ -32,6 +32,9 @@ static BOOL   (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 
 static void  (CDECL   *p_vcomp_barrier)(void);
+static void  (CDECL   *p_vcomp_for_static_end)(void);
+static void  (CDECL   *p_vcomp_for_static_simple_init)(unsigned int first, unsigned int last, int step,
+                                                       BOOL increment, unsigned int *begin, unsigned int *end);
 static void  (WINAPIV *p_vcomp_fork)(BOOL ifval, int nargs, void *wrapper, ...);
 static void  (CDECL   *p_vcomp_sections_init)(int n);
 static int   (CDECL   *p_vcomp_sections_next)(void);
@@ -171,6 +174,8 @@ static BOOL init_vcomp(void)
     }
 
     VCOMP_GET_PROC(_vcomp_barrier);
+    VCOMP_GET_PROC(_vcomp_for_static_end);
+    VCOMP_GET_PROC(_vcomp_for_static_simple_init);
     VCOMP_GET_PROC(_vcomp_fork);
     VCOMP_GET_PROC(_vcomp_sections_init);
     VCOMP_GET_PROC(_vcomp_sections_next);
@@ -458,6 +463,173 @@ if (0)
     pomp_set_num_threads(max_threads);
 }
 
+static void my_for_static_simple_init(unsigned int first, unsigned int last, int step,
+                                      BOOL increment, unsigned int *begin, unsigned int *end)
+{
+    unsigned int iterations, per_thread, remaining;
+    int num_threads = pomp_get_num_threads();
+    int thread_num = pomp_get_thread_num();
+
+    if (num_threads == 1)
+    {
+        *begin = first;
+        *end   = last;
+        return;
+    }
+
+    if (step <= 0)
+    {
+        *begin = 0;
+        *end   = increment ? -1 : 1;
+        return;
+    }
+
+    if (increment)
+        iterations = 1 + (last - first) / step;
+    else
+    {
+        iterations = 1 + (first - last) / step;
+        step *= -1;
+    }
+
+    per_thread = iterations / num_threads;
+    remaining  = iterations - per_thread * num_threads;
+
+    if (thread_num < remaining)
+        per_thread++;
+    else if (per_thread)
+        first += remaining * step;
+    else
+    {
+        *begin = first;
+        *end   = first - step;
+        return;
+    }
+
+    *begin = first + per_thread * thread_num * step;
+    *end   = *begin + (per_thread - 1) * step;
+}
+
+
+static void CDECL for_static_simple_cb(void)
+{
+    static const struct
+    {
+        unsigned int first;
+        unsigned int last;
+        int step;
+    }
+    tests[] =
+    {
+        {          0,          0,   1 }, /* 0 */
+        {          0,          1,   1 },
+        {          0,          2,   1 },
+        {          0,          3,   1 },
+        {          0,        100,   0 },
+        {          0,        100,   1 },
+        {          0,        100,   2 },
+        {          0,        100,   3 },
+        {          0,        100,  -1 },
+        {          0,        100,  -2 },
+        {          0,        100,  -3 }, /* 10 */
+        {          0,        100,  10 },
+        {          0,        100,  50 },
+        {          0,        100, 100 },
+        {          0,        100, 150 },
+        {          0, 0x80000000,   1 },
+        {          0, 0xfffffffe,   1 },
+        {          0, 0xffffffff,   1 },
+        {         50,         50,   0 },
+        {         50,         50,   1 },
+        {         50,         50,   2 }, /* 20 */
+        {         50,         50,   3 },
+        {         50,         50,  -1 },
+        {         50,         50,  -2 },
+        {         50,         50,  -3 },
+        {        100,        200,   1 },
+        {        100,        200,   5 },
+        {        100,        200,  10 },
+        {        100,        200,  50 },
+        {        100,        200, 100 },
+        {        100,        200, 150 }, /* 30 */
+    };
+    int num_threads = pomp_get_num_threads();
+    int thread_num = pomp_get_thread_num();
+    int i;
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        unsigned int my_begin, my_end, begin, end;
+
+        begin = end = 0xdeadbeef;
+        my_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, FALSE, &my_begin, &my_end);
+        p_vcomp_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, FALSE, &begin, &end);
+
+        ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
+           i, thread_num, num_threads, my_begin, end);
+        ok(end == my_end, "test %d, thread %d/%d: expected end == %u, got %u\n",
+           i, thread_num, num_threads, my_end, end);
+
+        p_vcomp_for_static_end();
+        p_vcomp_barrier();
+
+        begin = end = 0xdeadbeef;
+        my_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, TRUE, &my_begin, &my_end);
+        p_vcomp_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, TRUE, &begin, &end);
+
+        ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
+           i, thread_num, num_threads, my_begin, end);
+        ok(end == my_end, "test %d, thread %d/%d: expected end == %u, got %u\n",
+           i, thread_num, num_threads, my_end, end);
+
+        p_vcomp_for_static_end();
+        p_vcomp_barrier();
+
+        if (tests[i].first == tests[i].last) continue;
+
+        begin = end = 0xdeadbeef;
+        my_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, FALSE, &my_begin, &my_end);
+        p_vcomp_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, FALSE, &begin, &end);
+
+        ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
+           i, thread_num, num_threads, my_begin, end);
+        ok(end == my_end, "test %d, thread %d/%d: expected end == %u, got %u\n",
+           i, thread_num, num_threads, my_end, end);
+
+        p_vcomp_for_static_end();
+        p_vcomp_barrier();
+
+        begin = end = 0xdeadbeef;
+        my_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, TRUE, &my_begin, &my_end);
+        p_vcomp_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, TRUE, &begin, &end);
+
+        ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
+           i, thread_num, num_threads, my_begin, end);
+        ok(end == my_end, "test %d, thread %d/%d: expected end == %u, got %u\n",
+           i, thread_num, num_threads, my_end, end);
+
+        p_vcomp_for_static_end();
+        p_vcomp_barrier();
+    }
+}
+
+static void test_vcomp_for_static_simple_init(void)
+{
+    int max_threads = pomp_get_max_threads();
+    int i;
+
+    for_static_simple_cb();
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+        p_vcomp_fork(TRUE, 0, for_static_simple_cb);
+        p_vcomp_fork(FALSE, 0, for_static_simple_cb);
+    }
+
+    pomp_set_num_threads(max_threads);
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
@@ -467,6 +639,7 @@ START_TEST(vcomp)
     test_omp_get_num_threads(TRUE);
     test_vcomp_fork();
     test_vcomp_sections_init();
+    test_vcomp_for_static_simple_init();
 
     release_vcomp();
 }
