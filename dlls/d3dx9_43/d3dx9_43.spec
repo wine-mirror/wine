@@ -26,7 +26,7 @@
 @ stdcall D3DXComputeNormals(ptr ptr) d3dx9_36.D3DXComputeNormals
 @ stdcall D3DXComputeTangent(ptr long long long long ptr) d3dx9_36.D3DXComputeTangent
 @ stdcall D3DXComputeTangentFrame(ptr long) d3dx9_36.D3DXComputeTangentFrame
-@ stdcall D3DXComputeTangentFrameEx(ptr long long long long long long long long long ptr long long long ptr ptr) d3dx9_36.D3DXComputeTangentFrameEx
+@ stdcall D3DXComputeTangentFrameEx(ptr long long long long long long long long long ptr float float float ptr ptr) d3dx9_36.D3DXComputeTangentFrameEx
 @ stdcall D3DXConcatenateMeshes(ptr long long ptr ptr ptr ptr ptr) d3dx9_36.D3DXConcatenateMeshes
 @ stdcall D3DXConvertMeshSubsetToSingleStrip(ptr long long ptr ptr) d3dx9_36.D3DXConvertMeshSubsetToSingleStrip
 @ stdcall D3DXConvertMeshSubsetToStrips(ptr long long ptr ptr ptr ptr) d3dx9_36.D3DXConvertMeshSubsetToStrips

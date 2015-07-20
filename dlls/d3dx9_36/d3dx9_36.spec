@@ -26,7 +26,7 @@
 @ stub D3DXComputeNormals(ptr ptr)
 @ stub D3DXComputeTangent(ptr long long long long ptr)
 @ stub D3DXComputeTangentFrame(ptr long)
-@ stub D3DXComputeTangentFrameEx(ptr long long long long long long long long long ptr long long long ptr ptr)
+@ stdcall D3DXComputeTangentFrameEx(ptr long long long long long long long long long ptr float float float ptr ptr)
 @ stub D3DXConcatenateMeshes(ptr long long ptr ptr ptr ptr ptr)
 @ stub D3DXConvertMeshSubsetToSingleStrip(ptr long long ptr ptr)
 @ stub D3DXConvertMeshSubsetToStrips(ptr long long ptr ptr ptr ptr)

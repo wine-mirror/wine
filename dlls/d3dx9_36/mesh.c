@@ -7234,3 +7234,23 @@ HRESULT WINAPI D3DXOptimizeFaces(const void *indices, UINT num_faces,
 error:
     return hr;
 }
+
+/*************************************************************************
+ * D3DXComputeTangentFrameEx    (D3DX9_36.@)
+ */
+HRESULT WINAPI D3DXComputeTangentFrameEx(ID3DXMesh *mesh, DWORD texture_in_semantic, DWORD texture_in_index,
+        DWORD u_partial_out_semantic, DWORD u_partial_out_index, DWORD v_partial_out_semantic,
+        DWORD v_partial_out_index, DWORD normal_out_semantic, DWORD normal_out_index, DWORD options,
+        const DWORD *adjacency, float partial_edge_threshold, float singular_point_threshold,
+        float normal_edge_threshold, ID3DXMesh **mesh_out, ID3DXBuffer **vertex_mapping)
+{
+    FIXME("mesh %p, texture_in_semantic %u, texture_in_index %u, u_partial_out_semantic %u, u_partial_out_index %u, "
+            "v_partial_out_semantic %u, v_partial_out_index %u, normal_out_semantic %u, normal_out_index %u, "
+            "options %#x, adjacency %p, partial_edge_threshold %f, singular_point_threshold %f, "
+            "normal_edge_threshold %f, mesh_out %p, vertex_mapping %p stub!\n",
+            mesh, texture_in_semantic, texture_in_index, u_partial_out_semantic, u_partial_out_index,
+            v_partial_out_semantic, v_partial_out_index, normal_out_semantic, normal_out_index, options, adjacency,
+            partial_edge_threshold, singular_point_threshold, normal_edge_threshold, mesh_out, vertex_mapping);
+
+    return E_NOTIMPL;
+}
