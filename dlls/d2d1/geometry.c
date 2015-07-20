@@ -39,6 +39,10 @@ struct d2d_figure
     D2D1_POINT_2F *vertices;
     size_t vertices_size;
     size_t vertex_count;
+
+    struct d2d_bezier *beziers;
+    size_t beziers_size;
+    size_t bezier_count;
 };
 
 struct d2d_cdt_edge_ref
@@ -69,6 +73,16 @@ static void d2d_point_subtract(D2D1_POINT_2F *out,
 {
     out->x = a->x - b->x;
     out->y = a->y - b->y;
+}
+
+static float d2d_point_ccw(const D2D1_POINT_2F *a, const D2D1_POINT_2F *b, const D2D1_POINT_2F *c)
+{
+    D2D1_POINT_2F ab, ac;
+
+    d2d_point_subtract(&ab, b, a);
+    d2d_point_subtract(&ac, c, a);
+
+    return ab.x * ac.y - ab.y * ac.x;
 }
 
 static BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t element_count, size_t element_size)
@@ -133,6 +147,55 @@ static BOOL d2d_figure_add_vertex(struct d2d_figure *figure, D2D1_POINT_2F verte
     return TRUE;
 }
 
+/* FIXME: No inside/outside testing is done for beziers. */
+static BOOL d2d_figure_add_bezier(struct d2d_figure *figure, D2D1_POINT_2F p0, D2D1_POINT_2F p1, D2D1_POINT_2F p2)
+{
+    struct d2d_bezier *b;
+    unsigned int idx1, idx2;
+    float sign;
+
+    if (!d2d_array_reserve((void **)&figure->beziers, &figure->beziers_size,
+            figure->bezier_count + 1, sizeof(*figure->beziers)))
+    {
+        ERR("Failed to grow beziers array.\n");
+        return FALSE;
+    }
+
+    if (d2d_point_ccw(&p0, &p1, &p2) > 0.0f)
+    {
+        sign = -1.0f;
+        idx1 = 1;
+        idx2 = 2;
+    }
+    else
+    {
+        sign = 1.0f;
+        idx1 = 2;
+        idx2 = 1;
+    }
+
+    b = &figure->beziers[figure->bezier_count];
+    b->v[0].position = p0;
+    b->v[0].texcoord.u = 0.0f;
+    b->v[0].texcoord.v = 0.0f;
+    b->v[0].texcoord.sign = sign;
+    b->v[idx1].position = p1;
+    b->v[idx1].texcoord.u = 0.5f;
+    b->v[idx1].texcoord.v = 0.0f;
+    b->v[idx1].texcoord.sign = sign;
+    b->v[idx2].position = p2;
+    b->v[idx2].texcoord.u = 1.0f;
+    b->v[idx2].texcoord.v = 1.0f;
+    b->v[idx2].texcoord.sign = sign;
+    ++figure->bezier_count;
+
+    if (sign > 0.0f && !d2d_figure_add_vertex(figure, p1))
+        return FALSE;
+    if (!d2d_figure_add_vertex(figure, p2))
+        return FALSE;
+    return TRUE;
+}
+
 static void d2d_cdt_edge_rot(struct d2d_cdt_edge_ref *dst, const struct d2d_cdt_edge_ref *src)
 {
     dst->idx = src->idx;
@@ -193,12 +256,7 @@ static void d2d_cdt_edge_set_destination(const struct d2d_cdt *cdt,
 
 static float d2d_cdt_ccw(const struct d2d_cdt *cdt, size_t a, size_t b, size_t c)
 {
-    D2D1_POINT_2F ab, ac;
-
-    d2d_point_subtract(&ab, &cdt->vertices[b], &cdt->vertices[a]);
-    d2d_point_subtract(&ac, &cdt->vertices[c], &cdt->vertices[a]);
-
-    return ab.x * ac.y - ab.y * ac.x;
+    return d2d_point_ccw(&cdt->vertices[a], &cdt->vertices[b], &cdt->vertices[c]);
 }
 
 static BOOL d2d_cdt_rightof(const struct d2d_cdt *cdt, size_t p, const struct d2d_cdt_edge_ref *e)
@@ -773,6 +831,7 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
 /* Intersect the geometry's segments with themselves. This uses the
  * straightforward approach of testing everything against everything, but
  * there certainly exist more scalable algorithms for this. */
+/* FIXME: Beziers can't currently self-intersect. */
 static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
 {
     D2D1_POINT_2F p0, p1, q0, q1, v_p, v_q, v_qp, intersection;
@@ -920,6 +979,7 @@ static BOOL d2d_path_geometry_add_figure(struct d2d_geometry *geometry)
 
 static void d2d_geometry_destroy(struct d2d_geometry *geometry)
 {
+    HeapFree(GetProcessHeap(), 0, geometry->beziers);
     HeapFree(GetProcessHeap(), 0, geometry->faces);
     HeapFree(GetProcessHeap(), 0, geometry->vertices);
     HeapFree(GetProcessHeap(), 0, geometry);
@@ -1048,9 +1108,11 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
         const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+    struct d2d_figure *figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
+    D2D1_POINT_2F p;
     unsigned int i;
 
-    FIXME("iface %p, beziers %p, count %u stub!\n", iface, beziers, count);
+    TRACE("iface %p, beziers %p, count %u.\n", iface, beziers, count);
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
@@ -1060,9 +1122,14 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddBeziers(ID2D1GeometrySink *if
 
     for (i = 0; i < count; ++i)
     {
-        if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], beziers[i].point3))
+        /* FIXME: This tries to approximate a cubic bezier with a quadratic one. */
+        p.x = (beziers[i].point1.x + beziers[i].point2.x) * 0.75f;
+        p.y = (beziers[i].point1.y + beziers[i].point2.y) * 0.75f;
+        p.x -= (figure->vertices[figure->vertex_count - 1].x + beziers[i].point3.x) * 0.25f;
+        p.y -= (figure->vertices[figure->vertex_count - 1].y + beziers[i].point3.y) * 0.25f;
+        if (!d2d_figure_add_bezier(figure, figure->vertices[figure->vertex_count - 1], p, beziers[i].point3))
         {
-            ERR("Failed to add vertex.\n");
+            ERR("Failed to add bezier.\n");
             return;
         }
     }
@@ -1097,6 +1164,7 @@ static void d2d_path_geometry_free_figures(struct d2d_geometry *geometry)
 
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
+        HeapFree(GetProcessHeap(), 0, geometry->u.path.figures[i].beziers);
         HeapFree(GetProcessHeap(), 0, geometry->u.path.figures[i].vertices);
     }
     HeapFree(GetProcessHeap(), 0, geometry->u.path.figures);
@@ -1108,6 +1176,7 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
     HRESULT hr = E_FAIL;
+    size_t i, start;
 
     TRACE("iface %p.\n", iface);
 
@@ -1121,7 +1190,33 @@ static HRESULT STDMETHODCALLTYPE d2d_geometry_sink_Close(ID2D1GeometrySink *ifac
 
     if (!d2d_geometry_intersect_self(geometry))
         goto done;
-    hr = d2d_path_geometry_triangulate(geometry);
+    if (FAILED(hr = d2d_path_geometry_triangulate(geometry)))
+        goto done;
+
+    for (i = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        geometry->bezier_count += geometry->u.path.figures[i].bezier_count;
+    }
+
+    if (!(geometry->beziers = HeapAlloc(GetProcessHeap(), 0,
+            geometry->bezier_count * sizeof(*geometry->beziers))))
+    {
+        ERR("Failed to allocate beziers array.\n");
+        geometry->bezier_count = 0;
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    for (i = 0, start = 0; i < geometry->u.path.figure_count; ++i)
+    {
+        struct d2d_figure *figure = &geometry->u.path.figures[i];
+        if (figure->bezier_count)
+        {
+            memcpy(&geometry->beziers[start], figure->beziers,
+                    figure->bezier_count * sizeof(*figure->beziers));
+            start += figure->bezier_count;
+        }
+    }
 
 done:
     d2d_path_geometry_free_figures(geometry);
@@ -1156,9 +1251,10 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
         const D2D1_QUADRATIC_BEZIER_SEGMENT *beziers, UINT32 bezier_count)
 {
     struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+    struct d2d_figure *figure = &geometry->u.path.figures[geometry->u.path.figure_count - 1];
     unsigned int i;
 
-    FIXME("iface %p, beziers %p, bezier_count %u stub!\n", iface, beziers, bezier_count);
+    TRACE("iface %p, beziers %p, bezier_count %u.\n", iface, beziers, bezier_count);
 
     if (geometry->u.path.state != D2D_GEOMETRY_STATE_FIGURE)
     {
@@ -1168,9 +1264,10 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddQuadraticBeziers(ID2D1Geometr
 
     for (i = 0; i < bezier_count; ++i)
     {
-        if (!d2d_figure_add_vertex(&geometry->u.path.figures[geometry->u.path.figure_count - 1], beziers[i].point2))
+        if (!d2d_figure_add_bezier(figure, figure->vertices[figure->vertex_count - 1],
+                beziers[i].point1, beziers[i].point2))
         {
-            ERR("Failed to add vertex.\n");
+            ERR("Failed to add bezier.\n");
             return;
         }
     }
