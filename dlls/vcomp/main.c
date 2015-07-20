@@ -361,6 +361,63 @@ int CDECL _vcomp_sections_next(void)
     return i;
 }
 
+void CDECL _vcomp_for_static_simple_init(unsigned int first, unsigned int last, int step,
+                                         BOOL increment, unsigned int *begin, unsigned int *end)
+{
+    unsigned int iterations, per_thread, remaining;
+    struct vcomp_thread_data *thread_data = vcomp_init_thread_data();
+    struct vcomp_team_data *team_data = thread_data->team;
+    int num_threads = team_data ? team_data->num_threads : 1;
+    int thread_num = thread_data->thread_num;
+
+    TRACE("(%u, %u, %d, %u, %p, %p)\n", first, last, step, increment, begin, end);
+
+    if (num_threads == 1)
+    {
+        *begin = first;
+        *end   = last;
+        return;
+    }
+
+    if (step <= 0)
+    {
+        *begin = 0;
+        *end   = increment ? -1 : 1;
+        return;
+    }
+
+    if (increment)
+        iterations = 1 + (last - first) / step;
+    else
+    {
+        iterations = 1 + (first - last) / step;
+        step *= -1;
+    }
+
+    per_thread = iterations / num_threads;
+    remaining  = iterations - per_thread * num_threads;
+
+    if (thread_num < remaining)
+        per_thread++;
+    else if (per_thread)
+        first += remaining * step;
+    else
+    {
+        *begin = first;
+        *end   = first - step;
+        return;
+    }
+
+    *begin = first + per_thread * thread_num * step;
+    *end   = *begin + (per_thread - 1) * step;
+}
+
+void CDECL _vcomp_for_static_end(void)
+{
+    TRACE("()\n");
+    /* nothing to do here */
+}
+
 int CDECL omp_in_parallel(void)
 {
     TRACE("()\n");

@@ -59,10 +59,10 @@
 @ stub _vcomp_for_dynamic_init_i8
 @ stub _vcomp_for_dynamic_next
 @ stub _vcomp_for_dynamic_next_i8
-@ stub _vcomp_for_static_end
+@ cdecl _vcomp_for_static_end() vcomp._vcomp_for_static_end
 @ stub _vcomp_for_static_init
 @ stub _vcomp_for_static_init_i8
-@ stub _vcomp_for_static_simple_init
+@ cdecl _vcomp_for_static_simple_init(long long long long ptr ptr) vcomp._vcomp_for_static_simple_init
 @ stub _vcomp_for_static_simple_init_i8
 @ varargs _vcomp_fork(long long ptr) vcomp._vcomp_fork
 @ stub _vcomp_get_thread_num
