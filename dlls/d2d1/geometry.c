@@ -514,8 +514,8 @@ static int d2d_cdt_compare_vertices(const void *a, const void *b)
     return diff == 0.0f ? 0 : (diff > 0.0f ? 1 : -1);
 }
 
-/* Determine whether a given point is inside the geometry, using the even-odd
- * rule. */
+/* Determine whether a given point is inside the geometry, using the current
+ * fill mode rule. */
 static BOOL d2d_path_geometry_point_inside(const struct d2d_geometry *geometry, const D2D1_POINT_2F *probe)
 {
     const D2D1_POINT_2F *p0, *p1;
@@ -535,11 +535,16 @@ static BOOL d2d_path_geometry_point_inside(const struct d2d_geometry *geometry, 
             d2d_point_subtract(&v_probe, probe, p0);
 
             if ((probe->y < p0->y) != (probe->y < p1->y) && v_probe.x < v_p.x * (v_probe.y / v_p.y))
-                ++score;
+            {
+                if (geometry->u.path.fill_mode == D2D1_FILL_MODE_ALTERNATE || (probe->y < p0->y))
+                    ++score;
+                else
+                    --score;
+            }
         }
     }
 
-    return score & 1;
+    return geometry->u.path.fill_mode == D2D1_FILL_MODE_ALTERNATE ? score & 1 : score;
 }
 
 static BOOL d2d_path_geometry_add_face(struct d2d_geometry *geometry, const struct d2d_cdt *cdt,
@@ -970,7 +975,11 @@ static ULONG STDMETHODCALLTYPE d2d_geometry_sink_Release(ID2D1GeometrySink *ifac
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_SetFillMode(ID2D1GeometrySink *iface, D2D1_FILL_MODE mode)
 {
-    FIXME("iface %p, mode %#x stub!\n", iface, mode);
+    struct d2d_geometry *geometry = impl_from_ID2D1GeometrySink(iface);
+
+    TRACE("iface %p, mode %#x.\n", iface, mode);
+
+    geometry->u.path.fill_mode = mode;
 }
 
 static void STDMETHODCALLTYPE d2d_geometry_sink_SetSegmentFlags(ID2D1GeometrySink *iface, D2D1_PATH_SEGMENT flags)

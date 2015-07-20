@@ -880,6 +880,108 @@ static void test_bitmap_brush(void)
     DestroyWindow(window);
 }
 
+static void fill_geometry_sink(ID2D1GeometrySink *sink)
+{
+    D2D1_POINT_2F point;
+
+    set_point(&point, 15.0f,  20.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    set_point(&point, 55.0f,  20.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 55.0f, 220.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 25.0f, 220.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 25.0f, 100.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 75.0f, 100.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 75.0f, 300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point,  5.0f, 300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point,  5.0f,  60.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 45.0f,  60.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 45.0f, 180.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 35.0f, 180.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 35.0f, 140.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 65.0f, 140.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 65.0f, 260.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 15.0f, 260.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    set_point(&point, 155.0f, 300.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    set_point(&point, 155.0f, 160.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point,  85.0f, 160.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point,  85.0f, 300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 120.0f, 300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 120.0f,  20.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 155.0f,  20.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 155.0f, 160.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point,  85.0f, 160.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point,  85.0f,  20.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 120.0f,  20.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 120.0f, 300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    set_point(&point, 165.0f,  20.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    set_point(&point, 165.0f, 300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 235.0f, 300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 235.0f,  20.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    set_point(&point, 225.0f,  60.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    set_point(&point, 225.0f, 260.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 175.0f, 260.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 175.0f,  60.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    set_point(&point, 215.0f, 220.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    set_point(&point, 185.0f, 220.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 185.0f, 100.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 215.0f, 100.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+    set_point(&point, 195.0f, 180.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    set_point(&point, 205.0f, 180.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 205.0f, 140.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 195.0f, 140.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+}
+
 static void test_path_geometry(void)
 {
     ID2D1GeometrySink *sink, *tmp_sink;
@@ -911,6 +1013,12 @@ static void test_path_geometry(void)
     rt = create_render_target(surface);
     ok(!!rt, "Failed to create render target.\n");
     ID2D1RenderTarget_GetFactory(rt, &factory);
+
+    ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
+    ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
+    set_color(&color, 0.890f, 0.851f, 0.600f, 1.0f);
+    hr = ID2D1RenderTarget_CreateSolidColorBrush(rt, &color, NULL, &brush);
+    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
 
     /* Close() when closed. */
     hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
@@ -1068,104 +1176,10 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_Open(geometry, &sink);
     ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
-
-    set_point(&point, 15.0f,  20.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 55.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 55.0f, 220.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 25.0f, 220.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 25.0f, 100.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 75.0f, 100.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 75.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  5.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  5.0f,  60.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 45.0f,  60.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 45.0f, 180.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 35.0f, 180.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 35.0f, 140.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 65.0f, 140.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 65.0f, 260.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 15.0f, 260.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
-
-    set_point(&point, 155.0f, 300.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 155.0f, 160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  85.0f, 160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  85.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 120.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 120.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 155.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 155.0f, 160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  85.0f, 160.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point,  85.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 120.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 120.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
-
-    set_point(&point, 165.0f,  20.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 165.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 235.0f, 300.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 235.0f,  20.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
-    set_point(&point, 225.0f,  60.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 225.0f, 260.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 175.0f, 260.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 175.0f,  60.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
-    set_point(&point, 215.0f, 220.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 185.0f, 220.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 185.0f, 100.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 215.0f, 100.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
-    set_point(&point, 195.0f, 180.0f);
-    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
-    set_point(&point, 205.0f, 180.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 205.0f, 140.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    set_point(&point, 195.0f, 140.0f);
-    ID2D1GeometrySink_AddLine(sink, point);
-    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
-
+    /* The fillmode that's used is the last one set before the sink is closed. */
+    ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
+    fill_geometry_sink(sink);
+    ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_ALTERNATE);
     hr = ID2D1GeometrySink_Close(sink);
     ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
     hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
@@ -1175,28 +1189,44 @@ static void test_path_geometry(void)
     ok(SUCCEEDED(hr), "Failed to get segment count, hr %#x.\n", hr);
     /* Intersections don't create extra segments. */
     ok(count == 44, "Got unexpected segment count %u.\n", count);
+    ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
     ID2D1GeometrySink_Release(sink);
 
-    ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
-    ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
-
-    set_color(&color, 0.890f, 0.851f, 0.600f, 1.0f);
-    hr = ID2D1RenderTarget_CreateSolidColorBrush(rt, &color, NULL, &brush);
-    ok(SUCCEEDED(hr), "Failed to create brush, hr %#x.\n", hr);
-
     ID2D1RenderTarget_BeginDraw(rt);
-
     set_color(&color, 0.396f, 0.180f, 0.537f, 1.0f);
     ID2D1RenderTarget_Clear(rt, &color);
-
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)geometry, (ID2D1Brush *)brush, NULL);
-
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
     match = compare_surface(surface, "736d9bf019bcf0be264571c1bd954f07752330ab");
     ok(match, "Surface does not match.\n");
-
     ID2D1PathGeometry_Release(geometry);
+
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+    fill_geometry_sink(sink);
+    ID2D1GeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get figure count, hr %#x.\n", hr);
+    ok(count == 6, "Got unexpected figure count %u.\n", count);
+    hr = ID2D1PathGeometry_GetSegmentCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get segment count, hr %#x.\n", hr);
+    ok(count == 44, "Got unexpected segment count %u.\n", count);
+    ID2D1GeometrySink_Release(sink);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)geometry, (ID2D1Brush *)brush, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    match = compare_surface(surface, "dd80ed3c218698687156ff4598db3a53917f8476");
+    ok(match, "Surface does not match.\n");
+    ID2D1PathGeometry_Release(geometry);
+
     ID2D1SolidColorBrush_Release(brush);
     ID2D1RenderTarget_Release(rt);
     refcount = ID2D1Factory_Release(factory);
