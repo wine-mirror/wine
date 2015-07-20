@@ -208,17 +208,21 @@ static void CDECL num_threads_cb(BOOL nested, int nested_threads, LONG *count)
     thread_count = 0;
     p_vcomp_fork(TRUE, 1, num_threads_cb2, &thread_count);
     if (nested)
-        ok(thread_count == nested_threads, "expected %d thread, got %d\n", nested_threads, thread_count);
+        ok(thread_count == nested_threads, "expected %d threads, got %d\n", nested_threads, thread_count);
     else
         ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
+
+    thread_count = 0;
+    p_vcomp_fork(FALSE, 1, num_threads_cb2, &thread_count);
+    ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
 
     p_vcomp_set_num_threads(4);
     thread_count = 0;
     p_vcomp_fork(TRUE, 1, num_threads_cb2, &thread_count);
     if (nested)
-        ok(thread_count == 4 , "expected 4 thread, got %d\n", thread_count);
+        ok(thread_count == 4, "expected 4 threads, got %d\n", thread_count);
     else
-        ok(thread_count == 1 , "expected 1 thread, got %d\n", thread_count);
+        ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
 }
 
 static void test_omp_get_num_threads(BOOL nested)
@@ -240,6 +244,19 @@ static void test_omp_get_num_threads(BOOL nested)
     thread_count = 0;
     p_vcomp_fork(TRUE, 3, num_threads_cb, nested, max_threads, &thread_count);
     ok(thread_count == max_threads, "expected %d threads, got %d\n", max_threads, thread_count);
+
+    num_threads = pomp_get_num_threads();
+    ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
+    thread_count = 0;
+    p_vcomp_fork(FALSE, 3, num_threads_cb, TRUE, max_threads, &thread_count);
+    ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
+
+    pomp_set_num_threads(1);
+    num_threads = pomp_get_num_threads();
+    ok(num_threads == 1, "expected num_threads == 1, got %d\n", num_threads);
+    thread_count = 0;
+    p_vcomp_fork(TRUE, 3, num_threads_cb, nested, 1, &thread_count);
+    ok(thread_count == 1, "expected 1 thread, got %d\n", thread_count);
 
     pomp_set_num_threads(2);
     num_threads = pomp_get_num_threads();

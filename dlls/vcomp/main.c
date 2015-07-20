@@ -54,6 +54,7 @@ struct vcomp_thread_data
     struct vcomp_team_data  *team;
     struct vcomp_task_data  *task;
     int                     thread_num;
+    BOOL                    parallel;
     int                     fork_threads;
 
     /* only used for concurrent tasks */
@@ -203,6 +204,7 @@ static struct vcomp_thread_data *vcomp_init_thread_data(void)
     thread_data->team           = NULL;
     thread_data->task           = &data->task;
     thread_data->thread_num     = 0;
+    thread_data->parallel       = FALSE;
     thread_data->fork_threads   = 0;
     thread_data->section        = 1;
 
@@ -410,9 +412,10 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
 
     TRACE("(%d, %d, %p, ...)\n", ifval, nargs, wrapper);
 
+    if (prev_thread_data->parallel && !vcomp_nested_fork)
+        ifval = FALSE;
+
     if (!ifval)
-        num_threads = 1;
-    else if (prev_thread_data->team && !vcomp_nested_fork)
         num_threads = 1;
     else if (prev_thread_data->fork_threads)
         num_threads = prev_thread_data->fork_threads;
@@ -433,6 +436,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     thread_data.team            = &team_data;
     thread_data.task            = &task_data;
     thread_data.thread_num      = 0;
+    thread_data.parallel        = ifval || prev_thread_data->parallel;
     thread_data.fork_threads    = 0;
     thread_data.section         = 1;
     list_init(&thread_data.entry);
@@ -450,6 +454,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             data->team          = &team_data;
             data->task          = &task_data;
             data->thread_num    = team_data.num_threads++;
+            data->parallel      = thread_data.parallel;
             data->fork_threads  = 0;
             data->section       = 1;
             list_remove(&data->entry);
@@ -470,6 +475,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             data->team          = &team_data;
             data->task          = &task_data;
             data->thread_num    = team_data.num_threads;
+            data->parallel      = thread_data.parallel;
             data->fork_threads  = 0;
             data->section       = 1;
             InitializeConditionVariable(&data->cond);
