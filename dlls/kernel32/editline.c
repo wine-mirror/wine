@@ -987,6 +987,10 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
 	    }
 	}
 
+        GetConsoleMode(hConsoleIn, &mode);
+        ctx.insert = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==
+                     (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS);
+
 	if (func)
 	    (func)(&ctx);
 	else if (!(ir.Event.KeyEvent.dwControlKeyState & LEFT_ALT_PRESSED))
