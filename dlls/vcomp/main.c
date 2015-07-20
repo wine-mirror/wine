@@ -52,6 +52,7 @@ static RTL_CRITICAL_SECTION vcomp_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 struct vcomp_thread_data
 {
     struct vcomp_team_data  *team;
+    struct vcomp_task_data  *task;
     int                     thread_num;
     int                     fork_threads;
 
@@ -77,7 +78,10 @@ struct vcomp_team_data
     /* barrier */
     unsigned int            barrier;
     int                     barrier_count;
+};
 
+struct vcomp_task_data
+{
     /* section */
     unsigned int            section;
     int                     num_sections;
@@ -180,17 +184,27 @@ static inline void vcomp_set_thread_data(struct vcomp_thread_data *thread_data)
 static struct vcomp_thread_data *vcomp_init_thread_data(void)
 {
     struct vcomp_thread_data *thread_data = vcomp_get_thread_data();
-    if (thread_data) return thread_data;
+    struct
+    {
+        struct vcomp_thread_data thread;
+        struct vcomp_task_data   task;
+    } *data;
 
-    if (!(thread_data = HeapAlloc(GetProcessHeap(), 0, sizeof(*thread_data))))
+    if (thread_data) return thread_data;
+    if (!(data = HeapAlloc(GetProcessHeap(), 0, sizeof(*data))))
     {
         ERR("could not create thread data\n");
         ExitProcess(1);
     }
 
+    data->task.section          = 0;
+
+    thread_data = &data->thread;
     thread_data->team           = NULL;
+    thread_data->task           = &data->task;
     thread_data->thread_num     = 0;
     thread_data->fork_threads   = 0;
+    thread_data->section        = 1;
 
     vcomp_set_thread_data(thread_data);
     return thread_data;
@@ -311,35 +325,35 @@ void CDECL _vcomp_single_end(void)
 
 void CDECL _vcomp_sections_init(int n)
 {
-    struct vcomp_thread_data *thread_data = vcomp_get_thread_data();
-    struct vcomp_team_data *team_data = thread_data->team;
+    struct vcomp_thread_data *thread_data = vcomp_init_thread_data();
+    struct vcomp_task_data *task_data = thread_data->task;
 
     TRACE("(%d)\n", n);
 
     EnterCriticalSection(&vcomp_section);
     thread_data->section++;
-    if ((int)(thread_data->section - team_data->section) > 0)
+    if ((int)(thread_data->section - task_data->section) > 0)
     {
-        team_data->section       = thread_data->section;
-        team_data->num_sections  = n;
-        team_data->section_index = 0;
+        task_data->section       = thread_data->section;
+        task_data->num_sections  = n;
+        task_data->section_index = 0;
     }
     LeaveCriticalSection(&vcomp_section);
 }
 
 int CDECL _vcomp_sections_next(void)
 {
-    struct vcomp_thread_data *thread_data = vcomp_get_thread_data();
-    struct vcomp_team_data *team_data = thread_data->team;
+    struct vcomp_thread_data *thread_data = vcomp_init_thread_data();
+    struct vcomp_task_data *task_data = thread_data->task;
     int i = -1;
 
     TRACE("()\n");
 
     EnterCriticalSection(&vcomp_section);
-    if (thread_data->section == team_data->section &&
-        team_data->section_index != team_data->num_sections)
+    if (thread_data->section == task_data->section &&
+        task_data->section_index != task_data->num_sections)
     {
-        i = team_data->section_index++;
+        i = task_data->section_index++;
     }
     LeaveCriticalSection(&vcomp_section);
     return i;
@@ -391,6 +405,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     struct vcomp_thread_data *prev_thread_data = vcomp_init_thread_data();
     struct vcomp_thread_data thread_data;
     struct vcomp_team_data team_data;
+    struct vcomp_task_data task_data;
     int num_threads;
 
     TRACE("(%d, %d, %p, ...)\n", ifval, nargs, wrapper);
@@ -412,9 +427,11 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     __ms_va_start(team_data.valist, wrapper);
     team_data.barrier           = 0;
     team_data.barrier_count     = 0;
-    team_data.section           = 0;
+
+    task_data.section           = 0;
 
     thread_data.team            = &team_data;
+    thread_data.task            = &task_data;
     thread_data.thread_num      = 0;
     thread_data.fork_threads    = 0;
     thread_data.section         = 1;
@@ -431,6 +448,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
         {
             struct vcomp_thread_data *data = LIST_ENTRY(ptr, struct vcomp_thread_data, entry);
             data->team          = &team_data;
+            data->task          = &task_data;
             data->thread_num    = team_data.num_threads++;
             data->fork_threads  = 0;
             data->section       = 1;
@@ -450,6 +468,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             if (!data) break;
 
             data->team          = &team_data;
+            data->task          = &task_data;
             data->thread_num    = team_data.num_threads;
             data->fork_threads  = 0;
             data->section       = 1;

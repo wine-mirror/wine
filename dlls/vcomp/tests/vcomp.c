@@ -378,15 +378,35 @@ static void test_vcomp_sections_init(void)
     int max_threads = pomp_get_max_threads();
     int i;
 
+if (0)
+{
+    /* calling _vcomp_sections_next without prior _vcomp_sections_init
+     * returns uninitialized memory on Windows. */
+    i = p_vcomp_sections_next();
+    ok(i == -1, "expected -1, got %d\n", i);
+}
+
+    a = b = c = 0;
+    section_cb(&a, &b, &c);
+    ok(a == 20, "expected a == 20, got %d\n", a);
+    ok(b == 30, "expected b == 30, got %d\n", b);
+    ok(c == 40, "expected c == 40, got %d\n", c);
+
     for (i = 1; i <= 4; i++)
     {
         pomp_set_num_threads(i);
 
         a = b = c = 0;
         p_vcomp_fork(TRUE, 3, section_cb, &a, &b, &c);
-        ok(a == 20, "expected a = 20, got %d\n", a);
-        ok(b == 30, "expected b = 30, got %d\n", b);
-        ok(c == 40, "expected c = 40, got %d\n", c);
+        ok(a == 20, "expected a == 20, got %d\n", a);
+        ok(b == 30, "expected b == 30, got %d\n", b);
+        ok(c == 40, "expected c == 40, got %d\n", c);
+
+        a = b = c = 0;
+        p_vcomp_fork(FALSE, 3, section_cb, &a, &b, &c);
+        ok(a == 20, "expected a == 20, got %d\n", a);
+        ok(b == 30, "expected b == 30, got %d\n", b);
+        ok(c == 40, "expected c == 40, got %d\n", c);
     }
 
     pomp_set_num_threads(max_threads);
