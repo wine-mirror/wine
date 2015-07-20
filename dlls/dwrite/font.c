@@ -771,10 +771,19 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
     TRACE("(%p)->(%.2f %.2f %p %d %d %u %p %p)\n", This, em_size, ppdip, m,
         use_gdi_natural, is_sideways, glyph_count, glyphs, advances);
 
-    if (m && memcmp(m, &identity, sizeof(*m)))
-        FIXME("transform is not supported, %s\n", debugstr_matrix(m));
+    if (em_size < 0.0 || ppdip <= 0.0) {
+        memset(advances, 0, sizeof(*advances) * glyph_count);
+        return E_INVALIDARG;
+    }
 
     scale = em_size * ppdip / This->metrics.designUnitsPerEm;
+    if (scale == 0.0) {
+        memset(advances, 0, sizeof(*advances) * glyph_count);
+        return S_OK;
+    }
+
+    if (m && memcmp(m, &identity, sizeof(*m)))
+        FIXME("transform is not supported, %s\n", debugstr_matrix(m));
 
     for (i = 0; i < glyph_count; i++) {
         hr = IDWriteFontFace2_GetDesignGlyphAdvances(iface, 1, glyphs + i, advances + i, is_sideways);

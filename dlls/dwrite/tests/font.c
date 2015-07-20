@@ -3905,6 +3905,121 @@ static void test_GetPanose(void)
     IDWriteFactory_Release(factory);
 }
 
+static INT32 get_gdi_font_advance(HDC hdc, FLOAT emsize)
+{
+    LOGFONTW logfont;
+    HFONT hfont;
+    BOOL ret;
+    ABC abc;
+
+    memset(&logfont, 0, sizeof(logfont));
+    logfont.lfHeight = (LONG)-emsize;
+    logfont.lfWeight = FW_NORMAL;
+    logfont.lfQuality = CLEARTYPE_QUALITY;
+    lstrcpyW(logfont.lfFaceName, tahomaW);
+
+    hfont = CreateFontIndirectW(&logfont);
+    SelectObject(hdc, hfont);
+
+    ret = GetCharABCWidthsW(hdc, 'A', 'A', &abc);
+    ok(ret, "got %d\n", ret);
+
+    DeleteObject(hfont);
+
+    return abc.abcA + abc.abcB + abc.abcC;
+}
+
+static void test_GetGdiCompatibleGlyphAdvances(void)
+{
+    IDWriteFontFace1 *fontface1;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    IDWriteFont *font;
+    HRESULT hr;
+    HDC hdc;
+    UINT32 codepoint;
+    UINT16 glyph;
+    FLOAT emsize;
+    DWRITE_FONT_METRICS1 fm;
+    INT32 advance;
+
+    factory = create_factory();
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_NORMAL);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace1, (void**)&fontface1);
+    IDWriteFontFace_Release(fontface);
+
+    if (hr != S_OK) {
+        IDWriteFactory_Release(factory);
+        win_skip("GetGdiCompatibleGlyphAdvances() is not supported\n");
+        return;
+    }
+
+    codepoint = 'A';
+    glyph = 0;
+    hr = IDWriteFontFace1_GetGlyphIndices(fontface1, &codepoint, 1, &glyph);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(glyph > 0, "got %u\n", glyph);
+
+    /* zero emsize */
+    advance = 1;
+    hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, 0.0,
+        1.0, NULL, FALSE, FALSE, 1, &glyph, &advance);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(advance == 0, "got %d\n", advance);
+
+    /* negative emsize */
+    advance = 1;
+    hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, -1.0,
+        1.0, NULL, FALSE, FALSE, 1, &glyph, &advance);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(advance == 0, "got %d\n", advance);
+
+    /* zero ppdip */
+    advance = 1;
+    hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, 1.0,
+        0.0, NULL, FALSE, FALSE, 1, &glyph, &advance);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(advance == 0, "got %d\n", advance);
+
+    /* negative ppdip */
+    advance = 1;
+    hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, 1.0,
+        -1.0, NULL, FALSE, FALSE, 1, &glyph, &advance);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(advance == 0, "got %d\n", advance);
+
+    IDWriteFontFace1_GetMetrics(fontface1, &fm);
+
+    hdc = CreateCompatibleDC(0);
+
+    for (emsize = 1.0; emsize <= fm.designUnitsPerEm; emsize += 1.0) {
+        INT32 gdi_advance;
+
+        gdi_advance = get_gdi_font_advance(hdc, emsize);
+        hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, emsize,
+            1.0, NULL, FALSE, FALSE, 1, &glyph, &advance);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        /* advance is in design units */
+        advance = (int)floorf(emsize * advance / fm.designUnitsPerEm + 0.5f);
+
+        /* allow 1 pixel difference for large sizes, for Tahoma this happens for 16 sizes in [1, 2048] range */
+        if (emsize > 150.0)
+            ok((advance - gdi_advance) <= 1, "%.0f: got advance %d, expected %d\n", emsize, advance, gdi_advance);
+        else
+            ok(gdi_advance == advance, "%.0f: got advance %d, expected %d\n", emsize, advance, gdi_advance);
+    }
+
+    DeleteObject(hdc);
+
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -3950,6 +4065,7 @@ START_TEST(font)
     test_CreateGlyphRunAnalysis();
     test_GetGdiCompatibleMetrics();
     test_GetPanose();
+    test_GetGdiCompatibleGlyphAdvances();
 
     IDWriteFactory_Release(factory);
 }
