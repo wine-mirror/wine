@@ -2137,6 +2137,10 @@ HRESULT __cdecl wined3d_device_clear_rendertarget_view(struct wined3d_device *de
         struct wined3d_rendertarget_view *view, const RECT *rect, const struct wined3d_color *color);
 void __cdecl wined3d_device_copy_resource(struct wined3d_device *device,
         struct wined3d_resource *dst_resource, struct wined3d_resource *src_resource);
+void __cdecl wined3d_device_copy_sub_resource_region(struct wined3d_device *device,
+        struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx, unsigned int dst_x,
+        unsigned int dst_y, unsigned int dst_z, struct wined3d_resource *src_resource,
+        unsigned int src_sub_resource_idx, const struct wined3d_box *src_box);
 HRESULT __cdecl wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, HWND focus_window, DWORD behaviour_flags, BYTE surface_alignment,
         struct wined3d_device_parent *device_parent, struct wined3d_device **device);

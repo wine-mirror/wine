@@ -635,10 +635,25 @@ static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device1 *
         ID3D10Resource *dst_resource, UINT dst_subresource_idx, UINT dst_x, UINT dst_y, UINT dst_z,
         ID3D10Resource *src_resource, UINT src_subresource_idx, const D3D10_BOX *src_box)
 {
-    FIXME("iface %p, dst_resource %p, dst_subresource_idx %u, dst_x %u, dst_y %u, dst_z %u,\n"
-            "\tsrc_resource %p, src_subresource_idx %u, src_box %p stub!\n",
+    struct wined3d_resource *wined3d_dst_resource, *wined3d_src_resource;
+    struct d3d10_device *device = impl_from_ID3D10Device(iface);
+    struct wined3d_box wined3d_src_box;
+
+    TRACE("iface %p, dst_resource %p, dst_subresource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
+            "src_resource %p, src_subresource_idx %u, src_box %p.\n",
             iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
             src_resource, src_subresource_idx, src_box);
+
+    wined3d_dst_resource = wined3d_resource_from_resource(dst_resource);
+    wined3d_src_resource = wined3d_resource_from_resource(src_resource);
+    wined3d_src_box.left = src_box->left;
+    wined3d_src_box.top = src_box->top;
+    wined3d_src_box.front = src_box->front;
+    wined3d_src_box.right = src_box->right;
+    wined3d_src_box.bottom = src_box->bottom;
+    wined3d_src_box.back = src_box->back;
+    wined3d_device_copy_sub_resource_region(device->wined3d_device, wined3d_dst_resource, dst_subresource_idx,
+            dst_x, dst_y, dst_z, wined3d_src_resource, src_subresource_idx, &wined3d_src_box);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_CopyResource(ID3D10Device1 *iface,

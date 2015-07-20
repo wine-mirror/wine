@@ -3908,6 +3908,80 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
     }
 }
 
+void CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *device,
+        struct wined3d_resource *dst_resource, unsigned int dst_sub_resource_idx, unsigned int dst_x,
+        unsigned int dst_y, unsigned int dst_z, struct wined3d_resource *src_resource,
+        unsigned int src_sub_resource_idx, const struct wined3d_box *src_box)
+{
+    struct wined3d_surface *dst_surface, *src_surface;
+    struct wined3d_texture *dst_texture, *src_texture;
+    struct wined3d_resource *tmp;
+    RECT dst_rect, src_rect;
+    HRESULT hr;
+
+    TRACE("device %p, dst_resource %p, dst_sub_resource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
+            "src_resource %p, src_sub_resource_idx %u, src_box %p.\n",
+            device, dst_resource, dst_sub_resource_idx, dst_x, dst_y, dst_z,
+            src_resource, src_sub_resource_idx, src_box);
+
+    if (src_resource == dst_resource && src_sub_resource_idx == dst_sub_resource_idx)
+    {
+        WARN("Source and destination are the same sub-resource.\n");
+        return;
+    }
+
+    if (src_resource->type != dst_resource->type)
+    {
+        WARN("Resource types (%s / %s) don't match.\n",
+                debug_d3dresourcetype(dst_resource->type),
+                debug_d3dresourcetype(src_resource->type));
+        return;
+    }
+
+    if (src_resource->format->id != dst_resource->format->id)
+    {
+        WARN("Resource formats (%s / %s) don't match.\n",
+                debug_d3dformat(dst_resource->format->id),
+                debug_d3dformat(src_resource->format->id));
+        return;
+    }
+
+    if (dst_resource->type != WINED3D_RTYPE_TEXTURE)
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(dst_resource->type));
+        return;
+    }
+
+    dst_texture = wined3d_texture_from_resource(dst_resource);
+    if (!(tmp = wined3d_texture_get_sub_resource(dst_texture, dst_sub_resource_idx)))
+    {
+        WARN("Invalid dst_sub_resource_idx %u.\n", dst_sub_resource_idx);
+        return;
+    }
+    dst_surface = surface_from_resource(tmp);
+
+    src_texture = wined3d_texture_from_resource(src_resource);
+    if (!(tmp = wined3d_texture_get_sub_resource(src_texture, src_sub_resource_idx)))
+    {
+        WARN("Invalid src_sub_resource_idx %u.\n", src_sub_resource_idx);
+        return;
+    }
+    src_surface = surface_from_resource(tmp);
+
+    dst_rect.left = dst_x;
+    dst_rect.top = dst_y;
+    dst_rect.right = dst_x + (src_box->right - src_box->left);
+    dst_rect.bottom = dst_y + (src_box->bottom - src_box->top);
+
+    src_rect.left = src_box->left;
+    src_rect.top = src_box->top;
+    src_rect.right = src_box->right;
+    src_rect.bottom = src_box->bottom;
+
+    if (FAILED(hr = wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
+        ERR("Failed to blit, hr %#x.\n", hr);
+}
+
 HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
         struct wined3d_rendertarget_view *view, const RECT *rect, const struct wined3d_color *color)
 {
