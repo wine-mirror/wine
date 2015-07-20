@@ -3403,6 +3403,7 @@ static void test_CreateGlyphRunAnalysis(void)
     RECT rect;
     DWRITE_GLYPH_OFFSET offset;
     DWRITE_GLYPH_METRICS metrics;
+    DWRITE_FONT_METRICS fm;
     int i;
 
     factory = create_factory();
@@ -3488,6 +3489,41 @@ static void test_CreateGlyphRunAnalysis(void)
             ok(!IsRectEmpty(&rect), "got empty rect\n");
         }
         }
+
+        IDWriteGlyphRunAnalysis_Release(analysis);
+    }
+
+    IDWriteFontFace_GetMetrics(run.fontFace, &fm);
+
+    /* check bbox for a single glyph run */
+    for (run.fontEmSize = 1.0; run.fontEmSize <= 100.0; run.fontEmSize += 1.0) {
+        DWRITE_GLYPH_METRICS gm;
+        LONG bboxX, bboxY;
+
+        hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+            DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_GDI_CLASSIC,
+            0.0, 0.0, &analysis);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        memset(&rect, 0, sizeof(rect));
+        hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+    todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (hr != S_OK)
+            break;
+
+        hr = IDWriteFontFace_GetGdiCompatibleGlyphMetrics(run.fontFace, run.fontEmSize, 1.0, NULL,
+             DWRITE_MEASURING_MODE_GDI_CLASSIC, run.glyphIndices, 1, &gm, run.isSideways);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        /* metrics are in design units */
+        bboxX = (int)floorf((gm.advanceWidth - gm.leftSideBearing - gm.rightSideBearing) * run.fontEmSize / fm.designUnitsPerEm + 0.5f);
+        bboxY = (int)floorf((gm.advanceHeight - gm.topSideBearing - gm.bottomSideBearing) * run.fontEmSize / fm.designUnitsPerEm + 0.5f);
+
+        rect.right -= rect.left;
+        rect.bottom -= rect.top;
+        ok(abs(bboxX - rect.right) <= 1, "%.0f: bbox width %d, from metrics %d\n", run.fontEmSize, rect.right, bboxX);
+        ok(abs(bboxY - rect.bottom) <= 1, "%.0f: bbox height %d, from metrics %d\n", run.fontEmSize, rect.bottom, bboxY);
 
         IDWriteGlyphRunAnalysis_Release(analysis);
     }
