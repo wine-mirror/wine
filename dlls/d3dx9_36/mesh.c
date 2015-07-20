@@ -7266,3 +7266,12 @@ HRESULT WINAPI D3DXIntersect(ID3DXBaseMesh *mesh, const D3DXVECTOR3 *ray_pos, co
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DXTessellateNPatches(ID3DXMesh *mesh, const DWORD *adjacency_in, float num_segs,
+        BOOL quadratic_normals, ID3DXMesh **mesh_out, ID3DXBuffer **adjacency_out)
+{
+    FIXME("mesh %p, adjacency_in %p, num_segs %f, quadratic_normals %d, mesh_out %p, adjacency_out %p stub.\n",
+            mesh, adjacency_in, num_segs, quadratic_normals, mesh_out, adjacency_out);
+
+    return E_NOTIMPL;
+}

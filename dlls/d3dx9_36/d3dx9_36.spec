@@ -293,7 +293,7 @@
 @ stub D3DXSimplifyMesh(ptr ptr ptr ptr long long ptr)
 @ stdcall D3DXSphereBoundProbe(ptr float ptr ptr)
 @ stub D3DXSplitMesh(ptr ptr long long ptr ptr ptr ptr ptr)
-@ stub D3DXTessellateNPatches(ptr ptr long long ptr ptr)
+@ stdcall D3DXTessellateNPatches(ptr ptr float long ptr ptr)
 @ stub D3DXTessellateRectPatch(ptr ptr ptr ptr ptr)
 @ stub D3DXTessellateTriPatch(ptr ptr ptr ptr ptr)
 @ stub D3DXTriPatchSize(ptr ptr ptr)
