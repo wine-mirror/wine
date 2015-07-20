@@ -3209,7 +3209,7 @@ static const struct message WmMinimizeMDIchildVisibleSeq[] = {
     { 0 }
 };
 /* ShowWindow(SW_RESTORE) for a not visible MDI child window */
-static const struct message WmRestoreMDIchildInisibleSeq[] = {
+static const struct message WmRestoreMDIchildInvisibleSeq[] = {
     { HCBT_MINMAX, hook|lparam, 0, SW_RESTORE },
     { WM_WINDOWPOSCHANGING, sent|wparam, SWP_SHOWWINDOW|SWP_FRAMECHANGED|SWP_STATECHANGED  },
     { WM_NCCALCSIZE, sent|wparam, 1 },
@@ -3537,7 +3537,7 @@ static void test_mdi_messages(void)
     ok_sequence(WmHideChildSeq, "ShowWindow(SW_HIDE):MDI child", FALSE);
 
     ShowWindow(mdi_child2, SW_RESTORE);
-    ok_sequence(WmRestoreMDIchildInisibleSeq, "ShowWindow(SW_RESTORE):invisible MDI child", FALSE);
+    ok_sequence(WmRestoreMDIchildInvisibleSeq, "ShowWindow(SW_RESTORE):invisible MDI child", FALSE);
     flush_sequence();
 
     ok(GetWindowLongA(mdi_child2, GWL_STYLE) & WS_VISIBLE, "MDI child should be visible\n");
