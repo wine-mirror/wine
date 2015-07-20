@@ -848,6 +848,10 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGlyphRun(ID2D1RenderTarg
 
     if (measuring_mode)
         FIXME("Ignoring measuring mode %#x.\n", measuring_mode);
+    if (render_target->text_rendering_params)
+        FIXME("Ignoring text rendering parameters %p.\n", render_target->text_rendering_params);
+    if (render_target->drawing_state.textAntialiasMode != D2D1_TEXT_ANTIALIAS_MODE_ALIASED)
+        FIXME("Ignoring text antialiasing mode %#x.\n", render_target->drawing_state.textAntialiasMode);
 
     if (FAILED(hr = ID2D1Factory_CreatePathGeometry(render_target->factory, &geometry)))
     {
