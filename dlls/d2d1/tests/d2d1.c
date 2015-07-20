@@ -277,6 +277,7 @@ static void test_clip(void)
     D2D1_SIZE_F size;
     HWND window;
     HRESULT hr;
+    BOOL match;
     static const D2D1_MATRIX_3X2_F identity =
     {
         1.0f, 0.0f,
@@ -370,7 +371,8 @@ static void test_clip(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    ok(compare_surface(surface, "035a44d4198d6e422e9de6185b5b2c2bac5e33c9"), "Surface does not match.\n");
+    match = compare_surface(surface, "035a44d4198d6e422e9de6185b5b2c2bac5e33c9");
+    ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_Release(rt);
     IDXGISurface_Release(surface);
@@ -606,6 +608,7 @@ static void test_color_brush(void)
     float opacity;
     HWND window;
     HRESULT hr;
+    BOOL match;
 
     if (!(device = create_device()))
     {
@@ -681,7 +684,8 @@ static void test_color_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    ok(compare_surface(surface, "6d1218fca5e21fb7e287b3a439d60dbc251f5ceb"), "Surface does not match.\n");
+    match = compare_surface(surface, "6d1218fca5e21fb7e287b3a439d60dbc251f5ceb");
+    ok(match, "Surface does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
     ID2D1RenderTarget_Release(rt);
@@ -711,6 +715,7 @@ static void test_bitmap_brush(void)
     float opacity;
     HWND window;
     HRESULT hr;
+    BOOL match;
 
     static const struct
     {
@@ -833,7 +838,8 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    ok(compare_surface(surface, "393636185359a550d459e1e5f0e25411814f724c"), "Surface does not match.\n");
+    match = compare_surface(surface, "393636185359a550d459e1e5f0e25411814f724c");
+    ok(match, "Surface does not match.\n");
 
     ID2D1RenderTarget_BeginDraw(rt);
 
@@ -861,7 +867,8 @@ static void test_bitmap_brush(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    ok(compare_surface(surface, "b4b775afecdae2d26642001f4faff73663bb8b31"), "Surface does not match.\n");
+    match = compare_surface(surface, "b4b775afecdae2d26642001f4faff73663bb8b31");
+    ok(match, "Surface does not match.\n");
 
     ID2D1BitmapBrush_Release(brush);
     refcount = ID2D1Bitmap_Release(bitmap);
@@ -889,6 +896,7 @@ static void test_path_geometry(void)
     UINT32 count;
     HWND window;
     HRESULT hr;
+    BOOL match;
 
     if (!(device = create_device()))
     {
@@ -1185,7 +1193,8 @@ static void test_path_geometry(void)
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
-    ok(compare_surface(surface, "736d9bf019bcf0be264571c1bd954f07752330ab"), "Surface does not match.\n");
+    match = compare_surface(surface, "736d9bf019bcf0be264571c1bd954f07752330ab");
+    ok(match, "Surface does not match.\n");
 
     ID2D1PathGeometry_Release(geometry);
     ID2D1SolidColorBrush_Release(brush);
