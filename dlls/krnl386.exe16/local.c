@@ -998,7 +998,7 @@ notify_done:
  */
 static BOOL16 LOCAL_NewHTable( HANDLE16 ds )
 {
-    char *ptr = MapSL( MAKESEGPTR( ds, 0 ) );
+    char *ptr;
     LOCALHEAPINFO *pInfo;
     LOCALHANDLEENTRY *pEntry;
     HLOCAL16 handle;

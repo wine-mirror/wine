@@ -1084,7 +1084,7 @@ LPVOID WINAPI LockResource16( HGLOBAL16 handle )
  */
 DWORD WINAPI SizeofResource16( HMODULE16 hModule, HRSRC16 hRsrc )
 {
-    NE_MODULE *pModule = NE_GetPtr( hModule );
+    NE_MODULE *pModule;
 
     TRACE("(%x, %x)\n", hModule, hRsrc );
 
