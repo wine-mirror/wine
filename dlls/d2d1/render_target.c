@@ -551,6 +551,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRectangle(ID2D1RenderTar
     ID2D1RectangleGeometry *geometry;
     HRESULT hr;
 
+    TRACE("iface %p, rect %p, brush %p.\n", iface, rect, brush);
+
     if (FAILED(hr = ID2D1Factory_CreateRectangleGeometry(render_target->factory, rect, &geometry)))
     {
         ERR("Failed to create geometry, hr %#x.\n", hr);
