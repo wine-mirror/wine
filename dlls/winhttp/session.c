@@ -2038,8 +2038,6 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
                 if (netconn_set_timeout( &request->netconn, TRUE, send )) ret = FALSE;
                 if (netconn_set_timeout( &request->netconn, FALSE, receive )) ret = FALSE;
             }
-
-            release_object( &request->hdr );
             break;
 
         case WINHTTP_HANDLE_TYPE_SESSION:
@@ -2057,10 +2055,10 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
             break;
 
         default:
-            release_object( hdr );
             set_last_error( ERROR_WINHTTP_INCORRECT_HANDLE_TYPE );
-            return FALSE;
+            ret = FALSE;
     }
+    release_object( hdr );
     return ret;
 }
 
