@@ -1266,6 +1266,52 @@ static	void	dump_dir_imported_functions(void)
     printf("\n");
 }
 
+static void dump_dir_loadconfig(void)
+{
+    const IMAGE_LOAD_CONFIG_DIRECTORY32 *loadcfg32 = get_dir(IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG);
+    const IMAGE_LOAD_CONFIG_DIRECTORY64 *loadcfg64 = (void*)loadcfg32;
+
+    if (!loadcfg32) return;
+
+    printf( "Loadconfig\n" );
+    print_dword( "Size",                                loadcfg32->Size );
+    print_dword( "TimeDateStamp",                       loadcfg32->TimeDateStamp );
+    print_word(  "MajorVersion",                        loadcfg32->MajorVersion );
+    print_word(  "MinorVersion",                        loadcfg32->MinorVersion );
+    print_dword( "GlobalFlagsClear",                    loadcfg32->GlobalFlagsClear );
+    print_dword( "GlobalFlagsSet",                      loadcfg32->GlobalFlagsSet );
+    print_dword( "CriticalSectionDefaultTimeout",       loadcfg32->CriticalSectionDefaultTimeout );
+
+    if(PE_nt_headers->OptionalHeader.Magic == IMAGE_NT_OPTIONAL_HDR64_MAGIC)
+    {
+        print_longlong( "DeCommitFreeBlockThreshold",   loadcfg64->DeCommitFreeBlockThreshold );
+        print_longlong( "DeCommitTotalFreeThreshold",   loadcfg64->DeCommitTotalFreeThreshold );
+        print_longlong( "MaximumAllocationSize",        loadcfg64->MaximumAllocationSize );
+        print_longlong( "VirtualMemoryThreshold",       loadcfg64->VirtualMemoryThreshold );
+        print_dword(    "ProcessHeapFlags",             loadcfg64->ProcessHeapFlags );
+        print_longlong( "ProcessAffinityMask",          loadcfg64->ProcessAffinityMask );
+        print_word(     "CSDVersion",                   loadcfg64->CSDVersion );
+        print_word(     "Reserved",                     loadcfg64->Reserved1 );
+        print_longlong( "SecurityCookie",               loadcfg64->SecurityCookie );
+        print_longlong( "SEHandlerTable",               loadcfg64->SEHandlerTable );
+        print_longlong( "SEHandlerCount",               loadcfg64->SEHandlerCount );
+    }
+    else
+    {
+        print_dword( "DeCommitFreeBlockThreshold",      loadcfg32->DeCommitFreeBlockThreshold );
+        print_dword( "DeCommitTotalFreeThreshold",      loadcfg32->DeCommitTotalFreeThreshold );
+        print_dword( "MaximumAllocationSize",           loadcfg32->MaximumAllocationSize );
+        print_dword( "VirtualMemoryThreshold",          loadcfg32->VirtualMemoryThreshold );
+        print_dword( "ProcessHeapFlags",                loadcfg32->ProcessHeapFlags );
+        print_dword( "ProcessAffinityMask",             loadcfg32->ProcessAffinityMask );
+        print_word(  "CSDVersion",                      loadcfg32->CSDVersion );
+        print_word(  "Reserved",                        loadcfg32->Reserved1 );
+        print_dword( "SecurityCookie",                  loadcfg32->SecurityCookie );
+        print_dword( "SEHandlerTable",                  loadcfg32->SEHandlerTable );
+        print_dword( "SEHandlerCount",                  loadcfg32->SEHandlerCount );
+    }
+}
+
 static void dump_dir_delay_imported_functions(void)
 {
     unsigned  directorySize;
@@ -1930,6 +1976,8 @@ void pe_dump(void)
 	    dump_dir_resource();
 	if (all || !strcmp(globals.dumpsect, "tls"))
 	    dump_dir_tls();
+	if (all || !strcmp(globals.dumpsect, "loadcfg"))
+	    dump_dir_loadconfig();
 	if (all || !strcmp(globals.dumpsect, "clr"))
 	    dump_dir_clr_header();
 	if (all || !strcmp(globals.dumpsect, "reloc"))
