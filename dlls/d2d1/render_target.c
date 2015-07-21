@@ -599,7 +599,20 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawEllipse(ID2D1RenderTarge
 static void STDMETHODCALLTYPE d2d_d3d_render_target_FillEllipse(ID2D1RenderTarget *iface,
         const D2D1_ELLIPSE *ellipse, ID2D1Brush *brush)
 {
-    FIXME("iface %p, ellipse %p, brush %p stub!\n", iface, ellipse, brush);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    ID2D1EllipseGeometry *geometry;
+    HRESULT hr;
+
+    TRACE("iface %p, ellipse %p, brush %p.\n", iface, ellipse, brush);
+
+    if (FAILED(hr = ID2D1Factory_CreateEllipseGeometry(render_target->factory, ellipse, &geometry)))
+    {
+        ERR("Failed to create geometry, hr %#x.\n", hr);
+        return;
+    }
+
+    ID2D1RenderTarget_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
+    ID2D1EllipseGeometry_Release(geometry);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGeometry(ID2D1RenderTarget *iface,
