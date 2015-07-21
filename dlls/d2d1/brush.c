@@ -757,10 +757,10 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_d3d_render_targe
 
         /* Scale for bitmap size and dpi. */
         b = brush->transform;
-        dpi_scale = bitmap->pixel_size.width * (bitmap->dpi_x / 96.0f);
+        dpi_scale = bitmap->pixel_size.width * (96.0f / bitmap->dpi_x);
         b._11 *= dpi_scale;
         b._21 *= dpi_scale;
-        dpi_scale = bitmap->pixel_size.height * (bitmap->dpi_y / 96.0f);
+        dpi_scale = bitmap->pixel_size.height * (96.0f / bitmap->dpi_y);
         b._12 *= dpi_scale;
         b._22 *= dpi_scale;
 
