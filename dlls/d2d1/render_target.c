@@ -573,7 +573,20 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawRoundedRectangle(ID2D1Re
 static void STDMETHODCALLTYPE d2d_d3d_render_target_FillRoundedRectangle(ID2D1RenderTarget *iface,
         const D2D1_ROUNDED_RECT *rect, ID2D1Brush *brush)
 {
-    FIXME("iface %p, rect %p, brush %p stub!\n", iface, rect, brush);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    ID2D1RoundedRectangleGeometry *geometry;
+    HRESULT hr;
+
+    TRACE("iface %p, rect %p, brush %p.\n", iface, rect, brush);
+
+    if (FAILED(hr = ID2D1Factory_CreateRoundedRectangleGeometry(render_target->factory, rect, &geometry)))
+    {
+        ERR("Failed to create geometry, hr %#x.\n", hr);
+        return;
+    }
+
+    ID2D1RenderTarget_FillGeometry(iface, (ID2D1Geometry *)geometry, brush, NULL);
+    ID2D1RoundedRectangleGeometry_Release(geometry);
 }
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawEllipse(ID2D1RenderTarget *iface,
