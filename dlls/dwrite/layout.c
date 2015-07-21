@@ -1423,7 +1423,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             layout->clustermetrics[i].isNewline || /* always wrap on new line */
             i == layout->cluster_count - 1) /* end of the text */ {
 
-            UINT32 strlength, last_cluster = i, index;
+            UINT32 strlength, last_cluster, index;
             FLOAT descent, trailingspacewidth;
 
             if (!overflow) {
