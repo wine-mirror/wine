@@ -24,6 +24,11 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "davclnt.h"
+
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(davclnt);
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
@@ -37,4 +42,21 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+/***********************************************************************
+ *          DavRegisterAuthCallback (davclnt.@)
+ */
+OPAQUE_HANDLE WINAPI DavRegisterAuthCallback(PFNDAVAUTHCALLBACK cb, ULONG version)
+{
+    FIXME("%p, %u\n", cb, version);
+    return 0;
+}
+
+/***********************************************************************
+ *          DavUnregisterAuthCallback (davclnt.@)
+ */
+VOID WINAPI DavUnregisterAuthCallback(OPAQUE_HANDLE handle)
+{
+    FIXME("%u\n", handle);
 }

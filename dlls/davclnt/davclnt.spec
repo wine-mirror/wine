@@ -3,8 +3,8 @@
 @ stub DavGetDiskSpaceUsage
 @ stub DavGetTheLockOwnerOfTheFile
 @ stub DavInvalidateCache
-@ stub DavRegisterAuthCallback
-@ stub DavUnregisterAuthCallback
+@ stdcall DavRegisterAuthCallback(ptr long)
+@ stdcall DavUnregisterAuthCallback(long)
 @ stub DllCanUnloadNow
 @ stub DllGetClassObject
 @ stdcall -private DllMain(long long ptr)

@@ -236,6 +236,7 @@ SRCDIR_INCLUDES = \
 	d3dx9shape.h \
 	d3dx9tex.h \
 	d3dx9xof.h \
+	davclnt.h \
 	dbccmd.idl \
 	dbcses.idl \
 	dbdsad.idl \
