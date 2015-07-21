@@ -278,26 +278,140 @@ DWORD WINAPI CreateProxyArpEntry(DWORD dwAddress, DWORD dwMask, DWORD dwIfIndex)
   return ERROR_NOT_SUPPORTED;
 }
 
+static char *debugstr_ipv6(const struct WS_sockaddr_in6 *sin, char *buf)
+{
+    const IN6_ADDR *addr = &sin->sin6_addr;
+    char *p = buf;
+    int i;
+    BOOL in_zero = FALSE;
+
+    for (i = 0; i < 7; i++)
+    {
+        if (!addr->u.Word[i])
+        {
+            if (i == 0)
+                *p++ = ':';
+            if (!in_zero)
+            {
+                *p++ = ':';
+                in_zero = TRUE;
+            }
+        }
+        else
+        {
+            p += sprintf(p, "%x:", ntohs(addr->u.Word[i]));
+            in_zero = FALSE;
+        }
+    }
+    sprintf(p, "%x", ntohs(addr->u.Word[7]));
+    return buf;
+}
+
+static BOOL map_address_6to4( SOCKADDR_IN6 *addr6, SOCKADDR_IN *addr4 )
+{
+    ULONG i;
+
+    if (addr6->sin6_family != WS_AF_INET6) return FALSE;
+
+    for (i = 0; i < 5; i++)
+        if (addr6->sin6_addr.u.Word[i]) return FALSE;
+
+    if (addr6->sin6_addr.u.Word[5] != 0xffff) return FALSE;
+
+    addr4->sin_family = AF_INET;
+    addr4->sin_port   = addr6->sin6_port;
+    addr4->sin_addr.S_un.S_addr = addr6->sin6_addr.u.Word[6] << 16 | addr6->sin6_addr.u.Word[7];
+    memset( &addr4->sin_zero, 0, sizeof(addr4->sin_zero) );
+
+    return TRUE;
+}
+
+static BOOL find_src_address( MIB_IPADDRTABLE *table, SOCKADDR_IN *dst, SOCKADDR_IN6 *src )
+{
+    MIB_IPFORWARDROW row;
+    DWORD i, j;
+
+    if (GetBestRoute( dst->sin_addr.S_un.S_addr, 0, &row )) return FALSE;
+
+    for (i = 0; i < table->dwNumEntries; i++)
+    {
+        /* take the first address */
+        if (table->table[i].dwIndex == row.dwForwardIfIndex)
+        {
+            src->sin6_family   = WS_AF_INET6;
+            src->sin6_port     = 0;
+            src->sin6_flowinfo = 0;
+            for (j = 0; j < 5; j++) src->sin6_addr.u.Word[j] = 0;
+            src->sin6_addr.u.Word[5] = 0xffff;
+            src->sin6_addr.u.Word[6] = table->table[i].dwAddr & 0xffff;
+            src->sin6_addr.u.Word[7] = table->table[i].dwAddr >> 16;
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
 
 /******************************************************************
  *    CreateSortedAddressPairs (IPHLPAPI.@)
  */
-DWORD WINAPI CreateSortedAddressPairs(const PSOCKADDR_IN6 source, DWORD sourcecount,
-                                      const PSOCKADDR_IN6 destination, DWORD destinationcount,
-                                      DWORD sortoptions,
-                                      PSOCKADDR_IN6_PAIR *sortedaddr, DWORD *sortedcount)
+DWORD WINAPI CreateSortedAddressPairs( const PSOCKADDR_IN6 src_list, DWORD src_count,
+                                       const PSOCKADDR_IN6 dst_list, DWORD dst_count,
+                                       DWORD options, PSOCKADDR_IN6_PAIR *pair_list,
+                                       DWORD *pair_count )
 {
-  FIXME("(source %p, sourcecount %d, destination %p, destcount %d, sortoptions %x,"
-        " sortedaddr %p, sortedcount %p): stub\n", source, sourcecount, destination,
-        destinationcount, sortoptions, sortedaddr, sortedcount);
+    DWORD i, size, ret;
+    SOCKADDR_IN6_PAIR *pairs;
+    SOCKADDR_IN6 *ptr;
+    SOCKADDR_IN addr4;
+    MIB_IPADDRTABLE *table;
 
-  if (source || sourcecount || !destination || !sortedaddr || !sortedcount || destinationcount > 500)
-    return ERROR_INVALID_PARAMETER;
+    FIXME( "(src_list %p src_count %u dst_list %p dst_count %u options %x pair_list %p pair_count %p): stub\n",
+           src_list, src_count, dst_list, dst_count, options, pair_list, pair_count );
 
-  /* Returning not supported tells the client we don't have IPv6 support
-   * so applications can fallback to IPv4.
-   */
-  return ERROR_NOT_SUPPORTED;
+    if (src_list || src_count || !dst_list || !pair_list || !pair_count || dst_count > 500)
+        return ERROR_INVALID_PARAMETER;
+
+    for (i = 0; i < dst_count; i++)
+    {
+        if (!map_address_6to4( &dst_list[i], &addr4 ))
+        {
+            FIXME("only mapped IPv4 addresses are supported\n");
+            return ERROR_NOT_SUPPORTED;
+        }
+    }
+
+    size = dst_count * sizeof(*pairs);
+    size += dst_count * sizeof(SOCKADDR_IN6) * 2; /* source address + destination address */
+    if (!(pairs = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_NOT_ENOUGH_MEMORY;
+    ptr = (SOCKADDR_IN6 *)(char *)pairs + dst_count * sizeof(*pairs);
+
+    if ((ret = getIPAddrTable( &table, GetProcessHeap(), 0 )))
+    {
+        HeapFree( GetProcessHeap(), 0, pairs );
+        return ret;
+    }
+
+    for (i = 0; i < dst_count; i++)
+    {
+        pairs[i].SourceAddress = ptr++;
+        if (!map_address_6to4( &dst_list[i], &addr4 ) ||
+            !find_src_address( table, &addr4, pairs[i].SourceAddress ))
+        {
+            char buf[46];
+            FIXME( "source address for %s not found\n", debugstr_ipv6(&dst_list[i], buf) );
+            memset( pairs[i].SourceAddress, 0, sizeof(*pairs[i].SourceAddress) );
+            pairs[i].SourceAddress->sin6_family = WS_AF_INET6;
+        }
+
+        pairs[i].DestinationAddress = ptr++;
+        memcpy( pairs[i].DestinationAddress, &dst_list[i], sizeof(*pairs[i].DestinationAddress) );
+    }
+    *pair_list = pairs;
+    *pair_count = dst_count;
+
+    HeapFree( GetProcessHeap(), 0, table );
+    return NO_ERROR;
 }
 
 
@@ -724,35 +838,6 @@ static char *debugstr_ipv4(const in_addr_t *in_addr, char *buf)
         else
             p += sprintf(p, "%d.", *addrp);
     }
-    return buf;
-}
-
-static char *debugstr_ipv6(const struct WS_sockaddr_in6 *sin, char *buf)
-{
-    const IN6_ADDR *addr = &sin->sin6_addr;
-    char *p = buf;
-    int i;
-    BOOL in_zero = FALSE;
-
-    for (i = 0; i < 7; i++)
-    {
-        if (!addr->u.Word[i])
-        {
-            if (i == 0)
-                *p++ = ':';
-            if (!in_zero)
-            {
-                *p++ = ':';
-                in_zero = TRUE;
-            }
-        }
-        else
-        {
-            p += sprintf(p, "%x:", ntohs(addr->u.Word[i]));
-            in_zero = FALSE;
-        }
-    }
-    sprintf(p, "%x", ntohs(addr->u.Word[7]));
     return buf;
 }
 

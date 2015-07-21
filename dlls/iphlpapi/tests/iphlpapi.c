@@ -38,6 +38,7 @@
 #include "winsock2.h"
 #include "windef.h"
 #include "winbase.h"
+#include "ws2tcpip.h"
 #include "iphlpapi.h"
 #include "iprtrmib.h"
 #include "wine/test.h"
@@ -77,6 +78,9 @@ static DWORD (WINAPI *pGetExtendedUdpTable)(PVOID,PDWORD,BOOL,ULONG,UDP_TABLE_CL
 static DWORD (WINAPI *pSetTcpEntry)(PMIB_TCPROW);
 static HANDLE(WINAPI *pIcmpCreateFile)(VOID);
 static DWORD (WINAPI *pIcmpSendEcho)(HANDLE,IPAddr,LPVOID,WORD,PIP_OPTION_INFORMATION,LPVOID,DWORD,DWORD);
+static DWORD (WINAPI *pCreateSortedAddressPairs)(const PSOCKADDR_IN6,ULONG,const PSOCKADDR_IN6,ULONG,ULONG,
+                                                 PSOCKADDR_IN6_PAIR*,ULONG*);
+static void (WINAPI *pFreeMibTable)(void*);
 
 static void loadIPHlpApi(void)
 {
@@ -111,6 +115,8 @@ static void loadIPHlpApi(void)
     pSetTcpEntry = (void *)GetProcAddress(hLibrary, "SetTcpEntry");
     pIcmpCreateFile = (void *)GetProcAddress(hLibrary, "IcmpCreateFile");
     pIcmpSendEcho = (void *)GetProcAddress(hLibrary, "IcmpSendEcho");
+    pCreateSortedAddressPairs = (void *)GetProcAddress(hLibrary, "CreateSortedAddressPairs");
+    pFreeMibTable = (void *)GetProcAddress(hLibrary, "FreeMibTable");
   }
 }
 
@@ -1562,6 +1568,65 @@ static void test_GetExtendedUdpTable(void)
     HeapFree( GetProcessHeap(), 0, table_module );
 }
 
+static void test_CreateSortedAddressPairs(void)
+{
+    SOCKADDR_IN6 dst[2];
+    SOCKADDR_IN6_PAIR *pair;
+    ULONG pair_count;
+    DWORD ret;
+
+    if (!pCreateSortedAddressPairs)
+    {
+        win_skip( "CreateSortedAddressPairs not available\n" );
+        return;
+    }
+
+    memset( dst, 0, sizeof(dst) );
+    dst[0].sin6_family = AF_INET6;
+    dst[0].sin6_addr.u.Word[5] = 0xffff;
+    dst[0].sin6_addr.u.Word[6] = 0x0808;
+    dst[0].sin6_addr.u.Word[7] = 0x0808;
+
+    pair_count = 0xdeadbeef;
+    ret = pCreateSortedAddressPairs( NULL, 0, dst, 1, 0, NULL, &pair_count );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ok( pair_count == 0xdeadbeef, "got %u\n", pair_count );
+
+    pair = (SOCKADDR_IN6_PAIR *)0xdeadbeef;
+    pair_count = 0xdeadbeef;
+    ret = pCreateSortedAddressPairs( NULL, 0, NULL, 1, 0, &pair, &pair_count );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+    ok( pair == (SOCKADDR_IN6_PAIR *)0xdeadbeef, "got %p\n", pair );
+    ok( pair_count == 0xdeadbeef, "got %u\n", pair_count );
+
+    pair = NULL;
+    pair_count = 0xdeadbeef;
+    ret = pCreateSortedAddressPairs( NULL, 0, dst, 1, 0, &pair, &pair_count );
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    ok( pair != NULL, "pair not set\n" );
+    ok( pair_count == 1, "got %u\n", pair_count );
+    ok( pair[0].SourceAddress != NULL, "src address not set\n" );
+    ok( pair[0].DestinationAddress != NULL, "dst address not set\n" );
+    pFreeMibTable( pair );
+
+    dst[1].sin6_family = AF_INET6;
+    dst[1].sin6_addr.u.Word[5] = 0xffff;
+    dst[1].sin6_addr.u.Word[6] = 0x0404;
+    dst[1].sin6_addr.u.Word[7] = 0x0808;
+
+    pair = NULL;
+    pair_count = 0xdeadbeef;
+    ret = pCreateSortedAddressPairs( NULL, 0, dst, 2, 0, &pair, &pair_count );
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    ok( pair != NULL, "pair not set\n" );
+    ok( pair_count == 2, "got %u\n", pair_count );
+    ok( pair[0].SourceAddress != NULL, "src address not set\n" );
+    ok( pair[0].DestinationAddress != NULL, "dst address not set\n" );
+    ok( pair[1].SourceAddress != NULL, "src address not set\n" );
+    ok( pair[1].DestinationAddress != NULL, "dst address not set\n" );
+    pFreeMibTable( pair );
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -1581,6 +1646,7 @@ START_TEST(iphlpapi)
     test_GetAdaptersAddresses();
     test_GetExtendedTcpTable();
     test_GetExtendedUdpTable();
+    test_CreateSortedAddressPairs();
     freeIPHlpApi();
   }
 }
