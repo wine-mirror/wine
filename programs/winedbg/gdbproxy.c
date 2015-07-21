@@ -1400,13 +1400,12 @@ static enum packet_return packet_read_registers(struct gdb_context* gdbctx)
 {
     int                 i;
     CONTEXT             ctx;
-    CONTEXT*            pctx = &gdbctx->context;
 
     assert(gdbctx->in_trap);
 
     if (dbg_curr_thread != gdbctx->other_thread && gdbctx->other_thread)
     {
-        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, pctx = &ctx))
+        if (!fetch_context(gdbctx, gdbctx->other_thread->handle, &ctx))
             return packet_error;
     }
 
