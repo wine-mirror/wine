@@ -1267,7 +1267,7 @@ static HRESULT set_custdata(msft_typelib_t *typelib, REFGUID guid,
    any default value. */
 static int get_defaultvalue_vt(type_t *type)
 {
-    int vt = get_type_vt(type);
+    int vt;
     if (type_get_type(type) == TYPE_ENUM)
         vt = VT_I4;
     else
