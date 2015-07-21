@@ -1182,10 +1182,11 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_EndDraw(ID2D1RenderTarget
 static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelFormat(ID2D1RenderTarget *iface,
         D2D1_PIXEL_FORMAT *format)
 {
-    FIXME("iface %p, format %p stub!\n", iface, format);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
 
-    format->format = DXGI_FORMAT_UNKNOWN;
-    format->alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
+    TRACE("iface %p, format %p.\n", iface, format);
+
+    *format = render_target->format;
     return format;
 }
 
@@ -1784,6 +1785,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         goto err;
     }
 
+    render_target->format = desc->pixelFormat;
     render_target->pixel_size.width = surface_desc.Width;
     render_target->pixel_size.height = surface_desc.Height;
     render_target->drawing_state.transform = identity;

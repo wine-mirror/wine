@@ -79,6 +79,7 @@ struct d2d_d3d_render_target
     D2D1_DRAWING_STATE_DESCRIPTION drawing_state;
     IDWriteRenderingParams *text_rendering_params;
 
+    D2D1_PIXEL_FORMAT format;
     D2D1_SIZE_U pixel_size;
     struct d2d_clip_stack clip_stack;
     float dpi_x;
