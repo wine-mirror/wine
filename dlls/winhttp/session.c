@@ -561,13 +561,13 @@ static void request_destroy( object_header_t *hdr )
 
     if (request->task_thread)
     {
+        /* Signal to the task proc to quit.  It will call
+           this again when it does. */
+        HANDLE thread = request->task_thread;
+        request->task_thread = 0;
         SetEvent( request->task_cancel );
-        WaitForSingleObject( request->task_thread, INFINITE );
-        CloseHandle( request->task_thread );
-        CloseHandle( request->task_cancel );
-        CloseHandle( request->task_wait );
-        request->task_cs.DebugInfo->Spare[0] = 0;
-        DeleteCriticalSection( &request->task_cs );
+        CloseHandle( thread );
+        return;
     }
     release_object( &request->connect->hdr );
 

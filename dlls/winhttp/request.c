@@ -217,6 +217,11 @@ static DWORD CALLBACK task_proc( LPVOID param )
         }
         case WAIT_OBJECT_0 + 1:
             TRACE("exiting\n");
+            CloseHandle( request->task_cancel );
+            CloseHandle( request->task_wait );
+            request->task_cs.DebugInfo->Spare[0] = 0;
+            DeleteCriticalSection( &request->task_cs );
+            request->hdr.vtbl->destroy( &request->hdr );
             return 0;
 
         default:
