@@ -849,17 +849,35 @@ if (0) /* crashes on native */
     hr = IDWriteBitmapRenderTarget_Resize(target, 5, 5);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    size.cx = size.cy = -1;
+    hr = IDWriteBitmapRenderTarget_GetSize(target, &size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size.cx == 5, "got %d\n", size.cx);
+    ok(size.cy == 5, "got %d\n", size.cy);
+
     hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
     ok(hbm2 != hbm, "got %p, %p\n", hbm2, hbm);
 
     hr = IDWriteBitmapRenderTarget_Resize(target, 20, 5);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    size.cx = size.cy = -1;
+    hr = IDWriteBitmapRenderTarget_GetSize(target, &size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size.cx == 20, "got %d\n", size.cx);
+    ok(size.cy == 5, "got %d\n", size.cy);
+
     hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
     ok(hbm2 != hbm, "got %p, %p\n", hbm2, hbm);
 
     hr = IDWriteBitmapRenderTarget_Resize(target, 1, 5);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size.cx = size.cy = -1;
+    hr = IDWriteBitmapRenderTarget_GetSize(target, &size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size.cx == 1, "got %d\n", size.cx);
+    ok(size.cy == 5, "got %d\n", size.cy);
 
     hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
     ok(hbm2 != hbm, "got %p, %p\n", hbm2, hbm);
@@ -875,6 +893,12 @@ if (0) /* crashes on native */
     /* empty rectangle */
     hr = IDWriteBitmapRenderTarget_Resize(target, 0, 5);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    size.cx = size.cy = -1;
+    hr = IDWriteBitmapRenderTarget_GetSize(target, &size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(size.cx == 0, "got %d\n", size.cx);
+    ok(size.cy == 5, "got %d\n", size.cy);
 
     hbm2 = GetCurrentObject(hdc, OBJ_BITMAP);
     ok(hbm2 != hbm, "got %p, %p\n", hbm2, hbm);

@@ -47,11 +47,14 @@ struct rendertarget {
     HDC hdc;
 };
 
-static HRESULT create_target_dibsection(HDC hdc, UINT32 width, UINT32 height)
+static HRESULT create_target_dibsection(struct rendertarget *target, UINT32 width, UINT32 height)
 {
     char bmibuf[FIELD_OFFSET(BITMAPINFO, bmiColors[256])];
     BITMAPINFO *bmi = (BITMAPINFO*)bmibuf;
     HBITMAP hbm;
+
+    target->size.cx = width;
+    target->size.cy = height;
 
     memset(bmi, 0, sizeof(bmibuf));
     bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
@@ -61,11 +64,11 @@ static HRESULT create_target_dibsection(HDC hdc, UINT32 width, UINT32 height)
     bmi->bmiHeader.biPlanes = 1;
     bmi->bmiHeader.biCompression = BI_RGB;
 
-    hbm = CreateDIBSection(hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
+    hbm = CreateDIBSection(target->hdc, bmi, DIB_RGB_COLORS, NULL, NULL, 0);
     if (!hbm)
         hbm = CreateBitmap(1, 1, 1, 1, NULL);
 
-    DeleteObject(SelectObject(hdc, hbm));
+    DeleteObject(SelectObject(target->hdc, hbm));
     return S_OK;
 }
 
@@ -199,7 +202,7 @@ static HRESULT WINAPI rendertarget_Resize(IDWriteBitmapRenderTarget1 *iface, UIN
     if (This->size.cx == width && This->size.cy == height)
         return S_OK;
 
-    return create_target_dibsection(This->hdc, width, height);
+    return create_target_dibsection(This, width, height);
 }
 
 static DWRITE_TEXT_ANTIALIAS_MODE WINAPI rendertarget_GetTextAntialiasMode(IDWriteBitmapRenderTarget1 *iface)
@@ -251,11 +254,8 @@ static HRESULT create_rendertarget(HDC hdc, UINT32 width, UINT32 height, IDWrite
     target->IDWriteBitmapRenderTarget1_iface.lpVtbl = &rendertargetvtbl;
     target->ref = 1;
 
-    target->size.cx = width;
-    target->size.cy = height;
-
     target->hdc = CreateCompatibleDC(hdc);
-    hr = create_target_dibsection(target->hdc, width, height);
+    hr = create_target_dibsection(target, width, height);
     if (FAILED(hr)) {
         IDWriteBitmapRenderTarget1_Release(&target->IDWriteBitmapRenderTarget1_iface);
         return hr;
