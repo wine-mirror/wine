@@ -1,5 +1,5 @@
 MODULE    = regsvr32.exe
-APPMODE   = -mconsole -municode
+APPMODE   = -mwindows -municode
 IMPORTS   = ole32 user32
 
 C_SRCS = \
