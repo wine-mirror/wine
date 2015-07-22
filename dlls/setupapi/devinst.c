@@ -2340,7 +2340,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *class, PCWSTR enumstr, HWND p
     if (!(flags & DIGCF_ALLCLASSES) && !class)
     {
         SetLastError(ERROR_INVALID_PARAMETER);
-        return NULL;
+        return INVALID_HANDLE_VALUE;
     }
     if (flags & unsupportedFlags)
         WARN("unsupported flags %08x\n", flags & unsupportedFlags);
