@@ -51,6 +51,7 @@
 #include "ipstats.h"
 #include "ipifcons.h"
 #include "fltdefs.h"
+#include "ifdef.h"
 #include "netioapi.h"
 
 #include "wine/debug.h"
@@ -1685,6 +1686,57 @@ DWORD WINAPI GetIfEntry(PMIB_IFROW pIfRow)
   return ret;
 }
 
+/******************************************************************
+ *    GetIfEntry2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIfEntry2( MIB_IF_ROW2 *row2 )
+{
+    DWORD ret, len = sizeof(row2->Description)/sizeof(row2->Description[0]);
+    char buf[MAX_ADAPTER_NAME], *name;
+    MIB_IFROW row;
+
+    TRACE("%p\n", row2);
+
+    if (!row2 || (!(name = getInterfaceNameByIndex( row2->InterfaceIndex, buf )) &&
+                  !(name = getInterfaceNameByIndex( row2->InterfaceLuid.Info.NetLuidIndex, buf ))))
+    {
+        return ERROR_INVALID_PARAMETER;
+    }
+    if ((ret = getInterfaceEntryByName( name, &row ))) return ret;
+    if ((ret = getInterfaceStatsByName( name, &row ))) return ret;
+
+    memset( row2, 0, sizeof(*row2) );
+    row2->InterfaceLuid.Info.Reserved     = 0;
+    row2->InterfaceLuid.Info.NetLuidIndex = row.dwIndex;
+    row2->InterfaceLuid.Info.IfType       = row.dwType;
+    row2->InterfaceIndex                  = row.dwIndex;
+    row2->InterfaceGuid.Data1             = row.dwIndex;
+    row2->Type                            = row.dwType;
+    row2->Mtu                             = row.dwMtu;
+    MultiByteToWideChar( CP_UNIXCP, 0, (const char *)row.bDescr, -1, row2->Description, len );
+    row2->PhysicalAddressLength           = row.dwPhysAddrLen;
+    memcpy( &row2->PhysicalAddress, &row.bPhysAddr, row.dwPhysAddrLen );
+    memcpy( &row2->PermanentPhysicalAddress, &row.bPhysAddr, row.dwPhysAddrLen );
+    row2->OperStatus                      = IfOperStatusUp;
+    row2->AdminStatus                     = NET_IF_ADMIN_STATUS_UP;
+    row2->MediaConnectState               = MediaConnectStateConnected;
+    row2->ConnectionType                  = NET_IF_CONNECTION_DEDICATED;
+
+    /* stats */
+    row2->InOctets        = row.dwInOctets;
+    row2->InUcastPkts     = row.dwInUcastPkts;
+    row2->InNUcastPkts    = row.dwInNUcastPkts;
+    row2->InDiscards      = row.dwInDiscards;
+    row2->InErrors        = row.dwInErrors;
+    row2->InUnknownProtos = row.dwInUnknownProtos;
+    row2->OutOctets       = row.dwOutOctets;
+    row2->OutUcastPkts    = row.dwOutUcastPkts;
+    row2->OutNUcastPkts   = row.dwOutNUcastPkts;
+    row2->OutDiscards     = row.dwOutDiscards;
+    row2->OutErrors       = row.dwOutErrors;
+
+    return NO_ERROR;
+}
 
 static int IfTableSorter(const void *a, const void *b)
 {

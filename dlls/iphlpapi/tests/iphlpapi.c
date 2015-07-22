@@ -41,6 +41,7 @@
 #include "ws2tcpip.h"
 #include "iphlpapi.h"
 #include "iprtrmib.h"
+#include "netioapi.h"
 #include "wine/test.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +53,7 @@ static HMODULE hLibrary = NULL;
 static DWORD (WINAPI *pGetNumberOfInterfaces)(PDWORD);
 static DWORD (WINAPI *pGetIpAddrTable)(PMIB_IPADDRTABLE,PULONG,BOOL);
 static DWORD (WINAPI *pGetIfEntry)(PMIB_IFROW);
+static DWORD (WINAPI *pGetIfEntry2)(PMIB_IF_ROW2);
 static DWORD (WINAPI *pGetFriendlyIfIndex)(DWORD);
 static DWORD (WINAPI *pGetIfTable)(PMIB_IFTABLE,PULONG,BOOL);
 static DWORD (WINAPI *pGetIpForwardTable)(PMIB_IPFORWARDTABLE,PULONG,BOOL);
@@ -97,6 +99,7 @@ static void loadIPHlpApi(void)
     pGetNumberOfInterfaces = (void *)GetProcAddress(hLibrary, "GetNumberOfInterfaces");
     pGetIpAddrTable = (void *)GetProcAddress(hLibrary, "GetIpAddrTable");
     pGetIfEntry = (void *)GetProcAddress(hLibrary, "GetIfEntry");
+    pGetIfEntry2 = (void *)GetProcAddress(hLibrary, "GetIfEntry2");
     pGetFriendlyIfIndex = (void *)GetProcAddress(hLibrary, "GetFriendlyIfIndex");
     pGetIfTable = (void *)GetProcAddress(hLibrary, "GetIfTable");
     pGetIpForwardTable = (void *)GetProcAddress(hLibrary, "GetIpForwardTable");
@@ -1643,12 +1646,33 @@ static void test_CreateSortedAddressPairs(void)
     pFreeMibTable( pair );
 }
 
+static DWORD get_interface_index(void)
+{
+    DWORD size = 0, ret = 0;
+    IP_ADAPTER_ADDRESSES *buf, *aa;
+
+    if (pGetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size ) != ERROR_BUFFER_OVERFLOW)
+        return 0;
+
+    buf = HeapAlloc( GetProcessHeap(), 0, size );
+    pGetAdaptersAddresses( AF_UNSPEC, 0, NULL, buf, &size );
+    for (aa = buf; aa; aa = aa->Next)
+    {
+        if (aa->IfType == IF_TYPE_ETHERNET_CSMACD)
+        {
+            ret = aa->IfIndex;
+            break;
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, buf );
+    return ret;
+}
+
 static void test_interface_identifier_conversion(void)
 {
-    DWORD ret, size;
+    DWORD ret;
     NET_LUID luid;
     GUID guid;
-    IP_ADAPTER_ADDRESSES *buf, *aa;
     SIZE_T len;
     WCHAR nameW[IF_MAX_STRING_SIZE + 1];
     char nameA[IF_MAX_STRING_SIZE + 1];
@@ -1659,15 +1683,7 @@ static void test_interface_identifier_conversion(void)
         win_skip( "ConvertInterfaceIndexToLuid not available\n" );
         return;
     }
-
-    size = 0;
-    ret = pGetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
-    if (ret != ERROR_BUFFER_OVERFLOW) return;
-
-    buf = HeapAlloc( GetProcessHeap(), 0, size );
-    pGetAdaptersAddresses( AF_UNSPEC, 0, NULL, buf, &size );
-    for (aa = buf; aa; aa = aa->Next) { if (aa->IfType == IF_TYPE_ETHERNET_CSMACD) break; }
-    if (aa->IfType != IF_TYPE_ETHERNET_CSMACD)
+    if (!(index = get_interface_index()))
     {
         skip( "no suitable interface found\n" );
         return;
@@ -1685,7 +1701,7 @@ static void test_interface_identifier_conversion(void)
     ok( !luid.Info.IfType, "got %u\n", luid.Info.IfType );
 
     memset( &luid, 0, sizeof(luid) );
-    ret = pConvertInterfaceIndexToLuid( aa->IfIndex, &luid );
+    ret = pConvertInterfaceIndexToLuid( index, &luid );
     ok( !ret, "got %u\n", ret );
     ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
     ok( luid.Info.NetLuidIndex, "got %u\n", luid.Info.NetLuidIndex );
@@ -1817,8 +1833,38 @@ static void test_interface_identifier_conversion(void)
     ok( !luid.Info.Reserved, "got %x\n", luid.Info.Reserved );
     ok( luid.Info.NetLuidIndex, "got %u\n", luid.Info.NetLuidIndex );
     ok( luid.Info.IfType == IF_TYPE_ETHERNET_CSMACD, "got %u\n", luid.Info.IfType );
+}
 
-    HeapFree( GetProcessHeap(), 0, buf );
+static void test_GetIfEntry2(void)
+{
+    DWORD ret;
+    MIB_IF_ROW2 row;
+    NET_IFINDEX index;
+
+    if (!pGetIfEntry2)
+    {
+        win_skip( "GetIfEntry2 not available\n" );
+        return;
+    }
+    if (!(index = get_interface_index()))
+    {
+        skip( "no suitable interface found\n" );
+        return;
+    }
+
+    ret = pGetIfEntry2( NULL );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    memset( &row, 0, sizeof(row) );
+    ret = pGetIfEntry2( &row );
+    ok( ret == ERROR_INVALID_PARAMETER, "got %u\n", ret );
+
+    memset( &row, 0, sizeof(row) );
+    row.InterfaceIndex = index;
+    ret = pGetIfEntry2( &row );
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    ok( row.InterfaceIndex == index, "got %u\n", index );
+    ok( row.InterfaceLuid.Info.NetLuidIndex, "got %u\n", index );
 }
 
 START_TEST(iphlpapi)
@@ -1842,6 +1888,7 @@ START_TEST(iphlpapi)
     test_GetExtendedUdpTable();
     test_CreateSortedAddressPairs();
     test_interface_identifier_conversion();
+    test_GetIfEntry2();
     freeIPHlpApi();
   }
 }

@@ -87,7 +87,7 @@
 @ stdcall GetIcmpStatistics( ptr )
 @ stub GetIcmpStatsFromStack
 @ stdcall GetIfEntry( ptr )
-#@ stub GetIfEntry2
+@ stdcall GetIfEntry2( ptr )
 @ stub GetIfEntryFromStack
 #@ stub GetIfStackTable
 @ stdcall GetIfTable( ptr ptr long )
