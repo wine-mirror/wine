@@ -647,9 +647,9 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     text = NULL;
     hres = IHTMLXMLHttpRequest_get_responseText(xhr, &text);
-    todo_wine ok(hres == S_OK, "get_responseText failed: %08x\n", hres);
-    todo_wine ok(text != NULL, "test == NULL\n");
-    todo_wine ok(!strcmp_wa(text, EXPECT_RESPONSE_TEXT), "expect %s, got %s\n",
+    ok(hres == S_OK, "get_responseText failed: %08x\n", hres);
+    ok(text != NULL, "test == NULL\n");
+    ok(!strcmp_wa(text, EXPECT_RESPONSE_TEXT), "expect %s, got %s\n",
         EXPECT_RESPONSE_TEXT, wine_dbgstr_w(text));
     SysFreeString(text);
 
