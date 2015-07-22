@@ -449,12 +449,12 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
     ok(val == 0, "Expect UNSENT, got %d\n", val);
 
     hres = IHTMLXMLHttpRequest_get_status(xhr, NULL);
-    todo_wine ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
+    ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
-    todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
-    todo_wine ok(val == 0, "Expect 0, got %d\n", val);
+    ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
+    ok(val == 0, "Expect 0, got %d\n", val);
 
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, NULL);
     todo_wine ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
@@ -561,8 +561,8 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
-    todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
-    todo_wine ok(val == 0, "Expect 0, got %d\n", val);
+    ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
+    ok(val == 0, "Expect 0, got %d\n", val);
 
     text = (BSTR)0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
@@ -596,8 +596,8 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
-    todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
-    todo_wine ok(val == 0, "Expect 0, got %d\n", val);
+    ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
+    ok(val == 0, "Expect 0, got %d\n", val);
 
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
     todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
@@ -630,8 +630,8 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
-    todo_wine ok(hres == S_OK, "get_status failed: %08x\n", hres);
-    todo_wine ok(val == 200, "Expect 200, got %d\n", val);
+    ok(hres == S_OK, "get_status failed: %08x\n", hres);
+    ok(val == 200, "Expect 200, got %d\n", val);
 
     text = NULL;
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);

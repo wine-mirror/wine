@@ -312,8 +312,23 @@ static HRESULT WINAPI HTMLXMLHttpRequest_get_responseXML(IHTMLXMLHttpRequest *if
 static HRESULT WINAPI HTMLXMLHttpRequest_get_status(IHTMLXMLHttpRequest *iface, LONG *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    DWORD val;
+    nsresult nsres;
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    nsres = nsIXMLHttpRequest_GetStatus(This->nsxhr, &val);
+    if(NS_FAILED(nsres)) {
+        ERR("nsIXMLHttpRequest_GetStatus failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    *p = val;
+    if(val == 0)
+        return E_FAIL; /* WinAPI thinks this is an error */
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_get_statusText(IHTMLXMLHttpRequest *iface, BSTR *p)
