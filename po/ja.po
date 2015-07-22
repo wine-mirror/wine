@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-07-16 00:16+0900\n"
+"PO-Revision-Date: 2015-07-22 00:22+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -13513,7 +13513,7 @@ msgstr "簡易編集モード(&Q)"
 
 #: wineconsole.rc:80
 msgid "&Insert mode"
-msgstr "挿入モード(&E)"
+msgstr "挿入モード(&I)"
 
 #: wineconsole.rc:88
 msgid "&Font"
