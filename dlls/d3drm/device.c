@@ -33,6 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3drm);
 
 struct d3drm_device
 {
+    IDirect3DRMDevice IDirect3DRMDevice_iface;
     IDirect3DRMDevice2 IDirect3DRMDevice2_iface;
     IDirect3DRMDevice3 IDirect3DRMDevice3_iface;
     IDirect3DRMWinDevice IDirect3DRMWinDevice_iface;
@@ -43,6 +44,11 @@ struct d3drm_device
     DWORD height;
     DWORD width;
 };
+
+static inline struct d3drm_device *impl_from_IDirect3DRMDevice(IDirect3DRMDevice *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3drm_device, IDirect3DRMDevice_iface);
+}
 
 static inline struct d3drm_device *impl_from_IDirect3DRMDevice2(IDirect3DRMDevice2 *iface)
 {
@@ -58,6 +64,349 @@ static inline struct d3drm_device *impl_from_IDirect3DRMWinDevice(IDirect3DRMWin
 {
     return CONTAINING_RECORD(iface, struct d3drm_device, IDirect3DRMWinDevice_iface);
 }
+
+static HRESULT WINAPI d3drm_device1_QueryInterface(IDirect3DRMDevice *iface, REFIID riid, void **out)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    return IDirect3DRMDevice3_QueryInterface(&device->IDirect3DRMDevice3_iface, riid, out);
+}
+
+static ULONG WINAPI d3drm_device1_AddRef(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_AddRef(&device->IDirect3DRMDevice3_iface);
+}
+
+static ULONG WINAPI d3drm_device1_Release(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_Release(&device->IDirect3DRMDevice3_iface);
+}
+
+static HRESULT WINAPI d3drm_device1_Clone(IDirect3DRMDevice *iface,
+    IUnknown *outer, REFIID iid, void **out)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, outer %p, iid %s, out %p.\n", iface, outer, debugstr_guid(iid), out);
+
+    return IDirect3DRMDevice3_Clone(&device->IDirect3DRMDevice3_iface, outer, iid, out);
+}
+
+static HRESULT WINAPI d3drm_device1_AddDestroyCallback(IDirect3DRMDevice *iface,
+    D3DRMOBJECTCALLBACK cb, void *ctx)
+{
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_device1_DeleteDestroyCallback(IDirect3DRMDevice *iface,
+    D3DRMOBJECTCALLBACK cb, void *ctx)
+{
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_device1_SetAppData(IDirect3DRMDevice *iface, DWORD data)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, data %#x.\n", iface, data);
+
+    return IDirect3DRMDevice3_SetAppData(&device->IDirect3DRMDevice3_iface, data);
+}
+
+static DWORD WINAPI d3drm_device1_GetAppData(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetAppData(&device->IDirect3DRMDevice3_iface);
+}
+
+static HRESULT WINAPI d3drm_device1_SetName(IDirect3DRMDevice *iface, const char *name)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, name %s.\n", iface, debugstr_a(name));
+
+    return IDirect3DRMDevice3_SetName(&device->IDirect3DRMDevice3_iface, name);
+}
+
+static HRESULT WINAPI d3drm_device1_GetName(IDirect3DRMDevice *iface, DWORD *size, char *name)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return IDirect3DRMDevice3_GetName(&device->IDirect3DRMDevice3_iface, size, name);
+}
+
+static HRESULT WINAPI d3drm_device1_GetClassName(IDirect3DRMDevice *iface, DWORD *size, char *name)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, size %p, name %p.\n", iface, size, name);
+
+    return IDirect3DRMDevice3_GetClassName(&device->IDirect3DRMDevice3_iface, size, name);
+}
+
+static HRESULT WINAPI d3drm_device1_Init(IDirect3DRMDevice *iface, ULONG width, ULONG height)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, width %u, height %u.\n", iface, width, height);
+
+    return IDirect3DRMDevice3_Init(&device->IDirect3DRMDevice3_iface, width, height);
+}
+
+static HRESULT WINAPI d3drm_device1_InitFromD3D(IDirect3DRMDevice *iface,
+    IDirect3D *d3d, IDirect3DDevice *d3d_device)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, d3d %p, d3d_device %p.\n", iface, d3d, d3d_device);
+
+    return IDirect3DRMDevice3_InitFromD3D(&device->IDirect3DRMDevice3_iface, d3d, d3d_device);
+}
+
+static HRESULT WINAPI d3drm_device1_InitFromClipper(IDirect3DRMDevice *iface,
+    IDirectDrawClipper *clipper, GUID *guid, int width, int height)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, clipper %p, guid %s, width %d, height %d.\n",
+        iface, clipper, debugstr_guid(guid), width, height);
+
+    return IDirect3DRMDevice3_InitFromClipper(&device->IDirect3DRMDevice3_iface,
+        clipper, guid, width, height);
+}
+
+static HRESULT WINAPI d3drm_device1_Update(IDirect3DRMDevice *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return D3DRM_OK;
+}
+
+static HRESULT WINAPI d3drm_device1_AddUpdateCallback(IDirect3DRMDevice *iface,
+    D3DRMUPDATECALLBACK cb, void *ctx)
+{
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_device1_DeleteUpdateCallback(IDirect3DRMDevice *iface,
+    D3DRMUPDATECALLBACK cb, void *ctx)
+{
+    FIXME("iface %p, cb %p, ctx %p stub!\n", iface, cb, ctx);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI d3drm_device1_SetBufferCount(IDirect3DRMDevice *iface, DWORD count)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    return IDirect3DRMDevice3_SetBufferCount(&device->IDirect3DRMDevice3_iface, count);
+}
+
+static DWORD WINAPI d3drm_device1_GetBufferCount(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetBufferCount(&device->IDirect3DRMDevice3_iface);
+}
+
+static HRESULT WINAPI d3drm_device1_SetDither(IDirect3DRMDevice *iface, BOOL enable)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, enabled %#x.\n", iface, enable);
+
+    return IDirect3DRMDevice3_SetDither(&device->IDirect3DRMDevice3_iface, enable);
+}
+
+static HRESULT WINAPI d3drm_device1_SetShades(IDirect3DRMDevice *iface, DWORD count)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    return IDirect3DRMDevice3_SetShades(&device->IDirect3DRMDevice3_iface, count);
+}
+
+static HRESULT WINAPI d3drm_device1_SetQuality(IDirect3DRMDevice *iface, D3DRMRENDERQUALITY quality)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, quality %u.\n", iface, quality);
+
+    return IDirect3DRMDevice3_SetQuality(&device->IDirect3DRMDevice3_iface, quality);
+}
+
+static HRESULT WINAPI d3drm_device1_SetTextureQuality(IDirect3DRMDevice *iface, D3DRMTEXTUREQUALITY quality)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, quality %u.\n", iface, quality);
+
+    return IDirect3DRMDevice3_SetTextureQuality(&device->IDirect3DRMDevice3_iface, quality);
+}
+
+static HRESULT WINAPI d3drm_device1_GetViewports(IDirect3DRMDevice *iface, IDirect3DRMViewportArray **array)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, array %p.\n", iface, array);
+
+    return IDirect3DRMDevice3_GetViewports(&device->IDirect3DRMDevice3_iface, array);
+}
+
+static BOOL WINAPI d3drm_device1_GetDither(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetDither(&device->IDirect3DRMDevice3_iface);
+}
+
+static DWORD WINAPI d3drm_device1_GetShades(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetShades(&device->IDirect3DRMDevice3_iface);
+}
+
+static DWORD WINAPI d3drm_device1_GetHeight(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetHeight(&device->IDirect3DRMDevice3_iface);
+}
+
+static DWORD WINAPI d3drm_device1_GetWidth(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetWidth(&device->IDirect3DRMDevice3_iface);
+}
+
+static DWORD WINAPI d3drm_device1_GetTrianglesDrawn(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetTrianglesDrawn(&device->IDirect3DRMDevice3_iface);
+}
+
+static DWORD WINAPI d3drm_device1_GetWireframeOptions(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetWireframeOptions(&device->IDirect3DRMDevice3_iface);
+}
+
+static D3DRMRENDERQUALITY WINAPI d3drm_device1_GetQuality(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetQuality(&device->IDirect3DRMDevice3_iface);
+}
+
+static D3DCOLORMODEL WINAPI d3drm_device1_GetColorModel(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p stub!\n", iface);
+
+    return IDirect3DRMDevice3_GetColorModel(&device->IDirect3DRMDevice3_iface);
+}
+
+static D3DRMTEXTUREQUALITY WINAPI d3drm_device1_GetTextureQuality(IDirect3DRMDevice *iface)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return IDirect3DRMDevice3_GetTextureQuality(&device->IDirect3DRMDevice3_iface);
+}
+
+static HRESULT WINAPI d3drm_device1_GetDirect3DDevice(IDirect3DRMDevice *iface, IDirect3DDevice **d3d_device)
+{
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice(iface);
+
+    TRACE("iface %p, d3d_device %p.\n", iface, d3d_device);
+
+    return IDirect3DRMDevice3_GetDirect3DDevice(&device->IDirect3DRMDevice3_iface, d3d_device);
+}
+
+static const struct IDirect3DRMDeviceVtbl d3drm_device1_vtbl =
+{
+    d3drm_device1_QueryInterface,
+    d3drm_device1_AddRef,
+    d3drm_device1_Release,
+    d3drm_device1_Clone,
+    d3drm_device1_AddDestroyCallback,
+    d3drm_device1_DeleteDestroyCallback,
+    d3drm_device1_SetAppData,
+    d3drm_device1_GetAppData,
+    d3drm_device1_SetName,
+    d3drm_device1_GetName,
+    d3drm_device1_GetClassName,
+    d3drm_device1_Init,
+    d3drm_device1_InitFromD3D,
+    d3drm_device1_InitFromClipper,
+    d3drm_device1_Update,
+    d3drm_device1_AddUpdateCallback,
+    d3drm_device1_DeleteUpdateCallback,
+    d3drm_device1_SetBufferCount,
+    d3drm_device1_GetBufferCount,
+    d3drm_device1_SetDither,
+    d3drm_device1_SetShades,
+    d3drm_device1_SetQuality,
+    d3drm_device1_SetTextureQuality,
+    d3drm_device1_GetViewports,
+    d3drm_device1_GetDither,
+    d3drm_device1_GetShades,
+    d3drm_device1_GetHeight,
+    d3drm_device1_GetWidth,
+    d3drm_device1_GetTrianglesDrawn,
+    d3drm_device1_GetWireframeOptions,
+    d3drm_device1_GetQuality,
+    d3drm_device1_GetColorModel,
+    d3drm_device1_GetTextureQuality,
+    d3drm_device1_GetDirect3DDevice,
+};
 
 static HRESULT WINAPI d3drm_device2_QueryInterface(IDirect3DRMDevice2 *iface, REFIID riid, void **out)
 {
@@ -461,15 +810,18 @@ static HRESULT WINAPI d3drm_device3_QueryInterface(IDirect3DRMDevice3 *iface, RE
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualGUID(riid, &IID_IDirect3DRMDevice2)
-            || IsEqualGUID(riid, &IID_IDirect3DRMDevice)
+    if (IsEqualGUID(riid, &IID_IDirect3DRMDevice3)
             || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        *out = &device->IDirect3DRMDevice3_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMDevice2))
     {
         *out = &device->IDirect3DRMDevice2_iface;
     }
-    else if (IsEqualGUID(riid, &IID_IDirect3DRMDevice3))
+    else if (IsEqualGUID(riid, &IID_IDirect3DRMDevice))
     {
-        *out = &device->IDirect3DRMDevice3_iface;
+        *out = &device->IDirect3DRMDevice_iface;
     }
     else if (IsEqualGUID(riid, &IID_IDirect3DRMWinDevice))
     {
@@ -1032,21 +1384,21 @@ static const struct IDirect3DRMWinDeviceVtbl d3drm_device_win_vtbl =
 HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown **out)
 {
     struct d3drm_device *object;
+    HRESULT hr;
 
     TRACE("riid %s, out %p.\n", debugstr_guid(riid), out);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
+    object->IDirect3DRMDevice_iface.lpVtbl = &d3drm_device1_vtbl;
     object->IDirect3DRMDevice2_iface.lpVtbl = &d3drm_device2_vtbl;
     object->IDirect3DRMDevice3_iface.lpVtbl = &d3drm_device3_vtbl;
     object->IDirect3DRMWinDevice_iface.lpVtbl = &d3drm_device_win_vtbl;
     object->ref = 1;
 
-    if (IsEqualGUID(riid, &IID_IDirect3DRMDevice3))
-        *out = (IUnknown*)&object->IDirect3DRMDevice3_iface;
-    else
-        *out = (IUnknown*)&object->IDirect3DRMDevice2_iface;
+    hr = IDirect3DRMDevice_QueryInterface(&object->IDirect3DRMDevice3_iface, riid, (void **)out);
+    IDirect3DRMDevice3_Release(&object->IDirect3DRMDevice3_iface);
 
-    return S_OK;
+    return hr;
 }
