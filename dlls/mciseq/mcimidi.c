@@ -776,7 +776,7 @@ static DWORD MIDI_mciStop(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_GENERIC_PARMS 
 	if (oldstat == MCI_MODE_PAUSE)
 	    dwRet = midiOutReset((HMIDIOUT)wmm->hMidi);
 
-	if ((dwFlags & MCI_WAIT) && wmm->hThread)
+	if (wmm->hThread)
 	    WaitForSingleObject(wmm->hThread, INFINITE);
     }
 
@@ -808,7 +808,10 @@ static DWORD MIDI_mciClose(WINE_MCIMIDI* wmm, DWORD dwFlags, LPMCI_GENERIC_PARMS
 	    wmm->hFile = 0;
 	    TRACE("hFile closed !\n");
 	}
-	if (wmm->hThread) CloseHandle(wmm->hThread);
+	if (wmm->hThread) {
+	    CloseHandle(wmm->hThread);
+	    wmm->hThread = 0;
+	}
 	HeapFree(GetProcessHeap(), 0, wmm->tracks);
 	HeapFree(GetProcessHeap(), 0, wmm->lpstrElementName);
 	HeapFree(GetProcessHeap(), 0, wmm->lpstrCopyright);
