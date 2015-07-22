@@ -22,7 +22,7 @@
 @ stub D3DX10CreateDeviceAndSwapChain(ptr long long long ptr ptr ptr)
 @ stdcall D3DX10CreateEffectFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
 @ stdcall D3DX10CreateEffectFromFileW(wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr)
-@ stub D3DX10CreateEffectFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
+@ stdcall D3DX10CreateEffectFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
 @ stub D3DX10CreateEffectFromResourceA(long str str ptr ptr str long long ptr ptr ptr ptr ptr ptr)
 @ stub D3DX10CreateEffectFromResourceW(long wstr wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr)
 @ stub D3DX10CreateEffectPoolFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr)

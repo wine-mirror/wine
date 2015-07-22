@@ -90,3 +90,16 @@ HRESULT WINAPI D3DX10CreateEffectFromFileW(const WCHAR *filename, const D3D10_SH
 
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DX10CreateEffectFromMemory(const void *data, SIZE_T datasize, const char *filename,
+        const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *profile, UINT hlslflags,
+        UINT fxflags, ID3D10Device *device, ID3D10EffectPool *effectpool, ID3DX10ThreadPump *pump,
+        ID3D10Effect **effect, ID3D10Blob **errors, HRESULT *hresult)
+{
+    FIXME("data %p, datasize %lu, filename %s, defines %p, include %p, profile %s, hlslflags %#x, fxflags %#x, "
+            "device %p, effectpool %p, pump %p, effect %p, errors %p, hresult %p\n",
+            data, datasize, debugstr_a(filename), defines, include, debugstr_a(profile), hlslflags, fxflags, device,
+            effectpool, pump, effect, errors, hresult);
+
+    return E_NOTIMPL;
+}
