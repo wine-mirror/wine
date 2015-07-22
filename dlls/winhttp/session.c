@@ -98,6 +98,8 @@ static void session_destroy( object_header_t *hdr )
 
     TRACE("%p\n", session);
 
+    if (session->unload_event) SetEvent( session->unload_event );
+
     LIST_FOR_EACH_SAFE( item, next, &session->cookie_cache )
     {
         domain = LIST_ENTRY( item, domain_t, entry );
@@ -198,6 +200,10 @@ static BOOL session_set_option( object_header_t *hdr, DWORD option, LPVOID buffe
         return TRUE;
     case WINHTTP_OPTION_CONFIGURE_PASSPORT_AUTH:
         FIXME("WINHTTP_OPTION_CONFIGURE_PASSPORT_AUTH: 0x%x\n", *(DWORD *)buffer);
+        return TRUE;
+    case WINHTTP_OPTION_UNLOAD_NOTIFY_EVENT:
+        TRACE("WINHTTP_OPTION_UNLOAD_NOTIFY_EVENT: %p\n", *(HANDLE *)buffer);
+        session->unload_event = *(HANDLE *)buffer;
         return TRUE;
     default:
         FIXME("unimplemented option %u\n", option);

@@ -158,9 +158,9 @@ static void setup_test( struct info *info, enum api function, unsigned int line 
 
 static void test_connection_cache( void )
 {
-    HANDLE ses, con, req;
+    HANDLE ses, con, req, event;
     DWORD size, status;
-    BOOL ret;
+    BOOL ret, unload = TRUE;
     struct info info, *context = &info;
 
     info.test  = cache_test;
@@ -170,6 +170,14 @@ static void test_connection_cache( void )
 
     ses = WinHttpOpen( user_agent, 0, NULL, NULL, 0 );
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ret = WinHttpSetOption( ses, WINHTTP_OPTION_UNLOAD_NOTIFY_EVENT, &event, sizeof(event) );
+    if (!ret)
+    {
+        win_skip("Unload event not supported\n");
+        unload = FALSE;
+    }
 
     WinHttpSetStatusCallback( ses, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
 
@@ -236,14 +244,32 @@ static void test_connection_cache( void )
     setup_test( &info, winhttp_close_handle, __LINE__ );
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
+
+    if (unload)
+    {
+        status = WaitForSingleObject( event, 0 );
+        ok(status == WAIT_TIMEOUT, "got %08x\n", status);
+    }
+
     WinHttpCloseHandle( ses );
 
     Sleep(2000); /* make sure connection is evicted from cache */
+    if (unload)
+    {
+        status = WaitForSingleObject( event, 0 );
+        ok(status == WAIT_OBJECT_0, "got %08x\n", status);
+    }
 
     info.index = 0;
 
     ses = WinHttpOpen( user_agent, 0, NULL, NULL, 0 );
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    if (unload)
+    {
+        ret = WinHttpSetOption( ses, WINHTTP_OPTION_UNLOAD_NOTIFY_EVENT, &event, sizeof(event) );
+        ok(ret, "failed to set unload option\n");
+    }
 
     WinHttpSetStatusCallback( ses, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
 
@@ -311,9 +337,23 @@ static void test_connection_cache( void )
 done:
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
+
+    if (unload)
+    {
+        status = WaitForSingleObject( event, 0 );
+        ok(status == WAIT_TIMEOUT, "got %08x\n", status);
+    }
+
     WinHttpCloseHandle( ses );
 
     Sleep(2000); /* make sure connection is evicted from cache */
+    if (unload)
+    {
+        status = WaitForSingleObject( event, 0 );
+        ok(status == WAIT_OBJECT_0, "got %08x\n", status);
+    }
+
+    CloseHandle( event );
 }
 
 static const struct notification redirect_test[] =
@@ -433,9 +473,9 @@ static const struct notification async_test[] =
 
 static void test_async( void )
 {
-    HANDLE ses, con, req;
+    HANDLE ses, con, req, event;
     DWORD size, status;
-    BOOL ret;
+    BOOL ret, unload = TRUE;
     struct info info, *context = &info;
     char buffer[1024];
 
@@ -446,6 +486,14 @@ static void test_async( void )
 
     ses = WinHttpOpen( user_agent, 0, NULL, NULL, WINHTTP_FLAG_ASYNC );
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ret = WinHttpSetOption( ses, WINHTTP_OPTION_UNLOAD_NOTIFY_EVENT, &event, sizeof(event) );
+    if (!ret)
+    {
+        win_skip("Unload event not supported\n");
+        unload = FALSE;
+    }
 
     WinHttpSetStatusCallback( ses, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
 
@@ -501,9 +549,22 @@ static void test_async( void )
     setup_test( &info, winhttp_close_handle, __LINE__ );
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
+
+    if (unload)
+    {
+        status = WaitForSingleObject( event, 0 );
+        ok(status == WAIT_TIMEOUT, "got %08x\n", status);
+    }
     WinHttpCloseHandle( ses );
 
     WaitForSingleObject( info.wait, INFINITE );
+
+    if (unload)
+    {
+        status = WaitForSingleObject( event, 2000 );
+        ok(status == WAIT_OBJECT_0, "got %08x\n", status);
+    }
+    CloseHandle( event );
     CloseHandle( info.wait );
 }
 
