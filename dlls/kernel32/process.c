@@ -517,7 +517,7 @@ static void set_additional_environment(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
     WCHAR *profile_dir = NULL, *all_users_dir = NULL;
-    WCHAR buf[MAX_COMPUTERNAME_LENGTH];
+    WCHAR buf[MAX_COMPUTERNAME_LENGTH+1];
     HANDLE hkey;
     DWORD len;
 
