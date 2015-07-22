@@ -597,6 +597,7 @@ SRCDIR_INCLUDES = \
 	vsstyle.h \
 	vssym32.h \
 	vswriter.h \
+	webservices.h \
 	werapi.h \
 	wfext.h \
 	wia.h \

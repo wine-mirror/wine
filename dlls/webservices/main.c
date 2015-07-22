@@ -18,16 +18,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #include <stdarg.h>
-
-#define COBJMACROS
 
 #include "windef.h"
 #include "winbase.h"
-#include "initguid.h"
-#include "wincodec.h"
+#include "webservices.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
@@ -46,4 +41,14 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+/**************************************************************************
+ *          WsCreateError		[webservices.@]
+ */
+HRESULT WINAPI WsCreateError(const WS_ERROR_PROPERTY *properties, ULONG count, WS_ERROR **error)
+{
+    FIXME("%p %u %p: stub\n", properties, count, error);
+    if (error) *error = NULL;
+    return E_NOTIMPL;
 }
