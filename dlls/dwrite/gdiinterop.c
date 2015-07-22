@@ -55,7 +55,7 @@ static HRESULT create_target_dibsection(HDC hdc, UINT32 width, UINT32 height)
 
     memset(bmi, 0, sizeof(bmibuf));
     bmi->bmiHeader.biSize = sizeof(bmi->bmiHeader);
-    bmi->bmiHeader.biHeight = height;
+    bmi->bmiHeader.biHeight = -height;
     bmi->bmiHeader.biWidth = width;
     bmi->bmiHeader.biBitCount = 32;
     bmi->bmiHeader.biPlanes = 1;
