@@ -1378,6 +1378,16 @@ HRESULT WINAPI SetCurrentProcessExplicitAppUserModelID(PCWSTR appid)
 }
 
 /***********************************************************************
+ *              GetCurrentProcessExplicitAppUserModelID (SHELL32.@)
+ */
+HRESULT WINAPI GetCurrentProcessExplicitAppUserModelID(PWSTR *appid)
+{
+    FIXME("%p: stub\n", appid);
+    *appid = NULL;
+    return E_NOTIMPL;
+}
+
+/***********************************************************************
  *              SHSetUnreadMailCountW (SHELL32.@)
  */
 HRESULT WINAPI SHSetUnreadMailCountW(LPCWSTR mailaddress, DWORD count, LPCWSTR executecommand)

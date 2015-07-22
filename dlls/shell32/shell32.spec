@@ -310,6 +310,7 @@
 @ stdcall FindExecutableW(wstr wstr ptr)
 @ stub FixupOptionalComponents
 @ stdcall FreeIconList(long)
+@ stdcall GetCurrentProcessExplicitAppUserModelID(ptr)
 @ stdcall InitNetworkAddressControl()
 @ stub InternalExtractIconListA
 @ stub InternalExtractIconListW
