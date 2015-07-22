@@ -2348,7 +2348,7 @@ HDEVINFO WINAPI SetupDiGetClassDevsExW(const GUID *class, PCWSTR enumstr, HWND p
         set = deviceset;
     else
         set = SetupDiCreateDeviceInfoListExW(class, parent, machine, reserved);
-    if (set)
+    if (set != INVALID_HANDLE_VALUE)
     {
         if (machine && *machine)
             FIXME("%s: unimplemented for remote machines\n",
