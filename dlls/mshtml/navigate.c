@@ -1595,10 +1595,29 @@ static HRESULT nsChannelBSC_on_progress(BSCallback *bsc, ULONG status_code, LPCW
     return S_OK;
 }
 
+static HRESULT process_response_status_text(const WCHAR *header, const WCHAR *header_end, char **status_text)
+{
+    header = strchrW(header + 1, ' ');
+    if(!header || header >= header_end)
+        return E_FAIL;
+    header = strchrW(header + 1, ' ');
+    if(!header || header >= header_end)
+        return E_FAIL;
+    ++header;
+
+    *status_text = heap_strndupWtoU(header, header_end - header);
+
+    if(!*status_text)
+        return E_OUTOFMEMORY;
+
+    return S_OK;
+}
+
 static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
         LPCWSTR response_headers)
 {
     nsChannelBSC *This = nsChannelBSC_from_BSCallback(bsc);
+    char *str;
     HRESULT hres;
 
     This->response_processed = TRUE;
@@ -1608,6 +1627,15 @@ static HRESULT nsChannelBSC_on_response(BSCallback *bsc, DWORD response_code,
         const WCHAR *headers;
 
         headers = strchrW(response_headers, '\r');
+        hres = process_response_status_text(response_headers, headers, &str);
+        if(FAILED(hres)) {
+            WARN("parsing headers failed: %08x\n", hres);
+            return hres;
+        }
+
+        heap_free(This->nschannel->response_status_text);
+        This->nschannel->response_status_text = str;
+
         if(headers && headers[1] == '\n') {
             headers += 2;
             hres = process_response_headers(This, headers);

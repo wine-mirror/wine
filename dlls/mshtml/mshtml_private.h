@@ -1230,6 +1230,23 @@ static inline char *heap_strdupWtoU(const WCHAR *str)
     return ret;
 }
 
+static inline char *heap_strndupWtoU(LPCWSTR str, unsigned len)
+{
+    char *ret = NULL;
+    DWORD size;
+
+    if(str && len) {
+        size = WideCharToMultiByte(CP_UTF8, 0, str, len, NULL, 0, NULL, NULL);
+        ret = heap_alloc(size + 1);
+        if(ret) {
+            WideCharToMultiByte(CP_UTF8, 0, str, len, ret, size, NULL, NULL);
+            ret[size] = '\0';
+        }
+    }
+
+    return ret;
+}
+
 static inline void windowref_addref(windowref_t *ref)
 {
     InterlockedIncrement(&ref->ref);

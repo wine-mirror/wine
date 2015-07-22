@@ -1394,9 +1394,10 @@ static nsresult NSAPI nsChannel_GetResponseStatusText(nsIHttpChannel *iface,
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
 
-    FIXME("(%p)->(%p)\n", This, aResponseStatusText);
+    TRACE("(%p)->(%p)\n", This, aResponseStatusText);
 
-    return NS_ERROR_NOT_IMPLEMENTED;
+    nsACString_SetData(aResponseStatusText, This->response_status_text);
+    return NS_OK;
 }
 
 static nsresult NSAPI nsChannel_GetRequestSucceeded(nsIHttpChannel *iface,
