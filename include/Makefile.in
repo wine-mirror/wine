@@ -475,6 +475,7 @@ SRCDIR_INCLUDES = \
 	msxmldid.h \
 	nb30.h \
 	ndrtypes.h \
+	netioapi.h \
 	nldef.h \
 	npapi.h \
 	nspapi.h \

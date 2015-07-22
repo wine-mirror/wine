@@ -51,8 +51,10 @@
 #include "ipstats.h"
 #include "ipifcons.h"
 #include "fltdefs.h"
+#include "netioapi.h"
 
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(iphlpapi);
 
@@ -2745,10 +2747,175 @@ ULONG WINAPI GetTcp6Table2(PMIB_TCP6TABLE2 table, PULONG size, BOOL order)
 }
 
 /******************************************************************
+ *    ConvertInterfaceGuidToLuid (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID *guid, NET_LUID *luid)
+{
+    DWORD ret;
+    MIB_IFROW row;
+
+    TRACE("(%s %p)\n", debugstr_guid(guid), luid);
+
+    if (!guid || !luid) return ERROR_INVALID_PARAMETER;
+
+    row.dwIndex = guid->Data1;
+    if ((ret = GetIfEntry( &row ))) return ret;
+
+    luid->Info.Reserved     = 0;
+    luid->Info.NetLuidIndex = guid->Data1;
+    luid->Info.IfType       = row.dwType;
+    return NO_ERROR;
+}
+
+/******************************************************************
+ *    ConvertInterfaceIndexToLuid (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX index, NET_LUID *luid)
+{
+    MIB_IFROW row;
+
+    TRACE("(%u %p)\n", index, luid);
+
+    if (!luid) return ERROR_INVALID_PARAMETER;
+    memset( luid, 0, sizeof(*luid) );
+
+    row.dwIndex = index;
+    if (GetIfEntry( &row )) return ERROR_FILE_NOT_FOUND;
+
+    luid->Info.Reserved     = 0;
+    luid->Info.NetLuidIndex = index;
+    luid->Info.IfType       = row.dwType;
+    return NO_ERROR;
+}
+
+/******************************************************************
  *    ConvertInterfaceLuidToGuid (IPHLPAPI.@)
  */
 DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID *luid, GUID *guid)
 {
-    FIXME("(%p %p) stub\n", luid, guid);
-    return ERROR_CALL_NOT_IMPLEMENTED;
+    DWORD ret;
+    MIB_IFROW row;
+
+    TRACE("(%p %p)\n", luid, guid);
+
+    if (!luid || !guid) return ERROR_INVALID_PARAMETER;
+
+    row.dwIndex = luid->Info.NetLuidIndex;
+    if ((ret = GetIfEntry( &row ))) return ret;
+
+    guid->Data1 = luid->Info.NetLuidIndex;
+    return NO_ERROR;
+}
+
+/******************************************************************
+ *    ConvertInterfaceLuidToIndex (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceLuidToIndex(const NET_LUID *luid, NET_IFINDEX *index)
+{
+    DWORD ret;
+    MIB_IFROW row;
+
+    TRACE("(%p %p)\n", luid, index);
+
+    if (!luid || !index) return ERROR_INVALID_PARAMETER;
+
+    row.dwIndex = luid->Info.NetLuidIndex;
+    if ((ret = GetIfEntry( &row ))) return ret;
+
+    *index = luid->Info.NetLuidIndex;
+    return NO_ERROR;
+}
+
+/******************************************************************
+ *    ConvertInterfaceLuidToNameA (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceLuidToNameA(const NET_LUID *luid, char *name, SIZE_T len)
+{
+    DWORD ret;
+    MIB_IFROW row;
+
+    TRACE("(%p %p %u)\n", luid, name, (DWORD)len);
+
+    if (!luid) return ERROR_INVALID_PARAMETER;
+
+    row.dwIndex = luid->Info.NetLuidIndex;
+    if ((ret = GetIfEntry( &row ))) return ret;
+
+    if (!name || len < WideCharToMultiByte( CP_UNIXCP, 0, row.wszName, -1, NULL, 0, NULL, NULL ))
+        return ERROR_NOT_ENOUGH_MEMORY;
+
+    WideCharToMultiByte( CP_UNIXCP, 0, row.wszName, -1, name, len, NULL, NULL );
+    return NO_ERROR;
+}
+
+/******************************************************************
+ *    ConvertInterfaceLuidToNameW (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceLuidToNameW(const NET_LUID *luid, WCHAR *name, SIZE_T len)
+{
+    DWORD ret;
+    MIB_IFROW row;
+
+    TRACE("(%p %p %u)\n", luid, name, (DWORD)len);
+
+    if (!luid || !name) return ERROR_INVALID_PARAMETER;
+
+    row.dwIndex = luid->Info.NetLuidIndex;
+    if ((ret = GetIfEntry( &row ))) return ret;
+
+    if (len < strlenW( row.wszName ) + 1) return ERROR_NOT_ENOUGH_MEMORY;
+    strcpyW( name, row.wszName );
+    return NO_ERROR;
+}
+
+/******************************************************************
+ *    ConvertInterfaceNameToLuidA (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceNameToLuidA(const char *name, NET_LUID *luid)
+{
+    DWORD ret;
+    IF_INDEX index;
+    MIB_IFROW row;
+
+    TRACE("(%s %p)\n", debugstr_a(name), luid);
+
+    if ((ret = getInterfaceIndexByName( name, &index ))) return ERROR_INVALID_NAME;
+    if (!luid) return ERROR_INVALID_PARAMETER;
+
+    row.dwIndex = index;
+    if ((ret = GetIfEntry( &row ))) return ret;
+
+    luid->Info.Reserved     = 0;
+    luid->Info.NetLuidIndex = index;
+    luid->Info.IfType       = row.dwType;
+    return NO_ERROR;
+}
+
+/******************************************************************
+ *    ConvertInterfaceNameToLuidW (IPHLPAPI.@)
+ */
+DWORD WINAPI ConvertInterfaceNameToLuidW(const WCHAR *name, NET_LUID *luid)
+{
+    DWORD ret;
+    IF_INDEX index;
+    MIB_IFROW row;
+    char nameA[IF_MAX_STRING_SIZE + 1];
+
+    TRACE("(%s %p)\n", debugstr_w(name), luid);
+
+    if (!luid) return ERROR_INVALID_PARAMETER;
+    memset( luid, 0, sizeof(*luid) );
+
+    if (!WideCharToMultiByte( CP_UNIXCP, 0, name, -1, nameA, sizeof(nameA), NULL, NULL ))
+        return ERROR_INVALID_NAME;
+
+    if ((ret = getInterfaceIndexByName( nameA, &index ))) return ret;
+
+    row.dwIndex = index;
+    if ((ret = GetIfEntry( &row ))) return ret;
+
+    luid->Info.Reserved     = 0;
+    luid->Info.NetLuidIndex = index;
+    luid->Info.IfType       = row.dwType;
+    return NO_ERROR;
 }

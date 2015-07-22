@@ -12,15 +12,15 @@
 #@ stub ConvertGuidToStringA
 #@ stub ConvertGuidToStringW
 #@ stub ConvertInterfaceAliasToLuid
-#@ stub ConvertInterfaceGuidToLuid
-#@ stub ConvertInterfaceIndexToLuid
+@ stdcall ConvertInterfaceGuidToLuid( ptr ptr )
+@ stdcall ConvertInterfaceIndexToLuid( long ptr )
 #@ stub ConvertInterfaceLuidToAlias
 @ stdcall ConvertInterfaceLuidToGuid( ptr ptr )
-#@ stub ConvertInterfaceLuidToIndex
-#@ stub ConvertInterfaceLuidToNameA
-#@ stub ConvertInterfaceLuidToNameW
-#@ stub ConvertInterfaceNameToLuidA
-#@ stub ConvertInterfaceNameToLuidW
+@ stdcall ConvertInterfaceLuidToIndex( ptr ptr )
+@ stdcall ConvertInterfaceLuidToNameA( ptr ptr long )
+@ stdcall ConvertInterfaceLuidToNameW( ptr ptr long )
+@ stdcall ConvertInterfaceNameToLuidA( str ptr )
+@ stdcall ConvertInterfaceNameToLuidW( wstr ptr )
 #@ stub ConvertInterfacePhysicalAddressToLuid
 #@ stub ConvertIpv4MaskToLength
 #@ stub ConvertLengthToIpv4Mask
