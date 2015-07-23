@@ -722,7 +722,6 @@ static struct wm_gettext_override_data
     BOOL   enabled; /* when 1 bypasses default procedure */
     char  *buff;    /* expected text buffer pointer */
     WCHAR *buffW;   /* same, for W test */
-    int    len;
 } g_wm_gettext_override;
 
 static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -810,8 +809,7 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             {
                 char *text = (char*)lparam;
                 ok(g_wm_gettext_override.buff == text, "expected buffer %p, got %p\n", g_wm_gettext_override.buff, text);
-                if (g_wm_gettext_override.len)
-                    ok(*text == 0, "expected empty string buffer %x\n", *text);
+                ok(*text == 0, "expected empty string buffer %x\n", *text);
                 return 0;
             }
             break;
@@ -833,8 +831,7 @@ static LRESULT WINAPI main_window_procW(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             {
                 WCHAR *text = (WCHAR*)lparam;
                 ok(g_wm_gettext_override.buffW == text, "expected buffer %p, got %p\n", g_wm_gettext_override.buffW, text);
-                if (g_wm_gettext_override.len)
-                    ok(*text == 0, "expected empty string buffer %x\n", *text);
+                ok(*text == 0, "expected empty string buffer %x\n", *text);
                 return 0;
             }
             break;
@@ -5819,7 +5816,6 @@ static void test_gettext(void)
     num_gettext_msgs = 0;
     memset( buf, 0xcc, sizeof(buf) );
     g_wm_gettext_override.buff = buf;
-    g_wm_gettext_override.len = sizeof(buf);
     buf_len = GetWindowTextA( hwnd, buf, sizeof(buf) );
     ok( buf_len == 0, "got %d\n", buf_len );
     ok( *buf == 0, "got %x\n", *buf );
@@ -5828,11 +5824,9 @@ static void test_gettext(void)
     num_gettext_msgs = 0;
     strcpy( buf, "blah" );
     g_wm_gettext_override.buff = buf;
-    g_wm_gettext_override.len = 0;
     buf_len = GetWindowTextA( hwnd, buf, 0 );
     ok( buf_len == 0, "got %d\n", buf_len );
     ok( !strcmp(buf, "blah"), "got %s\n", buf );
-todo_wine
     ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
     g_wm_gettext_override.enabled = FALSE;
@@ -5846,7 +5840,6 @@ todo_wine
     num_gettext_msgs = 0;
     memset( bufW, 0xcc, sizeof(bufW) );
     g_wm_gettext_override.buffW = bufW;
-    g_wm_gettext_override.len = sizeof(bufW)/sizeof(WCHAR);
     buf_len = GetWindowTextW( hwnd2, bufW, sizeof(bufW)/sizeof(WCHAR) );
     ok( buf_len == 0, "got %d\n", buf_len );
     ok( *bufW == 0, "got %x\n", *bufW );
@@ -5855,11 +5848,9 @@ todo_wine
     num_gettext_msgs = 0;
     memset( bufW, 0xcc, sizeof(bufW) );
     g_wm_gettext_override.buffW = bufW;
-    g_wm_gettext_override.len = 0;
     buf_len = GetWindowTextW( hwnd2, bufW, 0 );
     ok( buf_len == 0, "got %d\n", buf_len );
     ok( *bufW == 0xcccc, "got %x\n", *bufW );
-todo_wine
     ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
 
     g_wm_gettext_override.enabled = FALSE;
