@@ -300,13 +300,27 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderT
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapFromWicBitmap(ID2D1RenderTarget *iface,
         IWICBitmapSource *bitmap_source, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
+    const D2D1_PIXEL_FORMAT *d2d_format;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
+    WICPixelFormatGUID wic_format;
     unsigned int bpp, data_size;
     D2D1_SIZE_U size;
+    unsigned int i;
     WICRect rect;
     UINT32 pitch;
     HRESULT hr;
     void *data;
+
+    static const struct
+    {
+        const WICPixelFormatGUID *wic;
+        D2D1_PIXEL_FORMAT d2d;
+    }
+    format_lookup[] =
+    {
+        {&GUID_WICPixelFormat32bppPBGRA, {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_PREMULTIPLIED}},
+        {&GUID_WICPixelFormat32bppBGR,   {DXGI_FORMAT_B8G8R8A8_UNORM, D2D1_ALPHA_MODE_IGNORE}},
+    };
 
     TRACE("iface %p, bitmap_source %p, desc %p, bitmap %p.\n",
             iface, bitmap_source, desc, bitmap);
@@ -329,27 +343,31 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapFromWicBitmap
         bitmap_desc = *desc;
     }
 
-    if (bitmap_desc.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
+    if (FAILED(hr = IWICBitmapSource_GetPixelFormat(bitmap_source, &wic_format)))
     {
-        WICPixelFormatGUID wic_format;
+        WARN("Failed to get bitmap format, hr %#x.\n", hr);
+        return hr;
+    }
 
-        if (FAILED(hr = IWICBitmapSource_GetPixelFormat(bitmap_source, &wic_format)))
+    for (i = 0, d2d_format = NULL; i < sizeof(format_lookup) / sizeof(*format_lookup); ++i)
+    {
+        if (IsEqualGUID(&wic_format, format_lookup[i].wic))
         {
-            WARN("Failed to get bitmap format, hr %#x.\n", hr);
-            return hr;
-        }
-
-        if (IsEqualGUID(&wic_format, &GUID_WICPixelFormat32bppPBGRA)
-                || IsEqualGUID(&wic_format, &GUID_WICPixelFormat32bppBGR))
-        {
-            bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
-        }
-        else
-        {
-            WARN("Unsupported WIC bitmap format %s.\n", debugstr_guid(&wic_format));
-            return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+            d2d_format = &format_lookup[i].d2d;
+            break;
         }
     }
+
+    if (!d2d_format)
+    {
+        WARN("Unsupported WIC bitmap format %s.\n", debugstr_guid(&wic_format));
+        return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+    }
+
+    if (bitmap_desc.pixelFormat.format == DXGI_FORMAT_UNKNOWN)
+        bitmap_desc.pixelFormat.format = d2d_format->format;
+    if (bitmap_desc.pixelFormat.alphaMode == D2D1_ALPHA_MODE_UNKNOWN)
+        bitmap_desc.pixelFormat.alphaMode = d2d_format->alphaMode;
 
     switch (bitmap_desc.pixelFormat.format)
     {
