@@ -2679,7 +2679,11 @@ INT WINAPI GetWindowTextA( HWND hwnd, LPSTR lpString, INT nMaxCount )
     if (!lpString) return 0;
 
     if (WIN_IsCurrentProcess( hwnd ))
+    {
+        if (nMaxCount > 0)
+            lpString[0] = 0;
         return (INT)SendMessageA( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
+    }
 
     /* when window belongs to other process, don't send a message */
     if (nMaxCount <= 0) return 0;
@@ -2724,7 +2728,11 @@ INT WINAPI GetWindowTextW( HWND hwnd, LPWSTR lpString, INT nMaxCount )
     if (!lpString) return 0;
 
     if (WIN_IsCurrentProcess( hwnd ))
+    {
+        if (nMaxCount > 0)
+            lpString[0] = 0;
         return (INT)SendMessageW( hwnd, WM_GETTEXT, nMaxCount, (LPARAM)lpString );
+    }
 
     /* when window belongs to other process, don't send a message */
     if (nMaxCount <= 0) return 0;

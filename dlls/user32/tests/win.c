@@ -717,6 +717,14 @@ static void test_enum_thread_windows(void)
     CloseHandle( handle );
 }
 
+static struct wm_gettext_override_data
+{
+    BOOL   enabled; /* when 1 bypasses default procedure */
+    char  *buff;    /* expected text buffer pointer */
+    WCHAR *buffW;   /* same, for W test */
+    int    len;
+} g_wm_gettext_override;
+
 static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
 {
     switch (msg)
@@ -798,9 +806,37 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             break;
         case WM_GETTEXT:
             num_gettext_msgs++;
+            if (g_wm_gettext_override.enabled)
+            {
+                char *text = (char*)lparam;
+                ok(g_wm_gettext_override.buff == text, "expected buffer %p, got %p\n", g_wm_gettext_override.buff, text);
+                if (g_wm_gettext_override.len)
+                    ok(*text == 0, "expected empty string buffer %x\n", *text);
+                return 0;
+            }
             break;
         case WM_SETTEXT:
             num_settext_msgs++;
+            break;
+    }
+
+    return DefWindowProcA(hwnd, msg, wparam, lparam);
+}
+
+static LRESULT WINAPI main_window_procW(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+        case WM_GETTEXT:
+            num_gettext_msgs++;
+            if (g_wm_gettext_override.enabled)
+            {
+                WCHAR *text = (WCHAR*)lparam;
+                ok(g_wm_gettext_override.buffW == text, "expected buffer %p, got %p\n", g_wm_gettext_override.buffW, text);
+                if (g_wm_gettext_override.len)
+                    ok(*text == 0, "expected empty string buffer %x\n", *text);
+                return 0;
+            }
             break;
     }
 
@@ -832,8 +868,11 @@ static LRESULT WINAPI tool_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return DefWindowProcA(hwnd, msg, wparam, lparam);
 }
 
+static const WCHAR mainclassW[] = {'M','a','i','n','W','i','n','d','o','w','C','l','a','s','s','W',0};
+
 static BOOL RegisterWindowClasses(void)
 {
+    WNDCLASSW clsW;
     WNDCLASSA cls;
 
     cls.style = CS_DBLCLKS;
@@ -848,6 +887,19 @@ static BOOL RegisterWindowClasses(void)
     cls.lpszClassName = "MainWindowClass";
 
     if(!RegisterClassA(&cls)) return FALSE;
+
+    clsW.style = CS_DBLCLKS;
+    clsW.lpfnWndProc = main_window_procW;
+    clsW.cbClsExtra = 0;
+    clsW.cbWndExtra = 0;
+    clsW.hInstance = GetModuleHandleA(0);
+    clsW.hIcon = 0;
+    clsW.hCursor = LoadCursorA(0, (LPCSTR)IDC_ARROW);
+    clsW.hbrBackground = GetStockObject(WHITE_BRUSH);
+    clsW.lpszMenuName = NULL;
+    clsW.lpszClassName = mainclassW;
+
+    if(!RegisterClassW(&clsW)) return FALSE;
 
     cls.style = 0;
     cls.lpfnWndProc = tool_window_procA;
@@ -5726,11 +5778,12 @@ static DWORD CALLBACK settext_msg_thread( LPVOID arg )
 static void test_gettext(void)
 {
     DWORD tid, num_msgs;
+    WCHAR bufW[32];
     HANDLE thread;
     BOOL success;
     char buf[32];
     INT buf_len;
-    HWND hwnd;
+    HWND hwnd, hwnd2;
     LRESULT r;
     MSG msg;
 
@@ -5744,6 +5797,74 @@ static void test_gettext(void)
     ok( buf_len != 0, "expected a nonempty window text\n" );
     ok( !strcmp(buf, "caption"), "got wrong window text '%s'\n", buf );
     ok( num_gettext_msgs == 1, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    /* other process window */
+    strcpy( buf, "a" );
+    buf_len = GetWindowTextA( GetDesktopWindow(), buf, sizeof(buf) );
+    ok( buf_len == 0, "expected a nonempty window text\n" );
+    ok( *buf == 0, "got wrong window text '%s'\n", buf );
+
+    strcpy( buf, "blah" );
+    buf_len = GetWindowTextA( GetDesktopWindow(), buf, 0 );
+    ok( buf_len == 0, "expected a nonempty window text\n" );
+    ok( !strcmp(buf, "blah"), "got wrong window text '%s'\n", buf );
+
+    bufW[0] = 0xcc;
+    buf_len = GetWindowTextW( GetDesktopWindow(), bufW, 0 );
+    ok( buf_len == 0, "expected a nonempty window text\n" );
+    ok( bufW[0] == 0xcc, "got %x\n", bufW[0] );
+
+    g_wm_gettext_override.enabled = TRUE;
+
+    num_gettext_msgs = 0;
+    memset( buf, 0xcc, sizeof(buf) );
+    g_wm_gettext_override.buff = buf;
+    g_wm_gettext_override.len = sizeof(buf);
+    buf_len = GetWindowTextA( hwnd, buf, sizeof(buf) );
+    ok( buf_len == 0, "got %d\n", buf_len );
+    ok( *buf == 0, "got %x\n", *buf );
+    ok( num_gettext_msgs == 1, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
+    strcpy( buf, "blah" );
+    g_wm_gettext_override.buff = buf;
+    g_wm_gettext_override.len = 0;
+    buf_len = GetWindowTextA( hwnd, buf, 0 );
+    ok( buf_len == 0, "got %d\n", buf_len );
+    ok( !strcmp(buf, "blah"), "got %s\n", buf );
+todo_wine
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    g_wm_gettext_override.enabled = FALSE;
+
+    /* same for W window */
+    hwnd2 = CreateWindowExW( 0, mainclassW, NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, NULL );
+    ok( hwnd2 != 0, "CreateWindowExA error %d\n", GetLastError() );
+
+    g_wm_gettext_override.enabled = TRUE;
+
+    num_gettext_msgs = 0;
+    memset( bufW, 0xcc, sizeof(bufW) );
+    g_wm_gettext_override.buffW = bufW;
+    g_wm_gettext_override.len = sizeof(bufW)/sizeof(WCHAR);
+    buf_len = GetWindowTextW( hwnd2, bufW, sizeof(bufW)/sizeof(WCHAR) );
+    ok( buf_len == 0, "got %d\n", buf_len );
+    ok( *bufW == 0, "got %x\n", *bufW );
+    ok( num_gettext_msgs == 1, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    num_gettext_msgs = 0;
+    memset( bufW, 0xcc, sizeof(bufW) );
+    g_wm_gettext_override.buffW = bufW;
+    g_wm_gettext_override.len = 0;
+    buf_len = GetWindowTextW( hwnd2, bufW, 0 );
+    ok( buf_len == 0, "got %d\n", buf_len );
+    ok( *bufW == 0xcccc, "got %x\n", *bufW );
+todo_wine
+    ok( num_gettext_msgs == 0, "got %u WM_GETTEXT messages\n", num_gettext_msgs );
+
+    g_wm_gettext_override.enabled = FALSE;
+
+    DestroyWindow( hwnd2 );
 
     /* test WM_GETTEXT */
     num_gettext_msgs = 0;
