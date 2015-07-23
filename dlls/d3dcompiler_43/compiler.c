@@ -763,3 +763,12 @@ HRESULT WINAPI D3DDisassemble(const void *data, SIZE_T size, UINT flags, const c
             data, size, flags, comments, disassembly);
     return E_NOTIMPL;
 }
+
+HRESULT WINAPI D3DCompileFromFile(const WCHAR *filename, const D3D_SHADER_MACRO *defines, ID3DInclude *includes,
+        const char *entrypoint, const char *target, UINT flags1, UINT flags2, ID3DBlob **code, ID3DBlob **errors)
+{
+    FIXME("filename %s, defines %p, includes %p, entrypoint %s, target %s, flags1 %x, flags2 %x, code %p, errors %p\n",
+            debugstr_w(filename), defines, includes, debugstr_a(entrypoint), debugstr_a(target), flags1, flags2, code, errors);
+
+    return E_NOTIMPL;
+}
