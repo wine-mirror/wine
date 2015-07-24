@@ -64,6 +64,7 @@ static size_t (CDECL *p_wcstombs_s)(size_t *ret, char* dest, size_t sz, const wc
 static int (CDECL *p__dsign)(double);
 static int (CDECL *p__fdsign)(float);
 static wchar_t** (CDECL *p____lc_locale_name_func)(void);
+static unsigned int (CDECL *p__GetConcurrency)(void);
 
 static BOOL init(void)
 {
@@ -82,6 +83,7 @@ static BOOL init(void)
     p__dsign = (void*)GetProcAddress(module, "_dsign");
     p__fdsign = (void*)GetProcAddress(module, "_fdsign");
     p____lc_locale_name_func = (void*)GetProcAddress(module, "___lc_locale_name_func");
+    p__GetConcurrency = (void*)GetProcAddress(module,"?_GetConcurrency@details@Concurrency@@YAIXZ");
     return TRUE;
 }
 
@@ -221,10 +223,21 @@ static void test____lc_locale_name_func(void)
     ok(!lc_names[1], "___lc_locale_name_func()[1] = %s\n", wine_dbgstr_w(lc_names[1]));
 }
 
+static void test__GetConcurrency(void)
+{
+    SYSTEM_INFO si;
+    unsigned int c;
+
+    GetSystemInfo(&si);
+    c = (*p__GetConcurrency)();
+    ok(c == si.dwNumberOfProcessors, "expected %u, got %u\n", si.dwNumberOfProcessors, c);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
     test_lconv();
     test__dsign();
     test____lc_locale_name_func();
+    test__GetConcurrency();
 }

@@ -537,6 +537,24 @@ void __thiscall critical_section_scoped_lock_dtor(critical_section_scoped_lock *
     TRACE("(%p)\n", this);
     critical_section_unlock(this->cs);
 }
+
+/* ?_GetConcurrency@details@Concurrency@@YAIXZ */
+unsigned int __cdecl _GetConcurrency(void)
+{
+    static unsigned int val = -1;
+
+    TRACE("()\n");
+
+    if(val == -1) {
+        SYSTEM_INFO si;
+
+        GetSystemInfo(&si);
+        val = si.dwNumberOfProcessors;
+    }
+
+    return val;
+}
+
 #endif
 
 /**********************************************************************
