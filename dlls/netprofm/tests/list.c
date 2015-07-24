@@ -103,8 +103,12 @@ static void test_INetworkListManager( void )
     ok( hr == S_OK, "got %08x\n", hr );
     ok( !memcmp( &iid, &IID_INetworkListManagerEvents, sizeof(iid) ),
         "Expected iid to be IID_INetworkListManagerEvents\n" );
-
     IConnectionPoint_Release( pt );
+
+    hr = IConnectionPointContainer_FindConnectionPoint( cpc, &IID_INetworkCostManagerEvents, &pt );
+    ok( hr == S_OK || hr == CO_E_FAILEDTOIMPERSONATE, "got %08x\n", hr );
+    if (hr == S_OK) IConnectionPoint_Release( pt );
+
     IConnectionPointContainer_Release( cpc );
     INetworkListManager_Release( mgr );
 }

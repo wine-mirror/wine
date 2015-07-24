@@ -68,6 +68,8 @@ typedef struct NLM_SOCKADDR
     BYTE data[128];
 } NLM_SOCKADDR;
 
+const UINT32 NLM_UNKNOWN_DATAPLAN_STATUS = 0xffffffff;
+
 typedef struct NLM_USAGE_DATA
 {
     DWORD    UsageInMegabytes;
@@ -105,6 +107,21 @@ interface INetworkCostManager : IUnknown
         [in] UINT32 length,
         [in, unique, size_is(length)] NLM_SOCKADDR *pDestIPAddrList,
         [in] VARIANT_BOOL bAppend);
+}
+
+[
+    object,
+    pointer_default(unique),
+    uuid(dcb00009-570f-4a9b-8d69-199fdba5723b)
+]
+interface INetworkCostManagerEvents : IUnknown
+{
+    HRESULT CostChanged(
+        [in] DWORD newCost,
+        [in, unique] NLM_SOCKADDR *pDestAddr);
+
+    HRESULT DataPlanStatusChanged(
+        [in, unique] NLM_SOCKADDR *pDestAddr);
 }
 
 [

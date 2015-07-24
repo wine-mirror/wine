@@ -489,7 +489,8 @@ static HRESULT WINAPI ConnectionPointContainer_FindConnectionPoint(IConnectionPo
     if (!riid || !cp)
         return E_POINTER;
 
-    if (IsEqualGUID( riid, &IID_INetworkListManagerEvents ))
+    if (IsEqualGUID( riid, &IID_INetworkListManagerEvents ) ||
+        IsEqualGUID( riid, &IID_INetworkCostManagerEvents ))
         return connection_point_create( cp, riid, iface );
 
     FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
