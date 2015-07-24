@@ -23,6 +23,12 @@
 #include <stdarg.h>
 #include "windef.h"
 #include "winbase.h"
+#define USE_WS_PREFIX
+#include "winsock2.h"
+#include "ws2ipdef.h"
+#include "iphlpapi.h"
+#include "ifdef.h"
+#include "netioapi.h"
 #include "initguid.h"
 #include "objbase.h"
 #include "ocidl.h"
@@ -240,12 +246,67 @@ static HRESULT WINAPI cost_manager_GetCost(
     return S_OK;
 }
 
+static BOOL map_address_6to4( const SOCKADDR_IN6 *addr6, SOCKADDR_IN *addr4 )
+{
+    ULONG i;
+
+    if (addr6->sin6_family != WS_AF_INET6) return FALSE;
+
+    for (i = 0; i < 5; i++)
+        if (addr6->sin6_addr.u.Word[i]) return FALSE;
+
+    if (addr6->sin6_addr.u.Word[5] != 0xffff) return FALSE;
+
+    addr4->sin_family = WS_AF_INET;
+    addr4->sin_port   = addr6->sin6_port;
+    addr4->sin_addr.S_un.S_addr = addr6->sin6_addr.u.Word[6] << 16 | addr6->sin6_addr.u.Word[7];
+    memset( &addr4->sin_zero, 0, sizeof(addr4->sin_zero) );
+
+    return TRUE;
+}
+
 static HRESULT WINAPI cost_manager_GetDataPlanStatus(
     INetworkCostManager *iface, NLM_DATAPLAN_STATUS *pDataPlanStatus,
     NLM_SOCKADDR *pDestIPAddr)
 {
+    DWORD ret, index;
+    NET_LUID luid;
+    SOCKADDR *dst = (SOCKADDR *)pDestIPAddr;
+    SOCKADDR_IN addr4, *dst4;
+
     FIXME( "%p, %p, %p\n", iface, pDataPlanStatus, pDestIPAddr );
-    return E_NOTIMPL;
+
+    if (!pDataPlanStatus) return E_POINTER;
+
+    if (dst && ((dst->sa_family == WS_AF_INET && (dst4 = (SOCKADDR_IN *)dst)) ||
+               ((dst->sa_family == WS_AF_INET6 && map_address_6to4( (const SOCKADDR_IN6 *)dst, &addr4 )
+                && (dst4 = &addr4)))))
+    {
+        if ((ret = GetBestInterface( dst4->sin_addr.S_un.S_addr, &index )))
+            return HRESULT_FROM_WIN32( ret );
+
+        if ((ret = ConvertInterfaceIndexToLuid( index, &luid )))
+            return HRESULT_FROM_WIN32( ret );
+
+        if ((ret = ConvertInterfaceLuidToGuid( &luid, &pDataPlanStatus->InterfaceGuid )))
+            return HRESULT_FROM_WIN32( ret );
+    }
+    else
+    {
+        FIXME( "interface guid not found\n" );
+        memset( &pDataPlanStatus->InterfaceGuid, 0, sizeof(pDataPlanStatus->InterfaceGuid) );
+    }
+
+    pDataPlanStatus->UsageData.UsageInMegabytes = NLM_UNKNOWN_DATAPLAN_STATUS;
+    memset( &pDataPlanStatus->UsageData.LastSyncTime, 0, sizeof(pDataPlanStatus->UsageData.LastSyncTime) );
+    pDataPlanStatus->DataLimitInMegabytes       = NLM_UNKNOWN_DATAPLAN_STATUS;
+    pDataPlanStatus->InboundBandwidthInKbps     = NLM_UNKNOWN_DATAPLAN_STATUS;
+    pDataPlanStatus->OutboundBandwidthInKbps    = NLM_UNKNOWN_DATAPLAN_STATUS;
+    memset( &pDataPlanStatus->NextBillingCycle, 0, sizeof(pDataPlanStatus->NextBillingCycle) );
+    pDataPlanStatus->MaxTransferSizeInMegabytes = NLM_UNKNOWN_DATAPLAN_STATUS;
+    pDataPlanStatus->Reserved                   = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI cost_manager_SetDestinationAddresses(
