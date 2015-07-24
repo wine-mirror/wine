@@ -51,6 +51,7 @@
 #include "winnls.h"
 #include "dsrole.h"
 #include "dsgetdc.h"
+#include "davclnt.h"
 #include "wine/debug.h"
 #include "wine/library.h"
 #include "wine/list.h"
@@ -3346,4 +3347,93 @@ NET_API_STATUS WINAPI NetLocalGroupSetMembers(
     FIXME("(%s %s %d %p %d) stub!\n", debugstr_w(servername),
             debugstr_w(groupname), level, buf, totalentries);
     return NERR_Success;
+}
+
+/************************************************************
+ *                DavGetHTTPFromUNCPath (NETAPI32.@)
+ */
+DWORD WINAPI DavGetHTTPFromUNCPath(const WCHAR *unc_path, WCHAR *buf, DWORD *buflen)
+{
+    static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
+    static const WCHAR httpsW[] = {'h','t','t','p','s',':','/','/',0};
+    static const WCHAR sslW[] = {'S','S','L',0};
+    static const WCHAR fmtW[] = {':','%','u',0};
+    const WCHAR *p = unc_path, *q, *server, *path, *scheme = httpW;
+    UINT i, len_server, len_path = 0, len_port = 0, len, port = 0;
+    WCHAR *end, portbuf[12];
+
+    TRACE("(%s %p %p)\n", debugstr_w(unc_path), buf, buflen);
+
+    if (p[0] != '\\' || p[1] != '\\' || !p[2]) return ERROR_INVALID_PARAMETER;
+    q = p += 2;
+    while (*q && *q != '\\' && *q != '/' && *q != '@') q++;
+    server = p;
+    len_server = q - p;
+    if (*q == '@')
+    {
+        p = ++q;
+        while (*p && (*p != '\\' && *p != '/' && *p != '@')) p++;
+        if (p - q == 3 && !memicmpW( q, sslW, 3 ))
+        {
+            scheme = httpsW;
+            q = p;
+        }
+        else if ((port = strtolW( q, &end, 10 ))) q = end;
+        else return ERROR_INVALID_PARAMETER;
+    }
+    if (*q == '@')
+    {
+        if (!(port = strtolW( ++q, &end, 10 ))) return ERROR_INVALID_PARAMETER;
+        q = end;
+    }
+    if (*q == '\\' || *q  == '/') q++;
+    path = q;
+    while (*q++) len_path++;
+    if (len_path && (path[len_path - 1] == '\\' || path[len_path - 1] == '/'))
+        len_path--; /* remove trailing slash */
+
+    sprintfW( portbuf, fmtW, port );
+    if (scheme == httpsW)
+    {
+        len = strlenW( httpsW );
+        if (port && port != 443) len_port = strlenW( portbuf );
+    }
+    else
+    {
+        len = strlenW( httpW );
+        if (port && port != 80) len_port = strlenW( portbuf );
+    }
+    len += len_server;
+    len += len_port;
+    if (len_path) len += len_path + 1; /* leading '/' */
+    len++; /* nul */
+
+    if (*buflen < len)
+    {
+        *buflen = len;
+        return ERROR_INSUFFICIENT_BUFFER;
+    }
+
+    memcpy( buf, scheme, strlenW(scheme) * sizeof(WCHAR) );
+    buf += strlenW( scheme );
+    memcpy( buf, server, len_server * sizeof(WCHAR) );
+    buf += len_server;
+    if (len_port)
+    {
+        memcpy( buf, portbuf, len_port * sizeof(WCHAR) );
+        buf += len_port;
+    }
+    if (len_path)
+    {
+        *buf++ = '/';
+        for (i = 0; i < len_path; i++)
+        {
+            if (path[i] == '\\') *buf++ = '/';
+            else *buf++ = path[i];
+        }
+    }
+    *buf = 0;
+    *buflen = len;
+
+    return ERROR_SUCCESS;
 }
