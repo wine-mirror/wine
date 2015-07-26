@@ -98,6 +98,51 @@ static BOOL init_threadpool(void)
 #undef NTDLL_GET_PROC
 
 
+static DWORD CALLBACK rtl_work_cb(void *userdata)
+{
+    HANDLE semaphore = userdata;
+    trace("Running rtl_work callback\n");
+    ReleaseSemaphore(semaphore, 1, NULL);
+    return 0;
+}
+
+static void test_RtlQueueWorkItem(void)
+{
+    HANDLE semaphore;
+    NTSTATUS status;
+    DWORD result;
+
+    semaphore = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(semaphore != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    status = RtlQueueWorkItem(rtl_work_cb, semaphore, WT_EXECUTEDEFAULT);
+    ok(!status, "RtlQueueWorkItem failed with status %x\n", status);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    status = RtlQueueWorkItem(rtl_work_cb, semaphore, WT_EXECUTEINIOTHREAD);
+    ok(!status, "RtlQueueWorkItem failed with status %x\n", status);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    status = RtlQueueWorkItem(rtl_work_cb, semaphore, WT_EXECUTEINPERSISTENTTHREAD);
+    ok(!status, "RtlQueueWorkItem failed with status %x\n", status);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    status = RtlQueueWorkItem(rtl_work_cb, semaphore, WT_EXECUTELONGFUNCTION);
+    ok(!status, "RtlQueueWorkItem failed with status %x\n", status);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    status = RtlQueueWorkItem(rtl_work_cb, semaphore, WT_TRANSFER_IMPERSONATION);
+    ok(!status, "RtlQueueWorkItem failed with status %x\n", status);
+    result = WaitForSingleObject(semaphore, 1000);
+    ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+
+    CloseHandle(semaphore);
+}
+
 static void CALLBACK simple_cb(TP_CALLBACK_INSTANCE *instance, void *userdata)
 {
     HANDLE semaphore = userdata;
@@ -1292,6 +1337,8 @@ static void test_tp_multi_wait(void)
 
 START_TEST(threadpool)
 {
+    test_RtlQueueWorkItem();
+
     if (!init_threadpool())
         return;
 
