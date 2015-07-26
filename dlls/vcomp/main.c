@@ -330,6 +330,50 @@ void CDECL _vcomp_atomic_sub_r4(float *dest, float val)
     while (interlocked_cmpxchg((int *)dest, new, old) != old);
 }
 
+void CDECL _vcomp_atomic_add_r8(double *dest, double val)
+{
+    LONG64 old, new;
+    do
+    {
+        old = *(LONG64 *)dest;
+        *(double *)&new = *(double *)&old + val;
+    }
+    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_r8(double *dest, double val)
+{
+    LONG64 old, new;
+    do
+    {
+        old = *(LONG64 *)dest;
+        *(double *)&new = *(double *)&old / val;
+    }
+    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+}
+
+void CDECL _vcomp_atomic_mul_r8(double *dest, double val)
+{
+    LONG64 old, new;
+    do
+    {
+        old = *(LONG64 *)dest;
+        *(double *)&new = *(double *)&old * val;
+    }
+    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+}
+
+void CDECL _vcomp_atomic_sub_r8(double *dest, double val)
+{
+    LONG64 old, new;
+    do
+    {
+        old = *(LONG64 *)dest;
+        *(double *)&new = *(double *)&old - val;
+    }
+    while (interlocked_cmpxchg64((LONG64 *)dest, new, old) != old);
+}
+
 int CDECL omp_get_dynamic(void)
 {
     TRACE("stub\n");

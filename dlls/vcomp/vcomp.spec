@@ -3,7 +3,7 @@
 @ cdecl _vcomp_atomic_add_i4(ptr long)
 @ stub _vcomp_atomic_add_i8
 @ cdecl _vcomp_atomic_add_r4(ptr float)
-@ stub _vcomp_atomic_add_r8
+@ cdecl _vcomp_atomic_add_r8(ptr double)
 @ stub _vcomp_atomic_and_i1
 @ stub _vcomp_atomic_and_i2
 @ cdecl _vcomp_atomic_and_i4(ptr long)
@@ -13,7 +13,7 @@
 @ cdecl _vcomp_atomic_div_i4(ptr long)
 @ stub _vcomp_atomic_div_i8
 @ cdecl _vcomp_atomic_div_r4(ptr float)
-@ stub _vcomp_atomic_div_r8
+@ cdecl _vcomp_atomic_div_r8(ptr double)
 @ stub _vcomp_atomic_div_ui1
 @ stub _vcomp_atomic_div_ui2
 @ cdecl _vcomp_atomic_div_ui4(ptr long)
@@ -23,7 +23,7 @@
 @ cdecl _vcomp_atomic_mul_i4(ptr long)
 @ stub _vcomp_atomic_mul_i8
 @ cdecl _vcomp_atomic_mul_r4(ptr float)
-@ stub _vcomp_atomic_mul_r8
+@ cdecl _vcomp_atomic_mul_r8(ptr double)
 @ stub _vcomp_atomic_or_i1
 @ stub _vcomp_atomic_or_i2
 @ cdecl _vcomp_atomic_or_i4(ptr long)
@@ -45,7 +45,7 @@
 @ cdecl _vcomp_atomic_sub_i4(ptr long)
 @ stub _vcomp_atomic_sub_i8
 @ cdecl _vcomp_atomic_sub_r4(ptr float)
-@ stub _vcomp_atomic_sub_r8
+@ cdecl _vcomp_atomic_sub_r8(ptr double)
 @ stub _vcomp_atomic_xor_i1
 @ stub _vcomp_atomic_xor_i2
 @ cdecl _vcomp_atomic_xor_i4(ptr long)
