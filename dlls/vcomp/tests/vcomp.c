@@ -31,6 +31,17 @@ static BOOL   (WINAPI *pActivateActCtx)(HANDLE, ULONG_PTR*);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 
+static void  (CDECL   *p_vcomp_atomic_add_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_and_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_div_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_div_ui4)(unsigned int *dest, unsigned int val);
+static void  (CDECL   *p_vcomp_atomic_mul_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_or_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_shl_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_shr_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_shr_ui4)(unsigned int *dest, unsigned int val);
+static void  (CDECL   *p_vcomp_atomic_sub_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_xor_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_barrier)(void);
 static void  (CDECL   *p_vcomp_for_static_end)(void);
 static void  (CDECL   *p_vcomp_for_static_init)(int first, int last, int step, int chunksize, unsigned int *loops,
@@ -175,6 +186,17 @@ static BOOL init_vcomp(void)
         return FALSE;
     }
 
+    VCOMP_GET_PROC(_vcomp_atomic_add_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_and_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_div_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_div_ui4);
+    VCOMP_GET_PROC(_vcomp_atomic_mul_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_or_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_shl_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_shr_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_shr_ui4);
+    VCOMP_GET_PROC(_vcomp_atomic_sub_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_xor_i4);
     VCOMP_GET_PROC(_vcomp_barrier);
     VCOMP_GET_PROC(_vcomp_for_static_end);
     VCOMP_GET_PROC(_vcomp_for_static_init);
@@ -849,6 +871,60 @@ static void test_vcomp_for_static_init(void)
     pomp_set_num_threads(max_threads);
 }
 
+static void test_atomic_integer32(void)
+{
+    struct
+    {
+        void (CDECL *func)(int *, int);
+        int v1, v2, expected;
+    }
+    tests1[] =
+    {
+        { p_vcomp_atomic_add_i4,  0x11223344,  0x77665544, -0x77777778 },
+        { p_vcomp_atomic_and_i4,  0x11223344,  0x77665544,  0x11221144 },
+        { p_vcomp_atomic_div_i4,  0x77665544,  0x11223344,           6 },
+        { p_vcomp_atomic_div_i4,  0x77665544, -0x11223344,          -6 },
+        { p_vcomp_atomic_mul_i4,  0x11223344,  0x77665544,  -0xecccdf0 },
+        { p_vcomp_atomic_mul_i4,  0x11223344, -0x77665544,   0xecccdf0 },
+        { p_vcomp_atomic_or_i4,   0x11223344,  0x77665544,  0x77667744 },
+        { p_vcomp_atomic_shl_i4,  0x11223344,           3, -0x76ee65e0 },
+        { p_vcomp_atomic_shl_i4,  0x11223344,          35, -0x76ee65e0 },
+        { p_vcomp_atomic_shl_i4, -0x11223344,           3,  0x76ee65e0 },
+        { p_vcomp_atomic_shr_i4,  0x11223344,           3,   0x2244668 },
+        { p_vcomp_atomic_shr_i4,  0x11223344,          35,   0x2244668 },
+        { p_vcomp_atomic_shr_i4, -0x11223344,           3,  -0x2244669 },
+        { p_vcomp_atomic_sub_i4,  0x11223344,  0x77665544, -0x66442200 },
+        { p_vcomp_atomic_xor_i4,  0x11223344,  0x77665544,  0x66446600 },
+    };
+    struct
+    {
+        void (CDECL *func)(unsigned int *, unsigned int);
+        unsigned int v1, v2, expected;
+    }
+    tests2[] =
+    {
+        { p_vcomp_atomic_div_ui4, 0x77665544, 0x11223344,          6 },
+        { p_vcomp_atomic_div_ui4, 0x77665544, 0xeeddccbc,          0 },
+        { p_vcomp_atomic_shr_ui4, 0x11223344,          3,  0x2244668 },
+        { p_vcomp_atomic_shr_ui4, 0x11223344,         35,  0x2244668 },
+        { p_vcomp_atomic_shr_ui4, 0xeeddccbc,          3, 0x1ddbb997 },
+    };
+    int i;
+
+    for (i = 0; i < sizeof(tests1)/sizeof(tests1[0]); i++)
+    {
+        int val = tests1[i].v1;
+        tests1[i].func(&val, tests1[i].v2);
+        ok(val == tests1[i].expected, "test %d: expected val == %d, got %d\n", i, tests1[i].expected, val);
+    }
+    for (i = 0; i < sizeof(tests2)/sizeof(tests2[0]); i++)
+    {
+        unsigned int val = tests2[i].v1;
+        tests2[i].func(&val, tests2[i].v2);
+        ok(val == tests2[i].expected, "test %d: expected val == %u, got %u\n", i, tests2[i].expected, val);
+    }
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
@@ -860,6 +936,7 @@ START_TEST(vcomp)
     test_vcomp_sections_init();
     test_vcomp_for_static_simple_init();
     test_vcomp_for_static_init();
+    test_atomic_integer32();
 
     release_vcomp();
 }
