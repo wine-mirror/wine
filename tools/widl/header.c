@@ -937,8 +937,18 @@ void write_args(FILE *h, const var_list_t *args, const char *name, int method, i
     if (method == 2) {
         const expr_t *expr = get_attrp(arg->attrs, ATTR_DEFAULTVALUE);
         if (expr) {
-            fprintf(h, " = ");
-            write_expr( h, expr, 0, 1, NULL, NULL, "" );
+            const var_t *tail_arg;
+
+            /* Output default value only if all following arguments also have default value. */
+            LIST_FOR_EACH_ENTRY_REV( tail_arg, args, const var_t, entry ) {
+                if(tail_arg == arg) {
+                    fprintf(h, " = ");
+                    write_expr( h, expr, 0, 1, NULL, NULL, "" );
+                    break;
+                }
+                if(!get_attrp(tail_arg->attrs, ATTR_DEFAULTVALUE))
+                    break;
+            }
         }
     }
     count++;
