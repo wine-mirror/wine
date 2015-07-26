@@ -32,15 +32,19 @@ static BOOL   (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 
 static void  (CDECL   *p_vcomp_atomic_add_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_add_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_and_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_div_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_div_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_div_ui4)(unsigned int *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_mul_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_mul_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_or_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_shl_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_shr_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_shr_ui4)(unsigned int *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_sub_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_sub_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_xor_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_barrier)(void);
 static void  (CDECL   *p_vcomp_for_static_end)(void);
@@ -187,15 +191,19 @@ static BOOL init_vcomp(void)
     }
 
     VCOMP_GET_PROC(_vcomp_atomic_add_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_add_r4);
     VCOMP_GET_PROC(_vcomp_atomic_and_i4);
     VCOMP_GET_PROC(_vcomp_atomic_div_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_div_r4);
     VCOMP_GET_PROC(_vcomp_atomic_div_ui4);
     VCOMP_GET_PROC(_vcomp_atomic_mul_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_mul_r4);
     VCOMP_GET_PROC(_vcomp_atomic_or_i4);
     VCOMP_GET_PROC(_vcomp_atomic_shl_i4);
     VCOMP_GET_PROC(_vcomp_atomic_shr_i4);
     VCOMP_GET_PROC(_vcomp_atomic_shr_ui4);
     VCOMP_GET_PROC(_vcomp_atomic_sub_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_sub_r4);
     VCOMP_GET_PROC(_vcomp_atomic_xor_i4);
     VCOMP_GET_PROC(_vcomp_barrier);
     VCOMP_GET_PROC(_vcomp_for_static_end);
@@ -925,6 +933,31 @@ static void test_atomic_integer32(void)
     }
 }
 
+static void test_atomic_float(void)
+{
+    struct
+    {
+        void (CDECL *func)(float *, float);
+        float v1, v2, expected;
+    }
+    tests[] =
+    {
+        { p_vcomp_atomic_add_r4, 42.0, 17.0, 42.0 + 17.0 },
+        { p_vcomp_atomic_div_r4, 42.0, 17.0, 42.0 / 17.0 },
+        { p_vcomp_atomic_mul_r4, 42.0, 17.0, 42.0 * 17.0 },
+        { p_vcomp_atomic_sub_r4, 42.0, 17.0, 42.0 - 17.0 },
+    };
+    int i;
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        float val = tests[i].v1;
+        tests[i].func(&val, tests[i].v2);
+        ok(tests[i].expected - 0.001 < val && val < tests[i].expected + 0.001,
+           "test %d: expected val == %f, got %f\n", i, tests[i].expected, val);
+    }
+}
+
 START_TEST(vcomp)
 {
     if (!init_vcomp())
@@ -937,6 +970,7 @@ START_TEST(vcomp)
     test_vcomp_for_static_simple_init();
     test_vcomp_for_static_init();
     test_atomic_integer32();
+    test_atomic_float();
 
     release_vcomp();
 }
