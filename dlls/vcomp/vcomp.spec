@@ -1,54 +1,54 @@
 @ stub _vcomp_atomic_add_i1
 @ stub _vcomp_atomic_add_i2
-@ stub _vcomp_atomic_add_i4
+@ cdecl _vcomp_atomic_add_i4(ptr long)
 @ stub _vcomp_atomic_add_i8
 @ stub _vcomp_atomic_add_r4
 @ stub _vcomp_atomic_add_r8
 @ stub _vcomp_atomic_and_i1
 @ stub _vcomp_atomic_and_i2
-@ stub _vcomp_atomic_and_i4
+@ cdecl _vcomp_atomic_and_i4(ptr long)
 @ stub _vcomp_atomic_and_i8
 @ stub _vcomp_atomic_div_i1
 @ stub _vcomp_atomic_div_i2
-@ stub _vcomp_atomic_div_i4
+@ cdecl _vcomp_atomic_div_i4(ptr long)
 @ stub _vcomp_atomic_div_i8
 @ stub _vcomp_atomic_div_r4
 @ stub _vcomp_atomic_div_r8
 @ stub _vcomp_atomic_div_ui1
 @ stub _vcomp_atomic_div_ui2
-@ stub _vcomp_atomic_div_ui4
+@ cdecl _vcomp_atomic_div_ui4(ptr long)
 @ stub _vcomp_atomic_div_ui8
 @ stub _vcomp_atomic_mul_i1
 @ stub _vcomp_atomic_mul_i2
-@ stub _vcomp_atomic_mul_i4
+@ cdecl _vcomp_atomic_mul_i4(ptr long)
 @ stub _vcomp_atomic_mul_i8
 @ stub _vcomp_atomic_mul_r4
 @ stub _vcomp_atomic_mul_r8
 @ stub _vcomp_atomic_or_i1
 @ stub _vcomp_atomic_or_i2
-@ stub _vcomp_atomic_or_i4
+@ cdecl _vcomp_atomic_or_i4(ptr long)
 @ stub _vcomp_atomic_or_i8
 @ stub _vcomp_atomic_shl_i1
 @ stub _vcomp_atomic_shl_i2
-@ stub _vcomp_atomic_shl_i4
+@ cdecl _vcomp_atomic_shl_i4(ptr long)
 @ stub _vcomp_atomic_shl_i8
 @ stub _vcomp_atomic_shr_i1
 @ stub _vcomp_atomic_shr_i2
-@ stub _vcomp_atomic_shr_i4
+@ cdecl _vcomp_atomic_shr_i4(ptr long)
 @ stub _vcomp_atomic_shr_i8
 @ stub _vcomp_atomic_shr_ui1
 @ stub _vcomp_atomic_shr_ui2
-@ stub _vcomp_atomic_shr_ui4
+@ cdecl _vcomp_atomic_shr_ui4(ptr long)
 @ stub _vcomp_atomic_shr_ui8
 @ stub _vcomp_atomic_sub_i1
 @ stub _vcomp_atomic_sub_i2
-@ stub _vcomp_atomic_sub_i4
+@ cdecl _vcomp_atomic_sub_i4(ptr long)
 @ stub _vcomp_atomic_sub_i8
 @ stub _vcomp_atomic_sub_r4
 @ stub _vcomp_atomic_sub_r8
 @ stub _vcomp_atomic_xor_i1
 @ stub _vcomp_atomic_xor_i2
-@ stub _vcomp_atomic_xor_i4
+@ cdecl _vcomp_atomic_xor_i4(ptr long)
 @ stub _vcomp_atomic_xor_i8
 @ cdecl _vcomp_barrier()
 @ stub _vcomp_copyprivate_broadcast

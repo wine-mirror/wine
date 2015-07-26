@@ -22,6 +22,7 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 #include <assert.h>
@@ -219,6 +220,70 @@ static void vcomp_free_thread_data(void)
 
     HeapFree(GetProcessHeap(), 0, thread_data);
     vcomp_set_thread_data(NULL);
+}
+
+void CDECL _vcomp_atomic_add_i4(int *dest, int val)
+{
+    interlocked_xchg_add(dest, val);
+}
+
+void CDECL _vcomp_atomic_and_i4(int *dest, int val)
+{
+    int old;
+    do old = *dest; while (interlocked_cmpxchg(dest, old & val, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_i4(int *dest, int val)
+{
+    int old;
+    do old = *dest; while (interlocked_cmpxchg(dest, old / val, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_ui4(unsigned int *dest, unsigned int val)
+{
+    unsigned int old;
+    do old = *dest; while (interlocked_cmpxchg((int *)dest, old / val, old) != old);
+}
+
+void CDECL _vcomp_atomic_mul_i4(int *dest, int val)
+{
+    int old;
+    do old = *dest; while (interlocked_cmpxchg(dest, old * val, old) != old);
+}
+
+void CDECL _vcomp_atomic_or_i4(int *dest, int val)
+{
+    int old;
+    do old = *dest; while (interlocked_cmpxchg(dest, old | val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shl_i4(int *dest, int val)
+{
+    int old;
+    do old = *dest; while (interlocked_cmpxchg(dest, old << val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shr_i4(int *dest, int val)
+{
+    int old;
+    do old = *dest; while (interlocked_cmpxchg(dest, old >> val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shr_ui4(unsigned int *dest, unsigned int val)
+{
+    unsigned int old;
+    do old = *dest; while (interlocked_cmpxchg((int *)dest, old >> val, old) != old);
+}
+
+void CDECL _vcomp_atomic_sub_i4(int *dest, int val)
+{
+    interlocked_xchg_add(dest, -val);
+}
+
+void CDECL _vcomp_atomic_xor_i4(int *dest, int val)
+{
+    int old;
+    do old = *dest; while (interlocked_cmpxchg(dest, old ^ val, old) != old);
 }
 
 int CDECL omp_get_dynamic(void)
