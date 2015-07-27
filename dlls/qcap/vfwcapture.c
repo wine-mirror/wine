@@ -276,23 +276,12 @@ static const IBaseFilterVtbl VfwCapture_Vtbl =
 };
 
 /* AMStreamConfig interface, we only need to implement {G,S}etFormat */
-static HRESULT WINAPI
-AMStreamConfig_QueryInterface( IAMStreamConfig * iface, REFIID riid, LPVOID * ppv )
+static HRESULT WINAPI AMStreamConfig_QueryInterface(IAMStreamConfig *iface, REFIID riid,
+        void **ret_iface)
 {
     VfwCapture *This = impl_from_IAMStreamConfig(iface);
 
-    TRACE("%p --> %s\n", This, debugstr_guid(riid));
-
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IAMStreamConfig))
-    {
-        IAMStreamConfig_AddRef(iface);
-        *ppv = iface;
-        return S_OK;
-    }
-
-    FIXME("No interface for iid %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    return IUnknown_QueryInterface(&This->filter.IBaseFilter_iface, riid, ret_iface);
 }
 
 static ULONG WINAPI AMStreamConfig_AddRef( IAMStreamConfig * iface )
@@ -391,20 +380,12 @@ static const IAMStreamConfigVtbl IAMStreamConfig_VTable =
     AMStreamConfig_GetStreamCaps
 };
 
-static HRESULT WINAPI
-AMVideoProcAmp_QueryInterface( IAMVideoProcAmp * iface, REFIID riid,
-                               LPVOID * ppv )
+static HRESULT WINAPI AMVideoProcAmp_QueryInterface(IAMVideoProcAmp *iface, REFIID riid,
+        void **ret_iface)
 {
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IAMVideoProcAmp))
-    {
-        *ppv = iface;
-        IAMVideoProcAmp_AddRef( iface );
-        return S_OK;
-    }
+    VfwCapture *This = impl_from_IAMVideoProcAmp(iface);
 
-    FIXME("No interface for iid %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    return IUnknown_QueryInterface(&This->filter.IBaseFilter_iface, riid, ret_iface);
 }
 
 static ULONG WINAPI AMVideoProcAmp_AddRef(IAMVideoProcAmp * iface)
@@ -459,27 +440,11 @@ static const IAMVideoProcAmpVtbl IAMVideoProcAmp_VTable =
     AMVideoProcAmp_Get,
 };
 
-static HRESULT WINAPI
-PPB_QueryInterface( IPersistPropertyBag * iface, REFIID riid, LPVOID * ppv )
+static HRESULT WINAPI PPB_QueryInterface(IPersistPropertyBag *iface, REFIID riid, void **ret_iface)
 {
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IPersist) ||
-        IsEqualIID(riid, &IID_IPersistPropertyBag))
-    {
-        IPersistPropertyBag_AddRef(iface);
-        *ppv = iface;
-        return S_OK;
-    }
-    if (IsEqualIID(riid, &IID_IBaseFilter))
-    {
-        /* FIXME: native devenum asks for IBaseFilter, should we return it? */
-        IPersistPropertyBag_AddRef(iface);
-        *ppv = iface;
-        return S_OK;
-    }
+    VfwCapture *This = impl_from_IPersistPropertyBag(iface);
 
-    FIXME("No interface for iid %s\n", debugstr_guid(riid));
-    return E_NOINTERFACE;
+    return IUnknown_QueryInterface(&This->filter.IBaseFilter_iface, riid, ret_iface);
 }
 
 static ULONG WINAPI PPB_AddRef(IPersistPropertyBag * iface)
