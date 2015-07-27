@@ -962,12 +962,10 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadTimes:
         {
             KERNEL_USER_TIMES   kusrt;
-            /* We need to do a server call to get the creation time or exit time */
-            /* This works on any thread */
-            SERVER_START_REQ( get_thread_info )
+
+            SERVER_START_REQ( get_thread_times )
             {
                 req->handle = wine_server_obj_handle( handle );
-                req->tid_in = 0;
                 status = wine_server_call( req );
                 if (status == STATUS_SUCCESS)
                 {

@@ -842,11 +842,18 @@ struct rawinput_device
     thread_id_t  tid;           /* server thread id */
     client_ptr_t teb;           /* thread teb pointer */
     affinity_t   affinity;      /* thread affinity mask */
-    timeout_t    creation_time; /* thread creation time */
-    timeout_t    exit_time;     /* thread exit time */
     int          exit_code;     /* thread exit code */
     int          priority;      /* thread priority level */
     int          last;          /* last thread in process */
+@END
+
+
+/* Retrieve information about thread times */
+@REQ(get_thread_times)
+    obj_handle_t handle;        /* thread handle */
+@REPLY
+    timeout_t    creation_time; /* thread creation time */
+    timeout_t    exit_time;     /* thread exit time */
 @END
 
 

@@ -1301,11 +1301,20 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, ", tid=%04x", req->tid );
     dump_uint64( ", teb=", &req->teb );
     dump_uint64( ", affinity=", &req->affinity );
-    dump_timeout( ", creation_time=", &req->creation_time );
-    dump_timeout( ", exit_time=", &req->exit_time );
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );
     fprintf( stderr, ", last=%d", req->last );
+}
+
+static void dump_get_thread_times_request( const struct get_thread_times_request *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
+static void dump_get_thread_times_reply( const struct get_thread_times_reply *req )
+{
+    dump_timeout( " creation_time=", &req->creation_time );
+    dump_timeout( ", exit_time=", &req->exit_time );
 }
 
 static void dump_set_thread_info_request( const struct set_thread_info_request *req )
@@ -4256,6 +4265,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_process_info_request,
     (dump_func)dump_set_process_info_request,
     (dump_func)dump_get_thread_info_request,
+    (dump_func)dump_get_thread_times_request,
     (dump_func)dump_set_thread_info_request,
     (dump_func)dump_get_dll_info_request,
     (dump_func)dump_suspend_thread_request,
@@ -4525,6 +4535,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_process_info_reply,
     NULL,
     (dump_func)dump_get_thread_info_reply,
+    (dump_func)dump_get_thread_times_reply,
     NULL,
     (dump_func)dump_get_dll_info_reply,
     (dump_func)dump_suspend_thread_reply,
@@ -4794,6 +4805,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_process_info",
     "set_process_info",
     "get_thread_info",
+    "get_thread_times",
     "set_thread_info",
     "get_dll_info",
     "suspend_thread",

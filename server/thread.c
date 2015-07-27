@@ -1374,9 +1374,21 @@ DECL_HANDLER(get_thread_info)
         reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STATUS_PENDING;
         reply->priority       = thread->priority;
         reply->affinity       = thread->affinity;
+        reply->last           = thread->process->running_threads == 1;
+
+        release_object( thread );
+    }
+}
+
+/* fetch information about thread times */
+DECL_HANDLER(get_thread_times)
+{
+    struct thread *thread;
+
+    if ((thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION )))
+    {
         reply->creation_time  = thread->creation_time;
         reply->exit_time      = thread->exit_time;
-        reply->last           = thread->process->running_threads == 1;
 
         release_object( thread );
     }
