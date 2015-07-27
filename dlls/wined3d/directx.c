@@ -3805,7 +3805,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     fixup_extensions(gl_info, gl_renderer_str, gl_vendor, card_vendor, device);
     init_driver_info(driver_info, card_vendor, device);
-    add_gl_compat_wrappers(gl_info);
+    install_gl_compat_wrapper(gl_info, ARB_MULTITEXTURE);
+    install_gl_compat_wrapper(gl_info, EXT_FOG_COORD);
 
     return TRUE;
 }
