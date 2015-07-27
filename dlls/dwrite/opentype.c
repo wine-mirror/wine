@@ -21,6 +21,7 @@
 #define COBJMACROS
 
 #include "dwrite_private.h"
+#include "winternl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
@@ -37,8 +38,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define GET_BE_WORD(x) (x)
 #define GET_BE_DWORD(x) (x)
 #else
-#define GET_BE_WORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
-#define GET_BE_DWORD(x) MAKELONG(GET_BE_WORD(HIWORD(x)), GET_BE_WORD(LOWORD(x)))
+#define GET_BE_WORD(x)  RtlUshortByteSwap(x)
+#define GET_BE_DWORD(x) RtlUlongByteSwap(x)
 #endif
 
 typedef struct {
@@ -1376,4 +1377,29 @@ BOOL opentype_get_vdmx_size(const void *data, INT emsize, UINT16 *ascent, UINT16
         }
     }
     return FALSE;
+}
+
+WORD opentype_get_gasp_flags(const WORD *ptr, UINT32 size, INT emsize)
+{
+    WORD num_recs, version;
+    WORD flags = 0;
+
+    if (!ptr)
+        return 0;
+
+    version  = GET_BE_WORD( *ptr++ );
+    num_recs = GET_BE_WORD( *ptr++ );
+    if (version > 1 || size < (num_recs * 2 + 2) * sizeof(WORD)) {
+        ERR("unsupported gasp table: ver %d size %d recs %d\n", version, size, num_recs);
+        goto done;
+    }
+
+    while (num_recs--) {
+        flags = GET_BE_WORD( *(ptr + 1) );
+        if (emsize <= GET_BE_WORD( *ptr )) break;
+        ptr += 2;
+    }
+
+done:
+    return flags;
 }

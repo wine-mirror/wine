@@ -4238,10 +4238,9 @@ if (0) /* crashes on native */
     mode = 10;
     hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, 3.0, 1.0,
         DWRITE_MEASURING_MODE_GDI_CLASSIC, NULL, &mode);
-todo_wine {
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(mode == DWRITE_RENDERING_MODE_DEFAULT, "got %d\n", mode);
-}
+
     hr = IDWriteFactory_CreateRenderingParams(factory, &params);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
@@ -4251,23 +4250,15 @@ todo_wine {
     for (emsize = 1.0; emsize < 500.0; emsize += 1.0) {
         WORD gasp = get_gasp_flags(fontface, emsize);
         DWRITE_RENDERING_MODE expected;
-        int i, skiptest = 0;
+        int i;
 
         for (i = 0; i < sizeof(recmode_tests)/sizeof(recmode_tests[0]); i++) {
             mode = 10;
             expected = get_expected_rendering_mode(emsize, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
             hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, 1.0, recmode_tests[i].measuring, params, &mode);
-        todo_wine
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            if (hr != S_OK) {
-                skiptest = 1;
-                break;
-            }
             ok(mode == expected, "%.2f/%d: got %d, flags 0x%04x, expected %d\n", emsize, i, mode, gasp, expected);
         }
-
-        if (skiptest)
-            break;
 
         /* IDWriteFontFace1 offers another variant of this method */
         if (fontface1) {
@@ -4308,10 +4299,9 @@ todo_wine {
 
     mode = 10;
     hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, 500.0, 1.0, DWRITE_MEASURING_MODE_NATURAL, params, &mode);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mode == DWRITE_RENDERING_MODE_GDI_CLASSIC, "got %d\n", mode);
-}
+
     IDWriteRenderingParams_Release(params);
 
     if (fontface2) {
@@ -4330,12 +4320,20 @@ todo_wine {
         gridfit = 10;
         hr = IDWriteFontFace2_GetRecommendedRenderingMode(fontface2, 5.0, 96.0, 96.0,
             NULL, FALSE, DWRITE_OUTLINE_THRESHOLD_ANTIALIASED, DWRITE_MEASURING_MODE_GDI_CLASSIC,
+            NULL, &mode, &gridfit);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(mode == DWRITE_RENDERING_MODE_GDI_CLASSIC, "got %d\n", mode);
+        ok(gridfit == DWRITE_GRID_FIT_MODE_ENABLED, "got %d\n", gridfit);
+
+        mode = 10;
+        gridfit = 10;
+        hr = IDWriteFontFace2_GetRecommendedRenderingMode(fontface2, 5.0, 96.0, 96.0,
+            NULL, FALSE, DWRITE_OUTLINE_THRESHOLD_ANTIALIASED, DWRITE_MEASURING_MODE_GDI_CLASSIC,
             (IDWriteRenderingParams*)params2, &mode, &gridfit);
-todo_wine {
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(mode == DWRITE_RENDERING_MODE_OUTLINE, "got %d\n", mode);
         ok(gridfit == DWRITE_GRID_FIT_MODE_ENABLED, "got %d\n", gridfit);
-}
+
         IDWriteRenderingParams2_Release(params2);
         IDWriteFactory2_Release(factory2);
     }

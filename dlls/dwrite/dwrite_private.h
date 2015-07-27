@@ -148,6 +148,15 @@ extern HRESULT opentype_get_font_strings_from_id(const void*,DWRITE_INFORMATIONA
 extern HRESULT opentype_get_typographic_features(IDWriteFontFace*,UINT32,UINT32,UINT32,UINT32*,DWRITE_FONT_FEATURE_TAG*) DECLSPEC_HIDDEN;
 extern BOOL opentype_get_vdmx_size(const void*,INT,UINT16*,UINT16*) DECLSPEC_HIDDEN;
 
+enum gasp_flags {
+    GASP_GRIDFIT             = 0x0001,
+    GASP_DOGRAY              = 0x0002,
+    GASP_SYMMETRIC_GRIDFIT   = 0x0004,
+    GASP_SYMMETRIC_SMOOTHING = 0x0008,
+};
+
+extern WORD opentype_get_gasp_flags(const WORD*,UINT32,INT) DECLSPEC_HIDDEN;
+
 /* BiDi helpers */
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;
 extern WCHAR bidi_get_mirrored_char(WCHAR) DECLSPEC_HIDDEN;
