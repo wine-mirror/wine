@@ -1310,6 +1310,11 @@ static void atifs_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
     caps->MaxSimultaneousTextures = 6;
 }
 
+static DWORD atifs_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
+}
+
 static void *atifs_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
 {
     struct atifs_private_data *priv;
@@ -1386,6 +1391,7 @@ static void atifs_free_context_data(struct wined3d_context *context)
 const struct fragment_pipeline atifs_fragment_pipeline = {
     atifs_enable,
     atifs_get_caps,
+    atifs_get_emul_mask,
     atifs_alloc,
     atifs_free,
     atifs_alloc_context_data,

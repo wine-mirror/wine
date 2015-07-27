@@ -5871,6 +5871,11 @@ static void arbfp_get_caps(const struct wined3d_gl_info *gl_info, struct fragmen
     caps->MaxSimultaneousTextures = min(gl_info->limits.fragment_samplers, 8);
 }
 
+static DWORD arbfp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
+}
+
 static void state_texfactor_arbfp(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
@@ -6871,6 +6876,7 @@ static void arbfp_free_context_data(struct wined3d_context *context)
 const struct fragment_pipeline arbfp_fragment_pipeline = {
     arbfp_enable,
     arbfp_get_caps,
+    arbfp_get_emul_mask,
     arbfp_alloc,
     arbfp_free,
     arbfp_alloc_context_data,

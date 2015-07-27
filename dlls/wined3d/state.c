@@ -5582,10 +5582,16 @@ static void vp_ffp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3
         caps->raster_caps |= WINED3DPRASTERCAPS_FOGRANGE;
 }
 
+static DWORD vp_ffp_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
+}
+
 const struct wined3d_vertex_pipe_ops ffp_vertex_pipe =
 {
     ffp_enable,
     vp_ffp_get_caps,
+    vp_ffp_get_emul_mask,
     ffp_alloc,
     ffp_free,
     vp_ffp_states,
@@ -5632,6 +5638,11 @@ static void ffp_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct 
     caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
+static DWORD ffp_fragment_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
+}
+
 static BOOL ffp_color_fixup_supported(struct color_fixup_desc fixup)
 {
     if (TRACE_ON(d3d))
@@ -5663,6 +5674,7 @@ static void ffp_none_context_free(struct wined3d_context *context)
 const struct fragment_pipeline ffp_fragment_pipeline = {
     ffp_enable,
     ffp_fragment_get_caps,
+    ffp_fragment_get_emul_mask,
     ffp_alloc,
     ffp_free,
     ffp_none_context_alloc,
@@ -5685,10 +5697,16 @@ static void vp_none_get_caps(const struct wined3d_gl_info *gl_info, struct wined
     memset(caps, 0, sizeof(*caps));
 }
 
+static DWORD vp_none_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return 0;
+}
+
 const struct wined3d_vertex_pipe_ops none_vertex_pipe =
 {
     none_enable,
     vp_none_get_caps,
+    vp_none_get_emul_mask,
     none_alloc,
     none_free,
     NULL,
@@ -5697,6 +5715,11 @@ const struct wined3d_vertex_pipe_ops none_vertex_pipe =
 static void fp_none_get_caps(const struct wined3d_gl_info *gl_info, struct fragment_caps *caps)
 {
     memset(caps, 0, sizeof(*caps));
+}
+
+static DWORD fp_none_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return 0;
 }
 
 static BOOL fp_none_color_fixup_supported(struct color_fixup_desc fixup)
@@ -5708,6 +5731,7 @@ const struct fragment_pipeline none_fragment_pipe =
 {
     none_enable,
     fp_none_get_caps,
+    fp_none_get_emul_mask,
     none_alloc,
     none_free,
     ffp_none_context_alloc,

@@ -738,6 +738,11 @@ static void nvrc_fragment_get_caps(const struct wined3d_gl_info *gl_info, struct
     caps->MaxSimultaneousTextures = gl_info->limits.textures;
 }
 
+static DWORD nvrc_fragment_get_emul_mask(const struct wined3d_gl_info *gl_info)
+{
+    return GL_EXT_EMUL_ARB_MULTITEXTURE | GL_EXT_EMUL_EXT_FOG_COORD;
+}
+
 static void *nvrc_fragment_alloc(const struct wined3d_shader_backend_ops *shader_backend, void *shader_priv)
 {
     return shader_priv;
@@ -924,6 +929,7 @@ static void nvrc_context_free(struct wined3d_context *context)
 const struct fragment_pipeline nvts_fragment_pipeline = {
     nvts_enable,
     nvrc_fragment_get_caps,
+    nvrc_fragment_get_emul_mask,
     nvrc_fragment_alloc,
     nvrc_fragment_free,
     nvrc_context_alloc,
@@ -935,6 +941,7 @@ const struct fragment_pipeline nvts_fragment_pipeline = {
 const struct fragment_pipeline nvrc_fragment_pipeline = {
     nvrc_enable,
     nvrc_fragment_get_caps,
+    nvrc_fragment_get_emul_mask,
     nvrc_fragment_alloc,
     nvrc_fragment_free,
     nvrc_context_alloc,

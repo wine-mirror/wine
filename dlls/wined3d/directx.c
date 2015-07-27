@@ -3434,7 +3434,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     const char *WGL_Extensions = NULL;
     enum wined3d_gl_vendor gl_vendor;
     enum wined3d_pci_device device;
-    DWORD gl_version;
+    DWORD gl_version, gl_ext_emul_mask;
     HDC hdc;
     unsigned int i, j;
     GLint context_profile = 0;
@@ -3805,8 +3805,12 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     fixup_extensions(gl_info, gl_renderer_str, gl_vendor, card_vendor, device);
     init_driver_info(driver_info, card_vendor, device);
-    install_gl_compat_wrapper(gl_info, ARB_MULTITEXTURE);
-    install_gl_compat_wrapper(gl_info, EXT_FOG_COORD);
+    gl_ext_emul_mask = adapter->vertex_pipe->vp_get_emul_mask(gl_info)
+            | adapter->fragment_pipe->get_emul_mask(gl_info);
+    if (gl_ext_emul_mask & GL_EXT_EMUL_ARB_MULTITEXTURE)
+        install_gl_compat_wrapper(gl_info, ARB_MULTITEXTURE);
+    if (gl_ext_emul_mask & GL_EXT_EMUL_EXT_FOG_COORD)
+        install_gl_compat_wrapper(gl_info, EXT_FOG_COORD);
 
     return TRUE;
 }
