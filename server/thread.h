@@ -79,6 +79,7 @@ struct thread
     context_t             *context;       /* current context if in an exception handler */
     context_t             *suspend_context; /* current context if suspended */
     client_ptr_t           teb;           /* TEB address (in client address space) */
+    client_ptr_t           entry_point;   /* entry point (in client address space) */
     affinity_t             affinity;      /* affinity mask */
     int                    priority;      /* priority level */
     int                    suspend;       /* suspend count */

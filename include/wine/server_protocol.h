@@ -922,16 +922,18 @@ struct set_thread_info_request
     int          mask;
     int          priority;
     affinity_t   affinity;
+    client_ptr_t entry_point;
     obj_handle_t token;
-    char __pad_36[4];
+    char __pad_44[4];
 };
 struct set_thread_info_reply
 {
     struct reply_header __header;
 };
-#define SET_THREAD_INFO_PRIORITY 0x01
-#define SET_THREAD_INFO_AFFINITY 0x02
-#define SET_THREAD_INFO_TOKEN    0x04
+#define SET_THREAD_INFO_PRIORITY   0x01
+#define SET_THREAD_INFO_AFFINITY   0x02
+#define SET_THREAD_INFO_TOKEN      0x04
+#define SET_THREAD_INFO_ENTRYPOINT 0x08
 
 
 
@@ -6111,6 +6113,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 482
+#define SERVER_PROTOCOL_VERSION 483
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -1323,6 +1323,7 @@ static void dump_set_thread_info_request( const struct set_thread_info_request *
     fprintf( stderr, ", mask=%d", req->mask );
     fprintf( stderr, ", priority=%d", req->priority );
     dump_uint64( ", affinity=", &req->affinity );
+    dump_uint64( ", entry_point=", &req->entry_point );
     fprintf( stderr, ", token=%04x", req->token );
 }
 

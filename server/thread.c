@@ -175,6 +175,7 @@ static inline void init_thread_structure( struct thread *thread )
     thread->context         = NULL;
     thread->suspend_context = NULL;
     thread->teb             = 0;
+    thread->entry_point     = 0;
     thread->debug_ctx       = NULL;
     thread->debug_event     = NULL;
     thread->debug_break     = 0;
@@ -497,6 +498,8 @@ static void set_thread_info( struct thread *thread,
     }
     if (req->mask & SET_THREAD_INFO_TOKEN)
         security_set_thread_token( thread, req->token );
+    if (req->mask & SET_THREAD_INFO_ENTRYPOINT)
+        thread->entry_point = req->entry_point;
 }
 
 /* stop a thread (at the Unix level) */
@@ -1284,6 +1287,7 @@ DECL_HANDLER(init_thread)
     current->unix_pid = req->unix_pid;
     current->unix_tid = req->unix_tid;
     current->teb      = req->teb;
+    current->entry_point = req->entry;
 
     if (!process->peb)  /* first thread, initialize the process too */
     {

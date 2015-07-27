@@ -1203,14 +1203,26 @@ NTSTATUS WINAPI NtSetInformationThread( HANDLE handle, THREADINFOCLASS class,
     case ThreadHideFromDebugger:
         /* pretend the call succeeded to satisfy some code protectors */
         return STATUS_SUCCESS;
-
+    case ThreadQuerySetWin32StartAddress:
+        {
+            const PRTL_THREAD_START_ROUTINE *entry = data;
+            if (length != sizeof(PRTL_THREAD_START_ROUTINE)) return STATUS_INVALID_PARAMETER;
+            SERVER_START_REQ( set_thread_info )
+            {
+                req->handle   = wine_server_obj_handle( handle );
+                req->mask     = SET_THREAD_INFO_ENTRYPOINT;
+                req->entry_point = wine_server_client_ptr( *entry );
+                status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        }
+        return status;
     case ThreadBasicInformation:
     case ThreadTimes:
     case ThreadPriority:
     case ThreadDescriptorTableEntry:
     case ThreadEnableAlignmentFaultFixup:
     case ThreadEventPair_Reusable:
-    case ThreadQuerySetWin32StartAddress:
     case ThreadPerformanceCount:
     case ThreadAmILastThread:
     case ThreadIdealProcessor:
