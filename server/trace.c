@@ -1300,6 +1300,7 @@ static void dump_get_thread_info_reply( const struct get_thread_info_reply *req 
     fprintf( stderr, " pid=%04x", req->pid );
     fprintf( stderr, ", tid=%04x", req->tid );
     dump_uint64( ", teb=", &req->teb );
+    dump_uint64( ", entry_point=", &req->entry_point );
     dump_uint64( ", affinity=", &req->affinity );
     fprintf( stderr, ", exit_code=%d", req->exit_code );
     fprintf( stderr, ", priority=%d", req->priority );

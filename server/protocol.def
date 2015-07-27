@@ -841,6 +841,7 @@ struct rawinput_device
     process_id_t pid;           /* server process id */
     thread_id_t  tid;           /* server thread id */
     client_ptr_t teb;           /* thread teb pointer */
+    client_ptr_t entry_point;   /* thread entry point */
     affinity_t   affinity;      /* thread affinity mask */
     int          exit_code;     /* thread exit code */
     int          priority;      /* thread priority level */

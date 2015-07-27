@@ -1375,6 +1375,7 @@ DECL_HANDLER(get_thread_info)
         reply->pid            = get_process_id( thread->process );
         reply->tid            = get_thread_id( thread );
         reply->teb            = thread->teb;
+        reply->entry_point    = thread->entry_point;
         reply->exit_code      = (thread->state == TERMINATED) ? thread->exit_code : STATUS_PENDING;
         reply->priority       = thread->priority;
         reply->affinity       = thread->affinity;

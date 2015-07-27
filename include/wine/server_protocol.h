@@ -892,11 +892,12 @@ struct get_thread_info_reply
     process_id_t pid;
     thread_id_t  tid;
     client_ptr_t teb;
+    client_ptr_t entry_point;
     affinity_t   affinity;
     int          exit_code;
     int          priority;
     int          last;
-    char __pad_44[4];
+    char __pad_52[4];
 };
 
 
@@ -6113,6 +6114,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 483
+#define SERVER_PROTOCOL_VERSION 484
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */
