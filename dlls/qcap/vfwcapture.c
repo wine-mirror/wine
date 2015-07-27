@@ -181,22 +181,6 @@ static HRESULT WINAPI VfwCapture_QueryInterface(IBaseFilter * iface, REFIID riid
     else if (IsEqualIID(riid, &IID_IPersistPropertyBag))
         *ppv = &This->IPersistPropertyBag_iface;
 
-    if (!IsEqualIID(riid, &IID_IUnknown) &&
-        !IsEqualIID(riid, &IID_IPersist) &&
-        !IsEqualIID(riid, &IID_IPersistPropertyBag) &&
-        !This->init)
-    {
-        FIXME("Capture system not initialised when looking for %s, "
-              "trying it on primary device now\n", debugstr_guid(riid));
-        This->driver_info = qcap_driver_init( This->pOutputPin, 0 );
-        if (!This->driver_info)
-        {
-            ERR("VfwCapture initialisation failed\n");
-            return E_UNEXPECTED;
-        }
-        This->init = TRUE;
-    }
-
     if (*ppv)
     {
         TRACE("Returning %s interface\n", debugstr_guid(riid));
