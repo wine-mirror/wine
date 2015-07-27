@@ -1695,6 +1695,61 @@ static void test_NtGetCurrentProcessorNumber(void)
     ok(status == STATUS_SUCCESS, "got 0x%x (expected STATUS_SUCCESS)\n", status);
 }
 
+static DWORD WINAPI start_address_thread(void *arg)
+{
+    PRTL_THREAD_START_ROUTINE entry;
+    NTSTATUS status;
+    DWORD ret;
+
+    entry = NULL;
+    ret = 0xdeadbeef;
+    status = pNtQueryInformationThread(GetCurrentThread(), ThreadQuerySetWin32StartAddress,
+                                       &entry, sizeof(entry), &ret);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok(ret == sizeof(entry), "NtQueryInformationThread returned %u bytes\n", ret);
+    ok(entry == (void *)start_address_thread, "expected %p, got %p\n", start_address_thread, entry);
+    return 0;
+}
+
+static void test_thread_start_address(void)
+{
+    PRTL_THREAD_START_ROUTINE entry;
+    NTSTATUS status;
+    HANDLE thread;
+    DWORD ret;
+
+    entry = NULL;
+    ret = 0xdeadbeef;
+    status = pNtQueryInformationThread(GetCurrentThread(), ThreadQuerySetWin32StartAddress,
+                                       &entry, sizeof(entry), &ret);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok(ret == sizeof(entry), "NtQueryInformationThread returned %u bytes\n", ret);
+    ok(entry != NULL, "expected non-NULL entry point\n");
+
+    entry = (void *)0xdeadbeef;
+    status = pNtSetInformationThread(GetCurrentThread(), ThreadQuerySetWin32StartAddress,
+                                     &entry, sizeof(entry));
+    ok(status == STATUS_SUCCESS || status == STATUS_INVALID_PARAMETER, /* >= Vista */
+       "expected STATUS_SUCCESS or STATUS_INVALID_PARAMETER, got %08x\n", status);
+
+    if (status == STATUS_SUCCESS)
+    {
+        entry = NULL;
+        ret = 0xdeadbeef;
+        status = pNtQueryInformationThread(GetCurrentThread(), ThreadQuerySetWin32StartAddress,
+                                           &entry, sizeof(entry), &ret);
+        ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+        ok(ret == sizeof(entry), "NtQueryInformationThread returned %u bytes\n", ret);
+        ok(entry == (void *)0xdeadbeef, "expected 0xdeadbeef, got %p\n", entry);
+    }
+
+    thread = CreateThread(NULL, 0, start_address_thread, NULL, 0, NULL);
+    ok(thread != INVALID_HANDLE_VALUE, "CreateThread failed with %d\n", GetLastError());
+    ret = WaitForSingleObject(thread, 1000);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", ret);
+    CloseHandle(thread);
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -1820,5 +1875,10 @@ START_TEST(info)
 
     trace("Starting test_affinity()\n");
     test_affinity();
+
+    trace("Starting test_NtGetCurrentProcessorNumber()\n");
     test_NtGetCurrentProcessorNumber();
+
+    trace("Starting test_thread_start_address()\n");
+    test_thread_start_address();
 }
