@@ -2375,7 +2375,8 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
         /* This was already handled by init_format_texture_info(). */
         return;
 
-    if(wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO
+            || !gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
         WARN("No FBO support, or no FBO ORM, guessing filter info from GL caps\n");
         if (vendor == HW_VENDOR_NVIDIA && gl_info->supported[ARB_TEXTURE_FLOAT])
