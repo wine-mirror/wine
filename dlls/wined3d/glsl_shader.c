@@ -333,7 +333,7 @@ static const char *get_info_log_line(const char **ptr)
 }
 
 /* Context activation is done by the caller. */
-static void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL program)
+void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL program)
 {
     int length = 0;
     char *log;
@@ -453,7 +453,7 @@ static void shader_glsl_dump_program_source(const struct wined3d_gl_info *gl_inf
 }
 
 /* Context activation is done by the caller. */
-static void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint program)
+void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint program)
 {
     GLint tmp;
 

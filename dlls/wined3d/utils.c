@@ -1557,13 +1557,133 @@ static void create_and_bind_fbo_attachment(const struct wined3d_gl_info *gl_info
     while (gl_info->gl_ops.gl.p_glGetError());
 }
 
+static void draw_test_quad(struct wined3d_caps_gl_ctx *ctx, const struct wined3d_vec3 *geometry,
+        const struct wined3d_color *color)
+{
+    const struct wined3d_gl_info *gl_info = ctx->gl_info;
+    static const struct wined3d_vec3 default_geometry[] =
+    {
+        {-1.0f, -1.0f, 0.0f},
+        { 1.0f, -1.0f, 0.0f},
+        {-1.0f,  1.0f, 0.0f},
+        { 1.0f,  1.0f, 0.0f},
+    };
+    static const char vs_core_header[] =
+        "#version 150\n"
+        "in vec4 pos;\n"
+        "in vec4 color;\n"
+        "out vec4 out_color;\n"
+        "\n";
+    static const char vs_legacy_header[] =
+        "#version 120\n"
+        "attribute vec4 pos;\n"
+        "attribute vec4 color;\n"
+        "varying vec4 out_color;\n"
+        "\n";
+    static const char vs_body[] =
+        "void main()\n"
+        "{\n"
+        "    gl_Position = pos;\n"
+        "    out_color = color;\n"
+        "}\n";
+    static const char fs_core[] =
+        "#version 150\n"
+        "in vec4 out_color;\n"
+        "out vec4 fragment_color;\n"
+        "\n"
+        "void main()\n"
+        "{\n"
+        "    fragment_color = out_color;\n"
+        "}\n";
+    static const char fs_legacy[] =
+        "#version 120\n"
+        "varying vec4 out_color;\n"
+        "\n"
+        "void main()\n"
+        "{\n"
+        "    gl_FragData[0] = out_color;\n"
+        "}\n";
+    const char *source[2];
+    GLuint vs_id, fs_id;
+    unsigned int i;
+
+    if (!geometry)
+        geometry = default_geometry;
+
+    if (!gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] || !gl_info->supported[ARB_VERTEX_SHADER]
+            || !gl_info->supported[ARB_FRAGMENT_SHADER])
+    {
+        gl_info->gl_ops.gl.p_glDisable(GL_LIGHTING);
+        gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
+        gl_info->gl_ops.gl.p_glLoadIdentity();
+        gl_info->gl_ops.gl.p_glMatrixMode(GL_PROJECTION);
+        gl_info->gl_ops.gl.p_glLoadIdentity();
+
+        gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
+        gl_info->gl_ops.gl.p_glColor4f(color->r, color->g, color->b, color->a);
+        for (i = 0; i < 4; ++i)
+            gl_info->gl_ops.gl.p_glVertex3fv(&geometry[i].x);
+        gl_info->gl_ops.gl.p_glEnd();
+        checkGLcall("Drawing a quad");
+        return;
+    }
+
+    if (!ctx->test_vbo)
+        GL_EXTCALL(glGenBuffers(1, &ctx->test_vbo));
+    GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, ctx->test_vbo));
+    GL_EXTCALL(glBufferData(GL_ARRAY_BUFFER, sizeof(struct wined3d_vec3) * 4, geometry, GL_STREAM_DRAW));
+    GL_EXTCALL(glVertexAttribPointer(0, 3, GL_FLOAT, FALSE, 0, NULL));
+    GL_EXTCALL(glVertexAttrib4f(1, color->r, color->g, color->b, color->a));
+    GL_EXTCALL(glEnableVertexAttribArray(0));
+    GL_EXTCALL(glDisableVertexAttribArray(1));
+
+    if (!ctx->test_program_id)
+    {
+        ctx->test_program_id = GL_EXTCALL(glCreateProgram());
+
+        vs_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
+        source[0] = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? vs_legacy_header : vs_core_header;
+        source[1] = vs_body;
+        GL_EXTCALL(glShaderSource(vs_id, 2, source, NULL));
+        GL_EXTCALL(glAttachShader(ctx->test_program_id, vs_id));
+        GL_EXTCALL(glDeleteShader(vs_id));
+
+        fs_id = GL_EXTCALL(glCreateShader(GL_FRAGMENT_SHADER));
+        source[0] = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? fs_legacy : fs_core;
+        GL_EXTCALL(glShaderSource(fs_id, 1, source, NULL));
+        GL_EXTCALL(glAttachShader(ctx->test_program_id, fs_id));
+        GL_EXTCALL(glDeleteShader(fs_id));
+
+        GL_EXTCALL(glBindAttribLocation(ctx->test_program_id, 0, "pos"));
+        GL_EXTCALL(glBindAttribLocation(ctx->test_program_id, 1, "color"));
+
+        GL_EXTCALL(glCompileShader(vs_id));
+        print_glsl_info_log(gl_info, vs_id, FALSE);
+        GL_EXTCALL(glCompileShader(fs_id));
+        print_glsl_info_log(gl_info, fs_id, FALSE);
+        GL_EXTCALL(glLinkProgram(ctx->test_program_id));
+        shader_glsl_validate_link(gl_info, ctx->test_program_id);
+    }
+    GL_EXTCALL(glUseProgram(ctx->test_program_id));
+
+    gl_info->gl_ops.gl.p_glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+    GL_EXTCALL(glUseProgram(0));
+    GL_EXTCALL(glDisableVertexAttribArray(0));
+    GL_EXTCALL(glBindBuffer(GL_ARRAY_BUFFER, 0));
+    checkGLcall("Drawing a quad");
+}
+
 /* Context activation is done by the caller. */
-static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined3d_format *format)
+static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_format *format)
 {
     /* Check if the default internal format is supported as a frame buffer
      * target, otherwise fall back to the render target internal.
      *
      * Try to stick to the standard format if possible, this limits precision differences. */
+    static const struct wined3d_color black = {0.0f, 0.0f, 0.0f, 1.0f};
+    static const struct wined3d_color half_transparent_red = {1.0f, 0.0f, 0.0f, 0.5f};
+    const struct wined3d_gl_info *gl_info = ctx->gl_info;
     GLenum status, rt_internal = format->rtInternal;
     GLuint object, color_rb;
     enum wined3d_gl_resource_type type;
@@ -1697,32 +1817,13 @@ static void check_fbo_compat(const struct wined3d_gl_info *gl_info, struct wined
                     gl_info->gl_ops.gl.p_glViewport(0, 0, 16, 1);
                 else
                     gl_info->gl_ops.gl.p_glViewport(0, 0, 16, 16);
-                gl_info->gl_ops.gl.p_glDisable(GL_LIGHTING);
-                gl_info->gl_ops.gl.p_glMatrixMode(GL_MODELVIEW);
-                gl_info->gl_ops.gl.p_glLoadIdentity();
-                gl_info->gl_ops.gl.p_glMatrixMode(GL_PROJECTION);
-                gl_info->gl_ops.gl.p_glLoadIdentity();
-
                 gl_info->gl_ops.gl.p_glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-                /* Draw a full-black quad */
-                gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
-                gl_info->gl_ops.gl.p_glColor4f(0.0f, 0.0f, 0.0f, 1.0f);
-                gl_info->gl_ops.gl.p_glVertex3f(-1.0f, -1.0f, 0.0f);
-                gl_info->gl_ops.gl.p_glVertex3f(1.0f, -1.0f, 0.0f);
-                gl_info->gl_ops.gl.p_glVertex3f(-1.0f, 1.0f, 0.0f);
-                gl_info->gl_ops.gl.p_glVertex3f(1.0f, 1.0f, 0.0f);
-                gl_info->gl_ops.gl.p_glEnd();
+                draw_test_quad(ctx, NULL, &black);
 
                 gl_info->gl_ops.gl.p_glEnable(GL_BLEND);
-                /* Draw a half-transparent red quad */
-                gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
-                gl_info->gl_ops.gl.p_glColor4f(1.0f, 0.0f, 0.0f, 0.5f);
-                gl_info->gl_ops.gl.p_glVertex3f(-1.0f, -1.0f, 0.0f);
-                gl_info->gl_ops.gl.p_glVertex3f(1.0f, -1.0f, 0.0f);
-                gl_info->gl_ops.gl.p_glVertex3f(-1.0f, 1.0f, 0.0f);
-                gl_info->gl_ops.gl.p_glVertex3f(1.0f, 1.0f, 0.0f);
-                gl_info->gl_ops.gl.p_glEnd();
+
+                draw_test_quad(ctx, NULL, &half_transparent_red);
 
                 gl_info->gl_ops.gl.p_glDisable(GL_BLEND);
 
@@ -1868,8 +1969,9 @@ static void query_format_flag(struct wined3d_gl_info *gl_info, struct wined3d_fo
 }
 
 /* Context activation is done by the caller. */
-static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
+static void init_format_fbo_compat_info(struct wined3d_caps_gl_ctx *ctx)
 {
+    const struct wined3d_gl_info *gl_info = ctx->gl_info;
     unsigned int i, type;
     GLuint fbo;
 
@@ -2002,7 +2104,7 @@ static void init_format_fbo_compat_info(struct wined3d_gl_info *gl_info)
         if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
         {
             TRACE("Checking if format %s is supported as FBO color attachment...\n", debug_d3dformat(format->id));
-            check_fbo_compat(gl_info, format);
+            check_fbo_compat(ctx, format);
         }
         else
         {
@@ -2582,7 +2684,7 @@ BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info)
 }
 
 /* Context activation is done by the caller. */
-BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter)
+BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, struct wined3d_caps_gl_ctx *ctx)
 {
     struct wined3d_gl_info *gl_info = &adapter->gl_info;
 
@@ -2593,7 +2695,7 @@ BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter)
     if (!init_format_vertex_info(gl_info)) goto fail;
 
     apply_format_fixups(adapter, gl_info);
-    init_format_fbo_compat_info(gl_info);
+    init_format_fbo_compat_info(ctx);
     init_format_filter_info(gl_info, adapter->driver_info.vendor);
 
     return TRUE;

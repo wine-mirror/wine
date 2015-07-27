@@ -250,18 +250,20 @@ const GLenum magLookup[] =
     GL_NEAREST, GL_NEAREST, GL_LINEAR,
 };
 
-struct wined3d_caps_gl_ctx
-{
-    HDC dc;
-    HWND wnd;
-    HGLRC gl_ctx;
-    HDC restore_dc;
-    HGLRC restore_gl_ctx;
-};
-
 static void wined3d_caps_gl_ctx_destroy(const struct wined3d_caps_gl_ctx *ctx)
 {
+    const struct wined3d_gl_info *gl_info = ctx->gl_info;
+
     TRACE("Destroying caps GL context.\n");
+
+    /* Both glDeleteProgram and glDeleteBuffers silently ignore 0 IDs but
+     * this function might be called before the relevant function pointers
+     * in gl_info are initialized. */
+    if (ctx->test_program_id || ctx->test_vbo)
+    {
+        GL_EXTCALL(glDeleteProgram(ctx->test_program_id));
+        GL_EXTCALL(glDeleteBuffers(1, &ctx->test_vbo));
+    }
 
     if (!wglMakeCurrent(NULL, NULL))
         ERR("Failed to disable caps GL context.\n");
@@ -309,7 +311,7 @@ static BOOL wined3d_caps_gl_ctx_create_attribs(struct wined3d_caps_gl_ctx *caps_
     return TRUE;
 }
 
-static BOOL wined3d_caps_gl_ctx_create(struct wined3d_caps_gl_ctx *ctx)
+static BOOL wined3d_caps_gl_ctx_create(struct wined3d_adapter *adapter, struct wined3d_caps_gl_ctx *ctx)
 {
     PIXELFORMATDESCRIPTOR pfd;
     int iPixelFormat;
@@ -367,6 +369,7 @@ static BOOL wined3d_caps_gl_ctx_create(struct wined3d_caps_gl_ctx *ctx)
         goto fail;
     }
 
+    ctx->gl_info = &adapter->gl_info;
     return TRUE;
 
 fail:
@@ -5840,7 +5843,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
     TRACE("Allocated LUID %08x:%08x for adapter %p.\n",
             adapter->luid.HighPart, adapter->luid.LowPart, adapter);
 
-    if (!wined3d_caps_gl_ctx_create(&caps_gl_ctx))
+    if (!wined3d_caps_gl_ctx_create(adapter, &caps_gl_ctx))
     {
         ERR("Failed to get a GL context for adapter %p.\n", adapter);
         return FALSE;
@@ -5887,7 +5890,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
         return FALSE;
     }
 
-    if (!wined3d_adapter_init_format_info(adapter))
+    if (!wined3d_adapter_init_format_info(adapter, &caps_gl_ctx))
     {
         ERR("Failed to initialize GL format info.\n");
         wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);

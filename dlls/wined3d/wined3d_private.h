@@ -1794,7 +1794,21 @@ struct wined3d_adapter
     const struct blit_shader *blitter;
 };
 
-BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter) DECLSPEC_HIDDEN;
+struct wined3d_caps_gl_ctx
+{
+    HDC dc;
+    HWND wnd;
+    HGLRC gl_ctx;
+    HDC restore_dc;
+    HGLRC restore_gl_ctx;
+
+    const struct wined3d_gl_info *gl_info;
+    GLuint test_vbo;
+    GLuint test_program_id;
+};
+
+BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter,
+        struct wined3d_caps_gl_ctx *ctx) DECLSPEC_HIDDEN;
 UINT64 adapter_adjust_memory(struct wined3d_adapter *adapter, INT64 amount) DECLSPEC_HIDDEN;
 
 BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
@@ -3102,6 +3116,9 @@ struct ps_np2fixup_info {
     WORD              active; /* bitfield indicating if we can apply the fixup */
     WORD              num_consts;
 };
+
+void print_glsl_info_log(const struct wined3d_gl_info *gl_info, GLuint id, BOOL program) DECLSPEC_HIDDEN;
+void shader_glsl_validate_link(const struct wined3d_gl_info *gl_info, GLuint program) DECLSPEC_HIDDEN;
 
 struct wined3d_palette
 {
