@@ -264,6 +264,14 @@ static void (WINE_GLAPI *old_fogcoord_glColor4f) (GLfloat r, GLfloat g, GLfloat 
 
 static void WINE_GLAPI wine_glVertex4f(GLfloat x, GLfloat y, GLfloat z, GLfloat w) {
     struct wined3d_context *ctx = context_get_current();
+
+    /* This can be called from draw_test_quad() and at that point there is no
+     * wined3d_context current. */
+    if (!ctx)
+    {
+        old_fogcoord_glVertex4f(x, y, z, w);
+        return;
+    }
     if(ctx->gl_fog_source == GL_FOG_COORDINATE_EXT && ctx->fog_enabled) {
         GLfloat c[4] = {ctx->color[0], ctx->color[1], ctx->color[2], ctx->color[3]};
         GLfloat i;
@@ -294,6 +302,14 @@ static void WINE_GLAPI wine_glVertex3fv(const GLfloat *pos) {
 
 static void WINE_GLAPI wine_glColor4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a) {
     struct wined3d_context *ctx = context_get_current();
+
+    /* This can be called from draw_test_quad() and at that point there is no
+     * wined3d_context current. */
+    if (!ctx)
+    {
+        old_fogcoord_glColor4f(r, g, b, a);
+        return;
+    }
     ctx->color[0] = r;
     ctx->color[1] = g;
     ctx->color[2] = b;
