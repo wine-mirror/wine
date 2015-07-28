@@ -10143,7 +10143,7 @@ static BOOL point_match(IDirect3DDevice9 *device, UINT x, UINT y, UINT r)
 
 static void pointsize_test(void)
 {
-    static const float a = 0.5f, b = 0.5f, c = 0.5f;
+    static const float a = 1.0f, b = 1.0f, c = 1.0f;
     float ptsize, ptsizemax_orig, ptsizemin_orig;
     IDirect3DSurface9 *rt, *backbuffer;
     IDirect3DTexture9 *tex1, *tex2;
@@ -10315,17 +10315,17 @@ static void pointsize_test(void)
     }
     test_setups[] =
     {
-        {&novs, &nops, D3DFVF_XYZ, 32, 62, FALSE, FALSE},
+        {&novs, &nops, D3DFVF_XYZ, 32, 45, FALSE, FALSE},
         {&vs1, &ps1, D3DFVF_XYZ, 32, 32, FALSE, FALSE},
-        {&novs, &ps1, D3DFVF_XYZ, 32, 62, FALSE, FALSE},
+        {&novs, &ps1, D3DFVF_XYZ, 32, 45, FALSE, FALSE},
         {&vs1, &nops, D3DFVF_XYZ, 32, 32, FALSE, FALSE},
-        {&novs, &ps2, D3DFVF_XYZ, 32, 62, FALSE, TRUE},
-        {&novs, &ps2_zw, D3DFVF_XYZ, 32, 62, TRUE, FALSE},
+        {&novs, &ps2, D3DFVF_XYZ, 32, 45, FALSE, TRUE},
+        {&novs, &ps2_zw, D3DFVF_XYZ, 32, 45, TRUE, FALSE},
         {&vs1, &ps2, D3DFVF_XYZ, 32, 32, FALSE, TRUE},
         {&vs1, &ps2_zw, D3DFVF_XYZ, 32, 32, TRUE, FALSE},
         {&vs3, &ps3, D3DFVF_XYZ, 32, 32, FALSE, TRUE},
         {&vs3, &ps3_zw, D3DFVF_XYZ, 32, 32, TRUE, FALSE},
-        {&novs, &nops, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 48, FALSE, FALSE},
+        {&novs, &nops, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 33, FALSE, FALSE},
         {&vs1_psize, &ps1, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24, FALSE, FALSE},
         {&vs3_psize, &ps3, D3DFVF_XYZ | D3DFVF_PSIZE, 48, 24, FALSE, TRUE},
     };
@@ -10564,8 +10564,11 @@ static void pointsize_test(void)
     ok(SUCCEEDED(hr), "Failed setting point scale attenuation coefficient, hr %#x.\n", hr);
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_POINTSCALE_C, *(DWORD *)&c);
     ok(SUCCEEDED(hr), "Failed setting point scale attenuation coefficient, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, &S(U(matrix))._11, 4);
-    ok(SUCCEEDED(hr), "Failed to set vertex shader constants, hr %#x.\n", hr);
+    if (caps.VertexShaderVersion >= D3DVS_VERSION(1, 1))
+    {
+        hr = IDirect3DDevice9_SetVertexShaderConstantF(device, 0, &S(U(matrix))._11, 4);
+        ok(SUCCEEDED(hr), "Failed to set vertex shader constants, hr %#x.\n", hr);
+    }
 
     if (caps.MaxPointSize < 63.0f)
     {
