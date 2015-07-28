@@ -8111,19 +8111,7 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 };
 
 /* TODO:
- *   - This currently depends on GL fixed function functions to set things
- *     like light parameters. Ideally we'd use regular uniforms for that.
- *   - In part because of the previous point, much of this is modelled after
- *     GL fixed function, and has much of the same limitations. For example,
- *     D3D spot lights are slightly different from GL spot lights.
- *   - We can now implement drawing transformed vertices using the GLSL pipe,
- *     instead of using the immediate mode fallback.
- *   - Similarly, we don't need the fallback for certain combinations of
- *     material sources anymore.
- *   - Implement vertex tweening.
- *   - Handle WINED3D_TSS_TEXCOORD_INDEX in the shader, instead of duplicating
- *     attribute arrays in load_tex_coords().
- *   - Per-vertex point sizes. */
+ *   - Implement vertex tweening. */
 const struct wined3d_vertex_pipe_ops glsl_vertex_pipe =
 {
     glsl_vertex_pipe_vp_enable,
