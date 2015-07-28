@@ -143,7 +143,8 @@ DEFINE_EXPECT(OnUIDeactivate);
 DEFINE_EXPECT(OnInPlaceDeactivate);
 DEFINE_EXPECT(RequestUIActivate);
 DEFINE_EXPECT(ControlSite_TranslateAccelerator);
-DEFINE_EXPECT(OnFocus);
+DEFINE_EXPECT(OnFocus_TRUE);
+DEFINE_EXPECT(OnFocus_FALSE);
 DEFINE_EXPECT(GetExternal);
 
 static const WCHAR wszItem[] = {'i','t','e','m',0};
@@ -1135,7 +1136,10 @@ static HRESULT WINAPI IOleControlSite_fnTranslateAccelerator(IOleControlSite* Th
 
 static HRESULT WINAPI IOleControlSite_fnOnFocus(IOleControlSite* This, BOOL fGotFocus)
 {
-    CHECK_EXPECT2(OnFocus);
+    if(fGotFocus)
+        CHECK_EXPECT2(OnFocus_TRUE);
+    else
+        CHECK_EXPECT2(OnFocus_FALSE);
     return E_NOTIMPL;
 }
 
@@ -1813,7 +1817,7 @@ static void test_DoVerb(IWebBrowser2 *unk)
     SET_EXPECT(Frame_SetActiveObject);
     SET_EXPECT(UIWindow_SetActiveObject);
     SET_EXPECT(SetMenu);
-    SET_EXPECT(OnFocus);
+    SET_EXPECT(OnFocus_TRUE);
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                              0, (HWND)0xdeadbeef, &rect);
@@ -1830,7 +1834,7 @@ static void test_DoVerb(IWebBrowser2 *unk)
     CHECK_CALLED(Frame_SetActiveObject);
     CHECK_CALLED(UIWindow_SetActiveObject);
     CHECK_CALLED(SetMenu);
-    todo_wine CHECK_CALLED(OnFocus);
+    CHECK_CALLED(OnFocus_TRUE);
 
     hres = IOleObject_DoVerb(oleobj, OLEIVERB_SHOW, NULL, &ClientSite,
                            0, (HWND)0xdeadbeef, &rect);
@@ -3213,7 +3217,7 @@ static void test_UIActivate(IWebBrowser2 *unk, BOOL activate)
             SET_EXPECT(RequestUIActivate);
             SET_EXPECT(ShowUI);
             SET_EXPECT(HideUI);
-            SET_EXPECT(OnFocus);
+            SET_EXPECT(OnFocus_FALSE);
         }
 
         hres = IOleDocumentView_UIActivate(docview, activate);
@@ -3227,7 +3231,7 @@ static void test_UIActivate(IWebBrowser2 *unk, BOOL activate)
                 CHECK_CALLED(RequestUIActivate);
                 CHECK_CALLED(ShowUI);
                 CHECK_CALLED(HideUI);
-                CHECK_CALLED(OnFocus);
+                CHECK_CALLED(OnFocus_FALSE);
             }
         }
 
@@ -3490,7 +3494,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     SET_EXPECT(Frame_SetActiveObject);
     SET_EXPECT(UIWindow_SetActiveObject);
     SET_EXPECT(OnUIDeactivate);
-    SET_EXPECT(OnFocus);
+    SET_EXPECT(OnFocus_FALSE);
     SET_EXPECT(OnInPlaceDeactivate);
     SET_EXPECT(Invoke_STATUSTEXTCHANGE);
     if(!do_download) {
@@ -3513,7 +3517,7 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     CHECK_CALLED(Frame_SetActiveObject);
     CHECK_CALLED(UIWindow_SetActiveObject);
     CHECK_CALLED(OnUIDeactivate);
-    todo_wine CHECK_CALLED(OnFocus);
+    CHECK_CALLED(OnFocus_FALSE);
     CHECK_CALLED(OnInPlaceDeactivate);
     CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
     if(!do_download) {

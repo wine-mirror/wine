@@ -49,6 +49,22 @@ static LRESULT resize_window(WebBrowser *This, LONG width, LONG height)
     return 0;
 }
 
+static void notify_on_focus(WebBrowser *This, BOOL got_focus)
+{
+    IOleControlSite *control_site;
+    HRESULT hres;
+
+    if(!This->client)
+        return;
+
+    hres = IOleClientSite_QueryInterface(This->client, &IID_IOleControlSite, (void**)&control_site);
+    if(FAILED(hres))
+        return;
+
+    IOleControlSite_OnFocus(control_site, got_focus);
+    IOleControlSite_Release(control_site);
+}
+
 static LRESULT WINAPI shell_embedding_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
     WebBrowser *This;
@@ -67,6 +83,12 @@ static LRESULT WINAPI shell_embedding_proc(HWND hwnd, UINT msg, WPARAM wParam, L
         return resize_window(This, LOWORD(lParam), HIWORD(lParam));
     case WM_DOCHOSTTASK:
         return process_dochost_tasks(&This->doc_host);
+    case WM_SETFOCUS:
+        notify_on_focus(This, TRUE);
+        break;
+    case WM_KILLFOCUS:
+        notify_on_focus(This, FALSE);
+        break;
     }
 
     return DefWindowProcW(hwnd, msg, wParam, lParam);
@@ -203,6 +225,7 @@ static HRESULT activate_ui(WebBrowser *This, IOleClientSite *active_site)
         IOleInPlaceFrame_SetMenu(This->doc_host.frame, NULL, NULL, This->shell_embedding_hwnd);
 
     SetFocus(This->shell_embedding_hwnd);
+    notify_on_focus(This, TRUE);
 
     return S_OK;
 }
@@ -534,10 +557,11 @@ static HRESULT WINAPI OleObject_Close(IOleObject *iface, DWORD dwSaveOption)
     if(This->uiwindow)
         IOleInPlaceUIWindow_SetActiveObject(This->uiwindow, NULL, NULL);
 
-    if(This->inplace) {
+    if(This->inplace)
         IOleInPlaceSiteEx_OnUIDeactivate(This->inplace, FALSE);
+    notify_on_focus(This, FALSE);
+    if(This->inplace)
         IOleInPlaceSiteEx_OnInPlaceDeactivate(This->inplace);
-    }
 
     return IOleObject_SetClientSite(iface, NULL);
 }
