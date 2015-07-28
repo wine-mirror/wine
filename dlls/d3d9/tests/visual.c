@@ -5331,9 +5331,9 @@ static void texdepth_test(void)
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
-    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 1))
+    if (caps.PixelShaderVersion < D3DPS_VERSION(1, 4))
     {
-        skip("No ps_1_1 support, skipping tests.\n");
+        skip("No ps_1_4 support, skipping tests.\n");
         IDirect3DDevice9_Release(device);
         goto done;
     }
