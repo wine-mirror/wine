@@ -841,7 +841,7 @@ static HRESULT WINAPI OleInPlaceObject_SetObjectRects(IOleInPlaceObject *iface,
 {
     WebBrowser *This = impl_from_IOleInPlaceObject(iface);
 
-    TRACE("(%p)->(%p %p)\n", This, lprcPosRect, lprcClipRect);
+    TRACE("(%p)->(%s %s)\n", This, wine_dbgstr_rect(lprcPosRect), wine_dbgstr_rect(lprcClipRect));
 
     This->pos_rect = *lprcPosRect;
 
