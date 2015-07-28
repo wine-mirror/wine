@@ -264,6 +264,11 @@ static void release_client_site(WebBrowser *This)
 {
     release_dochost_client(&This->doc_host);
 
+    if(This->client) {
+        IOleClientSite_Release(This->client);
+        This->client = NULL;
+    }
+
     if(This->shell_embedding_hwnd) {
         DestroyWindow(This->shell_embedding_hwnd);
         This->shell_embedding_hwnd = NULL;
@@ -282,11 +287,6 @@ static void release_client_site(WebBrowser *This)
     if(This->uiwindow) {
         IOleInPlaceUIWindow_Release(This->uiwindow);
         This->uiwindow = NULL;
-    }
-
-    if(This->client) {
-        IOleClientSite_Release(This->client);
-        This->client = NULL;
     }
 
     if(This->sink) {
