@@ -1272,10 +1272,9 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
     {
         stream->stride = stride;
         stream->offset = offset;
+        wined3d_buffer_incref(buffer);
     }
 
-    if (buffer)
-        wined3d_buffer_incref(buffer);
     if (!device->recording)
         wined3d_cs_emit_set_stream_source(device->cs, stream_idx, buffer, offset, stride);
     if (prev_buffer)
