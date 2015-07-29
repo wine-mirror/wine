@@ -20,6 +20,7 @@
  */
 
 #include <math.h>
+#include <limits.h>
 
 #define COBJMACROS
 
@@ -4346,6 +4347,114 @@ if (0) /* crashes on native */
     IDWriteFactory_Release(factory);
 }
 
+static inline BOOL float_eq(FLOAT left, FLOAT right)
+{
+    int x = *(int *)&left;
+    int y = *(int *)&right;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    return abs(x - y) <= 8;
+}
+
+static void test_GetAlphaBlendParams(void)
+{
+    static const DWRITE_RENDERING_MODE rendermodes[] = {
+        DWRITE_RENDERING_MODE_ALIASED,
+        DWRITE_RENDERING_MODE_GDI_CLASSIC,
+        DWRITE_RENDERING_MODE_GDI_NATURAL,
+        DWRITE_RENDERING_MODE_NATURAL,
+        DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC,
+    };
+
+    IDWriteGlyphRunAnalysis *analysis;
+    FLOAT gamma, contrast, ctlevel;
+    IDWriteRenderingParams *params;
+    DWRITE_GLYPH_METRICS metrics;
+    DWRITE_GLYPH_OFFSET offset;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    DWRITE_GLYPH_RUN run;
+    FLOAT advance, expected_gdi_gamma;
+    UINT value = 0;
+    UINT16 glyph;
+    UINT32 ch, i;
+    HRESULT hr;
+    BOOL ret;
+
+    factory = create_factory();
+    fontface = create_fontface(factory);
+
+    ch = 'A';
+    glyph = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, &ch, 1, &glyph);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(glyph > 0, "got %u\n", glyph);
+
+    hr = IDWriteFontFace_GetDesignGlyphMetrics(fontface, &glyph, 1, &metrics, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    advance = metrics.advanceWidth;
+
+    offset.advanceOffset = 0.0;
+    offset.ascenderOffset = 0.0;
+
+    run.fontFace = fontface;
+    run.fontEmSize = 24.0;
+    run.glyphCount = 1;
+    run.glyphIndices = &glyph;
+    run.glyphAdvances = &advance;
+    run.glyphOffsets = &offset;
+    run.isSideways = FALSE;
+    run.bidiLevel = 0;
+
+    hr = IDWriteFactory_CreateCustomRenderingParams(factory, 0.9, 0.3, 0.1, DWRITE_PIXEL_GEOMETRY_RGB,
+        DWRITE_RENDERING_MODE_DEFAULT, &params);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    value = 0;
+    ret = SystemParametersInfoW(SPI_GETFONTSMOOTHINGCONTRAST, 0, &value, 0);
+    ok(ret, "got %d\n", ret);
+    expected_gdi_gamma = (FLOAT)(value / 1000.0);
+
+    for (i = 0; i < sizeof(rendermodes)/sizeof(rendermodes[0]); i++) {
+        hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+            rendermodes[i], DWRITE_MEASURING_MODE_NATURAL,
+            0.0, 0.0, &analysis);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        gamma = contrast = ctlevel = -1.0;
+        hr = IDWriteGlyphRunAnalysis_GetAlphaBlendParams(analysis, NULL, &gamma, &contrast, &ctlevel);
+        ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+        ok(gamma == -1.0, "got %.2f\n", gamma);
+        ok(contrast == -1.0, "got %.2f\n", contrast);
+        ok(ctlevel == -1.0, "got %.2f\n", ctlevel);
+
+        gamma = contrast = ctlevel = -1.0;
+        hr = IDWriteGlyphRunAnalysis_GetAlphaBlendParams(analysis, params, &gamma, &contrast, &ctlevel);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        if (rendermodes[i] == DWRITE_RENDERING_MODE_GDI_CLASSIC || rendermodes[i] == DWRITE_RENDERING_MODE_GDI_NATURAL) {
+            ok(float_eq(gamma, expected_gdi_gamma), "got %.2f, expected %.2f\n", gamma, expected_gdi_gamma);
+            ok(contrast == 0.0f, "got %.2f\n", contrast);
+            ok(ctlevel == 1.0f, "got %.2f\n", ctlevel);
+        }
+        else {
+            ok(gamma == 0.9f, "got %.2f\n", gamma);
+            ok(contrast == 0.3f, "got %.2f\n", contrast);
+            ok(ctlevel == 0.1f, "got %.2f\n", ctlevel);
+        }
+
+        IDWriteGlyphRunAnalysis_Release(analysis);
+    }
+
+    IDWriteRenderingParams_Release(params);
+    IDWriteFontFace_Release(fontface);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -4393,6 +4502,7 @@ START_TEST(font)
     test_GetPanose();
     test_GetGdiCompatibleGlyphAdvances();
     test_GetRecommendedRenderingMode();
+    test_GetAlphaBlendParams();
 
     IDWriteFactory_Release(factory);
 }

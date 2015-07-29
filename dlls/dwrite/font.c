@@ -2933,11 +2933,39 @@ static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysi
 }
 
 static HRESULT WINAPI glyphrunanalysis_GetAlphaBlendParams(IDWriteGlyphRunAnalysis *iface, IDWriteRenderingParams *params,
-    FLOAT *blendGamma, FLOAT *blendEnhancedContrast, FLOAT *blendClearTypeLevel)
+    FLOAT *gamma, FLOAT *contrast, FLOAT *cleartypelevel)
 {
     struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
-    FIXME("(%p)->(%p %p %p %p): stub\n", This, params, blendGamma, blendEnhancedContrast, blendClearTypeLevel);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p %p %p %p)\n", This, params, gamma, contrast, cleartypelevel);
+
+    if (!params)
+        return E_INVALIDARG;
+
+    switch (This->rendering_mode)
+    {
+    case DWRITE_RENDERING_MODE_GDI_CLASSIC:
+    case DWRITE_RENDERING_MODE_GDI_NATURAL:
+    {
+        UINT value = 0;
+        SystemParametersInfoW(SPI_GETFONTSMOOTHINGCONTRAST, 0, &value, 0);
+        *gamma = (FLOAT)value / 1000.0f;
+        *contrast = 0.0f;
+        *cleartypelevel = 1.0f;
+        break;
+    }
+    case DWRITE_RENDERING_MODE_ALIASED:
+    case DWRITE_RENDERING_MODE_NATURAL:
+    case DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC:
+        *gamma = IDWriteRenderingParams_GetGamma(params);
+        *contrast = IDWriteRenderingParams_GetEnhancedContrast(params);
+        *cleartypelevel = IDWriteRenderingParams_GetClearTypeLevel(params);
+        break;
+    default:
+        ;
+    }
+
+    return S_OK;
 }
 
 static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
