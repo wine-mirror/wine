@@ -450,6 +450,7 @@
 @ stdcall IsWindow(long)
 @ stdcall IsWindowEnabled(long)
 # @ stub IsWindowInDestroy
+@ stdcall IsWindowRedirectedForPrint(long)
 @ stdcall IsWindowUnicode(long)
 @ stdcall IsWindowVisible(long)
 @ stdcall IsZoomed(long)

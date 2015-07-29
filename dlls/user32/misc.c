@@ -748,6 +748,16 @@ BOOL WINAPI IsTouchWindow( HWND hwnd, PULONG flags )
     return FALSE;
 }
 
+/**********************************************************************
+ * IsWindowRedirectedForPrint [USER32.@]
+ */
+BOOL WINAPI IsWindowRedirectedForPrint( HWND hwnd )
+{
+    FIXME("(%p): stub\n", hwnd);
+    return FALSE;
+}
+
+
 static const WCHAR imeW[] = {'I','M','E',0};
 const struct builtin_class_descr IME_builtin_class =
 {
