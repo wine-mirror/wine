@@ -1907,6 +1907,11 @@ static void test_COM_vfwcapture(void)
     /* COM aggregation */
     hr = CoCreateInstance(&CLSID_VfwCapture, &unk_obj.IUnknown_iface, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)&unk_obj.inner_unk);
+    if (hr == REGDB_E_CLASSNOTREG)
+    {
+        win_skip("CLSID_VfwCapture not registered\n");
+        return;
+    }
     ok(hr == S_OK, "VfwCapture create failed: %08x\n", hr);
     hr = IUnknown_QueryInterface(unk_obj.inner_unk, &IID_IBaseFilter, (void**)&bf);
     ok(hr == S_OK, "QueryInterface for IID_IBaseFilter  failed: %08x\n", hr);
