@@ -501,6 +501,8 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_brush_Release(ID2D1BitmapBrush *iface)
     {
         if (brush->u.bitmap.sampler_state)
             ID3D10SamplerState_Release(brush->u.bitmap.sampler_state);
+        if (brush->u.bitmap.bitmap)
+            ID2D1Bitmap_Release(&brush->u.bitmap.bitmap->ID2D1Bitmap_iface);
         HeapFree(GetProcessHeap(), 0, brush);
     }
 
@@ -598,7 +600,15 @@ static void STDMETHODCALLTYPE d2d_bitmap_brush_SetInterpolationMode(ID2D1BitmapB
 
 static void STDMETHODCALLTYPE d2d_bitmap_brush_SetBitmap(ID2D1BitmapBrush *iface, ID2D1Bitmap *bitmap)
 {
-    FIXME("iface %p, bitmap %p stub!\n", iface, bitmap);
+    struct d2d_brush *brush = impl_from_ID2D1BitmapBrush(iface);
+
+    TRACE("iface %p, bitmap %p.\n", iface, bitmap);
+
+    if (bitmap)
+        ID2D1Bitmap_AddRef(bitmap);
+    if (brush->u.bitmap.bitmap)
+        ID2D1Bitmap_Release(&brush->u.bitmap.bitmap->ID2D1Bitmap_iface);
+    brush->u.bitmap.bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap);
 }
 
 static D2D1_EXTEND_MODE STDMETHODCALLTYPE d2d_bitmap_brush_GetExtendModeX(ID2D1BitmapBrush *iface)
@@ -666,7 +676,8 @@ HRESULT d2d_bitmap_brush_init(struct d2d_brush *brush, struct d2d_d3d_render_tar
 
     d2d_brush_init(brush, &render_target->ID2D1RenderTarget_iface, D2D_BRUSH_TYPE_BITMAP,
             brush_desc, (ID2D1BrushVtbl *)&d2d_bitmap_brush_vtbl);
-    brush->u.bitmap.bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap);
+    if ((brush->u.bitmap.bitmap = unsafe_impl_from_ID2D1Bitmap(bitmap)))
+        ID2D1Bitmap_AddRef(&brush->u.bitmap.bitmap->ID2D1Bitmap_iface);
     if (bitmap_brush_desc)
     {
         brush->u.bitmap.extend_mode_x = bitmap_brush_desc->extendModeX;
