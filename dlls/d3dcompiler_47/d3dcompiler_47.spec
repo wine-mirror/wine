@@ -1,6 +1,6 @@
 @ stdcall D3DAssemble(ptr long str ptr ptr long ptr ptr)
 @ stdcall D3DCompile(ptr long str ptr ptr str str long long ptr ptr)
-@ stub D3DCompile2
+@ stdcall D3DCompile2(ptr long str ptr ptr str str long long long ptr long ptr ptr)
 @ stdcall D3DCompileFromFile(wstr ptr ptr str str long long ptr ptr)
 @ stub D3DCompressShaders
 @ stdcall D3DCreateBlob(long ptr)
