@@ -728,8 +728,9 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_d3d_render_targe
     struct
     {
         float _11, _21, _31, pad0;
-        float _12, _22, _32, pad1;
-    } transform;
+        float _12, _22, _32, opacity;
+        BOOL ignore_alpha;
+    } bitmap_brush_cb;
     D2D1_COLOR_F color;
     HRESULT hr;
 
@@ -783,17 +784,18 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_d3d_render_targe
         d = b._11 * b._22 - b._21 * b._12;
         if (d != 0.0f)
         {
-            transform._11 = b._22 / d;
-            transform._21 = -b._21 / d;
-            transform._31 = (b._21 * b._32 - b._31 * b._22) / d;
-            transform._12 = -b._12 / d;
-            transform._22 = b._11 / d;
-            transform._32 = -(b._11 * b._32 - b._31 * b._12) / d;
+            bitmap_brush_cb._11 = b._22 / d;
+            bitmap_brush_cb._21 = -b._21 / d;
+            bitmap_brush_cb._31 = (b._21 * b._32 - b._31 * b._22) / d;
+            bitmap_brush_cb._12 = -b._12 / d;
+            bitmap_brush_cb._22 = b._11 / d;
+            bitmap_brush_cb._32 = -(b._11 * b._32 - b._31 * b._12) / d;
         }
-        transform.pad1 = brush->opacity;
+        bitmap_brush_cb.opacity = brush->opacity;
+        bitmap_brush_cb.ignore_alpha = bitmap->format.alphaMode == D2D1_ALPHA_MODE_IGNORE;
 
-        buffer_desc.ByteWidth = sizeof(transform);
-        buffer_data.pSysMem = &transform;
+        buffer_desc.ByteWidth = sizeof(bitmap_brush_cb);
+        buffer_data.pSysMem = &bitmap_brush_cb;
     }
     else
     {
