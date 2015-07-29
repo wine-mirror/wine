@@ -2911,14 +2911,58 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
     return ref;
 }
 
-static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type, RECT *bounds)
+static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *analysis, RECT *bounds)
 {
-    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
     IDWriteFontFace2 *fontface2;
     BOOL nohint, is_rtl;
     FLOAT origin_x;
     HRESULT hr;
     UINT32 i;
+
+    if (analysis->ready & RUNANALYSIS_BOUNDS) {
+        *bounds = analysis->bounds;
+        return;
+    }
+
+    if (analysis->run.isSideways)
+        FIXME("sideways runs are not supported.\n");
+
+    hr = IDWriteFontFace_QueryInterface(analysis->run.fontFace, &IID_IDWriteFontFace2, (void**)&fontface2);
+    if (FAILED(hr))
+        WARN("failed to get IDWriteFontFace2, 0x%08x\n", hr);
+
+    nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL || analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
+
+    /* Start with empty bounds at (0,0) origin, returned bounds are not translated back to (0,0), e.g. for
+       RTL run negative left bound is returned, same goes for vertical direction - top bound will be negative
+       for any non-zero glyph ascender */
+    origin_x = 0.0;
+    is_rtl = analysis->run.bidiLevel & 1;
+    for (i = 0; i < analysis->run.glyphCount; i++) {
+        const DWRITE_GLYPH_OFFSET *offset = &analysis->offsets[i];
+        FLOAT advance = analysis->advances[i];
+        RECT bbox;
+
+        freetype_get_glyph_bbox(fontface2, analysis->run.fontEmSize * analysis->ppdip, analysis->run.glyphIndices[i], nohint, &bbox);
+
+        if (is_rtl)
+            OffsetRect(&bbox, origin_x - offset->advanceOffset - advance, -offset->ascenderOffset);
+        else
+            OffsetRect(&bbox, origin_x + offset->advanceOffset, offset->ascenderOffset);
+
+        UnionRect(&analysis->bounds, &analysis->bounds, &bbox);
+        origin_x += is_rtl ? -advance : advance;
+    }
+
+    IDWriteFontFace2_Release(fontface2);
+
+    analysis->ready |= RUNANALYSIS_BOUNDS;
+    *bounds = analysis->bounds;
+}
+
+static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type, RECT *bounds)
+{
+    struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
 
     TRACE("(%p)->(%d %p)\n", This, type, bounds);
 
@@ -2933,53 +2977,56 @@ static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnal
         return S_OK;
     }
 
-    if (This->ready & RUNANALYSIS_BOUNDS) {
-        *bounds = This->bounds;
-        return S_OK;
-    }
-
-    if (This->run.isSideways)
-        FIXME("sideways runs are not supported.\n");
-
-    hr = IDWriteFontFace_QueryInterface(This->run.fontFace, &IID_IDWriteFontFace2, (void**)&fontface2);
-    if (FAILED(hr))
-        WARN("failed to get IDWriteFontFace2, 0x%08x\n", hr);
-
-    nohint = This->rendering_mode == DWRITE_RENDERING_MODE_NATURAL || This->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
-
-    /* Start with empty bounds at (0,0) origin, returned bounds are not translated back to (0,0), e.g. for
-       RTL run negative left bound is returned, same goes for vertical direction - top bound will be negative
-       for any non-zero glyph ascender */
-    origin_x = 0.0;
-    is_rtl = This->run.bidiLevel & 1;
-    for (i = 0; i < This->run.glyphCount; i++) {
-        const DWRITE_GLYPH_OFFSET *offset = &This->offsets[i];
-        FLOAT advance = This->advances[i];
-        RECT bbox;
-
-        freetype_get_glyph_bbox(fontface2, This->run.fontEmSize * This->ppdip, This->run.glyphIndices[i], nohint, &bbox);
-
-        if (is_rtl)
-            OffsetRect(&bbox, origin_x - offset->advanceOffset - advance, -offset->ascenderOffset);
-        else
-            OffsetRect(&bbox, origin_x + offset->advanceOffset, offset->ascenderOffset);
-
-        UnionRect(&This->bounds, &This->bounds, &bbox);
-        origin_x += is_rtl ? -advance : advance;
-    }
-
-    IDWriteFontFace2_Release(fontface2);
-
-    This->ready |= RUNANALYSIS_BOUNDS;
-    *bounds = This->bounds;
+    glyphrunanalysis_get_texturebounds(This, bounds);
     return S_OK;
 }
 
 static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type,
-    RECT const* bounds, BYTE* alphaValues, UINT32 bufferSize)
+    RECT const *bounds, BYTE *bitmap, UINT32 size)
 {
     struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
-    FIXME("(%p)->(%d %p %p %u): stub\n", This, type, bounds, alphaValues, bufferSize);
+    UINT32 required;
+    RECT runbounds;
+
+    FIXME("(%p)->(%d %s %p %u): stub\n", This, type, wine_dbgstr_rect(bounds), bitmap, size);
+
+    if (!bounds || !bitmap || (UINT32)type > DWRITE_TEXTURE_CLEARTYPE_3x1)
+        return E_INVALIDARG;
+
+    /* make sure buffer is large enough for requested texture type */
+    required = (bounds->right - bounds->left) * (bounds->bottom - bounds->top);
+    if (type == DWRITE_TEXTURE_CLEARTYPE_3x1)
+        required *= 3;
+
+    if (size < required)
+        return E_NOT_SUFFICIENT_BUFFER;
+
+    /* validate requested texture type with rendering mode */
+    switch (This->rendering_mode)
+    {
+    case DWRITE_RENDERING_MODE_ALIASED:
+        if (type != DWRITE_TEXTURE_ALIASED_1x1)
+            return DWRITE_E_UNSUPPORTEDOPERATION;
+        break;
+    case DWRITE_RENDERING_MODE_GDI_CLASSIC:
+    case DWRITE_RENDERING_MODE_GDI_NATURAL:
+    case DWRITE_RENDERING_MODE_NATURAL:
+    case DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC:
+        if (type != DWRITE_TEXTURE_CLEARTYPE_3x1)
+            return DWRITE_E_UNSUPPORTEDOPERATION;
+        break;
+    default:
+        ;
+    }
+
+    glyphrunanalysis_get_texturebounds(This, &runbounds);
+
+    /* special case when there's nothing to return */
+    if (!IntersectRect(&runbounds, &runbounds, bounds)) {
+        memset(bitmap, 0, size);
+        return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 

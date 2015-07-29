@@ -4449,6 +4449,147 @@ static void test_GetAlphaBlendParams(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_CreateAlphaTexture(void)
+{
+    IDWriteGlyphRunAnalysis *analysis;
+    DWRITE_GLYPH_METRICS metrics;
+    DWRITE_GLYPH_OFFSET offset;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    DWRITE_GLYPH_RUN run;
+    UINT32 ch, size;
+    BYTE buff[1024];
+    RECT bounds, r;
+    FLOAT advance;
+    UINT16 glyph;
+    HRESULT hr;
+
+    factory = create_factory();
+    fontface = create_fontface(factory);
+
+    ch = 'A';
+    glyph = 0;
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, &ch, 1, &glyph);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(glyph > 0, "got %u\n", glyph);
+
+    hr = IDWriteFontFace_GetDesignGlyphMetrics(fontface, &glyph, 1, &metrics, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    advance = metrics.advanceWidth;
+
+    offset.advanceOffset = 0.0;
+    offset.ascenderOffset = 0.0;
+
+    run.fontFace = fontface;
+    run.fontEmSize = 24.0;
+    run.glyphCount = 1;
+    run.glyphIndices = &glyph;
+    run.glyphAdvances = &advance;
+    run.glyphOffsets = &offset;
+    run.isSideways = FALSE;
+    run.bidiLevel = 0;
+
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_NATURAL, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SetRectEmpty(&bounds);
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &bounds);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsRectEmpty(&bounds), "got empty rect\n");
+    size = (bounds.right - bounds.left)*(bounds.bottom - bounds.top)*3;
+    ok(sizeof(buff) >= size, "required %u\n", size);
+
+    /* invalid type value */
+    memset(buff, 0xcf, sizeof(buff));
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1+1, &bounds, buff, sizeof(buff));
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf, "got %1x\n", buff[0]);
+
+    memset(buff, 0xcf, sizeof(buff));
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &bounds, buff, 2);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf, "got %1x\n", buff[0]);
+
+    /* vista version allows texture type mismatch, mark it broken for now */
+    memset(buff, 0xcf, sizeof(buff));
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &bounds, buff, sizeof(buff));
+    ok(hr == DWRITE_E_UNSUPPORTEDOPERATION || broken(hr == S_OK), "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf || broken(buff[0] == 0), "got %1x\n", buff[0]);
+
+    memset(buff, 0xcf, sizeof(buff));
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &bounds, buff, size-1);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf, "got %1x\n", buff[0]);
+
+    IDWriteGlyphRunAnalysis_Release(analysis);
+
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_GDI_CLASSIC,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SetRectEmpty(&bounds);
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &bounds);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsRectEmpty(&bounds), "got empty rect\n");
+    size = (bounds.right - bounds.left)*(bounds.bottom - bounds.top);
+    ok(sizeof(buff) >= size, "required %u\n", size);
+
+    memset(buff, 0xcf, sizeof(buff));
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, NULL, buff, sizeof(buff));
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf, "got %1x\n", buff[0]);
+
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, NULL, NULL, sizeof(buff));
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    memset(buff, 0xcf, sizeof(buff));
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, NULL, buff, 0);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf, "got %1x\n", buff[0]);
+
+    /* buffer size is not enough */
+    memset(buff, 0xcf, sizeof(buff));
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &bounds, buff, size-1);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf, "got %1x\n", buff[0]);
+
+    /* request texture for rectangle that doesn't intersect */
+    memset(buff, 0xcf, sizeof(buff));
+    r = bounds;
+    OffsetRect(&r, (bounds.right - bounds.left)*2, 0);
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &r, buff, sizeof(buff));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(buff[0] == 0, "got %1x\n", buff[0]);
+
+    memset(buff, 0xcf, sizeof(buff));
+    r = bounds;
+    OffsetRect(&r, (bounds.right - bounds.left)*2, 0);
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &r, buff, sizeof(buff));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(buff[0] == 0, "got %1x\n", buff[0]);
+
+    /* request texture for rectangle that doesn't intersect, small buffer */
+    memset(buff, 0xcf, sizeof(buff));
+    r = bounds;
+    OffsetRect(&r, (bounds.right - bounds.left)*2, 0);
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_ALIASED_1x1, &r, buff, size-1);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf, "got %1x\n", buff[0]);
+
+    /* vista version allows texture type mismatch, mark it broken for now */
+    memset(buff, 0xcf, sizeof(buff));
+    hr = IDWriteGlyphRunAnalysis_CreateAlphaTexture(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &bounds, buff, sizeof(buff));
+    ok(hr == DWRITE_E_UNSUPPORTEDOPERATION || broken(hr == S_OK), "got 0x%08x\n", hr);
+    ok(buff[0] == 0xcf || broken(buff[0] == 0), "got %1x\n", buff[0]);
+
+    IDWriteGlyphRunAnalysis_Release(analysis);
+    IDWriteFontFace_Release(fontface);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -4497,6 +4638,7 @@ START_TEST(font)
     test_GetGdiCompatibleGlyphAdvances();
     test_GetRecommendedRenderingMode();
     test_GetAlphaBlendParams();
+    test_CreateAlphaTexture();
 
     IDWriteFactory_Release(factory);
 }
