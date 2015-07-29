@@ -1147,15 +1147,13 @@ static void D3DXIntersectTriTest(void)
 static void D3DXCreateMeshTest(void)
 {
     HRESULT hr;
-    HWND wnd;
-    IDirect3D9 *d3d;
     IDirect3DDevice9 *device, *test_device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh *d3dxmesh;
     int i, size;
     D3DVERTEXELEMENT9 test_decl[MAX_FVF_DECL_SIZE];
     DWORD options;
     struct mesh mesh;
+    struct test_context *test_context;
 
     static const D3DVERTEXELEMENT9 decl1[3] = {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
@@ -1185,31 +1183,13 @@ static void D3DXCreateMeshTest(void)
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl1, NULL, &d3dxmesh);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
+    test_context = new_test_context();
+    if (!test_context)
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!d3d)
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     hr = D3DXCreateMesh(0, 3, D3DXMESH_MANAGED, decl1, device, &d3dxmesh);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
@@ -1363,23 +1343,19 @@ static void D3DXCreateMeshTest(void)
     hr = D3DXCreateMesh(1, 3, D3DXMESH_MANAGED, decl3, device, &d3dxmesh);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
-    DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 static void D3DXCreateMeshFVFTest(void)
 {
     HRESULT hr;
-    HWND wnd;
-    IDirect3D9 *d3d;
     IDirect3DDevice9 *device, *test_device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh *d3dxmesh;
     int i, size;
     D3DVERTEXELEMENT9 test_decl[MAX_FVF_DECL_SIZE];
     DWORD options;
     struct mesh mesh;
+    struct test_context *test_context;
 
     static const D3DVERTEXELEMENT9 decl[3] = {
         {0, 0, D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
@@ -1392,31 +1368,13 @@ static void D3DXCreateMeshFVFTest(void)
     hr = D3DXCreateMeshFVF(1, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, NULL, &d3dxmesh);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
+    test_context = new_test_context();
+    if (!test_context)
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!d3d)
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     hr = D3DXCreateMeshFVF(0, 3, D3DXMESH_MANAGED, D3DFVF_XYZ | D3DFVF_NORMAL, device, &d3dxmesh);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
@@ -1502,9 +1460,7 @@ static void D3DXCreateMeshFVFTest(void)
         d3dxmesh->lpVtbl->Release(d3dxmesh);
     }
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
-    DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 #define check_vertex_buffer(mesh, vertices, num_vertices, fvf) \
@@ -2259,35 +2215,18 @@ static void D3DXLoadMeshTest(void)
         }
     };
     HRESULT hr;
-    HWND wnd = NULL;
-    IDirect3D9 *d3d = NULL;
     IDirect3DDevice9 *device = NULL;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh *mesh = NULL;
     D3DXFRAME *frame_hier = NULL;
     D3DXMATRIX transform;
+    struct test_context *test_context;
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_POPUP, 0, 0, 1000, 1000, NULL, NULL, NULL, NULL)))
+    if (!(test_context = new_test_context()))
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!d3d)
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        goto cleanup;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        goto cleanup;
-    }
+    device = test_context->device;
 
     hr = D3DXLoadMeshHierarchyFromXInMemory(NULL, sizeof(simple_xfile) - 1,
             D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
@@ -2427,10 +2366,7 @@ static void D3DXLoadMeshTest(void)
     test_LoadMeshFromX(device, box_xfile, box_vertex_buffer, box_fvf, box_index_buffer, box_materials, TRUE);
     test_LoadMeshFromX(device, framed_xfile, merged_vertex_buffer, framed_fvf, merged_index_buffer, default_materials, FALSE);
 
-cleanup:
-    if (device) IDirect3DDevice9_Release(device);
-    if (d3d) IDirect3D9_Release(d3d);
-    if (wnd) DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 static BOOL compute_box(struct mesh *mesh, float width, float height, float depth)
@@ -2515,11 +2451,7 @@ static void test_box(IDirect3DDevice9 *device, float width, float height, float 
 static void D3DXCreateBoxTest(void)
 {
     HRESULT hr;
-    HWND wnd;
-    WNDCLASSA wc = {0};
-    IDirect3D9* d3d;
     IDirect3DDevice9* device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh* box;
     ID3DXBuffer* ppBuffer;
     DWORD *buffer;
@@ -2531,43 +2463,14 @@ static void D3DXCreateBoxTest(void)
          7, 4, 9, 2, 0, 8,
          1, 3, 11, 5, 6, 10};
     unsigned int i;
+    struct test_context *test_context;
 
-    wc.lpfnWndProc = DefWindowProcA;
-    wc.lpszClassName = "d3dx9_test_wc";
-    if (!RegisterClassA(&wc))
+    if (!(test_context = new_test_context()))
     {
-        skip("RegisterClass failed\n");
+        skip("Couldn't create test context\n");
         return;
     }
-
-    wnd = CreateWindowA("d3dx9_test_wc", "d3dx9_test", WS_OVERLAPPEDWINDOW,
-            0, 0, 640, 480, 0, 0, 0, 0);
-    ok(wnd != NULL, "Expected to have a window, received NULL\n");
-    if (!wnd)
-    {
-        skip("Couldn't create application window\n");
-        return;
-    }
-
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!d3d)
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    memset(&d3dpp, 0, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     hr = D3DXCreateBox(device,2.0f,20.0f,4.9f,NULL, &ppBuffer);
     ok(hr==D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
@@ -2597,9 +2500,7 @@ static void D3DXCreateBoxTest(void)
 
     test_box(device, 10.9f, 20.0f, 4.9f);
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
-    DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 static BOOL compute_polygon(struct mesh *mesh, float length, unsigned int sides)
@@ -2673,40 +2574,19 @@ static void test_polygon(IDirect3DDevice9 *device, float length, unsigned int si
 static void D3DXCreatePolygonTest(void)
 {
     HRESULT hr;
-    HWND wnd;
-    IDirect3D9 *d3d;
     IDirect3DDevice9 *device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh *polygon;
     ID3DXBuffer *adjacency;
     DWORD (*buffer)[3], buffer_size;
     unsigned int i;
+    struct test_context *test_context;
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
+    if (!(test_context = new_test_context()))
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    memset(&d3dpp, 0, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd,
-            D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     hr = D3DXCreatePolygon(device, 2.0f, 11, NULL, &adjacency);
     ok(hr == D3DERR_INVALIDCALL, "Expected D3DERR_INVALIDCALL, received %#x\n", hr);
@@ -2751,9 +2631,7 @@ static void D3DXCreatePolygonTest(void)
     test_polygon(device, 10.0f, 10);
     test_polygon(device, 20.0f, 10);
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
-    DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 struct sincos_table
@@ -2972,11 +2850,9 @@ static void test_sphere(IDirect3DDevice9 *device, FLOAT radius, UINT slices, UIN
 static void D3DXCreateSphereTest(void)
 {
     HRESULT hr;
-    HWND wnd;
-    IDirect3D9* d3d;
     IDirect3DDevice9* device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh* sphere = NULL;
+    struct test_context *test_context;
 
     hr = D3DXCreateSphere(NULL, 0.0f, 0, 0, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
@@ -2990,30 +2866,12 @@ static void D3DXCreateSphereTest(void)
     hr = D3DXCreateSphere(NULL, 0.0f, 0, 1, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
+    if (!(test_context = new_test_context()))
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     hr = D3DXCreateSphere(device, 1.0f, 1, 1, &sphere, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
@@ -3035,9 +2893,7 @@ static void D3DXCreateSphereTest(void)
     test_sphere(device, 5.0f, 6, 7);
     test_sphere(device, 10.0f, 11, 12);
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
-    DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 static BOOL compute_cylinder(struct mesh *mesh, FLOAT radius1, FLOAT radius2, FLOAT length, UINT slices, UINT stacks)
@@ -3221,11 +3077,9 @@ static void test_cylinder(IDirect3DDevice9 *device, FLOAT radius1, FLOAT radius2
 static void D3DXCreateCylinderTest(void)
 {
     HRESULT hr;
-    HWND wnd;
-    IDirect3D9* d3d;
     IDirect3DDevice9* device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh* cylinder = NULL;
+    struct test_context *test_context;
 
     hr = D3DXCreateCylinder(NULL, 0.0f, 0.0f, 0.0f, 0, 0, NULL, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
@@ -3233,30 +3087,12 @@ static void D3DXCreateCylinderTest(void)
     hr = D3DXCreateCylinder(NULL, 1.0f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
+    if (!(test_context = new_test_context()))
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     hr = D3DXCreateCylinder(device, -0.1f, 1.0f, 1.0f, 2, 1, &cylinder, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %x, expected %x (D3DERR_INVALIDCALL)\n",hr,D3DERR_INVALIDCALL);
@@ -3308,9 +3144,7 @@ static void D3DXCreateCylinderTest(void)
     test_cylinder(device, 2.0f, 3.0f, 4.0f, 3, 4);
     test_cylinder(device, 3.0f, 4.0f, 5.0f, 11, 20);
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
-    DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 static BOOL compute_torus(struct mesh *mesh, float innerradius, float outerradius, UINT sides, UINT rings)
@@ -3406,39 +3240,17 @@ static void test_torus(IDirect3DDevice9 *device, float innerradius, float outerr
 
 static void D3DXCreateTorusTest(void)
 {
-
     HRESULT hr;
-    HWND wnd;
-    IDirect3D9* d3d;
     IDirect3DDevice9* device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh* torus = NULL;
+    struct test_context *test_context;
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
+    if (!(test_context = new_test_context()))
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     hr = D3DXCreateTorus(NULL, 0.0f, 0.0f, 3, 3, &torus, NULL);
     ok(hr == D3DERR_INVALIDCALL, "Got result %#x, expected %#x (D3DERR_INVALIDCALL)\n", hr, D3DERR_INVALIDCALL);
@@ -3467,9 +3279,7 @@ static void D3DXCreateTorusTest(void)
     test_torus(device, 0.2f, 1.0f, 60, 3);
     test_torus(device, 0.2f, 1.0f, 8, 70);
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
-    DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 struct dynamic_array
@@ -4381,40 +4191,21 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
 static void D3DXCreateTextTest(void)
 {
     HRESULT hr;
-    HWND wnd;
     HDC hdc;
-    IDirect3D9* d3d;
     IDirect3DDevice9* device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh* d3dxmesh = NULL;
     HFONT hFont;
     OUTLINETEXTMETRICA otm;
     int number_of_vertices;
     int number_of_faces;
+    struct test_context *test_context;
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_POPUP, 0, 0, 1000, 1000, NULL, NULL, NULL, NULL)))
+    if (!(test_context = new_test_context()))
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-    if (!(d3d = Direct3DCreate9(D3D_SDK_VERSION)))
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     hdc = CreateCompatibleDC(NULL);
 
@@ -4488,9 +4279,7 @@ if (0)
 
     DeleteDC(hdc);
 
-    IDirect3DDevice9_Release(device);
-    IDirect3D9_Release(d3d);
-    DestroyWindow(wnd);
+    free_test_context(test_context);
 }
 
 static void test_get_decl_length(void)
@@ -4618,10 +4407,7 @@ static void test_get_decl_vertex_size(void)
 static void D3DXGenerateAdjacencyTest(void)
 {
     HRESULT hr;
-    HWND wnd;
-    IDirect3D9 *d3d;
     IDirect3DDevice9 *device;
-    D3DPRESENT_PARAMETERS d3dpp;
     ID3DXMesh *d3dxmesh = NULL;
     D3DXVECTOR3 *vertices = NULL;
     WORD *indices = NULL;
@@ -4683,32 +4469,14 @@ static void D3DXGenerateAdjacencyTest(void)
             {-1, -1, -1,  -1, -1, -1},
         },
     };
+    struct test_context *test_context;
 
-    if (!(wnd = CreateWindowA("static", "d3dx9_test", WS_OVERLAPPEDWINDOW, 0, 0,
-            640, 480, NULL, NULL, NULL, NULL)))
+    if (!(test_context = new_test_context()))
     {
-        skip("Couldn't create application window\n");
+        skip("Couldn't create test context\n");
         return;
     }
-    d3d = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!d3d)
-    {
-        skip("Couldn't create IDirect3D9 object\n");
-        DestroyWindow(wnd);
-        return;
-    }
-
-    ZeroMemory(&d3dpp, sizeof(d3dpp));
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, wnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &device);
-    if (FAILED(hr))
-    {
-        skip("Failed to create IDirect3DDevice9 object %#x\n", hr);
-        IDirect3D9_Release(d3d);
-        DestroyWindow(wnd);
-        return;
-    }
+    device = test_context->device;
 
     for (i = 0; i < ARRAY_SIZE(test_data); i++)
     {
@@ -4748,6 +4516,8 @@ static void D3DXGenerateAdjacencyTest(void)
                adjacency[j], test_data[i].adjacency[j]);
     }
     if (d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+
+    free_test_context(test_context);
 }
 
 static void test_update_semantics(void)
