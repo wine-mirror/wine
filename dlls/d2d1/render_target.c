@@ -1133,6 +1133,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_PopAxisAlignedClip(ID2D1Rend
 static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *iface, const D2D1_COLOR_F *color)
 {
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    D2D1_COLOR_F c = {0.0f, 0.0f, 0.0f, 0.0f};
     D3D10_SUBRESOURCE_DATA buffer_data;
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Buffer *vs_cb, *ps_cb;
@@ -1162,8 +1163,11 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
         return;
     }
 
-    buffer_desc.ByteWidth = sizeof(*color);
-    buffer_data.pSysMem = color;
+    if (color)
+        c = *color;
+    c.a = 1.0f;
+    buffer_desc.ByteWidth = sizeof(c);
+    buffer_data.pSysMem = &c;
 
     if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ps_cb)))
     {
