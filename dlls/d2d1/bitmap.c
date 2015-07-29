@@ -165,7 +165,47 @@ HRESULT d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_d3d_render_target 
     D3D10_SUBRESOURCE_DATA resource_data;
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10Texture2D *texture;
+    BOOL supported = FALSE;
+    unsigned int i;
     HRESULT hr;
+
+    static const D2D1_PIXEL_FORMAT supported_formats[] =
+    {
+        {DXGI_FORMAT_R32G32B32A32_FLOAT,    D2D1_ALPHA_MODE_PREMULTIPLIED},
+        {DXGI_FORMAT_R32G32B32A32_FLOAT,    D2D1_ALPHA_MODE_IGNORE       },
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,    D2D1_ALPHA_MODE_PREMULTIPLIED},
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,    D2D1_ALPHA_MODE_IGNORE       },
+        {DXGI_FORMAT_R16G16B16A16_UNORM,    D2D1_ALPHA_MODE_PREMULTIPLIED},
+        {DXGI_FORMAT_R16G16B16A16_UNORM,    D2D1_ALPHA_MODE_IGNORE       },
+        {DXGI_FORMAT_R8G8B8A8_UNORM,        D2D1_ALPHA_MODE_PREMULTIPLIED},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,        D2D1_ALPHA_MODE_IGNORE       },
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,   D2D1_ALPHA_MODE_PREMULTIPLIED},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,   D2D1_ALPHA_MODE_IGNORE       },
+        {DXGI_FORMAT_A8_UNORM,              D2D1_ALPHA_MODE_PREMULTIPLIED},
+        {DXGI_FORMAT_A8_UNORM,              D2D1_ALPHA_MODE_STRAIGHT     },
+        {DXGI_FORMAT_B8G8R8A8_UNORM,        D2D1_ALPHA_MODE_PREMULTIPLIED},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,        D2D1_ALPHA_MODE_IGNORE       },
+        {DXGI_FORMAT_B8G8R8X8_UNORM,        D2D1_ALPHA_MODE_IGNORE       },
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,   D2D1_ALPHA_MODE_PREMULTIPLIED},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,   D2D1_ALPHA_MODE_IGNORE       },
+    };
+
+    for (i = 0; i < sizeof(supported_formats) / sizeof(*supported_formats); ++i)
+    {
+        if (supported_formats[i].format == desc->pixelFormat.format
+                && supported_formats[i].alphaMode == desc->pixelFormat.alphaMode)
+        {
+            supported = TRUE;
+            break;
+        }
+    }
+
+    if (!supported)
+    {
+        WARN("Tried to create bitmap with unsupported format {%#x / %#x}.\n",
+                desc->pixelFormat.format, desc->pixelFormat.alphaMode);
+        return D2DERR_UNSUPPORTED_PIXEL_FORMAT;
+    }
 
     FIXME("Ignoring bitmap properties.\n");
 

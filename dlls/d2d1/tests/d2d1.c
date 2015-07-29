@@ -1530,6 +1530,85 @@ static void test_path_geometry(void)
     DestroyWindow(window);
 }
 
+static void test_bitmap_formats(void)
+{
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    IDXGISwapChain *swapchain;
+    D2D1_SIZE_U size = {4, 4};
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    ID2D1Bitmap *bitmap;
+    unsigned int i, j;
+    HWND window;
+    HRESULT hr;
+
+    static const struct
+    {
+        DXGI_FORMAT format;
+        DWORD mask;
+    }
+    bitmap_formats[] =
+    {
+        {DXGI_FORMAT_R32G32B32A32_FLOAT,    0x8a},
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,    0x8a},
+        {DXGI_FORMAT_R16G16B16A16_UNORM,    0x8a},
+        {DXGI_FORMAT_R8G8B8A8_TYPELESS,     0x00},
+        {DXGI_FORMAT_R8G8B8A8_UNORM,        0x0a},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,   0x8a},
+        {DXGI_FORMAT_R8G8B8A8_UINT,         0x00},
+        {DXGI_FORMAT_R8G8B8A8_SNORM,        0x00},
+        {DXGI_FORMAT_R8G8B8A8_SINT,         0x00},
+        {DXGI_FORMAT_A8_UNORM,              0x06},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,        0x0a},
+        {DXGI_FORMAT_B8G8R8X8_UNORM,        0x88},
+        {DXGI_FORMAT_B8G8R8A8_TYPELESS,     0x00},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,   0x8a},
+    };
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    rt = create_render_target(surface);
+    ok(!!rt, "Failed to create render target.\n");
+
+    bitmap_desc.dpiX = 96.0f;
+    bitmap_desc.dpiY = 96.0f;
+    for (i = 0; i < sizeof(bitmap_formats) / sizeof(*bitmap_formats); ++i)
+    {
+        for (j = 0; j < 4; ++j)
+        {
+            if ((bitmap_formats[i].mask & (0x80 | (1u << j))) == (0x80 | (1u << j)))
+                continue;
+
+            bitmap_desc.pixelFormat.format = bitmap_formats[i].format;
+            bitmap_desc.pixelFormat.alphaMode = j;
+            hr = ID2D1RenderTarget_CreateBitmap(rt, size, NULL, 0, &bitmap_desc, &bitmap);
+            if (bitmap_formats[i].mask & (1u << j))
+                ok(hr == S_OK, "Got unexpected hr %#x, for format %#x/%#x.\n",
+                        hr, bitmap_formats[i].format, j);
+            else
+                ok(hr == D2DERR_UNSUPPORTED_PIXEL_FORMAT, "Got unexpected hr %#x, for format %#x/%#x.\n",
+                        hr, bitmap_formats[i].format, j);
+            if (SUCCEEDED(hr))
+                ID2D1Bitmap_Release(bitmap);
+        }
+    }
+
+    ID2D1RenderTarget_Release(rt);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -1537,4 +1616,5 @@ START_TEST(d2d1)
     test_color_brush();
     test_bitmap_brush();
     test_path_geometry();
+    test_bitmap_formats();
 }
