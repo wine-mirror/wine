@@ -111,6 +111,10 @@ struct dwrite_glyphrunanalysis {
     LONG ref;
 
     DWRITE_RENDERING_MODE rendering_mode;
+    DWRITE_GLYPH_RUN run;
+    UINT16 *glyphs;
+    FLOAT *advances;
+    DWRITE_GLYPH_OFFSET *offsets;
 };
 
 #define GLYPH_BLOCK_SHIFT 8
@@ -2890,6 +2894,10 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
     TRACE("(%p)->(%u)\n", This, ref);
 
     if (!ref) {
+        IDWriteFontFace_Release(This->run.fontFace);
+        heap_free(This->glyphs);
+        heap_free(This->advances);
+        heap_free(This->offsets);
         heap_free(This);
     }
 
@@ -2941,7 +2949,7 @@ static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
     glyphrunanalysis_GetAlphaBlendParams
 };
 
-HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, IDWriteGlyphRunAnalysis **ret)
+HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLYPH_RUN const *run, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
 
@@ -2958,6 +2966,31 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, IDWriteGly
     analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
     analysis->ref = 1;
     analysis->rendering_mode = rendering_mode;
+    analysis->run = *run;
+    IDWriteFontFace_AddRef(analysis->run.fontFace);
+    analysis->glyphs = heap_alloc(run->glyphCount*sizeof(*run->glyphIndices));
+    analysis->advances = heap_alloc(run->glyphCount*sizeof(*run->glyphAdvances));
+    analysis->offsets = heap_alloc(run->glyphCount*sizeof(*run->glyphOffsets));
+    if (!analysis->glyphs || !analysis->advances || !analysis->offsets) {
+        heap_free(analysis->glyphs);
+        heap_free(analysis->advances);
+        heap_free(analysis->offsets);
+
+        analysis->glyphs = NULL;
+        analysis->advances = NULL;
+        analysis->offsets = NULL;
+
+        IDWriteGlyphRunAnalysis_Release(&analysis->IDWriteGlyphRunAnalysis_iface);
+        return E_OUTOFMEMORY;
+    }
+
+    analysis->run.glyphIndices = analysis->glyphs;
+    analysis->run.glyphAdvances = analysis->advances;
+    analysis->run.glyphOffsets = analysis->offsets;
+
+    memcpy(analysis->glyphs, run->glyphIndices, run->glyphCount*sizeof(*run->glyphIndices));
+    memcpy(analysis->advances, run->glyphAdvances, run->glyphCount*sizeof(*run->glyphAdvances));
+    memcpy(analysis->offsets, run->glyphOffsets, run->glyphCount*sizeof(*run->glyphOffsets));
 
     *ret = &analysis->IDWriteGlyphRunAnalysis_iface;
     return S_OK;

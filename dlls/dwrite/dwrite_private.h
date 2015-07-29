@@ -124,7 +124,7 @@ extern HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *refer
 extern HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface) DECLSPEC_HIDDEN;
 extern HRESULT create_fontface(DWRITE_FONT_FACE_TYPE,UINT32,IDWriteFontFile* const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace2**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_collection(IDWriteFactory2*,IDWriteFontFileEnumerator*,BOOL,IDWriteFontCollection**) DECLSPEC_HIDDEN;
-extern HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
+extern HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE,DWRITE_GLYPH_RUN const*,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
 extern BOOL    is_system_collection(IDWriteFontCollection*) DECLSPEC_HIDDEN;
 extern HRESULT get_local_refkey(const WCHAR*,const FILETIME*,void**,UINT32*) DECLSPEC_HIDDEN;
 extern HRESULT get_filestream_from_file(IDWriteFontFile*,IDWriteFontFileStream**) DECLSPEC_HIDDEN;
