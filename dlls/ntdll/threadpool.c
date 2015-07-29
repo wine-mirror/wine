@@ -379,6 +379,8 @@ NTSTATUS WINAPI RtlQueueWorkItem( PRTL_WORK_ITEM_ROUTINE function, PVOID context
     struct rtl_work_item *item;
     NTSTATUS status;
 
+    TRACE( "%p %p %u\n", function, context, flags );
+
     item = RtlAllocateHeap( GetProcessHeap(), 0, sizeof(*item) );
     if (!item)
         return STATUS_NO_MEMORY;
@@ -1716,6 +1718,7 @@ static NTSTATUS tp_threadpool_lock( struct threadpool **out, TP_CALLBACK_ENVIRON
         {
             interlocked_inc( &pool->refcount );
             pool->num_workers++;
+            pool->num_busy_workers++;
             NtClose( thread );
         }
     }
@@ -1915,6 +1918,7 @@ static void tp_object_submit( struct threadpool_object *object, BOOL signaled )
         {
             interlocked_inc( &pool->refcount );
             pool->num_workers++;
+            pool->num_busy_workers++;
             NtClose( thread );
         }
     }
@@ -2070,6 +2074,7 @@ static void CALLBACK threadpool_worker_proc( void *param )
     TRACE( "starting worker thread for pool %p\n", pool );
 
     RtlEnterCriticalSection( &pool->cs );
+    pool->num_busy_workers--;
     for (;;)
     {
         while ((ptr = list_head( &pool->pool )))
@@ -2412,6 +2417,7 @@ NTSTATUS WINAPI TpCallbackMayRunLong( TP_CALLBACK_INSTANCE *instance )
             {
                 interlocked_inc( &pool->refcount );
                 pool->num_workers++;
+                pool->num_busy_workers++;
                 NtClose( thread );
             }
         }
@@ -2699,6 +2705,7 @@ BOOL WINAPI TpSetPoolMinThreads( TP_POOL *pool, DWORD minimum )
 
         interlocked_inc( &this->refcount );
         this->num_workers++;
+        this->num_busy_workers++;
         NtClose( thread );
     }
 
