@@ -2765,6 +2765,15 @@ static DWORD set_global_option(DWORD option, void *buf, DWORD size)
         FIXME("INTERNETOPTION_SETTINGS_CHANGED semi-stub\n");
         collect_connections(COLLECT_CONNECTIONS);
         return ERROR_SUCCESS;
+
+    case INTERNET_OPTION_SUPPRESS_BEHAVIOR:
+        FIXME("INTERNET_OPTION_SUPPRESS_BEHAVIOR stub\n");
+
+        if(size != sizeof(ULONG))
+            return ERROR_INTERNET_BAD_OPTION_LENGTH;
+
+        FIXME("%08x\n", *(ULONG*)buf);
+        return ERROR_SUCCESS;
     }
 
     return ERROR_INTERNET_INVALID_OPTION;
