@@ -3149,7 +3149,7 @@ HANDLE WINAPI AddPrinterW(LPWSTR pName, DWORD Level, LPBYTE pPrinter)
 
     TRACE("(%s,%d,%p)\n", debugstr_w(pName), Level, pPrinter);
 
-    if(pName != NULL) {
+    if(pName && *pName) {
         ERR("pName = %s - unsupported\n", debugstr_w(pName));
 	SetLastError(ERROR_INVALID_PARAMETER);
 	return 0;
