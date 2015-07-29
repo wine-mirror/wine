@@ -103,10 +103,11 @@ static D2D1_SIZE_U * STDMETHODCALLTYPE d2d_bitmap_GetPixelSize(ID2D1Bitmap *ifac
 
 static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_bitmap_GetPixelFormat(ID2D1Bitmap *iface, D2D1_PIXEL_FORMAT *format)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap(iface);
 
-    format->format = DXGI_FORMAT_UNKNOWN;
-    format->alphaMode = D2D1_ALPHA_MODE_UNKNOWN;
+    TRACE("iface %p, format %p.\n", iface, format);
+
+    *format = bitmap->format;
     return format;
 }
 
@@ -242,6 +243,7 @@ HRESULT d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_d3d_render_target 
     }
 
     bitmap->pixel_size = size;
+    bitmap->format = desc->pixelFormat;
     bitmap->dpi_x = desc->dpiX;
     bitmap->dpi_y = desc->dpiY;
 

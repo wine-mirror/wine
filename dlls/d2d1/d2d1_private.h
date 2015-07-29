@@ -184,6 +184,7 @@ struct d2d_bitmap
 
     ID3D10ShaderResourceView *view;
     D2D1_SIZE_U pixel_size;
+    D2D1_PIXEL_FORMAT format;
     float dpi_x;
     float dpi_y;
 };
