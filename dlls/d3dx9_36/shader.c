@@ -2077,6 +2077,27 @@ HRESULT WINAPI D3DXGetShaderConstantTable(const DWORD *byte_code, ID3DXConstantT
     return D3DXGetShaderConstantTableEx(byte_code, 0, constant_table);
 }
 
+HRESULT WINAPI D3DXCreateFragmentLinker(IDirect3DDevice9 *device, UINT size, ID3DXFragmentLinker **linker)
+{
+    FIXME("device %p, size %u, linker %p: stub.\n", device, size, linker);
+
+    if (linker)
+        *linker = NULL;
+
+
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI D3DXCreateFragmentLinkerEx(IDirect3DDevice9 *device, UINT size, DWORD flags, ID3DXFragmentLinker **linker)
+{
+    FIXME("device %p, size %u, flags %#x, linker %p: stub.\n", device, size, flags, linker);
+
+    if (linker)
+        *linker = NULL;
+
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DXGetShaderSamplers(const DWORD *byte_code, const char **samplers, UINT *count)
 {
     UINT i, sampler_count = 0;

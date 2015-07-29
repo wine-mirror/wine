@@ -414,6 +414,9 @@ HRESULT WINAPI D3DXGetShaderOutputSemantics(const DWORD *pFunction, D3DXSEMANTIC
 
 HRESULT WINAPI D3DXCreateTextureShader(const DWORD *pFunction, ID3DXTextureShader **ppTextureShader);
 
+HRESULT WINAPI D3DXCreateFragmentLinker(IDirect3DDevice9 *device, UINT size, ID3DXFragmentLinker **linker);
+HRESULT WINAPI D3DXCreateFragmentLinkerEx(IDirect3DDevice9 *device, UINT size, DWORD flags, ID3DXFragmentLinker **linker);
+
 #ifdef __cplusplus
 }
 #endif
