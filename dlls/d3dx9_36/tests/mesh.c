@@ -65,6 +65,11 @@ static BOOL compare_vec3(D3DXVECTOR3 u, D3DXVECTOR3 v)
     return ( compare(u.x, v.x) && compare(u.y, v.y) && compare(u.z, v.z) );
 }
 
+static BOOL compare_vec4(D3DXVECTOR4 u, D3DXVECTOR4 v)
+{
+    return compare(u.x, v.x) && compare(u.y, v.y) && compare(u.z, v.z) && compare(u.w, v.w);
+}
+
 #define check_floats(got, exp, dim) check_floats_(__LINE__, "", got, exp, dim)
 static void check_floats_(int line, const char *prefix, const float *got, const float *exp, int dim)
 {
@@ -10373,6 +10378,573 @@ static void test_optimize_faces(void)
     "faces when using 16-bit indices. Got %x\n, expected D3DERR_INVALIDCALL\n", hr);
 }
 
+static HRESULT clear_normals(ID3DXMesh *mesh)
+{
+    HRESULT hr;
+    BYTE *vertices;
+    size_t normal_size;
+    DWORD i, num_vertices, vertex_stride;
+    const D3DXVECTOR4 normal = {NAN, NAN, NAN, NAN};
+    D3DVERTEXELEMENT9 *normal_declaration = NULL;
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE] = {D3DDECL_END()};
+
+    if (FAILED(hr = mesh->lpVtbl->GetDeclaration(mesh, declaration)))
+        return hr;
+
+    for (i = 0; declaration[i].Stream != 0xff; i++)
+    {
+        if (declaration[i].Usage == D3DDECLUSAGE_NORMAL && !declaration[i].UsageIndex)
+        {
+            normal_declaration = &declaration[i];
+            break;
+        }
+    }
+
+    if (!normal_declaration)
+        return D3DERR_INVALIDCALL;
+
+    if (normal_declaration->Type == D3DDECLTYPE_FLOAT3)
+    {
+        normal_size = sizeof(D3DXVECTOR3);
+    }
+    else if (normal_declaration->Type == D3DDECLTYPE_FLOAT4)
+    {
+        normal_size = sizeof(D3DXVECTOR4);
+    }
+    else
+    {
+        trace("Cannot clear normals\n");
+        return E_NOTIMPL;
+    }
+
+    num_vertices = mesh->lpVtbl->GetNumVertices(mesh);
+    vertex_stride = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+
+    if (FAILED(hr = mesh->lpVtbl->LockVertexBuffer(mesh, 0, (void **)&vertices)))
+        return hr;
+
+    vertices += normal_declaration->Offset;
+
+    for (i = 0; i < num_vertices; i++, vertices += vertex_stride)
+        memcpy(vertices, &normal, normal_size);
+
+    return mesh->lpVtbl->UnlockVertexBuffer(mesh);
+}
+
+static void compare_normals(unsigned int line, const char *test_name,
+        ID3DXMesh *mesh, const D3DXVECTOR3 *normals, unsigned int num_normals)
+{
+    unsigned int i;
+    BYTE *vertices;
+    DWORD num_vertices, vertex_stride;
+    D3DVERTEXELEMENT9 *normal_declaration = NULL;
+    D3DVERTEXELEMENT9 declaration[MAX_FVF_DECL_SIZE] = {D3DDECL_END()};
+
+    if (FAILED(mesh->lpVtbl->GetDeclaration(mesh, declaration)))
+    {
+        ok_(__FILE__, line)(0, "%s: Failed to get declaration\n", test_name);
+        return;
+    }
+
+    for (i = 0; declaration[i].Stream != 0xff; i++)
+    {
+        if (declaration[i].Usage == D3DDECLUSAGE_NORMAL && !declaration[i].UsageIndex)
+        {
+            normal_declaration = &declaration[i];
+            break;
+        }
+    }
+
+    if (!normal_declaration)
+    {
+        ok_(__FILE__, line)(0, "%s: Mesh has no normals\n", test_name);
+        return;
+    }
+
+    if (normal_declaration->Type != D3DDECLTYPE_FLOAT3 && normal_declaration->Type != D3DDECLTYPE_FLOAT4)
+    {
+        ok_(__FILE__, line)(0, "%s: Mesh has invalid normals type\n", test_name);
+        return;
+    }
+
+    num_vertices = mesh->lpVtbl->GetNumVertices(mesh);
+    vertex_stride = mesh->lpVtbl->GetNumBytesPerVertex(mesh);
+
+    ok_(__FILE__, line)(num_vertices == num_normals, "%s: Expected %u vertices, got %u\n", test_name,
+            num_normals, num_vertices);
+
+    if (FAILED(mesh->lpVtbl->LockVertexBuffer(mesh, 0, (void **)&vertices)))
+    {
+        ok_(__FILE__, line)(0, "%s: Failed to compare normals\n", test_name);
+        return;
+    }
+
+    vertices += normal_declaration->Offset;
+
+    for (i = 0; i < min(num_vertices, num_normals); i++, vertices += vertex_stride)
+    {
+        if (normal_declaration->Type == D3DDECLTYPE_FLOAT3)
+        {
+            const D3DXVECTOR3 *n = (D3DXVECTOR3 *)vertices;
+            ok_(__FILE__, line)(compare_vec3(*n, normals[i]),
+                    "%s: normal %2u, expected (%f, %f, %f), got (%f, %f, %f)\n",
+                    test_name, i, normals[i].x, normals[i].y, normals[i].z, n->x, n->y, n->z);
+        }
+        else
+        {
+            const D3DXVECTOR4 *n = (D3DXVECTOR4 *)vertices;
+            const D3DXVECTOR4 normal = {normals[i].x, normals[i].y, normals[i].z, 1.0f};
+            ok_(__FILE__, line)(compare_vec4(*n, normal),
+                    "%s: normal %2u, expected (%f, %f, %f, %f), got (%f, %f, %f, %f)\n",
+                    test_name, i, normals[i].x, normals[i].y, normals[i].z, 1.0f,
+                    n->x, n->y, n->z, n->w);
+        }
+    }
+
+    mesh->lpVtbl->UnlockVertexBuffer(mesh);
+}
+
+static HRESULT compute_normals_D3DXComputeNormals(ID3DXMesh *mesh, const DWORD *adjacency)
+{
+    return D3DXComputeNormals((ID3DXBaseMesh *)mesh, adjacency);
+}
+
+static HRESULT compute_normals_D3DXComputeTangentFrameEx(ID3DXMesh *mesh, const DWORD *adjacency)
+{
+    return D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS,
+            adjacency, -1.01f, -0.01f, -1.01f, NULL, NULL);
+}
+
+static void test_compute_normals(void)
+{
+    HRESULT hr;
+    ULONG refcount;
+    ID3DXMesh *mesh, *cloned_mesh;
+    ID3DXBuffer *adjacency;
+    IDirect3DDevice9 *device;
+    struct test_context *test_context;
+    unsigned int i;
+
+    static const struct compute_normals_func
+    {
+        const char *name;
+        HRESULT (*apply)(ID3DXMesh *mesh, const DWORD *adjacency);
+    }
+    compute_normals_funcs[] =
+    {
+        {"D3DXComputeNormals",        compute_normals_D3DXComputeNormals       },
+        {"D3DXComputeTangentFrameEx", compute_normals_D3DXComputeTangentFrameEx}
+    };
+
+    static const D3DXVECTOR3 box_normals[24] =
+    {
+        {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f}, {-1.0f, 0.0f, 0.0f},
+        { 0.0f, 1.0f, 0.0f}, { 0.0f, 1.0f, 0.0f}, { 0.0f, 1.0f, 0.0f}, { 0.0f, 1.0f, 0.0f},
+        { 1.0f, 0.0f, 0.0f}, { 1.0f, 0.0f, 0.0f}, { 1.0f, 0.0f, 0.0f}, { 1.0f, 0.0f, 0.0f},
+        { 0.0f,-1.0f, 0.0f}, { 0.0f,-1.0f, 0.0f}, { 0.0f,-1.0f, 0.0f}, { 0.0f,-1.0f, 0.0f},
+        { 0.0f, 0.0f, 1.0f}, { 0.0f, 0.0f, 1.0f}, { 0.0f, 0.0f, 1.0f}, { 0.0f, 0.0f, 1.0f},
+        { 0.0f, 0.0f,-1.0f}, { 0.0f, 0.0f,-1.0f}, { 0.0f, 0.0f,-1.0f}, { 0.0f, 0.0f,-1.0f}
+    };
+    const float box_normal_component = 1.0f / sqrtf(3.0f);
+    const D3DXVECTOR3 box_normals_adjacency[24] =
+    {
+        {-box_normal_component, -box_normal_component, -box_normal_component},
+        {-box_normal_component, -box_normal_component,  box_normal_component},
+        {-box_normal_component,  box_normal_component,  box_normal_component},
+        {-box_normal_component,  box_normal_component, -box_normal_component},
+        {-box_normal_component,  box_normal_component, -box_normal_component},
+        {-box_normal_component,  box_normal_component,  box_normal_component},
+        { box_normal_component,  box_normal_component,  box_normal_component},
+        { box_normal_component,  box_normal_component, -box_normal_component},
+        { box_normal_component,  box_normal_component, -box_normal_component},
+        { box_normal_component,  box_normal_component,  box_normal_component},
+        { box_normal_component, -box_normal_component,  box_normal_component},
+        { box_normal_component, -box_normal_component, -box_normal_component},
+        {-box_normal_component, -box_normal_component,  box_normal_component},
+        {-box_normal_component, -box_normal_component, -box_normal_component},
+        { box_normal_component, -box_normal_component, -box_normal_component},
+        { box_normal_component, -box_normal_component,  box_normal_component},
+        {-box_normal_component, -box_normal_component,  box_normal_component},
+        { box_normal_component, -box_normal_component,  box_normal_component},
+        { box_normal_component,  box_normal_component,  box_normal_component},
+        {-box_normal_component,  box_normal_component,  box_normal_component},
+        {-box_normal_component, -box_normal_component, -box_normal_component},
+        {-box_normal_component,  box_normal_component, -box_normal_component},
+        { box_normal_component,  box_normal_component, -box_normal_component},
+        { box_normal_component, -box_normal_component, -box_normal_component}
+    };
+    static const D3DXVECTOR3 box_normals_adjacency_area[24] =
+    {
+        {-0.666667f, -0.333333f, -0.666667f}, {-0.333333f, -0.666667f,  0.666667f},
+        {-0.816496f,  0.408248f,  0.408248f}, {-0.408248f,  0.816496f, -0.408248f},
+        {-0.408248f,  0.816496f, -0.408248f}, {-0.816496f,  0.408248f,  0.408248f},
+        { 0.333333f,  0.666667f,  0.666667f}, { 0.666667f,  0.333333f, -0.666667f},
+        { 0.666667f,  0.333333f, -0.666667f}, { 0.333333f,  0.666667f,  0.666667f},
+        { 0.816496f, -0.408248f,  0.408248f}, { 0.408248f, -0.816496f, -0.408248f},
+        {-0.333333f, -0.666667f,  0.666667f}, {-0.666667f, -0.333333f, -0.666667f},
+        { 0.408248f, -0.816496f, -0.408248f}, { 0.816496f, -0.408248f,  0.408248f},
+        {-0.333333f, -0.666667f,  0.666667f}, { 0.816497f, -0.408248f,  0.408248f},
+        { 0.333333f,  0.666667f,  0.666667f}, {-0.816497f,  0.408248f,  0.408248f},
+        {-0.666667f, -0.333333f, -0.666667f}, {-0.408248f,  0.816497f, -0.408248f},
+        { 0.666667f,  0.333333f, -0.666667f}, { 0.408248f, -0.816496f, -0.408248f}
+    };
+    static const D3DXVECTOR3 box_normals_position1f[24] = {{0}};
+    static const D3DXVECTOR3 box_normals_position2f[24] =
+    {
+        {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f,  1.0f},
+        {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f,  1.0f},
+        {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f,  1.0f},
+        {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f,  1.0f}, {0.0f, 0.0f, -1.0f},
+        {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}, {0.0f, 0.0f, -1.0f}
+    };
+
+    static const D3DXVECTOR3 sphere_normals[22] =
+    {
+        { 0.000000f, -0.000000f,  1.000000f}, { 0.000000f,  0.582244f,  0.813014f},
+        { 0.582244f, -0.000000f,  0.813014f}, {-0.000000f, -0.582244f,  0.813014f},
+        {-0.582244f,  0.000000f,  0.813014f}, {-0.000000f,  0.890608f,  0.454772f},
+        { 0.890608f,  0.000000f,  0.454772f}, { 0.000000f, -0.890608f,  0.454772f},
+        {-0.890608f, -0.000000f,  0.454772f}, { 0.000000f,  1.000000f, -0.000000f},
+        { 1.000000f, -0.000000f, -0.000000f}, {-0.000000f, -1.000000f, -0.000000f},
+        {-1.000000f,  0.000000f, -0.000000f}, { 0.000000f,  0.890608f, -0.454773f},
+        { 0.890608f, -0.000000f, -0.454772f}, {-0.000000f, -0.890608f, -0.454773f},
+        {-0.890608f,  0.000000f, -0.454773f}, { 0.000000f,  0.582244f, -0.813015f},
+        { 0.582244f, -0.000000f, -0.813015f}, { 0.000000f, -0.582244f, -0.813015f},
+        {-0.582243f,  0.000000f, -0.813015f}, { 0.000000f,  0.000000f, -1.000000f}
+    };
+    static const D3DXVECTOR3 sphere_normals_area[22] =
+    {
+        { 0.000000f, -0.000000f,  1.000000f}, {-0.215311f,  0.554931f,  0.803550f},
+        { 0.554931f,  0.215311f,  0.803550f}, { 0.215311f, -0.554931f,  0.803550f},
+        {-0.554931f, -0.215311f,  0.803550f}, {-0.126638f,  0.872121f,  0.472618f},
+        { 0.872121f,  0.126638f,  0.472618f}, { 0.126638f, -0.872121f,  0.472618f},
+        {-0.872121f, -0.126637f,  0.472618f}, { 0.000000f,  1.000000f, -0.000000f},
+        { 1.000000f, -0.000000f, -0.000000f}, {-0.000000f, -1.000000f, -0.000000f},
+        {-1.000000f,  0.000000f, -0.000000f}, { 0.126638f,  0.872121f, -0.472618f},
+        { 0.872121f, -0.126638f, -0.472618f}, {-0.126638f, -0.872121f, -0.472618f},
+        {-0.872121f,  0.126638f, -0.472618f}, { 0.215311f,  0.554931f, -0.803550f},
+        { 0.554931f, -0.215311f, -0.803550f}, {-0.215311f, -0.554931f, -0.803550f},
+        {-0.554931f,  0.215311f, -0.803550f}, { 0.000000f,  0.000000f, -1.000000f}
+    };
+    static const D3DXVECTOR3 sphere_normals_equal[22] =
+    {
+        { 0.000000f, -0.000000f,  1.000000f}, {-0.134974f,  0.522078f,  0.842150f},
+        { 0.522078f,  0.134974f,  0.842150f}, { 0.134974f, -0.522078f,  0.842150f},
+        {-0.522078f, -0.134974f,  0.842150f}, {-0.026367f,  0.857121f,  0.514440f},
+        { 0.857121f,  0.026367f,  0.514440f}, { 0.026367f, -0.857121f,  0.514440f},
+        {-0.857121f, -0.026367f,  0.514440f}, { 0.000000f,  1.000000f, -0.000000f},
+        { 1.000000f, -0.000000f, -0.000000f}, {-0.000000f, -1.000000f, -0.000000f},
+        {-1.000000f,  0.000000f, -0.000000f}, { 0.026367f,  0.857121f, -0.514440f},
+        { 0.857121f, -0.026367f, -0.514440f}, {-0.026367f, -0.857121f, -0.514440f},
+        {-0.857121f,  0.026367f, -0.514440f}, { 0.134975f,  0.522078f, -0.842150f},
+        { 0.522078f, -0.134975f, -0.842150f}, {-0.134974f, -0.522078f, -0.842150f},
+        {-0.522078f,  0.134974f, -0.842150f}, { 0.000000f,  0.000000f, -1.000000f}
+    };
+
+    static const D3DVERTEXELEMENT9 position3f_normal1f_declaration[] =
+    {
+        {0, 0,                   D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, sizeof(D3DXVECTOR3), D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 position3f_normal2f_declaration[] =
+    {
+        {0, 0,                   D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, sizeof(D3DXVECTOR3), D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 normal4f_position3f_declaration[] =
+    {
+        {0, 0,                   D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+        {0, sizeof(D3DXVECTOR4), D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 position1f_normal3f_declaration[] =
+    {
+        {0, 0,                   D3DDECLTYPE_FLOAT1, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, sizeof(float),       D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 position2f_normal3f_declaration[] =
+    {
+        {0, 0,                   D3DDECLTYPE_FLOAT2, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, sizeof(D3DXVECTOR2), D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+        D3DDECL_END()
+    };
+    static const D3DVERTEXELEMENT9 position4f_normal3f_declaration[] =
+    {
+        {0, 0,                   D3DDECLTYPE_FLOAT4, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_POSITION, 0},
+        {0, sizeof(D3DXVECTOR4), D3DDECLTYPE_FLOAT3, D3DDECLMETHOD_DEFAULT, D3DDECLUSAGE_NORMAL,   0},
+        D3DDECL_END()
+    };
+
+    for (i = 0; i < ARRAY_SIZE(compute_normals_funcs); i++)
+    {
+        hr = compute_normals_funcs[i].apply(NULL, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", compute_normals_funcs[i].name, hr);
+    }
+
+    if (!(test_context = new_test_context()))
+    {
+        skip("Couldn't create test context\n");
+        return;
+    }
+    device = test_context->device;
+
+    hr = D3DXCreateBox(device, 1.0f, 1.0f, 1.0f, &mesh, &adjacency);
+    ok(SUCCEEDED(hr), "D3DXCreateBox failed %#x\n", hr);
+
+    /* Check wrong input */
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE, NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DDECLUSAGE_NORMAL, 0,
+            D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA | D3DXTANGENT_WEIGHT_EQUAL,
+            NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, 0, NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 1, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS,
+            NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DX_DEFAULT, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS,
+            NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_CALCULATE_NORMALS,
+            NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    todo_wine ok(hr == D3DERR_INVALIDCALL, "D3DXComputeTangentFrameEx returned %#x, expected D3DERR_INVALIDCALL\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(compute_normals_funcs); i++)
+    {
+        const struct compute_normals_func *func = &compute_normals_funcs[i];
+
+        /* Mesh without normals */
+        hr = mesh->lpVtbl->CloneMeshFVF(mesh, 0, D3DFVF_XYZ, device, &cloned_mesh);
+        ok(SUCCEEDED(hr), "CloneMeshFVF failed %#x\n", hr);
+
+        hr = func->apply(cloned_mesh, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", func->name, hr);
+
+        refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
+        ok(!refcount, "Mesh has %u references left\n", refcount);
+
+        /* Mesh without positions */
+        hr = mesh->lpVtbl->CloneMeshFVF(mesh, 0, D3DFVF_NORMAL, device, &cloned_mesh);
+        ok(SUCCEEDED(hr), "CloneMeshFVF failed %#x\n", hr);
+
+        hr = func->apply(cloned_mesh, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", func->name, hr);
+
+        refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
+        ok(!refcount, "Mesh has %u references left\n", refcount);
+
+        /* Mesh with D3DDECLTYPE_FLOAT1 normals */
+        hr = mesh->lpVtbl->CloneMesh(mesh, 0, position3f_normal1f_declaration, device, &cloned_mesh);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+
+        hr = func->apply(cloned_mesh, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", func->name, hr);
+
+        refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
+        ok(!refcount, "Mesh has %u references left\n", refcount);
+
+        /* Mesh with D3DDECLTYPE_FLOAT2 normals */
+        hr = mesh->lpVtbl->CloneMesh(mesh, 0, position3f_normal2f_declaration, device, &cloned_mesh);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+
+        hr = func->apply(cloned_mesh, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "%s returned %#x, expected D3DERR_INVALIDCALL\n", func->name, hr);
+
+        refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
+        ok(!refcount, "Mesh has %u references left\n", refcount);
+
+        /* Mesh without adjacency data */
+        hr = clear_normals(mesh);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+
+        hr = func->apply(mesh, NULL);
+        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+
+        compare_normals(__LINE__, func->name, mesh, box_normals, ARRAY_SIZE(box_normals));
+
+        /* Mesh with adjacency data */
+        hr = clear_normals(mesh);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+
+        hr = func->apply(mesh, ID3DXBuffer_GetBufferPointer(adjacency));
+        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+
+        compare_normals(__LINE__, func->name, mesh, box_normals_adjacency, ARRAY_SIZE(box_normals_adjacency));
+
+        /* Mesh with custom vertex format, D3DDECLTYPE_FLOAT4 normals and adjacency */
+        hr = mesh->lpVtbl->CloneMesh(mesh, 0, normal4f_position3f_declaration, device, &cloned_mesh);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+
+        hr = clear_normals(cloned_mesh);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+
+        hr = func->apply(cloned_mesh, ID3DXBuffer_GetBufferPointer(adjacency));
+        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+
+        compare_normals(__LINE__, func->name, cloned_mesh, box_normals_adjacency, ARRAY_SIZE(box_normals_adjacency));
+
+        refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
+        ok(!refcount, "Mesh has %u references left\n", refcount);
+
+        /* Mesh with D3DDECLTYPE_FLOAT1 positions and D3DDECLTYPE_FLOAT3 normals */
+        hr = mesh->lpVtbl->CloneMesh(mesh, 0, position1f_normal3f_declaration, device, &cloned_mesh);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+
+        hr = clear_normals(cloned_mesh);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+
+        hr = func->apply(cloned_mesh, ID3DXBuffer_GetBufferPointer(adjacency));
+        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+
+        compare_normals(__LINE__, func->name, cloned_mesh, box_normals_position1f, ARRAY_SIZE(box_normals_position1f));
+
+        refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
+        ok(!refcount, "Mesh has %u references left\n", refcount);
+
+        /* Mesh with D3DDECLTYPE_FLOAT2 positions and D3DDECLTYPE_FLOAT3 normals */
+        hr = mesh->lpVtbl->CloneMesh(mesh, 0, position2f_normal3f_declaration, device, &cloned_mesh);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+
+        hr = clear_normals(cloned_mesh);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+
+        hr = func->apply(cloned_mesh, ID3DXBuffer_GetBufferPointer(adjacency));
+        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+
+        compare_normals(__LINE__, func->name, cloned_mesh, box_normals_position2f, ARRAY_SIZE(box_normals_position2f));
+
+        refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
+        ok(!refcount, "Mesh has %u references left\n", refcount);
+
+        /* Mesh with D3DDECLTYPE_FLOAT4 positions and D3DDECLTYPE_FLOAT3 normals */
+        hr = mesh->lpVtbl->CloneMesh(mesh, 0, position4f_normal3f_declaration, device, &cloned_mesh);
+        ok(SUCCEEDED(hr), "CloneMesh failed %#x\n", hr);
+
+        hr = clear_normals(cloned_mesh);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+
+        hr = func->apply(cloned_mesh, ID3DXBuffer_GetBufferPointer(adjacency));
+        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+
+        compare_normals(__LINE__, func->name, cloned_mesh, box_normals_adjacency, ARRAY_SIZE(box_normals_adjacency));
+
+        refcount = cloned_mesh->lpVtbl->Release(cloned_mesh);
+        ok(!refcount, "Mesh has %u references left\n", refcount);
+    }
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA,
+            NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+
+    compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, box_normals, ARRAY_SIZE(box_normals));
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA,
+            ID3DXBuffer_GetBufferPointer(adjacency), -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+
+    compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, box_normals_adjacency_area, ARRAY_SIZE(box_normals_adjacency_area));
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_EQUAL,
+            NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+
+    compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, box_normals, ARRAY_SIZE(box_normals));
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_EQUAL,
+            ID3DXBuffer_GetBufferPointer(adjacency), -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+
+    compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, box_normals_adjacency_area, ARRAY_SIZE(box_normals_adjacency_area));
+
+    refcount = mesh->lpVtbl->Release(mesh);
+    ok(!refcount, "Mesh has %u references left\n", refcount);
+    refcount = ID3DXBuffer_Release(adjacency);
+    ok(!refcount, "Buffer has %u references left\n", refcount);
+
+    hr = D3DXCreateSphere(device, 1.0f, 4, 6, &mesh, &adjacency);
+    ok(SUCCEEDED(hr), "D3DXCreateSphere failed %#x\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(compute_normals_funcs); i++)
+    {
+        const struct compute_normals_func *func = &compute_normals_funcs[i];
+
+        /* Sphere without adjacency data */
+        hr = clear_normals(mesh);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+
+        hr = func->apply(mesh, NULL);
+        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+
+        compare_normals(__LINE__, func->name, mesh, sphere_normals, ARRAY_SIZE(sphere_normals));
+
+        /* Sphere with adjacency data */
+        hr = clear_normals(mesh);
+        ok(SUCCEEDED(hr), "Failed to clear normals, returned %#x\n", hr);
+
+        hr = func->apply(mesh, ID3DXBuffer_GetBufferPointer(adjacency));
+        ok(hr == D3D_OK, "%s returned %#x, expected D3D_OK\n", func->name, hr);
+
+        compare_normals(__LINE__, func->name, mesh, sphere_normals, ARRAY_SIZE(sphere_normals));
+    }
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA,
+            NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+
+    compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, sphere_normals_area, ARRAY_SIZE(sphere_normals_area));
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_BY_AREA,
+            ID3DXBuffer_GetBufferPointer(adjacency), -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+
+    compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, sphere_normals_area, ARRAY_SIZE(sphere_normals_area));
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_EQUAL,
+            NULL, -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+
+    compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, sphere_normals_equal, ARRAY_SIZE(sphere_normals_equal));
+
+    hr = D3DXComputeTangentFrameEx(mesh, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DX_DEFAULT, 0,
+            D3DDECLUSAGE_NORMAL, 0, D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS | D3DXTANGENT_WEIGHT_EQUAL,
+            ID3DXBuffer_GetBufferPointer(adjacency), -1.01f, -0.01f, -1.01f, NULL, NULL);
+    ok(hr == D3D_OK, "D3DXComputeTangentFrameEx returned %#x, expected D3D_OK\n", hr);
+
+    compare_normals(__LINE__, "D3DXComputeTangentFrameEx", mesh, sphere_normals_equal, ARRAY_SIZE(sphere_normals_equal));
+
+    refcount = mesh->lpVtbl->Release(mesh);
+    ok(!refcount, "Mesh has %u references left\n", refcount);
+    refcount = ID3DXBuffer_Release(adjacency);
+    ok(!refcount, "Buffer has %u references left\n", refcount);
+
+    free_test_context(test_context);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -10401,4 +10973,5 @@ START_TEST(mesh)
     test_clone_mesh();
     test_valid_mesh();
     test_optimize_faces();
+    test_compute_normals();
 }
