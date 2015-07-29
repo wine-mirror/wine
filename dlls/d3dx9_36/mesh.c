@@ -7494,6 +7494,25 @@ done:
 }
 
 /*************************************************************************
+ * D3DXComputeNormals    (D3DX9_36.@)
+ */
+HRESULT WINAPI D3DXComputeNormals(struct ID3DXBaseMesh *mesh, const DWORD *adjacency)
+{
+    TRACE("mesh %p, adjacency %p\n", mesh, adjacency);
+
+    if (mesh && (ID3DXMeshVtbl *)mesh->lpVtbl != &D3DXMesh_Vtbl)
+    {
+        ERR("Invalid virtual table\n");
+        return D3DERR_INVALIDCALL;
+    }
+
+    return D3DXComputeTangentFrameEx((ID3DXMesh *)mesh, D3DX_DEFAULT, 0,
+            D3DX_DEFAULT, 0, D3DX_DEFAULT, 0, D3DDECLUSAGE_NORMAL, 0,
+            D3DXTANGENT_GENERATE_IN_PLACE | D3DXTANGENT_CALCULATE_NORMALS,
+            adjacency, -1.01f, -0.01f, -1.01f, NULL, NULL);
+}
+
+/*************************************************************************
  * D3DXIntersect    (D3DX9_36.@)
  */
 HRESULT WINAPI D3DXIntersect(ID3DXBaseMesh *mesh, const D3DXVECTOR3 *ray_pos, const D3DXVECTOR3 *ray_dir,

@@ -23,7 +23,7 @@
 @ stub D3DXComputeIMTFromSignal(ptr long long long long ptr ptr ptr ptr ptr)
 @ stub D3DXComputeIMTFromTexture(ptr ptr long long ptr ptr ptr)
 @ stub D3DXComputeNormalMap(ptr ptr ptr long long long)
-@ stub D3DXComputeNormals(ptr ptr)
+@ stdcall D3DXComputeNormals(ptr ptr)
 @ stub D3DXComputeTangent(ptr long long long long ptr)
 @ stub D3DXComputeTangentFrame(ptr long)
 @ stdcall D3DXComputeTangentFrameEx(ptr long long long long long long long long long ptr float float float ptr ptr)
