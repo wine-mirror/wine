@@ -124,7 +124,7 @@ extern HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *refer
 extern HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface) DECLSPEC_HIDDEN;
 extern HRESULT create_fontface(DWRITE_FONT_FACE_TYPE,UINT32,IDWriteFontFile* const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace2**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_collection(IDWriteFactory2*,IDWriteFontFileEnumerator*,BOOL,IDWriteFontCollection**) DECLSPEC_HIDDEN;
-extern HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE,DWRITE_GLYPH_RUN const*,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
+extern HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE,DWRITE_GLYPH_RUN const*,FLOAT,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
 extern BOOL    is_system_collection(IDWriteFontCollection*) DECLSPEC_HIDDEN;
 extern HRESULT get_local_refkey(const WCHAR*,const FILETIME*,void**,UINT32*) DECLSPEC_HIDDEN;
 extern HRESULT get_filestream_from_file(IDWriteFontFile*,IDWriteFontFileStream**) DECLSPEC_HIDDEN;
@@ -188,6 +188,7 @@ extern UINT16 freetype_get_glyphcount(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphindex(IDWriteFontFace2*,UINT32) DECLSPEC_HIDDEN;
 extern BOOL freetype_has_kerning_pairs(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2*,UINT16,UINT16) DECLSPEC_HIDDEN;
+extern void freetype_get_glyph_bbox(IDWriteFontFace2*,FLOAT,UINT16,BOOL,RECT*) DECLSPEC_HIDDEN;
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY

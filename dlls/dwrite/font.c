@@ -106,15 +106,22 @@ struct dwrite_fonttable {
     BOOL   exists;
 };
 
+enum runanalysis_readystate {
+    RUNANALYSIS_BOUNDS  = 1 << 0,
+};
+
 struct dwrite_glyphrunanalysis {
     IDWriteGlyphRunAnalysis IDWriteGlyphRunAnalysis_iface;
     LONG ref;
 
     DWRITE_RENDERING_MODE rendering_mode;
     DWRITE_GLYPH_RUN run;
+    FLOAT ppdip;
     UINT16 *glyphs;
     FLOAT *advances;
     DWRITE_GLYPH_OFFSET *offsets;
+    RECT bounds;
+    UINT8 ready;
 };
 
 #define GLYPH_BLOCK_SHIFT 8
@@ -2904,11 +2911,16 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
     return ref;
 }
 
-static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type, RECT* bounds)
+static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type, RECT *bounds)
 {
     struct dwrite_glyphrunanalysis *This = impl_from_IDWriteGlyphRunAnalysis(iface);
+    IDWriteFontFace2 *fontface2;
+    BOOL nohint, is_rtl;
+    FLOAT origin_x;
+    HRESULT hr;
+    UINT32 i;
 
-    FIXME("(%p)->(%d %p): stub\n", This, type, bounds);
+    TRACE("(%p)->(%d %p)\n", This, type, bounds);
 
     if ((UINT32)type > DWRITE_TEXTURE_CLEARTYPE_3x1) {
         memset(bounds, 0, sizeof(*bounds));
@@ -2921,7 +2933,46 @@ static HRESULT WINAPI glyphrunanalysis_GetAlphaTextureBounds(IDWriteGlyphRunAnal
         return S_OK;
     }
 
-    return E_NOTIMPL;
+    if (This->ready & RUNANALYSIS_BOUNDS) {
+        *bounds = This->bounds;
+        return S_OK;
+    }
+
+    if (This->run.isSideways)
+        FIXME("sideways runs are not supported.\n");
+
+    hr = IDWriteFontFace_QueryInterface(This->run.fontFace, &IID_IDWriteFontFace2, (void**)&fontface2);
+    if (FAILED(hr))
+        WARN("failed to get IDWriteFontFace2, 0x%08x\n", hr);
+
+    nohint = This->rendering_mode == DWRITE_RENDERING_MODE_NATURAL || This->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
+
+    /* Start with empty bounds at (0,0) origin, returned bounds are not translated back to (0,0), e.g. for
+       RTL run negative left bound is returned, same goes for vertical direction - top bound will be negative
+       for any non-zero glyph ascender */
+    origin_x = 0.0;
+    is_rtl = This->run.bidiLevel & 1;
+    for (i = 0; i < This->run.glyphCount; i++) {
+        const DWRITE_GLYPH_OFFSET *offset = &This->offsets[i];
+        FLOAT advance = This->advances[i];
+        RECT bbox;
+
+        freetype_get_glyph_bbox(fontface2, This->run.fontEmSize * This->ppdip, This->run.glyphIndices[i], nohint, &bbox);
+
+        if (is_rtl)
+            OffsetRect(&bbox, origin_x - offset->advanceOffset - advance, -offset->ascenderOffset);
+        else
+            OffsetRect(&bbox, origin_x + offset->advanceOffset, offset->ascenderOffset);
+
+        UnionRect(&This->bounds, &This->bounds, &bbox);
+        origin_x += is_rtl ? -advance : advance;
+    }
+
+    IDWriteFontFace2_Release(fontface2);
+
+    This->ready |= RUNANALYSIS_BOUNDS;
+    *bounds = This->bounds;
+    return S_OK;
 }
 
 static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type,
@@ -2977,7 +3028,7 @@ static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
     glyphrunanalysis_GetAlphaBlendParams
 };
 
-HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLYPH_RUN const *run, IDWriteGlyphRunAnalysis **ret)
+HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLYPH_RUN const *run, FLOAT ppdip, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
 
@@ -2994,6 +3045,9 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLY
     analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
     analysis->ref = 1;
     analysis->rendering_mode = rendering_mode;
+    analysis->ready = 0;
+    analysis->ppdip = ppdip;
+    SetRectEmpty(&analysis->bounds);
     analysis->run = *run;
     IDWriteFontFace_AddRef(analysis->run.fontFace);
     analysis->glyphs = heap_alloc(run->glyphCount*sizeof(*run->glyphIndices));

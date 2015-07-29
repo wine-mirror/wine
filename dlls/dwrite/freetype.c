@@ -1,7 +1,7 @@
 /*
  *    FreeType integration
  *
- * Copyright 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2014-2015 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -54,6 +54,7 @@ static void *ft_handle = NULL;
 static FT_Library library = 0;
 static FTC_Manager cache_manager = 0;
 static FTC_CMapCache cmap_cache = 0;
+static FTC_ImageCache image_cache = 0;
 typedef struct
 {
     FT_Int major;
@@ -64,6 +65,7 @@ typedef struct
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(FT_Done_FreeType);
 MAKE_FUNCPTR(FT_Get_Kerning);
+MAKE_FUNCPTR(FT_Glyph_Get_CBox);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
@@ -71,6 +73,8 @@ MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FTC_CMapCache_Lookup);
 MAKE_FUNCPTR(FTC_CMapCache_New);
+MAKE_FUNCPTR(FTC_ImageCache_Lookup);
+MAKE_FUNCPTR(FTC_ImageCache_New);
 MAKE_FUNCPTR(FTC_Manager_New);
 MAKE_FUNCPTR(FTC_Manager_Done);
 MAKE_FUNCPTR(FTC_Manager_LookupFace);
@@ -137,6 +141,7 @@ BOOL init_freetype(void)
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
     LOAD_FUNCPTR(FT_Done_FreeType)
     LOAD_FUNCPTR(FT_Get_Kerning)
+    LOAD_FUNCPTR(FT_Glyph_Get_CBox)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
@@ -144,6 +149,8 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FTC_CMapCache_Lookup)
     LOAD_FUNCPTR(FTC_CMapCache_New)
+    LOAD_FUNCPTR(FTC_ImageCache_Lookup)
+    LOAD_FUNCPTR(FTC_ImageCache_New)
     LOAD_FUNCPTR(FTC_Manager_New)
     LOAD_FUNCPTR(FTC_Manager_Done)
     LOAD_FUNCPTR(FTC_Manager_LookupFace)
@@ -161,7 +168,8 @@ BOOL init_freetype(void)
 
     /* init cache manager */
     if (pFTC_Manager_New(library, 0, 0, 0, &face_requester, NULL, &cache_manager) != 0 ||
-        pFTC_CMapCache_New(cache_manager, &cmap_cache) != 0) {
+        pFTC_CMapCache_New(cache_manager, &cmap_cache) != 0 ||
+        pFTC_ImageCache_New(cache_manager, &image_cache) != 0) {
 
         ERR("Failed to init FreeType cache\n");
         pFTC_Manager_Done(cache_manager);
@@ -456,6 +464,29 @@ INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 le
     return adjustment;
 }
 
+void freetype_get_glyph_bbox(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, BOOL nohint, RECT *ret)
+{
+    FTC_ImageTypeRec imagetype;
+    FT_BBox bbox = { 0 };
+    FT_Glyph glyph;
+
+    imagetype.face_id = fontface;
+    imagetype.width = 0;
+    imagetype.height = emSize;
+    imagetype.flags = nohint ? FT_LOAD_NO_HINTING : FT_LOAD_DEFAULT;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, index, &glyph, NULL) == 0)
+        pFT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
+    LeaveCriticalSection(&freetype_cs);
+
+    /* flip Y axis */
+    ret->left = bbox.xMin;
+    ret->right = bbox.xMax;
+    ret->top = -bbox.yMax;
+    ret->bottom = -bbox.yMin;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -505,6 +536,11 @@ BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
 INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 left, UINT16 right)
 {
     return 0;
+}
+
+void freetype_get_glyph_bbox(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, BOOL nohint, RECT *ret)
+{
+    ret->left = ret->right = ret->top = ret->bottom = 0;
 }
 
 #endif /* HAVE_FREETYPE */

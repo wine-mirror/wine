@@ -3500,10 +3500,9 @@ static void test_CreateGlyphRunAnalysis(void)
         if (rendermodes[i] == DWRITE_RENDERING_MODE_ALIASED) {
             memset(&rect, 0, sizeof(rect));
             hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
-        todo_wine {
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(!IsRectEmpty(&rect), "got empty rect\n");
-        }
+
             rect.left = rect.top = 0;
             rect.bottom = rect.right = 1;
             hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
@@ -3519,10 +3518,8 @@ static void test_CreateGlyphRunAnalysis(void)
 
             memset(&rect, 0, sizeof(rect));
             hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_CLEARTYPE_3x1, &rect);
-        todo_wine {
             ok(hr == S_OK, "got 0x%08x\n", hr);
             ok(!IsRectEmpty(&rect), "got empty rect\n");
-        }
         }
 
         IDWriteGlyphRunAnalysis_Release(analysis);
@@ -3542,10 +3539,7 @@ static void test_CreateGlyphRunAnalysis(void)
 
         memset(&rect, 0, sizeof(rect));
         hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
-    todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
-        if (hr != S_OK)
-            break;
 
         hr = IDWriteFontFace_GetGdiCompatibleGlyphMetrics(run.fontFace, run.fontEmSize, 1.0, NULL,
              DWRITE_MEASURING_MODE_GDI_CLASSIC, run.glyphIndices, 1, &gm, run.isSideways);
@@ -3557,8 +3551,8 @@ static void test_CreateGlyphRunAnalysis(void)
 
         rect.right -= rect.left;
         rect.bottom -= rect.top;
-        ok(abs(bboxX - rect.right) <= 1, "%.0f: bbox width %d, from metrics %d\n", run.fontEmSize, rect.right, bboxX);
-        ok(abs(bboxY - rect.bottom) <= 1, "%.0f: bbox height %d, from metrics %d\n", run.fontEmSize, rect.bottom, bboxY);
+        ok(abs(bboxX - rect.right) <= 2, "%.0f: bbox width %d, from metrics %d\n", run.fontEmSize, rect.right, bboxX);
+        ok(abs(bboxY - rect.bottom) <= 2, "%.0f: bbox height %d, from metrics %d\n", run.fontEmSize, rect.bottom, bboxY);
 
         IDWriteGlyphRunAnalysis_Release(analysis);
     }
