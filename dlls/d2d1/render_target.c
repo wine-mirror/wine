@@ -1165,7 +1165,11 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
 
     if (color)
         c = *color;
-    c.a = 1.0f;
+    if (render_target->format.alphaMode == D2D1_ALPHA_MODE_IGNORE)
+        c.a = 1.0f;
+    c.r *= c.a;
+    c.g *= c.a;
+    c.b *= c.a;
     buffer_desc.ByteWidth = sizeof(c);
     buffer_data.pSysMem = &c;
 
@@ -1794,8 +1798,16 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     blend_desc.SrcBlend = D3D10_BLEND_ONE;
     blend_desc.DestBlend = D3D10_BLEND_INV_SRC_ALPHA;
     blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
-    blend_desc.SrcBlendAlpha = D3D10_BLEND_ZERO;
-    blend_desc.DestBlendAlpha = D3D10_BLEND_ONE;
+    if (desc->pixelFormat.alphaMode == D2D1_ALPHA_MODE_IGNORE)
+    {
+        blend_desc.SrcBlendAlpha = D3D10_BLEND_ZERO;
+        blend_desc.DestBlendAlpha = D3D10_BLEND_ONE;
+    }
+    else
+    {
+        blend_desc.SrcBlendAlpha = D3D10_BLEND_ONE;
+        blend_desc.DestBlendAlpha = D3D10_BLEND_INV_SRC_ALPHA;
+    }
     blend_desc.BlendOpAlpha = D3D10_BLEND_OP_ADD;
     blend_desc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
     if (FAILED(hr = ID3D10Device_CreateBlendState(render_target->device, &blend_desc, &render_target->bs)))
