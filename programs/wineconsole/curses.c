@@ -1018,7 +1018,7 @@ static int WCCURSES_MainLoop(struct inner_data* data)
 
     WCCURSES_Resize(data);
 
-    if (pipe( PRIVATE(data)->sync_pipe ) == -1) return 0;
+    if (pipe( PRIVATE(data)->sync_pipe ) == -1) return 1;
     PRIVATE(data)->input_thread = CreateThread( NULL, 0, input_thread, data, 0, &id );
 
     while (!data->dying && WaitForSingleObject(data->hSynchro, INFINITE) == WAIT_OBJECT_0)

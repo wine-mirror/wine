@@ -1382,7 +1382,7 @@ static int WCUSER_MainLoop(struct inner_data* data)
 	     * so GetMessage would lead to delayed processing */
             while (PeekMessageW(&msg, 0, 0, 0, PM_REMOVE))
 	    {
-                if (msg.message == WM_QUIT) return 0;
+                if (msg.message == WM_QUIT) return 1;
                 WINE_TRACE("dispatching msg %04x\n", msg.message);
                 DispatchMessageW(&msg);
 	    }
