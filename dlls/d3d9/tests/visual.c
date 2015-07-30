@@ -19624,6 +19624,169 @@ static void test_updatetexture(void)
     DestroyWindow(window);
 }
 
+static void test_depthbias(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    IDirect3DSurface9 *ds;
+    D3DCAPS9 caps;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    unsigned int i;
+    static const D3DFORMAT formats[] =
+    {
+        D3DFMT_D16, D3DFMT_D24X8, D3DFMT_D32, D3DFMT_D24S8, MAKEFOURCC('I','N','T','Z'),
+
+        /* The scaling factor detection function detects the wrong factor for
+         * float formats on Nvidia, therefore the following tests are disabled.
+         * The wined3d function detects 2^23 like for fixed point formats but
+         * the test needs 2^22 to pass.
+         *
+         * AMD GPUs need a different scaling factor for float depth buffers
+         * (2^24) than fixed point (2^23), but the wined3d detection function
+         * works there, producing the right result in the test.
+         *
+         * D3DFMT_D32F_LOCKABLE, D3DFMT_D24FS8,
+         */
+    };
+
+    static const struct
+    {
+        struct vec3 position;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.0f}},
+        {{-1.0f,  1.0f, 0.0f}},
+        {{ 1.0f, -1.0f, 1.0f}},
+        {{ 1.0f,  1.0f, 1.0f}},
+    };
+    union
+    {
+        float f;
+        DWORD d;
+    } conv;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    if (!(caps.RasterCaps & D3DPRASTERCAPS_DEPTHBIAS))
+    {
+        IDirect3DDevice9_Release(device);
+        skip("D3DPRASTERCAPS_DEPTHBIAS not supported.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZWRITEENABLE, FALSE);
+    ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP,D3DTOP_SELECTARG1);
+    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLORARG1, D3DTA_TFACTOR);
+    ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+    {
+        if (FAILED(IDirect3D9_CheckDeviceFormat(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_DEPTHSTENCIL, D3DRTYPE_SURFACE, formats[i])))
+        {
+            skip("Depth format %u not supported, skipping.\n", formats[i]);
+            continue;
+        }
+
+        hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, formats[i],
+                D3DMULTISAMPLE_NONE, 0, FALSE, &ds, NULL);
+        hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
+        ok(SUCCEEDED(hr), "Failed to set depth stencil surface, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 0.5f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear %08x\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x00ff0000);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        conv.f = -0.2f;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DEPTHBIAS, conv.d);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x0000ff00);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        conv.f = 0.0f;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DEPTHBIAS, conv.d);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x000000ff);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        conv.f = 0.2f;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DEPTHBIAS, conv.d);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_TEXTUREFACTOR, 0x00ffffff);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        conv.f = 0.4f;
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_DEPTHBIAS, conv.d);
+        ok(SUCCEEDED(hr), "Failed to set render state, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(*quad));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+        color = getPixelColor(device, 61, 240);
+        ok(color_match(color, 0x00ffffff, 1), "Got unexpected color %08x at x=62, format %u.\n", color, formats[i]);
+        color = getPixelColor(device, 65, 240);
+
+        ok(color_match(color, 0x000000ff, 1), "Got unexpected color %08x at x=64, format %u.\n", color, formats[i]);
+        color = getPixelColor(device, 190, 240);
+        ok(color_match(color, 0x000000ff, 1), "Got unexpected color %08x at x=190, format %u.\n", color, formats[i]);
+
+        color = getPixelColor(device, 194, 240);
+        ok(color_match(color, 0x0000ff00, 1), "Got unexpected color %08x at x=194, format %u.\n", color, formats[i]);
+        color = getPixelColor(device, 318, 240);
+        ok(color_match(color, 0x0000ff00, 1), "Got unexpected color %08x at x=318, format %u.\n", color, formats[i]);
+
+        color = getPixelColor(device, 322, 240);
+        ok(color_match(color, 0x00ff0000, 1), "Got unexpected color %08x at x=322, format %u.\n", color, formats[i]);
+        color = getPixelColor(device, 446, 240);
+        ok(color_match(color, 0x00ff0000, 1), "Got unexpected color %08x at x=446, format %u.\n", color, formats[i]);
+
+        color = getPixelColor(device, 450, 240);
+        ok(color_match(color, 0x00000000, 1), "Got unexpected color %08x at x=446, format %u.\n", color, formats[i]);
+
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+        IDirect3DSurface9_Release(ds);
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -19741,4 +19904,5 @@ START_TEST(visual)
     test_texcoordindex();
     test_vertex_blending();
     test_updatetexture();
+    test_depthbias();
 }
