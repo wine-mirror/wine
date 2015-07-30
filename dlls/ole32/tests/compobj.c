@@ -2145,16 +2145,16 @@ static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
     index = 0xdeadbeef;
     PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
     hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
-    ok(hr == RPC_S_CALLPENDING, "expected S_OK, got 0x%08x\n", hr);
-    ok(index == 0, "expected index 0, got %u\n", index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    ok(index==0 || index==0xdeadbeef/* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
     ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
 
     index = 0xdeadbeef;
     PostMessageA(hWnd, WM_USER, 0, 0);
     hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
-    ok(hr == RPC_S_CALLPENDING, "expected S_OK, got 0x%08x\n", hr);
-    ok(index == 0, "expected index 0, got %u\n", index);
+    ok(hr == RPC_S_CALLPENDING, "expected RPC_S_CALLPENDING, got 0x%08x\n", hr);
+    ok(index==0 || index==0xdeadbeef/* Win 8 */, "expected index 0, got %u\n", index);
     success = PeekMessageA(&msg, hWnd, WM_USER, WM_USER, PM_REMOVE);
     ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
 
