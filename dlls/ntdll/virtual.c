@@ -1320,9 +1320,11 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
     loadcfg = RtlImageDirectoryEntryToData( (HMODULE)ptr, TRUE,
                                             IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &loadcfg_size );
-    if (loadcfg &&
-        loadcfg_size >= offsetof(IMAGE_LOAD_CONFIG_DIRECTORY, SecurityCookie) + sizeof(loadcfg->SecurityCookie))
+    if (loadcfg && loadcfg_size >= offsetof(IMAGE_LOAD_CONFIG_DIRECTORY, SecurityCookie) + sizeof(loadcfg->SecurityCookie) &&
+        (ULONG_PTR)ptr <= loadcfg->SecurityCookie && loadcfg->SecurityCookie <= (ULONG_PTR)ptr + total_size - sizeof(ULONG_PTR))
+    {
         set_security_cookie((ULONG_PTR *)loadcfg->SecurityCookie);
+    }
 
     /* set the image protections */
 
