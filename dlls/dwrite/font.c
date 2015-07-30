@@ -117,6 +117,8 @@ struct dwrite_glyphrunanalysis {
     DWRITE_RENDERING_MODE rendering_mode;
     DWRITE_GLYPH_RUN run;
     FLOAT ppdip;
+    FLOAT originX;
+    FLOAT originY;
     UINT16 *glyphs;
     FLOAT *advances;
     DWRITE_GLYPH_OFFSET *offsets;
@@ -2956,6 +2958,9 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
 
     IDWriteFontFace2_Release(fontface2);
 
+    /* translate to given run origin */
+    OffsetRect(&analysis->bounds, analysis->originX, analysis->originY);
+
     analysis->ready |= RUNANALYSIS_BOUNDS;
     *bounds = analysis->bounds;
 }
@@ -3075,7 +3080,8 @@ static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
     glyphrunanalysis_GetAlphaBlendParams
 };
 
-HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLYPH_RUN const *run, FLOAT ppdip, IDWriteGlyphRunAnalysis **ret)
+HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLYPH_RUN const *run, FLOAT ppdip,
+    FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
 
@@ -3094,6 +3100,8 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLY
     analysis->rendering_mode = rendering_mode;
     analysis->ready = 0;
     analysis->ppdip = ppdip;
+    analysis->originX = originX;
+    analysis->originY = originY;
     SetRectEmpty(&analysis->bounds);
     analysis->run = *run;
     IDWriteFontFace_AddRef(analysis->run.fontFace);

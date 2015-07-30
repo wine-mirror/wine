@@ -1072,14 +1072,14 @@ static HRESULT WINAPI dwritefactory_CreateNumberSubstitution(IDWriteFactory2 *if
 
 static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory2 *iface, DWRITE_GLYPH_RUN const *run,
     FLOAT ppdip, DWRITE_MATRIX const* transform, DWRITE_RENDERING_MODE rendering_mode,
-    DWRITE_MEASURING_MODE measuring_mode, FLOAT baseline_x, FLOAT baseline_y, IDWriteGlyphRunAnalysis **analysis)
+    DWRITE_MEASURING_MODE measuring_mode, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **analysis)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
 
-    TRACE("(%p)->(%p %.2f %p %d %d %f %f %p)\n", This, run, ppdip, transform, rendering_mode,
-        measuring_mode, baseline_x, baseline_y, analysis);
+    TRACE("(%p)->(%p %.2f %p %d %d %.2f %.2f %p)\n", This, run, ppdip, transform, rendering_mode,
+        measuring_mode, originX, originY, analysis);
 
-    return create_glyphrunanalysis(rendering_mode, run, ppdip, analysis);
+    return create_glyphrunanalysis(rendering_mode, run, ppdip, originX, originY, analysis);
 }
 
 static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory2 *iface, IDWriteFontCollection **collection,

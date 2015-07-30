@@ -3435,7 +3435,7 @@ static void test_CreateGlyphRunAnalysis(void)
     FLOAT advance;
     HRESULT hr;
     UINT32 ch;
-    RECT rect;
+    RECT rect, rect2;
     DWRITE_GLYPH_OFFSET offset;
     DWRITE_GLYPH_METRICS metrics;
     DWRITE_FONT_METRICS fm;
@@ -3489,7 +3489,28 @@ static void test_CreateGlyphRunAnalysis(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(rect.left == 0 && rect.right == 0 &&
        rect.top == 0 && rect.bottom == 0, "unexpected rect\n");
+
+    /* check how origin affects bounds */
+    memset(&rect, 0, sizeof(rect));
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsRectEmpty(&rect), "got empty rect\n");
     IDWriteGlyphRunAnalysis_Release(analysis);
+
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        10.0, -5.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(&rect2, 0, sizeof(rect2));
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsRectEmpty(&rect2), "got empty rect\n");
+    IDWriteGlyphRunAnalysis_Release(analysis);
+
+    ok(!EqualRect(&rect, &rect2), "got equal bounds\n");
+    OffsetRect(&rect, 10, -5);
+    ok(EqualRect(&rect, &rect2), "got different bounds\n");
 
     for (i = 0; i < sizeof(rendermodes)/sizeof(rendermodes[0]); i++) {
         hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
