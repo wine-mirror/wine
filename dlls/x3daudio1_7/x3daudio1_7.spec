@@ -1,2 +1,2 @@
 @ stub X3DAudioCalculate
-@ stub X3DAudioInitialize
+@ cdecl X3DAudioInitialize(long float ptr)

@@ -21,6 +21,10 @@
 #include "windef.h"
 #include "winbase.h"
 
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(x3daudio);
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
     switch (reason)
@@ -33,4 +37,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+HRESULT CDECL X3DAudioInitialize(UINT32 chanmask, float speedofsound, void *handle)
+{
+    FIXME("0x%x, %f, %p: Stub!\n", chanmask, speedofsound, handle);
+    return S_OK;
 }
