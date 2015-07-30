@@ -1295,6 +1295,7 @@ DECL_HANDLER(init_process_done)
 
     process->ldt_copy = req->ldt_copy;
     process->start_time = current_time;
+    current->entry_point = req->entry;
 
     generate_startup_debug_events( process, req->entry );
     set_process_startup_state( process, STARTUP_DONE );

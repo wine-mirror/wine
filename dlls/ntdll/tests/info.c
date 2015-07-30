@@ -1713,10 +1713,17 @@ static DWORD WINAPI start_address_thread(void *arg)
 
 static void test_thread_start_address(void)
 {
-    PRTL_THREAD_START_ROUTINE entry;
+    PRTL_THREAD_START_ROUTINE entry, expected_entry;
+    IMAGE_NT_HEADERS *nt;
     NTSTATUS status;
     HANDLE thread;
+    void *module;
     DWORD ret;
+
+    module = GetModuleHandleA(0);
+    ok(module != NULL, "expected non-NULL address for module\n");
+    nt = RtlImageNtHeader(module);
+    ok(nt != NULL, "expected non-NULL address for NT header\n");
 
     entry = NULL;
     ret = 0xdeadbeef;
@@ -1724,7 +1731,8 @@ static void test_thread_start_address(void)
                                        &entry, sizeof(entry), &ret);
     ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
     ok(ret == sizeof(entry), "NtQueryInformationThread returned %u bytes\n", ret);
-    ok(entry != NULL, "expected non-NULL entry point\n");
+    expected_entry = (void *)((char *)module + nt->OptionalHeader.AddressOfEntryPoint);
+    ok(entry == expected_entry, "expected %p, got %p\n", expected_entry, entry);
 
     entry = (void *)0xdeadbeef;
     status = pNtSetInformationThread(GetCurrentThread(), ThreadQuerySetWin32StartAddress,

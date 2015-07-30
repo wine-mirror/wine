@@ -1287,7 +1287,7 @@ DECL_HANDLER(init_thread)
     current->unix_pid = req->unix_pid;
     current->unix_tid = req->unix_tid;
     current->teb      = req->teb;
-    current->entry_point = req->entry;
+    current->entry_point = process->peb ? req->entry : 0;
 
     if (!process->peb)  /* first thread, initialize the process too */
     {
