@@ -607,7 +607,7 @@ static void CDECL for_static_simple_cb(void)
         p_vcomp_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, FALSE, &begin, &end);
 
         ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
-           i, thread_num, num_threads, my_begin, end);
+           i, thread_num, num_threads, my_begin, begin);
         ok(end == my_end, "test %d, thread %d/%d: expected end == %u, got %u\n",
            i, thread_num, num_threads, my_end, end);
 
@@ -619,7 +619,7 @@ static void CDECL for_static_simple_cb(void)
         p_vcomp_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, TRUE, &begin, &end);
 
         ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
-           i, thread_num, num_threads, my_begin, end);
+           i, thread_num, num_threads, my_begin, begin);
         ok(end == my_end, "test %d, thread %d/%d: expected end == %u, got %u\n",
            i, thread_num, num_threads, my_end, end);
 
@@ -633,7 +633,7 @@ static void CDECL for_static_simple_cb(void)
         p_vcomp_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, FALSE, &begin, &end);
 
         ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
-           i, thread_num, num_threads, my_begin, end);
+           i, thread_num, num_threads, my_begin, begin);
         ok(end == my_end, "test %d, thread %d/%d: expected end == %u, got %u\n",
            i, thread_num, num_threads, my_end, end);
 
@@ -645,7 +645,7 @@ static void CDECL for_static_simple_cb(void)
         p_vcomp_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, TRUE, &begin, &end);
 
         ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
-           i, thread_num, num_threads, my_begin, end);
+           i, thread_num, num_threads, my_begin, begin);
         ok(end == my_end, "test %d, thread %d/%d: expected end == %u, got %u\n",
            i, thread_num, num_threads, my_end, end);
 
