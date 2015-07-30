@@ -1355,6 +1355,7 @@ enable_xapofx1_3
 enable_xapofx1_4
 enable_xapofx1_5
 enable_xaudio2_7
+enable_xaudio2_8
 enable_xinput1_1
 enable_xinput1_2
 enable_xinput1_3
@@ -17821,6 +17822,7 @@ wine_fn_config_dll xapofx1_3 enable_xapofx1_3
 wine_fn_config_dll xapofx1_4 enable_xapofx1_4
 wine_fn_config_dll xapofx1_5 enable_xapofx1_5
 wine_fn_config_dll xaudio2_7 enable_xaudio2_7 clean
+wine_fn_config_dll xaudio2_8 enable_xaudio2_8
 wine_fn_config_dll xinput1_1 enable_xinput1_1
 wine_fn_config_dll xinput1_2 enable_xinput1_2
 wine_fn_config_dll xinput1_3 enable_xinput1_3 implib xinput

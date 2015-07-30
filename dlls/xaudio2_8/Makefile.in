@@ -1,0 +1,5 @@
+MODULE    = xaudio2_8.dll
+IMPORTS   = ole32
+
+C_SRCS = \
+	xaudio_dll.c
