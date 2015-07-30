@@ -70,7 +70,9 @@ MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_New_Memory_Face);
+MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_Transform);
+MAKE_FUNCPTR(FT_Outline_Translate);
 MAKE_FUNCPTR(FTC_CMapCache_Lookup);
 MAKE_FUNCPTR(FTC_CMapCache_New);
 MAKE_FUNCPTR(FTC_ImageCache_Lookup);
@@ -146,7 +148,9 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_New_Memory_Face)
+    LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
     LOAD_FUNCPTR(FT_Outline_Transform)
+    LOAD_FUNCPTR(FT_Outline_Translate)
     LOAD_FUNCPTR(FTC_CMapCache_Lookup)
     LOAD_FUNCPTR(FTC_CMapCache_New)
     LOAD_FUNCPTR(FTC_ImageCache_Lookup)
@@ -473,7 +477,7 @@ void freetype_get_glyph_bbox(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 in
     imagetype.face_id = fontface;
     imagetype.width = 0;
     imagetype.height = emSize;
-    imagetype.flags = nohint ? FT_LOAD_NO_HINTING : FT_LOAD_DEFAULT;
+    imagetype.flags = FT_LOAD_DEFAULT;
 
     EnterCriticalSection(&freetype_cs);
     if (pFTC_ImageCache_Lookup(image_cache, &imagetype, index, &glyph, NULL) == 0)
@@ -485,6 +489,59 @@ void freetype_get_glyph_bbox(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 in
     ret->right = bbox.xMax;
     ret->top = -bbox.yMax;
     ret->bottom = -bbox.yMin;
+}
+
+void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, const RECT *bbox, BYTE *buf)
+{
+    FTC_ImageTypeRec imagetype;
+    FT_Glyph glyph;
+
+    imagetype.face_id = fontface;
+    imagetype.width = 0;
+    imagetype.height = emSize;
+    imagetype.flags = FT_LOAD_DEFAULT;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, index, &glyph, NULL) == 0) {
+        int width = bbox->right - bbox->left;
+        int pitch = ((width + 31) >> 5) << 2;
+        int height = bbox->bottom - bbox->top;
+
+        if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
+            FT_OutlineGlyph outline = (FT_OutlineGlyph)glyph;
+
+            FT_Bitmap ft_bitmap;
+
+            ft_bitmap.width = width;
+            ft_bitmap.rows = height;
+            ft_bitmap.pitch = pitch;
+            ft_bitmap.pixel_mode = FT_PIXEL_MODE_MONO;
+            ft_bitmap.buffer = buf;
+
+            pFT_Outline_Translate(&outline->outline, -bbox->left, -bbox->bottom);
+
+            /* Note: FreeType will only set 'black' bits for us. */
+            memset(buf, 0, height*pitch);
+            pFT_Outline_Get_Bitmap(library, &outline->outline, &ft_bitmap);
+        }
+        else if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
+            FT_Bitmap *bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
+            BYTE *src = bitmap->buffer, *dst = buf;
+            int w = min(pitch, (bitmap->width + 7) >> 3);
+            int h = min(height, bitmap->rows);
+
+            memset(buf, 0, height*pitch);
+
+            while (h--) {
+                memcpy(dst, src, w);
+                src += bitmap->pitch;
+                dst += pitch;
+            }
+        }
+        else
+            FIXME("format %d not handled\n", glyph->format);
+    }
+    LeaveCriticalSection(&freetype_cs);
 }
 
 #else /* HAVE_FREETYPE */
@@ -541,6 +598,12 @@ INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 le
 void freetype_get_glyph_bbox(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, BOOL nohint, RECT *ret)
 {
     ret->left = ret->right = ret->top = ret->bottom = 0;
+}
+
+void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, const RECT *bbox, BYTE *buf)
+{
+    UINT32 size = (bbox->right - bbox->left)*(bbox->bottom - bbox->top);
+    memset(buf, 0, size);
 }
 
 #endif /* HAVE_FREETYPE */
