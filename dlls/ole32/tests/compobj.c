@@ -2126,9 +2126,45 @@ static DWORD CALLBACK post_message_thread(LPVOID arg)
     return 0;
 }
 
+static const char cls_name[] = "cowait_test_class";
+static DWORD CALLBACK test_CoWaitForMultipleHandles_thread(LPVOID arg)
+{
+    HANDLE *handles = arg;
+    BOOL success;
+    DWORD index;
+    HRESULT hr;
+    HWND hWnd;
+    MSG msg;
+
+    hr = pCoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    ok(hr == S_OK, "CoInitializeEx failed with error 0x%08x\n", hr);
+
+    hWnd = CreateWindowExA(0, cls_name, "Test (thread)", WS_TILEDWINDOW, 0, 0, 640, 480, 0, 0, 0, 0);
+    ok(hWnd != 0, "CreateWindowExA failed %u\n", GetLastError());
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_DDE_FIRST, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected S_OK, got 0x%08x\n", hr);
+    ok(index == 0, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_DDE_FIRST, WM_DDE_FIRST, PM_REMOVE);
+    ok(!success, "CoWaitForMultipleHandles didn't pump any messages\n");
+
+    index = 0xdeadbeef;
+    PostMessageA(hWnd, WM_USER, 0, 0);
+    hr = CoWaitForMultipleHandles(0, 50, 2, handles, &index);
+    ok(hr == RPC_S_CALLPENDING, "expected S_OK, got 0x%08x\n", hr);
+    ok(index == 0, "expected index 0, got %u\n", index);
+    success = PeekMessageA(&msg, hWnd, WM_USER, WM_USER, PM_REMOVE);
+    ok(success, "CoWaitForMultipleHandles unexpectedly pumped messages\n");
+
+    DestroyWindow(hWnd);
+    CoUninitialize();
+    return 0;
+}
+
 static void test_CoWaitForMultipleHandles(void)
 {
-    static const char cls_name[] = "cowait_test_class";
     HANDLE handles[2], thread;
     DWORD index, tid;
     WNDCLASSEXA wc;
@@ -2430,6 +2466,12 @@ static void test_CoWaitForMultipleHandles(void)
         ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
         CloseHandle(thread);
     }
+
+    /* test message pumping when CoWaitForMultipleHandles is called from non main apartment thread */
+    thread = CreateThread(NULL, 0, test_CoWaitForMultipleHandles_thread, handles, 0, &tid);
+    index = WaitForSingleObject(thread, 500);
+    ok(index == WAIT_OBJECT_0, "WaitForSingleObject failed\n");
+    CloseHandle(thread);
 
     CloseHandle(handles[0]);
     CloseHandle(handles[1]);
