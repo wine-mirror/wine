@@ -1580,16 +1580,14 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
 
             texcoord.x = position.x * transform._11 + position.y * transform._21 + transform._31;
             texcoord.y = position.x * transform._12 + position.y * transform._22 + transform._32;
-            ret = t.Sample(s, texcoord);
+            ret = t.Sample(s, texcoord) * opacity;
             if (ignore_alpha)
                 ret.a = opacity;
-            else
-                ret.a *= opacity;
 
             return ret;
         }
 #endif
-        0x43425844, 0xf2e9967c, 0xad1d1ac2, 0x865274b8, 0x6ab4c5ca, 0x00000001, 0x000001fc, 0x00000003,
+        0x43425844, 0xf5bb1e01, 0xe3386963, 0xcaa095bd, 0xea2887de, 0x00000001, 0x000001fc, 0x00000003,
         0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
         0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
         0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
@@ -1601,10 +1599,10 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         0x0010000a, 0x00000000, 0x0020802a, 0x00000000, 0x00000000, 0x0800000f, 0x00100042, 0x00000000,
         0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000001, 0x08000000, 0x00100022, 0x00000000,
         0x0010002a, 0x00000000, 0x0020802a, 0x00000000, 0x00000001, 0x09000045, 0x001000f2, 0x00000000,
-        0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x08000038, 0x00100082,
-        0x00000000, 0x0010003a, 0x00000000, 0x0020803a, 0x00000000, 0x00000001, 0x05000036, 0x00102072,
-        0x00000000, 0x00100246, 0x00000000, 0x0b000037, 0x00102082, 0x00000000, 0x0020800a, 0x00000000,
-        0x00000002, 0x0020803a, 0x00000000, 0x00000001, 0x0010003a, 0x00000000, 0x0100003e,
+        0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x08000038, 0x001000f2,
+        0x00000000, 0x00100e46, 0x00000000, 0x00208ff6, 0x00000000, 0x00000001, 0x0b000037, 0x00102082,
+        0x00000000, 0x0020800a, 0x00000000, 0x00000002, 0x0020803a, 0x00000000, 0x00000001, 0x0010003a,
+        0x00000000, 0x05000036, 0x00102072, 0x00000000, 0x00100246, 0x00000000, 0x0100003e,
     };
     /* The basic idea here is to evaluate the implicit form of the curve in
      * texture space. "t.z" determines which side of the curve is shaded. */
@@ -1793,7 +1791,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
 
     memset(&blend_desc, 0, sizeof(blend_desc));
     blend_desc.BlendEnable[0] = TRUE;
-    blend_desc.SrcBlend = D3D10_BLEND_SRC_ALPHA;
+    blend_desc.SrcBlend = D3D10_BLEND_ONE;
     blend_desc.DestBlend = D3D10_BLEND_INV_SRC_ALPHA;
     blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
     blend_desc.SrcBlendAlpha = D3D10_BLEND_ZERO;

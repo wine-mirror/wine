@@ -746,6 +746,9 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_d3d_render_targe
     {
         color = brush->u.solid.color;
         color.a *= brush->opacity;
+        color.r *= color.a;
+        color.g *= color.a;
+        color.b *= color.a;
 
         buffer_desc.ByteWidth = sizeof(color);
         buffer_data.pSysMem = &color;
