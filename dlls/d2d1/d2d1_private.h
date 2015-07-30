@@ -164,6 +164,8 @@ struct d2d_stroke_style
 {
     ID2D1StrokeStyle ID2D1StrokeStyle_iface;
     LONG refcount;
+
+    ID2D1Factory *factory;
 };
 
 void d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory,

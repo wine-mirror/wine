@@ -65,16 +65,21 @@ static ULONG STDMETHODCALLTYPE d2d_stroke_style_Release(ID2D1StrokeStyle *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
+    {
+        ID2D1Factory_Release(style->factory);
         HeapFree(GetProcessHeap(), 0, style);
+    }
 
     return refcount;
 }
 
 static void STDMETHODCALLTYPE d2d_stroke_style_GetFactory(ID2D1StrokeStyle *iface, ID2D1Factory **factory)
 {
-    FIXME("iface %p, factory %p stub!\n", iface, factory);
+    struct d2d_stroke_style *style = impl_from_ID2D1StrokeStyle(iface);
 
-    *factory = NULL;
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = style->factory);
 }
 
 static D2D1_CAP_STYLE STDMETHODCALLTYPE d2d_stroke_style_GetStartCap(ID2D1StrokeStyle *iface)
@@ -162,4 +167,5 @@ void d2d_stroke_style_init(struct d2d_stroke_style *style, ID2D1Factory *factory
 
     style->ID2D1StrokeStyle_iface.lpVtbl = &d2d_stroke_style_vtbl;
     style->refcount = 1;
+    ID2D1Factory_AddRef(style->factory = factory);
 }
