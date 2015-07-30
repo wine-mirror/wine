@@ -1632,11 +1632,17 @@ static void state_scissor(struct wined3d_context *context, const struct wined3d_
  * OpenGL the bias is specified in units of "the smallest value that is
  * guaranteed to produce a resolvable offset for a given implementation". To
  * convert from D3D to GL we need to divide the D3D depth bias by that value.
- * There's no practical way to retrieve that value from a given GL
- * implementation, but the D3D application has essentially the same problem,
- * which makes a guess of the depth buffer format's highest possible value a
- * reasonable guess. Note that SLOPESCALEDEPTHBIAS is a scaling factor for the
- * depth slope, and doesn't need to be scaled. */
+ * We try to detect the value from GL with test draws. On most drivers (r300g,
+ * 600g, Nvidia, i965 on Mesa) the value is 2^23 for fixed point depth buffers,
+ * for r200 and i965 on OSX it is 2^24, for r500 on OSX it is 2^22. For floating
+ * point buffers it is 2^22, 2^23 or 2^24 depending on the GPU. The value does
+ * not depend on the depth buffer precision on any driver.
+ *
+ * Two games that are picky regarding depth bias are Mass Effect 2 (flickering
+ * decals) and F.E.A.R and F.E.A.R. 2 (semi-transparent guns).
+ *
+ * Note that SLOPESCALEDEPTHBIAS is a scaling factor for the depth slope, and
+ * doesn't need to be scaled to account for GL vs D3D differences. */
 static void state_depthbias(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -1669,10 +1675,13 @@ static void state_depthbias(struct wined3d_context *context, const struct wined3
         {
             if (depth)
             {
-                const struct wined3d_format *fmt = depth->format;
-                scale = powf(2, fmt->depth_size) - 1;
+                if (depth->format_flags & WINED3DFMT_FLAG_FLOAT)
+                    scale = gl_info->float_polyoffset_scale;
+                else
+                    scale = gl_info->fixed_polyoffset_scale;
+
                 TRACE("Depth format %s, using depthbias scale of %.8e.\n",
-                      debug_d3dformat(fmt->id), scale);
+                      debug_d3dformat(depth->format->id), scale);
             }
             else
             {

@@ -2707,6 +2707,100 @@ fail:
     return FALSE;
 }
 
+float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *ctx, GLenum format)
+{
+    const struct wined3d_gl_info *gl_info = ctx->gl_info;
+    static const struct wined3d_color blue = {0.0f, 0.0f, 1.0f, 1.0f};
+    GLuint fbo, color, depth;
+    unsigned int low = 0, high = 32, cur;
+    DWORD readback[256];
+    static const struct wined3d_vec3 geometry[] =
+    {
+        {-1.0f, -1.0f, -1.0f},
+        { 1.0f, -1.0f,  0.0f},
+        {-1.0f,  1.0f, -1.0f},
+        { 1.0f,  1.0f,  0.0f},
+    };
+
+    /* Most drivers want 2^23 for fixed point depth buffers, including r300g, r600g,
+     * Nvidia. Use this as a fallback if the detection fails. */
+    unsigned int fallback = 23;
+
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+    {
+        FIXME("No FBOs, assuming polyoffset scale of 2^%u.\n", fallback);
+        return (float)(1 << fallback);
+    }
+
+    gl_info->gl_ops.gl.p_glGenTextures(1, &color);
+    gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, color);
+    gl_info->gl_ops.gl.p_glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
+    gl_info->gl_ops.gl.p_glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, 256, 1, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
+
+    gl_info->fbo_ops.glGenRenderbuffers(1, &depth);
+    gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, depth);
+    gl_info->fbo_ops.glRenderbufferStorage(GL_RENDERBUFFER, format, 256, 1);
+
+    gl_info->fbo_ops.glGenFramebuffers(1, &fbo);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+    gl_info->fbo_ops.glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, color, 0);
+    gl_info->fbo_ops.glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depth);
+    checkGLcall("Setup framebuffer");
+
+    gl_info->gl_ops.gl.p_glClearColor(0.0f, 0.0f, 0.5f, 0.0f);
+    gl_info->gl_ops.gl.p_glClearDepth(0.5f);
+    gl_info->gl_ops.gl.p_glEnable(GL_DEPTH_TEST);
+    gl_info->gl_ops.gl.p_glEnable(GL_POLYGON_OFFSET_FILL);
+    gl_info->gl_ops.gl.p_glViewport(0, 0, 256, 1);
+    checkGLcall("Misc parameters");
+
+    for (;;)
+    {
+        if (high - low <= 1)
+        {
+            ERR("PolygonOffset scale factor detection failed, using fallback value 2^%u.\n", fallback);
+            cur = fallback;
+            break;
+        }
+        cur = (low + high) / 2;
+
+        gl_info->gl_ops.gl.p_glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        /* The post viewport transform Z of the geometry runs from 0.0 to 0.5. We want to push it another
+         * 0.25 so that the Z buffer content (0.5) cuts the quad off at half the screen. */
+        gl_info->gl_ops.gl.p_glPolygonOffset(0.0f, (float)(1 << cur) * 0.25f);
+        draw_test_quad(ctx, geometry, &blue);
+        checkGLcall("Test draw");
+
+        /* Rebinding texture to workaround a fglrx bug. */
+        gl_info->gl_ops.gl.p_glBindTexture(GL_TEXTURE_2D, color);
+        gl_info->gl_ops.gl.p_glGetTexImage(GL_TEXTURE_2D, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, readback);
+        checkGLcall("readback");
+
+        TRACE("low %02u, high %02u, cur %2u, 0=0x%08x, 125=0x%08x, 131=0x%08x, 255=0x%08x\n",
+                low, high, cur, readback[0], readback[125], readback[131], readback[255]);
+
+        if ((readback[125] & 0xff) < 0xa0)
+            high = cur;
+        else if ((readback[131] & 0xff) > 0xa0)
+            low = cur;
+        else
+        {
+            TRACE("Found scale factor 2^%u for format %x\n", cur, format);
+            break;
+        }
+    }
+
+    gl_info->gl_ops.gl.p_glDeleteTextures(1, &color);
+    gl_info->fbo_ops.glDeleteRenderbuffers(1, &depth);
+    gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
+    gl_info->fbo_ops.glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    checkGLcall("Delete framebuffer");
+
+    gl_info->gl_ops.gl.p_glDisable(GL_DEPTH_TEST);
+    gl_info->gl_ops.gl.p_glDisable(GL_POLYGON_OFFSET_FILL);
+    return (float)(1 << cur);
+}
+
 const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl_info,
         enum wined3d_format_id format_id)
 {
