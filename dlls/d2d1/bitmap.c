@@ -62,7 +62,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap *iface)
     struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap(iface);
     ULONG refcount = InterlockedDecrement(&bitmap->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
     {
