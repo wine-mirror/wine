@@ -228,7 +228,8 @@ HRESULT d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_d3d_render_target 
     resource_data.pSysMem = src_data;
     resource_data.SysMemPitch = pitch;
 
-    if (FAILED(hr = ID3D10Device_CreateTexture2D(render_target->device, &texture_desc, &resource_data, &texture)))
+    if (FAILED(hr = ID3D10Device_CreateTexture2D(render_target->device, &texture_desc,
+            src_data ? &resource_data : NULL, &texture)))
     {
         ERR("Failed to create texture, hr %#x.\n", hr);
         return hr;
