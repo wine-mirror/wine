@@ -533,6 +533,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLayer(ID2D1RenderTa
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateMesh(ID2D1RenderTarget *iface, ID2D1Mesh **mesh)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     struct d2d_mesh *object;
 
     TRACE("iface %p, mesh %p.\n", iface, mesh);
@@ -540,7 +541,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateMesh(ID2D1RenderTar
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_mesh_init(object);
+    d2d_mesh_init(object, render_target->factory);
 
     TRACE("Created mesh %p.\n", object);
     *mesh = &object->ID2D1Mesh_iface;
