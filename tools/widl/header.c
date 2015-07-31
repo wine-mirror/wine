@@ -1279,34 +1279,40 @@ static void write_com_interface_end(FILE *header, type_t *iface)
 
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
-  if (uuid)
-      fprintf(header, "MIDL_INTERFACE(\"%s\")\n", uuid_string(uuid));
-  else
+  if (!is_global_namespace(iface->namespace)) {
+      write_line(header, 0, "} /* extern \"C\" */");
+      write_namespace_start(header, iface->namespace);
+  }
+  if (uuid) {
+      write_line(header, 0, "MIDL_INTERFACE(\"%s\")", uuid_string(uuid));
+      indent(header, 0);
+  }else {
+      indent(header, 0);
       fprintf(header, "interface ");
+  }
   if (type_iface_get_inherit(iface))
   {
     fprintf(header, "%s : public %s\n", iface->name,
             type_iface_get_inherit(iface)->name);
-    fprintf(header, "{\n");
+    write_line(header, 1, "{");
   }
   else
   {
     fprintf(header, "%s\n", iface->name);
-    fprintf(header, "{\n");
-    fprintf(header, "    BEGIN_INTERFACE\n");
-    fprintf(header, "\n");
+    write_line(header, 1, "{\n");
+    write_line(header, 0, "BEGIN_INTERFACE\n");
   }
   /* dispinterfaces don't have real functions, so don't write C++ functions for
    * them */
   if (!dispinterface)
-  {
-    indentation++;
     write_cpp_method_def(header, iface);
-    indentation--;
-  }
   if (!type_iface_get_inherit(iface))
-    fprintf(header, "    END_INTERFACE\n");
-  fprintf(header, "};\n");
+    write_line(header, 0, "END_INTERFACE\n");
+  write_line(header, -1, "};");
+  if (!is_global_namespace(iface->namespace)) {
+      write_namespace_end(header, iface->namespace);
+      write_line(header, 0, "extern \"C\" {");
+  }
   if (uuid)
       write_uuid_decl(header, iface->name, uuid);
   fprintf(header, "#else\n");
