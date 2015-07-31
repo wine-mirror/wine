@@ -237,8 +237,8 @@ void  output_c_preamble (void)
   }
 
   fprintf (cfile,
-           "BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID "
-           "reserved)\n{\n"
+           "BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void "
+           "*reserved)\n{\n"
            "    TRACE(\"(%%p, %%u, %%p)\\n\", instance, reason, reserved);\n\n"
            "    switch (reason)\n"
            "    {\n"
