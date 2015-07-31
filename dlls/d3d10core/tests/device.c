@@ -397,6 +397,7 @@ static void test_create_depthstencil_view(void)
 static void test_create_rendertarget_view(void)
 {
     D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
+    D3D10_SUBRESOURCE_DATA data = {0};
     D3D10_TEXTURE2D_DESC texture_desc;
     ULONG refcount, expected_refcount;
     D3D10_BUFFER_DESC buffer_desc;
@@ -417,6 +418,9 @@ static void test_create_rendertarget_view(void)
     buffer_desc.BindFlags = D3D10_BIND_RENDER_TARGET;
     buffer_desc.CPUAccessFlags = 0;
     buffer_desc.MiscFlags = 0;
+
+    hr = ID3D10Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);

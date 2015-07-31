@@ -239,10 +239,9 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
     wined3d_desc.cpu_access_flags = desc->CPUAccessFlags;
     wined3d_desc.misc_flags = desc->MiscFlags;
 
-    hr = wined3d_buffer_create(device->wined3d_device, &wined3d_desc,
-            data ? data->pSysMem : NULL, buffer, &d3d10_buffer_wined3d_parent_ops,
-            &buffer->wined3d_buffer);
-    if (FAILED(hr))
+    if (FAILED(hr = wined3d_buffer_create(device->wined3d_device, &wined3d_desc,
+            (const struct wined3d_sub_resource_data *)data, buffer,
+            &d3d10_buffer_wined3d_parent_ops, &buffer->wined3d_buffer)))
     {
         WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&buffer->private_store);
