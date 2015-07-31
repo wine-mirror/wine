@@ -203,10 +203,10 @@ If a prototype is found, or correctly demangled, the following is emitted:
 @ stdcall _OpenZipFile ZIPEXTRA__OpenZipFile
 
 .h:
-BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName);
+BOOL __stdcall ZIPEXTRA__OpenZipFile(const char *filename);
 
 .c:
-BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName)
+BOOL __stdcall ZIPEXTRA__OpenZipFile(const char *filename)
 {
   TRACE("stub\n");
   return 0;
@@ -245,16 +245,16 @@ forward DLL automatically:
 
 HMODULE hDLL = 0; /* DLL to call through to */
 
-BOOL WINAPI ZIPEXTRA_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI ZIPEXTRA_Init(HINSTANCE dll, DWORD reason, void *reserved)
 {
-    TRACE("(0x%08x, %ld, %p)\n", hinstDLL, fdwReason, lpvReserved);
+    TRACE("(0x%08x, %u, %p)\n", dll, reason, reserved);
 
-    if (fdwReason == DLL_PROCESS_ATTACH)
+    if (reason == DLL_PROCESS_ATTACH)
     {
         hDLL = LoadLibraryA( "real_zipextra" );
         TRACE ("Forwarding DLL (real_zipextra) loaded\n" );
     }
-    else if (fdwReason == DLL_PROCESS_DETACH)
+    else if (reason == DLL_PROCESS_DETACH)
     {
         FreeLibrary( hDLL );
         TRACE ("Forwarding DLL (real_zipextra) freed\n" );
@@ -265,12 +265,12 @@ BOOL WINAPI ZIPEXTRA_Init(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserve
 
 The stub function is changed to call the forwarding DLL and return that value.
 
-BOOL __stdcall ZIPEXTRA__OpenZipFile(LPCSTR pszFileName)
+BOOL __stdcall ZIPEXTRA__OpenZipFile(const char *filename)
 {
-  BOOL (__stdcall *pFunc)(LPCSTR) = (void*)GetProcAddress(hDLL,"_OpenZipFile");
+  BOOL (__stdcall *pFunc)(const char *) = (void*)GetProcAddress(hDLL,"_OpenZipFile");
   BOOL retVal;
-  TRACE("((LPCSTR)%s) stub\n", pszFileName);
-  retVal = pFunc(pszFileName);
+  TRACE("((const char *)%s) stub\n", filename);
+  retVal = pFunc(filename);
   TRACE("returned (%ld)\n",(LONG)retVal));
   return retVal;
 }
