@@ -129,8 +129,9 @@ static void write_guid(FILE *f, const char *guid_prefix, const char *name, const
         uuid->Data4[6], uuid->Data4[7]);
 }
 
-static void write_uuid_decl(FILE *f, const char *name, const UUID *uuid)
+static void write_uuid_decl(FILE *f, type_t *type, const UUID *uuid)
 {
+  char *name = format_namespace(type->namespace, "", "::", type->name);
   fprintf(f, "#ifdef __CRT_UUID_DECL\n");
   fprintf(f, "__CRT_UUID_DECL(%s, 0x%08x, 0x%04x, 0x%04x, 0x%02x,0x%02x, 0x%02x,"
         "0x%02x,0x%02x,0x%02x,0x%02x,0x%02x)\n",
@@ -138,6 +139,7 @@ static void write_uuid_decl(FILE *f, const char *name, const UUID *uuid)
         uuid->Data4[2], uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6],
         uuid->Data4[7]);
   fprintf(f, "#endif\n");
+  free(name);
 }
 
 static const char *uuid_string(const UUID *uuid)
@@ -1314,7 +1316,7 @@ static void write_com_interface_end(FILE *header, type_t *iface)
       write_line(header, 0, "extern \"C\" {");
   }
   if (uuid)
-      write_uuid_decl(header, iface->name, uuid);
+      write_uuid_decl(header, iface, uuid);
   fprintf(header, "#else\n");
   /* C interface */
   write_line(header, 1, "typedef struct %sVtbl {", iface->c_name);
@@ -1400,7 +1402,7 @@ static void write_coclass(FILE *header, type_t *cocl)
   if (uuid)
   {
       fprintf(header, "class DECLSPEC_UUID(\"%s\") %s;\n", uuid_string(uuid), cocl->name);
-      write_uuid_decl(header, cocl->name, uuid);
+      write_uuid_decl(header, cocl, uuid);
   }
   else
   {
