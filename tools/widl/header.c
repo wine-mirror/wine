@@ -1106,12 +1106,12 @@ static void do_write_c_method_def(FILE *header, const type_t *iface, const char 
 
 static void write_c_method_def(FILE *header, const type_t *iface)
 {
-  do_write_c_method_def(header, iface, iface->name);
+  do_write_c_method_def(header, iface, iface->c_name);
 }
 
 static void write_c_disp_method_def(FILE *header, const type_t *iface)
 {
-  do_write_c_method_def(header, type_iface_get_inherit(iface), iface->name);
+  do_write_c_method_def(header, type_iface_get_inherit(iface), iface->c_name);
 }
 
 static void write_method_proto(FILE *header, const type_t *iface)
@@ -1264,8 +1264,8 @@ static void write_com_interface_start(FILE *header, const type_t *iface)
   fprintf(header, "/*****************************************************************************\n");
   fprintf(header, " * %s %sinterface\n", iface->name, dispinterface ? "disp" : "");
   fprintf(header, " */\n");
-  fprintf(header,"#ifndef __%s_%sINTERFACE_DEFINED__\n", iface->name, dispinterface ? "DISP" : "");
-  fprintf(header,"#define __%s_%sINTERFACE_DEFINED__\n\n", iface->name, dispinterface ? "DISP" : "");
+  fprintf(header,"#ifndef __%s_%sINTERFACE_DEFINED__\n", iface->c_name, dispinterface ? "DISP" : "");
+  fprintf(header,"#define __%s_%sINTERFACE_DEFINED__\n\n", iface->c_name, dispinterface ? "DISP" : "");
 }
 
 static void write_com_interface_end(FILE *header, type_t *iface)
@@ -1275,7 +1275,7 @@ static void write_com_interface_end(FILE *header, type_t *iface)
   type_t *type;
 
   if (uuid)
-      write_guid(header, dispinterface ? "DIID" : "IID", iface->name, uuid);
+      write_guid(header, dispinterface ? "DIID" : "IID", iface->c_name, uuid);
 
   /* C++ interface */
   fprintf(header, "#if defined(__cplusplus) && !defined(CINTERFACE)\n");
@@ -1317,29 +1317,25 @@ static void write_com_interface_end(FILE *header, type_t *iface)
       write_uuid_decl(header, iface->name, uuid);
   fprintf(header, "#else\n");
   /* C interface */
-  fprintf(header, "typedef struct %sVtbl {\n", iface->name);
-  indentation++;
-  fprintf(header, "    BEGIN_INTERFACE\n");
-  fprintf(header, "\n");
+  write_line(header, 1, "typedef struct %sVtbl {", iface->c_name);
+  write_line(header, 0, "BEGIN_INTERFACE\n");
   if (dispinterface)
     write_c_disp_method_def(header, iface);
   else
     write_c_method_def(header, iface);
-  indentation--;
-  fprintf(header, "    END_INTERFACE\n");
-  fprintf(header, "} %sVtbl;\n", iface->name);
-  fprintf(header, "interface %s {\n", iface->name);
-  fprintf(header, "    CONST_VTBL %sVtbl* lpVtbl;\n", iface->name);
-  fprintf(header, "};\n");
-  fprintf(header, "\n");
+  write_line(header, 0, "END_INTERFACE");
+  write_line(header, -1, "} %sVtbl;\n", iface->c_name);
+  fprintf(header, "interface %s {\n", iface->c_name);
+  fprintf(header, "    CONST_VTBL %sVtbl* lpVtbl;\n", iface->c_name);
+  fprintf(header, "};\n\n");
   fprintf(header, "#ifdef COBJMACROS\n");
   /* dispinterfaces don't have real functions, so don't write macros for them,
    * only for the interface this interface inherits from, i.e. IDispatch */
   fprintf(header, "#ifndef WIDL_C_INLINE_WRAPPERS\n");
   type = dispinterface ? type_iface_get_inherit(iface) : iface;
-  write_method_macro(header, type, type, iface->name);
+  write_method_macro(header, type, type, iface->c_name);
   fprintf(header, "#else\n");
-  write_inline_wrappers(header, type, type, iface->name);
+  write_inline_wrappers(header, type, type, iface->c_name);
   fprintf(header, "#endif\n");
   fprintf(header, "#endif\n");
   fprintf(header, "\n");
@@ -1347,13 +1343,13 @@ static void write_com_interface_end(FILE *header, type_t *iface)
   fprintf(header, "\n");
   /* dispinterfaces don't have real functions, so don't write prototypes for
    * them */
-  if (!dispinterface)
+  if (!dispinterface && !winrt_mode)
   {
     write_method_proto(header, iface);
     write_locals(header, iface, FALSE);
     fprintf(header, "\n");
   }
-  fprintf(header,"#endif  /* __%s_%sINTERFACE_DEFINED__ */\n\n", iface->name, dispinterface ? "DISP" : "");
+  fprintf(header,"#endif  /* __%s_%sINTERFACE_DEFINED__ */\n\n", iface->c_name, dispinterface ? "DISP" : "");
 }
 
 static void write_rpc_interface_start(FILE *header, const type_t *iface)
