@@ -727,11 +727,21 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
     return WINED3D_OK;
 }
 
-static void wined3d_texture_upload_data(struct wined3d_texture *texture, const struct wined3d_sub_resource_data *data)
+static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
+        const struct wined3d_sub_resource_data *data)
 {
     unsigned int sub_count = texture->level_count * texture->layer_count;
     struct wined3d_context *context;
     unsigned int i;
+
+    for (i = 0; i < sub_count; ++i)
+    {
+        if (!data[i].data)
+        {
+            WARN("Invalid sub-resource data specified for sub-resource %u.\n", i);
+            return E_INVALIDARG;
+        }
+    }
 
     context = context_acquire(texture->resource.device, NULL);
 
@@ -748,6 +758,8 @@ static void wined3d_texture_upload_data(struct wined3d_texture *texture, const s
     }
 
     context_release(context);
+
+    return WINED3D_OK;
 }
 
 static void texture2d_sub_resource_load(struct wined3d_resource *sub_resource,
@@ -1444,8 +1456,12 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
 
     /* FIXME: We'd like to avoid ever allocating system memory for the texture
      * in this case. */
-    if (data)
-        wined3d_texture_upload_data(object, data);
+    if (data && FAILED(hr = wined3d_texture_upload_data(object, data)))
+    {
+        wined3d_texture_cleanup(object);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
 
     TRACE("Created texture %p.\n", object);
     *texture = object;
