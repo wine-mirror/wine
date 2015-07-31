@@ -382,6 +382,16 @@ struct bitfield_details
   const expr_t *bits;
 };
 
+#define HASHMAX 64
+
+struct namespace {
+    const char *name;
+    struct namespace *parent;
+    struct list entry;
+    struct list children;
+    struct rtype *type_hash[HASHMAX];
+};
+
 enum type_type
 {
     TYPE_VOID,
@@ -549,10 +559,10 @@ void clear_all_offsets(void);
 #define tsUNION  3
 
 var_t *find_const(const char *name, int f);
-type_t *find_type(const char *name, int t);
+type_t *find_type(const char *name, struct namespace *namespace, int t);
 type_t *make_type(enum type_type type);
-type_t *get_type(enum type_type type, char *name, int t);
-type_t *reg_type(type_t *type, const char *name, int t);
+type_t *get_type(enum type_type type, char *name, struct namespace *namespace, int t);
+type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, int t);
 void add_incomplete(type_t *t);
 
 var_t *make_var(char *name);

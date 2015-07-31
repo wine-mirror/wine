@@ -152,7 +152,7 @@ type_t *type_new_alias(type_t *t, const char *name)
 
 type_t *type_new_module(char *name)
 {
-    type_t *type = get_type(TYPE_MODULE, name, 0);
+    type_t *type = get_type(TYPE_MODULE, name, NULL, 0);
     if (type->type_type != TYPE_MODULE || type->defined)
         error_loc("%s: redefinition error; original definition was at %s:%d\n",
                   type->name, type->loc_info.input_name, type->loc_info.line_number);
@@ -162,7 +162,7 @@ type_t *type_new_module(char *name)
 
 type_t *type_new_coclass(char *name)
 {
-    type_t *type = get_type(TYPE_COCLASS, name, 0);
+    type_t *type = get_type(TYPE_COCLASS, name, NULL, 0);
     if (type->type_type != TYPE_COCLASS || type->defined)
         error_loc("%s: redefinition error; original definition was at %s:%d\n",
                   type->name, type->loc_info.input_name, type->loc_info.line_number);
@@ -221,7 +221,7 @@ type_t *type_new_void(void)
 
 type_t *type_new_enum(const char *name, int defined, var_list_t *enums)
 {
-    type_t *tag_type = name ? find_type(name, tsENUM) : NULL;
+    type_t *tag_type = name ? find_type(name, NULL, tsENUM) : NULL;
     type_t *t = make_type(TYPE_ENUM);
     t->name = name;
 
@@ -237,7 +237,7 @@ type_t *type_new_enum(const char *name, int defined, var_list_t *enums)
     if (name)
     {
         if (defined)
-            reg_type(t, name, tsENUM);
+            reg_type(t, name, NULL, tsENUM);
         else
             add_incomplete(t);
     }
@@ -246,7 +246,7 @@ type_t *type_new_enum(const char *name, int defined, var_list_t *enums)
 
 type_t *type_new_struct(char *name, int defined, var_list_t *fields)
 {
-    type_t *tag_type = name ? find_type(name, tsSTRUCT) : NULL;
+    type_t *tag_type = name ? find_type(name, NULL, tsSTRUCT) : NULL;
     type_t *t = make_type(TYPE_STRUCT);
     t->name = name;
     if (tag_type && tag_type->details.structure)
@@ -260,7 +260,7 @@ type_t *type_new_struct(char *name, int defined, var_list_t *fields)
     if (name)
     {
         if (defined)
-            reg_type(t, name, tsSTRUCT);
+            reg_type(t, name, NULL, tsSTRUCT);
         else
             add_incomplete(t);
     }
@@ -269,7 +269,7 @@ type_t *type_new_struct(char *name, int defined, var_list_t *fields)
 
 type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t *fields)
 {
-    type_t *tag_type = name ? find_type(name, tsUNION) : NULL;
+    type_t *tag_type = name ? find_type(name, NULL, tsUNION) : NULL;
     type_t *t = make_type(TYPE_UNION);
     t->name = name;
     if (tag_type && tag_type->details.structure)
@@ -283,7 +283,7 @@ type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t
     if (name)
     {
         if (defined)
-            reg_type(t, name, tsUNION);
+            reg_type(t, name, NULL, tsUNION);
         else
             add_incomplete(t);
     }
@@ -292,7 +292,7 @@ type_t *type_new_nonencapsulated_union(const char *name, int defined, var_list_t
 
 type_t *type_new_encapsulated_union(char *name, var_t *switch_field, var_t *union_field, var_list_t *cases)
 {
-    type_t *t = get_type(TYPE_ENCAPSULATED_UNION, name, tsUNION);
+    type_t *t = get_type(TYPE_ENCAPSULATED_UNION, name, NULL, tsUNION);
     if (!union_field) union_field = make_var( xstrdup("tagged_union") );
     union_field->type = type_new_nonencapsulated_union(NULL, TRUE, cases);
     t->details.structure = xmalloc(sizeof(*t->details.structure));
@@ -392,7 +392,7 @@ void type_dispinterface_define(type_t *iface, var_list_t *props, var_list_t *met
     iface->details.iface->disp_props = props;
     iface->details.iface->disp_methods = methods;
     iface->details.iface->stmts = NULL;
-    iface->details.iface->inherit = find_type("IDispatch", 0);
+    iface->details.iface->inherit = find_type("IDispatch", NULL, 0);
     if (!iface->details.iface->inherit) error_loc("IDispatch is undefined\n");
     iface->defined = TRUE;
     compute_method_indexes(iface);
