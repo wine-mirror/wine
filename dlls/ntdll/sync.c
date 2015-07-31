@@ -636,7 +636,39 @@ NTSTATUS WINAPI NtQueryInformationJobObject( HANDLE handle, JOBOBJECTINFOCLASS c
                                              ULONG len, PULONG ret_len )
 {
     FIXME( "stub: %p %u %p %u %p\n", handle, class, info, len, ret_len );
-    return STATUS_NOT_IMPLEMENTED;
+
+    if (class >= MaxJobObjectInfoClass)
+        return STATUS_INVALID_PARAMETER;
+
+    switch (class)
+    {
+    case JobObjectExtendedLimitInformation:
+        {
+            JOBOBJECT_EXTENDED_LIMIT_INFORMATION *extended_limit;
+            if (len < sizeof(*extended_limit))
+                return STATUS_INFO_LENGTH_MISMATCH;
+
+            extended_limit = (JOBOBJECT_EXTENDED_LIMIT_INFORMATION *)info;
+            memset(extended_limit, 0, sizeof(*extended_limit));
+            if (ret_len) *ret_len = sizeof(*extended_limit);
+            return STATUS_SUCCESS;
+        }
+
+    case JobObjectBasicLimitInformation:
+        {
+            JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit;
+            if (len < sizeof(*basic_limit))
+                return STATUS_INFO_LENGTH_MISMATCH;
+
+            basic_limit = (JOBOBJECT_BASIC_LIMIT_INFORMATION *)info;
+            memset(basic_limit, 0, sizeof(*basic_limit));
+            if (ret_len) *ret_len = sizeof(*basic_limit);
+            return STATUS_SUCCESS;
+        }
+
+    default:
+        return STATUS_NOT_IMPLEMENTED;
+    }
 }
 
 /******************************************************************************
