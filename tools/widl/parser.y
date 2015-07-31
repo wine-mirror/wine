@@ -1971,6 +1971,8 @@ int is_type(const char *name)
 type_t *get_type(enum type_type type, char *name, struct namespace *namespace, int t)
 {
   type_t *tp;
+  if (!namespace)
+    namespace = &global_namespace;
   if (name) {
     tp = find_type(name, namespace, t);
     if (tp) {
@@ -1980,6 +1982,11 @@ type_t *get_type(enum type_type type, char *name, struct namespace *namespace, i
   }
   tp = make_type(type);
   tp->name = name;
+  tp->namespace = namespace;
+  if (is_global_namespace(namespace))
+    tp->c_name = name;
+  else
+    tp->c_name = format_namespace(namespace, "__x_", "_C", name);
   if (!name) return tp;
   return reg_type(tp, name, namespace, t);
 }

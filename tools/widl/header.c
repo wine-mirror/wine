@@ -1219,8 +1219,8 @@ static void write_function_proto(FILE *header, const type_t *iface, const var_t 
 
 static void write_forward(FILE *header, type_t *iface)
 {
-  fprintf(header, "#ifndef __%s_FWD_DEFINED__\n", iface->name);
-  fprintf(header, "#define __%s_FWD_DEFINED__\n", iface->name);
+  fprintf(header, "#ifndef __%s_FWD_DEFINED__\n", iface->c_name);
+  fprintf(header, "#define __%s_FWD_DEFINED__\n", iface->c_name);
   fprintf(header, "typedef interface %s %s;\n", iface->name, iface->name);
   fprintf(header, "#endif\n\n" );
 }

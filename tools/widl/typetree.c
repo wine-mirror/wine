@@ -45,8 +45,10 @@ type_t *make_type(enum type_type type)
 {
     type_t *t = alloc_type();
     t->name = NULL;
+    t->namespace = NULL;
     t->type_type = type;
     t->attrs = NULL;
+    t->c_name = NULL;
     t->orig = NULL;
     memset(&t->details, 0, sizeof(t->details));
     t->typestring_offset = 0;
@@ -74,6 +76,35 @@ static const var_t *find_arg(const var_list_t *args, const char *name)
     }
 
     return NULL;
+}
+
+static char *append_namespace(char *ptr, struct namespace *namespace, const char *separator)
+{
+    if(is_global_namespace(namespace))
+        return ptr;
+
+    ptr = append_namespace(ptr, namespace->parent, separator);
+    strcpy(ptr, namespace->name);
+    strcat(ptr, separator);
+    return ptr + strlen(ptr);
+}
+
+char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix)
+{
+    unsigned len = strlen(prefix) + strlen(suffix);
+    unsigned sep_len = strlen(separator);
+    struct namespace *iter;
+    char *ret, *ptr;
+
+    for(iter = namespace; !is_global_namespace(iter); iter = iter->parent)
+        len += strlen(iter->name) + sep_len;
+
+    ret = xmalloc(len+1);
+    strcpy(ret, prefix);
+    ptr = append_namespace(ret + strlen(ret), namespace, separator);
+    strcpy(ptr, suffix);
+
+    return ret;
 }
 
 type_t *type_new_function(var_list_t *args)

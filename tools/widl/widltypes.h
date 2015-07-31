@@ -412,6 +412,7 @@ enum type_type
 
 struct _type_t {
   const char *name;
+  struct namespace *namespace;
   enum type_type type_type;
   attr_list_t *attrs;
   union
@@ -427,6 +428,7 @@ struct _type_t {
     struct pointer_details pointer;
     struct bitfield_details bitfield;
   } details;
+  const char *c_name;
   type_t *orig;                   /* dup'd types */
   unsigned int typestring_offset;
   unsigned int ptrdesc;           /* used for complex structs */
@@ -570,6 +572,8 @@ var_list_t *append_var(var_list_t *list, var_t *var);
 
 void init_loc_info(loc_info_t *);
 
+char *format_namespace(struct namespace *namespace, const char *prefix, const char *separator, const char *suffix);
+
 static inline var_list_t *type_get_function_args(const type_t *func_type)
 {
   return func_type->details.function->args;
@@ -597,6 +601,11 @@ static inline int statements_has_func(const statement_list_t *stmts)
     break;
   }
   return has_func;
+}
+
+static inline int is_global_namespace(const struct namespace *namespace)
+{
+    return !namespace->name;
 }
 
 #endif
