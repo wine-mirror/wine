@@ -102,7 +102,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateRectangleGeometry(ID2D1Factor
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_rectangle_geometry_init(object, rect)))
+    if (FAILED(hr = d2d_rectangle_geometry_init(object, iface, rect)))
     {
         WARN("Failed to initialize rectangle geometry, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -159,7 +159,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreatePathGeometry(ID2D1Factory *if
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_path_geometry_init(object);
+    d2d_path_geometry_init(object, iface);
 
     TRACE("Created path geometry %p.\n", object);
     *geometry = (ID2D1PathGeometry *)&object->ID2D1Geometry_iface;

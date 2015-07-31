@@ -982,13 +982,16 @@ static void d2d_geometry_destroy(struct d2d_geometry *geometry)
     HeapFree(GetProcessHeap(), 0, geometry->beziers);
     HeapFree(GetProcessHeap(), 0, geometry->faces);
     HeapFree(GetProcessHeap(), 0, geometry->vertices);
+    ID2D1Factory_Release(geometry->factory);
     HeapFree(GetProcessHeap(), 0, geometry);
 }
 
-static void d2d_geometry_init(struct d2d_geometry *geometry, const struct ID2D1GeometryVtbl *vtbl)
+static void d2d_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory,
+        const struct ID2D1GeometryVtbl *vtbl)
 {
     geometry->ID2D1Geometry_iface.lpVtbl = vtbl;
     geometry->refcount = 1;
+    ID2D1Factory_AddRef(geometry->factory = factory);
 }
 
 static inline struct d2d_geometry *impl_from_ID2D1GeometrySink(ID2D1GeometrySink *iface)
@@ -1368,9 +1371,11 @@ static ULONG STDMETHODCALLTYPE d2d_path_geometry_Release(ID2D1PathGeometry *ifac
 
 static void STDMETHODCALLTYPE d2d_path_geometry_GetFactory(ID2D1PathGeometry *iface, ID2D1Factory **factory)
 {
-    FIXME("iface %p, factory %p stub!\n", iface, factory);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
 
-    *factory = NULL;
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = geometry->factory);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *iface,
@@ -1567,9 +1572,9 @@ static const struct ID2D1PathGeometryVtbl d2d_path_geometry_vtbl =
     d2d_path_geometry_GetFigureCount,
 };
 
-void d2d_path_geometry_init(struct d2d_geometry *geometry)
+void d2d_path_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory)
 {
-    d2d_geometry_init(geometry, (ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl);
+    d2d_geometry_init(geometry, factory, (ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl);
     geometry->u.path.ID2D1GeometrySink_iface.lpVtbl = &d2d_geometry_sink_vtbl;
 }
 
@@ -1779,9 +1784,9 @@ static const struct ID2D1RectangleGeometryVtbl d2d_rectangle_geometry_vtbl =
     d2d_rectangle_geometry_GetRect,
 };
 
-HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, const D2D1_RECT_F *rect)
+HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory, const D2D1_RECT_F *rect)
 {
-    d2d_geometry_init(geometry, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
+    d2d_geometry_init(geometry, factory, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
     geometry->u.rectangle.rect = *rect;
 
     if (!(geometry->vertices = HeapAlloc(GetProcessHeap(), 0, 4 * sizeof(*geometry->vertices))))
