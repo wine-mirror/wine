@@ -2304,6 +2304,8 @@ static void test_QueryInformationJobObject(void)
 {
     char buf[FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[5])];
     PJOBOBJECT_BASIC_PROCESS_ID_LIST pid_list = (JOBOBJECT_BASIC_PROCESS_ID_LIST *)buf;
+    JOBOBJECT_EXTENDED_LIMIT_INFORMATION ext_limit_info;
+    JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit_info = &ext_limit_info.BasicLimitInformation;
     DWORD dwret, ret_len;
     PROCESS_INFORMATION pi[2];
     HANDLE job;
@@ -2373,6 +2375,34 @@ static void test_QueryInformationJobObject(void)
             expect_eq_d(pi[1].dwProcessId, list[1]);
         }
     }
+
+    /* test JobObjectBasicLimitInformation */
+    ret = pQueryInformationJobObject(job, JobObjectBasicLimitInformation, basic_limit_info,
+                                     sizeof(*basic_limit_info) - 1, &ret_len);
+    ok(!ret, "QueryInformationJobObject expected failure\n");
+    expect_eq_d(ERROR_BAD_LENGTH, GetLastError());
+
+    ret_len = 0xdeadbeef;
+    memset(basic_limit_info, 0x11, sizeof(*basic_limit_info));
+    ret = pQueryInformationJobObject(job, JobObjectBasicLimitInformation, basic_limit_info,
+                                     sizeof(*basic_limit_info), &ret_len);
+    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    ok(ret_len == sizeof(*basic_limit_info), "QueryInformationJobObject returned ret_len=%u\n", ret_len);
+    expect_eq_d(0, basic_limit_info->LimitFlags);
+
+    /* test JobObjectExtendedLimitInformation */
+    ret = pQueryInformationJobObject(job, JobObjectExtendedLimitInformation, &ext_limit_info,
+                                     sizeof(ext_limit_info) - 1, &ret_len);
+    ok(!ret, "QueryInformationJobObject expected failure\n");
+    expect_eq_d(ERROR_BAD_LENGTH, GetLastError());
+
+    ret_len = 0xdeadbeef;
+    memset(&ext_limit_info, 0x11, sizeof(ext_limit_info));
+    ret = pQueryInformationJobObject(job, JobObjectExtendedLimitInformation, &ext_limit_info,
+                                     sizeof(ext_limit_info), &ret_len);
+    ok(ret, "QueryInformationJobObject error %u\n", GetLastError());
+    ok(ret_len == sizeof(ext_limit_info), "QueryInformationJobObject returned ret_len=%u\n", ret_len);
+    expect_eq_d(0, basic_limit_info->LimitFlags);
 
     TerminateProcess(pi[0].hProcess, 0);
     CloseHandle(pi[0].hProcess);
