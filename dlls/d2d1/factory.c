@@ -199,7 +199,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateDrawingStateBlock(ID2D1Factor
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_state_block_init(object, desc, text_rendering_params);
+    d2d_state_block_init(object, iface, desc, text_rendering_params);
 
     TRACE("Created state block %p.\n", object);
     *state_block = &object->ID2D1DrawingStateBlock_iface;

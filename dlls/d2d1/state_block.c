@@ -68,6 +68,7 @@ static ULONG STDMETHODCALLTYPE d2d_state_block_Release(ID2D1DrawingStateBlock *i
     {
         if (state_block->text_rendering_params)
             IDWriteRenderingParams_Release(state_block->text_rendering_params);
+        ID2D1Factory_Release(state_block->factory);
         HeapFree(GetProcessHeap(), 0, state_block);
     }
 
@@ -76,9 +77,11 @@ static ULONG STDMETHODCALLTYPE d2d_state_block_Release(ID2D1DrawingStateBlock *i
 
 static void STDMETHODCALLTYPE d2d_state_block_GetFactory(ID2D1DrawingStateBlock *iface, ID2D1Factory **factory)
 {
-    FIXME("iface %p, factory %p stub!\n", iface, factory);
+    struct d2d_state_block *state_block = impl_from_ID2D1DrawingStateBlock(iface);
 
-    *factory = NULL;
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = state_block->factory);
 }
 
 static void STDMETHODCALLTYPE d2d_state_block_GetDescription(ID2D1DrawingStateBlock *iface,
@@ -138,8 +141,8 @@ static const struct ID2D1DrawingStateBlockVtbl d2d_state_block_vtbl =
     d2d_state_block_GetTextRenderingParams,
 };
 
-void d2d_state_block_init(struct d2d_state_block *state_block, const D2D1_DRAWING_STATE_DESCRIPTION *desc,
-        IDWriteRenderingParams *text_rendering_params)
+void d2d_state_block_init(struct d2d_state_block *state_block, ID2D1Factory *factory,
+        const D2D1_DRAWING_STATE_DESCRIPTION *desc, IDWriteRenderingParams *text_rendering_params)
 {
     static const D2D1_MATRIX_3X2_F identity =
     {
@@ -150,6 +153,7 @@ void d2d_state_block_init(struct d2d_state_block *state_block, const D2D1_DRAWIN
 
     state_block->ID2D1DrawingStateBlock_iface.lpVtbl = &d2d_state_block_vtbl;
     state_block->refcount = 1;
+    ID2D1Factory_AddRef(state_block->factory = factory);
     if (desc)
         state_block->drawing_state = *desc;
     else
