@@ -52,6 +52,16 @@ static void indent(FILE *h, int delta)
   if (delta > 0) indentation += delta;
 }
 
+static void write_line(FILE *f, int delta, const char *fmt, ...)
+{
+    va_list ap;
+    indent(f, delta);
+    va_start(ap, fmt);
+    vfprintf(f, fmt, ap);
+    va_end(ap);
+    fprintf(f, "\n");
+}
+
 int is_ptrchain_attr(const var_t *var, enum attr_type t)
 {
     if (is_attr(var->attrs, t))
@@ -139,6 +149,24 @@ static const char *uuid_string(const UUID *uuid)
         uuid->Data4[3], uuid->Data4[4], uuid->Data4[5], uuid->Data4[6], uuid->Data4[7]);
 
   return buf;
+}
+
+static void write_namespace_start(FILE *header, struct namespace *namespace)
+{
+    if(is_global_namespace(namespace))
+        return;
+
+    write_namespace_start(header, namespace->parent);
+    write_line(header, 1, "namespace %s {", namespace->name);
+}
+
+static void write_namespace_end(FILE *header, struct namespace *namespace)
+{
+    if(is_global_namespace(namespace))
+        return;
+
+    write_line(header, -1, "}", namespace->name);
+    write_namespace_end(header, namespace->parent);
 }
 
 const char *get_name(const var_t *v)
@@ -1221,7 +1249,12 @@ static void write_forward(FILE *header, type_t *iface)
 {
   fprintf(header, "#ifndef __%s_FWD_DEFINED__\n", iface->c_name);
   fprintf(header, "#define __%s_FWD_DEFINED__\n", iface->c_name);
-  fprintf(header, "typedef interface %s %s;\n", iface->name, iface->name);
+  fprintf(header, "typedef interface %s %s;\n", iface->c_name, iface->c_name);
+  fprintf(header, "#ifdef __cplusplus\n");
+  write_namespace_start(header, iface->namespace);
+  write_line(header, 0, "interface %s;", iface->name);
+  write_namespace_end(header, iface->namespace);
+  fprintf(header, "#endif /* __cplusplus */\n");
   fprintf(header, "#endif\n\n" );
 }
 
