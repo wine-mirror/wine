@@ -310,8 +310,10 @@ static INT SIC_LoadIcon (LPCWSTR sSourceFile, INT dwSourceIndex, DWORD dwFlags)
 	HICON 	hiconLargeShortcut;
 	HICON	hiconSmallShortcut;
 
-        PrivateExtractIconsW( sSourceFile, dwSourceIndex, 32, 32, &hiconLarge, 0, 1, 0 );
-        PrivateExtractIconsW( sSourceFile, dwSourceIndex, 16, 16, &hiconSmall, 0, 1, 0 );
+        PrivateExtractIconsW( sSourceFile, dwSourceIndex, GetSystemMetrics(SM_CXICON),
+                              GetSystemMetrics(SM_CYICON), &hiconLarge, 0, 1, 0 );
+        PrivateExtractIconsW( sSourceFile, dwSourceIndex, GetSystemMetrics(SM_CXSMICON),
+                              GetSystemMetrics(SM_CYSMICON), &hiconSmall, 0, 1, 0 );
 
 	if ( !hiconLarge ||  !hiconSmall)
 	{
