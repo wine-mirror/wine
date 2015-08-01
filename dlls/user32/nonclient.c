@@ -172,7 +172,8 @@ static HICON NC_IconForWindow( HWND hwnd )
      * get the default one.
      */
     if (!hIcon && (GetWindowLongW( hwnd, GWL_STYLE ) & DS_MODALFRAME))
-        hIcon = LoadImageW(0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, 0, 0, LR_DEFAULTCOLOR);
+        hIcon = LoadImageW(0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, GetSystemMetrics(SM_CXSMICON),
+                           GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
     return hIcon;
 }
 
