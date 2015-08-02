@@ -876,7 +876,9 @@ static HRESULT WINAPI IExplorerBrowser_fnInitialize(IExplorerBrowser *iface,
         if (!RegisterClassW(&wc)) return E_FAIL;
     }
 
-    style = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_BORDER;
+    style = WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
+    if (!(This->eb_options & EBO_NOBORDER))
+        style |= WS_BORDER;
     This->hwnd_main = CreateWindowExW(WS_EX_CONTROLPARENT, EB_CLASS_NAME, NULL, style,
                                       prc->left, prc->top,
                                       prc->right - prc->left, prc->bottom - prc->top,
@@ -1030,7 +1032,7 @@ static HRESULT WINAPI IExplorerBrowser_fnSetOptions(IExplorerBrowser *iface,
 {
     ExplorerBrowserImpl *This = impl_from_IExplorerBrowser(iface);
     static const EXPLORER_BROWSER_OPTIONS unsupported_options =
-        EBO_ALWAYSNAVIGATE | EBO_NOWRAPPERWINDOW | EBO_HTMLSHAREPOINTVIEW;
+        EBO_ALWAYSNAVIGATE | EBO_NOWRAPPERWINDOW | EBO_HTMLSHAREPOINTVIEW | EBO_NOPERSISTVIEWSTATE;
 
     TRACE("%p (0x%x)\n", This, dwFlag);
 
