@@ -357,9 +357,11 @@ static ULONG STDMETHODCALLTYPE d2d_linear_gradient_brush_Release(ID2D1LinearGrad
 static void STDMETHODCALLTYPE d2d_linear_gradient_brush_GetFactory(ID2D1LinearGradientBrush *iface,
         ID2D1Factory **factory)
 {
-    FIXME("iface %p, factory %p stub!\n", iface, factory);
+    struct d2d_brush *brush = impl_from_ID2D1LinearGradientBrush(iface);
 
-    *factory = NULL;
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = brush->factory);
 }
 
 static void STDMETHODCALLTYPE d2d_linear_gradient_brush_SetOpacity(ID2D1LinearGradientBrush *iface, float opacity)
