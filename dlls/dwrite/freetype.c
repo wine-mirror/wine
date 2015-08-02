@@ -70,7 +70,10 @@ MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_New_Memory_Face);
+MAKE_FUNCPTR(FT_Outline_Copy);
+MAKE_FUNCPTR(FT_Outline_Done);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
+MAKE_FUNCPTR(FT_Outline_New);
 MAKE_FUNCPTR(FT_Outline_Transform);
 MAKE_FUNCPTR(FT_Outline_Translate);
 MAKE_FUNCPTR(FTC_CMapCache_Lookup);
@@ -148,7 +151,10 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_New_Memory_Face)
+    LOAD_FUNCPTR(FT_Outline_Copy)
+    LOAD_FUNCPTR(FT_Outline_Done)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
+    LOAD_FUNCPTR(FT_Outline_New)
     LOAD_FUNCPTR(FT_Outline_Transform)
     LOAD_FUNCPTR(FT_Outline_Translate)
     LOAD_FUNCPTR(FTC_CMapCache_Lookup)
@@ -509,8 +515,9 @@ void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 
 
         if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
             FT_OutlineGlyph outline = (FT_OutlineGlyph)glyph;
-
+            const FT_Outline *src = &outline->outline;
             FT_Bitmap ft_bitmap;
+            FT_Outline copy;
 
             ft_bitmap.width = width;
             ft_bitmap.rows = height;
@@ -518,11 +525,14 @@ void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 
             ft_bitmap.pixel_mode = FT_PIXEL_MODE_MONO;
             ft_bitmap.buffer = buf;
 
-            pFT_Outline_Translate(&outline->outline, -bbox->left, -bbox->bottom);
-
             /* Note: FreeType will only set 'black' bits for us. */
             memset(buf, 0, height*pitch);
-            pFT_Outline_Get_Bitmap(library, &outline->outline, &ft_bitmap);
+            if (pFT_Outline_New(library, src->n_points, src->n_contours, &copy) == 0) {
+                pFT_Outline_Copy(src, &copy);
+                pFT_Outline_Translate(&copy, -bbox->left << 6, bbox->bottom << 6);
+                pFT_Outline_Get_Bitmap(library, &copy, &ft_bitmap);
+                pFT_Outline_Done(library, &copy);
+            }
         }
         else if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
             FT_Bitmap *bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
