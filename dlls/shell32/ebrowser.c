@@ -704,7 +704,7 @@ static void initialize_navpane(ExplorerBrowserImpl *This, HWND hwnd_parent, RECT
         wc.hInstance        = shell32_hInstance;
         wc.hIcon            = 0;
         wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_SIZEWE);
-        wc.hbrBackground    = (HBRUSH)(COLOR_HIGHLIGHT + 1);
+        wc.hbrBackground    = (HBRUSH)(COLOR_3DFACE + 1);
         wc.lpszMenuName     = NULL;
         wc.lpszClassName    = navpane_classname;
 
