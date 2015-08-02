@@ -103,7 +103,6 @@ static inline VfwCapture *impl_from_IPersistPropertyBag(IPersistPropertyBag *ifa
 typedef struct VfwPinImpl
 {
     BaseOutputPin pin;
-    Capture *driver_info;
     VfwCapture *parent;
     const IKsPropertySetVtbl * KSP_VT;
 } VfwPinImpl;
@@ -554,7 +553,6 @@ PPB_Load( IPersistPropertyBag * iface, IPropertyBag *pPropBag,
         if (This->driver_info)
         {
             pin = (VfwPinImpl *)This->pOutputPin;
-            pin->driver_info = This->driver_info;
             pin->parent = This;
             This->init = TRUE;
             hr = S_OK;
@@ -683,7 +681,7 @@ static HRESULT WINAPI VfwPin_GetMediaType(BasePin *iface, int iPosition, AM_MEDI
     if (iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;
 
-    hr = qcap_driver_get_format(This->driver_info, &vfw_pmt);
+    hr = qcap_driver_get_format(This->parent->driver_info, &vfw_pmt);
     if (SUCCEEDED(hr)) {
         CopyMediaType(pmt, vfw_pmt);
         DeleteMediaType(vfw_pmt);
@@ -797,7 +795,7 @@ VfwPin_EnumMediaTypes(IPin * iface, IEnumMediaTypes ** ppEnum)
     HRESULT hr;
 
     VfwPinImpl *This = (VfwPinImpl *)iface;
-    hr = qcap_driver_get_format(This->driver_info, &pmt);
+    hr = qcap_driver_get_format(This->parent->driver_info, &pmt);
     if (SUCCEEDED(hr)) {
         hr = BasePinImpl_EnumMediaTypes(iface, ppEnum);
         DeleteMediaType(pmt);
