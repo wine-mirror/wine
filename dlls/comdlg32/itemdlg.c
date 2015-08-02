@@ -1194,7 +1194,7 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
     This->cctrls_hwnd = CreateWindowExW(0, ctrl_container_classname, NULL,
                                         WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
                                         0, 0, 0, 0, NULL, 0,
-                                        COMDLG32_hInstance, (void*)This);
+                                        COMDLG32_hInstance, This);
     if(!This->cctrls_hwnd)
         return E_FAIL;
 
@@ -1403,6 +1403,7 @@ static void update_layout(FileDialogImpl *This)
 static HRESULT init_explorerbrowser(FileDialogImpl *This)
 {
     IShellItem *psi_folder;
+    IObjectWithSite *client;
     FOLDERSETTINGS fos;
     RECT rc = {0};
     HRESULT hr;
@@ -1439,9 +1440,14 @@ static HRESULT init_explorerbrowser(FileDialogImpl *This)
 
     IExplorerBrowser_SetFolderSettings(This->peb, &fos);
 
-    hr = IUnknown_SetSite((IUnknown*)This->peb, (IUnknown*)This);
-    if(FAILED(hr))
-        ERR("SetSite (ExplorerBrowser) failed.\n");
+    hr = IExplorerBrowser_QueryInterface(This->peb, &IID_IObjectWithSite, (void**)&client);
+    if (hr == S_OK)
+    {
+        hr = IObjectWithSite_SetSite(client, (IUnknown*)&This->IFileDialog2_iface);
+        IObjectWithSite_Release(client);
+        if(FAILED(hr))
+            ERR("SetSite failed, 0x%08x\n", hr);
+    }
 
     /* Browse somewhere */
     psi_folder = This->psi_setfolder ? This->psi_setfolder : This->psi_defaultfolder;
@@ -3829,12 +3835,12 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     if(FAILED(hr))
     {
         ERR("Failed to initialize custom controls (0x%08x).\n", hr);
-        IUnknown_Release((IUnknown*)fdimpl);
+        IFileDialog2_Release(&fdimpl->IFileDialog2_iface);
         return E_FAIL;
     }
 
-    hr = IUnknown_QueryInterface((IUnknown*)fdimpl, riid, ppv);
-    IUnknown_Release((IUnknown*)fdimpl);
+    hr = IFileDialog2_QueryInterface(&fdimpl->IFileDialog2_iface, riid, ppv);
+    IFileDialog2_Release(&fdimpl->IFileDialog2_iface);
     return hr;
 }
 
