@@ -68,6 +68,7 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection 
     if (!refcount)
     {
         HeapFree(GetProcessHeap(), 0, gradient->stops);
+        ID2D1Factory_Release(gradient->factory);
         HeapFree(GetProcessHeap(), 0, gradient);
     }
 
@@ -76,9 +77,11 @@ static ULONG STDMETHODCALLTYPE d2d_gradient_Release(ID2D1GradientStopCollection 
 
 static void STDMETHODCALLTYPE d2d_gradient_GetFactory(ID2D1GradientStopCollection *iface, ID2D1Factory **factory)
 {
-    FIXME("iface %p, factory %p stub!\n", iface, factory);
+    struct d2d_gradient *gradient = impl_from_ID2D1GradientStopCollection(iface);
 
-    *factory = NULL;
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = gradient->factory);
 }
 
 static UINT32 STDMETHODCALLTYPE d2d_gradient_GetGradientStopCount(ID2D1GradientStopCollection *iface)
@@ -128,13 +131,14 @@ static const struct ID2D1GradientStopCollectionVtbl d2d_gradient_vtbl =
     d2d_gradient_GetExtendMode,
 };
 
-HRESULT d2d_gradient_init(struct d2d_gradient *gradient, ID2D1RenderTarget *render_target,
+HRESULT d2d_gradient_init(struct d2d_gradient *gradient, ID2D1Factory *factory,
         const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode)
 {
     FIXME("Ignoring gradient properties.\n");
 
     gradient->ID2D1GradientStopCollection_iface.lpVtbl = &d2d_gradient_vtbl;
     gradient->refcount = 1;
+    ID2D1Factory_AddRef(gradient->factory = factory);
 
     gradient->stop_count = stop_count;
     if (!(gradient->stops = HeapAlloc(GetProcessHeap(), 0, stop_count * sizeof(*stops))))

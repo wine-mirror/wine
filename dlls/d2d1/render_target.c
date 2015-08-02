@@ -462,6 +462,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateGradientStopCollect
         const D2D1_GRADIENT_STOP *stops, UINT32 stop_count, D2D1_GAMMA gamma, D2D1_EXTEND_MODE extend_mode,
         ID2D1GradientStopCollection **gradient)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     struct d2d_gradient *object;
     HRESULT hr;
 
@@ -471,7 +472,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateGradientStopCollect
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_gradient_init(object, iface, stops, stop_count, gamma, extend_mode)))
+    if (FAILED(hr = d2d_gradient_init(object, render_target->factory, stops, stop_count, gamma, extend_mode)))
     {
         WARN("Failed to initialize gradient, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
