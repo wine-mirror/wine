@@ -172,6 +172,11 @@
 #define INADDR_NONE ~0UL
 #endif
 
+#if !defined(TCP_KEEPIDLE) && defined(TCP_KEEPALIVE)
+/* TCP_KEEPALIVE is the Mac OS name for TCP_KEEPIDLE */
+#define TCP_KEEPIDLE TCP_KEEPALIVE
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(winsock);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
@@ -4459,14 +4464,23 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         fd = get_sock_fd(s, 0, NULL);
         if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&keepalive, sizeof(int)) == -1)
             status = WSAEINVAL;
-#if defined(TCP_KEEPIDLE) && defined(TCP_KEEPINTVL)
+#if defined(TCP_KEEPIDLE) || defined(TCP_KEEPINTVL)
         /* these values need to be set only if SO_KEEPALIVE is enabled */
         else if(keepalive)
         {
+#ifndef TCP_KEEPIDLE
+            FIXME("ignoring keepalive timeout\n");
+#else
             if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPIDLE, (void *)&keepidle, sizeof(int)) == -1)
                 status = WSAEINVAL;
-            else if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void *)&keepintvl, sizeof(int)) == -1)
+            else
+#endif
+#ifdef TCP_KEEPINTVL
+            if (setsockopt(fd, IPPROTO_TCP, TCP_KEEPINTVL, (void *)&keepintvl, sizeof(int)) == -1)
                 status = WSAEINVAL;
+#else
+                FIXME("ignoring keepalive interval\n");
+#endif
         }
 #else
         else
