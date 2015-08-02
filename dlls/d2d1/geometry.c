@@ -1629,9 +1629,11 @@ static ULONG STDMETHODCALLTYPE d2d_rectangle_geometry_Release(ID2D1RectangleGeom
 
 static void STDMETHODCALLTYPE d2d_rectangle_geometry_GetFactory(ID2D1RectangleGeometry *iface, ID2D1Factory **factory)
 {
-    FIXME("iface %p, factory %p stub!\n", iface, factory);
+    struct d2d_geometry *geometry = impl_from_ID2D1RectangleGeometry(iface);
 
-    *factory = NULL;
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = geometry->factory);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_rectangle_geometry_GetBounds(ID2D1RectangleGeometry *iface,
