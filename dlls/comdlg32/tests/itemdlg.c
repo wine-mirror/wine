@@ -322,7 +322,7 @@ static BOOL test_instantiation(void)
     IFileSaveDialog *pfsd;
     IServiceProvider *psp;
     IOleWindow *pow;
-    IUnknown *punk;
+    IUnknown *punk, *unk2;
     HRESULT hr;
     LONG ref;
 
@@ -331,7 +331,7 @@ static BOOL test_instantiation(void)
                           &IID_IFileOpenDialog, (void**)&pfod);
     if(FAILED(hr))
     {
-        skip("Could not instantiate the FileOpenDialog.\n");
+        win_skip("Could not instantiate the FileOpenDialog.\n");
         return FALSE;
     }
     ok(hr == S_OK, "got 0x%08x.\n", hr);
@@ -342,11 +342,12 @@ static BOOL test_instantiation(void)
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomize, (void**)&punk);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
-    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomizeAlt, (void**)&punk);
+    hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileDialogCustomizeAlt, (void**)&unk2);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+    ok(punk == unk2, "got %p, %p\n", punk, unk2);
+    IUnknown_Release(punk);
+    IUnknown_Release(unk2);
 
     hr = IFileOpenDialog_QueryInterface(pfod, &IID_IFileSaveDialog, (void**)&pfsd);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
@@ -448,11 +449,12 @@ static BOOL test_instantiation(void)
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomize, (void**)&punk);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
 
-    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomizeAlt, (void**)&punk);
+    hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileDialogCustomizeAlt, (void**)&unk2);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
-    if(SUCCEEDED(hr)) IUnknown_Release(punk);
+    ok(punk == unk2, "got %p, %p\n", punk, unk2);
+    IUnknown_Release(punk);
+    IUnknown_Release(unk2);
 
     hr = IFileSaveDialog_QueryInterface(pfsd, &IID_IFileOpenDialog, (void**)&pfod);
     ok(hr == E_NOINTERFACE, "got 0x%08x.\n", hr);
