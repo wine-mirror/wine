@@ -1418,7 +1418,7 @@ static HRESULT init_explorerbrowser(FileDialogImpl *This)
         return hr;
     }
 
-    IExplorerBrowser_SetOptions(This->peb, EBO_SHOWFRAMES);
+    IExplorerBrowser_SetOptions(This->peb, EBO_SHOWFRAMES | EBO_NOBORDER);
 
     hr = IExplorerBrowser_Initialize(This->peb, This->dlg_hwnd, &rc, NULL);
     if(FAILED(hr))
