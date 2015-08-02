@@ -564,7 +564,6 @@ static void test_tr2_sys__Copy_file(void)
         { "f1", "tr2_test_dir\\f1_copy", TRUE, ERROR_SUCCESS, FALSE },
         { "f1", "tr2_test_dir\\f1_copy", TRUE, ERROR_FILE_EXISTS, FALSE },
         { "f1", "tr2_test_dir\\f1_copy", FALSE, ERROR_SUCCESS, FALSE },
-        { "f1", "tr2_test_dir", TRUE, ERROR_ACCESS_DENIED, TRUE },
         { "tr2_test_dir", "f1", TRUE, ERROR_ACCESS_DENIED, FALSE },
         { "tr2_test_dir", "tr2_test_dir_copy", TRUE, ERROR_ACCESS_DENIED, FALSE },
         { NULL, "f1", TRUE, ERROR_INVALID_PARAMETER, TRUE },
@@ -594,6 +593,9 @@ static void test_tr2_sys__Copy_file(void)
             ok(p_tr2_sys__File_size(tests[i].source) == p_tr2_sys__File_size(tests[i].dest),
                     "test_tr2_sys__Copy_file(): test %d failed, two files' size are not equal\n", i+1);
     }
+    ret = p_tr2_sys__Copy_file("f1", "tr2_test_dir", TRUE);
+    ok(ret==ERROR_ACCESS_DENIED || ret==ERROR_FILE_EXISTS,
+            "test_tr2_sys__Copy_file(): expect: ERROR_ACCESS_DENIED or ERROR_FILE_EXISTS, got %d\n", ret);
 
     ok(DeleteFileA("f1"), "expect f1 to exist\n");
     ok(DeleteFileA("f1_copy"), "expect f1_copy to exist\n");
