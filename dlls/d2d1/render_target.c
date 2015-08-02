@@ -426,7 +426,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1Re
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_bitmap_brush_init(object, render_target, bitmap, bitmap_brush_desc, brush_desc)))
+    if (FAILED(hr = d2d_bitmap_brush_init(object, render_target->factory, bitmap, bitmap_brush_desc, brush_desc)))
     {
         WARN("Failed to initialize brush, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -442,6 +442,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1Re
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSolidColorBrush(ID2D1RenderTarget *iface,
         const D2D1_COLOR_F *color, const D2D1_BRUSH_PROPERTIES *desc, ID2D1SolidColorBrush **brush)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     struct d2d_brush *object;
 
     TRACE("iface %p, color %p, desc %p, brush %p.\n", iface, color, desc, brush);
@@ -449,7 +450,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSolidColorBrush(ID2
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_solid_color_brush_init(object, iface, color, desc);
+    d2d_solid_color_brush_init(object, render_target->factory, color, desc);
 
     TRACE("Created brush %p.\n", object);
     *brush = (ID2D1SolidColorBrush *)&object->ID2D1Brush_iface;
@@ -487,6 +488,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLinearGradientBrush
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient, ID2D1LinearGradientBrush **brush)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     struct d2d_brush *object;
 
     TRACE("iface %p, gradient_brush_desc %p, brush_desc %p, gradient %p, brush %p.\n",
@@ -495,7 +497,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateLinearGradientBrush
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    d2d_linear_gradient_brush_init(object, iface, gradient_brush_desc, brush_desc, gradient);
+    d2d_linear_gradient_brush_init(object, render_target->factory, gradient_brush_desc, brush_desc, gradient);
 
     TRACE("Created brush %p.\n", object);
     *brush = (ID2D1LinearGradientBrush *)&object->ID2D1Brush_iface;

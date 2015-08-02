@@ -125,6 +125,7 @@ struct d2d_brush
     ID2D1Brush ID2D1Brush_iface;
     LONG refcount;
 
+    ID2D1Factory *factory;
     float opacity;
     D2D1_MATRIX_3X2_F transform;
 
@@ -146,12 +147,12 @@ struct d2d_brush
     } u;
 };
 
-void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
+void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
         const D2D1_COLOR_F *color, const D2D1_BRUSH_PROPERTIES *desc) DECLSPEC_HIDDEN;
-void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1RenderTarget *render_target,
+void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
         const D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES *gradient_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         ID2D1GradientStopCollection *gradient) DECLSPEC_HIDDEN;
-HRESULT d2d_bitmap_brush_init(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target,
+HRESULT d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
         ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc) DECLSPEC_HIDDEN;
 void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target,
