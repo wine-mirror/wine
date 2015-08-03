@@ -32,6 +32,19 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcirt);
 #define RESERVE_SIZE 512
 #define STATEBUF_SIZE 8
 
+/* ?sh_none@filebuf@@2HB */
+const int filebuf_sh_none = 0x800;
+/* ?sh_read@filebuf@@2HB */
+const int filebuf_sh_read = 0xa00;
+/* ?sh_write@filebuf@@2HB */
+const int filebuf_sh_write = 0xc00;
+/* ?openprot@filebuf@@2HB */
+const int filebuf_openprot = 420;
+/* ?binary@filebuf@@2HB */
+const int filebuf_binary = 0x8000;
+/* ?text@filebuf@@2HB */
+const int filebuf_text = 0x4000;
+
 /* ?adjustfield@ios@@2JB */
 const LONG ios_adjustfield = FLAGS_left | FLAGS_right | FLAGS_internal;
 /* ?basefield@ios@@2JB */

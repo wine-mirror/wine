@@ -415,7 +415,7 @@
 @ thiscall -arch=win32 ?base@streambuf@@IBEPADXZ(ptr) streambuf_base
 @ cdecl -arch=win64 ?base@streambuf@@IEBAPEADXZ(ptr) streambuf_base
 @ extern ?basefield@ios@@2JB ios_basefield
-# @ extern ?binary@filebuf@@2HB  # static int const filebuf::binary
+@ extern ?binary@filebuf@@2HB filebuf_binary
 @ cdecl ?bitalloc@ios@@SAJXZ() ios_bitalloc
 @ thiscall -arch=win32 ?blen@streambuf@@IBEHXZ(ptr) streambuf_blen
 @ cdecl -arch=win64 ?blen@streambuf@@IEBAHXZ(ptr) streambuf_blen
@@ -570,7 +570,7 @@
 @ stub -arch=win64 ?open@ifstream@@QEAAXPEBDHH@Z
 @ stub -arch=win32 ?open@ofstream@@QAEXPBDHH@Z  # void __thiscall ofstream::open(char const *,int,int)
 @ stub -arch=win64 ?open@ofstream@@QEAAXPEBDHH@Z
-# @ extern ?openprot@filebuf@@2HB  # static int const filebuf::openprot
+@ extern ?openprot@filebuf@@2HB filebuf_openprot
 @ stub -arch=win32 ?opfx@ostream@@QAEHXZ  # int __thiscall ostream::opfx(void)
 @ stub -arch=win64 ?opfx@ostream@@QEAAHXZ
 @ stub -arch=win32 ?osfx@ostream@@QAEXXZ  # void __thiscall ostream::osfx(void)
@@ -697,9 +697,9 @@
 @ cdecl -arch=win64 ?sgetc@streambuf@@QEAAHXZ(ptr) streambuf_sgetc
 @ thiscall -arch=win32 ?sgetn@streambuf@@QAEHPADH@Z(ptr ptr long) streambuf_sgetn
 @ cdecl -arch=win64 ?sgetn@streambuf@@QEAAHPEADH@Z(ptr ptr long) streambuf_sgetn
-# @ extern ?sh_none@filebuf@@2HB  # static int const filebuf::sh_none
-# @ extern ?sh_read@filebuf@@2HB  # static int const filebuf::sh_read
-# @ extern ?sh_write@filebuf@@2HB  # static int const filebuf::sh_write
+@ extern ?sh_none@filebuf@@2HB filebuf_sh_none
+@ extern ?sh_read@filebuf@@2HB filebuf_sh_read
+@ extern ?sh_write@filebuf@@2HB filebuf_sh_write
 @ thiscall -arch=win32 ?snextc@streambuf@@QAEHXZ(ptr) streambuf_snextc
 @ cdecl -arch=win64 ?snextc@streambuf@@QEAAHXZ(ptr) streambuf_snextc
 @ thiscall -arch=win32 ?sputbackc@streambuf@@QAEHD@Z(ptr long) streambuf_sputbackc
@@ -736,7 +736,7 @@
 @ stub -arch=win64 ?tellg@istream@@QEAAJXZ
 @ stub -arch=win32 ?tellp@ostream@@QAEJXZ  # long __thiscall ostream::tellp(void)
 @ stub -arch=win64 ?tellp@ostream@@QEAAJXZ
-# @ extern ?text@filebuf@@2HB  # static int const filebuf::text
+@ extern ?text@filebuf@@2HB filebuf_text
 @ thiscall -arch=win32 ?tie@ios@@QAEPAVostream@@PAV2@@Z(ptr ptr) ios_tie_set
 @ cdecl -arch=win64 ?tie@ios@@QEAAPEAVostream@@PEAV2@@Z(ptr ptr) ios_tie_set
 @ thiscall -arch=win32 ?tie@ios@@QBEPAVostream@@XZ(ptr) ios_tie_get

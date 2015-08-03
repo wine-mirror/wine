@@ -403,7 +403,7 @@
 @ thiscall -arch=win32 ?base@streambuf@@IBEPADXZ(ptr) msvcirt.?base@streambuf@@IBEPADXZ
 @ cdecl -arch=win64 ?base@streambuf@@IEBAPEADXZ(ptr) msvcirt.?base@streambuf@@IEBAPEADXZ
 @ extern ?basefield@ios@@2JB msvcirt.?basefield@ios@@2JB
-# @ extern ?binary@filebuf@@2HB
+@ extern ?binary@filebuf@@2HB msvcirt.?binary@filebuf@@2HB
 @ cdecl ?bitalloc@ios@@SAJXZ() msvcirt.?bitalloc@ios@@SAJXZ
 @ thiscall -arch=win32 ?blen@streambuf@@IBEHXZ(ptr) msvcirt.?blen@streambuf@@IBEHXZ
 @ cdecl -arch=win64 ?blen@streambuf@@IEBAHXZ(ptr) msvcirt.?blen@streambuf@@IEBAHXZ
@@ -556,7 +556,7 @@
 @ stub -arch=win64 ?open@ifstream@@QEAAXPEBDHH@Z
 @ stub -arch=win32 ?open@ofstream@@QAEXPBDHH@Z
 @ stub -arch=win64 ?open@ofstream@@QEAAXPEBDHH@Z
-# @ extern ?openprot@filebuf@@2HB
+@ extern ?openprot@filebuf@@2HB msvcirt.?openprot@filebuf@@2HB
 @ stub -arch=win32 ?opfx@ostream@@QAEHXZ
 @ stub -arch=win64 ?opfx@ostream@@QEAAHXZ
 @ stub -arch=win32 ?osfx@ostream@@QAEXXZ
@@ -685,9 +685,9 @@
 @ cdecl -arch=win64 ?sgetc@streambuf@@QEAAHXZ(ptr) msvcirt.?sgetc@streambuf@@QEAAHXZ
 @ thiscall -arch=win32 ?sgetn@streambuf@@QAEHPADH@Z(ptr ptr long) msvcirt.?sgetn@streambuf@@QAEHPADH@Z
 @ cdecl -arch=win64 ?sgetn@streambuf@@QEAAHPEADH@Z(ptr ptr long) msvcirt.?sgetn@streambuf@@QEAAHPEADH@Z
-# @ extern ?sh_none@filebuf@@2HB
-# @ extern ?sh_read@filebuf@@2HB
-# @ extern ?sh_write@filebuf@@2HB
+@ extern ?sh_none@filebuf@@2HB msvcirt.?sh_none@filebuf@@2HB
+@ extern ?sh_read@filebuf@@2HB msvcirt.?sh_read@filebuf@@2HB
+@ extern ?sh_write@filebuf@@2HB msvcirt.?sh_write@filebuf@@2HB
 @ thiscall -arch=win32 ?snextc@streambuf@@QAEHXZ(ptr) msvcirt.?snextc@streambuf@@QAEHXZ
 @ cdecl -arch=win64 ?snextc@streambuf@@QEAAHXZ(ptr) msvcirt.?snextc@streambuf@@QEAAHXZ
 @ thiscall -arch=win32 ?sputbackc@streambuf@@QAEHD@Z(ptr long) msvcirt.?sputbackc@streambuf@@QAEHD@Z
@@ -725,7 +725,7 @@
 @ stub -arch=win32 ?tellp@ostream@@QAEJXZ
 @ stub -arch=win64 ?tellp@ostream@@QEAAJXZ
 @ cdecl ?terminate@@YAXXZ() msvcrt.?terminate@@YAXXZ
-# @ extern ?text@filebuf@@2HB
+@ extern ?text@filebuf@@2HB msvcirt.?text@filebuf@@2HB
 @ thiscall -arch=win32 ?tie@ios@@QAEPAVostream@@PAV2@@Z(ptr ptr) msvcirt.?tie@ios@@QAEPAVostream@@PAV2@@Z
 @ cdecl -arch=win64 ?tie@ios@@QEAAPEAVostream@@PEAV2@@Z(ptr ptr) msvcirt.?tie@ios@@QEAAPEAVostream@@PEAV2@@Z
 @ thiscall -arch=win32 ?tie@ios@@QBEPAVostream@@XZ(ptr) msvcirt.?tie@ios@@QBEPAVostream@@XZ
