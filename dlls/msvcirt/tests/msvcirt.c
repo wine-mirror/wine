@@ -22,6 +22,7 @@
 #include "wine/test.h"
 
 typedef void (*vtable_ptr)(void);
+typedef int filedesc;
 
 typedef enum {
     IOSTATE_goodbit   = 0x0,
@@ -65,6 +66,13 @@ typedef struct {
     int do_lock;
     CRITICAL_SECTION lock;
 } streambuf;
+
+/* class filebuf */
+typedef struct {
+    streambuf base;
+    filedesc fd;
+    int close;
+} filebuf;
 
 /* class ios */
 struct _ostream;
@@ -120,6 +128,12 @@ static int (*__thiscall p_streambuf_sync)(streambuf*);
 static void (*__thiscall p_streambuf_unlock)(streambuf*);
 static int (*__thiscall p_streambuf_xsgetn)(streambuf*, char*, int);
 static int (*__thiscall p_streambuf_xsputn)(streambuf*, const char*, int);
+
+/* filebuf */
+static filebuf* (*__thiscall p_filebuf_fd_ctor)(filebuf*, int);
+static filebuf* (*__thiscall p_filebuf_fd_reserve_ctor)(filebuf*, int, char*, int);
+static filebuf* (*__thiscall p_filebuf_ctor)(filebuf*);
+static void (*__thiscall p_filebuf_dtor)(filebuf*);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -251,6 +265,11 @@ static BOOL init(void)
         SET(p_streambuf_xsgetn, "?xsgetn@streambuf@@UEAAHPEADH@Z");
         SET(p_streambuf_xsputn, "?xsputn@streambuf@@UEAAHPEBDH@Z");
 
+        SET(p_filebuf_fd_ctor, "??0filebuf@@QEAA@H@Z");
+        SET(p_filebuf_fd_reserve_ctor, "??0filebuf@@QEAA@HPEADH@Z");
+        SET(p_filebuf_ctor, "??0filebuf@@QEAA@XZ");
+        SET(p_filebuf_dtor, "??1filebuf@@UEAA@XZ");
+
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
         SET(p_ios_sb_ctor, "??0ios@@QEAA@PEAVstreambuf@@@Z");
@@ -300,6 +319,11 @@ static BOOL init(void)
         SET(p_streambuf_unlock, "?unlock@streambuf@@QAEXXZ");
         SET(p_streambuf_xsgetn, "?xsgetn@streambuf@@UAEHPADH@Z");
         SET(p_streambuf_xsputn, "?xsputn@streambuf@@UAEHPBDH@Z");
+
+        SET(p_filebuf_fd_ctor, "??0filebuf@@QAE@H@Z");
+        SET(p_filebuf_fd_reserve_ctor, "??0filebuf@@QAE@HPADH@Z");
+        SET(p_filebuf_ctor, "??0filebuf@@QAE@XZ");
+        SET(p_filebuf_dtor, "??1filebuf@@UAE@XZ");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -877,6 +901,37 @@ static void test_streambuf(void)
     CloseHandle(thread);
 }
 
+static void test_filebuf(void)
+{
+    filebuf fb1, fb2, fb3;
+
+    memset(&fb1, 0xab, sizeof(filebuf));
+    memset(&fb2, 0xab, sizeof(filebuf));
+    memset(&fb3, 0xab, sizeof(filebuf));
+
+    /* constructors */
+    call_func2(p_filebuf_fd_ctor, &fb1, 1);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", fb1.base.unbuffered);
+    ok(fb1.fd == 1, "wrong fd, expected 1 got %d\n", fb1.fd);
+    ok(fb1.close == 0, "wrong value, expected 0 got %d\n", fb1.close);
+    call_func4(p_filebuf_fd_reserve_ctor, &fb2, 4, NULL, 0);
+    ok(fb2.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb2.base.allocated);
+    ok(fb2.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb2.base.unbuffered);
+    ok(fb2.fd == 4, "wrong fd, expected 4 got %d\n", fb2.fd);
+    ok(fb2.close == 0, "wrong value, expected 0 got %d\n", fb2.close);
+    call_func1(p_filebuf_ctor, &fb3);
+    ok(fb3.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb3.base.allocated);
+    ok(fb3.base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", fb3.base.unbuffered);
+    ok(fb3.fd == -1, "wrong fd, expected -1 got %d\n", fb3.fd);
+    ok(fb3.close == 0, "wrong value, expected 0 got %d\n", fb3.close);
+
+    /* destructor */
+    call_func1(p_filebuf_dtor, &fb1);
+    call_func1(p_filebuf_dtor, &fb2);
+    call_func1(p_filebuf_dtor, &fb3);
+}
+
 struct ios_lock_arg
 {
     ios *ios_obj;
@@ -1160,6 +1215,7 @@ START_TEST(msvcirt)
         return;
 
     test_streambuf();
+    test_filebuf();
     test_ios();
 
     FreeLibrary(msvcrt);

@@ -778,16 +778,9 @@ void __thiscall streambuf_dbp(streambuf *this)
 DEFINE_THISCALL_WRAPPER(filebuf_copy_ctor, 8)
 filebuf* __thiscall filebuf_copy_ctor(filebuf* this, const filebuf *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
-    return this;
-}
-
-/* ??0filebuf@@QAE@H@Z */
-/* ??0filebuf@@QEAA@H@Z */
-DEFINE_THISCALL_WRAPPER(filebuf_fd_ctor, 8)
-filebuf* __thiscall filebuf_fd_ctor(filebuf* this, filedesc fd)
-{
-    FIXME("(%p %d) stub\n", this, fd);
+    TRACE("(%p %p)\n", this, copy);
+    *this = *copy;
+    this->base.vtable = &MSVCP_filebuf_vtable;
     return this;
 }
 
@@ -796,7 +789,21 @@ filebuf* __thiscall filebuf_fd_ctor(filebuf* this, filedesc fd)
 DEFINE_THISCALL_WRAPPER(filebuf_fd_reserve_ctor, 16)
 filebuf* __thiscall filebuf_fd_reserve_ctor(filebuf* this, filedesc fd, char *buffer, int length)
 {
-    FIXME("(%p %d %p %d) stub\n", this, fd, buffer, length);
+    TRACE("(%p %d %p %d)\n", this, fd, buffer, length);
+    streambuf_reserve_ctor(&this->base, buffer, length);
+    this->base.vtable = &MSVCP_filebuf_vtable;
+    this->fd = fd;
+    this->close = 0;
+    return this;
+}
+
+/* ??0filebuf@@QAE@H@Z */
+/* ??0filebuf@@QEAA@H@Z */
+DEFINE_THISCALL_WRAPPER(filebuf_fd_ctor, 8)
+filebuf* __thiscall filebuf_fd_ctor(filebuf* this, filedesc fd)
+{
+    filebuf_fd_reserve_ctor(this, fd, NULL, 0);
+    this->base.unbuffered = 0;
     return this;
 }
 
@@ -805,8 +812,7 @@ filebuf* __thiscall filebuf_fd_reserve_ctor(filebuf* this, filedesc fd, char *bu
 DEFINE_THISCALL_WRAPPER(filebuf_ctor, 4)
 filebuf* __thiscall filebuf_ctor(filebuf* this)
 {
-    FIXME("(%p) stub\n", this);
-    return this;
+    return filebuf_fd_ctor(this, -1);
 }
 
 /* ??1filebuf@@UAE@XZ */
@@ -814,7 +820,8 @@ filebuf* __thiscall filebuf_ctor(filebuf* this)
 DEFINE_THISCALL_WRAPPER(filebuf_dtor, 4)
 void __thiscall filebuf_dtor(filebuf* this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    streambuf_dtor(&this->base);
 }
 
 /* ??4filebuf@@QAEAAV0@ABV0@@Z */
@@ -822,8 +829,8 @@ void __thiscall filebuf_dtor(filebuf* this)
 DEFINE_THISCALL_WRAPPER(filebuf_assign, 8)
 filebuf* __thiscall filebuf_assign(filebuf* this, const filebuf *rhs)
 {
-    FIXME("(%p %p) stub\n", this, rhs);
-    return this;
+    filebuf_dtor(this);
+    return filebuf_copy_ctor(this, rhs);
 }
 
 /* ??_Efilebuf@@UAEPAXI@Z */
