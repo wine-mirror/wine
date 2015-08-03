@@ -88,11 +88,11 @@
 @ stub CoEnableCallCancellation
 @ stdcall CoFreeUnusedLibraries() ole32.CoFreeUnusedLibraries
 @ stdcall CoFreeUnusedLibrariesEx(long long) ole32.CoFreeUnusedLibrariesEx
-@ stub CoGetActivationState
+@ stdcall CoGetActivationState(int128 long ptr) ole32.CoGetActivationState
 @ stub CoGetApartmentID
 @ stub CoGetApartmentType
 @ stdcall CoGetCallContext(ptr ptr) ole32.CoGetCallContext
-@ stub CoGetCallState
+@ stdcall CoGetCallState(long ptr) ole32.CoGetCallState
 @ stdcall CoGetCallerTID(ptr) ole32.CoGetCallerTID
 @ stub CoGetCancelObject
 @ stdcall CoGetClassObject(ptr long ptr ptr ptr) ole32.CoGetClassObject
