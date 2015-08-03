@@ -30,6 +30,7 @@
 #include "winternl.h"
 #include "winerror.h"
 #include "wincred.h"
+#include "wct.h"
 
 #include "wine/library.h"
 #include "wine/unicode.h"
@@ -320,4 +321,13 @@ DWORD WINAPI CommandLineFromMsiDescriptor( WCHAR *szDescriptor,
         r = mpcfd( szDescriptor, szCommandLine, pcchCommandLine, NULL );
     FreeLibrary( hmsi );
     return r;
+}
+
+/***********************************************************************
+ *      RegisterWaitChainCOMCallback (ole32.@)
+ */
+void WINAPI RegisterWaitChainCOMCallback(PCOGETCALLSTATE call_state_cb,
+                                         PCOGETACTIVATIONSTATE activation_state_cb)
+{
+    FIXME("%p, %p\n", call_state_cb, activation_state_cb);
 }

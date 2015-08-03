@@ -609,7 +609,7 @@
 @ stdcall RegGetKeySecurity(long long ptr ptr)
 @ stdcall RegGetValueA(long str str long ptr ptr ptr)
 @ stdcall RegGetValueW(long wstr wstr long ptr ptr ptr)
-# @ stub RegisterWaitChainCOMCallback
+@ stdcall RegisterWaitChainCOMCallback(ptr ptr)
 # @ stub RegLoadAppKeyA
 # @ stub RegLoadAppKeyW
 @ stdcall RegLoadKeyA(long str str)
