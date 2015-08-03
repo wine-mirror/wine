@@ -868,8 +868,15 @@ filebuf* __thiscall filebuf_scalar_dtor(filebuf *this, unsigned int flags)
 DEFINE_THISCALL_WRAPPER(filebuf_attach, 8)
 filebuf* __thiscall filebuf_attach(filebuf *this, filedesc fd)
 {
-    FIXME("(%p %d) stub\n", this, fd);
-    return NULL;
+    TRACE("(%p %d)\n", this, fd);
+    if (this->fd != -1)
+        return NULL;
+
+    streambuf_lock(&this->base);
+    this->fd = fd;
+    streambuf_allocate(&this->base);
+    streambuf_unlock(&this->base);
+    return this;
 }
 
 /* ?close@filebuf@@QAEPAV1@XZ */

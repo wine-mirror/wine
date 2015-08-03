@@ -134,6 +134,7 @@ static filebuf* (*__thiscall p_filebuf_fd_ctor)(filebuf*, int);
 static filebuf* (*__thiscall p_filebuf_fd_reserve_ctor)(filebuf*, int, char*, int);
 static filebuf* (*__thiscall p_filebuf_ctor)(filebuf*);
 static void (*__thiscall p_filebuf_dtor)(filebuf*);
+static filebuf* (*__thiscall p_filebuf_attach)(filebuf*, filedesc);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -269,6 +270,7 @@ static BOOL init(void)
         SET(p_filebuf_fd_reserve_ctor, "??0filebuf@@QEAA@HPEADH@Z");
         SET(p_filebuf_ctor, "??0filebuf@@QEAA@XZ");
         SET(p_filebuf_dtor, "??1filebuf@@UEAA@XZ");
+        SET(p_filebuf_attach, "?attach@filebuf@@QEAAPEAV1@H@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -324,6 +326,7 @@ static BOOL init(void)
         SET(p_filebuf_fd_reserve_ctor, "??0filebuf@@QAE@HPADH@Z");
         SET(p_filebuf_ctor, "??0filebuf@@QAE@XZ");
         SET(p_filebuf_dtor, "??1filebuf@@UAE@XZ");
+        SET(p_filebuf_attach, "?attach@filebuf@@QAEPAV1@H@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -901,9 +904,32 @@ static void test_streambuf(void)
     CloseHandle(thread);
 }
 
+struct filebuf_lock_arg
+{
+    filebuf *fb1, *fb2, *fb3;
+    HANDLE lock;
+    HANDLE test;
+};
+
+static DWORD WINAPI lock_filebuf(void *arg)
+{
+    struct filebuf_lock_arg *lock_arg = arg;
+    call_func1(p_streambuf_lock, &lock_arg->fb1->base);
+    call_func1(p_streambuf_lock, &lock_arg->fb2->base);
+    call_func1(p_streambuf_lock, &lock_arg->fb3->base);
+    SetEvent(lock_arg->lock);
+    WaitForSingleObject(lock_arg->test, INFINITE);
+    call_func1(p_streambuf_unlock, &lock_arg->fb1->base);
+    call_func1(p_streambuf_unlock, &lock_arg->fb2->base);
+    call_func1(p_streambuf_unlock, &lock_arg->fb3->base);
+    return 0;
+}
+
 static void test_filebuf(void)
 {
-    filebuf fb1, fb2, fb3;
+    filebuf fb1, fb2, fb3, *pret;
+    struct filebuf_lock_arg lock_arg;
+    HANDLE thread;
 
     memset(&fb1, 0xab, sizeof(filebuf));
     memset(&fb2, 0xab, sizeof(filebuf));
@@ -926,10 +952,47 @@ static void test_filebuf(void)
     ok(fb3.fd == -1, "wrong fd, expected -1 got %d\n", fb3.fd);
     ok(fb3.close == 0, "wrong value, expected 0 got %d\n", fb3.close);
 
+    lock_arg.fb1 = &fb1;
+    lock_arg.fb2 = &fb2;
+    lock_arg.fb3 = &fb3;
+    lock_arg.lock = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(lock_arg.lock != NULL, "CreateEventW failed\n");
+    lock_arg.test = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(lock_arg.test != NULL, "CreateEventW failed\n");
+    thread = CreateThread(NULL, 0, lock_filebuf, (void*)&lock_arg, 0, NULL);
+    ok(thread != NULL, "CreateThread failed\n");
+    WaitForSingleObject(lock_arg.lock, INFINITE);
+
+    /* attach */
+    pret = (filebuf*) call_func2(p_filebuf_attach, &fb1, 2);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.fd == 1, "wrong fd, expected 1 got %d\n", fb1.fd);
+    fb2.fd = -1;
+    fb2.base.do_lock = 0;
+    pret = (filebuf*) call_func2(p_filebuf_attach, &fb2, 3);
+    ok(pret == &fb2, "wrong return, expected %p got %p\n", &fb2, pret);
+    ok(fb2.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb2.base.allocated);
+    ok(fb2.fd == 3, "wrong fd, expected 3 got %d\n", fb2.fd);
+    fb2.base.do_lock = -1;
+    fb3.base.do_lock = 0;
+    pret = (filebuf*) call_func2(p_filebuf_attach, &fb3, 2);
+    ok(pret == &fb3, "wrong return, expected %p got %p\n", &fb3, pret);
+    ok(fb3.base.allocated == 1, "wrong allocate value, expected 1 got %d\n", fb3.base.allocated);
+    ok(fb3.fd == 2, "wrong fd, expected 2 got %d\n", fb3.fd);
+    fb3.base.do_lock = -1;
+
+    SetEvent(lock_arg.test);
+    WaitForSingleObject(thread, INFINITE);
+
     /* destructor */
     call_func1(p_filebuf_dtor, &fb1);
     call_func1(p_filebuf_dtor, &fb2);
     call_func1(p_filebuf_dtor, &fb3);
+
+    CloseHandle(lock_arg.lock);
+    CloseHandle(lock_arg.test);
+    CloseHandle(thread);
 }
 
 struct ios_lock_arg
