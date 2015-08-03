@@ -22,6 +22,7 @@
 
 typedef LONG streamoff;
 typedef LONG streampos;
+typedef int filedesc;
 
 typedef enum {
     IOSTATE_goodbit   = 0x0,
@@ -29,6 +30,17 @@ typedef enum {
     IOSTATE_failbit   = 0x2,
     IOSTATE_badbit    = 0x4
 } ios_io_state;
+
+typedef enum {
+    OPENMODE_in          = 0x1,
+    OPENMODE_out         = 0x2,
+    OPENMODE_ate         = 0x4,
+    OPENMODE_app         = 0x8,
+    OPENMODE_trunc       = 0x10,
+    OPENMODE_nocreate    = 0x20,
+    OPENMODE_noreplace   = 0x40,
+    OPENMODE_binary      = 0x80
+} ios_open_mode;
 
 typedef enum {
     SEEKDIR_beg = 0,
