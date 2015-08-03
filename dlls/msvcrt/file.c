@@ -2833,6 +2833,11 @@ int CDECL MSVCRT__setmode(int fd,int mode)
         return -1;
     }
 
+    if(info == &MSVCRT___badioinfo) {
+        *MSVCRT__errno() = MSVCRT_EBADF;
+        return -1;
+    }
+
     if(mode == MSVCRT__O_BINARY) {
         info->wxflag &= ~WX_TEXT;
         info->exflag &= ~(EF_UTF8|EF_UTF16);

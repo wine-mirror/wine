@@ -1789,6 +1789,16 @@ static void test_setmode(void)
         return;
     }
 
+    errno = 0xdeadbeef;
+    ret = _setmode(-2, 0);
+    ok(ret == -1, "_setmode returned %x, expected -1\n", ret);
+    ok(errno == EINVAL, "errno = %d\n", errno);
+
+    errno = 0xdeadbeef;
+    ret = _setmode(-2, _O_TEXT);
+    ok(ret == -1, "_setmode returned %x, expected -1\n", ret);
+    ok(errno == EBADF, "errno = %d\n", errno);
+
     fd = _open(name, _O_CREAT|_O_WRONLY, _S_IWRITE);
     ok(fd != -1, "failed to open file\n");
 
