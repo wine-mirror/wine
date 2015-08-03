@@ -2648,11 +2648,17 @@ static DWORD wait_message16( DWORD count, const HANDLE *handles, DWORD timeout, 
  */
 HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, BOOL unicode )
 {
+    DWORD lock;
+    HWND ret;
+
     /* map to module handle */
     if (instance && !((ULONG_PTR)instance >> 16))
         instance = HINSTANCE_32( GetExePtr( HINSTANCE_16(instance) ));
 
-    return wow_handlers32.create_window( cs, className, instance, unicode );
+    ReleaseThunkLock( &lock );
+    ret = wow_handlers32.create_window( cs, className, instance, unicode );
+    RestoreThunkLock( lock );
+    return ret;
 }
 
 
