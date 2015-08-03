@@ -61,6 +61,7 @@ typedef struct WCEL_Context {
     WCHAR*			yanked;		/* yanked line */
     unsigned			mark;		/* marked point (emacs mode only) */
     CONSOLE_SCREEN_BUFFER_INFO	csbi;		/* current state (initial cursor, window size, attribute) */
+    CONSOLE_CURSOR_INFO         cinfo;          /* original cursor state (size, visibility) */
     HANDLE			hConIn;
     HANDLE			hConOut;
     unsigned			done : 1,	/* to 1 when we're done with editing */
@@ -485,6 +486,8 @@ static void WCEL_Done(WCEL_Context* ctx)
     ctx->line[ctx->len++] = '\n';
     ctx->line[ctx->len] = 0;
     WriteConsoleW(ctx->hConOut, &nl, 1, NULL, NULL);
+    if (ctx->insertkey)
+        SetConsoleCursorInfo(ctx->hConOut, &ctx->cinfo);
     ctx->done = 1;
 }
 
@@ -930,6 +933,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
     if (!GetConsoleMode(ctx.hConOut, &mode)) mode = 0;
     ctx.can_wrap = (mode & ENABLE_WRAP_AT_EOL_OUTPUT) ? 1 : 0;
     ctx.can_pos_cursor = can_pos_cursor;
+    GetConsoleCursorInfo(ctx.hConOut, &ctx.cinfo);
 
     if (!WCEL_Grow(&ctx, 1))
     {
