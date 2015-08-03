@@ -147,6 +147,15 @@ UUID *parse_uuid(const char *u)
                             input_name = xstrdup(fname);
                         }
 <PP_PRAGMA>midl_echo[^\n]*  yyless(9); yy_pop_state(); return tCPPQUOTE;
+<PP_PRAGMA>winrt[^\n]*  {
+                            if(import_stack_ptr) {
+                                if(!winrt_mode)
+                                    error_loc("winrt IDL file imported in non-winrt mode\n");
+                            }else {
+                                winrt_mode = TRUE;
+                            }
+                            yy_pop_state();
+                        }
 <PP_PRAGMA>[^\n]*       parser_lval.str = xstrdup(yytext); yy_pop_state(); return aPRAGMA;
 <INITIAL,ATTR>\"	yy_push_state(QUOTE); cbufidx = 0;
 <QUOTE>\"		{
