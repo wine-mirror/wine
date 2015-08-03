@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-05-28 15:57+0200\n"
+"PO-Revision-Date: 2015-08-03 15:12+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -7532,10 +7532,8 @@ msgid "Add Control"
 msgstr "Додати елемент управління"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "&Шрифт..."
+msgstr "&Конвертувати..."
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -9290,24 +9288,20 @@ msgstr ""
 "достатньо вільного простору та що комп'ютер ще підключений до мережі."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Встановлювач Wine Mono"
+msgstr "Wine Sound Mapper"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "стовпчик"
+msgstr "Гучність"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Основна гучність"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Приглушити"
 
 #: winspool.rc:37
 msgid "Print to File"
@@ -13594,16 +13588,12 @@ msgid "Command history"
 msgstr "Історія команд"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Зона буфера"
+msgstr "&Розмір буфера:"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "Видаляти &повтори"
+msgstr "&Видаляти повтори"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -13618,22 +13608,16 @@ msgid "S&hift"
 msgstr ""
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "&Закрити консоль"
+msgstr "Консоль"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Швидке редагування"
+msgstr "&Швидке редагування"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "&Режим експерта"
+msgstr "&Режим вставки"
 
 #: wineconsole.rc:88
 msgid "&Font"
