@@ -541,6 +541,7 @@ BOOL WINAPI WinHttpAddRequestHeaders( HINTERNET hrequest, LPCWSTR headers, DWORD
     ret = add_request_headers( request, headers, len, flags );
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -848,6 +849,7 @@ BOOL WINAPI WinHttpQueryHeaders( HINTERNET hrequest, DWORD level, LPCWSTR name, 
     ret = query_headers( request, level, name, buffer, buflen, index );
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1265,6 +1267,7 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, LPCWSTR headers, DWORD heade
         ret = send_request( request, headers, headers_len, optional, optional_len, total_len, context, FALSE );
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1388,6 +1391,7 @@ BOOL WINAPI WinHttpQueryAuthSchemes( HINTERNET hrequest, LPDWORD supported, LPDW
     }
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1842,6 +1846,7 @@ BOOL WINAPI WinHttpSetCredentials( HINTERNET hrequest, DWORD target, DWORD schem
     ret = set_credentials( request, target, scheme, username, password );
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -2484,6 +2489,7 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
         ret = receive_response( request, FALSE );
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -2555,6 +2561,7 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
         ret = query_data_available( request, available, FALSE );
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -2604,6 +2611,7 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, LPVOID buffer, DWORD to_read, L
         ret = read_data( request, buffer, to_read, read, FALSE );
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -2675,6 +2683,7 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, LPCVOID buffer, DWORD to_write
         ret = write_data( request, buffer, to_write, written, FALSE );
 
     release_object( &request->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 

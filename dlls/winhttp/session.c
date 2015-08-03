@@ -276,6 +276,7 @@ HINTERNET WINAPI WinHttpOpen( LPCWSTR agent, DWORD access, LPCWSTR proxy, LPCWST
 end:
     release_object( &session->hdr );
     TRACE("returning %p\n", handle);
+    if (handle) set_last_error( ERROR_SUCCESS );
     return handle;
 }
 
@@ -552,6 +553,7 @@ end:
     release_object( &connect->hdr );
     release_object( &session->hdr );
     TRACE("returning %p\n", hconnect);
+    if (hconnect) set_last_error( ERROR_SUCCESS );
     return hconnect;
 }
 
@@ -1127,6 +1129,7 @@ end:
     release_object( &request->hdr );
     release_object( &connect->hdr );
     TRACE("returning %p\n", hrequest);
+    if (hrequest) set_last_error( ERROR_SUCCESS );
     return hrequest;
 }
 
@@ -1146,6 +1149,7 @@ BOOL WINAPI WinHttpCloseHandle( HINTERNET handle )
     }
     release_object( hdr );
     free_handle( handle );
+    set_last_error( ERROR_SUCCESS );
     return TRUE;
 }
 
@@ -1206,6 +1210,7 @@ BOOL WINAPI WinHttpQueryOption( HINTERNET handle, DWORD option, LPVOID buffer, L
     ret = query_option( hdr, option, buffer, buflen );
 
     release_object( hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1264,6 +1269,7 @@ BOOL WINAPI WinHttpSetOption( HINTERNET handle, DWORD option, LPVOID buffer, DWO
     ret = set_option( hdr, option, buffer, buflen );
 
     release_object( hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1373,6 +1379,7 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
 
         if (!(urlW = strdupAW( system_url ))) return FALSE;
         *url = urlW;
+        set_last_error( ERROR_SUCCESS );
         return TRUE;
     }
     if (flags & WINHTTP_AUTO_DETECT_TYPE_DHCP)
@@ -1433,6 +1440,7 @@ BOOL WINAPI WinHttpDetectAutoProxyConfigUrl( DWORD flags, LPWSTR *url )
         set_last_error( ERROR_WINHTTP_AUTODETECTION_FAILED );
         *url = NULL;
     }
+    else set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1600,6 +1608,7 @@ BOOL WINAPI WinHttpGetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
         info->lpszProxy       = NULL;
         info->lpszProxyBypass = NULL;
     }
+    set_last_error( ERROR_SUCCESS );
     return TRUE;
 }
 
@@ -1682,6 +1691,7 @@ done:
         GlobalFree( config->lpszProxyBypass );
         config->lpszProxyBypass = NULL;
     }
+    else set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1866,6 +1876,7 @@ BOOL WINAPI WinHttpGetProxyForUrl( HINTERNET hsession, LPCWSTR url, WINHTTP_AUTO
 done:
     GlobalFree( detected_pac_url );
     release_object( &session->hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1973,6 +1984,7 @@ BOOL WINAPI WinHttpSetDefaultProxyConfiguration( WINHTTP_PROXY_INFO *info )
         }
         RegCloseKey( key );
     }
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -1997,6 +2009,7 @@ WINHTTP_STATUS_CALLBACK WINAPI WinHttpSetStatusCallback( HINTERNET handle, WINHT
     hdr->notify_mask = flags;
 
     release_object( hdr );
+    set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -2065,6 +2078,7 @@ BOOL WINAPI WinHttpSetTimeouts( HINTERNET handle, int resolve, int connect, int 
             ret = FALSE;
     }
     release_object( hdr );
+    if (ret) set_last_error( ERROR_SUCCESS );
     return ret;
 }
 
@@ -2087,7 +2101,11 @@ BOOL WINAPI WinHttpTimeFromSystemTime( const SYSTEMTIME *time, LPWSTR string )
 
     TRACE("%p, %p\n", time, string);
 
-    if (!time || !string) return FALSE;
+    if (!time || !string)
+    {
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
 
     sprintfW( string, format,
               wkday[time->wDayOfWeek],
@@ -2098,6 +2116,7 @@ BOOL WINAPI WinHttpTimeFromSystemTime( const SYSTEMTIME *time, LPWSTR string )
               time->wMinute,
               time->wSecond );
 
+    set_last_error( ERROR_SUCCESS );
     return TRUE;
 }
 
@@ -2112,7 +2131,11 @@ BOOL WINAPI WinHttpTimeToSystemTime( LPCWSTR string, SYSTEMTIME *time )
 
     TRACE("%s, %p\n", debugstr_w(string), time);
 
-    if (!string || !time) return FALSE;
+    if (!string || !time)
+    {
+        set_last_error( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
 
     /* Windows does this too */
     GetSystemTime( time );
@@ -2120,6 +2143,8 @@ BOOL WINAPI WinHttpTimeToSystemTime( LPCWSTR string, SYSTEMTIME *time )
     /*  Convert an RFC1123 time such as 'Fri, 07 Jan 2005 12:06:35 GMT' into
      *  a SYSTEMTIME structure.
      */
+
+    set_last_error( ERROR_SUCCESS );
 
     while (*s && !isalphaW( *s )) s++;
     if (s[0] == '\0' || s[1] == '\0' || s[2] == '\0') return TRUE;

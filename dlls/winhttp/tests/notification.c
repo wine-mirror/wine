@@ -474,7 +474,7 @@ static const struct notification async_test[] =
 static void test_async( void )
 {
     HANDLE ses, con, req, event;
-    DWORD size, status;
+    DWORD size, status, err;
     BOOL ret, unload = TRUE;
     struct info info, *context = &info;
     char buffer[1024];
@@ -495,22 +495,36 @@ static void test_async( void )
         unload = FALSE;
     }
 
+    SetLastError( 0xdeadbeef );
     WinHttpSetStatusCallback( ses, check_notification, WINHTTP_CALLBACK_FLAG_ALL_NOTIFICATIONS, 0 );
+    err = GetLastError();
+    ok(err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %u\n", err);
 
+    SetLastError( 0xdeadbeef );
     ret = WinHttpSetOption( ses, WINHTTP_OPTION_CONTEXT_VALUE, &context, sizeof(struct info *) );
-    ok(ret, "failed to set context value %u\n", GetLastError());
+    err = GetLastError();
+    ok(ret, "failed to set context value %u\n", err);
+    ok(err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %u\n", err);
 
     setup_test( &info, winhttp_connect, __LINE__ );
+    SetLastError( 0xdeadbeef );
     con = WinHttpConnect( ses, test_winehq, 0, 0 );
-    ok(con != NULL, "failed to open a connection %u\n", GetLastError());
+    err = GetLastError();
+    ok(con != NULL, "failed to open a connection %u\n", err);
+    ok(err == ERROR_SUCCESS || broken(err == WSAEINVAL) /* < win7 */, "got %u\n", err);
 
     setup_test( &info, winhttp_open_request, __LINE__ );
+    SetLastError( 0xdeadbeef );
     req = WinHttpOpenRequest( con, NULL, NULL, NULL, NULL, NULL, 0 );
-    ok(req != NULL, "failed to open a request %u\n", GetLastError());
+    err = GetLastError();
+    ok(req != NULL, "failed to open a request %u\n", err);
+    ok(err == ERROR_SUCCESS, "got %u\n", err);
 
     setup_test( &info, winhttp_send_request, __LINE__ );
+    SetLastError( 0xdeadbeef );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && err == ERROR_WINHTTP_CANNOT_CONNECT)
     {
         skip("connection failed, skipping\n");
         WinHttpCloseHandle( req );
@@ -519,30 +533,43 @@ static void test_async( void )
         CloseHandle( info.wait );
         return;
     }
-    ok(ret, "failed to send request %u\n", GetLastError());
+    ok(ret, "failed to send request %u\n", err);
+    ok(err == ERROR_SUCCESS, "got %u\n", err);
 
     WaitForSingleObject( info.wait, INFINITE );
 
     setup_test( &info, winhttp_receive_response, __LINE__ );
+    SetLastError( 0xdeadbeef );
     ret = WinHttpReceiveResponse( req, NULL );
-    ok(ret, "failed to receive response %u\n", GetLastError());
+    err = GetLastError();
+    ok(ret, "failed to receive response %u\n", err);
+    ok(err == ERROR_SUCCESS, "got %u\n", err);
 
     WaitForSingleObject( info.wait, INFINITE );
 
     size = sizeof(status);
+    SetLastError( 0xdeadbeef );
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
-    ok(ret, "failed unexpectedly %u\n", GetLastError());
+    err = GetLastError();
+    ok(ret, "failed unexpectedly %u\n", err);
     ok(status == 200, "request failed unexpectedly %u\n", status);
+    ok(err == ERROR_SUCCESS || broken(err == 0xdeadbeef) /* < win7 */, "got %u\n", err);
 
     setup_test( &info, winhttp_query_data, __LINE__ );
+    SetLastError( 0xdeadbeef );
     ret = WinHttpQueryDataAvailable( req, NULL );
-    ok(ret, "failed to query data available %u\n", GetLastError());
+    err = GetLastError();
+    ok(ret, "failed to query data available %u\n", err);
+    ok(err == ERROR_SUCCESS || err == ERROR_IO_PENDING || broken(err == 0xdeadbeef) /* < win7 */, "got %u\n", err);
 
     WaitForSingleObject( info.wait, INFINITE );
 
     setup_test( &info, winhttp_read_data, __LINE__ );
+    SetLastError( 0xdeadbeef );
     ret = WinHttpReadData( req, buffer, sizeof(buffer), NULL );
-    ok(ret, "failed to query data available %u\n", GetLastError());
+    err = GetLastError();
+    ok(ret, "failed to read data %u\n", err);
+    ok(err == ERROR_SUCCESS, "got %u\n", err);
 
     WaitForSingleObject( info.wait, INFINITE );
 
