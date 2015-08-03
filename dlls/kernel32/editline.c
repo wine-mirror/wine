@@ -68,6 +68,7 @@ typedef struct WCEL_Context {
                                 can_wrap : 1,   /* to 1 when multi-line edition can take place */
                                 shall_echo : 1, /* to 1 when characters should be echo:ed when keyed-in */
                                 insert : 1,     /* to 1 when new characters are inserted (otherwise overwrite) */
+                                insertkey : 1,  /* to 1 when the Insert key toggle is active */
                                 can_pos_cursor : 1; /* to 1 when console can (re)position cursor */
     unsigned			histSize;
     unsigned			histPos;
@@ -763,24 +764,13 @@ static void WCEL_RepeatCount(WCEL_Context* ctx)
 
 static void WCEL_ToggleInsert(WCEL_Context* ctx)
 {
-    DWORD               mode;
     CONSOLE_CURSOR_INFO cinfo;
 
-    if (GetConsoleMode(ctx->hConIn, &mode) && GetConsoleCursorInfo(ctx->hConOut, &cinfo))
+    ctx->insertkey = !ctx->insertkey;
+
+    if (GetConsoleCursorInfo(ctx->hConOut, &cinfo))
     {
-        if ((mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) == (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS))
-        {
-            mode &= ~ENABLE_INSERT_MODE;
-            cinfo.dwSize = 100;
-            ctx->insert = FALSE;
-        }
-        else
-        {
-            mode |= ENABLE_INSERT_MODE | ENABLE_EXTENDED_FLAGS;
-            cinfo.dwSize = 25;
-            ctx->insert = TRUE;
-        }
-        SetConsoleMode(ctx->hConIn, mode);
+        cinfo.dwSize = ctx->insertkey ? 100 : 25;
         SetConsoleCursorInfo(ctx->hConOut, &cinfo);
     }
 }
@@ -990,6 +980,8 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
         GetConsoleMode(hConsoleIn, &mode);
         ctx.insert = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==
                      (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS);
+        if (ctx.insertkey)
+            ctx.insert = !ctx.insert;
 
 	if (func)
 	    (func)(&ctx);
