@@ -1942,6 +1942,44 @@ interface nsIDOMHTMLAnchorElement : nsISupports
 
 [
     object,
+    uuid(40c78026-36dc-40ca-9221-de73267e9e99),
+    local
+]
+interface nsIDOMHTMLAreaElement : nsISupports
+{
+    nsresult GetAlt(const nsAString *aAlt);
+    nsresult SetAlt(nsAString *aAlt);
+    nsresult GetCoords(const nsAString *aCoords);
+    nsresult SetCoords(nsAString *aCoords);
+    nsresult GetShape(const nsAString *aShape);
+    nsresult SetShape(nsAString *aShape);
+    nsresult GetHref(const nsAString *aHref);
+    nsresult SetHref(nsAString *aHref);
+    nsresult GetTarget(const nsAString *aTarget);
+    nsresult SetTarget(nsAString *aTarget);
+    nsresult GetPing(const nsAString *aPing);
+    nsresult SetPing(nsAString *aPing);
+    nsresult GetDownload(const nsAString *aDownload);
+    nsresult SetDownload(nsAString *aDownload);
+    nsresult GetProtocol(const nsAString *aProtocol);
+    nsresult SetProtocol(nsAString *aProtocol);
+    nsresult GetHost(const nsAString *aHost);
+    nsresult SetHost(nsAString *aHost);
+    nsresult GetPort(const nsAString *aPort);
+    nsresult SetPort(nsAString *aPort);
+    nsresult GetPathname(const nsAString *aPathname);
+    nsresult SetPathname(nsAString *aPathname);
+    nsresult GetSearch(const nsAString *aSearch);
+    nsresult SetSearch(nsAString *aSearch);
+    nsresult GetHash(const nsAString *aHash);
+    nsresult SetHash(nsAString *aHash);
+    nsresult GetNoHref(const nsAString *aNoHref);
+    nsresult SetNoHref(nsAString *aNoHref);
+    nsresult ToString(nsAString *_retval);
+}
+
+[
+    object,
     uuid(ee50b7ab-0015-4fbe-89e0-e3feacd4ffde),
     local
 ]

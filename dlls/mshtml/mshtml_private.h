@@ -76,6 +76,7 @@ typedef struct event_target_t event_target_t;
     XDIID(DispCPlugins) \
     XDIID(DispDOMChildrenCollection) \
     XDIID(DispHTMLAnchorElement) \
+    XDIID(DispHTMLAreaElement) \
     XDIID(DispHTMLAttributeCollection) \
     XDIID(DispHTMLBody) \
     XDIID(DispHTMLButtonElement) \
@@ -120,6 +121,7 @@ typedef struct event_target_t event_target_t;
     XDIID(HTMLDocumentEvents) \
     XDIID(HTMLElementEvents2) \
     XIID(IHTMLAnchorElement) \
+    XIID(IHTMLAreaElement) \
     XIID(IHTMLAttributeCollection) \
     XIID(IHTMLAttributeCollection2) \
     XIID(IHTMLAttributeCollection3) \
@@ -943,6 +945,7 @@ HRESULT HTMLDOMAttribute_Create(const WCHAR*,HTMLElement*,DISPID,HTMLDOMAttribut
 HRESULT HTMLElement_Create(HTMLDocumentNode*,nsIDOMNode*,BOOL,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLCommentElement_Create(HTMLDocumentNode*,nsIDOMNode*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLAnchorElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
+HRESULT HTMLAreaElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLBodyElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLButtonElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
 HRESULT HTMLEmbedElement_Create(HTMLDocumentNode*,nsIDOMHTMLElement*,HTMLElement**) DECLSPEC_HIDDEN;
