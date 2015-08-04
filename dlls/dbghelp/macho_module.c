@@ -337,7 +337,7 @@ BOOL macho_find_section(struct image_file_map* ifm, const char* segname, const c
         for (i = 0; i < fmap->num_sections; i++)
         {
             if (strcmp(fmap->sect[i].section->sectname, sectname) == 0 &&
-                (!segname || strcmp(fmap->sect[i].section->sectname, segname) == 0))
+                (!segname || strcmp(fmap->sect[i].section->segname, segname) == 0))
             {
                 ism->fmap = ifm;
                 ism->sidx = i;
