@@ -782,11 +782,10 @@ static const struct ID2D1RenderTargetVtbl d2d_wic_render_target_vtbl =
 };
 
 HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, ID2D1Factory *factory,
-        IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc)
+        ID3D10Device1 *device, IWICBitmap *bitmap, const D2D1_RENDER_TARGET_PROPERTIES *desc)
 {
     D3D10_TEXTURE2D_DESC texture_desc;
     ID3D10Texture2D *texture;
-    ID3D10Device1 *device;
     HRESULT hr;
 
     FIXME("Ignoring render target properties.\n");
@@ -846,17 +845,9 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     texture_desc.CPUAccessFlags = 0;
     texture_desc.MiscFlags = 0;
 
-    if (FAILED(hr = D3D10CreateDevice1(NULL, D3D10_DRIVER_TYPE_HARDWARE, NULL,
-            D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &device)))
-    {
-        WARN("Failed to create device, hr %#x.\n", hr);
-        return hr;
-    }
-
     if (FAILED(hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
-        ID3D10Device1_Release(device);
         return hr;
     }
 
@@ -865,7 +856,6 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     if (FAILED(hr))
     {
         WARN("Failed to get DXGI surface interface, hr %#x.\n", hr);
-        ID3D10Device1_Release(device);
         return hr;
     }
 
@@ -873,9 +863,7 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     texture_desc.BindFlags = 0;
     texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
 
-    hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &render_target->readback_texture);
-    ID3D10Device1_Release(device);
-    if (FAILED(hr))
+    if (FAILED(hr = ID3D10Device1_CreateTexture2D(device, &texture_desc, NULL, &render_target->readback_texture)))
     {
         WARN("Failed to create readback texture, hr %#x.\n", hr);
         IDXGISurface_Release(render_target->dxgi_surface);
