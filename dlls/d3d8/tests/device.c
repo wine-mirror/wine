@@ -4394,6 +4394,58 @@ static void test_cube_textures(void)
     DestroyWindow(window);
 }
 
+static void test_get_set_texture(void)
+{
+    const IDirect3DBaseTexture8Vtbl *texture_vtbl;
+    IDirect3DBaseTexture8 *texture;
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    texture = (IDirect3DBaseTexture8 *)0xdeadbeef;
+    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_GetTexture(device, 0, &texture);
+    ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+    ok(!texture, "Got unexpected texture %p.\n", texture);
+
+    hr = IDirect3DDevice8_CreateTexture(device, 16, 16, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_MANAGED, (IDirect3DTexture8 **)&texture);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    texture_vtbl = texture->lpVtbl;
+    texture->lpVtbl = (IDirect3DBaseTexture8Vtbl *)0xdeadbeef;
+    hr = IDirect3DDevice8_SetTexture(device, 0, texture);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    texture->lpVtbl = NULL;
+    hr = IDirect3DDevice8_SetTexture(device, 0, texture);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    texture->lpVtbl = texture_vtbl;
+    IDirect3DBaseTexture8_Release(texture);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 /* Test the behaviour of the IDirect3DDevice8::CreateImageSurface() method.
  *
  * The expected behaviour (as documented in the original DX8 docs) is that the
@@ -7270,6 +7322,7 @@ START_TEST(device)
     test_vb_lock_flags();
     test_texture_stage_states();
     test_cube_textures();
+    test_get_set_texture();
     test_image_surface_pool();
     test_surface_get_container();
     test_lockrect_invalid();
