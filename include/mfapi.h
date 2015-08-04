@@ -24,8 +24,8 @@
 #define MFSTARTUP_FULL     0
 
 typedef struct _MFT_REGISTER_TYPE_INFO {
-  GUID major_type;
-  GUID sub_type;
+  GUID guidMajorType;
+  GUID guidSubtype;
 } MFT_REGISTER_TYPE_INFO;
 
 typedef unsigned __int64 MFWORKITEM_KEY;
