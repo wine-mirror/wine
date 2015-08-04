@@ -3079,6 +3079,10 @@ HKLM,%CurrentVersionNT%\Time Zones\US Mountain Standard Time,"Display",,"America
 HKLM,%CurrentVersionNT%\Time Zones\US Mountain Standard Time,"Dlt",,"US Mountain Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\US Mountain Standard Time,"Std",,"US Mountain Standard Time"
 HKLM,%CurrentVersionNT%\Time Zones\US Mountain Standard Time,"TZI",1,a4,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\UTC,"Display",,"Etc/UTC"
+HKLM,%CurrentVersionNT%\Time Zones\UTC,"Dlt",,"Coordinated Universal Time"
+HKLM,%CurrentVersionNT%\Time Zones\UTC,"Std",,"Coordinated Universal Time"
+HKLM,%CurrentVersionNT%\Time Zones\UTC,"TZI",1,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Venezuela Standard Time,"Display",,"America/Caracas"
 HKLM,%CurrentVersionNT%\Time Zones\Venezuela Standard Time,"Dlt",,"Venezuela Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Venezuela Standard Time,"Std",,"Venezuela Standard Time"
