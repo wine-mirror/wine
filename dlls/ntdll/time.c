@@ -584,7 +584,7 @@ static BOOL reg_query_value(HKEY hkey, LPCWSTR name, DWORD type, void *data, DWO
     return TRUE;
 }
 
-static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi)
+static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi, int year)
 {
     static const WCHAR Time_ZonesW[] = { 'M','a','c','h','i','n','e','\\',
         'S','o','f','t','w','a','r','e','\\',
@@ -600,7 +600,7 @@ static void find_reg_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi)
     UNICODE_STRING nameW, nameDynamicW;
     WCHAR buf[128], yearW[16];
 
-    sprintfW(yearW, fmtW, tzi->DaylightDate.wYear);
+    sprintfW(yearW, fmtW, year);
 
     attrDynamic.Length = sizeof(attrDynamic);
     attrDynamic.RootDirectory = 0; /* will be replaced later */
@@ -856,7 +856,7 @@ static int init_tz_info(RTL_DYNAMIC_TIME_ZONE_INFORMATION *tzi)
             tzi->StandardBias);
     }
 
-    find_reg_tz_info(tzi);
+    find_reg_tz_info(tzi, current_year + 1900);
     cached_tzi = *tzi;
 
     RtlLeaveCriticalSection( &TIME_tz_section );
