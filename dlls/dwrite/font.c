@@ -2907,7 +2907,8 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
     TRACE("(%p)->(%u)\n", This, ref);
 
     if (!ref) {
-        IDWriteFontFace_Release(This->run.fontFace);
+        if (This->run.fontFace)
+            IDWriteFontFace_Release(This->run.fontFace);
         heap_free(This->glyphs);
         heap_free(This->advances);
         heap_free(This->offsets);
@@ -3088,6 +3089,20 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     IDWriteFontFace2_Release(fontface2);
 
     analysis->ready |= RUNANALYSIS_BITMAP;
+
+    /* we don't need this anymore */
+    heap_free(analysis->glyphs);
+    heap_free(analysis->advances);
+    heap_free(analysis->offsets);
+    IDWriteFontFace_Release(analysis->run.fontFace);
+
+    analysis->glyphs = NULL;
+    analysis->advances = NULL;
+    analysis->offsets = NULL;
+    analysis->run.glyphIndices = NULL;
+    analysis->run.glyphAdvances = NULL;
+    analysis->run.glyphOffsets = NULL;
+    analysis->run.fontFace = NULL;
 }
 
 static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysis *iface, DWRITE_TEXTURE_TYPE type,
