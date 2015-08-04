@@ -188,6 +188,7 @@ struct d2d_bitmap
     ID2D1Bitmap ID2D1Bitmap_iface;
     LONG refcount;
 
+    ID2D1Factory *factory;
     ID3D10ShaderResourceView *view;
     D2D1_SIZE_U pixel_size;
     D2D1_PIXEL_FORMAT format;

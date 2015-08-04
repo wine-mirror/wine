@@ -67,6 +67,7 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap *iface)
     if (!refcount)
     {
         ID3D10ShaderResourceView_Release(bitmap->view);
+        ID2D1Factory_Release(bitmap->factory);
         HeapFree(GetProcessHeap(), 0, bitmap);
     }
 
@@ -75,9 +76,11 @@ static ULONG STDMETHODCALLTYPE d2d_bitmap_Release(ID2D1Bitmap *iface)
 
 static void STDMETHODCALLTYPE d2d_bitmap_GetFactory(ID2D1Bitmap *iface, ID2D1Factory **factory)
 {
-    FIXME("iface %p, factory %p stub!\n", iface, factory);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap(iface);
 
-    *factory = NULL;
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = bitmap->factory);
 }
 
 static D2D1_SIZE_F * STDMETHODCALLTYPE d2d_bitmap_GetSize(ID2D1Bitmap *iface, D2D1_SIZE_F *size)
@@ -212,6 +215,7 @@ HRESULT d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_d3d_render_target 
 
     bitmap->ID2D1Bitmap_iface.lpVtbl = &d2d_bitmap_vtbl;
     bitmap->refcount = 1;
+    ID2D1Factory_AddRef(bitmap->factory = render_target->factory);
 
     texture_desc.Width = size.width;
     texture_desc.Height = size.height;
