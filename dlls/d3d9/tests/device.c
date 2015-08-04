@@ -6627,8 +6627,9 @@ static void test_filter(void)
     DestroyWindow(window);
 }
 
-static void test_get_texture(void)
+static void test_get_set_texture(void)
 {
+    const IDirect3DBaseTexture9Vtbl *texture_vtbl;
     IDirect3DBaseTexture9 *texture;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
@@ -6654,6 +6655,23 @@ static void test_get_texture(void)
     hr = IDirect3DDevice9_GetTexture(device, 0, &texture);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     ok(!texture, "Got unexpected texture %p.\n", texture);
+
+    hr = IDirect3DDevice9_CreateTexture(device, 16, 16, 1, 0, D3DFMT_A8R8G8B8,
+            D3DPOOL_MANAGED, (IDirect3DTexture9 **)&texture, NULL);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    texture_vtbl = texture->lpVtbl;
+    texture->lpVtbl = (IDirect3DBaseTexture9Vtbl *)0xdeadbeef;
+    hr = IDirect3DDevice9_SetTexture(device, 0, texture);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    texture->lpVtbl = NULL;
+    hr = IDirect3DDevice9_SetTexture(device, 0, texture);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
+    texture->lpVtbl = texture_vtbl;
+    IDirect3DBaseTexture9_Release(texture);
 
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
@@ -10231,7 +10249,7 @@ START_TEST(device)
     test_cube_textures();
     test_mipmap_gen();
     test_filter();
-    test_get_texture();
+    test_get_set_texture();
     test_lod();
     test_surface_get_container();
     test_surface_alignment();
