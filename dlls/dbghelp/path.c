@@ -522,7 +522,7 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
         }
         break;
     case DMT_MACHO:
-        if (macho_fetch_file_info(buffer, 0, &size, &checksum))
+        if (macho_fetch_file_info(NULL, buffer, 0, 0, &size, &checksum))
         {
             matched++;
             if (checksum == mf->dw1) matched++;
