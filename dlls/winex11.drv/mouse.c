@@ -452,7 +452,7 @@ void reset_clipping_window(void)
  */
 LRESULT clip_cursor_notify( HWND hwnd, HWND new_clip_hwnd )
 {
-    struct x11drv_thread_data *data = x11drv_thread_data();
+    struct x11drv_thread_data *data = x11drv_init_thread_data();
 
     if (hwnd == GetDesktopWindow())  /* change the clip window stored in the desktop process */
     {
