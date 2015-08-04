@@ -2708,6 +2708,11 @@ HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Display",,"Am
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Dlt",,"Central Daylight Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"Std",,"Central Standard Time (Mexico)"
 HKLM,%CurrentVersionNT%\Time Zones\Central Standard Time (Mexico),"TZI",1,68,01,00,00,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,00,00,05,00,02,00,00,00,00,00,00,00,00,00,04,00,00,00,01,00,02,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chile Standard Time,"Display",,"Chile/Continental"
+HKLM,%CurrentVersionNT%\Time Zones\Chile Standard Time,"Dlt",,"Chile Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Chile Standard Time,"Std",,"Chile Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Chile Standard Time,"TZI",1,b4,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Chile Standard Time\Dynamic DST,"2015",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,df,07,04,00,00,00,1a,00,01,00,00,00,00,00,00,00,e0,07,01,00,05,00,01,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"Display",,"Asia/Shanghai"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"Dlt",,"China Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\China Standard Time,"Std",,"China Standard Time"
@@ -2733,6 +2738,11 @@ HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2026",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,ea,07,02,00,00,00,16,00,00,00,00,00,00,00,00,00,ea,07,0a,00,00,00,12,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2034",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,f2,07,02,00,00,00,1a,00,00,00,00,00,00,00,00,00,f2,07,0a,00,00,00,0f,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\E. South America Standard Time\Dynamic DST,"2037",1,b4,00,00,00,00,00,00,00,c4,ff,ff,ff,f5,07,02,00,00,00,16,00,00,00,00,00,00,00,00,00,f5,07,0a,00,00,00,12,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Easter Island Standard Time,"Display",,"Chile/EasterIsland"
+HKLM,%CurrentVersionNT%\Time Zones\Easter Island Standard Time,"Dlt",,"Easter Island Daylight Time"
+HKLM,%CurrentVersionNT%\Time Zones\Easter Island Standard Time,"Std",,"Easter Island Standard Time"
+HKLM,%CurrentVersionNT%\Time Zones\Easter Island Standard Time,"TZI",1,2c,01,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\Easter Island Standard Time\Dynamic DST,"2015",1,2c,01,00,00,00,00,00,00,c4,ff,ff,ff,df,07,04,00,06,00,19,00,17,00,00,00,00,00,00,00,e0,07,01,00,05,00,01,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Display",,"America/New_York"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Dlt",,"Eastern Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\Eastern Standard Time,"Std",,"Eastern Standard Time"
