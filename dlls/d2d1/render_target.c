@@ -284,7 +284,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmap(ID2D1RenderT
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_bitmap_init(object, render_target, size, src_data, pitch, desc)))
+    if (FAILED(hr = d2d_bitmap_init_memory(object, render_target, size, src_data, pitch, desc)))
     {
         WARN("Failed to initialize bitmap, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -406,10 +406,27 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapFromWicBitmap
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateSharedBitmap(ID2D1RenderTarget *iface,
         REFIID iid, void *data, const D2D1_BITMAP_PROPERTIES *desc, ID2D1Bitmap **bitmap)
 {
-    FIXME("iface %p, iid %s, data %p, desc %p, bitmap %p stub!\n",
-        iface, debugstr_guid(iid), data, desc, bitmap);
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+    struct d2d_bitmap *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, iid %s, data %p, desc %p, bitmap %p.\n",
+            iface, debugstr_guid(iid), data, desc, bitmap);
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d2d_bitmap_init_shared(object, render_target, iid, data, desc)))
+    {
+        WARN("Failed to initialize bitmap, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created bitmap %p.\n", object);
+    *bitmap = &object->ID2D1Bitmap_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1RenderTarget *iface,

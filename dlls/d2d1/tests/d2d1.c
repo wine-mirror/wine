@@ -23,6 +23,7 @@
 #include "wine/test.h"
 #include "initguid.h"
 #include "dwrite.h"
+#include "wincodec.h"
 
 struct figure
 {
@@ -1844,6 +1845,159 @@ static void test_alpha_mode(void)
     DestroyWindow(window);
 }
 
+static void test_shared_bitmap(void)
+{
+    IDXGISwapChain *swapchain1, *swapchain2;
+    IWICBitmap *wic_bitmap1, *wic_bitmap2;
+    D2D1_RENDER_TARGET_PROPERTIES desc;
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    IDXGISurface *surface1, *surface2;
+    ID2D1Factory *factory1, *factory2;
+    ID3D10Device1 *device1, *device2;
+    IWICImagingFactory *wic_factory;
+    ID2D1Bitmap *bitmap1, *bitmap2;
+    ID2D1RenderTarget *rt1, *rt2;
+    D2D1_SIZE_U size = {4, 4};
+    HWND window1, window2;
+    HRESULT hr;
+
+    if (!(device1 = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    window1 = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    window2 = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain1 = create_swapchain(device1, window1, TRUE);
+    swapchain2 = create_swapchain(device1, window2, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain1, 0, &IID_IDXGISurface, (void **)&surface1);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    hr = IDXGISwapChain_GetBuffer(swapchain2, 0, &IID_IDXGISurface, (void **)&surface2);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+    CoInitializeEx(NULL, COINIT_APARTMENTTHREADED);
+    hr = CoCreateInstance(&CLSID_WICImagingFactory, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IWICImagingFactory, (void **)&wic_factory);
+    ok(SUCCEEDED(hr), "Failed to create WIC imaging factory, hr %#x.\n", hr);
+    hr = IWICImagingFactory_CreateBitmap(wic_factory, 640, 480,
+            &GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnDemand, &wic_bitmap1);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    hr = IWICImagingFactory_CreateBitmap(wic_factory, 640, 480,
+            &GUID_WICPixelFormat32bppPBGRA, WICBitmapCacheOnDemand, &wic_bitmap2);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    IWICImagingFactory_Release(wic_factory);
+
+    desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+    desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+    desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    desc.dpiX = 0.0f;
+    desc.dpiY = 0.0f;
+    desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+    desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+    bitmap_desc.dpiX = 96.0f;
+    bitmap_desc.dpiY = 96.0f;
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory1);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory2);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    /* DXGI surface render targets with the same device and factory. */
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory1, surface1, &desc, &rt1);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateBitmap(rt1, size, NULL, 0, &bitmap_desc, &bitmap1);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory1, surface2, &desc, &rt2);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_ID2D1Bitmap, bitmap1, NULL, &bitmap2);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    ID2D1Bitmap_Release(bitmap2);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_IUnknown, bitmap1, NULL, &bitmap2);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ID2D1RenderTarget_Release(rt2);
+
+    /* DXGI surface render targets with the same device but different factories. */
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory2, surface2, &desc, &rt2);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_ID2D1Bitmap, bitmap1, NULL, &bitmap2);
+    ok(hr == D2DERR_WRONG_FACTORY, "Got unexpected hr %#x.\n", hr);
+    ID2D1RenderTarget_Release(rt2);
+
+    /* DXGI surface render targets with different devices but the same factory. */
+    IDXGISurface_Release(surface2);
+    IDXGISwapChain_Release(swapchain2);
+    device2 = create_device();
+    ok(!!device2, "Failed to create device.\n");
+    swapchain2 = create_swapchain(device2, window2, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain2, 0, &IID_IDXGISurface, (void **)&surface2);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory1, surface2, &desc, &rt2);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_ID2D1Bitmap, bitmap1, NULL, &bitmap2);
+    ok(hr == D2DERR_UNSUPPORTED_OPERATION, "Got unexpected hr %#x.\n", hr);
+    ID2D1RenderTarget_Release(rt2);
+
+    /* DXGI surface render targets with different devices and different factories. */
+    hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory2, surface2, &desc, &rt2);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_ID2D1Bitmap, bitmap1, NULL, &bitmap2);
+    ok(hr == D2DERR_WRONG_FACTORY, "Got unexpected hr %#x.\n", hr);
+    ID2D1RenderTarget_Release(rt2);
+
+    /* DXGI surface render target and WIC bitmap render target, same factory. */
+    hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory1, wic_bitmap2, &desc, &rt2);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_ID2D1Bitmap, bitmap1, NULL, &bitmap2);
+    ok(hr == D2DERR_UNSUPPORTED_OPERATION, "Got unexpected hr %#x.\n", hr);
+    ID2D1RenderTarget_Release(rt2);
+
+    /* WIC bitmap render targets on different D2D factories. */
+    ID2D1Bitmap_Release(bitmap1);
+    ID2D1RenderTarget_Release(rt1);
+    hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory1, wic_bitmap1, &desc, &rt1);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateBitmap(rt1, size, NULL, 0, &bitmap_desc, &bitmap1);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+
+    hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory2, wic_bitmap2, &desc, &rt2);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_ID2D1Bitmap, bitmap1, NULL, &bitmap2);
+    ok(hr == D2DERR_WRONG_FACTORY, "Got unexpected hr %#x.\n", hr);
+    ID2D1RenderTarget_Release(rt2);
+
+    /* WIC bitmap render targets on the same D2D factory. */
+    hr = ID2D1Factory_CreateWicBitmapRenderTarget(factory1, wic_bitmap2, &desc, &rt2);
+    ok(SUCCEEDED(hr), "Failed to create render target, hr %#x.\n", hr);
+    hr = ID2D1RenderTarget_CreateSharedBitmap(rt2, &IID_ID2D1Bitmap, bitmap1, NULL, &bitmap2);
+    ok(SUCCEEDED(hr), "Failed to create bitmap, hr %#x.\n", hr);
+    ID2D1Bitmap_Release(bitmap2);
+    ID2D1RenderTarget_Release(rt2);
+
+    ID2D1Bitmap_Release(bitmap1);
+    ID2D1RenderTarget_Release(rt1);
+    ID2D1Factory_Release(factory2);
+    ID2D1Factory_Release(factory1);
+    IWICBitmap_Release(wic_bitmap2);
+    IWICBitmap_Release(wic_bitmap1);
+    IDXGISurface_Release(surface2);
+    IDXGISurface_Release(surface1);
+    IDXGISwapChain_Release(swapchain2);
+    IDXGISwapChain_Release(swapchain1);
+    ID3D10Device1_Release(device2);
+    ID3D10Device1_Release(device1);
+    DestroyWindow(window2);
+    DestroyWindow(window1);
+    CoUninitialize();
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -1853,4 +2007,5 @@ START_TEST(d2d1)
     test_path_geometry();
     test_bitmap_formats();
     test_alpha_mode();
+    test_shared_bitmap();
 }
