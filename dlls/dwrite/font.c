@@ -2946,16 +2946,19 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
     origin_x = 0.0;
     is_rtl = analysis->run.bidiLevel & 1;
     for (i = 0; i < analysis->run.glyphCount; i++) {
-        const DWRITE_GLYPH_OFFSET *offset = &analysis->offsets[i];
+        const DWRITE_GLYPH_OFFSET *offset = analysis->offsets ? &analysis->offsets[i] : NULL;
         FLOAT advance = analysis->advances[i];
         RECT bbox;
 
         freetype_get_glyph_bbox(fontface2, analysis->run.fontEmSize * analysis->ppdip, analysis->run.glyphIndices[i], nohint, &bbox);
 
         if (is_rtl)
-            OffsetRect(&bbox, origin_x - offset->advanceOffset - advance, -offset->ascenderOffset);
+            OffsetRect(&bbox, origin_x - advance, 0);
         else
-            OffsetRect(&bbox, origin_x + offset->advanceOffset, offset->ascenderOffset);
+            OffsetRect(&bbox, origin_x, 0);
+
+        if (offset)
+            OffsetRect(&bbox, is_rtl ? -offset->advanceOffset : offset->advanceOffset, is_rtl ? -offset->ascenderOffset : offset->ascenderOffset);
 
         UnionRect(&analysis->bounds, &analysis->bounds, &bbox);
         origin_x += is_rtl ? -advance : advance;
@@ -3026,7 +3029,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     origin_x = 0.0;
     is_rtl = analysis->run.bidiLevel & 1;
     for (i = 0; i < analysis->run.glyphCount; i++) {
-        const DWRITE_GLYPH_OFFSET *offset = &analysis->offsets[i];
+        const DWRITE_GLYPH_OFFSET *offset = analysis->offsets ? &analysis->offsets[i] : NULL;
         FLOAT advance = analysis->advances[i];
         int pitch, x, y, width, height;
         BYTE *glyph, *src, *dst;
@@ -3047,9 +3050,12 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
         freetype_get_glyph_bitmap(fontface2, analysis->run.fontEmSize * analysis->ppdip, analysis->run.glyphIndices[i], &bbox, glyph);
 
         if (is_rtl)
-            OffsetRect(&bbox, origin_x - offset->advanceOffset - advance, -offset->ascenderOffset);
+            OffsetRect(&bbox, origin_x - advance, 0);
         else
-            OffsetRect(&bbox, origin_x + offset->advanceOffset, offset->ascenderOffset);
+            OffsetRect(&bbox, origin_x, 0);
+
+        if (offset)
+            OffsetRect(&bbox, is_rtl ? -offset->advanceOffset : offset->advanceOffset, is_rtl ? -offset->ascenderOffset : offset->ascenderOffset);
 
         OffsetRect(&bbox, analysis->originX, analysis->originY);
 
@@ -3193,8 +3199,8 @@ static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
     glyphrunanalysis_GetAlphaBlendParams
 };
 
-HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLYPH_RUN const *run, FLOAT ppdip,
-    FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
+HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode, DWRITE_GLYPH_RUN const *run,
+    FLOAT ppdip, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
 
@@ -3221,8 +3227,8 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLY
     IDWriteFontFace_AddRef(analysis->run.fontFace);
     analysis->glyphs = heap_alloc(run->glyphCount*sizeof(*run->glyphIndices));
     analysis->advances = heap_alloc(run->glyphCount*sizeof(*run->glyphAdvances));
-    analysis->offsets = heap_alloc(run->glyphCount*sizeof(*run->glyphOffsets));
-    if (!analysis->glyphs || !analysis->advances || !analysis->offsets) {
+    analysis->offsets = run->glyphOffsets ? heap_alloc(run->glyphCount*sizeof(*run->glyphOffsets)) : NULL;
+    if (!analysis->glyphs || !analysis->advances || (!analysis->offsets && run->glyphOffsets)) {
         heap_free(analysis->glyphs);
         heap_free(analysis->advances);
         heap_free(analysis->offsets);
@@ -3240,8 +3246,48 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_GLY
     analysis->run.glyphOffsets = analysis->offsets;
 
     memcpy(analysis->glyphs, run->glyphIndices, run->glyphCount*sizeof(*run->glyphIndices));
-    memcpy(analysis->advances, run->glyphAdvances, run->glyphCount*sizeof(*run->glyphAdvances));
-    memcpy(analysis->offsets, run->glyphOffsets, run->glyphCount*sizeof(*run->glyphOffsets));
+
+    if (run->glyphAdvances)
+        memcpy(analysis->advances, run->glyphAdvances, run->glyphCount*sizeof(*run->glyphAdvances));
+    else {
+        DWRITE_FONT_METRICS metrics;
+        IDWriteFontFace1 *fontface1;
+        UINT32 i;
+
+        IDWriteFontFace_GetMetrics(run->fontFace, &metrics);
+        IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace1, (void**)&fontface1);
+
+        for (i = 0; i < run->glyphCount; i++) {
+            HRESULT hr;
+            INT32 a;
+
+            switch (measuring_mode)
+            {
+            case DWRITE_MEASURING_MODE_NATURAL:
+                hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, run->glyphIndices + i, &a, run->isSideways);
+                if (FAILED(hr))
+                    a = 0;
+                analysis->advances[i] = get_scaled_advance_width(a, run->fontEmSize, &metrics);
+                break;
+            case DWRITE_MEASURING_MODE_GDI_CLASSIC:
+            case DWRITE_MEASURING_MODE_GDI_NATURAL:
+                hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, run->fontEmSize, ppdip, NULL /* FIXME */,
+                    measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->isSideways, 1, run->glyphIndices + i, &a);
+                if (FAILED(hr))
+                    analysis->advances[i] = 0.0;
+                else
+                    analysis->advances[i] = floorf(a * run->fontEmSize * ppdip / metrics.designUnitsPerEm + 0.5f) / ppdip;
+                break;
+            default:
+                ;
+            }
+        }
+
+        IDWriteFontFace1_Release(fontface1);
+    }
+
+    if (run->glyphOffsets)
+        memcpy(analysis->offsets, run->glyphOffsets, run->glyphCount*sizeof(*run->glyphOffsets));
 
     *ret = &analysis->IDWriteGlyphRunAnalysis_iface;
     return S_OK;

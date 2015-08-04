@@ -3431,7 +3431,7 @@ static void test_CreateGlyphRunAnalysis(void)
     IDWriteFactory *factory;
     DWRITE_GLYPH_RUN run;
     IDWriteFontFace *face;
-    UINT16 glyph;
+    UINT16 glyph, glyphs[10];
     FLOAT advance;
     HRESULT hr;
     UINT32 ch;
@@ -3577,6 +3577,73 @@ static void test_CreateGlyphRunAnalysis(void)
 
         IDWriteGlyphRunAnalysis_Release(analysis);
     }
+
+    /* without offsets */
+    run.fontFace = face;
+    run.fontEmSize = 24.0;
+    run.glyphCount = 1;
+    run.glyphIndices = &glyph;
+    run.glyphAdvances = &advance;
+    run.glyphOffsets = NULL;
+    run.isSideways = FALSE;
+    run.bidiLevel = 0;
+
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SetRectEmpty(&rect);
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsRectEmpty(&rect), "got empty bounds\n");
+
+    IDWriteGlyphRunAnalysis_Release(analysis);
+
+    /* without explicit advances */
+    run.fontFace = face;
+    run.fontEmSize = 24.0;
+    run.glyphCount = 1;
+    run.glyphIndices = &glyph;
+    run.glyphAdvances = NULL;
+    run.glyphOffsets = NULL;
+    run.isSideways = FALSE;
+    run.bidiLevel = 0;
+
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SetRectEmpty(&rect);
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsRectEmpty(&rect), "got empty bounds\n");
+
+    IDWriteGlyphRunAnalysis_Release(analysis);
+
+    glyphs[0] = glyphs[1] = glyph;
+    run.fontFace = face;
+    run.fontEmSize = 24.0;
+    run.glyphCount = 2;
+    run.glyphIndices = glyphs;
+    run.glyphAdvances = NULL;
+    run.glyphOffsets = NULL;
+    run.isSideways = FALSE;
+    run.bidiLevel = 0;
+
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SetRectEmpty(&rect2);
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsRectEmpty(&rect2), "got empty bounds\n");
+    ok(!EqualRect(&rect, &rect2), "got wrong rect2\n");
+
+    IDWriteGlyphRunAnalysis_Release(analysis);
 
     IDWriteFontFace_Release(face);
     IDWriteFactory_Release(factory);

@@ -1079,7 +1079,7 @@ static HRESULT WINAPI dwritefactory_CreateGlyphRunAnalysis(IDWriteFactory2 *ifac
     TRACE("(%p)->(%p %.2f %p %d %d %.2f %.2f %p)\n", This, run, ppdip, transform, rendering_mode,
         measuring_mode, originX, originY, analysis);
 
-    return create_glyphrunanalysis(rendering_mode, run, ppdip, originX, originY, analysis);
+    return create_glyphrunanalysis(rendering_mode, measuring_mode, run, ppdip, originX, originY, analysis);
 }
 
 static HRESULT WINAPI dwritefactory1_GetEudcFontCollection(IDWriteFactory2 *iface, IDWriteFontCollection **collection,

@@ -104,6 +104,11 @@ static inline unsigned short get_table_entry(const unsigned short *table, WCHAR 
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
 }
 
+static inline FLOAT get_scaled_advance_width(INT32 advance, FLOAT emSize, const DWRITE_FONT_METRICS *metrics)
+{
+    return (FLOAT)advance * emSize / (FLOAT)metrics->designUnitsPerEm;
+}
+
 extern HRESULT convert_fontface_to_logfont(IDWriteFontFace*, LOGFONTW*) DECLSPEC_HIDDEN;
 extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const WCHAR *locale,BOOL,IDWriteNumberSubstitution**) DECLSPEC_HIDDEN;
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
@@ -124,7 +129,7 @@ extern HRESULT create_font_file(IDWriteFontFileLoader *loader, const void *refer
 extern HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface) DECLSPEC_HIDDEN;
 extern HRESULT create_fontface(DWRITE_FONT_FACE_TYPE,UINT32,IDWriteFontFile* const*,UINT32,DWRITE_FONT_SIMULATIONS,IDWriteFontFace2**) DECLSPEC_HIDDEN;
 extern HRESULT create_font_collection(IDWriteFactory2*,IDWriteFontFileEnumerator*,BOOL,IDWriteFontCollection**) DECLSPEC_HIDDEN;
-extern HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE,DWRITE_GLYPH_RUN const*,FLOAT,FLOAT,FLOAT,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
+extern HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE,DWRITE_MEASURING_MODE,DWRITE_GLYPH_RUN const*,FLOAT,FLOAT,FLOAT,IDWriteGlyphRunAnalysis**) DECLSPEC_HIDDEN;
 extern BOOL    is_system_collection(IDWriteFontCollection*) DECLSPEC_HIDDEN;
 extern HRESULT get_local_refkey(const WCHAR*,const FILETIME*,void**,UINT32*) DECLSPEC_HIDDEN;
 extern HRESULT get_filestream_from_file(IDWriteFontFile*,IDWriteFontFileStream**) DECLSPEC_HIDDEN;
