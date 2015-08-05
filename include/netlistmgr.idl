@@ -175,3 +175,25 @@ interface INetworkListManagerEvents : IUnknown
     HRESULT ConnectivityChanged(
         [in] NLM_CONNECTIVITY newConnectivity);
 }
+
+[
+    object,
+    oleautomation,
+    pointer_default(unique),
+    uuid(dcb00007-570f-4a9b-8d69-199fdba5723b)
+]
+interface INetworkConnectionEvents : IUnknown
+{
+    typedef enum NLM_CONNECTION_PROPERTY_CHANGE
+    {
+        NLM_CONNECTION_PROPERTY_CHANGE_AUTHENTICATION = 1
+    } NLM_CONNECTION_PROPERTY_CHANGE;
+
+    HRESULT NetworkConnectionConnectivityChanged(
+        [in] GUID connectionId,
+        [in] NLM_CONNECTIVITY newConnectivity);
+
+    HRESULT NetworkConnectionPropertyChanged(
+        [in] GUID connectionId,
+        [in] NLM_CONNECTION_PROPERTY_CHANGE flags);
+}
