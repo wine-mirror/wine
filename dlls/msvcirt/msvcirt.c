@@ -19,8 +19,12 @@
 
 #include "config.h"
 
+#include <fcntl.h>
+#include <io.h>
+#include <share.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include "msvcirt.h"
 #include "windef.h"
@@ -99,6 +103,8 @@ typedef struct {
     filedesc fd;
     int close;
 } filebuf;
+
+filebuf* __thiscall filebuf_close(filebuf*);
 
 /* class ios */
 struct _ostream;
@@ -549,6 +555,7 @@ void __thiscall streambuf_setp(streambuf *this, char *pb, char *ep)
 /* ?sync@streambuf@@UAEHXZ */
 /* ?sync@streambuf@@UEAAHXZ */
 DEFINE_THISCALL_WRAPPER(streambuf_sync, 4)
+#define call_streambuf_sync(this) CALL_VTBL_FUNC(this, 4, int, (streambuf*), (this))
 int __thiscall streambuf_sync(streambuf *this)
 {
     TRACE("(%p)\n", this);
@@ -821,6 +828,8 @@ DEFINE_THISCALL_WRAPPER(filebuf_dtor, 4)
 void __thiscall filebuf_dtor(filebuf* this)
 {
     TRACE("(%p)\n", this);
+    if (this->close)
+        filebuf_close(this);
     streambuf_dtor(&this->base);
 }
 
@@ -884,8 +893,21 @@ filebuf* __thiscall filebuf_attach(filebuf *this, filedesc fd)
 DEFINE_THISCALL_WRAPPER(filebuf_close, 4)
 filebuf* __thiscall filebuf_close(filebuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    filebuf *ret;
+
+    TRACE("(%p)\n", this);
+    if (this->fd == -1)
+        return NULL;
+
+    streambuf_lock(&this->base);
+    if (call_streambuf_sync(&this->base) == EOF || _close(this->fd) < 0) {
+        ret = NULL;
+    } else {
+        this->fd = -1;
+        ret = this;
+    }
+    streambuf_unlock(&this->base);
+    return ret;
 }
 
 /* ?fd@filebuf@@QBEHXZ */
@@ -911,8 +933,48 @@ int __thiscall filebuf_is_open(const filebuf *this)
 DEFINE_THISCALL_WRAPPER(filebuf_open, 16)
 filebuf* __thiscall filebuf_open(filebuf *this, const char *name, ios_open_mode mode, int protection)
 {
-    FIXME("(%p %s %d %d) stub\n", this, name, mode, protection);
-    return NULL;
+    const int inout_mode[4] = {-1, _O_RDONLY, _O_WRONLY, _O_RDWR};
+    const int share_mode[4] = {_SH_DENYRW, _SH_DENYWR, _SH_DENYRD, _SH_DENYNO};
+    int op_flags, sh_flags, fd;
+
+    TRACE("(%p %s %x %x)\n", this, name, mode, protection);
+    if (this->fd != -1)
+        return NULL;
+
+    /* mode */
+    if (mode & (OPENMODE_app|OPENMODE_trunc))
+        mode |= OPENMODE_out;
+    op_flags = inout_mode[mode & (OPENMODE_in|OPENMODE_out)];
+    if (op_flags < 0)
+        return NULL;
+    if (mode & OPENMODE_app)
+        op_flags |= _O_APPEND;
+    if ((mode & OPENMODE_trunc) ||
+            ((mode & OPENMODE_out) && !(mode & (OPENMODE_in|OPENMODE_app|OPENMODE_ate))))
+        op_flags |= _O_TRUNC;
+    if (!(mode & OPENMODE_nocreate))
+        op_flags |= _O_CREAT;
+    if (mode & OPENMODE_noreplace)
+        op_flags |= _O_EXCL;
+    op_flags |= (mode & OPENMODE_binary) ? _O_BINARY : _O_TEXT;
+
+    /* share protection */
+    sh_flags = (protection & filebuf_sh_none) ? share_mode[(protection >> 9) & 3] : _SH_DENYNO;
+
+    TRACE("op_flags %x, sh_flags %x\n", op_flags, sh_flags);
+    fd = _sopen(name, op_flags, sh_flags, _S_IREAD|_S_IWRITE);
+    if (fd < 0)
+        return NULL;
+
+    streambuf_lock(&this->base);
+    this->close = 1;
+    if ((mode & OPENMODE_ate) &&
+            call_streambuf_seekoff(&this->base, 0, SEEKDIR_end, mode & (OPENMODE_in|OPENMODE_out)) == EOF) {
+        _close(fd);
+    } else
+        this->fd = fd;
+    streambuf_unlock(&this->base);
+    return (this->fd == -1) ? NULL : this;
 }
 
 /* ?overflow@filebuf@@UAEHH@Z */
@@ -930,7 +992,7 @@ DEFINE_THISCALL_WRAPPER(filebuf_seekoff, 16)
 streampos __thiscall filebuf_seekoff(filebuf *this, streamoff offset, ios_seek_dir dir, int mode)
 {
     FIXME("(%p %d %d %d) stub\n", this, offset, dir, mode);
-    return EOF;
+    return 0;
 }
 
 /* ?setbuf@filebuf@@UAEPAVstreambuf@@PADH@Z */
@@ -957,7 +1019,7 @@ DEFINE_THISCALL_WRAPPER(filebuf_sync, 4)
 int __thiscall filebuf_sync(filebuf *this)
 {
     FIXME("(%p) stub\n", this);
-    return EOF;
+    return 0;
 }
 
 /* ?underflow@filebuf@@UAEHXZ */

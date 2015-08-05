@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <io.h>
 #include <stdio.h>
 #include <windef.h>
 #include <winbase.h>
@@ -30,6 +31,17 @@ typedef enum {
     IOSTATE_failbit   = 0x2,
     IOSTATE_badbit    = 0x4
 } ios_io_state;
+
+typedef enum {
+    OPENMODE_in          = 0x1,
+    OPENMODE_out         = 0x2,
+    OPENMODE_ate         = 0x4,
+    OPENMODE_app         = 0x8,
+    OPENMODE_trunc       = 0x10,
+    OPENMODE_nocreate    = 0x20,
+    OPENMODE_noreplace   = 0x40,
+    OPENMODE_binary      = 0x80
+} ios_open_mode;
 
 typedef enum {
     FLAGS_skipws     = 0x1,
@@ -48,6 +60,11 @@ typedef enum {
     FLAGS_unitbuf    = 0x2000,
     FLAGS_stdio      = 0x4000
 } ios_flags;
+
+const int filebuf_sh_none = 0x800;
+const int filebuf_sh_read = 0xa00;
+const int filebuf_sh_write = 0xc00;
+const int filebuf_openprot = 420;
 
 /* class streambuf */
 typedef struct {
@@ -135,6 +152,8 @@ static filebuf* (*__thiscall p_filebuf_fd_reserve_ctor)(filebuf*, int, char*, in
 static filebuf* (*__thiscall p_filebuf_ctor)(filebuf*);
 static void (*__thiscall p_filebuf_dtor)(filebuf*);
 static filebuf* (*__thiscall p_filebuf_attach)(filebuf*, filedesc);
+static filebuf* (*__thiscall p_filebuf_open)(filebuf*, const char*, ios_open_mode, int);
+static filebuf* (*__thiscall p_filebuf_close)(filebuf*);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -271,6 +290,8 @@ static BOOL init(void)
         SET(p_filebuf_ctor, "??0filebuf@@QEAA@XZ");
         SET(p_filebuf_dtor, "??1filebuf@@UEAA@XZ");
         SET(p_filebuf_attach, "?attach@filebuf@@QEAAPEAV1@H@Z");
+        SET(p_filebuf_open, "?open@filebuf@@QEAAPEAV1@PEBDHH@Z");
+        SET(p_filebuf_close, "?close@filebuf@@QEAAPEAV1@XZ");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -327,6 +348,8 @@ static BOOL init(void)
         SET(p_filebuf_ctor, "??0filebuf@@QAE@XZ");
         SET(p_filebuf_dtor, "??1filebuf@@UAE@XZ");
         SET(p_filebuf_attach, "?attach@filebuf@@QAEPAV1@H@Z");
+        SET(p_filebuf_open, "?open@filebuf@@QAEPAV1@PBDHH@Z");
+        SET(p_filebuf_close, "?close@filebuf@@QAEPAV1@XZ");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -930,6 +953,10 @@ static void test_filebuf(void)
     filebuf fb1, fb2, fb3, *pret;
     struct filebuf_lock_arg lock_arg;
     HANDLE thread;
+    const char filename1[] = "test1";
+    const char filename2[] = "test2";
+    const char filename3[] = "test3";
+    char read_buffer[16];
 
     memset(&fb1, 0xab, sizeof(filebuf));
     memset(&fb2, 0xab, sizeof(filebuf));
@@ -982,14 +1009,126 @@ static void test_filebuf(void)
     ok(fb3.fd == 2, "wrong fd, expected 2 got %d\n", fb3.fd);
     fb3.base.do_lock = -1;
 
+    /* open modes */
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_out, filebuf_openprot);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    fb1.fd = -1;
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1,
+        OPENMODE_ate|OPENMODE_nocreate|OPENMODE_noreplace|OPENMODE_binary, filebuf_openprot);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    fb1.base.do_lock = 0;
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_out, filebuf_openprot);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(_write(fb1.fd, "testing", 7) == 7, "_write failed\n");
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb1);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(fb1.fd == -1, "wrong fd, expected -1 got %d\n", fb1.fd);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_out, filebuf_openprot);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(_read(fb1.fd, read_buffer, 1) == -1, "file should not be open for reading\n");
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb1);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_app, filebuf_openprot);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(_read(fb1.fd, read_buffer, 1) == -1, "file should not be open for reading\n");
+    ok(_write(fb1.fd, "testing", 7) == 7, "_write failed\n");
+    ok(_lseek(fb1.fd, 0, SEEK_SET) == 0, "_lseek failed\n");
+    ok(_write(fb1.fd, "append", 6) == 6, "_write failed\n");
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb1);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_out|OPENMODE_ate, filebuf_openprot);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(_read(fb1.fd, read_buffer, 1) == -1, "file should not be open for reading\n");
+    ok(_lseek(fb1.fd, 0, SEEK_SET) == 0, "_lseek failed\n");
+    ok(_write(fb1.fd, "ate", 3) == 3, "_write failed\n");
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb1);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_in, filebuf_openprot);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(_read(fb1.fd, read_buffer, 13) == 13, "read failed\n");
+    read_buffer[13] = 0;
+    ok(!strncmp(read_buffer, "atetingappend", 13), "wrong contents, expected 'atetingappend' got '%s'\n", read_buffer);
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb1);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_in|OPENMODE_trunc, filebuf_openprot);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(_read(fb1.fd, read_buffer, 1) == 0, "read failed\n");
+    ok(_write(fb1.fd, "file1", 5) == 5, "_write failed\n");
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb1);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_in|OPENMODE_app, filebuf_openprot);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(_write(fb1.fd, "app", 3) == 3, "_write failed\n");
+    ok(_read(fb1.fd, read_buffer, 1) == 0, "read failed\n");
+    ok(_lseek(fb1.fd, 0, SEEK_SET) == 0, "_lseek failed\n");
+    ok(_read(fb1.fd, read_buffer, 8) == 8, "read failed\n");
+    read_buffer[8] = 0;
+    ok(!strncmp(read_buffer, "file1app", 8), "wrong contents, expected 'file1app' got '%s'\n", read_buffer);
+    fb1.base.do_lock = -1;
+
+    fb2.fd = -1;
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename2, OPENMODE_out|OPENMODE_nocreate, filebuf_openprot);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename2, OPENMODE_in|OPENMODE_nocreate, filebuf_openprot);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    fb2.base.do_lock = 0;
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename2, OPENMODE_in, filebuf_openprot);
+    ok(pret == &fb2, "wrong return, expected %p got %p\n", &fb2, pret);
+    ok(_read(fb1.fd, read_buffer, 1) == 0, "read failed\n");
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb2);
+    ok(pret == &fb2, "wrong return, expected %p got %p\n", &fb2, pret);
+    fb2.base.do_lock = -1;
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename2, OPENMODE_in|OPENMODE_noreplace, filebuf_openprot);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename2, OPENMODE_trunc|OPENMODE_noreplace, filebuf_openprot);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename3, OPENMODE_out|OPENMODE_nocreate|OPENMODE_noreplace, filebuf_openprot);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+
+    /* open protection*/
+    fb3.fd = -1;
+    fb3.base.do_lock = 0;
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb3, filename3, OPENMODE_in, filebuf_openprot);
+    ok(pret == &fb3, "wrong return, expected %p got %p\n", &fb3, pret);
+    fb2.base.do_lock = 0;
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename3, OPENMODE_in|OPENMODE_out, filebuf_openprot);
+    ok(pret == &fb2, "wrong return, expected %p got %p\n", &fb2, pret);
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb2);
+    ok(pret == &fb2, "wrong return, expected %p got %p\n", &fb2, pret);
+    fb2.base.do_lock = -1;
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb3);
+    ok(pret == &fb3, "wrong return, expected %p got %p\n", &fb3, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb3, filename3, OPENMODE_in, filebuf_sh_none);
+    ok(pret == &fb3, "wrong return, expected %p got %p\n", &fb3, pret);
+    pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename3, OPENMODE_in, filebuf_openprot);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    fb3.base.do_lock = -1;
+
+    /* close */
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb2);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    fb3.base.do_lock = 0;
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb3);
+    ok(pret == &fb3, "wrong return, expected %p got %p\n", &fb3, pret);
+    ok(fb3.fd == -1, "wrong fd, expected -1 got %d\n", fb3.fd);
+    fb3.fd = 5;
+    pret = (filebuf*) call_func1(p_filebuf_close, &fb3);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    ok(fb3.fd == 5, "wrong fd, expected 5 got %d\n", fb3.fd);
+    fb3.base.do_lock = -1;
+
     SetEvent(lock_arg.test);
     WaitForSingleObject(thread, INFINITE);
 
     /* destructor */
     call_func1(p_filebuf_dtor, &fb1);
+    ok(fb1.fd == -1, "wrong fd, expected -1 got %d\n", fb1.fd);
     call_func1(p_filebuf_dtor, &fb2);
     call_func1(p_filebuf_dtor, &fb3);
 
+    ok(_unlink(filename1) == 0, "Couldn't unlink file named '%s'\n", filename1);
+    ok(_unlink(filename2) == 0, "Couldn't unlink file named '%s'\n", filename2);
+    ok(_unlink(filename3) == 0, "Couldn't unlink file named '%s'\n", filename3);
     CloseHandle(lock_arg.lock);
     CloseHandle(lock_arg.test);
     CloseHandle(thread);
