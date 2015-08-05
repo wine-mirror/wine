@@ -4186,6 +4186,7 @@ error:
     free_mesh(&mesh);
 
     if (d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
+    if (font) DeleteObject(font);
     HeapFree(GetProcessHeap(), 0, glyphmetrics_float);
 
     if (glyphs)
@@ -4295,6 +4296,7 @@ if (0)
     test_createtext(device, hdc, "wi ne", 1.0f, 0.0f);
 
     DeleteDC(hdc);
+    DeleteObject(hFont);
 
     free_test_context(test_context);
 }
