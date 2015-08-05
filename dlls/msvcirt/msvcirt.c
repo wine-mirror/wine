@@ -915,8 +915,8 @@ filebuf* __thiscall filebuf_close(filebuf *this)
 DEFINE_THISCALL_WRAPPER(filebuf_fd, 4)
 filedesc __thiscall filebuf_fd(const filebuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return EOF;
+    TRACE("(%p)\n", this);
+    return this->fd;
 }
 
 /* ?is_open@filebuf@@QBEHXZ */
@@ -924,8 +924,8 @@ filedesc __thiscall filebuf_fd(const filebuf *this)
 DEFINE_THISCALL_WRAPPER(filebuf_is_open, 4)
 int __thiscall filebuf_is_open(const filebuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return 0;
+    TRACE("(%p)\n", this);
+    return this->fd != -1;
 }
 
 /* ?open@filebuf@@QAEPAV1@PBDHH@Z */
