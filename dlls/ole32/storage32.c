@@ -3446,10 +3446,18 @@ static HRESULT StorageImpl_ReadDirEntry(
       OFFSET_PS_SIZE,
       &buffer->size.u.LowPart);
 
-    StorageUtl_ReadDWord(
-      currentEntry,
-      OFFSET_PS_SIZE_HIGH,
-      &buffer->size.u.HighPart);
+    if (This->bigBlockSize < 4096)
+    {
+      /* Version 3 files may have junk in the high part of size. */
+      buffer->size.u.HighPart = 0;
+    }
+    else
+    {
+      StorageUtl_ReadDWord(
+        currentEntry,
+        OFFSET_PS_SIZE_HIGH,
+        &buffer->size.u.HighPart);
+    }
   }
 
   return readRes;
