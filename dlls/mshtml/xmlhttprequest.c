@@ -60,6 +60,35 @@ static HRESULT variant_to_nsastr(VARIANT var, nsAString *ret)
     }
 }
 
+static HRESULT return_nscstr(nsresult nsres, nsACString *nscstr, BSTR *p)
+{
+    const char *str;
+    int len;
+
+    if(NS_FAILED(nsres)) {
+        ERR("failed: %08x\n", nsres);
+        nsACString_Finish(nscstr);
+        return E_FAIL;
+    }
+
+    nsACString_GetData(nscstr, &str);
+
+    if(*str) {
+        len = MultiByteToWideChar(CP_UTF8, 0, str, -1, NULL, 0);
+        *p = SysAllocStringLen(NULL, len);
+        if(!*p) {
+            nsACString_Finish(nscstr);
+            return E_OUTOFMEMORY;
+        }
+        MultiByteToWideChar(CP_UTF8, 0, str, -1, *p, len);
+    }else {
+        *p = NULL;
+    }
+
+    nsACString_Finish(nscstr);
+    return S_OK;
+}
+
 typedef struct XMLHttpReqEventListener XMLHttpReqEventListener;
 
 typedef struct {
@@ -334,8 +363,28 @@ static HRESULT WINAPI HTMLXMLHttpRequest_get_status(IHTMLXMLHttpRequest *iface, 
 static HRESULT WINAPI HTMLXMLHttpRequest_get_statusText(IHTMLXMLHttpRequest *iface, BSTR *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsACString nscstr;
+    nsresult nsres;
+    HRESULT hres;
+    LONG state;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    hres = IHTMLXMLHttpRequest_get_readyState(iface, &state);
+    if(FAILED(hres))
+        return hres;
+
+    if(state < 2) {
+        *p = NULL;
+        return E_FAIL;
+    }
+
+    nsACString_Init(&nscstr, NULL);
+    nsres = nsIXMLHttpRequest_GetStatusText(This->nsxhr, &nscstr);
+    return return_nscstr(nsres, &nscstr, p);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_put_onreadystatechange(IHTMLXMLHttpRequest *iface, VARIANT v)

@@ -457,11 +457,11 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
     ok(val == 0, "Expect 0, got %d\n", val);
 
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, NULL);
-    todo_wine ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
+    ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
 
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
-    todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
-    todo_wine ok(text == NULL, "Expect NULL, got %p\n", text);
+    ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
+    ok(text == NULL, "Expect NULL, got %p\n", text);
 
     method = a2bstr("GET");
     url = a2bstr(xml_url);
@@ -566,8 +566,8 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     text = (BSTR)0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
-    todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
-    todo_wine ok(text == NULL, "Expect NULL, got %p\n", text);
+    ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
+    ok(text == NULL, "Expect NULL, got %p\n", text);
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, &val);
@@ -600,8 +600,8 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
     ok(val == 0, "Expect 0, got %d\n", val);
 
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
-    todo_wine ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
-    todo_wine ok(text == NULL, "Expect NULL, got %p\n", text);
+    ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
+    ok(text == NULL, "Expect NULL, got %p\n", text);
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_readyState(xhr, &val);
@@ -635,9 +635,9 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
 
     text = NULL;
     hres = IHTMLXMLHttpRequest_get_statusText(xhr, &text);
-    todo_wine ok(hres == S_OK, "get_statusText failed: %08x\n", hres);
-    todo_wine ok(text != NULL, "text == NULL\n");
-    todo_wine ok(!strcmp_wa(text, "OK"), "Expected \"OK\", got %s\n", wine_dbgstr_w(text));
+    ok(hres == S_OK, "get_statusText failed: %08x\n", hres);
+    ok(text != NULL, "text == NULL\n");
+    ok(!strcmp_wa(text, "OK"), "Expected \"OK\", got %s\n", wine_dbgstr_w(text));
     SysFreeString(text);
 
     val = 0xdeadbeef;
