@@ -325,6 +325,13 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
     }
 }
 
+void dxgi_sample_desc_from_wined3d(DXGI_SAMPLE_DESC *desc,
+        enum wined3d_multisample_type wined3d_type, unsigned int wined3d_quality)
+{
+    desc->Count = wined3d_type == WINED3D_MULTISAMPLE_NONE ? 1 : wined3d_type;
+    desc->Quality = wined3d_quality;
+}
+
 void wined3d_sample_desc_from_dxgi(enum wined3d_multisample_type *wined3d_type,
         unsigned int *wined3d_quality, const DXGI_SAMPLE_DESC *dxgi_desc)
 {
