@@ -421,8 +421,17 @@ static void create_xmlhttprequest(IHTMLDocument2 *doc)
 static void test_header(const struct HEADER_TYPE expect[], int num)
 {
     int i;
-    BSTR key, text;
+    BSTR key, text, all_header;
     HRESULT hres;
+    char all[4096], buf[512];
+
+    all_header = NULL;
+    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &all_header);
+    ok(hres == S_OK, "getAllResponseHeader failed: %08x\n", hres);
+    ok(all_header != NULL, "all_header == NULL\n");
+
+    WideCharToMultiByte(CP_UTF8, 0, all_header, -1, all, sizeof(all), NULL, NULL);
+    SysFreeString(all_header);
 
     for(i = 0; i < num; ++i) {
         text = NULL;
@@ -434,6 +443,11 @@ static void test_header(const struct HEADER_TYPE expect[], int num)
             "Expect %s: %s, got %s\n", expect[i].key, expect[i].value, wine_dbgstr_w(text));
         SysFreeString(key);
         SysFreeString(text);
+
+        strcpy(buf, expect[i].key);
+        strcat(buf, ": ");
+        strcat(buf, expect[i].value);
+        ok(strstr(all, buf) != NULL, "AllResponseHeaders(%s) don't have expected substr(%s)\n", all, buf);
     }
 }
 
@@ -495,6 +509,11 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
     ok(text == NULL, "Expect NULL, got %p\n", text);
 
     text = (BSTR)0xdeadbeef;
+    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &text);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+    ok(text == NULL, "text = %p\n", text);
+
+    text = (BSTR)0xdeadbeef;
     hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
     ok(hres == E_FAIL, "got %08x\n", hres);
     ok(text == NULL, "text = %p\n", text);
@@ -518,6 +537,11 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
         xhr = NULL;
         return;
     }
+
+    text = (BSTR)0xdeadbeef;
+    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &text);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+    ok(text == NULL, "text = %p\n", text);
 
     text = (BSTR)0xdeadbeef;
     hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
@@ -627,6 +651,14 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
     ok(hres == E_FAIL, "got %08x\n", hres);
     ok(text == NULL, "text = %p\n", text);
 
+    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, NULL);
+    ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
+
+    text = (BSTR)0xdeadbeef;
+    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &text);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+    ok(text == NULL, "text = %p\n", text);
+
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
     ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
@@ -661,6 +693,11 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
         xhr = NULL;
         return;
     }
+
+    text = (BSTR)0xdeadbeef;
+    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &text);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+    ok(text == NULL, "text = %p\n", text);
 
     text = (BSTR)0xdeadbeef;
     hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
@@ -700,6 +737,12 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
         xhr = NULL;
         return;
     }
+
+    text = NULL;
+    hres = IHTMLXMLHttpRequest_getAllResponseHeaders(xhr, &text);
+    ok(hres == S_OK, "getAllResponseHeader failed, got %08x\n", hres);
+    ok(text != NULL, "text == NULL\n");
+    SysFreeString(text);
 
     text = NULL;
     hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);

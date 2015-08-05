@@ -505,8 +505,28 @@ static HRESULT WINAPI HTMLXMLHttpRequest_send(IHTMLXMLHttpRequest *iface, VARIAN
 static HRESULT WINAPI HTMLXMLHttpRequest_getAllResponseHeaders(IHTMLXMLHttpRequest *iface, BSTR *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    nsACString nscstr;
+    nsresult nsres;
+    HRESULT hres;
+    LONG state;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_POINTER;
+
+    hres = IHTMLXMLHttpRequest_get_readyState(iface, &state);
+    if(FAILED(hres))
+        return hres;
+
+    if(state < 2) {
+        *p = NULL;
+        return E_FAIL;
+    }
+
+    nsACString_Init(&nscstr, NULL);
+    nsres = nsIXMLHttpRequest_GetAllResponseHeaders(This->nsxhr, &nscstr);
+    return return_nscstr(nsres, &nscstr, p);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_getResponseHeader(IHTMLXMLHttpRequest *iface, BSTR bstrHeader, BSTR *p)
