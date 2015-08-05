@@ -164,10 +164,15 @@ static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDevice(IDXGISurface *iface, REF
 static HRESULT STDMETHODCALLTYPE dxgi_surface_GetDesc(IDXGISurface *iface, DXGI_SURFACE_DESC *desc)
 {
     struct dxgi_surface *surface = impl_from_IDXGISurface(iface);
+    struct wined3d_resource_desc wined3d_desc;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    *desc = surface->desc;
+    wined3d_resource_get_desc(surface->wined3d_resource, &wined3d_desc);
+    desc->Width = wined3d_desc.width;
+    desc->Height = wined3d_desc.height;
+    desc->Format = dxgi_format_from_wined3dformat(wined3d_desc.format);
+    dxgi_sample_desc_from_wined3d(&desc->SampleDesc, wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
 
     return S_OK;
 }
@@ -214,7 +219,7 @@ static const struct IUnknownVtbl dxgi_surface_inner_unknown_vtbl =
 };
 
 HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,
-        IUnknown *outer, const DXGI_SURFACE_DESC *desc)
+        IUnknown *outer, struct wined3d_resource *wined3d_resource)
 {
     surface->IDXGISurface_iface.lpVtbl = &dxgi_surface_vtbl;
     surface->IUnknown_iface.lpVtbl = &dxgi_surface_inner_unknown_vtbl;
@@ -222,7 +227,7 @@ HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,
     wined3d_private_store_init(&surface->private_store);
     surface->outer_unknown = outer ? outer : &surface->IUnknown_iface;
     surface->device = device;
-    surface->desc = *desc;
+    surface->wined3d_resource = wined3d_resource;
 
     return S_OK;
 }

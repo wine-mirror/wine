@@ -164,11 +164,10 @@ struct dxgi_surface
     LONG refcount;
     struct wined3d_private_store private_store;
     IDXGIDevice *device;
-
-    DXGI_SURFACE_DESC desc;
+    struct wined3d_resource *wined3d_resource;
 };
 
 HRESULT dxgi_surface_init(struct dxgi_surface *surface, IDXGIDevice *device,
-        IUnknown *outer, const DXGI_SURFACE_DESC *desc) DECLSPEC_HIDDEN;
+        IUnknown *outer, struct wined3d_resource *wined3d_resource) DECLSPEC_HIDDEN;
 
 #endif /* __WINE_DXGI_PRIVATE_H */

@@ -256,23 +256,23 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IWineDXGIDevic
 
 /* IWineDXGIDevice methods */
 
-static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface, const DXGI_SURFACE_DESC *desc,
-        DXGI_USAGE usage, const DXGI_SHARED_RESOURCE *shared_resource, IUnknown *outer, void **surface)
+static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface,
+        struct wined3d_resource *wined3d_resource, DXGI_USAGE usage,
+        const DXGI_SHARED_RESOURCE *shared_resource, IUnknown *outer, void **surface)
 {
     struct dxgi_surface *object;
     HRESULT hr;
 
-    FIXME("iface %p, desc %p, usage %#x, shared_resource %p, outer %p, surface %p partial stub!\n",
-            iface, desc, usage, shared_resource, outer, surface);
+    TRACE("iface %p, wined3d_resource %p, usage %#x, shared_resource %p, outer %p, surface %p.\n",
+            iface, wined3d_resource, usage, shared_resource, outer, surface);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
     {
         ERR("Failed to allocate DXGI surface object memory\n");
         return E_OUTOFMEMORY;
     }
 
-    if (FAILED(hr = dxgi_surface_init(object, (IDXGIDevice *)iface, outer, desc)))
+    if (FAILED(hr = dxgi_surface_init(object, (IDXGIDevice *)iface, outer, wined3d_resource)))
     {
         WARN("Failed to initialize surface, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

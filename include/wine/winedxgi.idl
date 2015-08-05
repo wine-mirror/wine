@@ -26,7 +26,7 @@ import "dxgi.idl";
 interface IWineDXGIDevice : IDXGIDevice
 {
     HRESULT create_surface(
-        [in] const DXGI_SURFACE_DESC *desc,
+        [in] struct wined3d_resource *wined3d_resource,
         [in] DXGI_USAGE usage,
         [in] const DXGI_SHARED_RESOURCE *shared_resource,
         [in] IUnknown *outer,
