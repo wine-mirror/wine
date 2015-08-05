@@ -250,3 +250,15 @@ ASN1encoding_t WINAPI I_CryptGetAsn1Encoder(HCRYPTASN1MODULE x)
     FIXME("(%08x): stub\n", x);
     return NULL;
 }
+
+BOOL WINAPI CryptProtectMemory(void *data, DWORD len, DWORD flags)
+{
+    FIXME("(%p %u %08x): stub\n", data, len, flags);
+    return TRUE;
+}
+
+BOOL WINAPI CryptUnprotectMemory(void *data, DWORD len, DWORD flags)
+{
+    FIXME("(%p %u %08x): stub\n", data, len, flags);
+    return TRUE;
+}
