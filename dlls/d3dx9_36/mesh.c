@@ -5847,6 +5847,10 @@ static HRESULT triangulate(struct triangulation_array *triangulations)
     int i;
     struct point2d_index *idx_ptr;
 
+    /* Glyphs without outlines do not generate any vertices. */
+    if (!glyph->outlines.count)
+        return D3D_OK;
+
     for (i = 0; i < glyph->outlines.count; i++)
         nb_vertices += glyph->outlines.items[i].count;
 

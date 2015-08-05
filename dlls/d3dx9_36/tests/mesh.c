@@ -3617,57 +3617,17 @@ static HRESULT create_outline(struct glyphinfo *glyph, void *raw_outline, int da
     return S_OK;
 }
 
-static BOOL compute_text_mesh(struct mesh *mesh, HDC hdc, const char *text,
-        float deviation, float extrusion, float otmEMSquare)
+static BOOL compute_text_mesh(struct mesh *mesh, const char *text,
+        float deviation, float extrusion, float otmEMSquare, const struct glyphinfo *glyphs)
 {
-    HRESULT hr = E_FAIL;
     DWORD nb_vertices, nb_faces;
     DWORD nb_corners, nb_outline_points;
     int textlen = 0;
-    float offset_x;
-    char *raw_outline = NULL;
-    struct glyphinfo *glyphs = NULL;
-    GLYPHMETRICS gm;
     int i;
     struct vertex *vertex_ptr;
     face *face_ptr;
 
-    if (deviation == 0.0f)
-        deviation = 1.0f / otmEMSquare;
-
     textlen = strlen(text);
-    glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, textlen * sizeof(*glyphs));
-    if (!glyphs) {
-        hr = E_OUTOFMEMORY;
-        goto error;
-    }
-
-    offset_x = 0.0f;
-    for (i = 0; i < textlen; i++)
-    {
-        /* get outline points from data returned from GetGlyphOutline */
-        const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
-        int datasize;
-
-        glyphs[i].offset_x = offset_x;
-
-        datasize = GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);
-        if (datasize < 0) {
-            hr = E_FAIL;
-            goto error;
-        }
-        HeapFree(GetProcessHeap(), 0, raw_outline);
-        raw_outline = HeapAlloc(GetProcessHeap(), 0, datasize);
-        if (!raw_outline) {
-            hr = E_OUTOFMEMORY;
-            goto error;
-        }
-        datasize = GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, datasize, raw_outline, &identity);
-
-        create_outline(&glyphs[i], raw_outline, datasize, deviation, otmEMSquare);
-
-        offset_x += gm.gmCellIncX / (float)otmEMSquare;
-    }
 
     /* corner points need an extra vertex for the different side faces normals */
     nb_corners = 0;
@@ -3691,7 +3651,7 @@ static BOOL compute_text_mesh(struct mesh *mesh, HDC hdc, const char *text,
     nb_faces = nb_outline_points * 2;
 
     if (!new_mesh(mesh, nb_vertices, nb_faces))
-        goto error;
+        return FALSE;
 
     /* convert 2D vertices and faces into 3D mesh */
     vertex_ptr = mesh->vertices;
@@ -3801,24 +3761,11 @@ static BOOL compute_text_mesh(struct mesh *mesh, HDC hdc, const char *text,
         vertex_ptr++;
     }
 
-    hr = D3D_OK;
-error:
-    if (glyphs) {
-        for (i = 0; i < textlen; i++)
-        {
-            int j;
-            for (j = 0; j < glyphs[i].outlines.count; j++)
-                HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items[j].items);
-            HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items);
-        }
-        HeapFree(GetProcessHeap(), 0, glyphs);
-    }
-    HeapFree(GetProcessHeap(), 0, raw_outline);
-
-    return hr == D3D_OK;
+    return TRUE;
 }
 
-static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mesh, int textlen, float extrusion)
+static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, struct mesh *mesh,
+        size_t textlen, float extrusion, const struct glyphinfo *glyphs)
 {
     HRESULT hr;
     DWORD number_of_vertices, number_of_faces;
@@ -3936,13 +3883,20 @@ static void compare_text_outline_mesh(const char *name, ID3DXMesh *d3dxmesh, str
 
         first_vtx1 = vtx_idx1;
         first_vtx2 = vtx_idx2;
-        for (; vtx_idx1 < number_of_vertices; vtx_idx1++) {
-            if (vertices[vtx_idx1].normal.z != 0)
-                break;
-        }
-        for (; vtx_idx2 < mesh->number_of_vertices; vtx_idx2++) {
-            if (mesh->vertices[vtx_idx2].normal.z != 0)
-                break;
+        /* Glyphs without outlines do not generate any vertices. */
+        if (glyphs[i].outlines.count > 0)
+        {
+            for (; vtx_idx1 < number_of_vertices; vtx_idx1++)
+            {
+                if (vertices[vtx_idx1].normal.z != 0)
+                    break;
+            }
+
+            for (; vtx_idx2 < mesh->number_of_vertices; vtx_idx2++)
+            {
+                if (mesh->vertices[vtx_idx2].normal.z != 0)
+                    break;
+            }
         }
         nb_outline_vertices1 = vtx_idx1 - first_vtx1;
         nb_outline_vertices2 = vtx_idx2 - first_vtx2;
@@ -4124,15 +4078,19 @@ error:
 static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text, float deviation, float extrusion)
 {
     HRESULT hr;
-    ID3DXMesh *d3dxmesh;
-    struct mesh mesh;
+    ID3DXMesh *d3dxmesh = NULL;
+    struct mesh mesh = {0};
     char name[256];
     OUTLINETEXTMETRICA otm;
     GLYPHMETRICS gm;
+    struct glyphinfo *glyphs = NULL;
     GLYPHMETRICSFLOAT *glyphmetrics_float = HeapAlloc(GetProcessHeap(), 0, sizeof(GLYPHMETRICSFLOAT) * strlen(text));
     int i;
     LOGFONTA lf;
+    float offset_x;
+    size_t textlen;
     HFONT font = NULL, oldfont = NULL;
+    char *raw_outline = NULL;
 
     sprintf(name, "text ('%s', %f, %f)", text, deviation, extrusion);
 
@@ -4141,7 +4099,7 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
     if (hr != D3D_OK)
     {
         skip("Couldn't create text with D3DXCreateText\n");
-        return;
+        goto error;
     }
 
     /* must select a modified font having lfHeight = otm.otmEMSquare before
@@ -4149,21 +4107,25 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
     if (!GetObjectA(GetCurrentObject(hdc, OBJ_FONT), sizeof(lf), &lf)
             || !GetOutlineTextMetricsA(hdc, sizeof(otm), &otm))
     {
-        d3dxmesh->lpVtbl->Release(d3dxmesh);
         skip("Couldn't get text outline\n");
-        return;
+        goto error;
     }
     lf.lfHeight = otm.otmEMSquare;
     lf.lfWidth = 0;
     if (!(font = CreateFontIndirectA(&lf)))
     {
-        d3dxmesh->lpVtbl->Release(d3dxmesh);
         skip("Couldn't create the modified font\n");
-        return;
+        goto error;
     }
+
+    textlen = strlen(text);
+    glyphs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, textlen * sizeof(*glyphs));
+    if (!glyphs)
+        goto error;
+
     oldfont = SelectObject(hdc, font);
 
-    for (i = 0; i < strlen(text); i++)
+    for (i = 0; i < textlen; i++)
     {
         const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
         GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);
@@ -4175,8 +4137,42 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
         compare_float(glyphmetrics_float[i].gmfCellIncY, gm.gmCellIncY / (float)otm.otmEMSquare);
     }
 
+    if (deviation == 0.0f)
+        deviation = 1.0f / otm.otmEMSquare;
+
+    offset_x = 0.0f;
+    for (i = 0; i < textlen; i++)
+    {
+        /* get outline points from data returned from GetGlyphOutline */
+        const MAT2 identity = {{0, 1}, {0, 0}, {0, 0}, {0, 1}};
+        int datasize;
+
+        glyphs[i].offset_x = offset_x;
+
+        datasize = GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, 0, NULL, &identity);
+        if (datasize < 0)
+        {
+            SelectObject(hdc, oldfont);
+            goto error;
+        }
+        HeapFree(GetProcessHeap(), 0, raw_outline);
+        raw_outline = HeapAlloc(GetProcessHeap(), 0, datasize);
+        if (!raw_outline)
+        {
+            SelectObject(hdc, oldfont);
+            goto error;
+        }
+        datasize = GetGlyphOutlineA(hdc, text[i], GGO_NATIVE, &gm, datasize, raw_outline, &identity);
+
+        create_outline(&glyphs[i], raw_outline, datasize, deviation, otm.otmEMSquare);
+
+        offset_x += gm.gmCellIncX / (float)otm.otmEMSquare;
+    }
+
+    SelectObject(hdc, oldfont);
+
     ZeroMemory(&mesh, sizeof(mesh));
-    if (!compute_text_mesh(&mesh, hdc, text, deviation, extrusion, otm.otmEMSquare))
+    if (!compute_text_mesh(&mesh, text, deviation, extrusion, otm.otmEMSquare, glyphs))
     {
         skip("Couldn't create mesh\n");
         d3dxmesh->lpVtbl->Release(d3dxmesh);
@@ -4184,13 +4180,26 @@ static void test_createtext(IDirect3DDevice9 *device, HDC hdc, const char *text,
     }
     mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
 
-    compare_text_outline_mesh(name, d3dxmesh, &mesh, strlen(text), extrusion);
+    compare_text_outline_mesh(name, d3dxmesh, &mesh, textlen, extrusion, glyphs);
 
+error:
     free_mesh(&mesh);
 
-    d3dxmesh->lpVtbl->Release(d3dxmesh);
-    SelectObject(hdc, oldfont);
+    if (d3dxmesh) d3dxmesh->lpVtbl->Release(d3dxmesh);
     HeapFree(GetProcessHeap(), 0, glyphmetrics_float);
+
+    if (glyphs)
+    {
+        for (i = 0; i < textlen; i++)
+        {
+            int j;
+            for (j = 0; j < glyphs[i].outlines.count; j++)
+                HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items[j].items);
+            HeapFree(GetProcessHeap(), 0, glyphs[i].outlines.items);
+        }
+        HeapFree(GetProcessHeap(), 0, glyphs);
+    }
+    HeapFree(GetProcessHeap(), 0, raw_outline);
 }
 
 static void D3DXCreateTextTest(void)
@@ -4281,6 +4290,9 @@ if (0)
     test_createtext(device, hdc, "wine", 0.001f, 0.0f);
     test_createtext(device, hdc, "wine", 0.001f, FLT_MAX);
     test_createtext(device, hdc, "wine", 0.0f, 1.0f);
+    test_createtext(device, hdc, " wine", 1.0f, 0.0f);
+    test_createtext(device, hdc, "wine ", 1.0f, 0.0f);
+    test_createtext(device, hdc, "wi ne", 1.0f, 0.0f);
 
     DeleteDC(hdc);
 
