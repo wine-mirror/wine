@@ -185,8 +185,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     FIXME("Implement DXGI<->wined3d usage conversion\n");
     surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
     surface_desc.format = wined3dformat_from_dxgi_format(desc->Format);
-    surface_desc.multisample_type = desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE;
-    surface_desc.multisample_quality = desc->SampleDesc.Quality;
+    wined3d_sample_desc_from_dxgi(&surface_desc.multisample_type,
+            &surface_desc.multisample_quality, &desc->SampleDesc);
     surface_desc.usage = usage;
     surface_desc.pool = WINED3D_POOL_DEFAULT;
     surface_desc.width = desc->Width;

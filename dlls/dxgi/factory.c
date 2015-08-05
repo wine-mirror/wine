@@ -211,16 +211,8 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *ifa
     wined3d_desc.backbuffer_height = desc->BufferDesc.Height;
     wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(desc->BufferDesc.Format);
     wined3d_desc.backbuffer_count = desc->BufferCount;
-    if (desc->SampleDesc.Count > 1)
-    {
-        wined3d_desc.multisample_type = desc->SampleDesc.Count;
-        wined3d_desc.multisample_quality = desc->SampleDesc.Quality;
-    }
-    else
-    {
-        wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
-        wined3d_desc.multisample_quality = 0;
-    }
+    wined3d_sample_desc_from_dxgi(&wined3d_desc.multisample_type,
+            &wined3d_desc.multisample_quality, &desc->SampleDesc);
     wined3d_desc.swap_effect = WINED3D_SWAP_EFFECT_DISCARD;
     wined3d_desc.device_window = desc->OutputWindow;
     wined3d_desc.windowed = desc->Windowed;

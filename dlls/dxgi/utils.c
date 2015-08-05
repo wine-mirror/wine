@@ -325,6 +325,21 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
     }
 }
 
+void wined3d_sample_desc_from_dxgi(enum wined3d_multisample_type *wined3d_type,
+        unsigned int *wined3d_quality, const DXGI_SAMPLE_DESC *dxgi_desc)
+{
+    if (dxgi_desc->Count > 1)
+    {
+        *wined3d_type = dxgi_desc->Count;
+        *wined3d_quality = dxgi_desc->Quality;
+    }
+    else
+    {
+        *wined3d_type = WINED3D_MULTISAMPLE_NONE;
+        *wined3d_quality = 0;
+    }
+}
+
 HRESULT dxgi_get_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT *data_size, void *data)
 {
