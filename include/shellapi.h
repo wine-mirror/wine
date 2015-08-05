@@ -490,6 +490,19 @@ HRESULT     WINAPI SHQueryRecycleBinW(LPCWSTR,LPSHQUERYRBINFO);
  * Misc
  */
 
+typedef enum
+{
+    QUNS_NOT_PRESENT             = 1,
+    QUNS_BUSY                    = 2,
+    QUNS_RUNNING_D3D_FULL_SCREEN = 3,
+    QUNS_PRESENTATION_MODE       = 4,
+    QUNS_ACCEPTS_NOTIFICATIONS   = 5,
+    QUNS_QUIET_TIME              = 6,
+    QUNS_APP                     = 7
+} QUERY_USER_NOTIFICATION_STATE;
+
+HRESULT     WINAPI SHQueryUserNotificationState(QUERY_USER_NOTIFICATION_STATE*);
+
 typedef enum SHSTOCKICONID
 {
     SIID_INVALID=-1,

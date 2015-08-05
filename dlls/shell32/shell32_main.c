@@ -1404,3 +1404,13 @@ HRESULT WINAPI SHEnumerateUnreadMailAccountsW(HKEY user, DWORD idx, LPWSTR maila
     FIXME("%p %d %p %d: stub\n", user, idx, mailaddress, mailaddresslen);
     return E_NOTIMPL;
 }
+
+/***********************************************************************
+ *              SHQueryUserNotificationState (SHELL32.@)
+ */
+HRESULT WINAPI SHQueryUserNotificationState(QUERY_USER_NOTIFICATION_STATE *state)
+{
+    FIXME("%p: stub\n", state);
+    *state = QUNS_ACCEPTS_NOTIFICATIONS;
+    return S_OK;
+}
