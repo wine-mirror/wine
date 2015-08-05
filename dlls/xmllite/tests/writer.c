@@ -36,6 +36,10 @@ static HRESULT (WINAPI *pCreateXmlWriterOutputWithEncodingName)(IUnknown *stream
                                                                 IMalloc *imalloc,
                                                                 LPCWSTR encoding_name,
                                                                 IXmlWriterOutput **output);
+static HRESULT (WINAPI *pCreateXmlWriterOutputWithEncodingCodePage)(IUnknown *stream,
+                                                                    IMalloc *imalloc,
+                                                                    UINT codepage,
+                                                                    IXmlWriterOutput **output);
 
 static HRESULT WINAPI testoutput_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
@@ -168,6 +172,7 @@ static BOOL init_pointers(void)
 #define MAKEFUNC(f) if (!(p##f = (void*)GetProcAddress(mod, #f))) return FALSE;
     MAKEFUNC(CreateXmlWriter);
     MAKEFUNC(CreateXmlWriterOutputWithEncodingName);
+    MAKEFUNC(CreateXmlWriterOutputWithEncodingCodePage);
 #undef MAKEFUNC
 
     return TRUE;
@@ -186,6 +191,20 @@ static void test_writeroutput(void)
     IUnknown_Release(output);
 
     hr = pCreateXmlWriterOutputWithEncodingName(&testoutput, NULL, utf16W, &output);
+    ok(hr == S_OK, "got %08x\n", hr);
+    unk = NULL;
+    hr = IUnknown_QueryInterface(output, &IID_IXmlWriterOutput, (void**)&unk);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(unk != NULL, "got %p\n", unk);
+    /* releasing 'unk' crashes on native */
+    IUnknown_Release(output);
+
+    output = NULL;
+    hr = pCreateXmlWriterOutputWithEncodingCodePage(&testoutput, NULL, ~0u, &output);
+    ok(hr == S_OK, "got %08x\n", hr);
+    IUnknown_Release(output);
+
+    hr = pCreateXmlWriterOutputWithEncodingCodePage(&testoutput, NULL, CP_UTF8, &output);
     ok(hr == S_OK, "got %08x\n", hr);
     unk = NULL;
     hr = IUnknown_QueryInterface(output, &IID_IXmlWriterOutput, (void**)&unk);
