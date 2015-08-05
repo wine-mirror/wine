@@ -80,8 +80,13 @@ static const var_t *find_arg(const var_list_t *args, const char *name)
 
 static char *append_namespace(char *ptr, struct namespace *namespace, const char *separator)
 {
-    if(is_global_namespace(namespace))
-        return ptr;
+    if(is_global_namespace(namespace)) {
+        if(!use_abi_namespace)
+            return ptr;
+        strcpy(ptr, "ABI");
+        strcat(ptr, separator);
+        return ptr + strlen(ptr);
+    }
 
     ptr = append_namespace(ptr, namespace->parent, separator);
     strcpy(ptr, namespace->name);
@@ -95,6 +100,9 @@ char *format_namespace(struct namespace *namespace, const char *prefix, const ch
     unsigned sep_len = strlen(separator);
     struct namespace *iter;
     char *ret, *ptr;
+
+    if(use_abi_namespace && !is_global_namespace(namespace))
+        len += 3 /* strlen("ABI") */ + sep_len;
 
     for(iter = namespace; !is_global_namespace(iter); iter = iter->parent)
         len += strlen(iter->name) + sep_len;

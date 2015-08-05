@@ -85,6 +85,8 @@ file).
 .PP
 .IP "\fB--winrt\fR"
 Enable Windows Runtime mode.
+.IP "\fB--ns_prefix\fR"
+Prefix namespaces with ABI namespace.
 .PP
 .B Registration script options:
 .IP "\fB-r\fR"

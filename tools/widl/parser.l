@@ -152,7 +152,14 @@ UUID *parse_uuid(const char *u)
                                 if(!winrt_mode)
                                     error_loc("winrt IDL file imported in non-winrt mode\n");
                             }else {
+                                const char *ptr = yytext+5;
+
                                 winrt_mode = TRUE;
+
+                                while(isspace(*ptr))
+                                    ptr++;
+                                if(!strncmp(ptr, "ns_prefix", 9) && (!*(ptr += 9) || isspace(*ptr)))
+                                    use_abi_namespace = TRUE;
                             }
                             yy_pop_state();
                         }

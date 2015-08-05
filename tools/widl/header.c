@@ -155,8 +155,11 @@ static const char *uuid_string(const UUID *uuid)
 
 static void write_namespace_start(FILE *header, struct namespace *namespace)
 {
-    if(is_global_namespace(namespace))
+    if(is_global_namespace(namespace)) {
+        if(use_abi_namespace)
+            write_line(header, 1, "namespace ABI {");
         return;
+    }
 
     write_namespace_start(header, namespace->parent);
     write_line(header, 1, "namespace %s {", namespace->name);
@@ -164,8 +167,11 @@ static void write_namespace_start(FILE *header, struct namespace *namespace)
 
 static void write_namespace_end(FILE *header, struct namespace *namespace)
 {
-    if(is_global_namespace(namespace))
+    if(is_global_namespace(namespace)) {
+        if(use_abi_namespace)
+            write_line(header, -1, "}", namespace->name);
         return;
+    }
 
     write_line(header, -1, "}", namespace->name);
     write_namespace_end(header, namespace->parent);

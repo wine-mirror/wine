@@ -17,7 +17,7 @@
  */
 
 #ifdef __WIDL__
-#pragma winrt
+#pragma winrt ns_prefix
 #endif
 
 import "inspectable.idl";
