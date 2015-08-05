@@ -243,11 +243,26 @@ static void STDMETHODCALLTYPE d3d10_texture2d_Unmap(ID3D10Texture2D *iface, UINT
 
 static void STDMETHODCALLTYPE d3d10_texture2d_GetDesc(ID3D10Texture2D *iface, D3D10_TEXTURE2D_DESC *desc)
 {
-    struct d3d10_texture2d *This = impl_from_ID3D10Texture2D(iface);
+    struct d3d10_texture2d *texture = impl_from_ID3D10Texture2D(iface);
+    struct wined3d_resource_desc wined3d_desc;
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
-    *desc = This->desc;
+    *desc = texture->desc;
+
+    wined3d_mutex_lock();
+    wined3d_resource_get_desc(wined3d_texture_get_resource(texture->wined3d_texture), &wined3d_desc);
+    wined3d_mutex_unlock();
+
+    /* FIXME: Resizing swapchain buffers can cause these to change. We'd like
+     * to get everything from wined3d, but e.g. bind flags don't exist as such
+     * there (yet). */
+    desc->Width = wined3d_desc.width;
+    desc->Height = wined3d_desc.height;
+    desc->Format = dxgi_format_from_wined3dformat(wined3d_desc.format);
+    desc->SampleDesc.Count = wined3d_desc.multisample_type == WINED3D_MULTISAMPLE_NONE
+            ? 1 : wined3d_desc.multisample_type;
+    desc->SampleDesc.Quality = wined3d_desc.multisample_quality;
 }
 
 static const struct ID3D10Texture2DVtbl d3d10_texture2d_vtbl =
