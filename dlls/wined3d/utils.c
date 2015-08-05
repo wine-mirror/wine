@@ -93,6 +93,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_R10G10B10A2_UINT,          10, 10, 10,  2,   0, 10, 20, 30,    4,   0,     0},
     {WINED3DFMT_R10G10B10A2_SNORM,         10, 10, 10,  2,   0, 10, 20, 30,    4,   0,     0},
     {WINED3DFMT_R8G8B8A8_UNORM,             8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
+    {WINED3DFMT_R8G8B8A8_UNORM_SRGB,        8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
     {WINED3DFMT_R8G8B8A8_UINT,              8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
     {WINED3DFMT_R8G8B8X8_UNORM,             8,  8,  8,  0,   0,  8, 16,  0,    4,   0,     0},
     {WINED3DFMT_R16G16_UNORM,              16, 16,  0,  0,   0, 16,  0,  0,    4,   0,     0},
