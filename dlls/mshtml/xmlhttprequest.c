@@ -512,8 +512,36 @@ static HRESULT WINAPI HTMLXMLHttpRequest_getAllResponseHeaders(IHTMLXMLHttpReque
 static HRESULT WINAPI HTMLXMLHttpRequest_getResponseHeader(IHTMLXMLHttpRequest *iface, BSTR bstrHeader, BSTR *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrHeader), p);
-    return E_NOTIMPL;
+    nsACString header, ret;
+    char *cstr;
+    nsresult nsres;
+    HRESULT hres;
+    LONG state;
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrHeader), p);
+
+    if(!p)
+        return E_POINTER;
+    if(!bstrHeader)
+        return E_INVALIDARG;
+
+    hres = IHTMLXMLHttpRequest_get_readyState(iface, &state);
+    if(FAILED(hres))
+        return hres;
+
+    if(state < 2) {
+        *p = NULL;
+        return E_FAIL;
+    }
+
+    cstr = heap_strdupWtoU(bstrHeader);
+    nsACString_InitDepend(&header, cstr);
+    nsACString_Init(&ret, NULL);
+
+    nsres = nsIXMLHttpRequest_GetResponseHeader(This->nsxhr, &header, &ret);
+
+    nsACString_Finish(&header);
+    heap_free(cstr);
+    return return_nscstr(nsres, &ret, p);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_setRequestHeader(IHTMLXMLHttpRequest *iface, BSTR bstrHeader, BSTR bstrValue)

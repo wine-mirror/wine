@@ -71,6 +71,7 @@ static int strcmp_wa(LPCWSTR strw, const char *stra)
     }while(0)
 
 static IHTMLXMLHttpRequest *xhr = NULL;
+static BSTR content_type = NULL;
 
 DEFINE_EXPECT(xmlhttprequest_onreadystatechange_opened);
 DEFINE_EXPECT(xmlhttprequest_onreadystatechange_headers_received);
@@ -376,6 +377,11 @@ static void pump_msgs(BOOL *b)
 
 static const char EXPECT_RESPONSE_TEXT[] = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<a>TEST</a>\n";
 
+struct HEADER_TYPE {
+    const char *key;
+    const char *value;
+};
+
 static void create_xmlhttprequest(IHTMLDocument2 *doc)
 {
     IHTMLWindow2 *window;
@@ -412,6 +418,25 @@ static void create_xmlhttprequest(IHTMLDocument2 *doc)
     ok(xhr != NULL, "xhr == NULL\n");
 }
 
+static void test_header(const struct HEADER_TYPE expect[], int num)
+{
+    int i;
+    BSTR key, text;
+    HRESULT hres;
+
+    for(i = 0; i < num; ++i) {
+        text = NULL;
+        key = a2bstr(expect[i].key);
+        hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, key, &text);
+        ok(hres == S_OK, "getResponseHeader failed, got %08x\n", hres);
+        ok(text != NULL, "text == NULL\n");
+        ok(!strcmp_wa(text, expect[i].value),
+            "Expect %s: %s, got %s\n", expect[i].key, expect[i].value, wine_dbgstr_w(text));
+        SysFreeString(key);
+        SysFreeString(text);
+    }
+}
+
 static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
 {
     VARIANT vbool, vempty, var;
@@ -419,6 +444,12 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
     BSTR text;
     LONG val;
     HRESULT hres;
+    static const struct HEADER_TYPE expect_headers[] = {
+        {"Server", "Apache"},
+        {"Accept-Ranges", "bytes"},
+        {"Content-Length", "51"},
+        {"Content-Type", "application/xml"}
+    };
 
     create_xmlhttprequest(doc);
     if(!xhr)
@@ -463,6 +494,11 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
     ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
     ok(text == NULL, "Expect NULL, got %p\n", text);
 
+    text = (BSTR)0xdeadbeef;
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+    ok(text == NULL, "text = %p\n", text);
+
     method = a2bstr("GET");
     url = a2bstr(xml_url);
     V_VT(&vbool) = VT_BOOL;
@@ -482,6 +518,11 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
         xhr = NULL;
         return;
     }
+
+    text = (BSTR)0xdeadbeef;
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+    ok(text == NULL, "text = %p\n", text);
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
@@ -507,6 +548,14 @@ static void test_sync_xhr(IHTMLDocument2 *doc, const char *xml_url)
     CHECK_CALLED(xmlhttprequest_onreadystatechange_headers_received);
     CHECK_CALLED(xmlhttprequest_onreadystatechange_loading);
     CHECK_CALLED(xmlhttprequest_onreadystatechange_done);
+
+    text = NULL;
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
+    ok(hres == S_OK, "getResponseHeader failed, got %08x\n", hres);
+    ok(text != NULL, "text == NULL\n");
+    SysFreeString(text);
+
+    test_header(expect_headers, sizeof(expect_headers)/sizeof(expect_headers[0]));
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
@@ -543,6 +592,10 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
     BSTR text;
     LONG val;
     HRESULT hres;
+    static const struct HEADER_TYPE expect_headers[] = {
+        {"Content-Length", "51"},
+        {"Content-Type", "application/xml"}
+    };
 
     create_xmlhttprequest(doc);
     if(!xhr)
@@ -558,6 +611,21 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
     ok(hres == S_OK, "get_onreadystatechange failed: %08x\n", hres);
     ok(V_VT(&var) == VT_DISPATCH, "V_VT(onreadystatechange) = %d\n", V_VT(&var));
     ok(V_DISPATCH(&var) == (IDispatch*)&xmlhttprequest_onreadystatechange_obj, "unexpected onreadystatechange value\n");
+
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, NULL, &text);
+    ok(hres == E_INVALIDARG, "Expect E_INVALIDARG, got %08x\n", hres);
+
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, NULL);
+    ok(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
+
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, NULL, NULL);
+    ok(hres == E_POINTER || broken(hres == E_INVALIDARG), /* Vista and before */
+        "Expect E_POINTER, got %08x\n", hres);
+
+    text = (BSTR)0xdeadbeef;
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+    ok(text == NULL, "text = %p\n", text);
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
@@ -594,6 +662,11 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
         return;
     }
 
+    text = (BSTR)0xdeadbeef;
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
+    ok(hres == E_FAIL, "got %08x\n", hres);
+    ok(text == NULL, "text = %p\n", text);
+
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
     ok(hres == E_FAIL, "Expect E_FAIL, got: %08x\n", hres);
@@ -627,6 +700,15 @@ static void test_async_xhr(IHTMLDocument2 *doc, const char *xml_url)
         xhr = NULL;
         return;
     }
+
+    text = NULL;
+    hres = IHTMLXMLHttpRequest_getResponseHeader(xhr, content_type, &text);
+    ok(hres == S_OK, "getResponseHeader failed, got %08x\n", hres);
+    ok(text != NULL, "text == NULL\n");
+    ok(!strcmp_wa(text, "application/xml"), "text = %s\n", wine_dbgstr_w(text));
+    SysFreeString(text);
+
+    test_header(expect_headers, sizeof(expect_headers)/sizeof(expect_headers[0]));
 
     val = 0xdeadbeef;
     hres = IHTMLXMLHttpRequest_get_status(xhr, &val);
@@ -707,12 +789,14 @@ START_TEST(xmlhttprequest)
 
     CoInitialize(NULL);
 
+    content_type = a2bstr("Content-Type");
     doc = create_doc_from_url(start_url);
     if(doc) {
         test_sync_xhr(doc, xml_url);
         test_async_xhr(doc, xml_url);
         IHTMLDocument2_Release(doc);
     }
+    SysFreeString(content_type);
 
     CoUninitialize();
 }
