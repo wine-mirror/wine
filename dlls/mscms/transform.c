@@ -175,6 +175,12 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest,
     cmsoutput = dst->cmsprofile;
     transform.cmstransform = cmsCreateProofingTransform(cmsinput, in_format, cmsoutput, out_format, cmstarget,
                                                         intent, INTENT_ABSOLUTE_COLORIMETRIC, proofing);
+    if (!transform.cmstransform)
+    {
+        if (tgt) release_profile( tgt );
+        release_profile( dst );
+        return FALSE;
+    }
 
     ret = create_transform( &transform );
 
@@ -254,9 +260,15 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
         {
             cmsprofiles[1] = profile1->cmsprofile;
         }
-        transform.cmstransform = cmsCreateMultiprofileTransform( cmsprofiles, nprofiles, in_format, out_format, *intents, 0 );
-
+        transform.cmstransform = cmsCreateMultiprofileTransform( cmsprofiles, nprofiles, in_format,
+                                                                 out_format, *intents, 0 );
         HeapFree( GetProcessHeap(), 0, cmsprofiles );
+        if (!transform.cmstransform)
+        {
+            release_profile( profile0 );
+            release_profile( profile1 );
+            return FALSE;
+        }
         ret = create_transform( &transform );
     }
 
@@ -327,7 +339,8 @@ BOOL WINAPI TranslateBitmapBits( HTRANSFORM handle, PVOID srcbits, BMFORMAT inpu
            outputstride, callback, data );
 
     if (!transform) return FALSE;
-    cmsChangeBuffersFormat( transform->cmstransform, from_bmformat(input), from_bmformat(output) );
+    if (!cmsChangeBuffersFormat( transform->cmstransform, from_bmformat(input), from_bmformat(output) ))
+        return FALSE;
 
     cmsDoTransform( transform->cmstransform, srcbits, destbits, width * height );
     release_transform( transform );
@@ -368,7 +381,8 @@ BOOL WINAPI TranslateColors( HTRANSFORM handle, PCOLOR in, DWORD count,
     if (!transform) return FALSE;
 
     xfrm = transform->cmstransform;
-    cmsChangeBuffersFormat( xfrm, from_type(input_type), from_type(output_type) );
+    if (!cmsChangeBuffersFormat( xfrm, from_type(input_type), from_type(output_type) ))
+        return FALSE;
 
     switch (input_type)
     {
