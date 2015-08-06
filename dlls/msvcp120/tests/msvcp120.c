@@ -558,18 +558,20 @@ static void test_tr2_sys__Copy_file(void)
         char const *dest;
         MSVCP_bool fail_if_exists;
         int last_error;
+        int last_error2;
         MSVCP_bool is_todo;
     } tests[] = {
-        { "f1", "f1_copy", TRUE, ERROR_SUCCESS, FALSE },
-        { "f1", "tr2_test_dir\\f1_copy", TRUE, ERROR_SUCCESS, FALSE },
-        { "f1", "tr2_test_dir\\f1_copy", TRUE, ERROR_FILE_EXISTS, FALSE },
-        { "f1", "tr2_test_dir\\f1_copy", FALSE, ERROR_SUCCESS, FALSE },
-        { "tr2_test_dir", "f1", TRUE, ERROR_ACCESS_DENIED, FALSE },
-        { "tr2_test_dir", "tr2_test_dir_copy", TRUE, ERROR_ACCESS_DENIED, FALSE },
-        { NULL, "f1", TRUE, ERROR_INVALID_PARAMETER, TRUE },
-        { "f1", NULL, TRUE, ERROR_INVALID_PARAMETER, TRUE },
-        { "not_exist", "tr2_test_dir", TRUE, ERROR_FILE_NOT_FOUND, FALSE },
-        { "f1", "not_exist_dir\\f1_copy", TRUE, ERROR_PATH_NOT_FOUND, FALSE }
+        { "f1", "f1_copy", TRUE, ERROR_SUCCESS, ERROR_SUCCESS, FALSE },
+        { "f1", "tr2_test_dir\\f1_copy", TRUE, ERROR_SUCCESS, ERROR_SUCCESS, FALSE },
+        { "f1", "tr2_test_dir\\f1_copy", TRUE, ERROR_FILE_EXISTS, ERROR_FILE_EXISTS, FALSE },
+        { "f1", "tr2_test_dir\\f1_copy", FALSE, ERROR_SUCCESS, ERROR_SUCCESS, FALSE },
+        { "tr2_test_dir", "f1", TRUE, ERROR_ACCESS_DENIED, ERROR_ACCESS_DENIED, FALSE },
+        { "tr2_test_dir", "tr2_test_dir_copy", TRUE, ERROR_ACCESS_DENIED, ERROR_ACCESS_DENIED, FALSE },
+        { NULL, "f1", TRUE, ERROR_INVALID_PARAMETER, ERROR_INVALID_PARAMETER, TRUE },
+        { "f1", NULL, TRUE, ERROR_INVALID_PARAMETER, ERROR_INVALID_PARAMETER, TRUE },
+        { "not_exist", "tr2_test_dir", TRUE, ERROR_FILE_NOT_FOUND, ERROR_FILE_NOT_FOUND, FALSE },
+        { "f1", "not_exist_dir\\f1_copy", TRUE, ERROR_PATH_NOT_FOUND, ERROR_FILE_NOT_FOUND, FALSE },
+        { "f1", "tr2_test_dir", TRUE, ERROR_ACCESS_DENIED, ERROR_FILE_EXISTS, FALSE }
     };
 
     ret = p_tr2_sys__Make_dir("tr2_test_dir");
@@ -585,17 +587,18 @@ static void test_tr2_sys__Copy_file(void)
         errno = 0xdeadbeef;
         ret = p_tr2_sys__Copy_file(tests[i].source, tests[i].dest, tests[i].fail_if_exists);
         if(tests[i].is_todo)
-            todo_wine ok(ret == tests[i].last_error, "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n", i+1, tests[i].last_error, ret);
+            todo_wine ok(ret == tests[i].last_error || ret == tests[i].last_error2,
+                    "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n",
+                    i+1, tests[i].last_error, ret);
         else
-            ok(ret == tests[i].last_error, "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n", i+1, tests[i].last_error, ret);
+            ok(ret == tests[i].last_error || ret == tests[i].last_error2,
+                    "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n",
+                    i+1, tests[i].last_error, ret);
         ok(errno == 0xdeadbeef, "test_tr2_sys__Copy_file(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
         if(ret == ERROR_SUCCESS)
             ok(p_tr2_sys__File_size(tests[i].source) == p_tr2_sys__File_size(tests[i].dest),
                     "test_tr2_sys__Copy_file(): test %d failed, two files' size are not equal\n", i+1);
     }
-    ret = p_tr2_sys__Copy_file("f1", "tr2_test_dir", TRUE);
-    ok(ret==ERROR_ACCESS_DENIED || ret==ERROR_FILE_EXISTS,
-            "test_tr2_sys__Copy_file(): expect: ERROR_ACCESS_DENIED or ERROR_FILE_EXISTS, got %d\n", ret);
 
     ok(DeleteFileA("f1"), "expect f1 to exist\n");
     ok(DeleteFileA("f1_copy"), "expect f1_copy to exist\n");
