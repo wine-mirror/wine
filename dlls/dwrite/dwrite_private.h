@@ -153,6 +153,7 @@ extern void opentype_get_font_metrics(IDWriteFontFileStream*,DWRITE_FONT_FACE_TY
 extern HRESULT opentype_get_font_strings_from_id(const void*,DWRITE_INFORMATIONAL_STRING_ID,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_typographic_features(IDWriteFontFace*,UINT32,UINT32,UINT32,UINT32*,DWRITE_FONT_FEATURE_TAG*) DECLSPEC_HIDDEN;
 extern BOOL opentype_get_vdmx_size(const void*,INT,UINT16*,UINT16*) DECLSPEC_HIDDEN;
+extern UINT32 opentype_get_cpal_palettecount(const void*) DECLSPEC_HIDDEN;
 
 enum gasp_flags {
     GASP_GRIDFIT             = 0x0001,

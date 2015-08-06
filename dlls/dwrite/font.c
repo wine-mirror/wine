@@ -34,6 +34,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 #define MS_VDMX_TAG DWRITE_MAKE_OPENTYPE_TAG('V','D','M','X')
 #define MS_GASP_TAG DWRITE_MAKE_OPENTYPE_TAG('g','a','s','p')
+#define MS_CPAL_TAG DWRITE_MAKE_OPENTYPE_TAG('C','P','A','L')
 
 static const IID IID_issystemcollection = {0x14d88047,0x331f,0x4cd3,{0xbc,0xa8,0x3e,0x67,0x99,0xaf,0x34,0x75}};
 
@@ -154,6 +155,7 @@ struct dwrite_fontface {
     struct dwrite_fonttable cmap;
     struct dwrite_fonttable vdmx;
     struct dwrite_fonttable gasp;
+    struct dwrite_fonttable cpal;
     DWRITE_GLYPH_METRICS *glyphs[GLYPH_MAX/GLYPH_BLOCK_SIZE];
 };
 
@@ -262,6 +264,11 @@ static inline void* get_fontface_gasp(struct dwrite_fontface *fontface, UINT32 *
     return ptr;
 }
 
+static inline void* get_fontface_cpal(struct dwrite_fontface *fontface)
+{
+    return get_fontface_table(fontface, MS_CPAL_TAG, &fontface->cpal);
+}
+
 static void release_font_data(struct dwrite_font_data *data)
 {
     int i;
@@ -338,6 +345,8 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace2 *iface)
             IDWriteFontFace2_ReleaseFontTable(iface, This->vdmx.context);
         if (This->gasp.context)
             IDWriteFontFace2_ReleaseFontTable(iface, This->gasp.context);
+        if (This->cpal.context)
+            IDWriteFontFace2_ReleaseFontTable(iface, This->cpal.context);
         for (i = 0; i < This->file_count; i++) {
             if (This->streams[i])
                 IDWriteFontFileStream_Release(This->streams[i]);
@@ -948,8 +957,8 @@ static BOOL WINAPI dwritefontface2_IsColorFont(IDWriteFontFace2 *iface)
 static UINT32 WINAPI dwritefontface2_GetColorPaletteCount(IDWriteFontFace2 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p): stub\n", This);
-    return 0;
+    TRACE("(%p)\n", This);
+    return opentype_get_cpal_palettecount(get_fontface_cpal(This));
 }
 
 static UINT32 WINAPI dwritefontface2_GetPaletteEntryCount(IDWriteFontFace2 *iface)
@@ -2476,9 +2485,11 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
     memset(&fontface->cmap, 0, sizeof(fontface->cmap));
     memset(&fontface->vdmx, 0, sizeof(fontface->vdmx));
     memset(&fontface->gasp, 0, sizeof(fontface->gasp));
+    memset(&fontface->cpal, 0, sizeof(fontface->cpal));
     fontface->cmap.exists = TRUE;
     fontface->vdmx.exists = TRUE;
     fontface->gasp.exists = TRUE;
+    fontface->cpal.exists = TRUE;
     fontface->index = index;
     fontface->simulations = simulations;
     memset(fontface->glyphs, 0, sizeof(fontface->glyphs));

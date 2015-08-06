@@ -668,6 +668,25 @@ static const UINT16 dwriteid_to_opentypeid[DWRITE_INFORMATIONAL_STRING_POSTSCRIP
     OPENTYPE_STRING_POSTSCRIPT_CID_NAME
 };
 
+/* CPAL table */
+struct CPAL_Header_0
+{
+    USHORT version;
+    USHORT numPaletteEntries;
+    USHORT numPalette;
+    USHORT numColorRecords;
+    ULONG  offsetFirstColorRecord;
+    USHORT colorRecordIndices[1];
+};
+
+/* for version == 1, this comes after full CPAL_Header_0 */
+struct CPAL_SubHeader_1
+{
+    ULONG  offsetPaletteTypeArray;
+    ULONG  offsetPaletteLabelArray;
+    ULONG  offsetPaletteEntryLabelArray;
+};
+
 BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
 {
     return (type == DWRITE_FONT_FACE_TYPE_CFF) ||
@@ -1402,4 +1421,10 @@ WORD opentype_get_gasp_flags(const WORD *ptr, UINT32 size, INT emsize)
 
 done:
     return flags;
+}
+
+UINT32 opentype_get_cpal_palettecount(const void *cpal)
+{
+    const struct CPAL_Header_0 *header = (const struct CPAL_Header_0*)cpal;
+    return header ? GET_BE_WORD(header->numPalette) : 0;
 }
