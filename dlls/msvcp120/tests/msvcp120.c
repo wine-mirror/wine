@@ -44,6 +44,12 @@ struct space_info {
     ULONGLONG available;
 };
 
+enum file_type {
+    status_unknown, file_not_found, regular_file, directory_file,
+    symlink_file, block_file, character_file, fifo_file, socket_file,
+    type_unknown
+};
+
 static inline const char* debugstr_longlong(ULONGLONG ll)
 {
     static char string[17];
@@ -75,6 +81,8 @@ static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
 static int (__cdecl *p_tr2_sys__Copy_file)(char const*, char const*, MSVCP_bool);
 static int (__cdecl *p_tr2_sys__Rename)(char const*, char const*);
 static struct space_info (__cdecl *p_tr2_sys__Statvfs)(char const*);
+static enum file_type (__cdecl *p_tr2_sys__Stat)(char const*, int *);
+static enum file_type (__cdecl *p_tr2_sys__Lstat)(char const*, int *);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -121,6 +129,10 @@ static BOOL init(void)
                 "?_Rename@sys@tr2@std@@YAHPEBD0@Z");
         SET(p_tr2_sys__Statvfs,
                 "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEBD@Z");
+        SET(p_tr2_sys__Stat,
+                "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z");
+        SET(p_tr2_sys__Lstat,
+                "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -140,6 +152,10 @@ static BOOL init(void)
                 "?_Rename@sys@tr2@std@@YAHPBD0@Z");
         SET(p_tr2_sys__Statvfs,
                 "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PBD@Z");
+        SET(p_tr2_sys__Stat,
+                "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z");
+        SET(p_tr2_sys__Lstat,
+                "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -712,6 +728,95 @@ static void test_tr2_sys__Statvfs(void)
             0, debugstr_longlong(info.free));
 }
 
+static void test_tr2_sys__Stat(void)
+{
+    int i, err_code, ret;
+    HANDLE file;
+    enum file_type val;
+    struct {
+        char const *path;
+        enum file_type ret;
+        int err_code;
+        int is_todo;
+    } tests[] = {
+        { NULL, status_unknown, ERROR_INVALID_PARAMETER, FALSE },
+        { "tr2_test_dir",    directory_file, ERROR_SUCCESS, FALSE },
+        { "tr2_test_dir\\f1",  regular_file, ERROR_SUCCESS, FALSE },
+        { "tr2_test_dir\\not_exist_file  ", file_not_found, ERROR_SUCCESS, FALSE },
+        { "tr2_test_dir\\??invalid_name>>", file_not_found, ERROR_SUCCESS, FALSE },
+        { "tr2_test_dir\\f1_link" ,   regular_file, ERROR_SUCCESS, TRUE },
+        { "tr2_test_dir\\dir_link", directory_file, ERROR_SUCCESS, TRUE },
+    };
+
+    CreateDirectoryA("tr2_test_dir", NULL);
+    file = CreateFileA("tr2_test_dir/f1", 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(CloseHandle(file), "CloseHandle\n");
+    SetLastError(0xdeadbeef);
+    ret = CreateSymbolicLinkA("tr2_test_dir/f1_link", "tr2_test_dir/f1", 0);
+    if(!ret && (GetLastError()==ERROR_PRIVILEGE_NOT_HELD||GetLastError()==ERROR_INVALID_FUNCTION)) {
+        tests[5].ret = tests[6].ret = file_not_found;
+        win_skip("Privilege not held or symbolic link not supported, skipping symbolic link tests.\n");
+    }else {
+        ok(ret, "CreateSymbolicLinkA failed\n");
+        ok(CreateSymbolicLinkA("tr2_test_dir/dir_link", "tr2_test_dir", 1), "CreateSymbolicLinkA failed\n");
+    }
+
+    file = CreateNamedPipeA("\\\\.\\PiPe\\tests_pipe.c",
+            PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT, 2, 1024, 1024,
+            NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    err_code = 0xdeadbeef;
+    val = p_tr2_sys__Stat("\\\\.\\PiPe\\tests_pipe.c", &err_code);
+    todo_wine ok(regular_file == val, "tr2_sys__Stat(): expect: regular_file, got %d\n", val);
+    todo_wine ok(ERROR_SUCCESS == err_code, "tr2_sys__Stat(): err_code expect: ERROR_SUCCESS, got %d\n", err_code);
+    err_code = 0xdeadbeef;
+    val = p_tr2_sys__Lstat("\\\\.\\PiPe\\tests_pipe.c", &err_code);
+    ok(status_unknown == val, "tr2_sys__Lstat(): expect: status_unknown, got %d\n", val);
+    todo_wine ok(ERROR_PIPE_BUSY == err_code, "tr2_sys__Lstat(): err_code expect: ERROR_PIPE_BUSY, got %d\n", err_code);
+    ok(CloseHandle(file), "CloseHandle\n");
+    file = CreateNamedPipeA("\\\\.\\PiPe\\tests_pipe.c",
+            PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE | PIPE_WAIT, 2, 1024, 1024,
+            NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "CreateNamedPipe failed\n");
+    err_code = 0xdeadbeef;
+    val = p_tr2_sys__Lstat("\\\\.\\PiPe\\tests_pipe.c", &err_code);
+    todo_wine ok(regular_file == val, "tr2_sys__Lstat(): expect: regular_file, got %d\n", val);
+    todo_wine ok(ERROR_SUCCESS == err_code, "tr2_sys__Lstat(): err_code expect: ERROR_SUCCESS, got %d\n", err_code);
+    ok(CloseHandle(file), "CloseHandle\n");
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        err_code = 0xdeadbeef;
+        val = p_tr2_sys__Stat(tests[i].path, &err_code);
+        if(tests[i].is_todo)
+            todo_wine ok(tests[i].ret == val, "tr2_sys__Stat(): test %d expect: %d, got %d\n",
+                    i+1, tests[i].ret, val);
+        else
+            ok(tests[i].ret == val, "tr2_sys__Stat(): test %d expect: %d, got %d\n", i+1, tests[i].ret, val);
+        ok(tests[i].err_code == err_code, "tr2_sys__Stat(): test %d err_code expect: %d, got %d\n",
+                i+1, tests[i].err_code, err_code);
+
+        /* test tr2_sys__Lstat */
+        err_code = 0xdeadbeef;
+        val = p_tr2_sys__Lstat(tests[i].path, &err_code);
+        if(tests[i].is_todo)
+            todo_wine ok(tests[i].ret == val, "tr2_sys__Lstat(): test %d expect: %d, got %d\n",
+                    i+1, tests[i].ret, val);
+        else
+            ok(tests[i].ret == val, "tr2_sys__Lstat(): test %d expect: %d, got %d\n", i+1, tests[i].ret, val);
+
+        ok(tests[i].err_code == err_code, "tr2_sys__Lstat(): test %d err_code expect: %d, got %d\n",
+                i+1, tests[i].err_code, err_code);
+    }
+
+    if(ret) {
+        todo_wine ok(DeleteFileA("tr2_test_dir/f1_link"), "expect tr2_test_dir/f1_link to exist\n");
+        todo_wine ok(RemoveDirectoryA("tr2_test_dir/dir_link"), "expect tr2_test_dir/dir_link to exist\n");
+    }
+    ok(DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 to exist\n");
+    ok(RemoveDirectoryA("tr2_test_dir"), "expect tr2_test_dir to exist\n");
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -730,5 +835,6 @@ START_TEST(msvcp120)
     test_tr2_sys__Copy_file();
     test_tr2_sys__Rename();
     test_tr2_sys__Statvfs();
+    test_tr2_sys__Stat();
     FreeLibrary(msvcp);
 }

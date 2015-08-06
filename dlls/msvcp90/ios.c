@@ -324,6 +324,12 @@ struct space_info {
     ULONGLONG available;
 };
 
+enum file_type {
+    status_unknown, file_not_found, regular_file, directory_file,
+    symlink_file, block_file, character_file, fifo_file, socket_file,
+    type_unknown
+};
+
 #if _MSVCP_VER >= 100
 #define VBTABLE_ALIGN 8
 #else
@@ -14331,6 +14337,47 @@ struct space_info __cdecl tr2_sys__Statvfs(const char* path)
         info.available = available.QuadPart;
     }
     return info;
+}
+
+/* ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z */
+/* ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z */
+enum file_type __cdecl tr2_sys__Stat(char const* path, int* err_code)
+{
+    DWORD attr;
+    TRACE("(%s %p)\n", debugstr_a(path), err_code);
+    if(!path) {
+        *err_code = ERROR_INVALID_PARAMETER;
+        return status_unknown;
+    }
+
+    attr=GetFileAttributesA(path);
+    if(attr == INVALID_FILE_ATTRIBUTES) {
+        enum file_type ret;
+        switch(GetLastError()) {
+            case ERROR_FILE_NOT_FOUND:
+            case ERROR_BAD_NETPATH:
+            case ERROR_INVALID_NAME:
+            case ERROR_BAD_PATHNAME:
+            case ERROR_PATH_NOT_FOUND:
+                ret = file_not_found;
+                *err_code = ERROR_SUCCESS;
+                break;
+            default:
+                ret = status_unknown;
+                *err_code = GetLastError();
+        }
+        return ret;
+    }
+
+    *err_code = ERROR_SUCCESS;
+    return (attr & FILE_ATTRIBUTE_DIRECTORY)?directory_file:regular_file;
+}
+
+/* ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z */
+/* ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z */
+enum file_type __cdecl tr2_sys__Lstat(char const* path, int* err_code)
+{
+    return tr2_sys__Stat(path, err_code);
 }
 
 /* ??0strstream@std@@QAE@PADHH@Z */
