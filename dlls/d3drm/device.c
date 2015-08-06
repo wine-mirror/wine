@@ -1325,7 +1325,12 @@ static DWORD WINAPI d3drm_device3_GetRenderMode(IDirect3DRMDevice3 *iface)
 
 static HRESULT WINAPI d3drm_device3_GetDirect3DDevice2(IDirect3DRMDevice3 *iface, IDirect3DDevice2 **d3d_device)
 {
-    FIXME("iface %p, d3d_device %p stub!\n", iface, d3d_device);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
+
+    TRACE("iface %p, d3d_device %p.\n", iface, d3d_device);
+
+    if (device->device)
+        return IDirect3DDevice_QueryInterface(device->device, &IID_IDirect3DDevice2, (void**)d3d_device);
 
     return E_NOTIMPL;
 }

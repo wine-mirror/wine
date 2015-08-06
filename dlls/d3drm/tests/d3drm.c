@@ -2185,9 +2185,7 @@ static void test_create_device_from_clipper2(void)
 
     /* Fetch immediate mode device in order to access render target */
     hr = IDirect3DRMDevice2_GetDirect3DDevice2(device2, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -2263,7 +2261,7 @@ static void test_create_device_from_clipper2(void)
     ref3 = get_refcount((IUnknown *)d3drm2);
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     cref2 = get_refcount((IUnknown *)clipper);
-    todo_wine ok(cref1 == cref2, "expected cref1 == cref2, got cref1 = %u, cref2 = %u.\n", cref1, cref2);
+    ok(cref1 == cref2, "expected cref1 == cref2, got cref1 = %u, cref2 = %u.\n", cref1, cref2);
 
     /* Test if render target format follows the screen format */
     hr = IDirectDraw_GetDisplayMode(ddraw, &desc);
@@ -2279,9 +2277,7 @@ static void test_create_device_from_clipper2(void)
     ok(hr == D3DRM_OK, "Cannot create IDirect3DRMDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DRMDevice2_GetDirect3DDevice2(device2, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -2295,23 +2291,13 @@ static void test_create_device_from_clipper2(void)
     hr = IDirectDraw2_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
-cleanup:
-    if (ds)
-        IDirectDrawSurface_Release(ds);
-    if (surface)
-        IDirectDrawSurface_Release(surface);
-    if (d3ddevice2)
-        IDirect3DDevice2_Release(d3ddevice2);
-    if (device2)
-        IDirect3DRMDevice2_Release(device2);
-    if (d3drm2)
-        IDirect3DRM2_Release(d3drm2);
-    if (d3drm1)
-        IDirect3DRM_Release(d3drm1);
-    if (clipper)
-        IDirectDrawClipper_Release(clipper);
-    if (ddraw)
-        IDirectDraw_Release(ddraw);
+    IDirectDrawSurface_Release(surface);
+    IDirect3DDevice2_Release(d3ddevice2);
+    IDirect3DRMDevice2_Release(device2);
+    IDirect3DRM2_Release(d3drm2);
+    IDirect3DRM_Release(d3drm1);
+    IDirectDrawClipper_Release(clipper);
+    IDirectDraw_Release(ddraw);
     DestroyWindow(window);
 }
 
@@ -2373,9 +2359,7 @@ static void test_create_device_from_clipper3(void)
 
     /* Fetch immediate mode device in order to access render target */
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -2451,7 +2435,7 @@ static void test_create_device_from_clipper3(void)
     ref3 = get_refcount((IUnknown *)d3drm3);
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     cref2 = get_refcount((IUnknown *)clipper);
-    todo_wine ok(cref1 == cref2, "expected cref1 == cref2, got cref1 = %u, cref2 = %u.\n", cref1, cref2);
+    ok(cref1 == cref2, "expected cref1 == cref2, got cref1 = %u, cref2 = %u.\n", cref1, cref2);
 
     /* Test if render target format follows the screen format */
     hr = IDirectDraw_GetDisplayMode(ddraw, &desc);
@@ -2467,9 +2451,7 @@ static void test_create_device_from_clipper3(void)
     ok(hr == D3DRM_OK, "Cannot create IDirect3DRMDevice3 interface (hr = %x).\n", hr);
 
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -2483,23 +2465,13 @@ static void test_create_device_from_clipper3(void)
     hr = IDirectDraw2_RestoreDisplayMode(ddraw);
     ok(SUCCEEDED(hr), "RestoreDisplayMode failed, hr %#x.\n", hr);
 
-cleanup:
-    if (ds)
-        IDirectDrawSurface_Release(ds);
-    if (surface)
-        IDirectDrawSurface_Release(surface);
-    if (d3ddevice2)
-        IDirect3DDevice2_Release(d3ddevice2);
-    if (device3)
-        IDirect3DRMDevice3_Release(device3);
-    if (d3drm3)
-        IDirect3DRM3_Release(d3drm3);
-    if (d3drm1)
-        IDirect3DRM_Release(d3drm1);
-    if (clipper)
-        IDirectDrawClipper_Release(clipper);
-    if (ddraw)
-        IDirectDraw_Release(ddraw);
+    IDirectDrawSurface_Release(surface);
+    IDirect3DDevice2_Release(d3ddevice2);
+    IDirect3DRMDevice3_Release(device3);
+    IDirect3DRM3_Release(d3drm3);
+    IDirect3DRM_Release(d3drm1);
+    IDirectDrawClipper_Release(clipper);
+    IDirectDraw_Release(ddraw);
     DestroyWindow(window);
 }
 
