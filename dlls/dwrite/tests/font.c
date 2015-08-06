@@ -4792,7 +4792,6 @@ static void test_GetPaletteEntries(void)
     }
 
     hr = IDWriteFontFace2_GetPaletteEntries(fontface2, 0, 0, 1, &color);
-todo_wine
     ok(hr == DWRITE_E_NOCOLOR, "got 0x%08x\n", hr);
     IDWriteFontFace2_Release(fontface2);
 
@@ -4827,7 +4826,6 @@ todo_wine
     /* invalid palette index */
     color.r = color.g = color.b = color.a = 123.0;
     hr = IDWriteFontFace2_GetPaletteEntries(fontface2, palettecount, 0, 1, &color);
-todo_wine
     ok(hr == DWRITE_E_NOCOLOR, "got 0x%08x\n", hr);
     ok(color.r == 123.0 && color.g == 123.0 && color.b == 123.0 && color.a == 123.0,
         "got wrong color %.2fx%.2fx%.2fx%.2f\n", color.r, color.g, color.b, color.a);
@@ -4835,23 +4833,19 @@ todo_wine
     /* invalid entry index */
     color.r = color.g = color.b = color.a = 123.0;
     hr = IDWriteFontFace2_GetPaletteEntries(fontface2, 0, entrycount, 1, &color);
-todo_wine
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(color.r == 123.0 && color.g == 123.0 && color.b == 123.0 && color.a == 123.0,
         "got wrong color %.2fx%.2fx%.2fx%.2f\n", color.r, color.g, color.b, color.a);
 
     color.r = color.g = color.b = color.a = 123.0;
     hr = IDWriteFontFace2_GetPaletteEntries(fontface2, 0, entrycount - 1, 1, &color);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(color.r != 123.0 && color.g != 123.0 && color.b != 123.0 && color.a != 123.0,
         "got wrong color %.2fx%.2fx%.2fx%.2f\n", color.r, color.g, color.b, color.a);
-}
 
     /* zero return length */
     color.r = color.g = color.b = color.a = 123.0;
     hr = IDWriteFontFace2_GetPaletteEntries(fontface2, 0, 0, 0, &color);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(color.r == 123.0 && color.g == 123.0 && color.b == 123.0 && color.a == 123.0,
         "got wrong color %.2fx%.2fx%.2fx%.2f\n", color.r, color.g, color.b, color.a);
