@@ -75,6 +75,11 @@ IDirect3DRMDevice3 *IDirect3DRMDevice3_from_impl(struct d3drm_device *device)
     return &device->IDirect3DRMDevice3_iface;
 }
 
+void d3drm_device_destroy(struct d3drm_device *device)
+{
+    HeapFree(GetProcessHeap(), 0, device);
+}
+
 static inline struct d3drm_device *impl_from_IDirect3DRMWinDevice(IDirect3DRMWinDevice *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_device, IDirect3DRMWinDevice_iface);
@@ -871,7 +876,7 @@ static ULONG WINAPI d3drm_device3_Release(IDirect3DRMDevice3 *iface)
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
-        HeapFree(GetProcessHeap(), 0, device);
+        d3drm_device_destroy(device);
 
     return refcount;
 }

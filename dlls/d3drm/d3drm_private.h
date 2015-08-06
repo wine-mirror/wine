@@ -42,6 +42,8 @@ HRESULT Direct3DRMTexture_create(REFIID riid, IUnknown** ret_iface) DECLSPEC_HID
 HRESULT load_mesh_data(IDirect3DRMMeshBuilder3 *iface, IDirectXFileData *data,
                        D3DRMLOADTEXTURECALLBACK load_texture_proc, void *arg) DECLSPEC_HIDDEN;
 
+void d3drm_device_destroy(struct d3drm_device *device) DECLSPEC_HIDDEN;
+
 struct d3drm_file_header
 {
     WORD major;
