@@ -51,6 +51,9 @@ static void  (CDECL   *p_vcomp_atomic_sub_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_sub_r8)(double *dest, double val);
 static void  (CDECL   *p_vcomp_atomic_xor_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_barrier)(void);
+static void  (CDECL   *p_vcomp_for_dynamic_init)(unsigned int flags, unsigned int first, unsigned int last,
+                                                 int step, unsigned int chunksize);
+static int   (CDECL   *p_vcomp_for_dynamic_next)(unsigned int *begin, unsigned int *end);
 static void  (CDECL   *p_vcomp_for_static_end)(void);
 static void  (CDECL   *p_vcomp_for_static_init)(int first, int last, int step, int chunksize, unsigned int *loops,
                                                 int *begin, int *end, int *next, int *lastchunk);
@@ -67,6 +70,11 @@ static int   (CDECL   *pomp_get_thread_num)(void);
 static int   (CDECL   *pomp_in_parallel)(void);
 static void  (CDECL   *pomp_set_nested)(int nested);
 static void  (CDECL   *pomp_set_num_threads)(int num_threads);
+
+#define VCOMP_DYNAMIC_FLAGS_STATIC      0x01
+#define VCOMP_DYNAMIC_FLAGS_CHUNKED     0x02
+#define VCOMP_DYNAMIC_FLAGS_GUIDED      0x03
+#define VCOMP_DYNAMIC_FLAGS_INCREMENT   0x40
 
 #ifdef __i386__
 #define ARCH "x86"
@@ -214,6 +222,8 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_atomic_sub_r8);
     VCOMP_GET_PROC(_vcomp_atomic_xor_i4);
     VCOMP_GET_PROC(_vcomp_barrier);
+    VCOMP_GET_PROC(_vcomp_for_dynamic_init);
+    VCOMP_GET_PROC(_vcomp_for_dynamic_next);
     VCOMP_GET_PROC(_vcomp_for_static_end);
     VCOMP_GET_PROC(_vcomp_for_static_init);
     VCOMP_GET_PROC(_vcomp_for_static_simple_init);
@@ -504,14 +514,14 @@ if (0)
     pomp_set_num_threads(max_threads);
 }
 
-static void my_for_static_simple_init(unsigned int first, unsigned int last, int step,
+static void my_for_static_simple_init(BOOL dynamic, unsigned int first, unsigned int last, int step,
                                       BOOL increment, unsigned int *begin, unsigned int *end)
 {
     unsigned int iterations, per_thread, remaining;
     int num_threads = pomp_get_num_threads();
     int thread_num = pomp_get_thread_num();
 
-    if (num_threads == 1)
+    if (!dynamic && num_threads == 1)
     {
         *begin = first;
         *end   = last;
@@ -603,7 +613,7 @@ static void CDECL for_static_simple_cb(void)
         unsigned int my_begin, my_end, begin, end;
 
         begin = end = 0xdeadbeef;
-        my_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, FALSE, &my_begin, &my_end);
+        my_for_static_simple_init(FALSE, tests[i].first, tests[i].last, tests[i].step, FALSE, &my_begin, &my_end);
         p_vcomp_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, FALSE, &begin, &end);
 
         ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
@@ -615,7 +625,7 @@ static void CDECL for_static_simple_cb(void)
         p_vcomp_barrier();
 
         begin = end = 0xdeadbeef;
-        my_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, TRUE, &my_begin, &my_end);
+        my_for_static_simple_init(FALSE, tests[i].first, tests[i].last, tests[i].step, TRUE, &my_begin, &my_end);
         p_vcomp_for_static_simple_init(tests[i].first, tests[i].last, tests[i].step, TRUE, &begin, &end);
 
         ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
@@ -629,7 +639,7 @@ static void CDECL for_static_simple_cb(void)
         if (tests[i].first == tests[i].last) continue;
 
         begin = end = 0xdeadbeef;
-        my_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, FALSE, &my_begin, &my_end);
+        my_for_static_simple_init(FALSE, tests[i].last, tests[i].first, tests[i].step, FALSE, &my_begin, &my_end);
         p_vcomp_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, FALSE, &begin, &end);
 
         ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
@@ -641,7 +651,7 @@ static void CDECL for_static_simple_cb(void)
         p_vcomp_barrier();
 
         begin = end = 0xdeadbeef;
-        my_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, TRUE, &my_begin, &my_end);
+        my_for_static_simple_init(FALSE, tests[i].last, tests[i].first, tests[i].step, TRUE, &my_begin, &my_end);
         p_vcomp_for_static_simple_init(tests[i].last, tests[i].first, tests[i].step, TRUE, &begin, &end);
 
         ok(begin == my_begin, "test %d, thread %d/%d: expected begin == %u, got %u\n",
@@ -887,6 +897,231 @@ static void test_vcomp_for_static_init(void)
     pomp_set_num_threads(max_threads);
 }
 
+static void CDECL for_dynamic_static_cb(void)
+{
+    unsigned int my_begin, my_end, begin, end;
+    int ret;
+
+    begin = end = 0xdeadbeef;
+    my_for_static_simple_init(TRUE, 0, 1000, 7, TRUE, &my_begin, &my_end);
+    p_vcomp_for_dynamic_init(VCOMP_DYNAMIC_FLAGS_STATIC | VCOMP_DYNAMIC_FLAGS_INCREMENT, 0, 1000, 7, 1);
+    ret = p_vcomp_for_dynamic_next(&begin, &end);
+    ok(ret == TRUE, "expected ret == TRUE, got %d\n", ret);
+    ok(begin == my_begin, "expected begin == %u, got %u\n", my_begin, begin);
+    ok(end == my_end, "expected end == %u, got %u\n", my_end, end);
+    ret = p_vcomp_for_dynamic_next(&begin, &end);
+    ok(ret == FALSE, "expected ret == FALSE, got %d\n", ret);
+
+    begin = end = 0xdeadbeef;
+    my_for_static_simple_init(TRUE, 1000, 0, 7, FALSE, &my_begin, &my_end);
+    p_vcomp_for_dynamic_init(VCOMP_DYNAMIC_FLAGS_STATIC, 1000, 0, 7, 1);
+    ret = p_vcomp_for_dynamic_next(&begin, &end);
+    ok(ret == TRUE, "expected ret == TRUE, got %d\n", ret);
+    ok(begin == my_begin, "expected begin == %u, got %u\n", my_begin, begin);
+    ok(end == my_end, "expected end == %u, got %u\n", my_end, end);
+    ret = p_vcomp_for_dynamic_next(&begin, &end);
+    ok(ret == FALSE, "expected ret == FALSE, got %d\n", ret);
+
+    begin = end = 0xdeadbeef;
+    my_for_static_simple_init(TRUE, 0, 1000, 7, TRUE, &my_begin, &my_end);
+    p_vcomp_for_dynamic_init(VCOMP_DYNAMIC_FLAGS_STATIC | VCOMP_DYNAMIC_FLAGS_INCREMENT, 0, 1000, 7, 5);
+    ret = p_vcomp_for_dynamic_next(&begin, &end);
+    ok(ret == TRUE, "expected ret == TRUE, got %d\n", ret);
+    ok(begin == my_begin, "expected begin == %u, got %u\n", my_begin, begin);
+    ok(end == my_end, "expected end == %u, got %u\n", my_end, end);
+    ret = p_vcomp_for_dynamic_next(&begin, &end);
+    ok(ret == FALSE, "expected ret == FALSE, got %d\n", ret);
+
+    begin = end = 0xdeadbeef;
+    my_for_static_simple_init(TRUE, 1000, 0, 7, FALSE, &my_begin, &my_end);
+    p_vcomp_for_dynamic_init(VCOMP_DYNAMIC_FLAGS_STATIC, 1000, 0, 7, 5);
+    ret = p_vcomp_for_dynamic_next(&begin, &end);
+    ok(ret == TRUE, "expected ret == TRUE, got %d\n", ret);
+    ok(begin == my_begin, "expected begin == %u, got %u\n", my_begin, begin);
+    ok(end == my_end, "expected end == %u, got %u\n", my_end, end);
+    ret = p_vcomp_for_dynamic_next(&begin, &end);
+    ok(ret == FALSE, "expected ret == FALSE, got %d\n", ret);
+}
+
+static void CDECL for_dynamic_chunked_cb(LONG *a, LONG *b, LONG *c, LONG *d)
+{
+    unsigned int begin, end;
+
+    p_vcomp_for_dynamic_init(VCOMP_DYNAMIC_FLAGS_CHUNKED | VCOMP_DYNAMIC_FLAGS_INCREMENT, 0, 1000, 7, 1);
+    while (p_vcomp_for_dynamic_next(&begin, &end))
+    {
+        if (begin == 994) ok(end == 1000, "expected end == 1000, got %u\n", end);
+        else ok(begin == end, "expected begin == end, got %u and %u\n", begin, end);
+        InterlockedExchangeAdd(a, begin);
+    }
+
+    p_vcomp_for_dynamic_init(VCOMP_DYNAMIC_FLAGS_CHUNKED, 1000, 0, 7, 1);
+    while (p_vcomp_for_dynamic_next(&begin, &end))
+    {
+        if (begin == 6) ok(end == 0, "expected end == 0, got %u\n", end);
+        else ok(begin == end, "expected begin == end, got %u and %u\n", begin, end);
+        InterlockedExchangeAdd(b, begin);
+    }
+
+    p_vcomp_for_dynamic_init(VCOMP_DYNAMIC_FLAGS_CHUNKED | VCOMP_DYNAMIC_FLAGS_INCREMENT, 0, 1000, 7, 5);
+    while (p_vcomp_for_dynamic_next(&begin, &end))
+    {
+        if (begin == 980) ok(end == 1000, "expected end == 1000, got %u\n", end);
+        else ok(begin + 28 == end, "expected begin + 28 == end, got %u and %u\n", begin + 28, end);
+        InterlockedExchangeAdd(c, begin);
+    }
+
+    p_vcomp_for_dynamic_init(VCOMP_DYNAMIC_FLAGS_CHUNKED, 1000, 0, 7, 5);
+    while (p_vcomp_for_dynamic_next(&begin, &end))
+    {
+        if (begin == 20) ok(end == 0, "expected end == 0, got %u\n", end);
+        else ok(begin - 28 == end, "expected begin - 28 == end, got %u and %u\n", begin - 28, end);
+        InterlockedExchangeAdd(d, begin);
+    }
+}
+
+static void CDECL for_dynamic_guided_cb(unsigned int flags, LONG *a, LONG *b, LONG *c, LONG *d)
+{
+    int num_threads = pomp_get_num_threads();
+    unsigned int begin, end;
+
+    p_vcomp_for_dynamic_init(flags | VCOMP_DYNAMIC_FLAGS_INCREMENT, 0, 1000, 7, 1);
+    while (p_vcomp_for_dynamic_next(&begin, &end))
+    {
+        ok(num_threads != 1 || (begin == 0 && end == 1000),
+           "expected begin == 0 and end == 1000, got %u and %u\n", begin, end);
+        InterlockedExchangeAdd(a, begin);
+    }
+
+    p_vcomp_for_dynamic_init(flags, 1000, 0, 7, 1);
+    while (p_vcomp_for_dynamic_next(&begin, &end))
+    {
+        ok(num_threads != 1 || (begin == 1000 && end == 0),
+           "expected begin == 1000 and end == 0, got %u and %u\n", begin, end);
+        InterlockedExchangeAdd(b, begin);
+    }
+
+    p_vcomp_for_dynamic_init(flags | VCOMP_DYNAMIC_FLAGS_INCREMENT, 0, 1000, 7, 5);
+    while (p_vcomp_for_dynamic_next(&begin, &end))
+    {
+        ok(num_threads != 1 || (begin == 0 && end == 1000),
+           "expected begin == 0 and end == 1000, got %u and %u\n", begin, end);
+        InterlockedExchangeAdd(c, begin);
+    }
+
+    p_vcomp_for_dynamic_init(flags, 1000, 0, 7, 5);
+    while (p_vcomp_for_dynamic_next(&begin, &end))
+    {
+        ok(num_threads != 1 || (begin == 1000 && end == 0),
+           "expected begin == 1000 and end == 0, got %u and %u\n", begin, end);
+        InterlockedExchangeAdd(d, begin);
+    }
+}
+
+static void test_vcomp_for_dynamic_init(void)
+{
+    static const int guided_a[] = {0, 6041, 9072, 11179};
+    static const int guided_b[] = {1000, 1959, 2928, 3821};
+    static const int guided_c[] = {0, 4067, 6139, 7273};
+    static const int guided_d[] = {1000, 1933, 2861, 3727};
+    LONG a, b, c, d;
+    int max_threads = pomp_get_max_threads();
+    int i;
+
+    /* test static scheduling */
+    for_dynamic_static_cb();
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+        p_vcomp_fork(TRUE, 0, for_dynamic_static_cb);
+        p_vcomp_fork(FALSE, 0, for_dynamic_static_cb);
+    }
+
+    /* test chunked scheduling */
+    a = b = c = d = 0;
+    for_dynamic_chunked_cb(&a, &b, &c, &d);
+    ok(a == 71071, "expected a == 71071, got %d\n", a);
+    ok(b == 71929, "expected b == 71929, got %d\n", b);
+    ok(c == 14210, "expected c == 14210, got %d\n", c);
+    ok(d == 14790, "expected d == 14790, got %d\n", d);
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+
+        a = b = c = d = 0;
+        p_vcomp_fork(TRUE, 4, for_dynamic_chunked_cb, &a, &b, &c, &d);
+        ok(a == 71071, "expected a == 71071, got %d\n", a);
+        ok(b == 71929, "expected b == 71929, got %d\n", b);
+        ok(c == 14210, "expected c == 14210, got %d\n", c);
+        ok(d == 14790, "expected d == 14790, got %d\n", d);
+
+        a = b = c = d = 0;
+        p_vcomp_fork(FALSE, 4, for_dynamic_chunked_cb, &a, &b, &c, &d);
+        ok(a == 71071, "expected a == 71071, got %d\n", a);
+        ok(b == 71929, "expected b == 71929, got %d\n", b);
+        ok(c == 14210, "expected c == 14210, got %d\n", c);
+        ok(d == 14790, "expected d == 14790, got %d\n", d);
+    }
+
+    /* test guided scheduling */
+    a = b = c = d = 0;
+    for_dynamic_guided_cb(VCOMP_DYNAMIC_FLAGS_GUIDED, &a, &b, &c, &d);
+    ok(a == guided_a[0], "expected a == %d, got %d\n", guided_a[0], a);
+    ok(b == guided_b[0], "expected b == %d, got %d\n", guided_b[0], b);
+    ok(c == guided_c[0], "expected c == %d, got %d\n", guided_c[0], c);
+    ok(d == guided_d[0], "expected d == %d, got %d\n", guided_d[0], d);
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+
+        a = b = c = d = 0;
+        p_vcomp_fork(TRUE, 5, for_dynamic_guided_cb, VCOMP_DYNAMIC_FLAGS_GUIDED, &a, &b, &c, &d);
+        ok(a == guided_a[i - 1], "expected a == %d, got %d\n", guided_a[i - 1], a);
+        ok(b == guided_b[i - 1], "expected b == %d, got %d\n", guided_b[i - 1], b);
+        ok(c == guided_c[i - 1], "expected c == %d, got %d\n", guided_c[i - 1], c);
+        ok(d == guided_d[i - 1], "expected d == %d, got %d\n", guided_d[i - 1], d);
+
+        a = b = c = d = 0;
+        p_vcomp_fork(FALSE, 5, for_dynamic_guided_cb, VCOMP_DYNAMIC_FLAGS_GUIDED, &a, &b, &c, &d);
+        ok(a == guided_a[0], "expected a == %d, got %d\n", guided_a[0], a);
+        ok(b == guided_b[0], "expected b == %d, got %d\n", guided_b[0], b);
+        ok(c == guided_c[0], "expected c == %d, got %d\n", guided_c[0], c);
+        ok(d == guided_d[0], "expected d == %d, got %d\n", guided_d[0], d);
+    }
+
+    /* test with empty flags */
+    a = b = c = d = 0;
+    for_dynamic_guided_cb(0, &a, &b, &c, &d);
+    ok(a == guided_a[0], "expected a == %d, got %d\n", guided_a[0], a);
+    ok(b == guided_b[0], "expected b == %d, got %d\n", guided_b[0], b);
+    ok(c == guided_c[0], "expected c == %d, got %d\n", guided_c[0], c);
+    ok(d == guided_d[0], "expected d == %d, got %d\n", guided_d[0], d);
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+
+        a = b = c = d = 0;
+        p_vcomp_fork(TRUE, 5, for_dynamic_guided_cb, 0, &a, &b, &c, &d);
+        ok(a == guided_a[i - 1], "expected a == %d, got %d\n", guided_a[i - 1], a);
+        ok(b == guided_b[i - 1], "expected b == %d, got %d\n", guided_b[i - 1], b);
+        ok(c == guided_c[i - 1], "expected c == %d, got %d\n", guided_c[i - 1], c);
+        ok(d == guided_d[i - 1], "expected d == %d, got %d\n", guided_d[i - 1], d);
+
+        a = b = c = d = 0;
+        p_vcomp_fork(FALSE, 5, for_dynamic_guided_cb, 0, &a, &b, &c, &d);
+        ok(a == guided_a[0], "expected a == %d, got %d\n", guided_a[0], a);
+        ok(b == guided_b[0], "expected b == %d, got %d\n", guided_b[0], b);
+        ok(c == guided_c[0], "expected c == %d, got %d\n", guided_c[0], c);
+        ok(d == guided_d[0], "expected d == %d, got %d\n", guided_d[0], d);
+    }
+
+    pomp_set_num_threads(max_threads);
+}
+
 static void test_atomic_integer32(void)
 {
     struct
@@ -1002,6 +1237,7 @@ START_TEST(vcomp)
     test_vcomp_sections_init();
     test_vcomp_for_static_simple_init();
     test_vcomp_for_static_init();
+    test_vcomp_for_dynamic_init();
     test_atomic_integer32();
     test_atomic_float();
     test_atomic_double();
