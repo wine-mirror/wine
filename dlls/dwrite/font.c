@@ -131,6 +131,11 @@ struct dwrite_glyphrunanalysis {
     BYTE *bitmap;
 };
 
+struct dwrite_colorglyphenum {
+    IDWriteColorGlyphRunEnumerator IDWriteColorGlyphRunEnumerator_iface;
+    LONG ref;
+};
+
 #define GLYPH_BLOCK_SHIFT 8
 #define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
 #define GLYPH_BLOCK_MASK  (GLYPH_BLOCK_SIZE - 1)
@@ -197,6 +202,11 @@ static inline struct dwrite_fontcollection *impl_from_IDWriteFontCollection(IDWr
 static inline struct dwrite_glyphrunanalysis *impl_from_IDWriteGlyphRunAnalysis(IDWriteGlyphRunAnalysis *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_glyphrunanalysis, IDWriteGlyphRunAnalysis_iface);
+}
+
+static inline struct dwrite_colorglyphenum *impl_from_IDWriteColorGlyphRunEnumerator(IDWriteColorGlyphRunEnumerator *iface)
+{
+    return CONTAINING_RECORD(iface, struct dwrite_colorglyphenum, IDWriteColorGlyphRunEnumerator_iface);
 }
 
 static inline const char *debugstr_tag(UINT32 tag)
@@ -3319,5 +3329,84 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
         memcpy(analysis->offsets, run->glyphOffsets, run->glyphCount*sizeof(*run->glyphOffsets));
 
     *ret = &analysis->IDWriteGlyphRunAnalysis_iface;
+    return S_OK;
+}
+
+/* IDWriteColorGlyphRunEnumerator */
+static HRESULT WINAPI colorglyphenum_QueryInterface(IDWriteColorGlyphRunEnumerator *iface, REFIID riid, void **ppv)
+{
+    struct dwrite_colorglyphenum *This = impl_from_IDWriteColorGlyphRunEnumerator(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), ppv);
+
+    if (IsEqualIID(riid, &IID_IDWriteColorGlyphRunEnumerator) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *ppv = iface;
+        IDWriteColorGlyphRunEnumerator_AddRef(iface);
+        return S_OK;
+    }
+
+    *ppv = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI colorglyphenum_AddRef(IDWriteColorGlyphRunEnumerator *iface)
+{
+    struct dwrite_colorglyphenum *This = impl_from_IDWriteColorGlyphRunEnumerator(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%u)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI colorglyphenum_Release(IDWriteColorGlyphRunEnumerator *iface)
+{
+    struct dwrite_colorglyphenum *This = impl_from_IDWriteColorGlyphRunEnumerator(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    if (!ref)
+        heap_free(This);
+
+    return ref;
+}
+
+static HRESULT WINAPI colorglyphenum_MoveNext(IDWriteColorGlyphRunEnumerator *iface, BOOL *has_run)
+{
+    struct dwrite_colorglyphenum *This = impl_from_IDWriteColorGlyphRunEnumerator(iface);
+    FIXME("(%p)->(%p): stub\n", This, has_run);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI colorglyphenum_GetCurrentRun(IDWriteColorGlyphRunEnumerator *iface, DWRITE_COLOR_GLYPH_RUN const **run)
+{
+    struct dwrite_colorglyphenum *This = impl_from_IDWriteColorGlyphRunEnumerator(iface);
+    FIXME("(%p)->(%p): stub\n", This, run);
+    return E_NOTIMPL;
+}
+
+static const IDWriteColorGlyphRunEnumeratorVtbl colorglyphenumvtbl = {
+    colorglyphenum_QueryInterface,
+    colorglyphenum_AddRef,
+    colorglyphenum_Release,
+    colorglyphenum_MoveNext,
+    colorglyphenum_GetCurrentRun
+};
+
+HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_RUN *run, const DWRITE_GLYPH_RUN_DESCRIPTION *rundescr,
+    DWRITE_MEASURING_MODE mode, const DWRITE_MATRIX *transform, UINT32 palette, IDWriteColorGlyphRunEnumerator **ret)
+{
+    struct dwrite_colorglyphenum *colorglyphenum;
+
+    *ret = NULL;
+    colorglyphenum = heap_alloc(sizeof(*colorglyphenum));
+    if (!colorglyphenum)
+        return E_OUTOFMEMORY;
+
+    colorglyphenum->IDWriteColorGlyphRunEnumerator_iface.lpVtbl = &colorglyphenumvtbl;
+    colorglyphenum->ref = 1;
+
+    *ret = &colorglyphenum->IDWriteColorGlyphRunEnumerator_iface;
     return S_OK;
 }

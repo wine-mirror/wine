@@ -1137,12 +1137,12 @@ static HRESULT WINAPI dwritefactory2_CreateFontFallbackBuilder(IDWriteFactory2 *
 
 static HRESULT WINAPI dwritefactory2_TranslateColorGlyphRun(IDWriteFactory2 *iface, FLOAT originX, FLOAT originY,
     const DWRITE_GLYPH_RUN *run, const DWRITE_GLYPH_RUN_DESCRIPTION *rundescr, DWRITE_MEASURING_MODE mode,
-    const DWRITE_MATRIX *transform, UINT32 palette_index, IDWriteColorGlyphRunEnumerator **colorlayers)
+    const DWRITE_MATRIX *transform, UINT32 palette, IDWriteColorGlyphRunEnumerator **colorlayers)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
-    FIXME("(%p)->(%.2f %.2f %p %p %d %p %u %p): stub\n", This, originX, originY, run, rundescr, mode,
-        transform, palette_index, colorlayers);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%.2f %.2f %p %p %d %p %u %p)\n", This, originX, originY, run, rundescr, mode,
+        transform, palette, colorlayers);
+    return create_colorglyphenum(originX, originY, run, rundescr, mode, transform, palette, colorlayers);
 }
 
 static HRESULT WINAPI dwritefactory2_CreateCustomRenderingParams(IDWriteFactory2 *iface, FLOAT gamma, FLOAT contrast,
