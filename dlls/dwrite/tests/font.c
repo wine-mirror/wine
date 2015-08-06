@@ -39,6 +39,7 @@
 #define MS_CMAP_TAG MS_MAKE_TAG('c','m','a','p')
 #define MS_VDMX_TAG MS_MAKE_TAG('V','D','M','X')
 #define MS_GASP_TAG MS_MAKE_TAG('g','a','s','p')
+#define MS_CPAL_TAG MS_MAKE_TAG('C','P','A','L')
 
 #define EXPECT_HR(hr,hr_exp) \
     ok(hr == hr_exp, "got 0x%08x, expected 0x%08x\n", hr, hr_exp)
@@ -4754,6 +4755,111 @@ static void test_IsSymbolFont(void)
     IDWriteFactory_Release(factory);
 }
 
+struct CPAL_Header_0
+{
+    USHORT version;
+    USHORT numPaletteEntries;
+    USHORT numPalette;
+    USHORT numColorRecords;
+    ULONG  offsetFirstColorRecord;
+    USHORT colorRecordIndices[1];
+};
+
+static void test_GetPaletteEntries(void)
+{
+    static const WCHAR emojiW[] = {'S','e','g','o','e',' ','U','I',' ','E','m','o','j','i',0};
+    IDWriteFontFace2 *fontface2;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    IDWriteFont *font;
+    DWRITE_COLOR_F color;
+    UINT32 palettecount, entrycount, size, colorrecords;
+    void *ctxt;
+    const struct CPAL_Header_0 *cpal_header;
+    HRESULT hr;
+    BOOL exists;
+
+    factory = create_factory();
+
+    /* Tahoma, no color support */
+    fontface = create_fontface(factory);
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace2, (void**)&fontface2);
+    IDWriteFontFace_Release(fontface);
+    if (hr != S_OK) {
+        IDWriteFactory_Release(factory);
+        win_skip("GetPaletteEntries() is not supported.\n");
+        return;
+    }
+
+    hr = IDWriteFontFace2_GetPaletteEntries(fontface2, 0, 0, 1, &color);
+todo_wine
+    ok(hr == DWRITE_E_NOCOLOR, "got 0x%08x\n", hr);
+    IDWriteFontFace2_Release(fontface2);
+
+    /* Segoe UI Emoji, with color support */
+    font = get_font(factory, emojiW, DWRITE_FONT_STYLE_NORMAL);
+    if (!font) {
+        IDWriteFactory_Release(factory);
+        skip("Segoe UI Emoji font not found.\n");
+        return;
+    }
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
+
+    hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace2, (void**)&fontface2);
+    IDWriteFontFace_Release(fontface);
+
+    palettecount = IDWriteFontFace2_GetColorPaletteCount(fontface2);
+    ok(palettecount >= 1, "got %u\n", palettecount);
+
+    entrycount = IDWriteFontFace2_GetPaletteEntryCount(fontface2);
+    ok(entrycount >= 1, "got %u\n", entrycount);
+
+    exists = FALSE;
+    hr = IDWriteFontFace2_TryGetFontTable(fontface2, MS_CPAL_TAG, (const void**)&cpal_header, &size, &ctxt, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists, "got %d\n", exists);
+    colorrecords = GET_BE_WORD(cpal_header->numColorRecords);
+    ok(colorrecords >= 1, "got %u\n", colorrecords);
+
+    /* invalid palette index */
+    color.r = color.g = color.b = color.a = 123.0;
+    hr = IDWriteFontFace2_GetPaletteEntries(fontface2, palettecount, 0, 1, &color);
+todo_wine
+    ok(hr == DWRITE_E_NOCOLOR, "got 0x%08x\n", hr);
+    ok(color.r == 123.0 && color.g == 123.0 && color.b == 123.0 && color.a == 123.0,
+        "got wrong color %.2fx%.2fx%.2fx%.2f\n", color.r, color.g, color.b, color.a);
+
+    /* invalid entry index */
+    color.r = color.g = color.b = color.a = 123.0;
+    hr = IDWriteFontFace2_GetPaletteEntries(fontface2, 0, entrycount, 1, &color);
+todo_wine
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(color.r == 123.0 && color.g == 123.0 && color.b == 123.0 && color.a == 123.0,
+        "got wrong color %.2fx%.2fx%.2fx%.2f\n", color.r, color.g, color.b, color.a);
+
+    color.r = color.g = color.b = color.a = 123.0;
+    hr = IDWriteFontFace2_GetPaletteEntries(fontface2, 0, entrycount - 1, 1, &color);
+todo_wine {
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(color.r != 123.0 && color.g != 123.0 && color.b != 123.0 && color.a != 123.0,
+        "got wrong color %.2fx%.2fx%.2fx%.2f\n", color.r, color.g, color.b, color.a);
+}
+
+    /* zero return length */
+    color.r = color.g = color.b = color.a = 123.0;
+    hr = IDWriteFontFace2_GetPaletteEntries(fontface2, 0, 0, 0, &color);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(color.r == 123.0 && color.g == 123.0 && color.b == 123.0 && color.a == 123.0,
+        "got wrong color %.2fx%.2fx%.2fx%.2f\n", color.r, color.g, color.b, color.a);
+
+    IDWriteFontFace2_Release(fontface2);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -4804,6 +4910,7 @@ START_TEST(font)
     test_GetAlphaBlendParams();
     test_CreateAlphaTexture();
     test_IsSymbolFont();
+    test_GetPaletteEntries();
 
     IDWriteFactory_Release(factory);
 }
