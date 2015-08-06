@@ -1967,7 +1967,7 @@ static void test_create_device_from_clipper1(void)
     IDirect3DRM *d3drm1 = NULL;
     IDirectDraw *ddraw = NULL;
     IUnknown *unknown = NULL;
-    IDirect3DRMDevice *device1 = NULL;
+    IDirect3DRMDevice *device1 = (IDirect3DRMDevice *)0xdeadbeef;
     IDirect3DDevice *d3ddevice1 = NULL;
     IDirectDrawClipper *clipper = NULL, *d3drm_clipper = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_primary = NULL;
@@ -1993,22 +1993,22 @@ static void test_create_device_from_clipper1(void)
     cref1 = get_refcount((IUnknown *)clipper);
 
     hr = IDirect3DRM_CreateDeviceFromClipper(d3drm1, clipper, &driver, 0, 0, &device1);
-    todo_wine ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
-    if (SUCCEEDED(hr))
-        IDirect3DRMDevice_Release(device1);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
+    ok(device1 == NULL, "Expected device returned == NULL, got %p.\n", device1);
 
     /* If NULL is passed for clipper, CreateDeviceFromClipper returns D3DRMERR_BADVALUE */
     hr = IDirect3DRM_CreateDeviceFromClipper(d3drm1, NULL, &driver, 300, 200, &device1);
-    todo_wine ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
-    if (SUCCEEDED(hr))
-        IDirect3DRMDevice_Release(device1);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
+
+    hr = IDirect3DRM_CreateDeviceFromClipper(d3drm1, clipper, &driver, 300, 200, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == D3DRMERR_BADVALUE, got %x.\n", hr);
 
     hr = IDirect3DRM_CreateDeviceFromClipper(d3drm1, clipper, &driver, 300, 200, &device1);
     ok(hr == D3DRM_OK, "Cannot create IDirect3DRMDevice interface (hr = %x).\n", hr);
     ref2 = get_refcount((IUnknown *)d3drm1);
-    todo_wine ok(ref2 > ref1, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
+    ok(ref2 > ref1, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
     cref2 = get_refcount((IUnknown *)clipper);
-    todo_wine ok(cref2 > cref1, "expected cref2 > cref1, got cref1 = %u , cref2 = %u.\n", cref1, cref2);
+    ok(cref2 > cref1, "expected cref2 > cref1, got cref1 = %u , cref2 = %u.\n", cref1, cref2);
 
     /* Fetch immediate mode device in order to access render target */
     hr = IDirect3DRMDevice_GetDirect3DDevice(device1, &d3ddevice1);

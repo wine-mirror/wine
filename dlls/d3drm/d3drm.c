@@ -283,17 +283,48 @@ static HRESULT WINAPI d3drm1_CreateDeviceFromClipper(IDirect3DRM *iface,
         IDirect3DRMDevice **device)
 {
     struct d3drm_device *object;
+    IDirectDraw *ddraw;
+    IDirectDrawSurface *render_target;
     HRESULT hr;
-    FIXME("iface %p, clipper %p, guid %s, width %d, height %d, device %p.\n",
+
+    TRACE("iface %p, clipper %p, guid %s, width %d, height %d, device %p.\n",
             iface, clipper, debugstr_guid(guid), width, height, device);
 
-    hr = d3drm_device_create(&object);
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
+
+    if (!clipper || !width || !height)
+        return D3DRMERR_BADVALUE;
+
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
     if (FAILED(hr))
         return hr;
 
-    *device = IDirect3DRMDevice_from_impl(object);
+    hr = d3drm_device_create(&object);
+    if (FAILED(hr))
+    {
+        IDirectDraw_Release(ddraw);
+        return hr;
+    }
 
-    return D3DRM_OK;
+    hr = d3drm_device_create_surfaces_from_clipper(object, ddraw, clipper, width, height, &render_target);
+    if (FAILED(hr))
+    {
+        IDirectDraw_Release(ddraw);
+        d3drm_device_destroy(object);
+        return hr;
+    }
+
+    hr = d3drm_device_init(object, 1, iface, ddraw, render_target);
+    IDirectDraw_Release(ddraw);
+    IDirectDrawSurface_Release(render_target);
+    if (FAILED(hr))
+        d3drm_device_destroy(object);
+    else
+        *device = IDirect3DRMDevice_from_impl(object);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm1_CreateTextureFromSurface(IDirect3DRM *iface,

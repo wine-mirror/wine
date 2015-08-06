@@ -1,6 +1,6 @@
 MODULE    = d3drm.dll
 IMPORTLIB = d3drm
-IMPORTS   = dxguid uuid d3dxof
+IMPORTS   = dxguid uuid d3dxof ddraw
 
 C_SRCS = \
 	d3drm.c \
