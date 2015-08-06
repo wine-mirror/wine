@@ -1405,7 +1405,7 @@ static BOOL WINAPI dwritefont1_IsMonospacedFont(IDWriteFont2 *iface)
     return IDWriteFontFace2_IsMonospacedFont(fontface);
 }
 
-static HRESULT WINAPI dwritefont2_IsColorFont(IDWriteFont2 *iface)
+static BOOL WINAPI dwritefont2_IsColorFont(IDWriteFont2 *iface)
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
     IDWriteFontFace2 *fontface;
@@ -1415,7 +1415,7 @@ static HRESULT WINAPI dwritefont2_IsColorFont(IDWriteFont2 *iface)
 
     hr = get_fontface_from_font(This, &fontface);
     if (FAILED(hr))
-        return hr;
+        return FALSE;
 
     return IDWriteFontFace2_IsColorFont(fontface);
 }
