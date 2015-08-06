@@ -3218,7 +3218,7 @@ static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
 };
 
 HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode, DWRITE_GLYPH_RUN const *run,
-    FLOAT ppdip, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
+    FLOAT ppdip, DWRITE_GRID_FIT_MODE gridfit_mode, DWRITE_TEXT_ANTIALIAS_MODE aa_mode, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
 
