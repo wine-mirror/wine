@@ -697,18 +697,24 @@ static HRESULT WINAPI d3drm2_CreateDeviceFromClipper(IDirect3DRM2 *iface,
         IDirectDrawClipper *clipper, GUID *guid, int width, int height,
         IDirect3DRMDevice2 **device)
 {
-    struct d3drm_device *object;
+    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
+    IDirect3DRMDevice3 *device3;
     HRESULT hr;
-    FIXME("iface %p, clipper %p, guid %s, width %d, height %d, device %p.\n",
+
+    TRACE("iface %p, clipper %p, guid %s, width %d, height %d, device %p.\n",
             iface, clipper, debugstr_guid(guid), width, height, device);
 
-    hr = d3drm_device_create(&object);
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
+    hr = IDirect3DRM3_CreateDeviceFromClipper(&d3drm->IDirect3DRM3_iface, clipper, guid, width, height, &device3);
     if (FAILED(hr))
         return hr;
 
-    *device = IDirect3DRMDevice2_from_impl(object);
+    hr = IDirect3DRMDevice3_QueryInterface(device3, &IID_IDirect3DRMDevice2, (void**)device);
+    IDirect3DRMDevice3_Release(device3);
 
-    return D3DRM_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3drm2_CreateTextureFromSurface(IDirect3DRM2 *iface,
@@ -1103,18 +1109,50 @@ static HRESULT WINAPI d3drm3_CreateDeviceFromClipper(IDirect3DRM3 *iface,
         IDirectDrawClipper *clipper, GUID *guid, int width, int height,
         IDirect3DRMDevice3 **device)
 {
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
     struct d3drm_device *object;
+    IDirectDraw *ddraw;
+    IDirectDrawSurface *render_target;
     HRESULT hr;
-    FIXME("iface %p, clipper %p, guid %s, width %d, height %d, device %p.\n",
+
+    TRACE("iface %p, clipper %p, guid %s, width %d, height %d, device %p.\n",
             iface, clipper, debugstr_guid(guid), width, height, device);
 
-    hr = d3drm_device_create(&object);
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
+
+    if (!clipper || !width || !height)
+        return D3DRMERR_BADVALUE;
+
+    hr = DirectDrawCreate(NULL, &ddraw, NULL);
     if (FAILED(hr))
         return hr;
 
-    *device = IDirect3DRMDevice3_from_impl(object);
+    hr = d3drm_device_create(&object);
+    if (FAILED(hr))
+    {
+        IDirectDraw_Release(ddraw);
+        return hr;
+    }
 
-    return D3DRM_OK;
+    hr = d3drm_device_create_surfaces_from_clipper(object, ddraw, clipper, width, height, &render_target);
+    if (FAILED(hr))
+    {
+        IDirectDraw_Release(ddraw);
+        d3drm_device_destroy(object);
+        return hr;
+    }
+
+    hr = d3drm_device_init(object, 3, &d3drm->IDirect3DRM_iface, ddraw, render_target);
+    IDirectDraw_Release(ddraw);
+    IDirectDrawSurface_Release(render_target);
+    if (FAILED(hr))
+        d3drm_device_destroy(object);
+    else
+        *device = IDirect3DRMDevice3_from_impl(object);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm3_CreateShadow(IDirect3DRM3 *iface, IUnknown *object, IDirect3DRMLight *light,
