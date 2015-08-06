@@ -28,6 +28,7 @@
 #include FT_CACHE_H
 #include FT_FREETYPE_H
 #include FT_OUTLINE_H
+#include FT_TRUETYPE_TABLES_H
 #endif /* HAVE_FT2BUILD_H */
 
 #include "windef.h"
@@ -64,7 +65,9 @@ typedef struct
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(FT_Done_FreeType);
+MAKE_FUNCPTR(FT_Get_First_Char);
 MAKE_FUNCPTR(FT_Get_Kerning);
+MAKE_FUNCPTR(FT_Get_Sfnt_Table);
 MAKE_FUNCPTR(FT_Glyph_Get_CBox);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
@@ -145,7 +148,9 @@ BOOL init_freetype(void)
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
     LOAD_FUNCPTR(FT_Done_FreeType)
+    LOAD_FUNCPTR(FT_Get_First_Char)
     LOAD_FUNCPTR(FT_Get_Kerning)
+    LOAD_FUNCPTR(FT_Get_Sfnt_Table)
     LOAD_FUNCPTR(FT_Glyph_Get_CBox)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Library_Version)
@@ -554,6 +559,38 @@ void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 
     LeaveCriticalSection(&freetype_cs);
 }
 
+INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
+{
+    INT charmap_index = -1;
+    FT_Face face;
+
+    *is_symbol = FALSE;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0) {
+        TT_OS2 *os2 = pFT_Get_Sfnt_Table(face, ft_sfnt_os2);
+        FT_Int i;
+
+        if (os2) {
+            FT_UInt dummy;
+            if (os2->version == 0)
+                *is_symbol = pFT_Get_First_Char(face, &dummy) >= 0x100;
+            else
+                *is_symbol = os2->ulCodePageRange1 & FS_SYMBOL;
+        }
+
+        for (i = 0; i < face->num_charmaps; i++)
+            if (face->charmaps[i]->encoding == FT_ENCODING_MS_SYMBOL) {
+                *is_symbol = TRUE;
+                charmap_index = i;
+                break;
+            }
+    }
+    LeaveCriticalSection(&freetype_cs);
+
+    return charmap_index;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -614,6 +651,12 @@ void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 
 {
     UINT32 size = (bbox->right - bbox->left)*(bbox->bottom - bbox->top);
     memset(buf, 0, size);
+}
+
+INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
+{
+    *is_symbol = FALSE;
+    return -1;
 }
 
 #endif /* HAVE_FREETYPE */

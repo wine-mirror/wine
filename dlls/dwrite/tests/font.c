@@ -4710,6 +4710,50 @@ static void test_CreateAlphaTexture(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_IsSymbolFont(void)
+{
+    static const WCHAR symbolW[] = {'S','y','m','b','o','l',0};
+    IDWriteFontCollection *collection;
+    IDWriteFontFace *fontface;
+    IDWriteFactory *factory;
+    IDWriteFont *font;
+    HRESULT hr;
+    BOOL ret;
+
+    factory = create_factory();
+
+    /* Tahoma */
+    fontface = create_fontface(factory);
+    ret = IDWriteFontFace_IsSymbolFont(fontface);
+    ok(!ret, "got %d\n", ret);
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontCollection_GetFontFromFontFace(collection, fontface, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ret = IDWriteFont_IsSymbolFont(font);
+    ok(!ret, "got %d\n", ret);
+
+    IDWriteFontCollection_Release(collection);
+    IDWriteFont_Release(font);
+    IDWriteFontFace_Release(fontface);
+
+    /* Symbol */
+    font = get_font(factory, symbolW, DWRITE_FONT_STYLE_NORMAL);
+    ret = IDWriteFont_IsSymbolFont(font);
+    ok(ret, "got %d\n", ret);
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ret = IDWriteFontFace_IsSymbolFont(fontface);
+    ok(ret, "got %d\n", ret);
+    IDWriteFont_Release(font);
+
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -4759,6 +4803,7 @@ START_TEST(font)
     test_GetRecommendedRenderingMode();
     test_GetAlphaBlendParams();
     test_CreateAlphaTexture();
+    test_IsSymbolFont();
 
     IDWriteFactory_Release(factory);
 }

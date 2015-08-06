@@ -148,6 +148,8 @@ struct dwrite_fontface {
     DWRITE_FONT_FACE_TYPE type;
     DWRITE_FONT_METRICS1 metrics;
     DWRITE_CARET_METRICS caret;
+    INT charmap;
+    BOOL is_symbol;
 
     struct dwrite_fonttable cmap;
     struct dwrite_fonttable vdmx;
@@ -401,8 +403,8 @@ static DWRITE_FONT_SIMULATIONS WINAPI dwritefontface_GetSimulations(IDWriteFontF
 static BOOL WINAPI dwritefontface_IsSymbolFont(IDWriteFontFace2 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p): stub\n", This);
-    return FALSE;
+    TRACE("(%p)\n", This);
+    return This->is_symbol;
 }
 
 static void WINAPI dwritefontface_GetMetrics(IDWriteFontFace2 *iface, DWRITE_FONT_METRICS *metrics)
@@ -2500,6 +2502,7 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
             fontface->caret.slopeRun = fontface->caret.slopeRise / 3;
         }
     }
+    fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace2_iface, &fontface->is_symbol);
 
     *ret = &fontface->IDWriteFontFace2_iface;
     return S_OK;
