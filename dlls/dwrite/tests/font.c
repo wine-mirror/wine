@@ -2731,16 +2731,48 @@ if (0) { /* crashes on native */
     IDWriteGdiInterop_ConvertFontToLOGFONT(interop, NULL, &logfont, NULL);
     IDWriteGdiInterop_ConvertFontToLOGFONT(interop, font, NULL, &system);
 }
+
+    memset(&logfont, 0xcc, sizeof(logfont));
     system = TRUE;
     hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, NULL, &logfont, &system);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(!system, "got %d\n", system);
+    ok(logfont.lfFaceName[0] == 0, "got face name %s\n", wine_dbgstr_w(logfont.lfFaceName));
 
     system = FALSE;
-    memset(&logfont, 0, sizeof(logfont));
+
+    logfont.lfHeight = 10;
+    logfont.lfWidth = 11;
+    logfont.lfEscapement = 10;
+    logfont.lfOrientation = 10;
+    logfont.lfWeight = 0;
+    logfont.lfItalic = 1;
+    logfont.lfUnderline = 1;
+    logfont.lfStrikeOut = 1;
+    logfont.lfCharSet = 0;
+    logfont.lfOutPrecision = 0;
+    logfont.lfClipPrecision = 0;
+    logfont.lfQuality = 0;
+    logfont.lfPitchAndFamily = 0;
+    logfont.lfFaceName[0] = 0;
+
     hr = IDWriteGdiInterop_ConvertFontToLOGFONT(interop, font, &logfont, &system);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(system, "got %d\n", system);
+
+    ok(logfont.lfHeight == 0, "got %d\n", logfont.lfHeight);
+    ok(logfont.lfWidth == 0, "got %d\n", logfont.lfWidth);
+    ok(logfont.lfEscapement == 0, "got %d\n", logfont.lfEscapement);
+    ok(logfont.lfOrientation == 0, "got %d\n", logfont.lfOrientation);
+    ok(logfont.lfWeight > 0, "got %d\n", logfont.lfWeight);
+    ok(logfont.lfItalic == 0, "got %d\n", logfont.lfItalic);
+    ok(logfont.lfUnderline == 0, "got %d\n", logfont.lfUnderline);
+    ok(logfont.lfStrikeOut == 0, "got %d\n", logfont.lfStrikeOut);
+    ok(logfont.lfCharSet == DEFAULT_CHARSET, "got %d\n", logfont.lfCharSet);
+    ok(logfont.lfOutPrecision == OUT_OUTLINE_PRECIS, "got %d\n", logfont.lfOutPrecision);
+    ok(logfont.lfClipPrecision == 0, "got %d\n", logfont.lfClipPrecision);
+    ok(logfont.lfQuality == 0, "got %d\n", logfont.lfQuality);
+    ok(logfont.lfPitchAndFamily == 0, "got %d\n", logfont.lfPitchAndFamily);
     ok(logfont.lfFaceName[0] != 0, "got face name %s\n", wine_dbgstr_w(logfont.lfFaceName));
 
     IDWriteFactory_Release(factory2);

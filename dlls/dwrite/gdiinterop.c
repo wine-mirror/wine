@@ -504,6 +504,8 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop *iface,
 
     *is_systemfont = FALSE;
 
+    memset(logfont, 0, sizeof(*logfont));
+
     if (!font)
         return E_INVALIDARG;
 
