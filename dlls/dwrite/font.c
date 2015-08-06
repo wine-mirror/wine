@@ -964,8 +964,8 @@ static UINT32 WINAPI dwritefontface2_GetColorPaletteCount(IDWriteFontFace2 *ifac
 static UINT32 WINAPI dwritefontface2_GetPaletteEntryCount(IDWriteFontFace2 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FIXME("(%p): stub\n", This);
-    return 0;
+    TRACE("(%p)\n", This);
+    return opentype_get_cpal_paletteentrycount(get_fontface_cpal(This));
 }
 
 static HRESULT WINAPI dwritefontface2_GetPaletteEntries(IDWriteFontFace2 *iface, UINT32 palette_index,

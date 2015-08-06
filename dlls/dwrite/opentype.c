@@ -1428,3 +1428,9 @@ UINT32 opentype_get_cpal_palettecount(const void *cpal)
     const struct CPAL_Header_0 *header = (const struct CPAL_Header_0*)cpal;
     return header ? GET_BE_WORD(header->numPalette) : 0;
 }
+
+UINT32 opentype_get_cpal_paletteentrycount(const void *cpal)
+{
+    const struct CPAL_Header_0 *header = (const struct CPAL_Header_0*)cpal;
+    return header ? GET_BE_WORD(header->numPaletteEntries) : 0;
+}
