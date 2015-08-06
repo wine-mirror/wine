@@ -159,8 +159,10 @@ HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, I
     return D3DRM_OK;
 }
 
-HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM *d3drm, IDirectDraw *ddraw, IDirectDrawSurface *surface)
+HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM *d3drm, IDirectDraw *ddraw, IDirectDrawSurface *surface,
+            BOOL create_z_surface)
 {
+    DDSCAPS caps = { DDSCAPS_ZBUFFER };
     IDirectDrawSurface *ds = NULL;
     IDirect3DDevice *device1 = NULL;
     IDirect3DDevice2 *device2 = NULL;
@@ -180,21 +182,35 @@ HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM
     if (FAILED(hr))
         return hr;
 
-    memset(&surface_desc, 0, sizeof(surface_desc));
-    surface_desc.dwSize = sizeof(surface_desc);
-    surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
-    surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
-    surface_desc.dwZBufferBitDepth = 16;
-    surface_desc.dwWidth = desc.dwWidth;
-    surface_desc.dwHeight = desc.dwHeight;
-    hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL);
-    if (FAILED(hr))
-        return hr;
+    if (!(desc.ddsCaps.dwCaps & DDSCAPS_3DDEVICE))
+        return DDERR_INVALIDCAPS;
 
-    hr = IDirectDrawSurface_AddAttachedSurface(surface, ds);
-    IDirectDrawSurface_Release(ds);
-    if (FAILED(hr))
-        return hr;
+    hr = IDirectDrawSurface_GetAttachedSurface(surface, &caps, &ds);
+    if (SUCCEEDED(hr))
+    {
+        create_z_surface = FALSE;
+        IDirectDrawSurface_Release(ds);
+        ds = NULL;
+    }
+
+    if (create_z_surface)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_ZBUFFERBITDEPTH | DDSD_WIDTH | DDSD_HEIGHT;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
+        surface_desc.dwZBufferBitDepth = 16;
+        surface_desc.dwWidth = desc.dwWidth;
+        surface_desc.dwHeight = desc.dwHeight;
+        hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &ds, NULL);
+        if (FAILED(hr))
+            return hr;
+
+        hr = IDirectDrawSurface_AddAttachedSurface(surface, ds);
+        IDirectDrawSurface_Release(ds);
+        if (FAILED(hr))
+            return hr;
+    }
 
     if (version == 1)
         hr = IDirectDrawSurface_QueryInterface(surface, &IID_IDirect3DRGBDevice, (void **)&device1);

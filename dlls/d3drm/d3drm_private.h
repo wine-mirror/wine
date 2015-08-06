@@ -47,7 +47,8 @@ void d3drm_device_destroy(struct d3drm_device *device) DECLSPEC_HIDDEN;
 HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, IDirectDraw *ddraw, IDirectDrawClipper *clipper, int width, int height,
             IDirectDrawSurface **surface) DECLSPEC_HIDDEN;
 
-HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM *d3drm, IDirectDraw *ddraw, IDirectDrawSurface *surface) DECLSPEC_HIDDEN;
+HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM *d3drm, IDirectDraw *ddraw, IDirectDrawSurface *surface,
+            BOOL create_z_surface) DECLSPEC_HIDDEN;
 
 struct d3drm_file_header
 {
