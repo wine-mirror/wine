@@ -2649,7 +2649,7 @@ static void test_create_device_from_surface2(void)
     IDirectDraw *ddraw = NULL;
     IDirect3DRM *d3drm1 = NULL;
     IDirect3DRM2 *d3drm2 = NULL;
-    IDirect3DRMDevice2 *device2 = NULL;
+    IDirect3DRMDevice2 *device2 = (IDirect3DRMDevice2 *)0xdeadbeef;
     IDirect3DDevice2 *d3ddevice2 = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_surface = NULL, *d3drm_ds = NULL;
     DWORD expected_flags;
@@ -2689,23 +2689,30 @@ static void test_create_device_from_surface2(void)
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     hr = IDirect3DRM2_CreateDeviceFromSurface(d3drm2, &driver, ddraw, surface, &device2);
-    todo_wine ok(hr == DDERR_INVALIDCAPS, "Expected hr == DDERR_INVALIDCAPS, got %x.\n", hr);
+    ok(hr == DDERR_INVALIDCAPS, "Expected hr == DDERR_INVALIDCAPS, got %x.\n", hr);
+    ok(device2 == NULL, "Expected device returned == NULL, got %p.\n", device2);
     IDirectDrawSurface_Release(surface);
-    if (SUCCEEDED(hr))
-        IDirect3DRMDevice2_Release(device2);
 
     desc.ddsCaps.dwCaps |= DDSCAPS_3DDEVICE;
     hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
     surface_ref1 = get_refcount((IUnknown *)surface);
+
+    hr = IDirect3DRM2_CreateDeviceFromSurface(d3drm2, &driver, ddraw, surface, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == DDERR_BADVALUE, got %x.\n", hr);
+    hr = IDirect3DRM2_CreateDeviceFromSurface(d3drm2, &driver, ddraw, NULL, &device2);
+    ok(hr == D3DRMERR_BADDEVICE, "Expected hr == DDERR_BADDEVICE, got %x.\n", hr);
+    hr = IDirect3DRM2_CreateDeviceFromSurface(d3drm2, &driver, NULL, surface, &device2);
+    ok(hr == D3DRMERR_BADDEVICE, "Expected hr == DDERR_BADDEVICE, got %x.\n", hr);
+
     hr = IDirect3DRM2_CreateDeviceFromSurface(d3drm2, &driver, ddraw, surface, &device2);
     ok(SUCCEEDED(hr), "Cannot create IDirect3DRMDevice2 interface (hr = %x).\n", hr);
     ref3 = get_refcount((IUnknown *)d3drm1);
-    todo_wine ok(ref3 > ref1, "expected ref3 > ref1, got ref1 = %u , ref3 = %u.\n", ref1, ref3);
+    ok(ref3 > ref1, "expected ref3 > ref1, got ref1 = %u , ref3 = %u.\n", ref1, ref3);
     ref3 = get_refcount((IUnknown *)d3drm2);
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     surface_ref2 = get_refcount((IUnknown *)surface);
-    todo_wine ok(surface_ref2 > surface_ref1, "Expected surface_ref2 > surface_ref1, got surface_ref1 = %u, surface_ref2 = %u.\n", surface_ref1, surface_ref2);
+    ok(surface_ref2 > surface_ref1, "Expected surface_ref2 > surface_ref1, got surface_ref1 = %u, surface_ref2 = %u.\n", surface_ref1, surface_ref2);
 
     /* Check if CreateDeviceFromSurface creates a primary surface */
     hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
@@ -2714,9 +2721,7 @@ static void test_create_device_from_surface2(void)
     ok(d3drm_surface == NULL, "No primary surface should have enumerated (%p).\n", d3drm_surface);
 
     hr = IDirect3DRMDevice2_GetDirect3DDevice2(device2, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &d3drm_surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -2785,9 +2790,7 @@ static void test_create_device_from_surface2(void)
     ok(SUCCEEDED(hr), "Cannot create IDirect3DRMDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DRMDevice2_GetDirect3DDevice2(device2, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &d3drm_surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -2802,29 +2805,18 @@ static void test_create_device_from_surface2(void)
     IDirectDrawSurface_Release(d3drm_surface);
     IDirectDrawSurface_Release(ds);
 
-cleanup:
-    if (d3ddevice2)
-        IDirect3DDevice2_Release(d3ddevice2);
+    IDirect3DDevice2_Release(d3ddevice2);
     IDirect3DRMDevice2_Release(device2);
     hr = IDirectDrawSurface_GetAttachedSurface(surface, &caps, &ds);
-    todo_wine ok(hr == DD_OK, "Cannot get attached depth surface (hr = %x).\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        /*The render target still holds a reference to ds as the depth surface remains attached to it, so refcount will be 1*/
-        ref1 = IDirectDrawSurface_Release(ds);
-        ok(ref1 == 1, "Expected ref1 == 1, got %u.\n", ref1);
-    }
-    if (surface)
-    {
-        ref1 = IDirectDrawSurface_Release(surface);
-        ok(ref1 == 0, "Expected Render target refcount == 0, got %u.\n", ref1);
-    }
-    if (d3drm2)
-        IDirect3DRM2_Release(d3drm2);
-    if (d3drm1)
-        IDirect3DRM_Release(d3drm1);
-    if (ddraw)
-        IDirectDraw_Release(ddraw);
+    ok(hr == DD_OK, "Cannot get attached depth surface (hr = %x).\n", hr);
+    /*The render target still holds a reference to ds as the depth surface remains attached to it, so refcount will be 1*/
+    ref1 = IDirectDrawSurface_Release(ds);
+    ok(ref1 == 1, "Expected ref1 == 1, got %u.\n", ref1);
+    ref1 = IDirectDrawSurface_Release(surface);
+    ok(ref1 == 0, "Expected Render target refcount == 0, got %u.\n", ref1);
+    IDirect3DRM2_Release(d3drm2);
+    IDirect3DRM_Release(d3drm1);
+    IDirectDraw_Release(ddraw);
     DestroyWindow(window);
 }
 
@@ -2835,7 +2827,7 @@ static void test_create_device_from_surface3(void)
     IDirectDraw *ddraw = NULL;
     IDirect3DRM *d3drm1 = NULL;
     IDirect3DRM3 *d3drm3 = NULL;
-    IDirect3DRMDevice3 *device3 = NULL;
+    IDirect3DRMDevice3 *device3 = (IDirect3DRMDevice3 *)0xdeadbeef;
     IDirect3DDevice2 *d3ddevice2 = NULL;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_surface = NULL, *d3drm_ds = NULL;
     DWORD expected_flags;
@@ -2875,23 +2867,30 @@ static void test_create_device_from_surface3(void)
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
 
     hr = IDirect3DRM3_CreateDeviceFromSurface(d3drm3, &driver, ddraw, surface, 0, &device3);
-    todo_wine ok(hr == DDERR_INVALIDCAPS, "Expected hr == DDERR_INVALIDCAPS, got %x.\n", hr);
+    ok(hr == DDERR_INVALIDCAPS, "Expected hr == DDERR_INVALIDCAPS, got %x.\n", hr);
+    ok(device3 == NULL, "Expected device returned == NULL, got %p.\n", device3);
     IDirectDrawSurface_Release(surface);
-    if (SUCCEEDED(hr))
-        IDirect3DRMDevice3_Release(device3);
 
     desc.ddsCaps.dwCaps |= DDSCAPS_3DDEVICE;
     hr = IDirectDraw_CreateSurface(ddraw, &desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
     surface_ref1 = get_refcount((IUnknown *)surface);
+
+    hr = IDirect3DRM3_CreateDeviceFromSurface(d3drm3, &driver, ddraw, surface, 0, NULL);
+    ok(hr == D3DRMERR_BADVALUE, "Expected hr == DDERR_BADVALUE, got %x.\n", hr);
+    hr = IDirect3DRM3_CreateDeviceFromSurface(d3drm3, &driver, ddraw, NULL, 0, &device3);
+    ok(hr == D3DRMERR_BADDEVICE, "Expected hr == DDERR_BADDEVICE, got %x.\n", hr);
+    hr = IDirect3DRM3_CreateDeviceFromSurface(d3drm3, &driver, NULL, surface, 0, &device3);
+    ok(hr == D3DRMERR_BADDEVICE, "Expected hr == DDERR_BADDEVICE, got %x.\n", hr);
+
     hr = IDirect3DRM3_CreateDeviceFromSurface(d3drm3, &driver, ddraw, surface, 0, &device3);
     ok(SUCCEEDED(hr), "Cannot create IDirect3DRMDevice3 interface (hr = %x).\n", hr);
     ref3 = get_refcount((IUnknown *)d3drm1);
-    todo_wine ok(ref3 > ref1, "expected ref3 > ref1, got ref1 = %u , ref3 = %u.\n", ref1, ref3);
+    ok(ref3 > ref1, "expected ref3 > ref1, got ref1 = %u , ref3 = %u.\n", ref1, ref3);
     ref3 = get_refcount((IUnknown *)d3drm3);
     ok(ref3 == ref2, "expected ref3 == ref2, got ref2 = %u , ref3 = %u.\n", ref2, ref3);
     surface_ref2 = get_refcount((IUnknown *)surface);
-    todo_wine ok(surface_ref2 > surface_ref1, "Expected surface_ref2 > surface_ref1, got surface_ref1 = %u, surface_ref2 = %u.\n", surface_ref1, surface_ref2);
+    ok(surface_ref2 > surface_ref1, "Expected surface_ref2 > surface_ref1, got surface_ref1 = %u, surface_ref2 = %u.\n", surface_ref1, surface_ref2);
 
     /* Check if CreateDeviceFromSurface creates a primary surface */
     hr = IDirectDraw_EnumSurfaces(ddraw, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
@@ -2900,9 +2899,7 @@ static void test_create_device_from_surface3(void)
     ok(d3drm_surface == NULL, "No primary surface should have enumerated (%p).\n", d3drm_surface);
 
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &d3drm_surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -2927,8 +2924,8 @@ static void test_create_device_from_surface3(void)
     IDirectDrawSurface_Release(ds);
     IDirect3DDevice2_Release(d3ddevice2);
     IDirectDrawSurface_Release(d3drm_surface);
-
     IDirect3DRMDevice3_Release(device3);
+
     ref3 = get_refcount((IUnknown *)d3drm1);
     ok(ref1 == ref3, "expected ref1 == ref3, got ref1 = %u, ref3 = %u.\n", ref1, ref3);
     ref3 = get_refcount((IUnknown *)d3drm3);
@@ -2941,7 +2938,6 @@ static void test_create_device_from_surface3(void)
     todo_wine ok(hr == DDERR_NOTFOUND, "Expected hr == DDERR_NOTFOUND, got %x.\n", hr);
     if (SUCCEEDED(hr))
         IDirectDrawSurface_Release(ds);
-
     ref1 = IDirectDrawSurface_Release(surface);
     ok(ref1 == 0, "Expected Render target refcount == 0, got %u.\n", ref1);
 
@@ -2971,9 +2967,7 @@ static void test_create_device_from_surface3(void)
     ok(SUCCEEDED(hr), "Cannot create IDirect3DRMDevice3 interface (hr = %x).\n", hr);
 
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &d3drm_surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -2990,22 +2984,17 @@ static void test_create_device_from_surface3(void)
     IDirect3DDevice2_Release(d3ddevice2);
     IDirect3DRMDevice3_Release(device3);
     hr = IDirectDrawSurface_GetAttachedSurface(surface, &caps, &ds);
-    todo_wine ok(hr == DD_OK, "Cannot get attached depth surface (hr = %x).\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        /* The render target still holds a reference to ds as the depth surface remains attached to it, so refcount will be 1*/
-        ref1 = IDirectDrawSurface_Release(ds);
-        ok(ref1 == 1, "Expected ref1 == 1, got %u.\n", ref1);
-    }
+    ok(hr == DD_OK, "Cannot get attached depth surface (hr = %x).\n", hr);
+    /* The render target still holds a reference to ds as the depth surface remains attached to it, so refcount will be 1*/
+    ref1 = IDirectDrawSurface_Release(ds);
+    ok(ref1 == 1, "Expected ref1 == 1, got %u.\n", ref1);
 
     /* What happens if we pass no flags and still attach our own depth surface? */
     hr = IDirect3DRM3_CreateDeviceFromSurface(d3drm3, &driver, ddraw, surface, 0, &device3);
     ok(SUCCEEDED(hr), "Cannot create IDirect3DRMDevice3 interface (hr = %x).\n", hr);
 
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &d3drm_surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -3021,13 +3010,10 @@ static void test_create_device_from_surface3(void)
     IDirect3DDevice2_Release(d3ddevice2);
     IDirect3DRMDevice3_Release(device3);
     hr = IDirectDrawSurface_GetAttachedSurface(surface, &caps, &ds);
-    todo_wine ok(hr == DD_OK, "Cannot get attached depth surface (hr = %x).\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        /*The render target still holds a reference to ds as the depth surface remains attached to it, so refcount will be 1*/
-        ref1 = IDirectDrawSurface_Release(ds);
-        ok(ref1 == 1, "Expected ref1 == 1, got %u.\n", ref1);
-    }
+    ok(hr == DD_OK, "Cannot get attached depth surface (hr = %x).\n", hr);
+    /*The render target still holds a reference to ds as the depth surface remains attached to it, so refcount will be 1*/
+    ref1 = IDirectDrawSurface_Release(ds);
+    ok(ref1 == 1, "Expected ref1 == 1, got %u.\n", ref1);
     ref1 = IDirectDrawSurface_Release(surface);
     ok(ref1 == 0, "Expected Render target refcount == 0, got %u.\n", ref1);
 
@@ -3046,9 +3032,7 @@ static void test_create_device_from_surface3(void)
     ok(SUCCEEDED(hr), "Cannot create IDirect3DRMDevice3 interface (hr = %x).\n", hr);
 
     hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
-    todo_wine ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
-    if (FAILED(hr))
-        goto cleanup;
+    ok(hr == D3DRM_OK, "Cannot get IDirect3DDevice2 interface (hr = %x).\n", hr);
 
     hr = IDirect3DDevice2_GetRenderTarget(d3ddevice2, &d3drm_surface);
     ok(hr == DD_OK, "Cannot get surface to the render target (hr = %x).\n", hr);
@@ -3059,21 +3043,13 @@ static void test_create_device_from_surface3(void)
     ok(hr == DDERR_NOTFOUND, "Expected hr == DDERR_NOTFOUND, got %x).\n", hr);
     IDirectDrawSurface_Release(d3drm_surface);
 
-cleanup:
-    if (d3ddevice2)
-        IDirect3DDevice2_Release(d3ddevice2);
+    IDirect3DDevice2_Release(d3ddevice2);
     IDirect3DRMDevice3_Release(device3);
-    if (surface)
-    {
-        ref1 = IDirectDrawSurface_Release(surface);
-        ok(ref1 == 0, "Expected Render target refcount == 0, got %u.\n", ref1);
-    }
-    if (d3drm3)
-        IDirect3DRM3_Release(d3drm3);
-    if (d3drm1)
-        IDirect3DRM_Release(d3drm1);
-    if (ddraw)
-        IDirectDraw_Release(ddraw);
+    ref1 = IDirectDrawSurface_Release(surface);
+    ok(ref1 == 0, "Expected Render target refcount == 0, got %u.\n", ref1);
+    IDirect3DRM3_Release(d3drm3);
+    IDirect3DRM_Release(d3drm1);
+    IDirectDraw_Release(ddraw);
     DestroyWindow(window);
 }
 
