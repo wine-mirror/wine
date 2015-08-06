@@ -9934,8 +9934,7 @@ msgid ""
 "redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <tiedostonimi> kopioi tiedoston <tiedostonimi> konsolilaitteeseen (tai\n"
-"muualle, jos ohjataan muualle). Sitä, onko tiedosto luettavissa, ei\n"
-"tarkisteta.\n"
+"uudelleenohjattuna muualle). Tiedoston tekstimuotoisuutta ei tarkisteta.\n"
 
 #: cmd.rc:253
 msgid ""
