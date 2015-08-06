@@ -60,6 +60,21 @@ static inline struct d3drm_device *impl_from_IDirect3DRMDevice3(IDirect3DRMDevic
     return CONTAINING_RECORD(iface, struct d3drm_device, IDirect3DRMDevice3_iface);
 }
 
+IDirect3DRMDevice *IDirect3DRMDevice_from_impl(struct d3drm_device *device)
+{
+    return &device->IDirect3DRMDevice_iface;
+}
+
+IDirect3DRMDevice2 *IDirect3DRMDevice2_from_impl(struct d3drm_device *device)
+{
+    return &device->IDirect3DRMDevice2_iface;
+}
+
+IDirect3DRMDevice3 *IDirect3DRMDevice3_from_impl(struct d3drm_device *device)
+{
+    return &device->IDirect3DRMDevice3_iface;
+}
+
 static inline struct d3drm_device *impl_from_IDirect3DRMWinDevice(IDirect3DRMWinDevice *iface)
 {
     return CONTAINING_RECORD(iface, struct d3drm_device, IDirect3DRMWinDevice_iface);
@@ -1381,12 +1396,11 @@ static const struct IDirect3DRMWinDeviceVtbl d3drm_device_win_vtbl =
     d3drm_device_win_HandleActivate,
 };
 
-HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown **out)
+HRESULT d3drm_device_create(struct d3drm_device **out)
 {
     struct d3drm_device *object;
-    HRESULT hr;
 
-    TRACE("riid %s, out %p.\n", debugstr_guid(riid), out);
+    TRACE("out %p.\n", out);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -1397,8 +1411,7 @@ HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown **out)
     object->IDirect3DRMWinDevice_iface.lpVtbl = &d3drm_device_win_vtbl;
     object->ref = 1;
 
-    hr = IDirect3DRMDevice_QueryInterface(&object->IDirect3DRMDevice3_iface, riid, (void **)out);
-    IDirect3DRMDevice3_Release(&object->IDirect3DRMDevice3_iface);
+    *out = object;
 
-    return hr;
+    return D3DRM_OK;
 }

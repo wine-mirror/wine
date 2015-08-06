@@ -24,7 +24,12 @@
 #include "d3drm.h"
 #include "dxfile.h"
 
-HRESULT Direct3DRMDevice_create(REFIID riid, IUnknown** ppObj) DECLSPEC_HIDDEN;
+struct d3drm_device;
+
+HRESULT d3drm_device_create(struct d3drm_device **out) DECLSPEC_HIDDEN;
+IDirect3DRMDevice *IDirect3DRMDevice_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
+IDirect3DRMDevice2 *IDirect3DRMDevice2_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
+IDirect3DRMDevice3 *IDirect3DRMDevice3_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMFace_create(REFIID riid, IUnknown** ret_iface) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMFrame_create(REFIID riid, IUnknown* parent_frame, IUnknown** ret_iface) DECLSPEC_HIDDEN;
 HRESULT Direct3DRMLight_create(IUnknown** ppObj) DECLSPEC_HIDDEN;
