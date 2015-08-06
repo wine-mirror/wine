@@ -1273,7 +1273,15 @@ static D3DRMTEXTUREQUALITY WINAPI d3drm_device3_GetTextureQuality(IDirect3DRMDev
 
 static HRESULT WINAPI d3drm_device3_GetDirect3DDevice(IDirect3DRMDevice3 *iface, IDirect3DDevice **d3d_device)
 {
-    FIXME("iface %p, d3d_device %p stub!\n", iface, d3d_device);
+    struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
+    TRACE("iface %p, d3d_device %p!\n", iface, d3d_device);
+
+    if (device->device)
+    {
+        *d3d_device = device->device;
+        IDirect3DDevice_AddRef(*d3d_device);
+        return D3DRM_OK;
+    }
 
     return E_NOTIMPL;
 }
