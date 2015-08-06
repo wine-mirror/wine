@@ -437,12 +437,20 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
     return count;
 }
 
-UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint)
+UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint, INT charmap)
 {
     UINT16 glyph;
 
     EnterCriticalSection(&freetype_cs);
-    glyph = pFTC_CMapCache_Lookup(cmap_cache, fontface, -1, codepoint);
+    if (charmap == -1)
+        glyph = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint);
+    else {
+        /* special handling for symbol fonts */
+        if (codepoint < 0x100) codepoint += 0xf000;
+        glyph = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint);
+        if (!glyph)
+            glyph = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint - 0xf000);
+    }
     LeaveCriticalSection(&freetype_cs);
 
     return glyph;
@@ -627,7 +635,7 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
     return 0;
 }
 
-UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint)
+UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint, INT charmap)
 {
     return 0;
 }

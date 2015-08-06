@@ -469,7 +469,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace2 *iface, UI
     }
 
     for (i = 0; i < count; i++)
-        glyph_indices[i] = freetype_get_glyphindex(iface, codepoints[i]);
+        glyph_indices[i] = freetype_get_glyphindex(iface, codepoints[i], This->charmap);
 
     return S_OK;
 }
