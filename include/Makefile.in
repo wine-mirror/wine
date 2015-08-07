@@ -65,6 +65,7 @@ PUBLIC_IDL_H_SRCS = \
 	inspectable.idl \
 	mediaobj.idl \
 	metahost.idl \
+	mfobjects.idl \
 	mimeinfo.idl \
 	mimeole.idl \
 	mlang.idl \

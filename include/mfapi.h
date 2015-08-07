@@ -19,14 +19,13 @@
 #ifndef __WINE_MFAPI_H
 #define __WINE_MFAPI_H
 
+#include <mfobjects.h>
+#include <mmreg.h>
+#include <avrt.h>
+
 #define MFSTARTUP_NOSOCKET 0x1
 #define MFSTARTUP_LITE     (MFSTARTUP_NOSOCKET)
 #define MFSTARTUP_FULL     0
-
-typedef struct _MFT_REGISTER_TYPE_INFO {
-  GUID guidMajorType;
-  GUID guidSubtype;
-} MFT_REGISTER_TYPE_INFO;
 
 typedef unsigned __int64 MFWORKITEM_KEY;
 
@@ -36,5 +35,6 @@ HRESULT WINAPI MFLockPlatform(void);
 HRESULT WINAPI MFShutdown(void);
 HRESULT WINAPI MFStartup(ULONG version, DWORD flags);
 HRESULT WINAPI MFUnlockPlatform(void);
+HRESULT WINAPI MFGetPluginControl(IMFPluginControl**);
 
 #endif /* __WINE_MFAPI_H */
