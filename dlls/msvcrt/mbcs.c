@@ -1080,7 +1080,7 @@ int CDECL _mbscat_s_l( unsigned char *dst, MSVCRT_size_t size,
     for(j=0; src[j] && i+j<size; j++)
         dst[i+j] = src[j];
     if(i+j == size) {
-        MSVCRT_INVALID_PMT("dst buffer is to small", MSVCRT_ERANGE);
+        MSVCRT_INVALID_PMT("dst buffer is too small", MSVCRT_ERANGE);
         dst[0] = 0;
         return MSVCRT_ERANGE;
     }

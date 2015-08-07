@@ -1783,7 +1783,7 @@ SIZE_T virtual_uninterrupted_write_memory( void *addr, const void *buffer, SIZE_
                 BYTE *p = view->prot + (((const char *)page - (const char *)view->base) >> page_shift);
                 SIZE_T block_size;
 
-                /* If the page is not writeable then check for write watches
+                /* If the page is not writable then check for write watches
                  * before giving up. This can be done without raising a real
                  * exception. Similar to virtual_handle_fault. */
                 if (!(VIRTUAL_GetUnixProt( *p ) & PROT_WRITE))

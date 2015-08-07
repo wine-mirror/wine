@@ -1188,7 +1188,7 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
         if (ds_desc.multisample_type != rt_desc.multisample_type
                 || ds_desc.multisample_quality != rt_desc.multisample_quality)
         {
-            WARN("Multisample settings do not match, returing D3DERR_INVALIDCALL\n");
+            WARN("Multisample settings do not match, returning D3DERR_INVALIDCALL\n");
             wined3d_mutex_unlock();
             return D3DERR_INVALIDCALL;
 

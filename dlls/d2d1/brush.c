@@ -721,7 +721,7 @@ struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface)
     return CONTAINING_RECORD(iface, struct d2d_brush, ID2D1Brush_iface);
 }
 
-static D3D10_TEXTURE_ADDRESS_MODE texture_addres_mode_from_extend_mode(D2D1_EXTEND_MODE mode)
+static D3D10_TEXTURE_ADDRESS_MODE texture_address_mode_from_extend_mode(D2D1_EXTEND_MODE mode)
 {
     switch (mode)
     {
@@ -853,8 +853,8 @@ void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_d3d_render_tar
                 sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
             else
                 sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
-            sampler_desc.AddressU = texture_addres_mode_from_extend_mode(brush->u.bitmap.extend_mode_x);
-            sampler_desc.AddressV = texture_addres_mode_from_extend_mode(brush->u.bitmap.extend_mode_y);
+            sampler_desc.AddressU = texture_address_mode_from_extend_mode(brush->u.bitmap.extend_mode_x);
+            sampler_desc.AddressV = texture_address_mode_from_extend_mode(brush->u.bitmap.extend_mode_y);
             sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_CLAMP;
             sampler_desc.MipLODBias = 0.0f;
             sampler_desc.MaxAnisotropy = 0;

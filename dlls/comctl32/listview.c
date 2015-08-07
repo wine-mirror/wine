@@ -63,9 +63,9 @@
  *   -- if list is sorted by item text LISTVIEW_InsertItemT could use
  *      binary search to calculate item index (e.g. DPA_Search()).
  *      This requires sorted state to be reliably tracked in item modifiers.
- *   -- we should keep an ordered array of coordinates in iconic mode
- *      this would allow to frame items (iterator_frameditems),
- *      and find nearest item (LVFI_NEARESTXY) a lot more efficiently
+ *   -- we should keep an ordered array of coordinates in iconic mode.
+ *      This would allow framing items (iterator_frameditems),
+ *      and finding the nearest item (LVFI_NEARESTXY) a lot more efficiently.
  *
  * Flags
  *   -- LVIF_COLUMNS

@@ -1561,7 +1561,7 @@ static BOOL WINAPI dll_entry_point(HINSTANCE hinst, DWORD reason, LPVOID param)
             ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %#x\n", ret);
         }
 
-        /* win7 doesn't allow to create a thread during process shutdown,
+        /* win7 doesn't allow creating a thread during process shutdown but
          * earlier Windows versions allow it.
          */
         noop_thread_started = 0;
@@ -1690,8 +1690,8 @@ todo_wine
         trace("dll: %p, DLL_THREAD_DETACH, %p\n", hinst, param);
 
         ret = pRtlDllShutdownInProgress();
-        /* win7 doesn't allow to create a thread during process shutdown,
-         * earlier Windows versions allow it, and DLL_THREAD_DETACH is
+        /* win7 doesn't allow creating a thread during process shutdown but
+         * earlier Windows versions allow it. In that case DLL_THREAD_DETACH is
          * sent on thread exit, but DLL_THREAD_ATTACH is never received.
          */
         if (noop_thread_started)

@@ -196,13 +196,13 @@ static void test_gamestatisticsmgr( void )
 
     /* test trying to create interface IGameStatistics using GetGameStatistics method */
 
-    /* this should fail, cause statistics doesn't yet exists */
+    /* this should fail, because statistics don't exist yet */
     gs = (void *)0xdeadbeef;
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENONLY, &dwOpenResult, &gs);
     ok(hr == HRESULT_FROM_WIN32(ERROR_FILE_NOT_FOUND), "GetGameStatistics returned unexpected value: 0x%08x\n", hr);
     ok(gs == NULL, "Expected output pointer to be NULL, got %p\n", gs);
 
-    /* now, allow to create */
+    /* now, allow them to be created */
     hr = IGameStatisticsMgr_GetGameStatistics(gsm, sExeName, GAMESTATS_OPEN_OPENORCREATE, &dwOpenResult, &gs);
     ok(SUCCEEDED(hr), "GetGameStatistics returned error: 0x%x\n", hr);
     ok(gs!=NULL, "GetGameStatistics did not return valid interface pointer\n");

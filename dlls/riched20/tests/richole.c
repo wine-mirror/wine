@@ -3034,7 +3034,7 @@ static void test_SetFont(void)
   EXPECT_REF(range2, 2);
   EXPECT_REF(range, 2);
 
-  /* originaly range 0-4 is non-italic */
+  /* originally range 0-4 is non-italic */
   value = tomTrue;
   hr = ITextFont_GetItalic(font, &value);
   ok(hr == S_OK, "got 0x%08x\n", hr);

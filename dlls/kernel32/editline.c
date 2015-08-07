@@ -233,7 +233,7 @@ static BOOL WCEL_Grow(WCEL_Context* ctx, size_t len)
 {
     if (!WCEL_IsSingleLine(ctx, len) && !ctx->can_wrap)
     {
-        FIXME("Mode doesn't allow to wrap. However, we should allow to overwrite current string\n");
+        FIXME("Mode doesn't allow wrapping. However, we should allow overwriting the current string\n");
         return FALSE;
     }
 

@@ -876,7 +876,7 @@ static HRESULT removeFromTree(
  * IEnumSTATSTGImpl definitions.
  *
  * Definition of the implementation structure for the IEnumSTATSTGImpl interface.
- * This class allows iterating through the content of a storage and to find
+ * This class allows iterating through the content of a storage and finding
  * specific items inside it.
  */
 struct IEnumSTATSTGImpl
@@ -2518,7 +2518,7 @@ static HRESULT deleteStreamContents(
  * Strategy: This implementation is built this way for simplicity not for speed.
  *          I always delete the topmost element of the enumeration and adjust
  *          the deleted element pointer all the time.  This takes longer to
- *          do but allow to reinvoke DestroyElement whenever we encounter a
+ *          do but allows reinvoking DestroyElement whenever we encounter a
  *          storage object.  The optimisation resides in the usage of another
  *          enumeration strategy that would give all the leaves of a storage
  *          first. (postfix order)

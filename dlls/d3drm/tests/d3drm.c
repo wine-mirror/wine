@@ -2047,7 +2047,7 @@ static void test_create_device_from_clipper1(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
 
-    ok((surface_desc.dwWidth == 300) && (surface_desc.dwHeight == 200), "Expected surface dimentions = 300, 200, got %u, %u.\n",
+    ok((surface_desc.dwWidth == 300) && (surface_desc.dwHeight == 200), "Expected surface dimensions = 300, 200, got %u, %u.\n",
             surface_desc.dwWidth, surface_desc.dwHeight);
     ok((surface_desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE)) == (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE),
             "Expected caps containing %x, got %x.\n", DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE, surface_desc.ddsCaps.dwCaps);
@@ -2069,7 +2069,7 @@ static void test_create_device_from_clipper1(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(ds, &desc);
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == 300) && (desc.dwHeight == 200), "Expected surface dimentions = 300, 200, got %u, %u.\n",
+    ok((desc.dwWidth == 300) && (desc.dwHeight == 200), "Expected surface dimensions = 300, 200, got %u, %u.\n",
             desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) == DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
@@ -2230,7 +2230,7 @@ static void test_create_device_from_clipper2(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
 
-    ok((surface_desc.dwWidth == 300) && (surface_desc.dwHeight == 200), "Expected surface dimentions = 300, 200, got %u, %u.\n",
+    ok((surface_desc.dwWidth == 300) && (surface_desc.dwHeight == 200), "Expected surface dimensions = 300, 200, got %u, %u.\n",
             surface_desc.dwWidth, surface_desc.dwHeight);
     ok((surface_desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE)) == (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE),
             "Expected caps containing %x, got %x.\n", DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE, surface_desc.ddsCaps.dwCaps);
@@ -2252,7 +2252,7 @@ static void test_create_device_from_clipper2(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(ds, &desc);
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == 300) && (desc.dwHeight == 200), "Expected surface dimentions = 300, 200, got %u, %u.\n",
+    ok((desc.dwWidth == 300) && (desc.dwHeight == 200), "Expected surface dimensions = 300, 200, got %u, %u.\n",
             desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) == DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
@@ -2418,7 +2418,7 @@ static void test_create_device_from_clipper3(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &surface_desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
 
-    ok((surface_desc.dwWidth == 300) && (surface_desc.dwHeight == 200), "Expected surface dimentions = 300, 200, got %u, %u.\n",
+    ok((surface_desc.dwWidth == 300) && (surface_desc.dwHeight == 200), "Expected surface dimensions = 300, 200, got %u, %u.\n",
             surface_desc.dwWidth, surface_desc.dwHeight);
     ok((surface_desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE)) == (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE),
             "Expected caps containing %x, got %x.\n", DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE, surface_desc.ddsCaps.dwCaps);
@@ -2440,7 +2440,7 @@ static void test_create_device_from_clipper3(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(ds, &desc);
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == 300) && (desc.dwHeight == 200), "Expected surface dimentions = 300, 200, got %u, %u.\n",
+    ok((desc.dwWidth == 300) && (desc.dwHeight == 200), "Expected surface dimensions = 300, 200, got %u, %u.\n",
             desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) == DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
@@ -2596,7 +2596,7 @@ static void test_create_device_from_surface1(void)
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
     use_sysmem_zbuffer = desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY;
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok(desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
@@ -2778,7 +2778,7 @@ static void test_create_device_from_surface2(void)
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
     use_sysmem_zbuffer = desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY;
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok(desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
@@ -2964,7 +2964,7 @@ static void test_create_device_from_surface3(void)
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
     use_sysmem_zbuffer = desc.ddsCaps.dwCaps & DDSCAPS_SYSTEMMEMORY;
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok(desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
@@ -3250,7 +3250,7 @@ static void test_create_device_from_d3d1(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE)) == (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE),
             "Expected caps containing %x, got %x.\n", DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE, desc.ddsCaps.dwCaps);
@@ -3265,7 +3265,7 @@ static void test_create_device_from_d3d1(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(ds, &desc);
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) == DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
@@ -3440,7 +3440,7 @@ static void test_create_device_from_d3d2(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE)) == (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE),
             "Expected caps containing %x, got %x.\n", DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE, desc.ddsCaps.dwCaps);
@@ -3455,7 +3455,7 @@ static void test_create_device_from_d3d2(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(ds, &desc);
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) == DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
@@ -3565,7 +3565,7 @@ static void test_create_device_from_d3d3(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(surface, &desc);
     ok(hr == DD_OK, "Cannot get surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE)) == (DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE),
             "Expected caps containing %x, got %x.\n", DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE, desc.ddsCaps.dwCaps);
@@ -3580,7 +3580,7 @@ static void test_create_device_from_d3d3(void)
     hr = IDirectDrawSurface_GetSurfaceDesc(ds, &desc);
     ok(hr == DD_OK, "Cannot get z surface desc structure (hr = %x).\n", hr);
 
-    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimentions = %u, %u, got %u, %u.\n",
+    ok((desc.dwWidth == rc.right) && (desc.dwHeight == rc.bottom), "Expected surface dimensions = %u, %u, got %u, %u.\n",
             rc.right, rc.bottom, desc.dwWidth, desc.dwHeight);
     ok((desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) == DDSCAPS_ZBUFFER, "Expected caps containing %x, got %x.\n", DDSCAPS_ZBUFFER, desc.ddsCaps.dwCaps);
     expected_flags = DDSD_ZBUFFERBITDEPTH | DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PITCH;
