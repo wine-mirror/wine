@@ -74,7 +74,8 @@ static HWND XDNDLastDropTargetWnd;
 static void X11DRV_XDND_InsertXDNDData(int property, int format, HANDLE contents);
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     Atom *types, unsigned long count);
-static void X11DRV_XDND_SendDropFiles(HWND hwnd);
+static BOOL X11DRV_XDND_HasHDROP(void);
+static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd);
 static void X11DRV_XDND_FreeDragDropOp(void);
 
 static CRITICAL_SECTION xdnd_cs;
@@ -338,8 +339,15 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
 
     if (XDNDAccepted)
         accept = 1;
-    if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
+    else if (dropTarget == NULL &&
+            (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
+            (effect & DROPEFFECT_COPY) &&
+            X11DRV_XDND_HasHDROP())
+    {
         accept = 1;
+        effect = DROPEFFECT_COPY;
+        XDNDDropEffect = effect;
+    }
 
     TRACE("action req: %ld accept(%d) at x(%d),y(%d)\n",
           event->data.l[4], accept, XDNDxy.x, XDNDxy.y);
@@ -407,8 +415,17 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     {
         /* Only send WM_DROPFILES if there is no drop target. Doing both
          * causes winamp to duplicate the dropped files (#29081) */
-        if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
-            X11DRV_XDND_SendDropFiles( hWnd );
+        if ((GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
+                (effect & DROPEFFECT_COPY) &&
+                X11DRV_XDND_HasHDROP())
+        {
+            HRESULT hr = X11DRV_XDND_SendDropFiles( hWnd );
+            if (SUCCEEDED(hr))
+            {
+                accept = 1;
+                effect = DROPEFFECT_COPY;
+            }
+        }
     }
 
     X11DRV_XDND_FreeDragDropOp();
@@ -552,9 +569,9 @@ static void X11DRV_XDND_InsertXDNDData(int property, int format, HANDLE contents
 
 
 /**************************************************************************
- * X11DRV_XDND_SendDropFiles
+ * X11DRV_XDND_HasHDROP
  */
-static void X11DRV_XDND_SendDropFiles(HWND hwnd)
+static BOOL X11DRV_XDND_HasHDROP(void)
 {
     LPXDNDDATA current = NULL;
     BOOL found = FALSE;
@@ -571,10 +588,33 @@ static void X11DRV_XDND_SendDropFiles(HWND hwnd)
         }
     }
 
+    LeaveCriticalSection(&xdnd_cs);
+
+    return found;
+}
+
+/**************************************************************************
+ * X11DRV_XDND_SendDropFiles
+ */
+static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
+{
+    HRESULT hr;
+    LPXDNDDATA current = NULL;
+    BOOL found = FALSE;
+
+    EnterCriticalSection(&xdnd_cs);
+
+    LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
+    {
+         if (current->cf_win == CF_HDROP)
+         {
+             found = TRUE;
+             break;
+         }
+    }
     if (found)
     {
         HGLOBAL dropHandle = GlobalAlloc(GMEM_FIXED, GlobalSize(current->contents));
-
         if (dropHandle)
         {
             DROPFILES *lpDrop = GlobalLock(dropHandle);
@@ -587,12 +627,23 @@ static void X11DRV_XDND_SendDropFiles(HWND hwnd)
                     lpDrop->fNC, lpDrop->pt.x, lpDrop->pt.y, ((char*)lpDrop) + lpDrop->pFiles,
                     debugstr_w((WCHAR*)(((char*)lpDrop) + lpDrop->pFiles)));
             GlobalUnlock(dropHandle);
-            if (!PostMessageW(hwnd, WM_DROPFILES, (WPARAM)dropHandle, 0))
+            if (PostMessageW(hwnd, WM_DROPFILES, (WPARAM)dropHandle, 0))
+                hr = S_OK;
+            else
+            {
+                hr = HRESULT_FROM_WIN32(GetLastError());
                 GlobalFree(dropHandle);
+            }
         }
+        else
+            hr = HRESULT_FROM_WIN32(GetLastError());
     }
+    else
+        hr = E_FAIL;
 
     LeaveCriticalSection(&xdnd_cs);
+
+    return hr;
 }
 
 
