@@ -1035,10 +1035,8 @@ msgid "Open File"
 msgstr "Öppna fil"
 
 #: comdlg32.rc:147
-#, fuzzy
-#| msgid "New Folder"
 msgid "Select Folder"
-msgstr "Ny mapp"
+msgstr "Välj mapp"
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -2724,11 +2722,6 @@ msgstr ""
 "Är du säker du vill ta bort detta certifikat?"
 
 #: cryptui.rc:113
-#, fuzzy
-#| msgid ""
-#| "You will no longer be able to encrypt messages with these certificates, "
-#| "or verify messages signed with it.\n"
-#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
 "verify messages signed with them.\n"
@@ -3142,10 +3135,8 @@ msgid "&View Source"
 msgstr "&Visa källkod"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
-msgstr "Egenskaper"
+msgstr "&Egenskaper"
 
 #: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
@@ -3566,10 +3557,8 @@ msgid "Expected identifier"
 msgstr ""
 
 #: jscript.rc:41
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '='"
-msgstr "';' förväntades"
+msgstr "'=' förväntades"
 
 #: jscript.rc:42
 msgid "Invalid character"
@@ -3600,20 +3589,16 @@ msgid "Label not found"
 msgstr "Etiketten hittades inte"
 
 #: jscript.rc:49
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@end'"
-msgstr "';' förväntades"
+msgstr "'@end' förväntades"
 
 #: jscript.rc:50
 msgid "Conditional compilation is turned off"
 msgstr "Villkorlig kompilering är avslagen"
 
 #: jscript.rc:51
-#, fuzzy
-#| msgid "Expected ';'"
 msgid "Expected '@'"
-msgstr "';' förväntades"
+msgstr "'@' förväntades"
 
 #: jscript.rc:54
 msgid "Number expected"
@@ -6636,16 +6621,12 @@ msgid "The username could not be found.\n"
 msgstr "Användarnamnet kunde inte hittas.\n"
 
 #: winerror.mc:3741
-#, fuzzy
-#| msgid "The site does not exist.\n"
 msgid "This network connection does not exist.\n"
-msgstr "Sidan existerar inte.\n"
+msgstr "Nätverksanslutningen existerar inte.\n"
 
 #: winerror.mc:3746
-#, fuzzy
-#| msgid "Connection refused.\n"
 msgid "Connection reset by peer.\n"
-msgstr "Anslutning nekades.\n"
+msgstr "Anslutningen återställdes.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -7180,72 +7161,54 @@ msgid "outline button"
 msgstr "dispositionsknapp"
 
 #: oleacc.rc:97
-#, fuzzy
-#| msgid "Normal"
 msgctxt "object state"
 msgid "normal"
-msgstr "Normalt"
+msgstr "normalt"
 
 #: oleacc.rc:98
-#, fuzzy
-#| msgid "Unavailable"
 msgctxt "object state"
 msgid "unavailable"
-msgstr "Otillgänglig"
+msgstr "otillgängligt"
 
 #: oleacc.rc:99
-#, fuzzy
-#| msgid "Select"
 msgctxt "object state"
 msgid "selected"
-msgstr "Välj"
+msgstr "valt"
 
 #: oleacc.rc:100
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focused"
-msgstr "Pausad"
+msgstr "fokuserat"
 
 #: oleacc.rc:101
-#, fuzzy
-#| msgid "&Compressed"
 msgctxt "object state"
 msgid "pressed"
-msgstr "&Komprimerad"
+msgstr "tryckt"
 
 #: oleacc.rc:102
 msgctxt "object state"
 msgid "checked"
-msgstr ""
+msgstr "markerat"
 
 #: oleacc.rc:103
-#, fuzzy
-#| msgid "Mixed"
 msgctxt "object state"
 msgid "mixed"
-msgstr "Mixad"
+msgstr "blandat"
 
 #: oleacc.rc:104
-#, fuzzy
-#| msgid "&Read Only"
 msgctxt "object state"
 msgid "read only"
-msgstr "Sk&rivskyddad"
+msgstr "skrivskyddat"
 
 #: oleacc.rc:105
-#, fuzzy
-#| msgid "Hot Tracked Item"
 msgctxt "object state"
 msgid "hot tracked"
-msgstr "Hovrat föremål"
+msgstr ""
 
 #: oleacc.rc:106
-#, fuzzy
-#| msgid "(Default)"
 msgctxt "object state"
 msgid "default"
-msgstr "(Standard)"
+msgstr "standard"
 
 #: oleacc.rc:107
 msgctxt "object state"
@@ -7273,16 +7236,14 @@ msgid "marqueed"
 msgstr ""
 
 #: oleacc.rc:112
-#, fuzzy
-#| msgid "animation"
 msgctxt "object state"
 msgid "animated"
-msgstr "animation"
+msgstr "animerat"
 
 #: oleacc.rc:113
 msgctxt "object state"
 msgid "invisible"
-msgstr ""
+msgstr "osynligt"
 
 #: oleacc.rc:114
 msgctxt "object state"
@@ -7290,18 +7251,14 @@ msgid "offscreen"
 msgstr ""
 
 #: oleacc.rc:115
-#, fuzzy
-#| msgid "Size available"
 msgctxt "object state"
 msgid "sizeable"
-msgstr "Ledigt utrymme"
+msgstr ""
 
 #: oleacc.rc:116
-#, fuzzy
-#| msgid "Remove al&l"
 msgctxt "object state"
 msgid "moveable"
-msgstr "Ta bort a&lla"
+msgstr ""
 
 #: oleacc.rc:117
 msgctxt "object state"
@@ -7309,25 +7266,19 @@ msgid "self voicing"
 msgstr ""
 
 #: oleacc.rc:118
-#, fuzzy
-#| msgid "Paused"
 msgctxt "object state"
 msgid "focusable"
-msgstr "Pausad"
+msgstr ""
 
 #: oleacc.rc:119
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "selectable"
-msgstr "tabell"
+msgstr ""
 
 #: oleacc.rc:120
-#, fuzzy
-#| msgid "link"
 msgctxt "object state"
 msgid "linked"
-msgstr "länk"
+msgstr ""
 
 #: oleacc.rc:121
 msgctxt "object state"
@@ -7335,46 +7286,34 @@ msgid "traversed"
 msgstr ""
 
 #: oleacc.rc:122
-#, fuzzy
-#| msgid "table"
 msgctxt "object state"
 msgid "multi selectable"
-msgstr "tabell"
+msgstr ""
 
 #: oleacc.rc:123
-#, fuzzy
-#| msgid "Please select a file."
 msgctxt "object state"
 msgid "extended selectable"
-msgstr "Var god välj en fil."
+msgstr ""
 
 #: oleacc.rc:124
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert low"
-msgstr "varning"
+msgstr ""
 
 #: oleacc.rc:125
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert medium"
-msgstr "varning"
+msgstr ""
 
 #: oleacc.rc:126
-#, fuzzy
-#| msgid "alert"
 msgctxt "object state"
 msgid "alert high"
-msgstr "varning"
+msgstr ""
 
 #: oleacc.rc:127
-#, fuzzy
-#| msgid "Write protected.\n"
 msgctxt "object state"
 msgid "protected"
-msgstr "Skrivskyddad.\n"
+msgstr "skyddat"
 
 #: oleacc.rc:128
 msgctxt "object state"
@@ -7491,10 +7430,8 @@ msgid "Add Control"
 msgstr "Lägg till kontroll"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "T&ypsnitt..."
+msgstr ""
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8602,10 +8539,8 @@ msgid "Duplex:"
 msgstr "Dubbelsidig:"
 
 #: wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "&Inställningar"
+msgstr "Inställningar"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
@@ -8923,10 +8858,6 @@ msgstr ""
 "och fortfarande är ansluten till nätverket."
 
 #: winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
@@ -9232,16 +9163,12 @@ msgstr ""
 "eller är ansluten till nätverket."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Wine Mono Installationsprogram"
+msgstr ""
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "kolumn"
+msgstr "Volym"
 
 #: winmm.rc:138
 msgid "Master Volume"
@@ -10262,7 +10189,7 @@ msgstr "Wine kommandoprompt"
 
 #: cmd.rc:385
 msgid "Microsoft Windows %1!S!\n"
-msgstr ""
+msgstr "Microsoft Windows %1!S!\n"
 
 #: cmd.rc:386
 msgid "More? "
@@ -10328,10 +10255,8 @@ msgid "Wine Explorer"
 msgstr "Wine Explorer"
 
 #: explorer.rc:33
-#, fuzzy
-#| msgid "Start Menu"
 msgid "Start"
-msgstr "Start-meny"
+msgstr ""
 
 #: explorer.rc:34 winefile.rc:36
 msgid "&Run..."
@@ -11488,10 +11413,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Fel: Ogiltiga kommandoradsparametrar\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Fel: Kan inte lägga till nycklar till fjärrmaskin\n"
+msgstr "Fel: Kan inte få tillgång till fjärrmaskin\n"
 
 #: reg.rc:38
 msgid ""
@@ -11500,10 +11423,8 @@ msgstr ""
 "Fel: Systemet kunde inte hitta angiven nyckel eller värde i registret\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Ej stödd typ.\n"
+msgstr "Error: Ej stödd typ\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -11880,10 +11801,8 @@ msgid ""
 msgstr ""
 
 #: regsvr32.rc:42
-#, fuzzy
-#| msgid "Failed to open '%1'\n"
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "Misslyckades med att öppna '%1'\n"
+msgstr ""
 
 #: regsvr32.rc:43
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
@@ -13066,14 +12985,12 @@ msgid "&Test Sound"
 msgstr "&Testa ljud"
 
 #: winecfg.rc:277 winecfg.rc:90
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Konfiguration av Wine"
+msgstr "Högtalarkonfiguration"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr ""
+msgstr "Högtalare:"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -13181,21 +13098,19 @@ msgstr "(Systemstandard)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr ""
+msgstr "5.1 surround"
 
 #: winecfg.rc:92
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "grafik"
+msgstr "4-kanalsstereo"
 
 #: winecfg.rc:93
 msgid "Stereo"
-msgstr ""
+msgstr "Stereo"
 
 #: winecfg.rc:94
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: winecfg.rc:54
 msgid ""
@@ -13459,10 +13374,8 @@ msgid "&Buffer size:"
 msgstr ""
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove application"
 msgid "&Remove duplicates"
-msgstr "&Ta bort program"
+msgstr "&Ta bort upprepade"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -13477,20 +13390,16 @@ msgid "S&hift"
 msgstr "S&hift"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "&Stäng konsoll"
+msgstr "Konsoll"
 
 #: wineconsole.rc:79
 msgid "&Quick Edit mode"
 msgstr ""
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "&Expertläge"
+msgstr ""
 
 #: wineconsole.rc:88
 msgid "&Font"
