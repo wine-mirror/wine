@@ -696,7 +696,7 @@ static void test_vcomp_for_static_simple_init(void)
 #define VCOMP_FOR_STATIC_BROKEN_LOOP 1
 #define VCOMP_FOR_STATIC_BROKEN_NEXT 2
 
-DWORD CDECL my_for_static_init(int first, int last, int step, int chunksize, unsigned int *loops,
+static DWORD CDECL my_for_static_init(int first, int last, int step, int chunksize, unsigned int *loops,
                                int *begin, int *end, int *next, int *lastchunk)
 {
     unsigned int iterations, num_chunks, per_thread, remaining;
