@@ -1617,7 +1617,7 @@ static void test_smart_tee_filter_in_graph(IBaseFilter *smartTeeFilter, IPin *in
         todo_wine ok(sourceFilter->mediaThreadId != previewSinkFilter->receiveThreadId,
                 "sending thread should != preview receiving thread\n");
         todo_wine ok(captureSinkFilter->receiveThreadId != previewSinkFilter->receiveThreadId,
-                "capture receiving thread should != preview receiving thread");
+                "capture receiving thread should != preview receiving thread\n");
     } else {
         ok(0, "timeout: threads did not receive sample in time\n");
     }
