@@ -489,6 +489,18 @@ void CDECL _vcomp_set_num_threads(int num_threads)
         vcomp_init_thread_data()->fork_threads = num_threads;
 }
 
+int CDECL _vcomp_master_begin(void)
+{
+    TRACE("()\n");
+    return !vcomp_init_thread_data()->thread_num;
+}
+
+void CDECL _vcomp_master_end(void)
+{
+    TRACE("()\n");
+    /* nothing to do here */
+}
+
 int CDECL _vcomp_single_begin(int flags)
 {
     TRACE("(%x): stub\n", flags);

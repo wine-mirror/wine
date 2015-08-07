@@ -69,8 +69,8 @@
 @ stub _vcomp_get_thread_num
 @ stub _vcomp_leave_critsect
 @ stub _vcomp_master_barrier
-@ stub _vcomp_master_begin
-@ stub _vcomp_master_end
+@ cdecl _vcomp_master_begin() vcomp._vcomp_master_begin
+@ cdecl _vcomp_master_end() vcomp._vcomp_master_end
 @ stub _vcomp_ordered_begin
 @ stub _vcomp_ordered_end
 @ stub _vcomp_ordered_loop_end
