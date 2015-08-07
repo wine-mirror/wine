@@ -2193,6 +2193,30 @@ static void _test_select_set_multiple(unsigned line, IHTMLSelectElement *select,
     _test_select_multiple(line, select, val);
 }
 
+#define test_select_size(s,v) _test_select_size(__LINE__,s,v)
+static void _test_select_size(unsigned line, IHTMLSelectElement *select, LONG exval)
+{
+    HRESULT hres;
+    LONG val;
+
+    hres = IHTMLSelectElement_get_size(select, NULL);
+    ok_(__FILE__,line) (hres == E_INVALIDARG, "got %08x, expected E_INVALIDARG\n", hres);
+
+    val = 0xdeadbeef;
+    hres = IHTMLSelectElement_get_size(select, &val);
+    ok_(__FILE__,line) (hres == S_OK, "get_size failed: %08x\n", hres);
+    ok_(__FILE__,line) (val == exval, "size = %d, expected %d\n", val, exval);
+}
+
+#define test_select_set_size(s,v,e) _test_select_set_size(__LINE__,s,v,e)
+static void _test_select_set_size(unsigned line, IHTMLSelectElement *select, LONG val, HRESULT exhres)
+{
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_put_size(select, val);
+    ok_(__FILE__,line) (hres == exhres, "put_size(%d) got %08x, expect %08x\n", val, hres, exhres);
+}
+
 #define test_range_text(r,t) _test_range_text(__LINE__,r,t)
 static void _test_range_text(unsigned line, IHTMLTxtRange *range, const char *extext)
 {
@@ -4881,6 +4905,15 @@ static void test_select_elem(IHTMLSelectElement *select)
 
     test_select_set_value(select, "val1");
     test_select_value(select, "val1");
+
+    test_select_size(select, 0);
+    test_select_set_size(select, 1, S_OK);
+    test_select_size(select, 1);
+
+    test_select_set_size(select, -1, CTL_E_INVALIDPROPERTYVALUE);
+    test_select_size(select, 1);
+    test_select_set_size(select, 3, S_OK);
+    test_select_size(select, 3);
 
     test_select_get_disabled(select, VARIANT_FALSE);
     test_select_set_disabled(select, VARIANT_TRUE);

@@ -142,15 +142,37 @@ static HRESULT WINAPI HTMLSelectElement_Invoke(IHTMLSelectElement *iface, DISPID
 static HRESULT WINAPI HTMLSelectElement_put_size(IHTMLSelectElement *iface, LONG v)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    FIXME("(%p)->(%d)\n", This, v);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->(%d)\n", This, v);
+    if(v < 0)
+        return CTL_E_INVALIDPROPERTYVALUE;
+
+    nsres = nsIDOMHTMLSelectElement_SetSize(This->nsselect, v);
+    if(NS_FAILED(nsres)) {
+        ERR("SetSize failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_get_size(IHTMLSelectElement *iface, LONG *p)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    DWORD val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+    if(!p)
+        return E_INVALIDARG;
+
+    nsres = nsIDOMHTMLSelectElement_GetSize(This->nsselect, &val);
+    if(NS_FAILED(nsres)) {
+        ERR("GetSize failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    *p = val;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_put_multiple(IHTMLSelectElement *iface, VARIANT_BOOL v)
