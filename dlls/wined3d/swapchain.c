@@ -1225,7 +1225,7 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
     device->filter_messages = filter_messages;
 }
 
-HRESULT wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapchain, unsigned int buffer_count,
+HRESULT CDECL wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapchain, unsigned int buffer_count,
         unsigned int width, unsigned int height, enum wined3d_format_id format_id,
         enum wined3d_multisample_type multisample_type, unsigned int multisample_quality)
 {

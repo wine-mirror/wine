@@ -218,10 +218,40 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, D
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *iface,
         UINT buffer_count, UINT width, UINT height, DXGI_FORMAT format, UINT flags)
 {
-    FIXME("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x stub!\n",
+    struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain(iface);
+    struct wined3d_swapchain_desc wined3d_desc;
+    struct wined3d_surface *surface;
+    IUnknown *parent;
+    unsigned int i;
+    HRESULT hr;
+
+    TRACE("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x stub!\n",
             iface, buffer_count, width, height, debug_dxgi_format(format), flags);
 
-    return E_NOTIMPL;
+    if (flags)
+        FIXME("Ignoring flags %#x.\n", flags);
+
+    EnterCriticalSection(&dxgi_cs);
+    wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
+    for (i = 0; i < wined3d_desc.backbuffer_count; ++i)
+    {
+        surface = wined3d_swapchain_get_back_buffer(swapchain->wined3d_swapchain,
+                i, WINED3D_BACKBUFFER_TYPE_MONO);
+        parent = wined3d_surface_get_parent(surface);
+        IUnknown_AddRef(parent);
+        if (IUnknown_Release(parent))
+        {
+            LeaveCriticalSection(&dxgi_cs);
+            return DXGI_ERROR_INVALID_CALL;
+        }
+    }
+    if (format != DXGI_FORMAT_UNKNOWN)
+        wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(format);
+    hr = wined3d_swapchain_resize_buffers(swapchain->wined3d_swapchain, buffer_count, width, height,
+            wined3d_desc.backbuffer_format, wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
+    LeaveCriticalSection(&dxgi_cs);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeTarget(IDXGISwapChain *iface,
