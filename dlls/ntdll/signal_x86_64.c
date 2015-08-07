@@ -1431,7 +1431,7 @@ static NTSTATUS dwarf_virtual_unwind( ULONG64 ip, ULONG64 *frame,CONTEXT *contex
 }
 
 
-#if HAVE_LIBUNWIND_H
+#ifdef HAVE_LIBUNWIND_H
 /***********************************************************************
  *           libunwind_set_cursor_from_context
  */
@@ -2341,7 +2341,7 @@ static NTSTATUS call_stack_handlers( EXCEPTION_RECORD *rec, CONTEXT *orig_contex
                 if (status != STATUS_SUCCESS) return status;
                 got_info = TRUE;
             }
-#if HAVE_LIBUNWIND_H
+#ifdef HAVE_LIBUNWIND_H
             else
             {
                 status = libunwind_virtual_unwind( context.Rip, &got_info, &dispatch.EstablisherFrame, &new_context,
@@ -3369,7 +3369,7 @@ void WINAPI RtlUnwindEx( PVOID end_frame, PVOID target_ip, EXCEPTION_RECORD *rec
                 if (status != STATUS_SUCCESS) raise_status( status, rec );
                 got_info = TRUE;
             }
-#if HAVE_LIBUNWIND_H
+#ifdef HAVE_LIBUNWIND_H
             else
             {
                 status = libunwind_virtual_unwind( context->Rip, &got_info, &dispatch.EstablisherFrame, &new_context,
