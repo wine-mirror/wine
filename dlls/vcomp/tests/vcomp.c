@@ -51,6 +51,7 @@ static void  (CDECL   *p_vcomp_atomic_sub_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_sub_r8)(double *dest, double val);
 static void  (CDECL   *p_vcomp_atomic_xor_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_barrier)(void);
+static void  (CDECL   *p_vcomp_enter_critsect)(CRITICAL_SECTION **critsect);
 static void  (CDECL   *p_vcomp_for_dynamic_init)(unsigned int flags, unsigned int first, unsigned int last,
                                                  int step, unsigned int chunksize);
 static int   (CDECL   *p_vcomp_for_dynamic_next)(unsigned int *begin, unsigned int *end);
@@ -60,6 +61,7 @@ static void  (CDECL   *p_vcomp_for_static_init)(int first, int last, int step, i
 static void  (CDECL   *p_vcomp_for_static_simple_init)(unsigned int first, unsigned int last, int step,
                                                        BOOL increment, unsigned int *begin, unsigned int *end);
 static void  (WINAPIV *p_vcomp_fork)(BOOL ifval, int nargs, void *wrapper, ...);
+static void  (CDECL   *p_vcomp_leave_critsect)(CRITICAL_SECTION *critsect);
 static int   (CDECL   *p_vcomp_master_begin)(void);
 static void  (CDECL   *p_vcomp_master_end)(void);
 static void  (CDECL   *p_vcomp_sections_init)(int n);
@@ -226,12 +228,14 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_atomic_sub_r8);
     VCOMP_GET_PROC(_vcomp_atomic_xor_i4);
     VCOMP_GET_PROC(_vcomp_barrier);
+    VCOMP_GET_PROC(_vcomp_enter_critsect);
     VCOMP_GET_PROC(_vcomp_for_dynamic_init);
     VCOMP_GET_PROC(_vcomp_for_dynamic_next);
     VCOMP_GET_PROC(_vcomp_for_static_end);
     VCOMP_GET_PROC(_vcomp_for_static_init);
     VCOMP_GET_PROC(_vcomp_for_static_simple_init);
     VCOMP_GET_PROC(_vcomp_fork);
+    VCOMP_GET_PROC(_vcomp_leave_critsect);
     VCOMP_GET_PROC(_vcomp_master_begin);
     VCOMP_GET_PROC(_vcomp_master_end);
     VCOMP_GET_PROC(_vcomp_sections_init);
@@ -1219,6 +1223,52 @@ static void test_vcomp_single_begin(void)
     pomp_set_num_threads(max_threads);
 }
 
+static void CDECL critsect_cb(LONG *a)
+{
+    static CRITICAL_SECTION *critsect;
+    LONG tmp;
+
+    p_vcomp_enter_critsect(&critsect);
+    tmp = *a;
+    Sleep(50);
+    *a = tmp + 1;
+    p_vcomp_leave_critsect(critsect);
+
+    ok(critsect != NULL, "expected critsect != NULL\n");
+
+    EnterCriticalSection(critsect);
+    tmp = *a;
+    Sleep(50);
+    *a = tmp + 1;
+    LeaveCriticalSection(critsect);
+}
+
+static void test_vcomp_enter_critsect(void)
+{
+    int max_threads = pomp_get_max_threads();
+    LONG a;
+    int i;
+
+    a = 0;
+    critsect_cb(&a);
+    ok(a == 2, "expected a == 2, got %d\n", a);
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+
+        a = 0;
+        p_vcomp_fork(TRUE, 1, critsect_cb, &a);
+        ok(a == 2 * i, "expected a == %d, got %d\n", 2 * i, a);
+
+        a = 0;
+        p_vcomp_fork(FALSE, 1, critsect_cb, &a);
+        ok(a == 2, "expected a == 2, got %d\n", a);
+    }
+
+    pomp_set_num_threads(max_threads);
+}
+
 static void test_atomic_integer32(void)
 {
     struct
@@ -1337,6 +1387,7 @@ START_TEST(vcomp)
     test_vcomp_for_dynamic_init();
     test_vcomp_master_begin();
     test_vcomp_single_begin();
+    test_vcomp_enter_critsect();
     test_atomic_integer32();
     test_atomic_float();
     test_atomic_double();
