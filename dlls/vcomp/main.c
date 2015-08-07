@@ -67,6 +67,9 @@ struct vcomp_thread_data
     struct list             entry;
     CONDITION_VARIABLE      cond;
 
+    /* single */
+    unsigned int            single;
+
     /* section */
     unsigned int            section;
 
@@ -95,6 +98,9 @@ struct vcomp_team_data
 
 struct vcomp_task_data
 {
+    /* single */
+    unsigned int            single;
+
     /* section */
     unsigned int            section;
     int                     num_sections;
@@ -218,6 +224,7 @@ static struct vcomp_thread_data *vcomp_init_thread_data(void)
         ExitProcess(1);
     }
 
+    data->task.single           = 0;
     data->task.section          = 0;
     data->task.dynamic          = 0;
 
@@ -227,6 +234,7 @@ static struct vcomp_thread_data *vcomp_init_thread_data(void)
     thread_data->thread_num     = 0;
     thread_data->parallel       = FALSE;
     thread_data->fork_threads   = 0;
+    thread_data->single         = 1;
     thread_data->section        = 1;
     thread_data->dynamic        = 1;
     thread_data->dynamic_type   = 0;
@@ -503,13 +511,28 @@ void CDECL _vcomp_master_end(void)
 
 int CDECL _vcomp_single_begin(int flags)
 {
-    TRACE("(%x): stub\n", flags);
-    return TRUE;
+    struct vcomp_thread_data *thread_data = vcomp_init_thread_data();
+    struct vcomp_task_data *task_data = thread_data->task;
+    int ret = FALSE;
+
+    TRACE("(%x): semi-stub\n", flags);
+
+    EnterCriticalSection(&vcomp_section);
+    thread_data->single++;
+    if ((int)(thread_data->single - task_data->single) > 0)
+    {
+        task_data->single = thread_data->single;
+        ret = TRUE;
+    }
+    LeaveCriticalSection(&vcomp_section);
+
+    return ret;
 }
 
 void CDECL _vcomp_single_end(void)
 {
-    TRACE("stub\n");
+    TRACE("()\n");
+    /* nothing to do here */
 }
 
 void CDECL _vcomp_sections_init(int n)
@@ -859,6 +882,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     team_data.barrier           = 0;
     team_data.barrier_count     = 0;
 
+    task_data.single            = 0;
     task_data.section           = 0;
     task_data.dynamic           = 0;
 
@@ -867,6 +891,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     thread_data.thread_num      = 0;
     thread_data.parallel        = ifval || prev_thread_data->parallel;
     thread_data.fork_threads    = 0;
+    thread_data.single          = 1;
     thread_data.section         = 1;
     thread_data.dynamic         = 1;
     thread_data.dynamic_type    = 0;
@@ -887,6 +912,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             data->thread_num    = team_data.num_threads++;
             data->parallel      = thread_data.parallel;
             data->fork_threads  = 0;
+            data->single        = 1;
             data->section       = 1;
             data->dynamic       = 1;
             data->dynamic_type  = 0;
@@ -910,6 +936,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             data->thread_num    = team_data.num_threads;
             data->parallel      = thread_data.parallel;
             data->fork_threads  = 0;
+            data->single        = 1;
             data->section       = 1;
             data->dynamic       = 1;
             data->dynamic_type  = 0;
