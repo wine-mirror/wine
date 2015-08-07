@@ -77,13 +77,13 @@ void WINAPI HidD_GetHidGuid(LPGUID guid)
 
 BOOLEAN WINAPI HidD_GetInputReport(HANDLE HidDeviceObject, PVOID ReportBuffer, ULONG ReportBufferLength)
 {
-    TRACE("(%p %p %u) \n", HidDeviceObject, ReportBuffer, ReportBufferLength);
+    TRACE("(%p %p %u)\n", HidDeviceObject, ReportBuffer, ReportBufferLength);
     return DeviceIoControl(HidDeviceObject, IOCTL_HID_GET_INPUT_REPORT, NULL, 0, ReportBuffer, ReportBufferLength, NULL, NULL);
 }
 
 BOOLEAN WINAPI HidD_GetManufacturerString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
 {
-    TRACE("(%p %p %u) \n", HidDeviceObject, Buffer, BufferLength);
+    TRACE("(%p %p %u)\n", HidDeviceObject, Buffer, BufferLength);
     return DeviceIoControl(HidDeviceObject, IOCTL_HID_GET_MANUFACTURER_STRING, NULL, 0, Buffer, BufferLength, NULL, NULL);
 }
 
