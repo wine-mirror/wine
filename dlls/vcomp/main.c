@@ -979,6 +979,40 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     __ms_va_end(team_data.valist);
 }
 
+void CDECL _vcomp_enter_critsect(CRITICAL_SECTION **critsect)
+{
+    TRACE("(%p)\n", critsect);
+
+    if (!*critsect)
+    {
+        CRITICAL_SECTION *new_critsect;
+        if (!(new_critsect = HeapAlloc(GetProcessHeap(), 0, sizeof(*new_critsect))))
+        {
+            ERR("could not allocate critical section\n");
+            ExitProcess(1);
+        }
+
+        InitializeCriticalSection(new_critsect);
+        new_critsect->DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": critsect");
+
+        if (interlocked_cmpxchg_ptr((void **)critsect, new_critsect, NULL) != NULL)
+        {
+            /* someone beat us to it */
+            new_critsect->DebugInfo->Spare[0] = 0;
+            DeleteCriticalSection(new_critsect);
+            HeapFree(GetProcessHeap(), 0, new_critsect);
+        }
+    }
+
+    EnterCriticalSection(*critsect);
+}
+
+void CDECL _vcomp_leave_critsect(CRITICAL_SECTION *critsect)
+{
+    TRACE("(%p)\n", critsect);
+    LeaveCriticalSection(critsect);
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
     TRACE("(%p, %d, %p)\n", instance, reason, reserved);

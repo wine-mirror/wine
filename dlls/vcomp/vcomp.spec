@@ -53,7 +53,7 @@
 @ cdecl _vcomp_barrier()
 @ stub _vcomp_copyprivate_broadcast
 @ stub _vcomp_copyprivate_receive
-@ stub _vcomp_enter_critsect
+@ cdecl _vcomp_enter_critsect(ptr)
 @ stub _vcomp_flush
 @ cdecl _vcomp_for_dynamic_init(long long long long long)
 @ stub _vcomp_for_dynamic_init_i8
@@ -66,7 +66,7 @@
 @ stub _vcomp_for_static_simple_init_i8
 @ varargs _vcomp_fork(long long ptr)
 @ stub _vcomp_get_thread_num
-@ stub _vcomp_leave_critsect
+@ cdecl _vcomp_leave_critsect(ptr)
 @ stub _vcomp_master_barrier
 @ cdecl _vcomp_master_begin()
 @ cdecl _vcomp_master_end()
