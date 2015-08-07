@@ -1676,6 +1676,22 @@ static void _test_option_put_selected(unsigned line, IHTMLOptionElement *option,
     _test_option_selected(line, option, b);
 }
 
+#define test_option_get_index(o,s) _test_option_get_index(__LINE__,o,s)
+static void _test_option_get_index(unsigned line, IHTMLOptionElement *option, LONG exval)
+{
+    HRESULT hres;
+    LONG val;
+
+    hres = IHTMLOptionElement_get_index(option, NULL);
+    ok_(__FILE__,line)(hres == E_INVALIDARG, "Expect E_INVALIDARG, got %08x\n", hres);
+
+    val = 12345678;
+    hres = IHTMLOptionElement_get_index(option, &val);
+    ok_(__FILE__,line)(hres == S_OK, "get_index failed: %08x\n", hres);
+    ok_(__FILE__,line)(val == exval || broken(val == 12345678),  /* Win2k doesn't touch it*/
+        "value = %d, expected = %d\n", val, exval);
+}
+
 #define test_textarea_value(t,v) _test_textarea_value(__LINE__,t,v)
 static void _test_textarea_value(unsigned line, IUnknown *unk, const char *exval)
 {
@@ -4966,6 +4982,7 @@ static void test_create_option_elem(IHTMLDocument2 *doc)
 
     test_option_put_text(option, "new text");
     test_option_put_value(option, "new value");
+    test_option_get_index(option, 0);
     test_option_put_selected(option, VARIANT_TRUE);
     test_option_put_selected(option, VARIANT_FALSE);
 

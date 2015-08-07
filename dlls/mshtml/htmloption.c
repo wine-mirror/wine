@@ -187,8 +187,21 @@ static HRESULT WINAPI HTMLOptionElement_put_index(IHTMLOptionElement *iface, LON
 static HRESULT WINAPI HTMLOptionElement_get_index(IHTMLOptionElement *iface, LONG *p)
 {
     HTMLOptionElement *This = impl_from_IHTMLOptionElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    LONG val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    if(!p)
+        return E_INVALIDARG;
+
+    nsres = nsIDOMHTMLOptionElement_GetIndex(This->nsoption, &val);
+    if(NS_FAILED(nsres)) {
+        ERR("GetIndex failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+    *p = val;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLOptionElement_put_text(IHTMLOptionElement *iface, BSTR v)
