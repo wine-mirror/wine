@@ -2252,7 +2252,7 @@ NTSTATUS WINAPI TpAllocPool( TP_POOL **out, PVOID reserved )
     TRACE( "%p %p\n", out, reserved );
 
     if (reserved)
-        FIXME( "reserved argument is nonzero (%p)", reserved );
+        FIXME( "reserved argument is nonzero (%p)\n", reserved );
 
     return tp_threadpool_alloc( (struct threadpool **)out );
 }
