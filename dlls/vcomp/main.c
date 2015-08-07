@@ -857,6 +857,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
     thread_data.fork_threads    = 0;
     thread_data.section         = 1;
     thread_data.dynamic         = 1;
+    thread_data.dynamic_type    = 0;
     list_init(&thread_data.entry);
     InitializeConditionVariable(&thread_data.cond);
 
@@ -876,6 +877,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             data->fork_threads  = 0;
             data->section       = 1;
             data->dynamic       = 1;
+            data->dynamic_type  = 0;
             list_remove(&data->entry);
             list_add_tail(&thread_data.entry, &data->entry);
             WakeAllConditionVariable(&data->cond);
@@ -898,6 +900,7 @@ void WINAPIV _vcomp_fork(BOOL ifval, int nargs, void *wrapper, ...)
             data->fork_threads  = 0;
             data->section       = 1;
             data->dynamic       = 1;
+            data->dynamic_type  = 0;
             InitializeConditionVariable(&data->cond);
 
             thread = CreateThread(NULL, 0, _vcomp_fork_worker, data, 0, NULL);
