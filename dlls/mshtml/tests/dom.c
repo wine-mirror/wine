@@ -2872,7 +2872,6 @@ static void test_select_remove(IHTMLSelectElement *select)
     test_select_length(select, 2);
 
     hres = IHTMLSelectElement_remove(select, -1);
-    todo_wine
     ok(hres == E_INVALIDARG, "remove failed: %08x, expected E_INVALIDARG\n", hres);
     test_select_length(select, 2);
 

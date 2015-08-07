@@ -432,6 +432,9 @@ static HRESULT WINAPI HTMLSelectElement_remove(IHTMLSelectElement *iface, LONG i
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
     nsresult nsres;
     TRACE("(%p)->(%d)\n", This, index);
+    if(index < 0)
+        return E_INVALIDARG;
+
     nsres = nsIDOMHTMLSelectElement_select_Remove(This->nsselect, index);
     if(NS_FAILED(nsres)) {
         ERR("Remove failed: %08x\n", nsres);
