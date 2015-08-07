@@ -403,12 +403,43 @@ static HRESULT HTMLAreaElement_QI(HTMLDOMNode *iface, REFIID riid, void **ppv)
     return S_OK;
 }
 
+static HRESULT HTMLAreaElement_handle_event(HTMLDOMNode *iface, eventid_t eid, nsIDOMEvent *event, BOOL *prevent_default)
+{
+    HTMLAreaElement *This = impl_from_HTMLDOMNode(iface);
+    nsAString href_str, target_str;
+    nsresult nsres;
+
+    if(eid == EVENTID_CLICK) {
+        nsAString_Init(&href_str, NULL);
+        nsres = nsIDOMHTMLAreaElement_GetHref(This->nsarea, &href_str);
+        if (NS_FAILED(nsres)) {
+            ERR("Could not get area href: %08x\n", nsres);
+            goto fallback;
+        }
+
+        nsAString_Init(&target_str, NULL);
+        nsres = nsIDOMHTMLAreaElement_GetTarget(This->nsarea, &target_str);
+        if (NS_FAILED(nsres)) {
+            ERR("Could not get area target: %08x\n", nsres);
+            goto fallback;
+        }
+
+        return handle_link_click_event(&This->element, &href_str, &target_str, event, prevent_default);
+
+fallback:
+        nsAString_Finish(&href_str);
+        nsAString_Finish(&target_str);
+    }
+
+    return HTMLElement_handle_event(&This->element.node, eid, event, prevent_default);
+}
+
 static const NodeImplVtbl HTMLAreaElementImplVtbl = {
     HTMLAreaElement_QI,
     HTMLElement_destructor,
     HTMLElement_cpc,
     HTMLElement_clone,
-    HTMLElement_handle_event,
+    HTMLAreaElement_handle_event,
     HTMLElement_get_attr_col
 };
 
