@@ -2714,10 +2714,26 @@ static void check_statements(const statement_list_t *stmts, int is_inside_librar
 
     if (stmts) LIST_FOR_EACH_ENTRY(stmt, stmts, const statement_t, entry)
     {
-      if (stmt->type == STMT_LIBRARY)
-          check_statements(stmt->u.lib->stmts, TRUE);
-      else if (stmt->type == STMT_TYPE && type_get_type(stmt->u.type) == TYPE_INTERFACE)
-          check_functions(stmt->u.type, is_inside_library);
+        switch(stmt->type) {
+        case STMT_LIBRARY:
+            check_statements(stmt->u.lib->stmts, TRUE);
+            break;
+        case STMT_TYPE:
+            switch(type_get_type(stmt->u.type)) {
+            case TYPE_INTERFACE:
+                check_functions(stmt->u.type, is_inside_library);
+                break;
+            case TYPE_COCLASS:
+                if(winrt_mode)
+                    error_loc("coclass is not allowed in Windows Runtime mode\n");
+                break;
+            default:
+                break;
+            }
+            break;
+        default:
+            break;
+        }
     }
 }
 
