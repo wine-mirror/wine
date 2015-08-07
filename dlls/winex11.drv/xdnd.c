@@ -378,10 +378,6 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
 
     TRACE("\n");
 
-    /* If we have a HDROP type we send a WM_ACCEPTFILES.*/
-    if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
-        X11DRV_XDND_SendDropFiles( hWnd );
-
     /* Notify OLE of Drop */
     dropTarget = get_droptarget_pointer(XDNDLastDropTargetWnd);
     if (dropTarget)
@@ -406,6 +402,13 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
         else
             WARN("drop failed, error 0x%08X\n", hr);
         IDropTarget_Release(dropTarget);
+    }
+    else
+    {
+        /* Only send WM_DROPFILES if there is no drop target. Doing both
+         * causes winamp to duplicate the dropped files (#29081) */
+        if (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES)
+            X11DRV_XDND_SendDropFiles( hWnd );
     }
 
     X11DRV_XDND_FreeDragDropOp();
