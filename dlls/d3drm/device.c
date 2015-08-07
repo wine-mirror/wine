@@ -636,7 +636,7 @@ static DWORD WINAPI d3drm_device2_GetShades(IDirect3DRMDevice2 *iface)
 {
     struct d3drm_device *device = impl_from_IDirect3DRMDevice2(iface);
 
-    TRACE("iface %p.\n.", iface);
+    TRACE("iface %p.\n", iface);
 
     return IDirect3DRMDevice3_GetShades(&device->IDirect3DRMDevice3_iface);
 }
