@@ -65,6 +65,8 @@ static void  (CDECL   *p_vcomp_master_end)(void);
 static void  (CDECL   *p_vcomp_sections_init)(int n);
 static int   (CDECL   *p_vcomp_sections_next)(void);
 static void  (CDECL   *p_vcomp_set_num_threads)(int num_threads);
+static int   (CDECL   *p_vcomp_single_begin)(int flags);
+static void  (CDECL   *p_vcomp_single_end)(void);
 static int   (CDECL   *pomp_get_max_threads)(void);
 static int   (CDECL   *pomp_get_nested)(void);
 static int   (CDECL   *pomp_get_num_threads)(void);
@@ -235,6 +237,8 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_sections_init);
     VCOMP_GET_PROC(_vcomp_sections_next);
     VCOMP_GET_PROC(_vcomp_set_num_threads);
+    VCOMP_GET_PROC(_vcomp_single_begin);
+    VCOMP_GET_PROC(_vcomp_single_end);
     VCOMP_GET_PROC(omp_get_max_threads);
     VCOMP_GET_PROC(omp_get_nested);
     VCOMP_GET_PROC(omp_get_num_threads);
@@ -1168,6 +1172,53 @@ static void test_vcomp_master_begin(void)
     pomp_set_num_threads(max_threads);
 }
 
+static void CDECL single_cb(int flags, HANDLE semaphore)
+{
+    int num_threads = pomp_get_num_threads();
+
+    if (p_vcomp_single_begin(flags))
+    {
+        if (num_threads >= 2)
+        {
+            DWORD result = WaitForSingleObject(semaphore, 1000);
+            ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+        }
+    }
+    p_vcomp_single_end();
+
+    if (p_vcomp_single_begin(flags))
+    {
+        if (num_threads >= 2)
+            ReleaseSemaphore(semaphore, 1, NULL);
+    }
+    p_vcomp_single_end();
+}
+
+static void test_vcomp_single_begin(void)
+{
+    int max_threads = pomp_get_max_threads();
+    HANDLE semaphore;
+    int i;
+
+    semaphore = CreateSemaphoreA(NULL, 0, 1, NULL);
+    ok(semaphore != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
+
+    single_cb(0, semaphore);
+    single_cb(1, semaphore);
+
+    for (i = 1; i <= 4; i++)
+    {
+        pomp_set_num_threads(i);
+        p_vcomp_fork(TRUE, 2, single_cb, 0, semaphore);
+        p_vcomp_fork(TRUE, 2, single_cb, 1, semaphore);
+        p_vcomp_fork(FALSE, 2, single_cb, 0, semaphore);
+        p_vcomp_fork(FALSE, 2, single_cb, 1, semaphore);
+    }
+
+    CloseHandle(semaphore);
+    pomp_set_num_threads(max_threads);
+}
+
 static void test_atomic_integer32(void)
 {
     struct
@@ -1285,6 +1336,7 @@ START_TEST(vcomp)
     test_vcomp_for_static_init();
     test_vcomp_for_dynamic_init();
     test_vcomp_master_begin();
+    test_vcomp_single_begin();
     test_atomic_integer32();
     test_atomic_float();
     test_atomic_double();
