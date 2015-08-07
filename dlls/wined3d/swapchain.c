@@ -731,7 +731,7 @@ static const struct wined3d_swapchain_ops swapchain_gdi_ops =
     swapchain_gdi_present,
 };
 
-void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
+static void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)
 {
     RECT client_rect;
 
@@ -1223,4 +1223,96 @@ void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activa
     }
 
     device->filter_messages = filter_messages;
+}
+
+HRESULT wined3d_swapchain_resize_buffers(struct wined3d_swapchain *swapchain, unsigned int buffer_count,
+        unsigned int width, unsigned int height, enum wined3d_format_id format_id,
+        enum wined3d_multisample_type multisample_type, unsigned int multisample_quality)
+{
+    BOOL update_desc = FALSE;
+
+    TRACE("swapchain %p, buffer_count %u, width %u, height %u, format %s, "
+            "multisample_type %#x, multisample_quality %#x.\n",
+            swapchain, buffer_count, width, height, debug_d3dformat(format_id),
+            multisample_type, multisample_quality);
+
+    if (buffer_count && buffer_count != swapchain->desc.backbuffer_count)
+        FIXME("Cannot change the back buffer count yet.\n");
+
+    if (!width || !height)
+    {
+        /* The application is requesting that either the swapchain width or
+         * height be set to the corresponding dimension in the window's
+         * client rect. */
+
+        RECT client_rect;
+
+        if (!swapchain->desc.windowed)
+            return WINED3DERR_INVALIDCALL;
+
+        if (!GetClientRect(swapchain->device_window, &client_rect))
+        {
+            ERR("Failed to get client rect, last error %#x.\n", GetLastError());
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        if (!width)
+            width = client_rect.right;
+
+        if (!height)
+            height = client_rect.bottom;
+    }
+
+    if (width != swapchain->desc.backbuffer_width
+            || height != swapchain->desc.backbuffer_height)
+    {
+        swapchain->desc.backbuffer_width = width;
+        swapchain->desc.backbuffer_height = height;
+        update_desc = TRUE;
+    }
+
+    if (format_id == WINED3DFMT_UNKNOWN)
+    {
+        if (!swapchain->desc.windowed)
+            return WINED3DERR_INVALIDCALL;
+        format_id = swapchain->original_mode.format_id;
+    }
+
+    if (format_id != swapchain->desc.backbuffer_format)
+    {
+        swapchain->desc.backbuffer_format = format_id;
+        update_desc = TRUE;
+    }
+
+    if (multisample_type != swapchain->desc.multisample_type
+            || multisample_quality != swapchain->desc.multisample_quality)
+    {
+        swapchain->desc.multisample_type = multisample_type;
+        swapchain->desc.multisample_quality = multisample_quality;
+        update_desc = TRUE;
+    }
+
+    if (update_desc)
+    {
+        HRESULT hr;
+        UINT i;
+
+        if (FAILED(hr = wined3d_texture_update_desc(swapchain->front_buffer, swapchain->desc.backbuffer_width,
+                swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
+                swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
+            return hr;
+
+        for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
+        {
+            if (FAILED(hr = wined3d_texture_update_desc(swapchain->back_buffers[i], swapchain->desc.backbuffer_width,
+                    swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
+                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
+                return hr;
+        }
+    }
+
+    swapchain_update_render_to_fbo(swapchain);
+    swapchain_update_draw_bindings(swapchain);
+
+    return WINED3D_OK;
 }

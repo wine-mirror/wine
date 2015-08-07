@@ -4432,14 +4432,10 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         const struct wined3d_swapchain_desc *swapchain_desc, const struct wined3d_display_mode *mode,
         wined3d_device_reset_cb callback, BOOL reset_state)
 {
-    enum wined3d_format_id backbuffer_format = swapchain_desc->backbuffer_format;
     struct wined3d_resource *resource, *cursor;
     struct wined3d_swapchain *swapchain;
     struct wined3d_display_mode m;
     BOOL DisplayModeChanged;
-    BOOL update_desc = FALSE;
-    UINT backbuffer_width = swapchain_desc->backbuffer_width;
-    UINT backbuffer_height = swapchain_desc->backbuffer_height;
     HRESULT hr = WINED3D_OK;
     unsigned int i;
 
@@ -4492,13 +4488,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         }
     }
 
-    /* Is it necessary to recreate the gl context? Actually every setting can be changed
-     * on an existing gl context, so there's no real need for recreation.
-     *
-     * TODO: Figure out how Reset influences resources in D3DPOOL_DEFAULT, D3DPOOL_SYSTEMMEMORY and D3DPOOL_MANAGED
-     *
-     * TODO: Figure out what happens to explicit swapchains, or if we have more than one implicit swapchain
-     */
     TRACE("New params:\n");
     TRACE("backbuffer_width %u\n", swapchain_desc->backbuffer_width);
     TRACE("backbuffer_height %u\n", swapchain_desc->backbuffer_height);
@@ -4526,11 +4515,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     swapchain->desc.swap_interval = swapchain_desc->swap_interval;
     swapchain->desc.auto_restore_display_mode = swapchain_desc->auto_restore_display_mode;
 
-    /* What to do about these? */
-    if (swapchain_desc->backbuffer_count
-            && swapchain_desc->backbuffer_count != swapchain->desc.backbuffer_count)
-        FIXME("Cannot change the back buffer count yet.\n");
-
     if (swapchain_desc->device_window
             && swapchain_desc->device_window != swapchain->desc.device_window)
     {
@@ -4557,135 +4541,10 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         m.refresh_rate = swapchain_desc->refresh_rate;
         m.format_id = swapchain_desc->backbuffer_format;
         m.scanline_ordering = WINED3D_SCANLINE_ORDERING_UNKNOWN;
-    }
 
-    if (!backbuffer_width || !backbuffer_height)
-    {
-        /* The application is requesting that either the swapchain width or
-         * height be set to the corresponding dimension in the window's
-         * client rect. */
-
-        RECT client_rect;
-
-        if (!swapchain_desc->windowed)
-            return WINED3DERR_INVALIDCALL;
-
-        if (!GetClientRect(swapchain->device_window, &client_rect))
-        {
-            ERR("Failed to get client rect, last error %#x.\n", GetLastError());
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        if (!backbuffer_width)
-            backbuffer_width = client_rect.right;
-
-        if (!backbuffer_height)
-            backbuffer_height = client_rect.bottom;
-    }
-
-    if (backbuffer_width != swapchain->desc.backbuffer_width
-            || backbuffer_height != swapchain->desc.backbuffer_height)
-    {
-        if (!swapchain_desc->windowed)
+        if ((m.width != swapchain->desc.backbuffer_width
+                || m.height != swapchain->desc.backbuffer_height))
             DisplayModeChanged = TRUE;
-
-        swapchain->desc.backbuffer_width = backbuffer_width;
-        swapchain->desc.backbuffer_height = backbuffer_height;
-        update_desc = TRUE;
-    }
-
-    if (backbuffer_format == WINED3DFMT_UNKNOWN)
-    {
-        if (!swapchain_desc->windowed)
-            return WINED3DERR_INVALIDCALL;
-        backbuffer_format = swapchain->original_mode.format_id;
-    }
-
-    if (backbuffer_format != swapchain->desc.backbuffer_format)
-    {
-        swapchain->desc.backbuffer_format = backbuffer_format;
-        update_desc = TRUE;
-    }
-
-    if (swapchain_desc->multisample_type != swapchain->desc.multisample_type
-            || swapchain_desc->multisample_quality != swapchain->desc.multisample_quality)
-    {
-        swapchain->desc.multisample_type = swapchain_desc->multisample_type;
-        swapchain->desc.multisample_quality = swapchain_desc->multisample_quality;
-        update_desc = TRUE;
-    }
-
-    if (update_desc)
-    {
-        UINT i;
-
-        if (FAILED(hr = wined3d_texture_update_desc(swapchain->front_buffer, swapchain->desc.backbuffer_width,
-                swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
-                swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
-            return hr;
-
-        for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
-        {
-            if (FAILED(hr = wined3d_texture_update_desc(swapchain->back_buffers[i], swapchain->desc.backbuffer_width,
-                    swapchain->desc.backbuffer_height, swapchain->desc.backbuffer_format,
-                    swapchain->desc.multisample_type, swapchain->desc.multisample_quality, NULL, 0)))
-                return hr;
-        }
-    }
-
-    if (device->auto_depth_stencil_view)
-    {
-        wined3d_rendertarget_view_decref(device->auto_depth_stencil_view);
-        device->auto_depth_stencil_view = NULL;
-    }
-    if (swapchain->desc.enable_auto_depth_stencil)
-    {
-        struct wined3d_resource_desc surface_desc;
-        struct wined3d_surface *surface;
-
-        TRACE("Creating the depth stencil buffer\n");
-
-        surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
-        surface_desc.format = swapchain->desc.auto_depth_stencil_format;
-        surface_desc.multisample_type = swapchain->desc.multisample_type;
-        surface_desc.multisample_quality = swapchain->desc.multisample_quality;
-        surface_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
-        surface_desc.pool = WINED3D_POOL_DEFAULT;
-        surface_desc.width = swapchain->desc.backbuffer_width;
-        surface_desc.height = swapchain->desc.backbuffer_height;
-        surface_desc.depth = 1;
-        surface_desc.size = 0;
-
-        if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
-                device->device_parent, &surface_desc, &surface)))
-        {
-            ERR("Failed to create the auto depth/stencil surface, hr %#x.\n", hr);
-            return WINED3DERR_INVALIDCALL;
-        }
-
-        hr = wined3d_rendertarget_view_create_from_surface(surface,
-                NULL, &wined3d_null_parent_ops, &device->auto_depth_stencil_view);
-        wined3d_surface_decref(surface);
-        if (FAILED(hr))
-        {
-            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-            return hr;
-        }
-
-        wined3d_device_set_depth_stencil_view(device, device->auto_depth_stencil_view);
-    }
-
-    if (device->back_buffer_view)
-    {
-        wined3d_rendertarget_view_decref(device->back_buffer_view);
-        device->back_buffer_view = NULL;
-    }
-    if (swapchain->desc.backbuffer_count && FAILED(hr = wined3d_rendertarget_view_create_from_surface(
-            surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)),
-            NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
-    {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-        return hr;
     }
 
     if (!swapchain_desc->windowed != !swapchain->desc.windowed
@@ -4750,6 +4609,66 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         device->exStyle = exStyle;
     }
 
+    if (FAILED(hr = wined3d_swapchain_resize_buffers(swapchain, swapchain_desc->backbuffer_count,
+            swapchain_desc->backbuffer_width, swapchain_desc->backbuffer_height, swapchain_desc->backbuffer_format,
+            swapchain_desc->multisample_type, swapchain_desc->multisample_quality)))
+        return hr;
+
+    if (device->auto_depth_stencil_view)
+    {
+        wined3d_rendertarget_view_decref(device->auto_depth_stencil_view);
+        device->auto_depth_stencil_view = NULL;
+    }
+    if (swapchain->desc.enable_auto_depth_stencil)
+    {
+        struct wined3d_resource_desc surface_desc;
+        struct wined3d_surface *surface;
+
+        TRACE("Creating the depth stencil buffer\n");
+
+        surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
+        surface_desc.format = swapchain->desc.auto_depth_stencil_format;
+        surface_desc.multisample_type = swapchain->desc.multisample_type;
+        surface_desc.multisample_quality = swapchain->desc.multisample_quality;
+        surface_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
+        surface_desc.pool = WINED3D_POOL_DEFAULT;
+        surface_desc.width = swapchain->desc.backbuffer_width;
+        surface_desc.height = swapchain->desc.backbuffer_height;
+        surface_desc.depth = 1;
+        surface_desc.size = 0;
+
+        if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
+                device->device_parent, &surface_desc, &surface)))
+        {
+            ERR("Failed to create the auto depth/stencil surface, hr %#x.\n", hr);
+            return WINED3DERR_INVALIDCALL;
+        }
+
+        hr = wined3d_rendertarget_view_create_from_surface(surface,
+                NULL, &wined3d_null_parent_ops, &device->auto_depth_stencil_view);
+        wined3d_surface_decref(surface);
+        if (FAILED(hr))
+        {
+            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+            return hr;
+        }
+
+        wined3d_device_set_depth_stencil_view(device, device->auto_depth_stencil_view);
+    }
+
+    if (device->back_buffer_view)
+    {
+        wined3d_rendertarget_view_decref(device->back_buffer_view);
+        device->back_buffer_view = NULL;
+    }
+    if (swapchain->desc.backbuffer_count && FAILED(hr = wined3d_rendertarget_view_create_from_surface(
+            surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)),
+            NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        return hr;
+    }
+
     wine_rb_clear(&device->samplers, device_free_sampler, NULL);
 
     if (reset_state)
@@ -4793,9 +4712,6 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
         state->scissor_rect.bottom = view->height;
         wined3d_cs_emit_set_scissor_rect(device->cs, &state->scissor_rect);
     }
-
-    swapchain_update_render_to_fbo(swapchain);
-    swapchain_update_draw_bindings(swapchain);
 
     if (reset_state && device->d3d_initialized)
         hr = create_primary_opengl_context(device, swapchain);
