@@ -256,7 +256,7 @@ static void write_fields(FILE *h, var_list_t *fields)
     }
 }
 
-static void write_enums(FILE *h, var_list_t *enums)
+static void write_enums(FILE *h, var_list_t *enums, const char *enum_name)
 {
   var_t *v;
   if (!enums) return;
@@ -264,7 +264,10 @@ static void write_enums(FILE *h, var_list_t *enums)
   {
     if (v->name) {
       indent(h, 0);
-      fprintf(h, "%s", get_name(v));
+      if(!enum_name)
+          fprintf(h, "%s", get_name(v));
+      else
+          fprintf(h, "%s_%s", enum_name, get_name(v));
       if (v->eval) {
         fprintf(h, " = ");
         write_expr(h, v->eval, 0, 1, NULL, NULL, "");
@@ -281,9 +284,13 @@ int needs_space_after(type_t *t)
           (!is_ptr(t) && (!is_array(t) || !type_array_is_decl_as_ptr(t) || t->name)));
 }
 
-void write_type_left(FILE *h, type_t *t, int declonly)
+void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
 {
+  const char *name;
+
   if (!h) return;
+
+  name = type_get_name(t, name_type);
 
   if (is_attr(t->attrs, ATTR_CONST) &&
       (type_is_alias(t) || !is_ptr(t)))
@@ -294,15 +301,15 @@ void write_type_left(FILE *h, type_t *t, int declonly)
     switch (type_get_type_detect_alias(t)) {
       case TYPE_ENUM:
         if (!declonly && t->defined && !t->written) {
-          if (t->name) fprintf(h, "enum %s {\n", t->name);
+          if (name) fprintf(h, "enum %s {\n", name);
           else fprintf(h, "enum {\n");
           t->written = TRUE;
           indentation++;
-          write_enums(h, type_enum_get_values(t));
+          write_enums(h, type_enum_get_values(t), is_global_namespace(t->namespace) ? NULL : t->name);
           indent(h, -1);
           fprintf(h, "}");
         }
-        else fprintf(h, "enum %s", t->name ? t->name : "");
+        else fprintf(h, "enum %s", name ? name : "");
         break;
       case TYPE_STRUCT:
       case TYPE_ENCAPSULATED_UNION:
@@ -333,7 +340,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
         else fprintf(h, "union %s", t->name ? t->name : "");
         break;
       case TYPE_POINTER:
-        write_type_left(h, type_pointer_get_ref(t), declonly);
+        write_type_left(h, type_pointer_get_ref(t), name_type, declonly);
         fprintf(h, "%s*", needs_space_after(type_pointer_get_ref(t)) ? " " : "");
         if (is_attr(t->attrs, ATTR_CONST)) fprintf(h, "const ");
         break;
@@ -342,7 +349,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
           fprintf(h, "%s", t->name);
         else
         {
-          write_type_left(h, type_array_get_element(t), declonly);
+          write_type_left(h, type_array_get_element(t), name_type, declonly);
           if (type_array_is_decl_as_ptr(t))
             fprintf(h, "%s*", needs_space_after(type_array_get_element(t)) ? " " : "");
         }
@@ -397,7 +404,7 @@ void write_type_left(FILE *h, type_t *t, int declonly)
         fprintf(h, "void");
         break;
       case TYPE_BITFIELD:
-        write_type_left(h, type_bitfield_get_field(t), declonly);
+        write_type_left(h, type_bitfield_get_field(t), name_type, declonly);
         break;
       case TYPE_ALIAS:
       case TYPE_FUNCTION:
@@ -463,14 +470,14 @@ static void write_type_v(FILE *h, type_t *t, int is_field, int declonly, const c
       const char *callconv = get_attrp(pt->attrs, ATTR_CALLCONV);
       if (!callconv && is_object_interface) callconv = "STDMETHODCALLTYPE";
       if (is_attr(pt->attrs, ATTR_INLINE)) fprintf(h, "inline ");
-      write_type_left(h, type_function_get_rettype(pt), declonly);
+      write_type_left(h, type_function_get_rettype(pt), NAME_DEFAULT, declonly);
       fputc(' ', h);
       if (ptr_level) fputc('(', h);
       if (callconv) fprintf(h, "%s ", callconv);
       for (i = 0; i < ptr_level; i++)
         fputc('*', h);
     } else
-      write_type_left(h, t, declonly);
+      write_type_left(h, t, NAME_DEFAULT, declonly);
   }
 
   if (name) fprintf(h, "%s%s", !t || needs_space_after(t) ? " " : "", name );
@@ -496,6 +503,30 @@ static void write_type_def_or_decl(FILE *f, type_t *t, int field, const char *na
   write_type_v(f, t, field, FALSE, name);
 }
 
+static void write_type_definition(FILE *f, type_t *t)
+{
+    int in_namespace = t->namespace && !is_global_namespace(t->namespace);
+    int save_written = t->written;
+
+    if(in_namespace) {
+        fprintf(f, "#ifdef __cplusplus\n");
+        fprintf(f, "} /* extern \"C\" */\n");
+        write_namespace_start(f, t->namespace);
+    }
+    indent(f, 0);
+    write_type_left(f, t, NAME_DEFAULT, FALSE);
+    fprintf(f, ";\n");
+    if(in_namespace) {
+        t->written = save_written;
+        write_namespace_end(f, t->namespace);
+        fprintf(f, "extern \"C\" {\n");
+        fprintf(f, "#else\n");
+        write_type_left(f, t, NAME_C, FALSE);
+        fprintf(f, ";\n");
+        fprintf(f, "#endif\n\n");
+    }
+}
+
 void write_type_decl(FILE *f, type_t *t, const char *name)
 {
   write_type_v(f, t, FALSE, TRUE, name);
@@ -503,7 +534,7 @@ void write_type_decl(FILE *f, type_t *t, const char *name)
 
 void write_type_decl_left(FILE *f, type_t *t)
 {
-  write_type_left(f, t, TRUE);
+  write_type_left(f, t, NAME_DEFAULT, TRUE);
 }
 
 static int user_type_registered(const char *name)
@@ -1539,8 +1570,7 @@ static void write_header_stmts(FILE *header, const statement_list_t *stmts, cons
           write_coclass(header, stmt->u.type);
         else
         {
-          write_type_def_or_decl(header, stmt->u.type, FALSE, NULL);
-          fprintf(header, ";\n\n");
+          write_type_definition(header, stmt->u.type);
         }
         break;
       case STMT_TYPEREF:

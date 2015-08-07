@@ -4735,7 +4735,7 @@ void write_func_param_struct( FILE *file, const type_t *iface, const type_t *fun
     if (args) LIST_FOR_EACH_ENTRY( arg, args, const var_t, entry )
     {
         print_file(file, 2, "%s", "");
-        write_type_left( file, (type_t *)arg->type, TRUE );
+        write_type_left( file, (type_t *)arg->type, NAME_DEFAULT, TRUE );
         if (needs_space_after( arg->type )) fputc( ' ', file );
         if (is_array( arg->type ) && !type_array_is_decl_as_ptr( arg->type )) fputc( '*', file );
 
@@ -4800,9 +4800,9 @@ int write_expr_eval_routines(FILE *file, const char *iface)
         else
         {
             print_file(file, 1, "%s", "");
-            write_type_left(file, (type_t *)eval->cont_type, TRUE);
+            write_type_left(file, (type_t *)eval->cont_type, NAME_DEFAULT, TRUE);
             fprintf(file, " *%s = (", var_name);
-            write_type_left(file, (type_t *)eval->cont_type, TRUE);
+            write_type_left(file, (type_t *)eval->cont_type, NAME_DEFAULT, TRUE);
             fprintf(file, " *)(pStubMsg->StackTop - %u);\n", eval->baseoff);
         }
         print_file(file, 1, "pStubMsg->Offset = 0;\n"); /* FIXME */

@@ -378,7 +378,7 @@ statement:
 
 typedecl:
 	  enumdef
-	| tENUM aIDENTIFIER                     { $$ = type_new_enum($2, FALSE, NULL); }
+	| tENUM aIDENTIFIER                     { $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
 	| structdef
 	| tSTRUCT aIDENTIFIER                   { $$ = type_new_struct($2, FALSE, NULL); }
 	| uniondef
@@ -633,7 +633,7 @@ enum:	  ident '=' expr_int_const		{ $$ = reg_const($1);
 						}
 	;
 
-enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, TRUE, $4); }
+enumdef: tENUM t_ident '{' enums '}'		{ $$ = type_new_enum($2, current_namespace, TRUE, $4); }
 	;
 
 m_exprs:  m_expr                                { $$ = append_expr( NULL, $1 ); }
@@ -1098,7 +1098,7 @@ type:	  tVOID					{ $$ = type_new_void(); }
 	| aKNOWNTYPE				{ $$ = find_type_or_error($1, 0); }
 	| base_type				{ $$ = $1; }
 	| enumdef				{ $$ = $1; }
-	| tENUM aIDENTIFIER			{ $$ = type_new_enum($2, FALSE, NULL); }
+	| tENUM aIDENTIFIER			{ $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
 	| structdef				{ $$ = $1; }
 	| tSTRUCT aIDENTIFIER			{ $$ = type_new_struct($2, FALSE, NULL); }
 	| uniondef				{ $$ = $1; }
@@ -1809,6 +1809,10 @@ type_t *reg_type(type_t *type, const char *name, struct namespace *namespace, in
   hash = hash_ident(name);
   nt = xmalloc(sizeof(struct rtype));
   nt->name = name;
+  if (is_global_namespace(namespace))
+    type->c_name = name;
+  else
+    type->c_name = format_namespace(namespace, "__x_", "_C", name);
   nt->type = type;
   nt->t = t;
   nt->next = namespace->type_hash[hash];
@@ -1983,10 +1987,6 @@ type_t *get_type(enum type_type type, char *name, struct namespace *namespace, i
   tp = make_type(type);
   tp->name = name;
   tp->namespace = namespace;
-  if (is_global_namespace(namespace))
-    tp->c_name = name;
-  else
-    tp->c_name = format_namespace(namespace, "__x_", "_C", name);
   if (!name) return tp;
   return reg_type(tp, name, namespace, t);
 }

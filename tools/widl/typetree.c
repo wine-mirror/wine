@@ -78,6 +78,19 @@ static const var_t *find_arg(const var_list_t *args, const char *name)
     return NULL;
 }
 
+const char *type_get_name(const type_t *type, enum name_type name_type)
+{
+    switch(name_type) {
+    case NAME_DEFAULT:
+        return type->name;
+    case NAME_C:
+        return type->c_name;
+    }
+
+    assert(0);
+    return NULL;
+}
+
 static char *append_namespace(char *ptr, struct namespace *namespace, const char *separator)
 {
     if(is_global_namespace(namespace)) {
@@ -258,11 +271,12 @@ type_t *type_new_void(void)
     return void_type;
 }
 
-type_t *type_new_enum(const char *name, int defined, var_list_t *enums)
+type_t *type_new_enum(const char *name, struct namespace *namespace, int defined, var_list_t *enums)
 {
-    type_t *tag_type = name ? find_type(name, NULL, tsENUM) : NULL;
+    type_t *tag_type = name ? find_type(name, namespace, tsENUM) : NULL;
     type_t *t = make_type(TYPE_ENUM);
     t->name = name;
+    t->namespace = namespace;
 
     if (tag_type && tag_type->details.enumeration)
         t->details.enumeration = tag_type->details.enumeration;
@@ -276,7 +290,7 @@ type_t *type_new_enum(const char *name, int defined, var_list_t *enums)
     if (name)
     {
         if (defined)
-            reg_type(t, name, NULL, tsENUM);
+            reg_type(t, name, namespace, tsENUM);
         else
             add_incomplete(t);
     }
