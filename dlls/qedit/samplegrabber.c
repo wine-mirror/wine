@@ -37,7 +37,7 @@ static const WCHAR vendor_name[] = { 'W', 'i', 'n', 'e', 0 };
 static const WCHAR pin_in_name[] = { 'I', 'n', 0 };
 static const WCHAR pin_out_name[] = { 'O', 'u', 't', 0 };
 
-static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype);
+static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype, BOOL past);
 
 /* Single media type enumerator */
 typedef struct _ME_Impl {
@@ -151,10 +151,9 @@ static HRESULT WINAPI Single_IEnumMediaTypes_Clone(IEnumMediaTypes *iface, IEnum
     TRACE("(%p)->(%p)\n", This, me);
     if (!me)
         return E_POINTER;
-    *me = mediaenum_create(&This->mtype);
+    *me = mediaenum_create(&This->mtype, This->past);
     if (!*me)
         return E_OUTOFMEMORY;
-    ((ME_Impl *)*me)->past = This->past;
     return S_OK;
 }
 
@@ -172,27 +171,29 @@ static const IEnumMediaTypesVtbl IEnumMediaTypes_VTable =
     Single_IEnumMediaTypes_Clone,
 };
 
-static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype)
+static IEnumMediaTypes *mediaenum_create(const AM_MEDIA_TYPE *mtype, BOOL past)
 {
     ME_Impl *obj = CoTaskMemAlloc(sizeof(ME_Impl));
-    if (obj) {
-        ZeroMemory(obj, sizeof(ME_Impl));
-        obj->IEnumMediaTypes_iface.lpVtbl = &IEnumMediaTypes_VTable;
-        obj->refCount = 1;
-        obj->past = FALSE;
-        if (mtype) {
-            obj->mtype = *mtype;
-            obj->mtype.pUnk = NULL;
-            if (mtype->cbFormat) {
-                obj->mtype.pbFormat = CoTaskMemAlloc(mtype->cbFormat);
-                CopyMemory(obj->mtype.pbFormat, mtype->pbFormat, mtype->cbFormat);
-            }
-            else
-                obj->mtype.pbFormat = NULL;
+
+    if (!obj)
+        return NULL;
+    ZeroMemory(obj, sizeof(*obj));
+    obj->IEnumMediaTypes_iface.lpVtbl = &IEnumMediaTypes_VTable;
+    obj->refCount = 1;
+    obj->past = past;
+    if (mtype) {
+        obj->mtype = *mtype;
+        obj->mtype.pUnk = NULL;
+        if (mtype->cbFormat) {
+            obj->mtype.pbFormat = CoTaskMemAlloc(mtype->cbFormat);
+            CopyMemory(obj->mtype.pbFormat, mtype->pbFormat, mtype->cbFormat);
         }
         else
-            obj->mtype.majortype = GUID_NULL;
+            obj->mtype.pbFormat = NULL;
     }
+    else
+        obj->mtype.majortype = GUID_NULL;
+
     return &obj->IEnumMediaTypes_iface;
 }
 
@@ -1095,7 +1096,7 @@ SampleGrabber_IPin_EnumMediaTypes(IPin *iface, IEnumMediaTypes **mtypes)
     TRACE("(%p)->(%p)\n", This, mtypes);
     if (!mtypes)
         return E_POINTER;
-    *mtypes = mediaenum_create(This->sg->pin_in.pair ? &This->sg->mtype : NULL);
+    *mtypes = mediaenum_create(This->sg->pin_in.pair ? &This->sg->mtype : NULL, FALSE);
     return *mtypes ? S_OK : E_OUTOFMEMORY;
 }
 
