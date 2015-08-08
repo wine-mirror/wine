@@ -4313,6 +4313,40 @@ static void test_form_target(IUnknown *unk)
     IHTMLFormElement_Release(form);
 }
 
+static void test_select_form(IUnknown *uselect, IUnknown  *uform)
+{
+    IHTMLSelectElement *select = get_select_iface(uselect);
+    IHTMLFormElement *form;
+    HRESULT hres;
+
+    hres = IHTMLSelectElement_get_form(select, NULL);
+    ok(hres == E_POINTER, "got %08x\n, expected E_POINTER\n", hres);
+
+    hres = IHTMLSelectElement_get_form(select, &form);
+    ok(hres == S_OK, "get_form failed: %08x\n", hres);
+    ok(form != NULL, "form == NULL\n");
+
+    test_form_length((IUnknown*)form, 1);
+    test_form_elements((IUnknown*)form);
+    test_form_name((IUnknown*)form, "form_name");
+
+    ok(iface_cmp(uform, (IUnknown*)form), "Expected %p, got %p\n", uform, form);
+
+    IHTMLSelectElement_Release(select);
+    IHTMLFormElement_Release(form);
+}
+
+static void test_select_form_notfound(IHTMLSelectElement *select)
+{
+    IHTMLFormElement *form;
+    HRESULT hres;
+
+    form = (IHTMLFormElement*)0xdeadbeef;
+    hres = IHTMLSelectElement_get_form(select, &form);
+    ok(hres == S_OK, "get_form failed: %08x\n", hres);
+    ok(form == NULL, "got %p\n", form);
+}
+
 #define test_meta_name(a,b) _test_meta_name(__LINE__,a,b)
 static void _test_meta_name(unsigned line, IUnknown *unk, const char *exname)
 {
@@ -4948,6 +4982,7 @@ static void test_select_elem(IHTMLSelectElement *select)
     test_select_name(select, NULL);
     test_select_set_name(select, "select-name");
     test_select_name(select, "select-name");
+    test_select_form_notfound(select);
 
     test_select_get_disabled(select, VARIANT_FALSE);
     test_select_set_disabled(select, VARIANT_TRUE);
@@ -8489,6 +8524,16 @@ static void test_elems2(IHTMLDocument2 *doc)
         elem = get_elem_by_id(doc, "inputid", TRUE);
         test_input_get_form((IUnknown*)elem, "form");
         IHTMLElement_Release(elem);
+    }
+
+    test_elem_set_innerhtml((IUnknown*)div,
+            "<form id=\"form\" name=\"form_name\"><select id=\"sform\"></select></form>");
+    elem = get_elem_by_id(doc, "sform", TRUE);
+    elem2 = get_elem_by_id(doc, "form", TRUE);
+    if(elem && elem2) {
+        test_select_form((IUnknown*)elem, (IUnknown*)elem2);
+        IHTMLElement_Release(elem);
+        IHTMLElement_Release(elem2);
     }
 
     test_attr(div);
