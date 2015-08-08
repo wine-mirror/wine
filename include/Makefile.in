@@ -580,6 +580,7 @@ SRCDIR_INCLUDES = \
 	t2embapi.h \
 	tapi.h \
 	tchar.h \
+	tcpestats.h \
 	tcpmib.h \
 	textserv.h \
 	tlhelp32.h \
