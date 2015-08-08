@@ -285,7 +285,7 @@
 #@ stub SetNetworkInformation
 #@ stub SetPerTcp6ConnectionEStats
 #@ stub SetPerTcp6ConnectionStats
-#@ stub SetPerTcpConnectionEStats
+@ stdcall SetPerTcpConnectionEStats( ptr long ptr long long long )
 #@ stub SetPerTcpConnectionStats
 @ stub SetProxyArpEntryToStack
 @ stub SetRouteWithRef

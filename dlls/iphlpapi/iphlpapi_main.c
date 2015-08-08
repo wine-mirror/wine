@@ -53,6 +53,7 @@
 #include "fltdefs.h"
 #include "ifdef.h"
 #include "netioapi.h"
+#include "tcpestats.h"
 
 #include "wine/debug.h"
 #include "wine/unicode.h"
@@ -2706,6 +2707,17 @@ DWORD WINAPI SetTcpEntry(PMIB_TCPROW pTcpRow)
 {
   FIXME("(pTcpRow %p): stub\n", pTcpRow);
   return 0;
+}
+
+/******************************************************************
+ *    SetPerTcpConnectionEStats (IPHLPAPI.@)
+ */
+DWORD WINAPI SetPerTcpConnectionEStats(PMIB_TCPROW row, TCP_ESTATS_TYPE state, PBYTE rw,
+                                       ULONG version, ULONG size, ULONG offset)
+{
+  FIXME("(row %p, state %d, rw %p, version %u, size %u, offset %u): stub\n",
+        row, state, rw, version, size, offset);
+  return ERROR_NOT_SUPPORTED;
 }
 
 
