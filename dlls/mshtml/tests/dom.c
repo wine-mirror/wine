@@ -2217,6 +2217,37 @@ static void _test_select_set_size(unsigned line, IHTMLSelectElement *select, LON
     ok_(__FILE__,line) (hres == exhres, "put_size(%d) got %08x, expect %08x\n", val, hres, exhres);
 }
 
+#define test_select_name(s,v) _test_select_name(__LINE__,s,v)
+static void _test_select_name(unsigned line, IHTMLSelectElement *select, const char *extext)
+{
+    HRESULT hres;
+    BSTR text;
+
+    text = NULL;
+    hres = IHTMLSelectElement_get_name(select, &text);
+    ok_(__FILE__,line) (hres == S_OK, "get_name failed: %08x\n", hres);
+    if(extext) {
+        ok_(__FILE__,line) (text != NULL, "text == NULL\n");
+        ok_(__FILE__,line) (!strcmp_wa(text, extext), "name = %s, expected %s\n",
+            wine_dbgstr_w(text), extext);
+        SysFreeString(text);
+    } else
+        ok_(__FILE__,line) (text == NULL, "text(%p) = %s\n", text, wine_dbgstr_w(text));
+}
+
+#define test_select_set_name(s,v) _test_select_set_name(__LINE__,s,v)
+static void _test_select_set_name(unsigned line, IHTMLSelectElement *select, const char *text)
+{
+    HRESULT hres;
+    BSTR bstr;
+
+    bstr = a2bstr(text);
+
+    hres = IHTMLSelectElement_put_name(select, bstr);
+    ok_(__FILE__,line) (hres == S_OK, "put_name(%s) failed: %08x\n", wine_dbgstr_w(bstr), hres);
+    SysFreeString(bstr);
+}
+
 #define test_range_text(r,t) _test_range_text(__LINE__,r,t)
 static void _test_range_text(unsigned line, IHTMLTxtRange *range, const char *extext)
 {
@@ -4913,6 +4944,10 @@ static void test_select_elem(IHTMLSelectElement *select)
     test_select_size(select, 1);
     test_select_set_size(select, 3, S_OK);
     test_select_size(select, 3);
+
+    test_select_name(select, NULL);
+    test_select_set_name(select, "select-name");
+    test_select_name(select, "select-name");
 
     test_select_get_disabled(select, VARIANT_FALSE);
     test_select_set_disabled(select, VARIANT_TRUE);
