@@ -419,6 +419,7 @@ static void CDECL fork_uintptr_cb(UINT_PTR a, UINT_PTR b, UINT_PTR c, UINT_PTR d
     ok(e == 5, "expected e == 5, got %p\n", (void *)e);
 }
 
+#ifdef __i386__
 static void CDECL fork_float_cb(float a, float b, float c, float d, float e)
 {
     ok(1.4999 < a && a < 1.5001, "expected a == 1.5, got %f\n", a);
@@ -427,6 +428,7 @@ static void CDECL fork_float_cb(float a, float b, float c, float d, float e)
     ok(4.4999 < d && d < 4.5001, "expected d == 4.5, got %f\n", d);
     ok(5.4999 < e && e < 5.5001, "expected e == 5.5, got %f\n", e);
 }
+#endif
 
 static void test_vcomp_fork(void)
 {
@@ -453,13 +455,14 @@ static void test_vcomp_fork(void)
     p_vcomp_fork(TRUE, 5, fork_uintptr_cb, (UINT_PTR)1, (UINT_PTR)(MAXUINT_PTR - 2),
         (UINT_PTR)3, (UINT_PTR)(MAXUINT_PTR - 4), (UINT_PTR)5);
 
-    if (sizeof(int) < sizeof(void *))
-        skip("skipping float test on x86_64\n");
-    else
+#ifdef __i386__
     {
         void (CDECL *func)(BOOL, int, void *, float, float, float, float, float) = (void *)p_vcomp_fork;
         func(TRUE, 5, fork_float_cb, 1.5f, 2.5f, 3.5f, 4.5f, 5.5f);
     }
+#else
+    skip("skipping float test on non-x86\n");
+#endif
 
     pomp_set_num_threads(max_threads);
 }
