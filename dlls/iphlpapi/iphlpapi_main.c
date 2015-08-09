@@ -387,7 +387,7 @@ DWORD WINAPI CreateSortedAddressPairs( const PSOCKADDR_IN6 src_list, DWORD src_c
     size = dst_count * sizeof(*pairs);
     size += dst_count * sizeof(SOCKADDR_IN6) * 2; /* source address + destination address */
     if (!(pairs = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_NOT_ENOUGH_MEMORY;
-    ptr = (SOCKADDR_IN6 *)(char *)pairs + dst_count * sizeof(*pairs);
+    ptr = (SOCKADDR_IN6 *)&pairs[dst_count];
 
     if ((ret = getIPAddrTable( &table, GetProcessHeap(), 0 )))
     {
