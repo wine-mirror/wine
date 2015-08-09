@@ -1286,10 +1286,10 @@ static void test_atomic_integer32(void)
         { p_vcomp_atomic_mul_i4,  0x11223344, -0x77665544,   0xecccdf0 },
         { p_vcomp_atomic_or_i4,   0x11223344,  0x77665544,  0x77667744 },
         { p_vcomp_atomic_shl_i4,  0x11223344,           3, -0x76ee65e0 },
-        { p_vcomp_atomic_shl_i4,  0x11223344,          35, -0x76ee65e0 },
+     /* { p_vcomp_atomic_shl_i4,  0x11223344,          35, -0x76ee65e0 }, */ /* depends on Architecture */
         { p_vcomp_atomic_shl_i4, -0x11223344,           3,  0x76ee65e0 },
         { p_vcomp_atomic_shr_i4,  0x11223344,           3,   0x2244668 },
-        { p_vcomp_atomic_shr_i4,  0x11223344,          35,   0x2244668 },
+     /* { p_vcomp_atomic_shr_i4,  0x11223344,          35,   0x2244668 }, */ /* depends on Architecture */
         { p_vcomp_atomic_shr_i4, -0x11223344,           3,  -0x2244669 },
         { p_vcomp_atomic_sub_i4,  0x11223344,  0x77665544, -0x66442200 },
         { p_vcomp_atomic_xor_i4,  0x11223344,  0x77665544,  0x66446600 },
@@ -1304,7 +1304,7 @@ static void test_atomic_integer32(void)
         { p_vcomp_atomic_div_ui4, 0x77665544, 0x11223344,          6 },
         { p_vcomp_atomic_div_ui4, 0x77665544, 0xeeddccbc,          0 },
         { p_vcomp_atomic_shr_ui4, 0x11223344,          3,  0x2244668 },
-        { p_vcomp_atomic_shr_ui4, 0x11223344,         35,  0x2244668 },
+     /* { p_vcomp_atomic_shr_ui4, 0x11223344,         35,  0x2244668 }, */ /* depends on Architecture */
         { p_vcomp_atomic_shr_ui4, 0xeeddccbc,          3, 0x1ddbb997 },
     };
     int i;
