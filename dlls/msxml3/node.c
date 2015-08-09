@@ -654,6 +654,8 @@ HRESULT node_has_childnodes(const xmlnode *This, VARIANT_BOOL *ret)
 
 HRESULT node_get_owner_doc(const xmlnode *This, IXMLDOMDocument **doc)
 {
+    if(!doc)
+        return E_INVALIDARG;
     return get_domdoc_from_xmldoc(This->node->doc, (IXMLDOMDocument3**)doc);
 }
 

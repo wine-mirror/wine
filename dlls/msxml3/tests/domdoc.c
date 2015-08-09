@@ -7467,6 +7467,19 @@ static void test_get_ownerDocument(void)
     IXMLDOMSchemaCollection *cache;
     VARIANT_BOOL b;
     VARIANT var;
+    IXMLDOMElement *element;
+    IXMLDOMNodeList *node_list;
+    IXMLDOMAttribute *attr;
+    LONG i, len;
+    HRESULT hr;
+    const CHAR nodeXML[] =
+    "<root id='0'>"
+    "   <!-- comment node 0 -->"
+    "   text node 0"
+    "   <x attr='val'></x>"
+    "   <?foo value='PI for x'?>"
+    "   <![CDATA[ cdata ]]>"
+    "</root>";
 
     if (!is_clsid_supported(&CLSID_DOMDocument2, &IID_IXMLDOMDocument2)) return;
     if (!is_clsid_supported(&CLSID_XMLSchemaCache, &IID_IXMLDOMSchemaCollection)) return;
@@ -7518,6 +7531,47 @@ static void test_get_ownerDocument(void)
     unset_props(doc_owner);
     check_default_props(doc_owner);
     check_default_props(doc);
+
+    /* NULL check */
+    hr = IXMLDOMDocument_loadXML(doc1, _bstr_(nodeXML), &b);
+    EXPECT_HR(hr, S_OK);
+    ok(b == VARIANT_TRUE, "failed to load XML string\n");
+
+    hr = IXMLDOMDocument_get_documentElement(doc1, &element);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMElement_get_childNodes(element, &node_list);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMNodeList_get_length(node_list, &len);
+    EXPECT_HR(hr, S_OK);
+
+    for(i = 0; i < len; i++) {
+        hr = IXMLDOMNodeList_get_item(node_list, i, &node);
+        EXPECT_HR(hr, S_OK);
+
+        hr = IXMLDOMNode_get_ownerDocument(node, NULL);
+        EXPECT_HR(hr, E_INVALIDARG);
+
+        IXMLDOMNode_Release(node);
+    }
+    IXMLDOMElement_Release(element);
+
+    /* Test Attribute Node */
+    hr = IXMLDOMNodeList_get_item(node_list, 2, &node);
+    EXPECT_HR(hr, S_OK);
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&element);
+    EXPECT_HR(hr, S_OK);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMElement_getAttributeNode(element, _bstr_("attr"), &attr);
+    EXPECT_HR(hr, S_OK);
+    ok(attr != NULL, "attr == NULL\n");
+    IXMLDOMElement_Release(element);
+    hr = IXMLDOMAttribute_get_ownerDocument(attr, NULL);
+    EXPECT_HR(hr, E_INVALIDARG);
+    IXMLDOMAttribute_Release(attr);
+    IXMLDOMNodeList_Release(node_list);
 
     IXMLDOMSchemaCollection_Release(cache);
     IXMLDOMDocument_Release(doc1);
