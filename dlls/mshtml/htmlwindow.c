@@ -380,6 +380,11 @@ HRESULT get_frame_by_name(HTMLOuterWindow *This, const WCHAR *name, BOOL deep, H
         return E_FAIL;
     }
 
+    if(!nsframes) {
+        WARN("nsIDOMWindow_GetFrames returned NULL nsframes: %p\n", This->nswindow);
+        return DISP_E_MEMBERNOTFOUND;
+    }
+
     nsAString_InitDepend(&name_str, name);
     nsres = nsIDOMWindowCollection_NamedItem(nsframes, &name_str, &nswindow);
     nsAString_Finish(&name_str);
