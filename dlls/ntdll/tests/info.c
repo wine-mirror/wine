@@ -1442,6 +1442,8 @@ static void test_mapprotection(void)
     *(unsigned char*)addr = 0xc3;       /* lret ... in both i386 and x86_64 */
 #elif defined(__arm__)
     *(unsigned long*)addr = 0xe12fff1e; /* bx lr */
+#elif defined(__aarch64__)
+    *(unsigned long*)addr = 0xd65f03c0; /* ret */
 #else
     ok(0, "Add a return opcode for your architecture or expect a crash in this test\n");
 #endif
