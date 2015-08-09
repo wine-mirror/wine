@@ -189,6 +189,42 @@ __ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
                    __ASM_CFI(".cfi_same_value %rbp\n\t")
                    "ret")
 
+#elif defined(__arm__)
+
+extern void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args);
+__ASM_GLOBAL_FUNC( _vcomp_fork_call_wrapper,
+                   ".arm\n\t"
+                   "push {r4, r5, LR}\n\t"
+                   "mov r4, r0\n\t"
+                   "mov r5, SP\n\t"
+                   "lsl r3, r1, #2\n\t"
+                   "cmp r3, #0\n\t"
+                   "beq 5f\n\t"
+                   "sub SP, SP, r3\n\t"
+                   "tst r1, #1\n\t"
+                   "subeq SP, SP, #4\n\t"
+                   "1:\tsub r3, r3, #4\n\t"
+                   "ldr r0, [r2, r3]\n\t"
+                   "str r0, [SP, r3]\n\t"
+                   "cmp r3, #0\n\t"
+                   "bgt 1b\n\t"
+                   "cmp r1, #1\n\t"
+                   "bgt 2f\n\t"
+                   "pop {r0}\n\t"
+                   "b 5f\n\t"
+                   "2:\tcmp r1, #2\n\t"
+                   "bgt 3f\n\t"
+                   "pop {r0-r1}\n\t"
+                   "b 5f\n\t"
+                   "3:\tcmp r1, #3\n\t"
+                   "bgt 4f\n\t"
+                   "pop {r0-r2}\n\t"
+                   "b 5f\n\t"
+                   "4:\tpop {r0-r3}\n\t"
+                   "5:\tblx r4\n\t"
+                   "mov SP, r5\n\t"
+                   "pop {r4, r5, PC}" )
+
 #else
 
 static void CDECL _vcomp_fork_call_wrapper(void *wrapper, int nargs, __ms_va_list args)
