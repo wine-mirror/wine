@@ -14204,7 +14204,7 @@ basic_ostream_char* __cdecl basic_ostream_char_print_complex_ldouble(basic_ostre
 
 /* ?_File_size@sys@tr2@std@@YA_KPBD@Z  */
 /* ?_File_size@sys@tr2@std@@YA_KPEBD@Z */
-ULONGLONG __cdecl tr2_sys__File_size(const char* path)
+ULONGLONG __cdecl tr2_sys__File_size(char const* path)
 {
     WIN32_FILE_ATTRIBUTE_DATA fad;
 
@@ -14737,6 +14737,21 @@ void* __thiscall _Winit_ctor(void *this)
         _Winit__Init_cnt++;
 
     return this;
+}
+
+/* ?_File_size@sys@tr2@std@@YA_KPB_W@Z */
+/* ?_File_size@sys@tr2@std@@YA_KPEB_W@Z */
+ULONGLONG __cdecl tr2_sys__File_size_wchar(WCHAR const* path)
+{
+    WIN32_FILE_ATTRIBUTE_DATA fad;
+
+    TRACE("(%s)\n", debugstr_w(path));
+    if(!GetFileAttributesExW(path, GetFileExInfoStandard, &fad))
+        return 0;
+    if(fad.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        return 0;
+
+    return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
 }
 
 /* ??1_Winit@std@@QAE@XZ */

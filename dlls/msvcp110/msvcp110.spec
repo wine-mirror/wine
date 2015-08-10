@@ -1208,8 +1208,8 @@
 @ cdecl -arch=win64 ?_Ffmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAPEADPEADDH@Z(ptr ptr long long) num_put_wchar__Ffmt
 @ cdecl -ret64 -arch=win32 ?_File_size@sys@tr2@std@@YA_KPBD@Z(str) tr2_sys__File_size
 @ cdecl -ret64 -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEBD@Z(str) tr2_sys__File_size
-@ stub -arch=win32 ?_File_size@sys@tr2@std@@YA_KPB_W@Z
-@ stub -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEB_W@Z
+@ cdecl -arch=win32 ?_File_size@sys@tr2@std@@YA_KPB_W@Z(wstr) tr2_sys__File_size_wchar
+@ cdecl -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEB_W@Z(wstr) tr2_sys__File_size_wchar
 @ cdecl -arch=arm ?_Findarr@ios_base@std@@AAAAAU_Iosarray@12@H@Z(ptr long) ios_base_Findarr
 @ thiscall -arch=i386 ?_Findarr@ios_base@std@@AAEAAU_Iosarray@12@H@Z(ptr long) ios_base_Findarr
 @ cdecl -arch=win64 ?_Findarr@ios_base@std@@AEAAAEAU_Iosarray@12@H@Z(ptr long) ios_base_Findarr

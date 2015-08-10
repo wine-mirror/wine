@@ -1173,8 +1173,8 @@
 @ cdecl -arch=win64 ?_Ffmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAPEADPEADDH@Z(ptr ptr long long) msvcp120.?_Ffmt@?$num_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAPEADPEADDH@Z
 @ cdecl -ret64 -arch=win32 ?_File_size@sys@tr2@std@@YA_KPBD@Z(str) msvcp120.?_File_size@sys@tr2@std@@YA_KPBD@Z
 @ cdecl -ret64 -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEBD@Z(str) msvcp120.?_File_size@sys@tr2@std@@YA_KPEBD@Z
-@ stub -arch=win32 ?_File_size@sys@tr2@std@@YA_KPB_W@Z
-@ stub -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEB_W@Z
+@ cdecl -arch=win32 ?_File_size@sys@tr2@std@@YA_KPB_W@Z(wstr) msvcp120.?_File_size@sys@tr2@std@@YA_KPB_W@Z
+@ cdecl -arch=win64 ?_File_size@sys@tr2@std@@YA_KPEB_W@Z(wstr) msvcp120.?_File_size@sys@tr2@std@@YA_KPEB_W@Z
 @ cdecl -arch=arm ?_Findarr@ios_base@std@@AAAAAU_Iosarray@12@H@Z(ptr long) msvcp120.?_Findarr@ios_base@std@@AAAAAU_Iosarray@12@H@Z
 @ thiscall -arch=i386 ?_Findarr@ios_base@std@@AAEAAU_Iosarray@12@H@Z(ptr long) msvcp120.?_Findarr@ios_base@std@@AAEAAU_Iosarray@12@H@Z
 @ cdecl -arch=win64 ?_Findarr@ios_base@std@@AEAAAEAU_Iosarray@12@H@Z(ptr long) msvcp120.?_Findarr@ios_base@std@@AEAAAEAU_Iosarray@12@H@Z

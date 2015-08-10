@@ -73,6 +73,7 @@ static void (CDECL *p__Do_call)(void *this);
 
 /* filesystem */
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
+static ULONGLONG(__cdecl *p_tr2_sys__File_size_wchar)(WCHAR const*);
 static int (__cdecl *p_tr2_sys__Equivalent)(char const*, char const*);
 static char* (__cdecl *p_tr2_sys__Current_get)(char *);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
@@ -113,6 +114,8 @@ static BOOL init(void)
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPEBD@Z");
+        SET(p_tr2_sys__File_size_wchar,
+                "?_File_size@sys@tr2@std@@YA_KPEB_W@Z");
         SET(p_tr2_sys__Equivalent,
                 "?_Equivalent@sys@tr2@std@@YAHPEBD0@Z");
         SET(p_tr2_sys__Current_get,
@@ -136,6 +139,8 @@ static BOOL init(void)
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
+        SET(p_tr2_sys__File_size_wchar,
+                "?_File_size@sys@tr2@std@@YA_KPB_W@Z");
         SET(p_tr2_sys__Equivalent,
                 "?_Equivalent@sys@tr2@std@@YAHPBD0@Z");
         SET(p_tr2_sys__Current_get,
@@ -367,6 +372,7 @@ static void test_tr2_sys__File_size(void)
     ULONGLONG val;
     HANDLE file;
     LARGE_INTEGER file_size;
+    WCHAR testW[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','1',0};
     CreateDirectoryA("tr2_test_dir", NULL);
 
     file = CreateFileA("tr2_test_dir/f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
@@ -376,6 +382,8 @@ static void test_tr2_sys__File_size(void)
     ok(SetEndOfFile(file), "SetEndOfFile failed\n");
     CloseHandle(file);
     val = p_tr2_sys__File_size("tr2_test_dir/f1");
+    ok(val == 7, "file_size is %s\n", debugstr_longlong(val));
+    val = p_tr2_sys__File_size_wchar(testW);
     ok(val == 7, "file_size is %s\n", debugstr_longlong(val));
 
     file = CreateFileA("tr2_test_dir/f2", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
@@ -397,9 +405,9 @@ static void test_tr2_sys__File_size(void)
     ok(val == 0, "file_size is %s\n", debugstr_longlong(val));
     ok(errno == 0xdeadbeef, "errno = %d\n", errno);
 
-    ok(DeleteFileA("tr2_test_dir/f1"), "Expected tr2_test_dir/f1 to exist\n");
-    ok(DeleteFileA("tr2_test_dir/f2"), "Expected tr2_test_dir/f2 to exist\n");
-    ok(RemoveDirectoryA("tr2_test_dir"), "Expected tr2_test_dir to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f2"), "expect tr2_test_dir/f2 to exist\n");
+    ok(RemoveDirectoryA("tr2_test_dir"), "expect tr2_test_dir to exist\n");
 }
 
 static void test_tr2_sys__Equivalent(void)
