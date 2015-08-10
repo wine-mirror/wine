@@ -968,11 +968,12 @@ filebuf* __thiscall filebuf_open(filebuf *this, const char *name, ios_open_mode 
 
     streambuf_lock(&this->base);
     this->close = 1;
+    this->fd = fd;
     if ((mode & OPENMODE_ate) &&
             call_streambuf_seekoff(&this->base, 0, SEEKDIR_end, mode & (OPENMODE_in|OPENMODE_out)) == EOF) {
         _close(fd);
-    } else
-        this->fd = fd;
+        this->fd = -1;
+    }
     streambuf_allocate(&this->base);
     streambuf_unlock(&this->base);
     return (this->fd == -1) ? NULL : this;
@@ -1003,8 +1004,10 @@ int __thiscall filebuf_overflow(filebuf *this, int c)
 DEFINE_THISCALL_WRAPPER(filebuf_seekoff, 16)
 streampos __thiscall filebuf_seekoff(filebuf *this, streamoff offset, ios_seek_dir dir, int mode)
 {
-    FIXME("(%p %d %d %d) stub\n", this, offset, dir, mode);
-    return 0;
+    TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
+    if (call_streambuf_sync(&this->base) == EOF)
+        return EOF;
+    return _lseek(this->fd, offset, dir);
 }
 
 /* ?setbuf@filebuf@@UAEPAVstreambuf@@PADH@Z */

@@ -24,6 +24,8 @@
 #include "wine/test.h"
 
 typedef void (*vtable_ptr)(void);
+typedef LONG streamoff;
+typedef LONG streampos;
 typedef int filedesc;
 
 typedef enum {
@@ -43,6 +45,12 @@ typedef enum {
     OPENMODE_noreplace   = 0x40,
     OPENMODE_binary      = 0x80
 } ios_open_mode;
+
+typedef enum {
+    SEEKDIR_beg = 0,
+    SEEKDIR_cur = 1,
+    SEEKDIR_end = 2
+} ios_seek_dir;
 
 typedef enum {
     FLAGS_skipws     = 0x1,
@@ -162,6 +170,7 @@ static streambuf* (*__thiscall p_filebuf_setbuf)(filebuf*, char*, int);
 static int (*__thiscall p_filebuf_sync)(filebuf*);
 static int (*__thiscall p_filebuf_overflow)(filebuf*, int);
 static int (*__thiscall p_filebuf_underflow)(filebuf*);
+static streampos (*__thiscall p_filebuf_seekoff)(filebuf*, streamoff, ios_seek_dir, int);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -305,6 +314,7 @@ static BOOL init(void)
         SET(p_filebuf_sync, "?sync@filebuf@@UEAAHXZ");
         SET(p_filebuf_overflow, "?overflow@filebuf@@UEAAHH@Z");
         SET(p_filebuf_underflow, "?underflow@filebuf@@UEAAHXZ");
+        SET(p_filebuf_seekoff, "?seekoff@filebuf@@UEAAJJW4seek_dir@ios@@H@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -368,6 +378,7 @@ static BOOL init(void)
         SET(p_filebuf_sync, "?sync@filebuf@@UAEHXZ");
         SET(p_filebuf_overflow, "?overflow@filebuf@@UAEHH@Z");
         SET(p_filebuf_underflow, "?underflow@filebuf@@UAEHXZ");
+        SET(p_filebuf_seekoff, "?seekoff@filebuf@@UAEJJW4seek_dir@ios@@H@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -1304,6 +1315,35 @@ static void test_filebuf(void)
     fb2.base.do_lock = -1;
     ret = (int) call_func1(p_filebuf_underflow, &fb2);
     ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+
+    /* seekoff */
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 5, SEEKDIR_beg, 0);
+    ok(ret == 5, "wrong return, expected 5 got %d\n", ret);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.ebuf;
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 0, SEEKDIR_beg, 0);
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    fb1.base.eback = fb1.base.gptr = fb1.base.egptr = NULL;
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 10, SEEKDIR_beg, OPENMODE_in|OPENMODE_out);
+    ok(ret == 10, "wrong return, expected 10 got %d\n", ret);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 0, SEEKDIR_cur, 0);
+    ok(ret == 10, "wrong return, expected 10 got %d\n", ret);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 200, SEEKDIR_cur, OPENMODE_in);
+    ok(ret == 210, "wrong return, expected 210 got %d\n", ret);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, -60, SEEKDIR_cur, 0);
+    ok(ret == 150, "wrong return, expected 150 got %d\n", ret);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 0, SEEKDIR_end, 0);
+    ok(ret == 106, "wrong return, expected 106 got %d\n", ret);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 20, SEEKDIR_end, OPENMODE_out);
+    ok(ret == 126, "wrong return, expected 126 got %d\n", ret);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, -150, SEEKDIR_end, -1);
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 10, 3, 0);
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ret = (int) call_func4(p_filebuf_seekoff, &fb1, 16, SEEKDIR_beg, 0);
+    ok(ret == 16, "wrong return, expected 16 got %d\n", ret);
 
     /* close */
     pret = (filebuf*) call_func1(p_filebuf_close, &fb2);
