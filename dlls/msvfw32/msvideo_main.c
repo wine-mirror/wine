@@ -649,8 +649,8 @@ HIC VFWAPI ICLocate(DWORD fccType, DWORD fccHandler, LPBITMAPINFOHEADER lpbiIn,
     if (fccType == streamtypeVIDEO) 
         return ICLocate(ICTYPE_VIDEO, fccHandler, lpbiIn, lpbiOut, wMode);
     
-    WARN("(%s,%s,%p,%p,0x%04x) not found!\n",
-         wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), lpbiIn, lpbiOut, wMode);
+    ERR("Required media codec '%s %s' not found!\n",
+         wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler));
     return 0;
 }
 
