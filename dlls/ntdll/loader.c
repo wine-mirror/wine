@@ -50,6 +50,12 @@ WINE_DECLARE_DEBUG_CHANNEL(snoop);
 WINE_DECLARE_DEBUG_CHANNEL(loaddll);
 WINE_DECLARE_DEBUG_CHANNEL(imports);
 
+#ifdef _WIN64
+#define DEFAULT_SECURITY_COOKIE_64  (((ULONGLONG)0x00002b99 << 32) | 0x2ddfa232)
+#endif
+#define DEFAULT_SECURITY_COOKIE_32  0xbb40e64e
+#define DEFAULT_SECURITY_COOKIE_16  (DEFAULT_SECURITY_COOKIE_32 >> 16)
+
 /* we don't want to include winuser.h */
 #define RT_MANIFEST                         ((ULONG_PTR)24)
 #define ISOLATIONAWARE_MANIFEST_RESOURCE_ID ((ULONG_PTR)2)
@@ -1602,6 +1608,55 @@ static void load_builtin_callback( void *module, const char *filename )
 }
 
 
+/***********************************************************************
+ *           set_security_cookie
+ *
+ * Create a random security cookie for buffer overflow protection. Make
+ * sure it does not accidentally match the default cookie value.
+ */
+static void set_security_cookie( void *module, SIZE_T len )
+{
+    static ULONG seed;
+    IMAGE_LOAD_CONFIG_DIRECTORY *loadcfg;
+    ULONG loadcfg_size;
+    ULONG_PTR *cookie;
+
+    loadcfg = RtlImageDirectoryEntryToData( module, TRUE, IMAGE_DIRECTORY_ENTRY_LOAD_CONFIG, &loadcfg_size );
+    if (!loadcfg) return;
+    if (loadcfg_size < offsetof(IMAGE_LOAD_CONFIG_DIRECTORY, SecurityCookie) + sizeof(loadcfg->SecurityCookie)) return;
+    if (!loadcfg->SecurityCookie) return;
+    if (loadcfg->SecurityCookie < (ULONG_PTR)module ||
+        loadcfg->SecurityCookie > (ULONG_PTR)module + len - sizeof(ULONG_PTR))
+    {
+        WARN( "security cookie %p outside of image %p-%p\n",
+              (void *)loadcfg->SecurityCookie, module, (char *)module + len );
+        return;
+    }
+
+    cookie = (ULONG_PTR *)loadcfg->SecurityCookie;
+    TRACE( "initializing security cookie %p\n", cookie );
+
+    if (!seed) seed = NtGetTickCount() ^ GetCurrentProcessId();
+    for (;;)
+    {
+        if (*cookie == DEFAULT_SECURITY_COOKIE_16)
+            *cookie = RtlRandom( &seed ) >> 16; /* leave the high word clear */
+        else if (*cookie == DEFAULT_SECURITY_COOKIE_32)
+            *cookie = RtlRandom( &seed );
+#ifdef DEFAULT_SECURITY_COOKIE_64
+        else if (*cookie == DEFAULT_SECURITY_COOKIE_64)
+        {
+            *cookie = RtlRandom( &seed );
+            /* fill up, but keep the highest word clear */
+            *cookie ^= (ULONG_PTR)RtlRandom( &seed ) << 16;
+        }
+#endif
+        else
+            break;
+    }
+}
+
+
 /******************************************************************************
  *	load_native_dll  (internal)
  */
@@ -1635,6 +1690,8 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
         status = STATUS_NO_MEMORY;
         goto done;
     }
+
+    set_security_cookie( module, len );
 
     /* fixup imports */
 
