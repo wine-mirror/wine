@@ -1138,8 +1138,8 @@
 @ cdecl -arch=win64 ?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z(ptr) tr2_sys__Current_get_wchar
 @ cdecl -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPBD@Z(str) tr2_sys__Current_set
 @ cdecl -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEBD@Z(str) tr2_sys__Current_set
-@ stub -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPB_W@Z
-@ stub -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEB_W@Z
+@ cdecl -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPB_W@Z(wstr) tr2_sys__Current_set_wchar
+@ cdecl -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEB_W@Z(wstr) tr2_sys__Current_set_wchar
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@UAAPAV_Facet_base@3@XZ(ptr) locale_facet__Decref
 @ thiscall -arch=i386 ?_Decref@facet@locale@std@@UAEPAV_Facet_base@3@XZ(ptr) locale_facet__Decref
 @ cdecl -arch=win64 ?_Decref@facet@locale@std@@UEAAPEAV_Facet_base@3@XZ(ptr) locale_facet__Decref

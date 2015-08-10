@@ -14801,6 +14801,14 @@ WCHAR* __cdecl tr2_sys__Current_get_wchar(WCHAR *current_path)
     return current_path;
 }
 
+/* ?_Current_set@sys@tr2@std@@YA_NPB_W@Z */
+/* ?_Current_set@sys@tr2@std@@YA_NPEB_W@Z */
+MSVCP_bool __cdecl tr2_sys__Current_set_wchar(WCHAR const* path)
+{
+    TRACE("(%s)\n", debugstr_w(path));
+    return SetCurrentDirectoryW(path) != 0;
+}
+
 /* ??1_Winit@std@@QAE@XZ */
 /* ??1_Winit@std@@QAE@XZ */
 DEFINE_THISCALL_WRAPPER(_Winit_dtor, 4)

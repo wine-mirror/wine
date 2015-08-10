@@ -1138,8 +1138,8 @@
 @ cdecl -arch=win64 ?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z(ptr) msvcp120.?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z
 @ cdecl -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPBD@Z(str) msvcp120.?_Current_set@sys@tr2@std@@YA_NPBD@Z
 @ cdecl -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEBD@Z(str) msvcp120.?_Current_set@sys@tr2@std@@YA_NPEBD@Z
-@ stub -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPB_W@Z
-@ stub -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEB_W@Z
+@ cdecl -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPB_W@Z(wstr) msvcp120.?_Current_set@sys@tr2@std@@YA_NPB_W@Z
+@ cdecl -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEB_W@Z(wstr) msvcp120.?_Current_set@sys@tr2@std@@YA_NPEB_W@Z
 @ cdecl -arch=arm ?_Decref@facet@locale@std@@UAAPAV_Facet_base@3@XZ(ptr) msvcp120.?_Decref@facet@locale@std@@UAAPAV_Facet_base@3@XZ
 @ thiscall -arch=i386 ?_Decref@facet@locale@std@@UAEPAV_Facet_base@3@XZ(ptr) msvcp120.?_Decref@facet@locale@std@@UAEPAV_Facet_base@3@XZ
 @ cdecl -arch=win64 ?_Decref@facet@locale@std@@UEAAPEAV_Facet_base@3@XZ(ptr) msvcp120.?_Decref@facet@locale@std@@UEAAPEAV_Facet_base@3@XZ

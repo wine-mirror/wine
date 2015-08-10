@@ -79,6 +79,7 @@ static int (__cdecl *p_tr2_sys__Equivalent_wchar)(WCHAR const*, WCHAR const*);
 static char* (__cdecl *p_tr2_sys__Current_get)(char *);
 static WCHAR* (__cdecl *p_tr2_sys__Current_get_wchar)(WCHAR *);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
+static MSVCP_bool (__cdecl *p_tr2_sys__Current_set_wchar)(WCHAR const*);
 static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
 static int (__cdecl *p_tr2_sys__Copy_file)(char const*, char const*, MSVCP_bool);
@@ -128,6 +129,8 @@ static BOOL init(void)
                 "?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z");
         SET(p_tr2_sys__Current_set,
                 "?_Current_set@sys@tr2@std@@YA_NPEBD@Z");
+        SET(p_tr2_sys__Current_set_wchar,
+                "?_Current_set@sys@tr2@std@@YA_NPEB_W@Z");
         SET(p_tr2_sys__Make_dir,
                 "?_Make_dir@sys@tr2@std@@YAHPEBD@Z");
         SET(p_tr2_sys__Remove_dir,
@@ -157,6 +160,8 @@ static BOOL init(void)
                 "?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z");
         SET(p_tr2_sys__Current_set,
                 "?_Current_set@sys@tr2@std@@YA_NPBD@Z");
+        SET(p_tr2_sys__Current_set_wchar,
+                "?_Current_set@sys@tr2@std@@YA_NPB_W@Z");
         SET(p_tr2_sys__Make_dir,
                 "?_Make_dir@sys@tr2@std@@YAHPBD@Z");
         SET(p_tr2_sys__Remove_dir,
@@ -516,6 +521,7 @@ static void test_tr2_sys__Current_set(void)
 {
     char temp_path[MAX_PATH], current_path[MAX_PATH], origin_path[MAX_PATH];
     char *temp;
+    WCHAR testW[] = {'.','/',0};
     memset(temp_path, 0, MAX_PATH);
     GetTempPathA(MAX_PATH, temp_path);
     memset(origin_path, 0, MAX_PATH);
@@ -530,7 +536,7 @@ static void test_tr2_sys__Current_set(void)
     temp[strlen(temp)] = '\\';
     ok(!strcmp(temp_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", temp_path, current_path);
 
-    ok(p_tr2_sys__Current_set("./"), "p_tr2_sys__Current_set to temp_path failed\n");
+    ok(p_tr2_sys__Current_set_wchar(testW), "p_tr2_sys__Current_set_wchar to temp_path failed\n");
     memset(current_path, 0, MAX_PATH);
     temp = p_tr2_sys__Current_get(current_path);
     ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
