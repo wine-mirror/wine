@@ -2092,19 +2092,17 @@ static BOOL read_reply( request_t *request )
     static const WCHAR crlf[] = {'\r','\n',0};
 
     char buffer[MAX_REPLY_LEN];
-    DWORD buflen, len, offset, received_len, crlf_len = 2; /* strlenW(crlf) */
+    DWORD buflen, len, offset, crlf_len = 2; /* strlenW(crlf) */
     char *status_code, *status_text;
     WCHAR *versionW, *status_textW, *raw_headers;
     WCHAR status_codeW[4]; /* sizeof("nnn") */
 
     if (!netconn_connected( &request->netconn )) return FALSE;
 
-    received_len = 0;
     do
     {
         buflen = MAX_REPLY_LEN;
         if (!read_line( request, buffer, &buflen )) return FALSE;
-        received_len += buflen;
 
         /* first line should look like 'HTTP/1.x nnn OK' where nnn is the status code */
         if (!(status_code = strchr( buffer, ' ' ))) return FALSE;
@@ -2157,7 +2155,6 @@ static BOOL read_reply( request_t *request )
 
         buflen = MAX_REPLY_LEN;
         if (!read_line( request, buffer, &buflen )) return TRUE;
-        received_len += buflen;
         if (!*buffer) break;
 
         while (len - offset < buflen + crlf_len)
