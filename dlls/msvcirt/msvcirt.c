@@ -983,8 +983,19 @@ filebuf* __thiscall filebuf_open(filebuf *this, const char *name, ios_open_mode 
 DEFINE_THISCALL_WRAPPER(filebuf_overflow, 8)
 int __thiscall filebuf_overflow(filebuf *this, int c)
 {
-    FIXME("(%p %d) stub\n", this, c);
-    return EOF;
+    TRACE("(%p %d)\n", this, c);
+    if (call_streambuf_sync(&this->base) == EOF)
+        return EOF;
+    if (this->base.unbuffered)
+        return (c == EOF) ? 1 : _write(this->fd, &c, 1);
+    if (streambuf_allocate(&this->base) == EOF)
+        return EOF;
+
+    this->base.pbase = this->base.pptr = this->base.base;
+    this->base.epptr = this->base.ebuf;
+    if (c != EOF)
+        *this->base.pptr++ = c;
+    return 1;
 }
 
 /* ?seekoff@filebuf@@UAEJJW4seek_dir@ios@@H@Z */
