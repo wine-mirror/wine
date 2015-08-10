@@ -283,9 +283,18 @@ static inline const char *debugstr_sockaddr( const struct WS_sockaddr *a )
     switch (a->sa_family)
     {
     case WS_AF_INET:
+    {
+        char buf[16];
+        const char *p;
+        struct WS_sockaddr_in *sin = (struct WS_sockaddr_in *)a;
+
+        p = WS_inet_ntop( WS_AF_INET, &sin->sin_addr, buf, sizeof(buf) );
+        if (!p)
+            p = "(unknown IPv4 address)";
+
         return wine_dbg_sprintf("{ family AF_INET, address %s, port %d }",
-                                inet_ntoa(((const struct sockaddr_in *)a)->sin_addr),
-                                ntohs(((const struct sockaddr_in *)a)->sin_port));
+                                p, ntohs(sin->sin_port));
+    }
     case WS_AF_INET6:
     {
         char buf[46];
@@ -4004,15 +4013,15 @@ WS_u_short WINAPI WS_ntohs(WS_u_short netshort)
  */
 char* WINAPI WS_inet_ntoa(struct WS_in_addr in)
 {
-    char* s = inet_ntoa(*((struct in_addr*)&in));
-    if( s )
-    {
-        struct per_thread_data *data = get_per_thread_data();
-        strcpy(data->ntoa_buffer, s);
-        return data->ntoa_buffer;
-    }
-    SetLastError(wsaErrno());
-    return NULL;
+    struct per_thread_data *data = get_per_thread_data();
+
+    sprintf( data->ntoa_buffer, "%u.%u.%u.%u",
+            (unsigned int)(ntohl( in.WS_s_addr ) >> 24 & 0xff),
+            (unsigned int)(ntohl( in.WS_s_addr ) >> 16 & 0xff),
+            (unsigned int)(ntohl( in.WS_s_addr ) >> 8 & 0xff),
+            (unsigned int)(ntohl( in.WS_s_addr ) & 0xff) );
+
+    return data->ntoa_buffer;
 }
 
 static const char *debugstr_wsaioctl(DWORD ioctl)
