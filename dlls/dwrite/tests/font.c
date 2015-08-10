@@ -705,7 +705,7 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     weight = IDWriteFont_GetWeight(font);
-    ok(weight == DWRITE_FONT_WEIGHT_NORMAL || broken(weight == DWRITE_FONT_WEIGHT_BOLD) /* win7 w/o SP */,
+    ok(weight == DWRITE_FONT_WEIGHT_NORMAL || weight == DWRITE_FONT_WEIGHT_BOLD,
         "got %d\n", weight);
     IDWriteFont_Release(font);
 

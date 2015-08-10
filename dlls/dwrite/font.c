@@ -42,6 +42,12 @@ static const FLOAT RECOMMENDED_OUTLINE_AA_THRESHOLD = 100.0f;
 static const FLOAT RECOMMENDED_OUTLINE_A_THRESHOLD = 350.0f;
 static const FLOAT RECOMMENDED_NATURAL_PPEM = 20.0f;
 
+struct dwrite_font_propvec {
+    FLOAT stretch;
+    FLOAT style;
+    FLOAT weight;
+};
+
 struct dwrite_font_data {
     LONG ref;
 
@@ -49,6 +55,8 @@ struct dwrite_font_data {
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
     DWRITE_PANOSE panose;
+    struct dwrite_font_propvec propvec;
+
     DWRITE_FONT_METRICS1 metrics;
     IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
 
@@ -255,6 +263,23 @@ static void* get_fontface_table(struct dwrite_fontface *fontface, UINT32 tag, st
     }
 
     return table->data;
+}
+
+static void init_font_prop_vec(const struct dwrite_font_props *props, struct dwrite_font_propvec *vec)
+{
+    vec->stretch = ((INT32)props->stretch - DWRITE_FONT_STRETCH_NORMAL) * 11.0f;
+    vec->style = props->style * 7.0f;
+    vec->weight = ((INT32)props->weight - DWRITE_FONT_WEIGHT_NORMAL) / 100.0f * 5.0f;
+}
+
+static FLOAT get_font_prop_vec_distance(const struct dwrite_font_propvec *left, const struct dwrite_font_propvec *right)
+{
+    return powf(left->stretch - right->stretch, 2) + powf(left->style - right->style, 2) + powf(left->weight - right->weight, 2);
+}
+
+static FLOAT get_font_prop_vec_dotproduct(const struct dwrite_font_propvec *left, const struct dwrite_font_propvec *right)
+{
+    return left->stretch * right->stretch + left->style * right->style + left->weight * right->weight;
 }
 
 static inline void* get_fontface_cmap(struct dwrite_fontface *fontface)
@@ -1552,14 +1577,44 @@ static HRESULT WINAPI dwritefontfamily_GetFamilyNames(IDWriteFontFamily *iface, 
     return clone_localizedstring(This->data->familyname, names);
 }
 
-static inline BOOL is_matching_font_style(DWRITE_FONT_STYLE style, DWRITE_FONT_STYLE font_style)
+static BOOL is_better_font_match(const struct dwrite_font_propvec *next, const struct dwrite_font_propvec *cur,
+    const struct dwrite_font_propvec *req)
 {
-    if (style == font_style)
+    FLOAT cur_to_req = get_font_prop_vec_distance(cur, req);
+    FLOAT next_to_req = get_font_prop_vec_distance(next, req);
+    FLOAT cur_req_prod, next_req_prod;
+
+    if (next_to_req < cur_to_req)
         return TRUE;
 
-    if (((style == DWRITE_FONT_STYLE_ITALIC) || (style == DWRITE_FONT_STYLE_OBLIQUE)) && font_style == DWRITE_FONT_STYLE_NORMAL)
+    if (next_to_req > cur_to_req)
+        return FALSE;
+
+    cur_req_prod = get_font_prop_vec_dotproduct(cur, req);
+    next_req_prod = get_font_prop_vec_dotproduct(next, req);
+
+    if (next_req_prod > cur_req_prod)
         return TRUE;
 
+    if (next_req_prod < cur_req_prod)
+        return FALSE;
+
+    if (next->stretch > cur->stretch)
+        return TRUE;
+    if (next->stretch < cur->stretch)
+        return FALSE;
+
+    if (next->style > cur->style)
+        return TRUE;
+    if (next->style < cur->style)
+        return FALSE;
+
+    if (next->weight > cur->weight)
+        return TRUE;
+    if (next->weight < cur->weight)
+        return FALSE;
+
+    /* full match, no reason to prefer new variant */
     return FALSE;
 }
 
@@ -1567,35 +1622,34 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
     DWRITE_FONT_STRETCH stretch, DWRITE_FONT_STYLE style, IDWriteFont **font)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily(iface);
-    UINT32 min_weight_diff = ~0u;
-    int found = -1, i;
+    struct dwrite_font_props reqprops = { style, stretch, weight };
+    DWRITE_FONT_SIMULATIONS simulations;
+    struct dwrite_font_propvec req;
+    struct dwrite_font_data *match;
+    UINT32 i;
 
     TRACE("(%p)->(%d %d %d %p)\n", This, weight, stretch, style, font);
 
-    for (i = 0; i < This->data->font_count; i++) {
-        if (is_matching_font_style(style, This->data->fonts[i]->style) && stretch == This->data->fonts[i]->stretch) {
-            DWRITE_FONT_WEIGHT font_weight = This->data->fonts[i]->weight;
-            UINT32 weight_diff = abs(font_weight - weight);
-            if (weight_diff < min_weight_diff) {
-                min_weight_diff = weight_diff;
-                found = i;
-            }
-        }
-    }
-
-    if (found != -1) {
-        DWRITE_FONT_SIMULATIONS simulations = DWRITE_FONT_SIMULATIONS_NONE;
-
-        if (((style == DWRITE_FONT_STYLE_ITALIC) || (style == DWRITE_FONT_STYLE_OBLIQUE)) &&
-            This->data->fonts[found]->style == DWRITE_FONT_STYLE_NORMAL) {
-            simulations = DWRITE_FONT_SIMULATIONS_OBLIQUE;
-        }
-        return create_font(This->data->fonts[found], iface, simulations, font);
-    }
-    else {
+    if (This->data->font_count == 0) {
         *font = NULL;
         return DWRITE_E_NOFONT;
     }
+
+    init_font_prop_vec(&reqprops, &req);
+    match = This->data->fonts[0];
+
+    for (i = 1; i < This->data->font_count; i++) {
+        if (is_better_font_match(&This->data->fonts[i]->propvec, &match->propvec, &req))
+            match = This->data->fonts[i];
+    }
+
+    simulations = DWRITE_FONT_SIMULATIONS_NONE;
+    if (((style == DWRITE_FONT_STYLE_ITALIC) || (style == DWRITE_FONT_STYLE_OBLIQUE)) &&
+        match->style == DWRITE_FONT_STYLE_NORMAL) {
+        simulations = DWRITE_FONT_SIMULATIONS_OBLIQUE;
+    }
+
+    return create_font(match, iface, simulations, font);
 }
 
 static HRESULT WINAPI dwritefontfamily_GetMatchingFonts(IDWriteFontFamily *iface, DWRITE_FONT_WEIGHT weight,
@@ -1941,6 +1995,7 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, U
     data->stretch = props.stretch;
     data->weight = props.weight;
     data->panose = props.panose;
+    init_font_prop_vec(&props, &data->propvec);
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(*stream, os2_context);
