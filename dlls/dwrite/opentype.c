@@ -131,6 +131,12 @@ typedef struct
     SHORT glyphdata_format;
 } TT_HEAD;
 
+enum TT_HEAD_MACSTYLE
+{
+    TT_HEAD_MACSTYLE_BOLD   = 1 << 0,
+    TT_HEAD_MACSTYLE_ITALIC = 1 << 1,
+};
+
 typedef struct
 {
     ULONG Version;
@@ -1028,20 +1034,26 @@ void opentype_get_font_properties(IDWriteFontFileStream *stream, DWRITE_FONT_FAC
 
     /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
     if (tt_os2) {
+        USHORT version = GET_BE_WORD(tt_os2->version);
+        USHORT fsSelection = GET_BE_WORD(tt_os2->fsSelection);
+
         if (GET_BE_WORD(tt_os2->usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
             props->stretch = GET_BE_WORD(tt_os2->usWidthClass);
 
         props->weight = GET_BE_WORD(tt_os2->usWeightClass);
+        if (version >= 4 && (fsSelection & OS2_FSSELECTION_OBLIQUE))
+            props->style = DWRITE_FONT_STYLE_OBLIQUE;
+        else if (fsSelection & OS2_FSSELECTION_ITALIC)
+            props->style = DWRITE_FONT_STYLE_ITALIC;
         memcpy(&props->panose, &tt_os2->panose, sizeof(props->panose));
-
-        TRACE("stretch=%d, weight=%d\n", props->stretch, props->weight);
     }
-
-    if (tt_head) {
+    else if (tt_head) {
         USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
-        if (macStyle & 0x0002)
+        if (macStyle & TT_HEAD_MACSTYLE_ITALIC)
             props->style = DWRITE_FONT_STYLE_ITALIC;
     }
+
+    TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
 
     if (tt_os2)
         IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
