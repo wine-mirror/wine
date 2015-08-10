@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <fcntl.h>
 #include <io.h>
 #include <stdio.h>
 #include <windef.h>
@@ -65,6 +66,8 @@ const int filebuf_sh_none = 0x800;
 const int filebuf_sh_read = 0xa00;
 const int filebuf_sh_write = 0xc00;
 const int filebuf_openprot = 420;
+const int filebuf_binary = _O_BINARY;
+const int filebuf_text = _O_TEXT;
 
 /* class streambuf */
 typedef struct {
@@ -154,6 +157,7 @@ static void (*__thiscall p_filebuf_dtor)(filebuf*);
 static filebuf* (*__thiscall p_filebuf_attach)(filebuf*, filedesc);
 static filebuf* (*__thiscall p_filebuf_open)(filebuf*, const char*, ios_open_mode, int);
 static filebuf* (*__thiscall p_filebuf_close)(filebuf*);
+static int (*__thiscall p_filebuf_setmode)(filebuf*, int);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -292,6 +296,7 @@ static BOOL init(void)
         SET(p_filebuf_attach, "?attach@filebuf@@QEAAPEAV1@H@Z");
         SET(p_filebuf_open, "?open@filebuf@@QEAAPEAV1@PEBDHH@Z");
         SET(p_filebuf_close, "?close@filebuf@@QEAAPEAV1@XZ");
+        SET(p_filebuf_setmode, "?setmode@filebuf@@QEAAHH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -350,6 +355,7 @@ static BOOL init(void)
         SET(p_filebuf_attach, "?attach@filebuf@@QAEPAV1@H@Z");
         SET(p_filebuf_open, "?open@filebuf@@QAEPAV1@PBDHH@Z");
         SET(p_filebuf_close, "?close@filebuf@@QAEPAV1@XZ");
+        SET(p_filebuf_setmode, "?setmode@filebuf@@QAEHH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -957,6 +963,7 @@ static void test_filebuf(void)
     const char filename2[] = "test2";
     const char filename3[] = "test3";
     char read_buffer[16];
+    int ret;
 
     memset(&fb1, 0xab, sizeof(filebuf));
     memset(&fb2, 0xab, sizeof(filebuf));
@@ -1105,6 +1112,24 @@ static void test_filebuf(void)
     pret = (filebuf*) call_func4(p_filebuf_open, &fb2, filename3, OPENMODE_in, filebuf_openprot);
     ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
     fb3.base.do_lock = -1;
+
+    /* setmode */
+    fb1.base.do_lock = 0;
+    fb1.base.pbase = fb1.base.pptr = fb1.base.base;
+    fb1.base.epptr = fb1.base.ebuf;
+    ret = (int) call_func2(p_filebuf_setmode, &fb1, filebuf_binary);
+    ok(ret == filebuf_text, "wrong return, expected %d got %d\n", filebuf_text, ret);
+todo_wine
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ret = (int) call_func2(p_filebuf_setmode, &fb1, filebuf_binary);
+    ok(ret == filebuf_binary, "wrong return, expected %d got %d\n", filebuf_binary, ret);
+    fb1.base.do_lock = -1;
+    ret = (int) call_func2(p_filebuf_setmode, &fb1, 0x9000);
+    ok(ret == -1, "wrong return, expected -1 got %d\n", ret);
+    fb2.base.do_lock = 0;
+    ret = (int) call_func2(p_filebuf_setmode, &fb2, filebuf_text);
+    ok(ret == -1, "wrong return, expected -1 got %d\n", ret);
+    fb2.base.do_lock = -1;
 
     /* close */
     pret = (filebuf*) call_func1(p_filebuf_close, &fb2);

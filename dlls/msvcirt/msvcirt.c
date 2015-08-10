@@ -45,9 +45,9 @@ const int filebuf_sh_write = 0xc00;
 /* ?openprot@filebuf@@2HB */
 const int filebuf_openprot = 420;
 /* ?binary@filebuf@@2HB */
-const int filebuf_binary = 0x8000;
+const int filebuf_binary = _O_BINARY;
 /* ?text@filebuf@@2HB */
-const int filebuf_text = 0x4000;
+const int filebuf_text = _O_TEXT;
 
 /* ?adjustfield@ios@@2JB */
 const LONG ios_adjustfield = FLAGS_left | FLAGS_right | FLAGS_internal;
@@ -1010,8 +1010,16 @@ streambuf* __thiscall filebuf_setbuf(filebuf *this, char *buffer, int length)
 DEFINE_THISCALL_WRAPPER(filebuf_setmode, 8)
 int __thiscall filebuf_setmode(filebuf *this, int mode)
 {
-    FIXME("(%p %d) stub\n", this, mode);
-    return 0;
+    int ret;
+
+    TRACE("(%p %d)\n", this, mode);
+    if (mode != filebuf_text && mode != filebuf_binary)
+        return -1;
+
+    streambuf_lock(&this->base);
+    ret = (call_streambuf_sync(&this->base) == EOF) ? -1 : _setmode(this->fd, mode);
+    streambuf_unlock(&this->base);
+    return ret;
 }
 
 /* ?sync@filebuf@@UAEHXZ */
