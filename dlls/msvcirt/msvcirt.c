@@ -1035,7 +1035,40 @@ int __thiscall filebuf_setmode(filebuf *this, int mode)
 DEFINE_THISCALL_WRAPPER(filebuf_sync, 4)
 int __thiscall filebuf_sync(filebuf *this)
 {
-    FIXME("(%p) stub\n", this);
+    int count, mode;
+    char *ptr;
+    LONG offset;
+
+    TRACE("(%p)\n", this);
+    if (this->fd == -1)
+        return EOF;
+    if (this->base.unbuffered)
+        return 0;
+
+    /* flush output buffer */
+    if (this->base.pptr != NULL) {
+        count = this->base.pptr - this->base.pbase;
+        if (count > 0 && _write(this->fd, this->base.pbase, count) != count)
+            return EOF;
+        this->base.pbase = this->base.pptr = this->base.epptr = NULL;
+    }
+    /* flush input buffer */
+    if (this->base.egptr != NULL) {
+        offset = this->base.egptr - this->base.gptr;
+        if (offset > 0) {
+            mode = _setmode(this->fd, _O_TEXT);
+            _setmode(this->fd, mode);
+            if (mode & _O_TEXT) {
+                /* in text mode, '\n' in the buffer means '\r\n' in the file */
+                for (ptr = this->base.gptr; ptr < this->base.egptr; ptr++)
+                    if (*ptr == '\n')
+                        offset++;
+            }
+            if (_lseek(this->fd, -offset, SEEK_CUR) < 0)
+                return EOF;
+        }
+        this->base.eback = this->base.gptr = this->base.egptr = NULL;
+    }
     return 0;
 }
 
