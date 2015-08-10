@@ -1016,9 +1016,11 @@ static void test_filebuf(void)
     pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1,
         OPENMODE_ate|OPENMODE_nocreate|OPENMODE_noreplace|OPENMODE_binary, filebuf_openprot);
     ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
     fb1.base.do_lock = 0;
     pret = (filebuf*) call_func4(p_filebuf_open, &fb1, filename1, OPENMODE_out, filebuf_openprot);
     ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(fb1.base.allocated == 1, "wrong allocate value, expected 1 got %d\n", fb1.base.allocated);
     ok(_write(fb1.fd, "testing", 7) == 7, "_write failed\n");
     pret = (filebuf*) call_func1(p_filebuf_close, &fb1);
     ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);

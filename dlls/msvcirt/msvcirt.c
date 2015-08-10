@@ -973,6 +973,7 @@ filebuf* __thiscall filebuf_open(filebuf *this, const char *name, ios_open_mode 
         _close(fd);
     } else
         this->fd = fd;
+    streambuf_allocate(&this->base);
     streambuf_unlock(&this->base);
     return (this->fd == -1) ? NULL : this;
 }
