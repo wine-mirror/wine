@@ -72,6 +72,36 @@ namespace Windows {
             OtherTypeArray   = 1044
         };
 
+        [version(0x06020000)]
+        struct Point {
+            FLOAT X;
+            FLOAT Y;
+        };
+
+        [version(0x06020000)]
+        struct Size {
+            FLOAT Width;
+            FLOAT Height;
+        };
+
+        [version(0x06020000)]
+        struct Rect {
+            FLOAT X;
+            FLOAT Y;
+            FLOAT Width;
+            FLOAT Height;
+        };
+
+        [version(0x06020000)]
+        struct DateTime {
+            INT64 UniversalTime;
+        };
+
+        [version(0x06020000)]
+        struct TimeSpan {
+            INT64 Duration;
+        };
+
         [
             version(0x06030000),
             uuid(96369f54-8eb6-48f0-abce-c1b211e627c3)
