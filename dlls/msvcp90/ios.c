@@ -14825,6 +14825,14 @@ int __cdecl tr2_sys__Make_dir_wchar(WCHAR const* path)
     return 1;
 }
 
+/* ?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z */
+/* ?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z */
+MSVCP_bool __cdecl tr2_sys__Remove_dir_wchar(WCHAR const* path)
+{
+    TRACE("(%s)\n", debugstr_w(path));
+    return RemoveDirectoryW(path) != 0;
+}
+
 /* ??1_Winit@std@@QAE@XZ */
 /* ??1_Winit@std@@QAE@XZ */
 DEFINE_THISCALL_WRAPPER(_Winit_dtor, 4)

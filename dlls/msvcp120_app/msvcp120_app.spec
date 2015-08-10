@@ -1681,8 +1681,8 @@
 @ stub -arch=win64 ?_Release@_Pad@std@@QEAAXXZ
 @ cdecl -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPBD@Z(str) msvcp120.?_Remove_dir@sys@tr2@std@@YA_NPBD@Z
 @ cdecl -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z(str) msvcp120.?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z
-@ stub -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z
-@ stub -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z
+@ cdecl -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z(wstr) msvcp120.?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z
+@ cdecl -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z(wstr) msvcp120.?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z
 @ cdecl -arch=win32 ?_Rename@sys@tr2@std@@YAHPBD0@Z(str str) msvcp120.?_Rename@sys@tr2@std@@YAHPBD0@Z
 @ cdecl -arch=win64 ?_Rename@sys@tr2@std@@YAHPEBD0@Z(str str) msvcp120.?_Rename@sys@tr2@std@@YAHPEBD0@Z
 @ stub -arch=win32 ?_Rename@sys@tr2@std@@YAHPB_W0@Z
