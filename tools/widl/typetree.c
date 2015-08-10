@@ -297,11 +297,13 @@ type_t *type_new_enum(const char *name, struct namespace *namespace, int defined
     return t;
 }
 
-type_t *type_new_struct(char *name, int defined, var_list_t *fields)
+type_t *type_new_struct(char *name, struct namespace *namespace, int defined, var_list_t *fields)
 {
-    type_t *tag_type = name ? find_type(name, NULL, tsSTRUCT) : NULL;
+    type_t *tag_type = name ? find_type(name, namespace, tsSTRUCT) : NULL;
     type_t *t = make_type(TYPE_STRUCT);
     t->name = name;
+    t->namespace = namespace;
+
     if (tag_type && tag_type->details.structure)
         t->details.structure = tag_type->details.structure;
     else if (defined)
@@ -313,7 +315,7 @@ type_t *type_new_struct(char *name, int defined, var_list_t *fields)
     if (name)
     {
         if (defined)
-            reg_type(t, name, NULL, tsSTRUCT);
+            reg_type(t, name, namespace, tsSTRUCT);
         else
             add_incomplete(t);
     }

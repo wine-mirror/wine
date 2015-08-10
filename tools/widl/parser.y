@@ -380,7 +380,7 @@ typedecl:
 	  enumdef
 	| tENUM aIDENTIFIER                     { $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
 	| structdef
-	| tSTRUCT aIDENTIFIER                   { $$ = type_new_struct($2, FALSE, NULL); }
+	| tSTRUCT aIDENTIFIER                   { $$ = type_new_struct($2, current_namespace, FALSE, NULL); }
 	| uniondef
 	| tUNION aIDENTIFIER                    { $$ = type_new_nonencapsulated_union($2, FALSE, NULL); }
 	| attributes enumdef                    { $$ = $2; $$->attrs = check_enum_attrs($1); }
@@ -1091,7 +1091,7 @@ pointer_type:
 	| tPTR					{ $$ = RPC_FC_FP; }
 	;
 
-structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, TRUE, $4); }
+structdef: tSTRUCT t_ident '{' fields '}'	{ $$ = type_new_struct($2, current_namespace, TRUE, $4); }
 	;
 
 type:	  tVOID					{ $$ = type_new_void(); }
@@ -1100,7 +1100,7 @@ type:	  tVOID					{ $$ = type_new_void(); }
 	| enumdef				{ $$ = $1; }
 	| tENUM aIDENTIFIER			{ $$ = type_new_enum($2, current_namespace, FALSE, NULL); }
 	| structdef				{ $$ = $1; }
-	| tSTRUCT aIDENTIFIER			{ $$ = type_new_struct($2, FALSE, NULL); }
+	| tSTRUCT aIDENTIFIER			{ $$ = type_new_struct($2, current_namespace, FALSE, NULL); }
 	| uniondef				{ $$ = $1; }
 	| tUNION aIDENTIFIER			{ $$ = type_new_nonencapsulated_union($2, FALSE, NULL); }
 	| tSAFEARRAY '(' type ')'		{ $$ = make_safearray($3); }

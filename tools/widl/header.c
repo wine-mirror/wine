@@ -314,7 +314,7 @@ void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
       case TYPE_STRUCT:
       case TYPE_ENCAPSULATED_UNION:
         if (!declonly && t->defined && !t->written) {
-          if (t->name) fprintf(h, "struct %s {\n", t->name);
+          if (name) fprintf(h, "struct %s {\n", name);
           else fprintf(h, "struct {\n");
           t->written = TRUE;
           indentation++;
@@ -325,7 +325,7 @@ void write_type_left(FILE *h, type_t *t, enum name_type name_type, int declonly)
           indent(h, -1);
           fprintf(h, "}");
         }
-        else fprintf(h, "struct %s", t->name ? t->name : "");
+        else fprintf(h, "struct %s", name ? name : "");
         break;
       case TYPE_UNION:
         if (!declonly && t->defined && !t->written) {
