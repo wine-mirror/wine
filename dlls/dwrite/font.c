@@ -211,7 +211,7 @@ static inline struct dwrite_colorglyphenum *impl_from_IDWriteColorGlyphRunEnumer
 
 static inline const char *debugstr_tag(UINT32 tag)
 {
-    return wine_dbg_sprintf("%c%c%c%c", tag >> 24, (tag >> 16) & 0xff, (tag >> 8) & 0xff, tag & 0xff);
+    return wine_dbg_sprintf("%c%c%c%c", tag & 0xff, (tag >> 8) & 0xff, (tag >> 16) & 0xff, tag >> 24);
 }
 
 static HRESULT get_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
