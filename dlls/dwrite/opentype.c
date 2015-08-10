@@ -1041,11 +1041,19 @@ void opentype_get_font_properties(IDWriteFontFileStream *stream, DWRITE_FONT_FAC
     if (tt_os2) {
         USHORT version = GET_BE_WORD(tt_os2->version);
         USHORT fsSelection = GET_BE_WORD(tt_os2->fsSelection);
+        USHORT usWeightClass = GET_BE_WORD(tt_os2->usWeightClass);
 
         if (GET_BE_WORD(tt_os2->usWidthClass) <= DWRITE_FONT_STRETCH_ULTRA_EXPANDED)
             props->stretch = GET_BE_WORD(tt_os2->usWidthClass);
 
-        props->weight = GET_BE_WORD(tt_os2->usWeightClass);
+        if (usWeightClass >= 1 && usWeightClass <= 9)
+            usWeightClass *= 100;
+
+        if (usWeightClass > DWRITE_FONT_WEIGHT_ULTRA_BLACK)
+            props->weight = DWRITE_FONT_WEIGHT_ULTRA_BLACK;
+        else
+            props->weight = usWeightClass;
+
         if (version >= 4 && (fsSelection & OS2_FSSELECTION_OBLIQUE))
             props->style = DWRITE_FONT_STYLE_OBLIQUE;
         else if (fsSelection & OS2_FSSELECTION_ITALIC)
@@ -1054,13 +1062,17 @@ void opentype_get_font_properties(IDWriteFontFileStream *stream, DWRITE_FONT_FAC
     }
     else if (tt_head) {
         USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
-        if (macStyle & TT_HEAD_MACSTYLE_ITALIC)
-            props->style = DWRITE_FONT_STYLE_ITALIC;
 
         if (macStyle & TT_HEAD_MACSTYLE_CONDENSED)
             props->stretch = DWRITE_FONT_STRETCH_CONDENSED;
         else if (macStyle & TT_HEAD_MACSTYLE_EXTENDED)
             props->stretch = DWRITE_FONT_STRETCH_EXPANDED;
+
+        if (macStyle & TT_HEAD_MACSTYLE_BOLD)
+            props->weight = DWRITE_FONT_WEIGHT_BOLD;
+
+        if (macStyle & TT_HEAD_MACSTYLE_ITALIC)
+            props->style = DWRITE_FONT_STYLE_ITALIC;
     }
 
     TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
