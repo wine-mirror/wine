@@ -1111,29 +1111,29 @@ static void test_InternetSetOption(void)
     SetLastError(0xdeadbeef);
     ulArg = 11;
     ret = InternetSetOptionA(NULL, INTERNET_OPTION_ERROR_MASK, (void*)&ulArg, sizeof(ULONG));
-    ok(ret == FALSE, "InternetQueryOption should've failed\n");
+    ok(ret == FALSE, "InternetSetOption should've failed\n");
     ok(GetLastError() == ERROR_INTERNET_INCORRECT_HANDLE_TYPE, "GetLastError() = %x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ulArg = 11;
     ret = InternetSetOptionA(req, INTERNET_OPTION_ERROR_MASK, (void*)&ulArg, 20);
-    ok(ret == FALSE, "InternetQueryOption should've failed\n");
+    ok(ret == FALSE, "InternetSetOption should've failed\n");
     ok(GetLastError() == ERROR_INTERNET_BAD_OPTION_LENGTH, "GetLastError() = %d\n", GetLastError());
 
     ulArg = 11;
     ret = InternetSetOptionA(req, INTERNET_OPTION_ERROR_MASK, (void*)&ulArg, sizeof(ULONG));
-    ok(ret == TRUE, "InternetQueryOption should've succeeded\n");
+    ok(ret == TRUE, "InternetSetOption should've succeeded\n");
 
     SetLastError(0xdeadbeef);
     ulArg = 4;
     ret = InternetSetOptionA(req, INTERNET_OPTION_ERROR_MASK, (void*)&ulArg, sizeof(ULONG));
-    ok(ret == FALSE, "InternetQueryOption should've failed\n");
+    ok(ret == FALSE, "InternetSetOption should've failed\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %x\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ulArg = 16;
     ret = InternetSetOptionA(req, INTERNET_OPTION_ERROR_MASK, (void*)&ulArg, sizeof(ULONG));
-    ok(ret == FALSE, "InternetQueryOption should've failed\n");
+    ok(ret == FALSE, "InternetSetOption should've failed\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "GetLastError() = %x\n", GetLastError());
 
     ret = InternetCloseHandle(req);
