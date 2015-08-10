@@ -158,6 +158,7 @@ static filebuf* (*__thiscall p_filebuf_attach)(filebuf*, filedesc);
 static filebuf* (*__thiscall p_filebuf_open)(filebuf*, const char*, ios_open_mode, int);
 static filebuf* (*__thiscall p_filebuf_close)(filebuf*);
 static int (*__thiscall p_filebuf_setmode)(filebuf*, int);
+static streambuf* (*__thiscall p_filebuf_setbuf)(filebuf*, char*, int);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -297,6 +298,7 @@ static BOOL init(void)
         SET(p_filebuf_open, "?open@filebuf@@QEAAPEAV1@PEBDHH@Z");
         SET(p_filebuf_close, "?close@filebuf@@QEAAPEAV1@XZ");
         SET(p_filebuf_setmode, "?setmode@filebuf@@QEAAHH@Z");
+        SET(p_filebuf_setbuf, "?setbuf@filebuf@@UEAAPEAVstreambuf@@PEADH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -356,6 +358,7 @@ static BOOL init(void)
         SET(p_filebuf_open, "?open@filebuf@@QAEPAV1@PBDHH@Z");
         SET(p_filebuf_close, "?close@filebuf@@QAEPAV1@XZ");
         SET(p_filebuf_setmode, "?setmode@filebuf@@QAEHH@Z");
+        SET(p_filebuf_setbuf, "?setbuf@filebuf@@UAEPAVstreambuf@@PADH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -996,6 +999,33 @@ static void test_filebuf(void)
     thread = CreateThread(NULL, 0, lock_filebuf, (void*)&lock_arg, 0, NULL);
     ok(thread != NULL, "CreateThread failed\n");
     WaitForSingleObject(lock_arg.lock, INFINITE);
+
+    /* setbuf */
+    fb1.base.do_lock = 0;
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer, 16);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.base == read_buffer, "wrong buffer, expected %p got %p\n", read_buffer, fb1.base.base);
+    ok(fb1.base.pbase == NULL, "wrong put area, expected %p got %p\n", NULL, fb1.base.pbase);
+    fb1.base.pbase = fb1.base.pptr = fb1.base.base;
+    fb1.base.epptr = fb1.base.ebuf;
+    fb1.base.do_lock = -1;
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer, 16);
+    ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.base == read_buffer, "wrong buffer, expected %p got %p\n", read_buffer, fb1.base.base);
+    ok(fb1.base.pbase == read_buffer, "wrong put area, expected %p got %p\n", read_buffer, fb1.base.pbase);
+    fb1.base.base = fb1.base.ebuf = NULL;
+    fb1.base.do_lock = 0;
+    pret = (filebuf*) call_func3(p_filebuf_setbuf, &fb1, read_buffer, 0);
+    ok(pret == &fb1, "wrong return, expected %p got %p\n", &fb1, pret);
+    ok(fb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", fb1.base.allocated);
+    ok(fb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", fb1.base.unbuffered);
+    ok(fb1.base.base == NULL, "wrong buffer, expected %p got %p\n", NULL, fb1.base.base);
+    ok(fb1.base.pbase == read_buffer, "wrong put area, expected %p got %p\n", read_buffer, fb1.base.pbase);
+    fb1.base.pbase = fb1.base.pptr = fb1.base.epptr = NULL;
+    fb1.base.unbuffered = 0;
+    fb1.base.do_lock = -1;
 
     /* attach */
     pret = (filebuf*) call_func2(p_filebuf_attach, &fb1, 2);

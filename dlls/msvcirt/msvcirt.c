@@ -1001,8 +1001,16 @@ streampos __thiscall filebuf_seekoff(filebuf *this, streamoff offset, ios_seek_d
 DEFINE_THISCALL_WRAPPER(filebuf_setbuf, 12)
 streambuf* __thiscall filebuf_setbuf(filebuf *this, char *buffer, int length)
 {
-    FIXME("(%p %p %d) stub\n", this, buffer, length);
-    return NULL;
+    streambuf *ret;
+
+    TRACE("(%p %p %d)\n", this, buffer, length);
+    if (this->base.base != NULL)
+        return NULL;
+
+    streambuf_lock(&this->base);
+    ret = streambuf_setbuf(&this->base, buffer, length);
+    streambuf_unlock(&this->base);
+    return ret;
 }
 
 /* ?setmode@filebuf@@QAEHH@Z */
