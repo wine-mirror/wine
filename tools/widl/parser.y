@@ -2064,7 +2064,7 @@ struct allowed_attr
     unsigned int on_arg : 1;
     unsigned int on_type : 1;
     unsigned int on_enum : 1;
-    unsigned int on_struct : 1;
+    unsigned int on_struct : 2;
     unsigned int on_union : 1;
     unsigned int on_field : 1;
     unsigned int on_library : 1;
@@ -2175,7 +2175,7 @@ struct allowed_attr allowed_attr[] =
     /* ATTR_UUID */                { 1, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, "uuid" },
     /* ATTR_V1ENUM */              { 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, "v1_enum" },
     /* ATTR_VARARG */              { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "vararg" },
-    /* ATTR_VERSION */             { 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 0, 0, 1, "version" },
+    /* ATTR_VERSION */             { 1, 0, 1, 0, 0, 1, 1, 2, 0, 0, 1, 0, 0, 1, "version" },
     /* ATTR_VIPROGID */            { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, "vi_progid" },
     /* ATTR_WIREMARSHAL */         { 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, "wire_marshal" },
 };
@@ -2265,11 +2265,12 @@ static attr_list_t *check_enum_attrs(attr_list_t *attrs)
 
 static attr_list_t *check_struct_attrs(attr_list_t *attrs)
 {
+  int mask = winrt_mode ? 3 : 1;
   const attr_t *attr;
   if (!attrs) return attrs;
   LIST_FOR_EACH_ENTRY(attr, attrs, const attr_t, entry)
   {
-    if (!allowed_attr[attr->type].on_struct)
+    if (!(allowed_attr[attr->type].on_struct & mask))
       error_loc("inapplicable attribute %s for struct\n",
                 allowed_attr[attr->type].display_name);
   }
