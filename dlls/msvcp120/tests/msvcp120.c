@@ -81,6 +81,7 @@ static WCHAR* (__cdecl *p_tr2_sys__Current_get_wchar)(WCHAR *);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set_wchar)(WCHAR const*);
 static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
+static int (__cdecl *p_tr2_sys__Make_dir_wchar)(WCHAR const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
 static int (__cdecl *p_tr2_sys__Copy_file)(char const*, char const*, MSVCP_bool);
 static int (__cdecl *p_tr2_sys__Rename)(char const*, char const*);
@@ -133,6 +134,8 @@ static BOOL init(void)
                 "?_Current_set@sys@tr2@std@@YA_NPEB_W@Z");
         SET(p_tr2_sys__Make_dir,
                 "?_Make_dir@sys@tr2@std@@YAHPEBD@Z");
+        SET(p_tr2_sys__Make_dir_wchar,
+                "?_Make_dir@sys@tr2@std@@YAHPEB_W@Z");
         SET(p_tr2_sys__Remove_dir,
                 "?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z");
         SET(p_tr2_sys__Copy_file,
@@ -164,6 +167,8 @@ static BOOL init(void)
                 "?_Current_set@sys@tr2@std@@YA_NPB_W@Z");
         SET(p_tr2_sys__Make_dir,
                 "?_Make_dir@sys@tr2@std@@YAHPBD@Z");
+        SET(p_tr2_sys__Make_dir_wchar,
+                "?_Make_dir@sys@tr2@std@@YAHPB_W@Z");
         SET(p_tr2_sys__Remove_dir,
                 "?_Remove_dir@sys@tr2@std@@YA_NPBD@Z");
         SET(p_tr2_sys__Copy_file,
@@ -561,6 +566,7 @@ static void test_tr2_sys__Current_set(void)
 static void test_tr2_sys__Make_dir(void)
 {
     int ret, i;
+    WCHAR testW[] = {'w','d',0};
     struct {
         char const *path;
         int val;
@@ -577,8 +583,11 @@ static void test_tr2_sys__Make_dir(void)
         ok(ret == tests[i].val, "tr2_sys__Make_dir(): test %d expect: %d, got %d\n", i+1, tests[i].val, ret);
         ok(errno == 0xdeadbeef, "tr2_sys__Make_dir(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
     }
+    ret = p_tr2_sys__Make_dir_wchar(testW);
+    ok(ret == 1, "tr2_sys__Make_dir(): expect: 1, got %d\n", ret);
 
-    ok(RemoveDirectoryA("tr2_test_dir"), "Expected tr2_test_dir to exist\n");
+    ok(RemoveDirectoryA("tr2_test_dir"), "expect tr2_test_dir to exist\n");
+    ok(RemoveDirectoryW(testW), "expect wd to exist\n");
 }
 
 static void test_tr2_sys__Remove_dir(void)

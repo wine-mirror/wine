@@ -14809,6 +14809,22 @@ MSVCP_bool __cdecl tr2_sys__Current_set_wchar(WCHAR const* path)
     return SetCurrentDirectoryW(path) != 0;
 }
 
+/* ?_Make_dir@sys@tr2@std@@YAHPB_W@Z */
+/* ?_Make_dir@sys@tr2@std@@YAHPEB_W@Z */
+int __cdecl tr2_sys__Make_dir_wchar(WCHAR const* path)
+{
+    TRACE("(%s)\n", debugstr_w(path));
+
+    if(!CreateDirectoryW(path, NULL)) {
+        if(GetLastError() == ERROR_ALREADY_EXISTS)
+            return 0;
+        else
+            return -1;
+    }
+
+    return 1;
+}
+
 /* ??1_Winit@std@@QAE@XZ */
 /* ??1_Winit@std@@QAE@XZ */
 DEFINE_THISCALL_WRAPPER(_Winit_dtor, 4)

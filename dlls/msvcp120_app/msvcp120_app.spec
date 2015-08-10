@@ -1580,8 +1580,8 @@
 @ stub -arch=win64 ?_MP_Rem@std@@YAXQEA_K_K@Z
 @ cdecl -arch=win32 ?_Make_dir@sys@tr2@std@@YAHPBD@Z(str) msvcp120.?_Make_dir@sys@tr2@std@@YAHPBD@Z
 @ cdecl -arch=win64 ?_Make_dir@sys@tr2@std@@YAHPEBD@Z(str) msvcp120.?_Make_dir@sys@tr2@std@@YAHPEBD@Z
-@ stub -arch=win32 ?_Make_dir@sys@tr2@std@@YAHPB_W@Z
-@ stub -arch=win64 ?_Make_dir@sys@tr2@std@@YAHPEB_W@Z
+@ cdecl -arch=win32 ?_Make_dir@sys@tr2@std@@YAHPB_W@Z(wstr) msvcp120.?_Make_dir@sys@tr2@std@@YAHPB_W@Z
+@ cdecl -arch=win64 ?_Make_dir@sys@tr2@std@@YAHPEB_W@Z(wstr) msvcp120.?_Make_dir@sys@tr2@std@@YAHPEB_W@Z
 @ cdecl -arch=win32 ?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) msvcp120.?_Makeloc@_Locimp@locale@std@@CAPAV123@ABV_Locinfo@3@HPAV123@PBV23@@Z
 @ cdecl -arch=win64 ?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z(ptr long ptr ptr) msvcp120.?_Makeloc@_Locimp@locale@std@@CAPEAV123@AEBV_Locinfo@3@HPEAV123@PEBV23@@Z
 @ cdecl -arch=win32 ?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z(ptr long ptr ptr) msvcp120.?_Makeushloc@_Locimp@locale@std@@CAXABV_Locinfo@3@HPAV123@PBV23@@Z
