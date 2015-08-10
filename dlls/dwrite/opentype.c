@@ -133,8 +133,13 @@ typedef struct
 
 enum TT_HEAD_MACSTYLE
 {
-    TT_HEAD_MACSTYLE_BOLD   = 1 << 0,
-    TT_HEAD_MACSTYLE_ITALIC = 1 << 1,
+    TT_HEAD_MACSTYLE_BOLD      = 1 << 0,
+    TT_HEAD_MACSTYLE_ITALIC    = 1 << 1,
+    TT_HEAD_MACSTYLE_UNDERLINE = 1 << 2,
+    TT_HEAD_MACSTYLE_OUTLINE   = 1 << 3,
+    TT_HEAD_MACSTYLE_SHADOW    = 1 << 4,
+    TT_HEAD_MACSTYLE_CONDENSED = 1 << 5,
+    TT_HEAD_MACSTYLE_EXTENDED  = 1 << 6,
 };
 
 typedef struct
@@ -1051,6 +1056,11 @@ void opentype_get_font_properties(IDWriteFontFileStream *stream, DWRITE_FONT_FAC
         USHORT macStyle = GET_BE_WORD(tt_head->macStyle);
         if (macStyle & TT_HEAD_MACSTYLE_ITALIC)
             props->style = DWRITE_FONT_STYLE_ITALIC;
+
+        if (macStyle & TT_HEAD_MACSTYLE_CONDENSED)
+            props->stretch = DWRITE_FONT_STRETCH_CONDENSED;
+        else if (macStyle & TT_HEAD_MACSTYLE_EXTENDED)
+            props->stretch = DWRITE_FONT_STRETCH_EXPANDED;
     }
 
     TRACE("stretch=%d, weight=%d, style %d\n", props->stretch, props->weight, props->style);
