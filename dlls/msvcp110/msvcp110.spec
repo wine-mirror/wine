@@ -1198,8 +1198,8 @@
 @ cdecl -arch=win64 ?_Empty@?$_Yarn@_W@std@@QEBA_NXZ(ptr) _Yarn_wchar__Empty
 @ cdecl -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPBD0@Z(str str) tr2_sys__Equivalent
 @ cdecl -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEBD0@Z(str str) tr2_sys__Equivalent
-@ stub -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPB_W0@Z
-@ stub -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z
+@ cdecl -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPB_W0@Z(wstr wstr) tr2_sys__Equivalent_wchar
+@ cdecl -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z(wstr wstr) tr2_sys__Equivalent_wchar
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) num_put_char__Ffmt
 @ cdecl -arch=win64 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADDH@Z(ptr ptr long long) num_put_char__Ffmt
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) num_put_wchar__Ffmt

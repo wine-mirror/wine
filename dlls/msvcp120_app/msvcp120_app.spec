@@ -1163,8 +1163,8 @@
 @ cdecl -arch=win64 ?_Empty@?$_Yarn@_W@std@@QEBA_NXZ(ptr) msvcp120.?_Empty@?$_Yarn@_W@std@@QEBA_NXZ
 @ cdecl -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPBD0@Z(str str) msvcp120.?_Equivalent@sys@tr2@std@@YAHPBD0@Z
 @ cdecl -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEBD0@Z(str str) msvcp120.?_Equivalent@sys@tr2@std@@YAHPEBD0@Z
-@ stub -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPB_W0@Z
-@ stub -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z
+@ cdecl -arch=win32 ?_Equivalent@sys@tr2@std@@YAHPB_W0@Z(wstr wstr) msvcp120.?_Equivalent@sys@tr2@std@@YAHPB_W0@Z
+@ cdecl -arch=win64 ?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z(wstr wstr) msvcp120.?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) msvcp120.?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABAPADPADDH@Z
 @ cdecl -arch=win64 ?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADDH@Z(ptr ptr long long) msvcp120.?_Ffmt@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBAPEADPEADDH@Z
 @ cdecl -arch=win32 ?_Ffmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAPADPADDH@Z(ptr ptr long long) msvcp120.?_Ffmt@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABAPADPADDH@Z

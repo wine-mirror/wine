@@ -75,6 +75,7 @@ static void (CDECL *p__Do_call)(void *this);
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
 static ULONGLONG(__cdecl *p_tr2_sys__File_size_wchar)(WCHAR const*);
 static int (__cdecl *p_tr2_sys__Equivalent)(char const*, char const*);
+static int (__cdecl *p_tr2_sys__Equivalent_wchar)(WCHAR const*, WCHAR const*);
 static char* (__cdecl *p_tr2_sys__Current_get)(char *);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
 static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
@@ -118,6 +119,8 @@ static BOOL init(void)
                 "?_File_size@sys@tr2@std@@YA_KPEB_W@Z");
         SET(p_tr2_sys__Equivalent,
                 "?_Equivalent@sys@tr2@std@@YAHPEBD0@Z");
+        SET(p_tr2_sys__Equivalent_wchar,
+                "?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z");
         SET(p_tr2_sys__Current_get,
                 "?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z");
         SET(p_tr2_sys__Current_set,
@@ -143,6 +146,8 @@ static BOOL init(void)
                 "?_File_size@sys@tr2@std@@YA_KPB_W@Z");
         SET(p_tr2_sys__Equivalent,
                 "?_Equivalent@sys@tr2@std@@YAHPBD0@Z");
+        SET(p_tr2_sys__Equivalent_wchar,
+                "?_Equivalent@sys@tr2@std@@YAHPB_W0@Z");
         SET(p_tr2_sys__Current_get,
                 "?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z");
         SET(p_tr2_sys__Current_set,
@@ -415,6 +420,8 @@ static void test_tr2_sys__Equivalent(void)
     int val, i;
     HANDLE file;
     char temp_path[MAX_PATH], current_path[MAX_PATH];
+    WCHAR testW[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','1',0};
+    WCHAR testW2[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','2',0};
     struct {
         char const *path1;
         char const *path2;
@@ -456,9 +463,14 @@ static void test_tr2_sys__Equivalent(void)
         ok(errno == 0xdeadbeef, "errno = %d\n", errno);
     }
 
-    ok(DeleteFileA("tr2_test_dir/f1"), "Expected tr2_test_dir/f1 to exist\n");
-    ok(DeleteFileA("tr2_test_dir/f2"), "Expected tr2_test_dir/f2 to exist\n");
-    ok(RemoveDirectoryA("tr2_test_dir"), "Expected tr2_test_dir to exist\n");
+    val = p_tr2_sys__Equivalent_wchar(testW, testW);
+    ok(val == 1, "tr2_sys__Equivalent(): expect: 1, got %d\n", val);
+    val = p_tr2_sys__Equivalent_wchar(testW, testW2);
+    ok(val == 0, "tr2_sys__Equivalent(): expect: 0, got %d\n", val);
+
+    ok(DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f2"), "expect tr2_test_dir/f2 to exist\n");
+    ok(p_tr2_sys__Remove_dir("tr2_test_dir"), "expect tr2_test_dir to exist\n");
     ok(SetCurrentDirectoryA(current_path), "SetCurrentDirectoryA failed\n");
 }
 

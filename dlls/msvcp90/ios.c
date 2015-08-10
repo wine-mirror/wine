@@ -14754,6 +14754,42 @@ ULONGLONG __cdecl tr2_sys__File_size_wchar(WCHAR const* path)
     return ((ULONGLONG)(fad.nFileSizeHigh) << 32) + fad.nFileSizeLow;
 }
 
+/* ?_Equivalent@sys@tr2@std@@YAHPB_W0@Z */
+/* ?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z */
+int __cdecl tr2_sys__Equivalent_wchar(WCHAR const* path1, WCHAR const* path2)
+{
+    HANDLE h1, h2;
+    int ret;
+    BY_HANDLE_FILE_INFORMATION info1, info2;
+    TRACE("(%s %s)\n", debugstr_w(path1), debugstr_w(path2));
+
+    h1 = CreateFileW(path1, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, 0, 0);
+    h2 = CreateFileW(path2, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, 0, 0);
+    if(h1 == INVALID_HANDLE_VALUE) {
+        if(h2 == INVALID_HANDLE_VALUE) {
+            return -1;
+        }else {
+            CloseHandle(h2);
+            return 0;
+        }
+    }else if(h2 == INVALID_HANDLE_VALUE) {
+        CloseHandle(h1);
+        return 0;
+    }
+
+    ret = GetFileInformationByHandle(h1, &info1) && GetFileInformationByHandle(h2, &info2);
+    CloseHandle(h1);
+    CloseHandle(h2);
+    if(!ret)
+        return -1;
+    return (info1.dwVolumeSerialNumber == info2.dwVolumeSerialNumber
+            && info1.nFileIndexHigh == info2.nFileIndexHigh
+            && info1.nFileIndexLow == info2.nFileIndexLow
+            );
+}
+
 /* ??1_Winit@std@@QAE@XZ */
 /* ??1_Winit@std@@QAE@XZ */
 DEFINE_THISCALL_WRAPPER(_Winit_dtor, 4)
