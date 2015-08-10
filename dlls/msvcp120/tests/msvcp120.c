@@ -77,6 +77,7 @@ static ULONGLONG(__cdecl *p_tr2_sys__File_size_wchar)(WCHAR const*);
 static int (__cdecl *p_tr2_sys__Equivalent)(char const*, char const*);
 static int (__cdecl *p_tr2_sys__Equivalent_wchar)(WCHAR const*, WCHAR const*);
 static char* (__cdecl *p_tr2_sys__Current_get)(char *);
+static WCHAR* (__cdecl *p_tr2_sys__Current_get_wchar)(WCHAR *);
 static MSVCP_bool (__cdecl *p_tr2_sys__Current_set)(char const*);
 static int (__cdecl *p_tr2_sys__Make_dir)(char const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
@@ -123,6 +124,8 @@ static BOOL init(void)
                 "?_Equivalent@sys@tr2@std@@YAHPEB_W0@Z");
         SET(p_tr2_sys__Current_get,
                 "?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z");
+        SET(p_tr2_sys__Current_get_wchar,
+                "?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z");
         SET(p_tr2_sys__Current_set,
                 "?_Current_set@sys@tr2@std@@YA_NPEBD@Z");
         SET(p_tr2_sys__Make_dir,
@@ -150,6 +153,8 @@ static BOOL init(void)
                 "?_Equivalent@sys@tr2@std@@YAHPB_W0@Z");
         SET(p_tr2_sys__Current_get,
                 "?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z");
+        SET(p_tr2_sys__Current_get_wchar,
+                "?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z");
         SET(p_tr2_sys__Current_set,
                 "?_Current_set@sys@tr2@std@@YA_NPBD@Z");
         SET(p_tr2_sys__Make_dir,
@@ -478,6 +483,8 @@ static void test_tr2_sys__Current_get(void)
 {
     char temp_path[MAX_PATH], current_path[MAX_PATH], origin_path[MAX_PATH];
     char *temp;
+    WCHAR temp_path_wchar[MAX_PATH], current_path_wchar[MAX_PATH];
+    WCHAR *temp_wchar;
     memset(origin_path, 0, MAX_PATH);
     GetCurrentDirectoryA(MAX_PATH, origin_path);
     memset(temp_path, 0, MAX_PATH);
@@ -489,6 +496,14 @@ static void test_tr2_sys__Current_get(void)
     ok(temp == current_path, "p_tr2_sys__Current_get returned different buffer\n");
     temp[strlen(temp)] = '\\';
     ok(!strcmp(temp_path, current_path), "test_tr2_sys__Current_get(): expect: %s, got %s\n", temp_path, current_path);
+
+    GetTempPathW(MAX_PATH, temp_path_wchar);
+    ok(SetCurrentDirectoryW(temp_path_wchar), "SetCurrentDirectoryW to temp_path_wchar failed\n");
+    memset(current_path_wchar, 0, MAX_PATH);
+    temp_wchar = p_tr2_sys__Current_get_wchar(current_path_wchar);
+    ok(temp_wchar == current_path_wchar, "p_tr2_sys__Current_get_wchar returned different buffer\n");
+    temp_wchar[wcslen(temp_wchar)] = '\\';
+    ok(!wcscmp(temp_path_wchar, current_path_wchar), "test_tr2_sys__Current_get(): expect: %s, got %s\n", wine_dbgstr_w(temp_path_wchar), wine_dbgstr_w(current_path_wchar));
 
     ok(SetCurrentDirectoryA(origin_path), "SetCurrentDirectoryA to origin_path failed\n");
     memset(current_path, 0, MAX_PATH);

@@ -14790,6 +14790,17 @@ int __cdecl tr2_sys__Equivalent_wchar(WCHAR const* path1, WCHAR const* path2)
             );
 }
 
+/* ?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z */
+/* ?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z */
+WCHAR* __cdecl tr2_sys__Current_get_wchar(WCHAR *current_path)
+{
+    TRACE("(%s)\n", debugstr_w(current_path));
+
+    if(!GetCurrentDirectoryW(MAX_PATH, current_path))
+        return NULL;
+    return current_path;
+}
+
 /* ??1_Winit@std@@QAE@XZ */
 /* ??1_Winit@std@@QAE@XZ */
 DEFINE_THISCALL_WRAPPER(_Winit_dtor, 4)

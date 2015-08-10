@@ -1134,8 +1134,8 @@
 @ stub -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEB_W0_N@Z
 @ cdecl -arch=win32 ?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z(ptr) msvcp120.?_Current_get@sys@tr2@std@@YAPADAAY0BAE@D@Z
 @ cdecl -arch=win64 ?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z(ptr) msvcp120.?_Current_get@sys@tr2@std@@YAPEADAEAY0BAE@D@Z
-@ stub -arch=win32 ?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z
-@ stub -arch=win64 ?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z
+@ cdecl -arch=win32 ?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z(ptr) msvcp120.?_Current_get@sys@tr2@std@@YAPA_WAAY0BAE@_W@Z
+@ cdecl -arch=win64 ?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z(ptr) msvcp120.?_Current_get@sys@tr2@std@@YAPEA_WAEAY0BAE@_W@Z
 @ cdecl -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPBD@Z(str) msvcp120.?_Current_set@sys@tr2@std@@YA_NPBD@Z
 @ cdecl -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEBD@Z(str) msvcp120.?_Current_set@sys@tr2@std@@YA_NPEBD@Z
 @ stub -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPB_W@Z

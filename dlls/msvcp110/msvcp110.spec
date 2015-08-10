@@ -1169,8 +1169,8 @@
 @ stub -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEB_W0_N@Z
 @ cdecl -arch=win32 ?_Current_get@sys@tr2@std@@YAPADPAD@Z(ptr) tr2_sys__Current_get
 @ cdecl -arch=win64 ?_Current_get@sys@tr2@std@@YAPEADPEAD@Z(ptr) tr2_sys__Current_get
-@ stub -arch=win32 ?_Current_get@sys@tr2@std@@YAPA_WPA_W@Z
-@ stub -arch=win64 ?_Current_get@sys@tr2@std@@YAPEA_WPEA_W@Z
+@ cdecl -arch=win32 ?_Current_get@sys@tr2@std@@YAPA_WPA_W@Z(ptr) tr2_sys__Current_get_wchar
+@ cdecl -arch=win64 ?_Current_get@sys@tr2@std@@YAPEA_WPEA_W@Z(ptr) tr2_sys__Current_get_wchar
 @ cdecl -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPBD@Z(str) tr2_sys__Current_set
 @ cdecl -arch=win64 ?_Current_set@sys@tr2@std@@YA_NPEBD@Z(str) tr2_sys__Current_set
 @ stub -arch=win32 ?_Current_set@sys@tr2@std@@YA_NPB_W@Z
