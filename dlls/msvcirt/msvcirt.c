@@ -1088,8 +1088,25 @@ int __thiscall filebuf_sync(filebuf *this)
 DEFINE_THISCALL_WRAPPER(filebuf_underflow, 4)
 int __thiscall filebuf_underflow(filebuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return EOF;
+    int buffer_size, read_bytes;
+    char c;
+
+    TRACE("(%p)\n", this);
+
+    if (this->base.unbuffered)
+        return (_read(this->fd, &c, 1) < 1) ? EOF : c;
+
+    if (this->base.gptr >= this->base.egptr) {
+        if (call_streambuf_sync(&this->base) == EOF)
+            return EOF;
+        buffer_size = this->base.ebuf - this->base.base;
+        read_bytes = _read(this->fd, this->base.base, buffer_size);
+        if (read_bytes <= 0)
+            return EOF;
+        this->base.eback = this->base.gptr = this->base.base;
+        this->base.egptr = this->base.base + read_bytes;
+    }
+    return *this->base.gptr;
 }
 
 /* ??0ios@@IAE@ABV0@@Z */

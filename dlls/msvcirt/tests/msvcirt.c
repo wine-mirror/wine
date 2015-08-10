@@ -161,6 +161,7 @@ static int (*__thiscall p_filebuf_setmode)(filebuf*, int);
 static streambuf* (*__thiscall p_filebuf_setbuf)(filebuf*, char*, int);
 static int (*__thiscall p_filebuf_sync)(filebuf*);
 static int (*__thiscall p_filebuf_overflow)(filebuf*, int);
+static int (*__thiscall p_filebuf_underflow)(filebuf*);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -303,6 +304,7 @@ static BOOL init(void)
         SET(p_filebuf_setbuf, "?setbuf@filebuf@@UEAAPEAVstreambuf@@PEADH@Z");
         SET(p_filebuf_sync, "?sync@filebuf@@UEAAHXZ");
         SET(p_filebuf_overflow, "?overflow@filebuf@@UEAAHH@Z");
+        SET(p_filebuf_underflow, "?underflow@filebuf@@UEAAHXZ");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -365,6 +367,7 @@ static BOOL init(void)
         SET(p_filebuf_setbuf, "?setbuf@filebuf@@UAEPAVstreambuf@@PADH@Z");
         SET(p_filebuf_sync, "?sync@filebuf@@UAEHXZ");
         SET(p_filebuf_overflow, "?overflow@filebuf@@UAEHH@Z");
+        SET(p_filebuf_underflow, "?underflow@filebuf@@UAEHXZ");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -1261,10 +1264,46 @@ static void test_filebuf(void)
     fb2.base.do_lock = -1;
     ret = (int) call_func2(p_filebuf_overflow, &fb2, EOF);
     ok(ret == 1, "wrong return, expected 1 got %d\n", ret);
+
+    /* underflow */
+    ret = (int) call_func1(p_filebuf_underflow, &fb1);
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.pbase = fb1.base.pptr = fb1.base.base + 256;
+    fb1.base.epptr = fb1.base.ebuf;
+    *fb1.base.gptr = 'A';
+    ret = (int) call_func1(p_filebuf_underflow, &fb1);
+    ok(ret == 'A', "wrong return, expected 'A' got %d\n", ret);
+    ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
+    ok(fb1.base.pptr == fb1.base.base + 256, "wrong put pointer, expected %p got %p\n", fb1.base.base + 256, fb1.base.pptr);
+    fb1.base.gptr = fb1.base.ebuf;
+    ret = (int) call_func1(p_filebuf_underflow, &fb1);
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ok(_lseek(fb1.fd, 0, SEEK_SET) == 0, "_lseek failed\n");
+    ret = (int) call_func1(p_filebuf_underflow, &fb1);
+    ok(ret == 'f', "wrong return, expected 'f' got %d\n", ret);
+    ok(fb1.base.eback == fb1.base.base, "wrong get base, expected %p got %p\n", fb1.base.base, fb1.base.eback);
+    ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
+    ok(fb1.base.egptr == fb1.base.base + 106, "wrong get end pointer, expected %p got %p\n", fb1.base.base + 106, fb1.base.egptr);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ret = (int) call_func1(p_filebuf_underflow, &fb2);
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ok(_write(fb2.fd, "A\n", 2) == 2, "_write failed\n");
+    ok(_lseek(fb2.fd, 0, SEEK_SET) == 0, "_lseek failed\n");
+    ret = (int) call_func1(p_filebuf_underflow, &fb2);
+    ok(ret == 'A', "wrong return, expected 'A' got %d\n", ret);
+    ret = (int) call_func1(p_filebuf_underflow, &fb2);
+    ok(ret == '\n', "wrong return, expected '\\n' got %d\n", ret);
     fb2.base.do_lock = 0;
     pret = (filebuf*) call_func1(p_filebuf_close, &fb2);
     ok(pret == &fb2, "wrong return, expected %p got %p\n", &fb2, pret);
     fb2.base.do_lock = -1;
+    ret = (int) call_func1(p_filebuf_underflow, &fb2);
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
 
     /* close */
     pret = (filebuf*) call_func1(p_filebuf_close, &fb2);
