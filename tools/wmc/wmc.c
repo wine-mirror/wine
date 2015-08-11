@@ -157,8 +157,6 @@ static void exit_on_signal( int sig )
 
 int main(int argc,char *argv[])
 {
-	extern char* optarg;
-	extern int   optind;
 	int optc;
 	int opti = 0;
 	int lose = 0;
