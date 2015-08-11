@@ -1577,12 +1577,12 @@ static nsresult NSAPI nsURIContentListener_OnStartURIOpen(nsIURIContentListener 
 }
 
 static nsresult NSAPI nsURIContentListener_DoContent(nsIURIContentListener *iface,
-        const char *aContentType, cpp_bool aIsContentPreferred, nsIRequest *aRequest,
+        const nsACString *aContentType, cpp_bool aIsContentPreferred, nsIRequest *aRequest,
         nsIStreamListener **aContentHandler, cpp_bool *_retval)
 {
     NSContainer *This = impl_from_nsIURIContentListener(iface);
 
-    TRACE("(%p)->(%s %x %p %p %p)\n", This, debugstr_a(aContentType), aIsContentPreferred,
+    TRACE("(%p)->(%p %x %p %p %p)\n", This, aContentType, aIsContentPreferred,
             aRequest, aContentHandler, _retval);
 
     return This->content_listener
@@ -2199,7 +2199,7 @@ nsIXMLHttpRequest *create_nsxhr(nsIDOMWindow *nswindow)
         return NULL;
     }
 
-    nsres = nsIXMLHttpRequest_Init(nsxhr, nspri, NULL, nsglo, NULL);
+    nsres = nsIXMLHttpRequest_Init(nsxhr, nspri, NULL, nsglo, NULL, NULL);
 
     nsISupports_Release(nspri);
     nsIGlobalObject_Release(nsglo);
