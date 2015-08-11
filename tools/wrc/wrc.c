@@ -327,8 +327,6 @@ static void set_target( const char *target )
 
 int main(int argc,char *argv[])
 {
-	extern char* optarg;
-	extern int   optind;
 	int optc;
 	int opti = 0;
 	int stdinc = 1;
