@@ -950,7 +950,10 @@ static void ContextualShape_Control(HDC hdc, ScriptCache *psc, SCRIPT_ANALYSIS *
     {
         switch (pwcChars[i])
         {
-            case 0x000D: pwOutGlyphs[i] = psc->sfp.wgBlank; break;
+            case 0x000A:
+            case 0x000D:
+                pwOutGlyphs[i] = psc->sfp.wgBlank;
+                break;
             default:
                 if (pwcChars[i] < 0x1C)
                     pwOutGlyphs[i] = psc->sfp.wgDefault;
