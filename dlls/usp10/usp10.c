@@ -2967,6 +2967,15 @@ HRESULT WINAPI ScriptShapeOpenType( HDC hdc, SCRIPT_CACHE *psc,
             /* No mirroring done here */
             if (rtl) idx = cChars - 1 - i;
             pwOutGlyphs[i] = pwcChars[idx];
+
+            /* overwrite some basic control glyphs to blank */
+            if (psa && psa->eScript == Script_Control &&
+                pwcChars[idx] < ((ScriptCache *)*psc)->tm.tmFirstChar)
+            {
+                if (pwcChars[idx] == 0x0009 || pwcChars[idx] == 0x000A ||
+                    pwcChars[idx] == 0x000D || pwcChars[idx] >= 0x001C)
+                    pwOutGlyphs[i] = ((ScriptCache *)*psc)->sfp.wgBlank;
+            }
         }
     }
 
