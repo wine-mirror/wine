@@ -763,7 +763,7 @@ HIMC WINAPI ImmCreateContext(void)
         return 0;
     }
     new_context->threadID = GetCurrentThreadId();
-    SendMessageW(GetFocus(), WM_IME_SELECT, TRUE, (LPARAM)GetKeyboardLayout(0));
+    SendMessageW(GetFocus(), WM_IME_SELECT, TRUE, (LPARAM)new_context->immKbd);
 
     new_context->immKbd->uSelected++;
     TRACE("Created context %p\n",new_context);
@@ -783,7 +783,7 @@ static BOOL IMM_DestroyContext(HIMC hIMC)
 
     data->immKbd->uSelected --;
     data->immKbd->pImeSelect(hIMC, FALSE);
-    SendMessageW(data->IMC.hWnd, WM_IME_SELECT, FALSE, (LPARAM)GetKeyboardLayout(0));
+    SendMessageW(data->IMC.hWnd, WM_IME_SELECT, FALSE, (LPARAM)data->immKbd);
 
     ImmDestroyIMCC(data->IMC.hCompStr);
     ImmDestroyIMCC(data->IMC.hCandInfo);
