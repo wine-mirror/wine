@@ -36,23 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(imagehlp);
 
 static PLOADED_IMAGE IMAGEHLP_pFirstLoadedImage=NULL;
 
-static LOADED_IMAGE IMAGEHLP_EmptyLoadedImage = {
-  NULL,       /* ModuleName */
-  0,          /* hFile */
-  NULL,       /* MappedAddress */
-  NULL,       /* FileHeader */
-  NULL,       /* LastRvaSection */
-  0,          /* NumberOfSections */
-  NULL,       /* Sections */
-  1,          /* Characteristics */
-  FALSE,      /* fSystemImage */
-  FALSE,      /* fDOSImage */
-  FALSE,      /* fReadOnly */
-  0,          /* Version */
-  { &IMAGEHLP_EmptyLoadedImage.Links, &IMAGEHLP_EmptyLoadedImage.Links }, /* Links */
-  148,        /* SizeOfImage; */
-};
-
 DECLSPEC_HIDDEN extern HANDLE IMAGEHLP_hHeap;
 
 /***********************************************************************
