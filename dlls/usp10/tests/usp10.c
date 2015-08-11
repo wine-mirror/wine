@@ -1334,7 +1334,7 @@ static void test_ScriptShape(HDC hdc)
     WORD glyphs[4], glyphs2[4], logclust[4];
     SCRIPT_VISATTR attrs[4];
     SCRIPT_ITEM items[2];
-    int nb;
+    int nb, i, j;
 
     hr = ScriptItemize(test1, 4, 2, NULL, NULL, items, NULL);
     ok(hr == S_OK, "ScriptItemize should return S_OK not %08x\n", hr);
@@ -1454,6 +1454,51 @@ static void test_ScriptShape(HDC hdc)
     ok(attrs[3].fZeroWidth == 0, "fZeroWidth incorrect\n");
 
     ScriptFreeCache(&sc);
+
+    /* some control characters are shown as blank */
+    for (i = 0; i < 2; i++)
+    {
+        static const WCHAR space[]  = {' ', 0};
+        static const WCHAR blanks[] = {'\t', '\r', '\n', 0x001C, 0x001D, 0x001E, 0x001F,0};
+        HFONT font, oldfont = NULL;
+        LOGFONTA lf;
+
+        font = GetCurrentObject(hdc, OBJ_FONT);
+        GetObjectA(font, sizeof(lf), &lf);
+        if (i == 1) {
+            lstrcpyA(lf.lfFaceName, "MS Sans Serif");
+            font = CreateFontIndirectA(&lf);
+            oldfont = SelectObject(hdc, font);
+        }
+
+        hr = ScriptItemize(space, 1, 2, NULL, NULL, items, NULL);
+        ok(hr == S_OK, "%s: expected S_OK, got %08x\n", lf.lfFaceName, hr);
+
+        hr = ScriptShape(hdc, &sc, space, 1, 1, &items[0].a, glyphs, logclust, attrs, &nb);
+        ok(hr == S_OK, "%s: expected S_OK, got %08x\n", lf.lfFaceName, hr);
+        ok(nb == 1, "%s: expected 1, got %d\n", lf.lfFaceName, nb);
+
+        for (j = 0; blanks[j]; j++)
+        {
+            hr = ScriptItemize(&blanks[j], 1, 2, NULL, NULL, items, NULL);
+            ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, blanks[j], hr);
+
+            hr = ScriptShape(hdc, &sc, &blanks[j], 1, 1, &items[0].a, glyphs2, logclust, attrs, &nb);
+            ok(hr == S_OK, "%s: [%02x] expected S_OK, got %08x\n", lf.lfFaceName, blanks[j], hr);
+            ok(nb == 1, "%s: [%02x] expected 1, got %d\n", lf.lfFaceName, blanks[j], nb);
+            if (i == 0 && blanks[j] != '\n')
+            ok(glyphs[0] == glyphs2[0] ||
+               broken(glyphs2[0] == blanks[j] && (blanks[j] < 0x10)),
+               "%s: [%02x] expected %04x, got %04x\n", lf.lfFaceName, blanks[j], glyphs[0], glyphs2[0]);
+            else todo_wine
+            ok(glyphs[0] == glyphs2[0] ||
+               broken(glyphs2[0] == blanks[j] && (blanks[j] < 0x10)),
+               "%s: [%02x] expected %04x, got %04x\n", lf.lfFaceName, blanks[j], glyphs[0], glyphs2[0]);
+        }
+        if (oldfont)
+            DeleteObject(SelectObject(hdc, oldfont));
+        ScriptFreeCache(&sc);
+    }
 }
 
 static void test_ScriptPlace(HDC hdc)
