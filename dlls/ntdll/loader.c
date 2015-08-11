@@ -1166,6 +1166,10 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
         if ((status = process_attach( wm->deps[i], lpReserved )) != STATUS_SUCCESS) break;
     }
 
+    if (!wm->ldr.InInitializationOrderModuleList.Flink)
+        InsertTailList(&NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList,
+                &wm->ldr.InInitializationOrderModuleList);
+
     /* Call DLL entry point */
     if (status == STATUS_SUCCESS)
     {
@@ -1183,10 +1187,6 @@ static NTSTATUS process_attach( WINE_MODREF *wm, LPVOID lpReserved )
         }
         current_modref = prev;
     }
-
-    if (!wm->ldr.InInitializationOrderModuleList.Flink)
-        InsertTailList(&NtCurrentTeb()->Peb->LdrData->InInitializationOrderModuleList,
-                       &wm->ldr.InInitializationOrderModuleList);
 
     if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
     /* Remove recursion flag */
