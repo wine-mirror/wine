@@ -404,10 +404,12 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_view_Release(ID3D10DepthStenci
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         wined3d_rendertarget_view_decref(This->wined3d_view);
         ID3D10Resource_Release(This->resource);
         ID3D10Device1_Release(This->device);
         wined3d_private_store_cleanup(&This->private_store);
+        wined3d_mutex_unlock();
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -572,8 +574,10 @@ HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view, struc
         view->desc = *desc;
     }
 
+    wined3d_mutex_lock();
     if (!(wined3d_resource = wined3d_resource_from_resource(resource)))
     {
+        wined3d_mutex_unlock();
         ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
         return E_FAIL;
     }
@@ -582,11 +586,13 @@ HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view, struc
     if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource,
             view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
     {
+        wined3d_mutex_unlock();
         WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
         return hr;
     }
 
     wined3d_private_store_init(&view->private_store);
+    wined3d_mutex_unlock();
     view->resource = resource;
     ID3D10Resource_AddRef(resource);
     view->device = &device->ID3D10Device1_iface;
@@ -651,10 +657,12 @@ static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_Release(ID3D10RenderTarge
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         wined3d_rendertarget_view_decref(This->wined3d_view);
         ID3D10Resource_Release(This->resource);
         ID3D10Device1_Release(This->device);
         wined3d_private_store_cleanup(&This->private_store);
+        wined3d_mutex_unlock();
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -830,9 +838,10 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struc
         view->desc = *desc;
     }
 
-    wined3d_resource = wined3d_resource_from_resource(resource);
-    if (!wined3d_resource)
+    wined3d_mutex_lock();
+    if (!(wined3d_resource = wined3d_resource_from_resource(resource)))
     {
+        wined3d_mutex_unlock();
         ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
         return E_FAIL;
     }
@@ -841,11 +850,13 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struc
     if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource,
             view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
     {
+        wined3d_mutex_unlock();
         WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
         return hr;
     }
 
     wined3d_private_store_init(&view->private_store);
+    wined3d_mutex_unlock();
     view->resource = resource;
     ID3D10Resource_AddRef(resource);
     view->device = &device->ID3D10Device1_iface;
@@ -910,10 +921,12 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_Release(ID3D10ShaderRe
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         wined3d_shader_resource_view_decref(This->wined3d_view);
         ID3D10Resource_Release(This->resource);
         ID3D10Device1_Release(This->device);
         wined3d_private_store_cleanup(&This->private_store);
+        wined3d_mutex_unlock();
         HeapFree(GetProcessHeap(), 0, This);
     }
 
@@ -1026,6 +1039,7 @@ HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
         view->desc = *desc;
     }
 
+    wined3d_mutex_lock();
     if (!(wined3d_resource = wined3d_resource_from_resource(resource)))
     {
         ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
@@ -1040,6 +1054,7 @@ HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
     }
 
     wined3d_private_store_init(&view->private_store);
+    wined3d_mutex_unlock();
     view->resource = resource;
     ID3D10Resource_AddRef(resource);
     view->device = &device->ID3D10Device1_iface;

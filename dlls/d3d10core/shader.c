@@ -159,7 +159,9 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_AddRef(ID3D10VertexShader *if
     if (refcount == 1)
     {
         ID3D10Device1_AddRef(This->device);
+        wined3d_mutex_lock();
         wined3d_shader_incref(This->wined3d_shader);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -176,7 +178,9 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *i
     {
         ID3D10Device1 *device = This->device;
 
+        wined3d_mutex_lock();
         wined3d_shader_decref(This->wined3d_shader);
+        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D10Device1_Release(device);
@@ -266,6 +270,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
 
     shader->ID3D10VertexShader_iface.lpVtbl = &d3d10_vertex_shader_vtbl;
     shader->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
     shader_info.input_signature = &input_signature;
@@ -274,6 +279,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
     {
         ERR("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
 
@@ -290,8 +296,10 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d1
     {
         WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
+        wined3d_mutex_unlock();
         return E_INVALIDARG;
     }
+    wined3d_mutex_unlock();
 
     shader->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(shader->device);
@@ -353,7 +361,11 @@ static ULONG STDMETHODCALLTYPE d3d10_geometry_shader_Release(ID3D10GeometryShade
     TRACE("%p decreasing refcount to %u\n", This, refcount);
 
     if (!refcount)
+    {
+        wined3d_mutex_lock();
         wined3d_shader_decref(This->wined3d_shader);
+        wined3d_mutex_unlock();
+    }
 
     return refcount;
 }
@@ -434,6 +446,7 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
 
     shader->ID3D10GeometryShader_iface.lpVtbl = &d3d10_geometry_shader_vtbl;
     shader->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
     shader_info.input_signature = &input_signature;
@@ -442,6 +455,7 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
     {
         ERR("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
 
@@ -458,8 +472,10 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
     {
         WARN("Failed to create wined3d geometry shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
+        wined3d_mutex_unlock();
         return E_INVALIDARG;
     }
+    wined3d_mutex_unlock();
 
     return S_OK;
 }
@@ -510,7 +526,9 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_AddRef(ID3D10PixelShader *ifac
     if (refcount == 1)
     {
         ID3D10Device1_AddRef(This->device);
+        wined3d_mutex_lock();
         wined3d_shader_incref(This->wined3d_shader);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -527,7 +545,9 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_Release(ID3D10PixelShader *ifa
     {
         ID3D10Device1 *device = This->device;
 
+        wined3d_mutex_lock();
         wined3d_shader_decref(This->wined3d_shader);
+        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D10Device1_Release(device);
@@ -617,6 +637,7 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
 
     shader->ID3D10PixelShader_iface.lpVtbl = &d3d10_pixel_shader_vtbl;
     shader->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&shader->private_store);
 
     shader_info.input_signature = &input_signature;
@@ -625,6 +646,7 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
     {
         ERR("Failed to extract shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
 
@@ -641,8 +663,10 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_
     {
         WARN("Failed to create wined3d pixel shader, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
+        wined3d_mutex_unlock();
         return E_INVALIDARG;
     }
+    wined3d_mutex_unlock();
 
     shader->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(shader->device);

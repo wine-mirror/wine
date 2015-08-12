@@ -130,7 +130,9 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_AddRef(ID3D10InputLayout *ifac
 
     if (refcount == 1)
     {
+        wined3d_mutex_lock();
         wined3d_vertex_declaration_incref(This->wined3d_decl);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -145,7 +147,9 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_Release(ID3D10InputLayout *ifa
 
     if (!refcount)
     {
+        wined3d_mutex_lock();
         wined3d_vertex_declaration_decref(This->wined3d_decl);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -225,6 +229,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
 
     layout->ID3D10InputLayout_iface.lpVtbl = &d3d10_input_layout_vtbl;
     layout->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&layout->private_store);
 
     if (FAILED(hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,
@@ -232,6 +237,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
     {
         WARN("Failed to create wined3d vertex declaration elements, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&layout->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
 
@@ -242,8 +248,10 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_
     {
         WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&layout->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
+    wined3d_mutex_unlock();
 
     return S_OK;
 }

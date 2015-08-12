@@ -420,23 +420,32 @@ HRESULT d3d10_get_private_data(struct wined3d_private_store *store,
     if (!data_size)
         return E_INVALIDARG;
 
+    wined3d_mutex_lock();
     if (!(stored_data = wined3d_private_store_get_private_data(store, guid)))
     {
         *data_size = 0;
+        wined3d_mutex_unlock();
         return DXGI_ERROR_NOT_FOUND;
     }
 
     size_in = *data_size;
     *data_size = stored_data->size;
     if (!data)
+    {
+        wined3d_mutex_unlock();
         return S_OK;
+    }
     if (size_in < stored_data->size)
+    {
+        wined3d_mutex_unlock();
         return DXGI_ERROR_MORE_DATA;
+    }
 
     if (stored_data->flags & WINED3DSPD_IUNKNOWN)
         IUnknown_AddRef(stored_data->content.object);
     memcpy(data, stored_data->content.data, stored_data->size);
 
+    wined3d_mutex_unlock();
     return S_OK;
 }
 
@@ -444,28 +453,44 @@ HRESULT d3d10_set_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT data_size, const void *data)
 {
     struct wined3d_private_data *entry;
+    HRESULT hr;
 
+    wined3d_mutex_lock();
     if (!data)
     {
         if (!(entry = wined3d_private_store_get_private_data(store, guid)))
+        {
+            wined3d_mutex_unlock();
             return S_FALSE;
+        }
         wined3d_private_store_free_private_data(store, entry);
+        wined3d_mutex_unlock();
 
         return S_OK;
     }
 
-    return wined3d_private_store_set_private_data(store, guid, data, data_size, 0);
+    hr = wined3d_private_store_set_private_data(store, guid, data, data_size, 0);
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 HRESULT d3d10_set_private_data_interface(struct wined3d_private_store *store,
         REFGUID guid, const IUnknown *object)
 {
+    HRESULT hr;
+
     if (!object)
         return d3d10_set_private_data(store, guid, sizeof(object), &object);
 
-    return wined3d_private_store_set_private_data(store,
+    wined3d_mutex_lock();
+    hr = wined3d_private_store_set_private_data(store,
             guid, object, sizeof(object), WINED3DSPD_IUNKNOWN);
+    wined3d_mutex_unlock();
+
+    return hr;
 }
+
 void skip_dword_unknown(const char **ptr, unsigned int count)
 {
     unsigned int i;

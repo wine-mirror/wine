@@ -74,8 +74,10 @@ static ULONG STDMETHODCALLTYPE d3d10_query_Release(ID3D10Query *iface)
     if (!refcount)
     {
         ID3D10Device1_Release(query->device);
+        wined3d_mutex_lock();
         wined3d_query_decref(query->wined3d_query);
         wined3d_private_store_cleanup(&query->private_store);
+        wined3d_mutex_unlock();
         HeapFree(GetProcessHeap(), 0, query);
     }
 
@@ -215,6 +217,7 @@ HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
 
     query->ID3D10Query_iface.lpVtbl = &d3d10_query_vtbl;
     query->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&query->private_store);
 
     if (FAILED(hr = wined3d_query_create(device->wined3d_device,
@@ -222,8 +225,10 @@ HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
     {
         WARN("Failed to create wined3d query, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&query->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
+    wined3d_mutex_unlock();
 
     query->predicate = predicate;
     query->device = &device->ID3D10Device1_iface;

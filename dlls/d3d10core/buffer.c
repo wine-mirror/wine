@@ -61,7 +61,9 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_AddRef(ID3D10Buffer *iface)
     if (refcount == 1)
     {
         ID3D10Device1_AddRef(buffer->device);
+        wined3d_mutex_lock();
         wined3d_buffer_incref(buffer->wined3d_buffer);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -78,7 +80,9 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
     {
         ID3D10Device1 *device = buffer->device;
 
+        wined3d_mutex_lock();
         wined3d_buffer_decref(buffer->wined3d_buffer);
+        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D10Device1_Release(device);
@@ -157,14 +161,19 @@ static UINT STDMETHODCALLTYPE d3d10_buffer_GetEvictionPriority(ID3D10Buffer *ifa
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP map_type, UINT map_flags, void **data)
 {
     struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    HRESULT hr;
 
     TRACE("iface %p, map_type %u, map_flags %#x, data %p.\n", iface, map_type, map_flags, data);
 
     if (map_flags)
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
-    return wined3d_buffer_map(buffer->wined3d_buffer, 0, 0, (BYTE **)data,
+    wined3d_mutex_lock();
+    hr = wined3d_buffer_map(buffer->wined3d_buffer, 0, 0, (BYTE **)data,
             wined3d_map_flags_from_d3d10_map_type(map_type));
+    wined3d_mutex_unlock();
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
@@ -173,7 +182,9 @@ static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
 
     TRACE("iface %p.\n", iface);
 
+    wined3d_mutex_lock();
     wined3d_buffer_unmap(buffer->wined3d_buffer);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_buffer_GetDesc(ID3D10Buffer *iface, D3D10_BUFFER_DESC *desc)
@@ -231,6 +242,7 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
 
     buffer->ID3D10Buffer_iface.lpVtbl = &d3d10_buffer_vtbl;
     buffer->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&buffer->private_store);
 
     wined3d_desc.byte_width = desc->ByteWidth;
@@ -245,8 +257,10 @@ HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *devi
     {
         WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&buffer->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
+    wined3d_mutex_unlock();
 
     buffer->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(buffer->device);

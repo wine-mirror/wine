@@ -69,7 +69,9 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_AddRef(ID3D10Texture2D *iface)
     if (refcount == 1)
     {
         ID3D10Device1_AddRef(This->device);
+        wined3d_mutex_lock();
         wined3d_texture_incref(This->wined3d_texture);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -95,7 +97,9 @@ static ULONG STDMETHODCALLTYPE d3d10_texture2d_Release(ID3D10Texture2D *iface)
     {
         ID3D10Device1 *device = This->device;
 
+        wined3d_mutex_lock();
         wined3d_texture_decref(This->wined3d_texture);
+        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D10Device1_Release(device);
@@ -216,6 +220,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_Map(ID3D10Texture2D *iface, UIN
     if (map_flags)
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
+    wined3d_mutex_lock();
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, sub_resource_idx)))
         hr = E_INVALIDARG;
     else if (SUCCEEDED(hr = wined3d_surface_map(wined3d_surface_from_resource(sub_resource),
@@ -224,6 +229,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_Map(ID3D10Texture2D *iface, UIN
         mapped_texture->pData = wined3d_map_desc.data;
         mapped_texture->RowPitch = wined3d_map_desc.row_pitch;
     }
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -235,10 +241,15 @@ static void STDMETHODCALLTYPE d3d10_texture2d_Unmap(ID3D10Texture2D *iface, UINT
 
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
 
+    wined3d_mutex_lock();
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, sub_resource_idx)))
+    {
+        wined3d_mutex_unlock();
         return;
+    }
 
     wined3d_surface_unmap(wined3d_surface_from_resource(sub_resource));
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_texture2d_GetDesc(ID3D10Texture2D *iface, D3D10_TEXTURE2D_DESC *desc)
@@ -308,6 +319,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
 
     texture->ID3D10Texture2D_iface.lpVtbl = &d3d10_texture2d_vtbl;
     texture->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&texture->private_store);
     texture->desc = *desc;
 
@@ -335,6 +347,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&texture->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
     texture->desc.MipLevels = levels;
@@ -348,6 +361,7 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
         {
             ERR("Device should implement IWineDXGIDevice.\n");
             wined3d_texture_decref(texture->wined3d_texture);
+            wined3d_mutex_unlock();
             return E_FAIL;
         }
 
@@ -359,9 +373,11 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_devic
             ERR("Failed to create DXGI surface, returning %#x\n", hr);
             texture->dxgi_surface = NULL;
             wined3d_texture_decref(texture->wined3d_texture);
+            wined3d_mutex_unlock();
             return hr;
         }
     }
+    wined3d_mutex_unlock();
 
     texture->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(texture->device);
@@ -404,7 +420,9 @@ static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
     if (refcount == 1)
     {
         ID3D10Device1_AddRef(texture->device);
+        wined3d_mutex_lock();
         wined3d_texture_incref(texture->wined3d_texture);
+        wined3d_mutex_unlock();
     }
 
     return refcount;
@@ -429,7 +447,9 @@ static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
     {
         ID3D10Device1 *device = texture->device;
 
+        wined3d_mutex_lock();
         wined3d_texture_decref(texture->wined3d_texture);
+        wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
         ID3D10Device1_Release(device);
@@ -514,6 +534,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
     if (map_flags)
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
+    wined3d_mutex_lock();
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, sub_resource_idx)))
         hr = E_INVALIDARG;
     else if (SUCCEEDED(hr = wined3d_volume_map(wined3d_volume_from_resource(sub_resource),
@@ -523,6 +544,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
         mapped_texture->RowPitch = wined3d_map_desc.row_pitch;
         mapped_texture->DepthPitch = wined3d_map_desc.slice_pitch;
     }
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -534,10 +556,15 @@ static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT
 
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
 
+    wined3d_mutex_lock();
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, sub_resource_idx)))
+    {
+        wined3d_mutex_unlock();
         return;
+    }
 
     wined3d_volume_unmap(wined3d_volume_from_resource(sub_resource));
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d10_texture3d_GetDesc(ID3D10Texture3D *iface, D3D10_TEXTURE3D_DESC *desc)
@@ -584,6 +611,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
 
     texture->ID3D10Texture3D_iface.lpVtbl = &d3d10_texture3d_vtbl;
     texture->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&texture->private_store);
     texture->desc = *desc;
 
@@ -606,8 +634,10 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_devic
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&texture->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
+    wined3d_mutex_unlock();
     texture->desc.MipLevels = levels;
 
     texture->device = &device->ID3D10Device1_iface;
