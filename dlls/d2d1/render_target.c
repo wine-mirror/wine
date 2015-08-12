@@ -435,7 +435,6 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1Re
 {
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     struct d2d_brush *object;
-    HRESULT hr;
 
     TRACE("iface %p, bitmap %p, bitmap_brush_desc %p, brush_desc %p, brush %p.\n",
             iface, bitmap, bitmap_brush_desc, brush_desc, brush);
@@ -443,12 +442,7 @@ static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_CreateBitmapBrush(ID2D1Re
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d2d_bitmap_brush_init(object, render_target->factory, bitmap, bitmap_brush_desc, brush_desc)))
-    {
-        WARN("Failed to initialize brush, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
+    d2d_bitmap_brush_init(object, render_target->factory, bitmap, bitmap_brush_desc, brush_desc);
 
     TRACE("Created brush %p.\n", object);
     *brush = (ID2D1BitmapBrush *)&object->ID2D1Brush_iface;

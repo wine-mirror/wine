@@ -683,7 +683,7 @@ static const struct ID2D1BitmapBrushVtbl d2d_bitmap_brush_vtbl =
     d2d_bitmap_brush_GetBitmap,
 };
 
-HRESULT d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1Factory *factory, ID2D1Bitmap *bitmap,
+void d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1Factory *factory, ID2D1Bitmap *bitmap,
         const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc)
 {
     d2d_brush_init(brush, factory, D2D_BRUSH_TYPE_BITMAP,
@@ -702,8 +702,6 @@ HRESULT d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1Factory *factory, ID
         brush->u.bitmap.extend_mode_y = D2D1_EXTEND_MODE_CLAMP;
         brush->u.bitmap.interpolation_mode = D2D1_BITMAP_INTERPOLATION_MODE_LINEAR;
     }
-
-    return S_OK;
 }
 
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface)
