@@ -757,6 +757,7 @@ static void test_CreateBitmapRenderTarget(void)
     HBITMAP hbm, hbm2;
     DWRITE_MATRIX m;
     DIBSECTION ds;
+    XFORM xform;
     COLORREF c;
     HRESULT hr;
     FLOAT pdip;
@@ -790,6 +791,11 @@ if (0) /* crashes on native */
 
     hdc = IDWriteBitmapRenderTarget_GetMemoryDC(target);
     ok(hdc != NULL, "got %p\n", hdc);
+
+    /* test mode */
+    ret = GetGraphicsMode(hdc);
+todo_wine
+    ok(ret == GM_ADVANCED, "got %d\n", ret);
 
     hbm = GetCurrentObject(hdc, OBJ_BITMAP);
     ok(hbm != NULL, "got %p\n", hbm);
@@ -914,7 +920,7 @@ if (0) /* crashes on native */
     ok(ds.dsBm.bmBitsPixel == 1, "got %d\n", ds.dsBm.bmBitsPixel);
     ok(!ds.dsBm.bmBits, "got %p\n", ds.dsBm.bmBits);
 
-    /* transform tests */
+    /* transform tests, current hdc transform is not immediately affected */
 if (0) /* crashes on native */
     hr = IDWriteBitmapRenderTarget_GetCurrentTransform(target, NULL);
 
@@ -923,6 +929,10 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(m.m11 == 1.0 && m.m22 == 1.0 && m.m12 == 0.0 && m.m21 == 0.0, "got %.1f,%.1f,%.1f,%.1f\n", m.m11, m.m22, m.m12, m.m21);
     ok(m.dx == 0.0 && m.dy == 0.0, "got %.1f,%.1f\n", m.dx, m.dy);
+    ret = GetWorldTransform(hdc, &xform);
+    ok(ret, "got %d\n", ret);
+    ok(xform.eM11 == 1.0 && xform.eM22 == 1.0 && xform.eM12 == 0.0 && xform.eM21 == 0.0, "got wrong transform\n");
+    ok(xform.eDx == 0.0 && xform.eDy == 0.0, "got %.1f,%.1f\n", xform.eDx, xform.eDy);
 
     memset(&m, 0, sizeof(m));
     hr = IDWriteBitmapRenderTarget_SetCurrentTransform(target, &m);
@@ -933,6 +943,19 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(m.m11 == 0.0 && m.m22 == 0.0 && m.m12 == 0.0 && m.m21 == 0.0, "got %.1f,%.1f,%.1f,%.1f\n", m.m11, m.m22, m.m12, m.m21);
     ok(m.dx == 0.0 && m.dy == 0.0, "got %.1f,%.1f\n", m.dx, m.dy);
+    ret = GetWorldTransform(hdc, &xform);
+    ok(ret, "got %d\n", ret);
+    ok(xform.eM11 == 1.0 && xform.eM22 == 1.0 && xform.eM12 == 0.0 && xform.eM21 == 0.0, "got wrong transform\n");
+    ok(xform.eDx == 0.0 && xform.eDy == 0.0, "got %.1f,%.1f\n", xform.eDx, xform.eDy);
+
+    memset(&m, 0, sizeof(m));
+    m.m11 = 2.0; m.m22 = 1.0;
+    hr = IDWriteBitmapRenderTarget_SetCurrentTransform(target, &m);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ret = GetWorldTransform(hdc, &xform);
+    ok(ret, "got %d\n", ret);
+    ok(xform.eM11 == 1.0 && xform.eM22 == 1.0 && xform.eM12 == 0.0 && xform.eM21 == 0.0, "got wrong transform\n");
+    ok(xform.eDx == 0.0 && xform.eDy == 0.0, "got %.1f,%.1f\n", xform.eDx, xform.eDy);
 
     hr = IDWriteBitmapRenderTarget_SetCurrentTransform(target, NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
