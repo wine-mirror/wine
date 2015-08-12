@@ -1700,10 +1700,10 @@ int macdrv_err_on;
             }
         }
 
-        if (!process && windowBroughtForward)
+        if (windowBroughtForward)
         {
             [[windowBroughtForward ancestorWineWindow] postBroughtForwardEvent];
-            if (![windowBroughtForward isKeyWindow] && !windowBroughtForward.disabled && !windowBroughtForward.noActivate)
+            if (!process && ![windowBroughtForward isKeyWindow] && !windowBroughtForward.disabled && !windowBroughtForward.noActivate)
                 [self windowGotFocus:windowBroughtForward];
         }
 
