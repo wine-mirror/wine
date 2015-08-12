@@ -11935,6 +11935,71 @@ static void test_url(void)
     IXMLDOMDocument_Release(doc);
 }
 
+static void test_merging_text(void)
+{
+    IXMLDOMText *nodetext;
+    IXMLDOMText *newtext;
+    IXMLDOMElement *root;
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *first;
+    HRESULT hr;
+    VARIANT v;
+    BSTR str;
+    int i;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_createElement(doc, _bstr_("Testing"), &root);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_appendChild(doc, (IXMLDOMNode*)root, NULL);
+    EXPECT_HR(hr, S_OK);
+
+    /* test xmlAddChild */
+    for (i = 0; i < 10; i++)
+    {
+        str = SysAllocString(szstr1);
+        hr = IXMLDOMDocument_createTextNode(doc, str, &nodetext);
+        SysFreeString(str);
+        EXPECT_HR(hr, S_OK);
+
+        newtext = NULL;
+        hr = IXMLDOMElement_appendChild(root, (IXMLDOMNode*)nodetext, (IXMLDOMNode**)&newtext);
+        EXPECT_HR(hr, S_OK);
+        ok(nodetext == newtext, "expected %p, got %p\n", nodetext, newtext);
+
+        IXMLDOMText_Release(newtext);
+        IXMLDOMText_Release(nodetext);
+    }
+
+    /* test xmlAddPrevSibling */
+    hr = IXMLDOMElement_get_firstChild(root, &first);
+    EXPECT_HR(hr, S_OK);
+    V_VT(&v) = VT_UNKNOWN;
+    V_UNKNOWN(&v) = (IUnknown*)first;
+    for (i = 0; i < 10; i++)
+    {
+        str = SysAllocString(szstr2);
+        hr = IXMLDOMDocument_createTextNode(doc, str, &nodetext);
+        SysFreeString(str);
+        EXPECT_HR(hr, S_OK);
+
+        newtext = NULL;
+        hr = IXMLDOMElement_insertBefore(root, (IXMLDOMNode*)nodetext, v, (IXMLDOMNode**)&newtext);
+        EXPECT_HR(hr, S_OK);
+        ok(nodetext == newtext, "expected %p, got %p\n", nodetext, newtext);
+
+        IXMLDOMText_Release(newtext);
+        IXMLDOMText_Release(nodetext);
+    }
+
+    IXMLDOMNode_Release(first);
+    IXMLDOMElement_Release(root);
+    IXMLDOMDocument_Release(doc);
+
+    free_bstrs();
+}
+
 START_TEST(domdoc)
 {
     HRESULT hr;
@@ -12014,6 +12079,7 @@ START_TEST(domdoc)
     test_namedmap_newenum();
     test_xmlns_attribute();
     test_url();
+    test_merging_text();
 
     test_xsltemplate();
     test_xsltext();
