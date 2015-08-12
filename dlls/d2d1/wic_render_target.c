@@ -788,8 +788,6 @@ HRESULT d2d_wic_render_target_init(struct d2d_wic_render_target *render_target, 
     ID3D10Texture2D *texture;
     HRESULT hr;
 
-    FIXME("Ignoring render target properties.\n");
-
     render_target->ID2D1RenderTarget_iface.lpVtbl = &d2d_wic_render_target_vtbl;
     render_target->refcount = 1;
 
