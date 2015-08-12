@@ -59,6 +59,7 @@ struct dwrite_font_data {
 
     DWRITE_FONT_METRICS1 metrics;
     IDWriteLocalizedStrings *info_strings[DWRITE_INFORMATIONAL_STRING_POSTSCRIPT_CID_NAME+1];
+    IDWriteLocalizedStrings *names;
 
     /* data needed to create fontface instance */
     IDWriteFactory2 *factory;
@@ -315,6 +316,7 @@ static void release_font_data(struct dwrite_font_data *data)
         if (data->info_strings[i])
             IDWriteLocalizedStrings_Release(data->info_strings[i]);
     }
+    IDWriteLocalizedStrings_Release(data->names);
 
     IDWriteFontFile_Release(data->file);
     IDWriteFactory2_Release(data->factory);
@@ -1233,11 +1235,8 @@ static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont2 *iface, IDWriteLocali
 
     *names = NULL;
 
-    if (This->simulations == DWRITE_FONT_SIMULATIONS_NONE) {
-        BOOL exists;
-        return IDWriteFont2_GetInformationalStrings(iface, DWRITE_INFORMATIONAL_STRING_WIN32_SUBFAMILY_NAMES,
-            names, &exists);
-    }
+    if (This->simulations == DWRITE_FONT_SIMULATIONS_NONE)
+        return clone_localizedstring(This->data->names, names);
 
     switch (This->simulations) {
     case DWRITE_FONT_SIMULATIONS_BOLD|DWRITE_FONT_SIMULATIONS_OBLIQUE:
@@ -1940,7 +1939,7 @@ HRESULT get_filestream_from_file(IDWriteFontFile *file, IDWriteFontFileStream **
     return hr;
 }
 
-static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, UINT32 face_index, DWRITE_FONT_FACE_TYPE face_type,
+static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
     IDWriteFontFileStream **stream, struct dwrite_font_data **ret)
 {
     void *os2_context, *head_context;
@@ -1972,6 +1971,7 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, U
 
     opentype_get_font_properties(*stream, face_type, face_index, &props);
     opentype_get_font_metrics(*stream, face_type, face_index, &data->metrics, NULL);
+    opentype_get_font_facename(*stream, face_type, face_index, &data->names);
 
     data->style = props.style;
     data->stretch = props.stretch;
@@ -2038,9 +2038,8 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
         DWRITE_FONT_FACE_TYPE face_type;
         DWRITE_FONT_FILE_TYPE file_type;
         IDWriteFontFile *file;
-        UINT32 face_count;
+        UINT32 face_count, i;
         BOOL supported;
-        int i;
 
         current = FALSE;
         hr = IDWriteFontFileEnumerator_MoveNext(enumerator, &current);
@@ -2068,12 +2067,12 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
             UINT32 index;
 
             /* alloc and init new font data structure */
-            hr = init_font_data(factory, file, i, face_type, &stream, &font_data);
+            hr = init_font_data(factory, file, face_type, i, &stream, &font_data);
             if (FAILED(hr))
                 break;
 
             /* get family name from font file */
-            hr = opentype_get_font_familyname(stream, i, face_type, &family_name);
+            hr = opentype_get_font_familyname(stream, face_type, i, &family_name);
             IDWriteFontFileStream_Release(stream);
             if (FAILED(hr)) {
                 WARN("unable to get family name from font\n");
