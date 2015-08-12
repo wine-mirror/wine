@@ -58,6 +58,7 @@ typedef enum
     WIN7,    /* Windows 7 */
     WIN8,    /* Windows 8 */
     WIN81,   /* Windows 8.1 */
+    WIN10,   /* Windows 10 */
     NB_WINDOWS_VERSIONS
 } WINDOWS_VERSION;
 
@@ -184,6 +185,12 @@ static const RTL_OSVERSIONINFOEXW VersionData[NB_WINDOWS_VERSIONS] =
         {' ',0},
         0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
     },
+    /* WIN10 */
+    {
+        sizeof(RTL_OSVERSIONINFOEXW), 10, 0, 0x2800, VER_PLATFORM_WIN32_NT,
+        {' ',0},
+        0, 0, VER_SUITE_SINGLEUSERTS, VER_NT_WORKSTATION, 0
+    },
 
 };
 
@@ -207,6 +214,7 @@ static const char * const WinVersionNames[NB_WINDOWS_VERSIONS] =
     "win7",                       /* WIN7 */
     "win8",                       /* WIN8 */
     "win81",                      /* WIN81 */
+    "win10",                      /* WIN10 */
 };
 
 
