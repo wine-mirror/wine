@@ -304,8 +304,6 @@ static const struct ID2D1SolidColorBrushVtbl d2d_solid_color_brush_vtbl =
 void d2d_solid_color_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
         const D2D1_COLOR_F *color, const D2D1_BRUSH_PROPERTIES *desc)
 {
-    FIXME("Ignoring brush properties.\n");
-
     d2d_brush_init(brush, factory, D2D_BRUSH_TYPE_SOLID, desc,
             (ID2D1BrushVtbl *)&d2d_solid_color_brush_vtbl);
     brush->u.solid.color = *color;
