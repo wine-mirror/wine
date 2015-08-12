@@ -1108,24 +1108,6 @@ static const IDWriteFontFace2Vtbl dwritefontfacevtbl = {
     dwritefontface2_GetRecommendedRenderingMode
 };
 
-HRESULT get_family_names_from_stream(IDWriteFontFileStream *stream, UINT32 index, DWRITE_FONT_FACE_TYPE facetype,
-    IDWriteLocalizedStrings **names)
-{
-    const void *name_table = NULL;
-    void *name_context;
-    HRESULT hr = E_FAIL;
-
-    opentype_get_font_table(stream, facetype, index, MS_NAME_TAG, &name_table, &name_context, NULL, NULL);
-    if (name_table) {
-        hr = opentype_get_font_strings_from_id(name_table, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, names);
-        IDWriteFontFileStream_ReleaseFileFragment(stream, name_context);
-    }
-    else
-        *names = NULL;
-
-    return hr;
-}
-
 static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace2 **fontface)
 {
     struct dwrite_font_data *data = font->data;
@@ -1318,7 +1300,7 @@ static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont2 *iface,
             WARN("no NAME table found.\n");
 
         if (table_exists) {
-            hr = opentype_get_font_strings_from_id(table_data, stringid, &data->info_strings[stringid]);
+            hr = opentype_get_font_info_strings(table_data, stringid, &data->info_strings[stringid]);
             if (FAILED(hr) || !data->info_strings[stringid])
                 return hr;
             IDWriteFontFace2_ReleaseFontTable(fontface, context);
@@ -2091,7 +2073,7 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
                 break;
 
             /* get family name from font file */
-            hr = get_family_names_from_stream(stream, i, face_type, &family_name);
+            hr = opentype_get_font_familyname(stream, i, face_type, &family_name);
             IDWriteFontFileStream_Release(stream);
             if (FAILED(hr)) {
                 WARN("unable to get family name from font\n");

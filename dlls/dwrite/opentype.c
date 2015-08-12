@@ -33,6 +33,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_TTCF_TAG DWRITE_MAKE_OPENTYPE_TAG('t','t','c','f')
 #define MS_GPOS_TAG DWRITE_MAKE_OPENTYPE_TAG('G','P','O','S')
 #define MS_GSUB_TAG DWRITE_MAKE_OPENTYPE_TAG('G','S','U','B')
+#define MS_NAME_TAG DWRITE_MAKE_OPENTYPE_TAG('n','a','m','e')
 
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
@@ -1194,12 +1195,11 @@ static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT la
     }
 }
 
-HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings)
+HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OPENTYPE_STRING_ID id, IDWriteLocalizedStrings **strings)
 {
     const TT_NAME_V0 *header;
     BYTE *storage_area = 0;
     USHORT count = 0;
-    UINT16 name_id;
     BOOL exists;
     HRESULT hr;
     int i;
@@ -1222,14 +1222,12 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
     storage_area = (LPBYTE)table_data + GET_BE_WORD(header->stringOffset);
     count = GET_BE_WORD(header->count);
 
-    name_id = dwriteid_to_opentypeid[id];
-
     exists = FALSE;
     for (i = 0; i < count; i++) {
         const TT_NameRecord *record = &header->nameRecord[i];
         USHORT lang_id, length, offset, encoding, platform;
 
-        if (GET_BE_WORD(record->nameID) != name_id)
+        if (GET_BE_WORD(record->nameID) != id)
             continue;
 
         exists = TRUE;
@@ -1292,6 +1290,46 @@ HRESULT opentype_get_font_strings_from_id(const void *table_data, DWRITE_INFORMA
         IDWriteLocalizedStrings_Release(*strings);
         *strings = NULL;
     }
+
+    return exists ? S_OK : E_FAIL;
+}
+
+/* Provides a conversion from DWRITE to OpenType name ids, input id be valid, it's not checked. */
+HRESULT opentype_get_font_info_strings(const void *table_data, DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings)
+{
+    return opentype_get_font_strings_from_id(table_data, dwriteid_to_opentypeid[id], strings);
+}
+
+/* Name locating order is WWS Family Name -> Preferred Name -> Family Name. If font claims to
+   have 'Preferred Name' in WWS format, then WWS name is not used.  */
+HRESULT opentype_get_font_familyname(IDWriteFontFileStream *stream, UINT32 index, DWRITE_FONT_FACE_TYPE facetype,
+    IDWriteLocalizedStrings **names)
+{
+    const TT_OS2_V2 *tt_os2;
+    void *os2_context, *name_context;
+    const void *name_table;
+    HRESULT hr;
+
+    opentype_get_font_table(stream, facetype, index, MS_OS2_TAG,  (const void**)&tt_os2, &os2_context, NULL, NULL);
+    opentype_get_font_table(stream, facetype, index, MS_NAME_TAG, &name_table, &name_context, NULL, NULL);
+
+    *names = NULL;
+
+    /* if Preferred Family doesn't conform to WWS model try WWS name */
+    if (tt_os2 && !(GET_BE_WORD(tt_os2->fsSelection) & OS2_FSSELECTION_WWS))
+        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_WWS_FAMILY_NAME, names);
+    else
+        hr = E_FAIL;
+
+    if (FAILED(hr))
+        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_PREFERRED_FAMILY_NAME, names);
+    if (FAILED(hr))
+        hr = opentype_get_font_strings_from_id(name_table, OPENTYPE_STRING_FAMILY_NAME, names);
+
+    if (tt_os2)
+        IDWriteFontFileStream_ReleaseFileFragment(stream, os2_context);
+    if (name_context)
+        IDWriteFontFileStream_ReleaseFileFragment(stream, name_context);
 
     return hr;
 }

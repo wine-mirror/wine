@@ -575,7 +575,7 @@ static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop *ifa
     index = IDWriteFontFace_GetIndex(fontface);
     face_type = IDWriteFontFace_GetType(fontface);
     opentype_get_font_properties(stream, face_type, index, &props);
-    hr = get_family_names_from_stream(stream, index, face_type, &familynames);
+    hr = opentype_get_font_familyname(stream, index, face_type, &familynames);
     IDWriteFontFile_Release(file);
     IDWriteFontFileStream_Release(stream);
     if (FAILED(hr))
