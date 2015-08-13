@@ -913,7 +913,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
     const KeyEntry*	ke;
     unsigned		ofs;
     void		(*func)(struct WCEL_Context* ctx);
-    DWORD               mode, ks;
+    DWORD               mode, input_mode, ks;
     int                 use_emacs;
 
     memset(&ctx, 0, sizeof(ctx));
@@ -928,6 +928,7 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
 	!GetConsoleScreenBufferInfo(ctx.hConOut, &ctx.csbi))
 	return NULL;
     if (!GetConsoleMode(hConsoleIn, &mode)) mode = 0;
+    input_mode = mode;
     ctx.shall_echo = (mode & ENABLE_ECHO_INPUT) ? 1 : 0;
     ctx.insert = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) == (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS) ? 1 : 0;
     if (!GetConsoleMode(ctx.hConOut, &mode)) mode = 0;
@@ -982,6 +983,11 @@ WCHAR* CONSOLE_Readline(HANDLE hConsoleIn, BOOL can_pos_cursor)
 	}
 
         GetConsoleMode(hConsoleIn, &mode);
+        if (input_mode != mode)
+        {
+            input_mode = mode;
+            ctx.insertkey = 0;
+        }
         ctx.insert = (mode & (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS)) ==
                      (ENABLE_INSERT_MODE|ENABLE_EXTENDED_FLAGS);
         if (ctx.insertkey)
