@@ -288,6 +288,9 @@ static HRESULT WINAPI IFileDialogEvents_fnOnOverwrite(IFileDialogEvents *iface,
 {
     IFileDialogEventsImpl *This = impl_from_IFileDialogEvents(iface);
     This->OnOverwrite++;
+    ok(*pResponse == FDEOR_DEFAULT, "overwrite response %u\n", *pResponse);
+    *pResponse = FDEOR_ACCEPT;
+    ok(!This->OnFileOk, "OnFileOk already called %u times\n", This->OnFileOk);
     return S_OK;
 }
 
@@ -2261,6 +2264,164 @@ if (0)
     IFileDialog_Release(fd);
 }
 
+static void test_overwrite(void)
+{
+    static const WCHAR filename_winetest[] = {'w','i','n','e','t','e','s','t','.','o','v','w',0};
+    IFileDialogEventsImpl *pfdeimpl;
+    IFileDialogEvents *pfde;
+    IFileDialog *fd;
+    DWORD cookie;
+    LPWSTR filename;
+    IShellItem *psi_current;
+    WCHAR buf[MAX_PATH];
+    HRESULT hr;
+
+    GetCurrentDirectoryW(MAX_PATH, buf);
+    ok(!!pSHCreateItemFromParsingName, "SHCreateItemFromParsingName is missing.\n");
+    hr = pSHCreateItemFromParsingName(buf, NULL, &IID_IShellItem, (void**)&psi_current);
+    ok(hr == S_OK, "Got 0x%08x\n", hr);
+
+    touch_file(filename_winetest);
+
+    /* FOS_OVERWRITEPROMPT has no effect on open dialog */
+    hr = CoCreateInstance(&CLSID_FileOpenDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&fd);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialog_SetOptions(fd, FOS_OVERWRITEPROMPT | FOS_NOCHANGEDIR);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialog_SetFolder(fd, psi_current);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    pfde = IFileDialogEvents_Constructor();
+    pfdeimpl = impl_from_IFileDialogEvents(pfde);
+    pfdeimpl->set_filename = filename_winetest;
+    hr = IFileDialog_Advise(fd, pfde, &cookie);
+    ok(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+
+    hr = IFileDialog_Show(fd, NULL);
+    ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+
+    ok(!pfdeimpl->OnOverwrite, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
+
+    hr = IFileDialog_GetFileName(fd, &filename);
+    ok(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok(!lstrcmpW(filename, filename_winetest), "Got %s\n", wine_dbgstr_w(filename));
+    CoTaskMemFree(filename);
+
+    hr = IFileDialog_Unadvise(fd, cookie);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    IFileDialog_Release(fd);
+
+    IFileDialogEvents_Release(pfde);
+
+    /* Save dialog doesn't check for overwrite without FOS_OVERWRITEPROMPT set */
+    hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&fd);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialog_SetOptions(fd, FOS_NOREADONLYRETURN | FOS_PATHMUSTEXIST | FOS_NOCHANGEDIR);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialog_SetFolder(fd, psi_current);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    pfde = IFileDialogEvents_Constructor();
+    pfdeimpl = impl_from_IFileDialogEvents(pfde);
+    pfdeimpl->set_filename = filename_winetest;
+    hr = IFileDialog_Advise(fd, pfde, &cookie);
+    ok(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+
+    hr = IFileDialog_Show(fd, NULL);
+    ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+
+    ok(!pfdeimpl->OnOverwrite, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
+
+    hr = IFileDialog_GetFileName(fd, &filename);
+    ok(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok(!lstrcmpW(filename, filename_winetest), "Got %s\n", wine_dbgstr_w(filename));
+    CoTaskMemFree(filename);
+
+    hr = IFileDialog_Unadvise(fd, cookie);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    IFileDialog_Release(fd);
+
+    IFileDialogEvents_Release(pfde);
+
+    /* Save dialog with FOS_OVERWRITEPROMPT set */
+    hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&fd);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialog_SetFolder(fd, psi_current);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    pfde = IFileDialogEvents_Constructor();
+    pfdeimpl = impl_from_IFileDialogEvents(pfde);
+    pfdeimpl->set_filename = filename_winetest;
+    hr = IFileDialog_Advise(fd, pfde, &cookie);
+    ok(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+
+    hr = IFileDialog_Show(fd, NULL);
+    ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+
+    todo_wine ok(pfdeimpl->OnOverwrite == 1, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
+
+    hr = IFileDialog_GetFileName(fd, &filename);
+    ok(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok(!lstrcmpW(filename, filename_winetest), "Got %s\n", wine_dbgstr_w(filename));
+    CoTaskMemFree(filename);
+
+    hr = IFileDialog_Unadvise(fd, cookie);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    IFileDialog_Release(fd);
+
+    IFileDialogEvents_Release(pfde);
+
+    DeleteFileW(filename_winetest);
+
+    /* Save dialog with FOS_OVERWRITEPROMPT set but without existing file */
+    hr = CoCreateInstance(&CLSID_FileSaveDialog, NULL, CLSCTX_INPROC_SERVER,
+                          &IID_IFileDialog, (void**)&fd);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialog_SetFolder(fd, psi_current);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    pfde = IFileDialogEvents_Constructor();
+    pfdeimpl = impl_from_IFileDialogEvents(pfde);
+    pfdeimpl->set_filename = filename_winetest;
+    hr = IFileDialog_Advise(fd, pfde, &cookie);
+    ok(hr == S_OK, "Advise failed: Got 0x%08x\n", hr);
+
+    hr = IFileDialog_Show(fd, NULL);
+    ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
+
+    ok(!pfdeimpl->OnOverwrite, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
+
+    hr = IFileDialog_GetFileName(fd, &filename);
+    ok(hr == S_OK, "GetFileName failed: Got 0x%08x\n", hr);
+    ok(!lstrcmpW(filename, filename_winetest), "Got %s\n", wine_dbgstr_w(filename));
+    CoTaskMemFree(filename);
+
+    hr = IFileDialog_Unadvise(fd, cookie);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    IFileDialog_Release(fd);
+
+    IFileDialogEvents_Release(pfde);
+
+    IShellItem_Release(psi_current);
+}
+
 START_TEST(itemdlg)
 {
     OleInitialize(NULL);
@@ -2274,6 +2435,7 @@ START_TEST(itemdlg)
         test_filename();
         test_customize();
         test_persistent_state();
+        test_overwrite();
     }
     else
         skip("Skipping all Item Dialog tests.\n");
