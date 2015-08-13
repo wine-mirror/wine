@@ -213,6 +213,47 @@ static void events_OnTypeChange(FileDialogImpl *This)
     }
 }
 
+static HRESULT events_OnOverwrite(FileDialogImpl *This, IShellItem *shellitem)
+{
+    events_client *cursor;
+    HRESULT hr = S_OK;
+    FDE_OVERWRITE_RESPONSE response = FDEOR_DEFAULT;
+    TRACE("%p %p\n", This, shellitem);
+
+    LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
+    {
+        TRACE("Notifying %p\n", cursor);
+        hr = IFileDialogEvents_OnOverwrite(cursor->pfde, (IFileDialog*)&This->IFileDialog2_iface, shellitem, &response);
+        TRACE("<-- hr=%x response=%u\n", hr, response);
+        if(FAILED(hr) && hr != E_NOTIMPL)
+            break;
+    }
+
+    if(hr == E_NOTIMPL)
+        hr = S_OK;
+
+    if(SUCCEEDED(hr))
+    {
+        if (response == FDEOR_DEFAULT)
+        {
+            WCHAR buf[100];
+            int answer;
+
+            LoadStringW(COMDLG32_hInstance, IDS_OVERWRITEFILE, buf, 100);
+            answer = MessageBoxW(This->dlg_hwnd, buf, This->custom_title,
+                       MB_YESNO | MB_ICONEXCLAMATION);
+            if (answer == IDNO || answer == IDCANCEL)
+            {
+                hr = E_FAIL;
+            }
+        }
+        else if (response == FDEOR_REFUSE)
+            hr = E_FAIL;
+    }
+
+    return hr;
+}
+
 static inline HRESULT get_cctrl_event(IFileDialogEvents *pfde, IFileDialogControlEvents **pfdce)
 {
     return IFileDialogEvents_QueryInterface(pfde, &IID_IFileDialogControlEvents, (void**)pfdce);
@@ -423,6 +464,28 @@ static LPWSTR get_first_ext_from_spec(LPWSTR buf, LPCWSTR spec)
     return ext;
 }
 
+static BOOL shell_item_exists(IShellItem* shellitem)
+{
+    LPWSTR filename;
+    HRESULT hr;
+    BOOL result;
+
+    hr = IShellItem_GetDisplayName(shellitem, SIGDN_FILESYSPATH, &filename);
+    if (SUCCEEDED(hr))
+    {
+        /* FIXME: Implement SFGAO_VALIDATE in Wine and use it instead. */
+        result = (GetFileAttributesW(filename) != INVALID_FILE_ATTRIBUTES);
+        CoTaskMemFree(filename);
+    }
+    else
+    {
+        SFGAOF attributes;
+        result = SUCCEEDED(IShellItem_GetAttributes(shellitem, SFGAO_VALIDATE, &attributes));
+    }
+
+    return result;
+}
+
 static HRESULT on_default_action(FileDialogImpl *This)
 {
     IShellFolder *psf_parent, *psf_desktop;
@@ -587,6 +650,26 @@ static HRESULT on_default_action(FileDialogImpl *This)
                     This->psia_results = NULL;
                     break;
                 }
+            }
+
+            if((This->options & FOS_OVERWRITEPROMPT) && This->dlg_type == ITEMDLG_TYPE_SAVE)
+            {
+                IShellItem *shellitem;
+
+                for (i=0; SUCCEEDED(hr) && i<file_count; i++)
+                {
+                    hr = IShellItemArray_GetItemAt(This->psia_results, i, &shellitem);
+                    if (SUCCEEDED(hr))
+                    {
+                        if (shell_item_exists(shellitem))
+                            hr = events_OnOverwrite(This, shellitem);
+
+                        IShellItem_Release(shellitem);
+                    }
+                }
+
+                if (FAILED(hr))
+                    break;
             }
 
             if(events_OnFileOk(This) == S_OK)

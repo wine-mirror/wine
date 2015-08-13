@@ -2370,7 +2370,7 @@ static void test_overwrite(void)
     hr = IFileDialog_Show(fd, NULL);
     ok(hr == S_OK, "Show failed: Got 0x%08x\n", hr);
 
-    todo_wine ok(pfdeimpl->OnOverwrite == 1, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
+    ok(pfdeimpl->OnOverwrite == 1, "got %u overwrite events\n", pfdeimpl->OnOverwrite);
     ok(pfdeimpl->OnFileOk == 1, "got %u ok events\n", pfdeimpl->OnFileOk);
 
     hr = IFileDialog_GetFileName(fd, &filename);
