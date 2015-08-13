@@ -794,7 +794,6 @@ if (0) /* crashes on native */
 
     /* test mode */
     ret = GetGraphicsMode(hdc);
-todo_wine
     ok(ret == GM_ADVANCED, "got %d\n", ret);
 
     hbm = GetCurrentObject(hdc, OBJ_BITMAP);

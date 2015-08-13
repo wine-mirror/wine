@@ -45,6 +45,7 @@ struct dib_data {
 
 struct rendertarget {
     IDWriteBitmapRenderTarget1 IDWriteBitmapRenderTarget1_iface;
+    ID2D1SimplifiedGeometrySink ID2D1SimplifiedGeometrySink_iface;
     LONG ref;
 
     IDWriteFactory *factory;
@@ -99,10 +100,110 @@ static inline struct rendertarget *impl_from_IDWriteBitmapRenderTarget1(IDWriteB
     return CONTAINING_RECORD(iface, struct rendertarget, IDWriteBitmapRenderTarget1_iface);
 }
 
+static inline struct rendertarget *impl_from_ID2D1SimplifiedGeometrySink(ID2D1SimplifiedGeometrySink *iface)
+{
+    return CONTAINING_RECORD(iface, struct rendertarget, ID2D1SimplifiedGeometrySink_iface);
+}
+
 static inline struct gdiinterop *impl_from_IDWriteGdiInterop(IDWriteGdiInterop *iface)
 {
     return CONTAINING_RECORD(iface, struct gdiinterop, IDWriteGdiInterop_iface);
 }
+
+static HRESULT WINAPI rendertarget_sink_QueryInterface(ID2D1SimplifiedGeometrySink *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_ID2D1SimplifiedGeometrySink) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
+        *obj = iface;
+        ID2D1SimplifiedGeometrySink_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI rendertarget_sink_AddRef(ID2D1SimplifiedGeometrySink *iface)
+{
+    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    return IDWriteBitmapRenderTarget1_AddRef(&This->IDWriteBitmapRenderTarget1_iface);
+}
+
+static ULONG WINAPI rendertarget_sink_Release(ID2D1SimplifiedGeometrySink *iface)
+{
+    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    return IDWriteBitmapRenderTarget1_Release(&This->IDWriteBitmapRenderTarget1_iface);
+}
+
+static void WINAPI rendertarget_sink_SetFillMode(ID2D1SimplifiedGeometrySink *iface, D2D1_FILL_MODE mode)
+{
+    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    SetPolyFillMode(This->hdc, mode == D2D1_FILL_MODE_ALTERNATE ? ALTERNATE : WINDING);
+}
+
+static void WINAPI rendertarget_sink_SetSegmentFlags(ID2D1SimplifiedGeometrySink *iface, D2D1_PATH_SEGMENT vertexFlags)
+{
+}
+
+static void WINAPI rendertarget_sink_BeginFigure(ID2D1SimplifiedGeometrySink *iface, D2D1_POINT_2F startPoint, D2D1_FIGURE_BEGIN figureBegin)
+{
+    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    MoveToEx(This->hdc, startPoint.x, startPoint.y, NULL);
+}
+
+static void WINAPI rendertarget_sink_AddLines(ID2D1SimplifiedGeometrySink *iface, const D2D1_POINT_2F *points, UINT32 count)
+{
+    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+
+    while (count--) {
+        LineTo(This->hdc, points->x, points->y);
+        points++;
+    }
+}
+
+static void WINAPI rendertarget_sink_AddBeziers(ID2D1SimplifiedGeometrySink *iface, const D2D1_BEZIER_SEGMENT *beziers, UINT32 count)
+{
+    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    POINT points[3];
+
+    while (count--) {
+        points[0].x = beziers->point1.x;
+        points[0].y = beziers->point1.y;
+        points[1].x = beziers->point2.x;
+        points[1].y = beziers->point2.y;
+        points[2].x = beziers->point3.x;
+        points[2].y = beziers->point3.y;
+
+        PolyBezierTo(This->hdc, points, 3);
+        beziers++;
+    }
+}
+
+static void WINAPI rendertarget_sink_EndFigure(ID2D1SimplifiedGeometrySink *iface, D2D1_FIGURE_END figureEnd)
+{
+    struct rendertarget *This = impl_from_ID2D1SimplifiedGeometrySink(iface);
+    CloseFigure(This->hdc);
+}
+
+static HRESULT WINAPI rendertarget_sink_Close(ID2D1SimplifiedGeometrySink *iface)
+{
+    return S_OK;
+}
+
+static const ID2D1SimplifiedGeometrySinkVtbl rendertargetsinkvtbl = {
+    rendertarget_sink_QueryInterface,
+    rendertarget_sink_AddRef,
+    rendertarget_sink_Release,
+    rendertarget_sink_SetFillMode,
+    rendertarget_sink_SetSegmentFlags,
+    rendertarget_sink_BeginFigure,
+    rendertarget_sink_AddLines,
+    rendertarget_sink_AddBeziers,
+    rendertarget_sink_EndFigure,
+    rendertarget_sink_Close
+};
 
 static HRESULT WINAPI rendertarget_QueryInterface(IDWriteBitmapRenderTarget1 *iface, REFIID riid, void **obj)
 {
@@ -213,6 +314,8 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     TRACE("(%p)->(%.2f %.2f %d %p %p 0x%08x %p)\n", This, originX, originY,
         measuring_mode, run, params, color, bbox_ret);
 
+    SetRectEmpty(bbox_ret);
+
     if (!This->dib.ptr)
         return S_OK;
 
@@ -221,9 +324,59 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     if (FAILED(hr))
         return hr;
 
-    /* FIXME: outline mode rendering is not supported for this target yet */
-    if (rendermode == DWRITE_RENDERING_MODE_OUTLINE)
-        rendermode = DWRITE_RENDERING_MODE_ALIASED;
+    target.left = target.top = 0;
+    target.right = This->size.cx;
+    target.bottom = This->size.cy;
+
+    if (rendermode == DWRITE_RENDERING_MODE_OUTLINE) {
+        static const XFORM identity = { 1.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f };
+        const DWRITE_MATRIX *m = &This->m;
+        XFORM xform;
+
+        /* target allows any transform to be set, filter it here */
+        if (m->m11 * m->m22 == m->m12 * m->m21) {
+            xform.eM11 = 1.0f;
+            xform.eM12 = 0.0f;
+            xform.eM21 = 0.0f;
+            xform.eM22 = 1.0f;
+            xform.eDx  = originX;
+            xform.eDy  = originY;
+        } else {
+            xform.eM11 = m->m11;
+            xform.eM12 = m->m12;
+            xform.eM21 = m->m21;
+            xform.eM22 = m->m22;
+            xform.eDx  = m->m11 * originX + m->m21 * originY + m->dx;
+            xform.eDy  = m->m12 * originX + m->m22 * originY + m->dy;
+        }
+        SetWorldTransform(This->hdc, &xform);
+
+        BeginPath(This->hdc);
+
+        hr = IDWriteFontFace_GetGlyphRunOutline(run->fontFace, run->fontEmSize * This->ppdip,
+            run->glyphIndices, run->glyphAdvances, run->glyphOffsets, run->glyphCount,
+            run->isSideways, run->bidiLevel & 1, &This->ID2D1SimplifiedGeometrySink_iface);
+
+        EndPath(This->hdc);
+
+        if (hr == S_OK) {
+            HBRUSH brush = CreateSolidBrush(color);
+
+            SelectObject(This->hdc, brush);
+
+            FillPath(This->hdc);
+
+            /* FIXME: one way to get affected rectangle bounds is to use region fill */
+            if (bbox_ret)
+                *bbox_ret = target;
+
+            DeleteObject(brush);
+        }
+
+        SetWorldTransform(This->hdc, &identity);
+
+        return hr;
+    }
 
     hr = IDWriteFactory_CreateGlyphRunAnalysis(This->factory,
         run, This->ppdip, &This->m, rendermode, measuring_mode,
@@ -241,11 +394,6 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
         texturetype = DWRITE_TEXTURE_CLEARTYPE_3x1;
     }
 
-    target.left = target.top = 0;
-    target.right = This->size.cx;
-    target.bottom = This->size.cy;
-
-    SetRectEmpty(bbox_ret);
     if (IntersectRect(&target, &target, &bounds)) {
         UINT32 size = (target.right - target.left) * (target.bottom - target.top);
         BYTE *bitmap;
@@ -261,7 +409,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
             else
                 blit_subpixel_888(&This->dib, This->size.cx, bitmap, &target, color);
 
-            *bbox_ret = target;
+            if (bbox_ret) *bbox_ret = target;
         }
 
         heap_free(bitmap);
@@ -387,9 +535,11 @@ static HRESULT create_rendertarget(IDWriteFactory *factory, HDC hdc, UINT32 widt
     if (!target) return E_OUTOFMEMORY;
 
     target->IDWriteBitmapRenderTarget1_iface.lpVtbl = &rendertargetvtbl;
+    target->ID2D1SimplifiedGeometrySink_iface.lpVtbl = &rendertargetsinkvtbl;
     target->ref = 1;
 
     target->hdc = CreateCompatibleDC(hdc);
+    SetGraphicsMode(target->hdc, GM_ADVANCED);
     hr = create_target_dibsection(target, width, height);
     if (FAILED(hr)) {
         IDWriteBitmapRenderTarget1_Release(&target->IDWriteBitmapRenderTarget1_iface);
