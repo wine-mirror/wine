@@ -308,6 +308,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     IDWriteGlyphRunAnalysis *analysis;
     DWRITE_RENDERING_MODE rendermode;
     DWRITE_TEXTURE_TYPE texturetype;
+    IDWriteFontFace1 *fontface1;
     RECT target, bounds;
     HRESULT hr;
 
@@ -319,8 +320,17 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
     if (!This->dib.ptr)
         return S_OK;
 
-    hr = IDWriteFontFace_GetRecommendedRenderingMode(run->fontFace, run->fontEmSize,
-        This->ppdip, measuring_mode, params, &rendermode);
+    hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace1, (void**)&fontface1);
+    if (hr == S_OK) {
+        hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, run->fontEmSize, This->ppdip * 96.0f,
+            This->ppdip * 96.0f, NULL, run->isSideways, DWRITE_OUTLINE_THRESHOLD_ALIASED, measuring_mode,
+            &rendermode);
+        IDWriteFontFace1_Release(fontface1);
+    }
+    else
+        hr = IDWriteFontFace_GetRecommendedRenderingMode(run->fontFace, run->fontEmSize,
+            This->ppdip, measuring_mode, params, &rendermode);
+
     if (FAILED(hr))
         return hr;
 
