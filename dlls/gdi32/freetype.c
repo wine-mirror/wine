@@ -8151,7 +8151,7 @@ static BOOL freetype_GdiRealizationInfo( PHYSDEV dev, void *ptr )
         info->flags |= 2;
 
     info->cache_num = physdev->font->cache_num;
-    info->unknown2 = -1;
+    info->instance_id = -1;
     return TRUE;
 }
 

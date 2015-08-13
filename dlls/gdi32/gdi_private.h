@@ -281,8 +281,7 @@ typedef struct
 {
     DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
     DWORD cache_num;   /* keeps incrementing - num of fonts that have been created allowing for caching?? */
-    DWORD unknown2;    /* fixed for a given font - looks like it could be the order of the face in the font list or the order
-                          in which the face was first rendered. */
+    DWORD instance_id; /* identifies a realized font instance */
 } realization_info_t;
 
 

@@ -55,6 +55,9 @@ static HANDLE (WINAPI *pAddFontMemResourceEx)(PVOID, DWORD, PVOID, DWORD *);
 static BOOL  (WINAPI *pRemoveFontMemResourceEx)(HANDLE);
 static INT   (WINAPI *pAddFontResourceExA)(LPCSTR, DWORD, PVOID);
 static BOOL  (WINAPI *pRemoveFontResourceExA)(LPCSTR, DWORD, PVOID);
+static BOOL  (WINAPI *pGetFontRealizationInfo)(HDC hdc, DWORD *);
+static BOOL  (WINAPI *pGetFontFileInfo)(DWORD, DWORD, void *, DWORD, DWORD *);
+static BOOL  (WINAPI *pGetFontFileData)(DWORD, DWORD, ULONGLONG, void *, DWORD);
 
 static HMODULE hgdi32 = 0;
 static const MAT2 mat = { {0,1}, {0,0}, {0,0}, {0,1} };
@@ -97,6 +100,9 @@ static void init(void)
     pRemoveFontMemResourceEx = (void *)GetProcAddress(hgdi32, "RemoveFontMemResourceEx");
     pAddFontResourceExA = (void *)GetProcAddress(hgdi32, "AddFontResourceExA");
     pRemoveFontResourceExA = (void *)GetProcAddress(hgdi32, "RemoveFontResourceExA");
+    pGetFontRealizationInfo = (void *)GetProcAddress(hgdi32, "GetFontRealizationInfo");
+    pGetFontFileInfo = (void *)GetProcAddress(hgdi32, "GetFontFileInfo");
+    pGetFontFileData = (void *)GetProcAddress(hgdi32, "GetFontFileData");
 
     system_lang_id = PRIMARYLANGID(GetSystemDefaultLangID());
 }
@@ -4106,13 +4112,24 @@ todo_wine
     DeleteDC(hdc);
 }
 
-static void test_GdiRealizationInfo(void)
+static void test_RealizationInfo(void)
 {
     HDC hdc;
-    DWORD info[4];
+    DWORD info[4], info2[10];
     BOOL r;
     HFONT hfont, hfont_old;
     LOGFONTA lf;
+    DWORD needed, read;
+    HANDLE h;
+    BYTE file[16], data[14];
+    struct file_info
+    {
+        FILETIME time;
+        LARGE_INTEGER size;
+        WCHAR path[MAX_PATH];
+    } file_info;
+    FILETIME time;
+    LARGE_INTEGER size;
 
     if(!pGdiRealizationInfo)
     {
@@ -4146,6 +4163,62 @@ static void test_GdiRealizationInfo(void)
     ok(r != 0, "ret 0\n");
     ok((info[0] & 0xf) == 3, "info[0] = %x for arial\n", info[0]);
     ok(info[3] == 0xcccccccc, "structure longer than 3 dwords\n");
+
+    if (pGetFontRealizationInfo)
+    {
+        /* The first DWORD represents a struct size. On a
+           newly rebooted system setting this to < 16 results
+           in GetFontRealizationInfo failing.  However there
+           appears to be some caching going on which results
+           in calls after a successful call also succeeding even
+           if the size < 16.  This means we can't reliably test
+           this behaviour. */
+
+        memset(info2, 0xcc, sizeof(info2));
+        info2[0] = 16;
+        r = pGetFontRealizationInfo(hdc, info2);
+        ok(r != 0, "ret 0\n");
+        /* We may get the '24' version here if that has been previously
+           requested. */
+        ok(info2[0] == 16 || info2[0] == 24, "got %d\n", info2[0]);
+        ok(!memcmp(info2 + 1, info, 3 * sizeof(DWORD)), "mismatch\n");
+        ok(info2[6] == 0xcccccccc, "structure longer than 6 dwords\n");
+
+        memset(info2, 0xcc, sizeof(info2));
+        info2[0] = 28;
+        r = pGetFontRealizationInfo(hdc, info2);
+        ok(r == FALSE, "got %d\n", r);
+
+        memset(info2, 0xcc, sizeof(info2));
+        info2[0] = 24;
+        r = pGetFontRealizationInfo(hdc, info2);
+        ok(r != 0, "ret 0\n");
+        ok(info2[0] == 24, "got %d\n", info2[0]);
+        ok(!memcmp(info2 + 1, info, 3 * sizeof(DWORD)), "mismatch\n");
+        ok(info2[6] == 0xcccccccc, "structure longer than 6 dwords\n");
+
+        /* Test GetFontFileInfo() */
+        r = pGetFontFileInfo(info2[3], 0, &file_info, sizeof(file_info), &needed);
+        ok(r != 0, "ret 0 gle %d\n", GetLastError());
+
+        h = CreateFileW(file_info.path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+        ok(h != INVALID_HANDLE_VALUE, "Unable to open file %d\n", GetLastError());
+
+        GetFileTime(h, NULL, NULL, &time);
+        ok(!CompareFileTime(&file_info.time, &time), "time mismatch\n");
+        GetFileSizeEx(h, &size);
+        ok(file_info.size.QuadPart == size.QuadPart, "size mismatch\n");
+
+        /* Read first 16 bytes from the file */
+        ReadFile(h, file, sizeof(file), &read, NULL);
+        CloseHandle(h);
+
+        /* Get bytes 2 - 16 using GetFontFileData */
+        r = pGetFontFileData(info2[3], 0, 2, data, sizeof(data));
+        ok(r != 0, "ret 0 gle %d\n", GetLastError());
+
+        ok(!memcmp(data, file + 2, sizeof(data)), "mismatch\n");
+    }
 
     DeleteObject(SelectObject(hdc, hfont_old));
 
@@ -6374,7 +6447,7 @@ START_TEST(font)
         skip("Arial Black or Symbol/Wingdings is not installed\n");
     test_EnumFontFamiliesEx_default_charset();
     test_GetTextMetrics();
-    test_GdiRealizationInfo();
+    test_RealizationInfo();
     test_GetTextFace();
     test_GetGlyphOutline();
     test_GetTextMetrics2("Tahoma", -11);
