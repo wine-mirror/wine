@@ -146,6 +146,13 @@ HRESULT set_dochost_url(DocHost *This, const WCHAR *url)
     return S_OK;
 }
 
+void notify_download_state(DocHost *dochost, BOOL is_downloading)
+{
+    DISPPARAMS dwl_dp = {NULL};
+    TRACE("(%x)\n", is_downloading);
+    call_sink(dochost->cps.wbe2, is_downloading ? DISPID_DOWNLOADBEGIN : DISPID_DOWNLOADCOMPLETE, &dwl_dp);
+}
+
 static inline BindStatusCallback *impl_from_IBindStatusCallback(IBindStatusCallback *iface)
 {
     return CONTAINING_RECORD(iface, BindStatusCallback, IBindStatusCallback_iface);
@@ -896,6 +903,7 @@ static HRESULT navigate_bsc(DocHost *This, BindStatusCallback *bsc, IMoniker *mo
         return S_OK;
     }
 
+    notify_download_state(This, TRUE);
     on_commandstate_change(This, CSC_NAVIGATEBACK, VARIANT_FALSE);
     on_commandstate_change(This, CSC_NAVIGATEFORWARD, VARIANT_FALSE);
 

@@ -2718,7 +2718,7 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
         CHECK_CALLED(Invoke_AMBIENT_USERMODE);
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
         CHECK_CALLED(Invoke_BEFORENAVIGATE2);
-        todo_wine CHECK_CALLED(Invoke_DOWNLOADBEGIN);
+        CHECK_CALLED(Invoke_DOWNLOADBEGIN);
         if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_1);
         CHECK_CALLED(EnableModeless_FALSE);
         CHECK_CALLED(Invoke_STATUSTEXTCHANGE);

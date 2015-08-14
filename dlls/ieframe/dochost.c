@@ -646,8 +646,11 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
             if(This->olecmd)
                 return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
 
-            FIXME("Default action not implemented.\n");
-            return E_NOTIMPL;
+            if(!pvaIn || V_VT(pvaIn) != VT_I4)
+                return E_INVALIDARG;
+
+            notify_download_state(This, V_I4(pvaIn));
+            return S_OK;
         default:
             FIXME("Unimplemented cmdid %d\n", nCmdID);
             return E_NOTIMPL;

@@ -277,6 +277,7 @@ void set_doc_state(DocHost*,READYSTATE) DECLSPEC_HIDDEN;
 void deactivate_document(DocHost*) DECLSPEC_HIDDEN;
 void create_doc_view_hwnd(DocHost*) DECLSPEC_HIDDEN;
 void on_commandstate_change(DocHost*,LONG,VARIANT_BOOL) DECLSPEC_HIDDEN;
+void notify_download_state(DocHost*,BOOL) DECLSPEC_HIDDEN;
 
 #define WM_DOCHOSTTASK (WM_USER+0x300)
 void push_dochost_task(DocHost*,task_header_t*,task_proc_t,task_destr_t,BOOL) DECLSPEC_HIDDEN;
