@@ -939,6 +939,8 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
     }
 
     if(This->is_doc_channel) {
+        if(!This->bsc.window)
+            return E_ABORT; /* Binding aborted in OnStartRequest call. */
         update_window_doc(This->bsc.window);
         if(This->bsc.window->base.outer_window->readystate != READYSTATE_LOADING)
             set_ready_state(This->bsc.window->base.outer_window, READYSTATE_LOADING);
@@ -1053,7 +1055,9 @@ static HRESULT read_stream_data(nsChannelBSC *This, IStream *stream)
                     return E_OUTOFMEMORY;
             }
 
-            on_start_nsrequest(This);
+            hres = on_start_nsrequest(This);
+            if(FAILED(hres))
+                return hres;
         }
 
         nsres = nsIStreamListener_OnDataAvailable(This->nslistener,
