@@ -364,6 +364,8 @@ static HRESULT WINAPI BindStatusCallback_OnStopBinding(IBindStatusCallback *ifac
     if(!This->doc_host)
         return S_OK;
 
+    if(!This->doc_host->olecmd)
+        notify_download_state(This->doc_host, FALSE);
     if(FAILED(hresult))
         handle_navigation_error(This->doc_host, hresult, This->url, NULL);
 
