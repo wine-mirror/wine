@@ -582,6 +582,11 @@ void release_dochost_client(DocHost *This)
         IOleInPlaceFrame_Release(This->frame);
         This->frame = NULL;
     }
+
+    if(This->olecmd) {
+        IOleCommandTarget_Release(This->olecmd);
+        This->olecmd = NULL;
+    }
 }
 
 static inline DocHost *impl_from_IOleCommandTarget(IOleCommandTarget *iface)

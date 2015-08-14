@@ -128,6 +128,7 @@ struct DocHost {
     IDispatch *client_disp;
     IDocHostUIHandler *hostui;
     IOleInPlaceFrame *frame;
+    IOleCommandTarget *olecmd;
 
     IUnknown *document;
     IOleDocumentView *view;

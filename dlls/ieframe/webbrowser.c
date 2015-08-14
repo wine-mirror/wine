@@ -1206,33 +1206,17 @@ static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost* This, LPCWSTR text
 
 static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
 {
-
 }
 
 static HRESULT DocHostContainer_exec(DocHost *doc_host, const GUID *cmd_group, DWORD cmdid, DWORD execopt, VARIANT *in,
         VARIANT *out)
 {
-    WebBrowser *This = impl_from_DocHost(doc_host);
-    IOleCommandTarget *cmdtrg = NULL;
     HRESULT hres;
 
-    if(This->client) {
-        hres = IOleClientSite_QueryInterface(This->client, &IID_IOleCommandTarget, (void**)&cmdtrg);
-        if(FAILED(hres))
-            cmdtrg = NULL;
-    }
-
-    if(!cmdtrg && This->container) {
-        hres = IOleContainer_QueryInterface(This->container, &IID_IOleCommandTarget, (void**)&cmdtrg);
-        if(FAILED(hres))
-            cmdtrg = NULL;
-    }
-
-    if(!cmdtrg)
+    if(!doc_host->olecmd)
         return E_NOTIMPL;
 
-    hres = IOleCommandTarget_Exec(cmdtrg, cmd_group, cmdid, execopt, in, out);
-    IOleCommandTarget_Release(cmdtrg);
+    hres = IOleCommandTarget_Exec(doc_host->olecmd, cmd_group, cmdid, execopt, in, out);
     if(SUCCEEDED(hres))
         TRACE("Exec returned %08x %s\n", hres, debugstr_variant(out));
     else
