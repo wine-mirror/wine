@@ -143,8 +143,15 @@ static HRESULT ShellItem_get_parent_shellfolder(ShellItem *This, IShellFolder **
         ret = SHGetDesktopFolder(&desktop);
         if (SUCCEEDED(ret))
         {
-            ret = IShellFolder_BindToObject(desktop, parent_pidl, NULL, &IID_IShellFolder, (void**)ppsf);
-            IShellFolder_Release(desktop);
+            if (_ILIsDesktop(parent_pidl))
+            {
+                *ppsf = desktop;
+            }
+            else
+            {
+                ret = IShellFolder_BindToObject(desktop, parent_pidl, NULL, &IID_IShellFolder, (void**)ppsf);
+                IShellFolder_Release(desktop);
+            }
         }
         ILFree(parent_pidl);
     }
