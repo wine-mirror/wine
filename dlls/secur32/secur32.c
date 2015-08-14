@@ -36,6 +36,7 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(secur32);
 
@@ -1165,6 +1166,111 @@ BOOLEAN WINAPI TranslateNameW(
     FIXME("%p %d %d %p %p\n", lpAccountName, AccountNameFormat,
           DesiredNameFormat, lpTranslatedName, nSize);
     return FALSE;
+}
+
+/***********************************************************************
+ *		SspiEncodeAuthIdentityAsStrings (SECUR32.0)
+ */
+SECURITY_STATUS SEC_ENTRY SspiEncodeAuthIdentityAsStrings(
+    PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id, PCWSTR *username,
+    PCWSTR *domainname, PCWSTR *creds )
+{
+    SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+
+    FIXME("%p %p %p %p\n", opaque_id, username, domainname, creds);
+
+    *username = SECUR32_strdupW( id->User );
+    *domainname = SECUR32_strdupW( id->Domain );
+    *creds = SECUR32_strdupW( id->Password );
+
+    return SEC_E_OK;
+}
+
+/***********************************************************************
+ *		SspiEncodeStringsAsAuthIdentity (SECUR32.0)
+ */
+SECURITY_STATUS SEC_ENTRY SspiEncodeStringsAsAuthIdentity(
+    PCWSTR username, PCWSTR domainname, PCWSTR creds,
+    PSEC_WINNT_AUTH_IDENTITY_OPAQUE *opaque_id )
+{
+    SEC_WINNT_AUTH_IDENTITY_W *id;
+    DWORD len_username = 0, len_domainname = 0, len_password = 0, size;
+    WCHAR *ptr;
+
+    FIXME( "%s %s %s %p\n", debugstr_w(username), debugstr_w(domainname),
+           debugstr_w(creds), opaque_id );
+
+    if (!username && !domainname && !creds) return SEC_E_INVALID_TOKEN;
+
+    if (username) len_username = strlenW( username );
+    if (domainname) len_domainname = strlenW( domainname );
+    if (creds) len_password = strlenW( creds );
+
+    size = sizeof(*id);
+    if (username) size += (len_username + 1) * sizeof(WCHAR);
+    if (domainname) size += (len_domainname + 1) * sizeof(WCHAR);
+    if (creds) size += (len_password + 1) * sizeof(WCHAR);
+    if (!(id = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size ))) return ERROR_OUTOFMEMORY;
+    ptr = (WCHAR *)(id + 1);
+
+    if (username)
+    {
+        memcpy( ptr, username, (len_username + 1) * sizeof(WCHAR) );
+        id->User       = ptr;
+        id->UserLength = len_username;
+        ptr += len_username + 1;
+    }
+    if (domainname)
+    {
+        memcpy( ptr, domainname, (len_domainname + 1) * sizeof(WCHAR) );
+        id->Domain       = ptr;
+        id->DomainLength = len_domainname;
+        ptr += len_domainname + 1;
+    }
+    if (creds)
+    {
+        memcpy( ptr, creds, (len_password + 1) * sizeof(WCHAR) );
+        id->Password       = ptr;
+        id->PasswordLength = len_password;
+    }
+
+    *opaque_id = id;
+    return SEC_E_OK;
+}
+
+/***********************************************************************
+ *		SspiFreeAuthIdentity (SECUR32.0)
+ */
+void SEC_ENTRY SspiFreeAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
+{
+
+    TRACE( "%p\n", opaque_id );
+    HeapFree( GetProcessHeap(), 0, opaque_id );
+}
+
+/***********************************************************************
+ *		SspiLocalFree (SECUR32.0)
+ */
+void SEC_ENTRY SspiLocalFree( void *ptr )
+{
+    TRACE( "%p\n", ptr );
+    HeapFree( GetProcessHeap(), 0, ptr );
+}
+
+/***********************************************************************
+ *		SspiZeroAuthIdentity (SECUR32.0)
+ */
+void SEC_ENTRY SspiZeroAuthIdentity( PSEC_WINNT_AUTH_IDENTITY_OPAQUE opaque_id )
+{
+    SEC_WINNT_AUTH_IDENTITY_W *id = (SEC_WINNT_AUTH_IDENTITY_W *)opaque_id;
+
+    TRACE( "%p\n", opaque_id );
+
+    if (!id) return;
+    if (id->User) memset( id->User, 0, id->UserLength * sizeof(WCHAR) );
+    if (id->Domain) memset( id->Domain, 0, id->DomainLength * sizeof(WCHAR) );
+    if (id->Password) memset( id->Password, 0, id->PasswordLength * sizeof(WCHAR) );
+    memset( id, 0, sizeof(*id) );
 }
 
 /***********************************************************************
