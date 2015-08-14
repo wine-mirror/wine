@@ -1003,6 +1003,8 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
         aa->PhysicalAddressLength = buflen;
         aa->IfType = typeFromMibType(type);
         aa->ConnectionType = connectionTypeFromMibType(type);
+        aa->Luid.Info.NetLuidIndex = index;
+        aa->Luid.Info.IfType = aa->IfType;
 
         if (num_v4_gateways)
         {
