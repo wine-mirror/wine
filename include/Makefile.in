@@ -57,6 +57,7 @@ PUBLIC_IDL_H_SRCS = \
 	iads.idl \
 	icftypes.idl \
 	iextag.idl \
+	iimgctx.idl \
 	imnact.idl \
 	imnxport.idl \
 	indexsrv.idl \
