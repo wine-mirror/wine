@@ -1191,8 +1191,10 @@ static HRESULT WINAPI HTMLCurrentStyle3_get_wordSpacing(IHTMLCurrentStyle3 *ifac
 static HRESULT WINAPI HTMLCurrentStyle3_get_whiteSpace(IHTMLCurrentStyle3 *iface, BSTR *p)
 {
     HTMLCurrentStyle *This = impl_from_IHTMLCurrentStyle3(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    return get_nsstyle_attr(This->nsstyle, STYLEID_WHITE_SPACE, p, 0);
 }
 
 static const IHTMLCurrentStyle3Vtbl HTMLCurrentStyle3Vtbl = {
