@@ -1208,30 +1208,12 @@ static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
 {
 }
 
-static HRESULT DocHostContainer_exec(DocHost *doc_host, const GUID *cmd_group, DWORD cmdid, DWORD execopt, VARIANT *in,
-        VARIANT *out)
-{
-    HRESULT hres;
-
-    if(!doc_host->olecmd)
-        return E_NOTIMPL;
-
-    hres = IOleCommandTarget_Exec(doc_host->olecmd, cmd_group, cmdid, execopt, in, out);
-    if(SUCCEEDED(hres))
-        TRACE("Exec returned %08x %s\n", hres, debugstr_variant(out));
-    else
-        FIXME("Exec failed\n");
-
-    return hres;
-}
-
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
     WebBrowser_addref,
     WebBrowser_release,
     DocHostContainer_GetDocObjRect,
     DocHostContainer_SetStatusText,
-    DocHostContainer_SetURL,
-    DocHostContainer_exec
+    DocHostContainer_SetURL
 };
 
 static HRESULT create_webbrowser(int version, IUnknown *outer, REFIID riid, void **ppv)

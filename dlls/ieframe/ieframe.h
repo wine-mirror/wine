@@ -106,7 +106,6 @@ typedef struct _IDocHostContainerVtbl
     void (WINAPI* GetDocObjRect)(DocHost*,RECT*);
     HRESULT (WINAPI* SetStatusText)(DocHost*,LPCWSTR);
     void (WINAPI* SetURL)(DocHost*,LPCWSTR);
-    HRESULT (*exec)(DocHost*,const GUID*,DWORD,DWORD,VARIANT*,VARIANT*);
 } IDocHostContainerVtbl;
 
 struct DocHost {

@@ -639,8 +639,15 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
     if(!pguidCmdGroup) {
         switch(nCmdID) {
         case OLECMDID_UPDATECOMMANDS:
+            if(!This->olecmd)
+                return E_NOTIMPL;
+            return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
         case OLECMDID_SETDOWNLOADSTATE:
-            return This->container_vtbl->exec(This, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+            if(This->olecmd)
+                return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+
+            FIXME("Default action not implemented.\n");
+            return E_NOTIMPL;
         default:
             FIXME("Unimplemented cmdid %d\n", nCmdID);
             return E_NOTIMPL;
@@ -719,8 +726,11 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
         }
     }
 
-    if(IsEqualGUID(&CGID_DocHostCommandHandler, pguidCmdGroup))
-        return This->container_vtbl->exec(This, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+    if(IsEqualGUID(&CGID_DocHostCommandHandler, pguidCmdGroup)) {
+        if(!This->olecmd)
+            return E_NOTIMPL;
+        return IOleCommandTarget_Exec(This->olecmd, pguidCmdGroup, nCmdID, nCmdexecopt, pvaIn, pvaOut);
+    }
 
     FIXME("Unimplemented cmdid %d of group %s\n", nCmdID, debugstr_guid(pguidCmdGroup));
     return E_NOTIMPL;

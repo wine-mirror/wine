@@ -771,19 +771,12 @@ static void WINAPI DocHostContainer_SetURL(DocHost* iface, LPCWSTR url)
     SendMessageW(This->frame_hwnd, WM_UPDATEADDRBAR, 0, (LPARAM)url);
 }
 
-static HRESULT DocHostContainer_exec(DocHost* This, const GUID *cmd_group, DWORD cmdid, DWORD execopt, VARIANT *in,
-        VARIANT *out)
-{
-    return E_NOTIMPL;
-}
-
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
     IEDocHost_addref,
     IEDocHost_release,
     DocHostContainer_GetDocObjRect,
     DocHostContainer_SetStatusText,
-    DocHostContainer_SetURL,
-    DocHostContainer_exec
+    DocHostContainer_SetURL
 };
 
 static HRESULT create_ie(InternetExplorer **ret_obj)
