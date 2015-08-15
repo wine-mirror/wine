@@ -1160,7 +1160,7 @@ static void test_GetAttributesOf(void)
     dwFlags = ~0u;
     hr = IShellFolder_GetAttributesOf(testIShellFolder, 1, (LPCITEMIDLIST *)&pidls[1], &dwFlags);
     ok(hr == S_OK, "got hr %#lx\n", hr);
-    todo_wine ok(dwFlags == (testdir_flags & ~SFGAO_HASSUBFOLDER), "got flags %#lx\n", dwFlags);
+    ok(dwFlags == (testdir_flags & ~SFGAO_HASSUBFOLDER), "got flags %#lx\n", dwFlags);
 
     /* Test an absolute PIDL. Results for ParseDisplayName() are the same as
      * the relative PIDL, but for GetAttributesOf() they are different. */
