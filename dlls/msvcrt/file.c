@@ -1309,7 +1309,7 @@ int CDECL MSVCRT__locking(int fd, int mode, LONG nbytes)
         (mode==MSVCRT__LK_NBRLCK)?"_LK_NBRLCK":
                           "UNKNOWN");
 
-  if ((cur_locn = SetFilePointer(info->handle, 0L, NULL, SEEK_CUR)) == INVALID_SET_FILE_POINTER)
+  if ((cur_locn = SetFilePointer(info->handle, 0L, NULL, FILE_CURRENT)) == INVALID_SET_FILE_POINTER)
   {
     release_ioinfo(info);
     FIXME ("Seek failed\n");
