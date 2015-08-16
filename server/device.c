@@ -259,6 +259,7 @@ static struct irp_call *create_irp( struct device_file *file, const irp_params_t
     if ((irp = alloc_object( &irp_call_ops )))
     {
         irp->file     = (struct device_file *)grab_object( file );
+        irp->thread   = NULL;
         irp->async    = NULL;
         irp->params   = *params;
         irp->status   = STATUS_PENDING;
