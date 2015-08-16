@@ -1696,13 +1696,13 @@ int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
   if (type == FILE_TYPE_PIPE)
   {
     buf->st_dev = buf->st_rdev = fd;
-    buf->st_mode = S_IFIFO;
+    buf->st_mode = MSVCRT__S_IFIFO;
     buf->st_nlink = 1;
   }
   else if (type == FILE_TYPE_CHAR)
   {
     buf->st_dev = buf->st_rdev = fd;
-    buf->st_mode = S_IFCHR;
+    buf->st_mode = MSVCRT__S_IFCHR;
     buf->st_nlink = 1;
   }
   else /* FILE_TYPE_DISK etc. */
@@ -1714,7 +1714,7 @@ int CDECL MSVCRT__fstat64(int fd, struct MSVCRT__stat64* buf)
       release_ioinfo(info);
       return -1;
     }
-    buf->st_mode = S_IFREG | 0444;
+    buf->st_mode = MSVCRT__S_IFREG | 0444;
     if (!(hfi.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
       buf->st_mode |= 0222;
     buf->st_size  = ((__int64)hfi.nFileSizeHigh << 32) + hfi.nFileSizeLow;
@@ -2835,7 +2835,7 @@ int CDECL MSVCRT__setmode(int fd,int mode)
 
     if(info == &MSVCRT___badioinfo) {
         *MSVCRT__errno() = MSVCRT_EBADF;
-        return -1;
+        return MSVCRT_EOF;
     }
 
     if(mode == MSVCRT__O_BINARY) {
@@ -3745,7 +3745,7 @@ int CDECL MSVCRT__getw(MSVCRT_FILE* file)
     if (k == MSVCRT_EOF) {
       file->_flag |= MSVCRT__IOEOF;
       MSVCRT__unlock_file(file);
-      return EOF;
+      return MSVCRT_EOF;
     }
     ch[j] = k;
   }
@@ -4295,7 +4295,7 @@ MSVCRT_size_t CDECL MSVCRT__fread_nolock_s(void *buf, MSVCRT_size_t buf_size, MS
         }else {
             int c = MSVCRT__filbuf(stream);
 
-            if(c == EOF)
+            if(c == MSVCRT_EOF)
                 break;
 
             if(!MSVCRT_CHECK_PMT_ERR(buf_size != buf_pos, MSVCRT_ERANGE)) {
