@@ -78,13 +78,13 @@ static void update_gui_for_desktop_mode(HWND dialog)
     buf = get_reg_keyW(config_key, explorer_desktopsW, desktop_name, NULL);
     if (buf && (bufindex = strchrW(buf, 'x')))
     {
-        *bufindex = 0;
-        ++bufindex;
-        SetWindowTextW(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), buf);
-        SetWindowTextW(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), bufindex);
+        *bufindex++ = 0;
+
+        SetDlgItemTextW(dialog, IDC_DESKTOP_WIDTH, buf);
+        SetDlgItemTextW(dialog, IDC_DESKTOP_HEIGHT, bufindex);
     } else {
-        SetWindowTextA(GetDlgItem(dialog, IDC_DESKTOP_WIDTH), "800");
-        SetWindowTextA(GetDlgItem(dialog, IDC_DESKTOP_HEIGHT), "600");
+        SetDlgItemTextA(dialog, IDC_DESKTOP_WIDTH, "800");
+        SetDlgItemTextA(dialog, IDC_DESKTOP_HEIGHT, "600");
     }
     HeapFree(GetProcessHeap(), 0, buf);
 
@@ -244,17 +244,14 @@ static INT read_logpixels_reg(void)
 
 static void init_dpi_editbox(HWND hDlg)
 {
-    static const WCHAR fmtW[] = {'%','u',0};
     DWORD dwLogpixels;
-    WCHAR szLogpixels[MAXBUFLEN];
 
     updating_ui = TRUE;
 
     dwLogpixels = read_logpixels_reg();
     WINE_TRACE("%u\n", dwLogpixels);
 
-    sprintfW(szLogpixels, fmtW, dwLogpixels);
-    SetDlgItemTextW(hDlg, IDC_RES_DPIEDIT, szLogpixels);
+    SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, dwLogpixels, FALSE);
 
     updating_ui = FALSE;
 }
@@ -276,7 +273,6 @@ static void init_trackbar(HWND hDlg)
 
 static void update_dpi_trackbar_from_edit(HWND hDlg, BOOL fix)
 {
-    static const WCHAR fmtW[] = {'%','u',0};
     DWORD dpi;
 
     updating_ui = TRUE;
@@ -292,11 +288,8 @@ static void update_dpi_trackbar_from_edit(HWND hDlg, BOOL fix)
 
         if (fixed_dpi != dpi)
         {
-            WCHAR buf[16];
-
             dpi = fixed_dpi;
-            sprintfW(buf, fmtW, dpi);
-            SetDlgItemTextW(hDlg, IDC_RES_DPIEDIT, buf);
+            SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, dpi, FALSE);
         }
     }
 
@@ -420,13 +413,9 @@ GraphDlgProc(HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_HSCROLL:
 	    switch (wParam) {
 		default: {
-                    static const WCHAR fmtW[] = {'%','d',0};
-		    WCHAR buf[MAXBUFLEN];
 		    int i = SendMessageW(GetDlgItem(hDlg, IDC_RES_TRACKBAR), TBM_GETPOS, 0, 0);
-		    buf[0] = 0;
-		    sprintfW(buf, fmtW, i);
-		    SendMessageW(GetDlgItem(hDlg, IDC_RES_DPIEDIT), WM_SETTEXT, 0, (LPARAM) buf);
-                    update_font_preview(hDlg);
+		    SetDlgItemInt(hDlg, IDC_RES_DPIEDIT, i, TRUE);
+		    update_font_preview(hDlg);
 		    set_reg_key_dwordW(HKEY_LOCAL_MACHINE, logpixels_reg, logpixels, i);
 		    break;
 		}
