@@ -713,32 +713,35 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillGeometry(ID2D1RenderTarg
         return;
     }
 
-    buffer_desc.ByteWidth = geometry_impl->face_count * sizeof(*geometry_impl->faces);
-    buffer_desc.BindFlags = D3D10_BIND_INDEX_BUFFER;
-    buffer_data.pSysMem = geometry_impl->faces;
-
-    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ib)))
+    if (geometry_impl->face_count)
     {
-        WARN("Failed to create index buffer, hr %#x.\n", hr);
-        goto done;
-    }
+        buffer_desc.ByteWidth = geometry_impl->face_count * sizeof(*geometry_impl->faces);
+        buffer_desc.BindFlags = D3D10_BIND_INDEX_BUFFER;
+        buffer_data.pSysMem = geometry_impl->faces;
 
-    buffer_desc.ByteWidth = geometry_impl->vertex_count * sizeof(*geometry_impl->vertices);
-    buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-    buffer_data.pSysMem = geometry_impl->vertices;
+        if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &ib)))
+        {
+            WARN("Failed to create index buffer, hr %#x.\n", hr);
+            goto done;
+        }
 
-    if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &vb)))
-    {
-        ERR("Failed to create vertex buffer, hr %#x.\n", hr);
+        buffer_desc.ByteWidth = geometry_impl->vertex_count * sizeof(*geometry_impl->vertices);
+        buffer_desc.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+        buffer_data.pSysMem = geometry_impl->vertices;
+
+        if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, &vb)))
+        {
+            ERR("Failed to create vertex buffer, hr %#x.\n", hr);
+            ID3D10Buffer_Release(ib);
+            goto done;
+        }
+
+        d2d_draw(render_target, D2D_SHAPE_TYPE_TRIANGLE, ib, 3 * geometry_impl->face_count, vb,
+                sizeof(*geometry_impl->vertices), vs_cb, ps_cb, brush_impl);
+
+        ID3D10Buffer_Release(vb);
         ID3D10Buffer_Release(ib);
-        goto done;
     }
-
-    d2d_draw(render_target, D2D_SHAPE_TYPE_TRIANGLE, ib, 3 * geometry_impl->face_count, vb,
-            sizeof(*geometry_impl->vertices), vs_cb, ps_cb, brush_impl);
-
-    ID3D10Buffer_Release(vb);
-    ID3D10Buffer_Release(ib);
 
     if (geometry_impl->bezier_count)
     {
