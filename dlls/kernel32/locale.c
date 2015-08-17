@@ -2513,6 +2513,9 @@ LCID WINAPI ConvertDefaultLocale( LCID lcid )
 
     switch (lcid)
     {
+    case LOCALE_INVARIANT:
+        /* keep as-is */
+        break;
     case LOCALE_SYSTEM_DEFAULT:
         lcid = GetSystemDefaultLCID();
         break;
