@@ -1190,7 +1190,7 @@ BOOL WINAPI QueryThreadCycleTime(HANDLE thread, PULONG64 cycle)
 {
     static int once;
     if (!once++)
-        FIXME("(%p,%p,): stub!\n", thread, cycle);
+        FIXME("(%p,%p): stub!\n", thread, cycle);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

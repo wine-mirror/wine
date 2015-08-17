@@ -209,7 +209,7 @@ static HRESULT WINAPI test_unk_no_QI(IUnknown *iface, REFIID riid, void **obj)
 
 static ULONG WINAPI test_unk_AddRef(IUnknown *iface)
 {
-    ok(0, "unxpected\n");
+    ok(0, "unexpected\n");
     return 2;
 }
 
@@ -244,7 +244,7 @@ static HRESULT WINAPI test_disp_QI(IDispatch *iface, REFIID riid, void **obj)
 
 static ULONG WINAPI test_disp_AddRef(IDispatch *iface)
 {
-    ok(0, "unxpected\n");
+    ok(0, "unexpected\n");
     return 2;
 }
 

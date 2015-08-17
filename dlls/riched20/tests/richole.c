@@ -2361,7 +2361,7 @@ static void test_ITextFont(void)
   ok(hr == S_OK, "got 0x%08x\n", hr);
   ok(value != tomUndefined, "got %d\n", value);
 
-  /* reset to undefined for deatached font */
+  /* reset to undefined for detached font */
   hr = ITextFont_Reset(font2, tomUndefined);
   ok(hr == S_OK, "got 0x%08x\n", hr);
   test_textfont_undefined(font2);

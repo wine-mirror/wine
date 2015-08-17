@@ -115,7 +115,7 @@ static BOOL last_release_closes;
 
 static HRESULT WINAPI ExternalConnection_QueryInterface(IExternalConnection *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unxpected call\n");
+    ok(0, "unexpected call\n");
     *ppv = NULL;
     return E_NOINTERFACE;
 }

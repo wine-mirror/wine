@@ -226,7 +226,7 @@ try_again:
 				if(!n && ferror(yyin))
 					xyyerror(err_fatalread);
 				else
-					xyyerror("Fatal: file to short to determine byteorder (should never happen)\n");
+					xyyerror("Fatal: file too short to determine byteorder (should never happen)\n");
 			}
 			if(isisochar(inputbuffer[0]) &&
 				isisochar(inputbuffer[1]) &&

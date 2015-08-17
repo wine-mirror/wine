@@ -2018,7 +2018,7 @@ sub output_sgml_dll_file($)
     `rm -f $opt_output_directory/$_.sgml`;
   }
 
-  # close the chapter, and overwite the dll source
+  # close the chapter, and overwrite the dll source
   open(OUTPUT,">>$tmp_name") || die "Couldn't create $tmp_name\n";
   print OUTPUT "</chapter>\n";
   close OUTPUT;
@@ -2064,7 +2064,7 @@ sub output_xml_dll_file($)
     `rm -f $opt_output_directory/$_.xml`;
   }
 
-  # close the chapter, and overwite the dll source
+  # close the chapter, and overwrite the dll source
   open(OUTPUT,">>$tmp_name") || die "Couldn't create $tmp_name\n";
   print OUTPUT "</chapter>\n";
   close OUTPUT;

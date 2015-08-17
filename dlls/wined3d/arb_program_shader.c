@@ -1979,7 +1979,7 @@ static void pshader_hw_tex(const struct wined3d_shader_instruction *ins)
     shader_arb_get_dst_param(ins, dst, reg_dest);
 
     /* 1.0-1.4: Use destination register number as texture code.
-       2.0+: Use provided sampler number as texure code. */
+       2.0+: Use provided sampler number as texture code. */
     if (shader_version < WINED3D_SHADER_VERSION(2,0))
         reg_sampler_code = dst->reg.idx[0].offset;
     else

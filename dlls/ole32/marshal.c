@@ -1733,7 +1733,7 @@ HRESULT WINAPI CoMarshalInterface(IStream *pStream, REFIID riid, IUnknown *pUnk,
     OBJREF objref;
     LPMARSHAL pMarshal;
 
-    TRACE("(%p, %s, %p, %x, %p,", pStream, debugstr_guid(riid), pUnk,
+    TRACE("(%p, %s, %p, %x, %p)", pStream, debugstr_guid(riid), pUnk,
         dwDestContext, pvDestContext);
     dump_MSHLFLAGS(mshlFlags);
     TRACE(")\n");

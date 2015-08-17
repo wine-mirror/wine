@@ -2104,7 +2104,7 @@ static ULONG WINAPI OleRun_Release(IRunnableObject *iface)
 
 static HRESULT WINAPI OleRun_GetRunningClass(IRunnableObject *iface, CLSID *clsid)
 {
-    ok(0, "unxpected\n");
+    ok(0, "unexpected\n");
     return E_NOTIMPL;
 }
 
@@ -2116,20 +2116,20 @@ static HRESULT WINAPI OleRun_Run(IRunnableObject *iface, LPBINDCTX ctx)
 
 static BOOL WINAPI OleRun_IsRunning(IRunnableObject *iface)
 {
-    ok(0, "unxpected\n");
+    ok(0, "unexpected\n");
     return FALSE;
 }
 
 static HRESULT WINAPI OleRun_LockRunning(IRunnableObject *iface, BOOL lock,
     BOOL last_unlock_closes)
 {
-    ok(0, "unxpected\n");
+    ok(0, "unexpected\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI OleRun_SetContainedObject(IRunnableObject *iface, BOOL contained)
 {
-    ok(0, "unxpected\n");
+    ok(0, "unexpected\n");
     return E_NOTIMPL;
 }
 

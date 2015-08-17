@@ -136,7 +136,7 @@ typedef struct _OPSTACK
 } OPSTACK;
 
 /* This maintains a stack of values, where each value can either be a
-   numeric value, or a string represeting an environment variable     */
+   numeric value, or a string representing an environment variable     */
 typedef struct _VARSTACK
 {
   BOOL              isnum;

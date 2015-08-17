@@ -953,7 +953,7 @@ static void test_debugger(void)
                                           sizeof(stage), &size_read);
             ok(!status,"NtReadVirtualMemory failed with 0x%x\n", status);
 
-            ok(!de.u.DebugString.fUnicode, "unepxected unicode debug string event\n");
+            ok(!de.u.DebugString.fUnicode, "unexpected unicode debug string event\n");
             ok(de.u.DebugString.nDebugStringLength < sizeof(buffer) - 1, "buffer not large enough to hold %d bytes\n",
                de.u.DebugString.nDebugStringLength);
 

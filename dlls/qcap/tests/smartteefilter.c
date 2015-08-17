@@ -1733,7 +1733,7 @@ static void test_smart_tee_filter(void)
 
     ok(has_interface((IUnknown*)inputPin, &IID_IUnknown), "IUnknown should exist on the input pin\n");
     ok(has_interface((IUnknown*)inputPin, &IID_IMemInputPin), "IMemInputPin should exist the input pin\n");
-    ok(!has_interface((IUnknown*)inputPin, &IID_IKsPropertySet), "IKsPropertySet shouldn't eixst on the input pin\n");
+    ok(!has_interface((IUnknown*)inputPin, &IID_IKsPropertySet), "IKsPropertySet shouldn't exist on the input pin\n");
     ok(!has_interface((IUnknown*)inputPin, &IID_IAMStreamConfig), "IAMStreamConfig shouldn't exist on the input pin\n");
     ok(!has_interface((IUnknown*)inputPin, &IID_IAMStreamControl), "IAMStreamControl shouldn't exist on the input pin\n");
     ok(!has_interface((IUnknown*)inputPin, &IID_IPropertyBag), "IPropertyBag shouldn't exist on the input pin\n");

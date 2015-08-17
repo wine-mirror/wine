@@ -3140,7 +3140,7 @@ static void _test_img_alt(unsigned line, IUnknown *unk, const char *exalt)
     hres = IHTMLImgElement_get_alt(img, &alt);
     ok_(__FILE__,line) (hres == S_OK, "get_alt failed: %08x\n", hres);
     if(exalt)
-        ok_(__FILE__,line) (!strcmp_wa(alt, exalt), "inexopected alt %s\n", wine_dbgstr_w(alt));
+        ok_(__FILE__,line) (!strcmp_wa(alt, exalt), "unexpected alt %s\n", wine_dbgstr_w(alt));
     else
         ok_(__FILE__,line) (!alt, "alt != NULL\n");
     SysFreeString(alt);
