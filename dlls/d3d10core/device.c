@@ -316,8 +316,8 @@ static void STDMETHODCALLTYPE d3d10_device_DrawIndexedInstanced(ID3D10Device1 *i
 {
     struct d3d10_device *device = impl_from_ID3D10Device(iface);
 
-    TRACE("iface %p, instance_index_count %u, instance_count %u, start_index_location %u,\n"
-            "\tbase_vertex_location %d, start_instance_location %u.\n",
+    TRACE("iface %p, instance_index_count %u, instance_count %u, start_index_location %u, "
+            "base_vertex_location %d, start_instance_location %u.\n",
             iface, instance_index_count, instance_count, start_index_location,
             base_vertex_location, start_instance_location);
 
@@ -795,8 +795,8 @@ static void STDMETHODCALLTYPE d3d10_device_ResolveSubresource(ID3D10Device1 *ifa
         ID3D10Resource *dst_resource, UINT dst_subresource_idx,
         ID3D10Resource *src_resource, UINT src_subresource_idx, DXGI_FORMAT format)
 {
-    FIXME("iface %p, dst_resource %p, dst_subresource_idx %u,\n"
-            "\tsrc_resource %p, src_subresource_idx %u, format %s stub!\n",
+    FIXME("iface %p, dst_resource %p, dst_subresource_idx %u, "
+            "src_resource %p, src_subresource_idx %u, format %s stub!\n",
             iface, dst_resource, dst_subresource_idx,
             src_resource, src_subresource_idx, debug_dxgi_format(format));
 }
@@ -1731,8 +1731,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device1 *i
     struct d3d10_input_layout *object;
     HRESULT hr;
 
-    TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p,"
-            "\tshader_byte_code_length %lu, input_layout %p\n",
+    TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p, "
+            "shader_byte_code_length %lu, input_layout %p\n",
             iface, element_descs, element_count, shader_byte_code,
             shader_byte_code_length, input_layout);
 
@@ -1815,8 +1815,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
         const void *byte_code, SIZE_T byte_code_length, const D3D10_SO_DECLARATION_ENTRY *output_stream_decls,
         UINT output_stream_decl_count, UINT output_stream_stride, ID3D10GeometryShader **shader)
 {
-    FIXME("iface %p, byte_code %p, byte_code_length %lu, output_stream_decls %p,\n"
-            "\toutput_stream_decl_count %u, output_stream_stride %u, shader %p stub!\n",
+    FIXME("iface %p, byte_code %p, byte_code_length %lu, output_stream_decls %p, "
+            "output_stream_decl_count %u, output_stream_stride %u, shader %p stub!\n",
             iface, byte_code, byte_code_length, output_stream_decls,
             output_stream_decl_count, output_stream_stride, shader);
 
@@ -2134,8 +2134,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CheckCounter(ID3D10Device1 *iface,
         const D3D10_COUNTER_DESC *desc, D3D10_COUNTER_TYPE *type, UINT *active_counters, char *name,
         UINT *name_length, char *units, UINT *units_length, char *description, UINT *description_length)
 {
-    FIXME("iface %p, desc %p, type %p, active_counters %p, name %p, name_length %p,\n"
-            "\tunits %p, units_length %p, description %p, description_length %p stub!\n",
+    FIXME("iface %p, desc %p, type %p, active_counters %p, name %p, name_length %p, "
+            "units %p, units_length %p, description %p, description_length %p stub!\n",
             iface, desc, type, active_counters, name, name_length,
             units, units_length, description, description_length);
 
