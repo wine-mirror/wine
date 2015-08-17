@@ -1446,7 +1446,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
             measuring_mode, glyph_run, desc, effect);
 
     if (desc)
-        FIXME("Ignoring glyph run description %p.\n", desc);
+        WARN("Ignoring glyph run description %p.\n", desc);
     if (effect)
         FIXME("Ignoring effect %p.\n", effect);
     if (context->options & ~D2D1_DRAW_TEXT_OPTIONS_NO_SNAP)
