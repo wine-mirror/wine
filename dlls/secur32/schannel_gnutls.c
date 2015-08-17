@@ -402,7 +402,7 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
                                SIZE_T *length)
 {
     gnutls_session_t s = (gnutls_session_t)session;
-    ssize_t ret, total = 0;
+    SSIZE_T ret, total = 0;
 
     for (;;)
     {
@@ -410,7 +410,7 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
         if (ret >= 0)
         {
             total += ret;
-            TRACE( "sent %d now %d/%ld\n", ret, total, *length );
+            TRACE( "sent %ld now %ld/%ld\n", ret, total, *length );
             if (total == *length) return SEC_E_OK;
         }
         else if (ret == GNUTLS_E_AGAIN)
