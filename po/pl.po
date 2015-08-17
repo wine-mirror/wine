@@ -1,21 +1,21 @@
 # Polish translations for Wine
 #
 # Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>, 2011, 2012, 2013, 2014.
+# Adam "Saibamen" Stachowicz <saibamenppl@gmail.com>, 2015.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2014-11-29 07:31+0100\n"
-"Last-Translator: Łukasz Wojniłowicz <lukasz.wojnilowicz@gmail.com>\n"
+"PO-Revision-Date: 2015-08-16 21:14+0200\n"
+"Last-Translator: Adam Stachowicz <saibamenppl@gmail.com>\n"
 "Language-Team: Polish <kde-i18n-doc@kde.org>\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Lokalize 1.5\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2);\n"
+"X-Generator: Poedit 1.8.4\n"
+"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -2738,11 +2738,6 @@ msgstr ""
 "Czy jesteś pewien, że chcesz usunąć ten certyfikat?"
 
 #: cryptui.rc:113
-#, fuzzy
-#| msgid ""
-#| "You will no longer be able to encrypt messages with these certificates, "
-#| "or verify messages signed with it.\n"
-#| "Are you sure you want to remove these certificates?"
 msgid ""
 "You will no longer be able to encrypt messages with these certificates, or "
 "verify messages signed with them.\n"
@@ -3155,10 +3150,8 @@ msgid "&View Source"
 msgstr "&Pokaż źródło"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
-msgstr "Właściwości"
+msgstr "&Właściwości"
 
 #: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
@@ -7472,10 +7465,8 @@ msgid "Add Control"
 msgstr "Dodaj kontrolkę"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "&Czcionka..."
+msgstr "&Konwertuj..."
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8602,10 +8593,8 @@ msgid "Duplex:"
 msgstr "Dupleks:"
 
 #: wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "U&stawienia"
+msgstr "Ustawienia"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
@@ -8928,10 +8917,6 @@ msgstr ""
 "lub czy połączenie sieciowe jest wciąż aktywne."
 
 #: winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
@@ -9250,24 +9235,20 @@ msgstr ""
 "czy połączenie sieciowe jest aktywne."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Instalator Wine Mono"
+msgstr "Mapper dźwięku Wine"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "kolumna"
+msgstr "Głośność"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Główna głośność"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Wycisz"
 
 #: winspool.rc:37
 msgid "Print to File"
@@ -11585,10 +11566,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Błąd: Niewłaściwe parametry wiersza poleceń\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Błąd: Nie można dodać kluczy do zdalnej maszyny\n"
+msgstr "Błąd: Błąd dostępu do zdalnej maszyny\n"
 
 #: reg.rc:38
 msgid ""
@@ -11596,10 +11575,8 @@ msgid ""
 msgstr "Błąd: System nie mógł znaleźć podanej wartości lub klucza rejestru\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Niewspierany typ.\n"
+msgstr "Błąd: Niewspierany typ\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -13198,14 +13175,12 @@ msgid "&Test Sound"
 msgstr "Próba dźwięku"
 
 #: winecfg.rc:277 winecfg.rc:90
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Ustawienia Wine"
+msgstr "Konfiguracja głośników"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr ""
+msgstr "Głośniki:"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -13313,21 +13288,19 @@ msgstr "(Domyślne systemowe)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr ""
+msgstr "Dźwięk przestrzenny w układzie 5.1"
 
 #: winecfg.rc:92
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "grafika"
+msgstr "Kwadrofonia"
 
 #: winecfg.rc:93
 msgid "Stereo"
-msgstr ""
+msgstr "Stereo"
 
 #: winecfg.rc:94
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: winecfg.rc:54
 msgid ""
@@ -13588,16 +13561,12 @@ msgid "Command history"
 msgstr "Historia poleceń"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Strefa bufora"
+msgstr "Rozmiar &bufora:"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "&Usuń powtórzenia"
+msgstr "&Usuń duplikaty"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -13612,22 +13581,16 @@ msgid "S&hift"
 msgstr "S&hift"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "&Zamknij konsolę"
+msgstr "Konsola"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Szybka edycja"
+msgstr "Tryb szybkiej edycji"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "Tryb &eksperta"
+msgstr "Tryb wstaw&iania"
 
 #: wineconsole.rc:88
 msgid "&Font"
