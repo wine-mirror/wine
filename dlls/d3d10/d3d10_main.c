@@ -139,8 +139,8 @@ HRESULT WINAPI D3D10CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D10_DRIVER
     IDXGIFactory *factory;
     HRESULT hr;
 
-    TRACE("adapter %p, driver_type %s, swrast %p, flags %#x, sdk_version %d,\n"
-            "\tswapchain_desc %p, swapchain %p, device %p\n",
+    TRACE("adapter %p, driver_type %s, swrast %p, flags %#x, sdk_version %d, "
+            "swapchain_desc %p, swapchain %p, device %p\n",
             adapter, debug_d3d10_driver_type(driver_type), swrast, flags, sdk_version,
             swapchain_desc, swapchain, device);
 
