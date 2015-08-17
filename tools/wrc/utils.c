@@ -453,6 +453,7 @@ static const struct lang2cp lang2cps[] =
     { LANG_INDONESIAN,     SUBLANG_NEUTRAL,              1252 },
     { LANG_INUKTITUT,      SUBLANG_NEUTRAL,              0    },
     { LANG_INUKTITUT,      SUBLANG_INUKTITUT_CANADA_LATIN, 0  },
+    { LANG_INVARIANT,      SUBLANG_NEUTRAL,              0    },
     { LANG_IRISH,          SUBLANG_NEUTRAL,              1252 },
     { LANG_ITALIAN,        SUBLANG_NEUTRAL,              1252 },
     { LANG_JAPANESE,       SUBLANG_NEUTRAL,              932  },
