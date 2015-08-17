@@ -1299,7 +1299,7 @@ static void STDMETHODCALLTYPE d2d_geometry_sink_AddArc(ID2D1GeometrySink *iface,
     ++geometry->u.path.segment_count;
 }
 
-struct ID2D1GeometrySinkVtbl d2d_geometry_sink_vtbl =
+static const struct ID2D1GeometrySinkVtbl d2d_geometry_sink_vtbl =
 {
     d2d_geometry_sink_QueryInterface,
     d2d_geometry_sink_AddRef,
