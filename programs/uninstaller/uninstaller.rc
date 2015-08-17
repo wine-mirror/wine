@@ -27,4 +27,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_DEFAULT
 STRINGTABLE {
      IDS_APPNAME, "Wine Application Uninstaller"
      IDS_UNINSTALLFAILED, "Execution of uninstall command '%s' failed, perhaps due to missing executable.\nDo you want to remove the uninstall entry from the registry?"
+     STRING_NO_APP_MATCH, "uninstaller: The application with GUID '%1' was not found\n"
+     STRING_PARAMETER_REQUIRED, "uninstaller: The option '--remove' must be followed by an application GUID\n"
+     STRING_INVALID_OPTION, "uninstaller: Invalid option [%1]\n"
 }

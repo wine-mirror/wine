@@ -13068,6 +13068,21 @@ msgstr ""
 "언인스톨 명령 '%s' 실행 실패, 실행파일이 없는 것 같습니다.\n"
 "당신은 레지스트리에서 언인스톨 등록키를 제거하겠습니까?"
 
+#: uninstaller.rc:31
+msgid "uninstaller: The application with GUID '%1' was not found\n"
+msgstr ""
+
+#: uninstaller.rc:32
+msgid ""
+"uninstaller: The option '--remove' must be followed by an application GUID\n"
+msgstr ""
+
+#: uninstaller.rc:33
+#, fuzzy
+#| msgid "Error: Invalid option '%c'.\n"
+msgid "uninstaller: Invalid option [%1]\n"
+msgstr "오류: 올바르지 않은 옵션 '%c'.\n"
+
 #: view.rc:36
 msgid "&Pan"
 msgstr "회전(&P)"

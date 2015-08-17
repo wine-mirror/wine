@@ -12377,6 +12377,19 @@ msgstr ""
 "卸载命令 '%s' 运行失败，可能是找不到可执行程序。\n"
 "您想把这项卸载条目从注册表中删除吗？"
 
+#: uninstaller.rc:31
+msgid "uninstaller: The application with GUID '%1' was not found\n"
+msgstr ""
+
+#: uninstaller.rc:32
+msgid ""
+"uninstaller: The option '--remove' must be followed by an application GUID\n"
+msgstr ""
+
+#: uninstaller.rc:33
+msgid "uninstaller: Invalid option [%1]\n"
+msgstr ""
+
 #: view.rc:36
 msgid "&Pan"
 msgstr "平移(&P)"

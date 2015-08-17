@@ -12201,6 +12201,19 @@ msgid ""
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
 
+#: uninstaller.rc:31
+msgid "uninstaller: The application with GUID '%1' was not found\n"
+msgstr ""
+
+#: uninstaller.rc:32
+msgid ""
+"uninstaller: The option '--remove' must be followed by an application GUID\n"
+msgstr ""
+
+#: uninstaller.rc:33
+msgid "uninstaller: Invalid option [%1]\n"
+msgstr ""
+
 #: view.rc:36
 msgid "&Pan"
 msgstr ""

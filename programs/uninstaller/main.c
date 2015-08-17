@@ -60,6 +60,38 @@ static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l
 static const WCHAR WindowsInstallerW[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
 static const WCHAR SystemComponentW[] = {'S','y','s','t','e','m','C','o','m','p','o','n','e','n','t',0};
 
+static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
+{
+    WCHAR *str;
+    DWORD len, count;
+
+    SetLastError(NO_ERROR);
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         fmt, 0, 0, (LPWSTR)&str, 0, &va_args);
+    if (len == 0 && GetLastError() != NO_ERROR)
+    {
+        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
+        return;
+    }
+    WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &count, NULL);
+    LocalFree(str);
+}
+
+static void __cdecl output_message(unsigned int id, ...)
+{
+    WCHAR fmt[1024];
+    __ms_va_list va_args;
+
+    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, sizeof(fmt)/sizeof(fmt[0])))
+    {
+        WINE_FIXME("LoadString failed with %d\n", GetLastError());
+        return;
+    }
+    __ms_va_start(va_args, id);
+    output_formatstring(fmt, va_args);
+    __ms_va_end(va_args);
+}
+
 /**
  * Used to output program list when used with --list
  */
@@ -90,8 +122,6 @@ static void ListUninstallPrograms(void)
 static void RemoveSpecificProgram(WCHAR *nameW)
 {
     unsigned int i;
-    int lenName;
-    char *name;
 
     FetchUninstallInformation();
 
@@ -107,13 +137,7 @@ static void RemoveSpecificProgram(WCHAR *nameW)
     if (i < numentries)
         UninstallProgram();
     else
-    {
-        lenName = WideCharToMultiByte(CP_UNIXCP, 0, nameW, -1, NULL, 0, NULL, NULL); 
-        name = HeapAlloc(GetProcessHeap(), 0, lenName);
-        WideCharToMultiByte(CP_UNIXCP, 0, nameW, -1, name, lenName, NULL, NULL);
-        fprintf(stderr, "Error: could not match application [%s]\n", name);
-        HeapFree(GetProcessHeap(), 0, name);
-    }
+        output_message(STRING_NO_APP_MATCH, nameW);
 }
 
 
@@ -138,7 +162,7 @@ int wmain(int argc, WCHAR *argv[])
         {
             if( i >= argc )
             {
-                WINE_ERR( "The remove option requires a parameter.\n");
+                output_message(STRING_PARAMETER_REQUIRED);
                 return 1;
             }
 
@@ -147,7 +171,7 @@ int wmain(int argc, WCHAR *argv[])
         }
         else 
         {
-            WINE_ERR( "unknown option %s\n",wine_dbgstr_w(token));
+            output_message(STRING_INVALID_OPTION, token);
             return 1;
         }
     }

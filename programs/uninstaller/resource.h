@@ -22,4 +22,9 @@
 
 #define IDS_APPNAME                     1000
 #define IDS_UNINSTALLFAILED             1001
+
+#define STRING_NO_APP_MATCH             2000
+#define STRING_PARAMETER_REQUIRED       2001
+#define STRING_INVALID_OPTION           2002
+
 #define MAX_STRING_LEN                  255

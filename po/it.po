@@ -13099,6 +13099,21 @@ msgstr ""
 "di un eseguibile mancante.\n"
 "Vuoi rimuovere dal registro la voce di disinstallazione?"
 
+#: uninstaller.rc:31
+msgid "uninstaller: The application with GUID '%1' was not found\n"
+msgstr ""
+
+#: uninstaller.rc:32
+msgid ""
+"uninstaller: The option '--remove' must be followed by an application GUID\n"
+msgstr ""
+
+#: uninstaller.rc:33
+#, fuzzy
+#| msgid "Error: Invalid option '%c'.\n"
+msgid "uninstaller: Invalid option [%1]\n"
+msgstr "Errore: opzione non valida '%c'.\n"
+
 #: view.rc:36
 msgid "&Pan"
 msgstr "S&postamento"
