@@ -310,7 +310,10 @@ static const struct ID2D1FactoryVtbl d2d_factory_vtbl =
 static void d2d_factory_init(struct d2d_factory *factory, D2D1_FACTORY_TYPE factory_type,
         const D2D1_FACTORY_OPTIONS *factory_options)
 {
-    FIXME("Ignoring factory type and options.\n");
+    if (factory_type != D2D1_FACTORY_TYPE_SINGLE_THREADED)
+        FIXME("Ignoring factory type %#x.\n", factory_type);
+    if (factory_options && factory_options->debugLevel != D2D1_DEBUG_LEVEL_NONE)
+        WARN("Ignoring debug level %#x.\n", factory_options->debugLevel);
 
     factory->ID2D1Factory_iface.lpVtbl = &d2d_factory_vtbl;
     factory->refcount = 1;
