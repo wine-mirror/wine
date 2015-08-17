@@ -225,7 +225,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *if
     unsigned int i;
     HRESULT hr;
 
-    TRACE("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x stub!\n",
+    TRACE("iface %p, buffer_count %u, width %u, height %u, format %s, flags %#x.\n",
             iface, buffer_count, width, height, debug_dxgi_format(format), flags);
 
     if (flags)
