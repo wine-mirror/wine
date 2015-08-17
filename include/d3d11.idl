@@ -2157,3 +2157,8 @@ cpp_quote("    UINT,UINT,ID3D11Device**,D3D_FEATURE_LEVEL*,ID3D11DeviceContext**
 cpp_quote("typedef HRESULT (WINAPI *PFN_D3D11_CREATE_DEVICE_AND_SWAP_CHAIN)(IDXGIAdapter*,D3D_DRIVER_TYPE,HMODULE,UINT,")
 cpp_quote("    const D3D_FEATURE_LEVEL*,UINT,UINT,const DXGI_SWAP_CHAIN_DESC*,IDXGISwapChain**,ID3D11Device**,")
 cpp_quote("    D3D_FEATURE_LEVEL*,ID3D11DeviceContext**);")
+
+[local] HRESULT __stdcall D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type,
+        HMODULE swrast, UINT flags, const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version,
+        const DXGI_SWAP_CHAIN_DESC *swapchain_desc, IDXGISwapChain **swapchain, ID3D11Device **device,
+        D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context);
