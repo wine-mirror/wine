@@ -21,7 +21,6 @@
  *
  */
 
-#include <stdio.h>
 #include <string.h>
 #include <windows.h>
 #include <shlwapi.h>
@@ -92,30 +91,27 @@ static void __cdecl output_message(unsigned int id, ...)
     __ms_va_end(va_args);
 }
 
+static void __cdecl output_array(WCHAR *fmt, ...)
+{
+    __ms_va_list va_args;
+
+    __ms_va_start(va_args, fmt);
+    output_formatstring(fmt, va_args);
+    __ms_va_end(va_args);
+}
+
 /**
  * Used to output program list when used with --list
  */
 static void ListUninstallPrograms(void)
 {
     unsigned int i;
-    int lenDescr, lenKey;
-    char *descr;
-    char *key;
+    static WCHAR fmtW[] = {'%','1','|','|','|','%','2','\n',0};
 
     FetchUninstallInformation();
 
     for (i=0; i < numentries; i++)
-    {
-        lenDescr = WideCharToMultiByte(CP_UNIXCP, 0, entries[i].descr, -1, NULL, 0, NULL, NULL); 
-        lenKey = WideCharToMultiByte(CP_UNIXCP, 0, entries[i].key, -1, NULL, 0, NULL, NULL); 
-        descr = HeapAlloc(GetProcessHeap(), 0, lenDescr);
-        key = HeapAlloc(GetProcessHeap(), 0, lenKey);
-        WideCharToMultiByte(CP_UNIXCP, 0, entries[i].descr, -1, descr, lenDescr, NULL, NULL);
-        WideCharToMultiByte(CP_UNIXCP, 0, entries[i].key, -1, key, lenKey, NULL, NULL);
-        printf("%s|||%s\n", key, descr);
-        HeapFree(GetProcessHeap(), 0, descr);
-        HeapFree(GetProcessHeap(), 0, key);
-    }
+        output_array(fmtW, entries[i].key, entries[i].descr);
 }
 
 
