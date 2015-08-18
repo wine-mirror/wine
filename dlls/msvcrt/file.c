@@ -1224,9 +1224,9 @@ __int64 CDECL MSVCRT__lseeki64(int fd, __int64 offset, int whence)
 
   TRACE(":fd (%d) to %s pos %s\n",
         fd,wine_dbgstr_longlong(offset),
-        (whence==SEEK_SET)?"SEEK_SET":
-        (whence==SEEK_CUR)?"SEEK_CUR":
-        (whence==SEEK_END)?"SEEK_END":"UNKNOWN");
+        (whence==MSVCRT_SEEK_SET)?"SEEK_SET":
+        (whence==MSVCRT_SEEK_CUR)?"SEEK_CUR":
+        (whence==MSVCRT_SEEK_END)?"SEEK_END":"UNKNOWN");
 
   /* The MoleBox protection scheme expects msvcrt to use SetFilePointer only,
    * so a LARGE_INTEGER offset cannot be passed directly via SetFilePointerEx. */
@@ -1357,8 +1357,8 @@ int CDECL MSVCRT__fseeki64_nolock(MSVCRT_FILE* file, __int64 offset, int whence)
 {
   int ret;
 
-  if(whence == SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
-      whence = SEEK_SET;
+  if(whence == MSVCRT_SEEK_CUR && file->_flag & MSVCRT__IOREAD ) {
+      whence = MSVCRT_SEEK_SET;
       offset += MSVCRT__ftelli64_nolock(file);
   }
 
@@ -1409,10 +1409,10 @@ int CDECL MSVCRT__chsize_s(int fd, __int64 size)
     if (info->handle != INVALID_HANDLE_VALUE)
     {
         /* save the current file pointer */
-        cur = MSVCRT__lseeki64(fd, 0, SEEK_CUR);
+        cur = MSVCRT__lseeki64(fd, 0, MSVCRT_SEEK_CUR);
         if (cur >= 0)
         {
-            pos = MSVCRT__lseeki64(fd, size, SEEK_SET);
+            pos = MSVCRT__lseeki64(fd, size, MSVCRT_SEEK_SET);
             if (pos >= 0)
             {
                 ret = SetEndOfFile(info->handle);
@@ -1420,7 +1420,7 @@ int CDECL MSVCRT__chsize_s(int fd, __int64 size)
             }
 
             /* restore the file pointer */
-            MSVCRT__lseeki64(fd, cur, SEEK_SET);
+            MSVCRT__lseeki64(fd, cur, MSVCRT_SEEK_SET);
         }
     }
 
@@ -1457,7 +1457,7 @@ void CDECL MSVCRT_rewind(MSVCRT_FILE* file)
   TRACE(":file (%p) fd (%d)\n",file,file->_file);
 
   MSVCRT__lock_file(file);
-  MSVCRT__fseek_nolock(file, 0L, SEEK_SET);
+  MSVCRT__fseek_nolock(file, 0L, MSVCRT_SEEK_SET);
   MSVCRT_clearerr(file);
   MSVCRT__unlock_file(file);
 }
@@ -1623,14 +1623,14 @@ MSVCRT_FILE* CDECL MSVCRT__wfdopen(int fd, const MSVCRT_wchar_t *mode)
  */
 LONG CDECL MSVCRT__filelength(int fd)
 {
-  LONG curPos = MSVCRT__lseek(fd, 0, SEEK_CUR);
+  LONG curPos = MSVCRT__lseek(fd, 0, MSVCRT_SEEK_CUR);
   if (curPos != -1)
   {
-    LONG endPos = MSVCRT__lseek(fd, 0, SEEK_END);
+    LONG endPos = MSVCRT__lseek(fd, 0, MSVCRT_SEEK_END);
     if (endPos != -1)
     {
       if (endPos != curPos)
-        MSVCRT__lseek(fd, curPos, SEEK_SET);
+        MSVCRT__lseek(fd, curPos, MSVCRT_SEEK_SET);
       return endPos;
     }
   }
@@ -1642,14 +1642,14 @@ LONG CDECL MSVCRT__filelength(int fd)
  */
 __int64 CDECL MSVCRT__filelengthi64(int fd)
 {
-  __int64 curPos = MSVCRT__lseeki64(fd, 0, SEEK_CUR);
+  __int64 curPos = MSVCRT__lseeki64(fd, 0, MSVCRT_SEEK_CUR);
   if (curPos != -1)
   {
-    __int64 endPos = MSVCRT__lseeki64(fd, 0, SEEK_END);
+    __int64 endPos = MSVCRT__lseeki64(fd, 0, MSVCRT_SEEK_END);
     if (endPos != -1)
     {
       if (endPos != curPos)
-        MSVCRT__lseeki64(fd, curPos, SEEK_SET);
+        MSVCRT__lseeki64(fd, curPos, MSVCRT_SEEK_SET);
       return endPos;
     }
   }
@@ -3145,7 +3145,7 @@ int CDECL MSVCRT__wstat64i32(const MSVCRT_wchar_t *path, struct MSVCRT__stat64i3
  */
 MSVCRT_long CDECL MSVCRT__tell(int fd)
 {
-  return MSVCRT__lseek(fd, 0, SEEK_CUR);
+  return MSVCRT__lseek(fd, 0, MSVCRT_SEEK_CUR);
 }
 
 /*********************************************************************
@@ -3153,7 +3153,7 @@ MSVCRT_long CDECL MSVCRT__tell(int fd)
  */
 __int64 CDECL _telli64(int fd)
 {
-  return MSVCRT__lseeki64(fd, 0, SEEK_CUR);
+  return MSVCRT__lseeki64(fd, 0, MSVCRT_SEEK_CUR);
 }
 
 /*********************************************************************
@@ -4415,7 +4415,7 @@ int CDECL MSVCRT_fsetpos(MSVCRT_FILE* file, MSVCRT_fpos_t *pos)
         file->_flag &= ~(MSVCRT__IOREAD|MSVCRT__IOWRT);
   }
 
-  ret = (MSVCRT__lseeki64(file->_file,*pos,SEEK_SET) == -1) ? -1 : 0;
+  ret = (MSVCRT__lseeki64(file->_file,*pos,MSVCRT_SEEK_SET) == -1) ? -1 : 0;
   MSVCRT__unlock_file(file);
   return ret;
 }
@@ -4456,7 +4456,7 @@ __int64 CDECL MSVCRT__ftelli64_nolock(MSVCRT_FILE* file)
                         pos++;
             }
         } else if(!file->_cnt) { /* nothing to do */
-        } else if(MSVCRT__lseeki64(file->_file, 0, SEEK_END)==pos) {
+        } else if(MSVCRT__lseeki64(file->_file, 0, MSVCRT_SEEK_END)==pos) {
             int i;
 
             pos -= file->_cnt;
@@ -4468,7 +4468,7 @@ __int64 CDECL MSVCRT__ftelli64_nolock(MSVCRT_FILE* file)
         } else {
             char *p;
 
-            if(MSVCRT__lseeki64(file->_file, pos, SEEK_SET) != pos)
+            if(MSVCRT__lseeki64(file->_file, pos, MSVCRT_SEEK_SET) != pos)
                 return -1;
 
             pos -= file->_bufsiz;

@@ -666,6 +666,10 @@ struct MSVCRT__stat64 {
 #define MSVCRT_RAND_MAX  0x7fff
 #define MSVCRT_BUFSIZ    512
 
+#define MSVCRT_SEEK_SET  0
+#define MSVCRT_SEEK_CUR  1
+#define MSVCRT_SEEK_END  2
+
 #define MSVCRT_STDIN_FILENO  0
 #define MSVCRT_STDOUT_FILENO 1
 #define MSVCRT_STDERR_FILENO 2
