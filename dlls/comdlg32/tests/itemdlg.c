@@ -1642,9 +1642,14 @@ static void test_customize(void)
     ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, i);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, ++i);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+
+    hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, i);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, i+1);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
@@ -1652,32 +1657,32 @@ static void test_customize(void)
     ok(cdstate == 0xdeadbeef, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, label);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-    todo_wine ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
     hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, 0);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-    todo_wine ok(!cdstate, "got 0x%08x.\n", cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(!cdstate, "got 0x%08x.\n", cdstate);
     hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, CDCS_ENABLEDVISIBLE);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-    todo_wine ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, label2);
-    todo_wine ok(hr == E_NOTIMPL, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == E_NOTIMPL, "got 0x%08x (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddMenu(pfdc, i, menuW);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileDialogCustomize_AddMenu(pfdc, ++i, label);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
 
@@ -2067,7 +2072,7 @@ static void test_customize(void)
         }
     }
     hr = IFileDialogCustomize_EnableOpenDropDown(pfdc, ++i);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr))
     {
         DWORD selected = -1;
@@ -2080,8 +2085,8 @@ static void test_customize(void)
         }
 
         hr = IFileDialogCustomize_GetSelectedControlItem(pfdc, i, &selected);
-        ok(hr == S_OK, "got 0x%08x.\n", hr);
-        ok(selected == 0, "got %d.\n", selected);
+        todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+        todo_wine ok(selected == 0, "got %d.\n", selected);
 
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
@@ -2100,7 +2105,7 @@ static void test_customize(void)
         ok(hr == S_OK, "got 0x%08x.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetSelectedControlItem(pfdc, i, 0);
-        ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
+        todo_wine ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
 
         hr = IFileDialogCustomize_RemoveAllControlItems(pfdc, i);
         ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
