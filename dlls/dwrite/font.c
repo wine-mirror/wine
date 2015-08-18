@@ -1982,23 +1982,78 @@ static inline BOOL is_name_separator_char(WCHAR ch)
     return ch == ' ' || ch == '.' || ch == '-' || ch == '_';
 }
 
-static BOOL match_pattern_list(struct list *tokens, const WCHAR **patterns)
+struct name_pattern {
+    const WCHAR *part1; /* NULL indicates end of list */
+    const WCHAR *part2; /* optional, if not NULL should point to non-empty string */
+};
+
+static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *patterns)
 {
+    const struct name_pattern *pattern;
     struct name_token *token;
-    const WCHAR *ptr;
     int i = 0;
 
-    while ((ptr = patterns[++i])) {
-        int len = strlenW(ptr);
+    while ((pattern = &patterns[++i])->part1) {
+        int len_part1 = strlenW(pattern->part1);
+        int len_part2 = pattern->part2 ? strlenW(pattern->part2) : 0;
 
         LIST_FOR_EACH_ENTRY(token, tokens, struct name_token, entry) {
-            if (token->len != len)
-                continue;
+            if (len_part2 == 0) {
+                /* simple case with single part pattern */
+                if (token->len != len_part1)
+                    continue;
 
-            if (!strncmpiW(token->ptr, ptr, len)) {
-                list_remove(&token->entry);
-                heap_free(token);
-                return TRUE;
+                if (!strncmpiW(token->ptr, pattern->part1, len_part1)) {
+                    list_remove(&token->entry);
+                    heap_free(token);
+                    return TRUE;
+                }
+            }
+            else {
+                struct name_token *next_token;
+                struct list *next_entry;
+
+                /* pattern parts are stored in reading order, tokens list is reversed */
+                if (token->len < len_part2)
+                    continue;
+
+                /* it's possible to have combined string as a token, like ExtraCondensed */
+                if (token->len == len_part1 + len_part2) {
+                    if (strncmpiW(token->ptr, pattern->part1, len_part1))
+                        continue;
+
+                    if (strncmpiW(&token->ptr[len_part1], pattern->part2, len_part2))
+                        continue;
+
+                    /* combined string match */
+                    list_remove(&token->entry);
+                    heap_free(token);
+                    return TRUE;
+                }
+
+                /* now it's only possible to have two tokens matched to respective pattern parts */
+                if (token->len != len_part2)
+                    continue;
+
+                next_entry = list_next(tokens, &token->entry);
+                if (next_entry) {
+                    next_token = LIST_ENTRY(next_entry, struct name_token, entry);
+                    if (next_token->len != len_part1)
+                        continue;
+
+                    if (strncmpiW(token->ptr, pattern->part2, len_part2))
+                        continue;
+
+                    if (strncmpiW(next_token->ptr, pattern->part1, len_part1))
+                        continue;
+
+                    /* both parts matched, remove tokens */
+                    list_remove(&token->entry);
+                    list_remove(&next_token->entry);
+                    heap_free(next_token);
+                    heap_free(token);
+                    return TRUE;
+                }
             }
         }
     }
@@ -2020,22 +2075,22 @@ static DWRITE_FONT_STYLE font_extract_style(struct list *tokens, DWRITE_FONT_STY
     static const WCHAR backslantW[] = {'b','a','c','k','s','l','a','n','t',0};
     static const WCHAR slantedW[] = {'s','l','a','n','t','e','d',0};
 
-    static const WCHAR *italic_patterns[] = {
-        itaW,
-        italW,
-        italicW,
-        cursiveW,
-        kursivW,
-        NULL
+    static const struct name_pattern italic_patterns[] = {
+        { itaW },
+        { italW },
+        { italicW },
+        { cursiveW },
+        { kursivW },
+        { NULL }
     };
 
-    static const WCHAR *oblique_patterns[] = {
-        inclinedW,
-        obliqueW,
-        backslantedW,
-        backslantW,
-        slantedW,
-        NULL
+    static const struct name_pattern oblique_patterns[] = {
+        { inclinedW },
+        { obliqueW },
+        { backslantedW },
+        { backslantW },
+        { slantedW },
+        { NULL }
     };
 
     /* italic patterns first */
@@ -2047,6 +2102,108 @@ static DWRITE_FONT_STYLE font_extract_style(struct list *tokens, DWRITE_FONT_STY
         return DWRITE_FONT_STYLE_OBLIQUE;
 
     return style;
+}
+
+static DWRITE_FONT_STRETCH font_extract_stretch(struct list *tokens, DWRITE_FONT_STRETCH stretch)
+{
+    static const WCHAR compressedW[] = {'c','o','m','p','r','e','s','s','e','d',0};
+    static const WCHAR condensedW[] = {'c','o','n','d','e','n','s','e','d',0};
+    static const WCHAR expandedW[] = {'e','x','p','a','n','d','e','d',0};
+    static const WCHAR extendedW[] = {'e','x','t','e','n','d','e','d',0};
+    static const WCHAR compactW[] = {'c','o','m','p','a','c','t',0};
+    static const WCHAR narrowW[] = {'n','a','r','r','o','w',0};
+    static const WCHAR wideW[] = {'w','i','d','e',0};
+    /* modifiers */
+    static const WCHAR extraW[] = {'e','x','t','r','a',0};
+    static const WCHAR ultraW[] = {'u','l','t','r','a',0};
+    static const WCHAR condW[] = {'c','o','n','d',0};
+    static const WCHAR extW[] = {'e','x','t',0};
+    static const WCHAR semiW[] = {'s','e','m','i',0};
+
+    static const struct name_pattern ultracondensed_patterns[] = {
+        { extraW, compressedW },
+        { extW, compressedW },
+        { ultraW, compressedW },
+        { ultraW, condensedW },
+        { ultraW, condW },
+        { NULL }
+    };
+
+    static const struct name_pattern extracondensed_patterns[] = {
+        { compressedW },
+        { extraW, condensedW },
+        { extW, condensedW },
+        { extraW, condW },
+        { extW, condW },
+        { NULL }
+    };
+
+    static const struct name_pattern semicondensed_patterns[] = {
+        { narrowW },
+        { compactW },
+        { semiW, condensedW },
+        { semiW, condW },
+        { NULL }
+    };
+
+    static const struct name_pattern semiexpanded_patterns[] = {
+        { wideW },
+        { semiW, expandedW },
+        { semiW, extendedW },
+        { NULL }
+    };
+
+    static const struct name_pattern extraexpanded_patterns[] = {
+        { extraW, expandedW },
+        { extW, expandedW },
+        { extraW, extendedW },
+        { extW, extendedW },
+        { NULL }
+    };
+
+    static const struct name_pattern ultraexpanded_patterns[] = {
+        { ultraW, expandedW },
+        { ultraW, extendedW },
+        { NULL }
+    };
+
+    static const struct name_pattern condensed_patterns[] = {
+        { condensedW },
+        { condW },
+        { NULL }
+    };
+
+    static const struct name_pattern expanded_patterns[] = {
+        { expandedW },
+        { extendedW },
+        { NULL }
+    };
+
+    if (match_pattern_list(tokens, ultracondensed_patterns))
+        return DWRITE_FONT_STRETCH_ULTRA_CONDENSED;
+
+    if (match_pattern_list(tokens, extracondensed_patterns))
+        return DWRITE_FONT_STRETCH_EXTRA_CONDENSED;
+
+    if (match_pattern_list(tokens, semicondensed_patterns))
+        return DWRITE_FONT_STRETCH_SEMI_CONDENSED;
+
+    if (match_pattern_list(tokens, semiexpanded_patterns))
+        return DWRITE_FONT_STRETCH_SEMI_EXPANDED;
+
+    if (match_pattern_list(tokens, extraexpanded_patterns))
+        return DWRITE_FONT_STRETCH_EXTRA_EXPANDED;
+
+    if (match_pattern_list(tokens, ultraexpanded_patterns))
+        return DWRITE_FONT_STRETCH_ULTRA_EXPANDED;
+
+    if (match_pattern_list(tokens, condensed_patterns))
+        return DWRITE_FONT_STRETCH_CONDENSED;
+
+    if (match_pattern_list(tokens, expanded_patterns))
+        return DWRITE_FONT_STRETCH_EXPANDED;
+
+    return stretch;
 }
 
 static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHAR *familyW, WCHAR *faceW)
@@ -2066,6 +2223,7 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
         NULL
     };
 
+    DWRITE_FONT_STRETCH stretch = font->stretch;
     static const WCHAR spaceW[] = {' ',0};
     WCHAR familynameW[255], facenameW[255];
     struct name_token *token, *token2;
@@ -2129,13 +2287,24 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     /* extract and resolve style */
     font->style = font_extract_style(&tokens, font->style);
 
-    /* TODO: extract stretch */
+    /* extract stretch */
+    stretch = font_extract_stretch(&tokens, font->stretch);
 
     /* TODO: extract weight */
 
     /* TODO: resolve weight */
 
-    /* TODO: resolve stretch */
+    /* Resolve stretch - extracted stretch can't be normal, it will override specified stretch if
+       it's leaning in opposite direction from normal comparing to specified stretch or if specified
+       stretch itself is normal (extracted stretch is never normal). */
+    if (stretch != font->stretch) {
+        if ((font->stretch == DWRITE_FONT_STRETCH_NORMAL) ||
+            (font->stretch < DWRITE_FONT_STRETCH_NORMAL && stretch > DWRITE_FONT_STRETCH_NORMAL) ||
+            (font->stretch > DWRITE_FONT_STRETCH_NORMAL && stretch < DWRITE_FONT_STRETCH_NORMAL)) {
+
+            font->stretch = stretch;
+        }
+    }
 
     /* release tokens */
     LIST_FOR_EACH_ENTRY_SAFE(token, token2, &tokens, struct name_token, entry) {
