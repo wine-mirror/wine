@@ -501,6 +501,11 @@ void CDECL omp_set_num_threads(int num_threads)
         vcomp_num_threads = num_threads;
 }
 
+void CDECL _vcomp_flush(void)
+{
+    TRACE("(): stub\n");
+}
+
 void CDECL _vcomp_barrier(void)
 {
     struct vcomp_team_data *team_data = vcomp_init_thread_data()->team;

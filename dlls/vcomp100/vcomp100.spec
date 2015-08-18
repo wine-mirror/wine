@@ -54,7 +54,7 @@
 @ stub _vcomp_copyprivate_broadcast
 @ stub _vcomp_copyprivate_receive
 @ cdecl _vcomp_enter_critsect(ptr) vcomp._vcomp_enter_critsect
-@ stub _vcomp_flush
+@ cdecl _vcomp_flush() vcomp._vcomp_flush
 @ cdecl _vcomp_for_dynamic_init(long long long long long) vcomp._vcomp_for_dynamic_init
 @ stub _vcomp_for_dynamic_init_i8
 @ cdecl _vcomp_for_dynamic_next(ptr ptr) vcomp._vcomp_for_dynamic_next
