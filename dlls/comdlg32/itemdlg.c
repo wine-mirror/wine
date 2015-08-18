@@ -68,6 +68,13 @@ enum ITEMDLG_CCTRL_TYPE {
     IDLG_CCTRL_VISUALGROUP
 };
 
+typedef struct cctrl_item {
+    DWORD id, parent_id;
+    LPWSTR label;
+    CDCONTROLSTATEF cdcstate;
+    struct list entry;
+} cctrl_item;
+
 typedef struct {
     HWND hwnd, wrapper_hwnd;
     UINT id, dlgid;
@@ -77,6 +84,7 @@ typedef struct {
 
     struct list sub_cctrls;
     struct list sub_cctrls_entry;
+    struct list sub_items;
 } customctrl;
 
 typedef struct {
@@ -692,6 +700,65 @@ static HRESULT on_default_action(FileDialogImpl *This)
 }
 
 /**************************************************************************
+ * Control item functions.
+ */
+
+static void item_free(cctrl_item *item)
+{
+    HeapFree(GetProcessHeap(), 0, item->label);
+    HeapFree(GetProcessHeap(), 0, item);
+}
+
+static cctrl_item* get_item(customctrl* parent, DWORD itemid, CDCONTROLSTATEF visible_flags, DWORD* position)
+{
+    DWORD dummy;
+    cctrl_item* item;
+
+    if (!position) position = &dummy;
+
+    *position = 0;
+
+    LIST_FOR_EACH_ENTRY(item, &parent->sub_items, cctrl_item, entry)
+    {
+        if (item->id == itemid)
+            return item;
+
+        if ((item->cdcstate & visible_flags) == visible_flags)
+            (*position)++;
+    }
+
+    return NULL;
+}
+
+static HRESULT add_item(customctrl* parent, DWORD itemid, LPCWSTR label, cctrl_item** result)
+{
+    cctrl_item* item;
+    LPWSTR label_copy;
+
+    if (get_item(parent, itemid, 0, NULL))
+        return E_INVALIDARG;
+
+    item = HeapAlloc(GetProcessHeap(), 0, sizeof(*item));
+    label_copy = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(label)+1)*sizeof(WCHAR));
+
+    if (!item || !label_copy)
+    {
+        HeapFree(GetProcessHeap(), 0, item);
+        HeapFree(GetProcessHeap(), 0, label_copy);
+        return E_OUTOFMEMORY;
+    }
+
+    item->id = itemid;
+    item->parent_id = parent->id;
+    lstrcpyW(label_copy, label);
+    item->label = label_copy;
+    item->cdcstate = CDCS_VISIBLE|CDCS_ENABLED;
+    list_add_tail(&parent->sub_items, &item->entry);
+
+    return S_OK;
+}
+
+/**************************************************************************
  * Control functions.
  */
 static inline customctrl *get_cctrl_from_dlgid(FileDialogImpl *This, DWORD dlgid)
@@ -782,6 +849,7 @@ static UINT ctrl_get_height(customctrl *ctrl) {
 static void ctrl_free(customctrl *ctrl)
 {
     customctrl *sub_cur1, *sub_cur2;
+    cctrl_item *item_cur1, *item_cur2;
 
     TRACE("Freeing control %p\n", ctrl);
     if(ctrl->type == IDLG_CCTRL_MENU)
@@ -795,6 +863,12 @@ static void ctrl_free(customctrl *ctrl)
     {
         list_remove(&sub_cur1->sub_cctrls_entry);
         ctrl_free(sub_cur1);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(item_cur1, item_cur2, &ctrl->sub_items, cctrl_item, entry)
+    {
+        list_remove(&item_cur1->entry);
+        item_free(item_cur1);
     }
 
     DestroyWindow(ctrl->hwnd);
@@ -1016,6 +1090,7 @@ static HRESULT cctrl_create_new(FileDialogImpl *This, DWORD id,
     ctrl->dlgid = This->cctrl_next_dlgid;
     ctrl->cdcstate = CDCS_ENABLED | CDCS_VISIBLE;
     list_init(&ctrl->sub_cctrls);
+    list_init(&ctrl->sub_items);
 
     if(This->cctrl_active_vg)
         list_add_tail(&This->cctrl_active_vg->sub_cctrls, &ctrl->sub_cctrls_entry);
@@ -3590,6 +3665,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddControlItem(IFileDialogCustomize
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    HRESULT hr;
     TRACE("%p (%d, %d, %s)\n", This, dwIDCtl, dwIDItem, debugstr_w(pszLabel));
 
     if(!ctrl) return E_FAIL;
@@ -3611,10 +3687,13 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddControlItem(IFileDialogCustomize
     case IDLG_CCTRL_MENU:
     {
         TBBUTTON tbb;
-        SendMessageW(ctrl->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
+        cctrl_item* item;
 
-        if(GetMenuState((HMENU)tbb.dwData, dwIDItem, MF_BYCOMMAND) != -1)
-            return E_INVALIDARG;
+        hr = add_item(ctrl, dwIDItem, pszLabel, &item);
+
+        if (FAILED(hr)) return hr;
+
+        SendMessageW(ctrl->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
 
         AppendMenuW((HMENU)tbb.dwData, MF_STRING, dwIDItem, pszLabel);
         return S_OK;
@@ -3658,11 +3737,24 @@ static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustom
     {
         TBBUTTON tbb;
         HMENU hmenu;
-        SendMessageW(ctrl->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
-        hmenu = (HMENU)tbb.dwData;
+        cctrl_item* item;
 
-        if(!hmenu || !DeleteMenu(hmenu, dwIDItem, MF_BYCOMMAND))
+        item = get_item(ctrl, dwIDItem, 0, NULL);
+
+        if (!item)
             return E_UNEXPECTED;
+
+        if (item->cdcstate & CDCS_VISIBLE)
+        {
+            SendMessageW(ctrl->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
+            hmenu = (HMENU)tbb.dwData;
+
+            if(!hmenu || !DeleteMenu(hmenu, dwIDItem, MF_BYCOMMAND))
+                return E_UNEXPECTED;
+        }
+
+        list_remove(&item->entry);
+        item_free(item);
 
         return S_OK;
     }
@@ -3689,8 +3781,31 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetControlItemState(IFileDialogCust
                                                                  CDCONTROLSTATEF *pdwState)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p\n", This);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %d, %p)\n", This, dwIDCtl, dwIDItem, pdwState);
+
+    if(!ctrl) return E_FAIL;
+
+    switch(ctrl->type)
+    {
+    case IDLG_CCTRL_MENU:
+    {
+        cctrl_item* item;
+
+        item = get_item(ctrl, dwIDItem, 0, NULL);
+
+        if (!item)
+            return E_UNEXPECTED;
+
+        *pdwState = item->cdcstate;
+
+        return S_OK;
+    }
+    default:
+        break;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemState(IFileDialogCustomize *iface,
@@ -3699,8 +3814,68 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemState(IFileDialogCust
                                                                  CDCONTROLSTATEF dwState)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p\n", This);
-    return E_NOTIMPL;
+    customctrl *ctrl = get_cctrl(This, dwIDCtl);
+    TRACE("%p (%d, %d, %x)\n", This, dwIDCtl, dwIDItem, dwState);
+
+    if(!ctrl) return E_FAIL;
+
+    switch(ctrl->type)
+    {
+    case IDLG_CCTRL_MENU:
+    {
+        TBBUTTON tbb;
+        HMENU hmenu;
+        cctrl_item* item;
+        CDCONTROLSTATEF prev_state;
+        DWORD position;
+
+        item = get_item(ctrl, dwIDItem, CDCS_VISIBLE, &position);
+
+        if (!item)
+            return E_UNEXPECTED;
+
+        prev_state = item->cdcstate;
+
+        SendMessageW(ctrl->hwnd, TB_GETBUTTON, 0, (LPARAM)&tbb);
+        hmenu = (HMENU)tbb.dwData;
+
+        if (dwState & CDCS_VISIBLE)
+        {
+            if (prev_state & CDCS_VISIBLE)
+            {
+                /* change state */
+                EnableMenuItem(hmenu, dwIDItem,
+                    MF_BYCOMMAND|((dwState & CDCS_ENABLED) ? MFS_ENABLED : MFS_DISABLED));
+            }
+            else
+            {
+                /* show item */
+                MENUITEMINFOW mii;
+
+                mii.cbSize = sizeof(mii);
+                mii.fMask = MIIM_ID|MIIM_STATE|MIIM_STRING;
+                mii.fState = (dwState & CDCS_ENABLED) ? MFS_ENABLED : MFS_DISABLED;
+                mii.wID = dwIDItem;
+                mii.dwTypeData = item->label;
+
+                InsertMenuItemW(hmenu, position, TRUE, &mii);
+            }
+        }
+        else if (prev_state & CDCS_VISIBLE)
+        {
+            /* hide item */
+            DeleteMenu(hmenu, dwIDItem, MF_BYCOMMAND);
+        }
+
+        item->cdcstate = dwState;
+
+        return S_OK;
+    }
+    default:
+        break;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnGetSelectedControlItem(IFileDialogCustomize *iface,

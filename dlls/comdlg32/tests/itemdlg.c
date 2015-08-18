@@ -1927,20 +1927,20 @@ static void test_customize(void)
 
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-        todo_wine ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, 0);
-        todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-        todo_wine ok(cdstate == 0, "got 0x%08x.\n", cdstate);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(cdstate == 0, "got 0x%08x.\n", cdstate);
         hr = IFileDialogCustomize_SetControlItemState(pfdc, i, 0, CDCS_ENABLEDVISIBLE);
-        todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
-        todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-        todo_wine ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
         hr = IFileDialogCustomize_RemoveAllControlItems(pfdc, i);
         ok(hr == E_NOTIMPL, "got 0x%08x.\n", hr);
