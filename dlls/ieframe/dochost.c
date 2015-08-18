@@ -395,6 +395,13 @@ static void update_travellog(DocHost *This)
 {
     travellog_entry_t *new_entry;
 
+    static const WCHAR about_schemeW[] = {'a','b','o','u','t',':'};
+
+    if(This->url && !strncmpiW(This->url, about_schemeW, sizeof(about_schemeW)/sizeof(*about_schemeW))) {
+        TRACE("Skipping about URL\n");
+        return;
+    }
+
     if(!This->travellog.log) {
         This->travellog.log = heap_alloc(4 * sizeof(*This->travellog.log));
         if(!This->travellog.log)
