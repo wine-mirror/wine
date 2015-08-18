@@ -311,7 +311,7 @@ static char *debugstr_ipv6(const struct WS_sockaddr_in6 *sin, char *buf)
     return buf;
 }
 
-static BOOL map_address_6to4( SOCKADDR_IN6 *addr6, SOCKADDR_IN *addr4 )
+static BOOL map_address_6to4( const SOCKADDR_IN6 *addr6, SOCKADDR_IN *addr4 )
 {
     ULONG i;
 
@@ -322,7 +322,7 @@ static BOOL map_address_6to4( SOCKADDR_IN6 *addr6, SOCKADDR_IN *addr4 )
 
     if (addr6->sin6_addr.u.Word[5] != 0xffff) return FALSE;
 
-    addr4->sin_family = AF_INET;
+    addr4->sin_family = WS_AF_INET;
     addr4->sin_port   = addr6->sin6_port;
     addr4->sin_addr.S_un.S_addr = addr6->sin6_addr.u.Word[6] << 16 | addr6->sin6_addr.u.Word[7];
     memset( &addr4->sin_zero, 0, sizeof(addr4->sin_zero) );
@@ -330,7 +330,7 @@ static BOOL map_address_6to4( SOCKADDR_IN6 *addr6, SOCKADDR_IN *addr4 )
     return TRUE;
 }
 
-static BOOL find_src_address( MIB_IPADDRTABLE *table, SOCKADDR_IN *dst, SOCKADDR_IN6 *src )
+static BOOL find_src_address( MIB_IPADDRTABLE *table, const SOCKADDR_IN *dst, SOCKADDR_IN6 *src )
 {
     MIB_IPFORWARDROW row;
     DWORD i, j;
@@ -1022,7 +1022,7 @@ static ULONG adapterAddressesFromIndex(ULONG family, ULONG flags, IF_INDEX index
                 gw->u.s.Length = sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
                 ptr += sizeof(IP_ADAPTER_GATEWAY_ADDRESS);
                 sin = (PSOCKADDR_IN)ptr;
-                sin->sin_family = AF_INET;
+                sin->sin_family = WS_AF_INET;
                 sin->sin_port = 0;
                 memcpy(&sin->sin_addr, &adapterRow->dwForwardNextHop,
                        sizeof(DWORD));
@@ -1528,7 +1528,7 @@ DWORD WINAPI GetBestInterface(IPAddr dwDestAddr, PDWORD pdwBestIfIndex)
 {
     struct WS_sockaddr_in sa_in;
     memset(&sa_in, 0, sizeof(sa_in));
-    sa_in.sin_family = AF_INET;
+    sa_in.sin_family = WS_AF_INET;
     sa_in.sin_addr.S_un.S_addr = dwDestAddr;
     return GetBestInterfaceEx((struct WS_sockaddr *)&sa_in, pdwBestIfIndex);
 }
@@ -1556,7 +1556,7 @@ DWORD WINAPI GetBestInterfaceEx(struct WS_sockaddr *pDestAddr, PDWORD pdwBestIfI
   else {
     MIB_IPFORWARDROW ipRow;
 
-    if (pDestAddr->sa_family == AF_INET) {
+    if (pDestAddr->sa_family == WS_AF_INET) {
       ret = GetBestRoute(((struct WS_sockaddr_in *)pDestAddr)->sin_addr.S_un.S_addr, 0, &ipRow);
       if (ret == ERROR_SUCCESS)
         *pdwBestIfIndex = ipRow.dwForwardIfIndex;
@@ -2296,7 +2296,7 @@ BOOL WINAPI GetRTTAndHopCount(IPAddr DestIpAddress, PULONG HopCount, ULONG MaxHo
 DWORD WINAPI GetTcpTable(PMIB_TCPTABLE pTcpTable, PDWORD pdwSize, BOOL bOrder)
 {
     TRACE("pTcpTable %p, pdwSize %p, bOrder %d\n", pTcpTable, pdwSize, bOrder);
-    return GetExtendedTcpTable(pTcpTable, pdwSize, bOrder, AF_INET, TCP_TABLE_BASIC_ALL, 0);
+    return GetExtendedTcpTable(pTcpTable, pdwSize, bOrder, WS_AF_INET, TCP_TABLE_BASIC_ALL, 0);
 }
 
 /******************************************************************
@@ -2313,7 +2313,7 @@ DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    if (ulAf != AF_INET)
+    if (ulAf != WS_AF_INET)
     {
         FIXME("ulAf = %u not supported\n", ulAf);
         return ERROR_NOT_SUPPORTED;
@@ -2361,7 +2361,7 @@ DWORD WINAPI GetExtendedTcpTable(PVOID pTcpTable, PDWORD pdwSize, BOOL bOrder,
  */
 DWORD WINAPI GetUdpTable(PMIB_UDPTABLE pUdpTable, PDWORD pdwSize, BOOL bOrder)
 {
-    return GetExtendedUdpTable(pUdpTable, pdwSize, bOrder, AF_INET, UDP_TABLE_BASIC, 0);
+    return GetExtendedUdpTable(pUdpTable, pdwSize, bOrder, WS_AF_INET, UDP_TABLE_BASIC, 0);
 }
 
 /******************************************************************
@@ -2378,7 +2378,7 @@ DWORD WINAPI GetExtendedUdpTable(PVOID pUdpTable, PDWORD pdwSize, BOOL bOrder,
 
     if (!pdwSize) return ERROR_INVALID_PARAMETER;
 
-    if (ulAf != AF_INET)
+    if (ulAf != WS_AF_INET)
     {
         FIXME("ulAf = %u not supported\n", ulAf);
         return ERROR_NOT_SUPPORTED;
