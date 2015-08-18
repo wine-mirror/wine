@@ -3044,6 +3044,42 @@ static void context_preload_textures(struct wined3d_context *context, const stru
     }
 }
 
+static void context_load_shader_resources(struct wined3d_context *context, const struct wined3d_state *state)
+{
+    struct wined3d_shader_sampler_map_entry *entry;
+    struct wined3d_shader_resource_view *view;
+    struct wined3d_shader *shader;
+    unsigned int i, j;
+
+    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
+    {
+        if (!(shader = state->shader[i]))
+            continue;
+
+        for (j = 0; j < WINED3D_MAX_CBS; ++j)
+        {
+            if (state->cb[i][j])
+                buffer_internal_preload(state->cb[i][j], context, state);
+        }
+
+        for (j = 0; j < shader->reg_maps.sampler_map.count; ++j)
+        {
+            entry = &shader->reg_maps.sampler_map.entries[j];
+
+            if (!(view = state->shader_resource_view[i][entry->resource_idx]))
+            {
+                WARN("No resource view bound at index %u, %u.\n", i, entry->resource_idx);
+                continue;
+            }
+
+            if (view->resource->type == WINED3D_RTYPE_BUFFER)
+                buffer_internal_preload(buffer_from_resource(view->resource), context, state);
+            else
+                wined3d_texture_load(wined3d_texture_from_resource(view->resource), context, FALSE);
+        }
+    }
+}
+
 static void context_bind_shader_resources(struct wined3d_context *context, const struct wined3d_state *state)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
@@ -3102,7 +3138,6 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
             }
 
             texture = wined3d_texture_from_resource(view->resource);
-            wined3d_texture_load(texture, context, FALSE);
             context_active_texture(context, gl_info, shader_types[i].base_idx + entry->bind_idx);
             wined3d_texture_bind(texture, context, FALSE);
 
@@ -3118,7 +3153,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
     const struct wined3d_state *state = &device->state;
     const struct StateEntry *state_table = context->state_table;
     const struct wined3d_fb_state *fb = state->fb;
-    unsigned int i, j;
+    unsigned int i;
     WORD map;
 
     if (!context_validate_rt_config(context->gl_info->limits.buffers,
@@ -3135,6 +3170,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
      * updating a resource location. */
     context_update_tex_unit_map(context, state);
     context_preload_textures(context, state);
+    context_load_shader_resources(context, state);
     /* TODO: Right now the dependency on the vertex shader is necessary
      * since context_stream_info_from_declaration depends on the reg_maps of
      * the current VS but maybe it's possible to relax the coupling in some
@@ -3158,15 +3194,6 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
             buffer_internal_preload(state->index_buffer, context, state);
         else
             buffer_get_sysmem(state->index_buffer, context);
-    }
-
-    for (i = 0; i < WINED3D_SHADER_TYPE_COUNT; ++i)
-    {
-        for (j = 0; j < WINED3D_MAX_CBS; ++j)
-        {
-            if (state->cb[i][j])
-                buffer_internal_preload(state->cb[i][j], context, state);
-        }
     }
 
     for (i = 0; i < context->numDirtyEntries; ++i)
