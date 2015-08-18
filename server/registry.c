@@ -265,6 +265,7 @@ static void save_subkeys( const struct key *key, const struct key *base, FILE *f
         fprintf( f, "\n[" );
         if (key != base) dump_path( key, base, f );
         fprintf( f, "] %u\n", (unsigned int)((key->modif - ticks_1601_to_1970) / TICKS_PER_SEC) );
+        fprintf( f, "#time=%x%08x\n", (unsigned int)(key->modif >> 32), (unsigned int)key->modif );
         if (key->class)
         {
             fprintf( f, "#class=\"" );
@@ -1341,14 +1342,13 @@ static int get_data_type( const char *buffer, int *type, int *parse_type )
 }
 
 /* load and create a key from the input file */
-static struct key *load_key( struct key *base, const char *buffer,
-                             int prefix_len, struct file_load_info *info )
+static struct key *load_key( struct key *base, const char *buffer, int prefix_len,
+                             struct file_load_info *info, timeout_t *modif )
 {
     WCHAR *p;
     struct unicode_str name;
     int res;
     unsigned int mod;
-    timeout_t modif = current_time;
     data_size_t len;
 
     if (!get_file_tmp_space( info, strlen(buffer) * sizeof(WCHAR) )) return NULL;
@@ -1360,7 +1360,9 @@ static struct key *load_key( struct key *base, const char *buffer,
         return NULL;
     }
     if (sscanf( buffer + res, " %u", &mod ) == 1)
-        modif = (timeout_t)mod * TICKS_PER_SEC + ticks_1601_to_1970;
+        *modif = (timeout_t)mod * TICKS_PER_SEC + ticks_1601_to_1970;
+    else
+        *modif = current_time;
 
     p = info->tmp;
     while (prefix_len && *p) { if (*p++ == '\\') prefix_len--; }
@@ -1377,7 +1379,17 @@ static struct key *load_key( struct key *base, const char *buffer,
     }
     name.str = p;
     name.len = len - (p - info->tmp + 1) * sizeof(WCHAR);
-    return create_key_recursive( base, &name, modif );
+    return create_key_recursive( base, &name, 0 );
+}
+
+/* update the modification time of a key (and its parents) after it has been loaded from a file */
+static void update_key_time( struct key *key, timeout_t modif )
+{
+    while (key && !key->modif)
+    {
+        key->modif = modif;
+        key = key->parent;
+    }
 }
 
 /* load a global option from the input file */
@@ -1415,6 +1427,18 @@ static int load_key_option( struct key *key, const char *buffer, struct file_loa
     const char *p;
     data_size_t len;
 
+    if (!strncmp( buffer, "#time=", 6 ))
+    {
+        timeout_t modif = 0;
+        for (p = buffer + 6; *p; p++)
+        {
+            if (*p >= '0' && *p <= '9') modif = (modif << 4) | (*p - '0');
+            else if (*p >= 'A' && *p <= 'F') modif = (modif << 4) | (*p - 'A' + 10);
+            else if (*p >= 'a' && *p <= 'f') modif = (modif << 4) | (*p - 'a' + 10);
+            else break;
+        }
+        update_key_time( key, modif );
+    }
     if (!strncmp( buffer, "#class=", 7 ))
     {
         p = buffer + 7;
@@ -1589,6 +1613,7 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
 {
     struct key *subkey = NULL;
     struct file_load_info info;
+    timeout_t modif = current_time;
     char *p;
 
     info.filename = filename;
@@ -1617,9 +1642,13 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
         switch(*p)
         {
         case '[':   /* new key */
-            if (subkey) release_object( subkey );
+            if (subkey)
+            {
+                update_key_time( subkey, modif );
+                release_object( subkey );
+            }
             if (prefix_len == -1) prefix_len = get_prefix_len( key, p + 1, &info );
-            if (!(subkey = load_key( key, p + 1, prefix_len, &info )))
+            if (!(subkey = load_key( key, p + 1, prefix_len, &info, &modif )))
                 file_read_error( "Error creating key", &info );
             break;
         case '@':   /* default value */
@@ -1641,7 +1670,11 @@ static void load_keys( struct key *key, const char *filename, FILE *f, int prefi
     }
 
  done:
-    if (subkey) release_object( subkey );
+    if (subkey)
+    {
+        update_key_time( subkey, modif );
+        release_object( subkey );
+    }
     free( info.buffer );
     free( info.tmp );
 }
