@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-07-14 16:31+0300\n"
+"PO-Revision-Date: 2015-08-18 20:53+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -198,7 +198,7 @@ msgid ""
 "Unable to execute the uninstaller, '%s'. Do you want to remove the uninstall "
 "entry for this program from the registry?"
 msgstr ""
-"Nepavyko įvykdyti programos pašalinimo komandos „%s“. Ar norite pašalinti "
+"Nepavyko įvykdyti programos šalinimo komandos „%s“. Ar norite pašalinti "
 "programos šalinimo įrašą iš registro?"
 
 #: appwiz.rc:36
@@ -12864,18 +12864,17 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "šalinimo programa: Programa su GUID „%1“ nerasta\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"šalinimo programa: Už parametro „--remove“ privalo būti programos GUID\n"
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Klaida: netinkamas parametras „%c“.\n"
+msgstr "šalinimo programa: Netinkamas parametras [%1]\n"
 
 #: view.rc:36
 msgid "&Pan"
