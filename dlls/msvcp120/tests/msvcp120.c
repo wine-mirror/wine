@@ -87,6 +87,7 @@ static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir_wchar)(WCHAR const*);
 static int (__cdecl *p_tr2_sys__Copy_file)(char const*, char const*, MSVCP_bool);
 static int (__cdecl *p_tr2_sys__Copy_file_wchar)(WCHAR const*, WCHAR const*, MSVCP_bool);
 static int (__cdecl *p_tr2_sys__Rename)(char const*, char const*);
+static int (__cdecl *p_tr2_sys__Rename_wchar)(WCHAR const*, WCHAR const*);
 static struct space_info (__cdecl *p_tr2_sys__Statvfs)(char const*);
 static enum file_type (__cdecl *p_tr2_sys__Stat)(char const*, int *);
 static enum file_type (__cdecl *p_tr2_sys__Lstat)(char const*, int *);
@@ -148,6 +149,8 @@ static BOOL init(void)
                 "?_Copy_file@sys@tr2@std@@YAHPEB_W0_N@Z");
         SET(p_tr2_sys__Rename,
                 "?_Rename@sys@tr2@std@@YAHPEBD0@Z");
+        SET(p_tr2_sys__Rename_wchar,
+                "?_Rename@sys@tr2@std@@YAHPEB_W0@Z");
         SET(p_tr2_sys__Statvfs,
                 "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEBD@Z");
         SET(p_tr2_sys__Stat,
@@ -185,6 +188,8 @@ static BOOL init(void)
                 "?_Copy_file@sys@tr2@std@@YAHPB_W0_N@Z");
         SET(p_tr2_sys__Rename,
                 "?_Rename@sys@tr2@std@@YAHPBD0@Z");
+        SET(p_tr2_sys__Rename_wchar,
+                "?_Rename@sys@tr2@std@@YAHPB_W0@Z");
         SET(p_tr2_sys__Statvfs,
                 "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PBD@Z");
         SET(p_tr2_sys__Stat,
@@ -694,6 +699,8 @@ static void test_tr2_sys__Rename(void)
     BY_HANDLE_FILE_INFORMATION info1, info2;
     char temp_path[MAX_PATH], current_path[MAX_PATH];
     LARGE_INTEGER file_size;
+    WCHAR testW[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','1',0};
+    WCHAR testW2[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','w',0};
     struct {
         char const *old_path;
         char const *new_path;
@@ -756,8 +763,10 @@ static void test_tr2_sys__Rename(void)
     ok(ret == ERROR_ALREADY_EXISTS, "test_tr2_sys__Rename(): expect: ERROR_ALREADY_EXISTS, got %d\n", ret);
     ok(p_tr2_sys__File_size("tr2_test_dir\\f1") == 7, "test_tr2_sys__Rename(): expect: 7, got %s\n", debugstr_longlong(p_tr2_sys__File_size("tr2_test_dir\\f1")));
     ok(p_tr2_sys__File_size("tr2_test_dir\\f1_rename") == 0, "test_tr2_sys__Rename(): expect: 0, got %s\n",debugstr_longlong(p_tr2_sys__File_size("tr2_test_dir\\f1_rename")));
+    ret = p_tr2_sys__Rename_wchar(testW, testW2);
+    ok(ret == ERROR_SUCCESS, "tr2_sys__Rename_wchar(): expect: ERROR_SUCCESS, got %d\n",  ret);
 
-    ok(DeleteFileA("tr2_test_dir\\f1"), "expect f1 to exist\n");
+    ok(DeleteFileW(testW2), "expect fw to exist\n");
     ok(DeleteFileA("tr2_test_dir\\f1_rename"), "expect f1_rename to exist\n");
     ret = p_tr2_sys__Remove_dir("tr2_test_dir");
     ok(ret == 1, "test_tr2_sys__Remove_dir(): expect %d got %d\n", 1, ret);

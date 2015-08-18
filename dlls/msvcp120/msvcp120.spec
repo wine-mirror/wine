@@ -1685,8 +1685,8 @@
 @ cdecl -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z(wstr) tr2_sys__Remove_dir_wchar
 @ cdecl -arch=win32 ?_Rename@sys@tr2@std@@YAHPBD0@Z(str str) tr2_sys__Rename
 @ cdecl -arch=win64 ?_Rename@sys@tr2@std@@YAHPEBD0@Z(str str) tr2_sys__Rename
-@ stub -arch=win32 ?_Rename@sys@tr2@std@@YAHPB_W0@Z
-@ stub -arch=win64 ?_Rename@sys@tr2@std@@YAHPEB_W0@Z
+@ cdecl -arch=win32 ?_Rename@sys@tr2@std@@YAHPB_W0@Z(wstr wstr) tr2_sys__Rename_wchar
+@ cdecl -arch=win64 ?_Rename@sys@tr2@std@@YAHPEB_W0@Z(wstr wstr) tr2_sys__Rename_wchar
 @ cdecl -arch=win32 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@DI@Z(ptr ptr long ptr long long) num_put_char__Rep
 @ cdecl -arch=win64 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@D_K@Z(ptr ptr ptr long long) num_put_char__Rep
 @ cdecl -arch=win32 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@GI@Z(ptr ptr long ptr long long) num_put_wchar__Rep

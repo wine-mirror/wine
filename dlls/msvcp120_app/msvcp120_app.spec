@@ -1685,8 +1685,8 @@
 @ cdecl -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z(wstr) msvcp120.?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z
 @ cdecl -arch=win32 ?_Rename@sys@tr2@std@@YAHPBD0@Z(str str) msvcp120.?_Rename@sys@tr2@std@@YAHPBD0@Z
 @ cdecl -arch=win64 ?_Rename@sys@tr2@std@@YAHPEBD0@Z(str str) msvcp120.?_Rename@sys@tr2@std@@YAHPEBD0@Z
-@ stub -arch=win32 ?_Rename@sys@tr2@std@@YAHPB_W0@Z
-@ stub -arch=win64 ?_Rename@sys@tr2@std@@YAHPEB_W0@Z
+@ cdecl -arch=win32 ?_Rename@sys@tr2@std@@YAHPB_W0@Z(wstr wstr) msvcp120.?_Rename@sys@tr2@std@@YAHPB_W0@Z
+@ cdecl -arch=win64 ?_Rename@sys@tr2@std@@YAHPEB_W0@Z(wstr wstr) msvcp120.?_Rename@sys@tr2@std@@YAHPEB_W0@Z
 @ cdecl -arch=win32 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@DI@Z(ptr ptr long ptr long long) msvcp120.?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@DI@Z
 @ cdecl -arch=win64 ?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@D_K@Z(ptr ptr ptr long long) msvcp120.?_Rep@?$num_put@DV?$ostreambuf_iterator@DU?$char_traits@D@std@@@std@@@std@@AEBA?AV?$ostreambuf_iterator@DU?$char_traits@D@std@@@2@V32@D_K@Z
 @ cdecl -arch=win32 ?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@GI@Z(ptr ptr long ptr long long) msvcp120.?_Rep@?$num_put@GV?$ostreambuf_iterator@GU?$char_traits@G@std@@@std@@@std@@ABA?AV?$ostreambuf_iterator@GU?$char_traits@G@std@@@2@V32@GI@Z
