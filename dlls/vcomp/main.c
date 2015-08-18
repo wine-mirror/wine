@@ -1057,6 +1057,24 @@ void CDECL omp_destroy_lock(omp_lock_t *lock)
     destroy_critsect(*lock);
 }
 
+void CDECL omp_set_nest_lock(omp_nest_lock_t *lock)
+{
+    TRACE("(%p)\n", lock);
+    EnterCriticalSection(*lock);
+}
+
+void CDECL omp_unset_nest_lock(omp_nest_lock_t *lock)
+{
+    TRACE("(%p)\n", lock);
+    LeaveCriticalSection(*lock);
+}
+
+int CDECL omp_test_nest_lock(omp_nest_lock_t *lock)
+{
+    TRACE("(%p)\n", lock);
+    return TryEnterCriticalSection(*lock) ? (*lock)->RecursionCount : 0;
+}
+
 void CDECL _vcomp_enter_critsect(CRITICAL_SECTION **critsect)
 {
     TRACE("(%p)\n", critsect);

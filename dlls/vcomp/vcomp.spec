@@ -103,10 +103,10 @@
 @ cdecl omp_init_nest_lock(ptr) omp_init_lock
 @ cdecl omp_set_dynamic(long)
 @ stub omp_set_lock
-@ stub omp_set_nest_lock
+@ cdecl omp_set_nest_lock(ptr)
 @ cdecl omp_set_nested(long)
 @ cdecl omp_set_num_threads(long)
 @ stub omp_test_lock
-@ stub omp_test_nest_lock
+@ cdecl omp_test_nest_lock(ptr)
 @ stub omp_unset_lock
-@ stub omp_unset_nest_lock
+@ cdecl omp_unset_nest_lock(ptr)
