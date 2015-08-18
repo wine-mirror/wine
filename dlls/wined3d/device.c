@@ -3818,6 +3818,8 @@ float CDECL wined3d_device_get_npatch_mode(const struct wined3d_device *device)
     return 0.0f;
 }
 
+/* FIXME: Callers should probably use wined3d_device_update_sub_resource()
+ * instead. */
 HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
         struct wined3d_surface *src_surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const POINT *dst_point)
@@ -3979,6 +3981,84 @@ void CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *device
 
     if (FAILED(hr = wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
         ERR("Failed to blit, hr %#x.\n", hr);
+}
+
+void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, struct wined3d_resource *resource,
+        unsigned int sub_resource_idx, const struct wined3d_box *box, const void *data, unsigned int row_pitch,
+        unsigned int depth_pitch)
+{
+    struct wined3d_resource *sub_resource;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_const_bo_address addr;
+    struct wined3d_context *context;
+    struct wined3d_texture *texture;
+    struct wined3d_surface *surface;
+    POINT dst_point;
+    RECT src_rect;
+
+    TRACE("device %p, resource %p, sub_resource_idx %u, box %p, data %p, row_pitch %u, depth_pitch %u.\n",
+            device, resource, sub_resource_idx, box, data, row_pitch, depth_pitch);
+
+    if (resource->type != WINED3D_RTYPE_TEXTURE)
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
+        return;
+    }
+
+    texture = wined3d_texture_from_resource(resource);
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
+    {
+        WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
+        return;
+    }
+    surface = surface_from_resource(sub_resource);
+
+    src_rect.left = 0;
+    src_rect.top = 0;
+    if (box)
+    {
+        if (box->left >= box->right || box->right > sub_resource->width
+                || box->top >= box->bottom || box->bottom > sub_resource->height)
+        {
+            WARN("Invalid box (%u, %u, %u)->(%u, %u, %u) specified.\n",
+                    box->left, box->top, box->front, box->right, box->bottom, box->back);
+            return;
+        }
+
+        src_rect.right = box->right - box->left;
+        src_rect.bottom = box->bottom - box->top;
+        dst_point.x = box->left;
+        dst_point.y = box->top;
+    }
+    else
+    {
+        src_rect.right = sub_resource->width;
+        src_rect.bottom = sub_resource->height;
+        dst_point.x = 0;
+        dst_point.y = 0;
+    }
+
+    addr.buffer_object = 0;
+    addr.addr = data;
+
+    context = context_acquire(resource->device, NULL);
+    gl_info = context->gl_info;
+
+    /* Only load the surface for partial updates. */
+    if (!dst_point.x && !dst_point.y && src_rect.right == sub_resource->width
+            && src_rect.bottom == sub_resource->height)
+        wined3d_texture_prepare_texture(texture, context, FALSE);
+    else
+        surface_load_location(surface, WINED3D_LOCATION_TEXTURE_RGB);
+    wined3d_texture_bind_and_dirtify(texture, context, FALSE);
+
+    wined3d_surface_upload_data(surface, gl_info, resource->format,
+            &src_rect, row_pitch, &dst_point, FALSE, &addr);
+
+    context_release(context);
+
+    surface_validate_location(surface, WINED3D_LOCATION_TEXTURE_RGB);
+    surface_invalidate_location(surface, ~WINED3D_LOCATION_TEXTURE_RGB);
 }
 
 HRESULT CDECL wined3d_device_clear_rendertarget_view(struct wined3d_device *device,
