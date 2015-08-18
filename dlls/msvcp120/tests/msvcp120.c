@@ -89,6 +89,7 @@ static int (__cdecl *p_tr2_sys__Copy_file_wchar)(WCHAR const*, WCHAR const*, MSV
 static int (__cdecl *p_tr2_sys__Rename)(char const*, char const*);
 static int (__cdecl *p_tr2_sys__Rename_wchar)(WCHAR const*, WCHAR const*);
 static struct space_info (__cdecl *p_tr2_sys__Statvfs)(char const*);
+static struct space_info (__cdecl *p_tr2_sys__Statvfs_wchar)(WCHAR const*);
 static enum file_type (__cdecl *p_tr2_sys__Stat)(char const*, int *);
 static enum file_type (__cdecl *p_tr2_sys__Lstat)(char const*, int *);
 
@@ -153,6 +154,8 @@ static BOOL init(void)
                 "?_Rename@sys@tr2@std@@YAHPEB_W0@Z");
         SET(p_tr2_sys__Statvfs,
                 "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEBD@Z");
+        SET(p_tr2_sys__Statvfs_wchar,
+                "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEB_W@Z");
         SET(p_tr2_sys__Stat,
                 "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z");
         SET(p_tr2_sys__Lstat,
@@ -192,6 +195,8 @@ static BOOL init(void)
                 "?_Rename@sys@tr2@std@@YAHPB_W0@Z");
         SET(p_tr2_sys__Statvfs,
                 "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PBD@Z");
+        SET(p_tr2_sys__Statvfs_wchar,
+                "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PB_W@Z");
         SET(p_tr2_sys__Stat,
                 "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z");
         SET(p_tr2_sys__Lstat,
@@ -777,12 +782,19 @@ static void test_tr2_sys__Statvfs(void)
 {
     struct space_info info;
     char current_path[MAX_PATH];
+    WCHAR current_path_wchar[MAX_PATH];
     memset(current_path, 0, MAX_PATH);
     p_tr2_sys__Current_get(current_path);
+    memset(current_path_wchar, 0, MAX_PATH);
+    p_tr2_sys__Current_get_wchar(current_path_wchar);
 
     info = p_tr2_sys__Statvfs(current_path);
     ok(info.capacity >= info.free, "test_tr2_sys__Statvfs(): info.capacity < info.free\n");
     ok(info.free >= info.available, "test_tr2_sys__Statvfs(): info.free < info.available\n");
+
+    info = p_tr2_sys__Statvfs_wchar(current_path_wchar);
+    ok(info.capacity >= info.free, "tr2_sys__Statvfs_wchar(): info.capacity < info.free\n");
+    ok(info.free >= info.available, "tr2_sys__Statvfs_wchar(): info.free < info.available\n");
 
     info = p_tr2_sys__Statvfs(NULL);
     ok(info.available == 0, "test_tr2_sys__Statvfs(): info.available expect: %d, got %s\n",
