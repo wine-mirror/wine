@@ -10882,6 +10882,56 @@ static void test_getAttributeNode(void)
     free_bstrs();
 }
 
+static void test_getAttribute(void)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMElement *elem;
+    VARIANT_BOOL v;
+    VARIANT var;
+    HRESULT hr;
+
+    doc = create_document(&IID_IXMLDOMDocument);
+
+    hr = IXMLDOMDocument_loadXML(doc, _bstr_(szExampleXML), &v);
+    EXPECT_HR(hr, S_OK);
+
+    hr = IXMLDOMDocument_get_documentElement(doc, &elem);
+    EXPECT_HR(hr, S_OK);
+
+    VariantInit(&var);
+    hr = IXMLDOMElement_getAttribute( elem, _bstr_("xmlns:foo"), &var );
+    EXPECT_HR(hr, S_OK);
+    ok( V_VT(&var) == VT_BSTR, "vt = %x\n", V_VT(&var));
+    ok( !lstrcmpW(V_BSTR(&var), _bstr_("urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29")), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    hr = IXMLDOMElement_getAttribute( elem, _bstr_("a"), &var );
+    EXPECT_HR(hr, S_OK);
+    ok( V_VT(&var) == VT_BSTR, "vt = %x\n", V_VT(&var));
+    ok( !lstrcmpW(V_BSTR(&var), _bstr_("attr a")), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    hr = IXMLDOMElement_getAttribute( elem, _bstr_("foo:b"), &var );
+    EXPECT_HR(hr, S_OK);
+    ok( V_VT(&var) == VT_BSTR, "vt = %x\n", V_VT(&var));
+    ok( !lstrcmpW(V_BSTR(&var), _bstr_("attr b")), "wrong attr value: %s\n", wine_dbgstr_w(V_BSTR(&var)));
+    VariantClear(&var);
+
+    hr = IXMLDOMElement_getAttribute( elem, _bstr_("b"), &var );
+    EXPECT_HR(hr, S_FALSE);
+    ok( V_VT(&var) == VT_NULL, "vt = %x\n", V_VT(&var));
+    VariantClear(&var);
+
+    hr = IXMLDOMElement_getAttribute( elem, _bstr_("non-existent"), &var );
+    EXPECT_HR(hr, S_FALSE);
+    ok( V_VT(&var) == VT_NULL, "vt = %x\n", V_VT(&var));
+    VariantClear(&var);
+
+    IXMLDOMElement_Release(elem);
+    IXMLDOMDocument_Release(doc);
+    free_bstrs();
+}
+
 typedef struct {
     DOMNodeType type;
     const char *name;
@@ -12071,6 +12121,7 @@ START_TEST(domdoc)
     test_dispex();
     test_parseerror();
     test_getAttributeNode();
+    test_getAttribute();
     test_supporterrorinfo();
     test_nodeValue();
     test_get_namespaces();
