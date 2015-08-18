@@ -31,6 +31,9 @@ static BOOL   (WINAPI *pActivateActCtx)(HANDLE, ULONG_PTR*);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD, ULONG_PTR);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 
+typedef CRITICAL_SECTION *omp_lock_t;
+typedef CRITICAL_SECTION *omp_nest_lock_t;
+
 static void  (CDECL   *p_vcomp_atomic_add_i4)(int *dest, int val);
 static void  (CDECL   *p_vcomp_atomic_add_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_add_r8)(double *dest, double val);
@@ -70,11 +73,15 @@ static int   (CDECL   *p_vcomp_sections_next)(void);
 static void  (CDECL   *p_vcomp_set_num_threads)(int num_threads);
 static int   (CDECL   *p_vcomp_single_begin)(int flags);
 static void  (CDECL   *p_vcomp_single_end)(void);
+static void  (CDECL   *pomp_destroy_lock)(omp_lock_t *lock);
+static void  (CDECL   *pomp_destroy_nest_lock)(omp_nest_lock_t *lock);
 static int   (CDECL   *pomp_get_max_threads)(void);
 static int   (CDECL   *pomp_get_nested)(void);
 static int   (CDECL   *pomp_get_num_threads)(void);
 static int   (CDECL   *pomp_get_thread_num)(void);
 static int   (CDECL   *pomp_in_parallel)(void);
+static void  (CDECL   *pomp_init_lock)(omp_lock_t *lock);
+static void  (CDECL   *pomp_init_nest_lock)(omp_nest_lock_t *lock);
 static void  (CDECL   *pomp_set_nested)(int nested);
 static void  (CDECL   *pomp_set_num_threads)(int num_threads);
 
@@ -249,11 +256,15 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_set_num_threads);
     VCOMP_GET_PROC(_vcomp_single_begin);
     VCOMP_GET_PROC(_vcomp_single_end);
+    VCOMP_GET_PROC(omp_destroy_lock);
+    VCOMP_GET_PROC(omp_destroy_nest_lock);
     VCOMP_GET_PROC(omp_get_max_threads);
     VCOMP_GET_PROC(omp_get_nested);
     VCOMP_GET_PROC(omp_get_num_threads);
     VCOMP_GET_PROC(omp_get_thread_num);
     VCOMP_GET_PROC(omp_in_parallel);
+    VCOMP_GET_PROC(omp_init_lock);
+    VCOMP_GET_PROC(omp_init_nest_lock);
     VCOMP_GET_PROC(omp_set_nested);
     VCOMP_GET_PROC(omp_set_num_threads);
 
@@ -1285,6 +1296,14 @@ static void test_vcomp_flush(void)
     p_vcomp_flush();
 }
 
+static void test_omp_init_nest_lock(void)
+{
+    ok(pomp_init_nest_lock == pomp_init_lock, "expected omp_init_nest_lock == %p, got %p\n",
+       pomp_init_lock, pomp_init_nest_lock);
+    ok(pomp_destroy_nest_lock == pomp_destroy_lock, "expected omp_destroy_nest_lock == %p, got %p\n",
+       pomp_destroy_lock, pomp_destroy_nest_lock);
+}
+
 static void test_atomic_integer32(void)
 {
     struct
@@ -1405,6 +1424,7 @@ START_TEST(vcomp)
     test_vcomp_single_begin();
     test_vcomp_enter_critsect();
     test_vcomp_flush();
+    test_omp_init_nest_lock();
     test_atomic_integer32();
     test_atomic_float();
     test_atomic_double();
