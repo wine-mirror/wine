@@ -7103,8 +7103,8 @@ static UINT ITERATE_RemoveEnvironmentString( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
     LPCWSTR name, value, component;
-    LPWSTR deformatted = NULL;
-    DWORD flags;
+    WCHAR *p, *q, *deformatted = NULL, *new_value = NULL;
+    DWORD flags, type, size, len, len_value = 0, len_new_value;
     HKEY env;
     MSICOMPONENT *comp;
     MSIRECORD *uirow;
@@ -7141,7 +7141,20 @@ static UINT ITERATE_RemoveEnvironmentString( MSIRECORD *rec, LPVOID param )
     if (value && !deformat_string( package, value, &deformatted ))
         return ERROR_OUTOFMEMORY;
 
-    value = deformatted;
+    if ((value = deformatted))
+    {
+        if (flags & ENV_MOD_PREFIX)
+        {
+            p = strchrW( value, ';' );
+            len_value = p - value;
+        }
+        else if (flags & ENV_MOD_APPEND)
+        {
+            value = strchrW( value, ';' ) + 1;
+            len_value = strlenW( value );
+        }
+        else len_value = strlenW( value );
+    }
 
     r = open_env_key( flags, &env );
     if (r != ERROR_SUCCESS)
@@ -7153,13 +7166,48 @@ static UINT ITERATE_RemoveEnvironmentString( MSIRECORD *rec, LPVOID param )
     if (flags & ENV_MOD_MACHINE)
         action |= 0x20000000;
 
-    TRACE("Removing %s\n", debugstr_w(name));
+    size = 0;
+    type = REG_SZ;
+    res = RegQueryValueExW( env, name, NULL, &type, NULL, &size );
+    if (res != ERROR_SUCCESS || (type != REG_SZ && type != REG_EXPAND_SZ))
+        goto done;
 
-    res = RegDeleteValueW( env, name );
+    if (!(new_value = msi_alloc( size ))) goto done;
+
+    res = RegQueryValueExW( env, name, NULL, &type, (BYTE *)new_value, &size );
     if (res != ERROR_SUCCESS)
+        goto done;
+
+    len_new_value = size / sizeof(WCHAR) - 1;
+    p = q = new_value;
+    for (;;)
     {
-        WARN("Failed to delete value %s (%d)\n", debugstr_w(name), res);
-        r = ERROR_SUCCESS;
+        while (*q && *q != ';') q++;
+        len = q - p;
+        if (value && len == len_value && !memcmp( value, p, len * sizeof(WCHAR) ))
+        {
+            if (*q == ';') q++;
+            memmove( p, q, (len_new_value - (q - new_value) + 1) * sizeof(WCHAR) );
+            break;
+        }
+        if (!*q) break;
+        p = ++q;
+    }
+
+    if (!new_value[0] || !value)
+    {
+        TRACE("removing %s\n", debugstr_w(name));
+        res = RegDeleteValueW( env, name );
+        if (res != ERROR_SUCCESS)
+            WARN("failed to delete value %s (%d)\n", debugstr_w(name), res);
+    }
+    else
+    {
+        TRACE("setting %s to %s\n", debugstr_w(name), debugstr_w(new_value));
+        size = (strlenW( new_value ) + 1) * sizeof(WCHAR);
+        res = RegSetValueExW( env, name, 0, type, (BYTE *)new_value, size );
+        if (res != ERROR_SUCCESS)
+            WARN("failed to set %s to %s (%d)\n", debugstr_w(name), debugstr_w(new_value), res);
     }
 
 done:
@@ -7172,6 +7220,7 @@ done:
 
     if (env) RegCloseKey( env );
     msi_free( deformatted );
+    msi_free( new_value );
     return r;
 }
 
