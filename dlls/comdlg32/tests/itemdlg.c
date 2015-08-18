@@ -1970,7 +1970,6 @@ static void test_customize(void)
         ok(hr == E_FAIL, "got 0x%08x.\n", hr);
         ok(selected == -1, "got %d.\n", selected);
 
-        todo_wine {
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
         ok(hr == S_OK, "got 0x%08x.\n", hr);
@@ -1987,7 +1986,6 @@ static void test_customize(void)
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
         ok(hr == S_OK, "got 0x%08x.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
-        }
 
         for(j = 0; j < 10; j++)
         {

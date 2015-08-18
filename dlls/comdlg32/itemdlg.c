@@ -3675,9 +3675,11 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddControlItem(IFileDialogCustomize
     case IDLG_CCTRL_COMBOBOX:
     {
         UINT index;
+        cctrl_item* item;
 
-        if(get_combobox_index_from_id(ctrl->hwnd, dwIDItem) != -1)
-            return E_INVALIDARG;
+        hr = add_item(ctrl, dwIDItem, pszLabel, &item);
+
+        if (FAILED(hr)) return hr;
 
         index = SendMessageW(ctrl->hwnd, CB_ADDSTRING, 0, (LPARAM)pszLabel);
         SendMessageW(ctrl->hwnd, CB_SETITEMDATA, index, dwIDItem);
@@ -3719,19 +3721,21 @@ static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustom
     {
     case IDLG_CCTRL_COMBOBOX:
     {
-        UINT i, count = SendMessageW(ctrl->hwnd, CB_GETCOUNT, 0, 0);
-        if(!count || (count == CB_ERR))
-            return E_FAIL;
+        cctrl_item* item;
+        DWORD position;
 
-        for(i = 0; i < count; i++)
-            if(SendMessageW(ctrl->hwnd, CB_GETITEMDATA, i, 0) == dwIDItem)
-            {
-                if(SendMessageW(ctrl->hwnd, CB_DELETESTRING, i, 0) == CB_ERR)
-                    return E_FAIL;
-                return S_OK;
-            }
+        item = get_item(ctrl, dwIDItem, CDCS_VISIBLE|CDCS_ENABLED, &position);
 
-        return E_UNEXPECTED;
+        if ((item->cdcstate & (CDCS_VISIBLE|CDCS_ENABLED)) == (CDCS_VISIBLE|CDCS_ENABLED))
+        {
+            if(SendMessageW(ctrl->hwnd, CB_DELETESTRING, position, 0) == CB_ERR)
+                return E_FAIL;
+        }
+
+        list_remove(&item->entry);
+        item_free(item);
+
+        return S_OK;
     }
     case IDLG_CCTRL_MENU:
     {
@@ -3788,6 +3792,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetControlItemState(IFileDialogCust
 
     switch(ctrl->type)
     {
+    case IDLG_CCTRL_COMBOBOX:
     case IDLG_CCTRL_MENU:
     {
         cctrl_item* item;
@@ -3821,6 +3826,34 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemState(IFileDialogCust
 
     switch(ctrl->type)
     {
+    case IDLG_CCTRL_COMBOBOX:
+    {
+        cctrl_item* item;
+        BOOL visible, was_visible;
+        DWORD position;
+
+        item = get_item(ctrl, dwIDItem, CDCS_VISIBLE|CDCS_ENABLED, &position);
+
+        if (!item)
+            return E_UNEXPECTED;
+
+        visible = ((dwState & (CDCS_VISIBLE|CDCS_ENABLED)) == (CDCS_VISIBLE|CDCS_ENABLED));
+        was_visible = ((item->cdcstate & (CDCS_VISIBLE|CDCS_ENABLED)) == (CDCS_VISIBLE|CDCS_ENABLED));
+
+        if (visible && !was_visible)
+        {
+            SendMessageW(ctrl->hwnd, CB_INSERTSTRING, position, (LPARAM)item->label);
+            SendMessageW(ctrl->hwnd, CB_SETITEMDATA, position, dwIDItem);
+        }
+        else if (!visible && was_visible)
+        {
+            SendMessageW(ctrl->hwnd, CB_DELETESTRING, position, 0);
+        }
+
+        item->cdcstate = dwState;
+
+        return S_OK;
+    }
     case IDLG_CCTRL_MENU:
     {
         TBBUTTON tbb;
