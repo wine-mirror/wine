@@ -266,11 +266,12 @@ static void* get_fontface_table(struct dwrite_fontface *fontface, UINT32 tag, st
     return table->data;
 }
 
-static void init_font_prop_vec(const struct dwrite_font_props *props, struct dwrite_font_propvec *vec)
+static void init_font_prop_vec(DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STRETCH stretch, DWRITE_FONT_STYLE style,
+    struct dwrite_font_propvec *vec)
 {
-    vec->stretch = ((INT32)props->stretch - DWRITE_FONT_STRETCH_NORMAL) * 11.0f;
-    vec->style = props->style * 7.0f;
-    vec->weight = ((INT32)props->weight - DWRITE_FONT_WEIGHT_NORMAL) / 100.0f * 5.0f;
+    vec->stretch = ((INT32)stretch - DWRITE_FONT_STRETCH_NORMAL) * 11.0f;
+    vec->style = style * 7.0f;
+    vec->weight = ((INT32)weight - DWRITE_FONT_WEIGHT_NORMAL) / 100.0f * 5.0f;
 }
 
 static FLOAT get_font_prop_vec_distance(const struct dwrite_font_propvec *left, const struct dwrite_font_propvec *right)
@@ -1603,7 +1604,6 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
     DWRITE_FONT_STRETCH stretch, DWRITE_FONT_STYLE style, IDWriteFont **font)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily(iface);
-    struct dwrite_font_props reqprops = { style, stretch, weight };
     DWRITE_FONT_SIMULATIONS simulations;
     struct dwrite_font_propvec req;
     struct dwrite_font_data *match;
@@ -1616,7 +1616,7 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
         return DWRITE_E_NOFONT;
     }
 
-    init_font_prop_vec(&reqprops, &req);
+    init_font_prop_vec(weight, stretch, style, &req);
     match = This->data->fonts[0];
 
     for (i = 1; i < This->data->font_count; i++) {
@@ -1939,20 +1939,226 @@ HRESULT get_filestream_from_file(IDWriteFontFile *file, IDWriteFontFileStream **
     return hr;
 }
 
-static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
-    IDWriteFontFileStream **stream, struct dwrite_font_data **ret)
+static void fontstrings_get_en_string(IDWriteLocalizedStrings *strings, WCHAR *buffer, UINT32 size)
 {
-    void *os2_context, *head_context;
-    const void *tt_os2 = NULL, *tt_head = NULL;
-    struct dwrite_font_props props;
-    struct dwrite_font_data *data;
+    static const WCHAR enusW[] = {'e','n','-','U','S',0};
+    BOOL exists = FALSE;
+    UINT32 index;
     HRESULT hr;
 
+    buffer[0] = 0;
+    hr = IDWriteLocalizedStrings_FindLocaleName(strings, enusW, &index, &exists);
+    if (FAILED(hr) || !exists)
+        return;
+
+    IDWriteLocalizedStrings_GetString(strings, index, buffer, size);
+}
+
+static int trim_spaces(WCHAR *in, WCHAR *ret)
+{
+    int len;
+
+    while (isspaceW(*in))
+        in++;
+
+    len = strlenW(in);
+    while (isspaceW(in[len-1]))
+        len--;
+
+    memcpy(ret, in, len*sizeof(WCHAR));
+    ret[len] = 0;
+
+    return len;
+}
+
+struct name_token {
+    struct list entry;
+    const WCHAR *ptr;
+    INT len;
+};
+
+static inline BOOL is_name_separator_char(WCHAR ch)
+{
+    return ch == ' ' || ch == '.' || ch == '-' || ch == '_';
+}
+
+static BOOL match_pattern_list(struct list *tokens, const WCHAR **patterns)
+{
+    struct name_token *token;
+    const WCHAR *ptr;
+    int i = 0;
+
+    while ((ptr = patterns[++i])) {
+        int len = strlenW(ptr);
+
+        LIST_FOR_EACH_ENTRY(token, tokens, struct name_token, entry) {
+            if (token->len != len)
+                continue;
+
+            if (!strncmpiW(token->ptr, ptr, len)) {
+                list_remove(&token->entry);
+                heap_free(token);
+                return TRUE;
+            }
+        }
+    }
+
+    return FALSE;
+}
+
+static DWRITE_FONT_STYLE font_extract_style(struct list *tokens, DWRITE_FONT_STYLE style)
+{
+    static const WCHAR itaW[] = {'i','t','a',0};
+    static const WCHAR italW[] = {'i','t','a','l',0};
+    static const WCHAR italicW[] = {'i','t','a','l','i','c',0};
+    static const WCHAR cursiveW[] = {'c','u','r','s','i','v','e',0};
+    static const WCHAR kursivW[] = {'k','u','r','s','i','v',0};
+
+    static const WCHAR inclinedW[] = {'i','n','c','l','i','n','e','d',0};
+    static const WCHAR obliqueW[] = {'o','b','l','i','q','u','e',0};
+    static const WCHAR backslantedW[] = {'b','a','c','k','s','l','a','n','t','e','d',0};
+    static const WCHAR backslantW[] = {'b','a','c','k','s','l','a','n','t',0};
+    static const WCHAR slantedW[] = {'s','l','a','n','t','e','d',0};
+
+    static const WCHAR *italic_patterns[] = {
+        itaW,
+        italW,
+        italicW,
+        cursiveW,
+        kursivW,
+        NULL
+    };
+
+    static const WCHAR *oblique_patterns[] = {
+        inclinedW,
+        obliqueW,
+        backslantedW,
+        backslantW,
+        slantedW,
+        NULL
+    };
+
+    /* italic patterns first */
+    if (match_pattern_list(tokens, italic_patterns))
+        return DWRITE_FONT_STYLE_ITALIC;
+
+    /* oblique patterns */
+    if (match_pattern_list(tokens, oblique_patterns))
+        return DWRITE_FONT_STYLE_OBLIQUE;
+
+    return style;
+}
+
+static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHAR *familyW, WCHAR *faceW)
+{
+    static const WCHAR bookW[] = {'B','o','o','k',0};
+    static const WCHAR normalW[] = {'N','o','r','m','a','l',0};
+    static const WCHAR regularW[] = {'R','e','g','u','l','a','r',0};
+    static const WCHAR romanW[] = {'R','o','m','a','n',0};
+    static const WCHAR uprightW[] = {'U','p','r','i','g','h','t',0};
+
+    static const WCHAR *regular_patterns[] = {
+        bookW,
+        normalW,
+        regularW,
+        romanW,
+        uprightW,
+        NULL
+    };
+
+    static const WCHAR spaceW[] = {' ',0};
+    WCHAR familynameW[255], facenameW[255];
+    struct name_token *token, *token2;
+    BOOL found = FALSE;
+    struct list tokens;
+    const WCHAR *ptr;
+    int len, i = 0;
+
+    /* remove leading and trailing spaces from family and face name */
+    trim_spaces(familyW, familynameW);
+    len = trim_spaces(faceW, facenameW);
+
+    /* remove rightmost regular variant from face name */
+    while (!found && (ptr = regular_patterns[i++])) {
+        WCHAR *src;
+        int pattern_len = strlenW(ptr);
+
+        if (pattern_len > len)
+            continue;
+
+        src = facenameW + len - pattern_len;
+        while (src >= facenameW) {
+            if (!strncmpiW(src, ptr, pattern_len)) {
+                memmove(src, src + pattern_len, (len - pattern_len - (src - facenameW) + 1)*sizeof(WCHAR));
+                len = strlenW(facenameW);
+                found = TRUE;
+                break;
+            }
+            else
+                src--;
+        }
+    }
+
+    /* append face name to family name, FIXME check if face name is a substring of family name */
+    if (*facenameW) {
+        strcatW(familynameW, spaceW);
+        strcatW(familynameW, facenameW);
+    }
+
+    /* tokenize with " .-_" */
+    list_init(&tokens);
+    ptr = familynameW;
+
+    while (*ptr) {
+        struct name_token *token = heap_alloc(sizeof(*token));
+        token->ptr = ptr;
+        token->len = 0;
+
+        while (*ptr && !is_name_separator_char(*ptr)) {
+            token->len++;
+            ptr++;
+        }
+
+        /* skip separators */
+        while (is_name_separator_char(*ptr))
+            ptr++;
+
+        list_add_head(&tokens, &token->entry);
+    }
+
+    /* extract and resolve style */
+    font->style = font_extract_style(&tokens, font->style);
+
+    /* TODO: extract stretch */
+
+    /* TODO: extract weight */
+
+    /* TODO: resolve weight */
+
+    /* TODO: resolve stretch */
+
+    /* release tokens */
+    LIST_FOR_EACH_ENTRY_SAFE(token, token2, &tokens, struct name_token, entry) {
+        list_remove(&token->entry);
+        heap_free(token);
+    }
+}
+
+static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
+    IDWriteLocalizedStrings **family_name, struct dwrite_font_data **ret)
+{
+    struct dwrite_font_props props;
+    struct dwrite_font_data *data;
+    IDWriteFontFileStream *stream;
+    WCHAR familyW[255], faceW[255];
+    HRESULT hr;
+
+    *ret = NULL;
     data = heap_alloc_zero(sizeof(*data));
     if (!data)
         return E_OUTOFMEMORY;
 
-    hr = get_filestream_from_file(file, stream);
+    hr = get_filestream_from_file(file, &stream);
     if (FAILED(hr)) {
         heap_free(data);
         return hr;
@@ -1966,23 +2172,29 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, D
     IDWriteFontFile_AddRef(file);
     IDWriteFactory2_AddRef(factory);
 
-    opentype_get_font_table(*stream, face_type, face_index, MS_OS2_TAG, &tt_os2, &os2_context, NULL, NULL);
-    opentype_get_font_table(*stream, face_type, face_index, MS_HEAD_TAG, &tt_head, &head_context, NULL, NULL);
+    opentype_get_font_properties(stream, face_type, face_index, &props);
+    opentype_get_font_metrics(stream, face_type, face_index, &data->metrics, NULL);
+    opentype_get_font_facename(stream, face_type, face_index, &data->names);
 
-    opentype_get_font_properties(*stream, face_type, face_index, &props);
-    opentype_get_font_metrics(*stream, face_type, face_index, &data->metrics, NULL);
-    opentype_get_font_facename(*stream, face_type, face_index, &data->names);
+    /* get family name from font file */
+    hr = opentype_get_font_familyname(stream, face_type, face_index, family_name);
+    IDWriteFontFileStream_Release(stream);
+    if (FAILED(hr)) {
+        WARN("unable to get family name from font\n");
+        release_font_data(data);
+        return hr;
+    }
 
     data->style = props.style;
     data->stretch = props.stretch;
     data->weight = props.weight;
     data->panose = props.panose;
-    init_font_prop_vec(&props, &data->propvec);
 
-    if (tt_os2)
-        IDWriteFontFileStream_ReleaseFileFragment(*stream, os2_context);
-    if (tt_head)
-        IDWriteFontFileStream_ReleaseFileFragment(*stream, head_context);
+    fontstrings_get_en_string(*family_name, familyW, sizeof(familyW)/sizeof(WCHAR));
+    fontstrings_get_en_string(data->names, faceW, sizeof(faceW)/sizeof(WCHAR));
+    font_apply_differentiation_rules(data, familyW, faceW);
+
+    init_font_prop_vec(data->weight, data->stretch, data->style, &data->propvec);
 
     *ret = data;
     return S_OK;
@@ -2062,28 +2274,17 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
         for (i = 0; i < face_count; i++) {
             IDWriteLocalizedStrings *family_name = NULL;
             struct dwrite_font_data *font_data;
-            IDWriteFontFileStream *stream;
-            WCHAR buffer[255];
+            WCHAR familyW[255];
             UINT32 index;
 
             /* alloc and init new font data structure */
-            hr = init_font_data(factory, file, face_type, i, &stream, &font_data);
+            hr = init_font_data(factory, file, face_type, i, &family_name, &font_data);
             if (FAILED(hr))
-                break;
-
-            /* get family name from font file */
-            hr = opentype_get_font_familyname(stream, face_type, i, &family_name);
-            IDWriteFontFileStream_Release(stream);
-            if (FAILED(hr)) {
-                WARN("unable to get family name from font\n");
-                release_font_data(font_data);
                 continue;
-            }
 
-            buffer[0] = 0;
-            IDWriteLocalizedStrings_GetString(family_name, 0, buffer, sizeof(buffer)/sizeof(WCHAR));
+            fontstrings_get_en_string(family_name, familyW, sizeof(familyW)/sizeof(WCHAR));
 
-            index = collection_find_family(collection, buffer);
+            index = collection_find_family(collection, familyW);
             if (index != ~0u)
                 hr = fontfamily_add_font(collection->family_data[index], font_data);
             else {
