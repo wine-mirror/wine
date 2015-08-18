@@ -82,10 +82,13 @@ static int   (CDECL   *pomp_get_thread_num)(void);
 static int   (CDECL   *pomp_in_parallel)(void);
 static void  (CDECL   *pomp_init_lock)(omp_lock_t *lock);
 static void  (CDECL   *pomp_init_nest_lock)(omp_nest_lock_t *lock);
+static void  (CDECL   *pomp_set_lock)(omp_lock_t *lock);
 static void  (CDECL   *pomp_set_nest_lock)(omp_nest_lock_t *lock);
 static void  (CDECL   *pomp_set_nested)(int nested);
 static void  (CDECL   *pomp_set_num_threads)(int num_threads);
+static int   (CDECL   *pomp_test_lock)(omp_lock_t *lock);
 static int   (CDECL   *pomp_test_nest_lock)(omp_nest_lock_t *lock);
+static void  (CDECL   *pomp_unset_lock)(omp_lock_t *lock);
 static void  (CDECL   *pomp_unset_nest_lock)(omp_nest_lock_t *lock);
 
 #define VCOMP_DYNAMIC_FLAGS_STATIC      0x01
@@ -268,10 +271,13 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(omp_in_parallel);
     VCOMP_GET_PROC(omp_init_lock);
     VCOMP_GET_PROC(omp_init_nest_lock);
+    VCOMP_GET_PROC(omp_set_lock);
     VCOMP_GET_PROC(omp_set_nest_lock);
     VCOMP_GET_PROC(omp_set_nested);
     VCOMP_GET_PROC(omp_set_num_threads);
+    VCOMP_GET_PROC(omp_test_lock);
     VCOMP_GET_PROC(omp_test_nest_lock);
+    VCOMP_GET_PROC(omp_unset_lock);
     VCOMP_GET_PROC(omp_unset_nest_lock);
 
     return TRUE;
@@ -1302,6 +1308,40 @@ static void test_vcomp_flush(void)
     p_vcomp_flush();
 }
 
+static void test_omp_init_lock(void)
+{
+    omp_lock_t lock;
+    int ret;
+
+    pomp_init_lock(&lock);
+
+    /* test omp_set_lock */
+    pomp_set_lock(&lock);
+    pomp_unset_lock(&lock);
+
+    /* test omp_test_lock */
+    ret = pomp_test_lock(&lock);
+    ok(ret == 1, "expected ret == 1, got %d\n", ret);
+    ret = pomp_test_lock(&lock);
+    ok(ret == 0, "expected ret == 0, got %d\n", ret);
+    pomp_unset_lock(&lock);
+
+    /* test with EnterCriticalSection */
+    EnterCriticalSection(lock);
+    ret = pomp_test_lock(&lock);
+    todo_wine
+    ok(ret == 1, "expected ret == 1, got %d\n", ret);
+    if (ret)
+    {
+        ret = pomp_test_lock(&lock);
+        ok(ret == 0, "expected ret == 0, got %d\n", ret);
+        pomp_unset_lock(&lock);
+    }
+    LeaveCriticalSection(lock);
+
+    pomp_destroy_lock(&lock);
+}
+
 static void test_omp_init_nest_lock(void)
 {
     omp_nest_lock_t lock;
@@ -1462,6 +1502,7 @@ START_TEST(vcomp)
     test_vcomp_single_begin();
     test_vcomp_enter_critsect();
     test_vcomp_flush();
+    test_omp_init_lock();
     test_omp_init_nest_lock();
     test_atomic_integer32();
     test_atomic_float();

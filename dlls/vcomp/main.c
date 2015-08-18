@@ -1045,6 +1045,12 @@ static void destroy_critsect(CRITICAL_SECTION *critsect)
     HeapFree(GetProcessHeap(), 0, critsect);
 }
 
+static BOOL critsect_is_locked(CRITICAL_SECTION *critsect)
+{
+    return critsect->OwningThread == ULongToHandle(GetCurrentThreadId()) &&
+           critsect->RecursionCount;
+}
+
 void CDECL omp_init_lock(omp_lock_t *lock)
 {
     TRACE("(%p)\n", lock);
@@ -1055,6 +1061,35 @@ void CDECL omp_destroy_lock(omp_lock_t *lock)
 {
     TRACE("(%p)\n", lock);
     destroy_critsect(*lock);
+}
+
+void CDECL omp_set_lock(omp_lock_t *lock)
+{
+    TRACE("(%p)\n", lock);
+
+    if (critsect_is_locked(*lock))
+    {
+        ERR("omp_set_lock called while holding lock %p\n", *lock);
+        ExitProcess(1);
+    }
+
+    EnterCriticalSection(*lock);
+}
+
+void CDECL omp_unset_lock(omp_lock_t *lock)
+{
+    TRACE("(%p)\n", lock);
+    LeaveCriticalSection(*lock);
+}
+
+int CDECL omp_test_lock(omp_lock_t *lock)
+{
+    TRACE("(%p)\n", lock);
+
+    if (critsect_is_locked(*lock))
+        return 0;
+
+    return TryEnterCriticalSection(*lock);
 }
 
 void CDECL omp_set_nest_lock(omp_nest_lock_t *lock)

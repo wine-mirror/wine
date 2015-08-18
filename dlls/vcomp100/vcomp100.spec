@@ -102,11 +102,11 @@
 @ cdecl omp_init_lock(ptr) vcomp.omp_init_lock
 @ cdecl omp_init_nest_lock(ptr) vcomp.omp_init_nest_lock
 @ cdecl omp_set_dynamic(long) vcomp.omp_set_dynamic
-@ stub omp_set_lock
+@ cdecl omp_set_lock(ptr) vcomp.omp_set_lock
 @ cdecl omp_set_nest_lock(ptr) vcomp.omp_set_nest_lock
 @ cdecl omp_set_nested(long) vcomp.omp_set_nested
 @ cdecl omp_set_num_threads(long) vcomp.omp_set_num_threads
-@ stub omp_test_lock
+@ cdecl omp_test_lock(ptr) vcomp.omp_test_lock
 @ cdecl omp_test_nest_lock(ptr) vcomp.omp_test_nest_lock
-@ stub omp_unset_lock
+@ cdecl omp_unset_lock(ptr) vcomp.omp_unset_lock
 @ cdecl omp_unset_nest_lock(ptr) vcomp.omp_unset_nest_lock
