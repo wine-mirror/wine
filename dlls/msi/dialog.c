@@ -3664,8 +3664,11 @@ static LRESULT msi_dialog_oncreate( HWND hwnd, LPCREATESTRUCTW cs )
     if (!dialog->default_font)
     {
         dialog->default_font = strdupW(dfv);
-        msiobj_release( &rec->hdr );
-        if (!dialog->default_font) return -1;
+        if (!dialog->default_font)
+        {
+            msiobj_release( &rec->hdr );
+            return -1;
+        }
     }
 
     title = msi_get_deformatted_field( dialog->package, rec, 7 );
