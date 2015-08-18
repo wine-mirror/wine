@@ -1483,10 +1483,10 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawStrikethrough(IDWriteText
 static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawInlineObject(IDWriteTextRenderer *iface, void *ctx,
         float origin_x, float origin_y, IDWriteInlineObject *object, BOOL is_sideways, BOOL is_rtl, IUnknown *effect)
 {
-    FIXME("iface %p, ctx %p, origin_x %.8e, origin_y %.8e, object %p, is_sideways %#x, is_rtl %#x, effect %p stub!\n",
+    TRACE("iface %p, ctx %p, origin_x %.8e, origin_y %.8e, object %p, is_sideways %#x, is_rtl %#x, effect %p.\n",
             iface, ctx, origin_x, origin_y, object, is_sideways, is_rtl, effect);
 
-    return E_NOTIMPL;
+    return IDWriteInlineObject_Draw(object, ctx, iface, origin_x, origin_y, is_sideways, is_rtl, effect);
 }
 
 static const struct IDWriteTextRendererVtbl d2d_text_renderer_vtbl =
