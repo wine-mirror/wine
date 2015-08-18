@@ -1967,7 +1967,10 @@ static int trim_spaces(WCHAR *in, WCHAR *ret)
     while (isspaceW(*in))
         in++;
 
-    len = strlenW(in);
+    ret[0] = 0;
+    if (!(len = strlenW(in)))
+        return 0;
+
     while (isspaceW(in[len-1]))
         len--;
 
