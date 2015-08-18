@@ -89,7 +89,7 @@
 @ cdecl _vcomp_set_num_threads(long) vcomp._vcomp_set_num_threads
 @ cdecl _vcomp_single_begin(long) vcomp._vcomp_single_begin
 @ cdecl _vcomp_single_end() vcomp._vcomp_single_end
-@ stub omp_destroy_lock
+@ cdecl omp_destroy_lock(ptr) vcomp.omp_destroy_lock
 @ stub omp_destroy_nest_lock
 @ cdecl omp_get_dynamic() vcomp.omp_get_dynamic
 @ cdecl omp_get_max_threads() vcomp.omp_get_max_threads
@@ -100,7 +100,7 @@
 @ stub omp_get_wtick
 @ cdecl omp_get_wtime() vcomp.omp_get_wtime
 @ cdecl omp_in_parallel() vcomp.omp_in_parallel
-@ stub omp_init_lock
+@ cdecl omp_init_lock(ptr) vcomp.omp_init_lock
 @ stub omp_init_nest_lock
 @ cdecl omp_set_dynamic(long) vcomp.omp_set_dynamic
 @ stub omp_set_lock

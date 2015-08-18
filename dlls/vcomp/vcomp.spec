@@ -88,7 +88,7 @@
 @ cdecl _vcomp_set_num_threads(long)
 @ cdecl _vcomp_single_begin(long)
 @ cdecl _vcomp_single_end()
-@ stub omp_destroy_lock
+@ cdecl omp_destroy_lock(ptr)
 @ stub omp_destroy_nest_lock
 @ cdecl omp_get_dynamic()
 @ cdecl omp_get_max_threads()
@@ -99,7 +99,7 @@
 @ stub omp_get_wtick
 @ cdecl omp_get_wtime()
 @ cdecl omp_in_parallel()
-@ stub omp_init_lock
+@ cdecl omp_init_lock(ptr)
 @ stub omp_init_nest_lock
 @ cdecl omp_set_dynamic(long)
 @ stub omp_set_lock
