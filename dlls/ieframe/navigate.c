@@ -781,27 +781,6 @@ static void doc_navigate_task_destr(task_header_t *t)
     heap_free(task);
 }
 
-void on_commandstate_change(DocHost *doc_host, LONG command, VARIANT_BOOL enable)
-{
-    DISPPARAMS dispparams;
-    VARIANTARG params[2];
-
-    TRACE("command=%d enable=%d\n", command, enable);
-
-    dispparams.cArgs = 2;
-    dispparams.cNamedArgs = 0;
-    dispparams.rgdispidNamedArgs = NULL;
-    dispparams.rgvarg = params;
-
-    V_VT(params) = VT_BOOL;
-    V_BOOL(params) = enable;
-
-    V_VT(params+1) = VT_I4;
-    V_I4(params+1) = command;
-
-    call_sink(doc_host->cps.wbe2, DISPID_COMMANDSTATECHANGE, &dispparams);
-}
-
 static void doc_navigate_proc(DocHost *This, task_header_t *t)
 {
     task_doc_navigate_t *task = (task_doc_navigate_t*)t;
