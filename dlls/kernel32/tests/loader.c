@@ -799,15 +799,6 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL
     size = 0;
     status = pNtMapViewOfSection(hmap, GetCurrentProcess(), &addr2, 0, 0, &offset,
                                  &size, 1 /* ViewShare */, 0, PAGE_READONLY);
-    /* FIXME: remove once Wine is fixed */
-    if (status != STATUS_IMAGE_NOT_AT_BASE)
-    {
-        todo_wine {
-        ok(status == STATUS_IMAGE_NOT_AT_BASE, "expected STATUS_IMAGE_NOT_AT_BASE, got %x\n", status);
-        ok(addr2 != 0, "mapped address should be valid\n");
-        }
-        goto wine_is_broken;
-    }
     ok(status == STATUS_IMAGE_NOT_AT_BASE, "expected STATUS_IMAGE_NOT_AT_BASE, got %x\n", status);
     ok(addr2 != 0, "mapped address should be valid\n");
     ok(addr2 != addr1, "mapped addresses should be different\n");
@@ -861,7 +852,6 @@ static void test_image_mapping(const char *dll_name, DWORD scn_page_access, BOOL
         ok(ret, "FreeLibrary error %d\n", GetLastError());
     }
 
-wine_is_broken:
     status = pNtUnmapViewOfSection(GetCurrentProcess(), addr1);
     ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection error %x\n", status);
 

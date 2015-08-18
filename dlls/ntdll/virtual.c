@@ -1073,7 +1073,6 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
     struct stat st;
     struct file_view *view = NULL;
     char *ptr, *header_end, *header_start;
-    INT_PTR delta = 0;
 
     /* zero-map the whole range */
 
@@ -1236,47 +1235,6 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
         }
     }
 
-
-    /* perform base relocation, if necessary */
-
-    if (ptr != base &&
-        ((nt->FileHeader.Characteristics & IMAGE_FILE_DLL) ||
-          !NtCurrentTeb()->Peb->ImageBaseAddress) )
-    {
-        IMAGE_BASE_RELOCATION *rel, *end;
-        const IMAGE_DATA_DIRECTORY *relocs;
-
-        if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
-        {
-            WARN_(module)( "Need to relocate module from %p to %p, but there are no relocation records\n",
-                           base, ptr );
-            status = STATUS_CONFLICTING_ADDRESSES;
-            goto error;
-        }
-
-        TRACE_(module)( "relocating from %p-%p to %p-%p\n",
-                        base, base + total_size, ptr, ptr + total_size );
-
-        relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
-        rel = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress);
-        end = (IMAGE_BASE_RELOCATION *)(ptr + relocs->VirtualAddress + relocs->Size);
-        delta = ptr - base;
-
-        while (rel < end - 1 && rel->SizeOfBlock)
-        {
-            if (rel->VirtualAddress >= total_size)
-            {
-                WARN_(module)( "invalid address %p in relocation %p\n", ptr + rel->VirtualAddress, rel );
-                status = STATUS_ACCESS_VIOLATION;
-                goto error;
-            }
-            rel = LdrProcessRelocationBlock( ptr + rel->VirtualAddress,
-                                             (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
-                                             (USHORT *)(rel + 1), delta );
-            if (!rel) goto error;
-        }
-    }
-
     /* set the image protections */
 
     VIRTUAL_SetProt( view, ptr, ROUND_SIZE( 0, header_size ), VPROT_COMMITTED | VPROT_READ );
@@ -1313,7 +1271,7 @@ static NTSTATUS map_image( HANDLE hmapping, int fd, char *base, SIZE_T total_siz
 
     *addr_ptr = ptr;
 #ifdef VALGRIND_LOAD_PDB_DEBUGINFO
-    VALGRIND_LOAD_PDB_DEBUGINFO(fd, ptr, total_size, delta);
+    VALGRIND_LOAD_PDB_DEBUGINFO(fd, ptr, total_size, ptr - base);
 #endif
     if (ptr != base) return STATUS_IMAGE_NOT_AT_BASE;
     return STATUS_SUCCESS;

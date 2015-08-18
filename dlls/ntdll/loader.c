@@ -1656,6 +1656,81 @@ static void set_security_cookie( void *module, SIZE_T len )
     }
 }
 
+static NTSTATUS perform_relocations( void *module, SIZE_T len )
+{
+    IMAGE_NT_HEADERS *nt;
+    char *base;
+    IMAGE_BASE_RELOCATION *rel, *end;
+    const IMAGE_DATA_DIRECTORY *relocs;
+    const IMAGE_SECTION_HEADER *sec;
+    INT_PTR delta;
+    ULONG protect_old[96], i;
+
+    nt = RtlImageNtHeader( module );
+    base = (char *)nt->OptionalHeader.ImageBase;
+
+    assert( module != base );
+
+    /* no relocations are performed on non page-aligned binaries */
+    if (nt->OptionalHeader.SectionAlignment < page_size)
+        return STATUS_SUCCESS;
+
+    if (!(nt->FileHeader.Characteristics & IMAGE_FILE_DLL) && NtCurrentTeb()->Peb->ImageBaseAddress)
+        return STATUS_SUCCESS;
+
+    relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
+
+    if ((nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED) ||
+        !relocs->VirtualAddress || !relocs->Size)
+    {
+        WARN( "Need to relocate module from %p to %p, but there are no relocation records\n",
+              base, module );
+        return STATUS_CONFLICTING_ADDRESSES;
+    }
+
+    if (nt->FileHeader.NumberOfSections > sizeof(protect_old)/sizeof(protect_old[0]))
+        return STATUS_INVALID_IMAGE_FORMAT;
+
+    sec = (const IMAGE_SECTION_HEADER *)((const char *)&nt->OptionalHeader +
+                                         nt->FileHeader.SizeOfOptionalHeader);
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        void *addr = get_rva( module, sec[i].VirtualAddress );
+        SIZE_T size = sec[i].SizeOfRawData;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr,
+                                &size, PAGE_READWRITE, &protect_old[i] );
+    }
+
+    TRACE( "relocating from %p-%p to %p-%p\n",
+           base, base + len, module, (char *)module + len );
+
+    rel = get_rva( module, relocs->VirtualAddress );
+    end = get_rva( module, relocs->VirtualAddress + relocs->Size );
+    delta = (char *)module - base;
+
+    while (rel < end - 1 && rel->SizeOfBlock)
+    {
+        if (rel->VirtualAddress >= len)
+        {
+            WARN( "invalid address %p in relocation %p\n", get_rva( module, rel->VirtualAddress ), rel );
+            return STATUS_ACCESS_VIOLATION;
+        }
+        rel = LdrProcessRelocationBlock( get_rva( module, rel->VirtualAddress ),
+                                         (rel->SizeOfBlock - sizeof(*rel)) / sizeof(USHORT),
+                                         (USHORT *)(rel + 1), delta );
+        if (!rel) return STATUS_INVALID_IMAGE_FORMAT;
+    }
+
+    for (i = 0; i < nt->FileHeader.NumberOfSections; i++)
+    {
+        void *addr = get_rva( module, sec[i].VirtualAddress );
+        SIZE_T size = sec[i].SizeOfRawData;
+        NtProtectVirtualMemory( NtCurrentProcess(), &addr,
+                                &size, protect_old[i], &protect_old[i] );
+    }
+
+    return STATUS_SUCCESS;
+}
 
 /******************************************************************************
  *	load_native_dll  (internal)
@@ -1681,7 +1756,17 @@ static NTSTATUS load_native_dll( LPCWSTR load_path, LPCWSTR name, HANDLE file,
     module = NULL;
     status = NtMapViewOfSection( mapping, NtCurrentProcess(),
                                  &module, 0, 0, &size, &len, ViewShare, 0, PAGE_EXECUTE_READ );
-    if (status < 0) goto done;
+
+    /* perform base relocation, if necessary */
+
+    if (status == STATUS_IMAGE_NOT_AT_BASE)
+        status = perform_relocations( module, len );
+
+    if (status != STATUS_SUCCESS)
+    {
+        if (module) NtUnmapViewOfSection( NtCurrentProcess(), module );
+        goto done;
+    }
 
     /* create the MODREF */
 
