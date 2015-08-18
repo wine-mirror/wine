@@ -749,6 +749,7 @@ static HRESULT WINAPI ClOleCommandTarget_Exec(IOleCommandTarget *iface,
         switch(nCmdID) {
         case CMDID_EXPLORER_UPDATEHISTORY:
             update_travellog(This);
+            update_navigation_commands(This);
             return S_OK;
 
         default:
