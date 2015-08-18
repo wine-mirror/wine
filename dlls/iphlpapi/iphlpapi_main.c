@@ -1828,6 +1828,43 @@ DWORD WINAPI GetIfTable(PMIB_IFTABLE pIfTable, PULONG pdwSize, BOOL bOrder)
   return ret;
 }
 
+/******************************************************************
+ *    GetIfTable2 (IPHLPAPI.@)
+ */
+DWORD WINAPI GetIfTable2( MIB_IF_TABLE2 **table )
+{
+    DWORD i, nb_interfaces, size = sizeof(MIB_IF_TABLE2);
+    InterfaceIndexTable *index_table;
+    MIB_IF_TABLE2 *ret;
+
+    TRACE( "table %p\n", table );
+
+    if (!table) return ERROR_INVALID_PARAMETER;
+
+    if ((nb_interfaces = get_interface_indices( FALSE, NULL )) > 1)
+        size += (nb_interfaces - 1) * sizeof(MIB_IF_ROW2);
+
+    if (!(ret = HeapAlloc( GetProcessHeap(), 0, size ))) return ERROR_OUTOFMEMORY;
+
+    get_interface_indices( FALSE, &index_table );
+    if (!index_table)
+    {
+        HeapFree( GetProcessHeap(), 0, ret );
+        return ERROR_OUTOFMEMORY;
+    }
+
+    ret->NumEntries = 0;
+    for (i = 0; i < index_table->numIndexes; i++)
+    {
+        ret->Table[i].InterfaceIndex = index_table->indexes[i];
+        GetIfEntry2( &ret->Table[i] );
+        ret->NumEntries++;
+    }
+
+    HeapFree( GetProcessHeap(), 0, index_table );
+    *table = ret;
+    return NO_ERROR;
+}
 
 /******************************************************************
  *    GetInterfaceInfo (IPHLPAPI.@)

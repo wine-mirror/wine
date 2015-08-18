@@ -76,6 +76,12 @@ typedef struct _MIB_IF_ROW2
     ULONG64 OutQLen;
 } MIB_IF_ROW2, *PMIB_IF_ROW2;
 
+typedef struct _MIB_IF_TABLE2
+{
+    ULONG NumEntries;
+    MIB_IF_ROW2 Table[1];
+} MIB_IF_TABLE2, *PMIB_IF_TABLE2;
+
 DWORD WINAPI ConvertInterfaceGuidToLuid(const GUID*,NET_LUID*);
 DWORD WINAPI ConvertInterfaceIndexToLuid(NET_IFINDEX,NET_LUID*);
 DWORD WINAPI ConvertInterfaceLuidToGuid(const NET_LUID*,GUID*);

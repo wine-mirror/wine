@@ -56,6 +56,7 @@ static DWORD (WINAPI *pGetIfEntry)(PMIB_IFROW);
 static DWORD (WINAPI *pGetIfEntry2)(PMIB_IF_ROW2);
 static DWORD (WINAPI *pGetFriendlyIfIndex)(DWORD);
 static DWORD (WINAPI *pGetIfTable)(PMIB_IFTABLE,PULONG,BOOL);
+static DWORD (WINAPI *pGetIfTable2)(PMIB_IF_TABLE2*);
 static DWORD (WINAPI *pGetIpForwardTable)(PMIB_IPFORWARDTABLE,PULONG,BOOL);
 static DWORD (WINAPI *pGetIpNetTable)(PMIB_IPNETTABLE,PULONG,BOOL);
 static DWORD (WINAPI *pGetInterfaceInfo)(PIP_INTERFACE_INFO,PULONG);
@@ -102,6 +103,7 @@ static void loadIPHlpApi(void)
     pGetIfEntry2 = (void *)GetProcAddress(hLibrary, "GetIfEntry2");
     pGetFriendlyIfIndex = (void *)GetProcAddress(hLibrary, "GetFriendlyIfIndex");
     pGetIfTable = (void *)GetProcAddress(hLibrary, "GetIfTable");
+    pGetIfTable2 = (void *)GetProcAddress(hLibrary, "GetIfTable2");
     pGetIpForwardTable = (void *)GetProcAddress(hLibrary, "GetIpForwardTable");
     pGetIpNetTable = (void *)GetProcAddress(hLibrary, "GetIpNetTable");
     pGetInterfaceInfo = (void *)GetProcAddress(hLibrary, "GetInterfaceInfo");
@@ -1868,6 +1870,24 @@ static void test_GetIfEntry2(void)
     ok( row.InterfaceIndex == index, "got %u\n", index );
 }
 
+static void test_GetIfTable2(void)
+{
+    DWORD ret;
+    MIB_IF_TABLE2 *table;
+
+    if (!pGetIfTable2)
+    {
+        win_skip( "GetIfTable2 not available\n" );
+        return;
+    }
+
+    table = NULL;
+    ret = pGetIfTable2( &table );
+    ok( ret == NO_ERROR, "got %u\n", ret );
+    ok( table != NULL, "table not set\n" );
+    pFreeMibTable( table );
+}
+
 START_TEST(iphlpapi)
 {
 
@@ -1890,6 +1910,7 @@ START_TEST(iphlpapi)
     test_CreateSortedAddressPairs();
     test_interface_identifier_conversion();
     test_GetIfEntry2();
+    test_GetIfTable2();
     freeIPHlpApi();
   }
 }

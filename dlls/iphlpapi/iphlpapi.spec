@@ -91,7 +91,7 @@
 @ stub GetIfEntryFromStack
 #@ stub GetIfStackTable
 @ stdcall GetIfTable( ptr ptr long )
-#@ stub GetIfTable2
+@ stdcall GetIfTable2( ptr )
 #@ stub GetIfTable2Ex
 @ stub GetIfTableFromStack
 @ stub GetIgmpList
