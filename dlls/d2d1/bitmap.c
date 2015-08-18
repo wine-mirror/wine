@@ -143,9 +143,30 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromRenderTarget(ID2D1Bitmap *if
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_CopyFromMemory(ID2D1Bitmap *iface,
         const D2D1_RECT_U *dst_rect, const void *src_data, UINT32 pitch)
 {
-    FIXME("iface %p, dst_rect %p, src_data %p, pitch %u stub!\n", iface, dst_rect, src_data, pitch);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap(iface);
+    ID3D10Device *device;
+    ID3D10Resource *dst;
+    D3D10_BOX box;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, dst_rect %p, src_data %p, pitch %u.\n", iface, dst_rect, src_data, pitch);
+
+    if (dst_rect)
+    {
+        box.left = dst_rect->left;
+        box.top = dst_rect->top;
+        box.front = 0;
+        box.right = dst_rect->right;
+        box.bottom = dst_rect->bottom;
+        box.back = 1;
+    }
+
+    ID3D10ShaderResourceView_GetResource(bitmap->view, &dst);
+    ID3D10ShaderResourceView_GetDevice(bitmap->view, &device);
+    ID3D10Device_UpdateSubresource(device, dst, 0, dst_rect ? &box : NULL, src_data, pitch, 0);
+    ID3D10Device_Release(device);
+    ID3D10Resource_Release(dst);
+
+    return S_OK;
 }
 
 static const struct ID2D1BitmapVtbl d2d_bitmap_vtbl =
