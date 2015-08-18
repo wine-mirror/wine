@@ -42,6 +42,12 @@ static const FLOAT RECOMMENDED_OUTLINE_AA_THRESHOLD = 100.0f;
 static const FLOAT RECOMMENDED_OUTLINE_A_THRESHOLD = 350.0f;
 static const FLOAT RECOMMENDED_NATURAL_PPEM = 20.0f;
 
+/* common modifiers used in names */
+static const WCHAR extraW[] = {'e','x','t','r','a',0};
+static const WCHAR ultraW[] = {'u','l','t','r','a',0};
+static const WCHAR semiW[] = {'s','e','m','i',0};
+static const WCHAR extW[] = {'e','x','t',0};
+
 struct dwrite_font_propvec {
     FLOAT stretch;
     FLOAT style;
@@ -2113,12 +2119,7 @@ static DWRITE_FONT_STRETCH font_extract_stretch(struct list *tokens, DWRITE_FONT
     static const WCHAR compactW[] = {'c','o','m','p','a','c','t',0};
     static const WCHAR narrowW[] = {'n','a','r','r','o','w',0};
     static const WCHAR wideW[] = {'w','i','d','e',0};
-    /* modifiers */
-    static const WCHAR extraW[] = {'e','x','t','r','a',0};
-    static const WCHAR ultraW[] = {'u','l','t','r','a',0};
     static const WCHAR condW[] = {'c','o','n','d',0};
-    static const WCHAR extW[] = {'e','x','t',0};
-    static const WCHAR semiW[] = {'s','e','m','i',0};
 
     static const struct name_pattern ultracondensed_patterns[] = {
         { extraW, compressedW },
@@ -2206,6 +2207,135 @@ static DWRITE_FONT_STRETCH font_extract_stretch(struct list *tokens, DWRITE_FONT
     return stretch;
 }
 
+static DWRITE_FONT_WEIGHT font_extract_weight(struct list *tokens, DWRITE_FONT_WEIGHT weight)
+{
+    static const WCHAR mediumW[] = {'m','e','d','i','u','m',0};
+    static const WCHAR blackW[] = {'b','l','a','c','k',0};
+    static const WCHAR heavyW[] = {'h','e','a','v','y',0};
+    static const WCHAR lightW[] = {'l','i','g','h','t',0};
+    static const WCHAR boldW[] = {'b','o','l','d',0};
+    static const WCHAR demiW[] = {'d','e','m','i',0};
+    static const WCHAR thinW[] = {'t','h','i','n',0};
+    static const WCHAR nordW[] = {'n','o','r','d',0};
+
+    static const struct name_pattern thin_patterns[] = {
+        { extraW, thinW },
+        { extW, thinW },
+        { ultraW, thinW },
+        { NULL }
+    };
+
+    static const struct name_pattern extralight_patterns[] = {
+        { extraW, lightW },
+        { extW, lightW },
+        { ultraW, lightW },
+        { NULL }
+    };
+
+    static const struct name_pattern demibold_patterns[] = {
+        { semiW, boldW },
+        { demiW, boldW },
+        { NULL }
+    };
+
+    static const struct name_pattern extrabold_patterns[] = {
+        { extraW, boldW },
+        { extW, boldW },
+        { ultraW, boldW },
+        { NULL }
+    };
+
+    static const struct name_pattern extrablack_patterns[] = {
+        { extraW, blackW },
+        { extW, blackW },
+        { ultraW, blackW },
+        { NULL }
+    };
+
+    static const struct name_pattern bold_patterns[] = {
+        { boldW },
+        { NULL }
+    };
+
+    static const struct name_pattern thin2_patterns[] = {
+        { thinW },
+        { NULL }
+    };
+
+    static const struct name_pattern light_patterns[] = {
+        { lightW },
+        { NULL }
+    };
+
+    static const struct name_pattern medium_patterns[] = {
+        { mediumW },
+        { NULL }
+    };
+
+    static const struct name_pattern black_patterns[] = {
+        { blackW },
+        { heavyW },
+        { nordW },
+        { NULL }
+    };
+
+    static const struct name_pattern demibold2_patterns[] = {
+        { demiW },
+        { NULL }
+    };
+
+    static const struct name_pattern extrabold2_patterns[] = {
+        { ultraW },
+        { NULL }
+    };
+
+    /* FIXME: allow optional 'face' suffix, separated or not. It's removed together with
+       matching pattern. */
+
+    if (match_pattern_list(tokens, thin_patterns))
+        return DWRITE_FONT_WEIGHT_THIN;
+
+    if (match_pattern_list(tokens, extralight_patterns))
+        return DWRITE_FONT_WEIGHT_EXTRA_LIGHT;
+
+    if (match_pattern_list(tokens, demibold_patterns))
+        return DWRITE_FONT_WEIGHT_DEMI_BOLD;
+
+    if (match_pattern_list(tokens, extrabold_patterns))
+        return DWRITE_FONT_WEIGHT_EXTRA_BOLD;
+
+    if (match_pattern_list(tokens, extrablack_patterns))
+        return DWRITE_FONT_WEIGHT_EXTRA_BLACK;
+
+    if (match_pattern_list(tokens, bold_patterns))
+        return DWRITE_FONT_WEIGHT_BOLD;
+
+    if (match_pattern_list(tokens, thin2_patterns))
+        return DWRITE_FONT_WEIGHT_THIN;
+
+    if (match_pattern_list(tokens, light_patterns))
+        return DWRITE_FONT_WEIGHT_LIGHT;
+
+    if (match_pattern_list(tokens, medium_patterns))
+        return DWRITE_FONT_WEIGHT_MEDIUM;
+
+    if (match_pattern_list(tokens, black_patterns))
+        return DWRITE_FONT_WEIGHT_BLACK;
+
+    if (match_pattern_list(tokens, black_patterns))
+        return DWRITE_FONT_WEIGHT_BLACK;
+
+    if (match_pattern_list(tokens, demibold2_patterns))
+        return DWRITE_FONT_WEIGHT_DEMI_BOLD;
+
+    if (match_pattern_list(tokens, extrabold2_patterns))
+        return DWRITE_FONT_WEIGHT_EXTRA_BOLD;
+
+    /* FIXME: use abbreviated names to extract weight */
+
+    return weight;
+}
+
 static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHAR *familyW, WCHAR *faceW)
 {
     static const WCHAR bookW[] = {'B','o','o','k',0};
@@ -2223,10 +2353,11 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
         NULL
     };
 
-    DWRITE_FONT_STRETCH stretch = font->stretch;
     static const WCHAR spaceW[] = {' ',0};
     WCHAR familynameW[255], facenameW[255];
     struct name_token *token, *token2;
+    DWRITE_FONT_STRETCH stretch;
+    DWRITE_FONT_WEIGHT weight;
     BOOL found = FALSE;
     struct list tokens;
     const WCHAR *ptr;
@@ -2290,9 +2421,23 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     /* extract stretch */
     stretch = font_extract_stretch(&tokens, font->stretch);
 
-    /* TODO: extract weight */
+    /* extract weight */
+    weight = font_extract_weight(&tokens, font->weight);
 
-    /* TODO: resolve weight */
+    /* resolve weight */
+    if (weight != font->weight) {
+        if (!(weight < DWRITE_FONT_WEIGHT_NORMAL && font->weight < DWRITE_FONT_WEIGHT_NORMAL) &&
+            !(weight > DWRITE_FONT_WEIGHT_MEDIUM && font->weight > DWRITE_FONT_WEIGHT_MEDIUM) &&
+            !((weight == DWRITE_FONT_WEIGHT_NORMAL && font->weight == DWRITE_FONT_WEIGHT_MEDIUM) ||
+              (weight == DWRITE_FONT_WEIGHT_MEDIUM && font->weight == DWRITE_FONT_WEIGHT_NORMAL)) &&
+            !(abs(weight - font->weight) <= 150 &&
+              font->weight != DWRITE_FONT_WEIGHT_NORMAL &&
+              font->weight != DWRITE_FONT_WEIGHT_MEDIUM &&
+              font->weight != DWRITE_FONT_WEIGHT_BOLD)) {
+
+            font->weight = weight;
+        }
+    }
 
     /* Resolve stretch - extracted stretch can't be normal, it will override specified stretch if
        it's leaning in opposite direction from normal comparing to specified stretch or if specified
@@ -2305,6 +2450,8 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
             font->stretch = stretch;
         }
     }
+
+    /* FIXME: cleanup face name from possible 2-3 digit prefixes, compose final family/face names */
 
     /* release tokens */
     LIST_FOR_EACH_ENTRY_SAFE(token, token2, &tokens, struct name_token, entry) {
