@@ -2126,8 +2126,11 @@ static DWORD CALLBACK server_thread(LPVOID param)
 
 static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
 {
+    static const WCHAR test_header_end_clrf[] = {'\r','\n','\r','\n',0};
+    static const WCHAR test_header_end_raw[] = {0,0};
     HINTERNET ses, con, req;
     char buffer[0x100];
+    WCHAR buffer2[0x100];
     DWORD count, status, size, error, supported, first, target;
     BOOL ret;
 
@@ -2161,6 +2164,21 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     ok(supported == 0xdeadbeef, "got %x\n", supported);
     ok(first == 0xdeadbeef, "got %x\n", first);
     ok(target == 0xdeadbeef, "got %x\n", target);
+
+    size = sizeof(buffer2);
+    memset(buffer2, 0, sizeof(buffer2));
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, buffer2, &size, NULL);
+    ok(ret, "failed to query for raw headers: %u\n", GetLastError());
+    ok(!memcmp(buffer2 + lstrlenW(buffer2) - 4, test_header_end_clrf, sizeof(test_header_end_clrf)),
+       "WinHttpQueryHeaders returned invalid end of header string\n");
+
+    size = sizeof(buffer2);
+    memset(buffer2, 0, sizeof(buffer2));
+    ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_RAW_HEADERS, NULL, buffer2, &size, NULL);
+    ok(ret, "failed to query for raw headers: %u\n", GetLastError());
+    ok(!memcmp(buffer2 + (size / sizeof(WCHAR)) - 1, test_header_end_raw, sizeof(test_header_end_raw)),
+       "WinHttpQueryHeaders returned invalid end of header string\n");
+    ok(buffer2[(size / sizeof(WCHAR)) - 2] != 0, "returned string has too many NULL characters\n");
 
     count = 0;
     memset(buffer, 0, sizeof(buffer));
