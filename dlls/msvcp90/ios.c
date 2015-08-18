@@ -14833,6 +14833,17 @@ MSVCP_bool __cdecl tr2_sys__Remove_dir_wchar(WCHAR const* path)
     return RemoveDirectoryW(path) != 0;
 }
 
+/* ?_Copy_file@sys@tr2@std@@YAHPB_W0_N@Z */
+/* ?_Copy_file@sys@tr2@std@@YAHPEB_W0_N@Z */
+int __cdecl tr2_sys__Copy_file_wchar(WCHAR const* source, WCHAR const* dest, MSVCP_bool fail_if_exists)
+{
+    TRACE("(%s %s %x)\n", debugstr_w(source), debugstr_w(dest), fail_if_exists);
+
+    if(CopyFileW(source, dest, fail_if_exists))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ??1_Winit@std@@QAE@XZ */
 /* ??1_Winit@std@@QAE@XZ */
 DEFINE_THISCALL_WRAPPER(_Winit_dtor, 4)

@@ -85,6 +85,7 @@ static int (__cdecl *p_tr2_sys__Make_dir_wchar)(WCHAR const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir)(char const*);
 static MSVCP_bool (__cdecl *p_tr2_sys__Remove_dir_wchar)(WCHAR const*);
 static int (__cdecl *p_tr2_sys__Copy_file)(char const*, char const*, MSVCP_bool);
+static int (__cdecl *p_tr2_sys__Copy_file_wchar)(WCHAR const*, WCHAR const*, MSVCP_bool);
 static int (__cdecl *p_tr2_sys__Rename)(char const*, char const*);
 static struct space_info (__cdecl *p_tr2_sys__Statvfs)(char const*);
 static enum file_type (__cdecl *p_tr2_sys__Stat)(char const*, int *);
@@ -143,6 +144,8 @@ static BOOL init(void)
                 "?_Remove_dir@sys@tr2@std@@YA_NPEB_W@Z");
         SET(p_tr2_sys__Copy_file,
                 "?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z");
+        SET(p_tr2_sys__Copy_file_wchar,
+                "?_Copy_file@sys@tr2@std@@YAHPEB_W0_N@Z");
         SET(p_tr2_sys__Rename,
                 "?_Rename@sys@tr2@std@@YAHPEBD0@Z");
         SET(p_tr2_sys__Statvfs,
@@ -178,6 +181,8 @@ static BOOL init(void)
                 "?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z");
         SET(p_tr2_sys__Copy_file,
                 "?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z");
+        SET(p_tr2_sys__Copy_file_wchar,
+                "?_Copy_file@sys@tr2@std@@YAHPB_W0_N@Z");
         SET(p_tr2_sys__Rename,
                 "?_Rename@sys@tr2@std@@YAHPBD0@Z");
         SET(p_tr2_sys__Statvfs,
@@ -624,6 +629,7 @@ static void test_tr2_sys__Copy_file(void)
     HANDLE file;
     int ret, i;
     LARGE_INTEGER file_size;
+    WCHAR testW[] = {'f','1',0}, testW2[] = {'f','w',0};
     struct {
         char const *source;
         char const *dest;
@@ -670,8 +676,11 @@ static void test_tr2_sys__Copy_file(void)
             ok(p_tr2_sys__File_size(tests[i].source) == p_tr2_sys__File_size(tests[i].dest),
                     "test_tr2_sys__Copy_file(): test %d failed, two files' size are not equal\n", i+1);
     }
+    ret = p_tr2_sys__Copy_file_wchar(testW, testW2, TRUE);
+    ok(ret == ERROR_SUCCESS, "test_tr2_sys__Copy_file_wchar() expect ERROR_SUCCESS, got %d\n", ret);
 
     ok(DeleteFileA("f1"), "expect f1 to exist\n");
+    ok(DeleteFileW(testW2), "expect fw to exist\n");
     ok(DeleteFileA("f1_copy"), "expect f1_copy to exist\n");
     ok(DeleteFileA("tr2_test_dir/f1_copy"), "expect tr2_test_dir/f1 to exist\n");
     ret = p_tr2_sys__Remove_dir("tr2_test_dir");

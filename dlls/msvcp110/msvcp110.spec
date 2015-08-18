@@ -1165,8 +1165,8 @@
 @ stub -arch=win64 ?_Close_dir@sys@tr2@std@@YAXPEAX@Z
 @ cdecl -arch=win32 ?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z(str str long) tr2_sys__Copy_file
 @ cdecl -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z(str str long) tr2_sys__Copy_file
-@ stub -arch=win32 ?_Copy_file@sys@tr2@std@@YAHPB_W0_N@Z
-@ stub -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEB_W0_N@Z
+@ cdecl -arch=win32 ?_Copy_file@sys@tr2@std@@YAHPB_W0_N@Z(wstr wstr long) tr2_sys__Copy_file_wchar
+@ cdecl -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEB_W0_N@Z(wstr wstr long) tr2_sys__Copy_file_wchar
 @ cdecl -arch=win32 ?_Current_get@sys@tr2@std@@YAPADPAD@Z(ptr) tr2_sys__Current_get
 @ cdecl -arch=win64 ?_Current_get@sys@tr2@std@@YAPEADPEAD@Z(ptr) tr2_sys__Current_get
 @ cdecl -arch=win32 ?_Current_get@sys@tr2@std@@YAPA_WPA_W@Z(ptr) tr2_sys__Current_get_wchar
