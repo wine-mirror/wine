@@ -96,8 +96,10 @@ DEFINE_EXPECT(Invoke_DOWNLOADBEGIN);
 DEFINE_EXPECT(Invoke_BEFORENAVIGATE2);
 DEFINE_EXPECT(Invoke_SETSECURELOCKICON);
 DEFINE_EXPECT(Invoke_FILEDOWNLOAD);
-DEFINE_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
-DEFINE_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
+DEFINE_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+DEFINE_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+DEFINE_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+DEFINE_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
 DEFINE_EXPECT(Invoke_COMMANDSTATECHANGE_UPDATECOMMANDS);
 DEFINE_EXPECT(Invoke_DOWNLOADCOMPLETE);
 DEFINE_EXPECT(Invoke_ONMENUBAR);
@@ -158,8 +160,8 @@ static BOOL is_downloading, do_download, is_first_load, use_container_olecmd, te
 static HRESULT hr_dochost_TranslateAccelerator = E_NOTIMPL;
 static HRESULT hr_site_TranslateAccelerator = E_NOTIMPL;
 static const char *current_url;
-static int wb_version, expect_navigate_back_enable, set_navigate_back_enable, expect_navigate_forward_enable,
-           set_navigate_forward_enable, expect_update_commands_enable, set_update_commands_enable;
+static int wb_version, expect_update_commands_enable, set_update_commands_enable;
+static BOOL nav_back_todo, nav_forward_todo; /* FIXME */
 
 #define DWL_EXPECT_BEFORE_NAVIGATE  0x01
 #define DWL_FROM_PUT_HREF           0x02
@@ -167,6 +169,7 @@ static int wb_version, expect_navigate_back_enable, set_navigate_back_enable, ex
 #define DWL_FROM_GOFORWARD          0x08
 #define DWL_HTTP                    0x10
 #define DWL_REFRESH                 0x20
+#define DWL_BACK_ENABLE             0x40
 
 static DWORD dwl_flags;
 
@@ -897,13 +900,31 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
 
         if (V_I4(pDispParams->rgvarg+1) == CSC_NAVIGATEFORWARD)
         {
-            CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
-            set_navigate_forward_enable = V_BOOL(pDispParams->rgvarg);
+            if(nav_forward_todo) {
+                if(V_BOOL(pDispParams->rgvarg))
+                    todo_wine CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+                else
+                    todo_wine CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+            }else {
+                if(V_BOOL(pDispParams->rgvarg))
+                    CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+                else
+                    CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+            }
         }
         else if (V_I4(pDispParams->rgvarg+1) == CSC_NAVIGATEBACK)
         {
-            CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-            set_navigate_back_enable = V_BOOL(pDispParams->rgvarg);
+            if(nav_back_todo) {
+                if(V_BOOL(pDispParams->rgvarg))
+                    todo_wine CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+                else
+                    todo_wine CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+            }else {
+                if(V_BOOL(pDispParams->rgvarg))
+                    CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+                else
+                    CHECK_EXPECT2(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+            }
         }
         else if (V_I4(pDispParams->rgvarg+1) == CSC_UPDATECOMMANDS)
         {
@@ -1944,13 +1965,8 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
             SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
         }
 
-        expect_navigate_back_enable = 0;
-        set_navigate_back_enable = 0xdead;
-        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-
-        expect_navigate_forward_enable = 0;
-        set_navigate_forward_enable = 0xdead;
-        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 
         expect_update_commands_enable = 0;
         set_update_commands_enable = 0xdead;
@@ -1958,6 +1974,7 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     }else {
         SET_EXPECT(Invoke_STATUSTEXTCHANGE);
         SET_EXPECT(Invoke_PROGRESSCHANGE);
+        nav_back_todo = nav_forward_todo = TRUE;
     }
 
     hres = IOleObject_SetClientSite(oleobj, client);
@@ -1974,13 +1991,8 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
             todo_wine CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
         }
 
-        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-        ok(expect_navigate_back_enable == set_navigate_back_enable,
-           "got %d\n", set_navigate_back_enable);
-
-        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
-        ok(expect_navigate_forward_enable == set_navigate_forward_enable,
-           "got %d\n", set_navigate_forward_enable);
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_UPDATECOMMANDS);
         todo_wine ok(expect_update_commands_enable == set_update_commands_enable,
@@ -1988,6 +2000,7 @@ static void test_ClientSite(IWebBrowser2 *unk, IOleClientSite *client, BOOL stop
     }else {
         CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
         CLEAR_CALLED(Invoke_PROGRESSCHANGE);
+        nav_back_todo = nav_forward_todo = FALSE;
     }
 
     hres = IOleInPlaceObject_GetWindow(inplace, &hwnd);
@@ -2705,15 +2718,8 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
         SET_EXPECT(Invoke_SETSECURELOCKICON);
         SET_EXPECT(Invoke_FILEDOWNLOAD);
         if (use_container_olecmd) SET_EXPECT(Exec_SETDOWNLOADSTATE_0);
-
-        expect_navigate_back_enable = 0;
-        set_navigate_back_enable = 0xdead;
-        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-
-        expect_navigate_forward_enable = 0;
-        set_navigate_forward_enable = 0xdead;
-        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
-
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
         SET_EXPECT(EnableModeless_TRUE);
         if (!use_container_olecmd) SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
         if (is_file) SET_EXPECT(Invoke_PROGRESSCHANGE);
@@ -2747,15 +2753,8 @@ static void test_Navigate2(IWebBrowser2 *webbrowser, const char *nav_url)
         }
         todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
         todo_wine CHECK_CALLED(Invoke_FILEDOWNLOAD);
-
-        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-        ok(expect_navigate_back_enable == set_navigate_back_enable,
-           "got %d\n", set_navigate_back_enable);
-
-        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
-        ok(expect_navigate_forward_enable == set_navigate_forward_enable,
-           "got %d\n", set_navigate_forward_enable);
-
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
         if (use_container_olecmd) todo_wine CHECK_CALLED(Exec_SETDOWNLOADSTATE_0);
         CHECK_CALLED(EnableModeless_TRUE);
         if (!use_container_olecmd) CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
@@ -2888,13 +2887,16 @@ static void test_download(DWORD flags)
     SET_EXPECT(Invoke_282);
     SET_EXPECT(EnableModeless_FALSE);
 
-    expect_navigate_back_enable = 0;
-    set_navigate_back_enable = 0xdead;
-    SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-
-    expect_navigate_forward_enable = 0;
-    set_navigate_forward_enable = 0xdead;
-    SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
+    if(!(flags & DWL_REFRESH)) {
+        if(flags & (DWL_FROM_GOFORWARD|DWL_BACK_ENABLE))
+            SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+        else
+            SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        if(flags & DWL_FROM_GOBACK)
+            SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+        else
+            SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+    }
 
     expect_update_commands_enable = 0;
     set_update_commands_enable = 0xdead;
@@ -2954,6 +2956,24 @@ static void test_download(DWORD flags)
         todo_wine CHECK_CALLED(EnableModeless_FALSE);
     else
         CLEAR_CALLED(EnableModeless_FALSE); /* IE 8 */
+
+    if(!(flags & DWL_REFRESH)) {
+        if(nav_back_todo) {
+            if(flags & (DWL_FROM_GOFORWARD|DWL_BACK_ENABLE))
+                todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+            else
+                todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        }else {
+            if(flags & (DWL_FROM_GOFORWARD|DWL_BACK_ENABLE))
+                CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+            else
+                CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        }
+        if(flags & DWL_FROM_GOBACK)
+            CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+        else
+            CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+    }
     CLEAR_CALLED(Invoke_COMMANDSTATECHANGE_UPDATECOMMANDS);
     todo_wine CHECK_CALLED(Invoke_STATUSTEXTCHANGE);
     todo_wine CHECK_CALLED(SetStatusText);
@@ -3130,27 +3150,46 @@ static void test_go_back(IWebBrowser2 *wb, const char *back_url, int back_enable
 
     SET_EXPECT(Invoke_BEFORENAVIGATE2);
 
-    expect_navigate_back_enable = back_enable;
-    set_navigate_back_enable = 0xdead;
-    SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
+    if(back_enable)
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+    else
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
 
-    expect_navigate_forward_enable = forward_enable;
-    set_navigate_forward_enable = 0xdead;
-    SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
+    if(forward_enable)
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+    else
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 
+    nav_forward_todo = forward_todo;
     SET_EXPECT(Invoke_PROPERTYCHANGE);
     hres = IWebBrowser2_GoBack(wb);
     ok(hres == S_OK, "GoBack failed: %08x\n", hres);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
+    nav_forward_todo = FALSE;
 
-    CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-    ok(expect_navigate_back_enable == set_navigate_back_enable, "got %d\n", set_navigate_back_enable);
+    if(nav_back_todo) {
+        if(back_enable)
+            todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+        else
+            todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+    }else {
+        if(back_enable)
+            CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+        else
+            CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+    }
 
-    CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
-    if (forward_todo)
-        todo_wine ok(expect_navigate_forward_enable == set_navigate_forward_enable, "got %d\n", set_navigate_forward_enable);
-    else
-        ok(expect_navigate_forward_enable == set_navigate_forward_enable, "got %d\n", set_navigate_forward_enable);
+    if(forward_todo) {
+        if(forward_enable)
+            todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+        else
+            todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+    }else {
+        if(forward_enable)
+            CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+        else
+            CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
+    }
 
     CLEAR_CALLED(Invoke_PROPERTYCHANGE); /* called by IE11 */
 }
@@ -3164,25 +3203,29 @@ static void test_go_forward(IWebBrowser2 *wb, const char *forward_url, int back_
 
     SET_EXPECT(Invoke_BEFORENAVIGATE2);
 
-    expect_navigate_back_enable = back_enable;
-    set_navigate_back_enable = 0xdead;
-    SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
+    if(back_enable)
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+    else
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
 
-    expect_navigate_forward_enable = forward_enable;
-    set_navigate_forward_enable = 0xdead;
-    SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
+    if(forward_enable)
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+    else
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 
     hres = IWebBrowser2_GoForward(wb);
     ok(hres == S_OK, "GoForward failed: %08x\n", hres);
     CHECK_CALLED(Invoke_BEFORENAVIGATE2);
 
-    CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-    ok(expect_navigate_back_enable == set_navigate_back_enable,
-       "got %d\n", set_navigate_back_enable);
+    if(back_enable)
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_TRUE);
+    else
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
 
-    CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
-    ok(expect_navigate_forward_enable == set_navigate_forward_enable,
-       "got %d\n", set_navigate_forward_enable);
+    if(forward_enable)
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_TRUE);
+    else
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 }
 
 static void test_QueryInterface(IWebBrowser2 *wb)
@@ -3533,13 +3576,8 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     SET_EXPECT(OnInPlaceDeactivate);
     SET_EXPECT(Invoke_STATUSTEXTCHANGE);
     if(!do_download) {
-        expect_navigate_back_enable = 0;
-        set_navigate_back_enable = 0xdead;
-        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-
-        expect_navigate_forward_enable = 0;
-        set_navigate_forward_enable = 0xdead;
-        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        SET_EXPECT(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 
         expect_update_commands_enable = 0;
         set_update_commands_enable = 0xdead;
@@ -3547,6 +3585,8 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
 
         if(use_container_olecmd)
             SET_EXPECT(Invoke_DOWNLOADCOMPLETE);
+    }else {
+        nav_back_todo = nav_forward_todo = TRUE;
     }
     hres = IOleObject_Close(oo, OLECLOSE_NOSAVE);
     ok(hres == S_OK, "OleObject_Close failed: %x\n", hres);
@@ -3557,13 +3597,8 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
     CHECK_CALLED(OnInPlaceDeactivate);
     CLEAR_CALLED(Invoke_STATUSTEXTCHANGE); /* Called by IE9 */
     if(!do_download) {
-        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK);
-        ok(expect_navigate_back_enable == set_navigate_back_enable,
-           "got %d\n", set_navigate_back_enable);
-
-        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD);
-        ok(expect_navigate_forward_enable == set_navigate_forward_enable,
-           "got %d\n", set_navigate_forward_enable);
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEBACK_FALSE);
+        CHECK_CALLED(Invoke_COMMANDSTATECHANGE_NAVIGATEFORWARD_FALSE);
 
         todo_wine CHECK_CALLED(Invoke_COMMANDSTATECHANGE_UPDATECOMMANDS);
         todo_wine ok(expect_update_commands_enable == set_update_commands_enable,
@@ -3571,6 +3606,8 @@ static void test_Close(IWebBrowser2 *wb, BOOL do_download)
 
         if(use_container_olecmd)
             todo_wine CHECK_CALLED(Invoke_DOWNLOADCOMPLETE);
+    }else {
+        nav_back_todo = nav_forward_todo = FALSE;
     }
 
     hres = IOleObject_GetClientSite(oo, &ocs);
@@ -3669,26 +3706,32 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
             trace("Navigate2 http URL...\n");
             test_ready_state(READYSTATE_COMPLETE);
             test_Navigate2(webbrowser, "http://test.winehq.org/tests/hello.html");
+            nav_back_todo = TRUE;
             test_download(DWL_EXPECT_BEFORE_NAVIGATE|DWL_HTTP);
+            nav_back_todo = FALSE;
 
             test_Refresh(webbrowser, FALSE);
             test_Refresh(webbrowser, TRUE);
 
             trace("put_href http URL...\n");
             test_put_href(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/");
-            test_download(DWL_FROM_PUT_HREF|DWL_HTTP);
+            test_download(DWL_FROM_PUT_HREF|DWL_HTTP|DWL_BACK_ENABLE);
 
             trace("GoBack...\n");
+            nav_back_todo = TRUE;
             test_go_back(webbrowser, "http://test.winehq.org/tests/hello.html", 0, 0, 1);
             test_download(DWL_FROM_GOBACK|DWL_HTTP);
+            nav_back_todo = FALSE;
 
             trace("GoForward...\n");
             test_go_forward(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/", -1, 0);
             test_download(DWL_FROM_GOFORWARD|DWL_HTTP);
 
             trace("GoBack...\n");
+            nav_back_todo = TRUE;
             test_go_back(webbrowser, "http://test.winehq.org/tests/hello.html", 0, -1, 0);
             test_download(DWL_FROM_GOBACK|DWL_HTTP);
+            nav_back_todo = FALSE;
 
             trace("GoForward...\n");
             test_go_forward(webbrowser, "http://test.winehq.org/tests/winehq_snapshot/", -1, 0);
@@ -3704,9 +3747,7 @@ static void test_WebBrowser(DWORD flags, BOOL do_close)
 
         test_dochost_qs(webbrowser);
     }else {
-        trace("??\n");
         test_ExecWB(webbrowser, TRUE);
-        trace("or here\n");
     }
 
     test_external(webbrowser);

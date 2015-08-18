@@ -1091,19 +1091,10 @@ static HRESULT navigate_history(DocHost *This, unsigned travellog_pos)
         return E_NOTIMPL;
     }
 
-    if (travellog_pos < This->travellog.position)
-    {
-        on_commandstate_change(This, CSC_NAVIGATEBACK, VARIANT_FALSE);
-        on_commandstate_change(This, CSC_NAVIGATEFORWARD, VARIANT_TRUE);
-    }
-    else if (travellog_pos > This->travellog.position)
-    {
-        on_commandstate_change(This, CSC_NAVIGATEBACK, VARIANT_TRUE);
-        on_commandstate_change(This, CSC_NAVIGATEFORWARD, VARIANT_FALSE);
-    }
-
     This->travellog.loading_pos = travellog_pos;
     entry = This->travellog.log + This->travellog.loading_pos;
+
+    update_navigation_commands(This);
 
     if(!entry->stream)
         return async_doc_navigate(This, entry->url, NULL, NULL, 0, FALSE);
