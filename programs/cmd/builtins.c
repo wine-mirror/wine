@@ -1465,7 +1465,7 @@ void WCMD_echo (const WCHAR *args)
   WCHAR *trimmed;
 
   if (   args[0]==' ' || args[0]=='\t' || args[0]=='.'
-      || args[0]==':' || args[0]==';')
+      || args[0]==':' || args[0]==';'  || args[0]=='/')
     args++;
 
   trimmed = WCMD_strtrim(args);
@@ -1473,7 +1473,7 @@ void WCMD_echo (const WCHAR *args)
 
   count = strlenW(trimmed);
   if (count == 0 && origcommand[0]!='.' && origcommand[0]!=':'
-                 && origcommand[0]!=';') {
+                 && origcommand[0]!=';' && origcommand[0]!='/') {
     if (echo_mode) WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), onW);
     else WCMD_output (WCMD_LoadMessage(WCMD_ECHOPROMPT), offW);
     heap_free(trimmed);

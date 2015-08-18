@@ -1853,17 +1853,20 @@ WCHAR *WCMD_ReadAndParseLine(const WCHAR *optionalcmd, CMD_LIST **output, HANDLE
     if (context && echo_mode && *curPos && (*curPos != '@')) {
       static const WCHAR echoDot[] = {'e','c','h','o','.'};
       static const WCHAR echoCol[] = {'e','c','h','o',':'};
+      static const WCHAR echoSlash[] = {'e','c','h','o','/'};
       const DWORD len = sizeof(echoDot)/sizeof(echoDot[0]);
       DWORD curr_size = strlenW(curPos);
       DWORD min_len = (curr_size < len ? curr_size : len);
       WCMD_show_prompt();
       WCMD_output_asis(curPos);
       /* I don't know why Windows puts a space here but it does */
-      /* Except for lines starting with 'echo.' or 'echo:'. Ask MS why */
+      /* Except for lines starting with 'echo.', 'echo:' or 'echo/'. Ask MS why */
       if (CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
                          curPos, min_len, echoDot, len) != CSTR_EQUAL
           && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
-                         curPos, min_len, echoCol, len) != CSTR_EQUAL)
+                         curPos, min_len, echoCol, len) != CSTR_EQUAL
+          && CompareStringW(LOCALE_SYSTEM_DEFAULT, NORM_IGNORECASE,
+                         curPos, min_len, echoSlash, len) != CSTR_EQUAL)
       {
           WCMD_output_asis(spaceW);
       }
