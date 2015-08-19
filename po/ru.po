@@ -5,13 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-05-22 14:01+0300\n"
+"PO-Revision-Date: 2015-08-19 08:15+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 1.6.10\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -12851,18 +12852,18 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "uninstaller: приложение с идентификатором «%1» не найдено\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"uninstaller: за опцией «--remove» должен следовать GUID идентификатор "
+"приложения\n"
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Ошибка: неверная опция «%c».\n"
+msgstr "uninstaller: неверная опция [%1]\n"
 
 #: view.rc:36
 msgid "&Pan"
