@@ -103,6 +103,7 @@ static struct atom_table *create_table(int entries_count)
     {
         if ((entries_count < MIN_HASH_SIZE) ||
             (entries_count > MAX_HASH_SIZE)) entries_count = HASH_SIZE;
+        table->handles = NULL;
         table->entries_count = entries_count;
         if (!(table->entries = malloc( sizeof(*table->entries) * table->entries_count )))
         {
