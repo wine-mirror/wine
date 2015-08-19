@@ -1094,7 +1094,7 @@ static void on_draw_item(HWND hDlg, WPARAM wParam, LPARAM lParam)
         HTHEME theme;
         RECT buttonrect;
 
-        theme = OpenThemeData(draw_info->hwndItem, WC_BUTTONW);
+        theme = OpenThemeData(NULL, WC_BUTTONW);
 
         if (theme) {
             MARGINS margins;
