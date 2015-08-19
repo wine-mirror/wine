@@ -330,6 +330,7 @@ static struct object *create_console_input( struct thread* renderer, int fd )
     if (!console_input->history || (renderer && !console_input->evt) || !console_input->event)
     {
         if (fd != -1) close( fd );
+        console_input->history_size = 0;
         release_object( console_input );
         return NULL;
     }
@@ -1111,7 +1112,8 @@ static void console_input_destroy( struct object *obj )
         release_object( console_in->evt );
         console_in->evt = NULL;
     }
-    release_object( console_in->event );
+    if (console_in->event)
+        release_object( console_in->event );
     if (console_in->fd)
         release_object( console_in->fd );
 
