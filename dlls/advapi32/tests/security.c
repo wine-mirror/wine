@@ -130,6 +130,8 @@ static NTSTATUS (WINAPI *pNtCreateFile)(PHANDLE,ACCESS_MASK,POBJECT_ATTRIBUTES,P
 static BOOL     (WINAPI *pRtlDosPathNameToNtPathName_U)(LPCWSTR,PUNICODE_STRING,PWSTR*,CURDIR*);
 static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING,PCANSI_STRING,BOOLEAN);
 static BOOL     (WINAPI *pGetWindowsAccountDomainSid)(PSID,PSID,DWORD*);
+static void     (WINAPI *pRtlInitAnsiString)(PANSI_STRING,PCSZ);
+static NTSTATUS (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
 
 static HMODULE hmod;
 static int     myARGC;
@@ -160,6 +162,8 @@ static void init(void)
     pNtCreateFile = (void *)GetProcAddress(hntdll, "NtCreateFile");
     pRtlDosPathNameToNtPathName_U = (void *)GetProcAddress(hntdll, "RtlDosPathNameToNtPathName_U");
     pRtlAnsiStringToUnicodeString = (void *)GetProcAddress(hntdll, "RtlAnsiStringToUnicodeString");
+    pRtlInitAnsiString = (void *)GetProcAddress(hntdll, "RtlInitAnsiString");
+    pRtlFreeUnicodeString = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
 
     hmod = GetModuleHandleA("advapi32.dll");
     pAddAccessAllowedAceEx = (void *)GetProcAddress(hmod, "AddAccessAllowedAceEx");
@@ -3101,7 +3105,8 @@ static void get_nt_pathW(const char *name, UNICODE_STRING *nameW)
     ANSI_STRING str;
     NTSTATUS status;
     BOOLEAN ret;
-    RtlInitAnsiString(&str, name);
+
+    pRtlInitAnsiString(&str, name);
 
     status = pRtlAnsiStringToUnicodeString(&strW, &str, TRUE);
     ok(!status, "RtlAnsiStringToUnicodeString failed with %08x\n", status);
@@ -3109,7 +3114,7 @@ static void get_nt_pathW(const char *name, UNICODE_STRING *nameW)
     ret = pRtlDosPathNameToNtPathName_U(strW.Buffer, nameW, NULL, NULL);
     ok(ret, "RtlDosPathNameToNtPathName_U failed\n");
 
-    RtlFreeUnicodeString(&strW);
+    pRtlFreeUnicodeString(&strW);
 }
 
 static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD flags, DWORD mask,
@@ -3349,7 +3354,7 @@ static void test_CreateDirectoryA(void)
     status = pNtCreateFile(&hTemp, GENERIC_WRITE | DELETE, &attr, &io, NULL, 0,
                            FILE_SHARE_READ, FILE_CREATE, FILE_DELETE_ON_CLOSE, NULL, 0);
     ok(!status, "NtCreateFile failed with %08x\n", status);
-    RtlFreeUnicodeString(&tmpfileW);
+    pRtlFreeUnicodeString(&tmpfileW);
 
     error = pGetNamedSecurityInfoA(tmpfile, SE_FILE_OBJECT,
                                    OWNER_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION,
@@ -3384,7 +3389,7 @@ static void test_CreateDirectoryA(void)
     status = pNtCreateFile(&hTemp, GENERIC_WRITE | DELETE, &attr, &io, NULL, 0,
                            FILE_SHARE_READ, FILE_CREATE, FILE_DELETE_ON_CLOSE, NULL, 0);
     ok(!status, "NtCreateFile failed with %08x\n", status);
-    RtlFreeUnicodeString(&tmpfileW);
+    pRtlFreeUnicodeString(&tmpfileW);
     HeapFree(GetProcessHeap(), 0, pDacl);
 
     error = pGetSecurityInfo(hTemp, SE_FILE_OBJECT,
