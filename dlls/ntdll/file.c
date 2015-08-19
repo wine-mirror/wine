@@ -2765,6 +2765,22 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
         else io->u.Status = STATUS_INVALID_PARAMETER_3;
         break;
 
+    case FileDispositionInformation:
+        if (len >= sizeof(FILE_DISPOSITION_INFORMATION))
+        {
+            FILE_DISPOSITION_INFORMATION *info = ptr;
+
+            SERVER_START_REQ( set_fd_info )
+            {
+                req->handle   = wine_server_obj_handle( handle );
+                req->unlink   = info->DoDeleteFile;
+                io->u.Status  = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+        } else
+            io->u.Status = STATUS_INVALID_PARAMETER_3;
+        break;
+
     default:
         FIXME("Unsupported class (%d)\n", class);
         io->u.Status = STATUS_NOT_IMPLEMENTED;

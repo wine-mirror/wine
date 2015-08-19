@@ -2214,6 +2214,39 @@ static struct fd *get_handle_fd_obj( struct process *process, obj_handle_t handl
     return fd;
 }
 
+/* set disposition for the fd */
+static void set_fd_disposition( struct fd *fd, int unlink )
+{
+    struct stat st;
+
+    if (!fd->inode)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return;
+    }
+
+    if (fd->unix_fd == -1)
+    {
+        set_error( fd->no_fd_status );
+        return;
+    }
+
+    if (fstat( fd->unix_fd, &st ) == -1)
+    {
+        file_set_error();
+        return;
+    }
+
+    /* can't unlink special files */
+    if (unlink && !S_ISDIR(st.st_mode) && !S_ISREG(st.st_mode))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return;
+    }
+
+    fd->closed->unlink = unlink || (fd->options & FILE_DELETE_ON_CLOSE);
+}
+
 struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key )
 {
     *p_key = fd->comp_key;
@@ -2406,6 +2439,17 @@ DECL_HANDLER(add_fd_completion)
     {
         if (fd->completion)
             add_completion( fd->completion, fd->comp_key, req->cvalue, req->status, req->information );
+        release_object( fd );
+    }
+}
+
+/* set fd information */
+DECL_HANDLER(set_fd_info)
+{
+    struct fd *fd = get_handle_fd_obj( current->process, req->handle, DELETE );
+    if (fd)
+    {
+        set_fd_disposition( fd, req->unlink );
         release_object( fd );
     }
 }

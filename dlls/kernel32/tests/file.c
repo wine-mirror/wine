@@ -4645,7 +4645,6 @@ todo_wine
 
     dispinfo.DeleteFile = TRUE;
     ret = pSetFileInformationByHandle(file, FileDispositionInfo, &dispinfo, sizeof(dispinfo));
-todo_wine
     ok(ret, "setting FileDispositionInfo failed, error %d\n", GetLastError());
 
     CloseHandle(file);
