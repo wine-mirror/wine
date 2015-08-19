@@ -390,7 +390,7 @@ static HRESULT get_image_info_from_dds(const void *buffer, UINT length, D3DXIMAG
     info->Width = header->width;
     info->Height = header->height;
     info->Depth = 1;
-    info->MipLevels = (header->flags & DDS_MIPMAPCOUNT) ?  header->miplevels : 1;
+    info->MipLevels = header->miplevels ? header->miplevels : 1;
 
     info->Format = dds_pixel_format_to_d3dformat(&header->pixel_format);
     if (info->Format == D3DFMT_UNKNOWN)
