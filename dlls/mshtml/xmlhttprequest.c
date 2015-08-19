@@ -408,8 +408,17 @@ static HRESULT WINAPI HTMLXMLHttpRequest_get_onreadystatechange(IHTMLXMLHttpRequ
 static HRESULT WINAPI HTMLXMLHttpRequest_abort(IHTMLXMLHttpRequest *iface)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest(iface);
-    FIXME("(%p)->()\n", This);
-    return E_NOTIMPL;
+    nsresult nsres;
+
+    TRACE("(%p)->()\n", This);
+
+    nsres = nsIXMLHttpRequest_SlowAbort(This->nsxhr);
+    if(NS_FAILED(nsres)) {
+        ERR("nsIXMLHttpRequest_SlowAbort failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR bstrMethod, BSTR bstrUrl, VARIANT varAsync, VARIANT varUser, VARIANT varPassword)
