@@ -491,6 +491,11 @@ FONT 8, "MS Shell Dlg"
                     WS_CLIPSIBLINGS | CBS_HASSTRINGS | CBS_DROPDOWNLIST
 
     DEFPUSHBUTTON   "&Open",  IDOK,     350, 240, 40, 14, WS_GROUP | WS_CLIPSIBLINGS
+
+    /* drop-down menu for open button */
+    CONTROL         "#msgctxt#do not translate#6", psh1, "Button", WS_CHILD | WS_CLIPSIBLINGS | WS_GROUP | WS_TABSTOP |
+                    BS_CHECKBOX | BS_PUSHLIKE, 342, 240, 8, 14
+
     PUSHBUTTON      "Cancel", IDCANCEL, 395, 240, 40, 14, WS_CLIPSIBLINGS
     PUSHBUTTON      "&Help",  pshHelp,  350, 272, 40, 14, WS_CLIPSIBLINGS
 }

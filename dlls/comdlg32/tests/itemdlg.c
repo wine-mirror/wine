@@ -2085,8 +2085,8 @@ static void test_customize(void)
         }
 
         hr = IFileDialogCustomize_GetSelectedControlItem(pfdc, i, &selected);
-        todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-        todo_wine ok(selected == 0, "got %d.\n", selected);
+        ok(hr == S_OK, "got 0x%08x.\n", hr);
+        ok(selected == 0, "got %d.\n", selected);
 
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);

@@ -142,6 +142,9 @@ typedef struct FileDialogImpl {
 
     HMENU hmenu_opendropdown;
     customctrl cctrl_opendropdown;
+    HFONT hfont_opendropdown;
+    BOOL opendropdown_has_selection;
+    DWORD opendropdown_selection;
 
     GUID client_guid;
 } FileDialogImpl;
@@ -293,7 +296,7 @@ static HRESULT cctrl_event_OnButtonClicked(FileDialogImpl *This, DWORD ctl_id)
 static HRESULT cctrl_event_OnItemSelected(FileDialogImpl *This, DWORD ctl_id, DWORD item_id)
 {
     events_client *cursor;
-    TRACE("%p\n", This);
+    TRACE("%p %i %i\n", This, ctl_id, item_id);
 
     LIST_FOR_EACH_ENTRY(cursor, &This->events_clients, events_client, entry)
     {
@@ -703,6 +706,35 @@ static HRESULT on_default_action(FileDialogImpl *This)
     return ret;
 }
 
+static void show_opendropdown(FileDialogImpl *This)
+{
+    HWND open_hwnd;
+    RECT open_rc;
+    MSG msg;
+
+    open_hwnd = GetDlgItem(This->dlg_hwnd, IDOK);
+
+    GetWindowRect(open_hwnd, &open_rc);
+
+    if (TrackPopupMenu(This->hmenu_opendropdown, 0, open_rc.left, open_rc.bottom, 0, This->dlg_hwnd, NULL) &&
+        PeekMessageW(&msg, This->dlg_hwnd, WM_MENUCOMMAND, WM_MENUCOMMAND, PM_REMOVE))
+    {
+        MENUITEMINFOW mii;
+
+        This->opendropdown_has_selection = TRUE;
+
+        mii.cbSize = sizeof(mii);
+        mii.fMask = MIIM_ID;
+        GetMenuItemInfoW((HMENU)msg.lParam, msg.wParam, TRUE, &mii);
+        This->opendropdown_selection = mii.wID;
+
+        if(SUCCEEDED(on_default_action(This)))
+            EndDialog(This->dlg_hwnd, S_OK);
+        else
+            This->opendropdown_has_selection = FALSE;
+    }
+}
+
 /**************************************************************************
  * Control item functions.
  */
@@ -729,6 +761,19 @@ static cctrl_item* get_item(customctrl* parent, DWORD itemid, CDCONTROLSTATEF vi
 
         if ((item->cdcstate & visible_flags) == visible_flags)
             (*position)++;
+    }
+
+    return NULL;
+}
+
+static cctrl_item* get_first_item(customctrl* parent)
+{
+    cctrl_item* item;
+
+    LIST_FOR_EACH_ENTRY(item, &parent->sub_items, cctrl_item, entry)
+    {
+        if ((item->cdcstate & (CDCS_VISIBLE|CDCS_ENABLED)) == (CDCS_VISIBLE|CDCS_ENABLED))
+            return item;
     }
 
     return NULL;
@@ -1395,7 +1440,7 @@ static void update_layout(FileDialogImpl *This)
     HDWP hdwp;
     HWND hwnd;
     RECT dialog_rc;
-    RECT cancel_rc, open_rc;
+    RECT cancel_rc, dropdown_rc, open_rc;
     RECT filetype_rc, filename_rc, filenamelabel_rc;
     RECT toolbar_rc, ebrowser_rc, customctrls_rc;
     static const UINT vspacing = 4, hspacing = 4;
@@ -1432,6 +1477,28 @@ static void update_layout(FileDialogImpl *This)
         cancel_rc.bottom = cancel_rc.top + cancel_height;
     }
 
+    /* Open/Save dropdown */
+    if(This->hmenu_opendropdown)
+    {
+        int dropdown_width, dropdown_height;
+        hwnd = GetDlgItem(This->dlg_hwnd, psh1);
+
+        GetWindowRect(hwnd, &dropdown_rc);
+        dropdown_width = dropdown_rc.right - dropdown_rc.left;
+        dropdown_height = dropdown_rc.bottom - dropdown_rc.top;
+
+        dropdown_rc.left = cancel_rc.left - dropdown_width - hspacing;
+        dropdown_rc.top = cancel_rc.top;
+        dropdown_rc.right = dropdown_rc.left + dropdown_width;
+        dropdown_rc.bottom = dropdown_rc.top + dropdown_height;
+    }
+    else
+    {
+        dropdown_rc.left = dropdown_rc.right = cancel_rc.left - hspacing;
+        dropdown_rc.top = cancel_rc.top;
+        dropdown_rc.bottom = cancel_rc.bottom;
+    }
+
     /* Open/Save button */
     hwnd = GetDlgItem(This->dlg_hwnd, IDOK);
     if(hwnd)
@@ -1441,8 +1508,8 @@ static void update_layout(FileDialogImpl *This)
         open_width = open_rc.right - open_rc.left;
         open_height = open_rc.bottom - open_rc.top;
 
-        open_rc.left = cancel_rc.left - open_width - hspacing;
-        open_rc.top = cancel_rc.top;
+        open_rc.left = dropdown_rc.left - open_width;
+        open_rc.top = dropdown_rc.top;
         open_rc.right = open_rc.left + open_width;
         open_rc.bottom = open_rc.top + open_height;
     }
@@ -1551,6 +1618,10 @@ static void update_layout(FileDialogImpl *This)
 
     if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDOK)) )
         DeferWindowPos(hdwp, hwnd, NULL, open_rc.left, open_rc.top, 0, 0,
+                       SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
+
+    if(hdwp && This->hmenu_opendropdown && (hwnd = GetDlgItem(This->dlg_hwnd, psh1)))
+        DeferWindowPos(hdwp, hwnd, NULL, dropdown_rc.left, dropdown_rc.top, 0, 0,
                        SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
 
     if(hdwp && (hwnd = GetDlgItem(This->dlg_hwnd, IDCANCEL)) )
@@ -1737,6 +1808,44 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
        (hitem = GetDlgItem(This->dlg_hwnd, IDC_FILENAME)) )
         SendMessageW(hitem, WM_SETTEXT, 0, (LPARAM)This->set_filename);
 
+    if(This->hmenu_opendropdown)
+    {
+        RECT open_rc, dropdown_rc;
+        HWND open_hwnd, dropdown_hwnd;
+        LOGFONTW lfw, lfw_marlett;
+        HFONT dialog_font;
+        static const WCHAR marlett[] = {'M','a','r','l','e','t','t',0};
+
+        open_hwnd = GetDlgItem(This->dlg_hwnd, IDOK);
+        dropdown_hwnd = GetDlgItem(This->dlg_hwnd, psh1);
+
+        /* Show dropdown button, and remove its size from the open button */
+        ShowWindow(dropdown_hwnd, SW_SHOW);
+
+        GetWindowRect(open_hwnd, &open_rc);
+        GetWindowRect(dropdown_hwnd, &dropdown_rc);
+
+        SetWindowPos(open_hwnd, NULL, 0, 0,
+            (open_rc.right - open_rc.left) - (dropdown_rc.right - dropdown_rc.left),
+            open_rc.bottom - open_rc.top, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+
+        /* Change dropdown button font to Marlett */
+        dialog_font = (HFONT)SendMessageW(dropdown_hwnd, WM_GETFONT, 0, 0);
+
+        GetObjectW(dialog_font, sizeof(lfw), &lfw);
+
+        memset(&lfw_marlett, 0, sizeof(lfw_marlett));
+        lstrcpyW(lfw_marlett.lfFaceName, marlett);
+        lfw_marlett.lfHeight = lfw.lfHeight;
+        lfw_marlett.lfCharSet = SYMBOL_CHARSET;
+
+        This->hfont_opendropdown = CreateFontIndirectW(&lfw_marlett);
+
+        SendMessageW(dropdown_hwnd, WM_SETFONT, (LPARAM)This->hfont_opendropdown, 0);
+    }
+    else
+        ShowWindow(GetDlgItem(This->dlg_hwnd, psh1), SW_HIDE);
+
     ctrl_container_reparent(This, This->dlg_hwnd);
     init_explorerbrowser(This);
     init_toolbar(This, hwnd);
@@ -1781,6 +1890,9 @@ static LRESULT on_wm_destroy(FileDialogImpl *This)
     ctrl_container_reparent(This, NULL);
     This->dlg_hwnd = NULL;
 
+    DeleteObject(This->hfont_opendropdown);
+    This->hfont_opendropdown = NULL;
+
     return TRUE;
 }
 
@@ -1799,6 +1911,19 @@ static LRESULT on_idcancel(FileDialogImpl *This)
     TRACE("%p\n", This);
 
     EndDialog(This->dlg_hwnd, HRESULT_FROM_WIN32(ERROR_CANCELLED));
+
+    return FALSE;
+}
+
+static LRESULT on_command_opendropdown(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
+{
+    if(HIWORD(wparam) == BN_CLICKED)
+    {
+        HWND hwnd = (HWND)lparam;
+        SendMessageW(hwnd, BM_SETCHECK, BST_CHECKED, 0);
+        show_opendropdown(This);
+        SendMessageW(hwnd, BM_SETCHECK, BST_UNCHECKED, 0);
+    }
 
     return FALSE;
 }
@@ -1872,6 +1997,7 @@ static LRESULT on_wm_command(FileDialogImpl *This, WPARAM wparam, LPARAM lparam)
     {
     case IDOK:                return on_idok(This);
     case IDCANCEL:            return on_idcancel(This);
+    case psh1:                return on_command_opendropdown(This, wparam, lparam);
     case IDC_NAVBACK:         return on_browse_back(This);
     case IDC_NAVFORWARD:      return on_browse_forward(This);
     case IDC_FILETYPE:        return on_command_filetype(This, wparam, lparam);
@@ -2021,6 +2147,7 @@ static ULONG WINAPI IFileDialog2_fnRelease(IFileDialog2 *iface)
         LocalFree(This->custom_filenamelabel);
 
         DestroyMenu(This->hmenu_opendropdown);
+        DeleteObject(This->hfont_opendropdown);
 
         HeapFree(GetProcessHeap(), 0, This);
     }
@@ -2032,6 +2159,8 @@ static HRESULT WINAPI IFileDialog2_fnShow(IFileDialog2 *iface, HWND hwndOwner)
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
     TRACE("%p (%p)\n", iface, hwndOwner);
+
+    This->opendropdown_has_selection = FALSE;
 
     return create_dialog(This, hwndOwner);
 }
@@ -3369,6 +3498,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnEnableOpenDropDown(IFileDialogCusto
                                                                 DWORD dwIDCtl)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
+    MENUINFO mi;
     FIXME("semi-stub - %p (%d)\n", This, dwIDCtl);
 
     if (This->hmenu_opendropdown || get_cctrl(This, dwIDCtl))
@@ -3378,6 +3508,11 @@ static HRESULT WINAPI IFileDialogCustomize_fnEnableOpenDropDown(IFileDialogCusto
 
     if (!This->hmenu_opendropdown)
         return E_OUTOFMEMORY;
+
+    mi.cbSize = sizeof(mi);
+    mi.fMask = MIM_STYLE;
+    mi.dwStyle = MNS_NOTIFYBYPOS;
+    SetMenuInfo(This->hmenu_opendropdown, &mi);
 
     This->cctrl_opendropdown.hwnd = NULL;
     This->cctrl_opendropdown.wrapper_hwnd = NULL;
@@ -3982,6 +4117,26 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetSelectedControlItem(IFileDialogC
         *pdwIDItem = SendMessageW(ctrl->hwnd, CB_GETITEMDATA, index, 0);
         return S_OK;
     }
+    case IDLG_CCTRL_OPENDROPDOWN:
+        if (This->opendropdown_has_selection)
+        {
+            *pdwIDItem = This->opendropdown_selection;
+            return S_OK;
+        }
+        else
+        {
+            /* Return first enabled item. */
+            cctrl_item* item = get_first_item(ctrl);
+
+            if (item)
+            {
+                *pdwIDItem = item->id;
+                return S_OK;
+            }
+
+            WARN("no enabled items in open dropdown\n");
+            return E_FAIL;
+        }
     default:
         FIXME("Unsupported control type %d\n", ctrl->type);
     }
@@ -4167,6 +4322,7 @@ static HRESULT FileDialog_constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     fdimpl->client_guid = GUID_NULL;
 
     fdimpl->hmenu_opendropdown = NULL;
+    fdimpl->hfont_opendropdown = NULL;
 
     /* FIXME: The default folder setting should be restored for the
      * application if it was previously set. */
