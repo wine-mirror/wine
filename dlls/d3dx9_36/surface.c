@@ -77,7 +77,7 @@ static const GUID *d3dformat_to_wic_guid(D3DFORMAT format)
 /* dds_header.flags */
 #define DDS_CAPS 0x1
 #define DDS_HEIGHT 0x2
-#define DDS_WIDTH 0x2
+#define DDS_WIDTH 0x4
 #define DDS_PITCH 0x8
 #define DDS_PIXELFORMAT 0x1000
 #define DDS_MIPMAPCOUNT 0x20000
