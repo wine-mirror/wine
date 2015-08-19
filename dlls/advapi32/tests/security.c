@@ -5567,6 +5567,16 @@ static void test_process_access(void)
         CloseHandle(dup);
     }
 
+    SetLastError( 0xdeadbeef );
+    ret = DuplicateHandle(GetCurrentProcess(), process, GetCurrentProcess(), &dup,
+                          PROCESS_QUERY_INFORMATION, FALSE, 0);
+    ok(ret, "DuplicateHandle error %d\n", GetLastError());
+    access = get_obj_access(dup);
+    ok(access == (PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION) /* Vista+ */ ||
+       access == PROCESS_QUERY_INFORMATION /* before Vista */,
+       "expected PROCESS_QUERY_INFORMATION|PROCESS_QUERY_LIMITED_INFORMATION, got %#x\n", access);
+    CloseHandle(dup);
+
     TerminateProcess(process, 0);
     CloseHandle(process);
 }
