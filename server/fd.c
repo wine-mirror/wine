@@ -164,7 +164,8 @@ struct closed_fd
 {
     struct list entry;       /* entry in inode closed list */
     int         unix_fd;     /* the unix file descriptor */
-    char        unlink[1];   /* name to unlink on close (if any) */
+    int         unlink;      /* whether to unlink on close */
+    char       *unix_name;   /* name to unlink on close, points to parent fd unix_name */
 };
 
 struct fd
@@ -1016,9 +1017,10 @@ static void inode_close_pending( struct inode *inode, int keep_unlinks )
             close( fd->unix_fd );
             fd->unix_fd = -1;
         }
-        if (!keep_unlinks || !fd->unlink[0])  /* get rid of it unless there's an unlink pending on that file */
+        if (!keep_unlinks || !fd->unlink)  /* get rid of it unless there's an unlink pending on that file */
         {
             list_remove( ptr );
+            free( fd->unix_name );
             free( fd );
         }
         ptr = next;
@@ -1048,16 +1050,17 @@ static void inode_destroy( struct object *obj )
         struct closed_fd *fd = LIST_ENTRY( ptr, struct closed_fd, entry );
         list_remove( ptr );
         if (fd->unix_fd != -1) close( fd->unix_fd );
-        if (fd->unlink[0])
+        if (fd->unlink)
         {
             /* make sure it is still the same file */
             struct stat st;
-            if (!stat( fd->unlink, &st ) && st.st_dev == inode->device->dev && st.st_ino == inode->ino)
+            if (!stat( fd->unix_name, &st ) && st.st_dev == inode->device->dev && st.st_ino == inode->ino)
             {
-                if (S_ISDIR(st.st_mode)) rmdir( fd->unlink );
-                else unlink( fd->unlink );
+                if (S_ISDIR(st.st_mode)) rmdir( fd->unix_name );
+                else unlink( fd->unix_name );
             }
         }
+        free( fd->unix_name );
         free( fd );
     }
     release_object( inode->device );
@@ -1103,7 +1106,7 @@ static void inode_add_closed_fd( struct inode *inode, struct closed_fd *fd )
     {
         list_add_head( &inode->closed, &fd->entry );
     }
-    else if (fd->unlink[0])  /* close the fd but keep the structure around for unlink */
+    else if (fd->unlink)  /* close the fd but keep the structure around for unlink */
     {
         if (fd->unix_fd != -1) close( fd->unix_fd );
         fd->unix_fd = -1;
@@ -1112,6 +1115,7 @@ static void inode_add_closed_fd( struct inode *inode, struct closed_fd *fd )
     else  /* no locks on this inode and no unlink, get rid of the fd */
     {
         if (fd->unix_fd != -1) close( fd->unix_fd );
+        free( fd->unix_name );
         free( fd );
     }
 }
@@ -1451,7 +1455,7 @@ static void fd_dump( struct object *obj, int verbose )
 {
     struct fd *fd = (struct fd *)obj;
     fprintf( stderr, "Fd unix_fd=%d user=%p options=%08x", fd->unix_fd, fd->user, fd->options );
-    if (fd->inode) fprintf( stderr, " inode=%p unlink='%s'", fd->inode, fd->closed->unlink );
+    if (fd->inode) fprintf( stderr, " inode=%p unlink=%d", fd->inode, fd->closed->unlink );
     fprintf( stderr, "\n" );
 }
 
@@ -1465,7 +1469,6 @@ static void fd_destroy( struct object *obj )
 
     if (fd->completion) release_object( fd->completion );
     remove_fd_locks( fd );
-    free( fd->unix_name );
     list_remove( &fd->inode_entry );
     if (fd->poll_index != -1) remove_poll_user( fd, fd->poll_index );
     if (fd->inode)
@@ -1476,6 +1479,7 @@ static void fd_destroy( struct object *obj )
     else  /* no inode, close it right away */
     {
         if (fd->unix_fd != -1) close( fd->unix_fd );
+        free( fd->unix_name );
     }
 }
 
@@ -1563,7 +1567,7 @@ static inline void unmount_fd( struct fd *fd )
     fd->unix_fd = -1;
     fd->no_fd_status = STATUS_VOLUME_DISMOUNTED;
     fd->closed->unix_fd = -1;
-    fd->closed->unlink[0] = 0;
+    fd->closed->unlink = 0;
 
     /* stop using Unix locks on this fd (existing locks have been removed by close) */
     fd->fs_locks = 0;
@@ -1662,7 +1666,8 @@ struct fd *dup_fd_object( struct fd *orig, unsigned int access, unsigned int sha
             goto failed;
         }
         closed->unix_fd = fd->unix_fd;
-        closed->unlink[0] = 0;
+        closed->unlink = 0;
+        closed->unix_name = fd->unix_name;
         fd->closed = closed;
         fd->inode = (struct inode *)grab_object( orig->inode );
         list_add_head( &fd->inode->open, &fd->inode_entry );
@@ -1738,7 +1743,6 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     struct stat st;
     struct closed_fd *closed_fd;
     struct fd *fd;
-    const char *unlink_name = "";
     int root_fd = -1;
     int rw_mode;
 
@@ -1752,8 +1756,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     if (!(fd = alloc_fd_object())) return NULL;
 
     fd->options = options;
-    if (options & FILE_DELETE_ON_CLOSE) unlink_name = name;
-    if (!(closed_fd = mem_alloc( sizeof(*closed_fd) + strlen(unlink_name) )))
+    if (!(closed_fd = mem_alloc( sizeof(*closed_fd) )))
     {
         release_object( fd );
         return NULL;
@@ -1810,7 +1813,8 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     }
 
     closed_fd->unix_fd = fd->unix_fd;
-    closed_fd->unlink[0] = 0;
+    closed_fd->unlink = 0;
+    closed_fd->unix_name = fd->unix_name;
     fstat( fd->unix_fd, &st );
     *mode = st.st_mode;
 
@@ -1851,7 +1855,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
             set_error( err );
             return NULL;
         }
-        strcpy( closed_fd->unlink, unlink_name );
+        closed_fd->unlink = (options & FILE_DELETE_ON_CLOSE) != 0;
         if (flags & O_TRUNC)
         {
             if (S_ISDIR(st.st_mode))
@@ -1865,7 +1869,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
     }
     else  /* special file */
     {
-        if (unlink_name[0])  /* we can't unlink special files */
+        if (options & FILE_DELETE_ON_CLOSE)  /* we can't unlink special files */
         {
             set_error( STATUS_INVALID_PARAMETER );
             goto error;
