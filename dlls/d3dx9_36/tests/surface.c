@@ -171,6 +171,7 @@ static HRESULT create_file(const char *filename, const unsigned char *data, cons
 #define DDS_WIDTH 0x00000004
 #define DDS_PITCH 0x00000008
 #define DDS_PIXELFORMAT 0x00001000
+#define DDS_MIPMAPCOUNT 0x00020000
 #define DDS_LINEARSIZE 0x00080000
 
 /* dds_header.caps */
@@ -278,8 +279,8 @@ static void test_dds_header_handling(void)
     struct
     {
         struct dds_header header;
-        BYTE data[256];
-    } dds;
+        BYTE data[4096 * 1024];
+    } *dds;
 
     struct
     {
@@ -288,71 +289,135 @@ static void test_dds_header_handling(void)
         DWORD width;
         DWORD height;
         DWORD pitch;
+        DWORD miplevels;
         DWORD pixel_data_size;
-        HRESULT expected_result;
+        struct
+        {
+            HRESULT hr;
+            UINT miplevels;
+        }
+        expected;
     } tests[] = {
         /* pitch is ignored */
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, 0, 4, 4, 0,
-          63 /* pixel data size */, D3DXERR_INVALIDDATA },
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 0 /* pitch */,
-          64, D3D_OK },
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 1 /* pitch */,
-          64, D3D_OK },
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 2 /* pitch */,
-          64, D3D_OK },
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 3 /* pitch */,
-          64, D3D_OK },
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 4 /* pitch */,
-          64, D3D_OK },
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 16 /* pitch */,
-          64, D3D_OK },
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 1024 /* pitch */,
-          64, D3D_OK },
-        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, -1 /* pitch */,
-          64, D3D_OK },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, 0, 4, 4, 0, 0,
+          63 /* pixel data size */, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 0 /* pitch */, 0,
+          64, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 1 /* pitch */, 0,
+          64, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 2 /* pitch */, 0,
+          64, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 3 /* pitch */, 0,
+          64, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 4 /* pitch */, 0,
+          64, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 16 /* pitch */, 0,
+          64, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, 1024 /* pitch */, 0,
+          64, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x00ff0000, 0x0000ff00, 0x000000ff, 0xff000000 }, DDS_PITCH, 4, 4, -1 /* pitch */, 0,
+          64, { D3D_OK, 1 } },
         /* linear size is ignored */
-        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, 0, 4, 4, 0,
-          7 /* pixel data size */, D3DXERR_INVALIDDATA },
-        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 0 /* linear size */,
-          8, D3D_OK },
-        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 1 /* linear size */,
-          8, D3D_OK },
-        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 2 /* linear size */,
-          8, D3D_OK },
-        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 9 /* linear size */,
-          8, D3D_OK },
-        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 16 /* linear size */,
-          8, D3D_OK },
-        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, -1 /* linear size */,
-          8, D3D_OK },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, 0, 4, 4, 0, 0,
+          7 /* pixel data size */, { D3DXERR_INVALIDDATA, 1 } },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 0 /* linear size */, 0,
+          8, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 1 /* linear size */, 0,
+          8, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 2 /* linear size */, 0,
+          8, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 9 /* linear size */, 0,
+          8, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, 16 /* linear size */, 0,
+          8, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, MAKEFOURCC('D','X','T','1'), 0, 0, 0, 0, 0 }, DDS_LINEARSIZE, 4, 4, -1 /* linear size */, 0,
+          8, { D3D_OK, 1 } },
         /* integer overflows */
-        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000000, 0x80000000 /* 0x80000000 * 0x80000000 * 4 = 0 */, 0,
-          64, D3D_OK },
-        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x8000100, 0x800100 /* 0x8000100 * 0x800100 * 4 = 262144 */, 0,
-          64, D3DXERR_INVALIDDATA },
-        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000001, 0x80000001 /* 0x80000001 * 0x80000001 * 4 = 4 */, 0,
-          4, D3D_OK },
-        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000001, 0x80000001 /* 0x80000001 * 0x80000001 * 4 = 4 */, 0,
-          3 /* pixel data size */, D3DXERR_INVALIDDATA }
+        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000000, 0x80000000 /* 0x80000000 * 0x80000000 * 4 = 0 */, 0, 0,
+          64, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x8000100, 0x800100 /* 0x8000100 * 0x800100 * 4 = 262144 */, 0, 0,
+          64, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000001, 0x80000001 /* 0x80000001 * 0x80000001 * 4 = 4 */, 0, 0,
+          4, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0 }, 0, 0x80000001, 0x80000001 /* 0x80000001 * 0x80000001 * 4 = 4 */, 0, 0,
+          3 /* pixel data size */, { D3DXERR_INVALIDDATA, 0 } },
+        /* file size is validated */
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 64, 0, 0, 49151, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 64, 0, 0, 49152, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 64, 0, 4, 65279, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 64, 0, 4, 65280, { D3D_OK, 4 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 64, 0, 9, 65540, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 64, 0, 9, 65541, { D3D_OK, 9 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 0, 196607, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 0, 196608, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 0, 196609, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 1, 196607, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 1, 196608, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 196607, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 196608, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 400000, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 9, 262142, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 9, 262143, { D3D_OK, 9 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 10, 262145, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 10, 262146, { D3D_OK, 10 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 262175, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 262176, { D3D_OK, 20 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, 0, 256, 256, 0, 0, 32767, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, 0, 256, 256, 0, 0, 32768, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 32767, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 32768, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 9, 43703, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 9, 43704, { D3D_OK, 9 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 43791, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT1, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 43792, { D3D_OK, 20 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, 0, 256, 256, 0, 0, 65535, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, 0, 256, 256, 0, 0, 65536, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 65535, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 0, 65536, { D3D_OK, 1 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 9, 87407, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 9, 87408, { D3D_OK, 9 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 87583, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 256, 0, 20, 87584, { D3D_OK, 20 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 64, 0, 4, 21759, { D3DXERR_INVALIDDATA, 0 } },
+        { { 32, DDS_PF_FOURCC, D3DFMT_DXT4, 0, 0, 0, 0, 0 }, DDS_MIPMAPCOUNT, 256, 64, 0, 4, 21760, { D3D_OK, 4 } },
+        /* DDS_MIPMAPCOUNT is ignored */
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 0, 262146, { D3D_OK, 1 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 2, 262146, { D3D_OK, 2 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 9, 262146, { D3D_OK, 9 } },
+        { { 32, DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0x000000 }, 0, 256, 256, 0, 10, 262146, { D3D_OK, 10 } },
     };
 
-    memset(&dds, 0, sizeof(dds));
+    dds = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*dds));
+    if (!dds)
+    {
+        skip("Failed to allocate memory.\n");
+        return;
+    }
 
     for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
     {
-        DWORD file_size = sizeof(dds.header) + tests[i].pixel_data_size;
-        assert(file_size <= sizeof(dds));
+        DWORD file_size = sizeof(dds->header) + tests[i].pixel_data_size;
+        assert(file_size <= sizeof(*dds));
 
-        fill_dds_header(&dds.header);
-        dds.header.flags |= tests[i].flags;
-        dds.header.width = tests[i].width;
-        dds.header.height = tests[i].height;
-        dds.header.pitch_or_linear_size = tests[i].pitch;
-        dds.header.pixel_format = tests[i].pixel_format;
+        fill_dds_header(&dds->header);
+        dds->header.flags |= tests[i].flags;
+        dds->header.width = tests[i].width;
+        dds->header.height = tests[i].height;
+        dds->header.pitch_or_linear_size = tests[i].pitch;
+        dds->header.miplevels = tests[i].miplevels;
+        dds->header.pixel_format = tests[i].pixel_format;
 
-        hr = D3DXGetImageInfoFromFileInMemory(&dds, file_size, &info);
-        ok(hr == tests[i].expected_result, "%d: D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n", i, hr, tests[i].expected_result);
+        hr = D3DXGetImageInfoFromFileInMemory(dds, file_size, &info);
+        ok(hr == tests[i].expected.hr, "%d: D3DXGetImageInfoFromFileInMemory returned %#x, expected %#x\n",
+                i, hr, tests[i].expected.hr);
+        if (SUCCEEDED(hr))
+        {
+            ok(info.MipLevels == tests[i].expected.miplevels, "%d: Got MipLevels %u, expected %u\n",
+                    i, info.MipLevels, tests[i].expected.miplevels);
+        }
     }
+
+    HeapFree(GetProcessHeap(), 0, dds);
 }
 
 static void test_D3DXGetImageInfo(void)
@@ -567,6 +632,7 @@ static void test_D3DXGetImageInfo(void)
     check_dds_pixel_format(DDS_PF_RGB | DDS_PF_ALPHA, 0, 32, 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000, D3DFMT_A8B8G8R8);
     check_dds_pixel_format(DDS_PF_RGB, 0, 32, 0xff0000, 0x00ff00, 0x0000ff, 0, D3DFMT_X8R8G8B8);
     check_dds_pixel_format(DDS_PF_RGB, 0, 32, 0x0000ff, 0x00ff00, 0xff0000, 0, D3DFMT_X8B8G8R8);
+    check_dds_pixel_format(DDS_PF_RGB, 0, 24, 0xff0000, 0x00ff00, 0x0000ff, 0, D3DFMT_R8G8B8);
     check_dds_pixel_format(DDS_PF_RGB, 0, 32, 0x0000ffff, 0xffff0000, 0, 0, D3DFMT_G16R16);
     check_dds_pixel_format(DDS_PF_LUMINANCE, 0, 8, 0xff, 0, 0, 0, D3DFMT_L8);
     check_dds_pixel_format(DDS_PF_LUMINANCE, 0, 16, 0xffff, 0, 0, 0, D3DFMT_L16);
