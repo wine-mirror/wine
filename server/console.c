@@ -409,6 +409,9 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     screen_buffer->win.right      = screen_buffer->max_width - 1;
     screen_buffer->win.top        = 0;
     screen_buffer->win.bottom     = screen_buffer->max_height - 1;
+    screen_buffer->data           = NULL;
+    list_add_head( &screen_buffer_list, &screen_buffer->entry );
+
     if (fd == -1)
         screen_buffer->fd = NULL;
     else
@@ -421,8 +424,6 @@ static struct screen_buffer *create_console_output( struct console_input *consol
         }
         allow_fd_caching(screen_buffer->fd);
     }
-
-    list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
     if (!(screen_buffer->data = malloc( screen_buffer->width * screen_buffer->height *
                                         sizeof(*screen_buffer->data) )))
