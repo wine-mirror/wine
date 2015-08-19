@@ -59,10 +59,31 @@ static const WCHAR UninstallCommandlineW[] = {'U','n','i','n','s','t','a','l','l
 static const WCHAR WindowsInstallerW[] = {'W','i','n','d','o','w','s','I','n','s','t','a','l','l','e','r',0};
 static const WCHAR SystemComponentW[] = {'S','y','s','t','e','m','C','o','m','p','o','n','e','n','t',0};
 
+static void output_writeconsole(const WCHAR *str, DWORD len)
+{
+    DWORD written, ret, lenA;
+    char *strA;
+
+    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &written, NULL);
+    if (ret) return;
+
+    /* WriteConsole fails if its output is redirected to a file.
+     * If this occurs, we should use an OEM codepage and call WriteFile.
+     */
+    lenA = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, NULL, 0, NULL, NULL);
+    strA = HeapAlloc(GetProcessHeap(), 0, lenA);
+    if (strA)
+    {
+        WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, strA, lenA, NULL, NULL);
+        WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, lenA, &written, FALSE);
+        HeapFree(GetProcessHeap(), 0, strA);
+    }
+}
+
 static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
 {
     WCHAR *str;
-    DWORD len, count;
+    DWORD len;
 
     SetLastError(NO_ERROR);
     len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
@@ -72,7 +93,7 @@ static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
         WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
         return;
     }
-    WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &count, NULL);
+    output_writeconsole(str, len);
     LocalFree(str);
 }
 
