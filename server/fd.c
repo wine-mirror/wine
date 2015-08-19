@@ -2244,6 +2244,13 @@ static void set_fd_disposition( struct fd *fd, int unlink )
         return;
     }
 
+    /* can't unlink files we don't have permission to access */
+    if (unlink && !(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+    {
+        set_error( STATUS_CANNOT_DELETE );
+        return;
+    }
+
     fd->closed->unlink = unlink || (fd->options & FILE_DELETE_ON_CLOSE);
 }
 
