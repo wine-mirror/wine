@@ -2254,6 +2254,84 @@ static void set_fd_disposition( struct fd *fd, int unlink )
     fd->closed->unlink = unlink || (fd->options & FILE_DELETE_ON_CLOSE);
 }
 
+/* set new name for the fd */
+static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, data_size_t len )
+{
+    struct inode *inode;
+    struct stat st;
+    char *name;
+
+    if (!fd->inode || !fd->unix_name)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return;
+    }
+    if (!len || ((nameptr[0] == '/') ^ !root))
+    {
+        set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+        return;
+    }
+    if (!(name = mem_alloc( len + 1 ))) return;
+    memcpy( name, nameptr, len );
+    name[len] = 0;
+
+    if (root)
+    {
+        char *combined_name = dup_fd_name( root, name );
+        if (!combined_name)
+        {
+            set_error( STATUS_NO_MEMORY );
+            goto failed;
+        }
+        free( name );
+        name = combined_name;
+    }
+
+    if (!stat( name, &st ))
+    {
+        /* can't replace directories or special files */
+        if (!S_ISREG( st.st_mode ))
+        {
+            set_error( STATUS_ACCESS_DENIED );
+            goto failed;
+        }
+
+        /* can't replace an opened file */
+        if ((inode = get_inode( st.st_dev, st.st_ino, -1 )))
+        {
+            int is_empty = list_empty( &inode->open );
+            release_object( inode );
+            if (!is_empty)
+            {
+                set_error( STATUS_ACCESS_DENIED );
+                goto failed;
+            }
+        }
+
+        /* rename() cannot replace files with directories */
+        if (fd->unix_fd != -1 && !fstat( fd->unix_fd, &st ) &&
+            S_ISDIR( st.st_mode ) && unlink( name ))
+        {
+            file_set_error();
+            goto failed;
+        }
+    }
+
+    if (rename( fd->unix_name, name ))
+    {
+        file_set_error();
+        goto failed;
+    }
+
+    free( fd->unix_name );
+    fd->unix_name = name;
+    fd->closed->unix_name = name;
+    return;
+
+failed:
+    free( name );
+}
+
 struct completion *fd_get_completion( struct fd *fd, apc_param_t *p_key )
 {
     *p_key = fd->comp_key;
@@ -2450,8 +2528,8 @@ DECL_HANDLER(add_fd_completion)
     }
 }
 
-/* set fd information */
-DECL_HANDLER(set_fd_info)
+/* set fd disposition information */
+DECL_HANDLER(set_fd_disp_info)
 {
     struct fd *fd = get_handle_fd_obj( current->process, req->handle, DELETE );
     if (fd)
@@ -2459,4 +2537,27 @@ DECL_HANDLER(set_fd_info)
         set_fd_disposition( fd, req->unlink );
         release_object( fd );
     }
+}
+
+/* set fd name information */
+DECL_HANDLER(set_fd_name_info)
+{
+    struct fd *fd, *root_fd = NULL;
+
+    if (req->rootdir)
+    {
+        struct dir *root;
+
+        if (!(root = get_dir_obj( current->process, req->rootdir, 0 ))) return;
+        root_fd = get_obj_fd( (struct object *)root );
+        release_object( root );
+        if (!root_fd) return;
+    }
+
+    if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
+    {
+        set_fd_name( fd, root_fd, get_req_data(), get_req_data_size() );
+        release_object( fd );
+    }
+    if (root_fd) release_object( root_fd );
 }

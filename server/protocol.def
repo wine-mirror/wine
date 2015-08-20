@@ -3525,10 +3525,18 @@ enum coords_relative
 @END
 
 
-/* set fd information */
-@REQ(set_fd_info)
+/* set fd disposition information */
+@REQ(set_fd_disp_info)
     obj_handle_t handle;          /* handle to a file or directory */
     int          unlink;          /* whether to unlink file on close */
+@END
+
+
+/* set fd name information */
+@REQ(set_fd_name_info)
+    obj_handle_t handle;          /* handle to a file or directory */
+    obj_handle_t rootdir;         /* root directory */
+    VARARG(filename,string);      /* new file name */
 @END
 
 
