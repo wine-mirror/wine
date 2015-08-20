@@ -76,7 +76,7 @@ static ULONG STDMETHODCALLTYPE d3d10_blend_state_Release(ID3D10BlendState *iface
 
     if (!refcount)
     {
-        struct d3d10_device *device = impl_from_ID3D10Device(state->device);
+        struct d3d_device *device = impl_from_ID3D10Device(state->device);
         wined3d_mutex_lock();
         wine_rb_remove(&device->blend_states, &state->desc);
         ID3D10Device1_Release(state->device);
@@ -159,7 +159,7 @@ static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
     d3d10_blend_state_GetDesc,
 };
 
-HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, struct d3d10_device *device,
+HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, struct d3d_device *device,
         const D3D10_BLEND_DESC *desc)
 {
     state->ID3D10BlendState_iface.lpVtbl = &d3d10_blend_state_vtbl;
@@ -238,7 +238,7 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_state_Release(ID3D10DepthStenc
 
     if (!refcount)
     {
-        struct d3d10_device *device = impl_from_ID3D10Device(state->device);
+        struct d3d_device *device = impl_from_ID3D10Device(state->device);
         wined3d_mutex_lock();
         wine_rb_remove(&device->depthstencil_states, &state->desc);
         ID3D10Device1_Release(state->device);
@@ -321,7 +321,7 @@ static const struct ID3D10DepthStencilStateVtbl d3d10_depthstencil_state_vtbl =
     d3d10_depthstencil_state_GetDesc,
 };
 
-HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, struct d3d10_device *device,
+HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, struct d3d_device *device,
         const D3D10_DEPTH_STENCIL_DESC *desc)
 {
     state->ID3D10DepthStencilState_iface.lpVtbl = &d3d10_depthstencil_state_vtbl;
@@ -400,7 +400,7 @@ static ULONG STDMETHODCALLTYPE d3d10_rasterizer_state_Release(ID3D10RasterizerSt
 
     if (!refcount)
     {
-        struct d3d10_device *device = impl_from_ID3D10Device(state->device);
+        struct d3d_device *device = impl_from_ID3D10Device(state->device);
         wined3d_mutex_lock();
         wine_rb_remove(&device->rasterizer_states, &state->desc);
         ID3D10Device1_Release(state->device);
@@ -483,7 +483,7 @@ static const struct ID3D10RasterizerStateVtbl d3d10_rasterizer_state_vtbl =
     d3d10_rasterizer_state_GetDesc,
 };
 
-HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state, struct d3d10_device *device,
+HRESULT d3d10_rasterizer_state_init(struct d3d10_rasterizer_state *state, struct d3d_device *device,
         const D3D10_RASTERIZER_DESC *desc)
 {
     state->ID3D10RasterizerState_iface.lpVtbl = &d3d10_rasterizer_state_vtbl;
@@ -562,7 +562,7 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *i
 
     if (!refcount)
     {
-        struct d3d10_device *device = impl_from_ID3D10Device(state->device);
+        struct d3d_device *device = impl_from_ID3D10Device(state->device);
 
         wined3d_mutex_lock();
         wined3d_sampler_decref(state->wined3d_sampler);
@@ -683,7 +683,7 @@ static enum wined3d_cmp_func wined3d_cmp_func_from_d3d10core(D3D10_COMPARISON_FU
     return (enum wined3d_cmp_func)f;
 }
 
-HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d10_device *device,
+HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d_device *device,
         const D3D10_SAMPLER_DESC *desc)
 {
     struct wined3d_sampler_desc wined3d_desc;

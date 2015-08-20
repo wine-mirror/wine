@@ -554,7 +554,7 @@ static void wined3d_depth_stencil_view_desc_from_d3d10core(struct wined3d_render
     }
 }
 
-HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view, struct d3d10_device *device,
+HRESULT d3d10_depthstencil_view_init(struct d3d10_depthstencil_view *view, struct d3d_device *device,
         ID3D10Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc)
 {
     struct wined3d_rendertarget_view_desc wined3d_desc;
@@ -818,7 +818,7 @@ static void wined3d_rendertarget_view_desc_from_d3d10core(struct wined3d_rendert
     }
 }
 
-HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d10_device *device,
+HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d_device *device,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc)
 {
     struct wined3d_rendertarget_view_desc wined3d_desc;
@@ -1020,7 +1020,7 @@ static const struct ID3D10ShaderResourceViewVtbl d3d10_shader_resource_view_vtbl
     d3d10_shader_resource_view_GetDesc,
 };
 
-HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view, struct d3d10_device *device,
+HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view, struct d3d_device *device,
         ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc)
 {
     struct wined3d_resource *wined3d_resource;

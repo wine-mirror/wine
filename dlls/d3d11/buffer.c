@@ -234,7 +234,7 @@ static const struct wined3d_parent_ops d3d10_buffer_wined3d_parent_ops =
     d3d10_buffer_wined3d_object_released,
 };
 
-HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d10_device *device,
+HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d_device *device,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_buffer_desc wined3d_desc;

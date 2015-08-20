@@ -259,7 +259,7 @@ static const struct wined3d_parent_ops d3d10_vertex_shader_wined3d_parent_ops =
     d3d10_vertex_shader_wined3d_object_destroyed,
 };
 
-HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d10_device *device,
+HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
@@ -435,7 +435,7 @@ static const struct wined3d_parent_ops d3d10_geometry_shader_wined3d_parent_ops 
     d3d10_geometry_shader_wined3d_object_destroyed,
 };
 
-HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct d3d10_device *device,
+HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
@@ -626,7 +626,7 @@ static const struct wined3d_parent_ops d3d10_pixel_shader_wined3d_parent_ops =
     d3d10_pixel_shader_wined3d_object_destroyed,
 };
 
-HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d10_device *device,
+HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;

@@ -220,7 +220,7 @@ static const struct wined3d_parent_ops d3d10_input_layout_wined3d_parent_ops =
     d3d10_input_layout_wined3d_object_destroyed,
 };
 
-HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d10_device *device,
+HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d_device *device,
         const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
         const void *shader_byte_code, SIZE_T shader_byte_code_length)
 {

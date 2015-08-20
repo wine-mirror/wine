@@ -68,13 +68,13 @@ static UINT WINAPI layer_get_size(enum dxgi_device_layer_id id, struct layer_get
         return 0;
     }
 
-    return sizeof(struct d3d10_device);
+    return sizeof(struct d3d_device);
 }
 
 static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_base, DWORD unknown0,
         void *device_object, REFIID riid, void **device_layer)
 {
-    struct d3d10_device *object;
+    struct d3d_device *object;
     HRESULT hr;
 
     TRACE("id %#x, layer_base %p, unknown0 %#x, device_object %p, riid %s, device_layer %p\n",

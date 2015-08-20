@@ -189,7 +189,7 @@ struct d3d10_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface)
     return CONTAINING_RECORD(iface, struct d3d10_query, ID3D10Query_iface);
 }
 
-HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d10_device *device,
+HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d_device *device,
         const D3D10_QUERY_DESC *desc, BOOL predicate)
 {
     HRESULT hr;

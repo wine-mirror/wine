@@ -310,7 +310,7 @@ static const struct wined3d_parent_ops d3d10_texture2d_wined3d_parent_ops =
     d3d10_texture2d_wined3d_object_released,
 };
 
-HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d10_device *device,
+HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d_device *device,
         const D3D10_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_resource_desc wined3d_desc;
@@ -602,7 +602,7 @@ static const struct wined3d_parent_ops d3d10_texture3d_wined3d_parent_ops =
     d3d10_texture3d_wined3d_object_released,
 };
 
-HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d10_device *device,
+HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d_device *device,
         const D3D10_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_resource_desc wined3d_desc;
