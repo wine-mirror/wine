@@ -92,7 +92,7 @@ static void test_device_interfaces(void)
 
     if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_ID3D11Device, (void **)&iface)))
         IUnknown_Release(iface);
-    todo_wine ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Failed to query ID3D11Device interface, hr %#x.\n", hr);
 
     refcount = IDXGIDevice_Release(device);

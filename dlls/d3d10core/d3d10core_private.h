@@ -30,6 +30,7 @@
 #include "objbase.h"
 
 #include "d3d10_1.h"
+#include "d3d11_1.h"
 #ifdef D3D10CORE_INIT_GUID
 #include "initguid.h"
 #endif
@@ -331,6 +332,7 @@ struct d3d10_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HI
 struct d3d10_device
 {
     IUnknown IUnknown_inner;
+    ID3D11Device ID3D11Device_iface;
     ID3D10Device1 ID3D10Device1_iface;
     ID3D10Multithread ID3D10Multithread_iface;
     IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
