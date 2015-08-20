@@ -50,6 +50,8 @@ HRESULT d3drm_device_create_surfaces_from_clipper(struct d3drm_device *object, I
 HRESULT d3drm_device_init(struct d3drm_device *device, UINT version, IDirect3DRM *d3drm, IDirectDraw *ddraw, IDirectDrawSurface *surface,
             BOOL create_z_surface) DECLSPEC_HIDDEN;
 
+HRESULT d3drm_device_set_ddraw_device_d3d(struct d3drm_device *device, IDirect3DRM *d3drm, IDirect3D *d3d, IDirect3DDevice *d3d_device) DECLSPEC_HIDDEN;
+
 struct d3drm_file_header
 {
     WORD major;

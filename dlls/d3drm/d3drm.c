@@ -279,13 +279,25 @@ static HRESULT WINAPI d3drm1_CreateDeviceFromD3D(IDirect3DRM *iface,
 {
     struct d3drm_device *object;
     HRESULT hr;
-    FIXME("iface %p, d3d %p, d3d_device %p, device %p partial stub.\n",
+    TRACE("iface %p, d3d %p, d3d_device %p, device %p.\n",
             iface, d3d, d3d_device, device);
+
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
+    if (!d3d || !d3d_device)
+        return D3DRMERR_BADVALUE;
 
     hr = d3drm_device_create(&object);
     if (FAILED(hr))
         return hr;
 
+    hr = d3drm_device_set_ddraw_device_d3d(object, iface, d3d, d3d_device);
+    if (FAILED(hr))
+    {
+        d3drm_device_destroy(object);
+        return hr;
+    }
     *device = IDirect3DRMDevice_from_impl(object);
 
     return D3DRM_OK;
