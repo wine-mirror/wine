@@ -1680,13 +1680,15 @@ static NTSTATUS perform_relocations( void *module, SIZE_T len )
 
     relocs = &nt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_BASERELOC];
 
-    if ((nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED) ||
-        !relocs->VirtualAddress || !relocs->Size)
+    if (nt->FileHeader.Characteristics & IMAGE_FILE_RELOCS_STRIPPED)
     {
         WARN( "Need to relocate module from %p to %p, but there are no relocation records\n",
               base, module );
         return STATUS_CONFLICTING_ADDRESSES;
     }
+
+    if (!relocs->Size) return STATUS_SUCCESS;
+    if (!relocs->VirtualAddress) return STATUS_CONFLICTING_ADDRESSES;
 
     if (nt->FileHeader.NumberOfSections > sizeof(protect_old)/sizeof(protect_old[0]))
         return STATUS_INVALID_IMAGE_FORMAT;
