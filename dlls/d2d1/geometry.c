@@ -26,6 +26,13 @@ WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 #define D2D_CDT_EDGE_FLAG_FREED         0x80000000u
 #define D2D_CDT_EDGE_FLAG_VISITED(r)    (1u << (r))
 
+static const D2D1_MATRIX_3X2_F identity =
+{
+    1.0f, 0.0f,
+    0.0f, 1.0f,
+    0.0f, 0.0f,
+};
+
 enum d2d_cdt_edge_next
 {
     D2D_EDGE_NEXT_ORIGIN = 0,
@@ -986,11 +993,12 @@ static void d2d_geometry_cleanup(struct d2d_geometry *geometry)
 }
 
 static void d2d_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory,
-        const struct ID2D1GeometryVtbl *vtbl)
+        const D2D1_MATRIX_3X2_F *transform, const struct ID2D1GeometryVtbl *vtbl)
 {
     geometry->ID2D1Geometry_iface.lpVtbl = vtbl;
     geometry->refcount = 1;
     ID2D1Factory_AddRef(geometry->factory = factory);
+    geometry->transform = *transform;
 }
 
 static inline struct d2d_geometry *impl_from_ID2D1GeometrySink(ID2D1GeometrySink *iface)
@@ -1574,7 +1582,7 @@ static const struct ID2D1PathGeometryVtbl d2d_path_geometry_vtbl =
 
 void d2d_path_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory)
 {
-    d2d_geometry_init(geometry, factory, (ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl);
+    d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl);
     geometry->u.path.ID2D1GeometrySink_iface.lpVtbl = &d2d_geometry_sink_vtbl;
 }
 
@@ -1791,7 +1799,7 @@ static const struct ID2D1RectangleGeometryVtbl d2d_rectangle_geometry_vtbl =
 
 HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory, const D2D1_RECT_F *rect)
 {
-    d2d_geometry_init(geometry, factory, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
+    d2d_geometry_init(geometry, factory, &identity, (ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
     geometry->u.rectangle.rect = *rect;
 
     if (!(geometry->vertices = HeapAlloc(GetProcessHeap(), 0, 4 * sizeof(*geometry->vertices))))
@@ -1826,11 +1834,256 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory 
     return S_OK;
 }
 
+static inline struct d2d_geometry *impl_from_ID2D1TransformedGeometry(ID2D1TransformedGeometry *iface)
+{
+    return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_QueryInterface(ID2D1TransformedGeometry *iface,
+        REFIID iid, void **out)
+{
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_ID2D1TransformedGeometry)
+            || IsEqualGUID(iid, &IID_ID2D1Geometry)
+            || IsEqualGUID(iid, &IID_ID2D1Resource)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1TransformedGeometry_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_transformed_geometry_AddRef(ID2D1TransformedGeometry *iface)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1TransformedGeometry(iface);
+    ULONG refcount = InterlockedIncrement(&geometry->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d2d_transformed_geometry_Release(ID2D1TransformedGeometry *iface)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1TransformedGeometry(iface);
+    ULONG refcount = InterlockedDecrement(&geometry->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+
+    if (!refcount)
+    {
+        geometry->beziers = NULL;
+        geometry->faces = NULL;
+        geometry->vertices = NULL;
+        ID2D1Geometry_Release(geometry->u.transformed.src_geometry);
+        d2d_geometry_cleanup(geometry);
+        HeapFree(GetProcessHeap(), 0, geometry);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d2d_transformed_geometry_GetFactory(ID2D1TransformedGeometry *iface,
+        ID2D1Factory **factory)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1TransformedGeometry(iface);
+
+    TRACE("iface %p, factory %p.\n", iface, factory);
+
+    ID2D1Factory_AddRef(*factory = geometry->factory);
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_GetBounds(ID2D1TransformedGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, D2D1_RECT_F *bounds)
+{
+    FIXME("iface %p, transform %p, bounds %p stub!\n", iface, transform, bounds);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_GetWidenedBounds(ID2D1TransformedGeometry *iface,
+        float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, D2D1_RECT_F *bounds)
+{
+    FIXME("iface %p, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, bounds %p stub!\n",
+            iface, stroke_width, stroke_style, transform, tolerance, bounds);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_StrokeContainsPoint(ID2D1TransformedGeometry *iface,
+        D2D1_POINT_2F point, float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, BOOL *contains)
+{
+    FIXME("iface %p, point {%.8e, %.8e}, stroke_width %.8e, stroke_style %p, "
+            "transform %p, tolerance %.8e, contains %p stub!\n",
+            iface, point.x, point.y, stroke_width, stroke_style, transform, tolerance, contains);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_FillContainsPoint(ID2D1TransformedGeometry *iface,
+        D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F *transform, float tolerance, BOOL *contains)
+{
+    FIXME("iface %p, point {%.8e, %.8e}, transform %p, tolerance %.8e, contains %p stub!\n",
+            iface, point.x, point.y, transform, tolerance, contains);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_CompareWithGeometry(ID2D1TransformedGeometry *iface,
+        ID2D1Geometry *geometry, const D2D1_MATRIX_3X2_F *transform, float tolerance, D2D1_GEOMETRY_RELATION *relation)
+{
+    FIXME("iface %p, geometry %p, transform %p, tolerance %.8e, relation %p stub!\n",
+            iface, geometry, transform, tolerance, relation);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Simplify(ID2D1TransformedGeometry *iface,
+        D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
+        ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, option %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, option, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Tessellate(ID2D1TransformedGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1TessellationSink *sink)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_CombineWithGeometry(ID2D1TransformedGeometry *iface,
+        ID2D1Geometry *geometry, D2D1_COMBINE_MODE combine_mode, const D2D1_MATRIX_3X2_F *transform,
+        float tolerance, ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, geometry %p, combine_mode %#x, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, geometry, combine_mode, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Outline(ID2D1TransformedGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_ComputeArea(ID2D1TransformedGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, float *area)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, area %p stub!\n", iface, transform, tolerance, area);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_ComputeLength(ID2D1TransformedGeometry *iface,
+        const D2D1_MATRIX_3X2_F *transform, float tolerance, float *length)
+{
+    FIXME("iface %p, transform %p, tolerance %.8e, length %p stub!\n", iface, transform, tolerance, length);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_ComputePointAtLength(ID2D1TransformedGeometry *iface,
+        float length, const D2D1_MATRIX_3X2_F *transform, float tolerance, D2D1_POINT_2F *point,
+        D2D1_POINT_2F *tangent)
+{
+    FIXME("iface %p, length %.8e, transform %p, tolerance %.8e, point %p, tangent %p stub!\n",
+            iface, length, transform, tolerance, point, tangent);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d2d_transformed_geometry_Widen(ID2D1TransformedGeometry *iface, float stroke_width,
+        ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform, float tolerance,
+        ID2D1SimplifiedGeometrySink *sink)
+{
+    FIXME("iface %p, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, sink %p stub!\n",
+            iface, stroke_width, stroke_style, transform, tolerance, sink);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d2d_transformed_geometry_GetSourceGeometry(ID2D1TransformedGeometry *iface,
+        ID2D1Geometry **src_geometry)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1TransformedGeometry(iface);
+
+    TRACE("iface %p, src_geometry %p.\n", iface, src_geometry);
+
+    ID2D1Geometry_AddRef(*src_geometry = geometry->u.transformed.src_geometry);
+}
+
+static void STDMETHODCALLTYPE d2d_transformed_geometry_GetTransform(ID2D1TransformedGeometry *iface,
+        D2D1_MATRIX_3X2_F *transform)
+{
+    struct d2d_geometry *geometry = impl_from_ID2D1TransformedGeometry(iface);
+
+    TRACE("iface %p, transform %p.\n", iface, transform);
+
+    *transform = geometry->transform;
+}
+
+static const struct ID2D1TransformedGeometryVtbl d2d_transformed_geometry_vtbl =
+{
+    d2d_transformed_geometry_QueryInterface,
+    d2d_transformed_geometry_AddRef,
+    d2d_transformed_geometry_Release,
+    d2d_transformed_geometry_GetFactory,
+    d2d_transformed_geometry_GetBounds,
+    d2d_transformed_geometry_GetWidenedBounds,
+    d2d_transformed_geometry_StrokeContainsPoint,
+    d2d_transformed_geometry_FillContainsPoint,
+    d2d_transformed_geometry_CompareWithGeometry,
+    d2d_transformed_geometry_Simplify,
+    d2d_transformed_geometry_Tessellate,
+    d2d_transformed_geometry_CombineWithGeometry,
+    d2d_transformed_geometry_Outline,
+    d2d_transformed_geometry_ComputeArea,
+    d2d_transformed_geometry_ComputeLength,
+    d2d_transformed_geometry_ComputePointAtLength,
+    d2d_transformed_geometry_Widen,
+    d2d_transformed_geometry_GetSourceGeometry,
+    d2d_transformed_geometry_GetTransform,
+};
+
+void d2d_transformed_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory,
+        ID2D1Geometry *src_geometry, const D2D_MATRIX_3X2_F *transform)
+{
+    struct d2d_geometry *src_impl;
+
+    d2d_geometry_init(geometry, factory, transform, (ID2D1GeometryVtbl *)&d2d_transformed_geometry_vtbl);
+    ID2D1Geometry_AddRef(geometry->u.transformed.src_geometry = src_geometry);
+    src_impl = unsafe_impl_from_ID2D1Geometry(src_geometry);
+    geometry->vertices = src_impl->vertices;
+    geometry->vertex_count = src_impl->vertex_count;
+    geometry->faces = src_impl->faces;
+    geometry->face_count = src_impl->face_count;
+    geometry->beziers = src_impl->beziers;
+    geometry->bezier_count = src_impl->bezier_count;
+}
+
 struct d2d_geometry *unsafe_impl_from_ID2D1Geometry(ID2D1Geometry *iface)
 {
     if (!iface)
         return NULL;
     assert(iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_path_geometry_vtbl
-            || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl);
+            || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_rectangle_geometry_vtbl
+            || iface->lpVtbl == (const ID2D1GeometryVtbl *)&d2d_transformed_geometry_vtbl);
     return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);
 }

@@ -150,10 +150,20 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateTransformedGeometry(ID2D1Fact
         ID2D1Geometry *src_geometry, const D2D1_MATRIX_3X2_F *transform,
         ID2D1TransformedGeometry **transformed_geometry)
 {
-    FIXME("iface %p, src_geometry %p, transform %p, transformed_geometry %p stub!\n",
+    struct d2d_geometry *object;
+
+    TRACE("iface %p, src_geometry %p, transform %p, transformed_geometry %p.\n",
             iface, src_geometry, transform, transformed_geometry);
 
-    return E_NOTIMPL;
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    d2d_transformed_geometry_init(object, iface, src_geometry, transform);
+
+    TRACE("Created transformed geometry %p.\n", object);
+    *transformed_geometry = (ID2D1TransformedGeometry *)&object->ID2D1Geometry_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_CreatePathGeometry(ID2D1Factory *iface, ID2D1PathGeometry **geometry)
