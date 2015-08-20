@@ -28,6 +28,7 @@
 #include "rpcproxy.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 #include <propsys.h>
 #include "initguid.h"
 
@@ -73,6 +74,8 @@ HRESULT WINAPI DllUnregisterServer(void)
 typedef struct {
     IXAudio27 IXAudio27_iface;
     IXAudio2 IXAudio2_iface;
+    IXAudio2MasteringVoice IXAudio2MasteringVoice_iface;
+
     LONG ref;
 
     DWORD version;
@@ -87,6 +90,194 @@ static inline IXAudio2Impl *impl_from_IXAudio27(IXAudio27 *iface)
 {
     return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio27_iface);
 }
+
+IXAudio2Impl *impl_from_IXAudio2MasteringVoice(IXAudio2MasteringVoice *iface)
+{
+    return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio2MasteringVoice_iface);
+}
+
+static void WINAPI XA2M_GetVoiceDetails(IXAudio2MasteringVoice *iface,
+        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p\n", This, pVoiceDetails);
+}
+
+static HRESULT WINAPI XA2M_SetOutputVoices(IXAudio2MasteringVoice *iface,
+        const XAUDIO2_VOICE_SENDS *pSendList)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p\n", This, pSendList);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2M_SetEffectChain(IXAudio2MasteringVoice *iface,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p\n", This, pEffectChain);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2M_EnableEffect(IXAudio2MasteringVoice *iface, UINT32 EffectIndex,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %u, 0x%x\n", This, EffectIndex, OperationSet);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2M_DisableEffect(IXAudio2MasteringVoice *iface, UINT32 EffectIndex,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %u, 0x%x\n", This, EffectIndex, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2M_GetEffectState(IXAudio2MasteringVoice *iface, UINT32 EffectIndex,
+        BOOL *pEnabled)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %u, %p\n", This, EffectIndex, pEnabled);
+}
+
+static HRESULT WINAPI XA2M_SetEffectParameters(IXAudio2MasteringVoice *iface,
+        UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %u, %p, 0x%x, 0x%x\n", This, EffectIndex, pParameters,
+            ParametersByteSize, OperationSet);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2M_GetEffectParameters(IXAudio2MasteringVoice *iface,
+        UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %u, %p, 0x%x\n", This, EffectIndex, pParameters,
+            ParametersByteSize);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2M_SetFilterParameters(IXAudio2MasteringVoice *iface,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p, 0x%x\n", This, pParameters, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2M_GetFilterParameters(IXAudio2MasteringVoice *iface,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p\n", This, pParameters);
+}
+
+static HRESULT WINAPI XA2M_SetOutputFilterParameters(IXAudio2MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p, %p, 0x%x\n", This, pDestinationVoice, pParameters, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2M_GetOutputFilterParameters(IXAudio2MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p, %p\n", This, pDestinationVoice, pParameters);
+}
+
+static HRESULT WINAPI XA2M_SetVolume(IXAudio2MasteringVoice *iface, float Volume,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %f, 0x%x\n", This, Volume, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2M_GetVolume(IXAudio2MasteringVoice *iface, float *pVolume)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p\n", This, pVolume);
+}
+
+static HRESULT WINAPI XA2M_SetChannelVolumes(IXAudio2MasteringVoice *iface, UINT32 Channels,
+        const float *pVolumes, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %u, %p, 0x%x\n", This, Channels, pVolumes, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2M_GetChannelVolumes(IXAudio2MasteringVoice *iface, UINT32 Channels,
+        float *pVolumes)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %u, %p\n", This, Channels, pVolumes);
+}
+
+static HRESULT WINAPI XA2M_SetOutputMatrix(IXAudio2MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels,
+        UINT32 DestinationChannels, const float *pLevelMatrix,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p, %u, %u, %p, 0x%x\n", This, pDestinationVoice,
+            SourceChannels, DestinationChannels, pLevelMatrix, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2M_GetOutputMatrix(IXAudio2MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels,
+        UINT32 DestinationChannels, float *pLevelMatrix)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p, %p, %u, %u, %p\n", This, pDestinationVoice,
+            SourceChannels, DestinationChannels, pLevelMatrix);
+}
+
+static void WINAPI XA2M_DestroyVoice(IXAudio2MasteringVoice *iface)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p\n", This);
+}
+
+/* not present in XAudio2 2.7 */
+static void WINAPI XA2M_GetChannelMask(IXAudio2MasteringVoice *iface,
+        DWORD *pChannelMask)
+{
+    IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+    TRACE("%p %p\n", This, pChannelMask);
+}
+
+struct IXAudio2MasteringVoiceVtbl XAudio2MasteringVoice_Vtbl = {
+    XA2M_GetVoiceDetails,
+    XA2M_SetOutputVoices,
+    XA2M_SetEffectChain,
+    XA2M_EnableEffect,
+    XA2M_DisableEffect,
+    XA2M_GetEffectState,
+    XA2M_SetEffectParameters,
+    XA2M_GetEffectParameters,
+    XA2M_SetFilterParameters,
+    XA2M_GetFilterParameters,
+    XA2M_SetOutputFilterParameters,
+    XA2M_GetOutputFilterParameters,
+    XA2M_SetVolume,
+    XA2M_GetVolume,
+    XA2M_SetChannelVolumes,
+    XA2M_GetChannelVolumes,
+    XA2M_SetOutputMatrix,
+    XA2M_GetOutputMatrix,
+    XA2M_DestroyVoice,
+    XA2M_GetChannelMask
+};
 
 static HRESULT WINAPI IXAudio2Impl_QueryInterface(IXAudio2 *iface, REFIID riid,
         void **ppvObject)
@@ -194,7 +385,18 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
             ppMasteringVoice, inputChannels, inputSampleRate, flags,
             wine_dbgstr_w(deviceId), pEffectChain, streamCategory);
 
-    return E_NOTIMPL;
+    if(flags != 0)
+        WARN("Unknown flags set: 0x%x\n", flags);
+
+    if(pEffectChain)
+        WARN("Effect chain is unimplemented\n");
+
+    /* TODO: Initialize mmdevice */
+
+    /* there can only be one Mastering Voice, so just build it into XA2 */
+    *ppMasteringVoice = &This->IXAudio2MasteringVoice_iface;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IXAudio2Impl_StartEngine(IXAudio2 *iface)
@@ -450,6 +652,7 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
 
     object->IXAudio27_iface.lpVtbl = &XAudio27_Vtbl;
     object->IXAudio2_iface.lpVtbl = &XAudio2_Vtbl;
+    object->IXAudio2MasteringVoice_iface.lpVtbl = &XAudio2MasteringVoice_Vtbl;
 
     if(IsEqualGUID(riid, &IID_IXAudio27))
         object->version = 27;
