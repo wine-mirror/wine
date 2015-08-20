@@ -1197,6 +1197,35 @@ static void test_numbersubstitution(void)
     IDWriteNumberSubstitution_Release(substitution);
 }
 
+static void get_fontface_glyphs(IDWriteFontFace *fontface, const WCHAR *str, UINT16 *glyphs)
+{
+    while (*str) {
+        UINT32 codepoint = *str;
+        HRESULT hr;
+
+        hr = IDWriteFontFace_GetGlyphIndices(fontface, &codepoint, 1, glyphs++);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        str++;
+    }
+}
+
+static void get_fontface_advances(IDWriteFontFace *fontface, FLOAT emsize, const UINT16 *glyphs, FLOAT *advances, UINT32 count)
+{
+    DWRITE_FONT_METRICS fontmetrics;
+    UINT32 i;
+
+    IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
+    for (i = 0; i < count; i++) {
+        DWRITE_GLYPH_METRICS metrics;
+        HRESULT hr;
+
+        hr = IDWriteFontFace_GetDesignGlyphMetrics(fontface, glyphs + i, 1, &metrics, FALSE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        advances[i] = (FLOAT)metrics.advanceWidth * emsize / (FLOAT)fontmetrics.designUnitsPerEm;
+    }
+}
+
 static void test_GetGlyphs(void)
 {
     static const WCHAR test1W[] = {'<','B',' ','C',0};
@@ -1205,6 +1234,7 @@ static void test_GetGlyphs(void)
     DWRITE_SHAPING_GLYPH_PROPERTIES shapingprops[20];
     DWRITE_SHAPING_TEXT_PROPERTIES props[20];
     UINT32 maxglyphcount, actual_count;
+    FLOAT advances[10], advances2[10];
     IDWriteTextAnalyzer *analyzer;
     IDWriteFontFace *fontface;
     DWRITE_SCRIPT_ANALYSIS sa;
@@ -1212,7 +1242,6 @@ static void test_GetGlyphs(void)
     UINT16 clustermap[10];
     UINT16 glyphs1[10];
     UINT16 glyphs2[10];
-    FLOAT advances[10];
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
@@ -1275,13 +1304,16 @@ if (0) {
     ok(glyphs1[0] != glyphs2[0], "got %d\n", glyphs1[0]);
 
     /* embedded control codes, with unknown script id 0 */
+    get_fontface_glyphs(fontface, test3W, glyphs2);
+    get_fontface_advances(fontface, 10.0, glyphs2, advances2, 2);
+
     actual_count = 0;
     hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test3W, lstrlenW(test3W), fontface, FALSE, TRUE, &sa, NULL,
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(actual_count == 2, "got %d\n", actual_count);
-    ok(glyphs1[0] == 0, "got %d\n", glyphs1[0]);
-    ok(glyphs1[1] == 0, "got %d\n", glyphs1[1]);
+    ok(glyphs1[0] == glyphs2[0], "got %u, expected %u\n", glyphs1[0], glyphs2[0]);
+    ok(glyphs1[1] == glyphs2[1], "got %u, expected %u\n", glyphs1[1], glyphs2[1]);
     ok(shapingprops[0].isClusterStart == 1, "got %d\n", shapingprops[0].isClusterStart);
     ok(shapingprops[0].isZeroWidthSpace == 0, "got %d\n", shapingprops[0].isZeroWidthSpace);
     ok(shapingprops[1].isClusterStart == 1, "got %d\n", shapingprops[1].isClusterStart);
@@ -1294,8 +1326,8 @@ if (0) {
         glyphs1, shapingprops, actual_count, fontface, 10.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(advances[0] == 10.0, "got %.2f\n", advances[0]);
-    ok(advances[1] == 10.0, "got %.2f\n", advances[1]);
+    ok(advances[0] == advances2[0], "got %.2f, expected %.2f\n", advances[0], advances2[0]);
+    ok(advances[1] == advances2[1], "got %.2f, expected %.2f\n", advances[1], advances2[1]);
 
     /* embedded control codes with proper script */
     sa.script = 0;
@@ -1306,8 +1338,8 @@ if (0) {
         NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(actual_count == 2, "got %d\n", actual_count);
-    ok(glyphs1[0] == 0, "got %d\n", glyphs1[0]);
-    ok(glyphs1[1] == 0, "got %d\n", glyphs1[1]);
+    ok(glyphs1[0] == glyphs2[0], "got %u, expected %u\n", glyphs1[0], glyphs2[0]);
+    ok(glyphs1[1] == glyphs2[1], "got %u, expected %u\n", glyphs1[1], glyphs2[1]);
     ok(shapingprops[0].isClusterStart == 1, "got %d\n", shapingprops[0].isClusterStart);
     ok(shapingprops[0].isZeroWidthSpace == 0, "got %d\n", shapingprops[0].isZeroWidthSpace);
     ok(shapingprops[1].isClusterStart == 1, "got %d\n", shapingprops[1].isClusterStart);
@@ -1320,8 +1352,8 @@ if (0) {
         glyphs1, shapingprops, actual_count, fontface, 10.0, FALSE, FALSE, &sa, NULL, NULL,
         NULL, 0, advances, offsets);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(advances[0] == 10.0, "got %.2f\n", advances[0]);
-    ok(advances[1] == 10.0, "got %.2f\n", advances[1]);
+    ok(advances[0] == advances2[0], "got %.2f, expected %.2f\n", advances[0], advances2[0]);
+    ok(advances[1] == advances2[1], "got %.2f, expected %.2f\n", advances[1], advances2[1]);
 
     IDWriteTextAnalyzer_Release(analyzer);
     IDWriteFontFace_Release(fontface);
