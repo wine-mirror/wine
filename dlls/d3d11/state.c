@@ -20,9 +20,9 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "d3d10core_private.h"
+#include "d3d11_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
 #define D3D10_FILTER_MIP_MASK       0x01
 #define D3D10_FILTER_MAG_MASK       0x04

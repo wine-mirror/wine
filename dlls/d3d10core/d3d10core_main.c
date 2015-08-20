@@ -17,102 +17,46 @@
  *
  */
 
-#include "config.h"
-#include "wine/port.h"
+#include "wine/debug.h"
 
-#define D3D10CORE_INIT_GUID
-#include "d3d10core_private.h"
+#include "initguid.h"
+
+#define COBJMACROS
+#include "d3d10_1.h"
+#include "d3d11.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
 
-static HRESULT WINAPI layer_init(enum dxgi_device_layer_id id, DWORD *count, DWORD *values)
-{
-    TRACE("id %#x, count %p, values %p\n", id, count, values);
-
-    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
-    {
-        WARN("Unknown layer id %#x\n", id);
-        return E_NOTIMPL;
-    }
-
-    return S_OK;
-}
-
-static UINT WINAPI layer_get_size(enum dxgi_device_layer_id id, struct layer_get_size_args *args, DWORD unknown0)
-{
-    TRACE("id %#x, args %p, unknown0 %#x\n", id, args, unknown0);
-
-    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
-    {
-        WARN("Unknown layer id %#x\n", id);
-        return 0;
-    }
-
-    return sizeof(struct d3d10_device);
-}
-
-static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_base, DWORD unknown0,
-        void *device_object, REFIID riid, void **device_layer)
-{
-    struct d3d10_device *object;
-    HRESULT hr;
-
-    TRACE("id %#x, layer_base %p, unknown0 %#x, device_object %p, riid %s, device_layer %p\n",
-            id, layer_base, unknown0, device_object, debugstr_guid(riid), device_layer);
-
-    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
-    {
-        WARN("Unknown layer id %#x\n", id);
-        *device_layer = NULL;
-        return E_NOTIMPL;
-    }
-
-    object = *layer_base;
-    if (FAILED(hr = d3d10_device_init(object, device_object)))
-    {
-        WARN("Failed to initialize device, hr %#x.\n", hr);
-        *device_layer = NULL;
-        return hr;
-    }
-    *device_layer = &object->IUnknown_inner;
-
-    TRACE("Created d3d10 device at %p\n", object);
-
-    return S_OK;
-}
+HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter, UINT flags,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, ID3D11Device **device);
 
 HRESULT WINAPI D3D10CoreRegisterLayers(void)
 {
-    const struct dxgi_device_layer layers[] =
-    {
-        {DXGI_DEVICE_LAYER_D3D10_DEVICE, layer_init, layer_get_size, layer_create},
-    };
+    TRACE("\n");
 
-    DXGID3D10RegisterLayers(layers, sizeof(layers)/sizeof(*layers));
-
-    return S_OK;
+    return E_NOTIMPL;
 }
 
 HRESULT WINAPI D3D10CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter,
         UINT flags, void *unknown0, ID3D10Device **device)
 {
-    IUnknown *dxgi_device;
-    HMODULE d3d10core;
+    D3D_FEATURE_LEVEL feature_level = D3D_FEATURE_LEVEL_10_0;
+    ID3D11Device *device11;
     HRESULT hr;
 
     TRACE("factory %p, adapter %p, flags %#x, unknown0 %p, device %p.\n",
             factory, adapter, flags, unknown0, device);
 
-    d3d10core = GetModuleHandleA("d3d10core.dll");
-    hr = DXGID3D10CreateDevice(d3d10core, factory, adapter, flags, unknown0, (void **)&dxgi_device);
+    if (FAILED(hr = D3D11CoreCreateDevice(factory, adapter, flags, &feature_level, 1, &device11)))
+        return hr;
+
+    hr = ID3D11Device_QueryInterface(device11, &IID_ID3D10Device, (void **)device);
+    ID3D11Device_Release(device11);
     if (FAILED(hr))
     {
-        WARN("Failed to create device, returning %#x\n", hr);
-        return hr;
+        ERR("Device should implement ID3D10Device, returning E_FAIL.\n");
+        return E_FAIL;
     }
 
-    hr = IUnknown_QueryInterface(dxgi_device, &IID_ID3D10Device, (void **)device);
-    IUnknown_Release(dxgi_device);
-
-    return hr;
+    return S_OK;
 }

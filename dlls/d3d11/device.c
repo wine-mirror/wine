@@ -20,9 +20,9 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "d3d10core_private.h"
+#include "d3d11_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
 static void STDMETHODCALLTYPE d3d10_null_wined3d_object_destroyed(void *parent) {}
 

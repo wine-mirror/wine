@@ -1,6 +1,7 @@
 /*
  * Direct3D 11
  *
+ * Copyright 2008 Henri Verbeet for CodeWeavers
  * Copyright 2013 Austin English
  *
  * This library is free software; you can redistribute it and/or
@@ -19,12 +20,11 @@
  *
  */
 
-#include <stdarg.h>
+#include "config.h"
+#include "wine/port.h"
 
-#include "windef.h"
-#include "winbase.h"
-#include "d3d11.h"
-#include "wine/debug.h"
+#define D3D11_INIT_GUID
+#include "d3d11_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
@@ -43,6 +43,105 @@ static const char *debug_d3d_driver_type(D3D_DRIVER_TYPE driver_type)
         default:
             return wine_dbg_sprintf("Unrecognized D3D_DRIVER_TYPE %#x\n", driver_type);
     }
+}
+
+static HRESULT WINAPI layer_init(enum dxgi_device_layer_id id, DWORD *count, DWORD *values)
+{
+    TRACE("id %#x, count %p, values %p\n", id, count, values);
+
+    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
+    {
+        WARN("Unknown layer id %#x\n", id);
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static UINT WINAPI layer_get_size(enum dxgi_device_layer_id id, struct layer_get_size_args *args, DWORD unknown0)
+{
+    TRACE("id %#x, args %p, unknown0 %#x\n", id, args, unknown0);
+
+    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
+    {
+        WARN("Unknown layer id %#x\n", id);
+        return 0;
+    }
+
+    return sizeof(struct d3d10_device);
+}
+
+static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_base, DWORD unknown0,
+        void *device_object, REFIID riid, void **device_layer)
+{
+    struct d3d10_device *object;
+    HRESULT hr;
+
+    TRACE("id %#x, layer_base %p, unknown0 %#x, device_object %p, riid %s, device_layer %p\n",
+            id, layer_base, unknown0, device_object, debugstr_guid(riid), device_layer);
+
+    if (id != DXGI_DEVICE_LAYER_D3D10_DEVICE)
+    {
+        WARN("Unknown layer id %#x\n", id);
+        *device_layer = NULL;
+        return E_NOTIMPL;
+    }
+
+    object = *layer_base;
+    if (FAILED(hr = d3d10_device_init(object, device_object)))
+    {
+        WARN("Failed to initialize device, hr %#x.\n", hr);
+        *device_layer = NULL;
+        return hr;
+    }
+    *device_layer = &object->IUnknown_inner;
+
+    TRACE("Created d3d10 device at %p\n", object);
+
+    return S_OK;
+}
+
+HRESULT WINAPI D3D11CoreRegisterLayers(void)
+{
+    const struct dxgi_device_layer layers[] =
+    {
+        {DXGI_DEVICE_LAYER_D3D10_DEVICE, layer_init, layer_get_size, layer_create},
+    };
+
+    DXGID3D10RegisterLayers(layers, sizeof(layers)/sizeof(*layers));
+
+    return S_OK;
+}
+
+HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapter, UINT flags,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, ID3D11Device **device)
+{
+    IUnknown *dxgi_device;
+    HMODULE d3d11;
+    HRESULT hr;
+
+    TRACE("factory %p, adapter %p, flags %#x, feature_levels %p, levels %u, device %p.\n",
+            factory, adapter, flags, feature_levels, levels, device);
+
+    FIXME("Ignoring feature levels.\n");
+
+    d3d11 = GetModuleHandleA("d3d11.dll");
+    hr = DXGID3D10CreateDevice(d3d11, factory, adapter, flags, 0, (void **)&dxgi_device);
+    if (FAILED(hr))
+    {
+        WARN("Failed to create device, returning %#x.\n", hr);
+        return hr;
+    }
+
+    hr = IUnknown_QueryInterface(dxgi_device, &IID_ID3D11Device, (void **)device);
+    IUnknown_Release(dxgi_device);
+    if (FAILED(hr))
+    {
+        ERR("Failed to query ID3D11Device interface, returning E_FAIL.\n");
+        return E_FAIL;
+    }
+
+    return S_OK;
 }
 
 HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,

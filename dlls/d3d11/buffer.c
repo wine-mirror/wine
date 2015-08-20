@@ -20,9 +20,9 @@
 #include "config.h"
 #include "wine/port.h"
 
-#include "d3d10core_private.h"
+#include "d3d11_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(d3d10core);
+WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
 static inline struct d3d10_buffer *impl_from_ID3D10Buffer(ID3D10Buffer *iface)
 {

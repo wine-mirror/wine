@@ -16,8 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_D3D10CORE_PRIVATE_H
-#define __WINE_D3D10CORE_PRIVATE_H
+#ifndef __WINE_D3D11_PRIVATE_H
+#define __WINE_D3D11_PRIVATE_H
 
 #include "wine/debug.h"
 
@@ -31,7 +31,7 @@
 
 #include "d3d10_1.h"
 #include "d3d11_1.h"
-#ifdef D3D10CORE_INIT_GUID
+#ifdef D3D11_INIT_GUID
 #include "initguid.h"
 #endif
 #include "wine/wined3d.h"
@@ -397,4 +397,4 @@ HRESULT WINAPI DXGID3D10CreateDevice(HMODULE d3d10core, IDXGIFactory *factory, I
         UINT flags, void *unknown0, void **device);
 HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, UINT layer_count);
 
-#endif /* __WINE_D3D10CORE_PRIVATE_H */
+#endif /* __WINE_D3D11_PRIVATE_H */
