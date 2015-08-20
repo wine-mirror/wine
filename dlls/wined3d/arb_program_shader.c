@@ -7724,7 +7724,7 @@ err_out:
     if (type.use_color_key)
     {
         wined3d_format_convert_color_to_float(surface->resource.format, NULL,
-                surface->container->async.src_blt_color_key.color_space_high_value, &float_color_key);
+                color_key->color_space_high_value, &float_color_key);
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
                 ARBFP_BLIT_PARAM_COLOR_KEY, &float_color_key.r));
         checkGLcall("glProgramLocalParameter4fvARB");
