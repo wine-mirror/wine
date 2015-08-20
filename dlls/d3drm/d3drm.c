@@ -707,20 +707,43 @@ static HRESULT WINAPI d3drm2_CreateDeviceFromSurface(IDirect3DRM2 *iface, GUID *
 }
 
 static HRESULT WINAPI d3drm2_CreateDeviceFromD3D(IDirect3DRM2 *iface,
-        IDirect3D2 *d3d, IDirect3DDevice2 *d3d_device, IDirect3DRMDevice2 **device)
+    IDirect3D2 *d3d, IDirect3DDevice2 *d3d_device, IDirect3DRMDevice2 **device)
 {
-    struct d3drm_device *object;
+    struct d3drm *d3drm = impl_from_IDirect3DRM2(iface);
+    IDirect3D *d3d1;
+    IDirect3DDevice *d3d_device1;
+    IDirect3DRMDevice *device1;
     HRESULT hr;
-    FIXME("iface %p, d3d %p, d3d_device %p, device %p partial stub.\n",
+    TRACE("iface %p, d3d %p, d3d_device %p, device %p.\n",
             iface, d3d, d3d_device, device);
 
-    hr = d3drm_device_create(&object);
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
+    if (!d3d || !d3d_device)
+        return D3DRMERR_BADVALUE;
+
+    hr = IDirect3D2_QueryInterface(d3d, &IID_IDirect3D, (void **)&d3d1);
     if (FAILED(hr))
         return hr;
 
-    *device = IDirect3DRMDevice2_from_impl(object);
+    hr = IDirect3DDevice2_QueryInterface(d3d_device, &IID_IDirect3DDevice, (void **)&d3d_device1);
+    if (FAILED(hr))
+    {
+        IDirect3D_Release(d3d1);
+        return hr;
+    }
 
-    return D3DRM_OK;
+    hr = IDirect3DRM_CreateDeviceFromD3D(&d3drm->IDirect3DRM_iface, d3d1, d3d_device1, &device1);
+    IDirect3D_Release(d3d1);
+    IDirect3DDevice_Release(d3d_device1);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IDirect3DRMDevice2, (void **)device);
+    IDirect3DRMDevice_Release(device1);
+
+    return hr;
 }
 
 static HRESULT WINAPI d3drm2_CreateDeviceFromClipper(IDirect3DRM2 *iface,
@@ -1137,18 +1160,40 @@ static HRESULT WINAPI d3drm3_CreateDeviceFromSurface(IDirect3DRM3 *iface, GUID *
 static HRESULT WINAPI d3drm3_CreateDeviceFromD3D(IDirect3DRM3 *iface,
         IDirect3D2 *d3d, IDirect3DDevice2 *d3d_device, IDirect3DRMDevice3 **device)
 {
-    struct d3drm_device *object;
+    struct d3drm *d3drm = impl_from_IDirect3DRM3(iface);
+    IDirect3D *d3d1;
+    IDirect3DDevice *d3d_device1;
+    IDirect3DRMDevice *device1;
     HRESULT hr;
-    FIXME("iface %p, d3d %p, d3d_device %p, device %p partial stub.\n",
+    TRACE("iface %p, d3d %p, d3d_device %p, device %p.\n",
             iface, d3d, d3d_device, device);
 
-    hr = d3drm_device_create(&object);
+    if (!device)
+        return D3DRMERR_BADVALUE;
+    *device = NULL;
+    if (!d3d || !d3d_device)
+        return D3DRMERR_BADVALUE;
+
+    hr = IDirect3D2_QueryInterface(d3d, &IID_IDirect3D, (void **)&d3d1);
+    if (FAILED(hr))
+        return hr;
+    hr = IDirect3DDevice2_QueryInterface(d3d_device, &IID_IDirect3DDevice, (void **)&d3d_device1);
+    if (FAILED(hr))
+    {
+        IDirect3D_Release(d3d1);
+        return hr;
+    }
+
+    hr = IDirect3DRM_CreateDeviceFromD3D(&d3drm->IDirect3DRM_iface, d3d1, d3d_device1, &device1);
+    IDirect3D_Release(d3d1);
+    IDirect3DDevice_Release(d3d_device1);
     if (FAILED(hr))
         return hr;
 
-    *device = IDirect3DRMDevice3_from_impl(object);
+    hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IDirect3DRMDevice3, (void **)device);
+    IDirect3DRMDevice_Release(device1);
 
-    return D3DRM_OK;
+    return hr;
 }
 
 static HRESULT WINAPI d3drm3_CreateDeviceFromClipper(IDirect3DRM3 *iface,

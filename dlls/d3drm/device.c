@@ -1302,14 +1302,10 @@ static HRESULT WINAPI d3drm_device3_GetDirect3DDevice(IDirect3DRMDevice3 *iface,
     struct d3drm_device *device = impl_from_IDirect3DRMDevice3(iface);
     TRACE("iface %p, d3d_device %p!\n", iface, d3d_device);
 
-    if (device->device)
-    {
-        *d3d_device = device->device;
-        IDirect3DDevice_AddRef(*d3d_device);
-        return D3DRM_OK;
-    }
+    *d3d_device = device->device;
+    IDirect3DDevice_AddRef(*d3d_device);
 
-    return E_NOTIMPL;
+    return D3DRM_OK;
 }
 
 static HRESULT WINAPI d3drm_device3_InitFromD3D2(IDirect3DRMDevice3 *iface,
@@ -1355,10 +1351,7 @@ static HRESULT WINAPI d3drm_device3_GetDirect3DDevice2(IDirect3DRMDevice3 *iface
 
     TRACE("iface %p, d3d_device %p.\n", iface, d3d_device);
 
-    if (device->device)
-        return IDirect3DDevice_QueryInterface(device->device, &IID_IDirect3DDevice2, (void**)d3d_device);
-
-    return E_NOTIMPL;
+    return IDirect3DDevice_QueryInterface(device->device, &IID_IDirect3DDevice2, (void**)d3d_device);
 }
 
 static HRESULT WINAPI d3drm_device3_FindPreferredTextureFormat(IDirect3DRMDevice3 *iface,
