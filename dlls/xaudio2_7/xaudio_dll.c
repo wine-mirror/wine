@@ -297,7 +297,7 @@ static HRESULT WINAPI XA27_Initialize(IXAudio27 *iface, UINT32 flags,
 {
     IXAudio2Impl *This = impl_from_IXAudio27(iface);
     TRACE("(%p)->(0x%x, 0x%x)\n", This, flags, processor);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI XA27_RegisterForCallbacks(IXAudio27 *iface,
