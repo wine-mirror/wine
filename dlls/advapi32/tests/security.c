@@ -5495,6 +5495,16 @@ todo_wine
         CloseHandle(dup);
     }
 
+    SetLastError( 0xdeadbeef );
+    ret = DuplicateHandle(GetCurrentProcess(), thread, GetCurrentProcess(), &dup,
+                          THREAD_QUERY_INFORMATION, FALSE, 0);
+    ok(ret, "DuplicateHandle error %d\n", GetLastError());
+    access = get_obj_access(dup);
+    ok(access == (THREAD_QUERY_INFORMATION | THREAD_QUERY_LIMITED_INFORMATION) /* Vista+ */ ||
+       access == THREAD_QUERY_INFORMATION /* before Vista */,
+       "expected THREAD_QUERY_INFORMATION|THREAD_QUERY_LIMITED_INFORMATION, got %#x\n", access);
+    CloseHandle(dup);
+
     TerminateThread(thread, 0);
     CloseHandle(thread);
 }
