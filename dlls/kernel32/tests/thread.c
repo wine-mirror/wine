@@ -28,11 +28,14 @@
 /* the tests intentionally pass invalid pointers and need an exception handler */
 #define WINE_NO_INLINE_STRING
 
+#include <ntstatus.h>
+#define WIN32_NO_STATUS
 #include <windef.h>
 #include <winbase.h>
 #include <winnt.h>
 #include <winerror.h>
 #include <winnls.h>
+#include <winternl.h>
 #include "wine/test.h"
 
 /* THREAD_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
@@ -95,6 +98,7 @@ static PTP_WORK (WINAPI *pCreateThreadpoolWork)(PTP_WORK_CALLBACK,PVOID,PTP_CALL
 static void (WINAPI *pSubmitThreadpoolWork)(PTP_WORK);
 static void (WINAPI *pWaitForThreadpoolWorkCallbacks)(PTP_WORK,BOOL);
 static void (WINAPI *pCloseThreadpoolWork)(PTP_WORK);
+static NTSTATUS (WINAPI *pNtQueryInformationThread)(HANDLE,THREADINFOCLASS,PVOID,ULONG,PULONG);
 
 static HANDLE create_target_process(const char *arg)
 {
@@ -1686,9 +1690,91 @@ static void test_reserved_tls(void)
     }
 }
 
+static void test_thread_info(void)
+{
+    char buf[4096];
+    static const ULONG info_size[] =
+    {
+        sizeof(THREAD_BASIC_INFORMATION), /* ThreadBasicInformation */
+        sizeof(KERNEL_USER_TIMES), /* ThreadTimes */
+        sizeof(ULONG), /* ThreadPriority */
+        sizeof(ULONG), /* ThreadBasePriority */
+        sizeof(ULONG_PTR), /* ThreadAffinityMask */
+        sizeof(HANDLE), /* ThreadImpersonationToken */
+        sizeof(THREAD_DESCRIPTOR_INFORMATION), /* ThreadDescriptorTableEntry */
+        sizeof(BOOLEAN), /* ThreadEnableAlignmentFaultFixup */
+        0, /* ThreadEventPair_Reusable */
+        sizeof(ULONG_PTR), /* ThreadQuerySetWin32StartAddress */
+        sizeof(ULONG), /* ThreadZeroTlsCell */
+        sizeof(LARGE_INTEGER), /* ThreadPerformanceCount */
+        sizeof(ULONG), /* ThreadAmILastThread */
+        sizeof(ULONG), /* ThreadIdealProcessor */
+        sizeof(ULONG), /* ThreadPriorityBoost */
+        sizeof(ULONG_PTR), /* ThreadSetTlsArrayAddress */
+        sizeof(ULONG), /* ThreadIsIoPending */
+        sizeof(BOOLEAN), /* ThreadHideFromDebugger */
+        /* FIXME: Add remaining classes */
+    };
+    HANDLE thread;
+    ULONG i, status, ret_len, size;
+
+    if (!pOpenThread)
+    {
+        win_skip("OpenThread is not available on this platform\n");
+        return;
+    }
+
+    if (!pNtQueryInformationThread)
+    {
+        win_skip("NtQueryInformationThread is not available on this platform\n");
+        return;
+    }
+
+    thread = pOpenThread(THREAD_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentThreadId());
+    if (!thread)
+    {
+        win_skip("THREAD_QUERY_LIMITED_INFORMATION is not supported on this platform\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(info_size)/sizeof(info_size[0]); i++)
+    {
+        size = info_size[i];
+        if (!size) size = sizeof(buf);
+        ret_len = 0;
+        status = pNtQueryInformationThread(thread, i, buf, info_size[i], &ret_len);
+        if (status == STATUS_NOT_IMPLEMENTED) continue;
+        if (status == STATUS_INVALID_INFO_CLASS) continue;
+        if (status == STATUS_UNSUCCESSFUL) continue;
+
+        switch (i)
+        {
+        case ThreadBasicInformation:
+        case ThreadTimes:
+        case ThreadAmILastThread:
+        case ThreadPriorityBoost:
+todo_wine
+            ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        case ThreadDescriptorTableEntry:
+todo_wine
+            ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        default:
+            ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+        }
+    }
+
+    CloseHandle(thread);
+}
+
 static void init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
+    HMODULE ntdll = GetModuleHandleA("ntdll.dll");
 
 /* Neither Cygwin nor mingW export OpenThread, so do a dynamic check
    so that the compile passes */
@@ -1717,22 +1803,23 @@ static void init_funcs(void)
     X(WaitForThreadpoolWorkCallbacks);
     X(CloseThreadpoolWork);
 #undef X
+
+#define X(f) p##f = (void*)GetProcAddress(ntdll, #f)
+   if (ntdll)
+   {
+       X(NtQueryInformationThread);
+       X(RtlGetThreadErrorMode);
+   }
+#undef X
 }
 
 START_TEST(thread)
 {
-   HINSTANCE ntdll;
    int argc;
    char **argv;
    argc = winetest_get_mainargs( &argv );
 
    init_funcs();
-
-   ntdll=GetModuleHandleA("ntdll.dll");
-   if (ntdll)
-   {
-       pRtlGetThreadErrorMode=(void *)GetProcAddress(ntdll,"RtlGetThreadErrorMode");
-   }
 
    if (argc >= 3)
    {
@@ -1760,6 +1847,7 @@ START_TEST(thread)
        return;
    }
 
+   test_thread_info();
    test_reserved_tls();
    test_CreateRemoteThread();
    test_CreateThread_basic();
