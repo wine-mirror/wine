@@ -977,13 +977,12 @@ static BOOL d2d_path_geometry_add_figure(struct d2d_geometry *geometry)
     return TRUE;
 }
 
-static void d2d_geometry_destroy(struct d2d_geometry *geometry)
+static void d2d_geometry_cleanup(struct d2d_geometry *geometry)
 {
     HeapFree(GetProcessHeap(), 0, geometry->beziers);
     HeapFree(GetProcessHeap(), 0, geometry->faces);
     HeapFree(GetProcessHeap(), 0, geometry->vertices);
     ID2D1Factory_Release(geometry->factory);
-    HeapFree(GetProcessHeap(), 0, geometry);
 }
 
 static void d2d_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory,
@@ -1363,7 +1362,8 @@ static ULONG STDMETHODCALLTYPE d2d_path_geometry_Release(ID2D1PathGeometry *ifac
     if (!refcount)
     {
         d2d_path_geometry_free_figures(geometry);
-        d2d_geometry_destroy(geometry);
+        d2d_geometry_cleanup(geometry);
+        HeapFree(GetProcessHeap(), 0, geometry);
     }
 
     return refcount;
@@ -1622,7 +1622,10 @@ static ULONG STDMETHODCALLTYPE d2d_rectangle_geometry_Release(ID2D1RectangleGeom
     TRACE("%p decreasing refcount to %u.\n", iface, refcount);
 
     if (!refcount)
-        d2d_geometry_destroy(geometry);
+    {
+        d2d_geometry_cleanup(geometry);
+        HeapFree(GetProcessHeap(), 0, geometry);
+    }
 
     return refcount;
 }
@@ -1792,11 +1795,14 @@ HRESULT d2d_rectangle_geometry_init(struct d2d_geometry *geometry, ID2D1Factory 
     geometry->u.rectangle.rect = *rect;
 
     if (!(geometry->vertices = HeapAlloc(GetProcessHeap(), 0, 4 * sizeof(*geometry->vertices))))
+    {
+        d2d_geometry_cleanup(geometry);
         return E_OUTOFMEMORY;
+    }
     geometry->vertex_count = 4;
     if (!d2d_array_reserve((void **)&geometry->faces, &geometry->faces_size, 2, sizeof(*geometry->faces)))
     {
-        HeapFree(GetProcessHeap(), 0, geometry->vertices);
+        d2d_geometry_cleanup(geometry);
         return E_OUTOFMEMORY;
     }
     geometry->face_count = 2;
