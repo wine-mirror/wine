@@ -116,6 +116,7 @@ static const struct wined3d_extension_map gl_extension_map[] =
     {"GL_ARB_draw_buffers",                 ARB_DRAW_BUFFERS              },
     {"GL_ARB_draw_elements_base_vertex",    ARB_DRAW_ELEMENTS_BASE_VERTEX },
     {"GL_ARB_draw_instanced",               ARB_DRAW_INSTANCED            },
+    {"GL_ARB_ES2_compatibility",            ARB_ES2_COMPATIBILITY         },
     {"GL_ARB_fragment_program",             ARB_FRAGMENT_PROGRAM          },
     {"GL_ARB_fragment_shader",              ARB_FRAGMENT_SHADER           },
     {"GL_ARB_framebuffer_object",           ARB_FRAMEBUFFER_OBJECT        },
@@ -2483,6 +2484,12 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     /* GL_ARB_draw_instanced */
     USE_GL_FUNC(glDrawArraysInstancedARB)
     USE_GL_FUNC(glDrawElementsInstancedARB)
+    /* GL_ARB_ES2_compatibility */
+    USE_GL_FUNC(glReleaseShaderCompiler)
+    USE_GL_FUNC(glShaderBinary)
+    USE_GL_FUNC(glGetShaderPrecisionFormat)
+    USE_GL_FUNC(glDepthRangef)
+    USE_GL_FUNC(glClearDepthf)
     /* GL_ARB_framebuffer_object */
     USE_GL_FUNC(glBindFramebuffer)
     USE_GL_FUNC(glBindRenderbuffer)
