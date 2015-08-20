@@ -2176,7 +2176,7 @@ static void _create_process(int line, const char *command, LPPROCESS_INFORMATION
     char buffer[MAX_PATH];
     STARTUPINFOA si = {0};
 
-    snprintf(buffer, MAX_PATH, "\"%s\" tests/process.c %s", selfname, command);
+    sprintf(buffer, "\"%s\" tests/process.c %s", selfname, command);
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, pi);
     ok_(__FILE__, line)(ret, "CreateProcess error %u\n", GetLastError());
@@ -2302,7 +2302,7 @@ static void test_TerminateJobObject(void)
 
 static void test_QueryInformationJobObject(void)
 {
-    char buf[FIELD_OFFSET(JOBOBJECT_BASIC_PROCESS_ID_LIST, ProcessIdList[5])];
+    char buf[sizeof(JOBOBJECT_BASIC_PROCESS_ID_LIST) + sizeof(ULONG_PTR) * 4];
     PJOBOBJECT_BASIC_PROCESS_ID_LIST pid_list = (JOBOBJECT_BASIC_PROCESS_ID_LIST *)buf;
     JOBOBJECT_EXTENDED_LIMIT_INFORMATION ext_limit_info;
     JOBOBJECT_BASIC_LIMIT_INFORMATION *basic_limit_info = &ext_limit_info.BasicLimitInformation;
@@ -2599,7 +2599,7 @@ static void test_jobInheritance(HANDLE job)
         return;
     }
 
-    snprintf(buffer, MAX_PATH, "\"%s\" tests/process.c %s", selfname, "exit");
+    sprintf(buffer, "\"%s\" tests/process.c %s", selfname, "exit");
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcessA error %u\n", GetLastError());
@@ -2631,7 +2631,7 @@ static void test_BreakawayOk(HANDLE job)
         return;
     }
 
-    snprintf(buffer, MAX_PATH, "\"%s\" tests/process.c %s", selfname, "exit");
+    sprintf(buffer, "\"%s\" tests/process.c %s", selfname, "exit");
 
     ret = CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
     ok(!ret, "CreateProcessA expected failure\n");
