@@ -3118,7 +3118,10 @@ static void test_create_device_from_d3d1(void)
     IDirect3D *d3d1 = NULL;
     IDirect3DRM *d3drm1 = NULL;
     IDirect3DRMDevice *device1 = (IDirect3DRMDevice *)0xdeadbeef;
+    IDirect3DRMDevice2 *device2;
+    IDirect3DRMDevice3 *device3;
     IDirect3DDevice *d3ddevice1 = NULL, *d3drm_d3ddevice1 = NULL;
+    IDirect3DDevice2 *d3ddevice2 = (IDirect3DDevice2 *)0xdeadbeef;
     IDirectDrawSurface *surface = NULL, *ds = NULL, *d3drm_ds = NULL;
     DWORD expected_flags;
     DDSCAPS caps = { DDSCAPS_ZBUFFER };
@@ -3166,6 +3169,21 @@ static void test_create_device_from_d3d1(void)
     ok(ref2 > ref1, "expected ref2 > ref1, got ref1 = %u , ref2 = %u.\n", ref1, ref2);
     device_ref2 = get_refcount((IUnknown *)d3ddevice1);
     ok(device_ref2 > device_ref1, "Expected device_ref2 > device_ref1, got device_ref1 = %u, device_ref2 = %u.\n", device_ref1, device_ref2);
+
+    hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IDirect3DRMDevice2, (void **)&device2);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMDevice2 Interface (hr = %x).\n", hr);
+    hr = IDirect3DRMDevice2_GetDirect3DDevice2(device2, &d3ddevice2);
+    ok(SUCCEEDED(hr), "Expected hr == DD_OK, got %x).\n", hr);
+    ok(d3ddevice2 == NULL, "Expected d3ddevice2 == NULL, got %p.\n", d3ddevice2);
+    IDirect3DRMDevice2_Release(device2);
+
+    d3ddevice2 = (IDirect3DDevice2 *)0xdeadbeef;
+    hr = IDirect3DRMDevice_QueryInterface(device1, &IID_IDirect3DRMDevice2, (void **)&device3);
+    ok(hr == DD_OK, "Cannot get IDirect3DRMDevice2 Interface (hr = %x).\n", hr);
+    hr = IDirect3DRMDevice3_GetDirect3DDevice2(device3, &d3ddevice2);
+    ok(hr == DD_OK, "Expected hr == DD_OK, got %x).\n", hr);
+    ok(d3ddevice2 == NULL, "Expected d3ddevice2 == NULL, got %p.\n", d3ddevice2);
+    IDirect3DRMDevice3_Release(device3);
 
     hr = IDirectDraw_EnumSurfaces(ddraw1, DDENUMSURFACES_ALL | DDENUMSURFACES_DOESEXIST,
             NULL, &surface, surface_callback);
