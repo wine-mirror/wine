@@ -4116,7 +4116,7 @@ static void test_RealizationInfo(void)
 {
     HDC hdc;
     DWORD info[4], info2[10];
-    BOOL r;
+    BOOL r, have_file = FALSE;
     HFONT hfont, hfont_old;
     LOGFONTA lf;
     DWORD needed, read;
@@ -4199,25 +4199,30 @@ static void test_RealizationInfo(void)
 
         /* Test GetFontFileInfo() */
         r = pGetFontFileInfo(info2[3], 0, &file_info, sizeof(file_info), &needed);
-        ok(r != 0, "ret 0 gle %d\n", GetLastError());
+        ok(r != 0 || GetLastError() == ERROR_NOACCESS, "ret %d gle %d\n", r, GetLastError());
 
-        h = CreateFileW(file_info.path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
-        ok(h != INVALID_HANDLE_VALUE, "Unable to open file %d\n", GetLastError());
+        if (r)
+        {
+            h = CreateFileW(file_info.path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
+            ok(h != INVALID_HANDLE_VALUE, "Unable to open file %d\n", GetLastError());
 
-        GetFileTime(h, NULL, NULL, &time);
-        ok(!CompareFileTime(&file_info.time, &time), "time mismatch\n");
-        GetFileSizeEx(h, &size);
-        ok(file_info.size.QuadPart == size.QuadPart, "size mismatch\n");
+            GetFileTime(h, NULL, NULL, &time);
+            ok(!CompareFileTime(&file_info.time, &time), "time mismatch\n");
+            GetFileSizeEx(h, &size);
+            ok(file_info.size.QuadPart == size.QuadPart, "size mismatch\n");
 
-        /* Read first 16 bytes from the file */
-        ReadFile(h, file, sizeof(file), &read, NULL);
-        CloseHandle(h);
+            /* Read first 16 bytes from the file */
+            ReadFile(h, file, sizeof(file), &read, NULL);
+            CloseHandle(h);
+            have_file = TRUE;
+        }
 
         /* Get bytes 2 - 16 using GetFontFileData */
         r = pGetFontFileData(info2[3], 0, 2, data, sizeof(data));
         ok(r != 0, "ret 0 gle %d\n", GetLastError());
 
-        ok(!memcmp(data, file + 2, sizeof(data)), "mismatch\n");
+        if (have_file)
+            ok(!memcmp(data, file + 2, sizeof(data)), "mismatch\n");
     }
 
     DeleteObject(SelectObject(hdc, hfont_old));
