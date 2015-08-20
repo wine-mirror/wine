@@ -76,6 +76,7 @@ static BOOL   (WINAPI *pQueryInformationJobObject)(HANDLE job, JOBOBJECTINFOCLAS
 static BOOL   (WINAPI *pSetInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS class, LPVOID info, DWORD len);
 static HANDLE (WINAPI *pCreateIoCompletionPort)(HANDLE file, HANDLE existing_port, ULONG_PTR key, DWORD threads);
 static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
+static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -213,6 +214,9 @@ static BOOL init(void)
     hkernel32 = GetModuleHandleA("kernel32");
     hntdll    = GetModuleHandleA("ntdll.dll");
 
+    pNtCurrentTeb = (void *)GetProcAddress(hntdll, "NtCurrentTeb");
+    pNtQueryInformationProcess = (void *)GetProcAddress(hntdll, "NtQueryInformationProcess");
+
     pGetNativeSystemInfo = (void *) GetProcAddress(hkernel32, "GetNativeSystemInfo");
     pGetSystemRegistryQuota = (void *) GetProcAddress(hkernel32, "GetSystemRegistryQuota");
     pIsWow64Process = (void *) GetProcAddress(hkernel32, "IsWow64Process");
@@ -221,7 +225,6 @@ static BOOL init(void)
     pQueryFullProcessImageNameA = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameA");
     pQueryFullProcessImageNameW = (void *) GetProcAddress(hkernel32, "QueryFullProcessImageNameW");
     pK32GetProcessImageFileNameA = (void *) GetProcAddress(hkernel32, "K32GetProcessImageFileNameA");
-    pNtCurrentTeb = (void *)GetProcAddress(hntdll, "NtCurrentTeb");
     pCreateJobObjectW = (void *)GetProcAddress(hkernel32, "CreateJobObjectW");
     pAssignProcessToJobObject = (void *)GetProcAddress(hkernel32, "AssignProcessToJobObject");
     pIsProcessInJob = (void *)GetProcAddress(hkernel32, "IsProcessInJob");
@@ -1624,6 +1627,34 @@ static void test_OpenProcess(void)
 
     CloseHandle(hproc);
 
+    hproc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId());
+    if (hproc)
+    {
+        SetLastError(0xdeadbeef);
+        memset(&info, 0xcc, sizeof(info));
+        read_bytes = VirtualQueryEx(hproc, addr1, &info, sizeof(info));
+        if (read_bytes) /* win8 */
+        {
+            ok(read_bytes == sizeof(info), "VirtualQueryEx error %d\n", GetLastError());
+            ok(info.BaseAddress == addr1, "%p != %p\n", info.BaseAddress, addr1);
+            ok(info.AllocationBase == addr1, "%p != %p\n", info.AllocationBase, addr1);
+            ok(info.AllocationProtect == PAGE_NOACCESS, "%x != PAGE_NOACCESS\n", info.AllocationProtect);
+            ok(info.RegionSize == 0x10000, "%lx != 0x10000\n", info.RegionSize);
+            ok(info.State == MEM_RESERVE, "%x != MEM_RESERVE\n", info.State);
+            ok(info.Protect == 0, "%x != PAGE_NOACCESS\n", info.Protect);
+            ok(info.Type == MEM_PRIVATE, "%x != MEM_PRIVATE\n", info.Type);
+        }
+        else /* before win8 */
+            ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+
+        SetLastError(0xdeadbeef);
+        ok(!pVirtualFreeEx(hproc, addr1, 0, MEM_RELEASE),
+           "VirtualFreeEx without PROCESS_VM_OPERATION rights should fail\n");
+        ok(GetLastError() == ERROR_ACCESS_DENIED, "wrong error %d\n", GetLastError());
+
+        CloseHandle(hproc);
+    }
+
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
 }
 
@@ -2757,6 +2788,159 @@ static void test_GetNumaProcessorNode(void)
     }
 }
 
+static void test_process_info(void)
+{
+    char buf[4096];
+    static const ULONG info_size[] =
+    {
+        sizeof(PROCESS_BASIC_INFORMATION) /* ProcessBasicInformation */,
+        sizeof(QUOTA_LIMITS) /* ProcessQuotaLimits */,
+        sizeof(IO_COUNTERS) /* ProcessIoCounters */,
+        sizeof(VM_COUNTERS) /* ProcessVmCounters */,
+        sizeof(KERNEL_USER_TIMES) /* ProcessTimes */,
+        sizeof(ULONG) /* ProcessBasePriority */,
+        sizeof(ULONG) /* ProcessRaisePriority */,
+        sizeof(HANDLE) /* ProcessDebugPort */,
+        sizeof(HANDLE) /* ProcessExceptionPort */,
+        0 /* FIXME: sizeof(PROCESS_ACCESS_TOKEN) ProcessAccessToken */,
+        0 /* FIXME: sizeof(PROCESS_LDT_INFORMATION) ProcessLdtInformation */,
+        0 /* FIXME: sizeof(PROCESS_LDT_SIZE) ProcessLdtSize */,
+        sizeof(ULONG) /* ProcessDefaultHardErrorMode */,
+        0 /* ProcessIoPortHandlers: kernel-mode only */,
+        0 /* FIXME: sizeof(POOLED_USAGE_AND_LIMITS) ProcessPooledUsageAndLimits */,
+        0 /* FIXME: sizeof(PROCESS_WS_WATCH_INFORMATION) ProcessWorkingSetWatch */,
+        sizeof(ULONG) /* ProcessUserModeIOPL */,
+        sizeof(BOOLEAN) /* ProcessEnableAlignmentFaultFixup */,
+        sizeof(PROCESS_PRIORITY_CLASS) /* ProcessPriorityClass */,
+        sizeof(ULONG) /* ProcessWx86Information */,
+        sizeof(ULONG) /* ProcessHandleCount */,
+        sizeof(ULONG_PTR) /* ProcessAffinityMask */,
+        sizeof(ULONG) /* ProcessPriorityBoost */,
+        0 /* sizeof(PROCESS_DEVICEMAP_INFORMATION) ProcessDeviceMap */,
+        0 /* sizeof(PROCESS_SESSION_INFORMATION) ProcessSessionInformation */,
+        0 /* sizeof(PROCESS_FOREGROUND_BACKGROUND) ProcessForegroundInformation */,
+        sizeof(ULONG_PTR) /* ProcessWow64Information */,
+        sizeof(buf) /* ProcessImageFileName */,
+        sizeof(ULONG) /* ProcessLUIDDeviceMapsEnabled */,
+        sizeof(ULONG) /* ProcessBreakOnTermination */,
+        sizeof(HANDLE) /* ProcessDebugObjectHandle */,
+        sizeof(ULONG) /* ProcessDebugFlags */,
+        sizeof(buf) /* ProcessHandleTracing */,
+        sizeof(ULONG) /* ProcessIoPriority */,
+        sizeof(ULONG) /* ProcessExecuteFlags */,
+#if 0 /* FIXME: Add remaning classes */
+        ProcessResourceManagement,
+        sizeof(ULONG) /* ProcessCookie */,
+        sizeof(SECTION_IMAGE_INFORMATION) /* ProcessImageInformation */,
+        sizeof(PROCESS_CYCLE_TIME_INFORMATION) /* ProcessCycleTime */,
+        sizeof(ULONG) /* ProcessPagePriority */,
+        40 /* ProcessInstrumentationCallback */,
+        sizeof(PROCESS_STACK_ALLOCATION_INFORMATION) /* ProcessThreadStackAllocation */,
+        sizeof(PROCESS_WS_WATCH_INFORMATION_EX[]) /* ProcessWorkingSetWatchEx */,
+        sizeof(buf) /* ProcessImageFileNameWin32 */,
+        sizeof(HANDLE) /* ProcessImageFileMapping */,
+        sizeof(PROCESS_AFFINITY_UPDATE_MODE) /* ProcessAffinityUpdateMode */,
+        sizeof(PROCESS_MEMORY_ALLOCATION_MODE) /* ProcessMemoryAllocationMode */,
+        sizeof(USHORT[]) /* ProcessGroupInformation */,
+        sizeof(ULONG) /* ProcessTokenVirtualizationEnabled */,
+        sizeof(ULONG_PTR) /* ProcessConsoleHostProcess */,
+        sizeof(PROCESS_WINDOW_INFORMATION) /* ProcessWindowInformation */,
+        sizeof(PROCESS_HANDLE_SNAPSHOT_INFORMATION) /* ProcessHandleInformation */,
+        sizeof(PROCESS_MITIGATION_POLICY_INFORMATION) /* ProcessMitigationPolicy */,
+        sizeof(ProcessDynamicFunctionTableInformation) /* ProcessDynamicFunctionTableInformation */,
+        sizeof(?) /* ProcessHandleCheckingMode */,
+        sizeof(PROCESS_KEEPALIVE_COUNT_INFORMATION) /* ProcessKeepAliveCount */,
+        sizeof(PROCESS_REVOKE_FILE_HANDLES_INFORMATION) /* ProcessRevokeFileHandles */,
+        sizeof(PROCESS_WORKING_SET_CONTROL) /* ProcessWorkingSetControl */,
+        sizeof(?) /* ProcessHandleTable */,
+        sizeof(?) /* ProcessCheckStackExtentsMode */,
+        sizeof(buf) /* ProcessCommandLineInformation */,
+        sizeof(PS_PROTECTION) /* ProcessProtectionInformation */,
+        sizeof(PROCESS_MEMORY_EXHAUSTION_INFO) /* ProcessMemoryExhaustion */,
+        sizeof(PROCESS_FAULT_INFORMATION) /* ProcessFaultInformation */,
+        sizeof(PROCESS_TELEMETRY_ID_INFORMATION) /* ProcessTelemetryIdInformation */,
+        sizeof(PROCESS_COMMIT_RELEASE_INFORMATION) /* ProcessCommitReleaseInformation */,
+        sizeof(?) /* ProcessDefaultCpuSetsInformation */,
+        sizeof(?) /* ProcessAllowedCpuSetsInformation */,
+        0 /* ProcessReserved1Information */,
+        0 /* ProcessReserved2Information */,
+        sizeof(?) /* ProcessSubsystemProcess */,
+        sizeof(PROCESS_JOB_MEMORY_INFO) /* ProcessJobMemoryInformation */,
+#endif
+    };
+    HANDLE hproc;
+    ULONG i, status, ret_len, size;
+
+    if (!pNtQueryInformationProcess)
+    {
+        win_skip("NtQueryInformationProcess is not available on this platform\n");
+        return;
+    }
+
+    hproc = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, GetCurrentProcessId());
+    if (!hproc)
+    {
+        win_skip("PROCESS_QUERY_LIMITED_INFORMATION is not supported on this platform\n");
+        return;
+    }
+
+    for (i = 0; i < MaxProcessInfoClass; i++)
+    {
+        size = info_size[i];
+        if (!size) size = sizeof(buf);
+        ret_len = 0;
+        status = pNtQueryInformationProcess(hproc, i, buf, info_size[i], &ret_len);
+        if (status == STATUS_NOT_IMPLEMENTED) continue;
+        if (status == STATUS_INVALID_INFO_CLASS) continue;
+        if (status == STATUS_INFO_LENGTH_MISMATCH) continue;
+
+        switch (i)
+        {
+        case ProcessBasicInformation:
+        case ProcessQuotaLimits:
+        case ProcessTimes:
+        case ProcessPriorityClass:
+        case ProcessPriorityBoost:
+        case ProcessImageFileName:
+        case ProcessLUIDDeviceMapsEnabled:
+        case 33 /* ProcessIoPriority */:
+todo_wine
+            ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        case ProcessIoCounters:
+        case ProcessVmCounters:
+        case ProcessWow64Information:
+        case ProcessDefaultHardErrorMode:
+        case ProcessHandleCount:
+            ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        case ProcessAffinityMask:
+        case ProcessBreakOnTermination:
+            ok(status == STATUS_ACCESS_DENIED /* before win8 */ || status == STATUS_SUCCESS /* win8 is less strict */,
+               "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        case ProcessDebugObjectHandle:
+            ok(status == STATUS_ACCESS_DENIED || status == STATUS_PORT_NOT_SET,
+               "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        case ProcessExecuteFlags:
+todo_wine
+            ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        default:
+            ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+        }
+    }
+
+    CloseHandle(hproc);
+}
+
 START_TEST(process)
 {
     HANDLE job;
@@ -2786,6 +2970,7 @@ START_TEST(process)
         ok(0, "Unexpected command %s\n", myARGV[2]);
         return;
     }
+    test_process_info();
     test_TerminateProcess();
     test_Startup();
     test_CommandLine();
