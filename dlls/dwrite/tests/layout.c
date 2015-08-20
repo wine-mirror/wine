@@ -975,7 +975,7 @@ if (0) /* crashes on native */
     hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_DEFAULT, -10.0, 0.0);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_UNIFORM+1, 0.0, 0.0);
+    hr = IDWriteTextFormat_SetLineSpacing(format, DWRITE_LINE_SPACING_METHOD_PROPORTIONAL+1, 0.0, 0.0);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IDWriteTextFormat_SetTrimming(format, &trimming, NULL);
