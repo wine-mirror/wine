@@ -108,9 +108,13 @@ HRESULT WINAPI DllUnregisterServer(void)
     return __wine_unregister_resources(instance);
 }
 
+typedef struct _IXAudio2Impl IXAudio2Impl;
+
 typedef struct _XA2SourceImpl {
     IXAudio27SourceVoice IXAudio27SourceVoice_iface;
     IXAudio2SourceVoice IXAudio2SourceVoice_iface;
+
+    IXAudio2Impl *xa2;
 
     BOOL in_use;
 
@@ -119,6 +123,9 @@ typedef struct _XA2SourceImpl {
     WAVEFORMATEX *fmt;
 
     IXAudio2VoiceCallback *cb;
+
+    DWORD nsends;
+    XAUDIO2_SEND_DESCRIPTOR *sends;
 
     struct list entry;
 } XA2SourceImpl;
@@ -148,7 +155,7 @@ XA2SubmixImpl *impl_from_IXAudio2SubmixVoice(IXAudio2SubmixVoice *iface)
     return CONTAINING_RECORD(iface, XA2SubmixImpl, IXAudio2SubmixVoice_iface);
 }
 
-typedef struct {
+struct _IXAudio2Impl {
     IXAudio27 IXAudio27_iface;
     IXAudio2 IXAudio2_iface;
     IXAudio2MasteringVoice IXAudio2MasteringVoice_iface;
@@ -166,7 +173,7 @@ typedef struct {
 
     WCHAR **devids;
     UINT32 ndevs;
-} IXAudio2Impl;
+};
 
 static inline IXAudio2Impl *impl_from_IXAudio2(IXAudio2 *iface)
 {
@@ -194,7 +201,38 @@ static HRESULT WINAPI XA2SRC_SetOutputVoices(IXAudio2SourceVoice *iface,
         const XAUDIO2_VOICE_SENDS *pSendList)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+    int i;
+    XAUDIO2_VOICE_SENDS def_send;
+    XAUDIO2_SEND_DESCRIPTOR def_desc;
+
     TRACE("%p, %p\n", This, pSendList);
+
+    if(!pSendList){
+        def_desc.Flags = 0;
+        def_desc.pOutputVoice = (IXAudio2Voice*)&This->xa2->IXAudio2MasteringVoice_iface;
+
+        def_send.SendCount = 1;
+        def_send.pSends = &def_desc;
+
+        pSendList = &def_send;
+    }
+
+    if(TRACE_ON(xaudio2)){
+        for(i = 0; i < pSendList->SendCount; ++i){
+            XAUDIO2_SEND_DESCRIPTOR *desc = &pSendList->pSends[i];
+            TRACE("Outputting to: 0x%x, %p\n", desc->Flags, desc->pOutputVoice);
+        }
+    }
+
+    if(This->nsends < pSendList->SendCount){
+        HeapFree(GetProcessHeap(), 0, This->sends);
+        This->sends = HeapAlloc(GetProcessHeap(), 0, sizeof(*This->sends) * pSendList->SendCount);
+        This->nsends = pSendList->SendCount;
+    }else
+        memset(This->sends, 0, sizeof(*This->sends) * This->nsends);
+
+    memcpy(This->sends, pSendList->pSends, sizeof(*This->sends) * pSendList->SendCount);
+
     return S_OK;
 }
 
@@ -1114,6 +1152,7 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
         XA2SubmixImpl *sub, *sub2;
 
         LIST_FOR_EACH_ENTRY_SAFE(src, src2, &This->source_voices, XA2SourceImpl, entry){
+            HeapFree(GetProcessHeap(), 0, src->sends);
             IXAudio2SourceVoice_DestroyVoice(&src->IXAudio2SourceVoice_iface);
             DeleteCriticalSection(&src->lock);
             HeapFree(GetProcessHeap(), 0, src);
@@ -1180,6 +1219,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
     XA2SourceImpl *src;
+    HRESULT hr;
 
     TRACE("(%p)->(%p, %p, 0x%x, %f, %p, %p, %p)\n", This, ppSourceVoice,
             pSourceFormat, flags, maxFrequencyRatio, pCallback, pSendList,
@@ -1208,6 +1248,8 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
 
         InitializeCriticalSection(&src->lock);
         src->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": XA2SourceImpl.lock");
+
+        src->xa2 = This;
     }
 
     src->in_use = TRUE;
@@ -1217,6 +1259,12 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
     src->cb = pCallback;
 
     src->fmt = copy_waveformat(pSourceFormat);
+
+    hr = XA2SRC_SetOutputVoices(&src->IXAudio2SourceVoice_iface, pSendList);
+    if(FAILED(hr)){
+        src->in_use = FALSE;
+        return hr;
+    }
 
     if(This->version == 27)
         *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio27SourceVoice_iface;
