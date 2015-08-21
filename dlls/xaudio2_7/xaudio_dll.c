@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015 Mark Harmstone
+ * Copyright (c) 2015 Andrew Eikum for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,6 +19,8 @@
 
 #include <stdarg.h>
 
+#define NONAMELESSUNION
+#define NONAMELESSSTRUCT
 #define COBJMACROS
 
 #include "windef.h"
@@ -34,6 +37,9 @@
 
 #include "mmsystem.h"
 #include "xaudio2.h"
+#include "devpkey.h"
+#include "mmdeviceapi.h"
+#include "audioclient.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
@@ -155,6 +161,11 @@ typedef struct {
 
     struct list source_voices;
     struct list submix_voices;
+
+    IMMDeviceEnumerator *devenum;
+
+    WCHAR **devids;
+    UINT32 ndevs;
 } IXAudio2Impl;
 
 static inline IXAudio2Impl *impl_from_IXAudio2(IXAudio2 *iface)
@@ -1098,6 +1109,7 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
     TRACE("(%p)->(): Refcount now %u\n", This, ref);
 
     if (!ref) {
+        int i;
         XA2SourceImpl *src, *src2;
         XA2SubmixImpl *sub, *sub2;
 
@@ -1112,6 +1124,12 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
             DeleteCriticalSection(&sub->lock);
             HeapFree(GetProcessHeap(), 0, sub);
         }
+
+        if(This->devenum)
+            IMMDeviceEnumerator_Release(This->devenum);
+        for(i = 0; i < This->ndevs; ++i)
+            CoTaskMemFree(This->devids[i]);
+        HeapFree(GetProcessHeap(), 0, This->devids);
 
         DeleteCriticalSection(&This->lock);
 
@@ -1365,16 +1383,93 @@ static ULONG WINAPI XA27_Release(IXAudio27 *iface)
 static HRESULT WINAPI XA27_GetDeviceCount(IXAudio27 *iface, UINT32 *pCount)
 {
     IXAudio2Impl *This = impl_from_IXAudio27(iface);
-    TRACE("(%p)->(%p)\n", This, pCount);
-    return E_NOTIMPL;
+
+    TRACE("%p, %p\n", This, pCount);
+
+    *pCount = This->ndevs;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI XA27_GetDeviceDetails(IXAudio27 *iface, UINT32 index,
         XAUDIO2_DEVICE_DETAILS *pDeviceDetails)
 {
     IXAudio2Impl *This = impl_from_IXAudio27(iface);
-    TRACE("(%p)->(%u, %p)\n", This, index, pDeviceDetails);
-    return E_NOTIMPL;
+    HRESULT hr;
+    IMMDevice *dev;
+    IAudioClient *client;
+    IPropertyStore *ps;
+    WAVEFORMATEX *wfx;
+    PROPVARIANT var;
+
+    TRACE("%p, %u, %p\n", This, index, pDeviceDetails);
+
+    if(index >= This->ndevs)
+        return E_INVALIDARG;
+
+    hr = IMMDeviceEnumerator_GetDevice(This->devenum, This->devids[index], &dev);
+    if(FAILED(hr)){
+        WARN("GetDevice failed: %08x\n", hr);
+        return hr;
+    }
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&client);
+    if(FAILED(hr)){
+        WARN("Activate failed: %08x\n", hr);
+        IMMDevice_Release(dev);
+        return hr;
+    }
+
+    hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &ps);
+    if(FAILED(hr)){
+        WARN("OpenPropertyStore failed: %08x\n", hr);
+        IAudioClient_Release(client);
+        IMMDevice_Release(dev);
+        return hr;
+    }
+
+    PropVariantInit(&var);
+
+    hr = IPropertyStore_GetValue(ps, (PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &var);
+    if(FAILED(hr)){
+        WARN("GetValue failed: %08x\n", hr);
+        goto done;
+    }
+
+    lstrcpynW(pDeviceDetails->DisplayName, var.u.pwszVal, sizeof(pDeviceDetails->DisplayName)/sizeof(WCHAR));
+
+    PropVariantClear(&var);
+
+    hr = IAudioClient_GetMixFormat(client, &wfx);
+    if(FAILED(hr)){
+        WARN("GetMixFormat failed: %08x\n", hr);
+        goto done;
+    }
+
+    lstrcpyW(pDeviceDetails->DeviceID, This->devids[index]);
+
+    if(index == 0)
+        pDeviceDetails->Role = GlobalDefaultDevice;
+    else
+        pDeviceDetails->Role = NotDefaultDevice;
+
+    if(sizeof(WAVEFORMATEX) + wfx->cbSize > sizeof(pDeviceDetails->OutputFormat)){
+        FIXME("AudioClient format is too large to fit into WAVEFORMATEXTENSIBLE!\n");
+        CoTaskMemFree(wfx);
+        hr = E_FAIL;
+        goto done;
+    }
+    memcpy(&pDeviceDetails->OutputFormat, wfx, sizeof(WAVEFORMATEX) + wfx->cbSize);
+
+    CoTaskMemFree(wfx);
+
+done:
+    IPropertyStore_Release(ps);
+    IAudioClient_Release(client);
+    IMMDevice_Release(dev);
+
+    return hr;
 }
 
 static HRESULT WINAPI XA27_Initialize(IXAudio27 *iface, UINT32 flags,
@@ -1429,12 +1524,16 @@ static HRESULT WINAPI XA27_CreateMasteringVoice(IXAudio27 *iface,
         const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
     IXAudio2Impl *This = impl_from_IXAudio27(iface);
+
     TRACE("(%p)->(%p, %u, %u, 0x%x, %u, %p)\n", This, ppMasteringVoice,
             inputChannels, inputSampleRate, flags, deviceIndex,
             pEffectChain);
-    /* TODO: Convert DeviceIndex to DeviceId */
-    return IXAudio2Impl_CreateMasteringVoice(&This->IXAudio2_iface,
-            ppMasteringVoice, inputChannels, inputSampleRate, flags, 0,
+
+    if(deviceIndex >= This->ndevs)
+        return E_INVALIDARG;
+
+    return IXAudio2Impl_CreateMasteringVoice(&This->IXAudio2_iface, ppMasteringVoice,
+            inputChannels, inputSampleRate, flags, This->devids[deviceIndex],
             pEffectChain, AudioCategory_GameEffects);
 }
 
@@ -1516,6 +1615,79 @@ static ULONG WINAPI XAudio2CF_Release(IClassFactory *iface)
     return 1;
 }
 
+static HRESULT initialize_mmdevices(IXAudio2Impl *This)
+{
+    IMMDeviceCollection *devcoll;
+    UINT devcount;
+    HRESULT hr;
+
+    if(!This->devenum){
+        hr = CoCreateInstance(&CLSID_MMDeviceEnumerator, NULL,
+                CLSCTX_INPROC_SERVER, &IID_IMMDeviceEnumerator, (void**)&This->devenum);
+        if(FAILED(hr))
+            return hr;
+    }
+
+    hr = IMMDeviceEnumerator_EnumAudioEndpoints(This->devenum, eRender,
+            DEVICE_STATE_ACTIVE, &devcoll);
+    if(FAILED(hr)){
+        return hr;
+    }
+
+    hr = IMMDeviceCollection_GetCount(devcoll, &devcount);
+    if(FAILED(hr)){
+        IMMDeviceCollection_Release(devcoll);
+        return hr;
+    }
+
+    if(devcount > 0){
+        UINT i, count = 1;
+        IMMDevice *dev, *def_dev;
+
+        /* make sure that device 0 is the default device */
+        IMMDeviceEnumerator_GetDefaultAudioEndpoint(This->devenum, eRender, eConsole, &def_dev);
+
+        This->devids = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR *) * devcount);
+
+        for(i = 0; i < devcount; ++i){
+            hr = IMMDeviceCollection_Item(devcoll, i, &dev);
+            if(SUCCEEDED(hr)){
+                UINT idx;
+
+                if(dev == def_dev)
+                    idx = 0;
+                else{
+                    idx = count;
+                    ++count;
+                }
+
+                hr = IMMDevice_GetId(dev, &This->devids[idx]);
+                if(FAILED(hr)){
+                    WARN("GetId failed: %08x\n", hr);
+                    HeapFree(GetProcessHeap(), 0, This->devids);
+                    This->devids = NULL;
+                    IMMDevice_Release(dev);
+                    return hr;
+                }
+
+                IMMDevice_Release(dev);
+            }else{
+                WARN("Item failed: %08x\n", hr);
+                HeapFree(GetProcessHeap(), 0, This->devids);
+                This->devids = NULL;
+                IMMDeviceCollection_Release(devcoll);
+                return hr;
+            }
+        }
+    }
+
+    IMMDeviceCollection_Release(devcoll);
+
+    This->ndevs = devcount;
+
+    return S_OK;
+}
+
 static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
                                                REFIID riid, void **ppobj)
 {
@@ -1549,8 +1721,17 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     object->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IXAudio2Impl.lock");
 
     hr = IXAudio2_QueryInterface(&object->IXAudio2_iface, riid, ppobj);
-    if(FAILED(hr))
+    if(FAILED(hr)){
         HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    hr = initialize_mmdevices(object);
+    if(FAILED(hr)){
+        IUnknown_Release((IUnknown*)*ppobj);
+        return hr;
+    }
+
     return hr;
 }
 
