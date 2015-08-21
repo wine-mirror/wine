@@ -1435,6 +1435,64 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
 /**************************************************************************
  * Window related functions.
  */
+static BOOL update_open_dropdown(FileDialogImpl *This)
+{
+    /* Show or hide the open dropdown button as appropriate */
+    BOOL show=FALSE, showing;
+    HWND open_hwnd, dropdown_hwnd;
+
+    if (This->hmenu_opendropdown)
+    {
+        INT num_visible_items=0;
+        cctrl_item* item;
+
+        LIST_FOR_EACH_ENTRY(item, &This->cctrl_opendropdown.sub_items, cctrl_item, entry)
+        {
+            if (item->cdcstate & CDCS_VISIBLE)
+            {
+                num_visible_items++;
+                if (num_visible_items >= 2)
+                {
+                    show = TRUE;
+                    break;
+                }
+            }
+        }
+    }
+
+    open_hwnd = GetDlgItem(This->dlg_hwnd, IDOK);
+    dropdown_hwnd = GetDlgItem(This->dlg_hwnd, psh1);
+
+    showing = (GetWindowLongPtrW(dropdown_hwnd, GWL_STYLE) & WS_VISIBLE) != 0;
+
+    if (showing != show)
+    {
+        RECT open_rc, dropdown_rc;
+
+        GetWindowRect(open_hwnd, &open_rc);
+        GetWindowRect(dropdown_hwnd, &dropdown_rc);
+
+        if (show)
+        {
+            ShowWindow(dropdown_hwnd, SW_SHOW);
+
+            SetWindowPos(open_hwnd, NULL, 0, 0,
+                (open_rc.right - open_rc.left) - (dropdown_rc.right - dropdown_rc.left),
+                open_rc.bottom - open_rc.top, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+        }
+        else
+        {
+            ShowWindow(dropdown_hwnd, SW_HIDE);
+
+            SetWindowPos(open_hwnd, NULL, 0, 0,
+                (open_rc.right - open_rc.left) + (dropdown_rc.right - dropdown_rc.left),
+                open_rc.bottom - open_rc.top, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
+        }
+    }
+
+    return show;
+}
+
 static void update_layout(FileDialogImpl *This)
 {
     HDWP hdwp;
@@ -1445,6 +1503,7 @@ static void update_layout(FileDialogImpl *This)
     RECT toolbar_rc, ebrowser_rc, customctrls_rc;
     static const UINT vspacing = 4, hspacing = 4;
     static const UINT min_width = 320, min_height = 200;
+    BOOL show_dropdown;
 
     if (!GetClientRect(This->dlg_hwnd, &dialog_rc))
     {
@@ -1478,7 +1537,9 @@ static void update_layout(FileDialogImpl *This)
     }
 
     /* Open/Save dropdown */
-    if(This->hmenu_opendropdown)
+    show_dropdown = update_open_dropdown(This);
+
+    if(show_dropdown)
     {
         int dropdown_width, dropdown_height;
         hwnd = GetDlgItem(This->dlg_hwnd, psh1);
@@ -1728,13 +1789,21 @@ static void init_toolbar(FileDialogImpl *This, HWND hwnd)
 static void update_control_text(FileDialogImpl *This)
 {
     HWND hitem;
+    LPCWSTR custom_okbutton;
+    cctrl_item* item;
+
     if(This->custom_title)
         SetWindowTextW(This->dlg_hwnd, This->custom_title);
 
-    if(This->custom_okbutton &&
+    if(This->hmenu_opendropdown && (item = get_first_item(&This->cctrl_opendropdown)))
+        custom_okbutton = item->label;
+    else
+        custom_okbutton = This->custom_okbutton;
+
+    if(custom_okbutton &&
        (hitem = GetDlgItem(This->dlg_hwnd, IDOK)))
     {
-        SetWindowTextW(hitem, This->custom_okbutton);
+        SetWindowTextW(hitem, custom_okbutton);
         ctrl_resize(hitem, 50, 250, FALSE);
     }
 
@@ -1810,24 +1879,12 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
 
     if(This->hmenu_opendropdown)
     {
-        RECT open_rc, dropdown_rc;
-        HWND open_hwnd, dropdown_hwnd;
+        HWND dropdown_hwnd;
         LOGFONTW lfw, lfw_marlett;
         HFONT dialog_font;
         static const WCHAR marlett[] = {'M','a','r','l','e','t','t',0};
 
-        open_hwnd = GetDlgItem(This->dlg_hwnd, IDOK);
         dropdown_hwnd = GetDlgItem(This->dlg_hwnd, psh1);
-
-        /* Show dropdown button, and remove its size from the open button */
-        ShowWindow(dropdown_hwnd, SW_SHOW);
-
-        GetWindowRect(open_hwnd, &open_rc);
-        GetWindowRect(dropdown_hwnd, &dropdown_rc);
-
-        SetWindowPos(open_hwnd, NULL, 0, 0,
-            (open_rc.right - open_rc.left) - (dropdown_rc.right - dropdown_rc.left),
-            open_rc.bottom - open_rc.top, SWP_NOZORDER | SWP_NOMOVE | SWP_NOACTIVATE);
 
         /* Change dropdown button font to Marlett */
         dialog_font = (HFONT)SendMessageW(dropdown_hwnd, WM_GETFONT, 0, 0);
@@ -1843,8 +1900,6 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
 
         SendMessageW(dropdown_hwnd, WM_SETFONT, (LPARAM)This->hfont_opendropdown, 0);
     }
-    else
-        ShowWindow(GetDlgItem(This->dlg_hwnd, psh1), SW_HIDE);
 
     ctrl_container_reparent(This, This->dlg_hwnd);
     init_explorerbrowser(This);
@@ -4086,6 +4141,12 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemState(IFileDialogCust
         }
 
         item->cdcstate = dwState;
+
+        if (ctrl->type == IDLG_CCTRL_OPENDROPDOWN)
+        {
+            update_control_text(This);
+            update_layout(This);
+        }
 
         return S_OK;
     }
