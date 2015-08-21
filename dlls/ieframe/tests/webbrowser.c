@@ -2927,6 +2927,7 @@ static void test_download(DWORD flags)
         SET_EXPECT(Exec_UPDATECOMMANDS);
     SET_EXPECT(QueryStatus_STOP);
 
+    trace("Downloading...\n");
     while(!*b && GetMessageW(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
         DispatchMessageW(&msg);
