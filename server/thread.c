@@ -1372,7 +1372,7 @@ DECL_HANDLER(get_thread_info)
     obj_handle_t handle = req->handle;
 
     if (!handle) thread = get_thread_from_id( req->tid_in );
-    else thread = get_thread_from_handle( req->handle, THREAD_QUERY_INFORMATION );
+    else thread = get_thread_from_handle( req->handle, THREAD_QUERY_LIMITED_INFORMATION );
 
     if (thread)
     {

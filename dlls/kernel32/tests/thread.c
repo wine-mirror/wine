@@ -1750,14 +1750,19 @@ static void test_thread_info(void)
         switch (i)
         {
         case ThreadBasicInformation:
-        case ThreadTimes:
         case ThreadAmILastThread:
         case ThreadPriorityBoost:
+            ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        case ThreadTimes:
 todo_wine
             ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
 
         case ThreadDescriptorTableEntry:
+        case ThreadAffinityMask:
+        case ThreadQuerySetWin32StartAddress:
 todo_wine
             ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
