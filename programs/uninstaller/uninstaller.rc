@@ -30,4 +30,14 @@ STRINGTABLE {
      STRING_NO_APP_MATCH, "uninstaller: The application with GUID '%1' was not found\n"
      STRING_PARAMETER_REQUIRED, "uninstaller: The option '--remove' must be followed by an application GUID\n"
      STRING_INVALID_OPTION, "uninstaller: Invalid option [%1]\n"
+     STRING_HEADER, "Wine Application Uninstaller\n\n\
+\Uninstall applications from the current Wine prefix.\n\n"
+     STRING_USAGE, "Usage:\n\
+\  uninstaller [options]\n\n\
+\Options:\n\
+\  --help\t    Display this information.\n\
+\  --list\t    List all applications installed in this Wine prefix.\n\
+\  --remove {GUID}   Uninstall the specified application.\n\
+\t\t    Use '--list' to determine the application GUID.\n\
+\  [no option]       Launch the graphical version of this program.\n\n"
 }

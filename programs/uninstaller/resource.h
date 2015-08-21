@@ -26,5 +26,7 @@
 #define STRING_NO_APP_MATCH             2000
 #define STRING_PARAMETER_REQUIRED       2001
 #define STRING_INVALID_OPTION           2002
+#define STRING_HEADER                   2003
+#define STRING_USAGE                    2004
 
 #define MAX_STRING_LEN                  255

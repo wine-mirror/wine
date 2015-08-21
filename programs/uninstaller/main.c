@@ -161,6 +161,7 @@ static void RemoveSpecificProgram(WCHAR *nameW)
 int wmain(int argc, WCHAR *argv[])
 {
     LPCWSTR token = NULL;
+    static const WCHAR helpW[] = { '-','-','h','e','l','p',0 };
     static const WCHAR listW[] = { '-','-','l','i','s','t',0 };
     static const WCHAR removeW[] = { '-','-','r','e','m','o','v','e',0 };
     int i = 1;
@@ -169,8 +170,13 @@ int wmain(int argc, WCHAR *argv[])
     {
         token = argv[i++];
         
-        /* Handle requests just to list the applications */
-        if( !lstrcmpW( token, listW ) )
+        if( !lstrcmpW( token, helpW ) )
+        {
+            output_message(STRING_HEADER);
+            output_message(STRING_USAGE);
+            return 0;
+        }
+        else if( !lstrcmpW( token, listW ) )
         {
             ListUninstallPrograms();
             return 0;
