@@ -2255,7 +2255,8 @@ static void set_fd_disposition( struct fd *fd, int unlink )
 }
 
 /* set new name for the fd */
-static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, data_size_t len )
+static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr,
+                         data_size_t len, int create_link )
 {
     struct inode *inode;
     struct stat st;
@@ -2287,6 +2288,14 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, da
         name = combined_name;
     }
 
+    /* when creating a hard link, source cannot be a dir */
+    if (create_link && fd->unix_fd != -1 &&
+        !fstat( fd->unix_fd, &st ) && S_ISDIR( st.st_mode ))
+    {
+        set_error( STATUS_FILE_IS_A_DIRECTORY );
+        goto failed;
+    }
+
     if (!stat( name, &st ))
     {
         /* can't replace directories or special files */
@@ -2308,13 +2317,25 @@ static void set_fd_name( struct fd *fd, struct fd *root, const char *nameptr, da
             }
         }
 
+        /* link() expects that the target doesn't exist */
         /* rename() cannot replace files with directories */
-        if (fd->unix_fd != -1 && !fstat( fd->unix_fd, &st ) &&
-            S_ISDIR( st.st_mode ) && unlink( name ))
+        if (create_link || (fd->unix_fd != -1 &&
+            !fstat( fd->unix_fd, &st ) && S_ISDIR( st.st_mode )))
         {
-            file_set_error();
-            goto failed;
+            if (unlink( name ))
+            {
+                file_set_error();
+                goto failed;
+            }
         }
+    }
+
+    if (create_link)
+    {
+        if (link( fd->unix_name, name ))
+            file_set_error();
+        free( name );
+        return;
     }
 
     if (rename( fd->unix_name, name ))
@@ -2556,7 +2577,7 @@ DECL_HANDLER(set_fd_name_info)
 
     if ((fd = get_handle_fd_obj( current->process, req->handle, 0 )))
     {
-        set_fd_name( fd, root_fd, get_req_data(), get_req_data_size() );
+        set_fd_name( fd, root_fd, get_req_data(), get_req_data_size(), req->link );
         release_object( fd );
     }
     if (root_fd) release_object( root_fd );

@@ -5099,8 +5099,8 @@ struct set_fd_name_info_request
     struct request_header __header;
     obj_handle_t handle;
     obj_handle_t rootdir;
+    int          link;
     /* VARARG(filename,string); */
-    char __pad_20[4];
 };
 struct set_fd_name_info_reply
 {
@@ -6149,6 +6149,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 486
+#define SERVER_PROTOCOL_VERSION 487
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

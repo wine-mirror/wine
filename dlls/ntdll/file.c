@@ -2813,6 +2813,50 @@ NTSTATUS WINAPI NtSetInformationFile(HANDLE handle, PIO_STATUS_BLOCK io,
             {
                 req->handle   = wine_server_obj_handle( handle );
                 req->rootdir  = wine_server_obj_handle( attr.RootDirectory );
+                req->link     = FALSE;
+                wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
+                io->u.Status = wine_server_call( req );
+            }
+            SERVER_END_REQ;
+
+            RtlFreeAnsiString( &unix_name );
+        }
+        else io->u.Status = STATUS_INVALID_PARAMETER_3;
+        break;
+
+    case FileLinkInformation:
+        if (len >= sizeof(FILE_LINK_INFORMATION))
+        {
+            FILE_LINK_INFORMATION *info = ptr;
+            UNICODE_STRING name_str;
+            OBJECT_ATTRIBUTES attr;
+            ANSI_STRING unix_name;
+
+            name_str.Buffer = info->FileName;
+            name_str.Length = info->FileNameLength;
+            name_str.MaximumLength = info->FileNameLength + sizeof(WCHAR);
+
+            attr.Length = sizeof(attr);
+            attr.ObjectName = &name_str;
+            attr.RootDirectory = info->RootDirectory;
+            attr.Attributes = OBJ_CASE_INSENSITIVE;
+
+            io->u.Status = nt_to_unix_file_name_attr( &attr, &unix_name, FILE_OPEN_IF );
+            if (io->u.Status != STATUS_SUCCESS && io->u.Status != STATUS_NO_SUCH_FILE)
+                break;
+
+            if (!info->ReplaceIfExists && io->u.Status == STATUS_SUCCESS)
+            {
+                RtlFreeAnsiString( &unix_name );
+                io->u.Status = STATUS_OBJECT_NAME_COLLISION;
+                break;
+            }
+
+            SERVER_START_REQ( set_fd_name_info )
+            {
+                req->handle   = wine_server_obj_handle( handle );
+                req->rootdir  = wine_server_obj_handle( attr.RootDirectory );
+                req->link     = TRUE;
                 wine_server_add_data( req, unix_name.Buffer, unix_name.Length );
                 io->u.Status  = wine_server_call( req );
             }

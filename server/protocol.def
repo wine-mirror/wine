@@ -3536,6 +3536,7 @@ enum coords_relative
 @REQ(set_fd_name_info)
     obj_handle_t handle;          /* handle to a file or directory */
     obj_handle_t rootdir;         /* root directory */
+    int          link;            /* link instead of renaming */
     VARARG(filename,string);      /* new file name */
 @END
 

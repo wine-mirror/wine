@@ -4146,6 +4146,7 @@ static void dump_set_fd_name_info_request( const struct set_fd_name_info_request
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", rootdir=%04x", req->rootdir );
+    fprintf( stderr, ", link=%d", req->link );
     dump_varargs_string( ", filename=", cur_size );
 }
 
