@@ -466,8 +466,8 @@ static void open_file_test(void)
     attr.ObjectName = &nameW;
     status = pNtOpenFile( &root, SYNCHRONIZE|FILE_LIST_DIRECTORY, &attr, &io,
                          FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT );
-    todo_wine ok( status == STATUS_OBJECT_PATH_NOT_FOUND,
-                  "expected STATUS_OBJECT_PATH_NOT_FOUND, got %08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND,
+        "expected STATUS_OBJECT_PATH_NOT_FOUND, got %08x\n", status );
 
     nameW.Length = 0;
     nameW.Buffer = NULL;
@@ -475,24 +475,24 @@ static void open_file_test(void)
     attr.ObjectName = &nameW;
     status = pNtOpenFile( &root, SYNCHRONIZE|FILE_LIST_DIRECTORY, &attr, &io,
                           FILE_SHARE_READ, FILE_SYNCHRONOUS_IO_NONALERT );
-    todo_wine ok( !status, "open %s failed %x\n", wine_dbgstr_w(tmpfile), status );
+    ok( !status, "open %s failed %x\n", wine_dbgstr_w(tmpfile), status );
 
     numbytes = SetFilePointer( file, 0, 0, FILE_CURRENT );
     ok( numbytes == sizeof(testdata) - 1, "SetFilePointer returned %u\n", numbytes );
     numbytes = SetFilePointer( root, 0, 0, FILE_CURRENT );
-    todo_wine ok( numbytes == 0, "SetFilePointer returned %u\n", numbytes );
+    ok( numbytes == 0, "SetFilePointer returned %u\n", numbytes );
 
     numbytes = 0xdeadbeef;
     memset( data, 0, sizeof(data) );
     ret = ReadFile( root, data, sizeof(data), &numbytes, NULL );
-    todo_wine ok( ret, "ReadFile failed with error %u\n", GetLastError() );
-    todo_wine ok( numbytes == sizeof(testdata) - 1, "failed to read all data\n" );
-    todo_wine ok( !memcmp( data, testdata, sizeof(testdata) - 1 ), "testdata doesn't match\n" );
+    ok( ret, "ReadFile failed with error %u\n", GetLastError() );
+    ok( numbytes == sizeof(testdata) - 1, "failed to read all data\n" );
+    ok( !memcmp( data, testdata, sizeof(testdata) - 1 ), "testdata doesn't match\n" );
 
     numbytes = SetFilePointer( file, 0, 0, FILE_CURRENT );
     ok( numbytes == sizeof(testdata) - 1, "SetFilePointer returned %u\n", numbytes );
     numbytes = SetFilePointer( root, 0, 0, FILE_CURRENT );
-    todo_wine ok( numbytes == sizeof(testdata) - 1, "SetFilePointer returned %u\n", numbytes );
+    ok( numbytes == sizeof(testdata) - 1, "SetFilePointer returned %u\n", numbytes );
 
     CloseHandle( file );
     CloseHandle( root );

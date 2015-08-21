@@ -1717,7 +1717,7 @@ void set_fd_user( struct fd *fd, const struct fd_ops *user_ops, struct object *u
     fd->user   = user;
 }
 
-static char *dup_fd_name( struct fd *root, const char *name )
+char *dup_fd_name( struct fd *root, const char *name )
 {
     char *ret;
 
@@ -2386,19 +2386,30 @@ DECL_HANDLER(open_file_object)
 
     get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    if ((obj = open_object_dir( root, &name, req->attributes, NULL )))
     {
-        if ((result = obj->ops->open_file( obj, req->access, req->sharing, req->options )))
+        if (get_error() != STATUS_OBJECT_TYPE_MISMATCH) return;
+        if (!(obj = (struct object *)get_file_obj( current->process, req->rootdir, 0 ))) return;
+        if (name.len)
         {
-            reply->handle = alloc_handle( current->process, result, req->access, req->attributes );
-            release_object( result );
+            release_object( obj );
+            set_error( STATUS_OBJECT_PATH_NOT_FOUND );
+            return;
         }
-        release_object( obj );
+        clear_error();
+    }
+    else
+    {
+        obj = open_object_dir( root, &name, req->attributes, NULL );
+        if (root) release_object( root );
+        if (!obj) return;
     }
 
-    if (root) release_object( root );
+    if ((result = obj->ops->open_file( obj, req->access, req->sharing, req->options )))
+    {
+        reply->handle = alloc_handle( current->process, result, req->access, req->attributes );
+        release_object( result );
+    }
+    release_object( obj );
 }
 
 /* get the Unix name from a file handle */
