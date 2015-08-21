@@ -1343,7 +1343,7 @@ DECL_HANDLER(get_process_info)
 {
     struct process *process;
 
-    if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_INFORMATION )))
+    if ((process = get_process_from_handle( req->handle, PROCESS_QUERY_LIMITED_INFORMATION )))
     {
         reply->pid              = get_process_id( process );
         reply->ppid             = process->parent ? get_process_id( process->parent ) : 0;

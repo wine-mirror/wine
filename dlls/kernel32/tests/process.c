@@ -2901,18 +2901,18 @@ static void test_process_info(void)
         case ProcessTimes:
         case ProcessPriorityClass:
         case ProcessPriorityBoost:
-        case ProcessImageFileName:
         case ProcessLUIDDeviceMapsEnabled:
         case 33 /* ProcessIoPriority */:
-todo_wine
-            ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
-            break;
-
         case ProcessIoCounters:
         case ProcessVmCounters:
         case ProcessWow64Information:
         case ProcessDefaultHardErrorMode:
         case ProcessHandleCount:
+            ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
+            break;
+
+        case ProcessImageFileName:
+todo_wine
             ok(status == STATUS_SUCCESS, "for info %u expected STATUS_SUCCESS, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
 
@@ -2928,6 +2928,8 @@ todo_wine
             break;
 
         case ProcessExecuteFlags:
+        case ProcessDebugPort:
+        case ProcessDebugFlags:
 todo_wine
             ok(status == STATUS_ACCESS_DENIED, "for info %u expected STATUS_ACCESS_DENIED, got %08x (ret_len %u)\n", i, status, ret_len);
             break;
