@@ -127,6 +127,21 @@ XA2SourceImpl *impl_from_IXAudio27SourceVoice(IXAudio27SourceVoice *iface)
     return CONTAINING_RECORD(iface, XA2SourceImpl, IXAudio27SourceVoice_iface);
 }
 
+typedef struct _XA2SubmixImpl {
+    IXAudio2SubmixVoice IXAudio2SubmixVoice_iface;
+
+    BOOL in_use;
+
+    CRITICAL_SECTION lock;
+
+    struct list entry;
+} XA2SubmixImpl;
+
+XA2SubmixImpl *impl_from_IXAudio2SubmixVoice(IXAudio2SubmixVoice *iface)
+{
+    return CONTAINING_RECORD(iface, XA2SubmixImpl, IXAudio2SubmixVoice_iface);
+}
+
 typedef struct {
     IXAudio27 IXAudio27_iface;
     IXAudio2 IXAudio2_iface;
@@ -139,6 +154,7 @@ typedef struct {
     DWORD version;
 
     struct list source_voices;
+    struct list submix_voices;
 } IXAudio2Impl;
 
 static inline IXAudio2Impl *impl_from_IXAudio2(IXAudio2 *iface)
@@ -837,7 +853,7 @@ static void WINAPI XA2M_GetChannelMask(IXAudio2MasteringVoice *iface,
     TRACE("%p %p\n", This, pChannelMask);
 }
 
-struct IXAudio2MasteringVoiceVtbl XAudio2MasteringVoice_Vtbl = {
+static const struct IXAudio2MasteringVoiceVtbl XAudio2MasteringVoice_Vtbl = {
     XA2M_GetVoiceDetails,
     XA2M_SetOutputVoices,
     XA2M_SetEffectChain,
@@ -858,6 +874,187 @@ struct IXAudio2MasteringVoiceVtbl XAudio2MasteringVoice_Vtbl = {
     XA2M_GetOutputMatrix,
     XA2M_DestroyVoice,
     XA2M_GetChannelMask
+};
+
+static void WINAPI XA2SUB_GetVoiceDetails(IXAudio2SubmixVoice *iface,
+        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p\n", This, pVoiceDetails);
+}
+
+static HRESULT WINAPI XA2SUB_SetOutputVoices(IXAudio2SubmixVoice *iface,
+        const XAUDIO2_VOICE_SENDS *pSendList)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p\n", This, pSendList);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2SUB_SetEffectChain(IXAudio2SubmixVoice *iface,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p\n", This, pEffectChain);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2SUB_EnableEffect(IXAudio2SubmixVoice *iface, UINT32 EffectIndex,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %u, 0x%x\n", This, EffectIndex, OperationSet);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2SUB_DisableEffect(IXAudio2SubmixVoice *iface, UINT32 EffectIndex,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %u, 0x%x\n", This, EffectIndex, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2SUB_GetEffectState(IXAudio2SubmixVoice *iface, UINT32 EffectIndex,
+        BOOL *pEnabled)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %u, %p\n", This, EffectIndex, pEnabled);
+}
+
+static HRESULT WINAPI XA2SUB_SetEffectParameters(IXAudio2SubmixVoice *iface,
+        UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %u, %p, 0x%x, 0x%x\n", This, EffectIndex, pParameters,
+            ParametersByteSize, OperationSet);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2SUB_GetEffectParameters(IXAudio2SubmixVoice *iface,
+        UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %u, %p, 0x%x\n", This, EffectIndex, pParameters,
+            ParametersByteSize);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA2SUB_SetFilterParameters(IXAudio2SubmixVoice *iface,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p, 0x%x\n", This, pParameters, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2SUB_GetFilterParameters(IXAudio2SubmixVoice *iface,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p\n", This, pParameters);
+}
+
+static HRESULT WINAPI XA2SUB_SetOutputFilterParameters(IXAudio2SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p, %p, 0x%x\n", This, pDestinationVoice, pParameters, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2SUB_GetOutputFilterParameters(IXAudio2SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p, %p\n", This, pDestinationVoice, pParameters);
+}
+
+static HRESULT WINAPI XA2SUB_SetVolume(IXAudio2SubmixVoice *iface, float Volume,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %f, 0x%x\n", This, Volume, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2SUB_GetVolume(IXAudio2SubmixVoice *iface, float *pVolume)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p\n", This, pVolume);
+}
+
+static HRESULT WINAPI XA2SUB_SetChannelVolumes(IXAudio2SubmixVoice *iface, UINT32 Channels,
+        const float *pVolumes, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %u, %p, 0x%x\n", This, Channels, pVolumes, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2SUB_GetChannelVolumes(IXAudio2SubmixVoice *iface, UINT32 Channels,
+        float *pVolumes)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %u, %p\n", This, Channels, pVolumes);
+}
+
+static HRESULT WINAPI XA2SUB_SetOutputMatrix(IXAudio2SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels,
+        UINT32 DestinationChannels, const float *pLevelMatrix,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p, %u, %u, %p, 0x%x\n", This, pDestinationVoice,
+            SourceChannels, DestinationChannels, pLevelMatrix, OperationSet);
+    return S_OK;
+}
+
+static void WINAPI XA2SUB_GetOutputMatrix(IXAudio2SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels,
+        UINT32 DestinationChannels, float *pLevelMatrix)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+    TRACE("%p, %p, %u, %u, %p\n", This, pDestinationVoice,
+            SourceChannels, DestinationChannels, pLevelMatrix);
+}
+
+static void WINAPI XA2SUB_DestroyVoice(IXAudio2SubmixVoice *iface)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio2SubmixVoice(iface);
+
+    TRACE("%p\n", This);
+
+    EnterCriticalSection(&This->lock);
+
+    This->in_use = FALSE;
+
+    LeaveCriticalSection(&This->lock);
+}
+
+static const struct IXAudio2SubmixVoiceVtbl XAudio2SubmixVoice_Vtbl = {
+    XA2SUB_GetVoiceDetails,
+    XA2SUB_SetOutputVoices,
+    XA2SUB_SetEffectChain,
+    XA2SUB_EnableEffect,
+    XA2SUB_DisableEffect,
+    XA2SUB_GetEffectState,
+    XA2SUB_SetEffectParameters,
+    XA2SUB_GetEffectParameters,
+    XA2SUB_SetFilterParameters,
+    XA2SUB_GetFilterParameters,
+    XA2SUB_SetOutputFilterParameters,
+    XA2SUB_GetOutputFilterParameters,
+    XA2SUB_SetVolume,
+    XA2SUB_GetVolume,
+    XA2SUB_SetChannelVolumes,
+    XA2SUB_GetChannelVolumes,
+    XA2SUB_SetOutputMatrix,
+    XA2SUB_GetOutputMatrix,
+    XA2SUB_DestroyVoice
 };
 
 static HRESULT WINAPI IXAudio2Impl_QueryInterface(IXAudio2 *iface, REFIID riid,
@@ -902,11 +1099,18 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
 
     if (!ref) {
         XA2SourceImpl *src, *src2;
+        XA2SubmixImpl *sub, *sub2;
 
         LIST_FOR_EACH_ENTRY_SAFE(src, src2, &This->source_voices, XA2SourceImpl, entry){
             IXAudio2SourceVoice_DestroyVoice(&src->IXAudio2SourceVoice_iface);
             DeleteCriticalSection(&src->lock);
             HeapFree(GetProcessHeap(), 0, src);
+        }
+
+        LIST_FOR_EACH_ENTRY_SAFE(sub, sub2, &This->submix_voices, XA2SubmixImpl, entry){
+            IXAudio2SubmixVoice_DestroyVoice(&sub->IXAudio2SubmixVoice_iface);
+            DeleteCriticalSection(&sub->lock);
+            HeapFree(GetProcessHeap(), 0, sub);
         }
 
         DeleteCriticalSection(&This->lock);
@@ -1013,12 +1217,43 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
         const XAUDIO2_EFFECT_CHAIN *pEffectChain)
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
+    XA2SubmixImpl *sub;
 
-    FIXME("(%p)->(%p, %u, %u, 0x%x, %u, %p, %p): stub!\n", This, ppSubmixVoice,
+    TRACE("(%p)->(%p, %u, %u, 0x%x, %u, %p, %p)\n", This, ppSubmixVoice,
             inputChannels, inputSampleRate, flags, processingStage, pSendList,
             pEffectChain);
 
-    return E_NOTIMPL;
+    EnterCriticalSection(&This->lock);
+
+    LIST_FOR_EACH_ENTRY(sub, &This->submix_voices, XA2SubmixImpl, entry){
+        if(!sub->in_use)
+            break;
+    }
+
+    if(&sub->entry == &This->submix_voices){
+        sub = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*sub));
+        if(!sub){
+            LeaveCriticalSection(&This->lock);
+            return E_OUTOFMEMORY;
+        }
+
+        list_add_head(&This->submix_voices, &sub->entry);
+
+        sub->IXAudio2SubmixVoice_iface.lpVtbl = &XAudio2SubmixVoice_Vtbl;
+
+        InitializeCriticalSection(&sub->lock);
+        sub->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": XA2SubmixImpl.lock");
+    }
+
+    sub->in_use = TRUE;
+
+    LeaveCriticalSection(&This->lock);
+
+    *ppSubmixVoice = &sub->IXAudio2SubmixVoice_iface;
+
+    TRACE("Created submix voice: %p\n", sub);
+
+    return S_OK;
 }
 
 static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
@@ -1308,6 +1543,7 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
         object->version = 28;
 
     list_init(&object->source_voices);
+    list_init(&object->submix_voices);
 
     InitializeCriticalSection(&object->lock);
     object->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": IXAudio2Impl.lock");
