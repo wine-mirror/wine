@@ -166,15 +166,53 @@ static HRESULT WINAPI HTMLOptionElement_get_value(IHTMLOptionElement *iface, BST
 static HRESULT WINAPI HTMLOptionElement_put_defaultSelected(IHTMLOptionElement *iface, VARIANT_BOOL v)
 {
     HTMLOptionElement *This = impl_from_IHTMLOptionElement(iface);
-    FIXME("(%p)->(%x)\n", This, v);
-    return E_NOTIMPL;
+    cpp_bool val, selected;
+    nsresult nsres;
+
+    TRACE("(%p)->(%x)\n", This, v);
+
+    val = (v == VARIANT_TRUE);
+
+    nsres = nsIDOMHTMLOptionElement_GetSelected(This->nsoption, &selected);
+    if(NS_FAILED(nsres)) {
+        ERR("GetSelected failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    nsres = nsIDOMHTMLOptionElement_SetDefaultSelected(This->nsoption, val);
+    if(NS_FAILED(nsres)) {
+        ERR("SetDefaultSelected failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    if(val != selected) {
+        nsres = nsIDOMHTMLOptionElement_SetSelected(This->nsoption, selected); /* WinAPI will reserve selected property */
+        if(NS_FAILED(nsres)) {
+            ERR("SetSelected failed: %08x\n", nsres);
+            return E_FAIL;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLOptionElement_get_defaultSelected(IHTMLOptionElement *iface, VARIANT_BOOL *p)
 {
     HTMLOptionElement *This = impl_from_IHTMLOptionElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    cpp_bool val;
+    nsresult nsres;
+
+    TRACE("(%p)->(%p)\n", This, p);
+    if(!p)
+        return E_POINTER;
+    nsres = nsIDOMHTMLOptionElement_GetDefaultSelected(This->nsoption, &val);
+    if(NS_FAILED(nsres)) {
+        ERR("GetDefaultSelected failed: %08x\n", nsres);
+        return E_FAIL;
+    }
+
+    *p = val ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLOptionElement_put_index(IHTMLOptionElement *iface, LONG v)

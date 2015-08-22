@@ -1692,6 +1692,60 @@ static void _test_option_get_index(unsigned line, IHTMLOptionElement *option, LO
         "value = %d, expected = %d\n", val, exval);
 }
 
+#define test_option_put_defaultSelected(o,d) _test_option_put_defaultSelected(__LINE__,o,d)
+static void _test_option_put_defaultSelected(unsigned line, IHTMLOptionElement *option, VARIANT_BOOL b)
+{
+    HRESULT hres;
+
+    hres = IHTMLOptionElement_put_defaultSelected(option, b);
+    ok_(__FILE__,line)(hres == S_OK, "put_defaultSelected %08x\n", hres);
+}
+
+#define test_option_defaultSelected(o,e) _test_option_defaultSelected(__LINE__,o,e)
+static void _test_option_defaultSelected(unsigned line, IHTMLOptionElement *option, VARIANT_BOOL ex)
+{
+    HRESULT hres;
+    VARIANT_BOOL b;
+
+    hres = IHTMLOptionElement_get_defaultSelected(option, NULL);
+    ok_(__FILE__,line)(hres == E_POINTER, "Expect E_POINTER, got %08x\n", hres);
+
+    b = 0x100;
+    hres = IHTMLOptionElement_get_defaultSelected(option, &b);
+    ok_(__FILE__,line)(hres == S_OK, "get_defaultSelected failed: %08x\n", hres);
+    ok_(__FILE__,line)(b == ex, "b = %x, expected = %x\n", b, ex);
+}
+
+static void test_option_defaultSelected_property(IHTMLOptionElement *option)
+{
+    test_option_defaultSelected(option, VARIANT_FALSE);
+    test_option_selected(option, VARIANT_FALSE);
+
+    test_option_put_defaultSelected(option, 0x100); /* Invalid value */
+    test_option_defaultSelected(option, VARIANT_FALSE);
+    test_option_selected(option, VARIANT_FALSE);
+
+    test_option_put_defaultSelected(option, VARIANT_TRUE);
+    test_option_defaultSelected(option, VARIANT_TRUE);
+    test_option_selected(option, VARIANT_FALSE);
+
+    test_option_put_defaultSelected(option, 0x100); /* Invalid value */
+    test_option_defaultSelected(option, VARIANT_FALSE);
+    test_option_selected(option, VARIANT_FALSE);
+
+    test_option_put_selected(option, VARIANT_TRUE);
+    test_option_selected(option, VARIANT_TRUE);
+    test_option_defaultSelected(option, VARIANT_FALSE);
+
+    test_option_put_defaultSelected(option, VARIANT_TRUE);
+    test_option_defaultSelected(option, VARIANT_TRUE);
+    test_option_selected(option, VARIANT_TRUE);
+
+    /* Restore defaultSelected */
+    test_option_put_defaultSelected(option, VARIANT_TRUE);
+    test_option_put_selected(option, VARIANT_FALSE);
+}
+
 #define test_textarea_value(t,v) _test_textarea_value(__LINE__,t,v)
 static void _test_textarea_value(unsigned line, IUnknown *unk, const char *exval)
 {
@@ -5085,6 +5139,7 @@ static void test_create_option_elem(IHTMLDocument2 *doc)
     test_option_put_text(option, "new text");
     test_option_put_value(option, "new value");
     test_option_get_index(option, 0);
+    test_option_defaultSelected_property(option);
     test_option_put_selected(option, VARIANT_TRUE);
     test_option_put_selected(option, VARIANT_FALSE);
 
