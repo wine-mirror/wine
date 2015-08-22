@@ -6436,10 +6436,12 @@ static void test_layered_window(void)
         ret = pUpdateLayeredWindowIndirect( hwnd, &info );
         ok( ret, "UpdateLayeredWindowIndirect should succeed on layered window\n" );
         sz.cx--;
+        SetLastError(0);
         ret = pUpdateLayeredWindowIndirect( hwnd, &info );
         ok( !ret, "UpdateLayeredWindowIndirect should fail\n" );
-        ok( GetLastError() == ERROR_INCORRECT_SIZE || broken(GetLastError() == ERROR_MR_MID_NOT_FOUND),
-            "wrong error %u\n", GetLastError() );
+        /* particular error code differs from version to version, could be ERROR_INCORRECT_SIZE,
+           ERROR_MR_MID_NOT_FOUND or ERROR_GEN_FAILURE (Win8/Win10) */
+        ok( GetLastError() != 0, "wrong error %u\n", GetLastError() );
         info.dwFlags  = ULW_OPAQUE;
         ret = pUpdateLayeredWindowIndirect( hwnd, &info );
         ok( ret, "UpdateLayeredWindowIndirect should succeed on layered window\n" );
