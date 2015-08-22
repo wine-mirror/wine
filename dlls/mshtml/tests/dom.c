@@ -891,6 +891,17 @@ static IHTMLSelectElement *_get_select_iface(unsigned line, IUnknown *unk)
     return select;
 }
 
+#define get_option_iface(u) _get_option_iface(__LINE__,u)
+static IHTMLOptionElement *_get_option_iface(unsigned line, IUnknown *unk)
+{
+    IHTMLOptionElement *option;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(unk, &IID_IHTMLOptionElement, (void**)&option);
+    ok_(__FILE__,line) (hres == S_OK, "Could not get IHTMLOptionElement: %08x\n", hres);
+    return option;
+}
+
 #define get_form_iface(u) _get_form_iface(__LINE__,u)
 static IHTMLFormElement *_get_form_iface(unsigned line, IUnknown *unk)
 {
@@ -5146,6 +5157,25 @@ static void test_create_option_elem(IHTMLDocument2 *doc)
     IHTMLOptionElement_Release(option);
 }
 
+static void test_option_form(IUnknown *uoption, IUnknown  *uform)
+{
+    IHTMLOptionElement *option = get_option_iface(uoption);
+    IHTMLFormElement *form;
+    HRESULT hres;
+
+    hres = IHTMLOptionElement_get_form(option, NULL);
+    ok(hres == E_POINTER, "got %08x\n, expected E_POINTER\n", hres);
+
+    hres = IHTMLOptionElement_get_form(option, &form);
+    ok(hres == S_OK, "get_form failed: %08x\n", hres);
+    ok(form != NULL, "form == NULL\n");
+
+    ok(iface_cmp(uform, (IUnknown*)form), "Expected %p, got %p\n", uform, form);
+
+    IHTMLOptionElement_Release(option);
+    IHTMLFormElement_Release(form);
+}
+
 static void test_create_img_elem(IHTMLDocument2 *doc)
 {
     IHTMLImgElement *img;
@@ -8582,12 +8612,18 @@ static void test_elems2(IHTMLDocument2 *doc)
     }
 
     test_elem_set_innerhtml((IUnknown*)div,
-            "<form id=\"form\" name=\"form_name\"><select id=\"sform\"></select></form>");
+            "<form id=\"form\" name=\"form_name\"><select id=\"sform\"><option id=\"oform\"></option></select></form>");
     elem = get_elem_by_id(doc, "sform", TRUE);
     elem2 = get_elem_by_id(doc, "form", TRUE);
     if(elem && elem2) {
         test_select_form((IUnknown*)elem, (IUnknown*)elem2);
         IHTMLElement_Release(elem);
+
+        elem = get_elem_by_id(doc, "oform", TRUE);
+        if(elem) {
+            test_option_form((IUnknown*)elem, (IUnknown*)elem2);
+            IHTMLElement_Release(elem);
+        }
         IHTMLElement_Release(elem2);
     }
 
