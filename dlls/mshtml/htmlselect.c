@@ -383,7 +383,6 @@ static HRESULT WINAPI HTMLSelectElement_get_form(IHTMLSelectElement *iface, IHTM
         return E_POINTER;
 
     nsres = nsIDOMHTMLSelectElement_GetForm(This->nsselect, &nsform);
-    FIXME("get form %08x : %p\n", nsres, nsform);
     if (NS_FAILED(nsres)) {
         ERR("GetForm failed: %08x, nsform: %p\n", nsres, nsform);
         *p = NULL;
