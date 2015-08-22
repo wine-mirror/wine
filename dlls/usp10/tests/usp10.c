@@ -928,6 +928,7 @@ static void test_ScriptShapeOpenType(HDC hdc)
     int nb, outnItems;
     HFONT hfont, hfont_orig;
     int test_valid;
+    shapeTest_glyph glyph_test[4];
 
     static const WCHAR test1[] = {'w', 'i', 'n', 'e',0};
     static const shapeTest_char t1_c[] = {{0,{0,0}},{1,{0,0}},{2,{0,0}},{3,{0,0}}};
@@ -1186,7 +1187,16 @@ static void test_ScriptShapeOpenType(HDC hdc)
     ScriptFreeCache(&sc);
 
     test_shape_ok(hdc, test1, 4, &Control, &State, 0, 4, t1_c, t1_g);
-    test_shape_ok(hdc, test2, 4, &Control, &State, 1, 4, t2_c, t2_g);
+
+    /* newer Tahoma has zerowidth space glyphs for 0x202b and 0x202c */
+    memcpy(glyph_test, t2_g, sizeof(glyph_test));
+    GetGlyphIndicesW(hdc, test2, 4, glyphs, 0);
+    if (glyphs[0] != 0)
+        glyph_test[0].Glyph = 1;
+    if (glyphs[3] != 0)
+        glyph_test[3].Glyph = 1;
+
+    test_shape_ok(hdc, test2, 4, &Control, &State, 1, 4, t2_c, glyph_test);
 
     test_valid = find_font_for_range(hdc, "Microsoft Sans Serif", 11, test_hebrew[0], &hfont, &hfont_orig);
     if (hfont != NULL)
@@ -1331,7 +1341,7 @@ static void test_ScriptShape(HDC hdc)
     static const WCHAR test2[] = {0x202B, 'i', 'n', 0x202C,0};
     HRESULT hr;
     SCRIPT_CACHE sc = NULL;
-    WORD glyphs[4], glyphs2[4], logclust[4];
+    WORD glyphs[4], glyphs2[4], logclust[4], glyphs3[4];
     SCRIPT_VISATTR attrs[4];
     SCRIPT_ITEM items[2];
     int nb, i, j;
@@ -1392,13 +1402,17 @@ static void test_ScriptShape(HDC hdc)
     sc = NULL;
 
     memset(glyphs2,-1,sizeof(glyphs2));
+    memset(glyphs3,-1,sizeof(glyphs3));
     memset(logclust,-1,sizeof(logclust));
     memset(attrs,-1,sizeof(attrs));
+
+    GetGlyphIndicesW(hdc, test2, 4, glyphs3, 0);
+
     hr = ScriptShape(hdc, &sc, test2, 4, 4, &items[0].a, glyphs2, logclust, attrs, &nb);
     ok(hr == S_OK, "ScriptShape should return S_OK not %08x\n", hr);
     ok(nb == 4, "Wrong number of items\n");
-    ok(glyphs2[0] == 0 || broken(glyphs2[0] == 0x80), "Incorrect glyph for 0x202B\n");
-    ok(glyphs2[3] == 0 || broken(glyphs2[3] == 0x80), "Incorrect glyph for 0x202C\n");
+    ok(glyphs2[0] == glyphs3[0], "Incorrect glyph for 0x202B\n");
+    ok(glyphs2[3] == glyphs3[3], "Incorrect glyph for 0x202C\n");
     ok(logclust[0] == 0, "clusters out of order\n");
     ok(logclust[1] == 1, "clusters out of order\n");
     ok(logclust[2] == 2, "clusters out of order\n");
@@ -1812,13 +1826,19 @@ static void test_ScriptGetCMap(HDC hdc, unsigned short pwOutGlyphs[256])
     ScriptFreeCache( &psc);
     ok (!psc, "psc is not null after ScriptFreeCache\n");
 
+    /* ScriptGetCMap returns whatever font defines, no special treatment for control chars */
     cInChars = cChars = 4;
-    hr = ScriptGetCMap(hdc, &psc, TestItem2, cInChars, dwFlags, pwOutGlyphs3);
-    ok (hr == S_FALSE, "ScriptGetCMap should return S_FALSE not (%08x)\n", hr);
-    ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
-    ok(pwOutGlyphs3[0] == 0 || broken(pwOutGlyphs3[0] == 0x80), "Glyph 0 should be default glyph\n");
-    ok(pwOutGlyphs3[3] == 0 || broken(pwOutGlyphs3[0] == 0x80), "Glyph 0 should be default glyph\n");
+    GetGlyphIndicesW(hdc, TestItem2, cInChars, pwOutGlyphs2, 0);
 
+    hr = ScriptGetCMap(hdc, &psc, TestItem2, cInChars, dwFlags, pwOutGlyphs3);
+    if (pwOutGlyphs3[0] == 0 || pwOutGlyphs3[3] == 0)
+        ok(hr == S_FALSE, "ScriptGetCMap should return S_FALSE not (%08x)\n", hr);
+    else
+        ok(hr == S_OK, "ScriptGetCMap should return S_OK not (%08x)\n", hr);
+
+    ok(psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
+    ok(pwOutGlyphs3[0] == pwOutGlyphs2[0], "expected glyph %d, got %d\n", pwOutGlyphs2[0], pwOutGlyphs3[0]);
+    ok(pwOutGlyphs3[3] == pwOutGlyphs2[3], "expected glyph %d, got %d\n", pwOutGlyphs2[3], pwOutGlyphs3[3]);
 
     cInChars = cChars = 9;
     hr = ScriptGetCMap(hdc, &psc, TestItem3b, cInChars, dwFlags, pwOutGlyphs2);
