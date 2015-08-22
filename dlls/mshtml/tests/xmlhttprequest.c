@@ -805,6 +805,9 @@ static void test_async_xhr_abort(IHTMLDocument2 *doc, const char *xml_url)
 
     trace("abort before send() is fired\n");
     create_xmlhttprequest(doc);
+    if(!xhr)
+        return;
+
     V_VT(&var) = VT_DISPATCH;
     V_DISPATCH(&var) = (IDispatch*)&xmlhttprequest_onreadystatechange_obj;
     hres = IHTMLXMLHttpRequest_put_onreadystatechange(xhr, var);
