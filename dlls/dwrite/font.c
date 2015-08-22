@@ -3597,8 +3597,13 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     BOOL is_rtl, nohint;
     FLOAT origin_x;
     UINT32 i, size;
+    HRESULT hr;
 
-    IDWriteFontFace_QueryInterface(analysis->run.fontFace, &IID_IDWriteFontFace2, (void**)&fontface2);
+    hr = IDWriteFontFace_QueryInterface(analysis->run.fontFace, &IID_IDWriteFontFace2, (void**)&fontface2);
+    if (FAILED(hr)) {
+        WARN("failed to get IDWriteFontFace2, 0x%08x\n", hr);
+        return;
+    }
 
     nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL || analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
 
