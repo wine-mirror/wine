@@ -145,16 +145,17 @@ HRESULT WINAPI D3D11CoreCreateDevice(IDXGIFactory *factory, IDXGIAdapter *adapte
 }
 
 HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type, HMODULE swrast, UINT flags,
-        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device,
+        const D3D_FEATURE_LEVEL *feature_levels, UINT levels, UINT sdk_version, ID3D11Device **device_out,
         D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context)
 {
     IDXGIFactory *factory;
+    ID3D11Device *device;
     HRESULT hr;
 
     TRACE("adapter %p, driver_type %s, swrast %p, flags %#x, feature_levels %p, levels %u, sdk_version %u, "
             "device %p, obtained_feature_level %p, immediate_context %p.\n",
             adapter, debug_d3d_driver_type(driver_type), swrast, flags, feature_levels, levels, sdk_version,
-            device, obtained_feature_level, immediate_context);
+            device_out, obtained_feature_level, immediate_context);
 
     if (adapter)
     {
@@ -237,7 +238,7 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
         }
     }
 
-    hr = D3D11CoreCreateDevice(factory, adapter, flags, feature_levels, levels, device);
+    hr = D3D11CoreCreateDevice(factory, adapter, flags, feature_levels, levels, &device);
     IDXGIAdapter_Release(adapter);
     IDXGIFactory_Release(factory);
     if (FAILED(hr))
@@ -246,15 +247,20 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
         return hr;
     }
 
-    TRACE("Created ID3D11Device %p.\n", *device);
+    TRACE("Created ID3D11Device %p.\n", device);
 
     if (obtained_feature_level)
-        *obtained_feature_level = ID3D11Device_GetFeatureLevel(*device);
+        *obtained_feature_level = ID3D11Device_GetFeatureLevel(device);
 
     if (immediate_context)
-        ID3D11Device_GetImmediateContext(*device, immediate_context);
+        ID3D11Device_GetImmediateContext(device, immediate_context);
 
-    return hr;
+    if (device_out)
+        *device_out = device;
+    else
+        ID3D11Device_Release(device);
+
+    return S_OK;
 }
 
 HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type,
