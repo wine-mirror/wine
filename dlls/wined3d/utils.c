@@ -4207,6 +4207,72 @@ BOOL wined3d_format_convert_color_to_float(const struct wined3d_format *format,
     }
 }
 
+void wined3d_format_get_float_color_key(const struct wined3d_format *format,
+        const struct wined3d_color_key *key, struct wined3d_color *float_colors)
+{
+    struct wined3d_color slop;
+
+    switch (format->id)
+    {
+        case WINED3DFMT_B8G8R8_UNORM:
+        case WINED3DFMT_B8G8R8A8_UNORM:
+        case WINED3DFMT_B8G8R8X8_UNORM:
+        case WINED3DFMT_B5G6R5_UNORM:
+        case WINED3DFMT_B5G5R5X1_UNORM:
+        case WINED3DFMT_B5G5R5A1_UNORM:
+        case WINED3DFMT_B4G4R4A4_UNORM:
+        case WINED3DFMT_B2G3R3_UNORM:
+        case WINED3DFMT_R8_UNORM:
+        case WINED3DFMT_A8_UNORM:
+        case WINED3DFMT_B2G3R3A8_UNORM:
+        case WINED3DFMT_B4G4R4X4_UNORM:
+        case WINED3DFMT_R10G10B10A2_UNORM:
+        case WINED3DFMT_R10G10B10A2_SNORM:
+        case WINED3DFMT_R8G8B8A8_UNORM:
+        case WINED3DFMT_R8G8B8X8_UNORM:
+        case WINED3DFMT_R16G16_UNORM:
+        case WINED3DFMT_B10G10R10A2_UNORM:
+            slop.r = 0.5f / ((1 << format->red_size) - 1);
+            slop.g = 0.5f / ((1 << format->green_size) - 1);
+            slop.b = 0.5f / ((1 << format->blue_size) - 1);
+            slop.a = 0.5f / ((1 << format->alpha_size) - 1);
+
+            float_colors[0].r = color_to_float(key->color_space_low_value, format->red_size, format->red_offset)
+                    - slop.r;
+            float_colors[0].g = color_to_float(key->color_space_low_value, format->green_size, format->green_offset)
+                    - slop.g;
+            float_colors[0].b = color_to_float(key->color_space_low_value, format->blue_size, format->blue_offset)
+                    - slop.b;
+            float_colors[0].a = color_to_float(key->color_space_low_value, format->alpha_size, format->alpha_offset)
+                    - slop.a;
+
+            float_colors[1].r = color_to_float(key->color_space_high_value, format->red_size, format->red_offset)
+                    + slop.r;
+            float_colors[1].g = color_to_float(key->color_space_high_value, format->green_size, format->green_offset)
+                    + slop.g;
+            float_colors[1].b = color_to_float(key->color_space_high_value, format->blue_size, format->blue_offset)
+                    + slop.b;
+            float_colors[1].a = color_to_float(key->color_space_high_value, format->alpha_size, format->alpha_offset)
+                    + slop.a;
+            break;
+
+        case WINED3DFMT_P8_UINT:
+            float_colors[0].r = 0.0f;
+            float_colors[0].g = 0.0f;
+            float_colors[0].b = 0.0f;
+            float_colors[0].a = (key->color_space_low_value - 0.5f) / 255.0f;
+
+            float_colors[1].r = 0.0f;
+            float_colors[1].g = 0.0f;
+            float_colors[1].b = 0.0f;
+            float_colors[1].a = (key->color_space_high_value + 0.5f) / 255.0f;
+            break;
+
+        default:
+            ERR("Unhandled color key to float conversion for format %s.\n", debug_d3dformat(format->id));
+    }
+}
+
 /* DirectDraw stuff */
 enum wined3d_format_id pixelformat_for_depth(DWORD depth)
 {

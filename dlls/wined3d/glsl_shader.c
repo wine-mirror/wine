@@ -1266,12 +1266,11 @@ static void shader_glsl_load_fog_uniform(const struct wined3d_context *context,
 static void shader_glsl_load_color_key_constant(const struct glsl_ps_program *ps,
         const struct wined3d_gl_info *gl_info, const struct wined3d_state *state)
 {
-    struct wined3d_color float_key;
+    struct wined3d_color float_key[2];
     const struct wined3d_texture *texture = state->textures[0];
 
-    wined3d_format_convert_color_to_float(texture->resource.format, NULL,
-            texture->async.src_blt_color_key.color_space_high_value, &float_key);
-    GL_EXTCALL(glUniform4fv(ps->color_key_location, 1, &float_key.r));
+    wined3d_format_get_float_color_key(texture->resource.format, &texture->async.src_blt_color_key, float_key);
+    GL_EXTCALL(glUniform4fv(ps->color_key_location, 2, &float_key[0].r));
 }
 
 /* Context activation is done by the caller (state handler). */
@@ -6168,7 +6167,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     if (tfactor_used)
         shader_addline(buffer, "uniform vec4 tex_factor;\n");
     if (settings->color_key_enabled)
-        shader_addline(buffer, "uniform vec4 color_key;\n");
+        shader_addline(buffer, "uniform vec4 color_key[2];\n");
     shader_addline(buffer, "uniform vec4 specular_enable;\n");
 
     if (settings->sRGB_write)
@@ -6332,7 +6331,10 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     }
 
     if (settings->color_key_enabled)
-        shader_addline(buffer, "if (all(equal(tex0, color_key))) discard;\n");
+    {
+        shader_addline(buffer, "if (all(greaterThanEqual(tex0, color_key[0])) && all(lessThan(tex0, color_key[1])))\n");
+        shader_addline(buffer, "    discard;\n");
+    }
 
     /* Generate the main shader */
     for (stage = 0; stage < MAX_TEXTURES; ++stage)

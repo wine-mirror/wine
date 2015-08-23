@@ -5756,8 +5756,9 @@ const struct wined3d_shader_backend_ops arb_program_shader_backend =
 
 /* ARB_fragment_program fixed function pipeline replacement definitions */
 #define ARB_FFP_CONST_TFACTOR           0
-#define ARB_FFP_CONST_COLOR_KEY         ((ARB_FFP_CONST_TFACTOR) + 1)
-#define ARB_FFP_CONST_SPECULAR_ENABLE   ((ARB_FFP_CONST_COLOR_KEY) + 1)
+#define ARB_FFP_CONST_COLOR_KEY_LOW     ((ARB_FFP_CONST_TFACTOR) + 1)
+#define ARB_FFP_CONST_COLOR_KEY_HIGH    ((ARB_FFP_CONST_COLOR_KEY_LOW) + 1)
+#define ARB_FFP_CONST_SPECULAR_ENABLE   ((ARB_FFP_CONST_COLOR_KEY_HIGH) + 1)
 #define ARB_FFP_CONST_CONSTANT(i)       ((ARB_FFP_CONST_SPECULAR_ENABLE) + 1 + i)
 #define ARB_FFP_CONST_BUMPMAT(i)        ((ARB_FFP_CONST_CONSTANT(7)) + 1 + i)
 #define ARB_FFP_CONST_LUMINANCE(i)      ((ARB_FFP_CONST_BUMPMAT(7)) + 1 + i)
@@ -6030,7 +6031,7 @@ static void color_key_arbfp(struct wined3d_context *context, const struct wined3
 {
     struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    struct wined3d_color float_key;
+    struct wined3d_color float_key[2];
     const struct wined3d_texture *texture = state->textures[0];
 
     if (!texture)
@@ -6046,14 +6047,17 @@ static void color_key_arbfp(struct wined3d_context *context, const struct wined3
             return;
 
         priv = device->shader_priv;
-        priv->pshader_const_dirty[ARB_FFP_CONST_COLOR_KEY] = 1;
-        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_COLOR_KEY + 1);
+        priv->pshader_const_dirty[ARB_FFP_CONST_COLOR_KEY_LOW] = 1;
+        priv->pshader_const_dirty[ARB_FFP_CONST_COLOR_KEY_HIGH] = 1;
+        priv->highest_dirty_ps_const = max(priv->highest_dirty_ps_const, ARB_FFP_CONST_COLOR_KEY_HIGH + 1);
     }
 
-    wined3d_format_convert_color_to_float(texture->resource.format, NULL,
-            texture->async.src_blt_color_key.color_space_high_value, &float_key);
-    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_COLOR_KEY, &float_key.r));
-    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_COLOR_KEY, &float_key.r)");
+    wined3d_format_get_float_color_key(texture->resource.format, &texture->async.src_blt_color_key, float_key);
+
+    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_COLOR_KEY_LOW, &float_key[0].r));
+    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_COLOR_KEY_LOW, &float_key[0].r)");
+    GL_EXTCALL(glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_COLOR_KEY_HIGH, &float_key[1].r));
+    checkGLcall("glProgramEnvParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB, ARB_FFP_CONST_COLOR_KEY_HIGH, &float_key[1].r)");
 }
 
 static const char *get_argreg(struct wined3d_string_buffer *buffer, DWORD argnum, unsigned int stage, DWORD arg)
@@ -6308,7 +6312,8 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
 
     if (settings->color_key_enabled)
     {
-        shader_addline(&buffer, "PARAM color_key = program.env[%u];\n", ARB_FFP_CONST_COLOR_KEY);
+        shader_addline(&buffer, "PARAM color_key_low = program.env[%u];\n", ARB_FFP_CONST_COLOR_KEY_LOW);
+        shader_addline(&buffer, "PARAM color_key_high = program.env[%u];\n", ARB_FFP_CONST_COLOR_KEY_HIGH);
         tex_read[0] = TRUE;
     }
 
@@ -6492,10 +6497,12 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
 
     if (settings->color_key_enabled)
     {
-        shader_addline(&buffer, "SUB TMP, tex0, color_key;\n");
-        shader_addline(&buffer, "DP4 TMP.b, TMP, TMP;\n");
-        shader_addline(&buffer, "SGE TMP, -TMP.b, 0.0;\n");
-        shader_addline(&buffer, "KIL -TMP;\n");
+        shader_addline(&buffer, "SLT TMP, tex0, color_key_low;\n"); /* below low key */
+        shader_addline(&buffer, "SGE ret, tex0, color_key_high;\n"); /* above high key */
+        shader_addline(&buffer, "ADD TMP, TMP, ret;\n"); /* or */
+        shader_addline(&buffer, "DP4 TMP.b, TMP, TMP;\n"); /* on any channel */
+        shader_addline(&buffer, "SGE TMP, -TMP.b, 0.0;\n"); /* logical not */
+        shader_addline(&buffer, "KIL -TMP;\n"); /* discard if true */
     }
 
     /* Generate the main shader */
@@ -6901,7 +6908,8 @@ struct arbfp_blit_desc
 };
 
 #define ARBFP_BLIT_PARAM_SIZE 0
-#define ARBFP_BLIT_PARAM_COLOR_KEY 1
+#define ARBFP_BLIT_PARAM_COLOR_KEY_LOW 1
+#define ARBFP_BLIT_PARAM_COLOR_KEY_HIGH 2
 
 struct arbfp_blit_priv
 {
@@ -7586,13 +7594,16 @@ static GLuint arbfp_gen_plain_shader(struct arbfp_blit_priv *priv,
     if (type->use_color_key)
     {
         shader_addline(&buffer, "TEMP color;\n");
-        shader_addline(&buffer, "TEMP compare;\n");
-        shader_addline(&buffer, "PARAM color_key = program.local[%u];\n", ARBFP_BLIT_PARAM_COLOR_KEY);
+        shader_addline(&buffer, "TEMP less, greater;\n");
+        shader_addline(&buffer, "PARAM color_key_low = program.local[%u];\n", ARBFP_BLIT_PARAM_COLOR_KEY_LOW);
+        shader_addline(&buffer, "PARAM color_key_high = program.local[%u];\n", ARBFP_BLIT_PARAM_COLOR_KEY_HIGH);
         shader_addline(&buffer, "TEX color, fragment.texcoord[0], texture[0], %s;\n", tex_target);
-        shader_addline(&buffer, "SUB compare, color, color_key;\n");
-        shader_addline(&buffer, "DP4 compare.r, compare, compare;\n");
-        shader_addline(&buffer, "SGE compare, -compare.r, 0.0;\n");
-        shader_addline(&buffer, "KIL -compare;\n");
+        shader_addline(&buffer, "SLT less, color, color_key_low;\n"); /* below low key */
+        shader_addline(&buffer, "SGE greater, color, color_key_high;\n"); /* above high key */
+        shader_addline(&buffer, "ADD less, less, greater;\n"); /* or */
+        shader_addline(&buffer, "DP4 less.b, less, less;\n"); /* on any channel */
+        shader_addline(&buffer, "SGE less, -less.b, 0.0;\n"); /* logical not */
+        shader_addline(&buffer, "KIL -less;\n"); /* discard if true */
         shader_addline(&buffer, "MOV result.color, color;\n");
     }
     else
@@ -7622,7 +7633,7 @@ static HRESULT arbfp_blit_set(void *blit_priv, struct wined3d_context *context, 
     struct wine_rb_entry *entry;
     struct arbfp_blit_type type;
     struct arbfp_blit_desc *desc;
-    struct wined3d_color float_color_key;
+    struct wined3d_color float_color_key[2];
 
     if (is_complex_fixup(surface->resource.format->color_fixup))
         fixup = get_complex_fixup(surface->resource.format->color_fixup);
@@ -7723,10 +7734,11 @@ err_out:
     checkGLcall("glProgramLocalParameter4fvARB");
     if (type.use_color_key)
     {
-        wined3d_format_convert_color_to_float(surface->resource.format, NULL,
-                color_key->color_space_high_value, &float_color_key);
+        wined3d_format_get_float_color_key(surface->resource.format, color_key, float_color_key);
         GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
-                ARBFP_BLIT_PARAM_COLOR_KEY, &float_color_key.r));
+                ARBFP_BLIT_PARAM_COLOR_KEY_LOW, &float_color_key[0].r));
+        GL_EXTCALL(glProgramLocalParameter4fvARB(GL_FRAGMENT_PROGRAM_ARB,
+                ARBFP_BLIT_PARAM_COLOR_KEY_HIGH, &float_color_key[1].r));
         checkGLcall("glProgramLocalParameter4fvARB");
     }
 
