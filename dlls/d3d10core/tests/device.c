@@ -19,6 +19,7 @@
 #define COBJMACROS
 #include "initguid.h"
 #include "d3d10.h"
+#include "d3d11.h"
 #include "wine/test.h"
 #include <limits.h>
 
@@ -169,6 +170,37 @@ static IDXGISwapChain *create_swapchain(ID3D10Device *device, HWND window, BOOL 
     IDXGIFactory_Release(factory);
 
     return swapchain;
+}
+
+static void test_feature_level(void)
+{
+    D3D_FEATURE_LEVEL feature_level;
+    ID3D11Device *device11;
+    ID3D10Device *device10;
+    HRESULT hr;
+
+    if (!(device10 = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = ID3D10Device_QueryInterface(device10, &IID_ID3D11Device, (void **)&device11);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Failed to query ID3D11Device interface, hr %#x.\n", hr);
+    if (FAILED(hr))
+    {
+        skip("D3D11 is not available.\n");
+        ID3D10Device_Release(device10);
+        return;
+    }
+
+    /* Device was created by D3D10CreateDevice. */
+    feature_level = ID3D11Device_GetFeatureLevel(device11);
+    ok(feature_level == D3D_FEATURE_LEVEL_10_0, "Got unexpected feature level %#x.\n", feature_level);
+
+    ID3D11Device_Release(device11);
+    ID3D10Device_Release(device10);
 }
 
 static void test_create_texture2d(void)
@@ -3432,6 +3464,7 @@ static void test_update_subresource(void)
 
 START_TEST(device)
 {
+    test_feature_level();
     test_create_texture2d();
     test_create_texture3d();
     test_create_depthstencil_view();
