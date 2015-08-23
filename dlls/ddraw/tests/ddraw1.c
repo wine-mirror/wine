@@ -7279,6 +7279,340 @@ done:
     DestroyWindow(window);
 }
 
+static void test_colorkey_precision(void)
+{
+    static D3DTLVERTEX quad[] =
+    {
+        {{  0.0f}, {480.0f}, {0.0f}, {1.0f}, {0x00000000}, {0x00000000}, {0.0f}, {1.0f}},
+        {{  0.0f}, {  0.0f}, {0.0f}, {1.0f}, {0x00000000}, {0x00000000}, {0.0f}, {0.0f}},
+        {{640.0f}, {480.0f}, {0.0f}, {1.0f}, {0x00000000}, {0x00000000}, {1.0f}, {1.0f}},
+        {{640.0f}, {  0.0f}, {0.0f}, {1.0f}, {0x00000000}, {0x00000000}, {1.0f}, {0.0f}},
+    };
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    IDirect3DDevice *device;
+    IDirectDraw *ddraw;
+    IDirectDrawSurface *rt;
+    IDirect3DViewport *viewport;
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    UINT inst_length;
+    void *ptr;
+    HWND window;
+    HRESULT hr;
+    IDirectDrawSurface *src, *dst, *texture;
+    D3DTEXTUREHANDLE handle;
+    IDirect3DTexture *d3d_texture;
+    IDirect3DMaterial *green;
+    DDSURFACEDESC surface_desc, lock_desc;
+    ULONG refcount;
+    D3DCOLOR color;
+    unsigned int t, c;
+    DDCOLORKEY ckey;
+    DDBLTFX fx;
+    DWORD data[4] = {0}, color_mask;
+    D3DDEVICEDESC device_desc, hel_desc;
+    BOOL warp;
+    static const struct
+    {
+        unsigned int max, shift, bpp, clear;
+        const char *name;
+        DDPIXELFORMAT fmt;
+    }
+    tests[] =
+    {
+        {
+            255, 0, 4, 0x00345678, "D3DFMT_X8R8G8B8",
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
+                {32}, {0x00ff0000}, {0x0000ff00}, {0x000000ff}, {0x00000000}
+            }
+
+        },
+        {
+            63, 5, 2, 0x5678, "D3DFMT_R5G6B5, G channel",
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
+                {16}, {0xf800}, {0x07e0}, {0x001f}, {0x0000}
+            }
+
+        },
+        {
+            31, 0, 2, 0x5678, "D3DFMT_R5G6B5, B channel",
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB, 0,
+                {16}, {0xf800}, {0x07e0}, {0x001f}, {0x0000}
+            }
+
+        },
+        {
+            15, 0, 2, 0x0678, "D3DFMT_A4R4G4B4",
+            {
+                sizeof(DDPIXELFORMAT), DDPF_RGB | DDPF_ALPHAPIXELS, 0,
+                {16}, {0x0f00}, {0x00f0}, {0x000f}, {0xf000}
+            }
+
+        },
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        IDirectDraw_Release(ddraw);
+        return;
+    }
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    /* The Windows 8 WARP driver has plenty of false negatives in X8R8G8B8
+     * (color key doesn't match although the values are equal), and a false
+     * positive when the color key is 0 and the texture contains the value 1.
+     * I don't want to mark this broken unconditionally since this would
+     * essentially disable the test on Windows. Try to detect WARP (and I
+     * guess mismatch other SW renderers) by its ability to texture from
+     * system memory. Also on random occasions 254 == 255 and 255 != 255.*/
+    memset(&device_desc, 0, sizeof(device_desc));
+    device_desc.dwSize = sizeof(device_desc);
+    memset(&hel_desc, 0, sizeof(hel_desc));
+    hel_desc.dwSize = sizeof(hel_desc);
+    hr = IDirect3DDevice_GetCaps(device, &device_desc, &hel_desc);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    warp = !!(device_desc.dwDevCaps & D3DDEVCAPS_TEXTURESYSTEMMEMORY);
+
+    green = create_diffuse_material(device, 0.0f, 1.0f, 0.0f, 0.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, green);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    memset(&fx, 0, sizeof(fx));
+    fx.dwSize = sizeof(fx);
+    memset(&lock_desc, 0, sizeof(lock_desc));
+    lock_desc.dwSize = sizeof(lock_desc);
+
+    for (t = 0; t < sizeof(tests) / sizeof(*tests); ++t)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+        surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+        surface_desc.dwWidth = 4;
+        surface_desc.dwHeight = 1;
+        surface_desc.ddpfPixelFormat = tests[t].fmt;
+        /* Windows XP (at least with the r200 driver, other drivers untested) produces
+         * garbage when doing color keyed texture->texture blits. */
+        hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &src, NULL);
+        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+        hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &dst, NULL);
+        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+        fx.dwFillColor = tests[t].clear;
+        /* On the w8 testbot (WARP driver) the blit result has different values in the
+         * X channel. */
+        color_mask = U2(tests[t].fmt).dwRBitMask
+                | U3(tests[t].fmt).dwGBitMask
+                | U4(tests[t].fmt).dwBBitMask;
+
+        for (c = 0; c <= tests[t].max; ++c)
+        {
+            /* The idiotic Nvidia Windows driver can't change the color key on a d3d
+             * texture after it has been set once... */
+            surface_desc.dwFlags |= DDSD_CKSRCBLT;
+            surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+            surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = c << tests[t].shift;
+            surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = c << tests[t].shift;
+            hr = IDirectDraw_CreateSurface(ddraw, &surface_desc, &texture, NULL);
+            ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+            hr = IDirectDrawSurface_QueryInterface(texture, &IID_IDirect3DTexture, (void **)&d3d_texture);
+            ok(SUCCEEDED(hr), "Failed to get texture interface, hr %#x.\n", hr);
+            hr = IDirect3DTexture_GetHandle(d3d_texture, device, &handle);
+            ok(SUCCEEDED(hr), "Failed to get texture handle, hr %#x.\n", hr);
+            IDirect3DTexture_Release(d3d_texture);
+
+            hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+            ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+            memcpy(exec_desc.lpData, quad, sizeof(quad));
+
+            ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad);
+            emit_process_vertices(&ptr, D3DPROCESSVERTICES_COPY, 0, 8);
+            emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, D3DZB_FALSE);
+            emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, handle);
+            emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREMAPBLEND, D3DTBLEND_MODULATEALPHA);
+            /* D3DRENDERSTATE_COLORKEYENABLE is supposed to be on by default on version
+             * 1 devices, but for some reason it randomly defaults to FALSE on the W8
+             * testbot. This is either the fault of Windows 8 or the WARP driver.
+             * Also D3DRENDERSTATE_COLORKEYENABLE was introduced in D3D 5 aka version 2
+             * devices only, which might imply this doesn't actually do anything on
+             * WARP. */
+            emit_set_rs(&ptr, D3DRENDERSTATE_COLORKEYENABLE, TRUE);
+
+            emit_tquad(&ptr, 0);
+            emit_tquad(&ptr, 4);
+            emit_set_rs(&ptr, D3DRENDERSTATE_TEXTUREHANDLE, 0);
+            emit_end(&ptr);
+
+            inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+            inst_length -= sizeof(quad);
+            hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+            ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+            set_execute_data(execute_buffer, 8, sizeof(quad), inst_length);
+
+            hr = IDirectDrawSurface_Blt(dst, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
+            ok(SUCCEEDED(hr), "Failed to clear destination surface, hr %#x.\n", hr);
+
+            hr = IDirectDrawSurface_Lock(src, NULL, &lock_desc, DDLOCK_WAIT, NULL);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+            switch (tests[t].bpp)
+            {
+                case 4:
+                    ((DWORD *)lock_desc.lpSurface)[0] = (c ? c - 1 : 0) << tests[t].shift;
+                    ((DWORD *)lock_desc.lpSurface)[1] = c << tests[t].shift;
+                    ((DWORD *)lock_desc.lpSurface)[2] = min(c + 1, tests[t].max) << tests[t].shift;
+                    ((DWORD *)lock_desc.lpSurface)[3] = 0xffffffff;
+                    break;
+
+                case 2:
+                    ((WORD *)lock_desc.lpSurface)[0] = (c ? c - 1 : 0) << tests[t].shift;
+                    ((WORD *)lock_desc.lpSurface)[1] = c << tests[t].shift;
+                    ((WORD *)lock_desc.lpSurface)[2] = min(c + 1, tests[t].max) << tests[t].shift;
+                    ((WORD *)lock_desc.lpSurface)[3] = 0xffff;
+                    break;
+            }
+            hr = IDirectDrawSurface_Unlock(src, 0);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+            hr = IDirectDrawSurface_Blt(texture, NULL, src, NULL, DDBLT_WAIT, NULL);
+            ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+            ckey.dwColorSpaceLowValue = c << tests[t].shift;
+            ckey.dwColorSpaceHighValue = c << tests[t].shift;
+            hr = IDirectDrawSurface_SetColorKey(src, DDCKEY_SRCBLT, &ckey);
+            ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+            hr = IDirectDrawSurface_Blt(dst, NULL, src, NULL, DDBLT_KEYSRC | DDBLT_WAIT, NULL);
+            ok(SUCCEEDED(hr), "Failed to blit, hr %#x.\n", hr);
+
+            /* Don't make this read only, it somehow breaks the detection of the Nvidia bug below. */
+            hr = IDirectDrawSurface_Lock(dst, NULL, &lock_desc, DDLOCK_WAIT, NULL);
+            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+            switch (tests[t].bpp)
+            {
+                case 4:
+                    data[0] = ((DWORD *)lock_desc.lpSurface)[0] & color_mask;
+                    data[1] = ((DWORD *)lock_desc.lpSurface)[1] & color_mask;
+                    data[2] = ((DWORD *)lock_desc.lpSurface)[2] & color_mask;
+                    data[3] = ((DWORD *)lock_desc.lpSurface)[3] & color_mask;
+                    break;
+
+                case 2:
+                    data[0] = ((WORD *)lock_desc.lpSurface)[0] & color_mask;
+                    data[1] = ((WORD *)lock_desc.lpSurface)[1] & color_mask;
+                    data[2] = ((WORD *)lock_desc.lpSurface)[2] & color_mask;
+                    data[3] = ((WORD *)lock_desc.lpSurface)[3] & color_mask;
+                    break;
+            }
+            hr = IDirectDrawSurface_Unlock(dst, 0);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+            if (!c)
+            {
+                ok(data[0] == tests[t].clear, "Expected surface content %#x, got %#x, format %s, c=%u.\n",
+                        tests[t].clear, data[0], tests[t].name, c);
+
+                if (data[3] == tests[t].clear)
+                {
+                    /* My Geforce GTX 460 on Windows 7 misbehaves when A4R4G4B4 is blitted with color
+                     * keying: The blit takes ~0.5 seconds, and subsequent color keying draws are broken,
+                     * even when a different surface is used. The blit itself doesn't draw anything,
+                     * so we can detect the bug by looking at the otherwise unused 4th texel. It should
+                     * never be masked out by the key.
+                     *
+                     * Also appears to affect the testbot in some way with R5G6B5. Color keying is
+                     * terrible on WARP. */
+                    skip("Nvidia A4R4G4B4 color keying blit bug detected, skipping.\n");
+                    IDirectDrawSurface_Release(texture);
+                    IDirectDrawSurface_Release(src);
+                    IDirectDrawSurface_Release(dst);
+                    goto done;
+                }
+            }
+            else
+                ok(data[0] == (c - 1) << tests[t].shift, "Expected surface content %#x, got %#x, format %s, c=%u.\n",
+                        (c - 1) << tests[t].shift, data[0], tests[t].name, c);
+
+            ok(data[1] == tests[t].clear, "Expected surface content %#x, got %#x, format %s, c=%u.\n",
+                    tests[t].clear, data[1], tests[t].name, c);
+
+            if (c == tests[t].max)
+                ok(data[2] == tests[t].clear, "Expected surface content %#x, got %#x, format %s, c=%u.\n",
+                        tests[t].clear, data[2], tests[t].name, c);
+            else
+                ok(data[2] == (c + 1) << tests[t].shift, "Expected surface content %#x, got %#x, format %s, c=%u.\n",
+                        (c + 1) << tests[t].shift, data[2], tests[t].name, c);
+
+            hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+            ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+            hr = IDirect3DDevice_BeginScene(device);
+            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+            hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_UNCLIPPED);
+            ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+            hr = IDirect3DDevice_EndScene(device);
+            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+            color = get_surface_color(rt, 80, 240);
+            if (!c)
+                ok(compare_color(color, 0x0000ff00, 1) || broken(warp && compare_color(color, 0x00000000, 1)),
+                        "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                        color, tests[t].name, c);
+            else
+                ok(compare_color(color, 0x00000000, 1) || broken(warp && compare_color(color, 0x0000ff00, 1)),
+                        "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                        color, tests[t].name, c);
+
+            color = get_surface_color(rt, 240, 240);
+            ok(compare_color(color, 0x0000ff00, 1) || broken(warp && compare_color(color, 0x00000000, 1)),
+                    "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                    color, tests[t].name, c);
+
+            color = get_surface_color(rt, 400, 240);
+            if (c == tests[t].max)
+                ok(compare_color(color, 0x0000ff00, 1) || broken(warp && compare_color(color, 0x00000000, 1)),
+                        "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                        color, tests[t].name, c);
+            else
+                ok(compare_color(color, 0x00000000, 1) || broken(warp && compare_color(color, 0x0000ff00, 1)),
+                        "Got unexpected color 0x%08x, format %s, c=%u.\n",
+                        color, tests[t].name, c);
+
+            IDirectDrawSurface_Release(texture);
+        }
+        IDirectDrawSurface_Release(src);
+        IDirectDrawSurface_Release(dst);
+    }
+done:
+
+    destroy_viewport(device, viewport);
+    destroy_material(green);
+    IDirectDrawSurface_Release(rt);
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    IDirect3DDevice_Release(device);
+    refcount = IDirectDraw_Release(ddraw);
+    ok(refcount == 0, "Ddraw object not properly released, refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     IDirectDraw *ddraw;
@@ -7348,4 +7682,5 @@ START_TEST(ddraw1)
     test_texturemapblend();
     test_viewport_clear_rect();
     test_color_fill();
+    test_colorkey_precision();
 }
