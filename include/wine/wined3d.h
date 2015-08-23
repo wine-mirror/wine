@@ -1252,7 +1252,6 @@ enum wined3d_display_rotation
 
 #define WINED3D_RESZ_CODE                                       0x7fa05000
 
-#define WINED3D_CKEY_COLORSPACE                                 0x00000001
 #define WINED3D_CKEY_DST_BLT                                    0x00000002
 #define WINED3D_CKEY_DST_OVERLAY                                0x00000004
 #define WINED3D_CKEY_SRC_BLT                                    0x00000008

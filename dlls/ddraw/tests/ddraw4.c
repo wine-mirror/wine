@@ -9872,6 +9872,122 @@ static void test_colorkey_precision(void)
     DestroyWindow(window);
 }
 
+static void test_range_colorkey(void)
+{
+    IDirectDraw4 *ddraw;
+    HWND window;
+    HRESULT hr;
+    IDirectDrawSurface4 *surface;
+    DDSURFACEDESC2 surface_desc;
+    ULONG refcount;
+    DDCOLORKEY ckey;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CKSRCBLT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
+    surface_desc.dwWidth = 1;
+    surface_desc.dwHeight = 1;
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
+    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0x00ff0000;
+    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x0000ff00;
+    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x000000ff;
+    U5(U4(surface_desc).ddpfPixelFormat).dwRGBAlphaBitMask = 0x00000000;
+
+    /* Creating a surface with a range color key fails with DDERR_NOCOLORKEY. */
+    surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00000000;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0x00000001;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DDERR_NOCOLORKEYHW, "Got unexpected hr %#x.\n", hr);
+
+    surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00000001;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0x00000000;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DDERR_NOCOLORKEYHW, "Got unexpected hr %#x.\n", hr);
+
+    /* Same for DDSCAPS_OFFSCREENPLAIN. */
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00000000;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0x00000001;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DDERR_NOCOLORKEYHW, "Got unexpected hr %#x.\n", hr);
+
+    surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00000001;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0x00000000;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(hr == DDERR_NOCOLORKEYHW, "Got unexpected hr %#x.\n", hr);
+
+    surface_desc.ddckCKSrcBlt.dwColorSpaceLowValue = 0x00000000;
+    surface_desc.ddckCKSrcBlt.dwColorSpaceHighValue = 0x00000000;
+    hr = IDirectDraw4_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    /* Setting a range color key without DDCKEY_COLORSPACE collapses the key. */
+    ckey.dwColorSpaceLowValue = 0x00000000;
+    ckey.dwColorSpaceHighValue = 0x00000001;
+    hr = IDirectDrawSurface4_SetColorKey(surface, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_GetColorKey(surface, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(!ckey.dwColorSpaceLowValue, "Got unexpected value 0x%08x.\n", ckey.dwColorSpaceLowValue);
+    ok(!ckey.dwColorSpaceHighValue, "Got unexpected value 0x%08x.\n", ckey.dwColorSpaceHighValue);
+
+    ckey.dwColorSpaceLowValue = 0x00000001;
+    ckey.dwColorSpaceHighValue = 0x00000000;
+    hr = IDirectDrawSurface4_SetColorKey(surface, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface4_GetColorKey(surface, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(ckey.dwColorSpaceLowValue == 0x00000001, "Got unexpected value 0x%08x.\n", ckey.dwColorSpaceLowValue);
+    ok(ckey.dwColorSpaceHighValue == 0x00000001, "Got unexpected value 0x%08x.\n", ckey.dwColorSpaceHighValue);
+
+    /* DDCKEY_COLORSPACE is ignored if the key is a single value. */
+    ckey.dwColorSpaceLowValue = 0x00000000;
+    ckey.dwColorSpaceHighValue = 0x00000000;
+    hr = IDirectDrawSurface4_SetColorKey(surface, DDCKEY_SRCBLT | DDCKEY_COLORSPACE, &ckey);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    /* Using it with a range key results in DDERR_NOCOLORKEYHW. */
+    ckey.dwColorSpaceLowValue = 0x00000001;
+    ckey.dwColorSpaceHighValue = 0x00000000;
+    hr = IDirectDrawSurface4_SetColorKey(surface, DDCKEY_SRCBLT | DDCKEY_COLORSPACE, &ckey);
+    ok(hr == DDERR_NOCOLORKEYHW, "Got unexpected hr %#x.\n", hr);
+    ckey.dwColorSpaceLowValue = 0x00000000;
+    ckey.dwColorSpaceHighValue = 0x00000001;
+    hr = IDirectDrawSurface4_SetColorKey(surface, DDCKEY_SRCBLT | DDCKEY_COLORSPACE, &ckey);
+    ok(hr == DDERR_NOCOLORKEYHW, "Got unexpected hr %#x.\n", hr);
+    /* Range destination keys don't work either. */
+    hr = IDirectDrawSurface4_SetColorKey(surface, DDCKEY_DESTBLT | DDCKEY_COLORSPACE, &ckey);
+    ok(hr == DDERR_NOCOLORKEYHW, "Got unexpected hr %#x.\n", hr);
+
+    /* Just to show it's not because of A, R, and G having equal values. */
+    ckey.dwColorSpaceLowValue = 0x00000000;
+    ckey.dwColorSpaceHighValue = 0x01010101;
+    hr = IDirectDrawSurface4_SetColorKey(surface, DDCKEY_SRCBLT | DDCKEY_COLORSPACE, &ckey);
+    ok(hr == DDERR_NOCOLORKEYHW, "Got unexpected hr %#x.\n", hr);
+
+    /* None of these operations modified the key. */
+    hr = IDirectDrawSurface4_GetColorKey(surface, DDCKEY_SRCBLT, &ckey);
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(!ckey.dwColorSpaceLowValue, "Got unexpected value 0x%08x.\n", ckey.dwColorSpaceLowValue);
+    ok(!ckey.dwColorSpaceHighValue, "Got unexpected value 0x%08x.\n", ckey.dwColorSpaceHighValue);
+
+    IDirectDrawSurface4_Release(surface),
+    refcount = IDirectDraw4_Release(ddraw);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     IDirectDraw4 *ddraw;
@@ -9956,4 +10072,5 @@ START_TEST(ddraw4)
     test_color_fill();
     test_texcoordindex();
     test_colorkey_precision();
+    test_range_colorkey();
 }

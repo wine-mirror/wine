@@ -570,20 +570,14 @@ HRESULT CDECL wined3d_texture_set_color_key(struct wined3d_texture *texture,
         DWORD flags, const struct wined3d_color_key *color_key)
 {
     struct wined3d_device *device = texture->resource.device;
-    static const DWORD all_flags = WINED3D_CKEY_COLORSPACE | WINED3D_CKEY_DST_BLT
-            | WINED3D_CKEY_DST_OVERLAY | WINED3D_CKEY_SRC_BLT | WINED3D_CKEY_SRC_OVERLAY;
+    static const DWORD all_flags = WINED3D_CKEY_DST_BLT | WINED3D_CKEY_DST_OVERLAY
+            | WINED3D_CKEY_SRC_BLT | WINED3D_CKEY_SRC_OVERLAY;
 
     TRACE("texture %p, flags %#x, color_key %p.\n", texture, flags, color_key);
 
     if (flags & ~all_flags)
     {
         WARN("Invalid flags passed, returning WINED3DERR_INVALIDCALL.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    if (flags & WINED3D_CKEY_COLORSPACE)
-    {
-        FIXME("Unhandled flags %#x.\n", flags);
         return WINED3DERR_INVALIDCALL;
     }
 

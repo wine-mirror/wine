@@ -903,7 +903,7 @@ static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *dat
 
     if (op->set)
     {
-        switch (op->flags & ~WINED3D_CKEY_COLORSPACE)
+        switch (op->flags)
         {
             case WINED3D_CKEY_DST_BLT:
                 texture->async.dst_blt_color_key = op->color_key;
@@ -935,7 +935,7 @@ static void wined3d_cs_exec_set_color_key(struct wined3d_cs *cs, const void *dat
     }
     else
     {
-        switch (op->flags & ~WINED3D_CKEY_COLORSPACE)
+        switch (op->flags)
         {
             case WINED3D_CKEY_DST_BLT:
                 texture->async.color_key_flags &= ~WINED3D_CKEY_DST_BLT;

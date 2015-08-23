@@ -4641,15 +4641,21 @@ static HRESULT ddraw_surface_set_color_key(struct ddraw_surface *surface, DWORD 
     DDCOLORKEY fixed_color_key;
     HRESULT hr = WINED3D_OK;
 
+    if (flags & DDCKEY_COLORSPACE)
+    {
+        if (color_key && color_key->dwColorSpaceLowValue != color_key->dwColorSpaceHighValue)
+        {
+            WARN("Range color keys are not supported, returning DDERR_NOCOLORKEYHW.\n");
+            return DDERR_NOCOLORKEYHW;
+        }
+        flags &= ~DDCKEY_COLORSPACE;
+    }
+
     wined3d_mutex_lock();
 
     if (color_key)
     {
-        fixed_color_key = *color_key;
-        /* Handle case where dwColorSpaceHighValue < dwColorSpaceLowValue */
-        if (fixed_color_key.dwColorSpaceHighValue < fixed_color_key.dwColorSpaceLowValue)
-            fixed_color_key.dwColorSpaceHighValue = fixed_color_key.dwColorSpaceLowValue;
-
+        fixed_color_key.dwColorSpaceLowValue = fixed_color_key.dwColorSpaceHighValue = color_key->dwColorSpaceLowValue;
         switch (flags & ~DDCKEY_COLORSPACE)
         {
             case DDCKEY_DESTBLT:
@@ -6025,6 +6031,20 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
             pitch = desc->u1.lPitch;
         }
+    }
+
+    if (((desc->dwFlags & DDSD_CKDESTOVERLAY)
+            && desc->u3.ddckCKDestOverlay.dwColorSpaceLowValue != desc->u3.ddckCKDestOverlay.dwColorSpaceHighValue)
+            || ((desc->dwFlags & DDSD_CKDESTBLT)
+            && desc->ddckCKDestBlt.dwColorSpaceLowValue != desc->ddckCKDestBlt.dwColorSpaceHighValue)
+            || ((desc->dwFlags & DDSD_CKSRCOVERLAY)
+            && desc->ddckCKSrcOverlay.dwColorSpaceLowValue != desc->ddckCKSrcOverlay.dwColorSpaceHighValue)
+            || ((desc->dwFlags & DDSD_CKSRCBLT)
+            && desc->ddckCKSrcBlt.dwColorSpaceLowValue != desc->ddckCKSrcBlt.dwColorSpaceHighValue))
+    {
+        WARN("Range color keys not supported, returning DDERR_NOCOLORKEYHW.\n");
+        HeapFree(GetProcessHeap(), 0, texture);
+        return DDERR_NOCOLORKEYHW;
     }
 
     if (desc->ddsCaps.dwCaps & (DDSCAPS_OVERLAY))
