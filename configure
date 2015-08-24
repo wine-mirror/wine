@@ -1282,6 +1282,7 @@ enable_tapi32
 enable_taskschd
 enable_traffic
 enable_twain_32
+enable_ucrtbase
 enable_unicows
 enable_updspapi
 enable_url
@@ -17703,6 +17704,7 @@ wine_fn_config_dll twain.dll16 enable_win16
 wine_fn_config_dll twain_32 enable_twain_32
 wine_fn_config_test dlls/twain_32/tests twain_32_test
 wine_fn_config_dll typelib.dll16 enable_win16
+wine_fn_config_dll ucrtbase enable_ucrtbase
 wine_fn_config_dll unicows enable_unicows implib
 wine_fn_config_dll updspapi enable_updspapi
 wine_fn_config_dll url enable_url implib
