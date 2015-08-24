@@ -1822,6 +1822,25 @@ static void update_control_text(FileDialogImpl *This)
     }
 }
 
+static LRESULT CALLBACK dropdown_subclass_proc(HWND hwnd, UINT umessage, WPARAM wparam, LPARAM lparam)
+{
+    static const WCHAR prop_this[] = {'i','t','e','m','d','l','g','_','T','h','i','s',0};
+    static const WCHAR prop_oldwndproc[] = {'i','t','e','m','d','l','g','_','o','l','d','w','n','d','p','r','o','c',0};
+
+    if (umessage == WM_LBUTTONDOWN)
+    {
+        FileDialogImpl *This = (FileDialogImpl*)GetPropW(hwnd, prop_this);
+
+        SendMessageW(hwnd, BM_SETCHECK, BST_CHECKED, 0);
+        show_opendropdown(This);
+        SendMessageW(hwnd, BM_SETCHECK, BST_UNCHECKED, 0);
+
+        return 0;
+    }
+
+    return CallWindowProcW((WNDPROC)GetPropW(hwnd, prop_oldwndproc), hwnd, umessage, wparam, lparam);
+}
+
 static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
 {
     FileDialogImpl *This = (FileDialogImpl*)lParam;
@@ -1883,6 +1902,8 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
         LOGFONTW lfw, lfw_marlett;
         HFONT dialog_font;
         static const WCHAR marlett[] = {'M','a','r','l','e','t','t',0};
+        static const WCHAR prop_this[] = {'i','t','e','m','d','l','g','_','T','h','i','s',0};
+        static const WCHAR prop_oldwndproc[] = {'i','t','e','m','d','l','g','_','o','l','d','w','n','d','p','r','o','c',0};
 
         dropdown_hwnd = GetDlgItem(This->dlg_hwnd, psh1);
 
@@ -1899,6 +1920,11 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
         This->hfont_opendropdown = CreateFontIndirectW(&lfw_marlett);
 
         SendMessageW(dropdown_hwnd, WM_SETFONT, (LPARAM)This->hfont_opendropdown, 0);
+
+        /* Subclass button so we can handle LBUTTONDOWN */
+        SetPropW(dropdown_hwnd, prop_this, (HANDLE)This);
+        SetPropW(dropdown_hwnd, prop_oldwndproc,
+            (HANDLE)SetWindowLongPtrW(dropdown_hwnd, GWLP_WNDPROC, (LONG_PTR)dropdown_subclass_proc));
     }
 
     ctrl_container_reparent(This, This->dlg_hwnd);
