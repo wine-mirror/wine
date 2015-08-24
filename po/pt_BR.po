@@ -3147,10 +3147,8 @@ msgid "&View Source"
 msgstr "Ver Código Fo&nte"
 
 #: hhctrl.rc:83
-#, fuzzy
-#| msgid "Properties"
 msgid "Proper&ties"
-msgstr "Propriedades"
+msgstr "&Propriedades"
 
 #: hhctrl.rc:87 shdoclc.rc:79 shdoclc.rc:93 shdoclc.rc:117 shdoclc.rc:159
 #: shdoclc.rc:183 user32.rc:60 wordpad.rc:104
@@ -7464,10 +7462,8 @@ msgid "Add Control"
 msgstr "Adicionar Controle"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "&Fonte..."
+msgstr "&Converter..."
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8591,10 +8587,8 @@ msgid "Duplex:"
 msgstr "Frente e verso:"
 
 #: wineps.rc:50
-#, fuzzy
-#| msgid "&Setup"
 msgid "Setup"
-msgstr "&Configurar"
+msgstr "Configurar"
 
 #: wininet.rc:42 wininet.rc:62
 msgid "Realm"
@@ -8922,16 +8916,12 @@ msgstr ""
 "em disco suficiente ou que ainda esteja conectado a rede."
 
 #: winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "Não é possível encontrar o dispositivo especificado. Certifique-se que está "
-"instalado ou que o nome do dispositivo foi escrito corretamente."
+"instalado e que o nome do dispositivo foi escrito corretamente."
 
 #: winmm.rc:87
 msgid ""
@@ -9252,16 +9242,12 @@ msgstr ""
 "espaço em disco suficiente ou que ainda esteja conectado na rede."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Instalador Wine Mono"
+msgstr "Mapeador de Som do Wine"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "coluna"
+msgstr "Volume"
 
 #: winmm.rc:138
 msgid "Master Volume"
@@ -9798,7 +9784,6 @@ msgstr ""
 "MOVE falhará se o local antigo e o novo local estão em unidades diferentes.\n"
 
 #: cmd.rc:142
-#, fuzzy
 msgid ""
 "PATH displays or changes the cmd search path.\n"
 "\n"
@@ -9813,8 +9798,8 @@ msgstr ""
 "PATH mostra ou permite mudar o caminho de busca de programas do cmd.\n"
 "\n"
 "Digitando PATH mostrará a atual configuração do comando PATH (inicialmente\n"
-"este valor é especificado no arquivo wine.conf). Para mudar as\n"
-"configurações, digite novos valores no comando PATH.\n"
+"lido do registro). Para mudar as configurações digite novos valores no "
+"comando PATH.\n"
 "\n"
 "Também é possível modificar o comando PATH usando a variável de ambiente\n"
 "PATH, por exemplo:\n"
@@ -11595,10 +11580,8 @@ msgid "Error: Invalid command line parameters\n"
 msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to add keys to remote machine\n"
 msgid "Error: Unable to access remote machine\n"
-msgstr "Erro: Incapaz de adicionar chaves à máquina remota\n"
+msgstr "Erro: Não foi possível acessar a máquina remota\n"
 
 #: reg.rc:38
 msgid ""
@@ -11608,10 +11591,8 @@ msgstr ""
 "especificado\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Unsupported type.\n"
 msgid "Error: Unsupported type\n"
-msgstr "Tipo não suportado.\n"
+msgstr "Erro: Tipo não suportado.\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -12946,10 +12927,8 @@ msgid ""
 msgstr ""
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Erro: Opção inválida '%c'.\n"
+msgstr "uninstaller: Opção inválida [%1].\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -13239,10 +13218,8 @@ msgid "&Test Sound"
 msgstr "&Testar Som"
 
 #: winecfg.rc:277 winecfg.rc:90
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Configuração do Wine"
+msgstr "Configuração dos alto-falantes"
 
 #: winecfg.rc:280
 msgid "Speakers:"
@@ -13354,21 +13331,19 @@ msgstr "(Padrão do sistema)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr ""
+msgstr "Surround 5.1"
 
 #: winecfg.rc:92
-#, fuzzy
-#| msgid "graphic"
 msgid "Quadraphonic"
-msgstr "gráfico"
+msgstr "Quadrafônico"
 
 #: winecfg.rc:93
 msgid "Stereo"
-msgstr ""
+msgstr "Estéreo"
 
 #: winecfg.rc:94
 msgid "Mono"
-msgstr ""
+msgstr "Mono"
 
 #: winecfg.rc:54
 msgid ""
@@ -13629,16 +13604,12 @@ msgid "Command history"
 msgstr "Histórico de comandos"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Zona do buffer"
+msgstr "Tamanho do &buffer:"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "&Remover duplicados"
+msgstr "Remover &duplicados"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -13653,22 +13624,16 @@ msgid "S&hift"
 msgstr "&Rotação"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "&Fechar o console"
+msgstr "Console"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Edição rápida"
+msgstr "Modo de &edição rápida"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "&Modo Experiente"
+msgstr "Modo de &inserção"
 
 #: wineconsole.rc:88
 msgid "&Font"
