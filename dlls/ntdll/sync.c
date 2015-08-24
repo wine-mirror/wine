@@ -990,12 +990,9 @@ NTSTATUS WINAPI NtSetTimerResolution(IN ULONG resolution,
 
 /* wait operations */
 
-/******************************************************************
- *		NtWaitForMultipleObjects (NTDLL.@)
- */
-NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
-                                          BOOLEAN wait_any, BOOLEAN alertable,
-                                          const LARGE_INTEGER *timeout )
+static NTSTATUS wait_objects( DWORD count, const HANDLE *handles,
+                              BOOLEAN wait_any, BOOLEAN alertable,
+                              const LARGE_INTEGER *timeout )
 {
     select_op_t select_op;
     UINT i, flags = SELECT_INTERRUPTIBLE;
@@ -1010,11 +1007,22 @@ NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
 
 
 /******************************************************************
+ *		NtWaitForMultipleObjects (NTDLL.@)
+ */
+NTSTATUS WINAPI NtWaitForMultipleObjects( DWORD count, const HANDLE *handles,
+                                          BOOLEAN wait_any, BOOLEAN alertable,
+                                          const LARGE_INTEGER *timeout )
+{
+    return wait_objects( count, handles, wait_any, alertable, timeout );
+}
+
+
+/******************************************************************
  *		NtWaitForSingleObject (NTDLL.@)
  */
 NTSTATUS WINAPI NtWaitForSingleObject(HANDLE handle, BOOLEAN alertable, const LARGE_INTEGER *timeout )
 {
-    return NtWaitForMultipleObjects( 1, &handle, FALSE, alertable, timeout );
+    return wait_objects( 1, &handle, FALSE, alertable, timeout );
 }
 
 
