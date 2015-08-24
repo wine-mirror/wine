@@ -77,11 +77,10 @@ static HRESULT WINAPI d3drm_texture2_QueryInterface(IDirect3DRMTexture2 *iface, 
 static ULONG WINAPI d3drm_texture2_AddRef(IDirect3DRMTexture2 *iface)
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
-    ULONG refcount = InterlockedIncrement(&texture->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("iface %p.\n", iface);
 
-    return refcount;
+    return IDirect3DRMTexture3_AddRef(&texture->IDirect3DRMTexture3_iface);
 }
 
 static ULONG WINAPI d3drm_texture2_Release(IDirect3DRMTexture2 *iface)
