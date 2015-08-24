@@ -86,14 +86,10 @@ static ULONG WINAPI d3drm_texture2_AddRef(IDirect3DRMTexture2 *iface)
 static ULONG WINAPI d3drm_texture2_Release(IDirect3DRMTexture2 *iface)
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
-    ULONG refcount = InterlockedDecrement(&texture->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("iface %p.\n", iface);
 
-    if (!refcount)
-        HeapFree(GetProcessHeap(), 0, texture);
-
-    return refcount;
+    return IDirect3DRMTexture3_Release(&texture->IDirect3DRMTexture3_iface);
 }
 
 static HRESULT WINAPI d3drm_texture2_Clone(IDirect3DRMTexture2 *iface,
