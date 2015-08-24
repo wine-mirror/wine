@@ -53,25 +53,7 @@ static HRESULT WINAPI d3drm_texture2_QueryInterface(IDirect3DRMTexture2 *iface, 
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualGUID(riid, &IID_IDirect3DRMTexture2)
-            || IsEqualGUID(riid, &IID_IDirect3DRMTexture)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        *out = &texture->IDirect3DRMTexture2_iface;
-    }
-    else if (IsEqualGUID(riid, &IID_IDirect3DRMTexture3))
-    {
-        *out = &texture->IDirect3DRMTexture3_iface;
-    }
-    else
-    {
-        *out = NULL;
-        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-        return E_NOINTERFACE;
-    }
-
-    IUnknown_AddRef((IUnknown *)*out);
-    return S_OK;
+    return IDirect3DRMTexture3_QueryInterface(&texture->IDirect3DRMTexture3_iface, riid, out);
 }
 
 static ULONG WINAPI d3drm_texture2_AddRef(IDirect3DRMTexture2 *iface)
