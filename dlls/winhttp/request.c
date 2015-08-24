@@ -2723,6 +2723,7 @@ struct winhttp_request
     LONG receive_timeout;
     WINHTTP_PROXY_INFO proxy;
     BOOL async;
+    UINT url_codepage;
 };
 
 static inline struct winhttp_request *impl_from_IWinHttpRequest( IWinHttpRequest *iface )
@@ -3071,6 +3072,7 @@ static void initialize_request( struct winhttp_request *request )
     request->connect_timeout = 60000;
     request->send_timeout    = 30000;
     request->receive_timeout = 30000;
+    request->url_codepage = CP_UTF8;
     VariantInit( &request->data );
     request->state = REQUEST_STATE_INITIALIZED;
 }
@@ -3091,6 +3093,7 @@ static void reset_request( struct winhttp_request *request )
     request->bytes_read = 0;
     request->error    = ERROR_SUCCESS;
     request->async    = FALSE;
+    request->url_codepage = CP_UTF8;
     VariantClear( &request->data );
     request->state = REQUEST_STATE_INITIALIZED;
 }
@@ -4019,6 +4022,28 @@ static HRESULT WINAPI winhttp_request_put_Option(
             request->disable_feature &= ~WINHTTP_DISABLE_REDIRECTS;
         else
             request->disable_feature |= WINHTTP_DISABLE_REDIRECTS;
+        break;
+    }
+    case WinHttpRequestOption_URLCodePage:
+    {
+        static const WCHAR utf8W[] = {'u','t','f','-','8',0};
+        VARIANT cp;
+
+        VariantInit( &cp );
+        hr = VariantChangeType( &cp, &value, 0, VT_UI4 );
+        if (SUCCEEDED( hr ))
+        {
+            request->url_codepage = V_UI4( &cp );
+            TRACE("URL codepage: %u\n", request->url_codepage);
+        }
+        else if (V_VT( &value ) == VT_BSTR && !strcmpiW( V_BSTR( &value ), utf8W ))
+        {
+            TRACE("URL codepage: UTF-8\n");
+            request->url_codepage = CP_UTF8;
+            hr = S_OK;
+        }
+        else
+            FIXME("URL codepage %s is not recognized\n", debugstr_variant( &value ));
         break;
     }
     default:
