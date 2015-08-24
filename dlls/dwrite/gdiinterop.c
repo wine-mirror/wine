@@ -299,6 +299,11 @@ static void blit_subpixel_888(struct dib_data *dib, int dib_width, const BYTE *s
     }
 }
 
+static inline DWORD colorref_to_pixel_888(COLORREF color)
+{
+    return (((color >> 16) & 0xff) | (color & 0xff00) | ((color << 16) & 0xff0000));
+}
+
 static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *iface,
     FLOAT originX, FLOAT originY, DWRITE_MEASURING_MODE measuring_mode,
     DWRITE_GLYPH_RUN const *run, IDWriteRenderingParams *params, COLORREF color,
@@ -412,6 +417,7 @@ static HRESULT WINAPI rendertarget_DrawGlyphRun(IDWriteBitmapRenderTarget1 *ifac
         UINT32 size = (target.right - target.left) * (target.bottom - target.top);
         BYTE *bitmap;
 
+        color = colorref_to_pixel_888(color);
         if (texturetype == DWRITE_TEXTURE_CLEARTYPE_3x1)
             size *= 3;
         bitmap = heap_alloc_zero(size);
