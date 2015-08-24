@@ -94,7 +94,7 @@
 @ stub MFGetNumericNameFromSockaddr
 @ stub MFGetPlaneSize
 @ stub MFGetPlatform
-@ stub MFGetPluginControl
+@ stdcall MFGetPluginControl(ptr)
 @ stub MFGetPrivateWorkqueues
 @ stub MFGetSockaddrFromNumericName
 @ stub MFGetStrideForBitmapInfoHeader
