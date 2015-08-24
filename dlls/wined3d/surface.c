@@ -2844,12 +2844,25 @@ void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl
 {
     if (multisample)
     {
+        DWORD samples;
+
         if (surface->rb_multisample)
             return;
 
+        /* TODO: Nvidia exposes their Coverage Sample Anti-Aliasing (CSAA) feature
+         * through type == MULTISAMPLE_XX and quality != 0. This could be mapped
+         * to GL_NV_framebuffer_multisample_coverage.
+         *
+         * AMD has a similar feature called Enhanced Quality Anti-Aliasing (EQAA),
+         * but it does not have an equivalent OpenGL extension. */
+        if (surface->resource.multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
+            samples = surface->resource.multisample_quality;
+        else
+            samples = surface->resource.multisample_type;
+
         gl_info->fbo_ops.glGenRenderbuffers(1, &surface->rb_multisample);
         gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, surface->rb_multisample);
-        gl_info->fbo_ops.glRenderbufferStorageMultisample(GL_RENDERBUFFER, surface->resource.multisample_type,
+        gl_info->fbo_ops.glRenderbufferStorageMultisample(GL_RENDERBUFFER, samples,
                 surface->resource.format->glInternal, surface->pow2Width, surface->pow2Height);
         checkGLcall("glRenderbufferStorageMultisample()");
         TRACE("Created multisample rb %u.\n", surface->rb_multisample);
@@ -5394,12 +5407,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     BOOL lockable = flags & WINED3D_SURFACE_MAPPABLE;
     unsigned int resource_size;
     HRESULT hr;
-
-    if (multisample_quality > 0)
-    {
-        FIXME("multisample_quality set to %u, substituting 0.\n", multisample_quality);
-        multisample_quality = 0;
-    }
 
     /* Quick lockable sanity check.
      * TODO: remove this after surfaces, usage and lockability have been debugged properly
