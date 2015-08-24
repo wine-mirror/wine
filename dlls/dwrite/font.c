@@ -751,7 +751,8 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
     DWRITE_GLYPH_METRICS *metrics, BOOL is_sideways)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FLOAT scale;
+    DWRITE_MEASURING_MODE mode;
+    FLOAT scale, size;
     HRESULT hr;
     UINT32 i;
 
@@ -761,7 +762,9 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
     if (m && memcmp(m, &identity, sizeof(*m)))
         FIXME("transform is not supported, %s\n", debugstr_matrix(m));
 
-    scale = emSize * ppdip / This->metrics.designUnitsPerEm;
+    size = emSize * ppdip;
+    scale = size / This->metrics.designUnitsPerEm;
+    mode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
 
     for (i = 0; i < glyph_count; i++) {
         DWRITE_GLYPH_METRICS *ret = metrics + i;
@@ -771,9 +774,11 @@ static HRESULT WINAPI dwritefontface_GetGdiCompatibleGlyphMetrics(IDWriteFontFac
         if (FAILED(hr))
             return hr;
 
+        ret->advanceWidth = freetype_get_glyph_advance(iface, size, glyphs[i], mode);
+        ret->advanceWidth = round_metric(ret->advanceWidth * This->metrics.designUnitsPerEm / size);
+
 #define SCALE_METRIC(x) ret->x = round_metric(round_metric((design.x) * scale) / scale)
         SCALE_METRIC(leftSideBearing);
-        SCALE_METRIC(advanceWidth);
         SCALE_METRIC(rightSideBearing);
         SCALE_METRIC(topSideBearing);
         SCALE_METRIC(advanceHeight);
@@ -884,16 +889,11 @@ static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace2 *i
 
     TRACE("(%p)->(%u %p %p %d)\n", This, glyph_count, glyphs, advances, is_sideways);
 
-    for (i = 0; i < glyph_count; i++) {
-        DWRITE_GLYPH_METRICS metrics = { 0 };
-        HRESULT hr;
+    if (is_sideways)
+        FIXME("sideways mode not supported\n");
 
-        hr = IDWriteFontFace2_GetDesignGlyphMetrics(iface, glyphs + i, 1, &metrics, is_sideways);
-        if (FAILED(hr))
-            return hr;
-
-        advances[i] = is_sideways ? metrics.advanceHeight : metrics.advanceWidth;
-    }
+    for (i = 0; i < glyph_count; i++)
+        advances[i] = freetype_get_glyph_advance(iface, This->metrics.designUnitsPerEm, glyphs[i], DWRITE_MEASURING_MODE_NATURAL);
 
     return S_OK;
 }
@@ -903,8 +903,7 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
     BOOL is_sideways, UINT32 glyph_count, UINT16 const *glyphs, INT32 *advances)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FLOAT scale;
-    HRESULT hr;
+    DWRITE_MEASURING_MODE mode;
     UINT32 i;
 
     TRACE("(%p)->(%.2f %.2f %p %d %d %u %p %p)\n", This, em_size, ppdip, m,
@@ -915,8 +914,8 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
         return E_INVALIDARG;
     }
 
-    scale = em_size * ppdip / This->metrics.designUnitsPerEm;
-    if (scale == 0.0) {
+    em_size *= ppdip;
+    if (em_size == 0.0) {
         memset(advances, 0, sizeof(*advances) * glyph_count);
         return S_OK;
     }
@@ -924,14 +923,10 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
     if (m && memcmp(m, &identity, sizeof(*m)))
         FIXME("transform is not supported, %s\n", debugstr_matrix(m));
 
+    mode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
     for (i = 0; i < glyph_count; i++) {
-        hr = IDWriteFontFace2_GetDesignGlyphAdvances(iface, 1, glyphs + i, advances + i, is_sideways);
-        if (FAILED(hr))
-            return hr;
-
-#define SCALE_METRIC(x) x = round_metric(round_metric((x) * scale) / scale)
-        SCALE_METRIC(advances[i]);
-#undef  SCALE_METRIC
+        advances[i] = freetype_get_glyph_advance(iface, em_size, glyphs[i], mode);
+        advances[i] = round_metric(advances[i] * This->metrics.designUnitsPerEm / em_size);
     }
 
     return S_OK;

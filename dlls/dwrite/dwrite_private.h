@@ -204,6 +204,7 @@ extern INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2*,UINT16,UINT1
 extern void freetype_get_glyph_bbox(IDWriteFontFace2*,FLOAT,UINT16,BOOL,RECT*) DECLSPEC_HIDDEN;
 extern void freetype_get_glyph_bitmap(IDWriteFontFace2*,FLOAT,UINT16,const RECT*,BYTE*) DECLSPEC_HIDDEN;
 extern INT freetype_get_charmap_index(IDWriteFontFace2*,BOOL*) DECLSPEC_HIDDEN;
+extern INT32 freetype_get_glyph_advance(IDWriteFontFace2*,FLOAT,UINT16,DWRITE_MEASURING_MODE) DECLSPEC_HIDDEN;
 
 /* Glyph shaping */
 enum SCRIPT_JUSTIFY

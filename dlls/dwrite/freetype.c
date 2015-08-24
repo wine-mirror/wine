@@ -599,6 +599,29 @@ INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
     return charmap_index;
 }
 
+INT32 freetype_get_glyph_advance(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode)
+{
+    FTC_ImageTypeRec imagetype;
+    FT_Glyph glyph;
+    INT32 advance;
+
+    imagetype.face_id = fontface;
+    imagetype.width = 0;
+    imagetype.height = emSize;
+    imagetype.flags = FT_LOAD_DEFAULT;
+    if (mode == DWRITE_MEASURING_MODE_NATURAL)
+        imagetype.flags |= FT_LOAD_NO_HINTING;
+
+    EnterCriticalSection(&freetype_cs);
+    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, index, &glyph, NULL) == 0)
+        advance = glyph->advance.x >> 16;
+    else
+        advance = 0;
+    LeaveCriticalSection(&freetype_cs);
+
+    return advance;
+}
+
 #else /* HAVE_FREETYPE */
 
 BOOL init_freetype(void)
@@ -665,6 +688,11 @@ INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
 {
     *is_symbol = FALSE;
     return -1;
+}
+
+INT32 freetype_get_glyph_advance(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, DWRITE_MEASURING_MODE mode)
+{
+    return 0;
 }
 
 #endif /* HAVE_FREETYPE */

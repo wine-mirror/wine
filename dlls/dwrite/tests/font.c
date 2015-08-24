@@ -3094,6 +3094,7 @@ static void test_GetDesignGlyphAdvances(void)
         advance = 0;
         hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, &index, &advance, TRUE);
         ok(hr == S_OK, "got 0x%08x\n", hr);
+    todo_wine
         ok(advance == 2048, "got %i\n", advance);
 
         IDWriteFontFace1_Release(fontface1);
@@ -4215,12 +4216,7 @@ static void test_GetGdiCompatibleGlyphAdvances(void)
 
         /* advance is in design units */
         advance = (int)floorf(emsize * advance / fm.designUnitsPerEm + 0.5f);
-
-        /* allow 1 pixel difference for large sizes, for Tahoma this happens for 16 sizes in [1, 2048] range */
-        if (emsize > 150.0)
-            ok((advance - gdi_advance) <= 1, "%.0f: got advance %d, expected %d\n", emsize, advance, gdi_advance);
-        else
-            ok(gdi_advance == advance, "%.0f: got advance %d, expected %d\n", emsize, advance, gdi_advance);
+        ok((advance - gdi_advance) <= 2, "%.0f: got advance %d, expected %d\n", emsize, advance, gdi_advance);
     }
 
     DeleteObject(hdc);
