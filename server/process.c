@@ -1181,8 +1181,6 @@ DECL_HANDLER(new_process)
 
     if (!(thread = create_process( socket_fd, current, req->inherit_all ))) goto done;
     process = thread->process;
-    process->debug_children = (req->create_flags & DEBUG_PROCESS)
-        && !(req->create_flags & DEBUG_ONLY_THIS_PROCESS);
     process->startup_info = (struct startup_info *)grab_object( info );
 
     if (parent->job
@@ -1223,9 +1221,15 @@ DECL_HANDLER(new_process)
 
     /* attach to the debugger if requested */
     if (req->create_flags & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS))
+    {
         set_process_debugger( process, current );
+        process->debug_children = !(req->create_flags & DEBUG_ONLY_THIS_PROCESS);
+    }
     else if (parent->debugger && parent->debug_children)
+    {
         set_process_debugger( process, parent->debugger );
+        process->debug_children = 1;
+    }
 
     if (!(req->create_flags & CREATE_NEW_PROCESS_GROUP))
         process->group_id = parent->group_id;
