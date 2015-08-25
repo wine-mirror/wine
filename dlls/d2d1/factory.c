@@ -239,6 +239,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_CreateWicBitmapRenderTarget(ID2D1Fa
             D3D10_CREATE_DEVICE_BGRA_SUPPORT, D3D10_FEATURE_LEVEL_10_0, D3D10_1_SDK_VERSION, &factory->wic_device)))
     {
         WARN("Failed to create device, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
         return hr;
     }
 
