@@ -13604,13 +13604,14 @@ fi
 fi
 if test "x$ac_cv_lib_openal" != xyes; then :
   case "x$with_openal" in
-  x)   as_fn_append wine_notices "|libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported." ;;
+  x)   as_fn_append wine_notices "|libopenal ${notice_platform}development files not found (or too old), OpenAL and XAudio2 won't be supported" ;;
   xno) ;;
-  *)   as_fn_error $? "libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported.
+  *)   as_fn_error $? "libopenal ${notice_platform}development files not found (or too old), OpenAL and XAudio2 won't be supported
 This is an error since --with-openal was requested." "$LINENO" 5 ;;
 esac
 fi
 test "x$ac_cv_lib_openal" = xyes || enable_openal32=${enable_openal32:-no}
+test "x$ac_cv_lib_openal" = xyes || enable_xaudio2_7=${enable_xaudio2_7:-no}
 
 if test "$ac_cv_header_kstat_h" = "yes"
 then

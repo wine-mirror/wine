@@ -41,7 +41,13 @@
 #include "mmdeviceapi.h"
 #include "audioclient.h"
 
+#include <AL/al.h>
+#include <AL/alc.h>
+#include <AL/alext.h>
+
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
+
+static ALCdevice *(ALC_APIENTRY *palcLoopbackOpenDeviceSOFT)(const ALCchar*);
 
 static HINSTANCE instance;
 
@@ -86,6 +92,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
     case DLL_PROCESS_ATTACH:
         instance = hinstDLL;
         DisableThreadLibraryCalls( hinstDLL );
+
+        if(!alcIsExtensionPresent(NULL, "ALC_SOFT_loopback") ||
+                !(palcLoopbackOpenDeviceSOFT = alcGetProcAddress(NULL, "alcLoopbackOpenDeviceSOFT"))){
+            ERR("XAudio2 requires the ALC_SOFT_loopback extension (OpenAL-Soft >= 1.14)\n");
+            return FALSE;
+        }
+
         break;
     }
     return TRUE;
@@ -173,6 +186,14 @@ struct _IXAudio2Impl {
 
     WCHAR **devids;
     UINT32 ndevs;
+
+    IAudioClient *aclient;
+    IAudioRenderClient *render;
+
+    WAVEFORMATEXTENSIBLE fmt;
+
+    ALCdevice *al_device;
+    ALCcontext *al_ctx;
 };
 
 static inline IXAudio2Impl *impl_from_IXAudio2(IXAudio2 *iface)
@@ -188,6 +209,32 @@ static inline IXAudio2Impl *impl_from_IXAudio27(IXAudio27 *iface)
 IXAudio2Impl *impl_from_IXAudio2MasteringVoice(IXAudio2MasteringVoice *iface)
 {
     return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio2MasteringVoice_iface);
+}
+
+static DWORD get_channel_mask(unsigned int channels)
+{
+    switch(channels){
+    case 0:
+        return 0;
+    case 1:
+        return KSAUDIO_SPEAKER_MONO;
+    case 2:
+        return KSAUDIO_SPEAKER_STEREO;
+    case 3:
+        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
+    case 4:
+        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
+    case 5:
+        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
+    case 6:
+        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
+    case 7:
+        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
+    case 8:
+        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
+    }
+    FIXME("Unknown speaker configuration: %u\n", channels);
+    return 0;
 }
 
 static void WINAPI XA2SRC_GetVoiceDetails(IXAudio2SourceVoice *iface,
@@ -891,7 +938,29 @@ static void WINAPI XA2M_GetOutputMatrix(IXAudio2MasteringVoice *iface,
 static void WINAPI XA2M_DestroyVoice(IXAudio2MasteringVoice *iface)
 {
     IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+
     TRACE("%p\n", This);
+
+    EnterCriticalSection(&This->lock);
+
+    if(!This->aclient){
+        LeaveCriticalSection(&This->lock);
+        return;
+    }
+
+    IAudioRenderClient_Release(This->render);
+    This->render = NULL;
+
+    IAudioClient_Release(This->aclient);
+    This->aclient = NULL;
+
+    alcCloseDevice(This->al_device);
+    This->al_device = NULL;
+
+    alcDestroyContext(This->al_ctx);
+    This->al_ctx = NULL;
+
+    LeaveCriticalSection(&This->lock);
 }
 
 /* not present in XAudio2 2.7 */
@@ -1164,6 +1233,8 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
             HeapFree(GetProcessHeap(), 0, sub);
         }
 
+        IXAudio2MasteringVoice_DestroyVoice(&This->IXAudio2MasteringVoice_iface);
+
         if(This->devenum)
             IMMDeviceEnumerator_Release(This->devenum);
         for(i = 0; i < This->ndevs; ++i)
@@ -1322,6 +1393,28 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
     return S_OK;
 }
 
+static ALenum al_get_loopback_format(const WAVEFORMATEXTENSIBLE *fmt)
+{
+    if(fmt->Format.wFormatTag == WAVE_FORMAT_PCM ||
+            (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmt->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
+        switch(fmt->Format.wBitsPerSample){
+        case 8:
+            return ALC_UNSIGNED_BYTE_SOFT;
+        case 16:
+            return ALC_SHORT_SOFT;
+        case 32:
+            return ALC_INT_SOFT;
+        }
+    }else if(fmt->Format.wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+            (fmt->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmt->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
+        if(fmt->Format.wBitsPerSample == 32)
+            return ALC_FLOAT_SOFT;
+    }
+    return 0;
+}
+
 static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
         IXAudio2MasteringVoice **ppMasteringVoice, UINT32 inputChannels,
         UINT32 inputSampleRate, UINT32 flags, const WCHAR *deviceId,
@@ -1329,8 +1422,12 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
         AUDIO_STREAM_CATEGORY streamCategory)
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
+    IMMDevice *dev;
+    HRESULT hr;
+    WAVEFORMATEX *fmt;
+    ALCint attrs[7];
 
-    FIXME("(%p)->(%p, %u, %u, 0x%x, %s, %p, 0x%x): stub!\n", This,
+    TRACE("(%p)->(%p, %u, %u, 0x%x, %s, %p, 0x%x)\n", This,
             ppMasteringVoice, inputChannels, inputSampleRate, flags,
             wine_dbgstr_w(deviceId), pEffectChain, streamCategory);
 
@@ -1340,12 +1437,183 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     if(pEffectChain)
         WARN("Effect chain is unimplemented\n");
 
-    /* TODO: Initialize mmdevice */
+    EnterCriticalSection(&This->lock);
 
     /* there can only be one Mastering Voice, so just build it into XA2 */
+    if(This->aclient){
+        LeaveCriticalSection(&This->lock);
+        return XAUDIO2_E_INVALID_CALL;
+    }
+
+    if(!deviceId){
+        if(This->ndevs == 0){
+            LeaveCriticalSection(&This->lock);
+            return ERROR_NOT_FOUND;
+        }
+        deviceId = This->devids[0];
+    }
+
+    hr = IMMDeviceEnumerator_GetDevice(This->devenum, deviceId, &dev);
+    if(FAILED(hr)){
+        WARN("GetDevice failed: %08x\n", hr);
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient,
+            CLSCTX_INPROC_SERVER, NULL, (void**)&This->aclient);
+    if(FAILED(hr)){
+        WARN("Activate(IAudioClient) failed: %08x\n", hr);
+        IMMDevice_Release(dev);
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    IMMDevice_Release(dev);
+
+    hr = IAudioClient_GetMixFormat(This->aclient, &fmt);
+    if(FAILED(hr)){
+        WARN("GetMixFormat failed: %08x\n", hr);
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    if(sizeof(WAVEFORMATEX) + fmt->cbSize > sizeof(WAVEFORMATEXTENSIBLE)){
+        FIXME("Mix format doesn't fit into WAVEFORMATEXTENSIBLE!\n");
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    if(inputChannels == XAUDIO2_DEFAULT_CHANNELS)
+        inputChannels = fmt->nChannels;
+    if(inputSampleRate == XAUDIO2_DEFAULT_SAMPLERATE)
+        inputSampleRate = fmt->nSamplesPerSec;
+
+    memcpy(&This->fmt, fmt, sizeof(WAVEFORMATEX) + fmt->cbSize);
+    This->fmt.Format.nChannels = inputChannels;
+    This->fmt.Format.nSamplesPerSec = inputSampleRate;
+    This->fmt.Format.nBlockAlign = This->fmt.Format.nChannels * This->fmt.Format.wBitsPerSample / 8;
+    This->fmt.Format.nAvgBytesPerSec = This->fmt.Format.nSamplesPerSec * This->fmt.Format.nBlockAlign;
+    This->fmt.dwChannelMask = get_channel_mask(This->fmt.Format.nChannels);
+
+    CoTaskMemFree(fmt);
+    fmt = NULL;
+
+    hr = IAudioClient_IsFormatSupported(This->aclient,
+            AUDCLNT_SHAREMODE_SHARED, &This->fmt.Format, &fmt);
+    if(hr == S_FALSE){
+        if(sizeof(WAVEFORMATEX) + fmt->cbSize > sizeof(WAVEFORMATEXTENSIBLE)){
+            FIXME("Mix format doesn't fit into WAVEFORMATEXTENSIBLE!\n");
+            hr = XAUDIO2_E_DEVICE_INVALIDATED;
+            goto exit;
+        }
+        memcpy(&This->fmt, fmt, sizeof(WAVEFORMATEX) + fmt->cbSize);
+    }
+
+    CoTaskMemFree(fmt);
+
+    hr = IAudioClient_Initialize(This->aclient, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK, inputSampleRate /* 1s buffer */,
+            0, &This->fmt.Format, NULL);
+    if(FAILED(hr)){
+        WARN("Initialize failed: %08x\n", hr);
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    hr = IAudioClient_GetService(This->aclient, &IID_IAudioRenderClient,
+            (void**)&This->render);
+    if(FAILED(hr)){
+        WARN("GetService(IAudioRenderClient) failed: %08x\n", hr);
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    /* setup openal context */
+    attrs[0] = ALC_FORMAT_CHANNELS_SOFT;
+    switch(inputChannels){
+    case 1:
+        attrs[1] = ALC_MONO_SOFT;
+        break;
+    case 2:
+        attrs[1] = ALC_STEREO_SOFT;
+        break;
+    case 4:
+        attrs[1] = ALC_QUAD_SOFT;
+        break;
+    case 6:
+        attrs[1] = ALC_5POINT1_SOFT;
+        break;
+    case 7:
+        attrs[1] = ALC_6POINT1_SOFT;
+        break;
+    case 8:
+        attrs[1] = ALC_7POINT1_SOFT;
+        break;
+    default:
+        WARN("OpenAL doesn't support %u channels\n", inputChannels);
+        LeaveCriticalSection(&This->lock);
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    }
+    attrs[2] = ALC_FREQUENCY;
+    attrs[3] = inputSampleRate;
+    attrs[4] = ALC_FORMAT_TYPE_SOFT;
+    attrs[5] = al_get_loopback_format(&This->fmt);
+    attrs[6] = 0;
+
+    if(!attrs[5]){
+        WARN("OpenAL can't output samples in this format\n");
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    This->al_device = palcLoopbackOpenDeviceSOFT(NULL);
+    if(!This->al_device){
+        WARN("alcLoopbackOpenDeviceSOFT failed\n");
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    This->al_ctx = alcCreateContext(This->al_device, attrs);
+    if(!This->al_ctx){
+        WARN("alcCreateContext failed\n");
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    if(alcMakeContextCurrent(This->al_ctx) == ALC_FALSE){
+        WARN("alcMakeContextCurrent failed\n");
+        hr = XAUDIO2_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    IAudioClient_Start(This->aclient);
+
     *ppMasteringVoice = &This->IXAudio2MasteringVoice_iface;
 
-    return S_OK;
+exit:
+    if(FAILED(hr)){
+        if(This->render){
+            IAudioRenderClient_Release(This->render);
+            This->render = NULL;
+        }
+        if(This->aclient){
+            IAudioClient_Release(This->aclient);
+            This->aclient = NULL;
+        }
+        if(This->al_ctx){
+            alcDestroyContext(This->al_ctx);
+            This->al_ctx = NULL;
+        }
+        if(This->al_device){
+            alcCloseDevice(This->al_device);
+            This->al_device = NULL;
+        }
+    }
+
+    LeaveCriticalSection(&This->lock);
+
+    return hr;
 }
 
 static HRESULT WINAPI IXAudio2Impl_StartEngine(IXAudio2 *iface)
