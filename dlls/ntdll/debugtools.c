@@ -39,6 +39,7 @@
 #include "ntdll_misc.h"
 
 WINE_DECLARE_DEBUG_CHANNEL(tid);
+WINE_DECLARE_DEBUG_CHANNEL(pid);
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);
 
 static struct __wine_debug_functions default_funcs;
@@ -170,6 +171,8 @@ static int NTDLL_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_chan
             ULONG ticks = NtGetTickCount();
             ret = wine_dbg_printf( "%3u.%03u:", ticks / 1000, ticks % 1000 );
         }
+        if (TRACE_ON(pid))
+            ret += wine_dbg_printf( "%04x:", GetCurrentProcessId() );
         if (TRACE_ON(tid))
             ret += wine_dbg_printf( "%04x:", GetCurrentThreadId() );
         if (cls < sizeof(classes)/sizeof(classes[0]))

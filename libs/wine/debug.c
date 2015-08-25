@@ -35,6 +35,7 @@
 
 #if defined(__MINGW32__) || defined(_MSC_VER)
 WINE_DECLARE_DEBUG_CHANNEL(tid);
+WINE_DECLARE_DEBUG_CHANNEL(pid);
 #endif
 
 static const char * const debug_classes[] = { "fixme", "err", "warn", "trace" };
@@ -407,6 +408,8 @@ static int default_dbg_vlog( enum __wine_debug_class cls, struct __wine_debug_ch
     int ret = 0;
 
 #if defined(__MINGW32__) || defined(_MSC_VER)
+    if (TRACE_ON(pid))
+        ret += wine_dbg_printf( "%04x:", GetCurrentProcessId() );
     if (TRACE_ON(tid))
         ret += wine_dbg_printf( "%04x:", GetCurrentThreadId() );
 #endif
