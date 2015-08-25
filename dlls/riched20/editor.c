@@ -96,7 +96,7 @@
   + EM_SETCHARFORMAT (partly done, no ANSI)
   - EM_SETEDITSTYLE
   + EM_SETEVENTMASK (few notifications supported)
-  - EM_SETFONTSIZE
+  + EM_SETFONTSIZE
   - EM_SETIMECOLOR 1.0asian
   - EM_SETIMEOPTIONS 1.0asian
   - EM_SETIMESTATUS
@@ -3265,7 +3265,6 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
   UNSUPPORTED_MSG(EM_SELECTIONTYPE)
   UNSUPPORTED_MSG(EM_SETBIDIOPTIONS)
   UNSUPPORTED_MSG(EM_SETEDITSTYLE)
-  UNSUPPORTED_MSG(EM_SETFONTSIZE)
   UNSUPPORTED_MSG(EM_SETLANGOPTIONS)
   UNSUPPORTED_MSG(EM_SETMARGINS)
   UNSUPPORTED_MSG(EM_SETPALETTE)
@@ -3340,6 +3339,48 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
     DWORD settings = editor->styleFlags & mask;
 
     return settings;
+  }
+  case EM_SETFONTSIZE:
+  {
+      CHARFORMAT2W cf;
+      LONG tmp_size, size;
+      BOOL is_increase = ((LONG)wParam > 0);
+
+      if (editor->mode & TM_PLAINTEXT)
+          return FALSE;
+
+      cf.cbSize = sizeof(cf);
+      cf.dwMask = CFM_SIZE;
+      ME_GetSelectionCharFormat(editor, &cf);
+      tmp_size = (cf.yHeight / 20) + wParam;
+
+      if (tmp_size <= 1)
+          size = 1;
+      else if (tmp_size > 12 && tmp_size < 28 && tmp_size % 2)
+          size = tmp_size + (is_increase ? 1 : -1);
+      else if (tmp_size > 28 && tmp_size < 36)
+          size = is_increase ? 36 : 28;
+      else if (tmp_size > 36 && tmp_size < 48)
+          size = is_increase ? 48 : 36;
+      else if (tmp_size > 48 && tmp_size < 72)
+          size = is_increase ? 72 : 48;
+      else if (tmp_size > 72 && tmp_size < 80)
+          size = is_increase ? 80 : 72;
+      else if (tmp_size > 80 && tmp_size < 1638)
+          size = 10 * (is_increase ? (tmp_size / 10 + 1) : (tmp_size / 10));
+      else if (tmp_size >= 1638)
+          size = 1638;
+      else
+          size = tmp_size;
+
+      cf.yHeight = size * 20; /*  convert twips to points */
+      ME_SetSelectionCharFormat(editor, &cf);
+      ME_CommitUndo(editor);
+      ME_WrapMarkedParagraphs(editor);
+      ME_UpdateScrollBar(editor);
+      ME_Repaint(editor);
+
+      return TRUE;
   }
   case EM_SETOPTIONS:
   {

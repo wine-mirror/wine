@@ -7857,6 +7857,100 @@ static void test_EM_SETREADONLY(void)
     DestroyWindow(richedit);
 }
 
+static inline LONG twips2points(LONG value)
+{
+    return value / 20;
+}
+
+#define TEST_EM_SETFONTSIZE(hwnd,size,expected_size,expected_res,expected_undo) \
+    _test_font_size(__LINE__,hwnd,size,expected_size,expected_res,expected_undo)
+static void _test_font_size(unsigned line, HWND hwnd, LONG size, LONG expected_size,
+                            LRESULT expected_res, BOOL expected_undo)
+{
+    CHARFORMAT2A cf;
+    LRESULT res;
+    BOOL isundo;
+
+    cf.cbSize = sizeof(cf);
+    cf.dwMask = CFM_SIZE;
+
+    res = SendMessageA(hwnd, EM_SETFONTSIZE, size, 0);
+    SendMessageA(hwnd, EM_GETCHARFORMAT, SCF_SELECTION, (LPARAM)&cf);
+    isundo = SendMessageA(hwnd, EM_CANUNDO, 0, 0);
+    ok_(__FILE__,line)(res == expected_res, "EM_SETFONTSIZE unexpected return value: %lx.\n", res);
+    ok_(__FILE__,line)(twips2points(cf.yHeight) == expected_size, "got wrong font size: %d, expected: %d\n",
+                       twips2points(cf.yHeight), expected_size);
+    ok_(__FILE__,line)(isundo == expected_undo, "get wrong undo mark: %d, expected: %d.\n",
+                       isundo, expected_undo);
+}
+
+static void test_EM_SETFONTSIZE(void)
+{
+    HWND richedit = new_richedit(NULL);
+    CHAR text[] = "wine";
+    CHARFORMAT2A tmp_cf;
+    LONG default_size;
+
+    tmp_cf.cbSize = sizeof(tmp_cf);
+    tmp_cf.dwMask = CFM_SIZE;
+    tmp_cf.yHeight = 9 * 20.0;
+    SendMessageA(richedit, EM_SETCHARFORMAT, SCF_DEFAULT, (LPARAM)&tmp_cf);
+
+    SendMessageA(richedit, WM_SETTEXT, 0, (LPARAM)text);
+
+    SendMessageA(richedit, EM_SETMODIFY, FALSE, 0);
+    /* without selection */
+    TEST_EM_SETFONTSIZE(richedit, 1, 10, TRUE, FALSE); /* 9 + 1 -> 10 */
+    SendMessageA(richedit, EM_GETCHARFORMAT, SCF_DEFAULT, (LPARAM)&tmp_cf);
+    default_size = twips2points(tmp_cf.yHeight);
+    ok(default_size == 9, "Default font size should not be changed.\n");
+    ok(SendMessageA(richedit, EM_SETMODIFY, 0, 0) == FALSE, "Modify flag should not be changed.\n");
+
+    SendMessageA(richedit, EM_SETSEL, 0, 2);
+
+    TEST_EM_SETFONTSIZE(richedit, 0, 9, TRUE, TRUE); /* 9 + 0 -> 9 */
+
+    SendMessageA(richedit, EM_SETMODIFY, FALSE, 0);
+    TEST_EM_SETFONTSIZE(richedit, 3, 12, TRUE, TRUE); /* 9 + 3 -> 12 */
+    ok(SendMessageA(richedit, EM_SETMODIFY, 0, 0) == FALSE, "Modify flag should not be changed.\n");
+
+    TEST_EM_SETFONTSIZE(richedit, 1, 14, TRUE, TRUE); /* 12 + 1 + 1 -> 14 */
+    TEST_EM_SETFONTSIZE(richedit, -1, 12, TRUE, TRUE); /* 14 - 1 - 1 -> 12 */
+    TEST_EM_SETFONTSIZE(richedit, 4, 16, TRUE, TRUE); /* 12 + 4 -> 16 */
+    TEST_EM_SETFONTSIZE(richedit, 3, 20, TRUE, TRUE); /* 16 + 3 + 1 -> 20 */
+    TEST_EM_SETFONTSIZE(richedit, 0, 20, TRUE, TRUE); /* 20 + 0 -> 20 */
+    TEST_EM_SETFONTSIZE(richedit, 8, 28, TRUE, TRUE); /* 20 + 8 -> 28 */
+    TEST_EM_SETFONTSIZE(richedit, 0, 28, TRUE, TRUE); /* 28 + 0 -> 28 */
+    TEST_EM_SETFONTSIZE(richedit, 1, 36, TRUE, TRUE); /* 28 + 1 -> 36 */
+    TEST_EM_SETFONTSIZE(richedit, 0, 36, TRUE, TRUE); /* 36 + 0 -> 36 */
+    TEST_EM_SETFONTSIZE(richedit, 1, 48, TRUE, TRUE); /* 36 + 1 -> 48 */
+    TEST_EM_SETFONTSIZE(richedit, 0, 48, TRUE, TRUE); /* 48 + 0 -> 48 */
+    TEST_EM_SETFONTSIZE(richedit, 1, 72, TRUE, TRUE); /* 48 + 1 -> 72 */
+    TEST_EM_SETFONTSIZE(richedit, 0, 72, TRUE, TRUE); /* 72 + 0 -> 72 */
+    TEST_EM_SETFONTSIZE(richedit, 1, 80, TRUE, TRUE); /* 72 + 1 -> 80 */
+    TEST_EM_SETFONTSIZE(richedit, 0, 80, TRUE, TRUE); /* 80 + 0 -> 80 */
+    TEST_EM_SETFONTSIZE(richedit, 1, 90, TRUE, TRUE); /* 80 + 1 -> 90 */
+    TEST_EM_SETFONTSIZE(richedit, 0, 90, TRUE, TRUE); /* 90 + 0 -> 90 */
+    TEST_EM_SETFONTSIZE(richedit, 1, 100, TRUE, TRUE); /* 90 + 1 -> 100 */
+    TEST_EM_SETFONTSIZE(richedit, 25, 130, TRUE, TRUE); /* 100 + 25 -> 130 */
+    TEST_EM_SETFONTSIZE(richedit, -1, 120, TRUE, TRUE); /* 130 - 1 -> 120 */
+    TEST_EM_SETFONTSIZE(richedit, -35, 80, TRUE, TRUE); /* 120 - 35 -> 80 */
+    TEST_EM_SETFONTSIZE(richedit, -7, 72, TRUE, TRUE); /* 80 - 7 -> 72 */
+    TEST_EM_SETFONTSIZE(richedit, -42, 28, TRUE, TRUE); /* 72 - 42 -> 28 */
+    TEST_EM_SETFONTSIZE(richedit, -16, 12, TRUE, TRUE); /* 28 - 16 -> 12 */
+    TEST_EM_SETFONTSIZE(richedit, -3, 9, TRUE, TRUE); /* 12 - 3 -> 9 */
+    TEST_EM_SETFONTSIZE(richedit, -8, 1, TRUE, TRUE); /* 9 - 8 -> 1 */
+    TEST_EM_SETFONTSIZE(richedit, -111, 1, TRUE, TRUE); /* 1 - 111 -> 1 */
+    TEST_EM_SETFONTSIZE(richedit, 10086, 1638, TRUE, TRUE); /* 1 + 10086 -> 1638 */
+
+    /* return FALSE when richedit is TM_PLAINTEXT mode */
+    SendMessageA(richedit, WM_SETTEXT, 0, (LPARAM)"");
+    SendMessageA(richedit, EM_SETTEXTMODE, (WPARAM)TM_PLAINTEXT, 0);
+    TEST_EM_SETFONTSIZE(richedit, 0, 9, FALSE, FALSE);
+
+    DestroyWindow(richedit);
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -7922,6 +8016,7 @@ START_TEST( editor )
   test_WM_CREATE();
   test_reset_default_para_fmt();
   test_EM_SETREADONLY();
+  test_EM_SETFONTSIZE();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
