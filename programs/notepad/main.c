@@ -702,9 +702,18 @@ static void HandleCommandLine(LPWSTR cmdline)
         {
             switch (AlertFileDoesNotExist(file_name)) {
             case IDYES:
+            {
+
+                HANDLE file;
                 SetFileNameAndEncoding(file_name, ENCODING_ANSI);
+
+                file = CreateFileW(file_name, GENERIC_WRITE, FILE_SHARE_WRITE,
+                                   NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+                if (file != INVALID_HANDLE_VALUE) CloseHandle(file);
+
                 UpdateWindowCaption();
                 break;
+            }
 
             case IDNO:
                 break;
