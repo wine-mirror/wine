@@ -68,14 +68,14 @@ static inline void msvcrt_free_tls_mem(void)
   if (tls)
   {
     CloseHandle(tls->handle);
-    HeapFree(GetProcessHeap(),0,tls->efcvt_buffer);
-    HeapFree(GetProcessHeap(),0,tls->asctime_buffer);
-    HeapFree(GetProcessHeap(),0,tls->wasctime_buffer);
-    HeapFree(GetProcessHeap(),0,tls->strerror_buffer);
-    HeapFree(GetProcessHeap(),0,tls->wcserror_buffer);
-    HeapFree(GetProcessHeap(),0,tls->time_buffer);
-    HeapFree(GetProcessHeap(),0,tls->tmpnam_buffer);
-    HeapFree(GetProcessHeap(),0,tls->wtmpnam_buffer);
+    MSVCRT_free(tls->efcvt_buffer);
+    MSVCRT_free(tls->asctime_buffer);
+    MSVCRT_free(tls->wasctime_buffer);
+    MSVCRT_free(tls->strerror_buffer);
+    MSVCRT_free(tls->wcserror_buffer);
+    MSVCRT_free(tls->time_buffer);
+    MSVCRT_free(tls->tmpnam_buffer);
+    MSVCRT_free(tls->wtmpnam_buffer);
     if(tls->have_locale) {
         free_locinfo(tls->locinfo);
         free_mbcinfo(tls->mbcinfo);
