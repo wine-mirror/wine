@@ -8432,6 +8432,11 @@ BOOL WINAPI ScheduleJob( HANDLE hPrinter, DWORD dwJobID )
             {
                 ret = schedule_file(job->filename);
             }
+            else if(isalpha(portname[0]) && portname[1] == ':')
+            {
+                TRACE("copying to %s\n", debugstr_w(portname));
+                ret = CopyFileW(job->filename, portname, FALSE);
+            }
             else
             {
                 FIXME("can't schedule to port %s\n", debugstr_w(portname));
