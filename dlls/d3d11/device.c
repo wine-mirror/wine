@@ -44,15 +44,15 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *ifa
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
-    if (IsEqualGUID(riid, &IID_ID3D10Device1)
-            || IsEqualGUID(riid, &IID_ID3D10Device)
+    if (IsEqualGUID(riid, &IID_ID3D11Device)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
-        *out = &device->ID3D10Device1_iface;
-    }
-    else if (IsEqualGUID(riid, &IID_ID3D11Device))
-    {
         *out = &device->ID3D11Device_iface;
+    }
+    else if (IsEqualGUID(riid, &IID_ID3D10Device1)
+            || IsEqualGUID(riid, &IID_ID3D10Device))
+    {
+        *out = &device->ID3D10Device1_iface;
     }
     else if (IsEqualGUID(riid, &IID_ID3D10Multithread))
     {
