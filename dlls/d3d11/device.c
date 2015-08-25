@@ -2888,6 +2888,7 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
     struct wined3d_resource *sub_resource;
     struct d3d10_texture2d *texture;
+    ID3D10Texture2D *texture_iface;
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
@@ -2909,16 +2910,18 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
     desc.MiscFlags = 0;
 
     if (FAILED(hr = d3d10_device_CreateTexture2D(&device->ID3D10Device1_iface,
-            &desc, NULL, (ID3D10Texture2D **)&texture)))
+            &desc, NULL, &texture_iface)))
     {
         ERR("CreateTexture2D failed, returning %#x\n", hr);
         return hr;
     }
 
+    texture = impl_from_ID3D10Texture2D(texture_iface);
+
     sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, 0);
     *surface = wined3d_surface_from_resource(sub_resource);
     wined3d_surface_incref(*surface);
-    ID3D10Texture2D_Release(&texture->ID3D10Texture2D_iface);
+    ID3D10Texture2D_Release(texture_iface);
 
     return S_OK;
 }

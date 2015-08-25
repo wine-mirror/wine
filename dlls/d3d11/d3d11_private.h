@@ -87,6 +87,7 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
 /* ID3D10Texture2D */
 struct d3d10_texture2d
 {
+    ID3D11Texture2D ID3D11Texture2D_iface;
     ID3D10Texture2D ID3D10Texture2D_iface;
     LONG refcount;
 
@@ -96,6 +97,11 @@ struct d3d10_texture2d
     D3D10_TEXTURE2D_DESC desc;
     ID3D10Device1 *device;
 };
+
+static inline struct d3d10_texture2d *impl_from_ID3D10Texture2D(ID3D10Texture2D *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d10_texture2d, ID3D10Texture2D_iface);
+}
 
 HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d_device *device,
         const D3D10_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *initial_data) DECLSPEC_HIDDEN;
