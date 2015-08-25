@@ -140,6 +140,8 @@ typedef struct _XA2SourceImpl {
     DWORD nsends;
     XAUDIO2_SEND_DESCRIPTOR *sends;
 
+    BOOL running;
+
     struct list entry;
 } XA2SourceImpl;
 
@@ -429,6 +431,8 @@ static void WINAPI XA2SRC_DestroyVoice(IXAudio2SourceVoice *iface)
 
     This->in_use = FALSE;
 
+    This->running = FALSE;
+
     HeapFree(GetProcessHeap(), 0, This->fmt);
 
     LeaveCriticalSection(&This->lock);
@@ -438,7 +442,15 @@ static HRESULT WINAPI XA2SRC_Start(IXAudio2SourceVoice *iface, UINT32 Flags,
         UINT32 OperationSet)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p, 0x%x, 0x%x\n", This, Flags, OperationSet);
+
+    EnterCriticalSection(&This->lock);
+
+    This->running = TRUE;
+
+    LeaveCriticalSection(&This->lock);
+
     return S_OK;
 }
 
@@ -446,7 +458,15 @@ static HRESULT WINAPI XA2SRC_Stop(IXAudio2SourceVoice *iface, UINT32 Flags,
         UINT32 OperationSet)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p, 0x%x, 0x%x\n", This, Flags, OperationSet);
+
+    EnterCriticalSection(&This->lock);
+
+    This->running = FALSE;
+
+    LeaveCriticalSection(&This->lock);
+
     return S_OK;
 }
 
@@ -1324,6 +1344,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
     }
 
     src->in_use = TRUE;
+    src->running = FALSE;
 
     LeaveCriticalSection(&This->lock);
 
