@@ -196,6 +196,9 @@ struct _IXAudio2Impl {
 
     ALCdevice *al_device;
     ALCcontext *al_ctx;
+
+    UINT32 ncbs;
+    IXAudio2EngineCallback **cbs;
 };
 
 static inline IXAudio2Impl *impl_from_IXAudio2(IXAudio2 *iface)
@@ -1260,6 +1263,7 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
         for(i = 0; i < This->ndevs; ++i)
             CoTaskMemFree(This->devids[i]);
         HeapFree(GetProcessHeap(), 0, This->devids);
+        HeapFree(GetProcessHeap(), 0, This->cbs);
 
         DeleteCriticalSection(&This->lock);
 
@@ -1272,8 +1276,26 @@ static HRESULT WINAPI IXAudio2Impl_RegisterForCallbacks(IXAudio2 *iface,
         IXAudio2EngineCallback *pCallback)
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
+    int i;
 
-    FIXME("(%p)->(%p): stub!\n", This, pCallback);
+    TRACE("(%p)->(%p)\n", This, pCallback);
+
+    EnterCriticalSection(&This->lock);
+
+    for(i = 0; i < This->ncbs; ++i){
+        if(!This->cbs[i] || This->cbs[i] == pCallback){
+            This->cbs[i] = pCallback;
+            LeaveCriticalSection(&This->lock);
+            return S_OK;
+        }
+    }
+
+    This->ncbs *= 2;
+    This->cbs = HeapReAlloc(GetProcessHeap(), 0, This->cbs, This->ncbs * sizeof(*This->cbs));
+
+    This->cbs[i] = pCallback;
+
+    LeaveCriticalSection(&This->lock);
 
     return E_NOTIMPL;
 }
@@ -1282,8 +1304,24 @@ static void WINAPI IXAudio2Impl_UnregisterForCallbacks(IXAudio2 *iface,
         IXAudio2EngineCallback *pCallback)
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
+    int i;
 
-    FIXME("(%p)->(%p): stub!\n", This, pCallback);
+    TRACE("(%p)->(%p)\n", This, pCallback);
+
+    EnterCriticalSection(&This->lock);
+
+    for(i = 0; i < This->ncbs; ++i){
+        if(This->cbs[i] == pCallback)
+            break;
+    }
+
+    for(; i < This->ncbs - 1 && This->cbs[i + 1]; ++i)
+        This->cbs[i] = This->cbs[i + 1];
+
+    if(i < This->ncbs)
+        This->cbs[i] = NULL;
+
+    LeaveCriticalSection(&This->lock);
 }
 
 static WAVEFORMATEX *copy_waveformat(const WAVEFORMATEX *wfex)
@@ -2070,6 +2108,9 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
         IUnknown_Release((IUnknown*)*ppobj);
         return hr;
     }
+
+    object->ncbs = 4;
+    object->cbs = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, object->ncbs * sizeof(*object->cbs));
 
     return hr;
 }
