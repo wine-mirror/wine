@@ -103,7 +103,7 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
 
 HRESULT WINAPI D3D11CoreRegisterLayers(void)
 {
-    const struct dxgi_device_layer layers[] =
+    static const struct dxgi_device_layer layers[] =
     {
         {DXGI_DEVICE_LAYER_D3D10_DEVICE, layer_init, layer_get_size, layer_create},
     };
