@@ -2979,8 +2979,8 @@ static void test_header_override(int port)
     memset(buffer, 0, sizeof(buffer));
     ret = HttpQueryInfoA(req, HTTP_QUERY_HOST | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &size, &count);
     err = GetLastError();
-    todo_wine ok(!ret, "HttpQueryInfo succeeded\n");
-    todo_wine ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "Expected error ERROR_HTTP_HEADER_NOT_FOUND, got %d\n", err);
+    ok(!ret, "HttpQueryInfo succeeded\n");
+    ok(err == ERROR_HTTP_HEADER_NOT_FOUND, "Expected error ERROR_HTTP_HEADER_NOT_FOUND, got %d\n", err);
 
     size = sizeof(buffer) - 1;
     memset(buffer, 0, sizeof(buffer));
@@ -3001,12 +3001,12 @@ static void test_header_override(int port)
     memset(buffer, 0, sizeof(buffer));
     ret = InternetQueryOptionA(req, INTERNET_OPTION_URL, buffer, &size);
     ok(ret, "InternetQueryOption failed\n");
-    todo_wine ok(!strcmp(full_url, buffer), "Expected %s, got %s\n", full_url, buffer);
+    ok(!strcmp(full_url, buffer), "Expected %s, got %s\n", full_url, buffer);
 
     ret = HttpSendRequestA(req, NULL, 0, NULL, 0);
     ok(ret, "HttpSendRequest failed\n");
 
-    test_status_code_todo(req, 200);
+    test_status_code(req, 200);
 
     InternetCloseHandle(req);
     req = HttpOpenRequestA(con, NULL, "/test_host_override", NULL, NULL, NULL, INTERNET_FLAG_KEEP_CONNECTION, 0);

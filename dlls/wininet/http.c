@@ -376,6 +376,7 @@ static WCHAR *get_host_header( http_request_t *req )
 
     EnterCriticalSection( &req->headers_section );
     if ((header = HTTP_GetHeader( req, hostW ))) ret = heap_strdupW( header->lpszValue );
+    else ret = heap_strdupW( req->server->canon_host_port );
     LeaveCriticalSection( &req->headers_section );
     return ret;
 }
@@ -1886,20 +1887,21 @@ static BOOL HTTP_GetRequestURL(http_request_t *req, LPWSTR buf)
     static const WCHAR https[] = { 'h','t','t','p','s',':','/','/',0 };
     static const WCHAR slash[] = { '/',0 };
     LPHTTPHEADERW host_header;
+    const WCHAR *host;
     LPCWSTR scheme;
 
-    host_header = HTTP_GetHeader(req, hostW);
-    if(!host_header)
-        return FALSE;
-
     EnterCriticalSection( &req->headers_section );
+
+    host_header = HTTP_GetHeader(req, hostW);
+    if (host_header) host = host_header->lpszValue;
+    else host = req->server->canon_host_port;
 
     if (req->hdr.dwFlags & INTERNET_FLAG_SECURE)
         scheme = https;
     else
         scheme = http;
     strcpyW(buf, scheme);
-    strcatW(buf, host_header->lpszValue);
+    strcatW(buf, host);
     if (req->path[0] != '/')
         strcatW(buf, slash);
     strcatW(buf, req->path);
@@ -2140,16 +2142,12 @@ static DWORD HTTPREQ_QueryOption(object_header_t *hdr, DWORD option, void *buffe
     case INTERNET_OPTION_URL: {
         static const WCHAR httpW[] = {'h','t','t','p',':','/','/',0};
         WCHAR url[INTERNET_MAX_URL_LENGTH];
-        HTTPHEADERW *host;
 
         TRACE("INTERNET_OPTION_URL\n");
 
-        EnterCriticalSection( &req->headers_section );
-        host = HTTP_GetHeader(req, hostW);
         strcpyW(url, httpW);
-        strcatW(url, host->lpszValue);
+        strcatW(url, req->server->canon_host_port);
         strcatW(url, req->path);
-        LeaveCriticalSection( &req->headers_section );
 
         TRACE("INTERNET_OPTION_URL: %s\n",debugstr_w(url));
         return str_to_buffer(url, buffer, size, unicode);
@@ -3416,8 +3414,6 @@ static DWORD HTTP_HttpOpenRequestW(http_session_t *session,
 
     request->verb = heap_strdupW(lpszVerb && *lpszVerb ? lpszVerb : szGET);
     request->version = heap_strdupW(lpszVersion && *lpszVersion ? lpszVersion : g_szHttp1_1);
-
-    HTTP_ProcessHeader(request, hostW, request->server->canon_host_port, HTTP_ADDREQ_FLAG_ADD | HTTP_ADDHDR_FLAG_REQ);
 
     if (hIC->proxy && hIC->proxy[0] && !HTTP_ShouldBypassProxy(hIC, session->hostName))
         HTTP_DealWithProxy( hIC, session, request );
@@ -4911,6 +4907,9 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
     if (!request->verb)
         request->verb = heap_strdupW(szGET);
 
+    HTTP_ProcessHeader(request, hostW, request->server->canon_host_port,
+                       HTTP_ADDREQ_FLAG_ADD_IF_NEW | HTTP_ADDHDR_FLAG_REQ);
+
     if (dwContentLength || strcmpW(request->verb, szGET))
     {
         sprintfW(contentLengthStr, szContentLength, dwContentLength);
@@ -5121,7 +5120,7 @@ static DWORD HTTP_HttpSendRequestW(http_request_t *request, LPCWSTR lpszHeaders,
                 dwBufferSize=2048;
                 if (request->status_code == HTTP_STATUS_DENIED)
                 {
-                    WCHAR *host = get_host_header( request );
+                    WCHAR *host = heap_strdupW( request->server->canon_host_port );
                     DWORD dwIndex = 0;
                     while (HTTP_HttpQueryInfoW(request,HTTP_QUERY_WWW_AUTHENTICATE,szAuthValue,&dwBufferSize,&dwIndex) == ERROR_SUCCESS)
                     {
