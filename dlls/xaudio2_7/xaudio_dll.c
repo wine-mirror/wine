@@ -1669,6 +1669,8 @@ static void WINAPI IXAudio2Impl_GetPerformanceData(IXAudio2 *iface,
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
 
     FIXME("(%p)->(%p): stub!\n", This, pPerfData);
+
+    memset(pPerfData, 0, sizeof(*pPerfData));
 }
 
 static void WINAPI IXAudio2Impl_SetDebugConfiguration(IXAudio2 *iface,
