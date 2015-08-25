@@ -1218,6 +1218,195 @@ typedef struct D3D11_TEXTURE3D_DESC
     UINT MiscFlags;
 } D3D11_TEXTURE3D_DESC;
 
+typedef struct D3D11_VIDEO_DECODER_DESC
+{
+    GUID Guid;
+    UINT SampleWidth;
+    UINT SampleHeight;
+    DXGI_FORMAT OutputFormat;
+} D3D11_VIDEO_DECODER_DESC;
+
+typedef struct D3D11_VIDEO_DECODER_CONFIG
+{
+    GUID guidConfigBitstreamEncryption;
+    GUID guidConfigMBcontrolEncryption;
+    GUID guidConfigResidDiffEncryption;
+    UINT ConfigBitstreamRaw;
+    UINT ConfigMBcontrolRasterOrder;
+    UINT ConfigResidDiffHost;
+    UINT ConfigSpatialResid8;
+    UINT ConfigResid8Subtraction;
+    UINT ConfigSpatialHost8or9Clipping;
+    UINT ConfigSpatialResidInterleaved;
+    UINT ConfigIntraResidUnsigned;
+    UINT ConfigResidDiffAccelerator;
+    UINT ConfigHostInverseScan;
+    UINT ConfigSpecificIDCT;
+    UINT Config4GroupedCoefs;
+    USHORT ConfigMinRenderTargetBuffCount;
+    USHORT ConfigDecoderSpecific;
+} D3D11_VIDEO_DECODER_CONFIG;
+
+typedef enum D3D11_VIDEO_FRAME_FORMAT
+{
+    D3D11_VIDEO_FRAME_FORMAT_PROGRESSIVE                   = 0,
+    D3D11_VIDEO_FRAME_FORMAT_INTERLACED_TOP_FIELD_FIRST    = 1,
+    D3D11_VIDEO_FRAME_FORMAT_INTERLACED_BOTTOM_FIELD_FIRST = 2
+} D3D11_VIDEO_FRAME_FORMAT;
+
+typedef enum D3D11_VIDEO_USAGE
+{
+    D3D11_VIDEO_USAGE_PLAYBACK_NORMAL = 0,
+    D3D11_VIDEO_USAGE_OPTIMAL_SPEED   = 1,
+    D3D11_VIDEO_USAGE_OPTIMAL_QUALITY = 2
+} D3D11_VIDEO_USAGE;
+
+typedef struct D3D11_VIDEO_PROCESSOR_CONTENT_DESC
+{
+    D3D11_VIDEO_FRAME_FORMAT InputFrameFormat;
+    DXGI_RATIONAL InputFrameRate;
+    UINT InputWidth;
+    UINT InputHeight;
+    DXGI_RATIONAL OutputFrameRate;
+    UINT OutputWidth;
+    UINT OutputHeight;
+    D3D11_VIDEO_USAGE Usage;
+} D3D11_VIDEO_PROCESSOR_CONTENT_DESC;
+
+typedef struct D3D11_VIDEO_PROCESSOR_CAPS
+{
+    UINT DeviceCaps;
+    UINT FeatureCaps;
+    UINT FilterCaps;
+    UINT InputFormatCaps;
+    UINT AutoStreamCaps;
+    UINT StereoCaps;
+    UINT RateConversionCapsCount;
+    UINT MaxInputStreams;
+    UINT MaxStreamStates;
+} D3D11_VIDEO_PROCESSOR_CAPS;
+
+typedef struct D3D11_VIDEO_PROCESSOR_RATE_CONVERSION_CAPS
+{
+    UINT PastFrames;
+    UINT FutureFrames;
+    UINT ProcessorCaps;
+    UINT ITelecineCaps;
+    UINT CustomRateCount;
+} D3D11_VIDEO_PROCESSOR_RATE_CONVERSION_CAPS;
+
+typedef struct D3D11_VIDEO_PROCESSOR_CUSTOM_RATE
+{
+    DXGI_RATIONAL CustomRate;
+    UINT OutputFrames;
+    BOOL InputInterlaced;
+    UINT InputFramesOrFields;
+} D3D11_VIDEO_PROCESSOR_CUSTOM_RATE;
+
+typedef enum D3D11_VIDEO_PROCESSOR_FILTER
+{
+    D3D11_VIDEO_PROCESSOR_FILTER_BRIGHTNESS         = 0,
+    D3D11_VIDEO_PROCESSOR_FILTER_CONTRAST           = 1,
+    D3D11_VIDEO_PROCESSOR_FILTER_HUE                = 2,
+    D3D11_VIDEO_PROCESSOR_FILTER_SATURATION         = 3,
+    D3D11_VIDEO_PROCESSOR_FILTER_NOISE_REDUCTION    = 4,
+    D3D11_VIDEO_PROCESSOR_FILTER_EDGE_ENHANCEMENT   = 5,
+    D3D11_VIDEO_PROCESSOR_FILTER_ANAMORPHIC_SCALING = 6,
+    D3D11_VIDEO_PROCESSOR_FILTER_STEREO_ADJUSTMENT  = 7
+} D3D11_VIDEO_PROCESSOR_FILTER;
+
+typedef struct D3D11_VIDEO_PROCESSOR_FILTER_RANGE
+{
+    int Minimum;
+    int Maximum;
+    int Default;
+    float Multiplier;
+} D3D11_VIDEO_PROCESSOR_FILTER_RANGE;
+
+typedef enum D3D11_AUTHENTICATED_CHANNEL_TYPE
+{
+    D3D11_AUTHENTICATED_CHANNEL_D3D11           = 1,
+    D3D11_AUTHENTICATED_CHANNEL_DRIVER_SOFTWARE = 2,
+    D3D11_AUTHENTICATED_CHANNEL_DRIVER_HARDWARE = 3
+} D3D11_AUTHENTICATED_CHANNEL_TYPE;
+
+typedef enum D3D11_VDOV_DIMENSION
+{
+    D3D11_VDOV_DIMENSION_UNKNOWN   = 0,
+    D3D11_VDOV_DIMENSION_TEXTURE2D = 1
+} D3D11_VDOV_DIMENSION;
+
+typedef struct D3D11_TEX2D_VDOV
+{
+    UINT ArraySlice;
+} D3D11_TEX2D_VDOV;
+
+typedef struct D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC
+{
+    GUID DecodeProfile;
+    D3D11_VDOV_DIMENSION ViewDimension;
+    union {
+        D3D11_TEX2D_VDOV Texture2D;
+    };
+} D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC;
+
+typedef enum D3D11_VPIV_DIMENSION
+{
+    D3D11_VPIV_DIMENSION_UNKNOWN   = 0,
+    D3D11_VPIV_DIMENSION_TEXTURE2D = 1
+} D3D11_VPIV_DIMENSION;
+
+typedef struct D3D11_TEX2D_VPIV
+{
+    UINT MipSlice;
+    UINT ArraySlice;
+} D3D11_TEX2D_VPIV;
+
+typedef struct D3D11_VIDEO_PROCESSOR_INPUT_VIEW_DESC
+{
+    UINT FourCC;
+    D3D11_VPIV_DIMENSION ViewDimension;
+    union {
+        D3D11_TEX2D_VPIV Texture2D;
+    };
+} D3D11_VIDEO_PROCESSOR_INPUT_VIEW_DESC;
+
+typedef enum D3D11_VPOV_DIMENSION
+{
+    D3D11_VPOV_DIMENSION_UNKNOWN        = 0,
+    D3D11_VPOV_DIMENSION_TEXTURE2D      = 1,
+    D3D11_VPOV_DIMENSION_TEXTURE2DARRAY = 2
+} D3D11_VPOV_DIMENSION;
+
+typedef struct D3D11_TEX2D_VPOV
+{
+    UINT MipSlice;
+} D3D11_TEX2D_VPOV;
+
+typedef struct D3D11_TEX2D_ARRAY_VPOV
+{
+    UINT MipSlice;
+    UINT FirstArraySlice;
+    UINT ArraySize;
+} D3D11_TEX2D_ARRAY_VPOV;
+
+typedef struct D3D11_VIDEO_PROCESSOR_OUTPUT_VIEW_DESC
+{
+    D3D11_VPOV_DIMENSION ViewDimension;
+    union {
+        D3D11_TEX2D_VPOV Texture2D;
+        D3D11_TEX2D_ARRAY_VPOV Texture2DArray;
+    };
+} D3D11_VIDEO_PROCESSOR_OUTPUT_VIEW_DESC;
+
+typedef struct D3D11_VIDEO_CONTENT_PROTECTION_CAPS
+{
+    UINT Caps;
+    UINT KeyExchangeTypeCount;
+    UINT BlockAlignmentSize;
+    ULONGLONG ProtectedMemorySize;
+} D3D11_VIDEO_CONTENT_PROTECTION_CAPS;
+
 /* A couple forward declarations are needed */
 interface ID3D11Device;
 interface ID3D11ClassLinkage;
@@ -1965,6 +2154,210 @@ interface ID3D11DeviceContext : ID3D11DeviceChild
     HRESULT FinishCommandList(
         BOOL RestoreDeferredContextState,
         [out] ID3D11CommandList **ppCommandList);
+}
+
+[
+    object,
+    uuid(3015a308-dcbd-47aa-a747-192486d14d4a),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11AuthenticatedChannel : ID3D11DeviceChild
+{
+    HRESULT GetCertificateSize(
+        UINT *pCertificateSize);
+    HRESULT GetCertificate(
+        UINT CertificateSize,
+        BYTE *pCertificate);
+    void GetChannelHandle(
+        HANDLE *pChannelHandle);
+}
+
+[
+    object,
+    uuid(9b32f9ad-bdcc-40a6-a39d-d5c865845720),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11CryptoSession : ID3D11DeviceChild
+{
+    void GetCryptoType(
+        GUID *pCryptoType);
+    void GetDecoderProfile(
+        GUID *pDecoderProfile);
+    HRESULT GetCertificateSize(
+        UINT *pCertificateSize);
+    HRESULT GetCertificate(
+        UINT CertificateSize,
+        BYTE *pCertificate);
+    void GetCryptoSessionHandle(
+        HANDLE *pCryptoSessionHandle);
+}
+
+[
+    object,
+    uuid(3c9c5b51-995d-48d1-9b8d-fa5caeded65c),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11VideoDecoder : ID3D11DeviceChild
+{
+    HRESULT GetCreationParameters(
+        D3D11_VIDEO_DECODER_DESC *pVideoDesc,
+        D3D11_VIDEO_DECODER_CONFIG *pConfig);
+    HRESULT GetDriverHandle(
+        HANDLE *pDriverHandle);
+}
+
+[
+    object,
+    uuid(31627037-53ab-4200-9061-05faa9ab45f9),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11VideoProcessorEnumerator : ID3D11DeviceChild
+{
+    HRESULT GetVideoProcessorContentDesc(
+        D3D11_VIDEO_PROCESSOR_CONTENT_DESC *pContentDesc);
+    HRESULT CheckVideoProcessorFormat(
+        DXGI_FORMAT Format,
+        UINT *pFlags);
+    HRESULT GetVideoProcessorCaps(
+        D3D11_VIDEO_PROCESSOR_CAPS *pCaps);
+    HRESULT GetVideoProcessorRateConversionCaps(
+        UINT TypeIndex,
+        D3D11_VIDEO_PROCESSOR_RATE_CONVERSION_CAPS *pCaps);
+    HRESULT GetVideoProcessorCustomRate(
+        UINT TypeIndex,
+        UINT CustomRateIndex,
+        D3D11_VIDEO_PROCESSOR_CUSTOM_RATE *pRate);
+    HRESULT GetVideoProcessorFilterRange(
+        D3D11_VIDEO_PROCESSOR_FILTER Filter,
+        D3D11_VIDEO_PROCESSOR_FILTER_RANGE *pRange);
+}
+
+[
+    object,
+    uuid(1d7b0652-185f-41c6-85ce-0c5be3d4ae6c),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11VideoProcessor : ID3D11DeviceChild
+{
+    void GetContentDesc(
+        D3D11_VIDEO_PROCESSOR_CONTENT_DESC *pDesc);
+    void GetRateConversionCaps(
+        D3D11_VIDEO_PROCESSOR_RATE_CONVERSION_CAPS *pCaps);
+}
+
+[
+    object,
+    uuid(c2931aea-2a85-4f20-860f-fba1fd256e18),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11VideoDecoderOutputView : ID3D11View
+{
+    void GetDesc(
+        D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC *pDesc);
+}
+
+[
+    object,
+    uuid(11ec5a5f-51dc-4945-ab34-6e8c21300ea5),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11VideoProcessorInputView : ID3D11View
+{
+    void GetDesc(
+        D3D11_VIDEO_PROCESSOR_INPUT_VIEW_DESC *pDesc);
+}
+
+[
+    object,
+    uuid(a048285e-25a9-4527-bd93-d68b68c44254),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11VideoProcessorOutputView : ID3D11View
+{
+    void GetDesc(
+        D3D11_VIDEO_PROCESSOR_OUTPUT_VIEW_DESC *pDesc);
+}
+
+[
+    object,
+    uuid(10ec4d5b-975a-4689-b9e4-d0aac30fe333),
+    local,
+    pointer_default(unique)
+]
+interface ID3D11VideoDevice : IUnknown
+{
+    HRESULT CreateVideoDecoder(
+        const D3D11_VIDEO_DECODER_DESC *pVideoDesc,
+        const D3D11_VIDEO_DECODER_CONFIG *pConfig,
+        ID3D11VideoDecoder **ppDecoder);
+    HRESULT CreateVideoProcessor(
+        ID3D11VideoProcessorEnumerator *pEnum,
+        UINT RateConversionIndex,
+        ID3D11VideoProcessor **ppVideoProcessor);
+    HRESULT CreateAuthenticatedChannel(
+        D3D11_AUTHENTICATED_CHANNEL_TYPE ChannelType,
+        ID3D11AuthenticatedChannel **ppAuthenticatedChannel);
+    HRESULT CreateCryptoSession(
+        const GUID *pCryptoType,
+        const GUID *pDecoderProfile,
+        const GUID *pKeyExchangeType,
+        ID3D11CryptoSession **ppCryptoSession);
+    HRESULT CreateVideoDecoderOutputView(
+        ID3D11Resource *pResource,
+        const D3D11_VIDEO_DECODER_OUTPUT_VIEW_DESC *pDesc,
+        ID3D11VideoDecoderOutputView **ppVDOVView);
+    HRESULT CreateVideoProcessorInputView(
+        ID3D11Resource *pResource,
+        ID3D11VideoProcessorEnumerator *pEnum,
+        const D3D11_VIDEO_PROCESSOR_INPUT_VIEW_DESC *pDesc,
+        ID3D11VideoProcessorInputView **ppVPIView);
+    HRESULT CreateVideoProcessorOutputView(
+        ID3D11Resource *pResource,
+        ID3D11VideoProcessorEnumerator *pEnum,
+        const D3D11_VIDEO_PROCESSOR_OUTPUT_VIEW_DESC *pDesc,
+        ID3D11VideoProcessorOutputView **ppVPOView);
+    HRESULT CreateVideoProcessorEnumerator(
+        const D3D11_VIDEO_PROCESSOR_CONTENT_DESC *pDesc,
+        ID3D11VideoProcessorEnumerator **ppEnum);
+    UINT GetVideoDecoderProfileCount();
+    HRESULT GetVideoDecoderProfile(
+        UINT Index,
+        GUID *pDecoderProfile);
+    HRESULT CheckVideoDecoderFormat(
+        const GUID *pDecoderProfile,
+        DXGI_FORMAT Format,
+        BOOL *pSupported);
+    HRESULT GetVideoDecoderConfigCount(
+        const D3D11_VIDEO_DECODER_DESC *pDesc,
+        UINT *pCount);
+    HRESULT GetVideoDecoderConfig(
+        const D3D11_VIDEO_DECODER_DESC *pDesc,
+        UINT Index,
+        D3D11_VIDEO_DECODER_CONFIG *pConfig);
+    HRESULT GetContentProtectionCaps(
+        const GUID *pCryptoType,
+        const GUID *pDecoderProfile,
+        D3D11_VIDEO_CONTENT_PROTECTION_CAPS *pCaps);
+    HRESULT CheckCryptoKeyExchange(
+        const GUID *pCryptoType,
+        const GUID *pDecoderProfile,
+        UINT Index,
+        GUID *pKeyExchangeType);
+    HRESULT SetPrivateData(
+        REFGUID guid,
+        UINT DataSize,
+        const void *pData);
+    HRESULT SetPrivateDataInterface(
+        REFGUID guid,
+        const IUnknown *pData);
 }
 
 [
