@@ -923,6 +923,7 @@ enable_api_ms_win_crt_heap_l1_1_0
 enable_api_ms_win_crt_locale_l1_1_0
 enable_api_ms_win_crt_math_l1_1_0
 enable_api_ms_win_crt_multibyte_l1_1_0
+enable_api_ms_win_crt_private_l1_1_0
 enable_api_ms_win_downlevel_advapi32_l1_1_0
 enable_api_ms_win_downlevel_advapi32_l2_1_0
 enable_api_ms_win_downlevel_normaliz_l1_1_0
@@ -17171,6 +17172,7 @@ wine_fn_config_dll api-ms-win-crt-heap-l1-1-0 enable_api_ms_win_crt_heap_l1_1_0
 wine_fn_config_dll api-ms-win-crt-locale-l1-1-0 enable_api_ms_win_crt_locale_l1_1_0
 wine_fn_config_dll api-ms-win-crt-math-l1-1-0 enable_api_ms_win_crt_math_l1_1_0
 wine_fn_config_dll api-ms-win-crt-multibyte-l1-1-0 enable_api_ms_win_crt_multibyte_l1_1_0
+wine_fn_config_dll api-ms-win-crt-private-l1-1-0 enable_api_ms_win_crt_private_l1_1_0
 wine_fn_config_dll api-ms-win-downlevel-advapi32-l1-1-0 enable_api_ms_win_downlevel_advapi32_l1_1_0
 wine_fn_config_dll api-ms-win-downlevel-advapi32-l2-1-0 enable_api_ms_win_downlevel_advapi32_l2_1_0
 wine_fn_config_dll api-ms-win-downlevel-normaliz-l1-1-0 enable_api_ms_win_downlevel_normaliz_l1_1_0
