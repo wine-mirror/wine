@@ -1128,6 +1128,25 @@ static HRESULT Installer_UILevelPut(int level)
     return invoke(pInstaller, "UILevel", DISPATCH_PROPERTYPUT, &dispparams, &varresult, VT_EMPTY);
 }
 
+static HRESULT Installer_SummaryInformation(BSTR PackagePath, int UpdateCount, IDispatch **pSumInfo)
+{
+    VARIANT varresult;
+    VARIANTARG vararg[2];
+    DISPPARAMS dispparams = {vararg, NULL, sizeof(vararg)/sizeof(VARIANTARG), 0};
+    HRESULT hr;
+
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_BSTR;
+    V_BSTR(&vararg[1]) = SysAllocString(PackagePath);
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_I4;
+    V_I4(&vararg[0]) = UpdateCount;
+
+    hr = invoke(pInstaller, "SummaryInformation", DISPATCH_PROPERTYGET, &dispparams, &varresult, VT_DISPATCH);
+    *pSumInfo = V_DISPATCH(&varresult);
+    return hr;
+}
+
 static HRESULT Session_Installer(IDispatch *pSession, IDispatch **pInst)
 {
     VARIANT varresult;
@@ -2602,7 +2621,7 @@ static void test_Installer(void)
     static const WCHAR szIntegerDataException[] = { 'I','n','t','e','g','e','r','D','a','t','a',',','F','i','e','l','d',0 };
     WCHAR szPath[MAX_PATH];
     HRESULT hr;
-    IDispatch *pSession = NULL, *pDatabase = NULL, *pRecord = NULL, *pStringList = NULL;
+    IDispatch *pSession = NULL, *pDatabase = NULL, *pRecord = NULL, *pStringList = NULL, *pSumInfo = NULL;
     int iValue, iCount;
 
     if (!pInstaller) return;
@@ -2677,6 +2696,18 @@ static void test_Installer(void)
         test_Database(pDatabase, FALSE);
         IDispatch_Release(pDatabase);
     }
+
+    /* Installer::SummaryInformation */
+    hr = Installer_SummaryInformation(szPath, 0, &pSumInfo);
+    ok(hr == S_OK, "Installer_SummaryInformation failed, hresult 0x%08x\n", hr);
+    if (hr == S_OK)
+    {
+        test_SummaryInfo(pSumInfo, summary_info, sizeof(summary_info)/sizeof(msi_summary_info), TRUE);
+        IDispatch_Release(pSumInfo);
+    }
+
+    hr = Installer_SummaryInformation(NULL, 0, &pSumInfo);
+    ok(hr == DISP_E_EXCEPTION, "Installer_SummaryInformation failed, hresult 0x%08x\n", hr);
 
     /* Installer::RegistryValue */
     test_Installer_RegistryValue();

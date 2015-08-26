@@ -1832,13 +1832,41 @@ static HRESULT InstallerImpl_SummaryInformation(WORD wFlags,
                                                 EXCEPINFO* pExcepInfo,
                                                 UINT* puArgErr)
 {
-    if (!(wFlags & DISPATCH_METHOD))
+    UINT ret;
+    HRESULT hr;
+    MSIHANDLE hsuminfo;
+    IDispatch *dispatch;
+    VARIANTARG varg0, varg1;
+
+    if (!(wFlags & DISPATCH_PROPERTYGET))
         return DISP_E_MEMBERNOTFOUND;
 
-    FIXME("\n");
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
 
-    VariantInit(pVarResult);
-    return S_OK;
+    VariantInit(&varg1);
+    hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
+    if (FAILED(hr))
+        return hr;
+
+    V_VT(pVarResult) = VT_DISPATCH;
+
+    ret = MsiGetSummaryInformationW(0, V_BSTR(&varg0), V_I4(&varg1), &hsuminfo);
+    if (ret != ERROR_SUCCESS)
+    {
+        hr = DISP_E_EXCEPTION;
+        goto done;
+    }
+
+    hr = create_summaryinfo(hsuminfo, &dispatch);
+    if (SUCCEEDED(hr))
+        V_DISPATCH(pVarResult) = dispatch;
+
+done:
+    VariantClear(&varg0);
+    return hr;
 }
 
 static HRESULT InstallerImpl_UILevel(WORD wFlags,
