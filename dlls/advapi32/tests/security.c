@@ -1731,7 +1731,9 @@ static const struct well_known_sid_value
 /* 69 */ {TRUE, "S-1-16-16384"},  {TRUE, "S-1-5-33"},      {TRUE, "S-1-3-4"},
 /* 72 */ {FALSE, "S-1-5-21-12-23-34-45-56-571"},  {FALSE, "S-1-5-21-12-23-34-45-56-572"},
 /* 74 */ {TRUE, "S-1-5-22"}, {FALSE, "S-1-5-21-12-23-34-45-56-521"}, {TRUE, "S-1-5-32-573"},
-/* 77 */ {FALSE, "S-1-5-21-12-23-34-45-56-498"}, {TRUE, "S-1-5-32-574"}, {TRUE, "S-1-16-8448"}
+/* 77 */ {FALSE, "S-1-5-21-12-23-34-45-56-498"}, {TRUE, "S-1-5-32-574"}, {TRUE, "S-1-16-8448"},
+/* 80 */ {FALSE, NULL}, {TRUE, "S-1-2-1"}, {TRUE, "S-1-5-65-1"}, {FALSE, NULL},
+/* 84 */ {TRUE, "S-1-15-2-1"},
 };
 
 static void test_CreateWellKnownSid(void)
@@ -1780,15 +1782,12 @@ static void test_CreateWellKnownSid(void)
         if (value->sid_string == NULL)
             continue;
 
-        if (i > WinAccountRasAndIasServersSid)
+        /* some SIDs aren't implemented by all Windows versions - detect it */
+        cb = sizeof(sid_buffer);
+        if (!pCreateWellKnownSid(i, NULL, sid_buffer, &cb))
         {
-            /* These SIDs aren't implemented by all Windows versions - detect it and break the loop */
-            cb = sizeof(sid_buffer);
-            if (!pCreateWellKnownSid(i, domainsid, sid_buffer, &cb))
-            {
-                skip("Well known SIDs starting from %u are not implemented\n", i);
-                break;
-            }
+            skip("Well known SID %u not implemented\n", i);
+            continue;
         }
 
         cb = sizeof(sid_buffer);

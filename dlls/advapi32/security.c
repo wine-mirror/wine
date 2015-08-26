@@ -133,6 +133,7 @@ static const WELLKNOWNSID WellKnownSids[] =
     { {'M','E'}, WinMediumLabelSid, { SID_REVISION, 1, { SECURITY_MANDATORY_LABEL_AUTHORITY}, { SECURITY_MANDATORY_MEDIUM_RID } } },
     { {'H','I'}, WinHighLabelSid, { SID_REVISION, 1, { SECURITY_MANDATORY_LABEL_AUTHORITY}, { SECURITY_MANDATORY_HIGH_RID } } },
     { {'S','I'}, WinSystemLabelSid, { SID_REVISION, 1, { SECURITY_MANDATORY_LABEL_AUTHORITY}, { SECURITY_MANDATORY_SYSTEM_RID } } },
+    { {0,0}, WinBuiltinAnyPackageSid, { SID_REVISION, 2, { SECURITY_APP_PACKAGE_AUTHORITY }, { SECURITY_APP_PACKAGE_BASE_RID, SECURITY_BUILTIN_PACKAGE_ANY_PACKAGE } } },
 };
 
 /* these SIDs must be constructed as relative to some domain - only the RID is well-known */
@@ -173,7 +174,9 @@ typedef struct _AccountSid {
 static const WCHAR Account_Operators[] = { 'A','c','c','o','u','n','t',' ','O','p','e','r','a','t','o','r','s',0 };
 static const WCHAR Administrator[] = {'A','d','m','i','n','i','s','t','r','a','t','o','r',0 };
 static const WCHAR Administrators[] = { 'A','d','m','i','n','i','s','t','r','a','t','o','r','s',0 };
+static const WCHAR ALL_APPLICATION_PACKAGES[] = { 'A','L','L',' ','A','P','P','L','I','C','A','T','I','O','N',' ','P','A','C','K','A','G','E','S',0 };
 static const WCHAR ANONYMOUS_LOGON[] = { 'A','N','O','N','Y','M','O','U','S',' ','L','O','G','O','N',0 };
+static const WCHAR APPLICATION_PACKAGE_AUTHORITY[] = { 'A','P','P','L','I','C','A','T','I','O','N',' ','P','A','C','K','A','G','E',' ','A','U','T','H','O','R','I','T','Y',0 };
 static const WCHAR Authenticated_Users[] = { 'A','u','t','h','e','n','t','i','c','a','t','e','d',' ','U','s','e','r','s',0 };
 static const WCHAR Backup_Operators[] = { 'B','a','c','k','u','p',' ','O','p','e','r','a','t','o','r','s',0 };
 static const WCHAR BATCH[] = { 'B','A','T','C','H',0 };
@@ -277,6 +280,7 @@ static const AccountSid ACCOUNT_SIDS[] = {
     { WinOtherOrganizationSid, Other_Organization, NT_AUTHORITY, SidTypeWellKnownGroup },
     { WinBuiltinPerfMonitoringUsersSid, Performance_Monitor_Users, BUILTIN, SidTypeAlias },
     { WinBuiltinPerfLoggingUsersSid, Performance_Log_Users, BUILTIN, SidTypeAlias },
+    { WinBuiltinAnyPackageSid, ALL_APPLICATION_PACKAGES, APPLICATION_PACKAGE_AUTHORITY, SidTypeWellKnownGroup },
 };
 /*
  * ACE access rights
@@ -2208,7 +2212,7 @@ LookupAccountSidW(
     }
 
     /* check the well known SIDs first */
-    for (i = 0; i <= 60; i++) {
+    for (i = 0; i <= WinAccountProtectedUsersSid; i++) {
         if (IsWellKnownSid(sid, i)) {
             for (j = 0; j < (sizeof(ACCOUNT_SIDS) / sizeof(ACCOUNT_SIDS[0])); j++) {
                 if (ACCOUNT_SIDS[j].type == i) {
