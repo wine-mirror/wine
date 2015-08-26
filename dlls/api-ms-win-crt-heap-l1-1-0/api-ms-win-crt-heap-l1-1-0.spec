@@ -20,7 +20,7 @@
 @ stub _query_new_mode
 @ stub _realloc_base
 @ cdecl _recalloc(ptr long long) ucrtbase._recalloc
-@ stub _set_new_mode
+@ cdecl _set_new_mode(long) ucrtbase._set_new_mode
 @ cdecl calloc(long long) ucrtbase.calloc
 @ cdecl free(ptr) ucrtbase.free
 @ cdecl malloc(long) ucrtbase.malloc

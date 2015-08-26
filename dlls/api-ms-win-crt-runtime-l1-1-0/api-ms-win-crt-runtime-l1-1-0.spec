@@ -66,13 +66,13 @@
 @ stub _seh_filter_dll
 @ stub _seh_filter_exe
 @ cdecl _set_abort_behavior(long long) ucrtbase._set_abort_behavior
-@ stub _set_app_type
+@ cdecl _set_app_type(long) ucrtbase._set_app_type
 @ cdecl _set_controlfp(long long) ucrtbase._set_controlfp
 @ cdecl _set_doserrno(long) ucrtbase._set_doserrno
 @ cdecl _set_errno(long) ucrtbase._set_errno
 @ cdecl _set_error_mode(long) ucrtbase._set_error_mode
 @ cdecl _set_invalid_parameter_handler(ptr) ucrtbase._set_invalid_parameter_handler
-@ stub _set_new_handler
+@ cdecl _set_new_handler(ptr) ucrtbase._set_new_handler
 @ stub _set_thread_local_invalid_parameter_handler
 @ cdecl _seterrormode(long) ucrtbase._seterrormode
 @ cdecl _sleep(long) ucrtbase._sleep

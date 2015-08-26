@@ -1881,15 +1881,15 @@
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr)
 @ cdecl -arch=i386 _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
 @ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
-@ stub _set_app_type
+@ cdecl _set_app_type(long) MSVCRT___set_app_type
 @ cdecl _set_controlfp(long long)
 @ cdecl _set_doserrno(long)
 @ cdecl _set_errno(long)
 @ cdecl _set_error_mode(long)
 @ cdecl _set_fmode(long) MSVCRT__set_fmode
 @ cdecl _set_invalid_parameter_handler(ptr)
-@ stub _set_new_handler
-@ stub _set_new_mode
+@ cdecl _set_new_handler(ptr) MSVCRT_set_new_handler
+@ cdecl _set_new_mode(long) MSVCRT__set_new_mode
 @ cdecl _set_printf_count_output(long) MSVCRT__set_printf_count_output
 @ cdecl _set_purecall_handler(ptr)
 @ stub _set_se_translator
