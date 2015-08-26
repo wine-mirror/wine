@@ -58,6 +58,7 @@ my @dll_groups =
   "api-ms-win-crt-heap-l1-1-0",
   "api-ms-win-crt-locale-l1-1-0",
   "api-ms-win-crt-math-l1-1-0",
+  "api-ms-win-crt-multibyte-l1-1-0",
  ],
  [
   "msvcp120",
