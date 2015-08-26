@@ -50,6 +50,10 @@ my @dll_groups =
   "msvcr120_app",
  ],
  [
+  "ucrtbase",
+  "api-ms-win-crt-conio-l1-1-0",
+ ],
+ [
   "msvcp120",
   "msvcp120_app",
  ],
