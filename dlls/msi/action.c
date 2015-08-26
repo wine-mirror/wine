@@ -6922,13 +6922,13 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 {
     MSIPACKAGE *package = param;
     LPCWSTR name, value, component;
-    LPWSTR data = NULL, newval = NULL, deformatted = NULL, ptr;
-    DWORD flags, type, size;
+    WCHAR *data = NULL, *newval = NULL, *deformatted = NULL, *p, *q;
+    DWORD flags, type, size, len, len_value = 0;
     UINT res;
     HKEY env = NULL;
     MSICOMPONENT *comp;
     MSIRECORD *uirow;
-    int action = 0;
+    int action = 0, found = 0;
 
     component = MSI_RecordGetString(rec, 4);
     comp = msi_get_loaded_component(package, component);
@@ -6956,7 +6956,20 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
         goto done;
     }
 
-    value = deformatted;
+    if ((value = deformatted))
+    {
+        if (flags & ENV_MOD_PREFIX)
+        {
+            p = strrchrW( value, ';' );
+            len_value = p - value;
+        }
+        else if (flags & ENV_MOD_APPEND)
+        {
+            value = strchrW( value, ';' ) + 1;
+            len_value = strlenW( value );
+        }
+        else len_value = strlenW( value );
+    }
 
     res = open_env_key( flags, &env );
     if (res != ERROR_SUCCESS)
@@ -6982,10 +6995,6 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             res = ERROR_SUCCESS;
             goto done;
         }
-
-        /* If we are appending but the string was empty, strip ; */
-        if ((flags & ENV_MOD_APPEND) && (value[0] == szSemiColon[0])) value++;
-
         size = (lstrlenW(value) + 1) * sizeof(WCHAR);
         newval = strdupW(value);
         if (!newval)
@@ -7005,15 +7014,14 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             goto done;
         }
 
-        data = msi_alloc(size);
-        if (!data)
+        if (!(p = q = data = msi_alloc( size )))
         {
             msi_free(deformatted);
             RegCloseKey(env);
             return ERROR_OUTOFMEMORY;
         }
 
-        res = RegQueryValueExW(env, name, NULL, &type, (LPVOID)data, &size);
+        res = RegQueryValueExW( env, name, NULL, &type, (BYTE *)data, &size );
         if (res != ERROR_SUCCESS)
             goto done;
 
@@ -7026,20 +7034,28 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
             goto done;
         }
 
-        size = (lstrlenW(data) + 1) * sizeof(WCHAR);
-        if (flags & ENV_MOD_MASK)
+        for (;;)
         {
-            DWORD mod_size;
-            int multiplier = 0;
-            if (flags & ENV_MOD_APPEND) multiplier++;
-            if (flags & ENV_MOD_PREFIX) multiplier++;
-            mod_size = lstrlenW(value) * multiplier;
-            size += mod_size * sizeof(WCHAR);
+            while (*q && *q != ';') q++;
+            len = q - p;
+            if (value && len == len_value && !memcmp( value, p, len * sizeof(WCHAR) ) &&
+                (!p[len] || p[len] == ';'))
+            {
+                found = 1;
+                break;
+            }
+            if (!*q) break;
+            p = ++q;
         }
 
-        newval = msi_alloc(size);
-        ptr = newval;
-        if (!newval)
+        if (found)
+        {
+            TRACE("string already set\n");
+            goto done;
+        }
+
+        size = (len_value + 1 + strlenW( data ) + 1) * sizeof(WCHAR);
+        if (!(p = newval = msi_alloc( size )))
         {
             res = ERROR_OUTOFMEMORY;
             goto done;
@@ -7047,21 +7063,24 @@ static UINT ITERATE_WriteEnvironmentString( MSIRECORD *rec, LPVOID param )
 
         if (flags & ENV_MOD_PREFIX)
         {
-            lstrcpyW(newval, value);
-            ptr = newval + lstrlenW(value);
+            memcpy( newval, value, len_value * sizeof(WCHAR) );
+            newval[len_value] = ';';
+            p = newval + len_value + 1;
             action |= 0x80000000;
         }
 
-        lstrcpyW(ptr, data);
+        strcpyW( p, data );
 
         if (flags & ENV_MOD_APPEND)
         {
-            lstrcatW(newval, value);
+            p += strlenW( data );
+            *p++ = ';';
+            memcpy( p, value, (len_value + 1) * sizeof(WCHAR) );
             action |= 0x40000000;
         }
     }
     TRACE("setting %s to %s\n", debugstr_w(name), debugstr_w(newval));
-    res = RegSetValueExW(env, name, 0, type, (LPVOID)newval, size);
+    res = RegSetValueExW( env, name, 0, type, (BYTE *)newval, size );
     if (res)
     {
         WARN("Failed to set %s to %s (%d)\n",  debugstr_w(name), debugstr_w(newval), res);

@@ -218,7 +218,8 @@ static const char environment_dat[] =
     "Var23\t+-MSITESTVAR19\t1\tOne\n"
     "Var24\t+-MSITESTVAR19\t[~]2\tOne\n"
     "Var25\t+-MSITESTVAR20\t1\tOne\n"
-    "Var26\t+-MSITESTVAR20\t2[~]\tOne\n";
+    "Var26\t+-MSITESTVAR20\t2[~]\tOne\n"
+    "Var27\t+-MSITESTVAR21\t[~];1\tOne\n";
 
 static const char service_install_dat[] =
     "ServiceInstall\tName\tDisplayName\tServiceType\tStartType\tErrorControl\t"
@@ -5145,6 +5146,7 @@ static void test_envvar(void)
         "1;;2;;", /* MSITESTVAR18 */
         "1",      /* MSITESTVAR19 */
         "1",      /* MSITESTVAR20 */
+        "1",      /* MSITESTVAR21 */
         NULL
     };
     UINT r;
@@ -5170,6 +5172,9 @@ static void test_envvar(void)
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     res = RegSetValueExA(env, "MSITESTVAR2", 0, REG_SZ, (const BYTE *)"0", 2);
+    ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegSetValueExA(env, "MSITESTVAR21", 0, REG_SZ, (const BYTE *)"1", 2);
     ok(res == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", res);
 
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
@@ -5264,6 +5269,7 @@ static void test_envvar(void)
 error:
     RegDeleteValueA(env, "MSITESTVAR1");
     RegDeleteValueA(env, "MSITESTVAR2");
+    RegDeleteValueA(env, "MSITESTVAR21");
     RegCloseKey(env);
 
     delete_test_files();
