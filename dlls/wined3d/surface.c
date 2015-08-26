@@ -1795,21 +1795,21 @@ static inline unsigned short float_32_to_16(const float *in)
     if (isinf(*in))
         return (*in < 0.0f ? 0xfc00 : 0x7c00);
 
-    if (tmp < powf(2, 10))
+    if (tmp < (float)(1u << 10))
     {
         do
         {
             tmp = tmp * 2.0f;
             exp--;
-        } while (tmp < powf(2, 10));
+        } while (tmp < (float)(1u << 10));
     }
-    else if (tmp >= powf(2, 11))
+    else if (tmp >= (float)(1u << 11))
     {
         do
         {
             tmp /= 2.0f;
             exp++;
-        } while (tmp >= powf(2, 11));
+        } while (tmp >= (float)(1u << 11));
     }
 
     mantissa = (unsigned int)tmp;
