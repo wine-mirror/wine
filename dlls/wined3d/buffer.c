@@ -275,7 +275,7 @@ static BOOL buffer_check_attribute(struct wined3d_buffer *This, const struct win
     /* Ignore attributes that do not have our vbo. After that check we can be sure that the attribute is
      * there, on nonexistent attribs the vbo is 0.
      */
-    if (!(si->use_map & (1 << attrib_idx))
+    if (!(si->use_map & (1u << attrib_idx))
             || state->streams[attrib->stream_idx].buffer != This)
         return FALSE;
 
@@ -432,9 +432,9 @@ static inline void fixup_d3dcolor(DWORD *dst_color)
      * 0x000000ff: Red mask
      */
     *dst_color = 0;
-    *dst_color |= (src_color & 0xff00ff00);         /* Alpha Green */
-    *dst_color |= (src_color & 0x00ff0000) >> 16;   /* Red */
-    *dst_color |= (src_color & 0x000000ff) << 16;   /* Blue */
+    *dst_color |= (src_color & 0xff00ff00u);         /* Alpha Green */
+    *dst_color |= (src_color & 0x00ff0000u) >> 16;   /* Red */
+    *dst_color |= (src_color & 0x000000ffu) << 16;   /* Blue */
 }
 
 static inline void fixup_transformed_pos(float *p)

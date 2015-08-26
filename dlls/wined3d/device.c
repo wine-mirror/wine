@@ -1257,7 +1257,7 @@ HRESULT CDECL wined3d_device_set_stream_source(struct wined3d_device *device, UI
     prev_buffer = stream->buffer;
 
     if (device->recording)
-        device->recording->changed.streamSource |= 1 << stream_idx;
+        device->recording->changed.streamSource |= 1u << stream_idx;
 
     if (prev_buffer == buffer
             && stream->stride == stride
@@ -1338,7 +1338,7 @@ HRESULT CDECL wined3d_device_set_stream_source_freq(struct wined3d_device *devic
     stream->frequency = divider & 0x7fffff;
 
     if (device->recording)
-        device->recording->changed.streamFreq |= 1 << stream_idx;
+        device->recording->changed.streamFreq |= 1u << stream_idx;
     else if (stream->frequency != old_freq || stream->flags != old_flags)
         wined3d_cs_emit_set_stream_source_freq(device->cs, stream_idx, stream->frequency, stream->flags);
 
@@ -1374,7 +1374,7 @@ void CDECL wined3d_device_set_transform(struct wined3d_device *device,
     if (device->recording)
     {
         TRACE("Recording... not performing anything.\n");
-        device->recording->changed.transform[d3dts >> 5] |= 1 << (d3dts & 0x1f);
+        device->recording->changed.transform[d3dts >> 5] |= 1u << (d3dts & 0x1f);
         device->update_state->transforms[d3dts] = *matrix;
         return;
     }
@@ -1763,7 +1763,7 @@ HRESULT CDECL wined3d_device_set_clip_plane(struct wined3d_device *device,
     }
 
     if (device->recording)
-        device->recording->changed.clipplane |= 1 << plane_idx;
+        device->recording->changed.clipplane |= 1u << plane_idx;
 
     if (!memcmp(&device->update_state->clip_planes[plane_idx], plane, sizeof(*plane)))
     {
@@ -1957,7 +1957,7 @@ void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
     if (device->recording)
     {
         TRACE("Recording... not performing anything.\n");
-        device->recording->changed.renderState[state >> 5] |= 1 << (state & 0x1f);
+        device->recording->changed.renderState[state >> 5] |= 1u << (state & 0x1f);
         return;
     }
 
@@ -2005,7 +2005,7 @@ void CDECL wined3d_device_set_sampler_state(struct wined3d_device *device,
     if (device->recording)
     {
         TRACE("Recording... not performing anything.\n");
-        device->recording->changed.samplerState[sampler_idx] |= 1 << state;
+        device->recording->changed.samplerState[sampler_idx] |= 1u << state;
         return;
     }
 
@@ -2287,7 +2287,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_b(struct wined3d_device *device,
     if (device->recording)
     {
         for (i = start_register; i < count + start_register; ++i)
-            device->recording->changed.vertexShaderConstantsB |= (1 << i);
+            device->recording->changed.vertexShaderConstantsB |= (1u << i);
     }
     else
     {
@@ -2334,7 +2334,7 @@ HRESULT CDECL wined3d_device_set_vs_consts_i(struct wined3d_device *device,
     if (device->recording)
     {
         for (i = start_register; i < count + start_register; ++i)
-            device->recording->changed.vertexShaderConstantsI |= (1 << i);
+            device->recording->changed.vertexShaderConstantsI |= (1u << i);
     }
     else
     {
@@ -2521,7 +2521,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_b(struct wined3d_device *device,
     if (device->recording)
     {
         for (i = start_register; i < count + start_register; ++i)
-            device->recording->changed.pixelShaderConstantsB |= (1 << i);
+            device->recording->changed.pixelShaderConstantsB |= (1u << i);
     }
     else
     {
@@ -2568,7 +2568,7 @@ HRESULT CDECL wined3d_device_set_ps_consts_i(struct wined3d_device *device,
     if (device->recording)
     {
         for (i = start_register; i < count + start_register; ++i)
-            device->recording->changed.pixelShaderConstantsI |= (1 << i);
+            device->recording->changed.pixelShaderConstantsI |= (1u << i);
     }
     else
     {
@@ -2746,12 +2746,12 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
     DWORD numTextures;
     HRESULT hr;
 
-    if (stream_info->use_map & (1 << WINED3D_FFP_NORMAL))
+    if (stream_info->use_map & (1u << WINED3D_FFP_NORMAL))
     {
         WARN(" lighting state not saved yet... Some strange stuff may happen !\n");
     }
 
-    if (!(stream_info->use_map & (1 << WINED3D_FFP_POSITION)))
+    if (!(stream_info->use_map & (1u << WINED3D_FFP_POSITION)))
     {
         ERR("Source has no position mask\n");
         return WINED3DERR_INVALIDCALL;
@@ -2935,7 +2935,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
         {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_DIFFUSE];
             const DWORD *color_d = (const DWORD *)(element->data.addr + i * element->stride);
-            if (!(stream_info->use_map & (1 << WINED3D_FFP_DIFFUSE)))
+            if (!(stream_info->use_map & (1u << WINED3D_FFP_DIFFUSE)))
             {
                 static BOOL warned = FALSE;
 
@@ -2958,7 +2958,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
             /* What's the color value in the feedback buffer? */
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_SPECULAR];
             const DWORD *color_s = (const DWORD *)(element->data.addr + i * element->stride);
-            if (!(stream_info->use_map & (1 << WINED3D_FFP_SPECULAR)))
+            if (!(stream_info->use_map & (1u << WINED3D_FFP_SPECULAR)))
             {
                 static BOOL warned = FALSE;
 
@@ -2980,7 +2980,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
         {
             const struct wined3d_stream_info_element *element = &stream_info->elements[WINED3D_FFP_TEXCOORD0 + tex_index];
             const float *tex_coord = (const float *)(element->data.addr + i * element->stride);
-            if (!(stream_info->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + tex_index))))
+            if (!(stream_info->use_map & (1u << (WINED3D_FFP_TEXCOORD0 + tex_index))))
             {
                 ERR("No source texture, but destination requests one\n");
                 dest_ptr += GET_TEXCOORD_SIZE_FROM_FVF(DestFVF, tex_index) * sizeof(float);
@@ -3090,7 +3090,7 @@ void CDECL wined3d_device_set_texture_stage_state(struct wined3d_device *device,
     if (device->recording)
     {
         TRACE("Recording... not performing anything.\n");
-        device->recording->changed.textureState[stage] |= 1 << state;
+        device->recording->changed.textureState[stage] |= 1u << state;
         return;
     }
 
@@ -3143,7 +3143,7 @@ HRESULT CDECL wined3d_device_set_texture(struct wined3d_device *device,
     }
 
     if (device->recording)
-        device->recording->changed.textures |= 1 << stage;
+        device->recording->changed.textures |= 1u << stage;
 
     prev = device->update_state->textures[stage];
     TRACE("Previous texture %p.\n", prev);
@@ -5095,7 +5095,7 @@ void device_invalidate_state(const struct wined3d_device *device, DWORD state)
         context->dirtyArray[context->numDirtyEntries++] = rep;
         idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
         shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
-        context->isStateDirty[idx] |= (1 << shift);
+        context->isStateDirty[idx] |= (1u << shift);
     }
 }
 

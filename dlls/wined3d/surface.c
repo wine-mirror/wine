@@ -351,9 +351,9 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
 /* Works correctly only for <= 4 bpp formats. */
 static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
 {
-    masks[0] = ((1 << format->red_size) - 1) << format->red_offset;
-    masks[1] = ((1 << format->green_size) - 1) << format->green_offset;
-    masks[2] = ((1 << format->blue_size) - 1) << format->blue_offset;
+    masks[0] = ((1u << format->red_size) - 1) << format->red_offset;
+    masks[1] = ((1u << format->green_size) - 1) << format->green_offset;
+    masks[2] = ((1u << format->blue_size) - 1) << format->blue_offset;
 }
 
 static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
@@ -388,7 +388,7 @@ static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
         default:
             /* Allocate extra space for a palette. */
             b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (1 << (format->byte_count * 8)));
+                    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (1u << (format->byte_count * 8)));
             break;
     }
 
@@ -2206,10 +2206,10 @@ static void convert_r5g6b5_x8r8g8b8(const BYTE *src, BYTE *dst,
         for (x = 0; x < w; ++x)
         {
             WORD pixel = src_line[x];
-            dst_line[x] = 0xff000000
-                    | convert_5to8[(pixel & 0xf800) >> 11] << 16
-                    | convert_6to8[(pixel & 0x07e0) >> 5] << 8
-                    | convert_5to8[(pixel & 0x001f)];
+            dst_line[x] = 0xff000000u
+                    | convert_5to8[(pixel & 0xf800u) >> 11] << 16
+                    | convert_6to8[(pixel & 0x07e0u) >> 5] << 8
+                    | convert_5to8[(pixel & 0x001fu)];
         }
     }
 }

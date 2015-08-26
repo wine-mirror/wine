@@ -724,9 +724,9 @@ struct wined3d_query_data_timestamp_disjoint
     BOOL disjoint;
 };
 
-#define WINED3DISSUE_BEGIN                                      (1 << 1)
-#define WINED3DISSUE_END                                        (1 << 0)
-#define WINED3DGETDATA_FLUSH                                    (1 << 0)
+#define WINED3DISSUE_BEGIN                                      (1u << 1)
+#define WINED3DISSUE_END                                        (1u << 0)
+#define WINED3DGETDATA_FLUSH                                    (1u << 0)
 
 enum wined3d_stateblock_type
 {
@@ -797,10 +797,10 @@ enum wined3d_display_rotation
     WINED3D_DISPLAY_ROTATION_270            = 4,
 };
 
-#define WINED3DCOLORWRITEENABLE_RED                             (1 << 0)
-#define WINED3DCOLORWRITEENABLE_GREEN                           (1 << 1)
-#define WINED3DCOLORWRITEENABLE_BLUE                            (1 << 2)
-#define WINED3DCOLORWRITEENABLE_ALPHA                           (1 << 3)
+#define WINED3DCOLORWRITEENABLE_RED                             (1u << 0)
+#define WINED3DCOLORWRITEENABLE_GREEN                           (1u << 1)
+#define WINED3DCOLORWRITEENABLE_BLUE                            (1u << 2)
+#define WINED3DCOLORWRITEENABLE_ALPHA                           (1u << 3)
 
 #define WINED3DADAPTER_DEFAULT                                  0
 #define WINED3DENUM_NO_WHQL_LEVEL                               2
@@ -875,12 +875,12 @@ enum wined3d_display_rotation
 #define WINED3DPRESENT_INTERVAL_IMMEDIATE                       0x80000000
 
 #define WINED3DMAXUSERCLIPPLANES                                32
-#define WINED3DCLIPPLANE0                                       (1 << 0)
-#define WINED3DCLIPPLANE1                                       (1 << 1)
-#define WINED3DCLIPPLANE2                                       (1 << 2)
-#define WINED3DCLIPPLANE3                                       (1 << 3)
-#define WINED3DCLIPPLANE4                                       (1 << 4)
-#define WINED3DCLIPPLANE5                                       (1 << 5)
+#define WINED3DCLIPPLANE0                                       (1u << 0)
+#define WINED3DCLIPPLANE1                                       (1u << 1)
+#define WINED3DCLIPPLANE2                                       (1u << 2)
+#define WINED3DCLIPPLANE3                                       (1u << 3)
+#define WINED3DCLIPPLANE4                                       (1u << 4)
+#define WINED3DCLIPPLANE5                                       (1u << 5)
 
 /* FVF (Flexible Vertex Format) codes */
 #define WINED3DFVF_RESERVED0                                    0x0001
@@ -912,10 +912,10 @@ enum wined3d_display_rotation
 #define WINED3DFVF_LASTBETA_D3DCOLOR                            0x8000
 #define WINED3DFVF_RESERVED2                                    0x6000
 
-#define WINED3DFVF_TEXTUREFORMAT1                               3
-#define WINED3DFVF_TEXTUREFORMAT2                               0
-#define WINED3DFVF_TEXTUREFORMAT3                               1
-#define WINED3DFVF_TEXTUREFORMAT4                               2
+#define WINED3DFVF_TEXTUREFORMAT1                               3u
+#define WINED3DFVF_TEXTUREFORMAT2                               0u
+#define WINED3DFVF_TEXTUREFORMAT3                               1u
+#define WINED3DFVF_TEXTUREFORMAT4                               2u
 #define WINED3DFVF_TEXCOORDSIZE1(idx)                           (WINED3DFVF_TEXTUREFORMAT1 << (idx * 2 + 16))
 #define WINED3DFVF_TEXCOORDSIZE2(idx)                           (WINED3DFVF_TEXTUREFORMAT2 << (idx * 2 + 16))
 #define WINED3DFVF_TEXCOORDSIZE3(idx)                           (WINED3DFVF_TEXTUREFORMAT3 << (idx * 2 + 16))
@@ -927,8 +927,8 @@ enum wined3d_display_rotation
 #define WINED3DCLEAR_STENCIL                                    0x00000004
 
 /* Stream source flags */
-#define WINED3DSTREAMSOURCE_INDEXEDDATA                         (1 << 30)
-#define WINED3DSTREAMSOURCE_INSTANCEDATA                        (2 << 30)
+#define WINED3DSTREAMSOURCE_INDEXEDDATA                         (1u << 30)
+#define WINED3DSTREAMSOURCE_INSTANCEDATA                        (2u << 30)
 
 /* SetPrivateData flags */
 #define WINED3DSPD_IUNKNOWN                                     0x00000001

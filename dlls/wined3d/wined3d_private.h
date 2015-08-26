@@ -127,10 +127,10 @@ static inline struct color_fixup_desc create_complex_fixup_desc(enum complex_fix
 {
     struct color_fixup_desc fixup =
     {
-        0, complex_fixup & (1 << 0) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
-        0, complex_fixup & (1 << 1) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
-        0, complex_fixup & (1 << 2) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
-        0, complex_fixup & (1 << 3) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
+        0u, complex_fixup & (1u << 0) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
+        0u, complex_fixup & (1u << 1) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
+        0u, complex_fixup & (1u << 2) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
+        0u, complex_fixup & (1u << 3) ? CHANNEL_SOURCE_COMPLEX1 : CHANNEL_SOURCE_COMPLEX0,
     };
     return fixup;
 }
@@ -156,10 +156,10 @@ static inline BOOL is_same_fixup(struct color_fixup_desc f1, struct color_fixup_
 static inline enum complex_fixup get_complex_fixup(struct color_fixup_desc fixup)
 {
     enum complex_fixup complex_fixup = 0;
-    if (fixup.x_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1 << 0);
-    if (fixup.y_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1 << 1);
-    if (fixup.z_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1 << 2);
-    if (fixup.w_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1 << 3);
+    if (fixup.x_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1u << 0);
+    if (fixup.y_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1u << 1);
+    if (fixup.z_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1u << 2);
+    if (fixup.w_source == CHANNEL_SOURCE_COMPLEX1) complex_fixup |= (1u << 3);
     return complex_fixup;
 }
 
@@ -214,9 +214,9 @@ static inline GLenum wined3d_gl_min_mip_filter(enum wined3d_texture_filter_type 
  */
 static inline float float_16_to_32(const unsigned short *in)
 {
-    const unsigned short s = ((*in) & 0x8000);
-    const unsigned short e = ((*in) & 0x7c00) >> 10;
-    const unsigned short m = (*in) & 0x3ff;
+    const unsigned short s = ((*in) & 0x8000u);
+    const unsigned short e = ((*in) & 0x7c00u) >> 10;
+    const unsigned short m = (*in) & 0x3ffu;
     const float sgn = (s ? -1.0f : 1.0f);
 
     if(e == 0) {
@@ -232,9 +232,9 @@ static inline float float_16_to_32(const unsigned short *in)
 
 static inline float float_24_to_32(DWORD in)
 {
-    const float sgn = in & 0x800000 ? -1.0f : 1.0f;
-    const unsigned short e = (in & 0x780000) >> 19;
-    const unsigned int m = in & 0x7ffff;
+    const float sgn = in & 0x800000u ? -1.0f : 1.0f;
+    const unsigned short e = (in & 0x780000u) >> 19;
+    const unsigned int m = in & 0x7ffffu;
 
     if (e == 0)
     {
@@ -364,7 +364,7 @@ enum wined3d_immconst_type
     WINED3D_IMMCONST_VEC4,
 };
 
-#define WINED3DSP_NOSWIZZLE (0 | (1 << 2) | (2 << 4) | (3 << 6))
+#define WINED3DSP_NOSWIZZLE (0u | (1u << 2) | (2u << 4) | (3u << 6))
 
 enum wined3d_shader_src_modifier
 {
@@ -384,11 +384,11 @@ enum wined3d_shader_src_modifier
     WINED3DSPSM_NOT = 13,
 };
 
-#define WINED3DSP_WRITEMASK_0   0x1 /* .x r */
-#define WINED3DSP_WRITEMASK_1   0x2 /* .y g */
-#define WINED3DSP_WRITEMASK_2   0x4 /* .z b */
-#define WINED3DSP_WRITEMASK_3   0x8 /* .w a */
-#define WINED3DSP_WRITEMASK_ALL 0xf /* all */
+#define WINED3DSP_WRITEMASK_0   0x1u /* .x r */
+#define WINED3DSP_WRITEMASK_1   0x2u /* .y g */
+#define WINED3DSP_WRITEMASK_2   0x4u /* .z b */
+#define WINED3DSP_WRITEMASK_3   0x8u /* .w a */
+#define WINED3DSP_WRITEMASK_ALL 0xfu /* all */
 
 enum wined3d_shader_dst_modifier
 {
@@ -413,11 +413,11 @@ enum wined3d_shader_rel_op
     WINED3D_SHADER_REL_OP_LE = 6,
 };
 
-#define WINED3D_SM1_VS  0xfffe
-#define WINED3D_SM1_PS  0xffff
-#define WINED3D_SM4_PS  0x0000
-#define WINED3D_SM4_VS  0x0001
-#define WINED3D_SM4_GS  0x0002
+#define WINED3D_SM1_VS  0xfffeu
+#define WINED3D_SM1_PS  0xffffu
+#define WINED3D_SM4_PS  0x0000u
+#define WINED3D_SM4_VS  0x0001u
+#define WINED3D_SM4_GS  0x0002u
 
 /* Shader version tokens, and shader end tokens */
 #define WINED3DPS_VERSION(major, minor) ((WINED3D_SM1_PS << 16) | ((major) << 8) | (minor))
@@ -810,11 +810,11 @@ enum wined3d_ffp_ps_fog_mode
  * into the shader code
  */
 
-#define WINED3D_PSARGS_PROJECTED (1 << 3)
+#define WINED3D_PSARGS_PROJECTED (1u << 3)
 #define WINED3D_PSARGS_TEXTRANSFORM_SHIFT 4
-#define WINED3D_PSARGS_TEXTRANSFORM_MASK 0xf
+#define WINED3D_PSARGS_TEXTRANSFORM_MASK 0xfu
 #define WINED3D_PSARGS_TEXTYPE_SHIFT 2
-#define WINED3D_PSARGS_TEXTYPE_MASK 0x3
+#define WINED3D_PSARGS_TEXTYPE_MASK 0x3u
 
 /* Used for Shader Model 1 pixel shaders to track the bound texture
  * type. 2D and RECT textures are separated through NP2 fixup. */
@@ -1897,10 +1897,10 @@ enum wined3d_ffp_vs_fog_mode
 };
 
 #define WINED3D_FFP_TCI_SHIFT               16
-#define WINED3D_FFP_TCI_MASK                0xff
+#define WINED3D_FFP_TCI_MASK                0xffu
 
 #define WINED3D_FFP_LIGHT_TYPE_SHIFT(idx)   (3 * (idx))
-#define WINED3D_FFP_LIGHT_TYPE_MASK         0x7
+#define WINED3D_FFP_LIGHT_TYPE_MASK         0x7u
 
 struct wined3d_ffp_vs_settings
 {
@@ -2128,7 +2128,7 @@ static inline BOOL isStateDirty(const struct wined3d_context *context, DWORD sta
 {
     DWORD idx = state / (sizeof(*context->isStateDirty) * CHAR_BIT);
     BYTE shift = state & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
-    return context->isStateDirty[idx] & (1 << shift);
+    return context->isStateDirty[idx] & (1u << shift);
 }
 
 #define WINED3D_RESOURCE_ACCESS_GPU     0x1
@@ -3255,6 +3255,6 @@ static inline void context_apply_state(struct wined3d_context *context,
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */
 #define WINED3D_OPENGL_WINDOW_CLASS_NAME "WineD3D_OpenGL"
 
-#define MAKEDWORD_VERSION(maj, min) (((maj & 0xffff) << 16) | (min & 0xffff))
+#define MAKEDWORD_VERSION(maj, min) (((maj & 0xffffu) << 16) | (min & 0xffffu))
 
 #endif

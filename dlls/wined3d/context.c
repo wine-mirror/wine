@@ -305,12 +305,12 @@ void context_check_fbo_status(const struct wined3d_context *context, GLenum targ
 static inline DWORD context_generate_rt_mask(GLenum buffer)
 {
     /* Should take care of all the GL_FRONT/GL_BACK/GL_AUXi/GL_NONE... cases */
-    return buffer ? (1 << 31) | buffer : 0;
+    return buffer ? (1u << 31) | buffer : 0;
 }
 
 static inline DWORD context_generate_rt_mask_from_surface(const struct wined3d_surface *target)
 {
-    return (1 << 31) | surface_get_gl_buffer(target);
+    return (1u << 31) | surface_get_gl_buffer(target);
 }
 
 static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *context,
@@ -1228,7 +1228,7 @@ void context_invalidate_state(struct wined3d_context *context, DWORD state)
     context->dirtyArray[context->numDirtyEntries++] = rep;
     idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
     shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
-    context->isStateDirty[idx] |= (1 << shift);
+    context->isStateDirty[idx] |= (1u << shift);
 }
 
 /* This function takes care of wined3d pixel format selection. */
@@ -1805,9 +1805,9 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         GL_EXTCALL(glProvokingVertexEXT(GL_FIRST_VERTEX_CONVENTION_EXT));
     }
     device->shader_backend->shader_init_context_state(ret);
-    ret->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
-            | (1 << WINED3D_SHADER_TYPE_VERTEX)
-            | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
+    ret->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
+            | (1u << WINED3D_SHADER_TYPE_VERTEX)
+            | (1u << WINED3D_SHADER_TYPE_GEOMETRY);
 
     /* If this happens to be the first context for the device, dummy textures
      * are not created yet. In that case, they will be created (and bound) by
@@ -2099,12 +2099,12 @@ static void SetupForBlit(const struct wined3d_device *device, struct wined3d_con
 
 static inline BOOL is_rt_mask_onscreen(DWORD rt_mask)
 {
-    return rt_mask & (1 << 31);
+    return rt_mask & (1u << 31);
 }
 
 static inline GLenum draw_buffer_from_rt_mask(DWORD rt_mask)
 {
-    return rt_mask & ~(1 << 31);
+    return rt_mask & ~(1u << 31);
 }
 
 /* Context activation is done by the caller. */
@@ -2387,7 +2387,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
                 {
                     context->blit_targets[i] = wined3d_rendertarget_view_get_surface(rts[i]);
                     if (rts[i] && rts[i]->format->id != WINED3DFMT_NULL)
-                        rt_mask |= (1 << i);
+                        rt_mask |= (1u << i);
                 }
                 while (i < context->gl_info->limits.buffers)
                 {
@@ -2423,7 +2423,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
         for (i = 0; i < rt_count; ++i)
         {
             if (rts[i] && rts[i]->format->id != WINED3DFMT_NULL)
-                rt_mask |= (1 << i);
+                rt_mask |= (1u << i);
         }
     }
     else
@@ -2482,9 +2482,9 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
     i = 0;
     while (rt_mask_bits)
     {
-        rt_mask_bits &= ~(1 << i);
+        rt_mask_bits &= ~(1u << i);
         if (!rts[i] || rts[i]->format->id == WINED3DFMT_NULL)
-            rt_mask &= ~(1 << i);
+            rt_mask &= ~(1u << i);
 
         i++;
     }
@@ -2581,11 +2581,11 @@ static void context_update_fixed_function_usage_map(struct wined3d_context *cont
                 || ((alpha_arg2 == WINED3DTA_TEXTURE) && alpha_op != WINED3D_TOP_SELECT_ARG1)
                 || ((alpha_arg3 == WINED3DTA_TEXTURE)
                     && (alpha_op == WINED3D_TOP_MULTIPLY_ADD || alpha_op == WINED3D_TOP_LERP)))
-            context->fixed_function_usage_map |= (1 << i);
+            context->fixed_function_usage_map |= (1u << i);
 
         if ((color_op == WINED3D_TOP_BUMPENVMAP || color_op == WINED3D_TOP_BUMPENVMAP_LUMINANCE)
                 && i < MAX_TEXTURES - 1)
-            context->fixed_function_usage_map |= (1 << (i + 1));
+            context->fixed_function_usage_map |= (1u << (i + 1));
     }
 
     if (i < context->lowest_disabled_stage)
@@ -2688,7 +2688,7 @@ static BOOL context_unit_free_for_vs(const struct wined3d_context *context,
         if (!ps_resource_info)
         {
             /* No pixel shader, check fixed function */
-            return current_mapping >= MAX_TEXTURES || !(context->fixed_function_usage_map & (1 << current_mapping));
+            return current_mapping >= MAX_TEXTURES || !(context->fixed_function_usage_map & (1u << current_mapping));
         }
 
         /* Pixel shader, check the shader's sampler map */
@@ -2903,9 +2903,9 @@ void context_stream_info_from_declaration(struct wined3d_context *context,
             if (!context->gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
                     && element->format->id == WINED3DFMT_B8G8R8A8_UNORM)
             {
-                stream_info->swizzle_map |= 1 << idx;
+                stream_info->swizzle_map |= 1u << idx;
             }
-            stream_info->use_map |= 1 << idx;
+            stream_info->use_map |= 1u << idx;
         }
     }
 }
@@ -2983,9 +2983,9 @@ static void context_update_stream_info(struct wined3d_context *context, const st
     }
     else
     {
-        WORD slow_mask = -!d3d_info->ffp_generic_attributes & (1 << WINED3D_FFP_PSIZE);
+        WORD slow_mask = -!d3d_info->ffp_generic_attributes & (1u << WINED3D_FFP_PSIZE);
         slow_mask |= -!gl_info->supported[ARB_VERTEX_ARRAY_BGRA]
-                & ((1 << WINED3D_FFP_DIFFUSE) | (1 << WINED3D_FFP_SPECULAR));
+                & ((1u << WINED3D_FFP_DIFFUSE) | (1u << WINED3D_FFP_SPECULAR));
 
         if (((stream_info->position_transformed && !d3d_info->xyzrhw)
                 || (stream_info->use_map & slow_mask)) && !stream_info->all_vbo)
@@ -3201,7 +3201,7 @@ BOOL context_apply_draw_state(struct wined3d_context *context, struct wined3d_de
         DWORD rep = context->dirtyArray[i];
         DWORD idx = rep / (sizeof(*context->isStateDirty) * CHAR_BIT);
         BYTE shift = rep & ((sizeof(*context->isStateDirty) * CHAR_BIT) - 1);
-        context->isStateDirty[idx] &= ~(1 << shift);
+        context->isStateDirty[idx] &= ~(1u << shift);
         state_table[rep].apply(context, state, rep);
     }
 

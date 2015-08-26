@@ -139,13 +139,13 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
     /* Start drawing in GL */
     gl_info->gl_ops.gl.p_glBegin(glPrimType);
 
-    if (si->use_map & (1 << WINED3D_FFP_POSITION))
+    if (si->use_map & (1u << WINED3D_FFP_POSITION))
     {
         element = &si->elements[WINED3D_FFP_POSITION];
         position = element->data.addr;
     }
 
-    if (si->use_map & (1 << WINED3D_FFP_NORMAL))
+    if (si->use_map & (1u << WINED3D_FFP_NORMAL))
     {
         element = &si->elements[WINED3D_FFP_NORMAL];
         normal = element->data.addr;
@@ -156,7 +156,7 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
     }
 
     num_untracked_materials = context->num_untracked_materials;
-    if (si->use_map & (1 << WINED3D_FFP_DIFFUSE))
+    if (si->use_map & (1u << WINED3D_FFP_DIFFUSE))
     {
         element = &si->elements[WINED3D_FFP_DIFFUSE];
         diffuse = element->data.addr;
@@ -169,7 +169,7 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
         gl_info->gl_ops.gl.p_glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
     }
 
-    if (si->use_map & (1 << WINED3D_FFP_SPECULAR))
+    if (si->use_map & (1u << WINED3D_FFP_SPECULAR))
     {
         element = &si->elements[WINED3D_FFP_SPECULAR];
         specular = element->data.addr;
@@ -229,11 +229,11 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
             continue;
         }
 
-        if (si->use_map & (1 << (WINED3D_FFP_TEXCOORD0 + coordIdx)))
+        if (si->use_map & (1u << (WINED3D_FFP_TEXCOORD0 + coordIdx)))
         {
             element = &si->elements[WINED3D_FFP_TEXCOORD0 + coordIdx];
             texCoords[coordIdx] = element->data.addr;
-            tex_mask |= (1 << textureNo);
+            tex_mask |= (1u << textureNo);
         }
         else
         {
@@ -368,9 +368,9 @@ static inline void send_attribute(const struct wined3d_gl_info *gl_info,
             if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
             {
                 const DWORD *src = ptr;
-                DWORD c = *src & 0xff00ff00;
-                c |= (*src & 0xff0000) >> 16;
-                c |= (*src & 0xff) << 16;
+                DWORD c = *src & 0xff00ff00u;
+                c |= (*src & 0xff0000u) >> 16;
+                c |= (*src & 0xffu) << 16;
                 GL_EXTCALL(glVertexAttrib4Nubv(index, (GLubyte *)&c));
                 break;
             }
@@ -497,7 +497,7 @@ static void drawStridedSlowVs(struct wined3d_context *context, const struct wine
 
         for (i = MAX_ATTRIBS - 1; i >= 0; i--)
         {
-            if (!(si->use_map & (1 << i))) continue;
+            if (!(si->use_map & (1u << i))) continue;
 
             ptr = si->elements[i].data.addr + si->elements[i].stride * SkipnStrides;
 
@@ -534,7 +534,7 @@ static void drawStridedInstanced(struct wined3d_context *context, const struct w
 
     for (i = 0; i < sizeof(si->elements) / sizeof(*si->elements); ++i)
     {
-        if (!(si->use_map & (1 << i))) continue;
+        if (!(si->use_map & (1u << i))) continue;
 
         if (state->streams[si->elements[i].stream_idx].flags & WINED3DSTREAMSOURCE_INSTANCEDATA)
         {
@@ -582,7 +582,7 @@ static void remove_vbos(struct wined3d_context *context,
     {
         struct wined3d_stream_info_element *e;
 
-        if (!(s->use_map & (1 << i))) continue;
+        if (!(s->use_map & (1u << i))) continue;
 
         e = &s->elements[i];
         if (e->data.buffer_object)

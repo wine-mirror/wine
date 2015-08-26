@@ -805,7 +805,8 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
             {
                 DWORD idx = i >> 5;
                 DWORD shift = i & 0x1f;
-                if(reg_maps->constf[idx] & (1 << shift)) highest_constf = i;
+                if (reg_maps->constf[idx] & (1u << shift))
+                    highest_constf = i;
             }
 
             if(use_nv_clip(gl_info) && ctx->target_version >= NV2)
@@ -890,11 +891,14 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
         /* Need to PARAM the environment parameters (constants) so we can use relative addressing */
         shader_addline(buffer, "PARAM C[%d] = { program.env[0..%d] };\n",
                     max_constantsF, max_constantsF - 1);
-    } else {
-        for(i = 0; i < max_constantsF; i++) {
+    }
+    else
+    {
+        for (i = 0; i < max_constantsF; ++i)
+        {
             DWORD idx, mask;
             idx = i >> 5;
-            mask = 1 << (i & 0x1f);
+            mask = 1u << (i & 0x1fu);
             if (!shader_constant_is_local(shader, i) && (reg_maps->constf[idx] & mask))
             {
                 shader_addline(buffer, "PARAM C%d = program.env[%d];\n",i, i);
@@ -1087,7 +1091,7 @@ static void shader_arb_get_register_name(const struct wined3d_shader_instruction
             }
             else
             {
-                if (ctx->cur_vs_args->super.swizzle_map & (1 << reg->idx[0].offset))
+                if (ctx->cur_vs_args->super.swizzle_map & (1u << reg->idx[0].offset))
                     *is_color = TRUE;
                 sprintf(register_name, "vertex.attrib[%u]", reg->idx[0].offset);
             }
@@ -1426,14 +1430,14 @@ static void shader_hw_sample(const struct wined3d_shader_instruction *ins, DWORD
             device = shader->device;
             gl_info = &device->adapter->gl_info;
 
-            if (pshader && priv->cur_ps_args->super.np2_fixup & (1 << sampler_idx)
+            if (pshader && priv->cur_ps_args->super.np2_fixup & (1u << sampler_idx)
                     && gl_info->supported[ARB_TEXTURE_RECTANGLE])
                 tex_type = "RECT";
             else
                 tex_type = "2D";
             if (shader_is_pshader_version(ins->ctx->reg_maps->shader_version.type))
             {
-                if (priv->cur_np2fixup_info->super.active & (1 << sampler_idx))
+                if (priv->cur_np2fixup_info->super.active & (1u << sampler_idx))
                 {
                     if (flags) FIXME("Only ordinary sampling from NP2 textures is supported.\n");
                     else np2_fixup = TRUE;
@@ -3220,7 +3224,7 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
 
         for (i = 0; i < gl_info->limits.clipplanes; ++i)
         {
-            if (args->clip.boolclip.clipplane_mask & (1 << i))
+            if (args->clip.boolclip.clipplane_mask & (1u << i))
             {
                 shader_addline(buffer, "DP4 TA.%c, TMP_OUT, state.clip[%u].plane;\n",
                                component[cur_clip++], i);
@@ -3810,7 +3814,8 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
                        i, compiled->bumpenvmatconst[bump_const].const_num);
         compiled->numbumpenvmatconsts = bump_const + 1;
 
-        if (!(reg_maps->luminanceparams & (1 << i))) continue;
+        if (!(reg_maps->luminanceparams & (1u << i)))
+            continue;
 
         compiled->luminanceconst[bump_const].const_num = next_local++;
         shader_addline(buffer, "PARAM luminance%d = program.local[%d];\n",
@@ -3820,7 +3825,7 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
     for(i = 0; i < MAX_CONST_I; i++)
     {
         compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
-        if (reg_maps->integer_constants & (1 << i) && priv_ctx.target_version >= NV2)
+        if (reg_maps->integer_constants & (1u << i) && priv_ctx.target_version >= NV2)
         {
             const DWORD *control_values = find_loop_control_values(shader, i);
 
@@ -3876,13 +3881,18 @@ static GLuint shader_arb_generate_pshader(const struct wined3d_shader *shader,
         fixup->offset = next_local;
         fixup->super.active = 0;
 
-        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i) {
-            if (!(map & (1 << i))) continue;
+        for (i = 0; i < MAX_FRAGMENT_SAMPLERS; ++i)
+        {
+            if (!(map & (1u << i)))
+                continue;
 
-            if (fixup->offset + (cur_fixup_sampler >> 1) < max_lconsts) {
-                fixup->super.active |= (1 << i);
+            if (fixup->offset + (cur_fixup_sampler >> 1) < max_lconsts)
+            {
+                fixup->super.active |= (1u << i);
                 fixup->super.idx[i] = cur_fixup_sampler++;
-            } else {
+            }
+            else
+            {
                 FIXME("No free constant found to load NP2 fixup data into shader. "
                       "Sampling from this texture will probably look wrong.\n");
                 break;
@@ -4263,7 +4273,7 @@ static GLuint shader_arb_generate_vshader(const struct wined3d_shader *shader,
     for(i = 0; i < MAX_CONST_I; i++)
     {
         compiled->int_consts[i] = WINED3D_CONST_NUM_UNUSED;
-        if(reg_maps->integer_constants & (1 << i) && priv_ctx.target_version >= NV2)
+        if (reg_maps->integer_constants & (1u << i) && priv_ctx.target_version >= NV2)
         {
             const DWORD *control_values = find_loop_control_values(shader, i);
 
@@ -4536,7 +4546,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
     for(i = 0; i < MAX_CONST_B; i++)
     {
         if (state->ps_consts_b[i])
-            args->bools |= ( 1 << i);
+            args->bools |= ( 1u << i);
     }
 
     /* Only enable the clip plane emulation KIL if at least one clipplane is enabled. The KIL instruction
@@ -4558,9 +4568,9 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
         return;
     }
 
-    for(i = 0; i < MAX_CONST_I; i++)
+    for (i = 0; i < MAX_CONST_I; ++i)
     {
-        if(int_skip & (1 << i))
+        if (int_skip & (1u << i))
         {
             args->loop_ctrl[i][0] = 0;
             args->loop_ctrl[i][1] = 0;
@@ -4618,7 +4628,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     for(i = 0; i < MAX_CONST_B; i++)
     {
         if (state->vs_consts_b[i])
-            args->clip.boolclip.bools |= ( 1 << i);
+            args->clip.boolclip.bools |= (1u << i);
     }
 
     args->vertex.samplers[0] = context->tex_unit_map[MAX_FRAGMENT_SAMPLERS + 0];
@@ -4637,7 +4647,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
 
     for(i = 0; i < MAX_CONST_I; i++)
     {
-        if(int_skip & (1 << i))
+        if (int_skip & (1u << i))
         {
             args->loop_ctrl[i][0] = 0;
             args->loop_ctrl[i][1] = 0;
@@ -4820,9 +4830,9 @@ static void shader_arb_disable(void *shader_priv, struct wined3d_context *contex
         priv->last_vs_color_unclamp = FALSE;
     }
 
-    context->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
-            | (1 << WINED3D_SHADER_TYPE_VERTEX)
-            | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
+    context->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
+            | (1u << WINED3D_SHADER_TYPE_VERTEX)
+            | (1u << WINED3D_SHADER_TYPE_GEOMETRY);
 }
 
 /* Context activation is done by the caller. */
@@ -5326,7 +5336,7 @@ static BOOL get_bool_const(const struct wined3d_shader_instruction *ins,
     BOOL vshader = shader_is_vshader_version(reg_maps->shader_version.type);
     const struct wined3d_shader_lconst *constant;
     WORD bools = 0;
-    WORD flag = (1 << idx);
+    WORD flag = (1u << idx);
     struct shader_arb_ctx_priv *priv = ins->ctx->backend_data;
 
     if (reg_maps->local_bool_consts & flag)
@@ -5358,7 +5368,7 @@ static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
 
     /* Integer constants can either be a local constant, or they can be stored in the shader
      * type specific compile args. */
-    if (reg_maps->local_int_consts & (1 << idx))
+    if (reg_maps->local_int_consts & (1u << idx))
     {
         const struct wined3d_shader_lconst *constant;
 
@@ -6611,7 +6621,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
         }
         else if (use_pshader)
         {
-            context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
+            context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
         }
         return;
     }
@@ -6665,7 +6675,7 @@ static void fragment_prog_arbfp(struct wined3d_context *context, const struct wi
         context->last_was_pshader = TRUE;
     }
 
-    context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
+    context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
 }
 
 /* We can't link the fog states to the fragment state directly since the

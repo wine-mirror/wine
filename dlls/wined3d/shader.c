@@ -499,7 +499,7 @@ static inline void set_bitmap_bit(DWORD *bitmap, DWORD bit)
     DWORD idx, shift;
     idx = bit >> 5;
     shift = bit & 0x1f;
-    bitmap[idx] |= (1 << shift);
+    bitmap[idx] |= (1u << shift);
 }
 
 static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct wined3d_shader_reg_maps *reg_maps,
@@ -509,13 +509,13 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
     {
         case WINED3DSPR_TEXTURE: /* WINED3DSPR_ADDR */
             if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
-                reg_maps->texcoord |= 1 << reg->idx[0].offset;
+                reg_maps->texcoord |= 1u << reg->idx[0].offset;
             else
-                reg_maps->address |= 1 << reg->idx[0].offset;
+                reg_maps->address |= 1u << reg->idx[0].offset;
             break;
 
         case WINED3DSPR_TEMP:
-            reg_maps->temporary |= 1 << reg->idx[0].offset;
+            reg_maps->temporary |= 1u << reg->idx[0].offset;
             break;
 
         case WINED3DSPR_INPUT:
@@ -538,7 +538,7 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
                 }
             }
             else
-                reg_maps->input_registers |= 1 << reg->idx[0].offset;
+                reg_maps->input_registers |= 1u << reg->idx[0].offset;
             break;
 
         case WINED3DSPR_RASTOUT:
@@ -589,7 +589,7 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
             }
             else
             {
-                reg_maps->integer_constants |= (1 << reg->idx[0].offset);
+                reg_maps->integer_constants |= (1u << reg->idx[0].offset);
             }
             break;
 
@@ -601,12 +601,12 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
             }
             else
             {
-                reg_maps->boolean_constants |= (1 << reg->idx[0].offset);
+                reg_maps->boolean_constants |= (1u << reg->idx[0].offset);
             }
             break;
 
         case WINED3DSPR_COLOROUT:
-            reg_maps->rt_mask |= (1 << reg->idx[0].offset);
+            reg_maps->rt_mask |= (1u << reg->idx[0].offset);
             break;
 
         default:
@@ -745,7 +745,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL && shader_version.major == 3
                             && semantic->usage == WINED3D_DECL_USAGE_POSITION && !semantic->usage_idx)
                         return WINED3DERR_INVALIDCALL;
-                    reg_maps->input_registers |= 1 << reg_idx;
+                    reg_maps->input_registers |= 1u << reg_idx;
                     shader_signature_from_semantic(&input_signature_elements[reg_idx], semantic);
                     break;
 
@@ -756,7 +756,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                         ERR("Invalid output register index %u.\n", reg_idx);
                         break;
                     }
-                    reg_maps->output_registers |= 1 << reg_idx;
+                    reg_maps->output_registers |= 1u << reg_idx;
                     shader_signature_from_semantic(&output_signature_elements[reg_idx], semantic);
                     if (semantic->usage == WINED3D_DECL_USAGE_FOG)
                         reg_maps->fog = 1;
@@ -853,7 +853,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             memcpy(lconst->value, ins.src[0].reg.immconst_data, 4 * sizeof(DWORD));
 
             list_add_head(&shader->constantsI, &lconst->entry);
-            reg_maps->local_int_consts |= (1 << lconst->idx);
+            reg_maps->local_int_consts |= (1u << lconst->idx);
         }
         else if (ins.handler_idx == WINED3DSIH_DEFB)
         {
@@ -864,12 +864,12 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
             memcpy(lconst->value, ins.src[0].reg.immconst_data, sizeof(DWORD));
 
             list_add_head(&shader->constantsB, &lconst->entry);
-            reg_maps->local_bool_consts |= (1 << lconst->idx);
+            reg_maps->local_bool_consts |= (1u << lconst->idx);
         }
         /* For subroutine prototypes. */
         else if (ins.handler_idx == WINED3DSIH_LABEL)
         {
-            reg_maps->labels |= 1 << ins.src[0].reg.idx[0].offset;
+            reg_maps->labels |= 1u << ins.src[0].reg.idx[0].offset;
         }
         /* Set texture, address, temporary registers. */
         else
@@ -902,19 +902,19 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             switch (idx)
                             {
                                 case 0: /* oPos */
-                                    reg_maps->output_registers |= 1 << 10;
+                                    reg_maps->output_registers |= 1u << 10;
                                     shader_signature_from_usage(&output_signature_elements[10],
                                             WINED3D_DECL_USAGE_POSITION, 0, 10, WINED3DSP_WRITEMASK_ALL);
                                     break;
 
                                 case 1: /* oFog */
-                                    reg_maps->output_registers |= 1 << 11;
+                                    reg_maps->output_registers |= 1u << 11;
                                     shader_signature_from_usage(&output_signature_elements[11],
                                             WINED3D_DECL_USAGE_FOG, 0, 11, WINED3DSP_WRITEMASK_0);
                                     break;
 
                                 case 2: /* oPts */
-                                    reg_maps->output_registers |= 1 << 11;
+                                    reg_maps->output_registers |= 1u << 11;
                                     shader_signature_from_usage(&output_signature_elements[11],
                                             WINED3D_DECL_USAGE_PSIZE, 0, 11, WINED3DSP_WRITEMASK_1);
                                     break;
@@ -925,13 +925,13 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                             if (idx < 2)
                             {
                                 idx += 8;
-                                if (reg_maps->output_registers & (1 << idx))
+                                if (reg_maps->output_registers & (1u << idx))
                                 {
                                     output_signature_elements[idx].mask |= ins.dst[i].write_mask;
                                 }
                                 else
                                 {
-                                    reg_maps->output_registers |= 1 << idx;
+                                    reg_maps->output_registers |= 1u << idx;
                                     shader_signature_from_usage(&output_signature_elements[idx],
                                             WINED3D_DECL_USAGE_COLOR, idx - 8, idx, ins.dst[i].write_mask);
                                 }
@@ -941,13 +941,13 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                         case WINED3DSPR_TEXCRDOUT:
 
                             reg_maps->texcoord_mask[idx] |= ins.dst[i].write_mask;
-                            if (reg_maps->output_registers & (1 << idx))
+                            if (reg_maps->output_registers & (1u << idx))
                             {
                                 output_signature_elements[idx].mask |= ins.dst[i].write_mask;
                             }
                             else
                             {
-                                reg_maps->output_registers |= 1 << idx;
+                                reg_maps->output_registers |= 1u << idx;
                                 shader_signature_from_usage(&output_signature_elements[idx],
                                         WINED3D_DECL_USAGE_TEXCOORD, idx, idx, ins.dst[i].write_mask);
                             }
@@ -1012,16 +1012,16 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                     if (ins.handler_idx == WINED3DSIH_TEXBEM
                             || ins.handler_idx == WINED3DSIH_TEXBEML)
                     {
-                        reg_maps->bumpmat |= 1 << reg_idx;
+                        reg_maps->bumpmat |= 1u << reg_idx;
                         if (ins.handler_idx == WINED3DSIH_TEXBEML)
                         {
-                            reg_maps->luminanceparams |= 1 << reg_idx;
+                            reg_maps->luminanceparams |= 1u << reg_idx;
                         }
                     }
                 }
                 else if (ins.handler_idx == WINED3DSIH_BEM)
                 {
-                    reg_maps->bumpmat |= 1 << ins.dst[i].reg.idx[0].offset;
+                    reg_maps->bumpmat |= 1u << ins.dst[i].reg.idx[0].offset;
                 }
             }
 
@@ -1093,7 +1093,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     /* PS before 2.0 don't have explicit color outputs. Instead the value of
      * R0 is written to the render target. */
     if (shader_version.major < 2 && shader_version.type == WINED3D_SHADER_TYPE_PIXEL)
-        reg_maps->rt_mask |= (1 << 0);
+        reg_maps->rt_mask |= (1u << 0);
 
     shader->functionLength = ((const char *)ptr - (const char *)byte_code);
 
@@ -1101,7 +1101,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     {
         for (i = 0; i < input_signature->element_count; ++i)
         {
-            reg_maps->input_registers |= 1 << input_signature->elements[i].register_idx;
+            reg_maps->input_registers |= 1u << input_signature->elements[i].register_idx;
             if (shader_version.type == WINED3D_SHADER_TYPE_PIXEL
                     && input_signature->elements[i].sysval_semantic == WINED3D_SV_POSITION)
                 reg_maps->vpos = 1;
@@ -1120,7 +1120,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         e = input_signature->elements;
         for (i = 0; i < ARRAY_SIZE(input_signature_elements); ++i)
         {
-            if (!(reg_maps->input_registers & (1 << i)))
+            if (!(reg_maps->input_registers & (1u << i)))
                 continue;
             input_signature_elements[i].register_idx = i;
             *e++ = input_signature_elements[i];
@@ -1131,7 +1131,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     {
         for (i = 0; i < output_signature->element_count; ++i)
         {
-            reg_maps->output_registers |= 1 << output_signature->elements[i].register_idx;
+            reg_maps->output_registers |= 1u << output_signature->elements[i].register_idx;
         }
     }
     else if (reg_maps->output_registers)
@@ -1146,7 +1146,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
         e = output_signature->elements;
         for (i = 0; i < ARRAY_SIZE(output_signature_elements); ++i)
         {
-            if (!(reg_maps->output_registers & (1 << i)))
+            if (!(reg_maps->output_registers & (1u << i)))
                 continue;
             *e++ = output_signature_elements[i];
         }
@@ -1157,7 +1157,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
 
 unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_maps *reg_maps, unsigned int max)
 {
-    DWORD map = 1 << max;
+    DWORD map = 1u << max;
     map |= map - 1;
     map &= reg_maps->shader_version.major < 3 ? ~reg_maps->texcoord : ~reg_maps->input_registers;
 
@@ -1924,9 +1924,9 @@ static void shader_none_disable(void *shader_priv, struct wined3d_context *conte
     priv->vertex_pipe->vp_enable(gl_info, FALSE);
     priv->fragment_pipe->enable_extension(gl_info, FALSE);
 
-    context->shader_update_mask = (1 << WINED3D_SHADER_TYPE_PIXEL)
-            | (1 << WINED3D_SHADER_TYPE_VERTEX)
-            | (1 << WINED3D_SHADER_TYPE_GEOMETRY);
+    context->shader_update_mask = (1u << WINED3D_SHADER_TYPE_PIXEL)
+            | (1u << WINED3D_SHADER_TYPE_VERTEX)
+            | (1u << WINED3D_SHADER_TYPE_GEOMETRY);
 }
 
 static HRESULT shader_none_alloc(struct wined3d_device *device, const struct wined3d_vertex_pipe_ops *vertex_pipe,
@@ -2367,7 +2367,7 @@ static HRESULT vertexshader_init(struct wined3d_shader *shader, struct wined3d_d
     {
         const struct wined3d_shader_signature_element *input = &shader->input_signature.elements[i];
 
-        if (!(reg_maps->input_registers & (1 << input->register_idx)) || !input->semantic_name)
+        if (!(reg_maps->input_registers & (1u << input->register_idx)) || !input->semantic_name)
             continue;
 
         shader->u.vs.attributes[input->register_idx].usage =
@@ -2520,11 +2520,11 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         args->color_fixup[i] = texture->resource.format->color_fixup;
 
         if (texture->resource.format_flags & WINED3DFMT_FLAG_SHADOW)
-            args->shadow |= 1 << i;
+            args->shadow |= 1u << i;
 
         /* Flag samplers that need NP2 texcoord fixup. */
         if (!(texture->flags & WINED3D_TEXTURE_POW2_MAT_IDENT))
-            args->np2_fixup |= (1 << i);
+            args->np2_fixup |= (1u << i);
     }
     if (shader->reg_maps.shader_version.major >= 3)
     {

@@ -3799,7 +3799,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     adapter->d3d_info.valid_rt_mask = 0;
     for (i = 0; i < gl_info->limits.buffers; ++i)
-        adapter->d3d_info.valid_rt_mask |= (1 << i);
+        adapter->d3d_info.valid_rt_mask |= (1u << i);
 
     if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
