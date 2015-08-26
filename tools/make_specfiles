@@ -55,6 +55,7 @@ my @dll_groups =
   "api-ms-win-crt-convert-l1-1-0",
   "api-ms-win-crt-environment-l1-1-0",
   "api-ms-win-crt-filesystem-l1-1-0",
+  "api-ms-win-crt-heap-l1-1-0",
  ],
  [
   "msvcp120",
