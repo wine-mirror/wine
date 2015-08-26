@@ -326,6 +326,15 @@ int CDECL MSVCRT_atexit(void (*func)(void))
 }
 
 /*********************************************************************
+ *		_crt_atexit (UCRTBASE.@)
+ */
+int CDECL MSVCRT__crt_atexit(void (*func)(void))
+{
+  TRACE("(%p)\n", func);
+  return MSVCRT__onexit((MSVCRT__onexit_t)func) == (MSVCRT__onexit_t)func ? 0 : -1;
+}
+
+/*********************************************************************
  *		_set_purecall_handler (MSVCR71.@)
  */
 MSVCRT_purecall_handler CDECL _set_purecall_handler(MSVCRT_purecall_handler function)
