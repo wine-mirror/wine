@@ -2420,7 +2420,7 @@ static void test_LocaleNameToLCID(void)
     lcid = pLocaleNameToLCID(LOCALE_NAME_INVARIANT, 0);
     ok(lcid == 0x7F, "Expected lcid = 0x7F, got %08x, error %d\n", lcid, GetLastError());
     ret = pLCIDToLocaleName(lcid, buffer, LOCALE_NAME_MAX_LENGTH, 0);
-    todo_wine ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
+    ok(ret > 0, "Expected ret > 0, got %d, error %d\n", ret, GetLastError());
     trace("%08x, %s\n", lcid, wine_dbgstr_w(buffer));
 
     /* bad name */
