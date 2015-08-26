@@ -359,7 +359,7 @@ sub update_spec_file($)
         if ($parent{callconv} ne "stub" || $parent{args})
         {
             my $callconv = $parent{callconv} ne "stub" ? $parent{callconv} :
-                           $parent{spec} =~ /msvc/ ? "cdecl" : "stdcall";  # hack
+                           $parent{spec} =~ /(msvc|ucrtbase)/ ? "cdecl" : "stdcall";  # hack
             $_ = sprintf "$descr{ordinal} %s %s%s", $callconv, $flags, $func;
 
             if ($parent{target} =~ /$group_head\./)  # use the same forward as parent if possible
