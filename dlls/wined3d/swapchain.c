@@ -780,13 +780,6 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
     HRESULT hr;
     UINT i;
 
-    if (desc->backbuffer_count > WINED3DPRESENT_BACK_BUFFER_MAX)
-    {
-        FIXME("The application requested %u back buffers, this is not supported.\n",
-                desc->backbuffer_count);
-        return WINED3DERR_INVALIDCALL;
-    }
-
     if (desc->backbuffer_count > 1)
     {
         FIXME("The application requested more than one back buffer, this is not properly supported.\n"
