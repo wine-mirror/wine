@@ -2886,6 +2886,164 @@ static void test_window_style(void)
     }
 }
 
+static void test_swapchain_parameters(void)
+{
+    IDirect3DDevice9Ex *device;
+    IDirect3D9Ex *d3d9ex;
+    HWND window;
+    HRESULT hr;
+    unsigned int i;
+    D3DPRESENT_PARAMETERS present_parameters, present_parameters_windowed = {0}, present_parameters2;
+    IDirect3DSwapChain9 *swapchain;
+    D3DDISPLAYMODEEX mode = {0};
+    static const struct
+    {
+        BOOL windowed;
+        UINT backbuffer_count;
+        D3DSWAPEFFECT swap_effect;
+        HRESULT hr;
+    }
+    tests[] =
+    {
+        /* Swap effect 0 is not allowed. */
+        {TRUE,  1,  0,                        D3DERR_INVALIDCALL},
+        {FALSE, 1,  0,                        D3DERR_INVALIDCALL},
+
+        /* All (non-ex) swap effects are allowed in
+         * windowed and fullscreen mode. */
+        {TRUE,  1,  D3DSWAPEFFECT_DISCARD,    D3D_OK},
+        {TRUE,  1,  D3DSWAPEFFECT_FLIP,       D3D_OK},
+        {FALSE, 1,  D3DSWAPEFFECT_DISCARD,    D3D_OK},
+        {FALSE, 1,  D3DSWAPEFFECT_FLIP,       D3D_OK},
+        {FALSE, 1,  D3DSWAPEFFECT_COPY,       D3D_OK},
+
+        /* Only one backbuffer in copy mode. */
+        {TRUE,  0,  D3DSWAPEFFECT_COPY,       D3D_OK},
+        {TRUE,  1,  D3DSWAPEFFECT_COPY,       D3D_OK},
+        {TRUE,  2,  D3DSWAPEFFECT_COPY,       D3DERR_INVALIDCALL},
+        {FALSE, 2,  D3DSWAPEFFECT_COPY,       D3DERR_INVALIDCALL},
+
+        /* Ok with the others, in fullscreen and windowed mode. */
+        {TRUE,  2,  D3DSWAPEFFECT_DISCARD,    D3D_OK},
+        {TRUE,  2,  D3DSWAPEFFECT_FLIP,       D3D_OK},
+        {FALSE, 2,  D3DSWAPEFFECT_DISCARD,    D3D_OK},
+        {FALSE, 2,  D3DSWAPEFFECT_FLIP,       D3D_OK},
+
+        /* D3D9Ex swap effects. Flipex works, Overlay is complicated
+         * and depends on HW features, pixel format, etc. */
+        {TRUE,  1,  D3DSWAPEFFECT_FLIPEX,     D3D_OK},
+        {TRUE,  1,  D3DSWAPEFFECT_FLIPEX + 1, D3DERR_INVALIDCALL},
+        {FALSE, 1,  D3DSWAPEFFECT_FLIPEX,     D3D_OK},
+        {FALSE, 1,  D3DSWAPEFFECT_FLIPEX + 1, D3DERR_INVALIDCALL},
+
+        /* 30 is the highest allowed backbuffer count. */
+        {TRUE,  30, D3DSWAPEFFECT_DISCARD,    D3D_OK},
+        {TRUE,  31, D3DSWAPEFFECT_DISCARD,    D3DERR_INVALIDCALL},
+        {TRUE,  30, D3DSWAPEFFECT_FLIP,       D3D_OK},
+        {TRUE,  31, D3DSWAPEFFECT_FLIP,       D3DERR_INVALIDCALL},
+        {FALSE, 30, D3DSWAPEFFECT_DISCARD,    D3D_OK},
+        {FALSE, 31, D3DSWAPEFFECT_DISCARD,    D3DERR_INVALIDCALL},
+        {FALSE, 30, D3DSWAPEFFECT_FLIP,       D3D_OK},
+        {FALSE, 31, D3DSWAPEFFECT_FLIP,       D3DERR_INVALIDCALL},
+    };
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    hr = pDirect3DCreate9Ex(D3D_SDK_VERSION, &d3d9ex);
+    if (FAILED(hr))
+    {
+        skip("Direct3D9Ex is not available (%#x)\n", hr);
+        return;
+    }
+
+    if (!(device = create_device(window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9Ex_Release(d3d9ex);
+        DestroyWindow(window);
+        return;
+    }
+    IDirect3DDevice9Ex_Release(device);
+
+    present_parameters_windowed.BackBufferWidth = registry_mode.dmPelsWidth;
+    present_parameters_windowed.BackBufferHeight = registry_mode.dmPelsHeight;
+    present_parameters_windowed.hDeviceWindow = window;
+    present_parameters_windowed.BackBufferFormat = D3DFMT_X8R8G8B8;
+    present_parameters_windowed.SwapEffect = D3DSWAPEFFECT_COPY;
+    present_parameters_windowed.Windowed = TRUE;
+    present_parameters_windowed.BackBufferCount = 1;
+
+    mode.Size = sizeof(mode);
+    mode.Width = registry_mode.dmPelsWidth;
+    mode.Height = registry_mode.dmPelsHeight;
+    mode.RefreshRate = 0;
+    mode.Format = D3DFMT_X8R8G8B8;
+    mode.ScanLineOrdering = 0;
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        memset(&present_parameters, 0, sizeof(present_parameters));
+        present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
+        present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
+        present_parameters.hDeviceWindow = window;
+        present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
+
+        present_parameters.SwapEffect = tests[i].swap_effect;
+        present_parameters.Windowed = tests[i].windowed;
+        present_parameters.BackBufferCount = tests[i].backbuffer_count;
+
+        hr = IDirect3D9Ex_CreateDeviceEx(d3d9ex, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+                D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters,
+                tests[i].windowed ? NULL : &mode, &device);
+        ok(hr == tests[i].hr, "Expected hr %x, got %x, test %u.\n", tests[i].hr, hr, i);
+        if (SUCCEEDED(hr))
+        {
+            UINT bb_count = tests[i].backbuffer_count ? tests[i].backbuffer_count : 1;
+
+            hr = IDirect3DDevice9Ex_GetSwapChain(device, 0, &swapchain);
+            ok(SUCCEEDED(hr), "Failed to get swapchain, hr %#x, test %u.\n", hr, i);
+
+            hr = IDirect3DSwapChain9_GetPresentParameters(swapchain, &present_parameters2);
+            ok(SUCCEEDED(hr), "Failed to get present parameters, hr %#x, test %u.\n", hr, i);
+            ok(present_parameters2.SwapEffect == tests[i].swap_effect, "Swap effect changed from %u to %u, test %u.\n",
+                    tests[i].swap_effect, present_parameters2.SwapEffect, i);
+            ok(present_parameters2.BackBufferCount == bb_count, "Backbuffer count changed from %u to %u, test %u.\n",
+                    bb_count, present_parameters2.BackBufferCount, i);
+            ok(present_parameters2.Windowed == tests[i].windowed, "Windowed changed from %u to %u, test %u.\n",
+                    tests[i].windowed, present_parameters2.Windowed, i);
+
+            IDirect3DSwapChain9_Release(swapchain);
+            IDirect3DDevice9Ex_Release(device);
+        }
+
+        hr = IDirect3D9Ex_CreateDeviceEx(d3d9ex, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, window,
+                D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters_windowed, NULL, &device);
+        ok(SUCCEEDED(hr), "Failed to create device, hr %#x, test %u.\n", hr, i);
+
+        memset(&present_parameters, 0, sizeof(present_parameters));
+        present_parameters.BackBufferWidth = registry_mode.dmPelsWidth;
+        present_parameters.BackBufferHeight = registry_mode.dmPelsHeight;
+        present_parameters.hDeviceWindow = window;
+        present_parameters.BackBufferFormat = D3DFMT_X8R8G8B8;
+
+        present_parameters.SwapEffect = tests[i].swap_effect;
+        present_parameters.Windowed = tests[i].windowed;
+        present_parameters.BackBufferCount = tests[i].backbuffer_count;
+
+        hr = IDirect3DDevice9Ex_ResetEx(device, &present_parameters, tests[i].windowed ? NULL : &mode);
+        ok(hr == tests[i].hr, "Expected hr %x, got %x, test %u.\n", tests[i].hr, hr, i);
+
+        if (FAILED(hr))
+        {
+            hr = IDirect3DDevice9Ex_ResetEx(device, &present_parameters_windowed, NULL);
+            ok(SUCCEEDED(hr), "Failed to reset device, hr %#x, test %u.\n", hr, i);
+        }
+        IDirect3DDevice9Ex_Release(device);
+    }
+
+    IDirect3D9Ex_Release(d3d9ex);
+    DestroyWindow(window);
+}
 START_TEST(d3d9ex)
 {
     DEVMODEW current_mode;
@@ -2930,4 +3088,5 @@ START_TEST(d3d9ex)
     test_wndproc();
     test_wndproc_windowed();
     test_window_style();
+    test_swapchain_parameters();
 }
