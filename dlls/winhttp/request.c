@@ -3999,8 +3999,25 @@ static HRESULT WINAPI winhttp_request_get_Option(
     WinHttpRequestOption option,
     VARIANT *value )
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    struct winhttp_request *request = impl_from_IWinHttpRequest( iface );
+    HRESULT hr = S_OK;
+
+    TRACE("%p, %u, %p\n", request, option, value);
+
+    EnterCriticalSection( &request->cs );
+    switch (option)
+    {
+    case WinHttpRequestOption_URLCodePage:
+        V_VT( value ) = VT_I4;
+        V_I4( value ) = request->url_codepage;
+        break;
+    default:
+        FIXME("unimplemented option %u\n", option);
+        hr = E_NOTIMPL;
+        break;
+    }
+    LeaveCriticalSection( &request->cs );
+    return hr;
 }
 
 static HRESULT WINAPI winhttp_request_put_Option(

@@ -3043,11 +3043,12 @@ static void test_IWinHttpRequest(void)
     static const WCHAR connectionW[] = {'C','o','n','n','e','c','t','i','o','n',0};
     static const WCHAR dateW[] = {'D','a','t','e',0};
     static const WCHAR test_dataW[] = {'t','e','s','t','d','a','t','a',128,0};
+    static const WCHAR utf8W[] = {'u','t','f','-','8',0};
     HRESULT hr;
     IWinHttpRequest *req;
     BSTR method, url, username, password, response = NULL, status_text = NULL, headers = NULL;
     BSTR date, today, connection, value = NULL;
-    VARIANT async, empty, timeout, body, body2, proxy_server, bypass_list, data;
+    VARIANT async, empty, timeout, body, body2, proxy_server, bypass_list, data, cp;
     VARIANT_BOOL succeeded;
     LONG status;
     WCHAR todayW[WINHTTP_TIME_FORMAT_BUFSIZE];
@@ -3130,6 +3131,39 @@ static void test_IWinHttpRequest(void)
     V_ERROR( &async ) = DISP_E_PARAMNOTFOUND;
     hr = IWinHttpRequest_Open( req, method, url, async );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    V_VT( &cp ) = VT_ERROR;
+    V_ERROR( &cp ) = 0xdeadbeef;
+    hr = IWinHttpRequest_get_Option( req, WinHttpRequestOption_URLCodePage, &cp );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &cp ) == VT_I4, "got %08x\n", V_VT( &cp ) );
+    ok( V_I4( &cp ) == CP_UTF8, "got %u\n", V_I4( &cp ) );
+
+    V_VT( &cp ) = VT_UI4;
+    V_UI4( &cp ) = CP_ACP;
+    hr = IWinHttpRequest_put_Option( req, WinHttpRequestOption_URLCodePage, cp );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    V_VT( &cp ) = VT_ERROR;
+    V_ERROR( &cp ) = 0xdeadbeef;
+    hr = IWinHttpRequest_get_Option( req, WinHttpRequestOption_URLCodePage, &cp );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &cp ) == VT_I4, "got %08x\n", V_VT( &cp ) );
+    ok( V_I4( &cp ) == CP_ACP, "got %u\n", V_I4( &cp ) );
+
+    value = SysAllocString( utf8W );
+    V_VT( &cp ) = VT_BSTR;
+    V_BSTR( &cp ) = value;
+    hr = IWinHttpRequest_put_Option( req, WinHttpRequestOption_URLCodePage, cp );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( value );
+
+    V_VT( &cp ) = VT_ERROR;
+    V_ERROR( &cp ) = 0xdeadbeef;
+    hr = IWinHttpRequest_get_Option( req, WinHttpRequestOption_URLCodePage, &cp );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( V_VT( &cp ) == VT_I4, "got %08x\n", V_VT( &cp ) );
+    ok( V_I4( &cp ) == CP_UTF8, "got %u\n", V_I4( &cp ) );
 
     hr = IWinHttpRequest_Abort( req );
     ok( hr == S_OK, "got %08x\n", hr );
