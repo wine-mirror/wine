@@ -52,6 +52,7 @@ my @dll_groups =
  [
   "ucrtbase",
   "api-ms-win-crt-conio-l1-1-0",
+  "api-ms-win-crt-convert-l1-1-0",
  ],
  [
   "msvcp120",
