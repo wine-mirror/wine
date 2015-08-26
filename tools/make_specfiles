@@ -65,6 +65,7 @@ my @dll_groups =
   "api-ms-win-crt-stdio-l1-1-0",
   "api-ms-win-crt-string-l1-1-0",
   "api-ms-win-crt-time-l1-1-0",
+  "api-ms-win-crt-utility-l1-1-0",
  ],
  [
   "msvcp120",
