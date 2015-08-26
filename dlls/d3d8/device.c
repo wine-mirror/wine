@@ -188,9 +188,22 @@ static void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS
     present_parameters->FullScreen_PresentationInterval = swapchain_desc->swap_interval;
 }
 
-static void wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapchain_desc *swapchain_desc,
+static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapchain_desc *swapchain_desc,
         const D3DPRESENT_PARAMETERS *present_parameters)
 {
+    if (!present_parameters->SwapEffect || present_parameters->SwapEffect > D3DSWAPEFFECT_COPY)
+    {
+        WARN("Invalid swap effect %u passed.\n", present_parameters->SwapEffect);
+        return FALSE;
+    }
+    if (present_parameters->BackBufferCount > 3
+            || (present_parameters->SwapEffect == D3DSWAPEFFECT_COPY
+            && present_parameters->BackBufferCount > 1))
+    {
+        WARN("Invalid backbuffer count %u.\n", present_parameters->BackBufferCount);
+        return FALSE;
+    }
+
     swapchain_desc->backbuffer_width = present_parameters->BackBufferWidth;
     swapchain_desc->backbuffer_height = present_parameters->BackBufferHeight;
     swapchain_desc->backbuffer_format = wined3dformat_from_d3dformat(present_parameters->BackBufferFormat);
@@ -207,6 +220,8 @@ static void wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapch
     swapchain_desc->refresh_rate = present_parameters->FullScreen_RefreshRateInHz;
     swapchain_desc->swap_interval = present_parameters->FullScreen_PresentationInterval;
     swapchain_desc->auto_restore_display_mode = TRUE;
+
+    return TRUE;
 }
 
 /* Handle table functions */
@@ -585,7 +600,8 @@ static HRESULT WINAPI d3d8_device_CreateAdditionalSwapChain(IDirect3DDevice8 *if
     }
     wined3d_mutex_unlock();
 
-    wined3d_swapchain_desc_from_present_parameters(&desc, present_parameters);
+    if (!wined3d_swapchain_desc_from_present_parameters(&desc, present_parameters))
+        return D3DERR_INVALIDCALL;
     if (SUCCEEDED(hr = d3d8_swapchain_create(device, &desc, &object)))
         *swapchain = &object->IDirect3DSwapChain8_iface;
     present_parameters_from_wined3d_swapchain_desc(present_parameters, &desc);
@@ -650,6 +666,8 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
         WARN("App not active, returning D3DERR_DEVICELOST.\n");
         return D3DERR_DEVICELOST;
     }
+    if (!wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters))
+        return D3DERR_INVALIDCALL;
 
     wined3d_mutex_lock();
 
@@ -666,7 +684,6 @@ static HRESULT WINAPI d3d8_device_Reset(IDirect3DDevice8 *iface,
         device->index_buffer_size = 0;
     }
 
-    wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, present_parameters);
     if (SUCCEEDED(hr = wined3d_device_reset(device->wined3d_device, &swapchain_desc,
             NULL, reset_enum_callback, TRUE)))
     {
@@ -3142,7 +3159,14 @@ HRESULT device_init(struct d3d8_device *device, struct d3d8 *parent, struct wine
     if (flags & D3DCREATE_MULTITHREADED)
         wined3d_device_set_multithreaded(device->wined3d_device);
 
-    wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, parameters);
+    if (!wined3d_swapchain_desc_from_present_parameters(&swapchain_desc, parameters))
+    {
+        wined3d_device_release_focus_window(device->wined3d_device);
+        wined3d_device_decref(device->wined3d_device);
+        wined3d_mutex_unlock();
+        HeapFree(GetProcessHeap(), 0, device->handle_table.entries);
+        return D3DERR_INVALIDCALL;
+    }
 
     hr = wined3d_device_init_3d(device->wined3d_device, &swapchain_desc);
     if (FAILED(hr))
