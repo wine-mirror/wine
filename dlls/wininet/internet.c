@@ -1317,9 +1317,8 @@ HINTERNET WINAPI InternetConnectW(HINTERNET hInternet,
     HINTERNET rc = NULL;
     DWORD res = ERROR_SUCCESS;
 
-    TRACE("(%p, %s, %i, %s, %s, %i, %x, %lx)\n", hInternet, debugstr_w(lpszServerName),
-	  nServerPort, debugstr_w(lpszUserName), debugstr_w(lpszPassword),
-	  dwService, dwFlags, dwContext);
+    TRACE("(%p, %s, %u, %s, %p, %u, %x, %lx)\n", hInternet, debugstr_w(lpszServerName),
+          nServerPort, debugstr_w(lpszUserName), lpszPassword, dwService, dwFlags, dwContext);
 
     if (!lpszServerName)
     {
