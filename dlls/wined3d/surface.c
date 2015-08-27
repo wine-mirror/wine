@@ -5139,6 +5139,14 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
         memset(&src_rect, 0, sizeof(src_rect));
     }
 
+    /* FIXME: We should select the blitter in the main thread, that way we can return an error if the blit
+     * is unsupported without duplicating all the checks... */
+    if (flags & WINEDDBLT_COLORFILL && (dst_surface->container->resource.format_flags & WINED3DFMT_FLAG_BLOCKS))
+    {
+        WARN("Block color fill, returning WINED3DERR_INVALIDCALL\n");
+        return WINED3DERR_INVALIDCALL;
+    }
+
     if (!fx || !(fx->dwDDFX))
         flags &= ~WINEDDBLT_DDFX;
 
