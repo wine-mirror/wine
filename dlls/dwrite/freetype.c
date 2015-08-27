@@ -539,7 +539,6 @@ void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
             ft_bitmap.buffer = bitmap->buf;
 
             /* Note: FreeType will only set 'black' bits for us. */
-            memset(bitmap->buf, 0, height * bitmap->pitch);
             if (pFT_Outline_New(library, src->n_points, src->n_contours, &copy) == 0) {
                 pFT_Outline_Copy(src, &copy);
                 pFT_Outline_Translate(&copy, -bbox->left << 6, bbox->bottom << 6);
@@ -552,8 +551,6 @@ void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
             BYTE *src = ft_bitmap->buffer, *dst = bitmap->buf;
             int w = min(bitmap->pitch, (ft_bitmap->width + 7) >> 3);
             int h = min(height, ft_bitmap->rows);
-
-            memset(bitmap->buf, 0, height * bitmap->pitch);
 
             while (h--) {
                 memcpy(dst, src, w);
@@ -680,8 +677,6 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 
 void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 {
-    UINT32 size = (bitmap->bbox.right - bitmap->bbox.left)*(bitmap->bbox.bottom - bitmap->bbox.top);
-    memset(bitmap->buf, 0, size);
 }
 
 INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
