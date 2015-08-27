@@ -374,6 +374,7 @@ static HRESULT WINAPI list_manager_QueryInterface(
     TRACE( "%p, %s, %p\n", mgr, debugstr_guid(riid), obj );
 
     if (IsEqualGUID( riid, &IID_INetworkListManager ) ||
+        IsEqualGUID( riid, &IID_IDispatch ) ||
         IsEqualGUID( riid, &IID_IUnknown ))
     {
         *obj = iface;
