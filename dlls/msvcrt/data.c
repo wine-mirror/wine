@@ -640,3 +640,29 @@ void CDECL MSVCRT___set_app_type(int app_type)
   TRACE("(%d) %s application\n", app_type, app_type == 2 ? "Gui" : "Console");
   MSVCRT_app_type = app_type;
 }
+
+/*********************************************************************
+ *		_get_initial_narrow_environment (UCRTBASE.@)
+ */
+char** CDECL _get_initial_narrow_environment(void)
+{
+  return MSVCRT___argv;
+}
+
+/*********************************************************************
+ *		_configure_narrow_argv (UCRTBASE.@)
+ */
+int CDECL _configure_narrow_argv(int mode)
+{
+  TRACE("(%d)\n", mode);
+  return 0;
+}
+
+/*********************************************************************
+ *		_initialize_narrow_environment (UCRTBASE.@)
+ */
+int CDECL _initialize_narrow_environment(void)
+{
+  TRACE("\n");
+  return 0;
+}

@@ -229,7 +229,7 @@
 @ cdecl _close(long) MSVCRT__close
 @ cdecl _commit(long) MSVCRT__commit
 @ cdecl _configthreadlocale(long)
-@ stub _configure_narrow_argv
+@ cdecl _configure_narrow_argv(long)
 @ stub _configure_wide_argv
 @ cdecl _control87(long long)
 @ cdecl _controlfp(long long)
@@ -365,7 +365,7 @@
 @ cdecl _get_errno(ptr)
 @ cdecl _get_fmode(ptr) MSVCRT__get_fmode
 @ cdecl _get_heap_handle()
-@ stub _get_initial_narrow_environment
+@ cdecl _get_initial_narrow_environment()
 @ stub _get_initial_wide_environment
 @ cdecl _get_invalid_parameter_handler()
 @ stub _get_narrow_winmain_command_line
@@ -418,7 +418,7 @@
 @ cdecl _i64toa_s(int64 ptr long long) MSVCRT__i64toa_s
 @ cdecl _i64tow(int64 ptr long) ntdll._i64tow
 @ cdecl _i64tow_s(int64 ptr long long) MSVCRT__i64tow_s
-@ stub _initialize_narrow_environment
+@ cdecl _initialize_narrow_environment()
 @ stub _initialize_onexit_table
 @ stub _initialize_wide_environment
 @ cdecl _initterm(ptr ptr)

@@ -23,7 +23,7 @@
 @ cdecl _c_exit() ucrtbase._c_exit
 @ cdecl _cexit() ucrtbase._cexit
 @ cdecl _clearfp() ucrtbase._clearfp
-@ stub _configure_narrow_argv
+@ cdecl _configure_narrow_argv(long) ucrtbase._configure_narrow_argv
 @ stub _configure_wide_argv
 @ cdecl _control87(long long) ucrtbase._control87
 @ cdecl _controlfp(long long) ucrtbase._controlfp
@@ -40,7 +40,7 @@
 @ cdecl _fpreset() ucrtbase._fpreset
 @ cdecl _get_doserrno(ptr) ucrtbase._get_doserrno
 @ cdecl _get_errno(ptr) ucrtbase._get_errno
-@ stub _get_initial_narrow_environment
+@ cdecl _get_initial_narrow_environment() ucrtbase._get_initial_narrow_environment
 @ stub _get_initial_wide_environment
 @ cdecl _get_invalid_parameter_handler() ucrtbase._get_invalid_parameter_handler
 @ stub _get_narrow_winmain_command_line
@@ -51,7 +51,7 @@
 @ cdecl _get_wpgmptr(ptr) ucrtbase._get_wpgmptr
 @ cdecl _getdllprocaddr(long str long) ucrtbase._getdllprocaddr
 @ cdecl _getpid() ucrtbase._getpid
-@ stub _initialize_narrow_environment
+@ cdecl _initialize_narrow_environment() ucrtbase._initialize_narrow_environment
 @ stub _initialize_onexit_table
 @ stub _initialize_wide_environment
 @ cdecl _initterm(ptr ptr) ucrtbase._initterm
