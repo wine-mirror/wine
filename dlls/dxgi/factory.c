@@ -190,19 +190,41 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *ifa
     struct wined3d_swapchain_desc wined3d_desc;
     IWineDXGIDevice *dxgi_device;
     HRESULT hr;
+    UINT min_buffer_count;
 
     FIXME("iface %p, device %p, desc %p, swapchain %p partial stub!\n", iface, device, desc, swapchain);
+
+    switch (desc->SwapEffect)
+    {
+        case DXGI_SWAP_EFFECT_DISCARD:
+        case DXGI_SWAP_EFFECT_SEQUENTIAL:
+            min_buffer_count = 1;
+            break;
+
+        case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
+            min_buffer_count = 2;
+            break;
+
+        default:
+            WARN("Invalid swap effect %u used, returning DXGI_ERROR_INVALID_CALL.\n", desc->SwapEffect);
+            return DXGI_ERROR_INVALID_CALL;
+    }
+
+    if (desc->BufferCount < min_buffer_count || desc->BufferCount > 16)
+    {
+        WARN("BufferCount is %u, returning DXGI_ERROR_INVALID_CALL.\n", desc->BufferCount);
+        return DXGI_ERROR_INVALID_CALL;
+    }
+    if (!desc->OutputWindow)
+    {
+        FIXME("No output window, should use factory output window\n");
+    }
 
     hr = IUnknown_QueryInterface(device, &IID_IWineDXGIDevice, (void **)&dxgi_device);
     if (FAILED(hr))
     {
         ERR("This is not the device we're looking for\n");
         return hr;
-    }
-
-    if (!desc->OutputWindow)
-    {
-        FIXME("No output window, should use factory output window\n");
     }
 
     FIXME("Ignoring SwapEffect and Flags\n");
