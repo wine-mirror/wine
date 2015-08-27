@@ -782,10 +782,29 @@ static void test_ImmGetDescription(void)
     UnloadKeyboardLayout(hkl);
 }
 
+static LRESULT (WINAPI *old_imm_wnd_proc)(HWND, UINT, WPARAM, LPARAM);
+static LRESULT WINAPI imm_wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    ok(msg != WM_DESTROY, "got WM_DESTROY message\n");
+    return old_imm_wnd_proc(hwnd, msg, wparam, lparam);
+}
+
+static HWND thread_ime_wnd;
+static DWORD WINAPI test_ImmGetDefaultIMEWnd_thread(void *arg)
+{
+    CreateWindowA("static", "static", WS_POPUP, 0, 0, 1, 1, NULL, NULL, NULL, NULL);
+
+    thread_ime_wnd = ImmGetDefaultIMEWnd(0);
+    ok(thread_ime_wnd != 0, "ImmGetDefaultIMEWnd returned NULL\n");
+    old_imm_wnd_proc = (void*)SetWindowLongPtrW(thread_ime_wnd, GWLP_WNDPROC, (LONG_PTR)imm_wnd_proc);
+    return 0;
+}
+
 static void test_ImmDefaultHwnd(void)
 {
     HIMC imc1, imc2, imc3;
     HWND def1, def3;
+    HANDLE thread;
     HWND hwnd;
 
     hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, "EDIT", "Wine imm32.dll test",
@@ -812,6 +831,11 @@ static void test_ImmDefaultHwnd(void)
     ok(def3 == def1, "Default IME window should not change\n");
     ok(imc1 == imc3, "IME context should not change\n");
     ImmSetOpenStatus(imc2, FALSE);
+
+    thread = CreateThread(NULL, 0, test_ImmGetDefaultIMEWnd_thread, NULL, 0, NULL);
+    WaitForSingleObject(thread, INFINITE);
+    ok(thread_ime_wnd != def1, "thread_ime_wnd == def1\n");
+    ok(!IsWindow(thread_ime_wnd), "thread_ime_wnd was not destroyed\n");
 
     ImmReleaseContext(hwnd, imc1);
     ImmReleaseContext(hwnd, imc3);
