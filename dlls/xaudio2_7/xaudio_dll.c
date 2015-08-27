@@ -1297,7 +1297,7 @@ static HRESULT WINAPI IXAudio2Impl_RegisterForCallbacks(IXAudio2 *iface,
 
     LeaveCriticalSection(&This->lock);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static void WINAPI IXAudio2Impl_UnregisterForCallbacks(IXAudio2 *iface,
