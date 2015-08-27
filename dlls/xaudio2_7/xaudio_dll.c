@@ -655,7 +655,30 @@ static void WINAPI XA2SRC_GetState(IXAudio2SourceVoice *iface,
         XAUDIO2_VOICE_STATE *pVoiceState, UINT32 Flags)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p, %p, 0x%x\n", This, pVoiceState, Flags);
+
+    EnterCriticalSection(&This->lock);
+
+    if(!(Flags & XAUDIO2_VOICE_NOSAMPLESPLAYED)){
+        ALint bufpos = 0;
+
+        alGetSourcei(This->al_src, AL_SAMPLE_OFFSET, &bufpos);
+
+        pVoiceState->SamplesPlayed = This->played_frames + bufpos;
+    }else
+        pVoiceState->SamplesPlayed = 0;
+
+    if(This->nbufs)
+        pVoiceState->pCurrentBufferContext = This->buffers[This->first_buf].xa2buffer.pContext;
+    else
+        pVoiceState->pCurrentBufferContext = NULL;
+
+    pVoiceState->BuffersQueued = This->nbufs;
+
+    LeaveCriticalSection(&This->lock);
+
+    TRACE("returning %s, queued: %u\n", wine_dbgstr_longlong(pVoiceState->SamplesPlayed), This->nbufs);
 }
 
 static HRESULT WINAPI XA2SRC_SetFrequencyRatio(IXAudio2SourceVoice *iface,
