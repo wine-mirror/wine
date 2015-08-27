@@ -199,7 +199,26 @@ static UINT STDMETHODCALLTYPE d3d11_texture2d_GetEvictionPriority(ID3D11Texture2
 
 static void STDMETHODCALLTYPE d3d11_texture2d_GetDesc(ID3D11Texture2D *iface, D3D11_TEXTURE2D_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d10_texture2d *texture = impl_from_ID3D11Texture2D(iface);
+    struct wined3d_resource_desc wined3d_desc;
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = texture->desc;
+
+    wined3d_mutex_lock();
+    wined3d_resource_get_desc(wined3d_texture_get_resource(texture->wined3d_texture), &wined3d_desc);
+    wined3d_mutex_unlock();
+
+    /* FIXME: Resizing swapchain buffers can cause these to change. We'd like
+     * to get everything from wined3d, but e.g. bind flags don't exist as such
+     * there (yet). */
+    desc->Width = wined3d_desc.width;
+    desc->Height = wined3d_desc.height;
+    desc->Format = dxgi_format_from_wined3dformat(wined3d_desc.format);
+    desc->SampleDesc.Count = wined3d_desc.multisample_type == WINED3D_MULTISAMPLE_NONE
+        ? 1 : wined3d_desc.multisample_type;
+    desc->SampleDesc.Quality = wined3d_desc.multisample_quality;
 }
 
 static const struct ID3D11Texture2DVtbl d3d11_texture2d_vtbl =
@@ -373,25 +392,22 @@ static void STDMETHODCALLTYPE d3d10_texture2d_Unmap(ID3D10Texture2D *iface, UINT
 static void STDMETHODCALLTYPE d3d10_texture2d_GetDesc(ID3D10Texture2D *iface, D3D10_TEXTURE2D_DESC *desc)
 {
     struct d3d10_texture2d *texture = impl_from_ID3D10Texture2D(iface);
-    struct wined3d_resource_desc wined3d_desc;
+    D3D11_TEXTURE2D_DESC d3d11_desc;
 
     TRACE("iface %p, desc %p\n", iface, desc);
 
-    *desc = texture->desc;
+    d3d11_texture2d_GetDesc(&texture->ID3D11Texture2D_iface, &d3d11_desc);
 
-    wined3d_mutex_lock();
-    wined3d_resource_get_desc(wined3d_texture_get_resource(texture->wined3d_texture), &wined3d_desc);
-    wined3d_mutex_unlock();
-
-    /* FIXME: Resizing swapchain buffers can cause these to change. We'd like
-     * to get everything from wined3d, but e.g. bind flags don't exist as such
-     * there (yet). */
-    desc->Width = wined3d_desc.width;
-    desc->Height = wined3d_desc.height;
-    desc->Format = dxgi_format_from_wined3dformat(wined3d_desc.format);
-    desc->SampleDesc.Count = wined3d_desc.multisample_type == WINED3D_MULTISAMPLE_NONE
-            ? 1 : wined3d_desc.multisample_type;
-    desc->SampleDesc.Quality = wined3d_desc.multisample_quality;
+    desc->Width = d3d11_desc.Width;
+    desc->Height = d3d11_desc.Height;
+    desc->MipLevels = d3d11_desc.MipLevels;
+    desc->ArraySize = d3d11_desc.ArraySize;
+    desc->Format = d3d11_desc.Format;
+    desc->SampleDesc = d3d11_desc.SampleDesc;
+    desc->Usage = d3d10_usage_from_d3d11_usage(d3d11_desc.Usage);
+    desc->BindFlags = d3d10_bind_flags_from_d3d11_bind_flags(d3d11_desc.BindFlags);
+    desc->CPUAccessFlags = d3d10_cpu_access_flags_from_d3d11_cpu_access_flags(d3d11_desc.CPUAccessFlags);
+    desc->MiscFlags = d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(d3d11_desc.MiscFlags);
 }
 
 static const struct ID3D10Texture2DVtbl d3d10_texture2d_vtbl =
@@ -429,7 +445,7 @@ static const struct wined3d_parent_ops d3d10_texture2d_wined3d_parent_ops =
 };
 
 HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d_device *device,
-        const D3D10_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
+        const D3D11_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_resource_desc wined3d_desc;
     unsigned int levels;

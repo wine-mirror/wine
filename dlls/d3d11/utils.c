@@ -345,26 +345,171 @@ enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format)
     }
 }
 
-DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage)
+DWORD wined3d_usage_from_d3d11(UINT bind_flags, enum D3D11_USAGE usage)
 {
-    static const DWORD handled = D3D10_BIND_SHADER_RESOURCE
-            | D3D10_BIND_RENDER_TARGET
-            | D3D10_BIND_DEPTH_STENCIL;
+    static const DWORD handled = D3D11_BIND_SHADER_RESOURCE
+            | D3D11_BIND_RENDER_TARGET
+            | D3D11_BIND_DEPTH_STENCIL;
     DWORD wined3d_usage = 0;
 
-    if (bind_flags & D3D10_BIND_SHADER_RESOURCE)
+    if (bind_flags & D3D11_BIND_SHADER_RESOURCE)
         wined3d_usage |= WINED3DUSAGE_TEXTURE;
-    if (bind_flags & D3D10_BIND_RENDER_TARGET)
+    if (bind_flags & D3D11_BIND_RENDER_TARGET)
         wined3d_usage |= WINED3DUSAGE_RENDERTARGET;
-    if (bind_flags & D3D10_BIND_DEPTH_STENCIL)
+    if (bind_flags & D3D11_BIND_DEPTH_STENCIL)
         wined3d_usage |= WINED3DUSAGE_DEPTHSTENCIL;
     if (bind_flags & ~handled)
         FIXME("Unhandled bind flags %#x.\n", usage & ~handled);
 
-    if (usage == D3D10_USAGE_DYNAMIC)
+    if (usage == D3D11_USAGE_DYNAMIC)
         wined3d_usage |= WINED3DUSAGE_DYNAMIC;
 
     return wined3d_usage;
+}
+
+DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage)
+{
+    UINT d3d11_bind_flags = d3d11_bind_flags_from_d3d10_bind_flags(bind_flags);
+    enum D3D11_USAGE d3d11_usage = d3d11_usage_from_d3d10_usage(usage);
+    return wined3d_usage_from_d3d11(d3d11_bind_flags, d3d11_usage);
+}
+
+enum D3D11_USAGE d3d11_usage_from_d3d10_usage(enum D3D10_USAGE usage)
+{
+    switch (usage)
+    {
+        case D3D10_USAGE_DEFAULT: return D3D11_USAGE_DEFAULT;
+        case D3D10_USAGE_IMMUTABLE: return D3D11_USAGE_IMMUTABLE;
+        case D3D10_USAGE_DYNAMIC: return D3D11_USAGE_DYNAMIC;
+        case D3D10_USAGE_STAGING: return D3D11_USAGE_STAGING;
+        default:
+            FIXME("Unhandled usage %#x.\n", usage);
+            return D3D11_USAGE_DEFAULT;
+    }
+}
+
+enum D3D10_USAGE d3d10_usage_from_d3d11_usage(enum D3D11_USAGE usage)
+{
+    switch (usage)
+    {
+        case D3D11_USAGE_DEFAULT: return D3D10_USAGE_DEFAULT;
+        case D3D11_USAGE_IMMUTABLE: return D3D10_USAGE_IMMUTABLE;
+        case D3D11_USAGE_DYNAMIC: return D3D10_USAGE_DYNAMIC;
+        case D3D11_USAGE_STAGING: return D3D10_USAGE_STAGING;
+        default:
+            FIXME("Unhandled usage %#x.\n", usage);
+            return D3D10_USAGE_DEFAULT;
+    }
+}
+
+UINT d3d11_bind_flags_from_d3d10_bind_flags(UINT bind_flags)
+{
+    static const UINT handled_flags = D3D10_BIND_VERTEX_BUFFER
+            | D3D10_BIND_INDEX_BUFFER
+            | D3D10_BIND_CONSTANT_BUFFER
+            | D3D10_BIND_SHADER_RESOURCE
+            | D3D10_BIND_STREAM_OUTPUT
+            | D3D10_BIND_RENDER_TARGET
+            | D3D10_BIND_DEPTH_STENCIL;
+    UINT d3d11_bind_flags = bind_flags & handled_flags;
+
+    if (bind_flags & ~handled_flags)
+        FIXME("Unhandled bind flags %#x.\n", bind_flags & ~handled_flags);
+
+    return d3d11_bind_flags;
+}
+
+UINT d3d10_bind_flags_from_d3d11_bind_flags(UINT bind_flags)
+{
+    static const UINT handled_flags = D3D11_BIND_VERTEX_BUFFER
+            | D3D11_BIND_INDEX_BUFFER
+            | D3D11_BIND_CONSTANT_BUFFER
+            | D3D11_BIND_SHADER_RESOURCE
+            | D3D11_BIND_STREAM_OUTPUT
+            | D3D11_BIND_RENDER_TARGET
+            | D3D11_BIND_DEPTH_STENCIL
+            | D3D11_BIND_UNORDERED_ACCESS
+            | D3D11_BIND_DECODER
+            | D3D11_BIND_VIDEO_ENCODER;
+    UINT d3d10_bind_flags = bind_flags & handled_flags;
+
+    if (bind_flags & ~handled_flags)
+        FIXME("Unhandled bind flags %#x.\n", bind_flags & ~handled_flags);
+
+    return d3d10_bind_flags;
+}
+
+UINT d3d11_cpu_access_flags_from_d3d10_cpu_access_flags(UINT cpu_access_flags)
+{
+    static const UINT handled_flags = D3D10_CPU_ACCESS_WRITE
+            | D3D10_CPU_ACCESS_READ;
+    UINT d3d11_cpu_access_flags = cpu_access_flags & handled_flags;
+
+    if (cpu_access_flags & ~handled_flags)
+        FIXME("Unhandled cpu access flags %#x.\n", cpu_access_flags & ~handled_flags);
+
+    return d3d11_cpu_access_flags;
+}
+
+UINT d3d10_cpu_access_flags_from_d3d11_cpu_access_flags(UINT cpu_access_flags)
+{
+    static const UINT handled_flags = D3D11_CPU_ACCESS_WRITE
+            | D3D11_CPU_ACCESS_READ;
+    UINT d3d10_cpu_access_flags = cpu_access_flags & handled_flags;
+
+    if (cpu_access_flags & ~handled_flags)
+        FIXME("Unhandled cpu access flags %#x.\n", cpu_access_flags & ~handled_flags);
+
+    return d3d10_cpu_access_flags;
+}
+
+UINT d3d11_resource_misc_flags_from_d3d10_resource_misc_flags(UINT resource_misc_flags)
+{
+    static const UINT bitwise_identical_flags = D3D10_RESOURCE_MISC_GENERATE_MIPS
+            | D3D10_RESOURCE_MISC_SHARED
+            | D3D10_RESOURCE_MISC_TEXTURECUBE;
+    static const UINT handled_flags = bitwise_identical_flags
+            | D3D10_RESOURCE_MISC_SHARED_KEYEDMUTEX
+            | D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
+    UINT d3d11_resource_misc_flags = resource_misc_flags & bitwise_identical_flags;
+
+    if (resource_misc_flags & D3D10_RESOURCE_MISC_SHARED_KEYEDMUTEX)
+        d3d11_resource_misc_flags |= D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+    if (resource_misc_flags & D3D10_RESOURCE_MISC_GDI_COMPATIBLE)
+        d3d11_resource_misc_flags |= D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+
+    if (resource_misc_flags & ~handled_flags)
+        FIXME("Unhandled resource misc flags %#x.\n", resource_misc_flags & ~handled_flags);
+
+    return d3d11_resource_misc_flags;
+}
+
+UINT d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(UINT resource_misc_flags)
+{
+    static const UINT bitwise_identical_flags = D3D11_RESOURCE_MISC_GENERATE_MIPS
+            | D3D11_RESOURCE_MISC_SHARED
+            | D3D11_RESOURCE_MISC_TEXTURECUBE
+            | D3D11_RESOURCE_MISC_BUFFER_STRUCTURED
+            | D3D11_RESOURCE_MISC_RESOURCE_CLAMP
+            | D3D11_RESOURCE_MISC_SHARED_NTHANDLE
+            | D3D11_RESOURCE_MISC_RESTRICTED_CONTENT
+            | D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE
+            | D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE_DRIVER
+            | D3D11_RESOURCE_MISC_GUARDED;
+    static const UINT handled_flags = bitwise_identical_flags
+            | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX
+            | D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+    UINT d3d10_resource_misc_flags = resource_misc_flags & bitwise_identical_flags;
+
+    if (resource_misc_flags & D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX)
+        d3d10_resource_misc_flags |= D3D10_RESOURCE_MISC_SHARED_KEYEDMUTEX;
+    if (resource_misc_flags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE)
+        d3d10_resource_misc_flags |= D3D10_RESOURCE_MISC_GDI_COMPATIBLE;
+
+    if (resource_misc_flags & ~handled_flags)
+        FIXME("Unhandled resource misc flags #%x.\n", resource_misc_flags & ~handled_flags);
+
+    return d3d10_resource_misc_flags;
 }
 
 struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource)
