@@ -44,6 +44,13 @@ typedef [v1_enum] enum NLM_CONNECTIVITY
     NLM_CONNECTIVITY_IPV6_INTERNET     = 0x0400
 } NLM_CONNECTIVITY;
 
+typedef [v1_enum] enum NLM_DOMAIN_TYPE
+{
+    NLM_DOMAIN_TYPE_NON_DOMAIN_NETWORK   = 0x00,
+    NLM_DOMAIN_TYPE_DOMAIN_NETWORK       = 0x01,
+    NLM_DOMAIN_TYPE_DOMAIN_AUTHENTICATED = 0x02
+} NLM_DOMAIN_TYPE;
+
 typedef [v1_enum] enum NLM_ENUM_NETWORK
 {
     NLM_ENUM_NETWORK_CONNECTED    = 0x01,
@@ -112,6 +119,20 @@ interface INetworkCostManager : IUnknown
 [
     object,
     pointer_default(unique),
+    uuid(dcb0000a-570f-4a9b-8d69-199fdba5723b)
+]
+interface INetworkConnectionCost : IUnknown
+{
+    HRESULT GetCost(
+        [out] DWORD *pCost);
+
+    HRESULT GetDataPlanStatus(
+        [out] NLM_DATAPLAN_STATUS *pDataPlanStatus);
+}
+
+[
+    object,
+    pointer_default(unique),
     uuid(dcb00009-570f-4a9b-8d69-199fdba5723b)
 ]
 interface INetworkCostManagerEvents : IUnknown
@@ -122,6 +143,68 @@ interface INetworkCostManagerEvents : IUnknown
 
     HRESULT DataPlanStatusChanged(
         [in, unique] NLM_SOCKADDR *pDestAddr);
+}
+
+[
+    object,
+    oleautomation,
+    pointer_default(unique),
+    dual,
+    uuid(dcb00003-570f-4a9b-8d69-199fdba5723b)
+]
+interface IEnumNetworks : IDispatch
+{
+    [id(DISPID_NEWENUM), propget, hidden, restricted]
+    HRESULT _NewEnum(
+        [out, retval] IEnumVARIANT **ppEnumVar);
+
+    [id(1)]
+    HRESULT Next(
+        [in] ULONG celt,
+        [out, size_is(celt), length_is(*pceltFetched)] INetwork **rgelt,
+        [in, out] ULONG *pceltFetched);
+
+    [id(2)]
+    HRESULT Skip(
+        [in] ULONG celt);
+
+    [id(3)]
+    HRESULT Reset();
+
+    [id(4)]
+    HRESULT Clone(
+        [out, retval] IEnumNetworks **ppEnumNetwork);
+}
+
+[
+    object,
+    oleautomation,
+    pointer_default(unique),
+    dual,
+    uuid(dcb00006-570f-4a9b-8d69-199fdba5723b)
+]
+interface IEnumNetworkConnections : IDispatch
+{
+    [id(DISPID_NEWENUM), propget, hidden, restricted]
+    HRESULT _NewEnum(
+        [out, retval] IEnumVARIANT **ppEnumVar);
+
+    [id(1)]
+    HRESULT Next(
+        [in] ULONG celt,
+        [out, size_is(celt), length_is(*pceltFetched)] INetworkConnection **rgelt,
+        [in, out] ULONG *pceltFetched);
+
+    [id(2)]
+    HRESULT Skip(
+        [in] ULONG celt);
+
+    [id(3)]
+    HRESULT Reset();
+
+    [id(4)]
+    HRESULT Clone(
+        [out, retval] IEnumNetworkConnections **ppEnumNetwork);
 }
 
 [
@@ -196,4 +279,114 @@ interface INetworkConnectionEvents : IUnknown
     HRESULT NetworkConnectionPropertyChanged(
         [in] GUID connectionId,
         [in] NLM_CONNECTION_PROPERTY_CHANGE flags);
+}
+
+[
+    object,
+    oleautomation,
+    pointer_default(unique),
+    dual,
+    uuid(dcb00005-570f-4a9b-8d69-199fdba5723b)
+]
+interface INetworkConnection : IDispatch
+{
+    [id(1)]
+    HRESULT GetNetwork(
+        [out, retval] INetwork **ppNetwork);
+
+    [propget, id(2)]
+    HRESULT IsConnectedToInternet(
+        [out, retval] VARIANT_BOOL *pbIsConnected);
+
+    [propget, id(3)]
+    HRESULT IsConnected(
+        [out, retval] VARIANT_BOOL *pbIsConnected);
+
+    [id(4)]
+    HRESULT GetConnectivity(
+        [out, retval] NLM_CONNECTIVITY *pConnectivity);
+
+    [id(5)]
+    HRESULT GetConnectionId(
+        [out, retval] GUID *pgdConnectionId);
+
+    [id(6)]
+    HRESULT GetAdapterId(
+        [out, retval] GUID *pgdAdapterId);
+
+    [id(7)]
+    HRESULT GetDomainType(
+        [out, retval] NLM_DOMAIN_TYPE *pDomainType);
+}
+
+[
+    object,
+    oleautomation,
+    pointer_default(unique),
+    dual,
+    uuid(dcb00002-570f-4a9b-8d69-199fdba5723b)
+]
+interface INetwork : IDispatch
+{
+    typedef enum NLM_NETWORK_CATEGORY
+    {
+        NLM_NETWORK_CATEGORY_PUBLIC               = 0x00,
+        NLM_NETWORK_CATEGORY_PRIVATE              = 0x01,
+        NLM_NETWORK_CATEGORY_DOMAIN_AUTHENTICATED = 0x02
+    } NLM_NETWORK_CATEGORY;
+
+    [id(1)]
+    HRESULT GetName(
+        [out, string, retval] BSTR *pszNetworkName);
+
+    [id(2)]
+    HRESULT SetName(
+        [in, string] BSTR szNetworkNewName);
+
+    [id(3)]
+    HRESULT GetDescription(
+        [out, string, retval] BSTR *pszDescription);
+
+    [id(4)]
+    HRESULT SetDescription(
+        [in, string] BSTR szDescription);
+
+    [id(5)]
+    HRESULT GetNetworkId(
+        [out, retval] GUID *pgdGuidNetworkId);
+
+    [id(6)]
+    HRESULT GetDomainType(
+        [out, retval] NLM_DOMAIN_TYPE *pNetworkType);
+
+    [id(7)]
+    HRESULT GetNetworkConnections(
+        [out, retval] IEnumNetworkConnections **ppEnumNetworkConnection);
+
+    [id(8)]
+    HRESULT GetTimeCreatedAndConnected(
+        [out] DWORD *pdwLowDateTimeCreated,
+        [out] DWORD *pdwHighDateTimeCreated,
+        [out] DWORD *pdwLowDateTimeConnected,
+        [out] DWORD *pdwHighDateTimeConnected);
+
+    [propget, id(9)]
+    HRESULT IsConnectedToInternet(
+        [out, retval] VARIANT_BOOL *pbIsConnected);
+
+    [propget, id(10)]
+    HRESULT IsConnected(
+        [out, retval] VARIANT_BOOL *pbIsConnected);
+
+    [id(11)]
+    HRESULT GetConnectivity(
+        [out, retval] NLM_CONNECTIVITY *pConnectivity);
+
+    [id(12)]
+    HRESULT GetCategory(
+        [out, retval] NLM_NETWORK_CATEGORY *pCategory);
+
+    [id(13)]
+    HRESULT SetCategory(
+        [in] NLM_NETWORK_CATEGORY NewCategory);
 }
