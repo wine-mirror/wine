@@ -3496,9 +3496,10 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
 
 static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *analysis, RECT *bounds)
 {
+    struct dwrite_glyphbitmap glyph_bitmap;
     IDWriteFontFace2 *fontface2;
-    BOOL nohint, is_rtl;
     FLOAT origin_x;
+    BOOL is_rtl;
     HRESULT hr;
     UINT32 i;
 
@@ -3514,29 +3515,35 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
     if (FAILED(hr))
         WARN("failed to get IDWriteFontFace2, 0x%08x\n", hr);
 
-    nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL || analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
-
     /* Start with empty bounds at (0,0) origin, returned bounds are not translated back to (0,0), e.g. for
        RTL run negative left bound is returned, same goes for vertical direction - top bound will be negative
        for any non-zero glyph ascender */
     origin_x = 0.0;
     is_rtl = analysis->run.bidiLevel & 1;
+
+    memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
+    glyph_bitmap.fontface = fontface2;
+    glyph_bitmap.emsize = analysis->run.fontEmSize * analysis->ppdip;
+    glyph_bitmap.nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL ||
+        analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
+
     for (i = 0; i < analysis->run.glyphCount; i++) {
         const DWRITE_GLYPH_OFFSET *offset = analysis->offsets ? &analysis->offsets[i] : NULL;
         FLOAT advance = analysis->advances[i];
-        RECT bbox;
+        RECT *bbox = &glyph_bitmap.bbox;
 
-        freetype_get_glyph_bbox(fontface2, analysis->run.fontEmSize * analysis->ppdip, analysis->run.glyphIndices[i], nohint, &bbox);
+        glyph_bitmap.index = analysis->run.glyphIndices[i];
+        freetype_get_glyph_bbox(&glyph_bitmap);
 
         if (is_rtl)
-            OffsetRect(&bbox, origin_x - advance, 0);
+            OffsetRect(bbox, origin_x - advance, 0);
         else
-            OffsetRect(&bbox, origin_x, 0);
+            OffsetRect(bbox, origin_x, 0);
 
         if (offset)
-            OffsetRect(&bbox, is_rtl ? -offset->advanceOffset : offset->advanceOffset, is_rtl ? -offset->ascenderOffset : offset->ascenderOffset);
+            OffsetRect(bbox, is_rtl ? -offset->advanceOffset : offset->advanceOffset, is_rtl ? -offset->ascenderOffset : offset->ascenderOffset);
 
-        UnionRect(&analysis->bounds, &analysis->bounds, &bbox);
+        UnionRect(&analysis->bounds, &analysis->bounds, bbox);
         origin_x += is_rtl ? -advance : advance;
     }
 
@@ -3588,19 +3595,19 @@ static inline BYTE *get_pixel_ptr(BYTE *ptr, DWRITE_TEXTURE_TYPE type, const REC
 static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DWRITE_TEXTURE_TYPE type)
 {
     static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
+    struct dwrite_glyphbitmap glyph_bitmap;
     IDWriteFontFace2 *fontface2;
-    BOOL is_rtl, nohint;
     FLOAT origin_x;
     UINT32 i, size;
+    BOOL is_rtl;
     HRESULT hr;
+    RECT *bbox;
 
     hr = IDWriteFontFace_QueryInterface(analysis->run.fontFace, &IID_IDWriteFontFace2, (void**)&fontface2);
     if (FAILED(hr)) {
         WARN("failed to get IDWriteFontFace2, 0x%08x\n", hr);
         return;
     }
-
-    nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL || analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
 
     size = (analysis->bounds.right - analysis->bounds.left)*(analysis->bounds.bottom - analysis->bounds.top);
     if (type == DWRITE_TEXTURE_CLEARTYPE_3x1)
@@ -3609,39 +3616,47 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
 
     origin_x = 0.0;
     is_rtl = analysis->run.bidiLevel & 1;
+
+    memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
+    glyph_bitmap.fontface = fontface2;
+    glyph_bitmap.emsize = analysis->run.fontEmSize * analysis->ppdip;
+    glyph_bitmap.nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL ||
+        analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
+    bbox = &glyph_bitmap.bbox;
+
     for (i = 0; i < analysis->run.glyphCount; i++) {
         const DWRITE_GLYPH_OFFSET *offset = analysis->offsets ? &analysis->offsets[i] : NULL;
         FLOAT advance = analysis->advances[i];
-        int pitch, x, y, width, height;
-        BYTE *glyph, *src, *dst;
-        RECT bbox;
+        int x, y, width, height;
+        BYTE *src, *dst;
 
-        freetype_get_glyph_bbox(fontface2, analysis->run.fontEmSize * analysis->ppdip, analysis->run.glyphIndices[i], nohint, &bbox);
+        glyph_bitmap.index = analysis->run.glyphIndices[i];
+        freetype_get_glyph_bbox(&glyph_bitmap);
 
-        if (IsRectEmpty(&bbox)) {
+        if (IsRectEmpty(bbox)) {
             origin_x += is_rtl ? -advance : advance;
             continue;
         }
 
-        width = bbox.right - bbox.left;
-        height = bbox.bottom - bbox.top;
-        pitch = ((width + 31) >> 5) << 2;
+        width = bbox->right - bbox->left;
+        height = bbox->bottom - bbox->top;
+        glyph_bitmap.pitch = ((width + 31) >> 5) << 2;
 
-        src = glyph = heap_alloc_zero((bbox.bottom - bbox.top) * pitch);
-        freetype_get_glyph_bitmap(fontface2, analysis->run.fontEmSize * analysis->ppdip, analysis->run.glyphIndices[i], &bbox, glyph);
+        glyph_bitmap.buf = src = heap_alloc_zero(height * glyph_bitmap.pitch);
+        freetype_get_glyph_bitmap(&glyph_bitmap);
 
         if (is_rtl)
-            OffsetRect(&bbox, origin_x - advance, 0);
+            OffsetRect(bbox, origin_x - advance, 0);
         else
-            OffsetRect(&bbox, origin_x, 0);
+            OffsetRect(bbox, origin_x, 0);
 
         if (offset)
-            OffsetRect(&bbox, is_rtl ? -offset->advanceOffset : offset->advanceOffset, is_rtl ? -offset->ascenderOffset : offset->ascenderOffset);
+            OffsetRect(bbox, is_rtl ? -offset->advanceOffset : offset->advanceOffset, is_rtl ? -offset->ascenderOffset : offset->ascenderOffset);
 
-        OffsetRect(&bbox, analysis->originX, analysis->originY);
+        OffsetRect(bbox, analysis->originX, analysis->originY);
 
         /* blit to analysis bitmap */
-        dst = get_pixel_ptr(analysis->bitmap, type, &bbox, &analysis->bounds);
+        dst = get_pixel_ptr(analysis->bitmap, type, bbox, &analysis->bounds);
 
         /* convert 1bpp to 8bpp/24bpp */
         if (type == DWRITE_TEXTURE_CLEARTYPE_3x1) {
@@ -3661,7 +3676,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
             }
         }
 
-        heap_free(glyph);
+        heap_free(glyph_bitmap.buf);
 
         origin_x += is_rtl ? -advance : advance;
     }

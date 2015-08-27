@@ -487,43 +487,43 @@ INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 le
     return adjustment;
 }
 
-void freetype_get_glyph_bbox(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, BOOL nohint, RECT *ret)
+void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 {
     FTC_ImageTypeRec imagetype;
     FT_BBox bbox = { 0 };
     FT_Glyph glyph;
 
-    imagetype.face_id = fontface;
+    imagetype.face_id = bitmap->fontface;
     imagetype.width = 0;
-    imagetype.height = emSize;
+    imagetype.height = bitmap->emsize;
     imagetype.flags = FT_LOAD_DEFAULT;
 
     EnterCriticalSection(&freetype_cs);
-    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, index, &glyph, NULL) == 0)
+    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0)
         pFT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
     LeaveCriticalSection(&freetype_cs);
 
     /* flip Y axis */
-    ret->left = bbox.xMin;
-    ret->right = bbox.xMax;
-    ret->top = -bbox.yMax;
-    ret->bottom = -bbox.yMin;
+    bitmap->bbox.left = bbox.xMin;
+    bitmap->bbox.right = bbox.xMax;
+    bitmap->bbox.top = -bbox.yMax;
+    bitmap->bbox.bottom = -bbox.yMin;
 }
 
-void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, const RECT *bbox, BYTE *buf)
+void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 {
+    const RECT *bbox = &bitmap->bbox;
     FTC_ImageTypeRec imagetype;
     FT_Glyph glyph;
 
-    imagetype.face_id = fontface;
+    imagetype.face_id = bitmap->fontface;
     imagetype.width = 0;
-    imagetype.height = emSize;
+    imagetype.height = bitmap->emsize;
     imagetype.flags = FT_LOAD_DEFAULT;
 
     EnterCriticalSection(&freetype_cs);
-    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, index, &glyph, NULL) == 0) {
+    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0) {
         int width = bbox->right - bbox->left;
-        int pitch = ((width + 31) >> 5) << 2;
         int height = bbox->bottom - bbox->top;
 
         if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
@@ -534,12 +534,12 @@ void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 
 
             ft_bitmap.width = width;
             ft_bitmap.rows = height;
-            ft_bitmap.pitch = pitch;
+            ft_bitmap.pitch = bitmap->pitch;
             ft_bitmap.pixel_mode = FT_PIXEL_MODE_MONO;
-            ft_bitmap.buffer = buf;
+            ft_bitmap.buffer = bitmap->buf;
 
             /* Note: FreeType will only set 'black' bits for us. */
-            memset(buf, 0, height*pitch);
+            memset(bitmap->buf, 0, height * bitmap->pitch);
             if (pFT_Outline_New(library, src->n_points, src->n_contours, &copy) == 0) {
                 pFT_Outline_Copy(src, &copy);
                 pFT_Outline_Translate(&copy, -bbox->left << 6, bbox->bottom << 6);
@@ -548,21 +548,21 @@ void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 
             }
         }
         else if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
-            FT_Bitmap *bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
-            BYTE *src = bitmap->buffer, *dst = buf;
-            int w = min(pitch, (bitmap->width + 7) >> 3);
-            int h = min(height, bitmap->rows);
+            FT_Bitmap *ft_bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
+            BYTE *src = ft_bitmap->buffer, *dst = bitmap->buf;
+            int w = min(bitmap->pitch, (ft_bitmap->width + 7) >> 3);
+            int h = min(height, ft_bitmap->rows);
 
-            memset(buf, 0, height*pitch);
+            memset(bitmap->buf, 0, height * bitmap->pitch);
 
             while (h--) {
                 memcpy(dst, src, w);
-                src += bitmap->pitch;
-                dst += pitch;
+                src += ft_bitmap->pitch;
+                dst += bitmap->pitch;
             }
         }
         else
-            FIXME("format %d not handled\n", glyph->format);
+            FIXME("format %x not handled\n", glyph->format);
     }
     LeaveCriticalSection(&freetype_cs);
 }
@@ -673,15 +673,15 @@ INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 le
     return 0;
 }
 
-void freetype_get_glyph_bbox(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, BOOL nohint, RECT *ret)
+void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 {
-    ret->left = ret->right = ret->top = ret->bottom = 0;
+    memset(&bitmap->bbox, 0, sizeof(bitmap->bbox));
 }
 
-void freetype_get_glyph_bitmap(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, const RECT *bbox, BYTE *buf)
+void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 {
-    UINT32 size = (bbox->right - bbox->left)*(bbox->bottom - bbox->top);
-    memset(buf, 0, size);
+    UINT32 size = (bitmap->bbox.right - bitmap->bbox.left)*(bitmap->bbox.bottom - bitmap->bbox.top);
+    memset(bitmap->buf, 0, size);
 }
 
 INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)

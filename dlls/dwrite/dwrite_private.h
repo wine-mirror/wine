@@ -191,6 +191,16 @@ struct glyph_outline {
 extern HRESULT new_glyph_outline(UINT32,struct glyph_outline**) DECLSPEC_HIDDEN;
 
 /* FreeType integration */
+struct dwrite_glyphbitmap {
+    IDWriteFontFace2 *fontface;
+    FLOAT emsize;
+    BOOL nohint;
+    UINT16 index;
+    INT pitch;
+    RECT bbox;
+    BYTE *buf;
+};
+
 extern BOOL init_freetype(void) DECLSPEC_HIDDEN;
 extern void release_freetype(void) DECLSPEC_HIDDEN;
 extern HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2*,UINT16,UINT16,DWRITE_GLYPH_METRICS*) DECLSPEC_HIDDEN;
@@ -201,8 +211,8 @@ extern UINT16 freetype_get_glyphcount(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphindex(IDWriteFontFace2*,UINT32,INT) DECLSPEC_HIDDEN;
 extern BOOL freetype_has_kerning_pairs(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2*,UINT16,UINT16) DECLSPEC_HIDDEN;
-extern void freetype_get_glyph_bbox(IDWriteFontFace2*,FLOAT,UINT16,BOOL,RECT*) DECLSPEC_HIDDEN;
-extern void freetype_get_glyph_bitmap(IDWriteFontFace2*,FLOAT,UINT16,const RECT*,BYTE*) DECLSPEC_HIDDEN;
+extern void freetype_get_glyph_bbox(struct dwrite_glyphbitmap*) DECLSPEC_HIDDEN;
+extern void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap*) DECLSPEC_HIDDEN;
 extern INT freetype_get_charmap_index(IDWriteFontFace2*,BOOL*) DECLSPEC_HIDDEN;
 extern INT32 freetype_get_glyph_advance(IDWriteFontFace2*,FLOAT,UINT16,DWRITE_MEASURING_MODE) DECLSPEC_HIDDEN;
 
