@@ -36,6 +36,7 @@
 #include "olectl.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 #include "netprofm_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(netprofm);
@@ -50,12 +51,23 @@ static inline BOOL heap_free( void *mem )
     return HeapFree( GetProcessHeap(), 0, mem );
 }
 
+struct connection
+{
+    INetworkConnection     INetworkConnection_iface;
+    LONG                   refs;
+    struct list            entry;
+    GUID                   id;
+    VARIANT_BOOL           connected_to_internet;
+    VARIANT_BOOL           connected;
+};
+
 struct list_manager
 {
     INetworkListManager INetworkListManager_iface;
     INetworkCostManager INetworkCostManager_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG                refs;
+    struct list         connections;
 };
 
 struct connection_point
@@ -358,7 +370,16 @@ static ULONG WINAPI list_manager_Release(
     LONG refs = InterlockedDecrement( &mgr->refs );
     if (!refs)
     {
+        struct list *ptr;
+
         TRACE( "destroying %p\n", mgr );
+
+        while ((ptr = list_head( &mgr->connections )))
+        {
+            struct connection *connection = LIST_ENTRY( ptr, struct connection, entry );
+            list_remove( &connection->entry );
+            INetworkConnection_Release( &connection->INetworkConnection_iface );
+        }
         heap_free( mgr );
     }
     return refs;
@@ -583,6 +604,257 @@ static const struct IConnectionPointContainerVtbl cpc_vtbl =
     ConnectionPointContainer_FindConnectionPoint
 };
 
+static inline struct connection *impl_from_INetworkConnection(
+    INetworkConnection *iface )
+{
+    return CONTAINING_RECORD( iface, struct connection, INetworkConnection_iface );
+}
+
+static HRESULT WINAPI connection_QueryInterface(
+    INetworkConnection *iface, REFIID riid, void **obj )
+{
+    struct connection *connection = impl_from_INetworkConnection( iface );
+
+    TRACE( "%p, %s, %p\n", connection, debugstr_guid(riid), obj );
+
+    if (IsEqualIID( riid, &IID_INetworkConnection ) ||
+        IsEqualIID( riid, &IID_IDispatch ) ||
+        IsEqualIID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+    }
+    else
+    {
+        WARN( "interface not supported %s\n", debugstr_guid(riid) );
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+    INetworkConnection_AddRef( iface );
+    return S_OK;
+}
+
+static ULONG WINAPI connection_AddRef(
+    INetworkConnection  *iface )
+{
+    struct connection *connection = impl_from_INetworkConnection( iface );
+
+    TRACE( "%p\n", connection );
+    return InterlockedIncrement( &connection->refs );
+}
+
+static ULONG WINAPI connection_Release(
+    INetworkConnection  *iface )
+{
+    struct connection *connection = impl_from_INetworkConnection( iface );
+    LONG refs;
+
+    TRACE( "%p\n", connection );
+
+    if (!(refs = InterlockedDecrement( &connection->refs )))
+    {
+        list_remove( &connection->entry );
+        heap_free( connection );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI connection_GetTypeInfoCount(
+    INetworkConnection *iface,
+    UINT *count )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_GetTypeInfo(
+    INetworkConnection *iface,
+    UINT index,
+    LCID lcid,
+    ITypeInfo **info )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_GetIDsOfNames(
+    INetworkConnection *iface,
+    REFIID riid,
+    LPOLESTR *names,
+    UINT count,
+    LCID lcid,
+    DISPID *dispid )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_Invoke(
+    INetworkConnection *iface,
+    DISPID member,
+    REFIID riid,
+    LCID lcid,
+    WORD flags,
+    DISPPARAMS *params,
+    VARIANT *result,
+    EXCEPINFO *excep_info,
+    UINT *arg_err )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_GetNetwork(
+    INetworkConnection *iface,
+    INetwork **ppNetwork )
+{
+    FIXME( "%p, %p\n", iface, ppNetwork );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connection_get_IsConnectedToInternet(
+    INetworkConnection *iface,
+    VARIANT_BOOL *pbIsConnected )
+{
+    struct connection *connection = impl_from_INetworkConnection( iface );
+
+    TRACE( "%p, %p\n", iface, pbIsConnected );
+
+    *pbIsConnected = connection->connected_to_internet;
+    return S_OK;
+}
+
+static HRESULT WINAPI connection_get_IsConnected(
+    INetworkConnection *iface,
+    VARIANT_BOOL *pbIsConnected )
+{
+    struct connection *connection = impl_from_INetworkConnection( iface );
+
+    TRACE( "%p, %p\n", iface, pbIsConnected );
+
+    *pbIsConnected = connection->connected;
+    return S_OK;
+}
+
+static HRESULT WINAPI connection_GetConnectivity(
+    INetworkConnection *iface,
+    NLM_CONNECTIVITY *pConnectivity )
+{
+    FIXME( "%p, %p\n", iface, pConnectivity );
+
+    *pConnectivity = NLM_CONNECTIVITY_IPV4_INTERNET;
+    return S_OK;
+}
+
+static HRESULT WINAPI connection_GetConnectionId(
+    INetworkConnection *iface,
+    GUID *pgdConnectionId )
+{
+    struct connection *connection = impl_from_INetworkConnection( iface );
+
+    TRACE( "%p, %p\n", iface, pgdConnectionId );
+
+    *pgdConnectionId = connection->id;
+    return S_OK;
+}
+
+static HRESULT WINAPI connection_GetAdapterId(
+    INetworkConnection *iface,
+    GUID *pgdAdapterId )
+{
+    struct connection *connection = impl_from_INetworkConnection( iface );
+
+    FIXME( "%p, %p\n", iface, pgdAdapterId );
+
+    *pgdAdapterId = connection->id;
+    return S_OK;
+}
+
+static HRESULT WINAPI connection_GetDomainType(
+    INetworkConnection *iface,
+    NLM_DOMAIN_TYPE *pDomainType )
+{
+    FIXME( "%p, %p\n", iface, pDomainType );
+
+    *pDomainType = NLM_DOMAIN_TYPE_NON_DOMAIN_NETWORK;
+    return S_OK;
+}
+
+static const struct INetworkConnectionVtbl connection_vtbl =
+{
+    connection_QueryInterface,
+    connection_AddRef,
+    connection_Release,
+    connection_GetTypeInfoCount,
+    connection_GetTypeInfo,
+    connection_GetIDsOfNames,
+    connection_Invoke,
+    connection_GetNetwork,
+    connection_get_IsConnectedToInternet,
+    connection_get_IsConnected,
+    connection_GetConnectivity,
+    connection_GetConnectionId,
+    connection_GetAdapterId,
+    connection_GetDomainType
+};
+
+static struct connection *create_connection( const GUID *id )
+{
+    struct connection *ret;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+
+    ret->INetworkConnection_iface.lpVtbl     = &connection_vtbl;
+    ret->refs                  = 1;
+    ret->id                    = *id;
+    ret->connected             = VARIANT_FALSE;
+    ret->connected_to_internet = VARIANT_FALSE;
+    list_init( &ret->entry );
+
+    return ret;
+}
+
+static void init_networks( struct list_manager *mgr )
+{
+    DWORD size = 0;
+    IP_ADAPTER_ADDRESSES *buf, *aa;
+    GUID id;
+    ULONG ret, flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
+                       GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_INCLUDE_ALL_GATEWAYS;
+
+    list_init( &mgr->connections );
+
+    ret = GetAdaptersAddresses( WS_AF_UNSPEC, flags, NULL, NULL, &size );
+    if (ret != ERROR_BUFFER_OVERFLOW) return;
+
+    if (!(buf = heap_alloc( size ))) return;
+    if (GetAdaptersAddresses( WS_AF_UNSPEC, flags, NULL, buf, &size )) return;
+
+    memset( &id, 0, sizeof(id) );
+    for (aa = buf; aa; aa = aa->Next)
+    {
+        struct connection *connection;
+
+        id.Data1 = aa->IfIndex;
+
+        if (!(connection = create_connection( &id )))
+            goto done;
+
+        if (aa->FirstUnicastAddress)
+        {
+            connection->connected = VARIANT_TRUE;
+        }
+        if (aa->FirstGatewayAddress)
+        {
+            connection->connected_to_internet = VARIANT_TRUE;
+        }
+
+        list_add_tail( &mgr->connections, &connection->entry );
+    }
+
+done:
+    heap_free( buf );
+}
+
 HRESULT list_manager_create( void **obj )
 {
     struct list_manager *mgr;
@@ -593,6 +865,7 @@ HRESULT list_manager_create( void **obj )
     mgr->INetworkListManager_iface.lpVtbl = &list_manager_vtbl;
     mgr->INetworkCostManager_iface.lpVtbl = &cost_manager_vtbl;
     mgr->IConnectionPointContainer_iface.lpVtbl = &cpc_vtbl;
+    init_networks( mgr );
     mgr->refs = 1;
 
     *obj = &mgr->INetworkListManager_iface;
