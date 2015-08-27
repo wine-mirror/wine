@@ -19263,9 +19263,6 @@ static void test_vertex_blending(void)
         hr = IDirect3DDevice9_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
-        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
-
         point = tests[i].quad_points;
         while (point->x != -1 && point->y != -1)
         {
@@ -19281,6 +19278,9 @@ static void test_vertex_blending(void)
             ok(color_match(color, 0x00000000, 1), "Unexpected quad at %dx%d.\n", point->x, point->y);
             ++point;
         }
+
+        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+        ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
     }
 
     refcount = IDirect3DDevice9_Release(device);
