@@ -9415,7 +9415,7 @@ static void test_texcoordindex(void)
     }
 
     hr = IDirect3DDevice3_GetDirect3D(device, &d3d);
-    ok(SUCCEEDED(hr), "Failed to get Direct3D7 interface, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D3 interface, hr %#x.\n", hr);
     hr = IDirect3D3_QueryInterface(d3d, &IID_IDirectDraw4, (void **)&ddraw);
     ok(SUCCEEDED(hr), "Failed to get DirectDraw4 interface, hr %#x.\n", hr);
     IDirect3D3_Release(d3d);
@@ -9545,10 +9545,14 @@ static void test_texcoordindex(void)
     color = get_surface_color(rt, 480, 360);
     ok(compare_color(color, 0x00ffff00, 2), "Got unexpected color 0x%08x.\n", color);
 
-    IDirectDrawSurface7_Release(texture1);
-    IDirectDrawSurface7_Release(texture2);
+    IDirect3DTexture2_Release(texture2);
+    IDirect3DTexture2_Release(texture1);
+    IDirectDrawSurface4_Release(surface2);
+    IDirectDrawSurface4_Release(surface1);
 
-    IDirectDrawSurface7_Release(rt);
+    destroy_viewport(device, viewport);
+
+    IDirectDrawSurface4_Release(rt);
     IDirectDraw_Release(ddraw);
     refcount = IDirect3DDevice3_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
