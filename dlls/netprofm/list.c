@@ -99,6 +99,7 @@ static HRESULT WINAPI connection_point_QueryInterface(
     else
     {
         FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        *obj = NULL;
         return E_NOINTERFACE;
     }
     IConnectionPoint_AddRef( iface );
@@ -388,6 +389,7 @@ static HRESULT WINAPI list_manager_QueryInterface(
     else
     {
         FIXME( "interface %s not implemented\n", debugstr_guid(riid) );
+        *obj = NULL;
         return E_NOINTERFACE;
     }
     INetworkListManager_AddRef( iface );
