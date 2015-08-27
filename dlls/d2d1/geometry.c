@@ -843,23 +843,25 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
 {
     D2D1_POINT_2F p0, p1, q0, q1, v_p, v_q, v_qp, intersection;
     struct d2d_figure *figure_p, *figure_q;
-    size_t i, j, k, l, limit;
+    size_t i, j, k, l, min_j, min_l, max_l;
     float s, t, det;
 
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
         figure_p = &geometry->u.path.figures[i];
         p0 = figure_p->vertices[figure_p->vertex_count - 1];
+        min_j = 0;
+        min_l = 0;
         for (k = 0; k < figure_p->vertex_count; p0 = p1, ++k)
         {
             p1 = figure_p->vertices[k];
             d2d_point_subtract(&v_p, &p1, &p0);
-            for (j = 0; j < i || (j == i && k); ++j)
+            for (j = min_j, min_j = 0, l = min_l, min_l = 0; j < i || (j == i && k); ++j, l = 0)
             {
                 figure_q = &geometry->u.path.figures[j];
-                limit = j == i ? k - 1 : figure_q->vertex_count;
-                q0 = figure_q->vertices[figure_q->vertex_count - 1];
-                for (l = 0; l < limit; q0 = q1, ++l)
+                max_l = j == i ? k - 1 : figure_q->vertex_count;
+                q0 = figure_q->vertices[l == 0 ? figure_q->vertex_count - 1 : l - 1];
+                for (; l < max_l; q0 = q1, ++l)
                 {
                     q1 = figure_q->vertices[l];
                     d2d_point_subtract(&v_q, &q1, &q0);
@@ -884,7 +886,7 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
                             return FALSE;
                         if (j == i)
                             ++k;
-                        ++limit;
+                        ++max_l;
                         ++l;
                     }
 
@@ -892,6 +894,8 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
                     {
                         if (!d2d_figure_insert_vertex(figure_p, k, intersection))
                             return FALSE;
+                        min_j = j;
+                        min_l = l+1;
                         p1 = intersection;
                         d2d_point_subtract(&v_p, &p1, &p0);
                     }
