@@ -1024,6 +1024,7 @@ void update_net_wm_states( struct x11drv_win_data *data )
         xev.xclient.send_event = True;
         xev.xclient.format = 32;
         xev.xclient.data.l[3] = 1;
+        xev.xclient.data.l[4] = 0;
 
         for (i = 0; i < NB_NET_WM_STATES; i++)
         {
