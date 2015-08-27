@@ -584,7 +584,49 @@ static HRESULT WINAPI XA2SRC_SubmitSourceBuffer(IXAudio2SourceVoice *iface,
         const XAUDIO2_BUFFER *pBuffer, const XAUDIO2_BUFFER_WMA *pBufferWMA)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+    XA2Buffer *buf;
+    UINT32 buf_idx;
+
     TRACE("%p, %p, %p\n", This, pBuffer, pBufferWMA);
+
+    if(TRACE_ON(xaudio2)){
+        TRACE("Flags: 0x%x\n", pBuffer->Flags);
+        TRACE("AudioBytes: %u\n", pBuffer->AudioBytes);
+        TRACE("pAudioData: %p\n", pBuffer->pAudioData);
+        TRACE("PlayBegin: %u\n", pBuffer->PlayBegin);
+        TRACE("PlayLength: %u\n", pBuffer->PlayLength);
+        TRACE("LoopBegin: %u\n", pBuffer->LoopBegin);
+        TRACE("LoopLength: %u\n", pBuffer->LoopLength);
+        TRACE("LoopCount: %u\n", pBuffer->LoopCount);
+        TRACE("pContext: %p\n", pBuffer->pContext);
+    }
+
+    EnterCriticalSection(&This->lock);
+
+    if(This->nbufs >= XAUDIO2_MAX_QUEUED_BUFFERS){
+        TRACE("Too many buffers queued!\n");
+        LeaveCriticalSection(&This->lock);
+        return XAUDIO2_E_INVALID_CALL;
+    }
+
+    buf_idx = (This->first_buf + This->nbufs) % XAUDIO2_MAX_QUEUED_BUFFERS;
+    buf = &This->buffers[buf_idx];
+    memset(buf, 0, sizeof(*buf));
+
+    /* API contract: pAudioData must remain valid until this buffer is played,
+     * but pBuffer itself may be reused immediately */
+    memcpy(&buf->xa2buffer, pBuffer, sizeof(*pBuffer));
+
+    buf->offs_bytes = 0;
+    buf->latest_al_buf = -1;
+
+    ++This->nbufs;
+
+    TRACE("%p: queued buffer %u (%u bytes), now %u buffers held\n",
+            This, buf_idx, buf->xa2buffer.AudioBytes, This->nbufs);
+
+    LeaveCriticalSection(&This->lock);
+
     return S_OK;
 }
 
