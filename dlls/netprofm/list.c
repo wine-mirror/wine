@@ -40,6 +40,16 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(netprofm);
 
+static inline void *heap_alloc( SIZE_T size )
+{
+    return HeapAlloc( GetProcessHeap(), 0, size );
+}
+
+static inline BOOL heap_free( void *mem )
+{
+    return HeapFree( GetProcessHeap(), 0, mem );
+}
+
 struct list_manager
 {
     INetworkListManager INetworkListManager_iface;
@@ -111,7 +121,7 @@ static ULONG WINAPI connection_point_Release(
     {
         TRACE( "destroying %p\n", cp );
         IConnectionPointContainer_Release( cp->container );
-        HeapFree( GetProcessHeap(), 0, cp );
+        heap_free( cp );
     }
     return refs;
 }
@@ -199,7 +209,7 @@ static HRESULT connection_point_create(
     struct connection_point *cp;
     TRACE( "%p, %s, %p\n", obj, debugstr_guid(riid), container );
 
-    if (!(cp = HeapAlloc( GetProcessHeap(), 0, sizeof(*cp) ))) return E_OUTOFMEMORY;
+    if (!(cp = heap_alloc( sizeof(*cp) ))) return E_OUTOFMEMORY;
     cp->IConnectionPoint_iface.lpVtbl = &connection_point_vtbl;
     cp->container = container;
     cp->refs = 1;
@@ -348,7 +358,7 @@ static ULONG WINAPI list_manager_Release(
     if (!refs)
     {
         TRACE( "destroying %p\n", mgr );
-        HeapFree( GetProcessHeap(), 0, mgr );
+        heap_free( mgr );
     }
     return refs;
 }
@@ -576,7 +586,7 @@ HRESULT list_manager_create( void **obj )
 
     TRACE( "%p\n", obj );
 
-    if (!(mgr = HeapAlloc( GetProcessHeap(), 0, sizeof(*mgr) ))) return E_OUTOFMEMORY;
+    if (!(mgr = heap_alloc( sizeof(*mgr) ))) return E_OUTOFMEMORY;
     mgr->INetworkListManager_iface.lpVtbl = &list_manager_vtbl;
     mgr->INetworkCostManager_iface.lpVtbl = &cost_manager_vtbl;
     mgr->IConnectionPointContainer_iface.lpVtbl = &cpc_vtbl;
