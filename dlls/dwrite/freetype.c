@@ -510,10 +510,101 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
     bitmap->bbox.bottom = -bbox.yMin;
 }
 
-void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
+static BOOL freetype_get_aliased_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_Glyph glyph)
 {
     const RECT *bbox = &bitmap->bbox;
+    int width = bbox->right - bbox->left;
+    int height = bbox->bottom - bbox->top;
+
+    if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
+        FT_OutlineGlyph outline = (FT_OutlineGlyph)glyph;
+        const FT_Outline *src = &outline->outline;
+        FT_Bitmap ft_bitmap;
+        FT_Outline copy;
+
+        ft_bitmap.width = width;
+        ft_bitmap.rows = height;
+        ft_bitmap.pitch = bitmap->pitch;
+        ft_bitmap.pixel_mode = FT_PIXEL_MODE_MONO;
+        ft_bitmap.buffer = bitmap->buf;
+
+        /* Note: FreeType will only set 'black' bits for us. */
+        if (pFT_Outline_New(library, src->n_points, src->n_contours, &copy) == 0) {
+            pFT_Outline_Copy(src, &copy);
+            pFT_Outline_Translate(&copy, -bbox->left << 6, bbox->bottom << 6);
+            pFT_Outline_Get_Bitmap(library, &copy, &ft_bitmap);
+            pFT_Outline_Done(library, &copy);
+        }
+    }
+    else if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
+        FT_Bitmap *ft_bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
+        BYTE *src = ft_bitmap->buffer, *dst = bitmap->buf;
+        int w = min(bitmap->pitch, (ft_bitmap->width + 7) >> 3);
+        int h = min(height, ft_bitmap->rows);
+
+        while (h--) {
+            memcpy(dst, src, w);
+            src += ft_bitmap->pitch;
+            dst += bitmap->pitch;
+        }
+    }
+    else
+        FIXME("format %x not handled\n", glyph->format);
+
+    return TRUE;
+}
+
+static BOOL freetype_get_aa_glyph_bitmap(struct dwrite_glyphbitmap *bitmap, FT_Glyph glyph)
+{
+    const RECT *bbox = &bitmap->bbox;
+    int width = bbox->right - bbox->left;
+    int height = bbox->bottom - bbox->top;
+    BOOL ret = FALSE;
+
+    if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
+        FT_OutlineGlyph outline = (FT_OutlineGlyph)glyph;
+        const FT_Outline *src = &outline->outline;
+        FT_Bitmap ft_bitmap;
+        FT_Outline copy;
+
+        ft_bitmap.width = width;
+        ft_bitmap.rows = height;
+        ft_bitmap.pitch = bitmap->pitch;
+        ft_bitmap.pixel_mode = FT_PIXEL_MODE_GRAY;
+        ft_bitmap.buffer = bitmap->buf;
+
+        /* Note: FreeType will only set 'black' bits for us. */
+        if (pFT_Outline_New(library, src->n_points, src->n_contours, &copy) == 0) {
+            pFT_Outline_Copy(src, &copy);
+            pFT_Outline_Translate(&copy, -bbox->left << 6, bbox->bottom << 6);
+            pFT_Outline_Get_Bitmap(library, &copy, &ft_bitmap);
+            pFT_Outline_Done(library, &copy);
+        }
+    }
+    else if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
+        FT_Bitmap *ft_bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
+        BYTE *src = ft_bitmap->buffer, *dst = bitmap->buf;
+        int w = min(bitmap->pitch, (ft_bitmap->width + 7) >> 3);
+        int h = min(height, ft_bitmap->rows);
+
+        while (h--) {
+            memcpy(dst, src, w);
+            src += ft_bitmap->pitch;
+            dst += bitmap->pitch;
+        }
+
+        ret = TRUE;
+    }
+    else
+        FIXME("format %x not handled\n", glyph->format);
+
+    return ret;
+}
+
+BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
+{
     FTC_ImageTypeRec imagetype;
+    BOOL ret = FALSE;
     FT_Glyph glyph;
 
     imagetype.face_id = bitmap->fontface;
@@ -523,45 +614,14 @@ void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 
     EnterCriticalSection(&freetype_cs);
     if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0) {
-        int width = bbox->right - bbox->left;
-        int height = bbox->bottom - bbox->top;
-
-        if (glyph->format == FT_GLYPH_FORMAT_OUTLINE) {
-            FT_OutlineGlyph outline = (FT_OutlineGlyph)glyph;
-            const FT_Outline *src = &outline->outline;
-            FT_Bitmap ft_bitmap;
-            FT_Outline copy;
-
-            ft_bitmap.width = width;
-            ft_bitmap.rows = height;
-            ft_bitmap.pitch = bitmap->pitch;
-            ft_bitmap.pixel_mode = FT_PIXEL_MODE_MONO;
-            ft_bitmap.buffer = bitmap->buf;
-
-            /* Note: FreeType will only set 'black' bits for us. */
-            if (pFT_Outline_New(library, src->n_points, src->n_contours, &copy) == 0) {
-                pFT_Outline_Copy(src, &copy);
-                pFT_Outline_Translate(&copy, -bbox->left << 6, bbox->bottom << 6);
-                pFT_Outline_Get_Bitmap(library, &copy, &ft_bitmap);
-                pFT_Outline_Done(library, &copy);
-            }
-        }
-        else if (glyph->format == FT_GLYPH_FORMAT_BITMAP) {
-            FT_Bitmap *ft_bitmap = &((FT_BitmapGlyph)glyph)->bitmap;
-            BYTE *src = ft_bitmap->buffer, *dst = bitmap->buf;
-            int w = min(bitmap->pitch, (ft_bitmap->width + 7) >> 3);
-            int h = min(height, ft_bitmap->rows);
-
-            while (h--) {
-                memcpy(dst, src, w);
-                src += ft_bitmap->pitch;
-                dst += bitmap->pitch;
-            }
-        }
+        if (bitmap->type == DWRITE_TEXTURE_CLEARTYPE_3x1)
+            ret = freetype_get_aa_glyph_bitmap(bitmap, glyph);
         else
-            FIXME("format %x not handled\n", glyph->format);
+            ret = freetype_get_aliased_glyph_bitmap(bitmap, glyph);
     }
     LeaveCriticalSection(&freetype_cs);
+
+    return ret;
 }
 
 INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
@@ -675,8 +735,9 @@ void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
     memset(&bitmap->bbox, 0, sizeof(bitmap->bbox));
 }
 
-void freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
+BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
 {
+    return FALSE;
 }
 
 INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)

@@ -3622,6 +3622,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     glyph_bitmap.emsize = analysis->run.fontEmSize * analysis->ppdip;
     glyph_bitmap.nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL ||
         analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
+    glyph_bitmap.type = type;
     bbox = &glyph_bitmap.bbox;
 
     for (i = 0; i < analysis->run.glyphCount; i++) {
@@ -3629,6 +3630,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
         FLOAT advance = analysis->advances[i];
         int x, y, width, height;
         BYTE *src, *dst;
+        BOOL is_1bpp;
 
         glyph_bitmap.index = analysis->run.glyphIndices[i];
         freetype_get_glyph_bbox(&glyph_bitmap);
@@ -3640,10 +3642,14 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
 
         width = bbox->right - bbox->left;
         height = bbox->bottom - bbox->top;
-        glyph_bitmap.pitch = ((width + 31) >> 5) << 2;
+
+        if (type == DWRITE_TEXTURE_CLEARTYPE_3x1)
+            glyph_bitmap.pitch = (width + 3) / 4 * 4;
+        else
+            glyph_bitmap.pitch = ((width + 31) >> 5) << 2;
 
         glyph_bitmap.buf = src = heap_alloc_zero(height * glyph_bitmap.pitch);
-        freetype_get_glyph_bitmap(&glyph_bitmap);
+        is_1bpp = freetype_get_glyph_bitmap(&glyph_bitmap);
 
         if (is_rtl)
             OffsetRect(bbox, origin_x - advance, 0);
@@ -3658,21 +3664,32 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
         /* blit to analysis bitmap */
         dst = get_pixel_ptr(analysis->bitmap, type, bbox, &analysis->bounds);
 
-        /* convert 1bpp to 8bpp/24bpp */
-        if (type == DWRITE_TEXTURE_CLEARTYPE_3x1) {
-            for (y = 0; y < height; y++) {
-                for (x = 0; x < width; x++)
-                    dst[3*x] = dst[3*x+1] = dst[3*x+2] = (src[x / 8] & masks[x % 8]) ? DWRITE_ALPHA_MAX : 0;
-                src += get_dib_stride(width, 1);
-                dst += (analysis->bounds.right - analysis->bounds.left) * 3;
+        if (is_1bpp) {
+            /* convert 1bpp to 8bpp/24bpp */
+            if (type == DWRITE_TEXTURE_CLEARTYPE_3x1) {
+                for (y = 0; y < height; y++) {
+                    for (x = 0; x < width; x++)
+                        dst[3*x] = dst[3*x+1] = dst[3*x+2] = (src[x / 8] & masks[x % 8]) ? DWRITE_ALPHA_MAX : 0;
+                    src += glyph_bitmap.pitch;
+                    dst += (analysis->bounds.right - analysis->bounds.left) * 3;
+                }
+            }
+            else {
+                for (y = 0; y < height; y++) {
+                    for (x = 0; x < width; x++)
+                        dst[x] = (src[x / 8] & masks[x % 8]) ? DWRITE_ALPHA_MAX : 0;
+                    src += get_dib_stride(width, 1);
+                    dst += analysis->bounds.right - analysis->bounds.left;
+                }
             }
         }
         else {
+            /* at this point it's DWRITE_TEXTURE_CLEARTYPE_3x1 with 8bpp src bitmap */
             for (y = 0; y < height; y++) {
                 for (x = 0; x < width; x++)
-                    dst[x] = (src[x / 8] & masks[x % 8]) ? DWRITE_ALPHA_MAX : 0;
-                src += get_dib_stride(width, 1);
-                dst += analysis->bounds.right - analysis->bounds.left;
+                    dst[3*x] = dst[3*x+1] = dst[3*x+2] = src[x];
+                src += glyph_bitmap.pitch;
+                dst += (analysis->bounds.right - analysis->bounds.left) * 3;
             }
         }
 
