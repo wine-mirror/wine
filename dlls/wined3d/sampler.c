@@ -33,22 +33,27 @@ ULONG CDECL wined3d_sampler_incref(struct wined3d_sampler *sampler)
     return refcount;
 }
 
+void wined3d_sampler_destroy(struct wined3d_sampler *sampler)
+{
+    struct wined3d_context *context = context_acquire(sampler->device, NULL);
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+
+    GL_EXTCALL(glDeleteSamplers(1, &sampler->name));
+    context_release(context);
+
+    HeapFree(GetProcessHeap(), 0, sampler);
+}
+
 ULONG CDECL wined3d_sampler_decref(struct wined3d_sampler *sampler)
 {
     ULONG refcount = InterlockedDecrement(&sampler->refcount);
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
 
     TRACE("%p decreasing refcount to %u.\n", sampler, refcount);
 
     if (!refcount)
     {
-        context = context_acquire(sampler->device, NULL);
-        gl_info = context->gl_info;
-        GL_EXTCALL(glDeleteSamplers(1, &sampler->name));
-        context_release(context);
-
-        HeapFree(GetProcessHeap(), 0, sampler);
+        struct wined3d_device *device = sampler->device;
+        wined3d_cs_emit_sampler_destroy(device->cs, sampler);
     }
 
     return refcount;

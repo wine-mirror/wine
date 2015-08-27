@@ -93,6 +93,7 @@ enum wined3d_cs_op
     WINED3D_CS_OP_DELETE_GL_CONTEXTS,
     WINED3D_CS_OP_GETDC,
     WINED3D_CS_OP_RELEASEDC,
+    WINED3D_CS_OP_SAMPLER_DESTROY,
     WINED3D_CS_OP_STOP,
 };
 
@@ -555,6 +556,12 @@ struct wined3d_cs_releasedc
 {
     enum wined3d_cs_op opcode;
     struct wined3d_surface *surface;
+};
+
+struct wined3d_cs_sampler_destroy
+{
+    enum wined3d_cs_op opcode;
+    struct wined3d_sampler *sampler;
 };
 
 static void wined3d_cs_mt_submit(struct wined3d_cs *cs, size_t size)
@@ -2758,6 +2765,26 @@ void wined3d_cs_emit_releasedc(struct wined3d_cs *cs, struct wined3d_surface *su
     cs->ops->finish(cs);
 }
 
+static UINT wined3d_cs_exec_sampler_destroy(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_sampler_destroy *op = data;
+
+    wined3d_sampler_destroy(op->sampler);
+
+    return sizeof(*op);
+}
+
+void wined3d_cs_emit_sampler_destroy(struct wined3d_cs *cs, struct wined3d_sampler *sampler)
+{
+    struct wined3d_cs_sampler_destroy *op;
+
+    op = cs->ops->require_space(cs, sizeof(*op));
+    op->opcode = WINED3D_CS_OP_SAMPLER_DESTROY;
+    op->sampler = sampler;
+
+    cs->ops->submit(cs, sizeof(*op));
+}
+
 static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void *data) =
 {
     /* WINED3D_CS_OP_NOP                        */ wined3d_cs_exec_nop,
@@ -2829,6 +2856,7 @@ static UINT (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_DELETE_GL_CONTEXTS         */ wined3d_cs_exec_delete_gl_contexts,
     /* WINED3D_CS_OP_GETDC                      */ wined3d_cs_exec_getdc,
     /* WINED3D_CS_OP_RELEASEDC                  */ wined3d_cs_exec_releasedc,
+    /* WINED3D_CS_OP_SAMPLER_DESTROY            */ wined3d_cs_exec_sampler_destroy,
 };
 
 static inline void *_wined3d_cs_mt_require_space(struct wined3d_cs *cs, size_t size, BOOL prio)
