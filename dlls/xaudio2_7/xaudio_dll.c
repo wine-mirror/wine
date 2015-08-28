@@ -639,8 +639,45 @@ static HRESULT WINAPI XA2SRC_SubmitSourceBuffer(IXAudio2SourceVoice *iface,
 
 static HRESULT WINAPI XA2SRC_FlushSourceBuffers(IXAudio2SourceVoice *iface)
 {
+    UINT i, first, last, to_flush;
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p\n", This);
+
+    EnterCriticalSection(&This->lock);
+
+    if(This->running && This->nbufs > 0){
+        /* when running, flush only completely unused buffers; the rest remain
+         * in queue */
+        last = (This->first_buf + This->nbufs) % XAUDIO2_MAX_QUEUED_BUFFERS;
+        first = (This->cur_buf + 1) % XAUDIO2_MAX_QUEUED_BUFFERS;
+        if(This->cur_buf == last)
+            /* nothing to do */
+            to_flush = 0;
+        else if(last >= first)
+            to_flush = last - first;
+        else
+            to_flush = last + XAUDIO2_MAX_QUEUED_BUFFERS - first;
+    }else{
+        /* when stopped, flush all buffers */
+        first = This->first_buf;
+        last = (This->first_buf + This->nbufs) % XAUDIO2_MAX_QUEUED_BUFFERS;
+        to_flush = This->nbufs;
+    }
+
+
+    for(i = first;
+            i < (first + to_flush) % XAUDIO2_MAX_QUEUED_BUFFERS;
+            i = (i + 1) % XAUDIO2_MAX_QUEUED_BUFFERS){
+        if(This->cb)
+            IXAudio2VoiceCallback_OnBufferEnd(This->cb,
+                    This->buffers[i].xa2buffer.pContext);
+    }
+
+    This->nbufs -= to_flush;
+
+    LeaveCriticalSection(&This->lock);
+
     return S_OK;
 }
 
