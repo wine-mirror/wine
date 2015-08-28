@@ -1738,9 +1738,22 @@ then
                       AC_DEFINE_UNQUOTED(HAVE_OPENAL,1,[Define to 1 if OpenAL is available])],,)
 fi
 WINE_NOTICE_WITH(openal,[test "x$ac_cv_lib_openal" != xyes],
-                 [libopenal ${notice_platform}development files not found (or too old), OpenAL and XAudio2 won't be supported])
+                 [libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported])
 test "x$ac_cv_lib_openal" = xyes || enable_openal32=${enable_openal32:-no}
-test "x$ac_cv_lib_openal" = xyes || enable_xaudio2_7=${enable_xaudio2_7:-no}
+
+dnl **** Check for openal-soft ****
+if test "x$ac_cv_lib_openal" = xyes
+then
+    AC_CACHE_CHECK([for openal-soft], ac_cv_have_openalsoft,
+        AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+            [[#include <AL/alext.h>
+LPALCRENDERSAMPLESSOFT x;]])],[ac_cv_have_openalsoft=yes],[ac_cv_have_openalsoft=no]))
+fi
+if test "x$ac_cv_have_openalsoft" != xyes
+then
+    WINE_NOTICE([openal-soft ${notice_platform}development files not found (or too old), XAudio2 won't be supported])
+    enable_xaudio2_7=${enable_xaudio2_7:-no}
+fi
 
 dnl **** Check for libkstat ****
 if test "$ac_cv_header_kstat_h" = "yes"
