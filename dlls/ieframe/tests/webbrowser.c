@@ -2926,6 +2926,7 @@ static void test_download(DWORD flags)
     if(use_container_olecmd)
         SET_EXPECT(Exec_UPDATECOMMANDS);
     SET_EXPECT(QueryStatus_STOP);
+    SET_EXPECT(GetOverridesKeyPath); /* Called randomly on some VMs. */
 
     trace("Downloading...\n");
     while(!*b && GetMessageW(&msg, NULL, 0, 0)) {
@@ -3015,6 +3016,7 @@ static void test_download(DWORD flags)
     if(use_container_olecmd)
         CHECK_CALLED(Exec_UPDATECOMMANDS);
     CLEAR_CALLED(QueryStatus_STOP);
+    CLEAR_CALLED(GetOverridesKeyPath);
 }
 
 static void test_Refresh(IWebBrowser2 *webbrowser, BOOL use_refresh2)
