@@ -37,6 +37,32 @@
 
 #include "wine/test.h"
 
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    expect_ ## func = TRUE
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(CreateStub);
+
 /* functions that are not present on all versions of Windows */
 static HRESULT (WINAPI * pCoInitializeEx)(LPVOID lpReserved, DWORD dwCoInit);
 static HRESULT (WINAPI * pCoGetObjectContext)(REFIID riid, LPVOID *ppv);
@@ -903,6 +929,59 @@ static void test_CoRegisterMessageFilter(void)
     CoUninitialize();
 }
 
+static IUnknown Test_Unknown;
+
+static HRESULT WINAPI EnumOLEVERB_QueryInterface(IEnumOLEVERB *iface, REFIID riid, void **ppv)
+{
+    return IUnknown_QueryInterface(&Test_Unknown, riid, ppv);
+}
+
+static ULONG WINAPI EnumOLEVERB_AddRef(IEnumOLEVERB *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI EnumOLEVERB_Release(IEnumOLEVERB *iface)
+{
+    return 1;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Next(IEnumOLEVERB *iface, ULONG celt, OLEVERB *rgelt, ULONG *fetched)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Skip(IEnumOLEVERB *iface, ULONG celt)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Reset(IEnumOLEVERB *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EnumOLEVERB_Clone(IEnumOLEVERB *iface, IEnumOLEVERB **ppenum)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IEnumOLEVERBVtbl EnumOLEVERBVtbl = {
+    EnumOLEVERB_QueryInterface,
+    EnumOLEVERB_AddRef,
+    EnumOLEVERB_Release,
+    EnumOLEVERB_Next,
+    EnumOLEVERB_Skip,
+    EnumOLEVERB_Reset,
+    EnumOLEVERB_Clone
+};
+
+static IEnumOLEVERB EnumOLEVERB = { &EnumOLEVERBVtbl };
+
 static HRESULT WINAPI Test_IUnknown_QueryInterface(
     IUnknown *iface,
     REFIID riid,
@@ -910,16 +989,17 @@ static HRESULT WINAPI Test_IUnknown_QueryInterface(
 {
     if (ppvObj == NULL) return E_POINTER;
 
-    if (IsEqualIID(riid, &IID_IUnknown) ||
-        IsEqualIID(riid, &IID_IWineTest))
-    {
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IWineTest)) {
         *ppvObj = iface;
-        IUnknown_AddRef(iface);
-        return S_OK;
+    }else if(IsEqualIID(riid, &IID_IEnumOLEVERB)) {
+        *ppvObj = &EnumOLEVERB;
+    }else {
+        *ppvObj = NULL;
+        return E_NOINTERFACE;
     }
 
-    *ppvObj = NULL;
-    return E_NOINTERFACE;
+    IUnknown_AddRef((IUnknown*)*ppvObj);
+    return S_OK;
 }
 
 static ULONG WINAPI Test_IUnknown_AddRef(IUnknown *iface)
@@ -940,6 +1020,8 @@ static const IUnknownVtbl TestUnknown_Vtbl =
 };
 
 static IUnknown Test_Unknown = { &TestUnknown_Vtbl };
+
+static IPSFactoryBuffer *ps_factory_buffer;
 
 static HRESULT WINAPI PSFactoryBuffer_QueryInterface(
     IPSFactoryBuffer * This,
@@ -984,7 +1066,13 @@ static HRESULT WINAPI PSFactoryBuffer_CreateStub(
     /* [unique][in] */ IUnknown *pUnkServer,
     /* [out] */ IRpcStubBuffer **ppStub)
 {
-    return E_NOTIMPL;
+    CHECK_EXPECT(CreateStub);
+
+    ok(pUnkServer == (IUnknown*)&Test_Unknown, "unexpected pUnkServer %p\n", pUnkServer);
+    if(!ps_factory_buffer)
+        return E_NOTIMPL;
+
+    return IPSFactoryBuffer_CreateStub(ps_factory_buffer, &IID_IEnumOLEVERB, pUnkServer, ppStub);
 }
 
 static IPSFactoryBufferVtbl PSFactoryBufferVtbl =
@@ -1028,9 +1116,31 @@ static void test_CoRegisterPSClsid(void)
     hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok_ole_success(hr, "CreateStreamOnHGlobal");
 
+    SET_EXPECT(CreateStub);
     hr = CoMarshalInterface(stream, &IID_IWineTest, &Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
     ok(hr == E_NOTIMPL, "CoMarshalInterface should have returned E_NOTIMPL instead of 0x%08x\n", hr);
+    CHECK_CALLED(CreateStub);
+
+    hr = CoGetPSClsid(&IID_IEnumOLEVERB, &clsid);
+    ok_ole_success(hr, "CoGetPSClsid");
+
+    hr = CoGetClassObject(&clsid, CLSCTX_INPROC_SERVER, NULL, &IID_IPSFactoryBuffer, (void **)&ps_factory_buffer);
+    ok_ole_success(hr, "CoGetClassObject");
+
+    hr = CoRegisterPSClsid(&IID_IEnumOLEVERB, &CLSID_WineTestPSFactoryBuffer);
+    ok_ole_success(hr, "CoRegisterPSClsid");
+
+    SET_EXPECT(CreateStub);
+    hr = CoMarshalInterface(stream, &IID_IEnumOLEVERB, (IUnknown*)&EnumOLEVERB, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == S_OK, "CoMarshalInterface should have returned E_NOTIMPL instead of 0x%08x\n", hr);
+    CHECK_CALLED(CreateStub);
+
+    hr = CoMarshalInterface(stream, &IID_IEnumOLEVERB, &Test_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok(hr == S_OK, "CoMarshalInterface should have returned E_NOTIMPL instead of 0x%08x\n", hr);
+
     IStream_Release(stream);
+    IPSFactoryBuffer_Release(ps_factory_buffer);
+    ps_factory_buffer = NULL;
 
     hr = CoRevokeClassObject(dwRegistrationKey);
     ok_ole_success(hr, "CoRevokeClassObject");
