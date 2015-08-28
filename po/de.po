@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-07-19 02:02+0200\n"
+"PO-Revision-Date: 2015-08-28 14:35+0200\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -12938,18 +12938,17 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "Uninstaller: Die Anwendung mit der GUID '%1' wurde nicht gefunden\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"Uninstaller: Auf die Option '--remove' muss eine Anwendungs-GUID folgen\n"
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Fehler: Ungültige Option '%c'.\n"
+msgstr "Uninstaller: Ungültige Option [%1]\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -12958,6 +12957,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Wine Anwendungsentferner\n"
+"\n"
+"Deinstalliert Anwendungen aus dem aktuellen Wineprefix.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -12972,6 +12975,17 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"Aufruf:\n"
+"  uninstaller [Optionen]\n"
+"\n"
+"Optionen:\n"
+"  --help\t    Zeigt diese Hilfe an.\n"
+"  --list\t    Zeigt alle im aktuellen Wineprefix installierten Anwendungen "
+"an.\n"
+"  --remove {GUID}   Deinstalliert die angegebene Anwendung.\n"
+"\t\t    Benutzen Sie '--list', um die Anwendungs-GUID zu bestimmen.\n"
+"  [keine Option]    Startet die grafische Version dieses Programms.\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
