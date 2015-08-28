@@ -289,6 +289,9 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
         case PROCESSOR_ARCHITECTURE_ARM:
             str = "ARM";
             break;
+        case PROCESSOR_ARCHITECTURE_ARM64:
+            str = "ARM64";
+            break;
         case PROCESSOR_ARCHITECTURE_MSIL:
             str = "MSIL";
             break;
@@ -346,8 +349,27 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
                 else if (msi->u.s.ProductType == 3) str = "Server 2008";
                 else str = "6-????";
                 break;
-            case 2: str = "Win8"; break;
+            case 2:
+                if (msi->u.s.ProductType == 1) str = "Win8";
+                else if (msi->u.s.ProductType == 3) str = "Server 2012";
+                else str = "6-????";
+                break;
+            case 3:
+                if (msi->u.s.ProductType == 1) str = "Win8.1";
+                else if (msi->u.s.ProductType == 3) str = "Server 2012 R2";
+                else str = "6-????";
+                break;
             default: str = "6-????"; break;
+            }
+            break;
+        case 10:
+            switch (msi->MinorVersion)
+            {
+            case 0:
+                if (msi->u.s.ProductType == 1) str = "Win10";
+                else str = "10-????";
+                break;
+            default: str = "10-????"; break;
             }
             break;
         default: str = "???"; break;
