@@ -20,7 +20,6 @@
 #include <stdarg.h>
 
 #define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #define COBJMACROS
 
 #include "windef.h"
