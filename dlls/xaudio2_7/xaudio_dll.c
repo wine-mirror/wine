@@ -402,7 +402,14 @@ static HRESULT WINAPI XA2SRC_SetVolume(IXAudio2SourceVoice *iface, float Volume,
         UINT32 OperationSet)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+    ALfloat al_gain;
+
     TRACE("%p, %f, 0x%x\n", This, Volume, OperationSet);
+
+    al_gain = Volume;
+
+    alSourcef(This->al_src, AL_GAIN, al_gain);
+
     return S_OK;
 }
 
