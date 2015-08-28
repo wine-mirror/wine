@@ -168,7 +168,7 @@ struct ifstub *stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHL
 /* creates a new stub manager and adds it into the apartment. caller must
  * release stub manager when it is no longer required. the apartment and
  * external refs together take one implicit ref */
-struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
+static struct stub_manager *new_stub_manager(APARTMENT *apt, IUnknown *object)
 {
     struct stub_manager *sm;
     HRESULT hres;
@@ -298,10 +298,18 @@ ULONG stub_manager_int_release(struct stub_manager *This)
 /* gets the stub manager associated with an object - caller must have
  * a reference to the apartment while a reference to the stub manager is held.
  * it must also call release on the stub manager when it is no longer needed */
-struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object)
+struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, IUnknown *obj, BOOL alloc)
 {
     struct stub_manager *result = NULL;
     struct list         *cursor;
+    IUnknown *object;
+    HRESULT hres;
+
+    hres = IUnknown_QueryInterface(obj, &IID_IUnknown, (void**)&object);
+    if (FAILED(hres)) {
+        ERR("QueryInterface(IID_IUnknown failed): %08x\n", hres);
+        return NULL;
+    }
 
     EnterCriticalSection(&apt->cs);
     LIST_FOR_EACH( cursor, &apt->stubmgrs )
@@ -317,11 +325,16 @@ struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, void *object)
     }
     LeaveCriticalSection(&apt->cs);
 
-    if (result)
+    if (result) {
         TRACE("found %p for object %p\n", result, object);
-    else
+    }else if (alloc) {
+        TRACE("not found, creating new stub manager...\n");
+        result = new_stub_manager(apt, object);
+    }else {
         TRACE("not found for object %p\n", object);
+    }
 
+    IUnknown_Release(object);
     return result;    
 }
 

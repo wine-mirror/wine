@@ -132,22 +132,14 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
     if (hr != S_OK)
         return hr;
 
+    if (!(manager = get_stub_manager_from_object(apt, object, TRUE)))
+        return E_OUTOFMEMORY;
+
     stdobjref->flags = SORF_NULL;
     if (mshlflags & MSHLFLAGS_TABLEWEAK)
         stdobjref->flags |= SORFP_TABLEWEAK;
     if (mshlflags & MSHLFLAGS_NOPING)
         stdobjref->flags |= SORF_NOPING;
-
-    if ((manager = get_stub_manager_from_object(apt, object)))
-        TRACE("registering new ifstub on pre-existing manager\n");
-    else
-    {
-        TRACE("constructing new stub manager\n");
-
-        manager = new_stub_manager(apt, object);
-        if (!manager)
-            return E_OUTOFMEMORY;
-    }
     stdobjref->oid = manager->oid;
 
     tablemarshal = ((mshlflags & MSHLFLAGS_TABLESTRONG) || (mshlflags & MSHLFLAGS_TABLEWEAK));
