@@ -287,6 +287,9 @@ void mdmp_dump(void)
             case PROCESSOR_ARCHITECTURE_ARM:
                 str = "ARM";
                 break;
+            case PROCESSOR_ARCHITECTURE_ARM64:
+                str = "ARM64";
+                break;
             case PROCESSOR_ARCHITECTURE_AMD64:
                 str = "X86_64";
                 break;
@@ -356,6 +359,16 @@ void mdmp_dump(void)
                     else str = "6-????";
                     break;
                 default: str = "6-????"; break;
+                }
+                break;
+            case 10:
+                switch (msi->MinorVersion)
+                {
+                case 0:
+                    if (msi->u.s.ProductType == 1) str = "Win10";
+                    else str = "10-????";
+                    break;
+                default: str = "10-????"; break;
                 }
                 break;
             default: str = "???"; break;
