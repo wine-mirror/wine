@@ -65,21 +65,28 @@ static inline HRESULT generate_ipid(struct stub_manager *m, IPID *ipid)
 }
 
 /* registers a new interface stub COM object with the stub manager and returns registration record */
-struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid, DWORD dest_context,
+struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, REFIID iid, DWORD dest_context,
     void *dest_context_data, MSHLFLAGS flags)
 {
     struct ifstub *stub;
     HRESULT hr;
 
-    TRACE("oid=%s, stubbuffer=%p, iptr=%p, iid=%s\n",
-          wine_dbgstr_longlong(m->oid), sb, iptr, debugstr_guid(iid));
+    TRACE("oid=%s, stubbuffer=%p, iid=%s\n", wine_dbgstr_longlong(m->oid), sb, debugstr_guid(iid));
 
     stub = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct ifstub));
     if (!stub) return NULL;
 
+    hr = IUnknown_QueryInterface(m->object, iid, (void **)&stub->iface);
+    if (hr != S_OK)
+    {
+        HeapFree(GetProcessHeap(), 0, stub);
+        return NULL;
+    }
+
     hr = RPC_CreateServerChannel(dest_context, dest_context_data, &stub->chan);
     if (hr != S_OK)
     {
+        IUnknown_Release(stub->iface);
         HeapFree(GetProcessHeap(), 0, stub);
         return NULL;
     }
@@ -87,8 +94,6 @@ struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *s
     stub->stubbuffer = sb;
     if (sb) IRpcStubBuffer_AddRef(sb);
 
-    IUnknown_AddRef(iptr);
-    stub->iface = iptr;
     stub->flags = flags;
     stub->iid = *iid;
 

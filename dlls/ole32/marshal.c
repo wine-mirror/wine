@@ -148,16 +148,10 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
     ifstub = stub_manager_find_ifstub(manager, riid, mshlflags);
     if (!ifstub) {
         IRpcStubBuffer *stub = NULL;
-        IUnknown *iobject = NULL; /* object of type riid */
-
-        hr = IUnknown_QueryInterface(object, riid, (void **)&iobject);
-        if (hr != S_OK)
-            ERR("object doesn't expose interface %s, failing with error 0x%08x\n",
-                debugstr_guid(riid), hr);
 
         /* IUnknown doesn't require a stub buffer, because it never goes out on
          * the wire */
-        if (hr == S_OK && !IsEqualIID(riid, &IID_IUnknown))
+        if (!IsEqualIID(riid, &IID_IUnknown))
         {
             IPSFactoryBuffer *psfb;
 
@@ -176,12 +170,11 @@ HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnkno
         }
 
         if (hr == S_OK) {
-            ifstub = stub_manager_new_ifstub(manager, stub, iobject, riid, dest_context, dest_context_data, mshlflags);
+            ifstub = stub_manager_new_ifstub(manager, stub, riid, dest_context, dest_context_data, mshlflags);
             if (!ifstub)
                 hr = E_OUTOFMEMORY;
         }
         if (stub) IRpcStubBuffer_Release(stub);
-        if (iobject) IUnknown_Release(iobject);
 
         if (hr != S_OK) {
             stub_manager_int_release(manager);

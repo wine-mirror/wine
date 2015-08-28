@@ -187,7 +187,7 @@ HRESULT FTMarshalCF_Create(REFIID riid, LPVOID *ppv) DECLSPEC_HIDDEN;
 ULONG stub_manager_int_release(struct stub_manager *This) DECLSPEC_HIDDEN;
 ULONG stub_manager_ext_addref(struct stub_manager *m, ULONG refs, BOOL tableweak) DECLSPEC_HIDDEN;
 ULONG stub_manager_ext_release(struct stub_manager *m, ULONG refs, BOOL tableweak, BOOL last_unlock_releases) DECLSPEC_HIDDEN;
-struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, IUnknown *iptr, REFIID iid,
+struct ifstub *stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *sb, REFIID iid,
      DWORD dest_context, void *dest_context_data, MSHLFLAGS flags) DECLSPEC_HIDDEN;
 struct ifstub *stub_manager_find_ifstub(struct stub_manager *m, REFIID iid, MSHLFLAGS flags) DECLSPEC_HIDDEN;
 struct stub_manager *get_stub_manager(APARTMENT *apt, OID oid) DECLSPEC_HIDDEN;
