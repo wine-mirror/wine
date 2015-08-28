@@ -166,12 +166,12 @@ typedef struct _XA2SourceImpl {
     struct list entry;
 } XA2SourceImpl;
 
-XA2SourceImpl *impl_from_IXAudio2SourceVoice(IXAudio2SourceVoice *iface)
+static XA2SourceImpl *impl_from_IXAudio2SourceVoice(IXAudio2SourceVoice *iface)
 {
     return CONTAINING_RECORD(iface, XA2SourceImpl, IXAudio2SourceVoice_iface);
 }
 
-XA2SourceImpl *impl_from_IXAudio27SourceVoice(IXAudio27SourceVoice *iface)
+static XA2SourceImpl *impl_from_IXAudio27SourceVoice(IXAudio27SourceVoice *iface)
 {
     return CONTAINING_RECORD(iface, XA2SourceImpl, IXAudio27SourceVoice_iface);
 }
@@ -186,7 +186,7 @@ typedef struct _XA2SubmixImpl {
     struct list entry;
 } XA2SubmixImpl;
 
-XA2SubmixImpl *impl_from_IXAudio2SubmixVoice(IXAudio2SubmixVoice *iface)
+static XA2SubmixImpl *impl_from_IXAudio2SubmixVoice(IXAudio2SubmixVoice *iface)
 {
     return CONTAINING_RECORD(iface, XA2SubmixImpl, IXAudio2SubmixVoice_iface);
 }
@@ -239,7 +239,7 @@ static inline IXAudio2Impl *impl_from_IXAudio27(IXAudio27 *iface)
     return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio27_iface);
 }
 
-IXAudio2Impl *impl_from_IXAudio2MasteringVoice(IXAudio2MasteringVoice *iface)
+static IXAudio2Impl *impl_from_IXAudio2MasteringVoice(IXAudio2MasteringVoice *iface)
 {
     return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio2MasteringVoice_iface);
 }
