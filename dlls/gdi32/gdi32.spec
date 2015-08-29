@@ -280,6 +280,7 @@
 # @ stub GetFontAssocStatus
 @ stdcall GetFontData(long long long ptr long)
 @ stdcall GetFontLanguageInfo(long)
+@ stdcall GetFontRealizationInfo(long ptr)
 @ stub GetFontResourceInfo
 @ stdcall GetFontResourceInfoW(wstr ptr ptr long)
 @ stdcall GetFontUnicodeRanges(ptr ptr)

@@ -8131,17 +8131,17 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
 }
 
 /*************************************************************
- * freetype_GdiRealizationInfo
+ * freetype_GetFontRealizationInfo
  */
-static BOOL freetype_GdiRealizationInfo( PHYSDEV dev, void *ptr )
+static BOOL freetype_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
 {
     struct freetype_physdev *physdev = get_freetype_dev( dev );
-    realization_info_t *info = ptr;
+    struct font_realization_info *info = ptr;
 
     if (!physdev->font)
     {
-        dev = GET_NEXT_PHYSDEV( dev, pGdiRealizationInfo );
-        return dev->funcs->pGdiRealizationInfo( dev, ptr );
+        dev = GET_NEXT_PHYSDEV( dev, pGetFontRealizationInfo );
+        return dev->funcs->pGetFontRealizationInfo( dev, ptr );
     }
 
     FIXME("(%p, %p): stub!\n", physdev->font, info);
@@ -8152,6 +8152,12 @@ static BOOL freetype_GdiRealizationInfo( PHYSDEV dev, void *ptr )
 
     info->cache_num = physdev->font->cache_num;
     info->instance_id = -1;
+    if (info->size == sizeof(*info))
+    {
+        info->unk = 0;
+        info->face_index = physdev->font->ft_face->face_index;
+    }
+
     return TRUE;
 }
 
@@ -8445,7 +8451,6 @@ static const struct gdi_dc_funcs freetype_funcs =
     freetype_FontIsLinked,              /* pFontIsLinked */
     NULL,                               /* pFrameRgn */
     NULL,                               /* pGdiComment */
-    freetype_GdiRealizationInfo,        /* pGdiRealizationInfo */
     NULL,                               /* pGetBoundsRect */
     freetype_GetCharABCWidths,          /* pGetCharABCWidths */
     freetype_GetCharABCWidthsI,         /* pGetCharABCWidthsI */
@@ -8453,6 +8458,7 @@ static const struct gdi_dc_funcs freetype_funcs =
     NULL,                               /* pGetDeviceCaps */
     NULL,                               /* pGetDeviceGammaRamp */
     freetype_GetFontData,               /* pGetFontData */
+    freetype_GetFontRealizationInfo,    /* pGetFontRealizationInfo */
     freetype_GetFontUnicodeRanges,      /* pGetFontUnicodeRanges */
     freetype_GetGlyphIndices,           /* pGetGlyphIndices */
     freetype_GetGlyphOutline,           /* pGetGlyphOutline */

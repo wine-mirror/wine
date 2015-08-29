@@ -276,11 +276,6 @@ static BOOL nulldrv_GdiComment( PHYSDEV dev, UINT size, const BYTE *data )
     return FALSE;
 }
 
-static BOOL nulldrv_GdiRealizationInfo( PHYSDEV dev, void *info )
-{
-    return FALSE;
-}
-
 static UINT nulldrv_GetBoundsRect( PHYSDEV dev, RECT *rect, UINT flags )
 {
     return DCB_RESET;
@@ -330,6 +325,11 @@ static BOOL nulldrv_GetDeviceGammaRamp( PHYSDEV dev, void *ramp )
 }
 
 static DWORD nulldrv_GetFontData( PHYSDEV dev, DWORD table, DWORD offset, LPVOID buffer, DWORD length )
+{
+    return FALSE;
+}
+
+static BOOL nulldrv_GetFontRealizationInfo( PHYSDEV dev, void *info )
 {
     return FALSE;
 }
@@ -668,7 +668,6 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_FontIsLinked,               /* pFontIsLinked */
     nulldrv_FrameRgn,                   /* pFrameRgn */
     nulldrv_GdiComment,                 /* pGdiComment */
-    nulldrv_GdiRealizationInfo,         /* pGdiRealizationInfo */
     nulldrv_GetBoundsRect,              /* pGetBoundsRect */
     nulldrv_GetCharABCWidths,           /* pGetCharABCWidths */
     nulldrv_GetCharABCWidthsI,          /* pGetCharABCWidthsI */
@@ -676,6 +675,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_GetDeviceCaps,              /* pGetDeviceCaps */
     nulldrv_GetDeviceGammaRamp,         /* pGetDeviceGammaRamp */
     nulldrv_GetFontData,                /* pGetFontData */
+    nulldrv_GetFontRealizationInfo,     /* pGetFontRealizationInfo */
     nulldrv_GetFontUnicodeRanges,       /* pGetFontUnicodeRanges */
     nulldrv_GetGlyphIndices,            /* pGetGlyphIndices */
     nulldrv_GetGlyphOutline,            /* pGetGlyphOutline */

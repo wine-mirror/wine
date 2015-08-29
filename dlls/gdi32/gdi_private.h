@@ -276,14 +276,16 @@ extern HENHMETAFILE EMF_Create_HENHMETAFILE(ENHMETAHEADER *emh, BOOL on_disk ) D
 
 /* freetype.c */
 
-/* Undocumented structure filled in by GdiRealizationInfo */
-typedef struct
+/* Undocumented structure filled in by GetFontRealizationInfo */
+struct font_realization_info
 {
+    DWORD size;        /* could be 16 or 24 */
     DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
     DWORD cache_num;   /* keeps incrementing - num of fonts that have been created allowing for caching?? */
     DWORD instance_id; /* identifies a realized font instance */
-} realization_info_t;
-
+    DWORD unk;         /* unknown */
+    DWORD face_index;  /* face index in case of font collections */
+};
 
 extern INT WineEngAddFontResourceEx(LPCWSTR, DWORD, PVOID) DECLSPEC_HIDDEN;
 extern HANDLE WineEngAddFontMemResourceEx(PVOID, DWORD, PVOID, LPDWORD) DECLSPEC_HIDDEN;

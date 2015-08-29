@@ -3846,19 +3846,51 @@ BOOL WINAPI FontIsLinked(HDC hdc)
 }
 
 /*************************************************************
+ *           GetFontRealizationInfo    (GDI32.@)
+ */
+BOOL WINAPI GetFontRealizationInfo(HDC hdc, struct font_realization_info *info)
+{
+    BOOL is_v0 = info->size == FIELD_OFFSET(struct font_realization_info, unk);
+    PHYSDEV dev;
+    BOOL ret;
+    DC *dc;
+
+    if (info->size != sizeof(*info) && !is_v0)
+        return FALSE;
+
+    dc = get_dc_ptr(hdc);
+    if (!dc) return FALSE;
+    dev = GET_DC_PHYSDEV( dc, pGetFontRealizationInfo );
+    ret = dev->funcs->pGetFontRealizationInfo( dev, info );
+    release_dc_ptr(dc);
+    return ret;
+}
+
+struct realization_info
+{
+    DWORD flags;       /* 1 for bitmap fonts, 3 for scalable fonts */
+    DWORD cache_num;   /* keeps incrementing - num of fonts that have been created allowing for caching?? */
+    DWORD instance_id; /* identifies a realized font instance */
+};
+
+/*************************************************************
  *           GdiRealizationInfo    (GDI32.@)
  *
  * Returns a structure that contains some font information.
  */
-BOOL WINAPI GdiRealizationInfo(HDC hdc, realization_info_t *info)
+BOOL WINAPI GdiRealizationInfo(HDC hdc, struct realization_info *info)
 {
-    DC *dc = get_dc_ptr(hdc);
-    PHYSDEV dev;
+    struct font_realization_info ri;
     BOOL ret;
 
-    if (!dc) return FALSE;
-    dev = GET_DC_PHYSDEV( dc, pGdiRealizationInfo );
-    ret = dev->funcs->pGdiRealizationInfo( dev, info );
-    release_dc_ptr(dc);
+    ri.size = sizeof(ri);
+    ret = GetFontRealizationInfo( hdc, &ri );
+    if (ret)
+    {
+        info->flags = ri.flags;
+        info->cache_num = ri.cache_num;
+        info->instance_id = ri.instance_id;
+    }
+
     return ret;
 }

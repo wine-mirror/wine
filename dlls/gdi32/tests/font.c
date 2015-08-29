@@ -4222,6 +4222,7 @@ static void test_RealizationInfo(void)
         ok(info2[6] == 0xcccccccc, "structure longer than 6 dwords\n");
 
         /* Test GetFontFileInfo() */
+    if (pGetFontFileInfo) {
         r = pGetFontFileInfo(fri->instance_id, 0, &file_info, sizeof(file_info), &needed);
         ok(r != 0 || GetLastError() == ERROR_NOACCESS, "ret %d gle %d\n", r, GetLastError());
 
@@ -4249,6 +4250,7 @@ static void test_RealizationInfo(void)
             ok(!memcmp(data, file + 2, sizeof(data)), "mismatch\n");
         else
             win_skip("GetFontFileInfo() failed, skipping\n");
+    }
     }
 
     DeleteObject(SelectObject(hdc, hfont_old));

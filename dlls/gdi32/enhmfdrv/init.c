@@ -69,7 +69,6 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     NULL,                            /* pFontIsLinked */
     EMFDRV_FrameRgn,                 /* pFrameRgn */
     EMFDRV_GdiComment,               /* pGdiComment */
-    NULL,                            /* pGdiRealizationInfo */
     NULL,                            /* pGetBoundsRect */
     NULL,                            /* pGetCharABCWidths */
     NULL,                            /* pGetCharABCWidthsI */
@@ -77,6 +76,7 @@ static const struct gdi_dc_funcs EMFDRV_Funcs =
     EMFDRV_GetDeviceCaps,            /* pGetDeviceCaps */
     NULL,                            /* pGetDeviceGammaRamp */
     NULL,                            /* pGetFontData */
+    NULL,                            /* pGetFontRealizationInfo */
     NULL,                            /* pGetFontUnicodeRanges */
     NULL,                            /* pGetGlyphIndices */
     NULL,                            /* pGetGlyphOutline */
