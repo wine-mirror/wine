@@ -4114,6 +4114,22 @@ todo_wine
 
 static void test_RealizationInfo(void)
 {
+    struct font_realization_info {
+        DWORD size;
+        DWORD flags;
+        DWORD cache_num;
+        DWORD instance_id;
+        DWORD unk;
+        DWORD face_index;
+    };
+
+    struct realization_info_t
+    {
+        DWORD flags;
+        DWORD cache_num;
+        DWORD instance_id;
+    };
+
     HDC hdc;
     DWORD info[4], info2[10];
     BOOL r, have_file = FALSE;
@@ -4166,6 +4182,9 @@ static void test_RealizationInfo(void)
 
     if (pGetFontRealizationInfo)
     {
+        struct font_realization_info *fri = (struct font_realization_info*)info2;
+        struct realization_info_t *ri = (struct realization_info_t*)info;
+
         /* The first DWORD represents a struct size. On a
            newly rebooted system setting this to < 16 results
            in GetFontRealizationInfo failing.  However there
@@ -4180,9 +4199,11 @@ static void test_RealizationInfo(void)
         ok(r != 0, "ret 0\n");
         /* We may get the '24' version here if that has been previously
            requested. */
-        ok(info2[0] == 16 || info2[0] == 24, "got %d\n", info2[0]);
-        ok(!memcmp(info2 + 1, info, 3 * sizeof(DWORD)), "mismatch\n");
-        ok(info2[6] == 0xcccccccc, "structure longer than 6 dwords\n");
+        ok(fri->size == 16 || fri->size == 24, "got %d\n", info2[0]);
+        ok(fri->flags == ri->flags, "flags mismatch\n");
+        ok(fri->cache_num == ri->cache_num, "cache_num mismatch\n");
+        ok(fri->instance_id == ri->instance_id, "instance id mismatch\n");
+        ok(info2[6] == 0xcccccccc, "got wrong dword 6, 0x%08x\n", info2[6]);
 
         memset(info2, 0xcc, sizeof(info2));
         info2[0] = 28;
@@ -4193,12 +4214,15 @@ static void test_RealizationInfo(void)
         info2[0] = 24;
         r = pGetFontRealizationInfo(hdc, info2);
         ok(r != 0, "ret 0\n");
-        ok(info2[0] == 24, "got %d\n", info2[0]);
-        ok(!memcmp(info2 + 1, info, 3 * sizeof(DWORD)), "mismatch\n");
+        ok(fri->size == 24, "got %d\n", fri->size);
+        ok(fri->flags == ri->flags, "flags mismatch\n");
+        ok(fri->cache_num == ri->cache_num, "cache_num mismatch\n");
+        ok(fri->instance_id == ri->instance_id, "instance id mismatch\n");
+        ok(fri->face_index == 0, "got wrong face index %u\n", fri->face_index);
         ok(info2[6] == 0xcccccccc, "structure longer than 6 dwords\n");
 
         /* Test GetFontFileInfo() */
-        r = pGetFontFileInfo(info2[3], 0, &file_info, sizeof(file_info), &needed);
+        r = pGetFontFileInfo(fri->instance_id, 0, &file_info, sizeof(file_info), &needed);
         ok(r != 0 || GetLastError() == ERROR_NOACCESS, "ret %d gle %d\n", r, GetLastError());
 
         if (r)
@@ -4218,11 +4242,13 @@ static void test_RealizationInfo(void)
         }
 
         /* Get bytes 2 - 16 using GetFontFileData */
-        r = pGetFontFileData(info2[3], 0, 2, data, sizeof(data));
+        r = pGetFontFileData(fri->instance_id, 0, 2, data, sizeof(data));
         ok(r != 0, "ret 0 gle %d\n", GetLastError());
 
         if (have_file)
             ok(!memcmp(data, file + 2, sizeof(data)), "mismatch\n");
+        else
+            win_skip("GetFontFileInfo() failed, skipping\n");
     }
 
     DeleteObject(SelectObject(hdc, hfont_old));
