@@ -488,17 +488,14 @@ UINT d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(UINT resource_misc
 {
     static const UINT bitwise_identical_flags = D3D11_RESOURCE_MISC_GENERATE_MIPS
             | D3D11_RESOURCE_MISC_SHARED
-            | D3D11_RESOURCE_MISC_TEXTURECUBE
-            | D3D11_RESOURCE_MISC_BUFFER_STRUCTURED
-            | D3D11_RESOURCE_MISC_RESOURCE_CLAMP
-            | D3D11_RESOURCE_MISC_SHARED_NTHANDLE
-            | D3D11_RESOURCE_MISC_RESTRICTED_CONTENT
-            | D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE
-            | D3D11_RESOURCE_MISC_RESTRICT_SHARED_RESOURCE_DRIVER
-            | D3D11_RESOURCE_MISC_GUARDED;
+            | D3D11_RESOURCE_MISC_TEXTURECUBE;
     const UINT handled_flags = bitwise_identical_flags
+            | D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS
+            | D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS
+            | D3D11_RESOURCE_MISC_BUFFER_STRUCTURED
             | D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX
-            | D3D11_RESOURCE_MISC_GDI_COMPATIBLE;
+            | D3D11_RESOURCE_MISC_GDI_COMPATIBLE
+            | D3D11_RESOURCE_MISC_SHARED_NTHANDLE;
     UINT d3d10_resource_misc_flags = resource_misc_flags & bitwise_identical_flags;
 
     if (resource_misc_flags & D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX)
