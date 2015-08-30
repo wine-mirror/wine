@@ -94,7 +94,7 @@ HRESULT parse_dxbc(const char *data, SIZE_T data_size,
         HRESULT (*chunk_handler)(const char *data, DWORD data_size, DWORD tag, void *ctx), void *ctx) DECLSPEC_HIDDEN;
 
 /* ID3D11Texture2D, ID3D10Texture2D */
-struct d3d10_texture2d
+struct d3d_texture2d
 {
     ID3D11Texture2D ID3D11Texture2D_iface;
     ID3D10Texture2D ID3D10Texture2D_iface;
@@ -107,14 +107,14 @@ struct d3d10_texture2d
     ID3D11Device *device;
 };
 
-static inline struct d3d10_texture2d *impl_from_ID3D10Texture2D(ID3D10Texture2D *iface)
+static inline struct d3d_texture2d *impl_from_ID3D10Texture2D(ID3D10Texture2D *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_texture2d, ID3D10Texture2D_iface);
+    return CONTAINING_RECORD(iface, struct d3d_texture2d, ID3D10Texture2D_iface);
 }
 
 HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DESC *desc,
-        const D3D11_SUBRESOURCE_DATA *data, struct d3d10_texture2d **texture) DECLSPEC_HIDDEN;
-struct d3d10_texture2d *unsafe_impl_from_ID3D10Texture2D(ID3D10Texture2D *iface) DECLSPEC_HIDDEN;
+        const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture2d **texture) DECLSPEC_HIDDEN;
+struct d3d_texture2d *unsafe_impl_from_ID3D10Texture2D(ID3D10Texture2D *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Texture3D */
 struct d3d10_texture3d

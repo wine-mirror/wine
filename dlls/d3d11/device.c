@@ -76,7 +76,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateTexture2D(ID3D11Device *ifac
         const D3D11_TEXTURE2D_DESC *desc, const D3D11_SUBRESOURCE_DATA *data, ID3D11Texture2D **texture)
 {
     struct d3d_device *device = impl_from_ID3D11Device(iface);
-    struct d3d10_texture2d *object;
+    struct d3d_texture2d *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, data %p, texture %p.\n", iface, desc, data, texture);
@@ -2015,7 +2015,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture2D(ID3D10Device1 *ifa
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     D3D11_TEXTURE2D_DESC d3d11_desc;
-    struct d3d10_texture2d *object;
+    struct d3d_texture2d *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, data %p, texture %p.\n", iface, desc, data, texture);
@@ -2898,7 +2898,7 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
     struct wined3d_resource *sub_resource;
-    struct d3d10_texture2d *texture;
+    struct d3d_texture2d *texture;
     ID3D10Texture2D *texture_iface;
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
