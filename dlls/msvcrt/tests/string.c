@@ -1728,6 +1728,7 @@ static void test__strtod(void)
     const char double3[] = "INF";
     const char double4[] = ".21e12";
     const char double5[] = "214353e-3";
+    const char double6[] = "NAN";
     const char overflow[] = "1d9999999999999999999";
     const char white_chars[] = "  d10";
 
@@ -1753,6 +1754,10 @@ static void test__strtod(void)
     d = strtod(double5, &end);
     ok(almost_equal(d, 214.353), "d = %lf\n", d);
     ok(end == double5+9, "incorrect end (%d)\n", (int)(end-double5));
+
+    d = strtod(double6, &end);
+    ok(almost_equal(d, 0), "d = %lf\n", d);
+    ok(end == double6, "incorrect end (%d)\n", (int)(end-double6));
 
     d = strtod("12.1d2", NULL);
     ok(almost_equal(d, 12.1e2), "d = %lf\n", d);
