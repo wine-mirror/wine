@@ -189,7 +189,7 @@ static void test_feature_level(void)
             "Failed to query ID3D11Device interface, hr %#x.\n", hr);
     if (FAILED(hr))
     {
-        skip("D3D11 is not available.\n");
+        win_skip("D3D11 is not available.\n");
         ID3D10Device_Release(device10);
         return;
     }
