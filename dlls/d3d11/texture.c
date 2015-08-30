@@ -444,8 +444,8 @@ static const struct wined3d_parent_ops d3d10_texture2d_wined3d_parent_ops =
     d3d10_texture2d_wined3d_object_released,
 };
 
-HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d_device *device,
-        const D3D11_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
+static HRESULT d3d_texture2d_init(struct d3d10_texture2d *texture, struct d3d_device *device,
+        const D3D11_TEXTURE2D_DESC *desc, const D3D11_SUBRESOURCE_DATA *data)
 {
     struct wined3d_resource_desc wined3d_desc;
     unsigned int levels;
@@ -516,6 +516,28 @@ HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d_device 
 
     texture->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(texture->device);
+
+    return S_OK;
+}
+
+HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DESC *desc,
+        const D3D11_SUBRESOURCE_DATA *data, struct d3d10_texture2d **texture)
+{
+    struct d3d10_texture2d *object;
+    HRESULT hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_texture2d_init(object, device, desc, data)))
+    {
+        WARN("Failed to initialize texture, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created texture %p.\n", object);
+    *texture = object;
 
     return S_OK;
 }

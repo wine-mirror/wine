@@ -112,8 +112,8 @@ static inline struct d3d10_texture2d *impl_from_ID3D10Texture2D(ID3D10Texture2D 
     return CONTAINING_RECORD(iface, struct d3d10_texture2d, ID3D10Texture2D_iface);
 }
 
-HRESULT d3d10_texture2d_init(struct d3d10_texture2d *texture, struct d3d_device *device,
-        const D3D11_TEXTURE2D_DESC *desc, const D3D10_SUBRESOURCE_DATA *initial_data) DECLSPEC_HIDDEN;
+HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DESC *desc,
+        const D3D11_SUBRESOURCE_DATA *data, struct d3d10_texture2d **texture) DECLSPEC_HIDDEN;
 struct d3d10_texture2d *unsafe_impl_from_ID3D10Texture2D(ID3D10Texture2D *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Texture3D */
