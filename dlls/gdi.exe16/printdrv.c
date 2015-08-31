@@ -160,7 +160,7 @@ INT16 WINAPI InsertPQ16(HPQ16 hPQ, INT16 tag, INT16 key)
 {
     struct hpq *queueItem = HeapAlloc(GetProcessHeap(), 0, sizeof(struct hpq));
     if(queueItem == NULL) {
-        ERR("Memory exausted!\n");
+        ERR("Memory exhausted!\n");
         return FALSE;
     }
     queueItem->next = hpqueue;
@@ -366,7 +366,7 @@ HPJOB16 WINAPI OpenJob16(LPCSTR lpOutput, LPCSTR lpTitle, HDC16 hDC)
 	{
 	    pPrintJob = HeapAlloc(GetProcessHeap(), 0, sizeof(PRINTJOB));
             if(pPrintJob == NULL) {
-                WARN("Memory exausted!\n");
+                WARN("Memory exhausted!\n");
                 return hHandle;
             }
 

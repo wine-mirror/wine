@@ -2639,7 +2639,7 @@ static HRESULT WINAPI DocHostUIHandler_GetOverrideKeyPath(IDocHostUIHandler2 *if
     ok(pchKey != NULL, "pchKey = NULL\n");
     if(pchKey)
         ok(!*pchKey, "*pchKey=%p, expected NULL\n", *pchKey);
-    ok(!dw, "dw=%d, xepected 0\n", dw);
+    ok(!dw, "dw=%d, expected 0\n", dw);
     return S_OK;
 }
 

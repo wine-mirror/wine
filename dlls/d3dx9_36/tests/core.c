@@ -1184,7 +1184,7 @@ static void test_ID3DXRenderToEnvMap(IDirect3DDevice9 *device)
         todo_wine ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::BeginParabolic returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
         hr = ID3DXRenderToEnvMap_BeginSphere(render, NULL);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::BeginSphere returned %#x, exected %#x\n", hr, D3DERR_INVALIDCALL);
+        todo_wine ok(hr == D3DERR_INVALIDCALL, "ID3DXRenderToEnvMap::BeginSphere returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
         check_release((IUnknown *)render, 0);
     } else skip("Failed to create ID3DXRenderToEnvMap\n");

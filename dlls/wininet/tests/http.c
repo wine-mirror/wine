@@ -4548,7 +4548,7 @@ static void _test_security_info(unsigned line, const char *urlc, DWORD error, DW
         CertFreeCertificateChain(chain);
     }else {
         ok_(__FILE__,line)(!res && GetLastError() == error,
-                           "InternetGetSecurityInfoByURLA returned: %x(%u), exected %u\n", res, GetLastError(), error);
+                           "InternetGetSecurityInfoByURLA returned: %x(%u), expected %u\n", res, GetLastError(), error);
     }
 }
 
