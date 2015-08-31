@@ -588,7 +588,7 @@ static ULONG STDMETHODCALLTYPE d3d11_texture3d_AddRef(ID3D11Texture3D *iface)
 
     if (refcount == 1)
     {
-        ID3D10Device1_AddRef(texture->device);
+        ID3D11Device_AddRef(texture->device);
         wined3d_mutex_lock();
         wined3d_texture_incref(texture->wined3d_texture);
         wined3d_mutex_unlock();
@@ -614,14 +614,14 @@ static ULONG STDMETHODCALLTYPE d3d11_texture3d_Release(ID3D11Texture3D *iface)
 
     if (!refcount)
     {
-        ID3D10Device1 *device = texture->device;
+        ID3D11Device *device = texture->device;
 
         wined3d_mutex_lock();
         wined3d_texture_decref(texture->wined3d_texture);
         wined3d_mutex_unlock();
         /* Release the device last, it may cause the wined3d device to be
          * destroyed. */
-        ID3D10Device1_Release(device);
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -629,7 +629,12 @@ static ULONG STDMETHODCALLTYPE d3d11_texture3d_Release(ID3D11Texture3D *iface)
 
 static void STDMETHODCALLTYPE d3d11_texture3d_GetDevice(ID3D11Texture3D *iface, ID3D11Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d_texture3d *texture = impl_from_ID3D11Texture3D(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = texture->device;
+    ID3D11Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture3d_GetPrivateData(ID3D11Texture3D *iface,
@@ -740,8 +745,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_GetDevice(ID3D10Texture3D *iface, 
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (ID3D10Device *)texture->device;
-    ID3D10Device_AddRef(*device);
+    ID3D11Device_QueryInterface(texture->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_GetPrivateData(ID3D10Texture3D *iface,
@@ -917,8 +921,8 @@ HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_device *dev
     wined3d_mutex_unlock();
     texture->desc.MipLevels = levels;
 
-    texture->device = &device->ID3D10Device1_iface;
-    ID3D10Device1_AddRef(texture->device);
+    texture->device = &device->ID3D11Device_iface;
+    ID3D11Device_AddRef(texture->device);
 
     return S_OK;
 }

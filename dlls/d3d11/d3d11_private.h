@@ -126,7 +126,7 @@ struct d3d_texture3d
     struct wined3d_private_store private_store;
     struct wined3d_texture *wined3d_texture;
     D3D10_TEXTURE3D_DESC desc;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_device *device,
