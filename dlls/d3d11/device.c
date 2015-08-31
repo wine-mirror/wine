@@ -2044,6 +2044,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device1 *ifa
         ID3D10Texture3D **texture)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
+    D3D11_TEXTURE3D_DESC d3d11_desc;
     struct d3d_texture3d *object;
     HRESULT hr;
 
@@ -2053,7 +2054,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device1 *ifa
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d_texture3d_init(object, device, desc, data)))
+    d3d11_desc.Width = desc->Width;
+    d3d11_desc.Height = desc->Height;
+    d3d11_desc.Depth = desc->Depth;
+    d3d11_desc.MipLevels = desc->MipLevels;
+    d3d11_desc.Format = desc->Format;
+    d3d11_desc.Usage = d3d11_usage_from_d3d10_usage(desc->Usage);
+    d3d11_desc.BindFlags = d3d11_bind_flags_from_d3d10_bind_flags(desc->BindFlags);
+    d3d11_desc.CPUAccessFlags = d3d11_cpu_access_flags_from_d3d10_cpu_access_flags(desc->CPUAccessFlags);
+    d3d11_desc.MiscFlags = d3d11_resource_misc_flags_from_d3d10_resource_misc_flags(desc->MiscFlags);
+
+    if (FAILED(hr = d3d_texture3d_init(object, device, &d3d11_desc, data)))
     {
         WARN("Failed to initialize texture, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

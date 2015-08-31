@@ -467,7 +467,7 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
     wined3d_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_desc.multisample_type = desc->SampleDesc.Count > 1 ? desc->SampleDesc.Count : WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = desc->SampleDesc.Quality;
-    wined3d_desc.usage = wined3d_usage_from_d3d10core(desc->BindFlags, desc->Usage);
+    wined3d_desc.usage = wined3d_usage_from_d3d11(desc->BindFlags, desc->Usage);
     wined3d_desc.pool = WINED3D_POOL_DEFAULT;
     wined3d_desc.width = desc->Width;
     wined3d_desc.height = desc->Height;
@@ -683,7 +683,11 @@ static UINT STDMETHODCALLTYPE d3d11_texture3d_GetEvictionPriority(ID3D11Texture3
 
 static void STDMETHODCALLTYPE d3d11_texture3d_GetDesc(ID3D11Texture3D *iface, D3D11_TEXTURE3D_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_texture3d *texture = impl_from_ID3D11Texture3D(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = texture->desc;
 }
 
 static const struct ID3D11Texture3DVtbl d3d11_texture3d_vtbl =
@@ -850,10 +854,21 @@ static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT
 static void STDMETHODCALLTYPE d3d10_texture3d_GetDesc(ID3D10Texture3D *iface, D3D10_TEXTURE3D_DESC *desc)
 {
     struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    D3D11_TEXTURE3D_DESC d3d11_desc;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    *desc = texture->desc;
+    d3d11_texture3d_GetDesc(&texture->ID3D11Texture3D_iface, &d3d11_desc);
+
+    desc->Width = d3d11_desc.Width;
+    desc->Height = d3d11_desc.Height;
+    desc->Depth = d3d11_desc.Depth;
+    desc->MipLevels = d3d11_desc.MipLevels;
+    desc->Format = d3d11_desc.Format;
+    desc->Usage = d3d10_usage_from_d3d11_usage(d3d11_desc.Usage);
+    desc->BindFlags = d3d10_bind_flags_from_d3d11_bind_flags(d3d11_desc.BindFlags);
+    desc->CPUAccessFlags = d3d10_cpu_access_flags_from_d3d11_cpu_access_flags(d3d11_desc.CPUAccessFlags);
+    desc->MiscFlags = d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(d3d11_desc.MiscFlags);
 }
 
 static const struct ID3D10Texture3DVtbl d3d10_texture3d_vtbl =
@@ -883,7 +898,7 @@ static const struct wined3d_parent_ops d3d_texture3d_wined3d_parent_ops =
 };
 
 HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_device *device,
-        const D3D10_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
+        const D3D11_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_resource_desc wined3d_desc;
     unsigned int levels;
@@ -900,7 +915,7 @@ HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_device *dev
     wined3d_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;
-    wined3d_desc.usage = wined3d_usage_from_d3d10core(desc->BindFlags, desc->Usage);
+    wined3d_desc.usage = wined3d_usage_from_d3d11(desc->BindFlags, desc->Usage);
     wined3d_desc.pool = WINED3D_POOL_DEFAULT;
     wined3d_desc.width = desc->Width;
     wined3d_desc.height = desc->Height;
