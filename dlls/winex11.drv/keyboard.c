@@ -1592,7 +1592,7 @@ static HKL get_locale_kbd_layout(void)
      */
     langid = PRIMARYLANGID(LANGIDFROMLCID(layout));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        layout |= 0xe001 << 16; /* IME */
+        layout = MAKELONG( layout, 0xe001 ); /* IME */
     else
         layout |= layout << 16;
 
