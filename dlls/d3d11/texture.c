@@ -542,22 +542,34 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     return S_OK;
 }
 
-static inline struct d3d_texture3d *impl_from_ID3D10Texture3D(ID3D10Texture3D *iface)
+/* ID3D11Texture3D methods */
+
+static inline struct d3d_texture3d *impl_from_ID3D11Texture3D(ID3D11Texture3D *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d_texture3d, ID3D10Texture3D_iface);
+    return CONTAINING_RECORD(iface, struct d3d_texture3d, ID3D11Texture3D_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_texture3d_QueryInterface(ID3D10Texture3D *iface, REFIID riid, void **object)
+static HRESULT STDMETHODCALLTYPE d3d11_texture3d_QueryInterface(ID3D11Texture3D *iface, REFIID riid, void **object)
 {
+    struct d3d_texture3d *texture = impl_from_ID3D11Texture3D(iface);
+
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    if (IsEqualGUID(riid, &IID_ID3D10Texture3D)
-            || IsEqualGUID(riid, &IID_ID3D10Resource)
-            || IsEqualGUID(riid, &IID_ID3D10DeviceChild)
+    if (IsEqualGUID(riid, &IID_ID3D11Texture3D)
+            || IsEqualGUID(riid, &IID_ID3D11Resource)
+            || IsEqualGUID(riid, &IID_ID3D11DeviceChild)
             || IsEqualGUID(riid, &IID_IUnknown))
     {
         IUnknown_AddRef(iface);
         *object = iface;
+        return S_OK;
+    }
+    else if (IsEqualGUID(riid, &IID_ID3D10Texture3D)
+            || IsEqualGUID(riid, &IID_ID3D10Resource)
+            || IsEqualGUID(riid, &IID_ID3D10DeviceChild))
+    {
+        IUnknown_AddRef(iface);
+        *object = &texture->ID3D10Texture3D_iface;
         return S_OK;
     }
 
@@ -567,9 +579,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_QueryInterface(ID3D10Texture3D 
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
+static ULONG STDMETHODCALLTYPE d3d11_texture3d_AddRef(ID3D11Texture3D *iface)
 {
-    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D11Texture3D(iface);
     ULONG refcount = InterlockedIncrement(&texture->refcount);
 
     TRACE("%p increasing refcount to %u.\n", texture, refcount);
@@ -593,9 +605,9 @@ static void STDMETHODCALLTYPE d3d_texture3d_wined3d_object_released(void *parent
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
+static ULONG STDMETHODCALLTYPE d3d11_texture3d_Release(ID3D11Texture3D *iface)
 {
-    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D11Texture3D(iface);
     ULONG refcount = InterlockedDecrement(&texture->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", texture, refcount);
@@ -613,6 +625,113 @@ static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
     }
 
     return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d11_texture3d_GetDevice(ID3D11Texture3D *iface, ID3D11Device **device)
+{
+    FIXME("iface %p, device %p stub!\n", iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_texture3d_GetPrivateData(ID3D11Texture3D *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_texture3d_SetPrivateData(ID3D11Texture3D *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_texture3d_SetPrivateDataInterface(ID3D11Texture3D *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+
+    return E_NOTIMPL;
+}
+
+static void STDMETHODCALLTYPE d3d11_texture3d_GetType(ID3D11Texture3D *iface,
+        D3D11_RESOURCE_DIMENSION *resource_dimension)
+{
+    TRACE("iface %p, resource_dimension %p.\n", iface, resource_dimension);
+
+    *resource_dimension = D3D11_RESOURCE_DIMENSION_TEXTURE3D;
+}
+
+static void STDMETHODCALLTYPE d3d11_texture3d_SetEvictionPriority(ID3D11Texture3D *iface, UINT eviction_priority)
+{
+    FIXME("iface %p, eviction_priority %#x stub!\n", iface, eviction_priority);
+}
+
+static UINT STDMETHODCALLTYPE d3d11_texture3d_GetEvictionPriority(ID3D11Texture3D *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+static void STDMETHODCALLTYPE d3d11_texture3d_GetDesc(ID3D11Texture3D *iface, D3D11_TEXTURE3D_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+}
+
+static const struct ID3D11Texture3DVtbl d3d11_texture3d_vtbl =
+{
+    /* IUnknown methods */
+    d3d11_texture3d_QueryInterface,
+    d3d11_texture3d_AddRef,
+    d3d11_texture3d_Release,
+    /* ID3D11DeviceChild methods */
+    d3d11_texture3d_GetDevice,
+    d3d11_texture3d_GetPrivateData,
+    d3d11_texture3d_SetPrivateData,
+    d3d11_texture3d_SetPrivateDataInterface,
+    /* ID3D11Resource methods */
+    d3d11_texture3d_GetType,
+    d3d11_texture3d_SetEvictionPriority,
+    d3d11_texture3d_GetEvictionPriority,
+    /* ID3D11Texture3D methods */
+    d3d11_texture3d_GetDesc,
+};
+
+/* ID3D10Texture3D methods */
+
+static inline struct d3d_texture3d *impl_from_ID3D10Texture3D(ID3D10Texture3D *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_texture3d, ID3D10Texture3D_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_texture3d_QueryInterface(ID3D10Texture3D *iface, REFIID riid, void **object)
+{
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    return d3d11_texture3d_QueryInterface(&texture->ID3D11Texture3D_iface, riid, object);
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
+{
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3d11_texture3d_AddRef(&texture->ID3D11Texture3D_iface);
+}
+
+static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
+{
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    return d3d11_texture3d_Release(&texture->ID3D11Texture3D_iface);
 }
 
 static void STDMETHODCALLTYPE d3d10_texture3d_GetDevice(ID3D10Texture3D *iface, ID3D10Device **device)
@@ -766,6 +885,7 @@ HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_device *dev
     unsigned int levels;
     HRESULT hr;
 
+    texture->ID3D11Texture3D_iface.lpVtbl = &d3d11_texture3d_vtbl;
     texture->ID3D10Texture3D_iface.lpVtbl = &d3d10_texture3d_vtbl;
     texture->refcount = 1;
     wined3d_mutex_lock();
