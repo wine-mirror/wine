@@ -203,7 +203,7 @@ static HRESULT AVISplitter_next_request(AVISplitterImpl *This, DWORD streamnumbe
                 ++stream->index_next;
             }
 
-            rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(entry->dwSize & ~(1 << 31));
+            rtSampleStop = rtSampleStart + MEDIATIME_FROM_BYTES(entry->dwSize & ~(1u << 31));
 
             TRACE("offset(%u) size(%u)\n", (DWORD)BYTES_FROM_MEDIATIME(rtSampleStart), (DWORD)BYTES_FROM_MEDIATIME(rtSampleStop - rtSampleStart));
         }
@@ -596,7 +596,7 @@ static HRESULT AVISplitter_ProcessIndex(AVISplitterImpl *This, AVISTDINDEX **ind
         BOOL keyframe = !(pIndex->aIndex[x].dwSize >> 31);
         DWORDLONG offset = pIndex->qwBaseOffset + pIndex->aIndex[x].dwOffset;
         TRACE("dwOffset: %x%08x\n", (DWORD)(offset >> 32), (DWORD)offset);
-        TRACE("dwSize: %u\n", (pIndex->aIndex[x].dwSize & ~(1<<31)));
+        TRACE("dwSize: %u\n", (pIndex->aIndex[x].dwSize & ~(1u << 31)));
         TRACE("Frame is a keyframe: %s\n", keyframe ? "yes" : "no");
     }
 
@@ -994,7 +994,7 @@ static HRESULT AVISplitter_InitializeStreams(AVISplitterImpl *This)
 
                     for (z = 0; z < stream->stdindex[y]->nEntriesInUse; ++z)
                     {
-                        UINT len = stream->stdindex[y]->aIndex[z].dwSize & ~(1 << 31);
+                        UINT len = stream->stdindex[y]->aIndex[z].dwSize & ~(1u << 31);
                         frames += len / stream->streamheader.dwSampleSize + !!(len % stream->streamheader.dwSampleSize);
                     }
                 }
@@ -1342,7 +1342,7 @@ static HRESULT WINAPI AVISplitter_seek(IMediaSeeking *iface)
                 {
                     if (stream->streamheader.dwSampleSize)
                     {
-                        ULONG len = stream->stdindex[y]->aIndex[z].dwSize & ~(1 << 31);
+                        ULONG len = stream->stdindex[y]->aIndex[z].dwSize & ~(1u << 31);
                         ULONG size = stream->streamheader.dwSampleSize;
 
                         pin->dwSamplesProcessed += len / size;
