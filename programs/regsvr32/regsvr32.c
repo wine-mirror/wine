@@ -231,10 +231,8 @@ int wmain(int argc, WCHAR* argv[])
 
     OleInitialize(NULL);
 
-    /* Strictly, the Microsoft version processes all the flags before
+    /* We mirror the Microsoft version by processing all of the flags before
      * the files (e.g. regsvr32 file1 /s file2 is silent even for file1).
-     * For ease, we will not replicate that and will process the arguments
-     * in order.
      *
      * Note the complication that this version may be passed Unix format filenames
      * which could be mistaken for flags. The Windows version conveniently
@@ -270,8 +268,13 @@ int wmain(int argc, WCHAR* argv[])
                 output_write(STRING_USAGE);
                 return 1;
             }
+            argv[i] = NULL;
         }
-        else
+    }
+
+    for (i = 1; i < argc; i++)
+    {
+        if (argv[i])
         {
             WCHAR *DllName = argv[i];
             int res = 0;
