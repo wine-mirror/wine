@@ -51,7 +51,7 @@
 @ stub pcap_open_dead
 @ cdecl pcap_open_live(str long long long ptr) wine_pcap_open_live
 @ stub pcap_open_offline
-@ stub pcap_parsesrcstr
+@ cdecl pcap_parsesrcstr(str ptr ptr ptr ptr ptr) wine_pcap_parsesrcstr
 @ stub pcap_perror
 @ stub pcap_read
 @ stub pcap_remoteact_accept

@@ -27,6 +27,19 @@
 WINE_DEFAULT_DEBUG_CHANNEL(wpcap);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
+#ifndef PCAP_SRC_FILE_STRING
+#define PCAP_SRC_FILE_STRING    "file://"
+#endif
+#ifndef PCAP_SRC_FILE
+#define PCAP_SRC_FILE           2
+#endif
+#ifndef PCAP_SRC_IF_STRING
+#define PCAP_SRC_IF_STRING      "rpcap://"
+#endif
+#ifndef PCAP_SRC_IFLOCAL
+#define PCAP_SRC_IFLOCAL        3
+#endif
+
 void CDECL wine_pcap_breakloop(pcap_t *p)
 {
     TRACE("(%p)\n", p);
@@ -237,6 +250,44 @@ pcap_t* CDECL wine_pcap_open_live(const char *source, int snaplen, int promisc, 
 {
     TRACE("(%s %i %i %i %p)\n", debugstr_a(source), snaplen, promisc, to_ms, errbuf);
     return pcap_open_live(source, snaplen, promisc, to_ms, errbuf);
+}
+
+int CDECL wine_pcap_parsesrcstr(const char *source, int *type, char *host, char *port, char *name, char *errbuf)
+{
+    int t = PCAP_SRC_IFLOCAL;
+    const char *p = source;
+
+    FIXME("(%s %p %p %p %p %p): partial stub\n", debugstr_a(source), type, host, port, name, errbuf);
+
+    if (host)
+        *host = '\0';
+    if (port)
+        *port = '\0';
+    if (name)
+        *name = '\0';
+
+    if (!strncmp(p, PCAP_SRC_IF_STRING, strlen(PCAP_SRC_IF_STRING)))
+        p += strlen(PCAP_SRC_IF_STRING);
+    else if (!strncmp(p, PCAP_SRC_FILE_STRING, strlen(PCAP_SRC_FILE_STRING)))
+    {
+        p += strlen(PCAP_SRC_FILE_STRING);
+        t = PCAP_SRC_FILE;
+    }
+
+    if (type)
+        *type = t;
+
+    if (!*p)
+    {
+        if (errbuf)
+            sprintf(errbuf, "The name has not been specified in the source string.");
+        return -1;
+    }
+
+    if (name)
+        strcpy(name, p);
+
+    return 0;
 }
 
 int CDECL wine_pcap_sendpacket(pcap_t *p, const unsigned char *buf, int size)
