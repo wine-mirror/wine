@@ -2236,6 +2236,11 @@ static DWRITE_FONT_WEIGHT font_extract_weight(struct list *tokens, DWRITE_FONT_W
         { NULL }
     };
 
+    static const struct name_pattern semilight_patterns[] = {
+        { semiW, lightW },
+        { NULL }
+    };
+
     static const struct name_pattern demibold_patterns[] = {
         { semiW, boldW },
         { demiW, boldW },
@@ -2302,6 +2307,9 @@ static DWRITE_FONT_WEIGHT font_extract_weight(struct list *tokens, DWRITE_FONT_W
     if (match_pattern_list(tokens, extralight_patterns, match))
         return DWRITE_FONT_WEIGHT_EXTRA_LIGHT;
 
+    if (match_pattern_list(tokens, semilight_patterns, match))
+        return DWRITE_FONT_WEIGHT_SEMI_LIGHT;
+
     if (match_pattern_list(tokens, demibold_patterns, match))
         return DWRITE_FONT_WEIGHT_DEMI_BOLD;
 
@@ -2362,6 +2370,7 @@ static int compare_knownweights(const void *a, const void* b)
 static BOOL is_known_weight_value(DWRITE_FONT_WEIGHT weight, WCHAR *nameW)
 {
     static const WCHAR extralightW[] = {'E','x','t','r','a',' ','L','i','g','h','t',0};
+    static const WCHAR semilightW[] = {'S','e','m','i',' ','L','i','g','h','t',0};
     static const WCHAR extrablackW[] = {'E','x','t','r','a',' ','B','l','a','c','k',0};
     static const WCHAR extraboldW[] = {'E','x','t','r','a',' ','B','o','l','d',0};
     static const WCHAR demiboldW[] = {'D','e','m','i',' ','B','o','l','d',0};
@@ -2371,6 +2380,7 @@ static BOOL is_known_weight_value(DWRITE_FONT_WEIGHT weight, WCHAR *nameW)
         { thinW,       DWRITE_FONT_WEIGHT_THIN },
         { extralightW, DWRITE_FONT_WEIGHT_EXTRA_LIGHT },
         { lightW,      DWRITE_FONT_WEIGHT_LIGHT },
+        { semilightW,  DWRITE_FONT_WEIGHT_SEMI_LIGHT },
         { mediumW,     DWRITE_FONT_WEIGHT_MEDIUM },
         { demiboldW,   DWRITE_FONT_WEIGHT_DEMI_BOLD },
         { boldW,       DWRITE_FONT_WEIGHT_BOLD },
