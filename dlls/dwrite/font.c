@@ -2,7 +2,7 @@
  *    Font and collections
  *
  * Copyright 2011 Huw Davies
- * Copyright 2012, 2014 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2015 Nikolay Sivov for CodeWeavers
  * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -42,11 +42,20 @@ static const FLOAT RECOMMENDED_OUTLINE_AA_THRESHOLD = 100.0f;
 static const FLOAT RECOMMENDED_OUTLINE_A_THRESHOLD = 350.0f;
 static const FLOAT RECOMMENDED_NATURAL_PPEM = 20.0f;
 
-/* common modifiers used in names */
 static const WCHAR extraW[] = {'e','x','t','r','a',0};
 static const WCHAR ultraW[] = {'u','l','t','r','a',0};
 static const WCHAR semiW[] = {'s','e','m','i',0};
 static const WCHAR extW[] = {'e','x','t',0};
+static const WCHAR thinW[] = {'t','h','i','n',0};
+static const WCHAR lightW[] = {'l','i','g','h','t',0};
+static const WCHAR mediumW[] = {'m','e','d','i','u','m',0};
+static const WCHAR blackW[] = {'b','l','a','c','k',0};
+static const WCHAR condensedW[] = {'c','o','n','d','e','n','s','e','d',0};
+static const WCHAR expandedW[] = {'e','x','p','a','n','d','e','d',0};
+static const WCHAR italicW[] = {'i','t','a','l','i','c',0};
+static const WCHAR boldW[] = {'B','o','l','d',0};
+static const WCHAR obliqueW[] = {'O','b','l','i','q','u','e',0};
+static const WCHAR spaceW[] = {' ',0};
 
 struct dwrite_font_propvec {
     FLOAT stretch;
@@ -1224,8 +1233,6 @@ static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont2 *iface)
 static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont2 *iface, IDWriteLocalizedStrings **names)
 {
     static const WCHAR boldobliqueW[] = {'B','o','l','d',' ','O','b','l','i','q','u','e',0};
-    static const WCHAR obliqueW[] = {'O','b','l','i','q','u','e',0};
-    static const WCHAR boldW[] = {'B','o','l','d',0};
     static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
@@ -1991,13 +1998,13 @@ struct name_pattern {
     const WCHAR *part2; /* optional, if not NULL should point to non-empty string */
 };
 
-static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *patterns)
+static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *patterns, struct name_token *match)
 {
     const struct name_pattern *pattern;
     struct name_token *token;
     int i = 0;
 
-    while ((pattern = &patterns[++i])->part1) {
+    while ((pattern = &patterns[i++])->part1) {
         int len_part1 = strlenW(pattern->part1);
         int len_part2 = pattern->part2 ? strlenW(pattern->part2) : 0;
 
@@ -2008,6 +2015,7 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                     continue;
 
                 if (!strncmpiW(token->ptr, pattern->part1, len_part1)) {
+                    *match = *token;
                     list_remove(&token->entry);
                     heap_free(token);
                     return TRUE;
@@ -2030,6 +2038,7 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                         continue;
 
                     /* combined string match */
+                    *match = *token;
                     list_remove(&token->entry);
                     heap_free(token);
                     return TRUE;
@@ -2052,6 +2061,8 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                         continue;
 
                     /* both parts matched, remove tokens */
+                    match->ptr = next_token->ptr;
+                    match->len = (token->ptr - next_token->ptr) + token->len;
                     list_remove(&token->entry);
                     list_remove(&next_token->entry);
                     heap_free(next_token);
@@ -2062,19 +2073,19 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
         }
     }
 
+    match->ptr = NULL;
+    match->len = 0;
     return FALSE;
 }
 
-static DWRITE_FONT_STYLE font_extract_style(struct list *tokens, DWRITE_FONT_STYLE style)
+static DWRITE_FONT_STYLE font_extract_style(struct list *tokens, DWRITE_FONT_STYLE style, struct name_token *match)
 {
     static const WCHAR itaW[] = {'i','t','a',0};
     static const WCHAR italW[] = {'i','t','a','l',0};
-    static const WCHAR italicW[] = {'i','t','a','l','i','c',0};
     static const WCHAR cursiveW[] = {'c','u','r','s','i','v','e',0};
     static const WCHAR kursivW[] = {'k','u','r','s','i','v',0};
 
     static const WCHAR inclinedW[] = {'i','n','c','l','i','n','e','d',0};
-    static const WCHAR obliqueW[] = {'o','b','l','i','q','u','e',0};
     static const WCHAR backslantedW[] = {'b','a','c','k','s','l','a','n','t','e','d',0};
     static const WCHAR backslantW[] = {'b','a','c','k','s','l','a','n','t',0};
     static const WCHAR slantedW[] = {'s','l','a','n','t','e','d',0};
@@ -2098,21 +2109,20 @@ static DWRITE_FONT_STYLE font_extract_style(struct list *tokens, DWRITE_FONT_STY
     };
 
     /* italic patterns first */
-    if (match_pattern_list(tokens, italic_patterns))
+    if (match_pattern_list(tokens, italic_patterns, match))
         return DWRITE_FONT_STYLE_ITALIC;
 
     /* oblique patterns */
-    if (match_pattern_list(tokens, oblique_patterns))
+    if (match_pattern_list(tokens, oblique_patterns, match))
         return DWRITE_FONT_STYLE_OBLIQUE;
 
     return style;
 }
 
-static DWRITE_FONT_STRETCH font_extract_stretch(struct list *tokens, DWRITE_FONT_STRETCH stretch)
+static DWRITE_FONT_STRETCH font_extract_stretch(struct list *tokens, DWRITE_FONT_STRETCH stretch,
+    struct name_token *match)
 {
     static const WCHAR compressedW[] = {'c','o','m','p','r','e','s','s','e','d',0};
-    static const WCHAR condensedW[] = {'c','o','n','d','e','n','s','e','d',0};
-    static const WCHAR expandedW[] = {'e','x','p','a','n','d','e','d',0};
     static const WCHAR extendedW[] = {'e','x','t','e','n','d','e','d',0};
     static const WCHAR compactW[] = {'c','o','m','p','a','c','t',0};
     static const WCHAR narrowW[] = {'n','a','r','r','o','w',0};
@@ -2178,42 +2188,38 @@ static DWRITE_FONT_STRETCH font_extract_stretch(struct list *tokens, DWRITE_FONT
         { NULL }
     };
 
-    if (match_pattern_list(tokens, ultracondensed_patterns))
+    if (match_pattern_list(tokens, ultracondensed_patterns, match))
         return DWRITE_FONT_STRETCH_ULTRA_CONDENSED;
 
-    if (match_pattern_list(tokens, extracondensed_patterns))
+    if (match_pattern_list(tokens, extracondensed_patterns, match))
         return DWRITE_FONT_STRETCH_EXTRA_CONDENSED;
 
-    if (match_pattern_list(tokens, semicondensed_patterns))
+    if (match_pattern_list(tokens, semicondensed_patterns, match))
         return DWRITE_FONT_STRETCH_SEMI_CONDENSED;
 
-    if (match_pattern_list(tokens, semiexpanded_patterns))
+    if (match_pattern_list(tokens, semiexpanded_patterns, match))
         return DWRITE_FONT_STRETCH_SEMI_EXPANDED;
 
-    if (match_pattern_list(tokens, extraexpanded_patterns))
+    if (match_pattern_list(tokens, extraexpanded_patterns, match))
         return DWRITE_FONT_STRETCH_EXTRA_EXPANDED;
 
-    if (match_pattern_list(tokens, ultraexpanded_patterns))
+    if (match_pattern_list(tokens, ultraexpanded_patterns, match))
         return DWRITE_FONT_STRETCH_ULTRA_EXPANDED;
 
-    if (match_pattern_list(tokens, condensed_patterns))
+    if (match_pattern_list(tokens, condensed_patterns, match))
         return DWRITE_FONT_STRETCH_CONDENSED;
 
-    if (match_pattern_list(tokens, expanded_patterns))
+    if (match_pattern_list(tokens, expanded_patterns, match))
         return DWRITE_FONT_STRETCH_EXPANDED;
 
     return stretch;
 }
 
-static DWRITE_FONT_WEIGHT font_extract_weight(struct list *tokens, DWRITE_FONT_WEIGHT weight)
+static DWRITE_FONT_WEIGHT font_extract_weight(struct list *tokens, DWRITE_FONT_WEIGHT weight,
+    struct name_token *match)
 {
-    static const WCHAR mediumW[] = {'m','e','d','i','u','m',0};
-    static const WCHAR blackW[] = {'b','l','a','c','k',0};
     static const WCHAR heavyW[] = {'h','e','a','v','y',0};
-    static const WCHAR lightW[] = {'l','i','g','h','t',0};
-    static const WCHAR boldW[] = {'b','o','l','d',0};
     static const WCHAR demiW[] = {'d','e','m','i',0};
-    static const WCHAR thinW[] = {'t','h','i','n',0};
     static const WCHAR nordW[] = {'n','o','r','d',0};
 
     static const struct name_pattern thin_patterns[] = {
@@ -2290,48 +2296,104 @@ static DWRITE_FONT_WEIGHT font_extract_weight(struct list *tokens, DWRITE_FONT_W
     /* FIXME: allow optional 'face' suffix, separated or not. It's removed together with
        matching pattern. */
 
-    if (match_pattern_list(tokens, thin_patterns))
+    if (match_pattern_list(tokens, thin_patterns, match))
         return DWRITE_FONT_WEIGHT_THIN;
 
-    if (match_pattern_list(tokens, extralight_patterns))
+    if (match_pattern_list(tokens, extralight_patterns, match))
         return DWRITE_FONT_WEIGHT_EXTRA_LIGHT;
 
-    if (match_pattern_list(tokens, demibold_patterns))
+    if (match_pattern_list(tokens, demibold_patterns, match))
         return DWRITE_FONT_WEIGHT_DEMI_BOLD;
 
-    if (match_pattern_list(tokens, extrabold_patterns))
+    if (match_pattern_list(tokens, extrabold_patterns, match))
         return DWRITE_FONT_WEIGHT_EXTRA_BOLD;
 
-    if (match_pattern_list(tokens, extrablack_patterns))
+    if (match_pattern_list(tokens, extrablack_patterns, match))
         return DWRITE_FONT_WEIGHT_EXTRA_BLACK;
 
-    if (match_pattern_list(tokens, bold_patterns))
+    if (match_pattern_list(tokens, bold_patterns, match))
         return DWRITE_FONT_WEIGHT_BOLD;
 
-    if (match_pattern_list(tokens, thin2_patterns))
+    if (match_pattern_list(tokens, thin2_patterns, match))
         return DWRITE_FONT_WEIGHT_THIN;
 
-    if (match_pattern_list(tokens, light_patterns))
+    if (match_pattern_list(tokens, light_patterns, match))
         return DWRITE_FONT_WEIGHT_LIGHT;
 
-    if (match_pattern_list(tokens, medium_patterns))
+    if (match_pattern_list(tokens, medium_patterns, match))
         return DWRITE_FONT_WEIGHT_MEDIUM;
 
-    if (match_pattern_list(tokens, black_patterns))
+    if (match_pattern_list(tokens, black_patterns, match))
         return DWRITE_FONT_WEIGHT_BLACK;
 
-    if (match_pattern_list(tokens, black_patterns))
+    if (match_pattern_list(tokens, black_patterns, match))
         return DWRITE_FONT_WEIGHT_BLACK;
 
-    if (match_pattern_list(tokens, demibold2_patterns))
+    if (match_pattern_list(tokens, demibold2_patterns, match))
         return DWRITE_FONT_WEIGHT_DEMI_BOLD;
 
-    if (match_pattern_list(tokens, extrabold2_patterns))
+    if (match_pattern_list(tokens, extrabold2_patterns, match))
         return DWRITE_FONT_WEIGHT_EXTRA_BOLD;
 
     /* FIXME: use abbreviated names to extract weight */
 
     return weight;
+}
+
+struct knownweight_entry {
+    const WCHAR *nameW;
+    DWRITE_FONT_WEIGHT weight;
+};
+
+static int compare_knownweights(const void *a, const void* b)
+{
+    DWRITE_FONT_WEIGHT target = *(DWRITE_FONT_WEIGHT*)a;
+    const struct knownweight_entry *entry = (struct knownweight_entry*)b;
+    int ret = 0;
+
+    if (target > entry->weight)
+        ret = 1;
+    else if (target < entry->weight)
+        ret = -1;
+
+    return ret;
+}
+
+static BOOL is_known_weight_value(DWRITE_FONT_WEIGHT weight, WCHAR *nameW)
+{
+    static const WCHAR extralightW[] = {'E','x','t','r','a',' ','L','i','g','h','t',0};
+    static const WCHAR extrablackW[] = {'E','x','t','r','a',' ','B','l','a','c','k',0};
+    static const WCHAR extraboldW[] = {'E','x','t','r','a',' ','B','o','l','d',0};
+    static const WCHAR demiboldW[] = {'D','e','m','i',' ','B','o','l','d',0};
+    const struct knownweight_entry *ptr;
+
+    static const struct knownweight_entry knownweights[] = {
+        { thinW,       DWRITE_FONT_WEIGHT_THIN },
+        { extralightW, DWRITE_FONT_WEIGHT_EXTRA_LIGHT },
+        { lightW,      DWRITE_FONT_WEIGHT_LIGHT },
+        { mediumW,     DWRITE_FONT_WEIGHT_MEDIUM },
+        { demiboldW,   DWRITE_FONT_WEIGHT_DEMI_BOLD },
+        { boldW,       DWRITE_FONT_WEIGHT_BOLD },
+        { extraboldW,  DWRITE_FONT_WEIGHT_EXTRA_BOLD },
+        { blackW,      DWRITE_FONT_WEIGHT_BLACK },
+        { extrablackW, DWRITE_FONT_WEIGHT_EXTRA_BLACK }
+    };
+
+    ptr = bsearch(&weight, knownweights, sizeof(knownweights)/sizeof(knownweights[0]), sizeof(knownweights[0]),
+        compare_knownweights);
+    if (!ptr) {
+        nameW[0] = 0;
+        return FALSE;
+    }
+
+    strcpyW(nameW, ptr->nameW);
+    return TRUE;
+}
+
+static inline void font_name_token_to_str(const struct name_token *name, WCHAR *strW)
+{
+    memcpy(strW, name->ptr, name->len * sizeof(WCHAR));
+    strW[name->len] = 0;
 }
 
 static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHAR *familyW, WCHAR *faceW)
@@ -2351,24 +2413,25 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
         NULL
     };
 
-    static const WCHAR spaceW[] = {' ',0};
-    WCHAR familynameW[255], facenameW[255];
+    struct name_token stretch_name, weight_name, style_name;
+    WCHAR familynameW[255], facenameW[255], finalW[255];
+    WCHAR weightW[32], stretchW[32], styleW[32];
+    const WCHAR *ptr, *regular_ptr = NULL;
     struct name_token *token, *token2;
     DWRITE_FONT_STRETCH stretch;
     DWRITE_FONT_WEIGHT weight;
-    BOOL found = FALSE;
     struct list tokens;
-    const WCHAR *ptr;
     int len, i = 0;
+    WCHAR *ptrW;
 
     /* remove leading and trailing spaces from family and face name */
     trim_spaces(familyW, familynameW);
     len = trim_spaces(faceW, facenameW);
 
     /* remove rightmost regular variant from face name */
-    while (!found && (ptr = regular_patterns[i++])) {
-        WCHAR *src;
+    while (!regular_ptr && (ptr = regular_patterns[i++])) {
         int pattern_len = strlenW(ptr);
+        WCHAR *src;
 
         if (pattern_len > len)
             continue;
@@ -2378,7 +2441,7 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
             if (!strncmpiW(src, ptr, pattern_len)) {
                 memmove(src, src + pattern_len, (len - pattern_len - (src - facenameW) + 1)*sizeof(WCHAR));
                 len = strlenW(facenameW);
-                found = TRUE;
+                regular_ptr = ptr;
                 break;
             }
             else
@@ -2414,13 +2477,13 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     }
 
     /* extract and resolve style */
-    font->style = font_extract_style(&tokens, font->style);
+    font->style = font_extract_style(&tokens, font->style, &style_name);
 
     /* extract stretch */
-    stretch = font_extract_stretch(&tokens, font->stretch);
+    stretch = font_extract_stretch(&tokens, font->stretch, &stretch_name);
 
     /* extract weight */
-    weight = font_extract_weight(&tokens, font->weight);
+    weight = font_extract_weight(&tokens, font->weight, &weight_name);
 
     /* resolve weight */
     if (weight != font->weight) {
@@ -2449,13 +2512,104 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
         }
     }
 
-    /* FIXME: cleanup face name from possible 2-3 digit prefixes, compose final family/face names */
+    /* FIXME: cleanup face name from possible 2-3 digit prefixes */
 
-    /* release tokens */
-    LIST_FOR_EACH_ENTRY_SAFE(token, token2, &tokens, struct name_token, entry) {
+    /* get final combined string from what's left in token list, list is released */
+    ptrW = finalW;
+    *ptrW = 0;
+    LIST_FOR_EACH_ENTRY_SAFE_REV(token, token2, &tokens, struct name_token, entry) {
+        if (*finalW)
+            *(ptrW++) = ' ';
+        memcpy(ptrW, token->ptr, token->len * sizeof(WCHAR));
+        ptrW += token->len;
         list_remove(&token->entry);
         heap_free(token);
     }
+    *ptrW = 0;
+
+    if (!strcmpW(familyW, finalW))
+        return;
+
+    /* construct face name */
+    strcpyW(familyW, finalW);
+
+    /* resolved weight name */
+    if (weight_name.ptr)
+        font_name_token_to_str(&weight_name, weightW);
+    /* ignore normal weight */
+    else if (font->weight == DWRITE_FONT_WEIGHT_NORMAL)
+        weightW[0] = 0;
+    /* for known weight values use appropriate names */
+    else if (is_known_weight_value(font->weight, weightW)) {
+    }
+    /* use Wnnn format as a fallback in case weight is not one of defined values */
+    else {
+        static const WCHAR fmtW[] = {'W','%','d',0};
+        sprintfW(weightW, fmtW, font->weight);
+    }
+
+    /* resolved stretch name */
+    if (stretch_name.ptr)
+        font_name_token_to_str(&stretch_name, stretchW);
+    /* ignore normal stretch */
+    else if (font->stretch == DWRITE_FONT_STRETCH_NORMAL)
+        stretchW[0] = 0;
+    /* use predefined stretch names */
+    else {
+        static const WCHAR ultracondensedW[] = {'U','l','t','r','a',' ','C','o','n','d','e','n','s','e','d',0};
+        static const WCHAR extracondensedW[] = {'E','x','t','r','a',' ','C','o','n','d','e','n','s','e','d',0};
+        static const WCHAR semicondensedW[] = {'S','e','m','i',' ','C','o','n','d','e','n','s','e','d',0};
+        static const WCHAR semiexpandedW[] = {'S','e','m','i',' ','E','x','p','a','n','d','e','d',0};
+        static const WCHAR extraexpandedW[] = {'E','x','t','r','a',' ','E','x','p','a','n','d','e','d',0};
+        static const WCHAR ultraexpandedW[] = {'U','l','t','r','a',' ','E','x','p','a','n','d','e','d',0};
+
+        static const WCHAR *stretchnamesW[] = {
+            ultracondensedW,
+            extracondensedW,
+            condensedW,
+            semicondensedW,
+            NULL, /* DWRITE_FONT_STRETCH_NORMAL */
+            semiexpandedW,
+            expandedW,
+            extraexpandedW,
+            ultraexpandedW
+        };
+        strcpyW(stretchW, stretchnamesW[font->stretch]);
+    }
+
+    /* resolved style name */
+    if (style_name.ptr)
+        font_name_token_to_str(&style_name, styleW);
+    else if (font->style == DWRITE_FONT_STYLE_NORMAL)
+        styleW[0] = 0;
+    /* use predefined names */
+    else {
+        if (font->style == DWRITE_FONT_STYLE_ITALIC)
+            strcpyW(styleW, italicW);
+        else
+            strcpyW(styleW, obliqueW);
+    }
+
+    /* use Regular match if it was found initially */
+    if (!*weightW && !*stretchW && !*styleW)
+        strcpyW(faceW, regular_ptr ? regular_ptr : regularW);
+    else {
+        faceW[0] = 0;
+        if (*stretchW)
+            strcpyW(faceW, stretchW);
+        if (*weightW) {
+            if (*faceW)
+                strcatW(faceW, spaceW);
+            strcatW(faceW, weightW);
+        }
+        if (*styleW) {
+            if (*faceW)
+                strcatW(faceW, spaceW);
+            strcatW(faceW, styleW);
+        }
+    }
+
+    TRACE("resolved family %s, face %s\n", debugstr_w(familyW), debugstr_w(faceW));
 }
 
 static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
