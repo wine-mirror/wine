@@ -130,8 +130,8 @@ struct d3d_texture3d
     ID3D11Device *device;
 };
 
-HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_device *device,
-        const D3D11_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
+HRESULT d3d_texture3d_create(struct d3d_device *device, const D3D11_TEXTURE3D_DESC *desc,
+        const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture3d **texture) DECLSPEC_HIDDEN;
 
 /* ID3D10Buffer */
 struct d3d10_buffer
