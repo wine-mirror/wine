@@ -476,6 +476,14 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD options, REGSAM acc
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING nameW;
 
+    if (retkey && (!name || !name[0]) &&
+        (HandleToUlong(hkey) >= HandleToUlong(HKEY_SPECIAL_ROOT_FIRST)) &&
+        (HandleToUlong(hkey) <= HandleToUlong(HKEY_SPECIAL_ROOT_LAST)))
+    {
+        *retkey = hkey;
+        return ERROR_SUCCESS;
+    }
+
     /* NT+ allows beginning backslash for HKEY_CLASSES_ROOT */
     if (HandleToUlong(hkey) == HandleToUlong(HKEY_CLASSES_ROOT) && name && *name == '\\') name++;
 
@@ -519,6 +527,14 @@ LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD options, REGSAM acce
     OBJECT_ATTRIBUTES attr;
     STRING nameA;
     NTSTATUS status;
+
+    if (retkey && (!name || !name[0]) &&
+        (HandleToUlong(hkey) >= HandleToUlong(HKEY_SPECIAL_ROOT_FIRST)) &&
+        (HandleToUlong(hkey) <= HandleToUlong(HKEY_SPECIAL_ROOT_LAST)))
+    {
+        *retkey = hkey;
+        return ERROR_SUCCESS;
+    }
 
     if (!is_version_nt()) access = MAXIMUM_ALLOWED;  /* Win95 ignores the access mask */
     else

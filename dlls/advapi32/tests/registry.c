@@ -1075,7 +1075,6 @@ static void test_reg_open_key(void)
     ok(ret == ERROR_INVALID_HANDLE || ret == ERROR_BADKEY, /* Windows 95 returns BADKEY */
        "expected ERROR_INVALID_HANDLE or ERROR_BADKEY, got %d\n", ret);
     ok(hkResult == hkPreserve, "expected hkResult == hkPreserve\n");
-    RegCloseKey(hkResult);
 
     /* send in NULL hkResult */
     ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Test", NULL);
@@ -1100,6 +1099,45 @@ static void test_reg_open_key(void)
        ret == ERROR_BAD_PATHNAME, /* NT */
        "expected ERROR_SUCCESS, ERROR_BAD_PATHNAME or ERROR_FILE_NOT_FOUND, got %d\n", ret);
     RegCloseKey(hkResult);
+
+    /* NULL or empty subkey of special root */
+    hkResult = NULL;
+    ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, NULL, 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    ok(hkResult == HKEY_CLASSES_ROOT, "expected hkResult == HKEY_CLASSES_ROOT\n");
+
+    hkResult = NULL;
+    ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, "", 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    ok(hkResult == HKEY_CLASSES_ROOT, "expected hkResult == HKEY_CLASSES_ROOT\n");
+
+    hkResult = NULL;
+    ret = RegOpenKeyExA(HKEY_CLASSES_ROOT, "\\", 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    ok(hkResult != HKEY_CLASSES_ROOT, "expected hkResult to be a new key\n");
+    ok(!RegCloseKey(hkResult), "got invalid hkey\n");
+
+    /* empty subkey of existing handle */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyExA(hkPreserve, "", 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    ok(hkResult != hkPreserve, "expected hkResult != hkPreserve\n");
+    ok(!RegCloseKey(hkResult), "got invalid hkey\n");
+
+    /* NULL subkey of existing handle */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyExA(hkPreserve, NULL, 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+    ok(hkResult != hkPreserve, "expected hkResult != hkPreserve\n");
+    ok(!RegCloseKey(hkResult), "got invalid hkey\n");
+
+    /* empty subkey of NULL */
+    hkResult = hkPreserve;
+    ret = RegOpenKeyExA(NULL, "", 0, KEY_QUERY_VALUE, &hkResult);
+    ok(ret == ERROR_INVALID_HANDLE, "expected ERROR_INVALID_HANDLE, got %d\n", ret);
+    ok(hkResult == hkPreserve, "expected hkResult == hkPreserve\n");
+
+    RegCloseKey(hkPreserve);
 
     /* WOW64 flags */
     hkResult = NULL;
