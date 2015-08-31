@@ -2044,7 +2044,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device1 *ifa
         ID3D10Texture3D **texture)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_texture3d *object;
+    struct d3d_texture3d *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, data %p, texture %p.\n", iface, desc, data, texture);
@@ -2053,7 +2053,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device1 *ifa
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_texture3d_init(object, device, desc, data)))
+    if (FAILED(hr = d3d_texture3d_init(object, device, desc, data)))
     {
         WARN("Failed to initialize texture, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);

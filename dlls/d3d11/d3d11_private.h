@@ -117,7 +117,7 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
 struct d3d_texture2d *unsafe_impl_from_ID3D10Texture2D(ID3D10Texture2D *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Texture3D */
-struct d3d10_texture3d
+struct d3d_texture3d
 {
     ID3D10Texture3D ID3D10Texture3D_iface;
     LONG refcount;
@@ -128,7 +128,7 @@ struct d3d10_texture3d
     ID3D10Device1 *device;
 };
 
-HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d_device *device,
+HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_device *device,
         const D3D10_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
 
 /* ID3D10Buffer */

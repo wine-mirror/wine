@@ -542,9 +542,9 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     return S_OK;
 }
 
-static inline struct d3d10_texture3d *impl_from_ID3D10Texture3D(ID3D10Texture3D *iface)
+static inline struct d3d_texture3d *impl_from_ID3D10Texture3D(ID3D10Texture3D *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_texture3d, ID3D10Texture3D_iface);
+    return CONTAINING_RECORD(iface, struct d3d_texture3d, ID3D10Texture3D_iface);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_QueryInterface(ID3D10Texture3D *iface, REFIID riid, void **object)
@@ -569,7 +569,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_QueryInterface(ID3D10Texture3D 
 
 static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
     ULONG refcount = InterlockedIncrement(&texture->refcount);
 
     TRACE("%p increasing refcount to %u.\n", texture, refcount);
@@ -585,9 +585,9 @@ static ULONG STDMETHODCALLTYPE d3d10_texture3d_AddRef(ID3D10Texture3D *iface)
     return refcount;
 }
 
-static void STDMETHODCALLTYPE d3d10_texture3d_wined3d_object_released(void *parent)
+static void STDMETHODCALLTYPE d3d_texture3d_wined3d_object_released(void *parent)
 {
-    struct d3d10_texture3d *texture = parent;
+    struct d3d_texture3d *texture = parent;
 
     wined3d_private_store_cleanup(&texture->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
@@ -595,7 +595,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_wined3d_object_released(void *pare
 
 static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
     ULONG refcount = InterlockedDecrement(&texture->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", texture, refcount);
@@ -617,7 +617,7 @@ static ULONG STDMETHODCALLTYPE d3d10_texture3d_Release(ID3D10Texture3D *iface)
 
 static void STDMETHODCALLTYPE d3d10_texture3d_GetDevice(ID3D10Texture3D *iface, ID3D10Device **device)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -628,7 +628,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_GetDevice(ID3D10Texture3D *iface, 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_GetPrivateData(ID3D10Texture3D *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -639,7 +639,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_GetPrivateData(ID3D10Texture3D 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateData(ID3D10Texture3D *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -650,7 +650,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateData(ID3D10Texture3D 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateDataInterface(ID3D10Texture3D *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
@@ -680,7 +680,7 @@ static UINT STDMETHODCALLTYPE d3d10_texture3d_GetEvictionPriority(ID3D10Texture3
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UINT sub_resource_idx,
         D3D10_MAP map_type, UINT map_flags, D3D10_MAPPED_TEXTURE3D *mapped_texture)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
     struct wined3d_map_desc wined3d_map_desc;
     struct wined3d_resource *sub_resource;
     HRESULT hr;
@@ -708,7 +708,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
 
 static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT sub_resource_idx)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
     struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
@@ -726,7 +726,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT
 
 static void STDMETHODCALLTYPE d3d10_texture3d_GetDesc(ID3D10Texture3D *iface, D3D10_TEXTURE3D_DESC *desc)
 {
-    struct d3d10_texture3d *texture = impl_from_ID3D10Texture3D(iface);
+    struct d3d_texture3d *texture = impl_from_ID3D10Texture3D(iface);
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -754,12 +754,12 @@ static const struct ID3D10Texture3DVtbl d3d10_texture3d_vtbl =
     d3d10_texture3d_GetDesc,
 };
 
-static const struct wined3d_parent_ops d3d10_texture3d_wined3d_parent_ops =
+static const struct wined3d_parent_ops d3d_texture3d_wined3d_parent_ops =
 {
-    d3d10_texture3d_wined3d_object_released,
+    d3d_texture3d_wined3d_object_released,
 };
 
-HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d_device *device,
+HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_device *device,
         const D3D10_TEXTURE3D_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_resource_desc wined3d_desc;
@@ -787,7 +787,7 @@ HRESULT d3d10_texture3d_init(struct d3d10_texture3d *texture, struct d3d_device 
 
     if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &wined3d_desc,
             levels, 0, (struct wined3d_sub_resource_data *)data, texture,
-            &d3d10_texture3d_wined3d_parent_ops, &texture->wined3d_texture)))
+            &d3d_texture3d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&texture->private_store);
