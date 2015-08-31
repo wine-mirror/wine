@@ -1841,32 +1841,28 @@ static HRESULT InstallerImpl_SummaryInformation(WORD wFlags,
     if (!(wFlags & DISPATCH_PROPERTYGET))
         return DISP_E_MEMBERNOTFOUND;
 
-    VariantInit(&varg0);
-    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
-    if (FAILED(hr))
-        return hr;
-
     VariantInit(&varg1);
     hr = DispGetParam(pDispParams, 1, VT_I4, &varg1, puArgErr);
     if (FAILED(hr))
         return hr;
 
-    V_VT(pVarResult) = VT_DISPATCH;
+    VariantInit(&varg0);
+    hr = DispGetParam(pDispParams, 0, VT_BSTR, &varg0, puArgErr);
+    if (FAILED(hr))
+        return hr;
 
     ret = MsiGetSummaryInformationW(0, V_BSTR(&varg0), V_I4(&varg1), &hsuminfo);
+    VariantClear(&varg0);
     if (ret != ERROR_SUCCESS)
-    {
-        hr = DISP_E_EXCEPTION;
-        goto done;
-    }
+        return DISP_E_EXCEPTION;
 
     hr = create_summaryinfo(hsuminfo, &dispatch);
-    if (SUCCEEDED(hr))
-        V_DISPATCH(pVarResult) = dispatch;
+    if (FAILED(hr))
+        return hr;
 
-done:
-    VariantClear(&varg0);
-    return hr;
+    V_VT(pVarResult) = VT_DISPATCH;
+    V_DISPATCH(pVarResult) = dispatch;
+    return S_OK;
 }
 
 static HRESULT InstallerImpl_UILevel(WORD wFlags,
