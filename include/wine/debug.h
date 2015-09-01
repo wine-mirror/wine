@@ -244,7 +244,7 @@ static inline const char *wine_dbgstr_vt( VARTYPE vt )
         "|VT_ARRAY",
         "|VT_VECTOR|VT_ARRAY",
         "|VT_BYREF",
-        "|VT_VECTOR|VT_ARRAY",
+        "|VT_VECTOR|VT_BYREF",
         "|VT_ARRAY|VT_BYREF",
         "|VT_VECTOR|VT_ARRAY|VT_BYREF",
         "|VT_RESERVED",
@@ -252,7 +252,7 @@ static inline const char *wine_dbgstr_vt( VARTYPE vt )
         "|VT_ARRAY|VT_RESERVED",
         "|VT_VECTOR|VT_ARRAY|VT_RESERVED",
         "|VT_BYREF|VT_RESERVED",
-        "|VT_VECTOR|VT_ARRAY|VT_RESERVED",
+        "|VT_VECTOR|VT_BYREF|VT_RESERVED",
         "|VT_ARRAY|VT_BYREF|VT_RESERVED",
         "|VT_VECTOR|VT_ARRAY|VT_BYREF|VT_RESERVED",
     };
