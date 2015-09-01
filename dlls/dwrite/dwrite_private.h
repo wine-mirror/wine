@@ -122,6 +122,7 @@ extern void    release_gdiinterop(IDWriteGdiInterop*) DECLSPEC_HIDDEN;
 extern HRESULT create_localizedstrings(IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT add_localizedstring(IDWriteLocalizedStrings*,const WCHAR*,const WCHAR*) DECLSPEC_HIDDEN;
 extern HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;
+extern void    set_en_localizedstring(IDWriteLocalizedStrings*,const WCHAR*) DECLSPEC_HIDDEN;
 extern HRESULT get_system_fontcollection(IDWriteFactory2*,IDWriteFontCollection**) DECLSPEC_HIDDEN;
 extern HRESULT get_eudc_fontcollection(IDWriteFactory2*,IDWriteFontCollection**) DECLSPEC_HIDDEN;
 extern HRESULT get_textanalyzer(IDWriteTextAnalyzer**) DECLSPEC_HIDDEN;

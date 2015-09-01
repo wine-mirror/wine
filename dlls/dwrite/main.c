@@ -438,7 +438,7 @@ HRESULT add_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *locale,
 }
 
 HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedStrings **ret)
- {
+{
     struct localizedstrings *strings, *strings_clone;
     int i;
 
@@ -469,6 +469,21 @@ HRESULT clone_localizedstring(IDWriteLocalizedStrings *iface, IDWriteLocalizedSt
     *ret = &strings_clone->IDWriteLocalizedStrings_iface;
 
     return S_OK;
+}
+
+void set_en_localizedstring(IDWriteLocalizedStrings *iface, const WCHAR *string)
+{
+    static const WCHAR enusW[] = {'e','n','-','U','S',0};
+    struct localizedstrings *This = impl_from_IDWriteLocalizedStrings(iface);
+    UINT32 i;
+
+    for (i = 0; i < This->count; i++) {
+        if (!strcmpiW(This->data[i].locale, enusW)) {
+            heap_free(This->data[i].string);
+            This->data[i].string = heap_strdupW(string);
+            break;
+        }
+    }
 }
 
 struct collectionloader

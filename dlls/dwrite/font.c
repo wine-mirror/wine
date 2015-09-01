@@ -1985,7 +1985,8 @@ static int trim_spaces(WCHAR *in, WCHAR *ret)
 struct name_token {
     struct list entry;
     const WCHAR *ptr;
-    INT len;
+    INT len;     /* token length */
+    INT fulllen; /* full length including following separators */
 };
 
 static inline BOOL is_name_separator_char(WCHAR ch)
@@ -2406,7 +2407,7 @@ static inline void font_name_token_to_str(const struct name_token *name, WCHAR *
     strW[name->len] = 0;
 }
 
-static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHAR *familyW, WCHAR *faceW)
+static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHAR *familyW, WCHAR *faceW)
 {
     static const WCHAR bookW[] = {'B','o','o','k',0};
     static const WCHAR normalW[] = {'N','o','r','m','a','l',0};
@@ -2473,15 +2474,19 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
         struct name_token *token = heap_alloc(sizeof(*token));
         token->ptr = ptr;
         token->len = 0;
+        token->fulllen = 0;
 
         while (*ptr && !is_name_separator_char(*ptr)) {
             token->len++;
+            token->fulllen++;
             ptr++;
         }
 
         /* skip separators */
-        while (is_name_separator_char(*ptr))
+        while (is_name_separator_char(*ptr)) {
+            token->fulllen++;
             ptr++;
+        }
 
         list_add_head(&tokens, &token->entry);
     }
@@ -2526,19 +2531,22 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
 
     /* get final combined string from what's left in token list, list is released */
     ptrW = finalW;
-    *ptrW = 0;
     LIST_FOR_EACH_ENTRY_SAFE_REV(token, token2, &tokens, struct name_token, entry) {
-        if (*finalW)
-            *(ptrW++) = ' ';
-        memcpy(ptrW, token->ptr, token->len * sizeof(WCHAR));
-        ptrW += token->len;
+        int len;
+
         list_remove(&token->entry);
+
+        /* don't include last separator */
+        len = list_empty(&tokens) ? token->len : token->fulllen;
+        memcpy(ptrW, token->ptr, len * sizeof(WCHAR));
+        ptrW += len;
+
         heap_free(token);
     }
     *ptrW = 0;
 
     if (!strcmpW(familyW, finalW))
-        return;
+        return FALSE;
 
     /* construct face name */
     strcpyW(familyW, finalW);
@@ -2620,6 +2628,7 @@ static void font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     }
 
     TRACE("resolved family %s, face %s\n", debugstr_w(familyW), debugstr_w(faceW));
+    return TRUE;
 }
 
 static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE face_type, UINT32 face_index,
@@ -2670,7 +2679,10 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, D
 
     fontstrings_get_en_string(*family_name, familyW, sizeof(familyW)/sizeof(WCHAR));
     fontstrings_get_en_string(data->names, faceW, sizeof(faceW)/sizeof(WCHAR));
-    font_apply_differentiation_rules(data, familyW, faceW);
+    if (font_apply_differentiation_rules(data, familyW, faceW)) {
+        set_en_localizedstring(*family_name, familyW);
+        set_en_localizedstring(data->names, faceW);
+    }
 
     init_font_prop_vec(data->weight, data->stretch, data->style, &data->propvec);
 
