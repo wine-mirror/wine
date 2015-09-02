@@ -134,7 +134,7 @@ HRESULT d3d_texture3d_create(struct d3d_device *device, const D3D11_TEXTURE3D_DE
         const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture3d **texture) DECLSPEC_HIDDEN;
 
 /* ID3D10Buffer */
-struct d3d10_buffer
+struct d3d_buffer
 {
     ID3D10Buffer ID3D10Buffer_iface;
     LONG refcount;
@@ -144,9 +144,9 @@ struct d3d10_buffer
     ID3D10Device1 *device;
 };
 
-HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d_device *device,
+HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
-struct d3d10_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface) DECLSPEC_HIDDEN;
+struct d3d_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10DepthStencilView */
 struct d3d10_depthstencil_view

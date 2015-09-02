@@ -564,7 +564,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetConstantBuffers(ID3D10Device1 *i
     wined3d_mutex_lock();
     for (i = 0; i < buffer_count; ++i)
     {
-        struct d3d10_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
+        struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
 
         wined3d_device_set_vs_cb(device->wined3d_device, start_slot + i,
                 buffer ? buffer->wined3d_buffer : NULL);
@@ -677,7 +677,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetConstantBuffers(ID3D10Device1 *i
     wined3d_mutex_lock();
     for (i = 0; i < buffer_count; ++i)
     {
-        struct d3d10_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
+        struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
 
         wined3d_device_set_ps_cb(device->wined3d_device, start_slot + i,
                 buffer ? buffer->wined3d_buffer : NULL);
@@ -711,7 +711,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetVertexBuffers(ID3D10Device1 *ifa
     wined3d_mutex_lock();
     for (i = 0; i < buffer_count; ++i)
     {
-        struct d3d10_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
+        struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
 
         wined3d_device_set_stream_source(This->wined3d_device, start_slot + i,
                 buffer ? buffer->wined3d_buffer : NULL, offsets[i], strides[i]);
@@ -723,7 +723,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetIndexBuffer(ID3D10Device1 *iface
         ID3D10Buffer *buffer, DXGI_FORMAT format, UINT offset)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_buffer *buffer_impl = unsafe_impl_from_ID3D10Buffer(buffer);
+    struct d3d_buffer *buffer_impl = unsafe_impl_from_ID3D10Buffer(buffer);
 
     TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
@@ -782,7 +782,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device1 *i
     wined3d_mutex_lock();
     for (i = 0; i < buffer_count; ++i)
     {
-        struct d3d10_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
+        struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(buffers[i]);
 
         wined3d_device_set_gs_cb(device->wined3d_device, start_slot + i,
                 buffer ? buffer->wined3d_buffer : NULL);
@@ -1017,7 +1017,7 @@ static void STDMETHODCALLTYPE d3d10_device_SOSetTargets(ID3D10Device1 *iface,
     wined3d_mutex_lock();
     for (i = 0; i < count; ++i)
     {
-        struct d3d10_buffer *buffer = unsafe_impl_from_ID3D10Buffer(targets[i]);
+        struct d3d_buffer *buffer = unsafe_impl_from_ID3D10Buffer(targets[i]);
 
         wined3d_device_set_stream_output(device->wined3d_device, i,
                 buffer ? buffer->wined3d_buffer : NULL, offsets[i]);
@@ -1240,7 +1240,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSGetConstantBuffers(ID3D10Device1 *i
     for (i = 0; i < buffer_count; ++i)
     {
         struct wined3d_buffer *wined3d_buffer;
-        struct d3d10_buffer *buffer_impl;
+        struct d3d_buffer *buffer_impl;
 
         if (!(wined3d_buffer = wined3d_device_get_vs_cb(device->wined3d_device, start_slot + i)))
         {
@@ -1368,7 +1368,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetConstantBuffers(ID3D10Device1 *i
     for (i = 0; i < buffer_count; ++i)
     {
         struct wined3d_buffer *wined3d_buffer;
-        struct d3d10_buffer *buffer_impl;
+        struct d3d_buffer *buffer_impl;
 
         if (!(wined3d_buffer = wined3d_device_get_ps_cb(device->wined3d_device, start_slot + i)))
         {
@@ -1418,7 +1418,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetVertexBuffers(ID3D10Device1 *ifa
     for (i = 0; i < buffer_count; ++i)
     {
         struct wined3d_buffer *wined3d_buffer;
-        struct d3d10_buffer *buffer_impl;
+        struct d3d_buffer *buffer_impl;
 
         if (FAILED(wined3d_device_get_stream_source(device->wined3d_device, start_slot + i,
                 &wined3d_buffer, &offsets[i], &strides[i])))
@@ -1443,7 +1443,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetIndexBuffer(ID3D10Device1 *iface
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     enum wined3d_format_id wined3d_format;
     struct wined3d_buffer *wined3d_buffer;
-    struct d3d10_buffer *buffer_impl;
+    struct d3d_buffer *buffer_impl;
 
     TRACE("iface %p, buffer %p, format %p, offset %p.\n", iface, buffer, format, offset);
 
@@ -1477,7 +1477,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetConstantBuffers(ID3D10Device1 *i
     for (i = 0; i < buffer_count; ++i)
     {
         struct wined3d_buffer *wined3d_buffer;
-        struct d3d10_buffer *buffer_impl;
+        struct d3d_buffer *buffer_impl;
 
         if (!(wined3d_buffer = wined3d_device_get_gs_cb(device->wined3d_device, start_slot + i)))
         {
@@ -1751,7 +1751,7 @@ static void STDMETHODCALLTYPE d3d10_device_SOGetTargets(ID3D10Device1 *iface,
     for (i = 0; i < buffer_count; ++i)
     {
         struct wined3d_buffer *wined3d_buffer;
-        struct d3d10_buffer *buffer_impl;
+        struct d3d_buffer *buffer_impl;
 
         if (!(wined3d_buffer = wined3d_device_get_stream_output(device->wined3d_device, i, &offsets[i])))
         {
@@ -1986,7 +1986,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device1 *iface,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Buffer **buffer)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_buffer *object;
+    struct d3d_buffer *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, data %p, buffer %p.\n", iface, desc, data, buffer);
@@ -1995,7 +1995,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device1 *iface,
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3d10_buffer_init(object, This, desc, data);
+    hr = d3d_buffer_init(object, This, desc, data);
     if (FAILED(hr))
     {
         WARN("Failed to initialize buffer, hr %#x.\n", hr);

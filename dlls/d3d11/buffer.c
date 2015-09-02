@@ -24,9 +24,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static inline struct d3d10_buffer *impl_from_ID3D10Buffer(ID3D10Buffer *iface)
+static inline struct d3d_buffer *impl_from_ID3D10Buffer(ID3D10Buffer *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_buffer, ID3D10Buffer_iface);
+    return CONTAINING_RECORD(iface, struct d3d_buffer, ID3D10Buffer_iface);
 }
 
 /* IUnknown methods */
@@ -53,7 +53,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_QueryInterface(ID3D10Buffer *iface
 
 static ULONG STDMETHODCALLTYPE d3d10_buffer_AddRef(ID3D10Buffer *iface)
 {
-    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
     ULONG refcount = InterlockedIncrement(&buffer->refcount);
 
     TRACE("%p increasing refcount to %u.\n", buffer, refcount);
@@ -71,7 +71,7 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_AddRef(ID3D10Buffer *iface)
 
 static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
 {
-    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
     ULONG refcount = InterlockedDecrement(&buffer->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
@@ -95,7 +95,7 @@ static ULONG STDMETHODCALLTYPE d3d10_buffer_Release(ID3D10Buffer *iface)
 
 static void STDMETHODCALLTYPE d3d10_buffer_GetDevice(ID3D10Buffer *iface, ID3D10Device **device)
 {
-    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -106,7 +106,7 @@ static void STDMETHODCALLTYPE d3d10_buffer_GetDevice(ID3D10Buffer *iface, ID3D10
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_GetPrivateData(ID3D10Buffer *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -117,7 +117,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_GetPrivateData(ID3D10Buffer *iface
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateData(ID3D10Buffer *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -128,7 +128,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateData(ID3D10Buffer *iface
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateDataInterface(ID3D10Buffer *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
@@ -160,7 +160,7 @@ static UINT STDMETHODCALLTYPE d3d10_buffer_GetEvictionPriority(ID3D10Buffer *ifa
 
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP map_type, UINT map_flags, void **data)
 {
-    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
     HRESULT hr;
 
     TRACE("iface %p, map_type %u, map_flags %#x, data %p.\n", iface, map_type, map_flags, data);
@@ -178,7 +178,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP
 
 static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
 {
-    struct d3d10_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
 
     TRACE("iface %p.\n", iface);
 
@@ -213,17 +213,17 @@ static const struct ID3D10BufferVtbl d3d10_buffer_vtbl =
     d3d10_buffer_GetDesc,
 };
 
-struct d3d10_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface)
+struct d3d_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface)
 {
     if (!iface)
         return NULL;
     assert(iface->lpVtbl == &d3d10_buffer_vtbl);
-    return CONTAINING_RECORD(iface, struct d3d10_buffer, ID3D10Buffer_iface);
+    return CONTAINING_RECORD(iface, struct d3d_buffer, ID3D10Buffer_iface);
 }
 
 static void STDMETHODCALLTYPE d3d10_buffer_wined3d_object_released(void *parent)
 {
-    struct d3d10_buffer *buffer = parent;
+    struct d3d_buffer *buffer = parent;
 
     wined3d_private_store_cleanup(&buffer->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
@@ -234,7 +234,7 @@ static const struct wined3d_parent_ops d3d10_buffer_wined3d_parent_ops =
     d3d10_buffer_wined3d_object_released,
 };
 
-HRESULT d3d10_buffer_init(struct d3d10_buffer *buffer, struct d3d_device *device,
+HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_buffer_desc wined3d_desc;
