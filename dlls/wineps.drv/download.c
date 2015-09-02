@@ -30,6 +30,8 @@
 #include "winnls.h"
 
 #include "psdrv.h"
+#include "data/agl.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(psdrv);
@@ -359,11 +361,324 @@ BOOL PSDRV_WriteSetDownloadFont(PHYSDEV dev, BOOL vertical)
     return TRUE;
 }
 
+static void get_standard_glyph_name(WORD index, char *name)
+{
+    static const GLYPHNAME nonbreakingspace = { -1, "nonbreakingspace" };
+    static const GLYPHNAME nonmarkingreturn = { -1, "nonmarkingreturn" };
+    static const GLYPHNAME notdef = { -1, ".notdef" };
+    static const GLYPHNAME null = { -1, ".null" };
+    /* These PostScript Format 1 glyph names are stored by glyph index, do not reorder them. */
+    static const GLYPHNAME *glyph_table[] = {
+        &notdef,
+        &null,
+        &nonmarkingreturn,
+        GN_space,
+        GN_exclam,
+        GN_quotedbl,
+        GN_numbersign,
+        GN_dollar,
+        GN_percent,
+        GN_ampersand,
+        GN_quotesingle,
+        GN_parenleft,
+        GN_parenright,
+        GN_asterisk,
+        GN_plus,
+        GN_comma,
+        GN_hyphen,
+        GN_period,
+        GN_slash,
+        GN_zero,
+        GN_one,
+        GN_two,
+        GN_three,
+        GN_four,
+        GN_five,
+        GN_six,
+        GN_seven,
+        GN_eight,
+        GN_nine,
+        GN_colon,
+        GN_semicolon,
+        GN_less,
+        GN_equal,
+        GN_greater,
+        GN_question,
+        GN_at,
+        GN_A,
+        GN_B,
+        GN_C,
+        GN_D,
+        GN_E,
+        GN_F,
+        GN_G,
+        GN_H,
+        GN_I,
+        GN_J,
+        GN_K,
+        GN_L,
+        GN_M,
+        GN_N,
+        GN_O,
+        GN_P,
+        GN_Q,
+        GN_R,
+        GN_S,
+        GN_T,
+        GN_U,
+        GN_V,
+        GN_W,
+        GN_X,
+        GN_Y,
+        GN_Z,
+        GN_bracketleft,
+        GN_backslash,
+        GN_bracketright,
+        GN_asciicircum,
+        GN_underscore,
+        GN_grave,
+        GN_a,
+        GN_b,
+        GN_c,
+        GN_d,
+        GN_e,
+        GN_f,
+        GN_g,
+        GN_h,
+        GN_i,
+        GN_j,
+        GN_k,
+        GN_l,
+        GN_m,
+        GN_n,
+        GN_o,
+        GN_p,
+        GN_q,
+        GN_r,
+        GN_s,
+        GN_t,
+        GN_u,
+        GN_v,
+        GN_w,
+        GN_x,
+        GN_y,
+        GN_z,
+        GN_braceleft,
+        GN_bar,
+        GN_braceright,
+        GN_asciitilde,
+        GN_Adieresis,
+        GN_Aring,
+        GN_Ccedilla,
+        GN_Eacute,
+        GN_Ntilde,
+        GN_Odieresis,
+        GN_Udieresis,
+        GN_aacute,
+        GN_agrave,
+        GN_acircumflex,
+        GN_adieresis,
+        GN_atilde,
+        GN_aring,
+        GN_ccedilla,
+        GN_eacute,
+        GN_egrave,
+        GN_ecircumflex,
+        GN_edieresis,
+        GN_iacute,
+        GN_igrave,
+        GN_icircumflex,
+        GN_idieresis,
+        GN_ntilde,
+        GN_oacute,
+        GN_ograve,
+        GN_ocircumflex,
+        GN_odieresis,
+        GN_otilde,
+        GN_uacute,
+        GN_ugrave,
+        GN_ucircumflex,
+        GN_udieresis,
+        GN_dagger,
+        GN_degree,
+        GN_cent,
+        GN_sterling,
+        GN_section,
+        GN_bullet,
+        GN_paragraph,
+        GN_germandbls,
+        GN_registered,
+        GN_copyright,
+        GN_trademark,
+        GN_acute,
+        GN_dieresis,
+        GN_notequal,
+        GN_AE,
+        GN_Oslash,
+        GN_infinity,
+        GN_plusminus,
+        GN_lessequal,
+        GN_greaterequal,
+        GN_yen,
+        GN_mu,
+        GN_partialdiff,
+        GN_summation,
+        GN_product,
+        GN_pi,
+        GN_integral,
+        GN_ordfeminine,
+        GN_ordmasculine,
+        GN_Omega,
+        GN_ae,
+        GN_oslash,
+        GN_questiondown,
+        GN_exclamdown,
+        GN_logicalnot,
+        GN_radical,
+        GN_florin,
+        GN_approxequal,
+        GN_Delta,
+        GN_guillemotleft,
+        GN_guillemotright,
+        GN_ellipsis,
+        &nonbreakingspace,
+        GN_Agrave,
+        GN_Atilde,
+        GN_Otilde,
+        GN_OE,
+        GN_oe,
+        GN_endash,
+        GN_emdash,
+        GN_quotedblleft,
+        GN_quotedblright,
+        GN_quoteleft,
+        GN_quoteright,
+        GN_divide,
+        GN_lozenge,
+        GN_ydieresis,
+        GN_Ydieresis,
+        GN_fraction,
+        GN_currency,
+        GN_guilsinglleft,
+        GN_guilsinglright,
+        GN_fi,
+        GN_fl,
+        GN_daggerdbl,
+        GN_periodcentered,
+        GN_quotesinglbase,
+        GN_quotedblbase,
+        GN_perthousand,
+        GN_Acircumflex,
+        GN_Ecircumflex,
+        GN_Aacute,
+        GN_Edieresis,
+        GN_Egrave,
+        GN_Iacute,
+        GN_Icircumflex,
+        GN_Idieresis,
+        GN_Igrave,
+        GN_Oacute,
+        GN_Ocircumflex,
+        GN_apple,
+        GN_Ograve,
+        GN_Uacute,
+        GN_Ucircumflex,
+        GN_Ugrave,
+        GN_dotlessi,
+        GN_circumflex,
+        GN_tilde,
+        GN_macron,
+        GN_breve,
+        GN_dotaccent,
+        GN_ring,
+        GN_cedilla,
+        GN_hungarumlaut,
+        GN_ogonek,
+        GN_caron,
+        GN_Lslash,
+        GN_lslash,
+        GN_Scaron,
+        GN_scaron,
+        GN_Zcaron,
+        GN_zcaron,
+        GN_brokenbar,
+        GN_Eth,
+        GN_eth,
+        GN_Yacute,
+        GN_yacute,
+        GN_Thorn,
+        GN_thorn,
+        GN_minus,
+        GN_multiply,
+        GN_onesuperior,
+        GN_twosuperior,
+        GN_threesuperior,
+        GN_onehalf,
+        GN_onequarter,
+        GN_threequarters,
+        GN_franc,
+        GN_Gbreve,
+        GN_gbreve,
+        GN_Idotaccent,
+        GN_Scedilla,
+        GN_scedilla,
+        GN_Cacute,
+        GN_cacute,
+        GN_Ccaron,
+        GN_ccaron,
+        GN_dcroat
+    };
+    snprintf(name, MAX_G_NAME + 1, "%s", glyph_table[index]->sz);
+}
+
 void get_glyph_name(HDC hdc, WORD index, char *name)
 {
-  /* FIXME */
-    sprintf(name, "g%04x", index);
-    return;
+    struct
+    {
+        DWORD format;
+        DWORD italicAngle;
+        SHORT underlinePosition;
+        SHORT underlineThickness;
+        DWORD isFixedPitch;
+        DWORD minMemType42;
+        DWORD maxMemType42;
+        DWORD minMemType1;
+        DWORD maxMemType1;
+    } *post_header;
+    BYTE *post = NULL;
+    DWORD size;
+
+    /* set a fallback name that is just 'g<index>' */
+    snprintf(name, MAX_G_NAME + 1, "g%04x", index);
+
+    /* attempt to obtain the glyph name from the 'post' table */
+    size = GetFontData(hdc, MS_MAKE_TAG('p','o','s','t'), 0, NULL, 0);
+    if(size < sizeof(*post_header) || size == GDI_ERROR)
+        return;
+    post = HeapAlloc(GetProcessHeap(), 0, size);
+    if(!post)
+        return;
+    size = GetFontData(hdc, MS_MAKE_TAG('p','o','s','t'), 0, post, size);
+    if(size < sizeof(*post_header) || size == GDI_ERROR)
+        goto cleanup;
+    post_header = (typeof(post_header))(post);
+    /* note: only interested in the format for obtaining glyph names */
+    post_header->format = GET_BE_DWORD(&post_header->format);
+
+    /* now that we know the format of the 'post' table we can get the glyph name */
+    if(post_header->format == MAKELONG(0, 1))
+    {
+        if(index < 258)
+            get_standard_glyph_name(index, name);
+        else
+            WARN("Font uses PostScript Format 1, but non-standard glyph (%d) requested.\n", index);
+    }
+    else
+        FIXME("PostScript Format %d.%d glyph names are currently unsupported.\n",
+              HIWORD(post_header->format), LOWORD(post_header->format));
+
+cleanup:
+    HeapFree(GetProcessHeap(), 0, post);
 }
 
 /****************************************************************************
