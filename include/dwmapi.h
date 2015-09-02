@@ -107,6 +107,16 @@ typedef struct _DWM_BLURBEHIND
     BOOL fTransitionOnMaximized;
 } DWM_BLURBEHIND, *PDWM_BLURBEHIND;
 
+typedef struct _DWM_THUMBNAIL_PROPERTIES
+{
+    DWORD dwFlags;
+    RECT  rcDestination;
+    RECT  rcSource;
+    BYTE  opacity;
+    BOOL  fVisible;
+    BOOL  fSourceClientAreaOnly;
+} DWM_THUMBNAIL_PROPERTIES, *PDWM_THUMBNAIL_PROPERTIES;
+
 #include <poppack.h>
 
 DWMAPI DwmDefWindowProc(HWND, UINT, WPARAM, LPARAM, LRESULT*);
@@ -121,6 +131,7 @@ DWMAPI DwmIsCompositionEnabled(BOOL*);
 DWMAPI DwmRegisterThumbnail(HWND, HWND, PHTHUMBNAIL);
 DWMAPI DwmSetWindowAttribute(HWND, DWORD, LPCVOID, DWORD);
 DWMAPI DwmUnregisterThumbnail(HTHUMBNAIL);
+DWMAPI DwmUpdateThumbnailProperties(HTHUMBNAIL, const DWM_THUMBNAIL_PROPERTIES *);
 
 #ifdef __cplusplus
 }
