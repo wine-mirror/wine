@@ -1226,9 +1226,23 @@ static HRESULT WINAPI list_manager_GetNetworkConnection(
     GUID gdNetworkConnectionId,
     INetworkConnection **ppNetworkConnection )
 {
-    FIXME( "%p, %s, %p\n", iface, debugstr_guid(&gdNetworkConnectionId),
+    struct list_manager *mgr = impl_from_INetworkListManager( iface );
+    struct connection *connection;
+
+    TRACE( "%p, %s, %p\n", iface, debugstr_guid(&gdNetworkConnectionId),
             ppNetworkConnection );
-    return E_NOTIMPL;
+
+    LIST_FOR_EACH_ENTRY( connection, &mgr->connections, struct connection, entry )
+    {
+        if (IsEqualGUID( &connection->id, &gdNetworkConnectionId ))
+        {
+            *ppNetworkConnection = &connection->INetworkConnection_iface;
+            INetworkConnection_AddRef( *ppNetworkConnection );
+            return S_OK;
+        }
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI list_manager_IsConnectedToInternet(
