@@ -67,6 +67,7 @@ struct connection
     LONG                   refs;
     struct list            entry;
     GUID                   id;
+    INetwork              *network;
     VARIANT_BOOL           connected_to_internet;
     VARIANT_BOOL           connected;
 };
@@ -934,6 +935,7 @@ static ULONG WINAPI connection_Release(
 
     if (!(refs = InterlockedDecrement( &connection->refs )))
     {
+        INetwork_Release( connection->network );
         list_remove( &connection->entry );
         heap_free( connection );
     }
@@ -989,8 +991,13 @@ static HRESULT WINAPI connection_GetNetwork(
     INetworkConnection *iface,
     INetwork **ppNetwork )
 {
-    FIXME( "%p, %p\n", iface, ppNetwork );
-    return E_NOTIMPL;
+    struct connection *connection = impl_from_INetworkConnection( iface );
+
+    TRACE( "%p, %p\n", iface, ppNetwork );
+
+    *ppNetwork = connection->network;
+    INetwork_AddRef( *ppNetwork );
+    return S_OK;
 }
 
 static HRESULT WINAPI connection_get_IsConnectedToInternet(
@@ -1088,6 +1095,7 @@ static struct connection *create_connection( const GUID *id )
     ret->INetworkConnection_iface.lpVtbl     = &connection_vtbl;
     ret->refs                  = 1;
     ret->id                    = *id;
+    ret->network               = NULL;
     ret->connected             = VARIANT_FALSE;
     ret->connected_to_internet = VARIANT_FALSE;
     list_init( &ret->entry );
@@ -1138,6 +1146,9 @@ static void init_networks( struct list_manager *mgr )
             network->connected_to_internet = VARIANT_TRUE;
             connection->connected_to_internet = VARIANT_TRUE;
         }
+
+        connection->network = &network->INetwork_iface;
+        INetwork_AddRef( connection->network );
 
         list_add_tail( &mgr->networks, &network->entry );
         list_add_tail( &mgr->connections, &connection->entry );
