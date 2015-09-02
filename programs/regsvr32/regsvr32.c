@@ -127,7 +127,7 @@ static int RegisterDll(const WCHAR* strDll)
 
     pfRegister = LoadProc(strDll, "DllRegisterServer", &DllHandle);
     if (!pfRegister)
-        return 0;
+        return GETPROCADDRESS_FAILED;
 
     hr = pfRegister();
     if(FAILED(hr))
@@ -150,7 +150,7 @@ static int UnregisterDll(const WCHAR* strDll)
 
     pfUnregister = LoadProc(strDll, "DllUnregisterServer", &DllHandle);
     if (!pfUnregister)
-        return 0;
+        return GETPROCADDRESS_FAILED;
 
     hr = pfUnregister();
     if(FAILED(hr))
@@ -173,7 +173,7 @@ static int InstallDll(BOOL install, const WCHAR *strDll, const WCHAR *command_li
 
     pfInstall = LoadProc(strDll, "DllInstall", &DllHandle);
     if (!pfInstall)
-        return 0;
+        return GETPROCADDRESS_FAILED;
 
     hr = pfInstall(install, command_line);
     if(FAILED(hr))
