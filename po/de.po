@@ -9494,7 +9494,7 @@ msgstr "Kann nicht zum LDAP-Server verbinden"
 
 #: wldap32.rc:122
 msgid "Operation not supported by this version of the LDAP protocol"
-msgstr "Operation durch diese Version des LDAP-Protokoll nicht unterstützt"
+msgstr "Operation durch diese Version des LDAP-Protokolls nicht unterstützt"
 
 #: wldap32.rc:123
 msgid "Specified control was not found in message"
@@ -11200,7 +11200,7 @@ msgstr "Wine-Registrierungs-Editor ausführen"
 
 #: oleview.rc:110
 msgid "Quit the application. Prompts to save changes"
-msgstr "Anwendung beenden. Frag ob Änderungen zu speichern sind"
+msgstr "Anwendung beenden. Fragt ob Änderungen zu speichern sind"
 
 #: oleview.rc:111
 msgid "Create an instance of the selected object"
@@ -12266,7 +12266,7 @@ msgstr "&Neuer Task..."
 
 #: taskmgr.rc:364
 msgid "&Show processes from all users"
-msgstr "P&rozesse aller Benutzern anzeigen"
+msgstr "P&rozesse aller Benutzer anzeigen"
 
 #: taskmgr.rc:372
 msgid "CPU usage"
@@ -12719,7 +12719,7 @@ msgstr "Wechselt den Fokus zu dem Prozess des ausgewählten Tasks"
 
 #: taskmgr.rc:229
 msgid "Restores the Task Manager from its hidden state"
-msgstr "Stellt den Task-Manager von seiner versteckten Status wieder her"
+msgstr "Stellt den Task-Manager aus seinem versteckten Status wieder her"
 
 #: taskmgr.rc:230
 msgid "Removes the process from the system"
@@ -13779,7 +13779,7 @@ msgstr "Dies ist ein Test"
 
 #: wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: Ereignis-ID konnte nicht geparsed werden\n"
+msgstr "wineconsole: Ereignis-ID konnte nicht geparset werden\n"
 
 #: wineconsole.rc:45
 msgid "wineconsole: Invalid backend\n"
