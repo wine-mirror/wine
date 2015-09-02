@@ -51,6 +51,16 @@ static inline BOOL heap_free( void *mem )
     return HeapFree( GetProcessHeap(), 0, mem );
 }
 
+struct network
+{
+    INetwork     INetwork_iface;
+    LONG         refs;
+    struct list  entry;
+    GUID         id;
+    VARIANT_BOOL connected_to_internet;
+    VARIANT_BOOL connected;
+};
+
 struct connection
 {
     INetworkConnection     INetworkConnection_iface;
@@ -67,6 +77,7 @@ struct list_manager
     INetworkCostManager INetworkCostManager_iface;
     IConnectionPointContainer IConnectionPointContainer_iface;
     LONG                refs;
+    struct list         networks;
     struct list         connections;
 };
 
@@ -235,6 +246,271 @@ static HRESULT connection_point_create(
     return S_OK;
 }
 
+static inline struct network *impl_from_INetwork(
+    INetwork *iface )
+{
+    return CONTAINING_RECORD( iface, struct network, INetwork_iface );
+}
+
+static HRESULT WINAPI network_QueryInterface(
+    INetwork *iface, REFIID riid, void **obj )
+{
+    struct network *network = impl_from_INetwork( iface );
+
+    TRACE( "%p, %s, %p\n", network, debugstr_guid(riid), obj );
+
+    if (IsEqualIID( riid, &IID_INetwork ) ||
+        IsEqualIID( riid, &IID_IDispatch ) ||
+        IsEqualIID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+        INetwork_AddRef( iface );
+        return S_OK;
+    }
+    else
+    {
+        WARN( "interface not supported %s\n", debugstr_guid(riid) );
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+}
+
+static ULONG WINAPI network_AddRef(
+    INetwork *iface )
+{
+    struct network *network = impl_from_INetwork( iface );
+
+    TRACE( "%p\n", network );
+    return InterlockedIncrement( &network->refs );
+}
+
+static ULONG WINAPI network_Release(
+    INetwork *iface )
+{
+    struct network *network = impl_from_INetwork( iface );
+    LONG refs;
+
+    TRACE( "%p\n", network );
+
+    if (!(refs = InterlockedDecrement( &network->refs )))
+    {
+        list_remove( &network->entry );
+        heap_free( network );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI network_GetTypeInfoCount(
+    INetwork *iface,
+    UINT *count )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_GetTypeInfo(
+    INetwork *iface,
+    UINT index,
+    LCID lcid,
+    ITypeInfo **info )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_GetIDsOfNames(
+    INetwork *iface,
+    REFIID riid,
+    LPOLESTR *names,
+    UINT count,
+    LCID lcid,
+    DISPID *dispid )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_Invoke(
+    INetwork *iface,
+    DISPID member,
+    REFIID riid,
+    LCID lcid,
+    WORD flags,
+    DISPPARAMS *params,
+    VARIANT *result,
+    EXCEPINFO *excep_info,
+    UINT *arg_err )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_GetName(
+    INetwork *iface,
+    BSTR *pszNetworkName )
+{
+    FIXME( "%p, %p\n", iface, pszNetworkName );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_SetName(
+    INetwork *iface,
+    BSTR szNetworkNewName )
+{
+    FIXME( "%p, %s\n", iface, debugstr_w(szNetworkNewName) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_GetDescription(
+    INetwork *iface,
+    BSTR *pszDescription )
+{
+    FIXME( "%p, %p\n", iface, pszDescription );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_SetDescription(
+    INetwork *iface,
+    BSTR szDescription )
+{
+    FIXME( "%p, %s\n", iface, debugstr_w(szDescription) );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_GetNetworkId(
+    INetwork *iface,
+    GUID *pgdGuidNetworkId )
+{
+    struct network *network = impl_from_INetwork( iface );
+
+    TRACE( "%p, %p\n", iface, pgdGuidNetworkId );
+
+    *pgdGuidNetworkId = network->id;
+    return S_OK;
+}
+
+static HRESULT WINAPI network_GetDomainType(
+    INetwork *iface,
+    NLM_DOMAIN_TYPE *pDomainType )
+{
+    FIXME( "%p, %p\n", iface, pDomainType );
+
+    *pDomainType = NLM_DOMAIN_TYPE_NON_DOMAIN_NETWORK;
+    return S_OK;
+}
+
+static HRESULT WINAPI network_GetNetworkConnections(
+    INetwork *iface,
+    IEnumNetworkConnections **ppEnumNetworkConnection )
+{
+    FIXME( "%p, %p\n", iface, ppEnumNetworkConnection );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_GetTimeCreatedAndConnected(
+    INetwork *iface,
+    DWORD *pdwLowDateTimeCreated,
+    DWORD *pdwHighDateTimeCreated,
+    DWORD *pdwLowDateTimeConnected,
+    DWORD *pdwHighDateTimeConnected )
+{
+    FIXME( "%p, %p, %p, %p, %p\n", iface, pdwLowDateTimeCreated, pdwHighDateTimeCreated,
+        pdwLowDateTimeConnected, pdwHighDateTimeConnected );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI network_get_IsConnectedToInternet(
+    INetwork *iface,
+    VARIANT_BOOL *pbIsConnected )
+{
+    struct network *network = impl_from_INetwork( iface );
+
+    TRACE( "%p, %p\n", iface, pbIsConnected );
+
+    *pbIsConnected = network->connected_to_internet;
+    return S_OK;
+}
+
+static HRESULT WINAPI network_get_IsConnected(
+    INetwork *iface,
+    VARIANT_BOOL *pbIsConnected )
+{
+    struct network *network = impl_from_INetwork( iface );
+
+    TRACE( "%p, %p\n", iface, pbIsConnected );
+
+    *pbIsConnected = network->connected;
+    return S_OK;
+}
+
+static HRESULT WINAPI network_GetConnectivity(
+    INetwork *iface,
+    NLM_CONNECTIVITY *pConnectivity )
+{
+    FIXME( "%p, %p\n", iface, pConnectivity );
+
+    *pConnectivity = NLM_CONNECTIVITY_IPV4_INTERNET;
+    return S_OK;
+}
+
+static HRESULT WINAPI network_GetCategory(
+    INetwork *iface,
+    NLM_NETWORK_CATEGORY *pCategory )
+{
+    FIXME( "%p, %p\n", iface, pCategory );
+
+    *pCategory = NLM_NETWORK_CATEGORY_PUBLIC;
+    return S_OK;
+}
+
+static HRESULT WINAPI network_SetCategory(
+    INetwork *iface,
+    NLM_NETWORK_CATEGORY NewCategory )
+{
+    FIXME( "%p, %u\n", iface, NewCategory );
+    return E_NOTIMPL;
+}
+
+static const struct INetworkVtbl network_vtbl =
+{
+    network_QueryInterface,
+    network_AddRef,
+    network_Release,
+    network_GetTypeInfoCount,
+    network_GetTypeInfo,
+    network_GetIDsOfNames,
+    network_Invoke,
+    network_GetName,
+    network_SetName,
+    network_GetDescription,
+    network_SetDescription,
+    network_GetNetworkId,
+    network_GetDomainType,
+    network_GetNetworkConnections,
+    network_GetTimeCreatedAndConnected,
+    network_get_IsConnectedToInternet,
+    network_get_IsConnected,
+    network_GetConnectivity,
+    network_GetCategory,
+    network_SetCategory
+};
+
+static struct network *create_network( const GUID *id )
+{
+    struct network *ret;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+
+    ret->INetwork_iface.lpVtbl = &network_vtbl;
+    ret->refs                  = 1;
+    ret->id                    = *id;
+    ret->connected             = VARIANT_FALSE;
+    ret->connected_to_internet = VARIANT_FALSE;
+    list_init( &ret->entry );
+
+    return ret;
+}
+
 static HRESULT WINAPI cost_manager_QueryInterface(
     INetworkCostManager *iface,
     REFIID riid,
@@ -374,6 +650,12 @@ static ULONG WINAPI list_manager_Release(
 
         TRACE( "destroying %p\n", mgr );
 
+        while ((ptr = list_head( &mgr->networks )))
+        {
+            struct network *network = LIST_ENTRY( ptr, struct network, entry );
+            list_remove( &network->entry );
+            INetwork_Release( &network->INetwork_iface );
+        }
         while ((ptr = list_head( &mgr->connections )))
         {
             struct connection *connection = LIST_ENTRY( ptr, struct connection, entry );
@@ -821,6 +1103,7 @@ static void init_networks( struct list_manager *mgr )
     ULONG ret, flags = GAA_FLAG_SKIP_ANYCAST | GAA_FLAG_SKIP_MULTICAST |
                        GAA_FLAG_SKIP_DNS_SERVER | GAA_FLAG_INCLUDE_ALL_GATEWAYS;
 
+    list_init( &mgr->networks );
     list_init( &mgr->connections );
 
     ret = GetAdaptersAddresses( WS_AF_UNSPEC, flags, NULL, NULL, &size );
@@ -832,22 +1115,31 @@ static void init_networks( struct list_manager *mgr )
     memset( &id, 0, sizeof(id) );
     for (aa = buf; aa; aa = aa->Next)
     {
+        struct network *network;
         struct connection *connection;
 
         id.Data1 = aa->IfIndex;
 
+        /* assume a one-to-one mapping between networks and connections */
+        if (!(network = create_network( &id ))) goto done;
         if (!(connection = create_connection( &id )))
+        {
+            INetwork_Release( &network->INetwork_iface );
             goto done;
+        }
 
         if (aa->FirstUnicastAddress)
         {
+            network->connected = VARIANT_TRUE;
             connection->connected = VARIANT_TRUE;
         }
         if (aa->FirstGatewayAddress)
         {
+            network->connected_to_internet = VARIANT_TRUE;
             connection->connected_to_internet = VARIANT_TRUE;
         }
 
+        list_add_tail( &mgr->networks, &network->entry );
         list_add_tail( &mgr->connections, &connection->entry );
     }
 
