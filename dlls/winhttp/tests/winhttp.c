@@ -2,6 +2,7 @@
  * WinHTTP - tests
  *
  * Copyright 2008 Google (Zac Brown)
+ * Copyright 2015 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3542,6 +3543,27 @@ static void test_IWinHttpRequest(void)
     CoUninitialize();
 }
 
+static void request_get_property(IWinHttpRequest *request, int property, VARIANT *ret)
+{
+    DISPPARAMS params;
+    VARIANT arg;
+    HRESULT hr;
+
+    memset(&params, 0, sizeof(params));
+    params.cNamedArgs = 0;
+    params.rgdispidNamedArgs = NULL;
+    params.cArgs = 1;
+    params.rgvarg = &arg;
+    VariantInit(&arg);
+    V_VT(&arg) = VT_I4;
+    V_I4(&arg) = property;
+    VariantInit(ret);
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0,
+                                DISPATCH_PROPERTYGET, &params, ret, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+}
+
 static void test_IWinHttpRequest_Invoke(void)
 {
     static const WCHAR utf8W[] = {'U','T','F','-','8',0};
@@ -3582,6 +3604,72 @@ static void test_IWinHttpRequest_Invoke(void)
     ok(hr == S_OK, "error %#x\n", hr);
     ok(id == DISPID_HTTPREQUEST_OPTION, "expected DISPID_HTTPREQUEST_OPTION, got %u\n", id);
 
+    request_get_property(request, WinHttpRequestOption_URLCodePage, &ret);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == CP_UTF8, "expected CP_UTF8, got %d\n", V_I4(&ret));
+
+    memset(&params, 0, sizeof(params));
+    params.cArgs = 2;
+    params.cNamedArgs = 0;
+    params.rgvarg = arg;
+    V_VT(&arg[0]) = VT_I4;
+    V_I4(&arg[0]) = 1252;
+    V_VT(&arg[1]) = VT_R8;
+    V_R8(&arg[1]) = 2.0; /* WinHttpRequestOption_URLCodePage */
+    VariantInit(&ret);
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0,
+                                DISPATCH_METHOD, &params, NULL, NULL, &err);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    request_get_property(request, WinHttpRequestOption_URLCodePage, &ret);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == CP_UTF8, "expected CP_UTF8, got %d\n", V_I4(&ret));
+
+    memset(&params, 0, sizeof(params));
+    params.cArgs = 2;
+    params.cNamedArgs = 0;
+    params.rgvarg = arg;
+    V_VT(&arg[0]) = VT_I4;
+    V_I4(&arg[0]) = 1252;
+    V_VT(&arg[1]) = VT_R8;
+    V_R8(&arg[1]) = 2.0; /* WinHttpRequestOption_URLCodePage */
+    VariantInit(&ret);
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0,
+                                DISPATCH_METHOD | DISPATCH_PROPERTYPUT, &params, NULL, NULL, &err);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    request_get_property(request, WinHttpRequestOption_URLCodePage, &ret);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == CP_UTF8, "expected CP_UTF8, got %d\n", V_I4(&ret));
+
+    memset(&params, 0, sizeof(params));
+    params.cArgs = 2;
+    params.cNamedArgs = 0;
+    params.rgvarg = arg;
+    V_VT(&arg[0]) = VT_I4;
+    V_I4(&arg[0]) = 1252;
+    V_VT(&arg[1]) = VT_R8;
+    V_R8(&arg[1]) = 2.0; /* WinHttpRequestOption_URLCodePage */
+    VariantInit(&ret);
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0,
+                                DISPATCH_PROPERTYPUT, &params, NULL, NULL, &err);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    request_get_property(request, WinHttpRequestOption_URLCodePage, &ret);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == 1252, "expected 1252, got %d\n", V_I4(&ret));
+
     memset(&params, 0, sizeof(params));
     params.cArgs = 2;
     params.cNamedArgs = 0;
@@ -3590,16 +3678,127 @@ static void test_IWinHttpRequest_Invoke(void)
     utf8 = SysAllocString(utf8W);
     V_BSTR(&arg[0]) = utf8;
     V_VT(&arg[1]) = VT_R8;
-    V_R8(&arg[1]) = 2.0;
-    VariantInit(&ret);
+    V_R8(&arg[1]) = 2.0; /* WinHttpRequestOption_URLCodePage */
     hr = IWinHttpRequest_Invoke(request, id, &IID_NULL, 0, DISPATCH_METHOD, &params, NULL, NULL, &err);
 todo_wine
     ok(hr == S_OK, "error %#x\n", hr);
+
+    request_get_property(request, WinHttpRequestOption_URLCodePage, &ret);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == 1252, "expected 1252, got %d\n", V_I4(&ret));
 
     VariantInit(&ret);
     hr = IWinHttpRequest_Invoke(request, id, &IID_NULL, 0, DISPATCH_METHOD, &params, &ret, NULL, &err);
 todo_wine
     ok(hr == S_OK, "error %#x\n", hr);
+
+    request_get_property(request, WinHttpRequestOption_URLCodePage, &ret);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == 1252, "expected 1252, got %d\n", V_I4(&ret));
+
+    VariantInit(&ret);
+    hr = IWinHttpRequest_Invoke(request, id, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &params, &ret, NULL, &err);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    request_get_property(request, WinHttpRequestOption_URLCodePage, &ret);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == CP_UTF8, "expected CP_UTF8, got %d\n", V_I4(&ret));
+
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &params, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    hr = IWinHttpRequest_Invoke(request, 255, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &params, NULL, NULL, NULL);
+    ok(hr == DISP_E_MEMBERNOTFOUND, "error %#x\n", hr);
+
+    VariantInit(&ret);
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_IUnknown, 0, DISPATCH_PROPERTYPUT, &params, &ret, NULL, &err);
+todo_wine
+    ok(hr == DISP_E_UNKNOWNINTERFACE, "error %#x\n", hr);
+
+    VariantInit(&ret);
+if (0) /* crashes */
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYPUT, NULL, &ret, NULL, &err);
+
+    params.cArgs = 1;
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &params, &ret, NULL, &err);
+todo_wine
+    ok(hr == DISP_E_TYPEMISMATCH, "error %#x\n", hr);
+
+    VariantInit(&arg[2]);
+    params.cArgs = 3;
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &params, &ret, NULL, &err);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    VariantInit(&arg[0]);
+    VariantInit(&arg[1]);
+    VariantInit(&arg[2]);
+
+    params.cArgs = 1;
+    V_VT(&arg[0]) = VT_I4;
+    V_I4(&arg[0]) = WinHttpRequestOption_URLCodePage;
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYGET, &params, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    V_VT(&ret) = 0xdead;
+    V_I4(&ret) = 0xbeef;
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_METHOD|DISPATCH_PROPERTYGET, &params, &ret, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == CP_UTF8, "expected CP_UTF8, got %d\n", V_I4(&ret));
+
+    V_VT(&ret) = 0xdead;
+    V_I4(&ret) = 0xbeef;
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_METHOD, &params, &ret, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+todo_wine
+    ok(V_VT(&ret) == VT_I4, "expected VT_I4, got %d\n", V_VT(&ret));
+todo_wine
+    ok(V_I4(&ret) == CP_UTF8, "expected CP_UTF8, got %d\n", V_I4(&ret));
+
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_METHOD|DISPATCH_PROPERTYGET, &params, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    V_VT(&ret) = 0xdead;
+    V_I4(&ret) = 0xbeef;
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, 0, &params, &ret, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+todo_wine
+    ok(V_VT(&ret) == VT_EMPTY, "expected VT_EMPTY, got %d\n", V_VT(&ret));
+    ok(V_I4(&ret) == 0xbeef || V_I4(&ret) == 0 /* Win8 */, "expected 0xdead, got %d\n", V_I4(&ret));
+
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, 0, &params, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_IUnknown, 0, DISPATCH_PROPERTYGET, &params, NULL, NULL, NULL);
+todo_wine
+    ok(hr == DISP_E_UNKNOWNINTERFACE, "error %#x\n", hr);
+
+    params.cArgs = 2;
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYGET, &params, NULL, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
+    params.cArgs = 0;
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_OPTION, &IID_NULL, 0, DISPATCH_PROPERTYGET, &params, NULL, NULL, NULL);
+todo_wine
+    ok(hr == DISP_E_PARAMNOTFOUND, "error %#x\n", hr);
 
     SysFreeString(utf8);
     IWinHttpRequest_Release(request);
