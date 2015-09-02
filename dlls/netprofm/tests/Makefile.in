@@ -1,5 +1,5 @@
 TESTDLL   = netprofm.dll
-IMPORTS   = ole32
+IMPORTS   = oleaut32 ole32
 
 C_SRCS = \
 	list.c
