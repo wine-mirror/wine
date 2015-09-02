@@ -187,7 +187,7 @@ msgstr "Software"
 msgid ""
 "Allows you to install new software, or remove existing software from your "
 "computer."
-msgstr "Erlaubt es ihnen, neue Software hinzuzufügen oder zu entfernen."
+msgstr "Erlaubt es Ihnen, neue Software hinzuzufügen oder zu entfernen."
 
 #: appwiz.rc:33 taskmgr.rc:262 winecfg.rc:33
 msgid "Applications"
@@ -806,7 +806,7 @@ msgstr "Datei nicht gefunden"
 
 #: comdlg32.rc:33
 msgid "Please verify that the correct file name was given"
-msgstr "Bitte überprüfen sie, ob der korrekte Dateiname angegeben wurde"
+msgstr "Bitte überprüfen Sie, ob der korrekte Dateiname angegeben wurde"
 
 #: comdlg32.rc:34
 msgid ""
@@ -958,7 +958,7 @@ msgid ""
 "Please enter a value between %1!d! and %2!d!."
 msgstr ""
 "Dieser Wert liegt nicht auf der Seite.\n"
-"Bitte geben sie einen Wert zwischen %1!d! und %2!d! an."
+"Bitte geben Sie einen Wert zwischen %1!d! und %2!d! an."
 
 #: comdlg32.rc:60
 msgid "The 'from' entry cannot exceed the 'to' entry."
@@ -2184,10 +2184,10 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Dieser Assistent hilft ihnen Zertifikate, Zertifikatssperrlisten und "
+"Dieser Assistent hilft Ihnen Zertifikate, Zertifikatssperrlisten und "
 "Zertifikatsvertrauenslisten aus einer Datei zu importieren.\n"
 "\n"
-"Ein Zertifikat dient zur Identifikation von Ihnen oder ihrem Computer. Es "
+"Ein Zertifikat dient zur Identifikation von Ihnen oder Ihrem Computer. Es "
 "kann auch für die Authentifizierung und zum Unterzeichnen genutzt werden. "
 "Zertifikatsspeicher sind Sammlungen von Zertifikaten, Zertifikatssperrlisten "
 "und Zertifikatsvertrauenslisten.\n"
@@ -2319,10 +2319,10 @@ msgid ""
 "\n"
 "To continue, click Next."
 msgstr ""
-"Dieser Assistent hilft ihnen Zertifikate, Zertifikatssperrlisten und "
+"Dieser Assistent hilft Ihnen Zertifikate, Zertifikatssperrlisten und "
 "Zertifikatsvertrauenslisten in eine Datei zu exportieren.\n"
 "\n"
-"Ein Zertifikat dient zur Identifikation von Ihnen oder ihrem Computer. Es "
+"Ein Zertifikat dient zur Identifikation von Ihnen oder Ihrem Computer. Es "
 "kann auch für die Authentifizierung und zum Unterzeichnen genutzt werden. "
 "Zertifikatsspeicher sind Sammlungen von Zertifikaten, Zertifikatssperrlisten "
 "und Zertifikatsvertrauenslisten.\n"
@@ -2913,7 +2913,7 @@ msgstr "Passwort eingeben"
 
 #: cryptui.rc:173
 msgid "You may password-protect a private key."
-msgstr "Der private Schlüssel sollte Passwortgeschützt sein."
+msgstr "Der private Schlüssel sollte passwortgeschützt sein."
 
 #: cryptui.rc:174
 msgid "The passwords do not match."
@@ -8350,7 +8350,7 @@ msgstr ""
 "\n"
 "Wenn Dateien im Zielordner die gleichen Namen haben,\n"
 "werden diese durch Inhalte des Quellordners ersetzt.\n"
-"Möchten sie trotzdem fortfahren?"
+"Möchten Sie trotzdem fortfahren?"
 
 #: shell32.rc:238
 msgid "New Folder"
@@ -8499,7 +8499,7 @@ msgid ""
 "When installed, an ActiveX component has full access to your computer. Do "
 "not click install unless you have absolute trust in the above source."
 msgstr ""
-"Eine installierte ActiveX-Komponente hat Vollzugriff auf ihren Computer. "
+"Eine installierte ActiveX-Komponente hat Vollzugriff auf Ihren Computer. "
 "Klicken Sie nicht auf Installieren, wenn Sie der obigen Quelle nicht absolut "
 "vertrauen."
 
@@ -8769,7 +8769,7 @@ msgid ""
 "The current MIDI setup is damaged. Copy the original MIDIMAP.CFG file to the "
 "Windows SYSTEM directory, and then try again."
 msgstr ""
-"Das aktuelle MIDI-Setup ist beschädigt. Kopieren sie die ursprüngliche Datei "
+"Das aktuelle MIDI-Setup ist beschädigt. Kopieren Sie die ursprüngliche Datei "
 "MIDIMAP.CFG in das Windows-Systemverzeichnis und versuchen Sie es erneut."
 
 #: winmm.rc:60
@@ -9646,7 +9646,7 @@ msgstr "COPY <Dateiname> kopiert eine Datei.\n"
 
 #: cmd.rc:56
 msgid "CTTY changes the input/output device.\n"
-msgstr "CTTY Ändert das Eingabe/Ausgabe - Gerät.\n"
+msgstr "CTTY ändert das Eingabe/Ausgabe - Gerät.\n"
 
 #: cmd.rc:59
 msgid "DATE shows or changes the system date.\n"
@@ -10008,7 +10008,7 @@ msgstr ""
 
 #: cmd.rc:237
 msgid "TIME sets or shows the current system time.\n"
-msgstr "TIME Setzt oder zeigt die aktuelle Systemzeit an.\n"
+msgstr "TIME setzt oder zeigt die aktuelle Systemzeit an.\n"
 
 #: cmd.rc:240
 msgid "TITLE <string> sets the window title for the cmd window.\n"
@@ -10238,7 +10238,7 @@ msgstr ""
 
 #: cmd.rc:353
 msgid "Are you sure?"
-msgstr "Sind sie sicher?"
+msgstr "Sind Sie sicher?"
 
 #: cmd.rc:354 xcopy.rc:43
 msgctxt "Yes key"
@@ -12098,11 +12098,11 @@ msgstr ""
 
 #: taskkill.rc:38
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "Prozess mit der PID %1!u! wurde zum beenden gezwungen.\n"
+msgstr "Prozess mit der PID %1!u! wurde zum Beenden gezwungen.\n"
 
 #: taskkill.rc:39
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "Prozess \"%1\" mit der PID %2!u! wurde zum beenden gezwungen.\n"
+msgstr "Prozess \"%1\" mit der PID %2!u! wurde zum Beenden gezwungen.\n"
 
 #: taskkill.rc:40
 msgid "Error: Could not find process \"%1\".\n"
@@ -12110,7 +12110,7 @@ msgstr "Fehler: Konnte Prozess \"%1\" nicht finden.\n"
 
 #: taskkill.rc:41
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "Fehler: Konnte die Prozessliste nicht Enumerieren.\n"
+msgstr "Fehler: Konnte die Prozessliste nicht enumerieren.\n"
 
 #: taskkill.rc:42
 msgid "Error: Unable to terminate process \"%1\".\n"
