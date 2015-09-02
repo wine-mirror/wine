@@ -10397,7 +10397,7 @@ msgstr " (Ja|Nein|Alle)"
 msgid ""
 "Can't recognize '%1' as an internal or external command, or batch script.\n"
 msgstr ""
-"'%1' konnte nicht als interner oder externer Befehl,\n"
+"'%1' konnte nicht als interner oder externer Befehl\n"
 "oder als Batch-Skript erkannt werden.\n"
 
 #: cmd.rc:393
