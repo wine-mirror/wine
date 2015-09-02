@@ -142,7 +142,7 @@ struct d3d_buffer
 
     struct wined3d_private_store private_store;
     struct wined3d_buffer *wined3d_buffer;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
