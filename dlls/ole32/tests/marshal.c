@@ -195,6 +195,24 @@ static const IUnknownVtbl TestUnknown_Vtbl =
 
 static IUnknown Test_Unknown = { &TestUnknown_Vtbl };
 
+static ULONG WINAPI TestCrash_IUnknown_Release(LPUNKNOWN iface)
+{
+    UnlockModule();
+    if(!cLocks) {
+        trace("crashing...\n");
+        *(int**)0xc = 0;
+    }
+    return 1; /* non-heap-based object */
+}
+
+static const IUnknownVtbl TestCrashUnknown_Vtbl =
+{
+    Test_IUnknown_QueryInterface,
+    Test_IUnknown_AddRef,
+    TestCrash_IUnknown_Release,
+};
+
+static IUnknown TestCrash_Unknown = { &TestCrashUnknown_Vtbl };
 
 static HRESULT WINAPI Test_IClassFactory_QueryInterface(
     LPCLASSFACTORY iface,
@@ -1080,6 +1098,63 @@ static void test_no_couninitialize_client(void)
     ok_last_release_closes(TRUE);
 
     end_host_object(host_tid, host_thread);
+}
+
+static BOOL crash_thread_success;
+
+static DWORD CALLBACK crash_couninitialize_proc(void *p)
+{
+    IStream *stream;
+    HRESULT hr;
+
+    cLocks = 0;
+
+    CoInitialize(NULL);
+
+    hr = CreateStreamOnHGlobal(NULL, TRUE, &stream);
+    ok_ole_success(hr, CreateStreamOnHGlobal);
+
+    hr = CoMarshalInterface(stream, &IID_IUnknown, &TestCrash_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    IStream_Seek(stream, ullZero, STREAM_SEEK_SET, NULL);
+
+    hr = CoReleaseMarshalData(stream);
+    ok_ole_success(hr, CoReleaseMarshalData);
+
+    ok_no_locks();
+
+    hr = CoMarshalInterface(stream, &IID_IUnknown, &TestCrash_Unknown, MSHCTX_INPROC, NULL, MSHLFLAGS_NORMAL);
+    ok_ole_success(hr, CoMarshalInterface);
+
+    ok_more_than_one_lock();
+
+    trace("CoUninitialize >>>\n");
+    CoUninitialize();
+    trace("CoUninitialize <<<\n");
+
+    ok_no_locks();
+
+    IStream_Release(stream);
+    crash_thread_success = TRUE;
+    return 0;
+}
+
+static void test_crash_couninitialize(void)
+{
+    HANDLE thread;
+    DWORD tid;
+
+    if(!GetProcAddress(GetModuleHandleA("kernel32.dll"), "CreateActCtxW")) {
+        win_skip("Skipping crash tests on win2k.\n");
+        return;
+    }
+
+    crash_thread_success = FALSE;
+    thread = CreateThread(NULL, 0, crash_couninitialize_proc, NULL, 0, &tid);
+    ok(!WaitForSingleObject(thread, 10000), "wait timed out\n");
+    CloseHandle(thread);
+    ok(crash_thread_success, "Crash thread failed\n");
 }
 
 /* tests success case of a same-thread table-weak marshal, unmarshal, unmarshal */
@@ -3549,6 +3624,7 @@ START_TEST(marshal)
 
     test_globalinterfacetable();
     test_manualresetevent();
+    test_crash_couninitialize();
 
     /* must be last test as channel hooks can't be unregistered */
     test_channel_hook();

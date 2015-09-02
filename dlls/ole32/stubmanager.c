@@ -36,6 +36,8 @@
 #include "rpc.h"
 
 #include "wine/debug.h"
+#include "wine/exception.h"
+
 #include "compobj_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
@@ -254,7 +256,18 @@ static void stub_manager_delete(struct stub_manager *m)
         IExternalConnection_Release(m->extern_conn);
 
     CoTaskMemFree(m->oxid_info.psa);
-    IUnknown_Release(m->object);
+
+    /* Some broken apps crash in object destructors. We have a test showing
+     * that on winxp+ those crashes are caught and ignored. */
+    __TRY
+    {
+        IUnknown_Release(m->object);
+    }
+    __EXCEPT_PAGE_FAULT
+    {
+        ERR("Got page fault when releasing stub!\n");
+    }
+    __ENDTRY
 
     DEBUG_CLEAR_CRITSEC_NAME(&m->lock);
     DeleteCriticalSection(&m->lock);
