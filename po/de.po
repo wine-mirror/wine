@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-08-28 14:35+0200\n"
-"Last-Translator: Julian Rüger\n"
+"PO-Revision-Date: 2015-09-02 12:17+0200\n"
+"Last-Translator: Florian Pelz\n"
 "Language-Team: German\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -106,7 +106,7 @@ msgstr "Liesmich:"
 
 #: appwiz.rc:86
 msgid "Product Updates:"
-msgstr "Produkt Updates:"
+msgstr "Produkt-Updates:"
 
 #: appwiz.rc:87
 msgid "Comments:"
@@ -296,7 +296,7 @@ msgstr "Audio"
 
 #: avifil32.rc:36
 msgid "Wine AVI-default-filehandler"
-msgstr "Wine AVI-Standard-Dateibehandlungsroutine"
+msgstr "Wine-AVI-Standard-Dateibehandlungsroutine"
 
 #: avifil32.rc:37
 msgid "uncompressed"
@@ -962,7 +962,7 @@ msgstr ""
 
 #: comdlg32.rc:60
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "Der 'von' Eintrag kann nicht größer sein als der 'bis' Eintrag."
+msgstr "Der 'von'-Eintrag kann nicht größer sein als der 'bis'-Eintrag."
 
 #: comdlg32.rc:62
 msgid ""
@@ -1147,7 +1147,7 @@ msgstr "Stromsparmodus; "
 
 #: comdlg32.rc:77
 msgid "Default Printer; "
-msgstr "Standard Drucker; "
+msgstr "Standard-Drucker; "
 
 #: comdlg32.rc:78
 msgid "There are %d documents in the queue"
@@ -1251,11 +1251,11 @@ msgstr "Schlüsselkennung des Antragstellers"
 
 #: crypt32.rc:39
 msgid "CRL Reason Code"
-msgstr "CRL Grundcode"
+msgstr "CRL-Grundcode"
 
 #: crypt32.rc:40
 msgid "CRL Distribution Points"
-msgstr "CRL Verteilungspunkte"
+msgstr "CRL-Verteilungspunkte"
 
 #: crypt32.rc:41
 msgid "Enhanced Key Usage"
@@ -1311,7 +1311,7 @@ msgstr "Unstrukturierte Adresse"
 
 #: crypt32.rc:54
 msgid "S/MIME Capabilities"
-msgstr "S/MIME Möglichkeiten"
+msgstr "S/MIME-Möglichkeiten"
 
 #: crypt32.rc:55
 msgid "Prefer Signed Data"
@@ -1332,7 +1332,7 @@ msgstr "Online-Certificate-Status-Protocol"
 
 #: crypt32.rc:59
 msgid "Certification Authority Issuer"
-msgstr "Zertifizierungsstellen Emittent"
+msgstr "Zertifizierungsstellen-Emittent"
 
 #: crypt32.rc:60
 msgid "Certification Template Name"
@@ -1348,35 +1348,35 @@ msgstr "Zertifikatsvervielfältigung"
 
 #: crypt32.rc:63
 msgid "Netscape Cert Type"
-msgstr "Netscape Zertifikatstyp"
+msgstr "Netscape-Zertifikatstyp"
 
 #: crypt32.rc:64
 msgid "Netscape Base URL"
-msgstr "Netscape Basis-URL"
+msgstr "Netscape-Basis-URL"
 
 #: crypt32.rc:65
 msgid "Netscape Revocation URL"
-msgstr "Netscape Sperrungs-URL"
+msgstr "Netscape-Sperrungs-URL"
 
 #: crypt32.rc:66
 msgid "Netscape CA Revocation URL"
-msgstr "Netscape CA Sperrungs-URL"
+msgstr "Netscape-CA-Sperrungs-URL"
 
 #: crypt32.rc:67
 msgid "Netscape Cert Renewal URL"
-msgstr "Netscape Zertifikatserneuerungs-URL"
+msgstr "Netscape-Zertifikatserneuerungs-URL"
 
 #: crypt32.rc:68
 msgid "Netscape CA Policy URL"
-msgstr "Netscape CA Richtlinien-URL"
+msgstr "Netscape-CA-Richtlinien-URL"
 
 #: crypt32.rc:69
 msgid "Netscape SSL ServerName"
-msgstr "Netscape SSL Servername"
+msgstr "Netscape-SSL-Servername"
 
 #: crypt32.rc:70
 msgid "Netscape Comment"
-msgstr "Netscape Kommentar"
+msgstr "Netscape-Kommentar"
 
 #: crypt32.rc:71
 msgid "Country/Region"
@@ -1432,11 +1432,11 @@ msgstr "Seriennummer"
 
 #: crypt32.rc:84
 msgid "CA Version"
-msgstr "CA Version"
+msgstr "CA-Version"
 
 #: crypt32.rc:85
 msgid "Cross CA Version"
-msgstr "Kreuz CA Version"
+msgstr "Kreuz-CA-Version"
 
 #: crypt32.rc:86
 msgid "Serialized Signature Serial Number"
@@ -1448,7 +1448,7 @@ msgstr "Prinzipalname"
 
 #: crypt32.rc:88
 msgid "Windows Product Update"
-msgstr "Windows Produkt Aktualisierung"
+msgstr "Windows-Produkt-Aktualisierung"
 
 #: crypt32.rc:89
 msgid "Enrollment Name Value Pair"
@@ -1464,11 +1464,11 @@ msgstr "Eintragungs-CSP"
 
 #: crypt32.rc:92
 msgid "CRL Number"
-msgstr "CRL Nummer"
+msgstr "CRL-Nummer"
 
 #: crypt32.rc:93
 msgid "Delta CRL Indicator"
-msgstr "Delta CRL Indikator"
+msgstr "Delta-CRL-Indikator"
 
 #: crypt32.rc:94
 msgid "Issuing Distribution Point"
@@ -1508,43 +1508,43 @@ msgstr "Anwendungsrichtlinieneinschränkungen"
 
 #: crypt32.rc:103
 msgid "CMC Data"
-msgstr "CMC Daten"
+msgstr "CMC-Daten"
 
 #: crypt32.rc:104
 msgid "CMC Response"
-msgstr "CMC Antwort"
+msgstr "CMC-Antwort"
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr "Unsignierte CMC Antwort"
+msgstr "Unsignierte-CMC-Antwort"
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
-msgstr "CMC Statusinformation"
+msgstr "CMC-Statusinformation"
 
 #: crypt32.rc:107
 msgid "CMC Extensions"
-msgstr "CMC Erweiterungen"
+msgstr "CMC-Erweiterungen"
 
 #: crypt32.rc:108
 msgid "CMC Attributes"
-msgstr "CMC Attribute"
+msgstr "CMC-Attribute"
 
 #: crypt32.rc:109
 msgid "PKCS 7 Data"
-msgstr "PKCS 7 Daten"
+msgstr "PKCS-7-Daten"
 
 #: crypt32.rc:110
 msgid "PKCS 7 Signed"
-msgstr "PKCS 7 signiert"
+msgstr "PKCS-7-signiert"
 
 #: crypt32.rc:111
 msgid "PKCS 7 Enveloped"
-msgstr "PKCS 7 umhüllt"
+msgstr "PKCS-7-umhüllt"
 
 #: crypt32.rc:112
 msgid "PKCS 7 Signed Enveloped"
-msgstr "PKCS 7 signiert und umhüllt"
+msgstr "PKCS-7-signiert und -umhüllt"
 
 #: crypt32.rc:113
 msgid "PKCS 7 Digested"
@@ -1552,11 +1552,11 @@ msgstr "PKCS 7 Digested"
 
 #: crypt32.rc:114
 msgid "PKCS 7 Encrypted"
-msgstr "PKCS 7 verschlüsselt"
+msgstr "PKCS-7-verschlüsselt"
 
 #: crypt32.rc:115
 msgid "Previous CA Certificate Hash"
-msgstr "Vorheriger CA Zertifikatshash"
+msgstr "Vorheriger CA-Zertifikatshash"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
@@ -1564,11 +1564,11 @@ msgstr "Virtuelle Basis-CRL-Nummer"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
-msgstr "Nächste CRL Veröffentlichung"
+msgstr "Nächste CRL-Veröffentlichung"
 
 #: crypt32.rc:118
 msgid "CA Encryption Certificate"
-msgstr "CA Verschlüsselungszertifikat"
+msgstr "CA-Verschlüsselungszertifikat"
 
 #: crypt32.rc:119 cryptui.rc:148
 msgid "Key Recovery Agent"
@@ -1592,7 +1592,7 @@ msgstr "Verschlüsselter, privater Schlüssel"
 
 #: crypt32.rc:124
 msgid "Published CRL Locations"
-msgstr "Veröffentlichte CRL Standorte"
+msgstr "Veröffentlichte CRL-Standorte"
 
 #: crypt32.rc:125
 msgid "Enforce Certificate Chain Policy"
@@ -1644,15 +1644,15 @@ msgstr "Private Schlüsselbenutzungsdauer"
 
 #: crypt32.rc:137
 msgid "Client Information"
-msgstr "Client Informationen"
+msgstr "Client-Informationen"
 
 #: crypt32.rc:138
 msgid "Server Authentication"
-msgstr "Server Authentifizierung"
+msgstr "Server-Authentifizierung"
 
 #: crypt32.rc:139
 msgid "Client Authentication"
-msgstr "Client Authentifizierung"
+msgstr "Client-Authentifizierung"
 
 #: crypt32.rc:140
 msgid "Code Signing"
@@ -1676,15 +1676,15 @@ msgstr "Microsoft Zeitstempel"
 
 #: crypt32.rc:145
 msgid "IP security end system"
-msgstr "IP Sicherheitsendsystem"
+msgstr "IP-Sicherheitsendsystem"
 
 #: crypt32.rc:146
 msgid "IP security tunnel termination"
-msgstr "IP Sicherheitstunnelabschluss"
+msgstr "IP-Sicherheitstunnelabschluss"
 
 #: crypt32.rc:147
 msgid "IP security user"
-msgstr "IP Sicherheitsbenutzer"
+msgstr "IP-Sicherheitsbenutzer"
 
 #: crypt32.rc:148
 msgid "Encrypting File System"
@@ -1692,19 +1692,19 @@ msgstr "Verschlüsseltes Dateisystem"
 
 #: crypt32.rc:149 cryptui.rc:133
 msgid "Windows Hardware Driver Verification"
-msgstr "Windows Hardware Treiber Verifizierung"
+msgstr "Windows-Hardware-Treiber-Verifizierung"
 
 #: crypt32.rc:150 cryptui.rc:134
 msgid "Windows System Component Verification"
-msgstr "Windows System Komponenten Verifizierung"
+msgstr "Windows-System-Komponenten-Verifizierung"
 
 #: crypt32.rc:151 cryptui.rc:135
 msgid "OEM Windows System Component Verification"
-msgstr "OEM Windows System Komponenten Verifizierung"
+msgstr "OEM-Windows-System-Komponenten-Verifizierung"
 
 #: crypt32.rc:152 cryptui.rc:136
 msgid "Embedded Windows System Component Verification"
-msgstr "Embedded Windows System Komponenten Verifizierung"
+msgstr "Embedded-Windows-System-Komponenten-Verifizierung"
 
 #: crypt32.rc:153 cryptui.rc:143
 msgid "Key Pack Licenses"
@@ -1712,11 +1712,11 @@ msgstr "Schlüsselpaketlizenzen"
 
 #: crypt32.rc:154 cryptui.rc:144
 msgid "License Server Verification"
-msgstr "Lizenzserver Verifizierung"
+msgstr "Lizenzserver-Verifizierung"
 
 #: crypt32.rc:155 cryptui.rc:146
 msgid "Smart Card Logon"
-msgstr "Smartcard Anmeldung"
+msgstr "Smartcard-Anmeldung"
 
 #: crypt32.rc:156 cryptui.rc:142
 msgid "Digital Rights"
@@ -1736,7 +1736,7 @@ msgstr "Dokumentensignatur"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr "Dazwischenliegende IP Sicherheits-IKE"
+msgstr "Dazwischenliegende IP-Sicherheits-IKE"
 
 #: crypt32.rc:161 cryptui.rc:132
 msgid "File Recovery"
@@ -1744,7 +1744,7 @@ msgstr "Datenwiederherstellung"
 
 #: crypt32.rc:162 cryptui.rc:137
 msgid "Root List Signer"
-msgstr "Stammlisten Signierer"
+msgstr "Stammlisten-Signierer"
 
 #: crypt32.rc:163
 msgid "All application policies"
@@ -1752,7 +1752,7 @@ msgstr "Alle Anwendungsrichtlinien"
 
 #: crypt32.rc:164 cryptui.rc:149
 msgid "Directory Service Email Replication"
-msgstr "Verzeichnisdienst für E-Mail Replikation"
+msgstr "Verzeichnisdienst für E-Mail-Replikation"
 
 #: crypt32.rc:165 cryptui.rc:145
 msgid "Certificate Request Agent"
@@ -1808,11 +1808,11 @@ msgstr "Anderer Name="
 
 #: crypt32.rc:186
 msgid "Email Address="
-msgstr "E-Mail Adresse="
+msgstr "E-Mail-Adresse="
 
 #: crypt32.rc:187
 msgid "DNS Name="
-msgstr "DNS Name="
+msgstr "DNS-Name="
 
 #: crypt32.rc:188
 msgid "Directory Address"
@@ -1824,7 +1824,7 @@ msgstr "URL="
 
 #: crypt32.rc:190
 msgid "IP Address="
-msgstr "IP Adresse="
+msgstr "IP-Adresse="
 
 #: crypt32.rc:191
 msgid "Mask="
@@ -1840,7 +1840,7 @@ msgstr "Unbekannte Verwendung des Schlüssels"
 
 #: crypt32.rc:194
 msgid "Subject Type="
-msgstr "Subjekt Typ="
+msgstr "Subjekt-Typ="
 
 #: crypt32.rc:195
 msgctxt "Certificate Authority"
@@ -1879,7 +1879,7 @@ msgstr "OCSP"
 
 #: crypt32.rc:203
 msgid "CA Issuers"
-msgstr "CA Emittent"
+msgstr "CA-Emittent"
 
 #: crypt32.rc:204
 msgid "Unknown Access Method"
@@ -1891,7 +1891,7 @@ msgstr "Alternativer Name"
 
 #: crypt32.rc:206
 msgid "CRL Distribution Point"
-msgstr "CRL Verteilungspunkt"
+msgstr "CRL-Verteilungspunkt"
 
 #: crypt32.rc:207
 msgid "Distribution Point Name"
@@ -1903,15 +1903,15 @@ msgstr "Vollständiger Name"
 
 #: crypt32.rc:209
 msgid "RDN Name"
-msgstr "RDN Name"
+msgstr "RDN-Name"
 
 #: crypt32.rc:210
 msgid "CRL Reason="
-msgstr "CRL Begründung="
+msgstr "CRL-Begründung="
 
 #: crypt32.rc:211
 msgid "CRL Issuer"
-msgstr "CRL Ausgeber"
+msgstr "CRL-Ausgeber"
 
 #: crypt32.rc:212
 msgid "Key Compromise"
@@ -1919,7 +1919,7 @@ msgstr "Kompromittierung des Schlüssels"
 
 #: crypt32.rc:213
 msgid "CA Compromise"
-msgstr "CA Infekt"
+msgstr "CA-Infekt"
 
 #: crypt32.rc:214
 msgid "Affiliation Changed"
@@ -1987,7 +1987,7 @@ msgstr "Signieren des Zertifikats"
 
 #: crypt32.rc:230
 msgid "Off-line CRL Signing"
-msgstr "Offline Signieren der CRL"
+msgstr "Offline-Signieren der CRL"
 
 #: crypt32.rc:231
 msgid "CRL Signing"
@@ -2003,11 +2003,11 @@ msgstr "Nur Entschlüsseln"
 
 #: crypt32.rc:234
 msgid "SSL Client Authentication"
-msgstr "SSL Client-Authentifizierung"
+msgstr "SSL-Client-Authentifizierung"
 
 #: crypt32.rc:235
 msgid "SSL Server Authentication"
-msgstr "SSL Server-Authentifizierung"
+msgstr "SSL-Server-Authentifizierung"
 
 #: crypt32.rc:236
 msgid "S/MIME"
@@ -2019,15 +2019,15 @@ msgstr "Signatur"
 
 #: crypt32.rc:238
 msgid "SSL CA"
-msgstr "SSL CA"
+msgstr "SSL-CA"
 
 #: crypt32.rc:239
 msgid "S/MIME CA"
-msgstr "S/MIME CA"
+msgstr "S/MIME-CA"
 
 #: crypt32.rc:240
 msgid "Signature CA"
-msgstr "Signatur CA"
+msgstr "Signatur-CA"
 
 #: cryptdlg.rc:30
 msgid "Certificate Policy"
@@ -2039,11 +2039,11 @@ msgstr "Autoritätsschlüsselkennung: "
 
 #: cryptdlg.rc:32
 msgid "Policy Qualifier Info"
-msgstr "Richtlinien Qualifizierungs Information"
+msgstr "Richtlinien-Qualifizierungs-Information"
 
 #: cryptdlg.rc:33
 msgid "Policy Qualifier Id="
-msgstr "Richtlinien Qualifizierungs-ID="
+msgstr "Richtlinien-Qualifizierungs-ID="
 
 #: cryptdlg.rc:36
 msgid "Qualifier"
@@ -2166,11 +2166,11 @@ msgstr "&Physikalischen Speicher anzeigen"
 
 #: cryptui.rc:280 cryptui.rc:291 cryptui.rc:308 cryptui.rc:322 cryptui.rc:71
 msgid "Certificate Import Wizard"
-msgstr "Zertifikat Importassistent"
+msgstr "Zertifikat-Importassistent"
 
 #: cryptui.rc:283
 msgid "Welcome to the Certificate Import Wizard"
-msgstr "Willkommen beim Zertifikat Importassistent"
+msgstr "Willkommen beim Zertifikat-Importassistent"
 
 #: cryptui.rc:286
 msgid ""
@@ -2220,7 +2220,7 @@ msgstr "Privater Informationsaustausch/PKCS #12 (*.pfx; *.p12)"
 
 #: cryptui.rc:303 cryptui.rc:81 cryptui.rc:162
 msgid "Microsoft Serialized Certificate Store (*.sst)"
-msgstr "Microsoft Speicher serieller Zertifikate (*.sst)"
+msgstr "Microsoft-Speicher serieller Zertifikate (*.sst)"
 
 #: cryptui.rc:311
 msgid ""
@@ -2240,7 +2240,7 @@ msgstr "&Alle Zertifikate im folgendem Zertifikatsspeicher speichern:"
 
 #: cryptui.rc:325
 msgid "Completing the Certificate Import Wizard"
-msgstr "Fertigstellung des Zertifikat Importassistenten"
+msgstr "Fertigstellung des Zertifikat-Importassistenten"
 
 #: cryptui.rc:327
 msgid "You have successfully completed the Certificate Import Wizard."
@@ -2301,11 +2301,11 @@ msgstr "&Zertifikatszwecke:"
 #: cryptui.rc:370 cryptui.rc:381 cryptui.rc:394 cryptui.rc:404 cryptui.rc:427
 #: cryptui.rc:436 cryptui.rc:150
 msgid "Certificate Export Wizard"
-msgstr "Zertifikat Exportassistent"
+msgstr "Zertifikat-Exportassistent"
 
 #: cryptui.rc:373
 msgid "Welcome to the Certificate Export Wizard"
-msgstr "Willkommen beim Zertifikat Exportassistent"
+msgstr "Willkommen beim Zertifikat-Exportassistent"
 
 #: cryptui.rc:376
 msgid ""
@@ -2391,7 +2391,7 @@ msgstr "Priva&ten Schlüssel löschen wenn der Export erfolgreich war"
 
 #: cryptui.rc:439
 msgid "Completing the Certificate Export Wizard"
-msgstr "Fertigstellung des Zertifikat Exportassistenten"
+msgstr "Fertigstellung des Zertifikat-Exportassistenten"
 
 #: cryptui.rc:441
 msgid "You have successfully completed the Certificate Export Wizard."
@@ -2533,7 +2533,7 @@ msgstr "%1 (%2!d! Bits)"
 
 #: cryptui.rc:62
 msgid "SHA1 hash"
-msgstr "SHA1 Hash"
+msgstr "SHA1-Hash"
 
 #: cryptui.rc:63
 msgid "Enhanced key usage (property)"
@@ -2591,7 +2591,7 @@ msgstr "Zertifikatsspeicher sind Systemspeicher für Zertifikate."
 
 #: cryptui.rc:77
 msgid "X.509 Certificate (*.cer; *.crt)"
-msgstr "X.509 Zertifikat (*.cer; *.crt)"
+msgstr "X.509-Zertifikat (*.cer; *.crt)"
 
 #: cryptui.rc:78
 msgid "Personal Information Exchange (*.pfx; *.p12)"
@@ -2607,7 +2607,7 @@ msgstr "Zertifikatsvertrauensliste (*.stl)"
 
 #: cryptui.rc:82
 msgid "CMS/PKCS #7 Messages (*.spc; *.p7b)"
-msgstr "CMS/PKCS #7 Zertifikate (*.spc; *.p7b)"
+msgstr "CMS/PKCS-#7-Zertifikate (*.spc; *.p7b)"
 
 #: cryptui.rc:84
 msgid "Please select a file."
@@ -2651,7 +2651,7 @@ msgstr "Zertifikatssperrliste"
 
 #: cryptui.rc:96
 msgid "CMS/PKCS #7 Message"
-msgstr "CMS/PKCS #7 Zertifikat"
+msgstr "CMS/PKCS-#7-Zertifikat"
 
 #: cryptui.rc:97
 msgid "Personal Information Exchange"
@@ -2817,7 +2817,7 @@ msgstr ""
 
 #: cryptui.rc:127
 msgid "Protects e-mail messages"
-msgstr "Sichert E-Mail Nachrichten"
+msgstr "Sichert E-Mail-Nachrichten"
 
 #: cryptui.rc:128
 msgid "Allows secure communication over the Internet"
@@ -2841,7 +2841,7 @@ msgstr "Private Schlüsselarchive"
 
 #: cryptui.rc:151
 msgid "Export Format"
-msgstr "Export Format"
+msgstr "Export-Format"
 
 #: cryptui.rc:152
 msgid "Choose the format in which the content will be saved."
@@ -2849,7 +2849,7 @@ msgstr "Wählen Sie ein Dateiformat."
 
 #: cryptui.rc:153
 msgid "Export Filename"
-msgstr "Export Dateiname"
+msgstr "Export-Dateiname"
 
 #: cryptui.rc:154
 msgid "Specify the name of the file in which the content will be saved."
@@ -2869,7 +2869,7 @@ msgstr "Base64-codiertes X.509 (*.cer)"
 
 #: cryptui.rc:160
 msgid "CMS/PKCS #7 Messages (*.p7b)"
-msgstr "CMS/PKCS #7 Zertifikate (*.p7b)"
+msgstr "CMS/PKCS-#7-Zertifikate (*.p7b)"
 
 #: cryptui.rc:161
 msgid "Personal Information Exchange (*.pfx)"
@@ -3225,7 +3225,7 @@ msgstr "Vorwärts"
 
 #: iccvid.rc:28 iccvid.rc:29
 msgid "Cinepak Video codec"
-msgstr "Cinepak Video Codec"
+msgstr "Cinepak-Video-Codec"
 
 #: ieframe.rc:28 shell32.rc:114 notepad.rc:29 oleview.rc:30 oleview.rc:80
 #: progman.rc:32 taskmgr.rc:35 view.rc:31 winefile.rc:28 winhlp32.rc:31
@@ -3435,11 +3435,11 @@ msgstr "Herausgeber..."
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
-msgstr "Internet Einstellungen"
+msgstr "Internet-Einstellungen"
 
 #: inetcpl.rc:32
 msgid "Configure Wine Internet Browser and related settings"
-msgstr "Wine Internet Browser und zugehörige Einstellungen anpassen"
+msgstr "Wine-Internet-Browser und zugehörige Einstellungen anpassen"
 
 #: inetcpl.rc:33
 msgid "Security settings for zone: "
@@ -3656,11 +3656,11 @@ msgstr "Kann '|' nicht löschen"
 
 #: jscript.rc:60
 msgid "VBArray object expected"
-msgstr "VBArray Objekt erwartet"
+msgstr "VBArray-Objekt erwartet"
 
 #: jscript.rc:61
 msgid "JScript object expected"
-msgstr "JScript Objekt erwartet"
+msgstr "JScript-Objekt erwartet"
 
 #: jscript.rc:62
 msgid "Syntax error in regular expression"
@@ -3688,7 +3688,7 @@ msgstr "Array-Größe muss eine natürliche Zahl sein"
 
 #: jscript.rc:68
 msgid "Array object expected"
-msgstr "Array Objekt erwartet"
+msgstr "Array-Objekt erwartet"
 
 #: winerror.mc:26
 msgid "Success.\n"
@@ -4770,7 +4770,7 @@ msgstr "Kein Herunterfahren im Gange.\n"
 
 #: winerror.mc:1381
 msgid "I/O device error.\n"
-msgstr "E/A Gerätefehler.\n"
+msgstr "E/A-Gerätefehler.\n"
 
 #: winerror.mc:1386
 msgid "No serial devices found.\n"
@@ -4786,7 +4786,7 @@ msgstr "Serielle E/A vollständig.\n"
 
 #: winerror.mc:1401
 msgid "Serial I/O counter timeout.\n"
-msgstr "Zeitüberschreitung von seriellem E/A Zähler.\n"
+msgstr "Zeitüberschreitung von seriellem E/A-Zähler.\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found.\n"
@@ -4934,7 +4934,7 @@ msgstr "Punkt nicht gefunden.\n"
 
 #: winerror.mc:1586
 msgid "No running tracking service.\n"
-msgstr "Kein laufender Tracking Dienst.\n"
+msgstr "Kein laufender Tracking-Dienst.\n"
 
 #: winerror.mc:1591
 msgid "No such volume ID.\n"
@@ -4966,7 +4966,7 @@ msgstr "Potenziell übereinstimmende Datei gefunden.\n"
 
 #: winerror.mc:1626
 msgid "The journal entry was deleted.\n"
-msgstr "Der Journal Eintrag wurde gelöscht.\n"
+msgstr "Der Journal-Eintrag wurde gelöscht.\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
@@ -5182,7 +5182,7 @@ msgstr "Das Benutzerprofil ist ungültig.\n"
 
 #: winerror.mc:1901
 msgid "Not supported on Small Business Server.\n"
-msgstr "Nicht auf Small Business Servern unterstützt.\n"
+msgstr "Nicht auf Small-Business-Servern unterstützt.\n"
 
 #: winerror.mc:1906
 msgid "Not all privileges assigned.\n"
@@ -5442,7 +5442,7 @@ msgstr "Unbekanntes Authentifizierungspaket.\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state.\n"
-msgstr "Fehlerhafter Logon Sitzungsstatus.\n"
+msgstr "Fehlerhafter Logon-Sitzungsstatus.\n"
 
 #: winerror.mc:2231
 msgid "Logon session ID collision.\n"
@@ -5554,7 +5554,7 @@ msgstr "Datenträger beschädigt.\n"
 
 #: winerror.mc:2371
 msgid "No user session key.\n"
-msgstr "Kein Benutzer Sitzungsschlüssel.\n"
+msgstr "Kein Benutzer-Sitzungsschlüssel.\n"
 
 #: winerror.mc:2376
 msgid "License quota exceeded.\n"
@@ -5778,11 +5778,11 @@ msgstr "Keine Systemressourcen.\n"
 
 #: winerror.mc:2651
 msgid "No non-paged system resources.\n"
-msgstr "Keine non-paged Systemressourcen.\n"
+msgstr "Keine Non-Paged-Systemressourcen.\n"
 
 #: winerror.mc:2656
 msgid "No paged system resources.\n"
-msgstr "Keine paged Systemressourcen.\n"
+msgstr "Keine Paged-Systemressourcen.\n"
 
 #: winerror.mc:2661
 msgid "No working set quota.\n"
@@ -5838,7 +5838,7 @@ msgstr "Ereignisprotokolldatei verändert.\n"
 
 #: winerror.mc:2726
 msgid "Installer service failed.\n"
-msgstr "Installer Dienst gescheitert.\n"
+msgstr "Installer-Dienst gescheitert.\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user.\n"
@@ -6254,7 +6254,7 @@ msgstr "Interner RPC-Fehler.\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero.\n"
-msgstr "RPC Division-durch-Null.\n"
+msgstr "RPC-Division-durch-Null.\n"
 
 #: winerror.mc:3256
 msgid "Address error.\n"
@@ -6262,7 +6262,7 @@ msgstr "Adressfehler.\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero.\n"
-msgstr "Fließkomma Division-durch-Null.\n"
+msgstr "Fließkomma-Division-durch-Null.\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow.\n"
@@ -6462,7 +6462,7 @@ msgstr "Bindung unvollständig.\n"
 
 #: winerror.mc:3511
 msgid "RPC comm failure.\n"
-msgstr "RPC Kommunikationsausfall.\n"
+msgstr "RPC-Kommunikationsausfall.\n"
 
 #: winerror.mc:3516
 msgid "Unsupported authorization level.\n"
@@ -6482,7 +6482,7 @@ msgstr "UUID ist nur lokal.\n"
 
 #: winerror.mc:3536
 msgid "Security package error.\n"
-msgstr "Sicherheitspaket Fehler.\n"
+msgstr "Sicherheitspaket-Fehler.\n"
 
 #: winerror.mc:3541
 msgid "Thread not canceled.\n"
@@ -6610,7 +6610,7 @@ msgstr "Der Dateiname konnte nicht gefunden werden.\n"
 
 #: winerror.mc:3696
 msgid "RPC entry type mismatch.\n"
-msgstr "Falscher Typ von RPC Eintrag.\n"
+msgstr "Falscher Typ von RPC-Eintrag.\n"
 
 #: winerror.mc:3701
 msgid "Not all objects could be exported.\n"
@@ -6844,9 +6844,9 @@ msgstr ""
 "Protokollierung und Benutzeroberfläche für die oberen Befehle anpassen:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] Protokolldatei\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
-"MSI Service registrieren:\n"
+"MSI-Service registrieren:\n"
 "\t/y\n"
-"Registrierung des MSI Service aufheben:\n"
+"Registrierung des MSI-Service aufheben:\n"
 "\t/z\n"
 "Diese Hilfe anzeigen:\n"
 "\t/help\n"
@@ -6874,14 +6874,14 @@ msgstr "Wählen Sie das Verzeichnis aus, das %s enthält"
 
 #: msrle32.rc:31
 msgid "Wine MS-RLE video codec"
-msgstr "Wine MS-RLE Videodekoder"
+msgstr "Wine-MS-RLE-Videodekoder"
 
 #: msrle32.rc:32
 msgid ""
 "Wine MS-RLE video codec\n"
 "Copyright 2002 by Michael Guennewig"
 msgstr ""
-"Wine MS-RLE Videodekoder\n"
+"Wine-MS-RLE-Videodekoder\n"
 "Copyright 2002 Michael Günnewig"
 
 #: msvfw32.rc:33
@@ -6922,7 +6922,7 @@ msgstr "Vollständige Frames (Unkomprimiert)"
 
 #: msvidc32.rc:29
 msgid "Wine Video 1 video codec"
-msgstr "Wine Video 1 Video Codec"
+msgstr "Wine-Video-1-Video-Codec"
 
 #: oleacc.rc:31
 msgid "unknown object"
@@ -7150,15 +7150,15 @@ msgstr "Gleichung"
 
 #: oleacc.rc:87
 msgid "drop down button"
-msgstr "Dropdown Schaltfläche"
+msgstr "Dropdown-Schaltfläche"
 
 #: oleacc.rc:88
 msgid "menu button"
-msgstr "Menü Schaltfläche"
+msgstr "Menü-Schaltfläche"
 
 #: oleacc.rc:89
 msgid "grid drop down button"
-msgstr "Raster Dropdown Schaltfläche"
+msgstr "Raster-Dropdown-Schaltfläche"
 
 #: oleacc.rc:90
 msgid "white space"
@@ -7182,7 +7182,7 @@ msgstr "IP-Adresse"
 
 #: oleacc.rc:95
 msgid "outline button"
-msgstr "Gliederung Schaltfläche"
+msgstr "Gliederungs-Schaltfläche"
 
 #: oleacc.rc:97
 msgctxt "object state"
@@ -7886,7 +7886,7 @@ msgstr "Nach rechts scrollen"
 
 #: shdoclc.rc:28
 msgid "Wine Internet Explorer"
-msgstr "Wine Internet Explorer"
+msgstr "Wine-Internet-Explorer"
 
 #: shdoclc.rc:33
 msgid "&w&bPage &p"
@@ -8031,7 +8031,7 @@ msgstr "&Lizenz"
 
 #: shell32.rc:328
 msgid "Running on %s"
-msgstr "Wine Version %s"
+msgstr "Wine-Version %s"
 
 #: shell32.rc:329
 msgid "Wine was brought to you by:"
@@ -8358,7 +8358,7 @@ msgstr "Neuer Ordner"
 
 #: shell32.rc:240
 msgid "Wine Control Panel"
-msgstr "Wine Systemsteuerung"
+msgstr "Wine-Systemsteuerung"
 
 #: shell32.rc:195
 msgid "Unable to display Run File dialog box (internal error)"
@@ -8445,7 +8445,7 @@ msgstr ""
 
 #: shell32.rc:256
 msgid "Wine License"
-msgstr "Wine Lizenz"
+msgstr "Wine-Lizenz"
 
 #: shell32.rc:158
 msgid "Trash"
@@ -8761,7 +8761,7 @@ msgid ""
 "The current MIDI Mapper setup refers to a MIDI device that is not installed "
 "on the system."
 msgstr ""
-"Die gegenwärtigen MIDI-Mapper Einstellungen beziehen sich auf ein MIDI-"
+"Die gegenwärtigen MIDI-Mapper-Einstellungen beziehen sich auf ein MIDI-"
 "Gerät, das nicht installiert ist."
 
 #: winmm.rc:57
@@ -9378,7 +9378,7 @@ msgstr "Endknoten"
 
 #: wldap32.rc:66
 msgid "Alias Dereference Problem"
-msgstr "Alias Dereferenzierungsproblem"
+msgstr "Alias-Dereferenzierungsproblem"
 
 #: wldap32.rc:78
 msgid "Inappropriate Authentication"
@@ -9560,10 +9560,10 @@ msgstr ""
 "\n"
 "  +   Setzt ein Attribut.\n"
 "  -   Löscht ein Attribut.\n"
-"  R   Schreibschutz Dateiattribut.\n"
-"  A   Archiv Dateiattribut.\n"
-"  S   System Dateiattribut.\n"
-"  H   Verbergen Dateiattribut.\n"
+"  R   Schreibschutz-Dateiattribut.\n"
+"  A   Archiv-Dateiattribut.\n"
+"  S   System-Dateiattribut.\n"
+"  H   Verbergen-Dateiattribut.\n"
 "   [Laufwerk:][Pfad][Dateiname]\n"
 "      Gibt eine Datei oder mehrere Dateien für attrib an.\n"
 "  /S  Zutreffende Dateien im aktuellen Verzeichnis und Unterverzeichnissen "
@@ -9863,8 +9863,8 @@ msgstr ""
 "Die folgenden Zeichen haben eine besondere Bedeutung:\n"
 "\n"
 "$$    Dollarzeichen       $_    Zeilenvorschub      $b    Pipe-Zeichen (|)\n"
-"$d    aktuelles Datum     $e    Escape              $g    > Zeichen\n"
-"$l    < Zeichen           $n    aktuelles Laufwerk  $p    aktueller Pfad\n"
+"$d    aktuelles Datum     $e    Escape              $g    Größerzeichen (>)\n"
+"$l    Kleinerzeichen (<)  $n    aktuelles Laufwerk  $p    aktueller Pfad\n"
 "$q    Gleichheitszeichen  $t    aktuelle Zeit       $v    cmd-Version\n"
 "\n"
 "Hinweis: Eingabe des PROMPT-Befehls ohne Argumente setzt den Prompt auf\n"
@@ -10033,14 +10033,14 @@ msgid ""
 "\n"
 "The verify flag has no function in Wine.\n"
 msgstr ""
-"VERIFY wird benutzt, um das Verify Flag zu setzen, zu löschen oder zu\n"
+"VERIFY wird benutzt, um das Verify-Flag zu setzen, zu löschen oder zu\n"
 "testen. Gültige Eingaben sind:\n"
 "\n"
 "VERIFY ON\tSetzt das Flag.\n"
 "VERIFY OFF\tLöscht das Flag.\n"
 "VERIFY\t\tZeigt an, ob ON oder OFF verwendet wird.\n"
 "\n"
-"Das Verify Flag hat keine Funktion in Wine.\n"
+"Das Verify-Flag hat keine Funktion in Wine.\n"
 
 #: cmd.rc:256
 msgid "VER displays the version of cmd you are running.\n"
@@ -10198,7 +10198,7 @@ msgid ""
 msgstr ""
 "In CMD eingebaute Befehle sind:\n"
 "ASSOC\t\tZeigt oder ändert die Zuordnung von Dateierweiterungen\n"
-"ATTRIB\t\tZeigt oder ändert die DOS Dateieigenschaften\n"
+"ATTRIB\t\tZeigt oder ändert die DOS-Dateieigenschaften\n"
 "CALL\t\tRuft eine Batch-Datei innerhalb einer anderen auf\n"
 "CD (CHDIR)\tWechselt in ein Verzeichnis\n"
 "CHOICE\t\tWartet auf einen Tastendruck aus einer wählbaren Liste\n"
@@ -10363,7 +10363,7 @@ msgstr "Drücken Sie eine Taste um fortzufahren... "
 
 #: cmd.rc:384
 msgid "Wine Command Prompt"
-msgstr "Wine Befehlsprozessor"
+msgstr "Wine-Befehlsprozessor"
 
 #: cmd.rc:385
 msgid "Microsoft Windows %1!S!\n"
@@ -10426,7 +10426,7 @@ msgstr ""
 
 #: dxdiag.rc:30
 msgid "DirectX Diagnostic Tool"
-msgstr "DirectX Diagnosewerkzeug"
+msgstr "DirectX-Diagnosewerkzeug"
 
 #: dxdiag.rc:31
 msgid "Usage: dxdiag [/whql:off | /whql:on] [/t filename | /x filename]"
@@ -10434,7 +10434,7 @@ msgstr "Aufruf: dxdiag [/whql:off | /whql:on] [/t Dateiname | /x Dateiname]"
 
 #: explorer.rc:31
 msgid "Wine Explorer"
-msgstr "Wine Explorer"
+msgstr "Wine-Explorer"
 
 #: explorer.rc:33
 msgid "Start"
@@ -10482,7 +10482,7 @@ msgstr "Verbindungsspezifisches DNS-Suffix"
 
 #: ipconfig.rc:36
 msgid "IPv4 address"
-msgstr "IPv4 Adresse"
+msgstr "IPv4-Adresse"
 
 #: ipconfig.rc:37
 msgid "Hostname"
@@ -10522,11 +10522,11 @@ msgstr "DHCP aktiviert"
 
 #: ipconfig.rc:49
 msgid "Default gateway"
-msgstr "Standard Gateway"
+msgstr "Standard-Gateway"
 
 #: ipconfig.rc:50
 msgid "IPv6 address"
-msgstr "IPv6 Adresse"
+msgstr "IPv6-Adresse"
 
 #: net.rc:30
 msgid ""
@@ -10594,27 +10594,27 @@ msgstr "Konnte den Zeiger zum Dienst nicht bekommen.\n"
 
 #: net.rc:37
 msgid "The %1 service is starting.\n"
-msgstr "Der %1 Dienst startet.\n"
+msgstr "Der Dienst %1 startet.\n"
 
 #: net.rc:38
 msgid "The %1 service was started successfully.\n"
-msgstr "Der %1 Dienst wurde erfolgreich gestartet.\n"
+msgstr "Der Dienst %1 wurde erfolgreich gestartet.\n"
 
 #: net.rc:39
 msgid "The %1 service failed to start.\n"
-msgstr "Der Start des %1 Dienstes ist fehlgeschlagen.\n"
+msgstr "Der Start des Dienstes %1 ist fehlgeschlagen.\n"
 
 #: net.rc:40
 msgid "The %1 service is stopping.\n"
-msgstr "Der %1 Dienst wird gestoppt.\n"
+msgstr "Der Dienst %1 wird gestoppt.\n"
 
 #: net.rc:41
 msgid "The %1 service was stopped successfully.\n"
-msgstr "Der %1 Dienst wurde erfolgreich beendet.\n"
+msgstr "Der Dienst %1 wurde erfolgreich beendet.\n"
 
 #: net.rc:42
 msgid "The %1 service failed to stop.\n"
-msgstr "Der %1 Dienst konnte nicht beendet werden.\n"
+msgstr "Der Dienst %1 konnte nicht beendet werden.\n"
 
 #: net.rc:44
 msgid "There are no entries in the list.\n"
@@ -10696,11 +10696,11 @@ msgstr "Bytes"
 
 #: netstat.rc:39
 msgid "Unicast packets"
-msgstr "Unicast Pakete"
+msgstr "Unicast-Pakete"
 
 #: netstat.rc:40
 msgid "Non-unicast packets"
-msgstr "Nicht-Unicast Pakete"
+msgstr "Nicht-Unicast-Pakete"
 
 #: netstat.rc:41
 msgid "Discards"
@@ -11024,15 +11024,15 @@ msgstr "&Registrierungs-Editor ausführen"
 
 #: oleview.rc:42
 msgid "&CoCreateInstance Flag"
-msgstr "&CoCreateInstance Flag"
+msgstr "&CoCreateInstance-Flag"
 
 #: oleview.rc:44
 msgid "&In-process server"
-msgstr "&In-Prozess Server"
+msgstr "&In-Prozess-Server"
 
 #: oleview.rc:45
 msgid "In-process &handler"
-msgstr "In-Prozess &Handler"
+msgstr "In-Prozess-&Handler"
 
 #: oleview.rc:46
 msgid "&Local server"
@@ -11064,7 +11064,7 @@ msgstr "C&LSID in Zwischenablage kopieren"
 
 #: oleview.rc:57
 msgid "Copy &HTML object Tag to clipboard"
-msgstr "&HTML Objekt-Tag in Zwischenablage kopieren"
+msgstr "&HTML-Objekt-Tag in Zwischenablage kopieren"
 
 #: oleview.rc:63
 msgid "&Expert mode"
@@ -11172,7 +11172,7 @@ msgstr "ITypeLib-Betrachter"
 
 #: oleview.rc:99
 msgid "OleView - OLE/COM Object Viewer"
-msgstr "OleView - OLE/COM Objektbetrachter"
+msgstr "OleView - OLE/COM-Objektbetrachter"
 
 #: oleview.rc:100
 msgid "version 1.0"
@@ -11180,7 +11180,7 @@ msgstr "Version 1.0"
 
 #: oleview.rc:103
 msgid "TypeLib files (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
-msgstr "TypeLib Dateien (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
+msgstr "TypeLib-Dateien (*.tlb; *.olb; *.dll; *.ocx; *.exe)"
 
 #: oleview.rc:106
 msgid "Bind to file via a File Moniker"
@@ -11192,7 +11192,7 @@ msgstr "TypeLib-Datei öffnen und Inhalt betrachten"
 
 #: oleview.rc:108
 msgid "Change machine wide Distributed COM settings"
-msgstr "Maschinenweite Distributed COM Einstellungen ändern"
+msgstr "Maschinenweite Distributed-COM-Einstellungen ändern"
 
 #: oleview.rc:109
 msgid "Run the Wine registry editor"
@@ -11251,11 +11251,11 @@ msgstr "Programm-Information, -Version und -Copyright anzeigen"
 
 #: oleview.rc:116
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr "Für Aufruf von CoGetClassObject nach In-Prozess Server fragen"
+msgstr "Für Aufruf von CoGetClassObject nach In-Prozess-Server fragen"
 
 #: oleview.rc:117
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr "Für Aufruf von CoGetClassObject nach In-Prozess Handler fragen"
+msgstr "Für Aufruf von CoGetClassObject nach In-Prozess-Handler fragen"
 
 #: oleview.rc:118
 msgid "Ask for a local server when calling CoGetClassObject"
@@ -11812,7 +11812,7 @@ msgstr "Registrierungsdateien (*.reg)"
 
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
-msgstr "Win9x/NT4 Registrierungsdateien (REGEDIT4)"
+msgstr "Win9x/NT4-Registrierungsdateien (REGEDIT4)"
 
 #: regedit.rc:204
 msgid "(Default)"
@@ -11965,7 +11965,7 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
-"Wine DLL-Registrierungswerkzeug\n"
+"Wine-DLL-Registrierungswerkzeug\n"
 "\n"
 "Stellt Dienste zur DLL-Registrierung bereit.\n"
 "\n"
@@ -12086,14 +12086,14 @@ msgstr "Fehler: Optionen /im und /pid widersprechen sich.\n"
 #: taskkill.rc:36
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
 msgstr ""
-"Ein Beendigungssignal wurde an die Top-Level Fenster des Prozesses mit der "
+"Ein Beendigungssignal wurde an die Top-Level-Fenster des Prozesses mit der "
 "PID %1!u! geschickt.\n"
 
 #: taskkill.rc:37
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
 msgstr ""
-"Ein Beendigungssignal wurde an die Top-Level Fenster des Prozesses \"%1\" "
+"Ein Beendigungssignal wurde an die Top-Level-Fenster des Prozesses \"%1\" "
 "mit der PID %2!u! geschickt.\n"
 
 #: taskkill.rc:38
@@ -12170,7 +12170,7 @@ msgstr "&Spalten auswählen..."
 
 #: taskmgr.rc:69 taskmgr.rc:258
 msgid "&CPU History"
-msgstr "&CPU Verlauf"
+msgstr "&CPU-Verlauf"
 
 #: taskmgr.rc:71 taskmgr.rc:259
 msgid "&One Graph, All CPUs"
@@ -12270,7 +12270,7 @@ msgstr "P&rozesse aller Benutzer anzeigen"
 
 #: taskmgr.rc:372
 msgid "CPU usage"
-msgstr "CPU Auslastung"
+msgstr "CPU-Auslastung"
 
 #: taskmgr.rc:373
 msgid "Mem usage"
@@ -12608,7 +12608,7 @@ msgstr ""
 #: taskmgr.rc:190
 msgid "Task Manager is minimized when a SwitchTo operation is performed"
 msgstr ""
-"Der Task-Manager minimiert sich, wenn eine 'Wechseln zu' Operation "
+"Der Task-Manager minimiert sich, wenn eine 'Wechseln zu'-Operation "
 "ausgeführt wird"
 
 #: taskmgr.rc:191
@@ -12748,7 +12748,7 @@ msgstr "Setzt den Prozess in die HOCH-Prioritätsklasse"
 
 #: taskmgr.rc:240
 msgid "Sets process to the ABOVE NORMAL priority class"
-msgstr "Setzt den Prozess in die HÖHER ALS NORMAL-Prioritätsklasse"
+msgstr "Setzt den Prozess in die HÖHER-ALS-NORMAL-Prioritätsklasse"
 
 #: taskmgr.rc:242
 msgid "Sets process to the NORMAL priority class"
@@ -12756,7 +12756,7 @@ msgstr "Setzt den Prozess in die NORMAL-Prioritätsklasse"
 
 #: taskmgr.rc:244
 msgid "Sets process to the BELOW NORMAL priority class"
-msgstr "Setzt den Prozess in die NIEDRIGER ALS NORMAL-Prioritätsklasse"
+msgstr "Setzt den Prozess in die NIEDRIGER-ALS-NORMAL-Prioritätsklasse"
 
 #: taskmgr.rc:245
 msgid "Sets process to the LOW priority class"
@@ -12848,7 +12848,7 @@ msgstr "Basispriorität"
 
 #: taskmgr.rc:301
 msgid "Task Manager Warning"
-msgstr "Task Manager Warnung"
+msgstr "Task-Manager-Warnung"
 
 #: taskmgr.rc:304
 msgid ""
@@ -12908,7 +12908,7 @@ msgstr "Die Prozessoraffinität konnte nicht geändert werden"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
-msgstr "Leerlauf Prozess"
+msgstr "Leerlauf-Prozess"
 
 #: taskmgr.rc:323
 msgid "Not Responding"
@@ -12924,7 +12924,7 @@ msgstr "Task"
 
 #: uninstaller.rc:29
 msgid "Wine Application Uninstaller"
-msgstr "Wine Anwendungsentferner"
+msgstr "Wine-Anwendungsentferner"
 
 #: uninstaller.rc:30
 msgid ""
@@ -12957,7 +12957,7 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
-"Wine Anwendungsentferner\n"
+"Wine-Anwendungsentferner\n"
 "\n"
 "Deinstalliert Anwendungen aus dem aktuellen Wineprefix.\n"
 "\n"
@@ -13005,7 +13005,7 @@ msgstr "&Rechts"
 
 #: view.rc:49
 msgid "Regular Metafile Viewer"
-msgstr "Regulärer Metafile Betrachter"
+msgstr "Regulärer Metafile-Betrachter"
 
 #: wineboot.rc:31
 msgid "Waiting for Program"
@@ -13049,7 +13049,7 @@ msgstr ""
 
 #: winecfg.rc:143
 msgid "Windows registration information"
-msgstr "Windows Registrierungs-Informationen"
+msgstr "Windows-Registrierungs-Informationen"
 
 #: winecfg.rc:144
 msgid "&Owner:"
@@ -13116,7 +13116,7 @@ msgstr "Bildschirmauflösung"
 
 #: winecfg.rc:184
 msgid "This is a sample text using 10 point Tahoma"
-msgstr "Dies ist ein Beispieltext in 10 Punkt Tahoma"
+msgstr "Dies ist ein Beispieltext in 10-Punkt-Tahoma"
 
 #: winecfg.rc:191
 msgid "DLL overrides"
@@ -13889,7 +13889,7 @@ msgstr ""
 
 #: winedbg.rc:38
 msgid "Wine program crash"
-msgstr "Wine Programmabsturz"
+msgstr "Wine-Programmabsturz"
 
 #: winedbg.rc:39
 msgid "Internal errors - invalid parameters received"
@@ -13985,7 +13985,7 @@ msgstr "&Nebeneinander\tStrg+F4"
 
 #: winefile.rc:84
 msgid "&About Wine File Manager"
-msgstr "&Über Wine Dateimanager"
+msgstr "&Über Wine-Dateimanager"
 
 #: winefile.rc:125
 msgid "Select destination"
@@ -14074,7 +14074,7 @@ msgstr "Fehler während der Schriftart-Auswahl."
 
 #: winefile.rc:96
 msgid "Wine File Manager"
-msgstr "Wine Dateimanager"
+msgstr "Wine-Dateimanager"
 
 #: winefile.rc:98
 msgid "root fs"
@@ -14261,7 +14261,7 @@ msgstr "&Hilfe benutzen\tF1"
 
 #: winhlp32.rc:59
 msgid "&About Wine Help"
-msgstr "&Über Wine Hilfe"
+msgstr "&Über Wine-Hilfe"
 
 #: winhlp32.rc:67
 msgid "Annotation..."
@@ -14281,7 +14281,7 @@ msgstr "Suche"
 
 #: winhlp32.rc:81
 msgid "Wine Help"
-msgstr "Wine Hilfe"
+msgstr "Wine-Hilfe"
 
 #: winhlp32.rc:86
 msgid "Error while reading the help file `%s'"
@@ -14423,7 +14423,7 @@ msgstr "&Blassgelb\tStrg+2"
 
 #: wordpad.rc:96
 msgid "&About Wine Wordpad"
-msgstr "Ü&ber Wine Wordpad"
+msgstr "Ü&ber Wine-Wordpad"
 
 #: wordpad.rc:133
 msgid "Automatic"
