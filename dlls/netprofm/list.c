@@ -1193,8 +1193,22 @@ static HRESULT WINAPI list_manager_GetNetwork(
     GUID gdNetworkId,
     INetwork **ppNetwork )
 {
-    FIXME( "%p, %s, %p\n", iface, debugstr_guid(&gdNetworkId), ppNetwork );
-    return E_NOTIMPL;
+    struct list_manager *mgr = impl_from_INetworkListManager( iface );
+    struct network *network;
+
+    TRACE( "%p, %s, %p\n", iface, debugstr_guid(&gdNetworkId), ppNetwork );
+
+    LIST_FOR_EACH_ENTRY( network, &mgr->networks, struct network, entry )
+    {
+        if (IsEqualGUID( &network->id, &gdNetworkId ))
+        {
+            *ppNetwork = &network->INetwork_iface;
+            INetwork_AddRef( *ppNetwork );
+            return S_OK;
+        }
+    }
+
+    return S_FALSE;
 }
 
 static HRESULT WINAPI list_manager_GetNetworkConnections(
