@@ -76,11 +76,11 @@ UINT d3d10_cpu_access_flags_from_d3d11_cpu_access_flags(UINT cpu_access_flags) D
 UINT d3d11_resource_misc_flags_from_d3d10_resource_misc_flags(UINT resource_misc_flags) DECLSPEC_HIDDEN;
 UINT d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(UINT resource_misc_flags) DECLSPEC_HIDDEN;
 
-HRESULT d3d10_get_private_data(struct wined3d_private_store *store,
+HRESULT d3d_get_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT *data_size, void *data) DECLSPEC_HIDDEN;
-HRESULT d3d10_set_private_data(struct wined3d_private_store *store,
+HRESULT d3d_set_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT data_size, const void *data) DECLSPEC_HIDDEN;
-HRESULT d3d10_set_private_data_interface(struct wined3d_private_store *store,
+HRESULT d3d_set_private_data_interface(struct wined3d_private_store *store,
         REFGUID guid, const IUnknown *object) DECLSPEC_HIDDEN;
 
 static inline void read_dword(const char **ptr, DWORD *d)

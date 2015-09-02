@@ -209,7 +209,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_GetPrivateData(ID3D10Vertex
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_get_private_data(&shader->private_store, guid, data_size, data);
+    return d3d_get_private_data(&shader->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_SetPrivateData(ID3D10VertexShader *iface,
@@ -220,7 +220,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_SetPrivateData(ID3D10Vertex
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_set_private_data(&shader->private_store, guid, data_size, data);
+    return d3d_set_private_data(&shader->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_SetPrivateDataInterface(ID3D10VertexShader *iface,
@@ -230,7 +230,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_SetPrivateDataInterface(ID3
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d10_set_private_data_interface(&shader->private_store, guid, data);
+    return d3d_set_private_data_interface(&shader->private_store, guid, data);
 }
 
 static const struct ID3D10VertexShaderVtbl d3d10_vertex_shader_vtbl =
@@ -385,7 +385,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_GetPrivateData(ID3D10Geom
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_get_private_data(&shader->private_store, guid, data_size, data);
+    return d3d_get_private_data(&shader->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_SetPrivateData(ID3D10GeometryShader *iface,
@@ -396,7 +396,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_SetPrivateData(ID3D10Geom
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_set_private_data(&shader->private_store, guid, data_size, data);
+    return d3d_set_private_data(&shader->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_SetPrivateDataInterface(ID3D10GeometryShader *iface,
@@ -406,7 +406,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_SetPrivateDataInterface(I
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d10_set_private_data_interface(&shader->private_store, guid, data);
+    return d3d_set_private_data_interface(&shader->private_store, guid, data);
 }
 
 static const struct ID3D10GeometryShaderVtbl d3d10_geometry_shader_vtbl =
@@ -576,7 +576,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_GetPrivateData(ID3D10PixelSh
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_get_private_data(&shader->private_store, guid, data_size, data);
+    return d3d_get_private_data(&shader->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateData(ID3D10PixelShader *iface,
@@ -587,7 +587,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateData(ID3D10PixelSh
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_set_private_data(&shader->private_store, guid, data_size, data);
+    return d3d_set_private_data(&shader->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateDataInterface(ID3D10PixelShader *iface,
@@ -597,7 +597,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateDataInterface(ID3D
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d10_set_private_data_interface(&shader->private_store, guid, data);
+    return d3d_set_private_data_interface(&shader->private_store, guid, data);
 }
 
 static const struct ID3D10PixelShaderVtbl d3d10_pixel_shader_vtbl =

@@ -553,7 +553,7 @@ DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type)
     }
 }
 
-HRESULT d3d10_get_private_data(struct wined3d_private_store *store,
+HRESULT d3d_get_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT *data_size, void *data)
 {
     const struct wined3d_private_data *stored_data;
@@ -591,7 +591,7 @@ HRESULT d3d10_get_private_data(struct wined3d_private_store *store,
     return S_OK;
 }
 
-HRESULT d3d10_set_private_data(struct wined3d_private_store *store,
+HRESULT d3d_set_private_data(struct wined3d_private_store *store,
         REFGUID guid, UINT data_size, const void *data)
 {
     struct wined3d_private_data *entry;
@@ -617,13 +617,13 @@ HRESULT d3d10_set_private_data(struct wined3d_private_store *store,
     return hr;
 }
 
-HRESULT d3d10_set_private_data_interface(struct wined3d_private_store *store,
+HRESULT d3d_set_private_data_interface(struct wined3d_private_store *store,
         REFGUID guid, const IUnknown *object)
 {
     HRESULT hr;
 
     if (!object)
-        return d3d10_set_private_data(store, guid, sizeof(object), &object);
+        return d3d_set_private_data(store, guid, sizeof(object), &object);
 
     wined3d_mutex_lock();
     hr = wined3d_private_store_set_private_data(store,

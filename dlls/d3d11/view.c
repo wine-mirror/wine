@@ -436,7 +436,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_GetPrivateData(ID3D10De
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_get_private_data(&view->private_store, guid, data_size, data);
+    return d3d_get_private_data(&view->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_SetPrivateData(ID3D10DepthStencilView *iface,
@@ -447,7 +447,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_SetPrivateData(ID3D10De
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_set_private_data(&view->private_store, guid, data_size, data);
+    return d3d_set_private_data(&view->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_SetPrivateDataInterface(ID3D10DepthStencilView *iface,
@@ -457,7 +457,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_view_SetPrivateDataInterface
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d10_set_private_data_interface(&view->private_store, guid, data);
+    return d3d_set_private_data_interface(&view->private_store, guid, data);
 }
 
 /* ID3D10View methods */
@@ -689,7 +689,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_GetPrivateData(ID3D10Re
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_get_private_data(&view->private_store, guid, data_size, data);
+    return d3d_get_private_data(&view->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_SetPrivateData(ID3D10RenderTargetView *iface,
@@ -700,7 +700,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_SetPrivateData(ID3D10Re
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_set_private_data(&view->private_store, guid, data_size, data);
+    return d3d_set_private_data(&view->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_SetPrivateDataInterface(ID3D10RenderTargetView *iface,
@@ -710,7 +710,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_SetPrivateDataInterface
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d10_set_private_data_interface(&view->private_store, guid, data);
+    return d3d_set_private_data_interface(&view->private_store, guid, data);
 }
 
 /* ID3D10View methods */
@@ -954,7 +954,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_GetPrivateData(ID3D1
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_get_private_data(&view->private_store, guid, data_size, data);
+    return d3d_get_private_data(&view->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateData(ID3D10ShaderResourceView *iface,
@@ -965,7 +965,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateData(ID3D1
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_set_private_data(&view->private_store, guid, data_size, data);
+    return d3d_set_private_data(&view->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateDataInterface(ID3D10ShaderResourceView *iface,
@@ -975,7 +975,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateDataInterf
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d10_set_private_data_interface(&view->private_store, guid, data);
+    return d3d_set_private_data_interface(&view->private_store, guid, data);
 }
 
 /* ID3D10View methods */

@@ -134,7 +134,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_texture2d_GetPrivateData(ID3D11Texture2D 
         return hr;
     }
 
-    return d3d10_get_private_data(&texture->private_store, guid, data_size, data);
+    return d3d_get_private_data(&texture->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture2d_SetPrivateData(ID3D11Texture2D *iface,
@@ -154,7 +154,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_texture2d_SetPrivateData(ID3D11Texture2D 
         return hr;
     }
 
-    return d3d10_set_private_data(&texture->private_store, guid, data_size, data);
+    return d3d_set_private_data(&texture->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture2d_SetPrivateDataInterface(ID3D11Texture2D *iface,
@@ -174,7 +174,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_texture2d_SetPrivateDataInterface(ID3D11T
         return hr;
     }
 
-    return d3d10_set_private_data_interface(&texture->private_store, guid, data);
+    return d3d_set_private_data_interface(&texture->private_store, guid, data);
 }
 
 static void STDMETHODCALLTYPE d3d11_texture2d_GetType(ID3D11Texture2D *iface,
@@ -760,7 +760,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_GetPrivateData(ID3D10Texture3D 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_get_private_data(&texture->private_store, guid, data_size, data);
+    return d3d_get_private_data(&texture->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateData(ID3D10Texture3D *iface,
@@ -771,7 +771,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateData(ID3D10Texture3D 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d10_set_private_data(&texture->private_store, guid, data_size, data);
+    return d3d_set_private_data(&texture->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateDataInterface(ID3D10Texture3D *iface,
@@ -781,7 +781,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_SetPrivateDataInterface(ID3D10T
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d10_set_private_data_interface(&texture->private_store, guid, data);
+    return d3d_set_private_data_interface(&texture->private_store, guid, data);
 }
 
 static void STDMETHODCALLTYPE d3d10_texture3d_GetType(ID3D10Texture3D *iface,
