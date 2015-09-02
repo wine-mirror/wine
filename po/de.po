@@ -3972,15 +3972,15 @@ msgstr "Keine Prozess-Slots.\n"
 
 #: winerror.mc:376
 msgid "Too many semaphores.\n"
-msgstr "Zu viele Semaphoren.\n"
+msgstr "Zu viele Semaphore.\n"
 
 #: winerror.mc:381
 msgid "Exclusive semaphore already owned.\n"
-msgstr "Exklusive Semaphore bereits zugewiesen.\n"
+msgstr "Exklusiver Semaphor bereits zugewiesen.\n"
 
 #: winerror.mc:386
 msgid "Semaphore is set.\n"
-msgstr "Semaphore ist gesetzt.\n"
+msgstr "Semaphor ist gesetzt.\n"
 
 #: winerror.mc:391
 msgid "Too many semaphore requests.\n"
@@ -4420,7 +4420,7 @@ msgstr "Mutex nicht im Besitz des Aufrufers.\n"
 
 #: winerror.mc:946
 msgid "Too many posts to semaphore.\n"
-msgstr "Zu viele Posts an Semaphore.\n"
+msgstr "Zu viele Posts an Semaphor.\n"
 
 #: winerror.mc:951
 msgid "Read/WriteProcessMemory partially completed.\n"
@@ -7862,11 +7862,11 @@ msgstr "Runterscrollen"
 
 #: shdoclc.rc:235
 msgid "Left Edge"
-msgstr "Linke Ecke"
+msgstr "Linker Rand"
 
 #: shdoclc.rc:236
 msgid "Right Edge"
-msgstr "Rechte Ecke"
+msgstr "Rechter Rand"
 
 #: shdoclc.rc:238
 msgid "Page Left"
@@ -9860,7 +9860,7 @@ msgstr ""
 "unmittelbar danach), erscheint am Zeilenanfang, wenn cmd auf Eingabe\n"
 "wartet.\n"
 "\n"
-"Die folgenden Zeichen haben eine besondere Bedeutung:\n"
+"Die folgenden Zeichenketten haben eine besondere Bedeutung:\n"
 "\n"
 "$$    Dollarzeichen       $_    Zeilenvorschub      $b    Pipe-Zeichen (|)\n"
 "$d    aktuelles Datum     $e    Escape              $g    Größerzeichen (>)\n"
@@ -10048,7 +10048,7 @@ msgstr "VER zeigt die aktuelle Version von CMD an.\n"
 
 #: cmd.rc:259
 msgid "VOL shows the volume label of a disk device.\n"
-msgstr "VOL zeigt die Datenträgernummer an.\n"
+msgstr "VOL zeigt die Datenträgerbezeichnung an.\n"
 
 #: cmd.rc:263
 msgid ""
