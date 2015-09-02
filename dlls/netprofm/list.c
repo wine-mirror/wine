@@ -628,6 +628,220 @@ static const INetworkCostManagerVtbl cost_manager_vtbl =
     cost_manager_SetDestinationAddresses
 };
 
+struct networks_enum
+{
+    IEnumNetworks        IEnumNetworks_iface;
+    LONG                 refs;
+    struct list_manager *mgr;
+    struct list         *cursor;
+};
+
+static inline struct networks_enum *impl_from_IEnumNetworks(
+    IEnumNetworks *iface )
+{
+    return CONTAINING_RECORD( iface, struct networks_enum, IEnumNetworks_iface );
+}
+
+static HRESULT WINAPI networks_enum_QueryInterface(
+    IEnumNetworks *iface, REFIID riid, void **obj )
+{
+    struct networks_enum *iter = impl_from_IEnumNetworks( iface );
+
+    TRACE( "%p, %s, %p\n", iter, debugstr_guid(riid), obj );
+
+    if (IsEqualIID( riid, &IID_IEnumNetworks ) ||
+        IsEqualIID( riid, &IID_IDispatch ) ||
+        IsEqualIID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+        IEnumNetworks_AddRef( iface );
+        return S_OK;
+    }
+    else
+    {
+        WARN( "interface not supported %s\n", debugstr_guid(riid) );
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+}
+
+static ULONG WINAPI networks_enum_AddRef(
+    IEnumNetworks *iface )
+{
+    struct networks_enum *iter = impl_from_IEnumNetworks( iface );
+
+    TRACE( "%p\n", iter );
+    return InterlockedIncrement( &iter->refs );
+}
+
+static ULONG WINAPI networks_enum_Release(
+    IEnumNetworks *iface )
+{
+    struct networks_enum *iter = impl_from_IEnumNetworks( iface );
+    LONG refs;
+
+    TRACE( "%p\n", iter );
+
+    if (!(refs = InterlockedDecrement( &iter->refs )))
+    {
+        INetworkListManager_Release( &iter->mgr->INetworkListManager_iface );
+        heap_free( iter );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI networks_enum_GetTypeInfoCount(
+    IEnumNetworks *iface,
+    UINT *count )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networks_enum_GetTypeInfo(
+    IEnumNetworks *iface,
+    UINT index,
+    LCID lcid,
+    ITypeInfo **info )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networks_enum_GetIDsOfNames(
+    IEnumNetworks *iface,
+    REFIID riid,
+    LPOLESTR *names,
+    UINT count,
+    LCID lcid,
+    DISPID *dispid )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networks_enum_Invoke(
+    IEnumNetworks *iface,
+    DISPID member,
+    REFIID riid,
+    LCID lcid,
+    WORD flags,
+    DISPPARAMS *params,
+    VARIANT *result,
+    EXCEPINFO *excep_info,
+    UINT *arg_err )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networks_enum_get__NewEnum(
+    IEnumNetworks *iface, IEnumVARIANT **ppEnumVar )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI networks_enum_Next(
+    IEnumNetworks *iface, ULONG count, INetwork **ret, ULONG *fetched )
+{
+    struct networks_enum *iter = impl_from_IEnumNetworks( iface );
+    ULONG i = 0;
+
+    TRACE( "%p, %u %p %p\n", iter, count, ret, fetched );
+
+    if (fetched) *fetched = 0;
+    if (!count) return S_OK;
+
+    while (iter->cursor && i < count)
+    {
+        struct network *network = LIST_ENTRY( iter->cursor, struct network, entry );
+        ret[i] = &network->INetwork_iface;
+        INetwork_AddRef( ret[i] );
+        iter->cursor = list_next( &iter->mgr->networks, iter->cursor );
+        i++;
+    }
+    if (fetched) *fetched = i;
+
+    return i < count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI networks_enum_Skip(
+    IEnumNetworks *iface, ULONG count )
+{
+    struct networks_enum *iter = impl_from_IEnumNetworks( iface );
+
+    TRACE( "%p, %u\n", iter, count);
+
+    if (!count) return S_OK;
+    if (!iter->cursor) return S_FALSE;
+
+    while (count--)
+    {
+        iter->cursor = list_next( &iter->mgr->networks, iter->cursor );
+        if (!iter->cursor) break;
+    }
+
+    return count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI networks_enum_Reset(
+    IEnumNetworks *iface )
+{
+    struct networks_enum *iter = impl_from_IEnumNetworks( iface );
+
+    TRACE( "%p\n", iter );
+
+    iter->cursor = list_head( &iter->mgr->networks );
+    return S_OK;
+}
+
+static HRESULT create_networks_enum(
+    struct list_manager *, IEnumNetworks** );
+
+static HRESULT WINAPI networks_enum_Clone(
+    IEnumNetworks *iface, IEnumNetworks **ret )
+{
+    struct networks_enum *iter = impl_from_IEnumNetworks( iface );
+
+    TRACE( "%p, %p\n", iter, ret );
+    return create_networks_enum( iter->mgr, ret );
+}
+
+static const IEnumNetworksVtbl networks_enum_vtbl =
+{
+    networks_enum_QueryInterface,
+    networks_enum_AddRef,
+    networks_enum_Release,
+    networks_enum_GetTypeInfoCount,
+    networks_enum_GetTypeInfo,
+    networks_enum_GetIDsOfNames,
+    networks_enum_Invoke,
+    networks_enum_get__NewEnum,
+    networks_enum_Next,
+    networks_enum_Skip,
+    networks_enum_Reset,
+    networks_enum_Clone
+};
+
+static HRESULT create_networks_enum(
+    struct list_manager *mgr, IEnumNetworks **ret )
+{
+    struct networks_enum *iter;
+
+    *ret = NULL;
+    if (!(iter = heap_alloc( sizeof(*iter) ))) return E_OUTOFMEMORY;
+
+    iter->IEnumNetworks_iface.lpVtbl = &networks_enum_vtbl;
+    iter->cursor = list_head( &mgr->networks );
+    iter->mgr    = mgr;
+    INetworkListManager_AddRef( &mgr->INetworkListManager_iface );
+    iter->refs   = 1;
+
+    *ret = &iter->IEnumNetworks_iface;
+    return S_OK;
+}
+
 static inline struct list_manager *impl_from_INetworkListManager(
     INetworkListManager *iface )
 {
@@ -752,8 +966,12 @@ static HRESULT WINAPI list_manager_GetNetworks(
     NLM_ENUM_NETWORK Flags,
     IEnumNetworks **ppEnumNetwork )
 {
-    FIXME( "%p, %x, %p\n", iface, Flags, ppEnumNetwork );
-    return E_NOTIMPL;
+    struct list_manager *mgr = impl_from_INetworkListManager( iface );
+
+    TRACE( "%p, %x, %p\n", iface, Flags, ppEnumNetwork );
+    if (Flags) FIXME( "flags %08x not supported\n", Flags );
+
+    return create_networks_enum( mgr, ppEnumNetwork );
 }
 
 static HRESULT WINAPI list_manager_GetNetwork(
