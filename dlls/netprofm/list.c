@@ -848,6 +848,220 @@ static inline struct list_manager *impl_from_INetworkListManager(
     return CONTAINING_RECORD( iface, struct list_manager, INetworkListManager_iface );
 }
 
+struct connections_enum
+{
+    IEnumNetworkConnections IEnumNetworkConnections_iface;
+    LONG                    refs;
+    struct list_manager    *mgr;
+    struct list            *cursor;
+};
+
+static inline struct connections_enum *impl_from_IEnumNetworkConnections(
+    IEnumNetworkConnections *iface )
+{
+    return CONTAINING_RECORD( iface, struct connections_enum, IEnumNetworkConnections_iface );
+}
+
+static HRESULT WINAPI connections_enum_QueryInterface(
+    IEnumNetworkConnections *iface, REFIID riid, void **obj )
+{
+    struct connections_enum *iter = impl_from_IEnumNetworkConnections( iface );
+
+    TRACE( "%p, %s, %p\n", iter, debugstr_guid(riid), obj );
+
+    if (IsEqualIID( riid, &IID_IEnumNetworkConnections ) ||
+        IsEqualIID( riid, &IID_IDispatch ) ||
+        IsEqualIID( riid, &IID_IUnknown ))
+    {
+        *obj = iface;
+        IEnumNetworkConnections_AddRef( iface );
+        return S_OK;
+    }
+    else
+    {
+        WARN( "interface not supported %s\n", debugstr_guid(riid) );
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+}
+
+static ULONG WINAPI connections_enum_AddRef(
+    IEnumNetworkConnections *iface )
+{
+    struct connections_enum *iter = impl_from_IEnumNetworkConnections( iface );
+
+    TRACE( "%p\n", iter );
+    return InterlockedIncrement( &iter->refs );
+}
+
+static ULONG WINAPI connections_enum_Release(
+    IEnumNetworkConnections *iface )
+{
+    struct connections_enum *iter = impl_from_IEnumNetworkConnections( iface );
+    LONG refs;
+
+    TRACE( "%p\n", iter );
+
+    if (!(refs = InterlockedDecrement( &iter->refs )))
+    {
+        INetworkListManager_Release( &iter->mgr->INetworkListManager_iface );
+        heap_free( iter );
+    }
+    return refs;
+}
+
+static HRESULT WINAPI connections_enum_GetTypeInfoCount(
+    IEnumNetworkConnections *iface,
+    UINT *count )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connections_enum_GetTypeInfo(
+    IEnumNetworkConnections *iface,
+    UINT index,
+    LCID lcid,
+    ITypeInfo **info )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connections_enum_GetIDsOfNames(
+    IEnumNetworkConnections *iface,
+    REFIID riid,
+    LPOLESTR *names,
+    UINT count,
+    LCID lcid,
+    DISPID *dispid )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connections_enum_Invoke(
+    IEnumNetworkConnections *iface,
+    DISPID member,
+    REFIID riid,
+    LCID lcid,
+    WORD flags,
+    DISPPARAMS *params,
+    VARIANT *result,
+    EXCEPINFO *excep_info,
+    UINT *arg_err )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connections_enum_get__NewEnum(
+    IEnumNetworkConnections *iface, IEnumVARIANT **ppEnumVar )
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI connections_enum_Next(
+    IEnumNetworkConnections *iface, ULONG count, INetworkConnection **ret, ULONG *fetched )
+{
+    struct connections_enum *iter = impl_from_IEnumNetworkConnections( iface );
+    ULONG i = 0;
+
+    TRACE( "%p, %u %p %p\n", iter, count, ret, fetched );
+
+    if (fetched) *fetched = 0;
+    if (!count) return S_OK;
+
+    while (iter->cursor && i < count)
+    {
+        struct connection *connection = LIST_ENTRY( iter->cursor, struct connection, entry );
+        ret[i] = &connection->INetworkConnection_iface;
+        INetworkConnection_AddRef( ret[i] );
+        iter->cursor = list_next( &iter->mgr->connections, iter->cursor );
+        i++;
+    }
+    if (fetched) *fetched = i;
+
+    return i < count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI connections_enum_Skip(
+    IEnumNetworkConnections *iface, ULONG count )
+{
+    struct connections_enum *iter = impl_from_IEnumNetworkConnections( iface );
+
+    TRACE( "%p, %u\n", iter, count);
+
+    if (!count) return S_OK;
+    if (!iter->cursor) return S_FALSE;
+
+    while (count--)
+    {
+        iter->cursor = list_next( &iter->mgr->connections, iter->cursor );
+        if (!iter->cursor) break;
+    }
+
+    return count ? S_FALSE : S_OK;
+}
+
+static HRESULT WINAPI connections_enum_Reset(
+    IEnumNetworkConnections *iface )
+{
+    struct connections_enum *iter = impl_from_IEnumNetworkConnections( iface );
+
+    TRACE( "%p\n", iter );
+
+    iter->cursor = list_head( &iter->mgr->connections );
+    return S_OK;
+}
+
+static HRESULT create_connections_enum(
+    struct list_manager *, IEnumNetworkConnections** );
+
+static HRESULT WINAPI connections_enum_Clone(
+    IEnumNetworkConnections *iface, IEnumNetworkConnections **ret )
+{
+    struct connections_enum *iter = impl_from_IEnumNetworkConnections( iface );
+
+    TRACE( "%p, %p\n", iter, ret );
+    return create_connections_enum( iter->mgr, ret );
+}
+
+static const IEnumNetworkConnectionsVtbl connections_enum_vtbl =
+{
+    connections_enum_QueryInterface,
+    connections_enum_AddRef,
+    connections_enum_Release,
+    connections_enum_GetTypeInfoCount,
+    connections_enum_GetTypeInfo,
+    connections_enum_GetIDsOfNames,
+    connections_enum_Invoke,
+    connections_enum_get__NewEnum,
+    connections_enum_Next,
+    connections_enum_Skip,
+    connections_enum_Reset,
+    connections_enum_Clone
+};
+
+static HRESULT create_connections_enum(
+    struct list_manager *mgr, IEnumNetworkConnections **ret )
+{
+    struct connections_enum *iter;
+
+    *ret = NULL;
+    if (!(iter = heap_alloc( sizeof(*iter) ))) return E_OUTOFMEMORY;
+
+    iter->IEnumNetworkConnections_iface.lpVtbl = &connections_enum_vtbl;
+    iter->mgr         = mgr;
+    INetworkListManager_AddRef( &mgr->INetworkListManager_iface );
+    iter->cursor      = list_head( &iter->mgr->connections );
+    iter->refs        = 1;
+
+    *ret = &iter->IEnumNetworkConnections_iface;
+    return S_OK;
+}
+
 static ULONG WINAPI list_manager_AddRef(
     INetworkListManager *iface )
 {
@@ -987,8 +1201,10 @@ static HRESULT WINAPI list_manager_GetNetworkConnections(
     INetworkListManager *iface,
     IEnumNetworkConnections **ppEnum )
 {
-    FIXME( "%p, %p\n", iface, ppEnum );
-    return E_NOTIMPL;
+    struct list_manager *mgr = impl_from_INetworkListManager( iface );
+
+    TRACE( "%p, %p\n", iface, ppEnum );
+    return create_connections_enum( mgr, ppEnum );
 }
 
 static HRESULT WINAPI list_manager_GetNetworkConnection(
