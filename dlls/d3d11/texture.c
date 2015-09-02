@@ -1,5 +1,6 @@
 /*
  * Copyright 2009 Henri Verbeet for CodeWeavers
+ * Copyright 2015 Józef Kucia for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -640,25 +641,31 @@ static void STDMETHODCALLTYPE d3d11_texture3d_GetDevice(ID3D11Texture3D *iface, 
 static HRESULT STDMETHODCALLTYPE d3d11_texture3d_GetPrivateData(ID3D11Texture3D *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct d3d_texture3d *texture = impl_from_ID3D11Texture3D(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&texture->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture3d_SetPrivateData(ID3D11Texture3D *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    struct d3d_texture3d *texture = impl_from_ID3D11Texture3D(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&texture->private_store, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture3d_SetPrivateDataInterface(ID3D11Texture3D *iface,
         REFGUID guid, const IUnknown *data)
 {
-    FIXME("iface %p, guid %s, data %p stub!\n", iface, debugstr_guid(guid), data);
+    struct d3d_texture3d *texture = impl_from_ID3D11Texture3D(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&texture->private_store, guid, data);
 }
 
 static void STDMETHODCALLTYPE d3d11_texture3d_GetType(ID3D11Texture3D *iface,
