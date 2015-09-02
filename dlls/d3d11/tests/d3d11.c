@@ -488,6 +488,160 @@ static void test_create_texture3d(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_texture3d_interfaces(void)
+{
+    ID3D10Texture3D *d3d10_texture;
+    D3D11_TEXTURE3D_DESC desc;
+    ID3D11Texture3D *texture;
+    IDXGISurface *surface;
+    ID3D11Device *device;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct test
+    {
+        BOOL implements_d3d10_interfaces;
+        UINT bind_flags;
+        UINT misc_flags;
+        UINT expected_bind_flags;
+        UINT expected_misc_flags;
+    }
+    desc_conversion_tests[] =
+    {
+        {
+            TRUE,
+            D3D11_BIND_SHADER_RESOURCE, 0,
+            D3D10_BIND_SHADER_RESOURCE, 0
+        },
+        {
+            TRUE,
+            D3D11_BIND_UNORDERED_ACCESS, 0,
+            D3D11_BIND_UNORDERED_ACCESS, 0
+        },
+        {
+            FALSE,
+            0, D3D11_RESOURCE_MISC_RESOURCE_CLAMP,
+            0, 0
+        },
+        {
+            TRUE,
+            0, D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX,
+            0, D3D10_RESOURCE_MISC_SHARED_KEYEDMUTEX
+        },
+    };
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create ID3D11Device.\n");
+        return;
+    }
+
+    desc.Width = 64;
+    desc.Height = 64;
+    desc.Depth = 64;
+    desc.MipLevels = 0;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 3d texture, hr %#x.\n", hr);
+
+    hr = ID3D11Texture3D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    ok(hr == E_NOINTERFACE, "Texture should not implement IDXGISurface.\n");
+
+    hr = ID3D11Texture3D_QueryInterface(texture, &IID_ID3D10Texture3D, (void **)&d3d10_texture);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Texture should implement ID3D10Texture3D.\n");
+    if (SUCCEEDED(hr)) ID3D10Texture3D_Release(d3d10_texture);
+    ID3D11Texture3D_Release(texture);
+
+    if (FAILED(hr))
+    {
+        win_skip("3D textures do not implement ID3D10Texture3D.\n");
+        ID3D11Device_Release(device);
+        return;
+    }
+
+    for (i = 0; i < sizeof(desc_conversion_tests) / sizeof(*desc_conversion_tests); ++i)
+    {
+        const struct test *current = &desc_conversion_tests[i];
+        D3D10_TEXTURE3D_DESC d3d10_desc;
+        ID3D10Device *d3d10_device;
+
+        desc.Width = 64;
+        desc.Height = 64;
+        desc.Depth = 64;
+        desc.MipLevels = 1;
+        desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = current->bind_flags;
+        desc.CPUAccessFlags = 0;
+        desc.MiscFlags = current->misc_flags;
+
+        hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
+        /* Shared resources are not supported by REF and WARP devices. */
+        ok(SUCCEEDED(hr) || broken(hr == E_OUTOFMEMORY),
+                "Test %u: Failed to create a 3d texture, hr %#x.\n", i, hr);
+        if (FAILED(hr))
+        {
+            win_skip("Failed to create ID3D11Texture3D, skipping test %u.\n", i);
+            continue;
+        }
+
+        hr = ID3D11Texture3D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+        ok(hr == E_NOINTERFACE, "Texture should not implement IDXGISurface.\n");
+
+        hr = ID3D11Texture3D_QueryInterface(texture, &IID_ID3D10Texture3D, (void **)&d3d10_texture);
+        ID3D11Texture3D_Release(texture);
+
+        if (current->implements_d3d10_interfaces)
+        {
+            ok(SUCCEEDED(hr), "Test %u: Texture should implement ID3D10Texture3D.\n", i);
+        }
+        else
+        {
+            todo_wine ok(hr == E_NOINTERFACE, "Test %u: Texture should not implement ID3D10Texture3D.\n", i);
+            if (SUCCEEDED(hr)) ID3D10Texture3D_Release(d3d10_texture);
+            continue;
+        }
+
+        ID3D10Texture3D_GetDesc(d3d10_texture, &d3d10_desc);
+
+        ok(d3d10_desc.Width == desc.Width,
+                "Test %u: Got unexpected Width %u.\n", i, d3d10_desc.Width);
+        ok(d3d10_desc.Height == desc.Height,
+                "Test %u: Got unexpected Height %u.\n", i, d3d10_desc.Height);
+        ok(d3d10_desc.Depth == desc.Depth,
+                "Test %u: Got unexpected Depth %u.\n", i, d3d10_desc.Depth);
+        ok(d3d10_desc.MipLevels == desc.MipLevels,
+                "Test %u: Got unexpected MipLevels %u.\n", i, d3d10_desc.MipLevels);
+        ok(d3d10_desc.Format == desc.Format,
+                "Test %u: Got unexpected Format %u.\n", i, d3d10_desc.Format);
+        ok(d3d10_desc.Usage == (D3D10_USAGE)desc.Usage,
+                "Test %u: Got unexpected Usage %u.\n", i, d3d10_desc.Usage);
+        ok(d3d10_desc.BindFlags == current->expected_bind_flags,
+                "Test %u: Got unexpected BindFlags %#x.\n", i, d3d10_desc.BindFlags);
+        ok(d3d10_desc.CPUAccessFlags == desc.CPUAccessFlags,
+                "Test %u: Got unexpected CPUAccessFlags %#x.\n", i, d3d10_desc.CPUAccessFlags);
+        ok(d3d10_desc.MiscFlags == current->expected_misc_flags,
+                "Test %u: Got unexpected MiscFlags %#x.\n", i, d3d10_desc.MiscFlags);
+
+        d3d10_device = (ID3D10Device *)0xdeadbeef;
+        ID3D10Texture3D_GetDevice(d3d10_texture, &d3d10_device);
+        todo_wine ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
+        if (d3d10_device) ID3D10Device_Release(d3d10_device);
+
+        ID3D10Texture3D_Release(d3d10_texture);
+    }
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -495,4 +649,5 @@ START_TEST(d3d11)
     test_create_texture2d();
     test_texture2d_interfaces();
     test_create_texture3d();
+    test_texture3d_interfaces();
 }
