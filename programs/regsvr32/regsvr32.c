@@ -107,7 +107,7 @@ static VOID *LoadProc(const WCHAR* strDll, const char* procName, HMODULE* DllHan
     if(!*DllHandle)
     {
         output_write(STRING_DLL_LOAD_FAILED, strDll);
-        ExitProcess(1);
+        ExitProcess(LOADLIBRARY_FAILED);
     }
     proc = (VOID *) GetProcAddress(*DllHandle, procName);
     if(!proc)

@@ -19,6 +19,7 @@
  */
 
 /* Exit codes */
+#define LOADLIBRARY_FAILED                    3
 #define GETPROCADDRESS_FAILED                 4
 
 /* Resource strings */
