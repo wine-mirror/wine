@@ -266,14 +266,14 @@ int wmain(int argc, WCHAR* argv[])
             default:
                 output_write(STRING_UNRECOGNIZED_SWITCH, argv[i]);
                 output_write(STRING_USAGE);
-                return 1;
+                return INVALID_ARG;
             }
             argv[i] = NULL;
         }
     }
 
     if (!CallInstall && !CallRegister) /* flags: /n or /u /n */
-        return 1;
+        return INVALID_ARG;
 
     for (i = 1; i < argc; i++)
     {
@@ -309,7 +309,7 @@ int wmain(int argc, WCHAR* argv[])
     {
         output_write(STRING_HEADER);
         output_write(STRING_USAGE);
-        return 1;
+        return INVALID_ARG;
     }
 
     OleUninitialize();

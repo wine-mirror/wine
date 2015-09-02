@@ -19,6 +19,7 @@
  */
 
 /* Exit codes */
+#define INVALID_ARG                           1
 #define LOADLIBRARY_FAILED                    3
 #define GETPROCADDRESS_FAILED                 4
 
