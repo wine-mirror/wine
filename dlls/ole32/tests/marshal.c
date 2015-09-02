@@ -2969,7 +2969,7 @@ static HANDLE create_target_process(const char *arg)
     pi.hThread = NULL;
     pi.hProcess = NULL;
     winetest_get_mainargs( &argv );
-    sprintf(cmdline, "%s %s %s", argv[0], argv[1], arg);
+    sprintf(cmdline, "\"%s\" %s %s", argv[0], argv[1], arg);
     ret = CreateProcessA(argv[0], cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
     ok(ret, "CreateProcess failed with error: %u\n", GetLastError());
     if (pi.hThread) CloseHandle(pi.hThread);
