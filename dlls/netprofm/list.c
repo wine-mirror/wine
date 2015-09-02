@@ -64,6 +64,7 @@ struct network
 struct connection
 {
     INetworkConnection     INetworkConnection_iface;
+    INetworkConnectionCost INetworkConnectionCost_iface;
     LONG                   refs;
     struct list            entry;
     GUID                   id;
@@ -906,6 +907,10 @@ static HRESULT WINAPI connection_QueryInterface(
     {
         *obj = iface;
     }
+    else if (IsEqualIID( riid, &IID_INetworkConnectionCost ))
+    {
+        *obj = &connection->INetworkConnectionCost_iface;
+    }
     else
     {
         WARN( "interface not supported %s\n", debugstr_guid(riid) );
@@ -1086,6 +1091,77 @@ static const struct INetworkConnectionVtbl connection_vtbl =
     connection_GetDomainType
 };
 
+static inline struct connection *impl_from_INetworkConnectionCost(
+    INetworkConnectionCost *iface )
+{
+    return CONTAINING_RECORD( iface, struct connection, INetworkConnectionCost_iface );
+}
+
+static HRESULT WINAPI connection_cost_QueryInterface(
+    INetworkConnectionCost *iface,
+    REFIID riid,
+    void **obj )
+{
+    struct connection *conn = impl_from_INetworkConnectionCost( iface );
+    return INetworkConnection_QueryInterface( &conn->INetworkConnection_iface, riid, obj );
+}
+
+static ULONG WINAPI connection_cost_AddRef(
+    INetworkConnectionCost *iface )
+{
+    struct connection *conn = impl_from_INetworkConnectionCost( iface );
+    return INetworkConnection_AddRef( &conn->INetworkConnection_iface );
+}
+
+static ULONG WINAPI connection_cost_Release(
+    INetworkConnectionCost *iface )
+{
+    struct connection *conn = impl_from_INetworkConnectionCost( iface );
+    return INetworkConnection_Release( &conn->INetworkConnection_iface );
+}
+
+static HRESULT WINAPI connection_cost_GetCost(
+    INetworkConnectionCost *iface, DWORD *pCost )
+{
+    FIXME( "%p, %p\n", iface, pCost );
+
+    if (!pCost) return E_POINTER;
+
+    *pCost = NLM_CONNECTION_COST_UNRESTRICTED;
+    return S_OK;
+}
+
+static HRESULT WINAPI connection_cost_GetDataPlanStatus(
+    INetworkConnectionCost *iface, NLM_DATAPLAN_STATUS *pDataPlanStatus )
+{
+    struct connection *conn = impl_from_INetworkConnectionCost( iface );
+
+    FIXME( "%p, %p\n", iface, pDataPlanStatus );
+
+    if (!pDataPlanStatus) return E_POINTER;
+
+    memcpy( &pDataPlanStatus->InterfaceGuid, &conn->id, sizeof(conn->id) );
+    pDataPlanStatus->UsageData.UsageInMegabytes = NLM_UNKNOWN_DATAPLAN_STATUS;
+    memset( &pDataPlanStatus->UsageData.LastSyncTime, 0, sizeof(pDataPlanStatus->UsageData.LastSyncTime) );
+    pDataPlanStatus->DataLimitInMegabytes       = NLM_UNKNOWN_DATAPLAN_STATUS;
+    pDataPlanStatus->InboundBandwidthInKbps     = NLM_UNKNOWN_DATAPLAN_STATUS;
+    pDataPlanStatus->OutboundBandwidthInKbps    = NLM_UNKNOWN_DATAPLAN_STATUS;
+    memset( &pDataPlanStatus->NextBillingCycle, 0, sizeof(pDataPlanStatus->NextBillingCycle) );
+    pDataPlanStatus->MaxTransferSizeInMegabytes = NLM_UNKNOWN_DATAPLAN_STATUS;
+    pDataPlanStatus->Reserved                   = 0;
+
+    return S_OK;
+}
+
+static const INetworkConnectionCostVtbl connection_cost_vtbl =
+{
+    connection_cost_QueryInterface,
+    connection_cost_AddRef,
+    connection_cost_Release,
+    connection_cost_GetCost,
+    connection_cost_GetDataPlanStatus
+};
+
 static struct connection *create_connection( const GUID *id )
 {
     struct connection *ret;
@@ -1093,6 +1169,7 @@ static struct connection *create_connection( const GUID *id )
     if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
 
     ret->INetworkConnection_iface.lpVtbl     = &connection_vtbl;
+    ret->INetworkConnectionCost_iface.lpVtbl = &connection_cost_vtbl;
     ret->refs                  = 1;
     ret->id                    = *id;
     ret->network               = NULL;
