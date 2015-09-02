@@ -133,9 +133,10 @@ struct d3d_texture3d
 HRESULT d3d_texture3d_create(struct d3d_device *device, const D3D11_TEXTURE3D_DESC *desc,
         const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture3d **texture) DECLSPEC_HIDDEN;
 
-/* ID3D10Buffer */
+/* ID3D11Buffer, ID3D10Buffer */
 struct d3d_buffer
 {
+    ID3D11Buffer ID3D11Buffer_iface;
     ID3D10Buffer ID3D10Buffer_iface;
     LONG refcount;
 
