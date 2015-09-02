@@ -1249,9 +1249,21 @@ static HRESULT WINAPI list_manager_IsConnectedToInternet(
     INetworkListManager *iface,
     VARIANT_BOOL *pbIsConnected )
 {
-    FIXME( "%p, %p\n", iface, pbIsConnected );
+    struct list_manager *mgr = impl_from_INetworkListManager( iface );
+    struct network *network;
 
-    *pbIsConnected = VARIANT_TRUE;
+    TRACE( "%p, %p\n", iface, pbIsConnected );
+
+    LIST_FOR_EACH_ENTRY( network, &mgr->networks, struct network, entry )
+    {
+        if (network->connected_to_internet)
+        {
+            *pbIsConnected = VARIANT_TRUE;
+            return S_OK;
+        }
+    }
+
+    *pbIsConnected = VARIANT_FALSE;
     return S_OK;
 }
 
@@ -1259,9 +1271,21 @@ static HRESULT WINAPI list_manager_IsConnected(
     INetworkListManager *iface,
     VARIANT_BOOL *pbIsConnected )
 {
-    FIXME( "%p, %p\n", iface, pbIsConnected );
+    struct list_manager *mgr = impl_from_INetworkListManager( iface );
+    struct network *network;
 
-    *pbIsConnected = VARIANT_TRUE;
+    TRACE( "%p, %p\n", iface, pbIsConnected );
+
+    LIST_FOR_EACH_ENTRY( network, &mgr->networks, struct network, entry )
+    {
+        if (network->connected)
+        {
+            *pbIsConnected = VARIANT_TRUE;
+            return S_OK;
+        }
+    }
+
+    *pbIsConnected = VARIANT_FALSE;
     return S_OK;
 }
 
