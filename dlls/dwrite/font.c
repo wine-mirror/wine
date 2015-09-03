@@ -2866,7 +2866,13 @@ static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data 
 
 HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system, IDWriteFontCollection **ret)
 {
+    struct fontfile_enum {
+        struct list entry;
+        IDWriteFontFile *file;
+    };
+    struct fontfile_enum *fileenum, *fileenum2;
     struct dwrite_fontcollection *collection;
+    struct list scannedfiles;
     BOOL current = FALSE;
     HRESULT hr = S_OK;
     UINT32 i;
@@ -2886,12 +2892,13 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
 
     TRACE("building font collection:\n");
 
+    list_init(&scannedfiles);
     while (hr == S_OK) {
         DWRITE_FONT_FACE_TYPE face_type;
         DWRITE_FONT_FILE_TYPE file_type;
+        BOOL supported, same = FALSE;
         IDWriteFontFile *file;
         UINT32 face_count;
-        BOOL supported;
 
         current = FALSE;
         hr = IDWriteFontFileEnumerator_MoveNext(enumerator, &current);
@@ -2902,6 +2909,17 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
         if (FAILED(hr))
             break;
 
+        /* check if we've scanned this file already */
+        LIST_FOR_EACH_ENTRY(fileenum, &scannedfiles, struct fontfile_enum, entry) {
+            if ((same = is_same_fontfile(fileenum->file, file)))
+                break;
+        }
+
+        if (same) {
+            IDWriteFontFile_Release(file);
+            continue;
+        }
+
         /* failed font files are skipped */
         hr = IDWriteFontFile_Analyze(file, &supported, &file_type, &face_type, &face_count);
         if (FAILED(hr) || !supported || face_count == 0) {
@@ -2910,6 +2928,11 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
             hr = S_OK;
             continue;
         }
+
+        /* add to scanned list */
+        fileenum = heap_alloc(sizeof(*fileenum));
+        fileenum->file = file;
+        list_add_tail(&scannedfiles, &fileenum->entry);
 
         for (i = 0; i < face_count; i++) {
             IDWriteLocalizedStrings *family_name = NULL;
@@ -2948,8 +2971,12 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
             if (FAILED(hr))
                 break;
         }
+    }
 
-        IDWriteFontFile_Release(file);
+    LIST_FOR_EACH_ENTRY_SAFE(fileenum, fileenum2, &scannedfiles, struct fontfile_enum, entry) {
+        IDWriteFontFile_Release(fileenum->file);
+        list_remove(&fileenum->entry);
+        heap_free(fileenum);
     }
 
     for (i = 0; i < collection->family_count; i++) {
