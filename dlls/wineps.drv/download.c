@@ -644,6 +644,35 @@ static int get_post2_name_index(BYTE *post2header, DWORD size, WORD index)
     return GET_BE_WORD(post2header + offset);
 }
 
+static void get_post2_custom_glyph_name(BYTE *post2header, DWORD size, WORD index, char *name)
+{
+    USHORT numberOfGlyphs = GET_BE_WORD(post2header);
+    int i, name_offset = (1 + numberOfGlyphs) * sizeof(USHORT);
+    BYTE name_length = 0;
+
+    for(i = 0; i <= index; i++)
+    {
+        name_offset += name_length;
+        if(name_offset + sizeof(BYTE) > size)
+        {
+            FIXME("Pascal name offset '%d' exceeds PostScript Format 2 table size (%d)\n",
+                  name_offset + sizeof(BYTE), size);
+            return;
+        }
+        name_length = (post2header + name_offset)[0];
+        if(name_offset + name_length > size)
+        {
+            FIXME("Pascal name offset '%d' exceeds PostScript Format 2 table size (%d)\n",
+                  name_offset + name_length, size);
+            return;
+        }
+        name_offset += sizeof(BYTE);
+    }
+    name_length = min(name_length, MAX_G_NAME);
+    memcpy(name, post2header + name_offset, name_length);
+    name[name_length] = 0;
+}
+
 void get_glyph_name(HDC hdc, WORD index, char *name)
 {
     struct
@@ -703,7 +732,7 @@ void get_glyph_name(HDC hdc, WORD index, char *name)
         else if(glyphNameIndex < 258)
             get_standard_glyph_name(glyphNameIndex, name);
         else
-            FIXME("PostScript Format 2 custom glyphs are currently unsupported.\n");
+            get_post2_custom_glyph_name(post2header, size, glyphNameIndex - 258, name);
     }
     else
         FIXME("PostScript Format %d.%d glyph names are currently unsupported.\n",
