@@ -87,7 +87,11 @@ struct dwrite_font_data {
 
     WCHAR *facename;
 
-    BOOL bold_sim_tested : 1; /* used to mark font as tested when scanning for bold simulation candidate */
+    USHORT simulations;
+
+    /* used to mark font as tested when scanning for simulation candidate */
+    BOOL bold_sim_tested : 1;
+    BOOL oblique_sim_tested : 1;
 };
 
 struct dwrite_fontfamily_data {
@@ -125,7 +129,6 @@ struct dwrite_font {
 
     IDWriteFontFamily *family;
 
-    USHORT simulations;
     DWRITE_FONT_STYLE style;
     struct dwrite_font_data *data;
 };
@@ -1135,7 +1138,7 @@ static HRESULT get_fontface_from_font(struct dwrite_font *font, IDWriteFontFace2
     *fontface = NULL;
 
     hr = IDWriteFactory2_CreateFontFace(data->factory, data->face_type, 1, &data->file,
-            data->face_index, font->simulations, &face);
+            data->face_index, font->data->simulations, &face);
     if (FAILED(hr))
         return hr;
 
@@ -1248,10 +1251,10 @@ static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont2 *iface, IDWriteLocali
 
     *names = NULL;
 
-    if (This->simulations == DWRITE_FONT_SIMULATIONS_NONE)
+    if (This->data->simulations == DWRITE_FONT_SIMULATIONS_NONE)
         return clone_localizedstring(This->data->names, names);
 
-    switch (This->simulations) {
+    switch (This->data->simulations) {
     case DWRITE_FONT_SIMULATIONS_BOLD|DWRITE_FONT_SIMULATIONS_OBLIQUE:
         name = boldobliqueW;
         break;
@@ -1262,7 +1265,7 @@ static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont2 *iface, IDWriteLocali
         name = obliqueW;
         break;
     default:
-        ERR("unknown simulations %d\n", This->simulations);
+        ERR("unknown simulations %d\n", This->data->simulations);
         return E_FAIL;
     }
 
@@ -1331,7 +1334,7 @@ static DWRITE_FONT_SIMULATIONS WINAPI dwritefont_GetSimulations(IDWriteFont2 *if
 {
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
     TRACE("(%p)\n", This);
-    return This->simulations;
+    return This->data->simulations;
 }
 
 static void WINAPI dwritefont_GetMetrics(IDWriteFont2 *iface, DWRITE_FONT_METRICS *metrics)
@@ -1461,8 +1464,7 @@ static const IDWriteFont2Vtbl dwritefontvtbl = {
     dwritefont2_IsColorFont
 };
 
-static HRESULT create_font(struct dwrite_font_data *data, IDWriteFontFamily *family, DWRITE_FONT_SIMULATIONS simulations,
-    IDWriteFont **font)
+static HRESULT create_font(struct dwrite_font_data *data, IDWriteFontFamily *family, IDWriteFont **font)
 {
     struct dwrite_font *This;
     *font = NULL;
@@ -1474,14 +1476,9 @@ static HRESULT create_font(struct dwrite_font_data *data, IDWriteFontFamily *fam
     This->ref = 1;
     This->family = family;
     IDWriteFontFamily_AddRef(family);
-    This->simulations = simulations;
     This->style = data->style;
     This->data = data;
     InterlockedIncrement(&This->data->ref);
-
-    /* set oblique style from requested simulation */
-    if ((simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE) && data->style == DWRITE_FONT_STYLE_NORMAL)
-        This->style = DWRITE_FONT_STYLE_OBLIQUE;
 
     *font = (IDWriteFont*)&This->IDWriteFont2_iface;
 
@@ -1562,7 +1559,7 @@ static HRESULT WINAPI dwritefontfamily_GetFont(IDWriteFontFamily *iface, UINT32 
     if (index >= This->data->font_count)
         return E_INVALIDARG;
 
-    return create_font(This->data->fonts[index], iface, DWRITE_FONT_SIMULATIONS_NONE, font);
+    return create_font(This->data->fonts[index], iface, font);
 }
 
 static HRESULT WINAPI dwritefontfamily_GetFamilyNames(IDWriteFontFamily *iface, IDWriteLocalizedStrings **names)
@@ -1616,7 +1613,6 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
     DWRITE_FONT_STRETCH stretch, DWRITE_FONT_STYLE style, IDWriteFont **font)
 {
     struct dwrite_fontfamily *This = impl_from_IDWriteFontFamily(iface);
-    DWRITE_FONT_SIMULATIONS simulations;
     struct dwrite_font_propvec req;
     struct dwrite_font_data *match;
     UINT32 i;
@@ -1636,13 +1632,7 @@ static HRESULT WINAPI dwritefontfamily_GetFirstMatchingFont(IDWriteFontFamily *i
             match = This->data->fonts[i];
     }
 
-    simulations = DWRITE_FONT_SIMULATIONS_NONE;
-    if (((style == DWRITE_FONT_STYLE_ITALIC) || (style == DWRITE_FONT_STYLE_OBLIQUE)) &&
-        match->style == DWRITE_FONT_STYLE_NORMAL) {
-        simulations = DWRITE_FONT_SIMULATIONS_OBLIQUE;
-    }
-
-    return create_font(match, iface, simulations, font);
+    return create_font(match, iface, font);
 }
 
 static HRESULT WINAPI dwritefontfamily_GetMatchingFonts(IDWriteFontFamily *iface, DWRITE_FONT_WEIGHT weight,
@@ -1816,7 +1806,6 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     struct dwrite_fontcollection *This = impl_from_IDWriteFontCollection(iface);
     struct dwrite_fontfamily_data *found_family = NULL;
     struct dwrite_font_data *found_font = NULL;
-    DWRITE_FONT_SIMULATIONS simulations;
     IDWriteFontFamily *family;
     UINT32 i, j, face_index;
     IDWriteFontFile *file;
@@ -1855,8 +1844,7 @@ static HRESULT WINAPI dwritefontcollection_GetFontFromFontFace(IDWriteFontCollec
     if (FAILED(hr))
         return hr;
 
-    simulations = IDWriteFontFace_GetSimulations(face);
-    hr = create_font(found_font, family, simulations, font);
+    hr = create_font(found_font, family, font);
     IDWriteFontFamily_Release(family);
     return hr;
 }
@@ -2687,7 +2675,9 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, D
     data->file = file;
     data->face_index = face_index;
     data->face_type = face_type;
+    data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
     data->bold_sim_tested = FALSE;
+    data->oblique_sim_tested = FALSE;
     IDWriteFontFile_AddRef(file);
     IDWriteFactory2_AddRef(factory);
 
@@ -2722,7 +2712,7 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, D
     return S_OK;
 }
 
-static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRITE_FONT_WEIGHT weight, const WCHAR *facenameW,
+static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRITE_FONT_SIMULATIONS sim, const WCHAR *facenameW,
     struct dwrite_font_data **ret)
 {
     struct dwrite_font_data *data;
@@ -2734,7 +2724,11 @@ static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRI
 
     *data = *src;
     data->ref = 1;
-    data->weight = weight;
+    data->simulations |= sim;
+    if (sim == DWRITE_FONT_SIMULATIONS_BOLD)
+        data->weight = DWRITE_FONT_WEIGHT_BOLD;
+    else if (sim == DWRITE_FONT_SIMULATIONS_OBLIQUE)
+        data->style = DWRITE_FONT_STYLE_OBLIQUE;
     memset(data->info_strings, 0, sizeof(data->info_strings));
     data->names = NULL;
     IDWriteFactory2_AddRef(data->factory);
@@ -2837,10 +2831,73 @@ static void fontfamily_add_bold_simulated_face(struct dwrite_fontfamily_data *fa
                 strcatW(facenameW, spaceW);
             strcatW(facenameW, boldW);
 
-            if (init_font_data_from_font(family->fonts[heaviest], DWRITE_FONT_WEIGHT_BOLD, facenameW, &boldface) == S_OK) {
+            if (init_font_data_from_font(family->fonts[heaviest], DWRITE_FONT_SIMULATIONS_BOLD, facenameW, &boldface) == S_OK) {
                 boldface->bold_sim_tested = TRUE;
                 fontfamily_add_font(family, boldface);
             }
+        }
+    }
+}
+
+static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data *family)
+{
+    UINT32 i, j;
+
+    for (i = 0; i < family->font_count; i++) {
+        UINT32 regular = ~0u, oblique = ~0u;
+        struct dwrite_font_data *obliqueface;
+        WCHAR facenameW[255];
+
+        if (family->fonts[i]->oblique_sim_tested)
+            continue;
+
+        family->fonts[i]->oblique_sim_tested = TRUE;
+        if (family->fonts[i]->style == DWRITE_FONT_STYLE_NORMAL)
+            regular = i;
+        else if (family->fonts[i]->style == DWRITE_FONT_STYLE_OBLIQUE)
+            oblique = i;
+
+        /* find regular style with same weight/stretch values */
+        for (j = i; j < family->font_count; j++) {
+            if (family->fonts[j]->oblique_sim_tested)
+                continue;
+
+            if ((family->fonts[i]->weight == family->fonts[j]->weight) &&
+                (family->fonts[i]->stretch == family->fonts[j]->stretch)) {
+
+                family->fonts[j]->oblique_sim_tested = TRUE;
+                if (regular == ~0 && family->fonts[j]->style == DWRITE_FONT_STYLE_NORMAL)
+                    regular = j;
+
+                if (oblique == ~0 && family->fonts[j]->style == DWRITE_FONT_STYLE_OBLIQUE)
+                    oblique = j;
+            }
+
+            if (regular != ~0u && oblique != ~0u)
+                break;
+        }
+
+        /* no regular variant for this weight/stretch pair, nothing to base simulated face on */
+        if (regular == ~0u)
+            continue;
+
+        /* regular face exists, and corresponding oblique is present as well, nothing to do */
+        if (oblique != ~0u)
+            continue;
+
+        /* add oblique simulation based on this regular face */
+
+        /* remove regular term if any, append 'Oblique' */
+        fontstrings_get_en_string(family->fonts[regular]->names, facenameW, sizeof(facenameW)/sizeof(WCHAR));
+        facename_remove_regular_term(facenameW, -1);
+
+        if (*facenameW)
+            strcatW(facenameW, spaceW);
+        strcatW(facenameW, obliqueW);
+
+        if (init_font_data_from_font(family->fonts[regular], DWRITE_FONT_SIMULATIONS_OBLIQUE, facenameW, &obliqueface) == S_OK) {
+            obliqueface->oblique_sim_tested = TRUE;
+            fontfamily_add_font(family, obliqueface);
         }
     }
 }
@@ -2935,6 +2992,7 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
 
     for (i = 0; i < collection->family_count; i++) {
         fontfamily_add_bold_simulated_face(collection->family_data[i]);
+        fontfamily_add_oblique_simulated_face(collection->family_data[i]);
     }
 
     return hr;
