@@ -177,7 +177,7 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
     return wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
-struct wined3d_surface * CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
+struct wined3d_texture * CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
         UINT back_buffer_idx, enum wined3d_backbuffer_type type)
 {
     TRACE("swapchain %p, back_buffer_idx %u, type %#x.\n",
@@ -198,7 +198,7 @@ struct wined3d_surface * CDECL wined3d_swapchain_get_back_buffer(const struct wi
 
     TRACE("Returning back buffer %p.\n", swapchain->back_buffers[back_buffer_idx]);
 
-    return surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[back_buffer_idx], 0));
+    return swapchain->back_buffers[back_buffer_idx];
 }
 
 HRESULT CDECL wined3d_swapchain_get_raster_status(const struct wined3d_swapchain *swapchain,

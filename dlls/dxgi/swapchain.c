@@ -143,7 +143,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
         UINT buffer_idx, REFIID riid, void **surface)
 {
     struct dxgi_swapchain *This = impl_from_IDXGISwapChain(iface);
-    struct wined3d_surface *backbuffer;
+    struct wined3d_texture *texture;
     IUnknown *parent;
     HRESULT hr;
 
@@ -152,14 +152,14 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
 
     EnterCriticalSection(&dxgi_cs);
 
-    if (!(backbuffer = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
+    if (!(texture = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
             buffer_idx, WINED3D_BACKBUFFER_TYPE_MONO)))
     {
         LeaveCriticalSection(&dxgi_cs);
         return DXGI_ERROR_INVALID_CALL;
     }
 
-    parent = wined3d_surface_get_parent(backbuffer);
+    parent = wined3d_texture_get_parent(texture);
     hr = IUnknown_QueryInterface(parent, riid, surface);
     LeaveCriticalSection(&dxgi_cs);
 
@@ -220,7 +220,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *if
 {
     struct dxgi_swapchain *swapchain = impl_from_IDXGISwapChain(iface);
     struct wined3d_swapchain_desc wined3d_desc;
-    struct wined3d_surface *surface;
+    struct wined3d_texture *texture;
     IUnknown *parent;
     unsigned int i;
     HRESULT hr;
@@ -235,9 +235,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *if
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     for (i = 0; i < wined3d_desc.backbuffer_count; ++i)
     {
-        surface = wined3d_swapchain_get_back_buffer(swapchain->wined3d_swapchain,
+        texture = wined3d_swapchain_get_back_buffer(swapchain->wined3d_swapchain,
                 i, WINED3D_BACKBUFFER_TYPE_MONO);
-        parent = wined3d_surface_get_parent(surface);
+        parent = wined3d_texture_get_parent(texture);
         IUnknown_AddRef(parent);
         if (IUnknown_Release(parent))
         {
