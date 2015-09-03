@@ -1866,10 +1866,10 @@ static HRESULT init_font_collection(struct dwrite_fontcollection *collection, BO
     collection->IDWriteFontCollection_iface.lpVtbl = &fontcollectionvtbl;
     collection->ref = 1;
     collection->family_count = 0;
-    collection->family_alloc = 2;
+    collection->family_alloc = is_system ? 30 : 5;
     collection->is_system = is_system;
 
-    collection->family_data = heap_alloc(sizeof(*collection->family_data)*2);
+    collection->family_data = heap_alloc(sizeof(*collection->family_data) * collection->family_alloc);
     if (!collection->family_data)
         return E_OUTOFMEMORY;
 
