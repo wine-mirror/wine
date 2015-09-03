@@ -1240,47 +1240,9 @@ static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont2 *iface)
 
 static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont2 *iface, IDWriteLocalizedStrings **names)
 {
-    static const WCHAR boldobliqueW[] = {'B','o','l','d',' ','O','b','l','i','q','u','e',0};
-
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
-    IDWriteLocalizedStrings *strings;
-    const WCHAR *name;
-    HRESULT hr;
-
     TRACE("(%p)->(%p)\n", This, names);
-
-    *names = NULL;
-
-    if (This->data->simulations == DWRITE_FONT_SIMULATIONS_NONE)
-        return clone_localizedstring(This->data->names, names);
-
-    switch (This->data->simulations) {
-    case DWRITE_FONT_SIMULATIONS_BOLD|DWRITE_FONT_SIMULATIONS_OBLIQUE:
-        name = boldobliqueW;
-        break;
-    case DWRITE_FONT_SIMULATIONS_BOLD:
-        name = boldW;
-        break;
-    case DWRITE_FONT_SIMULATIONS_OBLIQUE:
-        name = obliqueW;
-        break;
-    default:
-        ERR("unknown simulations %d\n", This->data->simulations);
-        return E_FAIL;
-    }
-
-    hr = create_localizedstrings(&strings);
-    if (FAILED(hr)) return hr;
-
-    hr = add_localizedstring(strings, enusW, name);
-    if (FAILED(hr)) {
-        IDWriteLocalizedStrings_Release(strings);
-        return hr;
-    }
-
-    *names = strings;
-
-    return S_OK;
+    return clone_localizedstring(This->data->names, names);
 }
 
 static HRESULT WINAPI dwritefont_GetInformationalStrings(IDWriteFont2 *iface,
