@@ -724,25 +724,38 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
         UINT backbuffer_idx, D3DBACKBUFFER_TYPE backbuffer_type, IDirect3DSurface8 **backbuffer)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    struct wined3d_surface *wined3d_surface = NULL;
+    struct wined3d_swapchain *swapchain;
+    struct wined3d_resource *wined3d_resource;
+    struct wined3d_texture *wined3d_texture;
     struct d3d8_surface *surface_impl;
-    HRESULT hr;
 
     TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
             iface, backbuffer_idx, backbuffer_type, backbuffer);
 
+    /* No need to check for backbuffer == NULL, Windows crashes in that case. */
     wined3d_mutex_lock();
-    hr = wined3d_device_get_back_buffer(device->wined3d_device, 0, backbuffer_idx,
-            (enum wined3d_backbuffer_type)backbuffer_type, &wined3d_surface);
-    if (SUCCEEDED(hr) && wined3d_surface && backbuffer)
+    if (!(swapchain = wined3d_device_get_swapchain(device->wined3d_device, 0)))
     {
-        surface_impl = wined3d_surface_get_parent(wined3d_surface);
-        *backbuffer = &surface_impl->IDirect3DSurface8_iface;
-        IDirect3DSurface8_AddRef(*backbuffer);
+        wined3d_mutex_unlock();
+        *backbuffer = NULL;
+        return D3DERR_INVALIDCALL;
     }
-    wined3d_mutex_unlock();
 
-    return hr;
+    if (!(wined3d_texture = wined3d_swapchain_get_back_buffer(swapchain,
+            backbuffer_idx, (enum wined3d_backbuffer_type)backbuffer_type)))
+    {
+        wined3d_mutex_unlock();
+        *backbuffer = NULL;
+        return D3DERR_INVALIDCALL;
+    }
+
+    wined3d_resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
+    surface_impl = wined3d_resource_get_parent(wined3d_resource);
+    *backbuffer = &surface_impl->IDirect3DSurface8_iface;
+    IDirect3DSurface8_AddRef(*backbuffer);
+
+    wined3d_mutex_unlock();
+    return D3D_OK;
 }
 
 static HRESULT WINAPI d3d8_device_GetRasterStatus(IDirect3DDevice8 *iface, D3DRASTER_STATUS *raster_status)

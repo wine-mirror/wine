@@ -3183,26 +3183,6 @@ struct wined3d_texture * CDECL wined3d_device_get_texture(const struct wined3d_d
     return device->state.textures[stage];
 }
 
-HRESULT CDECL wined3d_device_get_back_buffer(const struct wined3d_device *device, UINT swapchain_idx,
-        UINT backbuffer_idx, enum wined3d_backbuffer_type backbuffer_type, struct wined3d_surface **backbuffer)
-{
-    struct wined3d_texture *texture;
-    struct wined3d_resource *resource;
-    struct wined3d_swapchain *swapchain;
-
-    TRACE("device %p, swapchain_idx %u, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
-            device, swapchain_idx, backbuffer_idx, backbuffer_type, backbuffer);
-
-    if (!(swapchain = wined3d_device_get_swapchain(device, swapchain_idx)))
-        return WINED3DERR_INVALIDCALL;
-
-    if (!(texture = wined3d_swapchain_get_back_buffer(swapchain, backbuffer_idx, backbuffer_type)))
-        return WINED3DERR_INVALIDCALL;
-    resource = wined3d_texture_get_sub_resource(texture, 0);
-    *backbuffer = wined3d_surface_from_resource(resource);
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_get_device_caps(const struct wined3d_device *device, WINED3DCAPS *caps)
 {
     TRACE("device %p, caps %p.\n", device, caps);
