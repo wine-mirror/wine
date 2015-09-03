@@ -1477,7 +1477,8 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
         }
     }
 
-    while ((!levels || (levels && levels[cnt+1] == levels[0])) && (pwcInChars[cnt] == Numeric_space) && cnt < cInChars)
+    while ((!levels || (levels && cnt+1 < cInChars && levels[cnt+1] == levels[0]))
+            && (cnt < cInChars && pwcInChars[cnt] == Numeric_space))
         cnt++;
 
     if (cnt == cInChars) /* All Spaces */
