@@ -55,7 +55,10 @@ static const WCHAR expandedW[] = {'e','x','p','a','n','d','e','d',0};
 static const WCHAR italicW[] = {'i','t','a','l','i','c',0};
 static const WCHAR boldW[] = {'B','o','l','d',0};
 static const WCHAR obliqueW[] = {'O','b','l','i','q','u','e',0};
+static const WCHAR regularW[] = {'R','e','g','u','l','a','r',0};
+static const WCHAR demiW[] = {'d','e','m','i',0};
 static const WCHAR spaceW[] = {' ',0};
+static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
 struct dwrite_font_propvec {
     FLOAT stretch;
@@ -83,6 +86,8 @@ struct dwrite_font_data {
     UINT32 face_index;
 
     WCHAR *facename;
+
+    BOOL bold_sim_tested : 1; /* used to mark font as tested when scanning for bold simulation candidate */
 };
 
 struct dwrite_fontfamily_data {
@@ -1233,7 +1238,6 @@ static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont2 *iface)
 static HRESULT WINAPI dwritefont_GetFaceNames(IDWriteFont2 *iface, IDWriteLocalizedStrings **names)
 {
     static const WCHAR boldobliqueW[] = {'B','o','l','d',' ','O','b','l','i','q','u','e',0};
-    static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
     struct dwrite_font *This = impl_from_IDWriteFont2(iface);
     IDWriteLocalizedStrings *strings;
@@ -1949,7 +1953,6 @@ HRESULT get_filestream_from_file(IDWriteFontFile *file, IDWriteFontFileStream **
 
 static void fontstrings_get_en_string(IDWriteLocalizedStrings *strings, WCHAR *buffer, UINT32 size)
 {
-    static const WCHAR enusW[] = {'e','n','-','U','S',0};
     BOOL exists = FALSE;
     UINT32 index;
     HRESULT hr;
@@ -2016,7 +2019,7 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                     continue;
 
                 if (!strncmpiW(token->ptr, pattern->part1, len_part1)) {
-                    *match = *token;
+                    if (match) *match = *token;
                     list_remove(&token->entry);
                     heap_free(token);
                     return TRUE;
@@ -2039,7 +2042,7 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                         continue;
 
                     /* combined string match */
-                    *match = *token;
+                    if (match) *match = *token;
                     list_remove(&token->entry);
                     heap_free(token);
                     return TRUE;
@@ -2062,8 +2065,10 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
                         continue;
 
                     /* both parts matched, remove tokens */
-                    match->ptr = next_token->ptr;
-                    match->len = (token->ptr - next_token->ptr) + token->len;
+                    if (match) {
+                        match->ptr = next_token->ptr;
+                        match->len = (token->ptr - next_token->ptr) + token->len;
+                    }
                     list_remove(&token->entry);
                     list_remove(&next_token->entry);
                     heap_free(next_token);
@@ -2074,8 +2079,10 @@ static BOOL match_pattern_list(struct list *tokens, const struct name_pattern *p
         }
     }
 
-    match->ptr = NULL;
-    match->len = 0;
+    if (match) {
+        match->ptr = NULL;
+        match->len = 0;
+    }
     return FALSE;
 }
 
@@ -2220,7 +2227,6 @@ static DWRITE_FONT_WEIGHT font_extract_weight(struct list *tokens, DWRITE_FONT_W
     struct name_token *match)
 {
     static const WCHAR heavyW[] = {'h','e','a','v','y',0};
-    static const WCHAR demiW[] = {'d','e','m','i',0};
     static const WCHAR nordW[] = {'n','o','r','d',0};
 
     static const struct name_pattern thin_patterns[] = {
@@ -2407,7 +2413,8 @@ static inline void font_name_token_to_str(const struct name_token *name, WCHAR *
     strW[name->len] = 0;
 }
 
-static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHAR *familyW, WCHAR *faceW)
+/* Modifies facenameW string, and returns pointer to regular term that was removed */
+static const WCHAR *facename_remove_regular_term(WCHAR *facenameW, INT len)
 {
     static const WCHAR bookW[] = {'B','o','o','k',0};
     static const WCHAR normalW[] = {'N','o','r','m','a','l',0};
@@ -2424,20 +2431,11 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
         NULL
     };
 
-    struct name_token stretch_name, weight_name, style_name;
-    WCHAR familynameW[255], facenameW[255], finalW[255];
-    WCHAR weightW[32], stretchW[32], styleW[32];
-    const WCHAR *ptr, *regular_ptr = NULL;
-    struct name_token *token, *token2;
-    DWRITE_FONT_STRETCH stretch;
-    DWRITE_FONT_WEIGHT weight;
-    struct list tokens;
-    int len, i = 0;
-    WCHAR *ptrW;
+    const WCHAR *regular_ptr = NULL, *ptr;
+    int i = 0;
 
-    /* remove leading and trailing spaces from family and face name */
-    trim_spaces(familyW, familynameW);
-    len = trim_spaces(faceW, facenameW);
+    if (len == -1)
+        len = strlenW(facenameW);
 
     /* remove rightmost regular variant from face name */
     while (!regular_ptr && (ptr = regular_patterns[i++])) {
@@ -2460,15 +2458,15 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
         }
     }
 
-    /* append face name to family name, FIXME check if face name is a substring of family name */
-    if (*facenameW) {
-        strcatW(familynameW, spaceW);
-        strcatW(familynameW, facenameW);
-    }
+    return regular_ptr;
+}
 
-    /* tokenize with " .-_" */
-    list_init(&tokens);
-    ptr = familynameW;
+static void fontname_tokenize(struct list *tokens, const WCHAR *nameW)
+{
+    const WCHAR *ptr;
+
+    list_init(tokens);
+    ptr = nameW;
 
     while (*ptr) {
         struct name_token *token = heap_alloc(sizeof(*token));
@@ -2488,8 +2486,54 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
             ptr++;
         }
 
-        list_add_head(&tokens, &token->entry);
+        list_add_head(tokens, &token->entry);
     }
+}
+
+static void fontname_tokens_to_str(struct list *tokens, WCHAR *nameW)
+{
+    struct name_token *token, *token2;
+    LIST_FOR_EACH_ENTRY_SAFE_REV(token, token2, tokens, struct name_token, entry) {
+        int len;
+
+        list_remove(&token->entry);
+
+        /* don't include last separator */
+        len = list_empty(tokens) ? token->len : token->fulllen;
+        memcpy(nameW, token->ptr, len * sizeof(WCHAR));
+        nameW += len;
+
+        heap_free(token);
+    }
+    *nameW = 0;
+}
+
+static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHAR *familyW, WCHAR *faceW)
+{
+    struct name_token stretch_name, weight_name, style_name;
+    WCHAR familynameW[255], facenameW[255], finalW[255];
+    WCHAR weightW[32], stretchW[32], styleW[32];
+    const WCHAR *regular_ptr = NULL;
+    DWRITE_FONT_STRETCH stretch;
+    DWRITE_FONT_WEIGHT weight;
+    struct list tokens;
+    int len;
+
+    /* remove leading and trailing spaces from family and face name */
+    trim_spaces(familyW, familynameW);
+    len = trim_spaces(faceW, facenameW);
+
+    /* remove rightmost regular variant from face name */
+    regular_ptr = facename_remove_regular_term(facenameW, len);
+
+    /* append face name to family name, FIXME check if face name is a substring of family name */
+    if (*facenameW) {
+        strcatW(familynameW, spaceW);
+        strcatW(familynameW, facenameW);
+    }
+
+    /* tokenize with " .-_" */
+    fontname_tokenize(&tokens, familynameW);
 
     /* extract and resolve style */
     font->style = font_extract_style(&tokens, font->style, &style_name);
@@ -2530,20 +2574,7 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     /* FIXME: cleanup face name from possible 2-3 digit prefixes */
 
     /* get final combined string from what's left in token list, list is released */
-    ptrW = finalW;
-    LIST_FOR_EACH_ENTRY_SAFE_REV(token, token2, &tokens, struct name_token, entry) {
-        int len;
-
-        list_remove(&token->entry);
-
-        /* don't include last separator */
-        len = list_empty(&tokens) ? token->len : token->fulllen;
-        memcpy(ptrW, token->ptr, len * sizeof(WCHAR));
-        ptrW += len;
-
-        heap_free(token);
-    }
-    *ptrW = 0;
+    fontname_tokens_to_str(&tokens, finalW);
 
     if (!strcmpW(familyW, finalW))
         return FALSE;
@@ -2656,6 +2687,7 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, D
     data->file = file;
     data->face_index = face_index;
     data->face_type = face_type;
+    data->bold_sim_tested = FALSE;
     IDWriteFontFile_AddRef(file);
     IDWriteFactory2_AddRef(factory);
 
@@ -2690,6 +2722,33 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, D
     return S_OK;
 }
 
+static HRESULT init_font_data_from_font(const struct dwrite_font_data *src, DWRITE_FONT_WEIGHT weight, const WCHAR *facenameW,
+    struct dwrite_font_data **ret)
+{
+    struct dwrite_font_data *data;
+
+    *ret = NULL;
+    data = heap_alloc_zero(sizeof(*data));
+    if (!data)
+        return E_OUTOFMEMORY;
+
+    *data = *src;
+    data->ref = 1;
+    data->weight = weight;
+    memset(data->info_strings, 0, sizeof(data->info_strings));
+    data->names = NULL;
+    IDWriteFactory2_AddRef(data->factory);
+    IDWriteFontFile_AddRef(data->file);
+
+    create_localizedstrings(&data->names);
+    add_localizedstring(data->names, enusW, facenameW);
+
+    init_font_prop_vec(data->weight, data->stretch, data->style, &data->propvec);
+
+    *ret = data;
+    return S_OK;
+};
+
 static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct dwrite_fontfamily_data **ret)
 {
     struct dwrite_fontfamily_data *data;
@@ -2715,11 +2774,83 @@ static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct 
     return S_OK;
 }
 
+static void fontfamily_add_bold_simulated_face(struct dwrite_fontfamily_data *family)
+{
+    UINT32 i, j, heaviest;
+
+    for (i = 0; i < family->font_count; i++) {
+        DWRITE_FONT_WEIGHT weight = family->fonts[i]->weight;
+        heaviest = i;
+
+        if (family->fonts[i]->bold_sim_tested)
+            continue;
+
+        family->fonts[i]->bold_sim_tested = TRUE;
+        for (j = i; j < family->font_count; j++) {
+            if (family->fonts[j]->bold_sim_tested)
+                continue;
+
+            if ((family->fonts[i]->style == family->fonts[j]->style) &&
+                (family->fonts[i]->stretch == family->fonts[j]->stretch)) {
+                if (family->fonts[j]->weight > weight) {
+                    weight = family->fonts[j]->weight;
+                    heaviest = j;
+                }
+                family->fonts[j]->bold_sim_tested = TRUE;
+            }
+        }
+
+        if (weight >= DWRITE_FONT_WEIGHT_SEMI_LIGHT && weight <= 550) {
+            static const struct name_pattern weightsim_patterns[] = {
+                { extraW, lightW },
+                { extW, lightW },
+                { ultraW, lightW },
+                { semiW, lightW },
+                { semiW, boldW },
+                { demiW, boldW },
+                { boldW },
+                { thinW },
+                { lightW },
+                { mediumW },
+                { demiW },
+                { NULL }
+            };
+
+            WCHAR facenameW[255], initialW[255];
+            struct dwrite_font_data *boldface;
+            struct list tokens;
+
+            /* add Bold simulation based on heaviest face data */
+
+            /* Simulated face name should only contain Bold as weight term,
+               so remove existing regular and weight terms. */
+            fontstrings_get_en_string(family->fonts[heaviest]->names, initialW, sizeof(initialW)/sizeof(WCHAR));
+            facename_remove_regular_term(initialW, -1);
+
+            /* remove current weight pattern */
+            fontname_tokenize(&tokens, initialW);
+            match_pattern_list(&tokens, weightsim_patterns, NULL);
+            fontname_tokens_to_str(&tokens, facenameW);
+
+            /* Bold suffix for new name */
+            if (*facenameW)
+                strcatW(facenameW, spaceW);
+            strcatW(facenameW, boldW);
+
+            if (init_font_data_from_font(family->fonts[heaviest], DWRITE_FONT_WEIGHT_BOLD, facenameW, &boldface) == S_OK) {
+                boldface->bold_sim_tested = TRUE;
+                fontfamily_add_font(family, boldface);
+            }
+        }
+    }
+}
+
 HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system, IDWriteFontCollection **ret)
 {
     struct dwrite_fontcollection *collection;
     BOOL current = FALSE;
     HRESULT hr = S_OK;
+    UINT32 i;
 
     *ret = NULL;
 
@@ -2740,7 +2871,7 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
         DWRITE_FONT_FACE_TYPE face_type;
         DWRITE_FONT_FILE_TYPE file_type;
         IDWriteFontFile *file;
-        UINT32 face_count, i;
+        UINT32 face_count;
         BOOL supported;
 
         current = FALSE;
@@ -2800,7 +2931,11 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
         }
 
         IDWriteFontFile_Release(file);
-    };
+    }
+
+    for (i = 0; i < collection->family_count; i++) {
+        fontfamily_add_bold_simulated_face(collection->family_data[i]);
+    }
 
     return hr;
 }
