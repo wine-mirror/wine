@@ -2904,18 +2904,18 @@ static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *
     return S_OK;
 }
 
-static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, const struct wined3d_resource_desc *wined3d_desc, struct wined3d_surface **surface)
+static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_device_parent *device_parent,
+        void *container_parent, const struct wined3d_resource_desc *wined3d_desc,
+        struct wined3d_texture **wined3d_texture)
 {
     struct d3d_device *device = device_from_wined3d_device_parent(device_parent);
-    struct wined3d_resource *sub_resource;
     struct d3d_texture2d *texture;
     ID3D10Texture2D *texture_iface;
     D3D10_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    FIXME("device_parent %p, container_parent %p, wined3d_desc %p, surface %p partial stub!\n",
-            device_parent, container_parent, wined3d_desc, surface);
+    FIXME("device_parent %p, container_parent %p, wined3d_desc %p, wined3d_texture %p partial stub!\n",
+            device_parent, container_parent, wined3d_desc, wined3d_texture);
 
     FIXME("Implement DXGI<->wined3d usage conversion\n");
 
@@ -2940,10 +2940,9 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
 
     texture = impl_from_ID3D10Texture2D(texture_iface);
 
-    sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, 0);
-    *surface = wined3d_surface_from_resource(sub_resource);
-    wined3d_surface_incref(*surface);
-    ID3D10Texture2D_Release(texture_iface);
+    *wined3d_texture = texture->wined3d_texture;
+    wined3d_texture_incref(*wined3d_texture);
+    ID3D10Texture2D_Release(&texture->ID3D10Texture2D_iface);
 
     return S_OK;
 }
@@ -2982,7 +2981,7 @@ static const struct wined3d_device_parent_ops d3d10_wined3d_device_parent_ops =
     device_parent_activate,
     device_parent_surface_created,
     device_parent_volume_created,
-    device_parent_create_swapchain_surface,
+    device_parent_create_swapchain_texture,
     device_parent_create_swapchain,
 };
 

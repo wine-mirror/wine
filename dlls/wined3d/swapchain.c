@@ -772,7 +772,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         struct wined3d_swapchain_desc *desc, void *parent, const struct wined3d_parent_ops *parent_ops)
 {
     const struct wined3d_adapter *adapter = device->adapter;
-    struct wined3d_resource_desc surface_desc;
+    struct wined3d_resource_desc texture_desc;
     struct wined3d_surface *front_buffer;
     BOOL displaymode_set = FALSE;
     RECT client_rect;
@@ -836,26 +836,26 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
 
     TRACE("Creating front buffer.\n");
 
-    surface_desc.resource_type = WINED3D_RTYPE_SURFACE;
-    surface_desc.format = swapchain->desc.backbuffer_format;
-    surface_desc.multisample_type = swapchain->desc.multisample_type;
-    surface_desc.multisample_quality = swapchain->desc.multisample_quality;
-    surface_desc.usage = 0;
-    surface_desc.pool = WINED3D_POOL_DEFAULT;
-    surface_desc.width = swapchain->desc.backbuffer_width;
-    surface_desc.height = swapchain->desc.backbuffer_height;
-    surface_desc.depth = 1;
-    surface_desc.size = 0;
+    texture_desc.resource_type = WINED3D_RTYPE_TEXTURE;
+    texture_desc.format = swapchain->desc.backbuffer_format;
+    texture_desc.multisample_type = swapchain->desc.multisample_type;
+    texture_desc.multisample_quality = swapchain->desc.multisample_quality;
+    texture_desc.usage = 0;
+    texture_desc.pool = WINED3D_POOL_DEFAULT;
+    texture_desc.width = swapchain->desc.backbuffer_width;
+    texture_desc.height = swapchain->desc.backbuffer_height;
+    texture_desc.depth = 1;
+    texture_desc.size = 0;
 
-    if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
-            parent, &surface_desc, &front_buffer)))
+    if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
+            parent, &texture_desc, &swapchain->front_buffer)))
     {
         WARN("Failed to create front buffer, hr %#x.\n", hr);
         goto err;
     }
 
-    swapchain->front_buffer = front_buffer->container;
     wined3d_texture_set_swapchain(swapchain->front_buffer, swapchain);
+    front_buffer = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
     if (!(device->wined3d->flags & WINED3D_NO3D))
     {
         surface_validate_location(front_buffer, WINED3D_LOCATION_DRAWABLE);
@@ -952,20 +952,17 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
             goto err;
         }
 
-        surface_desc.usage |= WINED3DUSAGE_RENDERTARGET;
+        texture_desc.usage |= WINED3DUSAGE_RENDERTARGET;
         for (i = 0; i < swapchain->desc.backbuffer_count; ++i)
         {
-            struct wined3d_surface *back_buffer;
-
             TRACE("Creating back buffer %u.\n", i);
-            if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
-                    parent, &surface_desc, &back_buffer)))
+            if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
+                    parent, &texture_desc, &swapchain->back_buffers[i])))
             {
                 WARN("Failed to create back buffer %u, hr %#x.\n", i, hr);
                 swapchain->desc.backbuffer_count = i;
                 goto err;
             }
-            swapchain->back_buffers[i] = back_buffer->container;
             wined3d_texture_set_swapchain(swapchain->back_buffers[i], swapchain);
         }
     }
@@ -976,21 +973,26 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
         TRACE("Creating depth/stencil buffer.\n");
         if (!device->auto_depth_stencil_view)
         {
-            struct wined3d_surface *ds;
+            struct wined3d_texture *ds;
+            struct wined3d_rendertarget_view_desc desc;
 
-            surface_desc.format = swapchain->desc.auto_depth_stencil_format;
-            surface_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
+            texture_desc.format = swapchain->desc.auto_depth_stencil_format;
+            texture_desc.usage = WINED3DUSAGE_DEPTHSTENCIL;
 
-            if (FAILED(hr = device->device_parent->ops->create_swapchain_surface(device->device_parent,
-                    device->device_parent, &surface_desc, &ds)))
+            if (FAILED(hr = device->device_parent->ops->create_swapchain_texture(device->device_parent,
+                    device->device_parent, &texture_desc, &ds)))
             {
                 WARN("Failed to create the auto depth/stencil surface, hr %#x.\n", hr);
                 goto err;
             }
 
-            hr = wined3d_rendertarget_view_create_from_surface(ds,
-                    NULL, &wined3d_null_parent_ops, &device->auto_depth_stencil_view);
-            wined3d_surface_decref(ds);
+            desc.format_id = ds->resource.format->id;
+            desc.u.texture.level_idx = 0;
+            desc.u.texture.layer_idx = 0;
+            desc.u.texture.layer_count = 1;
+            hr = wined3d_rendertarget_view_create(&desc, &ds->resource, NULL, &wined3d_null_parent_ops,
+                    &device->auto_depth_stencil_view);
+            wined3d_texture_decref(ds);
             if (FAILED(hr))
             {
                 ERR("Failed to create rendertarget view, hr %#x.\n", hr);

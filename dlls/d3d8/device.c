@@ -3034,32 +3034,24 @@ static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *
     return D3D_OK;
 }
 
-static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_surface **surface)
+static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_device_parent *device_parent,
+        void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_texture **texture)
 {
     struct d3d8_device *device = device_from_device_parent(device_parent);
-    struct wined3d_resource_desc texture_desc;
     struct d3d8_surface *d3d_surface;
-    struct wined3d_texture *texture;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, desc %p, surface %p.\n",
-            device_parent, container_parent, desc, surface);
+    TRACE("device_parent %p, container_parent %p, desc %p, texture %p.\n",
+            device_parent, container_parent, desc, texture);
 
-    texture_desc = *desc;
-    texture_desc.resource_type = WINED3D_RTYPE_TEXTURE;
-    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, &texture_desc, 1,
-            WINED3D_SURFACE_MAPPABLE, NULL, &device->IDirect3DDevice8_iface, &d3d8_null_wined3d_parent_ops, &texture)))
+    if (FAILED(hr = wined3d_texture_create(device->wined3d_device, desc, 1,
+            WINED3D_SURFACE_MAPPABLE, NULL, &device->IDirect3DDevice8_iface, &d3d8_null_wined3d_parent_ops, texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
     }
 
-    *surface = wined3d_surface_from_resource(wined3d_texture_get_sub_resource(texture, 0));
-    wined3d_surface_incref(*surface);
-    wined3d_texture_decref(texture);
-
-    d3d_surface = wined3d_surface_get_parent(*surface);
+    d3d_surface = wined3d_resource_get_parent(wined3d_texture_get_sub_resource(*texture, 0));
     d3d_surface->parent_device = &device->IDirect3DDevice8_iface;
 
     return hr;
@@ -3095,7 +3087,7 @@ static const struct wined3d_device_parent_ops d3d8_wined3d_device_parent_ops =
     device_parent_activate,
     device_parent_surface_created,
     device_parent_volume_created,
-    device_parent_create_swapchain_surface,
+    device_parent_create_swapchain_texture,
     device_parent_create_swapchain,
 };
 

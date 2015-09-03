@@ -197,19 +197,19 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     memset(surface, 0, surface_count * sizeof(*surface));
     for (i = 0; i < surface_count; ++i)
     {
-        struct wined3d_surface *wined3d_surface;
+        struct wined3d_texture *wined3d_texture;
         IUnknown *parent;
 
-        if (FAILED(hr = device_parent->ops->create_swapchain_surface(device_parent,
-                NULL, &surface_desc, &wined3d_surface)))
+        if (FAILED(hr = device_parent->ops->create_swapchain_texture(device_parent,
+                NULL, &surface_desc, &wined3d_texture)))
         {
             ERR("Failed to create surface, hr %#x.\n", hr);
             goto fail;
         }
 
-        parent = wined3d_surface_get_parent(wined3d_surface);
+        parent = wined3d_texture_get_parent(wined3d_texture);
         hr = IUnknown_QueryInterface(parent, &IID_IDXGISurface, (void **)&surface[i]);
-        wined3d_surface_decref(wined3d_surface);
+        wined3d_texture_decref(wined3d_texture);
         if (FAILED(hr))
         {
             ERR("Surface should implement IDXGISurface\n");

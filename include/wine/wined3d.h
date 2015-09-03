@@ -2041,8 +2041,8 @@ struct wined3d_device_parent_ops
             struct wined3d_surface *surface, void **parent, const struct wined3d_parent_ops **parent_ops);
     HRESULT (__cdecl *volume_created)(struct wined3d_device_parent *device_parent, void *container_parent,
             struct wined3d_volume *volume, void **parent, const struct wined3d_parent_ops **parent_ops);
-    HRESULT (__cdecl *create_swapchain_surface)(struct wined3d_device_parent *device_parent, void *container_parent,
-            const struct wined3d_resource_desc *desc, struct wined3d_surface **surface);
+    HRESULT (__cdecl *create_swapchain_texture)(struct wined3d_device_parent *device_parent, void *parent,
+            const struct wined3d_resource_desc *desc, struct wined3d_texture **texture);
     HRESULT (__cdecl *create_swapchain)(struct wined3d_device_parent *device_parent,
             struct wined3d_swapchain_desc *desc, struct wined3d_swapchain **swapchain);
 };

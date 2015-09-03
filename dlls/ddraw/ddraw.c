@@ -4769,16 +4769,14 @@ static const struct wined3d_parent_ops ddraw_frontbuffer_parent_ops =
     ddraw_frontbuffer_destroyed,
 };
 
-static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_device_parent *device_parent,
-        void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_surface **surface)
+static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_device_parent *device_parent,
+        void *container_parent, const struct wined3d_resource_desc *desc, struct wined3d_texture **texture)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
-    struct wined3d_resource_desc texture_desc;
-    struct wined3d_texture *texture;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, desc %p, surface %p.\n",
-            device_parent, container_parent, desc, surface);
+    TRACE("device_parent %p, container_parent %p, desc %p, texture %p.\n",
+            device_parent, container_parent, desc, texture);
 
     if (ddraw->wined3d_frontbuffer)
     {
@@ -4786,19 +4784,14 @@ static HRESULT CDECL device_parent_create_swapchain_surface(struct wined3d_devic
         return E_FAIL;
     }
 
-    texture_desc = *desc;
-    texture_desc.resource_type = WINED3D_RTYPE_TEXTURE;
-    if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, &texture_desc, 1,
-            WINED3D_SURFACE_MAPPABLE, NULL, ddraw, &ddraw_frontbuffer_parent_ops, &texture)))
+    if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, desc, 1,
+            WINED3D_SURFACE_MAPPABLE, NULL, ddraw, &ddraw_frontbuffer_parent_ops, texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;
     }
 
-    *surface = wined3d_surface_from_resource(wined3d_texture_get_sub_resource(texture, 0));
-    ddraw->wined3d_frontbuffer = *surface;
-    wined3d_surface_incref(*surface);
-    wined3d_texture_decref(texture);
+    ddraw->wined3d_frontbuffer = wined3d_surface_from_resource(wined3d_texture_get_sub_resource(*texture, 0));
 
     return hr;
 }
@@ -4831,7 +4824,7 @@ static const struct wined3d_device_parent_ops ddraw_wined3d_device_parent_ops =
     device_parent_activate,
     device_parent_surface_created,
     device_parent_volume_created,
-    device_parent_create_swapchain_surface,
+    device_parent_create_swapchain_texture,
     device_parent_create_swapchain,
 };
 
