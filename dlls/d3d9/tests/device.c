@@ -1085,6 +1085,18 @@ static void test_swapchain(void)
     ok(d3dpp.BackBufferCount == 1, "Got unexpected back buffer count %u.\n", d3dpp.BackBufferCount);
     IDirect3DSwapChain9_Release(swapchain0);
 
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain0, 0, D3DBACKBUFFER_TYPE_MONO, NULL);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    /* IDirect3DDevice9::GetBackBuffer crashes if a NULL output pointer is passed. */
+    backbuffer = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9_GetBackBuffer(device, 1, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!backbuffer, "The back buffer pointer is %p, expected NULL.\n", backbuffer);
+    backbuffer = (void *)0xdeadbeef;
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 1, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!backbuffer, "The back buffer pointer is %p, expected NULL.\n", backbuffer);
+
     /* Check if there is a back buffer */
     hr = IDirect3DSwapChain9_GetBackBuffer(swapchain0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
     ok(SUCCEEDED(hr), "Failed to get the back buffer (%08x)\n", hr);
