@@ -280,6 +280,12 @@ static void test_swapchain(void)
         goto cleanup;
     }
 
+    backbuffer = (void *)0xdeadbeef;
+    /* IDirect3DDevice8::GetBackBuffer crashes if a NULL output pointer is passed. */
+    hr = IDirect3DDevice8_GetBackBuffer(device, 1, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(!backbuffer, "The back buffer pointer is %p, expected NULL.\n", backbuffer);
+
     memset(&d3dpp, 0, sizeof(d3dpp));
     d3dpp.Windowed = TRUE;
     d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
@@ -300,6 +306,9 @@ static void test_swapchain(void)
     ok(SUCCEEDED(hr), "Failed to create a swapchain (%#08x)\n", hr);
     if(SUCCEEDED(hr)) {
         /* Swapchain 3, created with backbuffercount 2 */
+        hr = IDirect3DSwapChain8_GetBackBuffer(swapchain3, 0, 0, NULL);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+
         backbuffer = (void *) 0xdeadbeef;
         hr = IDirect3DSwapChain8_GetBackBuffer(swapchain3, 0, 0, &backbuffer);
         ok(SUCCEEDED(hr), "Failed to get the 1st back buffer (%#08x)\n", hr);
