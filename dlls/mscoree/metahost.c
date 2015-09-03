@@ -111,21 +111,6 @@ static MonoAssembly* mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char
 
 static void mono_shutdown_callback_fn(MonoProfiler *prof);
 
-static void set_environment(LPCWSTR bin_path)
-{
-    WCHAR path_env[MAX_PATH];
-    int len;
-
-    static const WCHAR pathW[] = {'P','A','T','H',0};
-
-    /* We have to modify PATH as Mono loads other DLLs from this directory. */
-    GetEnvironmentVariableW(pathW, path_env, sizeof(path_env)/sizeof(WCHAR));
-    len = strlenW(path_env);
-    path_env[len++] = ';';
-    strcpyW(path_env+len, bin_path);
-    SetEnvironmentVariableW(pathW, path_env);
-}
-
 static MonoImage* CDECL image_open_module_handle_dummy(HMODULE module_handle,
     char* fname, UINT has_entry_point, MonoImageOpenStatus* status)
 {
@@ -139,10 +124,9 @@ static void missing_runtime_message(void)
 
 static HRESULT load_mono(LPCWSTR mono_path)
 {
-    static const WCHAR bin[] = {'\\','b','i','n',0};
     static const WCHAR lib[] = {'\\','l','i','b',0};
     static const WCHAR etc[] = {'\\','e','t','c',0};
-    WCHAR mono_dll_path[MAX_PATH+16], mono_bin_path[MAX_PATH+4];
+    WCHAR mono_dll_path[MAX_PATH+16];
     WCHAR mono_lib_path[MAX_PATH+4], mono_etc_path[MAX_PATH+4];
     char mono_lib_path_a[MAX_PATH], mono_etc_path_a[MAX_PATH];
     int trace_size;
@@ -158,10 +142,6 @@ static HRESULT load_mono(LPCWSTR mono_path)
 
     if (!mono_handle)
     {
-        strcpyW(mono_bin_path, mono_path);
-        strcatW(mono_bin_path, bin);
-        set_environment(mono_bin_path);
-
         strcpyW(mono_lib_path, mono_path);
         strcatW(mono_lib_path, lib);
         WideCharToMultiByte(CP_UTF8, 0, mono_lib_path, -1, mono_lib_path_a, MAX_PATH, NULL, NULL);
