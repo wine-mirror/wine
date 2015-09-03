@@ -1109,24 +1109,18 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin,
         return E_FAIL;
     }
 
-    pos += sizeof(RIFFCHUNK) + list.cb;
-    hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
-
-    while (list.fcc == ckidAVIPADDING || (list.fcc == FOURCC_LIST && list.fccListType != listtypeAVIMOVIE))
+    /* Skip any chunks until we find the LIST chunk */
+    do
     {
         pos += sizeof(RIFFCHUNK) + list.cb;
-
         hr = IAsyncReader_SyncRead(This->pReader, pos, sizeof(list), (BYTE *)&list);
     }
+    while (hr == S_OK && (list.fcc != FOURCC_LIST ||
+           (list.fcc == FOURCC_LIST && list.fccListType != listtypeAVIMOVIE)));
 
-    if (list.fcc != FOURCC_LIST)
+    if (hr != S_OK)
     {
-        ERR("Expected LIST, but got %.04s\n", (LPSTR)&list.fcc);
-        return E_FAIL;
-    }
-    if (list.fccListType != listtypeAVIMOVIE)
-    {
-        ERR("Expected AVI movie list, but got %.04s\n", (LPSTR)&list.fccListType);
+        ERR("Failed to find LIST chunk from AVI file\n");
         return E_FAIL;
     }
 
@@ -1134,20 +1128,17 @@ static HRESULT AVISplitter_InputPin_PreConnect(IPin * iface, IPin * pConnectPin,
 
     /* FIXME: AVIX files are extended beyond the FOURCC chunk "AVI ", and thus won't be played here,
      * once I get one of the files I'll try to fix it */
-    if (hr == S_OK)
+    This->rtStart = pAviSplit->CurrentChunkOffset = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFLIST));
+    pos += list.cb + sizeof(RIFFCHUNK);
+
+    pAviSplit->EndOfFile = This->rtStop = MEDIATIME_FROM_BYTES(pos);
+    if (pos > total)
     {
-        This->rtStart = pAviSplit->CurrentChunkOffset = MEDIATIME_FROM_BYTES(pos + sizeof(RIFFLIST));
-        pos += list.cb + sizeof(RIFFCHUNK);
-
-        pAviSplit->EndOfFile = This->rtStop = MEDIATIME_FROM_BYTES(pos);
-        if (pos > total)
-        {
-            ERR("File smaller (%x%08x) then EndOfFile (%x%08x)\n", (DWORD)(total >> 32), (DWORD)total, (DWORD)(pAviSplit->EndOfFile >> 32), (DWORD)pAviSplit->EndOfFile);
-            return E_FAIL;
-        }
-
-        hr = IAsyncReader_SyncRead(This->pReader, BYTES_FROM_MEDIATIME(pAviSplit->CurrentChunkOffset), sizeof(pAviSplit->CurrentChunk), (BYTE *)&pAviSplit->CurrentChunk);
+        ERR("File smaller (%x%08x) then EndOfFile (%x%08x)\n", (DWORD)(total >> 32), (DWORD)total, (DWORD)(pAviSplit->EndOfFile >> 32), (DWORD)pAviSplit->EndOfFile);
+        return E_FAIL;
     }
+
+    hr = IAsyncReader_SyncRead(This->pReader, BYTES_FROM_MEDIATIME(pAviSplit->CurrentChunkOffset), sizeof(pAviSplit->CurrentChunk), (BYTE *)&pAviSplit->CurrentChunk);
 
     props->cbAlign = 1;
     props->cbPrefix = 0;
