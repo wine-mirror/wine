@@ -133,7 +133,7 @@ static int RegisterDll(const WCHAR* strDll)
     if(FAILED(hr))
     {
         output_write(STRING_REGISTER_FAILED, strDll);
-        return -1;
+        return DLLSERVER_FAILED;
     }
     output_write(STRING_REGISTER_SUCCESSFUL, strDll);
 
@@ -156,7 +156,7 @@ static int UnregisterDll(const WCHAR* strDll)
     if(FAILED(hr))
     {
         output_write(STRING_UNREGISTER_FAILED, strDll);
-        return -1;
+        return DLLSERVER_FAILED;
     }
     output_write(STRING_UNREGISTER_SUCCESSFUL, strDll);
 
@@ -182,7 +182,7 @@ static int InstallDll(BOOL install, const WCHAR *strDll, const WCHAR *command_li
             output_write(STRING_INSTALL_FAILED, strDll);
         else
             output_write(STRING_UNINSTALL_FAILED, strDll);
-        return -1;
+        return DLLSERVER_FAILED;
     }
     if (install)
         output_write(STRING_INSTALL_SUCCESSFUL, strDll);

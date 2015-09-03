@@ -22,6 +22,7 @@
 #define INVALID_ARG                           1
 #define LOADLIBRARY_FAILED                    3
 #define GETPROCADDRESS_FAILED                 4
+#define DLLSERVER_FAILED                      5
 
 /* Resource strings */
 #define STRING_HEADER                      1000
