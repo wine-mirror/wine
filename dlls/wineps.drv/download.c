@@ -631,6 +631,19 @@ static void get_standard_glyph_name(WORD index, char *name)
     snprintf(name, MAX_G_NAME + 1, "%s", glyph_table[index]->sz);
 }
 
+static int get_post2_name_index(BYTE *post2header, DWORD size, WORD index)
+{
+    USHORT numberOfGlyphs = GET_BE_WORD(post2header);
+    DWORD offset = (1 + index) * sizeof(USHORT);
+
+    if(offset + sizeof(USHORT) > size || index >= numberOfGlyphs)
+    {
+        FIXME("Index '%d' exceeds PostScript Format 2 table size (%d)\n", index, numberOfGlyphs);
+        return -1;
+    }
+    return GET_BE_WORD(post2header + offset);
+}
+
 void get_glyph_name(HDC hdc, WORD index, char *name)
 {
     struct
@@ -672,6 +685,25 @@ void get_glyph_name(HDC hdc, WORD index, char *name)
             get_standard_glyph_name(index, name);
         else
             WARN("Font uses PostScript Format 1, but non-standard glyph (%d) requested.\n", index);
+    }
+    else if(post_header->format == MAKELONG(0, 2))
+    {
+        BYTE *post2header = post + sizeof(*post_header);
+        int glyphNameIndex;
+
+        size -= sizeof(*post_header);
+        if(size < sizeof(USHORT))
+        {
+            FIXME("PostScript Format 2 table is invalid (cannot fit header)\n");
+            goto cleanup;
+        }
+        glyphNameIndex = get_post2_name_index(post2header, size, index);
+        if(glyphNameIndex == -1)
+            goto cleanup; /* invalid index, use fallback name */
+        else if(glyphNameIndex < 258)
+            get_standard_glyph_name(glyphNameIndex, name);
+        else
+            FIXME("PostScript Format 2 custom glyphs are currently unsupported.\n");
     }
     else
         FIXME("PostScript Format %d.%d glyph names are currently unsupported.\n",
