@@ -241,8 +241,14 @@ int wmain(int argc, WCHAR* argv[])
      */
     for(i = 1; i < argc; i++)
     {
-        if ((argv[i][0] == '/' || argv[i][0] == '-') && (!argv[i][2] || argv[i][2] == ':'))
+        if (argv[i][0] == '/' || argv[i][0] == '-')
         {
+            if (!argv[i][1])
+                return INVALID_ARG;
+
+            if (argv[i][2] && argv[i][2] != ':')
+                continue;
+
             switch (tolowerW(argv[i][1]))
             {
             case 'u':
