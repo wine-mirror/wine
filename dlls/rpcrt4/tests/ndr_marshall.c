@@ -965,7 +965,7 @@ static void test_simple_struct(void)
     s1.c = 0xa5;
     s1.l1 = 0xdeadbeef;
     s1.l2 = 0xcafebabe;
-    s1.ll = ((LONGLONG) 0xbadefeed << 32) | 0x2468ace0;
+    s1.ll = ((ULONGLONG) 0xbadefeed << 32) | 0x2468ace0;
 
     wiredatalen = 24;
     memcpy(wiredata, &s1, wiredatalen); 
