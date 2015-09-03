@@ -2885,7 +2885,7 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
     TRACE("device_parent %p, container_parent %p, surface %p, parent %p, parent_ops %p.\n",
             device_parent, container_parent, surface, parent, parent_ops);
 
-    *parent = container_parent;
+    *parent = NULL;
     *parent_ops = &d3d10_null_wined3d_parent_ops;
 
     return S_OK;
@@ -2898,7 +2898,7 @@ static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *
     TRACE("device_parent %p, container_parent %p, volume %p, parent %p, parent_ops %p.\n",
             device_parent, container_parent, volume, parent, parent_ops);
 
-    *parent = container_parent;
+    *parent = NULL;
     *parent_ops = &d3d10_null_wined3d_parent_ops;
 
     return S_OK;
