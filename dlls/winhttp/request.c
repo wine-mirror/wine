@@ -34,6 +34,7 @@
 #include "ole2.h"
 #include "initguid.h"
 #include "httprequest.h"
+#include "httprequestid.h"
 #include "winhttp.h"
 
 #include "winhttp_private.h"
@@ -2946,6 +2947,48 @@ static HRESULT WINAPI winhttp_request_Invoke(
     TRACE("%p, %d, %s, %d, %d, %p, %p, %p, %p\n", request, member, debugstr_guid(riid),
           lcid, flags, params, result, excep_info, arg_err);
 
+    if (!IsEqualIID( riid, &IID_NULL )) return DISP_E_UNKNOWNINTERFACE;
+
+    if (member == DISPID_HTTPREQUEST_OPTION)
+    {
+        VARIANT ret_value, option;
+        UINT err_pos;
+
+        if (!result) result = &ret_value;
+        if (!arg_err) arg_err = &err_pos;
+
+        VariantInit( &option );
+        VariantInit( result );
+
+        if (!flags) return S_OK;
+
+        if (flags == DISPATCH_PROPERTYPUT)
+        {
+            hr = DispGetParam( params, 0, VT_I4, &option, arg_err );
+            if (FAILED(hr)) return hr;
+
+            hr = IWinHttpRequest_put_Option( &request->IWinHttpRequest_iface, V_I4( &option ), params->rgvarg[0] );
+            if (FAILED(hr))
+                WARN("put_Option(%d) failed: %x\n", V_I4( &option ), hr);
+            return hr;
+        }
+        else if (flags & (DISPATCH_PROPERTYGET | DISPATCH_METHOD))
+        {
+            hr = DispGetParam( params, 0, VT_I4, &option, arg_err );
+            if (FAILED(hr)) return hr;
+
+            hr = IWinHttpRequest_get_Option( &request->IWinHttpRequest_iface, V_I4( &option ), result );
+            if (FAILED(hr))
+                WARN("get_Option(%d) failed: %x\n", V_I4( &option ), hr);
+            return hr;
+        }
+
+        FIXME("unsupported flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+
+    /* fallback to standard implementation */
+
     hr = get_typeinfo( IWinHttpRequest_tid, &typeinfo );
     if (SUCCEEDED(hr))
     {
@@ -4216,6 +4259,7 @@ HRESULT WinHttpRequest_create( void **obj )
     request->state = REQUEST_STATE_UNINITIALIZED;
     request->proxy.lpszProxy = NULL;
     request->proxy.lpszProxyBypass = NULL;
+    request->url_codepage = CP_UTF8;
     InitializeCriticalSection( &request->cs );
     request->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": winhttp_request.cs");
 
