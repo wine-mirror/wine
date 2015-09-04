@@ -415,6 +415,7 @@ static void PullPin_Flush(PullPin *This)
         {
             DWORD_PTR dwUser;
 
+            pSample = NULL;
             IAsyncReader_WaitForNext(This->pReader, 0, &pSample, &dwUser);
 
             if (!pSample)
