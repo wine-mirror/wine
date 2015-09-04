@@ -132,6 +132,8 @@ typedef MonoAssembly* (*MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char *
 
 typedef void (*MonoProfileFunc)(MonoProfiler *prof);
 
+typedef void (*MonoPrintCallback) (const char *string, INT is_stdout);
+
 extern BOOL is_mono_started DECLSPEC_HIDDEN;
 
 extern MonoImage* (CDECL *mono_assembly_get_image)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
@@ -156,6 +158,8 @@ extern MonoString* (CDECL *mono_string_new)(MonoDomain *domain, const char *str)
 extern MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain) DECLSPEC_HIDDEN;
 extern void (CDECL *mono_thread_manage)(void) DECLSPEC_HIDDEN;
 extern void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly) DECLSPEC_HIDDEN;
+extern void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback) DECLSPEC_HIDDEN;
+extern void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback) DECLSPEC_HIDDEN;
 
 /* loaded runtime interfaces */
 extern void expect_no_runtimes(void) DECLSPEC_HIDDEN;

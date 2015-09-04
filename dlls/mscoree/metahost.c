@@ -102,6 +102,8 @@ static char* (CDECL *mono_stringify_assembly_name)(MonoAssemblyName *aname);
 MonoThread* (CDECL *mono_thread_attach)(MonoDomain *domain);
 void (CDECL *mono_thread_manage)(void);
 void (CDECL *mono_trace_set_assembly)(MonoAssembly *assembly);
+void (CDECL *mono_trace_set_print_handler)(MonoPrintCallback callback);
+void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback);
 
 static BOOL get_mono_path(LPWSTR path);
 
@@ -111,10 +113,16 @@ static MonoAssembly* mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char
 
 static void mono_shutdown_callback_fn(MonoProfiler *prof);
 
+static void mono_print_handler_fn(const char *string, INT is_stdout);
+
 static MonoImage* CDECL image_open_module_handle_dummy(HMODULE module_handle,
     char* fname, UINT has_entry_point, MonoImageOpenStatus* status)
 {
     return mono_image_open(fname, status);
+}
+
+static void CDECL set_print_handler_dummy(MonoPrintCallback callback)
+{
 }
 
 static void missing_runtime_message(void)
@@ -204,10 +212,15 @@ static HRESULT load_mono(LPCWSTR mono_path)
 } while (0);
 
         LOAD_OPT_MONO_FUNCTION(mono_image_open_from_module_handle, image_open_module_handle_dummy);
+        LOAD_OPT_MONO_FUNCTION(mono_trace_set_print_handler, set_print_handler_dummy);
+        LOAD_OPT_MONO_FUNCTION(mono_trace_set_printerr_handler, set_print_handler_dummy);
 
 #undef LOAD_OPT_MONO_FUNCTION
 
         mono_profiler_install(NULL, mono_shutdown_callback_fn);
+
+        mono_trace_set_print_handler(mono_print_handler_fn);
+        mono_trace_set_printerr_handler(mono_print_handler_fn);
 
         mono_set_dirs(mono_lib_path_a, mono_etc_path_a);
 
@@ -242,6 +255,11 @@ fail:
 static void mono_shutdown_callback_fn(MonoProfiler *prof)
 {
     is_mono_shutdown = TRUE;
+}
+
+static void mono_print_handler_fn(const char *string, INT is_stdout)
+{
+    wine_dbg_printf("%s", string);
 }
 
 static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost **result)
