@@ -818,8 +818,11 @@ static HRESULT WINAPI dwritefactory_CreateFontFace(IDWriteFactory2 *iface,
     if (FAILED(hr))
         return hr;
 
-    if (!is_supported || (face_type != req_facetype))
+    if (!is_supported)
         return E_FAIL;
+
+    if (face_type != req_facetype)
+        return DWRITE_E_FILEFORMAT;
 
     hr = IDWriteFontFile_GetReferenceKey(*font_files, &key, &key_size);
     if (FAILED(hr))

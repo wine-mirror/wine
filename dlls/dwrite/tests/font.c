@@ -1307,12 +1307,11 @@ if (0) /* crashes on native */
 
     /* try mismatching face type, the one that's not supported */
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_CFF, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
-todo_wine
     ok(hr == DWRITE_E_FILEFORMAT, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION, 1, &file, 0,
         DWRITE_FONT_SIMULATIONS_NONE, &fontface);
-    ok(hr == E_FAIL, "got 0x%08x\n", hr);
+    ok(hr == DWRITE_E_FILEFORMAT || broken(hr == E_FAIL) /* < win10 */, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_RAW_CFF, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
 todo_wine
