@@ -103,7 +103,7 @@ library MSScriptControl
         [id(0x07d2)]
         HRESULT ExecuteStatement([in] BSTR Statement);
 
-        [id(0x07d3)]
+        [id(0x07d3), vararg]
         HRESULT Run(
                 [in] BSTR ProcedureName,
                 [in] SAFEARRAY(VARIANT) *Parameters,
@@ -234,7 +234,7 @@ library MSScriptControl
         [id(0x07d2)]
         HRESULT ExecuteStatement([in] BSTR Statement);
 
-        [id(0x07d3)]
+        [id(0x07d3), vararg]
         HRESULT Run(
                 [in] BSTR ProcedureName,
                 [in] SAFEARRAY(VARIANT) *Parameters,
