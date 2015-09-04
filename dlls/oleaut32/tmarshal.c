@@ -2282,6 +2282,7 @@ PSFacBuf_CreateStub(
     ITypeInfo	*tinfo;
     TMStubImpl	*stub;
     TYPEATTR *typeattr;
+    IUnknown *obj;
 
     TRACE("(%s,%p,%p)\n",debugstr_guid(riid),pUnkServer,ppStub);
 
@@ -2291,16 +2292,26 @@ PSFacBuf_CreateStub(
 	return hres;
     }
 
+    /* FIXME: This is not exactly right. We should probably call QI later. */
+    hres = IUnknown_QueryInterface(pUnkServer, riid, (void**)&obj);
+    if (FAILED(hres)) {
+        WARN("Could not get %s iface: %08x\n", debugstr_guid(riid), hres);
+        obj = pUnkServer;
+        IUnknown_AddRef(obj);
+    }
+
     stub = CoTaskMemAlloc(sizeof(TMStubImpl));
-    if (!stub)
+    if (!stub) {
+        IUnknown_Release(obj);
 	return E_OUTOFMEMORY;
+    }
     stub->IRpcStubBuffer_iface.lpVtbl = &tmstubvtbl;
     stub->ref		= 1;
     stub->tinfo		= tinfo;
     stub->dispatch_stub = NULL;
     stub->dispatch_derivative = FALSE;
     stub->iid		= *riid;
-    hres = IRpcStubBuffer_Connect(&stub->IRpcStubBuffer_iface,pUnkServer);
+    hres = IRpcStubBuffer_Connect(&stub->IRpcStubBuffer_iface, obj);
     *ppStub = &stub->IRpcStubBuffer_iface;
     TRACE("IRpcStubBuffer: %p\n", stub);
     if (hres)
@@ -2315,6 +2326,7 @@ PSFacBuf_CreateStub(
         ITypeInfo_ReleaseTypeAttr(tinfo, typeattr);
     }
 
+    IUnknown_Release(obj);
     return hres;
 }
 
