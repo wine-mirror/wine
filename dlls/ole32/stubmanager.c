@@ -356,31 +356,6 @@ struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, IUnknown *obj,
     return result;    
 }
 
-/* removes the apartment reference to an object, destroying it when no other
- * threads have a reference to it */
-void apartment_disconnectobject(struct apartment *apt, void *object)
-{
-    BOOL found = FALSE;
-    struct stub_manager *stubmgr;
-
-    EnterCriticalSection(&apt->cs);
-    LIST_FOR_EACH_ENTRY( stubmgr, &apt->stubmgrs, struct stub_manager, entry )
-    {
-        if (stubmgr->object == object)
-        {
-            found = TRUE;
-            stub_manager_int_release(stubmgr);
-            break;
-        }
-    }
-    LeaveCriticalSection(&apt->cs);
-
-    if (found)
-        TRACE("disconnect object %p\n", object);
-    else
-        WARN("couldn't find object %p\n", object);
-}
-
 /* gets the stub manager associated with an object id - caller must have
  * a reference to the apartment while a reference to the stub manager is held.
  * it must also call release on the stub manager when it is no longer needed */

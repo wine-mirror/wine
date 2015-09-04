@@ -235,7 +235,6 @@ APARTMENT *apartment_findfromoxid(OXID oxid, BOOL ref) DECLSPEC_HIDDEN;
 APARTMENT *apartment_findfromtid(DWORD tid) DECLSPEC_HIDDEN;
 DWORD apartment_release(struct apartment *apt) DECLSPEC_HIDDEN;
 HRESULT apartment_disconnectproxies(struct apartment *apt) DECLSPEC_HIDDEN;
-void apartment_disconnectobject(struct apartment *apt, void *object) DECLSPEC_HIDDEN;
 static inline HRESULT apartment_getoxid(const struct apartment *apt, OXID *oxid)
 {
     *oxid = apt->oxid;

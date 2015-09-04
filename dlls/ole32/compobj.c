@@ -2019,6 +2019,7 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
  */
 HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
 {
+    struct stub_manager *manager;
     HRESULT hr;
     IMarshal *marshal;
     APARTMENT *apt;
@@ -2039,7 +2040,12 @@ HRESULT WINAPI CoDisconnectObject( LPUNKNOWN lpUnk, DWORD reserved )
     if (!apt)
         return CO_E_NOTINITIALIZED;
 
-    apartment_disconnectobject(apt, lpUnk);
+    manager = get_stub_manager_from_object(apt, lpUnk, FALSE);
+    if (manager) {
+        /* Release stub manager twice, to remove the apartment reference. */
+        stub_manager_int_release(manager);
+        stub_manager_int_release(manager);
+    }
 
     /* Note: native is pretty broken here because it just silently
      * fails, without returning an appropriate error code if the object was
