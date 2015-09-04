@@ -1327,7 +1327,14 @@ todo_wine
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
 
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_UNKNOWN, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+todo_wine
+    ok(hr == S_OK || broken(hr == E_INVALIDARG) /* < win10 */, "got 0x%08x\n", hr);
+    if (hr == S_OK) {
+        ok(fontface != NULL, "got %p\n", fontface);
+        face_type = IDWriteFontFace_GetType(fontface);
+        ok(face_type == DWRITE_FONT_FACE_TYPE_TRUETYPE, "got %d\n", face_type);
+        IDWriteFontFace_Release(fontface);
+    }
 
     IDWriteFontFile_Release(file);
     IDWriteFactory_Release(factory);
@@ -1953,8 +1960,10 @@ static void test_CreateCustomFontFileReference(void)
     factory = create_factory();
     factory2 = create_factory();
 
+if (0) { /* crashes on win10 */
     hr = IDWriteFactory_RegisterFontFileLoader(factory, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
     hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IDWriteFactory_RegisterFontFileLoader(factory, &floader2);
