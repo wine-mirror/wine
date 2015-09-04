@@ -179,6 +179,9 @@ library TestTypelib
 
         [id(DISPID_TM_NEG_RESTRICTED), restricted]
         HRESULT neg_restrict([out, retval] INT *i);
+
+        [id(DISPID_TM_VARARG_RUN), vararg]
+        HRESULT VarArg_Run([in] BSTR name, [in] SAFEARRAY(VARIANT) params, [out, retval] VARIANT *result);
     }
 
     [

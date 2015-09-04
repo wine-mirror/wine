@@ -839,6 +839,13 @@ static HRESULT WINAPI Widget_neg_restrict(IWidget* iface, INT *i)
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_VarArg_Run(
+    IWidget *iface, BSTR name, SAFEARRAY *params, VARIANT *result)
+{
+    trace("VarArg_Run(%p,%p,%p)\n", name, params, result);
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -876,7 +883,8 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_put_prop_opt_arg,
     Widget_put_prop_req_arg,
     Widget_pos_restrict,
-    Widget_neg_restrict
+    Widget_neg_restrict,
+    Widget_VarArg_Run
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1492,7 +1500,7 @@ static void test_typelibmarshal(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-    ok_ole_success(hr, ITypeInfo_Invoke);
+    ok_ole_success(hr, IDispatch_Invoke);
 
     /* call VarArg, even one (non-optional, non-safearray) named argument is not allowed */
     dispidNamed = 0;
@@ -1501,6 +1509,23 @@ static void test_typelibmarshal(void)
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
     ok(hr == DISP_E_NONAMEDARGS, "IDispatch_Invoke should have returned DISP_E_NONAMEDARGS instead of 0x%08x\n", hr);
     dispidNamed = DISPID_PROPERTYPUT;
+
+    /* call VarArg_Run */
+    VariantInit(&vararg[1]);
+    V_VT(&vararg[1]) = VT_BSTR;
+    V_BSTR(&vararg[1]) = SysAllocString(szCat);
+    VariantInit(&vararg[0]);
+    V_VT(&vararg[0]) = VT_BSTR;
+    V_BSTR(&vararg[0]) = SysAllocString(NULL);
+    dispparams.cNamedArgs = 0;
+    dispparams.cArgs = 2;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.rgvarg = vararg;
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG_RUN, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
+todo_wine
+    ok_ole_success(hr, IDispatch_Invoke);
+    SysFreeString(V_BSTR(&vararg[1]));
+    SysFreeString(V_BSTR(&vararg[0]));
 
     /* call Error */
     dispparams.cNamedArgs = 0;
