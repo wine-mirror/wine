@@ -356,7 +356,7 @@ unsigned int get_active_hooks(void)
 {
     struct hook_table *table = get_queue_hooks( current );
     struct hook_table *global_hooks = get_global_hooks( current );
-    unsigned int ret = 1 << 31;  /* set high bit to indicate that the bitmap is valid */
+    unsigned int ret = 1u << 31;  /* set high bit to indicate that the bitmap is valid */
     int id;
 
     for (id = WH_MINHOOK; id <= WH_WINEVENT; id++)
