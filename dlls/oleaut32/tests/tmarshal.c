@@ -825,7 +825,7 @@ static HRESULT WINAPI Widget_put_prop_req_arg(
     return S_OK;
 }
 
-static HRESULT WINAPI Widget__restrict(IWidget* iface, INT *i)
+static HRESULT WINAPI Widget_pos_restrict(IWidget* iface, INT *i)
 {
     trace("restrict\n");
     *i = DISPID_TM_RESTRICTED;
@@ -875,7 +875,7 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_ByRefUInt,
     Widget_put_prop_opt_arg,
     Widget_put_prop_req_arg,
-    Widget__restrict,
+    Widget_pos_restrict,
     Widget_neg_restrict
 };
 
