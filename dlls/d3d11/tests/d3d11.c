@@ -642,6 +642,179 @@ static void test_texture3d_interfaces(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_buffer_interfaces(void)
+{
+    ID3D10Buffer *d3d10_buffer;
+    D3D11_BUFFER_DESC desc;
+    ID3D11Buffer *buffer;
+    ID3D11Device *device;
+    unsigned int i;
+    ULONG refcount;
+    HRESULT hr;
+
+    static const struct test
+    {
+        BOOL implements_d3d10_interfaces;
+        UINT bind_flags;
+        UINT misc_flags;
+        UINT structure_stride;
+        UINT expected_bind_flags;
+        UINT expected_misc_flags;
+    }
+    desc_conversion_tests[] =
+    {
+        {
+            TRUE,
+            D3D11_BIND_VERTEX_BUFFER, 0, 0,
+            D3D10_BIND_VERTEX_BUFFER, 0
+        },
+        {
+            TRUE,
+            D3D11_BIND_INDEX_BUFFER, 0, 0,
+            D3D10_BIND_INDEX_BUFFER, 0
+        },
+        {
+            TRUE,
+            D3D11_BIND_CONSTANT_BUFFER, 0, 0,
+            D3D10_BIND_CONSTANT_BUFFER, 0
+        },
+        {
+            TRUE,
+            D3D11_BIND_SHADER_RESOURCE, 0, 0,
+            D3D10_BIND_SHADER_RESOURCE, 0
+        },
+        {
+            TRUE,
+            D3D11_BIND_STREAM_OUTPUT, 0, 0,
+            D3D10_BIND_STREAM_OUTPUT, 0
+        },
+        {
+            TRUE,
+            D3D11_BIND_RENDER_TARGET, 0, 0,
+            D3D10_BIND_RENDER_TARGET, 0
+        },
+        {
+            TRUE,
+            D3D11_BIND_UNORDERED_ACCESS, 0, 0,
+            D3D11_BIND_UNORDERED_ACCESS, 0
+        },
+        {
+            TRUE,
+            0, D3D11_RESOURCE_MISC_SHARED, 0,
+            0, D3D10_RESOURCE_MISC_SHARED
+        },
+        {
+            TRUE,
+            0, D3D11_RESOURCE_MISC_DRAWINDIRECT_ARGS, 0,
+            0, 0
+        },
+        {
+            TRUE,
+            D3D11_BIND_SHADER_RESOURCE, D3D11_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, 0,
+            D3D10_BIND_SHADER_RESOURCE, 0
+        },
+        {
+            FALSE /* Structured buffers do not implement ID3D10Buffer. */,
+            0, D3D11_RESOURCE_MISC_BUFFER_STRUCTURED, 16,
+            0, 0
+        },
+        {
+            TRUE,
+            0, D3D11_RESOURCE_MISC_SHARED_KEYEDMUTEX, 0,
+            0, D3D10_RESOURCE_MISC_SHARED_KEYEDMUTEX
+        },
+    };
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create ID3D11Device.\n");
+        return;
+    }
+
+    desc.ByteWidth = 1024;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+    desc.StructureByteStride = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = ID3D11Buffer_QueryInterface(buffer, &IID_ID3D10Buffer, (void **)&d3d10_buffer);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Buffer should implement ID3D10Buffer.\n");
+    if (SUCCEEDED(hr)) ID3D10Buffer_Release(d3d10_buffer);
+    ID3D11Buffer_Release(buffer);
+
+    if (FAILED(hr))
+    {
+        win_skip("Buffers do not implement ID3D10Buffer.\n");
+        ID3D11Device_Release(device);
+        return;
+    }
+
+    for (i = 0; i < sizeof(desc_conversion_tests) / sizeof(*desc_conversion_tests); ++i)
+    {
+        const struct test *current = &desc_conversion_tests[i];
+        D3D10_BUFFER_DESC d3d10_desc;
+        ID3D10Device *d3d10_device;
+
+        desc.ByteWidth = 1024;
+        desc.Usage = D3D11_USAGE_DEFAULT;
+        desc.BindFlags = current->bind_flags;
+        desc.CPUAccessFlags = 0;
+        desc.MiscFlags = current->misc_flags;
+        desc.StructureByteStride = current->structure_stride;
+
+        hr = ID3D11Device_CreateBuffer(device, &desc, NULL, &buffer);
+        /* Shared resources are not supported by REF and WARP devices. */
+        ok(SUCCEEDED(hr) || broken(hr == E_OUTOFMEMORY), "Test %u: Failed to create a buffer, hr %#x.\n", i, hr);
+        if (FAILED(hr))
+        {
+            win_skip("Failed to create a buffer, skipping test %u.\n", i);
+            continue;
+        }
+
+        hr = ID3D11Buffer_QueryInterface(buffer, &IID_ID3D10Buffer, (void **)&d3d10_buffer);
+        ID3D11Buffer_Release(buffer);
+
+        if (current->implements_d3d10_interfaces)
+        {
+            ok(SUCCEEDED(hr), "Test %u: Buffer should implement ID3D10Buffer.\n", i);
+        }
+        else
+        {
+            todo_wine ok(hr == E_NOINTERFACE, "Test %u: Buffer should not implement ID3D10Buffer.\n", i);
+            if (SUCCEEDED(hr)) ID3D10Buffer_Release(d3d10_buffer);
+            continue;
+        }
+
+        ID3D10Buffer_GetDesc(d3d10_buffer, &d3d10_desc);
+
+        ok(d3d10_desc.ByteWidth == desc.ByteWidth,
+                "Test %u: Got unexpected ByteWidth %u.\n", i, d3d10_desc.ByteWidth);
+        ok(d3d10_desc.Usage == (D3D10_USAGE)desc.Usage,
+                "Test %u: Got unexpected Usage %u.\n", i, d3d10_desc.Usage);
+        ok(d3d10_desc.BindFlags == current->expected_bind_flags,
+                "Test %u: Got unexpected BindFlags %#x.\n", i, d3d10_desc.BindFlags);
+        ok(d3d10_desc.CPUAccessFlags == desc.CPUAccessFlags,
+                "Test %u: Got unexpected CPUAccessFlags %#x.\n", i, d3d10_desc.CPUAccessFlags);
+        ok(d3d10_desc.MiscFlags == current->expected_misc_flags,
+                "Test %u: Got unexpected MiscFlags %#x.\n", i, d3d10_desc.MiscFlags);
+
+        d3d10_device = (ID3D10Device *)0xdeadbeef;
+        ID3D10Buffer_GetDevice(d3d10_buffer, &d3d10_device);
+        todo_wine ok(!d3d10_device, "Test %u: Got unexpected device pointer %p, expected NULL.\n", i, d3d10_device);
+        if (d3d10_device) ID3D10Device_Release(d3d10_device);
+
+        ID3D10Buffer_Release(d3d10_buffer);
+    }
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -650,4 +823,5 @@ START_TEST(d3d11)
     test_texture2d_interfaces();
     test_create_texture3d();
     test_texture3d_interfaces();
+    test_buffer_interfaces();
 }
