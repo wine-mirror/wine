@@ -322,7 +322,16 @@ static void STDMETHODCALLTYPE d3d10_buffer_Unmap(ID3D10Buffer *iface)
 
 static void STDMETHODCALLTYPE d3d10_buffer_GetDesc(ID3D10Buffer *iface, D3D10_BUFFER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_buffer *buffer = impl_from_ID3D10Buffer(iface);
+    const D3D11_BUFFER_DESC *d3d11_desc = &buffer->desc;
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    desc->ByteWidth = d3d11_desc->ByteWidth;
+    desc->Usage = d3d10_usage_from_d3d11_usage(d3d11_desc->Usage);
+    desc->BindFlags = d3d10_bind_flags_from_d3d11_bind_flags(d3d11_desc->BindFlags);
+    desc->CPUAccessFlags = d3d10_cpu_access_flags_from_d3d11_cpu_access_flags(d3d11_desc->CPUAccessFlags);
+    desc->MiscFlags = d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(d3d11_desc->MiscFlags);
 }
 
 static const struct ID3D10BufferVtbl d3d10_buffer_vtbl =
