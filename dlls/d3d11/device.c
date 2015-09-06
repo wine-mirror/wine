@@ -59,9 +59,18 @@ static ULONG STDMETHODCALLTYPE d3d11_device_Release(ID3D11Device *iface)
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBuffer(ID3D11Device *iface, const D3D11_BUFFER_DESC *desc,
         const D3D11_SUBRESOURCE_DATA *data, ID3D11Buffer **buffer)
 {
-    FIXME("iface %p, desc %p, data %p, buffer %p stub!\n", iface, desc, data, buffer);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d_buffer *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, data %p, buffer %p.\n", iface, desc, data, buffer);
+
+    if (FAILED(hr = d3d_buffer_create(device, desc, data, &object)))
+        return hr;
+
+    *buffer = &object->ID3D11Buffer_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateTexture1D(ID3D11Device *iface,
@@ -1985,7 +1994,7 @@ static void STDMETHODCALLTYPE d3d10_device_Flush(ID3D10Device1 *iface)
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device1 *iface,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Buffer **buffer)
 {
-    struct d3d_device *This = impl_from_ID3D10Device(iface);
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
     D3D11_BUFFER_DESC d3d11_desc;
     struct d3d_buffer *object;
     HRESULT hr;
@@ -1999,21 +2008,10 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device1 *iface,
     d3d11_desc.MiscFlags = d3d11_resource_misc_flags_from_d3d10_resource_misc_flags(desc->MiscFlags);
     d3d11_desc.StructureByteStride = 0;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-        return E_OUTOFMEMORY;
-
-    hr = d3d_buffer_init(object, This, &d3d11_desc, data);
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize buffer, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+    if (FAILED(hr = d3d_buffer_create(device, &d3d11_desc, (const D3D11_SUBRESOURCE_DATA *)data, &object)))
         return hr;
-    }
 
     *buffer = &object->ID3D10Buffer_iface;
-
-    TRACE("Created ID3D10Buffer %p\n", object);
 
     return S_OK;
 }

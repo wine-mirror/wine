@@ -145,8 +145,8 @@ struct d3d_buffer
     ID3D11Device *device;
 };
 
-HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
-        const D3D11_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
+HRESULT d3d_buffer_create(struct d3d_device *device, const D3D11_BUFFER_DESC *desc,
+        const D3D11_SUBRESOURCE_DATA *data, struct d3d_buffer **buffer) DECLSPEC_HIDDEN;
 struct d3d_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10DepthStencilView */

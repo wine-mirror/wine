@@ -376,8 +376,8 @@ static const struct wined3d_parent_ops d3d10_buffer_wined3d_parent_ops =
     d3d10_buffer_wined3d_object_released,
 };
 
-HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
-        const D3D11_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
+static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
+        const D3D11_BUFFER_DESC *desc, const D3D11_SUBRESOURCE_DATA *data)
 {
     struct wined3d_buffer_desc wined3d_desc;
     HRESULT hr;
@@ -411,6 +411,28 @@ HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
 
     buffer->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(buffer->device);
+
+    return S_OK;
+}
+
+HRESULT d3d_buffer_create(struct d3d_device *device, const D3D11_BUFFER_DESC *desc,
+        const D3D11_SUBRESOURCE_DATA *data, struct d3d_buffer **buffer)
+{
+    struct d3d_buffer *object;
+    HRESULT hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_buffer_init(object, device, desc, data)))
+    {
+        WARN("Failed to initialize buffer, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created buffer %p.\n", object);
+    *buffer = object;
 
     return S_OK;
 }
