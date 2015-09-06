@@ -63,7 +63,6 @@ const char *debug_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 DXGI_FORMAT dxgi_format_from_wined3dformat(enum wined3d_format_id format) DECLSPEC_HIDDEN;
 enum wined3d_format_id wined3dformat_from_dxgi_format(DXGI_FORMAT format) DECLSPEC_HIDDEN;
 DWORD wined3d_usage_from_d3d11(UINT bind_flags, enum D3D11_USAGE usage) DECLSPEC_HIDDEN;
-DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage) DECLSPEC_HIDDEN;
 struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource) DECLSPEC_HIDDEN;
 DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type) DECLSPEC_HIDDEN;
 
@@ -142,11 +141,12 @@ struct d3d_buffer
 
     struct wined3d_private_store private_store;
     struct wined3d_buffer *wined3d_buffer;
+    D3D11_BUFFER_DESC desc;
     ID3D11Device *device;
 };
 
 HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
-        const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
+        const D3D11_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data) DECLSPEC_HIDDEN;
 struct d3d_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10DepthStencilView */

@@ -367,13 +367,6 @@ DWORD wined3d_usage_from_d3d11(UINT bind_flags, enum D3D11_USAGE usage)
     return wined3d_usage;
 }
 
-DWORD wined3d_usage_from_d3d10core(UINT bind_flags, enum D3D10_USAGE usage)
-{
-    UINT d3d11_bind_flags = d3d11_bind_flags_from_d3d10_bind_flags(bind_flags);
-    enum D3D11_USAGE d3d11_usage = d3d11_usage_from_d3d10_usage(usage);
-    return wined3d_usage_from_d3d11(d3d11_bind_flags, d3d11_usage);
-}
-
 enum D3D11_USAGE d3d11_usage_from_d3d10_usage(enum D3D10_USAGE usage)
 {
     switch (usage)

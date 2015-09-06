@@ -1986,16 +1986,24 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBuffer(ID3D10Device1 *iface,
         const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data, ID3D10Buffer **buffer)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
+    D3D11_BUFFER_DESC d3d11_desc;
     struct d3d_buffer *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, data %p, buffer %p.\n", iface, desc, data, buffer);
 
+    d3d11_desc.ByteWidth = desc->ByteWidth;
+    d3d11_desc.Usage = d3d11_usage_from_d3d10_usage(desc->Usage);
+    d3d11_desc.BindFlags = d3d11_bind_flags_from_d3d10_bind_flags(desc->BindFlags);
+    d3d11_desc.CPUAccessFlags = d3d11_cpu_access_flags_from_d3d10_cpu_access_flags(desc->CPUAccessFlags);
+    d3d11_desc.MiscFlags = d3d11_resource_misc_flags_from_d3d10_resource_misc_flags(desc->MiscFlags);
+    d3d11_desc.StructureByteStride = 0;
+
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3d_buffer_init(object, This, desc, data);
+    hr = d3d_buffer_init(object, This, &d3d11_desc, data);
     if (FAILED(hr))
     {
         WARN("Failed to initialize buffer, hr %#x.\n", hr);

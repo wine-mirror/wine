@@ -163,7 +163,11 @@ static UINT STDMETHODCALLTYPE d3d11_buffer_GetEvictionPriority(ID3D11Buffer *ifa
 
 static void STDMETHODCALLTYPE d3d11_buffer_GetDesc(ID3D11Buffer *iface, D3D11_BUFFER_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_buffer *buffer = impl_from_ID3D11Buffer(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = buffer->desc;
 }
 
 static const struct ID3D11BufferVtbl d3d11_buffer_vtbl =
@@ -364,7 +368,7 @@ static const struct wined3d_parent_ops d3d10_buffer_wined3d_parent_ops =
 };
 
 HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
-        const D3D10_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
+        const D3D11_BUFFER_DESC *desc, const D3D10_SUBRESOURCE_DATA *data)
 {
     struct wined3d_buffer_desc wined3d_desc;
     HRESULT hr;
@@ -374,12 +378,16 @@ HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *device,
     buffer->refcount = 1;
     wined3d_mutex_lock();
     wined3d_private_store_init(&buffer->private_store);
+    buffer->desc = *desc;
 
     wined3d_desc.byte_width = desc->ByteWidth;
-    wined3d_desc.usage = wined3d_usage_from_d3d10core(0, desc->Usage);
+    wined3d_desc.usage = wined3d_usage_from_d3d11(0, desc->Usage);
     wined3d_desc.bind_flags = desc->BindFlags;
     wined3d_desc.cpu_access_flags = desc->CPUAccessFlags;
     wined3d_desc.misc_flags = desc->MiscFlags;
+
+    if (desc->StructureByteStride)
+        FIXME("Ignoring structure byte stride %u.\n", desc->StructureByteStride);
 
     if (FAILED(hr = wined3d_buffer_create(device->wined3d_device, &wined3d_desc,
             (const struct wined3d_sub_resource_data *)data, buffer,
