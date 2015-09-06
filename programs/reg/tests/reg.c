@@ -214,7 +214,7 @@ static void test_add(void)
     run_reg_exe("reg add HKEY_CURRENT_USER\\" KEY_BASE " /ve /t REG_BINARY /d deadbeef /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u\n", r);
     dword = 0xefbeadde;
-    verify_reg(hkey, "", REG_BINARY, &dword, sizeof(DWORD), TODO_REG_SIZE);
+    verify_reg(hkey, "", REG_BINARY, &dword, sizeof(DWORD), 0);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_BINARY /v bin1 /f /d 0xDeAdBeEf", &r);
     todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
@@ -235,8 +235,8 @@ static void test_add(void)
     err = RegQueryValueExA(hkey, "bin4", NULL, &type, (void *) (buffer+12), &size);
     ok(err == ERROR_SUCCESS, "RegQueryValueEx failed: got %d\n", err);
     ok(type == REG_BINARY, "got wrong type %u\n", type);
-    todo_wine ok(size == 6, "got wrong size %u\n", size);
-    todo_wine ok(memcmp(buffer, buffer+12, 6) == 0 ||
+    ok(size == 6, "got wrong size %u\n", size);
+    ok(memcmp(buffer, buffer+12, 6) == 0 ||
         broken(memcmp(buffer+6, buffer+12, 6) == 0 /* WinXP */), "got wrong data\n");
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_BINARY /v bin5 /d \"\" /f", &r);

@@ -158,6 +158,19 @@ static DWORD wchar_get_type(const WCHAR *type_name)
     return ~0u;
 }
 
+/* hexchar_to_byte from programs/regedit/hexedit.c */
+static inline BYTE hexchar_to_byte(WCHAR ch)
+{
+    if (ch >= '0' && ch <= '9')
+        return ch - '0';
+    else if (ch >= 'a' && ch <= 'f')
+        return ch - 'a' + 10;
+    else if (ch >= 'A' && ch <= 'F')
+        return ch - 'A' + 10;
+    else
+        return -1;
+}
+
 static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *reg_count)
 {
     LPBYTE out_data = NULL;
@@ -185,6 +198,36 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             *reg_count = sizeof(DWORD);
             out_data = HeapAlloc(GetProcessHeap(),0,*reg_count);
             ((LPDWORD)out_data)[0] = val;
+            break;
+        }
+        case REG_BINARY:
+        {
+            static const WCHAR nohex[] = {'E','r','r','o','r',':',' ','/','d',' ','r','e','q','u','i','r','e','s',' ','h','e','x',' ','d','a','t','a','.','\n',0};
+            BYTE hex0, hex1;
+            int i = 0, destByteIndex = 0, datalen = lstrlenW(data);
+            *reg_count = ((datalen + datalen % 2) / 2) * sizeof(BYTE);
+            out_data = HeapAlloc(GetProcessHeap(), 0, *reg_count);
+            if(datalen % 2)
+            {
+                hex1 = hexchar_to_byte(data[i++]);
+                if(hex1 == 0xFF)
+                    goto no_hex_data;
+                out_data[destByteIndex++] = hex1;
+            }
+            for(;i + 1 < datalen;i += 2)
+            {
+                hex0 = hexchar_to_byte(data[i]);
+                hex1 = hexchar_to_byte(data[i + 1]);
+                if(hex0 == 0xFF || hex1 == 0xFF)
+                    goto no_hex_data;
+                out_data[destByteIndex++] = (hex0 << 4) | hex1;
+            }
+            break;
+            no_hex_data:
+            /* cleanup, print error */
+            HeapFree(GetProcessHeap(), 0, out_data);
+            reg_printfW(nohex);
+            out_data = NULL;
             break;
         }
         default:
