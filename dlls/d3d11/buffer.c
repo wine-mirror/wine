@@ -109,6 +109,7 @@ static void STDMETHODCALLTYPE d3d11_buffer_GetDevice(ID3D11Buffer *iface, ID3D11
     TRACE("iface %p, device %p.\n", iface, device);
 
     *device = buffer->device;
+    ID3D11Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_buffer_GetPrivateData(ID3D11Buffer *iface,
