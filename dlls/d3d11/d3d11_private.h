@@ -149,9 +149,10 @@ HRESULT d3d_buffer_create(struct d3d_device *device, const D3D11_BUFFER_DESC *de
         const D3D11_SUBRESOURCE_DATA *data, struct d3d_buffer **buffer) DECLSPEC_HIDDEN;
 struct d3d_buffer *unsafe_impl_from_ID3D10Buffer(ID3D10Buffer *iface) DECLSPEC_HIDDEN;
 
-/* ID3D10DepthStencilView */
+/* ID3D11DepthStencilView, ID3D10DepthStencilView */
 struct d3d_depthstencil_view
 {
+    ID3D11DepthStencilView ID3D11DepthStencilView_iface;
     ID3D10DepthStencilView ID3D10DepthStencilView_iface;
     LONG refcount;
 
