@@ -815,6 +815,74 @@ static void test_buffer_interfaces(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_depthstencil_view_interfaces(void)
+{
+    D3D10_DEPTH_STENCIL_VIEW_DESC d3d10_dsv_desc;
+    D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc;
+    ID3D10DepthStencilView *d3d10_dsview;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11DepthStencilView *dsview;
+    ID3D11Texture2D *texture;
+    ID3D11Device *device;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    texture_desc.Width = 512;
+    texture_desc.Height = 512;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+
+    dsv_desc.Format = texture_desc.Format;
+    dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    dsv_desc.Flags = 0;
+    U(dsv_desc).Texture2D.MipSlice = 0;
+
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)texture, &dsv_desc, &dsview);
+    ok(SUCCEEDED(hr), "Failed to create a depthstencil view, hr %#x.\n", hr);
+
+    hr = ID3D11DepthStencilView_QueryInterface(dsview, &IID_ID3D10DepthStencilView, (void **)&d3d10_dsview);
+    ID3D11DepthStencilView_Release(dsview);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+        "Depth stencil view should implement ID3D10DepthStencilView.\n");
+
+    if (FAILED(hr))
+    {
+        win_skip("Depth stencil view does not implement ID3D10DepthStencilView.\n");
+        goto done;
+    }
+
+    ID3D10DepthStencilView_GetDesc(d3d10_dsview, &d3d10_dsv_desc);
+    ok(d3d10_dsv_desc.Format == dsv_desc.Format, "Got unexpected format %#x.\n", d3d10_dsv_desc.Format);
+    ok(d3d10_dsv_desc.ViewDimension == (D3D10_DSV_DIMENSION)dsv_desc.ViewDimension,
+            "Got unexpected view dimension %u.\n", d3d10_dsv_desc.ViewDimension);
+    ok(U(d3d10_dsv_desc).Texture2D.MipSlice == U(dsv_desc).Texture2D.MipSlice,
+            "Got unexpected mip slice %u.\n", U(d3d10_dsv_desc).Texture2D.MipSlice);
+
+    ID3D10DepthStencilView_Release(d3d10_dsview);
+
+done:
+    ID3D11Texture2D_Release(texture);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -824,4 +892,5 @@ START_TEST(d3d11)
     test_create_texture3d();
     test_texture3d_interfaces();
     test_buffer_interfaces();
+    test_depthstencil_view_interfaces();
 }
