@@ -289,6 +289,12 @@ int wmain(int argc, WCHAR* argv[])
             int res = 0;
 
             DllFound = TRUE;
+            if (CallInstall && Unregister)
+                res = InstallDll(!Unregister, DllName, wsCommandLine);
+
+            if (res)
+                return res;
+
             if (!CallInstall || (CallInstall && CallRegister))
             {
                 if(Unregister)
@@ -301,10 +307,8 @@ int wmain(int argc, WCHAR* argv[])
                 return res;
             /* Confirmed. The Windows version stops on the first error. */
 
-            if (CallInstall)
-            {
+            if (CallInstall && !Unregister)
                 res = InstallDll(!Unregister, DllName, wsCommandLine);
-            }
 
             if (res)
 		return res;
