@@ -2338,17 +2338,12 @@ static const IPSFactoryBufferVtbl psfacbufvtbl = {
     PSFacBuf_CreateStub
 };
 
-/* This is the whole PSFactoryBuffer object, just the vtableptr */
-static const IPSFactoryBufferVtbl *lppsfac = &psfacbufvtbl;
+static IPSFactoryBuffer psfac = { &psfacbufvtbl };
 
 /***********************************************************************
  *           TMARSHAL_DllGetClassObject
  */
-HRESULT TMARSHAL_DllGetClassObject(REFCLSID rclsid, REFIID iid,LPVOID *ppv)
+HRESULT TMARSHAL_DllGetClassObject(REFCLSID rclsid, REFIID iid, void **ppv)
 {
-    if (IsEqualIID(iid,&IID_IPSFactoryBuffer)) {
-	*ppv = &lppsfac;
-	return S_OK;
-    }
-    return E_NOINTERFACE;
+    return IPSFactoryBuffer_QueryInterface(&psfac, iid, ppv);
 }
