@@ -5886,6 +5886,12 @@ static void test_system_security_access(void)
     /* ACCESS_SYSTEM_SECURITY requires special privilege */
     res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, testkeyW, 0, NULL, 0, KEY_READ|ACCESS_SYSTEM_SECURITY, NULL, &hkey, NULL );
     todo_wine ok( res == ERROR_PRIVILEGE_NOT_HELD, "got %d\n", res );
+    if (res == ERROR_ACCESS_DENIED)
+    {
+        skip( "unprivileged user\n" );
+        CloseHandle( token );
+        return;
+    }
 
     priv.PrivilegeCount = 1;
     priv.Privileges[0].Luid = luid;
@@ -5897,6 +5903,13 @@ static void test_system_security_access(void)
 
     res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, testkeyW, 0, NULL, 0, KEY_READ|ACCESS_SYSTEM_SECURITY, NULL, &hkey, NULL );
     ok( !res, "got %d\n", res );
+    if (res == ERROR_PRIVILEGE_NOT_HELD)
+    {
+        win_skip( "privilege not held\n" );
+        HeapFree( GetProcessHeap(), 0, priv_prev );
+        CloseHandle( token );
+        return;
+    }
 
     /* restore privileges */
     ret = AdjustTokenPrivileges( token, FALSE, priv_prev, 0, NULL, NULL );
