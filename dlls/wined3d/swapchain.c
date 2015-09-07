@@ -555,45 +555,16 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     }
 
     front = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
-    if (!swapchain->render_to_fbo && ((front->locations & WINED3D_LOCATION_SYSMEM)
-            || (back_buffer->locations & WINED3D_LOCATION_SYSMEM)))
-    {
-        /* Both memory copies of the surfaces are ok, flip them around too instead of dirtifying
-         * Doesn't work with render_to_fbo because we're not flipping
-         */
 
-        if (front->resource.size == back_buffer->resource.size)
-        {
-            flip_surface(front, back_buffer);
-
-            /* Tell the front buffer surface that is has been modified. However,
-             * the other locations were preserved during that, so keep the flags.
-             * This serves to update the emulated overlay, if any. */
-            surface_validate_location(front, WINED3D_LOCATION_DRAWABLE);
-        }
-        else
-        {
-            surface_validate_location(front, WINED3D_LOCATION_DRAWABLE);
-            surface_invalidate_location(front, ~WINED3D_LOCATION_DRAWABLE);
-            surface_validate_location(back_buffer, WINED3D_LOCATION_DRAWABLE);
-            surface_invalidate_location(back_buffer, ~WINED3D_LOCATION_DRAWABLE);
-        }
-    }
-    else
-    {
-        surface_validate_location(front, WINED3D_LOCATION_DRAWABLE);
-        surface_invalidate_location(front, ~WINED3D_LOCATION_DRAWABLE);
-        /* If the swapeffect is DISCARD, the back buffer is undefined. That means the SYSMEM
-         * and INTEXTURE copies can keep their old content if they have any defined content.
-         * If the swapeffect is COPY, the content remains the same. If it is FLIP however,
-         * the texture / sysmem copy needs to be reloaded from the drawable
-         */
-        if (swapchain->desc.swap_effect == WINED3D_SWAP_EFFECT_FLIP)
-        {
-            surface_validate_location(back_buffer, back_buffer->container->resource.draw_binding);
-            surface_invalidate_location(back_buffer, ~back_buffer->container->resource.draw_binding);
-        }
-    }
+    surface_validate_location(front, WINED3D_LOCATION_DRAWABLE);
+    surface_invalidate_location(front, ~WINED3D_LOCATION_DRAWABLE);
+    /* If the swapeffect is DISCARD, the back buffer is undefined. That means the SYSMEM
+     * and INTEXTURE copies can keep their old content if they have any defined content.
+     * If the swapeffect is COPY, the content remains the same.
+     *
+     * The FLIP swap effect is not implemented yet. We could mark WINED3D_LOCATION_DRAWABLE
+     * up to date and hope WGL flipped front and back buffers and read this data into
+     * the FBO. Don't bother about this for now. */
 
     if (fb->depth_stencil)
     {
