@@ -292,8 +292,9 @@ int wmain(int argc, WCHAR* argv[])
             if (CallInstall && Unregister)
                 res = InstallDll(!Unregister, DllName, wsCommandLine);
 
+            /* The Windows version stops processing the current file on the first error. */
             if (res)
-                return res;
+                continue;
 
             if (!CallInstall || (CallInstall && CallRegister))
             {
@@ -304,14 +305,13 @@ int wmain(int argc, WCHAR* argv[])
             }
 
             if (res)
-                return res;
-            /* Confirmed. The Windows version stops on the first error. */
+                continue;
 
             if (CallInstall && !Unregister)
                 res = InstallDll(!Unregister, DllName, wsCommandLine);
 
             if (res)
-		return res;
+		continue;
         }
     }
 
