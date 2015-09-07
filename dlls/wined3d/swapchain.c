@@ -178,10 +178,10 @@ HRESULT CDECL wined3d_swapchain_get_front_buffer_data(const struct wined3d_swapc
 }
 
 struct wined3d_texture * CDECL wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
-        UINT back_buffer_idx, enum wined3d_backbuffer_type type)
+        UINT back_buffer_idx)
 {
-    TRACE("swapchain %p, back_buffer_idx %u, type %#x.\n",
-            swapchain, back_buffer_idx, type);
+    TRACE("swapchain %p, back_buffer_idx %u.\n",
+            swapchain, back_buffer_idx);
 
     /* Return invalid if there is no backbuffer array, otherwise it will
      * crash when ddraw is used (there swapchain->back_buffers is always

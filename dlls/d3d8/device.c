@@ -732,6 +732,8 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
     TRACE("iface %p, backbuffer_idx %u, backbuffer_type %#x, backbuffer %p.\n",
             iface, backbuffer_idx, backbuffer_type, backbuffer);
 
+    /* backbuffer_type is ignored by native. */
+
     /* No need to check for backbuffer == NULL, Windows crashes in that case. */
     wined3d_mutex_lock();
     if (!(swapchain = wined3d_device_get_swapchain(device->wined3d_device, 0)))
@@ -741,8 +743,7 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
         return D3DERR_INVALIDCALL;
     }
 
-    if (!(wined3d_texture = wined3d_swapchain_get_back_buffer(swapchain,
-            backbuffer_idx, (enum wined3d_backbuffer_type)backbuffer_type)))
+    if (!(wined3d_texture = wined3d_swapchain_get_back_buffer(swapchain, backbuffer_idx)))
     {
         wined3d_mutex_unlock();
         *backbuffer = NULL;

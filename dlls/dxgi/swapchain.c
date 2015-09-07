@@ -152,8 +152,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
 
     EnterCriticalSection(&dxgi_cs);
 
-    if (!(texture = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain,
-            buffer_idx, WINED3D_BACKBUFFER_TYPE_MONO)))
+    if (!(texture = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain, buffer_idx)))
     {
         LeaveCriticalSection(&dxgi_cs);
         return DXGI_ERROR_INVALID_CALL;
@@ -235,8 +234,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *if
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     for (i = 0; i < wined3d_desc.backbuffer_count; ++i)
     {
-        texture = wined3d_swapchain_get_back_buffer(swapchain->wined3d_swapchain,
-                i, WINED3D_BACKBUFFER_TYPE_MONO);
+        texture = wined3d_swapchain_get_back_buffer(swapchain->wined3d_swapchain, i);
         parent = wined3d_texture_get_parent(texture);
         IUnknown_AddRef(parent);
         if (IUnknown_Release(parent))

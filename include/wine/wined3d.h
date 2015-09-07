@@ -503,13 +503,6 @@ enum wined3d_patch_edge_style
     WINED3D_PATCH_EDGE_CONTINUOUS           = 1,
 };
 
-enum wined3d_backbuffer_type
-{
-    WINED3D_BACKBUFFER_TYPE_MONO            = 0,
-    WINED3D_BACKBUFFER_TYPE_LEFT            = 1,
-    WINED3D_BACKBUFFER_TYPE_RIGHT           = 2,
-};
-
 enum wined3d_swap_effect
 {
     WINED3D_SWAP_EFFECT_DISCARD             = 1,
@@ -2512,7 +2505,7 @@ HRESULT __cdecl wined3d_swapchain_create(struct wined3d_device *device, struct w
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain);
 ULONG __cdecl wined3d_swapchain_decref(struct wined3d_swapchain *swapchain);
 struct wined3d_texture * __cdecl wined3d_swapchain_get_back_buffer(const struct wined3d_swapchain *swapchain,
-        UINT backbuffer_idx, enum wined3d_backbuffer_type backbuffer_type);
+        UINT backbuffer_idx);
 struct wined3d_device * __cdecl wined3d_swapchain_get_device(const struct wined3d_swapchain *swapchain);
 HRESULT __cdecl wined3d_swapchain_get_display_mode(const struct wined3d_swapchain *swapchain,
         struct wined3d_display_mode *mode, enum wined3d_display_rotation *rotation);
