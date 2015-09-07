@@ -1139,8 +1139,8 @@ static void STDMETHODCALLTYPE d3d10_device_CopySubresourceRegion(ID3D10Device1 *
             iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
             src_resource, src_subresource_idx, src_box);
 
-    wined3d_dst_resource = wined3d_resource_from_resource(dst_resource);
-    wined3d_src_resource = wined3d_resource_from_resource(src_resource);
+    wined3d_dst_resource = wined3d_resource_from_d3d10_resource(dst_resource);
+    wined3d_src_resource = wined3d_resource_from_d3d10_resource(src_resource);
     wined3d_src_box.left = src_box->left;
     wined3d_src_box.top = src_box->top;
     wined3d_src_box.front = src_box->front;
@@ -1161,8 +1161,8 @@ static void STDMETHODCALLTYPE d3d10_device_CopyResource(ID3D10Device1 *iface,
 
     TRACE("iface %p, dst_resource %p, src_resource %p.\n", iface, dst_resource, src_resource);
 
-    wined3d_dst_resource = wined3d_resource_from_resource(dst_resource);
-    wined3d_src_resource = wined3d_resource_from_resource(src_resource);
+    wined3d_dst_resource = wined3d_resource_from_d3d10_resource(dst_resource);
+    wined3d_src_resource = wined3d_resource_from_d3d10_resource(src_resource);
     wined3d_mutex_lock();
     wined3d_device_copy_resource(device->wined3d_device, wined3d_dst_resource, wined3d_src_resource);
     wined3d_mutex_unlock();
@@ -1189,7 +1189,7 @@ static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device1 *ifac
         wined3d_box.back = box->back;
     }
 
-    wined3d_resource = wined3d_resource_from_resource(resource);
+    wined3d_resource = wined3d_resource_from_d3d10_resource(resource);
     wined3d_mutex_lock();
     wined3d_device_update_sub_resource(device->wined3d_device, wined3d_resource,
             subresource_idx, box ? &wined3d_box : NULL, data, row_pitch, depth_pitch);

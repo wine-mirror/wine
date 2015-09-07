@@ -693,7 +693,7 @@ HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, struct d3
     }
 
     wined3d_mutex_lock();
-    if (!(wined3d_resource = wined3d_resource_from_resource(resource)))
+    if (!(wined3d_resource = wined3d_resource_from_d3d10_resource(resource)))
     {
         wined3d_mutex_unlock();
         ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
@@ -957,7 +957,7 @@ HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struc
     }
 
     wined3d_mutex_lock();
-    if (!(wined3d_resource = wined3d_resource_from_resource(resource)))
+    if (!(wined3d_resource = wined3d_resource_from_d3d10_resource(resource)))
     {
         wined3d_mutex_unlock();
         ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
@@ -1158,7 +1158,7 @@ HRESULT d3d10_shader_resource_view_init(struct d3d10_shader_resource_view *view,
     }
 
     wined3d_mutex_lock();
-    if (!(wined3d_resource = wined3d_resource_from_resource(resource)))
+    if (!(wined3d_resource = wined3d_resource_from_d3d10_resource(resource)))
     {
         ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
         return E_FAIL;

@@ -502,7 +502,7 @@ UINT d3d10_resource_misc_flags_from_d3d11_resource_misc_flags(UINT resource_misc
     return d3d10_resource_misc_flags;
 }
 
-struct wined3d_resource *wined3d_resource_from_resource(ID3D10Resource *resource)
+struct wined3d_resource *wined3d_resource_from_d3d10_resource(ID3D10Resource *resource)
 {
     D3D10_RESOURCE_DIMENSION dimension;
 
