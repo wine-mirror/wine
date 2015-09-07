@@ -2391,12 +2391,12 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     if (charset == SYMBOL_CHARSET)
     {
         ok(strcmp("Arial", name), "face name should NOT be Arial\n");
-        ok(fs.fsCsb[0] & (1 << 31), "symbol encoding should be available\n");
+        ok(fs.fsCsb[0] & (1u << 31), "symbol encoding should be available\n");
     }
     else
     {
         ok(!strcmp("Arial", name), "face name should be Arial, not %s\n", name);
-        ok(!(fs.fsCsb[0] & (1 << 31)), "symbol encoding should NOT be available\n");
+        ok(!(fs.fsCsb[0] & (1u << 31)), "symbol encoding should NOT be available\n");
     }
 
     if (!TranslateCharsetInfo((DWORD *)(INT_PTR)cs, &csi, TCI_SRCCHARSET))
