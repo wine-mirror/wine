@@ -143,9 +143,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRenderTargetView(ID3D11Devic
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDepthStencilView(ID3D11Device *iface,
         ID3D11Resource *resource, const D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11DepthStencilView **view)
 {
-    FIXME("iface %p, resource %p, desc %p, view %p stub!\n", iface, resource, desc, view);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d_depthstencil_view *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
+
+    if (FAILED(hr = d3d_depthstencil_view_create(device, resource, desc, &object)))
+        return hr;
+
+    *view = &object->ID3D11DepthStencilView_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateInputLayout(ID3D11Device *iface,
@@ -2153,27 +2162,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
         memcpy(&d3d11_desc.u, &desc->u, sizeof(d3d11_desc.u));
     }
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
     if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D11Resource, (void **)&d3d11_resource)))
     {
         ERR("Resource does not implement ID3D11Resource.\n");
-        HeapFree(GetProcessHeap(), 0, object);
         return E_FAIL;
     }
 
-    if (FAILED(hr = d3d_depthstencil_view_init(object, device, d3d11_resource, desc ? &d3d11_desc : NULL)))
-    {
-        WARN("Failed to initialize depthstencil view, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        ID3D11Resource_Release(d3d11_resource);
-        return hr;
-    }
-
+    hr = d3d_depthstencil_view_create(device, d3d11_resource, desc ? &d3d11_desc : NULL, &object);
     ID3D11Resource_Release(d3d11_resource);
+    if (FAILED(hr))
+        return hr;
 
-    TRACE("Created depthstencil view %p.\n", object);
     *view = &object->ID3D10DepthStencilView_iface;
 
     return S_OK;

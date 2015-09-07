@@ -166,8 +166,8 @@ struct d3d_depthstencil_view
     ID3D11Device *device;
 };
 
-HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, struct d3d_device *device,
-        ID3D11Resource *resource, const D3D11_DEPTH_STENCIL_VIEW_DESC *desc) DECLSPEC_HIDDEN;
+HRESULT d3d_depthstencil_view_create(struct d3d_device *device, ID3D11Resource *resource,
+        const D3D11_DEPTH_STENCIL_VIEW_DESC *desc, struct d3d_depthstencil_view **view) DECLSPEC_HIDDEN;
 struct d3d_depthstencil_view *unsafe_impl_from_ID3D10DepthStencilView(ID3D10DepthStencilView *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10RenderTargetView */
