@@ -25,20 +25,20 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3D10Resource *resource)
+static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Resource *resource)
 {
-    D3D10_RESOURCE_DIMENSION dimension;
+    D3D11_RESOURCE_DIMENSION dimension;
 
-    ID3D10Resource_GetType(resource, &dimension);
+    ID3D11Resource_GetType(resource, &dimension);
 
     switch (dimension)
     {
-        case D3D10_RESOURCE_DIMENSION_TEXTURE1D:
+        case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
         {
             D3D10_TEXTURE1D_DESC texture_desc;
             ID3D10Texture1D *texture;
 
-            if (FAILED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture1D, (void **)&texture)))
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D10Texture1D, (void **)&texture)))
             {
                 ERR("Resource of type TEXTURE1D doesn't implement ID3D10Texture1D.\n");
                 return E_INVALIDARG;
@@ -64,12 +64,12 @@ static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3
             return S_OK;
         }
 
-        case D3D10_RESOURCE_DIMENSION_TEXTURE2D:
+        case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
         {
             D3D10_TEXTURE2D_DESC texture_desc;
             ID3D10Texture2D *texture;
 
-            if (FAILED(ID3D10Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture)))
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture)))
             {
                 ERR("Resource of type TEXTURE2D doesn't implement ID3D10Texture2D.\n");
                 return E_INVALIDARG;
@@ -113,8 +113,8 @@ static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3
 
         default:
             FIXME("Unhandled resource dimension %#x.\n", dimension);
-        case D3D10_RESOURCE_DIMENSION_BUFFER:
-        case D3D10_RESOURCE_DIMENSION_TEXTURE3D:
+        case D3D11_RESOURCE_DIMENSION_BUFFER:
+        case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
             return E_INVALIDARG;
     }
 }
@@ -417,7 +417,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_view_Release(ID3D11DepthStenci
     {
         wined3d_mutex_lock();
         wined3d_rendertarget_view_decref(view->wined3d_view);
-        ID3D10Resource_Release(view->resource);
+        ID3D11Resource_Release(view->resource);
         ID3D11Device_Release(view->device);
         wined3d_private_store_cleanup(&view->private_store);
         wined3d_mutex_unlock();
@@ -471,7 +471,12 @@ static HRESULT STDMETHODCALLTYPE d3d11_depthstencil_view_SetPrivateDataInterface
 static void STDMETHODCALLTYPE d3d11_depthstencil_view_GetResource(ID3D11DepthStencilView *iface,
         ID3D11Resource **resource)
 {
-    FIXME("iface %p, resource %p stub!\n", iface, resource);
+    struct d3d_depthstencil_view *view = impl_from_ID3D11DepthStencilView(iface);
+
+    TRACE("iface %p, resource %p.\n", iface, resource);
+
+    *resource = view->resource;
+    ID3D11Resource_AddRef(*resource);
 }
 
 static void STDMETHODCALLTYPE d3d11_depthstencil_view_GetDesc(ID3D11DepthStencilView *iface,
@@ -586,8 +591,7 @@ static void STDMETHODCALLTYPE d3d10_depthstencil_view_GetResource(ID3D10DepthSte
 
     TRACE("iface %p, resource %p.\n", iface, resource);
 
-    *resource = view->resource;
-    ID3D10Resource_AddRef(*resource);
+    ID3D11Resource_QueryInterface(view->resource, &IID_ID3D10Resource, (void **)resource);
 }
 
 /* ID3D10DepthStencilView methods */
@@ -672,7 +676,7 @@ static void wined3d_depth_stencil_view_desc_from_d3d10core(struct wined3d_render
 }
 
 HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, struct d3d_device *device,
-        ID3D10Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc)
+        ID3D11Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc)
 {
     struct wined3d_rendertarget_view_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
@@ -693,10 +697,10 @@ HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, struct d3
     }
 
     wined3d_mutex_lock();
-    if (!(wined3d_resource = wined3d_resource_from_d3d10_resource(resource)))
+    if (!(wined3d_resource = wined3d_resource_from_d3d11_resource(resource)))
     {
         wined3d_mutex_unlock();
-        ERR("Failed to get wined3d resource for d3d10 resource %p.\n", resource);
+        ERR("Failed to get wined3d resource for d3d11 resource %p.\n", resource);
         return E_FAIL;
     }
 
@@ -712,7 +716,7 @@ HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, struct d3
     wined3d_private_store_init(&view->private_store);
     wined3d_mutex_unlock();
     view->resource = resource;
-    ID3D10Resource_AddRef(resource);
+    ID3D11Resource_AddRef(resource);
     view->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(view->device);
 

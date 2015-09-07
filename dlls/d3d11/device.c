@@ -2138,6 +2138,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_depthstencil_view *object;
+    ID3D11Resource *d3d11_resource;
     HRESULT hr;
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
@@ -2145,12 +2146,22 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d_depthstencil_view_init(object, device, resource, desc)))
+    if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D11Resource, (void **)&d3d11_resource)))
+    {
+        ERR("Resource does not implement ID3D11Resource.\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        return E_FAIL;
+    }
+
+    if (FAILED(hr = d3d_depthstencil_view_init(object, device, d3d11_resource, desc)))
     {
         WARN("Failed to initialize depthstencil view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
+        ID3D11Resource_Release(d3d11_resource);
         return hr;
     }
+
+    ID3D11Resource_Release(d3d11_resource);
 
     TRACE("Created depthstencil view %p.\n", object);
     *view = &object->ID3D10DepthStencilView_iface;

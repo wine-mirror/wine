@@ -190,6 +190,14 @@ static const struct ID3D11BufferVtbl d3d11_buffer_vtbl =
     d3d11_buffer_GetDesc,
 };
 
+struct d3d_buffer *unsafe_impl_from_ID3D11Buffer(ID3D11Buffer *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_buffer_vtbl);
+    return CONTAINING_RECORD(iface, struct d3d_buffer, ID3D11Buffer_iface);
+}
+
 /* ID3D10Buffer methods */
 
 static inline struct d3d_buffer *impl_from_ID3D10Buffer(ID3D10Buffer *iface)
