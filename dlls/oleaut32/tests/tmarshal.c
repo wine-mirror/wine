@@ -842,7 +842,35 @@ static HRESULT WINAPI Widget_neg_restrict(IWidget* iface, INT *i)
 static HRESULT WINAPI Widget_VarArg_Run(
     IWidget *iface, BSTR name, SAFEARRAY *params, VARIANT *result)
 {
+    static const WCHAR catW[] = { 'C','a','t',0 };
+    static const WCHAR supermanW[] = { 'S','u','p','e','r','m','a','n',0 };
+    LONG bound;
+    VARIANT *var;
+    BSTR bstr;
+    HRESULT hr;
+
     trace("VarArg_Run(%p,%p,%p)\n", name, params, result);
+
+    ok(!lstrcmpW(name, catW), "got %s\n", wine_dbgstr_w(name));
+
+    hr = SafeArrayGetLBound(params, 1, &bound);
+    ok(hr == S_OK, "SafeArrayGetLBound error %#x\n", hr);
+    ok(bound == 0, "expected 0, got %d\n", bound);
+
+    hr = SafeArrayGetUBound(params, 1, &bound);
+    ok(hr == S_OK, "SafeArrayGetUBound error %#x\n", hr);
+    ok(bound == 0, "expected 0, got %d\n", bound);
+
+    hr = SafeArrayAccessData(params, (void **)&var);
+    ok(hr == S_OK, "SafeArrayAccessData failed with %x\n", hr);
+
+    ok(V_VT(&var[0]) == VT_BSTR, "expected VT_BSTR, got %d\n", V_VT(&var[0]));
+    bstr = V_BSTR(&var[0]);
+    ok(!lstrcmpW(bstr, supermanW), "got %s\n", wine_dbgstr_w(bstr));
+
+    hr = SafeArrayUnaccessData(params);
+    ok(hr == S_OK, "SafeArrayUnaccessData error %#x\n", hr);
+
     return S_OK;
 }
 
@@ -1516,7 +1544,7 @@ static void test_typelibmarshal(void)
     V_BSTR(&vararg[1]) = SysAllocString(szCat);
     VariantInit(&vararg[0]);
     V_VT(&vararg[0]) = VT_BSTR;
-    V_BSTR(&vararg[0]) = SysAllocString(NULL);
+    V_BSTR(&vararg[0]) = SysAllocString(szSuperman);
     dispparams.cNamedArgs = 0;
     dispparams.cArgs = 2;
     dispparams.rgdispidNamedArgs = NULL;
