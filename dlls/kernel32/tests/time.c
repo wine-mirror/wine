@@ -851,7 +851,8 @@ static void test_GetSystemTimes(void)
                       sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * sbi.NumberOfProcessors);
 
     ok( !NtQuerySystemInformation( SystemProcessorPerformanceInformation, sppi,
-                                   sizeof(*sppi), &ReturnLength),
+                                   sizeof(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION) * sbi.NumberOfProcessors,
+                                   &ReturnLength),
                                    "NtQuerySystemInformation failed\n" );
 
     for (i = 0; i < sbi.NumberOfProcessors; i++)
