@@ -3159,6 +3159,11 @@ static void test_samesequence(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("unprivileged user?\n");
+        goto error;
+    }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     if (r == ERROR_SUCCESS)
     {
@@ -3167,6 +3172,8 @@ static void test_samesequence(void)
         ok(delete_pf("msitest\\maximus", TRUE), "File not installed\n");
         ok(delete_pf("msitest", FALSE), "Directory not created\n");
     }
+
+error:
     delete_cab_files();
     DeleteFileA(msifile);
 }
@@ -3181,6 +3188,12 @@ static void test_uiLevelFlags(void)
     MsiSetInternalUI(INSTALLUILEVEL_NONE | INSTALLUILEVEL_SOURCERESONLY, NULL);
 
     r = MsiInstallProductA(msifile, NULL);
+    if (r == ERROR_INSTALL_FAILURE)
+    {
+        win_skip("unprivileged user?\n");
+        goto error;
+    }
+
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
     if (r == ERROR_SUCCESS)
     {
@@ -3189,6 +3202,8 @@ static void test_uiLevelFlags(void)
         ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
         ok(delete_pf("msitest", FALSE), "Directory not created\n");
     }
+
+error:
     delete_cab_files();
     DeleteFileA(msifile);
 }
