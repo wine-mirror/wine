@@ -7078,7 +7078,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                             }
                             V_VT(&rgvarg[i]) = rgvt[i];
                         }
-                        else if (rgvt[i] == (VT_VARIANT | VT_ARRAY) && func_desc->cParamsOpt < 0 && i == func_desc->cParams-1)
+                        else if (rgvt[i] == (VT_VARIANT | VT_ARRAY) && func_desc->cParamsOpt < 0)
                         {
                             SAFEARRAY *a;
                             SAFEARRAYBOUND bound;
