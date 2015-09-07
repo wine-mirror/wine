@@ -5674,11 +5674,11 @@ static BOOL LISTVIEW_DeleteColumn(LISTVIEW_INFO *infoPtr, INT nColumn)
     }
 
     /* update the other column info */
-    LISTVIEW_UpdateItemSize(infoPtr);
     if(DPA_GetPtrCount(infoPtr->hdpaColumns) == 0)
         LISTVIEW_InvalidateList(infoPtr);
     else
         LISTVIEW_ScrollColumns(infoPtr, nColumn, -(rcCol.right - rcCol.left));
+    LISTVIEW_UpdateItemSize(infoPtr);
 
     return TRUE;
 }
