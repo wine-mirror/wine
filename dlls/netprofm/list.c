@@ -1681,7 +1681,11 @@ static void init_networks( struct list_manager *mgr )
     if (ret != ERROR_BUFFER_OVERFLOW) return;
 
     if (!(buf = heap_alloc( size ))) return;
-    if (GetAdaptersAddresses( WS_AF_UNSPEC, flags, NULL, buf, &size )) return;
+    if (GetAdaptersAddresses( WS_AF_UNSPEC, flags, NULL, buf, &size ))
+    {
+        heap_free( buf );
+        return;
+    }
 
     memset( &id, 0, sizeof(id) );
     for (aa = buf; aa; aa = aa->Next)
