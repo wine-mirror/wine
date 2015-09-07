@@ -1161,12 +1161,14 @@ static LONG_PTR *stub_do_args(MIDL_STUB_MESSAGE *pStubMsg,
             if (params[i].attr.IsOut || params[i].attr.IsReturn)
                 call_marshaller(pStubMsg, pArg, &params[i]);
             break;
-        case STUBLESS_FREE:
+        case STUBLESS_MUSTFREE:
             if (params[i].attr.MustFree)
             {
                 call_freer(pStubMsg, pArg, &params[i]);
             }
-            else if (params[i].attr.ServerAllocSize)
+            break;
+        case STUBLESS_FREE:
+            if (params[i].attr.ServerAllocSize)
             {
                 HeapFree(GetProcessHeap(), 0, *(void **)pArg);
             }
@@ -1455,6 +1457,7 @@ LONG WINAPI NdrStubCall2(
         case STUBLESS_INITOUT:
         case STUBLESS_CALCSIZE:
         case STUBLESS_MARSHAL:
+        case STUBLESS_MUSTFREE:
         case STUBLESS_FREE:
             retval_ptr = stub_do_args(&stubMsg, pFormat, phase, number_of_params);
             break;
