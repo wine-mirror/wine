@@ -161,13 +161,13 @@ struct d3d_depthstencil_view
 
     struct wined3d_private_store private_store;
     struct wined3d_rendertarget_view *wined3d_view;
-    D3D10_DEPTH_STENCIL_VIEW_DESC desc;
+    D3D11_DEPTH_STENCIL_VIEW_DESC desc;
     ID3D11Resource *resource;
     ID3D11Device *device;
 };
 
 HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, struct d3d_device *device,
-        ID3D11Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc) DECLSPEC_HIDDEN;
+        ID3D11Resource *resource, const D3D11_DEPTH_STENCIL_VIEW_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d_depthstencil_view *unsafe_impl_from_ID3D10DepthStencilView(ID3D10DepthStencilView *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10RenderTargetView */

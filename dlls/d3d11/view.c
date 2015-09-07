@@ -25,37 +25,39 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Resource *resource)
+static HRESULT set_dsdesc_from_resource(D3D11_DEPTH_STENCIL_VIEW_DESC *desc, ID3D11Resource *resource)
 {
     D3D11_RESOURCE_DIMENSION dimension;
 
     ID3D11Resource_GetType(resource, &dimension);
 
+    desc->Flags = 0;
+
     switch (dimension)
     {
         case D3D11_RESOURCE_DIMENSION_TEXTURE1D:
         {
-            D3D10_TEXTURE1D_DESC texture_desc;
-            ID3D10Texture1D *texture;
+            D3D11_TEXTURE1D_DESC texture_desc;
+            ID3D11Texture1D *texture;
 
-            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D10Texture1D, (void **)&texture)))
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture1D, (void **)&texture)))
             {
-                ERR("Resource of type TEXTURE1D doesn't implement ID3D10Texture1D.\n");
+                ERR("Resource of type TEXTURE1D doesn't implement ID3D11Texture1D.\n");
                 return E_INVALIDARG;
             }
 
-            ID3D10Texture1D_GetDesc(texture, &texture_desc);
-            ID3D10Texture1D_Release(texture);
+            ID3D11Texture1D_GetDesc(texture, &texture_desc);
+            ID3D11Texture1D_Release(texture);
 
             desc->Format = texture_desc.Format;
             if (texture_desc.ArraySize == 1)
             {
-                desc->ViewDimension = D3D10_DSV_DIMENSION_TEXTURE1D;
+                desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE1D;
                 desc->u.Texture1D.MipSlice = 0;
             }
             else
             {
-                desc->ViewDimension = D3D10_DSV_DIMENSION_TEXTURE1DARRAY;
+                desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE1DARRAY;
                 desc->u.Texture1DArray.MipSlice = 0;
                 desc->u.Texture1DArray.FirstArraySlice = 0;
                 desc->u.Texture1DArray.ArraySize = 1;
@@ -66,43 +68,43 @@ static HRESULT set_dsdesc_from_resource(D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3
 
         case D3D11_RESOURCE_DIMENSION_TEXTURE2D:
         {
-            D3D10_TEXTURE2D_DESC texture_desc;
-            ID3D10Texture2D *texture;
+            D3D11_TEXTURE2D_DESC texture_desc;
+            ID3D11Texture2D *texture;
 
-            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D10Texture2D, (void **)&texture)))
+            if (FAILED(ID3D11Resource_QueryInterface(resource, &IID_ID3D11Texture2D, (void **)&texture)))
             {
-                ERR("Resource of type TEXTURE2D doesn't implement ID3D10Texture2D.\n");
+                ERR("Resource of type TEXTURE2D doesn't implement ID3D11Texture2D.\n");
                 return E_INVALIDARG;
             }
 
-            ID3D10Texture2D_GetDesc(texture, &texture_desc);
-            ID3D10Texture2D_Release(texture);
+            ID3D11Texture2D_GetDesc(texture, &texture_desc);
+            ID3D11Texture2D_Release(texture);
 
             desc->Format = texture_desc.Format;
             if (texture_desc.ArraySize == 1)
             {
                 if (texture_desc.SampleDesc.Count == 1)
                 {
-                    desc->ViewDimension = D3D10_DSV_DIMENSION_TEXTURE2D;
+                    desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
                     desc->u.Texture2D.MipSlice = 0;
                 }
                 else
                 {
-                    desc->ViewDimension = D3D10_DSV_DIMENSION_TEXTURE2DMS;
+                    desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
                 }
             }
             else
             {
                 if (texture_desc.SampleDesc.Count == 1)
                 {
-                    desc->ViewDimension = D3D10_DSV_DIMENSION_TEXTURE2DARRAY;
+                    desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DARRAY;
                     desc->u.Texture2DArray.MipSlice = 0;
                     desc->u.Texture2DArray.FirstArraySlice = 0;
                     desc->u.Texture2DArray.ArraySize = 1;
                 }
                 else
                 {
-                    desc->ViewDimension = D3D10_DSV_DIMENSION_TEXTURE2DMSARRAY;
+                    desc->ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY;
                     desc->u.Texture2DMSArray.FirstArraySlice = 0;
                     desc->u.Texture2DMSArray.ArraySize = 1;
                 }
@@ -482,7 +484,11 @@ static void STDMETHODCALLTYPE d3d11_depthstencil_view_GetResource(ID3D11DepthSte
 static void STDMETHODCALLTYPE d3d11_depthstencil_view_GetDesc(ID3D11DepthStencilView *iface,
         D3D11_DEPTH_STENCIL_VIEW_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_depthstencil_view *view = impl_from_ID3D11DepthStencilView(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = view->desc;
 }
 
 static const struct ID3D11DepthStencilViewVtbl d3d11_depthstencil_view_vtbl =
@@ -600,10 +606,13 @@ static void STDMETHODCALLTYPE d3d10_depthstencil_view_GetDesc(ID3D10DepthStencil
         D3D10_DEPTH_STENCIL_VIEW_DESC *desc)
 {
     struct d3d_depthstencil_view *view = impl_from_ID3D10DepthStencilView(iface);
+    const D3D11_DEPTH_STENCIL_VIEW_DESC *d3d11_desc = &view->desc;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    *desc = view->desc;
+    desc->Format = d3d11_desc->Format;
+    desc->ViewDimension = (D3D10_DSV_DIMENSION)d3d11_desc->ViewDimension;
+    memcpy(&desc->u, &d3d11_desc->u, sizeof(desc->u));
 }
 
 static const struct ID3D10DepthStencilViewVtbl d3d10_depthstencil_view_vtbl =
@@ -623,44 +632,47 @@ static const struct ID3D10DepthStencilViewVtbl d3d10_depthstencil_view_vtbl =
     d3d10_depthstencil_view_GetDesc,
 };
 
-static void wined3d_depth_stencil_view_desc_from_d3d10core(struct wined3d_rendertarget_view_desc *wined3d_desc,
-        const D3D10_DEPTH_STENCIL_VIEW_DESC *desc)
+static void wined3d_depth_stencil_view_desc_from_d3d11(struct wined3d_rendertarget_view_desc *wined3d_desc,
+        const D3D11_DEPTH_STENCIL_VIEW_DESC *desc)
 {
     wined3d_desc->format_id = wined3dformat_from_dxgi_format(desc->Format);
 
+    if (desc->Flags)
+        FIXME("Unhandled depth stencil view flags %#x.\n", desc->Flags);
+
     switch (desc->ViewDimension)
     {
-        case D3D10_DSV_DIMENSION_TEXTURE1D:
+        case D3D11_DSV_DIMENSION_TEXTURE1D:
             wined3d_desc->u.texture.level_idx = desc->u.Texture1D.MipSlice;
             wined3d_desc->u.texture.layer_idx = 0;
             wined3d_desc->u.texture.layer_count = 1;
             break;
 
-        case D3D10_DSV_DIMENSION_TEXTURE1DARRAY:
+        case D3D11_DSV_DIMENSION_TEXTURE1DARRAY:
             wined3d_desc->u.texture.level_idx = desc->u.Texture1DArray.MipSlice;
             wined3d_desc->u.texture.layer_idx = desc->u.Texture1DArray.FirstArraySlice;
             wined3d_desc->u.texture.layer_count = desc->u.Texture1DArray.ArraySize;
             break;
 
-        case D3D10_DSV_DIMENSION_TEXTURE2D:
+        case D3D11_DSV_DIMENSION_TEXTURE2D:
             wined3d_desc->u.texture.level_idx = desc->u.Texture2D.MipSlice;
             wined3d_desc->u.texture.layer_idx = 0;
             wined3d_desc->u.texture.layer_count = 1;
             break;
 
-        case D3D10_DSV_DIMENSION_TEXTURE2DARRAY:
+        case D3D11_DSV_DIMENSION_TEXTURE2DARRAY:
             wined3d_desc->u.texture.level_idx = desc->u.Texture2DArray.MipSlice;
             wined3d_desc->u.texture.layer_idx = desc->u.Texture2DArray.FirstArraySlice;
             wined3d_desc->u.texture.layer_count = desc->u.Texture2DArray.ArraySize;
             break;
 
-        case D3D10_DSV_DIMENSION_TEXTURE2DMS:
+        case D3D11_DSV_DIMENSION_TEXTURE2DMS:
             wined3d_desc->u.texture.level_idx = 0;
             wined3d_desc->u.texture.layer_idx = 0;
             wined3d_desc->u.texture.layer_count = 1;
             break;
 
-        case D3D10_DSV_DIMENSION_TEXTURE2DMSARRAY:
+        case D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY:
             wined3d_desc->u.texture.level_idx = 0;
             wined3d_desc->u.texture.layer_idx = desc->u.Texture2DMSArray.FirstArraySlice;
             wined3d_desc->u.texture.layer_count = desc->u.Texture2DMSArray.ArraySize;
@@ -676,7 +688,7 @@ static void wined3d_depth_stencil_view_desc_from_d3d10core(struct wined3d_render
 }
 
 HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, struct d3d_device *device,
-        ID3D11Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc)
+        ID3D11Resource *resource, const D3D11_DEPTH_STENCIL_VIEW_DESC *desc)
 {
     struct wined3d_rendertarget_view_desc wined3d_desc;
     struct wined3d_resource *wined3d_resource;
@@ -704,7 +716,7 @@ HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, struct d3
         return E_FAIL;
     }
 
-    wined3d_depth_stencil_view_desc_from_d3d10core(&wined3d_desc, &view->desc);
+    wined3d_depth_stencil_view_desc_from_d3d11(&wined3d_desc, &view->desc);
     if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource,
             view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
     {

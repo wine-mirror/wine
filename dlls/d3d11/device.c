@@ -20,6 +20,7 @@
 #include "config.h"
 #include "wine/port.h"
 
+#define NONAMELESSUNION
 #include "d3d11_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
@@ -2137,11 +2138,20 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
         ID3D10Resource *resource, const D3D10_DEPTH_STENCIL_VIEW_DESC *desc, ID3D10DepthStencilView **view)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
+    D3D11_DEPTH_STENCIL_VIEW_DESC d3d11_desc;
     struct d3d_depthstencil_view *object;
     ID3D11Resource *d3d11_resource;
     HRESULT hr;
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
+
+    if (desc)
+    {
+        d3d11_desc.Format = desc->Format;
+        d3d11_desc.ViewDimension = desc->ViewDimension;
+        d3d11_desc.Flags = 0;
+        memcpy(&d3d11_desc.u, &desc->u, sizeof(d3d11_desc.u));
+    }
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -2153,7 +2163,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilView(ID3D10Devic
         return E_FAIL;
     }
 
-    if (FAILED(hr = d3d_depthstencil_view_init(object, device, d3d11_resource, desc)))
+    if (FAILED(hr = d3d_depthstencil_view_init(object, device, d3d11_resource, desc ? &d3d11_desc : NULL)))
     {
         WARN("Failed to initialize depthstencil view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
