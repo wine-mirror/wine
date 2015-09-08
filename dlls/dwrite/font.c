@@ -107,6 +107,9 @@ struct dwrite_fontfamily_data {
     struct dwrite_font_data **fonts;
     UINT32 font_count;
     UINT32 font_alloc;
+    BOOL has_normal_face : 1;
+    BOOL has_oblique_face : 1;
+    BOOL has_italic_face : 1;
 };
 
 struct dwrite_fontcollection {
@@ -1936,6 +1939,12 @@ static HRESULT fontfamily_add_font(struct dwrite_fontfamily_data *family_data, s
 
     family_data->fonts[family_data->font_count] = font_data;
     family_data->font_count++;
+    if (font_data->style == DWRITE_FONT_STYLE_NORMAL)
+        family_data->has_normal_face = TRUE;
+    else if (font_data->style == DWRITE_FONT_STYLE_OBLIQUE)
+        family_data->has_oblique_face = TRUE;
+    else
+        family_data->has_italic_face = TRUE;
     return S_OK;
 }
 
@@ -2815,6 +2824,9 @@ static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct 
     data->ref = 1;
     data->font_count = 0;
     data->font_alloc = 2;
+    data->has_normal_face = FALSE;
+    data->has_oblique_face = FALSE;
+    data->has_italic_face = FALSE;
 
     data->fonts = heap_alloc(sizeof(*data->fonts)*data->font_alloc);
     if (!data->fonts) {
