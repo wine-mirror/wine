@@ -1095,7 +1095,7 @@ static void wined3d_rendertarget_view_desc_from_d3d11(struct wined3d_rendertarge
     }
 }
 
-HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, struct d3d_device *device,
+static HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, struct d3d_device *device,
         ID3D11Resource *resource, const D3D11_RENDER_TARGET_VIEW_DESC *desc)
 {
     struct wined3d_rendertarget_view_desc wined3d_desc;
@@ -1139,6 +1139,28 @@ HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, struct d3
     ID3D11Resource_AddRef(resource);
     view->device = &device->ID3D10Device1_iface;
     ID3D10Device1_AddRef(view->device);
+
+    return S_OK;
+}
+
+HRESULT d3d_rendertarget_view_create(struct d3d_device *device, ID3D11Resource *resource,
+        const D3D11_RENDER_TARGET_VIEW_DESC *desc, struct d3d_rendertarget_view **view)
+{
+    struct d3d_rendertarget_view *object;
+    HRESULT hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_rendertarget_view_init(object, device, resource, desc)))
+    {
+        WARN("Failed to initialize rendertarget view, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created rendertarget view %p.\n", object);
+    *view = object;
 
     return S_OK;
 }

@@ -135,9 +135,19 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateUnorderedAccessView(ID3D11De
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRenderTargetView(ID3D11Device *iface,
         ID3D11Resource *resource, const D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3D11RenderTargetView **view)
 {
-    FIXME("iface %p, resource %p, desc %p, view %p stub!\n", iface, resource, desc, view);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d_rendertarget_view *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
+
+    if (FAILED(hr = d3d_rendertarget_view_create(device, resource, desc, &object)))
+        return hr;
+
+    *view = &object->ID3D11RenderTargetView_iface;
+
+    return S_OK;
+
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDepthStencilView(ID3D11Device *iface,
@@ -2128,28 +2138,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
     if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D11Resource, (void **)&d3d11_resource)))
     {
         ERR("Resource does not implement ID3D11Resource.\n");
-        HeapFree(GetProcessHeap(), 0, object);
         return E_FAIL;
     }
 
-    if (FAILED(hr = d3d_rendertarget_view_init(object, device, d3d11_resource,
-                    (const D3D11_RENDER_TARGET_VIEW_DESC *)desc)))
-    {
-        WARN("Failed to initialize rendertarget view, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        ID3D11Resource_Release(d3d11_resource);
-        return hr;
-    }
-
+    hr = d3d_rendertarget_view_create(device, d3d11_resource, (const D3D11_RENDER_TARGET_VIEW_DESC *)desc, &object);
     ID3D11Resource_Release(d3d11_resource);
+    if (FAILED(hr))
+        return hr;
 
-    TRACE("Created rendertarget view %p.\n", object);
     *view = &object->ID3D10RenderTargetView_iface;
 
     return S_OK;
