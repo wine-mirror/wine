@@ -766,6 +766,143 @@ struct d3d_depthstencil_view *unsafe_impl_from_ID3D10DepthStencilView(ID3D10Dept
     return impl_from_ID3D10DepthStencilView(iface);
 }
 
+/* ID3D11RenderTargetView methods */
+
+static inline struct d3d_rendertarget_view *impl_from_ID3D11RenderTargetView(ID3D11RenderTargetView *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_rendertarget_view, ID3D11RenderTargetView_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_rendertarget_view_QueryInterface(ID3D11RenderTargetView *iface,
+        REFIID riid, void **object)
+{
+    struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView(iface);
+
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D11RenderTargetView)
+            || IsEqualGUID(riid, &IID_ID3D11View)
+            || IsEqualGUID(riid, &IID_ID3D11DeviceChild)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        ID3D11RenderTargetView_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_ID3D10RenderTargetView)
+            || IsEqualGUID(riid, &IID_ID3D10View)
+            || IsEqualGUID(riid, &IID_ID3D10DeviceChild))
+    {
+        ID3D10RenderTargetView_AddRef(&view->ID3D10RenderTargetView_iface);
+        *object = &view->ID3D10RenderTargetView_iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_rendertarget_view_AddRef(ID3D11RenderTargetView *iface)
+{
+    struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView(iface);
+    ULONG refcount = InterlockedIncrement(&view->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", view, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_rendertarget_view_Release(ID3D11RenderTargetView *iface)
+{
+    struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView(iface);
+    ULONG refcount = InterlockedDecrement(&view->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", view, refcount);
+
+    if (!refcount)
+    {
+        wined3d_mutex_lock();
+        wined3d_rendertarget_view_decref(view->wined3d_view);
+        ID3D10Resource_Release(view->resource);
+        ID3D10Device1_Release(view->device);
+        wined3d_private_store_cleanup(&view->private_store);
+        wined3d_mutex_unlock();
+        HeapFree(GetProcessHeap(), 0, view);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d11_rendertarget_view_GetDevice(ID3D11RenderTargetView *iface,
+        ID3D11Device **device)
+{
+    FIXME("iface %p, device %p stub!\n", iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_rendertarget_view_GetPrivateData(ID3D11RenderTargetView *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&view->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_rendertarget_view_SetPrivateData(ID3D11RenderTargetView *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&view->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_rendertarget_view_SetPrivateDataInterface(ID3D11RenderTargetView *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView(iface);
+
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&view->private_store, guid, data);
+}
+
+static void STDMETHODCALLTYPE d3d11_rendertarget_view_GetResource(ID3D11RenderTargetView *iface,
+        ID3D11Resource **resource)
+{
+    FIXME("iface %p, resource %p stub!\n", iface, resource);
+}
+
+static void STDMETHODCALLTYPE d3d11_rendertarget_view_GetDesc(ID3D11RenderTargetView *iface,
+        D3D11_RENDER_TARGET_VIEW_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+}
+
+static const struct ID3D11RenderTargetViewVtbl d3d11_rendertarget_view_vtbl =
+{
+    /* IUnknown methods */
+    d3d11_rendertarget_view_QueryInterface,
+    d3d11_rendertarget_view_AddRef,
+    d3d11_rendertarget_view_Release,
+    /* ID3D11DeviceChild methods */
+    d3d11_rendertarget_view_GetDevice,
+    d3d11_rendertarget_view_GetPrivateData,
+    d3d11_rendertarget_view_SetPrivateData,
+    d3d11_rendertarget_view_SetPrivateDataInterface,
+    /* ID3D11View methods */
+    d3d11_rendertarget_view_GetResource,
+    /* ID3D11RenderTargetView methods */
+    d3d11_rendertarget_view_GetDesc,
+};
+
+/* ID3D10RenderTargetView methods */
+
 static inline struct d3d_rendertarget_view *impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d_rendertarget_view, ID3D10RenderTargetView_iface);
@@ -776,53 +913,29 @@ static inline struct d3d_rendertarget_view *impl_from_ID3D10RenderTargetView(ID3
 static HRESULT STDMETHODCALLTYPE d3d10_rendertarget_view_QueryInterface(ID3D10RenderTargetView *iface,
         REFIID riid, void **object)
 {
-    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+    struct d3d_rendertarget_view *view = impl_from_ID3D10RenderTargetView(iface);
 
-    if (IsEqualGUID(riid, &IID_ID3D10RenderTargetView)
-            || IsEqualGUID(riid, &IID_ID3D10View)
-            || IsEqualGUID(riid, &IID_ID3D10DeviceChild)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
+    return d3d11_rendertarget_view_QueryInterface(&view->ID3D11RenderTargetView_iface, riid, object);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_AddRef(ID3D10RenderTargetView *iface)
 {
-    struct d3d_rendertarget_view *This = impl_from_ID3D10RenderTargetView(iface);
-    ULONG refcount = InterlockedIncrement(&This->refcount);
+    struct d3d_rendertarget_view *view = impl_from_ID3D10RenderTargetView(iface);
 
-    TRACE("%p increasing refcount to %u\n", This, refcount);
+    TRACE("iface %p.\n", iface);
 
-    return refcount;
+    return d3d11_rendertarget_view_AddRef(&view->ID3D11RenderTargetView_iface);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_rendertarget_view_Release(ID3D10RenderTargetView *iface)
 {
-    struct d3d_rendertarget_view *This = impl_from_ID3D10RenderTargetView(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct d3d_rendertarget_view *view = impl_from_ID3D10RenderTargetView(iface);
 
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
+    TRACE("iface %p.\n", iface);
 
-    if (!refcount)
-    {
-        wined3d_mutex_lock();
-        wined3d_rendertarget_view_decref(This->wined3d_view);
-        ID3D10Resource_Release(This->resource);
-        ID3D10Device1_Release(This->device);
-        wined3d_private_store_cleanup(&This->private_store);
-        wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, This);
-    }
-
-    return refcount;
+    return d3d11_rendertarget_view_Release(&view->ID3D11RenderTargetView_iface);
 }
 
 /* ID3D10DeviceChild methods */
@@ -981,6 +1094,7 @@ HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, struct d3
     struct wined3d_resource *wined3d_resource;
     HRESULT hr;
 
+    view->ID3D11RenderTargetView_iface.lpVtbl = &d3d11_rendertarget_view_vtbl;
     view->ID3D10RenderTargetView_iface.lpVtbl = &d3d10_rendertarget_view_vtbl;
     view->refcount = 1;
 
