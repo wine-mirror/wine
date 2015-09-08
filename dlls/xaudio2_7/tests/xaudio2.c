@@ -23,11 +23,14 @@
 #include "wine/test.h"
 #include "initguid.h"
 #include "xaudio2.h"
+#include "xaudio2fx.h"
+#include "xapo.h"
 #include "mmsystem.h"
 
 static BOOL xaudio27;
 
 static HRESULT (WINAPI *pXAudio2Create)(IXAudio2 **, UINT32, XAUDIO2_PROCESSOR) = NULL;
+static HRESULT (WINAPI *pCreateAudioVolumeMeter)(IUnknown**) = NULL;
 
 #define XA2CALL_0(method) if(xaudio27) hr = IXAudio27_##method((IXAudio27*)xa); else hr = IXAudio2_##method(xa);
 #define XA2CALL_0V(method) if(xaudio27) IXAudio27_##method((IXAudio27*)xa); else IXAudio2_##method(xa);
@@ -165,9 +168,12 @@ static void test_simple_streaming(IXAudio2 *xa)
     HRESULT hr;
     IXAudio2MasteringVoice *master;
     IXAudio2SourceVoice *src, *src2;
+    IUnknown *vumeter;
     WAVEFORMATEX fmt;
     XAUDIO2_BUFFER buf, buf2;
     XAUDIO2_VOICE_STATE state;
+    XAUDIO2_EFFECT_DESCRIPTOR effect;
+    XAUDIO2_EFFECT_CHAIN chain;
 
     memset(&ecb_state, 0, sizeof(ecb_state));
     memset(&src1_state, 0, sizeof(src1_state));
@@ -190,6 +196,7 @@ static void test_simple_streaming(IXAudio2 *xa)
         hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08x\n", hr);
 
+    /* create first source voice */
     fmt.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
     fmt.nChannels = 2;
     fmt.nSamplesPerSec = 44100;
@@ -212,7 +219,7 @@ static void test_simple_streaming(IXAudio2 *xa)
     hr = IXAudio2SourceVoice_Start(src, 0, XAUDIO2_COMMIT_NOW);
     ok(hr == S_OK, "Start failed: %08x\n", hr);
 
-
+    /* create second source voice */
     XA2CALL(CreateSourceVoice, &src2, &fmt, 0, 1.f, &vcb2, NULL, NULL);
     ok(hr == S_OK, "CreateSourceVoice failed: %08x\n", hr);
 
@@ -229,6 +236,28 @@ static void test_simple_streaming(IXAudio2 *xa)
 
     XA2CALL_0(StartEngine);
     ok(hr == S_OK, "StartEngine failed: %08x\n", hr);
+
+    /* hook up volume meter */
+    if(xaudio27){
+        hr = CoCreateInstance(&CLSID_AudioVolumeMeter, NULL,
+                CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&vumeter);
+        ok(hr == S_OK, "CoCreateInstance(AudioVolumeMeter) failed: %08x\n", hr);
+    }else{
+        hr = pCreateAudioVolumeMeter(&vumeter);
+        ok(hr == S_OK, "CreateAudioVolumeMeter failed: %08x\n", hr);
+    }
+
+    effect.InitialState = TRUE;
+    effect.OutputChannels = 2;
+    effect.pEffect = vumeter;
+
+    chain.EffectCount = 1;
+    chain.pEffectDescriptors = &effect;
+
+    hr = IXAudio2MasteringVoice_SetEffectChain(master, &chain);
+    ok(hr == S_OK, "SetEffectchain failed: %08x\n", hr);
+
+    IUnknown_Release(vumeter);
 
     while(1){
         if(xaudio27)
@@ -471,8 +500,10 @@ START_TEST(xaudio2)
     CoInitialize(NULL);
 
     xa28dll = LoadLibraryA("xaudio2_8.dll");
-    if(xa28dll)
+    if(xa28dll){
         pXAudio2Create = (void*)GetProcAddress(xa28dll, "XAudio2Create");
+        pCreateAudioVolumeMeter = (void*)GetProcAddress(xa28dll, "CreateAudioVolumeMeter");
+    }
 
     /* XAudio 2.7 (Jun 2010 DirectX) */
     hr = CoCreateInstance(&CLSID_XAudio2, NULL, CLSCTX_INPROC_SERVER,

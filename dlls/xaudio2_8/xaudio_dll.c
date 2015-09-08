@@ -26,6 +26,8 @@
 
 #include "initguid.h"
 #include "xaudio2.h"
+#include "xaudio2fx.h"
+#include "xapo.h"
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -70,4 +72,10 @@ HRESULT WINAPI XAudio2Create(IXAudio2 **ppxa2, UINT32 flags, XAUDIO2_PROCESSOR p
     *ppxa2 = xa2;
 
     return S_OK;
+}
+
+HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
+{
+    return CoCreateInstance(&CLSID_AudioVolumeMeter, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)out);
 }

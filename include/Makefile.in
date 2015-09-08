@@ -147,6 +147,7 @@ PUBLIC_IDL_H_SRCS = \
 	wuapi.idl \
 	xapo.idl \
 	xaudio2.idl \
+	xaudio2fx.idl \
 	xmllite.idl
 
 IDL_TLB_SRCS = \

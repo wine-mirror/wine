@@ -1,7 +1,5 @@
 /*
- * COM Classes for xaudio
- *
- * Copyright 2015 Guillaume Charifi
+ * Copyright (c) 2015 Andrew Eikum
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,18 +16,11 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep register
+import "unknwn.idl";
 
 [
-    helpstring("XAudio2 Class"),
-    threading(both),
-    uuid(5a508685-a254-4fba-9b82-9a24b00306af)
-]
-coclass XAudio2 { interface IXAudio2; }
-
-[
-    helpstring("XAudio2 Volume Meter Class"),
-    threading(both),
     uuid(cac1105f-619b-4d04-831a-44e1cbf12d57)
 ]
-coclass AudioVolumeMeter { interface IUnknown; }
+coclass AudioVolumeMeter {
+    interface IUnknown;
+}

@@ -36,6 +36,8 @@
 
 #include "mmsystem.h"
 #include "xaudio2.h"
+#include "xaudio2fx.h"
+#include "xapo.h"
 #include "devpkey.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
@@ -2231,6 +2233,208 @@ static const IXAudio27Vtbl XAudio27_Vtbl = {
     XA27_SetDebugConfiguration
 };
 
+typedef struct _VUMeterImpl {
+    IXAPO IXAPO_iface;
+    IXAPOParameters IXAPOParameters_iface;
+
+    LONG ref;
+} VUMeterImpl;
+
+static VUMeterImpl *VUMeterImpl_from_IXAPO(IXAPO *iface)
+{
+    return CONTAINING_RECORD(iface, VUMeterImpl, IXAPO_iface);
+}
+
+static VUMeterImpl *VUMeterImpl_from_IXAPOParameters(IXAPOParameters *iface)
+{
+    return CONTAINING_RECORD(iface, VUMeterImpl, IXAPOParameters_iface);
+}
+
+static HRESULT WINAPI VUMXAPO_QueryInterface(IXAPO *iface, REFIID riid,
+        void **ppvObject)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+
+    TRACE("%p, %s, %p\n", This, wine_dbgstr_guid(riid), ppvObject);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) ||
+            IsEqualGUID(riid, &IID_IXAPO) ||
+            IsEqualGUID(riid, &IID_IXAPO27))
+        *ppvObject = &This->IXAPO_iface;
+    else if(IsEqualGUID(riid, &IID_IXAPOParameters))
+        *ppvObject = &This->IXAPOParameters_iface;
+    else
+        *ppvObject = NULL;
+
+    if(*ppvObject){
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI VUMXAPO_AddRef(IXAPO *iface)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI VUMXAPO_Release(IXAPO *iface)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI VUMXAPO_GetRegistrationProperties(IXAPO *iface,
+    XAPO_REGISTRATION_PROPERTIES **props)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p, %p\n", This, props);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VUMXAPO_IsInputFormatSupported(IXAPO *iface,
+        const WAVEFORMATEX *output_fmt, const WAVEFORMATEX *input_fmt,
+        WAVEFORMATEX **supported_fmt)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p, %p, %p, %p\n", This, output_fmt, input_fmt, supported_fmt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VUMXAPO_IsOutputFormatSupported(IXAPO *iface,
+        const WAVEFORMATEX *input_fmt, const WAVEFORMATEX *output_fmt,
+        WAVEFORMATEX **supported_fmt)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p, %p, %p, %p\n", This, input_fmt, output_fmt, supported_fmt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VUMXAPO_Initialize(IXAPO *iface, const void *data,
+        UINT32 data_len)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p, %p, %u\n", This, data, data_len);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VUMXAPO_Reset(IXAPO *iface)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI VUMXAPO_LockForProcess(IXAPO *iface,
+        UINT32 in_params_count,
+        const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *in_params,
+        UINT32 out_params_count,
+        const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *out_params)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p, %u, %p, %u, %p\n", This, in_params_count, in_params,
+            out_params_count, out_params);
+    return E_NOTIMPL;
+}
+
+static void WINAPI VUMXAPO_UnlockForProcess(IXAPO *iface)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p\n", This);
+}
+
+static void WINAPI VUMXAPO_Process(IXAPO *iface, UINT32 in_params_count,
+        const XAPO_PROCESS_BUFFER_PARAMETERS *in_params,
+        UINT32 out_params_count,
+        const XAPO_PROCESS_BUFFER_PARAMETERS *out_params, BOOL enabled)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p, %u, %p, %u, %p, %u\n", This, in_params_count, in_params,
+            out_params_count, out_params, enabled);
+}
+
+static UINT32 WINAPI VUMXAPO_CalcInputFrames(IXAPO *iface, UINT32 output_frames)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p, %u\n", This, output_frames);
+    return 0;
+}
+
+static UINT32 WINAPI VUMXAPO_CalcOutputFrames(IXAPO *iface, UINT32 input_frames)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPO(iface);
+    TRACE("%p, %u\n", This, input_frames);
+    return 0;
+}
+
+static const IXAPOVtbl VUMXAPO_Vtbl = {
+    VUMXAPO_QueryInterface,
+    VUMXAPO_AddRef,
+    VUMXAPO_Release,
+    VUMXAPO_GetRegistrationProperties,
+    VUMXAPO_IsInputFormatSupported,
+    VUMXAPO_IsOutputFormatSupported,
+    VUMXAPO_Initialize,
+    VUMXAPO_Reset,
+    VUMXAPO_LockForProcess,
+    VUMXAPO_UnlockForProcess,
+    VUMXAPO_Process,
+    VUMXAPO_CalcInputFrames,
+    VUMXAPO_CalcOutputFrames
+};
+
+static HRESULT WINAPI VUMXAPOParams_QueryInterface(IXAPOParameters *iface,
+        REFIID riid, void **ppvObject)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPOParameters(iface);
+    return VUMXAPO_QueryInterface(&This->IXAPO_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI VUMXAPOParams_AddRef(IXAPOParameters *iface)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPOParameters(iface);
+    return VUMXAPO_AddRef(&This->IXAPO_iface);
+}
+
+static ULONG WINAPI VUMXAPOParams_Release(IXAPOParameters *iface)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPOParameters(iface);
+    return VUMXAPO_Release(&This->IXAPO_iface);
+}
+
+static void WINAPI VUMXAPOParams_SetParameters(IXAPOParameters *iface,
+        const void *params, UINT32 params_len)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPOParameters(iface);
+    TRACE("%p, %p, %u\n", This, params, params_len);
+}
+
+static void WINAPI VUMXAPOParams_GetParameters(IXAPOParameters *iface,
+        void *params, UINT32 params_len)
+{
+    VUMeterImpl *This = VUMeterImpl_from_IXAPOParameters(iface);
+    TRACE("%p, %p, %u\n", This, params, params_len);
+}
+
+static const IXAPOParametersVtbl VUMXAPOParameters_Vtbl = {
+    VUMXAPOParams_QueryInterface,
+    VUMXAPOParams_AddRef,
+    VUMXAPOParams_Release,
+    VUMXAPOParams_SetParameters,
+    VUMXAPOParams_GetParameters
+};
+
 static HRESULT WINAPI XAudio2CF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
 {
     if(IsEqualGUID(riid, &IID_IUnknown)
@@ -2382,6 +2586,35 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     return hr;
 }
 
+static HRESULT WINAPI VUMeterCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
+        REFIID riid, void **ppobj)
+{
+    HRESULT hr;
+    VUMeterImpl *object;
+
+    TRACE("(static)->(%p,%s,%p)\n", pOuter, debugstr_guid(riid), ppobj);
+
+    *ppobj = NULL;
+
+    if(pOuter)
+        return CLASS_E_NOAGGREGATION;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if(!object)
+        return E_OUTOFMEMORY;
+
+    object->IXAPO_iface.lpVtbl = &VUMXAPO_Vtbl;
+    object->IXAPOParameters_iface.lpVtbl = &VUMXAPOParameters_Vtbl;
+
+    hr = IXAPO_QueryInterface(&object->IXAPO_iface, riid, ppobj);
+    if(FAILED(hr)){
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    return S_OK;
+}
+
 static HRESULT WINAPI XAudio2CF_LockServer(IClassFactory *iface, BOOL dolock)
 {
     FIXME("(static)->(%d): stub!\n", dolock);
@@ -2397,7 +2630,17 @@ static const IClassFactoryVtbl XAudio2CF_Vtbl =
     XAudio2CF_LockServer
 };
 
+static const IClassFactoryVtbl VUMeterCF_Vtbl =
+{
+    XAudio2CF_QueryInterface,
+    XAudio2CF_AddRef,
+    XAudio2CF_Release,
+    VUMeterCF_CreateInstance,
+    XAudio2CF_LockServer
+};
+
 static IClassFactory xaudio2_cf = { &XAudio2CF_Vtbl };
+static IClassFactory vumeter_cf = { &VUMeterCF_Vtbl };
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
@@ -2407,6 +2650,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     if(IsEqualGUID(rclsid, &CLSID_XAudio2)) {
         factory = &xaudio2_cf;
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter)) {
+        factory = &vumeter_cf;
     }
     if(!factory) return CLASS_E_CLASSNOTAVAILABLE;
 
