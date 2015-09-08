@@ -883,6 +883,112 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_rendertarget_view(void)
+{
+    D3D11_RENDER_TARGET_VIEW_DESC rtv_desc;
+    D3D11_SUBRESOURCE_DATA data = {0};
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ULONG refcount, expected_refcount;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11RenderTargetView *rtview;
+    ID3D11Device *device, *tmp;
+    ID3D11Texture2D *texture;
+    ID3D11Buffer *buffer;
+    IUnknown *iface;
+    HRESULT hr;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    buffer_desc.ByteWidth = 1024;
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    buffer_desc.StructureByteStride = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &data, &buffer);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D11Buffer_GetDevice(buffer, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D11Device_Release(tmp);
+
+    rtv_desc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+    rtv_desc.ViewDimension = D3D11_RTV_DIMENSION_BUFFER;
+    U(rtv_desc).Buffer.ElementOffset = 0;
+    U(rtv_desc).Buffer.ElementWidth = 64;
+
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)buffer, &rtv_desc, &rtview);
+    ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D11RenderTargetView_GetDevice(rtview, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D11Device_Release(tmp);
+
+    hr = ID3D11RenderTargetView_QueryInterface(rtview, &IID_ID3D10RenderTargetView, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Render target view should implement ID3D10RenderTargetView.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    ID3D11RenderTargetView_Release(rtview);
+    ID3D11Buffer_Release(buffer);
+
+    texture_desc.Width = 512;
+    texture_desc.Height = 512;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &texture);
+    ok(SUCCEEDED(hr), "Failed to create a 2d texture, hr %#x.\n", hr);
+
+    /* For texture resources it's allowed to specify NULL as desc */
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)texture, NULL, &rtview);
+    ok(SUCCEEDED(hr), "Failed to create a rendertarget view, hr %#x.\n", hr);
+
+    ID3D11RenderTargetView_GetDesc(rtview, &rtv_desc);
+    ok(rtv_desc.Format == texture_desc.Format, "Got unexpected format %#x.\n", rtv_desc.Format);
+    ok(rtv_desc.ViewDimension == D3D11_RTV_DIMENSION_TEXTURE2D, "Got unexpected view dimension %#x.\n",
+            rtv_desc.ViewDimension);
+    ok(U(rtv_desc).Texture2D.MipSlice == 0, "Got unexpected mip slice %#x.\n", U(rtv_desc).Texture2D.MipSlice);
+
+    hr = ID3D11RenderTargetView_QueryInterface(rtview, &IID_ID3D10RenderTargetView, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Render target view should implement ID3D10RenderTargetView.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    ID3D11RenderTargetView_Release(rtview);
+    ID3D11Texture2D_Release(texture);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -893,4 +999,5 @@ START_TEST(d3d11)
     test_texture3d_interfaces();
     test_buffer_interfaces();
     test_depthstencil_view_interfaces();
+    test_create_rendertarget_view();
 }
