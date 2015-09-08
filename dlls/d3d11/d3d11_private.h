@@ -171,7 +171,7 @@ HRESULT d3d_depthstencil_view_create(struct d3d_device *device, ID3D11Resource *
 struct d3d_depthstencil_view *unsafe_impl_from_ID3D10DepthStencilView(ID3D10DepthStencilView *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10RenderTargetView */
-struct d3d10_rendertarget_view
+struct d3d_rendertarget_view
 {
     ID3D10RenderTargetView ID3D10RenderTargetView_iface;
     LONG refcount;
@@ -183,9 +183,9 @@ struct d3d10_rendertarget_view
     ID3D10Device1 *device;
 };
 
-HRESULT d3d10_rendertarget_view_init(struct d3d10_rendertarget_view *view, struct d3d_device *device,
+HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, struct d3d_device *device,
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc) DECLSPEC_HIDDEN;
-struct d3d10_rendertarget_view *unsafe_impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface) DECLSPEC_HIDDEN;
+struct d3d_rendertarget_view *unsafe_impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10ShaderResourceView */
 struct d3d10_shader_resource_view

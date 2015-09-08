@@ -940,7 +940,7 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetRenderTargets(ID3D10Device1 *ifa
     wined3d_mutex_lock();
     for (i = 0; i < render_target_view_count; ++i)
     {
-        struct d3d10_rendertarget_view *rtv = unsafe_impl_from_ID3D10RenderTargetView(render_target_views[i]);
+        struct d3d_rendertarget_view *rtv = unsafe_impl_from_ID3D10RenderTargetView(render_target_views[i]);
 
         wined3d_device_set_rendertarget_view(device->wined3d_device, i,
                 rtv ? rtv->wined3d_view : NULL, FALSE);
@@ -1210,7 +1210,7 @@ static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *
         ID3D10RenderTargetView *render_target_view, const FLOAT color_rgba[4])
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_rendertarget_view *view = unsafe_impl_from_ID3D10RenderTargetView(render_target_view);
+    struct d3d_rendertarget_view *view = unsafe_impl_from_ID3D10RenderTargetView(render_target_view);
     const struct wined3d_color color = {color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]};
     HRESULT hr;
 
@@ -1692,7 +1692,7 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetRenderTargets(ID3D10Device1 *ifa
     wined3d_mutex_lock();
     if (render_target_views)
     {
-        struct d3d10_rendertarget_view *view_impl;
+        struct d3d_rendertarget_view *view_impl;
         unsigned int i;
 
         for (i = 0; i < view_count; ++i)
@@ -2122,7 +2122,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
         ID3D10Resource *resource, const D3D10_RENDER_TARGET_VIEW_DESC *desc, ID3D10RenderTargetView **view)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_rendertarget_view *object;
+    struct d3d_rendertarget_view *object;
     HRESULT hr;
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
@@ -2130,7 +2130,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_rendertarget_view_init(object, device, resource, desc)))
+    if (FAILED(hr = d3d_rendertarget_view_init(object, device, resource, desc)))
     {
         WARN("Failed to initialize rendertarget view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
