@@ -276,12 +276,14 @@ static void test_overlapped_buffers(void)
 static void test_string_conversion(LPBOOL bUsedDefaultChar)
 {
     char mbc;
-    char mbs[5];
+    char mbs[15];
     int ret;
     WCHAR wc1 = 228;                           /* Western Windows-1252 character */
     WCHAR wc2 = 1088;                          /* Russian Windows-1251 character not displayable for Windows-1252 */
     static const WCHAR wcs[] = {'T', 'h', 1088, 'i', 0}; /* String with ASCII characters and a Russian character */
     static const WCHAR dbwcs[] = {28953, 25152, 0}; /* String with Chinese (codepage 950) characters */
+    static const WCHAR dbwcs2[] = {0x7bb8, 0x3d, 0xc813, 0xac00, 0xb77d, 0};
+    static const char default_char[] = {0xa3, 0xbf, 0};
 
     SetLastError(0xdeadbeef);
     ret = WideCharToMultiByte(1252, 0, &wc1, 1, &mbc, 1, NULL, bUsedDefaultChar);
@@ -356,6 +358,11 @@ static void test_string_conversion(LPBOOL bUsedDefaultChar)
     ret = WideCharToMultiByte(1252, 0, dbwcs, 3, mbs, sizeof(mbs), NULL, bUsedDefaultChar);
     ok(ret == 3, "ret is %d\n", ret);
     ok(!strcmp(mbs, "??"), "mbs is %s\n", mbs);
+    if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
+
+    ret = WideCharToMultiByte(936, WC_COMPOSITECHECK, dbwcs2, -1, mbs, sizeof(mbs), (const char *)default_char, bUsedDefaultChar);
+    ok(ret == 10, "ret is %d\n", ret);
+    ok(!strcmp(mbs, "\xf3\xe7\x3d\xa3\xbf\xa3\xbf\xa3\xbf"), "mbs is %s\n", mbs);
     if(bUsedDefaultChar) ok(*bUsedDefaultChar == TRUE, "bUsedDefaultChar is %d\n", *bUsedDefaultChar);
 
     /* Length-only tests */
