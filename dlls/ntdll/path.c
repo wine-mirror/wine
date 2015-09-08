@@ -869,7 +869,7 @@ BOOLEAN WINAPI RtlIsNameLegalDOS8Dot3( const UNICODE_STRING *unicode,
     if (oem->Length > 12) return FALSE;
 
     /* a starting . is invalid, except for . and .. */
-    if (oem->Buffer[0] == '.')
+    if (oem->Length > 0 && oem->Buffer[0] == '.')
     {
         if (oem->Length != 1 && (oem->Length != 2 || oem->Buffer[1] != '.')) return FALSE;
         if (spaces) *spaces = FALSE;
