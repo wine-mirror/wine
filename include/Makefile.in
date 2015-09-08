@@ -145,6 +145,7 @@ PUBLIC_IDL_H_SRCS = \
 	wpcapi.idl \
 	wtypes.idl \
 	wuapi.idl \
+	xapo.idl \
 	xaudio2.idl \
 	xmllite.idl
 
