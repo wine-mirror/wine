@@ -33,3 +33,10 @@ coclass XAudio2 { interface IXAudio2; }
     uuid(cac1105f-619b-4d04-831a-44e1cbf12d57)
 ]
 coclass AudioVolumeMeter { interface IUnknown; }
+
+[
+    helpstring("XAudio2 Reverb Class"),
+    threading(both),
+    uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
+]
+coclass AudioReverb { interface IUnknown; }

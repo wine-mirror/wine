@@ -24,3 +24,10 @@ import "unknwn.idl";
 coclass AudioVolumeMeter {
     interface IUnknown;
 }
+
+[
+    uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
+]
+coclass AudioReverb {
+    interface IUnknown;
+}

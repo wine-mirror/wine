@@ -79,3 +79,9 @@ HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
     return CoCreateInstance(&CLSID_AudioVolumeMeter, NULL, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)out);
 }
+
+HRESULT WINAPI CreateAudioReverb(IUnknown **out)
+{
+    return CoCreateInstance(&CLSID_AudioReverb, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IUnknown, (void**)out);
+}
