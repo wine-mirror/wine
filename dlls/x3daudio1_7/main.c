@@ -20,6 +20,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "x3daudio.h"
 
 #include "wine/debug.h"
 
@@ -39,8 +40,29 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     return TRUE;
 }
 
-HRESULT CDECL X3DAudioInitialize(UINT32 chanmask, float speedofsound, void *handle)
+HRESULT CDECL X3DAudioInitialize(UINT32 chanmask, float speedofsound,
+        X3DAUDIO_HANDLE handle)
 {
     FIXME("0x%x, %f, %p: Stub!\n", chanmask, speedofsound, handle);
     return S_OK;
+}
+
+void CDECL X3DAudioCalculate(const X3DAUDIO_HANDLE handle,
+        const X3DAUDIO_LISTENER *listener, const X3DAUDIO_EMITTER *emitter,
+        UINT32 flags, X3DAUDIO_DSP_SETTINGS *out)
+{
+    static int once = 0;
+    if(!once){
+        FIXME("%p %p %p 0x%x %p: Stub!\n", handle, listener, emitter, flags, out);
+        ++once;
+    }
+
+    out->LPFDirectCoefficient = 0;
+    out->LPFReverbCoefficient = 0;
+    out->ReverbLevel = 0;
+    out->DopplerFactor = 1;
+    out->EmitterToListenerAngle = 0;
+    out->EmitterToListenerDistance = 0;
+    out->EmitterVelocityComponent = 0;
+    out->ListenerVelocityComponent = 0;
 }
