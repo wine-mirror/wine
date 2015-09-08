@@ -2138,7 +2138,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Devic
         return E_FAIL;
     }
 
-    if (FAILED(hr = d3d_rendertarget_view_init(object, device, d3d11_resource, desc)))
+    if (FAILED(hr = d3d_rendertarget_view_init(object, device, d3d11_resource,
+                    (const D3D11_RENDER_TARGET_VIEW_DESC *)desc)))
     {
         WARN("Failed to initialize rendertarget view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
