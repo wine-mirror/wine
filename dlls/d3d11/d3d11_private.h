@@ -181,7 +181,7 @@ struct d3d_rendertarget_view
     struct wined3d_rendertarget_view *wined3d_view;
     D3D11_RENDER_TARGET_VIEW_DESC desc;
     ID3D11Resource *resource;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_rendertarget_view_create(struct d3d_device *device, ID3D11Resource *resource,
