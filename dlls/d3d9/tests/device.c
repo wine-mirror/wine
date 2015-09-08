@@ -1053,7 +1053,7 @@ static void test_swapchain(void)
     IDirect3DSwapChain9 *swapchain2;
     IDirect3DSwapChain9 *swapchain3;
     IDirect3DSwapChain9 *swapchainX;
-    IDirect3DSurface9 *backbuffer;
+    IDirect3DSurface9 *backbuffer, *stereo_buffer;
     D3DPRESENT_PARAMETERS d3dpp;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
@@ -1102,6 +1102,33 @@ static void test_swapchain(void)
     ok(SUCCEEDED(hr), "Failed to get the back buffer (%08x)\n", hr);
     ok(backbuffer != NULL, "The back buffer is NULL\n");
     if(backbuffer) IDirect3DSurface9_Release(backbuffer);
+
+    /* The back buffer type value is ignored. */
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain0, 0, D3DBACKBUFFER_TYPE_LEFT, &stereo_buffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer, hr %#x.\n", hr);
+    ok(stereo_buffer == backbuffer, "Expected left back buffer = %p, got %p.\n", backbuffer, stereo_buffer);
+    IDirect3DSurface9_Release(stereo_buffer);
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain0, 0, D3DBACKBUFFER_TYPE_RIGHT, &stereo_buffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer, hr %#x.\n", hr);
+    ok(stereo_buffer == backbuffer, "Expected right back buffer = %p, got %p.\n", backbuffer, stereo_buffer);
+    IDirect3DSurface9_Release(stereo_buffer);
+    hr = IDirect3DSwapChain9_GetBackBuffer(swapchain0, 0, (D3DBACKBUFFER_TYPE)0xdeadbeef, &stereo_buffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer, hr %#x.\n", hr);
+    ok(stereo_buffer == backbuffer, "Expected unknown buffer = %p, got %p.\n", backbuffer, stereo_buffer);
+    IDirect3DSurface9_Release(stereo_buffer);
+
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_LEFT, &stereo_buffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer, hr %#x.\n", hr);
+    ok(stereo_buffer == backbuffer, "Expected left back buffer = %p, got %p.\n", backbuffer, stereo_buffer);
+    IDirect3DSurface9_Release(stereo_buffer);
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_RIGHT, &stereo_buffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer, hr %#x.\n", hr);
+    ok(stereo_buffer == backbuffer, "Expected right back buffer = %p, got %p.\n", backbuffer, stereo_buffer);
+    IDirect3DSurface9_Release(stereo_buffer);
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, (D3DBACKBUFFER_TYPE)0xdeadbeef, &stereo_buffer);
+    ok(SUCCEEDED(hr), "Failed to get the back buffer, hr %#x.\n", hr);
+    ok(stereo_buffer == backbuffer, "Expected unknown buffer = %p, got %p.\n", backbuffer, stereo_buffer);
+    IDirect3DSurface9_Release(stereo_buffer);
 
     /* Try to get a nonexistent swapchain */
     hr = IDirect3DDevice9_GetSwapChain(device, 1, &swapchainX);
