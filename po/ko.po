@@ -56,20 +56,19 @@ msgid "Support Information"
 msgstr "지원 정보"
 
 #: appwiz.rc:78 avifil32.rc:54 comctl32.rc:55 comdlg32.rc:231 comdlg32.rc:261
-#: comdlg32.rc:304 comdlg32.rc:358 comdlg32.rc:397 comdlg32.rc:451
-#: credui.rc:52 cryptui.rc:263 cryptui.rc:275 cryptui.rc:365 dinput.rc:46
-#: ieframe.rc:96 localui.rc:44 localui.rc:57 mpr.rc:49 msacm32.rc:53
-#: mshtml.rc:47 mshtml.rc:57 msvfw32.rc:36 oledlg.rc:60 oledlg.rc:92
-#: serialui.rc:41 setupapi.rc:59 shell32.rc:276 shell32.rc:300 shell32.rc:322
-#: shell32.rc:340 shlwapi.rc:44 user32.rc:80 user32.rc:98 wininet.rc:51
-#: wininet.rc:71 winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:162
-#: oleview.rc:175 progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158
-#: progman.rc:180 progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258
-#: regedit.rc:271 regedit.rc:287 regedit.rc:300 regedit.rc:313 taskmgr.rc:442
-#: taskmgr.rc:517 winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135
-#: winefile.rc:131 winefile.rc:154 winefile.rc:184 winemine.rc:71
-#: winemine.rc:81 winemine.rc:95 wordpad.rc:207 wordpad.rc:218 wordpad.rc:236
-#: wordpad.rc:249
+#: comdlg32.rc:304 comdlg32.rc:358 comdlg32.rc:397 comdlg32.rc:451 credui.rc:52
+#: cryptui.rc:263 cryptui.rc:275 cryptui.rc:365 dinput.rc:46 ieframe.rc:96
+#: localui.rc:44 localui.rc:57 mpr.rc:49 msacm32.rc:53 mshtml.rc:47
+#: mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62 oledlg.rc:94 serialui.rc:41
+#: setupapi.rc:59 shell32.rc:276 shell32.rc:300 shell32.rc:322 shell32.rc:340
+#: shlwapi.rc:44 user32.rc:80 user32.rc:98 wininet.rc:51 wininet.rc:71
+#: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:162 oleview.rc:175
+#: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
+#: progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258 regedit.rc:271
+#: regedit.rc:287 regedit.rc:300 regedit.rc:313 taskmgr.rc:442 taskmgr.rc:517
+#: winecfg.rc:214 winecfg.rc:224 wineconsole.rc:135 winefile.rc:131
+#: winefile.rc:154 winefile.rc:184 winemine.rc:71 winemine.rc:81 winemine.rc:95
+#: wordpad.rc:207 wordpad.rc:218 wordpad.rc:236 wordpad.rc:249
 msgid "OK"
 msgstr "확인"
 
@@ -142,7 +141,7 @@ msgstr "설치(&I)"
 #: comdlg32.rc:477 comdlg32.rc:500 credui.rc:53 cryptui.rc:264 cryptui.rc:276
 #: cryptui.rc:366 dinput.rc:47 ieframe.rc:97 inetcpl.rc:81 localui.rc:45
 #: localui.rc:58 mpr.rc:50 msacm32.rc:54 mshtml.rc:48 mshtml.rc:58
-#: msvfw32.rc:37 oledlg.rc:61 oledlg.rc:93 serialui.rc:42 setupapi.rc:42
+#: msvfw32.rc:37 oledlg.rc:63 oledlg.rc:95 serialui.rc:42 setupapi.rc:42
 #: setupapi.rc:60 shell32.rc:277 shell32.rc:301 shell32.rc:312 shell32.rc:341
 #: shlwapi.rc:45 user32.rc:81 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:163 oleview.rc:176 progman.rc:107
@@ -150,8 +149,8 @@ msgstr "설치(&I)"
 #: progman.rc:217 regedit.rc:248 regedit.rc:259 regedit.rc:272 regedit.rc:288
 #: regedit.rc:301 regedit.rc:314 taskmgr.rc:443 taskmgr.rc:518 wineboot.rc:34
 #: winecfg.rc:215 winecfg.rc:225 wineconsole.rc:136 winefile.rc:132
-#: winefile.rc:155 winefile.rc:185 winemine.rc:96 wordpad.rc:208
-#: wordpad.rc:219 wordpad.rc:237 wordpad.rc:250
+#: winefile.rc:155 winefile.rc:185 winemine.rc:96 wordpad.rc:208 wordpad.rc:219
+#: wordpad.rc:237 wordpad.rc:250
 msgid "Cancel"
 msgstr "취소"
 
@@ -348,7 +347,7 @@ msgstr "재설정(&E)"
 
 #: comctl32.rc:86 comdlg32.rc:171 comdlg32.rc:193 comdlg32.rc:264
 #: comdlg32.rc:328 comdlg32.rc:348 comdlg32.rc:360 comdlg32.rc:478
-#: comdlg32.rc:501 ieframe.rc:58 msacm32.rc:52 oledlg.rc:94 shell32.rc:128
+#: comdlg32.rc:501 ieframe.rc:58 msacm32.rc:52 oledlg.rc:96 shell32.rc:128
 #: clock.rc:44 notepad.rc:60 notepad.rc:119 oleview.rc:72 progman.rc:55
 #: progman.rc:108 progman.rc:126 progman.rc:144 progman.rc:160 progman.rc:184
 #: progman.rc:202 progman.rc:219 regedit.rc:79 taskmgr.rc:87 winefile.rc:82
@@ -7402,72 +7401,72 @@ msgstr "작동"
 msgid "Off"
 msgstr "비작동"
 
-#: oledlg.rc:53
+#: oledlg.rc:55
 msgid "Insert Object"
 msgstr "객체 삽입"
 
-#: oledlg.rc:59
+#: oledlg.rc:61
 msgid "Object Type:"
 msgstr "객체 타입:"
 
-#: oledlg.rc:62 oledlg.rc:100
+#: oledlg.rc:64 oledlg.rc:102
 msgid "Result"
 msgstr "결과"
 
-#: oledlg.rc:63
+#: oledlg.rc:65
 msgid "Create New"
 msgstr "새로 만들기"
 
-#: oledlg.rc:65
+#: oledlg.rc:67
 msgid "Create Control"
 msgstr "컨트롤 만들기"
 
-#: oledlg.rc:67
+#: oledlg.rc:69
 msgid "Create From File"
 msgstr "파일로부터 만들기"
 
-#: oledlg.rc:70
+#: oledlg.rc:72
 msgid "&Add Control..."
 msgstr "컨트롤 추가(&A)..."
 
-#: oledlg.rc:71
+#: oledlg.rc:73
 msgid "Display As Icon"
 msgstr "아이콘으로 보기"
 
-#: oledlg.rc:73 setupapi.rc:61
+#: oledlg.rc:75 setupapi.rc:61
 msgid "Browse..."
 msgstr "찾기..."
 
-#: oledlg.rc:74
+#: oledlg.rc:76
 msgid "File:"
 msgstr "파일:"
 
-#: oledlg.rc:80
+#: oledlg.rc:82
 msgid "Paste Special"
 msgstr "특별하게  붙여넣기"
 
-#: oledlg.rc:83 setupapi.rc:43
+#: oledlg.rc:85 setupapi.rc:43
 msgid "Source:"
 msgstr "원본:"
 
-#: oledlg.rc:84 shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:95 shdoclc.rc:135
+#: oledlg.rc:86 shdoclc.rc:50 shdoclc.rc:82 shdoclc.rc:95 shdoclc.rc:135
 #: shdoclc.rc:162 shdoclc.rc:186 user32.rc:62 wineconsole.rc:33 wordpad.rc:106
 msgid "&Paste"
 msgstr "붙여넣기(&P)"
 
-#: oledlg.rc:86
+#: oledlg.rc:88
 msgid "Paste &Link"
 msgstr "링크로 붙여넣기(&L)"
 
-#: oledlg.rc:88
+#: oledlg.rc:90
 msgid "&As:"
 msgstr "다른 이름으로(&A):"
 
-#: oledlg.rc:95
+#: oledlg.rc:97
 msgid "&Display As Icon"
 msgstr "아이콘으로 보기(&D)"
 
-#: oledlg.rc:97
+#: oledlg.rc:99
 msgid "Change &Icon..."
 msgstr "아이콘 바꾸기(&I)..."
 
@@ -7499,21 +7498,33 @@ msgstr ""
 msgid "Add Control"
 msgstr "컨트롤 더하기"
 
-#: oledlg.rc:34
+#: oledlg.rc:35
 #, fuzzy
 #| msgid "&Font..."
 msgid "&Convert..."
 msgstr "글꼴(&F)..."
 
+#: oledlg.rc:36
+#, fuzzy
+#| msgid "&Object"
+msgid "%1 %2 &Object"
+msgstr "객체(&O)"
+
+#: oledlg.rc:34
+#, fuzzy
+#| msgid "&Object"
+msgid "%s &Object"
+msgstr "객체(&O)"
+
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
 msgstr "객체(&O)"
 
-#: oledlg.rc:39
+#: oledlg.rc:41
 msgid "Inserts the contents of the clipboard into your document as %s."
 msgstr "당신의 문서 %s에 클립보드의 내용 삽입하기."
 
-#: oledlg.rc:40
+#: oledlg.rc:42
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s."
@@ -7521,7 +7532,7 @@ msgstr ""
 "당신의 문서에 클립보드의 내용들을 첨부하면  %s를 사용해서 이것을 실행할 수 있"
 "습니다."
 
-#: oledlg.rc:41
+#: oledlg.rc:43
 msgid ""
 "Inserts the contents of the clipboard into your document so that you can "
 "activate it using %s. It will be displayed as an icon."
@@ -7529,7 +7540,7 @@ msgstr ""
 "당신의 문서에 클립보드의 내용들을 첨부하면  %s를 사용해서 이것을 활성화할 수 "
 "있습니다. 이것은 아이콘으로 나타내질 겁니다."
 
-#: oledlg.rc:42
+#: oledlg.rc:44
 msgid ""
 "Inserts the contents of the clipboard into your document as %s. The data is "
 "linked to the source file so that changes to the file will be reflected in "
@@ -7538,7 +7549,7 @@ msgstr ""
 "당신의 문서 %s에 클립보드의 내용을 삽입합니다. 이 데이터는 원본 파일에 연결되"
 "어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
-#: oledlg.rc:43
+#: oledlg.rc:45
 msgid ""
 "Inserts a picture of the clipboard contents into your document. The picture "
 "is linked to the source file so that changes to the file will be reflected "
@@ -7547,7 +7558,7 @@ msgstr ""
 "당신의 문서에 클립보드에 있는 그림을 집어넣습니다. 이 그림은 원본 파일에 연결"
 "되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
-#: oledlg.rc:44
+#: oledlg.rc:46
 msgid ""
 "Inserts a shortcut which points to the location of the clipboard contents. "
 "The shortcut is linked to the source file so that changes to the file will "
@@ -7556,19 +7567,19 @@ msgstr ""
 "당신의 문서에 클립보드에 있는 단축아이콘을 집어넣습니다. 이 단축아이콘은 원"
 "본 파일에 연결되어 있어서 파일이 바뀌면 당신의 문서에 영향을 미칠 것입니다."
 
-#: oledlg.rc:45
+#: oledlg.rc:47
 msgid "Inserts the contents of the clipboard into your document."
 msgstr "당신의 문서에 클립보드의 내용 삽입하기."
 
-#: oledlg.rc:46
+#: oledlg.rc:48
 msgid "Unknown Type"
 msgstr "알수 없는 형식"
 
-#: oledlg.rc:47
+#: oledlg.rc:49
 msgid "Unknown Source"
 msgstr "알수 없는 원본"
 
-#: oledlg.rc:48
+#: oledlg.rc:50
 msgid "the program which created it"
 msgstr "내가 만든 프로그램"
 
