@@ -1513,10 +1513,7 @@ static ULONG WINAPI dwritefontlist_Release(IDWriteFontList *iface)
 static HRESULT WINAPI dwritefontlist_GetFontCollection(IDWriteFontList *iface, IDWriteFontCollection **collection)
 {
     struct dwrite_fontlist *This = impl_from_IDWriteFontList(iface);
-
-    FIXME("(%p)->(%p): stub\n", This, collection);
-
-    return E_NOTIMPL;
+    return IDWriteFontFamily_GetFontCollection(This->family, collection);
 }
 
 static UINT32 WINAPI dwritefontlist_GetFontCount(IDWriteFontList *iface)
