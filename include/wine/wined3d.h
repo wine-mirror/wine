@@ -2568,7 +2568,6 @@ ULONG __cdecl wined3d_vertex_declaration_incref(struct wined3d_vertex_declaratio
 
 ULONG __cdecl wined3d_volume_decref(struct wined3d_volume *volume);
 struct wined3d_volume * __cdecl wined3d_volume_from_resource(struct wined3d_resource *resource);
-void * __cdecl wined3d_volume_get_parent(const struct wined3d_volume *volume);
 struct wined3d_resource * __cdecl wined3d_volume_get_resource(struct wined3d_volume *volume);
 ULONG __cdecl wined3d_volume_incref(struct wined3d_volume *volume);
 HRESULT __cdecl wined3d_volume_map(struct wined3d_volume *volume,

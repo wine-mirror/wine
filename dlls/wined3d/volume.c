@@ -474,13 +474,6 @@ ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
     return wined3d_texture_decref(volume->container);
 }
 
-void * CDECL wined3d_volume_get_parent(const struct wined3d_volume *volume)
-{
-    TRACE("volume %p.\n", volume);
-
-    return volume->resource.parent;
-}
-
 struct wined3d_resource * CDECL wined3d_volume_get_resource(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);
