@@ -5854,10 +5854,14 @@ static void test_publish_components(void)
 {
     static const char keypath[] =
         "Software\\Microsoft\\Installer\\Components\\0CBCFA296AC907244845745CEEB2F8AA";
+    static const char keypath2[] =
+        "Software\\Classes\\Installer\\Components\\0CBCFA296AC907244845745CEEB2F8AA";
 
     UINT r;
     LONG res;
     HKEY key;
+    BYTE *data;
+    DWORD size;
 
     if (is_process_limited())
     {
@@ -5879,11 +5883,46 @@ static void test_publish_components(void)
     }
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
 
+    size = 0;
+    r = MsiProvideQualifiedComponentA("{92AFCBC0-9CA6-4270-8454-47C5EE2B8FAA}",
+            "english.txt", INSTALLMODE_DEFAULT, NULL, &size);
+    ok(r == ERROR_SUCCESS, "MsiProvideQualifiedCompontent returned %d\n", r);
+
     res = RegOpenKeyA(HKEY_CURRENT_USER, keypath, &key);
     ok(res == ERROR_SUCCESS, "components key not created %d\n", res);
 
-    res = RegQueryValueExA(key, "english.txt", NULL, NULL, NULL, NULL);
+    res = RegQueryValueExA(key, "english.txt", NULL, NULL, NULL, &size);
     ok(res == ERROR_SUCCESS, "value not found %d\n", res);
+
+    data = HeapAlloc(GetProcessHeap(), 0, size);
+    res = RegQueryValueExA(key, "english.txt", NULL, NULL, data, &size);
+    ok(res == ERROR_SUCCESS, "value not found %d\n", res);
+    RegCloseKey(key);
+
+    res = RegDeleteKeyA(HKEY_CURRENT_USER, keypath);
+    ok(res == ERROR_SUCCESS, "RegDeleteKey failed %d\n", res);
+
+    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath2, &key);
+    ok(res == ERROR_SUCCESS, "RegCreateKey failed %d\n", res);
+
+    res = RegSetValueExA(key, "english.txt", 0, REG_MULTI_SZ, data, size);
+    ok(res == ERROR_SUCCESS, "RegSetValueEx failed %d\n", res);
+    RegCloseKey(key);
+
+    size = 0;
+    r = MsiProvideQualifiedComponentA("{92AFCBC0-9CA6-4270-8454-47C5EE2B8FAA}",
+            "english.txt", INSTALLMODE_DEFAULT, NULL, &size);
+    ok(r == ERROR_SUCCESS, "MsiProvideQualifiedCompontent returned %d\n", r);
+
+    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, keypath2);
+    ok(res == ERROR_SUCCESS, "RegDeleteKey failed %d\n", res);
+
+    res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &key);
+    ok(res == ERROR_SUCCESS, "RegCreateKey failed %d\n", res);
+
+    res = RegSetValueExA(key, "english.txt", 0, REG_MULTI_SZ, data, size);
+    ok(res == ERROR_SUCCESS, "RegSetValueEx failed %d\n", res);
+    HeapFree(GetProcessHeap(), 0, data);
     RegCloseKey(key);
 
     r = MsiInstallProductA(msifile, "REMOVE=ALL");
