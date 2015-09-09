@@ -119,9 +119,18 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateTexture3D(ID3D11Device *ifac
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateShaderResourceView(ID3D11Device *iface,
         ID3D11Resource *resource, const D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D11ShaderResourceView **view)
 {
-    FIXME("iface %p, resource %p, desc %p, view %p stub!\n", iface, resource, desc, view);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d_shader_resource_view *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
+
+    if (FAILED(hr = d3d_shader_resource_view_create(device, resource, desc, &object)))
+        return hr;
+
+    *view = &object->ID3D11ShaderResourceView_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateUnorderedAccessView(ID3D11Device *iface,
@@ -147,7 +156,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRenderTargetView(ID3D11Devic
     *view = &object->ID3D11RenderTargetView_iface;
 
     return S_OK;
-
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDepthStencilView(ID3D11Device *iface,
@@ -2113,28 +2121,18 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
     if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D11Resource, (void **)&d3d11_resource)))
     {
         ERR("Resource does not implement ID3D11Resource.\n");
-        HeapFree(GetProcessHeap(), 0, object);
         return E_FAIL;
     }
 
-    if (FAILED(hr = d3d_shader_resource_view_init(object, device, d3d11_resource,
-            (const D3D11_SHADER_RESOURCE_VIEW_DESC *)desc)))
-    {
-        WARN("Failed to initialize shader resource view, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        ID3D11Resource_Release(d3d11_resource);
-        return hr;
-    }
-
+    hr = d3d_shader_resource_view_create(device, d3d11_resource, (const D3D11_SHADER_RESOURCE_VIEW_DESC *)desc,
+            &object);
     ID3D11Resource_Release(d3d11_resource);
+    if (FAILED(hr))
+        return hr;
 
-    TRACE("Created shader resource view %p.\n", object);
     *view = &object->ID3D10ShaderResourceView_iface;
 
     return S_OK;

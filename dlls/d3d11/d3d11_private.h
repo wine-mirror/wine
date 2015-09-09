@@ -202,8 +202,8 @@ struct d3d_shader_resource_view
     ID3D11Device *device;
 };
 
-HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *view, struct d3d_device *device,
-        ID3D11Resource *resource, const D3D11_SHADER_RESOURCE_VIEW_DESC *desc) DECLSPEC_HIDDEN;
+HRESULT d3d_shader_resource_view_create(struct d3d_device *device, ID3D11Resource *resource,
+        const D3D11_SHADER_RESOURCE_VIEW_DESC *desc, struct d3d_shader_resource_view **view) DECLSPEC_HIDDEN;
 struct d3d_shader_resource_view *unsafe_impl_from_ID3D10ShaderResourceView(
         ID3D10ShaderResourceView *iface) DECLSPEC_HIDDEN;
 
