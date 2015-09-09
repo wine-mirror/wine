@@ -658,6 +658,7 @@ HKLM,System\CurrentControlSet\Control\TimeZoneInformation,"StandardName",2,""
 HKLM,System\CurrentControlSet\Control\TimeZoneInformation,"TimeZoneKeyName",2,""
 HKLM,System\CurrentControlSet\Control\VirtualDeviceDrivers,,16
 HKLM,System\CurrentControlSet\Control\VMM32Files,,16
+HKLM,System\Select,"Current",0x10003,1
 HKCU,AppEvents\Schemes\Apps\Explorer\Navigating\.Current,,,""
 HKCU,Software\Microsoft\Protected Storage System Provider,,16
 ; Some apps requires at least four subkeys of Active Setup\Installed Components
