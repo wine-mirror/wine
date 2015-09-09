@@ -98,6 +98,7 @@ static const WCHAR arialW[] = {'A','r','i','a','l',0};
 static const WCHAR tahomaUppercaseW[] = {'T','A','H','O','M','A',0};
 static const WCHAR tahomaStrangecaseW[] = {'t','A','h','O','m','A',0};
 static const WCHAR blahW[]  = {'B','l','a','h','!',0};
+static const WCHAR emojiW[] = {'S','e','g','o','e',' ','U','I',' ','E','m','o','j','i',0};
 
 static IDWriteFactory *create_factory(void)
 {
@@ -4793,7 +4794,6 @@ struct CPAL_Header_0
 
 static void test_GetPaletteEntries(void)
 {
-    static const WCHAR emojiW[] = {'S','e','g','o','e',' ','U','I',' ','E','m','o','j','i',0};
     IDWriteFontFace2 *fontface2;
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
@@ -4880,6 +4880,127 @@ static void test_GetPaletteEntries(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_TranslateColorGlyphRun(void)
+{
+    IDWriteColorGlyphRunEnumerator *layers;
+    const DWRITE_COLOR_GLYPH_RUN *colorrun;
+    IDWriteFontFace *fontface;
+    IDWriteFactory2 *factory2;
+    IDWriteFactory *factory;
+    DWRITE_GLYPH_RUN run;
+    UINT32 codepoints[2];
+    IDWriteFont *font;
+    UINT16 glyphs[2];
+    BOOL hasrun;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
+    IDWriteFactory_Release(factory);
+    if (hr != S_OK) {
+        win_skip("TranslateColorGlyphRun() is not supported.\n");
+        return;
+    }
+
+    /* Tahoma, no color support */
+    fontface = create_fontface((IDWriteFactory*)factory2);
+
+    codepoints[0] = 'A';
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, codepoints, 1, glyphs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    run.fontFace = fontface;
+    run.fontEmSize = 20.0f;
+    run.glyphCount = 1;
+    run.glyphIndices = glyphs;
+    run.glyphAdvances = NULL;
+    run.glyphOffsets = NULL;
+    run.isSideways = FALSE;
+    run.bidiLevel = 0;
+
+    layers = (void*)0xdeadbeef;
+    hr = IDWriteFactory2_TranslateColorGlyphRun(factory2, 0.0, 0.0, &run, NULL,
+        DWRITE_MEASURING_MODE_NATURAL, NULL, 0, &layers);
+todo_wine {
+    ok(hr == DWRITE_E_NOCOLOR, "got 0x%08x\n", hr);
+    ok(layers == NULL, "got %p\n", layers);
+}
+    IDWriteFontFace_Release(fontface);
+
+    /* Segoe UI Emoji, with color support */
+    font = get_font((IDWriteFactory*)factory2, emojiW, DWRITE_FONT_STYLE_NORMAL);
+    if (!font) {
+        IDWriteFactory2_Release(factory2);
+        skip("Segoe UI Emoji font not found.\n");
+        return;
+    }
+
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFont_Release(font);
+
+    codepoints[0] = 0x26c4;
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, codepoints, 1, glyphs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    run.fontFace = fontface;
+
+    layers = NULL;
+    hr = IDWriteFactory2_TranslateColorGlyphRun(factory2, 0.0, 0.0, &run, NULL,
+        DWRITE_MEASURING_MODE_NATURAL, NULL, 0, &layers);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(layers != NULL, "got %p\n", layers);
+
+    while (1) {
+        hasrun = FALSE;
+        hr = IDWriteColorGlyphRunEnumerator_MoveNext(layers, &hasrun);
+    todo_wine
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        if (!hasrun)
+            break;
+    }
+
+    /* iterated all way through */
+    hr = IDWriteColorGlyphRunEnumerator_GetCurrentRun(layers, &colorrun);
+todo_wine
+    ok(hr == E_NOT_VALID_STATE, "got 0x%08x\n", hr);
+
+    IDWriteColorGlyphRunEnumerator_Release(layers);
+
+    /* color font, glyph without color info */
+    codepoints[0] = 'A';
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, codepoints, 1, glyphs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    layers = (void*)0xdeadbeef;
+    hr = IDWriteFactory2_TranslateColorGlyphRun(factory2, 0.0, 0.0, &run, NULL,
+        DWRITE_MEASURING_MODE_NATURAL, NULL, 0, &layers);
+todo_wine {
+    ok(hr == DWRITE_E_NOCOLOR, "got 0x%08x\n", hr);
+    ok(layers == NULL, "got %p\n", layers);
+}
+    /* one glyph with, one without */
+    codepoints[0] = 'A';
+    codepoints[1] = 0x26c4;
+
+    hr = IDWriteFontFace_GetGlyphIndices(fontface, codepoints, 2, glyphs);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    run.glyphCount = 2;
+
+    layers = NULL;
+    hr = IDWriteFactory2_TranslateColorGlyphRun(factory2, 0.0, 0.0, &run, NULL,
+        DWRITE_MEASURING_MODE_NATURAL, NULL, 0, &layers);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(layers != NULL, "got %p\n", layers);
+    IDWriteColorGlyphRunEnumerator_Release(layers);
+
+    IDWriteFontFace_Release(fontface);
+    IDWriteFactory2_Release(factory2);
+}
+
 START_TEST(font)
 {
     IDWriteFactory *factory;
@@ -4931,6 +5052,7 @@ START_TEST(font)
     test_CreateAlphaTexture();
     test_IsSymbolFont();
     test_GetPaletteEntries();
+    test_TranslateColorGlyphRun();
 
     IDWriteFactory_Release(factory);
 }

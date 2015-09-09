@@ -2077,6 +2077,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #undef NOERROR  /* arpa/nameser_compat.h defines this */
 
 #define E_NOT_SUFFICIENT_BUFFER                            HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER)
+#define E_NOT_VALID_STATE                                  HRESULT_FROM_WIN32(ERROR_INVALID_STATE)
 
 #ifdef RC_INVOKED
 #define _HRESULT_TYPEDEF_(x) (x)
