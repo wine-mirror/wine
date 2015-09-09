@@ -460,14 +460,14 @@ static void volume_unload(struct wined3d_resource *resource)
     resource_unload(resource);
 }
 
-ULONG CDECL wined3d_volume_incref(struct wined3d_volume *volume)
+static ULONG CDECL wined3d_volume_incref(struct wined3d_volume *volume)
 {
     TRACE("Forwarding to container %p.\n", volume->container);
 
     return wined3d_texture_incref(volume->container);
 }
 
-ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
+static ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
 {
     TRACE("Forwarding to container %p.\n", volume->container);
 
