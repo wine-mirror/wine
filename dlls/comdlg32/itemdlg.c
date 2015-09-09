@@ -3582,7 +3582,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnEnableOpenDropDown(IFileDialogCusto
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     MENUINFO mi;
-    FIXME("semi-stub - %p (%d)\n", This, dwIDCtl);
+    TRACE("%p (%d)\n", This, dwIDCtl);
 
     if (This->hmenu_opendropdown || get_cctrl(This, dwIDCtl))
         return E_UNEXPECTED;
