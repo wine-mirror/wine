@@ -199,7 +199,7 @@ struct d3d_shader_resource_view
     struct wined3d_shader_resource_view *wined3d_view;
     D3D10_SHADER_RESOURCE_VIEW_DESC desc;
     ID3D10Resource *resource;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *view, struct d3d_device *device,
