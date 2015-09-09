@@ -4423,7 +4423,6 @@ static void test_gethostbyname_hack(void)
         return;
     }
 
-    he = NULL;
     he = gethostbyname(name);
     ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, h_errno);
     if(he)
