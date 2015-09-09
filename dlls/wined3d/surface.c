@@ -1883,23 +1883,6 @@ struct wined3d_resource * CDECL wined3d_surface_get_resource(struct wined3d_surf
     return &surface->resource;
 }
 
-HRESULT CDECL wined3d_surface_get_flip_status(const struct wined3d_surface *surface, DWORD flags)
-{
-    TRACE("surface %p, flags %#x.\n", surface, flags);
-
-    /* XXX: DDERR_INVALIDSURFACETYPE */
-
-    switch (flags)
-    {
-        case WINEDDGFS_CANFLIP:
-        case WINEDDGFS_ISFLIPDONE:
-            return WINED3D_OK;
-
-        default:
-            return WINED3DERR_INVALIDCALL;
-    }
-}
-
 HRESULT CDECL wined3d_surface_is_lost(const struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
