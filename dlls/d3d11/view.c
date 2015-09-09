@@ -240,7 +240,7 @@ static HRESULT set_rtdesc_from_resource(D3D11_RENDER_TARGET_VIEW_DESC *desc, ID3
     }
 }
 
-static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, ID3D10Resource *resource)
+static HRESULT set_srdesc_from_resource(D3D11_SHADER_RESOURCE_VIEW_DESC *desc, ID3D10Resource *resource)
 {
     D3D10_RESOURCE_DIMENSION dimension;
 
@@ -265,13 +265,13 @@ static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, I
             desc->Format = texture_desc.Format;
             if (texture_desc.ArraySize == 1)
             {
-                desc->ViewDimension = D3D10_SRV_DIMENSION_TEXTURE1D;
+                desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1D;
                 desc->u.Texture1D.MostDetailedMip = 0;
                 desc->u.Texture1D.MipLevels = texture_desc.MipLevels;
             }
             else
             {
-                desc->ViewDimension = D3D10_SRV_DIMENSION_TEXTURE1DARRAY;
+                desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE1DARRAY;
                 desc->u.Texture1DArray.MostDetailedMip = 0;
                 desc->u.Texture1DArray.MipLevels = texture_desc.MipLevels;
                 desc->u.Texture1DArray.FirstArraySlice = 0;
@@ -300,20 +300,20 @@ static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, I
             {
                 if (texture_desc.SampleDesc.Count == 1)
                 {
-                    desc->ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2D;
+                    desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
                     desc->u.Texture2D.MostDetailedMip = 0;
                     desc->u.Texture2D.MipLevels = texture_desc.MipLevels;
                 }
                 else
                 {
-                    desc->ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2DMS;
+                    desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMS;
                 }
             }
             else
             {
                 if (texture_desc.SampleDesc.Count == 1)
                 {
-                    desc->ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2DARRAY;
+                    desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DARRAY;
                     desc->u.Texture2DArray.MostDetailedMip = 0;
                     desc->u.Texture2DArray.MipLevels = texture_desc.MipLevels;
                     desc->u.Texture2DArray.FirstArraySlice = 0;
@@ -321,7 +321,7 @@ static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, I
                 }
                 else
                 {
-                    desc->ViewDimension = D3D10_SRV_DIMENSION_TEXTURE2DMSARRAY;
+                    desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2DMSARRAY;
                     desc->u.Texture2DMSArray.FirstArraySlice = 0;
                     desc->u.Texture2DMSArray.ArraySize = texture_desc.ArraySize;
                 }
@@ -345,7 +345,7 @@ static HRESULT set_srdesc_from_resource(D3D10_SHADER_RESOURCE_VIEW_DESC *desc, I
             ID3D10Texture3D_Release(texture);
 
             desc->Format = texture_desc.Format;
-            desc->ViewDimension = D3D10_SRV_DIMENSION_TEXTURE3D;
+            desc->ViewDimension = D3D11_SRV_DIMENSION_TEXTURE3D;
             desc->u.Texture3D.MostDetailedMip = 0;
             desc->u.Texture3D.MipLevels = texture_desc.MipLevels;
 
@@ -1298,7 +1298,11 @@ static void STDMETHODCALLTYPE d3d11_shader_resource_view_GetResource(ID3D11Shade
 static void STDMETHODCALLTYPE d3d11_shader_resource_view_GetDesc(ID3D11ShaderResourceView *iface,
         D3D11_SHADER_RESOURCE_VIEW_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_shader_resource_view *view = impl_from_ID3D11ShaderResourceView(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = view->desc;
 }
 
 static const struct ID3D11ShaderResourceViewVtbl d3d11_shader_resource_view_vtbl =
@@ -1421,7 +1425,7 @@ static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDesc(ID3D10ShaderRes
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    *desc = view->desc;
+    memcpy(desc, &view->desc, sizeof(*desc));
 }
 
 static const struct ID3D10ShaderResourceViewVtbl d3d10_shader_resource_view_vtbl =
@@ -1442,7 +1446,7 @@ static const struct ID3D10ShaderResourceViewVtbl d3d10_shader_resource_view_vtbl
 };
 
 HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *view, struct d3d_device *device,
-        ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc)
+        ID3D10Resource *resource, const D3D11_SHADER_RESOURCE_VIEW_DESC *desc)
 {
     struct wined3d_resource *wined3d_resource;
     HRESULT hr;
