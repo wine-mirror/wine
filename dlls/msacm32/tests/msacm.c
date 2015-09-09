@@ -652,7 +652,6 @@ todo_wine
             | ACM_FORMATSUGGESTF_WBITSPERSAMPLE
             | ACM_FORMATSUGGESTF_WFORMATTAG;
     rc = acmFormatSuggest(NULL, &src, &dst, sizeof(dst), suggest);
-todo_wine
     ok(rc == ACMERR_NOTPOSSIBLE, "failed with error 0x%x\n", rc);
     memset(&dst, 0, sizeof(dst));
     suggest = 0;
