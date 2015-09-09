@@ -2108,6 +2108,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_shader_resource_view *object;
+    ID3D11Resource *d3d11_resource;
     HRESULT hr;
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
@@ -2115,13 +2116,23 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d_shader_resource_view_init(object, device, resource,
+    if (FAILED(hr = ID3D10Resource_QueryInterface(resource, &IID_ID3D11Resource, (void **)&d3d11_resource)))
+    {
+        ERR("Resource does not implement ID3D11Resource.\n");
+        HeapFree(GetProcessHeap(), 0, object);
+        return E_FAIL;
+    }
+
+    if (FAILED(hr = d3d_shader_resource_view_init(object, device, d3d11_resource,
             (const D3D11_SHADER_RESOURCE_VIEW_DESC *)desc)))
     {
         WARN("Failed to initialize shader resource view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
+        ID3D11Resource_Release(d3d11_resource);
         return hr;
     }
+
+    ID3D11Resource_Release(d3d11_resource);
 
     TRACE("Created shader resource view %p.\n", object);
     *view = &object->ID3D10ShaderResourceView_iface;
