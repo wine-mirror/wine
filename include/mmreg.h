@@ -107,6 +107,7 @@ typedef struct _WAVEFORMATEX {
 #define  WAVE_FORMAT_G721_ADPCM			0x0040	/*  Antex Electronics Corporation  */
 #define  WAVE_FORMAT_MPEG			0x0050	/*  Microsoft Corporation  */
 #define  WAVE_FORMAT_MPEGLAYER3			0x0055
+#define  WAVE_FORMAT_MSRT24			0x0082  /*  Microsoft Corporation */
 #define  WAVE_FORMAT_CREATIVE_ADPCM		0x0200	/*  Creative Labs, Inc  */
 #define  WAVE_FORMAT_CREATIVE_FASTSPEECH8	0x0202	/*  Creative Labs, Inc  */
 #define  WAVE_FORMAT_CREATIVE_FASTSPEECH10	0x0203	/*  Creative Labs, Inc  */
