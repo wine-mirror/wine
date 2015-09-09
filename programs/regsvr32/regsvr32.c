@@ -19,9 +19,6 @@
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
- *
- * This version deliberately differs in error handling compared to the
- * Windows version.
  */
 
 #define WIN32_LEAN_AND_MEAN
@@ -221,7 +218,7 @@ static WCHAR *parse_command_line(WCHAR *command_line)
 
 int wmain(int argc, WCHAR* argv[])
 {
-    int             i;
+    int             i, res, ret = 0;
     BOOL            CallRegister = TRUE;
     BOOL            CallInstall = FALSE;
     BOOL            Unregister = FALSE;
@@ -286,7 +283,7 @@ int wmain(int argc, WCHAR* argv[])
         if (argv[i])
         {
             WCHAR *DllName = argv[i];
-            int res = 0;
+            res = 0;
 
             DllFound = TRUE;
             if (CallInstall && Unregister)
@@ -294,7 +291,10 @@ int wmain(int argc, WCHAR* argv[])
 
             /* The Windows version stops processing the current file on the first error. */
             if (res)
+            {
+                ret = res;
                 continue;
+            }
 
             if (!CallInstall || (CallInstall && CallRegister))
             {
@@ -305,13 +305,19 @@ int wmain(int argc, WCHAR* argv[])
             }
 
             if (res)
+            {
+                ret = res;
                 continue;
+            }
 
             if (CallInstall && !Unregister)
                 res = InstallDll(!Unregister, DllName, wsCommandLine);
 
             if (res)
+            {
+                ret = res;
 		continue;
+            }
         }
     }
 
@@ -324,5 +330,6 @@ int wmain(int argc, WCHAR* argv[])
 
     OleUninitialize();
 
-    return 0;
+    /* return the most recent error code, even if later DLLs succeed */
+    return ret;
 }
