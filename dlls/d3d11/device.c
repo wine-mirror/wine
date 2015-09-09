@@ -613,7 +613,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetShaderResources(ID3D10Device1 *i
     wined3d_mutex_lock();
     for (i = 0; i < view_count; ++i)
     {
-        struct d3d10_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
+        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
 
         wined3d_device_set_ps_resource_view(device->wined3d_device, start_slot + i,
                 view ? view->wined3d_view : NULL);
@@ -855,7 +855,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetShaderResources(ID3D10Device1 *i
     wined3d_mutex_lock();
     for (i = 0; i < view_count; ++i)
     {
-        struct d3d10_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
+        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
 
         wined3d_device_set_vs_resource_view(device->wined3d_device, start_slot + i,
                 view ? view->wined3d_view : NULL);
@@ -908,7 +908,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetShaderResources(ID3D10Device1 *i
     wined3d_mutex_lock();
     for (i = 0; i < view_count; ++i)
     {
-        struct d3d10_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
+        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D10ShaderResourceView(views[i]);
 
         wined3d_device_set_gs_resource_view(device->wined3d_device, start_slot + i,
                 view ? view->wined3d_view : NULL);
@@ -1297,7 +1297,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetShaderResources(ID3D10Device1 *i
     for (i = 0; i < view_count; ++i)
     {
         struct wined3d_shader_resource_view *wined3d_view;
-        struct d3d10_shader_resource_view *view_impl;
+        struct d3d_shader_resource_view *view_impl;
 
         if (!(wined3d_view = wined3d_device_get_ps_resource_view(device->wined3d_device, start_slot + i)))
         {
@@ -1568,7 +1568,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSGetShaderResources(ID3D10Device1 *i
     for (i = 0; i < view_count; ++i)
     {
         struct wined3d_shader_resource_view *wined3d_view;
-        struct d3d10_shader_resource_view *view_impl;
+        struct d3d_shader_resource_view *view_impl;
 
         if (!(wined3d_view = wined3d_device_get_vs_resource_view(device->wined3d_device, start_slot + i)))
         {
@@ -1647,7 +1647,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetShaderResources(ID3D10Device1 *i
     for (i = 0; i < view_count; ++i)
     {
         struct wined3d_shader_resource_view *wined3d_view;
-        struct d3d10_shader_resource_view *view_impl;
+        struct d3d_shader_resource_view *view_impl;
 
         if (!(wined3d_view = wined3d_device_get_gs_resource_view(device->wined3d_device, start_slot + i)))
         {
@@ -2107,7 +2107,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
         ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc, ID3D10ShaderResourceView **view)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_shader_resource_view *object;
+    struct d3d_shader_resource_view *object;
     HRESULT hr;
 
     TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
@@ -2115,7 +2115,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_shader_resource_view_init(object, device, resource, desc)))
+    if (FAILED(hr = d3d_shader_resource_view_init(object, device, resource, desc)))
     {
         WARN("Failed to initialize shader resource view, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
