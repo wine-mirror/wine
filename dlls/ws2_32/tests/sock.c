@@ -6313,7 +6313,7 @@ static void test_GetAddrInfoW(void)
     int i, ret;
     ADDRINFOW *result, *result2, *p, hint;
     WCHAR name[256];
-    DWORD size = sizeof(name);
+    DWORD size = sizeof(name)/sizeof(WCHAR);
 
     if (!pGetAddrInfoW || !pFreeAddrInfoW)
     {
