@@ -778,22 +778,19 @@ static void test_basics(void)
         IFileSaveDialog_AddPlace(pfsd, NULL, 0);
     }
 
-    todo_wine
-    {
     hr = IFileOpenDialog_AddPlace(pfod, psidesktop, FDAP_TOP + 1);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     hr = IFileOpenDialog_AddPlace(pfod, psidesktop, FDAP_BOTTOM);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileOpenDialog_AddPlace(pfod, psidesktop, FDAP_TOP);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     hr = IFileSaveDialog_AddPlace(pfsd, psidesktop, FDAP_TOP + 1);
-    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_AddPlace(pfsd, psidesktop, FDAP_BOTTOM);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     hr = IFileSaveDialog_AddPlace(pfsd, psidesktop, FDAP_TOP);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    }
 
     /* SetFileName */
     hr = IFileOpenDialog_SetFileName(pfod, NULL);

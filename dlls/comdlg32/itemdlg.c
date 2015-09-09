@@ -2554,7 +2554,7 @@ static HRESULT WINAPI IFileDialog2_fnAddPlace(IFileDialog2 *iface, IShellItem *p
 {
     FileDialogImpl *This = impl_from_IFileDialog2(iface);
     FIXME("stub - %p (%p, %d)\n", This, psi, fdap);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialog2_fnSetDefaultExtension(IFileDialog2 *iface, LPCWSTR pszDefaultExtension)
