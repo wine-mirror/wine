@@ -481,11 +481,6 @@ void * CDECL wined3d_volume_get_parent(const struct wined3d_volume *volume)
     return volume->resource.parent;
 }
 
-void CDECL wined3d_volume_preload(struct wined3d_volume *volume)
-{
-    FIXME("volume %p stub!\n", volume);
-}
-
 struct wined3d_resource * CDECL wined3d_volume_get_resource(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);

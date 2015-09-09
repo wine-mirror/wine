@@ -289,5 +289,4 @@
 @ cdecl wined3d_volume_get_resource(ptr)
 @ cdecl wined3d_volume_incref(ptr)
 @ cdecl wined3d_volume_map(ptr ptr ptr long)
-@ cdecl wined3d_volume_preload(ptr)
 @ cdecl wined3d_volume_unmap(ptr)
