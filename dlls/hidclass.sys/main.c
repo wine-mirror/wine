@@ -30,7 +30,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 static struct list minidriver_list = LIST_INIT(minidriver_list);
 
-static minidriver* find_minidriver(DRIVER_OBJECT *driver)
+minidriver* find_minidriver(DRIVER_OBJECT *driver)
 {
     minidriver *md;
     LIST_FOR_EACH_ENTRY(md, &minidriver_list, minidriver, entry)
@@ -51,6 +51,7 @@ static VOID WINAPI UnloadDriver(DRIVER_OBJECT *driver)
     {
         if (md->DriverUnload)
             md->DriverUnload(md->minidriver.DriverObject);
+        PNP_CleanupPNP(md->minidriver.DriverObject);
         list_remove(&md->entry);
         HeapFree( GetProcessHeap(), 0, md );
     }
@@ -67,8 +68,55 @@ NTSTATUS WINAPI HidRegisterMinidriver(HID_MINIDRIVER_REGISTRATION *registration)
     driver->DriverUnload = registration->DriverObject->DriverUnload;
     registration->DriverObject->DriverUnload = UnloadDriver;
 
+    driver->AddDevice = registration->DriverObject->DriverExtension->AddDevice;
+    registration->DriverObject->DriverExtension->AddDevice = PNP_AddDevice;
+
     driver->minidriver = *registration;
     list_add_tail(&minidriver_list, &driver->entry);
 
     return STATUS_SUCCESS;
+}
+
+static NTSTATUS WINAPI internalComplete(DEVICE_OBJECT *deviceObject, IRP *irp,
+    void *context )
+{
+    SetEvent(irp->UserEvent);
+    return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size, void *out_buff, ULONG out_size)
+{
+    IRP *irp;
+    IO_STATUS_BLOCK irp_status;
+    IO_STACK_LOCATION *irpsp;
+    NTSTATUS status;
+    void *buffer = NULL;
+
+    HANDLE event = CreateEventA(NULL, FALSE, FALSE, NULL);
+
+    if (out_size)
+    {
+        buffer = HeapAlloc(GetProcessHeap(), 0, out_size);
+        memcpy(buffer, out_buff, out_size);
+    }
+
+    irp = IoBuildDeviceIoControlRequest(code, device, in_buff, in_size,
+        buffer, out_size, TRUE, event, &irp_status);
+
+    irpsp = IoGetNextIrpStackLocation(irp);
+    irpsp->CompletionRoutine = internalComplete;
+    irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR;
+
+    IoCallDriver(device, irp);
+
+    if (irp->IoStatus.u.Status == STATUS_PENDING)
+        WaitForSingleObject(event, INFINITE);
+
+    memcpy(out_buff, buffer, out_size);
+    status = irp->IoStatus.u.Status;
+
+    IoCompleteRequest(irp, IO_NO_INCREMENT );
+    CloseHandle(event);
+
+    return status;
 }

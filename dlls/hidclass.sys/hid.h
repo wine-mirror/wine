@@ -33,6 +33,8 @@
 #define DEFAULT_POLL_INTERVAL 200
 #define MAX_POLL_INTERVAL_MSEC 10000
 
+typedef NTSTATUS (WINAPI *pAddDevice)(DRIVER_OBJECT *DriverObject, DEVICE_OBJECT *PhysicalDeviceObject);
+
 typedef struct _BASE_DEVICE_EXTENSTION {
     HID_DEVICE_EXTENSION deviceExtension;
 
@@ -57,9 +59,18 @@ typedef struct _minidriver
     HID_MINIDRIVER_REGISTRATION minidriver;
 
     PDRIVER_UNLOAD DriverUnload;
+
+    pAddDevice AddDevice;
 } minidriver;
+
+NTSTATUS call_minidriver(ULONG code, DEVICE_OBJECT *device, void *in_buff, ULONG in_size, void *out_buff, ULONG out_size) DECLSPEC_HIDDEN;
+minidriver* find_minidriver(DRIVER_OBJECT* driver) DECLSPEC_HIDDEN;
 
 /* Internal device functions */
 NTSTATUS HID_CreateDevice(DEVICE_OBJECT *native_device, HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT **device) DECLSPEC_HIDDEN;
 NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device, LPCWSTR serial, LPCWSTR index) DECLSPEC_HIDDEN;
 void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
+
+/* Pseudo-Plug and Play support*/
+NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT* PDO) DECLSPEC_HIDDEN;
+void PNP_CleanupPNP(DRIVER_OBJECT *driver) DECLSPEC_HIDDEN;
