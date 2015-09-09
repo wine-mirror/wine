@@ -4302,7 +4302,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnMakeProminent(IFileDialogCustomize 
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
     FIXME("stub - %p (%d)\n", This, dwIDCtl);
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemText(IFileDialogCustomize *iface,

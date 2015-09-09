@@ -2233,7 +2233,7 @@ static void test_customize(void)
     ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_MakeProminent(pfdc, id_vgroup1);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
 
     IFileDialogCustomize_Release(pfdc);
     ref = IFileDialog_Release(pfod);
