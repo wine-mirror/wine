@@ -2547,6 +2547,12 @@ static void test_ScriptString(HDC hdc)
                               &InClass, &ssa);
     ok(hr == E_PENDING, "ScriptStringAnalyse Stub should return E_PENDING not %08x\n", hr);
 
+    /* Test that 0 length string returns E_INVALIDARG  */
+    hr = ScriptStringAnalyse( hdc, teststr, 0, Glyphs, Charset, Flags,
+                              ReqWidth, NULL, NULL, Dx, NULL,
+                              &InClass, &ssa);
+    ok(hr == E_INVALIDARG, "ScriptStringAnalyse should return E_INVALIDARG not %08x\n", hr);
+
     /* test with hdc, this should be a valid test  */
     hr = ScriptStringAnalyse( hdc, teststr, len, Glyphs, Charset, Flags,
                               ReqWidth, NULL, NULL, Dx, NULL,
