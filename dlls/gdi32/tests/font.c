@@ -3188,8 +3188,13 @@ typedef struct
     USHORT usDefaultChar;
     USHORT usBreakChar;
     USHORT usMaxContext;
-} TT_OS2_V2;
+    /* version 4 (OpenType 1.6) */
+    USHORT usLowerOpticalPointSize;
+    USHORT usUpperOpticalPointSize;
+} TT_OS2_V4;
 #include "poppack.h"
+
+#define TT_OS2_V0_SIZE (FIELD_OFFSET(TT_OS2_V4, ulCodePageRange1))
 
 typedef struct
 {
@@ -3242,7 +3247,7 @@ typedef struct
     USHORT id_range_offset;
 } cmap_format_4_seg;
 
-static void expect_ff(const TEXTMETRICA *tmA, const TT_OS2_V2 *os2, WORD family, const char *name)
+static void expect_ff(const TEXTMETRICA *tmA, const TT_OS2_V4 *os2, WORD family, const char *name)
 {
     ok((tmA->tmPitchAndFamily & 0xf0) == family ||
        broken(PRIMARYLANGID(GetSystemDefaultLangID()) != LANG_ENGLISH),
@@ -3662,7 +3667,7 @@ static void test_text_metrics(const LOGFONTA *lf, const NEWTEXTMETRICA *ntm)
     HDC hdc;
     HFONT hfont, hfont_old;
     TEXTMETRICA tmA;
-    TT_OS2_V2 tt_os2;
+    TT_OS2_V4 tt_os2;
     LONG size, ret;
     const char *font_name = lf->lfFaceName;
     DWORD cmap_first = 0, cmap_last = 0;
@@ -3693,7 +3698,8 @@ static void test_text_metrics(const LOGFONTA *lf, const NEWTEXTMETRICA *ntm)
 
     memset(&tt_os2, 0, sizeof(tt_os2));
     ret = GetFontData(hdc, MS_OS2_TAG, 0, &tt_os2, size);
-    ok(ret == size, "GetFontData should return %u not %u\n", size, ret);
+    ok(ret >= TT_OS2_V0_SIZE && ret <= size, "GetFontData should return size from [%u,%u] not %u\n", TT_OS2_V0_SIZE,
+        size, ret);
 
     SetLastError(0xdeadbeef);
     ret = GetTextMetricsA(hdc, &tmA);
