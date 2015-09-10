@@ -7078,7 +7078,7 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                             }
                             V_VT(&rgvarg[i]) = rgvt[i];
                         }
-                        else if (rgvt[i] == (VT_VARIANT | VT_ARRAY) && func_desc->cParamsOpt < 0)
+                        else if ((rgvt[i] == (VT_VARIANT | VT_ARRAY) || rgvt[i] == (VT_VARIANT | VT_ARRAY | VT_BYREF)) && func_desc->cParamsOpt < 0)
                         {
                             SAFEARRAY *a;
                             SAFEARRAYBOUND bound;
@@ -7107,7 +7107,10 @@ static HRESULT WINAPI ITypeInfo_fnInvoke(
                                 SafeArrayDestroy(a);
                                 break;
                             }
-                            V_ARRAY(&rgvarg[i]) = a;
+                            if (rgvt[i] & VT_BYREF)
+                                V_BYREF(&rgvarg[i]) = &a;
+                            else
+                                V_ARRAY(&rgvarg[i]) = a;
                             V_VT(&rgvarg[i]) = rgvt[i];
                         }
                         else if ((rgvt[i] & VT_BYREF) && !V_ISBYREF(src_arg))

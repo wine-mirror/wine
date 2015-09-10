@@ -1602,7 +1602,6 @@ static void test_typelibmarshal(void)
     dispparams.rgdispidNamedArgs = NULL;
     dispparams.rgvarg = vararg;
     hr = IDispatch_Invoke(pDispatch, DISPID_TM_VARARG_REF_RUN, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, NULL, NULL, NULL);
-todo_wine
     ok_ole_success(hr, IDispatch_Invoke);
     SysFreeString(V_BSTR(&vararg[1]));
     SysFreeString(V_BSTR(&vararg[0]));
