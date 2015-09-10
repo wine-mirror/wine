@@ -1549,10 +1549,10 @@ static void test_customize_onfolderchange(IFileDialog *pfd)
     GetClassNameW(item_parent, buf, 1024);
     ok(!lstrcmpW(buf, floatnotifysinkW), "Got %s\n", wine_dbgstr_w(buf));
     item = find_window(dlg_hwnd, NULL, radiobutton1W);
-    todo_wine ok(item != NULL, "Failed to find item.\n");
+    ok(item != NULL, "Failed to find item.\n");
     item_parent = GetParent(item);
     GetClassNameW(item_parent, buf, 1024);
-    todo_wine ok(!lstrcmpW(buf, RadioButtonListW), "Got %s\n", wine_dbgstr_w(buf));
+    ok(!lstrcmpW(buf, RadioButtonListW), "Got %s\n", wine_dbgstr_w(buf));
     item_parent = GetParent(item_parent);
     GetClassNameW(item_parent, buf, 1024);
     ok(!lstrcmpW(buf, floatnotifysinkW), "Got %s\n", wine_dbgstr_w(buf));
@@ -1731,25 +1731,25 @@ static void test_customize(void)
     ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddRadioButtonList(pfdc, i);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileDialogCustomize_AddRadioButtonList(pfdc, ++i);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
 
     cdstate = 0xdeadbeef;
     hr = IFileDialogCustomize_GetControlState(pfdc, i, &cdstate);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
-    todo_wine ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
 
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, radiobutton1W);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     hr = IFileDialogCustomize_AddControlItem(pfdc, i, 0, radiobutton1W);
-    todo_wine ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
+    ok(hr == E_INVALIDARG, "got 0x%08x.\n", hr);
 
     hr = IFileDialogCustomize_SetControlLabel(pfdc, i, radiobutton2W);
-    todo_wine ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
+    ok(hr == S_OK, "got 0x%08x (control: %d).\n", hr, i);
 
     hr = IFileDialogCustomize_AddCheckButton(pfdc, i, label, TRUE);
-    todo_wine ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
+    ok(hr == E_UNEXPECTED, "got 0x%08x.\n", hr);
     hr = IFileDialogCustomize_AddCheckButton(pfdc, ++i, checkbutton1W, TRUE);
     ok(hr == S_OK, "got 0x%08x.\n", hr);
 
@@ -2012,7 +2012,7 @@ static void test_customize(void)
     }
 
     hr = IFileDialogCustomize_AddRadioButtonList(pfdc, ++i);
-    todo_wine ok(hr == S_OK, "got 0x%08x.\n", hr);
+    ok(hr == S_OK, "got 0x%08x.\n", hr);
     if(SUCCEEDED(hr))
     {
         DWORD selected = -1;
@@ -2028,7 +2028,6 @@ static void test_customize(void)
         ok(hr == E_FAIL, "got 0x%08x.\n", hr);
         ok(selected == -1, "got %d.\n", selected);
 
-        todo_wine {
         cdstate = 0xdeadbeef;
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
         ok(hr == S_OK, "got 0x%08x.\n", hr);
@@ -2045,7 +2044,6 @@ static void test_customize(void)
         hr = IFileDialogCustomize_GetControlItemState(pfdc, i, 0, &cdstate);
         ok(hr == S_OK, "got 0x%08x.\n", hr);
         ok(cdstate == CDCS_ENABLEDVISIBLE, "got 0x%08x.\n", cdstate);
-        }
 
         for(j = 0; j < 10; j++)
         {

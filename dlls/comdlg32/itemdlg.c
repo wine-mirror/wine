@@ -50,6 +50,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(commdlg);
 
 static const WCHAR notifysink_childW[] = {'n','f','s','_','c','h','i','l','d',0};
 static const WCHAR floatnotifysinkW[] = {'F','l','o','a','t','N','o','t','i','f','y','S','i','n','k',0};
+static const WCHAR radiobuttonlistW[] = {'R','a','d','i','o','B','u','t','t','o','n','L','i','s','t',0};
 
 enum ITEMDLG_TYPE {
     ITEMDLG_TYPE_OPEN,
@@ -73,6 +74,7 @@ typedef struct cctrl_item {
     DWORD id, parent_id;
     LPWSTR label;
     CDCONTROLSTATEF cdcstate;
+    HWND hwnd;
     struct list entry;
 } cctrl_item;
 
@@ -741,6 +743,7 @@ static void show_opendropdown(FileDialogImpl *This)
 
 static void item_free(cctrl_item *item)
 {
+    DestroyWindow(item->hwnd);
     HeapFree(GetProcessHeap(), 0, item->label);
     HeapFree(GetProcessHeap(), 0, item);
 }
@@ -802,6 +805,7 @@ static HRESULT add_item(customctrl* parent, DWORD itemid, LPCWSTR label, cctrl_i
     lstrcpyW(label_copy, label);
     item->label = label_copy;
     item->cdcstate = CDCS_VISIBLE|CDCS_ENABLED;
+    item->hwnd = NULL;
     list_add_tail(&parent->sub_items, &item->entry);
 
     *result = item;
@@ -932,6 +936,7 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
 {
     RECT rc;
     UINT total_height;
+    UINT max_width;
     customctrl *sub_ctrl;
 
     switch(ctrl->type)
@@ -974,6 +979,32 @@ static void customctrl_resize(FileDialogImpl *This, customctrl *ctrl)
                      SWP_NOZORDER|SWP_NOMOVE);
         break;
     case IDLG_CCTRL_RADIOBUTTONLIST:
+    {
+        cctrl_item* item;
+
+        total_height = 0;
+        max_width = 0;
+
+        LIST_FOR_EACH_ENTRY(item, &ctrl->sub_items, cctrl_item, entry)
+        {
+            ctrl_resize(item->hwnd, 160, 160, TRUE);
+            SetWindowPos(item->hwnd, NULL, 0, total_height, 0, 0,
+                         SWP_NOZORDER|SWP_NOSIZE);
+
+            GetWindowRect(item->hwnd, &rc);
+
+            total_height += rc.bottom - rc.top;
+            max_width = max(rc.right - rc.left, max_width);
+        }
+
+        SetWindowPos(ctrl->hwnd, NULL, 0, 0, max_width, total_height,
+                     SWP_NOZORDER|SWP_NOMOVE);
+
+        SetWindowPos(ctrl->wrapper_hwnd, NULL, 0, 0, max_width, total_height,
+                     SWP_NOZORDER|SWP_NOMOVE);
+
+        break;
+    }
     case IDLG_CCTRL_EDITBOX:
     case IDLG_CCTRL_SEPARATOR:
     case IDLG_CCTRL_MENU:
@@ -1317,6 +1348,15 @@ static void ctrl_container_reparent(FileDialogImpl *This, HWND parent)
                 if(font) SendMessageW(sub_ctrl->hwnd, WM_SETFONT, (WPARAM)font, TRUE);
             }
 
+            if (ctrl->type == IDLG_CCTRL_RADIOBUTTONLIST)
+            {
+                cctrl_item* item;
+                LIST_FOR_EACH_ENTRY(item, &ctrl->sub_items, cctrl_item, entry)
+                {
+                    if (font) SendMessageW(item->hwnd, WM_SETFONT, (WPARAM)font, TRUE);
+                }
+            }
+
             customctrl_resize(This, ctrl);
         }
     }
@@ -1368,6 +1408,75 @@ static LRESULT CALLBACK ctrl_container_wndproc(HWND hwnd, UINT umessage, WPARAM 
     }
 
     return FALSE;
+}
+
+static void radiobuttonlist_set_selected_item(FileDialogImpl *This, customctrl *ctrl, cctrl_item *item)
+{
+    cctrl_item *cursor;
+
+    LIST_FOR_EACH_ENTRY(cursor, &ctrl->sub_items, cctrl_item, entry)
+    {
+        SendMessageW(cursor->hwnd, BM_SETCHECK, (cursor == item) ? BST_CHECKED : BST_UNCHECKED, 0);
+    }
+}
+
+static LRESULT radiobuttonlist_on_bn_clicked(FileDialogImpl *This, HWND hwnd, HWND child)
+{
+    DWORD ctrl_id = (DWORD)GetWindowLongPtrW(hwnd, GWLP_ID);
+    customctrl *ctrl;
+    cctrl_item *item;
+    BOOL found_item=FALSE;
+
+    ctrl = get_cctrl_from_dlgid(This, ctrl_id);
+
+    if (!ctrl)
+    {
+        ERR("Can't find this control\n");
+        return 0;
+    }
+
+    LIST_FOR_EACH_ENTRY(item, &ctrl->sub_items, cctrl_item, entry)
+    {
+        if (item->hwnd == child)
+        {
+            found_item = TRUE;
+            break;
+        }
+    }
+
+    if (!found_item)
+    {
+        ERR("Can't find control item\n");
+        return 0;
+    }
+
+    radiobuttonlist_set_selected_item(This, ctrl, item);
+
+    cctrl_event_OnItemSelected(This, ctrl->id, item->id);
+
+    return 0;
+}
+
+static LRESULT radiobuttonlist_on_wm_command(FileDialogImpl *This, HWND hwnd, WPARAM wparam, LPARAM lparam)
+{
+    switch(HIWORD(wparam))
+    {
+    case BN_CLICKED:          return radiobuttonlist_on_bn_clicked(This, hwnd, (HWND)lparam);
+    }
+
+    return FALSE;
+}
+
+static LRESULT CALLBACK radiobuttonlist_proc(HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam)
+{
+    FileDialogImpl *This = (FileDialogImpl*)GetWindowLongPtrW(hwnd, GWLP_USERDATA);
+
+    switch(message)
+    {
+    case WM_COMMAND:        return radiobuttonlist_on_wm_command(This, hwnd, wparam, lparam);
+    }
+
+    return DefWindowProcW(hwnd, message, wparam, lparam);
 }
 
 static HRESULT init_custom_controls(FileDialogImpl *This)
@@ -1429,6 +1538,24 @@ static HRESULT init_custom_controls(FileDialogImpl *This)
 
         if (!RegisterClassW(&wc))
             ERR("Failed to register FloatNotifySink window class.\n");
+    }
+
+    if( !GetClassInfoW(COMDLG32_hInstance, radiobuttonlistW, &wc) ||
+        wc.hInstance != COMDLG32_hInstance)
+    {
+        wc.style            = CS_HREDRAW | CS_VREDRAW;
+        wc.lpfnWndProc      = radiobuttonlist_proc;
+        wc.cbClsExtra       = 0;
+        wc.cbWndExtra       = 0;
+        wc.hInstance        = COMDLG32_hInstance;
+        wc.hIcon            = 0;
+        wc.hCursor          = LoadCursorW(0, (LPWSTR)IDC_ARROW);
+        wc.hbrBackground    = (HBRUSH)(COLOR_BTNFACE + 1);
+        wc.lpszMenuName     = NULL;
+        wc.lpszClassName    = radiobuttonlistW;
+
+        if (!RegisterClassW(&wc))
+            ERR("Failed to register RadioButtonList window class.\n");
     }
 
     return S_OK;
@@ -3678,8 +3805,18 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddRadioButtonList(IFileDialogCusto
                                                                 DWORD dwIDCtl)
 {
     FileDialogImpl *This = impl_from_IFileDialogCustomize(iface);
-    FIXME("stub - %p (%d)\n", This, dwIDCtl);
-    return E_NOTIMPL;
+    customctrl *ctrl;
+    HRESULT hr;
+    TRACE("%p (%d)\n", This, dwIDCtl);
+
+    hr =  cctrl_create_new(This, dwIDCtl, NULL, radiobuttonlistW, 0, 0, 0, &ctrl);
+    if(SUCCEEDED(hr))
+    {
+        ctrl->type = IDLG_CCTRL_RADIOBUTTONLIST;
+        SetWindowLongPtrW(ctrl->hwnd, GWLP_USERDATA, (LPARAM)This);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI IFileDialogCustomize_fnAddCheckButton(IFileDialogCustomize *iface,
@@ -3955,6 +4092,29 @@ static HRESULT WINAPI IFileDialogCustomize_fnAddControlItem(IFileDialogCustomize
         AppendMenuW(hmenu, MF_STRING, dwIDItem, pszLabel);
         return S_OK;
     }
+    case IDLG_CCTRL_RADIOBUTTONLIST:
+    {
+        cctrl_item* item;
+
+        hr = add_item(ctrl, dwIDItem, pszLabel, &item);
+
+        if (SUCCEEDED(hr))
+        {
+            item->hwnd = CreateWindowExW(0, WC_BUTTONW, pszLabel,
+                WS_CHILD|WS_VISIBLE|WS_CLIPSIBLINGS|BS_RADIOBUTTON|BS_MULTILINE,
+                0, 0, 0, 0, ctrl->hwnd, ULongToHandle(dwIDItem), COMDLG32_hInstance, 0);
+
+            if (!item->hwnd)
+            {
+                ERR("Failed to create radio button\n");
+                list_remove(&item->entry);
+                item_free(item);
+                return E_FAIL;
+            }
+        }
+
+        return hr;
+    }
     default:
         break;
     }
@@ -4023,6 +4183,20 @@ static HRESULT WINAPI IFileDialogCustomize_fnRemoveControlItem(IFileDialogCustom
 
         return S_OK;
     }
+    case IDLG_CCTRL_RADIOBUTTONLIST:
+    {
+        cctrl_item* item;
+
+        item = get_item(ctrl, dwIDItem, 0, NULL);
+
+        if (!item)
+            return E_UNEXPECTED;
+
+        list_remove(&item->entry);
+        item_free(item);
+
+        return S_OK;
+    }
     default:
         break;
     }
@@ -4056,6 +4230,7 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetControlItemState(IFileDialogCust
     case IDLG_CCTRL_COMBOBOX:
     case IDLG_CCTRL_MENU:
     case IDLG_CCTRL_OPENDROPDOWN:
+    case IDLG_CCTRL_RADIOBUTTONLIST:
     {
         cctrl_item* item;
 
@@ -4178,6 +4353,20 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetControlItemState(IFileDialogCust
 
         return S_OK;
     }
+    case IDLG_CCTRL_RADIOBUTTONLIST:
+    {
+        cctrl_item* item;
+
+        item = get_item(ctrl, dwIDItem, CDCS_VISIBLE, NULL);
+
+        if (!item)
+            return E_UNEXPECTED;
+
+        /* Oddly, native allows setting this but doesn't seem to do anything with it. */
+        item->cdcstate = dwState;
+
+        return S_OK;
+    }
     default:
         break;
     }
@@ -4226,6 +4415,22 @@ static HRESULT WINAPI IFileDialogCustomize_fnGetSelectedControlItem(IFileDialogC
             WARN("no enabled items in open dropdown\n");
             return E_FAIL;
         }
+    case IDLG_CCTRL_RADIOBUTTONLIST:
+    {
+        cctrl_item* item;
+
+        LIST_FOR_EACH_ENTRY(item, &ctrl->sub_items, cctrl_item, entry)
+        {
+            if (SendMessageW(item->hwnd, BM_GETCHECK, 0, 0) == BST_CHECKED)
+            {
+                *pdwIDItem = item->id;
+                return S_OK;
+            }
+        }
+
+        WARN("no checked items in radio button list\n");
+        return E_FAIL;
+    }
     default:
         FIXME("Unsupported control type %d\n", ctrl->type);
     }
@@ -4256,6 +4461,20 @@ static HRESULT WINAPI IFileDialogCustomize_fnSetSelectedControlItem(IFileDialogC
             return E_FAIL;
 
         return S_OK;
+    }
+    case IDLG_CCTRL_RADIOBUTTONLIST:
+    {
+        cctrl_item* item;
+
+        item = get_item(ctrl, dwIDItem, 0, NULL);
+
+        if (item)
+        {
+            radiobuttonlist_set_selected_item(This, ctrl, item);
+            return S_OK;
+        }
+
+        return E_INVALIDARG;
     }
     default:
         FIXME("Unsupported control type %d\n", ctrl->type);
