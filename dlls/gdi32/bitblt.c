@@ -224,20 +224,21 @@ static DWORD blend_bits( const BITMAPINFO *src_info, const struct gdi_image_bits
 /* helper to retrieve either both colors or only the background color for monochrome blits */
 static void get_mono_dc_colors( HDC hdc, BITMAPINFO *info, int count )
 {
+    RGBQUAD *colors = info->bmiColors;
     COLORREF color = GetBkColor( hdc );
 
-    info->bmiColors[count - 1].rgbRed      = GetRValue( color );
-    info->bmiColors[count - 1].rgbGreen    = GetGValue( color );
-    info->bmiColors[count - 1].rgbBlue     = GetBValue( color );
-    info->bmiColors[count - 1].rgbReserved = 0;
+    colors[count - 1].rgbRed      = GetRValue( color );
+    colors[count - 1].rgbGreen    = GetGValue( color );
+    colors[count - 1].rgbBlue     = GetBValue( color );
+    colors[count - 1].rgbReserved = 0;
 
     if (count > 1)
     {
         color = GetTextColor( hdc );
-        info->bmiColors[0].rgbRed      = GetRValue( color );
-        info->bmiColors[0].rgbGreen    = GetGValue( color );
-        info->bmiColors[0].rgbBlue     = GetBValue( color );
-        info->bmiColors[0].rgbReserved = 0;
+        colors[0].rgbRed      = GetRValue( color );
+        colors[0].rgbGreen    = GetGValue( color );
+        colors[0].rgbBlue     = GetBValue( color );
+        colors[0].rgbReserved = 0;
     }
     info->bmiHeader.biClrUsed = count;
 }
