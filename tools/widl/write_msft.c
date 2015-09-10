@@ -1128,9 +1128,12 @@ static int encode_var(
 
 	if (typeoffset == typelib->typelib_segdir[MSFT_SEG_TYPEDESC].length) {
 	    int mix_field;
-	    
+
 	    if (target_type & 0x80000000) {
 		mix_field = ((target_type >> 16) & 0x3fff) | VT_BYREF;
+	    } else if (is_array(ref)) {
+		type_t *element_type = type_alias_get_aliasee(type_array_get_element(ref));
+		mix_field = get_type_vt(element_type) | VT_ARRAY | VT_BYREF;
 	    } else {
 		typedata = (void *)&typelib->typelib_segment_data[MSFT_SEG_TYPEDESC][target_type];
 		mix_field = ((typedata[0] >> 16) == 0x7fff)? 0x7fff: 0x7ffe;
