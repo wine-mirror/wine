@@ -49,7 +49,7 @@
 @ stub WsFlushBody
 @ stub WsFlushWriter
 @ stub WsFreeChannel
-@ stub WsFreeError
+@ stdcall WsFreeError(ptr)
 @ stub WsFreeHeap
 @ stub WsFreeListener
 @ stub WsFreeMessage

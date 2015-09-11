@@ -2,4 +2,5 @@ MODULE    = webservices.dll
 IMPORTLIB = webservices
 
 C_SRCS = \
-	main.c
+	main.c \
+	reader.c

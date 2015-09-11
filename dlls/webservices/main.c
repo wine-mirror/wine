@@ -42,13 +42,3 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 
     return TRUE;
 }
-
-/**************************************************************************
- *          WsCreateError		[webservices.@]
- */
-HRESULT WINAPI WsCreateError(const WS_ERROR_PROPERTY *properties, ULONG count, WS_ERROR **error)
-{
-    FIXME("%p %u %p: stub\n", properties, count, error);
-    if (error) *error = NULL;
-    return E_NOTIMPL;
-}
