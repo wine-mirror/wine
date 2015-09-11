@@ -804,6 +804,8 @@ static HRESULT add_item(customctrl* parent, DWORD itemid, LPCWSTR label, cctrl_i
     item->cdcstate = CDCS_VISIBLE|CDCS_ENABLED;
     list_add_tail(&parent->sub_items, &item->entry);
 
+    *result = item;
+
     return S_OK;
 }
 
