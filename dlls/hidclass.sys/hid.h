@@ -35,6 +35,9 @@
 
 typedef NTSTATUS (WINAPI *pAddDevice)(DRIVER_OBJECT *DriverObject, DEVICE_OBJECT *PhysicalDeviceObject);
 
+/* Ring buffer functions */
+struct ReportRingBuffer;
+
 typedef struct _BASE_DEVICE_EXTENSTION {
     HID_DEVICE_EXTENSION deviceExtension;
 
@@ -44,6 +47,7 @@ typedef struct _BASE_DEVICE_EXTENSTION {
     ULONG poll_interval;
     WCHAR *device_name;
     WCHAR *link_name;
+    struct ReportRingBuffer *ring_buffer;
     HANDLE halt_event;
     HANDLE thread;
 
@@ -51,6 +55,9 @@ typedef struct _BASE_DEVICE_EXTENSTION {
 
     /* Minidriver Specific stuff will end up here */
 } BASE_DEVICE_EXTENSION;
+
+void RingBuffer_Destroy(struct ReportRingBuffer *buffer) DECLSPEC_HIDDEN;
+struct ReportRingBuffer* RingBuffer_Create(UINT buffer_size) DECLSPEC_HIDDEN;
 
 typedef struct _minidriver
 {

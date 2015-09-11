@@ -178,6 +178,8 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
     CloseHandle(ext->halt_event);
 
     HeapFree(GetProcessHeap(), 0, ext->preparseData);
+    if (ext->ring_buffer)
+        RingBuffer_Destroy(ext->ring_buffer);
 
     entry = RemoveHeadList(&ext->irp_queue);
     while(entry != &ext->irp_queue)

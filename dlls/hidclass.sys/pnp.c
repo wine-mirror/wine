@@ -126,6 +126,8 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     ext->poll_interval = DEFAULT_POLL_INTERVAL;
     InitializeListHead(&ext->irp_queue);
 
+    ext->ring_buffer = RingBuffer_Create(sizeof(HID_XFER_PACKET) + ext->preparseData->caps.InputReportByteLength);
+
     return STATUS_SUCCESS;
 }
 
