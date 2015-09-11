@@ -95,6 +95,15 @@ static HRESULT set_error_prop( struct error *error, WS_ERROR_PROPERTY_ID id, con
     return S_OK;
 }
 
+static HRESULT get_error_prop( struct error *error, WS_ERROR_PROPERTY_ID id, void *buf, ULONG size )
+{
+    if (id >= error->prop_count || size != error_props[id].size)
+        return E_INVALIDARG;
+
+    memcpy( buf, error->prop[id].value, error->prop[id].valueSize );
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsCreateError		[webservices.@]
  */
@@ -139,4 +148,30 @@ void WINAPI WsFreeError( WS_ERROR *handle )
 
     TRACE( "%p\n", handle );
     heap_free( error );
+}
+
+/**************************************************************************
+ *          WsGetErrorProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, void *buf,
+                                   ULONG size )
+{
+    struct error *error = (struct error *)handle;
+
+    TRACE( "%p %u %p %u\n", handle, id, buf, size );
+    return get_error_prop( error, id, buf, size );
+}
+
+/**************************************************************************
+ *          WsSetErrorProperty		[webservices.@]
+ */
+HRESULT WINAPI WsSetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, const void *value,
+                                   ULONG size )
+{
+    struct error *error = (struct error *)handle;
+
+    TRACE( "%p %u %p %u\n", handle, id, value, size );
+
+    if (id == WS_ERROR_PROPERTY_LANGID) return WS_E_INVALID_OPERATION;
+    return set_error_prop( error, id, value, size );
 }

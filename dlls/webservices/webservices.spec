@@ -62,7 +62,7 @@
 @ stub WsGetChannelProperty
 @ stub WsGetCustomHeader
 @ stub WsGetDictionary
-@ stub WsGetErrorProperty
+@ stdcall WsGetErrorProperty(ptr long ptr long)
 @ stub WsGetErrorString
 @ stub WsGetFaultErrorDetail
 @ stub WsGetFaultErrorProperty
@@ -146,7 +146,7 @@
 @ stub WsSendMessage
 @ stub WsSendReplyMessage
 @ stub WsSetChannelProperty
-@ stub WsSetErrorProperty
+@ stdcall WsSetErrorProperty(ptr long ptr long)
 @ stub WsSetFaultErrorDetail
 @ stub WsSetFaultErrorProperty
 @ stub WsSetHeader
