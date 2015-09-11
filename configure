@@ -17823,6 +17823,7 @@ wine_fn_config_test dlls/wbemdisp/tests wbemdisp_test
 wine_fn_config_dll wbemprox enable_wbemprox clean
 wine_fn_config_test dlls/wbemprox/tests wbemprox_test
 wine_fn_config_dll webservices enable_webservices implib
+wine_fn_config_test dlls/webservices/tests webservices_test
 wine_fn_config_dll wer enable_wer implib
 wine_fn_config_test dlls/wer/tests wer_test
 wine_fn_config_dll wevtapi enable_wevtapi
