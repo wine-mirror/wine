@@ -1964,7 +1964,7 @@ static HRESULT WINAPI IXAudio2Impl_CommitChanges(IXAudio2 *iface,
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
 
-    FIXME("(%p)->(0x%x): stub!\n", This, operationSet);
+    TRACE("(%p)->(0x%x): stub!\n", This, operationSet);
 
     return E_NOTIMPL;
 }
@@ -1974,7 +1974,7 @@ static void WINAPI IXAudio2Impl_GetPerformanceData(IXAudio2 *iface,
 {
     IXAudio2Impl *This = impl_from_IXAudio2(iface);
 
-    FIXME("(%p)->(%p): stub!\n", This, pPerfData);
+    TRACE("(%p)->(%p): stub!\n", This, pPerfData);
 
     memset(pPerfData, 0, sizeof(*pPerfData));
 }
