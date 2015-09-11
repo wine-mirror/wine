@@ -981,11 +981,31 @@ BOOL CDECL MCIWndRegisterClass16(void)
     return MCIWndRegisterClass();
 }
 
+static LRESULT (WINAPI *pMCIWndProc)(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
+
+static LRESULT WINAPI MCIWndProc16(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+{
+    switch (msg)
+    {
+    case MCIWNDM_SENDSTRINGA:
+        lparam = (ULONG_PTR)MapSL(lparam);
+        break;
+
+    default:
+        break;
+    }
+
+    return CallWindowProcA(pMCIWndProc, hwnd, msg, wparam, lparam);
+}
+
 /***********************************************************************
  *                      MCIWndCreate(MSVIDEO.250)
  */
-HWND16 CDECL MCIWndCreate16(HWND16 hwnd, HINSTANCE16 hinst16,
-                              DWORD style, LPSTR file)
+HWND16 CDECL MCIWndCreate16(HWND16 parent, HINSTANCE16 hinst16,
+                            DWORD style, LPSTR file)
 {
-    return HWND_16(MCIWndCreateA(HWND_32(hwnd), 0, style, file));
+    HWND hwnd = MCIWndCreateA(HWND_32(parent), 0, style, file);
+    if (hwnd)
+        pMCIWndProc = (void *)SetWindowLongPtrA(hwnd, GWLP_WNDPROC, (ULONG_PTR)MCIWndProc16);
+    return HWND_16(hwnd);
 }
