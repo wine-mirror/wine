@@ -974,6 +974,14 @@ BOOL WINAPI VIDEO_LibMain(DWORD fdwReason, HINSTANCE hinstDLL, WORD ds,
 }
 
 /***********************************************************************
+ *                      MCIWndRegisterClass(MSVIDEO.251)
+ */
+BOOL CDECL MCIWndRegisterClass16(void)
+{
+    return MCIWndRegisterClass();
+}
+
+/***********************************************************************
  *                      MCIWndCreate(MSVIDEO.250)
  */
 HWND16 CDECL MCIWndCreate16(HWND16 hwnd, HINSTANCE16 hinst16,
