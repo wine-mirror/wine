@@ -5902,9 +5902,8 @@ static void test_publish_components(void)
     res = RegDeleteKeyA(HKEY_CURRENT_USER, keypath);
     ok(res == ERROR_SUCCESS, "RegDeleteKey failed %d\n", res);
 
-    res = RegCreateKeyA(HKEY_LOCAL_MACHINE, keypath2, &key);
-    ok(res == ERROR_SUCCESS, "RegCreateKey failed %d\n", res);
-
+    res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath2, 0, NULL, REG_OPTION_NON_VOLATILE,
+            MAXIMUM_ALLOWED | KEY_WOW64_64KEY, NULL, &key, NULL );
     res = RegSetValueExA(key, "english.txt", 0, REG_MULTI_SZ, data, size);
     ok(res == ERROR_SUCCESS, "RegSetValueEx failed %d\n", res);
     RegCloseKey(key);
@@ -5914,7 +5913,10 @@ static void test_publish_components(void)
             "english.txt", INSTALLMODE_DEFAULT, NULL, &size);
     ok(r == ERROR_SUCCESS, "MsiProvideQualifiedCompontent returned %d\n", r);
 
-    res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, keypath2);
+    if (pRegDeleteKeyExA)
+        res = pRegDeleteKeyExA(HKEY_LOCAL_MACHINE, keypath2, KEY_WOW64_64KEY, 0);
+    else
+        res = RegDeleteKeyA(HKEY_LOCAL_MACHINE, keypath2);
     ok(res == ERROR_SUCCESS, "RegDeleteKey failed %d\n", res);
 
     res = RegCreateKeyA(HKEY_CURRENT_USER, keypath, &key);
