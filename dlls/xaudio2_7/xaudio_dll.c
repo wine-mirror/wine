@@ -1188,6 +1188,8 @@ static void WINAPI XA2M_DestroyVoice(IXAudio2MasteringVoice *iface)
         return;
     }
 
+    This->running = FALSE;
+
     IAudioRenderClient_Release(This->render);
     This->render = NULL;
 
@@ -3068,10 +3070,12 @@ static DWORD WINAPI engine_threadproc(void *arg)
         if(This->stop_engine)
             break;
 
-        if(!This->running)
-            continue;
-
         EnterCriticalSection(&This->lock);
+
+        if(!This->running || !This->aclient){
+            LeaveCriticalSection(&This->lock);
+            continue;
+        }
 
         do_engine_tick(This);
 
