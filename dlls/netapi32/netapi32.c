@@ -506,10 +506,10 @@ static unsigned char ace_flags_to_samba( BYTE flags )
     return ret;
 }
 
-#define GENERIC_ALL_ACCESS     (1 << 28)
-#define GENERIC_EXECUTE_ACCESS (1 << 29)
-#define GENERIC_WRITE_ACCESS   (1 << 30)
-#define GENERIC_READ_ACCESS    (1 << 31)
+#define GENERIC_ALL_ACCESS     (1u << 28)
+#define GENERIC_EXECUTE_ACCESS (1u << 29)
+#define GENERIC_WRITE_ACCESS   (1u << 30)
+#define GENERIC_READ_ACCESS    (1u << 31)
 
 static unsigned int access_mask_to_samba( DWORD mask )
 {
