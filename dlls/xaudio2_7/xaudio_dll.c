@@ -80,6 +80,9 @@ static void dump_fmt(const WAVEFORMATEX *fmt)
         TRACE("dwChannelMask: %08x\n", fmtex->dwChannelMask);
         TRACE("Samples: %04x\n", fmtex->Samples.wReserved);
         TRACE("SubFormat: %s\n", wine_dbgstr_guid(&fmtex->SubFormat));
+    }else if(fmt->wFormatTag == WAVE_FORMAT_ADPCM){
+        ADPCMWAVEFORMAT *fmtadpcm = (void*)fmt;
+        TRACE("wSamplesPerBlock: %u\n", fmtadpcm->wSamplesPerBlock);
     }
 }
 
@@ -127,7 +130,7 @@ HRESULT WINAPI DllUnregisterServer(void)
 typedef struct _XA2Buffer {
     XAUDIO2_BUFFER xa2buffer;
     DWORD offs_bytes;
-    UINT32 latest_al_buf;
+    UINT32 latest_al_buf, looped, loop_end_bytes, play_end_bytes, cur_end_bytes;
 } XA2Buffer;
 
 typedef struct _IXAudio2Impl IXAudio2Impl;
@@ -625,7 +628,67 @@ static HRESULT WINAPI XA2SRC_SubmitSourceBuffer(IXAudio2SourceVoice *iface,
      * but pBuffer itself may be reused immediately */
     memcpy(&buf->xa2buffer, pBuffer, sizeof(*pBuffer));
 
-    buf->offs_bytes = 0;
+    /* convert samples offsets to bytes */
+    if(This->fmt->wFormatTag == WAVE_FORMAT_ADPCM){
+        /* ADPCM gives us a number of samples per block, so round down to
+         * nearest block and convert to bytes */
+        buf->xa2buffer.PlayBegin = buf->xa2buffer.PlayBegin / ((ADPCMWAVEFORMAT*)This->fmt)->wSamplesPerBlock * This->fmt->nBlockAlign;
+        buf->xa2buffer.PlayLength = buf->xa2buffer.PlayLength / ((ADPCMWAVEFORMAT*)This->fmt)->wSamplesPerBlock * This->fmt->nBlockAlign;
+        buf->xa2buffer.LoopBegin = buf->xa2buffer.LoopBegin / ((ADPCMWAVEFORMAT*)This->fmt)->wSamplesPerBlock * This->fmt->nBlockAlign;
+        buf->xa2buffer.LoopLength = buf->xa2buffer.LoopLength / ((ADPCMWAVEFORMAT*)This->fmt)->wSamplesPerBlock * This->fmt->nBlockAlign;
+    }else{
+        buf->xa2buffer.PlayBegin *= This->fmt->nBlockAlign;
+        buf->xa2buffer.PlayLength *= This->fmt->nBlockAlign;
+        buf->xa2buffer.LoopBegin *= This->fmt->nBlockAlign;
+        buf->xa2buffer.LoopLength *= This->fmt->nBlockAlign;
+    }
+
+    if(buf->xa2buffer.PlayLength == 0)
+        /* set to end of buffer */
+        buf->xa2buffer.PlayLength = buf->xa2buffer.AudioBytes - buf->xa2buffer.PlayBegin;
+
+    buf->play_end_bytes = buf->xa2buffer.PlayBegin + buf->xa2buffer.PlayLength;
+
+    if(buf->xa2buffer.LoopCount){
+        if(buf->xa2buffer.LoopLength == 0)
+            /* set to end of play range */
+            buf->xa2buffer.LoopLength = buf->play_end_bytes - buf->xa2buffer.LoopBegin;
+
+        if(buf->xa2buffer.LoopBegin >= buf->play_end_bytes){
+            /* this actually crashes on native xaudio 2.7 */
+            LeaveCriticalSection(&This->lock);
+            return XAUDIO2_E_INVALID_CALL;
+        }
+
+        buf->loop_end_bytes = buf->xa2buffer.LoopBegin + buf->xa2buffer.LoopLength;
+
+        /* xaudio 2.7 allows some invalid looping setups, but later versions
+         * return an error */
+        if(This->xa2->version > 27){
+            if(buf->loop_end_bytes > buf->play_end_bytes){
+                LeaveCriticalSection(&This->lock);
+                return XAUDIO2_E_INVALID_CALL;
+            }
+
+            if(buf->loop_end_bytes <= buf->xa2buffer.PlayBegin){
+                LeaveCriticalSection(&This->lock);
+                return XAUDIO2_E_INVALID_CALL;
+            }
+        }else{
+            if(buf->loop_end_bytes <= buf->xa2buffer.PlayBegin){
+                buf->xa2buffer.LoopCount = 0;
+                buf->loop_end_bytes = buf->play_end_bytes;
+            }
+        }
+    }else{
+        buf->xa2buffer.LoopLength = buf->xa2buffer.PlayLength;
+        buf->xa2buffer.LoopBegin = buf->xa2buffer.PlayBegin;
+        buf->loop_end_bytes = buf->play_end_bytes;
+    }
+
+    buf->offs_bytes = buf->xa2buffer.PlayBegin;
+    buf->cur_end_bytes = buf->loop_end_bytes;
+
     buf->latest_al_buf = -1;
 
     ++This->nbufs;
@@ -692,7 +755,15 @@ static HRESULT WINAPI XA2SRC_Discontinuity(IXAudio2SourceVoice *iface)
 static HRESULT WINAPI XA2SRC_ExitLoop(IXAudio2SourceVoice *iface, UINT32 OperationSet)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p, 0x%x\n", This, OperationSet);
+
+    EnterCriticalSection(&This->lock);
+
+    This->buffers[This->cur_buf].looped = XAUDIO2_LOOP_INFINITE;
+
+    LeaveCriticalSection(&This->lock);
+
     return S_OK;
 }
 
@@ -2908,12 +2979,12 @@ static BOOL xa2buffer_queue_period(XA2SourceImpl *src, XA2Buffer *buf, ALuint al
     UINT32 submit_bytes;
     const BYTE *submit_buf = NULL;
 
-    if(buf->offs_bytes >= buf->xa2buffer.AudioBytes){
+    if(buf->offs_bytes >= buf->cur_end_bytes){
         WARN("Shouldn't happen: Trying to push frames from a spent buffer?\n");
         return FALSE;
     }
 
-    submit_bytes = min(src->xa2->period_frames * src->submit_blocksize, buf->xa2buffer.AudioBytes - buf->offs_bytes);
+    submit_bytes = min(src->xa2->period_frames * src->submit_blocksize, buf->cur_end_bytes - buf->offs_bytes);
     submit_buf = buf->xa2buffer.pAudioData + buf->offs_bytes;
     buf->offs_bytes += submit_bytes;
 
@@ -2929,9 +3000,32 @@ static BOOL xa2buffer_queue_period(XA2SourceImpl *src, XA2Buffer *buf, ALuint al
 
     TRACE("queueing %u bytes, now %u in AL\n", submit_bytes, src->in_al_bytes);
 
-    return buf->offs_bytes < buf->xa2buffer.AudioBytes;
+    return buf->offs_bytes < buf->cur_end_bytes;
 }
 
+/* Looping:
+ *
+ * The looped section of a buffer is a subset of the play area which is looped
+ * LoopCount times.
+ *
+ *       v PlayBegin
+ *       vvvvvvvvvvvvvvvvvv PlayLength
+ *                        v (PlayEnd)
+ * [-----PPPLLLLLLLLPPPPPPP------]
+ *          ^ LoopBegin
+ *          ^^^^^^^^ LoopLength
+ *                 ^ (LoopEnd)
+ *
+ * In the simple case, playback will start at PlayBegin. At LoopEnd, playback
+ * will move to LoopBegin and repeat that loop LoopCount times. Then, playback
+ * will cease at LoopEnd.
+ *
+ * If PlayLength is zero, then PlayEnd is the end of the buffer.
+ *
+ * If LoopLength is zero, then LoopEnd is PlayEnd.
+ *
+ * For corner cases and version differences, see tests.
+ */
 static void update_source_state(XA2SourceImpl *src)
 {
     int i;
@@ -2985,15 +3079,35 @@ static void update_source_state(XA2SourceImpl *src)
         TRACE("%p: going to queue a period from buffer %u\n", src, src->cur_buf);
 
         /* starting from an empty buffer */
-        if(src->cb && src->cur_buf == src->first_buf && src->buffers[src->cur_buf].offs_bytes == 0)
+        if(src->cb && src->cur_buf == src->first_buf && src->buffers[src->cur_buf].offs_bytes == 0 && !src->buffers[src->cur_buf].looped)
             IXAudio2VoiceCallback_OnBufferStart(src->cb,
                     src->buffers[src->first_buf].xa2buffer.pContext);
 
         if(!xa2buffer_queue_period(src, &src->buffers[src->cur_buf],
                     src->al_bufs[(src->first_al_buf + src->al_bufs_used) % XAUDIO2_MAX_QUEUED_BUFFERS])){
-            /* buffer is spent, move on */
-            src->cur_buf++;
-            src->cur_buf %= XAUDIO2_MAX_QUEUED_BUFFERS;
+            XA2Buffer *cur = &src->buffers[src->cur_buf];
+
+            if(cur->looped < cur->xa2buffer.LoopCount){
+                if(cur->xa2buffer.LoopCount != XAUDIO2_LOOP_INFINITE)
+                    ++cur->looped;
+                else
+                    cur->looped = 1; /* indicate that we are executing a loop */
+
+                cur->offs_bytes = cur->xa2buffer.LoopBegin;
+                if(cur->looped == cur->xa2buffer.LoopCount)
+                    cur->cur_end_bytes = cur->play_end_bytes;
+                else
+                    cur->cur_end_bytes = cur->loop_end_bytes;
+
+                if(src->cb)
+                    IXAudio2VoiceCallback_OnLoopEnd(src->cb,
+                            src->buffers[src->cur_buf].xa2buffer.pContext);
+
+            }else{
+                /* buffer is spent, move on */
+                src->cur_buf++;
+                src->cur_buf %= XAUDIO2_MAX_QUEUED_BUFFERS;
+            }
         }
     }
 }
