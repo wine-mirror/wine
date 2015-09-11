@@ -3789,7 +3789,8 @@ static void test_GetNamedSecurityInfoA(void)
         ok(bret, "Failed to get Builtin Admins ACE.\n");
         flags = ((ACE_HEADER *)ace)->AceFlags;
         ok(flags == 0x0
-           || broken(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE|INHERITED_ACE)) /* w2k8 */,
+           || broken(flags == (INHERIT_ONLY_ACE|CONTAINER_INHERIT_ACE|INHERITED_ACE)) /* w2k8 */
+           || broken(flags == (OBJECT_INHERIT_ACE|CONTAINER_INHERIT_ACE)), /* win7 */
            "Builtin Admins ACE has unexpected flags (0x%x != 0x0)\n", flags);
         ok(ace->Mask == KEY_ALL_ACCESS || broken(ace->Mask == GENERIC_ALL) /* w2k8 */,
            "Builtin Admins ACE has unexpected mask (0x%x != 0x%x)\n", ace->Mask, KEY_ALL_ACCESS);
@@ -5884,13 +5885,13 @@ static void test_system_security_access(void)
 
     /* ACCESS_SYSTEM_SECURITY requires special privilege */
     res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, testkeyW, 0, NULL, 0, KEY_READ|ACCESS_SYSTEM_SECURITY, NULL, &hkey, NULL );
-    todo_wine ok( res == ERROR_PRIVILEGE_NOT_HELD, "got %d\n", res );
     if (res == ERROR_ACCESS_DENIED)
     {
         skip( "unprivileged user\n" );
         CloseHandle( token );
         return;
     }
+    todo_wine ok( res == ERROR_PRIVILEGE_NOT_HELD, "got %d\n", res );
 
     priv.PrivilegeCount = 1;
     priv.Privileges[0].Luid = luid;
@@ -5901,7 +5902,6 @@ static void test_system_security_access(void)
     ok( ret, "got %u\n", GetLastError());
 
     res = RegCreateKeyExW( HKEY_LOCAL_MACHINE, testkeyW, 0, NULL, 0, KEY_READ|ACCESS_SYSTEM_SECURITY, NULL, &hkey, NULL );
-    ok( !res, "got %d\n", res );
     if (res == ERROR_PRIVILEGE_NOT_HELD)
     {
         win_skip( "privilege not held\n" );
@@ -5909,6 +5909,7 @@ static void test_system_security_access(void)
         CloseHandle( token );
         return;
     }
+    ok( !res, "got %d\n", res );
 
     /* restore privileges */
     ret = AdjustTokenPrivileges( token, FALSE, priv_prev, 0, NULL, NULL );
