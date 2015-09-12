@@ -2608,6 +2608,7 @@ static void test_wctomb(void)
 
 static void test_tolower(void)
 {
+    WCHAR chw, lower;
     char ch, lch;
     int ret, len;
 
@@ -2638,7 +2639,10 @@ static void test_tolower(void)
     ch = 0xF4;
     errno = 0xdeadbeef;
     ret = p_tolower(ch);
-    len = LCMapStringA(0, LCMAP_LOWERCASE, &ch, 1, &lch, 1);
+    if(!MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, &ch, 1, &chw, 1) ||
+            LCMapStringW(CP_ACP, LCMAP_LOWERCASE, &chw, 1, &lower, 1) != 1 ||
+            (len = WideCharToMultiByte(CP_ACP, 0, &lower, 1, &lch, 1, NULL, NULL)) != 1)
+        len = 0;
     if(len)
         ok(ret==(unsigned char)lch || broken(ret==ch)/*WinXP-*/, "ret = %x\n", ret);
     else
@@ -2649,7 +2653,10 @@ static void test_tolower(void)
     ch = 0xD0;
     errno = 0xdeadbeef;
     ret = p_tolower(ch);
-    len = LCMapStringA(0, LCMAP_LOWERCASE, &ch, 1, &lch, 1);
+    if(!MultiByteToWideChar(CP_ACP, MB_ERR_INVALID_CHARS, &ch, 1, &chw, 1) ||
+            LCMapStringW(CP_ACP, LCMAP_LOWERCASE, &chw, 1, &lower, 1) != 1 ||
+            (len = WideCharToMultiByte(CP_ACP, 0, &lower, 1, &lch, 1, NULL, NULL)) != 1)
+        len = 0;
     if(len)
         ok(ret==(unsigned char)lch || broken(ret==ch)/*WinXP-*/, "ret = %x\n", ret);
     else
