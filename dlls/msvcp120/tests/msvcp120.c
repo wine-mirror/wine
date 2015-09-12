@@ -18,9 +18,24 @@
 
 #include <locale.h>
 #include <stdio.h>
+#include <math.h>
 
 #include "wine/test.h"
 #include "winbase.h"
+
+static inline float __port_infinity(void)
+{
+    static const unsigned __inf_bytes = 0x7f800000;
+    return *(const float *)&__inf_bytes;
+}
+#define INFINITY __port_infinity()
+
+static inline float __port_nan(void)
+{
+    static const unsigned __nan_bytes = 0x7fc00000;
+    return *(const float *)&__nan_bytes;
+}
+#define NAN __port_nan()
 
 typedef int MSVCRT_long;
 typedef unsigned char MSVCP_bool;
@@ -70,6 +85,7 @@ static _Cvtvec* (__cdecl *p__Getcvt)(_Cvtvec*);
 static void (CDECL *p__Call_once)(int *once, void (CDECL *func)(void));
 static void (CDECL *p__Call_onceEx)(int *once, void (CDECL *func)(void*), void *argv);
 static void (CDECL *p__Do_call)(void *this);
+static short (__cdecl *p__Dtest)(double *d);
 
 /* filesystem */
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
@@ -119,6 +135,8 @@ static BOOL init(void)
             "_Call_onceEx");
     SET(p__Do_call,
             "_Do_call");
+    SET(p__Dtest,
+            "_Dtest");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPEBD@Z");
@@ -405,6 +423,32 @@ static void test__Do_call(void)
     vtbl_func0 = &pfunc;
     p__Do_call(&vtbl_func0);
     ok(cnt == 1, "func was not called\n");
+}
+
+static void test__Dtest(void)
+{
+    double d;
+    short ret;
+
+    d = 0;
+    ret = p__Dtest(&d);
+    ok(ret == FP_ZERO, "_Dtest(0) returned %x\n", ret);
+
+    d = 1;
+    ret = p__Dtest(&d);
+    ok(ret == FP_NORMAL, "_Dtest(1) returned %x\n", ret);
+
+    d = -1;
+    ret = p__Dtest(&d);
+    ok(ret == FP_NORMAL, "_Dtest(-1) returned %x\n", ret);
+
+    d = INFINITY;
+    ret = p__Dtest(&d);
+    ok(ret == FP_INFINITE, "_Dtest(INF) returned %x\n", ret);
+
+    d = NAN;
+    ret = p__Dtest(&d);
+    ok(ret == FP_NAN, "_Dtest(NAN) returned %x\n", ret);
 }
 
 static void test_tr2_sys__File_size(void)
@@ -910,6 +954,7 @@ START_TEST(msvcp120)
     test__Getcvt();
     test__Call_once();
     test__Do_call();
+    test__Dtest();
 
     test_tr2_sys__File_size();
     test_tr2_sys__Equivalent();

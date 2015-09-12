@@ -3745,7 +3745,7 @@
 @ cdecl _Do_call(ptr)
 @ stub _Dscale
 @ stub _Dtento
-@ stub _Dtest
+@ cdecl _Dtest(ptr)
 @ stub _Dunscale
 @ extern _Eps
 @ stub _Exp
@@ -3755,7 +3755,7 @@
 @ stub _FDnorm
 @ stub _FDscale
 @ stub _FDtento
-@ stub _FDtest
+@ cdecl _FDtest(ptr)
 @ stub _FDunscale
 @ extern _FEps
 @ stub _FExp
@@ -3791,7 +3791,7 @@
 @ stub _LDint
 @ stub _LDscale
 @ stub _LDtento
-@ stub _LDtest
+@ cdecl _LDtest(ptr) _Dtest
 @ stub _LDunscale
 @ extern _LEps
 @ stub _LExp

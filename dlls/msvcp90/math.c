@@ -2226,3 +2226,37 @@ complex_double* __cdecl complex_double_sqrt(complex_double *ret, const complex_d
     complex_double c = { 0.5, 0 };
     return complex_double_pow(ret, l, &c);
 }
+
+static short dclass(double x)
+{
+    switch(_fpclass(x)) {
+    case _FPCLASS_SNAN:
+    case _FPCLASS_QNAN:
+        return FP_NAN;
+    case _FPCLASS_NINF:
+    case _FPCLASS_PINF:
+        return FP_INFINITE;
+    case _FPCLASS_ND:
+    case _FPCLASS_PD:
+        return FP_SUBNORMAL;
+    case _FPCLASS_NN:
+    case _FPCLASS_PN:
+    default:
+        return FP_NORMAL;
+    case _FPCLASS_NZ:
+    case _FPCLASS_PZ:
+        return FP_ZERO;
+    }
+}
+
+/* _Dtest */
+short __cdecl _Dtest(double *x)
+{
+    return dclass(*x);
+}
+
+/* _FDtest */
+short __cdecl _FDtest(float *x)
+{
+    return dclass(*x);
+}

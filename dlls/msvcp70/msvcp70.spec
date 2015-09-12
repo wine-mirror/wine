@@ -5044,14 +5044,14 @@
 @ extern _Denorm
 @ stub _Dnorm
 @ stub _Dscale
-@ stub _Dtest
+@ cdecl _Dtest(ptr)
 @ extern _Eps
 @ stub _Exp
 @ stub _FCosh
 @ extern _FDenorm
 @ stub _FDnorm
 @ stub _FDscale
-@ stub _FDtest
+@ cdecl _FDtest(ptr)
 @ extern _FEps
 @ stub _FExp
 @ extern _FInf
@@ -5069,7 +5069,7 @@
 @ stub _LCosh
 @ extern _LDenorm
 @ stub _LDscale
-@ stub _LDtest
+@ cdecl _LDtest(ptr) _Dtest
 @ extern _LEps
 @ stub _LExp
 @ extern _LInf

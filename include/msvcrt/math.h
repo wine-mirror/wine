@@ -146,6 +146,12 @@ static const union {
 #  endif
 #endif
 
+#define FP_INFINITE   1
+#define FP_NAN        2
+#define FP_NORMAL    -1
+#define FP_SUBNORMAL -2
+#define FP_ZERO       0
+
 #ifdef __cplusplus
 }
 #endif

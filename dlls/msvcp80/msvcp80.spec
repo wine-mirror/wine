@@ -5705,7 +5705,7 @@
 @ stub _Dnorm
 @ stub _Dscale
 @ stub _Dtentox
-@ stub _Dtest
+@ cdecl _Dtest(ptr)
 @ stub _Dunscale
 @ extern _Eps
 @ stub _Exp
@@ -5714,7 +5714,7 @@
 @ stub _FDnorm
 @ stub _FDscale
 @ stub _FDtentox
-@ stub _FDtest
+@ cdecl _FDtest(ptr)
 @ stub _FDunscale
 @ extern _FEps
 @ stub _FExp
@@ -5736,7 +5736,7 @@
 @ extern _LDenorm
 @ stub _LDscale
 @ stub _LDtentox
-@ stub _LDtest
+@ cdecl _LDtest(ptr) _Dtest
 @ stub _LDunscale
 @ extern _LEps
 @ stub _LExp

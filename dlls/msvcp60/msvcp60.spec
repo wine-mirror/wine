@@ -4258,14 +4258,14 @@
 @ extern _Denorm _Denorm
 @ stub _Dnorm
 @ stub _Dscale
-@ stub _Dtest
+@ cdecl _Dtest(ptr)
 @ extern _Eps _Eps
 @ stub _Exp
 @ stub _FCosh
 @ extern _FDenorm _FDenorm
 @ stub _FDnorm
 @ stub _FDscale
-@ stub _FDtest
+@ cdecl _FDtest(ptr)
 @ extern _FEps _FEps
 @ stub _FExp
 @ extern _FInf _FInf
@@ -4282,7 +4282,7 @@
 @ stub _LCosh
 @ extern _LDenorm _LDenorm
 @ stub _LDscale
-@ stub _LDtest
+@ cdecl _LDtest(ptr) _Dtest
 @ extern _LEps _LEps
 @ stub _LExp
 @ extern _LInf _LInf

@@ -3686,7 +3686,7 @@
 @ cdecl _Do_call(ptr) msvcp120._Do_call
 @ stub _Dscale
 @ stub _Dtento
-@ stub _Dtest
+@ cdecl _Dtest(ptr) msvcp120._Dtest
 @ stub _Dunscale
 @ extern _Eps msvcp120._Eps
 @ stub _Exp
@@ -3696,7 +3696,7 @@
 @ stub _FDnorm
 @ stub _FDscale
 @ stub _FDtento
-@ stub _FDtest
+@ cdecl _FDtest(ptr) msvcp120._FDtest
 @ stub _FDunscale
 @ extern _FEps msvcp120._FEps
 @ stub _FExp
@@ -3734,7 +3734,7 @@
 @ stub _LDint
 @ stub _LDscale
 @ stub _LDtento
-@ stub _LDtest
+@ cdecl _LDtest(ptr) msvcp120._LDtest
 @ stub _LDunscale
 @ extern _LEps msvcp120._LEps
 @ stub _LExp
