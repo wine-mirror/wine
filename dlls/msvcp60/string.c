@@ -22,7 +22,6 @@
 
 #include "msvcp.h"
 #include "stdio.h"
-#include "assert.h"
 
 #include "windef.h"
 #include "winbase.h"
@@ -1412,15 +1411,29 @@ basic_string_char* __cdecl MSVCP_basic_string_char_concatenate_cstr_bstr(basic_s
 
 /* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z */
 /* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAD_K@Z */
-/* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z */
-/* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_operator_at, 8)
 char* __thiscall MSVCP_basic_string_char_operator_at(
         basic_string_char *this, MSVCP_size_t pos)
 {
     TRACE("%p %lu\n", this, pos);
 
-    assert(this->size >= pos);
+    if(!this->ptr || pos>this->size)
+        return (char*)basic_string_char__Nullstr();
+
+    basic_string_char__Freeze(this);
+    return this->ptr+pos;
+}
+
+/* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z */
+/* ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_operator_at_const, 8)
+const char* __thiscall MSVCP_basic_string_char_operator_at_const(
+        const basic_string_char *this, MSVCP_size_t pos)
+{
+    TRACE("%p %lu\n", this, pos);
+
+    if(!this->ptr)
+        return basic_string_char__Nullstr();
     return this->ptr+pos;
 }
 
@@ -2935,15 +2948,29 @@ basic_string_wchar* __cdecl MSVCP_basic_string_wchar_concatenate_cstr_bstr(basic
 
 /* ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAGI@Z */
 /* ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAAEAG_K@Z */
-/* ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEABGI@Z */
-/* ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBAAEBG_K@Z */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_operator_at, 8)
 wchar_t* __thiscall MSVCP_basic_string_wchar_operator_at(
         basic_string_wchar *this, MSVCP_size_t pos)
 {
     TRACE("%p %lu\n", this, pos);
 
-    assert(this->size >= pos);
+    if(!this->ptr || pos>this->size)
+        return (wchar_t*)basic_string_wchar__Nullstr();
+
+    basic_string_wchar__Freeze(this);
+    return this->ptr+pos;
+}
+
+/* ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEABGI@Z */
+/* ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBAAEBG_K@Z */
+DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_operator_at_const, 8)
+const wchar_t* __thiscall MSVCP_basic_string_wchar_operator_at_const(
+        const basic_string_wchar *this, MSVCP_size_t pos)
+{
+    TRACE("%p %lu\n", this, pos);
+
+    if(!this->ptr)
+        return basic_string_wchar__Nullstr();
     return this->ptr+pos;
 }
 

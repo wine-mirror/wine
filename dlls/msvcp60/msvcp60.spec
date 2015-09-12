@@ -1535,12 +1535,12 @@
 @ cdecl -arch=win64 ??9std@@YA_NPEBGAEBV?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@0@@Z(ptr ptr) MSVCP_basic_string_wchar_not_equal_cstr_str
 @ thiscall -arch=win32 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAEAADI@Z(ptr long) MSVCP_basic_string_char_operator_at
 @ cdecl -arch=win64 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAAAEAD_K@Z(ptr long) MSVCP_basic_string_char_operator_at
-@ thiscall -arch=win32 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z(ptr long) MSVCP_basic_string_char_operator_at
-@ cdecl -arch=win64 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z(ptr long) MSVCP_basic_string_char_operator_at
+@ thiscall -arch=win32 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEABDI@Z(ptr long) MSVCP_basic_string_char_operator_at_const
+@ cdecl -arch=win64 ??A?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEBAAEBD_K@Z(ptr long) MSVCP_basic_string_char_operator_at_const
 @ thiscall -arch=win32 ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAEAAGI@Z(ptr long) MSVCP_basic_string_wchar_operator_at
 @ cdecl -arch=win64 ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAAAEAG_K@Z(ptr long) MSVCP_basic_string_wchar_operator_at
-@ thiscall -arch=win32 ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEABGI@Z(ptr long) MSVCP_basic_string_wchar_operator_at
-@ cdecl -arch=win64 ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBAAEBG_K@Z(ptr long) MSVCP_basic_string_wchar_operator_at
+@ thiscall -arch=win32 ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QBEABGI@Z(ptr long) MSVCP_basic_string_wchar_operator_at_const
+@ cdecl -arch=win64 ??A?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEBAAEBG_K@Z(ptr long) MSVCP_basic_string_wchar_operator_at_const
 @ thiscall -arch=win32 ??Bid@locale@std@@QAEIXZ(ptr) locale_id_operator_size_t
 @ cdecl -arch=win64 ??Bid@locale@std@@QEAA_KXZ(ptr) locale_id_operator_size_t
 @ thiscall -arch=win32 ??Bios_base@std@@QBEPAXXZ(ptr) ios_base_op_fail
