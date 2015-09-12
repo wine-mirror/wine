@@ -114,9 +114,7 @@ static HRESULT parse_header(BYTE *header, LONGLONG *plen, LONGLONG *pduration)
     int bitrate_index, freq_index, lsf = 1, mpeg1, layer, padding, bitrate, length;
     LONGLONG duration;
 
-    if (!(header[0] == 0xff && ((header[1]>>5)&0x7) == 0x7 &&
-          ((header[1]>>1)&0x3) != 0 && ((header[2]>>4)&0xf) != 0xf &&
-          ((header[2]>>2)&0x3) != 0x3))
+    if (MPEGSplitter_head_check(header) != MPEG_AUDIO_HEADER)
     {
         FIXME("Not a valid header: %02x:%02x:%02x:%02x\n", header[0], header[1], header[2], header[3]);
         return E_INVALIDARG;
