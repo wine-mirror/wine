@@ -2691,7 +2691,7 @@ static UINT msi_dialog_selection_tree( msi_dialog *dialog, MSIRECORD *rec )
 
     /* create the treeview control */
     style = TVS_HASLINES | TVS_HASBUTTONS | TVS_LINESATROOT;
-    style |= WS_GROUP | WS_VSCROLL;
+    style |= WS_GROUP | WS_VSCROLL | WS_TABSTOP;
     control = msi_dialog_add_control( dialog, rec, WC_TREEVIEWW, style );
     if (!control)
     {
