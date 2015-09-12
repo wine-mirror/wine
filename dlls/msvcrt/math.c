@@ -2683,3 +2683,31 @@ int CDECL MSVCR120__dsign(double x)
 {
     return signbit(x) ? 0x8000 : 0;
 }
+
+/*********************************************************************
+ *      fminf (MSVCR120.@)
+ */
+float CDECL MSVCR120_fminf(float x, float y)
+{
+    if(isnanf(x))
+        return y;
+    if(isnanf(y))
+        return x;
+    if(x==0 && y==0)
+        return signbit(x) ? x : y;
+    return x<y ? x : y;
+}
+
+/*********************************************************************
+ *      fmin (MSVCR120.@)
+ */
+double CDECL MSVCR120_fmin(double x, double y)
+{
+    if(isnan(x))
+        return y;
+    if(isnan(y))
+        return x;
+    if(x==0 && y==0)
+        return signbit(x) ? x : y;
+    return x<y ? x : y;
+}

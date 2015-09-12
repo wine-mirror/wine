@@ -2167,9 +2167,9 @@
 @ cdecl fmax(double double) MSVCR120_fmax
 @ cdecl fmaxf(float float) MSVCR120_fmaxf
 @ cdecl fmaxl(double double) MSVCR120_fmax
-@ stub fmin
-@ stub fminf
-@ stub fminl
+@ cdecl fmin(double double) MSVCR120_fmin
+@ cdecl fminf(float float) MSVCR120_fminf
+@ cdecl fminl(double double) MSVCR120_fmin
 @ cdecl fmod(double double) MSVCRT_fmod
 @ cdecl -arch=arm,x86_64 fmodf(float float) MSVCRT_fmodf
 @ cdecl fopen(str str) MSVCRT_fopen
