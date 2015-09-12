@@ -122,9 +122,9 @@ static HRESULT WAVEParser_Sample(LPVOID iface, IMediaSample * pSample, DWORD_PTR
         pin->rtCurrent = pin->rtNext;
         pin->rtNext = rtSampleStop;
 
-        IMediaSample_SetPreroll(newsample, 0);
-        IMediaSample_SetDiscontinuity(newsample, 0);
-        IMediaSample_SetSyncPoint(newsample, 1);
+        IMediaSample_SetPreroll(newsample, FALSE);
+        IMediaSample_SetDiscontinuity(newsample, FALSE);
+        IMediaSample_SetSyncPoint(newsample, TRUE);
 
         hr = IAsyncReader_Request(pin->pReader, newsample, 0);
     }
