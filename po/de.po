@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-09-02 12:17+0200\n"
+"PO-Revision-Date: 2015-09-13 17:46+0200\n"
 "Last-Translator: Florian Pelz\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -1515,7 +1515,7 @@ msgstr "CMC-Antwort"
 
 #: crypt32.rc:105
 msgid "Unsigned CMC Request"
-msgstr "Unsignierte-CMC-Antwort"
+msgstr "Unsignierte CMC-Anfrage"
 
 #: crypt32.rc:106
 msgid "CMC Status Info"
@@ -1695,15 +1695,15 @@ msgstr "Windows-Hardware-Treiber-Verifizierung"
 
 #: crypt32.rc:150 cryptui.rc:134
 msgid "Windows System Component Verification"
-msgstr "Windows-System-Komponenten-Verifizierung"
+msgstr "Windows-Systemkomponenten-Verifizierung"
 
 #: crypt32.rc:151 cryptui.rc:135
 msgid "OEM Windows System Component Verification"
-msgstr "OEM-Windows-System-Komponenten-Verifizierung"
+msgstr "OEM-Windows-Systemkomponenten-Verifizierung"
 
 #: crypt32.rc:152 cryptui.rc:136
 msgid "Embedded Windows System Component Verification"
-msgstr "Embedded-Windows-System-Komponenten-Verifizierung"
+msgstr "Embedded-Windows-Systemkomponenten-Verifizierung"
 
 #: crypt32.rc:153 cryptui.rc:143
 msgid "Key Pack Licenses"
@@ -1735,7 +1735,7 @@ msgstr "Dokumentensignatur"
 
 #: crypt32.rc:160
 msgid "IP security IKE intermediate"
-msgstr "Dazwischenliegende IP-Sicherheits-IKE"
+msgstr "Intermediäre IP-Sicherheits-IKE"
 
 #: crypt32.rc:161 cryptui.rc:132
 msgid "File Recovery"
@@ -1775,7 +1775,7 @@ msgstr "Persönlich"
 
 #: crypt32.rc:174
 msgid "Intermediate Certification Authorities"
-msgstr "Zwischenzertifizierungsstellen"
+msgstr "Intermediäre Zertifizierungsstellen"
 
 #: crypt32.rc:175
 msgid "Other People"
@@ -6843,9 +6843,9 @@ msgstr ""
 "Protokollierung und Benutzeroberfläche für die oberen Befehle anpassen:\n"
 "\t/l[*][i|w|e|a|r|u|c|m|o|p|v|][+|!] Protokolldatei\n"
 "\t/q{|n|b|r|f|n+|b+|b-}\n"
-"MSI-Service registrieren:\n"
+"MSI-Dienst registrieren:\n"
 "\t/y\n"
-"Registrierung des MSI-Service aufheben:\n"
+"Registrierung des MSI-Dienstes aufheben:\n"
 "\t/z\n"
 "Diese Hilfe anzeigen:\n"
 "\t/help\n"
@@ -6921,7 +6921,7 @@ msgstr "Vollständige Frames (Unkomprimiert)"
 
 #: msvidc32.rc:29
 msgid "Wine Video 1 video codec"
-msgstr "Wine-Video-1-Video-Codec"
+msgstr "Wine-Video-1-Videocodec"
 
 #: oleacc.rc:31
 msgid "unknown object"
@@ -10533,7 +10533,7 @@ msgstr "DHCP aktiviert"
 
 #: ipconfig.rc:49
 msgid "Default gateway"
-msgstr "Standard-Gateway"
+msgstr "Standardgateway"
 
 #: ipconfig.rc:50
 msgid "IPv6 address"
@@ -12919,7 +12919,7 @@ msgstr "Die Prozessoraffinität konnte nicht geändert werden"
 
 #: taskmgr.rc:322
 msgid "System Idle Process"
-msgstr "Leerlauf-Prozess"
+msgstr "Leerlaufprozess"
 
 #: taskmgr.rc:323
 msgid "Not Responding"
@@ -13060,7 +13060,7 @@ msgstr ""
 
 #: winecfg.rc:143
 msgid "Windows registration information"
-msgstr "Windows-Registrierungs-Informationen"
+msgstr "Windows-Registrierungsinformationen"
 
 #: winecfg.rc:144
 msgid "&Owner:"
@@ -13790,7 +13790,7 @@ msgstr "Dies ist ein Test"
 
 #: wineconsole.rc:44
 msgid "wineconsole: Couldn't parse event id\n"
-msgstr "wineconsole: Ereignis-ID konnte nicht geparset werden\n"
+msgstr "wineconsole: Parsen der Ereignis-ID fehlgeschlagen\n"
 
 #: wineconsole.rc:45
 msgid "wineconsole: Invalid backend\n"
