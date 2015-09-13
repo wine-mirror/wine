@@ -520,6 +520,7 @@ static void test_createswapchain(void)
     IUnknown_Release(obj);
     refcount = IDXGIDevice_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(creation_desc.OutputWindow);
 }
 
 static void test_create_factory(void)
