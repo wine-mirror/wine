@@ -172,10 +172,10 @@ done:
 
 static void test_create_surface(void)
 {
-    ID3D10Texture2D *texture;
-    IDXGISurface *surface;
     DXGI_SURFACE_DESC desc;
+    IDXGISurface *surface;
     IDXGIDevice *device;
+    IUnknown *texture;
     ULONG refcount;
     HRESULT hr;
 
@@ -196,7 +196,12 @@ static void test_create_surface(void)
 
     hr = IDXGISurface_QueryInterface(surface, &IID_ID3D10Texture2D, (void **)&texture);
     ok(SUCCEEDED(hr), "Surface should implement ID3D10Texture2D\n");
-    if (SUCCEEDED(hr)) ID3D10Texture2D_Release(texture);
+    IUnknown_Release(texture);
+
+    hr = IDXGISurface_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Surface should implement ID3D11Texture2D.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(texture);
 
     IDXGISurface_Release(surface);
     refcount = IDXGIDevice_Release(device);
