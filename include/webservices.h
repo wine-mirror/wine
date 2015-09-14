@@ -25,10 +25,11 @@ extern "C" {
 
 typedef struct _WS_ERROR WS_ERROR;
 typedef struct _WS_HEAP WS_HEAP;
-typedef struct _WS_STRUCT_DESCRIPTION WS_STRUCT_DESCRIPTION;
 typedef struct _WS_XML_BUFFER WS_XML_BUFFER;
 typedef struct _WS_XML_READER WS_XML_READER;
-typedef struct _WS_XML_STRING WS_XML_STRING;
+
+struct _WS_STRUCT_DESCRIPTION;
+struct _WS_XML_STRING;
 
 typedef enum {
     WS_ERROR_PROPERTY_STRING_COUNT,
@@ -140,10 +141,10 @@ typedef struct _WS_XML_READER_STREAM_INPUT {
 } WS_XML_READER_STREAM_INPUT;
 
 typedef struct _WS_XML_DICTIONARY {
-    GUID           guid;
-    WS_XML_STRING *strings;
-    ULONG          stringCount;
-    BOOL           isConst;
+    GUID                   guid;
+    struct _WS_XML_STRING *strings;
+    ULONG                  stringCount;
+    BOOL                   isConst;
 } WS_XML_DICTIONARY;
 
 typedef struct _WS_XML_STRING {
@@ -254,8 +255,8 @@ typedef struct _WS_STRUCT_DESCRIPTION {
     ULONG fieldCount;
     WS_XML_STRING *typeLocalName;
     WS_XML_STRING *typeNs;
-    WS_STRUCT_DESCRIPTION *parentType;
-    WS_STRUCT_DESCRIPTION **subTypes;
+    struct _WS_STRUCT_DESCRIPTION *parentType;
+    struct _WS_STRUCT_DESCRIPTION **subTypes;
     ULONG subTypeCount;
     ULONG structOptions;
 } WS_STRUCT_DESCRIPTION;
