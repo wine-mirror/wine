@@ -333,7 +333,7 @@ static int CALLBACK CompareFunc(LPARAM lParam1, LPARAM lParam2, LPARAM lParamSor
     if (g_columnToSort == ~0U)
         g_columnToSort = 0;
     
-    if (g_columnToSort == 1 && l->dwValType != r->dwValType)
+    if (g_columnToSort == 1)
         return g_invertSort ? (int)r->dwValType - (int)l->dwValType : (int)l->dwValType - (int)r->dwValType;
     if (g_columnToSort == 2) {
         /* FIXME: Sort on value */
