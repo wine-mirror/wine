@@ -94,9 +94,11 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
     return S_OK;
 }
 
-static inline struct d3d10_input_layout *impl_from_ID3D10InputLayout(ID3D10InputLayout *iface)
+/* ID3D10InputLayout methods */
+
+static inline struct d3d_input_layout *impl_from_ID3D10InputLayout(ID3D10InputLayout *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_input_layout, ID3D10InputLayout_iface);
+    return CONTAINING_RECORD(iface, struct d3d_input_layout, ID3D10InputLayout_iface);
 }
 
 /* IUnknown methods */
@@ -123,7 +125,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_input_layout_QueryInterface(ID3D10InputLa
 
 static ULONG STDMETHODCALLTYPE d3d10_input_layout_AddRef(ID3D10InputLayout *iface)
 {
-    struct d3d10_input_layout *This = impl_from_ID3D10InputLayout(iface);
+    struct d3d_input_layout *This = impl_from_ID3D10InputLayout(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -140,7 +142,7 @@ static ULONG STDMETHODCALLTYPE d3d10_input_layout_AddRef(ID3D10InputLayout *ifac
 
 static ULONG STDMETHODCALLTYPE d3d10_input_layout_Release(ID3D10InputLayout *iface)
 {
-    struct d3d10_input_layout *This = impl_from_ID3D10InputLayout(iface);
+    struct d3d_input_layout *This = impl_from_ID3D10InputLayout(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -165,7 +167,7 @@ static void STDMETHODCALLTYPE d3d10_input_layout_GetDevice(ID3D10InputLayout *if
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_GetPrivateData(ID3D10InputLayout *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d10_input_layout *layout = impl_from_ID3D10InputLayout(iface);
+    struct d3d_input_layout *layout = impl_from_ID3D10InputLayout(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -176,7 +178,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_input_layout_GetPrivateData(ID3D10InputLa
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_SetPrivateData(ID3D10InputLayout *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d10_input_layout *layout = impl_from_ID3D10InputLayout(iface);
+    struct d3d_input_layout *layout = impl_from_ID3D10InputLayout(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -187,7 +189,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_input_layout_SetPrivateData(ID3D10InputLa
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_SetPrivateDataInterface(ID3D10InputLayout *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d10_input_layout *layout = impl_from_ID3D10InputLayout(iface);
+    struct d3d_input_layout *layout = impl_from_ID3D10InputLayout(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
@@ -207,20 +209,20 @@ static const struct ID3D10InputLayoutVtbl d3d10_input_layout_vtbl =
     d3d10_input_layout_SetPrivateDataInterface,
 };
 
-static void STDMETHODCALLTYPE d3d10_input_layout_wined3d_object_destroyed(void *parent)
+static void STDMETHODCALLTYPE d3d_input_layout_wined3d_object_destroyed(void *parent)
 {
-    struct d3d10_input_layout *layout = parent;
+    struct d3d_input_layout *layout = parent;
 
     wined3d_private_store_cleanup(&layout->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
-static const struct wined3d_parent_ops d3d10_input_layout_wined3d_parent_ops =
+static const struct wined3d_parent_ops d3d_input_layout_wined3d_parent_ops =
 {
-    d3d10_input_layout_wined3d_object_destroyed,
+    d3d_input_layout_wined3d_object_destroyed,
 };
 
-HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d_device *device,
+HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d_device *device,
         const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
         const void *shader_byte_code, SIZE_T shader_byte_code_length)
 {
@@ -242,7 +244,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d_de
     }
 
     hr = wined3d_vertex_declaration_create(device->wined3d_device, wined3d_elements, element_count,
-            layout, &d3d10_input_layout_wined3d_parent_ops, &layout->wined3d_decl);
+            layout, &d3d_input_layout_wined3d_parent_ops, &layout->wined3d_decl);
     HeapFree(GetProcessHeap(), 0, wined3d_elements);
     if (FAILED(hr))
     {
@@ -256,7 +258,7 @@ HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d_de
     return S_OK;
 }
 
-struct d3d10_input_layout *unsafe_impl_from_ID3D10InputLayout(ID3D10InputLayout *iface)
+struct d3d_input_layout *unsafe_impl_from_ID3D10InputLayout(ID3D10InputLayout *iface)
 {
     if (!iface)
         return NULL;

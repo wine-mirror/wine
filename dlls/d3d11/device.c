@@ -728,7 +728,7 @@ static void STDMETHODCALLTYPE d3d10_device_IASetInputLayout(ID3D10Device1 *iface
         ID3D10InputLayout *input_layout)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_input_layout *layout = unsafe_impl_from_ID3D10InputLayout(input_layout);
+    struct d3d_input_layout *layout = unsafe_impl_from_ID3D10InputLayout(input_layout);
 
     TRACE("iface %p, input_layout %p\n", iface, input_layout);
 
@@ -1426,7 +1426,7 @@ static void STDMETHODCALLTYPE d3d10_device_IAGetInputLayout(ID3D10Device1 *iface
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct wined3d_vertex_declaration *wined3d_declaration;
-    struct d3d10_input_layout *input_layout_impl;
+    struct d3d_input_layout *input_layout_impl;
 
     TRACE("iface %p, input_layout %p.\n", iface, input_layout);
 
@@ -2207,7 +2207,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device1 *i
         ID3D10InputLayout **input_layout)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_input_layout *object;
+    struct d3d_input_layout *object;
     HRESULT hr;
 
     TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p, "
@@ -2219,7 +2219,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device1 *i
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3d10_input_layout_init(object, This, element_descs, element_count,
+    hr = d3d_input_layout_init(object, This, element_descs, element_count,
             shader_byte_code, shader_byte_code_length);
     if (FAILED(hr))
     {

@@ -208,7 +208,7 @@ struct d3d_shader_resource_view *unsafe_impl_from_ID3D10ShaderResourceView(
         ID3D10ShaderResourceView *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10InputLayout */
-struct d3d10_input_layout
+struct d3d_input_layout
 {
     ID3D10InputLayout ID3D10InputLayout_iface;
     LONG refcount;
@@ -217,10 +217,10 @@ struct d3d10_input_layout
     struct wined3d_vertex_declaration *wined3d_decl;
 };
 
-HRESULT d3d10_input_layout_init(struct d3d10_input_layout *layout, struct d3d_device *device,
+HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d_device *device,
         const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
         const void *shader_byte_code, SIZE_T shader_byte_code_length) DECLSPEC_HIDDEN;
-struct d3d10_input_layout *unsafe_impl_from_ID3D10InputLayout(ID3D10InputLayout *iface) DECLSPEC_HIDDEN;
+struct d3d_input_layout *unsafe_impl_from_ID3D10InputLayout(ID3D10InputLayout *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10VertexShader */
 struct d3d10_vertex_shader
