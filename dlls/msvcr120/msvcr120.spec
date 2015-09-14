@@ -291,6 +291,7 @@
 @ stub -arch=i386 ??1_SpinLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_SpinLock@details@Concurrency@@QEAA@XZ
 @ stub -arch=i386 ??1_StructuredTaskCollection@details@Concurrency@@QAE@XZ
+@ stub -arch=win64 ??1_StructuredTaskCollection@details@Concurrency@@QEAA@XZ
 @ stub -arch=arm ??1_TaskCollection@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1_TaskCollection@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_TaskCollection@details@Concurrency@@QEAA@XZ
@@ -398,7 +399,8 @@
 @ stub -arch=win32 ?Alloc@Concurrency@@YAPAXI@Z
 @ stub -arch=win64 ?Alloc@Concurrency@@YAPEAX_K@Z
 @ stub ?Block@Context@Concurrency@@SAXXZ
-@ stub ?CaptureCallstack@platform@details@Concurrency@@YAIPAPAXII@Z
+@ stub -arch=win32 ?CaptureCallstack@platform@details@Concurrency@@YAIPAPAXII@Z
+@ stub -arch=win64 ?CaptureCallstack@platform@details@Concurrency@@YA_KPEAPEAX_K1@Z
 @ stub -arch=win32 ?Create@CurrentScheduler@Concurrency@@SAXABVSchedulerPolicy@2@@Z
 @ stub -arch=win64 ?Create@CurrentScheduler@Concurrency@@SAXAEBVSchedulerPolicy@2@@Z
 @ stub -arch=win32 ?Create@Scheduler@Concurrency@@SAPAV12@ABVSchedulerPolicy@2@@Z
@@ -1637,6 +1639,7 @@
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr)
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr)
 @ cdecl -arch=i386 _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
+@ stub -arch=win64 _set_FMA3_enable
 @ cdecl _set_abort_behavior(long long) MSVCRT__set_abort_behavior
 @ cdecl _set_controlfp(long long)
 @ cdecl _set_doserrno(long)
