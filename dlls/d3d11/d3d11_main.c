@@ -157,6 +157,13 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
             adapter, debug_d3d_driver_type(driver_type), swrast, flags, feature_levels, levels, sdk_version,
             device_out, obtained_feature_level, immediate_context);
 
+    if (device_out)
+        *device_out = NULL;
+    if (obtained_feature_level)
+        *obtained_feature_level = 0;
+    if (immediate_context)
+        *immediate_context = NULL;
+
     if (adapter)
     {
         IDXGIAdapter_AddRef(adapter);
