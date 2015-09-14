@@ -39,7 +39,7 @@ static HRESULT isgn_handler(const char *data, DWORD data_size, DWORD tag, void *
     }
 }
 
-static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEMENT_DESC *element_descs,
+static HRESULT d3d11_input_layout_to_wined3d_declaration(const D3D11_INPUT_ELEMENT_DESC *element_descs,
         UINT element_count, const void *shader_byte_code, SIZE_T shader_byte_code_length,
         struct wined3d_vertex_element **wined3d_elements)
 {
@@ -65,7 +65,7 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
     for (i = 0; i < element_count; ++i)
     {
         struct wined3d_vertex_element *e = &(*wined3d_elements)[i];
-        const D3D10_INPUT_ELEMENT_DESC *f = &element_descs[i];
+        const D3D11_INPUT_ELEMENT_DESC *f = &element_descs[i];
         UINT j;
 
         e->format = wined3dformat_from_dxgi_format(f->Format);
@@ -316,8 +316,8 @@ static const struct wined3d_parent_ops d3d_input_layout_wined3d_parent_ops =
     d3d_input_layout_wined3d_object_destroyed,
 };
 
-HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d_device *device,
-        const D3D10_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
+static HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d_device *device,
+        const D3D11_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
         const void *shader_byte_code, SIZE_T shader_byte_code_length)
 {
     struct wined3d_vertex_element *wined3d_elements;
@@ -329,7 +329,7 @@ HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d_device
     wined3d_mutex_lock();
     wined3d_private_store_init(&layout->private_store);
 
-    if (FAILED(hr = d3d10_input_layout_to_wined3d_declaration(element_descs, element_count,
+    if (FAILED(hr = d3d11_input_layout_to_wined3d_declaration(element_descs, element_count,
             shader_byte_code, shader_byte_code_length, &wined3d_elements)))
     {
         WARN("Failed to create wined3d vertex declaration elements, hr %#x.\n", hr);
@@ -349,6 +349,32 @@ HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d_device
         return hr;
     }
     wined3d_mutex_unlock();
+
+    return S_OK;
+}
+
+HRESULT d3d_input_layout_create(struct d3d_device *device,
+        const D3D11_INPUT_ELEMENT_DESC *element_descs, UINT element_count,
+        const void *shader_byte_code, SIZE_T shader_byte_code_length,
+        struct d3d_input_layout **layout)
+{
+    struct d3d_input_layout *object;
+    HRESULT hr;
+
+    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_input_layout_init(object, device, element_descs, element_count,
+            shader_byte_code, shader_byte_code_length)))
+    {
+        WARN("Failed to initialize input layout, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created input layout %p.\n", object);
+    *layout = object;
 
     return S_OK;
 }

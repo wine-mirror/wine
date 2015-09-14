@@ -179,11 +179,21 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateInputLayout(ID3D11Device *if
         const D3D11_INPUT_ELEMENT_DESC *element_descs, UINT element_count, const void *shader_byte_code,
         SIZE_T shader_byte_code_length, ID3D11InputLayout **input_layout)
 {
-    FIXME("iface %p, element_descs %p, element_count %u, shader_byte_code %p, shader_byte_code_length %lu, "
-            "input_layout %p stub!\n", iface, element_descs, element_count, shader_byte_code,
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d_input_layout *object;
+    HRESULT hr;
+
+    TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p, shader_byte_code_length %lu, "
+            "input_layout %p.\n", iface, element_descs, element_count, shader_byte_code,
             shader_byte_code_length, input_layout);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = d3d_input_layout_create(device, element_descs, element_count,
+            shader_byte_code, shader_byte_code_length, &object)))
+        return hr;
+
+    *input_layout = &object->ID3D11InputLayout_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateVertexShader(ID3D11Device *iface, const void *byte_code,
@@ -2206,7 +2216,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device1 *i
         const void *shader_byte_code, SIZE_T shader_byte_code_length,
         ID3D10InputLayout **input_layout)
 {
-    struct d3d_device *This = impl_from_ID3D10Device(iface);
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_input_layout *object;
     HRESULT hr;
 
@@ -2215,20 +2225,10 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device1 *i
             iface, element_descs, element_count, shader_byte_code,
             shader_byte_code_length, input_layout);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
-        return E_OUTOFMEMORY;
-
-    hr = d3d_input_layout_init(object, This, element_descs, element_count,
-            shader_byte_code, shader_byte_code_length);
-    if (FAILED(hr))
-    {
-        WARN("Failed to initialize input layout, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+    if (FAILED(hr = d3d_input_layout_create(device, (const D3D11_INPUT_ELEMENT_DESC *)element_descs, element_count,
+            shader_byte_code, shader_byte_code_length, &object)))
         return hr;
-    }
 
-    TRACE("Created input layout %p.\n", object);
     *input_layout = &object->ID3D10InputLayout_iface;
 
     return S_OK;
