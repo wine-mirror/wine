@@ -79,3 +79,31 @@ void RingBuffer_Destroy(struct ReportRingBuffer *ring)
     DeleteCriticalSection(&ring->lock);
     HeapFree(GetProcessHeap(), 0, ring);
 }
+
+UINT RingBuffer_AddPointer(struct ReportRingBuffer *ring)
+{
+    UINT idx;
+    EnterCriticalSection(&ring->lock);
+    for (idx = 0; idx < ring->pointer_alloc; idx++)
+        if (ring->pointers[idx] == -1)
+            break;
+    if (idx >= ring->pointer_alloc)
+    {
+        int count = idx = ring->pointer_alloc;
+        ring->pointer_alloc *= 2;
+        ring->pointers = HeapReAlloc(GetProcessHeap(), 0, ring->pointers, sizeof(int) * ring->pointer_alloc);
+        for( ;count < ring->pointer_alloc; count++)
+            ring->pointers[count] = -1;
+    }
+    ring->pointers[idx] = ring->start;
+    LeaveCriticalSection(&ring->lock);
+    return idx;
+}
+
+void RingBuffer_RemovePointer(struct ReportRingBuffer *ring, UINT index)
+{
+    EnterCriticalSection(&ring->lock);
+    if (index < ring->pointer_alloc)
+        ring->pointers[index] = 0xffffffff;
+    LeaveCriticalSection(&ring->lock);
+}

@@ -56,6 +56,8 @@ typedef struct _BASE_DEVICE_EXTENSTION {
     /* Minidriver Specific stuff will end up here */
 } BASE_DEVICE_EXTENSION;
 
+UINT RingBuffer_AddPointer(struct ReportRingBuffer *buffer) DECLSPEC_HIDDEN;
+void RingBuffer_RemovePointer(struct ReportRingBuffer *ring, UINT index) DECLSPEC_HIDDEN;
 void RingBuffer_Destroy(struct ReportRingBuffer *buffer) DECLSPEC_HIDDEN;
 struct ReportRingBuffer* RingBuffer_Create(UINT buffer_size) DECLSPEC_HIDDEN;
 
@@ -79,6 +81,8 @@ NTSTATUS HID_LinkDevice(DEVICE_OBJECT *device, LPCWSTR serial, LPCWSTR index) DE
 void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device) DECLSPEC_HIDDEN;
 
 NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI HID_Device_create(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
+NTSTATUS WINAPI HID_Device_close(DEVICE_OBJECT *device, IRP *irp) DECLSPEC_HIDDEN;
 
 /* Pseudo-Plug and Play support*/
 NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT* PDO) DECLSPEC_HIDDEN;

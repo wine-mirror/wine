@@ -351,3 +351,25 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
     return rc;
 }
+
+NTSTATUS WINAPI HID_Device_create(DEVICE_OBJECT *device, IRP *irp)
+{
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+
+    TRACE("Open handle on device %p\n", device);
+    irp->Tail.Overlay.OriginalFileObject->FsContext = UlongToPtr(RingBuffer_AddPointer(ext->ring_buffer));
+    irp->IoStatus.u.Status = STATUS_SUCCESS;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI HID_Device_close(DEVICE_OBJECT *device, IRP *irp)
+{
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    int ptr = PtrToUlong(irp->Tail.Overlay.OriginalFileObject->FsContext);
+    TRACE("Close handle on device %p\n", device);
+    RingBuffer_RemovePointer(ext->ring_buffer, ptr);
+    irp->IoStatus.u.Status = STATUS_SUCCESS;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
