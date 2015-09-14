@@ -150,6 +150,97 @@ void WINAPI WsFreeError( WS_ERROR *handle )
     heap_free( error );
 }
 
+static const struct
+{
+    ULONG size;
+    BOOL  readonly;
+}
+heap_props[] =
+{
+    { sizeof(SIZE_T), FALSE }, /* WS_HEAP_PROPERTY_MAX_SIZE */
+    { sizeof(SIZE_T), FALSE }, /* WS_HEAP_PROPERTY_TRIM_SIZE */
+    { sizeof(SIZE_T), TRUE },  /* WS_HEAP_PROPERTY_REQUESTED_SIZE */
+    { sizeof(SIZE_T), TRUE }   /* WS_HEAP_PROPERTY_ACTUAL_SIZE */
+};
+
+struct heap
+{
+    HANDLE           handle;
+    ULONG            prop_count;
+    WS_HEAP_PROPERTY prop[sizeof(heap_props)/sizeof(heap_props[0])];
+};
+
+static struct heap *alloc_heap(void)
+{
+    static const ULONG count = sizeof(heap_props)/sizeof(heap_props[0]);
+    struct heap *ret;
+    ULONG i, size = sizeof(*ret) + count * sizeof(WS_HEAP_PROPERTY);
+    char *ptr;
+
+    for (i = 0; i < count; i++) size += heap_props[i].size;
+    if (!(ret = heap_alloc_zero( size ))) return NULL;
+
+    ptr = (char *)&ret->prop[count];
+    for (i = 0; i < count; i++)
+    {
+        ret->prop[i].value = ptr;
+        ret->prop[i].valueSize = heap_props[i].size;
+        ptr += ret->prop[i].valueSize;
+    }
+    ret->prop_count = count;
+    return ret;
+}
+
+static HRESULT set_heap_prop( struct heap *heap, WS_HEAP_PROPERTY_ID id, const void *value, ULONG size )
+{
+    if (id >= heap->prop_count || size != heap_props[id].size || heap_props[id].readonly)
+        return E_INVALIDARG;
+
+    memcpy( heap->prop[id].value, value, size );
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsCreateHeap		[webservices.@]
+ */
+HRESULT WINAPI WsCreateHeap( SIZE_T max_size, SIZE_T trim_size, const WS_HEAP_PROPERTY *properties,
+                             ULONG count, WS_HEAP **handle, WS_ERROR *error )
+{
+    struct heap *heap;
+
+    TRACE( "%u %u %p %u %p %p\n", (ULONG)max_size, (ULONG)trim_size, properties, count, handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle || count) return E_INVALIDARG;
+    if (!(heap = alloc_heap())) return E_OUTOFMEMORY;
+
+    set_heap_prop( heap, WS_HEAP_PROPERTY_MAX_SIZE, &max_size, sizeof(max_size) );
+    set_heap_prop( heap, WS_HEAP_PROPERTY_TRIM_SIZE, &trim_size, sizeof(trim_size) );
+
+    if (!(heap->handle = HeapCreate( 0, 0, max_size )))
+    {
+        heap_free( heap );
+        return E_OUTOFMEMORY;
+    }
+
+    *handle = (WS_HEAP *)heap;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsFreeHeap		[webservices.@]
+ */
+void WINAPI WsFreeHeap( WS_HEAP *handle )
+{
+    struct heap *heap = (struct heap *)handle;
+
+    TRACE( "%p\n", handle );
+
+    if (!heap) return;
+    HeapDestroy( heap->handle );
+    heap_free( heap );
+}
+
 /**************************************************************************
  *          WsGetErrorProperty		[webservices.@]
  */

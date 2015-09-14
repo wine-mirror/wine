@@ -24,7 +24,7 @@
 @ stub WsCreateChannelForListener
 @ stdcall WsCreateError(ptr long ptr)
 @ stub WsCreateFaultFromError
-@ stub WsCreateHeap
+@ stdcall WsCreateHeap(long long ptr long ptr ptr)
 @ stub WsCreateListener
 @ stub WsCreateMessage
 @ stub WsCreateMessageForChannel
@@ -50,7 +50,7 @@
 @ stub WsFlushWriter
 @ stub WsFreeChannel
 @ stdcall WsFreeError(ptr)
-@ stub WsFreeHeap
+@ stdcall WsFreeHeap(ptr)
 @ stub WsFreeListener
 @ stub WsFreeMessage
 @ stub WsFreeMetadata
