@@ -1358,7 +1358,7 @@ int CDECL MSVCRT__wasctime_s(MSVCRT_wchar_t* time, MSVCRT_size_t size, const str
     if (!MSVCRT_CHECK_PMT(mstm != NULL)) return MSVCRT_EINVAL;
 
     ret = MSVCRT_asctime_s(buffer, sizeof(buffer), mstm);
-    if(!ret)
+    if(ret)
         return ret;
     MultiByteToWideChar(CP_ACP, 0, buffer, -1, time, size);
     return 0;
@@ -1467,6 +1467,51 @@ MSVCRT_wchar_t * CDECL MSVCRT__wctime(const MSVCRT___time32_t *time)
     return MSVCRT__wctime32( time );
 }
 #endif
+
+/*********************************************************************
+ *              _wctime64_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__wctime64_s(MSVCRT_wchar_t *buf,
+        MSVCRT_size_t size, const MSVCRT___time64_t *time)
+{
+    struct MSVCRT_tm tm;
+    int ret;
+
+    if(!MSVCRT_CHECK_PMT(buf != NULL)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(size != 0)) return MSVCRT_EINVAL;
+    buf[0] = 0;
+    if(!MSVCRT_CHECK_PMT(time != NULL)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(*time >= 0)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(*time <= _MAX__TIME64_T)) return MSVCRT_EINVAL;
+
+    ret = _localtime64_s(&tm, time);
+    if(ret != 0)
+        return ret;
+
+    return MSVCRT__wasctime_s(buf, size, &tm);
+}
+
+/*********************************************************************
+ *              _wctime32_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__wctime32_s(MSVCRT_wchar_t *buf, MSVCRT_size_t size,
+        const MSVCRT___time32_t *time)
+{
+    struct MSVCRT_tm tm;
+    int ret;
+
+    if(!MSVCRT_CHECK_PMT(buf != NULL)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(size != 0)) return MSVCRT_EINVAL;
+    buf[0] = 0;
+    if(!MSVCRT_CHECK_PMT(time != NULL)) return MSVCRT_EINVAL;
+    if(!MSVCRT_CHECK_PMT(*time >= 0)) return MSVCRT_EINVAL;
+
+    ret = _localtime32_s(&tm, time);
+    if(ret != 0)
+        return ret;
+
+    return MSVCRT__wasctime_s(buf, size, &tm);
+}
 
 /*********************************************************************
  * _get_timezone (MSVCR100.@)
