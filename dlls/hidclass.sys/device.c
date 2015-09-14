@@ -196,3 +196,158 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
 
     IoDeleteDevice(device);
 }
+
+static NTSTATUS handle_IOCTL_HID_GET_COLLECTION_INFORMATION(IRP *irp, BASE_DEVICE_EXTENSION *base)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    if (irpsp->Parameters.DeviceIoControl.OutputBufferLength <  sizeof(HID_COLLECTION_INFORMATION))
+    {
+        irp->IoStatus.u.Status = STATUS_BUFFER_OVERFLOW;
+        irp->IoStatus.Information = 0;
+    }
+    else
+    {
+        memcpy(irp->AssociatedIrp.SystemBuffer, &base->information, sizeof(HID_COLLECTION_INFORMATION));
+        irp->IoStatus.Information = sizeof(HID_COLLECTION_INFORMATION);
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS handle_IOCTL_HID_GET_COLLECTION_DESCRIPTOR(IRP *irp, BASE_DEVICE_EXTENSION *base)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+
+    if (irpsp->Parameters.DeviceIoControl.OutputBufferLength <  base->preparseData->dwSize)
+    {
+        irp->IoStatus.u.Status = STATUS_INVALID_BUFFER_SIZE;
+        irp->IoStatus.Information = 0;
+    }
+    else
+    {
+        memcpy(irp->UserBuffer, base->preparseData, base->preparseData->dwSize);
+        irp->IoStatus.Information = base->preparseData->dwSize;
+        irp->IoStatus.u.Status = STATUS_SUCCESS;
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS handle_minidriver_string(DEVICE_OBJECT *device, IRP *irp, DWORD index)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    WCHAR buffer[127];
+    NTSTATUS status;
+
+    status = call_minidriver(IOCTL_HID_GET_STRING, device, &index, sizeof(index), buffer, sizeof(buffer));
+
+    if (status == STATUS_SUCCESS)
+    {
+        WCHAR *out_buffer = (WCHAR*)(((BYTE*)irp->MdlAddress->StartVa) + irp->MdlAddress->ByteOffset);
+        int length = irpsp->Parameters.DeviceIoControl.OutputBufferLength/sizeof(WCHAR);
+        TRACE("got string %s from minidriver\n",debugstr_w(buffer));
+        lstrcpynW(out_buffer, buffer, length);
+        irp->IoStatus.Information = (lstrlenW(buffer)+1) * sizeof(WCHAR);
+    }
+    irp->IoStatus.u.Status = status;
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
+{
+    NTSTATUS rc = STATUS_SUCCESS;
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    BASE_DEVICE_EXTENSION *extension = device->DeviceExtension;
+
+    irp->IoStatus.Information = 0;
+
+    TRACE("device %p ioctl(%x)\n", device, irpsp->Parameters.DeviceIoControl.IoControlCode);
+
+    switch (irpsp->Parameters.DeviceIoControl.IoControlCode)
+    {
+        case IOCTL_HID_GET_POLL_FREQUENCY_MSEC:
+            TRACE("IOCTL_HID_GET_POLL_FREQUENCY_MSEC\n");
+            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(ULONG))
+            {
+                irp->IoStatus.u.Status = STATUS_BUFFER_OVERFLOW;
+                irp->IoStatus.Information = 0;
+                break;
+            }
+            *((ULONG*)irp->AssociatedIrp.SystemBuffer) = extension->poll_interval;
+            irp->IoStatus.Information = sizeof(ULONG);
+            irp->IoStatus.u.Status = STATUS_SUCCESS;
+            break;
+        case IOCTL_HID_SET_POLL_FREQUENCY_MSEC:
+        {
+            ULONG poll_interval;
+            TRACE("IOCTL_HID_SET_POLL_FREQUENCY_MSEC\n");
+            if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
+            {
+                irp->IoStatus.u.Status = STATUS_BUFFER_TOO_SMALL;
+                break;
+            }
+            poll_interval = *(ULONG *)irp->AssociatedIrp.SystemBuffer;
+            if (poll_interval == 0)
+                FIXME("Handle opportunistic reads\n");
+            else if (poll_interval <= MAX_POLL_INTERVAL_MSEC)
+            {
+                extension->poll_interval = poll_interval;
+                irp->IoStatus.u.Status = STATUS_SUCCESS;
+            }
+            else
+                irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
+            break;
+        }
+        case IOCTL_HID_GET_PRODUCT_STRING:
+        {
+            rc = handle_minidriver_string(device, irp, HID_STRING_ID_IPRODUCT);
+            break;
+        }
+        case IOCTL_HID_GET_MANUFACTURER_STRING:
+        {
+            rc = handle_minidriver_string(device, irp, HID_STRING_ID_IMANUFACTURER);
+            break;
+        }
+        case IOCTL_HID_GET_COLLECTION_INFORMATION:
+        {
+            rc = handle_IOCTL_HID_GET_COLLECTION_INFORMATION(irp, extension);
+            break;
+        }
+        case IOCTL_HID_GET_COLLECTION_DESCRIPTOR:
+        {
+            rc = handle_IOCTL_HID_GET_COLLECTION_DESCRIPTOR(irp, extension);
+            break;
+        }
+        case IOCTL_HID_GET_INPUT_REPORT:
+        {
+            HID_XFER_PACKET packet;
+            BYTE* buffer = ((BYTE*)irp->MdlAddress->StartVa) + irp->MdlAddress->ByteOffset;
+
+            if (extension->preparseData->InputReports[0].reportID)
+                packet.reportId = buffer[0];
+            else
+                packet.reportId = 0;
+            packet.reportBuffer = buffer;
+            packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+
+            call_minidriver(IOCTL_HID_GET_INPUT_REPORT, device, NULL, 0, &packet, sizeof(packet));
+            irp->IoStatus.Information = packet.reportBufferLen;
+            irp->IoStatus.u.Status = STATUS_SUCCESS;
+            break;
+        }
+        default:
+        {
+            ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
+            FIXME("Unsupported ioctl %x (device=%x access=%x func=%x method=%x)\n",
+                  code, code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3);
+            irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
+            rc = STATUS_UNSUCCESSFUL;
+            break;
+        }
+    }
+
+    if (rc != STATUS_PENDING)
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+
+    return rc;
+}
