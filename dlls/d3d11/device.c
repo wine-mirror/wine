@@ -425,6 +425,8 @@ static void STDMETHODCALLTYPE d3d11_device_GetImmediateContext(ID3D11Device *ifa
         ID3D11DeviceContext **immediate_context)
 {
     FIXME("iface %p, immediate_context %p stub!\n", iface, immediate_context);
+
+    *immediate_context = NULL;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_SetExceptionMode(ID3D11Device *iface, UINT flags)
