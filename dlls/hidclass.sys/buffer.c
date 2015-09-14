@@ -80,6 +80,39 @@ void RingBuffer_Destroy(struct ReportRingBuffer *ring)
     HeapFree(GetProcessHeap(), 0, ring);
 }
 
+UINT RingBuffer_GetBufferSize(struct ReportRingBuffer *ring)
+{
+    return ring->buffer_size;
+}
+
+void RingBuffer_Read(struct ReportRingBuffer *ring, UINT index, void *output, UINT *size)
+{
+    void *ret = NULL;
+
+    EnterCriticalSection(&ring->lock);
+    if (index >= ring->pointer_alloc || ring->pointers[index] == 0xffffffff)
+    {
+        LeaveCriticalSection(&ring->lock);
+        *size = 0;
+        return;
+    }
+    if (ring->pointers[index] == ring->end)
+    {
+        LeaveCriticalSection(&ring->lock);
+        *size = 0;
+    }
+    else
+    {
+        ret = &ring->buffer[ring->pointers[index] * ring->buffer_size];
+        memcpy(output, ret, ring->buffer_size);
+        ring->pointers[index]++;
+        if (ring->pointers[index] == ring->size)
+            ring->pointers[index] = 0;
+        LeaveCriticalSection(&ring->lock);
+        *size = ring->buffer_size;
+    }
+}
+
 UINT RingBuffer_AddPointer(struct ReportRingBuffer *ring)
 {
     UINT idx;

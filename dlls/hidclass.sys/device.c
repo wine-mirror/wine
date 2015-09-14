@@ -36,6 +36,7 @@
 #include "devguid.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
+WINE_DECLARE_DEBUG_CHANNEL(hid_report);
 
 static const WCHAR device_name_fmtW[] = {'\\','D','e','v','i','c','e',
     '\\','H','I','D','#','%','p','&','%','p',0};
@@ -348,6 +349,48 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
     if (rc != STATUS_PENDING)
         IoCompleteRequest( irp, IO_NO_INCREMENT );
+
+    return rc;
+}
+
+NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
+{
+    HID_XFER_PACKET *packet;
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    UINT buffer_size = RingBuffer_GetBufferSize(ext->ring_buffer);
+    NTSTATUS rc = STATUS_SUCCESS;
+    int ptr = -1;
+
+    packet = HeapAlloc(GetProcessHeap(), 0, buffer_size);
+    ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
+
+    irp->IoStatus.Information = 0;
+    RingBuffer_Read(ext->ring_buffer, ptr, packet, &buffer_size);
+
+    if (buffer_size)
+    {
+        IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+        TRACE_(hid_report)("Got Packet %p %i\n", packet->reportBuffer, packet->reportBufferLen);
+        if (irpsp->Parameters.Read.Length >= packet->reportBufferLen)
+        {
+            memcpy(irp->AssociatedIrp.SystemBuffer, packet->reportBuffer, packet->reportBufferLen);
+            irp->IoStatus.Information = packet->reportBufferLen;
+            irp->IoStatus.u.Status = STATUS_SUCCESS;
+        }
+        else
+        {
+            irp->IoStatus.Information = 0;
+            irp->IoStatus.u.Status = STATUS_BUFFER_OVERFLOW;
+        }
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+    else
+    {
+        TRACE_(hid_report)("Queue irp\n");
+        InsertTailList(&ext->irp_queue, &irp->Tail.Overlay.ListEntry);
+        rc = STATUS_PENDING;
+    }
+    HeapFree(GetProcessHeap(), 0, packet);
 
     return rc;
 }
