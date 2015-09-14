@@ -81,3 +81,6 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
 /* Pseudo-Plug and Play support*/
 NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT* PDO) DECLSPEC_HIDDEN;
 void PNP_CleanupPNP(DRIVER_OBJECT *driver) DECLSPEC_HIDDEN;
+
+/* Parsing HID Report Descriptors into preparsed data */
+WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length) DECLSPEC_HIDDEN;

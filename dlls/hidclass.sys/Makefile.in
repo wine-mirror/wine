@@ -5,6 +5,7 @@ DELAYIMPORTS = setupapi hid
 
 C_SRCS = \
 	buffer.c \
+	descriptor.c \
 	device.c \
 	main.c \
 	pnp.c

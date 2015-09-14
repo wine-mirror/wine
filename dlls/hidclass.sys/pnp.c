@@ -53,6 +53,9 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     DWORD index = HID_STRING_ID_ISERIALNUMBER;
     NATIVE_DEVICE *tracked_device, *ptr;
     INT interface_index = 1;
+    HID_DESCRIPTOR descriptor;
+    BYTE *reportDescriptor;
+    INT i;
 
     static const WCHAR ig_fmtW[] = {'I','G','_','%','i',0};
     static const WCHAR im_fmtW[] = {'I','M','_','%','i',0};
@@ -103,6 +106,40 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         if (ptr->vidpid == tracked_device->vidpid) interface_index++;
 
     list_add_tail(&tracked_devices, &tracked_device->entry);
+
+    status = call_minidriver(IOCTL_HID_GET_DEVICE_DESCRIPTOR, device, NULL, 0,
+        &descriptor, sizeof(descriptor));
+    if (status != STATUS_SUCCESS)
+    {
+        ERR("Cannot get Device Descriptor(%x)\n",status);
+        HID_DeleteDevice(&minidriver->minidriver, device);
+        return status;
+    }
+    for (i = 0; i < descriptor.bNumDescriptors; i++)
+        if (descriptor.DescriptorList[i].bReportType == HID_REPORT_DESCRIPTOR_TYPE)
+            break;
+
+    if (i >= descriptor.bNumDescriptors)
+    {
+        ERR("No Report Descriptor found in reply\n");
+        HID_DeleteDevice(&minidriver->minidriver, device);
+        return status;
+    }
+
+    reportDescriptor = HeapAlloc(GetProcessHeap(), 0, descriptor.DescriptorList[i].wReportLength);
+    status = call_minidriver(IOCTL_HID_GET_REPORT_DESCRIPTOR, device, NULL, 0,
+        reportDescriptor, descriptor.DescriptorList[i].wReportLength);
+    if (status != STATUS_SUCCESS)
+    {
+        ERR("Cannot get Report Descriptor(%x)\n",status);
+        HID_DeleteDevice(&minidriver->minidriver, device);
+        HeapFree(GetProcessHeap(), 0, reportDescriptor);
+        return status;
+    }
+
+    ext->preparseData = ParseDescriptor(reportDescriptor, descriptor.DescriptorList[0].wReportLength);
+    ext->information.DescriptorSize = ext->preparseData->dwSize;
+    HeapFree(GetProcessHeap(), 0, reportDescriptor);
 
     serial[0] = 0;
     status = call_minidriver(IOCTL_HID_GET_STRING, device,
