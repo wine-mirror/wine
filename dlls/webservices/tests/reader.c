@@ -112,7 +112,79 @@ static void test_WsCreateError(void)
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 }
 
+static void test_WsCreateHeap(void)
+{
+    HRESULT hr;
+    WS_HEAP *heap;
+    WS_HEAP_PROPERTY prop;
+    SIZE_T max, trim, requested, actual;
+    ULONG size;
+
+    hr = WsCreateHeap( 0, 0, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    heap = NULL;
+    hr = WsCreateHeap( 0, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( heap != NULL, "heap not set\n" );
+    WsFreeHeap( heap );
+
+    hr = WsCreateHeap( 1 << 16, 1 << 6, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    heap = NULL;
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( heap != NULL, "heap not set\n" );
+    WsFreeHeap( heap );
+
+    hr = WsCreateHeap( 1 << 16, 1 << 6, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    max = 0xdeadbeef;
+    size = sizeof(max);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_MAX_SIZE, &max, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( max == 1 << 16, "got %u\n", (ULONG)max );
+
+    trim = 0xdeadbeef;
+    size = sizeof(trim);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_TRIM_SIZE, &trim, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( trim == 1 << 6, "got %u\n", (ULONG)trim );
+
+    requested = 0xdeadbeef;
+    size = sizeof(requested);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_REQUESTED_SIZE, &requested, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !requested, "got %u\n", (ULONG)requested );
+
+    actual = 0xdeadbeef;
+    size = sizeof(actual);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_ACTUAL_SIZE, &actual, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !actual, "got %u\n", (ULONG)actual );
+
+    actual = 0xdeadbeef;
+    size = sizeof(actual);
+    hr = WsGetHeapProperty( heap, WS_HEAP_PROPERTY_ACTUAL_SIZE + 1, &actual, size, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( actual == 0xdeadbeef, "got %u\n", (ULONG)actual );
+    WsFreeHeap( heap );
+
+    max = 1 << 16;
+    prop.id = WS_HEAP_PROPERTY_MAX_SIZE;
+    prop.value = &max;
+    prop.valueSize = sizeof(max);
+    hr = WsCreateHeap( 1 << 16, 1 << 6, &prop, 1, &heap, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 16, 1 << 6, NULL, 1, &heap, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
+    test_WsCreateHeap();
 }

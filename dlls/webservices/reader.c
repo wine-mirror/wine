@@ -200,6 +200,15 @@ static HRESULT set_heap_prop( struct heap *heap, WS_HEAP_PROPERTY_ID id, const v
     return S_OK;
 }
 
+static HRESULT get_heap_prop( struct heap *heap, WS_HEAP_PROPERTY_ID id, void *buf, ULONG size )
+{
+    if (id >= heap->prop_count || size != heap_props[id].size)
+        return E_INVALIDARG;
+
+    memcpy( buf, heap->prop[id].value, heap->prop[id].valueSize );
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsCreateHeap		[webservices.@]
  */
@@ -251,6 +260,20 @@ HRESULT WINAPI WsGetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, vo
 
     TRACE( "%p %u %p %u\n", handle, id, buf, size );
     return get_error_prop( error, id, buf, size );
+}
+
+/**************************************************************************
+ *          WsGetHeapProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void *buf,
+                                  ULONG size, WS_ERROR *error )
+{
+    struct heap *heap = (struct heap *)handle;
+
+    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    return get_heap_prop( heap, id, buf, size );
 }
 
 /**************************************************************************

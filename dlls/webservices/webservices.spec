@@ -68,7 +68,7 @@
 @ stub WsGetFaultErrorProperty
 @ stub WsGetHeader
 @ stub WsGetHeaderAttributes
-@ stub WsGetHeapProperty
+@ stdcall WsGetHeapProperty(ptr long ptr long ptr)
 @ stub WsGetListenerProperty
 @ stub WsGetMappedHeader
 @ stub WsGetMessageProperty
