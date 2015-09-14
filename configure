@@ -17133,7 +17133,8 @@ ac_config_links="$ac_config_links fonts/marlett.ttf:fonts/marlett.ttf"
 ac_config_links="$ac_config_links fonts/symbol.ttf:fonts/symbol.ttf"
 ac_config_links="$ac_config_links fonts/tahoma.ttf:fonts/tahoma.ttf"
 ac_config_links="$ac_config_links fonts/tahomabd.ttf:fonts/tahomabd.ttf"
-test "$srcdir" = "." || wine_fn_config_symlink fonts/marlett.ttf fonts/symbol.ttf fonts/tahoma.ttf fonts/tahomabd.ttf
+ac_config_links="$ac_config_links fonts/wingding.ttf:fonts/wingding.ttf"
+test "$srcdir" = "." || wine_fn_config_symlink fonts/marlett.ttf fonts/symbol.ttf fonts/tahoma.ttf fonts/tahomabd.ttf fonts/wingding.ttf
 fi
 ac_config_links="$ac_config_links loader/l_intl.nls:loader/l_intl.nls"
 test "$srcdir" = "." || wine_fn_config_symlink loader/l_intl.nls
@@ -18909,6 +18910,7 @@ do
     "fonts/symbol.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/symbol.ttf:fonts/symbol.ttf" ;;
     "fonts/tahoma.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahoma.ttf:fonts/tahoma.ttf" ;;
     "fonts/tahomabd.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahomabd.ttf:fonts/tahomabd.ttf" ;;
+    "fonts/wingding.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/wingding.ttf:fonts/wingding.ttf" ;;
     "loader/l_intl.nls") CONFIG_LINKS="$CONFIG_LINKS loader/l_intl.nls:loader/l_intl.nls" ;;
     "po/LINGUAS") CONFIG_LINKS="$CONFIG_LINKS po/LINGUAS:po/LINGUAS" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
