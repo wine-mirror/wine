@@ -877,10 +877,10 @@ static void test_RtlRandom(void)
 	} /* if */
         result = pRtlRandom(&seed);
         ok(result == result_expected,
-                "test: 0x%x%08x RtlUniform(&seed (seed == %x)) returns %x, expected %x\n",
+                "test: 0x%x%08x RtlRandom(&seed (seed == %x)) returns %x, expected %x\n",
                 (DWORD)(num >> 32), (DWORD)num, seed_bak, result, result_expected);
         ok(seed == seed_expected,
-                "test: 0x%x%08x RtlUniform(&seed (seed == %x)) sets seed to %x, expected %x\n",
+                "test: 0x%x%08x RtlRandom(&seed (seed == %x)) sets seed to %x, expected %x\n",
                 (DWORD)(num >> 32), (DWORD)num, seed_bak, result, seed_expected);
     } /* for */
 }
