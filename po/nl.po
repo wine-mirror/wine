@@ -7579,7 +7579,7 @@ msgstr "&Object"
 #: oledlg.rc:34
 #, fuzzy
 #| msgid "&Object"
-msgid "%s &Object"
+msgid "%1 &Object"
 msgstr "&Object"
 
 #: oledlg.rc:33 oleview.rc:40

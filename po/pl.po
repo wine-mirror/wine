@@ -7473,8 +7473,8 @@ msgid "%1 %2 &Object"
 msgstr "%1 &Obiekt %2"
 
 #: oledlg.rc:34
-msgid "%s &Object"
-msgstr "&Obiekt %s"
+msgid "%1 &Object"
+msgstr "&Obiekt %1"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
