@@ -94,6 +94,126 @@ static HRESULT d3d10_input_layout_to_wined3d_declaration(const D3D10_INPUT_ELEME
     return S_OK;
 }
 
+/* ID3D11InputLayout methods */
+
+static inline struct d3d_input_layout *impl_from_ID3D11InputLayout(ID3D11InputLayout *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_input_layout, ID3D11InputLayout_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_input_layout_QueryInterface(ID3D11InputLayout *iface,
+        REFIID riid, void **object)
+{
+    struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
+
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if (IsEqualGUID(riid, &IID_ID3D11InputLayout)
+            || IsEqualGUID(riid, &IID_ID3D11DeviceChild)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        ID3D11InputLayout_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    if (IsEqualGUID(riid, &IID_ID3D10InputLayout)
+            || IsEqualGUID(riid, &IID_ID3D10DeviceChild))
+    {
+        ID3D10InputLayout_AddRef(&layout->ID3D10InputLayout_iface);
+        *object = &layout->ID3D10InputLayout_iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_input_layout_AddRef(ID3D11InputLayout *iface)
+{
+    struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
+    ULONG refcount = InterlockedIncrement(&layout->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", layout, refcount);
+
+    if (refcount == 1)
+    {
+        wined3d_mutex_lock();
+        wined3d_vertex_declaration_incref(layout->wined3d_decl);
+        wined3d_mutex_unlock();
+    }
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_input_layout_Release(ID3D11InputLayout *iface)
+{
+    struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
+    ULONG refcount = InterlockedDecrement(&layout->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", layout, refcount);
+
+    if (!refcount)
+    {
+        wined3d_mutex_lock();
+        wined3d_vertex_declaration_decref(layout->wined3d_decl);
+        wined3d_mutex_unlock();
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d11_input_layout_GetDevice(ID3D11InputLayout *iface,
+        ID3D11Device **device)
+{
+    FIXME("iface %p, device %p stub!\n", iface, device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_input_layout_GetPrivateData(ID3D11InputLayout *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&layout->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_input_layout_SetPrivateData(ID3D11InputLayout *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&layout->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_input_layout_SetPrivateDataInterface(ID3D11InputLayout *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
+
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&layout->private_store, guid, data);
+}
+
+static const struct ID3D11InputLayoutVtbl d3d11_input_layout_vtbl =
+{
+    /* IUnknown methods */
+    d3d11_input_layout_QueryInterface,
+    d3d11_input_layout_AddRef,
+    d3d11_input_layout_Release,
+    /* ID3D11DeviceChild methods */
+    d3d11_input_layout_GetDevice,
+    d3d11_input_layout_GetPrivateData,
+    d3d11_input_layout_SetPrivateData,
+    d3d11_input_layout_SetPrivateDataInterface,
+};
+
 /* ID3D10InputLayout methods */
 
 static inline struct d3d_input_layout *impl_from_ID3D10InputLayout(ID3D10InputLayout *iface)
@@ -106,55 +226,29 @@ static inline struct d3d_input_layout *impl_from_ID3D10InputLayout(ID3D10InputLa
 static HRESULT STDMETHODCALLTYPE d3d10_input_layout_QueryInterface(ID3D10InputLayout *iface,
         REFIID riid, void **object)
 {
-    TRACE("iface %p, riid %s, object %p\n", iface, debugstr_guid(riid), object);
+    struct d3d_input_layout *layout = impl_from_ID3D10InputLayout(iface);
 
-    if (IsEqualGUID(riid, &IID_ID3D10InputLayout)
-            || IsEqualGUID(riid, &IID_ID3D10DeviceChild)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
+    return d3d11_input_layout_QueryInterface(&layout->ID3D11InputLayout_iface, riid, object);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_input_layout_AddRef(ID3D10InputLayout *iface)
 {
-    struct d3d_input_layout *This = impl_from_ID3D10InputLayout(iface);
-    ULONG refcount = InterlockedIncrement(&This->refcount);
+    struct d3d_input_layout *layout = impl_from_ID3D10InputLayout(iface);
 
-    TRACE("%p increasing refcount to %u\n", This, refcount);
+    TRACE("iface %p.\n", iface);
 
-    if (refcount == 1)
-    {
-        wined3d_mutex_lock();
-        wined3d_vertex_declaration_incref(This->wined3d_decl);
-        wined3d_mutex_unlock();
-    }
-
-    return refcount;
+    return d3d11_input_layout_AddRef(&layout->ID3D11InputLayout_iface);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_input_layout_Release(ID3D10InputLayout *iface)
 {
-    struct d3d_input_layout *This = impl_from_ID3D10InputLayout(iface);
-    ULONG refcount = InterlockedDecrement(&This->refcount);
+    struct d3d_input_layout *layout = impl_from_ID3D10InputLayout(iface);
 
-    TRACE("%p decreasing refcount to %u\n", This, refcount);
+    TRACE("iface %p.\n", iface);
 
-    if (!refcount)
-    {
-        wined3d_mutex_lock();
-        wined3d_vertex_declaration_decref(This->wined3d_decl);
-        wined3d_mutex_unlock();
-    }
-
-    return refcount;
+    return d3d11_input_layout_Release(&layout->ID3D11InputLayout_iface);
 }
 
 /* ID3D10DeviceChild methods */
@@ -229,6 +323,7 @@ HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d_device
     struct wined3d_vertex_element *wined3d_elements;
     HRESULT hr;
 
+    layout->ID3D11InputLayout_iface.lpVtbl = &d3d11_input_layout_vtbl;
     layout->ID3D10InputLayout_iface.lpVtbl = &d3d10_input_layout_vtbl;
     layout->refcount = 1;
     wined3d_mutex_lock();

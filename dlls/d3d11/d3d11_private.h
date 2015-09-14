@@ -207,9 +207,10 @@ HRESULT d3d_shader_resource_view_create(struct d3d_device *device, ID3D11Resourc
 struct d3d_shader_resource_view *unsafe_impl_from_ID3D10ShaderResourceView(
         ID3D10ShaderResourceView *iface) DECLSPEC_HIDDEN;
 
-/* ID3D10InputLayout */
+/* ID3D11InputLayout, ID3D10InputLayout */
 struct d3d_input_layout
 {
+    ID3D11InputLayout ID3D11InputLayout_iface;
     ID3D10InputLayout ID3D10InputLayout_iface;
     LONG refcount;
 
