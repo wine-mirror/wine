@@ -7445,16 +7445,12 @@ msgid "&Convert..."
 msgstr "&Muunna..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Objekti"
+msgstr "%1 %2 &Objekti"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Objekti"
+msgstr "%1 &Objekti"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
