@@ -688,6 +688,8 @@ static void _test_invoke_bool(unsigned line, const DISPPARAMS *params, BOOL stri
 static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const VARIANT *flags,
         const VARIANT *frame, const VARIANT *post_data, const VARIANT *headers, const VARIANT *cancel)
 {
+    BSTR str;
+
     ok(V_VT(disp) == VT_DISPATCH, "V_VT(disp)=%d, expected VT_DISPATCH\n", V_VT(disp));
     ok(V_DISPATCH(disp) != NULL, "V_DISPATCH(disp) == NULL\n");
     ok(V_DISPATCH(disp) == (IDispatch*)wb, "V_DISPATCH(disp)=%p, wb=%p\n", V_DISPATCH(disp), wb);
@@ -763,8 +765,9 @@ static void test_OnBeforeNavigate(const VARIANT *disp, const VARIANT *url, const
     if(V_VARIANTREF(headers)) {
         ok(V_VT(V_VARIANTREF(headers)) == VT_BSTR, "V_VT(V_VARIANTREF(headers))=%d, expected VT_BSTR\n",
            V_VT(V_VARIANTREF(headers)));
-        ok(V_BSTR(V_VARIANTREF(headers)) == NULL, "V_BSTR(V_VARIANTREF(headers)) = %s, expected NULL\n",
-           wine_dbgstr_w(V_BSTR(V_VARIANTREF(headers))));
+        str = V_BSTR(V_VARIANTREF(headers));
+        ok(!str || !strcmp_wa(str, "Referer: http://test.winehq.org/tests/hello.html\r\n"),
+           "V_BSTR(V_VARIANTREF(headers)) = %s, expected NULL\n", wine_dbgstr_w(str));
     }
 
     ok(V_VT(cancel) == (VT_BYREF|VT_BOOL), "V_VT(cancel)=%x, expected VT_BYREF|VT_BOOL\n",
