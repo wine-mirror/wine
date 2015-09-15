@@ -49,9 +49,12 @@ static ID3D11Device *create_device(const D3D_FEATURE_LEVEL *feature_level)
 static void test_create_device(void)
 {
     D3D_FEATURE_LEVEL feature_level, supported_feature_level;
+    DXGI_SWAP_CHAIN_DESC swapchain_desc, obtained_desc;
     ID3D11DeviceContext *immediate_context = NULL;
+    IDXGISwapChain *swapchain;
     ID3D11Device *device;
     ULONG refcount;
+    HWND window;
     HRESULT hr;
 
     hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION, &device,
@@ -79,17 +82,160 @@ static void test_create_device(void)
     ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
 
     todo_wine ok(!!immediate_context, "Immediate context is NULL.\n");
-    if (!immediate_context) return;
+    if (immediate_context)
+    {
+        refcount = get_refcount((IUnknown *)immediate_context);
+        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
-    refcount = get_refcount((IUnknown *)immediate_context);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+        ID3D11DeviceContext_GetDevice(immediate_context, &device);
+        refcount = ID3D11Device_Release(device);
+        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
-    ID3D11DeviceContext_GetDevice(immediate_context, &device);
+        refcount = ID3D11DeviceContext_Release(immediate_context);
+        ok(!refcount, "ID3D11DeviceContext has %u references left.\n", refcount);
+    }
+
+    device = (ID3D11Device *)0xdeadbeef;
+    feature_level = 0xdeadbeef;
+    immediate_context = (ID3D11DeviceContext *)0xdeadbeef;
+    hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_UNKNOWN, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &device, &feature_level, &immediate_context);
+    todo_wine ok(hr == E_INVALIDARG, "D3D11CreateDevice returned %#x.\n", hr);
+    ok(!device, "Got unexpected device pointer %p.\n", device);
+    ok(!feature_level, "Got unexpected feature level %#x.\n", feature_level);
+    ok(!immediate_context, "Got unexpected immediate_context pointer %p.\n", immediate_context);
+
+    window = CreateWindowA("static", "d3d11_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
+
+    swapchain_desc.BufferDesc.Width = 800;
+    swapchain_desc.BufferDesc.Height = 600;
+    swapchain_desc.BufferDesc.RefreshRate.Numerator = 60;
+    swapchain_desc.BufferDesc.RefreshRate.Denominator = 60;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    swapchain_desc.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+    swapchain_desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+    swapchain_desc.SampleDesc.Count = 1;
+    swapchain_desc.SampleDesc.Quality = 0;
+    swapchain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+    swapchain_desc.BufferCount = 1;
+    swapchain_desc.OutputWindow = window;
+    swapchain_desc.Windowed = TRUE;
+    swapchain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+    swapchain_desc.Flags = 0;
+
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, NULL, NULL, &feature_level, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
+            feature_level, supported_feature_level);
+
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, &swapchain, &device, NULL, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+
+    memset(&obtained_desc, 0, sizeof(obtained_desc));
+    hr = IDXGISwapChain_GetDesc(swapchain, &obtained_desc);
+    ok(SUCCEEDED(hr), "GetDesc failed %#x.\n", hr);
+    ok(obtained_desc.BufferDesc.Width == swapchain_desc.BufferDesc.Width,
+            "Got unexpected BufferDesc.Width %u.\n", obtained_desc.BufferDesc.Width);
+    ok(obtained_desc.BufferDesc.Height == swapchain_desc.BufferDesc.Height,
+            "Got unexpected BufferDesc.Height %u.\n", obtained_desc.BufferDesc.Height);
+    todo_wine ok(obtained_desc.BufferDesc.RefreshRate.Numerator == swapchain_desc.BufferDesc.RefreshRate.Numerator,
+            "Got unexpected BufferDesc.RefreshRate.Numerator %u.\n",
+            obtained_desc.BufferDesc.RefreshRate.Numerator);
+    todo_wine ok(obtained_desc.BufferDesc.RefreshRate.Denominator == swapchain_desc.BufferDesc.RefreshRate.Denominator,
+            "Got unexpected BufferDesc.RefreshRate.Denominator %u.\n",
+            obtained_desc.BufferDesc.RefreshRate.Denominator);
+    ok(obtained_desc.BufferDesc.Format == swapchain_desc.BufferDesc.Format,
+            "Got unexpected BufferDesc.Format %#x.\n", obtained_desc.BufferDesc.Format);
+    ok(obtained_desc.BufferDesc.ScanlineOrdering == swapchain_desc.BufferDesc.ScanlineOrdering,
+            "Got unexpected BufferDesc.ScanlineOrdering %#x.\n", obtained_desc.BufferDesc.ScanlineOrdering);
+    ok(obtained_desc.BufferDesc.Scaling == swapchain_desc.BufferDesc.Scaling,
+            "Got unexpected BufferDesc.Scaling %#x.\n", obtained_desc.BufferDesc.Scaling);
+    ok(obtained_desc.SampleDesc.Count == swapchain_desc.SampleDesc.Count,
+            "Got unexpected SampleDesc.Count %u.\n", obtained_desc.SampleDesc.Count);
+    ok(obtained_desc.SampleDesc.Quality == swapchain_desc.SampleDesc.Quality,
+            "Got unexpected SampleDesc.Quality %u.\n", obtained_desc.SampleDesc.Quality);
+    todo_wine ok(obtained_desc.BufferUsage == swapchain_desc.BufferUsage,
+            "Got unexpected BufferUsage %#x.\n", obtained_desc.BufferUsage);
+    ok(obtained_desc.BufferCount == swapchain_desc.BufferCount,
+            "Got unexpected BufferCount %u.\n", obtained_desc.BufferCount);
+    ok(obtained_desc.OutputWindow == swapchain_desc.OutputWindow,
+            "Got unexpected OutputWindow %p.\n", obtained_desc.OutputWindow);
+    ok(obtained_desc.Windowed == swapchain_desc.Windowed,
+            "Got unexpected Windowed %#x.\n", obtained_desc.Windowed);
+    ok(obtained_desc.SwapEffect == swapchain_desc.SwapEffect,
+            "Got unexpected SwapEffect %#x.\n", obtained_desc.SwapEffect);
+    ok(obtained_desc.Flags == swapchain_desc.Flags,
+            "Got unexpected Flags %#x.\n", obtained_desc.Flags);
+
+    refcount = IDXGISwapChain_Release(swapchain);
+    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+
+    feature_level = ID3D11Device_GetFeatureLevel(device);
+    ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
+            feature_level, supported_feature_level);
+
     refcount = ID3D11Device_Release(device);
-    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(!refcount, "Device has %u references left.\n", refcount);
 
-    refcount = ID3D11DeviceContext_Release(immediate_context);
-    ok(!refcount, "ID3D11DeviceContext has %u references left.\n", refcount);
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            NULL, NULL, &device, NULL, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ID3D11Device_Release(device);
+
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            NULL, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            NULL, NULL, NULL, &feature_level, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ok(feature_level == supported_feature_level, "Got feature level %#x, expected %#x.\n",
+            feature_level, supported_feature_level);
+
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+
+    swapchain_desc.OutputWindow = NULL;
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, NULL, &device, NULL, NULL);
+    ok(SUCCEEDED(hr), "D3D11CreateDeviceAndSwapChain failed %#x.\n", hr);
+    ID3D11Device_Release(device);
+
+    swapchain = (IDXGISwapChain *)0xdeadbeef;
+    device = (ID3D11Device *)0xdeadbeef;
+    feature_level = 0xdeadbeef;
+    immediate_context = (ID3D11DeviceContext *)0xdeadbeef;
+    swapchain_desc.OutputWindow = NULL;
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, &swapchain, &device, &feature_level, &immediate_context);
+    todo_wine ok(hr == DXGI_ERROR_INVALID_CALL, "D3D11CreateDeviceAndSwapChain returned %#x.\n", hr);
+    ok(!swapchain, "Got unexpected swapchain pointer %p.\n", swapchain);
+    ok(!device, "Got unexpected device pointer %p.\n", device);
+    ok(!feature_level, "Got unexpected feature level %#x.\n", feature_level);
+    ok(!immediate_context, "Got unexpected immediate context pointer %p.\n", immediate_context);
+
+    swapchain = (IDXGISwapChain *)0xdeadbeef;
+    device = (ID3D11Device *)0xdeadbeef;
+    feature_level = 0xdeadbeef;
+    immediate_context = (ID3D11DeviceContext *)0xdeadbeef;
+    swapchain_desc.OutputWindow = window;
+    swapchain_desc.BufferDesc.Format = DXGI_FORMAT_BC5_UNORM;
+    hr = D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, NULL, 0, D3D11_SDK_VERSION,
+            &swapchain_desc, &swapchain, &device, &feature_level, &immediate_context);
+    todo_wine ok(hr == E_INVALIDARG, "D3D11CreateDeviceAndSwapChain returned %#x.\n", hr);
+    ok(!swapchain, "Got unexpected swapchain pointer %p.\n", swapchain);
+    ok(!device, "Got unexpected device pointer %p.\n", device);
+    ok(!feature_level, "Got unexpected feature level %#x.\n", feature_level);
+    ok(!immediate_context, "Got unexpected immediate context pointer %p.\n", immediate_context);
+
+    DestroyWindow(window);
 }
 
 static void test_device_interfaces(void)
