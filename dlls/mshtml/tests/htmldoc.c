@@ -3453,7 +3453,8 @@ static HRESULT  WINAPI DocObjectService_FireBeforeNavigate2(IDocObjectService *i
     if(!testing_submit) {
         ok(!pPostData, "pPostData = %p\n", pPostData);
         ok(!cbPostData, "cbPostData = %d\n", cbPostData);
-        ok(!lpszHeaders, "lpszHeaders = %s\n", wine_dbgstr_w(lpszHeaders));
+        ok(!lpszHeaders || !strcmp_wa(lpszHeaders, "Referer: http://test.winehq.org/tests/winehq_snapshot/\r\n"),
+           "lpszHeaders = %s\n", wine_dbgstr_w(lpszHeaders));
     }else {
         ok(cbPostData == 9, "cbPostData = %d\n", cbPostData);
         ok(!memcmp(pPostData, "cmd=TEST", cbPostData), "pPostData = %p\n", pPostData);
