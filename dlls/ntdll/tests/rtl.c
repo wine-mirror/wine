@@ -657,46 +657,11 @@ static void test_RtlUniform(void)
 }
 
 
-static ULONG my_RtlRandom(PULONG seed)
-{
-    static ULONG saved_value[128] =
-    { /*   0 */ 0x4c8bc0aa, 0x4c022957, 0x2232827a, 0x2f1e7626, 0x7f8bdafb, 0x5c37d02a, 0x0ab48f72, 0x2f0c4ffa,
-      /*   8 */ 0x290e1954, 0x6b635f23, 0x5d3885c0, 0x74b49ff8, 0x5155fa54, 0x6214ad3f, 0x111e9c29, 0x242a3a09,
-      /*  16 */ 0x75932ae1, 0x40ac432e, 0x54f7ba7a, 0x585ccbd5, 0x6df5c727, 0x0374dad1, 0x7112b3f1, 0x735fc311,
-      /*  24 */ 0x404331a9, 0x74d97781, 0x64495118, 0x323e04be, 0x5974b425, 0x4862e393, 0x62389c1d, 0x28a68b82,
-      /*  32 */ 0x0f95da37, 0x7a50bbc6, 0x09b0091c, 0x22cdb7b4, 0x4faaed26, 0x66417ccd, 0x189e4bfa, 0x1ce4e8dd,
-      /*  40 */ 0x5274c742, 0x3bdcf4dc, 0x2d94e907, 0x32eac016, 0x26d33ca3, 0x60415a8a, 0x31f57880, 0x68c8aa52,
-      /*  48 */ 0x23eb16da, 0x6204f4a1, 0x373927c1, 0x0d24eb7c, 0x06dd7379, 0x2b3be507, 0x0f9c55b1, 0x2c7925eb,
-      /*  56 */ 0x36d67c9a, 0x42f831d9, 0x5e3961cb, 0x65d637a8, 0x24bb3820, 0x4d08e33d, 0x2188754f, 0x147e409e,
-      /*  64 */ 0x6a9620a0, 0x62e26657, 0x7bd8ce81, 0x11da0abb, 0x5f9e7b50, 0x23e444b6, 0x25920c78, 0x5fc894f0,
-      /*  72 */ 0x5e338cbb, 0x404237fd, 0x1d60f80f, 0x320a1743, 0x76013d2b, 0x070294ee, 0x695e243b, 0x56b177fd,
-      /*  80 */ 0x752492e1, 0x6decd52f, 0x125f5219, 0x139d2e78, 0x1898d11e, 0x2f7ee785, 0x4db405d8, 0x1a028a35,
-      /*  88 */ 0x63f6f323, 0x1f6d0078, 0x307cfd67, 0x3f32a78a, 0x6980796c, 0x462b3d83, 0x34b639f2, 0x53fce379,
-      /*  96 */ 0x74ba50f4, 0x1abc2c4b, 0x5eeaeb8d, 0x335a7a0d, 0x3973dd20, 0x0462d66b, 0x159813ff, 0x1e4643fd,
-      /* 104 */ 0x06bc5c62, 0x3115e3fc, 0x09101613, 0x47af2515, 0x4f11ec54, 0x78b99911, 0x3db8dd44, 0x1ec10b9b,
-      /* 112 */ 0x5b5506ca, 0x773ce092, 0x567be81a, 0x5475b975, 0x7a2cde1a, 0x494536f5, 0x34737bb4, 0x76d9750b,
-      /* 120 */ 0x2a1f6232, 0x2e49644d, 0x7dddcbe7, 0x500cebdb, 0x619dab9e, 0x48c626fe, 0x1cda3193, 0x52dabe9d };
-    ULONG rand;
-    int pos;
-    ULONG result;
-
-    rand = (*seed * 0x7fffffed + 0x7fffffc3) % 0x7fffffff;
-    *seed = (rand * 0x7fffffed + 0x7fffffc3) % 0x7fffffff;
-    pos = *seed & 0x7f;
-    result = saved_value[pos];
-    saved_value[pos] = rand;
-    return(result);
-}
-
-
 static void test_RtlRandom(void)
 {
-    ULONGLONG num;
+    int i, j;
     ULONG seed;
-    ULONG seed_bak;
-    ULONG seed_expected;
-    ULONG result;
-    ULONG result_expected;
+    ULONG res[512];
 
     if (!pRtlRandom)
     {
@@ -704,185 +669,14 @@ static void test_RtlRandom(void)
         return;
     }
 
-/*
- * Unlike RtlUniform, RtlRandom is not documented. We guess that for
- * RtlRandom D.H. Lehmer's 1948 algorithm is used like stated in
- * the documentation of the RtlUniform function. This algorithm is:
- *
- * seed = (seed * const_1 + const_2) % const_3;
- *
- * According to the RtlUniform documentation the random number is
- * distributed over [0..MAXLONG], but in reality it is distributed
- * over [0..MAXLONG-1]. Therefore const_3 might be MAXLONG + 1 or
- * MAXLONG:
- *
- * seed = (seed * const_1 + const_2) % (MAXLONG + 1);
- *
- * or
- *
- * seed = (seed * const_1 + const_2) % MAXLONG;
- *
- * To find out const_2 we just call RtlRandom with seed set to 0:
- */
     seed = 0;
-    result_expected = 0x320a1743;
-    seed_expected =0x44b;
-    result = pRtlRandom(&seed);
-
-/*
- * Windows Vista uses different algorithms, so skip the rest of the tests
- * until that is figured out. Trace output for the failures is about 10.5 MB!
- */
-
-    if (seed == 0x3fc) {
-        skip("Most likely running on Windows Vista which uses a different algorithm\n");
-        return;
+    for (i = 0; i < sizeof(res) / sizeof(res[0]); i++)
+    {
+        res[i] = pRtlRandom(&seed);
+        ok(seed != res[i], "%i: seed is same as res %x\n", i, seed);
+        for (j = 0; j < i; j++)
+            ok(res[i] != res[j], "res[%i] (%x) is same as res[%i] (%x)\n", j, res[j], i, res[i]);
     }
-
-    ok(result == result_expected,
-        "pRtlRandom(&seed (seed == 0)) returns %x, expected %x\n",
-        result, result_expected);
-    ok(seed == seed_expected,
-        "pRtlRandom(&seed (seed == 0)) sets seed to %x, expected %x\n",
-        seed, seed_expected);
-/*
- * Seed is not equal to result as with RtlUniform. To see more we
- * call RtlRandom again with seed set to 0:
- */
-    seed = 0;
-    result_expected = 0x7fffffc3;
-    seed_expected =0x44b;
-    result = pRtlRandom(&seed);
-    ok(result == result_expected,
-        "RtlRandom(&seed (seed == 0)) returns %x, expected %x\n",
-        result, result_expected);
-    ok(seed == seed_expected,
-        "RtlRandom(&seed (seed == 0)) sets seed to %x, expected %x\n",
-        seed, seed_expected);
-/*
- * Seed is set to the same value as before but the result is different.
- * To see more we call RtlRandom again with seed set to 0:
- */
-    seed = 0;
-    result_expected = 0x7fffffc3;
-    seed_expected =0x44b;
-    result = pRtlRandom(&seed);
-    ok(result == result_expected,
-        "RtlRandom(&seed (seed == 0)) returns %x, expected %x\n",
-        result, result_expected);
-    ok(seed == seed_expected,
-        "RtlRandom(&seed (seed == 0)) sets seed to %x, expected %x\n",
-        seed, seed_expected);
-/*
- * Seed is again set to the same value as before. This time we also
- * have the same result as before. Interestingly the value of the
- * result is 0x7fffffc3 which is the same value used in RtlUniform
- * as const_2. If we do
- *
- * seed = 0;
- * result = RtlUniform(&seed);
- *
- * we get the same result (0x7fffffc3) as with
- *
- * seed = 0;
- * RtlRandom(&seed);
- * seed = 0;
- * result = RtlRandom(&seed);
- *
- * And there is another interesting thing. If we do
- *
- * seed = 0;
- * RtlUniform(&seed);
- * RtlUniform(&seed);
- *
- * seed is set to the value 0x44b which ist the same value that
- *
- * seed = 0;
- * RtlRandom(&seed);
- *
- * assigns to seed. Putting these two findings together leads to
- * the conclusion that RtlRandom saves the value in some variable,
- * like in the following algorithm:
- *
- * result = saved_value;
- * saved_value = RtlUniform(&seed);
- * RtlUniform(&seed);
- * return(result);
- *
- * Now we do further tests with seed set to 1:
- */
-    seed = 1;
-    result_expected = 0x7a50bbc6;
-    seed_expected =0x5a1;
-    result = pRtlRandom(&seed);
-    ok(result == result_expected,
-        "RtlRandom(&seed (seed == 1)) returns %x, expected %x\n",
-        result, result_expected);
-    ok(seed == seed_expected,
-        "RtlRandom(&seed (seed == 1)) sets seed to %x, expected %x\n",
-        seed, seed_expected);
-/*
- * If there is just one saved_value the result now would be
- * 0x7fffffc3. From this test we can see that there is more than
- * one saved_value, like with this algorithm:
- *
- * result = saved_value[pos];
- * saved_value[pos] = RtlUniform(&seed);
- * RtlUniform(&seed);
- * return(result);
- *
- * But how is the value of pos determined? The calls to RtlUniform
- * create a sequence of random numbers. Every second random number
- * is put into the saved_value array and is used in some later call
- * of RtlRandom as result. The only reasonable source to determine
- * pos are the random numbers generated by RtlUniform which are not
- * put into the saved_value array. This are the values of seed
- * between the two calls of RtlUniform as in this algorithm:
- *
- * rand = RtlUniform(&seed);
- * RtlUniform(&seed);
- * pos = position(seed);
- * result = saved_value[pos];
- * saved_value[pos] = rand;
- * return(result);
- *
- * What remains to be determined is: The size of the saved_value array,
- * the initial values of the saved_value array and the function
- * position(seed). These tests are not shown here. 
- * The result of these tests is: The size of the saved_value array
- * is 128, the initial values can be seen in the my_RtlRandom
- * function and the position(seed) function is (seed & 0x7f).
- *
- * For a full test of RtlRandom use one of the following loop heads:
- *
- *  for (num = 0; num <= 0xffffffff; num++) {
- *      seed = num;
- *      ...
- *
- *  seed = 0;
- *  for (num = 0; num <= 0xffffffff; num++) {
- *      ...
- */
-    seed = 0;
-    for (num = 0; num <= 100000; num++) {
-        seed_bak = seed;
-	seed_expected = seed;
-        result_expected = my_RtlRandom(&seed_expected);
-	/* The following corrections are necessary because the */
-	/* previous tests changed the saved_value array */
-	if (num == 0) {
-	    result_expected = 0x7fffffc3;
-        } else if (num == 81) {
-	    result_expected = 0x7fffffb1;
-	} /* if */
-        result = pRtlRandom(&seed);
-        ok(result == result_expected,
-                "test: 0x%x%08x RtlRandom(&seed (seed == %x)) returns %x, expected %x\n",
-                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, result_expected);
-        ok(seed == seed_expected,
-                "test: 0x%x%08x RtlRandom(&seed (seed == %x)) sets seed to %x, expected %x\n",
-                (DWORD)(num >> 32), (DWORD)num, seed_bak, result, seed_expected);
-    } /* for */
 }
 
 
