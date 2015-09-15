@@ -21,6 +21,9 @@
 #include "webservices.h"
 #include "wine/test.h"
 
+static const char data1[] =
+    "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+
 static void test_WsCreateError(void)
 {
     HRESULT hr;
@@ -183,8 +186,154 @@ static void test_WsCreateHeap(void)
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 }
 
+static HRESULT set_input( WS_XML_READER *reader, const char *data, ULONG size )
+{
+    WS_XML_READER_TEXT_ENCODING encoding;
+    WS_XML_READER_BUFFER_INPUT input;
+
+    encoding.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
+    encoding.charSet               = WS_CHARSET_UTF8;
+
+    input.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
+    input.encodedData     = (void *)data;
+    input.encodedDataSize = size;
+
+    return WsSetInput( reader, (WS_XML_READER_ENCODING *)&encoding,
+                       (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+}
+
+static void test_WsCreateReader(void)
+{
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_XML_READER_PROPERTY prop;
+    ULONG size, max_depth, max_attrs, trim_size, buffer_size, max_ns;
+    BOOL allow_fragment, read_decl, in_attr;
+    ULONGLONG row, column;
+    WS_CHARSET charset;
+
+    hr = WsCreateReader( NULL, 0, NULL, NULL ) ;
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    reader = NULL;
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( reader != NULL, "reader not set\n" );
+
+    /* can't retrieve properties before input is set */
+    max_depth = 0xdeadbeef;
+    size = sizeof(max_depth);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, size, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( max_depth == 0xdeadbeef, "max_depth set\n" );
+
+    hr = set_input( reader, data1, sizeof(data1) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* check some defaults */
+    max_depth = 0xdeadbeef;
+    size = sizeof(max_depth);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( max_depth == 32, "got %u\n", max_depth );
+
+    allow_fragment = TRUE;
+    size = sizeof(allow_fragment);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_ALLOW_FRAGMENT, &allow_fragment, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !allow_fragment, "got %d\n", allow_fragment );
+
+    max_attrs = 0xdeadbeef;
+    size = sizeof(max_attrs);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_MAX_ATTRIBUTES, &max_attrs, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( max_attrs == 128, "got %u\n", max_attrs );
+
+    read_decl = FALSE;
+    size = sizeof(read_decl);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_READ_DECLARATION, &read_decl, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( read_decl, "got %u\n", read_decl );
+
+    charset = 0xdeadbeef;
+    size = sizeof(charset);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( charset == WS_CHARSET_UTF8, "got %u\n", charset );
+
+    size = sizeof(trim_size);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_UTF8_TRIM_SIZE, &trim_size, size, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    WsFreeReader( reader );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, data1, sizeof(data1) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    size = sizeof(buffer_size);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_STREAM_BUFFER_SIZE, &buffer_size, size, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    WsFreeReader( reader );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, data1, sizeof(data1) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    max_ns = 0xdeadbeef;
+    size = sizeof(max_ns);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_MAX_NAMESPACES, &max_ns, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( max_ns == 32, "got %u\n", max_ns );
+    WsFreeReader( reader );
+
+    /* change a property */
+    max_depth = 16;
+    prop.id = WS_XML_READER_PROPERTY_MAX_DEPTH;
+    prop.value = &max_depth;
+    prop.valueSize = sizeof(max_depth);
+    hr = WsCreateReader( &prop, 1, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, data1, sizeof(data1) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    max_depth = 0xdeadbeef;
+    size = sizeof(max_depth);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( max_depth == 16, "got %u\n", max_depth );
+    WsFreeReader( reader );
+
+    /* show that some properties are read-only */
+    row = 1;
+    prop.id = WS_XML_READER_PROPERTY_ROW;
+    prop.value = &row;
+    prop.valueSize = sizeof(row);
+    hr = WsCreateReader( &prop, 1, &reader, NULL ) ;
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    column = 1;
+    prop.id = WS_XML_READER_PROPERTY_COLUMN;
+    prop.value = &column;
+    prop.valueSize = sizeof(column);
+    hr = WsCreateReader( &prop, 1, &reader, NULL ) ;
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    in_attr = TRUE;
+    prop.id = WS_XML_READER_PROPERTY_IN_ATTRIBUTE;
+    prop.value = &in_attr;
+    prop.valueSize = sizeof(in_attr);
+    hr = WsCreateReader( &prop, 1, &reader, NULL ) ;
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
     test_WsCreateHeap();
+    test_WsCreateReader();
 }
