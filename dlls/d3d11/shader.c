@@ -612,9 +612,9 @@ struct d3d10_geometry_shader *unsafe_impl_from_ID3D10GeometryShader(ID3D10Geomet
     return impl_from_ID3D10GeometryShader(iface);
 }
 
-static inline struct d3d10_pixel_shader *impl_from_ID3D10PixelShader(ID3D10PixelShader *iface)
+static inline struct d3d_pixel_shader *impl_from_ID3D10PixelShader(ID3D10PixelShader *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_pixel_shader, ID3D10PixelShader_iface);
+    return CONTAINING_RECORD(iface, struct d3d_pixel_shader, ID3D10PixelShader_iface);
 }
 
 /* IUnknown methods */
@@ -641,7 +641,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_QueryInterface(ID3D10PixelSh
 
 static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_AddRef(ID3D10PixelShader *iface)
 {
-    struct d3d10_pixel_shader *This = impl_from_ID3D10PixelShader(iface);
+    struct d3d_pixel_shader *This = impl_from_ID3D10PixelShader(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -659,7 +659,7 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_AddRef(ID3D10PixelShader *ifac
 
 static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_Release(ID3D10PixelShader *iface)
 {
-    struct d3d10_pixel_shader *This = impl_from_ID3D10PixelShader(iface);
+    struct d3d_pixel_shader *This = impl_from_ID3D10PixelShader(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -683,7 +683,7 @@ static ULONG STDMETHODCALLTYPE d3d10_pixel_shader_Release(ID3D10PixelShader *ifa
 
 static void STDMETHODCALLTYPE d3d10_pixel_shader_GetDevice(ID3D10PixelShader *iface, ID3D10Device **device)
 {
-    struct d3d10_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
+    struct d3d_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -694,7 +694,7 @@ static void STDMETHODCALLTYPE d3d10_pixel_shader_GetDevice(ID3D10PixelShader *if
 static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_GetPrivateData(ID3D10PixelShader *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d10_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
+    struct d3d_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -705,7 +705,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_GetPrivateData(ID3D10PixelSh
 static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateData(ID3D10PixelShader *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d10_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
+    struct d3d_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -716,7 +716,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateData(ID3D10PixelSh
 static HRESULT STDMETHODCALLTYPE d3d10_pixel_shader_SetPrivateDataInterface(ID3D10PixelShader *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d10_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
+    struct d3d_pixel_shader *shader = impl_from_ID3D10PixelShader(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
@@ -736,20 +736,20 @@ static const struct ID3D10PixelShaderVtbl d3d10_pixel_shader_vtbl =
     d3d10_pixel_shader_SetPrivateDataInterface,
 };
 
-static void STDMETHODCALLTYPE d3d10_pixel_shader_wined3d_object_destroyed(void *parent)
+static void STDMETHODCALLTYPE d3d_pixel_shader_wined3d_object_destroyed(void *parent)
 {
-    struct d3d10_pixel_shader *shader = parent;
+    struct d3d_pixel_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
-static const struct wined3d_parent_ops d3d10_pixel_shader_wined3d_parent_ops =
+static const struct wined3d_parent_ops d3d_pixel_shader_wined3d_parent_ops =
 {
-    d3d10_pixel_shader_wined3d_object_destroyed,
+    d3d_pixel_shader_wined3d_object_destroyed,
 };
 
-HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d_device *device,
+HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
@@ -779,7 +779,7 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d_de
     desc.max_version = 4;
 
     hr = wined3d_shader_create_ps(device->wined3d_device, &desc, shader,
-            &d3d10_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader);
+            &d3d_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader);
     shader_free_signature(&input_signature);
     shader_free_signature(&output_signature);
     if (FAILED(hr))
@@ -797,7 +797,7 @@ HRESULT d3d10_pixel_shader_init(struct d3d10_pixel_shader *shader, struct d3d_de
     return S_OK;
 }
 
-struct d3d10_pixel_shader *unsafe_impl_from_ID3D10PixelShader(ID3D10PixelShader *iface)
+struct d3d_pixel_shader *unsafe_impl_from_ID3D10PixelShader(ID3D10PixelShader *iface)
 {
     if (!iface)
         return NULL;

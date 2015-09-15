@@ -657,7 +657,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetShader(ID3D10Device1 *iface,
         ID3D10PixelShader *shader)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_pixel_shader *ps = unsafe_impl_from_ID3D10PixelShader(shader);
+    struct d3d_pixel_shader *ps = unsafe_impl_from_ID3D10PixelShader(shader);
 
     TRACE("iface %p, shader %p\n", iface, shader);
 
@@ -1347,7 +1347,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetShaderResources(ID3D10Device1 *i
 static void STDMETHODCALLTYPE d3d10_device_PSGetShader(ID3D10Device1 *iface, ID3D10PixelShader **shader)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_pixel_shader *shader_impl;
+    struct d3d_pixel_shader *shader_impl;
     struct wined3d_shader *wined3d_shader;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
@@ -2308,7 +2308,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device1 *i
         const void *byte_code, SIZE_T byte_code_length, ID3D10PixelShader **shader)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_pixel_shader *object;
+    struct d3d_pixel_shader *object;
     HRESULT hr;
 
     TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p\n",
@@ -2318,7 +2318,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device1 *i
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3d10_pixel_shader_init(object, This, byte_code, byte_code_length);
+    hr = d3d_pixel_shader_init(object, This, byte_code, byte_code_length);
     if (FAILED(hr))
     {
         WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
