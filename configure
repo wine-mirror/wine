@@ -1715,6 +1715,7 @@ enable_ipconfig
 enable_lodctr
 enable_mofcomp
 enable_mshta
+enable_msidb
 enable_msiexec
 enable_msinfo32
 enable_net
@@ -20292,6 +20293,7 @@ wine_fn_config_makefile programs/ipconfig enable_ipconfig
 wine_fn_config_makefile programs/lodctr enable_lodctr
 wine_fn_config_makefile programs/mofcomp enable_mofcomp
 wine_fn_config_makefile programs/mshta enable_mshta
+wine_fn_config_makefile programs/msidb enable_msidb
 wine_fn_config_makefile programs/msiexec enable_msiexec
 wine_fn_config_makefile programs/msinfo32 enable_msinfo32
 wine_fn_config_makefile programs/net enable_net
@@ -20443,6 +20445,7 @@ else
 fonts \
 loader/l_intl.nls \
 loader/wine.inf \
+programs/msidb/msidb \
 programs/msiexec/msiexec \
 programs/notepad/notepad \
 programs/regedit/regedit \

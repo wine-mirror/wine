@@ -3938,6 +3938,7 @@ WINE_CONFIG_MAKEFILE(programs/ipconfig)
 WINE_CONFIG_MAKEFILE(programs/lodctr)
 WINE_CONFIG_MAKEFILE(programs/mofcomp)
 WINE_CONFIG_MAKEFILE(programs/mshta)
+WINE_CONFIG_MAKEFILE(programs/msidb)
 WINE_CONFIG_MAKEFILE(programs/msiexec)
 WINE_CONFIG_MAKEFILE(programs/msinfo32)
 WINE_CONFIG_MAKEFILE(programs/net)
@@ -4106,6 +4107,7 @@ else
 fonts \
 loader/l_intl.nls \
 loader/wine.inf \
+programs/msidb/msidb \
 programs/msiexec/msiexec \
 programs/notepad/notepad \
 programs/regedit/regedit \
