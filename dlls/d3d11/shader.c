@@ -122,9 +122,9 @@ void shader_free_signature(struct wined3d_shader_signature *s)
     HeapFree(GetProcessHeap(), 0, s->elements);
 }
 
-static inline struct d3d10_vertex_shader *impl_from_ID3D10VertexShader(ID3D10VertexShader *iface)
+static inline struct d3d_vertex_shader *impl_from_ID3D10VertexShader(ID3D10VertexShader *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_vertex_shader, ID3D10VertexShader_iface);
+    return CONTAINING_RECORD(iface, struct d3d_vertex_shader, ID3D10VertexShader_iface);
 }
 
 /* IUnknown methods */
@@ -151,7 +151,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_QueryInterface(ID3D10Vertex
 
 static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_AddRef(ID3D10VertexShader *iface)
 {
-    struct d3d10_vertex_shader *This = impl_from_ID3D10VertexShader(iface);
+    struct d3d_vertex_shader *This = impl_from_ID3D10VertexShader(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u\n", This, refcount);
@@ -169,7 +169,7 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_AddRef(ID3D10VertexShader *if
 
 static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *iface)
 {
-    struct d3d10_vertex_shader *This = impl_from_ID3D10VertexShader(iface);
+    struct d3d_vertex_shader *This = impl_from_ID3D10VertexShader(iface);
     ULONG refcount = InterlockedDecrement(&This->refcount);
 
     TRACE("%p decreasing refcount to %u\n", This, refcount);
@@ -193,7 +193,7 @@ static ULONG STDMETHODCALLTYPE d3d10_vertex_shader_Release(ID3D10VertexShader *i
 
 static void STDMETHODCALLTYPE d3d10_vertex_shader_GetDevice(ID3D10VertexShader *iface, ID3D10Device **device)
 {
-    struct d3d10_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
+    struct d3d_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -204,7 +204,7 @@ static void STDMETHODCALLTYPE d3d10_vertex_shader_GetDevice(ID3D10VertexShader *
 static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_GetPrivateData(ID3D10VertexShader *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d10_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
+    struct d3d_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -215,7 +215,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_GetPrivateData(ID3D10Vertex
 static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_SetPrivateData(ID3D10VertexShader *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d10_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
+    struct d3d_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -226,7 +226,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_SetPrivateData(ID3D10Vertex
 static HRESULT STDMETHODCALLTYPE d3d10_vertex_shader_SetPrivateDataInterface(ID3D10VertexShader *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d10_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
+    struct d3d_vertex_shader *shader = impl_from_ID3D10VertexShader(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
@@ -246,20 +246,20 @@ static const struct ID3D10VertexShaderVtbl d3d10_vertex_shader_vtbl =
     d3d10_vertex_shader_SetPrivateDataInterface,
 };
 
-static void STDMETHODCALLTYPE d3d10_vertex_shader_wined3d_object_destroyed(void *parent)
+static void STDMETHODCALLTYPE d3d_vertex_shader_wined3d_object_destroyed(void *parent)
 {
-    struct d3d10_vertex_shader *shader = parent;
+    struct d3d_vertex_shader *shader = parent;
 
     wined3d_private_store_cleanup(&shader->private_store);
     HeapFree(GetProcessHeap(), 0, parent);
 }
 
-static const struct wined3d_parent_ops d3d10_vertex_shader_wined3d_parent_ops =
+static const struct wined3d_parent_ops d3d_vertex_shader_wined3d_parent_ops =
 {
-    d3d10_vertex_shader_wined3d_object_destroyed,
+    d3d_vertex_shader_wined3d_object_destroyed,
 };
 
-HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d_device *device,
+HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
@@ -289,7 +289,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d_
     desc.max_version = 4;
 
     hr = wined3d_shader_create_vs(device->wined3d_device, &desc, shader,
-            &d3d10_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader);
+            &d3d_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader);
     shader_free_signature(&input_signature);
     shader_free_signature(&output_signature);
     if (FAILED(hr))
@@ -307,7 +307,7 @@ HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d_
     return S_OK;
 }
 
-struct d3d10_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface)
+struct d3d_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface)
 {
     if (!iface)
         return NULL;

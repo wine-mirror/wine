@@ -225,7 +225,7 @@ HRESULT d3d_input_layout_create(struct d3d_device *device,
 struct d3d_input_layout *unsafe_impl_from_ID3D10InputLayout(ID3D10InputLayout *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10VertexShader */
-struct d3d10_vertex_shader
+struct d3d_vertex_shader
 {
     ID3D10VertexShader ID3D10VertexShader_iface;
     LONG refcount;
@@ -235,9 +235,9 @@ struct d3d10_vertex_shader
     ID3D10Device1 *device;
 };
 
-HRESULT d3d10_vertex_shader_init(struct d3d10_vertex_shader *shader, struct d3d_device *device,
+HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length) DECLSPEC_HIDDEN;
-struct d3d10_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface) DECLSPEC_HIDDEN;
+struct d3d_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10GeometryShader */
 struct d3d10_geometry_shader

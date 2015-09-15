@@ -678,7 +678,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetShader(ID3D10Device1 *iface,
         ID3D10VertexShader *shader)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_vertex_shader *vs = unsafe_impl_from_ID3D10VertexShader(shader);
+    struct d3d_vertex_shader *vs = unsafe_impl_from_ID3D10VertexShader(shader);
 
     TRACE("iface %p, shader %p\n", iface, shader);
 
@@ -1385,7 +1385,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetSamplers(ID3D10Device1 *iface,
 static void STDMETHODCALLTYPE d3d10_device_VSGetShader(ID3D10Device1 *iface, ID3D10VertexShader **shader)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_vertex_shader *shader_impl;
+    struct d3d_vertex_shader *shader_impl;
     struct wined3d_shader *wined3d_shader;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
@@ -2238,7 +2238,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device1 *
         const void *byte_code, SIZE_T byte_code_length, ID3D10VertexShader **shader)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_vertex_shader *object;
+    struct d3d_vertex_shader *object;
     HRESULT hr;
 
     TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p\n",
@@ -2248,7 +2248,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device1 *
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3d10_vertex_shader_init(object, This, byte_code, byte_code_length);
+    hr = d3d_vertex_shader_init(object, This, byte_code, byte_code_length);
     if (FAILED(hr))
     {
         WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
