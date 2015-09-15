@@ -7885,19 +7885,19 @@ static HRESULT WINAPI ITypeInfo_fnGetContainingTypeLib( ITypeInfo2 *iface,
         ITypeLib  * *ppTLib, UINT  *pIndex)
 {
     ITypeInfoImpl *This = impl_from_ITypeInfo2(iface);
-    
+
     /* If a pointer is null, we simply ignore it, the ATL in particular passes pIndex as 0 */
     if (pIndex) {
       *pIndex=This->index;
       TRACE("returning pIndex=%d\n", *pIndex);
     }
-    
+
     if (ppTLib) {
-      *ppTLib=(LPTYPELIB )(This->pTypeLib);
+      *ppTLib = (ITypeLib *)&This->pTypeLib->ITypeLib2_iface;
       ITypeLib_AddRef(*ppTLib);
       TRACE("returning ppTLib=%p\n", *ppTLib);
     }
-    
+
     return S_OK;
 }
 
