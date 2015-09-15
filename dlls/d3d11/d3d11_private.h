@@ -254,15 +254,16 @@ HRESULT d3d10_geometry_shader_init(struct d3d10_geometry_shader *shader, struct 
         const void *byte_code, SIZE_T byte_code_length) DECLSPEC_HIDDEN;
 struct d3d10_geometry_shader *unsafe_impl_from_ID3D10GeometryShader(ID3D10GeometryShader *iface) DECLSPEC_HIDDEN;
 
-/* ID3D10PixelShader */
+/* ID3D11PixelShader, ID3D10PixelShader */
 struct d3d_pixel_shader
 {
+    ID3D11PixelShader ID3D11PixelShader_iface;
     ID3D10PixelShader ID3D10PixelShader_iface;
     LONG refcount;
 
     struct wined3d_private_store private_store;
     struct wined3d_shader *wined3d_shader;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d_device *device,
