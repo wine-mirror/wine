@@ -250,6 +250,117 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
     heap_free( heap );
 }
 
+static const struct
+{
+    ULONG size;
+    BOOL  readonly;
+}
+reader_props[] =
+{
+    { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_MAX_DEPTH */
+    { sizeof(BOOL), FALSE },       /* WS_XML_READER_PROPERTY_ALLOW_FRAGMENT */
+    { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_MAX_ATTRIBUTES */
+    { sizeof(BOOL), FALSE },       /* WS_XML_READER_PROPERTY_READ_DECLARATION */
+    { sizeof(WS_CHARSET), FALSE }, /* WS_XML_READER_PROPERTY_CHARSET */
+    { sizeof(ULONGLONG), TRUE },   /* WS_XML_READER_PROPERTY_ROW */
+    { sizeof(ULONGLONG), TRUE },   /* WS_XML_READER_PROPERTY_COLUMN */
+    { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_UTF8_TRIM_SIZE */
+    { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_STREAM_BUFFER_SIZE */
+    { sizeof(BOOL), TRUE },        /* WS_XML_READER_PROPERTY_IN_ATTRIBUTE */
+    { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_STREAM_MAX_ROOT_MIME_PART_SIZE */
+    { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_STREAM_MAX_MIME_HEADERS_SIZE */
+    { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_MAX_MIME_PARTS */
+    { sizeof(BOOL), FALSE },       /* WS_XML_READER_PROPERTY_ALLOW_INVALID_CHARACTER_REFERENCES */
+    { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_MAX_NAMESPACES */
+};
+
+struct reader
+{
+    ULONG                   prop_count;
+    WS_XML_READER_PROPERTY  prop[sizeof(reader_props)/sizeof(reader_props[0])];
+};
+
+static struct reader *alloc_reader(void)
+{
+    static const ULONG count = sizeof(reader_props)/sizeof(reader_props[0]);
+    struct reader *ret;
+    ULONG i, size = sizeof(*ret) + count * sizeof(WS_XML_READER_PROPERTY);
+    char *ptr;
+
+    for (i = 0; i < count; i++) size += reader_props[i].size;
+    if (!(ret = heap_alloc_zero( size ))) return NULL;
+
+    ptr = (char *)&ret->prop[count];
+    for (i = 0; i < count; i++)
+    {
+        ret->prop[i].value = ptr;
+        ret->prop[i].valueSize = reader_props[i].size;
+        ptr += ret->prop[i].valueSize;
+    }
+    ret->prop_count = count;
+    return ret;
+}
+
+static HRESULT set_reader_prop( struct reader *reader, WS_XML_READER_PROPERTY_ID id, const void *value, ULONG size )
+{
+    if (id >= reader->prop_count || size != reader_props[id].size || reader_props[id].readonly)
+        return E_INVALIDARG;
+
+    memcpy( reader->prop[id].value, value, size );
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsCreateReader		[webservices.@]
+ */
+HRESULT WINAPI WsCreateReader( const WS_XML_READER_PROPERTY *properties, ULONG count,
+                               WS_XML_READER **handle, WS_ERROR *error )
+{
+    struct reader *reader;
+    ULONG i, max_depth = 32, max_attrs = 128, max_ns = 32;
+    WS_CHARSET charset = WS_CHARSET_UTF8;
+    BOOL read_decl = TRUE;
+    HRESULT hr;
+
+    TRACE( "%p %u %p %p\n", properties, count, handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle) return E_INVALIDARG;
+    if (!(reader = alloc_reader())) return E_OUTOFMEMORY;
+
+    set_reader_prop( reader, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, sizeof(max_depth) );
+    set_reader_prop( reader, WS_XML_READER_PROPERTY_MAX_ATTRIBUTES, &max_attrs, sizeof(max_attrs) );
+    set_reader_prop( reader, WS_XML_READER_PROPERTY_READ_DECLARATION, &read_decl, sizeof(read_decl) );
+    set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
+    set_reader_prop( reader, WS_XML_READER_PROPERTY_MAX_NAMESPACES, &max_ns, sizeof(max_ns) );
+
+    for (i = 0; i < count; i++)
+    {
+        hr = set_reader_prop( reader, properties[i].id, properties[i].value, properties[i].valueSize );
+        if (hr != S_OK)
+        {
+            heap_free( reader );
+            return hr;
+        }
+    }
+
+    *handle = (WS_XML_READER *)reader;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsFreeReader		[webservices.@]
+ */
+void WINAPI WsFreeReader( WS_XML_READER *handle )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p\n", handle );
+
+    if (!reader) return;
+    heap_free( reader );
+}
+
 /**************************************************************************
  *          WsGetErrorProperty		[webservices.@]
  */

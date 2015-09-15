@@ -29,7 +29,7 @@
 @ stub WsCreateMessage
 @ stub WsCreateMessageForChannel
 @ stub WsCreateMetadata
-@ stub WsCreateReader
+@ stdcall WsCreateReader(ptr long ptr ptr)
 @ stub WsCreateServiceEndpointFromTemplate
 @ stub WsCreateServiceHost
 @ stub WsCreateServiceProxy
@@ -54,7 +54,7 @@
 @ stub WsFreeListener
 @ stub WsFreeMessage
 @ stub WsFreeMetadata
-@ stub WsFreeReader
+@ stdcall WsFreeReader(ptr)
 @ stub WsFreeSecurityToken
 @ stub WsFreeServiceHost
 @ stub WsFreeServiceProxy
