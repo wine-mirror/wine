@@ -1178,7 +1178,7 @@ static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semanti
                 break;
 
             case WINED3D_SHADER_RESOURCE_TEXTURE_3D:
-                TRACE("_volume");
+                TRACE("_3d");
                 break;
 
             case WINED3D_SHADER_RESOURCE_TEXTURE_CUBE:
