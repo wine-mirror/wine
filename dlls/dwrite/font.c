@@ -260,7 +260,7 @@ static inline struct dwrite_fontlist *impl_from_IDWriteFontList(IDWriteFontList 
 
 static inline const char *debugstr_tag(UINT32 tag)
 {
-    return wine_dbg_sprintf("%c%c%c%c", tag & 0xff, (tag >> 8) & 0xff, (tag >> 16) & 0xff, tag >> 24);
+    return debugstr_an((char*)&tag, 4);
 }
 
 static HRESULT get_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
@@ -566,7 +566,7 @@ static HRESULT WINAPI dwritefontface_TryGetFontTable(IDWriteFontFace2 *iface, UI
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
 
-    TRACE("(%p)->(%u %p %p %p %p)\n", This, table_tag, table_data, table_size, context, exists);
+    TRACE("(%p)->(%s %p %p %p %p)\n", This, debugstr_tag(table_tag), table_data, table_size, context, exists);
 
     return opentype_get_font_table(This->streams[0], This->type, This->index, table_tag, table_data, context, table_size, exists);
 }
