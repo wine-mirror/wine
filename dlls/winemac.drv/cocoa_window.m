@@ -198,6 +198,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 @property (readonly, copy, nonatomic) NSArray* childWineWindows;
 
     - (void) updateColorSpace;
+    - (void) updateForGLSubviews;
 
     - (BOOL) becameEligibleParentOrChild;
     - (void) becameIneligibleChild;
@@ -334,14 +335,14 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             [self setNeedsDisplay:YES];
         }
 
-        [(WineWindow*)[self window] updateColorSpace];
+        [(WineWindow*)[self window] updateForGLSubviews];
     }
 
     - (void) removeGLContext:(WineOpenGLContext*)context
     {
         [glContexts removeObjectIdenticalTo:context];
         [pendingGlContexts removeObjectIdenticalTo:context];
-        [(WineWindow*)[self window] updateColorSpace];
+        [(WineWindow*)[self window] updateForGLSubviews];
     }
 
     - (void) updateGLContexts
@@ -1402,7 +1403,8 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
     - (BOOL) needsTransparency
     {
-        return self.shape || self.colorKeyed || self.usePerPixelAlpha;
+        return self.shape || self.colorKeyed || self.usePerPixelAlpha ||
+                (gl_surface_mode == GL_SURFACE_BEHIND && [[self.contentView valueForKeyPath:@"subviews.@max.hasGLContext"] boolValue]);
     }
 
     - (void) checkTransparency
@@ -1773,6 +1775,13 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             [self setColorSpace:nil];
         else
             [self setColorSpace:[NSColorSpace genericRGBColorSpace]];
+    }
+
+    - (void) updateForGLSubviews
+    {
+        [self updateColorSpace];
+        if (gl_surface_mode == GL_SURFACE_BEHIND)
+            [self checkTransparency];
     }
 
 
@@ -2683,7 +2692,7 @@ macdrv_view macdrv_create_view(macdrv_window w, CGRect rect)
                    name:NSApplicationDidChangeScreenParametersNotification
                  object:NSApp];
         [[window contentView] addSubview:view];
-        [window updateColorSpace];
+        [window updateForGLSubviews];
     });
 
     [pool release];
@@ -2712,7 +2721,7 @@ void macdrv_dispose_view(macdrv_view v)
                     object:NSApp];
         [view removeFromSuperview];
         [view release];
-        [window updateColorSpace];
+        [window updateForGLSubviews];
     });
 
     [pool release];
@@ -2737,15 +2746,15 @@ void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rec
         BOOL changedWindow = (window && window != [view window]);
         NSRect newFrame = NSRectFromCGRect(rect);
         NSRect oldFrame = [view frame];
-        BOOL needUpdateWindowColorSpace = FALSE;
+        BOOL needUpdateWindowForGLSubviews = FALSE;
 
         if (changedWindow)
         {
             WineWindow* oldWindow = (WineWindow*)[view window];
             [view removeFromSuperview];
-            [oldWindow updateColorSpace];
+            [oldWindow updateForGLSubviews];
             [[window contentView] addSubview:view];
-            needUpdateWindowColorSpace = TRUE;
+            needUpdateWindowForGLSubviews = TRUE;
         }
 
         if (!NSEqualRects(oldFrame, newFrame))
@@ -2759,11 +2768,11 @@ void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGRect rec
             else
                 [view setFrame:newFrame];
             [view setNeedsDisplay:YES];
-            needUpdateWindowColorSpace = TRUE;
+            needUpdateWindowForGLSubviews = TRUE;
         }
 
-        if (needUpdateWindowColorSpace)
-            [(WineWindow*)[view window] updateColorSpace];
+        if (needUpdateWindowForGLSubviews)
+            [(WineWindow*)[view window] updateForGLSubviews];
     });
 
     [pool release];

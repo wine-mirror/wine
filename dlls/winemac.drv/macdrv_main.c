@@ -57,6 +57,7 @@ BOOL disable_window_decorations = FALSE;
 int allow_immovable_windows = TRUE;
 int cursor_clipping_locks_windows = TRUE;
 int use_precise_scrolling = TRUE;
+int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
 HMODULE macdrv_module = 0;
 
 
@@ -182,6 +183,16 @@ static void setup_options(void)
 
     if (!get_config_key(hkey, appkey, "UsePreciseScrolling", buffer, sizeof(buffer)))
         use_precise_scrolling = IS_OPTION_TRUE(buffer[0]);
+
+    if (!get_config_key(hkey, appkey, "OpenGLSurfaceMode", buffer, sizeof(buffer)))
+    {
+        if (!strcmp(buffer, "transparent"))
+            gl_surface_mode = GL_SURFACE_IN_FRONT_TRANSPARENT;
+        else if (!strcmp(buffer, "behind"))
+            gl_surface_mode = GL_SURFACE_BEHIND;
+        else
+            gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
+    }
 
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);

@@ -109,7 +109,7 @@
             glDrawBuffer(GL_FRONT_AND_BACK);
             glDisable(GL_SCISSOR_TEST);
             glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-            glClearColor(0, 0, 0, 1);
+            glClearColor(0, 0, 0, gl_surface_mode == GL_SURFACE_IN_FRONT_TRANSPARENT ? 0 : 1);
 
             glClear(GL_COLOR_BUFFER_BIT);
 

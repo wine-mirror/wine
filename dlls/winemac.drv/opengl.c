@@ -1480,6 +1480,21 @@ static BOOL create_context(struct wgl_context *context, CGLContextObj share, uns
         return FALSE;
     }
 
+    if (gl_surface_mode == GL_SURFACE_IN_FRONT_TRANSPARENT)
+    {
+        GLint opacity = 0;
+        err = CGLSetParameter(context->cglcontext, kCGLCPSurfaceOpacity, &opacity);
+        if (err != kCGLNoError)
+            WARN("CGLSetParameter(kCGLCPSurfaceOpacity) failed with error %d %s; leaving opaque\n", err, CGLErrorString(err));
+    }
+    else if (gl_surface_mode == GL_SURFACE_BEHIND)
+    {
+        GLint order = -1;
+        err = CGLSetParameter(context->cglcontext, kCGLCPSurfaceOrder, &order);
+        if (err != kCGLNoError)
+            WARN("CGLSetParameter(kCGLCPSurfaceOrder) failed with error %d %s; leaving in front\n", err, CGLErrorString(err));
+    }
+
     context->context = macdrv_create_opengl_context(context->cglcontext);
     CGLReleaseContext(context->cglcontext);
     if (!context->context)
@@ -1638,7 +1653,7 @@ static BOOL set_pixel_format(HDC hdc, int fmt, BOOL allow_reset)
 
 done:
     release_win_data(data);
-    if (ret) __wine_set_pixel_format(hwnd, fmt);
+    if (ret && gl_surface_mode == GL_SURFACE_BEHIND) __wine_set_pixel_format(hwnd, fmt);
     return ret;
 }
 
