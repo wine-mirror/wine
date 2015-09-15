@@ -359,7 +359,7 @@ static const struct wined3d_parent_ops d3d_vertex_shader_wined3d_parent_ops =
     d3d_vertex_shader_wined3d_object_destroyed,
 };
 
-HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d3d_device *device,
+static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
@@ -404,6 +404,28 @@ HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d3d_devi
 
     shader->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(shader->device);
+
+    return S_OK;
+}
+
+HRESULT d3d_vertex_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
+        struct d3d_vertex_shader **shader)
+{
+    struct d3d_vertex_shader *object;
+    HRESULT hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_vertex_shader_init(object, device, byte_code, byte_code_length)))
+    {
+        WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created vertex shader %p.\n", object);
+    *shader = object;
 
     return S_OK;
 }

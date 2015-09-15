@@ -236,8 +236,8 @@ struct d3d_vertex_shader
     ID3D11Device *device;
 };
 
-HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d3d_device *device,
-        const void *byte_code, SIZE_T byte_code_length) DECLSPEC_HIDDEN;
+HRESULT d3d_vertex_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
+        struct d3d_vertex_shader **shader) DECLSPEC_HIDDEN;
 struct d3d_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10GeometryShader */
