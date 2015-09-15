@@ -273,11 +273,85 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
 HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_type,
         HMODULE swrast, UINT flags, const D3D_FEATURE_LEVEL *feature_levels, UINT levels,
         UINT sdk_version, const DXGI_SWAP_CHAIN_DESC *swapchain_desc, IDXGISwapChain **swapchain,
-        ID3D11Device **device, D3D_FEATURE_LEVEL *feature_level, ID3D11DeviceContext **immediate_context)
+        ID3D11Device **device_out, D3D_FEATURE_LEVEL *obtained_feature_level, ID3D11DeviceContext **immediate_context)
 {
-    FIXME("adapter %p, driver_type %s, swrast %p, flags %#x, feature_levels %p, levels %#x, sdk_version %u, "
-            "swapchain_desc %p, swapchain %p, device %p, feature_level %p, immediate_context %p stub!\n",
+    DXGI_SWAP_CHAIN_DESC desc;
+    IDXGIDevice *dxgi_device;
+    IDXGIFactory *factory;
+    ID3D11Device *device;
+    HRESULT hr;
+
+    TRACE("adapter %p, driver_type %s, swrast %p, flags %#x, feature_levels %p, levels %u, sdk_version %u, "
+            "swapchain_desc %p, swapchain %p, device %p, obtained_feature_level %p, immediate_context %p.\n",
             adapter, debug_d3d_driver_type(driver_type), swrast, flags, feature_levels, levels, sdk_version,
-            swapchain_desc, swapchain, device, feature_level, immediate_context);
-    return E_NOTIMPL;
+            swapchain_desc, swapchain, device_out, obtained_feature_level, immediate_context);
+
+    if (swapchain)
+        *swapchain = NULL;
+    if (device_out)
+        *device_out = NULL;
+
+    if (FAILED(hr = D3D11CreateDevice(adapter, driver_type, swrast, flags, feature_levels, levels, sdk_version,
+                    &device, obtained_feature_level, immediate_context)))
+    {
+        WARN("Failed to create a device, returning %#x.\n", hr);
+        return hr;
+    }
+
+    if (swapchain)
+    {
+        if (FAILED(hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device)))
+        {
+            ERR("Failed to get a dxgi device from the d3d11 device, returning %#x.\n", hr);
+            goto cleanup;
+        }
+
+        hr = IDXGIDevice_GetAdapter(dxgi_device, &adapter);
+        IDXGIDevice_Release(dxgi_device);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get the device adapter, returning %#x.\n", hr);
+            goto cleanup;
+        }
+
+        hr = IDXGIAdapter_GetParent(adapter, &IID_IDXGIFactory, (void **)&factory);
+        IDXGIAdapter_Release(adapter);
+        if (FAILED(hr))
+        {
+            ERR("Failed to get the adapter factory, returning %#x.\n", hr);
+            goto cleanup;
+        }
+
+        desc = *swapchain_desc;
+        hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &desc, swapchain);
+        IDXGIFactory_Release(factory);
+        if (FAILED(hr))
+        {
+            WARN("Failed to create a swapchain, returning %#x.\n", hr);
+            goto cleanup;
+        }
+
+        TRACE("Created IDXGISwapChain %p.\n", swapchain);
+    }
+
+    if (device_out)
+        *device_out = device;
+    else
+        ID3D11Device_Release(device);
+
+    return S_OK;
+
+cleanup:
+    if (device)
+        ID3D11Device_Release(device);
+    if (obtained_feature_level)
+        *obtained_feature_level = 0;
+    if (immediate_context)
+    {
+        /* FIXME: Remove the following NULL check once the d3d11_device_GetImmediateContext() is implemented. */
+        if (*immediate_context) ID3D11DeviceContext_Release(*immediate_context);
+        *immediate_context = NULL;
+    }
+
+    return hr;
 }
