@@ -310,6 +310,15 @@ static HRESULT set_reader_prop( struct reader *reader, WS_XML_READER_PROPERTY_ID
     return S_OK;
 }
 
+static HRESULT get_reader_prop( struct reader *reader, WS_XML_READER_PROPERTY_ID id, void *buf, ULONG size )
+{
+    if (id >= reader->prop_count || size != reader_props[id].size)
+        return E_INVALIDARG;
+
+    memcpy( buf, reader->prop[id].value, reader->prop[id].valueSize );
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsCreateReader		[webservices.@]
  */
@@ -385,6 +394,20 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
     if (error) FIXME( "ignoring error parameter\n" );
 
     return get_heap_prop( heap, id, buf, size );
+}
+
+/**************************************************************************
+ *          WsGetReaderProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetReaderProperty( WS_XML_READER *handle, WS_XML_READER_PROPERTY_ID id,
+                                    void *buf, ULONG size, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    return get_reader_prop( reader, id, buf, size );
 }
 
 /**************************************************************************

@@ -82,7 +82,7 @@
 @ stub WsGetPrefixFromNamespace
 @ stub WsGetReaderNode
 @ stub WsGetReaderPosition
-@ stub WsGetReaderProperty
+@ stdcall WsGetReaderProperty(ptr long ptr long ptr)
 @ stub WsGetSecurityContextProperty
 @ stub WsGetSecurityTokenProperty
 @ stub WsGetServiceHostProperty
