@@ -276,6 +276,8 @@ reader_props[] =
 
 struct reader
 {
+    const char             *input_data;
+    ULONG                   input_size;
     ULONG                   prop_count;
     WS_XML_READER_PROPERTY  prop[sizeof(reader_props)/sizeof(reader_props[0])];
 };
@@ -407,6 +409,7 @@ HRESULT WINAPI WsGetReaderProperty( WS_XML_READER *handle, WS_XML_READER_PROPERT
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
+    if (!reader->input_data) return WS_E_INVALID_OPERATION;
     return get_reader_prop( reader, id, buf, size );
 }
 
@@ -422,4 +425,59 @@ HRESULT WINAPI WsSetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, co
 
     if (id == WS_ERROR_PROPERTY_LANGID) return WS_E_INVALID_OPERATION;
     return set_error_prop( error, id, value, size );
+}
+
+/**************************************************************************
+ *          WsSetInput		[webservices.@]
+ */
+HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *encoding,
+                           const WS_XML_READER_INPUT *input, const WS_XML_READER_PROPERTY *properties,
+                           ULONG count, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+    HRESULT hr;
+    ULONG i;
+
+    TRACE( "%p %p %p %p %u %p\n", handle, encoding, input, properties, count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+
+    switch (encoding->encodingType)
+    {
+        case WS_XML_READER_ENCODING_TYPE_TEXT:
+        {
+            WS_XML_READER_TEXT_ENCODING *text = (WS_XML_READER_TEXT_ENCODING *)encoding;
+            if (text->charSet != WS_CHARSET_UTF8)
+            {
+                FIXME( "charset %u not supported\n", text->charSet );
+                return E_NOTIMPL;
+            }
+            break;
+        }
+        default:
+            FIXME( "encoding type %u not supported\n", encoding->encodingType );
+            return E_NOTIMPL;
+    }
+    switch (input->inputType)
+    {
+        case WS_XML_READER_INPUT_TYPE_BUFFER:
+        {
+            WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
+            reader->input_data = buf->encodedData;
+            reader->input_size = buf->encodedDataSize;
+            break;
+        }
+        default:
+            FIXME( "input type %u not supported\n", input->inputType );
+            return E_NOTIMPL;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        hr = set_reader_prop( reader, properties[i].id, properties[i].value, properties[i].valueSize );
+        if (hr != S_OK) return hr;
+    }
+
+    return S_OK;
 }
