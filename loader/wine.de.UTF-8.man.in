@@ -97,7 +97,7 @@ Gibt den Ort der
 .B wine
 -Anwendung an, die genutzt wird, um Windows-Programme zu laden. Wenn
  diese Variable nicht gesetzt ist, wird versucht,
-.B @bindir@/wineserver
+.B @bindir@/wine
 zu laden. Wenn auch dies nicht funktioniert, wird in $PATH und anderen
 Orten nach wine gesucht.
 .TP
