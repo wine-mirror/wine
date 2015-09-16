@@ -30,7 +30,7 @@ static inline struct d3d8_volume *impl_from_IDirect3DVolume8(IDirect3DVolume8 *i
 
 static HRESULT WINAPI d3d8_volume_QueryInterface(IDirect3DVolume8 *iface, REFIID riid, void **out)
 {
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), out);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualGUID(riid, &IID_IDirect3DVolume8)
             || IsEqualGUID(riid, &IID_IUnknown))

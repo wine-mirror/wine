@@ -30,7 +30,7 @@ static inline struct d3d8_surface *impl_from_IDirect3DSurface8(IDirect3DSurface8
 
 static HRESULT WINAPI d3d8_surface_QueryInterface(IDirect3DSurface8 *iface, REFIID riid, void **out)
 {
-    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), out);
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
     if (IsEqualGUID(riid, &IID_IDirect3DSurface8)
             || IsEqualGUID(riid, &IID_IDirect3DResource8)
