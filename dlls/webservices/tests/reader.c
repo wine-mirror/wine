@@ -331,9 +331,130 @@ static void test_WsCreateReader(void)
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 }
 
+static void test_WsSetInput(void)
+{
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_XML_READER_PROPERTY prop;
+    WS_XML_READER_TEXT_ENCODING enc;
+    WS_XML_READER_BUFFER_INPUT input;
+    WS_CHARSET charset;
+    const WS_XML_NODE *node;
+    ULONG size, max_depth;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetInput( NULL, NULL, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node != NULL, "node not set\n" );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
+    enc.charSet               = WS_CHARSET_UTF8;
+
+    input.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
+    input.encodedData     = (void *)data1;
+    input.encodedDataSize = sizeof(data1) - 1;
+
+    hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node != NULL, "node not set\n" );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    /* multiple calls are allowed */
+    hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* charset is detected by WsSetInput */
+    enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
+    enc.charSet               = WS_CHARSET_AUTO;
+    hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+
+    charset = 0xdeadbeef;
+    size = sizeof(charset);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( charset == WS_CHARSET_UTF8, "got %u\n", charset );
+
+    enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
+    enc.charSet               = WS_CHARSET_UTF8;
+
+    /* reader properties can be set with WsSetInput */
+    max_depth = 16;
+    prop.id = WS_XML_READER_PROPERTY_MAX_DEPTH;
+    prop.value = &max_depth;
+    prop.valueSize = sizeof(max_depth);
+    hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, &prop, 1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    max_depth = 0xdeadbeef;
+    size = sizeof(max_depth);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( max_depth == 16, "got %u\n", max_depth );
+    WsFreeReader( reader );
+}
+
+static void test_WsFillReader(void)
+{
+    HRESULT hr;
+    WS_XML_READER *reader;
+    const WS_XML_NODE *node;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, data1, sizeof(data1) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, sizeof(data1) - 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, data1, sizeof(data1) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node != NULL, "node not set\n" );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    hr = WsFillReader( NULL, sizeof(data1) - 1, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, sizeof(data1) - 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node != NULL, "node not set\n" );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    hr = WsFillReader( reader, sizeof(data1) - 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* min_size larger than input size */
+    hr = WsFillReader( reader, sizeof(data1), NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
     test_WsCreateHeap();
     test_WsCreateReader();
+    test_WsSetInput();
+    test_WsFillReader();
 }
