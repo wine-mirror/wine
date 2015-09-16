@@ -37,8 +37,6 @@
 #include "wine/wined3d.h"
 #include "wine/winedxgi.h"
 
-extern CRITICAL_SECTION dxgi_cs DECLSPEC_HIDDEN;
-
 /* Layered device */
 enum dxgi_device_layer_id
 {

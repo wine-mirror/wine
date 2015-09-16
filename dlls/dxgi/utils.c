@@ -357,7 +357,7 @@ HRESULT dxgi_get_private_data(struct wined3d_private_store *store,
     if (!data_size)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     if (!(stored_data = wined3d_private_store_get_private_data(store, guid)))
     {
         hr = DXGI_ERROR_NOT_FOUND;
@@ -384,7 +384,7 @@ HRESULT dxgi_get_private_data(struct wined3d_private_store *store,
     hr = S_OK;
 
 done:
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -397,22 +397,22 @@ HRESULT dxgi_set_private_data(struct wined3d_private_store *store,
 
     if (!data)
     {
-        EnterCriticalSection(&dxgi_cs);
+        wined3d_mutex_lock();
         if (!(entry = wined3d_private_store_get_private_data(store, guid)))
         {
-            LeaveCriticalSection(&dxgi_cs);
+            wined3d_mutex_unlock();
             return S_FALSE;
         }
 
         wined3d_private_store_free_private_data(store, entry);
-        LeaveCriticalSection(&dxgi_cs);
+        wined3d_mutex_unlock();
 
         return S_OK;
     }
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     hr = wined3d_private_store_set_private_data(store, guid, data, data_size, 0);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -425,10 +425,10 @@ HRESULT dxgi_set_private_data_interface(struct wined3d_private_store *store,
     if (!object)
         return dxgi_set_private_data(store, guid, sizeof(object), &object);
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     hr = wined3d_private_store_set_private_data(store,
             guid, object, sizeof(object), WINED3DSPD_IUNKNOWN);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }

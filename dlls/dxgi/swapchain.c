@@ -150,17 +150,17 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
     TRACE("iface %p, buffer_idx %u, riid %s, surface %p\n",
             iface, buffer_idx, debugstr_guid(riid), surface);
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
 
     if (!(texture = wined3d_swapchain_get_back_buffer(This->wined3d_swapchain, buffer_idx)))
     {
-        LeaveCriticalSection(&dxgi_cs);
+        wined3d_mutex_unlock();
         return DXGI_ERROR_INVALID_CALL;
     }
 
     parent = wined3d_texture_get_parent(texture);
     hr = IUnknown_QueryInterface(parent, riid, surface);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }
@@ -191,9 +191,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetDesc(IDXGISwapChain *iface, D
     if (desc == NULL)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     FIXME("Ignoring ScanlineOrdering, Scaling, SwapEffect and Flags\n");
 
@@ -230,7 +230,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *if
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     wined3d_swapchain_get_desc(swapchain->wined3d_swapchain, &wined3d_desc);
     for (i = 0; i < wined3d_desc.backbuffer_count; ++i)
     {
@@ -239,7 +239,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *if
         IUnknown_AddRef(parent);
         if (IUnknown_Release(parent))
         {
-            LeaveCriticalSection(&dxgi_cs);
+            wined3d_mutex_unlock();
             return DXGI_ERROR_INVALID_CALL;
         }
     }
@@ -247,7 +247,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_ResizeBuffers(IDXGISwapChain *if
         wined3d_desc.backbuffer_format = wined3dformat_from_dxgi_format(format);
     hr = wined3d_swapchain_resize_buffers(swapchain->wined3d_swapchain, buffer_count, width, height,
             wined3d_desc.backbuffer_format, wined3d_desc.multisample_type, wined3d_desc.multisample_quality);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return hr;
 }

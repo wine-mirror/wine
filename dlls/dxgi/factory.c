@@ -80,9 +80,9 @@ static ULONG STDMETHODCALLTYPE dxgi_factory_Release(IDXGIFactory1 *iface)
         }
         HeapFree(GetProcessHeap(), 0, factory->adapters);
 
-        EnterCriticalSection(&dxgi_cs);
+        wined3d_mutex_lock();
         wined3d_decref(factory->wined3d);
-        LeaveCriticalSection(&dxgi_cs);
+        wined3d_mutex_unlock();
         wined3d_private_store_cleanup(&factory->private_store);
         HeapFree(GetProcessHeap(), 0, factory);
     }
@@ -308,17 +308,17 @@ static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
     factory->refcount = 1;
     wined3d_private_store_init(&factory->private_store);
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     factory->wined3d = wined3d_create(0);
     if (!factory->wined3d)
     {
-        LeaveCriticalSection(&dxgi_cs);
+        wined3d_mutex_unlock();
         wined3d_private_store_cleanup(&factory->private_store);
         return DXGI_ERROR_UNSUPPORTED;
     }
 
     factory->adapter_count = wined3d_get_adapter_count(factory->wined3d);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
     factory->adapters = HeapAlloc(GetProcessHeap(), 0, factory->adapter_count * sizeof(*factory->adapters));
     if (!factory->adapters)
     {
@@ -367,9 +367,9 @@ static HRESULT dxgi_factory_init(struct dxgi_factory *factory, BOOL extended)
 
 fail:
     HeapFree(GetProcessHeap(), 0, factory->adapters);
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     wined3d_decref(factory->wined3d);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
     wined3d_private_store_cleanup(&factory->private_store);
     return hr;
 }
@@ -399,21 +399,21 @@ HRESULT dxgi_factory_create(REFIID riid, void **factory, BOOL extended)
 
 HWND dxgi_factory_get_device_window(struct dxgi_factory *factory)
 {
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
 
     if (!factory->device_window)
     {
         if (!(factory->device_window = CreateWindowA("static", "DXGI device window",
                 WS_DISABLED, 0, 0, 0, 0, NULL, NULL, NULL, NULL)))
         {
-            LeaveCriticalSection(&dxgi_cs);
+            wined3d_mutex_unlock();
             ERR("Failed to create a window.\n");
             return NULL;
         }
         TRACE("Created device window %p for factory %p.\n", factory->device_window, factory);
     }
 
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return factory->device_window;
 }

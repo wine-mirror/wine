@@ -150,20 +150,20 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
     wined3d = This->adapter->parent->wined3d;
     wined3d_format = wined3dformat_from_dxgi_format(format);
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     max_count = wined3d_get_adapter_mode_count(wined3d, This->adapter->ordinal,
             wined3d_format, WINED3D_SCANLINE_ORDERING_UNKNOWN);
 
     if (!desc)
     {
-        LeaveCriticalSection(&dxgi_cs);
+        wined3d_mutex_unlock();
         *mode_count = max_count;
         return S_OK;
     }
 
     if (max_count > *mode_count)
     {
-        LeaveCriticalSection(&dxgi_cs);
+        wined3d_mutex_unlock();
         return DXGI_ERROR_MORE_DATA;
     }
 
@@ -179,7 +179,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         if (FAILED(hr))
         {
             WARN("EnumAdapterModes failed, hr %#x.\n", hr);
-            LeaveCriticalSection(&dxgi_cs);
+            wined3d_mutex_unlock();
             return hr;
         }
 
@@ -191,7 +191,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *ifa
         desc[i].ScanlineOrdering = mode.scanline_ordering;
         desc[i].Scaling = DXGI_MODE_SCALING_UNSPECIFIED; /* FIXME */
     }
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return S_OK;
 }

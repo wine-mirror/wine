@@ -79,10 +79,10 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
     if (!refcount)
     {
         if (This->child_layer) IUnknown_Release(This->child_layer);
-        EnterCriticalSection(&dxgi_cs);
+        wined3d_mutex_lock();
         wined3d_device_uninit_3d(This->wined3d_device);
         wined3d_device_decref(This->wined3d_device);
-        LeaveCriticalSection(&dxgi_cs);
+        wined3d_mutex_unlock();
         IDXGIFactory1_Release(This->factory);
         wined3d_private_store_cleanup(&This->private_store);
         HeapFree(GetProcessHeap(), 0, This);
@@ -152,9 +152,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetAdapter(IWineDXGIDevice *iface, 
 
     TRACE("iface %p, adapter %p\n", iface, adapter);
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     wined3d_device_get_creation_parameters(This->wined3d_device, &create_parameters);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return IDXGIFactory1_EnumAdapters(This->factory, create_parameters.adapter_idx, adapter);
 }
@@ -400,10 +400,10 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         return hr;
     }
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     hr = wined3d_device_create(dxgi_factory->wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL,
             NULL, 0, 4, wined3d_device_parent, &device->wined3d_device);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, returning %#x.\n", hr);

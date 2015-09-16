@@ -25,15 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
-static CRITICAL_SECTION_DEBUG dxgi_cs_debug =
-{
-    0, 0, &dxgi_cs,
-    {&dxgi_cs_debug.ProcessLocksList,
-    &dxgi_cs_debug.ProcessLocksList},
-    0, 0, {(DWORD_PTR)(__FILE__ ": dxgi_cs")}
-};
-CRITICAL_SECTION dxgi_cs = {&dxgi_cs_debug, -1, 0, 0, 0, 0};
-
 struct dxgi_main
 {
     HMODULE d3d10core;
@@ -46,7 +37,6 @@ static void dxgi_main_cleanup(void)
 {
     HeapFree(GetProcessHeap(), 0, dxgi_main.device_layers);
     FreeLibrary(dxgi_main.d3d10core);
-    DeleteCriticalSection(&dxgi_cs);
 }
 
 BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, void *reserved)
@@ -84,25 +74,25 @@ static BOOL get_layer(enum dxgi_device_layer_id id, struct dxgi_device_layer *la
 {
     UINT i;
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
 
     for (i = 0; i < dxgi_main.layer_count; ++i)
     {
         if (dxgi_main.device_layers[i].id == id)
         {
             *layer = dxgi_main.device_layers[i];
-            LeaveCriticalSection(&dxgi_cs);
+            wined3d_mutex_unlock();
             return TRUE;
         }
     }
 
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
     return FALSE;
 }
 
 static HRESULT register_d3d10core_layers(HMODULE d3d10core)
 {
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
 
     if (!dxgi_main.d3d10core)
     {
@@ -113,7 +103,7 @@ static HRESULT register_d3d10core_layers(HMODULE d3d10core)
 
         if (!(ret = GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (const char *)d3d10core, &mod)))
         {
-            LeaveCriticalSection(&dxgi_cs);
+            wined3d_mutex_unlock();
             return E_FAIL;
         }
 
@@ -122,14 +112,14 @@ static HRESULT register_d3d10core_layers(HMODULE d3d10core)
         if (FAILED(hr))
         {
             ERR("Failed to register d3d11 layers, returning %#x\n", hr);
-            LeaveCriticalSection(&dxgi_cs);
+            wined3d_mutex_unlock();
             return hr;
         }
 
         dxgi_main.d3d10core = mod;
     }
 
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return S_OK;
 }
@@ -210,7 +200,7 @@ HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, U
 
     TRACE("layers %p, layer_count %u\n", layers, layer_count);
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
 
     if (!dxgi_main.layer_count)
         new_layers = HeapAlloc(GetProcessHeap(), 0, layer_count * sizeof(*new_layers));
@@ -220,7 +210,7 @@ HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, U
 
     if (!new_layers)
     {
-        LeaveCriticalSection(&dxgi_cs);
+        wined3d_mutex_unlock();
         ERR("Failed to allocate layer memory\n");
         return E_OUTOFMEMORY;
     }
@@ -238,7 +228,7 @@ HRESULT WINAPI DXGID3D10RegisterLayers(const struct dxgi_device_layer *layers, U
     dxgi_main.device_layers = new_layers;
     dxgi_main.layer_count += layer_count;
 
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     return S_OK;
 }

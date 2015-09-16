@@ -153,9 +153,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc1(IDXGIAdapter1 *iface, DXG
     adapter_id.description_size = sizeof(description);
     adapter_id.device_name_size = 0;
 
-    EnterCriticalSection(&dxgi_cs);
+    wined3d_mutex_lock();
     hr = wined3d_get_adapter_identifier(adapter->parent->wined3d, adapter->ordinal, 0, &adapter_id);
-    LeaveCriticalSection(&dxgi_cs);
+    wined3d_mutex_unlock();
 
     if (FAILED(hr))
         return hr;
