@@ -336,6 +336,8 @@ reader_props[] =
 
 struct reader
 {
+    ULONG                   read_size;
+    ULONG                   read_pos;
     struct list             nodes;
     struct node            *current;
     const char             *input_data;
@@ -443,6 +445,26 @@ void WINAPI WsFreeReader( WS_XML_READER *handle )
     if (!reader) return;
     destroy_nodes( &reader->nodes );
     heap_free( reader );
+}
+
+/**************************************************************************
+ *          WsFillReader		[webservices.@]
+ */
+HRESULT WINAPI WsFillReader( WS_XML_READER *handle, ULONG min_size, const WS_ASYNC_CONTEXT *ctx,
+                             WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %u %p %p\n", handle, min_size, ctx, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+
+    /* FIXME: add support for stream input */
+    reader->read_size = min( min_size, reader->input_size );
+    reader->read_pos  = 0;
+
+    return S_OK;
 }
 
 /**************************************************************************

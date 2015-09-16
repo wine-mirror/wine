@@ -44,7 +44,7 @@
 @ stub WsEndWriterCanonicalization
 @ stub WsFileTimeToDateTime
 @ stub WsFillBody
-@ stub WsFillReader
+@ stdcall WsFillReader(ptr long ptr ptr)
 @ stub WsFindAttribute
 @ stub WsFlushBody
 @ stub WsFlushWriter
