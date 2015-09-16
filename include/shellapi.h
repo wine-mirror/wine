@@ -606,8 +606,8 @@ typedef enum SHSTOCKICONID
     SIID_MEDIABDR,
     SIID_MEDIABDRE,
     SIID_CLUSTEREDDRIVE,
-    /* Missing: 141 - 174 */
-    SIID_MAX_ICONS = 175
+    /* Missing: 141 - 177 */
+    SIID_MAX_ICONS = 178
 }SHSTOCKICONID;
 
 typedef struct _SHSTOCKICONINFO
