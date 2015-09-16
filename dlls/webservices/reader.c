@@ -24,6 +24,7 @@
 #include "webservices.h"
 
 #include "wine/debug.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
@@ -250,6 +251,65 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
     heap_free( heap );
 }
 
+struct node
+{
+    WS_XML_ELEMENT_NODE hdr;
+    struct list entry;
+};
+
+static struct node *alloc_node( WS_XML_NODE_TYPE type )
+{
+    struct node *ret;
+
+    if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return NULL;
+    ret->hdr.node.nodeType = type;
+    list_init( &ret->entry );
+    return ret;
+}
+
+static void free_node( struct node *node )
+{
+    if (!node) return;
+    switch (node->hdr.node.nodeType)
+    {
+    case WS_XML_NODE_TYPE_ELEMENT:
+    {
+        WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)node;
+        heap_free( elem->prefix );
+        heap_free( elem->localName );
+        heap_free( elem->ns );
+        break;
+    }
+    case WS_XML_NODE_TYPE_TEXT:
+    {
+        WS_XML_TEXT_NODE *text = (WS_XML_TEXT_NODE *)node;
+        heap_free( text->text );
+        break;
+    }
+    case WS_XML_NODE_TYPE_END_ELEMENT:
+    case WS_XML_NODE_TYPE_EOF:
+    case WS_XML_NODE_TYPE_BOF:
+        break;
+
+    default:
+        ERR( "unhandled type %u\n", node->hdr.node.nodeType );
+        break;
+    }
+    heap_free( node );
+}
+
+static void destroy_nodes( struct list *list )
+{
+    struct list *ptr;
+
+    while ((ptr = list_head( list )))
+    {
+        struct node *node = LIST_ENTRY( ptr, struct node, entry );
+        list_remove( &node->entry );
+        free_node( node );
+    }
+}
+
 static const struct
 {
     ULONG size;
@@ -276,6 +336,8 @@ reader_props[] =
 
 struct reader
 {
+    struct list             nodes;
+    struct node            *current;
     const char             *input_data;
     ULONG                   input_size;
     ULONG                   prop_count;
@@ -328,6 +390,7 @@ HRESULT WINAPI WsCreateReader( const WS_XML_READER_PROPERTY *properties, ULONG c
                                WS_XML_READER **handle, WS_ERROR *error )
 {
     struct reader *reader;
+    struct node *node;
     ULONG i, max_depth = 32, max_attrs = 128, max_ns = 32;
     WS_CHARSET charset = WS_CHARSET_UTF8;
     BOOL read_decl = TRUE;
@@ -355,6 +418,15 @@ HRESULT WINAPI WsCreateReader( const WS_XML_READER_PROPERTY *properties, ULONG c
         }
     }
 
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF )))
+    {
+        heap_free( reader );
+        return E_OUTOFMEMORY;
+    }
+    list_init( &reader->nodes );
+    list_add_tail( &reader->nodes, &node->entry );
+    reader->current = node;
+
     *handle = (WS_XML_READER *)reader;
     return S_OK;
 }
@@ -369,6 +441,7 @@ void WINAPI WsFreeReader( WS_XML_READER *handle )
     TRACE( "%p\n", handle );
 
     if (!reader) return;
+    destroy_nodes( &reader->nodes );
     heap_free( reader );
 }
 
@@ -396,6 +469,23 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
     if (error) FIXME( "ignoring error parameter\n" );
 
     return get_heap_prop( heap, id, buf, size );
+}
+
+/**************************************************************************
+ *          WsGetReaderNode		[webservices.@]
+ */
+HRESULT WINAPI WsGetReaderNode( WS_XML_READER *handle, const WS_XML_NODE **node,
+                                WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p %p\n", handle, node, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !node) return E_INVALIDARG;
+
+    *node = &reader->current->hdr.node;
+    return S_OK;
 }
 
 /**************************************************************************
@@ -435,6 +525,7 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
                            ULONG count, WS_ERROR *error )
 {
     struct reader *reader = (struct reader *)handle;
+    struct node *node;
     HRESULT hr;
     ULONG i;
 
@@ -478,6 +569,10 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
         hr = set_reader_prop( reader, properties[i].id, properties[i].value, properties[i].valueSize );
         if (hr != S_OK) return hr;
     }
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
+    list_add_head( &reader->nodes, &node->entry );
+    reader->current = node;
 
     return S_OK;
 }
