@@ -42,8 +42,10 @@ struct msidb_state
     WCHAR *database_file;
     WCHAR *table_folder;
     MSIHANDLE database_handle;
+    BOOL add_streams;
     BOOL create_database;
     BOOL import_tables;
+    struct list add_stream_list;
     struct list table_list;
 };
 
@@ -78,6 +80,7 @@ static void show_usage( void )
         "Usage: msidb [OPTION]...[OPTION]... [TABLE]...[TABLE]\n"
         "Options:\n"
         "  -?                Show this usage message and exit.\n"
+        "  -a file.cab       Add stream/cabinet file to _Streams table.\n"
         "  -c                Create database file (instead of opening existing file).\n"
         "  -d package.msi    Path to the database file.\n"
         "  -f folder         Folder in which to open/save the tables.\n"
@@ -92,19 +95,19 @@ static int valid_state( struct msidb_state *state )
         FIXME( "GUI operation is not currently supported.\n" );
         return 0;
     }
-    if (state->table_folder == NULL)
+    if (state->table_folder == NULL && !state->add_streams)
     {
         ERR( "No table folder specified (-f option).\n" );
         show_usage();
         return 0;
     }
-    if (!state->create_database && !state->import_tables)
+    if (!state->create_database && !state->import_tables && !state->add_streams)
     {
-        ERR( "No mode flag specified (-c, -i).\n" );
+        ERR( "No mode flag specified (-a, -c, -i).\n" );
         show_usage();
         return 0;
     }
-    if (list_empty( &state->table_list ))
+    if (list_empty( &state->table_list ) && !state->add_streams)
     {
         ERR( "No tables specified.\n" );
         return 0;
@@ -122,6 +125,11 @@ static int process_argument( struct msidb_state *state, int i, int argc, WCHAR *
     case '?':
         show_usage();
         exit( 0 );
+    case 'a':
+        if (i + 1 >= argc) return 0;
+        state->add_streams = TRUE;
+        list_append( &state->add_stream_list, argv[i + 1] );
+        return 2;
     case 'c':
         state->create_database = TRUE;
         return 1;
@@ -178,6 +186,76 @@ static void close_database( struct msidb_state *state, BOOL commit_changes )
     }
 }
 
+static const WCHAR *basenameW( const WCHAR *filename )
+{
+    const WCHAR *dir_end;
+
+    dir_end = strrchrW( filename, '/' );
+    if (dir_end) return dir_end + 1;
+    dir_end = strrchrW( filename, '\\' );
+    if (dir_end) return dir_end + 1;
+    return filename;
+}
+
+static int add_stream( struct msidb_state *state, const WCHAR *stream_filename )
+{
+    static const char insert_command[] = "INSERT INTO _Streams (Name, Data) VALUES (?, ?)";
+    MSIHANDLE view = 0, record = 0;
+    UINT ret;
+
+    ret = MsiDatabaseOpenViewA( state->database_handle, insert_command, &view );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to open _Streams table.\n" );
+        goto cleanup;
+    }
+    record = MsiCreateRecord( 2 );
+    if (record == 0)
+    {
+        ERR( "Failed to create MSI record.\n" );
+        ret = ERROR_OUTOFMEMORY;
+        goto cleanup;
+    }
+    ret = MsiRecordSetStringW( record, 1, basenameW( stream_filename ) );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to add stream filename to MSI record.\n" );
+        goto cleanup;
+    }
+    ret = MsiRecordSetStreamW( record, 2, stream_filename );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to add stream to MSI record.\n" );
+        goto cleanup;
+    }
+    ret = MsiViewExecute( view, record );
+    if (ret != ERROR_SUCCESS)
+    {
+        ERR( "Failed to add stream to _Streams table.\n" );
+        goto cleanup;
+    }
+
+cleanup:
+    if (record)
+        MsiCloseHandle( record );
+    if (view)
+        MsiViewClose( view );
+
+    return (ret == ERROR_SUCCESS);
+}
+
+static int add_streams( struct msidb_state *state )
+{
+    struct msidb_listentry *data;
+
+    LIST_FOR_EACH_ENTRY( data, &state->add_stream_list, struct msidb_listentry, entry )
+    {
+        if (!add_stream( state, data->name ))
+            return 0; /* failed, do not commit changes */
+    }
+    return 1;
+}
+
 static int import_table( struct msidb_state *state, const WCHAR *table_name )
 {
     const WCHAR format[] = { '%','.','8','s','.','i','d','t',0 }; /* truncate to 8 characters */
@@ -213,6 +291,7 @@ int wmain( int argc, WCHAR *argv[] )
     int ret = 1;
 
     memset( &state, 0x0, sizeof(state) );
+    list_init( &state.add_stream_list );
     list_init( &state.table_list );
     /* process and validate all the command line flags */
     for (i = 1; n && i < argc; i += n)
@@ -229,12 +308,15 @@ int wmain( int argc, WCHAR *argv[] )
         ERR( "Failed to open database '%s'.\n", wine_dbgstr_w(state.database_file) );
         goto cleanup;
     }
+    if (state.add_streams && !add_streams( &state ))
+        goto cleanup; /* failed, do not commit changes */
     if (state.import_tables && !import_tables( &state ))
         goto cleanup; /* failed, do not commit changes */
     ret = 0;
 
 cleanup:
     close_database( &state, ret == 0 );
+    list_free( &state.add_stream_list );
     list_free( &state.table_list );
     return ret;
 }
