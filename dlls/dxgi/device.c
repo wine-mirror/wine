@@ -194,6 +194,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
     surface_desc.depth = 1;
     surface_desc.size = 0;
 
+    wined3d_mutex_lock();
     memset(surface, 0, surface_count * sizeof(*surface));
     for (i = 0; i < surface_count; ++i)
     {
@@ -218,11 +219,13 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
 
         TRACE("Created IDXGISurface %p (%u/%u)\n", surface[i], i + 1, surface_count);
     }
+    wined3d_mutex_unlock();
     IWineDXGIDeviceParent_Release(dxgi_device_parent);
 
     return S_OK;
 
 fail:
+    wined3d_mutex_unlock();
     for (j = 0; j < i; ++j)
     {
         IDXGISurface_Release(surface[i]);
@@ -364,6 +367,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 
     device->IWineDXGIDevice_iface.lpVtbl = &dxgi_device_vtbl;
     device->refcount = 1;
+    wined3d_mutex_lock();
     wined3d_private_store_init(&device->private_store);
 
     layer_base = device + 1;
@@ -373,6 +377,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     {
         WARN("Failed to create device, returning %#x.\n", hr);
         wined3d_private_store_cleanup(&device->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
 
@@ -382,6 +387,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         ERR("DXGI device should implement IWineD3DDeviceParent.\n");
         IUnknown_Release(device->child_layer);
         wined3d_private_store_cleanup(&device->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
     wined3d_device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
@@ -397,18 +403,18 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
             hr = E_FAIL;
         IUnknown_Release(device->child_layer);
         wined3d_private_store_cleanup(&device->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
 
-    wined3d_mutex_lock();
     hr = wined3d_device_create(dxgi_factory->wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL,
             NULL, 0, 4, wined3d_device_parent, &device->wined3d_device);
-    wined3d_mutex_unlock();
     if (FAILED(hr))
     {
         WARN("Failed to create a wined3d device, returning %#x.\n", hr);
         IUnknown_Release(device->child_layer);
         wined3d_private_store_cleanup(&device->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
 
@@ -422,8 +428,10 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
         wined3d_device_decref(device->wined3d_device);
         IUnknown_Release(device->child_layer);
         wined3d_private_store_cleanup(&device->private_store);
+        wined3d_mutex_unlock();
         return hr;
     }
+    wined3d_mutex_unlock();
 
     device->factory = &dxgi_factory->IDXGIFactory1_iface;
     IDXGIFactory1_AddRef(device->factory);

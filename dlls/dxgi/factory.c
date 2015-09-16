@@ -253,7 +253,9 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *ifa
         return hr;
     }
 
+    wined3d_mutex_lock();
     *swapchain = wined3d_swapchain_get_parent(wined3d_swapchain);
+    wined3d_mutex_unlock();
 
     return S_OK;
 }
