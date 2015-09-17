@@ -296,6 +296,68 @@ typedef struct {
 
 typedef struct tagGdiFont GdiFont;
 
+#define FIRST_FONT_HANDLE 1
+#define MAX_FONT_HANDLES  256
+
+struct font_handle_entry
+{
+    void *obj;
+    WORD  generation; /* generation count for reusing handle values */
+};
+
+static struct font_handle_entry font_handles[MAX_FONT_HANDLES];
+static struct font_handle_entry *next_free;
+static struct font_handle_entry *next_unused = font_handles;
+
+static inline DWORD entry_to_handle( struct font_handle_entry *entry )
+{
+    unsigned int idx = entry - font_handles + FIRST_FONT_HANDLE;
+    return idx | (entry->generation << 16);
+}
+
+static inline struct font_handle_entry *handle_entry( DWORD handle )
+{
+    unsigned int idx = LOWORD(handle) - FIRST_FONT_HANDLE;
+
+    if (idx < MAX_FONT_HANDLES)
+    {
+        if (!HIWORD( handle ) || HIWORD( handle ) == font_handles[idx].generation)
+            return &font_handles[idx];
+    }
+    if (handle) WARN( "invalid handle 0x%08x\n", handle );
+    return NULL;
+}
+
+static DWORD alloc_font_handle( void *obj )
+{
+    struct font_handle_entry *entry;
+
+    entry = next_free;
+    if (entry)
+        next_free = entry->obj;
+    else if (next_unused < font_handles + MAX_FONT_HANDLES)
+        entry = next_unused++;
+    else
+    {
+        ERR( "out of realized font handles\n" );
+        return 0;
+    }
+    entry->obj = obj;
+    if (++entry->generation == 0xffff) entry->generation = 1;
+    return entry_to_handle( entry );
+}
+
+static void free_font_handle( DWORD handle )
+{
+    struct font_handle_entry *entry;
+
+    if ((entry = handle_entry( handle )))
+    {
+        entry->obj = next_free;
+        next_free = entry;
+    }
+}
+
 typedef struct {
     struct list entry;
     Face *face;
@@ -337,6 +399,7 @@ struct tagGdiFont {
     VOID *GSUB_Table;
     const VOID *vert_feature;
     DWORD cache_num;
+    DWORD instance_id;
 };
 
 typedef struct {
@@ -4423,6 +4486,7 @@ static GdiFont *alloc_font(void)
     ret->font_desc.matrix.eM11 = ret->font_desc.matrix.eM22 = 1.0;
     ret->total_kern_pairs = (DWORD)-1;
     ret->kern_pairs = NULL;
+    ret->instance_id = alloc_font_handle(ret);
     list_init(&ret->child_fonts);
     return ret;
 }
@@ -4441,6 +4505,7 @@ static void free_font(GdiFont *font)
         HeapFree(GetProcessHeap(), 0, child);
     }
 
+    free_font_handle(font->instance_id);
     if (font->ft_face) pFT_Done_Face(font->ft_face);
     if (font->mapping) unmap_font_file( font->mapping );
     HeapFree(GetProcessHeap(), 0, font->kern_pairs);
@@ -8180,7 +8245,7 @@ static BOOL freetype_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
         info->flags |= 2;
 
     info->cache_num = physdev->font->cache_num;
-    info->instance_id = -1;
+    info->instance_id = physdev->font->instance_id;
     if (info->size == sizeof(*info))
     {
         info->unk = 0;
