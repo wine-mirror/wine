@@ -1380,8 +1380,13 @@ int __thiscall strstreambuf_sync(strstreambuf *this)
 DEFINE_THISCALL_WRAPPER(strstreambuf_underflow, 4)
 int __thiscall strstreambuf_underflow(strstreambuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return EOF;
+    TRACE("(%p)\n", this);
+    if (this->base.gptr < this->base.egptr)
+        return *this->base.gptr;
+    /* extend the get area to include the characters written */
+    if (this->base.egptr < this->base.pptr)
+        this->base.egptr = this->base.pptr;
+    return (this->base.gptr < this->base.egptr) ? *this->base.gptr : EOF;
 }
 
 /* ??0ios@@IAE@ABV0@@Z */
