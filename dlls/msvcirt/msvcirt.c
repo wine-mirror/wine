@@ -1332,8 +1332,18 @@ void __thiscall strstreambuf_freeze(strstreambuf *this, int frozen)
 DEFINE_THISCALL_WRAPPER(strstreambuf_overflow, 8)
 int __thiscall strstreambuf_overflow(strstreambuf *this, int c)
 {
-    FIXME("(%p %d) stub\n", this, c);
-    return EOF;
+    TRACE("(%p %d)\n", this, c);
+    if (this->base.pptr >= this->base.epptr) {
+        /* increase the buffer size if it's dynamic */
+        if (!this->dynamic || call_streambuf_doallocate(&this->base) == EOF)
+            return EOF;
+        if (!this->base.epptr)
+            this->base.pbase = this->base.pptr = this->base.egptr ? this->base.egptr : this->base.base;
+        this->base.epptr = this->base.ebuf;
+    }
+    if (c != EOF)
+        *this->base.pptr++ = c;
+    return 1;
 }
 
 /* ?seekoff@strstreambuf@@UAEJJW4seek_dir@ios@@H@Z */

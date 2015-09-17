@@ -195,6 +195,7 @@ static strstreambuf* (*__thiscall p_strstreambuf_ctor)(strstreambuf*);
 static void (*__thiscall p_strstreambuf_dtor)(strstreambuf*);
 static int (*__thiscall p_strstreambuf_doallocate)(strstreambuf*);
 static void (*__thiscall p_strstreambuf_freeze)(strstreambuf*, int);
+static int (*__thiscall p_strstreambuf_overflow)(strstreambuf*, int);
 static streambuf* (*__thiscall p_strstreambuf_setbuf)(strstreambuf*, char*, int);
 static int (*__thiscall p_strstreambuf_underflow)(strstreambuf*);
 
@@ -351,6 +352,7 @@ static BOOL init(void)
         SET(p_strstreambuf_dtor, "??1strstreambuf@@UEAA@XZ");
         SET(p_strstreambuf_doallocate, "?doallocate@strstreambuf@@MEAAHXZ");
         SET(p_strstreambuf_freeze, "?freeze@strstreambuf@@QEAAXH@Z");
+        SET(p_strstreambuf_overflow, "?overflow@strstreambuf@@UEAAHH@Z");
         SET(p_strstreambuf_setbuf, "?setbuf@strstreambuf@@UEAAPEAVstreambuf@@PEADH@Z");
         SET(p_strstreambuf_underflow, "?underflow@strstreambuf@@UEAAHXZ");
 
@@ -427,6 +429,7 @@ static BOOL init(void)
         SET(p_strstreambuf_dtor, "??1strstreambuf@@UAE@XZ");
         SET(p_strstreambuf_doallocate, "?doallocate@strstreambuf@@MAEHXZ");
         SET(p_strstreambuf_freeze, "?freeze@strstreambuf@@QAEXH@Z");
+        SET(p_strstreambuf_overflow, "?overflow@strstreambuf@@UAEHH@Z");
         SET(p_strstreambuf_setbuf, "?setbuf@strstreambuf@@UAEPAVstreambuf@@PADH@Z");
         SET(p_strstreambuf_underflow, "?underflow@strstreambuf@@UAEHXZ");
 
@@ -1623,6 +1626,71 @@ static void test_strstreambuf(void)
     ssb2.base.gptr = ssb2.base.egptr = ssb2.base.ebuf;
     ret = (int) call_func1(p_strstreambuf_underflow, &ssb2);
     ok(ret == EOF, "expected EOF got %d\n", ret);
+
+    /* overflow */
+    ssb1.base.pptr = ssb1.base.epptr - 1;
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb1, EOF);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb1, 'A');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(ssb1.base.pptr == ssb1.base.epptr, "wrong put pointer, expected %p got %p\n", ssb1.base.epptr, ssb1.base.pptr);
+    ok(*(ssb1.base.pptr - 1) == 'A', "expected 'A' got %d\n", *(ssb1.base.pptr - 1));
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb1, 'B');
+    ok(ret == EOF, "expected EOF got %d\n", ret);
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb1, EOF);
+    ok(ret == EOF, "expected EOF got %d\n", ret);
+    ssb2.dynamic = 0;
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'C');
+    ok(ret == EOF, "expected EOF got %d\n", ret);
+    ssb2.dynamic = 1;
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'C');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(ssb2.base.ebuf == ssb2.base.base + 12, "expected %p got %p\n", ssb2.base.base + 12, ssb2.base.ebuf);
+    ok(ssb2.base.gptr == ssb2.base.base + 11, "wrong get pointer, expected %p got %p\n", ssb2.base.base + 11, ssb2.base.gptr);
+    ok(ssb2.base.pbase == ssb2.base.base + 11, "wrong put base, expected %p got %p\n", ssb2.base.base + 11, ssb2.base.pbase);
+    ok(ssb2.base.pptr == ssb2.base.base + 12, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 12, ssb2.base.pptr);
+    ok(ssb2.base.epptr == ssb2.base.base + 12, "wrong put end, expected %p got %p\n", ssb2.base.base + 12, ssb2.base.epptr);
+    ok(*(ssb2.base.pptr - 1) == 'C', "expected 'C' got %d\n", *(ssb2.base.pptr - 1));
+    ssb2.increase = 4;
+    ssb2.base.eback = ssb2.base.gptr = ssb2.base.egptr = NULL;
+    ssb2.base.pbase = ssb2.base.pptr = ssb2.base.epptr = NULL;
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'D');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(ssb2.base.ebuf == ssb2.base.base + 16, "expected %p got %p\n", ssb2.base.base + 16, ssb2.base.ebuf);
+    ok(ssb2.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, ssb2.base.gptr);
+    ok(ssb2.base.pbase == ssb2.base.base, "wrong put base, expected %p got %p\n", ssb2.base.base, ssb2.base.pbase);
+    ok(ssb2.base.pptr == ssb2.base.base + 1, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 1, ssb2.base.pptr);
+    ok(ssb2.base.epptr == ssb2.base.base + 16, "wrong put end, expected %p got %p\n", ssb2.base.base + 16, ssb2.base.epptr);
+    ok(*(ssb2.base.pptr - 1) == 'D', "expected 'D' got %d\n", *(ssb2.base.pptr - 1));
+    ssb2.base.pbase = ssb2.base.base + 3;
+    ssb2.base.pptr = ssb2.base.epptr + 5;
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'E');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(ssb2.base.ebuf == ssb2.base.base + 20, "expected %p got %p\n", ssb2.base.base + 20, ssb2.base.ebuf);
+    ok(ssb2.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, ssb2.base.gptr);
+    ok(ssb2.base.pbase == ssb2.base.base + 3, "wrong put base, expected %p got %p\n", ssb2.base.base + 3, ssb2.base.pbase);
+    ok(ssb2.base.pptr == ssb2.base.base + 22, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 22, ssb2.base.pptr);
+    ok(ssb2.base.epptr == ssb2.base.base + 20, "wrong put end, expected %p got %p\n", ssb2.base.base + 20, ssb2.base.epptr);
+    ok(*(ssb2.base.pptr - 1) == 'E', "expected 'E' got %d\n", *(ssb2.base.pptr - 1));
+    ssb2.base.egptr = ssb2.base.base + 2;
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'F');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(ssb2.base.ebuf == ssb2.base.base + 24, "expected %p got %p\n", ssb2.base.base + 24, ssb2.base.ebuf);
+    ok(ssb2.base.gptr != NULL, "wrong get pointer, expected != NULL\n");
+    ok(ssb2.base.pbase == ssb2.base.base + 3, "wrong put base, expected %p got %p\n", ssb2.base.base + 3, ssb2.base.pbase);
+    ok(ssb2.base.pptr == ssb2.base.base + 23, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 23, ssb2.base.pptr);
+    ok(ssb2.base.epptr == ssb2.base.base + 24, "wrong put end, expected %p got %p\n", ssb2.base.base + 24, ssb2.base.epptr);
+    ok(*(ssb2.base.pptr - 1) == 'F', "expected 'F' got %d\n", *(ssb2.base.pptr - 1));
+    ssb2.base.eback = ssb2.base.gptr = ssb2.base.base;
+    ssb2.base.epptr = NULL;
+    ret = (int) call_func2(p_strstreambuf_overflow, &ssb2, 'G');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(ssb2.base.ebuf == ssb2.base.base + 28, "expected %p got %p\n", ssb2.base.base + 28, ssb2.base.ebuf);
+    ok(ssb2.base.gptr == ssb2.base.base, "wrong get pointer, expected %p got %p\n", ssb2.base.base, ssb2.base.gptr);
+    ok(ssb2.base.pbase == ssb2.base.base + 2, "wrong put base, expected %p got %p\n", ssb2.base.base + 2, ssb2.base.pbase);
+    ok(ssb2.base.pptr == ssb2.base.base + 3, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 3, ssb2.base.pptr);
+    ok(ssb2.base.epptr == ssb2.base.base + 28, "wrong put end, expected %p got %p\n", ssb2.base.base + 28, ssb2.base.epptr);
+    ok(*(ssb2.base.pptr - 1) == 'G', "expected 'G' got %d\n", *(ssb2.base.pptr - 1));
 
     call_func1(p_strstreambuf_dtor, &ssb1);
     call_func1(p_strstreambuf_dtor, &ssb2);
