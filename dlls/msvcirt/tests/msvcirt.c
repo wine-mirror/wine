@@ -193,6 +193,7 @@ static strstreambuf* (*__thiscall p_strstreambuf_buffer_ctor)(strstreambuf*, cha
 static strstreambuf* (*__thiscall p_strstreambuf_ubuffer_ctor)(strstreambuf*, unsigned char*, int, unsigned char*);
 static strstreambuf* (*__thiscall p_strstreambuf_ctor)(strstreambuf*);
 static void (*__thiscall p_strstreambuf_dtor)(strstreambuf*);
+static int (*__thiscall p_strstreambuf_doallocate)(strstreambuf*);
 static void (*__thiscall p_strstreambuf_freeze)(strstreambuf*, int);
 
 /* ios */
@@ -346,6 +347,7 @@ static BOOL init(void)
         SET(p_strstreambuf_ubuffer_ctor, "??0strstreambuf@@QEAA@PEAEH0@Z");
         SET(p_strstreambuf_ctor, "??0strstreambuf@@QEAA@XZ");
         SET(p_strstreambuf_dtor, "??1strstreambuf@@UEAA@XZ");
+        SET(p_strstreambuf_doallocate, "?doallocate@strstreambuf@@MEAAHXZ");
         SET(p_strstreambuf_freeze, "?freeze@strstreambuf@@QEAAXH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
@@ -419,6 +421,7 @@ static BOOL init(void)
         SET(p_strstreambuf_ubuffer_ctor, "??0strstreambuf@@QAE@PAEH0@Z");
         SET(p_strstreambuf_ctor, "??0strstreambuf@@QAE@XZ");
         SET(p_strstreambuf_dtor, "??1strstreambuf@@UAE@XZ");
+        SET(p_strstreambuf_doallocate, "?doallocate@strstreambuf@@MAEHXZ");
         SET(p_strstreambuf_freeze, "?freeze@strstreambuf@@QAEXH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
@@ -1420,6 +1423,7 @@ static void test_strstreambuf(void)
 {
     strstreambuf ssb1, ssb2;
     char buffer[64];
+    int ret;
 
     memset(&ssb1, 0xab, sizeof(strstreambuf));
     memset(&ssb2, 0xab, sizeof(strstreambuf));
@@ -1543,6 +1547,35 @@ static void test_strstreambuf(void)
     ok(ssb2.dynamic == 0, "expected 0, got %d\n", ssb2.dynamic);
     call_func2(p_strstreambuf_freeze, &ssb2, 0);
     ok(ssb2.dynamic == 1, "expected 1, got %d\n", ssb2.dynamic);
+
+    /* doallocate */
+    ssb2.dynamic = 0;
+    ssb2.increase = 5;
+    ret = (int) call_func1(p_strstreambuf_doallocate, &ssb2);
+    ok(ret == 1, "return value %d\n", ret);
+    ok(ssb2.base.ebuf == ssb2.base.base + 5, "expected %p, got %p\n", ssb2.base.base + 5, ssb2.base.ebuf);
+    ssb2.base.eback = ssb2.base.base;
+    ssb2.base.gptr = ssb2.base.base + 2;
+    ssb2.base.egptr = ssb2.base.base + 4;
+    strcpy(ssb2.base.base, "Check");
+    ret = (int) call_func1(p_strstreambuf_doallocate, &ssb2);
+    ok(ret == 1, "return value %d\n", ret);
+    ok(ssb2.base.ebuf == ssb2.base.base + 10, "expected %p, got %p\n", ssb2.base.base + 10, ssb2.base.ebuf);
+    ok(ssb2.base.eback == ssb2.base.base, "wrong get base, expected %p got %p\n", ssb2.base.base, ssb2.base.eback);
+    ok(ssb2.base.gptr == ssb2.base.base + 2, "wrong get pointer, expected %p got %p\n", ssb2.base.base + 2, ssb2.base.gptr);
+    ok(ssb2.base.egptr == ssb2.base.base + 4, "wrong get end, expected %p got %p\n", ssb2.base.base + 4, ssb2.base.egptr);
+    ok(!strncmp(ssb2.base.base, "Check", 5), "strings are not equal\n");
+    ssb2.base.pbase = ssb2.base.pptr = ssb2.base.base + 4;
+    ssb2.base.epptr = ssb2.base.ebuf;
+    ssb2.increase = -3;
+    ret = (int) call_func1(p_strstreambuf_doallocate, &ssb2);
+    ok(ret == 1, "return value %d\n", ret);
+    ok(ssb2.base.ebuf == ssb2.base.base + 11, "expected %p, got %p\n", ssb2.base.base + 11, ssb2.base.ebuf);
+    ok(ssb2.base.pbase == ssb2.base.base + 4, "wrong put base, expected %p got %p\n", ssb2.base.base + 4, ssb2.base.pbase);
+    ok(ssb2.base.pptr == ssb2.base.base + 4, "wrong put pointer, expected %p got %p\n", ssb2.base.base + 4, ssb2.base.pptr);
+    ok(ssb2.base.epptr == ssb2.base.base + 10, "wrong put end, expected %p got %p\n", ssb2.base.base + 10, ssb2.base.epptr);
+    ok(!strncmp(ssb2.base.base, "Check", 5), "strings are not equal\n");
+    ssb2.dynamic = 1;
 
     call_func1(p_strstreambuf_dtor, &ssb1);
     call_func1(p_strstreambuf_dtor, &ssb2);

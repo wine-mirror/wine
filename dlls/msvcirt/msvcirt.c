@@ -1280,8 +1280,41 @@ strstreambuf* __thiscall strstreambuf_scalar_dtor(strstreambuf *this, unsigned i
 DEFINE_THISCALL_WRAPPER(strstreambuf_doallocate, 4)
 int __thiscall strstreambuf_doallocate(strstreambuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return EOF;
+    char *prev_buffer = this->base.base, *new_buffer;
+    LONG prev_size = this->base.ebuf - this->base.base, new_size;
+
+    TRACE("(%p)\n", this);
+
+    /* calculate the size of the new buffer */
+    new_size = (prev_size > 0 ? prev_size : 0) + (this->increase > 0 ? this->increase : 1);
+    /* get a new buffer */
+    if (this->f_alloc)
+        new_buffer = this->f_alloc(new_size);
+    else
+        new_buffer = MSVCRT_operator_new(new_size);
+    if (!new_buffer)
+        return EOF;
+    if (this->base.ebuf) {
+        /* copy the contents and adjust the pointers */
+        memcpy(new_buffer, this->base.base, prev_size);
+        if (this->base.egptr) {
+            this->base.eback += new_buffer - prev_buffer;
+            this->base.gptr += new_buffer - prev_buffer;
+            this->base.egptr += new_buffer - prev_buffer;
+        }
+        if (this->base.epptr) {
+            this->base.pbase += new_buffer - prev_buffer;
+            this->base.pptr += new_buffer - prev_buffer;
+            this->base.epptr += new_buffer - prev_buffer;
+        }
+        /* free the old buffer */
+        if (this->f_free)
+            this->f_free(this->base.base);
+        else
+            MSVCRT_operator_delete(this->base.base);
+    }
+    streambuf_setb(&this->base, new_buffer, new_buffer + new_size, 0);
+    return 1;
 }
 
 /* ?freeze@strstreambuf@@QAEXH@Z */
