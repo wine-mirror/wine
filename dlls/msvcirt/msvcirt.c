@@ -1289,7 +1289,9 @@ int __thiscall strstreambuf_doallocate(strstreambuf *this)
 DEFINE_THISCALL_WRAPPER(strstreambuf_freeze, 8)
 void __thiscall strstreambuf_freeze(strstreambuf *this, int frozen)
 {
-    FIXME("(%p %d) stub\n", this, frozen);
+    TRACE("(%p %d)\n", this, frozen);
+    if (!this->constant)
+        this->dynamic = !frozen;
 }
 
 /* ?overflow@strstreambuf@@UAEHH@Z */

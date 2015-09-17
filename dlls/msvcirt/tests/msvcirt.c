@@ -193,6 +193,7 @@ static strstreambuf* (*__thiscall p_strstreambuf_buffer_ctor)(strstreambuf*, cha
 static strstreambuf* (*__thiscall p_strstreambuf_ubuffer_ctor)(strstreambuf*, unsigned char*, int, unsigned char*);
 static strstreambuf* (*__thiscall p_strstreambuf_ctor)(strstreambuf*);
 static void (*__thiscall p_strstreambuf_dtor)(strstreambuf*);
+static void (*__thiscall p_strstreambuf_freeze)(strstreambuf*, int);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -345,6 +346,7 @@ static BOOL init(void)
         SET(p_strstreambuf_ubuffer_ctor, "??0strstreambuf@@QEAA@PEAEH0@Z");
         SET(p_strstreambuf_ctor, "??0strstreambuf@@QEAA@XZ");
         SET(p_strstreambuf_dtor, "??1strstreambuf@@UEAA@XZ");
+        SET(p_strstreambuf_freeze, "?freeze@strstreambuf@@QEAAXH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -417,6 +419,7 @@ static BOOL init(void)
         SET(p_strstreambuf_ubuffer_ctor, "??0strstreambuf@@QAE@PAEH0@Z");
         SET(p_strstreambuf_ctor, "??0strstreambuf@@QAE@XZ");
         SET(p_strstreambuf_dtor, "??1strstreambuf@@UAE@XZ");
+        SET(p_strstreambuf_freeze, "?freeze@strstreambuf@@QAEXH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -1518,7 +1521,6 @@ static void test_strstreambuf(void)
         "wrong put end, expected %p + 0x7fffffff or -1, got %p\n", buffer, ssb1.base.epptr);
     ok(ssb1.dynamic == 0, "expected 0, got %d\n", ssb1.dynamic);
     ok(ssb1.constant == 1, "expected 1, got %d\n", ssb1.constant);
-    call_func1(p_strstreambuf_dtor, &ssb1);
     call_func1(p_strstreambuf_ctor, &ssb2);
     ok(ssb2.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", ssb2.base.allocated);
     ok(ssb2.base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", ssb2.base.unbuffered);
@@ -1527,6 +1529,22 @@ static void test_strstreambuf(void)
     ok(ssb2.constant == 0, "expected 0, got %d\n", ssb2.constant);
     ok(ssb2.f_alloc == NULL, "expected %p, got %p\n", NULL, ssb2.f_alloc);
     ok(ssb2.f_free == NULL, "expected %p, got %p\n", NULL, ssb2.f_free);
+
+    /* freeze */
+    call_func2(p_strstreambuf_freeze, &ssb1, 0);
+    ok(ssb1.dynamic == 0, "expected 0, got %d\n", ssb1.dynamic);
+    ssb1.constant = 0;
+    call_func2(p_strstreambuf_freeze, &ssb1, 0);
+    ok(ssb1.dynamic == 1, "expected 1, got %d\n", ssb1.dynamic);
+    call_func2(p_strstreambuf_freeze, &ssb1, 3);
+    ok(ssb1.dynamic == 0, "expected 0, got %d\n", ssb1.dynamic);
+    ssb1.constant = 1;
+    call_func2(p_strstreambuf_freeze, &ssb2, 5);
+    ok(ssb2.dynamic == 0, "expected 0, got %d\n", ssb2.dynamic);
+    call_func2(p_strstreambuf_freeze, &ssb2, 0);
+    ok(ssb2.dynamic == 1, "expected 1, got %d\n", ssb2.dynamic);
+
+    call_func1(p_strstreambuf_dtor, &ssb1);
     call_func1(p_strstreambuf_dtor, &ssb2);
 }
 
