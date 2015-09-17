@@ -23,6 +23,8 @@
 typedef LONG streamoff;
 typedef LONG streampos;
 typedef int filedesc;
+typedef void* (__cdecl *allocFunction)(LONG);
+typedef void (__cdecl *freeFunction)(void*);
 
 typedef enum {
     IOSTATE_goodbit   = 0x0,
