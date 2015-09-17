@@ -1139,7 +1139,9 @@ int __thiscall filebuf_underflow(filebuf *this)
 DEFINE_THISCALL_WRAPPER(strstreambuf_copy_ctor, 8)
 strstreambuf* __thiscall strstreambuf_copy_ctor(strstreambuf *this, const strstreambuf *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
+    TRACE("(%p %p)\n", this, copy);
+    *this = *copy;
+    this->base.vtable = &MSVCP_strstreambuf_vtable;
     return this;
 }
 
@@ -1148,7 +1150,14 @@ strstreambuf* __thiscall strstreambuf_copy_ctor(strstreambuf *this, const strstr
 DEFINE_THISCALL_WRAPPER(strstreambuf_dynamic_ctor, 8)
 strstreambuf* __thiscall strstreambuf_dynamic_ctor(strstreambuf* this, int length)
 {
-    FIXME("(%p %d) stub\n", this, length);
+    TRACE("(%p %d)\n", this, length);
+    streambuf_ctor(&this->base);
+    this->base.vtable = &MSVCP_strstreambuf_vtable;
+    this->dynamic = 1;
+    this->increase = length;
+    this->constant = 0;
+    this->f_alloc = NULL;
+    this->f_free = NULL;
     return this;
 }
 
@@ -1157,7 +1166,10 @@ strstreambuf* __thiscall strstreambuf_dynamic_ctor(strstreambuf* this, int lengt
 DEFINE_THISCALL_WRAPPER(strstreambuf_funcs_ctor, 12)
 strstreambuf* __thiscall strstreambuf_funcs_ctor(strstreambuf* this, allocFunction falloc, freeFunction ffree)
 {
-    FIXME("(%p %p %p) stub\n", this, falloc, ffree);
+    TRACE("(%p %p %p)\n", this, falloc, ffree);
+    strstreambuf_dynamic_ctor(this, 1);
+    this->f_alloc = falloc;
+    this->f_free = ffree;
     return this;
 }
 
@@ -1166,7 +1178,28 @@ strstreambuf* __thiscall strstreambuf_funcs_ctor(strstreambuf* this, allocFuncti
 DEFINE_THISCALL_WRAPPER(strstreambuf_buffer_ctor, 16)
 strstreambuf* __thiscall strstreambuf_buffer_ctor(strstreambuf *this, char *buffer, int length, char *put)
 {
-    FIXME("(%p %p %d %p) stub\n", this, buffer, length, put);
+    char *end_buffer;
+
+    TRACE("(%p %p %d %p)\n", this, buffer, length, put);
+
+    if (length > 0)
+        end_buffer = buffer + length;
+    else if (length == 0)
+        end_buffer = buffer + strlen(buffer);
+    else
+        end_buffer = (char*) -1;
+
+    streambuf_ctor(&this->base);
+    streambuf_setb(&this->base, buffer, end_buffer, 0);
+    if (put == NULL) {
+        streambuf_setg(&this->base, buffer, buffer, end_buffer);
+    } else {
+        streambuf_setg(&this->base, buffer, buffer, put);
+        streambuf_setp(&this->base, put, end_buffer);
+    }
+    this->base.vtable = &MSVCP_strstreambuf_vtable;
+    this->dynamic = 0;
+    this->constant = 1;
     return this;
 }
 
@@ -1175,8 +1208,8 @@ strstreambuf* __thiscall strstreambuf_buffer_ctor(strstreambuf *this, char *buff
 DEFINE_THISCALL_WRAPPER(strstreambuf_ubuffer_ctor, 16)
 strstreambuf* __thiscall strstreambuf_ubuffer_ctor(strstreambuf *this, unsigned char *buffer, int length, unsigned char *put)
 {
-    FIXME("(%p %p %d %p) stub\n", this, buffer, length, put);
-    return this;
+    TRACE("(%p %p %d %p)\n", this, buffer, length, put);
+    return strstreambuf_buffer_ctor(this, (char*)buffer, length, (char*)put);
 }
 
 /* ??0strstreambuf@@QAE@XZ */
@@ -1184,8 +1217,8 @@ strstreambuf* __thiscall strstreambuf_ubuffer_ctor(strstreambuf *this, unsigned 
 DEFINE_THISCALL_WRAPPER(strstreambuf_ctor, 4)
 strstreambuf* __thiscall strstreambuf_ctor(strstreambuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return this;
+    TRACE("(%p)\n", this);
+    return strstreambuf_dynamic_ctor(this, 1);
 }
 
 /* ??1strstreambuf@@UAE@XZ */
@@ -1193,7 +1226,14 @@ strstreambuf* __thiscall strstreambuf_ctor(strstreambuf *this)
 DEFINE_THISCALL_WRAPPER(strstreambuf_dtor, 4)
 void __thiscall strstreambuf_dtor(strstreambuf *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    if (this->dynamic && this->base.base) {
+        if (this->f_free)
+            this->f_free(this->base.base);
+        else
+            MSVCRT_operator_delete(this->base.base);
+    }
+    streambuf_dtor(&this->base);
 }
 
 /* ??4strstreambuf@@QAEAAV0@ABV0@@Z */
