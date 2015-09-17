@@ -393,8 +393,8 @@ static	DWORD	MCIAVI_player(WINE_MCIAVI *wma, DWORD dwFlags, LPMCI_PLAY_PARMS lpP
         {
             while(next_frame_us <= tc && wma->dwCurrVideoFrame < wma->dwToVideoFrame){
                 double dur;
-                ++wma->dwCurrVideoFrame;
                 dur = MCIAVI_PaintFrame(wma, hDC);
+                ++wma->dwCurrVideoFrame;
                 if(!dur)
                     break;
                 next_frame_us += dur;
