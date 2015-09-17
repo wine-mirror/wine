@@ -1326,8 +1326,9 @@ streambuf* __thiscall strstreambuf_setbuf(strstreambuf *this, char *buffer, int 
 DEFINE_THISCALL_WRAPPER(strstreambuf_str, 4)
 char* __thiscall strstreambuf_str(strstreambuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    strstreambuf_freeze(this, 1);
+    return this->base.base;
 }
 
 /* ?sync@strstreambuf@@UAEHXZ */
