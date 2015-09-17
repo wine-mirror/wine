@@ -1371,8 +1371,8 @@ char* __thiscall strstreambuf_str(strstreambuf *this)
 DEFINE_THISCALL_WRAPPER(strstreambuf_sync, 4)
 int __thiscall strstreambuf_sync(strstreambuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return EOF;
+    TRACE("(%p)\n", this);
+    return 0;
 }
 
 /* ?underflow@strstreambuf@@UAEHXZ */
