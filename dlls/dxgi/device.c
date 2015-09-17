@@ -23,6 +23,7 @@
 #include "dxgi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static inline struct dxgi_device *impl_from_IWineDXGIDevice(IWineDXGIDevice *iface)
 {
@@ -398,7 +399,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     hr = wined3d_get_device_caps(dxgi_factory->wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
     if (FAILED(hr) || caps.VertexShaderVersion < 4 || caps.PixelShaderVersion < 4)
     {
-        WARN("Direct3D 10 is not supported on this GPU with the current shader backend.\n");
+        FIXME_(winediag)("Direct3D 10 is not supported on this GPU with the current shader backend.\n");
         if (SUCCEEDED(hr))
             hr = E_FAIL;
         IUnknown_Release(device->child_layer);
