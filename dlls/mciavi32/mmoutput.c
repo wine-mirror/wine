@@ -190,8 +190,11 @@ static BOOL	MCIAVI_AddFrame(WINE_MCIAVI* wma, LPMMCKINFO mmck,
      */
     twocc = TWOCCFromFOURCC(mmck->ckid);
     if (twocc == TWOCCFromFOURCC(wma->inbih->biCompression))
-	twocc = cktypeDIBcompressed;
-    
+        twocc = cktypeDIBcompressed;
+    /* Also detect some chunks that seem to be used by Indeo videos where the chunk is named
+     * after the codec. */
+    else if (twocc == LOWORD(wma->ash_video.fccHandler))
+        twocc = cktypeDIBcompressed;
     switch (twocc) {
     case cktypeDIBbits:
     case cktypeDIBcompressed:
