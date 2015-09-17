@@ -195,6 +195,7 @@ static strstreambuf* (*__thiscall p_strstreambuf_ctor)(strstreambuf*);
 static void (*__thiscall p_strstreambuf_dtor)(strstreambuf*);
 static int (*__thiscall p_strstreambuf_doallocate)(strstreambuf*);
 static void (*__thiscall p_strstreambuf_freeze)(strstreambuf*, int);
+static streambuf* (*__thiscall p_strstreambuf_setbuf)(strstreambuf*, char*, int);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -349,6 +350,7 @@ static BOOL init(void)
         SET(p_strstreambuf_dtor, "??1strstreambuf@@UEAA@XZ");
         SET(p_strstreambuf_doallocate, "?doallocate@strstreambuf@@MEAAHXZ");
         SET(p_strstreambuf_freeze, "?freeze@strstreambuf@@QEAAXH@Z");
+        SET(p_strstreambuf_setbuf, "?setbuf@strstreambuf@@UEAAPEAVstreambuf@@PEADH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -423,6 +425,7 @@ static BOOL init(void)
         SET(p_strstreambuf_dtor, "??1strstreambuf@@UAE@XZ");
         SET(p_strstreambuf_doallocate, "?doallocate@strstreambuf@@MAEHXZ");
         SET(p_strstreambuf_freeze, "?freeze@strstreambuf@@QAEXH@Z");
+        SET(p_strstreambuf_setbuf, "?setbuf@strstreambuf@@UAEPAVstreambuf@@PADH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -1422,6 +1425,7 @@ static void test_filebuf(void)
 static void test_strstreambuf(void)
 {
     strstreambuf ssb1, ssb2;
+    streambuf *pret;
     char buffer[64];
     int ret;
 
@@ -1576,6 +1580,21 @@ static void test_strstreambuf(void)
     ok(ssb2.base.epptr == ssb2.base.base + 10, "wrong put end, expected %p got %p\n", ssb2.base.base + 10, ssb2.base.epptr);
     ok(!strncmp(ssb2.base.base, "Check", 5), "strings are not equal\n");
     ssb2.dynamic = 1;
+
+    /* setbuf */
+    pret = (streambuf*) call_func3(p_strstreambuf_setbuf, &ssb1, buffer + 16, 16);
+    ok(pret == &ssb1.base, "expected %p got %p\n", &ssb1.base, pret);
+    ok(ssb1.base.base == buffer, "wrong buffer, expected %p got %p\n", buffer, ssb1.base.base);
+    ok(ssb1.increase == 16, "expected 16, got %d\n", ssb1.increase);
+    pret = (streambuf*) call_func3(p_strstreambuf_setbuf, &ssb2, NULL, 2);
+    ok(pret == &ssb2.base, "expected %p got %p\n", &ssb2.base, pret);
+    ok(ssb2.increase == 2, "expected 2, got %d\n", ssb2.increase);
+    pret = (streambuf*) call_func3(p_strstreambuf_setbuf, &ssb2, buffer, 0);
+    ok(pret == &ssb2.base, "expected %p got %p\n", &ssb2.base, pret);
+    ok(ssb2.increase == 2, "expected 2, got %d\n", ssb2.increase);
+    pret = (streambuf*) call_func3(p_strstreambuf_setbuf, &ssb2, NULL, -2);
+    ok(pret == &ssb2.base, "expected %p got %p\n", &ssb2.base, pret);
+    ok(ssb2.increase == -2, "expected -2, got %d\n", ssb2.increase);
 
     call_func1(p_strstreambuf_dtor, &ssb1);
     call_func1(p_strstreambuf_dtor, &ssb2);

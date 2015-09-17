@@ -1350,8 +1350,10 @@ streampos __thiscall strstreambuf_seekoff(strstreambuf *this, streamoff offset, 
 DEFINE_THISCALL_WRAPPER(strstreambuf_setbuf, 12)
 streambuf* __thiscall strstreambuf_setbuf(strstreambuf *this, char *buffer, int length)
 {
-    FIXME("(%p %p %d) stub\n", this, buffer, length);
-    return NULL;
+    TRACE("(%p %p %d)\n", this, buffer, length);
+    if (length)
+        this->increase = length;
+    return &this->base;
 }
 
 /* ?str@strstreambuf@@QAEPADXZ */
