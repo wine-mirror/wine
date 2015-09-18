@@ -1571,8 +1571,10 @@ static BOOL macho_search_and_load_file(struct process* pcs, const WCHAR* filenam
     /* Try DYLD_FALLBACK_LIBRARY_PATH, with just the filename (no directories). */
     if (!ret)
     {
-        ret = macho_load_file_from_path(pcs, p, load_addr,
-                                      getenv("DYLD_FALLBACK_LIBRARY_PATH"), macho_info);
+        const char* fallback = getenv("DYLD_FALLBACK_LIBRARY_PATH");
+        if (!fallback)
+            fallback = "/usr/local/lib:/lib:/usr/lib";
+        ret = macho_load_file_from_path(pcs, p, load_addr, fallback, macho_info);
     }
     if (!ret && !strchrW(filename, '/'))
         ret = macho_load_file_from_dll_path(pcs, filename, load_addr, macho_info);
