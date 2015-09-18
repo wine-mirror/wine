@@ -58,6 +58,7 @@
 #include <mach-o/fat.h>
 #include <mach-o/loader.h>
 #include <mach-o/nlist.h>
+#include <mach-o/dyld.h>
 
 #ifdef HAVE_MACH_O_DYLD_IMAGES_H
 #include <mach-o/dyld_images.h>
@@ -1301,6 +1302,57 @@ static void macho_module_remove(struct process* pcs, struct module_format* modfm
     HeapFree(GetProcessHeap(), 0, modfmt);
 }
 
+
+/******************************************************************
+ *              get_dyld_image_info_address
+ */
+static ULONG_PTR get_dyld_image_info_address(struct process* pcs)
+{
+    NTSTATUS status;
+    PROCESS_BASIC_INFORMATION pbi;
+    ULONG_PTR dyld_image_info_address = 0;
+
+    /* Get address of PEB */
+    status = NtQueryInformationProcess(pcs->handle, ProcessBasicInformation, &pbi, sizeof(pbi), NULL);
+    if (status == STATUS_SUCCESS)
+    {
+        /* Read dyld image info address from PEB */
+        if (ReadProcessMemory(pcs->handle, &pbi.PebBaseAddress->Reserved[0],
+                              &dyld_image_info_address, sizeof(dyld_image_info_address), NULL))
+        {
+            TRACE("got dyld_image_info_address 0x%08lx from PEB %p MacDyldImageInfo %p\n",
+                  (unsigned long)dyld_image_info_address, pbi.PebBaseAddress, &pbi.PebBaseAddress->Reserved);
+        }
+    }
+
+#ifndef __LP64__ /* No reading the symtab with nlist(3) in LP64 */
+    if (!dyld_image_info_address)
+    {
+        static void* dyld_all_image_infos_addr;
+
+        /* Our next best guess is that dyld was loaded at its base address
+           and we can find the dyld image infos address by looking up its symbol. */
+        if (!dyld_all_image_infos_addr)
+        {
+            struct nlist nl[2];
+            memset(nl, 0, sizeof(nl));
+            nl[0].n_un.n_name = (char*)"_dyld_all_image_infos";
+            if (!nlist("/usr/lib/dyld", nl))
+                dyld_all_image_infos_addr = (void*)nl[0].n_value;
+        }
+
+        if (dyld_all_image_infos_addr)
+        {
+            TRACE("got dyld_image_info_address %p from /usr/lib/dyld symbol table\n",
+                  dyld_all_image_infos_addr);
+            dyld_image_info_address = (ULONG_PTR)dyld_all_image_infos_addr;
+        }
+    }
+#endif
+
+    return dyld_image_info_address;
+}
+
 /******************************************************************
  *              macho_load_file
  *
@@ -1328,54 +1380,8 @@ static BOOL macho_load_file(struct process* pcs, const WCHAR* filename,
      */
     if (macho_info->flags & MACHO_INFO_DEBUG_HEADER)
     {
-        PROCESS_BASIC_INFORMATION pbi;
-        NTSTATUS status;
-
-        ret = FALSE;
-
-        /* Get address of PEB */
-        status = NtQueryInformationProcess(pcs->handle, ProcessBasicInformation,
-                                           &pbi, sizeof(pbi), NULL);
-        if (status == STATUS_SUCCESS)
-        {
-            ULONG_PTR dyld_image_info;
-
-            /* Read dyld image info address from PEB */
-            if (ReadProcessMemory(pcs->handle, &pbi.PebBaseAddress->Reserved[0],
-                                  &dyld_image_info, sizeof(dyld_image_info), NULL))
-            {
-                TRACE("got dyld_image_info 0x%08lx from PEB %p MacDyldImageInfo %p\n",
-                      (unsigned long)dyld_image_info, pbi.PebBaseAddress, &pbi.PebBaseAddress->Reserved);
-                macho_info->dbg_hdr_addr = dyld_image_info;
-                ret = TRUE;
-            }
-        }
-
-#ifndef __LP64__ /* No reading the symtab with nlist(3) in LP64 */
-        if (!ret)
-        {
-            static void* dyld_all_image_infos_addr;
-
-            /* Our next best guess is that dyld was loaded at its base address
-               and we can find the dyld image infos address by looking up its symbol. */
-            if (!dyld_all_image_infos_addr)
-            {
-                struct nlist nl[2];
-                memset(nl, 0, sizeof(nl));
-                nl[0].n_un.n_name = (char*)"_dyld_all_image_infos";
-                if (!nlist("/usr/lib/dyld", nl))
-                    dyld_all_image_infos_addr = (void*)nl[0].n_value;
-            }
-
-            if (dyld_all_image_infos_addr)
-            {
-                TRACE("got dyld_image_info %p from /usr/lib/dyld symbol table\n",
-                      dyld_all_image_infos_addr);
-                macho_info->dbg_hdr_addr = (unsigned long)dyld_all_image_infos_addr;
-                ret = TRUE;
-            }
-        }
-#endif
+        macho_info->dbg_hdr_addr = (unsigned long)get_dyld_image_info_address(pcs);
+        ret = TRUE;
     }
 
     if (macho_info->flags & MACHO_INFO_MODULE)
@@ -1695,7 +1701,62 @@ BOOL    macho_synchronize_module_list(struct process* pcs)
  */
 static BOOL macho_search_loader(struct process* pcs, struct macho_info* macho_info)
 {
-    return macho_search_and_load_file(pcs, get_wine_loader_name(), 0, macho_info);
+    BOOL ret = FALSE;
+    ULONG_PTR dyld_image_info_address;
+    struct dyld_all_image_infos image_infos;
+    struct dyld_image_info image_info;
+    uint32_t len;
+    char path[PATH_MAX];
+    BOOL got_path = FALSE;
+
+    dyld_image_info_address = get_dyld_image_info_address(pcs);
+    if (dyld_image_info_address &&
+        ReadProcessMemory(pcs->handle, (void*)dyld_image_info_address, &image_infos, sizeof(image_infos), NULL) &&
+        image_infos.infoArray && image_infos.infoArrayCount &&
+        ReadProcessMemory(pcs->handle, image_infos.infoArray, &image_info, sizeof(image_info), NULL) &&
+        image_info.imageFilePath)
+    {
+        for (len = sizeof(path); len > 0; len /= 2)
+        {
+            if (ReadProcessMemory(pcs->handle, image_info.imageFilePath, path, len, NULL))
+            {
+                path[len - 1] = 0;
+                got_path = TRUE;
+                TRACE("got executable path from target's dyld image info: %s\n", debugstr_a(path));
+                break;
+            }
+        }
+    }
+
+    /* If we couldn't get the executable path from the target process, try our
+       own.  It will almost always be the same. */
+    if (!got_path)
+    {
+        len = sizeof(path);
+        if (!_NSGetExecutablePath(path, &len))
+        {
+            got_path = TRUE;
+            TRACE("using own executable path: %s\n", debugstr_a(path));
+        }
+    }
+
+    if (got_path)
+    {
+        WCHAR* pathW;
+
+        len = MultiByteToWideChar(CP_UNIXCP, 0, path, -1, NULL, 0);
+        pathW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
+        if (pathW)
+        {
+            MultiByteToWideChar(CP_UNIXCP, 0, path, -1, pathW, len);
+            ret = macho_load_file(pcs, pathW, 0, macho_info);
+            HeapFree(GetProcessHeap(), 0, pathW);
+        }
+    }
+
+    if (!ret)
+        ret = macho_search_and_load_file(pcs, get_wine_loader_name(), 0, macho_info);
+    return ret;
 }
 
 /******************************************************************
