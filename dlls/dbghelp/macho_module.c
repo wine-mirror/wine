@@ -1551,7 +1551,7 @@ static BOOL macho_search_and_load_file(struct process* pcs, const WCHAR* filenam
 
     if (strstrW(filename, S_libstdcPPW)) return FALSE; /* We know we can't do it */
 
-    /* If has no directories, try LD_LIBRARY_PATH first. */
+    /* If has no directories, try PATH first. */
     if (!strchrW(filename, '/'))
     {
         ret = macho_load_file_from_path(pcs, filename, load_addr,
