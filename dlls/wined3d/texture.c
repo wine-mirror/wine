@@ -443,7 +443,7 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     DWORD flag;
     UINT i;
 
-    TRACE("texture %p, srgb %#x.\n", texture, srgb);
+    TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
     if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
         srgb = FALSE;
@@ -826,7 +826,7 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
     GLenum internal;
     UINT i;
 
-    TRACE("texture %p, format %s.\n", texture, debug_d3dformat(format->id));
+    TRACE("texture %p, context %p, format %s.\n", texture, context, debug_d3dformat(format->id));
 
     if (format->convert)
     {

@@ -3557,7 +3557,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
     struct wined3d_device *device = surface->resource.device;
     GLsizei w, h;
 
-    TRACE("surface %p, new location %#x.\n", surface, location);
+    TRACE("surface %p, context %p, new location %#x.\n", surface, context, location);
 
     /* TODO: Make this work for modes other than FBO */
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO) return;
@@ -4980,7 +4980,7 @@ HRESULT CDECL wined3d_surface_blt(struct wined3d_surface *dst_surface, const REC
             | WINEDDBLT_DEPTHFILL
             | WINEDDBLT_DONOTWAIT;
 
-    TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
+    TRACE("dst_surface %p, dst_rect_in %s, src_surface %p, src_rect_in %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect_in), src_surface, wine_dbgstr_rect(src_rect_in),
             flags, fx, debug_d3dtexturefiltertype(filter));
     TRACE("Usage is %s.\n", debug_d3dusage(dst_surface->resource.usage));

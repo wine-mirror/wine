@@ -131,8 +131,8 @@ HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_rendertarget
 {
     struct wined3d_rendertarget_view *object;
 
-    TRACE("desc %p, resource %p, parent %p, view %p.\n",
-            desc, resource, parent, view);
+    TRACE("desc %p, resource %p, parent %p, parent_ops %p, view %p.\n",
+            desc, resource, parent, parent_ops, view);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -150,7 +150,7 @@ HRESULT CDECL wined3d_rendertarget_view_create_from_surface(struct wined3d_surfa
 {
     struct wined3d_rendertarget_view_desc desc;
 
-    TRACE("surface %p, view %p.\n", surface, view);
+    TRACE("surface %p, parent %p, parent_ops %p, view %p.\n", surface, parent, parent_ops, view);
 
     desc.format_id = surface->resource.format->id;
     desc.u.texture.level_idx = surface->texture_level;
@@ -199,7 +199,7 @@ HRESULT CDECL wined3d_shader_resource_view_create(struct wined3d_resource *resou
 {
     struct wined3d_shader_resource_view *object;
 
-    TRACE("parent %p, parent_ops %p, view %p.\n", parent, parent_ops, view);
+    TRACE("resource %p, parent %p, parent_ops %p, view %p.\n", resource, parent, parent_ops, view);
 
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;

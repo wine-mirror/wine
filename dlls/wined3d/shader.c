@@ -2037,8 +2037,8 @@ static HRESULT shader_set_function(struct wined3d_shader *shader, const DWORD *b
     unsigned int backend_version;
     const struct wined3d_d3d_info *d3d_info = &shader->device->adapter->d3d_info;
 
-    TRACE("shader %p, byte_code %p, output_signature %p, float_const_count %u.\n",
-            shader, byte_code, output_signature, float_const_count);
+    TRACE("shader %p, byte_code %p, output_signature %p, float_const_count %u, type %#x, max_version %u.\n",
+            shader, byte_code, output_signature, float_const_count, type, max_version);
 
     list_init(&shader->constantsF);
     list_init(&shader->constantsB);

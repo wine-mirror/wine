@@ -4503,7 +4503,8 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
     HRESULT hr = WINED3D_OK;
     unsigned int i;
 
-    TRACE("device %p, swapchain_desc %p, mode %p, callback %p.\n", device, swapchain_desc, mode, callback);
+    TRACE("device %p, swapchain_desc %p, mode %p, callback %p, reset_state %#x.\n",
+            device, swapchain_desc, mode, callback, reset_state);
 
     if (!(swapchain = wined3d_device_get_swapchain(device, 0)))
     {

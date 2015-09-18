@@ -5451,8 +5451,8 @@ HRESULT CDECL wined3d_device_create(struct wined3d *wined3d, UINT adapter_idx, e
     struct wined3d_device *object;
     HRESULT hr;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %#x, focus_window %p, flags %#x, device_parent %p, device %p.\n",
-            wined3d, adapter_idx, device_type, focus_window, flags, device_parent, device);
+    TRACE("wined3d %p, adapter_idx %u, device_type %#x, focus_window %p, flags %#x, surface_alignment %u, device_parent %p, device %p.\n",
+            wined3d, adapter_idx, device_type, focus_window, flags, surface_alignment, device_parent, device);
 
     /* Validate the adapter number. If no adapters are available(no GL), ignore the adapter
      * number and create a device without a 3D adapter for 2D only operation. */

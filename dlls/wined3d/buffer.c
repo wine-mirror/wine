@@ -1236,7 +1236,8 @@ HRESULT CDECL wined3d_buffer_create(struct wined3d_device *device, const struct 
     struct wined3d_buffer *object;
     HRESULT hr;
 
-    TRACE("device %p, desc %p, data %p, parent %p, buffer %p\n", device, desc, data, parent, buffer);
+    TRACE("device %p, desc %p, data %p, parent %p, parent_ops %p, buffer %p\n",
+            device, desc, data, parent, parent_ops, buffer);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)

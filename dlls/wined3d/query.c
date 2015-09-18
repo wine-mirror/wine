@@ -114,7 +114,7 @@ enum wined3d_event_query_result wined3d_event_query_finish(const struct wined3d_
     const struct wined3d_gl_info *gl_info;
     enum wined3d_event_query_result ret;
 
-    TRACE("(%p)\n", query);
+    TRACE("query %p, device %p.\n", query, device);
 
     if (!query->context)
     {
@@ -812,7 +812,7 @@ HRESULT CDECL wined3d_query_create(struct wined3d_device *device,
     struct wined3d_query *object;
     HRESULT hr;
 
-    TRACE("device %p, type %#x, query %p.\n", device, type, query);
+    TRACE("device %p, type %#x, parent %p, query %p.\n", device, type, parent, query);
 
     object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
     if (!object)
