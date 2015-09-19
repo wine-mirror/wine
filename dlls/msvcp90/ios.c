@@ -29,6 +29,12 @@
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
+#define SECSPERDAY        86400
+/* 1601 to 1970 is 369 years plus 89 leap days */
+#define SECS_1601_TO_1970  ((369 * 365 + 89) * (ULONGLONG)SECSPERDAY)
+#define TICKSPERSEC       10000000
+#define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
+
 /* ?_Index@ios_base@std@@0HA */
 int ios_base_Index = 0;
 /* ?_Sync@ios_base@std@@0_NA */
@@ -14378,6 +14384,59 @@ enum file_type __cdecl tr2_sys__Stat(char const* path, int* err_code)
 enum file_type __cdecl tr2_sys__Lstat(char const* path, int* err_code)
 {
     return tr2_sys__Stat(path, err_code);
+}
+
+/* ?_Last_write_time@sys@tr2@std@@YA_JPBD@Z */
+/* ?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z */
+__int64 __cdecl tr2_sys__Last_write_time(char const* path)
+{
+    HANDLE handle;
+    FILETIME lwt;
+    int ret;
+    __int64 last_write_time;
+    TRACE("(%s)\n", debugstr_a(path));
+
+    handle = CreateFileA(path, 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if(handle == INVALID_HANDLE_VALUE)
+        return 0;
+
+    ret = GetFileTime(handle, 0, 0, &lwt);
+    CloseHandle(handle);
+    if(!ret)
+        return 0;
+
+    last_write_time = (((__int64)lwt.dwHighDateTime)<< 32) + lwt.dwLowDateTime;
+    last_write_time -= TICKS_1601_TO_1970;
+    last_write_time /= TICKSPERSEC;
+    return last_write_time;
+}
+
+/* ?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z */
+/* ?_Last_write_time@sys@tr2@std@@YAXPEBD_J@Z */
+void __cdecl tr2_sys__Last_write_time_set(char const* path, __int64 newtime)
+{
+    HANDLE handle;
+    FILETIME lwt;
+    TRACE("(%s)\n", debugstr_a(path));
+
+    handle = CreateFileA(path, FILE_WRITE_ATTRIBUTES,
+            FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, 0);
+    if(handle == INVALID_HANDLE_VALUE)
+        return;
+
+    /* This is the implementation based on the test of msvcp110.
+     * According to the test of msvcp120,
+     * msvcp120's implementation does nothing. Obviously, this is a bug of windows.
+     */
+
+    newtime *= TICKSPERSEC;
+    newtime += TICKS_1601_TO_1970;
+    lwt.dwLowDateTime = (DWORD)(newtime);
+    lwt.dwHighDateTime = (DWORD)(newtime >> 32);
+    SetFileTime(handle, 0, 0, &lwt);
+    CloseHandle(handle);
 }
 
 /* ??0strstream@std@@QAE@PADHH@Z */

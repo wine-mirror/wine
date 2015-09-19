@@ -1,0 +1,5 @@
+TESTDLL   = msvcp110.dll
+APPMODE   = -mno-cygwin
+
+C_SRCS = \
+	msvcp110.c
