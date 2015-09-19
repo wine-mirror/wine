@@ -3737,7 +3737,8 @@ static void test_select(void)
     ok(FD_ISSET(fdRead, &writefds), "fdRead socket is not in the set\n");
     len = sizeof(id);
     id = 0xdeadbeef;
-    ok(!getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len), "getsockopt failed with %d\n",WSAGetLastError());
+    ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
+    ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
     ok(id == 0, "expected 0, got %d\n", id);
 
     /* When data is received the receiver gets the read descriptor */
@@ -3821,7 +3822,8 @@ static void test_select(void)
     ok(ret == 1, "expected 1, got %d\n", ret);
     len = sizeof(id);
     id = 0xdeadbeef;
-    ok(!getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len), "getsockopt failed with %d\n",WSAGetLastError());
+    ret = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
+    ok(!ret, "getsockopt failed with %d\n", WSAGetLastError());
     ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
     ok(FD_ISSET(fdWrite, &exceptfds), "fdWrite socket is not in the set\n");
     ok(select_timeout.tv_usec == 250000, "select timeout should not have changed\n");
