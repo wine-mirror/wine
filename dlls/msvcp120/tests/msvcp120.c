@@ -108,6 +108,8 @@ static struct space_info (__cdecl *p_tr2_sys__Statvfs)(char const*);
 static struct space_info (__cdecl *p_tr2_sys__Statvfs_wchar)(WCHAR const*);
 static enum file_type (__cdecl *p_tr2_sys__Stat)(char const*, int *);
 static enum file_type (__cdecl *p_tr2_sys__Lstat)(char const*, int *);
+static __int64 (__cdecl *p_tr2_sys__Last_write_time)(char const*);
+static void (__cdecl *p_tr2_sys__Last_write_time_set)(char const*, __int64);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -178,6 +180,10 @@ static BOOL init(void)
                 "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z");
         SET(p_tr2_sys__Lstat,
                 "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z");
+        SET(p_tr2_sys__Last_write_time,
+                "?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z");
+        SET(p_tr2_sys__Last_write_time_set,
+                "?_Last_write_time@sys@tr2@std@@YAXPEBD_J@Z");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -219,6 +225,10 @@ static BOOL init(void)
                 "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z");
         SET(p_tr2_sys__Lstat,
                 "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z");
+        SET(p_tr2_sys__Last_write_time,
+                "?_Last_write_time@sys@tr2@std@@YA_JPBD@Z");
+        SET(p_tr2_sys__Last_write_time_set,
+                "?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z");
     }
 
     msvcr = GetModuleHandleA("msvcr120.dll");
@@ -946,6 +956,42 @@ static void test_tr2_sys__Stat(void)
     ok(RemoveDirectoryA("tr2_test_dir"), "expect tr2_test_dir to exist\n");
 }
 
+static void test_tr2_sys__Last_write_time(void)
+{
+    HANDLE file;
+    int ret;
+    __int64 last_write_time, newtime;
+    ret = p_tr2_sys__Make_dir("tr2_test_dir");
+    ok(ret == 1, "tr2_sys__Make_dir() expect 1 got %d\n", ret);
+
+    file = CreateFileA("tr2_test_dir/f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+
+    last_write_time = p_tr2_sys__Last_write_time("tr2_test_dir/f1");
+    newtime = last_write_time + 123456789;
+    p_tr2_sys__Last_write_time_set("tr2_test_dir/f1", newtime);
+    todo_wine ok(last_write_time == p_tr2_sys__Last_write_time("tr2_test_dir/f1"),
+            "last_write_time before modfied should not equal to last_write_time %s\n",
+            debugstr_longlong(last_write_time));
+
+    errno = 0xdeadbeef;
+    last_write_time = p_tr2_sys__Last_write_time("not_exist");
+    ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
+    ok(last_write_time == 0, "expect 0 got %s\n", debugstr_longlong(last_write_time));
+    last_write_time = p_tr2_sys__Last_write_time(NULL);
+    ok(last_write_time == 0, "expect 0 got %s\n", debugstr_longlong(last_write_time));
+
+    p_tr2_sys__Last_write_time_set("not_exist", newtime);
+    errno = 0xdeadbeef;
+    p_tr2_sys__Last_write_time_set(NULL, newtime);
+    ok(errno == 0xdeadbeef, "tr2_sys__Last_write_time(): errno expect 0xdeadbeef, got %d\n", errno);
+
+    ok(DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 to exist\n");
+    ret = p_tr2_sys__Remove_dir("tr2_test_dir");
+    ok(ret == 1, "test_tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -966,5 +1012,6 @@ START_TEST(msvcp120)
     test_tr2_sys__Rename();
     test_tr2_sys__Statvfs();
     test_tr2_sys__Stat();
+    test_tr2_sys__Last_write_time();
     FreeLibrary(msvcp);
 }
