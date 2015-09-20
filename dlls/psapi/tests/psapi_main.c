@@ -194,6 +194,11 @@ static void test_GetModuleInformation(void)
     ok(info.lpBaseOfDll == hMod, "lpBaseOfDll=%p hMod=%p\n", info.lpBaseOfDll, hMod);
 }
 
+static BOOL check_with_margin(SIZE_T perf, SIZE_T sysperf, int margin)
+{
+    return (perf >= max(sysperf, margin) - margin && perf <= sysperf + margin);
+}
+
 static void test_GetPerformanceInfo(void)
 {
     PERFORMANCE_INFORMATION info;
@@ -227,36 +232,30 @@ static void test_GetPerformanceInfo(void)
         ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
         ok(size >= sizeof(SYSTEM_PERFORMANCE_INFORMATION), "incorrect length %d\n", size);
 
-        ok(info.CommitTotal == sys_performance_info->TotalCommittedPages,
-           "expected info.CommitTotal=%u but got %u\n",
-           sys_performance_info->TotalCommittedPages, (ULONG)info.CommitTotal);
 
-        ok(info.CommitLimit == sys_performance_info->TotalCommitLimit,
-           "expected info.CommitLimit=%u but got %u\n",
-           sys_performance_info->TotalCommitLimit, (ULONG)info.CommitLimit);
+        ok(check_with_margin(info.CommitTotal,          sys_performance_info->TotalCommittedPages,  288),
+           "expected approximately %ld but got %d\n", info.CommitTotal, sys_performance_info->TotalCommittedPages);
 
-        ok(info.CommitPeak == sys_performance_info->PeakCommitment,
-           "expected info.CommitPeak=%u but got %u\n",
-           sys_performance_info->PeakCommitment, (ULONG)info.CommitPeak);
+        ok(check_with_margin(info.CommitLimit,          sys_performance_info->TotalCommitLimit,     32),
+           "expected approximately %ld but got %d\n", info.CommitLimit, sys_performance_info->TotalCommitLimit);
 
-        ok(info.PhysicalAvailable >= max(sys_performance_info->AvailablePages, 25) - 25 &&
-           info.PhysicalAvailable <= sys_performance_info->AvailablePages + 25,
-           "expected approximately info.PhysicalAvailable=%u but got %u\n",
-           sys_performance_info->AvailablePages, (ULONG)info.PhysicalAvailable);
+        ok(check_with_margin(info.CommitPeak,           sys_performance_info->PeakCommitment,       32),
+           "expected approximately %ld but got %d\n", info.CommitPeak, sys_performance_info->PeakCommitment);
+
+        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       64),
+           "expected approximately %ld but got %d\n", info.PhysicalAvailable, sys_performance_info->AvailablePages);
 
         /* TODO: info.SystemCache not checked yet - to which field(s) does this value correspond to? */
 
-        ok(info.KernelTotal == sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage,
-            "expected info.KernelTotal=%u but got %u\n",
-            sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage, (ULONG)info.KernelTotal);
+        ok(check_with_margin(info.KernelTotal, sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage, 64),
+           "expected approximately %ld but got %d\n", info.KernelTotal,
+           sys_performance_info->PagedPoolUsage + sys_performance_info->NonPagedPoolUsage);
 
-        ok(info.KernelPaged == sys_performance_info->PagedPoolUsage,
-           "expected info.KernelPaged=%u but got %u\n",
-           sys_performance_info->PagedPoolUsage, (ULONG)info.KernelPaged);
+        ok(check_with_margin(info.KernelPaged,          sys_performance_info->PagedPoolUsage,       64),
+           "expected approximately %ld but got %d\n", info.KernelPaged, sys_performance_info->PagedPoolUsage);
 
-        ok(info.KernelNonpaged == sys_performance_info->NonPagedPoolUsage,
-           "expected info.KernelNonpaged=%u but got %u\n",
-           sys_performance_info->NonPagedPoolUsage, (ULONG)info.KernelNonpaged);
+        ok(check_with_margin(info.KernelNonpaged,       sys_performance_info->NonPagedPoolUsage,    8),
+           "expected approximately %ld but got %d\n", info.KernelNonpaged, sys_performance_info->NonPagedPoolUsage);
 
         /* compare with values from SYSTEM_BASIC_INFORMATION */
         size = 0;
@@ -297,14 +296,14 @@ static void test_GetPerformanceInfo(void)
         }
         HeapFree(GetProcessHeap(), 0, sys_process_info);
 
-        ok(info.HandleCount == handle_count,
-           "expected info.HandleCount=%u but got %u\n", handle_count, info.HandleCount);
+        ok(check_with_margin(info.HandleCount,  handle_count,  8),
+           "expected approximately %d but got %d\n", info.HandleCount, handle_count);
 
-        ok(info.ProcessCount == process_count,
-           "expected info.ProcessCount=%u but got %u\n", process_count, info.ProcessCount);
+        ok(check_with_margin(info.ProcessCount, process_count, 4),
+           "expected approximately %d but got %d\n", info.ProcessCount, process_count);
 
-        ok(info.ThreadCount == thread_count,
-           "expected info.ThreadCount=%u but got %u\n", thread_count, info.ThreadCount);
+        ok(check_with_margin(info.ThreadCount,  thread_count,  4),
+           "expected approximately %d but got %d\n", info.ThreadCount, thread_count);
     }
 }
 
