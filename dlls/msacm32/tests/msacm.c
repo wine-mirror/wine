@@ -127,15 +127,16 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
        TODO: should it be *exactly* sizeof(dd), as tested here?
      */
     if (rc == MMSYSERR_NOERROR) {
-        struct {
+        static const struct {
             const char *shortname;
-            const WORD mid;
-            const WORD pid;
+            WORD mid;
+            WORD pid;
+            WORD pid_alt;
         } *iter, expected_ids[] = {
             { "Microsoft IMA ADPCM", MM_MICROSOFT, MM_MSFT_ACM_IMAADPCM },
             { "MS-ADPCM", MM_MICROSOFT, MM_MSFT_ACM_MSADPCM },
             { "Microsoft CCITT G.711", MM_MICROSOFT, MM_MSFT_ACM_G711},
-            { "MPEG Layer-3 Codec", MM_FRAUNHOFER_IIS, MM_FHGIIS_MPEGLAYER3_DECODE },
+            { "MPEG Layer-3 Codec", MM_FRAUNHOFER_IIS, MM_FHGIIS_MPEGLAYER3_DECODE, MM_FHGIIS_MPEGLAYER3_PROFESSIONAL },
             { "MS-PCM", MM_MICROSOFT, MM_MSFT_ACM_PCM },
             { 0 }
         };
@@ -145,7 +146,14 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
 
         for (iter = expected_ids; iter->shortname; ++iter) {
             if (dd.szShortName && !strcmp(iter->shortname, dd.szShortName)) {
-                ok(iter->mid == dd.wMid && iter->pid == dd.wPid,
+                /* try alternative product id on mismatch */
+                if (iter->pid_alt && iter->pid != dd.wPid)
+                    ok(iter->mid == dd.wMid && iter->pid_alt == dd.wPid,
+                        "Got wrong manufacturer (0x%x vs 0x%x) or product (0x%x vs 0x%x)\n",
+                        dd.wMid, iter->mid,
+                        dd.wPid, iter->pid_alt);
+                else
+                    ok(iter->mid == dd.wMid && iter->pid == dd.wPid,
                         "Got wrong manufacturer (0x%x vs 0x%x) or product (0x%x vs 0x%x)\n",
                         dd.wMid, iter->mid,
                         dd.wPid, iter->pid);
