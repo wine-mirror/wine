@@ -254,7 +254,7 @@ static void test_OpenRequest (void)
     SetLastError(0xdeadbeef);
     ret = WinHttpSendRequest(request, WINHTTP_NO_ADDITIONAL_HEADERS, 0, NULL, 0, 0, 0);
     err = GetLastError();
-    if (!ret && err == ERROR_WINHTTP_CANNOT_CONNECT)
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("Connection failed, skipping.\n");
         goto done;
@@ -280,6 +280,7 @@ static void test_empty_headers_param(void)
 {
     static const WCHAR empty[]  = {0};
     HINTERNET ses, con, req;
+    DWORD err;
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
@@ -292,7 +293,8 @@ static void test_empty_headers_param(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, empty, 0, NULL, 0, 0, 0);
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -315,7 +317,7 @@ static void test_SendRequest (void)
     static CHAR post_data[] = "mode=Test";
     static const char test_post[] = "mode => Test\0\n";
     HINTERNET session, request, connection;
-    DWORD header_len, optional_len, total_len, bytes_rw, size;
+    DWORD header_len, optional_len, total_len, bytes_rw, size, err;
     DWORD_PTR context;
     BOOL ret;
     CHAR buffer[256];
@@ -348,7 +350,8 @@ static void test_SendRequest (void)
 
     context++;
     ret = WinHttpSendRequest(request, content_type, header_len, post_data, optional_len, total_len, context);
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -968,7 +971,7 @@ static void CALLBACK cert_error(HINTERNET handle, DWORD_PTR ctx, DWORD status, L
 static void test_secure_connection(void)
 {
     HINTERNET ses, con, req;
-    DWORD size, status, policy, bitness, read_size;
+    DWORD size, status, policy, bitness, read_size, err;
     BOOL ret;
     CERT_CONTEXT *cert;
     WINHTTP_CERTIFICATE_INFO info;
@@ -989,7 +992,8 @@ static void test_secure_connection(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("Connection failed, skipping.\n");
         goto cleanup;
@@ -1011,7 +1015,9 @@ static void test_secure_connection(void)
     WinHttpSetStatusCallback(req, cert_error, WINHTTP_CALLBACK_STATUS_SECURE_FAILURE, 0);
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-    if (!ret && (GetLastError() == ERROR_WINHTTP_SECURE_FAILURE || GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT))
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_SECURE_FAILURE || err == ERROR_WINHTTP_CANNOT_CONNECT ||
+                 err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("secure connection failed, skipping remaining secure tests\n");
         goto cleanup;
@@ -1089,7 +1095,8 @@ static void test_request_parameter_defaults(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    error = GetLastError();
+    if (!ret && (error == ERROR_WINHTTP_CANNOT_CONNECT || error == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -1116,7 +1123,8 @@ static void test_request_parameter_defaults(void)
     ok(req != NULL, "failed to open a request %u\n", GetLastError());
 
     ret = WinHttpSendRequest(req, NULL, 0, NULL, 0, 0, 0);
-    if (!ret && (GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT || GetLastError() == ERROR_WINHTTP_TIMEOUT))
+    error = GetLastError();
+    if (!ret && (error == ERROR_WINHTTP_CANNOT_CONNECT || error == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -4009,7 +4017,7 @@ static void test_chunked_read(void)
     static const WCHAR verb[] = {'/','t','e','s','t','c','h','u','n','k','e','d',0};
     static const WCHAR chunked[] = {'c','h','u','n','k','e','d',0};
     WCHAR header[32];
-    DWORD len;
+    DWORD len, err;
     HINTERNET ses, con = NULL, req = NULL;
     BOOL ret;
 
@@ -4028,7 +4036,8 @@ static void test_chunked_read(void)
     if (!req) goto done;
 
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;

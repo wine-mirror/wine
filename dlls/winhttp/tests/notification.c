@@ -159,7 +159,7 @@ static void setup_test( struct info *info, enum api function, unsigned int line 
 static void test_connection_cache( void )
 {
     HANDLE ses, con, req, event;
-    DWORD size, status;
+    DWORD size, status, err;
     BOOL ret, unload = TRUE;
     struct info info, *context = &info;
 
@@ -194,7 +194,8 @@ static void test_connection_cache( void )
 
     setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -222,7 +223,8 @@ static void test_connection_cache( void )
 
     setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -289,7 +291,8 @@ static void test_connection_cache( void )
 
     setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -317,7 +320,8 @@ static void test_connection_cache( void )
 
     setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -387,7 +391,7 @@ static const struct notification redirect_test[] =
 static void test_redirect( void )
 {
     HANDLE ses, con, req;
-    DWORD size, status;
+    DWORD size, status, err;
     BOOL ret;
     struct info info, *context = &info;
 
@@ -414,7 +418,8 @@ static void test_redirect( void )
 
     setup_test( &info, winhttp_send_request, __LINE__ );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
-    if (!ret && GetLastError() == ERROR_WINHTTP_CANNOT_CONNECT)
+    err = GetLastError();
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         goto done;
@@ -524,7 +529,7 @@ static void test_async( void )
     SetLastError( 0xdeadbeef );
     ret = WinHttpSendRequest( req, NULL, 0, NULL, 0, 0, 0 );
     err = GetLastError();
-    if (!ret && err == ERROR_WINHTTP_CANNOT_CONNECT)
+    if (!ret && (err == ERROR_WINHTTP_CANNOT_CONNECT || err == ERROR_WINHTTP_TIMEOUT))
     {
         skip("connection failed, skipping\n");
         WinHttpCloseHandle( req );
