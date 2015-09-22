@@ -2153,6 +2153,8 @@ static DWORD CALLBACK server_thread(LPVOID param)
         {
             if (strstr(buffer, "Content-Length: 100"))
             {
+                if (strstr(buffer, "POST /test7b"))
+                    recvfrom(c, buffer, sizeof buffer, 0, NULL, NULL);
                 send(c, okmsg, sizeof okmsg-1, 0);
                 send(c, page1, sizeof page1-1, 0);
             }
@@ -2879,7 +2881,7 @@ static void test_header_handling_order(int port)
     connect = InternetConnectA(session, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
     ok(connect != NULL, "InternetConnect failed\n");
 
-    request = HttpOpenRequestA(connect, "POST", "/test7b", NULL, NULL, types, 0, 0);
+    request = HttpOpenRequestA(connect, "POST", "/test7b", NULL, NULL, types, INTERNET_FLAG_KEEP_CONNECTION, 0);
     ok(request != NULL, "HttpOpenRequest failed\n");
 
     ret = HttpAddRequestHeadersA(request, "Content-Length: 100\r\n", ~0u, HTTP_ADDREQ_FLAG_ADD_IF_NEW);
@@ -2887,7 +2889,7 @@ static void test_header_handling_order(int port)
 
     data_len = sizeof(data);
     memset(data, 'a', sizeof(data));
-    ret = HttpSendRequestA(request, connection, ~0u, data, data_len);
+    ret = HttpSendRequestA(request, NULL, 0, data, data_len);
     ok(ret, "HttpSendRequest failed: %u\n", GetLastError());
 
     status = 0;
