@@ -2138,7 +2138,7 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     DWORD count, status, size, error, supported, first, target;
     BOOL ret;
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     con = WinHttpConnect(ses, localhostW, port, 0);
@@ -2206,7 +2206,7 @@ static void test_basic_authentication(int port)
     DWORD status, size, error, supported, first, target;
     BOOL ret;
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     con = WinHttpConnect(ses, localhostW, port, 0);
@@ -2343,7 +2343,7 @@ static void test_basic_authentication(int port)
 
     /* credentials set with WinHttpSetCredentials take precedence over those set through options */
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     con = WinHttpConnect(ses, localhostW, port, 0);
@@ -2377,7 +2377,7 @@ static void test_basic_authentication(int port)
     WinHttpCloseHandle(con);
     WinHttpCloseHandle(ses);
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     con = WinHttpConnect(ses, localhostW, port, 0);
@@ -2419,7 +2419,7 @@ static void test_no_headers(int port)
     DWORD error;
     BOOL ret;
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     con = WinHttpConnect(ses, localhostW, port, 0);
@@ -2456,7 +2456,7 @@ static void test_no_content(int port)
     DWORD size, len = sizeof(buf), bytes_read, status;
     BOOL ret;
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     con = WinHttpConnect(ses, localhostW, port, 0);
@@ -2541,7 +2541,7 @@ static void test_head_request(int port)
     DWORD size, len, count, status;
     BOOL ret;
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     con = WinHttpConnect(ses, localhostW, port, 0);
@@ -2606,7 +2606,7 @@ static void test_not_modified(int port)
     GetSystemTime(&st);
     WinHttpTimeFromSystemTime(&st, &today[sizeof(ifmodifiedW)/sizeof(WCHAR)]);
 
-    session = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_DEFAULT_PROXY,
+    session = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY,
         WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
     ok(session != NULL, "WinHttpOpen failed: %u\n", GetLastError());
 
@@ -2660,7 +2660,7 @@ static void test_bad_header( int port )
     DWORD index, len;
     BOOL ret;
 
-    ses = WinHttpOpen( test_useragent, 0, NULL, NULL, 0 );
+    ses = WinHttpOpen( test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
     ok( ses != NULL, "failed to open session %u\n", GetLastError() );
 
     con = WinHttpConnect( ses, localhostW, port, 0 );
@@ -2692,7 +2692,7 @@ static void test_multiple_reads(int port)
     DWORD total_len = 0;
     BOOL ret;
 
-    ses = WinHttpOpen(test_useragent, 0, NULL, NULL, 0);
+    ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
     ok(ses != NULL, "failed to open session %u\n", GetLastError());
 
     con = WinHttpConnect(ses, localhostW, port, 0);
@@ -2745,7 +2745,7 @@ static void test_cookies( int port )
     DWORD status, size;
     BOOL ret;
 
-    ses = WinHttpOpen( test_useragent, 0, NULL, NULL, 0 );
+    ses = WinHttpOpen( test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
     ok( ses != NULL, "failed to open session %u\n", GetLastError() );
 
     con = WinHttpConnect( ses, localhostW, port, 0 );
@@ -2825,7 +2825,7 @@ static void test_cookies( int port )
     WinHttpCloseHandle( con );
     WinHttpCloseHandle( ses );
 
-    ses = WinHttpOpen( test_useragent, 0, NULL, NULL, 0 );
+    ses = WinHttpOpen( test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
     ok( ses != NULL, "failed to open session %u\n", GetLastError() );
 
     con = WinHttpConnect( ses, localhostW, port, 0 );
@@ -2859,7 +2859,7 @@ static void test_connection_info( int port )
     DWORD size, error;
     BOOL ret;
 
-    ses = WinHttpOpen( test_useragent, 0, NULL, NULL, 0 );
+    ses = WinHttpOpen( test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0 );
     ok( ses != NULL, "failed to open session %u\n", GetLastError() );
 
     con = WinHttpConnect( ses, localhostW, port, 0 );
