@@ -2410,7 +2410,7 @@ static void test_proxy_indirect(int port)
     DWORD r, sz;
     char buffer[0x40];
 
-    hi = InternetOpenA(NULL, 0, NULL, NULL, 0);
+    hi = InternetOpenA(NULL, INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     ok(hi != NULL, "open failed\n");
 
     hc = InternetConnectA(hi, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
@@ -3300,7 +3300,7 @@ static void test_no_content(int port)
 
     hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    session = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_ASYNC);
+    session = InternetOpenA("", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(session != NULL,"InternetOpen failed with error %u\n", GetLastError());
 
     pInternetSetStatusCallbackA(session, callback);
@@ -3365,7 +3365,7 @@ static void test_conn_close(int port)
     hCompleteEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     conn_close_event = CreateEventW(NULL, FALSE, FALSE, NULL);
 
-    session = InternetOpenA("", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, INTERNET_FLAG_ASYNC);
+    session = InternetOpenA("", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, INTERNET_FLAG_ASYNC);
     ok(session != NULL,"InternetOpen failed with error %u\n", GetLastError());
 
     pInternetSetStatusCallbackA(session, callback);
@@ -4318,7 +4318,7 @@ static void test_accept_encoding(int port)
     HINTERNET ses, con, req;
     BOOL ret;
 
-    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    ses = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     ok(ses != NULL, "InternetOpen failed\n");
 
     con = InternetConnectA(ses, "localhost", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
@@ -4356,7 +4356,7 @@ static void test_basic_auth_credentials_reuse(int port)
     DWORD status, size;
     BOOL ret;
 
-    ses = InternetOpenA( "winetest", 0, NULL, NULL, 0 );
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
     ok( ses != NULL, "InternetOpenA failed\n" );
 
     con = InternetConnectA( ses, "localhost", port, "user", "pwd",
@@ -4379,7 +4379,7 @@ static void test_basic_auth_credentials_reuse(int port)
     InternetCloseHandle( con );
     InternetCloseHandle( ses );
 
-    ses = InternetOpenA( "winetest", 0, NULL, NULL, 0 );
+    ses = InternetOpenA( "winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0 );
     ok( ses != NULL, "InternetOpenA failed\n" );
 
     con = InternetConnectA( ses, "localhost", port, NULL, NULL,
@@ -5692,7 +5692,7 @@ static void test_connection_failure(void)
     DWORD error;
     BOOL ret;
 
-    session = InternetOpenA("winetest", INTERNET_OPEN_TYPE_PRECONFIG, NULL, NULL, 0);
+    session = InternetOpenA("winetest", INTERNET_OPEN_TYPE_DIRECT, NULL, NULL, 0);
     ok(session != NULL, "failed to get session handle\n");
 
     connect = InternetConnectA(session, "localhost", 1, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
