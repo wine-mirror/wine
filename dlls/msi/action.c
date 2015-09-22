@@ -2378,6 +2378,18 @@ void msi_resolve_target_folder( MSIPACKAGE *package, const WCHAR *name, BOOL loa
     TRACE("%s resolves to %s\n", debugstr_w(name), debugstr_w(folder->ResolvedTarget));
 }
 
+static ULONGLONG get_volume_space_required( MSIPACKAGE *package )
+{
+    MSICOMPONENT *comp;
+    ULONGLONG ret = 0;
+
+    LIST_FOR_EACH_ENTRY( comp, &package->components, MSICOMPONENT, entry )
+    {
+        if (comp->Action == INSTALLSTATE_LOCAL) ret += comp->Cost;
+    }
+    return ret;
+}
+
 static UINT ACTION_CostFinalize(MSIPACKAGE *package)
 {
     static const WCHAR query[] =
@@ -2392,6 +2404,12 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     static const WCHAR szPrimaryVolumeSpaceAvailable[] =
         {'P','r','i','m','a','r','y','V','o','l','u','m','e','S','p','a','c','e',
          'A','v','a','i','l','a','b','l','e',0};
+    static const WCHAR szPrimaryVolumeSpaceRequired[] =
+        {'P','r','i','m','a','r','y','V','o','l','u','m','e','S','p','a','c','e',
+         'R','e','q','u','i','r','e','d',0};
+    static const WCHAR szPrimaryVolumeSpaceRemaining[] =
+        {'P','r','i','m','a','r','y','V','o','l','u','m','e','S','p','a','c','e',
+         'R','e','m','a','i','n','i','n','g',0};
     static const WCHAR szOutOfNoRbDiskSpace[] =
         {'O','u','t','O','f','N','o','R','b','D','i','s','k','S','p','a','c','e',0};
     MSICOMPONENT *comp;
@@ -2442,6 +2460,8 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     if (!level) msi_set_property( package->db, szInstallLevel, szOne, -1 );
     msi_free(level);
 
+    if ((rc = MSI_SetFeatureStates( package ))) return rc;
+
     if ((primary_key = msi_dup_property( package->db, szPrimaryFolder )))
     {
         if ((primary_folder = msi_dup_property( package->db, primary_key )))
@@ -2449,17 +2469,23 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
             if (((primary_folder[0] >= 'A' && primary_folder[0] <= 'Z') ||
                  (primary_folder[0] >= 'a' && primary_folder[0] <= 'z')) && primary_folder[1] == ':')
             {
+                static const WCHAR fmtW[] = {'%','l','u',0};
                 ULARGE_INTEGER free;
+                ULONGLONG required;
+                WCHAR buf[21];
 
                 primary_folder[2] = 0;
                 if (GetDiskFreeSpaceExW( primary_folder, &free, NULL, NULL ))
                 {
-                    static const WCHAR fmtW[] = {'%','l','u',0};
-                    WCHAR buf[21];
-
                     sprintfW( buf, fmtW, free.QuadPart / 512 );
                     msi_set_property( package->db, szPrimaryVolumeSpaceAvailable, buf, -1 );
                 }
+                required = get_volume_space_required( package );
+                sprintfW( buf, fmtW, required / 512 );
+                msi_set_property( package->db, szPrimaryVolumeSpaceRequired, buf, -1 );
+
+                sprintfW( buf, fmtW, (free.QuadPart - required) / 512 );
+                msi_set_property( package->db, szPrimaryVolumeSpaceRemaining, buf, -1 );
                 msi_set_property( package->db, szPrimaryVolumePath, primary_folder, 2 );
             }
             msi_free( primary_folder );
@@ -2471,7 +2497,7 @@ static UINT ACTION_CostFinalize(MSIPACKAGE *package)
     msi_set_property( package->db, szOutOfDiskSpace, szZero, -1 );
     msi_set_property( package->db, szOutOfNoRbDiskSpace, szZero, -1 );
 
-    return MSI_SetFeatureStates(package);
+    return ERROR_SUCCESS;
 }
 
 static BYTE *parse_value( MSIPACKAGE *package, const WCHAR *value, DWORD len, DWORD *type, DWORD *size )
