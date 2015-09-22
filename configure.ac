@@ -1898,7 +1898,7 @@ dnl **** Disable Fortify, it has too many false positives
 
 AC_CACHE_CHECK([for the need to disable Fortify], ac_cv_c_fortify_enabled,
     AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <string.h>]],
-[[#if defined(__USE_FORTIFY_LEVEL) && __USE_FORTIFY_LEVEL > 0
+[[#if (defined(__USE_FORTIFY_LEVEL) && __USE_FORTIFY_LEVEL > 0) || (defined(_FORTIFY_SOURCE) && _FORTIFY_SOURCE > 0)
 #error Fortify enabled
 #endif]])],
         [ac_cv_c_fortify_enabled=no],[ac_cv_c_fortify_enabled=yes]))
