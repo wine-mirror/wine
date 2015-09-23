@@ -378,6 +378,52 @@ BOOL WINAPI SetThreadStackGuarantee(PULONG stacksize)
     return TRUE;
 }
 
+/***********************************************************************
+ *              GetThreadGroupAffinity (KERNEL32.@)
+ */
+BOOL WINAPI GetThreadGroupAffinity( HANDLE thread, GROUP_AFFINITY *affinity )
+{
+    NTSTATUS status;
+
+    if (!affinity)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    status = NtQueryInformationThread( thread, ThreadGroupInformation,
+                                       affinity, sizeof(*affinity), NULL );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *              SetThreadGroupAffinity (KERNEL32.@)
+ */
+BOOL WINAPI SetThreadGroupAffinity( HANDLE thread, const GROUP_AFFINITY *affinity_new,
+                                    GROUP_AFFINITY *affinity_old )
+{
+    NTSTATUS status;
+
+    if (affinity_old && !GetThreadGroupAffinity( thread, affinity_old ))
+        return FALSE;
+
+    status = NtSetInformationThread( thread, ThreadGroupInformation,
+                                     affinity_new, sizeof(*affinity_new) );
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 /**********************************************************************
  *           SetThreadAffinityMask   (KERNEL32.@)
  */
