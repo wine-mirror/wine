@@ -1014,7 +1014,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 status = STATUS_INFO_LENGTH_MISMATCH;
             else if (!(tdi->Selector & 4))  /* GDT selector */
             {
-                unsigned sel = tdi->Selector & ~3;  /* ignore RPL */
+                unsigned sel = LOWORD(tdi->Selector) & ~3;  /* ignore RPL */
                 status = STATUS_SUCCESS;
                 if (!sel)  /* null selector */
                     memset( &tdi->Entry, 0, sizeof(tdi->Entry) );
@@ -1045,7 +1045,7 @@ NTSTATUS WINAPI NtQueryInformationThread( HANDLE handle, THREADINFOCLASS class,
                 SERVER_START_REQ( get_selector_entry )
                 {
                     req->handle = wine_server_obj_handle( handle );
-                    req->entry = tdi->Selector >> 3;
+                    req->entry = LOWORD(tdi->Selector) >> 3;
                     status = wine_server_call( req );
                     if (!status)
                     {
