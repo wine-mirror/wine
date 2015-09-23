@@ -1351,8 +1351,43 @@ int __thiscall strstreambuf_overflow(strstreambuf *this, int c)
 DEFINE_THISCALL_WRAPPER(strstreambuf_seekoff, 16)
 streampos __thiscall strstreambuf_seekoff(strstreambuf *this, streamoff offset, ios_seek_dir dir, int mode)
 {
-    FIXME("(%p %d %d %d) stub\n", this, offset, dir, mode);
-    return EOF;
+    char *base[3];
+
+    TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
+
+    if (dir < SEEKDIR_beg || dir > SEEKDIR_end || !(mode & (OPENMODE_in|OPENMODE_out)))
+        return EOF;
+    /* read buffer */
+    if (mode & OPENMODE_in) {
+        call_streambuf_underflow(&this->base);
+        base[SEEKDIR_beg] = this->base.eback;
+        base[SEEKDIR_cur] = this->base.gptr;
+        base[SEEKDIR_end] = this->base.egptr;
+        if (base[dir] + offset < this->base.eback || base[dir] + offset > this->base.egptr)
+            return EOF;
+        this->base.gptr = base[dir] + offset;
+    }
+    /* write buffer */
+    if (mode & OPENMODE_out) {
+        if (!this->base.epptr && call_streambuf_overflow(&this->base, EOF) == EOF)
+            return EOF;
+        base[SEEKDIR_beg] = this->base.pbase;
+        base[SEEKDIR_cur] = this->base.pptr;
+        base[SEEKDIR_end] = this->base.epptr;
+        if (base[dir] + offset < this->base.pbase)
+            return EOF;
+        if (base[dir] + offset > this->base.epptr) {
+            /* make room if the buffer is dynamic */
+            if (!this->dynamic)
+                return EOF;
+            this->increase = offset;
+            if (call_streambuf_doallocate(&this->base) == EOF)
+                return EOF;
+        }
+        this->base.pptr = base[dir] + offset;
+        return this->base.pptr - base[SEEKDIR_beg];
+    }
+    return this->base.gptr - base[SEEKDIR_beg];
 }
 
 /* ?setbuf@strstreambuf@@UAEPAVstreambuf@@PADH@Z */
