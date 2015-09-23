@@ -1,0 +1,104 @@
+
+
+	List of Wine subsection maintainers
+
+When submitting patches to Wine, the guidelines at
+<http://wiki.winehq.org/SubmittingPatches> should be followed. This file
+contains a list of maintainers for subsections of Wine. When submitting
+patches, you may want to CC relevant people from this list. If you have
+questions about your work in an area of Wine, you may find a list of
+knowledgeable people here.
+
+Many areas of Wine don't have a specific maintainer, although there may
+be people with knowledge of those areas. If an area is not listed here
+at all, you can use the git log to find developers working in that area
+recently. Or, you can send a mail to wine-devel, but be aware that there
+may simply be no one knowledgeable about that subject on the list.
+
+This file uses a similar format to the Linux kernel MAINTAINERS file.
+Descriptions of section entries used here:
+
+	M: Primary maintainer. CC patches to: FullName <address@domain>
+	P: Other knowledgeable person. FullName <address@domain>
+	F: Files and directories with wildcard patterns.
+	   One pattern per line.  Multiple F: lines acceptable.
+
+Maintainers List
+
+		-----------------------------------
+
+Audio I/O
+M:	Andrew Eikum <aeikum@codeweavers.com>
+F:	dlls/dsound/
+F:	dlls/dswave/
+F:	dlls/mmdevapi/
+F:	dlls/winealsa.drv/
+F:	dlls/winecoreaudio.drv/
+F:	dlls/wineoss.drv/
+F:	dlls/winmm/
+F:	dlls/x3daudio*/
+F:	dlls/xapofx*/
+F:	dlls/xaudio*/
+
+Direct2D
+M:	Henri Verbeet <hverbeet@codeweavers.com>
+F:	dlls/d2d*/
+
+Direct3D
+M:	Henri Verbeet <hverbeet@codeweavers.com>
+P:	Stefan Dösinger <stefan@codeweavers.com>
+P:	Józef Kucia <jkucia@codeweavers.com>
+P:	Matteo Bruni <mbruni@codeweavers.com>
+F:	dlls/d3d*/
+F:	dlls/wined3d/
+
+DirectInput
+P:	Andrew Eikum <aeikum@codeweavers.com>
+F:	dlls/dinput/
+
+HTML rendering (Gecko)
+M:	Jacek Caban <jacek@codeweavers.com>
+F:	dlls/mshtml/
+F:	dlls/ieframe/
+F:	dlls/shdocvw/
+
+Input methods
+M:	Aric Stewart <aric@codeweavers.com>
+F:	dlls/imm32/
+
+JavaScript
+M:	Jacek Caban <jacek@codeweavers.com>
+F:	dlls/jscript/
+
+Mac OS X graphics driver
+M:	Ken Thomases <ken@codeweavers.com>
+F:	dlls/winemac.drv/
+
+Media format conversion
+M:	Andrew Eikum <aeikum@codeweavers.com>
+F:	dlls/msacm32/
+F:	dlls/*.acm/
+
+Microsoft C Runtime
+M:	Piotr Caban <piotr@codeweavers.com>
+F:	dlls/msvc*/
+
+MSI installers
+M:	Hans Leidekker <hans@codeweavers.com>
+F:	dlls/msi/
+
+OLE Typelibs
+P:	Andrew Eikum <aeikum@codeweavers.com>
+F:	dlls/oleaut32/typelib.c
+
+Wine server, IPC
+M:	Alexandre Julliard <julliard@winehq.org>
+F:	server/
+
+VB Script
+M:	Jacek Caban <jacek@codeweavers.com>
+F:	dlls/vbscript/
+
+XML parsing
+M:	Nikolay Sivov <nsivov@codeweavers.com>
+F:	dlls/msxml*/
