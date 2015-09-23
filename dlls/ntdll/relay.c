@@ -41,6 +41,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(relay);
 #if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
 
 WINE_DECLARE_DEBUG_CHANNEL(timestamp);
+WINE_DECLARE_DEBUG_CHANNEL(pid);
 
 struct relay_descr  /* descriptor for a module */
 {
@@ -340,6 +341,9 @@ void * WINAPI relay_trace_entry( struct relay_descr *descr, unsigned int idx, co
     {
         if (TRACE_ON(timestamp)) print_timestamp();
 
+        if (TRACE_ON(pid))
+            DPRINTF( "%04x:", GetCurrentProcessId() );
+
         if (entry_point->name)
             DPRINTF( "%04x:Call %s.%s(", GetCurrentThreadId(), data->dllname, entry_point->name );
         else
@@ -364,6 +368,9 @@ void WINAPI relay_trace_exit( struct relay_descr *descr, unsigned int idx,
     if (!TRACE_ON(relay)) return;
 
     if (TRACE_ON(timestamp)) print_timestamp();
+
+    if (TRACE_ON(pid))
+        DPRINTF( "%04x:", GetCurrentProcessId() );
 
     if (entry_point->name)
         DPRINTF( "%04x:Ret  %s.%s()", GetCurrentThreadId(), data->dllname, entry_point->name );
