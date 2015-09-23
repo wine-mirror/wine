@@ -4229,12 +4229,11 @@ static void test_MsiGetFileVersion(void)
     ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
 
     /* pcchLangBuf not big enough */
-    langsz = 3;
+    langsz = 4;
     lstrcpyA(lang, "lang");
     r = MsiGetFileVersionA(path, NULL, NULL, lang, &langsz);
     ok(r == ERROR_MORE_DATA, "Expected ERROR_MORE_DATA, got %d\n", r);
-    ok(!strncmp(lang, langcheck, 2),
-       "Expected first character of \"%s\", got \"%s\"\n", langcheck, lang);
+    ok(lstrcmpA(lang, "lang"), "lang not set\n");
     ok(langsz >= langchecksz, "Expected %d >= %d\n", langsz, langchecksz);
 
     /* pcchVersionBuf big enough, pcchLangBuf not big enough */
@@ -4255,7 +4254,7 @@ static void test_MsiGetFileVersion(void)
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", r);
     ok(versz == verchecksz, "Expected %d, got %d\n", verchecksz, versz);
     ok(langsz >= langchecksz && langsz < MAX_PATH, "Expected %d >= %d\n", langsz, langchecksz);
-    ok(lstrcmpA(lang, "lang"), "lang buffer not modified\n");
+    ok(strstr(lang, langcheck) != NULL, "expected %s in %s\n", langcheck, lang);
 
     /* NULL pcchVersionBuf and pcchLangBuf */
     r = MsiGetFileVersionA(path, version, NULL, lang, NULL);
