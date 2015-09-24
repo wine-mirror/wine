@@ -1798,7 +1798,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     HRESULT hr;
     WAVEFORMATEX *fmt;
     ALCint attrs[7];
-    REFERENCE_TIME period;
+    REFERENCE_TIME period, bufdur;
 
     TRACE("(%p)->(%p, %u, %u, 0x%x, %s, %p, 0x%x)\n", This,
             ppMasteringVoice, inputChannels, inputSampleRate, flags,
@@ -1885,18 +1885,21 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
 
     CoTaskMemFree(fmt);
 
-    hr = IAudioClient_Initialize(This->aclient, AUDCLNT_SHAREMODE_SHARED,
-            AUDCLNT_STREAMFLAGS_EVENTCALLBACK, inputSampleRate /* 1s buffer */,
-            0, &This->fmt.Format, NULL);
+    hr = IAudioClient_GetDevicePeriod(This->aclient, &period, NULL);
     if(FAILED(hr)){
-        WARN("Initialize failed: %08x\n", hr);
+        WARN("GetDevicePeriod failed: %08x\n", hr);
         hr = XAUDIO2_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
-    hr = IAudioClient_GetDevicePeriod(This->aclient, &period, NULL);
+    /* 3 periods or 0.1 seconds */
+    bufdur = max(3 * period, 1000000);
+
+    hr = IAudioClient_Initialize(This->aclient, AUDCLNT_SHAREMODE_SHARED,
+            AUDCLNT_STREAMFLAGS_EVENTCALLBACK, bufdur,
+            0, &This->fmt.Format, NULL);
     if(FAILED(hr)){
-        WARN("GetDevicePeriod failed: %08x\n", hr);
+        WARN("Initialize failed: %08x\n", hr);
         hr = XAUDIO2_E_DEVICE_INVALIDATED;
         goto exit;
     }
