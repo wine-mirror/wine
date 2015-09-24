@@ -541,6 +541,7 @@ static void WINECON_Delete(struct inner_data* data)
     if (data->hConIn)		CloseHandle(data->hConIn);
     if (data->hConOut)		CloseHandle(data->hConOut);
     if (data->hSynchro)		CloseHandle(data->hSynchro);
+    if (data->hProcess)         CloseHandle(data->hProcess);
     HeapFree(GetProcessHeap(), 0, data->curcfg.registry);
     HeapFree(GetProcessHeap(), 0, data->cells);
     HeapFree(GetProcessHeap(), 0, data);
@@ -749,7 +750,7 @@ static int WINECON_Spawn(struct inner_data* data, LPWSTR cmdLine)
     done = CreateProcessW(NULL, cmdLine, NULL, NULL, TRUE, 0L, NULL, NULL, &startup, &info);
     if (done)
     {
-        CloseHandle(info.hProcess);
+        data->hProcess = info.hProcess;
         CloseHandle(info.hThread);
     }
 
@@ -892,8 +893,18 @@ int PASCAL WinMain(HINSTANCE hInst, HINSTANCE hPrev, LPSTR lpCmdLine, INT nCmdSh
 
     if (!ret)
     {
-	WINE_TRACE("calling MainLoop.\n");
-	ret = data->fnMainLoop(data);
+        DWORD exitcode;
+
+        WINE_TRACE("calling MainLoop.\n");
+        ret = data->fnMainLoop(data);
+
+        if (!ret && data->hProcess &&
+            WaitForSingleObject(data->hProcess, INFINITE) == WAIT_OBJECT_0 &&
+            GetExitCodeProcess(data->hProcess, &exitcode))
+        {
+            WINE_TRACE("forwarding exitcode %u from child process\n", exitcode);
+            ret = exitcode;
+        }
     }
 
     WINECON_Delete(data);
