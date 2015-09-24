@@ -830,9 +830,9 @@ void CDECL MSVCRT__free_locale(MSVCRT__locale_t locale)
 }
 
 #if _MSVCR_VER >= 110
-static inline BOOL set_lc_locale_name(MSVCRT__locale_t loc, int cat)
+static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
 {
-    LCID lcid = loc->locinfo->lc_handle[cat];
+    LCID lcid = locinfo->lc_handle[cat];
     WCHAR buf[100];
     int len;
 
@@ -843,14 +843,14 @@ static inline BOOL set_lc_locale_name(MSVCRT__locale_t loc, int cat)
     if(LocaleNameToLCID(buf, 0) != lcid)
         len = LCIDToLocaleName(lcid, buf, 100, 0);
 
-    if(!len || !(loc->locinfo->lc_name[cat] = MSVCRT_malloc(len*sizeof(MSVCRT_wchar_t))))
+    if(!len || !(locinfo->lc_name[cat] = MSVCRT_malloc(len*sizeof(MSVCRT_wchar_t))))
         return FALSE;
 
-    memcpy(loc->locinfo->lc_name[cat], buf, len*sizeof(MSVCRT_wchar_t));
+    memcpy(locinfo->lc_name[cat], buf, len*sizeof(MSVCRT_wchar_t));
     return TRUE;
 }
 #else
-static inline BOOL set_lc_locale_name(MSVCRT__locale_t loc, int cat)
+static inline BOOL set_lc_locale_name(MSVCRT_pthreadlocinfo locinfo, int cat)
 {
     return TRUE;
 }
@@ -1013,7 +1013,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
 
         loc->locinfo->lc_collate_cp = loc->locinfo->lc_id[MSVCRT_LC_COLLATE].wCodePage;
 
-        if(!set_lc_locale_name(loc, MSVCRT_LC_COLLATE)) {
+        if(!set_lc_locale_name(loc->locinfo, MSVCRT_LC_COLLATE)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1063,7 +1063,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
             for(j=cp_info.LeadByte[i]; j<=cp_info.LeadByte[i+1]; j++)
                 loc->locinfo->ctype1[j+1] |= MSVCRT__LEADBYTE;
 
-        if(!set_lc_locale_name(loc, MSVCRT_LC_CTYPE)) {
+        if(!set_lc_locale_name(loc->locinfo, MSVCRT_LC_CTYPE)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1301,7 +1301,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         }
 #endif
 
-        if(!set_lc_locale_name(loc, MSVCRT_LC_MONETARY)) {
+        if(!set_lc_locale_name(loc->locinfo, MSVCRT_LC_MONETARY)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1434,7 +1434,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         }
 #endif
 
-        if(!set_lc_locale_name(loc, MSVCRT_LC_NUMERIC)) {
+        if(!set_lc_locale_name(loc->locinfo, MSVCRT_LC_NUMERIC)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1476,7 +1476,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
             return NULL;
         }
 
-        if(!set_lc_locale_name(loc, MSVCRT_LC_TIME)) {
+        if(!set_lc_locale_name(loc->locinfo, MSVCRT_LC_TIME)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
