@@ -367,8 +367,19 @@ static void intern_atoms(void)
     i = 0;
     LIST_FOR_EACH_ENTRY( format, &format_list, WINE_CLIPFORMAT, entry )
         if (!format->drvData) {
-            GetClipboardFormatNameW( format->wFormatID, buffer, 256 );
-            len = WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL);
+            if (GetClipboardFormatNameW(format->wFormatID, buffer, 256) > 0)
+            {
+                /* use defined format name */
+                len = WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL);
+            }
+            else
+            {
+                /* create a name in the same way as ntdll/atom.c:integral_atom_name
+                 * which is normally used by GetClipboardFormatNameW
+                 */
+                static const WCHAR fmt[] = {'#','%','u',0};
+                len = sprintfW(buffer, fmt, format->wFormatID) + 1;
+            }
             names[i] = HeapAlloc(GetProcessHeap(), 0, len);
             WideCharToMultiByte(CP_UNIXCP, 0, buffer, -1, names[i++], len, NULL, NULL);
         }
