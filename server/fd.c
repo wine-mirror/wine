@@ -1835,34 +1835,31 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
         fd->closed = closed_fd;
         fd->cacheable = !inode->device->removable;
         list_add_head( &inode->open, &fd->inode_entry );
+        closed_fd = NULL;
 
         /* check directory options */
         if ((options & FILE_DIRECTORY_FILE) && !S_ISDIR(st.st_mode))
         {
-            release_object( fd );
             set_error( STATUS_NOT_A_DIRECTORY );
-            return NULL;
+            goto error;
         }
         if ((options & FILE_NON_DIRECTORY_FILE) && S_ISDIR(st.st_mode))
         {
-            release_object( fd );
             set_error( STATUS_FILE_IS_A_DIRECTORY );
-            return NULL;
+            goto error;
         }
         if ((err = check_sharing( fd, access, sharing, flags, options )))
         {
-            release_object( fd );
             set_error( err );
-            return NULL;
+            goto error;
         }
-        closed_fd->unlink = (options & FILE_DELETE_ON_CLOSE) != 0;
+        fd->closed->unlink = (options & FILE_DELETE_ON_CLOSE) != 0;
         if (flags & O_TRUNC)
         {
             if (S_ISDIR(st.st_mode))
             {
-                release_object( fd );
                 set_error( STATUS_OBJECT_NAME_COLLISION );
-                return NULL;
+                goto error;
             }
             ftruncate( fd->unix_fd, 0 );
         }
@@ -1877,6 +1874,7 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
         free( closed_fd );
         fd->cacheable = 1;
     }
+    if (root_fd != -1) fchdir( server_dir_fd ); /* go back to the server dir */
     return fd;
 
 error:
