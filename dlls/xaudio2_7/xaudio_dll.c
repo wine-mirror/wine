@@ -776,13 +776,9 @@ static void WINAPI XA2SRC_GetState(IXAudio2SourceVoice *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if(!(Flags & XAUDIO2_VOICE_NOSAMPLESPLAYED)){
-        ALint bufpos = 0;
-
-        alGetSourcei(This->al_src, AL_SAMPLE_OFFSET, &bufpos);
-
-        pVoiceState->SamplesPlayed = This->played_frames + bufpos;
-    }else
+    if(!(Flags & XAUDIO2_VOICE_NOSAMPLESPLAYED))
+        pVoiceState->SamplesPlayed = This->played_frames;
+    else
         pVoiceState->SamplesPlayed = 0;
 
     if(This->nbufs)
