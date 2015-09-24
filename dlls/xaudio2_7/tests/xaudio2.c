@@ -775,7 +775,6 @@ START_TEST(xaudio2)
 
         has_devices = test_DeviceDetails(xa27);
         if(has_devices){
-            test_DeviceDetails(xa27);
             test_simple_streaming((IXAudio2*)xa27);
             test_buffer_callbacks((IXAudio2*)xa27);
             test_looping((IXAudio2*)xa27);
