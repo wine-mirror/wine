@@ -310,7 +310,7 @@ LCID MSVCRT_locale_to_LCID(const char *locale, unsigned short *codepage)
 
 /* INTERNAL: Set lc_handle, lc_id and lc_category in threadlocinfo struct */
 static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
-        MSVCRT__locale_t loc, int category)
+        MSVCRT_pthreadlocinfo locinfo, int category)
 {
     char buf[256], *p;
     int len;
@@ -318,25 +318,25 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
     if(GetLocaleInfoA(lcid, LOCALE_ILANGUAGE|LOCALE_NOUSEROVERRIDE, buf, 256)) {
         p = buf;
 
-        loc->locinfo->lc_id[category].wLanguage = 0;
+        locinfo->lc_id[category].wLanguage = 0;
         while(*p) {
-            loc->locinfo->lc_id[category].wLanguage *= 16;
+            locinfo->lc_id[category].wLanguage *= 16;
 
             if(*p <= '9')
-                loc->locinfo->lc_id[category].wLanguage += *p-'0';
+                locinfo->lc_id[category].wLanguage += *p-'0';
             else
-                loc->locinfo->lc_id[category].wLanguage += *p-'a'+10;
+                locinfo->lc_id[category].wLanguage += *p-'a'+10;
 
             p++;
         }
 
-        loc->locinfo->lc_id[category].wCountry =
-            loc->locinfo->lc_id[category].wLanguage;
+        locinfo->lc_id[category].wCountry =
+            locinfo->lc_id[category].wLanguage;
     }
 
-    loc->locinfo->lc_id[category].wCodePage = cp;
+    locinfo->lc_id[category].wCodePage = cp;
 
-    loc->locinfo->lc_handle[category] = lcid;
+    locinfo->lc_handle[category] = lcid;
 
     len = 0;
     len += GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE
@@ -348,18 +348,18 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
     sprintf(buf+len, "%d", cp);
     len += strlen(buf+len)+1;
 
-    loc->locinfo->lc_category[category].locale = MSVCRT_malloc(len);
-    loc->locinfo->lc_category[category].refcount = MSVCRT_malloc(sizeof(int));
-    if(!loc->locinfo->lc_category[category].locale
-            || !loc->locinfo->lc_category[category].refcount) {
-        MSVCRT_free(loc->locinfo->lc_category[category].locale);
-        MSVCRT_free(loc->locinfo->lc_category[category].refcount);
-        loc->locinfo->lc_category[category].locale = NULL;
-        loc->locinfo->lc_category[category].refcount = NULL;
+    locinfo->lc_category[category].locale = MSVCRT_malloc(len);
+    locinfo->lc_category[category].refcount = MSVCRT_malloc(sizeof(int));
+    if(!locinfo->lc_category[category].locale
+            || !locinfo->lc_category[category].refcount) {
+        MSVCRT_free(locinfo->lc_category[category].locale);
+        MSVCRT_free(locinfo->lc_category[category].refcount);
+        locinfo->lc_category[category].locale = NULL;
+        locinfo->lc_category[category].refcount = NULL;
         return TRUE;
     }
-    memcpy(loc->locinfo->lc_category[category].locale, buf, len);
-    *loc->locinfo->lc_category[category].refcount = 1;
+    memcpy(locinfo->lc_category[category].locale, buf, len);
+    *locinfo->lc_category[category].refcount = 1;
 
     return FALSE;
 }
@@ -1006,7 +1006,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     }
 
     if(lcid[MSVCRT_LC_COLLATE] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_COLLATE)) {
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE], cp[MSVCRT_LC_COLLATE], loc, MSVCRT_LC_COLLATE)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_COLLATE], cp[MSVCRT_LC_COLLATE], loc->locinfo, MSVCRT_LC_COLLATE)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1024,7 +1024,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
         CPINFO cp_info;
         int j;
 
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_CTYPE], cp[MSVCRT_LC_CTYPE], loc, MSVCRT_LC_CTYPE)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_CTYPE], cp[MSVCRT_LC_CTYPE], loc->locinfo, MSVCRT_LC_CTYPE)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1097,7 +1097,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     _setmbcp_l(loc->locinfo->lc_id[MSVCRT_LC_CTYPE].wCodePage, lcid[MSVCRT_LC_CTYPE], loc->mbcinfo);
 
     if(lcid[MSVCRT_LC_MONETARY] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_MONETARY)) {
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY], cp[MSVCRT_LC_MONETARY], loc, MSVCRT_LC_MONETARY)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_MONETARY], cp[MSVCRT_LC_MONETARY], loc->locinfo, MSVCRT_LC_MONETARY)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1365,7 +1365,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     }
 
     if(lcid[MSVCRT_LC_NUMERIC] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_NUMERIC)) {
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_NUMERIC], cp[MSVCRT_LC_NUMERIC], loc, MSVCRT_LC_NUMERIC)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_NUMERIC], cp[MSVCRT_LC_NUMERIC], loc->locinfo, MSVCRT_LC_NUMERIC)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
@@ -1471,7 +1471,7 @@ MSVCRT__locale_t CDECL MSVCRT__create_locale(int category, const char *locale)
     }
 
     if(lcid[MSVCRT_LC_TIME] && (category==MSVCRT_LC_ALL || category==MSVCRT_LC_TIME)) {
-        if(update_threadlocinfo_category(lcid[MSVCRT_LC_TIME], cp[MSVCRT_LC_TIME], loc, MSVCRT_LC_TIME)) {
+        if(update_threadlocinfo_category(lcid[MSVCRT_LC_TIME], cp[MSVCRT_LC_TIME], loc->locinfo, MSVCRT_LC_TIME)) {
             MSVCRT__free_locale(loc);
             return NULL;
         }
