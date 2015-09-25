@@ -2762,11 +2762,11 @@ static inline int get_dos_prefix_len( const UNICODE_STRING *name )
     static const WCHAR nt_prefixW[] = {'\\','?','?','\\'};
     static const WCHAR dosdev_prefixW[] = {'\\','D','o','s','D','e','v','i','c','e','s','\\'};
 
-    if (name->Length > sizeof(nt_prefixW) &&
+    if (name->Length >= sizeof(nt_prefixW) &&
         !memcmp( name->Buffer, nt_prefixW, sizeof(nt_prefixW) ))
         return sizeof(nt_prefixW) / sizeof(WCHAR);
 
-    if (name->Length > sizeof(dosdev_prefixW) &&
+    if (name->Length >= sizeof(dosdev_prefixW) &&
         !memicmpW( name->Buffer, dosdev_prefixW, sizeof(dosdev_prefixW)/sizeof(WCHAR) ))
         return sizeof(dosdev_prefixW) / sizeof(WCHAR);
 
@@ -3131,6 +3131,8 @@ NTSTATUS CDECL wine_nt_to_unix_file_name( const UNICODE_STRING *nameW, ANSI_STRI
 
     name += pos;
     name_len -= pos;
+
+    if (!name_len) return STATUS_OBJECT_NAME_INVALID;
 
     /* check for sub-directory */
     for (pos = 0; pos < name_len; pos++)

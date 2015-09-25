@@ -4661,7 +4661,7 @@ static void test_GetFileAttributesExW(void)
     SetLastError(0xdeadbeef);
     ret = GetFileAttributesExW(path1, GetFileExInfoStandard, &info);
     ok(!ret, "GetFileAttributesExW succeeded\n");
-    todo_wine ok(GetLastError() == ERROR_INVALID_NAME, "Expected error ERROR_INVALID_NAME, got %u\n", GetLastError());
+    ok(GetLastError() == ERROR_INVALID_NAME, "Expected error ERROR_INVALID_NAME, got %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = GetFileAttributesExW(path2, GetFileExInfoStandard, &info);
