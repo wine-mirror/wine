@@ -1993,6 +1993,11 @@ static void test_ScriptGetFontProperties(HDC hdc)
 
     for (i = 0; i < efnd.total; i++)
     {
+        if (strlen((char *)efnd.elf[i].elfFullName) >= LF_FACESIZE)
+        {
+            trace("Font name to long to test: %s\n",(char *)efnd.elf[i].elfFullName);
+            continue;
+        }
         lstrcpyA(lf.lfFaceName, (char *)efnd.elf[i].elfFullName);
         font = CreateFontIndirectA(&lf);
         oldfont = SelectObject(hdc, font);
@@ -2034,6 +2039,11 @@ static void test_ScriptGetFontProperties(HDC hdc)
 
     for (i = 0; i < efnd.total; i++)
     {
+        if (strlen((char *)efnd.elf[i].elfFullName) >= LF_FACESIZE)
+        {
+            trace("Font name to long to test: %s\n",(char *)efnd.elf[i].elfFullName);
+            continue;
+        }
         lstrcpyA(lf.lfFaceName, (char *)efnd.elf[i].elfFullName);
         font = CreateFontIndirectA(&lf);
         oldfont = SelectObject(hdc, font);
