@@ -467,6 +467,14 @@ static void test_buffer_callbacks(IXAudio2 *xa)
     XA2CALL_0(StartEngine);
     ok(hr == S_OK, "StartEngine failed: %08x\n", hr);
 
+    if(xaudio27){
+        hr = IXAudio27SourceVoice_SetSourceSampleRate((IXAudio27SourceVoice*)src, 48000);
+        todo_wine ok(hr == S_OK, "SetSourceSampleRate failed: %08x\n", hr);
+    }else{
+        hr = IXAudio2SourceVoice_SetSourceSampleRate(src, 48000);
+        ok(hr == XAUDIO2_E_INVALID_CALL, "SetSourceSampleRate should have failed: %08x\n", hr);
+    }
+
     while(1){
         if(xaudio27)
             IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)src, &state);

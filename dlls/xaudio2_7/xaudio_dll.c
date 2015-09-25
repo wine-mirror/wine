@@ -797,14 +797,32 @@ static HRESULT WINAPI XA2SRC_SetFrequencyRatio(IXAudio2SourceVoice *iface,
         float Ratio, UINT32 OperationSet)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+    ALfloat r;
+
     TRACE("%p, %f, 0x%x\n", This, Ratio, OperationSet);
+
+    if(Ratio < XAUDIO2_MIN_FREQ_RATIO)
+        r = XAUDIO2_MIN_FREQ_RATIO;
+    else if (Ratio > XAUDIO2_MAX_FREQ_RATIO)
+        r = XAUDIO2_MAX_FREQ_RATIO;
+    else
+        r = Ratio;
+
+    alSourcef(This->al_src, AL_PITCH, r);
+
     return S_OK;
 }
 
 static void WINAPI XA2SRC_GetFrequencyRatio(IXAudio2SourceVoice *iface, float *pRatio)
 {
+    ALfloat ratio;
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p, %p\n", This, pRatio);
+
+    alGetSourcef(This->al_src, AL_PITCH, &ratio);
+
+    *pRatio = ratio;
 }
 
 static HRESULT WINAPI XA2SRC_SetSourceSampleRate(
@@ -812,7 +830,20 @@ static HRESULT WINAPI XA2SRC_SetSourceSampleRate(
     UINT32 NewSourceSampleRate)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p, %u\n", This, NewSourceSampleRate);
+
+    EnterCriticalSection(&This->lock);
+
+    if(This->nbufs){
+        LeaveCriticalSection(&This->lock);
+        return XAUDIO2_E_INVALID_CALL;
+    }
+
+    This->fmt->nSamplesPerSec = NewSourceSampleRate;
+
+    LeaveCriticalSection(&This->lock);
+
     return S_OK;
 }
 
