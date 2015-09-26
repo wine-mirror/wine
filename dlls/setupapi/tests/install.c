@@ -720,6 +720,55 @@ static void test_inffilelist(void)
     RemoveDirectoryA(dirA);
 }
 
+static const char dirid_inf[] = "[Version]\n"
+    "Signature=\"$Chicago$\"\n"
+    "[DefaultInstall]\n"
+    "AddReg=Add.Settings\n"
+    "[Add.Settings]\n"
+    "HKCU,Software\\Wine\\setupapitest,dirid,,%%%i%%\n";
+
+static void check_dirid(int dirid, LPCSTR expected)
+{
+    char buffer[sizeof(dirid_inf)+11];
+    char path[MAX_PATH], actual[MAX_PATH];
+    LONG ret;
+    DWORD size;
+
+    sprintf(buffer, dirid_inf, dirid);
+
+    create_inf_file(inffile, buffer);
+
+    sprintf(path, "%s\\%s", CURR_DIR, inffile);
+    run_cmdline("DefaultInstall", 128, path);
+
+    size = sizeof(actual);
+    ret = RegGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\setupapitest", "dirid",
+        RRF_RT_REG_SZ|RRF_ZEROONFAILURE, NULL, &actual, &size);
+    ok(ret == ERROR_SUCCESS, "Failed getting value for dirid %i, err=%d\n", dirid, ret);
+    ok(!strcmp(actual, expected), "Expected path for dirid %i was \"%s\", got \"%s\"\n", dirid, expected, actual);
+
+    ok_registry(TRUE);
+    ret = DeleteFileA(inffile);
+    ok(ret, "Expected source inf to exist, last error was %d\n", GetLastError());
+}
+
+/* Test dirid values */
+static void test_dirid(void)
+{
+    char expected[MAX_PATH];
+
+    check_dirid(DIRID_NULL, "");
+
+    GetWindowsDirectoryA(expected, MAX_PATH);
+    check_dirid(DIRID_WINDOWS, expected);
+
+    GetSystemDirectoryA(expected, MAX_PATH);
+    check_dirid(DIRID_SYSTEM, expected);
+
+    strcat(expected, "\\unknown");
+    check_dirid(40, expected);
+}
+
 START_TEST(install)
 {
     HMODULE hsetupapi = GetModuleHandleA("setupapi.dll");
@@ -770,6 +819,7 @@ START_TEST(install)
         test_registry();
         test_install_svc_from();
         test_driver_install();
+        test_dirid();
 
         UnhookWindowsHookEx(hhook);
 
