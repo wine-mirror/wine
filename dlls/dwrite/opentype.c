@@ -960,7 +960,9 @@ void opentype_get_font_metrics(IDWriteFontFileStream *stream, DWRITE_FONT_FACE_T
         USHORT version = GET_BE_WORD(tt_os2->version);
 
         metrics->ascent  = GET_BE_WORD(tt_os2->usWinAscent);
-        metrics->descent = GET_BE_WORD(tt_os2->usWinDescent);
+        /* Some fonts have usWinDescent value stored as signed short, which could be wrongly
+           interpreted as large unsigned value. */
+        metrics->descent = abs((SHORT)GET_BE_WORD(tt_os2->usWinDescent));
 
         /* line gap is estimated using two sets of ascender/descender values and 'hhea' line gap */
         if (tt_hhea) {
