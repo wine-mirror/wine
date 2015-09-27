@@ -2821,7 +2821,7 @@ static void test_mdi(void)
     ok(item_info.fType == MF_STRING, "got type %#x\n", item_info.fType);
     ok(item_info.wID == 1, "got ID %#x\n", item_info.wID);
     ok(item_info.fState == MFS_CHECKED, "got state %#x\n", item_info.fState);
-    todo_wine ok(!strcmp(item_string, "&1 new title"), "got string %s\n", debugstr_a(item_string));
+    ok(!strcmp(item_string, "&1 new title"), "got string %s\n", debugstr_a(item_string));
 
     ok(GetMenuItemCount(frame_menu) == 5, "Frame menu should have 4 items after WM_MDISETMENU, but has %u\n",
             GetMenuItemCount(frame_menu));
