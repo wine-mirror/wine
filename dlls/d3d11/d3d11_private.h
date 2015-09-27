@@ -314,13 +314,13 @@ struct d3d_rasterizer_state
     LONG refcount;
 
     struct wined3d_private_store private_store;
-    D3D10_RASTERIZER_DESC desc;
+    D3D11_RASTERIZER_DESC desc;
     struct wine_rb_entry entry;
     ID3D11Device *device;
 };
 
 HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
-        const D3D10_RASTERIZER_DESC *desc) DECLSPEC_HIDDEN;
+        const D3D11_RASTERIZER_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d_rasterizer_state *unsafe_impl_from_ID3D10RasterizerState(ID3D10RasterizerState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10SamplerState */
