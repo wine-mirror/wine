@@ -34,11 +34,6 @@ const struct wined3d_parent_ops d3d10_null_wined3d_parent_ops =
 
 /* ID3D11Device methods */
 
-static inline struct d3d_device *impl_from_ID3D11Device(ID3D11Device *iface)
-{
-    return CONTAINING_RECORD(iface, struct d3d_device, ID3D11Device_iface);
-}
-
 static HRESULT STDMETHODCALLTYPE d3d11_device_QueryInterface(ID3D11Device *iface, REFIID riid, void **out)
 {
     struct d3d_device *device = impl_from_ID3D11Device(iface);

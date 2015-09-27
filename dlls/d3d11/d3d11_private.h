@@ -306,16 +306,17 @@ HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, st
 struct d3d10_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(
         ID3D10DepthStencilState *iface) DECLSPEC_HIDDEN;
 
-/* ID3D10RasterizerState */
+/* ID3D11RasterizerState, ID3D10RasterizerState */
 struct d3d_rasterizer_state
 {
+    ID3D11RasterizerState ID3D11RasterizerState_iface;
     ID3D10RasterizerState ID3D10RasterizerState_iface;
     LONG refcount;
 
     struct wined3d_private_store private_store;
     D3D10_RASTERIZER_DESC desc;
     struct wine_rb_entry entry;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
@@ -380,6 +381,11 @@ struct d3d_device
     UINT stencil_ref;
     struct d3d_rasterizer_state *rasterizer_state;
 };
+
+static inline struct d3d_device *impl_from_ID3D11Device(ID3D11Device *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_device, ID3D11Device_iface);
+}
 
 static inline struct d3d_device *impl_from_ID3D10Device(ID3D10Device1 *iface)
 {
