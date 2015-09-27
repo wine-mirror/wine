@@ -1469,6 +1469,86 @@ static void test_create_shader(void)
     }
 }
 
+static void test_create_rasterizer_state(void)
+{
+    ID3D11RasterizerState *rast_state1, *rast_state2;
+    ID3D10RasterizerState *d3d10_rast_state;
+    ULONG refcount, expected_refcount;
+    D3D10_RASTERIZER_DESC d3d10_desc;
+    D3D11_RASTERIZER_DESC desc;
+    ID3D11Device *device, *tmp;
+    HRESULT hr;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = ID3D11Device_CreateRasterizerState(device, NULL, &rast_state1);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    desc.FillMode = D3D11_FILL_SOLID;
+    desc.CullMode = D3D11_CULL_BACK;
+    desc.FrontCounterClockwise = FALSE;
+    desc.DepthBias = 0;
+    desc.DepthBiasClamp = 0.0f;
+    desc.SlopeScaledDepthBias = 0.0f;
+    desc.DepthClipEnable = TRUE;
+    desc.ScissorEnable = FALSE;
+    desc.MultisampleEnable = FALSE;
+    desc.AntialiasedLineEnable = FALSE;
+
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
+    hr = ID3D11Device_CreateRasterizerState(device, &desc, &rast_state1);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRasterizerState(device, &desc, &rast_state2);
+    ok(SUCCEEDED(hr), "Failed to create rasterizer state, hr %#x.\n", hr);
+    ok(rast_state1 == rast_state2, "Got different rasterizer state objects.\n");
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D11RasterizerState_GetDevice(rast_state1, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D11Device_Release(tmp);
+
+    hr = ID3D11RasterizerState_QueryInterface(rast_state1, &IID_ID3D10RasterizerState, (void **)&d3d10_rast_state);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Rasterizer state should implement ID3D10RasterizerState.\n");
+    if (SUCCEEDED(hr))
+    {
+        ID3D10RasterizerState_GetDesc(d3d10_rast_state, &d3d10_desc);
+        ok(d3d10_desc.FillMode == D3D10_FILL_SOLID, "Got unexpected fill mode %u.\n", d3d10_desc.FillMode);
+        ok(d3d10_desc.CullMode == D3D10_CULL_BACK, "Got unexpected cull mode %u.\n", d3d10_desc.CullMode);
+        ok(!d3d10_desc.FrontCounterClockwise, "Got unexpected front counter clockwise %#x.\n",
+                d3d10_desc.FrontCounterClockwise);
+        ok(!d3d10_desc.DepthBias, "Got unexpected depth bias %d.\n", d3d10_desc.DepthBias);
+        ok(!d3d10_desc.DepthBiasClamp, "Got unexpected depth bias clamp %f.\n", d3d10_desc.DepthBiasClamp);
+        ok(!d3d10_desc.SlopeScaledDepthBias, "Got unexpected slope scaled depth bias %f.\n",
+                d3d10_desc.SlopeScaledDepthBias);
+        ok(!!d3d10_desc.DepthClipEnable, "Got unexpected depth clip enable %#x.\n", d3d10_desc.DepthClipEnable);
+        ok(!d3d10_desc.ScissorEnable, "Got unexpected scissor enable %#x.\n", d3d10_desc.ScissorEnable);
+        ok(!d3d10_desc.MultisampleEnable, "Got unexpected multisample enable %#x.\n",
+                d3d10_desc.MultisampleEnable);
+        ok(!d3d10_desc.AntialiasedLineEnable, "Got unexpected antialiased line enable %#x.\n",
+                d3d10_desc.AntialiasedLineEnable);
+
+        refcount = ID3D10RasterizerState_Release(d3d10_rast_state);
+        ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    }
+
+    refcount = ID3D11RasterizerState_Release(rast_state2);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    refcount = ID3D11RasterizerState_Release(rast_state1);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -1483,4 +1563,5 @@ START_TEST(d3d11)
     test_create_rendertarget_view();
     test_create_shader_resource_view();
     test_create_shader();
+    test_create_rasterizer_state();
 }
