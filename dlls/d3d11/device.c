@@ -563,7 +563,7 @@ static inline struct d3d_device *impl_from_IUnknown(IUnknown *iface)
     return CONTAINING_RECORD(iface, struct d3d_device, IUnknown_inner);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *iface, REFIID riid, void **out)
+static HRESULT STDMETHODCALLTYPE d3d_device_inner_QueryInterface(IUnknown *iface, REFIID riid, void **out)
 {
     struct d3d_device *device = impl_from_IUnknown(iface);
 
@@ -598,17 +598,17 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_inner_QueryInterface(IUnknown *ifa
     return S_OK;
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_device_inner_AddRef(IUnknown *iface)
+static ULONG STDMETHODCALLTYPE d3d_device_inner_AddRef(IUnknown *iface)
 {
-    struct d3d_device *This = impl_from_IUnknown(iface);
-    ULONG refcount = InterlockedIncrement(&This->refcount);
+    struct d3d_device *device = impl_from_IUnknown(iface);
+    ULONG refcount = InterlockedIncrement(&device->refcount);
 
-    TRACE("%p increasing refcount to %u\n", This, refcount);
+    TRACE("%p increasing refcount to %u.\n", device, refcount);
 
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_device_inner_Release(IUnknown *iface)
+static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
 {
     struct d3d_device *device = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&device->refcount);
@@ -2786,12 +2786,12 @@ static const struct ID3D10Device1Vtbl d3d10_device1_vtbl =
     d3d10_device_GetFeatureLevel,
 };
 
-static const struct IUnknownVtbl d3d10_device_inner_unknown_vtbl =
+static const struct IUnknownVtbl d3d_device_inner_unknown_vtbl =
 {
     /* IUnknown methods */
-    d3d10_device_inner_QueryInterface,
-    d3d10_device_inner_AddRef,
-    d3d10_device_inner_Release,
+    d3d_device_inner_QueryInterface,
+    d3d_device_inner_AddRef,
+    d3d_device_inner_Release,
 };
 
 /* ID3D10Multithread methods */
@@ -3125,7 +3125,7 @@ static const struct wine_rb_functions d3d_rasterizer_state_rb_ops =
 
 HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown)
 {
-    device->IUnknown_inner.lpVtbl = &d3d10_device_inner_unknown_vtbl;
+    device->IUnknown_inner.lpVtbl = &d3d_device_inner_unknown_vtbl;
     device->ID3D11Device_iface.lpVtbl = &d3d11_device_vtbl;
     device->ID3D10Device1_iface.lpVtbl = &d3d10_device1_vtbl;
     device->ID3D10Multithread_iface.lpVtbl = &d3d10_multithread_vtbl;
