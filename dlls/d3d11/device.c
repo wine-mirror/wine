@@ -2439,7 +2439,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
         const D3D10_RASTERIZER_DESC *desc, ID3D10RasterizerState **rasterizer_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_rasterizer_state *object;
+    struct d3d_rasterizer_state *object;
     struct wine_rb_entry *entry;
     HRESULT hr;
 
@@ -2451,7 +2451,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
     wined3d_mutex_lock();
     if ((entry = wine_rb_get(&device->rasterizer_states, desc)))
     {
-        object = WINE_RB_ENTRY_VALUE(entry, struct d3d10_rasterizer_state, entry);
+        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_rasterizer_state, entry);
 
         TRACE("Returning existing rasterizer state %p.\n", object);
         *rasterizer_state = &object->ID3D10RasterizerState_iface;
@@ -2466,7 +2466,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRasterizerState(ID3D10Device
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_rasterizer_state_init(object, device, desc)))
+    if (FAILED(hr = d3d_rasterizer_state_init(object, device, desc)))
     {
         WARN("Failed to initialize rasterizer state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -3102,20 +3102,20 @@ static const struct wine_rb_functions d3d10_depthstencil_state_rb_ops =
     d3d10_depthstencil_state_compare,
 };
 
-static int d3d10_rasterizer_state_compare(const void *key, const struct wine_rb_entry *entry)
+static int d3d_rasterizer_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const D3D10_RASTERIZER_DESC *ka = key;
-    const D3D10_RASTERIZER_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d10_rasterizer_state, entry)->desc;
+    const D3D10_RASTERIZER_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_rasterizer_state, entry)->desc;
 
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-static const struct wine_rb_functions d3d10_rasterizer_state_rb_ops =
+static const struct wine_rb_functions d3d_rasterizer_state_rb_ops =
 {
     d3d10_rb_alloc,
     d3d10_rb_realloc,
     d3d10_rb_free,
-    d3d10_rasterizer_state_compare,
+    d3d_rasterizer_state_compare,
 };
 
 HRESULT d3d10_device_init(struct d3d_device *device, void *outer_unknown)
@@ -3147,7 +3147,7 @@ HRESULT d3d10_device_init(struct d3d_device *device, void *outer_unknown)
         return E_FAIL;
     }
 
-    if (wine_rb_init(&device->rasterizer_states, &d3d10_rasterizer_state_rb_ops) == -1)
+    if (wine_rb_init(&device->rasterizer_states, &d3d_rasterizer_state_rb_ops) == -1)
     {
         WARN("Failed to initialize rasterizer state rbtree.\n");
         wine_rb_destroy(&device->depthstencil_states, NULL, NULL);
