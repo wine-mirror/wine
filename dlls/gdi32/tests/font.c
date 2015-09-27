@@ -3718,7 +3718,7 @@ static void test_text_metrics(const LOGFONTA *lf, const NEWTEXTMETRICA *ntm)
         TEXTMETRICW tmW;
 
         ascent = GET_BE_WORD(tt_os2.usWinAscent);
-        descent = GET_BE_WORD(tt_os2.usWinDescent);
+        descent = abs((SHORT)GET_BE_WORD(tt_os2.usWinDescent));
         cell_height = ascent + descent;
         ok(ntm->ntmCellHeight == cell_height, "%s: ntmCellHeight %u != %u, os2.usWinAscent/os2.usWinDescent %u/%u\n",
            font_name, ntm->ntmCellHeight, cell_height, ascent, descent);

@@ -4185,6 +4185,13 @@ BOOL WineEngInit(void)
     return TRUE;
 }
 
+/* Some fonts have large usWinDescent values, as a result of storing signed short
+   in unsigned field. That's probably caused by sTypoDescent vs usWinDescent confusion in
+   some font generation tools. */
+static inline USHORT get_fixed_windescent(USHORT windescent)
+{
+    return abs((SHORT)windescent);
+}
 
 static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
 {
@@ -4214,12 +4221,13 @@ static LONG calc_ppem_for_height(FT_Face ft_face, LONG height)
      */
 
     if(height > 0) {
-        if(pOS2->usWinAscent + pOS2->usWinDescent == 0)
+        USHORT windescent = get_fixed_windescent(pOS2->usWinDescent);
+        if(pOS2->usWinAscent + windescent == 0)
             ppem = MulDiv(ft_face->units_per_EM, height,
                           pHori->Ascender - pHori->Descender);
         else
             ppem = MulDiv(ft_face->units_per_EM, height,
-                          pOS2->usWinAscent + pOS2->usWinDescent);
+                          pOS2->usWinAscent + windescent);
         if(ppem > MAX_PPEM) {
             WARN("Ignoring too large height %d, ppem %d\n", height, ppem);
             ppem = 1;
@@ -7340,6 +7348,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     WCHAR *family_nameW, *style_nameW, *face_nameW, *full_nameW;
     char *cp;
     INT ascent, descent;
+    USHORT windescent;
 
     TRACE("font=%p\n", font);
 
@@ -7408,7 +7417,7 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 
     pPost = pFT_Get_Sfnt_Table(ft_face, ft_sfnt_post); /* we can live with this failing */
 
-    TRACE("OS/2 winA = %d winD = %d typoA = %d typoD = %d typoLG = %d avgW %d FT_Face a = %d, d = %d, h = %d: HORZ a = %d, d = %d lg = %d maxY = %ld minY = %ld\n",
+    TRACE("OS/2 winA = %u winD = %u typoA = %d typoD = %d typoLG = %d avgW %d FT_Face a = %d, d = %d, h = %d: HORZ a = %d, d = %d lg = %d maxY = %ld minY = %ld\n",
 	  pOS2->usWinAscent, pOS2->usWinDescent,
 	  pOS2->sTypoAscender, pOS2->sTypoDescender, pOS2->sTypoLineGap,
 	  pOS2->xAvgCharWidth,
@@ -7421,12 +7430,13 @@ static BOOL get_outline_text_metrics(GdiFont *font)
 
 #define TM font->potm->otmTextMetrics
 
-    if(pOS2->usWinAscent + pOS2->usWinDescent == 0) {
+    windescent = get_fixed_windescent(pOS2->usWinDescent);
+    if(pOS2->usWinAscent + windescent == 0) {
         ascent = pHori->Ascender;
         descent = -pHori->Descender;
     } else {
         ascent = pOS2->usWinAscent;
-        descent = pOS2->usWinDescent;
+        descent = windescent;
     }
 
     font->ntmCellHeight = ascent + descent;
