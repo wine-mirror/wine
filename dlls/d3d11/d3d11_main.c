@@ -88,7 +88,7 @@ static HRESULT WINAPI layer_create(enum dxgi_device_layer_id id, void **layer_ba
     }
 
     object = *layer_base;
-    if (FAILED(hr = d3d10_device_init(object, device_object)))
+    if (FAILED(hr = d3d_device_init(object, device_object)))
     {
         WARN("Failed to initialize device, hr %#x.\n", hr);
         *device_layer = NULL;

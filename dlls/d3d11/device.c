@@ -3123,7 +3123,7 @@ static const struct wine_rb_functions d3d_rasterizer_state_rb_ops =
     d3d_rasterizer_state_compare,
 };
 
-HRESULT d3d10_device_init(struct d3d_device *device, void *outer_unknown)
+HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown)
 {
     device->IUnknown_inner.lpVtbl = &d3d10_device_inner_unknown_vtbl;
     device->ID3D11Device_iface.lpVtbl = &d3d11_device_vtbl;

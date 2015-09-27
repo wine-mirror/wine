@@ -392,7 +392,7 @@ static inline struct d3d_device *impl_from_ID3D10Device(ID3D10Device1 *iface)
     return CONTAINING_RECORD(iface, struct d3d_device, ID3D10Device1_iface);
 }
 
-HRESULT d3d10_device_init(struct d3d_device *device, void *outer_unknown) DECLSPEC_HIDDEN;
+HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown) DECLSPEC_HIDDEN;
 
 /* Layered device */
 enum dxgi_device_layer_id
