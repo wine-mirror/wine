@@ -3038,17 +3038,17 @@ static const struct wined3d_device_parent_ops d3d10_wined3d_device_parent_ops =
     device_parent_create_swapchain,
 };
 
-static void *d3d10_rb_alloc(size_t size)
+static void *d3d_rb_alloc(size_t size)
 {
     return HeapAlloc(GetProcessHeap(), 0, size);
 }
 
-static void *d3d10_rb_realloc(void *ptr, size_t size)
+static void *d3d_rb_realloc(void *ptr, size_t size)
 {
     return HeapReAlloc(GetProcessHeap(), 0, ptr, size);
 }
 
-static void d3d10_rb_free(void *ptr)
+static void d3d_rb_free(void *ptr)
 {
     HeapFree(GetProcessHeap(), 0, ptr);
 }
@@ -3063,9 +3063,9 @@ static int d3d10_sampler_state_compare(const void *key, const struct wine_rb_ent
 
 static const struct wine_rb_functions d3d10_sampler_state_rb_ops =
 {
-    d3d10_rb_alloc,
-    d3d10_rb_realloc,
-    d3d10_rb_free,
+    d3d_rb_alloc,
+    d3d_rb_realloc,
+    d3d_rb_free,
     d3d10_sampler_state_compare,
 };
 
@@ -3079,9 +3079,9 @@ static int d3d10_blend_state_compare(const void *key, const struct wine_rb_entry
 
 static const struct wine_rb_functions d3d10_blend_state_rb_ops =
 {
-    d3d10_rb_alloc,
-    d3d10_rb_realloc,
-    d3d10_rb_free,
+    d3d_rb_alloc,
+    d3d_rb_realloc,
+    d3d_rb_free,
     d3d10_blend_state_compare,
 };
 
@@ -3096,9 +3096,9 @@ static int d3d10_depthstencil_state_compare(const void *key, const struct wine_r
 
 static const struct wine_rb_functions d3d10_depthstencil_state_rb_ops =
 {
-    d3d10_rb_alloc,
-    d3d10_rb_realloc,
-    d3d10_rb_free,
+    d3d_rb_alloc,
+    d3d_rb_realloc,
+    d3d_rb_free,
     d3d10_depthstencil_state_compare,
 };
 
@@ -3112,9 +3112,9 @@ static int d3d_rasterizer_state_compare(const void *key, const struct wine_rb_en
 
 static const struct wine_rb_functions d3d_rasterizer_state_rb_ops =
 {
-    d3d10_rb_alloc,
-    d3d10_rb_realloc,
-    d3d10_rb_free,
+    d3d_rb_alloc,
+    d3d_rb_realloc,
+    d3d_rb_free,
     d3d_rasterizer_state_compare,
 };
 
