@@ -374,9 +374,11 @@ static const IXAudio2VoiceCallbackVtbl vcb_buf_vtbl = {
 static IXAudio2VoiceCallback vcb_buf = { &vcb_buf_vtbl };
 
 static int nloopends = 0;
+static int nstreamends = 0;
 
 static void WINAPI loop_buf_OnStreamEnd(IXAudio2VoiceCallback *This)
 {
+    ++nstreamends;
 }
 
 static void WINAPI loop_buf_OnBufferStart(IXAudio2VoiceCallback *This,
@@ -421,7 +423,7 @@ static void test_buffer_callbacks(IXAudio2 *xa)
     XAUDIO2_BUFFER buf;
     XAUDIO2_VOICE_STATE state;
     struct vcb_buf_testdata testdata[5];
-    int i;
+    int i, timeout;
 
     obs_calls = 0;
     obe_calls = 0;
@@ -434,6 +436,7 @@ static void test_buffer_callbacks(IXAudio2 *xa)
         hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08x\n", hr);
 
+    /* test OnBufferStart/End callbacks */
     fmt.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
     fmt.nChannels = 2;
     fmt.nSamplesPerSec = 44100;
@@ -487,14 +490,48 @@ static void test_buffer_callbacks(IXAudio2 *xa)
 
     ok(state.SamplesPlayed == 4410 * 5, "Got wrong samples played\n");
 
-    HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
+    if(xaudio27)
+        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
+    else
+        IXAudio2SourceVoice_DestroyVoice(src);
+
+
+    /* test OnStreamEnd callback */
+    XA2CALL(CreateSourceVoice, &src, &fmt, 0, 1.f, &loop_buf, NULL, NULL);
+    ok(hr == S_OK, "CreateSourceVoice failed: %08x\n", hr);
+
+    buf.Flags = XAUDIO2_END_OF_STREAM;
+
+    hr = IXAudio2SourceVoice_SubmitSourceBuffer(src, &buf, NULL);
+    ok(hr == S_OK, "SubmitSourceBuffer failed: %08x\n", hr);
+
+    hr = IXAudio2SourceVoice_Start(src, 0, XAUDIO2_COMMIT_NOW);
+    ok(hr == S_OK, "Start failed: %08x\n", hr);
+
+    timeout = 0;
+    while(nstreamends == 0 && timeout < 1000){
+        Sleep(100);
+        timeout += 100;
+    }
+
+    ok(nstreamends == 1, "Got wrong number of OnStreamEnd calls: %u\n", nstreamends);
+
+    /* xaudio resets SamplesPlayed after processing an end-of-stream buffer */
+    if(xaudio27)
+        IXAudio27SourceVoice_GetState((IXAudio27SourceVoice*)src, &state);
+    else
+        IXAudio2SourceVoice_GetState(src, &state, 0);
+    ok(state.SamplesPlayed == 0, "Got wrong samples played\n");
 
     if(xaudio27)
         IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
     else
         IXAudio2SourceVoice_DestroyVoice(src);
 
+
     IXAudio2MasteringVoice_DestroyVoice(master);
+
+    HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
 }
 
 static UINT32 play_to_completion(IXAudio2SourceVoice *src, UINT32 max_samples)

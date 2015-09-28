@@ -3092,9 +3092,14 @@ static void update_source_state(XA2SourceImpl *src)
 
                 TRACE("%p: done with buffer %u\n", src, old_buf);
 
+                if(src->buffers[old_buf].xa2buffer.Flags & XAUDIO2_END_OF_STREAM)
+                    src->played_frames = 0;
+
                 if(src->cb){
                     IXAudio2VoiceCallback_OnBufferEnd(src->cb,
                             src->buffers[old_buf].xa2buffer.pContext);
+                    if(src->buffers[old_buf].xa2buffer.Flags & XAUDIO2_END_OF_STREAM)
+                        IXAudio2VoiceCallback_OnStreamEnd(src->cb);
 
                     if(src->nbufs > 0)
                         IXAudio2VoiceCallback_OnBufferStart(src->cb,
