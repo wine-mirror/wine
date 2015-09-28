@@ -191,13 +191,14 @@ static void present_parameters_from_wined3d_swapchain_desc(D3DPRESENT_PARAMETERS
 static BOOL wined3d_swapchain_desc_from_present_parameters(struct wined3d_swapchain_desc *swapchain_desc,
         const D3DPRESENT_PARAMETERS *present_parameters)
 {
-    if (!present_parameters->SwapEffect || present_parameters->SwapEffect > D3DSWAPEFFECT_COPY)
+    if (!present_parameters->SwapEffect || present_parameters->SwapEffect > D3DSWAPEFFECT_COPY_VSYNC)
     {
         WARN("Invalid swap effect %u passed.\n", present_parameters->SwapEffect);
         return FALSE;
     }
     if (present_parameters->BackBufferCount > 3
-            || (present_parameters->SwapEffect == D3DSWAPEFFECT_COPY
+            || ((present_parameters->SwapEffect == D3DSWAPEFFECT_COPY
+            || present_parameters->SwapEffect == D3DSWAPEFFECT_COPY_VSYNC)
             && present_parameters->BackBufferCount > 1))
     {
         WARN("Invalid backbuffer count %u.\n", present_parameters->BackBufferCount);

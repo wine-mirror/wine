@@ -7309,36 +7309,44 @@ static void test_swapchain_parameters(void)
     tests[] =
     {
         /* Swap effect 0 is not allowed. */
-        {TRUE,  1, 0,                     D3DERR_INVALIDCALL},
-        {FALSE, 1, 0,                     D3DERR_INVALIDCALL},
+        {TRUE,  1, 0,                            D3DERR_INVALIDCALL},
+        {FALSE, 1, 0,                            D3DERR_INVALIDCALL},
 
         /* All (non-ex) swap effects are allowed in
          * windowed and fullscreen mode. */
-        {TRUE,  1, D3DSWAPEFFECT_DISCARD, D3D_OK},
-        {TRUE,  1, D3DSWAPEFFECT_FLIP,    D3D_OK},
-        {FALSE, 1, D3DSWAPEFFECT_DISCARD, D3D_OK},
-        {FALSE, 1, D3DSWAPEFFECT_FLIP,    D3D_OK},
-        {FALSE, 1, D3DSWAPEFFECT_COPY,    D3D_OK},
+        {TRUE,  1, D3DSWAPEFFECT_DISCARD,        D3D_OK},
+        {TRUE,  1, D3DSWAPEFFECT_FLIP,           D3D_OK},
+        {FALSE, 1, D3DSWAPEFFECT_DISCARD,        D3D_OK},
+        {FALSE, 1, D3DSWAPEFFECT_FLIP,           D3D_OK},
+        {FALSE, 1, D3DSWAPEFFECT_COPY,           D3D_OK},
 
         /* Only one backbuffer in copy mode. Reset allows it for
          * some reason. */
-        {TRUE,  0, D3DSWAPEFFECT_COPY,    D3D_OK},
-        {TRUE,  1, D3DSWAPEFFECT_COPY,    D3D_OK},
-        {TRUE,  2, D3DSWAPEFFECT_COPY,    D3DERR_INVALIDCALL},
-        {FALSE, 2, D3DSWAPEFFECT_COPY,    D3DERR_INVALIDCALL},
+        {TRUE,  0, D3DSWAPEFFECT_COPY,           D3D_OK},
+        {TRUE,  1, D3DSWAPEFFECT_COPY,           D3D_OK},
+        {TRUE,  2, D3DSWAPEFFECT_COPY,           D3DERR_INVALIDCALL},
+        {FALSE, 2, D3DSWAPEFFECT_COPY,           D3DERR_INVALIDCALL},
+        {TRUE,  0, D3DSWAPEFFECT_COPY_VSYNC,     D3D_OK},
+        {TRUE,  1, D3DSWAPEFFECT_COPY_VSYNC,     D3D_OK},
+        {TRUE,  2, D3DSWAPEFFECT_COPY_VSYNC,     D3DERR_INVALIDCALL},
+        {FALSE, 2, D3DSWAPEFFECT_COPY_VSYNC,     D3DERR_INVALIDCALL},
 
         /* Ok with the others, in fullscreen and windowed mode. */
-        {TRUE,  2, D3DSWAPEFFECT_DISCARD, D3D_OK},
-        {TRUE,  2, D3DSWAPEFFECT_FLIP,    D3D_OK},
-        {FALSE, 2, D3DSWAPEFFECT_DISCARD, D3D_OK},
-        {FALSE, 2, D3DSWAPEFFECT_FLIP,    D3D_OK},
+        {TRUE,  2, D3DSWAPEFFECT_DISCARD,        D3D_OK},
+        {TRUE,  2, D3DSWAPEFFECT_FLIP,           D3D_OK},
+        {FALSE, 2, D3DSWAPEFFECT_DISCARD,        D3D_OK},
+        {FALSE, 2, D3DSWAPEFFECT_FLIP,           D3D_OK},
+
+        /* Invalid swapeffects. */
+        {TRUE,  1, D3DSWAPEFFECT_COPY_VSYNC + 1, D3DERR_INVALIDCALL},
+        {FALSE, 1, D3DSWAPEFFECT_COPY_VSYNC + 1, D3DERR_INVALIDCALL},
 
         /* 3 is the highest allowed backbuffer count. */
-        {TRUE,  3, D3DSWAPEFFECT_DISCARD,    D3D_OK},
-        {TRUE,  4, D3DSWAPEFFECT_DISCARD,    D3DERR_INVALIDCALL},
-        {TRUE,  4, D3DSWAPEFFECT_FLIP,       D3DERR_INVALIDCALL},
-        {FALSE, 4, D3DSWAPEFFECT_DISCARD,    D3DERR_INVALIDCALL},
-        {FALSE, 4, D3DSWAPEFFECT_FLIP,       D3DERR_INVALIDCALL},
+        {TRUE,  3, D3DSWAPEFFECT_DISCARD,        D3D_OK},
+        {TRUE,  4, D3DSWAPEFFECT_DISCARD,        D3DERR_INVALIDCALL},
+        {TRUE,  4, D3DSWAPEFFECT_FLIP,           D3DERR_INVALIDCALL},
+        {FALSE, 4, D3DSWAPEFFECT_DISCARD,        D3DERR_INVALIDCALL},
+        {FALSE, 4, D3DSWAPEFFECT_FLIP,           D3DERR_INVALIDCALL},
     };
 
     window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
