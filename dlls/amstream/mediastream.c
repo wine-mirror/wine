@@ -1003,6 +1003,7 @@ static HRESULT ddrawstreamsample_create(IDirectDrawMediaStream *parent, IDirectD
         desc.ddpfPixelFormat.dwBBitMask = 0x0000ff;
         desc.ddpfPixelFormat.dwRGBAlphaBitMask = 0;
         desc.ddsCaps.dwCaps = DDSCAPS_SYSTEMMEMORY|DDSCAPS_OFFSCREENPLAIN;
+        desc.lpSurface = NULL;
 
         hr = IDirectDraw_CreateSurface(ddraw, &desc, &object->surface, NULL);
         IDirectDraw_Release(ddraw);
