@@ -748,7 +748,18 @@ static HRESULT WINAPI XA2SRC_FlushSourceBuffers(IXAudio2SourceVoice *iface)
 static HRESULT WINAPI XA2SRC_Discontinuity(IXAudio2SourceVoice *iface)
 {
     XA2SourceImpl *This = impl_from_IXAudio2SourceVoice(iface);
+
     TRACE("%p\n", This);
+
+    EnterCriticalSection(&This->lock);
+
+    if(This->nbufs > 0){
+        DWORD last = (This->first_buf + This->nbufs - 1) % XAUDIO2_MAX_QUEUED_BUFFERS;
+        This->buffers[last].xa2buffer.Flags |= XAUDIO2_END_OF_STREAM;
+    }
+
+    LeaveCriticalSection(&This->lock);
+
     return S_OK;
 }
 
