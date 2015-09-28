@@ -1132,6 +1132,9 @@ static void WINAPI XA2M_GetVoiceDetails(IXAudio2MasteringVoice *iface,
 {
     IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
     TRACE("%p, %p\n", This, pVoiceDetails);
+    pVoiceDetails->CreationFlags = 0;
+    pVoiceDetails->InputChannels = This->fmt.Format.nChannels;
+    pVoiceDetails->InputSampleRate = This->fmt.Format.nSamplesPerSec;
 }
 
 static HRESULT WINAPI XA2M_SetOutputVoices(IXAudio2MasteringVoice *iface,
