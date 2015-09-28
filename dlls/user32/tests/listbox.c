@@ -1665,7 +1665,10 @@ static void test_extents(void)
     ok(br == TRUE, "GetScrollInfo failed\n");
     ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
     ok(sinfo.nMax == 100, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) == 0,
+        "List box should not have a horizontal scroll bar\n");
 
+    /* horizontal extent < width */
     SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 64, 0);
 
     res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
@@ -1677,6 +1680,23 @@ static void test_extents(void)
     ok(br == TRUE, "GetScrollInfo failed\n");
     ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
     ok(sinfo.nMax == 100, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) == 0,
+        "List box should not have a horizontal scroll bar\n");
+
+    /* horizontal extent > width */
+    SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 184, 0);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 184, "Got wrong horizontal extent: %u\n", res);
+
+    sinfo.cbSize = sizeof(sinfo);
+    sinfo.fMask = SIF_RANGE;
+    br = GetScrollInfo(listbox, SB_HORZ, &sinfo);
+    ok(br == TRUE, "GetScrollInfo failed\n");
+    ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
+    ok(sinfo.nMax == 100, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) == 0,
+        "List box should not have a horizontal scroll bar\n");
 
     DestroyWindow(listbox);
 
@@ -1692,7 +1712,10 @@ static void test_extents(void)
     ok(br == TRUE, "GetScrollInfo failed\n");
     ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
     ok(sinfo.nMax == 100, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) == 0,
+        "List box should not have a horizontal scroll bar\n");
 
+    /* horizontal extent < width */
     SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 64, 0);
 
     res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
@@ -1704,6 +1727,23 @@ static void test_extents(void)
     ok(br == TRUE, "GetScrollInfo failed\n");
     ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
     ok(sinfo.nMax == 63, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) == 0,
+        "List box should not have a horizontal scroll bar\n");
+
+    /* horizontal extent > width */
+    SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 184, 0);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 184, "Got wrong horizontal extent: %u\n", res);
+
+    sinfo.cbSize = sizeof(sinfo);
+    sinfo.fMask = SIF_RANGE;
+    br = GetScrollInfo(listbox, SB_HORZ, &sinfo);
+    ok(br == TRUE, "GetScrollInfo failed\n");
+    ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
+    ok(sinfo.nMax == 183, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) != 0,
+        "List box should have a horizontal scroll bar\n");
 
     SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 0, 0);
 
@@ -1716,6 +1756,69 @@ static void test_extents(void)
     ok(br == TRUE, "GetScrollInfo failed\n");
     ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
     ok(sinfo.nMax == 0, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) == 0,
+        "List box should not have a horizontal scroll bar\n");
+
+    DestroyWindow(listbox);
+
+
+    listbox = create_listbox(WS_CHILD | WS_VISIBLE | WS_HSCROLL | LBS_DISABLENOSCROLL, parent);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 0, "Got wrong initial horizontal extent: %u\n", res);
+
+    sinfo.cbSize = sizeof(sinfo);
+    sinfo.fMask = SIF_RANGE;
+    br = GetScrollInfo(listbox, SB_HORZ, &sinfo);
+    ok(br == TRUE, "GetScrollInfo failed\n");
+    ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
+    ok(sinfo.nMax == 0, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) != 0,
+        "List box should have a horizontal scroll bar\n");
+
+    /* horizontal extent < width */
+    SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 64, 0);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 64, "Got wrong horizontal extent: %u\n", res);
+
+    sinfo.cbSize = sizeof(sinfo);
+    sinfo.fMask = SIF_RANGE;
+    br = GetScrollInfo(listbox, SB_HORZ, &sinfo);
+    ok(br == TRUE, "GetScrollInfo failed\n");
+    ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
+    ok(sinfo.nMax == 63, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) != 0,
+        "List box should have a horizontal scroll bar\n");
+
+    /* horizontal extent > width */
+    SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 184, 0);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 184, "Got wrong horizontal extent: %u\n", res);
+
+    sinfo.cbSize = sizeof(sinfo);
+    sinfo.fMask = SIF_RANGE;
+    br = GetScrollInfo(listbox, SB_HORZ, &sinfo);
+    ok(br == TRUE, "GetScrollInfo failed\n");
+    ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
+    ok(sinfo.nMax == 183, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) != 0,
+        "List box should have a horizontal scroll bar\n");
+
+    SendMessageA(listbox, LB_SETHORIZONTALEXTENT, 0, 0);
+
+    res = SendMessageA(listbox, LB_GETHORIZONTALEXTENT, 0, 0);
+    ok(res == 0, "Got wrong horizontal extent: %u\n", res);
+
+    sinfo.cbSize = sizeof(sinfo);
+    sinfo.fMask = SIF_RANGE;
+    br = GetScrollInfo(listbox, SB_HORZ, &sinfo);
+    ok(br == TRUE, "GetScrollInfo failed\n");
+    ok(sinfo.nMin == 0, "got wrong min: %u\n", sinfo.nMin);
+    ok(sinfo.nMax == 0, "got wrong max: %u\n", sinfo.nMax);
+    ok((GetWindowLongA(listbox, GWL_STYLE) & WS_HSCROLL) != 0,
+        "List box should have a horizontal scroll bar\n");
 
     DestroyWindow(listbox);
 

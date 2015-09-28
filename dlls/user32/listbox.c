@@ -265,7 +265,7 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
         if (descr->style & WS_VSCROLL)
             SetScrollInfo( descr->self, SB_VERT, &info, TRUE );
 
-        if (descr->style & WS_HSCROLL)
+        if ((descr->style & WS_HSCROLL) && descr->horz_extent)
         {
             info.nPos  = descr->horz_pos;
             info.nPage = descr->width;
@@ -273,6 +273,20 @@ static void LISTBOX_UpdateScroll( LB_DESCR *descr )
             if (descr->style & LBS_DISABLENOSCROLL)
                 info.fMask |= SIF_DISABLENOSCROLL;
             SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
+        }
+        else
+        {
+            if (descr->style & LBS_DISABLENOSCROLL)
+            {
+                info.nMin  = 0;
+                info.nMax  = 0;
+                info.fMask = SIF_RANGE | SIF_DISABLENOSCROLL;
+                SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
+            }
+            else
+            {
+                ShowScrollBar( descr->self, SB_HORZ, FALSE );
+            }
         }
     }
 }
@@ -1248,6 +1262,8 @@ static LRESULT LISTBOX_SetHorizontalExtent( LB_DESCR *descr, INT extent )
         info.nMin  = 0;
         info.nMax = descr->horz_extent ? descr->horz_extent - 1 : 0;
         info.fMask = SIF_RANGE;
+        if (descr->style & LBS_DISABLENOSCROLL)
+            info.fMask |= SIF_DISABLENOSCROLL;
         SetScrollInfo( descr->self, SB_HORZ, &info, TRUE );
     }
     if (descr->horz_pos > extent - descr->width)
