@@ -503,6 +503,7 @@ static struct list mappings_list = LIST_INIT( mappings_list );
 
 static UINT default_aa_flags;
 static HKEY hkey_font_cache;
+static BOOL antialias_fakes = TRUE;
 
 static CRITICAL_SECTION freetype_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
@@ -4143,6 +4144,7 @@ static void reorder_font_list(void)
  */
 BOOL WineEngInit(void)
 {
+    HKEY hkey;
     DWORD disposition;
     HANDLE font_mutex;
 
@@ -4154,6 +4156,23 @@ BOOL WineEngInit(void)
 #ifdef SONAME_LIBFONTCONFIG
     init_fontconfig();
 #endif
+
+    if (!RegOpenKeyExW(HKEY_CURRENT_USER, wine_fonts_key, 0, KEY_READ, &hkey))
+    {
+        static const WCHAR antialias_fake_bold_or_italic[] = { 'A','n','t','i','a','l','i','a','s','F','a','k','e',
+                                                               'B','o','l','d','O','r','I','t','a','l','i','c',0 };
+        static const WCHAR true_options[] = { 'y','Y','t','T','1',0 };
+        DWORD type, size;
+        WCHAR buffer[20];
+
+        size = sizeof(buffer);
+        if (!RegQueryValueExW(hkey, antialias_fake_bold_or_italic, NULL, &type, (BYTE*)buffer, &size) &&
+            type == REG_SZ && size >= 1)
+        {
+            antialias_fakes = (strchrW(true_options, buffer[0]) != NULL);
+        }
+        RegCloseKey(hkey);
+    }
 
     if((font_mutex = CreateMutexW(NULL, FALSE, font_mutex_nameW)) == NULL)
     {
@@ -5534,7 +5553,7 @@ done:
             case GGO_GRAY4_BITMAP:
             case GGO_GRAY8_BITMAP:
             case WINE_GGO_GRAY16_BITMAP:
-                if (is_hinting_enabled())
+                if ((!antialias_fakes || (!ret->fake_bold && !ret->fake_italic)) && is_hinting_enabled())
                 {
                     WORD gasp_flags;
                     if (get_gasp_flags( ret, &gasp_flags ) && !(gasp_flags & GASP_DOGRAY))
