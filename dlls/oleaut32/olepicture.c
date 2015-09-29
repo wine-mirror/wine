@@ -1210,6 +1210,8 @@ static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG x
     HDC hdcRef;
     int	i;
 
+    TRACE("(this %p, xbuf %p, xread %u)\n", This, xbuf, xread);
+
     /*
     FIXME("icon.idReserved=%d\n",cifd->idReserved);
     FIXME("icon.idType=%d\n",cifd->idType);
@@ -1226,6 +1228,13 @@ static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG x
 	FIXME("[%d] dwDIBOffset %d\n",i,cifd->idEntries[i].dwDIBOffset);
     }
     */
+
+    /* Need at least one icon to do something. */
+    if (!cifd->idCount)
+    {
+        ERR("Invalid icon count of zero.\n");
+        return E_FAIL;
+    }
     i=0;
     /* If we have more than one icon, try to find the best.
      * this currently means '32 pixel wide'.
@@ -1236,6 +1245,12 @@ static HRESULT OLEPictureImpl_LoadIcon(OLEPictureImpl *This, BYTE *xbuf, ULONG x
 		break;
 	}
 	if (i==cifd->idCount) i=0;
+    }
+    if (xread < cifd->idEntries[i].dwDIBOffset + cifd->idEntries[i].dwDIBSize)
+    {
+        ERR("Icon data address %u is over %u bytes available.\n",
+            cifd->idEntries[i].dwDIBOffset + cifd->idEntries[i].dwDIBSize, xread);
+        return E_FAIL;
     }
     if (cifd->idType == 2)
     {
