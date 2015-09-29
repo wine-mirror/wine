@@ -266,7 +266,7 @@ static void dump_function_descr( const cxx_function_descr *descr )
 
 /* check if the exception type is caught by a given catch block, and return the type that matched */
 static const cxx_type_info *find_caught_type( cxx_exception_type *exc_type,
-                                              const catchblock_info *catchblock )
+                                              const type_info *catch_ti, UINT catch_flags )
 {
     UINT i;
 
@@ -274,16 +274,16 @@ static const cxx_type_info *find_caught_type( cxx_exception_type *exc_type,
     {
         const cxx_type_info *type = exc_type->type_info_table->info[i];
 
-        if (!catchblock->type_info) return type;   /* catch(...) matches any type */
-        if (catchblock->type_info != type->type_info)
+        if (!catch_ti) return type;   /* catch(...) matches any type */
+        if (catch_ti != type->type_info)
         {
-            if (strcmp( catchblock->type_info->mangled, type->type_info->mangled )) continue;
+            if (strcmp( catch_ti->mangled, type->type_info->mangled )) continue;
         }
         /* type is the same, now check the flags */
         if ((exc_type->flags & TYPE_FLAG_CONST) &&
-            !(catchblock->flags & TYPE_FLAG_CONST)) continue;
+            !(catch_flags & TYPE_FLAG_CONST)) continue;
         if ((exc_type->flags & TYPE_FLAG_VOLATILE) &&
-            !(catchblock->flags & TYPE_FLAG_VOLATILE)) continue;
+            !(catch_flags & TYPE_FLAG_VOLATILE)) continue;
         return type;  /* it matched */
     }
     return NULL;
@@ -442,7 +442,8 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
             const catchblock_info *catchblock = &tryblock->catchblock[j];
             if(info)
             {
-                const cxx_type_info *type = find_caught_type( info, catchblock );
+                const cxx_type_info *type = find_caught_type( info,
+                        catchblock->type_info, catchblock->flags );
                 if (!type) continue;
 
                 TRACE( "matched type %p in tryblock %d catchblock %d\n", type, i, j );
@@ -491,6 +492,62 @@ static inline void call_catch_block( PEXCEPTION_RECORD rec, cxx_exception_frame 
     }
 }
 
+/*********************************************************************
+ *		__CxxExceptionFilter (MSVCRT.@)
+ */
+int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
+                                const type_info *ti, int flags, void **copy)
+{
+    const cxx_type_info *type;
+    PEXCEPTION_RECORD rec;
+
+    TRACE( "%p %p %x %p\n", ptrs, ti, flags, copy );
+
+    if (!ptrs) return EXCEPTION_CONTINUE_SEARCH;
+
+    /* handle catch(...) */
+    if (!ti) return EXCEPTION_EXECUTE_HANDLER;
+
+    rec = ptrs->ExceptionRecord;
+    if (rec->ExceptionCode != CXX_EXCEPTION || rec->NumberParameters != 3 ||
+            rec->ExceptionInformation[0] < CXX_FRAME_MAGIC_VC6 ||
+            rec->ExceptionInformation[0] > CXX_FRAME_MAGIC_VC8)
+        return EXCEPTION_CONTINUE_SEARCH;
+
+    if (rec->ExceptionInformation[1] == 0 && rec->ExceptionInformation[2] == 0)
+    {
+        rec = msvcrt_get_thread_data()->exc_record;
+        if (!rec) return EXCEPTION_CONTINUE_SEARCH;
+    }
+
+    type = find_caught_type( (cxx_exception_type*)rec->ExceptionInformation[2], ti, flags );
+    if (!type) return EXCEPTION_CONTINUE_SEARCH;
+
+    if (copy)
+    {
+        void *object = (void *)rec->ExceptionInformation[1];
+
+        if (flags & TYPE_FLAG_REFERENCE)
+        {
+            *copy = get_this_pointer( &type->offsets, object );
+        }
+        else if (type->flags & CLASS_IS_SIMPLE_TYPE)
+        {
+            memmove( copy, object, type->size );
+            /* if it is a pointer, adjust it */
+            if (type->size == sizeof(void*)) *copy = get_this_pointer( &type->offsets, *copy );
+        }
+        else  /* copy the object */
+        {
+            if (type->copy_ctor)
+                call_copy_ctor( type->copy_ctor, copy, get_this_pointer(&type->offsets,object),
+                        (type->flags & CLASS_HAS_VIRTUAL_BASE_CLASS) );
+            else
+                memmove( copy, get_this_pointer(&type->offsets,object), type->size );
+        }
+    }
+    return EXCEPTION_EXECUTE_HANDLER;
+}
 
 /*********************************************************************
  *		cxx_frame_handler

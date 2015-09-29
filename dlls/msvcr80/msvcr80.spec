@@ -182,7 +182,7 @@
 @ stub __CxxCallUnwindStdDelDtor
 @ stub __CxxCallUnwindVecDtor
 @ cdecl -arch=i386,x86_64,arm __CxxDetectRethrow(ptr)
-@ stub __CxxExceptionFilter
+@ cdecl -arch=i386,x86_64,arm __CxxExceptionFilter(ptr ptr long ptr)
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr)
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler2(ptr ptr ptr ptr) __CxxFrameHandler
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler3(ptr ptr ptr ptr) __CxxFrameHandler

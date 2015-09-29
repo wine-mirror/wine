@@ -61,6 +61,15 @@ typedef struct _DISPATCHER_CONTEXT
     ULONG                 ScopeIndex;
 } DISPATCHER_CONTEXT;
 
+/*********************************************************************
+ *		__CxxExceptionFilter (MSVCRT.@)
+ */
+int CDECL __CxxExceptionFilter( PEXCEPTION_POINTERS ptrs,
+                                const type_info *ti, int flags, void **copy )
+{
+    FIXME( "%p %p %x %p: not implemented\n", ptrs, ti, flags, copy );
+    return EXCEPTION_CONTINUE_SEARCH;
+}
 
 /*********************************************************************
  *		__CxxFrameHandler (MSVCRT.@)

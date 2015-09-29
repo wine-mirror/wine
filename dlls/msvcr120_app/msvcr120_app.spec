@@ -853,7 +853,7 @@
 @ stdcall -arch=x86_64 __C_specific_handler(ptr long ptr ptr) msvcr120.__C_specific_handler
 @ cdecl -arch=i386,x86_64,arm __CppXcptFilter(long ptr) msvcr120.__CppXcptFilter
 @ cdecl -arch=i386,x86_64,arm __CxxDetectRethrow(ptr) msvcr120.__CxxDetectRethrow
-@ stub __CxxExceptionFilter
+@ cdecl -arch=i386,x86_64,arm __CxxExceptionFilter(ptr ptr long ptr) msvcr120.__CxxExceptionFilter
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr) msvcr120.__CxxFrameHandler
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler2(ptr ptr ptr ptr) msvcr120.__CxxFrameHandler2
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler3(ptr ptr ptr ptr) msvcr120.__CxxFrameHandler3

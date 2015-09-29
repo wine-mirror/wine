@@ -119,7 +119,7 @@
 @ stub __CxxCallUnwindDtor
 @ stub __CxxCallUnwindVecDtor
 @ cdecl -arch=i386,x86_64,arm __CxxDetectRethrow(ptr)
-@ stub __CxxExceptionFilter
+@ cdecl -arch=i386,x86_64,arm __CxxExceptionFilter(ptr ptr long ptr)
 @ cdecl -arch=i386,x86_64,arm -norelay __CxxFrameHandler(ptr ptr ptr ptr)
 @ stdcall -arch=i386 __CxxLongjmpUnwind(ptr)
 @ cdecl -arch=i386,x86_64,arm __CxxQueryExceptionSize()
