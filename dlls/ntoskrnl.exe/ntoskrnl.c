@@ -2304,3 +2304,19 @@ PLIST_ENTRY WINAPI ExfInterlockedRemoveHeadList(PLIST_ENTRY head, PKSPIN_LOCK lo
     FIXME("(%p %p) stub\n", head, lock);
     return ExInterlockedRemoveHeadList( head, lock );
 }
+
+/***********************************************************************
+ *           KeEnterCriticalRegion  (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeEnterCriticalRegion(void)
+{
+    FIXME(": stub\n");
+}
+
+/***********************************************************************
+ *           KeLeaveCriticalRegion  (NTOSKRNL.EXE.@)
+ */
+void WINAPI KeLeaveCriticalRegion(void)
+{
+    FIXME(": stub\n");
+}

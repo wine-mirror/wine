@@ -523,7 +523,7 @@
 @ stub KeDeregisterBugCheckReasonCallback
 @ stub KeDetachProcess
 @ stub KeDisconnectInterrupt
-@ stub KeEnterCriticalRegion
+@ stdcall KeEnterCriticalRegion()
 @ stub KeEnterKernelDebugger
 @ stub KeFindConfigurationEntry
 @ stub KeFindConfigurationNextEntry
@@ -563,7 +563,7 @@
 @ stub KeInsertQueueDpc
 @ stub KeIsAttachedProcess
 @ stub KeIsExecutingDpc
-@ stub KeLeaveCriticalRegion
+@ stdcall KeLeaveCriticalRegion()
 @ stub KeLoaderBlock
 @ stub KeNumberProcessors
 @ stub KeProfileInterrupt
