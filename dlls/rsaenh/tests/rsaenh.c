@@ -1971,8 +1971,7 @@ static void test_import_private(void)
      * actual buffer.  The private exponent can be omitted, its length is
      * inferred from the passed-in length parameter.
      */
-    dwLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) +
-        rsaPubKey->bitlen / 8 + 5 * rsaPubKey->bitlen / 16;
+    dwLen = sizeof(BLOBHEADER) + sizeof(RSAPUBKEY) + rsaPubKey->bitlen / 2;
     for (; dwLen < sizeof(abPlainPrivateKey); dwLen++)
     {
         result = CryptImportKey(hProv, abPlainPrivateKey, dwLen, 0, 0, &hKeyExchangeKey);
