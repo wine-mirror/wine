@@ -457,6 +457,9 @@ IDR_AVI_FILEDELETE AVI searching.avi
 /* @makedep: AUTHORS */
 AUTHORS RCDATA AUTHORS
 
+/* @makedep: shell32.manifest */
+124 RT_MANIFEST shell32.manifest
+
 /* please keep in sync with version.h values */
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
