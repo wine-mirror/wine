@@ -1921,7 +1921,7 @@ static void test_ScriptGetFontProperties(HDC hdc)
     /* U+0020: numeric space
        U+200B: zero width space
        U+F71B: unknown, found by black box testing */
-    BOOL is_terminal, is_arial, is_times_new_roman, is_arabic = (system_lang_id == LANG_ARABIC);
+    BOOL is_arial, is_times_new_roman, is_arabic = (system_lang_id == LANG_ARABIC);
 
     /* Some sanity checks for ScriptGetFontProperties */
 
@@ -2019,10 +2019,12 @@ static void test_ScriptGetFontProperties(HDC hdc)
         ret = GetTextMetricsA(hdc, &tmA);
         ok(ret != 0, "GetTextMetricsA failed!\n");
 
-        is_terminal = !(lstrcmpA(lf.lfFaceName, "Terminal") && lstrcmpA(lf.lfFaceName, "@Terminal"));
-        ok(sfp.wgBlank == tmA.tmBreakChar || broken(is_terminal) || broken(is_arabic), "bitmap font %s wgBlank %04x tmBreakChar %04x\n", lf.lfFaceName, sfp.wgBlank, tmA.tmBreakChar);
+        ret = pGetGlyphIndicesW(hdc, invalids, 1, gi, GGI_MARK_NONEXISTING_GLYPHS);
+        ok(ret != GDI_ERROR, "GetGlyphIndicesW failed!\n");
 
-        ok(sfp.wgDefault == tmA.tmDefaultChar || broken(is_arabic), "bitmap font %s wgDefault %04x, tmDefaultChar %04x\n", lf.lfFaceName, sfp.wgDefault, tmA.tmDefaultChar);
+        ok(sfp.wgBlank == tmA.tmBreakChar || sfp.wgBlank == gi[0], "bitmap font %s wgBlank %04x tmBreakChar %04x Space %04x\n", lf.lfFaceName, sfp.wgBlank, tmA.tmBreakChar, gi[0]);
+
+        ok(sfp.wgDefault == 0 || sfp.wgDefault == tmA.tmDefaultChar || broken(sfp.wgDefault == (0x100 | tmA.tmDefaultChar)), "bitmap font %s wgDefault %04x, tmDefaultChar %04x\n", lf.lfFaceName, sfp.wgDefault, tmA.tmDefaultChar);
 
         ok(sfp.wgInvalid == sfp.wgBlank || broken(is_arabic), "bitmap font %s wgInvalid %02x wgBlank %02x\n", lf.lfFaceName, sfp.wgInvalid, sfp.wgBlank);
 
