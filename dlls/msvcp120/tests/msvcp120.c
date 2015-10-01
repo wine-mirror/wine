@@ -86,6 +86,7 @@ static void (CDECL *p__Call_once)(int *once, void (CDECL *func)(void));
 static void (CDECL *p__Call_onceEx)(int *once, void (CDECL *func)(void*), void *argv);
 static void (CDECL *p__Do_call)(void *this);
 static short (__cdecl *p__Dtest)(double *d);
+static short (__cdecl *p__Dscale)(double *d, int exp);
 
 /* filesystem */
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
@@ -139,6 +140,8 @@ static BOOL init(void)
             "_Do_call");
     SET(p__Dtest,
             "_Dtest");
+    SET(p__Dscale,
+            "_Dscale");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPEBD@Z");
@@ -459,6 +462,56 @@ static void test__Dtest(void)
     d = NAN;
     ret = p__Dtest(&d);
     ok(ret == FP_NAN, "_Dtest(NAN) returned %x\n", ret);
+}
+
+static void test__Dscale(void)
+{
+    double d;
+    short ret;
+
+    d = 0;
+    ret = p__Dscale(&d, 0);
+    ok(d == 0, "d = %f\n", d);
+    ok(ret == FP_ZERO, "ret = %x\n", ret);
+
+    d = 0;
+    ret = p__Dscale(&d, 1);
+    ok(d == 0, "d = %f\n", d);
+    ok(ret == FP_ZERO, "ret = %x\n", ret);
+
+    d = 0;
+    ret = p__Dscale(&d, -1);
+    ok(d == 0, "d = %f\n", d);
+    ok(ret == FP_ZERO, "ret = %x\n", ret);
+
+    d = 1;
+    ret = p__Dscale(&d, 0);
+    ok(d == 1, "d = %f\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
+
+    d = 1;
+    ret = p__Dscale(&d, 1);
+    ok(d == 2, "d = %f\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
+
+    d = 1;
+    ret = p__Dscale(&d, -1);
+    ok(d == 0.5, "d = %f\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
+
+    d = 1;
+    ret = p__Dscale(&d, -99999);
+    ok(d == 0, "d = %f\n", d);
+    ok(ret == FP_ZERO, "ret = %x\n", ret);
+
+    d = 1;
+    ret = p__Dscale(&d, 999999);
+    ok(d == INFINITY, "d = %f\n", d);
+    ok(ret == FP_INFINITE, "ret = %x\n", ret);
+
+    d = NAN;
+    ret = p__Dscale(&d, 1);
+    ok(ret == FP_NAN, "ret = %x\n", ret);
 }
 
 static void test_tr2_sys__File_size(void)
@@ -1001,6 +1054,7 @@ START_TEST(msvcp120)
     test__Call_once();
     test__Do_call();
     test__Dtest();
+    test__Dscale();
 
     test_tr2_sys__File_size();
     test_tr2_sys__Equivalent();

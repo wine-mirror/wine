@@ -3684,7 +3684,7 @@
 @ stub _Dint
 @ stub _Dnorm
 @ cdecl _Do_call(ptr) msvcp120._Do_call
-@ stub _Dscale
+@ cdecl _Dscale(ptr long) msvcp120._Dscale
 @ stub _Dtento
 @ cdecl _Dtest(ptr) msvcp120._Dtest
 @ stub _Dunscale
@@ -3694,7 +3694,7 @@
 @ extern _FDenorm msvcp120._FDenorm
 @ stub _FDint
 @ stub _FDnorm
-@ stub _FDscale
+@ cdecl _FDscale(ptr long) msvcp120._FDscale
 @ stub _FDtento
 @ cdecl _FDtest(ptr) msvcp120._FDtest
 @ stub _FDunscale
@@ -3732,7 +3732,7 @@
 @ stub _LCosh
 @ extern _LDenorm msvcp120._LDenorm
 @ stub _LDint
-@ stub _LDscale
+@ cdecl _LDscale(ptr long) msvcp120._LDscale
 @ stub _LDtento
 @ cdecl _LDtest(ptr) msvcp120._LDtest
 @ stub _LDunscale

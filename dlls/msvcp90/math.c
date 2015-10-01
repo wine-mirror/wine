@@ -2260,3 +2260,17 @@ short __cdecl _FDtest(float *x)
 {
     return dclass(*x);
 }
+
+/* _Dscale */
+short __cdecl _Dscale(double *x, int exp)
+{
+    *x *= pow(2, exp);
+    return dclass(*x);
+}
+
+/* _FDscale */
+short __cdecl _FDscale(float *x, int exp)
+{
+    *x *= pow(2, exp);
+    return dclass(*x);
+}

@@ -3684,7 +3684,7 @@
 @ stub _Dint
 @ stub _Dnorm
 @ cdecl _Do_call(ptr)
-@ stub _Dscale
+@ cdecl _Dscale(ptr long)
 @ stub _Dtento
 @ cdecl _Dtest(ptr)
 @ stub _Dunscale
@@ -3694,7 +3694,7 @@
 @ extern _FDenorm
 @ stub _FDint
 @ stub _FDnorm
-@ stub _FDscale
+@ cdecl _FDscale(ptr long)
 @ stub _FDtento
 @ cdecl _FDtest(ptr)
 @ stub _FDunscale
@@ -3732,7 +3732,7 @@
 @ stub _LCosh
 @ extern _LDenorm
 @ stub _LDint
-@ stub _LDscale
+@ cdecl _LDscale(ptr long) _Dscale
 @ stub _LDtento
 @ cdecl _LDtest(ptr) _Dtest
 @ stub _LDunscale

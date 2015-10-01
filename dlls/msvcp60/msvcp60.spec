@@ -4257,14 +4257,14 @@
 @ stub _Cosh
 @ extern _Denorm _Denorm
 @ stub _Dnorm
-@ stub _Dscale
+@ cdecl _Dscale(ptr long)
 @ cdecl _Dtest(ptr)
 @ extern _Eps _Eps
 @ stub _Exp
 @ stub _FCosh
 @ extern _FDenorm _FDenorm
 @ stub _FDnorm
-@ stub _FDscale
+@ cdecl _FDscale(ptr long)
 @ cdecl _FDtest(ptr)
 @ extern _FEps _FEps
 @ stub _FExp
@@ -4281,7 +4281,7 @@
 @ extern _Inf _Inf
 @ stub _LCosh
 @ extern _LDenorm _LDenorm
-@ stub _LDscale
+@ cdecl _LDscale(ptr long) _Dscale
 @ cdecl _LDtest(ptr) _Dtest
 @ extern _LEps _LEps
 @ stub _LExp
