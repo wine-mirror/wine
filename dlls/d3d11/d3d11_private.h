@@ -291,16 +291,17 @@ HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, struct d3d_devic
         const D3D10_BLEND_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d10_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface) DECLSPEC_HIDDEN;
 
-/* ID3D10DepthStencilState */
+/* ID3D11DepthStencilState, ID3D10DepthStencilState */
 struct d3d_depthstencil_state
 {
+    ID3D11DepthStencilState ID3D11DepthStencilState_iface;
     ID3D10DepthStencilState ID3D10DepthStencilState_iface;
     LONG refcount;
 
     struct wined3d_private_store private_store;
     D3D10_DEPTH_STENCIL_DESC desc;
     struct wine_rb_entry entry;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
