@@ -47,7 +47,7 @@
 
 struct d3d_device;
 
-struct d3d10_shader_info
+struct d3d_shader_info
 {
     const DWORD *shader_code;
     struct wined3d_shader_signature *input_signature;

@@ -26,7 +26,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
 static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *ctx)
 {
-    struct d3d10_shader_info *shader_info = ctx;
+    struct d3d_shader_info *shader_info = ctx;
     HRESULT hr;
 
     switch (tag)
@@ -53,7 +53,7 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
     return S_OK;
 }
 
-static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct d3d10_shader_info *shader_info)
+static HRESULT shader_extract_from_dxbc(const void *dxbc, SIZE_T dxbc_length, struct d3d_shader_info *shader_info)
 {
     HRESULT hr;
 
@@ -364,7 +364,7 @@ static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d
 {
     struct wined3d_shader_signature output_signature;
     struct wined3d_shader_signature input_signature;
-    struct d3d10_shader_info shader_info;
+    struct d3d_shader_info shader_info;
     struct wined3d_shader_desc desc;
     HRESULT hr;
 
@@ -659,7 +659,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, stru
 {
     struct wined3d_shader_signature output_signature;
     struct wined3d_shader_signature input_signature;
-    struct d3d10_shader_info shader_info;
+    struct d3d_shader_info shader_info;
     struct wined3d_shader_desc desc;
     HRESULT hr;
 
@@ -973,7 +973,7 @@ static HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d
 {
     struct wined3d_shader_signature output_signature;
     struct wined3d_shader_signature input_signature;
-    struct d3d10_shader_info shader_info;
+    struct d3d_shader_info shader_info;
     struct wined3d_shader_desc desc;
     HRESULT hr;
 
