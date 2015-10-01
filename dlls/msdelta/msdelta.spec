@@ -1,0 +1,15 @@
+@ stub ApplyDeltaA
+@ stub ApplyDeltaB
+@ stub ApplyDeltaProvidedB
+@ stub ApplyDeltaW
+@ stub CreateDeltaA
+@ stub CreateDeltaB
+@ stub CreateDeltaW
+@ stub DeltaFree
+@ stub DeltaNormalizeProvidedB
+@ stub GetDeltaInfoA
+@ stub GetDeltaInfoB
+@ stub GetDeltaInfoW
+@ stub GetDeltaSignatureA
+@ stub GetDeltaSignatureB
+@ stub GetDeltaSignatureW

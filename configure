@@ -1155,6 +1155,7 @@ enable_mscoree
 enable_msctf
 enable_msctfp
 enable_msdaps
+enable_msdelta
 enable_msdmo
 enable_msftedit
 enable_msg711_acm
@@ -17560,6 +17561,7 @@ wine_fn_config_dll msctf enable_msctf clean
 wine_fn_config_test dlls/msctf/tests msctf_test
 wine_fn_config_dll msctfp enable_msctfp clean
 wine_fn_config_dll msdaps enable_msdaps clean
+wine_fn_config_dll msdelta enable_msdelta
 wine_fn_config_dll msdmo enable_msdmo implib
 wine_fn_config_test dlls/msdmo/tests msdmo_test
 wine_fn_config_dll msftedit enable_msftedit

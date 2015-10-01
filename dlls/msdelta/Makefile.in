@@ -1,0 +1,4 @@
+MODULE    = msdelta.dll
+
+C_SRCS = \
+	msdelta_main.c
