@@ -249,6 +249,7 @@ struct d3d_geometry_shader
 
     struct wined3d_private_store private_store;
     struct wined3d_shader *wined3d_shader;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_geometry_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,

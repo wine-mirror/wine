@@ -495,9 +495,15 @@ static ULONG STDMETHODCALLTYPE d3d11_geometry_shader_Release(ID3D11GeometryShade
 
     if (!refcount)
     {
+        ID3D11Device *device = shader->device;
+
         wined3d_mutex_lock();
         wined3d_shader_decref(shader->wined3d_shader);
         wined3d_mutex_unlock();
+
+        /* Release the device last, it may cause the wined3d device to be
+         * destroyed. */
+        ID3D11Device_Release(device);
     }
 
     return refcount;
@@ -506,7 +512,12 @@ static ULONG STDMETHODCALLTYPE d3d11_geometry_shader_Release(ID3D11GeometryShade
 static void STDMETHODCALLTYPE d3d11_geometry_shader_GetDevice(ID3D11GeometryShader *iface,
         ID3D11Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d_geometry_shader *shader = impl_from_ID3D11GeometryShader(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = shader->device;
+    ID3D11Device_AddRef(*device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_geometry_shader_GetPrivateData(ID3D11GeometryShader *iface,
@@ -593,7 +604,11 @@ static ULONG STDMETHODCALLTYPE d3d10_geometry_shader_Release(ID3D10GeometryShade
 
 static void STDMETHODCALLTYPE d3d10_geometry_shader_GetDevice(ID3D10GeometryShader *iface, ID3D10Device **device)
 {
-    FIXME("iface %p, device %p stub!\n", iface, device);
+    struct d3d_geometry_shader *shader = impl_from_ID3D10GeometryShader(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    ID3D11Device_QueryInterface(shader->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_geometry_shader_GetPrivateData(ID3D10GeometryShader *iface,
@@ -696,6 +711,9 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, stru
         return E_INVALIDARG;
     }
     wined3d_mutex_unlock();
+
+    shader->device = &device->ID3D11Device_iface;
+    ID3D11Device_AddRef(shader->device);
 
     return S_OK;
 }
