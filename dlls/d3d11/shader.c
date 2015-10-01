@@ -654,7 +654,7 @@ static const struct wined3d_parent_ops d3d_geometry_shader_wined3d_parent_ops =
     d3d_geometry_shader_wined3d_object_destroyed,
 };
 
-HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, struct d3d_device *device,
+static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, struct d3d_device *device,
         const void *byte_code, SIZE_T byte_code_length)
 {
     struct wined3d_shader_signature output_signature;
@@ -696,6 +696,28 @@ HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader, struct d3d_
         return E_INVALIDARG;
     }
     wined3d_mutex_unlock();
+
+    return S_OK;
+}
+
+HRESULT d3d_geometry_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
+        struct d3d_geometry_shader **shader)
+{
+    struct d3d_geometry_shader *object;
+    HRESULT hr;
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_geometry_shader_init(object, device, byte_code, byte_code_length)))
+    {
+        WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created geometry shader %p.\n", object);
+    *shader = object;
 
     return S_OK;
 }
