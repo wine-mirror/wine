@@ -192,9 +192,9 @@ struct d3d10_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *if
     return impl_from_ID3D10BlendState(iface);
 }
 
-static inline struct d3d10_depthstencil_state *impl_from_ID3D10DepthStencilState(ID3D10DepthStencilState *iface)
+static inline struct d3d_depthstencil_state *impl_from_ID3D10DepthStencilState(ID3D10DepthStencilState *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_depthstencil_state, ID3D10DepthStencilState_iface);
+    return CONTAINING_RECORD(iface, struct d3d_depthstencil_state, ID3D10DepthStencilState_iface);
 }
 
 /* IUnknown methods */
@@ -221,7 +221,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_QueryInterface(ID3D10D
 
 static ULONG STDMETHODCALLTYPE d3d10_depthstencil_state_AddRef(ID3D10DepthStencilState *iface)
 {
-    struct d3d10_depthstencil_state *This = impl_from_ID3D10DepthStencilState(iface);
+    struct d3d_depthstencil_state *This = impl_from_ID3D10DepthStencilState(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -231,7 +231,7 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_state_AddRef(ID3D10DepthStenci
 
 static ULONG STDMETHODCALLTYPE d3d10_depthstencil_state_Release(ID3D10DepthStencilState *iface)
 {
-    struct d3d10_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
+    struct d3d_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
     ULONG refcount = InterlockedDecrement(&state->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
@@ -254,7 +254,7 @@ static ULONG STDMETHODCALLTYPE d3d10_depthstencil_state_Release(ID3D10DepthStenc
 
 static void STDMETHODCALLTYPE d3d10_depthstencil_state_GetDevice(ID3D10DepthStencilState *iface, ID3D10Device **device)
 {
-    struct d3d10_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
+    struct d3d_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -265,7 +265,7 @@ static void STDMETHODCALLTYPE d3d10_depthstencil_state_GetDevice(ID3D10DepthSten
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_GetPrivateData(ID3D10DepthStencilState *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d10_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
+    struct d3d_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -276,7 +276,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_GetPrivateData(ID3D10D
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_SetPrivateData(ID3D10DepthStencilState *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d10_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
+    struct d3d_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -287,7 +287,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_SetPrivateData(ID3D10D
 static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_SetPrivateDataInterface(ID3D10DepthStencilState *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d10_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
+    struct d3d_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
@@ -299,7 +299,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_depthstencil_state_SetPrivateDataInterfac
 static void STDMETHODCALLTYPE d3d10_depthstencil_state_GetDesc(ID3D10DepthStencilState *iface,
         D3D10_DEPTH_STENCIL_DESC *desc)
 {
-    struct d3d10_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
+    struct d3d_depthstencil_state *state = impl_from_ID3D10DepthStencilState(iface);
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -321,7 +321,7 @@ static const struct ID3D10DepthStencilStateVtbl d3d10_depthstencil_state_vtbl =
     d3d10_depthstencil_state_GetDesc,
 };
 
-HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, struct d3d_device *device,
+HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
         const D3D10_DEPTH_STENCIL_DESC *desc)
 {
     state->ID3D10DepthStencilState_iface.lpVtbl = &d3d10_depthstencil_state_vtbl;
@@ -345,7 +345,7 @@ HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, st
     return S_OK;
 }
 
-struct d3d10_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(ID3D10DepthStencilState *iface)
+struct d3d_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(ID3D10DepthStencilState *iface)
 {
     if (!iface)
         return NULL;

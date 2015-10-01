@@ -292,7 +292,7 @@ HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, struct d3d_devic
 struct d3d10_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10DepthStencilState */
-struct d3d10_depthstencil_state
+struct d3d_depthstencil_state
 {
     ID3D10DepthStencilState ID3D10DepthStencilState_iface;
     LONG refcount;
@@ -303,9 +303,9 @@ struct d3d10_depthstencil_state
     ID3D10Device1 *device;
 };
 
-HRESULT d3d10_depthstencil_state_init(struct d3d10_depthstencil_state *state, struct d3d_device *device,
+HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
         const D3D10_DEPTH_STENCIL_DESC *desc) DECLSPEC_HIDDEN;
-struct d3d10_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(
+struct d3d_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(
         ID3D10DepthStencilState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11RasterizerState, ID3D10RasterizerState */
@@ -379,7 +379,7 @@ struct d3d_device
 
     struct d3d10_blend_state *blend_state;
     float blend_factor[4];
-    struct d3d10_depthstencil_state *depth_stencil_state;
+    struct d3d_depthstencil_state *depth_stencil_state;
     UINT stencil_ref;
     struct d3d_rasterizer_state *rasterizer_state;
 };

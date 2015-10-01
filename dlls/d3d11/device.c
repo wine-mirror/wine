@@ -2414,7 +2414,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
         const D3D10_DEPTH_STENCIL_DESC *desc, ID3D10DepthStencilState **depth_stencil_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_depthstencil_state *object;
+    struct d3d_depthstencil_state *object;
     D3D10_DEPTH_STENCIL_DESC tmp_desc;
     struct wine_rb_entry *entry;
     HRESULT hr;
@@ -2439,7 +2439,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
     wined3d_mutex_lock();
     if ((entry = wine_rb_get(&device->depthstencil_states, &tmp_desc)))
     {
-        object = WINE_RB_ENTRY_VALUE(entry, struct d3d10_depthstencil_state, entry);
+        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_depthstencil_state, entry);
 
         TRACE("Returning existing depthstencil state %p.\n", object);
         *depth_stencil_state = &object->ID3D10DepthStencilState_iface;
@@ -2454,7 +2454,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Devi
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_depthstencil_state_init(object, device, &tmp_desc)))
+    if (FAILED(hr = d3d_depthstencil_state_init(object, device, &tmp_desc)))
     {
         WARN("Failed to initialize depthstencil state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -3092,21 +3092,21 @@ static const struct wine_rb_functions d3d10_blend_state_rb_ops =
     d3d10_blend_state_compare,
 };
 
-static int d3d10_depthstencil_state_compare(const void *key, const struct wine_rb_entry *entry)
+static int d3d_depthstencil_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const D3D10_DEPTH_STENCIL_DESC *ka = key;
     const D3D10_DEPTH_STENCIL_DESC *kb = &WINE_RB_ENTRY_VALUE(entry,
-            const struct d3d10_depthstencil_state, entry)->desc;
+            const struct d3d_depthstencil_state, entry)->desc;
 
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-static const struct wine_rb_functions d3d10_depthstencil_state_rb_ops =
+static const struct wine_rb_functions d3d_depthstencil_state_rb_ops =
 {
     d3d_rb_alloc,
     d3d_rb_realloc,
     d3d_rb_free,
-    d3d10_depthstencil_state_compare,
+    d3d_depthstencil_state_compare,
 };
 
 static int d3d_rasterizer_state_compare(const void *key, const struct wine_rb_entry *entry)
@@ -3147,7 +3147,7 @@ HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown)
     device->blend_factor[2] = 1.0f;
     device->blend_factor[3] = 1.0f;
 
-    if (wine_rb_init(&device->depthstencil_states, &d3d10_depthstencil_state_rb_ops) == -1)
+    if (wine_rb_init(&device->depthstencil_states, &d3d_depthstencil_state_rb_ops) == -1)
     {
         WARN("Failed to initialize depthstencil state rbtree.\n");
         wine_rb_destroy(&device->blend_states, NULL, NULL);
