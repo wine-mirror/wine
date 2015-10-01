@@ -829,7 +829,12 @@ int CDECL _mbsnbicoll(const unsigned char *str1, const unsigned char *str2, MSVC
  */
 int CDECL _mbsicoll(const unsigned char* str, const unsigned char* cmp)
 {
+#if _MSVCR_VER>=60 && _MSVCR_VER<=71
+    return CompareStringA(get_mbcinfo()->mblcid, NORM_IGNORECASE,
+            (const char*)str, -1, (const char*)cmp, -1)-CSTR_EQUAL;
+#else
     return _mbsnbicoll_l(str, cmp, -1, NULL);
+#endif
 }
 
 /*********************************************************************
@@ -870,7 +875,12 @@ int CDECL _mbsnbcoll(const unsigned char *str1, const unsigned char *str2, MSVCR
  */
 int CDECL _mbscoll(const unsigned char* str, const unsigned char* cmp)
 {
+#if _MSVCR_VER>=60 && _MSVCR_VER<=71
+    return CompareStringA(get_mbcinfo()->mblcid, 0,
+            (const char*)str, -1, (const char*)cmp, -1)-CSTR_EQUAL;
+#else
     return _mbsnbcoll_l(str, cmp, -1, NULL);
+#endif
 }
 
 /*********************************************************************
