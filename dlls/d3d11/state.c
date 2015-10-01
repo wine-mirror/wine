@@ -304,7 +304,11 @@ static HRESULT STDMETHODCALLTYPE d3d11_depthstencil_state_SetPrivateDataInterfac
 static void STDMETHODCALLTYPE d3d11_depthstencil_state_GetDesc(ID3D11DepthStencilState *iface,
         D3D11_DEPTH_STENCIL_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_depthstencil_state *state = impl_from_ID3D11DepthStencilState(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = state->desc;
 }
 
 static const struct ID3D11DepthStencilStateVtbl d3d11_depthstencil_state_vtbl =
@@ -411,7 +415,7 @@ static void STDMETHODCALLTYPE d3d10_depthstencil_state_GetDesc(ID3D10DepthStenci
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    *desc = state->desc;
+    memcpy(desc, &state->desc, sizeof(*desc));
 }
 
 static const struct ID3D10DepthStencilStateVtbl d3d10_depthstencil_state_vtbl =
@@ -430,7 +434,7 @@ static const struct ID3D10DepthStencilStateVtbl d3d10_depthstencil_state_vtbl =
 };
 
 HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
-        const D3D10_DEPTH_STENCIL_DESC *desc)
+        const D3D11_DEPTH_STENCIL_DESC *desc)
 {
     state->ID3D11DepthStencilState_iface.lpVtbl = &d3d11_depthstencil_state_vtbl;
     state->ID3D10DepthStencilState_iface.lpVtbl = &d3d10_depthstencil_state_vtbl;

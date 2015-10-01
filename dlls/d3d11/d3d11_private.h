@@ -299,13 +299,13 @@ struct d3d_depthstencil_state
     LONG refcount;
 
     struct wined3d_private_store private_store;
-    D3D10_DEPTH_STENCIL_DESC desc;
+    D3D11_DEPTH_STENCIL_DESC desc;
     struct wine_rb_entry entry;
     ID3D11Device *device;
 };
 
 HRESULT d3d_depthstencil_state_init(struct d3d_depthstencil_state *state, struct d3d_device *device,
-        const D3D10_DEPTH_STENCIL_DESC *desc) DECLSPEC_HIDDEN;
+        const D3D11_DEPTH_STENCIL_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d_depthstencil_state *unsafe_impl_from_ID3D10DepthStencilState(
         ID3D10DepthStencilState *iface) DECLSPEC_HIDDEN;
 
