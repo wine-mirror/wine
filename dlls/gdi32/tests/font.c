@@ -753,6 +753,7 @@ static BOOL is_CJK(void)
 #define FH_SCALE 0x80000000
 static void test_bitmap_font_metrics(void)
 {
+    static const WORD skip_rtl[] = {LANG_ARABIC, LANG_HEBREW, 0};
     static const struct font_data
     {
         const char face_name[LF_FACESIZE];
@@ -760,19 +761,19 @@ static void test_bitmap_font_metrics(void)
         int ave_char_width, max_char_width, dpi;
         BYTE first_char, last_char, def_char, break_char;
         DWORD ansi_bitfield;
-        WORD skip_lang_id;
+        const WORD *skip_lang_id;
         int scaled_height;
     } fd[] =
     {
-        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 6, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, LANG_ARABIC, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 6, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, skip_rtl, 13 },
         { "MS Sans Serif", FW_NORMAL, FH_SCALE | 6, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 13 },
-        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 8, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, LANG_ARABIC, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 8, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, skip_rtl, 13 },
         { "MS Sans Serif", FW_NORMAL, FH_SCALE | 8, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 13 },
-        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 10, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, LANG_ARABIC, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 10, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, skip_rtl, 13 },
         { "MS Sans Serif", FW_NORMAL, FH_SCALE | 10, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 13 },
-        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 14, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, LANG_ARABIC, 13 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 14, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, skip_rtl, 13 },
         { "MS Sans Serif", FW_NORMAL, FH_SCALE | 14, 11, 2, 2, 0, 5, 11, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 13 },
-        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 18, 13, 3, 3, 0, 7, 14, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, LANG_ARABIC, 16 },
+        { "MS Sans Serif", FW_NORMAL, FH_SCALE | 18, 13, 3, 3, 0, 7, 14, 96, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, skip_rtl, 16 },
         { "MS Sans Serif", FW_NORMAL, FH_SCALE | 18, 13, 3, 3, 0, 7, 14, 96, 0x20, 0xff, 0x7f, 0x20, FS_CYRILLIC, 0, 16 },
 
         { "MS Sans Serif", FW_NORMAL, FH_SCALE | 6, 13, 3, 3, 0, 7, 14, 120, 0x20, 0xff, 0x81, 0x20, FS_LATIN1 | FS_LATIN2, 0, 16 },
@@ -864,22 +865,22 @@ static void test_bitmap_font_metrics(void)
         { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 2, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 },
         { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 1, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
         { "Small Fonts", FW_NORMAL, 3, 2, 1, 0, 0, 2, 4, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
-        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, LANG_ARABIC },
+        { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 3, 4, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, skip_rtl},
         { "Small Fonts", FW_NORMAL, 5, 4, 1, 1, 0, 2, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
         { "Small Fonts", FW_NORMAL, 5, 4, 1, 0, 0, 3, 6, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
-        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, LANG_ARABIC },
+        { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 13, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, skip_rtl},
         { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
         { "Small Fonts", FW_NORMAL, 6, 5, 1, 1, 0, 3, 8, 96, 0x00, 0xff, 0x60, 0x00, FS_ARABIC },
         { "Small Fonts", FW_NORMAL, 6, 5, 1, 0, 0, 4, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
-        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, LANG_ARABIC },
+        { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 7, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1, skip_rtl},
         { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN2 | FS_CYRILLIC },
         { "Small Fonts", FW_NORMAL, 8, 7, 1, 1, 0, 4, 8, 96, 0x00, 0xff, 0x60, 0x00, FS_ARABIC },
         { "Small Fonts", FW_NORMAL, 8, 7, 1, 0, 0, 5, 10, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
-        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2, LANG_ARABIC },
+        { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2, skip_rtl},
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 5, 8, 96, 0x20, 0xff, 0x80, 0x20, FS_CYRILLIC },
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 2, 0, 4, 9, 96, 0x00, 0xff, 0x60, 0x00, FS_ARABIC },
         { "Small Fonts", FW_NORMAL, 10, 8, 2, 0, 0, 6, 12, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
-        { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC, LANG_ARABIC },
+        { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 5, 9, 96, 0x20, 0xff, 0x80, 0x20, FS_LATIN1 | FS_LATIN2 | FS_CYRILLIC, skip_rtl},
         { "Small Fonts", FW_NORMAL, 11, 9, 2, 2, 0, 4, 10, 96, 0x00, 0xff, 0x60, 0x00, FS_ARABIC },
         { "Small Fonts", FW_NORMAL, 11, 9, 2, 0, 0, 7, 14, 96, 0x20, 0xff, 0x80, 0x20, FS_JISJAPAN },
 
@@ -1021,8 +1022,17 @@ static void test_bitmap_font_metrics(void)
 
             if(fd[i].dpi == tm.tmDigitizedAspectX)
             {
+                int skipme = 0;
                 trace("matched %s, height %d charset %x dpi %d\n", lf.lfFaceName, lf.lfHeight, lf.lfCharSet, fd[i].dpi);
-                if (fd[i].skip_lang_id == 0 || system_lang_id != fd[i].skip_lang_id)
+                if (fd[i].skip_lang_id)
+                {
+                    int si = 0;
+                    skipme = 0;
+                    while(!skipme && fd[i].skip_lang_id[si])
+                        if (fd[i].skip_lang_id[si++] == system_lang_id)
+                            skipme = 1;
+                }
+                if (!skipme)
                 {
                     ok(tm.tmWeight == fd[i].weight, "%s(%d): tm.tmWeight %d != %d\n", fd[i].face_name, height, tm.tmWeight, fd[i].weight);
                     if (fd[i].height & FH_SCALE)
