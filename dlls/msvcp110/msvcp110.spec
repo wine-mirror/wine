@@ -3748,7 +3748,7 @@
 @ cdecl _Dtest(ptr)
 @ stub _Dunscale
 @ extern _Eps
-@ stub _Exp
+@ cdecl _Exp(ptr double long)
 @ stub _FCosh
 @ extern _FDenorm
 @ stub _FDint
@@ -3758,7 +3758,7 @@
 @ cdecl _FDtest(ptr)
 @ stub _FDunscale
 @ extern _FEps
-@ stub _FExp
+@ cdecl _FExp(ptr float long)
 @ extern _FInf
 @ extern _FNan
 # extern _FRteps

@@ -19,6 +19,7 @@
 #include <locale.h>
 #include <stdio.h>
 #include <math.h>
+#include <limits.h>
 
 #include "wine/test.h"
 #include "winbase.h"
@@ -65,6 +66,22 @@ enum file_type {
     type_unknown
 };
 
+static BOOL compare_float(float f, float g, unsigned int ulps)
+{
+    int x = *(int *)&f;
+    int y = *(int *)&g;
+
+    if (x < 0)
+        x = INT_MIN - x;
+    if (y < 0)
+        y = INT_MIN - y;
+
+    if (abs(x - y) > ulps)
+        return FALSE;
+
+    return TRUE;
+}
+
 static inline const char* debugstr_longlong(ULONGLONG ll)
 {
     static char string[17];
@@ -87,6 +104,7 @@ static void (CDECL *p__Call_onceEx)(int *once, void (CDECL *func)(void*), void *
 static void (CDECL *p__Do_call)(void *this);
 static short (__cdecl *p__Dtest)(double *d);
 static short (__cdecl *p__Dscale)(double *d, int exp);
+static short (__cdecl *p__FExp)(float *x, float y, int exp);
 
 /* filesystem */
 static ULONGLONG(__cdecl *p_tr2_sys__File_size)(char const*);
@@ -142,6 +160,8 @@ static BOOL init(void)
             "_Dtest");
     SET(p__Dscale,
             "_Dscale");
+    SET(p__FExp,
+            "_FExp");
     if(sizeof(void*) == 8) { /* 64-bit initialization */
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPEBD@Z");
@@ -512,6 +532,61 @@ static void test__Dscale(void)
     d = NAN;
     ret = p__Dscale(&d, 1);
     ok(ret == FP_NAN, "ret = %x\n", ret);
+}
+
+static void test__FExp(void)
+{
+    float d;
+    short ret;
+
+    d = 0;
+    ret = p__FExp(&d, 0, 0);
+    ok(d == 0, "d = %f\n", d);
+    ok(ret == FP_ZERO, "ret = %x\n", ret);
+
+    d = 0;
+    ret = p__FExp(&d, 1, 0);
+    ok(d == 1.0, "d = %f\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
+
+    d = 0;
+    ret = p__FExp(&d, 1, 1);
+    ok(d == 2.0, "d = %f\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
+
+    d = 0;
+    ret = p__FExp(&d, 1, 2);
+    ok(d == 4.0, "d = %f\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
+
+    d = 0;
+    ret = p__FExp(&d, 10, 0);
+    ok(d == 10.0, "d = %f\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
+
+    d = 1;
+    ret = p__FExp(&d, 0, 0);
+    ok(d == 0, "d = %f\n", d);
+    ok(ret == FP_ZERO, "ret = %x\n", ret);
+
+    d = 1;
+    ret = p__FExp(&d, 1, 0);
+    ok(compare_float(d, 2.7182817, 4), "d = %f\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
+
+    d = 9e20;
+    ret = p__FExp(&d, 0, 0);
+    ok(d == 0, "d = %f\n", d);
+    ok(ret == FP_ZERO, "ret = %x\n", ret);
+
+    d = 90;
+    ret = p__FExp(&d, 1, 0);
+    ok(ret == FP_INFINITE, "ret = %x\n", ret);
+
+    d = 90;
+    ret = p__FExp(&d, 1, -50);
+    ok(compare_float(d, 1.0839359e+024, 4), "d = %g\n", d);
+    ok(ret == FP_NORMAL, "ret = %x\n", ret);
 }
 
 static void test_tr2_sys__File_size(void)
@@ -1055,6 +1130,7 @@ START_TEST(msvcp120)
     test__Do_call();
     test__Dtest();
     test__Dscale();
+    test__FExp();
 
     test_tr2_sys__File_size();
     test_tr2_sys__Equivalent();

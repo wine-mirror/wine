@@ -5100,14 +5100,14 @@
 @ cdecl _Dscale(ptr long)
 @ cdecl _Dtest(ptr)
 @ extern _Eps
-@ stub _Exp
+@ cdecl _Exp(ptr double long)
 @ stub _FCosh
 @ extern _FDenorm
 @ stub _FDnorm
 @ cdecl _FDscale(ptr long)
 @ cdecl _FDtest(ptr)
 @ extern _FEps
-@ stub _FExp
+@ cdecl _FExp(ptr float long)
 @ extern _FInf
 @ extern _FNan
 # extern _FRteps

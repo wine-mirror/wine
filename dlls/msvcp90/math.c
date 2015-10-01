@@ -2274,3 +2274,45 @@ short __cdecl _FDscale(float *x, int exp)
     *x *= pow(2, exp);
     return dclass(*x);
 }
+
+/* _Exp */
+/* computes y * e^(*x) * 2^scale */
+short __cdecl _Exp(double *x, double y, int scale)
+{
+    double ed;
+    int e;
+
+    if(y == 0) {
+        *x = 0;
+        return FP_ZERO;
+    }
+
+    *x /= M_LN2;
+    ed = floor(*x);
+    *x -= ed;
+    e = ed;
+
+    if(ed!=e && ed>0)
+        scale = INT_MAX;
+    else if(ed!=e && ed<0)
+        scale = INT_MIN;
+    else if(scale>0 && e>0 && scale+e<=0)
+        scale = INT_MAX;
+    else if(scale<0 && e<0 && scale+e>=0)
+        scale = INT_MIN;
+    else
+        scale += e;
+
+    *x = y * pow(2.0, *x);
+    return _Dscale(x, scale);
+}
+
+/* _FExp */
+short __cdecl _FExp(float *x, float y, short scale)
+{
+    double d = *x;
+    _Exp(&d, y, scale);
+    *x = d;
+
+    return dclass(*x);
+}

@@ -3689,7 +3689,7 @@
 @ cdecl _Dtest(ptr) msvcp120._Dtest
 @ stub _Dunscale
 @ extern _Eps msvcp120._Eps
-@ stub _Exp
+@ cdecl _Exp(ptr double long) msvcp120._Exp
 @ stub _FCosh
 @ extern _FDenorm msvcp120._FDenorm
 @ stub _FDint
@@ -3699,7 +3699,7 @@
 @ cdecl _FDtest(ptr) msvcp120._FDtest
 @ stub _FDunscale
 @ extern _FEps msvcp120._FEps
-@ stub _FExp
+@ cdecl _FExp(ptr float long) msvcp120._FExp
 @ extern _FInf msvcp120._FInf
 @ extern _FNan msvcp120._FNan
 @ stub _FPlsw
