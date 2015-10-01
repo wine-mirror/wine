@@ -56,6 +56,11 @@ DirectInput
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/dinput/
 
+HID support
+M:	Aric Stewart <aric@codeweavers.com>
+F:	dlls/hid/
+F:	dlls/hidclass.sys/
+
 HTML rendering (Gecko)
 M:	Jacek Caban <jacek@codeweavers.com>
 F:	dlls/mshtml/
