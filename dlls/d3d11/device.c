@@ -896,7 +896,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetConstantBuffers(ID3D10Device1 *i
 static void STDMETHODCALLTYPE d3d10_device_GSSetShader(ID3D10Device1 *iface, ID3D10GeometryShader *shader)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_geometry_shader *gs = unsafe_impl_from_ID3D10GeometryShader(shader);
+    struct d3d_geometry_shader *gs = unsafe_impl_from_ID3D10GeometryShader(shader);
 
     TRACE("iface %p, shader %p.\n", iface, shader);
 
@@ -1598,7 +1598,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetConstantBuffers(ID3D10Device1 *i
 static void STDMETHODCALLTYPE d3d10_device_GSGetShader(ID3D10Device1 *iface, ID3D10GeometryShader **shader)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_geometry_shader *shader_impl;
+    struct d3d_geometry_shader *shader_impl;
     struct wined3d_shader *wined3d_shader;
 
     TRACE("iface %p, shader %p.\n", iface, shader);
@@ -2310,7 +2310,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device1
         const void *byte_code, SIZE_T byte_code_length, ID3D10GeometryShader **shader)
 {
     struct d3d_device *This = impl_from_ID3D10Device(iface);
-    struct d3d10_geometry_shader *object;
+    struct d3d_geometry_shader *object;
     HRESULT hr;
 
     TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p.\n",
@@ -2320,7 +2320,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device1
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3d10_geometry_shader_init(object, This, byte_code, byte_code_length);
+    hr = d3d_geometry_shader_init(object, This, byte_code, byte_code_length);
     if (FAILED(hr))
     {
         WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
