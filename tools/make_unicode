@@ -23,7 +23,7 @@ use strict;
 
 # base URLs for www.unicode.org files
 my $MAPPINGS = "http://www.unicode.org/Public/MAPPINGS";
-my $UNIDATA = "http://www.unicode.org/Public/7.0.0/ucd";
+my $UNIDATA = "http://www.unicode.org/Public/8.0.0/ucd";
 my $REPORTS = "http://www.unicode.org/reports";
 my $RFCS = "http://www.rfc-editor.org/rfc";
 my $VERTICALDATA = "http://www.unicode.org/Public/vertical/revision-11";
@@ -169,7 +169,11 @@ my %indic_types =
     "Joiner" => 0x001b,
     "Number_Joiner" => 0x001c,
     "Number" => 0x001d,
-    "Brahmi_Joining_Number" => 0x001e
+    "Brahmi_Joining_Number" => 0x001e,
+    "Consonant_With_Stacker" => 0x001f,
+    "Consonant_Prefixed" => 0x0020,
+    "Syllable_Modifier" => 0x0021,
+    "Consonant_Killer" => 0x0022
 );
 
 my %matra_types =
@@ -1207,7 +1211,7 @@ sub dump_indic($)
     }
     close $INPUT;
 
-    $INPUT = open_data_file( $UNIDATA, "IndicMatraCategory.txt" );
+    $INPUT = open_data_file( $UNIDATA, "IndicPositionalCategory.txt" );
     while (<$INPUT>)
     {
         next if /^\#/;  # skip comments
@@ -1238,7 +1242,7 @@ sub dump_indic($)
     print "Building $filename\n";
     print OUTPUT "/* Unicode Indic Syllabic Category */\n";
     print OUTPUT "/* generated from $UNIDATA/IndicSyllabicCategory.txt */\n";
-    print OUTPUT "/*       and from $UNIDATA/IndicMatraCategory.txt */\n";
+    print OUTPUT "/*       and from $UNIDATA/IndicPositionalCategory.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
 
     dump_two_level_mapping( "indic_syllabic_table", @indic_table);
