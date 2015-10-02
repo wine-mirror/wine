@@ -115,6 +115,12 @@ typedef struct {
     freeFunction f_free;
 } strstreambuf;
 
+/* class stdiobuf */
+typedef struct {
+    streambuf base;
+    FILE *file;
+} stdiobuf;
+
 /* class ios */
 struct _ostream;
 typedef struct {
@@ -199,6 +205,10 @@ static int (*__thiscall p_strstreambuf_overflow)(strstreambuf*, int);
 static streampos (*__thiscall p_strstreambuf_seekoff)(strstreambuf*, streamoff, ios_seek_dir, int);
 static streambuf* (*__thiscall p_strstreambuf_setbuf)(strstreambuf*, char*, int);
 static int (*__thiscall p_strstreambuf_underflow)(strstreambuf*);
+
+/* stdiobuf */
+static stdiobuf* (*__thiscall p_stdiobuf_file_ctor)(stdiobuf*, FILE*);
+static void (*__thiscall p_stdiobuf_dtor)(stdiobuf*);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -358,6 +368,9 @@ static BOOL init(void)
         SET(p_strstreambuf_setbuf, "?setbuf@strstreambuf@@UEAAPEAVstreambuf@@PEADH@Z");
         SET(p_strstreambuf_underflow, "?underflow@strstreambuf@@UEAAHXZ");
 
+        SET(p_stdiobuf_file_ctor, "??0stdiobuf@@QEAA@PEAU_iobuf@@@Z");
+        SET(p_stdiobuf_dtor, "??1stdiobuf@@UEAA@XZ");
+
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
         SET(p_ios_sb_ctor, "??0ios@@QEAA@PEAVstreambuf@@@Z");
@@ -435,6 +448,9 @@ static BOOL init(void)
         SET(p_strstreambuf_seekoff, "?seekoff@strstreambuf@@UAEJJW4seek_dir@ios@@H@Z");
         SET(p_strstreambuf_setbuf, "?setbuf@strstreambuf@@UAEPAVstreambuf@@PADH@Z");
         SET(p_strstreambuf_underflow, "?underflow@strstreambuf@@UAEHXZ");
+
+        SET(p_stdiobuf_file_ctor, "??0stdiobuf@@QAE@PAU_iobuf@@@Z");
+        SET(p_stdiobuf_dtor, "??1stdiobuf@@UAE@XZ");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -1806,6 +1822,47 @@ static void test_strstreambuf(void)
     call_func1(p_strstreambuf_dtor, &ssb2);
 }
 
+static void test_stdiobuf(void)
+{
+    stdiobuf stb1, stb2;
+    FILE *file1, *file2;
+    const char filename1[] = "stdiobuf_test1";
+    const char filename2[] = "stdiobuf_test2";
+
+    memset(&stb1, 0xab, sizeof(stdiobuf));
+    memset(&stb2, 0xab, sizeof(stdiobuf));
+
+    file1 = fopen(filename1, "w");
+    fputs("Never gonna give you up, never gonna let you down", file1);
+    fclose(file1);
+    file1 = fopen(filename1, "r");
+    ok(file1 != NULL, "Couldn't open the file named '%s'\n", filename1);
+    file2 = fopen(filename2, "w+");
+    ok(file2 != NULL, "Couldn't open the file named '%s'\n", filename2);
+
+    /* constructors/destructor */
+    call_func2(p_stdiobuf_file_ctor, &stb1, NULL);
+    ok(stb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", stb1.base.allocated);
+    ok(stb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", stb1.base.unbuffered);
+    ok(stb1.file == NULL, "wrong file pointer, expected %p got %p\n", NULL, stb1.file);
+    call_func1(p_stdiobuf_dtor, &stb1);
+    call_func2(p_stdiobuf_file_ctor, &stb1, file1);
+    ok(stb1.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", stb1.base.allocated);
+    ok(stb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", stb1.base.unbuffered);
+    ok(stb1.file == file1, "wrong file pointer, expected %p got %p\n", file1, stb1.file);
+    call_func2(p_stdiobuf_file_ctor, &stb2, file2);
+    ok(stb2.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", stb2.base.allocated);
+    ok(stb2.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", stb2.base.unbuffered);
+    ok(stb2.file == file2, "wrong file pointer, expected %p got %p\n", file2, stb2.file);
+
+    call_func1(p_stdiobuf_dtor, &stb1);
+    call_func1(p_stdiobuf_dtor, &stb2);
+    fclose(file1);
+    fclose(file2);
+    ok(_unlink(filename1) == 0, "Couldn't unlink file named '%s'\n", filename1);
+    ok(_unlink(filename2) == 0, "Couldn't unlink file named '%s'\n", filename2);
+}
+
 struct ios_lock_arg
 {
     ios *ios_obj;
@@ -2091,6 +2148,7 @@ START_TEST(msvcirt)
     test_streambuf();
     test_filebuf();
     test_strstreambuf();
+    test_stdiobuf();
     test_ios();
 
     FreeLibrary(msvcrt);

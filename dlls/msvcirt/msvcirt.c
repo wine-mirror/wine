@@ -1460,7 +1460,9 @@ int __thiscall strstreambuf_underflow(strstreambuf *this)
 DEFINE_THISCALL_WRAPPER(stdiobuf_copy_ctor, 8)
 stdiobuf* __thiscall stdiobuf_copy_ctor(stdiobuf *this, const stdiobuf *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
+    TRACE("(%p %p)\n", this, copy);
+    *this = *copy;
+    this->base.vtable = &MSVCP_stdiobuf_vtable;
     return this;
 }
 
@@ -1469,7 +1471,10 @@ stdiobuf* __thiscall stdiobuf_copy_ctor(stdiobuf *this, const stdiobuf *copy)
 DEFINE_THISCALL_WRAPPER(stdiobuf_file_ctor, 8)
 stdiobuf* __thiscall stdiobuf_file_ctor(stdiobuf *this, FILE *file)
 {
-    FIXME("(%p %p) stub\n", this, file);
+    TRACE("(%p %p)\n", this, file);
+    streambuf_reserve_ctor(&this->base, NULL, 0);
+    this->base.vtable = &MSVCP_stdiobuf_vtable;
+    this->file = file;
     return this;
 }
 
@@ -1478,7 +1483,9 @@ stdiobuf* __thiscall stdiobuf_file_ctor(stdiobuf *this, FILE *file)
 DEFINE_THISCALL_WRAPPER(stdiobuf_dtor, 4)
 void __thiscall stdiobuf_dtor(stdiobuf *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+    call_streambuf_sync(&this->base);
+    streambuf_dtor(&this->base);
 }
 
 /* ??4stdiobuf@@QAEAAV0@ABV0@@Z */
