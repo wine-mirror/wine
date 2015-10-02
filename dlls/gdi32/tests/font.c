@@ -5971,6 +5971,7 @@ static void test_stock_fonts(void)
     {
         { /* ANSI_FIXED_FONT */
             { ANSI_CHARSET, FW_NORMAL, 12, 12, 96, "Courier", LANG_ARABIC },
+            { ANSI_CHARSET, FW_NORMAL, 12, 12, 96, "Courier", LANG_HEBREW},
             { DEFAULT_CHARSET, FW_NORMAL, 12, 13, 96, "Courier" },
             { DEFAULT_CHARSET, FW_NORMAL, 12, 13, 120, "Courier" },
             { 0 }
