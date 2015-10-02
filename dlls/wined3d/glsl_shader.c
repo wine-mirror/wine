@@ -1833,6 +1833,11 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "} ffp_point;\n");
         }
 
+        if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        {
+            declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
+        }
+
         shader_addline(buffer, "uniform vec4 posFixup;\n");
         shader_addline(buffer, "void order_ps_input(in vec4[%u]);\n", shader->limits->packed_output);
     }
@@ -1850,6 +1855,15 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "    float end;\n");
             shader_addline(buffer, "    float scale;\n");
             shader_addline(buffer, "} ffp_fog;\n");
+
+            if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+            {
+                shader_addline(buffer, "float ffp_varying_fogcoord;\n");
+            }
+            else
+            {
+                declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
+            }
         }
 
         if (version->major >= 3)
@@ -4909,6 +4923,7 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
     const char *semantic_name;
     UINT semantic_idx;
     char reg_mask[6];
+    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
 
     string_buffer_clear(buffer);
 
@@ -4924,6 +4939,11 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
 
     if (ps_major < 3)
     {
+        if (!legacy_context)
+        {
+            declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
+        }
+
         shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits->packed_output);
 
         for (i = 0; i < vs->output_signature.element_count; ++i)
@@ -4973,7 +4993,8 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_FOG))
             {
-                shader_addline(buffer, "gl_FogFragCoord = clamp(vs_out[%u].%c, 0.0, 1.0);\n",
+                shader_addline(buffer, "%s = clamp(vs_out[%u].%c, 0.0, 1.0);\n",
+                        legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord",
                         output->register_idx, reg_mask[1]);
             }
         }
@@ -5042,16 +5063,16 @@ static void shader_glsl_generate_fog_code(struct wined3d_string_buffer *buffer, 
             return;
 
         case WINED3D_FFP_PS_FOG_LINEAR:
-            shader_addline(buffer, "float fog = (ffp_fog.end - gl_FogFragCoord) * ffp_fog.scale;\n");
+            shader_addline(buffer, "float fog = (ffp_fog.end - ffp_varying_fogcoord) * ffp_fog.scale;\n");
             break;
 
         case WINED3D_FFP_PS_FOG_EXP:
-            shader_addline(buffer, "float fog = exp(-ffp_fog.density * gl_FogFragCoord);\n");
+            shader_addline(buffer, "float fog = exp(-ffp_fog.density * ffp_varying_fogcoord);\n");
             break;
 
         case WINED3D_FFP_PS_FOG_EXP2:
             shader_addline(buffer, "float fog = exp(-ffp_fog.density * ffp_fog.density"
-                    " * gl_FogFragCoord * gl_FogFragCoord);\n");
+                    " * ffp_varying_fogcoord * ffp_varying_fogcoord);\n");
             break;
 
         default:
@@ -5073,6 +5094,7 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const DWORD *function = shader->function;
     struct shader_glsl_ctx_priv priv_ctx;
+    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
 
     /* Create the hw GLSL shader object and assign it as the shader->prgId */
     GLuint shader_id = GL_EXTCALL(glCreateShader(GL_FRAGMENT_SHADER));
@@ -5099,6 +5121,12 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
 
     /* Base Declarations */
     shader_generate_glsl_declarations(context, buffer, shader, reg_maps, &priv_ctx);
+
+    if (reg_maps->shader_version.major < 3 || args->vp_mode != vertexshader)
+    {
+        if (legacy_context)
+            shader_addline(buffer, "ffp_varying_fogcoord = gl_FogFragCoord;\n");
+    }
 
     /* Pack 3.0 inputs */
     if (reg_maps->shader_version.major >= 3)
@@ -5139,6 +5167,7 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
     const struct wined3d_gl_info *gl_info = context->gl_info;
     const DWORD *function = shader->function;
     struct shader_glsl_ctx_priv priv_ctx;
+    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
 
     /* Create the hw GLSL shader program and assign it as the shader->prgId */
     GLuint shader_id = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
@@ -5173,9 +5202,11 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
      * the shader, it is set to 0.0(fully fogged, since start = 1.0, end = 0.0)
      */
     if (args->fog_src == VS_FOG_Z)
-        shader_addline(buffer, "gl_FogFragCoord = gl_Position.z;\n");
+        shader_addline(buffer, "%s = gl_Position.z;\n",
+                legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
     else if (!reg_maps->fog)
-        shader_addline(buffer, "gl_FogFragCoord = 0.0;\n");
+        shader_addline(buffer, "%s = 0.0;\n",
+                legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
 
     /* We always store the clipplanes without y inversion */
     if (args->clip_enabled)
@@ -5637,6 +5668,8 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     };
     GLuint shader_obj;
     unsigned int i;
+    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+    BOOL output_legacy_fogcoord = legacy_context;
 
     string_buffer_clear(buffer);
 
@@ -5689,6 +5722,15 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
         shader_addline(buffer, "    float l_att;\n");
         shader_addline(buffer, "    float q_att;\n");
         shader_addline(buffer, "} ffp_point;\n");
+    }
+
+    if (legacy_context)
+    {
+        shader_addline(buffer, "float ffp_varying_fogcoord;\n");
+    }
+    else
+    {
+        declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
     }
 
     shader_addline(buffer, "\nvoid main()\n{\n");
@@ -5791,30 +5833,33 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
     switch (settings->fog_mode)
     {
         case WINED3D_FFP_VS_FOG_OFF:
+            output_legacy_fogcoord = FALSE;
             break;
 
         case WINED3D_FFP_VS_FOG_FOGCOORD:
-            shader_addline(buffer, "gl_FogFragCoord = ffp_attrib_specular.w * 255.0;\n");
+            shader_addline(buffer, "ffp_varying_fogcoord = ffp_attrib_specular.w * 255.0;\n");
             break;
 
         case WINED3D_FFP_VS_FOG_RANGE:
-            shader_addline(buffer, "gl_FogFragCoord = length(ec_pos.xyz);\n");
+            shader_addline(buffer, "ffp_varying_fogcoord = length(ec_pos.xyz);\n");
             break;
 
         case WINED3D_FFP_VS_FOG_DEPTH:
             if (settings->ortho_fog)
                 /* Need to undo the [0.0 - 1.0] -> [-1.0 - 1.0] transformation from D3D to GL coordinates. */
-                shader_addline(buffer, "gl_FogFragCoord = gl_Position.z * 0.5 + 0.5;\n");
+                shader_addline(buffer, "ffp_varying_fogcoord = gl_Position.z * 0.5 + 0.5;\n");
             else if (settings->transformed)
-                shader_addline(buffer, "gl_FogFragCoord = ec_pos.z;\n");
+                shader_addline(buffer, "ffp_varying_fogcoord = ec_pos.z;\n");
             else
-                shader_addline(buffer, "gl_FogFragCoord = abs(ec_pos.z);\n");
+                shader_addline(buffer, "ffp_varying_fogcoord = abs(ec_pos.z);\n");
             break;
 
         default:
             ERR("Unhandled fog mode %#x.\n", settings->fog_mode);
             break;
     }
+    if (output_legacy_fogcoord)
+        shader_addline(buffer, "gl_FogFragCoord = ffp_varying_fogcoord;\n");
 
     if (settings->point_size)
     {
@@ -6093,6 +6138,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     DWORD arg0, arg1, arg2;
     unsigned int stage;
     struct wined3d_string_buffer *tex_reg_name = string_buffer_get(&priv->string_buffers);
+    BOOL legacy_context = gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
 
     string_buffer_clear(buffer);
 
@@ -6232,7 +6278,19 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     shader_addline(buffer, "    float scale;\n");
     shader_addline(buffer, "} ffp_fog;\n");
 
+    if (legacy_context)
+    {
+        shader_addline(buffer, "float ffp_varying_fogcoord;\n");
+    }
+    else
+    {
+        declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
+    }
+
     shader_addline(buffer, "void main()\n{\n");
+
+    if (legacy_context && settings->fog != WINED3D_FFP_PS_FOG_OFF)
+        shader_addline(buffer, "ffp_varying_fogcoord = gl_FogFragCoord;\n");
 
     if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
         shader_addline(buffer, "if (any(lessThan(gl_TexCoord[7], vec4(0.0)))) discard;\n");
