@@ -1541,6 +1541,51 @@ static unsigned int vec4_varyings(DWORD shader_major, const struct wined3d_gl_in
     return ret;
 }
 
+static BOOL needs_legacy_glsl_syntax(const struct wined3d_gl_info *gl_info)
+{
+    return gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
+}
+
+static void PRINTF_ATTR(4, 5) declare_in_varying(const struct wined3d_gl_info *gl_info,
+        struct wined3d_string_buffer *buffer, BOOL flat, const char *format, ...)
+{
+    va_list args;
+    int ret;
+
+    shader_addline(buffer, "%s%s ", flat ? "flat " : "",
+            needs_legacy_glsl_syntax(gl_info) ? "varying" : "in");
+    for (;;)
+    {
+        va_start(args, format);
+        ret = shader_vaddline(buffer, format, args);
+        va_end(args);
+        if (!ret)
+            return;
+        if (!string_buffer_resize(buffer, ret))
+            return;
+    }
+}
+
+static void PRINTF_ATTR(4, 5) declare_out_varying(const struct wined3d_gl_info *gl_info,
+        struct wined3d_string_buffer *buffer, BOOL flat, const char *format, ...)
+{
+    va_list args;
+    int ret;
+
+    shader_addline(buffer, "%s%s ", flat ? "flat " : "",
+            needs_legacy_glsl_syntax(gl_info) ? "varying" : "out");
+    for (;;)
+    {
+        va_start(args, format);
+        ret = shader_vaddline(buffer, format, args);
+        va_end(args);
+        if (!ret)
+            return;
+        if (!string_buffer_resize(buffer, ret))
+            return;
+    }
+}
+
 /** Generate the variable & register declarations for the GLSL output target */
 static void shader_generate_glsl_declarations(const struct wined3d_context *context,
         struct wined3d_string_buffer *buffer, const struct wined3d_shader *shader,
@@ -1812,7 +1857,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             UINT in_count = min(vec4_varyings(version->major, gl_info), shader->limits->packed_input);
 
             if (use_vs(state))
-                shader_addline(buffer, "varying vec4 %s_link[%u];\n", prefix, in_count);
+                declare_in_varying(gl_info, buffer, FALSE, "vec4 %s_link[%u];\n", prefix, in_count);
             shader_addline(buffer, "vec4 %s_in[%u];\n", prefix, in_count);
         }
 
@@ -4937,8 +4982,8 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
     else
     {
         UINT in_count = min(vec4_varyings(ps_major, gl_info), ps->limits->packed_input);
-        /* This one is tricky: a 3.0 pixel shader reads from a 3.0 vertex shader */
-        shader_addline(buffer, "varying vec4 ps_link[%u];\n", in_count);
+
+        declare_out_varying(gl_info, buffer, FALSE, "vec4 ps_link[%u];\n", in_count);
         shader_addline(buffer, "void order_ps_input(in vec4 vs_out[%u])\n{\n", vs->limits->packed_output);
 
         /* First, sort out position and point size. Those are not passed to the pixel shader */
