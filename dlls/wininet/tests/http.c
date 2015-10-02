@@ -2106,6 +2106,13 @@ static DWORD CALLBACK server_thread(LPVOID param)
             else
                 send(c, notokmsg, sizeof notokmsg-1, 0);
         }
+        if (strstr(buffer, "CONNECT "))
+        {
+            if (!strstr(buffer, "Content-Length: 0"))
+                send(c, notokmsg, sizeof notokmsg-1, 0);
+            else
+                send(c, proxymsg, sizeof proxymsg-1, 0);
+        }
         if (strstr(buffer, "/test2"))
         {
             if (strstr(buffer, "Proxy-Authorization: Basic bWlrZToxMTAx"))
@@ -2805,6 +2812,25 @@ static void test_proxy_direct(int port)
     r = HttpQueryInfoA(hr, HTTP_QUERY_STATUS_CODE, buffer, &sz, NULL);
     ok(r, "HttpQueryInfo failed\n");
     ok(!strcmp(buffer, "200"), "proxy code wrong\n");
+
+    InternetCloseHandle(hr);
+    InternetCloseHandle(hc);
+    InternetCloseHandle(hi);
+
+    sprintf(buffer, "localhost:%d\n", port);
+    hi = InternetOpenA("winetest", INTERNET_OPEN_TYPE_PROXY, buffer, NULL, 0);
+    ok(hi != NULL, "InternetOpen failed\n");
+
+    hc = InternetConnectA(hi, "test.winehq.org", port, NULL, NULL, INTERNET_SERVICE_HTTP, 0, 0);
+    ok(hc != NULL, "InternetConnect failed\n");
+
+    hr = HttpOpenRequestA(hc, "POST", "/test2", NULL, NULL, NULL, INTERNET_FLAG_SECURE, 0);
+    ok(hr != NULL, "HttpOpenRequest failed\n");
+
+    r = HttpSendRequestA(hr, NULL, 0, (char *)"data", sizeof("data"));
+    ok(r, "HttpSendRequest failed %u\n", GetLastError());
+
+    test_status_code(hr, 407);
 
 done:
     InternetCloseHandle(hr);
