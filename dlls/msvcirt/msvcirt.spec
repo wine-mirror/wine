@@ -98,10 +98,10 @@
 @ stub -arch=win64 ??0ostrstream@@QEAA@PEADHH@Z
 @ thiscall -arch=win32 ??0ostrstream@@QAE@XZ(ptr long) MSVCIRT_ostrstream_ctor
 @ cdecl -arch=win64 ??0ostrstream@@QEAA@XZ(ptr long) MSVCIRT_ostrstream_ctor
-@ stub -arch=win32 ??0stdiobuf@@QAE@ABV0@@Z  # __thiscall stdiobuf::stdiobuf(class stdiobuf const &)
-@ stub -arch=win64 ??0stdiobuf@@QEAA@AEBV0@@Z
-@ stub -arch=win32 ??0stdiobuf@@QAE@PAU_iobuf@@@Z  # __thiscall stdiobuf::stdiobuf(struct _iobuf *)
-@ stub -arch=win64 ??0stdiobuf@@QEAA@PEAU_iobuf@@@Z
+@ thiscall -arch=win32 ??0stdiobuf@@QAE@ABV0@@Z(ptr ptr) stdiobuf_copy_ctor
+@ cdecl -arch=win64 ??0stdiobuf@@QEAA@AEBV0@@Z(ptr ptr) stdiobuf_copy_ctor
+@ thiscall -arch=win32 ??0stdiobuf@@QAE@PAU_iobuf@@@Z(ptr ptr) stdiobuf_file_ctor
+@ cdecl -arch=win64 ??0stdiobuf@@QEAA@PEAU_iobuf@@@Z(ptr ptr) stdiobuf_file_ctor
 @ stub -arch=win32 ??0stdiostream@@QAE@ABV0@@Z  # __thiscall stdiostream::stdiostream(class stdiostream const &)
 @ stub -arch=win64 ??0stdiostream@@QEAA@AEBV0@@Z
 @ stub -arch=win32 ??0stdiostream@@QAE@PAU_iobuf@@@Z  # __thiscall stdiostream::stdiostream(struct _iobuf *)
@@ -160,8 +160,8 @@
 @ stub -arch=win64 ??1ostream_withassign@@UEAA@XZ
 @ thiscall -arch=win32 ??1ostrstream@@UAE@XZ(ptr) MSVCIRT_ostrstream_dtor
 @ cdecl -arch=win64 ??1ostrstream@@UEAA@XZ(ptr) MSVCIRT_ostrstream_dtor
-@ stub -arch=win32 ??1stdiobuf@@UAE@XZ  # virtual __thiscall stdiobuf::~stdiobuf(void)
-@ stub -arch=win64 ??1stdiobuf@@UEAA@XZ
+@ thiscall -arch=win32 ??1stdiobuf@@UAE@XZ(ptr) stdiobuf_dtor
+@ cdecl -arch=win64 ??1stdiobuf@@UEAA@XZ(ptr) stdiobuf_dtor
 @ stub -arch=win32 ??1stdiostream@@UAE@XZ  # virtual __thiscall stdiostream::~stdiostream(void)
 @ stub -arch=win64 ??1stdiostream@@UEAA@XZ
 @ thiscall -arch=win32 ??1streambuf@@UAE@XZ(ptr) streambuf_dtor
@@ -214,8 +214,8 @@
 @ stub -arch=win64 ??4ostream_withassign@@QEAAAEAVostream@@PEAVstreambuf@@@Z
 @ stub -arch=win32 ??4ostrstream@@QAEAAV0@ABV0@@Z  # class ostrstream & __thiscall ostrstream::operator=(class ostrstream const &)
 @ stub -arch=win64 ??4ostrstream@@QEAAAEAV0@AEBV0@@Z
-@ stub -arch=win32 ??4stdiobuf@@QAEAAV0@ABV0@@Z  # class stdiobuf & __thiscall stdiobuf::operator=(class stdiobuf const &)
-@ stub -arch=win64 ??4stdiobuf@@QEAAAEAV0@AEBV0@@Z
+@ thiscall -arch=win32 ??4stdiobuf@@QAEAAV0@ABV0@@Z(ptr ptr) stdiobuf_assign
+@ cdecl -arch=win64 ??4stdiobuf@@QEAAAEAV0@AEBV0@@Z(ptr ptr) stdiobuf_assign
 @ stub -arch=win32 ??4stdiostream@@QAEAAV0@AAV0@@Z  # class stdiostream & __thiscall stdiostream::operator=(class stdiostream &)
 @ stub -arch=win64 ??4stdiostream@@QEAAAEAV0@AEAV0@@Z
 @ thiscall -arch=win32 ??4streambuf@@QAEAAV0@ABV0@@Z(ptr ptr) streambuf_assign
@@ -316,7 +316,7 @@
 # @ extern ??_7ostream@@6B@  # const ostream::`vftable'
 # @ extern ??_7ostream_withassign@@6B@  # const ostream_withassign::`vftable'
 # @ extern ??_7ostrstream@@6B@  # const ostrstream::`vftable'
-# @ extern ??_7stdiobuf@@6B@  # const stdiobuf::`vftable'
+@ extern ??_7stdiobuf@@6B@ MSVCP_stdiobuf_vtable
 # @ extern ??_7stdiostream@@6B@  # const stdiostream::`vftable'
 @ extern ??_7streambuf@@6B@ MSVCP_streambuf_vtable
 # @ extern ??_7strstream@@6B@  # const strstream::`vftable'
@@ -375,7 +375,7 @@
 @ stub -arch=win32 ??_Eostream@@UAEPAXI@Z  # virtual void * __thiscall ostream::`vector deleting destructor'(unsigned int)
 @ stub -arch=win32 ??_Eostream_withassign@@UAEPAXI@Z  # virtual void * __thiscall ostream_withassign::`vector deleting destructor'(unsigned int)
 @ stub -arch=win32 ??_Eostrstream@@UAEPAXI@Z  # virtual void * __thiscall ostrstream::`vector deleting destructor'(unsigned int)
-@ stub -arch=win32 ??_Estdiobuf@@UAEPAXI@Z  # virtual void * __thiscall stdiobuf::`vector deleting destructor'(unsigned int)
+@ thiscall -arch=win32 ??_Estdiobuf@@UAEPAXI@Z(ptr long) stdiobuf_vector_dtor
 @ stub -arch=win32 ??_Estdiostream@@UAEPAXI@Z  # virtual void * __thiscall stdiostream::`vector deleting destructor'(unsigned int)
 @ thiscall -arch=win32 ??_Estreambuf@@UAEPAXI@Z(ptr long) streambuf_vector_dtor
 @ stub -arch=win32 ??_Estrstream@@UAEPAXI@Z  # virtual void * __thiscall strstream::`vector deleting destructor'(unsigned int)
@@ -394,7 +394,7 @@
 @ stub -arch=win32 ??_Gostream@@UAEPAXI@Z  # virtual void * __thiscall ostream::`scalar deleting destructor'(unsigned int)
 @ stub -arch=win32 ??_Gostream_withassign@@UAEPAXI@Z  # virtual void * __thiscall ostream_withassign::`scalar deleting destructor'(unsigned int)
 @ stub -arch=win32 ??_Gostrstream@@UAEPAXI@Z  # virtual void * __thiscall ostrstream::`scalar deleting destructor'(unsigned int)
-@ stub -arch=win32 ??_Gstdiobuf@@UAEPAXI@Z  # virtual void * __thiscall stdiobuf::`scalar deleting destructor'(unsigned int)
+@ thiscall -arch=win32 ??_Gstdiobuf@@UAEPAXI@Z(ptr long) stdiobuf_scalar_dtor
 @ stub -arch=win32 ??_Gstdiostream@@UAEPAXI@Z  # virtual void * __thiscall stdiostream::`scalar deleting destructor'(unsigned int)
 @ thiscall -arch=win32 ??_Gstreambuf@@UAEPAXI@Z(ptr long) streambuf_scalar_dtor
 @ stub -arch=win32 ??_Gstrstream@@UAEPAXI@Z  # virtual void * __thiscall strstream::`scalar deleting destructor'(unsigned int)
@@ -579,12 +579,12 @@
 @ cdecl -arch=win64 ?out_waiting@streambuf@@QEBAHXZ(ptr) streambuf_out_waiting
 @ thiscall -arch=win32 ?overflow@filebuf@@UAEHH@Z(ptr long) filebuf_overflow
 @ cdecl -arch=win64 ?overflow@filebuf@@UEAAHH@Z(ptr long) filebuf_overflow
-@ stub -arch=win32 ?overflow@stdiobuf@@UAEHH@Z  # virtual int __thiscall stdiobuf::overflow(int)
-@ stub -arch=win64 ?overflow@stdiobuf@@UEAAHH@Z
+@ thiscall -arch=win32 ?overflow@stdiobuf@@UAEHH@Z(ptr long) stdiobuf_overflow
+@ cdecl -arch=win64 ?overflow@stdiobuf@@UEAAHH@Z(ptr long) stdiobuf_overflow
 @ thiscall -arch=win32 ?overflow@strstreambuf@@UAEHH@Z(ptr long) strstreambuf_overflow
 @ cdecl -arch=win64 ?overflow@strstreambuf@@UEAAHH@Z(ptr long) strstreambuf_overflow
-@ stub -arch=win32 ?pbackfail@stdiobuf@@UAEHH@Z  # virtual int __thiscall stdiobuf::pbackfail(int)
-@ stub -arch=win64 ?pbackfail@stdiobuf@@UEAAHH@Z
+@ thiscall -arch=win32 ?pbackfail@stdiobuf@@UAEHH@Z(ptr long) stdiobuf_pbackfail
+@ cdecl -arch=win64 ?pbackfail@stdiobuf@@UEAAHH@Z(ptr long) stdiobuf_pbackfail
 @ thiscall -arch=win32 ?pbackfail@streambuf@@UAEHH@Z(ptr long) streambuf_pbackfail
 @ cdecl -arch=win64 ?pbackfail@streambuf@@UEAAHH@Z(ptr long) streambuf_pbackfail
 @ thiscall -arch=win32 ?pbase@streambuf@@IBEPADXZ(ptr) streambuf_pbase
@@ -645,8 +645,8 @@
 @ stub -arch=win64 ?seekg@istream@@QEAAAEAV1@JW4seek_dir@ios@@@Z
 @ thiscall -arch=win32 ?seekoff@filebuf@@UAEJJW4seek_dir@ios@@H@Z(ptr long long long) filebuf_seekoff
 @ cdecl -arch=win64 ?seekoff@filebuf@@UEAAJJW4seek_dir@ios@@H@Z(ptr long long long) filebuf_seekoff
-@ stub -arch=win32 ?seekoff@stdiobuf@@UAEJJW4seek_dir@ios@@H@Z  # virtual long __thiscall stdiobuf::seekoff(long,enum ios::seek_dir,int)
-@ stub -arch=win64 ?seekoff@stdiobuf@@UEAAJJW4seek_dir@ios@@H@Z
+@ thiscall -arch=win32 ?seekoff@stdiobuf@@UAEJJW4seek_dir@ios@@H@Z(ptr long long long) stdiobuf_seekoff
+@ cdecl -arch=win64 ?seekoff@stdiobuf@@UEAAJJW4seek_dir@ios@@H@Z(ptr long long long) stdiobuf_seekoff
 @ thiscall -arch=win32 ?seekoff@streambuf@@UAEJJW4seek_dir@ios@@H@Z(ptr long long long) streambuf_seekoff
 @ cdecl -arch=win64 ?seekoff@streambuf@@UEAAJJW4seek_dir@ios@@H@Z(ptr long long long) streambuf_seekoff
 @ thiscall -arch=win32 ?seekoff@strstreambuf@@UAEJJW4seek_dir@ios@@H@Z(ptr long long long) strstreambuf_seekoff
@@ -691,8 +691,8 @@
 @ stub -arch=win64 ?setmode@ofstream@@QEAAHH@Z
 @ thiscall -arch=win32 ?setp@streambuf@@IAEXPAD0@Z(ptr ptr ptr) streambuf_setp
 @ cdecl -arch=win64 ?setp@streambuf@@IEAAXPEAD0@Z(ptr ptr ptr) streambuf_setp
-@ stub -arch=win32 ?setrwbuf@stdiobuf@@QAEHHH@Z  # int __thiscall stdiobuf::setrwbuf(int,int)
-@ stub -arch=win64 ?setrwbuf@stdiobuf@@QEAAHHH@Z
+@ thiscall -arch=win32 ?setrwbuf@stdiobuf@@QAEHHH@Z(ptr long long) stdiobuf_setrwbuf
+@ cdecl -arch=win64 ?setrwbuf@stdiobuf@@QEAAHHH@Z(ptr long long) stdiobuf_setrwbuf
 @ thiscall -arch=win32 ?sgetc@streambuf@@QAEHXZ(ptr) streambuf_sgetc
 @ cdecl -arch=win64 ?sgetc@streambuf@@QEAAHXZ(ptr) streambuf_sgetc
 @ thiscall -arch=win32 ?sgetn@streambuf@@QAEHPADH@Z(ptr ptr long) streambuf_sgetn
@@ -708,8 +708,8 @@
 @ cdecl -arch=win64 ?sputc@streambuf@@QEAAHH@Z(ptr long) streambuf_sputc
 @ thiscall -arch=win32 ?sputn@streambuf@@QAEHPBDH@Z(ptr str long) streambuf_sputn
 @ cdecl -arch=win64 ?sputn@streambuf@@QEAAHPEBDH@Z(ptr str long) streambuf_sputn
-@ stub -arch=win32 ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ  # struct _iobuf * __thiscall stdiobuf::stdiofile(void)
-@ stub -arch=win64 ?stdiofile@stdiobuf@@QEAAPEAU_iobuf@@XZ
+@ thiscall -arch=win32 ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ(ptr) stdiobuf_stdiofile
+@ cdecl -arch=win64 ?stdiofile@stdiobuf@@QEAAPEAU_iobuf@@XZ(ptr) stdiobuf_stdiofile
 @ thiscall -arch=win32 ?stossc@streambuf@@QAEXXZ(ptr) streambuf_stossc
 @ cdecl -arch=win64 ?stossc@streambuf@@QEAAXXZ(ptr) streambuf_stossc
 @ stub -arch=win32 ?str@istrstream@@QAEPADXZ  # char * __thiscall istrstream::str(void)
@@ -725,8 +725,8 @@
 @ cdecl -arch=win64 ?sync@filebuf@@UEAAHXZ(ptr) filebuf_sync
 @ stub -arch=win32 ?sync@istream@@QAEHXZ  # int __thiscall istream::sync(void)
 @ stub -arch=win64 ?sync@istream@@QEAAHXZ
-@ stub -arch=win32 ?sync@stdiobuf@@UAEHXZ  # virtual int __thiscall stdiobuf::sync(void)
-@ stub -arch=win64 ?sync@stdiobuf@@UEAAHXZ
+@ thiscall -arch=win32 ?sync@stdiobuf@@UAEHXZ(ptr) stdiobuf_sync
+@ cdecl -arch=win64 ?sync@stdiobuf@@UEAAHXZ(ptr) stdiobuf_sync
 @ thiscall -arch=win32 ?sync@streambuf@@UAEHXZ(ptr) streambuf_sync
 @ cdecl -arch=win64 ?sync@streambuf@@UEAAHXZ(ptr) streambuf_sync
 @ thiscall -arch=win32 ?sync@strstreambuf@@UAEHXZ(ptr) strstreambuf_sync
@@ -747,8 +747,8 @@
 @ cdecl -arch=win64 ?unbuffered@streambuf@@IEBAHXZ(ptr) streambuf_unbuffered_get
 @ thiscall -arch=win32 ?underflow@filebuf@@UAEHXZ(ptr) filebuf_underflow
 @ cdecl -arch=win64 ?underflow@filebuf@@UEAAHXZ(ptr) filebuf_underflow
-@ stub -arch=win32 ?underflow@stdiobuf@@UAEHXZ  # virtual int __thiscall stdiobuf::underflow(void)
-@ stub -arch=win64 ?underflow@stdiobuf@@UEAAHXZ
+@ thiscall -arch=win32 ?underflow@stdiobuf@@UAEHXZ(ptr) stdiobuf_underflow
+@ cdecl -arch=win64 ?underflow@stdiobuf@@UEAAHXZ(ptr) stdiobuf_underflow
 @ thiscall -arch=win32 ?underflow@strstreambuf@@UAEHXZ(ptr) strstreambuf_underflow
 @ cdecl -arch=win64 ?underflow@strstreambuf@@UEAAHXZ(ptr) strstreambuf_underflow
 @ cdecl -arch=win32 ?unlock@ios@@QAAXXZ(ptr) ios_unlock

@@ -117,6 +117,12 @@ typedef struct {
     freeFunction f_free;
 } strstreambuf;
 
+/* class stdiobuf */
+typedef struct {
+    streambuf base;
+    FILE *file;
+} stdiobuf;
+
 /* class ios */
 struct _ostream;
 typedef struct {
@@ -153,6 +159,8 @@ extern const vtable_ptr MSVCP_streambuf_vtable;
 extern const vtable_ptr MSVCP_filebuf_vtable;
 /* ??_7strstreambuf@@6B@ */
 extern const vtable_ptr MSVCP_strstreambuf_vtable;
+/* ??_7stdiobuf@@6B@ */
+extern const vtable_ptr MSVCP_stdiobuf_vtable;
 /* ??_7ios@@6B@ */
 extern const vtable_ptr MSVCP_ios_vtable;
 
@@ -195,6 +203,18 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(strstreambuf_underflow)
             VTABLE_ADD_FUNC(streambuf_pbackfail)
             VTABLE_ADD_FUNC(strstreambuf_doallocate));
+    __ASM_VTABLE(stdiobuf,
+            VTABLE_ADD_FUNC(stdiobuf_vector_dtor)
+            VTABLE_ADD_FUNC(stdiobuf_sync)
+            VTABLE_ADD_FUNC(streambuf_setbuf)
+            VTABLE_ADD_FUNC(stdiobuf_seekoff)
+            VTABLE_ADD_FUNC(streambuf_seekpos)
+            VTABLE_ADD_FUNC(streambuf_xsputn)
+            VTABLE_ADD_FUNC(streambuf_xsgetn)
+            VTABLE_ADD_FUNC(stdiobuf_overflow)
+            VTABLE_ADD_FUNC(stdiobuf_underflow)
+            VTABLE_ADD_FUNC(stdiobuf_pbackfail)
+            VTABLE_ADD_FUNC(streambuf_doallocate));
     __ASM_VTABLE(ios,
             VTABLE_ADD_FUNC(ios_vector_dtor));
 #ifndef __GNUC__
@@ -204,6 +224,7 @@ void __asm_dummy_vtables(void) {
 DEFINE_RTTI_DATA0(streambuf, 0, ".?AVstreambuf@@")
 DEFINE_RTTI_DATA1(filebuf, 0, &streambuf_rtti_base_descriptor, ".?AVfilebuf@@")
 DEFINE_RTTI_DATA1(strstreambuf, 0, &streambuf_rtti_base_descriptor, ".?AVstrstreambuf@@")
+DEFINE_RTTI_DATA1(stdiobuf, 0, &streambuf_rtti_base_descriptor, ".?AVstdiobuf@@")
 DEFINE_RTTI_DATA0(ios, 0, ".?AVios@@")
 
 /* ??0streambuf@@IAE@PADH@Z */
@@ -1434,6 +1455,134 @@ int __thiscall strstreambuf_underflow(strstreambuf *this)
     return (this->base.gptr < this->base.egptr) ? *this->base.gptr : EOF;
 }
 
+/* ??0stdiobuf@@QAE@ABV0@@Z */
+/* ??0stdiobuf@@QEAA@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_copy_ctor, 8)
+stdiobuf* __thiscall stdiobuf_copy_ctor(stdiobuf *this, const stdiobuf *copy)
+{
+    FIXME("(%p %p) stub\n", this, copy);
+    return this;
+}
+
+/* ??0stdiobuf@@QAE@PAU_iobuf@@@Z */
+/* ??0stdiobuf@@QEAA@PEAU_iobuf@@@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_file_ctor, 8)
+stdiobuf* __thiscall stdiobuf_file_ctor(stdiobuf *this, FILE *file)
+{
+    FIXME("(%p %p) stub\n", this, file);
+    return this;
+}
+
+/* ??1stdiobuf@@UAE@XZ */
+/* ??1stdiobuf@@UEAA@XZ */
+DEFINE_THISCALL_WRAPPER(stdiobuf_dtor, 4)
+void __thiscall stdiobuf_dtor(stdiobuf *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ??4stdiobuf@@QAEAAV0@ABV0@@Z */
+/* ??4stdiobuf@@QEAAAEAV0@AEBV0@@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_assign, 8)
+stdiobuf* __thiscall stdiobuf_assign(stdiobuf *this, const stdiobuf *rhs)
+{
+    stdiobuf_dtor(this);
+    return stdiobuf_copy_ctor(this, rhs);
+}
+
+/* ??_Estdiobuf@@UAEPAXI@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_vector_dtor, 8)
+stdiobuf* __thiscall stdiobuf_vector_dtor(stdiobuf *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    if (flags & 2) {
+        /* we have an array, with the number of elements stored before the first object */
+        INT_PTR i, *ptr = (INT_PTR *)this-1;
+
+        for (i = *ptr-1; i >= 0; i--)
+            stdiobuf_dtor(this+i);
+        MSVCRT_operator_delete(ptr);
+    } else {
+        stdiobuf_dtor(this);
+        if (flags & 1)
+            MSVCRT_operator_delete(this);
+    }
+    return this;
+}
+
+/* ??_Gstdiobuf@@UAEPAXI@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_scalar_dtor, 8)
+stdiobuf* __thiscall stdiobuf_scalar_dtor(stdiobuf *this, unsigned int flags)
+{
+    TRACE("(%p %x)\n", this, flags);
+    stdiobuf_dtor(this);
+    if (flags & 1) MSVCRT_operator_delete(this);
+    return this;
+}
+
+/* ?overflow@stdiobuf@@UAEHH@Z */
+/* ?overflow@stdiobuf@@UEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_overflow, 8)
+int __thiscall stdiobuf_overflow(stdiobuf *this, int c)
+{
+    FIXME("(%p %d) stub\n", this, c);
+    return EOF;
+}
+
+/* ?pbackfail@stdiobuf@@UAEHH@Z */
+/* ?pbackfail@stdiobuf@@UEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_pbackfail, 8)
+int __thiscall stdiobuf_pbackfail(stdiobuf *this, int c)
+{
+    FIXME("(%p %d) stub\n", this, c);
+    return EOF;
+}
+
+/* ?seekoff@stdiobuf@@UAEJJW4seek_dir@ios@@H@Z */
+/* ?seekoff@stdiobuf@@UEAAJJW4seek_dir@ios@@H@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_seekoff, 16)
+streampos __thiscall stdiobuf_seekoff(stdiobuf *this, streamoff offset, ios_seek_dir dir, int mode)
+{
+    FIXME("(%p %d %d %d) stub\n", this, offset, dir, mode);
+    return EOF;
+}
+
+/* ?setrwbuf@stdiobuf@@QAEHHH@Z */
+/* ?setrwbuf@stdiobuf@@QEAAHHH@Z */
+DEFINE_THISCALL_WRAPPER(stdiobuf_setrwbuf, 12)
+int __thiscall stdiobuf_setrwbuf(stdiobuf *this, int read_size, int write_size)
+{
+    FIXME("(%p %d %d) stub\n", this, read_size, write_size);
+    return EOF;
+}
+
+/* ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ */
+/* ?stdiofile@stdiobuf@@QEAAPEAU_iobuf@@XZ */
+DEFINE_THISCALL_WRAPPER(stdiobuf_stdiofile, 4)
+FILE* __thiscall stdiobuf_stdiofile(stdiobuf *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ?sync@stdiobuf@@UAEHXZ */
+/* ?sync@stdiobuf@@UEAAHXZ */
+DEFINE_THISCALL_WRAPPER(stdiobuf_sync, 4)
+int __thiscall stdiobuf_sync(stdiobuf *this)
+{
+    FIXME("(%p) stub\n", this);
+    return EOF;
+}
+
+/* ?underflow@stdiobuf@@UAEHXZ */
+/* ?underflow@stdiobuf@@UEAAHXZ */
+DEFINE_THISCALL_WRAPPER(stdiobuf_underflow, 4)
+int __thiscall stdiobuf_underflow(stdiobuf *this)
+{
+    FIXME("(%p) stub\n", this);
+    return EOF;
+}
+
 /* ??0ios@@IAE@ABV0@@Z */
 /* ??0ios@@IEAA@AEBV0@@Z */
 DEFINE_THISCALL_WRAPPER(ios_copy_ctor, 8)
@@ -2098,6 +2247,7 @@ static void init_io(void *base)
     init_streambuf_rtti(base);
     init_filebuf_rtti(base);
     init_strstreambuf_rtti(base);
+    init_stdiobuf_rtti(base);
     init_ios_rtti(base);
 #endif
 }
