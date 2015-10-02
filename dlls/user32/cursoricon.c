@@ -158,11 +158,6 @@ static struct cursoricon_object *get_icon_ptr( HICON handle )
     return obj;
 }
 
-static void release_icon_ptr( HICON handle, struct cursoricon_object *ptr )
-{
-    release_user_handle_ptr( ptr );
-}
-
 static struct cursoricon_frame *get_icon_frame( struct cursoricon_object *obj, int istep )
 {
     struct static_cursoricon_object *req_frame;
@@ -192,7 +187,7 @@ static void release_icon_frame( struct cursoricon_object *obj, int istep, struct
 
         ani_icon_data = (struct animated_cursoricon_object *) obj;
         frameobj = (struct cursoricon_object *) (((char *)frame) - FIELD_OFFSET(struct static_cursoricon_object, frame));
-        release_icon_ptr( ani_icon_data->frames[istep], frameobj );
+        release_user_handle_ptr( frameobj );
     }
 }
 
@@ -484,7 +479,7 @@ BOOL get_icon_size( HICON handle, SIZE *size )
     size->cx = frame->width;
     size->cy = frame->height;
     release_icon_frame( info, 0, frame);
-    release_icon_ptr( handle, info );
+    release_user_handle_ptr( info );
     return TRUE;
 }
 
@@ -976,7 +971,7 @@ done:
             info->rsrc = rsrc;
             list_add_head( &icon_cache, &info->entry );
         }
-        release_icon_ptr( hObj, info );
+        release_user_handle_ptr( info );
     }
     else
     {
@@ -1229,7 +1224,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
             {
                 FIXME_(cursor)("Completely failed to create animated cursor!\n");
                 ani_icon_data->num_frames = 0;
-                release_icon_ptr( cursor, info );
+                release_user_handle_ptr( info );
                 free_icon_handle( cursor );
                 HeapFree( GetProcessHeap(), 0, frames );
                 return 0;
@@ -1275,7 +1270,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
     }
 
     HeapFree( GetProcessHeap(), 0, frames );
-    release_icon_ptr( cursor, info );
+    release_user_handle_ptr( info );
 
     return cursor;
 }
@@ -1592,14 +1587,14 @@ HICON WINAPI CopyIcon( HICON hIcon )
         ptrNew->hotspot = ptrOld->hotspot;
         if (!(frameOld = get_icon_frame( ptrOld, 0 )))
         {
-            release_icon_ptr( hIcon, ptrOld );
+            release_user_handle_ptr( ptrOld );
             SetLastError( ERROR_INVALID_CURSOR_HANDLE );
             return 0;
         }
         if (!(frameNew = get_icon_frame( ptrNew, 0 )))
         {
             release_icon_frame( ptrOld, 0, frameOld );
-            release_icon_ptr( hIcon, ptrOld );
+            release_user_handle_ptr( ptrOld );
             SetLastError( ERROR_INVALID_CURSOR_HANDLE );
             return 0;
         }
@@ -1611,9 +1606,9 @@ HICON WINAPI CopyIcon( HICON hIcon )
         frameNew->alpha  = copy_bitmap( frameOld->alpha );
         release_icon_frame( ptrOld, 0, frameOld );
         release_icon_frame( ptrNew, 0, frameNew );
-        release_icon_ptr( hNew, ptrNew );
+        release_user_handle_ptr( ptrNew );
     }
-    release_icon_ptr( hIcon, ptrOld );
+    release_user_handle_ptr( ptrOld );
     return hNew;
 }
 
@@ -1631,7 +1626,7 @@ BOOL WINAPI DestroyIcon( HICON hIcon )
     if (obj)
     {
         BOOL shared = (obj->rsrc != NULL);
-        release_icon_ptr( hIcon, obj );
+        release_user_handle_ptr( obj );
         ret = (GetCursor() != hIcon);
         if (!shared) free_icon_handle( hIcon );
     }
@@ -1688,7 +1683,7 @@ HCURSOR WINAPI DECLSPEC_HOTPATCH SetCursor( HCURSOR hCursor /* [in] Handle of cu
     USER_Driver->pSetCursor( show_count >= 0 ? hCursor : 0 );
 
     if (!(obj = get_icon_ptr( hOldCursor ))) return 0;
-    release_icon_ptr( hOldCursor, obj );
+    release_user_handle_ptr( obj );
     return hOldCursor;
 }
 
@@ -1986,7 +1981,7 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD reserved, DWORD istep, 
         }
     }
 
-    release_icon_ptr( hCursor, ptr );
+    release_user_handle_ptr( ptr );
 
     return ret;
 }
@@ -2057,7 +2052,7 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
     frame = get_icon_frame( ptr, 0 );
     if (!frame)
     {
-        release_icon_ptr( icon, ptr );
+        release_user_handle_ptr( ptr );
         SetLastError( ERROR_INVALID_CURSOR_HANDLE );
         return FALSE;
     }
@@ -2085,7 +2080,7 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
     }
     module = ptr->module;
     release_icon_frame( ptr, 0, frame );
-    release_icon_ptr( icon, ptr );
+    release_user_handle_ptr( ptr );
     if (ret && module) GetModuleFileNameW( module, info->szModName, MAX_PATH );
     return ret;
 }
@@ -2215,7 +2210,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
             info->hotspot.y = iconinfo->yHotspot;
         }
 
-        release_icon_ptr( hObj, info );
+        release_user_handle_ptr( info );
     }
     return hObj;
 }
@@ -2260,19 +2255,19 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     if (istep >= get_icon_steps( ptr ))
     {
         TRACE_(icon)("Stepped past end of animated frames=%d\n", istep);
-        release_icon_ptr( hIcon, ptr );
+        release_user_handle_ptr( ptr );
         return FALSE;
     }
     if (!(frame = get_icon_frame( ptr, istep )))
     {
         FIXME_(icon)("Error retrieving icon frame %d\n", istep);
-        release_icon_ptr( hIcon, ptr );
+        release_user_handle_ptr( ptr );
         return FALSE;
     }
     if (!(hMemDC = CreateCompatibleDC( hdc )))
     {
         release_icon_frame( ptr, istep, frame );
-        release_icon_ptr( hIcon, ptr );
+        release_user_handle_ptr( ptr );
         return FALSE;
     }
 
@@ -2386,7 +2381,7 @@ done:
 failed:
     DeleteDC( hMemDC );
     release_icon_frame( ptr, istep, frame );
-    release_icon_ptr( hIcon, ptr );
+    release_user_handle_ptr( ptr );
     return result;
 }
 
@@ -2908,7 +2903,7 @@ HANDLE WINAPI CopyImage( HANDLE hnd, UINT type, INT desiredx,
                                        !icon->is_icon, flags );
             else
                 res = CopyIcon( hnd ); /* FIXME: change size if necessary */
-            release_icon_ptr( hnd, icon );
+            release_user_handle_ptr( icon );
 
             if (res && (flags & LR_COPYDELETEORG)) DeleteObject( hnd );
             return res;
