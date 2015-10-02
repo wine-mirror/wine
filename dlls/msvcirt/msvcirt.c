@@ -1607,8 +1607,29 @@ int __thiscall stdiobuf_sync(stdiobuf *this)
 DEFINE_THISCALL_WRAPPER(stdiobuf_underflow, 4)
 int __thiscall stdiobuf_underflow(stdiobuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return EOF;
+    TRACE("(%p)\n", this);
+    if (!this->file)
+        return EOF;
+    if (this->base.unbuffered)
+        return fgetc(this->file);
+    if (streambuf_allocate(&this->base) == EOF)
+        return EOF;
+
+    if (!this->base.egptr) {
+        /* set the get area to the first half of the buffer */
+        char *middle = this->base.base + (this->base.ebuf - this->base.base) / 2;
+        streambuf_setg(&this->base, this->base.base, middle, middle);
+    }
+    if (this->base.gptr >= this->base.egptr) {
+        /* read characters from the file */
+        int buffer_size = this->base.egptr - this->base.eback, read_bytes;
+        if (!this->base.eback ||
+            (read_bytes = fread(this->base.eback, sizeof(char), buffer_size, this->file)) <= 0)
+            return EOF;
+        memmove(this->base.egptr - read_bytes, this->base.eback, read_bytes);
+        this->base.gptr = this->base.egptr - read_bytes;
+    }
+    return *this->base.gptr++;
 }
 
 /* ??0ios@@IAE@ABV0@@Z */
