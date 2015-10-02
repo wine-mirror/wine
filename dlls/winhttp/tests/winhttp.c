@@ -3773,6 +3773,16 @@ todo_wine
     ok(hr == DISP_E_PARAMNOTFOUND, "error %#x\n", hr);
 
     SysFreeString(utf8);
+
+    params.cArgs = 1;
+    V_VT(&arg[0]) = VT_I4;
+    V_I4(&arg[0]) = AutoLogonPolicy_Never;
+    VariantInit(&ret);
+    hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_SETAUTOLOGONPOLICY, &IID_NULL, 0,
+                                DISPATCH_METHOD, &params, &ret, NULL, NULL);
+todo_wine
+    ok(hr == S_OK, "error %#x\n", hr);
+
     IWinHttpRequest_Release(request);
 
     CoUninitialize();
