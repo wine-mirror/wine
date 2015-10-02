@@ -1377,6 +1377,7 @@ enable_xapofx1_5
 enable_xaudio2_3
 enable_xaudio2_4
 enable_xaudio2_5
+enable_xaudio2_6
 enable_xaudio2_7
 enable_xaudio2_8
 enable_xinput1_1
@@ -17917,6 +17918,7 @@ wine_fn_config_dll xapofx1_5 enable_xapofx1_5
 wine_fn_config_dll xaudio2_3 enable_xaudio2_3 clean
 wine_fn_config_dll xaudio2_4 enable_xaudio2_4 clean
 wine_fn_config_dll xaudio2_5 enable_xaudio2_5 clean
+wine_fn_config_dll xaudio2_6 enable_xaudio2_6 clean
 wine_fn_config_dll xaudio2_7 enable_xaudio2_7 clean
 wine_fn_config_test dlls/xaudio2_7/tests xaudio2_7_test
 wine_fn_config_dll xaudio2_8 enable_xaudio2_8
