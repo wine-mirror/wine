@@ -4939,6 +4939,8 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
 
     if (ps_major < 3)
     {
+        DWORD texcoords_written_mask[MAX_TEXTURES] = {0};
+
         if (!legacy_context)
         {
             declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
@@ -4975,15 +4977,11 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_TEXCOORD))
             {
-                if (semantic_idx < 8)
+                if (semantic_idx < MAX_TEXTURES)
                 {
-                    if (!(gl_info->quirks & WINED3D_QUIRK_SET_TEXCOORD_W) || ps_major > 0)
-                        write_mask |= WINED3DSP_WRITEMASK_3;
-
                     shader_addline(buffer, "gl_TexCoord[%u]%s = vs_out[%u]%s;\n",
                             semantic_idx, reg_mask, output->register_idx, reg_mask);
-                    if (!(write_mask & WINED3DSP_WRITEMASK_3))
-                        shader_addline(buffer, "gl_TexCoord[%u].w = 1.0;\n", semantic_idx);
+                    texcoords_written_mask[semantic_idx] = write_mask;
                 }
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_PSIZE) && per_vertex_point_size)
@@ -4998,7 +4996,22 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
                         output->register_idx, reg_mask[1]);
             }
         }
-        shader_addline(buffer, "}\n");
+
+        for (i = 0; i < MAX_TEXTURES; ++i)
+        {
+            if (ps && !(ps->reg_maps.texcoord & (1u << i)))
+                continue;
+
+            if (texcoords_written_mask[i] != WINED3DSP_WRITEMASK_ALL)
+            {
+                if (gl_info->limits.glsl_varyings < wined3d_max_compat_varyings(gl_info)
+                        && !texcoords_written_mask[i])
+                    continue;
+
+                shader_glsl_write_mask_to_str(~texcoords_written_mask[i] & WINED3DSP_WRITEMASK_ALL, reg_mask);
+                shader_addline(buffer, "gl_TexCoord[%u]%s = vec4(0.0)%s;\n", i, reg_mask, reg_mask);
+            }
+        }
     }
     else
     {
@@ -5034,9 +5047,9 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
         /* Then, fix the pixel shader input */
         handle_ps3_input(priv, gl_info, ps->u.ps.input_reg_map, &ps->input_signature,
                 &ps->reg_maps, &vs->output_signature, &vs->reg_maps);
-
-        shader_addline(buffer, "}\n");
     }
+
+    shader_addline(buffer, "}\n");
 
     ret = GL_EXTCALL(glCreateShader(GL_VERTEX_SHADER));
     checkGLcall("glCreateShader(GL_VERTEX_SHADER)");
