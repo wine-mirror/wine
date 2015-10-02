@@ -4343,6 +4343,13 @@ DWORD get_flexible_vertex_size(DWORD d3dvtVertexType) {
     return size;
 }
 
+unsigned int wined3d_max_compat_varyings(const struct wined3d_gl_info *gl_info)
+{
+    /* On core profile we have to also count diffuse and specular colors and the
+     * fog coordinate. */
+    return gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] ? MAX_TEXTURES * 4 : (MAX_TEXTURES + 2) * 4 + 1;
+}
+
 void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d_state *state,
         struct ffp_frag_settings *settings, BOOL ignore_textype)
 {

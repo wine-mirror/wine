@@ -1877,6 +1877,7 @@ extern const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions DECL
 extern const struct wine_rb_functions wined3d_ffp_vertex_program_rb_functions DECLSPEC_HIDDEN;
 extern const struct wined3d_parent_ops wined3d_null_parent_ops DECLSPEC_HIDDEN;
 
+unsigned int wined3d_max_compat_varyings(const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d_state *state,
         struct ffp_frag_settings *settings, BOOL ignore_textype) DECLSPEC_HIDDEN;
 const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,

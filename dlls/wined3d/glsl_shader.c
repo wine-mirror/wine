@@ -5802,6 +5802,8 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct wined3d_string_buffe
                 if (settings->texcoords & (1u << i))
                     shader_addline(buffer, "gl_TexCoord[%u] = ffp_texture_matrix[%u] * ffp_attrib_texcoord%u;\n",
                             i, i, i);
+                else if (gl_info->limits.glsl_varyings >= wined3d_max_compat_varyings(gl_info))
+                    shader_addline(buffer, "gl_TexCoord[%u] = vec4(0.0);\n", i);
                 break;
 
             case WINED3DTSS_TCI_CAMERASPACENORMAL:
