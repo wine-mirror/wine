@@ -182,10 +182,8 @@ static void release_icon_frame( struct cursoricon_object *obj, int istep, struct
 {
     if (obj->is_ani)
     {
-        struct animated_cursoricon_object *ani_icon_data;
         struct cursoricon_object *frameobj;
 
-        ani_icon_data = (struct animated_cursoricon_object *) obj;
         frameobj = (struct cursoricon_object *) (((char *)frame) - FIELD_OFFSET(struct static_cursoricon_object, frame));
         release_user_handle_ptr( frameobj );
     }
