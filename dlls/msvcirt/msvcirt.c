@@ -1598,8 +1598,31 @@ FILE* __thiscall stdiobuf_stdiofile(stdiobuf *this)
 DEFINE_THISCALL_WRAPPER(stdiobuf_sync, 4)
 int __thiscall stdiobuf_sync(stdiobuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return EOF;
+    TRACE("(%p)\n", this);
+    if (this->base.unbuffered)
+        return 0;
+    /* flush the put area */
+    if (call_streambuf_overflow(&this->base, EOF) == EOF)
+        return EOF;
+    /* flush the get area */
+    if (this->base.gptr < this->base.egptr) {
+        char *ptr;
+        int fd, mode, offset = this->base.egptr - this->base.gptr;
+        if ((fd = fileno(this->file)) < 0)
+            return EOF;
+        mode = _setmode(fd, _O_TEXT);
+        _setmode(fd, mode);
+        if (mode & _O_TEXT) {
+            /* in text mode, '\n' in the buffer means '\r\n' in the file */
+            for (ptr = this->base.gptr; ptr < this->base.egptr; ptr++)
+                if (*ptr == '\n')
+                    offset++;
+        }
+        if (fseek(this->file, -offset, SEEK_CUR))
+            return EOF;
+        this->base.gptr = this->base.egptr;
+    }
+    return 0;
 }
 
 /* ?underflow@stdiobuf@@UAEHXZ */
