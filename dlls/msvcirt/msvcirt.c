@@ -1532,8 +1532,29 @@ stdiobuf* __thiscall stdiobuf_scalar_dtor(stdiobuf *this, unsigned int flags)
 DEFINE_THISCALL_WRAPPER(stdiobuf_overflow, 8)
 int __thiscall stdiobuf_overflow(stdiobuf *this, int c)
 {
-    FIXME("(%p %d) stub\n", this, c);
-    return EOF;
+    TRACE("(%p %d)\n", this, c);
+    if (this->base.unbuffered)
+        return (c == EOF) ? 1 : fputc(c, this->file);
+    if (streambuf_allocate(&this->base) == EOF)
+        return EOF;
+
+    if (!this->base.epptr) {
+        /* set the put area to the second half of the buffer */
+        streambuf_setp(&this->base,
+            this->base.base + (this->base.ebuf - this->base.base) / 2, this->base.ebuf);
+    } else if (this->base.pptr > this->base.pbase) {
+        /* flush the put area */
+        int count = this->base.pptr - this->base.pbase;
+        if (fwrite(this->base.pbase, sizeof(char), count, this->file) != count)
+            return EOF;
+        this->base.pptr = this->base.pbase;
+    }
+    if (c != EOF) {
+        if (this->base.pbase >= this->base.epptr)
+            return fputc(c, this->file);
+        *this->base.pptr++ = c;
+    }
+    return 1;
 }
 
 /* ?pbackfail@stdiobuf@@UAEHH@Z */

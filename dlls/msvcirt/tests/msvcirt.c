@@ -209,6 +209,7 @@ static int (*__thiscall p_strstreambuf_underflow)(strstreambuf*);
 /* stdiobuf */
 static stdiobuf* (*__thiscall p_stdiobuf_file_ctor)(stdiobuf*, FILE*);
 static void (*__thiscall p_stdiobuf_dtor)(stdiobuf*);
+static int (*__thiscall p_stdiobuf_overflow)(stdiobuf*, int);
 
 /* ios */
 static ios* (*__thiscall p_ios_copy_ctor)(ios*, const ios*);
@@ -370,6 +371,7 @@ static BOOL init(void)
 
         SET(p_stdiobuf_file_ctor, "??0stdiobuf@@QEAA@PEAU_iobuf@@@Z");
         SET(p_stdiobuf_dtor, "??1stdiobuf@@UEAA@XZ");
+        SET(p_stdiobuf_overflow, "?overflow@stdiobuf@@UEAAHH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IEAA@AEBV0@@Z");
         SET(p_ios_ctor, "??0ios@@IEAA@XZ");
@@ -451,6 +453,7 @@ static BOOL init(void)
 
         SET(p_stdiobuf_file_ctor, "??0stdiobuf@@QAE@PAU_iobuf@@@Z");
         SET(p_stdiobuf_dtor, "??1stdiobuf@@UAE@XZ");
+        SET(p_stdiobuf_overflow, "?overflow@stdiobuf@@UAEHH@Z");
 
         SET(p_ios_copy_ctor, "??0ios@@IAE@ABV0@@Z");
         SET(p_ios_ctor, "??0ios@@IAE@XZ");
@@ -1828,6 +1831,8 @@ static void test_stdiobuf(void)
     FILE *file1, *file2;
     const char filename1[] = "stdiobuf_test1";
     const char filename2[] = "stdiobuf_test2";
+    int ret;
+    char buffer[64];
 
     memset(&stb1, 0xab, sizeof(stdiobuf));
     memset(&stb2, 0xab, sizeof(stdiobuf));
@@ -1854,6 +1859,59 @@ static void test_stdiobuf(void)
     ok(stb2.base.allocated == 0, "wrong allocate value, expected 0 got %d\n", stb2.base.allocated);
     ok(stb2.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", stb2.base.unbuffered);
     ok(stb2.file == file2, "wrong file pointer, expected %p got %p\n", file2, stb2.file);
+
+    /* overflow */
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb1, EOF);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb1, 'a');
+    ok(ret == EOF, "expected EOF got %d\n", ret);
+    stb1.base.unbuffered = 0;
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb1, 'a');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(stb1.base.allocated == 1, "wrong allocate value, expected 1 got %d\n", stb1.base.allocated);
+    ok(stb1.base.ebuf == stb1.base.base + 512, "expected %p got %p\n", stb1.base.base + 512, stb1.base.ebuf);
+    ok(stb1.base.pbase == stb1.base.base + 256, "wrong put base, expected %p got %p\n", stb1.base.base + 256, stb1.base.pbase);
+    ok(stb1.base.pptr == stb1.base.pbase + 1, "wrong put pointer, expected %p got %p\n", stb1.base.pbase + 1, stb1.base.pptr);
+    ok(stb1.base.epptr == stb1.base.ebuf, "wrong put end, expected %p got %p\n", stb1.base.ebuf, stb1.base.epptr);
+    ok(*(stb1.base.pptr-1) == 'a', "expected 'a', got '%c'\n", *(stb1.base.pptr-1));
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb1, EOF);
+    ok(ret == EOF, "expected EOF got %d\n", ret);
+    ok(stb1.base.pptr == stb1.base.pbase + 1, "wrong put pointer, expected %p got %p\n", stb1.base.pbase + 1, stb1.base.pptr);
+    stb1.base.pptr = stb1.base.pbase;
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb1, EOF);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(stb1.base.pptr == stb1.base.pbase, "wrong put pointer, expected %p got %p\n", stb1.base.pbase, stb1.base.pptr);
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb1, 'b');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(stb1.base.pptr == stb1.base.pbase + 1, "wrong put pointer, expected %p got %p\n", stb1.base.pbase + 1, stb1.base.pptr);
+    ok(*(stb1.base.pptr-1) == 'b', "expected 'b', got '%c'\n", *(stb1.base.pptr-1));
+    stb1.base.unbuffered = 1;
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb2, EOF);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb2, 'a');
+    ok(ret == 'a', "expected 'a' got %d\n", ret);
+    stb2.base.unbuffered = 0;
+    stb2.base.base = buffer;
+    stb2.base.pbase = stb2.base.pptr = buffer + 32;
+    stb2.base.ebuf = stb2.base.epptr = buffer + 64;
+    ret = (int) call_func3(p_streambuf_xsputn, &stb2.base, "Never gonna run around", 22);
+    ok(ret == 22, "expected 22 got %d\n", ret);
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb2, 'c');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(stb2.base.pptr == stb2.base.pbase + 1, "wrong put pointer, expected %p got %p\n", stb2.base.pbase + 1, stb2.base.pptr);
+    ok(*(stb2.base.pptr-1) == 'c', "expected 'c', got '%c'\n", *(stb2.base.pptr-1));
+    stb2.base.pbase = stb2.base.pptr + 3;
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb2, 'd');
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(stb2.base.pptr == stb2.base.pbase - 2, "wrong put pointer, expected %p got %p\n", stb2.base.pbase - 2, stb2.base.pptr);
+    ok(*(stb2.base.pptr-1) == 'd', "expected 'd', got '%c'\n", *(stb2.base.pptr-1));
+    stb2.base.pbase = stb2.base.pptr = buffer + 32;
+    stb2.base.epptr = buffer + 30;
+    ret = (int) call_func2(p_stdiobuf_overflow, &stb2, 'd');
+    ok(ret == 'd', "expected 'd' got %d\n", ret);
+    ok(stb2.base.pptr == stb2.base.pbase, "wrong put pointer, expected %p got %p\n", stb2.base.pbase, stb2.base.pptr);
+    stb2.base.epptr = buffer + 64;
+    stb2.base.unbuffered = 1;
 
     call_func1(p_stdiobuf_dtor, &stb1);
     call_func1(p_stdiobuf_dtor, &stb2);
