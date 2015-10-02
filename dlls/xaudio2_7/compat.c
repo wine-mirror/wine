@@ -580,3 +580,606 @@ const IXAudio27Vtbl XAudio27_Vtbl = {
     XA27_GetPerformanceData,
     XA27_SetDebugConfiguration
 };
+
+XA2SourceImpl *impl_from_IXAudio23SourceVoice(IXAudio23SourceVoice *iface)
+{
+    return CONTAINING_RECORD(iface, XA2SourceImpl, IXAudio23SourceVoice_iface);
+}
+
+static void WINAPI XA23SRC_GetVoiceDetails(IXAudio23SourceVoice *iface,
+        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetVoiceDetails(&This->IXAudio2SourceVoice_iface, pVoiceDetails);
+}
+
+static HRESULT WINAPI XA23SRC_SetOutputVoices(IXAudio23SourceVoice *iface,
+        const XAUDIO23_VOICE_SENDS *pSendList)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    XAUDIO2_VOICE_SENDS sends;
+    HRESULT hr;
+    DWORD i;
+
+    TRACE("%p, %p\n", This, pSendList);
+
+    sends.SendCount = pSendList->OutputCount;
+    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
+    for(i = 0; i < sends.SendCount; ++i){
+        sends.pSends[i].Flags = 0;
+        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    }
+
+    hr = IXAudio2SourceVoice_SetOutputVoices(&This->IXAudio2SourceVoice_iface, &sends);
+
+    HeapFree(GetProcessHeap(), 0, sends.pSends);
+
+    return hr;
+}
+
+static HRESULT WINAPI XA23SRC_SetEffectChain(IXAudio23SourceVoice *iface,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_SetEffectChain(&This->IXAudio2SourceVoice_iface, pEffectChain);
+}
+
+static HRESULT WINAPI XA23SRC_EnableEffect(IXAudio23SourceVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_EnableEffect(&This->IXAudio2SourceVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static HRESULT WINAPI XA23SRC_DisableEffect(IXAudio23SourceVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_DisableEffect(&This->IXAudio2SourceVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static void WINAPI XA23SRC_GetEffectState(IXAudio23SourceVoice *iface,
+        UINT32 EffectIndex, BOOL *pEnabled)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetEffectState(&This->IXAudio2SourceVoice_iface,
+            EffectIndex, pEnabled);
+}
+
+static HRESULT WINAPI XA23SRC_SetEffectParameters(IXAudio23SourceVoice *iface,
+        UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize,
+        UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_SetEffectParameters(&This->IXAudio2SourceVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize, OperationSet);
+}
+
+static HRESULT WINAPI XA23SRC_GetEffectParameters(IXAudio23SourceVoice *iface,
+        UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetEffectParameters(&This->IXAudio2SourceVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize);
+}
+
+static HRESULT WINAPI XA23SRC_SetFilterParameters(IXAudio23SourceVoice *iface,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_SetFilterParameters(&This->IXAudio2SourceVoice_iface,
+            pParameters, OperationSet);
+}
+
+static void WINAPI XA23SRC_GetFilterParameters(IXAudio23SourceVoice *iface,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetFilterParameters(&This->IXAudio2SourceVoice_iface, pParameters);
+}
+
+static HRESULT WINAPI XA23SRC_SetVolume(IXAudio23SourceVoice *iface,
+        float Volume, UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_SetVolume(&This->IXAudio2SourceVoice_iface,
+            Volume, OperationSet);
+}
+
+static void WINAPI XA23SRC_GetVolume(IXAudio23SourceVoice *iface,
+        float *pVolume)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetVolume(&This->IXAudio2SourceVoice_iface, pVolume);
+}
+
+static HRESULT WINAPI XA23SRC_SetChannelVolumes(IXAudio23SourceVoice *iface,
+        UINT32 Channels, const float *pVolumes, UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_SetChannelVolumes(&This->IXAudio2SourceVoice_iface,
+            Channels, pVolumes, OperationSet);
+}
+
+static void WINAPI XA23SRC_GetChannelVolumes(IXAudio23SourceVoice *iface,
+        UINT32 Channels, float *pVolumes)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetChannelVolumes(&This->IXAudio2SourceVoice_iface,
+            Channels, pVolumes);
+}
+
+static HRESULT WINAPI XA23SRC_SetOutputMatrix(IXAudio23SourceVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels,
+        UINT32 DestinationChannels, const float *pLevelMatrix,
+        UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_SetOutputMatrix(&This->IXAudio2SourceVoice_iface,
+            pDestinationVoice, SourceChannels, DestinationChannels,
+            pLevelMatrix, OperationSet);
+}
+
+static void WINAPI XA23SRC_GetOutputMatrix(IXAudio23SourceVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SourceChannels,
+        UINT32 DestinationChannels, float *pLevelMatrix)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetOutputMatrix(&This->IXAudio2SourceVoice_iface,
+            pDestinationVoice, SourceChannels, DestinationChannels,
+            pLevelMatrix);
+}
+
+static void WINAPI XA23SRC_DestroyVoice(IXAudio23SourceVoice *iface)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_DestroyVoice(&This->IXAudio2SourceVoice_iface);
+}
+
+static HRESULT WINAPI XA23SRC_Start(IXAudio23SourceVoice *iface, UINT32 Flags,
+        UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_Start(&This->IXAudio2SourceVoice_iface, Flags, OperationSet);
+}
+
+static HRESULT WINAPI XA23SRC_Stop(IXAudio23SourceVoice *iface, UINT32 Flags,
+        UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_Stop(&This->IXAudio2SourceVoice_iface, Flags, OperationSet);
+}
+
+static HRESULT WINAPI XA23SRC_SubmitSourceBuffer(IXAudio23SourceVoice *iface,
+        const XAUDIO2_BUFFER *pBuffer, const XAUDIO2_BUFFER_WMA *pBufferWMA)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_SubmitSourceBuffer(&This->IXAudio2SourceVoice_iface,
+            pBuffer, pBufferWMA);
+}
+
+static HRESULT WINAPI XA23SRC_FlushSourceBuffers(IXAudio23SourceVoice *iface)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_FlushSourceBuffers(&This->IXAudio2SourceVoice_iface);
+}
+
+static HRESULT WINAPI XA23SRC_Discontinuity(IXAudio23SourceVoice *iface)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_Discontinuity(&This->IXAudio2SourceVoice_iface);
+}
+
+static HRESULT WINAPI XA23SRC_ExitLoop(IXAudio23SourceVoice *iface,
+        UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_ExitLoop(&This->IXAudio2SourceVoice_iface, OperationSet);
+}
+
+static void WINAPI XA23SRC_GetState(IXAudio23SourceVoice *iface,
+        XAUDIO2_VOICE_STATE *pVoiceState)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetState(&This->IXAudio2SourceVoice_iface, pVoiceState, 0);
+}
+
+static HRESULT WINAPI XA23SRC_SetFrequencyRatio(IXAudio23SourceVoice *iface,
+        float Ratio, UINT32 OperationSet)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_SetFrequencyRatio(&This->IXAudio2SourceVoice_iface,
+            Ratio, OperationSet);
+}
+
+static void WINAPI XA23SRC_GetFrequencyRatio(IXAudio23SourceVoice *iface,
+        float *pRatio)
+{
+    XA2SourceImpl *This = impl_from_IXAudio23SourceVoice(iface);
+    return IXAudio2SourceVoice_GetFrequencyRatio(&This->IXAudio2SourceVoice_iface, pRatio);
+}
+
+const IXAudio23SourceVoiceVtbl XAudio23SourceVoice_Vtbl = {
+    XA23SRC_GetVoiceDetails,
+    XA23SRC_SetOutputVoices,
+    XA23SRC_SetEffectChain,
+    XA23SRC_EnableEffect,
+    XA23SRC_DisableEffect,
+    XA23SRC_GetEffectState,
+    XA23SRC_SetEffectParameters,
+    XA23SRC_GetEffectParameters,
+    XA23SRC_SetFilterParameters,
+    XA23SRC_GetFilterParameters,
+    XA23SRC_SetVolume,
+    XA23SRC_GetVolume,
+    XA23SRC_SetChannelVolumes,
+    XA23SRC_GetChannelVolumes,
+    XA23SRC_SetOutputMatrix,
+    XA23SRC_GetOutputMatrix,
+    XA23SRC_DestroyVoice,
+    XA23SRC_Start,
+    XA23SRC_Stop,
+    XA23SRC_SubmitSourceBuffer,
+    XA23SRC_FlushSourceBuffers,
+    XA23SRC_Discontinuity,
+    XA23SRC_ExitLoop,
+    XA23SRC_GetState,
+    XA23SRC_SetFrequencyRatio,
+    XA23SRC_GetFrequencyRatio,
+};
+
+XA2SubmixImpl *impl_from_IXAudio23SubmixVoice(IXAudio23SubmixVoice *iface)
+{
+    return CONTAINING_RECORD(iface, XA2SubmixImpl, IXAudio23SubmixVoice_iface);
+}
+
+static void WINAPI XA23SUB_GetVoiceDetails(IXAudio23SubmixVoice *iface,
+        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetVoiceDetails(&This->IXAudio2SubmixVoice_iface, pVoiceDetails);
+}
+
+static HRESULT WINAPI XA23SUB_SetOutputVoices(IXAudio23SubmixVoice *iface,
+        const XAUDIO23_VOICE_SENDS *pSendList)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    XAUDIO2_VOICE_SENDS sends;
+    HRESULT hr;
+    DWORD i;
+
+    TRACE("%p, %p\n", This, pSendList);
+
+    sends.SendCount = pSendList->OutputCount;
+    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
+    for(i = 0; i < sends.SendCount; ++i){
+        sends.pSends[i].Flags = 0;
+        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    }
+
+    hr = IXAudio2SubmixVoice_SetOutputVoices(&This->IXAudio2SubmixVoice_iface, &sends);
+
+    HeapFree(GetProcessHeap(), 0, sends.pSends);
+
+    return hr;
+}
+
+static HRESULT WINAPI XA23SUB_SetEffectChain(IXAudio23SubmixVoice *iface,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetEffectChain(&This->IXAudio2SubmixVoice_iface, pEffectChain);
+}
+
+static HRESULT WINAPI XA23SUB_EnableEffect(IXAudio23SubmixVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_EnableEffect(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static HRESULT WINAPI XA23SUB_DisableEffect(IXAudio23SubmixVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_DisableEffect(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static void WINAPI XA23SUB_GetEffectState(IXAudio23SubmixVoice *iface,
+        UINT32 EffectIndex, BOOL *pEnabled)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetEffectState(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, pEnabled);
+}
+
+static HRESULT WINAPI XA23SUB_SetEffectParameters(IXAudio23SubmixVoice *iface,
+        UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetEffectParameters(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize, OperationSet);
+}
+
+static HRESULT WINAPI XA23SUB_GetEffectParameters(IXAudio23SubmixVoice *iface,
+        UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetEffectParameters(&This->IXAudio2SubmixVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize);
+}
+
+static HRESULT WINAPI XA23SUB_SetFilterParameters(IXAudio23SubmixVoice *iface,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetFilterParameters(&This->IXAudio2SubmixVoice_iface,
+            pParameters, OperationSet);
+}
+
+static void WINAPI XA23SUB_GetFilterParameters(IXAudio23SubmixVoice *iface,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetFilterParameters(&This->IXAudio2SubmixVoice_iface, pParameters);
+}
+
+static HRESULT WINAPI XA23SUB_SetVolume(IXAudio23SubmixVoice *iface,
+        float Volume, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetVolume(&This->IXAudio2SubmixVoice_iface,
+            Volume, OperationSet);
+}
+
+static void WINAPI XA23SUB_GetVolume(IXAudio23SubmixVoice *iface,
+        float *pVolume)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetVolume(&This->IXAudio2SubmixVoice_iface, pVolume);
+}
+
+static HRESULT WINAPI XA23SUB_SetChannelVolumes(IXAudio23SubmixVoice *iface,
+        UINT32 Channels, const float *pVolumes, UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetChannelVolumes(&This->IXAudio2SubmixVoice_iface,
+            Channels, pVolumes, OperationSet);
+}
+
+static void WINAPI XA23SUB_GetChannelVolumes(IXAudio23SubmixVoice *iface,
+        UINT32 Channels, float *pVolumes)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetChannelVolumes(&This->IXAudio2SubmixVoice_iface,
+            Channels, pVolumes);
+}
+
+static HRESULT WINAPI XA23SUB_SetOutputMatrix(IXAudio23SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SubmixChannels,
+        UINT32 DestinationChannels, const float *pLevelMatrix,
+        UINT32 OperationSet)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_SetOutputMatrix(&This->IXAudio2SubmixVoice_iface,
+            pDestinationVoice, SubmixChannels, DestinationChannels,
+            pLevelMatrix, OperationSet);
+}
+
+static void WINAPI XA23SUB_GetOutputMatrix(IXAudio23SubmixVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 SubmixChannels,
+        UINT32 DestinationChannels, float *pLevelMatrix)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_GetOutputMatrix(&This->IXAudio2SubmixVoice_iface,
+            pDestinationVoice, SubmixChannels, DestinationChannels,
+            pLevelMatrix);
+}
+
+static void WINAPI XA23SUB_DestroyVoice(IXAudio23SubmixVoice *iface)
+{
+    XA2SubmixImpl *This = impl_from_IXAudio23SubmixVoice(iface);
+    return IXAudio2SubmixVoice_DestroyVoice(&This->IXAudio2SubmixVoice_iface);
+}
+
+const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl = {
+    XA23SUB_GetVoiceDetails,
+    XA23SUB_SetOutputVoices,
+    XA23SUB_SetEffectChain,
+    XA23SUB_EnableEffect,
+    XA23SUB_DisableEffect,
+    XA23SUB_GetEffectState,
+    XA23SUB_SetEffectParameters,
+    XA23SUB_GetEffectParameters,
+    XA23SUB_SetFilterParameters,
+    XA23SUB_GetFilterParameters,
+    XA23SUB_SetVolume,
+    XA23SUB_GetVolume,
+    XA23SUB_SetChannelVolumes,
+    XA23SUB_GetChannelVolumes,
+    XA23SUB_SetOutputMatrix,
+    XA23SUB_GetOutputMatrix,
+    XA23SUB_DestroyVoice
+};
+
+IXAudio2Impl *impl_from_IXAudio23MasteringVoice(IXAudio23MasteringVoice *iface)
+{
+    return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio23MasteringVoice_iface);
+}
+
+static void WINAPI XA23M_GetVoiceDetails(IXAudio23MasteringVoice *iface,
+        XAUDIO2_VOICE_DETAILS *pVoiceDetails)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetVoiceDetails(&This->IXAudio2MasteringVoice_iface, pVoiceDetails);
+}
+
+static HRESULT WINAPI XA23M_SetOutputVoices(IXAudio23MasteringVoice *iface,
+        const XAUDIO23_VOICE_SENDS *pSendList)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    XAUDIO2_VOICE_SENDS sends;
+    HRESULT hr;
+    DWORD i;
+
+    TRACE("%p, %p\n", This, pSendList);
+
+    sends.SendCount = pSendList->OutputCount;
+    sends.pSends = HeapAlloc(GetProcessHeap(), 0, sends.SendCount * sizeof(*sends.pSends));
+    for(i = 0; i < sends.SendCount; ++i){
+        sends.pSends[i].Flags = 0;
+        sends.pSends[i].pOutputVoice = pSendList->pOutputVoices[i];
+    }
+
+    hr = IXAudio2MasteringVoice_SetOutputVoices(&This->IXAudio2MasteringVoice_iface, &sends);
+
+    HeapFree(GetProcessHeap(), 0, sends.pSends);
+
+    return hr;
+}
+
+static HRESULT WINAPI XA23M_SetEffectChain(IXAudio23MasteringVoice *iface,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetEffectChain(&This->IXAudio2MasteringVoice_iface, pEffectChain);
+}
+
+static HRESULT WINAPI XA23M_EnableEffect(IXAudio23MasteringVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_EnableEffect(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static HRESULT WINAPI XA23M_DisableEffect(IXAudio23MasteringVoice *iface,
+        UINT32 EffectIndex, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_DisableEffect(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, OperationSet);
+}
+
+static void WINAPI XA23M_GetEffectState(IXAudio23MasteringVoice *iface,
+        UINT32 EffectIndex, BOOL *pEnabled)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetEffectState(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, pEnabled);
+}
+
+static HRESULT WINAPI XA23M_SetEffectParameters(IXAudio23MasteringVoice *iface,
+        UINT32 EffectIndex, const void *pParameters, UINT32 ParametersByteSize,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetEffectParameters(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize, OperationSet);
+}
+
+static HRESULT WINAPI XA23M_GetEffectParameters(IXAudio23MasteringVoice *iface,
+        UINT32 EffectIndex, void *pParameters, UINT32 ParametersByteSize)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetEffectParameters(&This->IXAudio2MasteringVoice_iface,
+            EffectIndex, pParameters, ParametersByteSize);
+}
+
+static HRESULT WINAPI XA23M_SetFilterParameters(IXAudio23MasteringVoice *iface,
+        const XAUDIO2_FILTER_PARAMETERS *pParameters, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetFilterParameters(&This->IXAudio2MasteringVoice_iface,
+            pParameters, OperationSet);
+}
+
+static void WINAPI XA23M_GetFilterParameters(IXAudio23MasteringVoice *iface,
+        XAUDIO2_FILTER_PARAMETERS *pParameters)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetFilterParameters(&This->IXAudio2MasteringVoice_iface, pParameters);
+}
+
+static HRESULT WINAPI XA23M_SetVolume(IXAudio23MasteringVoice *iface,
+        float Volume, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetVolume(&This->IXAudio2MasteringVoice_iface,
+            Volume, OperationSet);
+}
+
+static void WINAPI XA23M_GetVolume(IXAudio23MasteringVoice *iface,
+        float *pVolume)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetVolume(&This->IXAudio2MasteringVoice_iface, pVolume);
+}
+
+static HRESULT WINAPI XA23M_SetChannelVolumes(IXAudio23MasteringVoice *iface,
+        UINT32 Channels, const float *pVolumes, UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetChannelVolumes(&This->IXAudio2MasteringVoice_iface,
+            Channels, pVolumes, OperationSet);
+}
+
+static void WINAPI XA23M_GetChannelVolumes(IXAudio23MasteringVoice *iface,
+        UINT32 Channels, float *pVolumes)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetChannelVolumes(&This->IXAudio2MasteringVoice_iface,
+            Channels, pVolumes);
+}
+
+static HRESULT WINAPI XA23M_SetOutputMatrix(IXAudio23MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 MasteringChannels,
+        UINT32 DestinationChannels, const float *pLevelMatrix,
+        UINT32 OperationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_SetOutputMatrix(&This->IXAudio2MasteringVoice_iface,
+            pDestinationVoice, MasteringChannels, DestinationChannels,
+            pLevelMatrix, OperationSet);
+}
+
+static void WINAPI XA23M_GetOutputMatrix(IXAudio23MasteringVoice *iface,
+        IXAudio2Voice *pDestinationVoice, UINT32 MasteringChannels,
+        UINT32 DestinationChannels, float *pLevelMatrix)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_GetOutputMatrix(&This->IXAudio2MasteringVoice_iface,
+            pDestinationVoice, MasteringChannels, DestinationChannels,
+            pLevelMatrix);
+}
+
+static void WINAPI XA23M_DestroyVoice(IXAudio23MasteringVoice *iface)
+{
+    IXAudio2Impl *This = impl_from_IXAudio23MasteringVoice(iface);
+    return IXAudio2MasteringVoice_DestroyVoice(&This->IXAudio2MasteringVoice_iface);
+}
+
+const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl = {
+    XA23M_GetVoiceDetails,
+    XA23M_SetOutputVoices,
+    XA23M_SetEffectChain,
+    XA23M_EnableEffect,
+    XA23M_DisableEffect,
+    XA23M_GetEffectState,
+    XA23M_SetEffectParameters,
+    XA23M_GetEffectParameters,
+    XA23M_SetFilterParameters,
+    XA23M_GetFilterParameters,
+    XA23M_SetVolume,
+    XA23M_GetVolume,
+    XA23M_SetChannelVolumes,
+    XA23M_GetChannelVolumes,
+    XA23M_SetOutputMatrix,
+    XA23M_GetOutputMatrix,
+    XA23M_DestroyVoice
+};

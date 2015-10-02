@@ -1348,6 +1348,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
 
         list_add_head(&This->source_voices, &src->entry);
 
+        src->IXAudio23SourceVoice_iface.lpVtbl = &XAudio23SourceVoice_Vtbl;
         src->IXAudio27SourceVoice_iface.lpVtbl = &XAudio27SourceVoice_Vtbl;
         src->IXAudio2SourceVoice_iface.lpVtbl = &XAudio2SourceVoice_Vtbl;
 
@@ -1386,7 +1387,9 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
 
     alSourcePlay(src->al_src);
 
-    if(This->version == 27)
+    if(This->version <= 23)
+        *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio23SourceVoice_iface;
+    else if(This->version <= 27)
         *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio27SourceVoice_iface;
     else
         *ppSourceVoice = &src->IXAudio2SourceVoice_iface;
@@ -1425,6 +1428,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
 
         list_add_head(&This->submix_voices, &sub->entry);
 
+        sub->IXAudio23SubmixVoice_iface.lpVtbl = &XAudio23SubmixVoice_Vtbl;
         sub->IXAudio2SubmixVoice_iface.lpVtbl = &XAudio2SubmixVoice_Vtbl;
 
         InitializeCriticalSection(&sub->lock);
@@ -1435,7 +1439,10 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
 
     LeaveCriticalSection(&This->lock);
 
-    *ppSubmixVoice = &sub->IXAudio2SubmixVoice_iface;
+    if(This->version <= 23)
+        *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio23SubmixVoice_iface;
+    else
+        *ppSubmixVoice = &sub->IXAudio2SubmixVoice_iface;
 
     TRACE("Created submix voice: %p\n", sub);
 
@@ -1658,7 +1665,10 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
 
     IAudioClient_Start(This->aclient);
 
-    *ppMasteringVoice = &This->IXAudio2MasteringVoice_iface;
+    if(This->version <= 23)
+        *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio23MasteringVoice_iface;
+    else
+        *ppMasteringVoice = &This->IXAudio2MasteringVoice_iface;
 
 exit:
     if(FAILED(hr)){
@@ -2159,6 +2169,17 @@ static const IXAPOParametersVtbl RVBXAPOParameters_Vtbl = {
     RVBXAPOParams_GetParameters
 };
 
+struct xaudio2_cf {
+    IClassFactory IClassFactory_iface;
+    LONG ref;
+    DWORD version;
+};
+
+struct xaudio2_cf *impl_from_IClassFactory(IClassFactory *iface)
+{
+    return CONTAINING_RECORD(iface, struct xaudio2_cf, IClassFactory_iface);
+}
+
 static HRESULT WINAPI XAudio2CF_QueryInterface(IClassFactory *iface, REFIID riid, void **ppobj)
 {
     if(IsEqualGUID(riid, &IID_IUnknown)
@@ -2176,12 +2197,20 @@ static HRESULT WINAPI XAudio2CF_QueryInterface(IClassFactory *iface, REFIID riid
 
 static ULONG WINAPI XAudio2CF_AddRef(IClassFactory *iface)
 {
-    return 2;
+    struct xaudio2_cf *This = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    return ref;
 }
 
 static ULONG WINAPI XAudio2CF_Release(IClassFactory *iface)
 {
-    return 1;
+    struct xaudio2_cf *This = impl_from_IClassFactory(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    if (!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+    return ref;
 }
 
 static HRESULT initialize_mmdevices(IXAudio2Impl *This)
@@ -2260,10 +2289,11 @@ static HRESULT initialize_mmdevices(IXAudio2Impl *This)
 static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
                                                REFIID riid, void **ppobj)
 {
+    struct xaudio2_cf *This = impl_from_IClassFactory(iface);
     HRESULT hr;
     IXAudio2Impl *object;
 
-    TRACE("(static)->(%p,%s,%p)\n", pOuter, debugstr_guid(riid), ppobj);
+    TRACE("(%p)->(%p,%s,%p)\n", This, pOuter, debugstr_guid(riid), ppobj);
 
     *ppobj = NULL;
 
@@ -2276,11 +2306,12 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
 
     object->IXAudio27_iface.lpVtbl = &XAudio27_Vtbl;
     object->IXAudio2_iface.lpVtbl = &XAudio2_Vtbl;
+    object->IXAudio23MasteringVoice_iface.lpVtbl = &XAudio23MasteringVoice_Vtbl;
     object->IXAudio2MasteringVoice_iface.lpVtbl = &XAudio2MasteringVoice_Vtbl;
 
     if(IsEqualGUID(riid, &IID_IXAudio27))
-        object->version = 27;
-    else
+        object->version = This->version;
+    else /* only xaudio 2.8 has a different IID */
         object->version = 28;
 
     list_init(&object->source_voices);
@@ -2308,6 +2339,16 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     IXAudio2_StartEngine(&object->IXAudio2_iface);
 
     return hr;
+}
+
+static ULONG WINAPI static_AddRef(IClassFactory *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI static_Release(IClassFactory *iface)
+{
+    return 1;
 }
 
 static HRESULT WINAPI VUMeterCF_CreateInstance(IClassFactory *iface, IUnknown *pOuter,
@@ -2386,8 +2427,8 @@ static const IClassFactoryVtbl XAudio2CF_Vtbl =
 static const IClassFactoryVtbl VUMeterCF_Vtbl =
 {
     XAudio2CF_QueryInterface,
-    XAudio2CF_AddRef,
-    XAudio2CF_Release,
+    static_AddRef,
+    static_Release,
     VUMeterCF_CreateInstance,
     XAudio2CF_LockServer
 };
@@ -2395,15 +2436,23 @@ static const IClassFactoryVtbl VUMeterCF_Vtbl =
 static const IClassFactoryVtbl ReverbCF_Vtbl =
 {
     XAudio2CF_QueryInterface,
-    XAudio2CF_AddRef,
-    XAudio2CF_Release,
+    static_AddRef,
+    static_Release,
     ReverbCF_CreateInstance,
     XAudio2CF_LockServer
 };
 
-static IClassFactory xaudio2_cf = { &XAudio2CF_Vtbl };
 static IClassFactory vumeter_cf = { &VUMeterCF_Vtbl };
 static IClassFactory reverb_cf = { &ReverbCF_Vtbl };
+
+static IClassFactory *make_xaudio2_factory(DWORD version)
+{
+    struct xaudio2_cf *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xaudio2_cf));
+    ret->IClassFactory_iface.lpVtbl = &XAudio2CF_Vtbl;
+    ret->version = version;
+    ret->ref = 0;
+    return &ret->IClassFactory_iface;
+}
 
 HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 {
@@ -2411,8 +2460,10 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if(IsEqualGUID(rclsid, &CLSID_XAudio2)) {
-        factory = &xaudio2_cf;
+    if IsEqualGUID(rclsid, &CLSID_XAudio23){
+        factory = make_xaudio2_factory(23);
+    }else if(IsEqualGUID(rclsid, &CLSID_XAudio2)){
+        factory = make_xaudio2_factory(27);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter)) {
         factory = &vumeter_cf;
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb)) {

@@ -42,6 +42,7 @@ typedef struct _XA2Buffer {
 typedef struct _IXAudio2Impl IXAudio2Impl;
 
 typedef struct _XA2SourceImpl {
+    IXAudio23SourceVoice IXAudio23SourceVoice_iface;
     IXAudio27SourceVoice IXAudio27SourceVoice_iface;
     IXAudio2SourceVoice IXAudio2SourceVoice_iface;
 
@@ -80,6 +81,7 @@ typedef struct _XA2SourceImpl {
 } XA2SourceImpl;
 
 typedef struct _XA2SubmixImpl {
+    IXAudio23SubmixVoice IXAudio23SubmixVoice_iface;
     IXAudio2SubmixVoice IXAudio2SubmixVoice_iface;
 
     BOOL in_use;
@@ -92,6 +94,7 @@ typedef struct _XA2SubmixImpl {
 struct _IXAudio2Impl {
     IXAudio27 IXAudio27_iface;
     IXAudio2 IXAudio2_iface;
+    IXAudio23MasteringVoice IXAudio23MasteringVoice_iface;
     IXAudio2MasteringVoice IXAudio2MasteringVoice_iface;
 
     LONG ref;
@@ -129,3 +132,7 @@ struct _IXAudio2Impl {
 
 extern const IXAudio27SourceVoiceVtbl XAudio27SourceVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio27Vtbl XAudio27_Vtbl DECLSPEC_HIDDEN;
+
+extern const IXAudio23SourceVoiceVtbl XAudio23SourceVoice_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl DECLSPEC_HIDDEN;
