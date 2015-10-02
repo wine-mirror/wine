@@ -1589,8 +1589,8 @@ int __thiscall stdiobuf_setrwbuf(stdiobuf *this, int read_size, int write_size)
 DEFINE_THISCALL_WRAPPER(stdiobuf_stdiofile, 4)
 FILE* __thiscall stdiobuf_stdiofile(stdiobuf *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+    return this->file;
 }
 
 /* ?sync@stdiobuf@@UAEHXZ */
