@@ -1,0 +1,7 @@
+MODULE    = xaudio2_4.dll
+IMPORTS   = ole32
+
+C_SRCS = \
+	xaudio_dll.c
+
+IDL_SRCS = xaudio_classes.idl

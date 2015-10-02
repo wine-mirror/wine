@@ -2462,6 +2462,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     if IsEqualGUID(rclsid, &CLSID_XAudio23){
         factory = make_xaudio2_factory(23);
+    }else if(IsEqualGUID(rclsid, &CLSID_XAudio24)){
+        factory = make_xaudio2_factory(24);
     }else if(IsEqualGUID(rclsid, &CLSID_XAudio2)){
         factory = make_xaudio2_factory(27);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter)) {

@@ -38,6 +38,13 @@ coclass XAudio23 {
 }
 
 [
+    uuid(03219e78-5bc3-44d1-b92e-f63d89cc6526)
+]
+coclass XAudio24 {
+    interface IUnknown;
+}
+
+[
     uuid(db05ea35-0329-4d4b-a53a-6dead03d3852)
 ]
 coclass XAudio2Debug {
