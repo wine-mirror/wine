@@ -3,6 +3,7 @@ IMPORTS   = advapi32 kernel32 ole32 user32 uuid
 EXTRALIBS = $(OPENAL_LIBS)
 
 C_SRCS = \
+	compat.c \
 	xaudio_dll.c
 
 IDL_SRCS = xaudio_classes.idl
