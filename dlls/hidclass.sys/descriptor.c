@@ -414,7 +414,7 @@ void parse_io_feature(unsigned int bSize, int itemVal, int bTag, unsigned int *f
         if ((itemVal & INPUT_ARRAY) == 0)
             feature->isArray= TRUE;
         else
-            feature->isArray= TRUE; /* Var */
+            feature->isArray= FALSE; /* Var */
         if ((itemVal & INPUT_ABS) == 0)
             feature->IsAbsolute = TRUE;
         else
