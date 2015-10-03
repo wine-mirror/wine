@@ -646,10 +646,13 @@ static void test_GetModuleFileNameEx(void)
         "szModExPath=\"%s\" ret=%d\n", szModExPath, ret );
     ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    ret = pGetModuleFileNameExA(hpQV, NULL, szModExPath, 0 );
-    ok( ret == 0, "wrong length %u\n", ret );
-    ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %d\n", GetLastError());
+    if (0) /* crashes on Windows 10 */
+    {
+        SetLastError(0xdeadbeef);
+        ret = pGetModuleFileNameExA(hpQV, NULL, szModExPath, 0 );
+        ok( ret == 0, "wrong length %u\n", ret );
+        ok(GetLastError() == ERROR_INVALID_PARAMETER, "got error %d\n", GetLastError());
+    }
 
     SetLastError(0xdeadbeef);
     memset( buffer, 0xcc, sizeof(buffer) );
@@ -659,12 +662,15 @@ static void test_GetModuleFileNameEx(void)
         "buffer=%s ret=%d\n", wine_dbgstr_w(buffer), ret );
     ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
 
-    SetLastError(0xdeadbeef);
-    buffer[0] = 0xcc;
-    ret = pGetModuleFileNameExW(hpQV, NULL, buffer, 0 );
-    ok( ret == 0, "wrong length %u\n", ret );
-    ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
-    ok( buffer[0] == 0xcc, "buffer modified %s\n", wine_dbgstr_w(buffer) );
+    if (0) /* crashes on Windows 10 */
+    {
+        SetLastError(0xdeadbeef);
+        buffer[0] = 0xcc;
+        ret = pGetModuleFileNameExW(hpQV, NULL, buffer, 0 );
+        ok( ret == 0, "wrong length %u\n", ret );
+        ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
+        ok( buffer[0] == 0xcc, "buffer modified %s\n", wine_dbgstr_w(buffer) );
+    }
 }
 
 static void test_GetModuleBaseName(void)
