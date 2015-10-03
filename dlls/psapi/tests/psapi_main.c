@@ -624,7 +624,7 @@ static void test_GetModuleFileNameEx(void)
     SetLastError(0xdeadbeef);
     memset( szModExPath, 0xcc, sizeof(szModExPath) );
     ret = pGetModuleFileNameExA(hpQV, NULL, szModExPath, 4 );
-    ok( ret == 4, "wrong length %u\n", ret );
+    ok( ret == 4 || ret == strlen(szModExPath), "wrong length %u\n", ret );
     ok( broken(szModExPath[3]) /*w2kpro*/ || strlen(szModExPath) == 3,
         "szModExPath=\"%s\" ret=%d\n", szModExPath, ret );
     ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
@@ -640,7 +640,7 @@ static void test_GetModuleFileNameEx(void)
     SetLastError(0xdeadbeef);
     memset( buffer, 0xcc, sizeof(buffer) );
     ret = pGetModuleFileNameExW(hpQV, NULL, buffer, 4 );
-    ok( ret == 4, "wrong length %u\n", ret );
+    ok( ret == 4 || ret == lstrlenW(buffer), "wrong length %u\n", ret );
     ok( broken(buffer[3]) /*w2kpro*/ || lstrlenW(buffer) == 3,
         "buffer=%s ret=%d\n", wine_dbgstr_w(buffer), ret );
     ok(GetLastError() == 0xdeadbeef, "got error %d\n", GetLastError());
