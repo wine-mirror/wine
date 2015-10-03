@@ -85,8 +85,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wineboot);
 
-#define MAX_LINE_LENGTH (2*MAX_PATH+2)
-
 extern BOOL shutdown_close_windows( BOOL force );
 extern BOOL shutdown_all_desktops( BOOL force );
 extern void kill_processes( BOOL kill_desktop );
