@@ -147,23 +147,6 @@ static void test_EnumProcessModules(void)
     ok(hMod == GetModuleHandleA(NULL),
        "hMod=%p GetModuleHandleA(NULL)=%p\n", hMod, GetModuleHandleA(NULL));
     ok(cbNeeded % sizeof(hMod) == 0, "not a multiple of sizeof(HMODULE) cbNeeded=%d\n", cbNeeded);
-    /* Windows sometimes has a bunch of extra dlls, presumably brought in by
-     * aclayers.dll.
-     */
-    if (cbNeeded < 4 * sizeof(HMODULE) || cbNeeded > 30 * sizeof(HMODULE))
-    {
-        HMODULE hmods[100];
-        int i;
-        ok(0, "cbNeeded=%d\n", cbNeeded);
-
-        pEnumProcessModules(hpQV, hmods, sizeof(hmods), &cbNeeded);
-        for (i = 0 ; i < cbNeeded/sizeof(*hmods); i++)
-        {
-            char path[1024];
-            GetModuleFileNameA(hmods[i], path, sizeof(path));
-            trace("i=%d hmod=%p path=[%s]\n", i, hmods[i], path);
-        }
-    }
 }
 
 static void test_GetModuleInformation(void)
