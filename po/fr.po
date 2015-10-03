@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-07-18 09:12+0100\n"
+"PO-Revision-Date: 2015-10-03 11:45+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -7496,16 +7496,12 @@ msgid "&Convert..."
 msgstr "&Convertir..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Objet"
+msgstr "&Objet %1 %2"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Objet"
+msgstr "&Objet %1"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -9310,11 +9306,11 @@ msgstr "Volume"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Volume principal"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Muet"
 
 #: winspool.rc:37
 msgid "Print to File"
@@ -13010,18 +13006,18 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "uninstaller : l'application de GUID « %1 » est introuvable\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"uninstaller : l'option « --remove » doit être suivie d'un GUID "
+"d'application\n"
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Erreur : option « %c » invalide.\n"
+msgstr "uninstaller : option [%1] invalide\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -13030,6 +13026,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Programme de désinstallation des applications Wine\n"
+"\n"
+"Désinstalle des applications du préfixe Wine courant.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -13044,6 +13044,17 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"Usage :\n"
+"  uninstaller [options]\n"
+"\n"
+"Options :\n"
+"  --help\t    Afficher ces informations.\n"
+"  --list\t    Lister toutes les applications installées dans ce préfix "
+"Wine.\n"
+"  --remove {GUID}   Désinstaller l'application spécifiée.\n"
+"\t\t    Utilisez « --list » pour déterminer le GUID de l'application.\n"
+"  [aucune option]   Lancer la version graphique de ce programme.\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
