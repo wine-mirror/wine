@@ -40,6 +40,13 @@ F:	dlls/x3daudio*/
 F:	dlls/xapofx*/
 F:	dlls/xaudio*/
 
+ARM, ARM64
+M:	André Hentschel <nerv@dawncrow.de>
+F:	dlls/dbghelp/cpu_arm*
+F:	dlls/msvcrt/except_arm.c
+F:	dlls/ntdll/signal_arm*
+F:	programs/winedbg/be_arm*
+
 Direct2D
 M:	Henri Verbeet <hverbeet@codeweavers.com>
 F:	dlls/d2d*/
@@ -92,6 +99,10 @@ MSI installers
 M:	Hans Leidekker <hans@codeweavers.com>
 F:	dlls/msi/
 
+Netstat
+M:	André Hentschel <nerv@dawncrow.de>
+F:	programs/netstat/
+
 OLE Typelibs
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
@@ -99,6 +110,14 @@ F:	dlls/oleaut32/typelib.c
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
 F:	server/
+
+Winemaker
+M:	André Hentschel <nerv@dawncrow.de>
+F:	tools/winemaker
+
+WPcap
+M:	André Hentschel <nerv@dawncrow.de>
+F:	dlls/wpcap/
 
 VB Script
 M:	Jacek Caban <jacek@codeweavers.com>
