@@ -342,8 +342,7 @@ HRESULT WINAPI D3D11CreateDeviceAndSwapChain(IDXGIAdapter *adapter, D3D_DRIVER_T
     return S_OK;
 
 cleanup:
-    if (device)
-        ID3D11Device_Release(device);
+    ID3D11Device_Release(device);
     if (obtained_feature_level)
         *obtained_feature_level = 0;
     if (immediate_context)
