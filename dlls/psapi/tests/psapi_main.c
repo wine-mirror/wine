@@ -225,7 +225,7 @@ static void test_GetPerformanceInfo(void)
         ok(check_with_margin(info.CommitPeak,           sys_performance_info->PeakCommitment,       32),
            "expected approximately %ld but got %d\n", info.CommitPeak, sys_performance_info->PeakCommitment);
 
-        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       64),
+        ok(check_with_margin(info.PhysicalAvailable,    sys_performance_info->AvailablePages,       128),
            "expected approximately %ld but got %d\n", info.PhysicalAvailable, sys_performance_info->AvailablePages);
 
         /* TODO: info.SystemCache not checked yet - to which field(s) does this value correspond to? */
@@ -279,7 +279,7 @@ static void test_GetPerformanceInfo(void)
         }
         HeapFree(GetProcessHeap(), 0, sys_process_info);
 
-        ok(check_with_margin(info.HandleCount,  handle_count,  8),
+        ok(check_with_margin(info.HandleCount,  handle_count,  24),
            "expected approximately %d but got %d\n", info.HandleCount, handle_count);
 
         ok(check_with_margin(info.ProcessCount, process_count, 4),
