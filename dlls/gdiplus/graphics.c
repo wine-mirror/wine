@@ -458,7 +458,7 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
 
         size = GetRegionData(hrgn, 0, NULL);
 
-        rgndata = GdipAlloc(size);
+        rgndata = heap_alloc_zero(size);
         if (!rgndata)
         {
             DeleteObject(hrgn);
@@ -477,7 +477,7 @@ static GpStatus alpha_blend_pixels_hrgn(GpGraphics *graphics, INT dst_x, INT dst
                 src_stride, fmt);
         }
 
-        GdipFree(rgndata);
+        heap_free(rgndata);
 
         DeleteObject(hrgn);
 
@@ -1234,7 +1234,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
         {
             BitmapData lockeddata;
 
-            fill->bitmap_bits = GdipAlloc(sizeof(ARGB) * bitmap->width * bitmap->height);
+            fill->bitmap_bits = heap_alloc_zero(sizeof(ARGB) * bitmap->width * bitmap->height);
             if (!fill->bitmap_bits)
                 stat = OutOfMemory;
 
@@ -1260,7 +1260,7 @@ static GpStatus brush_fill_pixels(GpGraphics *graphics, GpBrush *brush,
 
             if (stat != Ok)
             {
-                GdipFree(fill->bitmap_bits);
+                heap_free(fill->bitmap_bits);
                 fill->bitmap_bits = NULL;
             }
         }
@@ -1656,9 +1656,9 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
                 break;
 
             count = custom->pathdata.Count;
-            custptf = GdipAlloc(count * sizeof(PointF));
-            custpt = GdipAlloc(count * sizeof(POINT));
-            tp = GdipAlloc(count);
+            custptf = heap_alloc_zero(count * sizeof(PointF));
+            custpt = heap_alloc_zero(count * sizeof(POINT));
+            tp = heap_alloc_zero(count);
 
             if(!custptf || !custpt || !tp)
                 goto custend;
@@ -1687,9 +1687,9 @@ static void draw_cap(GpGraphics *graphics, COLORREF color, GpLineCap cap, REAL s
                 PolyDraw(graphics->hdc, custpt, tp, count);
 
 custend:
-            GdipFree(custptf);
-            GdipFree(custpt);
-            GdipFree(tp);
+            heap_free(custptf);
+            heap_free(custpt);
+            heap_free(tp);
             break;
         default:
             break;
@@ -1791,9 +1791,9 @@ static void shorten_bezier_amt(GpPointF * pt, REAL amt, BOOL rev)
 static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF * pt,
     GDIPCONST BYTE * types, INT count, BOOL caps)
 {
-    POINT *pti = GdipAlloc(count * sizeof(POINT));
-    BYTE *tp = GdipAlloc(count);
-    GpPointF *ptcopy = GdipAlloc(count * sizeof(GpPointF));
+    POINT *pti = heap_alloc_zero(count * sizeof(POINT));
+    BYTE *tp = heap_alloc_zero(count);
+    GpPointF *ptcopy = heap_alloc_zero(count * sizeof(GpPointF));
     INT i, j;
     GpStatus status = GenericError;
 
@@ -1906,9 +1906,9 @@ static GpStatus draw_poly(GpGraphics *graphics, GpPen *pen, GDIPCONST GpPointF *
     status = Ok;
 
 end:
-    GdipFree(pti);
-    GdipFree(ptcopy);
-    GdipFree(tp);
+    heap_free(pti);
+    heap_free(ptcopy);
+    heap_free(tp);
 
     return status;
 }
@@ -1946,7 +1946,7 @@ static GpStatus init_container(GraphicsContainerItem** container,
         GDIPCONST GpGraphics* graphics){
     GpStatus sts;
 
-    *container = GdipAlloc(sizeof(GraphicsContainerItem));
+    *container = heap_alloc_zero(sizeof(GraphicsContainerItem));
     if(!(*container))
         return OutOfMemory;
 
@@ -1967,7 +1967,7 @@ static GpStatus init_container(GraphicsContainerItem** container,
 
     sts = GdipCloneRegion(graphics->clip, &(*container)->clip);
     if(sts != Ok){
-        GdipFree(*container);
+        heap_free(*container);
         *container = NULL;
         return sts;
     }
@@ -1978,7 +1978,7 @@ static GpStatus init_container(GraphicsContainerItem** container,
 static void delete_container(GraphicsContainerItem* container)
 {
     GdipDeleteRegion(container->clip);
-    GdipFree(container);
+    heap_free(container);
 }
 
 static GpStatus restore_container(GpGraphics* graphics,
@@ -2216,13 +2216,13 @@ GpStatus WINGDIPAPI GdipCreateFromHDC2(HDC hdc, HANDLE hDevice, GpGraphics **gra
     if(graphics == NULL)
         return InvalidParameter;
 
-    *graphics = GdipAlloc(sizeof(GpGraphics));
+    *graphics = heap_alloc_zero(sizeof(GpGraphics));
     if(!*graphics)  return OutOfMemory;
 
     GdipSetMatrixElements(&(*graphics)->worldtrans, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
     if((retval = GdipCreateRegion(&(*graphics)->clip)) != Ok){
-        GdipFree(*graphics);
+        heap_free(*graphics);
         return retval;
     }
 
@@ -2259,13 +2259,13 @@ GpStatus graphics_from_image(GpImage *image, GpGraphics **graphics)
 {
     GpStatus retval;
 
-    *graphics = GdipAlloc(sizeof(GpGraphics));
+    *graphics = heap_alloc_zero(sizeof(GpGraphics));
     if(!*graphics)  return OutOfMemory;
 
     GdipSetMatrixElements(&(*graphics)->worldtrans, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
     if((retval = GdipCreateRegion(&(*graphics)->clip)) != Ok){
-        GdipFree(*graphics);
+        heap_free(*graphics);
         return retval;
     }
 
@@ -2378,7 +2378,7 @@ GpStatus WINGDIPAPI GdipDeleteGraphics(GpGraphics *graphics)
      * accessing freed memory. */
     graphics->busy = TRUE;
 
-    GdipFree(graphics);
+    heap_free(graphics);
 
     return Ok;
 }
@@ -2492,7 +2492,7 @@ GpStatus WINGDIPAPI GdipDrawBeziersI(GpGraphics *graphics, GpPen *pen,
     if(graphics->busy)
         return ObjectBusy;
 
-    pts = GdipAlloc(sizeof(GpPointF) * count);
+    pts = heap_alloc_zero(sizeof(GpPointF) * count);
     if(!pts)
         return OutOfMemory;
 
@@ -2503,7 +2503,7 @@ GpStatus WINGDIPAPI GdipDrawBeziersI(GpGraphics *graphics, GpPen *pen,
 
     ret = GdipDrawBeziers(graphics,pen,pts,count);
 
-    GdipFree(pts);
+    heap_free(pts);
 
     return ret;
 }
@@ -2562,7 +2562,7 @@ GpStatus WINGDIPAPI GdipDrawClosedCurve2I(GpGraphics *graphics, GpPen *pen,
     if(!points || count <= 0)
         return InvalidParameter;
 
-    ptf = GdipAlloc(sizeof(GpPointF)*count);
+    ptf = heap_alloc_zero(sizeof(GpPointF)*count);
     if(!ptf)
         return OutOfMemory;
 
@@ -2573,7 +2573,7 @@ GpStatus WINGDIPAPI GdipDrawClosedCurve2I(GpGraphics *graphics, GpPen *pen,
 
     stat = GdipDrawClosedCurve2(graphics, pen, ptf, count, tension);
 
-    GdipFree(ptf);
+    heap_free(ptf);
 
     return stat;
 }
@@ -2598,7 +2598,7 @@ GpStatus WINGDIPAPI GdipDrawCurveI(GpGraphics *graphics, GpPen *pen,
     if(!points)
         return InvalidParameter;
 
-    pointsF = GdipAlloc(sizeof(GpPointF)*count);
+    pointsF = heap_alloc_zero(sizeof(GpPointF)*count);
     if(!pointsF)
         return OutOfMemory;
 
@@ -2608,7 +2608,7 @@ GpStatus WINGDIPAPI GdipDrawCurveI(GpGraphics *graphics, GpPen *pen,
     }
 
     ret = GdipDrawCurve(graphics,pen,pointsF,count);
-    GdipFree(pointsF);
+    heap_free(pointsF);
 
     return ret;
 }
@@ -2654,7 +2654,7 @@ GpStatus WINGDIPAPI GdipDrawCurve2I(GpGraphics *graphics, GpPen *pen,
     if(!points)
         return InvalidParameter;
 
-    pointsF = GdipAlloc(sizeof(GpPointF)*count);
+    pointsF = heap_alloc_zero(sizeof(GpPointF)*count);
     if(!pointsF)
         return OutOfMemory;
 
@@ -2664,7 +2664,7 @@ GpStatus WINGDIPAPI GdipDrawCurve2I(GpGraphics *graphics, GpPen *pen,
     }
 
     ret = GdipDrawCurve2(graphics,pen,pointsF,count,tension);
-    GdipFree(pointsF);
+    heap_free(pointsF);
 
     return ret;
 }
@@ -3004,7 +3004,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             TRACE("src_area: %d x %d\n", src_area.Width, src_area.Height);
 
-            src_data = GdipAlloc(sizeof(ARGB) * src_area.Width * src_area.Height);
+            src_data = heap_alloc_zero(sizeof(ARGB) * src_area.Width * src_area.Height);
             if (!src_data)
                 return OutOfMemory;
             src_stride = sizeof(ARGB) * src_area.Width;
@@ -3027,7 +3027,7 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
 
             if (stat != Ok)
             {
-                GdipFree(src_data);
+                heap_free(src_data);
                 return stat;
             }
 
@@ -3038,10 +3038,10 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
             if (do_resampling)
             {
                 /* Transform the bits as needed to the destination. */
-                dst_data = dst_dyn_data = GdipAlloc(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
+                dst_data = dst_dyn_data = heap_alloc_zero(sizeof(ARGB) * (dst_area.right - dst_area.left) * (dst_area.bottom - dst_area.top));
                 if (!dst_data)
                 {
-                    GdipFree(src_data);
+                    heap_free(src_data);
                     return OutOfMemory;
                 }
 
@@ -3084,9 +3084,9 @@ GpStatus WINGDIPAPI GdipDrawImagePointsRect(GpGraphics *graphics, GpImage *image
                 dst_data, dst_area.right - dst_area.left, dst_area.bottom - dst_area.top, dst_stride,
                 lockeddata.PixelFormat);
 
-            GdipFree(src_data);
+            heap_free(src_data);
 
-            GdipFree(dst_dyn_data);
+            heap_free(dst_dyn_data);
 
             return stat;
         }
@@ -3353,7 +3353,7 @@ GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
 
     TRACE("(%p, %p, %p, %d)\n", graphics, pen, points, count);
 
-    ptf = GdipAlloc(count * sizeof(GpPointF));
+    ptf = heap_alloc_zero(count * sizeof(GpPointF));
     if(!ptf) return OutOfMemory;
 
     for(i = 0; i < count; i ++){
@@ -3363,7 +3363,7 @@ GpStatus WINGDIPAPI GdipDrawLinesI(GpGraphics *graphics, GpPen *pen, GDIPCONST
 
     retval = GdipDrawLines(graphics, pen, ptf, count);
 
-    GdipFree(ptf);
+    heap_free(ptf);
     return retval;
 }
 
@@ -3512,7 +3512,7 @@ GpStatus WINGDIPAPI GdipDrawRectanglesI(GpGraphics *graphics, GpPen *pen,
     if(!rects || count<=0)
         return InvalidParameter;
 
-    rectsF = GdipAlloc(sizeof(GpRectF) * count);
+    rectsF = heap_alloc_zero(sizeof(GpRectF) * count);
     if(!rectsF)
         return OutOfMemory;
 
@@ -3524,7 +3524,7 @@ GpStatus WINGDIPAPI GdipDrawRectanglesI(GpGraphics *graphics, GpPen *pen,
     }
 
     ret = GdipDrawRectangles(graphics, pen, rectsF, count);
-    GdipFree(rectsF);
+    heap_free(rectsF);
 
     return ret;
 }
@@ -3574,7 +3574,7 @@ GpStatus WINGDIPAPI GdipFillClosedCurve2I(GpGraphics *graphics, GpBrush *brush,
     if(count == 1)    /* Do nothing */
         return Ok;
 
-    ptf = GdipAlloc(sizeof(GpPointF)*count);
+    ptf = heap_alloc_zero(sizeof(GpPointF)*count);
     if(!ptf)
         return OutOfMemory;
 
@@ -3585,7 +3585,7 @@ GpStatus WINGDIPAPI GdipFillClosedCurve2I(GpGraphics *graphics, GpBrush *brush,
 
     stat = GdipFillClosedCurve2(graphics, brush, ptf, count, tension, fill);
 
-    GdipFree(ptf);
+    heap_free(ptf);
 
     return stat;
 }
@@ -3917,7 +3917,7 @@ GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GD
     if(!rects || count <= 0)
         return InvalidParameter;
 
-    rectsF = GdipAlloc(sizeof(GpRectF)*count);
+    rectsF = heap_alloc_zero(sizeof(GpRectF)*count);
     if(!rectsF)
         return OutOfMemory;
 
@@ -3929,7 +3929,7 @@ GpStatus WINGDIPAPI GdipFillRectanglesI(GpGraphics *graphics, GpBrush *brush, GD
     }
 
     ret = GdipFillRectangles(graphics,brush,rectsF,count);
-    GdipFree(rectsF);
+    heap_free(rectsF);
 
     return ret;
 }
@@ -4020,7 +4020,7 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
         gp_bound_rect.Width = bound_rect.right - bound_rect.left;
         gp_bound_rect.Height = bound_rect.bottom - bound_rect.top;
 
-        pixel_data = GdipAlloc(sizeof(*pixel_data) * gp_bound_rect.Width * gp_bound_rect.Height);
+        pixel_data = heap_alloc_zero(sizeof(*pixel_data) * gp_bound_rect.Width * gp_bound_rect.Height);
         if (!pixel_data)
             stat = OutOfMemory;
 
@@ -4035,7 +4035,7 @@ static GpStatus SOFTWARE_GdipFillRegion(GpGraphics *graphics, GpBrush *brush,
                     gp_bound_rect.Height, gp_bound_rect.Width * 4, hregion,
                     PixelFormat32bppARGB);
 
-            GdipFree(pixel_data);
+            heap_free(pixel_data);
         }
 
         DeleteObject(hregion);
@@ -4500,7 +4500,7 @@ GpStatus gdip_format_string(HDC hdc,
 
     if(length == -1) length = lstrlenW(string);
 
-    stringdup = GdipAlloc((length + 1) * sizeof(WCHAR));
+    stringdup = heap_alloc_zero((length + 1) * sizeof(WCHAR));
     if(!stringdup) return OutOfMemory;
 
     if (!format)
@@ -4508,7 +4508,7 @@ GpStatus gdip_format_string(HDC hdc,
         stat = GdipStringFormatGetGenericDefault(&dyn_format);
         if (stat != Ok)
         {
-            GdipFree(stringdup);
+            heap_free(stringdup);
             return stat;
         }
         format = dyn_format;
@@ -4534,7 +4534,7 @@ GpStatus gdip_format_string(HDC hdc,
     }
 
     if (hotkeyprefix_count)
-        hotkeyprefix_offsets = GdipAlloc(sizeof(INT) * hotkeyprefix_count);
+        hotkeyprefix_offsets = heap_alloc_zero(sizeof(INT) * hotkeyprefix_count);
 
     hotkeyprefix_count = 0;
 
@@ -4660,8 +4660,8 @@ GpStatus gdip_format_string(HDC hdc,
             break;
     }
 
-    GdipFree(stringdup);
-    GdipFree(hotkeyprefix_offsets);
+    heap_free(stringdup);
+    heap_free(hotkeyprefix_offsets);
     GdipDeleteStringFormat(dyn_format);
 
     return stat;
@@ -5636,7 +5636,7 @@ GpStatus WINGDIPAPI GdipDrawPolygon(GpGraphics *graphics,GpPen *pen,GDIPCONST Gp
         return Ok;
     }
 
-    pti = GdipAlloc(sizeof(POINT) * count);
+    pti = heap_alloc_zero(sizeof(POINT) * count);
 
     save_state = prepare_dc(graphics, pen);
     SelectObject(graphics->hdc, GetStockObject(NULL_BRUSH));
@@ -5645,7 +5645,7 @@ GpStatus WINGDIPAPI GdipDrawPolygon(GpGraphics *graphics,GpPen *pen,GDIPCONST Gp
     Polygon(graphics->hdc, pti, count);
 
     restore_dc(graphics, save_state);
-    GdipFree(pti);
+    heap_free(pti);
 
     return Ok;
 }
@@ -5660,7 +5660,7 @@ GpStatus WINGDIPAPI GdipDrawPolygonI(GpGraphics *graphics,GpPen *pen,GDIPCONST G
     TRACE("(%p, %p, %p, %d)\n", graphics, pen, points, count);
 
     if(count<=0)    return InvalidParameter;
-    ptf = GdipAlloc(sizeof(GpPointF) * count);
+    ptf = heap_alloc_zero(sizeof(GpPointF) * count);
 
     for(i = 0;i < count; i++){
         ptf[i].X = (REAL)points[i].X;
@@ -5668,7 +5668,7 @@ GpStatus WINGDIPAPI GdipDrawPolygonI(GpGraphics *graphics,GpPen *pen,GDIPCONST G
     }
 
     ret = GdipDrawPolygon(graphics,pen,ptf,count);
-    GdipFree(ptf);
+    heap_free(ptf);
 
     return ret;
 }
@@ -5882,7 +5882,7 @@ GpStatus WINGDIPAPI GdipGetClip(GpGraphics *graphics, GpRegion *region)
     /* free everything except root node and header */
     delete_element(&region->node);
     memcpy(region, clip, sizeof(GpRegion));
-    GdipFree(clip);
+    heap_free(clip);
 
     return Ok;
 }
@@ -5974,7 +5974,7 @@ GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics *graphics, GpCoordinateSpace
     if(count <= 0)
         return InvalidParameter;
 
-    pointsF = GdipAlloc(sizeof(GpPointF) * count);
+    pointsF = heap_alloc_zero(sizeof(GpPointF) * count);
     if(!pointsF)
         return OutOfMemory;
 
@@ -5990,7 +5990,7 @@ GpStatus WINGDIPAPI GdipTransformPointsI(GpGraphics *graphics, GpCoordinateSpace
             points[i].X = gdip_round(pointsF[i].X);
             points[i].Y = gdip_round(pointsF[i].Y);
         }
-    GdipFree(pointsF);
+    heap_free(pointsF);
 
     return ret;
 }
@@ -6103,7 +6103,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
 
     if (flags & DriverStringOptionsCmapLookup)
     {
-        glyph_indices = dynamic_glyph_indices = GdipAlloc(sizeof(WORD) * length);
+        glyph_indices = dynamic_glyph_indices = heap_alloc_zero(sizeof(WORD) * length);
         if (!glyph_indices)
         {
             DeleteDC(hdc);
@@ -6145,7 +6145,7 @@ GpStatus WINGDIPAPI GdipMeasureDriverString(GpGraphics *graphics, GDIPCONST UINT
         if (max_x < x) max_x = x;
     }
 
-    GdipFree(dynamic_glyph_indices);
+    heap_free(dynamic_glyph_indices);
     DeleteDC(hdc);
     DeleteObject(hfont);
 
@@ -6227,7 +6227,7 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     if (flags & unsupported_flags)
         FIXME("Ignoring flags %x\n", flags & unsupported_flags);
 
-    pti = GdipAlloc(sizeof(POINT) * length);
+    pti = heap_alloc_zero(sizeof(POINT) * length);
     if (!pti)
         return OutOfMemory;
 
@@ -6239,10 +6239,10 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     }
     else
     {
-        real_positions = GdipAlloc(sizeof(PointF) * length);
+        real_positions = heap_alloc_zero(sizeof(PointF) * length);
         if (!real_positions)
         {
-            GdipFree(pti);
+            heap_free(pti);
             return OutOfMemory;
         }
 
@@ -6250,7 +6250,7 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
 
         transform_and_round_points(graphics, pti, real_positions, length);
 
-        GdipFree(real_positions);
+        heap_free(real_positions);
     }
 
     get_font_hfont(graphics, font, format, &hfont, matrix);
@@ -6270,7 +6270,7 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         if (glyphsize == GDI_ERROR)
         {
             ERR("GetGlyphOutlineW failed\n");
-            GdipFree(pti);
+            heap_free(pti);
             DeleteDC(hdc);
             DeleteObject(hfont);
             return GenericError;
@@ -6303,15 +6303,15 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         /* Nothing to draw. */
         return Ok;
 
-    glyph_mask = GdipAlloc(max_glyphsize);
-    text_mask = GdipAlloc((max_x - min_x) * (max_y - min_y));
+    glyph_mask = heap_alloc_zero(max_glyphsize);
+    text_mask = heap_alloc_zero((max_x - min_x) * (max_y - min_y));
     text_mask_stride = max_x - min_x;
 
     if (!(glyph_mask && text_mask))
     {
-        GdipFree(glyph_mask);
-        GdipFree(text_mask);
-        GdipFree(pti);
+        heap_free(glyph_mask);
+        heap_free(text_mask);
+        heap_free(pti);
         DeleteDC(hdc);
         DeleteObject(hfont);
         return OutOfMemory;
@@ -6346,16 +6346,16 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         }
     }
 
-    GdipFree(pti);
+    heap_free(pti);
     DeleteDC(hdc);
     DeleteObject(hfont);
-    GdipFree(glyph_mask);
+    heap_free(glyph_mask);
 
     /* get the brush data */
-    pixel_data = GdipAlloc(4 * (max_x - min_x) * (max_y - min_y));
+    pixel_data = heap_alloc_zero(4 * (max_x - min_x) * (max_y - min_y));
     if (!pixel_data)
     {
-        GdipFree(text_mask);
+        heap_free(text_mask);
         return OutOfMemory;
     }
 
@@ -6368,8 +6368,8 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
     stat = brush_fill_pixels(graphics, (GpBrush*)brush, (DWORD*)pixel_data, &pixel_area, pixel_area.Width);
     if (stat != Ok)
     {
-        GdipFree(text_mask);
-        GdipFree(pixel_data);
+        heap_free(text_mask);
+        heap_free(pixel_data);
         return stat;
     }
 
@@ -6386,13 +6386,13 @@ static GpStatus SOFTWARE_GdipDrawDriverString(GpGraphics *graphics, GDIPCONST UI
         }
     }
 
-    GdipFree(text_mask);
+    heap_free(text_mask);
 
     /* draw the result */
     stat = alpha_blend_pixels(graphics, min_x, min_y, pixel_data, pixel_area.Width,
         pixel_area.Height, pixel_data_stride, PixelFormat32bppARGB);
 
-    GdipFree(pixel_data);
+    heap_free(pixel_data);
 
     return stat;
 }

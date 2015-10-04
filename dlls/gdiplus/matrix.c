@@ -66,7 +66,7 @@ GpStatus WINGDIPAPI GdipCreateMatrix2(REAL m11, REAL m12, REAL m21, REAL m22,
     if(!matrix)
         return InvalidParameter;
 
-    *matrix = GdipAlloc(sizeof(GpMatrix));
+    *matrix = heap_alloc_zero(sizeof(GpMatrix));
     if(!*matrix)    return OutOfMemory;
 
     /* first row */
@@ -129,7 +129,7 @@ GpStatus WINGDIPAPI GdipCloneMatrix(GpMatrix *matrix, GpMatrix **clone)
     if(!matrix || !clone)
         return InvalidParameter;
 
-    *clone = GdipAlloc(sizeof(GpMatrix));
+    *clone = heap_alloc_zero(sizeof(GpMatrix));
     if(!*clone)    return OutOfMemory;
 
     **clone = *matrix;
@@ -144,7 +144,7 @@ GpStatus WINGDIPAPI GdipCreateMatrix(GpMatrix **matrix)
     if(!matrix)
         return InvalidParameter;
 
-    *matrix = GdipAlloc(sizeof(GpMatrix));
+    *matrix = heap_alloc_zero(sizeof(GpMatrix));
     if(!*matrix)    return OutOfMemory;
 
     (*matrix)->matrix[0] = 1.0;
@@ -164,7 +164,7 @@ GpStatus WINGDIPAPI GdipDeleteMatrix(GpMatrix *matrix)
     if(!matrix)
         return InvalidParameter;
 
-    GdipFree(matrix);
+    heap_free(matrix);
 
     return Ok;
 }
@@ -380,7 +380,7 @@ GpStatus WINGDIPAPI GdipTransformMatrixPointsI(GpMatrix *matrix, GpPoint *pts, I
     if(count <= 0)
         return InvalidParameter;
 
-    ptsF = GdipAlloc(sizeof(GpPointF) * count);
+    ptsF = heap_alloc_zero(sizeof(GpPointF) * count);
     if(!ptsF)
         return OutOfMemory;
 
@@ -396,7 +396,7 @@ GpStatus WINGDIPAPI GdipTransformMatrixPointsI(GpMatrix *matrix, GpPoint *pts, I
             pts[i].X = gdip_round(ptsF[i].X);
             pts[i].Y = gdip_round(ptsF[i].Y);
         }
-    GdipFree(ptsF);
+    heap_free(ptsF);
 
     return ret;
 }
@@ -461,7 +461,7 @@ GpStatus WINGDIPAPI GdipVectorTransformMatrixPointsI(GpMatrix *matrix, GpPoint *
     if(count <= 0)
         return InvalidParameter;
 
-    ptsF = GdipAlloc(sizeof(GpPointF) * count);
+    ptsF = heap_alloc_zero(sizeof(GpPointF) * count);
     if(!ptsF)
         return OutOfMemory;
 
@@ -477,7 +477,7 @@ GpStatus WINGDIPAPI GdipVectorTransformMatrixPointsI(GpMatrix *matrix, GpPoint *
             pts[i].X = gdip_round(ptsF[i].X);
             pts[i].Y = gdip_round(ptsF[i].Y);
         }
-    GdipFree(ptsF);
+    heap_free(ptsF);
 
     return ret;
 }
@@ -513,7 +513,7 @@ GpStatus WINGDIPAPI GdipIsMatrixIdentity(GDIPCONST GpMatrix *matrix, BOOL *resul
     if(ret == Ok)
         *result = isIdentity;
 
-    GdipFree(e);
+    heap_free(e);
 
     return ret;
 }

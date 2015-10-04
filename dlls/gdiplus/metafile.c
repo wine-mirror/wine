@@ -86,7 +86,7 @@ static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void *
     if (!metafile->comment_data_size)
     {
         DWORD data_size = max(256, size * 2 + 4);
-        metafile->comment_data = GdipAlloc(data_size);
+        metafile->comment_data = heap_alloc_zero(data_size);
 
         if (!metafile->comment_data)
             return OutOfMemory;
@@ -102,7 +102,7 @@ static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void *
     if (size_needed > metafile->comment_data_size)
     {
         DWORD data_size = size_needed * 2;
-        BYTE *new_data = GdipAlloc(data_size);
+        BYTE *new_data = heap_alloc_zero(data_size);
 
         if (!new_data)
             return OutOfMemory;
@@ -110,7 +110,7 @@ static GpStatus METAFILE_AllocateRecord(GpMetafile *metafile, DWORD size, void *
         memcpy(new_data, metafile->comment_data, metafile->comment_data_length);
 
         metafile->comment_data_size = data_size;
-        GdipFree(metafile->comment_data);
+        heap_free(metafile->comment_data);
         metafile->comment_data = new_data;
     }
 
@@ -243,7 +243,7 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     if (!record_dc)
         return GenericError;
 
-    *metafile = GdipAlloc(sizeof(GpMetafile));
+    *metafile = heap_alloc_zero(sizeof(GpMetafile));
     if(!*metafile)
     {
         DeleteEnhMetaFile(CloseEnhMetaFile(record_dc));
@@ -270,7 +270,7 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     if (stat != Ok)
     {
         DeleteEnhMetaFile(CloseEnhMetaFile(record_dc));
-        GdipFree(*metafile);
+        heap_free(*metafile);
         *metafile = NULL;
         return OutOfMemory;
     }
@@ -463,7 +463,7 @@ GpStatus METAFILE_GraphicsDeleted(GpMetafile* metafile)
     metafile->hemf = CloseEnhMetaFile(metafile->record_dc);
     metafile->record_dc = NULL;
 
-    GdipFree(metafile->comment_data);
+    heap_free(metafile->comment_data);
     metafile->comment_data = NULL;
     metafile->comment_data_size = 0;
 
@@ -565,7 +565,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
         {
             ENHMETARECORD *record;
 
-            record = GdipAlloc(dataSize + 8);
+            record = heap_alloc_zero(dataSize + 8);
 
             if (record)
             {
@@ -576,7 +576,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                 PlayEnhMetaFileRecord(metafile->playback_dc, metafile->handle_table,
                     record, metafile->handle_count);
 
-                GdipFree(record);
+                heap_free(record);
             }
             else
                 return OutOfMemory;
@@ -634,7 +634,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
                     EmfPlusRect *int_rects = (EmfPlusRect*)(record+1);
                     int i;
 
-                    rects = temp_rects = GdipAlloc(sizeof(GpRectF) * record->Count);
+                    rects = temp_rects = heap_alloc_zero(sizeof(GpRectF) * record->Count);
                     if (rects)
                     {
                         for (i=0; i<record->Count; i++)
@@ -658,7 +658,7 @@ GpStatus WINGDIPAPI GdipPlayMetafileRecord(GDIPCONST GpMetafile *metafile,
             }
 
             GdipDeleteBrush(temp_brush);
-            GdipFree(temp_rects);
+            heap_free(temp_rects);
 
             return stat;
         }
@@ -1010,7 +1010,7 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     if (metafile_type == MetafileTypeInvalid)
         return GenericError;
 
-    *metafile = GdipAlloc(sizeof(GpMetafile));
+    *metafile = heap_alloc_zero(sizeof(GpMetafile));
     if (!*metafile)
         return OutOfMemory;
 
@@ -1050,11 +1050,11 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
     read = GetMetaFileBitsEx(hwmf, 0, NULL);
     if(!read)
         return GenericError;
-    copy = GdipAlloc(read);
+    copy = heap_alloc_zero(read);
     GetMetaFileBitsEx(hwmf, read, copy);
 
     hemf = SetWinMetaFileBits(read, copy, NULL, NULL);
-    GdipFree(copy);
+    heap_free(copy);
 
     /* FIXME: We should store and use hwmf instead of converting to hemf */
     retval = GdipCreateMetafileFromEmf(hemf, TRUE, metafile);
