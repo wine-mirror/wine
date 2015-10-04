@@ -1402,8 +1402,8 @@ BOOL WINAPI WritePrivateProfileStringW( LPCWSTR section, LPCWSTR entry,
 /***********************************************************************
  *           WritePrivateProfileStringA   (KERNEL32.@)
  */
-BOOL WINAPI WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
-					LPCSTR string, LPCSTR filename )
+BOOL WINAPI DECLSPEC_HOTPATCH WritePrivateProfileStringA( LPCSTR section, LPCSTR entry,
+                                                          LPCSTR string, LPCSTR filename )
 {
     UNICODE_STRING sectionW, entryW, stringW, filenameW;
     BOOL ret;
