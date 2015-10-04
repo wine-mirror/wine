@@ -23,6 +23,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -522,7 +524,7 @@ LSTATUS WINAPI RegOpenKeyExW( HKEY hkey, LPCWSTR name, DWORD options, REGSAM acc
  *  Unlike RegCreateKeyExA(), this function will not create the key if it
  *  does not exist.
  */
-LSTATUS WINAPI RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD options, REGSAM access, PHKEY retkey )
+LSTATUS WINAPI DECLSPEC_HOTPATCH RegOpenKeyExA( HKEY hkey, LPCSTR name, DWORD options, REGSAM access, PHKEY retkey )
 {
     OBJECT_ATTRIBUTES attr;
     STRING nameA;
@@ -1107,7 +1109,7 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
  *  Success: ERROR_SUCCESS
  *  Failure: Error code
  */
-LSTATUS WINAPI RegCloseKey( HKEY hkey )
+LSTATUS WINAPI DECLSPEC_HOTPATCH RegCloseKey( HKEY hkey )
 {
     if (!hkey) return ERROR_INVALID_HANDLE;
     if (hkey >= (HKEY)0x80000000) return ERROR_SUCCESS;
@@ -1477,8 +1479,8 @@ LSTATUS WINAPI RegQueryValueExW( HKEY hkey, LPCWSTR name, LPDWORD reserved, LPDW
  *   MSDN states that if data is too small it is partially filled. In reality 
  *   it remains untouched.
  */
-LSTATUS WINAPI RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved, LPDWORD type,
-                              LPBYTE data, LPDWORD count )
+LSTATUS WINAPI DECLSPEC_HOTPATCH RegQueryValueExA( HKEY hkey, LPCSTR name, LPDWORD reserved,
+                                                   LPDWORD type, LPBYTE data, LPDWORD count )
 {
     NTSTATUS status;
     ANSI_STRING nameA;
