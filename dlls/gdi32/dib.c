@@ -59,6 +59,8 @@
     Search for "Bitmap Structures" in MSDN
 */
 
+#include "config.h"
+
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -602,9 +604,10 @@ done:
 /***********************************************************************
  *           StretchDIBits   (GDI32.@)
  */
-INT WINAPI StretchDIBits(HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDst,
-                         INT xSrc, INT ySrc, INT widthSrc, INT heightSrc, const void *bits,
-                         const BITMAPINFO *bmi, UINT coloruse, DWORD rop )
+INT WINAPI DECLSPEC_HOTPATCH StretchDIBits( HDC hdc, INT xDst, INT yDst, INT widthDst, INT heightDst,
+                                            INT xSrc, INT ySrc, INT widthSrc, INT heightSrc,
+                                            const void *bits, const BITMAPINFO *bmi, UINT coloruse,
+                                            DWORD rop )
 {
     char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
     BITMAPINFO *info = (BITMAPINFO *)buffer;

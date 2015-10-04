@@ -559,8 +559,8 @@ BOOL WINAPI PatBlt( HDC hdc, INT left, INT top, INT width, INT height, DWORD rop
 /***********************************************************************
  *           BitBlt    (GDI32.@)
  */
-BOOL WINAPI BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
-                    INT height, HDC hdcSrc, INT xSrc, INT ySrc, DWORD rop )
+BOOL WINAPI DECLSPEC_HOTPATCH BitBlt( HDC hdcDst, INT xDst, INT yDst, INT width,
+                                      INT height, HDC hdcSrc, INT xSrc, INT ySrc, DWORD rop )
 {
     if (!rop_uses_src( rop )) return PatBlt( hdcDst, xDst, yDst, width, height, rop );
     else return StretchBlt( hdcDst, xDst, yDst, width, height,
