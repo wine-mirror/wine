@@ -3767,7 +3767,10 @@ LRESULT ME_HandleMessage(ME_TextEditor *editor, UINT msg, WPARAM wParam,
 
     if (!wParam)
       wParam = (WPARAM)GetStockObject(SYSTEM_FONT);
-    GetObjectW((HGDIOBJ)wParam, sizeof(LOGFONTW), &lf);
+
+    if (!GetObjectW((HGDIOBJ)wParam, sizeof(LOGFONTW), &lf))
+      return 0;
+
     hDC = ITextHost_TxGetDC(editor->texthost);
     ME_CharFormatFromLogFont(hDC, &lf, &fmt);
     ITextHost_TxReleaseDC(editor->texthost, hDC);
