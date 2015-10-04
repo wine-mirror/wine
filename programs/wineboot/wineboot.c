@@ -321,9 +321,9 @@ static void create_environment_registry_keys( void )
     WCHAR buffer[60];
     const WCHAR *arch;
 
-    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
-
     if (RegCreateKeyW( HKEY_LOCAL_MACHINE, EnvironW, &env_key )) return;
+
+    NtQuerySystemInformation( SystemCpuInformation, &sci, sizeof(sci), NULL );
 
     sprintfW( buffer, PercentDW, NtCurrentTeb()->Peb->NumberOfProcessors );
     set_reg_value( env_key, NumProcW, buffer );
