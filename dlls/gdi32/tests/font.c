@@ -4177,14 +4177,14 @@ static void test_RealizationInfo(void)
     ok((info[0] & 0xf) == 1, "info[0] = %x for the system font\n", info[0]);
     ok(info[3] == 0xcccccccc, "structure longer than 3 dwords\n");
 
-    if (!is_truetype_font_installed("Arial"))
+    if (!is_truetype_font_installed("Tahoma"))
     {
         skip("skipping GdiRealizationInfo with truetype font\n");
         goto end;
     }
 
     memset(&lf, 0, sizeof(lf));
-    strcpy(lf.lfFaceName, "Arial");
+    strcpy(lf.lfFaceName, "Tahoma");
     lf.lfHeight = 20;
     lf.lfWeight = FW_NORMAL;
     hfont = CreateFontIndirectA(&lf);
@@ -4238,12 +4238,19 @@ static void test_RealizationInfo(void)
         ok(info2[6] == 0xcccccccc, "structure longer than 6 dwords\n");
 
         /* Test GetFontFileInfo() */
-    if (pGetFontFileInfo) {
+        /* invalid font id */
+        SetLastError(0xdeadbeef);
+        r = pGetFontFileInfo(0xabababab, 0, &file_info, sizeof(file_info), &needed);
+        ok(r == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "ret %d gle %d\n", r, GetLastError());
+
+        needed = 0;
         r = pGetFontFileInfo(fri->instance_id, 0, &file_info, sizeof(file_info), &needed);
         ok(r != 0 || GetLastError() == ERROR_NOACCESS, "ret %d gle %d\n", r, GetLastError());
 
         if (r)
         {
+            ok(needed > 0 && needed < sizeof(file_info), "got needed size %u\n", needed);
+
             h = CreateFileW(file_info.path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
             ok(h != INVALID_HANDLE_VALUE, "Unable to open file %d\n", GetLastError());
 
@@ -4256,8 +4263,14 @@ static void test_RealizationInfo(void)
             ReadFile(h, file, sizeof(file), &read, NULL);
             CloseHandle(h);
             have_file = TRUE;
+
+            /* shorter buffer */
+            SetLastError(0xdeadbeef);
+            r = pGetFontFileInfo(fri->instance_id, 0, &file_info, needed - 1, &needed);
+            ok(r == 0 && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "ret %d gle %d\n", r, GetLastError());
         }
 
+    if (pGetFontFileData) {
         /* Get bytes 2 - 16 using GetFontFileData */
         r = pGetFontFileData(fri->instance_id, 0, 2, data, sizeof(data));
         ok(r != 0, "ret 0 gle %d\n", GetLastError());

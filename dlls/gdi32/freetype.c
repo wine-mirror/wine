@@ -364,6 +364,12 @@ typedef struct {
     GdiFont *font;
 } CHILD_FONT;
 
+struct font_fileinfo {
+    FILETIME writetime;
+    LARGE_INTEGER size;
+    WCHAR path[1];
+};
+
 struct tagGdiFont {
     struct list entry;
     struct list unused_entry;
@@ -400,6 +406,7 @@ struct tagGdiFont {
     const VOID *vert_feature;
     DWORD cache_num;
     DWORD instance_id;
+    struct font_fileinfo *fileinfo;
 };
 
 typedef struct {
@@ -4505,6 +4512,7 @@ static void free_font(GdiFont *font)
         HeapFree(GetProcessHeap(), 0, child);
     }
 
+    HeapFree(GetProcessHeap(), 0, font->fileinfo);
     free_font_handle(font->instance_id);
     if (font->ft_face) pFT_Done_Face(font->ft_face);
     if (font->mapping) unmap_font_file( font->mapping );
@@ -5161,6 +5169,29 @@ static const VOID * get_GSUB_vert_feature(const GdiFont *font)
     return feature;
 }
 
+static void fill_fileinfo_from_face( GdiFont *font, Face *face )
+{
+    WIN32_FILE_ATTRIBUTE_DATA info;
+    int len;
+
+    if (!face->file)
+    {
+        font->fileinfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*font->fileinfo));
+        return;
+    }
+
+    len = strlenW(face->file);
+    font->fileinfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*font->fileinfo) + len * sizeof(WCHAR));
+    if (GetFileAttributesExW(face->file, GetFileExInfoStandard, &info))
+    {
+        font->fileinfo->writetime = info.ftLastWriteTime;
+        font->fileinfo->size.QuadPart = (LONGLONG)info.nFileSizeHigh << 32 | info.nFileSizeLow;
+        strcpyW(font->fileinfo->path, face->file);
+    }
+    else
+        memset(&font->fileinfo, 0, sizeof(*font->fileinfo) + len * sizeof(WCHAR));
+}
+
 /*************************************************************
  * freetype_SelectFont
  */
@@ -5555,6 +5586,7 @@ found_face:
         goto done;
     }
 
+    fill_fileinfo_from_face( ret, face );
     ret->ntmFlags = face->ntmFlags;
 
     pick_charmap( ret->ft_face, ret->charset );
@@ -8238,7 +8270,7 @@ static BOOL freetype_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
         return dev->funcs->pGetFontRealizationInfo( dev, ptr );
     }
 
-    FIXME("(%p, %p): stub!\n", physdev->font, info);
+    TRACE("(%p, %p)\n", physdev->font, info);
 
     info->flags = 1;
     if(FT_IS_SCALABLE(physdev->font->ft_face))
@@ -8252,6 +8284,33 @@ static BOOL freetype_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
         info->face_index = physdev->font->ft_face->face_index;
     }
 
+    return TRUE;
+}
+
+/*************************************************************************
+ *             GetFontFileInfo   (GDI32.@)
+ */
+BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info, DWORD size, DWORD *needed )
+{
+    struct font_handle_entry *entry = handle_entry( instance_id );
+    const GdiFont *font;
+
+    if (!entry)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    font = entry->obj;
+    *needed = sizeof(*info) + strlenW(font->fileinfo->path) * sizeof(WCHAR);
+    if (*needed > size)
+    {
+        SetLastError(ERROR_INSUFFICIENT_BUFFER);
+        return FALSE;
+    }
+
+    /* path is included too */
+    memcpy(info, font->fileinfo, *needed);
     return TRUE;
 }
 
@@ -8644,6 +8703,8 @@ static const struct gdi_dc_funcs freetype_funcs =
 
 #else /* HAVE_FREETYPE */
 
+struct font_fileinfo;
+
 /*************************************************************************/
 
 BOOL WineEngInit(void)
@@ -8685,6 +8746,15 @@ BOOL WINAPI GetRasterizerCaps( LPRASTERIZER_STATUS lprs, UINT cbNumBytes)
     lprs->wFlags = 0;
     lprs->nLanguageID = 0;
     return TRUE;
+}
+
+/*************************************************************************
+ *             GetFontFileInfo   (GDI32.@)
+ */
+BOOL WINAPI GetFontFileInfo( DWORD instance_id, DWORD unknown, struct font_fileinfo *info, DWORD size, DWORD *needed)
+{
+    *needed = 0;
+    return FALSE;
 }
 
 #endif /* HAVE_FREETYPE */
