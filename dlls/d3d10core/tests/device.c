@@ -2945,6 +2945,8 @@ static void test_private_data(void)
 {
     D3D10_TEXTURE2D_DESC texture_desc;
     ULONG refcount, expected_refcount;
+    ID3D11Texture2D *d3d11_texture;
+    ID3D11Device *d3d11_device;
     ID3D10Device *test_object;
     ID3D10Texture2D *texture;
     IDXGIDevice *dxgi_device;
@@ -3065,6 +3067,23 @@ static void test_private_data(void)
     IUnknown_Release(ptr);
     --expected_refcount;
 
+    hr = ID3D10Device_QueryInterface(device, &IID_ID3D11Device, (void **)&d3d11_device);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Device should implement ID3D11Device.\n");
+    if (SUCCEEDED(hr))
+    {
+        ptr = NULL;
+        size = sizeof(ptr);
+        hr = ID3D11Device_GetPrivateData(d3d11_device, &test_guid, &size, &ptr);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
+        IUnknown_Release(ptr);
+        ID3D11Device_Release(d3d11_device);
+        refcount = get_refcount((IUnknown *)test_object);
+        ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
+                refcount, expected_refcount);
+    }
+
     ptr = (IUnknown *)0xdeadbeef;
     size = 1;
     hr = ID3D10Device_GetPrivateData(device, &test_guid, &size, NULL);
@@ -3101,6 +3120,20 @@ static void test_private_data(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
     IUnknown_Release(ptr);
+
+    hr = ID3D10Texture2D_QueryInterface(texture, &IID_ID3D11Texture2D, (void **)&d3d11_texture);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Texture should implement ID3D11Texture2D.\n");
+    if (SUCCEEDED(hr))
+    {
+        ptr = NULL;
+        size = sizeof(ptr);
+        hr = ID3D11Texture2D_GetPrivateData(d3d11_texture, &test_guid, &size, &ptr);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
+        IUnknown_Release(ptr);
+        ID3D11Texture2D_Release(d3d11_texture);
+    }
 
     IDXGISurface_Release(surface);
     ID3D10Texture2D_Release(texture);
