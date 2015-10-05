@@ -1175,9 +1175,13 @@ static HRESULT WINAPI IXAudio2Impl_QueryInterface(IXAudio2 *iface, REFIID riid,
     if(IsEqualGUID(riid, &IID_IUnknown) ||
             IsEqualGUID(riid, &IID_IXAudio2))
         *ppvObject = &This->IXAudio2_iface;
-    else if(IsEqualGUID(riid, &IID_IXAudio27))
-        *ppvObject = &This->IXAudio27_iface;
-    else
+    else if(IsEqualGUID(riid, &IID_IXAudio27)){
+        /* all xaudio versions before 28 share an IID */
+        if(This->version == 21 || This->version == 22)
+            *ppvObject = &This->IXAudio22_iface;
+        else
+            *ppvObject = &This->IXAudio27_iface;
+    }else
         *ppvObject = NULL;
 
     if(*ppvObject){
@@ -2304,6 +2308,7 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     if(!object)
         return E_OUTOFMEMORY;
 
+    object->IXAudio22_iface.lpVtbl = &XAudio22_Vtbl;
     object->IXAudio27_iface.lpVtbl = &XAudio27_Vtbl;
     object->IXAudio2_iface.lpVtbl = &XAudio2_Vtbl;
     object->IXAudio23MasteringVoice_iface.lpVtbl = &XAudio23MasteringVoice_Vtbl;
@@ -2460,7 +2465,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if IsEqualGUID(rclsid, &CLSID_XAudio23){
+    if IsEqualGUID(rclsid, &CLSID_XAudio21){
+        factory = make_xaudio2_factory(21);
+    }else if IsEqualGUID(rclsid, &CLSID_XAudio22){
+        factory = make_xaudio2_factory(22);
+    }else if IsEqualGUID(rclsid, &CLSID_XAudio23){
         factory = make_xaudio2_factory(23);
     }else if(IsEqualGUID(rclsid, &CLSID_XAudio24)){
         factory = make_xaudio2_factory(24);

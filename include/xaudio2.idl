@@ -31,6 +31,13 @@ coclass XAudio2 {
 }
 
 [
+    uuid(b802058a-464a-42db-bc10-b650d6f2586a)
+]
+coclass XAudio22 {
+    interface IUnknown;
+}
+
+[
     uuid(4c5e637a-16c7-4de3-9c46-5ed22181962d)
 ]
 coclass XAudio23 {
@@ -148,6 +155,23 @@ typedef struct XAUDIO2_PERFORMANCE_DATA
     UINT32 ActiveXmaSourceVoices;
     UINT32 ActiveXmaStreams;
 } XAUDIO2_PERFORMANCE_DATA;
+
+typedef struct XAUDIO22_PERFORMANCE_DATA
+{
+    UINT64 AudioCyclesSinceLastQuery;
+    UINT64 TotalCyclesSinceLastQuery;
+    UINT32 MinimumCyclesPerQuantum;
+    UINT32 MaximumCyclesPerQuantum;
+    UINT32 MemoryUsageInBytes;
+    UINT32 CurrentLatencyInSamples;
+    UINT32 GlitchesSinceEngineStarted;
+    UINT32 ActiveSourceVoiceCount;
+    UINT32 TotalSourceVoiceCount;
+    UINT32 ActiveSubmixVoiceCount;
+    UINT32 TotalSubmixVoiceCount;
+    UINT32 ActiveXmaSourceVoices;
+    UINT32 ActiveXmaStreams;
+} XAUDIO22_PERFORMANCE_DATA;
 
 typedef enum XAUDIO2_DEVICE_ROLE
 {
@@ -609,6 +633,67 @@ typedef struct XAUDIO2_DEBUG_CONFIGURATION
     BOOL LogFunctionName;
     BOOL LogTiming;
 } XAUDIO2_DEBUG_CONFIGURATION;
+
+[
+    object,
+    uuid(8bcf1f58-9fe7-4583-8ac6-e2adc465c8bb), /* all versions before 28 share IID_IXAudio */
+]
+/* XAudio2 2.2's IXAudio2 interface. Actually called IXAudio2 in the Jun 2010
+ * DX SDK */
+interface IXAudio22 : IUnknown
+{
+    HRESULT GetDeviceCount([out] UINT32* pCount);
+
+    HRESULT GetDeviceDetails(
+        [in] UINT32 Index,
+        [out] XAUDIO2_DEVICE_DETAILS* pDeviceDetails);
+
+    HRESULT Initialize(
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(XAUDIO2_DEFAULT_PROCESSOR)] XAUDIO2_PROCESSOR XAudio2Processor);
+
+    HRESULT RegisterForCallbacks([in] IXAudio2EngineCallback* pCallback);
+
+    void UnregisterForCallbacks([in] IXAudio2EngineCallback* pCallback);
+
+    HRESULT CreateSourceVoice(
+        [out] IXAudio2SourceVoice** ppSourceVoice,
+        [in] const WAVEFORMATEX* pSourceFormat,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(XAUDIO2_DEFAULT_FREQ_RATIO)] float MaxFrequencyRatio,
+        [in, defaultvalue(NULL)] IXAudio2VoiceCallback* pCallback,
+        [in, defaultvalue(NULL)] const XAUDIO2_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT CreateSubmixVoice(
+        [out] IXAudio2SubmixVoice** ppSubmixVoice,
+        [in] UINT32 InputChannels,
+        [in] UINT32 InputSampleRate,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(0)] UINT32 ProcessingStage,
+        [in, defaultvalue(NULL)] const XAUDIO2_VOICE_SENDS* pSendList,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT CreateMasteringVoice(
+        [out] IXAudio2MasteringVoice** ppMasteringVoice,
+        [in, defaultvalue(XAUDIO2_DEFAULT_CHANNELS)] UINT32 InputChannels,
+        [in, defaultvalue(XAUDIO2_DEFAULT_SAMPLERATE)] UINT32 InputSampleRate,
+        [in, defaultvalue(0)] UINT32 Flags,
+        [in, defaultvalue(0)] UINT32 DeviceIndex,
+        [in, defaultvalue(NULL)] const XAUDIO2_EFFECT_CHAIN* pEffectChain);
+
+    HRESULT StartEngine();
+
+    void StopEngine();
+
+    HRESULT CommitChanges([in] UINT32 OperationSet);
+
+    void GetPerformanceData([out] XAUDIO22_PERFORMANCE_DATA* pPerfData);
+
+    [local] void SetDebugConfiguration(
+        [in] const XAUDIO2_DEBUG_CONFIGURATION* pDebugConfiguration,
+        [in, defaultvalue(NULL)] void* pReserved);
+}
 
 [
     object,

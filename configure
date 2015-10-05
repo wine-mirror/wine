@@ -1374,6 +1374,7 @@ enable_xapofx1_1
 enable_xapofx1_3
 enable_xapofx1_4
 enable_xapofx1_5
+enable_xaudio2_2
 enable_xaudio2_3
 enable_xaudio2_4
 enable_xaudio2_5
@@ -17915,6 +17916,7 @@ wine_fn_config_dll xapofx1_1 enable_xapofx1_1
 wine_fn_config_dll xapofx1_3 enable_xapofx1_3
 wine_fn_config_dll xapofx1_4 enable_xapofx1_4
 wine_fn_config_dll xapofx1_5 enable_xapofx1_5
+wine_fn_config_dll xaudio2_2 enable_xaudio2_2 clean
 wine_fn_config_dll xaudio2_3 enable_xaudio2_3 clean
 wine_fn_config_dll xaudio2_4 enable_xaudio2_4 clean
 wine_fn_config_dll xaudio2_5 enable_xaudio2_5 clean

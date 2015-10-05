@@ -1183,3 +1183,255 @@ const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl = {
     XA23M_GetOutputMatrix,
     XA23M_DestroyVoice
 };
+
+static inline IXAudio2Impl *impl_from_IXAudio22(IXAudio22 *iface)
+{
+    return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio22_iface);
+}
+
+static HRESULT WINAPI XA22_QueryInterface(IXAudio22 *iface, REFIID riid,
+        void **ppvObject)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_QueryInterface(&This->IXAudio2_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI XA22_AddRef(IXAudio22 *iface)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_AddRef(&This->IXAudio2_iface);
+}
+
+static ULONG WINAPI XA22_Release(IXAudio22 *iface)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_Release(&This->IXAudio2_iface);
+}
+
+static HRESULT WINAPI XA22_GetDeviceCount(IXAudio22 *iface, UINT32 *pCount)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+
+    TRACE("%p, %p\n", This, pCount);
+
+    *pCount = This->ndevs;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI XA22_GetDeviceDetails(IXAudio22 *iface, UINT32 index,
+        XAUDIO2_DEVICE_DETAILS *pDeviceDetails)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    HRESULT hr;
+    IMMDevice *dev;
+    IAudioClient *client;
+    IPropertyStore *ps;
+    WAVEFORMATEX *wfx;
+    PROPVARIANT var;
+
+    TRACE("%p, %u, %p\n", This, index, pDeviceDetails);
+
+    if(index >= This->ndevs)
+        return E_INVALIDARG;
+
+    hr = IMMDeviceEnumerator_GetDevice(This->devenum, This->devids[index], &dev);
+    if(FAILED(hr)){
+        WARN("GetDevice failed: %08x\n", hr);
+        return hr;
+    }
+
+    hr = IMMDevice_Activate(dev, &IID_IAudioClient, CLSCTX_INPROC_SERVER,
+            NULL, (void**)&client);
+    if(FAILED(hr)){
+        WARN("Activate failed: %08x\n", hr);
+        IMMDevice_Release(dev);
+        return hr;
+    }
+
+    hr = IMMDevice_OpenPropertyStore(dev, STGM_READ, &ps);
+    if(FAILED(hr)){
+        WARN("OpenPropertyStore failed: %08x\n", hr);
+        IAudioClient_Release(client);
+        IMMDevice_Release(dev);
+        return hr;
+    }
+
+    PropVariantInit(&var);
+
+    hr = IPropertyStore_GetValue(ps, (PROPERTYKEY*)&DEVPKEY_Device_FriendlyName, &var);
+    if(FAILED(hr)){
+        WARN("GetValue failed: %08x\n", hr);
+        goto done;
+    }
+
+    lstrcpynW(pDeviceDetails->DisplayName, var.u.pwszVal, sizeof(pDeviceDetails->DisplayName)/sizeof(WCHAR));
+
+    PropVariantClear(&var);
+
+    hr = IAudioClient_GetMixFormat(client, &wfx);
+    if(FAILED(hr)){
+        WARN("GetMixFormat failed: %08x\n", hr);
+        goto done;
+    }
+
+    lstrcpyW(pDeviceDetails->DeviceID, This->devids[index]);
+
+    if(index == 0)
+        pDeviceDetails->Role = GlobalDefaultDevice;
+    else
+        pDeviceDetails->Role = NotDefaultDevice;
+
+    if(sizeof(WAVEFORMATEX) + wfx->cbSize > sizeof(pDeviceDetails->OutputFormat)){
+        FIXME("AudioClient format is too large to fit into WAVEFORMATEXTENSIBLE!\n");
+        CoTaskMemFree(wfx);
+        hr = E_FAIL;
+        goto done;
+    }
+    memcpy(&pDeviceDetails->OutputFormat, wfx, sizeof(WAVEFORMATEX) + wfx->cbSize);
+
+    CoTaskMemFree(wfx);
+
+done:
+    IPropertyStore_Release(ps);
+    IAudioClient_Release(client);
+    IMMDevice_Release(dev);
+
+    return hr;
+}
+
+static HRESULT WINAPI XA22_Initialize(IXAudio22 *iface, UINT32 flags,
+        XAUDIO2_PROCESSOR processor)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    TRACE("(%p)->(0x%x, 0x%x)\n", This, flags, processor);
+    return S_OK;
+}
+
+static HRESULT WINAPI XA22_RegisterForCallbacks(IXAudio22 *iface,
+        IXAudio2EngineCallback *pCallback)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_RegisterForCallbacks(&This->IXAudio2_iface, pCallback);
+}
+
+static void WINAPI XA22_UnregisterForCallbacks(IXAudio22 *iface,
+        IXAudio2EngineCallback *pCallback)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    IXAudio2_UnregisterForCallbacks(&This->IXAudio2_iface, pCallback);
+}
+
+static HRESULT WINAPI XA22_CreateSourceVoice(IXAudio22 *iface,
+        IXAudio2SourceVoice **ppSourceVoice, const WAVEFORMATEX *pSourceFormat,
+        UINT32 flags, float maxFrequencyRatio,
+        IXAudio2VoiceCallback *pCallback, const XAUDIO2_VOICE_SENDS *pSendList,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_CreateSourceVoice(&This->IXAudio2_iface, ppSourceVoice,
+            pSourceFormat, flags, maxFrequencyRatio, pCallback, pSendList,
+            pEffectChain);
+}
+
+static HRESULT WINAPI XA22_CreateSubmixVoice(IXAudio22 *iface,
+        IXAudio2SubmixVoice **ppSubmixVoice, UINT32 inputChannels,
+        UINT32 inputSampleRate, UINT32 flags, UINT32 processingStage,
+        const XAUDIO2_VOICE_SENDS *pSendList,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_CreateSubmixVoice(&This->IXAudio2_iface, ppSubmixVoice,
+            inputChannels, inputSampleRate, flags, processingStage, pSendList,
+            pEffectChain);
+}
+
+static HRESULT WINAPI XA22_CreateMasteringVoice(IXAudio22 *iface,
+        IXAudio2MasteringVoice **ppMasteringVoice, UINT32 inputChannels,
+        UINT32 inputSampleRate, UINT32 flags, UINT32 deviceIndex,
+        const XAUDIO2_EFFECT_CHAIN *pEffectChain)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+
+    TRACE("(%p)->(%p, %u, %u, 0x%x, %u, %p)\n", This, ppMasteringVoice,
+            inputChannels, inputSampleRate, flags, deviceIndex,
+            pEffectChain);
+
+    if(deviceIndex >= This->ndevs)
+        return E_INVALIDARG;
+
+    return IXAudio2_CreateMasteringVoice(&This->IXAudio2_iface, ppMasteringVoice,
+            inputChannels, inputSampleRate, flags, This->devids[deviceIndex],
+            pEffectChain, AudioCategory_GameEffects);
+}
+
+static HRESULT WINAPI XA22_StartEngine(IXAudio22 *iface)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_StartEngine(&This->IXAudio2_iface);
+}
+
+static void WINAPI XA22_StopEngine(IXAudio22 *iface)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_StopEngine(&This->IXAudio2_iface);
+}
+
+static HRESULT WINAPI XA22_CommitChanges(IXAudio22 *iface, UINT32 operationSet)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_CommitChanges(&This->IXAudio2_iface, operationSet);
+}
+
+static void WINAPI XA22_GetPerformanceData(IXAudio22 *iface,
+        XAUDIO22_PERFORMANCE_DATA *pPerfData)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    XAUDIO2_PERFORMANCE_DATA data;
+
+    IXAudio2_GetPerformanceData(&This->IXAudio2_iface, &data);
+
+    pPerfData->AudioCyclesSinceLastQuery = data.AudioCyclesSinceLastQuery;
+    pPerfData->TotalCyclesSinceLastQuery = data.TotalCyclesSinceLastQuery;
+    pPerfData->MinimumCyclesPerQuantum = data.MinimumCyclesPerQuantum;
+    pPerfData->MaximumCyclesPerQuantum = data.MaximumCyclesPerQuantum;
+    pPerfData->MemoryUsageInBytes = data.MemoryUsageInBytes;
+    pPerfData->CurrentLatencyInSamples = data.CurrentLatencyInSamples;
+    pPerfData->GlitchesSinceEngineStarted = data.GlitchesSinceEngineStarted;
+    pPerfData->ActiveSourceVoiceCount = data.ActiveSourceVoiceCount;
+    pPerfData->TotalSourceVoiceCount = data.TotalSourceVoiceCount;
+
+    pPerfData->ActiveSubmixVoiceCount = data.ActiveSubmixVoiceCount;
+    pPerfData->TotalSubmixVoiceCount = data.ActiveSubmixVoiceCount;
+
+    pPerfData->ActiveXmaSourceVoices = data.ActiveXmaSourceVoices;
+    pPerfData->ActiveXmaStreams = data.ActiveXmaStreams;
+}
+
+static void WINAPI XA22_SetDebugConfiguration(IXAudio22 *iface,
+        const XAUDIO2_DEBUG_CONFIGURATION *pDebugConfiguration,
+        void *pReserved)
+{
+    IXAudio2Impl *This = impl_from_IXAudio22(iface);
+    return IXAudio2_SetDebugConfiguration(&This->IXAudio2_iface,
+            pDebugConfiguration, pReserved);
+}
+
+const IXAudio22Vtbl XAudio22_Vtbl = {
+    XA22_QueryInterface,
+    XA22_AddRef,
+    XA22_Release,
+    XA22_GetDeviceCount,
+    XA22_GetDeviceDetails,
+    XA22_Initialize,
+    XA22_RegisterForCallbacks,
+    XA22_UnregisterForCallbacks,
+    XA22_CreateSourceVoice,
+    XA22_CreateSubmixVoice,
+    XA22_CreateMasteringVoice,
+    XA22_StartEngine,
+    XA22_StopEngine,
+    XA22_CommitChanges,
+    XA22_GetPerformanceData,
+    XA22_SetDebugConfiguration
+};

@@ -92,6 +92,7 @@ typedef struct _XA2SubmixImpl {
 } XA2SubmixImpl;
 
 struct _IXAudio2Impl {
+    IXAudio22 IXAudio22_iface;
     IXAudio27 IXAudio27_iface;
     IXAudio2 IXAudio2_iface;
     IXAudio23MasteringVoice IXAudio23MasteringVoice_iface;
@@ -136,3 +137,5 @@ extern const IXAudio27Vtbl XAudio27_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio23SourceVoiceVtbl XAudio23SourceVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl DECLSPEC_HIDDEN;
+
+extern const IXAudio22Vtbl XAudio22_Vtbl DECLSPEC_HIDDEN;

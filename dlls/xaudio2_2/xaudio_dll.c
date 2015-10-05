@@ -1,7 +1,5 @@
 /*
- * COM Classes for xaudio
- *
- * Copyright 2015 Guillaume Charifi
+ * Copyright (c) 2015 Andrew Eikum for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,32 +16,37 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#pragma makedep register
+#include <stdarg.h>
+#include "windef.h"
+#include "winbase.h"
+#include "objbase.h"
+#include "rpcproxy.h"
 
-[
-    helpstring("XAudio2 Class"),
-    threading(both),
-    uuid(5a508685-a254-4fba-9b82-9a24b00306af)
-]
-coclass XAudio2 { interface IXAudio2; }
+static HINSTANCE instance;
 
-[
-    helpstring("XAudio2 Volume Meter Class"),
-    threading(both),
-    uuid(cac1105f-619b-4d04-831a-44e1cbf12d57)
-]
-coclass AudioVolumeMeter { interface IUnknown; }
+BOOL WINAPI DllMain(HINSTANCE hinstance, DWORD reason, LPVOID reserved)
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        instance = hinstance;
+        DisableThreadLibraryCalls(hinstance);
+        break;
+    }
+    return TRUE;
+}
 
-[
-    helpstring("XAudio2 Reverb Class"),
-    threading(both),
-    uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
-]
-coclass AudioReverb { interface IUnknown; }
+HRESULT WINAPI DllCanUnloadNow(void)
+{
+    return S_FALSE;
+}
 
-[
-    helpstring("XACT 31 Class"),
-    threading(both),
-    uuid(962f5027-99be-4692-a468-85802cf8de61)
-]
-coclass XACT31 { interface IUnknown; }
+HRESULT WINAPI DllRegisterServer(void)
+{
+    return __wine_register_resources(instance);
+}
+
+HRESULT WINAPI DllUnregisterServer(void)
+{
+    return __wine_unregister_resources(instance);
+}

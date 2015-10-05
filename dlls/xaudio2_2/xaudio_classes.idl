@@ -1,7 +1,7 @@
 /*
  * COM Classes for xaudio
  *
- * Copyright 2015 Guillaume Charifi
+ * Copyright 2015 Andrew Eikum for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -21,29 +21,8 @@
 #pragma makedep register
 
 [
-    helpstring("XAudio2 Class"),
+    helpstring("XAudio2.2 Class"),
     threading(both),
-    uuid(5a508685-a254-4fba-9b82-9a24b00306af)
+    uuid(b802058a-464a-42db-bc10-b650d6f2586a)
 ]
-coclass XAudio2 { interface IXAudio2; }
-
-[
-    helpstring("XAudio2 Volume Meter Class"),
-    threading(both),
-    uuid(cac1105f-619b-4d04-831a-44e1cbf12d57)
-]
-coclass AudioVolumeMeter { interface IUnknown; }
-
-[
-    helpstring("XAudio2 Reverb Class"),
-    threading(both),
-    uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
-]
-coclass AudioReverb { interface IUnknown; }
-
-[
-    helpstring("XACT 31 Class"),
-    threading(both),
-    uuid(962f5027-99be-4692-a468-85802cf8de61)
-]
-coclass XACT31 { interface IUnknown; }
+coclass XAudio22 { interface IXAudio22; }
