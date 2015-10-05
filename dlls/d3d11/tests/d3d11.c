@@ -1448,6 +1448,7 @@ static void test_create_shader(void)
     ID3D11GeometryShader *gs;
     ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
+    IUnknown *iface;
     unsigned int i;
     HRESULT hr;
 
@@ -1481,6 +1482,7 @@ static void test_create_shader(void)
         expected_refcount = get_refcount((IUnknown *)device) + 1;
         hr = ID3D11Device_CreateVertexShader(device, vs_4_0, sizeof(vs_4_0), NULL, &vs);
         ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+
         refcount = get_refcount((IUnknown *)device);
         ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
                 refcount, expected_refcount);
@@ -1492,12 +1494,20 @@ static void test_create_shader(void)
         ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
                 refcount, expected_refcount);
         ID3D11Device_Release(tmp);
-        ID3D11VertexShader_Release(vs);
+
+        hr = ID3D11VertexShader_QueryInterface(vs, &IID_ID3D10VertexShader, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Vertex shader should implement ID3D10VertexShader.\n");
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+        refcount = ID3D11VertexShader_Release(vs);
+        ok(!refcount, "Vertex shader has %u references left.\n", refcount);
 
         /* pixel shader */
         expected_refcount = get_refcount((IUnknown *)device) + 1;
         hr = ID3D11Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), NULL, &ps);
         ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
+
         refcount = get_refcount((IUnknown *)device);
         ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
                 refcount, expected_refcount);
@@ -1509,12 +1519,20 @@ static void test_create_shader(void)
         ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
                 refcount, expected_refcount);
         ID3D11Device_Release(tmp);
-        ID3D11PixelShader_Release(ps);
+
+        hr = ID3D11PixelShader_QueryInterface(ps, &IID_ID3D10PixelShader, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Pixel shader should implement ID3D10PixelShader.\n");
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+        refcount = ID3D11PixelShader_Release(ps);
+        ok(!refcount, "Pixel shader has %u references left.\n", refcount);
 
         /* geometry shader */
         expected_refcount = get_refcount((IUnknown *)device) + 1;
         hr = ID3D11Device_CreateGeometryShader(device, gs_4_0, sizeof(gs_4_0), NULL, &gs);
         ok(SUCCEEDED(hr), "Failed to create SM4 geometry shader, hr %#x.\n", hr);
+
         refcount = get_refcount((IUnknown *)device);
         ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
                 refcount, expected_refcount);
@@ -1526,6 +1544,12 @@ static void test_create_shader(void)
         ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
                 refcount, expected_refcount);
         ID3D11Device_Release(tmp);
+
+        hr = ID3D11GeometryShader_QueryInterface(gs, &IID_ID3D10GeometryShader, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Geometry shader should implement ID3D10GeometryShader.\n");
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
         refcount = ID3D11GeometryShader_Release(gs);
         ok(!refcount, "Geometry shader has %u references left.\n", refcount);
 
