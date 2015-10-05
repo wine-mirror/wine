@@ -67,7 +67,8 @@ static int   (WINAPI *pgetaddrinfo)(LPCSTR,LPCSTR,const struct addrinfo *,struct
 static void  (WINAPI *pFreeAddrInfoW)(PADDRINFOW);
 static int   (WINAPI *pGetAddrInfoW)(LPCWSTR,LPCWSTR,const ADDRINFOW *,PADDRINFOW *);
 static PCSTR (WINAPI *pInetNtop)(INT,LPVOID,LPSTR,ULONG);
-static int   (WINAPI *pInetPton)(INT,LPSTR,LPVOID);
+static int   (WINAPI *pInetPtonA)(INT,LPCSTR,LPVOID);
+static int   (WINAPI *pInetPtonW)(INT,LPWSTR,LPVOID);
 static int   (WINAPI *pWSALookupServiceBeginW)(LPWSAQUERYSETW,DWORD,LPHANDLE);
 static int   (WINAPI *pWSALookupServiceEnd)(HANDLE);
 static int   (WINAPI *pWSALookupServiceNextW)(HANDLE,DWORD,LPDWORD,LPWSAQUERYSETW);
@@ -1159,7 +1160,8 @@ static void Init (void)
     pFreeAddrInfoW = (void *)GetProcAddress(hws2_32, "FreeAddrInfoW");
     pGetAddrInfoW = (void *)GetProcAddress(hws2_32, "GetAddrInfoW");
     pInetNtop = (void *)GetProcAddress(hws2_32, "inet_ntop");
-    pInetPton = (void *)GetProcAddress(hws2_32, "inet_pton");
+    pInetPtonA = (void *)GetProcAddress(hws2_32, "inet_pton");
+    pInetPtonW = (void *)GetProcAddress(hws2_32, "InetPtonW");
     pWSALookupServiceBeginW = (void *)GetProcAddress(hws2_32, "WSALookupServiceBeginW");
     pWSALookupServiceEnd = (void *)GetProcAddress(hws2_32, "WSALookupServiceEnd");
     pWSALookupServiceNextW = (void *)GetProcAddress(hws2_32, "WSALookupServiceNextW");
@@ -4698,10 +4700,11 @@ static void test_inet_pton(void)
     int i, ret;
     DWORD err;
     char buffer[64],str[64];
+    WCHAR printableW[64];
     const char *ptr;
 
     /* InetNtop and InetPton became available in Vista and Win2008 */
-    if (!pInetNtop || !pInetPton)
+    if (!pInetNtop || !pInetPtonA || !pInetPtonW)
     {
         win_skip("InetNtop and/or InetPton not present, not executing tests\n");
         return;
@@ -4710,7 +4713,7 @@ static void test_inet_pton(void)
     for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
     {
         WSASetLastError(0xdeadbeef);
-        ret = pInetPton(tests[i].family, (char *)tests[i].printable, buffer);
+        ret = pInetPtonA(tests[i].family, tests[i].printable, buffer);
         ok (ret == tests[i].ret, "Test [%d]: Expected %d, got %d\n", i, tests[i].ret, ret);
         if (tests[i].ret == -1)
         {
@@ -4730,6 +4733,25 @@ static void test_inet_pton(void)
         if (!ptr) continue;
         ok (strcmp(ptr, tests[i].collapsed) == 0, "Test [%d]: Expected '%s', got '%s'\n",
             i, tests[i].collapsed, ptr);
+    }
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
+    {
+        if (tests[i].printable)
+            MultiByteToWideChar(CP_ACP, 0, tests[i].printable, -1, printableW,
+                                sizeof(printableW) / sizeof(printableW[0]));
+        WSASetLastError(0xdeadbeef);
+        ret = pInetPtonW(tests[i].family, tests[i].printable ? printableW : NULL, buffer);
+        ok(ret == tests[i].ret, "Test [%d]: Expected %d, got %d\n", i, tests[i].ret, ret);
+        if (tests[i].ret == -1)
+        {
+            err = WSAGetLastError();
+            ok(tests[i].err == err, "Test [%d]: Expected 0x%x, got 0x%x\n", i, tests[i].err, err);
+        }
+        if (tests[i].ret != 1) continue;
+        ok(memcmp(buffer, tests[i].raw_data,
+           tests[i].family == AF_INET ? sizeof(struct in_addr) : sizeof(struct in6_addr)) == 0,
+           "Test [%d]: Expected binary data differs\n", i);
     }
 }
 
