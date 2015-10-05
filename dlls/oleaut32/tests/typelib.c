@@ -3722,9 +3722,82 @@ static const struct map_entry callconv_map[] = {
     {0, NULL}
 };
 
+static const struct map_entry vt_map[] = {
+    MAP_ENTRY(VT_EMPTY),
+    MAP_ENTRY(VT_NULL),
+    MAP_ENTRY(VT_I2),
+    MAP_ENTRY(VT_I4),
+    MAP_ENTRY(VT_R4),
+    MAP_ENTRY(VT_R8),
+    MAP_ENTRY(VT_CY),
+    MAP_ENTRY(VT_DATE),
+    MAP_ENTRY(VT_BSTR),
+    MAP_ENTRY(VT_DISPATCH),
+    MAP_ENTRY(VT_ERROR),
+    MAP_ENTRY(VT_BOOL),
+    MAP_ENTRY(VT_VARIANT),
+    MAP_ENTRY(VT_UNKNOWN),
+    MAP_ENTRY(VT_DECIMAL),
+    MAP_ENTRY(15),
+    MAP_ENTRY(VT_I1),
+    MAP_ENTRY(VT_UI1),
+    MAP_ENTRY(VT_UI2),
+    MAP_ENTRY(VT_UI4),
+    MAP_ENTRY(VT_I8),
+    MAP_ENTRY(VT_UI8),
+    MAP_ENTRY(VT_INT),
+    MAP_ENTRY(VT_UINT),
+    MAP_ENTRY(VT_VOID),
+    MAP_ENTRY(VT_HRESULT),
+    MAP_ENTRY(VT_PTR),
+    MAP_ENTRY(VT_SAFEARRAY),
+    MAP_ENTRY(VT_CARRAY),
+    MAP_ENTRY(VT_USERDEFINED),
+    MAP_ENTRY(VT_LPSTR),
+    MAP_ENTRY(VT_LPWSTR),
+    MAP_ENTRY(VT_RECORD),
+    MAP_ENTRY(VT_INT_PTR),
+    MAP_ENTRY(VT_UINT_PTR),
+    MAP_ENTRY(39),
+    MAP_ENTRY(40),
+    MAP_ENTRY(41),
+    MAP_ENTRY(42),
+    MAP_ENTRY(43),
+    MAP_ENTRY(44),
+    MAP_ENTRY(45),
+    MAP_ENTRY(46),
+    MAP_ENTRY(47),
+    MAP_ENTRY(48),
+    MAP_ENTRY(49),
+    MAP_ENTRY(50),
+    MAP_ENTRY(51),
+    MAP_ENTRY(52),
+    MAP_ENTRY(53),
+    MAP_ENTRY(54),
+    MAP_ENTRY(55),
+    MAP_ENTRY(56),
+    MAP_ENTRY(57),
+    MAP_ENTRY(58),
+    MAP_ENTRY(59),
+    MAP_ENTRY(60),
+    MAP_ENTRY(61),
+    MAP_ENTRY(62),
+    MAP_ENTRY(63),
+    MAP_ENTRY(VT_FILETIME),
+    MAP_ENTRY(VT_BLOB),
+    MAP_ENTRY(VT_STREAM),
+    MAP_ENTRY(VT_STORAGE),
+    MAP_ENTRY(VT_STREAMED_OBJECT),
+    MAP_ENTRY(VT_STORED_OBJECT),
+    MAP_ENTRY(VT_BLOB_OBJECT),
+    MAP_ENTRY(VT_CF),
+    MAP_ENTRY(VT_CLSID),
+    {0, NULL}
+};
+
 #undef MAP_ENTRY
 
-static const char *map_value(DWORD val, const struct map_entry *map)
+static const char *map_value(int val, const struct map_entry *map)
 {
     static int map_id;
     static char bufs[16][256];
@@ -3738,7 +3811,7 @@ static const char *map_value(DWORD val, const struct map_entry *map)
     }
 
     buf = bufs[(map_id++)%16];
-    sprintf(buf, "0x%x", val);
+    sprintf(buf, "%d", val);
     return buf;
 }
 
@@ -3802,6 +3875,60 @@ static char *print_size(BSTR name, TYPEATTR *attr)
     return buf;
 }
 
+static const char *dump_param_flags(DWORD flags)
+{
+    static char buf[256];
+
+    if (!flags) return "PARAMFLAG_NONE";
+
+    buf[0] = 0;
+
+#define ADD_FLAG(x) if (flags & x) { if (buf[0]) strcat(buf, "|"); strcat(buf, #x); flags &= ~x; }
+    ADD_FLAG(PARAMFLAG_FIN)
+    ADD_FLAG(PARAMFLAG_FOUT)
+    ADD_FLAG(PARAMFLAG_FLCID)
+    ADD_FLAG(PARAMFLAG_FRETVAL)
+    ADD_FLAG(PARAMFLAG_FOPT)
+    ADD_FLAG(PARAMFLAG_FHASDEFAULT)
+    ADD_FLAG(PARAMFLAG_FHASCUSTDATA)
+#undef ADD_FLAG
+
+    assert(!flags);
+    assert(strlen(buf) < sizeof(buf));
+
+    return buf;
+}
+
+static const char *dump_func_flags(DWORD flags)
+{
+    static char buf[256];
+
+    if (!flags) return "0";
+
+    buf[0] = 0;
+
+#define ADD_FLAG(x) if (flags & x) { if (buf[0]) strcat(buf, "|"); strcat(buf, #x); flags &= ~x; }
+    ADD_FLAG(FUNCFLAG_FRESTRICTED)
+    ADD_FLAG(FUNCFLAG_FSOURCE)
+    ADD_FLAG(FUNCFLAG_FBINDABLE)
+    ADD_FLAG(FUNCFLAG_FREQUESTEDIT)
+    ADD_FLAG(FUNCFLAG_FDISPLAYBIND)
+    ADD_FLAG(FUNCFLAG_FDEFAULTBIND)
+    ADD_FLAG(FUNCFLAG_FHIDDEN)
+    ADD_FLAG(FUNCFLAG_FUSESGETLASTERROR)
+    ADD_FLAG(FUNCFLAG_FDEFAULTCOLLELEM)
+    ADD_FLAG(FUNCFLAG_FUIDEFAULT)
+    ADD_FLAG(FUNCFLAG_FNONBROWSABLE)
+    ADD_FLAG(FUNCFLAG_FREPLACEABLE)
+    ADD_FLAG(FUNCFLAG_FIMMEDIATEBIND)
+#undef ADD_FLAG
+
+    assert(!flags);
+    assert(strlen(buf) < sizeof(buf));
+
+    return buf;
+}
+
 static void test_dump_typelib(const char *name)
 {
     WCHAR wszString[260];
@@ -3853,14 +3980,14 @@ static void test_dump_typelib(const char *name)
                    "      /*id*/ 0x%x, /*func*/ %s, /*inv*/ %s, /*call*/ %s,\n",
                 desc->memid, map_value(desc->funckind, funckind_map), map_value(desc->invkind, invkind_map),
                 map_value(desc->callconv, callconv_map));
-            printf("      /*#param*/ %d, /*#opt*/ %d, /*vtbl*/ %d, /*#scodes*/ %d, /*flags*/ 0x%x,\n",
-                desc->cParams, desc->cParamsOpt, desc->oVft/sizeof(void*), desc->cScodes, desc->wFuncFlags);
-            printf("      {%d, %x}, /* ret */\n", desc->elemdescFunc.tdesc.vt, U(desc->elemdescFunc).paramdesc.wParamFlags);
+            printf("      /*#param*/ %d, /*#opt*/ %d, /*vtbl*/ %d, /*#scodes*/ %d, /*flags*/ %s,\n",
+                desc->cParams, desc->cParamsOpt, desc->oVft/sizeof(void*), desc->cScodes, dump_func_flags(desc->wFuncFlags));
+            printf("      {%s, %s}, /* ret */\n", map_value(desc->elemdescFunc.tdesc.vt, vt_map), dump_param_flags(U(desc->elemdescFunc).paramdesc.wParamFlags));
             printf("      { /* params */\n");
             for (p = 0; p < desc->cParams; p++)
             {
                 ELEMDESC e = desc->lprgelemdescParam[p];
-                printf("        {%d, %x},\n", e.tdesc.vt, U(e).paramdesc.wParamFlags);
+                printf("        {%s, %s},\n", map_value(e.tdesc.vt, vt_map), dump_param_flags(U(e).paramdesc.wParamFlags));
             }
             printf("        {-1, -1}\n");
             printf("      },\n");
@@ -3933,11 +4060,11 @@ static const type_info info[] = {
   {
     {
       /*id*/ 0x60000000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 2, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ 0x1,
-      {24, 0}, /* ret */
+      /*#param*/ 2, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {26, 1},
-        {26, 2},
+        {VT_PTR, PARAMFLAG_FIN},
+        {VT_PTR, PARAMFLAG_FOUT},
         {-1, -1}
       },
       { /* names */
@@ -3949,8 +4076,8 @@ static const type_info info[] = {
     },
     {
       /*id*/ 0x60000001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 1, /*#scodes*/ 0, /*flags*/ 0x1,
-      {19, 0}, /* ret */
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 1, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_UI4, PARAMFLAG_NONE}, /* ret */
       { /* params */
         {-1, -1}
       },
@@ -3961,8 +4088,8 @@ static const type_info info[] = {
     },
     {
       /*id*/ 0x60000002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 2, /*#scodes*/ 0, /*flags*/ 0x1,
-      {19, 0}, /* ret */
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 2, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_UI4, PARAMFLAG_NONE}, /* ret */
       { /* params */
         {-1, -1}
       },
@@ -3973,10 +4100,10 @@ static const type_info info[] = {
     },
     {
       /*id*/ 0x60010000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 3, /*#scodes*/ 0, /*flags*/ 0x1,
-      {24, 0}, /* ret */
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 3, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {26, 2},
+        {VT_PTR, PARAMFLAG_FOUT},
         {-1, -1}
       },
       { /* names */
@@ -3987,12 +4114,12 @@ static const type_info info[] = {
     },
     {
       /*id*/ 0x60010001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 3, /*#opt*/ 0, /*vtbl*/ 4, /*#scodes*/ 0, /*flags*/ 0x1,
-      {24, 0}, /* ret */
+      /*#param*/ 3, /*#opt*/ 0, /*vtbl*/ 4, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {23, 1},
-        {19, 1},
-        {26, 2},
+        {VT_UINT, PARAMFLAG_FIN},
+        {VT_UI4, PARAMFLAG_FIN},
+        {VT_PTR, PARAMFLAG_FOUT},
         {-1, -1}
       },
       { /* names */
@@ -4005,14 +4132,14 @@ static const type_info info[] = {
     },
     {
       /*id*/ 0x60010002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 5, /*#opt*/ 0, /*vtbl*/ 5, /*#scodes*/ 0, /*flags*/ 0x1,
-      {24, 0}, /* ret */
+      /*#param*/ 5, /*#opt*/ 0, /*vtbl*/ 5, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {26, 1},
-        {26, 1},
-        {23, 1},
-        {19, 1},
-        {26, 2},
+        {VT_PTR, PARAMFLAG_FIN},
+        {VT_PTR, PARAMFLAG_FIN},
+        {VT_UINT, PARAMFLAG_FIN},
+        {VT_UI4, PARAMFLAG_FIN},
+        {VT_PTR, PARAMFLAG_FOUT},
         {-1, -1}
       },
       { /* names */
@@ -4027,17 +4154,17 @@ static const type_info info[] = {
     },
     {
       /*id*/ 0x60010003, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 8, /*#opt*/ 0, /*vtbl*/ 6, /*#scodes*/ 0, /*flags*/ 0x1,
-      {24, 0}, /* ret */
+      /*#param*/ 8, /*#opt*/ 0, /*vtbl*/ 6, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
+      {VT_VOID, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {3, 1},
-        {26, 1},
-        {19, 1},
-        {18, 1},
-        {26, 1},
-        {26, 2},
-        {26, 2},
-        {26, 2},
+        {VT_I4, PARAMFLAG_FIN},
+        {VT_PTR, PARAMFLAG_FIN},
+        {VT_UI4, PARAMFLAG_FIN},
+        {VT_UI2, PARAMFLAG_FIN},
+        {VT_PTR, PARAMFLAG_FIN},
+        {VT_PTR, PARAMFLAG_FOUT},
+        {VT_PTR, PARAMFLAG_FOUT},
+        {VT_PTR, PARAMFLAG_FOUT},
         {-1, -1}
       },
       { /* names */
@@ -4055,8 +4182,8 @@ static const type_info info[] = {
     },
     {
       /*id*/ 0x60020000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0x0,
-      {24, 0}, /* ret */
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_VOID, PARAMFLAG_NONE}, /* ret */
       { /* params */
         {-1, -1}
       },
@@ -4075,8 +4202,8 @@ static const type_info info[] = {
   {
     {
       /*id*/ 0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
-      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0x0,
-      {25, 0}, /* ret */
+      /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, PARAMFLAG_NONE}, /* ret */
       { /* params */
         {-1, -1}
       },
