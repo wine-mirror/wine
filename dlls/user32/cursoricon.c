@@ -178,7 +178,7 @@ static struct cursoricon_frame *get_icon_frame( struct cursoricon_object *obj, i
     return &req_frame->frame;
 }
 
-static void release_icon_frame( struct cursoricon_object *obj, int istep, struct cursoricon_frame *frame )
+static void release_icon_frame( struct cursoricon_object *obj, struct cursoricon_frame *frame )
 {
     if (obj->is_ani)
     {
@@ -220,7 +220,7 @@ static BOOL free_icon_handle( HICON handle )
             if (frame->alpha) DeleteObject( frame->alpha );
             if (frame->color) DeleteObject( frame->color );
             DeleteObject( frame->mask );
-            release_icon_frame( obj, 0, frame );
+            release_icon_frame( obj, frame );
         }
         else
         {
@@ -476,7 +476,7 @@ BOOL get_icon_size( HICON handle, SIZE *size )
     frame = get_icon_frame( info, 0 );
     size->cx = frame->width;
     size->cy = frame->height;
-    release_icon_frame( info, 0, frame);
+    release_icon_frame( info, frame);
     release_user_handle_ptr( info );
     return TRUE;
 }
@@ -956,7 +956,7 @@ done:
         frame->color  = color;
         frame->mask   = mask;
         frame->alpha  = alpha;
-        release_icon_frame( info, 0, frame );
+        release_icon_frame( info, frame );
         if (!IS_INTRESOURCE(resname))
         {
             info->resname = HeapAlloc( GetProcessHeap(), 0, (strlenW(resname) + 1) * sizeof(WCHAR) );
@@ -1264,7 +1264,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
             frame->delay = frame_rates[i];
         else
             frame->delay = ~0;
-        release_icon_frame( info, i, frame );
+        release_icon_frame( info, frame );
     }
 
     HeapFree( GetProcessHeap(), 0, frames );
@@ -1591,7 +1591,7 @@ HICON WINAPI CopyIcon( HICON hIcon )
         }
         if (!(frameNew = get_icon_frame( ptrNew, 0 )))
         {
-            release_icon_frame( ptrOld, 0, frameOld );
+            release_icon_frame( ptrOld, frameOld );
             release_user_handle_ptr( ptrOld );
             SetLastError( ERROR_INVALID_CURSOR_HANDLE );
             return 0;
@@ -1602,8 +1602,8 @@ HICON WINAPI CopyIcon( HICON hIcon )
         frameNew->mask   = copy_bitmap( frameOld->mask );
         frameNew->color  = copy_bitmap( frameOld->color );
         frameNew->alpha  = copy_bitmap( frameOld->alpha );
-        release_icon_frame( ptrOld, 0, frameOld );
-        release_icon_frame( ptrNew, 0, frameNew );
+        release_icon_frame( ptrOld, frameOld );
+        release_icon_frame( ptrNew, frameNew );
         release_user_handle_ptr( ptrNew );
     }
     release_user_handle_ptr( ptrOld );
@@ -1975,7 +1975,7 @@ HCURSOR WINAPI GetCursorFrameInfo(HCURSOR hCursor, DWORD reserved, DWORD istep, 
                 *rate_jiffies = ptr->delay;
             else
                 *rate_jiffies = frame->delay;
-            release_icon_frame( ptr, istep, frame );
+            release_icon_frame( ptr, frame );
         }
     }
 
@@ -2077,7 +2077,7 @@ BOOL WINAPI GetIconInfoExW( HICON icon, ICONINFOEXW *info )
         ret = FALSE;
     }
     module = ptr->module;
-    release_icon_frame( ptr, 0, frame );
+    release_icon_frame( ptr, frame );
     release_user_handle_ptr( ptr );
     if (ret && module) GetModuleFileNameW( module, info->szModName, MAX_PATH );
     return ret;
@@ -2196,7 +2196,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         frame->color  = color;
         frame->mask   = mask;
         frame->alpha  = create_alpha_bitmap( iconinfo->hbmColor, mask, NULL, NULL );
-        release_icon_frame( info, 0, frame );
+        release_icon_frame( info, frame );
         if (info->is_icon)
         {
             info->hotspot.x = width / 2;
@@ -2264,7 +2264,7 @@ BOOL WINAPI DrawIconEx( HDC hdc, INT x0, INT y0, HICON hIcon,
     }
     if (!(hMemDC = CreateCompatibleDC( hdc )))
     {
-        release_icon_frame( ptr, istep, frame );
+        release_icon_frame( ptr, frame );
         release_user_handle_ptr( ptr );
         return FALSE;
     }
@@ -2378,7 +2378,7 @@ done:
     if (hB_off) DeleteObject(hB_off);
 failed:
     DeleteDC( hMemDC );
-    release_icon_frame( ptr, istep, frame );
+    release_icon_frame( ptr, frame );
     release_user_handle_ptr( ptr );
     return result;
 }
