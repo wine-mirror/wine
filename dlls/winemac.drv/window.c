@@ -1682,12 +1682,7 @@ LRESULT CDECL macdrv_WindowMessage(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         macdrv_reset_device_metrics();
         return 0;
     case WM_MACDRV_DISPLAYCHANGE:
-        if ((data = get_win_data(hwnd)))
-        {
-            if (data->cocoa_window && data->on_screen)
-                sync_window_position(data, SWP_NOZORDER | SWP_NOACTIVATE, NULL, NULL);
-            release_win_data(data);
-        }
+        macdrv_reassert_window_position(hwnd);
         SendMessageW(hwnd, WM_DISPLAYCHANGE, wp, lp);
         return 0;
     case WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS:
@@ -2240,6 +2235,23 @@ void macdrv_window_drag_end(HWND hwnd)
         /* Post this rather than sending it, so that the message loop in
            macdrv_window_drag_begin() will see it. */
         PostMessageW(hwnd, WM_EXITSIZEMOVE, 0, 0);
+    }
+}
+
+
+/***********************************************************************
+ *              macdrv_reassert_window_position
+ *
+ * Handler for REASSERT_WINDOW_POSITION events.
+ */
+void macdrv_reassert_window_position(HWND hwnd)
+{
+    struct macdrv_win_data *data = get_win_data(hwnd);
+    if (data)
+    {
+        if (data->cocoa_window && data->on_screen)
+            sync_window_position(data, SWP_NOZORDER | SWP_NOACTIVATE, NULL, NULL);
+        release_win_data(data);
     }
 }
 

@@ -150,6 +150,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 }
 
 
+@interface NSWindow (WineAccessPrivateMethods)
+    - (id) _displayChanged;
+@end
+
+
 @interface WineContentView : NSView <NSTextInputClient>
 {
     NSMutableArray* glContexts;
@@ -1591,6 +1596,38 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             frame_intersects_screens(frameRect, screens))
             frameRect = [super constrainFrameRect:frameRect toScreen:screen];
         return frameRect;
+    }
+
+    // This private method of NSWindow is called as Cocoa reacts to the display
+    // configuration changing.  Among other things, it adjusts the window's
+    // frame based on how the screen(s) changed size.  That tells Wine that the
+    // window has been moved.  We don't want that.  Rather, we want to make
+    // sure that the WinAPI notion of the window position is maintained/
+    // restored, possibly undoing or overriding Cocoa's adjustment.
+    //
+    // So, we queue a REASSERT_WINDOW_POSITION event to the back end before
+    // Cocoa has a chance to adjust the frame, thus preceding any resulting
+    // WINDOW_FRAME_CHANGED event that may get queued.  The back end will
+    // reassert its notion of the position.  That call won't get processed
+    // until after this method returns, so it will override whatever this
+    // method does to the window position.  It will also discard any pending
+    // WINDOW_FRAME_CHANGED events.
+    //
+    // Unfortunately, the only way I've found to know when Cocoa is _about to_
+    // adjust the window's position due to a display change is to hook into
+    // this private method.  This private method has remained stable from 10.6
+    // through 10.11.  If it does change, the most likely thing is that it
+    // will be removed and no longer called and this fix will simply stop
+    // working.  The only real danger would be if Apple changed the return type
+    // to a struct or floating-point type, which would change the calling
+    // convention.
+    - (id) _displayChanged
+    {
+        macdrv_event* event = macdrv_create_event(REASSERT_WINDOW_POSITION, self);
+        [queue postEvent:event];
+        macdrv_release_event(event);
+
+        return [super _displayChanged];
     }
 
     - (BOOL) isExcludedFromWindowsMenu
