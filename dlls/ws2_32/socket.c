@@ -7431,7 +7431,7 @@ INT WINAPI WS_inet_pton( INT family, PCSTR addr, PVOID buffer)
 #ifdef HAVE_INET_PTON
     int unixaf, ret;
 
-    TRACE("family %d, addr '%s', buffer (%p)\n", family, addr ? addr : "(null)", buffer);
+    TRACE("family %d, addr %s, buffer (%p)\n", family, debugstr_a(addr), buffer);
 
     if (!addr || !buffer)
     {
