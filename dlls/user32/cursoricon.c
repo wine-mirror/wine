@@ -725,8 +725,7 @@ static BOOL bmi_has_alpha( const BITMAPINFO *info, const void *bits )
  *
  * Create the alpha bitmap for a 32-bpp icon that has an alpha channel.
  */
-static HBITMAP create_alpha_bitmap( HBITMAP color, HBITMAP mask,
-                                    const BITMAPINFO *src_info, const void *color_bits )
+static HBITMAP create_alpha_bitmap( HBITMAP color, const BITMAPINFO *src_info, const void *color_bits )
 {
     HBITMAP alpha = 0;
     BITMAPINFO *info = NULL;
@@ -904,7 +903,7 @@ static HICON create_icon_from_bmi( const BITMAPINFO *bmi, DWORD maxsize, HMODULE
                        color_bits, bmi_copy, DIB_RGB_COLORS, SRCCOPY );
 
         if (bmi_has_alpha( bmi_copy, color_bits ))
-            alpha = create_alpha_bitmap( color, mask, bmi_copy, color_bits );
+            alpha = create_alpha_bitmap( color, bmi_copy, color_bits );
 
         /* convert info to monochrome to copy the mask */
         bmi_copy->bmiHeader.biBitCount = 1;
@@ -2195,7 +2194,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
         frame->height = height;
         frame->color  = color;
         frame->mask   = mask;
-        frame->alpha  = create_alpha_bitmap( iconinfo->hbmColor, mask, NULL, NULL );
+        frame->alpha  = create_alpha_bitmap( iconinfo->hbmColor, NULL, NULL );
         release_icon_frame( info, frame );
         if (info->is_icon)
         {
