@@ -3780,7 +3780,6 @@ todo_wine
     VariantInit(&ret);
     hr = IWinHttpRequest_Invoke(request, DISPID_HTTPREQUEST_SETAUTOLOGONPOLICY, &IID_NULL, 0,
                                 DISPATCH_METHOD, &params, &ret, NULL, NULL);
-todo_wine
     ok(hr == S_OK, "error %#x\n", hr);
 
     IWinHttpRequest_Release(request);
