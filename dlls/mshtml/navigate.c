@@ -1137,7 +1137,7 @@ static nsrefcnt NSAPI nsAsyncVerifyRedirectCallback_Release(nsIAsyncVerifyRedire
     return ref;
 }
 
-static nsresult NSAPI nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect(nsIAsyncVerifyRedirectCallback *iface, nsresult result)
+static nsresult NSAPI nsAsyncVerifyRedirectCallback_OnRedirectVerifyCallback(nsIAsyncVerifyRedirectCallback *iface, nsresult result)
 {
     nsRedirectCallback *This = impl_from_nsIAsyncVerifyRedirectCallback(iface);
     nsChannel *old_nschannel;
@@ -1184,7 +1184,7 @@ static const nsIAsyncVerifyRedirectCallbackVtbl nsAsyncVerifyRedirectCallbackVtb
     nsAsyncVerifyRedirectCallback_QueryInterface,
     nsAsyncVerifyRedirectCallback_AddRef,
     nsAsyncVerifyRedirectCallback_Release,
-    nsAsyncVerifyRedirectCallback_AsyncOnChannelRedirect
+    nsAsyncVerifyRedirectCallback_OnRedirectVerifyCallback
 };
 
 static HRESULT create_redirect_callback(nsChannel *nschannel, nsChannelBSC *bsc, nsRedirectCallback **ret)
