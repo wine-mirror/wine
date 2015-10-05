@@ -225,7 +225,7 @@ DWORD WINAPI DsClientMakeSpnForTargetServerW(LPCWSTR class, LPCWSTR name, DWORD 
     p = buf + strlenW(class);
     *p++ = '/';
     memcpy(p, name, strlenW(name) * sizeof(WCHAR));
-    buf[len] = 0;
+    buf[len - 1] = 0;
 
     return ERROR_SUCCESS;
 }
