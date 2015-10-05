@@ -114,6 +114,38 @@ out:
     return ret;
 }
 
+static D3DCOLOR get_surface_color(IDirect3DSurface8 *surface, UINT x, UINT y)
+{
+    DWORD color;
+    HRESULT hr;
+    D3DSURFACE_DESC desc;
+    RECT rectToLock = {x, y, x+1, y+1};
+    D3DLOCKED_RECT lockedRect;
+
+    hr = IDirect3DSurface8_GetDesc(surface, &desc);
+    ok(SUCCEEDED(hr), "Failed to get surface description, hr=%#x.\n", hr);
+
+    hr = IDirect3DSurface8_LockRect(surface, &lockedRect, &rectToLock, D3DLOCK_READONLY);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr=%#x.\n", hr);
+
+    switch(desc.Format)
+    {
+        case D3DFMT_A8R8G8B8:
+            color = ((D3DCOLOR *)lockedRect.pBits)[0];
+            break;
+
+        default:
+            trace("Error: unknown surface format: %u.\n", desc.Format);
+            color = 0xdeadbeef;
+            break;
+    }
+
+    hr = IDirect3DSurface8_UnlockRect(surface);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr=%#x.\n", hr);
+
+    return color;
+}
+
 static IDirect3DDevice8 *create_device(IDirect3D8 *d3d, HWND device_window, HWND focus_window, BOOL windowed)
 {
     D3DPRESENT_PARAMETERS present_parameters = {0};
@@ -7885,6 +7917,118 @@ done:
     DestroyWindow(window);
 }
 
+static void test_flip(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    IDirect3DSurface8 *back_buffers[3], *test_surface;
+    unsigned int i;
+    D3DCOLOR color;
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.BackBufferCount = 3;
+    present_parameters.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+    hr = IDirect3D8_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+    {
+        hr = IDirect3DDevice8_GetBackBuffer(device, i, D3DBACKBUFFER_TYPE_MONO, &back_buffers[i]);
+        ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+    }
+    hr = IDirect3DDevice8_GetRenderTarget(device, &test_surface);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(test_surface == back_buffers[0], "Expected render target %p, got %p.\n", back_buffers[0], test_surface);
+    IDirect3DSurface8_Release(test_surface);
+
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, back_buffers[0], NULL);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, back_buffers[1], NULL);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x\n", hr);
+
+    hr = IDirect3DDevice8_SetRenderTarget(device, back_buffers[2], NULL);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x\n", hr);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* Render target is unmodified. */
+    hr = IDirect3DDevice8_GetRenderTarget(device, &test_surface);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(test_surface == back_buffers[2], "Expected render target %p, got %p.\n", back_buffers[2], test_surface);
+    IDirect3DSurface8_Release(test_surface);
+
+    /* Backbuffer surface pointers are unmodified */
+    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+    {
+        hr = IDirect3DDevice8_GetBackBuffer(device, i, D3DBACKBUFFER_TYPE_MONO, &test_surface);
+        ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+        ok(test_surface == back_buffers[i], "Expected back buffer %u = %p, got %p.\n",
+                i, back_buffers[i], test_surface);
+        IDirect3DSurface8_Release(test_surface);
+    }
+
+    /* Contents were changed. */
+    color = get_surface_color(back_buffers[0], 1, 1);
+    todo_wine ok(color == 0xff00ff00, "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(back_buffers[1], 1, 1);
+    todo_wine ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff808080, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x\n", hr);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    color = get_surface_color(back_buffers[0], 1, 1);
+    todo_wine ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
+    color = get_surface_color(back_buffers[1], 1, 1);
+    todo_wine ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    color = get_surface_color(back_buffers[0], 1, 1);
+    todo_wine ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
+
+    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+        IDirect3DSurface8_Release(back_buffers[i]);
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -7946,4 +8090,5 @@ START_TEST(visual)
     test_texcoordindex();
     test_vshader_input();
     test_fixed_function_fvf();
+    test_flip();
 }
