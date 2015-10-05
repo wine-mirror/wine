@@ -1399,8 +1399,53 @@ static void test_create_shader(void)
         0x00000000, 0x00000000,
     };
 
+#if 0
+    struct gs_out
+    {
+        float4 pos : SV_POSITION;
+    };
+
+    [maxvertexcount(4)]
+    void main(point float4 vin[1] : POSITION, inout TriangleStream<gs_out> vout)
+    {
+        float offset = 0.1 * vin[0].w;
+        gs_out v;
+
+        v.pos = float4(vin[0].x - offset, vin[0].y - offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x - offset, vin[0].y + offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x + offset, vin[0].y - offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+        v.pos = float4(vin[0].x + offset, vin[0].y + offset, vin[0].z, vin[0].w);
+        vout.Append(v);
+    }
+#endif
+    static const DWORD gs_4_0[] =
+    {
+        0x43425844, 0x000ee786, 0xc624c269, 0x885a5cbe, 0x444b3b1f, 0x00000001, 0x0000023c, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x000001a0, 0x00020040,
+        0x00000068, 0x0400005f, 0x002010f2, 0x00000001, 0x00000000, 0x02000068, 0x00000001, 0x0100085d,
+        0x0100285c, 0x04000067, 0x001020f2, 0x00000000, 0x00000001, 0x0200005e, 0x00000004, 0x0f000032,
+        0x00100032, 0x00000000, 0x80201ff6, 0x00000041, 0x00000000, 0x00000000, 0x00004002, 0x3dcccccd,
+        0x3dcccccd, 0x00000000, 0x00000000, 0x00201046, 0x00000000, 0x00000000, 0x05000036, 0x00102032,
+        0x00000000, 0x00100046, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000,
+        0x00000000, 0x01000013, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x0e000032,
+        0x00100052, 0x00000000, 0x00201ff6, 0x00000000, 0x00000000, 0x00004002, 0x3dcccccd, 0x00000000,
+        0x3dcccccd, 0x00000000, 0x00201106, 0x00000000, 0x00000000, 0x05000036, 0x00102022, 0x00000000,
+        0x0010002a, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000, 0x00000000,
+        0x01000013, 0x05000036, 0x00102012, 0x00000000, 0x0010000a, 0x00000000, 0x05000036, 0x00102022,
+        0x00000000, 0x0010001a, 0x00000000, 0x06000036, 0x001020c2, 0x00000000, 0x00201ea6, 0x00000000,
+        0x00000000, 0x01000013, 0x05000036, 0x00102032, 0x00000000, 0x00100086, 0x00000000, 0x06000036,
+        0x001020c2, 0x00000000, 0x00201ea6, 0x00000000, 0x00000000, 0x01000013, 0x0100003e,
+    };
+
     ULONG refcount, expected_refcount;
     ID3D11Device *device, *tmp;
+    ID3D11GeometryShader *gs;
     ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
     unsigned int i;
@@ -1415,6 +1460,7 @@ static void test_create_shader(void)
             continue;
         }
 
+        /* vertex shader */
         hr = ID3D11Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), NULL, &vs);
         ok(hr == E_INVALIDARG, "Created a SM2 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
 
@@ -1448,6 +1494,7 @@ static void test_create_shader(void)
         ID3D11Device_Release(tmp);
         ID3D11VertexShader_Release(vs);
 
+        /* pixel shader */
         expected_refcount = get_refcount((IUnknown *)device) + 1;
         hr = ID3D11Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), NULL, &ps);
         ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x, feature level %#x.\n", hr, feature_level);
@@ -1463,6 +1510,24 @@ static void test_create_shader(void)
                 refcount, expected_refcount);
         ID3D11Device_Release(tmp);
         ID3D11PixelShader_Release(ps);
+
+        /* geometry shader */
+        expected_refcount = get_refcount((IUnknown *)device) + 1;
+        hr = ID3D11Device_CreateGeometryShader(device, gs_4_0, sizeof(gs_4_0), NULL, &gs);
+        ok(SUCCEEDED(hr), "Failed to create SM4 geometry shader, hr %#x.\n", hr);
+        refcount = get_refcount((IUnknown *)device);
+        ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n",
+                refcount, expected_refcount);
+        tmp = NULL;
+        expected_refcount = refcount + 1;
+        ID3D11GeometryShader_GetDevice(gs, &tmp);
+        ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+        refcount = get_refcount((IUnknown *)device);
+        ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n",
+                refcount, expected_refcount);
+        ID3D11Device_Release(tmp);
+        refcount = ID3D11GeometryShader_Release(gs);
+        ok(!refcount, "Geometry shader has %u references left.\n", refcount);
 
         refcount = ID3D11Device_Release(device);
         ok(!refcount, "Device has %u references left.\n", refcount);
