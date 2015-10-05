@@ -924,6 +924,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 					 wine_dbgstr_w(argvW[i]+2));
 			}
 		}
+                else if(msi_option_equal(argvW[i], "passive"))
+                {
+                    static const WCHAR rebootpromptW[] =
+                        {'R','E','B','O','O','T','P','R','O','M','P','T','=','"','S','"',0};
+
+                    InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_PROGRESSONLY|INSTALLUILEVEL_HIDECANCEL;
+                    StringListAppend(&property_list, rebootpromptW);
+                }
 		else if(msi_option_equal(argvW[i], "y"))
 		{
 			FunctionDllRegisterServer = TRUE;
