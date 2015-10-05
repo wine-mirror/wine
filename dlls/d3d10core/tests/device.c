@@ -1085,6 +1085,7 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     ID3D10VertexShader *vs = NULL;
     ID3D10PixelShader *ps = NULL;
     ID3D10Device *device, *tmp;
+    IUnknown *iface;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -1096,6 +1097,7 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateVertexShader(device, vs_4_0, sizeof(vs_4_0), &vs);
     ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x\n", hr);
+
     refcount = get_refcount((IUnknown *)device);
     ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
     tmp = NULL;
@@ -1105,7 +1107,14 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
-    ID3D10VertexShader_Release(vs);
+
+    hr = ID3D10VertexShader_QueryInterface(vs, &IID_ID3D11VertexShader, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Vertex shader should implement ID3D11VertexShader.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    refcount = ID3D10VertexShader_Release(vs);
+    ok(!refcount, "Vertex shader has %u references left.\n", refcount);
 
     hr = ID3D10Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), &vs);
     ok(hr == E_INVALIDARG, "Created a SM2 vertex shader, hr %#x\n", hr);
@@ -1119,6 +1128,7 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), &ps);
     ok(SUCCEEDED(hr), "Failed to create SM4 vertex shader, hr %#x\n", hr);
+
     refcount = get_refcount((IUnknown *)device);
     ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
     tmp = NULL;
@@ -1128,7 +1138,14 @@ float4 main(const float4 color : COLOR) : SV_TARGET
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
-    ID3D10PixelShader_Release(ps);
+
+    hr = ID3D10PixelShader_QueryInterface(ps, &IID_ID3D11PixelShader, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Pixel shader should implement ID3D11PixelShader.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    refcount = ID3D10PixelShader_Release(ps);
+    ok(!refcount, "Pixel shader has %u references left.\n", refcount);
 
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
