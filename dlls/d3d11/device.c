@@ -503,25 +503,49 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device *
 static HRESULT STDMETHODCALLTYPE d3d11_device_GetPrivateData(ID3D11Device *iface, REFGUID guid,
         UINT *data_size, void *data)
 {
-    FIXME("iface %p, guid %s, data_size %p, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    IDXGIDevice *dxgi_device;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    if (FAILED(hr = ID3D11Device_QueryInterface(iface, &IID_IDXGIDevice, (void **)&dxgi_device)))
+        return hr;
+    hr = IDXGIDevice_GetPrivateData(dxgi_device, guid, data_size, data);
+    IDXGIDevice_Release(dxgi_device);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_SetPrivateData(ID3D11Device *iface, REFGUID guid,
         UINT data_size, const void *data)
 {
-    FIXME("iface %p, guid %s, data_size %u, data %p stub!\n", iface, debugstr_guid(guid), data_size, data);
+    IDXGIDevice *dxgi_device;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    if (FAILED(hr = ID3D11Device_QueryInterface(iface, &IID_IDXGIDevice, (void **)&dxgi_device)))
+        return hr;
+    hr = IDXGIDevice_SetPrivateData(dxgi_device, guid, data_size, data);
+    IDXGIDevice_Release(dxgi_device);
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_SetPrivateDataInterface(ID3D11Device *iface, REFGUID guid,
-        const IUnknown *data_iface)
+        const IUnknown *data)
 {
-    FIXME("iface %p, guid %s, data_iface %p stub!\n", iface, debugstr_guid(guid), data_iface);
+    IDXGIDevice *dxgi_device;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    if (FAILED(hr = ID3D11Device_QueryInterface(iface, &IID_IDXGIDevice, (void **)&dxgi_device)))
+        return hr;
+    hr = IDXGIDevice_SetPrivateDataInterface(dxgi_device, guid, data);
+    IDXGIDevice_Release(dxgi_device);
+
+    return hr;
 }
 
 static D3D_FEATURE_LEVEL STDMETHODCALLTYPE d3d11_device_GetFeatureLevel(ID3D11Device *iface)
@@ -2020,51 +2044,31 @@ static UINT STDMETHODCALLTYPE d3d10_device_GetExceptionMode(ID3D10Device1 *iface
 static HRESULT STDMETHODCALLTYPE d3d10_device_GetPrivateData(ID3D10Device1 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    IDXGIDevice *dxgi_device;
-    HRESULT hr;
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
 
-    TRACE("iface %p, guid %s, data_size %p, data %p.\n",
-            iface, debugstr_guid(guid), data_size, data);
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
-    if (FAILED(hr = ID3D10Device1_QueryInterface(iface, &IID_IDXGIDevice, (void **)&dxgi_device)))
-        return hr;
-    hr = IDXGIDevice_GetPrivateData(dxgi_device, guid, data_size, data);
-    IDXGIDevice_Release(dxgi_device);
-
-    return hr;
+    return d3d11_device_GetPrivateData(&device->ID3D11Device_iface, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateData(ID3D10Device1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    IDXGIDevice *dxgi_device;
-    HRESULT hr;
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
 
-    TRACE("iface %p, guid %s, data_size %u, data %p.\n",
-            iface, debugstr_guid(guid), data_size, data);
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
-    if (FAILED(hr = ID3D10Device1_QueryInterface(iface, &IID_IDXGIDevice, (void **)&dxgi_device)))
-        return hr;
-    hr = IDXGIDevice_SetPrivateData(dxgi_device, guid, data_size, data);
-    IDXGIDevice_Release(dxgi_device);
-
-    return hr;
+    return d3d11_device_SetPrivateData(&device->ID3D11Device_iface, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_SetPrivateDataInterface(ID3D10Device1 *iface,
         REFGUID guid, const IUnknown *data)
 {
-    IDXGIDevice *dxgi_device;
-    HRESULT hr;
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    if (FAILED(hr = ID3D10Device1_QueryInterface(iface, &IID_IDXGIDevice, (void **)&dxgi_device)))
-        return hr;
-    hr = IDXGIDevice_SetPrivateDataInterface(dxgi_device, guid, data);
-    IDXGIDevice_Release(dxgi_device);
-
-    return hr;
+    return d3d11_device_SetPrivateDataInterface(&device->ID3D11Device_iface, guid, data);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearState(ID3D10Device1 *iface)
