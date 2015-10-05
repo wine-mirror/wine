@@ -939,7 +939,7 @@ done:
     HeapFree( GetProcessHeap(), 0, bmi_copy );
 
     if (ret)
-        hObj = alloc_icon_handle( FALSE, 1 );
+        hObj = alloc_icon_handle( FALSE, 0 );
     if (hObj)
     {
         struct cursoricon_object *info = get_icon_ptr( hObj );
@@ -1575,7 +1575,7 @@ HICON WINAPI CopyIcon( HICON hIcon )
         SetLastError( ERROR_INVALID_CURSOR_HANDLE );
         return 0;
     }
-    if ((hNew = alloc_icon_handle( FALSE, 1 )))
+    if ((hNew = alloc_icon_handle( FALSE, 0 )))
     {
         struct cursoricon_frame *frameOld, *frameNew;
 
@@ -2181,7 +2181,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
 
     DeleteDC( hdc );
 
-    hObj = alloc_icon_handle( FALSE, 1 );
+    hObj = alloc_icon_handle( FALSE, 0 );
     if (hObj)
     {
         struct cursoricon_object *info = get_icon_ptr( hObj );
