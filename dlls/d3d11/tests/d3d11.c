@@ -1637,6 +1637,7 @@ static void test_private_data(void)
 {
     ULONG refcount, expected_refcount;
     D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D10Texture2D *d3d10_texture;
     ID3D11Device *test_object;
     ID3D11Texture2D *texture;
     IDXGIDevice *dxgi_device;
@@ -1784,6 +1785,20 @@ static void test_private_data(void)
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
     ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
     IUnknown_Release(ptr);
+
+    hr = ID3D11Texture2D_QueryInterface(texture, &IID_ID3D10Texture2D, (void **)&d3d10_texture);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Texture should implement ID3D10Texture2D.\n");
+    if (SUCCEEDED(hr))
+    {
+        ptr = NULL;
+        size = sizeof(ptr);
+        hr = ID3D10Texture2D_GetPrivateData(d3d10_texture, &test_guid, &size, &ptr);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(ptr == (IUnknown *)test_object, "Got unexpected ptr %p, expected %p.\n", ptr, test_object);
+        IUnknown_Release(ptr);
+        ID3D10Texture2D_Release(d3d10_texture);
+    }
 
     IDXGISurface_Release(surface);
     ID3D11Texture2D_Release(texture);
