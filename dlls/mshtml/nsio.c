@@ -363,7 +363,7 @@ static http_header_t *find_http_header(struct list *headers, const WCHAR *name, 
     http_header_t *iter;
 
     LIST_FOR_EACH_ENTRY(iter, headers, http_header_t, entry) {
-        if(!strcmpiW(iter->header, name))
+        if(!strncmpiW(iter->header, name, len) && !iter->header[len])
             return iter;
     }
 
