@@ -19,8 +19,13 @@
 
 #include <stdarg.h>
 
+#include "initguid.h"
 #include "windef.h"
 #include "winbase.h"
+#include "compobj.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
@@ -34,4 +39,10 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out)
+{
+    TRACE("%s %p\n", debugstr_guid(clsid), out);
+    return CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)out);
 }

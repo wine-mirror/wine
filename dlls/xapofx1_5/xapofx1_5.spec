@@ -1,1 +1,1 @@
-@ stub CreateFX
+@ cdecl CreateFX(ptr ptr)
