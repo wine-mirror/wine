@@ -2520,10 +2520,10 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                     TRACE("NMHDR hwndFrom=%p idFrom=0x%08lx code=0x%08x\n",
                           pnmh->hwndFrom, pnmh->idFrom, pnmh->code);
             }
+            break;
         default:
             if (sp_e->data_len > 0)
                 SPY_DumpMem ("MSG lParam", (UINT *)sp_e->lParam, sp_e->data_len);
-            break;
         }
 
 }
