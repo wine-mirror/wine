@@ -886,10 +886,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				InstallUILevel = INSTALLUILEVEL_NONE;
 			}
-			else if(msi_strequal(argvW[i]+2, "b"))
-			{
-				InstallUILevel = INSTALLUILEVEL_BASIC;
-			}
 			else if(msi_strequal(argvW[i]+2, "r"))
 			{
 				InstallUILevel = INSTALLUILEVEL_REDUCED;
@@ -902,28 +898,25 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 			{
 				InstallUILevel = INSTALLUILEVEL_NONE|INSTALLUILEVEL_ENDDIALOG;
 			}
-			else if(msi_strequal(argvW[i]+2, "b+"))
+			else if(msi_strprefix(argvW[i]+2, "b"))
 			{
-				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_ENDDIALOG;
-			}
-			else if(msi_strequal(argvW[i]+2, "b-"))
-			{
-				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_PROGRESSONLY;
-			}
-			else if(msi_strequal(argvW[i]+2, "b+!"))
-			{
-				WINE_FIXME("Unhandled modifier: !\n");
-				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_ENDDIALOG|INSTALLUILEVEL_HIDECANCEL;
-			}
-			else if(msi_strequal(argvW[i]+2, "b-!"))
-			{
-				WINE_FIXME("Unhandled modifier: !\n");
-				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_PROGRESSONLY|INSTALLUILEVEL_HIDECANCEL;
-			}
-			else if(msi_strequal(argvW[i]+2, "b!"))
-			{
-				WINE_FIXME("Unhandled modifier: !\n");
-				InstallUILevel = INSTALLUILEVEL_BASIC|INSTALLUILEVEL_HIDECANCEL;
+                const WCHAR *ptr = argvW[i] + 3;
+
+                InstallUILevel = INSTALLUILEVEL_BASIC;
+
+                while (*ptr)
+                {
+                    if (msi_strprefix(ptr, "+"))
+                        InstallUILevel |= INSTALLUILEVEL_ENDDIALOG;
+                    if (msi_strprefix(ptr, "-"))
+                        InstallUILevel |= INSTALLUILEVEL_PROGRESSONLY;
+                    if (msi_strprefix(ptr, "!"))
+                    {
+                        WINE_FIXME("Unhandled modifier: !\n");
+                        InstallUILevel |= INSTALLUILEVEL_HIDECANCEL;
+                    }
+                    ptr++;
+                }
 			}
 			else
 			{
