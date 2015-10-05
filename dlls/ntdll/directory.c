@@ -48,7 +48,22 @@
 #include <sys/attr.h>
 #endif
 #ifdef HAVE_SYS_VNODE_H
+/* Work around a conflict with Solaris' system list defined in sys/list.h. */
+#define list SYSLIST
+#define list_next SYSLIST_NEXT
+#define list_prev SYSLIST_PREV
+#define list_head SYSLIST_HEAD
+#define list_tail SYSLIST_TAIL
+#define list_move_tail SYSLIST_MOVE_TAIL
+#define list_remove SYSLIST_REMOVE
 #include <sys/vnode.h>
+#undef list
+#undef list_next
+#undef list_prev
+#undef list_head
+#undef list_tail
+#undef list_move_tail
+#undef list_remove
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #include <sys/ioctl.h>

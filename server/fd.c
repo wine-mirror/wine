@@ -44,10 +44,7 @@
 #include <sys/statvfs.h>
 #endif
 #ifdef HAVE_SYS_VFS_H
-/*
- * Solaris defines its system list in sys/list.h.
- * This need to be workaround it here.
- */
+/* Work around a conflict with Solaris' system list defined in sys/list.h. */
 #define list SYSLIST
 #define list_next SYSLIST_NEXT
 #define list_prev SYSLIST_PREV
