@@ -3929,6 +3929,30 @@ static const char *dump_func_flags(DWORD flags)
     return buf;
 }
 
+static int get_href_type(ITypeInfo *info, TYPEDESC *tdesc)
+{
+    int href_type = -1;
+
+    if (tdesc->vt == VT_USERDEFINED)
+    {
+        HRESULT hr;
+        ITypeInfo *param;
+        TYPEATTR *attr;
+
+        hr = ITypeInfo_GetRefTypeInfo(info, U(*tdesc).hreftype, &param);
+        ok(hr == S_OK, "GetRefTypeInfo error %#x\n", hr);
+        hr = ITypeInfo_GetTypeAttr(param, &attr);
+        ok(hr == S_OK, "GetTypeAttr error %#x\n", hr);
+
+        href_type = attr->typekind;
+
+        ITypeInfo_ReleaseTypeAttr(param, attr);
+        ITypeInfo_Release(param);
+    }
+
+    return href_type;
+}
+
 static void test_dump_typelib(const char *name)
 {
     WCHAR wszString[260];
@@ -3982,14 +4006,16 @@ static void test_dump_typelib(const char *name)
                 map_value(desc->callconv, callconv_map));
             printf("      /*#param*/ %d, /*#opt*/ %d, /*vtbl*/ %d, /*#scodes*/ %d, /*flags*/ %s,\n",
                 desc->cParams, desc->cParamsOpt, desc->oVft/sizeof(void*), desc->cScodes, dump_func_flags(desc->wFuncFlags));
-            printf("      {%s, %s}, /* ret */\n", map_value(desc->elemdescFunc.tdesc.vt, vt_map), dump_param_flags(U(desc->elemdescFunc).paramdesc.wParamFlags));
+            printf("      {%s, %s, %s}, /* ret */\n", map_value(desc->elemdescFunc.tdesc.vt, vt_map),
+                map_value(get_href_type(info, &desc->elemdescFunc.tdesc), tkind_map), dump_param_flags(U(desc->elemdescFunc).paramdesc.wParamFlags));
             printf("      { /* params */\n");
             for (p = 0; p < desc->cParams; p++)
             {
                 ELEMDESC e = desc->lprgelemdescParam[p];
-                printf("        {%s, %s},\n", map_value(e.tdesc.vt, vt_map), dump_param_flags(U(e).paramdesc.wParamFlags));
+                printf("        {%s, %s, %s},\n", map_value(e.tdesc.vt, vt_map),
+                    map_value(get_href_type(info, &e.tdesc), tkind_map), dump_param_flags(U(e).paramdesc.wParamFlags));
             }
-            printf("        {-1, -1}\n");
+            printf("        {-1, 0, 0}\n");
             printf("      },\n");
             printf("      { /* names */\n");
             OLE_CHECK(ITypeInfo_GetNames(info, desc->memid, tab, 256, &cNames));
@@ -4018,6 +4044,7 @@ static void test_dump_typelib(const char *name)
 typedef struct _element_info
 {
     VARTYPE vt;
+    TYPEKIND type;
     USHORT wParamFlags;
 } element_info;
 
@@ -4061,11 +4088,11 @@ static const type_info info[] = {
     {
       /*id*/ 0x60000000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 2, /*#opt*/ 0, /*vtbl*/ 0, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
-      {VT_VOID, PARAMFLAG_NONE}, /* ret */
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {VT_PTR, PARAMFLAG_FIN},
-        {VT_PTR, PARAMFLAG_FOUT},
-        {-1, -1}
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
       },
       { /* names */
         "QueryInterface",
@@ -4077,9 +4104,9 @@ static const type_info info[] = {
     {
       /*id*/ 0x60000001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 1, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
-      {VT_UI4, PARAMFLAG_NONE}, /* ret */
+      {VT_UI4, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {-1, -1}
+        {-1, 0, 0}
       },
       { /* names */
         "AddRef",
@@ -4089,9 +4116,9 @@ static const type_info info[] = {
     {
       /*id*/ 0x60000002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 2, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
-      {VT_UI4, PARAMFLAG_NONE}, /* ret */
+      {VT_UI4, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {-1, -1}
+        {-1, 0, 0}
       },
       { /* names */
         "Release",
@@ -4101,10 +4128,10 @@ static const type_info info[] = {
     {
       /*id*/ 0x60010000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 3, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
-      {VT_VOID, PARAMFLAG_NONE}, /* ret */
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {VT_PTR, PARAMFLAG_FOUT},
-        {-1, -1}
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
       },
       { /* names */
         "GetTypeInfoCount",
@@ -4115,12 +4142,12 @@ static const type_info info[] = {
     {
       /*id*/ 0x60010001, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 3, /*#opt*/ 0, /*vtbl*/ 4, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
-      {VT_VOID, PARAMFLAG_NONE}, /* ret */
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {VT_UINT, PARAMFLAG_FIN},
-        {VT_UI4, PARAMFLAG_FIN},
-        {VT_PTR, PARAMFLAG_FOUT},
-        {-1, -1}
+        {VT_UINT, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
       },
       { /* names */
         "GetTypeInfo",
@@ -4133,14 +4160,14 @@ static const type_info info[] = {
     {
       /*id*/ 0x60010002, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 5, /*#opt*/ 0, /*vtbl*/ 5, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
-      {VT_VOID, PARAMFLAG_NONE}, /* ret */
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {VT_PTR, PARAMFLAG_FIN},
-        {VT_PTR, PARAMFLAG_FIN},
-        {VT_UINT, PARAMFLAG_FIN},
-        {VT_UI4, PARAMFLAG_FIN},
-        {VT_PTR, PARAMFLAG_FOUT},
-        {-1, -1}
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_UINT, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
       },
       { /* names */
         "GetIDsOfNames",
@@ -4155,17 +4182,17 @@ static const type_info info[] = {
     {
       /*id*/ 0x60010003, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 8, /*#opt*/ 0, /*vtbl*/ 6, /*#scodes*/ 0, /*flags*/ FUNCFLAG_FRESTRICTED,
-      {VT_VOID, PARAMFLAG_NONE}, /* ret */
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {VT_I4, PARAMFLAG_FIN},
-        {VT_PTR, PARAMFLAG_FIN},
-        {VT_UI4, PARAMFLAG_FIN},
-        {VT_UI2, PARAMFLAG_FIN},
-        {VT_PTR, PARAMFLAG_FIN},
-        {VT_PTR, PARAMFLAG_FOUT},
-        {VT_PTR, PARAMFLAG_FOUT},
-        {VT_PTR, PARAMFLAG_FOUT},
-        {-1, -1}
+        {VT_I4, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_UI4, -1, PARAMFLAG_FIN},
+        {VT_UI2, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FIN},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {VT_PTR, -1, PARAMFLAG_FOUT},
+        {-1, 0, 0}
       },
       { /* names */
         "Invoke",
@@ -4183,9 +4210,9 @@ static const type_info info[] = {
     {
       /*id*/ 0x60020000, /*func*/ FUNC_DISPATCH, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
-      {VT_VOID, PARAMFLAG_NONE}, /* ret */
+      {VT_VOID, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {-1, -1}
+        {-1, 0, 0}
       },
       { /* names */
         "Test",
@@ -4203,9 +4230,9 @@ static const type_info info[] = {
     {
       /*id*/ 0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
       /*#param*/ 0, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
-      {VT_HRESULT, PARAMFLAG_NONE}, /* ret */
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
       { /* params */
-        {-1, -1}
+        {-1, 0, 0}
       },
       { /* names */
         "Test",
@@ -4316,6 +4343,20 @@ static void test_dump_typelib(const char *name)
             for (i = 0 ; i < desc->cParams; i++)
             {
                 check_type(&desc->lprgelemdescParam[i], &fn_info->params[i]);
+
+                if (desc->lprgelemdescParam[i].tdesc.vt == VT_USERDEFINED)
+                {
+                    ITypeInfo *param;
+                    TYPEATTR *var_attr;
+
+                    ole_check(ITypeInfo_GetRefTypeInfo(typeinfo, U(desc->lprgelemdescParam[i].tdesc).hreftype, &param));
+                    ole_check(ITypeInfo_GetTypeAttr(param, &var_attr));
+
+                    ok(var_attr->typekind == fn_info->params[i].type, "expected %#x, got %#x\n", fn_info->params[i].type, var_attr->typekind);
+
+                    ITypeInfo_ReleaseTypeAttr(param, var_attr);
+                    ITypeInfo_Release(param);
+                }
             }
             expect_int(fn_info->params[desc->cParams].vt, (VARTYPE)-1);
 
