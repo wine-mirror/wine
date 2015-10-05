@@ -19,6 +19,9 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define NONAMELESSSTRUCT
+#define NONAMELESSUNION
+
 #define COBJMACROS
 #define CONST_VTABLE
 
@@ -71,8 +74,8 @@
 #define ARCH "none"
 #endif
 
-static HRESULT WINAPI (*pRegisterTypeLibForUser)(ITypeLib*,OLECHAR*,OLECHAR*);
-static HRESULT WINAPI (*pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIND);
+static HRESULT (WINAPI *pRegisterTypeLibForUser)(ITypeLib*,OLECHAR*,OLECHAR*);
+static HRESULT (WINAPI *pUnRegisterTypeLibForUser)(REFGUID,WORD,WORD,LCID,SYSKIND);
 
 static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
 static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
@@ -3773,12 +3776,12 @@ static void test_dump_typelib(const char *name)
                 desc->callconv);
             printf("      /*#param*/ %d, /*#opt*/ %d, /*vtbl*/ %d, /*#scodes*/ %d, /*flags*/ 0x%x,\n",
                 desc->cParams, desc->cParamsOpt, desc->oVft, desc->cScodes, desc->wFuncFlags);
-            printf("      {%d, %x}, /* ret */\n", desc->elemdescFunc.tdesc.vt, desc->elemdescFunc.paramdesc.wParamFlags);
+            printf("      {%d, %x}, /* ret */\n", desc->elemdescFunc.tdesc.vt, U(desc->elemdescFunc).paramdesc.wParamFlags);
             printf("      { /* params */\n");
             for (p = 0; p < desc->cParams; p++)
             {
                 ELEMDESC e = desc->lprgelemdescParam[p];
-                printf("        {%d, %x},\n", e.tdesc.vt, e.paramdesc.wParamFlags);
+                printf("        {%d, %x},\n", e.tdesc.vt, U(e).paramdesc.wParamFlags);
             }
             printf("        {-1, -1}\n");
             printf("      },\n");
