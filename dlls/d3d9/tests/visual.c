@@ -19796,6 +19796,112 @@ done:
     DestroyWindow(window);
 }
 
+static void test_flip(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    IDirect3DSurface9 *back_buffers[3], *test_surface;
+    unsigned int i;
+    D3DCOLOR color;
+    D3DPRESENT_PARAMETERS present_parameters = {0};
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    present_parameters.BackBufferWidth = 640;
+    present_parameters.BackBufferHeight = 480;
+    present_parameters.BackBufferFormat = D3DFMT_A8R8G8B8;
+    present_parameters.SwapEffect = D3DSWAPEFFECT_DISCARD;
+    present_parameters.hDeviceWindow = window;
+    present_parameters.Windowed = TRUE;
+    present_parameters.BackBufferCount = 3;
+    present_parameters.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+    hr = IDirect3D9_CreateDevice(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            window, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &present_parameters, &device);
+    if (!device)
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+    {
+        hr = IDirect3DDevice9_GetBackBuffer(device, 0, i, D3DBACKBUFFER_TYPE_MONO, &back_buffers[i]);
+        ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+    }
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &test_surface);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(test_surface == back_buffers[0], "Expected render target %p, got %p.\n", back_buffers[0], test_surface);
+    IDirect3DSurface9_Release(test_surface);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, back_buffers[2]);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_ColorFill(device, back_buffers[0], NULL, 0xffff0000);
+    ok(SUCCEEDED(hr), "Failed to color fill, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_ColorFill(device, back_buffers[1], NULL, 0xff00ff00);
+    ok(SUCCEEDED(hr), "Failed to color fill, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff0000ff, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x\n", hr);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    /* Render target is unmodified. */
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &test_surface);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+    ok(test_surface == back_buffers[2], "Expected render target %p, got %p.\n", back_buffers[2], test_surface);
+    IDirect3DSurface9_Release(test_surface);
+
+    /* Backbuffer surface pointers are unmodified */
+    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+    {
+        hr = IDirect3DDevice9_GetBackBuffer(device, 0, i, D3DBACKBUFFER_TYPE_MONO, &test_surface);
+        ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+        ok(test_surface == back_buffers[i], "Expected back buffer %u = %p, got %p.\n",
+                i, back_buffers[i], test_surface);
+        IDirect3DSurface9_Release(test_surface);
+    }
+
+    /* Contents were changed. */
+    color = getPixelColorFromSurface(back_buffers[0], 1, 1);
+    todo_wine ok(color == 0xff00ff00, "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColorFromSurface(back_buffers[1], 1, 1);
+    todo_wine ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff808080, 0.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x\n", hr);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    color = getPixelColorFromSurface(back_buffers[0], 1, 1);
+    todo_wine ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColorFromSurface(back_buffers[1], 1, 1);
+    todo_wine ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    color = getPixelColorFromSurface(back_buffers[0], 1, 1);
+    todo_wine ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
+
+    for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
+        IDirect3DSurface9_Release(back_buffers[i]);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -19914,4 +20020,5 @@ START_TEST(visual)
     test_vertex_blending();
     test_updatetexture();
     test_depthbias();
+    test_flip();
 }
