@@ -3735,12 +3735,13 @@ interface nsIContentViewer : nsISupports
 
 [
     object,
-    uuid(c8d3b1e1-565a-427e-9d68-b109910ce9b7),
+    uuid(c63e9d64-490d-48bf-8013-b5d8ee4dbc25),
     local
 ]
 interface nsIDocShellLoadInfo : nsISupports
 {
-    typedef int nsDocShellInfoLoadType;
+    typedef int32_t nsDocShellInfoLoadType;
+    typedef uint32_t nsDocShellInfoReferrerPolicy;
 
     nsresult GetReferrer(nsIURI **aReferrer);
     nsresult SetReferrer(nsIURI *aReferrer);
@@ -3762,6 +3763,8 @@ interface nsIDocShellLoadInfo : nsISupports
     nsresult SetHeadersStream(nsIInputStream *aHeadersStream);
     nsresult GetSendReferrer(bool *aSendReferrer);
     nsresult SetSendReferrer(bool aSendReferrer);
+    nsresult GetReferrerPolicy(nsDocShellInfoReferrerPolicy *aReferrerPolicy);
+    nsresult SetReferrerPolicy(nsDocShellInfoReferrerPolicy aReferrerPolicy);
     nsresult GetIsSrcdocLoad(bool *aIsSrcdocLoad);
     nsresult GetSrcdocData(nsAString *aSrcdocData);
     nsresult SetSrcdocData(const nsAString *aSrcdocData);
