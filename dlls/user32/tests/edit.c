@@ -1476,10 +1476,23 @@ static void test_margins(void)
     SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&old_rect);
     SendMessageA(hwEdit, EM_SETMARGINS, EC_LEFTMARGIN | EC_RIGHTMARGIN, MAKELONG(10, 10));
     SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
-    ok(new_rect.left == old_rect.left, "The left border of the rectangle has changed\n");
-    ok(new_rect.right == old_rect.right, "The right border of the rectangle has changed\n");
-    ok(new_rect.top == old_rect.top, "The top border of the rectangle has changed\n");
-    ok(new_rect.bottom == old_rect.bottom, "The bottom border of the rectangle has changed\n");
+    ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
+
+    /* The lParam argument of the WM_SIZE message should be ignored. */
+
+    SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&old_rect);
+    SendMessageA(hwEdit, WM_SIZE, SIZE_RESTORED, 0);
+    SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
+    todo_wine ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
+    SendMessageA(hwEdit, WM_SIZE, SIZE_MINIMIZED, 0);
+    SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
+    todo_wine ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
+    SendMessageA(hwEdit, WM_SIZE, SIZE_MAXIMIZED, 0);
+    SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
+    todo_wine ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
+    SendMessageA(hwEdit, WM_SIZE, SIZE_RESTORED, MAKELONG(10, 10));
+    SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
+    todo_wine ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
 
     DestroyWindow (hwEdit);
 
