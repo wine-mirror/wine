@@ -777,31 +777,85 @@ static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop *ifa
     return hr;
 }
 
+struct font_realization_info {
+    DWORD size;
+    DWORD flags;
+    DWORD cache_num;
+    DWORD instance_id;
+    DWORD unk;
+    DWORD face_index;
+};
+
+struct font_fileinfo {
+    FILETIME writetime;
+    LARGE_INTEGER size;
+    WCHAR path[1];
+};
+
+/* Undocumented gdi32 exports, used to access actually selected font information */
+extern BOOL WINAPI GetFontRealizationInfo(HDC hdc, struct font_realization_info *info);
+extern BOOL WINAPI GetFontFileInfo(DWORD instance_id, DWORD unknown, struct font_fileinfo *info, DWORD size, DWORD *needed);
+
 static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop *iface,
     HDC hdc, IDWriteFontFace **fontface)
 {
     struct gdiinterop *This = impl_from_IDWriteGdiInterop(iface);
-    IDWriteFont *font;
-    LOGFONTW logfont;
-    HFONT hfont;
+    struct font_realization_info info;
+    struct font_fileinfo *fileinfo;
+    DWRITE_FONT_FILE_TYPE filetype;
+    DWRITE_FONT_FACE_TYPE facetype;
+    IDWriteFontFile *file;
+    BOOL is_supported;
+    UINT32 facenum;
+    DWORD needed;
     HRESULT hr;
 
     TRACE("(%p)->(%p %p)\n", This, hdc, fontface);
 
     *fontface = NULL;
 
-    hfont = GetCurrentObject(hdc, OBJ_FONT);
-    if (!hfont)
+    if (!hdc)
         return E_INVALIDARG;
-    GetObjectW(hfont, sizeof(logfont), &logfont);
 
-    hr = IDWriteGdiInterop_CreateFontFromLOGFONT(iface, &logfont, &font);
+    /* get selected font id  */
+    info.size = sizeof(info);
+    if (!GetFontRealizationInfo(hdc, &info)) {
+        WARN("failed to get selected font id\n");
+        return E_FAIL;
+    }
+
+    needed = 0;
+    GetFontFileInfo(info.instance_id, 0, NULL, 0, &needed);
+    if (needed == 0) {
+        WARN("failed to get font file info size\n");
+        return E_FAIL;
+    }
+
+    fileinfo = heap_alloc(needed);
+    if (!fileinfo)
+        return E_OUTOFMEMORY;
+
+    if (!GetFontFileInfo(info.instance_id, 0, fileinfo, needed, &needed)) {
+        heap_free(fileinfo);
+        return E_FAIL;
+    }
+
+    hr = IDWriteFactory2_CreateFontFileReference(This->factory, fileinfo->path, &fileinfo->writetime,
+        &file);
+    heap_free(fileinfo);
     if (FAILED(hr))
         return hr;
 
-    hr = IDWriteFont_CreateFontFace(font, fontface);
-    IDWriteFont_Release(font);
+    is_supported = FALSE;
+    hr = IDWriteFontFile_Analyze(file, &is_supported, &filetype, &facetype, &facenum);
+    if (FAILED(hr) || !is_supported) {
+        IDWriteFontFile_Release(file);
+        return hr;
+    }
 
+    hr = IDWriteFactory2_CreateFontFace(This->factory, facetype, 1, &file, info.face_index, DWRITE_FONT_SIMULATIONS_NONE,
+        fontface);
+    IDWriteFontFile_Release(file);
     return hr;
 }
 
