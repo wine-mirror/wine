@@ -712,7 +712,12 @@ static BOOL d2d_cdt_fixup(struct d2d_cdt *cdt, const struct d2d_cdt_edge_ref *ba
 
     if (count > 1)
     {
-        if (!d2d_cdt_connect(cdt, &new_base, &candidate, base_edge))
+        d2d_cdt_edge_next_left(cdt, &next, &candidate);
+        if (d2d_cdt_edge_destination(cdt, &next) == d2d_cdt_edge_origin(cdt, base_edge))
+            d2d_cdt_edge_next_left(cdt, &next, base_edge);
+        else
+            next = *base_edge;
+        if (!d2d_cdt_connect(cdt, &new_base, &candidate, &next))
             return FALSE;
         if (!d2d_cdt_fixup(cdt, &new_base))
             return FALSE;
