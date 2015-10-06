@@ -33,16 +33,18 @@ WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
 #define USAGE_MAX 10
 
+/* Flags that are defined in the document
+   "Device Class Definition for Human Interface Devices" */
 enum {
-    INPUT_DATA = 0x01,
-    INPUT_ARRAY = 0x02,
-    INPUT_ABS = 0x04,
-    INPUT_WRAP = 0x08,
-    INPUT_LINEAR = 0x10,
-    INPUT_PREFSTATE = 0x20,
-    INPUT_NULL = 0x40,
-    INPUT_VOLATILE = 0x80,
-    INPUT_BITFIELD = 0x100
+    INPUT_DATA_CONST = 0x01, /* Data (0)             | Constant (1)       */
+    INPUT_ARRAY_VAR = 0x02,  /* Array (0)            | Variable (1)       */
+    INPUT_ABS_REL = 0x04,    /* Absolute (0)         | Relative (1)       */
+    INPUT_WRAP = 0x08,       /* No Wrap (0)          | Wrap (1)           */
+    INPUT_LINEAR = 0x10,     /* Linear (0)           | Non Linear (1)     */
+    INPUT_PREFSTATE = 0x20,  /* Preferred State (0)  | No Preferred (1)   */
+    INPUT_NULL = 0x40,       /* No Null position (0) | Null state(1)      */
+    INPUT_VOLATILE = 0x80,   /* Non Volatile (0)     | Volatile (1)       */
+    INPUT_BITFIELD = 0x100   /* Bit Field (0)        | Buffered Bytes (1) */
 };
 
 enum {
@@ -407,48 +409,21 @@ void parse_io_feature(unsigned int bSize, int itemVal, int bTag, unsigned int *f
     }
     else
     {
-        if ((itemVal & INPUT_DATA) == 0)
-            feature->isData = TRUE;
-        else
-            feature->isData = FALSE; /* Const */
-        if ((itemVal & INPUT_ARRAY) == 0)
-            feature->isArray= TRUE;
-        else
-            feature->isArray= FALSE; /* Var */
-        if ((itemVal & INPUT_ABS) == 0)
-            feature->IsAbsolute = TRUE;
-        else
-            feature->IsAbsolute = FALSE; /* Rel */
-        if ((itemVal & INPUT_WRAP) == 0)
-            feature->Wrap = FALSE;
-        else
-            feature->Wrap = TRUE;
-        if ((itemVal & INPUT_LINEAR) == 0)
-            feature->Linear = TRUE;
-        else
-            feature->Linear = FALSE;
-        if ((itemVal & INPUT_PREFSTATE) == 0)
-            feature->prefState = TRUE;
-        else
-            feature->prefState = FALSE;
-        if ((itemVal & INPUT_NULL) == 0)
-            feature->HasNull = FALSE;
-        else
-            feature->HasNull = TRUE;
+        feature->isData = ((itemVal & INPUT_DATA_CONST) == 0);
+        feature->isArray =  ((itemVal & INPUT_ARRAY_VAR) == 0);
+        feature->IsAbsolute = ((itemVal & INPUT_ABS_REL) == 0);
+        feature->Wrap = ((itemVal & INPUT_WRAP) != 0);
+        feature->Linear = ((itemVal & INPUT_LINEAR) == 0);
+        feature->prefState = ((itemVal & INPUT_PREFSTATE) == 0);
+        feature->HasNull = ((itemVal & INPUT_NULL) != 0);
 
         if (bTag != TAG_MAIN_INPUT)
         {
-            if ((itemVal & INPUT_VOLATILE) == 0)
-                feature->Volatile = FALSE;
-            else
-                feature->Volatile = TRUE;
+            feature->Volatile = ((itemVal & INPUT_VOLATILE) != 0);
         }
         if (bSize > 1)
         {
-            if ((itemVal & INPUT_BITFIELD) == 0)
-                feature->BitField = TRUE;
-            else
-                feature->BitField = FALSE; /* Buffered Bytes */
+            feature->BitField = ((itemVal & INPUT_BITFIELD) == 0);
         }
         feature->index = *feature_index;
         *feature_index = *feature_index + 1;
