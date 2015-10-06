@@ -4122,6 +4122,7 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
     /* see if we are supposed to be tracking mouse hovering */
     if (LISTVIEW_IsHotTracking(infoPtr)) {
         TRACKMOUSEEVENT trackinfo;
+        DWORD flags;
 
         trackinfo.cbSize = sizeof(TRACKMOUSEEVENT);
         trackinfo.dwFlags = TME_QUERY;
@@ -4129,8 +4130,12 @@ static LRESULT LISTVIEW_MouseMove(LISTVIEW_INFO *infoPtr, WORD fwKeys, INT x, IN
         /* see if we are already tracking this hwnd */
         _TrackMouseEvent(&trackinfo);
 
-        if(!(trackinfo.dwFlags & TME_HOVER) || trackinfo.hwndTrack != infoPtr->hwndSelf) {
-            trackinfo.dwFlags     = TME_HOVER;
+        flags = TME_LEAVE;
+        if(infoPtr->dwLvExStyle & LVS_EX_TRACKSELECT)
+            flags |= TME_HOVER;
+
+        if((trackinfo.dwFlags & flags) != flags || trackinfo.hwndTrack != infoPtr->hwndSelf) {
+            trackinfo.dwFlags     = flags;
             trackinfo.dwHoverTime = infoPtr->dwHoverTime;
             trackinfo.hwndTrack   = infoPtr->hwndSelf;
 
