@@ -47,6 +47,10 @@ F:	dlls/msvcrt/except_arm.c
 F:	dlls/ntdll/signal_arm*
 F:	programs/winedbg/be_arm*
 
+Common Controls Library
+P:	Nikolay Sivov <nsivov@codeweavers.com>
+F:	dlls/comctl32/
+
 Direct2D
 M:	Henri Verbeet <hverbeet@codeweavers.com>
 F:	dlls/d2d*/
@@ -62,6 +66,10 @@ F:	dlls/wined3d/
 DirectInput
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/dinput/
+
+DirectWrite
+M:	Nikolay Sivov <nsivov@codeweavers.com>
+F:	dlls/dwrite/
 
 HID support
 M:	Aric Stewart <aric@codeweavers.com>
