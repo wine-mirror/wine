@@ -204,12 +204,14 @@ struct d3d8_volume
 {
     IDirect3DVolume8 IDirect3DVolume8_iface;
     struct d3d8_resource resource;
+    struct wined3d_texture *wined3d_texture;
+    unsigned int sub_resource_idx;
     struct wined3d_volume *wined3d_volume;
     struct d3d8_texture *texture;
 };
 
-void volume_init(struct d3d8_volume *volume, struct d3d8_texture *texture,
-        struct wined3d_volume *wined3d_volume, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
+void volume_init(struct d3d8_volume *volume, struct wined3d_texture *wined3d_texture,
+        unsigned int sub_resource_idx, struct wined3d_volume *wined3d_volume, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
 
 struct d3d8_swapchain
 {

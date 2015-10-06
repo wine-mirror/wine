@@ -201,14 +201,14 @@ static const struct wined3d_parent_ops d3d9_volume_wined3d_parent_ops =
     volume_wined3d_object_destroyed,
 };
 
-void volume_init(struct d3d9_volume *volume, struct d3d9_texture *texture,
-        struct wined3d_volume *wined3d_volume, const struct wined3d_parent_ops **parent_ops)
+void volume_init(struct d3d9_volume *volume, struct wined3d_texture *wined3d_texture,
+        unsigned int sub_resource_idx, struct wined3d_volume *wined3d_volume, const struct wined3d_parent_ops **parent_ops)
 {
     volume->IDirect3DVolume9_iface.lpVtbl = &d3d9_volume_vtbl;
     d3d9_resource_init(&volume->resource);
     volume->resource.refcount = 0;
     volume->wined3d_volume = wined3d_volume;
-    volume->texture = texture;
+    volume->texture = wined3d_texture_get_parent(wined3d_texture);
 
     *parent_ops = &d3d9_volume_wined3d_parent_ops;
 }

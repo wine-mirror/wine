@@ -2032,7 +2032,8 @@ struct wined3d_device_parent_ops
     void (__cdecl *activate)(struct wined3d_device_parent *device_parent, BOOL activate);
     HRESULT (__cdecl *surface_created)(struct wined3d_device_parent *device_parent, void *container_parent,
             struct wined3d_surface *surface, void **parent, const struct wined3d_parent_ops **parent_ops);
-    HRESULT (__cdecl *volume_created)(struct wined3d_device_parent *device_parent, void *container_parent,
+    HRESULT (__cdecl *volume_created)(struct wined3d_device_parent *device_parent,
+            struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
             struct wined3d_volume *volume, void **parent, const struct wined3d_parent_ops **parent_ops);
     HRESULT (__cdecl *create_swapchain_texture)(struct wined3d_device_parent *device_parent, void *parent,
             const struct wined3d_resource_desc *desc, struct wined3d_texture **texture);

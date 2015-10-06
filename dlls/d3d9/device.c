@@ -3553,18 +3553,18 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
 }
 
 static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *device_parent,
-        void *container_parent, struct wined3d_volume *volume, void **parent,
+        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx, struct wined3d_volume *volume, void **parent,
         const struct wined3d_parent_ops **parent_ops)
 {
     struct d3d9_volume *d3d_volume;
 
-    TRACE("device_parent %p, container_parent %p, volume %p, parent %p, parent_ops %p.\n",
-            device_parent, container_parent, volume, parent, parent_ops);
+    TRACE("device_parent %p, texture %p, sub_resource_idx %u, volume %p, parent %p, parent_ops %p.\n",
+            device_parent, wined3d_texture, sub_resource_idx, volume, parent, parent_ops);
 
     if (!(d3d_volume = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_volume))))
         return E_OUTOFMEMORY;
 
-    volume_init(d3d_volume, container_parent, volume, parent_ops);
+    volume_init(d3d_volume, wined3d_texture, sub_resource_idx, volume, parent_ops);
     *parent = d3d_volume;
     TRACE("Created volume %p.\n", d3d_volume);
 
