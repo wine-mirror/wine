@@ -4252,6 +4252,104 @@ static const type_info info[] = {
   "{4029f190-ca4a-4611-aeb9-673983cb96de}",
   /*kind*/ TKIND_RECORD, /*flags*/ 0, /*align*/ 4, /*size*/ sizeof(struct test_struct2),
   /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "a",
+  "{00000000-0000-0000-0000-000000000000}",
+  /*kind*/ TKIND_ALIAS, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "_a",
+  "{00000000-0000-0000-0000-000000000000}",
+  /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "aa",
+  "{00000000-0000-0000-0000-000000000000}",
+  /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "_b",
+  "{00000000-0000-0000-0000-000000000000}",
+  /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "bb",
+  "{00000000-0000-0000-0000-000000000000}",
+  /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "c",
+  "{016fe2ec-b2c8-45f8-b23b-39e53a75396b}",
+  /*kind*/ TKIND_ALIAS, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "_c",
+  "{00000000-0000-0000-0000-000000000000}",
+  /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "cc",
+  "{00000000-0000-0000-0000-000000000000}",
+  /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
+  /*#vtbl*/ 0, /*#func*/ 0
+},
+{
+  "ITestIface",
+  "{ec5dfcd6-eeb0-4cd6-b51e-8030e1dac00a}",
+  /*kind*/ TKIND_INTERFACE, /*flags*/ TYPEFLAG_FDISPATCHABLE, /*align*/ 4, /*size*/ sizeof(ITestIface*),
+  /*#vtbl*/ 10, /*#func*/ 3,
+  {
+    {
+      /*id*/ 0x60020000, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 7, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_USERDEFINED, TKIND_ALIAS, PARAMFLAG_NONE},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test1",
+        "value",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60020001, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 8, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_USERDEFINED, TKIND_ENUM, PARAMFLAG_NONE},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test2",
+        "value",
+        NULL,
+      },
+    },
+    {
+      /*id*/ 0x60020002, /*func*/ FUNC_PUREVIRTUAL, /*inv*/ INVOKE_FUNC, /*call*/ CC_STDCALL,
+      /*#param*/ 1, /*#opt*/ 0, /*vtbl*/ 9, /*#scodes*/ 0, /*flags*/ 0,
+      {VT_HRESULT, -1, PARAMFLAG_NONE}, /* ret */
+      { /* params */
+        {VT_USERDEFINED, TKIND_ALIAS, PARAMFLAG_NONE},
+        {-1, 0, 0}
+      },
+      { /* names */
+        "test3",
+        "value",
+        NULL,
+      },
+    },
+  }
 }
 };
 
@@ -4286,8 +4384,21 @@ static void test_dump_typelib(const char *name)
         ole_check(ITypeInfo_GetTypeAttr(typeinfo, &typeattr));
         expect_int(typeattr->typekind, ti->type);
         expect_hex(typeattr->wTypeFlags, ti->wTypeFlags);
+        /* FIXME: remove once widl is fixed */
+        if (typeattr->typekind == TKIND_ALIAS)
+        {
+todo_wine /* widl generates broken typelib and typeattr just reflects that */
+        ok(typeattr->cbAlignment == ti->cbAlignment || broken(typeattr->cbAlignment == 1),
+           "expected %d, got %d\n", ti->cbAlignment, typeattr->cbAlignment);
+todo_wine /* widl generates broken typelib and typeattr just reflects that */
+        ok(typeattr->cbSizeInstance == ti->cbSizeInstance || broken(typeattr->cbSizeInstance == 0),
+           "expected %d, got %d\n", ti->cbSizeInstance, typeattr->cbSizeInstance);
+        }
+        else
+        {
         expect_int(typeattr->cbAlignment, ti->cbAlignment);
         expect_int(typeattr->cbSizeInstance, ti->cbSizeInstance);
+        }
         expect_int(typeattr->cbSizeVft, ti->cbSizeVft * sizeof(void*));
         expect_int(typeattr->cFuncs, ti->cFuncs);
 

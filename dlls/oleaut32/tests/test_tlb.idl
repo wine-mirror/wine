@@ -58,4 +58,19 @@ library Test
 		IDispatch *disp;
 		BSTR bstr;
 	};
+
+	typedef [public] enum _a { a1, a2 } a;
+	typedef [public] enum aa { aa1, aa2 } aa;
+	typedef enum _b { b1, b2 } b;
+	typedef enum bb { bb1, bb2 } bb;
+	typedef [uuid(016fe2ec-b2c8-45f8-b23b-39e53a75396b)] enum _c { c1, c2 } c;
+	typedef [uuid(016fe2ec-b2c8-45f8-b23b-39e53a75396c)] enum cc { cc1, cc2 } cc;
+
+	[uuid(ec5dfcd6-eeb0-4cd6-b51e-8030e1dac00a)]
+	interface ITestIface : IDispatch
+	{
+		HRESULT test1(a value);
+		HRESULT test2(b value);
+		HRESULT test3(c value);
+	}
 }
