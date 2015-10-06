@@ -245,7 +245,7 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
             {
             case '"':
                 state = state_quote;
-                if (in_quotes) count--;
+                if (in_quotes && p[1] != '\"') count--;
                 else count++;
                 break;
             case ' ':
@@ -329,7 +329,7 @@ UINT msi_parse_command_line( MSIPACKAGE *package, LPCWSTR szCommandLine,
 
         ptr2 = strchrW( ptr, '=' );
         if (!ptr2) return ERROR_INVALID_COMMAND_LINE;
- 
+
         len = ptr2 - ptr;
         if (!len) return ERROR_INVALID_COMMAND_LINE;
 
