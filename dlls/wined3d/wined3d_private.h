@@ -1939,8 +1939,8 @@ struct wined3d_ffp_vs_desc
     struct wined3d_ffp_vs_settings settings;
 };
 
-void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct wined3d_stream_info *si,
-        struct wined3d_ffp_vs_settings *settings) DECLSPEC_HIDDEN;
+void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct wined3d_ffp_vs_settings *settings) DECLSPEC_HIDDEN;
 
 struct wined3d
 {

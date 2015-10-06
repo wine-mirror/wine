@@ -6803,7 +6803,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         struct glsl_ffp_vertex_shader *ffp_shader;
         struct wined3d_ffp_vs_settings settings;
 
-        wined3d_ffp_get_vs_settings(state, &context->stream_info, &settings);
+        wined3d_ffp_get_vs_settings(context, state, &settings);
         ffp_shader = shader_glsl_find_ffp_vertex_shader(priv, gl_info, &settings);
         vs_id = ffp_shader->id;
         vs_list = &ffp_shader->linked_programs;
@@ -7971,11 +7971,11 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
 
         context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_TEXMATRIX;
 
-        /* Because of settings->texcoords, we have to always regenerate the
-         * vertex shader on a vdecl change.
-         * TODO: Just always output all the texcoords when there are enough
-         * varyings available to drop the dependency. */
-        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
+        /* Because of settings->texcoords, we have to regenerate the vertex
+         * shader on a vdecl change if there aren't enough varyings to just
+         * always output all the texture coordinates. */
+        if (gl_info->limits.glsl_varyings < wined3d_max_compat_varyings(gl_info))
+            context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 
         if (use_ps(state)
                 && state->shader[WINED3D_SHADER_TYPE_PIXEL]->reg_maps.shader_version.major == 1

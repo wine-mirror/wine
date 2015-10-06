@@ -4825,9 +4825,12 @@ const struct wine_rb_functions wined3d_ffp_frag_program_rb_functions =
     ffp_frag_program_key_compare,
 };
 
-void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct wined3d_stream_info *si,
-        struct wined3d_ffp_vs_settings *settings)
+void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
+        const struct wined3d_state *state, struct wined3d_ffp_vs_settings *settings)
 {
+    const struct wined3d_stream_info *si = &context->stream_info;
+    const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     unsigned int coord_idx, i;
 
     if (si->position_transformed)
@@ -4851,6 +4854,8 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
                 settings->texcoords |= 1u << i;
             settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
         }
+        if (d3d_info->limits.varying_count >= wined3d_max_compat_varyings(gl_info))
+            settings->texcoords = (1u << MAX_TEXTURES) - 1;
         return;
     }
 
@@ -4900,6 +4905,8 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_state *state, const struct
             settings->texcoords |= 1u << i;
         settings->texgen[i] = state->texture_states[i][WINED3D_TSS_TEXCOORD_INDEX];
     }
+    if (d3d_info->limits.varying_count >= wined3d_max_compat_varyings(gl_info))
+        settings->texcoords = (1u << MAX_TEXTURES) - 1;
 
     settings->light_type = 0;
     for (i = 0; i < MAX_ACTIVE_LIGHTS; ++i)
