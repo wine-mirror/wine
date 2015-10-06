@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Austin English
+ * Copyright 2015 Andrew Eikum for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -15,35 +15,22 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-
 #include "config.h"
-
 #include <stdarg.h>
 
 #include "windef.h"
 #include "winbase.h"
 
-#include "x3daudio.h"
-
-BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
-    switch (fdwReason)
+    switch (reason)
     {
         case DLL_WINE_PREATTACH:
             return FALSE;    /* prefer native version */
         case DLL_PROCESS_ATTACH:
-            DisableThreadLibraryCalls(hinstDLL);
-            break;
-        case DLL_PROCESS_DETACH:
+            DisableThreadLibraryCalls(instance);
             break;
     }
 
     return TRUE;
-}
-
-void CDECL X3DA16_X3DAudioInitialize(UINT32 chanmask, float speedofsound,
-        X3DAUDIO_HANDLE handle)
-{
-    /* forward to 1.7 */
-    X3DAudioInitialize(chanmask, speedofsound, handle);
 }
