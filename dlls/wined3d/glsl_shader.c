@@ -6295,20 +6295,35 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
 
     if (legacy_context)
     {
+        shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
         shader_addline(buffer, "float ffp_varying_fogcoord;\n");
     }
     else
     {
+        shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
         declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
     }
 
     shader_addline(buffer, "void main()\n{\n");
 
+    for (stage = 0; stage < MAX_TEXTURES; ++stage)
+    {
+        if (tex_map & (1u << stage))
+        {
+            if (settings->pointsprite)
+                shader_addline(buffer, "ffp_texcoord[%u] = vec4(gl_PointCoord.xy, 0.0, 0.0);\n", stage);
+            else if (settings->texcoords_initialized & (1u << stage))
+                shader_addline(buffer, "ffp_texcoord[%u] = gl_TexCoord[%u];\n", stage, stage);
+            else
+                shader_addline(buffer, "ffp_texcoord[%u] = vec4(0.0);\n", stage);
+        }
+    }
+
     if (legacy_context && settings->fog != WINED3D_FFP_PS_FOG_OFF)
         shader_addline(buffer, "ffp_varying_fogcoord = gl_FogFragCoord;\n");
 
     if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
-        shader_addline(buffer, "if (any(lessThan(gl_TexCoord[7], vec4(0.0)))) discard;\n");
+        shader_addline(buffer, "if (any(lessThan(ffp_texcoord[7], vec4(0.0)))) discard;\n");
 
     /* Generate texture sampling instructions) */
     for (stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
@@ -6409,20 +6424,20 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
             {
                 if (settings->op[stage].projected == proj_count4)
                 {
-                    shader_addline(buffer, "ret.xy = (ret.xy * gl_TexCoord[%u].w) + gl_TexCoord[%u].xy;\n",
+                    shader_addline(buffer, "ret.xy = (ret.xy * ffp_texcoord[%u].w) + ffp_texcoord[%u].xy;\n",
                             stage, stage);
-                    shader_addline(buffer, "ret.zw = gl_TexCoord[%u].ww;\n", stage);
+                    shader_addline(buffer, "ret.zw = ffp_texcoord[%u].ww;\n", stage);
                 }
                 else
                 {
-                    shader_addline(buffer, "ret.xy = (ret.xy * gl_TexCoord[%u].z) + gl_TexCoord[%u].xy;\n",
+                    shader_addline(buffer, "ret.xy = (ret.xy * ffp_texcoord[%u].z) + ffp_texcoord[%u].xy;\n",
                             stage, stage);
-                    shader_addline(buffer, "ret.zw = gl_TexCoord[%u].zz;\n", stage);
+                    shader_addline(buffer, "ret.zw = ffp_texcoord[%u].zz;\n", stage);
                 }
             }
             else
             {
-                shader_addline(buffer, "ret = gl_TexCoord[%u] + ret.xyxy;\n", stage);
+                shader_addline(buffer, "ret = ffp_texcoord[%u] + ret.xyxy;\n", stage);
             }
 
             shader_addline(buffer, "tex%u = %s(ps_sampler%u, ret.%s);\n",
@@ -6434,12 +6449,12 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
         }
         else if (settings->op[stage].projected == proj_count3)
         {
-            shader_addline(buffer, "tex%u = %s(ps_sampler%u, gl_TexCoord[%u].xyz);\n",
+            shader_addline(buffer, "tex%u = %s(ps_sampler%u, ffp_texcoord[%u].xyz);\n",
                     stage, texture_function, stage, stage);
         }
         else
         {
-            shader_addline(buffer, "tex%u = %s(ps_sampler%u, gl_TexCoord[%u].%s);\n",
+            shader_addline(buffer, "tex%u = %s(ps_sampler%u, ffp_texcoord[%u].%s);\n",
                     stage, texture_function, stage, stage, coord_mask);
         }
 
@@ -8391,8 +8406,20 @@ static void glsl_fragment_pipe_fog(struct wined3d_context *context,
 static void glsl_fragment_pipe_vdecl(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
+    /* Because of settings->texcoords_initialized. */
+    if (!use_ps(state) && context->gl_info->limits.glsl_varyings < wined3d_max_compat_varyings(context->gl_info))
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
+
     if (!isStateDirty(context, STATE_RENDER(WINED3D_RS_FOGENABLE)))
         glsl_fragment_pipe_fog(context, state, state_id);
+}
+
+static void glsl_fragment_pipe_vs(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    /* Because of settings->texcoords_initialized. */
+    if (!use_ps(state) && context->gl_info->limits.glsl_varyings < wined3d_max_compat_varyings(context->gl_info))
+        context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_PIXEL;
 }
 
 static void glsl_fragment_pipe_tex_transform(struct wined3d_context *context,
@@ -8447,6 +8474,7 @@ static void glsl_fragment_pipe_color_key(struct wined3d_context *context,
 static const struct StateEntryTemplate glsl_fragment_pipe_state_template[] =
 {
     {STATE_VDECL,                                               {STATE_VDECL,                                                glsl_fragment_pipe_vdecl               }, WINED3D_GL_EXT_NONE },
+    {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                  {STATE_SHADER(WINED3D_SHADER_TYPE_VERTEX),                   glsl_fragment_pipe_vs                  }, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),                    {STATE_RENDER(WINED3D_RS_TEXTUREFACTOR),                     glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_OP),               {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },
     {STATE_TEXTURESTAGE(0, WINED3D_TSS_COLOR_ARG1),             {STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL),                    NULL                                   }, WINED3D_GL_EXT_NONE },

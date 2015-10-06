@@ -1865,8 +1865,10 @@ struct ffp_frag_settings
     enum wined3d_ffp_ps_fog_mode fog;
     unsigned char sRGB_write;
     unsigned char emul_clipplanes;
-    unsigned char color_key_enabled;
-    unsigned char padding;
+    unsigned char texcoords_initialized;
+    unsigned char color_key_enabled : 1;
+    unsigned char pointsprite : 1;
+    unsigned char padding : 6;
 };
 
 struct ffp_frag_desc
