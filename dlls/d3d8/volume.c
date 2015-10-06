@@ -116,13 +116,13 @@ static HRESULT WINAPI d3d8_volume_GetDesc(IDirect3DVolume8 *iface, D3DVOLUME_DES
 {
     struct d3d8_volume *volume = impl_from_IDirect3DVolume8(iface);
     struct wined3d_resource_desc wined3d_desc;
-    struct wined3d_resource *wined3d_resource;
+    struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-    wined3d_resource = wined3d_volume_get_resource(volume->wined3d_volume);
-    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
+    sub_resource = wined3d_texture_get_sub_resource(volume->wined3d_texture, volume->sub_resource_idx);
+    wined3d_resource_get_desc(sub_resource, &wined3d_desc);
     wined3d_mutex_unlock();
 
     desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
@@ -203,12 +203,11 @@ static const struct wined3d_parent_ops d3d8_volume_wined3d_parent_ops =
 };
 
 void volume_init(struct d3d8_volume *volume, struct wined3d_texture *wined3d_texture,
-        unsigned int sub_resource_idx, struct wined3d_volume *wined3d_volume, const struct wined3d_parent_ops **parent_ops)
+        unsigned int sub_resource_idx, const struct wined3d_parent_ops **parent_ops)
 {
     volume->IDirect3DVolume8_iface.lpVtbl = &d3d8_volume_vtbl;
     d3d8_resource_init(&volume->resource);
     volume->resource.refcount = 0;
-    volume->wined3d_volume = wined3d_volume;
     volume->texture = wined3d_texture_get_parent(wined3d_texture);
     volume->wined3d_texture = wined3d_texture;
     volume->sub_resource_idx = sub_resource_idx;
