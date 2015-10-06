@@ -4927,6 +4927,7 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
 
     if (ps_major < 3)
     {
+        DWORD colors_written_mask[2] = {0};
         DWORD texcoords_written_mask[MAX_TEXTURES] = {0};
 
         if (!legacy_context)
@@ -4949,7 +4950,7 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
             write_mask = output->mask;
             shader_glsl_write_mask_to_str(write_mask, reg_mask);
 
-            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
+            if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR) && semantic_idx < 2)
             {
                 if (!semantic_idx)
                     shader_addline(buffer, "gl_FrontColor%s = vs_out[%u]%s;\n",
@@ -4957,6 +4958,8 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
                 else if (semantic_idx == 1)
                     shader_addline(buffer, "gl_FrontSecondaryColor%s = vs_out[%u]%s;\n",
                             reg_mask, output->register_idx, reg_mask);
+
+                colors_written_mask[semantic_idx] = write_mask;
             }
             else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_POSITION) && !semantic_idx)
             {
@@ -4985,6 +4988,19 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
             }
         }
 
+        for (i = 0; i < 2; ++i)
+        {
+            if (colors_written_mask[i] != WINED3DSP_WRITEMASK_ALL)
+            {
+                shader_glsl_write_mask_to_str(~colors_written_mask[i] & WINED3DSP_WRITEMASK_ALL, reg_mask);
+                if (!i)
+                    shader_addline(buffer, "gl_FrontColor%s = vec4(1.0)%s;\n",
+                            reg_mask, reg_mask);
+                else
+                    shader_addline(buffer, "gl_FrontSecondaryColor%s = vec4(0.0)%s;\n",
+                            reg_mask, reg_mask);
+            }
+        }
         for (i = 0; i < MAX_TEXTURES; ++i)
         {
             if (ps && !(ps->reg_maps.texcoord & (1u << i)))
