@@ -228,6 +228,7 @@ static void test_tp_simple(void)
 
     /* test cancellation of pending simple callbacks */
     userdata = 0;
+    pTpSetPoolMaxThreads(pool, 10);
     memset(&environment, 0, sizeof(environment));
     environment.Version = 1;
     environment.Pool = pool;
