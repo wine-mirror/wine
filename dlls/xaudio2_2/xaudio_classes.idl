@@ -26,3 +26,10 @@
     uuid(b802058a-464a-42db-bc10-b650d6f2586a)
 ]
 coclass XAudio22 { interface IXAudio22; }
+
+[
+    helpstring("XAudio2.2 AudioReverb Class"),
+    threading(both),
+    uuid(629cf0de-3ecc-41e7-9926-f7e43eebec51)
+]
+coclass AudioReverb22 { interface IXAPO; }

@@ -2481,7 +2481,13 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         factory = make_xaudio2_factory(27);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter)) {
         factory = &vumeter_cf;
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb)) {
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb) ||
+            IsEqualGUID(rclsid, &CLSID_AudioReverb21) ||
+            IsEqualGUID(rclsid, &CLSID_AudioReverb22) ||
+            IsEqualGUID(rclsid, &CLSID_AudioReverb23) ||
+            IsEqualGUID(rclsid, &CLSID_AudioReverb24) ||
+            IsEqualGUID(rclsid, &CLSID_AudioReverb25) ||
+            IsEqualGUID(rclsid, &CLSID_AudioReverb26)){
         factory = &reverb_cf;
     }
     if(!factory) return CLASS_E_CLASSNOTAVAILABLE;

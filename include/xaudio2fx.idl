@@ -31,3 +31,45 @@ coclass AudioVolumeMeter {
 coclass AudioReverb {
     interface IUnknown;
 }
+
+[
+    uuid(f4769300-b949-4df9-b333-00d33932e9a6)
+]
+coclass AudioReverb21 {
+    interface IUnknown;
+}
+
+[
+    uuid(629cf0de-3ecc-41e7-9926-f7e43eebec51)
+]
+coclass AudioReverb22 {
+    interface IUnknown;
+}
+
+[
+    uuid(9cab402c-1d37-44b4-886d-fa4f36170a4c)
+]
+coclass AudioReverb23 {
+    interface IUnknown;
+}
+
+[
+    uuid(8bb7778b-645b-4475-9a73-1de3170bd3af)
+]
+coclass AudioReverb24 {
+    interface IUnknown;
+}
+
+[
+    uuid(d06df0d0-8518-441e-822f-5451d5c595b8)
+]
+coclass AudioReverb25 {
+    interface IUnknown;
+}
+
+[
+    uuid(cecec95a-d894-491a-bee3-5e106fb59f2d)
+]
+coclass AudioReverb26 {
+    interface IUnknown;
+}
