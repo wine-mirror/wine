@@ -5745,11 +5745,28 @@ static void test_header_proc(void)
     DestroyWindow(hwnd);
 }
 
+static void flush_events(void)
+{
+    MSG msg;
+    int diff = 200;
+    int min_timeout = 100;
+    DWORD time = GetTickCount() + diff;
+
+    while (diff > 0)
+    {
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE )) DispatchMessageA( &msg );
+        diff = time - GetTickCount();
+    }
+}
+
 static void test_oneclickactivate(void)
 {
+    TRACKMOUSEEVENT track;
     char item1[] = "item1";
     LVITEMA item;
     HWND hwnd, fg;
+    RECT rect;
     INT r;
 
     hwnd = CreateWindowExA(0, "SysListView32", "foo", WS_VISIBLE|WS_CHILD|LVS_LIST,
@@ -5774,6 +5791,18 @@ static void test_oneclickactivate(void)
     item.pszText = item1;
     r = SendMessageA(hwnd, LVM_INSERTITEMA, 0, (LPARAM) &item);
     ok(r == 0, "should not fail\n");
+
+    GetWindowRect(hwnd, &rect);
+    SetCursorPos(rect.left+5, rect.top+5);
+    flush_events();
+    r = SendMessageA(hwnd, WM_MOUSEMOVE, MAKELONG(1, 1), 0);
+    expect(0, r);
+
+    track.cbSize = sizeof(track);
+    track.dwFlags = TME_QUERY;
+    _TrackMouseEvent(&track);
+    ok(track.hwndTrack == hwnd, "hwndTrack != hwnd\n");
+    ok(track.dwFlags == TME_LEAVE, "dwFlags = %x\n", track.dwFlags);
 
     r = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
     expect(0, r);
