@@ -676,11 +676,6 @@ HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
     return WINED3D_OK;
 }
 
-struct wined3d_volume * CDECL wined3d_volume_from_resource(struct wined3d_resource *resource)
-{
-    return volume_from_resource(resource);
-}
-
 HRESULT CDECL wined3d_volume_unmap(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);
