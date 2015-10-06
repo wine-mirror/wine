@@ -3923,12 +3923,11 @@ static void EDIT_WM_SetText(EDITSTATE *es, LPCWSTR text, BOOL unicode)
  *	WM_SIZE
  *
  */
-static void EDIT_WM_Size(EDITSTATE *es, UINT action, INT width, INT height)
+static void EDIT_WM_Size(EDITSTATE *es, UINT action)
 {
 	if ((action == SIZE_MAXIMIZED) || (action == SIZE_RESTORED)) {
 		RECT rc;
-		TRACE("width = %d, height = %d\n", width, height);
-		SetRect(&rc, 0, 0, width, height);
+		GetClientRect(es->hwndSelf, &rc);
 		EDIT_SetRectNP(es, &rc);
 		EDIT_UpdateText(es, NULL, TRUE);
 	}
@@ -5096,7 +5095,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 		break;
 
 	case WM_SIZE:
-		EDIT_WM_Size(es, (UINT)wParam, LOWORD(lParam), HIWORD(lParam));
+		EDIT_WM_Size(es, (UINT)wParam);
 		break;
 
         case WM_STYLECHANGED:

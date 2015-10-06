@@ -1483,16 +1483,16 @@ static void test_margins(void)
     SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&old_rect);
     SendMessageA(hwEdit, WM_SIZE, SIZE_RESTORED, 0);
     SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
-    todo_wine ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
+    ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
     SendMessageA(hwEdit, WM_SIZE, SIZE_MINIMIZED, 0);
     SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
-    todo_wine ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
+    ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
     SendMessageA(hwEdit, WM_SIZE, SIZE_MAXIMIZED, 0);
     SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
-    todo_wine ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
+    ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
     SendMessageA(hwEdit, WM_SIZE, SIZE_RESTORED, MAKELONG(10, 10));
     SendMessageA(hwEdit, EM_GETRECT, 0, (LPARAM)&new_rect);
-    todo_wine ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
+    ok(EqualRect(&old_rect, &new_rect), "The border of the rectangle has changed\n");
 
     DestroyWindow (hwEdit);
 
