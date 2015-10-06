@@ -867,6 +867,7 @@ static void test_tp_window_length(void)
     NTSTATUS status;
     TP_POOL *pool;
     DWORD result;
+    BOOL merged;
 
     semaphore = CreateSemaphoreA(NULL, 0, 2, NULL);
     ok(semaphore != NULL, "CreateSemaphoreA failed %u\n", GetLastError());
@@ -929,8 +930,8 @@ static void test_tp_window_length(void)
     result = WaitForSingleObject(semaphore, 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
     ok(info1.ticks != 0 && info2.ticks != 0, "expected that ticks are nonzero\n");
-    ok(info2.ticks >= info1.ticks - 50 && info2.ticks <= info1.ticks + 50,
-       "expected that timers are merged\n");
+    merged = info2.ticks >= info1.ticks - 50 && info2.ticks <= info1.ticks + 50;
+    ok(merged || broken(!merged) /* Win 10 */, "expected that timers are merged\n");
 
     /* on Windows the timers also get merged in this case */
     info1.ticks = 0;
@@ -948,9 +949,9 @@ static void test_tp_window_length(void)
     result = WaitForSingleObject(semaphore, 1000);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
     ok(info1.ticks != 0 && info2.ticks != 0, "expected that ticks are nonzero\n");
+    merged = info2.ticks >= info1.ticks - 50 && info2.ticks <= info1.ticks + 50;
     todo_wine
-    ok(info2.ticks >= info1.ticks - 50 && info2.ticks <= info1.ticks + 50,
-       "expected that timers are merged\n");
+    ok(merged || broken(!merged) /* Win 10 */, "expected that timers are merged\n");
 
     /* cleanup */
     pTpReleaseTimer(timer1);
