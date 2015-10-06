@@ -1989,6 +1989,7 @@ static void shader_none_get_caps(const struct wined3d_gl_info *gl_info, struct s
     caps->vs_uniform_count = 0;
     caps->ps_uniform_count = 0;
     caps->ps_1x_max_value = 0.0f;
+    caps->varying_count = 0;
     caps->wined3d_caps = 0;
 }
 

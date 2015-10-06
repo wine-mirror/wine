@@ -7632,6 +7632,7 @@ static void shader_glsl_get_caps(const struct wined3d_gl_info *gl_info, struct s
 
     caps->vs_uniform_count = gl_info->limits.glsl_vs_float_constants;
     caps->ps_uniform_count = gl_info->limits.glsl_ps_float_constants;
+    caps->varying_count = gl_info->limits.glsl_varyings;
 
     /* FIXME: The following line is card dependent. -8.0 to 8.0 is the
      * Direct3D minimum requirement.

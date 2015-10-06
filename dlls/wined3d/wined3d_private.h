@@ -774,6 +774,7 @@ struct shader_caps
     DWORD vs_uniform_count;
     DWORD ps_uniform_count;
     float ps_1x_max_value;
+    DWORD varying_count;
 
     DWORD wined3d_caps;
 };
@@ -1748,6 +1749,7 @@ struct wined3d_d3d_limits
     UINT vs_version, gs_version, ps_version;
     DWORD vs_uniform_count;
     DWORD ps_uniform_count;
+    UINT varying_count;
     UINT ffp_textures;
     UINT ffp_blend_stages;
     UINT ffp_vertex_blend_matrices;
