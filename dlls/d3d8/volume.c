@@ -167,7 +167,7 @@ static HRESULT WINAPI d3d8_volume_UnlockBox(IDirect3DVolume8 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_volume_unmap(volume->wined3d_volume);
+    hr = wined3d_texture_unmap(volume->wined3d_texture, volume->sub_resource_idx);
     wined3d_mutex_unlock();
 
     return hr;
