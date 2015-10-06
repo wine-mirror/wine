@@ -115,6 +115,10 @@ OLE Typelibs
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
 
+Uniscribe
+M:	Aric Stewart <aric@codeweavers.com>
+F:	dlls/usp10/
+
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
 F:	server/
