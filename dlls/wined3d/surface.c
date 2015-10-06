@@ -1526,13 +1526,13 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
     }
 }
 
-static BOOL surface_check_block_align(struct wined3d_surface *surface, const RECT *rect)
+static BOOL surface_check_block_align(struct wined3d_surface *surface, const struct wined3d_box *box)
 {
     UINT width_mask, height_mask;
 
-    if (!rect->left && !rect->top
-            && rect->right == surface->resource.width
-            && rect->bottom == surface->resource.height)
+    if (!box->left && !box->top
+            && box->right == surface->resource.width
+            && box->bottom == surface->resource.height)
         return TRUE;
 
     /* This assumes power of two block sizes, but NPOT block sizes would be
@@ -1540,11 +1540,18 @@ static BOOL surface_check_block_align(struct wined3d_surface *surface, const REC
     width_mask = surface->resource.format->block_width - 1;
     height_mask = surface->resource.format->block_height - 1;
 
-    if (!(rect->left & width_mask) && !(rect->top & height_mask)
-            && !(rect->right & width_mask) && !(rect->bottom & height_mask))
+    if (!(box->left & width_mask) && !(box->top & height_mask)
+            && !(box->right & width_mask) && !(box->bottom & height_mask))
         return TRUE;
 
     return FALSE;
+}
+
+static BOOL surface_check_block_align_rect(struct wined3d_surface *surface, const RECT *rect)
+{
+    struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
+
+    return surface_check_block_align(surface, &box);
 }
 
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
@@ -1617,14 +1624,14 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
         return WINED3DERR_INVALIDCALL;
     }
 
-    if ((src_fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align(src_surface, src_rect))
+    if ((src_fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align_rect(src_surface, src_rect))
     {
         WARN("Source rectangle not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
     SetRect(&dst_rect, dst_point->x, dst_point->y, dst_point->x + update_w, dst_point->y + update_h);
-    if ((dst_fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align(dst_surface, &dst_rect))
+    if ((dst_fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !surface_check_block_align_rect(dst_surface, &dst_rect))
     {
         WARN("Destination rectangle not block-aligned.\n");
         return WINED3DERR_INVALIDCALL;
@@ -2457,7 +2464,7 @@ HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 }
 
 HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
-        struct wined3d_map_desc *map_desc, const RECT *rect, DWORD flags)
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
     const struct wined3d_format *format = surface->resource.format;
     unsigned int fmt_flags = surface->container->resource.format_flags;
@@ -2466,8 +2473,8 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     const struct wined3d_gl_info *gl_info;
     BYTE *base_memory;
 
-    TRACE("surface %p, map_desc %p, rect %s, flags %#x.\n",
-            surface, map_desc, wine_dbgstr_rect(rect), flags);
+    TRACE("surface %p, map_desc %p, box %p, flags %#x.\n",
+            surface, map_desc, box, flags);
 
     if (surface->resource.map_count)
     {
@@ -2475,11 +2482,11 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && rect
-            && !surface_check_block_align(surface, rect))
+    if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && box
+            && !surface_check_block_align(surface, box))
     {
-        WARN("Map rect %s is misaligned for %ux%u blocks.\n",
-                wine_dbgstr_rect(rect), format->block_width, format->block_height);
+        WARN("Map rect %p is misaligned for %ux%u blocks.\n",
+                box, format->block_width, format->block_height);
 
         if (surface->resource.pool == WINED3D_POOL_DEFAULT)
             return WINED3DERR_INVALIDCALL;
@@ -2560,7 +2567,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         map_desc->row_pitch = wined3d_surface_get_pitch(surface);
     map_desc->slice_pitch = 0;
 
-    if (!rect)
+    if (!box)
     {
         map_desc->data = base_memory;
         surface->lockedRect.left = 0;
@@ -2575,19 +2582,19 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
             /* Compressed textures are block based, so calculate the offset of
              * the block that contains the top-left pixel of the locked rectangle. */
             map_desc->data = base_memory
-                    + ((rect->top / format->block_height) * map_desc->row_pitch)
-                    + ((rect->left / format->block_width) * format->block_byte_count);
+                    + ((box->top / format->block_height) * map_desc->row_pitch)
+                    + ((box->left / format->block_width) * format->block_byte_count);
         }
         else
         {
             map_desc->data = base_memory
-                    + (map_desc->row_pitch * rect->top)
-                    + (rect->left * format->byte_count);
+                    + (map_desc->row_pitch * box->top)
+                    + (box->left * format->byte_count);
         }
-        surface->lockedRect.left = rect->left;
-        surface->lockedRect.top = rect->top;
-        surface->lockedRect.right = rect->right;
-        surface->lockedRect.bottom = rect->bottom;
+        surface->lockedRect.left = box->left;
+        surface->lockedRect.top = box->top;
+        surface->lockedRect.right = box->right;
+        surface->lockedRect.bottom = box->bottom;
     }
 
     TRACE("Locked rect %s.\n", wine_dbgstr_rect(&surface->lockedRect));
@@ -4443,6 +4450,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
         const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
 {
+    const struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
     const struct wined3d_format *src_format, *dst_format;
     unsigned int src_fmt_flags, dst_fmt_flags;
@@ -4493,7 +4501,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             src_fmt_flags = dst_fmt_flags;
         }
 
-        wined3d_surface_map(dst_surface, &dst_map, dst_rect, 0);
+        wined3d_surface_map(dst_surface, &dst_map, &dst_box, 0);
     }
 
     bpp = dst_surface->resource.format->byte_count;
@@ -4532,14 +4540,14 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
             goto release;
         }
 
-        if (!surface_check_block_align(src_surface, src_rect))
+        if (!surface_check_block_align_rect(src_surface, src_rect))
         {
             WARN("Source rectangle not block-aligned.\n");
             hr = WINED3DERR_INVALIDCALL;
             goto release;
         }
 
-        if (!surface_check_block_align(dst_surface, dst_rect))
+        if (!surface_check_block_align_rect(dst_surface, dst_rect))
         {
             WARN("Destination rectangle not block-aligned.\n");
             hr = WINED3DERR_INVALIDCALL;

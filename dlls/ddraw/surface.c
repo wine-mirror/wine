@@ -954,6 +954,7 @@ static HRESULT WINAPI ddraw_surface1_GetAttachedSurface(IDirectDrawSurface *ifac
 static HRESULT surface_lock(struct ddraw_surface *This,
         RECT *Rect, DDSURFACEDESC2 *DDSD, DWORD Flags, HANDLE h)
 {
+    struct wined3d_box box;
     struct wined3d_map_desc map_desc;
     HRESULT hr = DD_OK;
 
@@ -985,12 +986,18 @@ static HRESULT surface_lock(struct ddraw_surface *This,
             wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
         }
+        box.left = Rect->left;
+        box.top = Rect->top;
+        box.right = Rect->right;
+        box.bottom = Rect->bottom;
+        box.front = 0;
+        box.back = 1;
     }
 
     if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         hr = ddraw_surface_update_frontbuffer(This, Rect, TRUE);
     if (SUCCEEDED(hr))
-        hr = wined3d_surface_map(This->wined3d_surface, &map_desc, Rect, Flags);
+        hr = wined3d_surface_map(This->wined3d_surface, &map_desc, Rect ? &box : NULL, Flags);
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();

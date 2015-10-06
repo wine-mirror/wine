@@ -233,14 +233,25 @@ static HRESULT WINAPI d3d9_surface_LockRect(IDirect3DSurface9 *iface,
         D3DLOCKED_RECT *locked_rect, const RECT *rect, DWORD flags)
 {
     struct d3d9_surface *surface = impl_from_IDirect3DSurface9(iface);
+    struct wined3d_box box;
     struct wined3d_map_desc map_desc;
     HRESULT hr;
 
     TRACE("iface %p, locked_rect %p, rect %s, flags %#x.\n",
             iface, locked_rect, wine_dbgstr_rect(rect), flags);
 
+    if (rect)
+    {
+        box.left = rect->left;
+        box.top = rect->top;
+        box.right = rect->right;
+        box.bottom = rect->bottom;
+        box.front = 0;
+        box.back = 1;
+    }
+
     wined3d_mutex_lock();
-    hr = wined3d_surface_map(surface->wined3d_surface, &map_desc, rect, flags);
+    hr = wined3d_surface_map(surface->wined3d_surface, &map_desc, rect ? &box : NULL, flags);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))

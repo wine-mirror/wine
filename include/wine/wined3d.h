@@ -2488,7 +2488,7 @@ HRESULT __cdecl wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc);
 ULONG __cdecl wined3d_surface_incref(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_is_lost(const struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_map(struct wined3d_surface *surface,
-        struct wined3d_map_desc *map_desc, const RECT *rect, DWORD flags);
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags);
 void __cdecl wined3d_surface_preload(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc);
 HRESULT __cdecl wined3d_surface_restore(struct wined3d_surface *surface);
