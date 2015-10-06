@@ -4538,7 +4538,7 @@ static void find_arb_ps_compile_args(const struct wined3d_state *state,
     int i;
     WORD int_skip;
 
-    find_ps_compile_args(state, shader, context->stream_info.position_transformed, &args->super, gl_info);
+    find_ps_compile_args(state, shader, context->stream_info.position_transformed, &args->super, context);
 
     /* This forces all local boolean constants to 1 to make them stateblock independent */
     args->bools = shader->reg_maps.local_bool_consts;

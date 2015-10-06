@@ -833,11 +833,12 @@ struct ps_compile_args {
     WORD                        tex_transform; /* ps 1.0-1.3, 4 textures */
     WORD                        tex_types; /* ps 1.0 - 1.4, 6 textures */
     WORD                        srgb_correction;
-    WORD                        np2_fixup;
     /* Bitmap for NP2 texcoord fixups (16 samplers max currently).
        D3D9 has a limit of 16 samplers and the fixup is superfluous
        in D3D10 (unconditional NP2 support mandatory). */
+    WORD                        np2_fixup;
     WORD shadow; /* MAX_FRAGMENT_SAMPLERS, 16 */
+    WORD texcoords_initialized; /* MAX_TEXTURES, 8 */
     BOOL pointsprite;
 };
 
@@ -3006,7 +3007,7 @@ struct wined3d_shader
 void pixelshader_update_resource_types(struct wined3d_shader *shader, WORD tex_types) DECLSPEC_HIDDEN;
 void find_ps_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         BOOL position_transformed, struct ps_compile_args *args,
-        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
+        const struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
         WORD swizzle_map, struct vs_compile_args *args) DECLSPEC_HIDDEN;
