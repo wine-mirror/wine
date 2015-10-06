@@ -1820,6 +1820,7 @@ then
   dnl Check for some compiler flags
   WINE_TRY_CFLAGS([-fno-builtin],[AC_SUBST(BUILTINFLAG,"-fno-builtin")])
   WINE_TRY_CFLAGS([-fno-strict-aliasing])
+  WINE_TRY_CFLAGS([-fexcess-precision=standard],[AC_SUBST(EXCESS_PRECISION_CFLAGS,"-fexcess-precision=standard")])
   dnl clang needs to be told to fail on unknown options
   saved_CFLAGS=$CFLAGS
   WINE_TRY_CFLAGS([-Werror=unknown-warning-option],[CFLAGS="$CFLAGS -Werror=unknown-warning-option"])

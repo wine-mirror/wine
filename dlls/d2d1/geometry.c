@@ -20,11 +20,16 @@
 #include "wine/port.h"
 
 #include "d2d1_private.h"
+#ifdef HAVE_FLOAT_H
+#include <float.h>
+#endif
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
 #define D2D_CDT_EDGE_FLAG_FREED         0x80000000u
 #define D2D_CDT_EDGE_FLAG_VISITED(r)    (1u << (r))
+
+#define D2D_FP_EPS (1.0f / (1 << FLT_MANT_DIG))
 
 static const D2D1_MATRIX_3X2_F identity =
 {
@@ -75,6 +80,171 @@ struct d2d_cdt
     const D2D1_POINT_2F *vertices;
 };
 
+struct d2d_fp_two_vec2
+{
+    float x[2];
+    float y[2];
+};
+
+static void d2d_fp_two_sum(float *out, float a, float b)
+{
+    float a_virt, a_round, b_virt, b_round;
+
+    out[1] = a + b;
+    b_virt = out[1] - a;
+    a_virt = out[1] - b_virt;
+    b_round = b - b_virt;
+    a_round = a - a_virt;
+    out[0] = a_round + b_round;
+}
+
+static void d2d_fp_fast_two_sum(float *out, float a, float b)
+{
+    float b_virt;
+
+    out[1] = a + b;
+    b_virt = out[1] - a;
+    out[0] = b - b_virt;
+}
+
+static void d2d_fp_two_diff_tail(float *out, float a, float b, float x)
+{
+    float a_virt, a_round, b_virt, b_round;
+
+    b_virt = a - x;
+    a_virt = x + b_virt;
+    b_round = b_virt - b;
+    a_round = a - a_virt;
+    *out = a_round + b_round;
+}
+
+static void d2d_fp_two_two_diff(float *out, const float *a, const float *b)
+{
+    float sum[2], diff;
+
+    diff = a[0] - b[0];
+    d2d_fp_two_diff_tail(out, a[0], b[0], diff);
+    d2d_fp_two_sum(sum, a[1], diff);
+    diff = sum[0] - b[1];
+    d2d_fp_two_diff_tail(&out[1], sum[0], b[1], diff);
+    d2d_fp_two_sum(&out[2], sum[1], diff);
+}
+
+static void d2d_fp_split(float *out, float a)
+{
+    float a_big, c;
+
+    c = a * ((1 << (FLT_MANT_DIG / 2)) + 1.0f);
+    a_big = c - a;
+    out[1] = c - a_big;
+    out[0] = a - out[1];
+}
+
+static void d2d_fp_two_product_presplit(float *out, float a, float b, const float *b_split)
+{
+    float a_split[2], err1, err2, err3;
+
+    out[1] = a * b;
+    d2d_fp_split(a_split, a);
+    err1 = out[1] - (a_split[1] * b_split[1]);
+    err2 = err1 - (a_split[0] * b_split[1]);
+    err3 = err2 - (a_split[1] * b_split[0]);
+    out[0] = (a_split[0] * b_split[0]) - err3;
+}
+
+static void d2d_fp_two_product(float *out, float a, float b)
+{
+    float b_split[2];
+
+    d2d_fp_split(b_split, b);
+    d2d_fp_two_product_presplit(out, a, b, b_split);
+}
+
+static float d2d_fp_estimate(float *a, size_t len)
+{
+    float out = a[0];
+    size_t idx = 1;
+
+    while (idx < len)
+        out += a[idx++];
+
+    return out;
+}
+
+static void d2d_fp_fast_expansion_sum_zeroelim(float *out, size_t *out_len,
+        const float *a, size_t a_len, const float *b, size_t b_len)
+{
+    float sum[2], q, a_curr, b_curr;
+    size_t a_idx, b_idx, out_idx;
+
+    a_curr = a[0];
+    b_curr = b[0];
+    a_idx = b_idx = 0;
+    if ((b_curr > a_curr) == (b_curr > -a_curr))
+    {
+        q = a_curr;
+        a_curr = a[++a_idx];
+    }
+    else
+    {
+        q = b_curr;
+        b_curr = b[++b_idx];
+    }
+    out_idx = 0;
+    if (a_idx < a_len && b_idx < b_len)
+    {
+        if ((b_curr > a_curr) == (b_curr > -a_curr))
+        {
+            d2d_fp_fast_two_sum(sum, a_curr, q);
+            a_curr = a[++a_idx];
+        }
+        else
+        {
+            d2d_fp_fast_two_sum(sum, b_curr, q);
+            b_curr = b[++b_idx];
+        }
+        if (sum[0] != 0.0f)
+            out[out_idx++] = sum[0];
+        q = sum[1];
+        while (a_idx < a_len && b_idx < b_len)
+        {
+            if ((b_curr > a_curr) == (b_curr > -a_curr))
+            {
+                d2d_fp_two_sum(sum, q, a_curr);
+                a_curr = a[++a_idx];
+            }
+            else
+            {
+                d2d_fp_two_sum(sum, q, b_curr);
+                b_curr = b[++b_idx];
+            }
+            if (sum[0] != 0.0f)
+                out[out_idx++] = sum[0];
+            q = sum[1];
+        }
+    }
+    while (a_idx < a_len)
+    {
+        d2d_fp_two_sum(sum, q, a_curr);
+        a_curr = a[++a_idx];
+        if (sum[0] != 0.0f)
+            out[out_idx++] = sum[0];
+        q = sum[1];
+    }
+    while (b_idx < b_len)
+    {
+        d2d_fp_two_sum(sum, q, b_curr);
+        b_curr = b[++b_idx];
+        if (sum[0] != 0.0f)
+            out[out_idx++] = sum[0];
+        q = sum[1];
+    }
+    if (q != 0.0f || !out_idx)
+        out[out_idx++] = q;
+
+    *out_len = out_idx;
+}
+
 static void d2d_point_subtract(D2D1_POINT_2F *out,
         const D2D1_POINT_2F *a, const D2D1_POINT_2F *b)
 {
@@ -82,14 +252,88 @@ static void d2d_point_subtract(D2D1_POINT_2F *out,
     out->y = a->y - b->y;
 }
 
+/* This implementation is based on the paper "Adaptive Precision
+ * Floating-Point Arithmetic and Fast Robust Geometric Predicates" and
+ * associated (Public Domain) code by Jonathan Richard Shewchuk. */
 static float d2d_point_ccw(const D2D1_POINT_2F *a, const D2D1_POINT_2F *b, const D2D1_POINT_2F *c)
 {
-    D2D1_POINT_2F ab, ac;
+    static const float err_bound_result = (3.0f + 8.0f * D2D_FP_EPS) * D2D_FP_EPS;
+    static const float err_bound_a = (3.0f + 16.0f * D2D_FP_EPS) * D2D_FP_EPS;
+    static const float err_bound_b = (2.0f + 12.0f * D2D_FP_EPS) * D2D_FP_EPS;
+    static const float err_bound_c = (9.0f + 64.0f * D2D_FP_EPS) * D2D_FP_EPS * D2D_FP_EPS;
+    float det_d[16], det_c2[12], det_c1[8], det_b[4], temp4[4], temp2a[2], temp2b[2], abxacy[2], abyacx[2];
+    size_t det_d_len, det_c2_len, det_c1_len;
+    float det, det_sum, err_bound;
+    struct d2d_fp_two_vec2 ab, ac;
 
-    d2d_point_subtract(&ab, b, a);
-    d2d_point_subtract(&ac, c, a);
+    ab.x[1] = b->x - a->x;
+    ab.y[1] = b->y - a->y;
+    ac.x[1] = c->x - a->x;
+    ac.y[1] = c->y - a->y;
 
-    return ab.x * ac.y - ab.y * ac.x;
+    abxacy[1] = ab.x[1] * ac.y[1];
+    abyacx[1] = ab.y[1] * ac.x[1];
+    det = abxacy[1] - abyacx[1];
+
+    if (abxacy[1] > 0.0f)
+    {
+        if (abyacx[1] <= 0.0f)
+            return det;
+        det_sum = abxacy[1] + abyacx[1];
+    }
+    else if (abxacy[1] < 0.0f)
+    {
+        if (abyacx[1] >= 0.0f)
+            return det;
+        det_sum = -abxacy[1] - abyacx[1];
+    }
+    else
+    {
+        return det;
+    }
+
+    err_bound = err_bound_a * det_sum;
+    if (det >= err_bound || -det >= err_bound)
+        return det;
+
+    d2d_fp_two_product(abxacy, ab.x[1], ac.y[1]);
+    d2d_fp_two_product(abyacx, ab.y[1], ac.x[1]);
+    d2d_fp_two_two_diff(det_b, abxacy, abyacx);
+
+    det = d2d_fp_estimate(det_b, 4);
+    err_bound = err_bound_b * det_sum;
+    if (det >= err_bound || -det >= err_bound)
+        return det;
+
+    d2d_fp_two_diff_tail(&ab.x[0], b->x, a->x, ab.x[1]);
+    d2d_fp_two_diff_tail(&ab.y[0], b->y, a->y, ab.y[1]);
+    d2d_fp_two_diff_tail(&ac.x[0], c->x, a->x, ac.x[1]);
+    d2d_fp_two_diff_tail(&ac.y[0], c->y, a->y, ac.y[1]);
+
+    if (ab.x[0] == 0.0f && ab.y[0] == 0.0f && ac.x[0] == 0.0f && ac.y[0] == 0.0f)
+        return det;
+
+    err_bound = err_bound_c * det_sum + err_bound_result * fabsf(det);
+    det += (ab.x[1] * ac.y[0] + ac.y[1] * ab.x[0]) - (ab.y[1] * ac.x[0] + ac.x[1] * ab.y[0]);
+    if (det >= err_bound || -det >= err_bound)
+        return det;
+
+    d2d_fp_two_product(temp2a, ab.x[0], ac.y[1]);
+    d2d_fp_two_product(temp2b, ab.y[0], ac.x[1]);
+    d2d_fp_two_two_diff(temp4, temp2a, temp2b);
+    d2d_fp_fast_expansion_sum_zeroelim(det_c1, &det_c1_len, det_b, 4, temp4, 4);
+
+    d2d_fp_two_product(temp2a, ab.x[1], ac.y[0]);
+    d2d_fp_two_product(temp2b, ab.y[1], ac.x[0]);
+    d2d_fp_two_two_diff(temp4, temp2a, temp2b);
+    d2d_fp_fast_expansion_sum_zeroelim(det_c2, &det_c2_len, det_c1, det_c1_len, temp4, 4);
+
+    d2d_fp_two_product(temp2a, ab.x[0], ac.y[0]);
+    d2d_fp_two_product(temp2b, ab.y[0], ac.x[0]);
+    d2d_fp_two_two_diff(temp4, temp2a, temp2b);
+    d2d_fp_fast_expansion_sum_zeroelim(det_d, &det_d_len, det_c2, det_c2_len, temp4, 4);
+
+    return det_d[det_d_len - 1];
 }
 
 static BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t element_count, size_t element_size)

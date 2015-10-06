@@ -2,6 +2,7 @@ MODULE    = d2d1.dll
 IMPORTLIB = d2d1
 IMPORTS   = d3d10_1 dxguid uuid
 DELAYIMPORTS = dwrite
+CFLAGS += $(EXCESS_PRECISION_CFLAGS)
 
 C_SRCS = \
 	bitmap.c \
