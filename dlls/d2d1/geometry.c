@@ -86,6 +86,12 @@ struct d2d_fp_two_vec2
     float y[2];
 };
 
+struct d2d_fp_fin
+{
+    float *now, *other;
+    size_t length;
+};
+
 static void d2d_fp_two_sum(float *out, float a, float b)
 {
     float a_virt, a_round, b_virt, b_round;
@@ -105,6 +111,16 @@ static void d2d_fp_fast_two_sum(float *out, float a, float b)
     out[1] = a + b;
     b_virt = out[1] - a;
     out[0] = b - b_virt;
+}
+
+static void d2d_fp_two_two_sum(float *out, const float *a, const float *b)
+{
+    float sum[2];
+
+    d2d_fp_two_sum(out, a[0], b[0]);
+    d2d_fp_two_sum(sum, a[1], out[1]);
+    d2d_fp_two_sum(&out[1], sum[0], b[1]);
+    d2d_fp_two_sum(&out[2], sum[1], out[2]);
 }
 
 static void d2d_fp_two_diff_tail(float *out, float a, float b, float x)
@@ -158,6 +174,17 @@ static void d2d_fp_two_product(float *out, float a, float b)
 
     d2d_fp_split(b_split, b);
     d2d_fp_two_product_presplit(out, a, b, b_split);
+}
+
+static void d2d_fp_square(float *out, float a)
+{
+    float a_split[2], err1, err2;
+
+    out[1] = a * a;
+    d2d_fp_split(a_split, a);
+    err1 = out[1] - (a_split[1] * a_split[1]);
+    err2 = err1 - ((a_split[1] + a_split[1]) * a_split[0]);
+    out[0] = (a_split[0] * a_split[0]) - err2;
 }
 
 static float d2d_fp_estimate(float *a, size_t len)
@@ -241,6 +268,33 @@ static void d2d_fp_fast_expansion_sum_zeroelim(float *out, size_t *out_len,
     }
     if (q != 0.0f || !out_idx)
         out[out_idx++] = q;
+
+    *out_len = out_idx;
+}
+
+static void d2d_fp_scale_expansion_zeroelim(float *out, size_t *out_len, const float *a, size_t a_len, float b)
+{
+    float product[2], sum[2], b_split[2], q[2], a_curr;
+    size_t a_idx, out_idx;
+
+    d2d_fp_split(b_split, b);
+    d2d_fp_two_product_presplit(q, a[0], b, b_split);
+    out_idx = 0;
+    if (q[0] != 0.0f)
+        out[out_idx++] = q[0];
+    for (a_idx = 1; a_idx < a_len; ++a_idx)
+    {
+        a_curr = a[a_idx];
+        d2d_fp_two_product_presplit(product, a_curr, b, b_split);
+        d2d_fp_two_sum(sum, q[1], product[0]);
+        if (sum[0] != 0.0f)
+            out[out_idx++] = sum[0];
+        d2d_fp_fast_two_sum(q, product[1], sum[1]);
+        if (q[0] != 0.0f)
+            out[out_idx++] = q[0];
+    }
+    if (q[1] != 0.0f || !out_idx)
+        out[out_idx++] = q[1];
 
     *out_len = out_idx;
 }
@@ -520,6 +574,153 @@ static BOOL d2d_cdt_leftof(const struct d2d_cdt *cdt, size_t p, const struct d2d
     return d2d_cdt_ccw(cdt, p, d2d_cdt_edge_origin(cdt, e), d2d_cdt_edge_destination(cdt, e)) > 0.0f;
 }
 
+/* |ax ay|
+ * |bx by| */
+static void d2d_fp_four_det2x2(float *out, float ax, float ay, float bx, float by)
+{
+    float axby[2], aybx[2];
+
+    d2d_fp_two_product(axby, ax, by);
+    d2d_fp_two_product(aybx, ay, bx);
+    d2d_fp_two_two_diff(out, axby, aybx);
+}
+
+/* (a->x² + a->y²) * det2x2 */
+static void d2d_fp_sub_det3x3(float *out, size_t *out_len, const struct d2d_fp_two_vec2 *a, const float *det2x2)
+{
+    size_t axd_len, ayd_len, axxd_len, ayyd_len;
+    float axd[8], ayd[8], axxd[16], ayyd[16];
+
+    d2d_fp_scale_expansion_zeroelim(axd, &axd_len, det2x2, 4, a->x[1]);
+    d2d_fp_scale_expansion_zeroelim(axxd, &axxd_len, axd, axd_len, a->x[1]);
+    d2d_fp_scale_expansion_zeroelim(ayd, &ayd_len, det2x2, 4, a->y[1]);
+    d2d_fp_scale_expansion_zeroelim(ayyd, &ayyd_len, ayd, ayd_len, a->y[1]);
+    d2d_fp_fast_expansion_sum_zeroelim(out, out_len, axxd, axxd_len, ayyd, ayyd_len);
+}
+
+/* det_abt = det_ab * c[0]
+ * fin += c[0] * (az * b - bz * a + c[1] * det_ab * 2.0f) */
+static void d2d_cdt_incircle_refine1(struct d2d_fp_fin *fin, float *det_abt, size_t *det_abt_len,
+        const float *det_ab, float a, const float *az, float b, const float *bz, const float *c)
+{
+    size_t temp48_len, temp32_len, temp16a_len, temp16b_len, temp16c_len, temp8_len;
+    float temp48[48], temp32[32], temp16a[16], temp16b[16], temp16c[16], temp8[8];
+    float *swap;
+
+    d2d_fp_scale_expansion_zeroelim(det_abt, det_abt_len, det_ab, 4, c[0]);
+    d2d_fp_scale_expansion_zeroelim(temp16a, &temp16a_len, det_abt, *det_abt_len, 2.0f * c[1]);
+    d2d_fp_scale_expansion_zeroelim(temp8, &temp8_len, az, 4, c[0]);
+    d2d_fp_scale_expansion_zeroelim(temp16b, &temp16b_len, temp8, temp8_len, b);
+    d2d_fp_scale_expansion_zeroelim(temp8, &temp8_len, bz, 4, c[0]);
+    d2d_fp_scale_expansion_zeroelim(temp16c, &temp16c_len, temp8, temp8_len, -a);
+    d2d_fp_fast_expansion_sum_zeroelim(temp32, &temp32_len, temp16a, temp16a_len, temp16b, temp16b_len);
+    d2d_fp_fast_expansion_sum_zeroelim(temp48, &temp48_len, temp16c, temp16c_len, temp32, temp32_len);
+    d2d_fp_fast_expansion_sum_zeroelim(fin->other, &fin->length, fin->now, fin->length, temp48, temp48_len);
+    swap = fin->now; fin->now = fin->other; fin->other = swap;
+}
+
+static void d2d_cdt_incircle_refine2(struct d2d_fp_fin *fin, const struct d2d_fp_two_vec2 *a,
+        const struct d2d_fp_two_vec2 *b, const float *bz, const struct d2d_fp_two_vec2 *c, const float *cz,
+        const float *axt_det_bc, size_t axt_det_bc_len, const float *ayt_det_bc, size_t ayt_det_bc_len)
+{
+    size_t temp64_len, temp48_len, temp32a_len, temp32b_len, temp16a_len, temp16b_len, temp8_len;
+    float temp64[64], temp48[48], temp32a[32], temp32b[32], temp16a[16], temp16b[16], temp8[8];
+    float bct[8], bctt[4], temp4a[4], temp4b[4], temp2a[2], temp2b[2];
+    size_t bct_len, bctt_len;
+    float *swap;
+
+    /* bct = (b->x[0] * c->y[1] + b->x[1] * c->y[0]) - (c->x[0] * b->y[1] + c->x[1] * b->y[0]) */
+    /* bctt = b->x[0] * c->y[0] + c->x[0] * b->y[0] */
+    if (b->x[0] != 0.0f || b->y[0] != 0.0f || c->x[0] != 0.0f || c->y[0] != 0.0f)
+    {
+        d2d_fp_two_product(temp2a, b->x[0], c->y[1]);
+        d2d_fp_two_product(temp2b, b->x[1], c->y[0]);
+        d2d_fp_two_two_sum(temp4a, temp2a, temp2b);
+        d2d_fp_two_product(temp2a, c->x[0], -b->y[1]);
+        d2d_fp_two_product(temp2b, c->x[1], -b->y[0]);
+        d2d_fp_two_two_sum(temp4b, temp2a, temp2b);
+        d2d_fp_fast_expansion_sum_zeroelim(bct, &bct_len, temp4a, 4, temp4b, 4);
+
+        d2d_fp_two_product(temp2a, b->x[0], c->y[0]);
+        d2d_fp_two_product(temp2b, c->x[0], b->y[0]);
+        d2d_fp_two_two_diff(bctt, temp2a, temp2b);
+        bctt_len = 4;
+    }
+    else
+    {
+        bct[0] = 0.0f;
+        bct_len = 1;
+        bctt[0] = 0.0f;
+        bctt_len = 1;
+    }
+
+    if (a->x[0] != 0.0f)
+    {
+        size_t axt_bct_len, axt_bctt_len;
+        float axt_bct[16], axt_bctt[8];
+
+        /* fin += a->x[0] * (axt_det_bc + bct * 2.0f * a->x[1]) */
+        d2d_fp_scale_expansion_zeroelim(temp16a, &temp16a_len, axt_det_bc, axt_det_bc_len, a->x[0]);
+        d2d_fp_scale_expansion_zeroelim(axt_bct, &axt_bct_len, bct, bct_len, a->x[0]);
+        d2d_fp_scale_expansion_zeroelim(temp32a, &temp32a_len, axt_bct, axt_bct_len, 2.0f * a->x[1]);
+        d2d_fp_fast_expansion_sum_zeroelim(temp48, &temp48_len, temp16a, temp16a_len, temp32a, temp32a_len);
+        d2d_fp_fast_expansion_sum_zeroelim(fin->other, &fin->length, fin->now, fin->length, temp48, temp48_len);
+        swap = fin->now; fin->now = fin->other; fin->other = swap;
+
+        if (b->y[0] != 0.0f)
+        {
+            /* fin += a->x[0] * cz * b->y[0] */
+            d2d_fp_scale_expansion_zeroelim(temp8, &temp8_len, cz, 4, a->x[0]);
+            d2d_fp_scale_expansion_zeroelim(temp16a, &temp16a_len, temp8, temp8_len, b->y[0]);
+            d2d_fp_fast_expansion_sum_zeroelim(fin->other, &fin->length, fin->now, fin->length, temp16a, temp16a_len);
+            swap = fin->now; fin->now = fin->other; fin->other = swap;
+        }
+
+        if (c->y[0] != 0.0f)
+        {
+            /* fin -= a->x[0] * bz * c->y[0] */
+            d2d_fp_scale_expansion_zeroelim(temp8, &temp8_len, bz, 4, -a->x[0]);
+            d2d_fp_scale_expansion_zeroelim(temp16a, &temp16a_len, temp8, temp8_len, c->y[0]);
+            d2d_fp_fast_expansion_sum_zeroelim(fin->other, &fin->length, fin->now, fin->length, temp16a, temp16a_len);
+            swap = fin->now; fin->now = fin->other; fin->other = swap;
+        }
+
+        /* fin += a->x[0] * (bct * a->x[0] + bctt * (2.0f * a->x[1] + a->x[0])) */
+        d2d_fp_scale_expansion_zeroelim(temp32a, &temp32a_len, axt_bct, axt_bct_len, a->x[0]);
+        d2d_fp_scale_expansion_zeroelim(axt_bctt, &axt_bctt_len, bctt, bctt_len, a->x[0]);
+        d2d_fp_scale_expansion_zeroelim(temp16a, &temp16a_len, axt_bctt, axt_bctt_len, 2.0f * a->x[1]);
+        d2d_fp_scale_expansion_zeroelim(temp16b, &temp16b_len, axt_bctt, axt_bctt_len, a->x[0]);
+        d2d_fp_fast_expansion_sum_zeroelim(temp32b, &temp32b_len, temp16a, temp16a_len, temp16b, temp16b_len);
+        d2d_fp_fast_expansion_sum_zeroelim(temp64, &temp64_len, temp32a, temp32a_len, temp32b, temp32b_len);
+        d2d_fp_fast_expansion_sum_zeroelim(fin->other, &fin->length, fin->now, fin->length, temp64, temp64_len);
+        swap = fin->now; fin->now = fin->other; fin->other = swap;
+    }
+
+    if (a->y[0] != 0.0f)
+    {
+        size_t ayt_bct_len, ayt_bctt_len;
+        float ayt_bct[16], ayt_bctt[8];
+
+        /* fin += a->y[0] * (ayt_det_bc + bct * 2.0f * a->y[1]) */
+        d2d_fp_scale_expansion_zeroelim(temp16a, &temp16a_len, ayt_det_bc, ayt_det_bc_len, a->y[0]);
+        d2d_fp_scale_expansion_zeroelim(ayt_bct, &ayt_bct_len, bct, bct_len, a->y[0]);
+        d2d_fp_scale_expansion_zeroelim(temp32a, &temp32a_len, ayt_bct, ayt_bct_len, 2.0f * a->y[1]);
+        d2d_fp_fast_expansion_sum_zeroelim(temp48, &temp48_len, temp16a, temp16a_len, temp32a, temp32a_len);
+        d2d_fp_fast_expansion_sum_zeroelim(fin->other, &fin->length, fin->now, fin->length, temp48, temp48_len);
+        swap = fin->now; fin->now = fin->other; fin->other = swap;
+
+        /* fin += a->y[0] * (bct * a->y[0] + bctt * (2.0f * a->y[1] + a->y[0])) */
+        d2d_fp_scale_expansion_zeroelim(temp32a, &temp32a_len, ayt_bct, ayt_bct_len, a->y[0]);
+        d2d_fp_scale_expansion_zeroelim(ayt_bctt, &ayt_bctt_len, bctt, bctt_len, a->y[0]);
+        d2d_fp_scale_expansion_zeroelim(temp16a, &temp16a_len, ayt_bctt, ayt_bctt_len, 2.0f * a->y[1]);
+        d2d_fp_scale_expansion_zeroelim(temp16b, &temp16b_len, ayt_bctt, ayt_bctt_len, a->y[0]);
+        d2d_fp_fast_expansion_sum_zeroelim(temp32b, &temp32b_len, temp16a, temp16a_len, temp16b, temp16b_len);
+        d2d_fp_fast_expansion_sum_zeroelim(temp64, &temp64_len, temp32a, temp32a_len, temp32b, temp32b_len);
+        d2d_fp_fast_expansion_sum_zeroelim(fin->other, &fin->length, fin->now, fin->length, temp64, temp64_len);
+        swap = fin->now; fin->now = fin->other; fin->other = swap;
+    }
+}
+
 /* Determine if point D is inside or outside the circle defined by points A,
  * B, C. As explained in the paper by Guibas and Stolfi, this is equivalent to
  * calculating the signed volume of the tetrahedron defined by projecting the
@@ -535,21 +736,138 @@ static BOOL d2d_cdt_leftof(const struct d2d_cdt *cdt, size_t p, const struct d2d
  *
  * |λ(A-D)|
  * |λ(B-D)| > 0
- * |λ(C-D)| */
+ * |λ(C-D)|
+ *
+ * This implementation is based on the paper "Adaptive Precision
+ * Floating-Point Arithmetic and Fast Robust Geometric Predicates" and
+ * associated (Public Domain) code by Jonathan Richard Shewchuk. */
 static BOOL d2d_cdt_incircle(const struct d2d_cdt *cdt, size_t a, size_t b, size_t c, size_t d)
 {
-    const D2D1_POINT_2F *p = cdt->vertices;
-    const struct
-    {
-        double x, y;
-    }
-    da = {p[a].x - p[d].x, p[a].y - p[d].y},
-    db = {p[b].x - p[d].x, p[b].y - p[d].y},
-    dc = {p[c].x - p[d].x, p[c].y - p[d].y};
+    static const float err_bound_result = (3.0f + 8.0f * D2D_FP_EPS) * D2D_FP_EPS;
+    static const float err_bound_a = (10.0f + 96.0f * D2D_FP_EPS) * D2D_FP_EPS;
+    static const float err_bound_b = (4.0f + 48.0f * D2D_FP_EPS) * D2D_FP_EPS;
+    static const float err_bound_c = (44.0f + 576.0f * D2D_FP_EPS) * D2D_FP_EPS * D2D_FP_EPS;
 
-    return (da.x * da.x + da.y * da.y) * (db.x * dc.y - db.y * dc.x)
-            + (db.x * db.x + db.y * db.y) * (dc.x * da.y - dc.y * da.x)
-            + (dc.x * dc.x + dc.y * dc.y) * (da.x * db.y - da.y * db.x) > 0.0;
+    size_t axt_det_bc_len, ayt_det_bc_len, bxt_det_ca_len, byt_det_ca_len, cxt_det_ab_len, cyt_det_ab_len;
+    float axt_det_bc[8], ayt_det_bc[8], bxt_det_ca[8], byt_det_ca[8], cxt_det_ab[8], cyt_det_ab[8];
+    float fin1[1152], fin2[1152], temp64[64], sub_det_a[32], sub_det_b[32], sub_det_c[32];
+    float det_bc[4], det_ca[4], det_ab[4], daz[4], dbz[4], dcz[4], temp2a[2], temp2b[2];
+    size_t temp64_len, sub_det_a_len, sub_det_b_len, sub_det_c_len;
+    float dbxdcy, dbydcx, dcxday, dcydax, daxdby, daydbx;
+    const D2D1_POINT_2F *p = cdt->vertices;
+    struct d2d_fp_two_vec2 da, db, dc;
+    float permanent, err_bound, det;
+    struct d2d_fp_fin fin;
+
+    da.x[1] = p[a].x - p[d].x;
+    da.y[1] = p[a].y - p[d].y;
+    db.x[1] = p[b].x - p[d].x;
+    db.y[1] = p[b].y - p[d].y;
+    dc.x[1] = p[c].x - p[d].x;
+    dc.y[1] = p[c].y - p[d].y;
+
+    daz[3] = da.x[1] * da.x[1] + da.y[1] * da.y[1];
+    dbxdcy = db.x[1] * dc.y[1];
+    dbydcx = db.y[1] * dc.x[1];
+
+    dbz[3] = db.x[1] * db.x[1] + db.y[1] * db.y[1];
+    dcxday = dc.x[1] * da.y[1];
+    dcydax = dc.y[1] * da.x[1];
+
+    dcz[3] = dc.x[1] * dc.x[1] + dc.y[1] * dc.y[1];
+    daxdby = da.x[1] * db.y[1];
+    daydbx = da.y[1] * db.x[1];
+
+    det = daz[3] * (dbxdcy - dbydcx) + dbz[3] * (dcxday - dcydax) + dcz[3] * (daxdby - daydbx);
+    permanent = daz[3] * (fabsf(dbxdcy) + fabsf(dbydcx))
+            + dbz[3] * (fabsf(dcxday) + fabsf(dcydax))
+            + dcz[3] * (fabsf(daxdby) + fabsf(daydbx));
+    err_bound = err_bound_a * permanent;
+    if (det > err_bound || -det > err_bound)
+        return det > 0.0f;
+
+    fin.now = fin1;
+    fin.other = fin2;
+
+    d2d_fp_four_det2x2(det_bc, db.x[1], db.y[1], dc.x[1], dc.y[1]);
+    d2d_fp_sub_det3x3(sub_det_a, &sub_det_a_len, &da, det_bc);
+
+    d2d_fp_four_det2x2(det_ca, dc.x[1], dc.y[1], da.x[1], da.y[1]);
+    d2d_fp_sub_det3x3(sub_det_b, &sub_det_b_len, &db, det_ca);
+
+    d2d_fp_four_det2x2(det_ab, da.x[1], da.y[1], db.x[1], db.y[1]);
+    d2d_fp_sub_det3x3(sub_det_c, &sub_det_c_len, &dc, det_ab);
+
+    d2d_fp_fast_expansion_sum_zeroelim(temp64, &temp64_len, sub_det_a, sub_det_a_len, sub_det_b, sub_det_b_len);
+    d2d_fp_fast_expansion_sum_zeroelim(fin.now, &fin.length, temp64, temp64_len, sub_det_c, sub_det_c_len);
+    det = d2d_fp_estimate(fin.now, fin.length);
+    err_bound = err_bound_b * permanent;
+    if (det >= err_bound || -det >= err_bound)
+        return det > 0.0f;
+
+    d2d_fp_two_diff_tail(&da.x[0], p[a].x, p[d].x, da.x[1]);
+    d2d_fp_two_diff_tail(&da.y[0], p[a].y, p[d].y, da.y[1]);
+    d2d_fp_two_diff_tail(&db.x[0], p[b].x, p[d].x, db.x[1]);
+    d2d_fp_two_diff_tail(&db.y[0], p[b].y, p[d].y, db.y[1]);
+    d2d_fp_two_diff_tail(&dc.x[0], p[c].x, p[d].x, dc.x[1]);
+    d2d_fp_two_diff_tail(&dc.y[0], p[c].y, p[d].y, dc.y[1]);
+    if (da.x[0] == 0.0f && db.x[0] == 0.0f && dc.x[0] == 0.0f
+            && da.y[0] == 0.0f && db.y[0] == 0.0f && dc.y[0] == 0.0f)
+        return det > 0.0f;
+
+    err_bound = err_bound_c * permanent + err_bound_result * fabsf(det);
+    det += (daz[3] * ((db.x[1] * dc.y[0] + dc.y[1] * db.x[0]) - (db.y[1] * dc.x[0] + dc.x[1] * db.y[0]))
+            + 2.0f * (da.x[1] * da.x[0] + da.y[1] * da.y[0]) * (db.x[1] * dc.y[1] - db.y[1] * dc.x[1]))
+            + (dbz[3] * ((dc.x[1] * da.y[0] + da.y[1] * dc.x[0]) - (dc.y[1] * da.x[0] + da.x[1] * dc.y[0]))
+            + 2.0f * (db.x[1] * db.x[0] + db.y[1] * db.y[0]) * (dc.x[1] * da.y[1] - dc.y[1] * da.x[1]))
+            + (dcz[3] * ((da.x[1] * db.y[0] + db.y[1] * da.x[0]) - (da.y[1] * db.x[0] + db.x[1] * da.y[0]))
+            + 2.0f * (dc.x[1] * dc.x[0] + dc.y[1] * dc.y[0]) * (da.x[1] * db.y[1] - da.y[1] * db.x[1]));
+    if (det >= err_bound || -det >= err_bound)
+        return det > 0.0f;
+
+    if (db.x[0] != 0.0f || db.y[0] != 0.0f || dc.x[0] != 0.0f || dc.y[0] != 0.0f)
+    {
+        d2d_fp_square(temp2a, da.x[1]);
+        d2d_fp_square(temp2b, da.y[1]);
+        d2d_fp_two_two_sum(daz, temp2a, temp2b);
+    }
+    if (dc.x[0] != 0.0f || dc.y[0] != 0.0f || da.x[0] != 0.0f || da.y[0] != 0.0f)
+    {
+        d2d_fp_square(temp2a, db.x[1]);
+        d2d_fp_square(temp2b, db.y[1]);
+        d2d_fp_two_two_sum(dbz, temp2a, temp2b);
+    }
+    if (da.x[0] != 0.0f || da.y[0] != 0.0f || db.x[0] != 0.0f || db.y[0] != 0.0f)
+    {
+        d2d_fp_square(temp2a, dc.x[1]);
+        d2d_fp_square(temp2b, dc.y[1]);
+        d2d_fp_two_two_sum(dcz, temp2a, temp2b);
+    }
+
+    if (da.x[0] != 0.0f)
+        d2d_cdt_incircle_refine1(&fin, axt_det_bc, &axt_det_bc_len, det_bc, dc.y[1], dcz, db.y[1], dbz, da.x);
+    if (da.y[0] != 0.0f)
+        d2d_cdt_incircle_refine1(&fin, ayt_det_bc, &ayt_det_bc_len, det_bc, db.x[1], dbz, dc.x[1], dcz, da.y);
+    if (db.x[0] != 0.0f)
+        d2d_cdt_incircle_refine1(&fin, bxt_det_ca, &bxt_det_ca_len, det_ca, da.y[1], daz, dc.y[1], dcz, db.x);
+    if (db.y[0] != 0.0f)
+        d2d_cdt_incircle_refine1(&fin, byt_det_ca, &byt_det_ca_len, det_ca, dc.x[1], dcz, da.x[1], daz, db.y);
+    if (dc.x[0] != 0.0f)
+        d2d_cdt_incircle_refine1(&fin, cxt_det_ab, &cxt_det_ab_len, det_ab, db.y[1], dbz, da.y[1], daz, dc.x);
+    if (dc.y[0] != 0.0f)
+        d2d_cdt_incircle_refine1(&fin, cyt_det_ab, &cyt_det_ab_len, det_ab, da.x[1], daz, db.x[1], dbz, dc.y);
+
+    if (da.x[0] != 0.0f || da.y[0] != 0.0f)
+        d2d_cdt_incircle_refine2(&fin, &da, &db, dbz, &dc, dcz,
+                axt_det_bc, axt_det_bc_len, ayt_det_bc, ayt_det_bc_len);
+    if (db.x[0] != 0.0f || db.y[0] != 0.0f)
+        d2d_cdt_incircle_refine2(&fin, &db, &dc, dcz, &da, daz,
+                bxt_det_ca, bxt_det_ca_len, byt_det_ca, byt_det_ca_len);
+    if (dc.x[0] != 0.0f || dc.y[0] != 0.0f)
+        d2d_cdt_incircle_refine2(&fin, &dc, &da, daz, &db, dbz,
+                cxt_det_ab, cxt_det_ab_len, cyt_det_ab, cyt_det_ab_len);
+
+    return fin.now[fin.length - 1] > 0.0f;
 }
 
 static void d2d_cdt_splice(const struct d2d_cdt *cdt, const struct d2d_cdt_edge_ref *a,
