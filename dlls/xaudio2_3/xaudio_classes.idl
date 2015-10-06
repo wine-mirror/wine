@@ -33,3 +33,10 @@ coclass XAudio23 { interface IXAudio27; }
     uuid(9cab402c-1d37-44b4-886d-fa4f36170a4c)
 ]
 coclass AudioReverb23 { interface IXAPO; }
+
+[
+    helpstring("XAudio2.3 AudioVolumeMeter Class"),
+    threading(both),
+    uuid(e180344b-ac83-4483-959e-18a5c56a5e19)
+]
+coclass AudioVolumeMeter23 { interface IXAPO; }
