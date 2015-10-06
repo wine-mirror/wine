@@ -233,13 +233,15 @@ static NTSTATUS handle_IOCTL_HID_GET_COLLECTION_DESCRIPTOR(IRP *irp, BASE_DEVICE
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS handle_minidriver_string(DEVICE_OBJECT *device, IRP *irp, DWORD index)
+static NTSTATUS handle_minidriver_string(DEVICE_OBJECT *device, IRP *irp, SHORT index)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     WCHAR buffer[127];
     NTSTATUS status;
+    ULONG InputBuffer;
 
-    status = call_minidriver(IOCTL_HID_GET_STRING, device, &index, sizeof(index), buffer, sizeof(buffer));
+    InputBuffer = MAKELONG(index, 0);
+    status = call_minidriver(IOCTL_HID_GET_STRING, device, ULongToPtr(InputBuffer), sizeof(InputBuffer), buffer, sizeof(buffer));
 
     if (status == STATUS_SUCCESS)
     {
