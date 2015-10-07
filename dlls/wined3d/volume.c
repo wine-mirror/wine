@@ -531,7 +531,7 @@ static BOOL wined3d_volume_check_box_dimensions(const struct wined3d_volume *vol
     return TRUE;
 }
 
-HRESULT CDECL wined3d_volume_map(struct wined3d_volume *volume,
+HRESULT wined3d_volume_map(struct wined3d_volume *volume,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
     struct wined3d_device *device = volume->resource.device;

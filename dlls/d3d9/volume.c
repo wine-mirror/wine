@@ -148,7 +148,8 @@ static HRESULT WINAPI d3d9_volume_LockBox(IDirect3DVolume9 *iface,
             iface, locked_box, box, flags);
 
     wined3d_mutex_lock();
-    hr = wined3d_volume_map(volume->wined3d_volume, &map_desc, (const struct wined3d_box *)box, flags);
+    hr = wined3d_texture_map(volume->wined3d_texture, volume->sub_resource_idx,
+            &map_desc, (const struct wined3d_box *)box, flags);
     wined3d_mutex_unlock();
 
     locked_box->RowPitch = map_desc.row_pitch;
@@ -209,6 +210,8 @@ void volume_init(struct d3d9_volume *volume, struct wined3d_texture *wined3d_tex
     volume->resource.refcount = 0;
     volume->wined3d_volume = wined3d_volume;
     volume->texture = wined3d_texture_get_parent(wined3d_texture);
+    volume->wined3d_texture = wined3d_texture;
+    volume->sub_resource_idx = sub_resource_idx;
 
     *parent_ops = &d3d9_volume_wined3d_parent_ops;
 }
