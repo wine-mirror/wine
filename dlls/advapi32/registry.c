@@ -1940,53 +1940,45 @@ LSTATUS WINAPI RegEnumValueW( HKEY hkey, DWORD index, LPWSTR value, LPDWORD val_
 
     status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
                                   buffer, total_size, &total_size );
-    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
-    if (value || data)
+    /* retry with a dynamically allocated buffer */
+    while (status == STATUS_BUFFER_OVERFLOW)
     {
-        /* retry with a dynamically allocated buffer */
-        while (status == STATUS_BUFFER_OVERFLOW)
+        if (buf_ptr != buffer) heap_free( buf_ptr );
+        if (!(buf_ptr = heap_alloc( total_size )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+        info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
+        status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                      buf_ptr, total_size, &total_size );
+    }
+
+    if (status) goto done;
+
+    if (info->NameLength/sizeof(WCHAR) >= *val_count)
+    {
+        status = STATUS_BUFFER_OVERFLOW;
+        goto overflow;
+    }
+    memcpy( value, info->Name, info->NameLength );
+    *val_count = info->NameLength / sizeof(WCHAR);
+    value[*val_count] = 0;
+
+    if (data)
+    {
+        if (total_size - info->DataOffset > *count)
         {
-            if (buf_ptr != buffer) heap_free( buf_ptr );
-            if (!(buf_ptr = heap_alloc( total_size )))
-                return ERROR_NOT_ENOUGH_MEMORY;
-            info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
-            status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
-                                          buf_ptr, total_size, &total_size );
+            status = STATUS_BUFFER_OVERFLOW;
+            goto overflow;
         }
-
-        if (status) goto done;
-
-        if (value)
+        memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
+        if (total_size - info->DataOffset <= *count-sizeof(WCHAR) && is_string(info->Type))
         {
-            if (info->NameLength/sizeof(WCHAR) >= *val_count)
-            {
-                status = STATUS_BUFFER_OVERFLOW;
-                goto overflow;
-            }
-            memcpy( value, info->Name, info->NameLength );
-            *val_count = info->NameLength / sizeof(WCHAR);
-            value[*val_count] = 0;
-        }
-
-        if (data)
-        {
-            if (total_size - info->DataOffset > *count)
-            {
-                status = STATUS_BUFFER_OVERFLOW;
-                goto overflow;
-            }
-            memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
-            if (total_size - info->DataOffset <= *count-sizeof(WCHAR) && is_string(info->Type))
-            {
-                /* if the type is REG_SZ and data is not 0-terminated
-                 * and there is enough space in the buffer NT appends a \0 */
-                WCHAR *ptr = (WCHAR *)(data + total_size - info->DataOffset);
-                if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
-            }
+            /* if the type is REG_SZ and data is not 0-terminated
+             * and there is enough space in the buffer NT appends a \0 */
+            WCHAR *ptr = (WCHAR *)(data + total_size - info->DataOffset);
+            if (ptr > (WCHAR *)data && ptr[-1]) *ptr = 0;
         }
     }
-    else status = STATUS_SUCCESS;
 
  overflow:
     if (type) *type = info->Type;
@@ -2025,74 +2017,70 @@ LSTATUS WINAPI RegEnumValueA( HKEY hkey, DWORD index, LPSTR value, LPDWORD val_c
 
     status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
                                   buffer, total_size, &total_size );
-    if (status && status != STATUS_BUFFER_OVERFLOW) goto done;
 
     /* we need to fetch the contents for a string type even if not requested,
      * because we need to compute the length of the ASCII string. */
-    if (value || data || is_string(info->Type))
+
+    /* retry with a dynamically allocated buffer */
+    while (status == STATUS_BUFFER_OVERFLOW)
     {
-        /* retry with a dynamically allocated buffer */
-        while (status == STATUS_BUFFER_OVERFLOW)
-        {
-            if (buf_ptr != buffer) heap_free( buf_ptr );
-            if (!(buf_ptr = heap_alloc( total_size )))
-                return ERROR_NOT_ENOUGH_MEMORY;
-            info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
-            status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
-                                          buf_ptr, total_size, &total_size );
-        }
+        if (buf_ptr != buffer) heap_free( buf_ptr );
+        if (!(buf_ptr = heap_alloc( total_size )))
+            return ERROR_NOT_ENOUGH_MEMORY;
+        info = (KEY_VALUE_FULL_INFORMATION *)buf_ptr;
+        status = NtEnumerateValueKey( hkey, index, KeyValueFullInformation,
+                                      buf_ptr, total_size, &total_size );
+    }
 
-        if (status) goto done;
+    if (status) goto done;
 
-        if (is_string(info->Type))
+    if (is_string(info->Type))
+    {
+        DWORD len;
+        RtlUnicodeToMultiByteSize( &len, (WCHAR *)(buf_ptr + info->DataOffset),
+                                   total_size - info->DataOffset );
+        if (data && len)
         {
-            DWORD len;
-            RtlUnicodeToMultiByteSize( &len, (WCHAR *)(buf_ptr + info->DataOffset),
-                                       total_size - info->DataOffset );
-            if (data && len)
-            {
-                if (len > *count) status = STATUS_BUFFER_OVERFLOW;
-                else
-                {
-                    RtlUnicodeToMultiByteN( (char*)data, len, NULL, (WCHAR *)(buf_ptr + info->DataOffset),
-                                            total_size - info->DataOffset );
-                    /* if the type is REG_SZ and data is not 0-terminated
-                     * and there is enough space in the buffer NT appends a \0 */
-                    if (len < *count && data[len-1]) data[len] = 0;
-                }
-            }
-            info->DataLength = len;
-        }
-        else if (data)
-        {
-            if (total_size - info->DataOffset > *count) status = STATUS_BUFFER_OVERFLOW;
-            else memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
-        }
-
-        if (value && !status)
-        {
-            DWORD len;
-
-            RtlUnicodeToMultiByteSize( &len, info->Name, info->NameLength );
-            if (len >= *val_count)
-            {
-                status = STATUS_BUFFER_OVERFLOW;
-                if (*val_count)
-                {
-                    len = *val_count - 1;
-                    RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
-                    value[len] = 0;
-                }
-            }
+            if (len > *count) status = STATUS_BUFFER_OVERFLOW;
             else
             {
-                RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
-                value[len] = 0;
-                *val_count = len;
+                RtlUnicodeToMultiByteN( (char*)data, len, NULL, (WCHAR *)(buf_ptr + info->DataOffset),
+                                        total_size - info->DataOffset );
+                /* if the type is REG_SZ and data is not 0-terminated
+                 * and there is enough space in the buffer NT appends a \0 */
+                if (len < *count && data[len-1]) data[len] = 0;
             }
         }
+        info->DataLength = len;
     }
-    else status = STATUS_SUCCESS;
+    else if (data)
+    {
+        if (total_size - info->DataOffset > *count) status = STATUS_BUFFER_OVERFLOW;
+        else memcpy( data, buf_ptr + info->DataOffset, total_size - info->DataOffset );
+    }
+
+    if (!status)
+    {
+        DWORD len;
+
+        RtlUnicodeToMultiByteSize( &len, info->Name, info->NameLength );
+        if (len >= *val_count)
+        {
+            status = STATUS_BUFFER_OVERFLOW;
+            if (*val_count)
+            {
+                len = *val_count - 1;
+                RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
+                value[len] = 0;
+            }
+        }
+        else
+        {
+            RtlUnicodeToMultiByteN( value, len, NULL, info->Name, info->NameLength );
+            value[len] = 0;
+            *val_count = len;
+        }
+    }
 
     if (type) *type = info->Type;
     if (count) *count = info->DataLength;
