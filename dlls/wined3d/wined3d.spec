@@ -284,4 +284,3 @@
 @ cdecl wined3d_vertex_declaration_incref(ptr)
 
 @ cdecl wined3d_volume_get_resource(ptr)
-@ cdecl wined3d_volume_unmap(ptr)
