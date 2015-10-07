@@ -3413,17 +3413,45 @@ BOOL WINAPI AnyPopup(void)
  */
 BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
 {
+    FLASHWINFO finfo;
+
+    finfo.cbSize = sizeof(FLASHWINFO);
+    finfo.dwFlags = bInvert ? FLASHW_ALL : FLASHW_STOP;
+    finfo.uCount = 1;
+    finfo.dwTimeout = 0;
+    finfo.hwnd = hWnd;
+    return FlashWindowEx( &finfo );
+}
+
+/*******************************************************************
+ *		FlashWindowEx (USER32.@)
+ */
+BOOL WINAPI FlashWindowEx( PFLASHWINFO pfinfo )
+{
     WND *wndPtr;
 
-    TRACE("%p\n", hWnd);
+    TRACE( "%p\n", pfinfo->hwnd );
 
-    if (IsIconic( hWnd ))
+    if (!pfinfo)
     {
-        RedrawWindow( hWnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
 
-        wndPtr = WIN_GetPtr(hWnd);
+    if (!pfinfo->hwnd || pfinfo->cbSize != sizeof(FLASHWINFO) || !IsWindow( pfinfo->hwnd ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    FIXME( "%p - semi-stub\n", pfinfo );
+
+    if (IsIconic( pfinfo->hwnd ))
+    {
+        RedrawWindow( pfinfo->hwnd, 0, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_FRAME );
+
+        wndPtr = WIN_GetPtr( pfinfo->hwnd );
         if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
-        if (bInvert && !(wndPtr->flags & WIN_NCACTIVATED))
+        if (pfinfo->dwFlags && !(wndPtr->flags & WIN_NCACTIVATED))
         {
             wndPtr->flags |= WIN_NCACTIVATED;
         }
@@ -3437,27 +3465,19 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
     else
     {
         WPARAM wparam;
+        HWND hwnd = pfinfo->hwnd;
 
-        wndPtr = WIN_GetPtr(hWnd);
+        wndPtr = WIN_GetPtr( hwnd );
         if (!wndPtr || wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
-        hWnd = wndPtr->obj.handle;  /* make it a full handle */
+        hwnd = wndPtr->obj.handle;  /* make it a full handle */
 
-        if (bInvert) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
-        else wparam = (hWnd == GetForegroundWindow());
+        if (pfinfo->dwFlags) wparam = !(wndPtr->flags & WIN_NCACTIVATED);
+        else wparam = (hwnd == GetForegroundWindow());
 
         WIN_ReleasePtr( wndPtr );
-        SendMessageW( hWnd, WM_NCACTIVATE, wparam, 0 );
+        SendMessageW( hwnd, WM_NCACTIVATE, wparam, 0 );
         return wparam;
     }
-}
-
-/*******************************************************************
- *		FlashWindowEx (USER32.@)
- */
-BOOL WINAPI FlashWindowEx( PFLASHWINFO pfwi )
-{
-    FIXME("%p\n", pfwi);
-    return TRUE;
 }
 
 /*******************************************************************
