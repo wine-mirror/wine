@@ -26,6 +26,13 @@ coclass AudioVolumeMeter {
 }
 
 [
+    uuid(c0c56f46-29b1-44e9-9939-a32ce86867e2)
+]
+coclass AudioVolumeMeter20 {
+    interface IUnknown;
+}
+
+[
     uuid(c1e3f122-a2ea-442c-854f-20d98f8357a1)
 ]
 coclass AudioVolumeMeter21 {
@@ -71,6 +78,13 @@ coclass AudioVolumeMeter26 {
     uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
 ]
 coclass AudioReverb {
+    interface IUnknown;
+}
+
+[
+    uuid(6f6ea3a9-2cf5-41cf-91c1-2170b1540063)
+]
+coclass AudioReverb20 {
     interface IUnknown;
 }
 

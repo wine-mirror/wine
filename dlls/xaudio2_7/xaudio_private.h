@@ -42,6 +42,7 @@ typedef struct _XA2Buffer {
 typedef struct _IXAudio2Impl IXAudio2Impl;
 
 typedef struct _XA2SourceImpl {
+    IXAudio20SourceVoice IXAudio20SourceVoice_iface;
     IXAudio23SourceVoice IXAudio23SourceVoice_iface;
     IXAudio27SourceVoice IXAudio27SourceVoice_iface;
     IXAudio2SourceVoice IXAudio2SourceVoice_iface;
@@ -81,6 +82,7 @@ typedef struct _XA2SourceImpl {
 } XA2SourceImpl;
 
 typedef struct _XA2SubmixImpl {
+    IXAudio20SubmixVoice IXAudio20SubmixVoice_iface;
     IXAudio23SubmixVoice IXAudio23SubmixVoice_iface;
     IXAudio2SubmixVoice IXAudio2SubmixVoice_iface;
 
@@ -92,9 +94,11 @@ typedef struct _XA2SubmixImpl {
 } XA2SubmixImpl;
 
 struct _IXAudio2Impl {
+    IXAudio20 IXAudio20_iface;
     IXAudio22 IXAudio22_iface;
     IXAudio27 IXAudio27_iface;
     IXAudio2 IXAudio2_iface;
+    IXAudio20MasteringVoice IXAudio20MasteringVoice_iface;
     IXAudio23MasteringVoice IXAudio23MasteringVoice_iface;
     IXAudio2MasteringVoice IXAudio2MasteringVoice_iface;
 
@@ -114,6 +118,8 @@ struct _IXAudio2Impl {
 
     WCHAR **devids;
     UINT32 ndevs;
+
+    UINT32 last_query_glitches;
 
     IAudioClient *aclient;
     IAudioRenderClient *render;
@@ -139,3 +145,8 @@ extern const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl DECLSPEC_HIDDEN;
 
 extern const IXAudio22Vtbl XAudio22_Vtbl DECLSPEC_HIDDEN;
+
+extern const IXAudio20Vtbl XAudio20_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio20SourceVoiceVtbl XAudio20SourceVoice_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio20SubmixVoiceVtbl XAudio20SubmixVoice_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio20MasteringVoiceVtbl XAudio20MasteringVoice_Vtbl DECLSPEC_HIDDEN;

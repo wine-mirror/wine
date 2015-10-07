@@ -1,0 +1,42 @@
+/*
+ * COM Classes for xaudio
+ *
+ * Copyright 2015 Andrew Eikum for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+#pragma makedep register
+
+[
+    helpstring("XAudio2.0 Class"),
+    threading(both),
+    uuid(e21a7345-eb21-468e-be50-804db97cf708)
+]
+coclass XAudio20 { interface IXAudio20; }
+
+[
+    helpstring("XAudio2.0 AudioReverb Class"),
+    threading(both),
+    uuid(6f6ea3a9-2cf5-41cf-91c1-2170b1540063)
+]
+coclass AudioReverb20 { interface IXAPO; }
+
+[
+    helpstring("XAudio2.0 AudioVolumeMeter Class"),
+    threading(both),
+    uuid(c0c56f46-29b1-44e9-9939-a32ce86867e2)
+]
+coclass AudioVolumeMeter20 { interface IXAPO; }
