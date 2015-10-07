@@ -7429,6 +7429,32 @@ end:
         closesocket(connector2);
 }
 
+#define compare_file(h,s) compare_file2(h,s,__FILE__,__LINE__)
+
+static void compare_file2(HANDLE handle, SOCKET sock, const char *file, int line)
+{
+    char buf1[256], buf2[256];
+    BOOL success;
+    int i = 0;
+
+    SetFilePointer(handle, 0, NULL, FILE_BEGIN);
+    while (1)
+    {
+        DWORD n1 = 0, n2 = 0;
+
+        success = ReadFile(handle, buf1, sizeof(buf1), &n1, NULL);
+        ok_(file,line)(success, "Failed to read from file.\n");
+        if (success && n1 == 0)
+            break;
+        else if(!success)
+            return;
+        n2 = recv(sock, buf2, n1, 0);
+        ok_(file,line)(n1 == n2, "Block %d size mismatch (%d != %d)\n", i, n1, n2);
+        ok_(file,line)(memcmp(buf1, buf2, n2) == 0, "Block %d failed\n", i);
+        i++;
+    }
+}
+
 static void test_TransmitFile(void)
 {
     GUID transmitFileGuid = WSAID_TRANSMITFILE;
@@ -7438,6 +7464,7 @@ static void test_TransmitFile(void)
     struct sockaddr_in bindAddress;
     SOCKET client, server, dest;
     DWORD num_bytes, err;
+    char buf[256];
     int iret, len;
     BOOL bret;
 
@@ -7515,7 +7542,14 @@ static void test_TransmitFile(void)
 
     /* Test TransmitFile with no possible buffer */
     bret = pTransmitFile(client, NULL, 0, 0, NULL, NULL, 0);
-    todo_wine ok(bret, "TransmitFile failed unexpectedly.\n");
+    ok(bret, "TransmitFile failed unexpectedly.\n");
+    iret = recv(dest, buf, sizeof(buf), 0);
+    ok(iret == -1, "Returned an unexpected buffer from TransmitFile (%d != -1).\n", iret);
+
+    /* Test TransmitFile with only file data */
+    bret = pTransmitFile(client, file, 0, 0, NULL, NULL, 0);
+    ok(bret, "TransmitFile failed unexpectedly.\n");
+    compare_file(file, dest);
 
     /* Test TransmitFile with a UDP datagram socket */
     closesocket(client);

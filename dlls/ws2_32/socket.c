@@ -514,6 +514,18 @@ struct ws2_accept_async
     struct ws2_async    *read;
 };
 
+struct ws2_transmitfile_async
+{
+    struct ws2_async_io   io;
+    char                  *buffer;
+    HANDLE                file;
+    DWORD                 file_read;
+    DWORD                 file_bytes;
+    DWORD                 bytes_per_send;
+    DWORD                 flags;
+    struct ws2_async      write;
+};
+
 static struct ws2_async_io *async_io_freelist;
 
 static void release_async_io( struct ws2_async_io *io )
@@ -2725,6 +2737,117 @@ static BOOL WINAPI WS2_AcceptEx(SOCKET listener, SOCKET acceptor, PVOID dest, DW
 }
 
 /***********************************************************************
+ *     WS2_ReadFile                     (INTERNAL)
+ *
+ * Perform an APC-safe ReadFile operation
+ */
+static NTSTATUS WS2_ReadFile(HANDLE hFile, PIO_STATUS_BLOCK io_status, char* buffer, ULONG length)
+{
+    int result, unix_handle;
+    unsigned int options;
+    NTSTATUS status;
+
+    TRACE( "(%p,%p,0x%08x)\n", hFile, buffer,length );
+
+    status = wine_server_handle_to_fd( hFile, FILE_READ_DATA, &unix_handle, &options );
+    if (status) return status;
+
+    while ((result = read( unix_handle, buffer, length )) == -1)
+    {
+        if (errno != EINTR)
+            break;
+    }
+
+    if (!result)
+        status = (length ? STATUS_END_OF_FILE : STATUS_SUCCESS);
+    else if (result != -1)
+        status = STATUS_SUCCESS;
+    else if (errno != EAGAIN)
+        status = wsaErrStatus();
+    else
+        status = STATUS_PENDING;
+
+    close( unix_handle );
+    TRACE("= 0x%08x (%d)\n", status, result);
+    if (status == STATUS_SUCCESS || status == STATUS_END_OF_FILE)
+    {
+        io_status->u.Status = status;
+        io_status->Information = result;
+    }
+
+    return status;
+}
+
+/***********************************************************************
+ *     WS2_transmitfile_getbuffer       (INTERNAL)
+ *
+ * Pick the appropriate buffer for a TransmitFile send operation.
+ */
+static NTSTATUS WS2_transmitfile_getbuffer( int fd, struct ws2_transmitfile_async *wsa )
+{
+    /* send any incomplete writes from a previous iteration */
+    if (wsa->write.first_iovec < wsa->write.n_iovecs)
+        return STATUS_PENDING;
+
+    /* process the main file */
+    if (wsa->file)
+    {
+        DWORD bytes_per_send = wsa->bytes_per_send;
+        IO_STATUS_BLOCK iosb;
+        NTSTATUS status;
+
+        /* when the size of the transfer is limited ensure that we don't go past that limit */
+        if (wsa->file_bytes != 0)
+            bytes_per_send = min(bytes_per_send, wsa->file_bytes - wsa->file_read);
+        status = WS2_ReadFile( wsa->file, &iosb, wsa->buffer, bytes_per_send );
+        if (status == STATUS_END_OF_FILE)
+            return STATUS_SUCCESS;
+        else if (status != STATUS_SUCCESS)
+            return status;
+        else
+        {
+            if (iosb.Information)
+            {
+                wsa->write.first_iovec       = 0;
+                wsa->write.n_iovecs          = 1;
+                wsa->write.iovec[0].iov_base = wsa->buffer;
+                wsa->write.iovec[0].iov_len  = iosb.Information;
+                wsa->file_read += iosb.Information;
+            }
+
+            if (wsa->file_bytes != 0 && wsa->file_read >= wsa->file_bytes)
+                wsa->file = NULL;
+
+            return STATUS_PENDING;
+        }
+    }
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *     WS2_transmitfile_base            (INTERNAL)
+ *
+ * Shared implementation for both synchronous and asynchronous TransmitFile.
+ */
+static NTSTATUS WS2_transmitfile_base( int fd, struct ws2_transmitfile_async *wsa )
+{
+    NTSTATUS status;
+
+    status = WS2_transmitfile_getbuffer( fd, wsa );
+    if (status == STATUS_PENDING)
+    {
+        int n;
+
+        n = WS2_send( fd, &wsa->write, convert_flags(wsa->write.flags) );
+        if (n == -1 && errno != EAGAIN)
+            return wsaErrStatus();
+    }
+
+    return status;
+}
+
+/***********************************************************************
  *     TransmitFile
  */
 static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD bytes_per_send,
@@ -2733,12 +2856,22 @@ static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD
 {
     union generic_unix_sockaddr uaddr;
     unsigned int uaddrlen = sizeof(uaddr);
+    struct ws2_transmitfile_async *wsa;
+    NTSTATUS status;
     int fd;
 
-    FIXME("(%lx, %p, %d, %d, %p, %p, %d): stub !\n", s, h, file_bytes, bytes_per_send, overlapped,
-          buffers, flags );
+    if (overlapped || buffers)
+    {
+        FIXME("(%lx, %p, %d, %d, %p, %p, %d): stub !\n", s, h, file_bytes, bytes_per_send,
+               overlapped, buffers, flags);
+        WSASetLastError( WSAEOPNOTSUPP );
+        return FALSE;
+    }
 
-    fd = get_sock_fd( s, 0, NULL );
+    TRACE("(%lx, %p, %d, %d, %p, %p, %d)\n", s, h, file_bytes, bytes_per_send, overlapped,
+            buffers, flags );
+
+    fd = get_sock_fd( s, FILE_WRITE_DATA, NULL );
     if (fd == -1)
     {
         WSASetLastError( WSAENOTSOCK );
@@ -2750,12 +2883,60 @@ static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD
         WSASetLastError( WSAENOTCONN );
         return FALSE;
     }
-    release_sock_fd( s, fd );
     if (flags)
         FIXME("Flags are not currently supported (0x%x).\n", flags);
 
-    WSASetLastError( WSAEOPNOTSUPP );
-    return FALSE;
+    if (h && GetFileType( h ) != FILE_TYPE_DISK)
+    {
+        FIXME("Non-disk file handles are not currently supported.\n");
+        release_sock_fd( s, fd );
+        WSASetLastError( WSAEOPNOTSUPP );
+        return FALSE;
+    }
+
+    /* set reasonable defaults when requested */
+    if (!bytes_per_send)
+        bytes_per_send = (1 << 16); /* Depends on OS version: PAGE_SIZE, 2*PAGE_SIZE, or 2^16 */
+
+    if (!(wsa = (struct ws2_transmitfile_async *)alloc_async_io( sizeof(*wsa) + bytes_per_send )))
+    {
+        release_sock_fd( s, fd );
+        WSASetLastError( WSAEFAULT );
+        return FALSE;
+    }
+    wsa->buffer                = (char *)(wsa + 1);
+    wsa->file                  = h;
+    wsa->file_read             = 0;
+    wsa->file_bytes            = file_bytes;
+    wsa->bytes_per_send        = bytes_per_send;
+    wsa->flags                 = flags;
+    wsa->write.hSocket         = SOCKET2HANDLE(s);
+    wsa->write.addr            = NULL;
+    wsa->write.addrlen.val     = 0;
+    wsa->write.flags           = 0;
+    wsa->write.lpFlags         = &wsa->flags;
+    wsa->write.control         = NULL;
+    wsa->write.n_iovecs        = 0;
+    wsa->write.first_iovec     = 0;
+    wsa->write.user_overlapped = NULL;
+
+    do
+    {
+        status = WS2_transmitfile_base( fd, wsa );
+        if (status == STATUS_PENDING)
+        {
+            /* block here */
+            do_block(fd, POLLOUT, -1);
+            _sync_sock_state(s); /* let wineserver notice connection */
+        }
+    }
+    while (status == STATUS_PENDING);
+    release_sock_fd( s, fd );
+
+    if (status != STATUS_SUCCESS)
+        WSASetLastError( NtStatusToWSAError(status) );
+    HeapFree( GetProcessHeap(), 0, wsa );
+    return (status == STATUS_SUCCESS);
 }
 
 /***********************************************************************
