@@ -55,6 +55,8 @@ struct d2d_figure
     struct d2d_bezier *beziers;
     size_t beziers_size;
     size_t bezier_count;
+
+    D2D1_RECT_F bounds;
 };
 
 struct d2d_cdt_edge_ref
@@ -422,6 +424,18 @@ static BOOL d2d_array_reserve(void **elements, size_t *capacity, size_t element_
     return TRUE;
 }
 
+static void d2d_figure_update_bounds(struct d2d_figure *figure, D2D1_POINT_2F vertex)
+{
+    if (vertex.x < figure->bounds.left)
+        figure->bounds.left = vertex.x;
+    if (vertex.x > figure->bounds.right)
+        figure->bounds.right = vertex.x;
+    if (vertex.y < figure->bounds.top)
+        figure->bounds.top = vertex.y;
+    if (vertex.y > figure->bounds.bottom)
+        figure->bounds.bottom = vertex.y;
+}
+
 static BOOL d2d_figure_insert_vertex(struct d2d_figure *figure, size_t idx, D2D1_POINT_2F vertex)
 {
     if (!d2d_array_reserve((void **)&figure->vertices, &figure->vertices_size,
@@ -434,6 +448,7 @@ static BOOL d2d_figure_insert_vertex(struct d2d_figure *figure, size_t idx, D2D1
     memmove(&figure->vertices[idx + 1], &figure->vertices[idx],
             (figure->vertex_count - idx) * sizeof(*figure->vertices));
     figure->vertices[idx] = vertex;
+    d2d_figure_update_bounds(figure, vertex);
     ++figure->vertex_count;
     return TRUE;
 }
@@ -448,6 +463,7 @@ static BOOL d2d_figure_add_vertex(struct d2d_figure *figure, D2D1_POINT_2F verte
     }
 
     figure->vertices[figure->vertex_count] = vertex;
+    d2d_figure_update_bounds(figure, vertex);
     ++figure->vertex_count;
     return TRUE;
 }
@@ -1426,6 +1442,13 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
             for (j = min_j, min_j = 0, l = min_l, min_l = 0; j < i || (j == i && k); ++j, l = 0)
             {
                 figure_q = &geometry->u.path.figures[j];
+
+                if (figure_p->bounds.left > figure_q->bounds.right
+                        || figure_q->bounds.left > figure_p->bounds.right
+                        || figure_p->bounds.top > figure_q->bounds.bottom
+                        || figure_q->bounds.top > figure_p->bounds.bottom)
+                    continue;
+
                 max_l = j == i ? k - 1 : figure_q->vertex_count;
                 q0 = figure_q->vertices[l == 0 ? figure_q->vertex_count - 1 : l - 1];
                 for (; l < max_l; q0 = q1, ++l)
@@ -1550,6 +1573,10 @@ static BOOL d2d_path_geometry_add_figure(struct d2d_geometry *geometry)
 
     figure = &geometry->u.path.figures[geometry->u.path.figure_count];
     memset(figure, 0, sizeof(*figure));
+    figure->bounds.left = FLT_MAX;
+    figure->bounds.top = FLT_MAX;
+    figure->bounds.right = -FLT_MAX;
+    figure->bounds.bottom = -FLT_MAX;
 
     ++geometry->u.path.figure_count;
     return TRUE;
