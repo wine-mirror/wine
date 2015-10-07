@@ -1170,6 +1170,10 @@ static BOOL d2d_path_geometry_point_inside(const struct d2d_geometry *geometry, 
     {
         const struct d2d_figure *figure = &geometry->u.path.figures[i];
 
+        if (probe->x < figure->bounds.left || probe->x > figure->bounds.right
+                || probe->y < figure->bounds.top || probe->y > figure->bounds.bottom)
+            continue;
+
         p0 = &figure->vertices[figure->vertex_count - 1];
         for (j = 0; j < figure->vertex_count; p0 = p1, ++j)
         {
