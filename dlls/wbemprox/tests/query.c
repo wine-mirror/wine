@@ -299,15 +299,11 @@ static void test_Win32_Bios( IWbemServices *services )
     type = 0xdeadbeef;
     VariantInit( &val );
     hr = IWbemClassObject_Get( obj, nameW, 0, &val, &type, NULL );
-    todo_wine
     ok( hr == S_OK, "failed to get name %08x\n", hr );
-    if (hr == S_OK)
-    {
-        ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
-        ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
-        trace( "name: %s\n", wine_dbgstr_w(V_BSTR( &val )) );
-        VariantClear( &val );
-    }
+    ok( V_VT( &val ) == VT_BSTR, "unexpected variant type 0x%x\n", V_VT( &val ) );
+    ok( type == CIM_STRING, "unexpected type 0x%x\n", type );
+    trace( "name: %s\n", wine_dbgstr_w(V_BSTR( &val )) );
+    VariantClear( &val );
 
     type = 0xdeadbeef;
     VariantInit( &val );

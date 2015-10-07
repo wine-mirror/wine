@@ -374,6 +374,7 @@ static const struct column col_bios[] =
     { prop_descriptionW,        CIM_STRING },
     { prop_identificationcodeW, CIM_STRING },
     { prop_manufacturerW,       CIM_STRING },
+    { prop_nameW,               CIM_STRING },
     { prop_releasedateW,        CIM_DATETIME },
     { prop_serialnumberW,       CIM_STRING },
     { prop_smbiosbiosversionW,  CIM_STRING },
@@ -658,6 +659,8 @@ static const WCHAR bios_descriptionW[] =
     {'D','e','f','a','u','l','t',' ','S','y','s','t','e','m',' ','B','I','O','S',0};
 static const WCHAR bios_manufacturerW[] =
     {'T','h','e',' ','W','i','n','e',' ','P','r','o','j','e','c','t',0};
+static const WCHAR bios_nameW[] =
+    {'W','I','N','E',' ','B','I','O','S',0};
 static const WCHAR bios_releasedateW[] =
     {'2','0','1','2','0','6','0','8','0','0','0','0','0','0','.','0','0','0','0','0','0','+','0','0','0',0};
 static const WCHAR bios_serialnumberW[] =
@@ -761,6 +764,7 @@ struct record_bios
     const WCHAR *description;
     const WCHAR *identificationcode;
     const WCHAR *manufacturer;
+    const WCHAR *name;
     const WCHAR *releasedate;
     const WCHAR *serialnumber;
     const WCHAR *smbiosbiosversion;
@@ -1040,7 +1044,7 @@ static const struct record_baseboard data_baseboard[] =
 };
 static const struct record_bios data_bios[] =
 {
-    { bios_descriptionW, bios_descriptionW, bios_manufacturerW, bios_releasedateW, bios_serialnumberW,
+    { bios_descriptionW, bios_descriptionW, bios_manufacturerW, bios_nameW, bios_releasedateW, bios_serialnumberW,
       bios_smbiosbiosversionW, bios_versionW }
 };
 static const struct record_computersystemproduct data_compsysproduct[] =
