@@ -558,12 +558,9 @@ int APIENTRY WinMain(HINSTANCE hInst, HINSTANCE hPrevInst, LPSTR lpCmdLine, int 
 {
     MSG msg;
     HANDLE hAccelTable;
-   
-    if(!hPrevInst)
-    {
-        if(!InitApplication(hInst))
-            return FALSE;
-    }
+
+    if(!InitApplication(hInst))
+        return FALSE;
 
     if(!InitInstance(hInst, nCmdShow))
         return FALSE;
