@@ -66,12 +66,10 @@ CFArrayRef macdrv_copy_pasteboard_types(CFTypeRef pasteboard)
                                     [NSNumber numberWithUnsignedInteger:NSBMPFileType],
                                     [NSNumber numberWithUnsignedInteger:NSGIFFileType],
                                     [NSNumber numberWithUnsignedInteger:NSJPEGFileType],
-                                    [NSNumber numberWithUnsignedInteger:NSJPEG2000FileType],
                                     nil];
 
         BitmapOutputTypes = [[NSArray alloc] initWithObjects:@"public.tiff", @"public.png",
-                             @"com.microsoft.bmp", @"com.compuserve.gif", @"public.jpeg",
-                             @"public.jpeg-2000", nil];
+                             @"com.microsoft.bmp", @"com.compuserve.gif", @"public.jpeg", nil];
 
         BitmapOutputTypeMap = [[NSDictionary alloc] initWithObjects:bitmapFileTypes
                                                             forKeys:BitmapOutputTypes];
