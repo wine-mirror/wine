@@ -784,7 +784,7 @@ HRESULT wined3d_volume_create(struct wined3d_texture *container, const struct wi
     }
 
     if (FAILED(hr = device_parent->ops->volume_created(device_parent,
-            container, level, object, &parent, &parent_ops)))
+            container, level, &parent, &parent_ops)))
     {
         WARN("Failed to create volume parent, hr %#x.\n", hr);
         wined3d_volume_destroy(object);
