@@ -422,7 +422,7 @@ static int MenuCommand(WPARAM wParam, HWND hWnd)
             LoadStringW(globals.hMainInst, IDS_OPEN, wszTitle, sizeof(wszTitle)/sizeof(wszTitle[0]));
             LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_TYPELIB, filter_typelib, sizeof(filter_typelib)/sizeof(WCHAR));
             LoadStringW(globals.hMainInst, IDS_OPEN_FILTER_ALL, filter_all, sizeof(filter_all)/sizeof(WCHAR));
-            snprintfW( filter, MAX_PATH, filterW, filter_typelib, 0, 0, filter_all, 0, 0 );
+            wsprintfW( filter, filterW, filter_typelib, 0, 0, filter_all, 0, 0 );
             InitOpenFileName(hWnd, &ofn, filter, wszTitle, wszName);
             if(GetOpenFileNameW(&ofn)) CreateTypeLibWindow(globals.hMainInst, wszName);
             break;
