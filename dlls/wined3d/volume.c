@@ -460,20 +460,6 @@ static void volume_unload(struct wined3d_resource *resource)
     resource_unload(resource);
 }
 
-static ULONG CDECL wined3d_volume_incref(struct wined3d_volume *volume)
-{
-    TRACE("Forwarding to container %p.\n", volume->container);
-
-    return wined3d_texture_incref(volume->container);
-}
-
-static ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
-{
-    TRACE("Forwarding to container %p.\n", volume->container);
-
-    return wined3d_texture_decref(volume->container);
-}
-
 static BOOL volume_check_block_align(const struct wined3d_volume *volume,
         const struct wined3d_box *box)
 {
@@ -700,12 +686,18 @@ HRESULT wined3d_volume_unmap(struct wined3d_volume *volume)
 
 static ULONG volume_resource_incref(struct wined3d_resource *resource)
 {
-    return wined3d_volume_incref(volume_from_resource(resource));
+    struct wined3d_volume *volume = volume_from_resource(resource);
+    TRACE("Forwarding to container %p.\n", volume->container);
+
+    return wined3d_texture_incref(volume->container);
 }
 
 static ULONG volume_resource_decref(struct wined3d_resource *resource)
 {
-    return wined3d_volume_decref(volume_from_resource(resource));
+    struct wined3d_volume *volume = volume_from_resource(resource);
+    TRACE("Forwarding to container %p.\n", volume->container);
+
+    return wined3d_texture_decref(volume->container);
 }
 
 static const struct wined3d_resource_ops volume_resource_ops =
