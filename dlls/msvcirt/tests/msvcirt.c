@@ -210,6 +210,7 @@ static int (*__thiscall p_strstreambuf_underflow)(strstreambuf*);
 static stdiobuf* (*__thiscall p_stdiobuf_file_ctor)(stdiobuf*, FILE*);
 static void (*__thiscall p_stdiobuf_dtor)(stdiobuf*);
 static int (*__thiscall p_stdiobuf_overflow)(stdiobuf*, int);
+static int (*__thiscall p_stdiobuf_pbackfail)(stdiobuf*, int);
 static streampos (*__thiscall p_stdiobuf_seekoff)(stdiobuf*, streamoff, ios_seek_dir, int);
 static int (*__thiscall p_stdiobuf_setrwbuf)(stdiobuf*, int, int);
 static int (*__thiscall p_stdiobuf_sync)(stdiobuf*);
@@ -376,6 +377,7 @@ static BOOL init(void)
         SET(p_stdiobuf_file_ctor, "??0stdiobuf@@QEAA@PEAU_iobuf@@@Z");
         SET(p_stdiobuf_dtor, "??1stdiobuf@@UEAA@XZ");
         SET(p_stdiobuf_overflow, "?overflow@stdiobuf@@UEAAHH@Z");
+        SET(p_stdiobuf_pbackfail, "?pbackfail@stdiobuf@@UEAAHH@Z");
         SET(p_stdiobuf_seekoff, "?seekoff@stdiobuf@@UEAAJJW4seek_dir@ios@@H@Z");
         SET(p_stdiobuf_setrwbuf, "?setrwbuf@stdiobuf@@QEAAHHH@Z");
         SET(p_stdiobuf_sync, "?sync@stdiobuf@@UEAAHXZ");
@@ -462,6 +464,7 @@ static BOOL init(void)
         SET(p_stdiobuf_file_ctor, "??0stdiobuf@@QAE@PAU_iobuf@@@Z");
         SET(p_stdiobuf_dtor, "??1stdiobuf@@UAE@XZ");
         SET(p_stdiobuf_overflow, "?overflow@stdiobuf@@UAEHH@Z");
+        SET(p_stdiobuf_pbackfail, "?pbackfail@stdiobuf@@UAEHH@Z");
         SET(p_stdiobuf_seekoff, "?seekoff@stdiobuf@@UAEJJW4seek_dir@ios@@H@Z");
         SET(p_stdiobuf_setrwbuf, "?setrwbuf@stdiobuf@@QAEHHH@Z");
         SET(p_stdiobuf_sync, "?sync@stdiobuf@@UAEHXZ");
@@ -1432,6 +1435,38 @@ static void test_filebuf(void)
     ret = (int) call_func4(p_filebuf_seekoff, &fb1, 16, SEEKDIR_beg, 0);
     ok(ret == 16, "wrong return, expected 16 got %d\n", ret);
 
+    /* pbackfail */
+    ret = (int) call_func2(p_streambuf_pbackfail, &fb1.base, 'B');
+    ok(ret == 'B', "wrong return, expected 'B' got %d\n", ret);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ok(_tell(fb1.fd) == 15, "_tell failed\n");
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.pbase = fb1.base.pptr = fb1.base.base + 256;
+    fb1.base.epptr = fb1.base.ebuf;
+    ret = (int) call_func2(p_streambuf_pbackfail, &fb1.base, 'C');
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ok(_tell(fb1.fd) == 15, "_tell failed\n");
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.base + 2;
+    ret = (int) call_func2(p_streambuf_pbackfail, &fb1.base, 'C');
+    ok(ret == 'C', "wrong return, expected 'C' got %d\n", ret);
+    ok(fb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, fb1.base.gptr);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ok(_tell(fb1.fd) == 12, "_tell failed\n");
+    fb1.base.eback = fb1.base.gptr = fb1.base.base;
+    fb1.base.egptr = fb1.base.ebuf;
+    *fb1.base.gptr++ = 'D';
+    ret = (int) call_func2(p_streambuf_pbackfail, &fb1.base, 'C');
+    ok(ret == 'C', "wrong return, expected 'C' got %d\n", ret);
+    ok(fb1.base.gptr == fb1.base.base, "wrong get pointer, expected %p got %p\n", fb1.base.base, fb1.base.gptr);
+    ok(*fb1.base.gptr == 'C', "wrong character, expected 'C' got '%c'\n", *fb1.base.gptr);
+    ok(fb1.base.pptr == NULL, "wrong put pointer, expected %p got %p\n", NULL, fb1.base.pptr);
+    ok(_tell(fb1.fd) == 12, "_tell failed\n");
+    fb1.base.eback = fb1.base.gptr = fb1.base.egptr = NULL;
+
     /* close */
     pret = (filebuf*) call_func1(p_filebuf_close, &fb2);
     ok(pret == NULL, "wrong return, expected %p got %p\n", NULL, pret);
@@ -1833,6 +1868,21 @@ static void test_strstreambuf(void)
     ok(ret == 74, "expected 74 got %d\n", ret);
     ok(ssb2.base.pptr == ssb2.base.epptr, "wrong put pointer, expected %p got %p\n", ssb2.base.epptr, ssb2.base.pptr);
 
+    /* pbackfail */
+    *(ssb1.base.gptr-1) = 'A';
+    ret = (int) call_func2(p_streambuf_pbackfail, &ssb1.base, 'X');
+    ok(ret == 'X', "wrong return, expected 'X' got %d\n", ret);
+    ok(ssb1.base.gptr == ssb1.base.eback + 51, "wrong get pointer, expected %p got %p\n", ssb1.base.eback + 51, ssb1.base.gptr);
+    ok(*ssb1.base.gptr == 'X', "expected 'X' got '%c'\n", *ssb1.base.gptr);
+    ssb1.base.gptr = ssb1.base.eback;
+    ret = (int) call_func2(p_streambuf_pbackfail, &ssb1.base, 'Y');
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ssb1.base.gptr = ssb1.base.eback + 1;
+    ret = (int) call_func2(p_streambuf_pbackfail, &ssb1.base, EOF);
+    ok(ret == EOF, "wrong return, expected EOF got %d\n", ret);
+    ok(ssb1.base.gptr == ssb1.base.eback, "wrong get pointer, expected %p got %p\n", ssb1.base.eback, ssb1.base.gptr);
+    ok((signed char)*ssb1.base.gptr == EOF, "expected EOF got '%c'\n", *ssb1.base.gptr);
+
     call_func1(p_strstreambuf_dtor, &ssb1);
     call_func1(p_strstreambuf_dtor, &ssb2);
 }
@@ -1843,7 +1893,7 @@ static void test_stdiobuf(void)
     FILE *file1, *file2;
     const char filename1[] = "stdiobuf_test1";
     const char filename2[] = "stdiobuf_test2";
-    int ret;
+    int ret, last;
     char buffer[64];
 
     memset(&stb1, 0xab, sizeof(stdiobuf));
@@ -2107,6 +2157,42 @@ static void test_stdiobuf(void)
     ok(ret == 20, "expected 20 got %d\n", ret);
     stb2.base.gptr = stb2.base.egptr;
     stb2.base.unbuffered = 1;
+
+    /* pbackfail */
+    last = fgetc(stb1.file);
+    ok(last == 'r', "expected 'r' got %d\n", last);
+    ok(ftell(stb1.file) == 30, "ftell failed\n");
+    ret = (int) call_func2(p_stdiobuf_pbackfail, &stb1, 'i');
+    ok(ret == 'i', "expected 'i' got %d\n", ret);
+    ok(ftell(stb1.file) == 29, "ftell failed\n");
+    last = fgetc(stb1.file);
+    ok(last == 'r', "expected 'r' got %d\n", last);
+    ok(ftell(stb1.file) == 30, "ftell failed\n");
+    stb1.base.eback = stb1.base.base;
+    stb1.base.gptr = stb1.base.egptr = stb1.base.base + 9;
+    strcpy(stb1.base.eback, "pbackfail");
+    ret = (int) call_func2(p_stdiobuf_pbackfail, &stb1, 'j');
+    ok(ret == 'j', "expected 'j' got %d\n", ret);
+    ok(stb1.base.gptr == stb1.base.base + 8, "wrong get pointer, expected %p got %p\n", stb1.base.base + 8, stb1.base.gptr);
+    ok(strncmp(stb1.base.eback, "pbackfaij", 9) == 0, "strncmp failed\n");
+    ok(ftell(stb1.file) == 30, "ftell failed\n");
+    stb1.base.gptr = stb1.base.eback;
+    ret = (int) call_func2(p_stdiobuf_pbackfail, &stb1, 'k');
+    ok(ret == 'k', "expected 'k' got %d\n", ret);
+    ok(stb1.base.gptr == stb1.base.base, "wrong get pointer, expected %p got %p\n", stb1.base.base, stb1.base.gptr);
+    ok(strncmp(stb1.base.eback, "pbackfaij", 9) == 0, "strncmp failed\n");
+    ok(ftell(stb1.file) == 29, "ftell failed\n");
+    stb1.base.unbuffered = 0;
+    ret = (int) call_func2(p_stdiobuf_pbackfail, &stb1, 'l');
+    ok(ret == 'l', "expected 'l' got %d\n", ret);
+    ok(strncmp(stb1.base.eback, "lpbackfai", 9) == 0, "strncmp failed\n");
+    ok(ftell(stb1.file) == 28, "ftell failed\n");
+    stb1.base.egptr = NULL;
+    ret = (int) call_func2(p_stdiobuf_pbackfail, &stb1, 'm');
+    ok(ret == 'm', "expected 'm' got %d\n", ret);
+    ok(strncmp(stb1.base.eback, "lpbackfai", 9) == 0, "strncmp failed\n");
+    ok(ftell(stb1.file) == 27, "ftell failed\n");
+    stb1.base.unbuffered = 1;
 
     call_func1(p_stdiobuf_dtor, &stb1);
     call_func1(p_stdiobuf_dtor, &stb2);

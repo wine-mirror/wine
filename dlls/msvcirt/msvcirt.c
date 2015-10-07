@@ -501,18 +501,6 @@ int __thiscall streambuf_overflow(streambuf *this, int c)
     return EOF;
 }
 
-/* ?pbackfail@streambuf@@UAEHH@Z */
-/* ?pbackfail@streambuf@@UEAAHH@Z */
-DEFINE_THISCALL_WRAPPER(streambuf_pbackfail, 8)
-#define call_streambuf_pbackfail(this, c) CALL_VTBL_FUNC(this, 36, int, (streambuf*, int), (this, c))
-int __thiscall streambuf_pbackfail(streambuf *this, int c)
-{
-    TRACE("(%p %d)\n", this, c);
-    if (this->gptr <= this->eback)
-        return EOF;
-    return *--this->gptr = c;
-}
-
 /* ?seekoff@streambuf@@UAEJJW4seek_dir@ios@@H@Z */
 /* ?seekoff@streambuf@@UEAAJJW4seek_dir@ios@@H@Z */
 DEFINE_THISCALL_WRAPPER(streambuf_seekoff, 16)
@@ -530,6 +518,25 @@ streampos __thiscall streambuf_seekpos(streambuf *this, streampos pos, int mode)
 {
     TRACE("(%p %d %d)\n", this, pos, mode);
     return call_streambuf_seekoff(this, pos, SEEKDIR_beg, mode);
+}
+
+/* ?pbackfail@streambuf@@UAEHH@Z */
+/* ?pbackfail@streambuf@@UEAAHH@Z */
+DEFINE_THISCALL_WRAPPER(streambuf_pbackfail, 8)
+#define call_streambuf_pbackfail(this, c) CALL_VTBL_FUNC(this, 36, int, (streambuf*, int), (this, c))
+int __thiscall streambuf_pbackfail(streambuf *this, int c)
+{
+    TRACE("(%p %d)\n", this, c);
+    if (this->gptr > this->eback)
+        return *--this->gptr = c;
+    if (call_streambuf_seekoff(this, -1, SEEKDIR_cur, OPENMODE_in) == EOF)
+        return EOF;
+    if (!this->unbuffered && this->egptr) {
+        /* 'c' should be the next character read */
+        memmove(this->gptr + 1, this->gptr, this->egptr - this->gptr - 1);
+        *this->gptr = c;
+    }
+    return c;
 }
 
 /* ?setb@streambuf@@IAEXPAD0H@Z */
@@ -1562,8 +1569,8 @@ int __thiscall stdiobuf_overflow(stdiobuf *this, int c)
 DEFINE_THISCALL_WRAPPER(stdiobuf_pbackfail, 8)
 int __thiscall stdiobuf_pbackfail(stdiobuf *this, int c)
 {
-    FIXME("(%p %d) stub\n", this, c);
-    return EOF;
+    TRACE("(%p %d)\n", this, c);
+    return streambuf_pbackfail(&this->base, c);
 }
 
 /* ?seekoff@stdiobuf@@UAEJJW4seek_dir@ios@@H@Z */
