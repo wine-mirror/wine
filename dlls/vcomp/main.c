@@ -480,6 +480,12 @@ int CDECL omp_get_thread_num(void)
     return vcomp_init_thread_data()->thread_num;
 }
 
+int CDECL _vcomp_get_thread_num(void)
+{
+    TRACE("()\n");
+    return vcomp_init_thread_data()->thread_num;
+}
+
 /* Time in seconds since "some time in the past" */
 double CDECL omp_get_wtime(void)
 {

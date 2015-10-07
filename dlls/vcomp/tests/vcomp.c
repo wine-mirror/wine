@@ -65,6 +65,7 @@ static void  (CDECL   *p_vcomp_for_static_init)(int first, int last, int step, i
 static void  (CDECL   *p_vcomp_for_static_simple_init)(unsigned int first, unsigned int last, int step,
                                                        BOOL increment, unsigned int *begin, unsigned int *end);
 static void  (WINAPIV *p_vcomp_fork)(BOOL ifval, int nargs, void *wrapper, ...);
+static int   (CDECL   *p_vcomp_get_thread_num)(void);
 static void  (CDECL   *p_vcomp_leave_critsect)(CRITICAL_SECTION *critsect);
 static int   (CDECL   *p_vcomp_master_begin)(void);
 static void  (CDECL   *p_vcomp_master_end)(void);
@@ -254,6 +255,7 @@ static BOOL init_vcomp(void)
     VCOMP_GET_PROC(_vcomp_for_static_init);
     VCOMP_GET_PROC(_vcomp_for_static_simple_init);
     VCOMP_GET_PROC(_vcomp_fork);
+    VCOMP_GET_PROC(_vcomp_get_thread_num);
     VCOMP_GET_PROC(_vcomp_leave_critsect);
     VCOMP_GET_PROC(_vcomp_master_begin);
     VCOMP_GET_PROC(_vcomp_master_end);
@@ -306,6 +308,8 @@ static void CDECL num_threads_cb(BOOL nested, int parallel, int nested_threads, 
     thread_num = pomp_get_thread_num();
     ok(thread_num >= 0 && thread_num < num_threads,
        "expected thread_num in range [0, %d], got %d\n", num_threads - 1, thread_num);
+    ok(thread_num == p_vcomp_get_thread_num(),
+       "expected _vcomp_get_thread_num to return the same value\n");
 
     is_parallel = pomp_in_parallel();
     ok(is_parallel == parallel, "expected %d, got %d\n", parallel, is_parallel);
@@ -343,6 +347,9 @@ static void test_omp_get_num_threads(BOOL nested)
 {
     int is_nested, is_parallel, max_threads, num_threads, thread_num;
     LONG thread_count;
+
+    ok(pomp_get_thread_num != p_vcomp_get_thread_num,
+       "expected omp_get_thread_num != _vcomp_get_thread_num\n");
 
     pomp_set_nested(nested);
     is_nested = pomp_get_nested();
