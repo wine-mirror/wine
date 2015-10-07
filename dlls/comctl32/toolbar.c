@@ -5536,95 +5536,92 @@ TOOLBAR_LButtonDown (TOOLBAR_INFO *infoPtr, WPARAM wParam, LPARAM lParam)
     nHit = TOOLBAR_InternalHitTest (infoPtr, &pt, &button);
 
     if (button)
+    {
         btnPtr = &infoPtr->buttons[nHit];
 
-    if (button && bDragKeyPressed && (infoPtr->dwStyle & CCS_ADJUSTABLE))
-    {
-        infoPtr->nButtonDrag = nHit;
-        SetCapture (infoPtr->hwndSelf);
-        
-        /* If drag cursor has not been loaded, load it.
-         * Note: it doesn't need to be freed */
-        if (!hCursorDrag)
-            hCursorDrag = LoadCursorW(COMCTL32_hModule, (LPCWSTR)IDC_MOVEBUTTON);
-        SetCursor(hCursorDrag);
-    }
-    else if (button)
-    {
-	RECT arrowRect;
-	infoPtr->nOldHit = nHit;
+        if (bDragKeyPressed && (infoPtr->dwStyle & CCS_ADJUSTABLE))
+        {
+            infoPtr->nButtonDrag = nHit;
+            SetCapture (infoPtr->hwndSelf);
 
-	CopyRect(&arrowRect, &btnPtr->rect);
-	arrowRect.left = max(btnPtr->rect.left, btnPtr->rect.right - DDARROW_WIDTH);
+            /* If drag cursor has not been loaded, load it.
+             * Note: it doesn't need to be freed */
+            if (!hCursorDrag)
+                hCursorDrag = LoadCursorW(COMCTL32_hModule, (LPCWSTR)IDC_MOVEBUTTON);
+            SetCursor(hCursorDrag);
+        }
+        else
+        {
+            RECT arrowRect;
+            infoPtr->nOldHit = nHit;
 
-	/* for EX_DRAWDDARROWS style,  click must be in the drop-down arrow rect */
-	if ((btnPtr->fsState & TBSTATE_ENABLED) && 
-	     ((btnPtr->fsStyle & BTNS_WHOLEDROPDOWN) ||
-	      ((btnPtr->fsStyle & BTNS_DROPDOWN) &&
-	       ((TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && PtInRect(&arrowRect, pt)) ||
-	       (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))))
-	{
-	    LRESULT res;
+            CopyRect(&arrowRect, &btnPtr->rect);
+            arrowRect.left = max(btnPtr->rect.left, btnPtr->rect.right - DDARROW_WIDTH);
 
-	    /* draw in pressed state */
-	    if (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN)
-	        btnPtr->fsState |= TBSTATE_PRESSED;
-	    else
-	        btnPtr->bDropDownPressed = TRUE;
-	    RedrawWindow(infoPtr->hwndSelf,&btnPtr->rect,0,
-			RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
-
-	    memset(&nmtb, 0, sizeof(nmtb));
-	    nmtb.iItem = btnPtr->idCommand;
-	    nmtb.rcButton = btnPtr->rect;
-	    res = TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr,
-				  TBN_DROPDOWN);
-	    TRACE("TBN_DROPDOWN responded with %ld\n", res);
-
-            if (res != TBDDRET_TREATPRESSED)
+            /* for EX_DRAWDDARROWS style,  click must be in the drop-down arrow rect */
+            if ((btnPtr->fsState & TBSTATE_ENABLED) &&
+                 ((btnPtr->fsStyle & BTNS_WHOLEDROPDOWN) ||
+                  ((btnPtr->fsStyle & BTNS_DROPDOWN) &&
+                   ((TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle) && PtInRect(&arrowRect, pt)) ||
+                   (!TOOLBAR_HasDropDownArrows(infoPtr->dwExStyle))))))
             {
-                MSG msg;
+                LRESULT res;
 
-                /* redraw button in unpressed state */
-	        if (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN)
-       	            btnPtr->fsState &= ~TBSTATE_PRESSED;
-       	        else
-       	            btnPtr->bDropDownPressed = FALSE;
-                InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
+                /* draw in pressed state */
+                if (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN)
+                    btnPtr->fsState |= TBSTATE_PRESSED;
+                else
+                    btnPtr->bDropDownPressed = TRUE;
+                RedrawWindow(infoPtr->hwndSelf, &btnPtr->rect, 0, RDW_ERASE|RDW_INVALIDATE|RDW_UPDATENOW);
 
-                /* find and set hot item */
-                GetCursorPos(&pt);
-                ScreenToClient(infoPtr->hwndSelf, &pt);
-                nHit = TOOLBAR_InternalHitTest(infoPtr, &pt, &button);
-                if (!infoPtr->bAnchor || button)
-                    TOOLBAR_SetHotItemEx(infoPtr, button ? nHit : TOOLBAR_NOWHERE, HICF_MOUSE | HICF_LMOUSE);
-                
-                /* remove any left mouse button down or double-click messages
-                 * so that we can get a toggle effect on the button */
-                while (PeekMessageW(&msg, infoPtr->hwndSelf, WM_LBUTTONDOWN, WM_LBUTTONDOWN, PM_REMOVE) ||
-                       PeekMessageW(&msg, infoPtr->hwndSelf, WM_LBUTTONDBLCLK, WM_LBUTTONDBLCLK, PM_REMOVE))
-                    ;
+                memset(&nmtb, 0, sizeof(nmtb));
+                nmtb.iItem = btnPtr->idCommand;
+                nmtb.rcButton = btnPtr->rect;
+                res = TOOLBAR_SendNotify ((NMHDR *) &nmtb, infoPtr, TBN_DROPDOWN);
+                TRACE("TBN_DROPDOWN responded with %ld\n", res);
 
-		return 0;
+                if (res != TBDDRET_TREATPRESSED)
+                {
+                    MSG msg;
+
+                    /* redraw button in unpressed state */
+                    if (btnPtr->fsStyle & BTNS_WHOLEDROPDOWN)
+                        btnPtr->fsState &= ~TBSTATE_PRESSED;
+                    else
+                        btnPtr->bDropDownPressed = FALSE;
+                    InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
+
+                    /* find and set hot item */
+                    GetCursorPos(&pt);
+                    ScreenToClient(infoPtr->hwndSelf, &pt);
+                    nHit = TOOLBAR_InternalHitTest(infoPtr, &pt, &button);
+                    if (!infoPtr->bAnchor || button)
+                        TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
+
+                    /* remove any left mouse button down or double-click messages
+                     * so that we can get a toggle effect on the button */
+                    while (PeekMessageW(&msg, infoPtr->hwndSelf, WM_LBUTTONDOWN, WM_LBUTTONDOWN, PM_REMOVE) ||
+                           PeekMessageW(&msg, infoPtr->hwndSelf, WM_LBUTTONDBLCLK, WM_LBUTTONDBLCLK, PM_REMOVE))
+                        ;
+
+                    return 0;
+                }
+                /* otherwise drop through and process as pushed */
             }
-	    /* otherwise drop through and process as pushed */
-       	}
-	infoPtr->bCaptured = TRUE;
-	infoPtr->nButtonDown = nHit;
-	infoPtr->bDragOutSent = FALSE;
+            infoPtr->bCaptured = TRUE;
+            infoPtr->nButtonDown = nHit;
+            infoPtr->bDragOutSent = FALSE;
 
-	btnPtr->fsState |= TBSTATE_PRESSED;
+            btnPtr->fsState |= TBSTATE_PRESSED;
 
-        TOOLBAR_SetHotItemEx(infoPtr, button ? nHit : TOOLBAR_NOWHERE, HICF_MOUSE | HICF_LMOUSE);
+            TOOLBAR_SetHotItemEx(infoPtr, nHit, HICF_MOUSE | HICF_LMOUSE);
 
-        if (btnPtr->fsState & TBSTATE_ENABLED)
-	    InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
-	UpdateWindow(infoPtr->hwndSelf);
-	SetCapture (infoPtr->hwndSelf);
-    }
+            if (btnPtr->fsState & TBSTATE_ENABLED)
+                InvalidateRect(infoPtr->hwndSelf, &btnPtr->rect, TRUE);
+            UpdateWindow(infoPtr->hwndSelf);
+            SetCapture (infoPtr->hwndSelf);
+        }
 
-    if (button)
-    {
         memset(&nmtb, 0, sizeof(nmtb));
         nmtb.iItem = btnPtr->idCommand;
         TOOLBAR_SendNotify((NMHDR *)&nmtb, infoPtr, TBN_BEGINDRAG);
