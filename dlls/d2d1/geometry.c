@@ -1332,7 +1332,7 @@ static void d2d_cdt_cut_edges(struct d2d_cdt *cdt, struct d2d_cdt_edge_ref *end_
 }
 
 static BOOL d2d_cdt_insert_segment(struct d2d_cdt *cdt, struct d2d_geometry *geometry,
-        const struct d2d_cdt_edge_ref *origin, size_t end_vertex)
+        const struct d2d_cdt_edge_ref *origin, struct d2d_cdt_edge_ref *edge, size_t end_vertex)
 {
     struct d2d_cdt_edge_ref base_edge, current, next, target;
 
@@ -1341,7 +1341,10 @@ static BOOL d2d_cdt_insert_segment(struct d2d_cdt *cdt, struct d2d_geometry *geo
         d2d_cdt_edge_next_origin(cdt, &next, &current);
 
         if (d2d_cdt_edge_destination(cdt, &current) == end_vertex)
+        {
+            d2d_cdt_edge_sym(edge, &current);
             return TRUE;
+        }
 
         if (d2d_cdt_rightof(cdt, end_vertex, &next) && d2d_cdt_leftof(cdt, end_vertex, &current))
         {
@@ -1353,6 +1356,7 @@ static BOOL d2d_cdt_insert_segment(struct d2d_cdt *cdt, struct d2d_geometry *geo
 
             if (!d2d_cdt_connect(cdt, &base_edge, &target, &current))
                 return FALSE;
+            *edge = base_edge;
             if (!d2d_cdt_fixup(cdt, &base_edge))
                 return FALSE;
             d2d_cdt_edge_sym(&base_edge, &base_edge);
@@ -1373,9 +1377,10 @@ static BOOL d2d_cdt_insert_segment(struct d2d_cdt *cdt, struct d2d_geometry *geo
 static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *geometry)
 {
     size_t start_vertex, end_vertex, i, j, k;
+    struct d2d_cdt_edge_ref edge, new_edge;
     const struct d2d_figure *figure;
-    struct d2d_cdt_edge_ref edge;
     const D2D1_POINT_2F *p;
+    BOOL found;
 
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
@@ -1384,6 +1389,33 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
         p = bsearch(&figure->vertices[figure->vertex_count - 1], cdt->vertices,
                 geometry->vertex_count, sizeof(*p), d2d_cdt_compare_vertices);
         start_vertex = p - cdt->vertices;
+
+        for (k = 0, found = FALSE; k < cdt->edge_count; ++k)
+        {
+            if (cdt->edges[k].flags & D2D_CDT_EDGE_FLAG_FREED)
+                continue;
+
+            edge.idx = k;
+            edge.r = 0;
+
+            if (d2d_cdt_edge_origin(cdt, &edge) == start_vertex)
+            {
+                found = TRUE;
+                break;
+            }
+            d2d_cdt_edge_sym(&edge, &edge);
+            if (d2d_cdt_edge_origin(cdt, &edge) == start_vertex)
+            {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if (!found)
+        {
+            ERR("Edge not found.\n");
+            return FALSE;
+        }
 
         for (j = 0; j < figure->vertex_count; start_vertex = end_vertex, ++j)
         {
@@ -1394,28 +1426,9 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
             if (start_vertex == end_vertex)
                 continue;
 
-            for (k = 0; k < cdt->edge_count; ++k)
-            {
-                if (cdt->edges[k].flags & D2D_CDT_EDGE_FLAG_FREED)
-                    continue;
-
-                edge.idx = k;
-                edge.r = 0;
-
-                if (d2d_cdt_edge_origin(cdt, &edge) == start_vertex)
-                {
-                    if (!d2d_cdt_insert_segment(cdt, geometry, &edge, end_vertex))
-                        return FALSE;
-                    break;
-                }
-                d2d_cdt_edge_sym(&edge, &edge);
-                if (d2d_cdt_edge_origin(cdt, &edge) == start_vertex)
-                {
-                    if (!d2d_cdt_insert_segment(cdt, geometry, &edge, end_vertex))
-                        return FALSE;
-                    break;
-                }
-            }
+            if (!d2d_cdt_insert_segment(cdt, geometry, &edge, &new_edge, end_vertex))
+                return FALSE;
+            edge = new_edge;
         }
     }
 
