@@ -703,6 +703,8 @@ HWND CreateTreeWindow(HINSTANCE hInst)
     memset(&wct, 0, sizeof(WNDCLASSW));
     wct.lpfnWndProc = TreeProc;
     wct.lpszClassName = wszTreeClass;
+    wct.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wct.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 
     if(!RegisterClassW(&wct)) return NULL;
 

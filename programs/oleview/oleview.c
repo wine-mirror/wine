@@ -499,6 +499,7 @@ static BOOL InitApplication(HINSTANCE hInst)
     memset(&wc, 0, sizeof(WNDCLASSW));
     wc.lpfnWndProc = WndProc;
     wc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wc.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     wc.lpszMenuName = MAKEINTRESOURCEW(IDM_MENU);
     wc.lpszClassName = wszAppName;
 

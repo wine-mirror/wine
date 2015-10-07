@@ -397,7 +397,8 @@ HWND CreateDetailsWindow(HINSTANCE hInst)
     memset(&wcd, 0, sizeof(WNDCLASSW));
     wcd.lpfnWndProc = DetailsProc;
     wcd.lpszClassName = wszDetailsClass;
-    wcd.hbrBackground = (HBRUSH)COLOR_WINDOW;
+    wcd.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wcd.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 
     if(!RegisterClassW(&wcd)) return NULL;
 

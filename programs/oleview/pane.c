@@ -135,7 +135,8 @@ BOOL PaneRegisterClassW(void)
 
     memset(&wcc, 0, sizeof(WNDCLASSW));
     wcc.lpfnWndProc = PaneProc;
-    wcc.hbrBackground = (HBRUSH)(COLOR_WINDOW);
+    wcc.hbrBackground = (HBRUSH)(COLOR_WINDOW+1);
+    wcc.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
     wcc.lpszClassName = wszPaneClass;
 
     if(!RegisterClassW(&wcc))
