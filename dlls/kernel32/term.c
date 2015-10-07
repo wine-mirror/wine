@@ -227,7 +227,7 @@ struct dbkey_init
     struct dbkey_descr  descr;
 };
 
-static struct dbkey_init TERM_dbkey_init[] = {
+static const struct dbkey_init TERM_dbkey_init[] = {
     {"kcud1", "kDN",  {dbk_complex, 0x50, 0x28, 0}},
     {"kcuu1", "kUP",  {dbk_complex, 0x48, 0x26, 0}},
     {"kcub1", "kLFT", {dbk_complex, 0x4b, 0x25, 0}},
@@ -342,7 +342,7 @@ static int  TERM_dbkey_cmp(const void* p1, const void* p2)
     return strcmp(kp1->string, kp2->string);
 }
 
-static BOOL TERM_AddKeyDescr(const char* string, struct dbkey_descr* descr)
+static BOOL TERM_AddKeyDescr(const char* string, const struct dbkey_descr* descr)
 {
     if (!string || string == (const char*)-1) return TRUE;
     if (!TERM_dbkey)
