@@ -1571,8 +1571,11 @@ int __thiscall stdiobuf_pbackfail(stdiobuf *this, int c)
 DEFINE_THISCALL_WRAPPER(stdiobuf_seekoff, 16)
 streampos __thiscall stdiobuf_seekoff(stdiobuf *this, streamoff offset, ios_seek_dir dir, int mode)
 {
-    FIXME("(%p %d %d %d) stub\n", this, offset, dir, mode);
-    return EOF;
+    TRACE("(%p %d %d %d)\n", this, offset, dir, mode);
+    call_streambuf_overflow(&this->base, EOF);
+    if (fseek(this->file, offset, dir))
+        return EOF;
+    return ftell(this->file);
 }
 
 /* ?setrwbuf@stdiobuf@@QAEHHH@Z */
