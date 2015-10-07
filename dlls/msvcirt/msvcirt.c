@@ -1580,8 +1580,32 @@ streampos __thiscall stdiobuf_seekoff(stdiobuf *this, streamoff offset, ios_seek
 DEFINE_THISCALL_WRAPPER(stdiobuf_setrwbuf, 12)
 int __thiscall stdiobuf_setrwbuf(stdiobuf *this, int read_size, int write_size)
 {
-    FIXME("(%p %d %d) stub\n", this, read_size, write_size);
-    return EOF;
+    char *reserve;
+    int buffer_size = read_size + write_size;
+
+    TRACE("(%p %d %d)\n", this, read_size, write_size);
+    if (read_size < 0 || write_size < 0)
+        return 0;
+    if (!buffer_size) {
+        this->base.unbuffered = 1;
+        return 0;
+    }
+    /* get a new buffer */
+    reserve = MSVCRT_operator_new(buffer_size);
+    if (!reserve)
+        return 0;
+    streambuf_setb(&this->base, reserve, reserve + buffer_size, 1);
+    this->base.unbuffered = 0;
+    /* set the get/put areas */
+    if (read_size > 0)
+        streambuf_setg(&this->base, reserve, reserve + read_size, reserve + read_size);
+    else
+        streambuf_setg(&this->base, NULL, NULL, NULL);
+    if (write_size > 0)
+        streambuf_setp(&this->base, reserve + read_size, reserve + buffer_size);
+    else
+        streambuf_setp(&this->base, NULL, NULL);
+    return 1;
 }
 
 /* ?stdiofile@stdiobuf@@QAEPAU_iobuf@@XZ */

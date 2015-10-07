@@ -210,6 +210,7 @@ static int (*__thiscall p_strstreambuf_underflow)(strstreambuf*);
 static stdiobuf* (*__thiscall p_stdiobuf_file_ctor)(stdiobuf*, FILE*);
 static void (*__thiscall p_stdiobuf_dtor)(stdiobuf*);
 static int (*__thiscall p_stdiobuf_overflow)(stdiobuf*, int);
+static int (*__thiscall p_stdiobuf_setrwbuf)(stdiobuf*, int, int);
 static int (*__thiscall p_stdiobuf_sync)(stdiobuf*);
 static int (*__thiscall p_stdiobuf_underflow)(stdiobuf*);
 
@@ -374,6 +375,7 @@ static BOOL init(void)
         SET(p_stdiobuf_file_ctor, "??0stdiobuf@@QEAA@PEAU_iobuf@@@Z");
         SET(p_stdiobuf_dtor, "??1stdiobuf@@UEAA@XZ");
         SET(p_stdiobuf_overflow, "?overflow@stdiobuf@@UEAAHH@Z");
+        SET(p_stdiobuf_setrwbuf, "?setrwbuf@stdiobuf@@QEAAHHH@Z");
         SET(p_stdiobuf_sync, "?sync@stdiobuf@@UEAAHXZ");
         SET(p_stdiobuf_underflow, "?underflow@stdiobuf@@UEAAHXZ");
 
@@ -458,6 +460,7 @@ static BOOL init(void)
         SET(p_stdiobuf_file_ctor, "??0stdiobuf@@QAE@PAU_iobuf@@@Z");
         SET(p_stdiobuf_dtor, "??1stdiobuf@@UAE@XZ");
         SET(p_stdiobuf_overflow, "?overflow@stdiobuf@@UAEHH@Z");
+        SET(p_stdiobuf_setrwbuf, "?setrwbuf@stdiobuf@@QAEHHH@Z");
         SET(p_stdiobuf_sync, "?sync@stdiobuf@@UAEHXZ");
         SET(p_stdiobuf_underflow, "?underflow@stdiobuf@@UAEHXZ");
 
@@ -2015,6 +2018,35 @@ static void test_stdiobuf(void)
     ok(ret == 0, "expected 0 got %d\n", ret);
     ok(stb2.base.gptr == stb2.base.egptr, "wrong get pointer, expected %p got %p\n", stb2.base.egptr, stb2.base.gptr);
     stb2.base.unbuffered = 1;
+
+    /* setrwbuf */
+    ret = (int) call_func3(p_stdiobuf_setrwbuf, &stb1, 100, 60);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(stb1.base.allocated == 1, "wrong allocate value, expected 1 got %d\n", stb1.base.allocated);
+    ok(stb1.base.unbuffered == 0, "wrong unbuffered value, expected 0 got %d\n", stb1.base.unbuffered);
+    ok(stb1.base.ebuf == stb1.base.base + 160, "expected %p got %p\n", stb1.base.base + 160, stb1.base.ebuf);
+    ok(stb1.base.eback == stb1.base.base, "wrong get base, expected %p got %p\n", stb1.base.base, stb1.base.eback);
+    ok(stb1.base.gptr == stb1.base.base + 100, "wrong get pointer, expected %p got %p\n", stb1.base.base + 100, stb1.base.gptr);
+    ok(stb1.base.egptr == stb1.base.base + 100, "wrong get end, expected %p got %p\n", stb1.base.base + 100, stb1.base.egptr);
+    ok(stb1.base.pbase == stb1.base.base + 100, "wrong put base, expected %p got %p\n", stb1.base.base + 100, stb1.base.pbase);
+    ok(stb1.base.pptr == stb1.base.base + 100, "wrong put pointer, expected %p got %p\n", stb1.base.base + 100, stb1.base.pptr);
+    ok(stb1.base.epptr == stb1.base.base + 160, "wrong put end, expected %p got %p\n", stb1.base.base + 160, stb1.base.epptr);
+    ret = (int) call_func3(p_stdiobuf_setrwbuf, &stb1, -1, 64);
+    ok(ret == 0 || ret == 1, "expected 0 or 1, got %d\n", ret);
+    ret = (int) call_func3(p_stdiobuf_setrwbuf, &stb1, 32, -8);
+    ok(ret == 0 || ret == 1, "expected 0 or 1, got %d\n", ret);
+    ret = (int) call_func3(p_stdiobuf_setrwbuf, &stb1, 0, 64);
+    ok(ret == 1, "expected 1 got %d\n", ret);
+    ok(stb1.base.ebuf == stb1.base.base + 64, "expected %p got %p\n", stb1.base.base + 64, stb1.base.ebuf);
+    ok(stb1.base.eback == NULL, "wrong get base, expected %p got %p\n", NULL, stb1.base.eback);
+    ok(stb1.base.gptr == NULL, "wrong get pointer, expected %p got %p\n", NULL, stb1.base.gptr);
+    ok(stb1.base.egptr == NULL, "wrong get end, expected %p got %p\n", NULL, stb1.base.egptr);
+    ok(stb1.base.pbase == stb1.base.base, "wrong put base, expected %p got %p\n", stb1.base.base, stb1.base.pbase);
+    ok(stb1.base.pptr == stb1.base.base, "wrong put pointer, expected %p got %p\n", stb1.base.base, stb1.base.pptr);
+    ok(stb1.base.epptr == stb1.base.base + 64, "wrong put end, expected %p got %p\n", stb1.base.base + 64, stb1.base.epptr);
+    ret = (int) call_func3(p_stdiobuf_setrwbuf, &stb1, 0, 0);
+    ok(ret == 0, "expected 0 got %d\n", ret);
+    ok(stb1.base.unbuffered == 1, "wrong unbuffered value, expected 1 got %d\n", stb1.base.unbuffered);
 
     call_func1(p_stdiobuf_dtor, &stb1);
     call_func1(p_stdiobuf_dtor, &stb2);
