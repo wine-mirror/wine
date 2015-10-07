@@ -522,6 +522,7 @@ struct ws2_transmitfile_async
     DWORD                 file_read;
     DWORD                 file_bytes;
     DWORD                 bytes_per_send;
+    TRANSMIT_FILE_BUFFERS buffers;
     DWORD                 flags;
     struct ws2_async      write;
 };
@@ -2789,6 +2790,17 @@ static NTSTATUS WS2_transmitfile_getbuffer( int fd, struct ws2_transmitfile_asyn
     if (wsa->write.first_iovec < wsa->write.n_iovecs)
         return STATUS_PENDING;
 
+    /* process the header (if applicable) */
+    if (wsa->buffers.Head)
+    {
+        wsa->write.first_iovec       = 0;
+        wsa->write.n_iovecs          = 1;
+        wsa->write.iovec[0].iov_base = wsa->buffers.Head;
+        wsa->write.iovec[0].iov_len  = wsa->buffers.HeadLength;
+        wsa->buffers.Head            = NULL;
+        return STATUS_PENDING;
+    }
+
     /* process the main file */
     if (wsa->file)
     {
@@ -2801,7 +2813,7 @@ static NTSTATUS WS2_transmitfile_getbuffer( int fd, struct ws2_transmitfile_asyn
             bytes_per_send = min(bytes_per_send, wsa->file_bytes - wsa->file_read);
         status = WS2_ReadFile( wsa->file, &iosb, wsa->buffer, bytes_per_send );
         if (status == STATUS_END_OF_FILE)
-            return STATUS_SUCCESS;
+            wsa->file = NULL; /* continue on to the footer */
         else if (status != STATUS_SUCCESS)
             return status;
         else
@@ -2820,6 +2832,17 @@ static NTSTATUS WS2_transmitfile_getbuffer( int fd, struct ws2_transmitfile_asyn
 
             return STATUS_PENDING;
         }
+    }
+
+    /* send the footer (if applicable) */
+    if (wsa->buffers.Tail)
+    {
+        wsa->write.first_iovec       = 0;
+        wsa->write.n_iovecs          = 1;
+        wsa->write.iovec[0].iov_base = wsa->buffers.Tail;
+        wsa->write.iovec[0].iov_len  = wsa->buffers.TailLength;
+        wsa->buffers.Tail            = NULL;
+        return STATUS_PENDING;
     }
 
     return STATUS_SUCCESS;
@@ -2860,7 +2883,7 @@ static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD
     NTSTATUS status;
     int fd;
 
-    if (overlapped || buffers)
+    if (overlapped)
     {
         FIXME("(%lx, %p, %d, %d, %p, %p, %d): stub !\n", s, h, file_bytes, bytes_per_send,
                overlapped, buffers, flags);
@@ -2904,6 +2927,10 @@ static BOOL WINAPI WS2_TransmitFile( SOCKET s, HANDLE h, DWORD file_bytes, DWORD
         WSASetLastError( WSAEFAULT );
         return FALSE;
     }
+    if (buffers)
+        wsa->buffers = *buffers;
+    else
+        memset(&wsa->buffers, 0x0, sizeof(wsa->buffers));
     wsa->buffer                = (char *)(wsa + 1);
     wsa->file                  = h;
     wsa->file_read             = 0;
