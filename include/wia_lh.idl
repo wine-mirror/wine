@@ -20,6 +20,8 @@ import "unknwn.idl";
 import "oaidl.idl";
 import "propidl.idl";
 
+cpp_quote("#include <wiadef.h>")
+
 interface IEnumWIA_DEV_INFO;
 interface IWiaPropertyStorage;
 interface IWiaItem;

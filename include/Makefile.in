@@ -611,6 +611,7 @@ SRCDIR_INCLUDES = \
 	werapi.h \
 	wfext.h \
 	wia.h \
+	wiadef.h \
 	winbase.h \
 	wincon.h \
 	wincred.h \
