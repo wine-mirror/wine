@@ -3564,7 +3564,7 @@ static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *
     if (!(d3d_volume = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_volume))))
         return E_OUTOFMEMORY;
 
-    volume_init(d3d_volume, wined3d_texture, sub_resource_idx, volume, parent_ops);
+    volume_init(d3d_volume, wined3d_texture, sub_resource_idx, parent_ops);
     *parent = d3d_volume;
     TRACE("Created volume %p.\n", d3d_volume);
 

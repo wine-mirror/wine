@@ -474,13 +474,6 @@ static ULONG CDECL wined3d_volume_decref(struct wined3d_volume *volume)
     return wined3d_texture_decref(volume->container);
 }
 
-struct wined3d_resource * CDECL wined3d_volume_get_resource(struct wined3d_volume *volume)
-{
-    TRACE("volume %p.\n", volume);
-
-    return &volume->resource;
-}
-
 static BOOL volume_check_block_align(const struct wined3d_volume *volume,
         const struct wined3d_box *box)
 {

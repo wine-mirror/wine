@@ -193,12 +193,11 @@ struct d3d9_volume
     struct d3d9_resource resource;
     struct wined3d_texture *wined3d_texture;
     unsigned int sub_resource_idx;
-    struct wined3d_volume *wined3d_volume;
     struct d3d9_texture *texture;
 };
 
 void volume_init(struct d3d9_volume *volume, struct wined3d_texture *wined3d_texture,
-        unsigned int sub_resource_idx, struct wined3d_volume *wined3d_volume, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
+        unsigned int sub_resource_idx, const struct wined3d_parent_ops **parent_ops) DECLSPEC_HIDDEN;
 
 struct d3d9_swapchain
 {
