@@ -65,13 +65,13 @@ static HWND create_window(void)
 
 static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
+    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff) return FALSE;
     return TRUE;
 }
 
