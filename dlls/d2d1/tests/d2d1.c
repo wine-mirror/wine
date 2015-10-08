@@ -1630,6 +1630,46 @@ static void test_path_geometry(void)
     ID2D1TransformedGeometry_Release(transformed_geometry);
     ID2D1PathGeometry_Release(geometry);
 
+    hr = ID2D1Factory_CreatePathGeometry(factory, &geometry);
+    ok(SUCCEEDED(hr), "Failed to create path geometry, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_Open(geometry, &sink);
+    ok(SUCCEEDED(hr), "Failed to open geometry sink, hr %#x.\n", hr);
+
+    set_point(&point, 40.0f,   20.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    set_point(&point, 75.0f,  300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point,  5.0f,  300.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    set_point(&point, 40.0f,  290.0f);
+    ID2D1GeometrySink_BeginFigure(sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    set_point(&point, 55.0f,  160.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    set_point(&point, 25.0f,  160.0f);
+    ID2D1GeometrySink_AddLine(sink, point);
+    ID2D1GeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+
+    hr = ID2D1GeometrySink_Close(sink);
+    ok(SUCCEEDED(hr), "Failed to close geometry sink, hr %#x.\n", hr);
+    hr = ID2D1PathGeometry_GetFigureCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get figure count, hr %#x.\n", hr);
+    ok(count == 2, "Got unexpected figure count %u.\n", count);
+    hr = ID2D1PathGeometry_GetSegmentCount(geometry, &count);
+    ok(SUCCEEDED(hr), "Failed to get segment count, hr %#x.\n", hr);
+    ok(count == 6, "Got unexpected segment count %u.\n", count);
+    ID2D1GeometrySink_Release(sink);
+
+    ID2D1RenderTarget_BeginDraw(rt);
+    ID2D1RenderTarget_Clear(rt, &color);
+    ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)geometry, (ID2D1Brush *)brush, NULL);
+    hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to end draw, hr %#x.\n", hr);
+    match = compare_surface(surface, "a875e68e0cb9c055927b1b50b879f90b24e38470");
+    ok(match, "Surface does not match.\n");
+    ID2D1PathGeometry_Release(geometry);
+
     ID2D1SolidColorBrush_Release(brush);
     ID2D1RenderTarget_Release(rt);
     refcount = ID2D1Factory_Release(factory);

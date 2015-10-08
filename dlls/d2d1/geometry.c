@@ -1234,8 +1234,7 @@ static BOOL d2d_path_geometry_add_face(struct d2d_geometry *geometry, const stru
     probe.x += cdt->vertices[d2d_cdt_edge_origin(cdt, &tmp)].x * 0.50f;
     probe.y += cdt->vertices[d2d_cdt_edge_origin(cdt, &tmp)].y * 0.50f;
 
-    d2d_cdt_edge_next_left(cdt, &tmp, &tmp);
-    if (tmp.idx == base_edge->idx && d2d_path_geometry_point_inside(geometry, &probe))
+    if (d2d_cdt_leftof(cdt, face->v[2], base_edge) && d2d_path_geometry_point_inside(geometry, &probe))
         ++geometry->face_count;
 
     return TRUE;
