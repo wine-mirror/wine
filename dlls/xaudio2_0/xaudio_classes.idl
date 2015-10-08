@@ -23,7 +23,7 @@
 [
     helpstring("XAudio2.0 Class"),
     threading(both),
-    uuid(e21a7345-eb21-468e-be50-804db97cf708)
+    uuid(fac23f48-31f5-45a8-b49b-5225d61401aa)
 ]
 coclass XAudio20 { interface IXAudio20; }
 
