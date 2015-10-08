@@ -23,6 +23,11 @@
 
 #define DB_E_BADBINDINFO                    0x80040e08
 
+#define DB_E_ERRORSINCOMMAND                0x80040e14
+#define DB_E_CANTCANCEL                     0x80040e15
+#define DB_E_DIALECTNOTSUPPORTED            0x80040e16
+#define DB_E_DUPLICATEDATASOURCE            0x80040e17
+#define DB_E_CANNOTRESTART                  0x80040e18
 #define DB_E_NOTFOUND                       0x80040e19
 
 #define DB_E_UNSUPPORTEDCONVERSION          0x80040e1d
