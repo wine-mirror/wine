@@ -276,7 +276,7 @@ HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d
 void shader_free_signature(struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 
 /* ID3D10BlendState */
-struct d3d10_blend_state
+struct d3d_blend_state
 {
     ID3D10BlendState ID3D10BlendState_iface;
     LONG refcount;
@@ -287,9 +287,9 @@ struct d3d10_blend_state
     ID3D10Device1 *device;
 };
 
-HRESULT d3d10_blend_state_init(struct d3d10_blend_state *state, struct d3d_device *device,
+HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *device,
         const D3D10_BLEND_DESC *desc) DECLSPEC_HIDDEN;
-struct d3d10_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface) DECLSPEC_HIDDEN;
+struct d3d_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11DepthStencilState, ID3D10DepthStencilState */
 struct d3d_depthstencil_state
@@ -378,7 +378,7 @@ struct d3d_device
     struct wine_rb_tree rasterizer_states;
     struct wine_rb_tree sampler_states;
 
-    struct d3d10_blend_state *blend_state;
+    struct d3d_blend_state *blend_state;
     float blend_factor[4];
     struct d3d_depthstencil_state *depth_stencil_state;
     UINT stencil_ref;

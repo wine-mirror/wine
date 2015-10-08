@@ -2422,7 +2422,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device1 *if
         const D3D10_BLEND_DESC *desc, ID3D10BlendState **blend_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_blend_state *object;
+    struct d3d_blend_state *object;
     struct wine_rb_entry *entry;
     HRESULT hr;
 
@@ -2434,7 +2434,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device1 *if
     wined3d_mutex_lock();
     if ((entry = wine_rb_get(&device->blend_states, desc)))
     {
-        object = WINE_RB_ENTRY_VALUE(entry, struct d3d10_blend_state, entry);
+        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_blend_state, entry);
 
         TRACE("Returning existing blend state %p.\n", object);
         *blend_state = &object->ID3D10BlendState_iface;
@@ -2449,7 +2449,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device1 *if
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_blend_state_init(object, device, desc)))
+    if (FAILED(hr = d3d_blend_state_init(object, device, desc)))
     {
         WARN("Failed to initialize blend state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -3090,20 +3090,20 @@ static const struct wine_rb_functions d3d10_sampler_state_rb_ops =
     d3d10_sampler_state_compare,
 };
 
-static int d3d10_blend_state_compare(const void *key, const struct wine_rb_entry *entry)
+static int d3d_blend_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const D3D10_BLEND_DESC *ka = key;
-    const D3D10_BLEND_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d10_blend_state, entry)->desc;
+    const D3D10_BLEND_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_blend_state, entry)->desc;
 
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-static const struct wine_rb_functions d3d10_blend_state_rb_ops =
+static const struct wine_rb_functions d3d_blend_state_rb_ops =
 {
     d3d_rb_alloc,
     d3d_rb_realloc,
     d3d_rb_free,
-    d3d10_blend_state_compare,
+    d3d_blend_state_compare,
 };
 
 static int d3d_depthstencil_state_compare(const void *key, const struct wine_rb_entry *entry)
@@ -3151,7 +3151,7 @@ HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown)
     /* COM aggregation always takes place */
     device->outer_unk = outer_unknown;
 
-    if (wine_rb_init(&device->blend_states, &d3d10_blend_state_rb_ops) == -1)
+    if (wine_rb_init(&device->blend_states, &d3d_blend_state_rb_ops) == -1)
     {
         WARN("Failed to initialize blend state rbtree.\n");
         return E_FAIL;
