@@ -359,7 +359,7 @@ static LONG INTERNET_SaveProxySettings( proxyinfo_t *lpwpi )
     }
     else
     {
-        if ((ret = RegDeleteValueW( key, szProxyServer )))
+        if ((ret = RegDeleteValueW( key, szProxyServer )) && ret != ERROR_FILE_NOT_FOUND)
         {
             RegCloseKey( key );
             return ret;
