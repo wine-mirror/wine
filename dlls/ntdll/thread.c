@@ -280,6 +280,12 @@ HANDLE thread_init(void)
 #endif
 #endif
 
+    /*
+     * Starting with Vista, the first user to log on has session id 1.
+     * Session id 0 is for processes that don't interact with the user (like services).
+     */
+    peb->SessionId = 1;
+
     /* allocate and initialize the initial TEB */
 
     signal_alloc_thread( &teb );
