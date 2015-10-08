@@ -1349,6 +1349,35 @@ static void test_Option_PerConnectionOptionA(void)
     HeapFree(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
     HeapFree(GetProcessHeap(), 0, list.pOptions);
 
+    /* test with NULL as proxy server */
+    list.dwOptionCount = 1;
+    list.pOptions = HeapAlloc(GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONA));
+    list.pOptions[0].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
+    list.pOptions[0].Value.pszValue = NULL;
+
+    ret = InternetSetOptionA(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION, &list, size);
+    ok(ret == TRUE, "InternetSetOption should've succeeded\n");
+
+    ret = InternetSetOptionA(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION, &list, size);
+    ok(ret == TRUE, "InternetSetOption should've succeeded\n");
+
+    HeapFree(GetProcessHeap(), 0, list.pOptions);
+
+    /* get & verify the proxy server */
+    list.dwOptionCount = 1;
+    list.dwOptionError = 0;
+    list.pOptions = HeapAlloc(GetProcessHeap(), 0, sizeof(INTERNET_PER_CONN_OPTIONA));
+    list.pOptions[0].dwOption = INTERNET_PER_CONN_PROXY_SERVER;
+
+    ret = InternetQueryOptionA(NULL, INTERNET_OPTION_PER_CONNECTION_OPTION, &list, &size);
+    ok(ret == TRUE, "InternetQueryOption should've succeeded\n");
+    ok(!list.pOptions[0].Value.pszValue,
+            "Retrieved proxy server should've been NULL, was: \"%s\"\n",
+            list.pOptions[0].Value.pszValue);
+
+    HeapFree(GetProcessHeap(), 0, list.pOptions[0].Value.pszValue);
+    HeapFree(GetProcessHeap(), 0, list.pOptions);
+
     /* restore original settings */
     list.dwOptionCount = 2;
     list.pOptions = orig_settings;
