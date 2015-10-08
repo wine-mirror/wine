@@ -141,7 +141,11 @@ static HRESULT STDMETHODCALLTYPE d3d11_blend_state_SetPrivateDataInterface(ID3D1
 
 static void STDMETHODCALLTYPE d3d11_blend_state_GetDesc(ID3D11BlendState *iface, D3D11_BLEND_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct d3d_blend_state *state = impl_from_ID3D11BlendState(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    *desc = state->desc;
 }
 
 static const struct ID3D11BlendStateVtbl d3d11_blend_state_vtbl =
@@ -245,10 +249,23 @@ static void STDMETHODCALLTYPE d3d10_blend_state_GetDesc(ID3D10BlendState *iface,
         D3D10_BLEND_DESC *desc)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
+    const D3D11_BLEND_DESC *d3d11_desc = &state->desc;
+    unsigned int i;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
-    *desc = state->desc;
+    desc->AlphaToCoverageEnable = d3d11_desc->AlphaToCoverageEnable;
+    desc->SrcBlend = d3d11_desc->RenderTarget[0].SrcBlend;
+    desc->DestBlend = d3d11_desc->RenderTarget[0].DestBlend;
+    desc->BlendOp = d3d11_desc->RenderTarget[0].BlendOp;
+    desc->SrcBlendAlpha = d3d11_desc->RenderTarget[0].SrcBlendAlpha;
+    desc->DestBlendAlpha = d3d11_desc->RenderTarget[0].DestBlendAlpha;
+    desc->BlendOpAlpha = d3d11_desc->RenderTarget[0].BlendOpAlpha;
+    for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        desc->BlendEnable[i] = d3d11_desc->RenderTarget[i].BlendEnable;
+        desc->RenderTargetWriteMask[i] = d3d11_desc->RenderTarget[i].RenderTargetWriteMask;
+    }
 }
 
 static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
@@ -267,7 +284,7 @@ static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
 };
 
 HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *device,
-        const D3D10_BLEND_DESC *desc)
+        const D3D11_BLEND_DESC *desc)
 {
     state->ID3D11BlendState_iface.lpVtbl = &d3d11_blend_state_vtbl;
     state->ID3D10BlendState_iface.lpVtbl = &d3d10_blend_state_vtbl;
