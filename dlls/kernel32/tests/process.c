@@ -77,6 +77,8 @@ static BOOL   (WINAPI *pSetInformationJobObject)(HANDLE job, JOBOBJECTINFOCLASS 
 static HANDLE (WINAPI *pCreateIoCompletionPort)(HANDLE file, HANDLE existing_port, ULONG_PTR key, DWORD threads);
 static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
+static BOOL   (WINAPI *pProcessIdToSessionId)(DWORD,DWORD*);
+static DWORD  (WINAPI *pWTSGetActiveConsoleSessionId)(void);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -233,6 +235,8 @@ static BOOL init(void)
     pSetInformationJobObject = (void *)GetProcAddress(hkernel32, "SetInformationJobObject");
     pCreateIoCompletionPort = (void *)GetProcAddress(hkernel32, "CreateIoCompletionPort");
     pGetNumaProcessorNode = (void *)GetProcAddress(hkernel32, "GetNumaProcessorNode");
+    pProcessIdToSessionId = (void *)GetProcAddress(hkernel32, "ProcessIdToSessionId");
+    pWTSGetActiveConsoleSessionId = (void *)GetProcAddress(hkernel32, "WTSGetActiveConsoleSessionId");
     return TRUE;
 }
 
@@ -2788,6 +2792,25 @@ static void test_GetNumaProcessorNode(void)
     }
 }
 
+static void test_session_info(void)
+{
+    DWORD session_id, active_session;
+    BOOL r;
+
+    if (!pProcessIdToSessionId)
+    {
+        win_skip("ProcessIdToSessionId is missing\n");
+        return;
+    }
+
+    r = pProcessIdToSessionId(GetCurrentProcessId(), &session_id);
+    ok(r, "ProcessIdToSessionId failed: %u\n", GetLastError());
+    trace("session_id = %x\n", session_id);
+
+    active_session = pWTSGetActiveConsoleSessionId();
+    trace("active_session = %x\n", active_session);
+}
+
 static void test_process_info(void)
 {
     char buf[4096];
@@ -2994,6 +3017,8 @@ START_TEST(process)
     test_DuplicateHandle();
     test_StartupNoConsole();
     test_GetNumaProcessorNode();
+    test_session_info();
+
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
      *  handles:        check the handle inheritance stuff (+sec options)
