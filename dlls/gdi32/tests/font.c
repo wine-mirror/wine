@@ -4136,7 +4136,8 @@ static void test_RealizationInfo(void)
         DWORD cache_num;
         DWORD instance_id;
         DWORD unk;
-        DWORD face_index;
+        WORD  face_index;
+        WORD  simulations;
     };
 
     struct realization_info_t
@@ -4186,7 +4187,8 @@ static void test_RealizationInfo(void)
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Tahoma");
     lf.lfHeight = 20;
-    lf.lfWeight = FW_NORMAL;
+    lf.lfWeight = FW_BOLD;
+    lf.lfItalic = 1;
     hfont = CreateFontIndirectA(&lf);
     hfont_old = SelectObject(hdc, hfont);
 
@@ -4234,6 +4236,7 @@ static void test_RealizationInfo(void)
         ok(fri->flags == ri->flags, "flags mismatch\n");
         ok(fri->cache_num == ri->cache_num, "cache_num mismatch\n");
         ok(fri->instance_id == ri->instance_id, "instance id mismatch\n");
+        ok(fri->simulations == 0x2, "got simulations flags 0x%04x\n", fri->simulations);
         ok(fri->face_index == 0, "got wrong face index %u\n", fri->face_index);
         ok(info2[6] == 0xcccccccc, "structure longer than 6 dwords\n");
 

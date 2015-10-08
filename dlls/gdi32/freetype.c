@@ -8282,6 +8282,11 @@ static BOOL freetype_GetFontRealizationInfo( PHYSDEV dev, void *ptr )
     {
         info->unk = 0;
         info->face_index = physdev->font->ft_face->face_index;
+        info->simulations = 0;
+        if (physdev->font->fake_bold)
+            info->simulations |= 0x1;
+        if (physdev->font->fake_italic)
+            info->simulations |= 0x2;
     }
 
     return TRUE;

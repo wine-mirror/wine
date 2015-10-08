@@ -783,7 +783,8 @@ struct font_realization_info {
     DWORD cache_num;
     DWORD instance_id;
     DWORD unk;
-    DWORD face_index;
+    WORD  face_index;
+    WORD  simulations;
 };
 
 struct font_fileinfo {
@@ -853,7 +854,8 @@ static HRESULT WINAPI gdiinterop_CreateFontFaceFromHdc(IDWriteGdiInterop *iface,
         return hr;
     }
 
-    hr = IDWriteFactory2_CreateFontFace(This->factory, facetype, 1, &file, info.face_index, DWRITE_FONT_SIMULATIONS_NONE,
+    /* Simulations flags values match DWRITE_FONT_SIMULATIONS */
+    hr = IDWriteFactory2_CreateFontFace(This->factory, facetype, 1, &file, info.face_index, info.simulations,
         fontface);
     IDWriteFontFile_Release(file);
     return hr;
