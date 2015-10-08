@@ -512,6 +512,34 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
             irp->IoStatus.u.Status = STATUS_SUCCESS;
             break;
         }
+        case IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS:
+        {
+            irp->IoStatus.Information = 0;
+
+            if (irpsp->Parameters.DeviceIoControl.InputBufferLength != sizeof(ULONG))
+            {
+                irp->IoStatus.u.Status = rc = STATUS_BUFFER_OVERFLOW;
+            }
+            else
+            {
+                rc = RingBuffer_SetSize(extension->ring_buffer, *(ULONG*)irp->AssociatedIrp.SystemBuffer);
+                irp->IoStatus.u.Status = rc;
+            }
+            break;
+        }
+        case IOCTL_GET_NUM_DEVICE_INPUT_BUFFERS:
+        {
+            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(ULONG))
+            {
+                irp->IoStatus.u.Status = rc = STATUS_BUFFER_TOO_SMALL;
+            }
+            else
+            {
+                *(ULONG*)irp->AssociatedIrp.SystemBuffer = RingBuffer_GetSize(extension->ring_buffer);
+                rc = irp->IoStatus.u.Status = STATUS_SUCCESS;
+            }
+            break;
+        }
         default:
         {
             ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
