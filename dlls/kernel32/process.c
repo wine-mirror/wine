@@ -3742,10 +3742,10 @@ BOOL WINAPI K32GetProcessMemoryInfo(HANDLE process,
  */
 BOOL WINAPI ProcessIdToSessionId( DWORD procid, DWORD *sessionid_ptr )
 {
-    /* According to MSDN, if the calling process is not in a terminal
-     * services environment, then the sessionid returned is zero.
-     */
-    *sessionid_ptr = 0;
+    if (procid != GetCurrentProcessId())
+        FIXME("Unsupported for other processes.\n");
+
+    *sessionid_ptr = NtCurrentTeb()->Peb->SessionId;
     return TRUE;
 }
 
