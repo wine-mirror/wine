@@ -1280,14 +1280,18 @@ static void test_create_sampler_state(void)
 static void test_create_blend_state(void)
 {
     ID3D10BlendState *blend_state1, *blend_state2;
+    ID3D11BlendState *d3d11_blend_state;
     ULONG refcount, expected_refcount;
+    D3D11_BLEND_DESC d3d11_blend_desc;
     D3D10_BLEND_DESC blend_desc;
+    ID3D11Device *d3d11_device;
     ID3D10Device *device, *tmp;
+    unsigned int i;
     HRESULT hr;
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
@@ -1295,28 +1299,17 @@ static void test_create_blend_state(void)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     blend_desc.AlphaToCoverageEnable = FALSE;
-    blend_desc.BlendEnable[0] = FALSE;
-    blend_desc.BlendEnable[1] = FALSE;
-    blend_desc.BlendEnable[2] = FALSE;
-    blend_desc.BlendEnable[3] = FALSE;
-    blend_desc.BlendEnable[4] = FALSE;
-    blend_desc.BlendEnable[5] = FALSE;
-    blend_desc.BlendEnable[6] = FALSE;
-    blend_desc.BlendEnable[7] = FALSE;
     blend_desc.SrcBlend = D3D10_BLEND_ONE;
     blend_desc.DestBlend = D3D10_BLEND_ZERO;
     blend_desc.BlendOp = D3D10_BLEND_OP_ADD;
     blend_desc.SrcBlendAlpha = D3D10_BLEND_ONE;
     blend_desc.DestBlendAlpha = D3D10_BLEND_ZERO;
     blend_desc.BlendOpAlpha = D3D10_BLEND_OP_ADD;
-    blend_desc.RenderTargetWriteMask[0] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    blend_desc.RenderTargetWriteMask[1] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    blend_desc.RenderTargetWriteMask[2] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    blend_desc.RenderTargetWriteMask[3] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    blend_desc.RenderTargetWriteMask[4] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    blend_desc.RenderTargetWriteMask[5] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    blend_desc.RenderTargetWriteMask[6] = D3D10_COLOR_WRITE_ENABLE_ALL;
-    blend_desc.RenderTargetWriteMask[7] = D3D10_COLOR_WRITE_ENABLE_ALL;
+    for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        blend_desc.BlendEnable[i] = FALSE;
+        blend_desc.RenderTargetWriteMask[i] = D3D10_COLOR_WRITE_ENABLE_ALL;
+    }
 
     expected_refcount = get_refcount((IUnknown *)device) + 1;
     hr = ID3D10Device_CreateBlendState(device, &blend_desc, &blend_state1);
@@ -1334,6 +1327,130 @@ static void test_create_blend_state(void)
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
 
+    hr = ID3D10Device_QueryInterface(device, &IID_ID3D11Device, (void **)&d3d11_device);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Device should implement ID3D11Device.\n");
+    if (FAILED(hr))
+    {
+        win_skip("D3D11 is not available.\n");
+        goto done;
+    }
+
+    hr = ID3D10BlendState_QueryInterface(blend_state1, &IID_ID3D11BlendState, (void **)&d3d11_blend_state);
+    ok(SUCCEEDED(hr), "Blend state should implement ID3D11BlendState.\n");
+
+    ID3D11BlendState_GetDesc(d3d11_blend_state, &d3d11_blend_desc);
+    ok(d3d11_blend_desc.AlphaToCoverageEnable == blend_desc.AlphaToCoverageEnable,
+            "Got unexpected alpha to coverage %#x.\n", d3d11_blend_desc.AlphaToCoverageEnable);
+    ok(d3d11_blend_desc.IndependentBlendEnable == FALSE,
+            "Got unexpected independent blend enable %#x.\n", d3d11_blend_desc.IndependentBlendEnable);
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        ok(d3d11_blend_desc.RenderTarget[i].BlendEnable == blend_desc.BlendEnable[i],
+                "Got unexpected blend enable %#x for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].BlendEnable, i);
+        ok(d3d11_blend_desc.RenderTarget[i].SrcBlend == (D3D11_BLEND)blend_desc.SrcBlend,
+                "Got unexpected src blend %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].SrcBlend, i);
+        ok(d3d11_blend_desc.RenderTarget[i].DestBlend == (D3D11_BLEND)blend_desc.DestBlend,
+                "Got unexpected dest blend %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].DestBlend, i);
+        ok(d3d11_blend_desc.RenderTarget[i].BlendOp == (D3D11_BLEND_OP)blend_desc.BlendOp,
+                "Got unexpected blend op %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].BlendOp, i);
+        ok(d3d11_blend_desc.RenderTarget[i].SrcBlendAlpha == (D3D11_BLEND)blend_desc.SrcBlendAlpha,
+                "Got unexpected src blend alpha %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].SrcBlendAlpha, i);
+        ok(d3d11_blend_desc.RenderTarget[i].DestBlendAlpha == (D3D11_BLEND)blend_desc.DestBlendAlpha,
+                "Got unexpected dest blend alpha %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].DestBlendAlpha, i);
+        ok(d3d11_blend_desc.RenderTarget[i].BlendOpAlpha == (D3D11_BLEND_OP)blend_desc.BlendOpAlpha,
+                "Got unexpected blend op alpha %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].BlendOpAlpha, i);
+        ok(d3d11_blend_desc.RenderTarget[i].RenderTargetWriteMask == blend_desc.RenderTargetWriteMask[i],
+                "Got unexpected render target write mask %#x for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].RenderTargetWriteMask, i);
+    }
+
+    refcount = ID3D11BlendState_Release(d3d11_blend_state);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    refcount = ID3D10BlendState_Release(blend_state2);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    hr = ID3D11Device_CreateBlendState(d3d11_device, &d3d11_blend_desc, &d3d11_blend_state);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
+    hr = ID3D11BlendState_QueryInterface(d3d11_blend_state, &IID_ID3D10BlendState, (void **)&blend_state2);
+    ok(SUCCEEDED(hr), "Blend state should implement ID3D10BlendState.\n");
+    ok(blend_state1 == blend_state2, "Got different blend state objects.\n");
+
+    refcount = ID3D11BlendState_Release(d3d11_blend_state);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+    refcount = ID3D10BlendState_Release(blend_state2);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    refcount = ID3D10BlendState_Release(blend_state1);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    blend_desc.BlendEnable[0] = TRUE;
+    blend_desc.RenderTargetWriteMask[1] = D3D10_COLOR_WRITE_ENABLE_RED;
+    blend_desc.RenderTargetWriteMask[2] = D3D10_COLOR_WRITE_ENABLE_GREEN;
+    blend_desc.RenderTargetWriteMask[3] = D3D10_COLOR_WRITE_ENABLE_BLUE;
+
+    hr = ID3D10Device_CreateBlendState(device, &blend_desc, &blend_state1);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
+    hr = ID3D10BlendState_QueryInterface(blend_state1, &IID_ID3D11BlendState, (void **)&d3d11_blend_state);
+    ok(SUCCEEDED(hr), "Blend state should implement ID3D11BlendState.\n");
+
+    ID3D11BlendState_GetDesc(d3d11_blend_state, &d3d11_blend_desc);
+    ok(d3d11_blend_desc.AlphaToCoverageEnable == blend_desc.AlphaToCoverageEnable,
+            "Got unexpected alpha to coverage %#x.\n", d3d11_blend_desc.AlphaToCoverageEnable);
+    ok(d3d11_blend_desc.IndependentBlendEnable == TRUE,
+            "Got unexpected independent blend enable %#x.\n", d3d11_blend_desc.IndependentBlendEnable);
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        ok(d3d11_blend_desc.RenderTarget[i].BlendEnable == blend_desc.BlendEnable[i],
+                "Got unexpected blend enable %#x for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].BlendEnable, i);
+        ok(d3d11_blend_desc.RenderTarget[i].SrcBlend == (D3D11_BLEND)blend_desc.SrcBlend,
+                "Got unexpected src blend %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].SrcBlend, i);
+        ok(d3d11_blend_desc.RenderTarget[i].DestBlend == (D3D11_BLEND)blend_desc.DestBlend,
+                "Got unexpected dest blend %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].DestBlend, i);
+        ok(d3d11_blend_desc.RenderTarget[i].BlendOp == (D3D11_BLEND_OP)blend_desc.BlendOp,
+                "Got unexpected blend op %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].BlendOp, i);
+        ok(d3d11_blend_desc.RenderTarget[i].SrcBlendAlpha == (D3D11_BLEND)blend_desc.SrcBlendAlpha,
+                "Got unexpected src blend alpha %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].SrcBlendAlpha, i);
+        ok(d3d11_blend_desc.RenderTarget[i].DestBlendAlpha == (D3D11_BLEND)blend_desc.DestBlendAlpha,
+                "Got unexpected dest blend alpha %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].DestBlendAlpha, i);
+        ok(d3d11_blend_desc.RenderTarget[i].BlendOpAlpha == (D3D11_BLEND_OP)blend_desc.BlendOpAlpha,
+                "Got unexpected blend op alpha %u for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].BlendOpAlpha, i);
+        ok(d3d11_blend_desc.RenderTarget[i].RenderTargetWriteMask == blend_desc.RenderTargetWriteMask[i],
+                "Got unexpected render target write mask %#x for render target %u.\n",
+                d3d11_blend_desc.RenderTarget[i].RenderTargetWriteMask, i);
+    }
+
+    refcount = ID3D11BlendState_Release(d3d11_blend_state);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+
+    hr = ID3D11Device_CreateBlendState(d3d11_device, &d3d11_blend_desc, &d3d11_blend_state);
+    ok(SUCCEEDED(hr), "Failed to create blend state, hr %#x.\n", hr);
+
+    hr = ID3D11BlendState_QueryInterface(d3d11_blend_state, &IID_ID3D10BlendState, (void **)&blend_state2);
+    ok(SUCCEEDED(hr), "Blend state should implement ID3D10BlendState.\n");
+    ok(blend_state1 == blend_state2, "Got different blend state objects.\n");
+
+    refcount = ID3D11BlendState_Release(d3d11_blend_state);
+    ok(refcount == 2, "Got unexpected refcount %u.\n", refcount);
+
+    ID3D11Device_Release(d3d11_device);
+
+done:
     refcount = ID3D10BlendState_Release(blend_state2);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
     refcount = ID3D10BlendState_Release(blend_state1);
