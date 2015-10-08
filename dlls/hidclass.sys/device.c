@@ -198,6 +198,180 @@ void HID_DeleteDevice(HID_MINIDRIVER_REGISTRATION *driver, DEVICE_OBJECT *device
     IoDeleteDevice(device);
 }
 
+static void HID_Device_processQueue(DEVICE_OBJECT *device)
+{
+    LIST_ENTRY *entry;
+    IRP *irp;
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    UINT buffer_size = RingBuffer_GetBufferSize(ext->ring_buffer);
+    HID_XFER_PACKET *packet;
+
+    packet = HeapAlloc(GetProcessHeap(), 0, buffer_size);
+
+    entry = RemoveHeadList(&ext->irp_queue);
+    while(entry != &ext->irp_queue)
+    {
+        int ptr;
+        irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+        ptr = PtrToUlong( irp->Tail.Overlay.OriginalFileObject->FsContext );
+
+        RingBuffer_Read(ext->ring_buffer, ptr, packet, &buffer_size);
+        if (buffer_size)
+        {
+            IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation(irp);
+            TRACE_(hid_report)("Processing Request (%i)\n",ptr);
+            if (irpsp->Parameters.Read.Length >= packet->reportBufferLen)
+            {
+                memcpy(irp->AssociatedIrp.SystemBuffer, packet->reportBuffer, packet->reportBufferLen);
+                irp->IoStatus.Information = packet->reportBufferLen;
+                irp->IoStatus.u.Status = STATUS_SUCCESS;
+            }
+            else
+            {
+                irp->IoStatus.Information = 0;
+                irp->IoStatus.u.Status = STATUS_BUFFER_OVERFLOW;
+            }
+        }
+        else
+        {
+            irp->IoStatus.Information = 0;
+            irp->IoStatus.u.Status = STATUS_UNSUCCESSFUL;
+        }
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        entry = RemoveHeadList(&ext->irp_queue);
+    }
+    HeapFree(GetProcessHeap(), 0, packet);
+}
+
+static NTSTATUS WINAPI read_Completion(DEVICE_OBJECT *deviceObject, IRP *irp, void *context )
+{
+    SetEvent(irp->UserEvent);
+    return STATUS_MORE_PROCESSING_REQUIRED;
+}
+
+static DWORD CALLBACK hid_device_thread(void *args)
+{
+    DEVICE_OBJECT *device = (DEVICE_OBJECT*)args;
+
+    IRP *irp;
+    IO_STATUS_BLOCK irp_status;
+    IO_STACK_LOCATION *irpsp;
+    DWORD rc;
+    HANDLE events[2];
+    NTSTATUS ntrc;
+
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    events[0] = CreateEventA(NULL, FALSE, FALSE, NULL);
+    events[1] = ext->halt_event;
+
+    if (ext->information.Polled)
+    {
+        while(1)
+        {
+            HID_XFER_PACKET *packet;
+            ResetEvent(events[0]);
+
+            packet = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*packet) + ext->preparseData->caps.InputReportByteLength);
+            packet->reportBufferLen = ext->preparseData->caps.InputReportByteLength;
+            packet->reportBuffer = ((BYTE*)packet) + sizeof(*packet);
+            packet->reportId = 0;
+
+            irp = IoBuildDeviceIoControlRequest(IOCTL_HID_GET_INPUT_REPORT,
+                device, NULL, 0, packet, sizeof(packet), TRUE, events[0],
+                &irp_status);
+
+            irpsp = IoGetNextIrpStackLocation(irp);
+            irpsp->CompletionRoutine = read_Completion;
+            irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR;
+
+            ntrc = IoCallDriver(device, irp);
+
+            if (ntrc == STATUS_PENDING)
+                rc = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+
+            if (irp->IoStatus.u.Status == STATUS_SUCCESS)
+            {
+                RingBuffer_Write(ext->ring_buffer, packet);
+                HID_Device_processQueue(device);
+            }
+
+            IoCompleteRequest(irp, IO_NO_INCREMENT );
+
+            rc = WaitForSingleObject(ext->halt_event, ext->poll_interval);
+
+            if (rc == WAIT_OBJECT_0)
+                break;
+            else if (rc != WAIT_TIMEOUT)
+                ERR("Wait returned unexpected value %x\n",rc);
+        }
+    }
+    else
+    {
+        INT exit_now = FALSE;
+
+        HID_XFER_PACKET *packet;
+        packet = HeapAlloc(GetProcessHeap(), 0, sizeof(*packet) + ext->preparseData->caps.InputReportByteLength);
+        packet->reportBufferLen = ext->preparseData->caps.InputReportByteLength;
+        packet->reportBuffer = ((BYTE*)packet) + sizeof(*packet);
+        packet->reportId = 0;
+
+        while(1)
+        {
+            BYTE *buffer;
+
+            buffer = HeapAlloc(GetProcessHeap(), 0, ext->preparseData->caps.InputReportByteLength);
+
+            ResetEvent(events[0]);
+
+            irp = IoBuildDeviceIoControlRequest(IOCTL_HID_READ_REPORT,
+                device, NULL, 0, buffer,
+                ext->preparseData->caps.InputReportByteLength, TRUE, events[0],
+                &irp_status);
+
+            irpsp = IoGetNextIrpStackLocation(irp);
+            irpsp->CompletionRoutine = read_Completion;
+            irpsp->Control = SL_INVOKE_ON_SUCCESS | SL_INVOKE_ON_ERROR;
+
+            ntrc = IoCallDriver(device, irp);
+
+            if (ntrc == STATUS_PENDING)
+            {
+                rc = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+
+                if (rc == WAIT_OBJECT_0 + 1)
+                    exit_now = TRUE;
+            }
+
+            if (!exit_now && irp->IoStatus.u.Status == STATUS_SUCCESS)
+            {
+                packet->reportId = buffer[0];
+                memcpy(packet->reportBuffer, buffer, ext->preparseData->caps.InputReportByteLength);
+                RingBuffer_Write(ext->ring_buffer, packet);
+                HID_Device_processQueue(device);
+            }
+
+            IoCompleteRequest(irp, IO_NO_INCREMENT );
+
+            if (exit_now)
+                break;
+        }
+
+        HeapFree(GetProcessHeap(), 0, packet);
+    }
+
+    CloseHandle(events[0]);
+
+    TRACE("Device thread exiting\n");
+    return 1;
+}
+
+void HID_StartDeviceThread(DEVICE_OBJECT *device)
+{
+    BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    ext->halt_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ext->thread = CreateThread(NULL, 0, hid_device_thread, device, 0, NULL);
+}
+
 static NTSTATUS handle_IOCTL_HID_GET_COLLECTION_INFORMATION(IRP *irp, BASE_DEVICE_EXTENSION *base)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );

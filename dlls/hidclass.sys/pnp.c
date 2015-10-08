@@ -165,6 +165,8 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 
     ext->ring_buffer = RingBuffer_Create(sizeof(HID_XFER_PACKET) + ext->preparseData->caps.InputReportByteLength);
 
+    HID_StartDeviceThread(device);
+
     return STATUS_SUCCESS;
 }
 

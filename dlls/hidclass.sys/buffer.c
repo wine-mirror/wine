@@ -140,3 +140,24 @@ void RingBuffer_RemovePointer(struct ReportRingBuffer *ring, UINT index)
         ring->pointers[index] = 0xffffffff;
     LeaveCriticalSection(&ring->lock);
 }
+
+void RingBuffer_Write(struct ReportRingBuffer *ring, void *data)
+{
+    UINT i;
+
+    EnterCriticalSection(&ring->lock);
+    memcpy(&ring->buffer[ring->end * ring->buffer_size], data, ring->buffer_size);
+    ring->end++;
+    if (ring->end == ring->size)
+        ring->end = 0;
+    if (ring->start == ring->end)
+    {
+        ring->start++;
+        if (ring->start == ring->size)
+            ring->start = 0;
+    }
+    for (i = 0; i < ring->pointer_alloc; i++)
+        if (ring->pointers[i] == ring->end)
+            ring->pointers[i] = ring->start;
+    LeaveCriticalSection(&ring->lock);
+}
