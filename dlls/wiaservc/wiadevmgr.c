@@ -29,10 +29,118 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wia);
 
+typedef struct
+{
+    IEnumWIA_DEV_INFO IEnumWIA_DEV_INFO_iface;
+    LONG ref;
+} enumwiadevinfo;
+
 static inline wiadevmgr *impl_from_IWiaDevMgr(IWiaDevMgr *iface)
 {
     return CONTAINING_RECORD(iface, wiadevmgr, IWiaDevMgr_iface);
 }
+
+static inline enumwiadevinfo *impl_from_IEnumWIA_DEV_INFO(IEnumWIA_DEV_INFO *iface)
+{
+    return CONTAINING_RECORD(iface, enumwiadevinfo, IEnumWIA_DEV_INFO_iface);
+}
+
+static HRESULT WINAPI enumwiadevinfo_QueryInterface(IEnumWIA_DEV_INFO *iface, REFIID riid, void **obj)
+{
+    enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
+
+    TRACE("(%p, %s, %p)\n", This, debugstr_guid(riid), obj);
+
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IEnumWIA_DEV_INFO))
+        *obj = iface;
+    else
+    {
+        FIXME("interface %s not implemented\n", debugstr_guid(riid));
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+    IUnknown_AddRef((IUnknown*)*obj);
+    return S_OK;
+}
+
+static ULONG WINAPI enumwiadevinfo_AddRef(IEnumWIA_DEV_INFO *iface)
+{
+    enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(%u)\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI enumwiadevinfo_Release(IEnumWIA_DEV_INFO *iface)
+{
+    enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(%u)\n", This, ref);
+
+    if (ref == 0)
+        HeapFree(GetProcessHeap(), 0, This);
+    return ref;
+}
+
+static HRESULT WINAPI enumwiadevinfo_Next(IEnumWIA_DEV_INFO *iface, ULONG count, IWiaPropertyStorage **elem, ULONG *fetched)
+{
+    enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
+
+    FIXME("(%p, %d, %p, %p): stub\n", This, count, elem, fetched);
+
+    *fetched = 0;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enumwiadevinfo_Skip(IEnumWIA_DEV_INFO *iface, ULONG count)
+{
+    enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
+
+    FIXME("(%p, %u): stub\n", This, count);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enumwiadevinfo_Reset(IEnumWIA_DEV_INFO *iface)
+{
+    enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
+
+    FIXME("(%p): stub\n", This);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enumwiadevinfo_Clone(IEnumWIA_DEV_INFO *iface, IEnumWIA_DEV_INFO **ret)
+{
+    enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
+
+    FIXME("(%p, %p): stub\n", This, ret);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI enumwiadevinfo_GetCount(IEnumWIA_DEV_INFO *iface, ULONG *count)
+{
+    enumwiadevinfo *This = impl_from_IEnumWIA_DEV_INFO(iface);
+
+    FIXME("(%p, %p): stub\n", This, count);
+
+    *count = 0;
+    return E_NOTIMPL;
+}
+
+static const IEnumWIA_DEV_INFOVtbl EnumWIA_DEV_INFOVtbl =
+{
+    enumwiadevinfo_QueryInterface,
+    enumwiadevinfo_AddRef,
+    enumwiadevinfo_Release,
+    enumwiadevinfo_Next,
+    enumwiadevinfo_Skip,
+    enumwiadevinfo_Reset,
+    enumwiadevinfo_Clone,
+    enumwiadevinfo_GetCount
+};
 
 static HRESULT WINAPI wiadevmgr_QueryInterface(IWiaDevMgr *iface, REFIID riid, void **ppvObject)
 {
@@ -69,11 +177,24 @@ static ULONG WINAPI wiadevmgr_Release(IWiaDevMgr *iface)
     return ref;
 }
 
-static HRESULT WINAPI wiadevmgr_EnumDeviceInfo(IWiaDevMgr *iface, LONG lFlag, IEnumWIA_DEV_INFO **ppIEnum)
+static HRESULT WINAPI wiadevmgr_EnumDeviceInfo(IWiaDevMgr *iface, LONG flag, IEnumWIA_DEV_INFO **ret)
 {
     wiadevmgr *This = impl_from_IWiaDevMgr(iface);
-    FIXME("(%p, %d, %p): stub\n", This, lFlag, ppIEnum);
-    return E_NOTIMPL;
+    enumwiadevinfo *enuminfo;
+
+    TRACE("(%p)->(%x, %p)\n", This, flag, ret);
+
+    *ret = NULL;
+
+    enuminfo = HeapAlloc(GetProcessHeap(), 0, sizeof(*enuminfo));
+    if (!enuminfo)
+        return E_OUTOFMEMORY;
+
+    enuminfo->IEnumWIA_DEV_INFO_iface.lpVtbl = &EnumWIA_DEV_INFOVtbl;
+    enuminfo->ref = 1;
+
+    *ret = &enuminfo->IEnumWIA_DEV_INFO_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI wiadevmgr_CreateDevice(IWiaDevMgr *iface, BSTR bstrDeviceID, IWiaItem **ppWiaItemRoot)

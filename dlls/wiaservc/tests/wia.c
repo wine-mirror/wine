@@ -40,20 +40,18 @@ static void test_EnumDeviceInfo(void)
     ok(FAILED(hr), "got 0x%08x\n", hr);
 
     hr = IWiaDevMgr_EnumDeviceInfo(devmanager, WIA_DEVINFO_ENUM_LOCAL, &devenum);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
-if (hr == S_OK) {
     hr = IEnumWIA_DEV_INFO_GetCount(devenum, NULL);
     ok(FAILED(hr), "got 0x%08x\n", hr);
 
     count = 1000;
     hr = IEnumWIA_DEV_INFO_GetCount(devenum, &count);
+todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count != 1000, "got %u\n", count);
 
     IEnumWIA_DEV_INFO_Release(devenum);
-}
 }
 
 START_TEST(wia)
