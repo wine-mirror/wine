@@ -86,6 +86,22 @@ static NTSTATUS PNP_SendPnPIRP(DEVICE_OBJECT *device, UCHAR minor)
     return SendDeviceIRP(device, irp);
 }
 
+static NTSTATUS PNP_SendPowerIRP(DEVICE_OBJECT *device, DEVICE_POWER_STATE power)
+{
+    IO_STATUS_BLOCK irp_status;
+    IO_STACK_LOCATION *irpsp;
+
+    IRP *irp = IoBuildSynchronousFsdRequest(IRP_MJ_POWER, device, NULL, 0, NULL, NULL, &irp_status);
+
+    irpsp = IoGetNextIrpStackLocation(irp);
+    irpsp->MinorFunction = IRP_MN_SET_POWER;
+
+    irpsp->Parameters.Power.Type = DevicePowerState;
+    irpsp->Parameters.Power.State.DeviceState = power;
+
+    return SendDeviceIRP(device, irp);
+}
+
 NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
 {
     DEVICE_OBJECT *device = NULL;
@@ -222,6 +238,7 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     ext->ring_buffer = RingBuffer_Create(sizeof(HID_XFER_PACKET) + ext->preparseData->caps.InputReportByteLength);
 
     HID_StartDeviceThread(device);
+    PNP_SendPowerIRP(device, PowerDeviceD0);
 
     return STATUS_SUCCESS;
 }
@@ -236,6 +253,7 @@ void PNP_CleanupPNP(DRIVER_OBJECT *driver)
         if (tracked_device->minidriver->DriverObject == driver)
         {
             list_remove(&tracked_device->entry);
+            PNP_SendPowerIRP(tracked_device->FDO, PowerDeviceD3);
             PNP_SendPnPIRP(tracked_device->FDO, IRP_MN_REMOVE_DEVICE);
             HID_DeleteDevice(tracked_device->minidriver, tracked_device->FDO);
             HeapFree(GetProcessHeap(), 0, tracked_device);
