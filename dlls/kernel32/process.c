@@ -3876,7 +3876,8 @@ DWORD WINAPI WTSGetActiveConsoleSessionId(void)
 {
     static int once;
     if (!once++) FIXME("stub\n");
-    return 0;
+    /* Return current session id. */
+    return NtCurrentTeb()->Peb->SessionId;
 }
 
 /**********************************************************************
