@@ -571,6 +571,21 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
     return rc;
 }
 
+NTSTATUS WINAPI HID_Device_write(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+
+    irp->IoStatus.Information = 0;
+
+    TRACE("Buffer length %i\n", irpsp->Parameters.Write.Length);
+
+    FIXME("device %p\n", device);
+
+    irp->IoStatus.u.Status = STATUS_SUCCESS;
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS WINAPI HID_Device_create(DEVICE_OBJECT *device, IRP *irp)
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
