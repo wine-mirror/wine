@@ -275,16 +275,17 @@ struct d3d_pixel_shader *unsafe_impl_from_ID3D10PixelShader(ID3D10PixelShader *i
 HRESULT shader_parse_signature(const char *data, DWORD data_size, struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 void shader_free_signature(struct wined3d_shader_signature *s) DECLSPEC_HIDDEN;
 
-/* ID3D10BlendState */
+/* ID3D11BlendState, ID3D10BlendState */
 struct d3d_blend_state
 {
+    ID3D11BlendState ID3D11BlendState_iface;
     ID3D10BlendState ID3D10BlendState_iface;
     LONG refcount;
 
     struct wined3d_private_store private_store;
     D3D10_BLEND_DESC desc;
     struct wine_rb_entry entry;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *device,
