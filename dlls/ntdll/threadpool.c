@@ -537,7 +537,7 @@ static DWORD CALLBACK wait_thread_proc(LPVOID Arg)
             if (wait_work_item->Flags & WT_EXECUTEONLYONCE)
                 break;
         }
-        else
+        else if (status != STATUS_USER_APC)
             break;
     }
 
