@@ -7020,6 +7020,20 @@ static void pretransformed_varying_test(void)
         0x0000ffff                              /* end                      */
     };
     /* sample: fails */
+    static const DWORD texcoord1_code[] =
+    {
+        0xffff0300,                             /* ps_3_0                   */
+        0x0200001f, 0x80010005, 0x900f0000,     /* dcl_texcoord1, v0        */
+        0x02000001, 0x800f0800, 0x90e40000,     /* mov oC0, v0              */
+        0x0000ffff                              /* end                      */
+    };
+    static const DWORD texcoord1_alpha_code[] =
+    {
+        0xffff0300,                             /* ps_3_0                   */
+        0x0200001f, 0x80010005, 0x900f0000,     /* dcl_texcoord1, v0        */
+        0x02000001, 0x800f0800, 0x90ff0000,     /* mov oC0, v0.w            */
+        0x0000ffff                              /* end                      */
+    };
 
     static const struct
     {
@@ -7027,19 +7041,22 @@ static void pretransformed_varying_test(void)
         const DWORD *shader_code;
         DWORD color;
         BOOL todo;
+        BOOL broken_warp;
     }
     tests[] =
     {
-        {"blendweight",     blendweight_code,   0x00191919, TRUE },
-        {"blendindices",    blendindices_code,  0x00333333, TRUE },
-        {"normal",          normal_code,        0x004c4c4c, TRUE },
-        {"texcoord0",       texcoord0_code,     0x00808c8c, FALSE},
-        {"tangent",         tangent_code,       0x00999999, TRUE },
-        {"binormal",        binormal_code,      0x00b2b2b2, TRUE },
-        {"color",           color_code,         0x00e6e6e6, FALSE},
-        {"fog",             fog_code,           0x00666666, TRUE },
-        {"depth",           depth_code,         0x00cccccc, TRUE },
-        {"specular",        specular_code,      0x004488ff, FALSE},
+        {"blendweight",     blendweight_code,     0x00191919, TRUE },
+        {"blendindices",    blendindices_code,    0x00333333, TRUE },
+        {"normal",          normal_code,          0x004c4c4c, TRUE },
+        {"texcoord0",       texcoord0_code,       0x00808c8c, FALSE},
+        {"tangent",         tangent_code,         0x00999999, TRUE },
+        {"binormal",        binormal_code,        0x00b2b2b2, TRUE },
+        {"color",           color_code,           0x00e6e6e6, FALSE},
+        {"fog",             fog_code,             0x00666666, TRUE },
+        {"depth",           depth_code,           0x00cccccc, TRUE },
+        {"specular",        specular_code,        0x004488ff, FALSE},
+        {"texcoord1",       texcoord1_code,       0x00000000, FALSE},
+        {"texcoord1 alpha", texcoord1_alpha_code, 0x00000000, FALSE, TRUE},
     };
     /* Declare a monster vertex type :-) */
     static const D3DVERTEXELEMENT9 decl_elements[] = {
@@ -7126,6 +7143,7 @@ static void pretransformed_varying_test(void)
            0x224488ff, /* Nothing special */
         },
     };
+    D3DADAPTER_IDENTIFIER9 identifier;
     IDirect3DVertexDeclaration9 *decl;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
@@ -7135,6 +7153,7 @@ static void pretransformed_varying_test(void)
     DWORD color;
     HWND window;
     HRESULT hr;
+    BOOL warp;
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -7154,6 +7173,10 @@ static void pretransformed_varying_test(void)
         IDirect3DDevice9_Release(device);
         goto done;
     }
+
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    warp = !strcmp(identifier.Description, "Microsoft Basic Render Driver");
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -7190,7 +7213,7 @@ static void pretransformed_varying_test(void)
                     "Test %s returned color 0x%08x, expected 0x%08x (todo).\n",
                     tests[i].name, color, tests[i].color);
         else
-            ok(color_match(color, tests[i].color, 1),
+            ok(color_match(color, tests[i].color, 1) || broken(warp && tests[i].broken_warp),
                     "Test %s returned color 0x%08x, expected 0x%08x.\n",
                     tests[i].name, color, tests[i].color);
 
