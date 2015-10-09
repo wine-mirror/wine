@@ -399,7 +399,7 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UIN
 
     EnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
-         if (pFT_Load_Glyph(size->face, index, FT_LOAD_DEFAULT) == 0) {
+         if (pFT_Load_Glyph(size->face, index, FT_LOAD_NO_BITMAP) == 0) {
              FT_Outline *outline = &size->face->glyph->outline;
              short count;
              FT_Matrix m;
