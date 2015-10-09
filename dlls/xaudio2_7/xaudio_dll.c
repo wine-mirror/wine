@@ -2489,7 +2489,7 @@ static IClassFactory *make_xaudio2_factory(DWORD version)
 static IClassFactory *make_xapo_factory(REFCLSID clsid, DWORD version)
 {
     struct xapo_cf *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xaudio2_cf));
-    ret->IClassFactory_iface.lpVtbl = &XAudio2CF_Vtbl;
+    ret->IClassFactory_iface.lpVtbl = &xapo_Vtbl;
     ret->version = version;
     ret->class = clsid;
     ret->ref = 0;
