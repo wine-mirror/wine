@@ -115,12 +115,21 @@ OLE Typelibs
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
 
+OpenMP
+M:	Sebastian Lackner <sebastian@fds-team.de>
+F:	dlls/vcomp*/
+
+Threadpool
+M:	Sebastian Lackner <sebastian@fds-team.de>
+F:	dlls/ntdll/threadpool.c
+
 Uniscribe
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/usp10/
 
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
+P:	Sebastian Lackner <sebastian@fds-team.de>
 F:	server/
 
 Winemaker
