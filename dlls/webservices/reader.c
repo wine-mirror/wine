@@ -1044,6 +1044,283 @@ HRESULT WINAPI WsReadToStartElement( WS_XML_READER *handle, const WS_XML_STRING 
     return read_to_startelement( reader, found );
 }
 
+static void *read_alloc( WS_HEAP *handle, SIZE_T size )
+{
+    struct heap *heap = (struct heap *)handle;
+    return HeapAlloc( heap->handle, 0, size );
+}
+
+static WCHAR *xmltext_to_widechar( WS_HEAP *heap, const WS_XML_TEXT *text )
+{
+    WCHAR *ret;
+
+    switch (text->textType)
+    {
+    case WS_XML_TEXT_TYPE_UTF8:
+    {
+        const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
+        int len = MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, NULL, 0 );
+        if (!(ret = read_alloc( heap, (len + 1) * sizeof(WCHAR) ))) return NULL;
+        MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, ret, len );
+        ret[len] = 0;
+        break;
+    }
+    default:
+        FIXME( "unhandled type %u\n", text->textType );
+        return NULL;
+    }
+
+    return ret;
+}
+
+#define MAX_INT8    0x7f
+#define MIN_INT8    (-MAX_INT8 - 1)
+#define MAX_INT16   0x7fff
+#define MIN_INT16   (-MAX_INT16 - 1)
+#define MAX_INT32   0x7fffffff
+#define MIN_INT32   (-MAX_INT32 - 1)
+#define MAX_INT64   (((INT64)0x7fffffff << 32) | 0xffffffff)
+#define MIN_INT64   (-MAX_INT64 - 1)
+#define MAX_UINT8   0xff
+#define MAX_UINT16  0xffff
+#define MAX_UINT32  0xffffffff
+#define MAX_UINT64  (((UINT64)0xffffffff << 32) | 0xffffffff)
+
+static HRESULT str_to_int64( const char *str, ULONG len, INT64 min, INT64 max, INT64 *ret )
+{
+    BOOL negative = FALSE;
+    const char *ptr = str;
+
+    *ret = 0;
+    while (len && read_isspace( *ptr )) { ptr++; len--; }
+    while (len && read_isspace( ptr[len - 1] )) { len--; }
+    if (!len) return WS_E_INVALID_FORMAT;
+
+    if (*ptr == '-')
+    {
+        negative = TRUE;
+        ptr++;
+        len--;
+    }
+    if (!len) return WS_E_INVALID_FORMAT;
+
+    while (len--)
+    {
+        int val;
+
+        if (!isdigit( *ptr )) return WS_E_INVALID_FORMAT;
+        val = *ptr - '0';
+        if (negative) val = -val;
+
+        if ((!negative && (*ret > max / 10 || *ret * 10 > max - val)) ||
+            (negative && (*ret < min / 10 || *ret * 10 < min - val)))
+        {
+            return WS_E_NUMERIC_OVERFLOW;
+        }
+        *ret = *ret * 10 + val;
+        ptr++;
+    }
+
+    return S_OK;
+}
+
+static HRESULT str_to_uint64( const char *str, ULONG len, UINT64 max, UINT64 *ret )
+{
+    const char *ptr = str;
+
+    *ret = 0;
+    while (len && read_isspace( *ptr )) { ptr++; len--; }
+    while (len && read_isspace( ptr[len - 1] )) { len--; }
+    if (!len) return WS_E_INVALID_FORMAT;
+
+    while (len--)
+    {
+        unsigned int val;
+
+        if (!isdigit( *ptr )) return WS_E_INVALID_FORMAT;
+        val = *ptr - '0';
+
+        if ((*ret > max / 10 || *ret * 10 > max - val)) return WS_E_NUMERIC_OVERFLOW;
+        *ret = *ret * 10 + val;
+        ptr++;
+    }
+
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsReadType		[webservices.@]
+ */
+HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TYPE type,
+                           const void *desc, WS_READ_OPTION option, WS_HEAP *heap, void *value,
+                           ULONG value_size, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+    WS_XML_TEXT_NODE *text;
+
+    TRACE( "%p %u %u %p %u %p %p %u %p\n", handle, mapping, type, desc, option, heap, value,
+           value_size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !value) return E_INVALIDARG;
+
+    if (reader->current->hdr.node.nodeType != WS_XML_NODE_TYPE_TEXT)
+    {
+        FIXME( "only text nodes are supported\n" );
+        return E_NOTIMPL;
+    }
+    text = (WS_XML_TEXT_NODE *)&reader->current->hdr.node;
+    if (text->text->textType != WS_XML_TEXT_TYPE_UTF8)
+    {
+        FIXME( "text type %u not supported\n", text->text->textType );
+        return E_NOTIMPL;
+    }
+
+    switch (mapping)
+    {
+    case WS_ELEMENT_CONTENT_TYPE_MAPPING:
+        break;
+    default:
+        FIXME( "mapping %u not supported\n", mapping );
+        return E_NOTIMPL;
+    }
+
+    switch (type)
+    {
+    case WS_BOOL_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        ULONG len = utf8->value.length;
+        BOOL *ret = value;
+
+        if (value_size != sizeof(BOOL)) return E_INVALIDARG;
+
+        if (len == 4 && !memcmp( utf8->value.bytes, "true", 4 )) *ret = TRUE;
+        else if (len == 1 && !memcmp( utf8->value.bytes, "1", 1 )) *ret = TRUE;
+        else if (len == 5 && !memcmp( utf8->value.bytes, "false", 5 )) *ret = FALSE;
+        else if (len == 1 && !memcmp( utf8->value.bytes, "0", 1 )) *ret = FALSE;
+        else return WS_E_INVALID_FORMAT;
+        break;
+    }
+    case WS_INT8_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        INT8 *ret = value;
+        HRESULT hr;
+        INT64 val;
+
+        if (value_size != sizeof(INT8)) return E_INVALIDARG;
+        hr = str_to_int64( (const char *)utf8->value.bytes, utf8->value.length, MIN_INT8, MAX_INT8, &val );
+        if (hr != S_OK) return hr;
+        *ret = val;
+        break;
+    }
+    case WS_INT16_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        INT16 *ret = value;
+        HRESULT hr;
+        INT64 val;
+
+        if (value_size != sizeof(INT16)) return E_INVALIDARG;
+        hr = str_to_int64( (const char *)utf8->value.bytes, utf8->value.length, MIN_INT16, MAX_INT16, &val );
+        if (hr != S_OK) return hr;
+        *ret = val;
+        break;
+    }
+    case WS_INT32_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        INT32 *ret = value;
+        HRESULT hr;
+        INT64 val;
+
+        if (value_size != sizeof(INT32)) return E_INVALIDARG;
+        hr = str_to_int64( (const char *)utf8->value.bytes, utf8->value.length, MIN_INT32, MAX_INT32, &val );
+        if (hr != S_OK) return hr;
+        *ret = val;
+        break;
+    }
+    case WS_INT64_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        INT64 val, *ret = value;
+        HRESULT hr;
+
+        if (value_size != sizeof(INT64)) return E_INVALIDARG;
+        hr = str_to_int64( (const char *)utf8->value.bytes, utf8->value.length, MIN_INT64, MAX_INT64, &val );
+        if (hr != S_OK) return hr;
+        *ret = val;
+        break;
+    }
+    case WS_UINT8_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        UINT8 *ret = value;
+        HRESULT hr;
+        UINT64 val;
+
+        if (value_size != sizeof(UINT8)) return E_INVALIDARG;
+        hr = str_to_uint64( (const char *)utf8->value.bytes, utf8->value.length, MAX_UINT8, &val );
+        if (hr != S_OK) return hr;
+        *ret = val;
+        break;
+    }
+    case WS_UINT16_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        UINT16 *ret = value;
+        HRESULT hr;
+        UINT64 val;
+
+        if (value_size != sizeof(UINT16)) return E_INVALIDARG;
+        hr = str_to_uint64( (const char *)utf8->value.bytes, utf8->value.length, MAX_UINT16, &val );
+        if (hr != S_OK) return hr;
+        *ret = val;
+        break;
+    }
+    case WS_UINT32_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        UINT32 *ret = value;
+        HRESULT hr;
+        UINT64 val;
+
+        if (value_size != sizeof(UINT32)) return E_INVALIDARG;
+        hr = str_to_uint64( (const char *)utf8->value.bytes, utf8->value.length, MAX_UINT32, &val );
+        if (hr != S_OK) return hr;
+        *ret = val;
+        break;
+    }
+    case WS_UINT64_TYPE:
+    {
+        WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+        UINT64 val, *ret = value;
+        HRESULT hr;
+
+        if (value_size != sizeof(UINT64)) return E_INVALIDARG;
+        hr = str_to_uint64( (const char *)utf8->value.bytes, utf8->value.length, MAX_UINT64, &val );
+        if (hr != S_OK) return hr;
+        *ret = val;
+        break;
+    }
+    case WS_WSZ_TYPE:
+    {
+        WCHAR *str, **ret = value;
+
+        if (value_size != sizeof(WCHAR *)) return E_INVALIDARG;
+        if (!(str = xmltext_to_widechar( heap, text->text ))) return E_OUTOFMEMORY;
+        *ret = str;
+        break;
+    }
+    default:
+        FIXME( "type %u not supported\n", type );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsSetErrorProperty		[webservices.@]
  */

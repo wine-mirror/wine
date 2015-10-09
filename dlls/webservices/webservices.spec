@@ -121,7 +121,7 @@
 @ stub WsReadStartAttribute
 @ stdcall WsReadStartElement(ptr ptr)
 @ stdcall WsReadToStartElement(ptr ptr ptr ptr ptr)
-@ stub WsReadType
+@ stdcall WsReadType(ptr long long ptr long ptr ptr long ptr)
 @ stub WsReadValue
 @ stub WsReadXmlBuffer
 @ stub WsReadXmlBufferFromBytes
