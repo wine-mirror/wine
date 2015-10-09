@@ -25,11 +25,11 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
-static void STDMETHODCALLTYPE d3d10_null_wined3d_object_destroyed(void *parent) {}
+static void STDMETHODCALLTYPE d3d_null_wined3d_object_destroyed(void *parent) {}
 
-const struct wined3d_parent_ops d3d10_null_wined3d_parent_ops =
+const struct wined3d_parent_ops d3d_null_wined3d_parent_ops =
 {
-    d3d10_null_wined3d_object_destroyed,
+    d3d_null_wined3d_object_destroyed,
 };
 
 /* ID3D11Device methods */
@@ -3018,7 +3018,7 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
             device_parent, container_parent, surface, parent, parent_ops);
 
     *parent = NULL;
-    *parent_ops = &d3d10_null_wined3d_parent_ops;
+    *parent_ops = &d3d_null_wined3d_parent_ops;
 
     return S_OK;
 }
@@ -3031,7 +3031,7 @@ static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *
             device_parent, wined3d_texture, sub_resource_idx, parent, parent_ops);
 
     *parent = NULL;
-    *parent_ops = &d3d10_null_wined3d_parent_ops;
+    *parent_ops = &d3d_null_wined3d_parent_ops;
 
     return S_OK;
 }

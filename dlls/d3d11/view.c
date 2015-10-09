@@ -718,7 +718,7 @@ static HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, st
 
     wined3d_depth_stencil_view_desc_from_d3d11(&wined3d_desc, &view->desc);
     if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource,
-            view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
+            view, &d3d_null_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
         WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
@@ -1130,7 +1130,7 @@ static HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, st
 
     wined3d_rendertarget_view_desc_from_d3d11(&wined3d_desc, &view->desc);
     if (FAILED(hr = wined3d_rendertarget_view_create(&wined3d_desc, wined3d_resource,
-            view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
+            view, &d3d_null_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
         WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
@@ -1477,7 +1477,7 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
     }
 
     if (FAILED(hr = wined3d_shader_resource_view_create(wined3d_resource,
-            view, &d3d10_null_wined3d_parent_ops, &view->wined3d_view)))
+            view, &d3d_null_wined3d_parent_ops, &view->wined3d_view)))
     {
         WARN("Failed to create wined3d shader resource view, hr %#x.\n", hr);
         return hr;
