@@ -31,7 +31,7 @@
 @ stdcall CopySid(long ptr ptr) advapi32.CopySid
 @ stdcall CreatePrivateObjectSecurity(ptr ptr ptr long long ptr) advapi32.CreatePrivateObjectSecurity
 @ stub CreatePrivateObjectSecurityEx
-@ stub CreatePrivateObjectSecurityWithMultipleInheritance
+@ stdcall CreatePrivateObjectSecurityWithMultipleInheritance(ptr ptr ptr ptr long long long long ptr) advapi32.CreatePrivateObjectSecurityWithMultipleInheritance
 @ stdcall CreateRestrictedToken(long long long ptr long ptr long ptr ptr) advapi32.CreateRestrictedToken
 @ stdcall CreateWellKnownSid(long ptr ptr ptr) advapi32.CreateWellKnownSid
 @ stdcall DeleteAce(ptr long) advapi32.DeleteAce

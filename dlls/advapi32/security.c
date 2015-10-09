@@ -5296,6 +5296,14 @@ BOOL WINAPI CreatePrivateObjectSecurity(
     return TRUE;
 }
 
+BOOL WINAPI CreatePrivateObjectSecurityWithMultipleInheritance(
+    PSECURITY_DESCRIPTOR parent, PSECURITY_DESCRIPTOR creator, PSECURITY_DESCRIPTOR *out,
+    GUID **types, ULONG count, BOOL is_container, ULONG flags, HANDLE token, PGENERIC_MAPPING mapping)
+{
+    FIXME(": semi-stub\n");
+    return CreatePrivateObjectSecurity(parent, creator, out, is_container, token, mapping);
+}
+
 BOOL WINAPI DestroyPrivateObjectSecurity( PSECURITY_DESCRIPTOR* ObjectDescriptor )
 {
     FIXME("%p - stub\n", ObjectDescriptor);
