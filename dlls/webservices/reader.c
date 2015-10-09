@@ -273,6 +273,16 @@ static struct node *alloc_node( WS_XML_NODE_TYPE type )
     return ret;
 }
 
+static void free_attribute( WS_XML_ATTRIBUTE *attr )
+{
+    if (!attr) return;
+    heap_free( attr->prefix );
+    heap_free( attr->localName );
+    heap_free( attr->ns );
+    heap_free( attr->value );
+    heap_free( attr );
+}
+
 static void free_node( struct node *node )
 {
     if (!node) return;
@@ -281,6 +291,10 @@ static void free_node( struct node *node )
     case WS_XML_NODE_TYPE_ELEMENT:
     {
         WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)node;
+        ULONG i;
+
+        for (i = 0; i < elem->attributeCount; i++) free_attribute( elem->attributes[i] );
+        heap_free( elem->attributes );
         heap_free( elem->prefix );
         heap_free( elem->localName );
         heap_free( elem->ns );
@@ -705,12 +719,89 @@ static HRESULT read_xmldecl( struct reader *reader )
     return S_OK;
 }
 
+static HRESULT append_attribute( WS_XML_ELEMENT_NODE *elem, WS_XML_ATTRIBUTE *attr )
+{
+    if (elem->attributeCount)
+    {
+        WS_XML_ATTRIBUTE **tmp;
+        if (!(tmp = heap_realloc( elem->attributes, (elem->attributeCount + 1) * sizeof(attr) )))
+            return E_OUTOFMEMORY;
+        elem->attributes = tmp;
+    }
+    else if (!(elem->attributes = heap_alloc( sizeof(attr) ))) return E_OUTOFMEMORY;
+    elem->attributes[elem->attributeCount++] = attr;
+    return S_OK;
+}
+
+static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
+{
+    WS_XML_ATTRIBUTE *attr;
+    WS_XML_UTF8_TEXT *text;
+    unsigned int len = 0, ch, skip;
+    const char *start;
+    HRESULT hr = WS_E_INVALID_FORMAT;
+
+    if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
+
+    start = read_current_ptr( reader );
+    for (;;)
+    {
+        if (!(ch = read_utf8_char( reader, &skip ))) goto error;
+        if (!read_isnamechar( ch )) break;
+        read_skip( reader, skip );
+        len += skip;
+    }
+    if (!len) goto error;
+
+    hr = E_OUTOFMEMORY;
+    if (!(attr->localName = alloc_xml_string( start, len ))) goto error;
+    if (!(attr->prefix = alloc_xml_string( NULL, 0 ))) goto error;
+    attr->prefix->bytes = NULL;
+    if (!(attr->ns = alloc_xml_string( NULL, 0 ))) goto error;
+    attr->ns->bytes = NULL;
+
+    hr = WS_E_INVALID_FORMAT;
+    read_skip_whitespace( reader );
+    if (read_cmp( reader, "=", 1 )) goto error;
+    read_skip( reader, 1 );
+
+    read_skip_whitespace( reader );
+    if (read_cmp( reader, "\"", 1 )) goto error;
+    read_skip( reader, 1 );
+
+    len = 0;
+    start = read_current_ptr( reader );
+    for (;;)
+    {
+        if (!(ch = read_utf8_char( reader, &skip ))) goto error;
+        if (ch == '"') break;
+        read_skip( reader, skip );
+        len += skip;
+    }
+    read_skip( reader, 1 );
+
+    if (!(text = alloc_utf8_text( start, len )))
+    {
+        free_attribute( attr );
+        return E_OUTOFMEMORY;
+    }
+    attr->value = (WS_XML_TEXT *)text;
+
+    *ret = attr;
+    return S_OK;
+
+error:
+    free_attribute( attr );
+    return hr;
+}
+
 static HRESULT read_element( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
     const char *start;
     struct node *node;
     WS_XML_ELEMENT_NODE *elem;
+    WS_XML_ATTRIBUTE *attr;
     HRESULT hr = WS_E_INVALID_FORMAT;
 
     if (read_end_of_data( reader ))
@@ -742,10 +833,19 @@ static HRESULT read_element( struct reader *reader )
     elem->prefix->bytes = NULL;
     if (!(elem->ns = alloc_xml_string( NULL, 0 ))) goto error;
 
-    /* FIXME: parse attributes */
-    while (reader->read_pos < reader->read_size && reader->read_bufptr[reader->read_pos] != '>')
-        reader->read_pos++;
+    for (;;)
+    {
+        read_skip_whitespace( reader );
+        if (!read_cmp( reader, ">", 1 )) break;
+        if ((hr = read_attribute( reader, &attr )) != S_OK) goto error;
+        if ((hr = append_attribute( elem, attr )) != S_OK)
+        {
+            free_attribute( attr );
+            goto error;
+        }
+    }
 
+    read_skip_whitespace( reader );
     if (read_cmp( reader, ">", 1 ))
     {
         hr = WS_E_INVALID_FORMAT;
@@ -862,6 +962,29 @@ static HRESULT read_endelement( struct reader *reader )
     return S_OK;
 }
 
+static HRESULT read_node( struct reader *reader )
+{
+    HRESULT hr;
+
+    for (;;)
+    {
+        if (read_end_of_data( reader ))
+        {
+            reader->current = LIST_ENTRY( list_tail( &reader->nodes ), struct node, entry );
+            reader->state   = READER_STATE_EOF;
+            return S_OK;
+        }
+        if (!read_cmp( reader, "<?", 2 ))
+        {
+            hr = read_xmldecl( reader );
+            if (FAILED( hr )) return hr;
+        }
+        else if (!read_cmp( reader, "</", 2 )) return read_endelement( reader );
+        else if (!read_cmp( reader, "<", 1 )) return read_startelement( reader );
+        else return read_text( reader );
+    }
+}
+
 /**************************************************************************
  *          WsReadEndElement		[webservices.@]
  */
@@ -874,6 +997,20 @@ HRESULT WINAPI WsReadEndElement( WS_XML_READER *handle, WS_ERROR *error )
 
     if (!reader) return E_INVALIDARG;
     return read_endelement( reader );
+}
+
+/**************************************************************************
+ *          WsReadNode		[webservices.@]
+ */
+HRESULT WINAPI WsReadNode( WS_XML_READER *handle, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+    return read_node( reader );
 }
 
 /**************************************************************************
