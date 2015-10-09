@@ -215,9 +215,9 @@ static void test_RtlRegisterWait(void)
     ok(info.userdata == 2, "expected info.userdata = 2, got %u\n", info.userdata);
     result = WaitForSingleObject(semaphores[1], 0);
     ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    Sleep(50);
     status = RtlDeregisterWait(wait1);
-    ok(!status || broken(status == STATUS_PENDING) /* >= Win 8 */,
-       "RtlDeregisterWait failed with status %x\n", status);
+    ok(!status, "RtlDeregisterWait failed with status %x\n", status);
 
     /* repeat test with WT_EXECUTEONLYONCE */
     info.userdata = 0;
@@ -233,6 +233,7 @@ static void test_RtlRegisterWait(void)
     ok(info.userdata == 1, "expected info.userdata = 1, got %u\n", info.userdata);
     result = WaitForSingleObject(semaphores[1], 0);
     ok(result == WAIT_OBJECT_0, "WaitForSingleObject returned %u\n", result);
+    Sleep(50);
     status = RtlDeregisterWait(wait1);
     ok(!status, "RtlDeregisterWait failed with status %x\n", status);
 
@@ -248,9 +249,9 @@ static void test_RtlRegisterWait(void)
     ok(info.userdata == 0x10000, "expected info.userdata = 0x10000, got %u\n", info.userdata);
     result = WaitForSingleObject(semaphores[1], 0);
     ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    Sleep(50);
     status = RtlDeregisterWait(wait1);
-    ok(!status || broken(status == STATUS_PENDING) /* >= Win 8 */,
-       "RtlDeregisterWait failed with status %x\n", status);
+    ok(!status, "RtlDeregisterWait failed with status %x\n", status);
 
     /* finite timeout, with event */
     info.userdata = 0;
@@ -265,9 +266,9 @@ static void test_RtlRegisterWait(void)
     ok(info.userdata == 1, "expected info.userdata = 1, got %u\n", info.userdata);
     result = WaitForSingleObject(semaphores[1], 0);
     ok(result == WAIT_TIMEOUT, "WaitForSingleObject returned %u\n", result);
+    Sleep(50);
     status = RtlDeregisterWait(wait1);
-    ok(!status || broken(status == STATUS_PENDING) /* >= Win 8 */,
-       "RtlDeregisterWait failed with status %x\n", status);
+    ok(!status, "RtlDeregisterWait failed with status %x\n", status);
 
     /* test RtlDeregisterWaitEx before wait expired */
     info.userdata = 0;
