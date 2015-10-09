@@ -610,7 +610,7 @@
 610 stdcall GdipFindFirstImageItem(ptr ptr)
 611 stub GdipFindNextImageItem
 612 stdcall GdipGetImageItemData(ptr ptr)
-613 stub GdipCreateEffect
+613 stdcall GdipCreateEffect(int128 ptr)
 614 stdcall GdipDeleteEffect(ptr)
 615 stub GdipGetEffectParameterSize
 616 stub GdipGetEffectParameters

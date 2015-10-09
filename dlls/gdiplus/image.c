@@ -5008,6 +5008,24 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHBITMAP(HBITMAP hbm, HPALETTE hpal, GpBi
     return retval;
 }
 
+/*****************************************************************************
+ * GdipCreateEffect [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipCreateEffect(const GUID guid, CGpEffect **effect)
+{
+    FIXME("(%s, %p): stub\n", debugstr_guid(&guid), effect);
+
+    if(!effect)
+        return InvalidParameter;
+
+    *effect = NULL;
+
+    return NotImplemented;
+}
+
+/*****************************************************************************
+ * GdipDeleteEffect [GDIPLUS.@]
+ */
 GpStatus WINGDIPAPI GdipDeleteEffect(CGpEffect *effect)
 {
     FIXME("(%p): stub\n", effect);
