@@ -4629,6 +4629,47 @@ static void test_supported_encoders(void)
     GdipDisposeImage((GpImage *)bm);
 }
 
+static void test_createeffect(void)
+{
+    static const GUID noneffect = { 0xcd0c3d4b, 0xe15e, 0x4cf2, { 0x9e, 0xa8, 0x6e, 0x1d, 0x65, 0x48, 0xc5, 0xa5 } };
+    GpStatus (WINAPI *pGdipCreateEffect)( const GUID guid, CGpEffect **effect);
+    GpStatus (WINAPI *pGdipDeleteEffect)( CGpEffect *effect);
+    GpStatus stat;
+    CGpEffect *effect;
+    HMODULE mod = GetModuleHandleA("gdiplus.dll");
+    int i;
+    const GUID effectlist[] =
+               {BlurEffectGuid, SharpenEffectGuid, ColorMatrixEffectGuid, ColorLUTEffectGuid,
+                BrightnessContrastEffectGuid, HueSaturationLightnessEffectGuid, LevelsEffectGuid,
+                TintEffectGuid, ColorBalanceEffectGuid, RedEyeCorrectionEffectGuid, ColorCurveEffectGuid};
+
+    pGdipCreateEffect = (void*)GetProcAddress( mod, "GdipCreateEffect");
+    pGdipDeleteEffect = (void*)GetProcAddress( mod, "GdipDeleteEffect");
+    if(!pGdipCreateEffect || !pGdipDeleteEffect)
+    {
+        /* GdipCreateEffect/GdipDeleteEffect was introduced in Windows Vista. */
+        win_skip("GDIPlus version 1.1 not available\n");
+        return;
+    }
+
+    stat = pGdipCreateEffect(BlurEffectGuid, NULL);
+    expect(InvalidParameter, stat);
+
+    stat = pGdipCreateEffect(noneffect, &effect);
+    todo_wine expect(Win32Error, stat);
+
+    for(i=0; i < sizeof(effectlist) / sizeof(GUID); i++)
+    {
+        stat = pGdipCreateEffect(effectlist[i], &effect);
+        todo_wine expect(Ok, stat);
+        if(stat == Ok)
+        {
+            stat = pGdipDeleteEffect(effect);
+            expect(Ok, stat);
+        }
+    }
+}
+
 START_TEST(image)
 {
     struct GdiplusStartupInput gdiplusStartupInput;
@@ -4683,6 +4724,7 @@ START_TEST(image)
     test_remaptable();
     test_colorkey();
     test_dispose();
+    test_createeffect();
 
     GdiplusShutdown(gdiplusToken);
 }
