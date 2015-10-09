@@ -505,7 +505,7 @@ FileMonikerImpl_BindToObject(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft
                 res=GetClassFile(This->filePathName,&clsID);
                 if (SUCCEEDED(res)){
 
-                    res=CoCreateInstance(&clsID,NULL,CLSCTX_ALL,&IID_IPersistFile,(void**)&ppf);
+                    res=CoCreateInstance(&clsID,NULL,CLSCTX_SERVER,&IID_IPersistFile,(void**)&ppf);
                     if (SUCCEEDED(res)){
 
                         res=IPersistFile_Load(ppf,This->filePathName,STGM_READ);
