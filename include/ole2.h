@@ -107,6 +107,9 @@ HGLOBAL     WINAPI OleMetafilePictFromIconAndLabel(HICON hIcon, LPOLESTR lpszLab
 HRESULT     WINAPI OleLockRunning(LPUNKNOWN pUnknown, BOOL fLock, BOOL fLastUnlockCloses);
 HRESULT     WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID riid,
                 DWORD renderopt, LPFORMATETC lpFormatEtc, LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj);
+HRESULT     WINAPI OleCreateFromFileEx(REFCLSID clsid, LPCOLESTR filename, REFIID iid, DWORD flags,
+                DWORD renderopt, ULONG num_fmts, DWORD *adv_flags, LPFORMATETC fmts, IAdviseSink *sink,
+                DWORD *conns, LPOLECLIENTSITE client_site, LPSTORAGE storage, LPVOID* obj);
 HRESULT     WINAPI OleCreateLink(LPMONIKER pmkLinkSrc, REFIID riid, DWORD renderopt, LPFORMATETC lpFormatEtc,
                 LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj);
 HRESULT     WINAPI OleCreate(REFCLSID rclsid, REFIID riid, DWORD renderopt, LPFORMATETC pFormatEtc, LPOLECLIENTSITE pClientSite,

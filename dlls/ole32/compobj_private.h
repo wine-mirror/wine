@@ -315,6 +315,8 @@ extern LSTATUS open_classes_key(HKEY, const WCHAR *, REGSAM, HKEY *) DECLSPEC_HI
 
 extern BOOL actctx_get_miscstatus(const CLSID*, DWORD, DWORD*) DECLSPEC_HIDDEN;
 
+extern const char *debugstr_formatetc(const FORMATETC *formatetc) DECLSPEC_HIDDEN;
+
 static inline void *heap_alloc(size_t len)
 {
     return HeapAlloc(GetProcessHeap(), 0, len);

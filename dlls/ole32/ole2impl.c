@@ -233,6 +233,37 @@ HRESULT WINAPI OleCreateStaticFromData(IDataObject *data, REFIID iid,
 }
 
 /******************************************************************************
+ *              OleCreateFromFileEx        [OLE32.@]
+ */
+HRESULT WINAPI OleCreateFromFileEx(REFCLSID clsid, const OLECHAR *filename, REFIID iid, DWORD flags,
+                                   DWORD renderopt, ULONG num_fmts, DWORD *adv_flags, FORMATETC *fmts, IAdviseSink *sink,
+                                   DWORD *conns, IOleClientSite *client_site, IStorage *stg, void **obj)
+{
+    ULONG i;
+
+    FIXME("%s: stub!\n", debugstr_w(filename));
+    TRACE("cls %s, %s, iid %s, flags %d, render opts %d, num fmts %d, adv flags %p, fmts %p\n", debugstr_guid(clsid),
+          debugstr_w(filename), debugstr_guid(iid), flags, renderopt, num_fmts, adv_flags, fmts);
+    TRACE("sink %p, conns %p, client site %p, storage %p, obj %p\n", sink, conns, client_site, stg, obj);
+    for (i = 0; i < num_fmts; i++)
+        TRACE("\t%d: fmt %s adv flags %d\n", i, debugstr_formatetc(fmts + i), adv_flags[i]);
+
+    return E_NOTIMPL;
+}
+
+/******************************************************************************
+ *              OleCreateFromFile        [OLE32.@]
+ */
+HRESULT WINAPI OleCreateFromFile(REFCLSID clsid, const OLECHAR *filename, REFIID iid, DWORD renderopt,
+                                 FORMATETC *fmt, IOleClientSite *client_site, IStorage *storage, void **obj)
+{
+    DWORD advf = ADVF_PRIMEFIRST;
+
+    return OleCreateFromFileEx(clsid, filename, iid, 0, renderopt, fmt ? 1 : 0, fmt ? &advf : NULL, fmt,
+                               NULL, NULL, client_site, storage, obj);
+}
+
+/******************************************************************************
  *              OleDuplicateData        [OLE32.@]
  *
  * Duplicates clipboard data.

@@ -216,7 +216,7 @@ static inline DataCache *impl_from_IAdviseSink( IAdviseSink *iface )
     return CONTAINING_RECORD(iface, DataCache, IAdviseSink_iface);
 }
 
-static const char * debugstr_formatetc(const FORMATETC *formatetc)
+const char *debugstr_formatetc(const FORMATETC *formatetc)
 {
     return wine_dbg_sprintf("{ cfFormat = 0x%x, ptd = %p, dwAspect = %d, lindex = %d, tymed = %d }",
         formatetc->cfFormat, formatetc->ptd, formatetc->dwAspect,

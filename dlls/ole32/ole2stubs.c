@@ -52,17 +52,6 @@ HRESULT WINAPI OleCreateLink(LPMONIKER pmkLinkSrc, REFIID riid, DWORD renderopt,
 }
 
 /******************************************************************************
- *              OleCreateFromFile        [OLE32.@]
- */
-HRESULT WINAPI OleCreateFromFile(REFCLSID rclsid, LPCOLESTR lpszFileName, REFIID riid,
-            DWORD renderopt, LPFORMATETC lpFormatEtc, LPOLECLIENTSITE pClientSite, LPSTORAGE pStg, LPVOID* ppvObj)
-{
-  FIXME("(not shown), stub!\n");
-  return E_NOTIMPL;
-}
-
-
-/******************************************************************************
  *              OleGetIconOfClass        [OLE32.@]
  */
 HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseTypeAsLabel)
