@@ -345,6 +345,7 @@ SRCDIR_INCLUDES = \
 	gdiplus.h \
 	gdipluscolor.h \
 	gdipluscolormatrix.h \
+	gdipluseffects.h \
 	gdiplusenums.h \
 	gdiplusflat.h \
 	gdiplusgpstubs.h \
