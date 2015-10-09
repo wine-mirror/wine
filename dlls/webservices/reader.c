@@ -557,6 +557,20 @@ static WS_XML_STRING *alloc_xml_string( const char *data, ULONG len )
     return ret;
 }
 
+static WS_XML_UTF8_TEXT *alloc_utf8_text( const char *data, ULONG len )
+{
+    WS_XML_UTF8_TEXT *ret;
+
+    if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
+    ret->text.textType    = WS_XML_TEXT_TYPE_UTF8;
+    ret->value.length     = len;
+    ret->value.bytes      = (BYTE *)(ret + 1);
+    ret->value.dictionary = NULL;
+    ret->value.id         = 0;
+    if (data) memcpy( ret->value.bytes, data, len );
+    return ret;
+}
+
 static inline BOOL read_end_of_data( struct reader *reader )
 {
     return reader->read_pos >= reader->read_size;
@@ -749,6 +763,45 @@ error:
     return hr;
 }
 
+static HRESULT read_text( struct reader *reader )
+{
+    unsigned int len = 0, ch, skip;
+    const char *start;
+    struct node *node;
+    WS_XML_TEXT_NODE *text;
+    WS_XML_UTF8_TEXT *utf8;
+
+    start = read_current_ptr( reader );
+    for (;;)
+    {
+        if (read_end_of_data( reader )) break;
+        if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
+        if (ch == '<') break;
+        read_skip( reader, skip );
+        len += skip;
+    }
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_TEXT ))) return E_OUTOFMEMORY;
+    text = (WS_XML_TEXT_NODE *)node;
+    if (!(utf8 = alloc_utf8_text( start, len )))
+    {
+        heap_free( node );
+        return E_OUTOFMEMORY;
+    }
+    text->text = (WS_XML_TEXT *)utf8;
+
+    list_add_after( &reader->current->entry, &node->entry );
+    reader->current = node;
+    reader->state   = READER_STATE_TEXT;
+    return S_OK;
+}
+
+static HRESULT read_startelement( struct reader *reader )
+{
+    if (!read_cmp( reader, "<", 1 )) return read_element( reader );
+    return read_text( reader );
+}
+
 static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
 {
     HRESULT hr;
@@ -778,6 +831,20 @@ static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
     }
 
     return hr;
+}
+
+/**************************************************************************
+ *          WsReadStartElement		[webservices.@]
+ */
+HRESULT WINAPI WsReadStartElement( WS_XML_READER *handle, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+    return read_startelement( reader );
 }
 
 /**************************************************************************
