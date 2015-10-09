@@ -500,7 +500,7 @@ FileMonikerImpl_BindToObject(IMoniker* iface, IBindCtx* pbc, IMoniker* pmkToLeft
             /* if the requested class was loaded before ! we don't need to reload it */
             res = IRunningObjectTable_GetObject(prot,iface,&pObj);
 
-            if (res==S_FALSE){
+            if (res != S_OK){
                 /* first activation of this class */
                 res=GetClassFile(This->filePathName,&clsID);
                 if (SUCCEEDED(res)){
