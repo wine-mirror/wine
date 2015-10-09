@@ -292,6 +292,43 @@ static void test_device_interfaces(void)
     }
 }
 
+static void test_get_immediate_context(void)
+{
+    ID3D11DeviceContext *immediate_context, *previous_immediate_context;
+    ULONG expected_refcount, refcount;
+    ID3D11Device *device;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u.\n", refcount);
+    previous_immediate_context = immediate_context;
+
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+    ok(immediate_context == previous_immediate_context, "Got different immediate device context objects.\n");
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID3D11DeviceContext_Release(previous_immediate_context);
+    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    refcount = ID3D11DeviceContext_Release(immediate_context);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    ID3D11Device_GetImmediateContext(device, &immediate_context);
+    ok(immediate_context == previous_immediate_context, "Got different immediate device context objects.\n");
+    refcount = ID3D11DeviceContext_Release(immediate_context);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_create_texture2d(void)
 {
     ULONG refcount, expected_refcount;
@@ -2125,6 +2162,7 @@ START_TEST(d3d11)
 {
     test_create_device();
     test_device_interfaces();
+    test_get_immediate_context();
     test_create_texture2d();
     test_texture2d_interfaces();
     test_create_texture3d();
