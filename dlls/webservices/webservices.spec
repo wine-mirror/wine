@@ -120,7 +120,7 @@
 @ stub WsReadQualifiedName
 @ stub WsReadStartAttribute
 @ stub WsReadStartElement
-@ stub WsReadToStartElement
+@ stdcall WsReadToStartElement(ptr ptr ptr ptr ptr)
 @ stub WsReadType
 @ stub WsReadValue
 @ stub WsReadXmlBuffer

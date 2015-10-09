@@ -28,6 +28,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
+static const char *debugstr_xmlstr( const WS_XML_STRING *str )
+{
+    if (!str) return "(null)";
+    return debugstr_an( (const char *)str->bytes, str->length );
+}
+
 static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
@@ -334,10 +340,22 @@ reader_props[] =
     { sizeof(ULONG), FALSE },      /* WS_XML_READER_PROPERTY_MAX_NAMESPACES */
 };
 
+enum reader_state
+{
+    READER_STATE_INITIAL,
+    READER_STATE_BOF,
+    READER_STATE_STARTELEMENT,
+    READER_STATE_TEXT,
+    READER_STATE_ENDELEMENT,
+    READER_STATE_EOF
+};
+
 struct reader
 {
     ULONG                   read_size;
     ULONG                   read_pos;
+    const char             *read_bufptr;
+    enum reader_state       state;
     struct list             nodes;
     struct node            *current;
     const char             *input_data;
@@ -428,6 +446,7 @@ HRESULT WINAPI WsCreateReader( const WS_XML_READER_PROPERTY *properties, ULONG c
     list_init( &reader->nodes );
     list_add_tail( &reader->nodes, &node->entry );
     reader->current = node;
+    reader->state   = READER_STATE_INITIAL;
 
     *handle = (WS_XML_READER *)reader;
     return S_OK;
@@ -525,6 +544,259 @@ HRESULT WINAPI WsGetReaderProperty( WS_XML_READER *handle, WS_XML_READER_PROPERT
     return get_reader_prop( reader, id, buf, size );
 }
 
+static WS_XML_STRING *alloc_xml_string( const char *data, ULONG len )
+{
+    WS_XML_STRING *ret;
+
+    if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
+    ret->length     = len;
+    ret->bytes      = (BYTE *)(ret + 1);
+    ret->dictionary = NULL;
+    ret->id         = 0;
+    if (data) memcpy( ret->bytes, data, len );
+    return ret;
+}
+
+static inline BOOL read_end_of_data( struct reader *reader )
+{
+    return reader->read_pos >= reader->read_size;
+}
+
+static inline const char *read_current_ptr( struct reader *reader )
+{
+    return &reader->read_bufptr[reader->read_pos];
+}
+
+/* UTF-8 support based on libs/wine/utf8.c */
+
+/* number of following bytes in sequence based on first byte value (for bytes above 0x7f) */
+static const char utf8_length[128] =
+{
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x80-0x8f */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
+    0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
+    0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xc0-0xcf */
+    1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xd0-0xdf */
+    2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xe0-0xef */
+    3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
+};
+
+/* first byte mask depending on UTF-8 sequence length */
+static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
+
+/* minimum Unicode value depending on UTF-8 sequence length */
+static const unsigned int utf8_minval[4] = { 0x0, 0x80, 0x800, 0x10000 };
+
+static inline unsigned int read_utf8_char( struct reader *reader, unsigned int *skip )
+{
+    unsigned int len, res;
+    unsigned char ch = reader->read_bufptr[reader->read_pos];
+    const char *end;
+
+    if (reader->read_pos >= reader->read_size) return 0;
+
+    if (ch < 0x80)
+    {
+        *skip = 1;
+        return ch;
+    }
+    len = utf8_length[ch - 0x80];
+    if (reader->read_pos + len >= reader->read_size) return 0;
+    end = reader->read_bufptr + reader->read_pos + len;
+    res = ch & utf8_mask[len];
+
+    switch (len)
+    {
+    case 3:
+        if ((ch = end[-3] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+    case 2:
+        if ((ch = end[-2] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+    case 1:
+        if ((ch = end[-1] ^ 0x80) >= 0x40) break;
+        res = (res << 6) | ch;
+        if (res < utf8_minval[len]) break;
+        *skip = len + 1;
+        return res;
+    }
+
+    return 0;
+}
+
+static inline void read_skip( struct reader *reader, unsigned int count )
+{
+    while (reader->read_pos < reader->read_size && count)
+    {
+        reader->read_pos++;
+        count--;
+    }
+}
+
+static inline BOOL read_isnamechar( unsigned int ch )
+{
+    /* FIXME: incomplete */
+    return (ch >= 'A' && ch <= 'Z') ||
+           (ch >= 'a' && ch <= 'z') ||
+           (ch >= '0' && ch <= '9') ||
+           ch == '_' || ch == '-' || ch == '.' || ch == ':';
+}
+
+static inline BOOL read_isspace( unsigned int ch )
+{
+    return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
+}
+
+static inline void read_skip_whitespace( struct reader *reader )
+{
+    while (reader->read_pos < reader->read_size && read_isspace( reader->read_bufptr[reader->read_pos] ))
+        reader->read_pos++;
+}
+
+static inline int read_cmp( struct reader *reader, const char *str, int len )
+{
+    const char *ptr = read_current_ptr( reader );
+
+    if (len < 0) len = strlen( str );
+    if (reader->read_pos + len > reader->read_size) return -1;
+    while (len--)
+    {
+        if (*str != *ptr) return *ptr - *str;
+        str++; ptr++;
+    }
+    return 0;
+}
+
+static HRESULT read_xmldecl( struct reader *reader )
+{
+    if (!reader->read_size) return WS_E_INVALID_FORMAT;
+
+    if (read_cmp( reader, "<", 1 ) || read_cmp( reader, "<?", 2 ))
+    {
+        reader->state = READER_STATE_BOF;
+        return S_OK;
+    }
+    if (read_cmp( reader, "<?xml ", 6 )) return WS_E_INVALID_FORMAT;
+    read_skip( reader, 6 );
+
+    /* FIXME: parse attributes */
+    while (reader->read_pos < reader->read_size && reader->read_bufptr[reader->read_pos] != '?')
+        reader->read_pos++;
+
+    if (read_cmp( reader, "?>", 2 )) return WS_E_INVALID_FORMAT;
+    read_skip( reader, 2 );
+
+    reader->state = READER_STATE_BOF;
+    return S_OK;
+}
+
+static HRESULT read_element( struct reader *reader )
+{
+    unsigned int len = 0, ch, skip;
+    const char *start;
+    struct node *node;
+    WS_XML_ELEMENT_NODE *elem;
+    HRESULT hr = WS_E_INVALID_FORMAT;
+
+    if (read_end_of_data( reader ))
+    {
+        reader->current = LIST_ENTRY( list_tail( &reader->nodes ), struct node, entry );
+        reader->state   = READER_STATE_EOF;
+        return S_OK;
+    }
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) return E_OUTOFMEMORY;
+    elem = (WS_XML_ELEMENT_NODE *)node;
+
+    if (read_cmp( reader, "<", 1 )) goto error;
+    read_skip( reader, 1 );
+
+    start = read_current_ptr( reader );
+    for (;;)
+    {
+        if (!(ch = read_utf8_char( reader, &skip ))) goto error;
+        if (!read_isnamechar( ch )) break;
+        read_skip( reader, skip );
+        len += skip;
+    }
+    if (!len) goto error;
+
+    hr = E_OUTOFMEMORY;
+    if (!(elem->localName = alloc_xml_string( start, len ))) goto error;
+    if (!(elem->prefix = alloc_xml_string( NULL, 0 ))) goto error;
+    elem->prefix->bytes = NULL;
+    if (!(elem->ns = alloc_xml_string( NULL, 0 ))) goto error;
+
+    /* FIXME: parse attributes */
+    while (reader->read_pos < reader->read_size && reader->read_bufptr[reader->read_pos] != '>')
+        reader->read_pos++;
+
+    if (read_cmp( reader, ">", 1 ))
+    {
+        hr = WS_E_INVALID_FORMAT;
+        goto error;
+    }
+    read_skip( reader, 1 );
+
+    list_add_after( &reader->current->entry, &node->entry );
+    reader->current = node;
+    reader->state   = READER_STATE_STARTELEMENT;
+    return S_OK;
+
+error:
+    free_node( node );
+    return hr;
+}
+
+static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
+{
+    HRESULT hr;
+
+    switch (reader->state)
+    {
+    case READER_STATE_INITIAL:
+    {
+        if ((hr = read_xmldecl( reader )) != S_OK) return hr;
+        break;
+    }
+    case READER_STATE_STARTELEMENT:
+        if (found) *found = TRUE;
+        return S_OK;
+
+    default:
+        break;
+    }
+
+    read_skip_whitespace( reader );
+    if ((hr = read_element( reader )) == S_OK && found)
+    {
+        if (reader->state == READER_STATE_STARTELEMENT)
+            *found = TRUE;
+        else
+            *found = FALSE;
+    }
+
+    return hr;
+}
+
+/**************************************************************************
+ *          WsReadToStartElement		[webservices.@]
+ */
+HRESULT WINAPI WsReadToStartElement( WS_XML_READER *handle, const WS_XML_STRING *localname,
+                                     const WS_XML_STRING *ns, BOOL *found, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %s %s %p %p\n", handle, debugstr_xmlstr(localname), debugstr_xmlstr(ns), found, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+    if (localname || ns) FIXME( "name and/or namespace not verified\n" );
+
+    return read_to_startelement( reader, found );
+}
+
 /**************************************************************************
  *          WsSetErrorProperty		[webservices.@]
  */
@@ -579,6 +851,7 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
             WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
             reader->input_data = buf->encodedData;
             reader->input_size = buf->encodedDataSize;
+            reader->read_bufptr = reader->input_data;
             break;
         }
         default:
@@ -595,6 +868,7 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
     list_add_head( &reader->nodes, &node->entry );
     reader->current = node;
+    reader->state   = READER_STATE_INITIAL;
 
     return S_OK;
 }
