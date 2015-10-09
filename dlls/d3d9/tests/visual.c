@@ -117,59 +117,90 @@ static DWORD getPixelColorFromSurface(IDirect3DSurface9 *surface, UINT x, UINT y
     return color;
 }
 
+struct surface_readback
+{
+    IDirect3DSurface9 *surface;
+    D3DLOCKED_RECT locked_rect;
+};
+
+static void get_rt_readback(IDirect3DSurface9 *surface, struct surface_readback *rb)
+{
+    IDirect3DDevice9 *device;
+    HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+    IDirect3DSurface9_GetDevice(surface, &device);
+    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 640, 480,
+            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &rb->surface, NULL);
+    if (FAILED(hr) || !rb->surface)
+    {
+        trace("Can't create an offscreen plain surface to read the render target data, hr %#x.\n", hr);
+        goto error;
+    }
+
+    hr = IDirect3DDevice9_GetRenderTargetData(device, surface, rb->surface);
+    if (FAILED(hr))
+    {
+        trace("Can't read the render target data, hr %#x.\n", hr);
+        goto error;
+    }
+
+    hr = IDirect3DSurface9_LockRect(rb->surface, &rb->locked_rect, NULL, D3DLOCK_READONLY);
+    if (FAILED(hr))
+    {
+        trace("Can't lock the offscreen surface, hr %#x.\n", hr);
+        goto error;
+    }
+    IDirect3DDevice9_Release(device);
+
+    return;
+
+error:
+    if (rb->surface)
+        IDirect3DSurface9_Release(rb->surface);
+    rb->surface = NULL;
+    IDirect3DDevice9_Release(device);
+}
+
+static DWORD get_readback_color(struct surface_readback *rb, unsigned int x, unsigned int y)
+{
+    return rb->locked_rect.pBits
+            ? ((DWORD *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(DWORD) + x] : 0xdeadbeef;
+}
+
+static void release_surface_readback(struct surface_readback *rb)
+{
+    HRESULT hr;
+
+    if (!rb->surface)
+        return;
+    if (rb->locked_rect.pBits && FAILED(hr = IDirect3DSurface9_UnlockRect(rb->surface)))
+        trace("Can't unlock the offscreen surface, hr %#x.\n", hr);
+    IDirect3DSurface9_Release(rb->surface);
+}
+
 static DWORD getPixelColor(IDirect3DDevice9 *device, UINT x, UINT y)
 {
     DWORD ret;
-    IDirect3DSurface9 *surf = NULL, *target = NULL;
+    IDirect3DSurface9 *rt;
+    struct surface_readback rb;
     HRESULT hr;
-    D3DLOCKED_RECT lockedRect;
-    RECT rectToLock = {x, y, x+1, y+1};
 
-    hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 640, 480,
-            D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &surf, NULL);
-    if (FAILED(hr) || !surf)
-    {
-        trace("Can't create an offscreen plain surface to read the render target data, hr=%08x\n", hr);
-        return 0xdeadbeef;
-    }
-
-    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &target);
+    hr = IDirect3DDevice9_GetRenderTarget(device, 0, &rt);
     if(FAILED(hr))
     {
-        trace("Can't get the render target, hr=%08x\n", hr);
-        ret = 0xdeadbeed;
-        goto out;
+        trace("Can't get the render target, hr %#x.\n", hr);
+        return 0xdeadbeed;
     }
 
-    hr = IDirect3DDevice9_GetRenderTargetData(device, target, surf);
-    if (FAILED(hr))
-    {
-        trace("Can't read the render target data, hr=%08x\n", hr);
-        ret = 0xdeadbeec;
-        goto out;
-    }
-
-    hr = IDirect3DSurface9_LockRect(surf, &lockedRect, &rectToLock, D3DLOCK_READONLY);
-    if(FAILED(hr))
-    {
-        trace("Can't lock the offscreen surface, hr=%08x\n", hr);
-        ret = 0xdeadbeeb;
-        goto out;
-    }
-
+    get_rt_readback(rt, &rb);
     /* Remove the X channel for now. DirectX and OpenGL have different ideas how to treat it apparently, and it isn't
      * really important for these tests
      */
-    ret = ((DWORD *) lockedRect.pBits)[0] & 0x00ffffff;
-    hr = IDirect3DSurface9_UnlockRect(surf);
-    if(FAILED(hr))
-    {
-        trace("Can't unlock the offscreen surface, hr=%08x\n", hr);
-    }
+    ret = get_readback_color(&rb, x, y) & 0x00ffffff;
+    release_surface_readback(&rb);
 
-out:
-    if(target) IDirect3DSurface9_Release(target);
-    if(surf) IDirect3DSurface9_Release(surf);
+    IDirect3DSurface9_Release(rt);
     return ret;
 }
 
@@ -19633,7 +19664,7 @@ static void test_updatetexture(void)
 
                 color = getPixelColor(device, 320, 240);
                 ok (color_match(color, 0x007f7f00, 2) || broken(tests[i].broken)
-                        || broken(color == 0xdeadbeec), /* WARP device often just breaks down. */
+                        || broken(color == 0x00adbeef), /* WARP device often just breaks down. */
                         "Got unexpected color 0x%08x, case %u, %u.\n", color, t, i);
             }
 
