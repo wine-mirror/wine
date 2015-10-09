@@ -1978,6 +1978,9 @@ static struct symt* dwarf2_parse_subprogram(dwarf2_parse_context_t* ctx,
         case DW_TAG_pointer_type:
             dwarf2_parse_pointer_type(subpgm.ctx, di);
             break;
+        case DW_TAG_const_type:
+            dwarf2_parse_const_type(subpgm.ctx, di);
+            break;
         case DW_TAG_subprogram:
             /* FIXME: likely a declaration (to be checked)
              * skip it for now
