@@ -1341,7 +1341,7 @@ static void test_create_blend_state(void)
 
     ID3D11BlendState_GetDesc(d3d11_blend_state, &d3d11_blend_desc);
     ok(d3d11_blend_desc.AlphaToCoverageEnable == blend_desc.AlphaToCoverageEnable,
-            "Got unexpected alpha to coverage %#x.\n", d3d11_blend_desc.AlphaToCoverageEnable);
+            "Got unexpected alpha to coverage enable %#x.\n", d3d11_blend_desc.AlphaToCoverageEnable);
     ok(d3d11_blend_desc.IndependentBlendEnable == FALSE,
             "Got unexpected independent blend enable %#x.\n", d3d11_blend_desc.IndependentBlendEnable);
     for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
@@ -1404,7 +1404,7 @@ static void test_create_blend_state(void)
 
     ID3D11BlendState_GetDesc(d3d11_blend_state, &d3d11_blend_desc);
     ok(d3d11_blend_desc.AlphaToCoverageEnable == blend_desc.AlphaToCoverageEnable,
-            "Got unexpected alpha to coverage %#x.\n", d3d11_blend_desc.AlphaToCoverageEnable);
+            "Got unexpected alpha to coverage enable %#x.\n", d3d11_blend_desc.AlphaToCoverageEnable);
     ok(d3d11_blend_desc.IndependentBlendEnable == TRUE,
             "Got unexpected independent blend enable %#x.\n", d3d11_blend_desc.IndependentBlendEnable);
     for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
