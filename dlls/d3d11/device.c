@@ -1215,14 +1215,18 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device1 *iface,
         FIXME("Ignoring AlphaToCoverageEnable %#x.\n", desc->AlphaToCoverageEnable);
     /* glEnableIndexedEXT(GL_BLEND, ...) */
     FIXME("Per-rendertarget blend not implemented.\n");
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ALPHABLENDENABLE, desc->RenderTarget[0].BlendEnable);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ALPHABLENDENABLE,
+            desc->RenderTarget[0].BlendEnable);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SRCBLEND, desc->RenderTarget[0].SrcBlend);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DESTBLEND, desc->RenderTarget[0].DestBlend);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BLENDOP, desc->RenderTarget[0].BlendOp);
     wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SEPARATEALPHABLENDENABLE, TRUE);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SRCBLENDALPHA, desc->RenderTarget[0].SrcBlendAlpha);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DESTBLENDALPHA, desc->RenderTarget[0].DestBlendAlpha);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BLENDOPALPHA, desc->RenderTarget[0].BlendOpAlpha);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SRCBLENDALPHA,
+            desc->RenderTarget[0].SrcBlendAlpha);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DESTBLENDALPHA,
+            desc->RenderTarget[0].DestBlendAlpha);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BLENDOPALPHA,
+            desc->RenderTarget[0].BlendOpAlpha);
     FIXME("Color mask > 3 not implemented.\n");
     wined3d_device_set_render_state(device->wined3d_device,
             WINED3D_RS_COLORWRITEENABLE, desc->RenderTarget[0].RenderTargetWriteMask);
