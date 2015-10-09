@@ -10195,7 +10195,7 @@ static BOOL point_match(IDirect3DDevice9 *device, UINT x, UINT y, UINT r)
     return TRUE;
 }
 
-static void pointsize_test(void)
+static void test_pointsize(void)
 {
     static const float a = 1.0f, b = 1.0f, c = 1.0f;
     float ptsize, ptsizemax_orig, ptsizemin_orig;
@@ -10718,35 +10718,40 @@ static void pointsize_test(void)
             }
             else
             {
+                struct surface_readback rb;
+
+                get_rt_readback(backbuffer, &rb);
                 /* On AMD apparently only the first texcoord is modified by the point coordinates
                  * when using SM2/3 pixel shaders. */
-                color = getPixelColor(device, 64 - size / 2 + 1, 64 - size / 2 + 1);
+                color = get_readback_color(&rb, 64 - size / 2 + 1, 64 - size / 2 + 1);
                 ok(color_match(color, 0x00ff0000, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 + size / 2 - 1, 64 - size / 2 + 1);
+                color = get_readback_color(&rb, 64 + size / 2 - 1, 64 - size / 2 + 1);
                 ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x00ffff00, 0)
                         || (allow_broken && broken(color_match(color, 0x00ff0000, 0))),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 - size / 2 + 1, 64 + size / 2 - 1);
+                color = get_readback_color(&rb, 64 - size / 2 + 1, 64 + size / 2 - 1);
                 ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x00000000, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 + size / 2 - 1, 64 + size / 2 - 1);
+                color = get_readback_color(&rb, 64 + size / 2 - 1, 64 + size / 2 - 1);
                 ok(color_match(color, test_setups[i].gives_0_0_texcoord ? 0x00ff0000 : 0x0000ff00, 0)
                         || (allow_broken && broken(color_match(color, 0x00000000, 0))),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
 
-                color = getPixelColor(device, 64 - size / 2 - 1, 64 - size / 2 - 1);
-                ok(color_match(color, 0x0000ffff, 0),
+                color = get_readback_color(&rb, 64 - size / 2 - 1, 64 - size / 2 - 1);
+                ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 + size / 2 + 1, 64 - size / 2 - 1);
-                ok(color_match(color, 0x0000ffff, 0),
+                color = get_readback_color(&rb, 64 + size / 2 + 1, 64 - size / 2 - 1);
+                ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 - size / 2 - 1, 64 + size / 2 + 1);
-                ok(color_match(color, 0x0000ffff, 0),
+                color = get_readback_color(&rb, 64 - size / 2 - 1, 64 + size / 2 + 1);
+                ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 + size / 2 + 1, 64 + size / 2 + 1);
-                ok(color_match(color, 0x0000ffff, 0),
+                color = get_readback_color(&rb, 64 + size / 2 + 1, 64 + size / 2 + 1);
+                ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+
+                release_surface_readback(&rb);
             }
         }
         IDirect3DDevice9_SetVertexShader(device, NULL);
@@ -20008,7 +20013,7 @@ START_TEST(visual)
     fixed_function_decl_test();
     conditional_np2_repeat_test();
     fixed_function_bumpmap_test();
-    pointsize_test();
+    test_pointsize();
     tssargtemp_test();
     np2_stretch_rect_test();
     yuv_color_test();
