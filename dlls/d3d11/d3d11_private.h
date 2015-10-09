@@ -360,6 +360,14 @@ HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d_device *device,
         const D3D10_QUERY_DESC *desc, BOOL predicate) DECLSPEC_HIDDEN;
 struct d3d10_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;
 
+/* ID3D11DeviceContext - immediate context */
+struct d3d11_immediate_context
+{
+    ID3D11DeviceContext ID3D11DeviceContext_iface;
+    LONG refcount;
+    ID3D11Device *device;
+};
+
 /* ID3D11Device, ID3D10Device1 */
 struct d3d_device
 {
@@ -370,6 +378,8 @@ struct d3d_device
     IWineDXGIDeviceParent IWineDXGIDeviceParent_iface;
     IUnknown *outer_unk;
     LONG refcount;
+
+    struct d3d11_immediate_context immediate_context;
 
     struct wined3d_device_parent device_parent;
     struct wined3d_device *wined3d_device;

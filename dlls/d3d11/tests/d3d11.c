@@ -61,7 +61,7 @@ static void test_create_device(void)
 {
     D3D_FEATURE_LEVEL feature_level, supported_feature_level;
     DXGI_SWAP_CHAIN_DESC swapchain_desc, obtained_desc;
-    ID3D11DeviceContext *immediate_context = NULL;
+    ID3D11DeviceContext *immediate_context;
     IDXGISwapChain *swapchain;
     ID3D11Device *device;
     ULONG refcount;
@@ -72,7 +72,7 @@ static void test_create_device(void)
             NULL, NULL);
     if (FAILED(hr))
     {
-        skip("Failed to create HAL device, skipping tests.\n");
+        skip("Failed to create HAL device.\n");
         return;
     }
 
@@ -92,19 +92,16 @@ static void test_create_device(void)
             &immediate_context);
     ok(SUCCEEDED(hr), "D3D11CreateDevice failed %#x.\n", hr);
 
-    todo_wine ok(!!immediate_context, "Immediate context is NULL.\n");
-    if (immediate_context)
-    {
-        refcount = get_refcount((IUnknown *)immediate_context);
-        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ok(!!immediate_context, "Expected immediate device context pointer, got NULL.\n");
+    refcount = get_refcount((IUnknown *)immediate_context);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
-        ID3D11DeviceContext_GetDevice(immediate_context, &device);
-        refcount = ID3D11Device_Release(device);
-        ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
+    ID3D11DeviceContext_GetDevice(immediate_context, &device);
+    refcount = ID3D11Device_Release(device);
+    ok(refcount == 1, "Got refcount %u, expected 1.\n", refcount);
 
-        refcount = ID3D11DeviceContext_Release(immediate_context);
-        ok(!refcount, "ID3D11DeviceContext has %u references left.\n", refcount);
-    }
+    refcount = ID3D11DeviceContext_Release(immediate_context);
+    ok(!refcount, "ID3D11DeviceContext has %u references left.\n", refcount);
 
     device = (ID3D11Device *)0xdeadbeef;
     feature_level = 0xdeadbeef;
@@ -114,7 +111,7 @@ static void test_create_device(void)
     todo_wine ok(hr == E_INVALIDARG, "D3D11CreateDevice returned %#x.\n", hr);
     ok(!device, "Got unexpected device pointer %p.\n", device);
     ok(!feature_level, "Got unexpected feature level %#x.\n", feature_level);
-    ok(!immediate_context, "Got unexpected immediate_context pointer %p.\n", immediate_context);
+    ok(!immediate_context, "Got unexpected immediate context pointer %p.\n", immediate_context);
 
     window = CreateWindowA("static", "d3d11_test", 0, 0, 0, 0, 0, 0, 0, 0, 0);
 
