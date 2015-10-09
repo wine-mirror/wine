@@ -833,6 +833,49 @@ static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
     return hr;
 }
 
+static HRESULT read_endelement( struct reader *reader )
+{
+    struct node *node;
+    unsigned int ch, skip;
+
+    if (reader->state != READER_STATE_TEXT) return WS_E_INVALID_FORMAT;
+
+    if (read_cmp( reader, "</", 2 )) return WS_E_INVALID_FORMAT;
+    read_skip( reader, 2 );
+
+    for (;;)
+    {
+        if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
+        if (ch == '>')
+        {
+            read_skip( reader, 1 );
+            break;
+        }
+        if (!read_isnamechar( ch )) return WS_E_INVALID_FORMAT;
+        read_skip( reader, skip );
+    }
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_END_ELEMENT ))) return E_OUTOFMEMORY;
+    list_add_after( &reader->current->entry, &node->entry );
+    reader->current = node;
+    reader->state   = READER_STATE_ENDELEMENT;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsReadEndElement		[webservices.@]
+ */
+HRESULT WINAPI WsReadEndElement( WS_XML_READER *handle, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+    return read_endelement( reader );
+}
+
 /**************************************************************************
  *          WsReadStartElement		[webservices.@]
  */
