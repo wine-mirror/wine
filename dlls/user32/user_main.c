@@ -81,7 +81,7 @@ void USER_Unlock(void)
  */
 void USER_CheckNotLock(void)
 {
-    if (user_section.OwningThread == ULongToHandle(GetCurrentThreadId()) && user_section.RecursionCount)
+    if (RtlIsCriticalSectionLockedByThread(&user_section))
     {
         ERR( "BUG: holding USER lock\n" );
         DebugBreak();
