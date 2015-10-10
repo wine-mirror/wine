@@ -610,6 +610,43 @@ BOOL WINAPI RtlTryEnterCriticalSection( RTL_CRITICAL_SECTION *crit )
 
 
 /***********************************************************************
+ *           RtlIsCriticalSectionLocked   (NTDLL.@)
+ *
+ * Checks if the critical section is locked by any thread.
+ *
+ * PARAMS
+ *  crit [I/O] Critical section to check.
+ *
+ * RETURNS
+ *  Success: TRUE. The critical section is locked.
+ *  Failure: FALSE. The critical section is not locked.
+ */
+BOOL WINAPI RtlIsCriticalSectionLocked( RTL_CRITICAL_SECTION *crit )
+{
+    return crit->RecursionCount != 0;
+}
+
+
+/***********************************************************************
+ *           RtlIsCriticalSectionLockedByThread   (NTDLL.@)
+ *
+ * Checks if the critical section is locked by the current thread.
+ *
+ * PARAMS
+ *  crit [I/O] Critical section to check.
+ *
+ * RETURNS
+ *  Success: TRUE. The critical section is locked.
+ *  Failure: FALSE. The critical section is not locked.
+ */
+BOOL WINAPI RtlIsCriticalSectionLockedByThread( RTL_CRITICAL_SECTION *crit )
+{
+    return crit->OwningThread == ULongToHandle(GetCurrentThreadId()) &&
+           crit->RecursionCount;
+}
+
+
+/***********************************************************************
  *           RtlLeaveCriticalSection   (NTDLL.@)
  *
  * Leaves a critical section.

@@ -2008,7 +2008,7 @@ static void test_RtlIsCriticalSectionLocked(void)
 
     if (!pRtlIsCriticalSectionLocked || !pRtlIsCriticalSectionLockedByThread)
     {
-        skip("skipping RtlIsCriticalSectionLocked tests, required functions not available\n");
+        win_skip("skipping RtlIsCriticalSectionLocked tests, required functions not available\n");
         return;
     }
 

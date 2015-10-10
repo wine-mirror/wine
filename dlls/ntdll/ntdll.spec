@@ -719,6 +719,8 @@
 # @ stub RtlIpv6StringToAddressExW
 # @ stub RtlIpv6StringToAddressW
 @ stdcall RtlIsActivationContextActive(ptr)
+@ stdcall RtlIsCriticalSectionLocked(ptr)
+@ stdcall RtlIsCriticalSectionLockedByThread(ptr)
 @ stdcall RtlIsDosDeviceName_U(wstr)
 @ stub RtlIsGenericTableEmpty
 # @ stub RtlIsGenericTableEmptyAvl
