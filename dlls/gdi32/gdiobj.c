@@ -867,7 +867,7 @@ void GDI_ReleaseObj( HGDIOBJ handle )
  */
 void GDI_CheckNotLock(void)
 {
-    if (gdi_section.OwningThread == ULongToHandle(GetCurrentThreadId()) && gdi_section.RecursionCount)
+    if (RtlIsCriticalSectionLockedByThread(&gdi_section))
     {
         ERR( "BUG: holding GDI lock\n" );
         DebugBreak();
