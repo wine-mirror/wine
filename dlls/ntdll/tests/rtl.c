@@ -96,6 +96,8 @@ static NTSTATUS  (WINAPI *pRtlGetCompressionWorkSpaceSize)(USHORT, PULONG, PULON
 static NTSTATUS  (WINAPI *pRtlDecompressBuffer)(USHORT, PUCHAR, ULONG, const UCHAR*, ULONG, PULONG);
 static NTSTATUS  (WINAPI *pRtlDecompressFragment)(USHORT, PUCHAR, ULONG, const UCHAR*, ULONG, ULONG, PULONG, PVOID);
 static NTSTATUS  (WINAPI *pRtlCompressBuffer)(USHORT, const UCHAR*, ULONG, PUCHAR, ULONG, ULONG, PULONG, PVOID);
+static BOOL      (WINAPI *pRtlIsCriticalSectionLocked)(RTL_CRITICAL_SECTION *);
+static BOOL      (WINAPI *pRtlIsCriticalSectionLockedByThread)(RTL_CRITICAL_SECTION *);
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -147,6 +149,8 @@ static void InitFunctionPtrs(void)
         pRtlDecompressBuffer = (void *)GetProcAddress(hntdll, "RtlDecompressBuffer");
         pRtlDecompressFragment = (void *)GetProcAddress(hntdll, "RtlDecompressFragment");
         pRtlCompressBuffer = (void *)GetProcAddress(hntdll, "RtlCompressBuffer");
+        pRtlIsCriticalSectionLocked = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLocked");
+        pRtlIsCriticalSectionLockedByThread = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLockedByThread");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -1956,6 +1960,102 @@ static void test_RtlDecompressBuffer(void)
 #undef DECOMPRESS_BROKEN_FRAGMENT
 #undef DECOMPRESS_BROKEN_TRUNCATED
 
+struct critsect_locked_info
+{
+    CRITICAL_SECTION crit;
+    HANDLE semaphores[2];
+};
+
+static DWORD WINAPI critsect_locked_thread(void *param)
+{
+    struct critsect_locked_info *info = param;
+    DWORD ret;
+
+    ret = pRtlIsCriticalSectionLocked(&info->crit);
+    ok(ret == TRUE, "expected TRUE, got %u\n", ret);
+    ret = pRtlIsCriticalSectionLockedByThread(&info->crit);
+    ok(ret == FALSE, "expected FALSE, got %u\n", ret);
+
+    ReleaseSemaphore(info->semaphores[0], 1, NULL);
+    ret = WaitForSingleObject(info->semaphores[1], 1000);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", ret);
+
+    ret = pRtlIsCriticalSectionLocked(&info->crit);
+    ok(ret == FALSE, "expected FALSE, got %u\n", ret);
+    ret = pRtlIsCriticalSectionLockedByThread(&info->crit);
+    ok(ret == FALSE, "expected FALSE, got %u\n", ret);
+
+    EnterCriticalSection(&info->crit);
+
+    ret = pRtlIsCriticalSectionLocked(&info->crit);
+    ok(ret == TRUE, "expected TRUE, got %u\n", ret);
+    ret = pRtlIsCriticalSectionLockedByThread(&info->crit);
+    ok(ret == TRUE, "expected TRUE, got %u\n", ret);
+
+    ReleaseSemaphore(info->semaphores[0], 1, NULL);
+    ret = WaitForSingleObject(info->semaphores[1], 1000);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", ret);
+
+    LeaveCriticalSection(&info->crit);
+    return 0;
+}
+
+static void test_RtlIsCriticalSectionLocked(void)
+{
+    struct critsect_locked_info info;
+    HANDLE thread;
+    BOOL ret;
+
+    if (!pRtlIsCriticalSectionLocked || !pRtlIsCriticalSectionLockedByThread)
+    {
+        skip("skipping RtlIsCriticalSectionLocked tests, required functions not available\n");
+        return;
+    }
+
+    InitializeCriticalSection(&info.crit);
+    info.semaphores[0] = CreateSemaphoreW(NULL, 0, 1, NULL);
+    ok(info.semaphores[0] != NULL, "CreateSemaphore failed with %u\n", GetLastError());
+    info.semaphores[1] = CreateSemaphoreW(NULL, 0, 1, NULL);
+    ok(info.semaphores[1] != NULL, "CreateSemaphore failed with %u\n", GetLastError());
+
+    ret = pRtlIsCriticalSectionLocked(&info.crit);
+    ok(ret == FALSE, "expected FALSE, got %u\n", ret);
+    ret = pRtlIsCriticalSectionLockedByThread(&info.crit);
+    ok(ret == FALSE, "expected FALSE, got %u\n", ret);
+
+    EnterCriticalSection(&info.crit);
+
+    ret = pRtlIsCriticalSectionLocked(&info.crit);
+    ok(ret == TRUE, "expected TRUE, got %u\n", ret);
+    ret = pRtlIsCriticalSectionLockedByThread(&info.crit);
+    ok(ret == TRUE, "expected TRUE, got %u\n", ret);
+
+    thread = CreateThread(NULL, 0, critsect_locked_thread, &info, 0, NULL);
+    ok(thread != NULL, "CreateThread failed with %u\n", GetLastError());
+    ret = WaitForSingleObject(info.semaphores[0], 1000);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", ret);
+
+    LeaveCriticalSection(&info.crit);
+
+    ReleaseSemaphore(info.semaphores[1], 1, NULL);
+    ret = WaitForSingleObject(info.semaphores[0], 1000);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", ret);
+
+    ret = pRtlIsCriticalSectionLocked(&info.crit);
+    ok(ret == TRUE, "expected TRUE, got %u\n", ret);
+    ret = pRtlIsCriticalSectionLockedByThread(&info.crit);
+    ok(ret == FALSE, "expected FALSE, got %u\n", ret);
+
+    ReleaseSemaphore(info.semaphores[1], 1, NULL);
+    ret = WaitForSingleObject(thread, 1000);
+    ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", ret);
+
+    CloseHandle(thread);
+    CloseHandle(info.semaphores[0]);
+    CloseHandle(info.semaphores[1]);
+    DeleteCriticalSection(&info.crit);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -1985,4 +2085,5 @@ START_TEST(rtl)
     test_RtlCompressBuffer();
     test_RtlGetCompressionWorkSpaceSize();
     test_RtlDecompressBuffer();
+    test_RtlIsCriticalSectionLocked();
 }
