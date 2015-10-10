@@ -162,9 +162,9 @@
 @ stdcall NtDuplicateToken(long long long long long long)
 # @ stub NtEnumerateBootEntries
 @ stub NtEnumerateBus
-@ stdcall NtEnumerateKey (long long long long long long)
+@ stdcall NtEnumerateKey(long long long ptr long ptr)
 # @ stub NtEnumerateSystemEnvironmentValuesEx
-@ stdcall NtEnumerateValueKey (long long long long long long)
+@ stdcall NtEnumerateValueKey(long long long ptr long ptr)
 @ stub NtExtendSection
 # @ stub NtFilterToken
 @ stdcall NtFindAtom(ptr long ptr)
@@ -273,7 +273,7 @@
 @ stdcall NtQuerySystemTime(ptr)
 @ stdcall NtQueryTimer(ptr long ptr long ptr)
 @ stdcall NtQueryTimerResolution(long long long)
-@ stdcall NtQueryValueKey(long long long long long long)
+@ stdcall NtQueryValueKey(long ptr long ptr long ptr)
 @ stdcall NtQueryVirtualMemory(long ptr long ptr long ptr)
 @ stdcall NtQueryVolumeInformationFile(long ptr ptr long long)
 @ stdcall NtQueueApcThread(long ptr long long long)
@@ -1010,7 +1010,7 @@
 # @ stub ZwAccessCheckByTypeResultListAndAuditAlarmByHandle
 @ stdcall ZwAddAtom(ptr long ptr) NtAddAtom
 # @ stub ZwAddBootEntry
-@ stdcall ZwAdjustGroupsToken(long long long long long long) NtAdjustGroupsToken
+@ stdcall ZwAdjustGroupsToken(long long ptr long ptr ptr) NtAdjustGroupsToken
 @ stdcall ZwAdjustPrivilegesToken(long long long long long long) NtAdjustPrivilegesToken
 @ stdcall ZwAlertResumeThread(long ptr) NtAlertResumeThread
 @ stdcall ZwAlertThread(long) NtAlertThread
@@ -1048,7 +1048,7 @@
 @ stdcall ZwCreateMutant(ptr long ptr long) NtCreateMutant
 @ stdcall ZwCreateNamedPipeFile(ptr long ptr ptr long long long long long long long long long ptr) NtCreateNamedPipeFile
 @ stdcall ZwCreatePagingFile(long long long long) NtCreatePagingFile
-@ stdcall ZwCreatePort(ptr ptr long long long) NtCreatePort
+@ stdcall ZwCreatePort(ptr ptr long long ptr) NtCreatePort
 @ stub ZwCreateProcess
 # @ stub ZwCreateProcessEx
 @ stub ZwCreateProfile
@@ -1089,11 +1089,12 @@
 @ stdcall ZwFreeVirtualMemory(long ptr ptr long) NtFreeVirtualMemory
 @ stdcall ZwFsControlFile(long long long long long long long long long long) NtFsControlFile
 @ stdcall ZwGetContextThread(long ptr) NtGetContextThread
+@ stdcall ZwGetCurrentProcessorNumber() NtGetCurrentProcessorNumber
 # @ stub ZwGetDevicePowerState
 @ stub ZwGetPlugPlayEvent
 @ stdcall ZwGetTickCount() NtGetTickCount
 @ stdcall ZwGetWriteWatch(long long ptr long ptr ptr ptr) NtGetWriteWatch
-# @ stub ZwImpersonateAnonymousToken
+@ stdcall ZwImpersonateAnonymousToken(long) NtImpersonateAnonymousToken
 @ stub ZwImpersonateClientOfPort
 @ stub ZwImpersonateThread
 @ stub ZwInitializeRegistry
@@ -1171,15 +1172,15 @@
 @ stdcall ZwQueryMutant(long long ptr long ptr) NtQueryMutant
 @ stdcall ZwQueryObject(long long long long long) NtQueryObject
 @ stub ZwQueryOpenSubKeys
-@ stdcall ZwQueryPerformanceCounter (long long) NtQueryPerformanceCounter
+@ stdcall ZwQueryPerformanceCounter(ptr ptr) NtQueryPerformanceCounter
 # @ stub ZwQueryPortInformationProcess
 # @ stub ZwQueryQuotaInformationFile
 @ stdcall ZwQuerySection (long long long long long) NtQuerySection
 @ stdcall ZwQuerySecurityObject (long long long long long) NtQuerySecurityObject
-@ stdcall ZwQuerySemaphore (long long long long long) NtQuerySemaphore
+@ stdcall ZwQuerySemaphore(long long ptr long ptr) NtQuerySemaphore
 @ stdcall ZwQuerySymbolicLinkObject(long ptr ptr) NtQuerySymbolicLinkObject
-@ stub ZwQuerySystemEnvironmentValue
-# @ stub ZwQuerySystemEnvironmentValueEx
+@ stdcall ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
+@ stdcall ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
 @ stdcall ZwQuerySystemInformation(long long long long) NtQuerySystemInformation
 @ stdcall ZwQuerySystemTime(ptr) NtQuerySystemTime
 @ stdcall ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
@@ -1189,7 +1190,7 @@
 @ stdcall ZwQueryVolumeInformationFile(long ptr ptr long long) NtQueryVolumeInformationFile
 @ stdcall ZwQueueApcThread(long ptr long long long) NtQueueApcThread
 @ stdcall ZwRaiseException(ptr ptr long) NtRaiseException
-@ stub ZwRaiseHardError
+@ stdcall ZwRaiseHardError(long long ptr ptr long long) NtRaiseHardError
 @ stdcall ZwReadFile(long long ptr ptr ptr ptr long ptr ptr) NtReadFile
 @ stdcall ZwReadFileScatter(long long ptr ptr ptr ptr long ptr ptr) NtReadFileScatter
 @ stub ZwReadRequestData
@@ -1206,7 +1207,7 @@
 @ stdcall ZwReplaceKey(ptr long ptr) NtReplaceKey
 @ stub ZwReplyPort
 @ stdcall ZwReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort
-# @ stub ZwReplyWaitReceivePortEx
+@ stub ZwReplyWaitReceivePortEx
 @ stub ZwReplyWaitReplyPort
 # @ stub ZwRequestDeviceWakeup
 @ stub ZwRequestPort
@@ -1224,7 +1225,7 @@
 # @ stub ZwSetBootEntryOrder
 # @ stub ZwSetBootOptions
 @ stdcall ZwSetContextThread(long ptr) NtSetContextThread
-# @ stub ZwSetDebugFilterState
+@ stub ZwSetDebugFilterState
 @ stub ZwSetDefaultHardErrorPort
 @ stdcall ZwSetDefaultLocale(long long) NtSetDefaultLocale
 @ stdcall ZwSetDefaultUILanguage(long) NtSetDefaultUILanguage
