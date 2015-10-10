@@ -29,6 +29,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 
@@ -1051,12 +1052,6 @@ static void destroy_critsect(CRITICAL_SECTION *critsect)
     HeapFree(GetProcessHeap(), 0, critsect);
 }
 
-static BOOL critsect_is_locked(CRITICAL_SECTION *critsect)
-{
-    return critsect->OwningThread == ULongToHandle(GetCurrentThreadId()) &&
-           critsect->RecursionCount;
-}
-
 void CDECL omp_init_lock(omp_lock_t *lock)
 {
     TRACE("(%p)\n", lock);
@@ -1073,7 +1068,7 @@ void CDECL omp_set_lock(omp_lock_t *lock)
 {
     TRACE("(%p)\n", lock);
 
-    if (critsect_is_locked(*lock))
+    if (RtlIsCriticalSectionLockedByThread(*lock))
     {
         ERR("omp_set_lock called while holding lock %p\n", *lock);
         ExitProcess(1);
@@ -1092,7 +1087,7 @@ int CDECL omp_test_lock(omp_lock_t *lock)
 {
     TRACE("(%p)\n", lock);
 
-    if (critsect_is_locked(*lock))
+    if (RtlIsCriticalSectionLockedByThread(*lock))
         return 0;
 
     return TryEnterCriticalSection(*lock);
