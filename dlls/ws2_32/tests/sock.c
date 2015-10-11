@@ -72,6 +72,8 @@ static int   (WINAPI *pInetPtonW)(INT,LPWSTR,LPVOID);
 static int   (WINAPI *pWSALookupServiceBeginW)(LPWSAQUERYSETW,DWORD,LPHANDLE);
 static int   (WINAPI *pWSALookupServiceEnd)(HANDLE);
 static int   (WINAPI *pWSALookupServiceNextW)(HANDLE,DWORD,LPDWORD,LPWSAQUERYSETW);
+static int   (WINAPI *pWSAEnumNameSpaceProvidersA)(LPDWORD,LPWSANAMESPACE_INFOA);
+static int   (WINAPI *pWSAEnumNameSpaceProvidersW)(LPDWORD,LPWSANAMESPACE_INFOW);
 
 /**************** Structs and typedefs ***************/
 
@@ -1165,6 +1167,8 @@ static void Init (void)
     pWSALookupServiceBeginW = (void *)GetProcAddress(hws2_32, "WSALookupServiceBeginW");
     pWSALookupServiceEnd = (void *)GetProcAddress(hws2_32, "WSALookupServiceEnd");
     pWSALookupServiceNextW = (void *)GetProcAddress(hws2_32, "WSALookupServiceNextW");
+    pWSAEnumNameSpaceProvidersA = (void *)GetProcAddress(hws2_32, "WSAEnumNameSpaceProvidersA");
+    pWSAEnumNameSpaceProvidersW = (void *)GetProcAddress(hws2_32, "WSAEnumNameSpaceProvidersW");
 
     ok ( WSAStartup ( ver, &data ) == 0, "WSAStartup failed\n" );
     tls = TlsAlloc();
@@ -8834,6 +8838,160 @@ todo_wine
     ok(!ret, "WSALookupServiceEnd failed unexpectedly\n");
 }
 
+static void test_WSAEnumNameSpaceProvidersA(void)
+{
+    LPWSANAMESPACE_INFOA name = NULL;
+    DWORD ret, error, blen = 0, i;
+    if (!pWSAEnumNameSpaceProvidersA)
+    {
+        win_skip("WSAEnumNameSpaceProvidersA not found\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pWSAEnumNameSpaceProvidersA(&blen, name);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    /* Invalid parameter tests */
+    SetLastError(0xdeadbeef);
+    ret = pWSAEnumNameSpaceProvidersA(NULL, name);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pWSAEnumNameSpaceProvidersA(NULL, NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pWSAEnumNameSpaceProvidersA(&blen, NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    name = HeapAlloc(GetProcessHeap(), 0, blen);
+    if (!name)
+    {
+        skip("Failed to alloc memory\n");
+        return;
+    }
+
+    ret = pWSAEnumNameSpaceProvidersA(&blen, name);
+todo_wine
+    ok(ret > 0, "Expected more than zero name space providers\n");
+
+    for (i = 0;i < ret; i++)
+    {
+        trace("Name space Identifier (%p): %s\n", name[i].lpszIdentifier,
+              name[i].lpszIdentifier);
+        switch (name[i].dwNameSpace)
+        {
+            case NS_DNS:
+                trace("\tName space ID: NS_DNS (%u)\n", name[i].dwNameSpace);
+                break;
+            case NS_NLA:
+                trace("\tName space ID: NS_NLA (%u)\n", name[i].dwNameSpace);
+                break;
+            default:
+                trace("\tName space ID: Unknown (%u)\n", name[i].dwNameSpace);
+                break;
+        }
+        trace("\tActive:  %d\n", name[i].fActive);
+        trace("\tVersion: %d\n", name[i].dwVersion);
+    }
+
+    HeapFree(GetProcessHeap(), 0, name);
+}
+
+static void test_WSAEnumNameSpaceProvidersW(void)
+{
+    LPWSANAMESPACE_INFOW name = NULL;
+    DWORD ret, error, blen = 0, i;
+    if (!pWSAEnumNameSpaceProvidersW)
+    {
+        win_skip("WSAEnumNameSpaceProvidersW not found\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    ret = pWSAEnumNameSpaceProvidersW(&blen, name);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    /* Invalid parameter tests */
+    SetLastError(0xdeadbeef);
+    ret = pWSAEnumNameSpaceProvidersW(NULL, name);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pWSAEnumNameSpaceProvidersW(NULL, NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    SetLastError(0xdeadbeef);
+    ret = pWSAEnumNameSpaceProvidersW(&blen, NULL);
+    error = WSAGetLastError();
+todo_wine
+    ok(ret == SOCKET_ERROR, "Expected failure, got %u\n", ret);
+todo_wine
+    ok(error == WSAEFAULT, "Expected 10014, got %u\n", error);
+
+    name = HeapAlloc(GetProcessHeap(), 0, blen);
+    if (!name)
+    {
+        skip("Failed to alloc memory\n");
+        return;
+    }
+
+    ret = pWSAEnumNameSpaceProvidersW(&blen, name);
+todo_wine
+    ok(ret > 0, "Expected more than zero name space providers\n");
+
+    for (i = 0;i < ret; i++)
+    {
+        trace("Name space Identifier (%p): %s\n", name[i].lpszIdentifier,
+               wine_dbgstr_w(name[i].lpszIdentifier));
+        switch (name[i].dwNameSpace)
+        {
+            case NS_DNS:
+                trace("\tName space ID: NS_DNS (%u)\n", name[i].dwNameSpace);
+                break;
+            case NS_NLA:
+                trace("\tName space ID: NS_NLA (%u)\n", name[i].dwNameSpace);
+                break;
+            default:
+                trace("\tName space ID: Unknown (%u)\n", name[i].dwNameSpace);
+                break;
+        }
+        trace("\tActive:  %d\n", name[i].fActive);
+        trace("\tVersion: %d\n", name[i].dwVersion);
+    }
+
+    HeapFree(GetProcessHeap(), 0, name);
+}
+
 /**************** Main program  ***************/
 
 START_TEST( sock )
@@ -8905,6 +9063,8 @@ START_TEST( sock )
     test_sioAddressListChange();
 
     test_WSALookupService();
+    test_WSAEnumNameSpaceProvidersA();
+    test_WSAEnumNameSpaceProvidersW();
 
     test_WSAAsyncGetServByPort();
     test_WSAAsyncGetServByName();
