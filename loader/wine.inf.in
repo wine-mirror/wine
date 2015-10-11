@@ -2499,6 +2499,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 10,syswow64,stdole2.tlb
 11,,iexplore.exe
 11,,winetest.exe,-
+12,,fltmgr.sys,-
 12,,mountmgr.sys,-
 12,,ndis.sys,-
 ; skip .NET fake dlls in Wine Mono package
@@ -2537,6 +2538,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,iexplore.exe
 11,,notepad.exe
 11,,winetest.exe,-
+12,,fltmgr.sys
 12,,mountmgr.sys
 12,,ndis.sys
 ; skip .NET fake dlls in Wine Mono package
