@@ -12,7 +12,7 @@
 @ stdcall -norelay GetCurrentProcess() kernel32.GetCurrentProcess
 @ stdcall -norelay GetCurrentProcessId() kernel32.GetCurrentProcessId
 @ stdcall GetCurrentProcessorNumber() kernel32.GetCurrentProcessorNumber
-@ stub GetCurrentProcessorNumberEx
+@ stdcall GetCurrentProcessorNumberEx(ptr) kernel32.GetCurrentProcessorNumberEx
 @ stdcall -norelay GetCurrentThread() kernel32.GetCurrentThread
 @ stdcall -norelay GetCurrentThreadId() kernel32.GetCurrentThreadId
 @ stub GetCurrentThreadStackLimits
