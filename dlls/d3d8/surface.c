@@ -260,7 +260,7 @@ static HRESULT WINAPI d3d8_surface_UnlockRect(IDirect3DSurface8 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_unmap(surface->wined3d_surface);
+    hr = wined3d_texture_unmap(surface->wined3d_texture, surface->sub_resource_idx);
     wined3d_mutex_unlock();
 
     switch(hr)
