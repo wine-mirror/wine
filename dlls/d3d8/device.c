@@ -1058,7 +1058,7 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
      * destination texture is in WINED3D_POOL_DEFAULT. */
 
     wined3d_mutex_lock();
-    wined3d_resource = wined3d_surface_get_resource(src->wined3d_surface);
+    wined3d_resource = wined3d_texture_get_sub_resource(src->wined3d_texture, src->sub_resource_idx);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     if (wined3d_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
@@ -1070,7 +1070,7 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
     src_w = wined3d_desc.width;
     src_h = wined3d_desc.height;
 
-    wined3d_resource = wined3d_surface_get_resource(dst->wined3d_surface);
+    wined3d_resource = wined3d_texture_get_sub_resource(dst->wined3d_texture, dst->sub_resource_idx);
     wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
     if (wined3d_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
@@ -1202,13 +1202,13 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
                 return D3DERR_NOTFOUND;
             }
             original_surface = wined3d_rendertarget_view_get_sub_resource_parent(original_rtv);
-            wined3d_resource = wined3d_surface_get_resource(original_surface->wined3d_surface);
+            wined3d_resource = wined3d_texture_get_sub_resource(original_surface->wined3d_texture, original_surface->sub_resource_idx);
         }
         else
-            wined3d_resource = wined3d_surface_get_resource(rt_impl->wined3d_surface);
+            wined3d_resource = wined3d_texture_get_sub_resource(rt_impl->wined3d_texture, rt_impl->sub_resource_idx);
         wined3d_resource_get_desc(wined3d_resource, &rt_desc);
 
-        wined3d_resource = wined3d_surface_get_resource(ds_impl->wined3d_surface);
+        wined3d_resource = wined3d_texture_get_sub_resource(ds_impl->wined3d_texture, ds_impl->sub_resource_idx);
         wined3d_resource_get_desc(wined3d_resource, &ds_desc);
 
         if (ds_desc.width < rt_desc.width || ds_desc.height < rt_desc.height)
