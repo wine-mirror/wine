@@ -7197,31 +7197,36 @@ static void test_pointsize(void)
             }
             else
             {
-                color = getPixelColor(device, 64 - size / 2 + 1, 64 - size / 2 + 1);
+                struct surface_readback rb;
+
+                get_rt_readback(rt, &rb);
+                color = get_readback_color(&rb, 64 - size / 2 + 1, 64 - size / 2 + 1);
                 ok(color_match(color, 0x00ff0000, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 + size / 2 - 1, 64 - size / 2 + 1);
+                color = get_readback_color(&rb, 64 + size / 2 - 1, 64 - size / 2 + 1);
                 ok(color_match(color, 0x00ffff00, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 - size / 2 + 1, 64 + size / 2 - 1);
+                color = get_readback_color(&rb, 64 - size / 2 + 1, 64 + size / 2 - 1);
                 ok(color_match(color, 0x00000000, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 + size / 2 - 1, 64 + size / 2 - 1);
+                color = get_readback_color(&rb, 64 + size / 2 - 1, 64 + size / 2 - 1);
                 ok(color_match(color, 0x0000ff00, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
 
-                color = getPixelColor(device, 64 - size / 2 - 1, 64 - size / 2 - 1);
-                ok(color_match(color, 0x0000ffff, 0),
+                color = get_readback_color(&rb, 64 - size / 2 - 1, 64 - size / 2 - 1);
+                ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 + size / 2 + 1, 64 - size / 2 - 1);
-                ok(color_match(color, 0x0000ffff, 0),
+                color = get_readback_color(&rb, 64 + size / 2 + 1, 64 - size / 2 - 1);
+                ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 - size / 2 - 1, 64 + size / 2 + 1);
-                ok(color_match(color, 0x0000ffff, 0),
+                color = get_readback_color(&rb, 64 - size / 2 - 1, 64 + size / 2 + 1);
+                ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
-                color = getPixelColor(device, 64 + size / 2 + 1, 64 + size / 2 + 1);
-                ok(color_match(color, 0x0000ffff, 0),
+                color = get_readback_color(&rb, 64 + size / 2 + 1, 64 + size / 2 + 1);
+                ok(color_match(color, 0xff00ffff, 0),
                         "Got unexpected color 0x%08x (case %u, %u, size %u).\n", color, i, j, size);
+
+                release_surface_readback(&rb);
             }
         }
         IDirect3DDevice8_SetVertexShader(device, 0);
