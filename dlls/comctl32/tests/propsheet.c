@@ -300,7 +300,7 @@ static LRESULT CALLBACK hook_proc( int code, WPARAM wp, LPARAM lp )
         CBT_CREATEWNDW *c = (CBT_CREATEWNDW *)lp;
 
         /* The first dialog created will be the parent dialog */
-        if (!done && c->lpcs->lpszClass == MAKEINTRESOURCEW(WC_DIALOG))
+        if (!done && c->lpcs->lpszClass == (LPWSTR)WC_DIALOG)
         {
             old_nav_dialog_proc = (WNDPROC)SetWindowLongPtrW( (HWND)wp, GWLP_WNDPROC, (LONG_PTR)new_nav_dialog_proc );
             done = TRUE;
