@@ -197,6 +197,8 @@ static IOleUndoManager *create_undomgr(void)
 {
     UndoManager *ret = heap_alloc(sizeof(UndoManager));
 
+    if (!ret) return NULL;
+
     ret->IOleUndoManager_iface.lpVtbl = &OleUndoManagerVtbl;
     ret->ref = 1;
 
@@ -245,6 +247,9 @@ static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFG
 
         if(!This->doc_obj->undomgr)
             This->doc_obj->undomgr = create_undomgr();
+
+        if (!This->doc_obj->undomgr)
+            return E_OUTOFMEMORY;
 
         return IOleUndoManager_QueryInterface(This->doc_obj->undomgr, riid, ppv);
     }
