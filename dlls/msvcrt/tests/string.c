@@ -1108,7 +1108,7 @@ static void test__wcslwr_s(void)
 
     /* Test NULL input string and valid size. */
     errno = EBADF;
-    ret = p_wcslwr_s(NULL, sizeof(buffer)/sizeof(wchar_t));
+    ret = p_wcslwr_s(NULL, sizeof(buffer)/sizeof(buffer[0]));
     ok(ret == EINVAL, "expected EINVAL, got %d\n", ret);
     ok(errno == EINVAL, "expected errno EINVAL, got %d\n", errno);
 
