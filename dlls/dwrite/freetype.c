@@ -641,7 +641,7 @@ INT freetype_get_charmap_index(IDWriteFontFace2 *fontface, BOOL *is_symbol)
             if (os2->version == 0)
                 *is_symbol = pFT_Get_First_Char(face, &dummy) >= 0x100;
             else
-                *is_symbol = os2->ulCodePageRange1 & FS_SYMBOL;
+                *is_symbol = !!(os2->ulCodePageRange1 & FS_SYMBOL);
         }
 
         for (i = 0; i < face->num_charmaps; i++)
