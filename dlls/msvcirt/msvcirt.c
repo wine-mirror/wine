@@ -825,8 +825,8 @@ void __thiscall streambuf_dbp(streambuf *this)
     } else {
         printf("_fAlloc=%d\n", this->allocated);
         printf(" base()=%p, ebuf()=%p,  blen()=%d\n", this->base, this->ebuf, streambuf_blen(this));
-        printf("pbase()=%p, pptr()=%p, epptr()=%d\n", this->pbase, this->pptr, this->epptr);
-        printf("eback()=%p, gptr()=%p, egptr()=%d\n", this->eback, this->gptr, this->egptr);
+        printf("pbase()=%p, pptr()=%p, epptr()=%p\n", this->pbase, this->pptr, this->epptr);
+        printf("eback()=%p, gptr()=%p, egptr()=%p\n", this->eback, this->gptr, this->egptr);
     }
 }
 
