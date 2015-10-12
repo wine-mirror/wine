@@ -1250,7 +1250,7 @@ static BOOL WINAPI dwritefont_IsSymbolFont(IDWriteFont2 *iface)
 
     hr = get_fontface_from_font(This, &fontface);
     if (FAILED(hr))
-        return hr;
+        return FALSE;
 
     return IDWriteFontFace2_IsSymbolFont(fontface);
 }
@@ -1401,7 +1401,7 @@ static BOOL WINAPI dwritefont1_IsMonospacedFont(IDWriteFont2 *iface)
 
     hr = get_fontface_from_font(This, &fontface);
     if (FAILED(hr))
-        return hr;
+        return FALSE;
 
     return IDWriteFontFace2_IsMonospacedFont(fontface);
 }
