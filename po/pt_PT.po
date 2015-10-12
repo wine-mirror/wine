@@ -62,7 +62,7 @@ msgstr "Informação de Suporte"
 #: localui.rc:44 localui.rc:57 mpr.rc:49 msacm32.rc:53 mshtml.rc:47
 #: mshtml.rc:57 msvfw32.rc:36 oledlg.rc:62 oledlg.rc:94 serialui.rc:41
 #: setupapi.rc:59 shell32.rc:276 shell32.rc:300 shell32.rc:322 shell32.rc:340
-#: shlwapi.rc:44 user32.rc:80 user32.rc:98 wininet.rc:51 wininet.rc:71
+#: shlwapi.rc:44 user32.rc:83 user32.rc:98 wininet.rc:51 wininet.rc:71
 #: winspool.rc:42 net.rc:47 notepad.rc:117 oleview.rc:162 oleview.rc:175
 #: progman.rc:106 progman.rc:124 progman.rc:142 progman.rc:158 progman.rc:180
 #: progman.rc:199 progman.rc:216 regedit.rc:247 regedit.rc:258 regedit.rc:271
@@ -145,7 +145,7 @@ msgstr "&Instalar"
 #: localui.rc:58 mpr.rc:50 msacm32.rc:54 mshtml.rc:48 mshtml.rc:58
 #: msvfw32.rc:37 oledlg.rc:63 oledlg.rc:95 serialui.rc:42 setupapi.rc:42
 #: setupapi.rc:60 shell32.rc:277 shell32.rc:301 shell32.rc:312 shell32.rc:341
-#: shlwapi.rc:45 user32.rc:81 user32.rc:99 wininet.rc:52 wininet.rc:72
+#: shlwapi.rc:45 user32.rc:84 user32.rc:99 wininet.rc:52 wininet.rc:72
 #: winspool.rc:43 notepad.rc:118 oleview.rc:163 oleview.rc:176 progman.rc:107
 #: progman.rc:125 progman.rc:143 progman.rc:159 progman.rc:181 progman.rc:200
 #: progman.rc:217 regedit.rc:248 regedit.rc:259 regedit.rc:272 regedit.rc:288
@@ -314,7 +314,7 @@ msgstr "Propriedades de %s"
 msgid "&Apply"
 msgstr "&Aplicar"
 
-#: comctl32.rc:58 comctl32.rc:72 comdlg32.rc:306 user32.rc:89
+#: comctl32.rc:58 comctl32.rc:72 comdlg32.rc:306 user32.rc:88
 msgid "Help"
 msgstr "Ajuda"
 
@@ -7998,7 +7998,7 @@ msgstr "&Criar nova pasta"
 msgid "Message"
 msgstr "Mensagem"
 
-#: shell32.rc:309 shlwapi.rc:46 user32.rc:85
+#: shell32.rc:309 shlwapi.rc:46 user32.rc:79
 msgid "&Yes"
 msgstr "&Sim"
 
@@ -8006,7 +8006,7 @@ msgstr "&Sim"
 msgid "Yes to &all"
 msgstr "Sim a &todos"
 
-#: shell32.rc:311 shlwapi.rc:47 user32.rc:86
+#: shell32.rc:311 shlwapi.rc:47 user32.rc:80
 msgid "&No"
 msgstr "&Não"
 
@@ -8537,23 +8537,23 @@ msgstr "&Fechar\tCtrl+F4"
 msgid "Nex&t\tCtrl+F6"
 msgstr "&Próximo\tCtrl+F6"
 
-#: user32.rc:82
+#: user32.rc:81
 msgid "&Abort"
 msgstr "&Abortar"
 
-#: user32.rc:83
+#: user32.rc:82
 msgid "&Retry"
 msgstr "&Repetir"
 
-#: user32.rc:84
+#: user32.rc:85
 msgid "&Ignore"
 msgstr "&Ignorar"
 
-#: user32.rc:87
+#: user32.rc:86
 msgid "&Try Again"
 msgstr "&Tente Novamente"
 
-#: user32.rc:88
+#: user32.rc:87
 msgid "&Continue"
 msgstr "&Continuar"
 
