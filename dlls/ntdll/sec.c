@@ -558,6 +558,16 @@ NTSTATUS WINAPI RtlValidSecurityDescriptor(
 }
 
 /**************************************************************************
+ * RtlValidRelativeSecurityDescriptor		[NTDLL.@]
+ */
+BOOLEAN WINAPI RtlValidRelativeSecurityDescriptor(PSECURITY_DESCRIPTOR descriptor,
+    ULONG length, SECURITY_INFORMATION info)
+{
+    FIXME("%p,%u,%d: semi-stub\n", descriptor, length, info);
+    return RtlValidSecurityDescriptor(descriptor) == STATUS_SUCCESS;
+}
+
+/**************************************************************************
  *  RtlLengthSecurityDescriptor			[NTDLL.@]
  */
 ULONG WINAPI RtlLengthSecurityDescriptor(

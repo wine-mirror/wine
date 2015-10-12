@@ -939,7 +939,7 @@
 @ stub RtlUsageHeap
 @ cdecl -i386 -norelay RtlUshortByteSwap() NTDLL_RtlUshortByteSwap
 @ stdcall RtlValidAcl(ptr)
-# @ stub RtlValidRelativeSecurityDescriptor
+@ stdcall RtlValidRelativeSecurityDescriptor(ptr long long)
 @ stdcall RtlValidSecurityDescriptor(ptr)
 @ stdcall RtlValidSid(ptr)
 @ stdcall RtlValidateHeap(long long ptr)

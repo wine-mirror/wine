@@ -1191,7 +1191,7 @@
 @ stdcall RtlUpcaseUnicodeToOemN(ptr long ptr ptr long) ntdll.RtlUpcaseUnicodeToOemN
 @ stdcall RtlUpperChar(long) ntdll.RtlUpperChar
 @ stdcall RtlUpperString(ptr ptr) ntdll.RtlUpperString
-@ stub RtlValidRelativeSecurityDescriptor
+@ stdcall RtlValidRelativeSecurityDescriptor(ptr long long) ntdll.RtlValidRelativeSecurityDescriptor
 @ stdcall RtlValidSecurityDescriptor(ptr) ntdll.RtlValidSecurityDescriptor
 @ stdcall RtlValidSid(ptr) ntdll.RtlValidSid
 @ stdcall RtlVerifyVersionInfo(ptr long int64) ntdll.RtlVerifyVersionInfo
