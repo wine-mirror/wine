@@ -3850,11 +3850,11 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
             surface, wined3d_debug_location(surface->locations));
 }
 
+/* Context activation is done by the caller. */
 static HRESULT surface_load_drawable(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info)
+        struct wined3d_context *context)
 {
     RECT r;
-    struct wined3d_context *context;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
             && wined3d_resource_is_offscreen(&surface->container->resource))
@@ -3863,12 +3863,10 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
         return WINED3DERR_INVALIDCALL;
     }
 
-    context = context_acquire(surface->resource.device, surface);
     surface_get_rect(surface, NULL, &r);
     surface_load_location(surface, WINED3D_LOCATION_TEXTURE_RGB);
     surface_blt_to_drawable(surface->resource.device, context,
             WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
-    context_release(context);
 
     return WINED3D_OK;
 }
@@ -4125,7 +4123,10 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
             break;
 
         case WINED3D_LOCATION_DRAWABLE:
-            if (FAILED(hr = surface_load_drawable(surface, gl_info)))
+            context = context_acquire(device, NULL);
+            hr = surface_load_drawable(surface, context);
+            context_release(context);
+            if (FAILED(hr))
                 return hr;
             break;
 
