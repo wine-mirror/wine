@@ -3275,19 +3275,28 @@ void surface_translate_drawable_coords(const struct wined3d_surface *surface, HW
     rect->bottom = drawable_height - rect->bottom;
 }
 
+/* Context activation is done by the caller. */
 static void surface_blt_to_drawable(const struct wined3d_device *device,
+        struct wined3d_context *old_ctx,
         enum wined3d_texture_filter_type filter, BOOL alpha_test,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in)
 {
     const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
+    struct wined3d_context *context = old_ctx;
+    struct wined3d_surface *restore_rt = NULL;
     RECT src_rect, dst_rect;
 
     src_rect = *src_rect_in;
     dst_rect = *dst_rect_in;
 
-    context = context_acquire(device, dst_surface);
+
+    if (old_ctx->current_rt != dst_surface)
+    {
+        restore_rt = old_ctx->current_rt;
+        context = context_acquire(device, dst_surface);
+    }
+
     gl_info = context->gl_info;
 
     /* Make sure the surface is up-to-date. This should probably use
@@ -3340,7 +3349,8 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
             && dst_surface->container->swapchain->front_buffer == dst_surface->container))
         gl_info->gl_ops.gl.p_glFlush(); /* Flush to ensure ordering across contexts. */
 
-    context_release(context);
+    if (restore_rt)
+        context_restore(context, restore_rt);
 }
 
 HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const struct wined3d_color *color)
@@ -3844,6 +3854,7 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info)
 {
     RECT r;
+    struct wined3d_context *context;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO
             && wined3d_resource_is_offscreen(&surface->container->resource))
@@ -3852,10 +3863,12 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
         return WINED3DERR_INVALIDCALL;
     }
 
+    context = context_acquire(surface->resource.device, surface);
     surface_get_rect(surface, NULL, &r);
     surface_load_location(surface, WINED3D_LOCATION_TEXTURE_RGB);
-    surface_blt_to_drawable(surface->resource.device,
+    surface_blt_to_drawable(surface->resource.device, context,
             WINED3D_TEXF_POINT, FALSE, surface, &r, surface, &r);
+    context_release(context);
 
     return WINED3D_OK;
 }
@@ -4286,6 +4299,8 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, DWORD filter,
         struct wined3d_surface *dst_surface, const RECT *dst_rect,
         const struct wined3d_color_key *color_key)
 {
+    struct wined3d_context *context;
+
     /* Blit from offscreen surface to render target */
     struct wined3d_color_key old_blt_key = src_surface->container->async.src_blt_color_key;
     DWORD old_color_key_flags = src_surface->container->async.color_key_flags;
@@ -4294,8 +4309,10 @@ static void ffp_blit_blit_surface(struct wined3d_device *device, DWORD filter,
 
     wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT, color_key);
 
-    surface_blt_to_drawable(device, filter,
+    context = context_acquire(device, dst_surface);
+    surface_blt_to_drawable(device, context, filter,
             !!color_key, src_surface, src_rect, dst_surface, dst_rect);
+    context_release(context);
 
     /* Restore the color key parameters */
     wined3d_texture_set_color_key(src_surface->container, WINED3D_CKEY_SRC_BLT,
