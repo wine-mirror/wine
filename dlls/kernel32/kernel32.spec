@@ -210,7 +210,7 @@
 @ stub CancelDeviceWakeupRequest
 @ stdcall CancelIo(long)
 @ stdcall CancelIoEx(long ptr)
-# @ stub CancelSynchronousIo
+@ stdcall CancelSynchronousIo(long)
 # @ stub CancelThreadpoolIo
 @ stdcall CancelTimerQueueTimer(ptr ptr)
 @ stdcall CancelWaitableTimer(long)

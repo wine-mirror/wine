@@ -686,6 +686,25 @@ BOOL WINAPI CancelIo(HANDLE handle)
 }
 
 /***********************************************************************
+ *             CancelSynchronousIo                   (KERNEL32.@)
+ *
+ * Marks pending synchronous I/O operations issued by the specified thread as cancelled
+ *
+ * PARAMS
+ *  handle [I] handle to the thread whose I/O operations should be cancelled
+ *
+ * RETURNS
+ *  Success: TRUE.
+ *  Failure: FALSE, check GetLastError().
+ */
+BOOL WINAPI CancelSynchronousIo(HANDLE thread)
+{
+    FIXME("(%p): stub\n", thread);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+/***********************************************************************
  *           _hread   (KERNEL32.@)
  */
 LONG WINAPI _hread( HFILE hFile, LPVOID buffer, LONG count)
