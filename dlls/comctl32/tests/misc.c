@@ -267,7 +267,7 @@ static void test_LoadIconWithScaleDown(void)
 
     /* invalid arguments */
     icon = (HICON)0x1234;
-    hr = pLoadIconMetric(NULL, MAKEINTRESOURCEW(IDI_APPLICATION), 0x100, &icon);
+    hr = pLoadIconMetric(NULL, (LPWSTR)IDI_APPLICATION, 0x100, &icon);
     ok(hr == E_INVALIDARG, "Expected E_INVALIDARG, got %x\n", hr);
     ok(icon == NULL, "Expected NULL, got %p\n", icon);
 
@@ -302,7 +302,7 @@ static void test_LoadIconWithScaleDown(void)
        "Expected HRESULT_FROM_WIN32(ERROR_RESOURCE_TYPE_NOT_FOUND), got %x\n", hr);
 
     /* load icon using predefined identifier */
-    hr = pLoadIconMetric(NULL, MAKEINTRESOURCEW(IDI_APPLICATION), LIM_SMALL, &icon);
+    hr = pLoadIconMetric(NULL, (LPWSTR)IDI_APPLICATION, LIM_SMALL, &icon);
     ok(hr == S_OK, "Expected S_OK, got %x\n", hr);
     res = GetIconInfo(icon, &info);
     ok(res, "Failed to get icon info, error %u\n", GetLastError());
@@ -312,7 +312,7 @@ static void test_LoadIconWithScaleDown(void)
     ok(bmp.bmHeight == GetSystemMetrics(SM_CYSMICON), "Wrong icon height %d\n", bmp.bmHeight);
     DestroyIcon(icon);
 
-    hr = pLoadIconMetric(NULL, MAKEINTRESOURCEW(IDI_APPLICATION), LIM_LARGE, &icon);
+    hr = pLoadIconMetric(NULL, (LPWSTR)IDI_APPLICATION, LIM_LARGE, &icon);
     ok(hr == S_OK, "Expected S_OK, got %x\n", hr);
     res = GetIconInfo(icon, &info);
     ok(res, "Failed to get icon info, error %u\n", GetLastError());
@@ -322,7 +322,7 @@ static void test_LoadIconWithScaleDown(void)
     ok(bmp.bmHeight == GetSystemMetrics(SM_CYICON), "Wrong icon height %d\n", bmp.bmHeight);
     DestroyIcon(icon);
 
-    hr = pLoadIconWithScaleDown(NULL, MAKEINTRESOURCEW(IDI_APPLICATION), 42, 42, &icon);
+    hr = pLoadIconWithScaleDown(NULL, (LPWSTR)IDI_APPLICATION, 42, 42, &icon);
     ok(hr == S_OK, "Expected S_OK, got %x\n", hr);
     res = GetIconInfo(icon, &info);
     ok(res, "Failed to get icon info, error %u\n", GetLastError());
