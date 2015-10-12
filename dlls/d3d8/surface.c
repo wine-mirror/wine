@@ -176,13 +176,13 @@ static HRESULT WINAPI d3d8_surface_GetDesc(IDirect3DSurface8 *iface, D3DSURFACE_
 {
     struct d3d8_surface *surface = impl_from_IDirect3DSurface8(iface);
     struct wined3d_resource_desc wined3d_desc;
-    struct wined3d_resource *wined3d_resource;
+    struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
     wined3d_mutex_lock();
-    wined3d_resource = wined3d_surface_get_resource(surface->wined3d_surface);
-    wined3d_resource_get_desc(wined3d_resource, &wined3d_desc);
+    sub_resource = wined3d_texture_get_sub_resource(surface->wined3d_texture, surface->sub_resource_idx);
+    wined3d_resource_get_desc(sub_resource, &wined3d_desc);
     wined3d_mutex_unlock();
 
     desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
