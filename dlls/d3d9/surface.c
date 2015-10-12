@@ -251,7 +251,8 @@ static HRESULT WINAPI d3d9_surface_LockRect(IDirect3DSurface9 *iface,
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_map(surface->wined3d_surface, &map_desc, rect ? &box : NULL, flags);
+    hr = wined3d_texture_map(surface->wined3d_texture, surface->sub_resource_idx,
+            &map_desc, rect ? &box : NULL, flags);
     wined3d_mutex_unlock();
 
     if (SUCCEEDED(hr))
@@ -356,7 +357,7 @@ static const struct wined3d_parent_ops d3d9_surface_wined3d_parent_ops =
     surface_wined3d_object_destroyed,
 };
 
-void surface_init(struct d3d9_surface *surface, IUnknown *container_parent,
+void surface_init(struct d3d9_surface *surface, struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
         struct wined3d_surface *wined3d_surface, const struct wined3d_parent_ops **parent_ops)
 {
     struct wined3d_resource_desc desc;
@@ -367,9 +368,11 @@ void surface_init(struct d3d9_surface *surface, IUnknown *container_parent,
     surface->resource.refcount = 0;
     surface->wined3d_surface = wined3d_surface;
     list_init(&surface->rtv_entry);
-    surface->container = container_parent;
+    surface->container = wined3d_texture_get_parent(wined3d_texture);
+    surface->wined3d_texture = wined3d_texture;
+    surface->sub_resource_idx = sub_resource_idx;
 
-    if (container_parent && SUCCEEDED(IUnknown_QueryInterface(container_parent,
+    if (surface->container && SUCCEEDED(IUnknown_QueryInterface(surface->container,
             &IID_IDirect3DBaseTexture9, (void **)&texture)))
     {
         surface->texture = unsafe_impl_from_IDirect3DBaseTexture9(texture);

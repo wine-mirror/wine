@@ -3545,7 +3545,7 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
     if (!(d3d_surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_surface))))
         return E_OUTOFMEMORY;
 
-    surface_init(d3d_surface, wined3d_texture_get_parent(wined3d_texture), surface, parent_ops);
+    surface_init(d3d_surface, wined3d_texture, sub_resource_idx, surface, parent_ops);
     *parent = d3d_surface;
     TRACE("Created surface %p.\n", d3d_surface);
 
