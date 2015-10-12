@@ -4858,9 +4858,8 @@ static void handle_ps3_input(struct shader_glsl_priv *priv,
                 continue;
 
             if (set[in_idx] == ~0u)
-                set[in_idx] = mask;
-            else
-                set[in_idx] |= mask;
+                set[in_idx] = 0;
+            set[in_idx] |= mask & reg_maps_out->u.output_registers_mask[output->register_idx];
             shader_glsl_write_mask_to_str(mask, reg_mask);
 
             shader_addline(buffer, "%s%s = vs_out[%u]%s;\n",

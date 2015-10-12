@@ -609,24 +609,28 @@ struct wined3d_shader_sampler_map
 struct wined3d_shader_reg_maps
 {
     struct wined3d_shader_version shader_version;
-    BYTE texcoord;                          /* MAX_REG_TEXCRD, 8 */
-    BYTE address;                           /* MAX_REG_ADDR, 1 */
-    WORD labels;                            /* MAX_LABELS, 16 */
-    DWORD temporary;                        /* MAX_REG_TEMP, 32 */
-    DWORD *constf;                          /* pixel, vertex */
-    DWORD texcoord_mask[MAX_REG_TEXCRD];    /* vertex < 3.0 */
-    DWORD input_registers;                  /* max(MAX_REG_INPUT, MAX_ATTRIBS), 32 */
-    DWORD output_registers;                 /* MAX_REG_OUTPUT, 32 */
-    WORD integer_constants;                 /* MAX_CONST_I, 16 */
-    WORD boolean_constants;                 /* MAX_CONST_B, 16 */
-    WORD local_int_consts;                  /* MAX_CONST_I, 16 */
-    WORD local_bool_consts;                 /* MAX_CONST_B, 16 */
+    BYTE texcoord;                                  /* MAX_REG_TEXCRD, 8 */
+    BYTE address;                                   /* MAX_REG_ADDR, 1 */
+    WORD labels;                                    /* MAX_LABELS, 16 */
+    DWORD temporary;                                /* MAX_REG_TEMP, 32 */
+    DWORD *constf;                                  /* pixel, vertex */
+    union
+    {
+        DWORD texcoord_mask[MAX_REG_TEXCRD];        /* vertex < 3.0 */
+        BYTE output_registers_mask[MAX_REG_OUTPUT]; /* vertex >= 3.0 */
+    } u;
+    DWORD input_registers;                          /* max(MAX_REG_INPUT, MAX_ATTRIBS), 32 */
+    DWORD output_registers;                         /* MAX_REG_OUTPUT, 32 */
+    WORD integer_constants;                         /* MAX_CONST_I, 16 */
+    WORD boolean_constants;                         /* MAX_CONST_B, 16 */
+    WORD local_int_consts;                          /* MAX_CONST_I, 16 */
+    WORD local_bool_consts;                         /* MAX_CONST_B, 16 */
     UINT cb_sizes[WINED3D_MAX_CBS];
 
     struct wined3d_shader_resource_info resource_info[max(MAX_FRAGMENT_SAMPLERS, MAX_VERTEX_SAMPLERS)];
     struct wined3d_shader_sampler_map sampler_map;
-    BYTE bumpmat;                           /* MAX_TEXTURES, 8 */
-    BYTE luminanceparams;                   /* MAX_TEXTURES, 8 */
+    BYTE bumpmat;                                   /* MAX_TEXTURES, 8 */
+    BYTE luminanceparams;                           /* MAX_TEXTURES, 8 */
 
     WORD usesnrm        : 1;
     WORD vpos           : 1;
