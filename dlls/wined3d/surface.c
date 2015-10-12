@@ -5421,7 +5421,7 @@ HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct w
     }
 
     if (FAILED(hr = device_parent->ops->surface_created(device_parent,
-            wined3d_texture_get_parent(container), object, &parent, &parent_ops)))
+            container, layer * container->level_count + level, object, &parent, &parent_ops)))
     {
         WARN("Failed to create surface parent, hr %#x.\n", hr);
         wined3d_surface_destroy(object);

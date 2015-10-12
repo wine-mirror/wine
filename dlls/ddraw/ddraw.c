@@ -4712,17 +4712,17 @@ static void CDECL device_parent_activate(struct wined3d_device_parent *device_pa
 }
 
 static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,
-        void *container_parent, struct wined3d_surface *surface,
+        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx, struct wined3d_surface *surface,
         void **parent, const struct wined3d_parent_ops **parent_ops)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     struct ddraw_surface *ddraw_surface;
 
-    TRACE("device_parent %p, container_parent %p, surface %p, parent %p, parent_ops %p.\n",
-            device_parent, container_parent, surface, parent, parent_ops);
+    TRACE("device_parent %p, wined3d_texture %p, sub_resource_idx %u, surface %p, parent %p, parent_ops %p.\n",
+            device_parent, wined3d_texture, sub_resource_idx, surface, parent, parent_ops);
 
     /* We have a swapchain or wined3d internal texture. */
-    if (!container_parent || container_parent == ddraw)
+    if (!wined3d_texture_get_parent(wined3d_texture) || wined3d_texture_get_parent(wined3d_texture) == ddraw)
     {
         *parent = NULL;
         *parent_ops = &ddraw_null_wined3d_parent_ops;
@@ -4736,7 +4736,7 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    ddraw_surface_init(ddraw_surface, ddraw, container_parent, surface, parent_ops);
+    ddraw_surface_init(ddraw_surface, ddraw, wined3d_texture_get_parent(wined3d_texture), surface, parent_ops);
     *parent = ddraw_surface;
     list_add_head(&ddraw->surface_list, &ddraw_surface->surface_list_entry);
 

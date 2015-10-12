@@ -3989,11 +3989,11 @@ static void CDECL device_parent_activate(struct wined3d_device_parent *device_pa
 }
 
 static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,
-        void *container_parent, struct wined3d_surface *surface, void **parent,
+        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx, struct wined3d_surface *surface, void **parent,
         const struct wined3d_parent_ops **parent_ops)
 {
-    TRACE("device_parent %p, container_parent %p, surface %p, parent %p, parent_ops %p.\n",
-            device_parent, container_parent, surface, parent, parent_ops);
+    TRACE("device_parent %p, wined3d_texture %p, sub_resource_idx %u, surface %p, parent %p, parent_ops %p.\n",
+            device_parent, wined3d_texture, sub_resource_idx, surface, parent, parent_ops);
 
     *parent = NULL;
     *parent_ops = &d3d_null_wined3d_parent_ops;
