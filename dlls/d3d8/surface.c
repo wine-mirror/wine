@@ -70,7 +70,7 @@ static ULONG WINAPI d3d8_surface_AddRef(IDirect3DSurface8 *iface)
         wined3d_mutex_lock();
         if (surface->wined3d_rtv)
             wined3d_rendertarget_view_incref(surface->wined3d_rtv);
-        wined3d_surface_incref(surface->wined3d_surface);
+        wined3d_texture_incref(surface->wined3d_texture);
         wined3d_mutex_unlock();
     }
 
@@ -100,7 +100,7 @@ static ULONG WINAPI d3d8_surface_Release(IDirect3DSurface8 *iface)
         wined3d_mutex_lock();
         if (surface->wined3d_rtv)
             wined3d_rendertarget_view_decref(surface->wined3d_rtv);
-        wined3d_surface_decref(surface->wined3d_surface);
+        wined3d_texture_decref(surface->wined3d_texture);
         wined3d_mutex_unlock();
 
         if (parent_device)
