@@ -1073,7 +1073,7 @@ static BOOL WINAPI d3drm_frame2_GetBoxEnable(IDirect3DRMFrame2 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static HRESULT WINAPI d3drm_frame2_GetAxes(IDirect3DRMFrame2 *iface, D3DVECTOR *dir, D3DVECTOR *up)
@@ -1094,7 +1094,7 @@ static BOOL WINAPI d3drm_frame2_GetInheritAxes(IDirect3DRMFrame2 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static HRESULT WINAPI d3drm_frame2_GetHierarchyBox(IDirect3DRMFrame2 *iface, D3DRMBOX *box)
@@ -2014,7 +2014,7 @@ static BOOL WINAPI d3drm_frame3_GetBoxEnable(IDirect3DRMFrame3 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static HRESULT WINAPI d3drm_frame3_GetAxes(IDirect3DRMFrame3 *iface, D3DVECTOR *dir, D3DVECTOR *up)
@@ -2035,7 +2035,7 @@ static BOOL WINAPI d3drm_frame3_GetInheritAxes(IDirect3DRMFrame3 *iface)
 {
     FIXME("iface %p stub!\n", iface);
 
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static HRESULT WINAPI d3drm_frame3_GetHierarchyBox(IDirect3DRMFrame3 *iface, D3DRMBOX *box)
