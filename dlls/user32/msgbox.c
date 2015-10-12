@@ -115,12 +115,14 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     TRACE_(msgbox)("%s\n", debugstr_w(lpszText));
     SetWindowTextW(GetDlgItem(hwnd, MSGBOX_IDTEXT), lpszText);
 
-    /* Remove not selected buttons */
+    /* Remove not selected buttons and assign the WS_GROUP style to the first button */
+    hItem = 0;
     switch(lpmb->dwStyle & MB_TYPEMASK) {
     case MB_OK:
 	DestroyWindow(GetDlgItem(hwnd, IDCANCEL));
 	/* fall through */
     case MB_OKCANCEL:
+	hItem = GetDlgItem(hwnd, IDOK);
 	DestroyWindow(GetDlgItem(hwnd, IDABORT));
 	DestroyWindow(GetDlgItem(hwnd, IDRETRY));
 	DestroyWindow(GetDlgItem(hwnd, IDIGNORE));
@@ -130,6 +132,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 	DestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
 	break;
     case MB_ABORTRETRYIGNORE:
+	hItem = GetDlgItem(hwnd, IDABORT);
 	DestroyWindow(GetDlgItem(hwnd, IDOK));
 	DestroyWindow(GetDlgItem(hwnd, IDCANCEL));
 	DestroyWindow(GetDlgItem(hwnd, IDYES));
@@ -141,6 +144,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 	DestroyWindow(GetDlgItem(hwnd, IDCANCEL));
 	/* fall through */
     case MB_YESNOCANCEL:
+	hItem = GetDlgItem(hwnd, IDYES);
 	DestroyWindow(GetDlgItem(hwnd, IDOK));
 	DestroyWindow(GetDlgItem(hwnd, IDABORT));
 	DestroyWindow(GetDlgItem(hwnd, IDRETRY));
@@ -149,6 +153,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 	DestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
 	break;
     case MB_RETRYCANCEL:
+	hItem = GetDlgItem(hwnd, IDRETRY);
 	DestroyWindow(GetDlgItem(hwnd, IDOK));
 	DestroyWindow(GetDlgItem(hwnd, IDABORT));
 	DestroyWindow(GetDlgItem(hwnd, IDIGNORE));
@@ -158,6 +163,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 	DestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
 	break;
     case MB_CANCELTRYCONTINUE:
+	hItem = GetDlgItem(hwnd, IDCANCEL);
 	DestroyWindow(GetDlgItem(hwnd, IDOK));
 	DestroyWindow(GetDlgItem(hwnd, IDABORT));
 	DestroyWindow(GetDlgItem(hwnd, IDIGNORE));
@@ -165,6 +171,9 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 	DestroyWindow(GetDlgItem(hwnd, IDNO));
 	DestroyWindow(GetDlgItem(hwnd, IDRETRY));
     }
+
+    if (hItem) SetWindowLongW(hItem, GWL_STYLE, GetWindowLongW(hItem, GWL_STYLE) | WS_GROUP);
+
     /* Set the icon */
     switch(lpmb->dwStyle & MB_ICONMASK) {
     case MB_ICONEXCLAMATION:
