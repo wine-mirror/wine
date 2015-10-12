@@ -964,7 +964,7 @@ WINE_HIDP_PREPARSED_DATA* build_PreparseData(
             if (feature_features[i]->caps.ReportID != wine_report->reportID)
             {
                 wine_report->dwSize += (sizeof(WINE_HID_ELEMENT) * wine_report->elementCount);
-                wine_report = (WINE_HID_REPORT*)((BYTE*)wine_report)+wine_report->dwSize;
+                wine_report = (WINE_HID_REPORT*)((BYTE*)wine_report+wine_report->dwSize);
                 new_report(wine_report, feature_features[i]);
                 data->dwFeatureReportCount++;
                 bitLength = max(bitOffset, bitLength);
