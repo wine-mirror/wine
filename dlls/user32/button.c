@@ -353,9 +353,13 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
                                 (state & BST_INDETERMINATE) ? 0 : ((state & 3) + 1), 0 );
                 break;
             }
+            ReleaseCapture();
             BUTTON_NOTIFY_PARENT(hWnd, BN_CLICKED);
         }
-        ReleaseCapture();
+        else
+        {
+            ReleaseCapture();
+        }
         break;
 
     case WM_CAPTURECHANGED:
