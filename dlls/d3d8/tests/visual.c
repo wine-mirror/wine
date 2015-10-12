@@ -52,65 +52,96 @@ static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     return TRUE;
 }
 
+struct surface_readback
+{
+    IDirect3DSurface8 *surface;
+    D3DLOCKED_RECT locked_rect;
+};
+
+static void get_rt_readback(IDirect3DSurface8 *surface, struct surface_readback *rb)
+{
+    IDirect3DDevice8 *device;
+    IDirect3DTexture8 *tex = NULL;
+    HRESULT hr;
+
+    memset(rb, 0, sizeof(*rb));
+    IDirect3DSurface8_GetDevice(surface, &device);
+    hr = IDirect3DDevice8_CreateTexture(device, 640, 480, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &tex);
+    if (FAILED(hr) || !tex)
+    {
+        trace("Can't create an offscreen plain surface to read the render target data, hr %#x.\n", hr);
+        goto error;
+    }
+    hr = IDirect3DTexture8_GetSurfaceLevel(tex, 0, &rb->surface);
+    if (FAILED(hr))
+    {
+        trace("Can't get surface from texture, hr %#x.\n", hr);
+        goto error;
+    }
+    hr = IDirect3DDevice8_CopyRects(device, surface, NULL, 0, rb->surface, NULL);
+    if (FAILED(hr))
+    {
+        trace("Can't read the render target, hr %#x.\n", hr);
+        goto error;
+    }
+    hr = IDirect3DSurface8_LockRect(rb->surface, &rb->locked_rect, NULL, D3DLOCK_READONLY);
+    if (FAILED(hr))
+    {
+        trace("Can't lock the offscreen surface, hr %#x.\n", hr);
+        goto error;
+    }
+    IDirect3DTexture8_Release(tex);
+    IDirect3DDevice8_Release(device);
+    return;
+
+error:
+    if (rb->surface)
+        IDirect3DSurface8_Release(rb->surface);
+    rb->surface = NULL;
+    if (tex)
+        IDirect3DTexture8_Release(tex);
+    IDirect3DDevice8_Release(device);
+}
+
+static DWORD get_readback_color(struct surface_readback *rb, unsigned int x, unsigned int y)
+{
+    return rb->locked_rect.pBits
+            ? ((DWORD *)rb->locked_rect.pBits)[y * rb->locked_rect.Pitch / sizeof(DWORD) + x] : 0xdeadbeef;
+}
+
+static void release_surface_readback(struct surface_readback *rb)
+{
+    HRESULT hr;
+
+    if (!rb->surface)
+        return;
+    if (rb->locked_rect.pBits && FAILED(hr = IDirect3DSurface8_UnlockRect(rb->surface)))
+        trace("Can't unlock the offscreen surface, hr %#x.\n", hr);
+    IDirect3DSurface8_Release(rb->surface);
+}
+
 static DWORD getPixelColor(IDirect3DDevice8 *device, UINT x, UINT y)
 {
     DWORD ret;
-    IDirect3DTexture8 *tex = NULL;
-    IDirect3DSurface8 *surf = NULL, *backbuf = NULL;
+    IDirect3DSurface8 *rt;
+    struct surface_readback rb;
     HRESULT hr;
-    D3DLOCKED_RECT lockedRect;
-    RECT rectToLock = {x, y, x+1, y+1};
 
-    hr = IDirect3DDevice8_CreateTexture(device, 640, 480, 1 /* Levels */, 0, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &tex);
-    if(FAILED(hr) || !tex )  /* This is not a test */
+    hr = IDirect3DDevice8_GetRenderTarget(device, &rt);
+    if (FAILED(hr))
     {
-        trace("Can't create an offscreen plain surface to read the render target data, hr=%#08x\n", hr);
+        trace("Can't get the render target, hr %#x.\n", hr);
         return 0xdeadbeef;
     }
-    hr = IDirect3DTexture8_GetSurfaceLevel(tex, 0, &surf);
-    if (FAILED(hr))  /* This is not a test */
-    {
-        trace("Can't get surface from texture, hr=%#08x\n", hr);
-        ret = 0xdeadbeee;
-        goto out;
-    }
 
-    hr = IDirect3DDevice8_GetRenderTarget(device, &backbuf);
-    if(FAILED(hr))
-    {
-        trace("Can't get the render target, hr=%#08x\n", hr);
-        ret = 0xdeadbeed;
-        goto out;
-    }
-    hr = IDirect3DDevice8_CopyRects(device, backbuf, NULL, 0, surf, NULL);
-    if(FAILED(hr))
-    {
-        trace("Can't read the render target, hr=%#08x\n", hr);
-        ret = 0xdeadbeec;
-        goto out;
-    }
-
-    hr = IDirect3DSurface8_LockRect(surf, &lockedRect, &rectToLock, D3DLOCK_READONLY);
-    if(FAILED(hr))
-    {
-        trace("Can't lock the offscreen surface, hr=%#08x\n", hr);
-        ret = 0xdeadbeeb;
-        goto out;
-    }
+    get_rt_readback(rt, &rb);
     /* Remove the X channel for now. DirectX and OpenGL have different ideas how to treat it apparently, and it isn't
      * really important for these tests
      */
-    ret = ((DWORD *) lockedRect.pBits)[0] & 0x00ffffff;
-    hr = IDirect3DSurface8_UnlockRect(surf);
-    if(FAILED(hr))
-    {
-        trace("Can't unlock the offscreen surface, hr=%#08x\n", hr);
-    }
+    ret = get_readback_color(&rb, x, y) & 0x00ffffff;
+    release_surface_readback(&rb);
 
-out:
-    if(backbuf) IDirect3DSurface8_Release(backbuf);
-    if(surf) IDirect3DSurface8_Release(surf);
-    if(tex) IDirect3DTexture8_Release(tex);
+    IDirect3DSurface8_Release(rt);
     return ret;
 }
 
@@ -6692,7 +6723,7 @@ static void test_updatetexture(void)
 
                 color = getPixelColor(device, 320, 240);
                 ok (color_match(color, 0x007f7f00, 2) || broken(tests[i].broken)
-                        || broken(color == 0xdeadbeec), /* WARP device often just breaks down. */
+                        || broken(color == 0x00adbeef), /* WARP device often just breaks down. */
                         "Got unexpected color 0x%08x, case %u, %u.\n", color, t, i);
             }
 
