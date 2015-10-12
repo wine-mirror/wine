@@ -2681,11 +2681,13 @@ HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
     return WINED3D_OK;
 }
 
-static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_location)
+static void read_from_framebuffer(struct wined3d_surface *surface,
+        struct wined3d_context *old_ctx, DWORD dst_location)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
+    struct wined3d_context *context = old_ctx;
+    struct wined3d_surface *restore_rt = NULL;
     BYTE *mem;
     BYTE *row, *top, *bottom;
     int i;
@@ -2694,7 +2696,12 @@ static void read_from_framebuffer(struct wined3d_surface *surface, DWORD dst_loc
 
     surface_get_memory(surface, &data, dst_location);
 
-    context = context_acquire(device, surface);
+    if (surface != old_ctx->current_rt)
+    {
+        restore_rt = old_ctx->current_rt;
+        context = context_acquire(device, surface);
+    }
+
     context_apply_blit_state(context, device);
     gl_info = context->gl_info;
 
@@ -2781,7 +2788,8 @@ error:
         checkGLcall("glBindBuffer");
     }
 
-    context_release(context);
+    if (restore_rt)
+        context_restore(context, restore_rt);
 }
 
 /* Read the framebuffer contents into a texture. Note that this function
@@ -3824,7 +3832,7 @@ static void surface_load_sysmem(struct wined3d_surface *surface,
 
     if (surface->locations & WINED3D_LOCATION_DRAWABLE)
     {
-        read_from_framebuffer(surface, dst_location);
+        read_from_framebuffer(surface, context, dst_location);
         return;
     }
 

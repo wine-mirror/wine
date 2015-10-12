@@ -1194,6 +1194,20 @@ void context_release(struct wined3d_context *context)
     }
 }
 
+/* This is used when a context for render target A is active, but a separate context is
+ * needed to access the WGL framebuffer for render target B. Re-acquire a context for rt
+ * A to avoid breaking caller code. */
+void context_restore(struct wined3d_context *context, struct wined3d_surface *restore)
+{
+    if (context->current_rt != restore)
+    {
+        context_release(context);
+        context = context_acquire(restore->resource.device, restore);
+    }
+
+    context_release(context);
+}
+
 static void context_enter(struct wined3d_context *context)
 {
     TRACE("Entering context %p, level %u.\n", context, context->level + 1);
