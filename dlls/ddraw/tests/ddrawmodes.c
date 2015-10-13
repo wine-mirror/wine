@@ -567,13 +567,13 @@ static void setdisplaymode(int i)
                       scrn.right, scrn.bottom, virt.left, virt.top, virt.right, virt.bottom);
                 if (!EqualRect(&scrn, &orig_rect))
                 {
-                    HRESULT rect_result;
+                    BOOL rect_result, ret;
 
                     /* Check that the client rect was resized */
-                    rc = GetClientRect(hwnd, &test);
-                    ok(rc!=0, "GetClientRect returned %x\n", rc);
-                    rc = EqualRect(&scrn, &test);
-                    todo_wine ok(rc!=0, "Fullscreen window has wrong size\n");
+                    ret = GetClientRect(hwnd, &test);
+                    ok(ret, "GetClientRect returned %d\n", ret);
+                    ret = EqualRect(&scrn, &test);
+                    todo_wine ok(ret, "Fullscreen window has wrong size\n");
 
                     /* Check that switching to normal cooperative level
                        does not restore the display mode */
