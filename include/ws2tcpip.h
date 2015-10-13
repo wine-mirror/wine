@@ -161,6 +161,8 @@ static inline WCHAR *gai_strerrorW(int errcode)
 # define gai_strerror WINELIB_NAME_AW(gai_strerror)
 #endif
 
+typedef void (CALLBACK *LPLOOKUPSERVICE_COMPLETION_ROUTINE)(DWORD,DWORD,WSAOVERLAPPED*);
+
 void WINAPI WS(freeaddrinfo)(LPADDRINFO);
 #define     FreeAddrInfoA WS(freeaddrinfo)
 void WINAPI FreeAddrInfoW(PADDRINFOW);
@@ -169,6 +171,11 @@ int WINAPI  WS(getaddrinfo)(const char*,const char*,const struct WS(addrinfo)*,s
 #define     GetAddrInfoA WS(getaddrinfo)
 int WINAPI  GetAddrInfoW(PCWSTR,PCWSTR,const ADDRINFOW*,PADDRINFOW*);
 #define     GetAddrInfo WINELIB_NAME_AW(GetAddrInfo)
+int WINAPI  GetAddrInfoExA(const char*,const char*,DWORD,GUID*,const ADDRINFOEXA*,ADDRINFOEXA**,struct timeval*,
+                           OVERLAPPED*,LPLOOKUPSERVICE_COMPLETION_ROUTINE,HANDLE*);
+int WINAPI  GetAddrInfoExW(const WCHAR*,const WCHAR*,DWORD,GUID*, const ADDRINFOEXW*,ADDRINFOEXW**,struct timeval*,
+                           OVERLAPPED*,LPLOOKUPSERVICE_COMPLETION_ROUTINE,HANDLE*);
+#define     GetAddrInfoEx WINELIB_NAME_AW(GetAddrInfoExW)
 int WINAPI  WS(getnameinfo)(const SOCKADDR*,WS(socklen_t),PCHAR,DWORD,PCHAR,DWORD,INT);
 #define     GetNameInfoA WS(getnameinfo)
 INT WINAPI  GetNameInfoW(const SOCKADDR*,WS(socklen_t),PWCHAR,DWORD,PWCHAR,DWORD,INT);
