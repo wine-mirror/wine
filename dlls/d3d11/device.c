@@ -4084,7 +4084,7 @@ static HRESULT CDECL device_parent_create_swapchain(struct wined3d_device_parent
     return S_OK;
 }
 
-static const struct wined3d_device_parent_ops d3d10_wined3d_device_parent_ops =
+static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =
 {
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
@@ -4182,7 +4182,7 @@ HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown)
     device->ID3D10Device1_iface.lpVtbl = &d3d10_device1_vtbl;
     device->ID3D10Multithread_iface.lpVtbl = &d3d10_multithread_vtbl;
     device->IWineDXGIDeviceParent_iface.lpVtbl = &d3d_dxgi_device_parent_vtbl;
-    device->device_parent.ops = &d3d10_wined3d_device_parent_ops;
+    device->device_parent.ops = &d3d_wined3d_device_parent_ops;
     device->refcount = 1;
     /* COM aggregation always takes place */
     device->outer_unk = outer_unknown;
