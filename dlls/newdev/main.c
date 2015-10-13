@@ -18,8 +18,14 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdarg.h>
+
 #include "windef.h"
 #include "winerror.h"
+#include "winbase.h"
+#include "winuser.h"
+#include "winreg.h"
+#include "setupapi.h"
 
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -35,6 +41,14 @@ BOOL WINAPI InstallNewDevice(HWND hwndParent, LPGUID ClassGuid, PDWORD pReboot)
     return TRUE;
 }
 
+/***********************************************************************
+ *           InstallSelectedDriver (NEWDEV.@)
+ */
+BOOL WINAPI InstallSelectedDriver(HWND parent, HDEVINFO info, const WCHAR *reserved, BOOL backup, DWORD *reboot)
+{
+    FIXME("Stub! %p %p %s %u %p\n", parent, info, debugstr_w(reserved), backup, reboot);
+    return TRUE;
+}
 
 /***********************************************************************
  *           UpdateDriverForPlugAndPlayDevicesA (NEWDEV.@)
