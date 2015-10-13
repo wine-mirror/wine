@@ -348,12 +348,23 @@ static const struct wined3d_parent_ops d3d8_view_wined3d_parent_ops =
 
 struct wined3d_rendertarget_view *d3d8_surface_get_rendertarget_view(struct d3d8_surface *surface)
 {
+    struct wined3d_resource *resource;
+    struct wined3d_resource_desc resource_desc;
+    struct wined3d_rendertarget_view_desc desc;
     HRESULT hr;
 
     if (surface->wined3d_rtv)
         return surface->wined3d_rtv;
 
-    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(surface->wined3d_surface,
+    resource = wined3d_texture_get_resource(surface->wined3d_texture);
+    wined3d_resource_get_desc(resource, &resource_desc);
+
+    desc.format_id = resource_desc.format;
+    desc.u.texture.level_idx = surface->sub_resource_idx;
+    desc.u.texture.layer_idx = 0;
+    desc.u.texture.layer_count = 1;
+
+    if (FAILED(hr = wined3d_rendertarget_view_create(&desc, resource,
             surface, &d3d8_view_wined3d_parent_ops, &surface->wined3d_rtv)))
     {
         ERR("Failed to create rendertarget view, hr %#x.\n", hr);
