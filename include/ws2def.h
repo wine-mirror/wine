@@ -110,4 +110,32 @@ typedef struct _WSAMSG {
           (((unsigned char*)cmsg + WSA_CMSG_ALIGN(cmsg->cmsg_len)+WSA_CMSG_ALIGN(((WSACMSGHDR*)((unsigned char*)cmsg + WSA_CMSG_ALIGN(cmsg->cmsg_len)))->cmsg_len) > ((unsigned char*)(mhdr)->Control.buf + (mhdr)->Control.len)) ? NULL : \
            (WSACMSGHDR*)((unsigned char*)cmsg + WSA_CMSG_ALIGN(cmsg->cmsg_len))))))
 
+typedef struct addrinfoexA {
+    int ai_flags;
+    int ai_family;
+    int ai_socktype;
+    int ai_protocol;
+    size_t ai_addrlen;
+    char *ai_canonname;
+    struct sockaddr *ai_addr;
+    void *ai_blob;
+    size_t ai_bloblen;
+    GUID *ai_provider;
+    struct addrinfoexA *ai_next;
+} ADDRINFOEXA, *PADDRINFOEXA, *LPADDRINFOEXA;
+
+typedef struct addrinfoexW {
+    int ai_flags;
+    int ai_family;
+    int ai_socktype;
+    int ai_protocol;
+    size_t ai_addrlen;
+    WCHAR *ai_canonname;
+    struct sockaddr *ai_addr;
+    void *ai_blob;
+    size_t ai_bloblen;
+    GUID *ai_provider;
+    struct addrinfoexW *ai_next;
+} ADDRINFOEXW, *PADDRINFOEXW, *LPADDRINFOEXW;
+
 #endif /* _WS2DEF_ */
