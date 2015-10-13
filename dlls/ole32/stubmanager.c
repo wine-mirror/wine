@@ -667,7 +667,8 @@ static HRESULT WINAPI RemUnknown_QueryInterface(IRemUnknown *iface, REFIID riid,
         return S_OK;
     }
 
-    FIXME("No interface for iid %s\n", debugstr_guid(riid));
+    if (!IsEqualIID(riid, &IID_IExternalConnection))
+        FIXME("No interface for iid %s\n", debugstr_guid(riid));
 
     *ppv = NULL;
     return E_NOINTERFACE;
