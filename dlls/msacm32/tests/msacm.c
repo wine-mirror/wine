@@ -145,7 +145,7 @@ static BOOL CALLBACK DriverEnumProc(HACMDRIVERID hadid,
             "acmDriverDetailsA(): cbStruct = %08x\n", dd.cbStruct);
 
         for (iter = expected_ids; iter->shortname; ++iter) {
-            if (dd.szShortName && !strcmp(iter->shortname, dd.szShortName)) {
+            if (!strcmp(iter->shortname, dd.szShortName)) {
                 /* try alternative product id on mismatch */
                 if (iter->pid_alt && iter->pid != dd.wPid)
                     ok(iter->mid == dd.wMid && iter->pid_alt == dd.wPid,
