@@ -23,6 +23,7 @@
 #include "dxgi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define WINE_DXGI_TO_STR(x) case x: return #x
 
@@ -431,4 +432,26 @@ HRESULT dxgi_set_private_data_interface(struct wined3d_private_store *store,
     wined3d_mutex_unlock();
 
     return hr;
+}
+
+HRESULT dxgi_check_d3d10_support(struct dxgi_factory *factory, struct dxgi_adapter *adapter)
+{
+    WINED3DCAPS caps;
+    HRESULT hr;
+
+    FIXME("Ignoring adapter type.\n");
+
+    wined3d_mutex_lock();
+    hr = wined3d_get_device_caps(factory->wined3d, adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
+    if (FAILED(hr) || caps.VertexShaderVersion < 4 || caps.PixelShaderVersion < 4)
+    {
+        FIXME_(winediag)("Direct3D 10 is not supported on this GPU with the current shader backend.\n");
+        if (SUCCEEDED(hr))
+            hr = E_FAIL;
+        wined3d_mutex_unlock();
+        return hr;
+    }
+    wined3d_mutex_unlock();
+
+    return S_OK;
 }

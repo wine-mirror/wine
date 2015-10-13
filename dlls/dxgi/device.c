@@ -23,7 +23,6 @@
 #include "dxgi_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static inline struct dxgi_device *impl_from_IWineDXGIDevice(IWineDXGIDevice *iface)
 {
@@ -352,7 +351,6 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     struct dxgi_factory *dxgi_factory;
     void *layer_base;
     HRESULT hr;
-    WINED3DCAPS caps;
 
     if (!(dxgi_factory = unsafe_impl_from_IDXGIFactory1((IDXGIFactory1 *)factory)))
     {
@@ -394,19 +392,15 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     wined3d_device_parent = IWineDXGIDeviceParent_get_wined3d_device_parent(dxgi_device_parent);
     IWineDXGIDeviceParent_Release(dxgi_device_parent);
 
-    FIXME("Ignoring adapter type.\n");
-
-    hr = wined3d_get_device_caps(dxgi_factory->wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL, &caps);
-    if (FAILED(hr) || caps.VertexShaderVersion < 4 || caps.PixelShaderVersion < 4)
+    if (FAILED(hr = dxgi_check_d3d10_support(dxgi_factory, dxgi_adapter)))
     {
-        FIXME_(winediag)("Direct3D 10 is not supported on this GPU with the current shader backend.\n");
-        if (SUCCEEDED(hr))
-            hr = E_FAIL;
         IUnknown_Release(device->child_layer);
         wined3d_private_store_cleanup(&device->private_store);
         wined3d_mutex_unlock();
         return hr;
     }
+
+    FIXME("Ignoring adapter type.\n");
 
     hr = wined3d_device_create(dxgi_factory->wined3d, dxgi_adapter->ordinal, WINED3D_DEVICE_TYPE_HAL,
             NULL, 0, 4, wined3d_device_parent, &device->wined3d_device);

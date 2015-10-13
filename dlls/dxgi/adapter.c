@@ -200,9 +200,39 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc(IDXGIAdapter1 *iface, DXGI
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_CheckInterfaceSupport(IDXGIAdapter1 *iface,
         REFGUID guid, LARGE_INTEGER *umd_version)
 {
-    FIXME("iface %p, guid %s, umd_version %p stub!\n", iface, debugstr_guid(guid), umd_version);
+    struct dxgi_adapter *adapter = impl_from_IDXGIAdapter1(iface);
+    struct wined3d_adapter_identifier adapter_id;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, guid %s, umd_version %p.\n", iface, debugstr_guid(guid), umd_version);
+
+    /* This method works only for D3D10 interfaces. */
+    if (!(IsEqualGUID(guid, &IID_ID3D10Device)
+            || IsEqualGUID(guid, &IID_ID3D10Device1)))
+    {
+        WARN("Returning DXGI_ERROR_UNSUPPORTED for %s.\n", debugstr_guid(guid));
+        return DXGI_ERROR_UNSUPPORTED;
+    }
+
+    if (FAILED(hr = dxgi_check_d3d10_support(adapter->parent, adapter)))
+        return DXGI_ERROR_UNSUPPORTED;
+
+    if (umd_version)
+    {
+        adapter_id.driver_size = 0;
+        adapter_id.description_size = 0;
+        adapter_id.device_name_size = 0;
+
+        wined3d_mutex_lock();
+        hr = wined3d_get_adapter_identifier(adapter->parent->wined3d, adapter->ordinal, 0, &adapter_id);
+        wined3d_mutex_unlock();
+        if (FAILED(hr))
+            return hr;
+
+        *umd_version = adapter_id.driver_version;
+    }
+
+    return S_OK;
 }
 
 static const struct IDXGIAdapter1Vtbl dxgi_adapter_vtbl =
