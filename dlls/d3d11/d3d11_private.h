@@ -336,13 +336,13 @@ struct d3d_sampler_state
 
     struct wined3d_private_store private_store;
     struct wined3d_sampler *wined3d_sampler;
-    D3D10_SAMPLER_DESC desc;
+    D3D11_SAMPLER_DESC desc;
     struct wine_rb_entry entry;
     ID3D11Device *device;
 };
 
 HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_device *device,
-        const D3D10_SAMPLER_DESC *desc) DECLSPEC_HIDDEN;
+        const D3D11_SAMPLER_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Query */

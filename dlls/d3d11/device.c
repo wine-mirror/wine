@@ -3567,7 +3567,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device1 *
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d_sampler_state_init(object, device, desc)))
+    if (FAILED(hr = d3d_sampler_state_init(object, device, (const D3D11_SAMPLER_DESC *)desc)))
     {
         WARN("Failed to initialize sampler state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -4112,8 +4112,8 @@ static void d3d_rb_free(void *ptr)
 
 static int d3d_sampler_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
-    const D3D10_SAMPLER_DESC *ka = key;
-    const D3D10_SAMPLER_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_sampler_state, entry)->desc;
+    const D3D11_SAMPLER_DESC *ka = key;
+    const D3D11_SAMPLER_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_sampler_state, entry)->desc;
 
     return memcmp(ka, kb, sizeof(*ka));
 }
