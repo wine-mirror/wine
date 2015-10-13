@@ -8498,8 +8498,12 @@ static void test_ServiceProvider(void)
     hres = IServiceProvider_QueryService(provider, &SID_SContainerDispatch, &IID_IUnknown, (void**)&unk);
     ok(hres == S_OK, "got 0x%08x\n", hres);
     ok(iface_cmp((IUnknown*)doc, unk), "got wrong pointer\n");
-
     IUnknown_Release(unk);
+
+    hres = IServiceProvider_QueryService(provider, &SID_SHTMLEditServices, &IID_IHTMLEditServices, (void**)&unk);
+    ok(hres == S_OK, "QueryService(HTMLEditServices) failed: %08x\n", hres);
+    IUnknown_Release(unk);
+
     IServiceProvider_Release(provider);
     release_document(doc);
 }

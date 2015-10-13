@@ -602,6 +602,7 @@ struct HTMLDocumentObj {
     DOCHOSTUIINFO hostinfo;
 
     IOleUndoManager *undomgr;
+    IHTMLEditServices *editsvcs;
 
     HWND hwnd;
     HWND tooltips_hwnd;

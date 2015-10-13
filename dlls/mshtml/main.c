@@ -554,6 +554,7 @@ const char *debugstr_mshtml_guid(const GUID *iid)
     X(IID_IHlinkTarget);
     X(IID_IHTMLDocument6);
     X(IID_IHTMLDocument7);
+    X(IID_IHTMLEditServices);
     X(IID_IHTMLFramesCollection2);
     X(IID_IHTMLPrivateWindow);
     X(IID_IHtmlLoadOptions);

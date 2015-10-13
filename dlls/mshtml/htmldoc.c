@@ -4761,6 +4761,8 @@ static ULONG WINAPI CustomDoc_Release(ICustomDoc *iface)
             IOleDocumentView_SetInPlaceSite(&This->basedoc.IOleDocumentView_iface, NULL);
         if(This->undomgr)
             IOleUndoManager_Release(This->undomgr);
+        if(This->editsvcs)
+            IHTMLEditServices_Release(This->editsvcs);
         if(This->tooltips_hwnd)
             DestroyWindow(This->tooltips_hwnd);
 
