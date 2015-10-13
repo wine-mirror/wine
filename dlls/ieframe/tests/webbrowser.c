@@ -452,11 +452,14 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         }
     }else if(IsEqualGUID(&CGID_ShellDocView, pguidCmdGroup)) {
         switch(nCmdID) {
+        case 63: /* win10 */
         case 105: /* TODO */
+        case 132: /* win10 */
         case 133: /* IE11 */
         case 134: /* TODO (IE10) */
         case 135: /* IE11 */
         case 136: /* TODO (IE10) */
+        case 137: /* win10 */
         case 138: /* TODO */
         case 140: /* TODO (Win7) */
         case 144: /* TODO */
@@ -464,6 +467,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 179: /* IE11 */
         case 180: /* IE11 */
         case 181: /* IE11 */
+        case 182: /* win10 */
             return E_FAIL;
         default:
             ok(0, "unexpected nCmdID %d\n", nCmdID);
