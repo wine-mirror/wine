@@ -107,6 +107,7 @@ struct stub_manager
      */
 
     ULONG             norm_refs;  /* refcount of normal marshals (CS lock) */
+    BOOL              disconnected; /* CoDisconnectObject has been called (CS lock) */
 };
 
 /* imported interface proxy */
@@ -195,6 +196,7 @@ struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, IUnknown *obje
 BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid) DECLSPEC_HIDDEN;
 BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid) DECLSPEC_HIDDEN;
 void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak) DECLSPEC_HIDDEN;
+void stub_manager_disconnect(struct stub_manager *m) DECLSPEC_HIDDEN;
 HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **manager, IRpcStubBuffer **stub,
                                  IRpcChannelBuffer **chan, IID *iid, IUnknown **iface) DECLSPEC_HIDDEN;
 HRESULT start_apartment_remote_unknown(void) DECLSPEC_HIDDEN;
@@ -213,7 +215,7 @@ HRESULT RPC_CreateClientChannel(const OXID *oxid, const IPID *ipid,
 HRESULT RPC_CreateServerChannel(DWORD dest_context, void *dest_context_data, IRpcChannelBuffer **chan) DECLSPEC_HIDDEN;
 void    RPC_ExecuteCall(struct dispatch_params *params) DECLSPEC_HIDDEN;
 HRESULT RPC_RegisterInterface(REFIID riid) DECLSPEC_HIDDEN;
-void    RPC_UnregisterInterface(REFIID riid) DECLSPEC_HIDDEN;
+void    RPC_UnregisterInterface(REFIID riid, BOOL wait) DECLSPEC_HIDDEN;
 HRESULT RPC_StartLocalServer(REFCLSID clsid, IStream *stream, BOOL multi_use, void **registration) DECLSPEC_HIDDEN;
 void    RPC_StopLocalServer(void *registration) DECLSPEC_HIDDEN;
 HRESULT RPC_GetLocalClassObject(REFCLSID rclsid, REFIID iid, LPVOID *ppv) DECLSPEC_HIDDEN;

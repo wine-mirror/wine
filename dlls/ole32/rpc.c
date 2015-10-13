@@ -1581,7 +1581,7 @@ HRESULT RPC_RegisterInterface(REFIID riid)
 }
 
 /* stub unregistration */
-void RPC_UnregisterInterface(REFIID riid)
+void RPC_UnregisterInterface(REFIID riid, BOOL wait)
 {
     struct registered_if *rif;
     EnterCriticalSection(&csRegIf);
@@ -1591,7 +1591,7 @@ void RPC_UnregisterInterface(REFIID riid)
         {
             if (!--rif->refs)
             {
-                RpcServerUnregisterIf((RPC_IF_HANDLE)&rif->If, NULL, TRUE);
+                RpcServerUnregisterIf((RPC_IF_HANDLE)&rif->If, NULL, wait);
                 list_remove(&rif->entry);
                 HeapFree(GetProcessHeap(), 0, rif);
             }
