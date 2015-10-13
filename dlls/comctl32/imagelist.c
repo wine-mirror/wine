@@ -3554,7 +3554,7 @@ static HRESULT WINAPI ImageListImpl_SetDragCursorImage(IImageList2 *iface,
     IUnknown *punk, int iDrag, int dxHotspot, int dyHotspot)
 {
     IImageList *iml2 = NULL;
-    HRESULT ret;
+    BOOL ret;
 
     if (!punk)
         return E_FAIL;
