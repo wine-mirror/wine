@@ -506,6 +506,7 @@ static HRESULT ipid_to_stub_manager(const IPID *ipid, APARTMENT **stub_apt, stru
  * release the references to all objects (except iface) if the function
  * returned success, otherwise no references are returned. */
 HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt,
+                                 struct stub_manager **manager,
                                  IRpcStubBuffer **stub, IRpcChannelBuffer **chan,
                                  IID *iid, IUnknown **iface)
 {
@@ -528,7 +529,10 @@ HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt,
         *iid = ifstub->iid;
         *iface = ifstub->iface;
 
-        stub_manager_int_release(stubmgr);
+        if (manager)
+            *manager = stubmgr;
+        else
+            stub_manager_int_release(stubmgr);
         return S_OK;
     }
     else

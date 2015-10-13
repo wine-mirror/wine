@@ -195,7 +195,8 @@ struct stub_manager *get_stub_manager_from_object(APARTMENT *apt, IUnknown *obje
 BOOL stub_manager_notify_unmarshal(struct stub_manager *m, const IPID *ipid) DECLSPEC_HIDDEN;
 BOOL stub_manager_is_table_marshaled(struct stub_manager *m, const IPID *ipid) DECLSPEC_HIDDEN;
 void stub_manager_release_marshal_data(struct stub_manager *m, ULONG refs, const IPID *ipid, BOOL tableweak) DECLSPEC_HIDDEN;
-HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt, IRpcStubBuffer **stub, IRpcChannelBuffer **chan, IID *iid, IUnknown **iface) DECLSPEC_HIDDEN;
+HRESULT ipid_get_dispatch_params(const IPID *ipid, APARTMENT **stub_apt, struct stub_manager **manager, IRpcStubBuffer **stub,
+                                 IRpcChannelBuffer **chan, IID *iid, IUnknown **iface) DECLSPEC_HIDDEN;
 HRESULT start_apartment_remote_unknown(void) DECLSPEC_HIDDEN;
 
 HRESULT marshal_object(APARTMENT *apt, STDOBJREF *stdobjref, REFIID riid, IUnknown *obj, DWORD dest_context, void *dest_context_data, MSHLFLAGS mshlflags) DECLSPEC_HIDDEN;
