@@ -296,7 +296,7 @@ int wmain(int argc, WCHAR* argv[])
                 continue;
             }
 
-            if (!CallInstall || (CallInstall && CallRegister))
+            if (!CallInstall || CallRegister)
             {
                 if(Unregister)
                     res = UnregisterDll(DllName);
