@@ -1700,6 +1700,11 @@ union codeview_symbol
 #define S_MSTOOLINFO_V3 0x113C
 #define S_MSTOOLENV_V3  0x113D
 
+#define S_LOCAL_VS2013      0x113E
+#define S_FPOFF_VS2013      0x1144
+#define S_LPROC32_VS2013    0x1146
+#define S_GPROC32_VS2013    0x1147
+
 /* ======================================== *
  *          Line number information
  * ======================================== */
