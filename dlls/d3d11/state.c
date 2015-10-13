@@ -867,9 +867,9 @@ struct d3d_rasterizer_state *unsafe_impl_from_ID3D10RasterizerState(ID3D10Raster
     return impl_from_ID3D10RasterizerState(iface);
 }
 
-static inline struct d3d10_sampler_state *impl_from_ID3D10SamplerState(ID3D10SamplerState *iface)
+static inline struct d3d_sampler_state *impl_from_ID3D10SamplerState(ID3D10SamplerState *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d10_sampler_state, ID3D10SamplerState_iface);
+    return CONTAINING_RECORD(iface, struct d3d_sampler_state, ID3D10SamplerState_iface);
 }
 
 /* IUnknown methods */
@@ -896,7 +896,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_QueryInterface(ID3D10Sample
 
 static ULONG STDMETHODCALLTYPE d3d10_sampler_state_AddRef(ID3D10SamplerState *iface)
 {
-    struct d3d10_sampler_state *This = impl_from_ID3D10SamplerState(iface);
+    struct d3d_sampler_state *This = impl_from_ID3D10SamplerState(iface);
     ULONG refcount = InterlockedIncrement(&This->refcount);
 
     TRACE("%p increasing refcount to %u.\n", This, refcount);
@@ -906,7 +906,7 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_AddRef(ID3D10SamplerState *if
 
 static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *iface)
 {
-    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+    struct d3d_sampler_state *state = impl_from_ID3D10SamplerState(iface);
     ULONG refcount = InterlockedDecrement(&state->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", state, refcount);
@@ -931,7 +931,7 @@ static ULONG STDMETHODCALLTYPE d3d10_sampler_state_Release(ID3D10SamplerState *i
 
 static void STDMETHODCALLTYPE d3d10_sampler_state_GetDevice(ID3D10SamplerState *iface, ID3D10Device **device)
 {
-    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+    struct d3d_sampler_state *state = impl_from_ID3D10SamplerState(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
@@ -942,7 +942,7 @@ static void STDMETHODCALLTYPE d3d10_sampler_state_GetDevice(ID3D10SamplerState *
 static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_GetPrivateData(ID3D10SamplerState *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
-    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+    struct d3d_sampler_state *state = impl_from_ID3D10SamplerState(iface);
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -953,7 +953,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_GetPrivateData(ID3D10Sample
 static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_SetPrivateData(ID3D10SamplerState *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
-    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+    struct d3d_sampler_state *state = impl_from_ID3D10SamplerState(iface);
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
@@ -964,7 +964,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_SetPrivateData(ID3D10Sample
 static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_SetPrivateDataInterface(ID3D10SamplerState *iface,
         REFGUID guid, const IUnknown *data)
 {
-    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+    struct d3d_sampler_state *state = impl_from_ID3D10SamplerState(iface);
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
@@ -976,7 +976,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_sampler_state_SetPrivateDataInterface(ID3
 static void STDMETHODCALLTYPE d3d10_sampler_state_GetDesc(ID3D10SamplerState *iface,
         D3D10_SAMPLER_DESC *desc)
 {
-    struct d3d10_sampler_state *state = impl_from_ID3D10SamplerState(iface);
+    struct d3d_sampler_state *state = impl_from_ID3D10SamplerState(iface);
 
     TRACE("iface %p, desc %p.\n", iface, desc);
 
@@ -1034,7 +1034,7 @@ static enum wined3d_cmp_func wined3d_cmp_func_from_d3d10core(D3D10_COMPARISON_FU
     return (enum wined3d_cmp_func)f;
 }
 
-HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d_device *device,
+HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_device *device,
         const D3D10_SAMPLER_DESC *desc)
 {
     struct wined3d_sampler_desc wined3d_desc;
@@ -1085,7 +1085,7 @@ HRESULT d3d10_sampler_state_init(struct d3d10_sampler_state *state, struct d3d_d
     return S_OK;
 }
 
-struct d3d10_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface)
+struct d3d_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface)
 {
     if (!iface)
         return NULL;

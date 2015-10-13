@@ -1837,7 +1837,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSSetSamplers(ID3D10Device1 *iface,
     wined3d_mutex_lock();
     for (i = 0; i < sampler_count; ++i)
     {
-        struct d3d10_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
+        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
 
         wined3d_device_set_ps_sampler(device->wined3d_device, start_slot + i,
                 sampler ? sampler->wined3d_sampler : NULL);
@@ -2066,7 +2066,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSSetSamplers(ID3D10Device1 *iface,
     wined3d_mutex_lock();
     for (i = 0; i < sampler_count; ++i)
     {
-        struct d3d10_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
+        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
 
         wined3d_device_set_vs_sampler(device->wined3d_device, start_slot + i,
                 sampler ? sampler->wined3d_sampler : NULL);
@@ -2119,7 +2119,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSSetSamplers(ID3D10Device1 *iface,
     wined3d_mutex_lock();
     for (i = 0; i < sampler_count; ++i)
     {
-        struct d3d10_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
+        struct d3d_sampler_state *sampler = unsafe_impl_from_ID3D10SamplerState(samplers[i]);
 
         wined3d_device_set_gs_sampler(device->wined3d_device, start_slot + i,
                 sampler ? sampler->wined3d_sampler : NULL);
@@ -2541,7 +2541,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetSamplers(ID3D10Device1 *iface,
     wined3d_mutex_lock();
     for (i = 0; i < sampler_count; ++i)
     {
-        struct d3d10_sampler_state *sampler_impl;
+        struct d3d_sampler_state *sampler_impl;
         struct wined3d_sampler *wined3d_sampler;
 
         if (!(wined3d_sampler = wined3d_device_get_ps_sampler(device->wined3d_device, start_slot + i)))
@@ -2790,7 +2790,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSGetSamplers(ID3D10Device1 *iface,
     wined3d_mutex_lock();
     for (i = 0; i < sampler_count; ++i)
     {
-        struct d3d10_sampler_state *sampler_impl;
+        struct d3d_sampler_state *sampler_impl;
         struct wined3d_sampler *wined3d_sampler;
 
         if (!(wined3d_sampler = wined3d_device_get_vs_sampler(device->wined3d_device, start_slot + i)))
@@ -2869,7 +2869,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetSamplers(ID3D10Device1 *iface,
     wined3d_mutex_lock();
     for (i = 0; i < sampler_count; ++i)
     {
-        struct d3d10_sampler_state *sampler_impl;
+        struct d3d_sampler_state *sampler_impl;
         struct wined3d_sampler *wined3d_sampler;
 
         if (!(wined3d_sampler = wined3d_device_get_gs_sampler(device->wined3d_device, start_slot + i)))
@@ -3540,7 +3540,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device1 *
         const D3D10_SAMPLER_DESC *desc, ID3D10SamplerState **sampler_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d10_sampler_state *object;
+    struct d3d_sampler_state *object;
     struct wine_rb_entry *entry;
     HRESULT hr;
 
@@ -3552,7 +3552,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device1 *
     wined3d_mutex_lock();
     if ((entry = wine_rb_get(&device->sampler_states, desc)))
     {
-        object = WINE_RB_ENTRY_VALUE(entry, struct d3d10_sampler_state, entry);
+        object = WINE_RB_ENTRY_VALUE(entry, struct d3d_sampler_state, entry);
 
         TRACE("Returning existing sampler state %p.\n", object);
         *sampler_state = &object->ID3D10SamplerState_iface;
@@ -3567,7 +3567,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateSamplerState(ID3D10Device1 *
     if (!object)
         return E_OUTOFMEMORY;
 
-    if (FAILED(hr = d3d10_sampler_state_init(object, device, desc)))
+    if (FAILED(hr = d3d_sampler_state_init(object, device, desc)))
     {
         WARN("Failed to initialize sampler state, hr %#x.\n", hr);
         HeapFree(GetProcessHeap(), 0, object);
@@ -4110,20 +4110,20 @@ static void d3d_rb_free(void *ptr)
     HeapFree(GetProcessHeap(), 0, ptr);
 }
 
-static int d3d10_sampler_state_compare(const void *key, const struct wine_rb_entry *entry)
+static int d3d_sampler_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const D3D10_SAMPLER_DESC *ka = key;
-    const D3D10_SAMPLER_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d10_sampler_state, entry)->desc;
+    const D3D10_SAMPLER_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_sampler_state, entry)->desc;
 
     return memcmp(ka, kb, sizeof(*ka));
 }
 
-static const struct wine_rb_functions d3d10_sampler_state_rb_ops =
+static const struct wine_rb_functions d3d_sampler_state_rb_ops =
 {
     d3d_rb_alloc,
     d3d_rb_realloc,
     d3d_rb_free,
-    d3d10_sampler_state_compare,
+    d3d_sampler_state_compare,
 };
 
 static int d3d_blend_state_compare(const void *key, const struct wine_rb_entry *entry)
@@ -4219,7 +4219,7 @@ HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown)
         return E_FAIL;
     }
 
-    if (wine_rb_init(&device->sampler_states, &d3d10_sampler_state_rb_ops) == -1)
+    if (wine_rb_init(&device->sampler_states, &d3d_sampler_state_rb_ops) == -1)
     {
         WARN("Failed to initialize sampler state rbtree.\n");
         wine_rb_destroy(&device->rasterizer_states, NULL, NULL);
