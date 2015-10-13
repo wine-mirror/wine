@@ -1686,7 +1686,7 @@ static void test_sid_str(PSID * sid)
         DWORD acc_size = MAX_PATH;
         DWORD dom_size = MAX_PATH;
         ret = LookupAccountSidA (NULL, sid, account, &acc_size, domain, &dom_size, &use);
-        ok(ret || (!ret && (GetLastError() == ERROR_NONE_MAPPED)),
+        ok(ret || GetLastError() == ERROR_NONE_MAPPED,
            "LookupAccountSid(%s) failed: %d\n", str_sid, GetLastError());
         if (ret)
             trace(" %s %s\\%s %d\n", str_sid, domain, account, use);
