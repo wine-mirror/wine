@@ -87,8 +87,7 @@ static HRESULT create_directory(const WCHAR *path)
         WCHAR *slash;
         DWORD last_error = GetLastError();
 
-        if (last_error == ERROR_ALREADY_EXISTS || last_error != ERROR_PATH_NOT_FOUND ||
-            !(slash = strrchrW(new_path, '\\')))
+        if (last_error != ERROR_PATH_NOT_FOUND || !(slash = strrchrW(new_path, '\\')))
         {
             hr = HRESULT_FROM_WIN32(last_error);
             break;
