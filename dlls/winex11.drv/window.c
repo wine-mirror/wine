@@ -2767,3 +2767,32 @@ failed:
     release_win_data( data );
     return -1;
 }
+
+void CDECL X11DRV_FlashWindowEx( PFLASHWINFO pfinfo )
+{
+    struct x11drv_win_data *data = get_win_data( pfinfo->hwnd );
+    XEvent xev;
+
+    if (!data)
+        return;
+
+    if (data->mapped)
+    {
+        xev.type = ClientMessage;
+        xev.xclient.window = data->whole_window;
+        xev.xclient.message_type = x11drv_atom( _NET_WM_STATE );
+        xev.xclient.serial = 0;
+        xev.xclient.display = data->display;
+        xev.xclient.send_event = True;
+        xev.xclient.format = 32;
+        xev.xclient.data.l[0] = pfinfo->dwFlags ?  _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE;
+        xev.xclient.data.l[1] = x11drv_atom( _NET_WM_STATE_DEMANDS_ATTENTION );
+        xev.xclient.data.l[2] = 0;
+        xev.xclient.data.l[3] = 1;
+        xev.xclient.data.l[4] = 0;
+
+        XSendEvent( data->display, DefaultRootWindow( data->display ), False,
+                    SubstructureNotifyMask, &xev );
+    }
+    release_win_data( data );
+}
