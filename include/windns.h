@@ -618,6 +618,67 @@ typedef struct _DnsRRSet
     _prrset->pLastRR->pNext = NULL;  \
 }
 
+#define DNS_ADDR_MAX_SOCKADDR_LENGTH 32
+
+#include <pshpack1.h>
+
+typedef struct _DnsAddr
+{
+    char MaxSa[DNS_ADDR_MAX_SOCKADDR_LENGTH];
+    union {
+        DWORD DnsAddrUserDword[8];
+    } Data;
+} DNS_ADDR, *PDNS_ADDR;
+
+typedef struct _DnsAddrArray
+{
+    DWORD MaxCount;
+    DWORD AddrCount;
+    DWORD Tag;
+    WORD Family;
+    WORD WordReserved;
+    DWORD Flags;
+    DWORD MatchFlag;
+    DWORD Reserved1;
+    DWORD Reserved2;
+    DNS_ADDR AddrArray[1];
+} DNS_ADDR_ARRAY, *PDNS_ADDR_ARRAY;
+
+#include <poppack.h>
+
+#define DNS_QUERY_RESULTS_VERSION1  0x1
+
+typedef struct _DNS_QUERY_RESULT
+{
+    ULONG Version;
+    DNS_STATUS QueryStatus;
+    ULONG64 QueryOptions;
+    DNS_RECORD *pQueryRecords;
+    void *Reserved;
+} DNS_QUERY_RESULT, *PDNS_QUERY_RESULT;
+
+typedef void WINAPI DNS_QUERY_COMPLETION_ROUTINE(void*,DNS_QUERY_RESULT*);
+typedef DNS_QUERY_COMPLETION_ROUTINE *PDNS_QUERY_COMPLETION_ROUTINE;
+
+#define DNS_QUERY_REQUEST_VERSION1  0x1
+
+typedef struct _DNS_QUERY_REQUEST
+{
+    ULONG Version;
+    const WCHAR *QueryName;
+    WORD QueryType;
+    ULONG64 QueryOptions;
+    PDNS_ADDR_ARRAY pDnsServerList;
+    ULONG InterfaceIndex;
+    PDNS_QUERY_COMPLETION_ROUTINE pQueryCompletionCallback;
+    void *pQueryContext;
+} DNS_QUERY_REQUEST, *PDNS_QUERY_REQUEST;
+
+typedef struct _DNS_QUERY_CANCEL
+{
+    char Reserved[32];
+} DNS_QUERY_CANCEL, *PDNS_QUERY_CANCEL;
+
 DNS_STATUS WINAPI DnsAcquireContextHandle_A(DWORD,PVOID,PHANDLE);
 DNS_STATUS WINAPI DnsAcquireContextHandle_W(DWORD,PVOID,PHANDLE);
 #define DnsAcquireContextHandle WINELIB_NAME_AW(DnsAcquireContextHandle_)
@@ -635,6 +696,8 @@ DNS_STATUS WINAPI DnsQuery_A(PCSTR,WORD,DWORD,PVOID,PDNS_RECORDA*,PVOID*);
 DNS_STATUS WINAPI DnsQuery_W(PCWSTR,WORD,DWORD,PVOID,PDNS_RECORDW*,PVOID*);
 DNS_STATUS WINAPI DnsQuery_UTF8(PCSTR,WORD,DWORD,PVOID,PDNS_RECORDA*,PVOID*);
 #define DnsQuery WINELIB_NAME_AW(DnsQuery_)
+DNS_STATUS WINAPI DnsQueryEx(DNS_QUERY_REQUEST*,DNS_QUERY_RESULT*,DNS_QUERY_CANCEL*);
+DNS_STATUS WINAPI DnsCancelQuery(DNS_QUERY_CANCEL*);
 DNS_STATUS WINAPI DnsQueryConfig(DNS_CONFIG_TYPE,DWORD,PCWSTR,PVOID,PVOID,PDWORD);
 BOOL WINAPI DnsRecordCompare(PDNS_RECORD,PDNS_RECORD);
 PDNS_RECORD WINAPI DnsRecordCopyEx(PDNS_RECORD,DNS_CHARSET,DNS_CHARSET);
