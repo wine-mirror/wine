@@ -3427,7 +3427,7 @@ static void cleanup_menus(void)
                 if (data == NULL)
                     break;
                 lret = RegEnumValueW(hkey, i, value, &valueSize, NULL, NULL, (BYTE*)data, &dataSize);
-                if (lret == ERROR_SUCCESS || lret != ERROR_MORE_DATA)
+                if (lret != ERROR_MORE_DATA)
                     break;
                 valueSize *= 2;
                 dataSize *= 2;
