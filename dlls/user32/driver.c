@@ -134,6 +134,7 @@ static const USER_DRIVER *load_driver(void)
         GET_USER_FUNC(CreateDesktopWindow);
         GET_USER_FUNC(CreateWindow);
         GET_USER_FUNC(DestroyWindow);
+        GET_USER_FUNC(FlashWindowEx);
         GET_USER_FUNC(GetDC);
         GET_USER_FUNC(MsgWaitForMultipleObjectsEx);
         GET_USER_FUNC(ReleaseDC);
@@ -410,6 +411,10 @@ static void CDECL nulldrv_DestroyWindow( HWND hwnd )
 {
 }
 
+static void CDECL nulldrv_FlashWindowEx( FLASHWINFO *info )
+{
+}
+
 static void CDECL nulldrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
                                  const RECT *top_rect, DWORD flags )
 {
@@ -546,6 +551,7 @@ static USER_DRIVER null_driver =
     nulldrv_CreateDesktopWindow,
     nulldrv_CreateWindow,
     nulldrv_DestroyWindow,
+    nulldrv_FlashWindowEx,
     nulldrv_GetDC,
     nulldrv_MsgWaitForMultipleObjectsEx,
     nulldrv_ReleaseDC,
@@ -733,6 +739,11 @@ static BOOL CDECL loaderdrv_CreateWindow( HWND hwnd )
     return load_driver()->pCreateWindow( hwnd );
 }
 
+static void CDECL loaderdrv_FlashWindowEx( FLASHWINFO *info )
+{
+    load_driver()->pFlashWindowEx( info );
+}
+
 static void CDECL loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
                                    const RECT *top_rect, DWORD flags )
 {
@@ -795,6 +806,7 @@ static USER_DRIVER lazy_load_driver =
     loaderdrv_CreateDesktopWindow,
     loaderdrv_CreateWindow,
     nulldrv_DestroyWindow,
+    loaderdrv_FlashWindowEx,
     loaderdrv_GetDC,
     nulldrv_MsgWaitForMultipleObjectsEx,
     nulldrv_ReleaseDC,

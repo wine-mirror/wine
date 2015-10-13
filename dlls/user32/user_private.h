@@ -96,6 +96,7 @@ typedef struct tagUSER_DRIVER {
     BOOL   (CDECL *pCreateDesktopWindow)(HWND);
     BOOL   (CDECL *pCreateWindow)(HWND);
     void   (CDECL *pDestroyWindow)(HWND);
+    void   (CDECL *pFlashWindowEx)(FLASHWINFO*);
     void   (CDECL *pGetDC)(HDC,HWND,HWND,const RECT *,const RECT *,DWORD);
     DWORD  (CDECL *pMsgWaitForMultipleObjectsEx)(DWORD,const HANDLE*,DWORD,DWORD,DWORD);
     void   (CDECL *pReleaseDC)(HWND,HDC);

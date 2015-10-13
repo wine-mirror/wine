@@ -3460,6 +3460,7 @@ BOOL WINAPI FlashWindowEx( PFLASHWINFO pfinfo )
             wndPtr->flags &= ~WIN_NCACTIVATED;
         }
         WIN_ReleasePtr( wndPtr );
+        USER_Driver->pFlashWindowEx( pfinfo );
         return TRUE;
     }
     else
@@ -3476,6 +3477,7 @@ BOOL WINAPI FlashWindowEx( PFLASHWINFO pfinfo )
 
         WIN_ReleasePtr( wndPtr );
         SendMessageW( hwnd, WM_NCACTIVATE, wparam, 0 );
+        USER_Driver->pFlashWindowEx( pfinfo );
         return wparam;
     }
 }
