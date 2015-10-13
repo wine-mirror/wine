@@ -872,7 +872,8 @@ static IHlinkFrame HlinkFrame = { &HlinkFrameVtbl };
 
 static HRESULT WINAPI NewWindowManager_QueryInterface(INewWindowManager *iface, REFIID riid, void **ppv)
 {
-    ok(0, "unexpected call\n");
+    ok(0, "unexpected call %s\n", wine_dbgstr_guid(riid));
+    *ppv = NULL;
     return E_NOINTERFACE;
 }
 
@@ -2983,7 +2984,9 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
             return E_NOTIMPL;
 
         case 83:
+        case 101:
         case 102:
+        case 132:
         case 133:
         case 134: /* TODO */
         case 135:
@@ -2997,6 +3000,7 @@ static HRESULT WINAPI OleCommandTarget_Exec(IOleCommandTarget *iface, const GUID
         case 180:
         case 181:
         case 182:
+        case 183:
             return E_NOTIMPL;
 
         default:
