@@ -1638,12 +1638,12 @@ static void test_cursor(void)
     ok(SUCCEEDED(hr), "Failed to create cursor surface, hr %#x.\n", hr);
 
     /* Initially hidden */
-    hr = IDirect3DDevice9_ShowCursor(device, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08x\n", hr);
+    ret = IDirect3DDevice9_ShowCursor(device, TRUE);
+    ok(!ret, "IDirect3DDevice9_ShowCursor returned %d\n", ret);
 
     /* Not enabled without a surface*/
-    hr = IDirect3DDevice9_ShowCursor(device, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08x\n", hr);
+    ret = IDirect3DDevice9_ShowCursor(device, TRUE);
+    ok(!ret, "IDirect3DDevice9_ShowCursor returned %d\n", ret);
 
     /* Fails */
     hr = IDirect3DDevice9_SetCursorProperties(device, 0, 0, NULL);
@@ -1661,12 +1661,12 @@ static void test_cursor(void)
     ok(info.hCursor == cur, "The cursor handle is %p\n", info.hCursor); /* unchanged */
 
     /* Still hidden */
-    hr = IDirect3DDevice9_ShowCursor(device, TRUE);
-    ok(hr == FALSE, "IDirect3DDevice9_ShowCursor returned %08x\n", hr);
+    ret = IDirect3DDevice9_ShowCursor(device, TRUE);
+    ok(!ret, "IDirect3DDevice9_ShowCursor returned %d\n", ret);
 
     /* Enabled now*/
-    hr = IDirect3DDevice9_ShowCursor(device, TRUE);
-    ok(hr == TRUE, "IDirect3DDevice9_ShowCursor returned %08x\n", hr);
+    ret = IDirect3DDevice9_ShowCursor(device, TRUE);
+    ok(ret, "IDirect3DDevice9_ShowCursor returned %d\n", ret);
 
     memset(&info, 0, sizeof(info));
     info.cbSize = sizeof(info);
