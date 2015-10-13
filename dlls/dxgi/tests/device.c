@@ -170,6 +170,60 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_check_interface_support(void)
+{
+    LARGE_INTEGER driver_version;
+    IDXGIAdapter *adapter;
+    IDXGIDevice *device;
+    IUnknown *iface;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = IDXGIDevice_GetAdapter(device, &adapter);
+    ok(SUCCEEDED(hr), "GetAdapter failed, hr %#x.\n", hr);
+
+    hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D10Device, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D10Device, &driver_version);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    trace("UMD version: %u.%u.%u.%u.\n",
+            HIWORD(U(driver_version).HighPart), LOWORD(U(driver_version).HighPart),
+            HIWORD(U(driver_version).LowPart), LOWORD(U(driver_version).LowPart));
+
+    hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device1, (void **)&iface);
+    if (SUCCEEDED(hr))
+    {
+        IUnknown_Release(iface);
+        hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D10Device1, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D10Device1, &driver_version);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    }
+    else
+    {
+        win_skip("D3D10.1 is not supported.\n");
+    }
+
+    hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D11Device, NULL);
+    ok(hr == DXGI_ERROR_UNSUPPORTED, "Got unexpected hr %#x.\n", hr);
+    driver_version.HighPart = driver_version.LowPart = 0xdeadbeef;
+    hr = IDXGIAdapter_CheckInterfaceSupport(adapter, &IID_ID3D11Device, &driver_version);
+    ok(hr == DXGI_ERROR_UNSUPPORTED, "Got unexpected hr %#x.\n", hr);
+    ok(driver_version.HighPart == 0xdeadbeef, "Got unexpected driver version %#x.\n", driver_version.HighPart);
+    ok(driver_version.LowPart == 0xdeadbeef, "Got unexpected driver version %#x.\n", driver_version.LowPart);
+
+    IDXGIAdapter_Release(adapter);
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_create_surface(void)
 {
     DXGI_SURFACE_DESC desc;
@@ -1215,6 +1269,7 @@ START_TEST(device)
     ok(EnumDisplaySettingsW(NULL, ENUM_REGISTRY_SETTINGS, &registry_mode), "Failed to get display mode.\n");
 
     test_adapter_desc();
+    test_check_interface_support();
     test_device_interfaces();
     test_create_surface();
     test_parents();
