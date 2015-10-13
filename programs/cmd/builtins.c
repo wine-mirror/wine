@@ -1005,7 +1005,7 @@ void WCMD_copy(WCHAR * args) {
       if (!srcisdevice) FindClose (hff);
     } else {
       /* Error if the first file was not found */
-      if (!anyconcats || (anyconcats && !writtenoneconcat)) {
+      if (!anyconcats || !writtenoneconcat) {
         WCMD_print_error ();
         errorlevel = 1;
       }

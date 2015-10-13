@@ -879,7 +879,7 @@ static void handleExpansion(WCHAR *cmd, BOOL atExecute, BOOL delayed) {
       if (startchar == '%' && forvaridx != -1 && forloopcontext.variable[forvaridx]) {
         /* Replace the 2 characters, % and for variable character */
         WCMD_strsubstW(p, p + 2, forloopcontext.variable[forvaridx], -1);
-      } else if (!atExecute || (atExecute && startchar == '!')) {
+      } else if (!atExecute || startchar == '!') {
         p = WCMD_expand_envvar(p, startchar);
 
       /* In a FOR loop, see if this is the variable to replace */
