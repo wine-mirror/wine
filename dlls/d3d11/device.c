@@ -3952,7 +3952,7 @@ static struct wined3d_device_parent * STDMETHODCALLTYPE dxgi_device_parent_get_w
     return &device->device_parent;
 }
 
-static const struct IWineDXGIDeviceParentVtbl d3d10_dxgi_device_parent_vtbl =
+static const struct IWineDXGIDeviceParentVtbl d3d_dxgi_device_parent_vtbl =
 {
     /* IUnknown methods */
     dxgi_device_parent_QueryInterface,
@@ -4181,7 +4181,7 @@ HRESULT d3d_device_init(struct d3d_device *device, void *outer_unknown)
     device->ID3D11Device_iface.lpVtbl = &d3d11_device_vtbl;
     device->ID3D10Device1_iface.lpVtbl = &d3d10_device1_vtbl;
     device->ID3D10Multithread_iface.lpVtbl = &d3d10_multithread_vtbl;
-    device->IWineDXGIDeviceParent_iface.lpVtbl = &d3d10_dxgi_device_parent_vtbl;
+    device->IWineDXGIDeviceParent_iface.lpVtbl = &d3d_dxgi_device_parent_vtbl;
     device->device_parent.ops = &d3d10_wined3d_device_parent_ops;
     device->refcount = 1;
     /* COM aggregation always takes place */
