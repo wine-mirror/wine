@@ -1223,10 +1223,46 @@ void main(point float4 vin[1] : POSITION, inout TriangleStream<gs_out> vout)
 
 static void test_create_sampler_state(void)
 {
+    static const struct test
+    {
+        D3D10_FILTER filter;
+        D3D11_FILTER expected_filter;
+    }
+    desc_conversion_tests[] =
+    {
+        {D3D10_FILTER_MIN_MAG_MIP_POINT, D3D11_FILTER_MIN_MAG_MIP_POINT},
+        {D3D10_FILTER_MIN_MAG_POINT_MIP_LINEAR, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR},
+        {D3D10_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT, D3D11_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT},
+        {D3D10_FILTER_MIN_POINT_MAG_MIP_LINEAR, D3D11_FILTER_MIN_POINT_MAG_MIP_LINEAR},
+        {D3D10_FILTER_MIN_LINEAR_MAG_MIP_POINT, D3D11_FILTER_MIN_LINEAR_MAG_MIP_POINT},
+        {D3D10_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR, D3D11_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR},
+        {D3D10_FILTER_MIN_MAG_LINEAR_MIP_POINT, D3D11_FILTER_MIN_MAG_LINEAR_MIP_POINT},
+        {D3D10_FILTER_MIN_MAG_MIP_LINEAR, D3D11_FILTER_MIN_MAG_MIP_LINEAR},
+        {D3D10_FILTER_ANISOTROPIC, D3D11_FILTER_ANISOTROPIC},
+        {D3D10_FILTER_COMPARISON_MIN_MAG_MIP_POINT, D3D11_FILTER_COMPARISON_MIN_MAG_MIP_POINT},
+        {D3D10_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR, D3D11_FILTER_COMPARISON_MIN_MAG_POINT_MIP_LINEAR},
+        {
+            D3D10_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT,
+            D3D11_FILTER_COMPARISON_MIN_POINT_MAG_LINEAR_MIP_POINT
+        },
+        {D3D10_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR, D3D11_FILTER_COMPARISON_MIN_POINT_MAG_MIP_LINEAR},
+        {D3D10_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT, D3D11_FILTER_COMPARISON_MIN_LINEAR_MAG_MIP_POINT},
+        {
+            D3D10_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR,
+            D3D11_FILTER_COMPARISON_MIN_LINEAR_MAG_POINT_MIP_LINEAR
+        },
+        {D3D10_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT, D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT},
+        {D3D10_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR, D3D11_FILTER_COMPARISON_MIN_MAG_MIP_LINEAR},
+        {D3D10_FILTER_COMPARISON_ANISOTROPIC, D3D11_FILTER_COMPARISON_ANISOTROPIC},
+    };
+
     ID3D10SamplerState *sampler_state1, *sampler_state2;
+    ID3D11SamplerState *d3d11_sampler_state;
     ULONG refcount, expected_refcount;
-    D3D10_SAMPLER_DESC sampler_desc;
     ID3D10Device *device, *tmp;
+    ID3D11Device *d3d11_device;
+    D3D10_SAMPLER_DESC desc;
+    unsigned int i;
     HRESULT hr;
 
     if (!(device = create_device()))
@@ -1238,24 +1274,24 @@ static void test_create_sampler_state(void)
     hr = ID3D10Device_CreateSamplerState(device, NULL, &sampler_state1);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
-    sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
-    sampler_desc.AddressU = D3D10_TEXTURE_ADDRESS_WRAP;
-    sampler_desc.AddressV = D3D10_TEXTURE_ADDRESS_WRAP;
-    sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_WRAP;
-    sampler_desc.MipLODBias = 0.0f;
-    sampler_desc.MaxAnisotropy = 16;
-    sampler_desc.ComparisonFunc = D3D10_COMPARISON_ALWAYS;
-    sampler_desc.BorderColor[0] = 0.0f;
-    sampler_desc.BorderColor[1] = 1.0f;
-    sampler_desc.BorderColor[2] = 0.0f;
-    sampler_desc.BorderColor[3] = 1.0f;
-    sampler_desc.MinLOD = 0.0f;
-    sampler_desc.MaxLOD = 16.0f;
+    desc.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
+    desc.AddressU = D3D10_TEXTURE_ADDRESS_WRAP;
+    desc.AddressV = D3D10_TEXTURE_ADDRESS_WRAP;
+    desc.AddressW = D3D10_TEXTURE_ADDRESS_WRAP;
+    desc.MipLODBias = 0.0f;
+    desc.MaxAnisotropy = 16;
+    desc.ComparisonFunc = D3D10_COMPARISON_ALWAYS;
+    desc.BorderColor[0] = 0.0f;
+    desc.BorderColor[1] = 1.0f;
+    desc.BorderColor[2] = 0.0f;
+    desc.BorderColor[3] = 1.0f;
+    desc.MinLOD = 0.0f;
+    desc.MaxLOD = 16.0f;
 
     expected_refcount = get_refcount((IUnknown *)device) + 1;
-    hr = ID3D10Device_CreateSamplerState(device, &sampler_desc, &sampler_state1);
+    hr = ID3D10Device_CreateSamplerState(device, &desc, &sampler_state1);
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
-    hr = ID3D10Device_CreateSamplerState(device, &sampler_desc, &sampler_state2);
+    hr = ID3D10Device_CreateSamplerState(device, &desc, &sampler_state2);
     ok(SUCCEEDED(hr), "Failed to create sampler state, hr %#x.\n", hr);
     ok(sampler_state1 == sampler_state2, "Got different sampler state objects.\n");
     refcount = get_refcount((IUnknown *)device);
@@ -1268,11 +1304,116 @@ static void test_create_sampler_state(void)
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
 
+    ID3D10SamplerState_GetDesc(sampler_state1, &desc);
+    ok(desc.Filter == D3D10_FILTER_MIN_MAG_MIP_LINEAR, "Got unexpected filter %#x.\n", desc.Filter);
+    ok(desc.AddressU == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected address u %u.\n", desc.AddressU);
+    ok(desc.AddressV == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected address v %u.\n", desc.AddressV);
+    ok(desc.AddressW == D3D10_TEXTURE_ADDRESS_WRAP, "Got unexpected address w %u.\n", desc.AddressW);
+    ok(!desc.MipLODBias, "Got unexpected mip LOD bias %f.\n", desc.MipLODBias);
+    ok(!desc.MaxAnisotropy || broken(desc.MaxAnisotropy == 16) /* Not set to 0 on all Windows versions. */,
+            "Got unexpected max anisotropy %u.\n", desc.MaxAnisotropy);
+    ok(desc.ComparisonFunc == D3D10_COMPARISON_NEVER, "Got unexpected comparison func %u.\n", desc.ComparisonFunc);
+    ok(!desc.BorderColor[0] && !desc.BorderColor[1] && !desc.BorderColor[2] && !desc.BorderColor[3],
+            "Got unexpected border color {%.8e, %.8e, %.8e, %.8e}.\n",
+            desc.BorderColor[0], desc.BorderColor[1], desc.BorderColor[2], desc.BorderColor[3]);
+    ok(!desc.MinLOD, "Got unexpected min LOD %f.\n", desc.MinLOD);
+    ok(desc.MaxLOD == 16.0f, "Got unexpected max LOD %f.\n", desc.MaxLOD);
+
     refcount = ID3D10SamplerState_Release(sampler_state2);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
     refcount = ID3D10SamplerState_Release(sampler_state1);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
+    hr = ID3D10Device_QueryInterface(device, &IID_ID3D11Device, (void **)&d3d11_device);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Device should implement ID3D11Device.\n");
+    if (FAILED(hr))
+    {
+        win_skip("D3D11 is not available.\n");
+        goto done;
+    }
+
+    for (i = 0; i < sizeof(desc_conversion_tests) / sizeof(*desc_conversion_tests); ++i)
+    {
+        const struct test *current = &desc_conversion_tests[i];
+        D3D11_SAMPLER_DESC d3d11_desc, expected_desc;
+
+        desc.Filter = current->filter;
+        desc.AddressU = D3D10_TEXTURE_ADDRESS_WRAP;
+        desc.AddressV = D3D10_TEXTURE_ADDRESS_WRAP;
+        desc.AddressW = D3D10_TEXTURE_ADDRESS_BORDER;
+        desc.MipLODBias = 0.0f;
+        desc.MaxAnisotropy = 16;
+        desc.ComparisonFunc = D3D10_COMPARISON_ALWAYS;
+        desc.BorderColor[0] = 0.0f;
+        desc.BorderColor[1] = 1.0f;
+        desc.BorderColor[2] = 0.0f;
+        desc.BorderColor[3] = 1.0f;
+        desc.MinLOD = 0.0f;
+        desc.MaxLOD = 16.0f;
+
+        hr = ID3D10Device_CreateSamplerState(device, &desc, &sampler_state1);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create sampler state, hr %#x.\n", i, hr);
+
+        hr = ID3D10SamplerState_QueryInterface(sampler_state1, &IID_ID3D11SamplerState,
+                (void **)&d3d11_sampler_state);
+        ok(SUCCEEDED(hr), "Test %u: Sampler state should implement ID3D11SamplerState.\n", i);
+
+        memcpy(&expected_desc, &desc, sizeof(expected_desc));
+        expected_desc.Filter = current->expected_filter;
+        if (!D3D11_DECODE_IS_ANISOTROPIC_FILTER(current->filter))
+            expected_desc.MaxAnisotropy = 0;
+        if (!D3D11_DECODE_IS_COMPARISON_FILTER(current->filter))
+            expected_desc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+
+        ID3D11SamplerState_GetDesc(d3d11_sampler_state, &d3d11_desc);
+        ok(d3d11_desc.Filter == expected_desc.Filter,
+                "Test %u: Got unexpected filter %#x.\n", i, d3d11_desc.Filter);
+        ok(d3d11_desc.AddressU == expected_desc.AddressU,
+                "Test %u: Got unexpected adress u %u.\n", i, d3d11_desc.AddressU);
+        ok(d3d11_desc.AddressV == expected_desc.AddressV,
+                "Test %u: Got unexpected address v %u.\n", i, d3d11_desc.AddressV);
+        ok(d3d11_desc.AddressW == expected_desc.AddressW,
+                "Test %u: Got unexpected address w %u.\n", i, d3d11_desc.AddressW);
+        ok(d3d11_desc.MipLODBias == expected_desc.MipLODBias,
+                "Test %u: Got unexpected mip LOD bias %f.\n", i, d3d11_desc.MipLODBias);
+        ok(d3d11_desc.MaxAnisotropy == expected_desc.MaxAnisotropy,
+                "Test %u: Got unexpected max anisotropy %u.\n", i, d3d11_desc.MaxAnisotropy);
+        ok(d3d11_desc.ComparisonFunc == expected_desc.ComparisonFunc,
+                "Test %u: Got unexpected comparison func %u.\n", i, d3d11_desc.ComparisonFunc);
+        ok(d3d11_desc.BorderColor[0] == expected_desc.BorderColor[0]
+                && d3d11_desc.BorderColor[1] == expected_desc.BorderColor[1]
+                && d3d11_desc.BorderColor[2] == expected_desc.BorderColor[2]
+                && d3d11_desc.BorderColor[3] == expected_desc.BorderColor[3],
+                "Test %u: Got unexpected border color {%.8e, %.8e, %.8e, %.8e}.\n", i,
+                d3d11_desc.BorderColor[0], d3d11_desc.BorderColor[1],
+                d3d11_desc.BorderColor[2], d3d11_desc.BorderColor[3]);
+        ok(d3d11_desc.MinLOD == expected_desc.MinLOD,
+                "Test %u: Got unexpected min LOD %f.\n", i, d3d11_desc.MinLOD);
+        ok(d3d11_desc.MaxLOD == expected_desc.MaxLOD,
+                "Test %u: Got unexpected max LOD %f.\n", i, d3d11_desc.MaxLOD);
+
+        refcount = ID3D11SamplerState_Release(d3d11_sampler_state);
+        ok(refcount == 1, "Test %u: Got unexpected refcount %u.\n", i, refcount);
+
+        hr = ID3D11Device_CreateSamplerState(d3d11_device, &d3d11_desc, &d3d11_sampler_state);
+        ok(SUCCEEDED(hr), "Test %u: Failed to create sampler state, hr %#x.\n", i, hr);
+        hr = ID3D11SamplerState_QueryInterface(d3d11_sampler_state, &IID_ID3D10SamplerState,
+                (void **)&sampler_state2);
+        ok(SUCCEEDED(hr), "Test %u: Sampler state should implement ID3D10SamplerState.\n", i);
+        ok(sampler_state1 == sampler_state2, "Test %u: Got different sampler state objects.\n", i);
+
+        refcount = ID3D11SamplerState_Release(d3d11_sampler_state);
+        ok(refcount == 2, "Test %u: Got unexpected refcount %u.\n", i, refcount);
+        refcount = ID3D10SamplerState_Release(sampler_state2);
+        ok(refcount == 1, "Test %u: Got unexpected refcount %u.\n", i, refcount);
+        refcount = ID3D10SamplerState_Release(sampler_state1);
+        ok(!refcount, "Test %u: Got unexpected refcount %u.\n", i, refcount);
+    }
+
+    ID3D11Device_Release(d3d11_device);
+
+done:
     refcount = ID3D10Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
