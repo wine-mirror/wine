@@ -280,7 +280,8 @@ static void DebugChannels_OnNotify(HWND hDlg, LPARAM lParam)
             HANDLE              hProcess;
             NMITEMACTIVATE*     nmia = (NMITEMACTIVATE*)lParam;
 
-            hProcess = OpenProcess(PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE, FALSE, get_selected_pid());
+            hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_OPERATION | PROCESS_VM_READ | PROCESS_VM_WRITE,
+                                   FALSE, get_selected_pid());
             if (!hProcess) return; /* FIXME message box */
             lhti.pt = nmia->ptAction;
             hChannelLV = GetDlgItem(hDlg, IDC_DEBUG_CHANNELS_LIST);
