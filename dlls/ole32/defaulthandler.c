@@ -1330,26 +1330,30 @@ static HRESULT WINAPI DefaultHandler_Run(
   This->object_state = object_state_running;
 
   hr = IOleObject_Advise(This->pOleDelegate, &This->IAdviseSink_iface, &This->dwAdvConn);
+  if (FAILED(hr)) goto fail;
 
-  if (SUCCEEDED(hr) && This->clientSite)
-    hr = IOleObject_SetClientSite(This->pOleDelegate, This->clientSite);
-
-  if (SUCCEEDED(hr))
+  if (This->clientSite)
   {
-    IOleObject_QueryInterface(This->pOleDelegate, &IID_IPersistStorage,
-                              (void **)&This->pPSDelegate);
-    if (This->pPSDelegate)
-    {
-      if(This->storage_state == storage_state_initialised)
-        hr = IPersistStorage_InitNew(This->pPSDelegate, This->storage);
-      else if(This->storage_state == storage_state_loaded)
-        hr = IPersistStorage_Load(This->pPSDelegate, This->storage);
-    }
+    hr = IOleObject_SetClientSite(This->pOleDelegate, This->clientSite);
+    if (FAILED(hr)) goto fail;
   }
 
-  if (SUCCEEDED(hr) && This->containerApp)
+  hr = IOleObject_QueryInterface(This->pOleDelegate, &IID_IPersistStorage,
+                                 (void **)&This->pPSDelegate);
+  if (FAILED(hr)) goto fail;
+
+  if (This->storage_state == storage_state_initialised)
+      hr = IPersistStorage_InitNew(This->pPSDelegate, This->storage);
+  else if (This->storage_state == storage_state_loaded)
+      hr = IPersistStorage_Load(This->pPSDelegate, This->storage);
+  if (FAILED(hr)) goto fail;
+
+  if (This->containerApp)
+  {
     hr = IOleObject_SetHostNames(This->pOleDelegate, This->containerApp,
                                  This->containerObj);
+    if (FAILED(hr)) goto fail;
+  }
 
   /* FIXME: do more stuff here:
    * - IOleObject_GetMiscStatus
@@ -1357,19 +1361,21 @@ static HRESULT WINAPI DefaultHandler_Run(
    * - IOleCache_OnRun
    */
 
-  if (SUCCEEDED(hr))
-    hr = IOleObject_QueryInterface(This->pOleDelegate, &IID_IDataObject,
-                                   (void **)&This->pDataDelegate);
+  hr = IOleObject_QueryInterface(This->pOleDelegate, &IID_IDataObject,
+                                 (void **)&This->pDataDelegate);
+  if (FAILED(hr)) goto fail;
 
-  if (SUCCEEDED(hr) && This->dataAdviseHolder)
-    hr = DataAdviseHolder_OnConnect(This->dataAdviseHolder, This->pDataDelegate);
-
-  if (FAILED(hr))
+  if (This->dataAdviseHolder)
   {
-    DefaultHandler_Stop(This);
-    release_delegates(This);
+    hr = DataAdviseHolder_OnConnect(This->dataAdviseHolder, This->pDataDelegate);
+    if (FAILED(hr)) goto fail;
   }
 
+  return hr;
+
+fail:
+  DefaultHandler_Stop(This);
+  release_delegates(This);
   return hr;
 }
 
