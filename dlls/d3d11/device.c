@@ -259,10 +259,17 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawIndexedInstanced(ID3D1
 static void STDMETHODCALLTYPE d3d11_immediate_context_DrawInstanced(ID3D11DeviceContext *iface,
         UINT instance_vertex_count, UINT instance_count, UINT start_vertex_location, UINT start_instance_location)
 {
-    FIXME("iface %p, instance_vertex_count %u, instance_count %u, start_vertex_location %u, "
-            "start_instance_location %u stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, instance_vertex_count %u, instance_count %u, start_vertex_location %u, "
+            "start_instance_location %u.\n",
             iface, instance_vertex_count, instance_count, start_vertex_location,
             start_instance_location);
+
+    wined3d_mutex_lock();
+    wined3d_device_draw_primitive_instanced(device->wined3d_device, start_vertex_location,
+            instance_vertex_count, start_instance_location, instance_count);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_GSSetConstantBuffers(ID3D11DeviceContext *iface,
