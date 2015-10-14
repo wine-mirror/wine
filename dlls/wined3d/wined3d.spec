@@ -104,7 +104,6 @@
 @ cdecl wined3d_device_init_3d(ptr ptr)
 @ cdecl wined3d_device_init_gdi(ptr ptr)
 @ cdecl wined3d_device_multiply_transform(ptr long ptr)
-@ cdecl wined3d_device_present(ptr ptr ptr ptr ptr long)
 @ cdecl wined3d_device_process_vertices(ptr long long long ptr ptr long long)
 @ cdecl wined3d_device_release_focus_window(ptr)
 @ cdecl wined3d_device_reset(ptr ptr ptr ptr long)

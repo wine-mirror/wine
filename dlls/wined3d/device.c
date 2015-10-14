@@ -3290,24 +3290,6 @@ HRESULT CDECL wined3d_device_end_scene(struct wined3d_device *device)
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_device_present(const struct wined3d_device *device, const RECT *src_rect,
-        const RECT *dst_rect, HWND dst_window_override, const RGNDATA *dirty_region, DWORD flags)
-{
-    UINT i;
-
-    TRACE("device %p, src_rect %s, dst_rect %s, dst_window_override %p, dirty_region %p, flags %#x.\n",
-            device, wine_dbgstr_rect(src_rect), wine_dbgstr_rect(dst_rect),
-            dst_window_override, dirty_region, flags);
-
-    for (i = 0; i < device->swapchain_count; ++i)
-    {
-        wined3d_swapchain_present(device->swapchains[i], src_rect,
-                dst_rect, dst_window_override, dirty_region, flags);
-    }
-
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_device_clear(struct wined3d_device *device, DWORD rect_count,
         const RECT *rects, DWORD flags, const struct wined3d_color *color, float depth, DWORD stencil)
 {

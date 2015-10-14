@@ -167,6 +167,9 @@ struct d3d9_device
     LONG device_state;
     BOOL in_destruction;
     BOOL in_scene;
+
+    UINT implicit_swapchain_count;
+    struct d3d9_swapchain **implicit_swapchains;
 };
 
 HRESULT device_init(struct d3d9_device *device, struct d3d9 *parent, struct wined3d *wined3d,
