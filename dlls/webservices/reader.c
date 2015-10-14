@@ -25,6 +25,7 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "webservices_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
@@ -32,26 +33,6 @@ static const char *debugstr_xmlstr( const WS_XML_STRING *str )
 {
     if (!str) return "(null)";
     return debugstr_an( (const char *)str->bytes, str->length );
-}
-
-static inline void *heap_alloc( SIZE_T size )
-{
-    return HeapAlloc( GetProcessHeap(), 0, size );
-}
-
-static inline void *heap_alloc_zero( SIZE_T size )
-{
-    return HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
-}
-
-static inline void *heap_realloc( void *mem, SIZE_T size )
-{
-    return HeapReAlloc( GetProcessHeap(), 0, mem, size );
-}
-
-static inline BOOL heap_free( void *mem )
-{
-    return HeapFree( GetProcessHeap(), 0, mem );
 }
 
 static const struct

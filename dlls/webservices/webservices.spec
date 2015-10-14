@@ -34,7 +34,7 @@
 @ stub WsCreateServiceHost
 @ stub WsCreateServiceProxy
 @ stub WsCreateServiceProxyFromTemplate
-@ stub WsCreateWriter
+@ stdcall WsCreateWriter(ptr long ptr ptr)
 @ stub WsCreateXmlBuffer
 @ stub WsCreateXmlSecurityToken
 @ stub WsDateTimeToFileTime
@@ -58,7 +58,7 @@
 @ stub WsFreeSecurityToken
 @ stub WsFreeServiceHost
 @ stub WsFreeServiceProxy
-@ stub WsFreeWriter
+@ stdcall WsFreeWriter(ptr)
 @ stub WsGetChannelProperty
 @ stub WsGetCustomHeader
 @ stub WsGetDictionary

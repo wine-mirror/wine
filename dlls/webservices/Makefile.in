@@ -3,4 +3,5 @@ IMPORTLIB = webservices
 
 C_SRCS = \
 	main.c \
-	reader.c
+	reader.c \
+	writer.c
