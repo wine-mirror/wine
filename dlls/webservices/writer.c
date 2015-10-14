@@ -92,6 +92,15 @@ static HRESULT set_writer_prop( struct writer *writer, WS_XML_WRITER_PROPERTY_ID
     return S_OK;
 }
 
+static HRESULT get_writer_prop( struct writer *writer, WS_XML_WRITER_PROPERTY_ID id, void *buf, ULONG size )
+{
+    if (id >= writer->prop_count || size != writer_props[id].size)
+        return E_INVALIDARG;
+
+    memcpy( buf, writer->prop[id].value, writer->prop[id].valueSize );
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsCreateWriter		[webservices.@]
  */
@@ -140,4 +149,18 @@ void WINAPI WsFreeWriter( WS_XML_WRITER *handle )
 
     TRACE( "%p\n", handle );
     heap_free( writer );
+}
+
+/**************************************************************************
+ *          WsGetWriterProperty		[webservices.@]
+ */
+HRESULT WINAPI WsGetWriterProperty( WS_XML_WRITER *handle, WS_XML_WRITER_PROPERTY_ID id,
+                                    void *buf, ULONG size, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+
+    TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    return get_writer_prop( writer, id, buf, size );
 }
