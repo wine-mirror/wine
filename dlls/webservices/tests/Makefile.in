@@ -2,4 +2,5 @@ TESTDLL   = webservices.dll
 IMPORTS   = webservices
 
 C_SRCS = \
-	reader.c
+	reader.c \
+	writer.c
