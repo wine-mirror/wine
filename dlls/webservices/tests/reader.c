@@ -50,7 +50,7 @@ static const char data5[] =
 
 static const char data6[] =
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-    "<text attr= \"value\" >test</text>";
+    "<text attr= \"value\" attr2='value2'>test</text>";
 
 static const char data8[] =
     "<node1><node2>test</node2></node1>";
@@ -872,7 +872,7 @@ static void test_WsReadNode(void)
         ok( elem->ns != NULL, "ns not set\n" );
         ok( !elem->ns->length, "got %u\n", elem->ns->length );
         ok( elem->ns->bytes != NULL, "bytes not set\n" );
-        ok( elem->attributeCount == 1, "got %u\n", elem->attributeCount );
+        ok( elem->attributeCount == 2, "got %u\n", elem->attributeCount );
         ok( elem->attributes != NULL, "attributes not set\n" );
         ok( !elem->isEmpty, "isEmpty not zero\n" );
 
@@ -894,6 +894,25 @@ static void test_WsReadNode(void)
         ok( attr->value->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", attr->value->textType );
         ok( text->value.length == 5, "got %u\n", text->value.length );
         ok( !memcmp( text->value.bytes, "value", 5 ), "wrong data\n" );
+
+        attr = elem->attributes[1];
+        ok( attr->singleQuote == 1, "got %u\n", attr->singleQuote );
+        ok( !attr->isXmlNs, "got %u\n", attr->isXmlNs );
+        ok( attr->prefix != NULL, "prefix not set\n" );
+        ok( !attr->prefix->length, "got %u\n", attr->prefix->length );
+        ok( attr->prefix->bytes == NULL, "bytes set\n" );
+        ok( attr->localName != NULL, "localName not set\n" );
+        ok( attr->localName->length == 5, "got %u\n", attr->localName->length );
+        ok( !memcmp( attr->localName->bytes, "attr2", 5 ), "wrong data\n" );
+        ok( attr->ns != NULL, "ns not set\n" );
+        ok( !attr->ns->length, "got %u\n", attr->ns->length );
+        ok( attr->ns->bytes == NULL, "bytes set\n" );
+        ok( attr->value != NULL, "value not set\n" );
+
+        text = (WS_XML_UTF8_TEXT *)attr->value;
+        ok( attr->value->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", attr->value->textType );
+        ok( text->value.length == 6, "got %u\n", text->value.length );
+        ok( !memcmp( text->value.bytes, "value2", 6 ), "wrong data\n" );
     }
 
     WsFreeReader( reader );

@@ -746,7 +746,7 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
 {
     WS_XML_ATTRIBUTE *attr;
     WS_XML_UTF8_TEXT *text;
-    unsigned int len = 0, ch, skip;
+    unsigned int len = 0, ch, skip, quote;
     const char *start;
     HRESULT hr = WS_E_INVALID_FORMAT;
 
@@ -775,7 +775,8 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     read_skip( reader, 1 );
 
     read_skip_whitespace( reader );
-    if (read_cmp( reader, "\"", 1 )) goto error;
+    if (read_cmp( reader, "\"", 1 ) && read_cmp( reader, "'", 1 )) goto error;
+    quote = read_utf8_char( reader, &skip );
     read_skip( reader, 1 );
 
     len = 0;
@@ -783,7 +784,7 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     for (;;)
     {
         if (!(ch = read_utf8_char( reader, &skip ))) goto error;
-        if (ch == '"') break;
+        if (ch == quote) break;
         read_skip( reader, skip );
         len += skip;
     }
@@ -795,6 +796,7 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
         return E_OUTOFMEMORY;
     }
     attr->value = (WS_XML_TEXT *)text;
+    attr->singleQuote = (quote == '\'');
 
     *ret = attr;
     return S_OK;
