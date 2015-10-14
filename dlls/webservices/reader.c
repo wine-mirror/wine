@@ -513,6 +513,15 @@ HRESULT WINAPI WsGetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, vo
 }
 
 /**************************************************************************
+ *          WsGetErrorString		[webservices.@]
+ */
+HRESULT WINAPI WsGetErrorString( WS_ERROR *handle, ULONG index, WS_STRING *str )
+{
+    FIXME( "%p %u %p: stub\n", handle, index, str );
+    return E_NOTIMPL;
+}
+
+/**************************************************************************
  *          WsGetHeapProperty		[webservices.@]
  */
 HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void *buf,

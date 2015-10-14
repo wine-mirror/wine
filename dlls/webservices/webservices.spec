@@ -63,7 +63,7 @@
 @ stub WsGetCustomHeader
 @ stub WsGetDictionary
 @ stdcall WsGetErrorProperty(ptr long ptr long)
-@ stub WsGetErrorString
+@ stdcall WsGetErrorString(ptr long ptr)
 @ stub WsGetFaultErrorDetail
 @ stub WsGetFaultErrorProperty
 @ stub WsGetHeader
