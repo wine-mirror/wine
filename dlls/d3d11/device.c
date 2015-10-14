@@ -467,8 +467,18 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopyStructureCount(ID3D11D
 static void STDMETHODCALLTYPE d3d11_immediate_context_ClearRenderTargetView(ID3D11DeviceContext *iface,
         ID3D11RenderTargetView *render_target_view, const FLOAT color_rgba[4])
 {
-    FIXME("iface %p, render_target_view %p, color_rgba {%.8e %.8e %.8e %.8e} stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct d3d_rendertarget_view *view = unsafe_impl_from_ID3D11RenderTargetView(render_target_view);
+    const struct wined3d_color color = {color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]};
+    HRESULT hr;
+
+    TRACE("iface %p, render_target_view %p, color_rgba {%.8e %.8e %.8e %.8e}.\n",
             iface, render_target_view, color_rgba[0], color_rgba[1], color_rgba[2], color_rgba[3]);
+
+    wined3d_mutex_lock();
+    if (FAILED(hr = wined3d_device_clear_rendertarget_view(device->wined3d_device, view->wined3d_view, NULL, &color)))
+        ERR("Failed to clear view, hr %#x.\n", hr);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_ClearUnorderedAccessViewUint(ID3D11DeviceContext *iface,
