@@ -430,6 +430,15 @@ HRESULT d3d_vertex_shader_create(struct d3d_device *device, const void *byte_cod
     return S_OK;
 }
 
+struct d3d_vertex_shader *unsafe_impl_from_ID3D11VertexShader(ID3D11VertexShader *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_vertex_shader_vtbl);
+
+    return impl_from_ID3D11VertexShader(iface);
+}
+
 struct d3d_vertex_shader *unsafe_impl_from_ID3D10VertexShader(ID3D10VertexShader *iface)
 {
     if (!iface)
