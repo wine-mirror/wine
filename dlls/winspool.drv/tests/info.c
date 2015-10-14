@@ -721,8 +721,7 @@ static void test_DeleteMonitor(void)
     AddMonitorA(NULL, 2, (LPBYTE) &mi2a);
     SetLastError(MAGIC_DEAD);
     res = DeleteMonitorA(NULL, invalid_env, winetest);
-    ok( res ||
-        (!res && GetLastError() == ERROR_INVALID_ENVIRONMENT) /* Vista/W2K8 */,
+    ok( res || GetLastError() == ERROR_INVALID_ENVIRONMENT /* Vista/W2K8 */,
         "returned %d with %d\n", res, GetLastError());
 
     /* the monitor-name */
@@ -1012,7 +1011,7 @@ static void test_EnumMonitors(void)
         pcbNeeded = MAGIC_DEAD;
         pcReturned = MAGIC_DEAD;
         res = EnumMonitorsA(NULL, level, buffer, cbBuf, NULL, &pcReturned);
-        ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
+        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER,
             "(%d) returned %d with %d (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1020,7 +1019,7 @@ static void test_EnumMonitors(void)
         pcReturned = MAGIC_DEAD;
         SetLastError(MAGIC_DEAD);
         res = EnumMonitorsA(NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
-        ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
+        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER,
             "(%d) returned %d with %d (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1230,7 +1229,7 @@ static void test_EnumPrinterDrivers(void)
         pcbNeeded = 0xdeadbeef;
         pcReturned = 0xdeadbeef;
         res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf, NULL, &pcReturned);
-        ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
+        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER,
             "(%u) got %u with %u (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1238,7 +1237,7 @@ static void test_EnumPrinterDrivers(void)
         pcReturned = 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = EnumPrinterDriversA(NULL, NULL, level, buffer, cbBuf, &pcbNeeded, NULL);
-        ok( res || (!res && (GetLastError() == RPC_X_NULL_REF_POINTER)) ,
+        ok( res || GetLastError() == RPC_X_NULL_REF_POINTER,
             "(%u) got %u with %u (expected '!=0' or '0' with "
             "RPC_X_NULL_REF_POINTER)\n", level, res, GetLastError());
 
@@ -1790,7 +1789,7 @@ static void test_OpenPrinter(void)
     SetLastError(MAGIC_DEAD);
     res = OpenPrinterA(NULL, &hprinter, NULL);
     if (is_spooler_deactivated(res, GetLastError())) return;
-    ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
+    ok(res || GetLastError() == ERROR_INVALID_PARAMETER,
         "returned %d with %d (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
         res, GetLastError());
     if(res) {
@@ -1824,7 +1823,7 @@ static void test_OpenPrinter(void)
         hprinter = (HANDLE) 0xdeadbeef;
         SetLastError(0xdeadbeef);
         res = OpenPrinterA(local_server, &hprinter, NULL);
-        ok(res || (!res && GetLastError() == ERROR_INVALID_PARAMETER),
+        ok(res || GetLastError() == ERROR_INVALID_PARAMETER,
             "returned %d with %d (expected '!=0' or '0' with ERROR_INVALID_PARAMETER)\n",
             res, GetLastError());
         if(res) ClosePrinter(hprinter);
@@ -1965,21 +1964,21 @@ static void test_SetDefaultPrinter(void)
     WriteProfileStringA("windows", "device", org_value);
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA("");
-    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+    ok(res || GetLastError() == ERROR_INVALID_PRINTER_NAME,
         "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", org_value);
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA(NULL);
-    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+    ok(res || GetLastError() == ERROR_INVALID_PRINTER_NAME,
         "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", org_value);
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA(default_printer);
-    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+    ok(res || GetLastError() == ERROR_INVALID_PRINTER_NAME,
         "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
@@ -2000,7 +1999,7 @@ static void test_SetDefaultPrinter(void)
         goto restore_old_printer;
 
     /* we get ERROR_INVALID_PRINTER_NAME when no printer is installed */
-    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+    ok(res || GetLastError() == ERROR_INVALID_PRINTER_NAME,
          "returned %d with %d (expected '!=0' or '0' with "
          "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
@@ -2008,14 +2007,14 @@ static void test_SetDefaultPrinter(void)
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA(NULL);
     /* we get ERROR_INVALID_PRINTER_NAME when no printer is installed */
-    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+    ok(res || GetLastError() == ERROR_INVALID_PRINTER_NAME,
         "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
     WriteProfileStringA("windows", "device", NULL);    
     SetLastError(MAGIC_DEAD);
     res = pSetDefaultPrinterA(default_printer);
-    ok(res || (!res && (GetLastError() == ERROR_INVALID_PRINTER_NAME)),
+    ok(res || GetLastError() == ERROR_INVALID_PRINTER_NAME,
         "returned %d with %d (expected '!=0' or '0' with "
         "ERROR_INVALID_PRINTER_NAME)\n", res, GetLastError());
 
