@@ -3244,7 +3244,7 @@ DWORD WINAPI FormatMessage16(
                         argliststart=args+insertnr-1;
 
                         /* CMF - This makes a BIG assumption about va_list */
-                        while ((ret = vsnprintf(b, sz, fmtstr, (va_list) argliststart) < 0) || (ret >= sz)) {
+                        while ((ret = vsnprintf(b, sz, fmtstr, (va_list) argliststart)) < 0 || ret >= sz) {
                             sz = (ret == -1 ? sz + 100 : ret + 1);
                             b = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, b, sz);
                         }
