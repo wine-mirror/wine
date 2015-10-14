@@ -39,6 +39,12 @@ static inline struct d3d11_immediate_context *impl_from_ID3D11DeviceContext(ID3D
     return CONTAINING_RECORD(iface, struct d3d11_immediate_context, ID3D11DeviceContext_iface);
 }
 
+static inline struct d3d_device *device_from_immediate_ID3D11DeviceContext(ID3D11DeviceContext *iface)
+{
+    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext(iface);
+    return CONTAINING_RECORD(context, struct d3d_device, immediate_context);
+}
+
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_QueryInterface(ID3D11DeviceContext *iface,
         REFIID riid, void **out)
 {
@@ -249,7 +255,13 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_GSSetShader(ID3D11DeviceCo
 static void STDMETHODCALLTYPE d3d11_immediate_context_IASetPrimitiveTopology(ID3D11DeviceContext *iface,
         D3D11_PRIMITIVE_TOPOLOGY topology)
 {
-    FIXME("iface %p, topology %u stub!\n", iface, topology);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, topology %u.\n", iface, topology);
+
+    wined3d_mutex_lock();
+    wined3d_device_set_primitive_type(device->wined3d_device, (enum wined3d_primitive_type)topology);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_VSSetShaderResources(ID3D11DeviceContext *iface,
