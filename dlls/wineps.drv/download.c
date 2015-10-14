@@ -656,7 +656,7 @@ static void get_post2_custom_glyph_name(BYTE *post2header, DWORD size, WORD inde
         if(name_offset + sizeof(BYTE) > size)
         {
             FIXME("Pascal name offset '%d' exceeds PostScript Format 2 table size (%d)\n",
-                  name_offset + sizeof(BYTE), size);
+                  name_offset + 1, size);
             return;
         }
         name_length = (post2header + name_offset)[0];
