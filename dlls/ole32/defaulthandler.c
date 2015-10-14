@@ -459,12 +459,20 @@ static void release_delegates(DefaultHandler *This)
 /* undoes the work done by DefaultHandler_Run */
 static void DefaultHandler_Stop(DefaultHandler *This)
 {
+  IOleCacheControl *cache_ctrl;
+  HRESULT hr;
+
   if (!object_is_running(This))
     return;
 
-  IOleObject_Unadvise(This->pOleDelegate, This->dwAdvConn);
+  hr = IUnknown_QueryInterface( This->dataCache, &IID_IOleCacheControl, (void **)&cache_ctrl );
+  if (SUCCEEDED(hr))
+  {
+    hr = IOleCacheControl_OnStop( cache_ctrl );
+    IOleCacheControl_Release( cache_ctrl );
+  }
 
-  /* FIXME: call IOleCache_OnStop */
+  IOleObject_Unadvise(This->pOleDelegate, This->dwAdvConn);
 
   if (This->dataAdviseHolder)
     DataAdviseHolder_OnDisconnect(This->dataAdviseHolder);
@@ -1331,6 +1339,7 @@ static HRESULT WINAPI DefaultHandler_Run(
 {
   DefaultHandler *This = impl_from_IRunnableObject(iface);
   HRESULT hr;
+  IOleCacheControl *cache_ctrl;
 
   FIXME("(%p): semi-stub\n", pbc);
 
@@ -1374,7 +1383,6 @@ static HRESULT WINAPI DefaultHandler_Run(
   /* FIXME: do more stuff here:
    * - IOleObject_GetMiscStatus
    * - IOleObject_GetMoniker
-   * - IOleCache_OnRun
    */
 
   hr = IOleObject_QueryInterface(This->pOleDelegate, &IID_IDataObject,
@@ -1388,6 +1396,12 @@ static HRESULT WINAPI DefaultHandler_Run(
     hr = DataAdviseHolder_OnConnect(This->dataAdviseHolder, This->pDataDelegate);
     if (FAILED(hr)) goto fail;
   }
+
+  hr = IUnknown_QueryInterface( This->dataCache, &IID_IOleCacheControl, (void **)&cache_ctrl );
+  if (FAILED(hr)) goto fail;
+  hr = IOleCacheControl_OnRun( cache_ctrl, This->pDataDelegate );
+  IOleCacheControl_Release( cache_ctrl );
+  if (FAILED(hr)) goto fail;
 
   return hr;
 
