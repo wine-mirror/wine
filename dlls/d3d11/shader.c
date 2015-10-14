@@ -1066,6 +1066,15 @@ HRESULT d3d_pixel_shader_create(struct d3d_device *device, const void *byte_code
     return S_OK;
 }
 
+struct d3d_pixel_shader *unsafe_impl_from_ID3D11PixelShader(ID3D11PixelShader *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_pixel_shader_vtbl);
+
+    return impl_from_ID3D11PixelShader(iface);
+}
+
 struct d3d_pixel_shader *unsafe_impl_from_ID3D10PixelShader(ID3D10PixelShader *iface)
 {
     if (!iface)
