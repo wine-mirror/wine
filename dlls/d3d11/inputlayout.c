@@ -379,6 +379,15 @@ HRESULT d3d_input_layout_create(struct d3d_device *device,
     return S_OK;
 }
 
+struct d3d_input_layout *unsafe_impl_from_ID3D11InputLayout(ID3D11InputLayout *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_input_layout_vtbl);
+
+    return impl_from_ID3D11InputLayout(iface);
+}
+
 struct d3d_input_layout *unsafe_impl_from_ID3D10InputLayout(ID3D10InputLayout *iface)
 {
     if (!iface)
