@@ -732,7 +732,8 @@ static void check_dirid(int dirid, LPCSTR expected)
     char buffer[sizeof(dirid_inf)+11];
     char path[MAX_PATH], actual[MAX_PATH];
     LONG ret;
-    DWORD size;
+    DWORD size, type;
+    HKEY key;
 
     sprintf(buffer, dirid_inf, dirid);
 
@@ -742,8 +743,16 @@ static void check_dirid(int dirid, LPCSTR expected)
     run_cmdline("DefaultInstall", 128, path);
 
     size = sizeof(actual);
-    ret = RegGetValueA(HKEY_CURRENT_USER, "Software\\Wine\\setupapitest", "dirid",
-        RRF_RT_REG_SZ|RRF_ZEROONFAILURE, NULL, &actual, &size);
+    actual[0] = '\0';
+    ret = RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\setupapitest", &key);
+    if (ret == ERROR_SUCCESS)
+    {
+        ret = RegQueryValueExA(key, "dirid", NULL, &type, (BYTE*)&actual, &size);
+        RegCloseKey(key);
+        if (type != REG_SZ)
+            ret = ERROR_FILE_NOT_FOUND;
+    }
+
     ok(ret == ERROR_SUCCESS, "Failed getting value for dirid %i, err=%d\n", dirid, ret);
     ok(!strcmp(actual, expected), "Expected path for dirid %i was \"%s\", got \"%s\"\n", dirid, expected, actual);
 
