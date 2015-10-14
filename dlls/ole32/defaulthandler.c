@@ -75,7 +75,8 @@ enum storage_state
 enum object_state
 {
     object_state_not_running,
-    object_state_running
+    object_state_running,
+    object_state_deferred_close
 };
 
 /****************************************************************************
@@ -131,6 +132,7 @@ struct DefaultHandler
   /* IDataObject delegate */
   IDataObject *pDataDelegate;
   enum object_state object_state;
+  ULONG in_call;
 
   /* connection cookie for the advise on the delegate OLE object */
   DWORD dwAdvConn;
@@ -182,6 +184,20 @@ static void DefaultHandler_Destroy(DefaultHandler* This);
 static inline BOOL object_is_running(DefaultHandler *This)
 {
     return IRunnableObject_IsRunning(&This->IRunnableObject_iface);
+}
+
+static void DefaultHandler_Stop(DefaultHandler *This);
+
+static inline void start_object_call(DefaultHandler *This)
+{
+    This->in_call++;
+}
+
+static inline void end_object_call(DefaultHandler *This)
+{
+    This->in_call--;
+    if (This->in_call == 0 && This->object_state == object_state_deferred_close)
+        DefaultHandler_Stop( This );
 }
 
 /*********************************************************
@@ -350,7 +366,11 @@ static HRESULT WINAPI DefaultHandler_SetClientSite(
   TRACE("(%p, %p)\n", iface, pClientSite);
 
   if (object_is_running(This))
+  {
+    start_object_call( This );
     hr = IOleObject_SetClientSite(This->pOleDelegate, pClientSite);
+    end_object_call( This );
+  }
 
   /*
    * Make sure we release the previous client site if there
@@ -413,7 +433,11 @@ static HRESULT WINAPI DefaultHandler_SetHostNames(
 	debugstr_w(szContainerObj));
 
   if (object_is_running(This))
+  {
+    start_object_call( This );
     IOleObject_SetHostNames(This->pOleDelegate, szContainerApp, szContainerObj);
+    end_object_call( This );
+  }
 
   /* Be sure to cleanup before re-assigning the strings. */
   HeapFree( GetProcessHeap(), 0, This->containerApp );
@@ -462,7 +486,7 @@ static void DefaultHandler_Stop(DefaultHandler *This)
   IOleCacheControl *cache_ctrl;
   HRESULT hr;
 
-  if (!object_is_running(This))
+  if (This->object_state == object_state_not_running)
     return;
 
   hr = IUnknown_QueryInterface( This->dataCache, &IID_IOleCacheControl, (void **)&cache_ctrl );
@@ -500,7 +524,9 @@ static HRESULT WINAPI DefaultHandler_Close(
   if (!object_is_running(This))
     return S_OK;
 
+  start_object_call( This );
   hr = IOleObject_Close(This->pOleDelegate, dwSaveOption);
+  end_object_call( This );
 
   DefaultHandler_Stop(This);
   release_delegates(This);
@@ -521,16 +547,18 @@ static HRESULT WINAPI DefaultHandler_SetMoniker(
 	    IMoniker*          pmk)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr = S_OK;
 
-  TRACE("(%p, %d, %p)\n",
-	iface,
-	dwWhichMoniker,
-	pmk);
+  TRACE("(%p, %d, %p)\n", iface, dwWhichMoniker, pmk);
 
   if (object_is_running(This))
-    return IOleObject_SetMoniker(This->pOleDelegate, dwWhichMoniker, pmk);
+  {
+    start_object_call( This );
+    hr = IOleObject_SetMoniker(This->pOleDelegate, dwWhichMoniker, pmk);
+    end_object_call( This );
+  }
 
-  return S_OK;
+  return hr;
 }
 
 /************************************************************************
@@ -547,13 +575,19 @@ static HRESULT WINAPI DefaultHandler_GetMoniker(
 	    IMoniker**         ppmk)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr;
 
   TRACE("(%p, %d, %d, %p)\n",
 	iface, dwAssign, dwWhichMoniker, ppmk);
 
   if (object_is_running(This))
-    return IOleObject_GetMoniker(This->pOleDelegate, dwAssign, dwWhichMoniker,
-                                 ppmk);
+  {
+    start_object_call( This );
+    hr = IOleObject_GetMoniker(This->pOleDelegate, dwAssign, dwWhichMoniker,
+                               ppmk);
+    end_object_call( This );
+    return hr;
+  }
 
   /* FIXME: dwWhichMoniker == OLEWHICHMK_CONTAINER only? */
   if (This->clientSite)
@@ -582,14 +616,20 @@ static HRESULT WINAPI DefaultHandler_InitFromData(
 	    DWORD              dwReserved)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr = OLE_E_NOTRUNNING;
 
   TRACE("(%p, %p, %d, %d)\n",
 	iface, pDataObject, fCreation, dwReserved);
 
   if (object_is_running(This))
-    return IOleObject_InitFromData(This->pOleDelegate, pDataObject, fCreation,
+  {
+    start_object_call( This );
+    hr = IOleObject_InitFromData(This->pOleDelegate, pDataObject, fCreation,
 		                   dwReserved);
-  return OLE_E_NOTRUNNING;
+    end_object_call( This );
+  }
+
+  return hr;
 }
 
 /************************************************************************
@@ -605,15 +645,20 @@ static HRESULT WINAPI DefaultHandler_GetClipboardData(
 	    IDataObject**      ppDataObject)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr = OLE_E_NOTRUNNING;
 
   TRACE("(%p, %d, %p)\n",
 	iface, dwReserved, ppDataObject);
 
   if (object_is_running(This))
-    return IOleObject_GetClipboardData(This->pOleDelegate, dwReserved,
+  {
+    start_object_call( This );
+    hr = IOleObject_GetClipboardData(This->pOleDelegate, dwReserved,
                                        ppDataObject);
+    end_object_call( This );
+  }
 
-  return OLE_E_NOTRUNNING;
+  return hr;
 }
 
 static HRESULT WINAPI DefaultHandler_DoVerb(
@@ -634,8 +679,12 @@ static HRESULT WINAPI DefaultHandler_DoVerb(
   hr = IRunnableObject_Run(pRunnableObj, NULL);
   if (FAILED(hr)) return hr;
 
-  return IOleObject_DoVerb(This->pOleDelegate, iVerb, lpmsg, pActiveSite,
+  start_object_call( This );
+  hr = IOleObject_DoVerb(This->pOleDelegate, iVerb, lpmsg, pActiveSite,
                            lindex, hwndParent, lprcPosRect);
+  end_object_call( This );
+
+  return hr;
 }
 
 /************************************************************************
@@ -656,7 +705,11 @@ static HRESULT WINAPI DefaultHandler_EnumVerbs(
   TRACE("(%p, %p)\n", iface, ppEnumOleVerb);
 
   if (object_is_running(This))
+  {
+    start_object_call( This );
     hr = IOleObject_EnumVerbs(This->pOleDelegate, ppEnumOleVerb);
+    end_object_call( This );
+  }
 
   if (hr == OLE_S_USEREG)
     return OleRegEnumVerbs(&This->clsid, ppEnumOleVerb);
@@ -668,6 +721,8 @@ static HRESULT WINAPI DefaultHandler_Update(
 	    IOleObject*        iface)
 {
     DefaultHandler *This = impl_from_IOleObject(iface);
+    HRESULT hr;
+
     TRACE("(%p)\n", iface);
 
     if (!object_is_running(This))
@@ -675,7 +730,12 @@ static HRESULT WINAPI DefaultHandler_Update(
         FIXME("Should run object\n");
         return E_NOTIMPL;
     }
-    return IOleObject_Update(This->pOleDelegate);
+
+    start_object_call( This );
+    hr = IOleObject_Update(This->pOleDelegate);
+    end_object_call( This );
+
+    return hr;
 }
 
 /************************************************************************
@@ -689,12 +749,17 @@ static HRESULT WINAPI DefaultHandler_IsUpToDate(
 	    IOleObject*        iface)
 {
     DefaultHandler *This = impl_from_IOleObject(iface);
+    HRESULT hr = OLE_E_NOTRUNNING;
     TRACE("(%p)\n", iface);
 
     if (object_is_running(This))
-        return IOleObject_IsUpToDate(This->pOleDelegate);
+    {
+        start_object_call( This );
+        hr = IOleObject_IsUpToDate(This->pOleDelegate);
+        end_object_call( This );
+    }
 
-    return OLE_E_NOTRUNNING;
+    return hr;
 }
 
 /************************************************************************
@@ -709,11 +774,17 @@ static HRESULT WINAPI DefaultHandler_GetUserClassID(
 	    CLSID*             pClsid)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr;
 
   TRACE("(%p, %p)\n", iface, pClsid);
 
   if (object_is_running(This))
-    return IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
+  {
+    start_object_call( This );
+    hr = IOleObject_GetUserClassID(This->pOleDelegate, pClsid);
+    end_object_call( This );
+    return hr;
+  }
 
   if (!pClsid)
     return E_POINTER;
@@ -737,10 +808,16 @@ static HRESULT WINAPI DefaultHandler_GetUserType(
 	    LPOLESTR*          pszUserType)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr;
 
   TRACE("(%p, %d, %p)\n", iface, dwFormOfType, pszUserType);
   if (object_is_running(This))
-    return IOleObject_GetUserType(This->pOleDelegate, dwFormOfType, pszUserType);
+  {
+    start_object_call( This );
+    hr = IOleObject_GetUserType(This->pOleDelegate, dwFormOfType, pszUserType);
+    end_object_call( This );
+    return hr;
+  }
 
   return OleRegGetUserType(&This->clsid, dwFormOfType, pszUserType);
 }
@@ -758,14 +835,19 @@ static HRESULT WINAPI DefaultHandler_SetExtent(
 	    SIZEL*             psizel)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr = OLE_E_NOTRUNNING;
 
   TRACE("(%p, %x, (%d x %d))\n", iface,
         dwDrawAspect, psizel->cx, psizel->cy);
 
   if (object_is_running(This))
-    return IOleObject_SetExtent(This->pOleDelegate, dwDrawAspect, psizel);
+  {
+    start_object_call( This );
+    hr = IOleObject_SetExtent(This->pOleDelegate, dwDrawAspect, psizel);
+    end_object_call( This );
+  }
 
-  return OLE_E_NOTRUNNING;
+  return hr;
 }
 
 /************************************************************************
@@ -790,7 +872,12 @@ static HRESULT WINAPI DefaultHandler_GetExtent(
   TRACE("(%p, %x, %p)\n", iface, dwDrawAspect, psizel);
 
   if (object_is_running(This))
-    return IOleObject_GetExtent(This->pOleDelegate, dwDrawAspect, psizel);
+  {
+    start_object_call( This );
+    hres = IOleObject_GetExtent(This->pOleDelegate, dwDrawAspect, psizel);
+    end_object_call( This );
+    return hres;
+  }
 
   hres = IUnknown_QueryInterface(This->dataCache, &IID_IViewObject2, (void**)&cacheView);
   if (FAILED(hres))
@@ -920,7 +1007,12 @@ static HRESULT WINAPI DefaultHandler_GetMiscStatus(
   TRACE("(%p, %x, %p)\n", iface, dwAspect, pdwStatus);
 
   if (object_is_running(This))
-    return IOleObject_GetMiscStatus(This->pOleDelegate, dwAspect, pdwStatus);
+  {
+    start_object_call( This );
+    hres = IOleObject_GetMiscStatus(This->pOleDelegate, dwAspect, pdwStatus);
+    end_object_call( This );
+    return hres;
+  }
 
   hres = OleRegGetMiscStatus(&This->clsid, dwAspect, pdwStatus);
 
@@ -942,13 +1034,18 @@ static HRESULT WINAPI DefaultHandler_SetColorScheme(
 	    struct tagLOGPALETTE* pLogpal)
 {
   DefaultHandler *This = impl_from_IOleObject(iface);
+  HRESULT hr = OLE_E_NOTRUNNING;
 
   TRACE("(%p, %p))\n", iface, pLogpal);
 
   if (object_is_running(This))
-    return IOleObject_SetColorScheme(This->pOleDelegate, pLogpal);
+  {
+    start_object_call( This );
+    hr = IOleObject_SetColorScheme(This->pOleDelegate, pLogpal);
+    end_object_call( This );
+  }
 
-  return OLE_E_NOTRUNNING;
+  return hr;
 }
 
 /*********************************************************
@@ -1033,7 +1130,9 @@ static HRESULT WINAPI DefaultHandler_GetData(
 
   if (object_is_running( This ))
   {
+    start_object_call(This);
     hres = IDataObject_GetData(This->pDataDelegate, pformatetcIn, pmedium);
+    end_object_call(This);
     if (hres == S_OK) return hres;
   }
 
@@ -1088,7 +1187,9 @@ static HRESULT WINAPI DefaultHandler_QueryGetData(
 
   if (object_is_running( This ))
   {
+    start_object_call( This );
     hres = IDataObject_QueryGetData(This->pDataDelegate, pformatetc);
+    end_object_call( This );
     if (hres == S_OK) return hres;
   }
 
@@ -1112,13 +1213,18 @@ static HRESULT WINAPI DefaultHandler_GetCanonicalFormatEtc(
 	    LPFORMATETC      pformatetcOut)
 {
   DefaultHandler *This = impl_from_IDataObject(iface);
+  HRESULT hr;
 
   TRACE("(%p, %p, %p)\n", iface, pformatetcIn, pformatetcOut);
 
   if (!object_is_running( This ))
     return OLE_E_NOTRUNNING;
 
-  return IDataObject_GetCanonicalFormatEtc(This->pDataDelegate, pformatetcIn, pformatetcOut);
+  start_object_call( This );
+  hr = IDataObject_GetCanonicalFormatEtc(This->pDataDelegate, pformatetcIn, pformatetcOut);
+  end_object_call( This );
+
+  return hr;
 }
 
 /************************************************************************
@@ -1204,7 +1310,11 @@ static HRESULT WINAPI DefaultHandler_DAdvise(
   {
     hres = CreateDataAdviseHolder(&This->dataAdviseHolder);
     if (SUCCEEDED(hres) && object_is_running( This ))
+    {
+      start_object_call( This );
       DataAdviseHolder_OnConnect(This->dataAdviseHolder, This->pDataDelegate);
+      end_object_call( This );
+    }
   }
 
   if (SUCCEEDED(hres))
@@ -1537,9 +1647,14 @@ static void WINAPI DefaultHandler_IAdviseSink_OnClose(
     if (This->oleAdviseHolder)
         IOleAdviseHolder_SendOnClose(This->oleAdviseHolder);
 
-    DefaultHandler_Stop(This);
+    if(!This->in_call)
+        DefaultHandler_Stop(This);
+    else
+    {
+        TRACE("OnClose during call.  Deferring shutdown\n");
+        This->object_state = object_state_deferred_close;
+    }
 }
-
 
 /************************************************************************
  * DefaultHandler_IPersistStorage_QueryInterface
@@ -1593,7 +1708,11 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_GetClassID(
     TRACE("(%p)->(%p)\n", iface, clsid);
 
     if(object_is_running(This))
+    {
+        start_object_call( This );
         hr = IPersistStorage_GetClassID(This->pPSDelegate, clsid);
+        end_object_call( This );
+    }
     else
         hr = IPersistStorage_GetClassID(This->dataCache_PersistStg, clsid);
 
@@ -1616,7 +1735,11 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_IsDirty(
     if(hr != S_FALSE) return hr;
 
     if(object_is_running(This))
+    {
+        start_object_call( This );
         hr = IPersistStorage_IsDirty(This->pPSDelegate);
+        end_object_call( This );
+    }
 
     return hr;
 }
@@ -1700,7 +1823,11 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_InitNew(
     hr = IPersistStorage_InitNew(This->dataCache_PersistStg, pStg);
 
     if(SUCCEEDED(hr) && object_is_running(This))
+    {
+        start_object_call( This );
         hr = IPersistStorage_InitNew(This->pPSDelegate, pStg);
+        end_object_call( This );
+    }
 
     if(SUCCEEDED(hr))
     {
@@ -1732,7 +1859,11 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_Load(
         hr = IPersistStorage_Load(This->dataCache_PersistStg, pStg);
 
     if(SUCCEEDED(hr) && object_is_running(This))
+    {
+        start_object_call( This );
         hr = IPersistStorage_Load(This->pPSDelegate, pStg);
+        end_object_call( This );
+    }
 
     if(SUCCEEDED(hr))
     {
@@ -1760,7 +1891,11 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_Save(
 
     hr = IPersistStorage_Save(This->dataCache_PersistStg, pStgSave, fSameAsLoad);
     if(SUCCEEDED(hr) && object_is_running(This))
+    {
+        start_object_call( This );
         hr = IPersistStorage_Save(This->pPSDelegate, pStgSave, fSameAsLoad);
+        end_object_call( This );
+    }
 
     return hr;
 }
@@ -1782,7 +1917,11 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_SaveCompleted(
     hr = IPersistStorage_SaveCompleted(This->dataCache_PersistStg, pStgNew);
 
     if(SUCCEEDED(hr) && object_is_running(This))
+    {
+        start_object_call( This );
         hr = IPersistStorage_SaveCompleted(This->pPSDelegate, pStgNew);
+        end_object_call( This );
+    }
 
     if(pStgNew)
     {
@@ -1811,7 +1950,11 @@ static HRESULT WINAPI DefaultHandler_IPersistStorage_HandsOffStorage(
     hr = IPersistStorage_HandsOffStorage(This->dataCache_PersistStg);
 
     if(SUCCEEDED(hr) && object_is_running(This))
+    {
+        start_object_call( This );
         hr = IPersistStorage_HandsOffStorage(This->pPSDelegate);
+        end_object_call( This );
+    }
 
     if(This->storage) IStorage_Release(This->storage);
     This->storage = NULL;
@@ -1992,6 +2135,7 @@ static DefaultHandler* DefaultHandler_Construct(
   This->pPSDelegate = NULL;
   This->pDataDelegate = NULL;
   This->object_state = object_state_not_running;
+  This->in_call = 0;
 
   This->dwAdvConn = 0;
   This->storage = NULL;
