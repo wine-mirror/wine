@@ -502,6 +502,7 @@ static void DefaultHandler_Stop(DefaultHandler *This)
     DataAdviseHolder_OnDisconnect(This->dataAdviseHolder);
 
   This->object_state = object_state_not_running;
+  release_delegates( This );
 }
 
 /************************************************************************
@@ -529,7 +530,6 @@ static HRESULT WINAPI DefaultHandler_Close(
   end_object_call( This );
 
   DefaultHandler_Stop(This);
-  release_delegates(This);
 
   return hr;
 }
@@ -1517,7 +1517,6 @@ static HRESULT WINAPI DefaultHandler_Run(
 
 fail:
   DefaultHandler_Stop(This);
-  release_delegates(This);
   return hr;
 }
 
@@ -2180,7 +2179,6 @@ static void DefaultHandler_Destroy(
 
   /* release delegates */
   DefaultHandler_Stop(This);
-  release_delegates(This);
 
   HeapFree( GetProcessHeap(), 0, This->containerApp );
   This->containerApp = NULL;
