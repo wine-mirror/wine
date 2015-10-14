@@ -1021,7 +1021,7 @@ static HRESULT WINAPI DefaultHandler_GetData(
 
   IDataObject_Release(cacheDataObject);
 
-  if (FAILED(hres) && This->pDataDelegate)
+  if (FAILED(hres) && object_is_running( This ))
     hres = IDataObject_GetData(This->pDataDelegate, pformatetcIn, pmedium);
 
   return hres;
@@ -1067,7 +1067,7 @@ static HRESULT WINAPI DefaultHandler_QueryGetData(
 
   IDataObject_Release(cacheDataObject);
 
-  if (FAILED(hres) && This->pDataDelegate)
+  if (FAILED(hres) && object_is_running( This ))
     hres = IDataObject_QueryGetData(This->pDataDelegate, pformatetc);
 
   return hres;
@@ -1089,7 +1089,7 @@ static HRESULT WINAPI DefaultHandler_GetCanonicalFormatEtc(
 
   TRACE("(%p, %p, %p)\n", iface, pformatetcIn, pformatetcOut);
 
-  if (!This->pDataDelegate)
+  if (!object_is_running( This ))
     return OLE_E_NOTRUNNING;
 
   return IDataObject_GetCanonicalFormatEtc(This->pDataDelegate, pformatetcIn, pformatetcOut);
@@ -1177,7 +1177,7 @@ static HRESULT WINAPI DefaultHandler_DAdvise(
   if (!This->dataAdviseHolder)
   {
     hres = CreateDataAdviseHolder(&This->dataAdviseHolder);
-    if (SUCCEEDED(hres) && This->pDataDelegate)
+    if (SUCCEEDED(hres) && object_is_running( This ))
       DataAdviseHolder_OnConnect(This->dataAdviseHolder, This->pDataDelegate);
   }
 
@@ -1327,8 +1327,6 @@ static HRESULT WINAPI DefaultHandler_Run(
   if (FAILED(hr))
     return hr;
 
-  This->object_state = object_state_running;
-
   hr = IOleObject_Advise(This->pOleDelegate, &This->IAdviseSink_iface, &This->dwAdvConn);
   if (FAILED(hr)) goto fail;
 
@@ -1364,6 +1362,8 @@ static HRESULT WINAPI DefaultHandler_Run(
   hr = IOleObject_QueryInterface(This->pOleDelegate, &IID_IDataObject,
                                  (void **)&This->pDataDelegate);
   if (FAILED(hr)) goto fail;
+
+  This->object_state = object_state_running;
 
   if (This->dataAdviseHolder)
   {
