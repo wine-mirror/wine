@@ -154,7 +154,7 @@
 @ stub WsSetInputToBuffer
 @ stub WsSetListenerProperty
 @ stub WsSetMessageProperty
-@ stub WsSetOutput
+@ stdcall WsSetOutput(ptr ptr ptr ptr long ptr)
 @ stub WsSetOutputToBuffer
 @ stub WsSetReaderPosition
 @ stub WsSetWriterPosition

@@ -57,6 +57,7 @@ writer_props[] =
 
 struct writer
 {
+    WS_XML_WRITER_OUTPUT_TYPE output_type;
     ULONG                     prop_count;
     WS_XML_WRITER_PROPERTY    prop[sizeof(writer_props)/sizeof(writer_props[0])];
 };
@@ -162,5 +163,57 @@ HRESULT WINAPI WsGetWriterProperty( WS_XML_WRITER *handle, WS_XML_WRITER_PROPERT
     TRACE( "%p %u %p %u %p\n", handle, id, buf, size, error );
     if (error) FIXME( "ignoring error parameter\n" );
 
+    if (!writer->output_type) return WS_E_INVALID_OPERATION;
     return get_writer_prop( writer, id, buf, size );
+}
+
+/**************************************************************************
+ *          WsSetOutput		[webservices.@]
+ */
+HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING *encoding,
+                            const WS_XML_WRITER_OUTPUT *output, const WS_XML_WRITER_PROPERTY *properties,
+                            ULONG count, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    HRESULT hr;
+    ULONG i;
+
+    TRACE( "%p %p %p %p %u %p\n", handle, encoding, output, properties, count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+
+    switch (encoding->encodingType)
+    {
+        case WS_XML_WRITER_ENCODING_TYPE_TEXT:
+        {
+            WS_XML_WRITER_TEXT_ENCODING *text = (WS_XML_WRITER_TEXT_ENCODING *)encoding;
+            if (text->charSet != WS_CHARSET_UTF8)
+            {
+                FIXME( "charset %u not supported\n", text->charSet );
+                return E_NOTIMPL;
+            }
+            break;
+        }
+        default:
+            FIXME( "encoding type %u not supported\n", encoding->encodingType );
+            return E_NOTIMPL;
+    }
+    switch (output->outputType)
+    {
+        case WS_XML_WRITER_OUTPUT_TYPE_BUFFER:
+            writer->output_type = WS_XML_WRITER_OUTPUT_TYPE_BUFFER;
+            break;
+        default:
+            FIXME( "output type %u not supported\n", output->outputType );
+            return E_NOTIMPL;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        hr = set_writer_prop( writer, properties[i].id, properties[i].value, properties[i].valueSize );
+        if (hr != S_OK) return hr;
+    }
+
+    return S_OK;
 }
