@@ -1933,7 +1933,6 @@ static void test_default_handler(void)
     fmtetc.lindex = -1;
     fmtetc.tymed = TYMED_ENHMF;
     hr = IDataObject_QueryGetData(pDataObject, &fmtetc);
-    todo_wine
     ok(hr == OLE_E_NOTRUNNING, "IDataObject_QueryGetData should have returned OLE_E_NOTRUNNING instead of 0x%08x\n", hr);
 
     fmtetc.cfFormat = CF_TEXT;
@@ -1942,7 +1941,6 @@ static void test_default_handler(void)
     fmtetc.lindex = -1;
     fmtetc.tymed = TYMED_NULL;
     hr = IDataObject_QueryGetData(pDataObject, &fmtetc);
-    todo_wine
     ok(hr == OLE_E_NOTRUNNING, "IDataObject_QueryGetData should have returned OLE_E_NOTRUNNING instead of 0x%08x\n", hr);
 
     hr = IOleObject_QueryInterface(pObject, &IID_IRunnableObject, (void **)&pRunnableObject);

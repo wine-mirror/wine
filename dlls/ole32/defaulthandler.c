@@ -1021,8 +1021,17 @@ static HRESULT WINAPI DefaultHandler_GetData(
 
   IDataObject_Release(cacheDataObject);
 
-  if (FAILED(hres) && object_is_running( This ))
+  if (hres == S_OK) return hres;
+
+  if (object_is_running( This ))
+  {
     hres = IDataObject_GetData(This->pDataDelegate, pformatetcIn, pmedium);
+    if (hres == S_OK) return hres;
+  }
+
+  /* Query running state again, as the object may have closed during _GetData call */
+  if (!object_is_running( This ))
+    hres = OLE_E_NOTRUNNING;
 
   return hres;
 }
@@ -1067,8 +1076,17 @@ static HRESULT WINAPI DefaultHandler_QueryGetData(
 
   IDataObject_Release(cacheDataObject);
 
-  if (FAILED(hres) && object_is_running( This ))
+  if (hres == S_OK) return hres;
+
+  if (object_is_running( This ))
+  {
     hres = IDataObject_QueryGetData(This->pDataDelegate, pformatetc);
+    if (hres == S_OK) return hres;
+  }
+
+  /* Query running state again, as the object may have closed during _QueryGetData call */
+  if (!object_is_running( This ))
+    hres = OLE_E_NOTRUNNING;
 
   return hres;
 }
