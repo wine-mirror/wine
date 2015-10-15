@@ -787,7 +787,7 @@ static void test_snprintf (void)
             fmt, expect, n);
         ok (!memcmp (fmt, buffer, valid),
             "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
-    };
+    }
 }
 
 static void test_fprintf(void)
