@@ -1586,6 +1586,35 @@ static void PRINTF_ATTR(4, 5) declare_out_varying(const struct wined3d_gl_info *
     }
 }
 
+static BOOL glsl_is_color_reg_read(const struct wined3d_shader *shader, unsigned int idx)
+{
+    const struct wined3d_shader_signature *input_signature = &shader->input_signature;
+    const struct wined3d_shader_reg_maps *reg_maps = &shader->reg_maps;
+    const BOOL *input_reg_used = shader->u.ps.input_reg_used;
+    unsigned int i;
+
+    if (reg_maps->shader_version.major < 3)
+        return input_reg_used[idx];
+
+    for (i = 0; i < input_signature->element_count; ++i)
+    {
+        const struct wined3d_shader_signature_element *input = &input_signature->elements[i];
+
+        if (!(reg_maps->input_registers & (1u << input->register_idx)))
+            continue;
+
+        if (shader_match_semantic(input->semantic_name, WINED3D_DECL_USAGE_COLOR)
+                && input->semantic_idx == idx)
+        {
+            if (input_reg_used[input->register_idx])
+                return TRUE;
+            else
+                return FALSE;
+        }
+    }
+    return FALSE;
+}
+
 /** Generate the variable & register declarations for the GLSL output target */
 static void shader_generate_glsl_declarations(const struct wined3d_context *context,
         struct wined3d_string_buffer *buffer, const struct wined3d_shader *shader,
@@ -1829,6 +1858,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
         if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && version->major < 3)
         {
+            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
+            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
             declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
             declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
         }
@@ -1853,11 +1884,19 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
             if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
             {
+                if (glsl_is_color_reg_read(shader, 0))
+                    shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
+                if (glsl_is_color_reg_read(shader, 1))
+                    shader_addline(buffer, "vec4 ffp_varying_specular;\n");
                 shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
                 shader_addline(buffer, "float ffp_varying_fogcoord;\n");
             }
             else
             {
+                if (glsl_is_color_reg_read(shader, 0))
+                    declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
+                if (glsl_is_color_reg_read(shader, 1))
+                    declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
                 declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
                 shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
                 declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
@@ -2183,9 +2222,9 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             else
             {
                 if (!reg->idx[0].offset)
-                    strcpy(register_name, "gl_Color");
+                    strcpy(register_name, "ffp_varying_diffuse");
                 else
-                    strcpy(register_name, "gl_SecondaryColor");
+                    strcpy(register_name, "ffp_varying_specular");
                 break;
             }
             break;
@@ -4736,10 +4775,10 @@ static void shader_glsl_input_pack(const struct wined3d_shader *shader, struct w
         else if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR))
         {
             if (!semantic_idx)
-                shader_addline(buffer, "ps_in[%u]%s = vec4(gl_Color)%s;\n",
+                shader_addline(buffer, "ps_in[%u]%s = vec4(ffp_varying_diffuse)%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask, reg_mask);
             else if (semantic_idx == 1)
-                shader_addline(buffer, "ps_in[%u]%s = vec4(gl_SecondaryColor)%s;\n",
+                shader_addline(buffer, "ps_in[%u]%s = vec4(ffp_varying_specular)%s;\n",
                         shader->u.ps.input_reg_map[input->register_idx], reg_mask, reg_mask);
             else
                 shader_addline(buffer, "ps_in[%u]%s = vec4(0.0, 0.0, 0.0, 0.0)%s;\n",
@@ -4939,6 +4978,8 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
 
         if (!legacy_context)
         {
+            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
+            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
             declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
             declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
         }
@@ -4960,12 +5001,12 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
 
             if (shader_match_semantic(semantic_name, WINED3D_DECL_USAGE_COLOR) && semantic_idx < 2)
             {
-                if (!semantic_idx)
-                    shader_addline(buffer, "gl_FrontColor%s = vs_out[%u]%s;\n",
-                            reg_mask, output->register_idx, reg_mask);
-                else if (semantic_idx == 1)
-                    shader_addline(buffer, "gl_FrontSecondaryColor%s = vs_out[%u]%s;\n",
-                            reg_mask, output->register_idx, reg_mask);
+                if (legacy_context)
+                    shader_addline(buffer, "gl_Front%sColor%s = vs_out[%u]%s;\n",
+                            semantic_idx ? "Secondary" : "", reg_mask, output->register_idx, reg_mask);
+                else
+                    shader_addline(buffer, "ffp_varying_%s%s = clamp(vs_out[%u]%s, 0.0, 1.0);\n",
+                            semantic_idx ? "specular" : "diffuse", reg_mask, output->register_idx, reg_mask);
 
                 colors_written_mask[semantic_idx] = write_mask;
             }
@@ -5003,10 +5044,12 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
             {
                 shader_glsl_write_mask_to_str(~colors_written_mask[i] & WINED3DSP_WRITEMASK_ALL, reg_mask);
                 if (!i)
-                    shader_addline(buffer, "gl_FrontColor%s = vec4(1.0)%s;\n",
+                    shader_addline(buffer, "%s%s = vec4(1.0)%s;\n",
+                            legacy_context ? "gl_FrontColor" : "ffp_varying_diffuse",
                             reg_mask, reg_mask);
                 else
-                    shader_addline(buffer, "gl_FrontSecondaryColor%s = vec4(0.0)%s;\n",
+                    shader_addline(buffer, "%s%s = vec4(0.0)%s;\n",
+                            legacy_context ? "gl_FrontSecondaryColor" : "ffp_varying_specular",
                             reg_mask, reg_mask);
             }
         }
@@ -5153,6 +5196,14 @@ static GLuint shader_glsl_generate_pshader(const struct wined3d_context *context
     {
         unsigned int i;
         WORD map = reg_maps->texcoord;
+
+        if (legacy_context)
+        {
+            if (glsl_is_color_reg_read(shader, 0))
+                shader_addline(buffer, "ffp_varying_diffuse = gl_Color;\n");
+            if (glsl_is_color_reg_read(shader, 1))
+                shader_addline(buffer, "ffp_varying_specular = gl_SecondaryColor;\n");
+        }
 
         for (i = 0; map; map >>= 1, ++i)
         {
@@ -5544,8 +5595,8 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
 
     if (!settings->lighting)
     {
-        shader_addline(buffer, "gl_FrontColor = ffp_attrib_diffuse;\n");
-        shader_addline(buffer, "gl_FrontSecondaryColor = ffp_attrib_specular;\n");
+        shader_addline(buffer, "ffp_varying_diffuse = ffp_attrib_diffuse;\n");
+        shader_addline(buffer, "ffp_varying_specular = ffp_attrib_specular;\n");
         return;
     }
 
@@ -5687,10 +5738,10 @@ static void shader_glsl_ffp_vertex_lighting(struct wined3d_string_buffer *buffer
         }
     }
 
-    shader_addline(buffer, "gl_FrontColor.xyz = %s.xyz * ambient + %s.xyz * diffuse + %s.xyz;\n",
+    shader_addline(buffer, "ffp_varying_diffuse.xyz = %s.xyz * ambient + %s.xyz * diffuse + %s.xyz;\n",
             ambient, diffuse, emissive);
-    shader_addline(buffer, "gl_FrontColor.w = %s.w;\n", diffuse);
-    shader_addline(buffer, "gl_FrontSecondaryColor = %s * specular;\n", specular);
+    shader_addline(buffer, "ffp_varying_diffuse.w = %s.w;\n", diffuse);
+    shader_addline(buffer, "ffp_varying_specular = %s * specular;\n", specular);
 }
 
 /* Context activation is done by the caller. */
@@ -5775,11 +5826,15 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
 
     if (legacy_context)
     {
+        shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
+        shader_addline(buffer, "vec4 ffp_varying_specular;\n");
         shader_addline(buffer, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
         shader_addline(buffer, "float ffp_varying_fogcoord;\n");
     }
     else
     {
+        declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
+        declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
         declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
         declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
     }
@@ -5844,6 +5899,11 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     }
 
     shader_glsl_ffp_vertex_lighting(buffer, settings, legacy_lighting);
+    if (legacy_context)
+    {
+        shader_addline(buffer, "gl_FrontColor = ffp_varying_diffuse;\n");
+        shader_addline(buffer, "gl_FrontSecondaryColor = ffp_varying_specular;\n");
+    }
 
     for (i = 0; i < MAX_TEXTURES; ++i)
     {
@@ -5948,12 +6008,12 @@ static const char *shader_glsl_get_ffp_fragment_op_arg(struct wined3d_string_buf
     switch (arg & WINED3DTA_SELECTMASK)
     {
         case WINED3DTA_DIFFUSE:
-            ret = "gl_Color";
+            ret = "ffp_varying_diffuse";
             break;
 
         case WINED3DTA_CURRENT:
             if (!stage)
-                ret = "gl_Color";
+                ret = "ffp_varying_diffuse";
             else
                 ret = "ret";
             break;
@@ -5980,7 +6040,7 @@ static const char *shader_glsl_get_ffp_fragment_op_arg(struct wined3d_string_buf
             break;
 
         case WINED3DTA_SPECULAR:
-            ret = "gl_SecondaryColor";
+            ret = "ffp_varying_specular";
             break;
 
         case WINED3DTA_TEMP:
@@ -6058,7 +6118,7 @@ static void shader_glsl_ffp_fragment_op(struct wined3d_string_buffer *buffer, un
     {
         case WINED3D_TOP_DISABLE:
             if (!stage)
-                shader_addline(buffer, "%s%s = gl_Color%s;\n", dstreg, dstmask, dstmask);
+                shader_addline(buffer, "%s%s = ffp_varying_diffuse%s;\n", dstreg, dstmask, dstmask);
             break;
 
         case WINED3D_TOP_SELECT_ARG1:
@@ -6339,18 +6399,28 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
 
     if (legacy_context)
     {
+        shader_addline(buffer, "vec4 ffp_varying_diffuse;\n");
+        shader_addline(buffer, "vec4 ffp_varying_specular;\n");
         shader_addline(buffer, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
         shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
         shader_addline(buffer, "float ffp_varying_fogcoord;\n");
     }
     else
     {
+        declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
+        declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
         declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
         shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
         declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
     }
 
     shader_addline(buffer, "void main()\n{\n");
+
+    if (legacy_context)
+    {
+        shader_addline(buffer, "ffp_varying_diffuse = gl_Color;\n");
+        shader_addline(buffer, "ffp_varying_specular = gl_SecondaryColor;\n");
+    }
 
     for (stage = 0; stage < MAX_TEXTURES; ++stage)
     {
@@ -6524,7 +6594,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
         if (settings->op[stage].cop == WINED3D_TOP_DISABLE)
         {
             if (!stage)
-                final_combiner_src = "gl_Color";
+                final_combiner_src = "ffp_varying_diffuse";
             break;
         }
 
@@ -6552,7 +6622,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
                     settings->op[stage].cop, settings->op[stage].carg0,
                     settings->op[stage].carg1, settings->op[stage].carg2);
             if (!stage)
-                shader_addline(buffer, "ret.w = gl_Color.w;\n");
+                shader_addline(buffer, "ret.w = ffp_varying_diffuse.w;\n");
         }
         else if (op_equal)
         {
@@ -6571,7 +6641,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
         }
     }
 
-    shader_addline(buffer, "gl_FragData[0] = gl_SecondaryColor * specular_enable + %s;\n", final_combiner_src);
+    shader_addline(buffer, "gl_FragData[0] = ffp_varying_specular * specular_enable + %s;\n", final_combiner_src);
 
     if (settings->sRGB_write)
         shader_glsl_generate_srgb_write_correction(buffer);
