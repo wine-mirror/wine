@@ -2803,14 +2803,23 @@ error:
 
 /* Read the framebuffer contents into a texture. Note that this function
  * doesn't do any kind of flipping. Using this on an onscreen surface will
- * result in a flipped D3D texture. */
-void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
+ * result in a flipped D3D texture.
+ *
+ * Context activation is done by the caller. This function may temporarily
+ * switch to a different context and restore the original one before return. */
+void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct wined3d_context *old_ctx)
 {
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
+    struct wined3d_context *context = old_ctx;
+    struct wined3d_surface *restore_rt = NULL;
 
-    context = context_acquire(device, surface);
+    if (old_ctx->current_rt != surface)
+    {
+        restore_rt = old_ctx->current_rt;
+        context = context_acquire(device, surface);
+    }
+
     gl_info = context->gl_info;
     device_invalidate_state(device, STATE_FRAMEBUFFER);
 
@@ -2829,7 +2838,8 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb)
             0, 0, 0, 0, surface->resource.width, surface->resource.height);
     checkGLcall("glCopyTexSubImage2D");
 
-    context_release(context);
+    if (restore_rt)
+        context_restore(context, restore_rt);
 }
 
 void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
@@ -3898,7 +3908,7 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             && wined3d_resource_is_offscreen(&texture->resource)
             && (surface->locations & WINED3D_LOCATION_DRAWABLE))
     {
-        surface_load_fb_texture(surface, srgb);
+        surface_load_fb_texture(surface, srgb, context);
 
         return WINED3D_OK;
     }

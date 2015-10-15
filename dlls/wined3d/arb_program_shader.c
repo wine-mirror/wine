@@ -7859,7 +7859,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
          * flip in the blitter, we don't actually need that flip anyway. So we
          * use the surface's texture as scratch texture, and flip the source
          * rectangle instead. */
-        surface_load_fb_texture(src_surface, FALSE);
+        surface_load_fb_texture(src_surface, FALSE, context);
 
         src_rect.top = src_surface->resource.height - src_rect.top;
         src_rect.bottom = src_surface->resource.height - src_rect.bottom;
