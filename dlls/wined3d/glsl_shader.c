@@ -1827,7 +1827,7 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             shader_addline(buffer, "} ffp_point;\n");
         }
 
-        if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && version->major < 3)
         {
             declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
         }
@@ -5234,12 +5234,15 @@ static GLuint shader_glsl_generate_vshader(const struct wined3d_context *context
      * the fog frag coord is thrown away. If the fog frag coord is used, but not written by
      * the shader, it is set to 0.0(fully fogged, since start = 1.0, end = 0.0)
      */
-    if (args->fog_src == VS_FOG_Z)
-        shader_addline(buffer, "%s = gl_Position.z;\n",
-                legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
-    else if (!reg_maps->fog)
-        shader_addline(buffer, "%s = 0.0;\n",
-                legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+    if (reg_maps->shader_version.major < 3)
+    {
+        if (args->fog_src == VS_FOG_Z)
+            shader_addline(buffer, "%s = gl_Position.z;\n",
+                    legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+        else if (!reg_maps->fog)
+            shader_addline(buffer, "%s = 0.0;\n",
+                    legacy_context ? "gl_FogFragCoord" : "ffp_varying_fogcoord");
+    }
 
     /* We always store the clipplanes without y inversion */
     if (args->clip_enabled)
