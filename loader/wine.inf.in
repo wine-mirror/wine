@@ -449,6 +449,7 @@ HKLM,System\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57d
 HKLM,System\CurrentControlSet\Control\Class\{745a17a0-74d3-11d0-b6fe-00a0c90f57da},"Class",,"HIDClass"
 
 [CurrentVersion]
+HKCU,%CurrentVersion%\Run,,16
 HKLM,%CurrentVersion%,"CommonFilesDir",,"%16427%"
 HKLM,%CurrentVersion%,"FirstInstallDateTime",1,21,81,7c,23
 HKLM,%CurrentVersion%,"ProductId",,"12345-oem-0000001-54321"
@@ -468,12 +469,12 @@ HKLM,%CurrentVersion%\Group Policy,,16
 HKLM,%CurrentVersion%\Installer,"InstallerLocation",,"%11%"
 HKLM,%CurrentVersion%\Policies\System,"EnableLUA",0x10003,0
 HKLM,%CurrentVersion%\PreviewHandlers,,16
+HKLM,%CurrentVersion%\Run,,16
 HKLM,%CurrentVersion%\Setup,"BootDir",,"%30%"
 HKLM,%CurrentVersion%\Setup,"SharedDir",,"%25%"
 HKLM,%CurrentVersion%\Shell Extensions\Approved,,16
 HKLM,%CurrentVersion%\Uninstall,,16
-HKCU,%CurrentVersion%\Run,,16
-HKLM,%CurrentVersion%\Run,,16
+HKLM,%CurrentVersion%\Winlogon,,16
 HKLM,%CurrentVersionNT%,"InstallDate",0x10003,1273299354
 HKLM,%CurrentVersionNT%,"ProductId",,"12345-oem-0000001-54321"
 HKLM,%CurrentVersionNT%,"RegisteredOrganization",2,""
