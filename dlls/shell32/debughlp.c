@@ -53,7 +53,7 @@ LPCITEMIDLIST _dbg_ILGetNext(LPCITEMIDLIST pidl)
 static
 BOOL _dbg_ILIsDesktop(LPCITEMIDLIST pidl)
 {
-	return ( !pidl || (pidl && pidl->mkid.cb == 0x00) );
+	return ( !pidl || pidl->mkid.cb == 0x00 );
 }
 
 static
