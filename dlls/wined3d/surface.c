@@ -3881,13 +3881,13 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
 }
 
 static HRESULT surface_load_texture(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, BOOL srgb)
+        struct wined3d_context *context, BOOL srgb)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_color_key_conversion *conversion;
     struct wined3d_texture *texture = surface->container;
-    struct wined3d_context *context;
     UINT width, src_pitch, dst_pitch;
     struct wined3d_bo_address data;
     struct wined3d_format format;
@@ -3909,16 +3909,12 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format,
                 NULL, surface->resource.usage, surface->resource.pool, surface->resource.format))
     {
-        context = context_acquire(device, NULL);
-
         if (srgb)
             surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_RGB,
                     &src_rect, surface, WINED3D_LOCATION_TEXTURE_SRGB, &src_rect);
         else
             surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, WINED3D_LOCATION_TEXTURE_SRGB,
                     &src_rect, surface, WINED3D_LOCATION_TEXTURE_RGB, &src_rect);
-
-        context_release(context);
 
         return WINED3D_OK;
     }
@@ -3934,10 +3930,8 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         DWORD dst_location = srgb ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB;
         RECT rect = {0, 0, surface->resource.width, surface->resource.height};
 
-        context = context_acquire(device, NULL);
         surface_blt_fbo(device, context, WINED3D_TEXF_POINT, surface, src_location,
                 &rect, surface, dst_location, &rect);
-        context_release(context);
 
         return WINED3D_OK;
     }
@@ -3974,9 +3968,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         surface_prepare_system_memory(surface);
         surface_load_location(surface, WINED3D_LOCATION_SYSMEM);
     }
-
-    /* TODO: Use already acquired context when possible. */
-    context = context_acquire(device, NULL);
 
     wined3d_texture_prepare_texture(texture, context, srgb);
     wined3d_texture_bind_and_dirtify(texture, context, srgb);
@@ -4051,8 +4042,6 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     wined3d_surface_upload_data(surface, gl_info, &format, &src_rect,
             src_pitch, &dst_point, srgb, wined3d_const_bo_address(&data));
 
-    context_release(context);
-
     HeapFree(GetProcessHeap(), 0, mem);
 
     return WINED3D_OK;
@@ -4074,7 +4063,6 @@ static void surface_multisample_resolve(struct wined3d_surface *surface, struct 
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
 {
     struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     HRESULT hr;
     struct wined3d_context *context = NULL;
 
@@ -4154,7 +4142,10 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
 
         case WINED3D_LOCATION_TEXTURE_RGB:
         case WINED3D_LOCATION_TEXTURE_SRGB:
-            if (FAILED(hr = surface_load_texture(surface, gl_info, location == WINED3D_LOCATION_TEXTURE_SRGB)))
+            context = context_acquire(device, NULL);
+            hr = surface_load_texture(surface, context, location == WINED3D_LOCATION_TEXTURE_SRGB);
+            context_release(context);
+            if (FAILED(hr))
                 return hr;
             break;
 
