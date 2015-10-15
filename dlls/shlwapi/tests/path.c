@@ -27,8 +27,8 @@
 #include "shlwapi.h"
 #include "wininet.h"
 
-static HRESULT (WINAPI *pPathIsValidCharA)(char,DWORD);
-static HRESULT (WINAPI *pPathIsValidCharW)(WCHAR,DWORD);
+static BOOL (WINAPI *pPathIsValidCharA)(char,DWORD);
+static BOOL (WINAPI *pPathIsValidCharW)(WCHAR,DWORD);
 static LPWSTR  (WINAPI *pPathCombineW)(LPWSTR, LPCWSTR, LPCWSTR);
 static HRESULT (WINAPI *pPathCreateFromUrlA)(LPCSTR, LPSTR, LPDWORD, DWORD);
 static HRESULT (WINAPI *pPathCreateFromUrlW)(LPCWSTR, LPWSTR, LPDWORD, DWORD);
