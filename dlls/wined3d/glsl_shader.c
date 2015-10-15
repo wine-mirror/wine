@@ -66,6 +66,7 @@ struct glsl_sample_function
     struct wined3d_string_buffer *name;
     DWORD coord_mask;
     enum wined3d_data_type data_type;
+    BOOL output_single_component;
 };
 
 enum heap_node_op
@@ -2657,21 +2658,24 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     if (resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_CUBE)
         projected = FALSE;
 
-    if (shadow)
-        base = "shadow";
-
-    type_part = resource_types[resource_type].type_part;
-    if (resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2D && texrect)
-        type_part = "2DRect";
-    if (!type_part[0])
-        FIXME("Unhandled resource type %#x.\n", resource_type);
-
-    if (!lod && grad && !gl_info->supported[EXT_GPU_SHADER4])
+    if (needs_legacy_glsl_syntax(gl_info))
     {
-        if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
-            suffix = "ARB";
-        else
-            FIXME("Unsupported grad function.\n");
+        if (shadow)
+            base = "shadow";
+
+        type_part = resource_types[resource_type].type_part;
+        if (resource_type == WINED3D_SHADER_RESOURCE_TEXTURE_2D && texrect)
+            type_part = "2DRect";
+        if (!type_part[0])
+            FIXME("Unhandled resource type %#x.\n", resource_type);
+
+        if (!lod && grad && !gl_info->supported[EXT_GPU_SHADER4])
+        {
+            if (gl_info->supported[ARB_SHADER_TEXTURE_LOD])
+                suffix = "ARB";
+            else
+                FIXME("Unsupported grad function.\n");
+        }
     }
 
     sample_function->name = string_buffer_get(priv->string_buffers);
@@ -2682,6 +2686,7 @@ static void shader_glsl_get_sample_function(const struct wined3d_shader_context 
     if (shadow)
         ++coord_size;
     sample_function->coord_mask = (1u << coord_size) - 1;
+    sample_function->output_single_component = shadow && !needs_legacy_glsl_syntax(gl_info);
 }
 
 static void shader_glsl_release_sample_function(const struct wined3d_shader_context *ctx,
@@ -2828,6 +2833,9 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
 
     shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], sample_function->data_type);
 
+    if (sample_function->output_single_component)
+        shader_addline(ins->ctx->buffer, "vec4(");
+
     shader_addline(ins->ctx->buffer, "%s(%s_sampler%u, ",
             sample_function->name->buffer, shader_glsl_get_prefix(version->type), sampler);
 
@@ -2872,6 +2880,9 @@ static void PRINTF_ATTR(8, 9) shader_glsl_gen_sample_code(const struct wined3d_s
     else if (bias)
         shader_addline(ins->ctx->buffer, ", %s)", bias);
     else
+        shader_addline(ins->ctx->buffer, ")");
+
+    if (sample_function->output_single_component)
         shader_addline(ins->ctx->buffer, ")");
 
     shader_addline(ins->ctx->buffer, "%s);\n", dst_swizzle);
