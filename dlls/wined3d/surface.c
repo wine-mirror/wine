@@ -4058,19 +4058,17 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
     return WINED3D_OK;
 }
 
-static void surface_multisample_resolve(struct wined3d_surface *surface)
+/* Context activation is done by the caller. */
+static void surface_multisample_resolve(struct wined3d_surface *surface, struct wined3d_context *context)
 {
-    struct wined3d_context *context;
     RECT rect = {0, 0, surface->resource.width, surface->resource.height};
 
     if (!(surface->locations & WINED3D_LOCATION_RB_MULTISAMPLE))
         ERR("Trying to resolve multisampled surface %p, but location WINED3D_LOCATION_RB_MULTISAMPLE not current.\n",
                 surface);
 
-    context = context_acquire(surface->resource.device, NULL);
     surface_blt_fbo(surface->resource.device, context, WINED3D_TEXF_POINT,
             surface, WINED3D_LOCATION_RB_MULTISAMPLE, &rect, surface, WINED3D_LOCATION_RB_RESOLVED, &rect);
-    context_release(context);
 }
 
 HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
@@ -4149,7 +4147,9 @@ HRESULT surface_load_location(struct wined3d_surface *surface, DWORD location)
             break;
 
         case WINED3D_LOCATION_RB_RESOLVED:
-            surface_multisample_resolve(surface);
+            context = context_acquire(device, NULL);
+            surface_multisample_resolve(surface, context);
+            context_release(context);
             break;
 
         case WINED3D_LOCATION_TEXTURE_RGB:
