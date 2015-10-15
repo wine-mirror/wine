@@ -2075,6 +2075,7 @@ static void test_device_qi(void)
     IDirect3DRM3_Release(d3drm3);
     IDirect3DRM2_Release(d3drm2);
     IDirect3DRM_Release(d3drm1);
+    DestroyWindow(window);
 }
 
 static HRESULT CALLBACK surface_callback(IDirectDrawSurface *surface, DDSURFACEDESC *desc, void *context)
