@@ -8065,6 +8065,210 @@ static void test_flip(void)
     DestroyWindow(window);
 }
 
+static void test_uninitialized_varyings(void)
+{
+    static const D3DMATRIX mat =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
+    static const struct vec3 quad[] =
+    {
+        {-1.0f, -1.0f, 0.1f},
+        {-1.0f,  1.0f, 0.1f},
+        { 1.0f, -1.0f, 0.1f},
+        { 1.0f,  1.0f, 0.1f},
+    };
+    static const DWORD decl[] =
+    {
+        D3DVSD_STREAM(0),
+        D3DVSD_REG(0, D3DVSDT_FLOAT3),
+        D3DVSD_CONST(0, 1), 0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000,     /* def c0, 0.5, 0.5, 0.5, 0.5 */
+        D3DVSD_END()
+    };
+    static const DWORD vs1_code[] =
+    {
+        0xfffe0101,                                                             /* vs_1_1                         */
+        0x00000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                   */
+        0x0000ffff
+    };
+    static const DWORD vs1_partial_code[] =
+    {
+        0xfffe0101,                                                             /* vs_1_1                         */
+        0x00000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0                   */
+        0x00000001, 0xd0010000, 0xa0e40000,                                     /* mov oD0.x, c0                  */
+        0x00000001, 0xd0010001, 0xa0e40000,                                     /* mov oD1.x, c0                  */
+        0x00000001, 0xe0010000, 0xa0e40000,                                     /* mov oT0.x, c0                  */
+        0x0000ffff
+    };
+    static const DWORD ps1_diffuse_code[] =
+    {
+        0xffff0101,                                                             /* ps_1_1                         */
+        0x00000001, 0x800f0000, 0x90e40000,                                     /* mov r0, v0                     */
+        0x0000ffff
+    };
+    static const DWORD ps1_specular_code[] =
+    {
+        0xffff0101,                                                             /* ps_1_1                         */
+        0x00000001, 0x800f0000, 0x90e40001,                                     /* mov r0, v1                     */
+        0x0000ffff
+    };
+    static const DWORD ps1_texcoord_code[] =
+    {
+        0xffff0101,                                                             /* ps_1_1                         */
+        0x00000040, 0xb00f0000,                                                 /* texcoord t0                    */
+        0x00000001, 0x800f0000, 0xb0e40000,                                     /* mov r0, t0                     */
+        0x0000ffff
+    };
+    static const struct
+    {
+        DWORD vs_version;
+        const DWORD *vs;
+        DWORD ps_version;
+        const DWORD *ps;
+        D3DCOLOR expected;
+        BOOL allow_zero_alpha;
+        BOOL broken_warp;
+    }
+    /* On AMD specular color is generally initialized to 0x00000000 and texcoords to 0xff000000
+     * while on Nvidia it's the opposite. Just allow both. */
+    tests[] =
+    {
+        {D3DVS_VERSION(1, 1),         vs1_code,                   0,              NULL, 0xffffffff},
+        {                  0,             NULL, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff000000, TRUE},
+        {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1),  ps1_diffuse_code, 0xffffffff},
+        {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff000000, TRUE,  TRUE},
+        {D3DVS_VERSION(1, 1),         vs1_code, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff000000, TRUE},
+        {D3DVS_VERSION(1, 1), vs1_partial_code,                   0,              NULL, 0xff7fffff, FALSE, TRUE},
+        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1),  ps1_diffuse_code, 0xff7fffff, FALSE, TRUE},
+        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1), ps1_specular_code, 0xff7f0000, TRUE},
+        {D3DVS_VERSION(1, 1), vs1_partial_code, D3DPS_VERSION(1, 1), ps1_texcoord_code, 0xff7f0000, TRUE},
+    };
+    IDirect3DDevice8 *device;
+    IDirect3D8 *d3d;
+    HWND window;
+    HRESULT hr;
+    DWORD vs, ps;
+    unsigned int i;
+    ULONG refcount;
+    D3DCAPS8 caps;
+    IDirect3DSurface8 *backbuffer;
+    D3DADAPTER_IDENTIFIER8 identifier;
+    struct surface_readback rb;
+    D3DCOLOR color;
+    BOOL warp;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3D8_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    warp = !strcmp(identifier.Driver, "d3d10warp.dll");
+
+    hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_GetBackBuffer(device, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_WORLD, &mat);
+    ok(SUCCEEDED(hr), "Failed to set world transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_VIEW, &mat);
+    ok(SUCCEEDED(hr), "Failed to set view transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetTransform(device, D3DTS_PROJECTION, &mat);
+    ok(SUCCEEDED(hr), "Failed to set projection transform, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable Z test, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_STENCILENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable stencil test, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
+    ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        if (caps.VertexShaderVersion < tests[i].vs_version
+                || caps.PixelShaderVersion < tests[i].ps_version)
+        {
+            skip("Vertex / pixel shader version not supported, skipping test %u.\n", i);
+            continue;
+        }
+        if (tests[i].vs)
+        {
+            hr = IDirect3DDevice8_CreateVertexShader(device, decl, tests[i].vs, &vs, 0);
+            ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x (case %u).\n", hr, i);
+            hr = IDirect3DDevice8_SetVertexShader(device, vs);
+            ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+        }
+        else
+        {
+            vs = 0;
+            hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ);
+            ok(SUCCEEDED(hr), "Failed to set vertex shader, hr %#x.\n", hr);
+        }
+        if (tests[i].ps)
+        {
+            hr = IDirect3DDevice8_CreatePixelShader(device, tests[i].ps, &ps);
+            ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x (case %u).\n", hr, i);
+        }
+        else
+        {
+            ps = 0;
+        }
+
+        hr = IDirect3DDevice8_SetPixelShader(device, ps);
+        ok(SUCCEEDED(hr), "Failed to set pixel shader, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff00ff00, 0.0f, 0);
+        ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice8_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice8_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad[0]));
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice8_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        get_rt_readback(backbuffer, &rb);
+        color = get_readback_color(&rb, 320, 240);
+        ok(color_match(color, tests[i].expected, 1)
+                || (tests[i].allow_zero_alpha && color_match(color, tests[i].expected & 0x00ffffff, 1))
+                || (broken(warp && tests[i].broken_warp)),
+                "Got unexpected color 0x%08x, case %u.\n", color, i);
+        release_surface_readback(&rb);
+
+        if (vs)
+            IDirect3DDevice8_DeleteVertexShader(device, vs);
+        if (ps)
+            IDirect3DDevice8_DeletePixelShader(device, ps);
+    }
+
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    IDirect3DSurface8_Release(backbuffer);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER8 identifier;
@@ -8127,4 +8331,5 @@ START_TEST(visual)
     test_vshader_input();
     test_fixed_function_fvf();
     test_flip();
+    test_uninitialized_varyings();
 }
