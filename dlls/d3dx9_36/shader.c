@@ -1096,7 +1096,7 @@ static UINT set(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device, 
             offset = min(desc->Elements - 1, offset);
             last = offset * desc->Rows * desc->Columns;
 
-            if ((is_pointer || (!is_pointer && inclass == D3DXPC_MATRIX_ROWS)) && desc->RegisterSet != D3DXRS_BOOL)
+            if ((is_pointer || inclass == D3DXPC_MATRIX_ROWS) && desc->RegisterSet != D3DXRS_BOOL)
             {
                 set(table, device, &constant->constants[0], NULL, intype, size, incol, inclass, 0, is_pointer);
             }
@@ -1136,7 +1136,7 @@ static UINT set(struct ID3DXConstantTableImpl *table, IDirect3DDevice9 *device, 
              * E.g.: struct {int i; int n} s;
              *       SetValue(device, "s", [1, 2], 8) => s = {1, 0};
              */
-            else if ((is_pointer || (!is_pointer && inclass == D3DXPC_MATRIX_ROWS)) && desc->RegisterSet != D3DXRS_BOOL)
+            else if ((is_pointer || inclass == D3DXPC_MATRIX_ROWS) && desc->RegisterSet != D3DXRS_BOOL)
             {
                 last = set(table, device, &constant->constants[0], indata, intype, size, incol, inclass,
                         index + last, is_pointer);
