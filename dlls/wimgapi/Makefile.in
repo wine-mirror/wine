@@ -1,0 +1,4 @@
+MODULE = wimgapi.dll
+
+C_SRCS = \
+	main.c
