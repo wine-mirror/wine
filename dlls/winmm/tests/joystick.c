@@ -156,7 +156,7 @@ static void test_api(void)
         par = 0xdead;
         ret = joyGetThreshold(joyid, &par);
         ok(ret == JOYERR_NOERROR, "Test [%d]: Expected %d, got %d\n", i, JOYERR_NOERROR, ret);
-        if (!win98 || (win98 && i < 8))
+        if (!win98 || i < 8)
         {
             if ((1 << i) & threshold_error)
                 ok(par == period[8], "Test [%d]: Expected %d, got %d\n", i, period[8], par);
