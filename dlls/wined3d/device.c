@@ -300,6 +300,15 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     unsigned int i;
     RECT ds_rect;
 
+    context = context_acquire(device, target);
+    if (!context->valid)
+    {
+        context_release(context);
+        WARN("Invalid context, skipping clear.\n");
+        return;
+    }
+    gl_info = context->gl_info;
+
     /* When we're clearing parts of the drawable, make sure that the target surface is well up to date in the
      * drawable. After the clear we'll mark the drawable up to date, so we have to make sure that this is true
      * for the cleared parts, and the untouched parts.
@@ -314,18 +323,9 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         {
             struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(fb->render_targets[i]);
             if (rt)
-                surface_load_location(rt, rt->container->resource.draw_binding);
+                surface_load_location(rt, context, rt->container->resource.draw_binding);
         }
     }
-
-    context = context_acquire(device, target);
-    if (!context->valid)
-    {
-        context_release(context);
-        WARN("Invalid context, skipping clear.\n");
-        return;
-    }
-    gl_info = context->gl_info;
 
     if (target)
     {
@@ -4015,7 +4015,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
             && src_rect.bottom == sub_resource->height)
         wined3d_texture_prepare_texture(texture, context, FALSE);
     else
-        surface_load_location(surface, WINED3D_LOCATION_TEXTURE_RGB);
+        surface_load_location(surface, context, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_bind_and_dirtify(texture, context, FALSE);
 
     wined3d_surface_upload_data(surface, gl_info, resource->format,

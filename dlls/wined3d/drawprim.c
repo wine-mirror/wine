@@ -611,20 +611,6 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
 
     if (!index_count) return;
 
-    if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
-    {
-        /* Invalidate the back buffer memory so LockRect will read it the next time */
-        for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
-        {
-            struct wined3d_surface *target = wined3d_rendertarget_view_get_surface(device->fb.render_targets[i]);
-            if (target)
-            {
-                surface_load_location(target, target->container->resource.draw_binding);
-                surface_invalidate_location(target, ~target->container->resource.draw_binding);
-            }
-        }
-    }
-
     context = context_acquire(device, wined3d_rendertarget_view_get_surface(device->fb.render_targets[0]));
     if (!context->valid)
     {
@@ -633,6 +619,20 @@ void draw_primitive(struct wined3d_device *device, UINT start_idx, UINT index_co
         return;
     }
     gl_info = context->gl_info;
+
+    if (state->render_states[WINED3D_RS_COLORWRITEENABLE])
+    {
+        /* Invalidate the back buffer memory so LockRect will read it the next time */
+        for (i = 0; i < device->adapter->gl_info.limits.buffers; ++i)
+        {
+            struct wined3d_surface *target = wined3d_rendertarget_view_get_surface(device->fb.render_targets[i]);
+            if (target)
+            {
+                surface_load_location(target, context, target->container->resource.draw_binding);
+                surface_invalidate_location(target, ~target->container->resource.draw_binding);
+            }
+        }
+    }
 
     if (device->fb.depth_stencil)
     {
