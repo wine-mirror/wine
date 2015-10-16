@@ -3287,13 +3287,11 @@ static HRESULT WINAPI d3d9_device_CheckDeviceState(IDirect3DDevice9Ex *iface, HW
 {
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct wined3d_swapchain_desc swapchain_desc;
-    struct wined3d_swapchain *swapchain;
 
     TRACE("iface %p, dst_window %p.\n", iface, dst_window);
 
     wined3d_mutex_lock();
-    swapchain = wined3d_device_get_swapchain(device->wined3d_device, 0);
-    wined3d_swapchain_get_desc(swapchain, &swapchain_desc);
+    wined3d_swapchain_get_desc(device->implicit_swapchains[0]->wined3d_swapchain, &swapchain_desc);
     wined3d_mutex_unlock();
 
     if (swapchain_desc.windowed)
