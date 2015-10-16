@@ -1158,7 +1158,7 @@ static HRESULT WINAPI d3d8_device_GetFrontBuffer(IDirect3DDevice8 *iface, IDirec
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_device_get_front_buffer_data(device->wined3d_device, 0, dst_impl->wined3d_surface);
+    hr = wined3d_swapchain_get_front_buffer_data(device->implicit_swapchain->wined3d_swapchain, dst_impl->wined3d_surface);
     wined3d_mutex_unlock();
 
     return hr;
