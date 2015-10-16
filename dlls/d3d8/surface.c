@@ -301,14 +301,13 @@ static const struct wined3d_parent_ops d3d8_surface_wined3d_parent_ops =
 };
 
 void surface_init(struct d3d8_surface *surface, struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
-        struct wined3d_surface *wined3d_surface, const struct wined3d_parent_ops **parent_ops)
+        const struct wined3d_parent_ops **parent_ops)
 {
     IDirect3DBaseTexture8 *texture;
 
     surface->IDirect3DSurface8_iface.lpVtbl = &d3d8_surface_vtbl;
     d3d8_resource_init(&surface->resource);
     surface->resource.refcount = 0;
-    surface->wined3d_surface = wined3d_surface;
     list_init(&surface->rtv_entry);
     surface->container = wined3d_texture_get_parent(wined3d_texture);
     surface->wined3d_texture = wined3d_texture;

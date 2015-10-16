@@ -1085,8 +1085,8 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
     if (!rect_count && !src_rects && !dst_points)
     {
         RECT rect = {0, 0, src_w, src_h};
-        wined3d_surface_blt(dst->wined3d_surface, &rect,
-                src->wined3d_surface, &rect, 0, NULL, WINED3D_TEXF_POINT);
+        wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, &rect,
+                src->wined3d_texture, src->sub_resource_idx, &rect, 0, NULL, WINED3D_TEXF_POINT);
     }
     else
     {
@@ -1101,8 +1101,8 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
                 RECT dst_rect = {dst_points[i].x, dst_points[i].y,
                         dst_points[i].x + w, dst_points[i].y + h};
 
-                wined3d_surface_blt(dst->wined3d_surface, &dst_rect,
-                        src->wined3d_surface, &src_rects[i], 0, NULL, WINED3D_TEXF_POINT);
+                wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, &dst_rect,
+                        src->wined3d_texture, src->sub_resource_idx, &src_rects[i], 0, NULL, WINED3D_TEXF_POINT);
             }
         }
         else
@@ -1113,8 +1113,8 @@ static HRESULT WINAPI d3d8_device_CopyRects(IDirect3DDevice8 *iface,
                 UINT h = src_rects[i].bottom - src_rects[i].top;
                 RECT dst_rect = {0, 0, w, h};
 
-                wined3d_surface_blt(dst->wined3d_surface, &dst_rect,
-                        src->wined3d_surface, &src_rects[i], 0, NULL, WINED3D_TEXF_POINT);
+                wined3d_texture_blt(dst->wined3d_texture, dst->sub_resource_idx, &dst_rect,
+                        src->wined3d_texture, src->sub_resource_idx, &src_rects[i], 0, NULL, WINED3D_TEXF_POINT);
             }
         }
     }
@@ -3003,7 +3003,7 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
     if (!(d3d_surface = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*d3d_surface))))
         return E_OUTOFMEMORY;
 
-    surface_init(d3d_surface, wined3d_texture, sub_resource_idx, surface, parent_ops);
+    surface_init(d3d_surface, wined3d_texture, sub_resource_idx, parent_ops);
     *parent = d3d_surface;
     TRACE("Created surface %p.\n", d3d_surface);
 

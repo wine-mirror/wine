@@ -2527,6 +2527,9 @@ void __cdecl wined3d_swapchain_set_window(struct wined3d_swapchain *swapchain, H
 
 HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
         UINT layer, const struct wined3d_box *dirty_region);
+HRESULT __cdecl wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned int dst_idx, const RECT *dst_rect_in,
+        struct wined3d_texture *src_texture, unsigned int src_idx, const RECT *src_rect_in, DWORD flags,
+        const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter);
 HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
         UINT level_count, DWORD surface_flags, const struct wined3d_sub_resource_data *data, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
