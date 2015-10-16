@@ -902,6 +902,12 @@ LSTATUS WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPD
     if (max_data) *max_data = info->MaxValueDataLen;
     if (modif) *modif = *(FILETIME *)&info->LastWriteTime;
 
+    if (security)
+    {
+        FIXME( "security argument not supported.\n");
+        *security = 0;
+    }
+
  done:
     if (buf_ptr != buffer) heap_free( buf_ptr );
     return RtlNtStatusToDosError( status );
@@ -1090,6 +1096,12 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
     if (max_value) *max_value = info->MaxValueNameLen;
     if (max_data) *max_data = info->MaxValueDataLen;
     if (modif) *modif = *(FILETIME *)&info->LastWriteTime;
+
+    if (security)
+    {
+        FIXME( "security argument not supported.\n");
+        *security = 0;
+    }
 
  done:
     if (buf_ptr != buffer) heap_free( buf_ptr );
