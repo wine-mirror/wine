@@ -101,7 +101,7 @@ HRESULT WINAPI OutputQueue_Construct(
 
     EnterCriticalSection(&This->csQueue);
     if (bAuto && pInputPin->pMemInputPin)
-        threaded = IMemInputPin_ReceiveCanBlock(pInputPin->pMemInputPin);
+        threaded = IMemInputPin_ReceiveCanBlock(pInputPin->pMemInputPin) == S_OK;
     else
         threaded = bQueue;
 
