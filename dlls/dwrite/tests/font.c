@@ -3531,17 +3531,37 @@ static void test_CreateGlyphRunAnalysis(void)
     run.isSideways = FALSE;
     run.bidiLevel = 0;
 
+    /* zero ppdip */
+    analysis = (void*)0xdeadbeef;
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 0.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(analysis == NULL, "got %p\n", analysis);
+
+    /* negative ppdip */
+    analysis = (void*)0xdeadbeef;
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, -1.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(analysis == NULL, "got %p\n", analysis);
+
     /* default mode is not allowed */
+    analysis = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
         DWRITE_RENDERING_MODE_DEFAULT, DWRITE_MEASURING_MODE_NATURAL,
         0.0, 0.0, &analysis);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(analysis == NULL, "got %p\n", analysis);
 
     /* outline too */
+    analysis = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
         DWRITE_RENDERING_MODE_OUTLINE, DWRITE_MEASURING_MODE_NATURAL,
         0.0, 0.0, &analysis);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(analysis == NULL, "got %p\n", analysis);
 
     hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
         DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
@@ -3560,6 +3580,18 @@ static void test_CreateGlyphRunAnalysis(void)
     hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!IsRectEmpty(&rect), "got empty rect\n");
+    IDWriteGlyphRunAnalysis_Release(analysis);
+
+    /* doubled ppdip */
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 2.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    memset(&rect2, 0, sizeof(rect2));
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(rect.right - rect.left < rect2.right - rect2.left, "expected wider rect\n");
+    ok(rect.bottom - rect.top < rect2.bottom - rect2.top, "expected taller rect\n");
     IDWriteGlyphRunAnalysis_Release(analysis);
 
     hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
