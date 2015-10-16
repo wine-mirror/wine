@@ -4190,14 +4190,22 @@ static struct wined3d_texture *wined3d_device_create_cursor_texture(struct wined
 }
 
 HRESULT CDECL wined3d_device_set_cursor_properties(struct wined3d_device *device,
-        UINT x_hotspot, UINT y_hotspot, struct wined3d_surface *cursor_image)
+        UINT x_hotspot, UINT y_hotspot, struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
     struct wined3d_display_mode mode;
     struct wined3d_map_desc map_desc;
+    struct wined3d_resource *sub_resource;
+    struct wined3d_surface *cursor_image;
     HRESULT hr;
 
-    TRACE("device %p, x_hotspot %u, y_hotspot %u, cursor_image %p.\n",
-            device, x_hotspot, y_hotspot, cursor_image);
+    TRACE("device %p, x_hotspot %u, y_hotspot %u, texture %p, sub_resource_idx %u.\n",
+            device, x_hotspot, y_hotspot, texture, sub_resource_idx);
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx))
+            || sub_resource->type != WINED3D_RTYPE_SURFACE)
+        return WINED3DERR_INVALIDCALL;
+
+    cursor_image = surface_from_resource(sub_resource);
 
     if (device->cursor_texture)
     {

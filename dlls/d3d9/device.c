@@ -486,7 +486,7 @@ static HRESULT WINAPI d3d9_device_SetCursorProperties(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
     hr = wined3d_device_set_cursor_properties(device->wined3d_device,
-            hotspot_x, hotspot_y, bitmap_impl->wined3d_surface);
+            hotspot_x, hotspot_y, bitmap_impl->wined3d_texture, bitmap_impl->sub_resource_idx);
     wined3d_mutex_unlock();
 
     return hr;
