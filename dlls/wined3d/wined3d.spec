@@ -244,7 +244,7 @@
 @ cdecl wined3d_swapchain_get_back_buffer(ptr long long)
 @ cdecl wined3d_swapchain_get_device(ptr)
 @ cdecl wined3d_swapchain_get_display_mode(ptr ptr ptr)
-@ cdecl wined3d_swapchain_get_front_buffer_data(ptr ptr)
+@ cdecl wined3d_swapchain_get_front_buffer_data(ptr ptr long)
 @ cdecl wined3d_swapchain_get_gamma_ramp(ptr ptr)
 @ cdecl wined3d_swapchain_get_parent(ptr)
 @ cdecl wined3d_swapchain_get_desc(ptr ptr)

@@ -1288,7 +1288,7 @@ static HRESULT WINAPI d3d9_device_GetFrontBufferData(IDirect3DDevice9Ex *iface,
     wined3d_mutex_lock();
     if (swapchain < device->implicit_swapchain_count)
         hr = wined3d_swapchain_get_front_buffer_data(device->implicit_swapchains[swapchain]->wined3d_swapchain,
-                dst_impl->wined3d_surface);
+                dst_impl->wined3d_texture, dst_impl->sub_resource_idx);
     wined3d_mutex_unlock();
 
     return hr;

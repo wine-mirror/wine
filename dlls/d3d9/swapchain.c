@@ -142,7 +142,7 @@ static HRESULT WINAPI d3d9_swapchain_GetFrontBufferData(IDirect3DSwapChain9Ex *i
     TRACE("iface %p, surface %p.\n", iface, surface);
 
     wined3d_mutex_lock();
-    hr = wined3d_swapchain_get_front_buffer_data(swapchain->wined3d_swapchain, dst->wined3d_surface);
+    hr = wined3d_swapchain_get_front_buffer_data(swapchain->wined3d_swapchain, dst->wined3d_texture, dst->sub_resource_idx);
     wined3d_mutex_unlock();
 
     return hr;
