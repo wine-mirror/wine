@@ -722,7 +722,7 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
         UINT backbuffer_idx, D3DBACKBUFFER_TYPE backbuffer_type, IDirect3DSurface8 **backbuffer)
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
-    struct wined3d_swapchain *swapchain;
+    struct wined3d_swapchain *wined3d_swapchain;
     struct wined3d_resource *wined3d_resource;
     struct wined3d_texture *wined3d_texture;
     struct d3d8_surface *surface_impl;
@@ -734,14 +734,9 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
 
     /* No need to check for backbuffer == NULL, Windows crashes in that case. */
     wined3d_mutex_lock();
-    if (!(swapchain = wined3d_device_get_swapchain(device->wined3d_device, 0)))
-    {
-        wined3d_mutex_unlock();
-        *backbuffer = NULL;
-        return D3DERR_INVALIDCALL;
-    }
 
-    if (!(wined3d_texture = wined3d_swapchain_get_back_buffer(swapchain, backbuffer_idx)))
+    wined3d_swapchain = device->implicit_swapchain->wined3d_swapchain;
+    if (!(wined3d_texture = wined3d_swapchain_get_back_buffer(wined3d_swapchain, backbuffer_idx)))
     {
         wined3d_mutex_unlock();
         *backbuffer = NULL;
