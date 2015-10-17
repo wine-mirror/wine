@@ -76,7 +76,7 @@ double __cdecl _y0(double);
 double __cdecl _y1(double);
 double __cdecl _yn(int, double);
 
-#ifdef __x86_64__
+#if defined(__x86_64__) || defined(__arm__)
 
 float __cdecl sinf(float);
 float __cdecl cosf(float);
