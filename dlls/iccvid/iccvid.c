@@ -376,33 +376,41 @@ typedef void (*fn_cvid_v4)(unsigned char *frm, unsigned char *limit, int stride,
  * context - the context created by decode_cinepak_init().
  * buf - the input buffer to be decoded
  * size - the size of the input buffer
- * frame - the output frame buffer (24 or 32 bit per pixel)
- * width - the width of the output frame
- * height - the height of the output frame
+ * output - the output frame buffer (24 or 32 bit per pixel)
+ * out_width - the width of the output frame
+ * out_height - the height of the output frame
  * bit_per_pixel - the number of bits per pixel allocated to the output
  *   frame (only 24 or 32 bpp are supported)
  */
 static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
-           unsigned char *frame, unsigned int width, unsigned int height, int bit_per_pixel)
+           unsigned char *output, unsigned int out_width, unsigned int out_height, int bit_per_pixel)
 {
     cvid_codebook *v4_codebook, *v1_codebook, *codebook = NULL;
-    unsigned long x, y, y_bottom, frame_flags, strips, cv_width, cv_height,
-                  cnum, strip_id, chunk_id, x0, y0, x1, y1, ci, flag, mask;
-    long len, top_size, chunk_size;
+    unsigned long x, y, y_bottom, cnum, strip_id, chunk_id,
+                  x0, y0, x1, y1, ci, flag, mask;
+    long top_size, chunk_size;
     unsigned char *frm_ptr;
     unsigned int i, cur_strip;
     int d0, d1, d2, d3, frm_stride, bpp = 3;
     fn_cvid_v1 cvid_v1 = cvid_v1_24;
     fn_cvid_v4 cvid_v4 = cvid_v4_24;
+    struct frame_header
+    {
+      unsigned char flags;
+      unsigned long length;
+      unsigned short width;
+      unsigned short height;
+      unsigned short strips;
+    } frame;
 
     y = 0;
     y_bottom = 0;
     in_buffer = buf;
 
-    frame_flags = get_byte();
-    len = get_byte() << 16;
-    len |= get_byte() << 8;
-    len |= get_byte();
+    frame.flags = get_byte();
+    frame.length = get_byte() << 16;
+    frame.length |= get_byte() << 8;
+    frame.length |= get_byte();
 
     switch(bit_per_pixel)
         {
@@ -428,32 +436,32 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
             break;
         }
 
-    frm_stride = width * bpp;
-    frm_ptr = frame;
+    frm_stride = out_width * bpp;
+    frm_ptr = output;
 
-    if(len != size)
+    if(frame.length != size)
         {
-        if(len & 0x01) len++; /* AVIs tend to have a size mismatch */
-        if(len != size)
+        if(frame.length & 0x01) frame.length++; /* AVIs tend to have a size mismatch */
+        if(frame.length != size)
             {
-            ERR("CVID: corruption %d (QT/AVI) != %ld (CV)\n", size, len);
+            ERR("CVID: corruption %d (QT/AVI) != %ld (CV)\n", size, frame.length);
             /* return; */
             }
         }
 
-    cv_width = get_word();
-    cv_height = get_word();
-    strips = get_word();
+    frame.width = get_word();
+    frame.height = get_word();
+    frame.strips = get_word();
 
-    if(strips > cvinfo->strip_num)
+    if(frame.strips > cvinfo->strip_num)
         {
-        if(strips >= MAX_STRIPS)
+        if(frame.strips >= MAX_STRIPS)
             {
             ERR("CVID: strip overflow (more than %d)\n", MAX_STRIPS);
             return;
             }
 
-        for(i = cvinfo->strip_num; i < strips; i++)
+        for(i = cvinfo->strip_num; i < frame.strips; i++)
             {
             if((cvinfo->v4_codebook[i] = heap_alloc(sizeof(cvid_codebook) * 260)) == NULL)
                 {
@@ -468,16 +476,17 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
                 }
             }
         }
-    cvinfo->strip_num = strips;
+    cvinfo->strip_num = frame.strips;
 
-    TRACE("CVID: <%ld,%ld> strips %ld\n", cv_width, cv_height, strips);
+    TRACE("CVID: %ux%u, strips %u, length %lu\n",
+          frame.width, frame.height, frame.strips, frame.length);
 
-    for(cur_strip = 0; cur_strip < strips; cur_strip++)
+    for(cur_strip = 0; cur_strip < frame.strips; cur_strip++)
         {
         v4_codebook = cvinfo->v4_codebook[cur_strip];
         v1_codebook = cvinfo->v1_codebook[cur_strip];
 
-        if((cur_strip > 0) && (!(frame_flags & 0x01)))
+        if((cur_strip > 0) && (!(frame.flags & 0x01)))
             {
             memcpy(cvinfo->v4_codebook[cur_strip], cvinfo->v4_codebook[cur_strip-1], 260 * sizeof(cvid_codebook));
             memcpy(cvinfo->v1_codebook[cur_strip], cvinfo->v1_codebook[cur_strip-1], 260 * sizeof(cvid_codebook));
@@ -493,8 +502,8 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
         y_bottom += y1;
         top_size -= 12;
         x = 0;
-        if(x1 != width)
-            WARN("CVID: Warning x1 (%ld) != width (%d)\n", x1, width);
+        if(x1 != out_width)
+            WARN("CVID: Warning x1 (%ld) != width (%d)\n", x1, out_width);
 
         TRACE("   %d) %04lx %04ld <%ld,%ld> <%ld,%ld> yt %ld\n",
               cur_strip, strip_id, top_size, x0, y0, x1, y1, y_bottom);
@@ -595,7 +604,7 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
 #ifdef ORIGINAL
                                 cvid_v4(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
 #else
-                                cvid_v4(frm_ptr + ((height - 1 - y) * frm_stride + x * bpp), frame, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
+                                cvid_v4(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
 #endif
                                 }
                             else        /* 1 byte per block */
@@ -603,13 +612,13 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
 #ifdef ORIGINAL
                                 cvid_v1(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v1_codebook + get_byte());
 #else
-                                cvid_v1(frm_ptr + ((height - 1 - y) * frm_stride + x * bpp), frame, frm_stride, v1_codebook + get_byte());
+                                cvid_v1(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v1_codebook + get_byte());
 #endif
                                 chunk_size--;
                                 }
 
                             x += 4;
-                            if(x >= width)
+                            if(x >= out_width)
                                 {
                                 x = 0;
                                 y += 4;
@@ -651,7 +660,7 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
 #ifdef ORIGINAL
                                     cvid_v4(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
 #else
-                                    cvid_v4(frm_ptr + ((height - 1 - y) * frm_stride + x * bpp), frame, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
+                                    cvid_v4(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
 #endif
                                     }
                                 else        /* V1 */
@@ -660,14 +669,14 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
 #ifdef ORIGINAL
                                     cvid_v1(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v1_codebook + get_byte());
 #else
-                                    cvid_v1(frm_ptr + ((height - 1 - y) * frm_stride + x * bpp), frame, frm_stride, v1_codebook + get_byte());
+                                    cvid_v1(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v1_codebook + get_byte());
 #endif
                                     }
                                 }        /* else SKIP */
 
                             mask >>= 1;
                             x += 4;
-                            if(x >= width)
+                            if(x >= out_width)
                                 {
                                 x = 0;
                                 y += 4;
@@ -684,11 +693,11 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
 #ifdef ORIGINAL
                         cvid_v1(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v1_codebook + get_byte());
 #else
-                        cvid_v1(frm_ptr + ((height - 1 - y) * frm_stride + x * bpp), frame, frm_stride, v1_codebook + get_byte());
+                        cvid_v1(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v1_codebook + get_byte());
 #endif
                         chunk_size--;
                         x += 4;
-                        if(x >= width)
+                        if(x >= out_width)
                             {
                             x = 0;
                             y += 4;
@@ -705,10 +714,10 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
             }
         }
 
-    if(len != size)
+    if(frame.length != size)
         {
-        if(len & 0x01) len++; /* AVIs tend to have a size mismatch */
-        if(len != size)
+        if(frame.length & 0x01) frame.length++; /* AVIs tend to have a size mismatch */
+        if(frame.length != size)
             {
             long xlen;
             skip_byte();
@@ -716,7 +725,7 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
             xlen |= get_byte() << 8;
             xlen |= get_byte(); /* Read Len */
             WARN("CVID: END INFO chunk size %d cvid size1 %ld cvid size2 %ld\n",
-                  size, len, xlen);
+                  size, frame.length, xlen);
             }
         }
 }
