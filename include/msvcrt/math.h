@@ -76,6 +76,25 @@ double __cdecl _y0(double);
 double __cdecl _y1(double);
 double __cdecl _yn(int, double);
 
+double __cdecl cbrt(double);
+double __cdecl exp2(double);
+double __cdecl log2(double);
+double __cdecl rint(double);
+double __cdecl round(double);
+double __cdecl trunc(double);
+
+float __cdecl cbrtf(float);
+float __cdecl exp2f(float);
+float __cdecl log2f(float);
+float __cdecl rintf(float);
+float __cdecl roundf(float);
+float __cdecl truncf(float);
+
+long __cdecl lrint(double);
+long __cdecl lrintf(float);
+long __cdecl lround(double);
+long __cdecl lroundf(float);
+
 #if defined(__x86_64__) || defined(__arm__)
 
 float __cdecl sinf(float);
