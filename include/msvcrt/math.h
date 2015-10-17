@@ -120,13 +120,13 @@ float __cdecl fmodf(float, float);
 #define sqrtf(x) ((float)sqrt((double)(x)))
 #define ceilf(x) ((float)ceil((double)(x)))
 #define floorf(x) ((float)floor((double)(x)))
+#define fabsf(x) ((float)fabs((double)(x)))
 #define frexpf(x) ((float)frexp((double)(x)))
 #define modff(x,y) ((float)modf((double)(x), (double*)(y)))
 #define fmodf(x,y) ((float)fmod((double)(x), (double)(y)))
 
 #endif
 
-#define fabsf(x) ((float)fabs((double)(x)))
 #define ldexpf(x,y) ((float)ldexp((double)(x),(y)))
 
 float __cdecl _hypotf(float, float);
