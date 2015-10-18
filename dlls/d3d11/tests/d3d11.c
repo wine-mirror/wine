@@ -1282,6 +1282,10 @@ static void test_create_shader_resource_view(void)
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Shader resource view should implement ID3D10ShaderResourceView.\n");
     if (SUCCEEDED(hr)) IUnknown_Release(iface);
+    hr = ID3D11ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView1, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Shader resource view should implement ID3D10ShaderResourceView1.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
     ID3D11ShaderResourceView_Release(srview);
     ID3D11Buffer_Release(buffer);
@@ -1307,6 +1311,10 @@ static void test_create_shader_resource_view(void)
     hr = ID3D11ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView, (void **)&iface);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Shader resource view should implement ID3D10ShaderResourceView.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+    hr = ID3D11ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView1, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Shader resource view should implement ID3D10ShaderResourceView1.\n");
     if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
     ID3D11ShaderResourceView_GetDesc(srview, &srv_desc);
