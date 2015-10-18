@@ -5568,8 +5568,7 @@ static HRESULT register_folder(const KNOWNFOLDERID *rfid, const KNOWNFOLDER_DEFI
 
     if(SUCCEEDED(hr))
     {
-        if(SUCCEEDED(hr))
-            hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szCategory, 0, REG_DWORD, (LPBYTE)&pKFD->category, sizeof(pKFD->category)));
+        hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szCategory, 0, REG_DWORD, (LPBYTE)&pKFD->category, sizeof(pKFD->category)));
 
         if(SUCCEEDED(hr) && pKFD->dwAttributes != 0)
             hr = HRESULT_FROM_WIN32(RegSetValueExW(hKey, szAttributes, 0, REG_DWORD, (LPBYTE)&pKFD->dwAttributes, sizeof(pKFD->dwAttributes)));
