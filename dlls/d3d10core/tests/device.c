@@ -926,6 +926,10 @@ static void test_create_shader_resource_view(void)
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
 
+    hr = ID3D10ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView1, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Shader resource view should implement ID3D10ShaderResourceView1.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
     hr = ID3D10ShaderResourceView_QueryInterface(srview, &IID_ID3D11ShaderResourceView, (void **)&iface);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Shader resource view should implement ID3D11ShaderResourceView.\n");
@@ -960,6 +964,10 @@ static void test_create_shader_resource_view(void)
             U(srv_desc).Texture2D.MostDetailedMip);
     ok(U(srv_desc).Texture2D.MipLevels == 10, "Got unexpected MipLevels %u.\n", U(srv_desc).Texture2D.MipLevels);
 
+    hr = ID3D10ShaderResourceView_QueryInterface(srview, &IID_ID3D10ShaderResourceView1, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Shader resource view should implement ID3D10ShaderResourceView1.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
     hr = ID3D10ShaderResourceView_QueryInterface(srview, &IID_ID3D11ShaderResourceView, (void **)&iface);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
             "Shader resource view should implement ID3D11ShaderResourceView.\n");
