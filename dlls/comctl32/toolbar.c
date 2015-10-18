@@ -5155,15 +5155,12 @@ TOOLBAR_GetStringW (const TOOLBAR_INFO *infoPtr, WPARAM wParam, LPWSTR str)
     return ret;
 }
 
-/* UNDOCUMENTED MESSAGE: This appears to set some kind of size. Perhaps it
- * is the maximum size of the toolbar? */
-static LRESULT TOOLBAR_Unkwn45D(HWND hwnd, WPARAM wParam, LPARAM lParam)
+static LRESULT TOOLBAR_SetBoundingSize(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
     SIZE * pSize = (SIZE*)lParam;
     FIXME("hwnd=%p, wParam=0x%08lx, size.cx=%d, size.cy=%d stub!\n", hwnd, wParam, pSize->cx, pSize->cy);
     return 0;
 }
-
 
 /* This is an extended version of the TB_SETHOTITEM message. It allows the
  * caller to specify a reason why the hot item changed (rather than just the
@@ -6734,8 +6731,8 @@ ToolbarWindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case TB_SETUNICODEFORMAT:
 	    return TOOLBAR_SetUnicodeFormat (infoPtr, wParam);
 
-	case TB_UNKWN45D:
-	    return TOOLBAR_Unkwn45D(hwnd, wParam, lParam);
+	case TB_SETBOUNDINGSIZE:
+	    return TOOLBAR_SetBoundingSize(hwnd, wParam, lParam);
 
 	case TB_SETHOTITEM2:
 	    return TOOLBAR_SetHotItem2 (infoPtr, wParam, lParam);
