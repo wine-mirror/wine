@@ -178,10 +178,10 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_GetBuffer(IDXGISwapChain *iface,
     return hr;
 }
 
-static HRESULT STDMETHODCALLTYPE dxgi_swapchain_SetFullscreenState(IDXGISwapChain *iface,
+static HRESULT STDMETHODCALLTYPE DECLSPEC_HOTPATCH dxgi_swapchain_SetFullscreenState(IDXGISwapChain *iface,
         BOOL fullscreen, IDXGIOutput *target)
 {
-    FIXME("iface %p, fullscreen %u, target %p stub!\n", iface, fullscreen, target);
+    FIXME("iface %p, fullscreen %#x, target %p stub!\n", iface, fullscreen, target);
 
     return E_NOTIMPL;
 }
