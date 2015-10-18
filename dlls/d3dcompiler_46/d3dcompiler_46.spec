@@ -16,10 +16,10 @@
 @ stdcall D3DGetOutputSignatureBlob(ptr long ptr)
 @ stub D3DGetTraceInstructionOffsets
 @ stdcall D3DPreprocess(ptr long str ptr ptr ptr ptr)
-@ stub D3DReadFileToBlob
+@ stdcall D3DReadFileToBlob(wstr ptr)
 @ stdcall D3DReflect(ptr long ptr ptr)
 @ stub D3DReturnFailure1
 @ stub D3DSetBlobPart
 @ stdcall D3DStripShader(ptr long long ptr)
-@ stub D3DWriteBlobToFile
+@ stdcall D3DWriteBlobToFile(ptr wstr long)
 @ stub DebugSetMute
