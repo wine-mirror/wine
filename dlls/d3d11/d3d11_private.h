@@ -189,11 +189,11 @@ HRESULT d3d_rendertarget_view_create(struct d3d_device *device, ID3D11Resource *
 struct d3d_rendertarget_view *unsafe_impl_from_ID3D11RenderTargetView(ID3D11RenderTargetView *iface) DECLSPEC_HIDDEN;
 struct d3d_rendertarget_view *unsafe_impl_from_ID3D10RenderTargetView(ID3D10RenderTargetView *iface) DECLSPEC_HIDDEN;
 
-/* ID3D11ShaderResourceView, ID3D10ShaderResourceView */
+/* ID3D11ShaderResourceView, ID3D10ShaderResourceView1 */
 struct d3d_shader_resource_view
 {
     ID3D11ShaderResourceView ID3D11ShaderResourceView_iface;
-    ID3D10ShaderResourceView ID3D10ShaderResourceView_iface;
+    ID3D10ShaderResourceView1 ID3D10ShaderResourceView1_iface;
     LONG refcount;
 
     struct wined3d_private_store private_store;

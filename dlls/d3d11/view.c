@@ -1211,12 +1211,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_shader_resource_view_QueryInterface(ID3D1
         return S_OK;
     }
 
-    if (IsEqualGUID(riid, &IID_ID3D10ShaderResourceView)
+    if (IsEqualGUID(riid, &IID_ID3D10ShaderResourceView1)
+            || IsEqualGUID(riid, &IID_ID3D10ShaderResourceView)
             || IsEqualGUID(riid, &IID_ID3D10View)
             || IsEqualGUID(riid, &IID_ID3D10DeviceChild))
     {
-        ID3D10ShaderResourceView_AddRef(&view->ID3D10ShaderResourceView_iface);
-        *object = &view->ID3D10ShaderResourceView_iface;
+        ID3D10ShaderResourceView1_AddRef(&view->ID3D10ShaderResourceView1_iface);
+        *object = &view->ID3D10ShaderResourceView1_iface;
         return S_OK;
     }
 
@@ -1338,14 +1339,14 @@ static const struct ID3D11ShaderResourceViewVtbl d3d11_shader_resource_view_vtbl
 
 /* ID3D10ShaderResourceView methods */
 
-static inline struct d3d_shader_resource_view *impl_from_ID3D10ShaderResourceView(ID3D10ShaderResourceView *iface)
+static inline struct d3d_shader_resource_view *impl_from_ID3D10ShaderResourceView(ID3D10ShaderResourceView1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d_shader_resource_view, ID3D10ShaderResourceView_iface);
+    return CONTAINING_RECORD(iface, struct d3d_shader_resource_view, ID3D10ShaderResourceView1_iface);
 }
 
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_QueryInterface(ID3D10ShaderResourceView *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_QueryInterface(ID3D10ShaderResourceView1 *iface,
         REFIID riid, void **object)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
@@ -1355,7 +1356,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_QueryInterface(ID3D1
     return d3d11_shader_resource_view_QueryInterface(&view->ID3D11ShaderResourceView_iface, riid, object);
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_AddRef(ID3D10ShaderResourceView *iface)
+static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_AddRef(ID3D10ShaderResourceView1 *iface)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
 
@@ -1364,7 +1365,7 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_AddRef(ID3D10ShaderRes
     return d3d11_shader_resource_view_AddRef(&view->ID3D11ShaderResourceView_iface);
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_Release(ID3D10ShaderResourceView *iface)
+static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_Release(ID3D10ShaderResourceView1 *iface)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
 
@@ -1375,7 +1376,7 @@ static ULONG STDMETHODCALLTYPE d3d10_shader_resource_view_Release(ID3D10ShaderRe
 
 /* ID3D10DeviceChild methods */
 
-static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDevice(ID3D10ShaderResourceView *iface,
+static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDevice(ID3D10ShaderResourceView1 *iface,
         ID3D10Device **device)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
@@ -1385,7 +1386,7 @@ static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDevice(ID3D10ShaderR
     ID3D11Device_QueryInterface(view->device, &IID_ID3D10Device, (void **)device);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_GetPrivateData(ID3D10ShaderResourceView *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_GetPrivateData(ID3D10ShaderResourceView1 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
@@ -1396,7 +1397,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_GetPrivateData(ID3D1
     return d3d_get_private_data(&view->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateData(ID3D10ShaderResourceView *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateData(ID3D10ShaderResourceView1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
@@ -1407,7 +1408,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateData(ID3D1
     return d3d_set_private_data(&view->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateDataInterface(ID3D10ShaderResourceView *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateDataInterface(ID3D10ShaderResourceView1 *iface,
         REFGUID guid, const IUnknown *data)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
@@ -1419,7 +1420,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_shader_resource_view_SetPrivateDataInterf
 
 /* ID3D10View methods */
 
-static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetResource(ID3D10ShaderResourceView *iface,
+static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetResource(ID3D10ShaderResourceView1 *iface,
         ID3D10Resource **resource)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
@@ -1431,7 +1432,7 @@ static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetResource(ID3D10Shade
 
 /* ID3D10ShaderResourceView methods */
 
-static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDesc(ID3D10ShaderResourceView *iface,
+static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDesc(ID3D10ShaderResourceView1 *iface,
         D3D10_SHADER_RESOURCE_VIEW_DESC *desc)
 {
     struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
@@ -1441,7 +1442,17 @@ static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDesc(ID3D10ShaderRes
     memcpy(desc, &view->desc, sizeof(*desc));
 }
 
-static const struct ID3D10ShaderResourceViewVtbl d3d10_shader_resource_view_vtbl =
+static void STDMETHODCALLTYPE d3d10_shader_resource_view_GetDesc1(ID3D10ShaderResourceView1 *iface,
+        D3D10_SHADER_RESOURCE_VIEW_DESC1 *desc)
+{
+    struct d3d_shader_resource_view *view = impl_from_ID3D10ShaderResourceView(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    memcpy(desc, &view->desc, sizeof(*desc));
+}
+
+static const struct ID3D10ShaderResourceView1Vtbl d3d10_shader_resource_view_vtbl =
 {
     /* IUnknown methods */
     d3d10_shader_resource_view_QueryInterface,
@@ -1456,6 +1467,8 @@ static const struct ID3D10ShaderResourceViewVtbl d3d10_shader_resource_view_vtbl
     d3d10_shader_resource_view_GetResource,
     /* ID3D10ShaderResourceView methods */
     d3d10_shader_resource_view_GetDesc,
+    /* ID3D10ShaderResourceView1 methods */
+    d3d10_shader_resource_view_GetDesc1,
 };
 
 static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *view, struct d3d_device *device,
@@ -1465,7 +1478,7 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
     HRESULT hr;
 
     view->ID3D11ShaderResourceView_iface.lpVtbl = &d3d11_shader_resource_view_vtbl;
-    view->ID3D10ShaderResourceView_iface.lpVtbl = &d3d10_shader_resource_view_vtbl;
+    view->ID3D10ShaderResourceView1_iface.lpVtbl = &d3d10_shader_resource_view_vtbl;
     view->refcount = 1;
 
     if (!desc)
@@ -1528,6 +1541,6 @@ struct d3d_shader_resource_view *unsafe_impl_from_ID3D10ShaderResourceView(ID3D1
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == &d3d10_shader_resource_view_vtbl);
-    return CONTAINING_RECORD(iface, struct d3d_shader_resource_view, ID3D10ShaderResourceView_iface);
+    assert(iface->lpVtbl == (ID3D10ShaderResourceViewVtbl *)&d3d10_shader_resource_view_vtbl);
+    return CONTAINING_RECORD(iface, struct d3d_shader_resource_view, ID3D10ShaderResourceView1_iface);
 }

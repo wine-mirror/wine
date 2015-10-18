@@ -2603,7 +2603,7 @@ static void STDMETHODCALLTYPE d3d10_device_PSGetShaderResources(ID3D10Device1 *i
         }
 
         view_impl = wined3d_shader_resource_view_get_parent(wined3d_view);
-        views[i] = &view_impl->ID3D10ShaderResourceView_iface;
+        views[i] = (ID3D10ShaderResourceView *)&view_impl->ID3D10ShaderResourceView1_iface;
         ID3D10ShaderResourceView_AddRef(views[i]);
     }
     wined3d_mutex_unlock();
@@ -2874,7 +2874,7 @@ static void STDMETHODCALLTYPE d3d10_device_VSGetShaderResources(ID3D10Device1 *i
         }
 
         view_impl = wined3d_shader_resource_view_get_parent(wined3d_view);
-        views[i] = &view_impl->ID3D10ShaderResourceView_iface;
+        views[i] = (ID3D10ShaderResourceView *)&view_impl->ID3D10ShaderResourceView1_iface;
         ID3D10ShaderResourceView_AddRef(views[i]);
     }
     wined3d_mutex_unlock();
@@ -2953,7 +2953,7 @@ static void STDMETHODCALLTYPE d3d10_device_GSGetShaderResources(ID3D10Device1 *i
         }
 
         view_impl = wined3d_shader_resource_view_get_parent(wined3d_view);
-        views[i] = &view_impl->ID3D10ShaderResourceView_iface;
+        views[i] = (ID3D10ShaderResourceView *)&view_impl->ID3D10ShaderResourceView1_iface;
         ID3D10ShaderResourceView_AddRef(views[i]);
     }
     wined3d_mutex_unlock();
@@ -3402,7 +3402,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
     if (FAILED(hr))
         return hr;
 
-    *view = &object->ID3D10ShaderResourceView_iface;
+    *view = (ID3D10ShaderResourceView *)&object->ID3D10ShaderResourceView1_iface;
 
     return S_OK;
 }
