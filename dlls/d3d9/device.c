@@ -1378,7 +1378,11 @@ static HRESULT WINAPI d3d9_device_ColorFill(IDirect3DDevice9Ex *iface,
 
     wined3d_mutex_lock();
 
-    wined3d_resource = wined3d_surface_get_resource(surface_impl->wined3d_surface);
+    if (!(wined3d_resource = wined3d_texture_get_sub_resource(surface_impl->wined3d_texture, surface_impl->sub_resource_idx)))
+    {
+        wined3d_mutex_unlock();
+        return D3DERR_INVALIDCALL;
+    }
     wined3d_resource_get_desc(wined3d_resource, &desc);
 
     if (desc.pool != WINED3D_POOL_DEFAULT)
