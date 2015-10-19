@@ -567,7 +567,7 @@ static HRESULT create_rendertarget(IDWriteFactory *factory, HDC hdc, UINT32 widt
     }
 
     target->m = identity;
-    target->ppdip = 1.0;
+    target->ppdip = GetDeviceCaps(target->hdc, LOGPIXELSX) / 96.0f;
     target->antialiasmode = DWRITE_TEXT_ANTIALIAS_MODE_CLEARTYPE;
     target->factory = factory;
     IDWriteFactory_AddRef(factory);
