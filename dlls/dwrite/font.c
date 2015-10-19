@@ -4378,7 +4378,8 @@ static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
 };
 
 HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode, DWRITE_GLYPH_RUN const *run,
-    FLOAT ppdip, DWRITE_GRID_FIT_MODE gridfit_mode, DWRITE_TEXT_ANTIALIAS_MODE aa_mode, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
+    FLOAT ppdip, const DWRITE_MATRIX *transform, DWRITE_GRID_FIT_MODE gridfit_mode, DWRITE_TEXT_ANTIALIAS_MODE aa_mode,
+    FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
     UINT32 i;
@@ -4455,7 +4456,7 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
                 break;
             case DWRITE_MEASURING_MODE_GDI_CLASSIC:
             case DWRITE_MEASURING_MODE_GDI_NATURAL:
-                hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, run->fontEmSize, ppdip, NULL /* FIXME */,
+                hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, run->fontEmSize, ppdip, transform,
                     measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->isSideways, 1, run->glyphIndices + i, &a);
                 if (FAILED(hr))
                     analysis->advances[i] = 0.0;
