@@ -4399,8 +4399,8 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     analysis->ready = 0;
     analysis->bitmap = NULL;
     analysis->ppdip = ppdip;
-    analysis->originX = originX;
-    analysis->originY = originY;
+    analysis->originX = originX * ppdip;
+    analysis->originY = originY * ppdip;
     SetRectEmpty(&analysis->bounds);
     analysis->run = *run;
     IDWriteFontFace_AddRef(analysis->run.fontFace);
