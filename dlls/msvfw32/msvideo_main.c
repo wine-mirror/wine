@@ -1433,28 +1433,18 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
     *pc->lpbiIn = *lpbiIn;
     pc->lpBitsPrev = HeapAlloc(GetProcessHeap(), 0, pc->lpbiIn->bmiHeader.biSizeImage);
     if (!pc->lpBitsPrev)
-    {
-        HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-	return FALSE;
-    }
+        goto error;
 
     pc->lpState = HeapAlloc(GetProcessHeap(), 0, sizeof(ICCOMPRESS));
     if (!pc->lpState)
-    {
-       HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-       HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
-       return FALSE;
-    }
+        goto error;
+
     pc->cbState = sizeof(ICCOMPRESS);
 
     pc->lpBitsOut = HeapAlloc(GetProcessHeap(), 0, pc->lpbiOut->bmiHeader.biSizeImage);
     if (!pc->lpBitsOut)
-    {
-       HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-       HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
-       HeapFree(GetProcessHeap(), 0, pc->lpState);
-       return FALSE;
-    }
+        goto error;
+
     TRACE("Compvars:\n"
           "\tpc:\n"
           "\tsize: %i\n"
@@ -1483,6 +1473,7 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
        icComp->lpbiPrev = &pc->lpbiIn->bmiHeader;
        return TRUE;
     }
+error:
     HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
     HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
     HeapFree(GetProcessHeap(), 0, pc->lpState);
