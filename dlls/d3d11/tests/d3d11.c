@@ -1874,6 +1874,7 @@ static void test_create_blend_state(void)
     ULONG refcount, expected_refcount;
     ID3D11Device *device, *tmp;
     unsigned int i, j;
+    IUnknown *iface;
     HRESULT hr;
 
     if (!(device = create_device(NULL)))
@@ -1945,6 +1946,15 @@ static void test_create_blend_state(void)
                 "Got unexpected render target write mask %#x for render target %u.\n",
                 obtained_desc.RenderTarget[0].RenderTargetWriteMask, i);
     }
+
+    hr = ID3D11BlendState_QueryInterface(blend_state1, &IID_ID3D10BlendState, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Blend state should implement ID3D10BlendState.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+    hr = ID3D11BlendState_QueryInterface(blend_state1, &IID_ID3D10BlendState1, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Blend state should implement ID3D10BlendState1.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
     refcount = ID3D11BlendState_Release(blend_state1);
     ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
