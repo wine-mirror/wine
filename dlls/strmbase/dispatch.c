@@ -29,8 +29,8 @@
 
 HRESULT WINAPI BaseDispatch_Init(BaseDispatch *This, REFIID riid)
 {
-    HRESULT hr = E_FAIL;
     ITypeLib *pTypeLib;
+    HRESULT hr;
 
     This->pTypeInfo = NULL;
     hr = LoadRegTypeLib(&LIBID_QuartzTypeLib, 1, 0, LOCALE_SYSTEM_DEFAULT, &pTypeLib);

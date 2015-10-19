@@ -575,9 +575,9 @@ HRESULT WINAPI BaseOutputPinImpl_GetDeliveryBuffer(BaseOutputPin *This, IMediaSa
 /* replaces OutputPin_SendSample */
 HRESULT WINAPI BaseOutputPinImpl_Deliver(BaseOutputPin *This, IMediaSample * pSample)
 {
-    HRESULT hr = S_OK;
     IMemInputPin * pMemConnected = NULL;
     PIN_INFO pinInfo;
+    HRESULT hr;
 
     EnterCriticalSection(This->pin.pCritSec);
     {
@@ -615,7 +615,7 @@ HRESULT WINAPI BaseOutputPinImpl_Deliver(BaseOutputPin *This, IMediaSample * pSa
 /* replaces OutputPin_CommitAllocator */
 HRESULT WINAPI BaseOutputPinImpl_Active(BaseOutputPin *This)
 {
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     TRACE("(%p)->()\n", This);
 
@@ -635,7 +635,7 @@ HRESULT WINAPI BaseOutputPinImpl_Active(BaseOutputPin *This)
 /* replaces OutputPin_DecommitAllocator */
 HRESULT WINAPI BaseOutputPinImpl_Inactive(BaseOutputPin *This)
 {
-    HRESULT hr = S_OK;
+    HRESULT hr;
 
     TRACE("(%p)->()\n", This);
 
@@ -875,12 +875,9 @@ ULONG WINAPI BaseInputPinImpl_Release(IPin * iface)
     TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
 
     if (!refCount)
-    {
         BaseInputPin_Destroy(This);
-        return 0;
-    }
-    else
-        return refCount;
+
+    return refCount;
 }
 
 HRESULT WINAPI BaseInputPinImpl_Connect(IPin * iface, IPin * pConnector, const AM_MEDIA_TYPE * pmt)

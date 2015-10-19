@@ -68,7 +68,6 @@ HRESULT WINAPI OutputQueue_Construct(
     OutputQueue **ppOutputQueue )
 
 {
-    HRESULT hr = S_OK;
     BOOL threaded = FALSE;
     DWORD tid;
 
@@ -116,7 +115,7 @@ HRESULT WINAPI OutputQueue_Construct(
     }
     LeaveCriticalSection(&This->csQueue);
 
-    return hr;
+    return S_OK;
 }
 
 HRESULT WINAPI OutputQueue_Destroy(OutputQueue *pOutputQueue)
