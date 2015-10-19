@@ -1449,6 +1449,27 @@ VOID WINAPI GlobalMemoryStatus( LPMEMORYSTATUS lpBuffer )
           lpBuffer->dwTotalVirtual, lpBuffer->dwAvailVirtual );
 }
 
+/***********************************************************************
+ *           GetPhysicallyInstalledSystemMemory   (KERNEL32.@)
+ */
+BOOL WINAPI GetPhysicallyInstalledSystemMemory(ULONGLONG *total_memory)
+{
+    MEMORYSTATUSEX memstatus;
+
+    FIXME("stub: %p\n", total_memory);
+
+    if (!total_memory)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    memstatus.dwLength = sizeof(memstatus);
+    GlobalMemoryStatusEx(&memstatus);
+    *total_memory = memstatus.ullTotalPhys / 1024;
+    return TRUE;
+}
+
 BOOL WINAPI GetSystemFileCacheSize(PSIZE_T mincache, PSIZE_T maxcache, PDWORD flags)
 {
     FIXME("stub: %p %p %p\n", mincache, maxcache, flags);

@@ -7,7 +7,7 @@
 @ stdcall GetLogicalProcessorInformationEx(long ptr ptr) kernel32.GetLogicalProcessorInformationEx
 @ stdcall GetNativeSystemInfo(ptr) kernel32.GetNativeSystemInfo
 @ stub GetOsSafeBootMode
-@ stub GetPhysicallyInstalledSystemMemory
+@ stdcall GetPhysicallyInstalledSystemMemory(ptr) kernel32.GetPhysicallyInstalledSystemMemory
 @ stdcall GetProductInfo(long long long long ptr) kernel32.GetProductInfo
 @ stdcall GetSystemDirectoryA(ptr long) kernel32.GetSystemDirectoryA
 @ stdcall GetSystemDirectoryW(ptr long) kernel32.GetSystemDirectoryW

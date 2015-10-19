@@ -759,7 +759,7 @@
 @ stdcall GetOEMCP()
 @ stdcall GetOverlappedResult(long ptr ptr long)
 @ stdcall GetUserPreferredUILanguages(long ptr ptr ptr)
-# @ stub GetPhysicallyInstalledSystemMemory
+@ stdcall GetPhysicallyInstalledSystemMemory(ptr)
 @ stdcall GetPriorityClass(long)
 @ stdcall GetPrivateProfileIntA(str str long str)
 @ stdcall GetPrivateProfileIntW(wstr wstr long wstr)

@@ -1156,7 +1156,7 @@ static void test_GetPhysicallyInstalledSystemMemory(void)
     pGetPhysicallyInstalledSystemMemory = (void *)GetProcAddress(kernel32, "GetPhysicallyInstalledSystemMemory");
     if (!pGetPhysicallyInstalledSystemMemory)
     {
-        skip("GetPhysicallyInstalledSystemMemory is not available\n");
+        win_skip("GetPhysicallyInstalledSystemMemory is not available\n");
         return;
     }
 
