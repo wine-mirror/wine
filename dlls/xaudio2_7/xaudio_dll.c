@@ -966,7 +966,10 @@ static void WINAPI XA2M_GetChannelMask(IXAudio2MasteringVoice *iface,
         DWORD *pChannelMask)
 {
     IXAudio2Impl *This = impl_from_IXAudio2MasteringVoice(iface);
+
     TRACE("%p %p\n", This, pChannelMask);
+
+    *pChannelMask = This->fmt.dwChannelMask;
 }
 
 static const struct IXAudio2MasteringVoiceVtbl XAudio2MasteringVoice_Vtbl = {

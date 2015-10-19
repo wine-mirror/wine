@@ -174,6 +174,7 @@ static void test_simple_streaming(IXAudio2 *xa)
     XAUDIO2_VOICE_STATE state;
     XAUDIO2_EFFECT_DESCRIPTOR effect;
     XAUDIO2_EFFECT_CHAIN chain;
+    DWORD chmask;
 
     memset(&ecb_state, 0, sizeof(ecb_state));
     memset(&src1_state, 0, sizeof(src1_state));
@@ -195,6 +196,12 @@ static void test_simple_streaming(IXAudio2 *xa)
     else
         hr = IXAudio2_CreateMasteringVoice(xa, &master, 2, 44100, 0, NULL, NULL, AudioCategory_GameEffects);
     ok(hr == S_OK, "CreateMasteringVoice failed: %08x\n", hr);
+
+    if(!xaudio27){
+        chmask = 0xdeadbeef;
+        IXAudio2MasteringVoice_GetChannelMask(master, &chmask);
+        ok(chmask == (SPEAKER_FRONT_LEFT | SPEAKER_FRONT_RIGHT), "Got unexpected channel mask: 0x%x\n", chmask);
+    }
 
     /* create first source voice */
     fmt.wFormatTag = WAVE_FORMAT_IEEE_FLOAT;
