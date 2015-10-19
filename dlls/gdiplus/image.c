@@ -3838,7 +3838,7 @@ static DWORD get_gif_background_color(GpBitmap *bitmap)
         if(bitmap->prop_item[i].id == PropertyTagGlobalPalette) {
             if(bitmap->prop_item[i].length/3 > bgcolor_idx) {
                 BYTE *color = ((BYTE*)bitmap->prop_item[i].value)+bgcolor_idx*3;
-                return color[2] + (color[1]<<8) + (color[0]<<16) + (0xff<<24);
+                return color[2] + (color[1]<<8) + (color[0]<<16) + (0xffu<<24);
             }
             break;
         }
