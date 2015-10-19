@@ -3041,7 +3041,7 @@ HRESULT WINAPI PropVariantCopy(PROPVARIANT *pvarDest,      /* [out] */
 
     hr = PROPVARIANT_ValidateType(pvarSrc->vt);
     if (FAILED(hr))
-        return hr;
+        return DISP_E_BADVARTYPE;
 
     /* this will deal with most cases */
     *pvarDest = *pvarSrc;
