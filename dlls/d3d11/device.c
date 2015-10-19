@@ -3566,47 +3566,57 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device1 *i
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device1 *iface,
-        const D3D10_BLEND_DESC *desc, ID3D10BlendState **blend_state)
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState1(ID3D10Device1 *iface,
+        const D3D10_BLEND_DESC1 *desc, ID3D10BlendState1 **blend_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     ID3D11BlendState *d3d11_blend_state;
-    D3D11_BLEND_DESC d3d11_desc;
-    unsigned int i;
     HRESULT hr;
+
+    TRACE("iface %p, desc %p, blend_state %p.\n", iface, desc, blend_state);
+
+    if (FAILED(hr = d3d11_device_CreateBlendState(&device->ID3D11Device_iface, (D3D11_BLEND_DESC *)desc,
+            &d3d11_blend_state)))
+        return hr;
+
+    hr = ID3D11BlendState_QueryInterface(d3d11_blend_state, &IID_ID3D10BlendState1, (void **)blend_state);
+    ID3D11BlendState_Release(d3d11_blend_state);
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState(ID3D10Device1 *iface,
+        const D3D10_BLEND_DESC *desc, ID3D10BlendState **blend_state)
+{
+    D3D10_BLEND_DESC1 d3d10_1_desc;
+    unsigned int i;
 
     TRACE("iface %p, desc %p, blend_state %p.\n", iface, desc, blend_state);
 
     if (!desc)
         return E_INVALIDARG;
 
-    d3d11_desc.AlphaToCoverageEnable = desc->AlphaToCoverageEnable;
-    d3d11_desc.IndependentBlendEnable = FALSE;
+    d3d10_1_desc.AlphaToCoverageEnable = desc->AlphaToCoverageEnable;
+    d3d10_1_desc.IndependentBlendEnable = FALSE;
     for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT - 1; ++i)
     {
         if (desc->BlendEnable[i] != desc->BlendEnable[i + 1]
                 || desc->RenderTargetWriteMask[i] != desc->RenderTargetWriteMask[i + 1])
-            d3d11_desc.IndependentBlendEnable = TRUE;
+            d3d10_1_desc.IndependentBlendEnable = TRUE;
     }
 
-    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    for (i = 0; i < D3D10_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
     {
-        d3d11_desc.RenderTarget[i].BlendEnable = desc->BlendEnable[i];
-        d3d11_desc.RenderTarget[i].SrcBlend = desc->SrcBlend;
-        d3d11_desc.RenderTarget[i].DestBlend = desc->DestBlend;
-        d3d11_desc.RenderTarget[i].BlendOp = desc->BlendOp;
-        d3d11_desc.RenderTarget[i].SrcBlendAlpha = desc->SrcBlendAlpha;
-        d3d11_desc.RenderTarget[i].DestBlendAlpha = desc->DestBlendAlpha;
-        d3d11_desc.RenderTarget[i].BlendOpAlpha = desc->BlendOpAlpha;
-        d3d11_desc.RenderTarget[i].RenderTargetWriteMask = desc->RenderTargetWriteMask[i];
+        d3d10_1_desc.RenderTarget[i].BlendEnable = desc->BlendEnable[i];
+        d3d10_1_desc.RenderTarget[i].SrcBlend = desc->SrcBlend;
+        d3d10_1_desc.RenderTarget[i].DestBlend = desc->DestBlend;
+        d3d10_1_desc.RenderTarget[i].BlendOp = desc->BlendOp;
+        d3d10_1_desc.RenderTarget[i].SrcBlendAlpha = desc->SrcBlendAlpha;
+        d3d10_1_desc.RenderTarget[i].DestBlendAlpha = desc->DestBlendAlpha;
+        d3d10_1_desc.RenderTarget[i].BlendOpAlpha = desc->BlendOpAlpha;
+        d3d10_1_desc.RenderTarget[i].RenderTargetWriteMask = desc->RenderTargetWriteMask[i];
     }
 
-    if (FAILED(hr = d3d11_device_CreateBlendState(&device->ID3D11Device_iface, &d3d11_desc, &d3d11_blend_state)))
-        return hr;
-
-    hr = ID3D11BlendState_QueryInterface(d3d11_blend_state, &IID_ID3D10BlendState, (void **)blend_state);
-    ID3D11BlendState_Release(d3d11_blend_state);
-    return hr;
+    return d3d10_device_CreateBlendState1(iface, &d3d10_1_desc, (ID3D10BlendState1 **)blend_state);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateDepthStencilState(ID3D10Device1 *iface,
@@ -3791,14 +3801,6 @@ static void STDMETHODCALLTYPE d3d10_device_SetTextFilterSize(ID3D10Device1 *ifac
 static void STDMETHODCALLTYPE d3d10_device_GetTextFilterSize(ID3D10Device1 *iface, UINT *width, UINT *height)
 {
     FIXME("iface %p, width %p, height %p stub!\n", iface, width, height);
-}
-
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState1(ID3D10Device1 *iface,
-        const D3D10_BLEND_DESC1 *desc, ID3D10BlendState1 **blend_state)
-{
-    FIXME("iface %p, desc %p, blend_state %p stub!\n", iface, desc, blend_state);
-
-    return E_NOTIMPL;
 }
 
 static D3D10_FEATURE_LEVEL1 STDMETHODCALLTYPE d3d10_device_GetFeatureLevel(ID3D10Device1 *iface)
