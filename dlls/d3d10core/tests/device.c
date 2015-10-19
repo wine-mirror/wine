@@ -1435,6 +1435,7 @@ static void test_create_blend_state(void)
     D3D10_BLEND_DESC blend_desc;
     ID3D11Device *d3d11_device;
     ID3D10Device *device, *tmp;
+    IUnknown *iface;
     unsigned int i;
     HRESULT hr;
 
@@ -1475,6 +1476,11 @@ static void test_create_blend_state(void)
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
+
+    hr = ID3D10BlendState_QueryInterface(blend_state1, &IID_ID3D10BlendState1, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Blend state should implement ID3D10BlendState1.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
 
     hr = ID3D10Device_QueryInterface(device, &IID_ID3D11Device, (void **)&d3d11_device);
     ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
