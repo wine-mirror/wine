@@ -277,7 +277,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
             packet->reportId = 0;
 
             irp = IoBuildDeviceIoControlRequest(IOCTL_HID_GET_INPUT_REPORT,
-                device, NULL, 0, packet, sizeof(packet), TRUE, events[0],
+                device, NULL, 0, packet, sizeof(*packet), TRUE, events[0],
                 &irp_status);
 
             irpsp = IoGetNextIrpStackLocation(irp);
@@ -287,7 +287,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
             ntrc = IoCallDriver(device, irp);
 
             if (ntrc == STATUS_PENDING)
-                rc = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+                WaitForMultipleObjects(2, events, FALSE, INFINITE);
 
             if (irp->IoStatus.u.Status == STATUS_SUCCESS)
             {
