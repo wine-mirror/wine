@@ -851,7 +851,8 @@ static jstring wine_init_jni( JNIEnv *env, jobject obj, jobjectArray cmdline, jo
     {
         jobject str_obj = (*env)->GetObjectArrayElement( env, cmdline, i );
         length = (*env)->GetStringUTFLength( env, str_obj );
-        (*env)->GetStringUTFRegion( env, str_obj, 0, length, str );
+        (*env)->GetStringUTFRegion( env, str_obj, 0,
+                                    (*env)->GetStringLength( env, str_obj ), str );
         argv[i] = str;
         str[length] = 0;
         str += length + 1;
