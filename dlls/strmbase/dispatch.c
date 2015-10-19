@@ -37,8 +37,6 @@ HRESULT WINAPI BaseDispatch_Init(BaseDispatch *This, REFIID riid)
     if (SUCCEEDED(hr))
     {
         hr = ITypeLib_GetTypeInfoOfGuid(pTypeLib, riid, &This->pTypeInfo);
-
-    if (pTypeLib)
         ITypeLib_Release(pTypeLib);
     }
     return hr;
