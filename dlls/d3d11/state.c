@@ -47,11 +47,12 @@ static HRESULT STDMETHODCALLTYPE d3d11_blend_state_QueryInterface(ID3D11BlendSta
         return S_OK;
     }
 
-    if (IsEqualGUID(riid, &IID_ID3D10BlendState)
+    if (IsEqualGUID(riid, &IID_ID3D10BlendState1)
+            || IsEqualGUID(riid, &IID_ID3D10BlendState)
             || IsEqualGUID(riid, &IID_ID3D10DeviceChild))
     {
-        ID3D10BlendState_AddRef(&state->ID3D10BlendState_iface);
-        *object = &state->ID3D10BlendState_iface;
+        ID3D10BlendState1_AddRef(&state->ID3D10BlendState1_iface);
+        *object = &state->ID3D10BlendState1_iface;
         return S_OK;
     }
 
@@ -159,14 +160,14 @@ static const struct ID3D11BlendStateVtbl d3d11_blend_state_vtbl =
 
 /* ID3D10BlendState methods */
 
-static inline struct d3d_blend_state *impl_from_ID3D10BlendState(ID3D10BlendState *iface)
+static inline struct d3d_blend_state *impl_from_ID3D10BlendState(ID3D10BlendState1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d_blend_state, ID3D10BlendState_iface);
+    return CONTAINING_RECORD(iface, struct d3d_blend_state, ID3D10BlendState1_iface);
 }
 
 /* IUnknown methods */
 
-static HRESULT STDMETHODCALLTYPE d3d10_blend_state_QueryInterface(ID3D10BlendState *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_blend_state_QueryInterface(ID3D10BlendState1 *iface,
         REFIID riid, void **object)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
@@ -176,7 +177,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_blend_state_QueryInterface(ID3D10BlendSta
     return d3d11_blend_state_QueryInterface(&state->ID3D11BlendState_iface, riid, object);
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_blend_state_AddRef(ID3D10BlendState *iface)
+static ULONG STDMETHODCALLTYPE d3d10_blend_state_AddRef(ID3D10BlendState1 *iface)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
 
@@ -185,7 +186,7 @@ static ULONG STDMETHODCALLTYPE d3d10_blend_state_AddRef(ID3D10BlendState *iface)
     return d3d11_blend_state_AddRef(&state->ID3D11BlendState_iface);
 }
 
-static ULONG STDMETHODCALLTYPE d3d10_blend_state_Release(ID3D10BlendState *iface)
+static ULONG STDMETHODCALLTYPE d3d10_blend_state_Release(ID3D10BlendState1 *iface)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
 
@@ -196,7 +197,7 @@ static ULONG STDMETHODCALLTYPE d3d10_blend_state_Release(ID3D10BlendState *iface
 
 /* ID3D10DeviceChild methods */
 
-static void STDMETHODCALLTYPE d3d10_blend_state_GetDevice(ID3D10BlendState *iface, ID3D10Device **device)
+static void STDMETHODCALLTYPE d3d10_blend_state_GetDevice(ID3D10BlendState1 *iface, ID3D10Device **device)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
 
@@ -205,7 +206,7 @@ static void STDMETHODCALLTYPE d3d10_blend_state_GetDevice(ID3D10BlendState *ifac
     ID3D11Device_QueryInterface(state->device, &IID_ID3D10Device, (void **)device);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_blend_state_GetPrivateData(ID3D10BlendState *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_blend_state_GetPrivateData(ID3D10BlendState1 *iface,
         REFGUID guid, UINT *data_size, void *data)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
@@ -216,7 +217,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_blend_state_GetPrivateData(ID3D10BlendSta
     return d3d_get_private_data(&state->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateData(ID3D10BlendState *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateData(ID3D10BlendState1 *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
@@ -227,7 +228,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateData(ID3D10BlendSta
     return d3d_set_private_data(&state->private_store, guid, data_size, data);
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateDataInterface(ID3D10BlendState *iface,
+static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateDataInterface(ID3D10BlendState1 *iface,
         REFGUID guid, const IUnknown *data)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
@@ -239,8 +240,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_blend_state_SetPrivateDataInterface(ID3D1
 
 /* ID3D10BlendState methods */
 
-static void STDMETHODCALLTYPE d3d10_blend_state_GetDesc(ID3D10BlendState *iface,
-        D3D10_BLEND_DESC *desc)
+static void STDMETHODCALLTYPE d3d10_blend_state_GetDesc(ID3D10BlendState1 *iface, D3D10_BLEND_DESC *desc)
 {
     struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
     const D3D11_BLEND_DESC *d3d11_desc = &state->desc;
@@ -262,7 +262,16 @@ static void STDMETHODCALLTYPE d3d10_blend_state_GetDesc(ID3D10BlendState *iface,
     }
 }
 
-static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
+static void STDMETHODCALLTYPE d3d10_blend_state_GetDesc1(ID3D10BlendState1 *iface, D3D10_BLEND_DESC1 *desc)
+{
+    struct d3d_blend_state *state = impl_from_ID3D10BlendState(iface);
+
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    memcpy(desc, &state->desc, sizeof(*desc));
+}
+
+static const struct ID3D10BlendState1Vtbl d3d10_blend_state_vtbl =
 {
     /* IUnknown methods */
     d3d10_blend_state_QueryInterface,
@@ -275,13 +284,15 @@ static const struct ID3D10BlendStateVtbl d3d10_blend_state_vtbl =
     d3d10_blend_state_SetPrivateDataInterface,
     /* ID3D10BlendState methods */
     d3d10_blend_state_GetDesc,
+    /* ID3D10BlendState1 methods */
+    d3d10_blend_state_GetDesc1,
 };
 
 HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *device,
         const D3D11_BLEND_DESC *desc)
 {
     state->ID3D11BlendState_iface.lpVtbl = &d3d11_blend_state_vtbl;
-    state->ID3D10BlendState_iface.lpVtbl = &d3d10_blend_state_vtbl;
+    state->ID3D10BlendState1_iface.lpVtbl = &d3d10_blend_state_vtbl;
     state->refcount = 1;
     wined3d_mutex_lock();
     wined3d_private_store_init(&state->private_store);
@@ -306,9 +317,9 @@ struct d3d_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *ifac
 {
     if (!iface)
         return NULL;
-    assert(iface->lpVtbl == &d3d10_blend_state_vtbl);
+    assert(iface->lpVtbl == (ID3D10BlendStateVtbl *)&d3d10_blend_state_vtbl);
 
-    return impl_from_ID3D10BlendState(iface);
+    return impl_from_ID3D10BlendState((ID3D10BlendState1 *)iface);
 }
 
 /* ID3D11DepthStencilState methods */

@@ -3042,7 +3042,7 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetBlendState(ID3D10Device1 *iface,
     TRACE("iface %p, blend_state %p, blend_factor %p, sample_mask %p.\n",
             iface, blend_state, blend_factor, sample_mask);
 
-    if ((*blend_state = device->blend_state ? &device->blend_state->ID3D10BlendState_iface : NULL))
+    if ((*blend_state = device->blend_state ? (ID3D10BlendState *)&device->blend_state->ID3D10BlendState1_iface : NULL))
         ID3D10BlendState_AddRef(*blend_state);
     wined3d_mutex_lock();
     memcpy(blend_factor, device->blend_factor, 4 * sizeof(*blend_factor));
