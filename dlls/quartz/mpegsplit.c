@@ -476,7 +476,7 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
     HRESULT hr;
     LONGLONG pos = 0; /* in bytes */
     BYTE header[10];
-    int streamtype = 0;
+    int streamtype;
     LONGLONG total, avail;
     AM_MEDIA_TYPE amt;
     PIN_INFO piOutput;
@@ -514,12 +514,37 @@ static HRESULT MPEGSplitter_pre_connect(IPin *iface, IPin *pConnectPin, ALLOCATO
         hr = IAsyncReader_SyncRead(pPin->pReader, pos, 4, header);
         if (SUCCEEDED(hr))
             pos += 4;
-        TRACE("%x:%x:%x:%x\n", header[0], header[1], header[2], header[3]);
     } while (0);
 
-    while(SUCCEEDED(hr) && !(streamtype=MPEGSplitter_head_check(header)))
+    while(SUCCEEDED(hr))
     {
-        TRACE("%x:%x:%x:%x\n", header[0], header[1], header[2], header[3]);
+        TRACE("Testing header %x:%x:%x:%x\n", header[0], header[1], header[2], header[3]);
+
+        streamtype = MPEGSplitter_head_check(header);
+        if (streamtype == MPEG_AUDIO_HEADER)
+        {
+            LONGLONG length;
+            if (parse_header(header, &length, NULL) == S_OK)
+            {
+                BYTE next_header[4];
+                /* Ensure we have a valid header by seeking for the next frame, some bad
+                 * encoded ID3v2 may have an incorrect length and we end up finding bytes
+                 * like FF FE 00 28 which are nothing more than a Unicode BOM followed by
+                 * ')' character from inside a ID3v2 tag. Unfortunately that sequence
+                 * matches like a valid mpeg audio header.
+                 */
+                hr = IAsyncReader_SyncRead(pPin->pReader, pos + length - 4, 4, next_header);
+                if (FAILED(hr))
+                    break;
+                if (parse_header(next_header, &length, NULL) == S_OK)
+                    break;
+                TRACE("%x:%x:%x:%x is a fake audio header, looking for next...\n",
+                      header[0], header[1], header[2], header[3]);
+            }
+        }
+        else if (streamtype) /* Video or System stream */
+            break;
+
         /* No valid header yet; shift by a byte and check again */
         memmove(header, header+1, 3);
         hr = IAsyncReader_SyncRead(pPin->pReader, pos++, 1, header + 3);
