@@ -1085,6 +1085,8 @@ void WINAPI __regs_SNOOP_Entry( CONTEXT *context )
 
 	context->Eip = (DWORD)fun->origfun;
 
+        if (!TRACE_ON(snoop)) return;
+
 	if (TRACE_ON(timestamp))
 		print_timestamp();
 	if (fun->name) DPRINTF("%04x:CALL %s.%s(",GetCurrentThreadId(),dll->name,fun->name);
@@ -1121,6 +1123,12 @@ void WINAPI __regs_SNOOP_Return( CONTEXT *context )
 	if (ret->dll->funs[ret->ordinal].nrofargs<0)
 		ret->dll->funs[ret->ordinal].nrofargs=(context->Esp - ret->origESP-4)/4;
 	context->Eip = (DWORD)ret->origreturn;
+
+        if (!TRACE_ON(snoop)) {
+            ret->origreturn = NULL; /* mark as empty */
+            return;
+        }
+
 	if (TRACE_ON(timestamp))
 		print_timestamp();
 	if (ret->args) {
