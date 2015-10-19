@@ -176,7 +176,7 @@ static void WINAPI d3d9_surface_PreLoad(IDirect3DSurface9 *iface)
     TRACE("iface %p.\n", iface);
 
     wined3d_mutex_lock();
-    wined3d_surface_preload(surface->wined3d_surface);
+    wined3d_texture_preload(surface->wined3d_texture);
     wined3d_mutex_unlock();
 }
 
