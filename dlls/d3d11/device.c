@@ -3380,8 +3380,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateTexture3D(ID3D10Device1 *ifa
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Device1 *iface,
-        ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc, ID3D10ShaderResourceView **view)
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView1(ID3D10Device1 *iface,
+        ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC1 *desc, ID3D10ShaderResourceView1 **view)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_shader_resource_view *object;
@@ -3402,9 +3402,18 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Dev
     if (FAILED(hr))
         return hr;
 
-    *view = (ID3D10ShaderResourceView *)&object->ID3D10ShaderResourceView1_iface;
+    *view = &object->ID3D10ShaderResourceView1_iface;
 
     return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView(ID3D10Device1 *iface,
+        ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC *desc, ID3D10ShaderResourceView **view)
+{
+    TRACE("iface %p, resource %p, desc %p, view %p.\n", iface, resource, desc, view);
+
+    return d3d10_device_CreateShaderResourceView1(iface, resource,
+            (const D3D10_SHADER_RESOURCE_VIEW_DESC1 *)desc, (ID3D10ShaderResourceView1 **)view);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateRenderTargetView(ID3D10Device1 *iface,
@@ -3782,14 +3791,6 @@ static void STDMETHODCALLTYPE d3d10_device_SetTextFilterSize(ID3D10Device1 *ifac
 static void STDMETHODCALLTYPE d3d10_device_GetTextFilterSize(ID3D10Device1 *iface, UINT *width, UINT *height)
 {
     FIXME("iface %p, width %p, height %p stub!\n", iface, width, height);
-}
-
-static HRESULT STDMETHODCALLTYPE d3d10_device_CreateShaderResourceView1(ID3D10Device1 *iface,
-        ID3D10Resource *resource, const D3D10_SHADER_RESOURCE_VIEW_DESC1 *desc, ID3D10ShaderResourceView1 **view)
-{
-    FIXME("iface %p, resource %p, desc %p, view %p stub!\n", iface, resource, desc, view);
-
-    return E_NOTIMPL;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState1(ID3D10Device1 *iface,
