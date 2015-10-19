@@ -4381,6 +4381,7 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     FLOAT ppdip, DWRITE_GRID_FIT_MODE gridfit_mode, DWRITE_TEXT_ANTIALIAS_MODE aa_mode, FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
 {
     struct dwrite_glyphrunanalysis *analysis;
+    UINT32 i;
 
     *ret = NULL;
 
@@ -4425,12 +4426,17 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
 
     memcpy(analysis->glyphs, run->glyphIndices, run->glyphCount*sizeof(*run->glyphIndices));
 
-    if (run->glyphAdvances)
-        memcpy(analysis->advances, run->glyphAdvances, run->glyphCount*sizeof(*run->glyphAdvances));
+    if (run->glyphAdvances) {
+        if (ppdip == 1.0f)
+            memcpy(analysis->advances, run->glyphAdvances, run->glyphCount*sizeof(*run->glyphAdvances));
+        else {
+            for (i = 0; i < run->glyphCount; i++)
+                analysis->advances[i] = run->glyphAdvances[i] * ppdip;
+        }
+    }
     else {
         DWRITE_FONT_METRICS metrics;
         IDWriteFontFace1 *fontface1;
-        UINT32 i;
 
         IDWriteFontFace_GetMetrics(run->fontFace, &metrics);
         IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace1, (void**)&fontface1);
@@ -4445,7 +4451,7 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
                 hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, run->glyphIndices + i, &a, run->isSideways);
                 if (FAILED(hr))
                     a = 0;
-                analysis->advances[i] = get_scaled_advance_width(a, run->fontEmSize, &metrics);
+                analysis->advances[i] = get_scaled_advance_width(a, run->fontEmSize, &metrics) * ppdip;
                 break;
             case DWRITE_MEASURING_MODE_GDI_CLASSIC:
             case DWRITE_MEASURING_MODE_GDI_NATURAL:
@@ -4454,7 +4460,7 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
                 if (FAILED(hr))
                     analysis->advances[i] = 0.0;
                 else
-                    analysis->advances[i] = floorf(a * run->fontEmSize * ppdip / metrics.designUnitsPerEm + 0.5f) / ppdip;
+                    analysis->advances[i] = floorf(a * run->fontEmSize * ppdip / metrics.designUnitsPerEm + 0.5f);
                 break;
             default:
                 ;
@@ -4464,8 +4470,16 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
         IDWriteFontFace1_Release(fontface1);
     }
 
-    if (run->glyphOffsets)
-        memcpy(analysis->offsets, run->glyphOffsets, run->glyphCount*sizeof(*run->glyphOffsets));
+    if (run->glyphOffsets) {
+        if (ppdip == 1.0f)
+            memcpy(analysis->offsets, run->glyphOffsets, run->glyphCount*sizeof(*run->glyphOffsets));
+        else {
+            for (i = 0; i < run->glyphCount; i++) {
+                analysis->offsets[i].advanceOffset  = run->glyphOffsets[i].advanceOffset * ppdip;
+                analysis->offsets[i].ascenderOffset = run->glyphOffsets[i].ascenderOffset * ppdip;
+            }
+        }
+    }
 
     *ret = &analysis->IDWriteGlyphRunAnalysis_iface;
     return S_OK;
