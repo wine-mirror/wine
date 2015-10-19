@@ -1493,6 +1493,7 @@ enum wined3d_pci_device
     CARD_AMD_RADEON_HD2600          = 0x9581,
     CARD_AMD_RADEON_HD2900          = 0x9400,
     CARD_AMD_RADEON_HD3200          = 0x9620,
+    CARD_AMD_RADEON_HD3850          = 0x9515,
     CARD_AMD_RADEON_HD4200M         = 0x9712,
     CARD_AMD_RADEON_HD4350          = 0x954f,
     CARD_AMD_RADEON_HD4600          = 0x9495,

@@ -1291,6 +1291,7 @@ static const struct gpu_description gpu_description_table[] =
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD2600,         "ATI Mobility Radeon HD 2600",      DRIVER_AMD_R600,         256 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD2900,         "ATI Radeon HD 2900 XT",            DRIVER_AMD_R600,         512 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD3200,         "ATI Radeon HD 3200 Graphics",      DRIVER_AMD_R600,         128 },
+    {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD3850,         "ATI Radeon HD 3850 AGP",           DRIVER_AMD_R600,         512 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4200M,        "ATI Mobility Radeon HD 4200",      DRIVER_AMD_R600,         256 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4350,         "ATI Radeon HD 4350",               DRIVER_AMD_R600,         256 },
     {HW_VENDOR_AMD,        CARD_AMD_RADEON_HD4600,         "ATI Radeon HD 4600 Series",        DRIVER_AMD_R600,         512 },
@@ -2019,7 +2020,7 @@ cards_amd_mesa[] =
     /* R600 */
     {"R680",                        CARD_AMD_RADEON_HD2900},
     {"R600",                        CARD_AMD_RADEON_HD2900},
-    {"RV670",                       CARD_AMD_RADEON_HD2900},
+    {"RV670",                       CARD_AMD_RADEON_HD3850},
     {"RV635",                       CARD_AMD_RADEON_HD2600},
     {"RV630",                       CARD_AMD_RADEON_HD2600},
     {"RV620",                       CARD_AMD_RADEON_HD2350},
