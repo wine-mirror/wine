@@ -2372,6 +2372,8 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
 
     IXAudio2_StartEngine(&object->IXAudio2_iface);
 
+    TRACE("Created XAudio version %u: %p\n", object->version, object);
+
     return hr;
 }
 
