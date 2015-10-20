@@ -1408,6 +1408,12 @@ static void clear_compvars(PCOMPVARS pc)
     HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
     HeapFree(GetProcessHeap(), 0, pc->lpState);
     pc->lpbiIn = pc->lpBitsPrev = pc->lpBitsOut = pc->lpState = NULL;
+    if (pc->dwFlags & 0x80000000)
+    {
+        HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
+        pc->lpBitsOut = NULL;
+        pc->dwFlags &= ~0x80000000;
+    }
 }
 
 /***********************************************************************
@@ -1444,6 +1450,33 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
         goto error;
 
     pc->cbState = sizeof(ICCOMPRESS);
+
+    if (!pc->lpbiOut)
+    {
+        pc->lpbiOut = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFO));
+        if (!pc->lpbiOut)
+            goto error;
+
+        ret = ICSendMessage(pc->hic, ICM_COMPRESS_GET_FORMAT,
+                            (DWORD_PTR)pc->lpbiIn, (DWORD_PTR)pc->lpbiOut);
+        if (ret != ICERR_OK)
+        {
+            ERR("Could not get output format from compressor\n");
+            goto error;
+        }
+        if (!pc->lpbiOut->bmiHeader.biSizeImage)
+        {
+            /* If we can't know the output frame size for sure at least allocate
+             * the same size of the input frame and also at least 8Kb to be sure
+             * that poor compressors will have enough memory to work if the input
+             * frame is too small.
+             */
+            pc->lpbiOut->bmiHeader.biSizeImage = max(8192, pc->lpbiIn->bmiHeader.biSizeImage);
+            ERR("Bad codec! Invalid output frame size, guessing from input\n");
+        }
+        /* Flag to show that we allocated lpbiOutput for proper cleanup */
+        pc->dwFlags |= 0x80000000;
+    }
 
     TRACE("Input: %ux%u, fcc %s, bpp %u, size %u\n",
           pc->lpbiIn->bmiHeader.biWidth, pc->lpbiIn->bmiHeader.biHeight,
