@@ -13937,10 +13937,9 @@ static void intz_test(void)
         0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 0.0, 0.0, 0.0, 1.0   */
         0x02000001, 0x800f0001, 0xa0e40000,                                     /* mov r1, c0                   */
         0x03000042, 0x800f0000, 0xb0e40000, 0xa0e40800,                         /* texld r0, t0, s0             */
-        0x02000001, 0x80010001, 0x80e40000,                                     /* mov r1.x, r0                 */
-        0x03010042, 0x800f0000, 0xb0e40000, 0xa0e40800,                         /* texldp r0, t0, s0            */
-        0x02000001, 0x80020001, 0x80000000,                                     /* mov r1.y, r0.x               */
-        0x02000001, 0x800f0800, 0x80e40001,                                     /* mov oC0, r1                  */
+        0x03010042, 0x800f0001, 0xb0e40000, 0xa0e40800,                         /* texldp r1, t0, s0            */
+        0x02000001, 0x80020000, 0x80000001,                                     /* mov r0.y, r1.x               */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                  */
         0x0000ffff,                                                             /* end                          */
     };
     struct
@@ -13976,17 +13975,18 @@ static void intz_test(void)
     }
     expected_colors[] =
     {
-        { 80, 100, D3DCOLOR_ARGB(0x00, 0x20, 0x40, 0x00)},
-        {240, 100, D3DCOLOR_ARGB(0x00, 0x60, 0xbf, 0x00)},
-        {400, 100, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
-        {560, 100, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
-        { 80, 450, D3DCOLOR_ARGB(0x00, 0x20, 0x40, 0x00)},
-        {240, 450, D3DCOLOR_ARGB(0x00, 0x60, 0xbf, 0x00)},
-        {400, 450, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
-        {560, 450, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
+        { 80, 100, 0x20204020},
+        {240, 100, 0x6060bf60},
+        {400, 100, 0x9f9f409f},
+        {560, 100, 0xdfdfbfdf},
+        { 80, 450, 0x20204020},
+        {240, 450, 0x6060bf60},
+        {400, 450, 0x9f9f409f},
+        {560, 450, 0xdfdfbfdf},
     };
 
     IDirect3DSurface9 *original_rt, *rt;
+    struct surface_readback rb;
     IDirect3DTexture9 *texture;
     IDirect3DPixelShader9 *ps;
     IDirect3DDevice9 *device;
@@ -14102,13 +14102,15 @@ static void intz_test(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
+    get_rt_readback(original_rt, &rb);
     for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
     {
-        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
                 "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
                 expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
+    release_surface_readback(&rb);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
@@ -14154,13 +14156,15 @@ static void intz_test(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
+    get_rt_readback(original_rt, &rb);
     for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
     {
-        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
                 "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
                 expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
+    release_surface_readback(&rb);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
@@ -14219,13 +14223,15 @@ static void intz_test(void)
     hr = IDirect3DDevice9_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
+    get_rt_readback(original_rt, &rb);
     for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
     {
-        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
                 "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
                 expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
+    release_surface_readback(&rb);
 
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
