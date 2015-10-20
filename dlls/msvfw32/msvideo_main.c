@@ -1366,7 +1366,7 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
         if (pc->lKey && pc->lKeyCount == (pc->lKey - 1))
         /* No key frames if pc->lKey == 0 */
            pc->lKeyCount = 0;
-	icComp->dwFlags = 0;
+        icComp->dwFlags = 0;
     }
 
     icComp->lpInput = lpBits;
@@ -1375,28 +1375,30 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
     icComp->lpPrev = pc->lpBitsPrev;
     ret = ICSendMessage(pc->hic, ICM_COMPRESS, (DWORD_PTR)icComp, sizeof(*icComp));
 
-    if (icComp->dwFlags & AVIIF_KEYFRAME)
-    {
-       pc->lKeyCount = 1;
-       *pfKey = TRUE;
-       TRACE("Key frame\n");
-    }
-    else
-       *pfKey = FALSE;
-
-    *plSize = icComp->lpbiOutput->biSizeImage;
     TRACE(" -- 0x%08x\n", ret);
     if (ret == ICERR_OK)
     {
-       LPVOID oldprev, oldout;
-/* We shift Prev and Out, so we don't have to allocate and release memory */
-       oldprev = pc->lpBitsPrev;
-       oldout = pc->lpBitsOut;
-       pc->lpBitsPrev = oldout;
-       pc->lpBitsOut = oldprev;
+        LPVOID oldprev, oldout;
 
-       TRACE("returning: %p\n", icComp->lpOutput);
-       return icComp->lpOutput;
+        if (icComp->dwFlags & AVIIF_KEYFRAME)
+        {
+            pc->lKeyCount = 1;
+            *pfKey = TRUE;
+            TRACE("Key frame\n");
+        }
+        else
+            *pfKey = FALSE;
+
+        *plSize = icComp->lpbiOutput->biSizeImage;
+
+        /* We shift Prev and Out, so we don't have to allocate and release memory */
+        oldprev = pc->lpBitsPrev;
+        oldout = pc->lpBitsOut;
+        pc->lpBitsPrev = oldout;
+        pc->lpBitsOut = oldprev;
+
+        TRACE("returning: %p, compressed frame size %u\n", icComp->lpOutput, *plSize);
+        return icComp->lpOutput;
     }
     return NULL;
 }
