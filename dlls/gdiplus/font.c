@@ -1612,7 +1612,7 @@ static INT CALLBACK add_font_proc(const LOGFONTW *lfw, const TEXTMETRICW *ntm,
     if (fonts->allocated == fonts->count)
     {
         INT new_alloc_count = fonts->allocated+50;
-        GpFontFamily** new_family_list = HeapAlloc(GetProcessHeap(), 0, new_alloc_count*sizeof(void*));
+        GpFontFamily** new_family_list = heap_alloc(new_alloc_count*sizeof(void*));
 
         if (!new_family_list)
             return 0;

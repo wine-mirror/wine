@@ -48,6 +48,12 @@
 #define GIF_DISPOSE_RESTORE_TO_BKGND 2
 #define GIF_DISPOSE_RESTORE_TO_PREV 3
 
+static void *heap_alloc(size_t len) __WINE_ALLOC_SIZE(1);
+static inline void *heap_alloc(size_t len)
+{
+    return HeapAlloc(GetProcessHeap(), 0, len);
+}
+
 static void *heap_alloc_zero(size_t len) __WINE_ALLOC_SIZE(1);
 static inline void *heap_alloc_zero(size_t len)
 {

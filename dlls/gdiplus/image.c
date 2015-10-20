@@ -92,7 +92,7 @@ static ColorPalette *get_palette(IWICBitmapFrameDecode *frame, WICBitmapPaletteT
             UINT count;
 
             IWICPalette_GetColorCount(wic_palette, &count);
-            palette = HeapAlloc(GetProcessHeap(), 0, 2 * sizeof(UINT) + count * sizeof(ARGB));
+            palette = heap_alloc(2 * sizeof(UINT) + count * sizeof(ARGB));
             IWICPalette_GetColors(wic_palette, count, palette->Entries, &palette->Count);
 
             IWICPalette_GetType(wic_palette, &type);
@@ -1692,7 +1692,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
     {
         if (iinfo.hbmMask)
         {
-            BYTE *bits = HeapAlloc(GetProcessHeap(), 0, height * stride);
+            BYTE *bits = heap_alloc(height * stride);
 
             /* read alpha data from the mask */
             if (iinfo.hbmColor)
@@ -2874,7 +2874,7 @@ GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
         item_size = propvariant_size(&value);
         if (item_size)
         {
-            item = HeapAlloc(GetProcessHeap(), 0, item_size + sizeof(*item));
+            item = heap_alloc(item_size + sizeof(*item));
 
             propvariant_to_item(&value, item, item_size + sizeof(*item), id.u.uiVal);
             buf[i].id = item->id;
