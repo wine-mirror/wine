@@ -420,12 +420,10 @@ BOOL lengthen_path(GpPath *path, INT len)
         while(path->datalen - path->pathdata.Count < len)
             path->datalen *= 2;
 
-        path->pathdata.Points = HeapReAlloc(GetProcessHeap(), 0,
-            path->pathdata.Points, path->datalen * sizeof(PointF));
+        path->pathdata.Points = heap_realloc(path->pathdata.Points, path->datalen * sizeof(PointF));
         if(!path->pathdata.Points)  return FALSE;
 
-        path->pathdata.Types = HeapReAlloc(GetProcessHeap(), 0,
-            path->pathdata.Types, path->datalen);
+        path->pathdata.Types = heap_realloc(path->pathdata.Types, path->datalen);
         if(!path->pathdata.Types)   return FALSE;
     }
 

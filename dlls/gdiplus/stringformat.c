@@ -291,7 +291,7 @@ GpStatus WINGDIPAPI GdipSetStringFormatTabStops(GpStringFormat *format, REAL fir
         /* reallocation */
         if((format->tabcount < count) && (format->tabcount > 0)){
             REAL *ptr;
-            ptr = HeapReAlloc(GetProcessHeap(), 0, format->tabs, sizeof(REAL)*count);
+            ptr = heap_realloc(format->tabs, sizeof(REAL)*count);
             if(!ptr)
                 return OutOfMemory;
             format->tabs = ptr;
