@@ -3999,6 +3999,50 @@ static void test_DrawImage(void)
     expect(Ok, status);
 }
 
+static void test_DrawImage_SourceCopy(void)
+{
+    DWORD dst_pixels[4] = { 0xffffffff, 0xffffffff,
+                            0xffffffff, 0xffffffff };
+    DWORD src_pixels[4] = { 0, 0xffff0000,
+                            0, 0xff00ff };
+
+    GpStatus status;
+    union
+    {
+        GpBitmap *bitmap;
+        GpImage *image;
+    } u1, u2;
+    GpGraphics *graphics;
+
+    status = GdipCreateBitmapFromScan0(2, 2, 8, PixelFormat32bppARGB, (BYTE*)dst_pixels, &u1.bitmap);
+    expect(Ok, status);
+
+    status = GdipCreateBitmapFromScan0(2, 2, 8, PixelFormat32bppARGB, (BYTE*)src_pixels, &u2.bitmap);
+    expect(Ok, status);
+    status = GdipGetImageGraphicsContext(u1.image, &graphics);
+    expect(Ok, status);
+    status = GdipSetInterpolationMode(graphics, InterpolationModeNearestNeighbor);
+    expect(Ok, status);
+
+    status = GdipSetCompositingMode(graphics, CompositingModeSourceCopy);
+    expect(Ok, status);
+
+    status = GdipDrawImageI(graphics, u2.image, 0, 0);
+    expect(Ok, status);
+
+    todo_wine expect(0, dst_pixels[0]);
+    expect(0xffff0000, dst_pixels[1]);
+    todo_wine expect(0, dst_pixels[2]);
+    todo_wine expect(0, dst_pixels[3]);
+
+    status = GdipDeleteGraphics(graphics);
+    expect(Ok, status);
+    status = GdipDisposeImage(u1.image);
+    expect(Ok, status);
+    status = GdipDisposeImage(u2.image);
+    expect(Ok, status);
+}
+
 static void test_GdipDrawImagePointRect(void)
 {
     BYTE black_1x1[4] = { 0,0,0,0 };
@@ -4689,6 +4733,7 @@ START_TEST(image)
     test_DrawImage_scale();
     test_image_format();
     test_DrawImage();
+    test_DrawImage_SourceCopy();
     test_GdipDrawImagePointRect();
     test_bitmapbits();
     test_tiff_palette();
