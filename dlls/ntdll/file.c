@@ -1795,6 +1795,11 @@ NTSTATUS WINAPI NtFsControlFile(HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc
         }
         break;
     }
+    case FSCTL_SET_SPARSE:
+        TRACE("FSCTL_SET_SPARSE: Ignoring request\n");
+        io->Information = 0;
+        status = STATUS_SUCCESS;
+        break;
     case FSCTL_PIPE_LISTEN:
     case FSCTL_PIPE_WAIT:
     default:
