@@ -1401,6 +1401,15 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
     return NULL;
 }
 
+static void clear_compvars(PCOMPVARS pc)
+{
+    HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
+    HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
+    HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
+    HeapFree(GetProcessHeap(), 0, pc->lpState);
+    pc->lpbiIn = pc->lpBitsPrev = pc->lpBitsOut = pc->lpState = NULL;
+}
+
 /***********************************************************************
  *      ICSeqCompressFrameEnd   [MSVFW32.@]
  */
@@ -1410,11 +1419,7 @@ void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
     TRACE("(%p)\n", pc);
     ret = ICSendMessage(pc->hic, ICM_COMPRESS_END, 0, 0);
     TRACE(" -- %x\n", ret);
-    HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-    HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
-    HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
-    HeapFree(GetProcessHeap(), 0, pc->lpState);
-    pc->lpbiIn = pc->lpBitsPrev = pc->lpBitsOut = pc->lpState = NULL;
+    clear_compvars(pc);
 }
 
 /***********************************************************************
@@ -1474,11 +1479,7 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
        return TRUE;
     }
 error:
-    HeapFree(GetProcessHeap(), 0, pc->lpbiIn);
-    HeapFree(GetProcessHeap(), 0, pc->lpBitsPrev);
-    HeapFree(GetProcessHeap(), 0, pc->lpState);
-    HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
-    pc->lpBitsPrev = pc->lpbiIn = pc->lpState = pc->lpBitsOut = NULL;
+    clear_compvars(pc);
     return FALSE;
 }
 
