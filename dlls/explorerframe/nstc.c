@@ -686,9 +686,9 @@ static LRESULT on_nm_click(NSTC2Impl *This, NMHDR *nmhdr)
     psi = shellitem_from_treeitem(This, tvhit.hItem);
     hr = events_OnItemClick(This, psi, tvhit.flags, NSTCECT_LBUTTON);
 
-    /* The expando should not be expanded unless
+    /* The label should not be expanded unless
      * double-clicked. */
-    if(tvhit.flags == TVHT_ONITEMBUTTON)
+    if(tvhit.flags == TVHT_ONITEMLABEL)
         return TRUE;
 
     if(SUCCEEDED(hr))
