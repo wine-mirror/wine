@@ -2700,6 +2700,7 @@ static void test_multiframegif(void)
     expect(0, color);
 
     stat = GdipImageSelectActiveFrame((GpImage*)bmp, &dimension, 3);
+    expect(Ok, stat);
     stat = GdipBitmapGetPixel(bmp, 2, 0, &color);
     expect(Ok, stat);
     ok(color==0 || broken(color==0xff0000ff), "color = %x\n", color);
