@@ -55,6 +55,7 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
     WCHAR*		line;
     RECT                r;
     HBRUSH              hbr;
+    INT *dx;
 
     /* no font has been set up yet, don't worry about filling the bitmap,
      * we'll do it once a font is chosen
@@ -66,6 +67,7 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
      */
     if (!(line = HeapAlloc(GetProcessHeap(), 0, data->curcfg.sb_width * sizeof(WCHAR))))
         WINECON_Fatal("OOM\n");
+    dx = HeapAlloc( GetProcessHeap(), 0, data->curcfg.sb_width * sizeof(*dx) );
 
     hOldFont = SelectObject(PRIVATE(data)->hMemDC, PRIVATE(data)->hFont);
     for (j = upd_tp; j <= upd_bm; j++)
@@ -79,10 +81,11 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
 	    for (k = i; k < data->curcfg.sb_width && cell[k].Attributes == attr; k++)
 	    {
 		line[k - i] = cell[k].Char.UnicodeChar;
+                dx[k - i] = data->curcfg.cell_width;
 	    }
-            TextOutW(PRIVATE(data)->hMemDC, i * data->curcfg.cell_width,
-                     j * data->curcfg.cell_height, line, k - i);
-            if (PRIVATE(data)->ext_leading && 
+            ExtTextOutW( PRIVATE(data)->hMemDC, i * data->curcfg.cell_width, j * data->curcfg.cell_height,
+                         0, NULL, line, k - i, dx );
+            if (PRIVATE(data)->ext_leading &&
                 (hbr = CreateSolidBrush(WCUSER_ColorMap[(attr>>4)&0x0F])))
             {
                 r.left   = i * data->curcfg.cell_width;
@@ -96,6 +99,7 @@ static void WCUSER_FillMemDC(const struct inner_data* data, int upd_tp, int upd_
 	}
     }
     SelectObject(PRIVATE(data)->hMemDC, hOldFont);
+    HeapFree(GetProcessHeap(), 0, dx);
     HeapFree(GetProcessHeap(), 0, line);
 }
 
@@ -431,62 +435,25 @@ HFONT WCUSER_CopyFont(struct config_data* config, HWND hWnd, const LOGFONTW* lf,
     TEXTMETRICW tm;
     HDC         hDC;
     HFONT       hFont, hOldFont;
-    int         w, i, buf[256];
 
     if (!(hDC = GetDC(hWnd))) return NULL;
-    if (!(hFont = CreateFontIndirectW(lf))) goto err1;
-
+    if (!(hFont = CreateFontIndirectW(lf)))
+    {
+        ReleaseDC(hWnd, hDC);
+        return NULL;
+    }
     hOldFont = SelectObject(hDC, hFont);
     GetTextMetricsW(hDC, &tm);
-
-    /* FIXME:
-     * the current freetype engine (at least 2.0.x with x <= 8) and its implementation
-     * in Wine don't return adequate values for fixed fonts
-     * In Windows, those fonts are expected to return the same value for
-     *  - the average width
-     *  - the largest width
-     *  - the width of all characters in the font
-     * This isn't true in Wine. As a temporary workaround, we get as the width of the
-     * cell, the width of the first character in the font, after checking that all
-     * characters in the font have the same width (I hear paranoia coming)
-     * when this gets fixed, the code should be using tm.tmAveCharWidth
-     * or tm.tmMaxCharWidth as the cell width.
-     */
-    GetCharWidth32W(hDC, tm.tmFirstChar, tm.tmFirstChar, &w);
-    for (i = tm.tmFirstChar + 1; i <= tm.tmLastChar; i += sizeof(buf) / sizeof(buf[0]))
-    {
-        int j, k;
-
-        k = min(tm.tmLastChar - i, sizeof(buf) / sizeof(buf[0]) - 1);
-        GetCharWidth32W(hDC, i, i + k, buf);
-        for (j = 0; j <= k; j++)
-        {
-            if (buf[j] != w)
-            {
-                WINE_WARN("Non uniform cell width: [%d]=%d [%d]=%d\n"
-                          "This may be caused by old freetype libraries, >= 2.0.8 is recommended\n",
-                          i + j, buf[j], tm.tmFirstChar, w);
-                goto err;
-            }
-        }
-    }
     SelectObject(hDC, hOldFont);
     ReleaseDC(hWnd, hDC);
 
-    config->cell_width  = w;
+    config->cell_width  = tm.tmMaxCharWidth;
     config->cell_height = tm.tmHeight + tm.tmExternalLeading;
     config->font_weight = tm.tmWeight;
     lstrcpyW(config->face_name, lf->lfFaceName);
     if (el) *el = tm.tmExternalLeading;
 
     return hFont;
- err:
-    if (hDC && hOldFont) SelectObject(hDC, hOldFont);
-    if (hFont) DeleteObject(hFont);
- err1:
-    if (hDC) ReleaseDC(hWnd, hDC);
-
-    return NULL;
 }
 
 /******************************************************************
