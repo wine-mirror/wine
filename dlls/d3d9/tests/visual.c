@@ -14257,10 +14257,9 @@ static void shadow_test(void)
         0x05000051, 0xa00f0000, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, /* def c0, 0.0, 0.0, 0.0, 1.0   */
         0x02000001, 0x800f0001, 0xa0e40000,                                     /* mov r1, c0                   */
         0x03000042, 0x800f0000, 0xb0e40000, 0xa0e40800,                         /* texld r0, t0, s0             */
-        0x02000001, 0x80010001, 0x80e40000,                                     /* mov r1.x, r0                 */
-        0x03010042, 0x800f0000, 0xb0e40000, 0xa0e40800,                         /* texldp r0, t0, s0            */
-        0x02000001, 0x80020001, 0x80000000,                                     /* mov r1.y, r0.x               */
-        0x02000001, 0x800f0800, 0x80e40001,                                     /* mov 0C0, r1                  */
+        0x03010042, 0x800f0001, 0xb0e40000, 0xa0e40800,                         /* texldp r1, t0, s0            */
+        0x02000001, 0x80020000, 0x80000001,                                     /* mov r0.y, r1.x               */
+        0x02000001, 0x800f0800, 0x80e40000,                                     /* mov oC0, r0                  */
         0x0000ffff,                                                             /* end                          */
     };
     struct
@@ -14299,17 +14298,18 @@ static void shadow_test(void)
     }
     expected_colors[] =
     {
-        {400,  60, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00)},
-        {560, 180, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00)},
-        {560, 300, D3DCOLOR_ARGB(0x00, 0xff, 0x00, 0x00)},
-        {400, 420, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00)},
-        {240, 420, D3DCOLOR_ARGB(0x00, 0xff, 0xff, 0x00)},
-        { 80, 300, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00)},
-        { 80, 180, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00)},
-        {240,  60, D3DCOLOR_ARGB(0x00, 0x00, 0x00, 0x00)},
+        {400,  60, 0x00000000},
+        {560, 180, 0xffff00ff},
+        {560, 300, 0xffff00ff},
+        {400, 420, 0xffffffff},
+        {240, 420, 0xffffffff},
+        { 80, 300, 0x00000000},
+        { 80, 180, 0x00000000},
+        {240,  60, 0x00000000},
     };
 
     IDirect3DSurface9 *original_ds, *original_rt, *rt;
+    struct surface_readback rb;
     IDirect3DPixelShader9 *ps;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
@@ -14434,14 +14434,16 @@ static void shadow_test(void)
         ok(SUCCEEDED(hr), "SetTexture failed, hr %#x.\n", hr);
         IDirect3DTexture9_Release(texture);
 
+        get_rt_readback(original_rt, &rb);
         for (j = 0; j < sizeof(expected_colors) / sizeof(*expected_colors); ++j)
         {
-            D3DCOLOR color = getPixelColor(device, expected_colors[j].x, expected_colors[j].y);
+            D3DCOLOR color = get_readback_color(&rb, expected_colors[j].x, expected_colors[j].y);
             ok(color_match(color, expected_colors[j].color, 0),
                     "Expected color 0x%08x at (%u, %u) for format %s, got 0x%08x.\n",
                     expected_colors[j].color, expected_colors[j].x, expected_colors[j].y,
                     formats[i].name, color);
         }
+        release_surface_readback(&rb);
 
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
