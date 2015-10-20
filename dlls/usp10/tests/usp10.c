@@ -2267,15 +2267,17 @@ static void test_ScriptTextOut2(HDC hdc)
         ok (hr == S_OK, "ScriptShape should return S_OK not (%08x)\n", hr);
         ok (psc != NULL, "psc should not be null and have SCRIPT_CACHE buffer address\n");
         ok (pcGlyphs == cChars, "Chars in (%d) should equal Glyphs out (%d)\n", cChars, pcGlyphs);
-        if (hr ==0) {
+        if (hr == S_OK) {
+            BOOL ret;
+
             /* Note hdc is needed as glyph info is not yet in psc                  */
             hr = ScriptPlace(hdc2, &psc, pwOutGlyphs1, pcGlyphs, psva, &pItem[0].a, piAdvance,
                              pGoffset, pABC);
             ok (hr == S_OK, "Should return S_OK not (%08x)\n", hr);
 
             /*   key part!!!   cached dc is being deleted  */
-            hr = DeleteDC(hdc2);
-            ok(hr == 1, "DeleteDC should return 1 not %08x\n", hr);
+            ret = DeleteDC(hdc2);
+            ok(ret, "DeleteDC should return 1 not %d\n", ret);
 
             /* At this point the cached hdc (hdc2) has been destroyed,
              * however, we are passing in a *real* hdc (the original hdc).
