@@ -333,7 +333,8 @@ static BOOL WCUSER_AreFontsEqual(const struct config_data* config, const LOGFONT
 struct font_chooser
 {
     struct inner_data*	data;
-    int			done;
+    BOOL                check_screen_size;
+    BOOL                done;
 };
 
 /******************************************************************
@@ -341,11 +342,12 @@ struct font_chooser
  *
  * Returns true if the font described in tm is usable as a font for the renderer
  */
-BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRICW* tm, DWORD fontType)
+BOOL WCUSER_ValidateFontMetric(const struct inner_data* data, const TEXTMETRICW* tm,
+                               DWORD type, BOOL check_screen_size)
 {
     BOOL        ret = TRUE;
 
-    if (fontType & RASTER_FONTTYPE)
+    if (check_screen_size && (type & RASTER_FONTTYPE))
         ret = (tm->tmMaxCharWidth * data->curcfg.win_width < GetSystemMetrics(SM_CXSCREEN) &&
                tm->tmHeight * data->curcfg.win_height < GetSystemMetrics(SM_CYSCREEN));
     return ret && !tm->tmItalic && !tm->tmUnderlined && !tm->tmStruckOut &&
@@ -377,7 +379,7 @@ static int CALLBACK get_first_font_enum_2(const LOGFONTW* lf, const TEXTMETRICW*
     struct font_chooser*	fc = (struct font_chooser*)lParam;
 
     WCUSER_DumpTextMetric(tm, FontType);
-    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType))
+    if (WCUSER_ValidateFontMetric(fc->data, tm, FontType, fc->check_screen_size))
     {
         LOGFONTW mlf = *lf;
 
@@ -535,7 +537,11 @@ static void     WCUSER_SetFontPmt(struct inner_data* data, const WCHAR* font,
     /* try to find an acceptable font */
     WINE_WARN("Couldn't match the font from registry... trying to find one\n");
     fc.data = data;
-    fc.done = 0;
+    fc.check_screen_size = TRUE;
+    fc.done = FALSE;
+    EnumFontFamiliesW(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
+    if (fc.done) return;
+    fc.check_screen_size = FALSE;
     EnumFontFamiliesW(PRIVATE(data)->hMemDC, NULL, get_first_font_enum, (LPARAM)&fc);
     if (!fc.done) WINECON_Fatal("Couldn't find a decent font, aborting\n");
 }

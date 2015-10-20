@@ -300,7 +300,7 @@ static int CALLBACK font_enum_size2(const LOGFONTW* lf, const TEXTMETRICW* tm,
     struct dialog_info*	di = (struct dialog_info*)lParam;
 
     WCUSER_DumpTextMetric(tm, FontType);
-    if (WCUSER_ValidateFontMetric(di->data, tm, FontType))
+    if (WCUSER_ValidateFontMetric(di->data, tm, FontType, TRUE))
     {
 	di->nFont++;
     }
@@ -372,7 +372,7 @@ static int CALLBACK font_enum_size(const LOGFONTW* lf, const TEXTMETRICW* tm,
         return 0;
     }
 
-    if (WCUSER_ValidateFontMetric(di->data, tm, FontType))
+    if (WCUSER_ValidateFontMetric(di->data, tm, FontType, TRUE))
     {
 	int	idx = 0;
 
