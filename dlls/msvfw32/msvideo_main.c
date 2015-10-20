@@ -48,9 +48,12 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
 
 static inline const char *wine_dbgstr_fcc( DWORD fcc )
 {
-    return wine_dbg_sprintf("%c%c%c%c", 
-                            LOBYTE(LOWORD(fcc)), HIBYTE(LOWORD(fcc)),
-                            LOBYTE(HIWORD(fcc)), HIBYTE(HIWORD(fcc)));
+    char fcc_str[5] = {LOBYTE(LOWORD(fcc)), HIBYTE(LOWORD(fcc)),
+                       LOBYTE(HIWORD(fcc)), HIBYTE(HIWORD(fcc)), '\0'};
+    if (isalnum(fcc_str[0]) && isalnum(fcc_str[1])
+     && isalnum(fcc_str[2]) && isalnum(fcc_str[3]))
+        return wine_dbg_sprintf("%s", fcc_str);
+    return wine_dbg_sprintf("0x%08x", fcc);
 }
 
 static WINE_HIC*        MSVIDEO_FirstHic /* = NULL */;
