@@ -1215,6 +1215,11 @@ UINT X11DRV_GetSystemPaletteEntries( PHYSDEV dev, UINT start, UINT count, LPPALE
 {
     UINT i;
 
+    if (!palette_size)
+    {
+        dev = GET_NEXT_PHYSDEV(dev, pGetSystemPaletteEntries);
+        return dev->funcs->pGetSystemPaletteEntries(dev, start, count, entries);
+    }
     if (!entries) return palette_size;
     if (start >= palette_size) return 0;
     if (start + count >= palette_size) count = palette_size - start;
