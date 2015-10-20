@@ -1436,9 +1436,6 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
         return FALSE;
 
     *pc->lpbiIn = *lpbiIn;
-    pc->lpBitsPrev = HeapAlloc(GetProcessHeap(), 0, pc->lpbiIn->bmiHeader.biSizeImage);
-    if (!pc->lpBitsPrev)
-        goto error;
 
     pc->lpState = HeapAlloc(GetProcessHeap(), 0, sizeof(ICCOMPRESS));
     if (!pc->lpState)
@@ -1446,8 +1443,14 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
 
     pc->cbState = sizeof(ICCOMPRESS);
 
+    /* Buffer for compressed frame data */
     pc->lpBitsOut = HeapAlloc(GetProcessHeap(), 0, pc->lpbiOut->bmiHeader.biSizeImage);
     if (!pc->lpBitsOut)
+        goto error;
+
+    /* Buffer for previous compressed frame data */
+    pc->lpBitsPrev = HeapAlloc(GetProcessHeap(), 0, pc->lpbiOut->bmiHeader.biSizeImage);
+    if (!pc->lpBitsPrev)
         goto error;
 
     TRACE("Compvars:\n"
