@@ -245,10 +245,10 @@
 
  650 stdcall -noname PathIsSameRoot(ptr ptr) PathIsSameRootAW
 
- 651 stdcall -noname ReadCabinetState(long long) # OldReadCabinetState
- 652 stdcall -noname WriteCabinetState(long)
+ 651 stdcall -noname @(ptr long) ReadCabinetState # OldReadCabinetState
+ 652 stdcall -noname WriteCabinetState(ptr)
  653 stdcall -noname PathProcessCommand(long long long long) PathProcessCommandAW
- 654 stdcall @(long long) shell32_654 # ReadCabinetState@8
+ 654 stdcall ReadCabinetState(ptr long)
 
  660 stdcall -noname FileIconInit(long)
  680 stdcall IsUserAnAdmin()

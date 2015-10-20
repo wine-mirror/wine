@@ -1555,21 +1555,6 @@ BOOL WINAPI SHWaitForFileToOpen(
 }
 
 /************************************************************************
- *	@				[SHELL32.654]
- *
- * NOTES
- *  first parameter seems to be a pointer (same as passed to WriteCabinetState)
- *  second one could be a size (0x0c). The size is the same as the structure saved to
- *  HCU\Software\Microsoft\Windows\CurrentVersion\Explorer\CabinetState
- *  I'm (js) guessing: this one is just ReadCabinetState ;-)
- */
-HRESULT WINAPI shell32_654 (CABINETSTATE *cs, int length)
-{
-	TRACE("%p %d\n",cs,length);
-	return ReadCabinetState(cs,length);
-}
-
-/************************************************************************
  *	RLBuildListOfPaths			[SHELL32.146]
  *
  * NOTES
