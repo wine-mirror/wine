@@ -8690,6 +8690,7 @@ static void test_negative_fixedfunction_fog(void)
         ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
         hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP,
                 tests[i].pos_type | D3DFVF_DIFFUSE, tests[i].quad, 4, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
         hr = IDirect3DDevice7_EndScene(device);
         ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
 
