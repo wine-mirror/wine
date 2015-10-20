@@ -227,9 +227,8 @@ static DWORD WINAPI threadFunc1(LPVOID p)
 /* Double check that all threads really did run by validating that
    they have all written to the shared memory. There should be no race
    here, since all threads were synchronized after the write.*/
-   for(i=0;i<NUM_THREADS;i++) {
-     while(tstruct->threadmem[i]==0) ;
-   }
+   for (i = 0; i < NUM_THREADS; i++)
+      ok(tstruct->threadmem[i] != 0, "expected threadmem[%d] != 0\n", i);
 
    /* lstrlenA contains an exception handler so this makes sure exceptions work in threads */
    ok( lstrlenA( (char *)0xdeadbeef ) == 0, "lstrlenA: unexpected success\n" );
