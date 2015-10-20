@@ -6477,6 +6477,9 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
             proj = TRUE;
         }
 
+        if (settings->op[stage].tex_type == WINED3D_GL_RES_TYPE_TEX_CUBE)
+            proj = FALSE;
+
         switch (settings->op[stage].tex_type)
         {
             case WINED3D_GL_RES_TYPE_TEX_1D:
@@ -6537,6 +6540,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
                 coord_mask = "xyzw";
                 break;
         }
+        if (!needs_legacy_glsl_syntax(gl_info))
+            texture_function = proj ? "textureProj" : "texture";
 
         if (stage > 0
                 && (settings->op[stage - 1].cop == WINED3D_TOP_BUMPENVMAP
