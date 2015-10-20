@@ -319,9 +319,6 @@ static BOOL BUTTON_Paint(HTHEME theme, HWND hwnd, HDC hParamDC)
     ButtonState drawState;
     pfThemedPaint paint = btnThemedPaintFunc[ dwStyle & BUTTON_TYPE ];
 
-    if(!paint)
-        return FALSE;
-
     if(IsWindowEnabled(hwnd))
     {
         if(state & BST_PUSHED) drawState = STATE_PRESSED;
@@ -332,7 +329,7 @@ static BOOL BUTTON_Paint(HTHEME theme, HWND hwnd, HDC hParamDC)
     else drawState = STATE_DISABLED;
 
     hDC = hParamDC ? hParamDC : BeginPaint(hwnd, &ps);
-    paint(theme, hwnd, hDC, drawState, dtFlags, state & BST_FOCUS);
+    if (paint) paint(theme, hwnd, hDC, drawState, dtFlags, state & BST_FOCUS);
     if (!hParamDC) EndPaint(hwnd, &ps);
     return TRUE;
 }
