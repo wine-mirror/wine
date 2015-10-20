@@ -1431,13 +1431,15 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
      * it doesn't appear to be used though
      */
     DWORD ret;
+    ICCOMPRESS* icComp;
     pc->lpbiIn = HeapAlloc(GetProcessHeap(), 0, sizeof(BITMAPINFO));
     if (!pc->lpbiIn)
         return FALSE;
 
     *pc->lpbiIn = *lpbiIn;
 
-    pc->lpState = HeapAlloc(GetProcessHeap(), 0, sizeof(ICCOMPRESS));
+    pc->lpState = HeapAlloc(GetProcessHeap(), 0, sizeof(ICCOMPRESS)
+                            + sizeof(*icComp->lpckid) + sizeof(*icComp->lpdwFlags));
     if (!pc->lpState)
         goto error;
 
@@ -1469,17 +1471,20 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
     TRACE(" -- %x\n", ret);
     if (ret == ICERR_OK)
     {
-       ICCOMPRESS* icComp = pc->lpState;
-       /* Initialise some variables */
-       pc->lFrame = 0; pc->lKeyCount = 0;
+        icComp = pc->lpState;
+        /* Initialise some variables */
+        pc->lFrame = 0; pc->lKeyCount = 0;
 
-       icComp->lpbiOutput = &pc->lpbiOut->bmiHeader;
-       icComp->lpbiInput = &pc->lpbiIn->bmiHeader;
-       icComp->lpckid = NULL;
-       icComp->dwFrameSize = 0;
-       icComp->dwQuality = pc->lQ;
-       icComp->lpbiPrev = &pc->lpbiIn->bmiHeader;
-       return TRUE;
+        icComp->lpbiOutput = &pc->lpbiOut->bmiHeader;
+        icComp->lpbiInput = &pc->lpbiIn->bmiHeader;
+        icComp->lpckid = (DWORD *)(icComp + 1);
+        *icComp->lpckid = 0;
+        icComp->lpdwFlags = (DWORD *)((char *)(icComp + 1) + sizeof(*icComp->lpckid));
+        *icComp->lpdwFlags = 0;
+        icComp->dwFrameSize = 0;
+        icComp->dwQuality = pc->lQ;
+        icComp->lpbiPrev = &pc->lpbiIn->bmiHeader;
+        return TRUE;
     }
 error:
     clear_compvars(pc);
