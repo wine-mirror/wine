@@ -5189,7 +5189,7 @@ static void fill_fileinfo_from_face( GdiFont *font, Face *face )
         strcpyW(font->fileinfo->path, face->file);
     }
     else
-        memset(&font->fileinfo, 0, sizeof(*font->fileinfo) + len * sizeof(WCHAR));
+        memset(font->fileinfo, 0, sizeof(*font->fileinfo) + len * sizeof(WCHAR));
 }
 
 /*************************************************************
