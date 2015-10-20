@@ -1716,7 +1716,7 @@ GpStatus WINGDIPAPI GdipCreateBitmapFromHICON(HICON hicon, GpBitmap** bitmap)
                 dst_row += lockeddata.Stride;
             }
 
-            HeapFree(GetProcessHeap(), 0, bits);
+            heap_free(bits);
         }
         else
         {
@@ -2884,7 +2884,7 @@ GpStatus WINGDIPAPI GdipGetAllPropertyItems(GpImage *image, UINT size,
             memcpy(item_value, item->value, item_size);
             item_value += item_size;
 
-            HeapFree(GetProcessHeap(), 0, item);
+            heap_free(item);
         }
 
         PropVariantClear(&id);
