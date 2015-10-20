@@ -3745,7 +3745,6 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
         gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-        gl_info->gl_ops.gl.p_glTexParameteri(bind_target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
         gl_info->gl_ops.gl.p_glBindTexture(bind_target, old_binding);
 
         context_apply_fbo_state_blit(context, GL_FRAMEBUFFER,

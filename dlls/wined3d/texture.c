@@ -253,6 +253,9 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
         gl_tex->sampler_desc.min_filter = WINED3D_TEXF_POINT;
         gl_tex->sampler_desc.mip_filter = WINED3D_TEXF_NONE;
     }
+
+    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+        gl_info->gl_ops.gl.p_glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_INTENSITY);
 }
 
 /* Context activation is done by the caller. */
@@ -362,14 +365,9 @@ void wined3d_texture_apply_sampler_desc(struct wined3d_texture *texture,
     if (!sampler_desc->compare != !gl_tex->sampler_desc.compare)
     {
         if (sampler_desc->compare)
-        {
-            gl_info->gl_ops.gl.p_glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_LUMINANCE);
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
-        }
         else
-        {
             gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_COMPARE_MODE_ARB, GL_NONE);
-        }
         gl_tex->sampler_desc.compare = sampler_desc->compare;
     }
 
