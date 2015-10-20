@@ -2855,7 +2855,7 @@ static HRESULT WINAPI xmlreader_GetDepth(IXmlReader* iface, UINT *depth)
 static BOOL WINAPI xmlreader_IsEOF(IXmlReader* iface)
 {
     FIXME("(%p): stub\n", iface);
-    return E_NOTIMPL;
+    return FALSE;
 }
 
 static const struct IXmlReaderVtbl xmlreader_vtbl =
