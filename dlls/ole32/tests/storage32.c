@@ -513,6 +513,7 @@ static void test_storage_stream(void)
     ULARGE_INTEGER p;
     unsigned char buffer[0x100];
     IUnknown *unk;
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -691,8 +692,8 @@ static void test_storage_stream(void)
         IStorage_Release(stg);
     }
 
-    r = DeleteFileA(filenameA);
-    ok(r, "file should exist\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "file should exist\n");
 }
 
 static BOOL touch_file(LPCSTR filename)
@@ -739,6 +740,7 @@ static void test_open_storage(void)
     IStorage *stg = NULL, *stg2 = NULL;
     HRESULT r;
     DWORD stgm;
+    BOOL ret;
 
     /* try opening a zero length file - it should stay zero length */
     DeleteFileA(filenameA);
@@ -898,8 +900,8 @@ static void test_open_storage(void)
     r = StgOpenStorage( filename, NULL, STGM_NOSNAPSHOT | STGM_PRIORITY, NULL, 0, &stg);
     ok(r == STG_E_INVALIDFLAG, "should fail\n");
 
-    r = DeleteFileA(filenameA);
-    ok(r, "file didn't exist\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "file didn't exist\n");
 }
 
 static void test_storage_suminfo(void)
@@ -1397,6 +1399,7 @@ static void test_transact(void)
     static const WCHAR stmname2[] = { 'F','O','O',0 };
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
     static const WCHAR stgname2[] = { 'T','E','M','P','S','T','G',0 };
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -1517,8 +1520,8 @@ static void test_transact(void)
 
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_substorage_share(void)
@@ -1529,6 +1532,7 @@ static void test_substorage_share(void)
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
     static const WCHAR othername[] = { 'N','E','W','N','A','M','E',0 };
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -1608,8 +1612,8 @@ static void test_substorage_share(void)
 
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_revert(void)
@@ -1622,6 +1626,7 @@ static void test_revert(void)
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
     static const WCHAR stgname2[] = { 'T','E','M','P','S','T','G',0 };
     STATSTG statstg;
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -1739,8 +1744,8 @@ static void test_revert(void)
 
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 
     /* Revert only invalidates objects in transacted mode */
     r = StgCreateDocfile( filename, STGM_CREATE | STGM_SHARE_EXCLUSIVE |
@@ -1759,8 +1764,8 @@ static void test_revert(void)
     IStream_Release(stm);
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_parent_free(void)
@@ -1772,6 +1777,7 @@ static void test_parent_free(void)
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
     ULONG ref;
     STATSTG statstg;
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -1821,8 +1827,8 @@ static void test_parent_free(void)
 
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_nonroot_transacted(void)
@@ -1833,6 +1839,7 @@ static void test_nonroot_transacted(void)
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
     static const WCHAR stmname2[] = { 'F','O','O',0 };
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -1941,8 +1948,8 @@ static void test_nonroot_transacted(void)
 
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_ReadClassStm(void)
@@ -2925,6 +2932,7 @@ static void test_rename(void)
     static const WCHAR stgname2[] = { 'S','T','G',0 };
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
     static const WCHAR stmname2[] = { 'E','N','T','S',0 };
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -2981,8 +2989,8 @@ static void test_rename(void)
 
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_toplevel_stat(void)
@@ -3068,6 +3076,7 @@ static void test_substorage_enum(void)
     HRESULT r;
     ULONG ref;
     static const WCHAR stgname[] = { 'P','E','R','M','S','T','G',0 };
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -3103,8 +3112,8 @@ static void test_substorage_enum(void)
 
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_copyto_locking(void)
@@ -3115,6 +3124,7 @@ static void test_copyto_locking(void)
     static const WCHAR stgname[] = { 'S','T','G','1',0 };
     static const WCHAR stgname2[] = { 'S','T','G','2',0 };
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -3154,8 +3164,8 @@ static void test_copyto_locking(void)
     IStorage_Release(stg2);
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_copyto_recursive(void)
@@ -3164,6 +3174,7 @@ static void test_copyto_recursive(void)
     HRESULT r;
     static const WCHAR stgname[] = { 'S','T','G','1',0 };
     static const WCHAR stgname2[] = { 'S','T','G','2',0 };
+    BOOL ret;
 
     DeleteFileA(filenameA);
 
@@ -3205,8 +3216,8 @@ static void test_copyto_recursive(void)
     IStorage_Release(stg2);
     IStorage_Release(stg);
 
-    r = DeleteFileA(filenameA);
-    ok( r == TRUE, "deleted file\n");
+    ret = DeleteFileA(filenameA);
+    ok(ret, "deleted file\n");
 }
 
 static void test_hglobal_storage_creation(void)
