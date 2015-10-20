@@ -1445,6 +1445,17 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
 
     pc->cbState = sizeof(ICCOMPRESS);
 
+    TRACE("Input: %ux%u, fcc %s, bpp %u, size %u\n",
+          pc->lpbiIn->bmiHeader.biWidth, pc->lpbiIn->bmiHeader.biHeight,
+          wine_dbgstr_fcc(pc->lpbiIn->bmiHeader.biCompression),
+          pc->lpbiIn->bmiHeader.biBitCount,
+          pc->lpbiIn->bmiHeader.biSizeImage);
+    TRACE("Output: %ux%u, fcc %s, bpp %u, size %u\n",
+          pc->lpbiOut->bmiHeader.biWidth, pc->lpbiOut->bmiHeader.biHeight,
+          wine_dbgstr_fcc(pc->lpbiOut->bmiHeader.biCompression),
+          pc->lpbiOut->bmiHeader.biBitCount,
+          pc->lpbiOut->bmiHeader.biSizeImage);
+
     /* Buffer for compressed frame data */
     pc->lpBitsOut = HeapAlloc(GetProcessHeap(), 0, pc->lpbiOut->bmiHeader.biSizeImage);
     if (!pc->lpBitsOut)
@@ -1456,15 +1467,14 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
         goto error;
 
     TRACE("Compvars:\n"
-          "\tpc:\n"
           "\tsize: %i\n"
-          "\tflags: %i\n"
+          "\tflags: 0x%x\n"
           "\thic: %p\n"
-          "\ttype: %x\n"
-          "\thandler: %x\n"
+          "\ttype: 0x%x\n"
+          "\thandler: %s\n"
           "\tin/out: %p/%p\n"
-          "key/data/quality: %i/%i/%i\n",
-	     pc->cbSize, pc->dwFlags, pc->hic, pc->fccType, pc->fccHandler,
+          "\tkey/data/quality: %i/%i/%i\n",
+	     pc->cbSize, pc->dwFlags, pc->hic, pc->fccType, wine_dbgstr_fcc(pc->fccHandler),
 	     pc->lpbiIn, pc->lpbiOut, pc->lKey, pc->lDataRate, pc->lQ);
 
     ret = ICSendMessage(pc->hic, ICM_COMPRESS_BEGIN, (DWORD_PTR)pc->lpbiIn, (DWORD_PTR)pc->lpbiOut);
