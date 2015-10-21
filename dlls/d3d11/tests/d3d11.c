@@ -248,6 +248,8 @@ static void test_create_device(void)
 
 static void test_device_interfaces(void)
 {
+    IDXGIAdapter *dxgi_adapter;
+    IDXGIDevice *dxgi_device;
     ID3D11Device *device;
     IUnknown *iface;
     ULONG refcount;
@@ -270,9 +272,21 @@ static void test_device_interfaces(void)
         ok(SUCCEEDED(hr), "Device should implement IDXGIObject interface, hr %#x.\n", hr);
         IUnknown_Release(iface);
 
-        hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&iface);
-        ok(SUCCEEDED(hr), "Device should implement IDXGIDevice interface, hr %#x.\n", hr);
+        hr = ID3D11Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+        ok(SUCCEEDED(hr), "Device should implement IDXGIDevice.\n");
+        hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter, (void **)&dxgi_adapter);
+        ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter.\n");
+        hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory, (void **)&iface);
+        ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory.\n");
         IUnknown_Release(iface);
+        IDXGIAdapter_Release(dxgi_adapter);
+        hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter1, (void **)&dxgi_adapter);
+        ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter1.\n");
+        hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory1, (void **)&iface);
+        ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory1.\n");
+        IUnknown_Release(iface);
+        IDXGIAdapter_Release(dxgi_adapter);
+        IDXGIDevice_Release(dxgi_device);
 
         hr = ID3D11Device_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
         ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
