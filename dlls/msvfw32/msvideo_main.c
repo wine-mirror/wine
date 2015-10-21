@@ -1415,8 +1415,8 @@ static void clear_compvars(PCOMPVARS pc)
     pc->lpbiIn = pc->lpBitsPrev = pc->lpBitsOut = pc->lpState = NULL;
     if (pc->dwFlags & 0x80000000)
     {
-        HeapFree(GetProcessHeap(), 0, pc->lpBitsOut);
-        pc->lpBitsOut = NULL;
+        HeapFree(GetProcessHeap(), 0, pc->lpbiOut);
+        pc->lpbiOut = NULL;
         pc->dwFlags &= ~0x80000000;
     }
 }
@@ -1461,6 +1461,8 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
         pc->lpbiOut = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFO));
         if (!pc->lpbiOut)
             goto error;
+        /* Flag to show that we allocated lpbiOut for proper cleanup */
+        pc->dwFlags |= 0x80000000;
 
         ret = ICSendMessage(pc->hic, ICM_COMPRESS_GET_FORMAT,
                             (DWORD_PTR)pc->lpbiIn, (DWORD_PTR)pc->lpbiOut);
@@ -1479,8 +1481,6 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
             pc->lpbiOut->bmiHeader.biSizeImage = max(8192, pc->lpbiIn->bmiHeader.biSizeImage);
             ERR("Bad codec! Invalid output frame size, guessing from input\n");
         }
-        /* Flag to show that we allocated lpbiOutput for proper cleanup */
-        pc->dwFlags |= 0x80000000;
     }
 
     TRACE("Input: %ux%u, fcc %s, bpp %u, size %u\n",
