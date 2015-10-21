@@ -145,6 +145,11 @@ static inline BOOL is_complex_fixup(struct color_fixup_desc fixup)
     return fixup.x_source == CHANNEL_SOURCE_COMPLEX0 || fixup.x_source == CHANNEL_SOURCE_COMPLEX1;
 }
 
+static inline BOOL is_scaling_fixup(struct color_fixup_desc fixup)
+{
+    return fixup.x_sign_fixup || fixup.y_sign_fixup || fixup.z_sign_fixup || fixup.w_sign_fixup;
+}
+
 static inline BOOL is_same_fixup(struct color_fixup_desc f1, struct color_fixup_desc f2)
 {
     return f1.x_sign_fixup == f2.x_sign_fixup && f1.x_source == f2.x_source

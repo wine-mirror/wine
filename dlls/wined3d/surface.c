@@ -1008,6 +1008,10 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
             if (!((dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FBO_ATTACHABLE)
                     || (dst_usage & WINED3DUSAGE_RENDERTARGET)))
                 return FALSE;
+            if (!(src_format->id == dst_format->id
+                    || (is_identity_fixup(src_format->color_fixup)
+                    && is_identity_fixup(dst_format->color_fixup))))
+                return FALSE;
             break;
 
         case WINED3D_BLIT_OP_DEPTH_BLIT:
@@ -1015,16 +1019,17 @@ static BOOL fbo_blit_supported(const struct wined3d_gl_info *gl_info, enum wined
                 return FALSE;
             if (!(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL)))
                 return FALSE;
+            /* Accept pure swizzle fixups for depth formats. In general we
+             * ignore the stencil component (if present) at the moment and the
+             * swizzle is not relevant with just the depth component. */
+            if (is_complex_fixup(src_format->color_fixup) || is_complex_fixup(dst_format->color_fixup)
+                    || is_scaling_fixup(src_format->color_fixup) || is_scaling_fixup(dst_format->color_fixup))
+                return FALSE;
             break;
 
         default:
             return FALSE;
     }
-
-    if (!(src_format->id == dst_format->id
-            || (is_identity_fixup(src_format->color_fixup)
-            && is_identity_fixup(dst_format->color_fixup))))
-        return FALSE;
 
     return TRUE;
 }
