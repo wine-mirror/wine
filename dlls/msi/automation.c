@@ -1437,7 +1437,7 @@ static HRESULT session_invoke(
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
                 V_VT(pVarResult) = VT_BOOL;
-                V_BOOL(pVarResult) = MsiGetMode(This->msiHandle, V_I4(&varg0));
+                V_BOOL(pVarResult) = MsiGetMode(This->msiHandle, V_I4(&varg0)) ? VARIANT_TRUE : VARIANT_FALSE;
             } else if (wFlags & DISPATCH_PROPERTYPUT) {
                 hr = DispGetParam(pDispParams, 0, VT_I4, &varg0, puArgErr);
                 if (FAILED(hr)) return hr;
@@ -2053,7 +2053,7 @@ static HRESULT InstallerImpl_RegistryValue(WORD wFlags,
         /* Return VT_BOOL clarifying whether registry key exists or not. */
         case VT_EMPTY:
             V_VT(pVarResult) = VT_BOOL;
-            V_BOOL(pVarResult) = (ret == ERROR_SUCCESS);
+            V_BOOL(pVarResult) = (ret == ERROR_SUCCESS) ? VARIANT_TRUE : VARIANT_FALSE;
             break;
 
         /* Return the value of specified key if it exists. */
