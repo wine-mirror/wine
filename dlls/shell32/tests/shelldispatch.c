@@ -829,6 +829,46 @@ if (0) { /* crashes on winxp/win2k3 */
     IShellDispatch_Release(sd);
 }
 
+static void test_ShellExecute(void)
+{
+    HRESULT hr;
+    IShellDispatch2 *sd;
+    BSTR name;
+    VARIANT args, dir, op, show;
+
+    static const WCHAR regW[] = {'r','e','g',0};
+
+    hr = CoCreateInstance(&CLSID_Shell, NULL, CLSCTX_INPROC_SERVER,
+        &IID_IShellDispatch2, (void**)&sd);
+    if (hr != S_OK)
+    {
+        win_skip("IShellDispatch2 not supported\n");
+        return;
+    }
+
+    VariantInit(&args);
+    VariantInit(&dir);
+    VariantInit(&op);
+    VariantInit(&show);
+
+    V_VT(&show) = VT_I4;
+    V_I4(&show) = 0;
+
+    name = SysAllocString(regW);
+
+    hr = IShellDispatch2_ShellExecute(sd, name, args, dir, op, show);
+    ok(hr == S_OK, "ShellExecute failed: %08x\n", hr);
+
+    /* test invalid value for show */
+    V_VT(&show) = VT_BSTR;
+    V_BSTR(&show) = name;
+
+    hr = IShellDispatch2_ShellExecute(sd, name, args, dir, op, show);
+    ok(hr == S_OK, "ShellExecute failed: %08x\n", hr);
+
+    SysFreeString(name);
+}
+
 START_TEST(shelldispatch)
 {
     HRESULT r;
@@ -845,6 +885,7 @@ START_TEST(shelldispatch)
     test_ShellWindows();
     test_ParseName();
     test_Verbs();
+    test_ShellExecute();
 
     CoUninitialize();
 }

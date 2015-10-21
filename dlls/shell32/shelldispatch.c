@@ -1569,11 +1569,45 @@ static HRESULT WINAPI ShellDispatch_IsRestricted(IShellDispatch6 *iface, BSTR gr
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI ShellDispatch_ShellExecute(IShellDispatch6 *iface, BSTR file, VARIANT args, VARIANT dir,
-        VARIANT op, VARIANT show)
+static HRESULT WINAPI ShellDispatch_ShellExecute(IShellDispatch6 *iface,
+        BSTR file, VARIANT v_args, VARIANT v_dir, VARIANT v_op, VARIANT v_show)
 {
-    FIXME("(%s): stub\n", debugstr_w(file));
-    return E_NOTIMPL;
+    VARIANT args_str, dir_str, op_str, show_int;
+    WCHAR *args = NULL, *dir = NULL, *op = NULL;
+    INT show = 0;
+    HINSTANCE ret;
+
+    TRACE("(%s, %s, %s, %s, %s)\n", debugstr_w(file), debugstr_variant(&v_args),
+            debugstr_variant(&v_dir), debugstr_variant(&v_op), debugstr_variant(&v_show));
+
+    VariantInit(&args_str);
+    VariantChangeType(&args_str, &v_args, 0, VT_BSTR);
+    if (V_VT(&args_str) == VT_BSTR)
+        args = V_BSTR(&args_str);
+
+    VariantInit(&dir_str);
+    VariantChangeType(&dir_str, &v_dir, 0, VT_BSTR);
+    if (V_VT(&dir_str) == VT_BSTR)
+        dir = V_BSTR(&dir_str);
+
+    VariantInit(&op_str);
+    VariantChangeType(&op_str, &v_op, 0, VT_BSTR);
+    if (V_VT(&op_str) == VT_BSTR)
+        op = V_BSTR(&op_str);
+
+    VariantInit(&show_int);
+    VariantChangeType(&show_int, &v_show, 0, VT_I4);
+    if (V_VT(&show_int) == VT_I4)
+        show = V_I4(&show_int);
+
+    ret = ShellExecuteW(NULL, op, file, args, dir, show);
+
+    VariantClear(&args_str);
+    VariantClear(&dir_str);
+    VariantClear(&op_str);
+    VariantClear(&show_int);
+
+    return (ULONG_PTR)ret > 32 ? S_OK : S_FALSE;
 }
 
 static HRESULT WINAPI ShellDispatch_FindPrinter(IShellDispatch6 *iface, BSTR name, BSTR location, BSTR model)
