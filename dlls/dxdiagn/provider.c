@@ -335,7 +335,7 @@ static inline HRESULT add_bool_property(IDxDiagContainerImpl_Container *node, co
         return E_OUTOFMEMORY;
 
     V_VT(&prop->vProp) = VT_BOOL;
-    V_BOOL(&prop->vProp) = data;
+    V_BOOL(&prop->vProp) = data ? VARIANT_TRUE : VARIANT_FALSE;
 
     list_add_tail(&node->properties, &prop->entry);
     ++node->nProperties;
