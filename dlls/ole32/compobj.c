@@ -3271,18 +3271,26 @@ static void init_multi_qi(DWORD count, MULTI_QI *mqi)
   }
 }
 
-static HRESULT return_multi_qi(IUnknown *unk, DWORD count, MULTI_QI *mqi)
+static HRESULT return_multi_qi(IUnknown *unk, DWORD count, MULTI_QI *mqi, BOOL include_unk)
 {
-  ULONG index, fetched = 0;
+  ULONG index = 0, fetched = 0;
 
-  for (index = 0; index < count; index++)
+  if (include_unk)
+  {
+    mqi[0].hr = S_OK;
+    mqi[0].pItf = unk;
+    index = fetched = 1;
+  }
+
+  for (; index < count; index++)
   {
     mqi[index].hr = IUnknown_QueryInterface(unk, mqi[index].pIID, (void**)&mqi[index].pItf);
     if (mqi[index].hr == S_OK)
       fetched++;
   }
 
-  IUnknown_Release(unk);
+  if (!include_unk)
+      IUnknown_Release(unk);
 
   if (fetched == 0)
     return E_NOINTERFACE;
@@ -3321,13 +3329,13 @@ HRESULT WINAPI DECLSPEC_HOTPATCH CoCreateInstanceEx(
   hr = CoCreateInstance(rclsid,
 			pUnkOuter,
 			dwClsContext,
-			&IID_IUnknown,
+			pResults[0].pIID,
 			(VOID**)&pUnk);
 
   if (hr != S_OK)
     return hr;
 
-  return return_multi_qi(pUnk, cmq, pResults);
+  return return_multi_qi(pUnk, cmq, pResults, TRUE);
 }
 
 /***********************************************************************
@@ -3390,7 +3398,7 @@ HRESULT WINAPI CoGetInstanceFromFile(
       IPersistFile_Release(pf);
   }
 
-  return return_multi_qi(unk, count, results);
+  return return_multi_qi(unk, count, results, FALSE);
 }
 
 /***********************************************************************
@@ -3453,7 +3461,7 @@ HRESULT WINAPI CoGetInstanceFromIStorage(
       IPersistStorage_Release(ps);
   }
 
-  return return_multi_qi(unk, count, results);
+  return return_multi_qi(unk, count, results, FALSE);
 }
 
 /***********************************************************************

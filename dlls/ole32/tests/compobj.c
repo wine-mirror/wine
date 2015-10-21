@@ -152,6 +152,7 @@ static ULONG WINAPI Test_IClassFactory_Release(LPCLASSFACTORY iface)
     return 1; /* non-heap-based object */
 }
 
+static IID create_instance_iid;
 static HRESULT WINAPI Test_IClassFactory_CreateInstance(
     LPCLASSFACTORY iface,
     IUnknown *pUnkOuter,
@@ -159,6 +160,7 @@ static HRESULT WINAPI Test_IClassFactory_CreateInstance(
     LPVOID *ppvObj)
 {
     *ppvObj = NULL;
+    create_instance_iid = *riid;
     if (pUnkOuter) return CLASS_E_NOAGGREGATION;
     return E_NOINTERFACE;
 }
@@ -785,6 +787,30 @@ static void test_CoGetClassObject(void)
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
     }
+
+    CoUninitialize();
+}
+
+static void test_CoCreateInstanceEx(void)
+{
+    MULTI_QI qi_res = { &IID_IMoniker };
+    DWORD cookie;
+    HRESULT hr;
+
+    CoInitialize(NULL);
+
+    hr = CoRegisterClassObject(&CLSID_WineOOPTest, (IUnknown *)&Test_ClassFactory,
+                               CLSCTX_INPROC_SERVER, REGCLS_MULTIPLEUSE, &cookie);
+    ok_ole_success(hr, "CoRegisterClassObject");
+
+    create_instance_iid = IID_NULL;
+    hr = CoCreateInstanceEx(&CLSID_WineOOPTest, NULL, CLSCTX_INPROC_SERVER, NULL, 1, &qi_res);
+    ok(hr == E_NOINTERFACE, "CoCreateInstanceEx failed: %08x\n", hr);
+    ok(IsEqualGUID(&create_instance_iid, qi_res.pIID), "Unexpected CreateInstance iid %s\n",
+       wine_dbgstr_guid(&create_instance_iid));
+
+    hr = CoRevokeClassObject(cookie);
+    ok_ole_success(hr, "CoRevokeClassObject");
 
     CoUninitialize();
 }
@@ -2636,6 +2662,7 @@ START_TEST(compobj)
     test_CoCreateInstance();
     test_ole_menu();
     test_CoGetClassObject();
+    test_CoCreateInstanceEx();
     test_CoRegisterMessageFilter();
     test_CoRegisterPSClsid();
     test_CoGetPSClsid();
