@@ -48,6 +48,8 @@ static const char *cups_duplexes[3] =
     cups_two_sided_long,    /* DMDUP_VERTICAL */
     cups_two_sided_short    /* DMDUP_HORIZONTAL */
 };
+static const char cups_collate_false[] = "%cupsJobTicket: collate=false\n";
+static const char cups_collate_true[] = "%cupsJobTicket: collate=true\n";
 
 static const char psheader[] = /* title llx lly urx ury orientation */
 "%%%%Creator: Wine PostScript Driver\n"
@@ -364,6 +366,14 @@ static void write_cups_job_ticket( PHYSDEV dev, const struct ticket_info *info )
                         physDev->Devmode->dmPublic.u1.s1.dmCopies );
         if (len > 0 && len < sizeof(buf))
             write_spool( dev, buf, len );
+
+        if (physDev->Devmode->dmPublic.dmFields & DM_COLLATE)
+        {
+            if (physDev->Devmode->dmPublic.dmCollate == DMCOLLATE_FALSE)
+                write_spool( dev, cups_collate_false, sizeof(cups_collate_false) - 1 );
+            else if (physDev->Devmode->dmPublic.dmCollate == DMCOLLATE_TRUE)
+                write_spool( dev, cups_collate_true, sizeof(cups_collate_true) - 1 );
+        }
     }
 }
 
