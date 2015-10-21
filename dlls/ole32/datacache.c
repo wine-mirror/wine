@@ -408,7 +408,7 @@ static HRESULT read_clipformat(IStream *stream, CLIPFORMAT *clipformat)
     if (length == -1)
     {
         DWORD cf;
-        hr = IStream_Read(stream, &cf, sizeof(cf), 0);
+        hr = IStream_Read(stream, &cf, sizeof(cf), &read);
         if (hr != S_OK || read != sizeof(cf))
             return DV_E_CLIPFORMAT;
         *clipformat = cf;
