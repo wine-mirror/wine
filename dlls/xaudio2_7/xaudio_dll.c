@@ -2723,7 +2723,11 @@ static void do_engine_tick(IXAudio2Impl *This)
     }
 
     nframes = This->period_frames * 3 - pad;
-    TRACE("going to render %u frames\n", nframes);
+
+    TRACE("frames available: %u\n", nframes);
+
+    if(nframes < This->period_frames)
+        return;
 
     if(!nframes)
         return;
