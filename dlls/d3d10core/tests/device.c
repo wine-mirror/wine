@@ -202,6 +202,62 @@ static void test_feature_level(void)
     ID3D10Device_Release(device10);
 }
 
+static void test_device_interfaces(void)
+{
+    IDXGIAdapter *dxgi_adapter;
+    IDXGIDevice *dxgi_device;
+    ID3D10Device *device;
+    IUnknown *iface;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = ID3D10Device_QueryInterface(device, &IID_IUnknown, (void **)&iface);
+    ok(SUCCEEDED(hr), "Device should implement IUnknown interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
+
+    hr = ID3D10Device_QueryInterface(device, &IID_IDXGIObject, (void **)&iface);
+    ok(SUCCEEDED(hr), "Device should implement IDXGIObject interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
+
+    hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+    ok(SUCCEEDED(hr), "Device should implement IDXGIDevice.\n");
+    hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter, (void **)&dxgi_adapter);
+    ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter.\n");
+    hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory, (void **)&iface);
+    ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory.\n");
+    IUnknown_Release(iface);
+    IUnknown_Release(dxgi_adapter);
+    hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter1, (void **)&dxgi_adapter);
+    ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter1.\n");
+    hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory1, (void **)&iface);
+    ok(hr == E_NOINTERFACE, "Adapter parent should not implement IDXGIFactory1.\n");
+    IUnknown_Release(dxgi_adapter);
+    IUnknown_Release(dxgi_device);
+
+    hr = ID3D10Device_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
+    ok(SUCCEEDED(hr), "Device should implement ID3D10Multithread interface, hr %#x.\n", hr);
+    IUnknown_Release(iface);
+
+    hr = ID3D10Device_QueryInterface(device, &IID_ID3D10Device1, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Device should implement ID3D10Device1 interface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    hr = ID3D10Device_QueryInterface(device, &IID_ID3D11Device, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Device should implement ID3D11Device interface, hr %#x.\n", hr);
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+    refcount = ID3D10Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_create_texture2d(void)
 {
     ULONG refcount, expected_refcount;
@@ -4215,6 +4271,7 @@ static void test_update_subresource(void)
 START_TEST(device)
 {
     test_feature_level();
+    test_device_interfaces();
     test_create_texture2d();
     test_texture2d_interfaces();
     test_create_texture3d();
