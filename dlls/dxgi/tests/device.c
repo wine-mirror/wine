@@ -54,53 +54,6 @@ success:
     return dxgi_device;
 }
 
-static void test_device_interfaces(void)
-{
-    IDXGIDevice *device;
-    IUnknown *iface;
-    ULONG refcount;
-    HRESULT hr;
-
-    if (!(device = create_device()))
-    {
-        skip("Failed to create device, skipping tests.\n");
-        return;
-    }
-
-    hr = IDXGIDevice_QueryInterface(device, &IID_IUnknown, (void **)&iface);
-    ok(SUCCEEDED(hr), "Failed to query IUnknown interface, hr %#x.\n", hr);
-    IUnknown_Release(iface);
-
-    hr = IDXGIDevice_QueryInterface(device, &IID_IDXGIObject, (void **)&iface);
-    ok(SUCCEEDED(hr), "Failed to query IDXGIObject interface, hr %#x.\n", hr);
-    IUnknown_Release(iface);
-
-    hr = IDXGIDevice_QueryInterface(device, &IID_IDXGIDevice, (void **)&iface);
-    ok(SUCCEEDED(hr), "Failed to query IDXGIDevice interface, hr %#x.\n", hr);
-    IUnknown_Release(iface);
-
-    hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device, (void **)&iface);
-    ok(SUCCEEDED(hr), "Failed to query ID3D10Device interface, hr %#x.\n", hr);
-    IUnknown_Release(iface);
-
-    hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
-    ok(SUCCEEDED(hr), "Failed to query ID3D10Multithread interface, hr %#x.\n", hr);
-    IUnknown_Release(iface);
-
-    if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_ID3D10Device1, (void **)&iface)))
-        IUnknown_Release(iface);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Failed to query ID3D10Device1 interface, hr %#x.\n", hr);
-
-    if (SUCCEEDED(hr = IDXGIDevice_QueryInterface(device, &IID_ID3D11Device, (void **)&iface)))
-        IUnknown_Release(iface);
-    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
-            "Failed to query ID3D11Device interface, hr %#x.\n", hr);
-
-    refcount = IDXGIDevice_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
-}
-
 static void test_adapter_desc(void)
 {
     DXGI_ADAPTER_DESC1 desc1;
@@ -1270,7 +1223,6 @@ START_TEST(device)
 
     test_adapter_desc();
     test_check_interface_support();
-    test_device_interfaces();
     test_create_surface();
     test_parents();
     test_output();
