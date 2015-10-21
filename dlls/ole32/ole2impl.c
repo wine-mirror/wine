@@ -113,6 +113,7 @@ static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf, BOOL 
     init_fmtetc(&fmt, embedded_object_clipboard_format, TYMED_ISTORAGE);
     med.tymed = TYMED_ISTORAGE;
     med.u.pstg = stg;
+    med.pUnkForRelease = NULL;
     hr = IDataObject_GetDataHere(data, &fmt, &med);
     if(SUCCEEDED(hr))
     {
@@ -124,6 +125,7 @@ static HRESULT get_storage(IDataObject *data, IStorage *stg, UINT *src_cf, BOOL 
     init_fmtetc(&fmt, embed_source_clipboard_format, TYMED_ISTORAGE);
     med.tymed = TYMED_ISTORAGE;
     med.u.pstg = stg;
+    med.pUnkForRelease = NULL;
     hr = IDataObject_GetDataHere(data, &fmt, &med);
     if(SUCCEEDED(hr))
     {
