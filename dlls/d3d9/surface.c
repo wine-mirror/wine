@@ -379,7 +379,7 @@ void surface_init(struct d3d9_surface *surface, struct wined3d_texture *wined3d_
         IDirect3DBaseTexture9_Release(texture);
     }
 
-    wined3d_resource_get_desc(wined3d_surface_get_resource(wined3d_surface), &desc);
+    wined3d_resource_get_desc(wined3d_texture_get_resource(wined3d_texture), &desc);
     switch (d3dformat_from_wined3dformat(desc.format))
     {
         case D3DFMT_A8R8G8B8:
