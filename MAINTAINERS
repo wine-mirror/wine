@@ -163,3 +163,9 @@ F:	dlls/vbscript/
 XML parsing
 M:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/msxml*/
+
+THE REST
+M:	Alexandre Julliard <julliard@winehq.org>
+P:	Sebastian Lackner <sebastian@fds-team.de>
+F:	*
+F:	*/
