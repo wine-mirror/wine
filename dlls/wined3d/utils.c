@@ -2533,6 +2533,13 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     gl_info->formats[idx].height_scale.denominator = 2;
     gl_info->formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_NV12);
 
+    if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    {
+        idx = getFmtIdx(WINED3DFMT_INTZ);
+        gl_info->formats[idx].color_fixup = create_color_fixup_desc(
+                0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X);
+    }
+
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
     {
         idx = getFmtIdx(WINED3DFMT_P8_UINT);
