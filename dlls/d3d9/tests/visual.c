@@ -16219,6 +16219,7 @@ static void resz_test(void)
     IDirect3DSurface9_Release(ds);
     hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, D3DFMT_D24S8,
             D3DMULTISAMPLE_NONE, 0, TRUE, &ds, NULL);
+    ok(SUCCEEDED(hr), "Failed to create depth stencil surface, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetRenderTarget(device, 0, readback);
     ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
@@ -19777,6 +19778,7 @@ static void test_depthbias(void)
 
         hr = IDirect3DDevice9_CreateDepthStencilSurface(device, 640, 480, formats[i],
                 D3DMULTISAMPLE_NONE, 0, FALSE, &ds, NULL);
+        ok(SUCCEEDED(hr), "Failed to create depth stencil surface, hr %#x.\n", hr);
         hr = IDirect3DDevice9_SetDepthStencilSurface(device, ds);
         ok(SUCCEEDED(hr), "Failed to set depth stencil surface, hr %#x.\n", hr);
         hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0x00000000, 0.5f, 0);
