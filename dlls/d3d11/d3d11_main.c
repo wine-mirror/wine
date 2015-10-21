@@ -347,8 +347,7 @@ cleanup:
         *obtained_feature_level = 0;
     if (immediate_context)
     {
-        /* FIXME: Remove the following NULL check once the d3d11_device_GetImmediateContext() is implemented. */
-        if (*immediate_context) ID3D11DeviceContext_Release(*immediate_context);
+        ID3D11DeviceContext_Release(*immediate_context);
         *immediate_context = NULL;
     }
 
