@@ -176,7 +176,7 @@ HRESULT WINAPI D3D11CreateDevice(IDXGIAdapter *adapter, D3D_DRIVER_TYPE driver_t
     }
     else
     {
-        hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
+        hr = CreateDXGIFactory1(&IID_IDXGIFactory, (void **)&factory);
         if (FAILED(hr))
         {
             WARN("Failed to create dxgi factory, returning %#x.\n", hr);
