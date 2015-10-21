@@ -5268,3 +5268,13 @@ GpStatus WINGDIPAPI GdipImageSetAbort(GpImage *image, GdiplusAbort *pabort)
     FIXME("(%p, %p): stub\n", image, pabort);
     return NotImplemented;
 }
+
+/*****************************************************************************
+ * GdipBitmapConvertFormat [GDIPLUS.@]
+ */
+GpStatus WINGDIPAPI GdipBitmapConvertFormat(GpBitmap *bitmap, PixelFormat format, DitherType dithertype,
+    PaletteType palettetype, ColorPalette *palette, REAL alphathreshold)
+{
+    FIXME("(%p, 0x%08x, %d, %d, %p, %f): stub\n", bitmap, format, dithertype, palettetype, palette, alphathreshold);
+    return NotImplemented;
+}
