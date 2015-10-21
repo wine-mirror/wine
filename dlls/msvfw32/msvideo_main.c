@@ -1458,7 +1458,13 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
 
     if (!pc->lpbiOut)
     {
-        pc->lpbiOut = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFO));
+        /* Ask compressor for needed header size */
+        int size = ICSendMessage(pc->hic, ICM_COMPRESS_GET_FORMAT,
+                                 (DWORD_PTR)pc->lpbiIn, 0);
+        if (size <= 0)
+            goto error;
+
+        pc->lpbiOut = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
         if (!pc->lpbiOut)
             goto error;
         /* Flag to show that we allocated lpbiOut for proper cleanup */
