@@ -215,7 +215,7 @@ static HRESULT WINAPI SystemClockImpl_QueryInterface(IReferenceClock* iface, REF
   if (IsEqualIID (riid, &IID_IUnknown) || 
       IsEqualIID (riid, &IID_IReferenceClock)) {
     SystemClockImpl_AddRef(iface);
-    *ppobj = This;
+    *ppobj = &This->IReferenceClock_iface;
     return S_OK;
   }
   

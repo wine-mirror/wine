@@ -3111,6 +3111,6 @@ static HRESULT VMR9DefaultAllocatorPresenterImpl_create(struct quartz_vmr *paren
     This->SurfaceAllocatorNotify = NULL;
     This->reset = FALSE;
 
-    *ppv = This;
+    *ppv = &This->IVMRImagePresenter9_iface;
     return S_OK;
 }

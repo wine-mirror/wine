@@ -797,7 +797,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     This->seek = TRUE;
 
     /* Note: This memory is managed by the parser filter once created */
-    *ppv = This;
+    *ppv = &This->Parser.filter.IBaseFilter_iface;
 
     return hr;
 }

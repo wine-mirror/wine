@@ -1451,7 +1451,7 @@ HRESULT AVISplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
     if (FAILED(hr))
         return hr;
 
-    *ppv = This;
+    *ppv = &This->Parser.filter.IBaseFilter_iface;
 
     return hr;
 }
