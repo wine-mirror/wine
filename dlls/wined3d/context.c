@@ -1676,27 +1676,27 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
 
     if (context_debug_output_enabled(gl_info))
     {
-        GL_EXTCALL(glDebugMessageCallbackARB(wined3d_debug_callback, ret));
+        GL_EXTCALL(glDebugMessageCallback(wined3d_debug_callback, ret));
         if (TRACE_ON(d3d_synchronous))
-            gl_info->gl_ops.gl.p_glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS_ARB);
-        GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_FALSE));
+            gl_info->gl_ops.gl.p_glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+        GL_EXTCALL(glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_FALSE));
         if (ERR_ON(d3d))
         {
-            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR_ARB,
+            GL_EXTCALL(glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_ERROR,
                     GL_DONT_CARE, 0, NULL, GL_TRUE));
         }
         if (FIXME_ON(d3d))
         {
-            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR_ARB,
+            GL_EXTCALL(glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR,
                     GL_DONT_CARE, 0, NULL, GL_TRUE));
-            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR_ARB,
+            GL_EXTCALL(glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR,
                     GL_DONT_CARE, 0, NULL, GL_TRUE));
-            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_PORTABILITY_ARB,
+            GL_EXTCALL(glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_PORTABILITY,
                     GL_DONT_CARE, 0, NULL, GL_TRUE));
         }
         if (WARN_ON(d3d_perf))
         {
-            GL_EXTCALL(glDebugMessageControlARB(GL_DONT_CARE, GL_DEBUG_TYPE_PERFORMANCE_ARB,
+            GL_EXTCALL(glDebugMessageControl(GL_DONT_CARE, GL_DEBUG_TYPE_PERFORMANCE,
                     GL_DONT_CARE, 0, NULL, GL_TRUE));
         }
     }
