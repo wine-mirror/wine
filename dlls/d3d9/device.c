@@ -1302,17 +1302,17 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
     struct d3d9_surface *dst = unsafe_impl_from_IDirect3DSurface9(dst_surface);
     HRESULT hr = D3DERR_INVALIDCALL;
     struct wined3d_resource_desc src_desc, dst_desc;
-    struct wined3d_resource *wined3d_resource;
+    struct wined3d_resource *sub_resource;
 
     TRACE("iface %p, src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %#x.\n",
             iface, src_surface, src_rect, dst_surface, dst_rect, filter);
 
     wined3d_mutex_lock();
-    wined3d_resource = wined3d_surface_get_resource(dst->wined3d_surface);
-    wined3d_resource_get_desc(wined3d_resource, &dst_desc);
+    sub_resource = wined3d_texture_get_sub_resource(dst->wined3d_texture, dst->sub_resource_idx);
+    wined3d_resource_get_desc(sub_resource, &dst_desc);
 
-    wined3d_resource = wined3d_surface_get_resource(src->wined3d_surface);
-    wined3d_resource_get_desc(wined3d_resource, &src_desc);
+    sub_resource = wined3d_texture_get_sub_resource(src->wined3d_texture, src->sub_resource_idx);
+    wined3d_resource_get_desc(sub_resource, &src_desc);
 
     if (src_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
