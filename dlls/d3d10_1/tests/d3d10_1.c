@@ -22,6 +22,15 @@
 #include "d3d11.h"
 #include "wine/test.h"
 
+static const D3D10_FEATURE_LEVEL1 d3d10_feature_levels[] =
+{
+    D3D10_FEATURE_LEVEL_10_1,
+    D3D10_FEATURE_LEVEL_10_0,
+    D3D10_FEATURE_LEVEL_9_3,
+    D3D10_FEATURE_LEVEL_9_2,
+    D3D10_FEATURE_LEVEL_9_1
+};
+
 static ULONG get_refcount(IUnknown *iface)
 {
     IUnknown_AddRef(iface);
@@ -43,6 +52,66 @@ static ID3D10Device1 *create_device(D3D10_FEATURE_LEVEL1 feature_level)
         return device;
 
     return NULL;
+}
+
+static void test_device_interfaces(void)
+{
+    IDXGIAdapter *dxgi_adapter;
+    IDXGIDevice *dxgi_device;
+    ID3D10Device1 *device;
+    IUnknown *iface;
+    ULONG refcount;
+    unsigned int i;
+    HRESULT hr;
+
+    for (i = 0; i < sizeof(d3d10_feature_levels) / sizeof(*d3d10_feature_levels); ++i)
+    {
+        if (!(device = create_device(d3d10_feature_levels[i])))
+        {
+            skip("Failed to create device for feature level %#x.\n", d3d10_feature_levels[i]);
+            continue;
+        }
+
+        hr = ID3D10Device1_QueryInterface(device, &IID_IUnknown, (void **)&iface);
+        ok(SUCCEEDED(hr), "Device should implement IUnknown interface, hr %#x.\n", hr);
+        IUnknown_Release(iface);
+
+        hr = ID3D10Device1_QueryInterface(device, &IID_IDXGIObject, (void **)&iface);
+        ok(SUCCEEDED(hr), "Device should implement IDXGIObject interface, hr %#x.\n", hr);
+        IUnknown_Release(iface);
+
+        hr = ID3D10Device1_QueryInterface(device, &IID_IDXGIDevice, (void **)&dxgi_device);
+        ok(SUCCEEDED(hr), "Device should implement IDXGIDevice.\n");
+        hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter, (void **)&dxgi_adapter);
+        ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter.\n");
+        hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory, (void **)&iface);
+        ok(SUCCEEDED(hr), "Adapter parent should implement IDXGIFactory.\n");
+        IUnknown_Release(iface);
+        IDXGIAdapter_Release(dxgi_adapter);
+        hr = IDXGIDevice_GetParent(dxgi_device, &IID_IDXGIAdapter1, (void **)&dxgi_adapter);
+        ok(SUCCEEDED(hr), "Device parent should implement IDXGIAdapter1.\n");
+        hr = IDXGIAdapter_GetParent(dxgi_adapter, &IID_IDXGIFactory1, (void **)&iface);
+        ok(hr == E_NOINTERFACE, "Adapter parent should not implement IDXGIFactory1.\n");
+        IDXGIAdapter_Release(dxgi_adapter);
+        IDXGIDevice_Release(dxgi_device);
+
+        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Device should implement ID3D10Multithread interface, hr %#x.\n", hr);
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D10Device, (void **)&iface);
+        ok(SUCCEEDED(hr), "Device should implement ID3D10Device interface, hr %#x.\n", hr);
+        IUnknown_Release(iface);
+
+        hr = ID3D10Device1_QueryInterface(device, &IID_ID3D11Device, (void **)&iface);
+        ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+                "Device should implement ID3D11Device interface, hr %#x.\n", hr);
+        if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
+        refcount = ID3D10Device1_Release(device);
+        ok(!refcount, "Device has %u references left.\n", refcount);
+    }
 }
 
 static void test_create_shader_resource_view(void)
@@ -379,6 +448,7 @@ static void test_create_blend_state(void)
 
 START_TEST(d3d10_1)
 {
+    test_device_interfaces();
     test_create_shader_resource_view();
     test_create_blend_state();
 }
