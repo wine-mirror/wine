@@ -3535,6 +3535,7 @@ done:
 static void intz_test(void)
 {
     IDirect3DSurface8 *original_rt, *rt;
+    struct surface_readback rb;
     IDirect3DTexture8 *texture;
     IDirect3DDevice8 *device;
     IDirect3DSurface8 *ds;
@@ -3549,15 +3550,12 @@ static void intz_test(void)
     static const DWORD ps_code[] =
     {
         0xffff0101,                                                             /* ps_1_1                       */
-        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x00000000, 0x00000000, /* def c0, 1.0, 0.0, 0.0, 0.0   */
+        0x00000051, 0xa00f0000, 0x3f800000, 0x00000000, 0x3f800000, 0x3f800000, /* def c0, 1.0, 0.0, 1.0, 1.0   */
         0x00000051, 0xa00f0001, 0x00000000, 0x3f800000, 0x00000000, 0x00000000, /* def c1, 0.0, 1.0, 0.0, 0.0   */
-        0x00000051, 0xa00f0002, 0x00000000, 0x00000000, 0x3f800000, 0x00000000, /* def c2, 0.0, 0.0, 1.0, 0.0   */
         0x00000042, 0xb00f0000,                                                 /* tex t0                       */
         0x00000042, 0xb00f0001,                                                 /* tex t1                       */
-        0x00000008, 0xb0070001, 0xa0e40000, 0xb0e40001,                         /* dp3 t1.xyz, c0, t1           */
-        0x00000005, 0x80070000, 0xa0e40001, 0xb0e40001,                         /* mul r0.xyz, c1, t1           */
-        0x00000004, 0x80070000, 0xa0e40000, 0xb0e40000, 0x80e40000,             /* mad r0.xyz, c0, t0, r0       */
-        0x40000001, 0x80080000, 0xa0aa0002,                                     /* +mov r0.w, c2.z              */
+        0x00000005, 0xb00f0000, 0xa0e40000, 0xb0e40000,                         /* mul t0, c0, t0               */
+        0x00000004, 0x800f0000, 0xa0e40001, 0xb0e40001, 0xb0e40000,             /* mad r0, c1, t1, t0           */
         0x0000ffff,                                                             /* end                          */
     };
     static const struct
@@ -3594,14 +3592,14 @@ static void intz_test(void)
     }
     expected_colors[] =
     {
-        { 80, 100, D3DCOLOR_ARGB(0x00, 0x20, 0x40, 0x00)},
-        {240, 100, D3DCOLOR_ARGB(0x00, 0x60, 0xbf, 0x00)},
-        {400, 100, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
-        {560, 100, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
-        { 80, 450, D3DCOLOR_ARGB(0x00, 0x20, 0x40, 0x00)},
-        {240, 450, D3DCOLOR_ARGB(0x00, 0x60, 0xbf, 0x00)},
-        {400, 450, D3DCOLOR_ARGB(0x00, 0x9f, 0x40, 0x00)},
-        {560, 450, D3DCOLOR_ARGB(0x00, 0xdf, 0xbf, 0x00)},
+        { 80, 100, 0x20204020},
+        {240, 100, 0x6060bf60},
+        {400, 100, 0x9f9f409f},
+        {560, 100, 0xdfdfbfdf},
+        { 80, 450, 0x20204020},
+        {240, 450, 0x6060bf60},
+        {400, 450, 0x9f9f409f},
+        {560, 450, 0xdfdfbfdf},
     };
 
     window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -3722,13 +3720,15 @@ static void intz_test(void)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
+    get_rt_readback(original_rt, &rb);
     for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
     {
-        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
                 "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
                 expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
+    release_surface_readback(&rb);
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
@@ -3778,13 +3778,15 @@ static void intz_test(void)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
+    get_rt_readback(original_rt, &rb);
     for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
     {
-        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
                 "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
                 expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
+    release_surface_readback(&rb);
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
@@ -3844,13 +3846,15 @@ static void intz_test(void)
     hr = IDirect3DDevice8_EndScene(device);
     ok(SUCCEEDED(hr), "EndScene failed, hr %#x.\n", hr);
 
+    get_rt_readback(original_rt, &rb);
     for (i = 0; i < sizeof(expected_colors) / sizeof(*expected_colors); ++i)
     {
-        D3DCOLOR color = getPixelColor(device, expected_colors[i].x, expected_colors[i].y);
+        D3DCOLOR color = get_readback_color(&rb, expected_colors[i].x, expected_colors[i].y);
         ok(color_match(color, expected_colors[i].color, 1),
                 "Expected color 0x%08x at (%u, %u), got 0x%08x.\n",
                 expected_colors[i].color, expected_colors[i].x, expected_colors[i].y, color);
     }
+    release_surface_readback(&rb);
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Present failed, hr %#x.\n", hr);
