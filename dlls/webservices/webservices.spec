@@ -151,7 +151,7 @@
 @ stub WsSetFaultErrorProperty
 @ stub WsSetHeader
 @ stdcall WsSetInput(ptr ptr ptr ptr long ptr)
-@ stub WsSetInputToBuffer
+@ stdcall WsSetInputToBuffer(ptr ptr ptr long ptr)
 @ stub WsSetListenerProperty
 @ stub WsSetMessageProperty
 @ stdcall WsSetOutput(ptr ptr ptr ptr long ptr)

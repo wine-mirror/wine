@@ -235,8 +235,7 @@ static HRESULT set_input( WS_XML_READER *reader, const char *data, ULONG size )
     input.encodedData     = (void *)data;
     input.encodedDataSize = size;
 
-    return WsSetInput( reader, (WS_XML_READER_ENCODING *)&encoding,
-                       (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+    return WsSetInput( reader, &encoding.encoding, &input.input, NULL, 0, NULL );
 }
 
 static void test_WsCreateReader(void)
@@ -457,7 +456,7 @@ static void test_WsSetInput(void)
     input.encodedData     = (void *)data1;
     input.encodedDataSize = sizeof(data1) - 1;
 
-    hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+    hr = WsSetInput( reader, &enc.encoding, &input.input, NULL, 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     node = NULL;
@@ -467,7 +466,7 @@ static void test_WsSetInput(void)
     if (node) ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
 
     /* multiple calls are allowed */
-    hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+    hr = WsSetInput( reader, &enc.encoding, &input.input, NULL, 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     /* charset is detected by WsSetInput */
@@ -478,7 +477,7 @@ static void test_WsSetInput(void)
     {
         input.encodedData     = tests[i].data;
         input.encodedDataSize = tests[i].size;
-        hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+        hr = WsSetInput( reader, &enc.encoding, &input.input, NULL, 0, NULL );
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
 
         charset = 0xdeadbeef;
@@ -506,7 +505,7 @@ static void test_WsSetInput(void)
     prop.id = WS_XML_READER_PROPERTY_MAX_DEPTH;
     prop.value = &max_depth;
     prop.valueSize = sizeof(max_depth);
-    hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, &prop, 1, NULL );
+    hr = WsSetInput( reader, &enc.encoding, &input.input, &prop, 1, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     max_depth = 0xdeadbeef;
@@ -515,6 +514,68 @@ static void test_WsSetInput(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( max_depth == 16, "got %u\n", max_depth );
     WsFreeReader( reader );
+}
+
+static void test_WsSetInputToBuffer(void)
+{
+    HRESULT hr;
+    WS_HEAP *heap;
+    WS_XML_BUFFER *buffer;
+    WS_XML_READER *reader;
+    WS_XML_READER_PROPERTY prop;
+    const WS_XML_NODE *node;
+    ULONG size, max_depth;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetInputToBuffer( NULL, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsSetInputToBuffer( reader, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node != NULL, "node not set\n" );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    hr = WsSetInputToBuffer( reader, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node != NULL, "node not set\n" );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    /* multiple calls are allowed */
+    hr = WsSetInputToBuffer( reader, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* reader properties can be set with WsSetInputToBuffer */
+    max_depth = 16;
+    prop.id = WS_XML_READER_PROPERTY_MAX_DEPTH;
+    prop.value = &max_depth;
+    prop.valueSize = sizeof(max_depth);
+    hr = WsSetInputToBuffer( reader, buffer, &prop, 1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    max_depth = 0xdeadbeef;
+    size = sizeof(max_depth);
+    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_MAX_DEPTH, &max_depth, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( max_depth == 16, "got %u\n", max_depth );
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
 }
 
 static void test_WsFillReader(void)
@@ -1351,6 +1412,7 @@ START_TEST(reader)
     test_WsCreateHeap();
     test_WsCreateReader();
     test_WsSetInput();
+    test_WsSetInputToBuffer();
     test_WsFillReader();
     test_WsReadToStartElement();
     test_WsReadStartElement();
