@@ -55,6 +55,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 typedef struct MPEGSplitterImpl
 {
     ParserImpl Parser;
+    IAMStreamSelect IAMStreamSelect_iface;
     LONGLONG EndOfFile;
     LONGLONG position;
     DWORD begin_offset;
@@ -64,9 +65,19 @@ typedef struct MPEGSplitterImpl
     BOOL seek;
 } MPEGSplitterImpl;
 
+static inline MPEGSplitterImpl *impl_from_IBaseFilter( IBaseFilter *iface )
+{
+    return CONTAINING_RECORD(iface, MPEGSplitterImpl, Parser.filter.IBaseFilter_iface);
+}
+
 static inline MPEGSplitterImpl *impl_from_IMediaSeeking( IMediaSeeking *iface )
 {
     return CONTAINING_RECORD(iface, MPEGSplitterImpl, Parser.sourceSeeking.IMediaSeeking_iface);
+}
+
+static inline MPEGSplitterImpl *impl_from_IAMStreamSelect( IAMStreamSelect *iface )
+{
+    return CONTAINING_RECORD(iface, MPEGSplitterImpl, IAMStreamSelect_iface);
 }
 
 static int MPEGSplitter_head_check(const BYTE *header)
@@ -752,9 +763,36 @@ static HRESULT MPEGSplitter_first_request(LPVOID iface)
     return hr;
 }
 
+static HRESULT WINAPI MPEGSplitter_QueryInterface(IBaseFilter *iface, REFIID riid, void **ppv)
+{
+    MPEGSplitterImpl *This = impl_from_IBaseFilter(iface);
+    TRACE("(%s, %p)\n", qzdebugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+
+    if ( IsEqualIID(riid, &IID_IUnknown)
+      || IsEqualIID(riid, &IID_IPersist)
+      || IsEqualIID(riid, &IID_IMediaFilter)
+      || IsEqualIID(riid, &IID_IBaseFilter) )
+        *ppv = iface;
+    else if ( IsEqualIID(riid, &IID_IAMStreamSelect) )
+        *ppv = &This->IAMStreamSelect_iface;
+
+    if (*ppv)
+    {
+        IBaseFilter_AddRef(iface);
+        return S_OK;
+    }
+
+    if (!IsEqualIID(riid, &IID_IPin) && !IsEqualIID(riid, &IID_IVideoWindow))
+        FIXME("No interface for %s!\n", qzdebugstr_guid(riid));
+
+    return E_NOINTERFACE;
+}
+
 static const IBaseFilterVtbl MPEGSplitter_Vtbl =
 {
-    Parser_QueryInterface,
+    MPEGSplitter_QueryInterface,
     Parser_AddRef,
     Parser_Release,
     Parser_GetClassID,
@@ -769,6 +807,64 @@ static const IBaseFilterVtbl MPEGSplitter_Vtbl =
     Parser_QueryFilterInfo,
     Parser_JoinFilterGraph,
     Parser_QueryVendorInfo
+};
+
+static HRESULT WINAPI AMStreamSelect_QueryInterface(IAMStreamSelect *iface, REFIID riid, void **ppv)
+{
+    MPEGSplitterImpl *This = impl_from_IAMStreamSelect(iface);
+
+    return IBaseFilter_QueryInterface(&This->Parser.filter.IBaseFilter_iface, riid, ppv);
+}
+
+static ULONG WINAPI AMStreamSelect_AddRef(IAMStreamSelect *iface)
+{
+    MPEGSplitterImpl *This = impl_from_IAMStreamSelect(iface);
+
+    return IBaseFilter_AddRef(&This->Parser.filter.IBaseFilter_iface);
+}
+
+static ULONG WINAPI AMStreamSelect_Release(IAMStreamSelect *iface)
+{
+    MPEGSplitterImpl *This = impl_from_IAMStreamSelect(iface);
+
+    return IBaseFilter_Release(&This->Parser.filter.IBaseFilter_iface);
+}
+
+static HRESULT WINAPI AMStreamSelect_Count(IAMStreamSelect *iface, DWORD *streams)
+{
+    MPEGSplitterImpl *This = impl_from_IAMStreamSelect(iface);
+
+    FIXME("(%p/%p)->(%p) stub!\n", This, iface, streams);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI AMStreamSelect_Info(IAMStreamSelect *iface, LONG index, AM_MEDIA_TYPE **media_type, DWORD *flags, LCID *lcid, DWORD *group, WCHAR **name, IUnknown **object, IUnknown **unknown)
+{
+    MPEGSplitterImpl *This = impl_from_IAMStreamSelect(iface);
+
+    FIXME("(%p/%p)->(%d,%p,%p,%p,%p,%p,%p,%p) stub!\n", This, iface, index, media_type, flags, lcid, group, name, object, unknown);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI AMStreamSelect_Enable(IAMStreamSelect *iface, LONG index, DWORD flags)
+{
+    MPEGSplitterImpl *This = impl_from_IAMStreamSelect(iface);
+
+    FIXME("(%p/%p)->(%d,%x) stub!\n", This, iface, index, flags);
+
+    return E_NOTIMPL;
+}
+
+static const IAMStreamSelectVtbl AMStreamSelectVtbl =
+{
+    AMStreamSelect_QueryInterface,
+    AMStreamSelect_AddRef,
+    AMStreamSelect_Release,
+    AMStreamSelect_Count,
+    AMStreamSelect_Info,
+    AMStreamSelect_Enable
 };
 
 HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
@@ -794,6 +890,7 @@ HRESULT MPEGSplitter_create(IUnknown * pUnkOuter, LPVOID * ppv)
         CoTaskMemFree(This);
         return hr;
     }
+    This->IAMStreamSelect_iface.lpVtbl = &AMStreamSelectVtbl;
     This->seek = TRUE;
 
     /* Note: This memory is managed by the parser filter once created */
