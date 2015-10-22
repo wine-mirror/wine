@@ -1100,19 +1100,6 @@ static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DW
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_get_render_target_data(struct wined3d_surface *surface,
-        struct wined3d_surface *render_target)
-{
-    TRACE("surface %p, render_target %p.\n", surface, render_target);
-
-    /* TODO: Check surface sizes, pools, etc. */
-
-    if (render_target->resource.multisample_type)
-        return WINED3DERR_INVALIDCALL;
-
-    return wined3d_surface_blt(surface, NULL, render_target, NULL, 0, NULL, WINED3D_TEXF_POINT);
-}
-
 /* Context activation is done by the caller. */
 static void surface_remove_pbo(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {

@@ -225,7 +225,6 @@
 @ cdecl wined3d_surface_get_overlay_position(ptr ptr ptr)
 @ cdecl wined3d_surface_get_parent(ptr)
 @ cdecl wined3d_surface_get_pitch(ptr)
-@ cdecl wined3d_surface_get_render_target_data(ptr ptr)
 @ cdecl wined3d_surface_get_resource(ptr)
 @ cdecl wined3d_surface_getdc(ptr ptr)
 @ cdecl wined3d_surface_incref(ptr)
