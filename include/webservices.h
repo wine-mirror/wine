@@ -57,6 +57,14 @@ typedef struct _WS_HEAP_PROPERTY {
     ULONG               valueSize;
 } WS_HEAP_PROPERTY;
 
+typedef ULONG WS_XML_BUFFER_PROPERTY_ID;
+
+typedef struct _WS_XML_BUFFER_PROPERTY {
+    WS_XML_BUFFER_PROPERTY_ID id;
+    void                     *value;
+    ULONG                     valueSize;
+} WS_XML_BUFFER_PROPERTY;
+
 typedef enum {
     WS_XML_READER_PROPERTY_MAX_DEPTH,
     WS_XML_READER_PROPERTY_ALLOW_FRAGMENT,
@@ -445,6 +453,8 @@ HRESULT WINAPI WsCreateError(const WS_ERROR_PROPERTY*, ULONG, WS_ERROR**);
 HRESULT WINAPI WsCreateHeap(SIZE_T, SIZE_T, const WS_HEAP_PROPERTY*, ULONG, WS_HEAP**, WS_ERROR*);
 HRESULT WINAPI WsCreateReader(const WS_XML_READER_PROPERTY*, ULONG, WS_XML_READER**, WS_ERROR*);
 HRESULT WINAPI WsCreateWriter(const WS_XML_WRITER_PROPERTY*, ULONG, WS_XML_WRITER**, WS_ERROR*);
+HRESULT WINAPI WsCreateXmlBuffer(WS_HEAP*, const WS_XML_BUFFER_PROPERTY*, ULONG, WS_XML_BUFFER**,
+                                 WS_ERROR*);
 HRESULT WINAPI WsFillReader(WS_XML_READER*, ULONG, const WS_ASYNC_CONTEXT*, WS_ERROR*);
 HRESULT WINAPI WsFindAttribute(WS_XML_READER*, const WS_XML_STRING*, const WS_XML_STRING*, BOOL,
                                ULONG*, WS_ERROR*);
@@ -474,8 +484,18 @@ HRESULT WINAPI WsReadType(WS_XML_READER*, WS_TYPE_MAPPING, WS_TYPE, const void*,
 HRESULT WINAPI WsSetErrorProperty(WS_ERROR*, WS_ERROR_PROPERTY_ID, const void*, ULONG);
 HRESULT WINAPI WsSetInput(WS_XML_READER*, const WS_XML_READER_ENCODING*, const WS_XML_READER_INPUT*,
                           const WS_XML_READER_PROPERTY*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsSetInputToBuffer(WS_XML_READER*, WS_XML_BUFFER*, const WS_XML_READER_PROPERTY*,
+                                  ULONG, WS_ERROR*);
 HRESULT WINAPI WsSetOutput(WS_XML_WRITER*, const WS_XML_WRITER_ENCODING*, const WS_XML_WRITER_OUTPUT*,
                            const WS_XML_WRITER_PROPERTY*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsSetOutputToBuffer(WS_XML_WRITER*, WS_XML_BUFFER*, const WS_XML_WRITER_PROPERTY*,
+                                   ULONG, WS_ERROR*);
+HRESULT WINAPI WsWriteEndAttribute(WS_XML_WRITER*, WS_ERROR*);
+HRESULT WINAPI WsWriteEndElement(WS_XML_WRITER*, WS_ERROR*);
+HRESULT WINAPI WsWriteStartAttribute(WS_XML_WRITER*, const WS_XML_STRING*, const WS_XML_STRING*,
+                                     const WS_XML_STRING*, BOOL, WS_ERROR*);
+HRESULT WINAPI WsWriteStartElement(WS_XML_WRITER*, const WS_XML_STRING*, const WS_XML_STRING*,
+                                   const WS_XML_STRING*, WS_ERROR*);
 HRESULT WINAPI WsWriteType(WS_XML_WRITER*, WS_TYPE_MAPPING, WS_TYPE, const void*, WS_WRITE_OPTION,
                            const void*, ULONG, WS_ERROR*);
 
