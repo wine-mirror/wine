@@ -25,7 +25,7 @@ static const char data1[] =
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>";
 
 static const char data2[] =
-    "<text>test</text>";
+    {0xef,0xbb,0xbf,'<','t','e','x','t','>','t','e','s','t','<','/','t','e','x','t','>',0};
 
 static const char data3[] =
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
@@ -226,7 +226,7 @@ static HRESULT set_input( WS_XML_READER *reader, const char *data, ULONG size )
     WS_XML_READER_BUFFER_INPUT input;
 
     encoding.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
-    encoding.charSet               = WS_CHARSET_UTF8;
+    encoding.charSet               = WS_CHARSET_AUTO;
 
     input.input.inputType = WS_XML_READER_INPUT_TYPE_BUFFER;
     input.encodedData     = (void *)data;
@@ -367,6 +367,31 @@ static void test_WsCreateReader(void)
 
 static void test_WsSetInput(void)
 {
+    static char test1[] = {0xef,0xbb,0xbf,'<','a','/','>'};
+    static char test2[] = {'<','a','/','>'};
+    static char test3[] = {'<','!','-','-'};
+    static char test4[] = {'<','?','x','m','l',' ','v','e','r','s','i','o','n','=','"','1','.','0','"',
+                           ' ','e','n','c','o','d','i','n','g','=','"','u','t','f','-','8','"','?','>'};
+    static char test5[] = {'<','?','x','m','l',' ','e','n','c','o','d','i','n','g','=',
+                           '"','u','t','f','-','8','"','?','>'};
+    static char test6[] = {'<','?','x','m','l'};
+    static char test7[] = {'<','?','y','m','l'};
+    static char test8[] = {'<','?'};
+    static char test9[] = {'<','!'};
+    static char test10[] = {0xff,0xfe,'<',0,'a',0,'/',0,'>',0};
+    static char test11[] = {'<',0,'a',0,'/',0,'>',0};
+    static char test12[] = {'<',0,'!',0,'-',0,'-',0};
+    static char test13[] = {'<',0,'?',0};
+    static char test14[] = {'a','b'};
+    static char test15[] = {'a','b','c'};
+    static char test16[] = {'a',0};
+    static char test17[] = {'a',0,'b',0};
+    static char test18[] = {'<',0,'a',0,'b',0};
+    static char test19[] = {'<',0,'a',0};
+    static char test20[] = {0,'a','b'};
+    static char test21[] = {0,0};
+    static char test22[] = {0,0,0};
+    static char test23[] = {'<',0,'?',0,'x',0,'m',0,'l',0};
     HRESULT hr;
     WS_XML_READER *reader;
     WS_XML_READER_PROPERTY prop;
@@ -374,7 +399,41 @@ static void test_WsSetInput(void)
     WS_XML_READER_BUFFER_INPUT input;
     WS_CHARSET charset;
     const WS_XML_NODE *node;
-    ULONG size, max_depth;
+    ULONG i, size, max_depth;
+    static const struct
+    {
+        void       *data;
+        ULONG       size;
+        HRESULT     hr;
+        WS_CHARSET  charset;
+        int         todo;
+    }
+    tests[] =
+    {
+        { test1, sizeof(test1), S_OK, WS_CHARSET_UTF8 },
+        { test2, sizeof(test2), S_OK, WS_CHARSET_UTF8 },
+        { test3, sizeof(test3), S_OK, WS_CHARSET_UTF8 },
+        { test4, sizeof(test4), S_OK, WS_CHARSET_UTF8 },
+        { test5, sizeof(test5), WS_E_INVALID_FORMAT, 0, 1 },
+        { test6, sizeof(test6), WS_E_INVALID_FORMAT, 0, 1 },
+        { test7, sizeof(test7), WS_E_INVALID_FORMAT, 0, 1 },
+        { test8, sizeof(test8), WS_E_INVALID_FORMAT, 0 },
+        { test9, sizeof(test9), WS_E_INVALID_FORMAT, 0 },
+        { test10, sizeof(test10), S_OK, WS_CHARSET_UTF16LE },
+        { test11, sizeof(test11), S_OK, WS_CHARSET_UTF16LE },
+        { test12, sizeof(test12), S_OK, WS_CHARSET_UTF16LE },
+        { test13, sizeof(test13), WS_E_INVALID_FORMAT, 0, 1 },
+        { test14, sizeof(test14), WS_E_INVALID_FORMAT, 0 },
+        { test15, sizeof(test15), S_OK, WS_CHARSET_UTF8 },
+        { test16, sizeof(test16), WS_E_INVALID_FORMAT, 0 },
+        { test17, sizeof(test17), S_OK, WS_CHARSET_UTF8 },
+        { test18, sizeof(test18), S_OK, WS_CHARSET_UTF16LE },
+        { test19, sizeof(test19), S_OK, WS_CHARSET_UTF16LE },
+        { test20, sizeof(test20), S_OK, WS_CHARSET_UTF8 },
+        { test21, sizeof(test21), WS_E_INVALID_FORMAT, 0 },
+        { test22, sizeof(test22), S_OK, WS_CHARSET_UTF8 },
+        { test23, sizeof(test23), WS_E_INVALID_FORMAT, 0, 1 },
+    };
 
     hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
     ok( hr == S_OK, "got %08x\n", hr );
@@ -411,14 +470,30 @@ static void test_WsSetInput(void)
     /* charset is detected by WsSetInput */
     enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
     enc.charSet               = WS_CHARSET_AUTO;
-    hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
 
-    charset = 0xdeadbeef;
-    size = sizeof(charset);
-    hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, size, NULL );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( charset == WS_CHARSET_UTF8, "got %u\n", charset );
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        input.encodedData     = tests[i].data;
+        input.encodedDataSize = tests[i].size;
+        hr = WsSetInput( reader, (WS_XML_READER_ENCODING *)&enc, (WS_XML_READER_INPUT *)&input, NULL, 0, NULL );
+        ok( hr == S_OK, "%u: got %08x\n", i, hr );
+
+        charset = 0xdeadbeef;
+        size = sizeof(charset);
+        hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, size, NULL );
+        if (tests[i].todo)
+        {
+            todo_wine ok( hr == tests[i].hr, "%u: got %08x expected %08x\n", i, hr, tests[i].hr );
+            if (hr == S_OK)
+                todo_wine ok( charset == tests[i].charset, "%u: got %u expected %u\n", i, charset, tests[i].charset );
+        }
+        else
+        {
+            ok( hr == tests[i].hr, "%u: got %08x expected %08x\n", i, hr, tests[i].hr );
+            if (hr == S_OK)
+                ok( charset == tests[i].charset, "%u: got %u expected %u\n", i, charset, tests[i].charset );
+        }
+    }
 
     enc.encoding.encodingType = WS_XML_READER_ENCODING_TYPE_TEXT;
     enc.charSet               = WS_CHARSET_UTF8;

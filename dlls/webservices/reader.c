@@ -551,6 +551,17 @@ HRESULT WINAPI WsGetReaderProperty( WS_XML_READER *handle, WS_XML_READER_PROPERT
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!reader->input_data) return WS_E_INVALID_OPERATION;
+
+    if (id == WS_XML_READER_PROPERTY_CHARSET)
+    {
+        WS_CHARSET charset;
+        HRESULT hr;
+
+        if ((hr = get_reader_prop( reader, id, &charset, size )) != S_OK) return hr;
+        if (!charset) return WS_E_INVALID_FORMAT;
+        *(WS_CHARSET *)buf = charset;
+        return S_OK;
+    }
     return get_reader_prop( reader, id, buf, size );
 }
 
@@ -1373,6 +1384,54 @@ HRESULT WINAPI WsSetErrorProperty( WS_ERROR *handle, WS_ERROR_PROPERTY_ID id, co
     return set_error_prop( error, id, value, size );
 }
 
+static inline BOOL is_utf8( const unsigned char *data, ULONG size, ULONG *offset )
+{
+    static const char bom[] = {0xef,0xbb,0xbf};
+    const unsigned char *p = data;
+
+    return (size >= sizeof(bom) && !memcmp( p, bom, sizeof(bom) ) && (*offset = sizeof(bom))) ||
+           (size > 2 && !(*offset = 0));
+}
+
+static inline BOOL is_utf16le( const unsigned char *data, ULONG size, ULONG *offset )
+{
+    static const char bom[] = {0xff,0xfe};
+    const unsigned char *p = data;
+
+    return (size >= sizeof(bom) && !memcmp( p, bom, sizeof(bom) ) && (*offset = sizeof(bom))) ||
+           (size >= 4 && p[0] == '<' && !p[1] && !(*offset = 0));
+}
+
+static HRESULT detect_charset( const WS_XML_READER_INPUT *input, WS_CHARSET *charset, ULONG *offset )
+{
+    const WS_XML_READER_BUFFER_INPUT *buf = (const WS_XML_READER_BUFFER_INPUT *)input;
+
+    if (input->inputType != WS_XML_READER_INPUT_TYPE_BUFFER)
+    {
+        FIXME( "charset detection on input type %u not supported\n", input->inputType );
+        return E_NOTIMPL;
+    }
+
+    /* FIXME: parse xml declaration */
+
+    if (is_utf16le( buf->encodedData, buf->encodedDataSize, offset ))
+    {
+        *charset = WS_CHARSET_UTF16LE;
+    }
+    else if (is_utf8( buf->encodedData, buf->encodedDataSize, offset ))
+    {
+        *charset = WS_CHARSET_UTF8;
+    }
+    else
+    {
+        FIXME( "charset not recognized\n" );
+        *charset = 0;
+    }
+
+    TRACE( "detected charset %u\n", *charset );
+    return S_OK;
+}
+
 /**************************************************************************
  *          WsSetInput		[webservices.@]
  */
@@ -1383,7 +1442,7 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     struct reader *reader = (struct reader *)handle;
     struct node *node;
     HRESULT hr;
-    ULONG i;
+    ULONG i, offset = 0;
 
     TRACE( "%p %p %p %p %u %p\n", handle, encoding, input, properties, count, error );
     if (error) FIXME( "ignoring error parameter\n" );
@@ -1395,11 +1454,13 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
         case WS_XML_READER_ENCODING_TYPE_TEXT:
         {
             WS_XML_READER_TEXT_ENCODING *text = (WS_XML_READER_TEXT_ENCODING *)encoding;
-            if (text->charSet != WS_CHARSET_UTF8)
-            {
-                FIXME( "charset %u not supported\n", text->charSet );
-                return E_NOTIMPL;
-            }
+            WS_CHARSET charset = text->charSet;
+
+            if (charset == WS_CHARSET_AUTO && (hr = detect_charset( input, &charset, &offset )) != S_OK)
+                return hr;
+
+            hr = set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
+            if (hr != S_OK) return hr;
             break;
         }
         default:
@@ -1411,8 +1472,8 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
         case WS_XML_READER_INPUT_TYPE_BUFFER:
         {
             WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
-            reader->input_data = buf->encodedData;
-            reader->input_size = buf->encodedDataSize;
+            reader->input_data = (const char *)buf->encodedData + offset;
+            reader->input_size = buf->encodedDataSize - offset;
             reader->read_bufptr = reader->input_data;
             break;
         }
