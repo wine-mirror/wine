@@ -1333,7 +1333,10 @@ static HRESULT parse_contents_stream( DataCache *This, IStorage *stg, IStream *s
     if (IsEqualCLSID( &stat.clsid, &CLSID_Picture_Dib ))
         fmt = &static_dib_fmt;
     else
+    {
+        FIXME("unsupported format %s\n", debugstr_guid( &stat.clsid ));
         return E_FAIL;
+    }
 
     return add_cache_entry( This, fmt, stm, contents_stream );
 }
