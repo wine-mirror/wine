@@ -1778,6 +1778,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define DNS_ERROR_NO_PACKET                                9503
 #define DNS_ERROR_RCODE                                    9504
 #define DNS_ERROR_UNSECURE_PACKET                          9505
+#define DNS_REQUEST_PENDING                                9506
 #define DNS_ERROR_INVALID_TYPE                             9551
 #define DNS_ERROR_INVALID_IP_ADDRESS                       9552
 #define DNS_ERROR_INVALID_PROPERTY                         9553
