@@ -565,6 +565,16 @@ HRESULT WINAPI WsGetReaderProperty( WS_XML_READER *handle, WS_XML_READER_PROPERT
     return get_reader_prop( reader, id, buf, size );
 }
 
+/**************************************************************************
+ *          WsGetXmlAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsGetXmlAttribute( WS_XML_READER *handle, const WS_XML_STRING *attr,
+                                  WS_HEAP *heap, WCHAR **str, ULONG *len, WS_ERROR *error )
+{
+    FIXME( "%p %p %p %p %p %p: stub\n", handle, debugstr_xmlstr(attr), heap, str, len, error );
+    return E_NOTIMPL;
+}
+
 static WS_XML_STRING *alloc_xml_string( const char *data, ULONG len )
 {
     WS_XML_STRING *ret;

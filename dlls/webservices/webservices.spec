@@ -89,7 +89,7 @@
 @ stub WsGetServiceProxyProperty
 @ stub WsGetWriterPosition
 @ stdcall WsGetWriterProperty(ptr long ptr long ptr)
-@ stub WsGetXmlAttribute
+@ stdcall WsGetXmlAttribute(ptr ptr ptr ptr ptr ptr)
 @ stub WsInitializeMessage
 @ stub WsMarkHeaderAsUnderstood
 @ stub WsMatchPolicyAlternative

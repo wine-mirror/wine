@@ -58,6 +58,9 @@ static const char data7[] =
 static const char data8[] =
     "<node1><node2>test</node2></node1>";
 
+static const char data9[] =
+    "<text xml:attr=\"value\">test</text>";
+
 static void test_WsCreateError(void)
 {
     HRESULT hr;
@@ -1286,6 +1289,62 @@ static void test_WsReadType(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsGetXmlAttribute(void)
+{
+    static const WCHAR valueW[] = {'v','a','l','u','e',0};
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_XML_STRING xmlstr;
+    WS_HEAP *heap;
+    WCHAR *str;
+    ULONG count;
+    int found;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, data9, sizeof(data9) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, sizeof(data9) - 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    found = -1;
+    hr = WsReadToStartElement( reader, NULL, NULL, &found, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( found == TRUE, "got %d\n", found );
+
+    xmlstr.bytes      = (BYTE *)"attr";
+    xmlstr.length     = sizeof("attr") - 1;
+    xmlstr.dictionary = NULL;
+    xmlstr.id         = 0;
+    str = NULL;
+    count = 0;
+    hr = WsGetXmlAttribute( reader, &xmlstr, heap, &str, &count, NULL );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    todo_wine ok( str != NULL, "str not set\n" );
+    todo_wine ok( count == 5, "got %u\n", count );
+    /* string is not null-terminated */
+    if (str) ok( !memcmp( str, valueW, count * sizeof(WCHAR) ), "wrong data\n" );
+
+    xmlstr.bytes      = (BYTE *)"none";
+    xmlstr.length     = sizeof("none") - 1;
+    xmlstr.dictionary = NULL;
+    xmlstr.id         = 0;
+    str = (WCHAR *)0xdeadbeef;
+    count = 0xdeadbeef;
+    hr = WsGetXmlAttribute( reader, &xmlstr, heap, &str, &count, NULL );
+    todo_wine ok( hr == S_FALSE, "got %08x\n", hr );
+    todo_wine ok( str == NULL, "str not set\n" );
+    todo_wine ok( !count, "got %u\n", count );
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -1298,4 +1357,5 @@ START_TEST(reader)
     test_WsReadEndElement();
     test_WsReadNode();
     test_WsReadType();
+    test_WsGetXmlAttribute();
 }
