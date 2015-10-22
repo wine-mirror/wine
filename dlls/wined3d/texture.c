@@ -254,8 +254,11 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
         gl_tex->sampler_desc.mip_filter = WINED3D_TEXF_NONE;
     }
 
-    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
+    if (gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && gl_info->supported[ARB_DEPTH_TEXTURE])
+    {
         gl_info->gl_ops.gl.p_glTexParameteri(target, GL_DEPTH_TEXTURE_MODE_ARB, GL_INTENSITY);
+        checkGLcall("glTexParameteri(GL_DEPTH_TEXTURE_MODE_ARB, GL_INTENSITY)");
+    }
 }
 
 /* Context activation is done by the caller. */
