@@ -287,6 +287,11 @@ static void free_node( struct node *node )
         heap_free( text->text );
         break;
     }
+    case WS_XML_NODE_TYPE_COMMENT:
+    {
+        WS_XML_COMMENT_NODE *comment = (WS_XML_COMMENT_NODE *)node;
+        heap_free( comment->value.bytes );
+    }
     case WS_XML_NODE_TYPE_END_ELEMENT:
     case WS_XML_NODE_TYPE_EOF:
     case WS_XML_NODE_TYPE_BOF:
@@ -342,6 +347,7 @@ enum reader_state
     READER_STATE_STARTELEMENT,
     READER_STATE_TEXT,
     READER_STATE_ENDELEMENT,
+    READER_STATE_COMMENT,
     READER_STATE_EOF
 };
 
@@ -954,6 +960,45 @@ static HRESULT read_endelement( struct reader *reader )
     return S_OK;
 }
 
+static HRESULT read_comment( struct reader *reader )
+{
+    unsigned int len = 0, ch, skip;
+    const char *start;
+    struct node *node;
+    WS_XML_COMMENT_NODE *comment;
+
+    if (read_cmp( reader, "<!--", 4 )) return WS_E_INVALID_FORMAT;
+    read_skip( reader, 4 );
+
+    start = read_current_ptr( reader );
+    for (;;)
+    {
+        if (!read_cmp( reader, "-->", 3 ))
+        {
+            read_skip( reader, 3 );
+            break;
+        }
+        if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
+        read_skip( reader, skip );
+        len += skip;
+    }
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_COMMENT ))) return E_OUTOFMEMORY;
+    comment = (WS_XML_COMMENT_NODE *)node;
+    if (!(comment->value.bytes = heap_alloc( len )))
+    {
+        heap_free( node );
+        return E_OUTOFMEMORY;
+    }
+    memcpy( comment->value.bytes, start, len );
+    comment->value.length = len;
+
+    list_add_after( &reader->current->entry, &node->entry );
+    reader->current = node;
+    reader->state   = READER_STATE_COMMENT;
+    return S_OK;
+}
+
 static HRESULT read_node( struct reader *reader )
 {
     HRESULT hr;
@@ -972,6 +1017,7 @@ static HRESULT read_node( struct reader *reader )
             if (FAILED( hr )) return hr;
         }
         else if (!read_cmp( reader, "</", 2 )) return read_endelement( reader );
+        else if (!read_cmp( reader, "<!", 2 )) return read_comment( reader );
         else if (!read_cmp( reader, "<", 1 )) return read_startelement( reader );
         else return read_text( reader );
     }

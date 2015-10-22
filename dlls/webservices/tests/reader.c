@@ -52,6 +52,9 @@ static const char data6[] =
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
     "<text attr= \"value\" attr2='value2'>test</text>";
 
+static const char data7[] =
+    "<!-- comment -->";
+
 static const char data8[] =
     "<node1><node2>test</node2></node1>";
 
@@ -780,6 +783,9 @@ static void test_WsReadNode(void)
     static const char str12[] = "<text>test</text>";
     static const char str13[] = "<?xml version=\"1.0\"?><text>test</text>";
     static const char str14[] = "";
+    static const char str15[] = "<!--";
+    static const char str16[] = "<!---->";
+    static const char str17[] = "<!--comment-->";
     HRESULT hr;
     WS_XML_READER *reader;
     const WS_XML_NODE *node;
@@ -808,6 +814,9 @@ static void test_WsReadNode(void)
         { str12, S_OK, WS_XML_NODE_TYPE_ELEMENT },
         { str13, S_OK, WS_XML_NODE_TYPE_ELEMENT },
         { str14, WS_E_INVALID_FORMAT, 0, 1 },
+        { str15, WS_E_INVALID_FORMAT, 0 },
+        { str16, S_OK, WS_XML_NODE_TYPE_COMMENT },
+        { str17, S_OK, WS_XML_NODE_TYPE_COMMENT },
     };
 
     hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
@@ -913,6 +922,26 @@ static void test_WsReadNode(void)
         ok( attr->value->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", attr->value->textType );
         ok( text->value.length == 6, "got %u\n", text->value.length );
         ok( !memcmp( text->value.bytes, "value2", 6 ), "wrong data\n" );
+    }
+
+    hr = set_input( reader, data7, sizeof(data7) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, sizeof(data7) - 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node)
+    {
+        WS_XML_COMMENT_NODE *comment = (WS_XML_COMMENT_NODE *)node;
+
+        ok( comment->node.nodeType == WS_XML_NODE_TYPE_COMMENT, "got %u\n", comment->node.nodeType );
+        ok( comment->value.length == 9, "got %u\n", comment->value.length );
+        ok( !memcmp( comment->value.bytes, " comment ", 9 ), "wrong data\n" );
     }
 
     WsFreeReader( reader );
