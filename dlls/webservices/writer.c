@@ -57,7 +57,11 @@ writer_props[] =
 
 struct writer
 {
+    ULONG                     write_pos;
+    char                     *write_bufptr;
     WS_XML_WRITER_OUTPUT_TYPE output_type;
+    struct xmlbuf            *output_buf;
+    WS_HEAP                  *output_heap;
     ULONG                     prop_count;
     WS_XML_WRITER_PROPERTY    prop[sizeof(writer_props)/sizeof(writer_props[0])];
 };
@@ -102,6 +106,12 @@ static HRESULT get_writer_prop( struct writer *writer, WS_XML_WRITER_PROPERTY_ID
     return S_OK;
 }
 
+static void free_writer( struct writer *writer )
+{
+    WsFreeHeap( writer->output_heap );
+    heap_free( writer );
+}
+
 /**************************************************************************
  *          WsCreateWriter		[webservices.@]
  */
@@ -132,9 +142,23 @@ HRESULT WINAPI WsCreateWriter( const WS_XML_WRITER_PROPERTY *properties, ULONG c
         hr = set_writer_prop( writer, properties[i].id, properties[i].value, properties[i].valueSize );
         if (hr != S_OK)
         {
-            heap_free( writer );
+            free_writer( writer );
             return hr;
         }
+    }
+
+    hr = get_writer_prop( writer, WS_XML_WRITER_PROPERTY_BUFFER_MAX_SIZE, &max_size, sizeof(max_size) );
+    if (hr != S_OK)
+    {
+        free_writer( writer );
+        return hr;
+    }
+
+    hr = WsCreateHeap( max_size, 0, NULL, 0, &writer->output_heap, NULL );
+    if (hr != S_OK)
+    {
+        free_writer( writer );
+        return hr;
     }
 
     *handle = (WS_XML_WRITER *)writer;
@@ -149,7 +173,7 @@ void WINAPI WsFreeWriter( WS_XML_WRITER *handle )
     struct writer *writer = (struct writer *)handle;
 
     TRACE( "%p\n", handle );
-    heap_free( writer );
+    free_writer( writer );
 }
 
 #define XML_BUFFER_INITIAL_ALLOCATED_SIZE 256
@@ -167,6 +191,13 @@ static struct xmlbuf *alloc_xmlbuf( WS_HEAP *heap )
     ret->size_allocated = XML_BUFFER_INITIAL_ALLOCATED_SIZE;
     ret->size           = 0;
     return ret;
+}
+
+static void free_xmlbuf( struct xmlbuf *xmlbuf )
+{
+    if (!xmlbuf) return;
+    ws_free( xmlbuf->heap, xmlbuf->ptr );
+    ws_free( xmlbuf->heap, xmlbuf );
 }
 
 /**************************************************************************
@@ -201,6 +232,19 @@ HRESULT WINAPI WsGetWriterProperty( WS_XML_WRITER *handle, WS_XML_WRITER_PROPERT
     return get_writer_prop( writer, id, buf, size );
 }
 
+static void set_output_buffer( struct writer *writer, struct xmlbuf *xmlbuf )
+{
+    /* free current buffer if it's ours */
+    if (writer->output_buf && writer->output_buf->heap == writer->output_heap)
+    {
+        free_xmlbuf( writer->output_buf );
+    }
+    writer->output_buf   = xmlbuf;
+    writer->output_type  = WS_XML_WRITER_OUTPUT_TYPE_BUFFER;
+    writer->write_bufptr = xmlbuf->ptr;
+    writer->write_pos    = 0;
+}
+
 /**************************************************************************
  *          WsSetOutput		[webservices.@]
  */
@@ -216,6 +260,12 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!writer) return E_INVALIDARG;
+
+    for (i = 0; i < count; i++)
+    {
+        hr = set_writer_prop( writer, properties[i].id, properties[i].value, properties[i].valueSize );
+        if (hr != S_OK) return hr;
+    }
 
     switch (encoding->encodingType)
     {
@@ -236,12 +286,37 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
     switch (output->outputType)
     {
         case WS_XML_WRITER_OUTPUT_TYPE_BUFFER:
-            writer->output_type = WS_XML_WRITER_OUTPUT_TYPE_BUFFER;
+        {
+            struct xmlbuf *xmlbuf;
+
+            if (!(xmlbuf = alloc_xmlbuf( writer->output_heap ))) return E_OUTOFMEMORY;
+            set_output_buffer( writer, xmlbuf );
             break;
+        }
         default:
             FIXME( "output type %u not supported\n", output->outputType );
             return E_NOTIMPL;
     }
+
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsSetOutputToBuffer		[webservices.@]
+ */
+HRESULT WINAPI WsSetOutputToBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer,
+                                    const WS_XML_WRITER_PROPERTY *properties, ULONG count,
+                                    WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    struct xmlbuf *xmlbuf = (struct xmlbuf *)buffer;
+    HRESULT hr;
+    ULONG i;
+
+    TRACE( "%p %p %p %u %p\n", handle, buffer, properties, count, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !xmlbuf) return E_INVALIDARG;
 
     for (i = 0; i < count; i++)
     {
@@ -249,5 +324,6 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
         if (hr != S_OK) return hr;
     }
 
+    set_output_buffer( writer, xmlbuf );
     return S_OK;
 }

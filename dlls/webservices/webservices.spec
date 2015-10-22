@@ -155,7 +155,7 @@
 @ stub WsSetListenerProperty
 @ stub WsSetMessageProperty
 @ stdcall WsSetOutput(ptr ptr ptr ptr long ptr)
-@ stub WsSetOutputToBuffer
+@ stdcall WsSetOutputToBuffer(ptr ptr ptr long ptr)
 @ stub WsSetReaderPosition
 @ stub WsSetWriterPosition
 @ stub WsShutdownSessionChannel
