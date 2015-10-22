@@ -72,7 +72,6 @@ conf_manext     = 5
 @SET_MAKE@
 
 all:
-dummy:
-.PHONY: all dummy
+.PHONY: all
 
 # End of common header

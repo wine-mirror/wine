@@ -107,8 +107,10 @@ config_EXTRADEFS = \
 version.c: dummy
 	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || ($(RM) $@ && exit 1)
 
+dummy:
+
 # Make sure that make_makefiles sees the generated rules
-.PHONY: install install-lib install-dev uninstall
+.PHONY: dummy install install-lib install-dev uninstall
 install install-lib::
 install install-dev::
 clean::
