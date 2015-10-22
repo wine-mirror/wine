@@ -31,8 +31,7 @@ static HRESULT set_output( WS_XML_WRITER *writer )
 
     output.output.outputType = WS_XML_WRITER_OUTPUT_TYPE_BUFFER;
 
-    return WsSetOutput( writer, (const WS_XML_WRITER_ENCODING *)&encoding,
-                        (const WS_XML_WRITER_OUTPUT *)&output, NULL, 0, NULL );
+    return WsSetOutput( writer, &encoding.encoding, &output.output, NULL, 0, NULL );
 }
 
 static void test_WsCreateWriter(void)
@@ -191,6 +190,50 @@ static void test_WsCreateWriter(void)
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
 }
 
+static void test_WsCreateXmlBuffer(void)
+{
+    HRESULT hr;
+    WS_HEAP *heap;
+    WS_XML_WRITER *writer;
+    WS_XML_BUFFER *buffer;
+    WS_BYTES bytes;
+    ULONG size;
+
+    hr = WsCreateXmlBuffer( NULL, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( NULL, NULL, 0, &buffer, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    buffer = NULL;
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( buffer != NULL, "buffer not set\n" );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    size = sizeof(bytes);
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    size = sizeof(bytes);
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
+    todo_wine ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    WsFreeWriter( writer );
+    WsFreeHeap( heap );
+}
+
 static void test_WsSetOutput(void)
 {
     HRESULT hr;
@@ -211,13 +254,11 @@ static void test_WsSetOutput(void)
 
     output.output.outputType = WS_XML_WRITER_OUTPUT_TYPE_BUFFER;
 
-    hr = WsSetOutput( writer, (const WS_XML_WRITER_ENCODING *)&encoding,
-                      (const WS_XML_WRITER_OUTPUT *)&output, NULL, 0, NULL );
+    hr = WsSetOutput( writer, &encoding.encoding, &output.output, NULL, 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     /* multiple calls are allowed */
-    hr = WsSetOutput( writer, (const WS_XML_WRITER_ENCODING *)&encoding,
-                      (const WS_XML_WRITER_OUTPUT *)&output, NULL, 0, NULL );
+    hr = WsSetOutput( writer, &encoding.encoding, &output.output, NULL, 0, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     /* writer properties can be set with WsSetOutput */
@@ -225,8 +266,7 @@ static void test_WsSetOutput(void)
     prop.id = WS_XML_WRITER_PROPERTY_MAX_DEPTH;
     prop.value = &max_depth;
     prop.valueSize = sizeof(max_depth);
-    hr = WsSetOutput( writer, (const WS_XML_WRITER_ENCODING *)&encoding,
-                      (const WS_XML_WRITER_OUTPUT *)&output, &prop, 1, NULL );
+    hr = WsSetOutput( writer, &encoding.encoding, &output.output, &prop, 1, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
 
     max_depth = 0xdeadbeef;
@@ -237,8 +277,59 @@ static void test_WsSetOutput(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsSetOutputToBuffer(void)
+{
+    HRESULT hr;
+    WS_HEAP *heap;
+    WS_XML_BUFFER *buffer;
+    WS_XML_WRITER *writer;
+    WS_XML_WRITER_PROPERTY prop;
+    ULONG size, max_depth;
+
+    hr = WsSetOutputToBuffer( NULL, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, NULL, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* multiple calls are allowed */
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* writer properties can be set with WsSetOutputToBuffer */
+    max_depth = 16;
+    prop.id = WS_XML_WRITER_PROPERTY_MAX_DEPTH;
+    prop.value = &max_depth;
+    prop.valueSize = sizeof(max_depth);
+    hr = WsSetOutputToBuffer( writer, buffer, &prop, 1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    max_depth = 0xdeadbeef;
+    size = sizeof(max_depth);
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_MAX_DEPTH, &max_depth, size, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( max_depth == 16, "got %u\n", max_depth );
+
+    WsFreeWriter( writer );
+    WsFreeHeap( heap );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
+    test_WsCreateXmlBuffer();
     test_WsSetOutput();
+    test_WsSetOutputToBuffer();
 }
