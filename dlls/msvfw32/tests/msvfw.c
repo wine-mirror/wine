@@ -28,6 +28,29 @@
 static void test_OpenCase(void)
 {
     HIC h;
+    ICINFO info;
+    /* Check if default handler works */
+    h = ICOpen(mmioFOURCC('v','i','d','c'),0,ICMODE_DECOMPRESS);
+todo_wine
+    ok(0!=h,"ICOpen(vidc.0) failed\n");
+    if (h) {
+        info.dwSize = sizeof(info);
+        info.szName[0] = 0;
+        ICGetInfo(h, &info, sizeof(info));
+        trace("The default decompressor is %s\n", wine_dbgstr_w(info.szName));
+        ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
+    }
+    h = ICOpen(mmioFOURCC('v','i','d','c'),0,ICMODE_COMPRESS);
+todo_wine
+    ok(0!=h || broken(h == 0),"ICOpen(vidc.0) failed\n");  /* Not present in Win8 */
+    if (h) {
+        info.dwSize = sizeof(info);
+        info.szName[0] = 0;
+        ICGetInfo(h, &info, sizeof(info));
+        trace("The default compressor is %s\n", wine_dbgstr_w(info.szName));
+        ok(ICClose(h)==ICERR_OK,"ICClose failed\n");
+    }
+
     /* Open a compressor with combinations of lowercase
      * and uppercase compressortype and handler.
      */
