@@ -1,6 +1,6 @@
 MODULE    = wpcap.dll
 DELAYIMPORTS = ws2_32
-EXTRALIBS = @LIBPCAP@
+EXTRALIBS = $(PCAP_LIBS)
 
 C_SRCS = \
 	wpcap.c
