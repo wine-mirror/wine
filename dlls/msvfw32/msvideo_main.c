@@ -436,6 +436,27 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
 
     TRACE("(%s,%s,0x%08x)\n", wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode);
 
+    if (!fccHandler) /* No specific handler, return the first valid for wMode */
+    {
+        HIC local;
+        ICINFO info;
+        DWORD loop = 0;
+        info.dwSize = sizeof(info);
+        while(ICInfo(fccType, loop++, &info))
+        {
+            /* Ensure fccHandler is not 0x0 because we will recurse on ICOpen */
+            if(!info.fccHandler)
+                continue;
+            local = ICOpen(fccType, info.fccHandler, wMode);
+            if (local != 0)
+            {
+                TRACE("Returning %s as defult handler for %s\n",
+                      wine_dbgstr_fcc(info.fccHandler), wine_dbgstr_fcc(fccType));
+                return local;
+            }
+        }
+    }
+
     /* Check if there is a registered driver that matches */
     driver = reg_driver_list;
     while(driver)
@@ -448,7 +469,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
             driver = driver->next;
 
     if (driver && driver->proc)
-	/* The driver has been registered at runtime with its driverproc */
+        /* The driver has been registered at runtime with its driverproc */
         return ICOpenFunction(fccType, fccHandler, wMode, driver->proc);
   
     /* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the
@@ -478,7 +499,7 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         codecname[9] = '\0';
 
         hdrv = OpenDriver(codecname, drv32W, (LPARAM)&icopen);
-        if (!hdrv) 
+        if (!hdrv)
             return 0;
     } else {
         /* The driver has been registered at runtime with its name */
