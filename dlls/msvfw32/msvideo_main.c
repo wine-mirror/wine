@@ -46,14 +46,56 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvideo);
 
+/* This one is a macro in order to work for both ASCII and Unicode */
+#define fourcc_to_string(str, fcc) do { \
+	(str)[0] = LOBYTE(LOWORD(fcc)); \
+	(str)[1] = HIBYTE(LOWORD(fcc)); \
+	(str)[2] = LOBYTE(HIWORD(fcc)); \
+	(str)[3] = HIBYTE(HIWORD(fcc)); \
+	} while(0)
+
 static inline const char *wine_dbgstr_fcc( DWORD fcc )
 {
-    char fcc_str[5] = {LOBYTE(LOWORD(fcc)), HIBYTE(LOWORD(fcc)),
-                       LOBYTE(HIWORD(fcc)), HIBYTE(HIWORD(fcc)), '\0'};
-    if (isalnum(fcc_str[0]) && isalnum(fcc_str[1])
-     && isalnum(fcc_str[2]) && isalnum(fcc_str[3]))
+    char fcc_str[5];
+    fourcc_to_string(fcc_str, fcc);
+    fcc_str[4] = '\0';
+    /* Last byte may be ' ' in some cases like "DIB " */
+    if (isalnum(fcc_str[0]) && isalnum(fcc_str[1]) && isalnum(fcc_str[2])
+    && (isalnum(fcc_str[3]) || isspace(fcc_str[3])))
         return wine_dbg_sprintf("%s", fcc_str);
     return wine_dbg_sprintf("0x%08x", fcc);
+}
+
+static const char *wine_dbgstr_icerr( int ret )
+{
+    const char *str;
+    if (ret <= ICERR_CUSTOM)
+        return wine_dbg_sprintf("ICERR_CUSTOM (%d)", ret);
+#define XX(x) case (x): str = #x; break
+    switch (ret)
+    {
+        XX(ICERR_OK);
+        XX(ICERR_DONTDRAW);
+        XX(ICERR_NEWPALETTE);
+        XX(ICERR_GOTOKEYFRAME);
+        XX(ICERR_STOPDRAWING);
+        XX(ICERR_UNSUPPORTED);
+        XX(ICERR_BADFORMAT);
+        XX(ICERR_MEMORY);
+        XX(ICERR_INTERNAL);
+        XX(ICERR_BADFLAGS);
+        XX(ICERR_BADPARAM);
+        XX(ICERR_BADSIZE);
+        XX(ICERR_BADHANDLE);
+        XX(ICERR_CANTUPDATE);
+        XX(ICERR_ABORT);
+        XX(ICERR_ERROR);
+        XX(ICERR_BADBITDEPTH);
+        XX(ICERR_BADIMAGESIZE);
+        default: str = wine_dbg_sprintf("UNKNOWN (%d)", ret);
+    }
+#undef XX
+    return str;
 }
 
 static WINE_HIC*        MSVIDEO_FirstHic /* = NULL */;
@@ -69,14 +111,6 @@ struct _reg_driver
 };
 
 static reg_driver* reg_driver_list = NULL;
-
-/* This one is a macro in order to work for both ASCII and Unicode */
-#define fourcc_to_string(str, fcc) do { \
-	(str)[0] = LOBYTE(LOWORD(fcc)); \
-	(str)[1] = HIBYTE(LOWORD(fcc)); \
-	(str)[2] = LOBYTE(HIWORD(fcc)); \
-	(str)[3] = HIBYTE(HIWORD(fcc)); \
-	} while(0)
 
 HMODULE MSVFW32_hModule;
 
@@ -176,7 +210,7 @@ static LRESULT MSVIDEO_SendMessage(WINE_HIC* whic, UINT msg, DWORD_PTR lParam1, 
         ret = SendDriverMessage(whic->hdrv, msg, lParam1, lParam2);
     }
 
-    TRACE("	-> 0x%08lx\n", ret);
+    TRACE("	-> %s\n", wine_dbgstr_icerr(ret));
     return ret;
 }
 
@@ -293,8 +327,8 @@ static BOOL ICInfo_enum_handler(const char *drv, unsigned int nr, void *param)
  */
 BOOL VFWAPI ICInfo( DWORD fccType, DWORD fccHandler, ICINFO *lpicinfo)
 {
-    TRACE("(%s,%s/%08x,%p)\n",
-          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), fccHandler, lpicinfo);
+    TRACE("(%s,%s,%p)\n",
+          wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), lpicinfo);
 
     lpicinfo->fccType = fccType;
     lpicinfo->fccHandler = fccHandler;
@@ -420,16 +454,16 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
     /* Well, lParam2 is in fact a LPVIDEO_OPEN_PARMS, but it has the
      * same layout as ICOPEN
      */
-    icopen.dwSize		= sizeof(ICOPEN);
-    icopen.fccType		= fccType;
-    icopen.fccHandler	        = fccHandler;
-    icopen.dwVersion            = 0x00001000; /* FIXME */
-    icopen.dwFlags		= wMode;
-    icopen.dwError              = 0;
-    icopen.pV1Reserved          = NULL;
-    icopen.pV2Reserved          = NULL;
-    icopen.dnDevNode            = 0; /* FIXME */
-	
+    icopen.dwSize      = sizeof(ICOPEN);
+    icopen.fccType     = fccType;
+    icopen.fccHandler  = fccHandler;
+    icopen.dwVersion   = 0x00001000; /* FIXME */
+    icopen.dwFlags     = wMode;
+    icopen.dwError     = 0;
+    icopen.pV1Reserved = NULL;
+    icopen.pV2Reserved = NULL;
+    icopen.dnDevNode   = 0; /* FIXME */
+
     if (!driver) {
         /* normalize to lower case as in 'vidc' */
         ((char*)&fccType)[0] = tolower(((char*)&fccType)[0]);
@@ -438,9 +472,9 @@ HIC VFWAPI ICOpen(DWORD fccType, DWORD fccHandler, UINT wMode)
         ((char*)&fccType)[3] = tolower(((char*)&fccType)[3]);
         icopen.fccType = fccType;
         /* Seek the driver in the registry */
-	fourcc_to_string(codecname, fccType);
+        fourcc_to_string(codecname, fccType);
         codecname[4] = '.';
-	fourcc_to_string(codecname + 5, fccHandler);
+        fourcc_to_string(codecname + 5, fccHandler);
         codecname[9] = '\0';
 
         hdrv = OpenDriver(codecname, drv32W, (LPARAM)&icopen);
@@ -483,15 +517,15 @@ HIC VFWAPI ICOpenFunction(DWORD fccType, DWORD fccHandler, UINT wMode, DRIVERPRO
     TRACE("(%s,%s,%d,%p)\n",
           wine_dbgstr_fcc(fccType), wine_dbgstr_fcc(fccHandler), wMode, lpfnHandler);
 
-    icopen.dwSize		= sizeof(ICOPEN);
-    icopen.fccType		= fccType;
-    icopen.fccHandler	        = fccHandler;
-    icopen.dwVersion            = ICVERSION;
-    icopen.dwFlags		= wMode;
-    icopen.dwError              = 0;
-    icopen.pV1Reserved          = NULL;
-    icopen.pV2Reserved          = NULL;
-    icopen.dnDevNode            = 0; /* FIXME */
+    icopen.dwSize      = sizeof(ICOPEN);
+    icopen.fccType     = fccType;
+    icopen.fccHandler  = fccHandler;
+    icopen.dwVersion   = ICVERSION;
+    icopen.dwFlags     = wMode;
+    icopen.dwError     = 0;
+    icopen.pV1Reserved = NULL;
+    icopen.pV2Reserved = NULL;
+    icopen.dnDevNode   = 0; /* FIXME */
 
     whic = HeapAlloc(GetProcessHeap(), 0, sizeof(WINE_HIC));
     if (!whic) return 0;
@@ -567,7 +601,7 @@ LRESULT VFWAPI ICGetInfo(HIC hic, ICINFO *picinfo, DWORD cb)
         lstrcpyW(picinfo->szDriver, ii.szDriver);
     }
 
-    TRACE("	-> 0x%08lx\n", ret);
+    TRACE("	-> %s\n", wine_dbgstr_icerr(ret));
     return ret;
 }
 
@@ -764,7 +798,7 @@ DWORD VFWAPIV  ICDecompress(HIC hic,DWORD dwFlags,LPBITMAPINFOHEADER lpbiFormat,
 	icd.ckid	= 0;
 	ret = ICSendMessage(hic,ICM_DECOMPRESS,(DWORD_PTR)&icd,sizeof(ICDECOMPRESS));
 
-	TRACE("-> %d\n",ret);
+	TRACE("-> %s\n",wine_dbgstr_icerr(ret));
 
 	return ret;
 }
@@ -1378,7 +1412,6 @@ LPVOID VFWAPI ICSeqCompressFrame(PCOMPVARS pc, UINT uiFlags, LPVOID lpBits, BOOL
     icComp->lpPrev = pc->lpBitsPrev;
     ret = ICSendMessage(pc->hic, ICM_COMPRESS, (DWORD_PTR)icComp, sizeof(*icComp));
 
-    TRACE(" -- 0x%08x\n", ret);
     if (ret == ICERR_OK)
     {
         LPVOID oldprev, oldout;
@@ -1426,10 +1459,8 @@ static void clear_compvars(PCOMPVARS pc)
  */
 void VFWAPI ICSeqCompressFrameEnd(PCOMPVARS pc)
 {
-    DWORD ret;
     TRACE("(%p)\n", pc);
-    ret = ICSendMessage(pc->hic, ICM_COMPRESS_END, 0, 0);
-    TRACE(" -- %x\n", ret);
+    ICSendMessage(pc->hic, ICM_COMPRESS_END, 0, 0);
     clear_compvars(pc);
 }
 
@@ -1514,15 +1545,15 @@ BOOL VFWAPI ICSeqCompressFrameStart(PCOMPVARS pc, LPBITMAPINFO lpbiIn)
           "\tsize: %i\n"
           "\tflags: 0x%x\n"
           "\thic: %p\n"
-          "\ttype: 0x%x\n"
+          "\ttype: %s\n"
           "\thandler: %s\n"
           "\tin/out: %p/%p\n"
           "\tkey/data/quality: %i/%i/%i\n",
-	     pc->cbSize, pc->dwFlags, pc->hic, pc->fccType, wine_dbgstr_fcc(pc->fccHandler),
-	     pc->lpbiIn, pc->lpbiOut, pc->lKey, pc->lDataRate, pc->lQ);
+    pc->cbSize, pc->dwFlags, pc->hic, wine_dbgstr_fcc(pc->fccType),
+    wine_dbgstr_fcc(pc->fccHandler), pc->lpbiIn, pc->lpbiOut, pc->lKey,
+    pc->lDataRate, pc->lQ);
 
     ret = ICSendMessage(pc->hic, ICM_COMPRESS_BEGIN, (DWORD_PTR)pc->lpbiIn, (DWORD_PTR)pc->lpbiOut);
-    TRACE(" -- %x\n", ret);
     if (ret == ICERR_OK)
     {
         icComp = pc->lpState;
