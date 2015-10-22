@@ -5822,11 +5822,11 @@ typedef struct _PROCESSOR_NUMBER
 typedef struct _PROCESSOR_RELATIONSHIP
 {
     BYTE Flags;
-    BYTE Reserved[21];
+    BYTE EfficiencyClass;
+    BYTE Reserved[20];
     WORD GroupCount;
     GROUP_AFFINITY GroupMask[ANYSIZE_ARRAY];
 } PROCESSOR_RELATIONSHIP, *PPROCESSOR_RELATIONSHIP;
-
 
 typedef struct _NUMA_NODE_RELATIONSHIP
 {
@@ -5840,6 +5840,7 @@ typedef struct _CACHE_RELATIONSHIP
     BYTE Level;
     BYTE Associativity;
     WORD LineSize;
+    DWORD CacheSize;
     PROCESSOR_CACHE_TYPE Type;
     BYTE Reserved[20];
     GROUP_AFFINITY GroupMask;
