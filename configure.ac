@@ -988,11 +988,12 @@ wine-installed: main.o
                            *) LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400" ;;
                            esac
                           ])
-          AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
-          if test "x$PRELINK" = xfalse
-          then
-              WINE_WARNING([prelink not found, base address of core dlls won't be set correctly.])
-          fi
+          WINE_TRY_CFLAGS([-Wl,-Ttext-segment=0x7bc00000],[:],
+                          [AC_PATH_PROG(PRELINK, prelink, false, [/sbin /usr/sbin $PATH])
+                           if test "x$PRELINK" = xfalse
+                           then
+                               WINE_WARNING([prelink not found and linker does not support relocation, base address of core dlls won't be set correctly.])
+                           fi])
           ;;
       esac
 

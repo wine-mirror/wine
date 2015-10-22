@@ -8678,7 +8678,32 @@ if test "x$ac_cv_cflags__Wl___section_start__interp_0x7bf00400" = xyes; then :
                            esac
 
 fi
-          # Extract the first word of "prelink", so it can be a program name with args.
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000" >&5
+$as_echo_n "checking whether the compiler supports -Wl,-Ttext-segment=0x7bc00000... " >&6; }
+if ${ac_cv_cflags__Wl__Ttext_segment_0x7bc00000+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_wine_try_cflags_saved=$CFLAGS
+CFLAGS="$CFLAGS -Wl,-Ttext-segment=0x7bc00000"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+int main(int argc, char **argv) { return 0; }
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_cflags__Wl__Ttext_segment_0x7bc00000=yes
+else
+  ac_cv_cflags__Wl__Ttext_segment_0x7bc00000=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+CFLAGS=$ac_wine_try_cflags_saved
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" >&5
+$as_echo "$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" >&6; }
+if test "x$ac_cv_cflags__Wl__Ttext_segment_0x7bc00000" = xyes; then :
+  :
+else
+  # Extract the first word of "prelink", so it can be a program name with args.
 set dummy prelink; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -8719,10 +8744,11 @@ $as_echo "no" >&6; }
 fi
 
 
-          if test "x$PRELINK" = xfalse
-          then
-              as_fn_append wine_warnings "|prelink not found, base address of core dlls won't be set correctly."
-          fi
+                           if test "x$PRELINK" = xfalse
+                           then
+                               as_fn_append wine_warnings "|prelink not found and linker does not support relocation, base address of core dlls won't be set correctly."
+                           fi
+fi
           ;;
       esac
 

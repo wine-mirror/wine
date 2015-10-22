@@ -776,6 +776,7 @@ static void build(struct options* opts)
     char *output_file;
     const char *spec_o_name;
     const char *output_name, *spec_file, *lang;
+    const char *prelink = NULL;
     int generate_app_loader = 1;
     int fake_module = 0;
     unsigned int j;
@@ -1134,6 +1135,13 @@ static void build(struct options* opts)
         }
         break;
     default:
+        if (opts->image_base)
+        {
+            if (!try_link(opts->prefix, link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base)))
+                strarray_add(link_args, strmake("-Wl,-Ttext-segment=%s", opts->image_base));
+            else
+                prelink = PRELINK;
+        }
         break;
     }
 
@@ -1167,10 +1175,9 @@ static void build(struct options* opts)
     spawn(opts->prefix, link_args, 0);
     strarray_free (link_args);
 
-    /* set the base address */
-    if (opts->image_base && !opts->target)
+    /* set the base address with prelink if linker support is not present */
+    if (prelink && !opts->target)
     {
-        const char *prelink = PRELINK;
         if (prelink[0] && strcmp(prelink,"false"))
         {
             strarray *prelink_args = strarray_alloc();
