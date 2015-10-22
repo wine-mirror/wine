@@ -35,7 +35,7 @@
 @ stub WsCreateServiceProxy
 @ stub WsCreateServiceProxyFromTemplate
 @ stdcall WsCreateWriter(ptr long ptr ptr)
-@ stub WsCreateXmlBuffer
+@ stdcall WsCreateXmlBuffer(ptr ptr long ptr ptr)
 @ stub WsCreateXmlSecurityToken
 @ stub WsDateTimeToFileTime
 @ stub WsDecodeUrl

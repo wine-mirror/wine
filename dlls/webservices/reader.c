@@ -158,6 +158,18 @@ struct heap
     WS_HEAP_PROPERTY prop[sizeof(heap_props)/sizeof(heap_props[0])];
 };
 
+void *ws_alloc( WS_HEAP *handle, SIZE_T size )
+{
+    struct heap *heap = (struct heap *)handle;
+    return HeapAlloc( heap->handle, 0, size );
+}
+
+void ws_free( WS_HEAP *handle, void *ptr )
+{
+    struct heap *heap = (struct heap *)handle;
+    HeapFree( heap->handle, 0, ptr );
+}
+
 static struct heap *alloc_heap(void)
 {
     static const ULONG count = sizeof(heap_props)/sizeof(heap_props[0]);
@@ -1103,12 +1115,6 @@ HRESULT WINAPI WsReadToStartElement( WS_XML_READER *handle, const WS_XML_STRING 
     return read_to_startelement( reader, found );
 }
 
-static void *read_alloc( WS_HEAP *handle, SIZE_T size )
-{
-    struct heap *heap = (struct heap *)handle;
-    return HeapAlloc( heap->handle, 0, size );
-}
-
 static WCHAR *xmltext_to_widechar( WS_HEAP *heap, const WS_XML_TEXT *text )
 {
     WCHAR *ret;
@@ -1119,7 +1125,7 @@ static WCHAR *xmltext_to_widechar( WS_HEAP *heap, const WS_XML_TEXT *text )
     {
         const WS_XML_UTF8_TEXT *utf8 = (const WS_XML_UTF8_TEXT *)text;
         int len = MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, NULL, 0 );
-        if (!(ret = read_alloc( heap, (len + 1) * sizeof(WCHAR) ))) return NULL;
+        if (!(ret = ws_alloc( heap, (len + 1) * sizeof(WCHAR) ))) return NULL;
         MultiByteToWideChar( CP_UTF8, 0, (char *)utf8->value.bytes, utf8->value.length, ret, len );
         ret[len] = 0;
         break;

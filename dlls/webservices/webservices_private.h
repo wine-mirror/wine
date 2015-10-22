@@ -16,6 +16,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+struct xmlbuf
+{
+    WS_HEAP *heap;
+    void    *ptr;
+    SIZE_T   size_allocated;
+    SIZE_T   size;
+};
+
+void *ws_alloc( WS_HEAP *, SIZE_T ) DECLSPEC_HIDDEN;
+void ws_free( WS_HEAP *, void * ) DECLSPEC_HIDDEN;
+
 static inline void *heap_alloc( SIZE_T size )
 {
     return HeapAlloc( GetProcessHeap(), 0, size );
