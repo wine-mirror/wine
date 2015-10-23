@@ -1265,6 +1265,10 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         if ([self isMiniaturized])
             pendingMinimize = TRUE;
 
+        WineWindow* parent = (WineWindow*)self.parentWindow;
+        if ([parent isKindOfClass:[WineWindow class]])
+            [parent grabDockIconSnapshotFromWindow:self force:NO];
+
         [self becameIneligibleParentOrChild];
         if ([self isMiniaturized])
         {
@@ -1569,6 +1573,109 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         }
     }
 
+    - (BOOL) isEmptyShaped
+    {
+        return (self.shapeData.length == sizeof(CGRectZero) && !memcmp(self.shapeData.bytes, &CGRectZero, sizeof(CGRectZero)));
+    }
+
+    - (BOOL) canProvideSnapshot
+    {
+        return (self.windowNumber > 0 && ![self isEmptyShaped]);
+    }
+
+    - (void) grabDockIconSnapshotFromWindow:(WineWindow*)window force:(BOOL)force
+    {
+        if (![self isEmptyShaped])
+            return;
+
+        NSTimeInterval now = [[NSProcessInfo processInfo] systemUptime];
+        if (!force && now < lastDockIconSnapshot + 1)
+            return;
+
+        if (window)
+        {
+            if (![window canProvideSnapshot])
+                return;
+        }
+        else
+        {
+            CGFloat bestArea;
+            for (WineWindow* childWindow in self.childWindows)
+            {
+                if (![childWindow isKindOfClass:[WineWindow class]] || ![childWindow canProvideSnapshot])
+                    continue;
+
+                NSSize size = childWindow.frame.size;
+                CGFloat area = size.width * size.height;
+                if (!window || area > bestArea)
+                {
+                    window = childWindow;
+                    bestArea = area;
+                }
+            }
+
+            if (!window)
+                return;
+        }
+
+        const void* windowID = (const void*)(CGWindowID)window.windowNumber;
+        CFArrayRef windowIDs = CFArrayCreate(NULL, &windowID, 1, NULL);
+        CGImageRef windowImage = CGWindowListCreateImageFromArray(CGRectNull, windowIDs, kCGWindowImageBoundsIgnoreFraming);
+        CFRelease(windowIDs);
+        if (!windowImage)
+            return;
+
+        NSImage* appImage = [NSApp applicationIconImage];
+        if (!appImage)
+            appImage = [NSImage imageNamed:NSImageNameApplicationIcon];
+
+        NSImage* dockIcon = [[[NSImage alloc] initWithSize:NSMakeSize(256, 256)] autorelease];
+        [dockIcon lockFocus];
+
+        CGContextRef cgcontext = [[NSGraphicsContext currentContext] graphicsPort];
+
+        CGRect rect = CGRectMake(8, 8, 240, 240);
+        size_t width = CGImageGetWidth(windowImage);
+        size_t height = CGImageGetHeight(windowImage);
+        if (width > height)
+        {
+            rect.size.height *= height / (double)width;
+            rect.origin.y += (CGRectGetWidth(rect) - CGRectGetHeight(rect)) / 2;
+        }
+        else if (width != height)
+        {
+            rect.size.width *= width / (double)height;
+            rect.origin.x += (CGRectGetHeight(rect) - CGRectGetWidth(rect)) / 2;
+        }
+
+        CGContextDrawImage(cgcontext, rect, windowImage);
+        [appImage drawInRect:NSMakeRect(156, 4, 96, 96)];
+
+        [dockIcon unlockFocus];
+
+        CGImageRelease(windowImage);
+
+        NSImageView* imageView = (NSImageView*)self.dockTile.contentView;
+        if (![imageView isKindOfClass:[NSImageView class]])
+        {
+            imageView = [[[NSImageView alloc] initWithFrame:NSMakeRect(0, 0, 256, 256)] autorelease];
+            imageView.imageScaling = NSImageScaleProportionallyUpOrDown;
+            self.dockTile.contentView = imageView;
+        }
+        imageView.image = dockIcon;
+        [self.dockTile display];
+        lastDockIconSnapshot = now;
+    }
+
+    - (void) checkEmptyShaped
+    {
+        if (self.dockTile.contentView && ![self isEmptyShaped])
+        {
+            self.dockTile.contentView = nil;
+            lastDockIconSnapshot = 0;
+        }
+    }
+
 
     /*
      * ---------- NSWindow method overrides ----------
@@ -1766,6 +1873,10 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         macdrv_event* event = macdrv_create_event(WINDOW_MINIMIZE_REQUESTED, self);
         [queue postEvent:event];
         macdrv_release_event(event);
+
+        WineWindow* parent = (WineWindow*)self.parentWindow;
+        if ([parent isKindOfClass:[WineWindow class]])
+            [parent grabDockIconSnapshotFromWindow:self force:YES];
     }
 
     - (void) toggleFullScreen:(id)sender
@@ -2123,6 +2234,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     - (void)windowWillMiniaturize:(NSNotification *)notification
     {
         [self becameIneligibleParentOrChild];
+        [self grabDockIconSnapshotFromWindow:nil force:NO];
     }
 
     - (NSSize) windowWillResize:(NSWindow*)sender toSize:(NSSize)frameSize
@@ -2584,6 +2696,7 @@ void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count)
         {
             window.shape = nil;
             window.shapeData = nil;
+            [window checkEmptyShaped];
         }
         else
         {
@@ -2598,6 +2711,7 @@ void macdrv_set_window_shape(macdrv_window w, const CGRect *rects, int count)
                     [path appendBezierPathWithRect:NSRectFromCGRect(rects[i])];
                 window.shape = path;
                 window.shapeData = [NSData dataWithBytes:rects length:length];
+                [window checkEmptyShaped];
             }
         }
     });

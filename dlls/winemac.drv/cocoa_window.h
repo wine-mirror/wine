@@ -73,6 +73,8 @@
     NSPoint dragStartPosition;
     NSPoint dragWindowStartPosition;
 
+    NSTimeInterval lastDockIconSnapshot;
+
     BOOL ignore_windowDeminiaturize;
     BOOL ignore_windowResize;
     BOOL fakingClose;
