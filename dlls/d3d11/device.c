@@ -67,13 +67,14 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_QueryInterface(ID3D11De
 static ULONG STDMETHODCALLTYPE d3d11_immediate_context_AddRef(ID3D11DeviceContext *iface)
 {
     struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext(iface);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
     ULONG refcount = InterlockedIncrement(&context->refcount);
 
     TRACE("%p increasing refcount to %u.\n", context, refcount);
 
     if (refcount == 1)
     {
-        ID3D11Device_AddRef(context->device);
+        ID3D11Device_AddRef(&device->ID3D11Device_iface);
     }
 
     return refcount;
@@ -82,13 +83,14 @@ static ULONG STDMETHODCALLTYPE d3d11_immediate_context_AddRef(ID3D11DeviceContex
 static ULONG STDMETHODCALLTYPE d3d11_immediate_context_Release(ID3D11DeviceContext *iface)
 {
     struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext(iface);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
     ULONG refcount = InterlockedDecrement(&context->refcount);
 
     TRACE("%p decreasing refcount to %u.\n", context, refcount);
 
     if (!refcount)
     {
-        ID3D11Device_Release(context->device);
+        ID3D11Device_Release(&device->ID3D11Device_iface);
     }
 
     return refcount;
@@ -96,11 +98,11 @@ static ULONG STDMETHODCALLTYPE d3d11_immediate_context_Release(ID3D11DeviceConte
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_GetDevice(ID3D11DeviceContext *iface, ID3D11Device **device)
 {
-    struct d3d11_immediate_context *context = impl_from_ID3D11DeviceContext(iface);
+    struct d3d_device *device_object = device_from_immediate_ID3D11DeviceContext(iface);
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = context->device;
+    *device = &device_object->ID3D11Device_iface;
     ID3D11Device_AddRef(*device);
 }
 
@@ -1057,8 +1059,7 @@ static HRESULT d3d11_immediate_context_init(struct d3d11_immediate_context *cont
     context->ID3D11DeviceContext_iface.lpVtbl = &d3d11_immediate_context_vtbl;
     context->refcount = 1;
 
-    context->device = &device->ID3D11Device_iface;
-    ID3D11Device_AddRef(context->device);
+    ID3D11Device_AddRef(&device->ID3D11Device_iface);
 
     return S_OK;
 }

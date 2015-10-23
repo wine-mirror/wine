@@ -370,7 +370,6 @@ struct d3d11_immediate_context
 {
     ID3D11DeviceContext ID3D11DeviceContext_iface;
     LONG refcount;
-    ID3D11Device *device;
 };
 
 /* ID3D11Device, ID3D10Device1 */
