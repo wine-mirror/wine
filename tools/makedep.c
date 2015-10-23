@@ -172,7 +172,6 @@ struct makefile
 static struct makefile *top_makefile;
 
 static const char *makefile_name = "Makefile";
-static const char *Separator = "### Dependencies";
 static const char *input_file_name;
 static const char *output_file_name;
 static const char *temp_file_name;
@@ -185,8 +184,7 @@ static const char Usage[] =
     "Usage: makedep [options] directories\n"
     "Options:\n"
     "   -R from to  Compute the relative path between two directories\n"
-    "   -fxxx       Store output in file 'xxx' (default: Makefile)\n"
-    "   -sxxx       Use 'xxx' as separator (default: \"### Dependencies\")\n";
+    "   -fxxx       Store output in file 'xxx' (default: Makefile)\n";
 
 
 #ifndef __GNUC__
@@ -2534,38 +2532,27 @@ static void output_top_variables( struct makefile *make )
 /*******************************************************************
  *         output_dependencies
  */
-static void output_dependencies( struct makefile *make, const char *path )
+static void output_dependencies( struct makefile *make )
 {
     struct strarray targets, testlist_files = empty_strarray, ignore_files = empty_strarray;
+    char buffer[1024];
     FILE *src_file;
 
-    if (Separator && ((src_file = fopen( path, "r" ))))
-    {
-        char buffer[1024];
-        int found = 0;
+    output_file_name = base_dir_path( make, makefile_name );
+    output_file = create_temp_file( output_file_name );
+    output_top_variables( make );
 
-        output_file = create_temp_file( path );
-        output_top_variables( make );
-        while (fgets( buffer, sizeof(buffer), src_file ) && !found)
-        {
-            if (fwrite( buffer, 1, strlen(buffer), output_file ) != strlen(buffer)) fatal_perror( "write" );
-            found = !strncmp( buffer, Separator, strlen(Separator) );
-        }
-        if (fclose( src_file )) fatal_perror( "close" );
-        if (!found) output( "\n%s\n", Separator );
-    }
-    else
-    {
-        if (!(output_file = fopen( path, Separator ? "a" : "w" )))
-            fatal_perror( "%s", path );
-        output_top_variables( make );
-    }
+    /* copy the contents of the source makefile */
+    if (!(src_file = fopen( output_file_name, "r" ))) fatal_perror( "open" );
+    while (fgets( buffer, sizeof(buffer), src_file ))
+        if (fwrite( buffer, 1, strlen(buffer), output_file ) != strlen(buffer)) fatal_perror( "write" );
+    if (fclose( src_file )) fatal_perror( "close" );
 
     targets = output_sources( make, &testlist_files );
 
     fclose( output_file );
     output_file = NULL;
-    if (temp_file_name) rename_temp_file( path );
+    rename_temp_file( output_file_name );
 
     strarray_add( &ignore_files, ".gitignore" );
     strarray_add( &ignore_files, "Makefile" );
@@ -2576,6 +2563,8 @@ static void output_dependencies( struct makefile *make, const char *path )
         output_testlist( base_dir_path( make, "testlist.c" ), testlist_files );
     if (!make->src_dir && make->base_dir)
         output_gitignore( base_dir_path( make, ".gitignore" ), ignore_files );
+
+    output_file_name = NULL;
 }
 
 
@@ -2606,7 +2595,7 @@ static void update_makefile( const char *path )
     struct incl_file *file;
     struct makefile *make;
 
-    make = parse_makefile( path, Separator );
+    make = parse_makefile( path, NULL );
 
     if (root_src_dir)
     {
@@ -2671,9 +2660,7 @@ static void update_makefile( const char *path )
 
     LIST_FOR_EACH_ENTRY( file, &make->includes, struct incl_file, entry ) parse_file( make, file, 0 );
 
-    output_file_name = base_dir_path( make, makefile_name );
-    output_dependencies( make, output_file_name );
-    output_file_name = NULL;
+    output_dependencies( make );
 }
 
 
@@ -2717,10 +2704,6 @@ static int parse_option( const char *opt )
         break;
     case 'R':
         relative_dir_mode = 1;
-        break;
-    case 's':
-        if (opt[2]) Separator = opt + 2;
-        else Separator = NULL;
         break;
     default:
         fprintf( stderr, "Unknown option '%s'\n%s", opt, Usage );
