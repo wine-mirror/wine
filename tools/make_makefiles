@@ -282,6 +282,10 @@ sub parse_makefile($)
         {
             die "Variable $1 in $file.in is obsolete";
         }
+        if (/\@[A-Z_]+\@/)  # config.status substitution variable
+        {
+            ${$make{"=flags"}}{"config"} = 1;
+        }
     }
 
     if ($file =~ /^programs\/([^\/]+)\/Makefile/)

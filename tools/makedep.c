@@ -171,7 +171,8 @@ struct makefile
 
 static struct makefile *top_makefile;
 
-static const char *makefile_name = "Makefile";
+static const char *output_makefile_name = "Makefile";
+static const char *input_makefile_name;
 static const char *input_file_name;
 static const char *output_file_name;
 static const char *temp_file_name;
@@ -184,7 +185,8 @@ static const char Usage[] =
     "Usage: makedep [options] directories\n"
     "Options:\n"
     "   -R from to  Compute the relative path between two directories\n"
-    "   -fxxx       Store output in file 'xxx' (default: Makefile)\n";
+    "   -fxxx       Store output in file 'xxx' (default: Makefile)\n"
+    "   -ixxx       Read input from file 'xxx' (default: Makefile.in)\n";
 
 
 #ifndef __GNUC__
@@ -1460,6 +1462,28 @@ static struct incl_file *add_src_file( struct makefile *make, const char *name )
 
 
 /*******************************************************************
+ *         open_input_makefile
+ */
+static FILE *open_input_makefile( struct makefile *make )
+{
+    FILE *ret;
+
+    if (make->base_dir)
+        input_file_name = base_dir_path( make, input_makefile_name );
+    else
+        input_file_name = output_makefile_name;  /* always use output name for main Makefile */
+
+    input_line = 0;
+    if (!(ret = fopen( input_file_name, "r" )))
+    {
+        input_file_name = root_dir_path( input_file_name );
+        if (!(ret = fopen( input_file_name, "r" ))) fatal_perror( "open" );
+    }
+    return ret;
+}
+
+
+/*******************************************************************
  *         get_make_variable
  */
 static char *get_make_variable( struct makefile *make, const char *name )
@@ -1578,10 +1602,7 @@ static struct makefile *parse_makefile( const char *path, const char *separator 
         if (!strcmp( make->base_dir, "." )) make->base_dir = NULL;
     }
 
-    input_file_name = base_dir_path( make, makefile_name );
-    if (!(file = fopen( input_file_name, "r" ))) fatal_perror( "open" );
-
-    input_line = 0;
+    file = open_input_makefile( make );
     while ((buffer = get_line( file )))
     {
         if (separator && !strncmp( buffer, separator, strlen(separator) )) break;
@@ -2538,15 +2559,16 @@ static void output_dependencies( struct makefile *make )
     char buffer[1024];
     FILE *src_file;
 
-    output_file_name = base_dir_path( make, makefile_name );
+    output_file_name = base_dir_path( make, output_makefile_name );
     output_file = create_temp_file( output_file_name );
     output_top_variables( make );
 
     /* copy the contents of the source makefile */
-    if (!(src_file = fopen( output_file_name, "r" ))) fatal_perror( "open" );
+    src_file = open_input_makefile( make );
     while (fgets( buffer, sizeof(buffer), src_file ))
         if (fwrite( buffer, 1, strlen(buffer), output_file ) != strlen(buffer)) fatal_perror( "write" );
     if (fclose( src_file )) fatal_perror( "close" );
+    input_file_name = NULL;
 
     targets = output_sources( make, &testlist_files );
 
@@ -2640,6 +2662,9 @@ static void update_makefile( const char *path )
     list_init( &make->sources );
     list_init( &make->includes );
 
+    /* FIXME: target dir has to exist to allow locating srcdir-relative include files */
+    if (make->base_dir) create_dir( make->base_dir );
+
     for (var = source_vars; *var; var++)
     {
         value = get_expanded_make_var_array( make, *var );
@@ -2700,7 +2725,10 @@ static int parse_option( const char *opt )
     switch(opt[1])
     {
     case 'f':
-        if (opt[2]) makefile_name = opt + 2;
+        if (opt[2]) output_makefile_name = opt + 2;
+        break;
+    case 'i':
+        if (opt[2]) input_makefile_name = opt + 2;
         break;
     case 'R':
         relative_dir_mode = 1;
@@ -2761,6 +2789,8 @@ int main( int argc, char *argv[] )
 #endif
 
     for (i = 0; i < HASH_SIZE; i++) list_init( &files[i] );
+
+    if (!input_makefile_name) input_makefile_name = strmake( "%s.in", output_makefile_name );
 
     top_makefile = parse_makefile( NULL, "# End of common header" );
 
