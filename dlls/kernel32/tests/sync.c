@@ -2317,20 +2317,16 @@ static DWORD WINAPI alertable_wait_thread(void *param)
 
     ReleaseSemaphore(semaphores[0], 1, NULL);
     result = WaitForMultipleObjectsEx(1, &semaphores[1], TRUE, 1000, TRUE);
-    todo_wine
     ok(result == WAIT_IO_COMPLETION, "expected WAIT_IO_COMPLETION, got %u\n", result);
     result = WaitForMultipleObjectsEx(1, &semaphores[1], TRUE, 200, TRUE);
-    todo_wine
     ok(result == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", result);
 
     ReleaseSemaphore(semaphores[0], 1, NULL);
     timeout.QuadPart = -10000000;
     status = pNtWaitForMultipleObjects(1, &semaphores[1], FALSE, TRUE, &timeout);
-    todo_wine
     ok(status == STATUS_USER_APC, "expected STATUS_USER_APC, got %08x\n", status);
     timeout.QuadPart = -2000000;
     status = pNtWaitForMultipleObjects(1, &semaphores[1], FALSE, TRUE, &timeout);
-    todo_wine
     ok(status == STATUS_WAIT_0, "expected STATUS_WAIT_0, got %08x\n", status);
 
     ReleaseSemaphore(semaphores[0], 1, NULL);
