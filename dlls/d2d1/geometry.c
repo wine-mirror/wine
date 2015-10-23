@@ -1314,6 +1314,7 @@ static void d2d_cdt_cut_edges(struct d2d_cdt *cdt, struct d2d_cdt_edge_ref *end_
         const struct d2d_cdt_edge_ref *base_edge, size_t start_vertex, size_t end_vertex)
 {
     struct d2d_cdt_edge_ref next;
+    float ccw;
 
     d2d_cdt_edge_next_left(cdt, &next, base_edge);
     if (d2d_cdt_edge_destination(cdt, &next) == end_vertex)
@@ -1322,7 +1323,14 @@ static void d2d_cdt_cut_edges(struct d2d_cdt *cdt, struct d2d_cdt_edge_ref *end_
         return;
     }
 
-    if (d2d_cdt_ccw(cdt, d2d_cdt_edge_destination(cdt, &next), end_vertex, start_vertex) > 0.0f)
+    ccw = d2d_cdt_ccw(cdt, d2d_cdt_edge_destination(cdt, &next), end_vertex, start_vertex);
+    if (ccw == 0.0f)
+    {
+        *end_edge = next;
+        return;
+    }
+
+    if (ccw > 0.0f)
         d2d_cdt_edge_next_left(cdt, &next, &next);
 
     d2d_cdt_edge_sym(&next, &next);
@@ -1333,7 +1341,7 @@ static void d2d_cdt_cut_edges(struct d2d_cdt *cdt, struct d2d_cdt_edge_ref *end_
 static BOOL d2d_cdt_insert_segment(struct d2d_cdt *cdt, struct d2d_geometry *geometry,
         const struct d2d_cdt_edge_ref *origin, struct d2d_cdt_edge_ref *edge, size_t end_vertex)
 {
-    struct d2d_cdt_edge_ref base_edge, current, next, target;
+    struct d2d_cdt_edge_ref base_edge, current, new_origin, next, target;
 
     for (current = *origin;; current = next)
     {
@@ -1362,7 +1370,10 @@ static BOOL d2d_cdt_insert_segment(struct d2d_cdt *cdt, struct d2d_geometry *geo
             if (!d2d_cdt_fixup(cdt, &base_edge))
                 return FALSE;
 
-            return TRUE;
+            if (d2d_cdt_edge_origin(cdt, edge) == end_vertex)
+                return TRUE;
+            new_origin = *edge;
+            return d2d_cdt_insert_segment(cdt, geometry, &new_origin, edge, end_vertex);
         }
 
         if (next.idx == origin->idx)
