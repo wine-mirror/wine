@@ -75,6 +75,11 @@ static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     return TRUE;
 }
 
+static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER9 *identifier)
+{
+    return !strcmp(identifier->Driver, "d3d10warp.dll");
+}
+
 /* Locks a given surface and returns the color at (x,y).  It's the caller's
  * responsibility to only pass in lockable surfaces and valid x,y coordinates */
 static DWORD getPixelColorFromSurface(IDirect3DSurface9 *surface, UINT x, UINT y)
@@ -7207,7 +7212,7 @@ static void pretransformed_varying_test(void)
 
     hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
     ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
-    warp = !strcmp(identifier.Description, "Microsoft Basic Render Driver");
+    warp = adapter_is_warp(&identifier);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements, &decl);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -7718,7 +7723,7 @@ static void test_vshader_input(void)
 
     hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
     ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
-    warp = !strcmp(identifier.Description, "Microsoft Basic Render Driver");
+    warp = adapter_is_warp(&identifier);
 
     hr = IDirect3DDevice9_CreateVertexDeclaration(device, decl_elements_twotexcrd, &decl_twotexcrd);
     ok(hr == D3D_OK, "IDirect3DDevice9_CreateVertexDeclaration returned %08x\n", hr);
@@ -20176,7 +20181,7 @@ static void test_uninitialized_varyings(void)
 
     hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
     ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
-    warp = !strcmp(identifier.Description, "Microsoft Basic Render Driver");
+    warp = adapter_is_warp(&identifier);
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
