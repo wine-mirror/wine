@@ -2682,7 +2682,7 @@ CLEAN_FILES = *.o *.a *.so *.res *.fake *.ok *.tab.[[ch]] *.yy.c
 .INIT: Makefile
 .MAKEFILEDEPS:
 all: Makefile
-Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in config.status \$(MAKEDEP)
+Makefile: $srcdir/Makefile.in config.status \$(MAKEDEP)
 	@./config.status Make.tmp Makefile])
 
 test "$srcdir" = . && WINE_APPEND_RULE(
@@ -3682,7 +3682,7 @@ _WINE_EOF
     AS_ERROR([could not create Makefile])
 }])
 
-AC_CONFIG_FILES([Make.tmp:Make.vars.in:Makefile.in])
+AC_CONFIG_FILES([Make.tmp:Makefile.in])
 
 dnl Some final makefile rules
 

@@ -7390,12 +7390,12 @@ wine_fn_has_flag ()
 wine_fn_depend_rules ()
 {
     wine_fn_append_rule \
-"$ac_dir/Makefile: $srcdir/$ac_dir/Makefile.in $srcdir/Make.vars.in config.status \$(MAKEDEP)
-	@./config.status --file $ac_dir/Makefile:Make.vars.in:$ac_dir/Makefile.in && \$(MAKEDEP) $ac_dir
+"$ac_dir/Makefile: $srcdir/$ac_dir/Makefile.in Makefile config.status \$(MAKEDEP)
+	@./config.status --file $ac_dir/Makefile && \$(MAKEDEP) $ac_dir
 depend: $ac_dir/depend
 .PHONY: $ac_dir/depend
 $ac_dir/depend: \$(MAKEDEP) dummy
-	@./config.status --file $ac_dir/Makefile:Make.vars.in:$ac_dir/Makefile.in && \$(MAKEDEP) $ac_dir"
+	@./config.status --file $ac_dir/Makefile && \$(MAKEDEP) $ac_dir"
 }
 
 wine_fn_pot_rules ()
@@ -17187,7 +17187,7 @@ CLEAN_FILES = *.o *.a *.so *.res *.fake *.ok *.tab.[ch] *.yy.c
 .INIT: Makefile
 .MAKEFILEDEPS:
 all: Makefile
-Makefile: $srcdir/Makefile.in $srcdir/Make.vars.in config.status \$(MAKEDEP)
+Makefile: $srcdir/Makefile.in config.status \$(MAKEDEP)
 	@./config.status Make.tmp Makefile"
 
 test "$srcdir" = . && wine_fn_append_rule "all: .gitignore
@@ -18187,7 +18187,7 @@ fi
 ac_config_commands="$ac_config_commands Makefile"
 
 
-ac_config_files="$ac_config_files Make.tmp:Make.vars.in:Makefile.in"
+ac_config_files="$ac_config_files Make.tmp:Makefile.in"
 
 
 
@@ -19004,7 +19004,7 @@ do
     "wine64") CONFIG_LINKS="$CONFIG_LINKS wine64:tools/winewrapper" ;;
     "tools/makedep") CONFIG_COMMANDS="$CONFIG_COMMANDS tools/makedep" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
-    "Make.tmp") CONFIG_FILES="$CONFIG_FILES Make.tmp:Make.vars.in:Makefile.in" ;;
+    "Make.tmp") CONFIG_FILES="$CONFIG_FILES Make.tmp:Makefile.in" ;;
     ".gitignore") CONFIG_COMMANDS="$CONFIG_COMMANDS .gitignore" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
