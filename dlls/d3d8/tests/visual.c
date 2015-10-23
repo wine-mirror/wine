@@ -52,6 +52,11 @@ static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     return TRUE;
 }
 
+static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER8 *identifier)
+{
+    return !strcmp(identifier->Driver, "d3d10warp.dll");
+}
+
 struct surface_readback
 {
     IDirect3DSurface8 *surface;
@@ -8178,7 +8183,7 @@ static void test_uninitialized_varyings(void)
 
     hr = IDirect3D8_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
     ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
-    warp = !strcmp(identifier.Driver, "d3d10warp.dll");
+    warp = adapter_is_warp(&identifier);
 
     hr = IDirect3DDevice8_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
