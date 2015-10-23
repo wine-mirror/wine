@@ -757,6 +757,20 @@ BOOL WINAPI IsWindowRedirectedForPrint( HWND hwnd )
     return FALSE;
 }
 
+/**********************************************************************
+ * GetDisplayConfigBufferSizes [USER32.@]
+ */
+LONG WINAPI GetDisplayConfigBufferSizes(UINT32 flags, UINT32 *num_path_info, UINT32 *num_mode_info)
+{
+    FIXME("(0x%x %p %p): stub\n", flags, num_path_info, num_mode_info);
+
+    if (!num_path_info || !num_mode_info)
+        return ERROR_INVALID_PARAMETER;
+
+    *num_path_info = 0;
+    *num_mode_info = 0;
+    return ERROR_NOT_SUPPORTED;
+}
 
 static const WCHAR imeW[] = {'I','M','E',0};
 const struct builtin_class_descr IME_builtin_class =

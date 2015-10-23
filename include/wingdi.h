@@ -3306,6 +3306,11 @@ DECL_WINELIB_TYPE_AW(LPDISPLAY_DEVICE)
 #define	DISPLAY_DEVICE_MIRRORING_DRIVER		0x00000008
 #define	DISPLAY_DEVICE_VGA_COMPATIBLE		0x00000010
 
+/* For GetDisplayConfigBufferSizes */
+#define QDC_ALL_PATHS                           0x00000001
+#define QDC_ONLY_ACTIVE_PATHS                   0x00000002
+#define QDC_DATABASE_CURRENT                    0x00000004
+
 #define GDI_ERROR                               (~0u)
 #define HGDI_ERROR                              ((HANDLE)~(ULONG_PTR)0)
 

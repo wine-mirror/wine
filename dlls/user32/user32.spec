@@ -281,6 +281,7 @@
 @ stdcall GetDCEx(long long long)
 @ stdcall GetDesktopWindow()
 @ stdcall GetDialogBaseUnits()
+@ stdcall GetDisplayConfigBufferSizes(long ptr ptr)
 @ stdcall GetDlgCtrlID(long)
 @ stdcall GetDlgItem(long long)
 @ stdcall GetDlgItemInt(long long ptr long)
