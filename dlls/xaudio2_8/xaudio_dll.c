@@ -23,11 +23,15 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winuser.h"
+#include "wine/debug.h"
 
 #include "initguid.h"
 #include "xaudio2.h"
 #include "xaudio2fx.h"
 #include "xapo.h"
+#include "xapofx.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
@@ -84,4 +88,45 @@ HRESULT WINAPI CreateAudioReverb(IUnknown **out)
 {
     return CoCreateInstance(&CLSID_AudioReverb, NULL, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)out);
+}
+
+HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out, void *initdata, UINT32 initdata_bytes)
+{
+    HRESULT hr;
+    IUnknown *obj;
+    const GUID *class;
+
+    *out = NULL;
+    class = clsid;
+
+    if(IsEqualGUID(clsid, &CLSID_FXReverb27) ||
+            IsEqualGUID(clsid, &CLSID_FXReverb))
+        class = &CLSID_WINE_FXReverb28;
+
+    hr = CoCreateInstance(class, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&obj);
+    if(FAILED(hr)){
+        WARN("CoCreateInstance failed: %08x\n", hr);
+        return hr;
+    }
+
+    if(initdata && initdata_bytes > 0){
+        IXAPO *xapo;
+
+        hr = IUnknown_QueryInterface(obj, &IID_IXAPO, (void**)&xapo);
+        if(SUCCEEDED(hr)){
+            hr = IXAPO_Initialize(xapo, initdata, initdata_bytes);
+
+            IXAPO_Release(xapo);
+
+            if(FAILED(hr)){
+                WARN("Initialize failed: %08x\n", hr);
+                IUnknown_Release(obj);
+                return hr;
+            }
+        }
+    }
+
+    *out = obj;
+
+    return S_OK;
 }

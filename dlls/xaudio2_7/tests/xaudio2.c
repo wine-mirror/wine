@@ -903,6 +903,113 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
     FreeLibrary(xapofxdll);
 }
 
+static void test_xapo_creation_modern(const char *module)
+{
+    HANDLE xaudio2dll;
+    HRESULT hr;
+    IUnknown *fx_unk;
+    unsigned int i;
+
+    HRESULT (CDECL *pCreateFX)(REFCLSID,IUnknown**,void*,UINT32) = NULL;
+    HRESULT (WINAPI *pCAVM)(IUnknown**) = NULL;
+    HRESULT (WINAPI *pCAR)(IUnknown**) = NULL;
+
+    /* CLSIDs are the same across all versions */
+    static struct {
+        const GUID *clsid;
+        BOOL todo;
+    } const_clsids[] = {
+        { &CLSID_FXEQ27, TRUE },
+        { &CLSID_FXMasteringLimiter27, TRUE },
+        { &CLSID_FXReverb27, FALSE },
+        { &CLSID_FXEcho27, TRUE},
+        /* older versions of xapofx actually have support for new clsids */
+        { &CLSID_FXEQ, TRUE },
+        { &CLSID_FXMasteringLimiter, TRUE },
+        { &CLSID_FXReverb, FALSE },
+        { &CLSID_FXEcho, TRUE}
+    };
+
+    xaudio2dll = LoadLibraryA(module);
+    if(xaudio2dll){
+        pCreateFX = (void*)GetProcAddress(xaudio2dll, "CreateFX");
+        ok(pCreateFX != NULL, "%s did not have CreateFX?\n", module);
+        if(!pCreateFX){
+            FreeLibrary(xaudio2dll);
+            return;
+        }
+    }else{
+        win_skip("Couldn't load %s\n", module);
+        return;
+    }
+
+    if(pCreateFX){
+        for(i = 0; i < sizeof(const_clsids) / sizeof(*const_clsids); ++i){
+            hr = pCreateFX(const_clsids[i].clsid, &fx_unk, NULL, 0);
+            if(const_clsids[i].todo)
+                todo_wine ok(hr == S_OK, "%s: CreateFX(%s) failed: %08x\n", module, wine_dbgstr_guid(const_clsids[i].clsid), hr);
+            else
+                ok(hr == S_OK, "%s: CreateFX(%s) failed: %08x\n", module, wine_dbgstr_guid(const_clsids[i].clsid), hr);
+            if(SUCCEEDED(hr)){
+                IXAPO *xapo;
+                hr = IUnknown_QueryInterface(fx_unk, &IID_IXAPO, (void**)&xapo);
+                ok(hr == S_OK, "Couldn't get IXAPO interface: %08x\n", hr);
+                if(SUCCEEDED(hr))
+                    IXAPO_Release(xapo);
+                IUnknown_Release(fx_unk);
+            }
+
+            hr = CoCreateInstance(const_clsids[i].clsid, NULL, CLSCTX_INPROC_SERVER,
+                    &IID_IUnknown, (void**)&fx_unk);
+            ok(hr == REGDB_E_CLASSNOTREG, "CoCreateInstance should have failed: %08x\n", hr);
+            if(SUCCEEDED(hr))
+                IUnknown_Release(fx_unk);
+        }
+
+        /* test legacy CLSID */
+        hr = pCreateFX(&CLSID_AudioVolumeMeter, &fx_unk, NULL, 0);
+        ok(hr == S_OK, "%s: CreateFX(CLSID_AudioVolumeMeter) failed: %08x\n", module, hr);
+        if(SUCCEEDED(hr)){
+            IXAPO *xapo;
+            hr = IUnknown_QueryInterface(fx_unk, &IID_IXAPO, (void**)&xapo);
+            ok(hr == S_OK, "Couldn't get IXAPO interface: %08x\n", hr);
+            if(SUCCEEDED(hr))
+                IXAPO_Release(xapo);
+            IUnknown_Release(fx_unk);
+        }
+    }
+
+    pCAVM = (void*)GetProcAddress(xaudio2dll, "CreateAudioVolumeMeter");
+    ok(pCAVM != NULL, "%s did not have CreateAudioVolumeMeter?\n", module);
+
+    hr = pCAVM(&fx_unk);
+    ok(hr == S_OK, "CreateAudioVolumeMeter failed: %08x\n", hr);
+    if(SUCCEEDED(hr)){
+        IXAPO *xapo;
+        hr = IUnknown_QueryInterface(fx_unk, &IID_IXAPO, (void**)&xapo);
+        ok(hr == S_OK, "Couldn't get IXAPO interface: %08x\n", hr);
+        if(SUCCEEDED(hr))
+            IXAPO_Release(xapo);
+        IUnknown_Release(fx_unk);
+    }
+
+    pCAR = (void*)GetProcAddress(xaudio2dll, "CreateAudioReverb");
+    ok(pCAR != NULL, "%s did not have CreateAudioReverb?\n", module);
+
+    hr = pCAR(&fx_unk);
+    ok(hr == S_OK, "CreateAudioReverb failed: %08x\n", hr);
+    if(SUCCEEDED(hr)){
+        IXAPO *xapo;
+        hr = IUnknown_QueryInterface(fx_unk, &IID_IXAPO, (void**)&xapo);
+        ok(hr == S_OK, "Couldn't get IXAPO interface: %08x\n", hr);
+        if(SUCCEEDED(hr))
+            IXAPO_Release(xapo);
+        IUnknown_Release(fx_unk);
+    }
+
+    FreeLibrary(xaudio2dll);
+}
+
 static void test_xapo_creation(void)
 {
     test_xapo_creation_legacy("xapofx1_1.dll", 22);
@@ -911,6 +1018,7 @@ static void test_xapo_creation(void)
     test_xapo_creation_legacy("xapofx1_3.dll", 25);
     test_xapo_creation_legacy("xapofx1_4.dll", 26);
     test_xapo_creation_legacy("xapofx1_5.dll", 27);
+    test_xapo_creation_modern("xaudio2_8.dll");
 }
 
 static UINT32 check_has_devices(IXAudio2 *xa)

@@ -82,3 +82,10 @@ coclass FXReverb14 { interface IXAPO; }
     uuid(a90bc001-e897-e897-7439-43FF02000105)
 ]
 coclass FXReverb15 { interface IXAPO; }
+
+[
+    helpstring("XAudio2.8 FXReverb Class (Wine)"),
+    threading(both),
+    uuid(a90bc001-e897-e897-7439-43FF02000208)
+]
+coclass FXReverb28 { interface IXAPO; }
