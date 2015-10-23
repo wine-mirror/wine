@@ -1342,15 +1342,28 @@ static BOOL d2d_cdt_insert_segment(struct d2d_cdt *cdt, struct d2d_geometry *geo
         const struct d2d_cdt_edge_ref *origin, struct d2d_cdt_edge_ref *edge, size_t end_vertex)
 {
     struct d2d_cdt_edge_ref base_edge, current, new_origin, next, target;
+    size_t current_destination, current_origin;
 
     for (current = *origin;; current = next)
     {
         d2d_cdt_edge_next_origin(cdt, &next, &current);
 
-        if (d2d_cdt_edge_destination(cdt, &current) == end_vertex)
+        current_destination = d2d_cdt_edge_destination(cdt, &current);
+        if (current_destination == end_vertex)
         {
             d2d_cdt_edge_sym(edge, &current);
             return TRUE;
+        }
+
+        current_origin = d2d_cdt_edge_origin(cdt, &current);
+        if (d2d_cdt_ccw(cdt, end_vertex, current_origin, current_destination) == 0.0f
+                && (cdt->vertices[current_destination].x > cdt->vertices[current_origin].x)
+                == (cdt->vertices[end_vertex].x > cdt->vertices[current_origin].x)
+                && (cdt->vertices[current_destination].y > cdt->vertices[current_origin].y)
+                == (cdt->vertices[end_vertex].y > cdt->vertices[current_origin].y))
+        {
+            d2d_cdt_edge_sym(&new_origin, &current);
+            return d2d_cdt_insert_segment(cdt, geometry, &new_origin, edge, end_vertex);
         }
 
         if (d2d_cdt_rightof(cdt, end_vertex, &next) && d2d_cdt_leftof(cdt, end_vertex, &current))
