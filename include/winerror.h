@@ -2092,6 +2092,7 @@ static inline HRESULT HRESULT_FROM_WIN32(unsigned int x)
 #define S_FALSE                                            _HRESULT_TYPEDEF_(1)
 
 #define E_PENDING                                          _HRESULT_TYPEDEF_(0x8000000A)
+#define E_BOUNDS                                           _HRESULT_TYPEDEF_(0x8000000B)
 
 
 #define E_NOTIMPL                                          _HRESULT_TYPEDEF_(0x80004001)

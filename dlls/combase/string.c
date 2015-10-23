@@ -255,6 +255,25 @@ HRESULT WINAPI WindowsStringHasEmbeddedNull(HSTRING str, BOOL *out)
 }
 
 /***********************************************************************
+ *      WindowsSubstring (combase.@)
+ */
+HRESULT WINAPI WindowsSubstring(HSTRING str, UINT32 start, HSTRING *out)
+{
+    struct hstring_private *priv = impl_from_HSTRING(str);
+    UINT32 len = WindowsGetStringLen(str);
+    if (out == NULL)
+        return E_INVALIDARG;
+    if (start > len)
+        return E_BOUNDS;
+    if (start == len)
+    {
+        *out = NULL;
+        return S_OK;
+    }
+    return WindowsCreateString(&priv->buffer[start], len - start, out);
+}
+
+/***********************************************************************
  *      WindowsIsStringEmpty (combase.@)
  */
 BOOL WINAPI WindowsIsStringEmpty(HSTRING str)

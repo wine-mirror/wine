@@ -21,7 +21,7 @@
 @ stdcall WindowsPromoteStringBuffer(ptr ptr) combase.WindowsPromoteStringBuffer
 @ stub WindowsReplaceString
 @ stdcall WindowsStringHasEmbeddedNull(ptr ptr) combase.WindowsStringHasEmbeddedNull
-@ stub WindowsSubstring
+@ stdcall WindowsSubstring(ptr long ptr) combase.WindowsSubstring
 @ stub WindowsSubstringWithSpecifiedLength
 @ stub WindowsTrimStringEnd
 @ stub WindowsTrimStringStart

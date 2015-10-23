@@ -302,7 +302,7 @@
 @ stdcall WindowsPromoteStringBuffer(ptr ptr)
 @ stub WindowsReplaceString
 @ stdcall WindowsStringHasEmbeddedNull(ptr ptr)
-@ stub WindowsSubstring
+@ stdcall WindowsSubstring(ptr long ptr)
 @ stub WindowsSubstringWithSpecifiedLength
 @ stub WindowsTrimStringEnd
 @ stub WindowsTrimStringStart
