@@ -1368,7 +1368,8 @@ static HRESULT WINAPI DataCache_Load( IPersistStorage *iface, IStorage *pStg )
         hr = parse_contents_stream( This, pStg, stm );
         IStream_Release( stm );
     }
-    else
+
+    if (FAILED(hr))
         hr = parse_pres_streams( This, pStg );
 
     if (SUCCEEDED( hr ))
