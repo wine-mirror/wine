@@ -29,6 +29,8 @@
 #include "ole2.h"
 #include "rpcproxy.h"
 
+#include "xapofx.h"
+
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
@@ -2507,13 +2509,13 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if IsEqualGUID(rclsid, &CLSID_XAudio20){
+    if(IsEqualGUID(rclsid, &CLSID_XAudio20)){
         factory = make_xaudio2_factory(20);
-    }else if IsEqualGUID(rclsid, &CLSID_XAudio21){
+    }else if(IsEqualGUID(rclsid, &CLSID_XAudio21)){
         factory = make_xaudio2_factory(21);
-    }else if IsEqualGUID(rclsid, &CLSID_XAudio22){
+    }else if(IsEqualGUID(rclsid, &CLSID_XAudio22)){
         factory = make_xaudio2_factory(22);
-    }else if IsEqualGUID(rclsid, &CLSID_XAudio23){
+    }else if(IsEqualGUID(rclsid, &CLSID_XAudio23)){
         factory = make_xaudio2_factory(23);
     }else if(IsEqualGUID(rclsid, &CLSID_XAudio24)){
         factory = make_xaudio2_factory(24);
@@ -2524,13 +2526,13 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
     }else if(IsEqualGUID(rclsid, &CLSID_XAudio2)){
         factory = make_xaudio2_factory(27);
 
-    }else if IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter20){
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter20)){
         factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 20);
-    }else if IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter21){
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter21)){
         factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 21);
-    }else if IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter22){
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter22)){
         factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 22);
-    }else if IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter23){
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter23)){
         factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 23);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter24)){
         factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 24);
@@ -2541,23 +2543,40 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter)){
         factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 27);
 
-    }else if IsEqualGUID(rclsid, &CLSID_AudioReverb20){
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb20)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 20);
-    }else if IsEqualGUID(rclsid, &CLSID_AudioReverb21){
+
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb21) ||
+            IsEqualGUID(rclsid, &CLSID_WINE_FXReverb10)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 21);
-    }else if IsEqualGUID(rclsid, &CLSID_AudioReverb22){
+
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb22) ||
+            IsEqualGUID(rclsid, &CLSID_WINE_FXReverb11)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 22);
-    }else if IsEqualGUID(rclsid, &CLSID_AudioReverb23){
+
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb23) ||
+            IsEqualGUID(rclsid, &CLSID_WINE_FXReverb12)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 23);
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb24)){
+
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb24) ||
+            IsEqualGUID(rclsid, &CLSID_WINE_FXReverb13)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 24);
+
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb25)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 25);
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb26)){
+
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb26) ||
+            IsEqualGUID(rclsid, &CLSID_WINE_FXReverb14)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 26);
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb)){
+
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb) ||
+            IsEqualGUID(rclsid, &CLSID_WINE_FXReverb15)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 27);
+
+    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXReverb28)){
+        factory = make_xapo_factory(&CLSID_AudioReverb, 28);
     }
+
     if(!factory) return CLASS_E_CLASSNOTAVAILABLE;
 
     return IClassFactory_QueryInterface(factory, riid, ppv);

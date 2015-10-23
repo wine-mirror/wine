@@ -15,12 +15,18 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#include "config.h"
 
+#include "config.h"
 #include <stdarg.h>
 
+#include "initguid.h"
 #include "windef.h"
 #include "winbase.h"
+#include "compobj.h"
+#include "xapofx.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
 {
@@ -34,4 +40,17 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, LPVOID reserved)
     }
 
     return TRUE;
+}
+
+HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out)
+{
+    const GUID *class = clsid;
+
+    TRACE("%s %p\n", debugstr_guid(clsid), out);
+
+    if(IsEqualGUID(clsid, &CLSID_FXReverb27) ||
+            IsEqualGUID(clsid, &CLSID_FXReverb))
+        class = &CLSID_WINE_FXReverb14;
+
+    return CoCreateInstance(class, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)out);
 }

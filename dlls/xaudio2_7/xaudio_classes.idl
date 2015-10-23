@@ -47,3 +47,38 @@ coclass AudioReverb { interface IUnknown; }
     uuid(962f5027-99be-4692-a468-85802cf8de61)
 ]
 coclass XACT31 { interface IUnknown; }
+
+[
+    helpstring("XAPOFX1.1 FXReverb Class (Wine)"),
+    threading(both),
+    uuid(a90bc001-e897-e897-7439-43FF02000101)
+]
+coclass FXReverb11 { interface IXAPO; }
+
+[
+    helpstring("XAPOFX1.2 FXReverb Class (Wine)"),
+    threading(both),
+    uuid(a90bc001-e897-e897-7439-43FF02000102)
+]
+coclass FXReverb12 { interface IXAPO; }
+
+[
+    helpstring("XAPOFX1.3 FXReverb Class (Wine)"),
+    threading(both),
+    uuid(a90bc001-e897-e897-7439-43FF02000103)
+]
+coclass FXReverb13 { interface IXAPO; }
+
+[
+    helpstring("XAPOFX1.4 FXReverb Class (Wine)"),
+    threading(both),
+    uuid(a90bc001-e897-e897-7439-43FF02000104)
+]
+coclass FXReverb14 { interface IXAPO; }
+
+[
+    helpstring("XAPOFX1.5 FXReverb Class (Wine)"),
+    threading(both),
+    uuid(a90bc001-e897-e897-7439-43FF02000105)
+]
+coclass FXReverb15 { interface IXAPO; }

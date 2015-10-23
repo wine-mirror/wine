@@ -669,6 +669,7 @@ SRCDIR_INCLUDES = \
 	wsnwlink.h \
 	wtsapi32.h \
 	x3daudio.h \
+	xapofx.h \
 	xcmc.h \
 	xinput.h \
 	xmldom.h \
