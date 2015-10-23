@@ -257,6 +257,7 @@ struct d3d_geometry_shader
 
 HRESULT d3d_geometry_shader_create(struct d3d_device *device, const void *byte_code, SIZE_T byte_code_length,
         struct d3d_geometry_shader **shader) DECLSPEC_HIDDEN;
+struct d3d_geometry_shader *unsafe_impl_from_ID3D11GeometryShader(ID3D11GeometryShader *iface) DECLSPEC_HIDDEN;
 struct d3d_geometry_shader *unsafe_impl_from_ID3D10GeometryShader(ID3D10GeometryShader *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11PixelShader, ID3D10PixelShader */
