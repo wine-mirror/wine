@@ -2776,7 +2776,7 @@ static NTSTATUS WS2_ReadFile(HANDLE hFile, PIO_STATUS_BLOCK io_status, char* buf
     else
         status = STATUS_PENDING;
 
-    close( unix_handle );
+    wine_server_release_fd( hFile, unix_handle );
     TRACE("= 0x%08x (%d)\n", status, result);
     if (status == STATUS_SUCCESS || status == STATUS_END_OF_FILE)
     {
