@@ -596,24 +596,24 @@ WORD WINAPI GetDialog32Size16( LPCVOID dialog32 )
         p = (const DWORD *)p + 1; /* exStyle */
 
     nbItems = get_word(&p);
-    p = (const DWORD *)p + 1; /* x */
-    p = (const DWORD *)p + 1; /* y */
-    p = (const DWORD *)p + 1; /* cx */
-    p = (const DWORD *)p + 1; /* cy */
+    p = (const WORD *)p + 1; /* x */
+    p = (const WORD *)p + 1; /* y */
+    p = (const WORD *)p + 1; /* cx */
+    p = (const WORD *)p + 1; /* cy */
 
     /* Skip menu name */
-    switch (*(const DWORD *)p)
+    switch (*(const WORD *)p)
     {
-    case 0x0000:  p = (const DWORD *)p + 1; break;
-    case 0xffff:  p = (const DWORD *)p + 2; break;
+    case 0x0000:  p = (const WORD *)p + 1; break;
+    case 0xffff:  p = (const WORD *)p + 2; break;
     default:      p = (LPCWSTR)p + strlenW( p ) + 1; break;
     }
 
     /* Skip class name */
-    switch (*(const DWORD *)p)
+    switch (*(const WORD *)p)
     {
-    case 0x0000:  p = (const DWORD *)p + 1; break;
-    case 0xffff:  p = (const DWORD *)p + 2; break;
+    case 0x0000:  p = (const WORD *)p + 1; break;
+    case 0xffff:  p = (const WORD *)p + 2; break;
     default:      p = (LPCWSTR)p + strlenW( p ) + 1; break;
     }
 
@@ -623,11 +623,11 @@ WORD WINAPI GetDialog32Size16( LPCVOID dialog32 )
     /* Skip font info */
     if (style & DS_SETFONT)
     {
-        p = (const DWORD *)p + 1;  /* pointSize */
+        p = (const WORD *)p + 1;  /* pointSize */
         if (dialogEx)
         {
-            p = (const DWORD *)p + 1; /* weight */
-            p = (const DWORD *)p + 1; /* italic */
+            p = (const WORD *)p + 1; /* weight */
+            p = (const WORD *)p + 1; /* italic */
         }
         p = (LPCWSTR)p + strlenW( p ) + 1;  /* faceName */
     }
@@ -650,29 +650,29 @@ WORD WINAPI GetDialog32Size16( LPCVOID dialog32 )
             p = (const DWORD *)p + 1; /* exStyle */
         }
 
-        p = (const DWORD *)p + 1; /* x */
-        p = (const DWORD *)p + 1; /* y */
-        p = (const DWORD *)p + 1; /* cx */
-        p = (const DWORD *)p + 1; /* cy */
+        p = (const WORD *)p + 1; /* x */
+        p = (const WORD *)p + 1; /* y */
+        p = (const WORD *)p + 1; /* cx */
+        p = (const WORD *)p + 1; /* cy */
 
         if (dialogEx)
             p = (const DWORD *)p + 1; /* ID */
         else
-            p = (const DWORD *)p + 1; /* ID */
+            p = (const WORD *)p + 1; /* ID */
 
         /* Skip class name */
-        switch (*(const DWORD *)p)
+        switch (*(const WORD *)p)
         {
-        case 0x0000:  p = (const DWORD *)p + 1; break;
-        case 0xffff:  p = (const DWORD *)p + 2; break;
+        case 0x0000:  p = (const WORD *)p + 1; break;
+        case 0xffff:  p = (const WORD *)p + 2; break;
         default:      p = (LPCWSTR)p + strlenW( p ) + 1; break;
         }
 
         /* Skip window name */
-        switch (*(const DWORD *)p)
+        switch (*(const WORD *)p)
         {
-        case 0x0000:  p = (const DWORD *)p + 1; break;
-        case 0xffff:  p = (const DWORD *)p + 2; break;
+        case 0x0000:  p = (const WORD *)p + 1; break;
+        case 0xffff:  p = (const WORD *)p + 2; break;
         default:      p = (LPCWSTR)p + strlenW( p ) + 1; break;
         }
 
