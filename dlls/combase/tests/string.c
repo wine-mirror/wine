@@ -39,6 +39,7 @@ static HRESULT (WINAPI *pWindowsPreallocateStringBuffer)(UINT32, WCHAR **, HSTRI
 static HRESULT (WINAPI *pWindowsPromoteStringBuffer)(HSTRING_BUFFER, HSTRING *);
 static HRESULT (WINAPI *pWindowsStringHasEmbeddedNull)(HSTRING, BOOL *);
 static HRESULT (WINAPI *pWindowsSubstring)(HSTRING, UINT32, HSTRING *);
+static HRESULT (WINAPI *pWindowsSubstringWithSpecifiedLength)(HSTRING, UINT32, UINT32, HSTRING *);
 
 #define SET(x) p##x = (void*)GetProcAddress(hmod, #x)
 
@@ -62,6 +63,7 @@ static BOOL init_functions(void)
     SET(WindowsPromoteStringBuffer);
     SET(WindowsStringHasEmbeddedNull);
     SET(WindowsSubstring);
+    SET(WindowsSubstringWithSpecifiedLength);
     return TRUE;
 }
 
@@ -249,11 +251,18 @@ static void test_substring(void)
     ok(pWindowsSubstring(str, 2, &substr) == S_OK, "Failed to create substring\n");
     check_string(substr, output_substring, 4, FALSE);
     ok(pWindowsDeleteString(substr) == S_OK, "Failed to delete string\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 2, 3, &substr) == S_OK, "Failed to create substring\n");
+    check_string(substr, output_substring, 3, FALSE);
+    ok(pWindowsDeleteString(substr) == S_OK, "Failed to delete string\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
     /* Test duplication of string using substring */
     ok(pWindowsCreateString(input_string, 6, &str) == S_OK, "Failed to create string\n");
     ok(pWindowsSubstring(str, 0, &substr) == S_OK, "Failed to create substring\n");
+    ok(str != substr, "Duplicated string didn't create new string\n");
+    check_string(substr, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(substr) == S_OK, "Failed to delete string\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 0, 6, &substr) == S_OK, "Failed to create substring\n");
     ok(str != substr, "Duplicated string didn't create new string\n");
     check_string(substr, input_string, 6, FALSE);
     ok(pWindowsDeleteString(substr) == S_OK, "Failed to delete string\n");
@@ -264,6 +273,9 @@ static void test_substring(void)
     ok(pWindowsSubstring(str, 2, &substr) == S_OK, "Failed to create substring of string ref\n");
     check_string(substr, output_substring, 4, FALSE);
     ok(pWindowsDeleteString(substr) == S_OK, "Failed to delete string\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 2, 3, &substr) == S_OK, "Failed to create substring of string ref\n");
+    check_string(substr, output_substring, 3, FALSE);
+    ok(pWindowsDeleteString(substr) == S_OK, "Failed to delete string\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string ref\n");
 
     /* Test duplication of string reference using substring */
@@ -272,26 +284,38 @@ static void test_substring(void)
     ok(str != substr, "Duplicated string ref didn't create new string\n");
     check_string(substr, input_string, 6, FALSE);
     ok(pWindowsDeleteString(substr) == S_OK, "Failed to delete string\n");
-    ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 0, 6, &substr) == S_OK, "Failed to create substring of string ref\n");
+    ok(str != substr, "Duplicated string ref didn't create new string\n");
+    check_string(substr, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(substr) == S_OK, "Failed to delete string\n");
+    ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string ref\n");
 
     /* Test get substring of empty string */
     ok(pWindowsSubstring(NULL, 0, &substr) == S_OK, "Failed to duplicate NULL string\n");
+    ok(substr == NULL, "Substring created new string\n");
+    ok(pWindowsSubstringWithSpecifiedLength(NULL, 0, 0, &substr) == S_OK, "Failed to duplicate NULL string\n");
     ok(substr == NULL, "Substring created new string\n");
 
     /* Test get empty substring of string */
     ok(pWindowsCreateString(input_string, 6, &str) == S_OK, "Failed to create string\n");
     ok(pWindowsSubstring(str, 6, &substr) == S_OK, "Failed to create substring\n");
     ok(substr == NULL, "Substring created new string\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 6, 0, &substr) == S_OK, "Failed to create substring\n");
+    ok(substr == NULL, "Substring created new string\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
-    /* Test handling of using too high start index */
+    /* Test handling of using too high start index or length */
     ok(pWindowsCreateString(input_string, 6, &str) == S_OK, "Failed to create string\n");
     ok(pWindowsSubstring(str, 7, &substr) == E_BOUNDS, "Incorrect error handling\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 7, 0, &substr) == E_BOUNDS, "Incorrect error handling\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 6, 1, &substr) == E_BOUNDS, "Incorrect error handling\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 7, ~0U, &substr) == E_BOUNDS, "Incorrect error handling\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
     /* Test handling of a NULL string  */
     ok(pWindowsCreateString(input_string, 6, &str) == S_OK, "Failed to create string\n");
     ok(pWindowsSubstring(str, 7, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsSubstringWithSpecifiedLength(str, 7, 0, NULL) == E_INVALIDARG, "Incorrect error handling\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 }
 
