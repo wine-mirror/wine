@@ -21,7 +21,9 @@
 #include "windows.h"
 #include "winerror.h"
 #include "hstring.h"
+#include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(winstring);
 
 struct hstring_private
 {
@@ -72,6 +74,9 @@ HRESULT WINAPI WindowsCreateString(LPCWSTR ptr, UINT32 len,
                                    HSTRING *out)
 {
     struct hstring_private *priv;
+
+    TRACE("(%s, %u, %p)\n", debugstr_wn(ptr, len), len, out);
+
     if (out == NULL)
         return E_INVALIDARG;
     if (ptr == NULL && len > 0)
@@ -95,6 +100,9 @@ HRESULT WINAPI WindowsCreateStringReference(LPCWSTR ptr, UINT32 len,
                                             HSTRING_HEADER *header, HSTRING *out)
 {
     struct hstring_private *priv = impl_from_HSTRING_HEADER(header);
+
+    TRACE("(%s, %u, %p, %p)\n", debugstr_wn(ptr, len), len, header, out);
+
     if (out == NULL || header == NULL)
         return E_INVALIDARG;
     if (ptr == NULL && len > 0)
@@ -119,6 +127,9 @@ HRESULT WINAPI WindowsCreateStringReference(LPCWSTR ptr, UINT32 len,
 HRESULT WINAPI WindowsDeleteString(HSTRING str)
 {
     struct hstring_private *priv = impl_from_HSTRING(str);
+
+    TRACE("(%p)\n", str);
+
     if (str == NULL)
         return S_OK;
     if (priv->reference)
@@ -134,6 +145,9 @@ HRESULT WINAPI WindowsDeleteString(HSTRING str)
 HRESULT WINAPI WindowsDuplicateString(HSTRING str, HSTRING *out)
 {
     struct hstring_private *priv = impl_from_HSTRING(str);
+
+    TRACE("(%p, %p)\n", str, out);
+
     if (out == NULL)
         return E_INVALIDARG;
     if (str == NULL)
@@ -156,6 +170,9 @@ HRESULT WINAPI WindowsPreallocateStringBuffer(UINT32 len, WCHAR **outptr,
 {
     struct hstring_private *priv;
     HSTRING str;
+
+    TRACE("(%u, %p, %p)\n", len, outptr, out);
+
     if (outptr == NULL || out == NULL)
         return E_POINTER;
     if (len == 0)
@@ -178,6 +195,8 @@ HRESULT WINAPI WindowsPreallocateStringBuffer(UINT32 len, WCHAR **outptr,
  */
 HRESULT WINAPI WindowsDeleteStringBuffer(HSTRING_BUFFER buf)
 {
+    TRACE("(%p)\n", buf);
+
     return WindowsDeleteString((HSTRING)buf);
 }
 
@@ -187,6 +206,9 @@ HRESULT WINAPI WindowsDeleteStringBuffer(HSTRING_BUFFER buf)
 HRESULT WINAPI WindowsPromoteStringBuffer(HSTRING_BUFFER buf, HSTRING *out)
 {
     struct hstring_private *priv = impl_from_HSTRING_BUFFER(buf);
+
+    TRACE("(%p, %p)\n", buf, out);
+
     if (out == NULL)
         return E_POINTER;
     if (buf == NULL)
@@ -206,6 +228,9 @@ HRESULT WINAPI WindowsPromoteStringBuffer(HSTRING_BUFFER buf, HSTRING *out)
 UINT32 WINAPI WindowsGetStringLen(HSTRING str)
 {
     struct hstring_private *priv = impl_from_HSTRING(str);
+
+    TRACE("(%p)\n", str);
+
     if (str == NULL)
         return 0;
     return priv->length;
@@ -217,6 +242,9 @@ UINT32 WINAPI WindowsGetStringLen(HSTRING str)
 LPCWSTR WINAPI WindowsGetStringRawBuffer(HSTRING str, UINT32 *len)
 {
     struct hstring_private *priv = impl_from_HSTRING(str);
+
+    TRACE("(%p, %p)\n", str, len);
+
     if (str == NULL)
     {
         if (len)
@@ -235,6 +263,9 @@ HRESULT WINAPI WindowsStringHasEmbeddedNull(HSTRING str, BOOL *out)
 {
     UINT32 i;
     struct hstring_private *priv = impl_from_HSTRING(str);
+
+    TRACE("(%p, %p)\n", str, out);
+
     if (out == NULL)
         return E_INVALIDARG;
     if (str == NULL)
@@ -261,6 +292,9 @@ HRESULT WINAPI WindowsSubstring(HSTRING str, UINT32 start, HSTRING *out)
 {
     struct hstring_private *priv = impl_from_HSTRING(str);
     UINT32 len = WindowsGetStringLen(str);
+
+    TRACE("(%p, %u, %p)\n", str, start, out);
+
     if (out == NULL)
         return E_INVALIDARG;
     if (start > len)
@@ -279,6 +313,9 @@ HRESULT WINAPI WindowsSubstring(HSTRING str, UINT32 start, HSTRING *out)
 BOOL WINAPI WindowsIsStringEmpty(HSTRING str)
 {
     struct hstring_private *priv = impl_from_HSTRING(str);
+
+    TRACE("(%p)\n", str);
+
     if (str == NULL)
         return TRUE;
     return priv->length == 0;
