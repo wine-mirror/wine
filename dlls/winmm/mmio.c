@@ -591,11 +591,7 @@ static HMMIO MMIO_Open(LPSTR szFileName, MMIOINFO* refmminfo, DWORD dwOpenFlags,
 
     if (!refmminfo) {
         refmminfo = &mmioinfo;
-
-	mmioinfo.fccIOProc = 0;
-	mmioinfo.pIOProc = NULL;
-	mmioinfo.pchBuffer = NULL;
-	mmioinfo.cchBuffer = 0;
+	memset(&mmioinfo, 0, sizeof(mmioinfo));
         is_unicode = FALSE;
     }
 

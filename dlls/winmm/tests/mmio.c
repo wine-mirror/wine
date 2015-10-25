@@ -599,12 +599,15 @@ static void test_mmioSetBuffer(char *fname)
 static LRESULT CALLBACK mmio_test_IOProc(LPSTR lpMMIOInfo, UINT uMessage, LPARAM lParam1, LPARAM lParam2)
 {
     LPMMIOINFO lpInfo = (LPMMIOINFO) lpMMIOInfo;
+    int i;
 
     switch (uMessage)
     {
     case MMIOM_OPEN:
         if (lpInfo->fccIOProc == FOURCC_DOS)
             lpInfo->fccIOProc = mmioFOURCC('F', 'A', 'I', 'L');
+        for (i = 0; i < sizeof(lpInfo->adwInfo) / sizeof(*lpInfo->adwInfo); i++)
+            ok(lpInfo->adwInfo[i] == 0, "[%d] Expected 0, got %u\n", i, lpInfo->adwInfo[i]);
         return MMSYSERR_NOERROR;
     case MMIOM_CLOSE:
         return MMSYSERR_NOERROR;
@@ -633,6 +636,18 @@ static void test_mmioOpen_fourcc(void)
 
     memset(&mmio, 0, sizeof(mmio));
     hmmio = mmioOpenA(fname, &mmio, MMIO_READ);
+    mmioGetInfo(hmmio, &mmio, 0);
+    ok(hmmio && mmio.fccIOProc == FOURCC_XYZ, "mmioOpenA error %u, got %4.4s\n",
+            mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
+    ok(mmio.adwInfo[1] == 0, "mmioOpenA sent MMIOM_SEEK, got %d\n",
+       mmio.adwInfo[1]);
+    ok(mmio.lDiskOffset == 0, "mmioOpenA updated lDiskOffset, got %d\n",
+       mmio.lDiskOffset);
+    mmioClose(hmmio, 0);
+
+    /* Same test with NULL info */
+    memset(&mmio, 0, sizeof(mmio));
+    hmmio = mmioOpenA(fname, NULL, MMIO_READ);
     mmioGetInfo(hmmio, &mmio, 0);
     ok(hmmio && mmio.fccIOProc == FOURCC_XYZ, "mmioOpenA error %u, got %4.4s\n",
             mmio.wErrorRet, (LPCSTR)&mmio.fccIOProc);
