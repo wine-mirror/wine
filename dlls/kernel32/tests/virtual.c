@@ -1436,12 +1436,17 @@ static void test_IsBadCodePtr(void)
 
 static void test_write_watch(void)
 {
-    char *base;
-    DWORD ret, size, old_prot;
+    static const char pipename[] = "\\\\.\\pipe\\test_write_watch_pipe";
+    static const char testdata[] = "Hello World";
+    DWORD ret, size, old_prot, num_bytes;
     MEMORY_BASIC_INFORMATION info;
+    HANDLE readpipe, writepipe;
+    OVERLAPPED overlapped;
     void *results[64];
     ULONG_PTR count;
     ULONG pagesize;
+    BOOL success;
+    char *base;
 
     if (!pGetWriteWatch || !pResetWriteWatch)
     {
@@ -1588,6 +1593,64 @@ static void test_write_watch(void)
     ok( info.RegionSize == size, "wrong RegionSize 0x%lx\n", info.RegionSize );
     ok( info.State == MEM_COMMIT, "wrong State 0x%x\n", info.State );
     ok( info.Protect == PAGE_READWRITE, "wrong Protect 0x%x\n", info.Protect );
+
+    /* ReadFile should trigger write watches */
+
+    memset( &overlapped, 0, sizeof(overlapped) );
+    overlapped.hEvent = CreateEventA( NULL, TRUE, FALSE, NULL );
+
+    readpipe = CreateNamedPipeA( pipename, FILE_FLAG_OVERLAPPED | PIPE_ACCESS_INBOUND,
+                                 PIPE_TYPE_BYTE | PIPE_WAIT, 1, 1024, 1024,
+                                 NMPWAIT_USE_DEFAULT_WAIT, NULL );
+    ok( readpipe != INVALID_HANDLE_VALUE, "CreateNamedPipeA failed %u\n", GetLastError() );
+
+    success = ConnectNamedPipe( readpipe, &overlapped );
+    ok( !success, "ConnectNamedPipe unexpectedly succeeded\n" );
+    ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
+
+    writepipe = CreateFileA( pipename, GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL );
+    ok( writepipe != INVALID_HANDLE_VALUE, "CreateFileA failed %u\n", GetLastError() );
+
+    ret = WaitForSingleObject( overlapped.hEvent, 1000 );
+    ok( ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %u\n", ret );
+
+    memset( base, 0, size );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 16, "wrong count %lu\n", count );
+
+    success = ReadFile( readpipe, base, size, NULL, &overlapped );
+    ok( !success, "ReadFile unexpectedly succeeded\n" );
+    ok( GetLastError() == ERROR_IO_PENDING, "expected ERROR_IO_PENDING, got %u\n", GetLastError() );
+
+    count = 64;
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    ok( count == 16, "wrong count %lu\n", count );
+
+    num_bytes = 0;
+    success = WriteFile( writepipe, testdata, sizeof(testdata), &num_bytes, NULL );
+    ok( success, "WriteFile failed %u\n", GetLastError() );
+    ok( num_bytes == sizeof(testdata), "wrong number of bytes written\n" );
+
+    num_bytes = 0;
+    success = GetOverlappedResult( readpipe, &overlapped, &num_bytes, TRUE );
+    todo_wine ok( success, "GetOverlappedResult failed %u\n", GetLastError() );
+    todo_wine ok( num_bytes == sizeof(testdata), "wrong number of bytes read\n" );
+    todo_wine ok( !memcmp( base, testdata, sizeof(testdata)), "didn't receive expected data\n" );
+
+    count = 64;
+    memset( results, 0, sizeof(results) );
+    ret = pGetWriteWatch( WRITE_WATCH_FLAG_RESET, base, size, results, &count, &pagesize );
+    ok( !ret, "GetWriteWatch failed %u\n", GetLastError() );
+    todo_wine ok( count == 1, "wrong count %lu\n", count );
+    todo_wine ok( results[0] == base, "wrong result %p\n", results[0] );
+
+    CloseHandle( readpipe );
+    CloseHandle( writepipe );
+    CloseHandle( overlapped.hEvent );
 
     /* some invalid parameter tests */
 
