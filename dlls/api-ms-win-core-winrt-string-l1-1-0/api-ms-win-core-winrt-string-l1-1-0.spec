@@ -22,6 +22,6 @@
 @ stub WindowsReplaceString
 @ stdcall WindowsStringHasEmbeddedNull(ptr ptr) combase.WindowsStringHasEmbeddedNull
 @ stdcall WindowsSubstring(ptr long ptr) combase.WindowsSubstring
-@ stub WindowsSubstringWithSpecifiedLength
+@ stdcall WindowsSubstringWithSpecifiedLength(ptr long long ptr) combase.WindowsSubstringWithSpecifiedLength
 @ stub WindowsTrimStringEnd
 @ stub WindowsTrimStringStart

@@ -303,6 +303,6 @@
 @ stub WindowsReplaceString
 @ stdcall WindowsStringHasEmbeddedNull(ptr ptr)
 @ stdcall WindowsSubstring(ptr long ptr)
-@ stub WindowsSubstringWithSpecifiedLength
+@ stdcall WindowsSubstringWithSpecifiedLength(ptr long long ptr)
 @ stub WindowsTrimStringEnd
 @ stub WindowsTrimStringStart

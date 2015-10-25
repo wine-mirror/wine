@@ -308,6 +308,28 @@ HRESULT WINAPI WindowsSubstring(HSTRING str, UINT32 start, HSTRING *out)
 }
 
 /***********************************************************************
+ *      WindowsSubstringWithSpecifiedLength (combase.@)
+ */
+HRESULT WINAPI WindowsSubstringWithSpecifiedLength(HSTRING str, UINT32 start, UINT32 len, HSTRING *out)
+{
+    struct hstring_private *priv = impl_from_HSTRING(str);
+
+    TRACE("(%p, %u, %u, %p)\n", str, start, len, out);
+
+    if (out == NULL)
+        return E_INVALIDARG;
+    if (start + len < start ||
+        start + len > WindowsGetStringLen(str))
+        return E_BOUNDS;
+    if (len == 0)
+    {
+        *out = NULL;
+        return S_OK;
+    }
+    return WindowsCreateString(&priv->buffer[start], len, out);
+}
+
+/***********************************************************************
  *      WindowsIsStringEmpty (combase.@)
  */
 BOOL WINAPI WindowsIsStringEmpty(HSTRING str)
