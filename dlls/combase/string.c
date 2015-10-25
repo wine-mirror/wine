@@ -79,13 +79,13 @@ HRESULT WINAPI WindowsCreateString(LPCWSTR ptr, UINT32 len,
 
     if (out == NULL)
         return E_INVALIDARG;
-    if (ptr == NULL && len > 0)
-        return E_POINTER;
     if (len == 0)
     {
         *out = NULL;
         return S_OK;
     }
+    if (ptr == NULL)
+        return E_POINTER;
     if (!alloc_string(len, out))
         return E_OUTOFMEMORY;
     priv = impl_from_HSTRING(*out);
@@ -105,13 +105,13 @@ HRESULT WINAPI WindowsCreateStringReference(LPCWSTR ptr, UINT32 len,
 
     if (out == NULL || header == NULL)
         return E_INVALIDARG;
-    if (ptr == NULL && len > 0)
-        return E_POINTER;
     if (len == 0)
     {
         *out = NULL;
         return S_OK;
     }
+    if (ptr == NULL)
+        return E_POINTER;
     if (ptr[len] != '\0')
         return E_INVALIDARG;
     priv->buffer = (LPWSTR)ptr;
