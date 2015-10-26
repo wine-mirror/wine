@@ -54,9 +54,13 @@ static const unsigned int win_formats[][4] = {
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
+/* undocumented error code */
+#define D3D11_ERROR_4E MAKE_HRESULT(SEVERITY_ERROR, FACILITY_DIRECT3D11, 0x4e)
+
 static IMMDeviceEnumerator *mme = NULL;
 static IMMDevice *dev = NULL;
 static HRESULT hexcl = S_OK; /* or AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED */
+static BOOL win10 = FALSE;
 
 static const LARGE_INTEGER ullZero;
 
@@ -281,7 +285,8 @@ static void test_audioclient(void)
         fmtex->dwChannelMask = 0xffff;
 
         hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
-        ok(hr == S_OK, "Initialize(dwChannelMask = 0xffff) returns %08x\n", hr);
+        ok(hr == S_OK ||
+                hr == AUDCLNT_E_UNSUPPORTED_FORMAT /* win10 */, "Initialize(dwChannelMask = 0xffff) returns %08x\n", hr);
 
         IAudioClient_Release(ac);
 
@@ -330,9 +335,12 @@ static void test_audioclient(void)
     ok(hr == S_OK, "Valid GetStreamLatency call returns %08x\n", hr);
     trace("Returned latency: %u.%04u ms\n",
           (UINT)(t2/10000), (UINT)(t2 % 10000));
-    ok(t2 >= t1 || broken(t2 >= t1/2 && pwfx->nSamplesPerSec > 48000),
-       "Latency < default period, delta %ldus\n", (long)((t2-t1)/10));
+    ok(t2 >= t1 || broken(t2 >= t1/2 && pwfx->nSamplesPerSec > 48000) ||
+            broken(t2 == 0) /* (!) win10 */,
+       "Latency < default period, delta %ldus (%llu vs %llu)\n", (long)((t2-t1)/10), t2, t1);
     /* Native appears to add the engine period to the HW latency in shared mode */
+    if(t2 == 0)
+        win10 = TRUE;
 
     hr = IAudioClient_Initialize(ac, AUDCLNT_SHAREMODE_SHARED, 0, 5000000, 0, pwfx, NULL);
     ok(hr == AUDCLNT_E_ALREADY_INITIALIZED, "Calling Initialize twice returns %08x\n", hr);
@@ -627,13 +635,15 @@ static void test_event(void)
     ok(event != NULL, "CreateEvent failed\n");
 
     hr = IAudioClient_Start(ac);
-    ok(hr == AUDCLNT_E_EVENTHANDLE_NOT_SET, "Start failed: %08x\n", hr);
+    ok(hr == AUDCLNT_E_EVENTHANDLE_NOT_SET ||
+            hr == D3D11_ERROR_4E /* win10 */, "Start failed: %08x\n", hr);
 
     hr = IAudioClient_SetEventHandle(ac, event);
     ok(hr == S_OK, "SetEventHandle failed: %08x\n", hr);
 
     hr = IAudioClient_SetEventHandle(ac, event);
-    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME), "SetEventHandle returns %08x\n", hr);
+    ok(hr == HRESULT_FROM_WIN32(ERROR_INVALID_NAME) ||
+            hr == E_UNEXPECTED /* win10 */, "SetEventHandle returns %08x\n", hr);
 
     r = WaitForSingleObject(event, 40);
     ok(r == WAIT_TIMEOUT, "Wait(event) before Start gave %x\n", r);
@@ -733,10 +743,13 @@ static void test_padding(void)
     hr = IAudioRenderClient_GetBuffer(arc, psize, &buf);
     ok(hr == S_OK, "GetBuffer failed: %08x\n", hr);
     ok(buf != NULL, "NULL buffer returned\n");
-    for(i = 0; i < psize * pwfx->nBlockAlign; ++i){
-        if(buf[i] != silence){
-            ok(0, "buffer has data in it already\n");
-            break;
+    if(!win10){
+        /* win10 appears not to clear the buffer */
+        for(i = 0; i < psize * pwfx->nBlockAlign; ++i){
+            if(buf[i] != silence){
+                ok(0, "buffer has data in it already, i: %u, valu: %f\n", i, *((float*)buf));
+                break;
+            }
         }
     }
 
@@ -910,7 +923,8 @@ static void test_clock(int share)
     hr = IAudioClient_GetStreamLatency(ac, &t2);
     ok(hr == S_OK, "GetStreamLatency failed: %08x\n", hr);
     trace("Latency: %u.%04u ms\n", (UINT)(t2/10000), (UINT)(t2 % 10000));
-    ok(t2 >= period || broken(t2 >= period/2 && share && pwfx->nSamplesPerSec > 48000),
+    ok(t2 >= period || broken(t2 >= period/2 && share && pwfx->nSamplesPerSec > 48000) ||
+            broken(t2 == 0) /* win10 */,
        "Latency < default period, delta %ldus\n", (long)((t2-period)/10));
 
     /** GetBufferSize
@@ -1972,7 +1986,6 @@ static void test_session_creation(void)
         vol = 0.5f;
         hr = ISimpleAudioVolume_GetMasterVolume(cap_sav, &vol);
         ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
-        ok(vol == 1.f, "Got wrong volume: %f\n", vol);
 
         ISimpleAudioVolume_Release(cap_sav);
         IAudioSessionManager_Release(cap_sesm);
@@ -2001,7 +2014,6 @@ static void test_session_creation(void)
             vol = 0.5f;
             hr = ISimpleAudioVolume_GetMasterVolume(cap_sav, &vol);
             ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
-            ok(vol == 1.f, "Got wrong volume: %f\n", vol);
 
             ISimpleAudioVolume_Release(cap_sav);
         }

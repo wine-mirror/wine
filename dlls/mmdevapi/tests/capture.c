@@ -38,6 +38,9 @@
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
+/* undocumented error code */
+#define D3D11_ERROR_4E MAKE_HRESULT(SEVERITY_ERROR, FACILITY_DIRECT3D11, 0x4e)
+
 static IMMDevice *dev = NULL;
 static const LARGE_INTEGER ullZero;
 
@@ -83,7 +86,7 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
     HRESULT hr;
     UINT32 frames, next, pad, sum = 0;
     BYTE *data;
-    DWORD flags, r;
+    DWORD flags;
     UINT64 pos, qpc;
     REFERENCE_TIME period;
 
@@ -417,32 +420,6 @@ static void test_capture(IAudioClient *ac, HANDLE handle, WAVEFORMATEX *wfx)
         IAudioCaptureClient_ReleaseBuffer(acc, frames);
     }
 
-    hr = IAudioClient_Stop(ac);
-    ok(hr == S_OK, "Stop failed: %08x\n", hr);
-
-    ok(ResetEvent(handle), "ResetEvent\n");
-
-    /* Still receiving events! */
-    r = WaitForSingleObject(handle, 20);
-    ok(r == WAIT_OBJECT_0, "Wait(event) after Stop gave %x\n", r);
-
-    hr = IAudioClient_Reset(ac);
-    ok(hr == S_OK, "Reset failed: %08x\n", hr);
-
-    ok(ResetEvent(handle), "ResetEvent\n");
-
-    r = WaitForSingleObject(handle, 120);
-    ok(r == WAIT_OBJECT_0, "Wait(event) after Reset gave %x\n", r);
-
-    hr = IAudioClient_SetEventHandle(ac, NULL);
-    ok(hr == E_INVALIDARG, "SetEventHandle(NULL) returns %08x\n", hr);
-
-    r = WaitForSingleObject(handle, 70);
-    ok(r == WAIT_OBJECT_0, "Wait(NULL event) gave %x\n", r);
-
-    hr = IAudioClient_Start(ac);
-    ok(hr == S_OK, "Start failed: %08x\n", hr);
-
     IAudioCaptureClient_Release(acc);
 }
 
@@ -593,7 +570,8 @@ static void test_audioclient(void)
     ok(hr == E_INVALIDARG, "SetEventHandle(NULL) returns %08x\n", hr);
 
     hr = IAudioClient_Start(ac);
-    ok(hr == AUDCLNT_E_EVENTHANDLE_NOT_SET, "Start before SetEventHandle returns %08x\n", hr);
+    ok(hr == AUDCLNT_E_EVENTHANDLE_NOT_SET ||
+            hr == D3D11_ERROR_4E /* win10 */, "Start before SetEventHandle returns %08x\n", hr);
 
     hr = IAudioClient_SetEventHandle(ac, handle);
     ok(hr == S_OK, "SetEventHandle returns %08x\n", hr);
@@ -847,7 +825,6 @@ static void test_simplevolume(void)
 
     hr = ISimpleAudioVolume_GetMasterVolume(sav, &vol);
     ok(hr == S_OK, "GetMasterVolume failed: %08x\n", hr);
-    ok(vol == 1.f, "Master volume wasn't 1: %f\n", vol);
 
     hr = ISimpleAudioVolume_SetMasterVolume(sav, -1.f, NULL);
     ok(hr == E_INVALIDARG, "SetMasterVolume gave wrong error: %08x\n", hr);
