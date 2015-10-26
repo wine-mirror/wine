@@ -342,31 +342,31 @@ BYTE DMA_ioport_in( WORD port )
         channel = ((port-1)&0xC0)?(((port-1)-0xC0)>>2):(port>>1);
         dmachip = (channel<4) ? 0 : 1;
         if (!DMA_Toggle[dmachip])
-            res = DMA_CurrentByteCount[channel] & 0xFF;
+            res = DMA_CurrentByteCount[channel];
         else {
-            res = (DMA_CurrentByteCount[channel] & (0xFF << 8))>>8;
+            res = DMA_CurrentByteCount[channel] >> 8;
             TRACE("Read Current Count = %x.\n",DMA_CurrentByteCount[channel]);
         }
         DMA_Toggle[dmachip] = !DMA_Toggle[dmachip];
         break;
 
     /* Low Page Base Address */
-    case 0x87: res = (DMA_BaseAddress[0]&(0xFF<<16))>>16; break;
-    case 0x83: res = (DMA_BaseAddress[1]&(0xFF<<16))>>16; break;
-    case 0x81: res = (DMA_BaseAddress[2]&(0xFF<<16))>>16; break;
-    case 0x82: res = (DMA_BaseAddress[3]&(0xFF<<16))>>16; break;
-    case 0x8B: res = (DMA_BaseAddress[5]&(0xFF<<16))>>16; break;
-    case 0x89: res = (DMA_BaseAddress[6]&(0xFF<<16))>>16; break;
-    case 0x8A: res = (DMA_BaseAddress[7]&(0xFF<<16))>>16; break;
+    case 0x87: res = DMA_BaseAddress[0] >> 16; break;
+    case 0x83: res = DMA_BaseAddress[1] >> 16; break;
+    case 0x81: res = DMA_BaseAddress[2] >> 16; break;
+    case 0x82: res = DMA_BaseAddress[3] >> 16; break;
+    case 0x8B: res = DMA_BaseAddress[5] >> 16; break;
+    case 0x89: res = DMA_BaseAddress[6] >> 16; break;
+    case 0x8A: res = DMA_BaseAddress[7] >> 16; break;
 
     /* High Page Base Address */
-    case 0x487: res = (DMA_BaseAddress[0]&(0xFF<<24))>>24; break;
-    case 0x483: res = (DMA_BaseAddress[1]&(0xFF<<24))>>24; break;
-    case 0x481: res = (DMA_BaseAddress[2]&(0xFF<<24))>>24; break;
-    case 0x482: res = (DMA_BaseAddress[3]&(0xFF<<24))>>24; break;
-    case 0x48B: res = (DMA_BaseAddress[5]&(0xFF<<24))>>24; break;
-    case 0x489: res = (DMA_BaseAddress[6]&(0xFF<<24))>>24; break;
-    case 0x48A: res = (DMA_BaseAddress[7]&(0xFF<<24))>>24; break;
+    case 0x487: res = DMA_BaseAddress[0] >> 24; break;
+    case 0x483: res = DMA_BaseAddress[1] >> 24; break;
+    case 0x481: res = DMA_BaseAddress[2] >> 24; break;
+    case 0x482: res = DMA_BaseAddress[3] >> 24; break;
+    case 0x48B: res = DMA_BaseAddress[5] >> 24; break;
+    case 0x489: res = DMA_BaseAddress[6] >> 24; break;
+    case 0x48A: res = DMA_BaseAddress[7] >> 24; break;
 
     case 0x08:
     case 0xD0:
