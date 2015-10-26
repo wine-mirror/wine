@@ -1869,51 +1869,7 @@ static LRESULT WINAPI mdi_main_wnd_procA(HWND hwnd, UINT msg, WPARAM wparam, LPA
     switch (msg)
     {
         case WM_CREATE:
-        {
-            CLIENTCREATESTRUCT client_cs;
-            RECT rc;
-
-            GetClientRect(hwnd, &rc);
-
-            client_cs.hWindowMenu = 0;
-            client_cs.idFirstChild = 1;
-
-            /* MDIClient without MDIS_ALLCHILDSTYLES */
-            mdi_client = CreateWindowExA(0, "mdiclient",
-                                         NULL,
-                                         WS_CHILD /*| WS_VISIBLE*/,
-                                          /* tests depend on a not zero MDIClient size */
-                                         0, 0, rc.right, rc.bottom,
-                                         hwnd, 0, GetModuleHandleA(NULL),
-                                         &client_cs);
-            assert(mdi_client);
-            test_MDI_create(hwnd, mdi_client, client_cs.idFirstChild);
-            DestroyWindow(mdi_client);
-
-            /* MDIClient with MDIS_ALLCHILDSTYLES */
-            mdi_client = CreateWindowExA(0, "mdiclient",
-                                         NULL,
-                                         WS_CHILD | MDIS_ALLCHILDSTYLES /*| WS_VISIBLE*/,
-                                          /* tests depend on a not zero MDIClient size */
-                                         0, 0, rc.right, rc.bottom,
-                                         hwnd, 0, GetModuleHandleA(NULL),
-                                         &client_cs);
-            assert(mdi_client);
-            test_MDI_create(hwnd, mdi_client, client_cs.idFirstChild);
-            DestroyWindow(mdi_client);
-
-            /* Test child window stack management */
-            mdi_client = CreateWindowExA(0, "mdiclient",
-                                         NULL,
-                                         WS_CHILD,
-                                         0, 0, rc.right, rc.bottom,
-                                         hwnd, 0, GetModuleHandleA(NULL),
-                                         &client_cs);
-            assert(mdi_client);
-            test_MDI_child_stack(mdi_client);
-            DestroyWindow(mdi_client);
-            break;
-        }
+            return 1;
 
         case WM_WINDOWPOSCHANGED:
         {
@@ -1993,7 +1949,9 @@ static BOOL mdi_RegisterWindowClasses(void)
 
 static void test_mdi(void)
 {
-    HWND mdi_hwndMain;
+    HWND mdi_hwndMain, mdi_client;
+    CLIENTCREATESTRUCT client_cs;
+    RECT rc;
     /*MSG msg;*/
 
     if (!mdi_RegisterWindowClasses()) assert(0);
@@ -2005,6 +1963,46 @@ static void test_mdi(void)
                                    GetDesktopWindow(), 0,
                                    GetModuleHandleA(NULL), NULL);
     assert(mdi_hwndMain);
+
+    GetClientRect(mdi_hwndMain, &rc);
+
+    client_cs.hWindowMenu = 0;
+    client_cs.idFirstChild = 1;
+
+    /* MDIClient without MDIS_ALLCHILDSTYLES */
+    mdi_client = CreateWindowExA(0, "mdiclient",
+                                 NULL,
+                                 WS_CHILD /*| WS_VISIBLE*/,
+                                  /* tests depend on a not zero MDIClient size */
+                                 0, 0, rc.right, rc.bottom,
+                                 mdi_hwndMain, 0, GetModuleHandleA(NULL),
+                                 &client_cs);
+    assert(mdi_client);
+    test_MDI_create(mdi_hwndMain, mdi_client, client_cs.idFirstChild);
+    DestroyWindow(mdi_client);
+
+    /* MDIClient with MDIS_ALLCHILDSTYLES */
+    mdi_client = CreateWindowExA(0, "mdiclient",
+                                 NULL,
+                                 WS_CHILD | MDIS_ALLCHILDSTYLES /*| WS_VISIBLE*/,
+                                  /* tests depend on a not zero MDIClient size */
+                                 0, 0, rc.right, rc.bottom,
+                                 mdi_hwndMain, 0, GetModuleHandleA(NULL),
+                                 &client_cs);
+    assert(mdi_client);
+    test_MDI_create(mdi_hwndMain, mdi_client, client_cs.idFirstChild);
+    DestroyWindow(mdi_client);
+
+    /* Test child window stack management */
+    mdi_client = CreateWindowExA(0, "mdiclient",
+                                 NULL,
+                                 WS_CHILD,
+                                 0, 0, rc.right, rc.bottom,
+                                 mdi_hwndMain, 0, GetModuleHandleA(NULL),
+                                 &client_cs);
+    assert(mdi_client);
+    test_MDI_child_stack(mdi_client);
+    DestroyWindow(mdi_client);
 /*
     while(GetMessage(&msg, 0, 0, 0))
     {
