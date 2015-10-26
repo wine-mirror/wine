@@ -4986,12 +4986,6 @@ HRESULT WINAPI D3DXCreateCylinder(struct IDirect3DDevice9 *device, float radius1
         return D3DERR_INVALIDCALL;
     }
 
-    if (adjacency)
-    {
-        FIXME("Case of adjacency != NULL not implemented.\n");
-        return E_NOTIMPL;
-    }
-
     number_of_vertices = 2 + (slices * (3 + stacks));
     number_of_faces = 2 * slices + stacks * (2 * slices);
 
@@ -5143,6 +5137,23 @@ HRESULT WINAPI D3DXCreateCylinder(struct IDirect3DDevice9 *device, float radius1
     free_sincos_table(&theta);
     cylinder->lpVtbl->UnlockIndexBuffer(cylinder);
     cylinder->lpVtbl->UnlockVertexBuffer(cylinder);
+
+    if (adjacency)
+    {
+        if (FAILED(hr = D3DXCreateBuffer(number_of_faces * sizeof(DWORD) * 3, adjacency)))
+        {
+            cylinder->lpVtbl->Release(cylinder);
+            return hr;
+        }
+
+        if (FAILED(hr = cylinder->lpVtbl->GenerateAdjacency(cylinder, 0.0f, (*adjacency)->lpVtbl->GetBufferPointer(*adjacency))))
+        {
+            (*adjacency)->lpVtbl->Release(*adjacency);
+            cylinder->lpVtbl->Release(cylinder);
+            return hr;
+        }
+    }
+
     *mesh = cylinder;
 
     return D3D_OK;
