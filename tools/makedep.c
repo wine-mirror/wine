@@ -1518,23 +1518,21 @@ static char *get_expanded_make_variable( struct makefile *make, const char *name
             var = get_make_variable( make, p + 2 );
             tmp = replace_substr( expand, p, end - p, var ? var : "" );
             free( var );
+            /* switch to the new string */
+            p = tmp + (p - expand);
+            free( expand );
+            expand = tmp;
         }
         else if (p[1] == '{')  /* don't expand ${} variables */
         {
             if (!(end = strchr( p + 2, '}' ))) fatal_error( "syntax error in '%s'\n", expand );
             p = end + 1;
-            continue;
         }
         else if (p[1] == '$')
         {
-            tmp = replace_substr( expand, p, 2, "$" );
+            p += 2;
         }
         else fatal_error( "syntax error in '%s'\n", expand );
-
-        /* switch to the new string */
-        p = tmp + (p - expand);
-        free( expand );
-        expand = tmp;
     }
 
     /* consider empty variables undefined */
