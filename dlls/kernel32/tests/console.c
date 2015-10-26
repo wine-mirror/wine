@@ -2588,6 +2588,45 @@ static void test_ReadConsole(void)
     ok(bytes == 0xdeadbeef, "expected 0xdeadbeef, got %#x\n", bytes);
 }
 
+static void test_GetCurrentConsoleFont(HANDLE std_output)
+{
+    BOOL ret;
+    CONSOLE_FONT_INFO cfi;
+    CONSOLE_SCREEN_BUFFER_INFO csbi;
+    short int width, height;
+    COORD c;
+
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(NULL, FALSE, &cfi);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
+    ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
+
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(GetStdHandle(STD_INPUT_HANDLE), FALSE, &cfi);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
+    ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
+
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(std_output, FALSE, &cfi);
+    ok(ret, "got %d, expected non-zero\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    GetConsoleScreenBufferInfo(std_output, &csbi);
+    width = csbi.srWindow.Right - csbi.srWindow.Left + 1;
+    height = csbi.srWindow.Bottom - csbi.srWindow.Top + 1;
+    c = GetConsoleFontSize(std_output, cfi.nFont);
+    ok(cfi.dwFontSize.X == width || cfi.dwFontSize.X == c.X /* Vista and higher */,
+        "got %d, expected %d\n", cfi.dwFontSize.X, width);
+    ok(cfi.dwFontSize.Y == height || cfi.dwFontSize.Y == c.Y /* Vista and higher */,
+        "got %d, expected %d\n", cfi.dwFontSize.Y, height);
+}
+
 START_TEST(console)
 {
     static const char font_name[] = "Lucida Console";
@@ -2720,4 +2759,5 @@ START_TEST(console)
     test_ReadConsoleOutputCharacterA(hConOut);
     test_ReadConsoleOutputCharacterW(hConOut);
     test_ReadConsoleOutputAttribute(hConOut);
+    test_GetCurrentConsoleFont(hConOut);
 }
