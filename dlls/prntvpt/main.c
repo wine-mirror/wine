@@ -23,6 +23,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "prntvpt.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(prntvpt);
@@ -46,5 +47,11 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
 HRESULT WINAPI PTQuerySchemaVersionSupport(PCWSTR printer, DWORD *version)
 {
     FIXME("stub:%s %p\n", debugstr_w(printer), version);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI PTOpenProvider(PCWSTR printer, DWORD version, HPTPROVIDER *provider)
+{
+    FIXME("%s, %d, %p: stub\n", debugstr_w(printer), version, provider);
     return E_NOTIMPL;
 }

@@ -514,6 +514,7 @@ SRCDIR_INCLUDES = \
 	pktdef.h \
 	poppack.h \
 	powrprof.h \
+	prntvpt.h \
 	profinfo.h \
 	propkey.h \
 	propkeydef.h \

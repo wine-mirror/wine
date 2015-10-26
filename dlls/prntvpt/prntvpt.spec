@@ -1,5 +1,5 @@
 @ stdcall PTQuerySchemaVersionSupport(wstr ptr)
-@ stub PTOpenProvider
+@ stdcall PTOpenProvider(wstr long ptr)
 @ stub PTOpenProviderEx
 @ stub PTCloseProvider
 @ stub BindPTProviderThunk
