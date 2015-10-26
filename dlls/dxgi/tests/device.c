@@ -21,6 +21,12 @@
 #include "d3d11.h"
 #include "wine/test.h"
 
+enum frame_latency
+{
+    DEFAULT_FRAME_LATENCY =  3,
+    MAX_FRAME_LATENCY     = 16,
+};
+
 static DEVMODEW registry_mode;
 
 static HRESULT (WINAPI *pCreateDXGIFactory1)(REFIID iid, void **factory);
@@ -1214,6 +1220,57 @@ static void test_swapchain_parameters(void)
     DestroyWindow(window);
 }
 
+static void test_maximum_frame_latency(void)
+{
+    IDXGIDevice1 *device1;
+    IDXGIDevice *device;
+    UINT max_latency;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    if (SUCCEEDED(IDXGIDevice_QueryInterface(device, &IID_IDXGIDevice1, (void **)&device1)))
+    {
+        hr = IDXGIDevice1_GetMaximumFrameLatency(device1, &max_latency);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(max_latency == DEFAULT_FRAME_LATENCY, "Got unexpected maximum frame latency %u.\n", max_latency);
+
+        hr = IDXGIDevice1_SetMaximumFrameLatency(device1, MAX_FRAME_LATENCY);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDXGIDevice1_GetMaximumFrameLatency(device1, &max_latency);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        todo_wine ok(max_latency == MAX_FRAME_LATENCY, "Got unexpected maximum frame latency %u.\n", max_latency);
+
+        hr = IDXGIDevice1_SetMaximumFrameLatency(device1, MAX_FRAME_LATENCY + 1);
+        ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#x.\n", hr);
+        hr = IDXGIDevice1_GetMaximumFrameLatency(device1, &max_latency);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        todo_wine ok(max_latency == MAX_FRAME_LATENCY, "Got unexpected maximum frame latency %u.\n", max_latency);
+
+        hr = IDXGIDevice1_SetMaximumFrameLatency(device1, 0);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDXGIDevice1_GetMaximumFrameLatency(device1, &max_latency);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        /* 0 does not reset to the default frame latency on all Windows versions. */
+        ok(max_latency == DEFAULT_FRAME_LATENCY || broken(!max_latency),
+                "Got unexpected maximum frame latency %u.\n", max_latency);
+
+        IDXGIDevice1_Release(device1);
+    }
+    else
+    {
+        win_skip("IDXGIDevice1 is not implemented.\n");
+    }
+
+    refcount = IDXGIDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(device)
 {
     pCreateDXGIFactory1 = (void *)GetProcAddress(GetModuleHandleA("dxgi.dll"), "CreateDXGIFactory1");
@@ -1231,4 +1288,5 @@ START_TEST(device)
     test_private_data();
     test_swapchain_resize();
     test_swapchain_parameters();
+    test_maximum_frame_latency();
 }
