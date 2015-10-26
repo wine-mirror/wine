@@ -401,7 +401,9 @@ static int getValue(int bsize, int source)
     return value;
 }
 
-void parse_io_feature(unsigned int bSize, int itemVal, int bTag, unsigned int *feature_index, struct feature *feature)
+static void parse_io_feature(unsigned int bSize, int itemVal, int bTag,
+                             unsigned int *feature_index,
+                             struct feature *feature)
 {
     if (bSize <= 0)
     {
@@ -430,7 +432,8 @@ void parse_io_feature(unsigned int bSize, int itemVal, int bTag, unsigned int *f
     }
 }
 
-void parse_collection(unsigned int bSize, int itemVal, struct collection *collection)
+static void parse_collection(unsigned int bSize, int itemVal,
+                             struct collection *collection)
 {
     if (bSize <= 0)
         return;
@@ -772,7 +775,7 @@ static void count_elements(struct feature* feature, USHORT *buttons, USHORT *val
     }
 }
 
-WINE_HIDP_PREPARSED_DATA* build_PreparseData(
+static WINE_HIDP_PREPARSED_DATA* build_PreparseData(
                        struct feature **features, int feature_count,
                        struct feature **input_features, int i_count,
                        struct feature **output_features, int o_count,
