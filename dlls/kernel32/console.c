@@ -3236,9 +3236,28 @@ BOOL WINAPI SetConsoleIcon(HICON icon)
 
 BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, LPCONSOLE_FONT_INFO fontinfo)
 {
-    FIXME(": (%p, %d, %p) stub!\n", hConsole, maxwindow, fontinfo);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    BOOL ret;
+
+    memset(fontinfo, 0, sizeof(CONSOLE_FONT_INFO));
+
+    if (maxwindow)
+    {
+        FIXME(": (%p, %d, %p) stub!\n", hConsole, maxwindow, fontinfo);
+        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+        return FALSE;
+    }
+
+    SERVER_START_REQ(get_console_output_info)
+    {
+        req->handle = console_handle_unmap(hConsole);
+        if ((ret = !wine_server_call_err(req)))
+        {
+            fontinfo->dwFontSize.X = reply->win_right - reply->win_left + 1;
+            fontinfo->dwFontSize.Y = reply->win_bottom - reply->win_top + 1;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 #ifdef __i386__
