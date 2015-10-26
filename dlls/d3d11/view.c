@@ -1189,7 +1189,7 @@ struct d3d_rendertarget_view *unsafe_impl_from_ID3D10RenderTargetView(ID3D10Rend
 
 /* ID3D11ShaderResourceView methods */
 
-struct d3d_shader_resource_view *impl_from_ID3D11ShaderResourceView(ID3D11ShaderResourceView *iface)
+static inline struct d3d_shader_resource_view *impl_from_ID3D11ShaderResourceView(ID3D11ShaderResourceView *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d_shader_resource_view, ID3D11ShaderResourceView_iface);
 }
