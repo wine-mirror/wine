@@ -18000,7 +18000,7 @@ wine_fn_config_dll x3daudio1_3 enable_x3daudio1_3
 wine_fn_config_dll x3daudio1_4 enable_x3daudio1_4
 wine_fn_config_dll x3daudio1_5 enable_x3daudio1_5
 wine_fn_config_dll x3daudio1_6 enable_x3daudio1_6
-wine_fn_config_dll x3daudio1_7 enable_x3daudio1_7 implib
+wine_fn_config_dll x3daudio1_7 enable_x3daudio1_7
 wine_fn_config_dll xapofx1_1 enable_xapofx1_1
 wine_fn_config_dll xapofx1_2 enable_xapofx1_2
 wine_fn_config_dll xapofx1_3 enable_xapofx1_3
@@ -18015,7 +18015,7 @@ wine_fn_config_dll xaudio2_5 enable_xaudio2_5 clean
 wine_fn_config_dll xaudio2_6 enable_xaudio2_6 clean
 wine_fn_config_dll xaudio2_7 enable_xaudio2_7 clean
 wine_fn_config_test dlls/xaudio2_7/tests xaudio2_7_test
-wine_fn_config_dll xaudio2_8 enable_xaudio2_8
+wine_fn_config_dll xaudio2_8 enable_xaudio2_8 implib
 wine_fn_config_dll xinput1_1 enable_xinput1_1
 wine_fn_config_dll xinput1_2 enable_xinput1_2
 wine_fn_config_dll xinput1_3 enable_xinput1_3 implib xinput

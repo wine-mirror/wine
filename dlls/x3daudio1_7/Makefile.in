@@ -1,5 +1,5 @@
 MODULE    = x3daudio1_7.dll
-IMPORTLIB = x3daudio1_7
+IMPORTS   = xaudio2_8
 
 C_SRCS = \
 	main.c

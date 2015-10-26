@@ -1,5 +1,4 @@
 MODULE    = x3daudio1_6.dll
-IMPORTS   = x3daudio1_7
 
 C_SRCS = \
 	main.c
