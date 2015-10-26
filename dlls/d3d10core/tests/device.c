@@ -240,6 +240,11 @@ static void test_device_interfaces(void)
     IUnknown_Release(dxgi_adapter);
     IUnknown_Release(dxgi_device);
 
+    hr = ID3D10Device_QueryInterface(device, &IID_IDXGIDevice1, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Device should implement IDXGIDevice1.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+
     hr = ID3D10Device_QueryInterface(device, &IID_ID3D10Multithread, (void **)&iface);
     ok(SUCCEEDED(hr), "Device should implement ID3D10Multithread interface, hr %#x.\n", hr);
     IUnknown_Release(iface);
