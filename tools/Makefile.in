@@ -18,13 +18,10 @@ all: wineapploader
 make_xftmpl$(EXEEXT): make_xftmpl.o
 	$(CC) $(CFLAGS) -o $@ make_xftmpl.o $(LIBPORT) $(LDFLAGS)
 
-.PHONY: install install-lib install-dev uninstall
-
-install install-lib::
-	$(INSTALL_DATA) $(srcdir)/wine.desktop $(DESTDIR)$(datadir)/applications/wine.desktop
+.PHONY: install install-dev uninstall
 
 install install-dev:: install-man-pages
 	$(INSTALL_SCRIPT) $(srcdir)/winemaker $(DESTDIR)$(bindir)/winemaker
 
 uninstall::
-	$(RM) $(DESTDIR)$(datadir)/applications/wine.desktop $(DESTDIR)$(bindir)/winemaker
+	$(RM) $(DESTDIR)$(bindir)/winemaker

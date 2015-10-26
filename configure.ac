@@ -1039,6 +1039,15 @@ $wine_binary: main.o
 wine-installed: main.o
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
 "])
+    if test -z "$with_wine64"
+    then
+        AS_VAR_APPEND([LOADER_RULES],["
+install install-lib::
+	\$(INSTALL_DATA) \$(srcdir)/wine.desktop \$(DESTDIR)\$(datadir)/applications/wine.desktop
+uninstall::
+	\$(RM) \$(DESTDIR)\$(datadir)/applications/wine.desktop
+"])
+    fi
     ;;
 esac
 
@@ -3589,7 +3598,7 @@ WINE_CONFIG_PROGRAM(wusa,,[install])
 WINE_CONFIG_PROGRAM(xcopy,,[install,po])
 WINE_CONFIG_TEST(programs/xcopy/tests)
 WINE_CONFIG_MAKEFILE([server],,[clean,install-lib,manpage])
-WINE_CONFIG_TOOL(tools,[clean,install-dev,install-lib,manpage])
+WINE_CONFIG_TOOL(tools,[clean,install-dev,manpage])
 WINE_CONFIG_TOOL(tools/sfnt2fon,[clean])
 WINE_CONFIG_TOOL(tools/widl,[clean,install-dev,manpage])
 WINE_CONFIG_TOOL(tools/winebuild,[clean,install-dev,manpage])

@@ -8825,6 +8825,15 @@ $wine_binary: main.o
 wine-installed: main.o
 	\$(CC) -o \$@ $LDEXECFLAGS main.o \$(LIBWINE) \$(LIBPORT) \$(EXTRALIBS) \$(LDFLAGS) \$(LDRPATH_INSTALL)
 "
+    if test -z "$with_wine64"
+    then
+        as_fn_append LOADER_RULES "
+install install-lib::
+	\$(INSTALL_DATA) \$(srcdir)/wine.desktop \$(DESTDIR)\$(datadir)/applications/wine.desktop
+uninstall::
+	\$(RM) \$(DESTDIR)\$(datadir)/applications/wine.desktop
+"
+    fi
     ;;
 esac
 
@@ -18116,7 +18125,7 @@ wine_fn_config_program wusa enable_wusa install
 wine_fn_config_program xcopy enable_xcopy install,po
 wine_fn_config_test programs/xcopy/tests xcopy.exe_test
 wine_fn_config_makefile server enable_server clean,install-lib,manpage
-wine_fn_config_tool tools clean,install-dev,install-lib,manpage
+wine_fn_config_tool tools clean,install-dev,manpage
 wine_fn_config_tool tools/sfnt2fon clean
 wine_fn_config_tool tools/widl clean,install-dev,manpage
 wine_fn_config_tool tools/winebuild clean,install-dev,manpage
