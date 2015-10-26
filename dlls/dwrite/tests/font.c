@@ -4278,7 +4278,7 @@ static void test_GetGdiCompatibleGlyphAdvances(void)
     IDWriteFactory_Release(factory);
 }
 
-static WORD get_gasp_flags(IDWriteFontFace *fontface, FLOAT emsize)
+static WORD get_gasp_flags(IDWriteFontFace *fontface, FLOAT emsize, FLOAT ppdip)
 {
     WORD num_recs, version;
     const WORD *ptr;
@@ -4287,6 +4287,8 @@ static WORD get_gasp_flags(IDWriteFontFace *fontface, FLOAT emsize)
     BOOL exists;
     void *ctxt;
     HRESULT hr;
+
+    emsize *= ppdip;
 
     exists = FALSE;
     hr = IDWriteFontFace_TryGetFontTable(fontface, MS_GASP_TAG,
@@ -4436,18 +4438,52 @@ if (0) /* crashes on native */
     g_is_vista = fontface1 == NULL;
 
     for (emsize = 1.0; emsize < 500.0; emsize += 1.0) {
-        WORD gasp = get_gasp_flags(fontface, emsize);
         DWRITE_RENDERING_MODE expected;
+        WORD gasp;
         int i;
 
         for (i = 0; i < sizeof(recmode_tests)/sizeof(recmode_tests[0]); i++) {
+            FLOAT ppdip;
+
+            ppdip = 1.0f;
             mode = 10;
-            expected = get_expected_rendering_mode(emsize, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
-            hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, 1.0, recmode_tests[i].measuring, params, &mode);
+            gasp = get_gasp_flags(fontface, emsize, ppdip);
+            expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
+            hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, ppdip, recmode_tests[i].measuring, params, &mode);
             ok(hr == S_OK, "got 0x%08x\n", hr);
-            ok(mode == expected, "%.2f/%d: got %d, flags 0x%04x, expected %d\n", emsize, i, mode, gasp, expected);
+            ok(mode == expected, "%.2f/%d: got %d, ppdip %f, flags 0x%04x, expected %d\n", emsize, i, mode, ppdip, gasp, expected);
+
+            /* some ppdip variants */
+            ppdip = 0.5f;
+            mode = 10;
+            gasp = get_gasp_flags(fontface, emsize, ppdip);
+            expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
+            hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, ppdip, recmode_tests[i].measuring, params, &mode);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(mode == expected, "%.2f/%d: got %d, ppdip %f, flags 0x%04x, expected %d\n", emsize, i, mode, ppdip, gasp, expected);
+
+            /* Only test larger sizes to workaround Win7 differences, where unscaled natural emsize threshold is used;
+               Win8 and Win10 handle this as expected. */
+            if (emsize > 20.0f) {
+                ppdip = 1.5f;
+                mode = 10;
+                gasp = get_gasp_flags(fontface, emsize, ppdip);
+                expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
+                hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, ppdip, recmode_tests[i].measuring, params, &mode);
+                ok(hr == S_OK, "got 0x%08x\n", hr);
+                ok(mode == expected, "%.2f/%d: got %d, ppdip %f, flags 0x%04x, expected %d\n", emsize, i, mode, ppdip, gasp, expected);
+
+                ppdip = 2.0f;
+                mode = 10;
+                gasp = get_gasp_flags(fontface, emsize, ppdip);
+                expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests[i].measuring, recmode_tests[i].threshold);
+                hr = IDWriteFontFace_GetRecommendedRenderingMode(fontface, emsize, ppdip, recmode_tests[i].measuring, params, &mode);
+                ok(hr == S_OK, "got 0x%08x\n", hr);
+                ok(mode == expected, "%.2f/%d: got %d, ppdip %f, flags 0x%04x, expected %d\n", emsize, i, mode, ppdip, gasp, expected);
+            }
         }
 
+        gasp = get_gasp_flags(fontface, emsize, 1.0f);
         /* IDWriteFontFace1 offers another variant of this method */
         if (fontface1) {
             for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
