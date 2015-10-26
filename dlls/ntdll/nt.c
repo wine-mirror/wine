@@ -1002,7 +1002,7 @@ static inline void get_cpuinfo(SYSTEM_CPU_INFORMATION* info)
                 user_shared_data->ProcessorFeatures[PF_VIRT_FIRMWARE_ENABLED]        = (regs2[2] >> 2) & 1;
                 user_shared_data->ProcessorFeatures[PF_NX_ENABLED]                   = (regs2[3] >> 20) & 1;
                 user_shared_data->ProcessorFeatures[PF_3DNOW_INSTRUCTIONS_AVAILABLE] = (regs2[3] >> 31) & 1;
-                if(regs2[3] & (1 << 31)) info->FeatureSet |= CPU_FEATURE_3DNOW;
+                if (regs2[3] >> 31) info->FeatureSet |= CPU_FEATURE_3DNOW;
             }
         }
         else if (regs[1] == GENU && regs[3] == INEI && regs[2] == NTEL)
