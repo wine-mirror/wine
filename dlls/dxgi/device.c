@@ -40,6 +40,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IWineDXGIDevice *ifa
     if (IsEqualGUID(riid, &IID_IUnknown)
             || IsEqualGUID(riid, &IID_IDXGIObject)
             || IsEqualGUID(riid, &IID_IDXGIDevice)
+            || IsEqualGUID(riid, &IID_IDXGIDevice1)
             || IsEqualGUID(riid, &IID_IWineDXGIDevice))
     {
         IUnknown_AddRef(iface);
@@ -49,11 +50,11 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_QueryInterface(IWineDXGIDevice *ifa
 
     if (This->child_layer)
     {
-        TRACE("forwarding to child layer %p\n", This->child_layer);
+        TRACE("forwarding to child layer %p.\n", This->child_layer);
         return IUnknown_QueryInterface(This->child_layer, riid, object);
     }
 
-    WARN("%s not implemented, returning E_NOINTERFACE\n", debugstr_guid(riid));
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
 
     *object = NULL;
     return E_NOINTERFACE;
@@ -257,6 +258,26 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetGPUThreadPriority(IWineDXGIDevic
     return E_NOTIMPL;
 }
 
+static HRESULT STDMETHODCALLTYPE dxgi_device_SetMaximumFrameLatency(IWineDXGIDevice *iface, UINT max_latency)
+{
+    FIXME("iface %p, max_latency %u stub!\n", iface, max_latency);
+
+    if (max_latency > DXGI_FRAME_LATENCY_MAX)
+        return DXGI_ERROR_INVALID_CALL;
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE dxgi_device_GetMaximumFrameLatency(IWineDXGIDevice *iface, UINT *max_latency)
+{
+    FIXME("iface %p, max_latency %p stub!\n", iface, max_latency);
+
+    if (max_latency)
+        *max_latency = DXGI_FRAME_LATENCY_DEFAULT;
+
+    return E_NOTIMPL;
+}
+
 /* IWineDXGIDevice methods */
 
 static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *iface,
@@ -336,6 +357,9 @@ static const struct IWineDXGIDeviceVtbl dxgi_device_vtbl =
     dxgi_device_QueryResourceResidency,
     dxgi_device_SetGPUThreadPriority,
     dxgi_device_GetGPUThreadPriority,
+    /* IDXGIDevice1 methods */
+    dxgi_device_SetMaximumFrameLatency,
+    dxgi_device_GetMaximumFrameLatency,
     /* IWineDXGIDevice methods */
     dxgi_device_create_surface,
     dxgi_device_create_swapchain,

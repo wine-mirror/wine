@@ -37,6 +37,12 @@
 #include "wine/wined3d.h"
 #include "wine/winedxgi.h"
 
+enum dxgi_frame_latency
+{
+    DXGI_FRAME_LATENCY_DEFAULT =  3,
+    DXGI_FRAME_LATENCY_MAX     = 16,
+};
+
 /* Layered device */
 enum dxgi_device_layer_id
 {
