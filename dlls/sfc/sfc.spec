@@ -7,7 +7,7 @@
 7 stub @
 8 stub @
 9 stub @
-@ stub SfcGetNextProtectedFile
+@ stdcall SfcGetNextProtectedFile(long ptr) sfc_os.SfcGetNextProtectedFile
 @ stdcall SfcIsFileProtected(ptr wstr) sfc_os.SfcIsFileProtected
 @ stdcall SfcIsKeyProtected(long wstr long) sfc_os.SfcIsKeyProtected
 @ stub SfcWLEventLogoff

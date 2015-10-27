@@ -49,6 +49,15 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 }
 
 /******************************************************************
+ *      SfcGetNextProtectedFile     [sfc_os.@]
+ */
+BOOL WINAPI SfcGetNextProtectedFile(HANDLE handle, PROTECTED_FILE_DATA *data)
+{
+    FIXME("%p %p\n", handle, data);
+    return FALSE;
+}
+
+/******************************************************************
  *              SfcIsFileProtected     [sfc_os.@]
  *
  * Check, if the given File is protected by the System
