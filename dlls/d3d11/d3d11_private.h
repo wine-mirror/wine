@@ -363,8 +363,6 @@ struct d3d_query
     ID3D11Device *device;
 };
 
-HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device,
-        const D3D11_QUERY_DESC *desc, BOOL predicate) DECLSPEC_HIDDEN;
 HRESULT d3d_query_create(struct d3d_device *device, const D3D11_QUERY_DESC *desc, BOOL predicate,
         struct d3d_query **query) DECLSPEC_HIDDEN;
 struct d3d_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;

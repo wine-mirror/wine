@@ -1583,11 +1583,20 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateSamplerState(ID3D11Device *i
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateQuery(ID3D11Device *iface,
-    const D3D11_QUERY_DESC *desc, ID3D11Query **query)
+        const D3D11_QUERY_DESC *desc, ID3D11Query **query)
 {
-    FIXME("iface %p, desc %p, query %p stub!\n", iface, desc, query);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct d3d_query *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p, query %p.\n", iface, desc, query);
+
+    if (FAILED(hr = d3d_query_create(device, desc, FALSE, &object)))
+        return hr;
+
+    *query = &object->ID3D11Query_iface;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreatePredicate(ID3D11Device *iface, const D3D11_QUERY_DESC *desc,
@@ -3726,17 +3735,9 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateQuery(ID3D10Device1 *iface,
 
     TRACE("iface %p, desc %p, query %p.\n", iface, desc, query);
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = d3d_query_init(object, device, (const D3D11_QUERY_DESC *)desc, FALSE)))
-    {
-        WARN("Failed to initialize query, hr %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
+    if (FAILED(hr = d3d_query_create(device, (const D3D11_QUERY_DESC *)desc, FALSE, &object)))
         return hr;
-    }
 
-    TRACE("Created query %p.\n", object);
     *query = &object->ID3D10Query_iface;
 
     return S_OK;
