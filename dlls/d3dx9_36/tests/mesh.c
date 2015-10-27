@@ -1487,8 +1487,8 @@ static void check_vertex_buffer_(int line, ID3DXMesh *mesh, const void *vertices
         return;
 
     if (mesh_fvf == fvf) {
-        DWORD vertex_size = D3DXGetFVFVertexSize(fvf);
-        int i;
+        DWORD vertex_size = D3DXGetFVFVertexSize(fvf), i;
+
         for (i = 0; i < min(num_vertices, mesh_num_vertices); i++)
         {
             const FLOAT *exp_float = vertices;
@@ -2568,7 +2568,7 @@ static void test_polygon(IDirect3DDevice9 *device, float length, unsigned int si
 
     mesh.fvf = D3DFVF_XYZ | D3DFVF_NORMAL;
 
-    sprintf(name, "polygon (%g, %d)", length, sides);
+    sprintf(name, "polygon (%g, %u)", length, sides);
     compare_mesh(name, polygon, &mesh);
 
     free_mesh(&mesh);

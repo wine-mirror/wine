@@ -343,7 +343,7 @@ static void test_dump(void)
         goto exit;
     }
 
-    printf("Load templates file (%d bytes)\n", size);
+    printf("Load templates file (%u bytes)\n", size);
 
     ret = D3DXFileCreate(&xfile);
     ok(ret == S_OK, "D3DXCreateFile failed with %#x\n", ret);
