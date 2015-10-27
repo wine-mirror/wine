@@ -4985,6 +4985,7 @@ static void test_GetPaletteEntries(void)
     IDWriteFont_Release(font);
 
     hr = IDWriteFontFace_QueryInterface(fontface, &IID_IDWriteFontFace2, (void**)&fontface2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     IDWriteFontFace_Release(fontface);
 
     palettecount = IDWriteFontFace2_GetColorPaletteCount(fontface2);
