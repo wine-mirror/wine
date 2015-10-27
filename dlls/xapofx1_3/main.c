@@ -51,6 +51,9 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out)
     if(IsEqualGUID(clsid, &CLSID_FXReverb27) ||
             IsEqualGUID(clsid, &CLSID_FXReverb))
         class = &CLSID_WINE_FXReverb13;
+    else if(IsEqualGUID(clsid, &CLSID_FXEQ27) ||
+            IsEqualGUID(clsid, &CLSID_FXEQ))
+        class = &CLSID_WINE_FXEQ13;
 
     return CoCreateInstance(class, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)out);
 }

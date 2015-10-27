@@ -2067,6 +2067,22 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXReverb28)){
         factory = make_xapo_factory(&CLSID_AudioReverb, 28);
+
+
+    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ10)){
+        factory = make_xapo_factory(&CLSID_FXEQ, 21);
+    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ11)){
+        factory = make_xapo_factory(&CLSID_FXEQ, 22);
+    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ12)){
+        factory = make_xapo_factory(&CLSID_FXEQ, 23);
+    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ13)){
+        factory = make_xapo_factory(&CLSID_FXEQ, 24);
+    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ14)){
+        factory = make_xapo_factory(&CLSID_FXEQ, 26);
+    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ15)){
+        factory = make_xapo_factory(&CLSID_FXEQ, 27);
+    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ28)){
+        factory = make_xapo_factory(&CLSID_FXEQ, 28);
     }
 
     if(!factory) return CLASS_E_CLASSNOTAVAILABLE;

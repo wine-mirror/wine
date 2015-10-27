@@ -438,6 +438,209 @@ static const IXAPOParametersVtbl RVBXAPOParameters_Vtbl = {
     RVBXAPOParams_GetParameters
 };
 
+typedef struct _EQImpl {
+    IXAPO IXAPO_iface;
+    IXAPOParameters IXAPOParameters_iface;
+
+    LONG ref;
+
+    DWORD version;
+} EQImpl;
+
+static EQImpl *EQImpl_from_IXAPO(IXAPO *iface)
+{
+    return CONTAINING_RECORD(iface, EQImpl, IXAPO_iface);
+}
+
+static EQImpl *EQImpl_from_IXAPOParameters(IXAPOParameters *iface)
+{
+    return CONTAINING_RECORD(iface, EQImpl, IXAPOParameters_iface);
+}
+
+static HRESULT WINAPI EQXAPO_QueryInterface(IXAPO *iface, REFIID riid, void **ppvObject)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+
+    TRACE("%p, %s, %p\n", This, wine_dbgstr_guid(riid), ppvObject);
+
+    if(IsEqualGUID(riid, &IID_IUnknown) ||
+            IsEqualGUID(riid, &IID_IXAPO) ||
+            IsEqualGUID(riid, &IID_IXAPO27))
+        *ppvObject = &This->IXAPO_iface;
+    else if(IsEqualGUID(riid, &IID_IXAPOParameters))
+        *ppvObject = &This->IXAPOParameters_iface;
+    else
+        *ppvObject = NULL;
+
+    if(*ppvObject){
+        IUnknown_AddRef((IUnknown*)*ppvObject);
+        return S_OK;
+    }
+
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI EQXAPO_AddRef(IXAPO *iface)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+    return ref;
+}
+
+static ULONG WINAPI EQXAPO_Release(IXAPO *iface)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p)->(): Refcount now %u\n", This, ref);
+
+    if(!ref)
+        HeapFree(GetProcessHeap(), 0, This);
+
+    return ref;
+}
+
+static HRESULT WINAPI EQXAPO_GetRegistrationProperties(IXAPO *iface,
+    XAPO_REGISTRATION_PROPERTIES **props)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p, %p\n", This, props);
+    /* TODO: check for version == 20 and use XAPO20_REGISTRATION_PROPERTIES */
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EQXAPO_IsInputFormatSupported(IXAPO *iface,
+        const WAVEFORMATEX *output_fmt, const WAVEFORMATEX *input_fmt,
+        WAVEFORMATEX **supported_fmt)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p, %p, %p, %p\n", This, output_fmt, input_fmt, supported_fmt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EQXAPO_IsOutputFormatSupported(IXAPO *iface,
+        const WAVEFORMATEX *input_fmt, const WAVEFORMATEX *output_fmt,
+        WAVEFORMATEX **supported_fmt)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p, %p, %p, %p\n", This, input_fmt, output_fmt, supported_fmt);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EQXAPO_Initialize(IXAPO *iface, const void *data,
+        UINT32 data_len)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p, %p, %u\n", This, data, data_len);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EQXAPO_Reset(IXAPO *iface)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI EQXAPO_LockForProcess(IXAPO *iface, UINT32 in_params_count,
+        const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *in_params,
+        UINT32 out_params_count,
+        const XAPO_LOCKFORPROCESS_BUFFER_PARAMETERS *out_params)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p, %u, %p, %u, %p\n", This, in_params_count, in_params,
+            out_params_count, out_params);
+    return E_NOTIMPL;
+}
+
+static void WINAPI EQXAPO_UnlockForProcess(IXAPO *iface)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p\n", This);
+}
+
+static void WINAPI EQXAPO_Process(IXAPO *iface, UINT32 in_params_count,
+        const XAPO_PROCESS_BUFFER_PARAMETERS *in_params,
+        UINT32 out_params_count,
+        const XAPO_PROCESS_BUFFER_PARAMETERS *out_params, BOOL enabled)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p, %u, %p, %u, %p, %u\n", This, in_params_count, in_params,
+            out_params_count, out_params, enabled);
+}
+
+static UINT32 WINAPI EQXAPO_CalcInputFrames(IXAPO *iface, UINT32 output_frames)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p, %u\n", This, output_frames);
+    return 0;
+}
+
+static UINT32 WINAPI EQXAPO_CalcOutputFrames(IXAPO *iface, UINT32 input_frames)
+{
+    EQImpl *This = EQImpl_from_IXAPO(iface);
+    TRACE("%p, %u\n", This, input_frames);
+    return 0;
+}
+
+static const IXAPOVtbl EQXAPO_Vtbl = {
+    EQXAPO_QueryInterface,
+    EQXAPO_AddRef,
+    EQXAPO_Release,
+    EQXAPO_GetRegistrationProperties,
+    EQXAPO_IsInputFormatSupported,
+    EQXAPO_IsOutputFormatSupported,
+    EQXAPO_Initialize,
+    EQXAPO_Reset,
+    EQXAPO_LockForProcess,
+    EQXAPO_UnlockForProcess,
+    EQXAPO_Process,
+    EQXAPO_CalcInputFrames,
+    EQXAPO_CalcOutputFrames
+};
+
+static HRESULT WINAPI EQXAPOParams_QueryInterface(IXAPOParameters *iface,
+        REFIID riid, void **ppvObject)
+{
+    EQImpl *This = EQImpl_from_IXAPOParameters(iface);
+    return EQXAPO_QueryInterface(&This->IXAPO_iface, riid, ppvObject);
+}
+
+static ULONG WINAPI EQXAPOParams_AddRef(IXAPOParameters *iface)
+{
+    EQImpl *This = EQImpl_from_IXAPOParameters(iface);
+    return EQXAPO_AddRef(&This->IXAPO_iface);
+}
+
+static ULONG WINAPI EQXAPOParams_Release(IXAPOParameters *iface)
+{
+    EQImpl *This = EQImpl_from_IXAPOParameters(iface);
+    return EQXAPO_Release(&This->IXAPO_iface);
+}
+
+static void WINAPI EQXAPOParams_SetParameters(IXAPOParameters *iface,
+        const void *params, UINT32 params_len)
+{
+    EQImpl *This = EQImpl_from_IXAPOParameters(iface);
+    TRACE("%p, %p, %u\n", This, params, params_len);
+}
+
+static void WINAPI EQXAPOParams_GetParameters(IXAPOParameters *iface, void *params,
+        UINT32 params_len)
+{
+    EQImpl *This = EQImpl_from_IXAPOParameters(iface);
+    TRACE("%p, %p, %u\n", This, params, params_len);
+}
+
+static const IXAPOParametersVtbl EQXAPOParameters_Vtbl = {
+    EQXAPOParams_QueryInterface,
+    EQXAPOParams_AddRef,
+    EQXAPOParams_Release,
+    EQXAPOParams_SetParameters,
+    EQXAPOParams_GetParameters
+};
+
 struct xapo_cf {
     IClassFactory IClassFactory_iface;
     LONG ref;
@@ -521,6 +724,22 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
 
         object->IXAPO_iface.lpVtbl = &RVBXAPO_Vtbl;
         object->IXAPOParameters_iface.lpVtbl = &RVBXAPOParameters_Vtbl;
+        object->version = This->version;
+
+        hr = IXAPO_QueryInterface(&object->IXAPO_iface, riid, ppobj);
+        if(FAILED(hr)){
+            HeapFree(GetProcessHeap(), 0, object);
+            return hr;
+        }
+    }else if(IsEqualGUID(This->class, &CLSID_FXEQ)){
+        EQImpl *object;
+
+        object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+        if(!object)
+            return E_OUTOFMEMORY;
+
+        object->IXAPO_iface.lpVtbl = &EQXAPO_Vtbl;
+        object->IXAPOParameters_iface.lpVtbl = &EQXAPOParameters_Vtbl;
         object->version = This->version;
 
         hr = IXAPO_QueryInterface(&object->IXAPO_iface, riid, ppobj);

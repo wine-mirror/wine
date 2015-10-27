@@ -807,12 +807,12 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
         const GUID *clsid;
         BOOL todo;
     } const_clsids[] = {
-        { &CLSID_FXEQ27, TRUE },
+        { &CLSID_FXEQ27, FALSE },
         { &CLSID_FXMasteringLimiter27, TRUE },
         { &CLSID_FXReverb27, FALSE },
         { &CLSID_FXEcho27, TRUE},
         /* older versions of xapofx actually have support for new clsids */
-        { &CLSID_FXEQ, TRUE },
+        { &CLSID_FXEQ, FALSE },
         { &CLSID_FXMasteringLimiter, TRUE },
         { &CLSID_FXReverb, FALSE },
         { &CLSID_FXEcho, TRUE}
@@ -919,12 +919,11 @@ static void test_xapo_creation_modern(const char *module)
         const GUID *clsid;
         BOOL todo;
     } const_clsids[] = {
-        { &CLSID_FXEQ27, TRUE },
+        { &CLSID_FXEQ27, FALSE },
         { &CLSID_FXMasteringLimiter27, TRUE },
         { &CLSID_FXReverb27, FALSE },
         { &CLSID_FXEcho27, TRUE},
-        /* older versions of xapofx actually have support for new clsids */
-        { &CLSID_FXEQ, TRUE },
+        { &CLSID_FXEQ, FALSE },
         { &CLSID_FXMasteringLimiter, TRUE },
         { &CLSID_FXReverb, FALSE },
         { &CLSID_FXEcho, TRUE}
