@@ -331,7 +331,7 @@ static inline const char *wine_dbgstr_variant( const VARIANT *v )
     case VT_VOID:
         return wine_dbg_sprintf( "%p {VT_VOID}", v );
     case VT_RECORD:
-        return wine_dbg_sprintf( "%p {VT_RECORD: %p %p}", v, V_UNION(v,brecVal).pvRecord, V_UNION(v,brecVal).pRecInfo );
+        return wine_dbg_sprintf( "%p {VT_RECORD: %p %p}", v, V_RECORD(v), V_RECORDINFO(v) );
     default:
         return wine_dbg_sprintf( "%p {vt %s}", v, wine_dbgstr_vt(V_VT(v)) );
     }
