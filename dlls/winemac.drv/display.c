@@ -312,63 +312,64 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display)
             BOOL better = TRUE;
             CGDisplayModeRef new_mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
             uint32_t new_flags = CGDisplayModeGetIOFlags(new_mode);
-            CFStringRef pixel_encoding;
-            size_t width_points;
-            size_t height_points;
-            CFDictionaryRef key;
-            CGDisplayModeRef old_mode;
+            CFDictionaryRef key = create_mode_dict(new_mode);
 
-            if (!(new_flags & kDisplayModeDefaultFlag) && (pixel_encoding = CGDisplayModeCopyPixelEncoding(new_mode)))
+            /* If a given mode is the user's default, then always list it in preference to any similar
+               modes that may exist. */
+            if (new_flags & kDisplayModeDefaultFlag)
+                better = TRUE;
+            else
             {
-                BOOL bpp30 = CFEqual(pixel_encoding, CFSTR(kIO30BitDirectPixels));
-                CFRelease(pixel_encoding);
-                if (bpp30)
+                CFStringRef pixel_encoding = CGDisplayModeCopyPixelEncoding(new_mode);
+                CGDisplayModeRef old_mode;
+
+                if (pixel_encoding)
                 {
-                    /* This is an odd pixel encoding.  It seems it's only returned
-                       when using kCGDisplayShowDuplicateLowResolutionModes.  It's
-                       32bpp in terms of the actual raster layout, but it's 10
-                       bits per component.  I think that no Windows program is
-                       likely to need it and they will probably be confused by it.
-                       Skip it. */
-                    continue;
+                    BOOL bpp30 = CFEqual(pixel_encoding, CFSTR(kIO30BitDirectPixels));
+                    CFRelease(pixel_encoding);
+                    if (bpp30)
+                    {
+                        /* This is an odd pixel encoding.  It seems it's only returned
+                           when using kCGDisplayShowDuplicateLowResolutionModes.  It's
+                           32bpp in terms of the actual raster layout, but it's 10
+                           bits per component.  I think that no Windows program is
+                           likely to need it and they will probably be confused by it.
+                           Skip it. */
+                        CFRelease(key);
+                        continue;
+                    }
                 }
-            }
 
-            width_points = CGDisplayModeGetWidth(new_mode);
-            height_points = CGDisplayModeGetHeight(new_mode);
-            key = create_mode_dict(new_mode);
-            old_mode = (CGDisplayModeRef)CFDictionaryGetValue(modes_by_size, key);
-
-            if (old_mode)
-            {
-                uint32_t old_flags = CGDisplayModeGetIOFlags(old_mode);
-
-                /* If a given mode is the user's default, then always list it in preference to any similar
-                   modes that may exist. */
-                if ((new_flags & kDisplayModeDefaultFlag) && !(old_flags & kDisplayModeDefaultFlag))
-                    better = TRUE;
-                else if (!(new_flags & kDisplayModeDefaultFlag) && (old_flags & kDisplayModeDefaultFlag))
-                    better = FALSE;
-                else
+                old_mode = (CGDisplayModeRef)CFDictionaryGetValue(modes_by_size, key);
+                if (old_mode)
                 {
-                    /* Otherwise, prefer a mode whose pixel size equals its point size over one which
-                       is scaled. */
-                    size_t new_width_pixels = CGDisplayModeGetPixelWidth(new_mode);
-                    size_t new_height_pixels = CGDisplayModeGetPixelHeight(new_mode);
-                    size_t old_width_pixels = CGDisplayModeGetPixelWidth(old_mode);
-                    size_t old_height_pixels = CGDisplayModeGetPixelHeight(old_mode);
-                    BOOL new_size_same = (new_width_pixels == width_points && new_height_pixels == height_points);
-                    BOOL old_size_same = (old_width_pixels == width_points && old_height_pixels == height_points);
+                    uint32_t old_flags = CGDisplayModeGetIOFlags(old_mode);
 
-                    if (new_size_same && !old_size_same)
-                        better = TRUE;
-                    else if (!new_size_same && old_size_same)
+                    if (old_flags & kDisplayModeDefaultFlag)
                         better = FALSE;
                     else
                     {
-                        /* Otherwise, prefer the mode with the smaller pixel size. */
-                        if (old_width_pixels < new_width_pixels || old_height_pixels < new_height_pixels)
+                        /* Otherwise, prefer a mode whose pixel size equals its point size over one which
+                           is scaled. */
+                        size_t width_points = CGDisplayModeGetWidth(new_mode);
+                        size_t height_points = CGDisplayModeGetHeight(new_mode);
+                        size_t new_width_pixels = CGDisplayModeGetPixelWidth(new_mode);
+                        size_t new_height_pixels = CGDisplayModeGetPixelHeight(new_mode);
+                        size_t old_width_pixels = CGDisplayModeGetPixelWidth(old_mode);
+                        size_t old_height_pixels = CGDisplayModeGetPixelHeight(old_mode);
+                        BOOL new_size_same = (new_width_pixels == width_points && new_height_pixels == height_points);
+                        BOOL old_size_same = (old_width_pixels == width_points && old_height_pixels == height_points);
+
+                        if (new_size_same && !old_size_same)
+                            better = TRUE;
+                        else if (!new_size_same && old_size_same)
                             better = FALSE;
+                        else
+                        {
+                            /* Otherwise, prefer the mode with the smaller pixel size. */
+                            if (old_width_pixels < new_width_pixels || old_height_pixels < new_height_pixels)
+                                better = FALSE;
+                        }
                     }
                 }
             }
