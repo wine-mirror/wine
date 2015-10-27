@@ -587,7 +587,7 @@ static const char* debugscrollinfo(const SCROLLINFO *pScrollInfo)
     int len, size = DEBUG_BUFFER_SIZE;
 
     if (pScrollInfo == NULL) return "(null)";
-    len = snprintf(buf, size, "{cbSize=%d, ", pScrollInfo->cbSize);
+    len = snprintf(buf, size, "{cbSize=%u, ", pScrollInfo->cbSize);
     if (len == -1) goto end; buf += len; size -= len;
     if (pScrollInfo->fMask & SIF_RANGE)
 	len = snprintf(buf, size, "nMin=%d, nMax=%d, ", pScrollInfo->nMin, pScrollInfo->nMax);
