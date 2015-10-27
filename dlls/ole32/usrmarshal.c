@@ -1490,6 +1490,7 @@ unsigned char * WINAPI WdtpInterfacePointer_UserUnmarshal(ULONG *pFlags, unsigne
     IStream *stm;
     DWORD size;
     void *ptr;
+    IUnknown *orig;
 
     TRACE("(%s, %p, %p, %s)\n", debugstr_user_flags(pFlags), pBuffer, ppunk, debugstr_guid(riid));
 
@@ -1517,10 +1518,13 @@ unsigned char * WINAPI WdtpInterfacePointer_UserUnmarshal(ULONG *pFlags, unsigne
     memcpy(ptr, pBuffer, size);
     GlobalUnlock(h);
 
+    orig = *ppunk;
     hr = CoUnmarshalInterface(stm, riid, (void**)ppunk);
     IStream_Release(stm);
 
     if(hr != S_OK) RaiseException(hr, 0, 0, NULL);
+
+    if(orig) IUnknown_Release(orig);
 
     return pBuffer + size;
 }

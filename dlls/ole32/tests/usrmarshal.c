@@ -563,13 +563,14 @@ static const IStreamVtbl TestStream_Vtbl =
 };
 
 static TestUnknown Test_Unknown = { {&TestUnknown_Vtbl}, 1 };
+static TestUnknown Test_Unknown2 = { {&TestUnknown_Vtbl}, 1 };
 static IStream Test_Stream = { &TestStream_Vtbl };
 
 ULONG __RPC_USER WdtpInterfacePointer_UserSize(ULONG *, ULONG, ULONG, IUnknown *, REFIID);
 unsigned char * __RPC_USER WdtpInterfacePointer_UserMarshal(ULONG *, ULONG, unsigned char *, IUnknown *, REFIID);
 unsigned char * __RPC_USER WdtpInterfacePointer_UserUnmarshal(ULONG *, unsigned char *, IUnknown **, REFIID);
 
-static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx)
+static void marshal_WdtpInterfacePointer(DWORD umcb_ctx, DWORD ctx, BOOL client, BOOL in, BOOL out)
 {
     USER_MARSHAL_CB umcb;
     MIDL_STUB_MESSAGE stub_msg;
@@ -638,11 +639,17 @@ todo_wine
     CoReleaseMarshalData(stm);
     IStream_Release(stm);
 
-    unk2 = NULL;
+    Test_Unknown2.refs = 1;
+    unk2 = &Test_Unknown2.IUnknown_iface;
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, buffer, size, umcb_ctx);
+    umcb.pStubMsg->IsClient = client;
+    umcb.pStubMsg->fIsIn = in;
+    umcb.pStubMsg->fIsOut = out;
+
     WdtpInterfacePointer_UserUnmarshal(&umcb.Flags, buffer, &unk2, &IID_IUnknown);
     ok(unk2 != NULL, "IUnknown object didn't unmarshal properly\n");
     ok(Test_Unknown.refs == 2, "got %d\n", Test_Unknown.refs);
+    ok(Test_Unknown2.refs == 0, "got %d\n", Test_Unknown2.refs);
     HeapFree(GetProcessHeap(), 0, buffer);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_INPROC);
     IUnknown_Release(unk2);
@@ -657,14 +664,23 @@ static void test_marshal_WdtpInterfacePointer(void)
      */
 
     /* All three are marshalled as inproc */
-    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_INPROC);
-    marshal_WdtpInterfacePointer(MSHCTX_DIFFERENTMACHINE, MSHCTX_INPROC);
-    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MAKELONG(MSHCTX_INPROC, 0xffff));
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_INPROC, 0,0,0);
+    marshal_WdtpInterfacePointer(MSHCTX_DIFFERENTMACHINE, MSHCTX_INPROC,0,0,0);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MAKELONG(MSHCTX_INPROC, 0xffff),0,0,0);
 
     /* All three are marshalled as remote */
-    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE);
-    marshal_WdtpInterfacePointer(MSHCTX_DIFFERENTMACHINE, MSHCTX_DIFFERENTMACHINE);
-    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MAKELONG(MSHCTX_DIFFERENTMACHINE, 0xffff));
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE,0,0,0);
+    marshal_WdtpInterfacePointer(MSHCTX_DIFFERENTMACHINE, MSHCTX_DIFFERENTMACHINE,0,0,0);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MAKELONG(MSHCTX_DIFFERENTMACHINE, 0xffff),0,0,0);
+
+    /* Test different combinations of client, in and out */
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE,0,0,1);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE,0,1,0);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE,0,1,1);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE,1,0,0);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE,1,0,1);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE,1,1,0);
+    marshal_WdtpInterfacePointer(MSHCTX_INPROC, MSHCTX_DIFFERENTMACHINE,1,1,1);
 }
 
 static void test_marshal_STGMEDIUM(void)
