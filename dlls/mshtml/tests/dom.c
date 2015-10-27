@@ -5627,6 +5627,7 @@ static void test_plugins_col(IHTMLDocument2 *doc)
 
     window = get_doc_window(doc);
     hres = IHTMLWindow2_get_navigator(window, &nav);
+    ok(hres == S_OK, "get_navigator failed: %08x\n", hres);
     IHTMLWindow2_Release(window);
 
     hres = IOmNavigator_get_plugins(nav, &col);
