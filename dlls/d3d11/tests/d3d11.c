@@ -2176,6 +2176,77 @@ static void test_create_rasterizer_state(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_create_predicate(void)
+{
+    static const D3D11_QUERY other_queries[] =
+    {
+        D3D11_QUERY_EVENT,
+        D3D11_QUERY_OCCLUSION,
+        D3D11_QUERY_TIMESTAMP,
+        D3D11_QUERY_TIMESTAMP_DISJOINT,
+        D3D11_QUERY_PIPELINE_STATISTICS,
+        D3D11_QUERY_SO_STATISTICS,
+        D3D11_QUERY_SO_STATISTICS_STREAM0,
+        D3D11_QUERY_SO_STATISTICS_STREAM1,
+        D3D11_QUERY_SO_STATISTICS_STREAM2,
+        D3D11_QUERY_SO_STATISTICS_STREAM3,
+    };
+
+    ULONG refcount, expected_refcount;
+    D3D11_QUERY_DESC query_desc;
+    ID3D11Predicate *predicate;
+    ID3D11Device *device, *tmp;
+    IUnknown *iface;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    hr = ID3D11Device_CreatePredicate(device, NULL, &predicate);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    query_desc.MiscFlags = 0;
+
+    for (i = 0; i < sizeof(other_queries) / sizeof(*other_queries); ++i)
+    {
+        query_desc.Query = other_queries[i];
+        hr = ID3D11Device_CreatePredicate(device, &query_desc, &predicate);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x for query type %u.\n", hr, other_queries[i]);
+    }
+
+    query_desc.Query = D3D11_QUERY_OCCLUSION_PREDICATE;
+    expected_refcount = get_refcount((IUnknown *)device) + 1;
+    hr = ID3D11Device_CreatePredicate(device, &query_desc, &predicate);
+    ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount >= expected_refcount, "Got unexpected refcount %u, expected >= %u.\n", refcount, expected_refcount);
+    tmp = NULL;
+    expected_refcount = refcount + 1;
+    ID3D11Predicate_GetDevice(predicate, &tmp);
+    ok(tmp == device, "Got unexpected device %p, expected %p.\n", tmp, device);
+    refcount = get_refcount((IUnknown *)device);
+    ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
+    ID3D11Device_Release(tmp);
+    hr = ID3D11Predicate_QueryInterface(predicate, &IID_ID3D10Predicate, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Predicate should implement ID3D10Predicate.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
+    ID3D11Predicate_Release(predicate);
+
+    query_desc.Query = D3D11_QUERY_SO_OVERFLOW_PREDICATE;
+    hr = ID3D11Device_CreatePredicate(device, &query_desc, &predicate);
+    todo_wine ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
+    if (SUCCEEDED(hr))
+        ID3D11Predicate_Release(predicate);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 static void test_device_removed_reason(void)
 {
     ID3D11Device *device;
@@ -2391,6 +2462,7 @@ START_TEST(d3d11)
     test_create_blend_state();
     test_create_depthstencil_state();
     test_create_rasterizer_state();
+    test_create_predicate();
     test_device_removed_reason();
     test_private_data();
 }
