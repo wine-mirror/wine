@@ -351,7 +351,7 @@ HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_devic
 struct d3d_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D10Query */
-struct d3d10_query
+struct d3d_query
 {
     ID3D10Query ID3D10Query_iface;
     LONG refcount;
@@ -362,9 +362,9 @@ struct d3d10_query
     ID3D10Device1 *device;
 };
 
-HRESULT d3d10_query_init(struct d3d10_query *query, struct d3d_device *device,
+HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device,
         const D3D10_QUERY_DESC *desc, BOOL predicate) DECLSPEC_HIDDEN;
-struct d3d10_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;
+struct d3d_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11DeviceContext - immediate context */
 struct d3d11_immediate_context
