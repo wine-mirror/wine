@@ -1788,25 +1788,41 @@ static void test_create_rasterizer_state(void)
 
 static void test_create_predicate(void)
 {
+    static const D3D10_QUERY other_queries[] =
+    {
+        D3D10_QUERY_EVENT,
+        D3D10_QUERY_OCCLUSION,
+        D3D10_QUERY_TIMESTAMP,
+        D3D10_QUERY_TIMESTAMP_DISJOINT,
+        D3D10_QUERY_PIPELINE_STATISTICS,
+        D3D10_QUERY_SO_STATISTICS,
+    };
+
     ULONG refcount, expected_refcount;
     D3D10_QUERY_DESC query_desc;
     ID3D10Predicate *predicate;
     ID3D10Device *device, *tmp;
+    IUnknown *iface;
+    unsigned int i;
     HRESULT hr;
 
     if (!(device = create_device()))
     {
-        skip("Failed to create device, skipping tests.\n");
+        skip("Failed to create device.\n");
         return;
     }
 
     hr = ID3D10Device_CreatePredicate(device, NULL, &predicate);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
-    query_desc.Query = D3D10_QUERY_OCCLUSION;
     query_desc.MiscFlags = 0;
-    hr = ID3D10Device_CreatePredicate(device, &query_desc, &predicate);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(other_queries) / sizeof(*other_queries); ++i)
+    {
+        query_desc.Query = other_queries[i];
+        hr = ID3D10Device_CreatePredicate(device, &query_desc, &predicate);
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#x for query type %u.\n", hr, other_queries[i]);
+    }
 
     query_desc.Query = D3D10_QUERY_OCCLUSION_PREDICATE;
     expected_refcount = get_refcount((IUnknown *)device) + 1;
@@ -1821,6 +1837,10 @@ static void test_create_predicate(void)
     refcount = get_refcount((IUnknown *)device);
     ok(refcount == expected_refcount, "Got unexpected refcount %u, expected %u.\n", refcount, expected_refcount);
     ID3D10Device_Release(tmp);
+    hr = ID3D10Predicate_QueryInterface(predicate, &IID_ID3D11Predicate, (void **)&iface);
+    ok(SUCCEEDED(hr) || broken(hr == E_NOINTERFACE) /* Not available on all Windows versions. */,
+            "Predicate should implement ID3D11Predicate.\n");
+    if (SUCCEEDED(hr)) IUnknown_Release(iface);
     ID3D10Predicate_Release(predicate);
 
     query_desc.Query = D3D10_QUERY_SO_OVERFLOW_PREDICATE;
