@@ -699,6 +699,8 @@ static void test_marshal_STGMEDIUM(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     expect_size = WdtpInterfacePointer_UserSize(&umcb.Flags, umcb.Flags, 2 * sizeof(DWORD), unk, &IID_IUnknown);
     expect_buffer = HeapAlloc(GetProcessHeap(), 0, expect_size);
+    *(DWORD*)expect_buffer = TYMED_NULL;
+    *((DWORD*)expect_buffer + 1) = 0xdeadbeef;
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, expect_buffer, expect_size, MSHCTX_DIFFERENTMACHINE);
     expect_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, expect_buffer + 2 * sizeof(DWORD), unk, &IID_IUnknown);
 
@@ -735,6 +737,14 @@ static void test_marshal_STGMEDIUM(void)
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     STGMEDIUM_UserFree(&umcb.Flags, &med2);
 
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, expect_buffer, expect_size, MSHCTX_DIFFERENTMACHINE);
+    med2.tymed = TYMED_NULL;
+    U(med2).pstm = NULL;
+    med2.pUnkForRelease = NULL;
+    STGMEDIUM_UserUnmarshal(&umcb.Flags, expect_buffer, &med2);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    STGMEDIUM_UserFree(&umcb.Flags, &med2);
+
     HeapFree(GetProcessHeap(), 0, expect_buffer);
 
     /* TYMED_ISTREAM with pUnkForRelease */
@@ -746,6 +756,9 @@ static void test_marshal_STGMEDIUM(void)
     expect_buffer = HeapAlloc(GetProcessHeap(), 0, expect_size);
     /* There may be a hole between the two interfaces so init the buffer to something */
     memset(expect_buffer, 0xcc, expect_size);
+    *(DWORD*)expect_buffer = TYMED_ISTREAM;
+    *((DWORD*)expect_buffer + 1) = 0xdeadbeef;
+    *((DWORD*)expect_buffer + 2) = 0xcafe;
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, expect_buffer, expect_size, MSHCTX_DIFFERENTMACHINE);
     expect_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, expect_buffer + 3 * sizeof(DWORD), (IUnknown*)stm, &IID_IStream);
     expect_buffer_end = WdtpInterfacePointer_UserMarshal(&umcb.Flags, umcb.Flags, expect_buffer_end, unk, &IID_IUnknown);
@@ -783,6 +796,14 @@ static void test_marshal_STGMEDIUM(void)
     ok(med2.pUnkForRelease != NULL, "Incorrectly unmarshalled\n");
 
     HeapFree(GetProcessHeap(), 0, buffer);
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
+    STGMEDIUM_UserFree(&umcb.Flags, &med2);
+
+    init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, expect_buffer, expect_size, MSHCTX_DIFFERENTMACHINE);
+    med2.tymed = TYMED_NULL;
+    U(med2).pstm = NULL;
+    med2.pUnkForRelease = NULL;
+    STGMEDIUM_UserUnmarshal(&umcb.Flags, expect_buffer, &med2);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     STGMEDIUM_UserFree(&umcb.Flags, &med2);
 
