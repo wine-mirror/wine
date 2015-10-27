@@ -51,6 +51,11 @@ Common Controls Library
 P:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/comctl32/
 
+Common Item Dialog
+P:	Vincent Povirk <vincent@codeweavers.com>
+F:	dlls/comdlg32/itemdlg.c
+F:	dlls/comdlg32/tests/itemdlg.c
+
 Direct2D
 M:	Henri Verbeet <hverbeet@codeweavers.com>
 F:	dlls/d2d*/
@@ -86,6 +91,14 @@ F:	dlls/dinput/
 DirectWrite
 M:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/dwrite/
+
+DotNet Runtime
+M:	Vincent Povirk <vincent@codeweavers.com>
+F:	dlls/mscoree/
+
+GDIPlus
+M:	Vincent Povirk <vincent@codeweavers.com>
+F:	dlls/gdiplus/
 
 HID support
 M:	Aric Stewart <aric@codeweavers.com>
@@ -127,6 +140,15 @@ Netstat
 M:	André Hentschel <nerv@dawncrow.de>
 F:	programs/netstat/
 
+OLE Storage
+M:	Vincent Povirk <vincent@codeweavers.com>
+F:	dlls/ole32/filelockbytes.c
+F:	dlls/ole32/memlockbytes.c
+F:	dlls/ole32/stg_stream.c
+F:	dlls/ole32/storage32.c
+F:	dlls/ole32/storage32.h
+F:	dlls/ole32/tests/storage32.c
+
 OLE Typelibs
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
@@ -142,6 +164,11 @@ F:	dlls/ntdll/threadpool.c
 Uniscribe
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/usp10/
+
+Windows Imaging Component
+M:	Vincent Povirk <vincent@codeweavers.com>
+F:	dlls/windowscodecs/
+F:	dlls/windowscodecsext/
 
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
@@ -160,6 +187,11 @@ VB Script
 M:	Jacek Caban <jacek@codeweavers.com>
 F:	dlls/vbscript/
 
+X11 Driver
+M:	Alexandre Julliard <julliard@winehq.org>
+P:	Vincent Povirk <vincent@codeweavers.com>
+F:	dlls/winex11.drv/
+
 XML parsing
 M:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/msxml*/
@@ -168,5 +200,6 @@ THE REST
 M:	Alexandre Julliard <julliard@winehq.org>
 P:	Sebastian Lackner <sebastian@fds-team.de>
 P:	Alex Henrie <alexhenrie24@gmail.com>
+P:	Vincent Povirk <vincent@codeweavers.com>
 F:	*
 F:	*/
