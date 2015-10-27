@@ -4439,12 +4439,11 @@ if (0) /* crashes on native */
 
     for (emsize = 1.0; emsize < 500.0; emsize += 1.0) {
         DWRITE_RENDERING_MODE expected;
+        FLOAT ppdip;
         WORD gasp;
         int i;
 
         for (i = 0; i < sizeof(recmode_tests)/sizeof(recmode_tests[0]); i++) {
-            FLOAT ppdip;
-
             ppdip = 1.0f;
             mode = 10;
             gasp = get_gasp_flags(fontface, emsize, ppdip);
@@ -4487,12 +4486,82 @@ if (0) /* crashes on native */
         /* IDWriteFontFace1 offers another variant of this method */
         if (fontface1) {
             for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
+                FLOAT dpi;
+
+                ppdip = 1.0f;
+                dpi = 96.0f * ppdip;
                 mode = 10;
-                expected = get_expected_rendering_mode(emsize, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
-                hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, 96.0, 96.0,
+                gasp = get_gasp_flags(fontface, emsize, ppdip);
+                expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi,
                     NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
                 ok(hr == S_OK, "got 0x%08x\n", hr);
-                ok(mode == expected, "%.2f/%d: got %d, flags 0x%04x, expected %d\n", emsize, i, mode, gasp, expected);
+                ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+
+                /* Only test larger sizes to workaround Win7 differences, where unscaled natural emsize threshold is used;
+                   Win8 and Win10 handle this as expected. */
+                if (emsize > 20.0f) {
+                    ppdip = 2.0f;
+                    dpi = 96.0f * ppdip;
+                    mode = 10;
+                    gasp = get_gasp_flags(fontface, emsize, ppdip);
+                    expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                    hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi,
+                        NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
+                    ok(hr == S_OK, "got 0x%08x\n", hr);
+                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+
+                    ppdip = 0.5f;
+                    dpi = 96.0f * ppdip;
+                    mode = 10;
+                    gasp = get_gasp_flags(fontface, emsize, ppdip);
+                    expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                    hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi,
+                        NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
+                    ok(hr == S_OK, "got 0x%08x\n", hr);
+                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+
+                    /* try different dpis for X and Y direction */
+                    ppdip = 1.0f;
+                    dpi = 96.0f * ppdip;
+                    mode = 10;
+                    gasp = get_gasp_flags(fontface, emsize, ppdip);
+                    expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                    hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi * 0.5f, dpi,
+                        NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
+                    ok(hr == S_OK, "got 0x%08x\n", hr);
+                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+
+                    ppdip = 1.0f;
+                    dpi = 96.0f * ppdip;
+                    mode = 10;
+                    gasp = get_gasp_flags(fontface, emsize, ppdip);
+                    expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                    hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi * 0.5f,
+                        NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
+                    ok(hr == S_OK, "got 0x%08x\n", hr);
+                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+
+                    ppdip = 2.0f;
+                    dpi = 96.0f * ppdip;
+                    mode = 10;
+                    gasp = get_gasp_flags(fontface, emsize, ppdip);
+                    expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                    hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi * 0.5f, dpi,
+                        NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
+                    ok(hr == S_OK, "got 0x%08x\n", hr);
+                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+
+                    ppdip = 2.0f;
+                    dpi = 96.0f * ppdip;
+                    mode = 10;
+                    gasp = get_gasp_flags(fontface, emsize, ppdip);
+                    expected = get_expected_rendering_mode(emsize * ppdip, gasp, recmode_tests1[i].measuring, recmode_tests1[i].threshold);
+                    hr = IDWriteFontFace1_GetRecommendedRenderingMode(fontface1, emsize, dpi, dpi * 0.5f,
+                        NULL, FALSE, recmode_tests1[i].threshold, recmode_tests1[i].measuring, &mode);
+                    ok(hr == S_OK, "got 0x%08x\n", hr);
+                    ok(mode == expected, "%.2f/%d: got %d, dpi %f, flags 0x%04x, expected %d\n", emsize, i, mode, dpi, gasp, expected);
+                }
             }
         }
 
@@ -4500,6 +4569,7 @@ if (0) /* crashes on native */
         if (fontface2) {
             DWRITE_GRID_FIT_MODE gridfit, expected_gridfit;
 
+            gasp = get_gasp_flags(fontface, emsize, 1.0f);
             for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
                 mode = 10;
                 expected = get_expected_rendering_mode(emsize, gasp, recmode_tests1[0].measuring, recmode_tests1[0].threshold);

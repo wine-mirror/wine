@@ -1068,6 +1068,8 @@ static HRESULT WINAPI dwritefontface2_GetRecommendedRenderingMode(IDWriteFontFac
     if (is_sideways)
         FIXME("sideways mode not supported\n");
 
+    emSize *= max(dpiX, dpiY) / 96.0f;
+
     *renderingmode = DWRITE_RENDERING_MODE_DEFAULT;
     *gridfitmode = DWRITE_GRID_FIT_MODE_DEFAULT;
     if (params) {
