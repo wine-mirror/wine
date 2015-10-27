@@ -2783,13 +2783,39 @@ HRESULT __RPC_STUB IDataObject_GetData_Stub(
     return IDataObject_GetData(This, pformatetcIn, pRemoteMedium);
 }
 
-HRESULT CALLBACK IDataObject_GetDataHere_Proxy(
-    IDataObject* This,
-    FORMATETC *pformatetc,
-    STGMEDIUM *pmedium)
+HRESULT CALLBACK IDataObject_GetDataHere_Proxy(IDataObject *iface, FORMATETC *fmt, STGMEDIUM *med)
 {
-    TRACE("(%p)->(%p, %p)\n", This, pformatetc, pmedium);
-    return IDataObject_RemoteGetDataHere_Proxy(This, pformatetc, pmedium);
+    IUnknown *release;
+    IStorage *stg = NULL;
+    HRESULT hr;
+
+    TRACE("(%p)->(%p, %p)\n", iface, fmt, med);
+
+    if ((med->tymed & (TYMED_HGLOBAL | TYMED_FILE | TYMED_ISTREAM | TYMED_ISTORAGE)) == 0)
+        return DV_E_TYMED;
+    if (med->tymed != fmt->tymed)
+        return DV_E_TYMED;
+
+    release = med->pUnkForRelease;
+    med->pUnkForRelease = NULL;
+
+    if (med->tymed == TYMED_ISTREAM || med->tymed == TYMED_ISTORAGE)
+    {
+        stg = med->u.pstg; /* This may actually be a stream, but that's ok */
+        if (stg) IStorage_AddRef( stg );
+    }
+
+    hr = IDataObject_RemoteGetDataHere_Proxy(iface, fmt, med);
+
+    med->pUnkForRelease = release;
+    if (stg)
+    {
+        if (med->u.pstg)
+            IStorage_Release( med->u.pstg );
+        med->u.pstg = stg;
+    }
+
+    return hr;
 }
 
 HRESULT __RPC_STUB IDataObject_GetDataHere_Stub(
