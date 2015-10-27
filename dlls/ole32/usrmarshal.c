@@ -1850,7 +1850,10 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
             pBuffer = WdtpInterfacePointer_UserUnmarshal(pFlags, pBuffer, (IUnknown**)&pStgMedium->u.pstm, &IID_IStream);
         }
         else
+        {
+            if (pStgMedium->u.pstm) IStream_Release( pStgMedium->u.pstm );
             pStgMedium->u.pstm = NULL;
+        }
         break;
     case TYMED_ISTORAGE:
         TRACE("TYMED_ISTORAGE\n");
@@ -1859,7 +1862,10 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
             pBuffer = WdtpInterfacePointer_UserUnmarshal(pFlags, pBuffer, (IUnknown**)&pStgMedium->u.pstg, &IID_IStorage);
         }
         else
+        {
+            if (pStgMedium->u.pstg) IStorage_Release( pStgMedium->u.pstg );
             pStgMedium->u.pstg = NULL;
+        }
         break;
     case TYMED_GDI:
         TRACE("TYMED_GDI\n");
@@ -1888,9 +1894,10 @@ unsigned char * __RPC_USER STGMEDIUM_UserUnmarshal(ULONG *pFlags, unsigned char 
         RaiseException(DV_E_TYMED, 0, 0, NULL);
     }
 
-    pStgMedium->pUnkForRelease = NULL;
     if (releaseunk)
         pBuffer = WdtpInterfacePointer_UserUnmarshal(pFlags, pBuffer, &pStgMedium->pUnkForRelease, &IID_IUnknown);
+    /* Unlike the IStream / IStorage ifaces, the existing pUnkForRelease
+       is left intact if a NULL ptr is unmarshalled - see the tests. */
 
     return pBuffer;
 }
