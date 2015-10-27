@@ -1,7 +1,7 @@
-@ stub __acrt_iob_func
+@ cdecl __acrt_iob_func(long) ucrtbase.__acrt_iob_func
 @ cdecl __p__commode() ucrtbase.__p__commode
 @ cdecl __p__fmode() ucrtbase.__p__fmode
-@ stub __stdio_common_vfprintf
+@ cdecl __stdio_common_vfprintf(int64 ptr ptr ptr ptr) ucrtbase.__stdio_common_vfprintf
 @ stub __stdio_common_vfprintf_p
 @ stub __stdio_common_vfprintf_s
 @ stub __stdio_common_vfscanf
@@ -9,13 +9,13 @@
 @ stub __stdio_common_vfwprintf_p
 @ stub __stdio_common_vfwprintf_s
 @ stub __stdio_common_vfwscanf
-@ stub __stdio_common_vsnprintf_s
+@ cdecl __stdio_common_vsnprintf_s(int64 ptr long long ptr ptr ptr) ucrtbase.__stdio_common_vsnprintf_s
 @ stub __stdio_common_vsnwprintf_s
-@ stub __stdio_common_vsprintf
+@ cdecl __stdio_common_vsprintf(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vsprintf
 @ stub __stdio_common_vsprintf_p
-@ stub __stdio_common_vsprintf_s
+@ cdecl __stdio_common_vsprintf_s(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vsprintf_s
 @ stub __stdio_common_vsscanf
-@ stub __stdio_common_vswprintf
+@ cdecl __stdio_common_vswprintf(int64 ptr long ptr ptr ptr) ucrtbase.__stdio_common_vswprintf
 @ stub __stdio_common_vswprintf_p
 @ stub __stdio_common_vswprintf_s
 @ stub __stdio_common_vswscanf

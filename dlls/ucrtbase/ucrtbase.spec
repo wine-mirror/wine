@@ -72,7 +72,7 @@
 @ cdecl ___lc_locale_name_func()
 @ cdecl ___mb_cur_max_func() MSVCRT____mb_cur_max_func
 @ cdecl ___mb_cur_max_l_func(ptr)
-@ stub __acrt_iob_func
+@ cdecl __acrt_iob_func(long) MSVCRT___acrt_iob_func
 @ stub __conio_common_vcprintf
 @ stub __conio_common_vcprintf_p
 @ stub __conio_common_vcprintf_s
@@ -146,7 +146,7 @@
 @ stub __std_type_info_destroy_list
 @ stub __std_type_info_hash
 @ stub __std_type_info_name
-@ stub __stdio_common_vfprintf
+@ cdecl __stdio_common_vfprintf(int64 ptr ptr ptr ptr) MSVCRT__stdio_common_vfprintf
 @ stub __stdio_common_vfprintf_p
 @ stub __stdio_common_vfprintf_s
 @ stub __stdio_common_vfscanf
@@ -154,13 +154,13 @@
 @ stub __stdio_common_vfwprintf_p
 @ stub __stdio_common_vfwprintf_s
 @ stub __stdio_common_vfwscanf
-@ stub __stdio_common_vsnprintf_s
+@ cdecl __stdio_common_vsnprintf_s(int64 ptr long long ptr ptr ptr) MSVCRT__stdio_common_vsnprintf_s
 @ stub __stdio_common_vsnwprintf_s
-@ stub __stdio_common_vsprintf
+@ cdecl __stdio_common_vsprintf(int64 ptr long ptr ptr ptr) MSVCRT__stdio_common_vsprintf
 @ stub __stdio_common_vsprintf_p
-@ stub __stdio_common_vsprintf_s
+@ cdecl __stdio_common_vsprintf_s(int64 ptr long ptr ptr ptr) MSVCRT__stdio_common_vsprintf_s
 @ stub __stdio_common_vsscanf
-@ stub __stdio_common_vswprintf
+@ cdecl __stdio_common_vswprintf(int64 ptr long ptr ptr ptr) MSVCRT__stdio_common_vswprintf
 @ stub __stdio_common_vswprintf_p
 @ stub __stdio_common_vswprintf_s
 @ stub __stdio_common_vswscanf

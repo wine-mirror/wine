@@ -694,6 +694,44 @@ int CDECL MSVCRT_vsnprintf( char *str, MSVCRT_size_t len,
     return ret;
 }
 
+static int puts_clbk_str_c99_a(void *ctx, int len, const char *str)
+{
+    struct _str_ctx_a *out = ctx;
+
+    if(!out->buf)
+        return len;
+
+    if(out->len - 1 < len) {
+        memcpy(out->buf, str, out->len - 1);
+        out->buf += out->len - 1;
+        out->len = 1;
+        return len;
+    }
+
+    memcpy(out->buf, str, len);
+    out->buf += len;
+    out->len -= len;
+    return len;
+}
+
+/*********************************************************************
+ *		__stdio_common_vsprintf (MSVCRT.@)
+ */
+int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MSVCRT_size_t len, const char *format,
+                                         MSVCRT__locale_t locale, __ms_va_list valist )
+{
+    static const char nullbyte = '\0';
+    struct _str_ctx_a ctx = {len, str};
+    int ret;
+
+    if (options != 1 && options != 2)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    ret = pf_printf_a(options & 2 ? puts_clbk_str_c99_a : puts_clbk_str_a,
+            &ctx, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    puts_clbk_str_a(&ctx, 1, &nullbyte);
+    return ret;
+}
+
 /*********************************************************************
  *		_vsnprintf_l (MSVCRT.@)
  */
@@ -798,6 +836,24 @@ int CDECL MSVCRT_vsnprintf_s( char *str, MSVCRT_size_t sizeOfBuffer,
         MSVCRT_size_t count, const char *format, __ms_va_list valist )
 {
     return MSVCRT_vsnprintf_s_l(str,sizeOfBuffer, count, format, NULL, valist);
+}
+
+/*********************************************************************
+ *		__stdio_common_vsnprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__stdio_common_vsnprintf_s( unsigned __int64 options, char *str, MSVCRT_size_t sizeOfBuffer, MSVCRT_size_t count, const char *format,
+                                      MSVCRT__locale_t locale, __ms_va_list valist )
+{
+    return MSVCRT_vsnprintf_s_l(str, sizeOfBuffer, count, format, locale, valist);
+}
+
+/*********************************************************************
+ *		__stdio_common_vsprintf_s (MSVCRT.@)
+ */
+int CDECL MSVCRT__stdio_common_vsprintf_s( unsigned __int64 options, char *str, MSVCRT_size_t count, const char *format,
+                                      MSVCRT__locale_t locale, __ms_va_list valist )
+{
+    return MSVCRT_vsnprintf_s_l(str, INT_MAX, count, format, locale, valist);
 }
 
 /*********************************************************************
@@ -1082,6 +1138,44 @@ int CDECL MSVCRT__snwprintf_s_l( MSVCRT_wchar_t *str, unsigned int len, unsigned
     retval = MSVCRT_vsnwprintf_s_l(str, len, count, format, locale, valist);
     __ms_va_end(valist);
     return retval;
+}
+
+static int puts_clbk_str_c99_w(void *ctx, int len, const MSVCRT_wchar_t *str)
+{
+    struct _str_ctx_w *out = ctx;
+
+    if(!out->buf)
+        return len;
+
+    if(out->len - 1 < len) {
+        memcpy(out->buf, str, (out->len - 1)*sizeof(MSVCRT_wchar_t));
+        out->buf += out->len - 1;
+        out->len = 1;
+        return len;
+    }
+
+    memcpy(out->buf, str, len*sizeof(MSVCRT_wchar_t));
+    out->buf += len;
+    out->len -= len;
+    return len;
+}
+
+/*********************************************************************
+ *		__stdio_common_vsprintf (MSVCRT.@)
+ */
+int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options, MSVCRT_wchar_t *str, MSVCRT_size_t len, const MSVCRT_wchar_t *format,
+                                          MSVCRT__locale_t locale, __ms_va_list valist )
+{
+    static const MSVCRT_wchar_t nullbyte = '\0';
+    struct _str_ctx_w ctx = {len, str};
+    int ret;
+
+    if (options != 1 && options != 2)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    ret = pf_printf_w(options & 2 ? puts_clbk_str_c99_w : puts_clbk_str_w,
+            &ctx, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    puts_clbk_str_w(&ctx, 1, &nullbyte);
+    return ret;
 }
 
 /*********************************************************************
