@@ -5904,6 +5904,7 @@ static void test_publish_components(void)
 
     res = RegCreateKeyExA(HKEY_LOCAL_MACHINE, keypath2, 0, NULL, REG_OPTION_NON_VOLATILE,
             MAXIMUM_ALLOWED | KEY_WOW64_64KEY, NULL, &key, NULL );
+    ok(res == ERROR_SUCCESS, "RegCreateKeyEx failed %d\n", res);
     res = RegSetValueExA(key, "english.txt", 0, REG_MULTI_SZ, data, size);
     ok(res == ERROR_SUCCESS, "RegSetValueEx failed %d\n", res);
     RegCloseKey(key);
