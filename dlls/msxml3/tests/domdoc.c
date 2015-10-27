@@ -8977,6 +8977,7 @@ static void test_get_doctype(void)
     ok(doctype == NULL, "got %p\n", doctype);
 
     hr = IXMLDOMDocument_loadXML(doc, _bstr_(szEmailXML), &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
 
     doctype = NULL;
