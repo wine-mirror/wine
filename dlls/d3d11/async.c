@@ -304,20 +304,20 @@ struct d3d_query *unsafe_impl_from_ID3D10Query(ID3D10Query *iface)
 }
 
 HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device,
-        const D3D10_QUERY_DESC *desc, BOOL predicate)
+        const D3D11_QUERY_DESC *desc, BOOL predicate)
 {
     HRESULT hr;
 
     static const enum wined3d_query_type query_type_map[] =
     {
-        /* D3D10_QUERY_EVENT                    */  WINED3D_QUERY_TYPE_EVENT,
-        /* D3D10_QUERY_OCCLUSION                */  WINED3D_QUERY_TYPE_OCCLUSION,
-        /* D3D10_QUERY_TIMESTAMP                */  WINED3D_QUERY_TYPE_TIMESTAMP,
-        /* D3D10_QUERY_TIMESTAMP_DISJOINT       */  WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT,
-        /* D3D10_QUERY_PIPELINE_STATISTICS      */  WINED3D_QUERY_TYPE_PIPELINE_STATISTICS,
-        /* D3D10_QUERY_OCCLUSION_PREDICATE      */  WINED3D_QUERY_TYPE_OCCLUSION,
-        /* D3D10_QUERY_SO_STATISTICS            */  WINED3D_QUERY_TYPE_SO_STATISTICS,
-        /* D3D10_QUERY_SO_OVERFLOW_PREDICATE    */  WINED3D_QUERY_TYPE_SO_OVERFLOW,
+        /* D3D11_QUERY_EVENT                    */  WINED3D_QUERY_TYPE_EVENT,
+        /* D3D11_QUERY_OCCLUSION                */  WINED3D_QUERY_TYPE_OCCLUSION,
+        /* D3D11_QUERY_TIMESTAMP                */  WINED3D_QUERY_TYPE_TIMESTAMP,
+        /* D3D11_QUERY_TIMESTAMP_DISJOINT       */  WINED3D_QUERY_TYPE_TIMESTAMP_DISJOINT,
+        /* D3D11_QUERY_PIPELINE_STATISTICS      */  WINED3D_QUERY_TYPE_PIPELINE_STATISTICS,
+        /* D3D11_QUERY_OCCLUSION_PREDICATE      */  WINED3D_QUERY_TYPE_OCCLUSION,
+        /* D3D11_QUERY_SO_STATISTICS            */  WINED3D_QUERY_TYPE_SO_STATISTICS,
+        /* D3D11_QUERY_SO_OVERFLOW_PREDICATE    */  WINED3D_QUERY_TYPE_SO_OVERFLOW,
     };
 
     if (desc->Query >= sizeof(query_type_map) / sizeof(*query_type_map))
@@ -348,6 +348,43 @@ HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device,
     query->predicate = predicate;
     query->device = &device->ID3D11Device_iface;
     ID3D11Device_AddRef(query->device);
+
+    return S_OK;
+}
+
+HRESULT d3d_query_create(struct d3d_device *device, const D3D11_QUERY_DESC *desc, BOOL predicate,
+        struct d3d_query **query)
+{
+    struct d3d_query *object;
+    HRESULT hr;
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    if (predicate
+            && desc->Query != D3D11_QUERY_OCCLUSION_PREDICATE
+            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE
+            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM0
+            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM1
+            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM2
+            && desc->Query != D3D11_QUERY_SO_OVERFLOW_PREDICATE_STREAM3)
+    {
+        WARN("Query type %u is not a predicate.\n", desc->Query);
+        return E_INVALIDARG;
+    }
+
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = d3d_query_init(object, device, desc, predicate)))
+    {
+        WARN("Failed to initialize predicate, hr %#x.\n", hr);
+        HeapFree(GetProcessHeap(), 0, object);
+        return hr;
+    }
+
+    TRACE("Created predicate %p.\n", object);
+    *query = object;
 
     return S_OK;
 }
