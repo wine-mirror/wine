@@ -1676,9 +1676,15 @@ RPC_STATUS WINAPI RpcMgmtIsServerListening(RPC_BINDING_HANDLE Binding)
 
   TRACE("(%p)\n", Binding);
 
-  EnterCriticalSection(&listen_cs);
-  if (manual_listen_count > 0) status = RPC_S_OK;
-  LeaveCriticalSection(&listen_cs);
+  if (Binding) {
+    RpcBinding *rpc_binding = (RpcBinding*)Binding;
+    status = RPCRT4_IsServerListening(rpc_binding->Protseq, rpc_binding->Endpoint);
+  }else {
+    EnterCriticalSection(&listen_cs);
+    if (manual_listen_count > 0) status = RPC_S_OK;
+    LeaveCriticalSection(&listen_cs);
+  }
+
   return status;
 }
 

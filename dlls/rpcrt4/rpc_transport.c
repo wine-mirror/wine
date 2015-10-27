@@ -398,6 +398,33 @@ static RPC_STATUS rpcrt4_ncacn_np_handoff(RpcConnection *old_conn, RpcConnection
   return status;
 }
 
+static RPC_STATUS is_pipe_listening(const char *pipe_name)
+{
+  return WaitNamedPipeA(pipe_name, 1) ? RPC_S_OK : RPC_S_NOT_LISTENING;
+}
+
+static RPC_STATUS rpcrt4_ncacn_np_is_server_listening(const char *endpoint)
+{
+  char *pipe_name;
+  RPC_STATUS status;
+
+  pipe_name = ncacn_pipe_name(endpoint);
+  status = is_pipe_listening(pipe_name);
+  I_RpcFree(pipe_name);
+  return status;
+}
+
+static RPC_STATUS rpcrt4_ncalrpc_np_is_server_listening(const char *endpoint)
+{
+  char *pipe_name;
+  RPC_STATUS status;
+
+  pipe_name = ncalrpc_pipe_name(endpoint);
+  status = is_pipe_listening(pipe_name);
+  I_RpcFree(pipe_name);
+  return status;
+}
+
 static RPC_STATUS rpcrt4_ncalrpc_handoff(RpcConnection *old_conn, RpcConnection *new_conn)
 {
   RPC_STATUS status;
@@ -1530,6 +1557,12 @@ static void rpcrt4_conn_tcp_cancel_call(RpcConnection *Connection)
     RpcConnection_tcp *tcpc = (RpcConnection_tcp *) Connection;
     TRACE("%p\n", Connection);
     rpcrt4_sock_wait_cancel(tcpc);
+}
+
+static RPC_STATUS rpcrt4_conn_tcp_is_server_listening(const char *endpoint)
+{
+    FIXME("\n");
+    return RPC_S_ACCESS_DENIED;
 }
 
 static int rpcrt4_conn_tcp_wait_for_incoming_data(RpcConnection *Connection)
@@ -3301,6 +3334,12 @@ static void rpcrt4_ncacn_http_cancel_call(RpcConnection *Connection)
   SetEvent(httpc->cancel_event);
 }
 
+static RPC_STATUS rpcrt4_ncacn_http_is_server_listening(const char *endpoint)
+{
+    FIXME("\n");
+    return RPC_S_ACCESS_DENIED;
+}
+
 static int rpcrt4_ncacn_http_wait_for_incoming_data(RpcConnection *Connection)
 {
   RpcConnection_http *httpc = (RpcConnection_http *) Connection;
@@ -3342,6 +3381,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
     rpcrt4_conn_np_cancel_call,
+    rpcrt4_ncacn_np_is_server_listening,
     rpcrt4_conn_np_wait_for_incoming_data,
     rpcrt4_ncacn_np_get_top_of_tower,
     rpcrt4_ncacn_np_parse_top_of_tower,
@@ -3362,6 +3402,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_np_write,
     rpcrt4_conn_np_close,
     rpcrt4_conn_np_cancel_call,
+    rpcrt4_ncalrpc_np_is_server_listening,
     rpcrt4_conn_np_wait_for_incoming_data,
     rpcrt4_ncalrpc_get_top_of_tower,
     rpcrt4_ncalrpc_parse_top_of_tower,
@@ -3382,6 +3423,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_conn_tcp_write,
     rpcrt4_conn_tcp_close,
     rpcrt4_conn_tcp_cancel_call,
+    rpcrt4_conn_tcp_is_server_listening,
     rpcrt4_conn_tcp_wait_for_incoming_data,
     rpcrt4_ncacn_ip_tcp_get_top_of_tower,
     rpcrt4_ncacn_ip_tcp_parse_top_of_tower,
@@ -3402,6 +3444,7 @@ static const struct connection_ops conn_protseq_list[] = {
     rpcrt4_ncacn_http_write,
     rpcrt4_ncacn_http_close,
     rpcrt4_ncacn_http_cancel_call,
+    rpcrt4_ncacn_http_is_server_listening,
     rpcrt4_ncacn_http_wait_for_incoming_data,
     rpcrt4_ncacn_http_get_top_of_tower,
     rpcrt4_ncacn_http_parse_top_of_tower,
@@ -3573,6 +3616,20 @@ RPC_STATUS RPCRT4_ReleaseConnection(RpcConnection* Connection)
 
   HeapFree(GetProcessHeap(), 0, Connection);
   return RPC_S_OK;
+}
+
+RPC_STATUS RPCRT4_IsServerListening(const char *protseq, const char *endpoint)
+{
+  const struct connection_ops *ops;
+
+  ops = rpcrt4_get_conn_protseq_ops(protseq);
+  if (!ops)
+  {
+    FIXME("not supported for protseq %s\n", protseq);
+    return RPC_S_INVALID_BINDING;
+  }
+
+  return ops->is_server_listening(endpoint);
 }
 
 RPC_STATUS RpcTransport_GetTopOfTower(unsigned char *tower_data,
