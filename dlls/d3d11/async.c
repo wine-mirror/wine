@@ -24,6 +24,147 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d11);
 
+/* ID3D11Query methods */
+
+static inline struct d3d_query *impl_from_ID3D11Query(ID3D11Query *iface)
+{
+    return CONTAINING_RECORD(iface, struct d3d_query, ID3D11Query_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_query_QueryInterface(ID3D11Query *iface, REFIID riid, void **object)
+{
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+
+    TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
+
+    if ((IsEqualGUID(riid, &IID_ID3D11Predicate) && query->predicate)
+            || IsEqualGUID(riid, &IID_ID3D11Query)
+            || IsEqualGUID(riid, &IID_ID3D11Asynchronous)
+            || IsEqualGUID(riid, &IID_ID3D11DeviceChild)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        ID3D11Query_AddRef(iface);
+        *object = iface;
+        return S_OK;
+    }
+
+    if ((IsEqualGUID(riid, &IID_ID3D10Predicate) && query->predicate)
+            || IsEqualGUID(riid, &IID_ID3D10Query)
+            || IsEqualGUID(riid, &IID_ID3D10Asynchronous)
+            || IsEqualGUID(riid, &IID_ID3D10DeviceChild))
+    {
+        ID3D10Query_AddRef(&query->ID3D10Query_iface);
+        *object = &query->ID3D10Query_iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+
+    *object = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_query_AddRef(ID3D11Query *iface)
+{
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+    ULONG refcount = InterlockedIncrement(&query->refcount);
+
+    TRACE("%p increasing refcount to %u.\n", query, refcount);
+
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE d3d11_query_Release(ID3D11Query *iface)
+{
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+    ULONG refcount = InterlockedDecrement(&query->refcount);
+
+    TRACE("%p decreasing refcount to %u.\n", query, refcount);
+
+    if (!refcount)
+    {
+        ID3D11Device_Release(query->device);
+        wined3d_mutex_lock();
+        wined3d_query_decref(query->wined3d_query);
+        wined3d_private_store_cleanup(&query->private_store);
+        wined3d_mutex_unlock();
+        HeapFree(GetProcessHeap(), 0, query);
+    }
+
+    return refcount;
+}
+
+static void STDMETHODCALLTYPE d3d11_query_GetDevice(ID3D11Query *iface, ID3D11Device **device)
+{
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+
+    TRACE("iface %p, device %p.\n", iface, device);
+
+    *device = query->device;
+    ID3D11Device_AddRef(*device);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_query_GetPrivateData(ID3D11Query *iface,
+        REFGUID guid, UINT *data_size, void *data)
+{
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+
+    TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_get_private_data(&query->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_query_SetPrivateData(ID3D11Query *iface,
+        REFGUID guid, UINT data_size, const void *data)
+{
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+
+    TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
+
+    return d3d_set_private_data(&query->private_store, guid, data_size, data);
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_query_SetPrivateDataInterface(ID3D11Query *iface,
+        REFGUID guid, const IUnknown *data)
+{
+    struct d3d_query *query = impl_from_ID3D11Query(iface);
+
+    TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
+
+    return d3d_set_private_data_interface(&query->private_store, guid, data);
+}
+
+static UINT STDMETHODCALLTYPE d3d11_query_GetDataSize(ID3D11Query *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+
+    return 0;
+}
+
+static void STDMETHODCALLTYPE d3d11_query_GetDesc(ID3D11Query *iface, D3D11_QUERY_DESC *desc)
+{
+    FIXME("iface %p, desc %p stub!\n", iface, desc);
+}
+
+static const struct ID3D11QueryVtbl d3d11_query_vtbl =
+{
+    /* IUnknown methods */
+    d3d11_query_QueryInterface,
+    d3d11_query_AddRef,
+    d3d11_query_Release,
+    /* ID3D11DeviceChild methods */
+    d3d11_query_GetDevice,
+    d3d11_query_GetPrivateData,
+    d3d11_query_SetPrivateData,
+    d3d11_query_SetPrivateDataInterface,
+    /* ID3D11Asynchronous methods */
+    d3d11_query_GetDataSize,
+    /* ID3D11Query methods */
+    d3d11_query_GetDesc,
+};
+
+/* ID3D10Query methods */
+
 static inline struct d3d_query *impl_from_ID3D10Query(ID3D10Query *iface)
 {
     return CONTAINING_RECORD(iface, struct d3d_query, ID3D10Query_iface);
@@ -37,51 +178,25 @@ static HRESULT STDMETHODCALLTYPE d3d10_query_QueryInterface(ID3D10Query *iface, 
 
     TRACE("iface %p, riid %s, object %p.\n", iface, debugstr_guid(riid), object);
 
-    if ((IsEqualGUID(riid, &IID_ID3D10Predicate) && query->predicate)
-            || IsEqualGUID(riid, &IID_ID3D10Query)
-            || IsEqualGUID(riid, &IID_ID3D10Asynchronous)
-            || IsEqualGUID(riid, &IID_ID3D10DeviceChild)
-            || IsEqualGUID(riid, &IID_IUnknown))
-    {
-        IUnknown_AddRef(iface);
-        *object = iface;
-        return S_OK;
-    }
-
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
-
-    *object = NULL;
-    return E_NOINTERFACE;
+    return d3d11_query_QueryInterface(&query->ID3D11Query_iface, riid, object);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_query_AddRef(ID3D10Query *iface)
 {
-    struct d3d_query *This = impl_from_ID3D10Query(iface);
-    ULONG refcount = InterlockedIncrement(&This->refcount);
+    struct d3d_query *query = impl_from_ID3D10Query(iface);
 
-    TRACE("%p increasing refcount to %u.\n", This, refcount);
+    TRACE("iface %p.\n", iface);
 
-    return refcount;
+    return d3d11_query_AddRef(&query->ID3D11Query_iface);
 }
 
 static ULONG STDMETHODCALLTYPE d3d10_query_Release(ID3D10Query *iface)
 {
     struct d3d_query *query = impl_from_ID3D10Query(iface);
-    ULONG refcount = InterlockedDecrement(&query->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", query, refcount);
+    TRACE("iface %p.\n", iface);
 
-    if (!refcount)
-    {
-        ID3D10Device1_Release(query->device);
-        wined3d_mutex_lock();
-        wined3d_query_decref(query->wined3d_query);
-        wined3d_private_store_cleanup(&query->private_store);
-        wined3d_mutex_unlock();
-        HeapFree(GetProcessHeap(), 0, query);
-    }
-
-    return refcount;
+    return d3d11_query_Release(&query->ID3D11Query_iface);
 }
 
 /* ID3D10DeviceChild methods */
@@ -92,8 +207,7 @@ static void STDMETHODCALLTYPE d3d10_query_GetDevice(ID3D10Query *iface, ID3D10De
 
     TRACE("iface %p, device %p.\n", iface, device);
 
-    *device = (ID3D10Device *)query->device;
-    ID3D10Device_AddRef(*device);
+    ID3D11Device_QueryInterface(query->device, &IID_ID3D10Device, (void **)device);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_GetPrivateData(ID3D10Query *iface,
@@ -215,6 +329,7 @@ HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device,
     if (desc->MiscFlags)
         FIXME("Ignoring MiscFlags %#x.\n", desc->MiscFlags);
 
+    query->ID3D11Query_iface.lpVtbl = &d3d11_query_vtbl;
     query->ID3D10Query_iface.lpVtbl = &d3d10_query_vtbl;
     query->refcount = 1;
     wined3d_mutex_lock();
@@ -231,8 +346,8 @@ HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device,
     wined3d_mutex_unlock();
 
     query->predicate = predicate;
-    query->device = &device->ID3D10Device1_iface;
-    ID3D10Device1_AddRef(query->device);
+    query->device = &device->ID3D11Device_iface;
+    ID3D11Device_AddRef(query->device);
 
     return S_OK;
 }

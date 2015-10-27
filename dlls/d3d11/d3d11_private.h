@@ -350,16 +350,17 @@ HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_devic
         const D3D11_SAMPLER_DESC *desc) DECLSPEC_HIDDEN;
 struct d3d_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface) DECLSPEC_HIDDEN;
 
-/* ID3D10Query */
+/* ID3D11Query, ID3D10Query */
 struct d3d_query
 {
+    ID3D11Query ID3D11Query_iface;
     ID3D10Query ID3D10Query_iface;
     LONG refcount;
 
     struct wined3d_private_store private_store;
     struct wined3d_query *wined3d_query;
     BOOL predicate;
-    ID3D10Device1 *device;
+    ID3D11Device *device;
 };
 
 HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device,
