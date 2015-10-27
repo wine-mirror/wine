@@ -45,7 +45,7 @@ C_SRCS = \
 	window.c \
 	winstation.c
 
-PROGRAMS = wineserver wineserver-installed
+EXTRA_TARGETS = wineserver wineserver-installed
 
 MANPAGES = \
 	wineserver.de.UTF-8.man.in \
@@ -53,6 +53,8 @@ MANPAGES = \
 	wineserver.man.in
 
 OBJS = $(C_SRCS:.c=.o)
+
+all: $(EXTRA_TARGETS)
 
 wineserver: $(OBJS)
 	$(CC) -o $@ $(OBJS) $(LIBWINE) $(LIBPORT) $(LDFLAGS) $(EXTRALIBS) $(LIBS) $(LDRPATH_LOCAL)

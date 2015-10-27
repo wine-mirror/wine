@@ -1,6 +1,5 @@
-PROGRAMS = wrc$(EXEEXT)
+PROGRAMS = wrc
 MANPAGES = wrc.man.in
-ALL_LIBS = $(GETTEXTPO_LIBS) $(LIBWPP) $(LIBWINE_STATIC) $(LIBPORT)
 
 C_SRCS = \
 	dumpres.c \
@@ -18,10 +17,7 @@ BISON_SRCS = parser.y
 
 wrc_EXTRADEFS = -DINCLUDEDIR="\"${includedir}\""
 
-OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o)
-
-wrc$(EXEEXT): $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(ALL_LIBS) $(LDFLAGS)
+EXTRALIBS = $(GETTEXTPO_LIBS) $(LIBWPP) $(LIBWINE_STATIC)
 
 .PHONY: install install-dev uninstall
 

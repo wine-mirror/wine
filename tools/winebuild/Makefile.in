@@ -1,4 +1,4 @@
-PROGRAMS = winebuild$(EXEEXT)
+PROGRAMS = winebuild
 MANPAGES = winebuild.man.in
 
 C_SRCS = \
@@ -12,14 +12,9 @@ C_SRCS = \
 	spec32.c \
 	utils.c
 
-OBJS = $(C_SRCS:.c=.o)
-
-winebuild$(EXEEXT): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBPORT) $(LDFLAGS)
-
 .PHONY: install install-dev uninstall
 
-install install-dev:: $(PROGRAMS) install-man-pages
+install install-dev:: winebuild$(EXEEXT) install-man-pages
 	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)
 
 uninstall::

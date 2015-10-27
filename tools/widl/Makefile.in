@@ -1,4 +1,4 @@
-PROGRAMS = widl$(EXEEXT)
+PROGRAMS = widl
 MANPAGES = widl.man.in
 
 C_SRCS = \
@@ -21,14 +21,11 @@ BISON_SRCS = parser.y
 
 widl_EXTRADEFS = -DDEFAULT_INCLUDE_DIR=\"${includedir}/windows/\"
 
-OBJS = $(C_SRCS:.c=.o) $(BISON_SRCS:.y=.tab.o) $(LEX_SRCS:.l=.yy.o)
-
-widl$(EXEEXT): $(OBJS) $(LIBWPP)
-	$(CC) $(CFLAGS) -o $@ $(OBJS) $(LIBWPP) $(LIBPORT) $(LDFLAGS)
+EXTRALIBS = $(LIBWPP)
 
 .PHONY: install install-dev uninstall
 
-install install-dev:: $(PROGRAMS) install-man-pages
+install install-dev:: widl$(EXEEXT) install-man-pages
 	$(INSTALL_PROGRAM) widl$(EXEEXT) $(DESTDIR)$(bindir)/widl$(EXEEXT)
 
 uninstall::

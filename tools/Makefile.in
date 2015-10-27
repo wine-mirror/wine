@@ -1,5 +1,5 @@
 PROGRAMS = \
-	make_xftmpl$(EXEEXT)
+	make_xftmpl
 
 MANPAGES = \
 	winemaker.de.UTF-8.man.in \
@@ -7,16 +7,12 @@ MANPAGES = \
 	winemaker.man.in
 
 C_SRCS = \
-	make_xftmpl.c \
-	makedep.c
+	make_xftmpl.c
 
 IN_SRCS = \
 	wineapploader.in
 
 all: wineapploader
-
-make_xftmpl$(EXEEXT): make_xftmpl.o
-	$(CC) $(CFLAGS) -o $@ make_xftmpl.o $(LIBPORT) $(LDFLAGS)
 
 .PHONY: install install-dev uninstall
 

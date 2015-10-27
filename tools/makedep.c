@@ -149,6 +149,7 @@ struct makefile
     struct strarray vars;
     struct strarray include_args;
     struct strarray define_args;
+    struct strarray programs;
     struct strarray appmode;
     struct strarray imports;
     struct strarray delayimports;
@@ -1560,6 +1561,19 @@ static struct strarray get_expanded_make_var_array( struct makefile *make, const
 
 
 /*******************************************************************
+ *         file_local_var
+ */
+static char *file_local_var( const char *file, const char *name )
+{
+    char *p, *var;
+
+    var = strmake( "%s_%s", file, name );
+    for (p = var; *p; p++) if (!isalnum( *p )) *p = '_';
+    return var;
+}
+
+
+/*******************************************************************
  *         set_make_variable
  */
 static int set_make_variable( struct strarray *array, const char *assignment )
@@ -1763,7 +1777,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
     struct strarray includes = empty_strarray;
     struct strarray subdirs = empty_strarray;
     struct strarray phony_targets = empty_strarray;
-    struct strarray all_targets = get_expanded_make_var_array( make, "PROGRAMS" );
+    struct strarray all_targets = empty_strarray;
 
     for (i = 0; i < linguas.count; i++)
         strarray_add( &mo_files, strmake( "%s/%s.mo", top_obj_dir_path( make, "po" ), linguas.str[i] ));
@@ -1793,7 +1807,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             strarray_add_uniq( &subdirs, subdir );
         }
 
-        extradefs = get_expanded_make_var_array( make, strmake( "%s_EXTRADEFS", obj ));
+        extradefs = get_expanded_make_var_array( make, file_local_var( obj, "EXTRADEFS" ));
 
         if (!strcmp( ext, "y" ))  /* yacc file */
         {
@@ -2269,7 +2283,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
 
         for (i = 0; i < make->imports.count; i++)
             strarray_add( &all_libs, strmake( "-l%s", make->imports.str[i] ));
-        strarray_addall( &all_libs, get_expanded_make_var_array( make, "LIBS" ));
+        strarray_addall( &all_libs, libs );
 
         strarray_add( &all_targets, strmake( "%s%s", testmodule, dll_ext ));
         strarray_add( &clean_files, strmake( "%s%s", stripped, dll_ext ));
@@ -2347,6 +2361,30 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         strarray_add( &phony_targets, "test" );
         strarray_add( &phony_targets, "testclean" );
         *testlist_files = strarray_replace_extension( &ok_files, ".ok", "" );
+    }
+
+    for (i = 0; i < make->programs.count; i++)
+    {
+        char *program = strmake( "%s%s", make->programs.str[i], exe_ext );
+        struct strarray all_libs = empty_strarray;
+        struct strarray objs = get_expanded_make_var_array( make,
+                                                 file_local_var( make->programs.str[i], "OBJS" ));
+
+        if (!objs.count) objs = object_files;
+        output( "%s:", obj_dir_path( make, program ) );
+        output_filenames_obj_dir( make, objs );
+        output( "\n" );
+        output( "\t$(CC) -o $@" );
+        output_filenames_obj_dir( make, objs );
+        strarray_add( &all_libs, top_obj_dir_path( make, "libs/port/libwine_port.a" ));
+        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+        strarray_addall( &all_libs, libs );
+        strarray_addall( &all_libs, get_expanded_make_var_array( make,
+                                                      file_local_var( make->programs.str[i], "LDFLAGS" )));
+        output_filenames( all_libs );
+        output_filename( "$(LDFLAGS)" );
+        output( "\n" );
+        strarray_add( &all_targets, program );
     }
 
     if (all_targets.count)
@@ -2632,6 +2670,7 @@ static void update_makefile( const char *path )
     make->staticlib     = get_expanded_make_variable( make, "STATICLIB" );
     make->importlib     = get_expanded_make_variable( make, "IMPORTLIB" );
 
+    make->programs      = get_expanded_make_var_array( make, "PROGRAMS" );
     make->appmode       = get_expanded_make_var_array( make, "APPMODE" );
     make->imports       = get_expanded_make_var_array( make, "IMPORTS" );
     make->delayimports  = get_expanded_make_var_array( make, "DELAYIMPORTS" );
@@ -2816,6 +2855,7 @@ int main( int argc, char *argv[] )
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
+    if (!exe_ext) exe_ext = "";
     if (!tools_ext) tools_ext = "";
     if (!dll_prefix) dll_prefix = "";
     if (!man_ext) man_ext = "3w";

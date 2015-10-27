@@ -110,6 +110,7 @@ my %ignored_source_files = (
     "dlls/wineps.drv/afm2c.c" => 1,
     "dlls/wineps.drv/mkagl.c" => 1,
     "programs/winetest/dist.rc" => 1,
+    "tools/makedep.c" => 1,
 );
 
 my (@linguas, @makefiles, %makefiles);

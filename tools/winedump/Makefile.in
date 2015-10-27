@@ -1,4 +1,4 @@
-PROGRAMS = winedump$(EXEEXT)
+PROGRAMS = winedump
 MANPAGES = winedump.man.in
 
 C_SRCS = \
@@ -23,14 +23,9 @@ C_SRCS = \
 	symbol.c \
 	tlb.c
 
-OBJS = $(C_SRCS:.c=.o)
-
-winedump$(EXEEXT): $(OBJS)
-	$(CC) $(CFLAGS) -o winedump$(EXEEXT) $(OBJS) $(LIBPORT) $(LDFLAGS)
-
 .PHONY: install install-dev uninstall
 
-install install-dev:: $(PROGRAMS) install-man-pages
+install install-dev:: winedump$(EXEEXT) install-man-pages
 	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(DESTDIR)$(bindir)/winedump$(EXEEXT)
 	$(INSTALL_SCRIPT) $(srcdir)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl
 

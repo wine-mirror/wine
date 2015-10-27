@@ -1,7 +1,4 @@
-PROGRAMS = \
-	winecpp$(EXEEXT) \
-	winegcc$(EXEEXT) \
-	wineg++$(EXEEXT)
+PROGRAMS = winegcc
 
 MANPAGES = winegcc.man.in
 
@@ -19,15 +16,16 @@ winegcc_EXTRADEFS = \
 	-DLD="\"$(LD)\"" \
 	-DPRELINK="\"$(PRELINK)\""
 
-winegcc$(EXEEXT): winegcc.o utils.o
-	$(CC) $(CFLAGS) -o $@ winegcc.o utils.o $(LIBPORT) $(LDFLAGS)
+EXTRA_TARGETS = winecpp$(EXEEXT) wineg++$(EXEEXT)
+
+all: $(EXTRA_TARGETS)
 
 winecpp$(EXEEXT) wineg++$(EXEEXT): winegcc$(EXEEXT)
 	$(RM) $@ && $(LN_S) winegcc$(EXEEXT) $@
 
 .PHONY: install install-dev uninstall
 
-install install-dev:: $(PROGRAMS) install-man-pages
+install install-dev:: winegcc$(EXEEXT) install-man-pages
 	$(INSTALL_PROGRAM) winegcc$(EXEEXT) $(DESTDIR)$(bindir)/winegcc$(EXEEXT)
 	cd $(DESTDIR)$(bindir) && $(RM) wineg++$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) wineg++$(EXEEXT)
 	cd $(DESTDIR)$(bindir) && $(RM) winecpp$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) winecpp$(EXEEXT)

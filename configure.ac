@@ -2058,7 +2058,8 @@ preloader_EXTRADEFS = $BUILTINFLAG
     ;;
 esac
 AS_VAR_APPEND([LOADER_RULES],["
-PROGRAMS = $loader_programs
+EXTRA_TARGETS = $loader_programs
+all: $loader_programs
 "])
 
 dnl **** Check for functions ****
