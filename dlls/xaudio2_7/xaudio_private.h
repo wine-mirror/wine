@@ -150,3 +150,5 @@ extern const IXAudio20Vtbl XAudio20_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio20SourceVoiceVtbl XAudio20SourceVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio20SubmixVoiceVtbl XAudio20SubmixVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio20MasteringVoiceVtbl XAudio20MasteringVoice_Vtbl DECLSPEC_HIDDEN;
+
+extern IClassFactory *make_xapo_factory(REFCLSID clsid, DWORD version);

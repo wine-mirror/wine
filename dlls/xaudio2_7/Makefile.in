@@ -4,6 +4,7 @@ EXTRALIBS = $(OPENAL_LIBS)
 
 C_SRCS = \
 	compat.c \
+	xapofx.c \
 	xaudio_dll.c
 
 IDL_SRCS = xaudio_classes.idl
