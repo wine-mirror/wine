@@ -1307,9 +1307,9 @@ static inline BOOL logical_proc_info_add_numa_node(SYSTEM_LOGICAL_PROCESSOR_INFO
 
 static NTSTATUS create_logical_proc_info(SYSTEM_LOGICAL_PROCESSOR_INFORMATION **data, DWORD *max_len)
 {
-    static const char core_info[] = "/sys/devices/system/cpu/cpu%d/%s";
-    static const char cache_info[] = "/sys/devices/system/cpu/cpu%d/cache/index%d/%s";
-    static const char numa_info[] = "/sys/devices/system/node/node%d/cpumap";
+    static const char core_info[] = "/sys/devices/system/cpu/cpu%u/%s";
+    static const char cache_info[] = "/sys/devices/system/cpu/cpu%u/cache/index%u/%s";
+    static const char numa_info[] = "/sys/devices/system/node/node%u/cpumap";
 
     FILE *fcpu_list, *fnuma_list, *f;
     DWORD len = 0, beg, end, i, j, r;
