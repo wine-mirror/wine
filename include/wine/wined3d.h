@@ -2537,6 +2537,7 @@ HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const stru
 ULONG __cdecl wined3d_texture_decref(struct wined3d_texture *texture);
 void __cdecl wined3d_texture_generate_mipmaps(struct wined3d_texture *texture);
 enum wined3d_texture_filter_type __cdecl wined3d_texture_get_autogen_filter_type(const struct wined3d_texture *texture);
+HRESULT __cdecl wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC *dc);
 DWORD __cdecl wined3d_texture_get_level_count(const struct wined3d_texture *texture);
 DWORD __cdecl wined3d_texture_get_lod(const struct wined3d_texture *texture);
 void * __cdecl wined3d_texture_get_parent(const struct wined3d_texture *texture);

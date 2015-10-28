@@ -297,7 +297,7 @@ static HRESULT WINAPI d3d9_surface_GetDC(IDirect3DSurface9 *iface, HDC *dc)
     }
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_getdc(surface->wined3d_surface, dc);
+    hr = wined3d_texture_get_dc(surface->wined3d_texture, surface->sub_resource_idx, dc);
     wined3d_mutex_unlock();
 
     return hr;

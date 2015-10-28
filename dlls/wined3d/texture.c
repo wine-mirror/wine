@@ -1540,3 +1540,21 @@ HRESULT CDECL wined3d_texture_unmap(struct wined3d_texture *texture, unsigned in
 
     return texture->texture_ops->texture_sub_resource_unmap(sub_resource);
 }
+
+HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC *dc)
+{
+    struct wined3d_resource *sub_resource;
+
+    TRACE("texture %p, sub_resource_idx %u, dc %p.\n", texture, sub_resource_idx, dc);
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
+        return WINED3DERR_INVALIDCALL;
+
+    if (sub_resource->type != WINED3D_RTYPE_SURFACE)
+    {
+        WARN("Not supported on %s resources.\n", debug_d3dresourcetype(texture->resource.type));
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    return wined3d_surface_getdc(surface_from_resource(sub_resource), dc);
+}
