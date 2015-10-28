@@ -1655,6 +1655,76 @@ interface IEnumTfDocumentMgrs : IUnknown
 }
 
 [
+    object,
+    local,
+    uuid(ea1ea137-19df-11d7-a6d2-00065b84435c),
+    pointer_default(unique)
+]
+interface ITfUIElement : IUnknown
+{
+    HRESULT GetDescription(
+        [out] BSTR *description);
+
+    HRESULT GetGUID(
+        [out] GUID *guid);
+
+    HRESULT Show(
+        [in] BOOL show);
+
+    HRESULT IsShown(
+        [out] BOOL *show);
+}
+
+[
+    object,
+    local,
+    uuid(887aa91e-acba-4931-84da-3c5208cf543f),
+    pointer_default(unique)
+]
+interface IEnumTfUIElements : IUnknown
+{
+    HRESULT Clone(
+        [out] IEnumTfUIElements **enum_elements);
+
+    HRESULT Next(
+        [in] ULONG count,
+        [out, size_is(count), length_is(fetched)] ITfUIElement **element,
+        [out] ULONG fetched);
+
+    HRESULT Reset();
+
+    HRESULT Skip(
+        [in] ULONG count);
+}
+
+[
+    object,
+    local,
+    uuid(ea1ea135-19df-11d7-a6d2-00065b84435c),
+    pointer_default(unique)
+]
+interface ITfUIElementMgr : IUnknown
+{
+    HRESULT BeginUIElement(
+        [in] ITfUIElement *element,
+        [in, out] BOOL *show,
+        [out] DWORD *id);
+
+    HRESULT UpdateUIElement(
+        [in] DWORD id);
+
+    HRESULT EndUIElement(
+        [in] DWORD id);
+
+    HRESULT GetUIElement(
+        [in] DWORD id,
+        [out] ITfUIElement **element);
+
+    HRESULT EnumUIElements(
+        [out] IEnumTfUIElements **enum_elements);
+}
+
+[
   object,
   uuid(73131f9c-56a9-49dd-b0ee-d046633f7528),
   pointer_default(unique)

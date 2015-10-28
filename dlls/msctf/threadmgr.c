@@ -87,7 +87,7 @@ typedef struct tagACLMulti {
     /* const ITfThreadMgrExVtbl *ThreadMgrExVtbl; */
     /* const ITfConfigureSystemKeystrokeFeedVtbl *ConfigureSystemKeystrokeFeedVtbl; */
     /* const ITfLangBarItemMgrVtbl *LangBarItemMgrVtbl; */
-    /* const ITfUIElementMgrVtbl *UIElementMgrVtbl; */
+    ITfUIElementMgr ITfUIElementMgr_iface;
     ITfSourceSingle ITfSourceSingle_iface;
     LONG refCount;
 
@@ -155,6 +155,11 @@ static inline ThreadMgr *impl_from_ITfClientId(ITfClientId *iface)
 static inline ThreadMgr *impl_from_ITfThreadMgrEventSink(ITfThreadMgrEventSink *iface)
 {
     return CONTAINING_RECORD(iface, ThreadMgr, ITfThreadMgrEventSink_iface);
+}
+
+static inline ThreadMgr *impl_from_ITfUIElementMgr(ITfUIElementMgr *iface)
+{
+    return CONTAINING_RECORD(iface, ThreadMgr, ITfUIElementMgr_iface);
 }
 
 static inline ThreadMgr *impl_from_ITfSourceSingle(ITfSourceSingle *iface)
@@ -281,6 +286,10 @@ static HRESULT WINAPI ThreadMgr_QueryInterface(ITfThreadMgrEx *iface, REFIID iid
     else if (IsEqualIID(iid, &IID_ITfCompartmentMgr))
     {
         *ppvOut = This->CompartmentMgr;
+    }
+    else if (IsEqualIID(iid, &IID_ITfUIElementMgr))
+    {
+        *ppvOut = &This->ITfUIElementMgr_iface;
     }
     else if (IsEqualIID(iid, &IID_ITfSourceSingle))
     {
@@ -1239,6 +1248,86 @@ static const ITfThreadMgrEventSinkVtbl ThreadMgrEventSinkVtbl =
 };
 
 /*****************************************************
+ * ITfUIElementMgr functions
+ *****************************************************/
+static HRESULT WINAPI UIElementMgr_QueryInterface(ITfUIElementMgr *iface, REFIID iid, void **ppvOut)
+{
+    ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
+
+    return ITfThreadMgrEx_QueryInterface(&This->ITfThreadMgrEx_iface, iid, *ppvOut);
+}
+
+static ULONG WINAPI UIElementMgr_AddRef(ITfUIElementMgr *iface)
+{
+    ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
+
+    return ITfThreadMgrEx_AddRef(&This->ITfThreadMgrEx_iface);
+}
+
+static ULONG WINAPI UIElementMgr_Release(ITfUIElementMgr *iface)
+{
+    ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
+
+    return ITfThreadMgrEx_Release(&This->ITfThreadMgrEx_iface);
+}
+
+static HRESULT WINAPI UIElementMgr_BeginUIElement(ITfUIElementMgr *iface, ITfUIElement *element,
+                                                  BOOL *show, DWORD *id)
+{
+    ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
+
+    FIXME("STUB:(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UIElementMgr_UpdateUIElement(ITfUIElementMgr *iface, DWORD id)
+{
+    ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
+
+    FIXME("STUB:(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UIElementMgr_EndUIElement(ITfUIElementMgr *iface, DWORD id)
+{
+    ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
+
+    FIXME("STUB:(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UIElementMgr_GetUIElement(ITfUIElementMgr *iface, DWORD id,
+                                                ITfUIElement **element)
+{
+    ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
+
+    FIXME("STUB:(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI UIElementMgr_EnumUIElements(ITfUIElementMgr *iface,
+                                                  IEnumTfUIElements **enum_elements)
+{
+    ThreadMgr *This = impl_from_ITfUIElementMgr(iface);
+
+    FIXME("STUB:(%p)\n", This);
+    return E_NOTIMPL;
+}
+
+static const ITfUIElementMgrVtbl ThreadMgrUIElementMgrVtbl =
+{
+    UIElementMgr_QueryInterface,
+    UIElementMgr_AddRef,
+    UIElementMgr_Release,
+
+    UIElementMgr_BeginUIElement,
+    UIElementMgr_UpdateUIElement,
+    UIElementMgr_EndUIElement,
+    UIElementMgr_GetUIElement,
+    UIElementMgr_EnumUIElements
+};
+
+/*****************************************************
  * ITfSourceSingle functions
  *****************************************************/
 static HRESULT WINAPI ThreadMgrSourceSingle_QueryInterface(ITfSourceSingle *iface, REFIID iid, LPVOID *ppvOut)
@@ -1309,6 +1398,7 @@ HRESULT ThreadMgr_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     This->ITfMessagePump_iface.lpVtbl = &MessagePumpVtbl;
     This->ITfClientId_iface.lpVtbl = &ClientIdVtbl;
     This->ITfThreadMgrEventSink_iface.lpVtbl = &ThreadMgrEventSinkVtbl;
+    This->ITfUIElementMgr_iface.lpVtbl = &ThreadMgrUIElementMgrVtbl;
     This->ITfSourceSingle_iface.lpVtbl = &SourceSingleVtbl;
     This->refCount = 1;
     TlsSetValue(tlsIndex,This);
