@@ -702,4 +702,16 @@ int __cdecl _Thrd_lt(_Thrd_t a, _Thrd_t b)
     TRACE("(%p %u %p %u)\n", a.hnd, a.id, b.hnd, b.id);
     return a.id < b.id;
 }
+
+void __cdecl _Thrd_sleep(const xtime *t)
+{
+    TRACE("(%p)\n", t);
+    Sleep(_Xtime_diff_to_millis(t));
+}
+
+void __cdecl _Thrd_yield(void)
+{
+    TRACE("()\n");
+    Sleep(0);
+}
 #endif

@@ -3810,9 +3810,9 @@
 @ stub _Thrd_exit
 @ stub _Thrd_join
 @ cdecl _Thrd_lt(ptr ptr) msvcp120._Thrd_lt
-@ stub _Thrd_sleep
+@ cdecl _Thrd_sleep(ptr) msvcp120._Thrd_sleep
 @ stub _Thrd_start
-@ stub _Thrd_yield
+@ cdecl _Thrd_yield() msvcp120._Thrd_yield
 @ cdecl _Tolower(long ptr) msvcp120._Tolower
 @ cdecl _Toupper(long ptr) msvcp120._Toupper
 @ cdecl _Towlower(long ptr) msvcp120._Towlower

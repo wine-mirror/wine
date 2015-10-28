@@ -137,8 +137,11 @@ typedef struct
     DWORD  id;
 } _Thrd_t;
 
+#define TIMEDELTA 150  /* 150 ms uncertainty allowed */
+
 static int (__cdecl *p__Thrd_equal)(_Thrd_t, _Thrd_t);
 static int (__cdecl *p__Thrd_lt)(_Thrd_t, _Thrd_t);
+static void (__cdecl *p__Thrd_sleep)(const xtime*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -267,6 +270,8 @@ static BOOL init(void)
             "_Thrd_equal");
     SET(p__Thrd_lt,
             "_Thrd_lt");
+    SET(p__Thrd_sleep,
+            "_Thrd_sleep");
 
     msvcr = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
@@ -1144,6 +1149,8 @@ static void test_thrd(void)
     };
     const HANDLE hnd1 = (HANDLE)0xcccccccc;
     const HANDLE hnd2 = (HANDLE)0xdeadbeef;
+    xtime xt, before, after;
+    MSVCRT_long diff;
 
     struct test testeq[] = {
         { {0,    0}, {0,    0}, 1 },
@@ -1173,6 +1180,17 @@ static void test_thrd(void)
         ok(ret == testlt[i].r, "(%p %u) < (%p %u) expected %d, got %d\n",
             testlt[i].a.hnd, testlt[i].a.id, testlt[i].b.hnd, testlt[i].b.id, testlt[i].r, ret);
     }
+
+    /* test for sleep */
+    if (0) /* crash on Windows */
+        p__Thrd_sleep(NULL);
+    p_xtime_get(&xt, 1);
+    xt.sec += 2;
+    p_xtime_get(&before, 1);
+    p__Thrd_sleep(&xt);
+    p_xtime_get(&after, 1);
+    diff = p__Xtime_diff_to_millis2(&after, &before);
+    ok(diff > 2000 - TIMEDELTA, "got %d\n", diff);
 }
 
 START_TEST(msvcp120)
