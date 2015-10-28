@@ -8,6 +8,7 @@ C_SRCS = \
 	filtermapper.c \
 	memallocator.c \
 	misc.c \
+	mpegsplit.c \
 	referenceclock.c \
 	videorenderer.c
 
