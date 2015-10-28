@@ -270,6 +270,7 @@
 @ cdecl wined3d_texture_get_sub_resource(ptr long)
 @ cdecl wined3d_texture_incref(ptr)
 @ cdecl wined3d_texture_preload(ptr)
+@ cdecl wined3d_texture_release_dc(ptr long ptr)
 @ cdecl wined3d_texture_set_autogen_filter_type(ptr long)
 @ cdecl wined3d_texture_set_color_key(ptr long ptr)
 @ cdecl wined3d_texture_set_lod(ptr long)

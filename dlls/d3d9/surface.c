@@ -311,7 +311,7 @@ static HRESULT WINAPI d3d9_surface_ReleaseDC(IDirect3DSurface9 *iface, HDC dc)
     TRACE("iface %p, dc %p.\n", iface, dc);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_releasedc(surface->wined3d_surface, dc);
+    hr = wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, dc);
     wined3d_mutex_unlock();
 
     switch (hr)

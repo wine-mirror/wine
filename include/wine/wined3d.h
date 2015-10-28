@@ -2553,6 +2553,7 @@ HRESULT __cdecl wined3d_texture_set_color_key(struct wined3d_texture *texture,
 DWORD __cdecl wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod);
 HRESULT __cdecl wined3d_texture_map(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags);
+HRESULT __cdecl wined3d_texture_release_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC dc);
 HRESULT __cdecl wined3d_texture_unmap(struct wined3d_texture *texture, unsigned int sub_resource_idx);
 HRESULT __cdecl wined3d_texture_update_desc(struct wined3d_texture *texture,
         UINT width, UINT height, enum wined3d_format_id format_id,
