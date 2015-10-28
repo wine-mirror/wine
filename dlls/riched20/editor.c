@@ -1236,6 +1236,35 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
   return ret;
 }
 
+static void ME_RTFReadShpPictGroup( RTF_Info *info )
+{
+    int level = 1;
+
+    for (;;)
+    {
+        RTFGetToken (info);
+
+        if (info->rtfClass == rtfEOF) return;
+        if (RTFCheckCM( info, rtfGroup, rtfEndGroup ))
+        {
+            if (--level == 0) break;
+        }
+        else if (RTFCheckCM( info, rtfGroup, rtfBeginGroup ))
+        {
+            level++;
+        }
+        else
+        {
+            RTFRouteToken( info );
+            if (RTFCheckCM( info, rtfGroup, rtfEndGroup ))
+                level--;
+        }
+    }
+
+    RTFRouteToken( info ); /* feed "}" back to router */
+    return;
+}
+
 static DWORD read_hex_data( RTF_Info *info, BYTE **out )
 {
     DWORD read = 0, size = 1024;
@@ -1579,6 +1608,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
       WriterInit(&parser);
       RTFInit(&parser);
       RTFSetReadHook(&parser, ME_RTFReadHook);
+      RTFSetDestinationCallback(&parser, rtfShpPict, ME_RTFReadShpPictGroup);
       RTFSetDestinationCallback(&parser, rtfPict, ME_RTFReadPictGroup);
       RTFSetDestinationCallback(&parser, rtfObject, ME_RTFReadObjectGroup);
       if (!parser.editor->bEmulateVersion10) /* v4.1 */
