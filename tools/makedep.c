@@ -1778,6 +1778,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
     struct strarray subdirs = empty_strarray;
     struct strarray phony_targets = empty_strarray;
     struct strarray all_targets = empty_strarray;
+    char *ldrpath_local   = get_expanded_make_variable( make, "LDRPATH_LOCAL" );
+    char *ldrpath_install = get_expanded_make_variable( make, "LDRPATH_INSTALL" );
 
     for (i = 0; i < linguas.count; i++)
         strarray_add( &mo_files, strmake( "%s/%s.mo", top_obj_dir_path( make, "po" ), linguas.str[i] ));
@@ -2381,6 +2383,28 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         strarray_addall( &all_libs, libs );
         strarray_addall( &all_libs, get_expanded_make_var_array( make,
                                                       file_local_var( make->programs.str[i], "LDFLAGS" )));
+
+        if (strarray_exists( &all_libs, "-lwine" ))
+        {
+            strarray_add( &all_libs, strmake( "-L%s", top_obj_dir_path( make, "libs/wine" )));
+            if (ldrpath_local && ldrpath_install)
+            {
+                char *program_installed = strmake( "%s-installed%s", make->programs.str[i], exe_ext );
+
+                output_filename( ldrpath_local );
+                output_filenames( all_libs );
+                output_filename( "$(LDFLAGS)" );
+                output( "\n" );
+                output( "%s:", obj_dir_path( make, program_installed ) );
+                output_filenames_obj_dir( make, objs );
+                output( "\n" );
+                output( "\t$(CC) -o $@" );
+                output_filenames_obj_dir( make, objs );
+                output_filename( ldrpath_install );
+                strarray_add( &all_targets, program_installed );
+            }
+        }
+
         output_filenames( all_libs );
         output_filename( "$(LDFLAGS)" );
         output( "\n" );

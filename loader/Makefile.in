@@ -1,5 +1,3 @@
-EXTRALIBS = $(PTHREAD_LIBS)
-
 C_SRCS = \
 	main.c \
 	preloader.c
