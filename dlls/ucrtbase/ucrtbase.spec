@@ -2532,7 +2532,7 @@
 @ cdecl -arch=arm,x86_64 tanf(float) MSVCRT_tanf
 @ cdecl tanh(double) MSVCRT_tanh
 @ cdecl -arch=arm,x86_64 tanhf(float) MSVCRT_tanhf
-@ stub terminate
+@ cdecl terminate() MSVCRT_terminate
 @ stub tgamma
 @ stub tgammaf
 @ stub tgammal

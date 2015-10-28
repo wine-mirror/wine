@@ -104,4 +104,4 @@
 @ cdecl strerror(long) ucrtbase.strerror
 @ cdecl strerror_s(ptr long long) ucrtbase.strerror_s
 @ cdecl system(str) ucrtbase.system
-@ stub terminate
+@ cdecl terminate() ucrtbase.terminate
