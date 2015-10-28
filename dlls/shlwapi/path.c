@@ -661,7 +661,7 @@ void WINAPI PathStripPathA(LPSTR lpszPath)
   if (lpszPath)
   {
     LPSTR lpszFileName = PathFindFileNameA(lpszPath);
-    if(lpszFileName)
+    if(lpszFileName != lpszPath)
       RtlMoveMemory(lpszPath, lpszFileName, strlen(lpszFileName)+1);
   }
 }
@@ -677,7 +677,7 @@ void WINAPI PathStripPathW(LPWSTR lpszPath)
 
   TRACE("(%s)\n", debugstr_w(lpszPath));
   lpszFileName = PathFindFileNameW(lpszPath);
-  if(lpszFileName)
+  if(lpszFileName != lpszPath)
     RtlMoveMemory(lpszPath, lpszFileName, (strlenW(lpszFileName)+1)*sizeof(WCHAR));
 }
 
