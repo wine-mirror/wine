@@ -1236,136 +1236,161 @@ static BOOL ME_RTFInsertOleObject(RTF_Info *info, HENHMETAFILE hemf, HBITMAP hbm
   return ret;
 }
 
+static DWORD read_hex_data( RTF_Info *info, BYTE **out )
+{
+    DWORD read = 0, size = 1024;
+    BYTE *buf = HeapAlloc( GetProcessHeap(), 0, size );
+    BYTE val;
+    BOOL flip;
+
+    *out = NULL;
+    if (!buf) return 0;
+
+    if (info->rtfClass != rtfText)
+    {
+        ERR("Called with incorrect token\n");
+        return 0;
+    }
+
+    val = info->rtfMajor;
+    for (flip = TRUE;; flip = !flip)
+    {
+        RTFGetToken( info );
+        if (info->rtfClass == rtfEOF)
+        {
+            HeapFree( GetProcessHeap(), 0, buf );
+            return 0;
+        }
+        if (info->rtfClass != rtfText) break;
+        if (flip)
+        {
+            if (read >= size)
+            {
+                size *= 2;
+                buf = HeapReAlloc( GetProcessHeap(), 0, buf, size );
+                if (!buf) return 0;
+            }
+            buf[read++] = RTFCharToHex(val) * 16 + RTFCharToHex(info->rtfMajor);
+        }
+        else
+            val = info->rtfMajor;
+    }
+    if (flip) FIXME("wrong hex string\n");
+
+    *out = buf;
+    return read;
+}
+
 static void ME_RTFReadPictGroup(RTF_Info *info)
 {
-  SIZEL         sz;
-  BYTE*         buffer = NULL;
-  unsigned      bufsz, bufidx;
-  BOOL          flip;
-  BYTE          val;
-  METAFILEPICT  mfp;
-  HENHMETAFILE  hemf;
-  HBITMAP       hbmp;
-  enum gfxkind {gfx_unknown = 0, gfx_enhmetafile, gfx_metafile, gfx_dib} gfx = gfx_unknown;
+    SIZEL sz;
+    BYTE *buffer = NULL;
+    DWORD size = 0;
+    METAFILEPICT mfp;
+    HENHMETAFILE hemf;
+    HBITMAP hbmp;
+    enum gfxkind {gfx_unknown = 0, gfx_enhmetafile, gfx_metafile, gfx_dib} gfx = gfx_unknown;
+    int level = 1;
 
-  RTFGetToken (info);
-  if (info->rtfClass == rtfEOF)
+    mfp.mm = MM_TEXT;
+    sz.cx = sz.cy = 0;
+
+    for (;;)
+    {
+        RTFGetToken( info );
+
+        if (info->rtfClass == rtfText)
+        {
+            if (level == 1)
+            {
+                if (!buffer)
+                    size = read_hex_data( info, &buffer );
+            }
+            else
+            {
+                RTFSkipGroup( info );
+            }
+        } /* We potentially have a new token so fall through. */
+
+        if (info->rtfClass == rtfEOF) return;
+
+        if (RTFCheckCM( info, rtfGroup, rtfEndGroup ))
+        {
+            if (--level == 0) break;
+            continue;
+        }
+        if (RTFCheckCM( info, rtfGroup, rtfBeginGroup ))
+        {
+            level++;
+            continue;
+        }
+        if (!RTFCheckCM( info, rtfControl, rtfPictAttr ))
+        {
+            RTFRouteToken( info );
+            if (RTFCheckCM( info, rtfGroup, rtfEndGroup ))
+                level--;
+            continue;
+        }
+
+        if (RTFCheckMM( info, rtfPictAttr, rtfWinMetafile ))
+        {
+            mfp.mm = info->rtfParam;
+            gfx = gfx_metafile;
+        }
+        else if (RTFCheckMM( info, rtfPictAttr, rtfDevIndBitmap ))
+        {
+            if (info->rtfParam != 0) FIXME("dibitmap should be 0 (%d)\n", info->rtfParam);
+            gfx = gfx_dib;
+        }
+        else if (RTFCheckMM( info, rtfPictAttr, rtfEmfBlip ))
+            gfx = gfx_enhmetafile;
+        else if (RTFCheckMM( info, rtfPictAttr, rtfPicWid ))
+            mfp.xExt = info->rtfParam;
+        else if (RTFCheckMM( info, rtfPictAttr, rtfPicHt ))
+            mfp.yExt = info->rtfParam;
+        else if (RTFCheckMM( info, rtfPictAttr, rtfPicGoalWid ))
+            sz.cx = info->rtfParam;
+        else if (RTFCheckMM( info, rtfPictAttr, rtfPicGoalHt ))
+            sz.cy = info->rtfParam;
+        else
+            FIXME("Non supported attribute: %d %d %d\n", info->rtfClass, info->rtfMajor, info->rtfMinor);
+    }
+
+    if (buffer)
+    {
+        switch (gfx)
+        {
+        case gfx_enhmetafile:
+            if ((hemf = SetEnhMetaFileBits( size, buffer )))
+                ME_RTFInsertOleObject( info, hemf, NULL, &sz );
+            break;
+        case gfx_metafile:
+            if ((hemf = SetWinMetaFileBits( size, buffer, NULL, &mfp )))
+                ME_RTFInsertOleObject( info, hemf, NULL, &sz );
+            break;
+        case gfx_dib:
+        {
+            BITMAPINFO *bi = (BITMAPINFO*)buffer;
+            HDC hdc = GetDC(0);
+            unsigned nc = bi->bmiHeader.biClrUsed;
+
+            /* not quite right, especially for bitfields type of compression */
+            if (!nc && bi->bmiHeader.biBitCount <= 8)
+                nc = 1 << bi->bmiHeader.biBitCount;
+            if ((hbmp = CreateDIBitmap( hdc, &bi->bmiHeader,
+                                        CBM_INIT, (char*)(bi + 1) + nc * sizeof(RGBQUAD),
+                                        bi, DIB_RGB_COLORS)) )
+                ME_RTFInsertOleObject( info, NULL, hbmp, &sz );
+            ReleaseDC( 0, hdc );
+            break;
+        }
+        default:
+            break;
+        }
+    }
+    HeapFree( GetProcessHeap(), 0, buffer );
+    RTFRouteToken( info ); /* feed "}" back to router */
     return;
-  mfp.mm = MM_TEXT;
-  /* fetch picture type */
-  if (RTFCheckMM (info, rtfPictAttr, rtfWinMetafile))
-  {
-    mfp.mm = info->rtfParam;
-    gfx = gfx_metafile;
-  }
-  else if (RTFCheckMM (info, rtfPictAttr, rtfDevIndBitmap))
-  {
-    if (info->rtfParam != 0) FIXME("dibitmap should be 0 (%d)\n", info->rtfParam);
-    gfx = gfx_dib;
-  }
-  else if (RTFCheckMM (info, rtfPictAttr, rtfEmfBlip))
-  {
-    gfx = gfx_enhmetafile;
-  }
-  else
-  {
-    FIXME("%d %d\n", info->rtfMajor, info->rtfMinor);
-    goto skip_group;
-  }
-  sz.cx = sz.cy = 0;
-  /* fetch picture attributes */
-  for (;;)
-  {
-    RTFGetToken (info);
-    if (info->rtfClass == rtfEOF)
-      return;
-    if (info->rtfClass == rtfText)
-      break;
-    if (!RTFCheckCM (info, rtfControl, rtfPictAttr))
-    {
-      ERR("Expected picture attribute (%d %d)\n",
-        info->rtfClass, info->rtfMajor);
-      goto skip_group;
-    }
-    else if (RTFCheckMM (info, rtfPictAttr, rtfPicWid))
-    {
-      if (gfx == gfx_metafile) mfp.xExt = info->rtfParam;
-    }
-    else if (RTFCheckMM (info, rtfPictAttr, rtfPicHt))
-    {
-      if (gfx == gfx_metafile) mfp.yExt = info->rtfParam;
-    }
-    else if (RTFCheckMM (info, rtfPictAttr, rtfPicGoalWid))
-      sz.cx = info->rtfParam;
-    else if (RTFCheckMM (info, rtfPictAttr, rtfPicGoalHt))
-      sz.cy = info->rtfParam;
-    else
-      FIXME("Non supported attribute: %d %d %d\n", info->rtfClass, info->rtfMajor, info->rtfMinor);
-  }
-  /* fetch picture data */
-  bufsz = 1024;
-  bufidx = 0;
-  buffer = HeapAlloc(GetProcessHeap(), 0, bufsz);
-  val = info->rtfMajor;
-  for (flip = TRUE;; flip = !flip)
-  {
-    RTFGetToken (info);
-    if (info->rtfClass == rtfEOF)
-    {
-      HeapFree(GetProcessHeap(), 0, buffer);
-      return; /* Warn ?? */
-    }
-    if (RTFCheckCM(info, rtfGroup, rtfEndGroup))
-      break;
-    if (info->rtfClass != rtfText) goto skip_group;
-    if (flip)
-    {
-      if (bufidx >= bufsz &&
-          !(buffer = HeapReAlloc(GetProcessHeap(), 0, buffer, bufsz += 1024)))
-        goto skip_group;
-      buffer[bufidx++] = RTFCharToHex(val) * 16 + RTFCharToHex(info->rtfMajor);
-    }
-    else
-      val = info->rtfMajor;
-  }
-  if (flip) FIXME("wrong hex string\n");
-
-  switch (gfx)
-  {
-  case gfx_enhmetafile:
-    if ((hemf = SetEnhMetaFileBits(bufidx, buffer)))
-      ME_RTFInsertOleObject(info, hemf, NULL, &sz);
-    break;
-  case gfx_metafile:
-    if ((hemf = SetWinMetaFileBits(bufidx, buffer, NULL, &mfp)))
-        ME_RTFInsertOleObject(info, hemf, NULL, &sz);
-    break;
-  case gfx_dib:
-    {
-      BITMAPINFO* bi = (BITMAPINFO*)buffer;
-      HDC         hdc = GetDC(0);
-      unsigned    nc = bi->bmiHeader.biClrUsed;
-
-      /* not quite right, especially for bitfields type of compression */
-      if (!nc && bi->bmiHeader.biBitCount <= 8)
-        nc = 1 << bi->bmiHeader.biBitCount;
-      if ((hbmp = CreateDIBitmap(hdc, &bi->bmiHeader,
-                                 CBM_INIT, (char*)(bi + 1) + nc * sizeof(RGBQUAD),
-                                 bi, DIB_RGB_COLORS)))
-          ME_RTFInsertOleObject(info, NULL, hbmp, &sz);
-      ReleaseDC(0, hdc);
-    }
-    break;
-  default:
-    break;
-  }
-  HeapFree(GetProcessHeap(), 0, buffer);
-  RTFRouteToken (info);	/* feed "}" back to router */
-  return;
-skip_group:
-  HeapFree(GetProcessHeap(), 0, buffer);
-  RTFSkipGroup(info);
-  RTFRouteToken(info);	/* feed "}" back to router */
 }
 
 /* for now, lookup the \result part and use it, whatever the object */
