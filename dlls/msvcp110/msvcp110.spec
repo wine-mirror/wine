@@ -3856,12 +3856,12 @@
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr)
 @ stub _Strxfrm
 @ stub _Thrd_abort
-@ stub _Thrd_create
+@ cdecl _Thrd_create(ptr ptr ptr)
 @ cdecl _Thrd_current()
 @ stub _Thrd_detach
 @ cdecl _Thrd_equal(ptr ptr)
 @ stub _Thrd_exit
-@ stub _Thrd_join
+@ cdecl _Thrd_join(ptr long)
 @ cdecl _Thrd_lt(ptr ptr)
 @ cdecl _Thrd_sleep(ptr)
 @ stub _Thrd_start

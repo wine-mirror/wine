@@ -3803,12 +3803,12 @@
 @ cdecl _Strcoll(ptr ptr ptr ptr ptr) msvcp120._Strcoll
 @ stub _Strxfrm
 @ stub _Thrd_abort
-@ stub _Thrd_create
+@ cdecl _Thrd_create(ptr ptr ptr) msvcp120._Thrd_create
 @ cdecl _Thrd_current() msvcp120._Thrd_current
 @ stub _Thrd_detach
 @ cdecl _Thrd_equal(ptr ptr) msvcp120._Thrd_equal
 @ stub _Thrd_exit
-@ stub _Thrd_join
+@ cdecl _Thrd_join(ptr long) msvcp120._Thrd_join
 @ cdecl _Thrd_lt(ptr ptr) msvcp120._Thrd_lt
 @ cdecl _Thrd_sleep(ptr) msvcp120._Thrd_sleep
 @ stub _Thrd_start

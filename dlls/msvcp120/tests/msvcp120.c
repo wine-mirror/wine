@@ -139,10 +139,14 @@ typedef struct
 
 #define TIMEDELTA 150  /* 150 ms uncertainty allowed */
 
+typedef int (__cdecl *_Thrd_start_t)(void*);
+
 static int (__cdecl *p__Thrd_equal)(_Thrd_t, _Thrd_t);
 static int (__cdecl *p__Thrd_lt)(_Thrd_t, _Thrd_t);
 static void (__cdecl *p__Thrd_sleep)(const xtime*);
 static _Thrd_t (__cdecl *p__Thrd_current)(void);
+static int (__cdecl *p__Thrd_create)(_Thrd_t*, _Thrd_start_t, void*);
+static int (__cdecl *p__Thrd_join)(_Thrd_t, int*);
 
 #ifdef __i386__
 static ULONGLONG (__cdecl *p_i386_Thrd_current)(void);
@@ -296,6 +300,10 @@ static BOOL init(void)
             "_Thrd_lt");
     SET(p__Thrd_sleep,
             "_Thrd_sleep");
+    SET(p__Thrd_create,
+            "_Thrd_create");
+    SET(p__Thrd_join,
+            "_Thrd_join");
 
     msvcr = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
@@ -1163,9 +1171,17 @@ static void test_tr2_sys__Last_write_time(void)
     ok(ret == 1, "test_tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
 }
 
+static int __cdecl thrd_thread(void *arg)
+{
+    _Thrd_t *thr = arg;
+
+    *thr = p__Thrd_current();
+    return 0x42;
+}
+
 static void test_thrd(void)
 {
-    int ret, i;
+    int ret, i, r;
     struct test {
         _Thrd_t a;
         _Thrd_t b;
@@ -1226,6 +1242,22 @@ static void test_thrd(void)
     ok(ta.hnd == tb.hnd, "got a %p b %p\n", ta.hnd, tb.hnd);
     ok(!CloseHandle(ta.hnd), "handle %p not closed\n", ta.hnd);
     ok(!CloseHandle(tb.hnd), "handle %p not closed\n", tb.hnd);
+
+    /* test for create/join */
+    if (0) /* crash on Windows */
+    {
+        p__Thrd_create(NULL, thrd_thread, NULL);
+        p__Thrd_create(&ta, NULL, NULL);
+    }
+    r = -1;
+    ret = p__Thrd_create(&ta, thrd_thread, (void*)&tb);
+    ok(!ret, "failed to create thread, got %d\n", ret);
+    ret = p__Thrd_join(ta, &r);
+    ok(!ret, "failed to join thread, got %d\n", ret);
+    ok(ta.id == tb.id, "expected %d, got %d\n", ta.id, tb.id);
+    ok(ta.hnd != tb.hnd, "same handles, got %p\n", ta.hnd);
+    ok(r == 0x42, "expected 0x42, got %d\n", r);
+    ok(!CloseHandle(ta.hnd), "handle %p not closed\n", ta.hnd);
 }
 
 START_TEST(msvcp120)

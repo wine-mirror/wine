@@ -691,6 +691,10 @@ typedef struct
     DWORD  id;
 } _Thrd_t;
 
+typedef int (__cdecl *_Thrd_start_t)(void*);
+
+#define _THRD_ERROR 4
+
 int __cdecl _Thrd_equal(_Thrd_t a, _Thrd_t b)
 {
     TRACE("(%p %u %p %u)\n", a.hnd, a.id, b.hnd, b.id);
@@ -750,4 +754,24 @@ ULONGLONG __cdecl _Thrd_current(void)
     return ret.ull;
 }
 #endif
+
+int __cdecl _Thrd_join(_Thrd_t thr, int *code)
+{
+    TRACE("(%p %u %p)\n", thr.hnd, thr.id, code);
+    if (WaitForSingleObject(thr.hnd, INFINITE))
+        return _THRD_ERROR;
+
+    if (code)
+        GetExitCodeThread(thr.hnd, (DWORD *)code);
+
+    CloseHandle(thr.hnd);
+    return 0;
+}
+
+int __cdecl _Thrd_create(_Thrd_t *thr, _Thrd_start_t proc, void *arg)
+{
+    TRACE("(%p %p %p)\n", thr, proc, arg);
+    thr->hnd = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg, 0, &thr->id);
+    return !thr->hnd;
+}
 #endif
