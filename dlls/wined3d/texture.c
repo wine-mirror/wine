@@ -1523,9 +1523,12 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
 HRESULT CDECL wined3d_texture_map(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
-    struct wined3d_resource *sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx);
+    struct wined3d_resource *sub_resource;
 
-    if (!sub_resource)
+    TRACE("texture %p, sub_resource_idx %u, map_desc %p, box %p, flags %#x.\n",
+            texture, sub_resource_idx, map_desc, box, flags);
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
         return WINED3DERR_INVALIDCALL;
 
     return texture->texture_ops->texture_sub_resource_map(sub_resource, map_desc, box, flags);
