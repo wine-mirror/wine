@@ -18151,12 +18151,13 @@ wine_fn_config_program wusa enable_wusa install
 wine_fn_config_program xcopy enable_xcopy install,po
 wine_fn_config_test programs/xcopy/tests xcopy.exe_test
 wine_fn_config_makefile server enable_server clean,install-lib,manpage
-wine_fn_config_tool tools clean,install-dev,manpage
+wine_fn_config_tool tools clean
 wine_fn_config_tool tools/sfnt2fon clean
 wine_fn_config_tool tools/widl clean,install-dev,manpage
 wine_fn_config_tool tools/winebuild clean,install-dev,manpage
 wine_fn_config_tool tools/winedump clean,install-dev,manpage
 wine_fn_config_tool tools/winegcc clean,install-dev,manpage
+wine_fn_config_tool tools/winemaker install-dev,manpage
 wine_fn_config_tool tools/wmc clean,install-dev,manpage
 wine_fn_config_tool tools/wrc clean,install-dev,manpage
 
