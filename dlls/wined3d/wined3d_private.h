@@ -2459,6 +2459,8 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb,
 HRESULT surface_load_location(struct wined3d_surface *surface,
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void surface_modify_ds_location(struct wined3d_surface *surface, DWORD location, UINT w, UINT h) DECLSPEC_HIDDEN;
+void wined3d_surface_prepare(struct wined3d_surface *surface, struct wined3d_context *context,
+        DWORD location) DECLSPEC_HIDDEN;
 void surface_prepare_rb(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, BOOL multisample) DECLSPEC_HIDDEN;
 void surface_set_compatible_renderbuffer(struct wined3d_surface *surface,

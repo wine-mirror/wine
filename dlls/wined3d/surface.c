@@ -821,6 +821,8 @@ static void surface_depth_blt_fbo(const struct wined3d_device *device,
     surface_load_location(src_surface, context, src_location);
     if (!surface_is_full_rect(dst_surface, dst_rect))
         surface_load_location(dst_surface, context, dst_location);
+    else
+        wined3d_surface_prepare(dst_surface, context, dst_location);
 
     gl_info = context->gl_info;
 
@@ -912,6 +914,9 @@ static void surface_blt_fbo(const struct wined3d_device *device,
     surface_load_location(src_surface, old_ctx, src_location);
     if (!surface_is_full_rect(dst_surface, &dst_rect))
         surface_load_location(dst_surface, old_ctx, dst_location);
+    else
+        wined3d_surface_prepare(dst_surface, old_ctx, dst_location);
+
 
     if (src_location == WINED3D_LOCATION_DRAWABLE) required_rt = src_surface;
     else if (dst_location == WINED3D_LOCATION_DRAWABLE) required_rt = dst_surface;
@@ -3658,23 +3663,7 @@ void surface_load_ds_location(struct wined3d_surface *surface, struct wined3d_co
     if (surface->locations & WINED3D_LOCATION_DISCARDED)
     {
         TRACE("Surface was discarded, no need copy data.\n");
-        switch (location)
-        {
-            case WINED3D_LOCATION_TEXTURE_RGB:
-                wined3d_texture_prepare_texture(surface->container, context, FALSE);
-                break;
-            case WINED3D_LOCATION_RB_MULTISAMPLE:
-                surface_prepare_rb(surface, gl_info, TRUE);
-                break;
-            case WINED3D_LOCATION_RB_RESOLVED:
-                surface_prepare_rb(surface, gl_info, FALSE);
-                break;
-            case WINED3D_LOCATION_DRAWABLE:
-                /* Nothing to do */
-                break;
-            default:
-                FIXME("Unhandled location %#x\n", location);
-        }
+        wined3d_surface_prepare(surface, context, location);
         surface->locations &= ~WINED3D_LOCATION_DISCARDED;
         surface->locations |= location;
         surface->ds_current_size.cx = surface->resource.width;
@@ -5496,4 +5485,27 @@ HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct w
     *surface = object;
 
     return hr;
+}
+
+/* Context activation is done by the caller. */
+void wined3d_surface_prepare(struct wined3d_surface *surface, struct wined3d_context *context, DWORD location)
+{
+    switch (location)
+    {
+        case WINED3D_LOCATION_TEXTURE_RGB:
+            wined3d_texture_prepare_texture(surface->container, context, FALSE);
+            break;
+
+        case WINED3D_LOCATION_TEXTURE_SRGB:
+            wined3d_texture_prepare_texture(surface->container, context, TRUE);
+            break;
+
+        case WINED3D_LOCATION_RB_MULTISAMPLE:
+            surface_prepare_rb(surface, context->gl_info, TRUE);
+            break;
+
+        case WINED3D_LOCATION_RB_RESOLVED:
+            surface_prepare_rb(surface, context->gl_info, FALSE);
+            break;
+    }
 }

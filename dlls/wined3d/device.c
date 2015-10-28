@@ -317,13 +317,15 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
      * anyway. If we're not clearing the color buffer we don't have to copy either since we're not going to set
      * the drawable up to date. We have to check all settings that limit the clear area though. Do not bother
      * checking all this if the dest surface is in the drawable anyway. */
-    if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, clear_rect))
+    for (i = 0; i < rt_count; ++i)
     {
-        for (i = 0; i < rt_count; ++i)
+        struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(fb->render_targets[i]);
+        if (rt && rt->resource.format->id != WINED3DFMT_NULL)
         {
-            struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(fb->render_targets[i]);
-            if (rt)
+            if (flags & WINED3DCLEAR_TARGET && !is_full_clear(target, draw_rect, clear_rect))
                 surface_load_location(rt, context, rt->container->resource.draw_binding);
+            else
+                wined3d_surface_prepare(rt, context, rt->container->resource.draw_binding);
         }
     }
 
@@ -338,6 +340,9 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
         drawable_width = depth_stencil->pow2Width;
         drawable_height = depth_stencil->pow2Height;
     }
+
+    if (depth_stencil && render_offscreen)
+        wined3d_surface_prepare(depth_stencil, context, depth_stencil->container->resource.draw_binding);
 
     if (flags & WINED3DCLEAR_ZBUFFER)
     {
