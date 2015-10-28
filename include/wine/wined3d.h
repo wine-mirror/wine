@@ -2430,6 +2430,9 @@ HRESULT __cdecl wined3d_rendertarget_view_create(const struct wined3d_rendertarg
         struct wined3d_rendertarget_view **view);
 HRESULT __cdecl wined3d_rendertarget_view_create_from_surface(struct wined3d_surface *surface,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_rendertarget_view **view);
+HRESULT __cdecl wined3d_rendertarget_view_create_from_sub_resource(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_rendertarget_view **view);
 ULONG __cdecl wined3d_rendertarget_view_decref(struct wined3d_rendertarget_view *view);
 void * __cdecl wined3d_rendertarget_view_get_parent(const struct wined3d_rendertarget_view *view);
 struct wined3d_resource * __cdecl wined3d_rendertarget_view_get_resource(const struct wined3d_rendertarget_view *view);

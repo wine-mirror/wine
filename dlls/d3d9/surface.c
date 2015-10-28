@@ -428,8 +428,8 @@ struct wined3d_rendertarget_view *d3d9_surface_get_rendertarget_view(struct d3d9
     if (surface->wined3d_rtv)
         return surface->wined3d_rtv;
 
-    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(surface->wined3d_surface,
-            surface, &d3d9_view_wined3d_parent_ops, &surface->wined3d_rtv)))
+    if (FAILED(hr = wined3d_rendertarget_view_create_from_sub_resource(surface->wined3d_texture,
+            surface->sub_resource_idx, surface, &d3d9_view_wined3d_parent_ops, &surface->wined3d_rtv)))
     {
         ERR("Failed to create rendertarget view, hr %#x.\n", hr);
         return NULL;

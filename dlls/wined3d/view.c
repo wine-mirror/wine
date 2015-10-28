@@ -160,6 +160,28 @@ HRESULT CDECL wined3d_rendertarget_view_create_from_surface(struct wined3d_surfa
     return wined3d_rendertarget_view_create(&desc, &surface->container->resource, parent, parent_ops, view);
 }
 
+HRESULT CDECL wined3d_rendertarget_view_create_from_sub_resource(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, void *parent, const struct wined3d_parent_ops *parent_ops,
+        struct wined3d_rendertarget_view **view)
+{
+    struct wined3d_resource *sub_resource;
+
+    TRACE("texture %p, sub_resource_idx %u, parent %p, parent_ops %p, view %p.\n",
+            texture, sub_resource_idx, parent, parent_ops, view);
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
+        return WINED3DERR_INVALIDCALL;
+
+    if (sub_resource->type != WINED3D_RTYPE_SURFACE)
+    {
+        FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(texture->resource.type));
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    return wined3d_rendertarget_view_create_from_surface(surface_from_resource(sub_resource),
+            parent, parent_ops, view);
+}
+
 ULONG CDECL wined3d_shader_resource_view_incref(struct wined3d_shader_resource_view *view)
 {
     ULONG refcount = InterlockedIncrement(&view->refcount);
