@@ -214,6 +214,20 @@ interface ITfThreadMgr: IUnknown
 
 [
     object,
+    uuid(3e90ade3-7594-4cb0-bb58-69628f5f458c),
+    pointer_default(unique)
+]
+interface ITfThreadMgrEx : ITfThreadMgr
+{
+    HRESULT ActivateEx(
+        [out] TfClientId *id,
+        [in] DWORD flags);
+    HRESULT GetActiveFlags(
+        [out] DWORD *flags);
+}
+
+[
+    object,
     uuid(d7540241-f9a1-4364-befc-dbcd2c4395b7),
     pointer_default(unique)
 ]
