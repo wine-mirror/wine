@@ -3804,7 +3804,7 @@
 @ stub _Strxfrm
 @ stub _Thrd_abort
 @ stub _Thrd_create
-@ stub _Thrd_current
+@ cdecl _Thrd_current()
 @ stub _Thrd_detach
 @ cdecl _Thrd_equal(ptr ptr)
 @ stub _Thrd_exit

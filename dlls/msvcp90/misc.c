@@ -714,4 +714,40 @@ void __cdecl _Thrd_yield(void)
     TRACE("()\n");
     Sleep(0);
 }
+
+static _Thrd_t thread_current(void)
+{
+    _Thrd_t ret;
+
+    if(DuplicateHandle(GetCurrentProcess(), GetCurrentThread(),
+                       GetCurrentProcess(), &ret.hnd, 0, FALSE, DUPLICATE_SAME_ACCESS)) {
+        CloseHandle(ret.hnd);
+    } else {
+        ret.hnd = 0;
+    }
+    ret.id  = GetCurrentThreadId();
+
+    TRACE("(%p %u)\n", ret.hnd, ret.id);
+    return ret;
+}
+
+#ifndef __i386__
+_Thrd_t __cdecl _Thrd_current(void)
+{
+    return thread_current();
+}
+#else
+ULONGLONG __cdecl _Thrd_current(void)
+{
+    union {
+        _Thrd_t thr;
+        ULONGLONG ull;
+    } ret;
+
+    C_ASSERT(sizeof(_Thrd_t) <= sizeof(ULONGLONG));
+
+    ret.thr = thread_current();
+    return ret.ull;
+}
+#endif
 #endif

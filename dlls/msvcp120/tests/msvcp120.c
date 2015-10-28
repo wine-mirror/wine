@@ -142,6 +142,20 @@ typedef struct
 static int (__cdecl *p__Thrd_equal)(_Thrd_t, _Thrd_t);
 static int (__cdecl *p__Thrd_lt)(_Thrd_t, _Thrd_t);
 static void (__cdecl *p__Thrd_sleep)(const xtime*);
+static _Thrd_t (__cdecl *p__Thrd_current)(void);
+
+#ifdef __i386__
+static ULONGLONG (__cdecl *p_i386_Thrd_current)(void);
+_Thrd_t __cdecl i386_Thrd_current(void)
+{
+    union {
+        _Thrd_t thr;
+        ULONGLONG ull;
+    } r;
+    r.ull = p_i386_Thrd_current();
+    return r.thr;
+}
+#endif
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -220,6 +234,8 @@ static BOOL init(void)
                 "?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z");
         SET(p_tr2_sys__Last_write_time_set,
                 "?_Last_write_time@sys@tr2@std@@YAXPEBD_J@Z");
+        SET(p__Thrd_current,
+                "_Thrd_current");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -265,6 +281,14 @@ static BOOL init(void)
                 "?_Last_write_time@sys@tr2@std@@YA_JPBD@Z");
         SET(p_tr2_sys__Last_write_time_set,
                 "?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z");
+#ifdef __i386__
+        SET(p_i386_Thrd_current,
+                "_Thrd_current");
+        p__Thrd_current = i386_Thrd_current;
+#else
+        SET(p__Thrd_current,
+                "_Thrd_current");
+#endif
     }
     SET(p__Thrd_equal,
             "_Thrd_equal");
@@ -1151,6 +1175,7 @@ static void test_thrd(void)
     const HANDLE hnd2 = (HANDLE)0xdeadbeef;
     xtime xt, before, after;
     MSVCRT_long diff;
+    _Thrd_t ta, tb;
 
     struct test testeq[] = {
         { {0,    0}, {0,    0}, 1 },
@@ -1191,6 +1216,16 @@ static void test_thrd(void)
     p_xtime_get(&after, 1);
     diff = p__Xtime_diff_to_millis2(&after, &before);
     ok(diff > 2000 - TIMEDELTA, "got %d\n", diff);
+
+    /* test for current */
+    ta = p__Thrd_current();
+    tb = p__Thrd_current();
+    ok(ta.id == tb.id, "got a %d b %d\n", ta.id, tb.id);
+    ok(ta.id == GetCurrentThreadId(), "expected %d, got %d\n", GetCurrentThreadId(), ta.id);
+    /* these can be different if new threads are created at same time */
+    ok(ta.hnd == tb.hnd, "got a %p b %p\n", ta.hnd, tb.hnd);
+    ok(!CloseHandle(ta.hnd), "handle %p not closed\n", ta.hnd);
+    ok(!CloseHandle(tb.hnd), "handle %p not closed\n", tb.hnd);
 }
 
 START_TEST(msvcp120)
