@@ -1166,8 +1166,8 @@ static void test_aes(int keylen)
 
     /* Does AES provider support salt? */
     result = CryptGetKeyParam(hKey, KP_SALT, NULL, &dwLen, 0);
-    ok((!result && GetLastError() == NTE_BAD_KEY) || result /* Win7 */,
-       "expected NTE_BAD_KEY, got %08x\n", GetLastError());
+    todo_wine ok(result || broken(GetLastError() == NTE_BAD_KEY), /* Vista or older */
+       "Expected OK, got last error %d\n", GetLastError());
     if (result)
         ok(!dwLen, "unexpected salt length %d\n", dwLen);
 
