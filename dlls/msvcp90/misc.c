@@ -683,3 +683,23 @@ void init_misc(void *base)
     iostream_category_ctor(&iostream_category);
 #endif
 }
+
+#if _MSVCP_VER >= 110
+typedef struct
+{
+    HANDLE hnd;
+    DWORD  id;
+} _Thrd_t;
+
+int __cdecl _Thrd_equal(_Thrd_t a, _Thrd_t b)
+{
+    TRACE("(%p %u %p %u)\n", a.hnd, a.id, b.hnd, b.id);
+    return a.id == b.id;
+}
+
+int __cdecl _Thrd_lt(_Thrd_t a, _Thrd_t b)
+{
+    TRACE("(%p %u %p %u)\n", a.hnd, a.id, b.hnd, b.id);
+    return a.id < b.id;
+}
+#endif

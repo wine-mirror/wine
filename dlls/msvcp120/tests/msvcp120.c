@@ -130,6 +130,16 @@ static enum file_type (__cdecl *p_tr2_sys__Lstat)(char const*, int *);
 static __int64 (__cdecl *p_tr2_sys__Last_write_time)(char const*);
 static void (__cdecl *p_tr2_sys__Last_write_time_set)(char const*, __int64);
 
+/* thrd */
+typedef struct
+{
+    HANDLE hnd;
+    DWORD  id;
+} _Thrd_t;
+
+static int (__cdecl *p__Thrd_equal)(_Thrd_t, _Thrd_t);
+static int (__cdecl *p__Thrd_lt)(_Thrd_t, _Thrd_t);
+
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -253,6 +263,10 @@ static BOOL init(void)
         SET(p_tr2_sys__Last_write_time_set,
                 "?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z");
     }
+    SET(p__Thrd_equal,
+            "_Thrd_equal");
+    SET(p__Thrd_lt,
+            "_Thrd_lt");
 
     msvcr = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
@@ -1120,6 +1134,47 @@ static void test_tr2_sys__Last_write_time(void)
     ok(ret == 1, "test_tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
 }
 
+static void test_thrd(void)
+{
+    int ret, i;
+    struct test {
+        _Thrd_t a;
+        _Thrd_t b;
+        int     r;
+    };
+    const HANDLE hnd1 = (HANDLE)0xcccccccc;
+    const HANDLE hnd2 = (HANDLE)0xdeadbeef;
+
+    struct test testeq[] = {
+        { {0,    0}, {0,    0}, 1 },
+        { {0,    1}, {0,    0}, 0 },
+        { {hnd1, 0}, {hnd1, 1}, 0 },
+        { {hnd1, 0}, {hnd2, 0}, 1 }
+    };
+
+    struct test testlt[] = {
+        { {0,    0}, {0,    0}, 0 },
+        { {0,    0}, {0,    1}, 1 },
+        { {0,    1}, {0,    0}, 0 },
+        { {hnd1, 0}, {hnd2, 0}, 0 },
+        { {hnd1, 0}, {hnd2, 1}, 1 }
+    };
+
+    /* test for equal */
+    for(i=0; i<sizeof(testeq)/sizeof(testeq[0]); i++) {
+        ret = p__Thrd_equal(testeq[i].a, testeq[i].b);
+        ok(ret == testeq[i].r, "(%p %u) = (%p %u) expected %d, got %d\n",
+            testeq[i].a.hnd, testeq[i].a.id, testeq[i].b.hnd, testeq[i].b.id, testeq[i].r, ret);
+    }
+
+    /* test for less than */
+    for(i=0; i<sizeof(testlt)/sizeof(testlt[0]); i++) {
+        ret = p__Thrd_lt(testlt[i].a, testlt[i].b);
+        ok(ret == testlt[i].r, "(%p %u) < (%p %u) expected %d, got %d\n",
+            testlt[i].a.hnd, testlt[i].a.id, testlt[i].b.hnd, testlt[i].b.id, testlt[i].r, ret);
+    }
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -1143,5 +1198,8 @@ START_TEST(msvcp120)
     test_tr2_sys__Statvfs();
     test_tr2_sys__Stat();
     test_tr2_sys__Last_write_time();
+
+    test_thrd();
+
     FreeLibrary(msvcp);
 }

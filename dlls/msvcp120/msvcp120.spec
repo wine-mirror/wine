@@ -3806,10 +3806,10 @@
 @ stub _Thrd_create
 @ stub _Thrd_current
 @ stub _Thrd_detach
-@ stub _Thrd_equal
+@ cdecl _Thrd_equal(ptr ptr)
 @ stub _Thrd_exit
 @ stub _Thrd_join
-@ stub _Thrd_lt
+@ cdecl _Thrd_lt(ptr ptr)
 @ stub _Thrd_sleep
 @ stub _Thrd_start
 @ stub _Thrd_yield
