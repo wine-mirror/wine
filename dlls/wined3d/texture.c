@@ -1536,9 +1536,11 @@ HRESULT CDECL wined3d_texture_map(struct wined3d_texture *texture, unsigned int 
 
 HRESULT CDECL wined3d_texture_unmap(struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
-    struct wined3d_resource *sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx);
+    struct wined3d_resource *sub_resource;
 
-    if (!sub_resource)
+    TRACE("texture %p, sub_resource_idx %u.\n", texture, sub_resource_idx);
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
         return WINED3DERR_INVALIDCALL;
 
     return texture->texture_ops->texture_sub_resource_unmap(sub_resource);
