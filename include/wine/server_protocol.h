@@ -3228,13 +3228,11 @@ struct ioctl_reply
 struct set_irp_result_request
 {
     struct request_header __header;
-    obj_handle_t manager;
     obj_handle_t handle;
     unsigned int status;
-    client_ptr_t file_ptr;
     data_size_t  size;
+    client_ptr_t file_ptr;
     /* VARARG(data,bytes); */
-    char __pad_36[4];
 };
 struct set_irp_result_reply
 {
@@ -6149,6 +6147,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 487
+#define SERVER_PROTOCOL_VERSION 488
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

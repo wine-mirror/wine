@@ -2834,11 +2834,10 @@ static void dump_ioctl_reply( const struct ioctl_reply *req )
 
 static void dump_set_irp_result_request( const struct set_irp_result_request *req )
 {
-    fprintf( stderr, " manager=%04x", req->manager );
-    fprintf( stderr, ", handle=%04x", req->handle );
+    fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", status=%08x", req->status );
-    dump_uint64( ", file_ptr=", &req->file_ptr );
     fprintf( stderr, ", size=%u", req->size );
+    dump_uint64( ", file_ptr=", &req->file_ptr );
     dump_varargs_bytes( ", data=", cur_size );
 }
 

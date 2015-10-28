@@ -1271,13 +1271,11 @@ VOID WINAPI IoCompleteRequest( IRP *irp, UCHAR priority_boost )
     handle = (HANDLE)irp->UserIosb;
     if (handle)
     {
-        HANDLE manager = get_device_manager();
         void *out_buff = irp->UserBuffer;
         FILE_OBJECT *file = irp->Tail.Overlay.OriginalFileObject;
 
         SERVER_START_REQ( set_irp_result )
         {
-            req->manager  = wine_server_obj_handle( manager );
             req->handle   = wine_server_obj_handle( handle );
             req->status   = irp->IoStatus.u.Status;
             req->file_ptr = wine_server_client_ptr( file );

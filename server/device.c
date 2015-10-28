@@ -807,11 +807,6 @@ DECL_HANDLER(get_next_device_request)
 DECL_HANDLER(set_irp_result)
 {
     struct irp_call *irp;
-    struct device_manager *manager;
-
-    if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
-                                                             0, &device_manager_ops )))
-        return;
 
     if ((irp = (struct irp_call *)get_handle_obj( current->process, req->handle, 0, &irp_call_ops )))
     {
@@ -820,7 +815,6 @@ DECL_HANDLER(set_irp_result)
         close_handle( current->process, req->handle );  /* avoid an extra round-trip for close */
         release_object( irp );
     }
-    release_object( manager );
 }
 
 
