@@ -183,6 +183,15 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         return S_OK;
     }
 
+    if(src_type == DBTYPE_VARIANT && V_VT((VARIANT*)src) == VT_NULL)
+    {
+        if(dst_type == DBTYPE_VARIANT)
+            *dst_len = sizeof(VARIANT);
+
+        *dst_status = DBSTATUS_S_ISNULL;
+        return S_OK;
+    }
+
     if(IDataConvert_CanConvert(iface, src_type, dst_type) != S_OK)
     {
         return DB_E_UNSUPPORTEDCONVERSION;
@@ -631,18 +640,9 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
         }
         break;
         case DBTYPE_VARIANT:
-            if(V_VT((VARIANT*)src) == VT_NULL)
-            {
-                *dst_status = DBSTATUS_S_ISNULL;
-                *dst_len = get_length(DBTYPE_BSTR);
-                return S_OK;
-            }
-            else
-            {
-                VariantInit(&tmp);
-                if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
-                    *d = V_BSTR(&tmp);
-            }
+            VariantInit(&tmp);
+            if ((hr = VariantChangeType(&tmp, (VARIANT*)src, 0, VT_BSTR)) == S_OK)
+                *d = V_BSTR(&tmp);
             break;
         default: FIXME("Unimplemented conversion %04x -> BSTR\n", src_type); return E_NOTIMPL;
         }
@@ -1000,44 +1000,35 @@ static HRESULT WINAPI convert_DataConvert(IDataConvert* iface,
             return S_OK;
         case DBTYPE_VARIANT:
         {
-            if(V_VT((VARIANT*)src) == VT_NULL)
+            switch(V_VT((VARIANT*)src))
             {
-                *dst_status = DBSTATUS_S_ISNULL;
-                *dst_len = 0;
+            case VT_UI1 | VT_ARRAY:
+            {
+                LONG l;
+                BYTE *data = NULL;
+
+                hr = SafeArrayGetUBound(V_ARRAY((VARIANT*)src), 1, &l);
+                if(FAILED(hr))
+                    return hr;
+
+                hr = SafeArrayAccessData(V_ARRAY((VARIANT*)src), (VOID**)&data);
+                if(FAILED(hr))
+                {
+                    ERR("SafeArrayAccessData Failed = 0x%08x\n", hr);
+                    return hr;
+                }
+
+                *dst_len = l+1;
+                *dst_status = DBSTATUS_S_OK;
+                memcpy(d, data, *dst_len);
+
+                SafeArrayUnaccessData(V_ARRAY((VARIANT*)src));
                 return S_OK;
             }
-            else
-            {
-                switch(V_VT((VARIANT*)src))
-                {
-                case VT_UI1 | VT_ARRAY:
-                {
-                    LONG l;
-                    BYTE *data = NULL;
-
-                    hr = SafeArrayGetUBound(V_ARRAY((VARIANT*)src), 1, &l);
-                    if(FAILED(hr))
-                        return hr;
-
-                    hr = SafeArrayAccessData(V_ARRAY((VARIANT*)src), (VOID**)&data);
-                    if(FAILED(hr))
-                    {
-                        ERR("SafeArrayAccessData Failed = 0x%08x\n", hr);
-                        return hr;
-                    }
-
-                    *dst_len = l+1;
-                    *dst_status = DBSTATUS_S_OK;
-                    memcpy(d, data, *dst_len);
-
-                    SafeArrayUnaccessData(V_ARRAY((VARIANT*)src));
-                    return S_OK;
-                }
-                break;
-                default:
-                    FIXME("Unimplemented variant type %d -> BYTES\n", V_VT((VARIANT*)src));
-                    return E_NOTIMPL;
-                }
+            break;
+            default:
+                FIXME("Unimplemented variant type %d -> BYTES\n", V_VT((VARIANT*)src));
+                return E_NOTIMPL;
             }
         }
         break;
