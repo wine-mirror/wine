@@ -1307,20 +1307,27 @@ int macdrv_err_on;
         }
         else
         {
+            // Annoyingly, CGWarpMouseCursorPosition() effectively disassociates
+            // the mouse from the cursor position for 0.25 seconds.  This means
+            // that mouse movement during that interval doesn't move the cursor
+            // and events carry a constant location (the warped-to position)
+            // even though they have delta values.  For apps which warp the
+            // cursor frequently (like after every mouse move), this makes
+            // cursor movement horribly laggy and jerky, as only a fraction of
+            // mouse move events have any effect.
+            //
+            // On some versions of OS X, it's sufficient to forcibly reassociate
+            // the mouse and cursor position.  On others, it's necessary to set
+            // the local events suppression interval to 0 for the warp.  That's
+            // deprecated, but I'm not aware of any other way.  For good
+            // measure, we do both.
+            CGSetLocalEventsSuppressionInterval(0);
             ret = (CGWarpMouseCursorPosition(pos) == kCGErrorSuccess);
+            CGSetLocalEventsSuppressionInterval(0.25);
             if (ret)
             {
                 lastSetCursorPositionTime = [[NSProcessInfo processInfo] systemUptime];
 
-                // Annoyingly, CGWarpMouseCursorPosition() effectively disassociates
-                // the mouse from the cursor position for 0.25 seconds.  This means
-                // that mouse movement during that interval doesn't move the cursor
-                // and events carry a constant location (the warped-to position)
-                // even though they have delta values.  This screws us up because
-                // the accumulated deltas we send to Wine don't match any eventual
-                // absolute position we send (like with a button press).  We can
-                // work around this by simply forcibly reassociating the mouse and
-                // cursor position.
                 CGAssociateMouseAndMouseCursorPosition(true);
             }
         }
