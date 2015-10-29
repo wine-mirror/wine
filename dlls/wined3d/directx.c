@@ -3553,6 +3553,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
 
     if (gl_version >= MAKEDWORD_VERSION(2, 0))
         gl_info->supported[WINED3D_GL_VERSION_2_0] = TRUE;
+    if (gl_version >= MAKEDWORD_VERSION(3, 2))
+        gl_info->supported[WINED3D_GL_VERSION_3_2] = TRUE;
 
     if (gl_info->supported[APPLE_FENCE])
     {
