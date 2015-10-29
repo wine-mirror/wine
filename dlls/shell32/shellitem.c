@@ -1197,6 +1197,7 @@ HRESULT WINAPI SHCreateShellItemArray(PCIDLIST_ABSOLUTE pidlParent,
     if(SUCCEEDED(ret))
     {
         ret = create_shellitemarray(array, cidl, ppsiItemArray);
+        HeapFree(GetProcessHeap(), 0, array);
         if(SUCCEEDED(ret))
             return ret;
     }
@@ -1310,6 +1311,7 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
     if(SUCCEEDED(ret))
     {
         ret = create_shellitemarray(array, cidl, psia);
+        HeapFree(GetProcessHeap(), 0, array);
         if(SUCCEEDED(ret))
             return ret;
     }
