@@ -632,7 +632,6 @@ static int write_console_input( struct console_input* console, int count,
                              (console->recnum + count) * sizeof(INPUT_RECORD) )))
     {
         set_error( STATUS_NO_MEMORY );
-        release_object( console );
         return -1;
     }
     console->records = new_rec;
