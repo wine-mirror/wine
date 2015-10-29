@@ -27,7 +27,7 @@
 @ stub D3DX10CreateEffectFromResourceW(long wstr wstr ptr ptr str long long ptr ptr ptr ptr ptr ptr)
 @ stub D3DX10CreateEffectPoolFromFileA(str ptr ptr str long long ptr ptr ptr ptr ptr)
 @ stub D3DX10CreateEffectPoolFromFileW(wstr ptr ptr str long long ptr ptr ptr ptr ptr)
-@ stub D3DX10CreateEffectPoolFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr)
+@ stdcall D3DX10CreateEffectPoolFromMemory(ptr long str ptr ptr str long long ptr ptr ptr ptr ptr)
 @ stub D3DX10CreateEffectPoolFromResourceA(long str str ptr ptr str long long ptr ptr ptr ptr ptr)
 @ stub D3DX10CreateEffectPoolFromResourceW(long wstr wstr ptr ptr str long long ptr ptr ptr ptr ptr)
 @ stub D3DX10CreateFontA(ptr long long long long long long long long long str ptr)
