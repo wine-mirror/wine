@@ -480,6 +480,11 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
             rc = handle_minidriver_string(device, irp, HID_STRING_ID_IPRODUCT);
             break;
         }
+        case IOCTL_HID_GET_SERIALNUMBER_STRING:
+        {
+            rc = handle_minidriver_string(device, irp, HID_STRING_ID_ISERIALNUMBER);
+            break;
+        }
         case IOCTL_HID_GET_MANUFACTURER_STRING:
         {
             rc = handle_minidriver_string(device, irp, HID_STRING_ID_IMANUFACTURER);
