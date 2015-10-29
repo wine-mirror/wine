@@ -3606,7 +3606,7 @@ HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
     }
 
     /* Determine return type */
-    if (!(rightvt == VT_EMPTY))
+    if (rightvt != VT_EMPTY)
     {
         if (leftvt == VT_NULL || rightvt == VT_NULL)
         {
@@ -3639,7 +3639,7 @@ HRESULT WINAPI VarDiv(LPVARIANT left, LPVARIANT right, LPVARIANT result)
         else if (leftvt == VT_R4 || rightvt == VT_R4)
             resvt = VT_R4;
     }
-    else if (leftvt == VT_NULL && rightvt == VT_EMPTY)
+    else if (leftvt == VT_NULL)
     {
         V_VT(result) = VT_NULL;
         hres = S_OK;
