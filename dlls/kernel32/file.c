@@ -1574,7 +1574,7 @@ HANDLE WINAPI CreateFileW( LPCWSTR filename, DWORD access, DWORD sharing,
 
     if (sa && sa->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
 
-    status = NtCreateFile( &ret, access, &attr, &io, NULL, attributes,
+    status = NtCreateFile( &ret, access | SYNCHRONIZE, &attr, &io, NULL, attributes,
                            sharing, nt_disposition[creation - CREATE_NEW],
                            options, NULL, 0 );
     if (status)
@@ -1683,7 +1683,7 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtCreateFile(&hFile, GENERIC_READ | GENERIC_WRITE | DELETE,
+    status = NtCreateFile(&hFile, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE | DELETE,
 			  &attr, &io, NULL, 0,
 			  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 			  FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0);
@@ -1826,7 +1826,7 @@ BOOL WINAPI ReplaceFileW(LPCWSTR lpReplacedFileName, LPCWSTR lpReplacementFileNa
         }
         attr.ObjectName = &nt_backup_name;
         /* Open the backup with permissions to write over it */
-        status = NtCreateFile(&hBackup, GENERIC_WRITE,
+        status = NtCreateFile(&hBackup, GENERIC_WRITE | SYNCHRONIZE,
                               &attr, &io, NULL, replaced_info.FileAttributes,
                               FILE_SHARE_WRITE, FILE_OPEN_IF,
                               FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE,
@@ -2835,7 +2835,7 @@ HANDLE WINAPI OpenFileById( HANDLE handle, LPFILE_ID_DESCRIPTOR id, DWORD access
     attr.SecurityQualityOfService = NULL;
     if (sec_attr && sec_attr->bInheritHandle) attr.Attributes |= OBJ_INHERIT;
 
-    status = NtCreateFile( &result, access, &attr, &io, NULL, flags,
+    status = NtCreateFile( &result, access | SYNCHRONIZE, &attr, &io, NULL, flags,
                            share, OPEN_EXISTING, options, NULL, 0 );
     if (status != STATUS_SUCCESS)
     {
