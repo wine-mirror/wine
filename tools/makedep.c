@@ -1831,6 +1831,9 @@ static void output_install_rules( struct makefile *make, struct strarray files,
             output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s $(DESTDIR)%s\n",
                     install_sh, src_dir_path( make, file ), dest + 1 );
             break;
+        case 'y':  /* symlink */
+            output( "\t$(RM) $(DESTDIR)%s && $(LN_S) %s $(DESTDIR)%s\n", dest + 1, file, dest + 1 );
+            break;
         default:
             assert(0);
         }
@@ -1853,7 +1856,7 @@ static void output_install_rules( struct makefile *make, struct strarray files,
 static struct strarray output_sources( struct makefile *make, struct strarray *testlist_files )
 {
     struct incl_file *source;
-    unsigned int i;
+    unsigned int i, j;
     struct strarray object_files = empty_strarray;
     struct strarray crossobj_files = empty_strarray;
     struct strarray res_files = empty_strarray;
@@ -2018,6 +2021,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         {
             if (strendswith( obj, ".man" ) && source->file->args)
             {
+                struct strarray symlinks;
                 char *dir, *dest = replace_extension( obj, ".man", "" );
                 char *lang = strchr( dest, '.' );
                 char *section = source->file->args;
@@ -2028,6 +2032,10 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 }
                 else dir = strmake( "$(mandir)/man%s", section );
                 add_install_rule( make, dest, xstrdup(obj), strmake( "d%s/%s.%s", dir, dest, section ));
+                symlinks = get_expanded_make_var_array( make, file_local_var( dest, "SYMLINKS" ));
+                for (j = 0; j < symlinks.count; j++)
+                    add_install_rule( make, symlinks.str[j], strmake( "%s.%s", dest, section ),
+                                      strmake( "y%s/%s.%s", dir, symlinks.str[j], section ));
                 free( dest );
                 free( dir );
                 strarray_add( &all_targets, xstrdup(obj) );
@@ -2447,6 +2455,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         struct strarray all_libs = empty_strarray;
         struct strarray objs = get_expanded_make_var_array( make,
                                                  file_local_var( make->programs.str[i], "OBJS" ));
+        struct strarray symlinks = get_expanded_make_var_array( make,
+                                                 file_local_var( make->programs.str[i], "SYMLINKS" ));
 
         if (!objs.count) objs = object_files;
         output( "%s:", obj_dir_path( make, program ) );
@@ -2485,8 +2495,19 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         output( "\n" );
         strarray_add( &all_targets, program );
 
+        if (symlinks.count)
+        {
+            output_filenames_obj_dir( make, symlinks );
+            output( ": %s\n", obj_dir_path( make, program ));
+            output( "\t$(RM) $@ && $(LN_S) %s $@\n", obj_dir_path( make, program ));
+            strarray_addall( &all_targets, symlinks );
+        }
+
         add_install_rule( make, program, program_installed ? program_installed : program,
                           strmake( "p$(bindir)/%s", program ));
+        for (j = 0; j < symlinks.count; j++)
+            add_install_rule( make, symlinks.str[j], program,
+                              strmake( "y$(bindir)/%s%s", symlinks.str[j], exe_ext ));
     }
 
     for (i = 0; i < make->scripts.count; i++)

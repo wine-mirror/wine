@@ -2,6 +2,8 @@ PROGRAMS = winegcc
 
 MANPAGES = winegcc.man.in
 
+winegcc_SYMLINKS = winecpp wineg++
+
 C_SRCS = \
 	utils.c \
 	winegcc.c
@@ -16,21 +18,4 @@ winegcc_EXTRADEFS = \
 	-DLD="\"$(LD)\"" \
 	-DPRELINK="\"$(PRELINK)\""
 
-INSTALL_DEV = $(PROGRAMS)
-
-EXTRA_TARGETS = winecpp$(EXEEXT) wineg++$(EXEEXT)
-
-all: $(EXTRA_TARGETS)
-
-winecpp$(EXEEXT) wineg++$(EXEEXT): winegcc$(EXEEXT)
-	$(RM) $@ && $(LN_S) winegcc$(EXEEXT) $@
-
-install install-dev::
-	cd $(DESTDIR)$(bindir) && $(RM) wineg++$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) wineg++$(EXEEXT)
-	cd $(DESTDIR)$(bindir) && $(RM) winecpp$(EXEEXT) && $(LN_S) winegcc$(EXEEXT) winecpp$(EXEEXT)
-	cd $(DESTDIR)$(mandir)/man$(prog_manext) && $(RM) wineg++.$(prog_manext) && $(LN_S) winegcc.$(prog_manext) wineg++.$(prog_manext)
-	cd $(DESTDIR)$(mandir)/man$(prog_manext) && $(RM) winecpp.$(prog_manext) && $(LN_S) winegcc.$(prog_manext) winecpp.$(prog_manext)
-
-uninstall::
-	$(RM) $(DESTDIR)$(bindir)/wineg++$(EXEEXT) $(DESTDIR)$(bindir)/winecpp$(EXEEXT)
-	$(RM) $(DESTDIR)$(mandir)/man$(prog_manext)/wineg++.$(prog_manext) $(DESTDIR)$(mandir)/man$(prog_manext)/winecpp.$(prog_manext)
+INSTALL_DEV = $(PROGRAMS) $(winegcc_SYMLINKS)
