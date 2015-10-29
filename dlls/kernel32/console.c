@@ -3265,32 +3265,47 @@ BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, LPCONSOLE_FON
     return ret;
 }
 
+static COORD get_console_font_size(HANDLE hConsole, DWORD index)
+{
+    COORD c = {0,0};
+
+    if (index >= GetNumberOfConsoleFonts())
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return c;
+    }
+
+    SERVER_START_REQ(get_console_output_info)
+    {
+        req->handle = console_handle_unmap(hConsole);
+        if (!wine_server_call_err(req))
+        {
+            c.X = reply->font_width;
+            c.Y = reply->font_height;
+        }
+    }
+    SERVER_END_REQ;
+    return c;
+}
+
 #ifdef __i386__
 #undef GetConsoleFontSize
-DWORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD font)
+DWORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD index)
 {
     union {
         COORD c;
         DWORD w;
     } x;
 
-    FIXME(": (%p, %d) stub!\n", hConsole, font);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-
-    x.c.X = 0;
-    x.c.Y = 0;
+    x.c = get_console_font_size(hConsole, index);
     return x.w;
 }
 #endif /* defined(__i386__) */
 
 
 #ifndef __i386__
-COORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD font)
+COORD WINAPI GetConsoleFontSize(HANDLE hConsole, DWORD index)
 {
-    COORD c;
-    c.X = 80;
-    c.Y = 24;
-     FIXME(": (%p, %d) stub!\n", hConsole, font);
-    return c;
+    return get_console_font_size(hConsole, index);
 }
-#endif /* defined(__i386__) */
+#endif /* !defined(__i386__) */
