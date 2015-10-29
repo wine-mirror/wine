@@ -1796,7 +1796,7 @@ static void output_install_rules( struct makefile *make, struct strarray files,
     if (!files.count) return;
 
     for (i = 0; i < files.count; i += 2)
-        if (files.str[i + 1][0] >= 'a' && files.str[i + 1][0] <= 'z')  /* only for files in object dir */
+        if (strchr( "dps", files.str[i + 1][0] ))  /* only for files copied from object dir */
             strarray_add_uniq( &targets, files.str[i] );
 
     output( "install %s::", target );
