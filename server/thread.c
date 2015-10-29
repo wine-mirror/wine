@@ -1602,13 +1602,12 @@ DECL_HANDLER(get_apc_result)
 
     if (!(apc = (struct thread_apc *)get_handle_obj( current->process, req->handle,
                                                      0, &thread_apc_ops ))) return;
-    if (!apc->executed) set_error( STATUS_PENDING );
-    else
-    {
-        reply->result = apc->result;
-        /* close the handle directly to avoid an extra round-trip */
-        close_handle( current->process, req->handle );
-    }
+
+    if (apc->executed) reply->result = apc->result;
+    else set_error( STATUS_PENDING );
+
+    /* close the handle directly to avoid an extra round-trip */
+    close_handle( current->process, req->handle );
     release_object( apc );
 }
 

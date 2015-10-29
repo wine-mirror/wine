@@ -677,7 +677,6 @@ unsigned int server_queue_process_apc( HANDLE process, const apc_call_t *call, a
             SERVER_END_REQ;
 
             if (!ret && result->type == APC_NONE) continue;  /* APC didn't run, try again */
-            if (ret) NtClose( handle );
         }
         return ret;
     }
