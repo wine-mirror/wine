@@ -27,6 +27,7 @@
 
 #include "wine/test.h"
 
+static HRESULT (WINAPI *pWindowsConcatString)(HSTRING, HSTRING, HSTRING *);
 static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
 static HRESULT (WINAPI *pWindowsCreateStringReference)(LPCWSTR, UINT32, HSTRING_HEADER *, HSTRING *);
 static HRESULT (WINAPI *pWindowsDeleteString)(HSTRING);
@@ -51,6 +52,7 @@ static BOOL init_functions(void)
         win_skip("Failed to load combase.dll, skipping tests\n");
         return FALSE;
     }
+    SET(WindowsConcatString);
     SET(WindowsCreateString);
     SET(WindowsCreateStringReference);
     SET(WindowsDeleteString);
@@ -94,6 +96,8 @@ static void _check_string(int line, HSTRING str, LPCWSTR content, UINT32 length,
 }
 
 static const WCHAR input_string[] = { 'a', 'b', 'c', 'd', 'e', 'f', '\0', '\0' };
+static const WCHAR input_string1[] = { 'a', 'b', 'c', '\0' };
+static const WCHAR input_string2[] = { 'd', 'e', 'f', '\0' };
 static const WCHAR input_empty_string[] = { '\0' };
 static const WCHAR input_embed_null[] = { 'a', '\0', 'c', '\0', 'e', 'f', '\0' };
 static const WCHAR output_substring[] = { 'c', 'd', 'e', 'f', '\0' };
@@ -334,6 +338,62 @@ static void test_substring(void)
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 }
 
+static void test_concat(void)
+{
+    HSTRING str1, str2, concat;
+    HSTRING_HEADER header1, header2;
+
+    /* Test concatenation of string buffers */
+    ok(pWindowsCreateString(input_string1, 3, &str1) == S_OK, "Failed to create string\n");
+    ok(pWindowsCreateString(input_string2, 3, &str2) == S_OK, "Failed to create string\n");
+
+    ok(pWindowsConcatString(str1, NULL, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsConcatString(str1, NULL, &concat) == S_OK, "Failed to concatenate string\n");
+    ok(str1 == concat, "Concatenate created new string\n");
+    check_string(concat, input_string1, 3, FALSE);
+    ok(pWindowsDeleteString(concat) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsConcatString(NULL, str2, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsConcatString(NULL, str2, &concat) == S_OK, "Failed to concatenate string\n");
+    ok(str2 == concat, "Concatenate created new string\n");
+    check_string(concat, input_string2, 3, FALSE);
+    ok(pWindowsDeleteString(concat) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsConcatString(str1, str2, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsConcatString(str1, str2, &concat) == S_OK, "Failed to concatenate string\n");
+    check_string(concat, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(concat) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsDeleteString(str2) == S_OK, "Failed to delete string\n");
+    ok(pWindowsDeleteString(str1) == S_OK, "Failed to delete string\n");
+
+    /* Test concatenation of string references */
+    ok(pWindowsCreateStringReference(input_string1, 3, &header1, &str1) == S_OK, "Failed to create string ref\n");
+    ok(pWindowsCreateStringReference(input_string2, 3, &header2, &str2) == S_OK, "Failed to create string ref\n");
+
+    ok(pWindowsConcatString(str1, NULL, &concat) == S_OK, "Failed to concatenate string\n");
+    ok(str1 != concat, "Concatenate string ref didn't create new string\n");
+    check_string(concat, input_string1, 3, FALSE);
+    ok(pWindowsDeleteString(concat) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsConcatString(NULL, str2, &concat) == S_OK, "Failed to concatenate string\n");
+    ok(str2 != concat, "Concatenate string ref didn't create new string\n");
+    check_string(concat, input_string2, 3, FALSE);
+    ok(pWindowsDeleteString(concat) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsConcatString(str1, str2, &concat) == S_OK, "Failed to concatenate string\n");
+    check_string(concat, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(concat) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsDeleteString(str2) == S_OK, "Failed to delete string ref\n");
+    ok(pWindowsDeleteString(str1) == S_OK, "Failed to delete string ref\n");
+
+    /* Test concatenation of two empty strings */
+    ok(pWindowsConcatString(NULL, NULL, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsConcatString(NULL, NULL, &concat) == S_OK, "Failed to concatenate string\n");
+    ok(concat == NULL, "Concatenate created new string\n");
+}
+
 START_TEST(string)
 {
     if (!init_functions())
@@ -343,4 +403,5 @@ START_TEST(string)
     test_access();
     test_string_buffer();
     test_substring();
+    test_concat();
 }
