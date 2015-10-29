@@ -13,10 +13,4 @@ BISON_SRCS = mcy.y
 
 EXTRALIBS = $(GETTEXTPO_LIBS) $(LIBWINE_STATIC)
 
-.PHONY: install install-dev uninstall
-
-install install-dev:: wmc$(EXEEXT) install-man-pages
-	$(INSTALL_PROGRAM) wmc$(EXEEXT) $(DESTDIR)$(bindir)/wmc$(EXEEXT)
-
-uninstall::
-	$(RM) $(DESTDIR)$(bindir)/wmc$(EXEEXT)
+INSTALL_DEV = $(PROGRAMS)

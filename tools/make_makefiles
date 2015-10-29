@@ -274,6 +274,11 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"clean"} = 1 if $var eq "EXTRA_TARGETS";
             next;
         }
+        if (/^\s*INSTALL_(LIB|DEV)\s*=\s*/)
+        {
+            ${$make{"=flags"}}{$1 eq "LIB" ? "install-lib" : "install-dev"} = 1;
+            next;
+        }
         if (/(install-lib|install-dev|clean)\s*:/)
         {
             ${$make{"=flags"}}{$1} = 1;

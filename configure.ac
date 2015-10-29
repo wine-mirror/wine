@@ -691,12 +691,6 @@ libwine_soversion=`expr $libwine_version : '\([[0-9]]*\)\..*'`
 
 AC_SUBST(LOADER_RULES,["
 all: wine.inf
-
-install install-lib:: $wine_binary-installed
-	\$(INSTALL_PROGRAM) $wine_binary-installed \$(DESTDIR)\$(bindir)/$wine_binary
-
-uninstall::
-	\$(RM) \$(DESTDIR)\$(bindir)/$wine_binary
 "])
 
 case $host_os in
@@ -2039,18 +2033,13 @@ case $host_os in
 preloader_EXTRADEFS = $BUILTINFLAG
 ${wine_binary}_preloader_OBJS = preloader.o
 ${wine_binary}_preloader_LDFLAGS = -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000
-
-install install-lib:: $wine_binary-preloader
-	\$(INSTALL_PROGRAM) $wine_binary-preloader \$(DESTDIR)\$(bindir)/$wine_binary-preloader
-
-uninstall::
-	\$(RM) \$(DESTDIR)\$(bindir)/$wine_binary-preloader
 "]) ;;
     esac
     ;;
 esac
 AS_VAR_APPEND([LOADER_RULES],["
 PROGRAMS = $loader_programs
+INSTALL_LIB = $loader_programs
 "])
 
 dnl **** Check for functions ****
@@ -3758,7 +3747,7 @@ clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
     AS_VAR_APPEND([LOADER_RULES],["
-install install-lib:: wine.inf install-man-pages
+install install-lib:: wine.inf
 	\$(INSTALL_DATA) wine.inf \$(DESTDIR)\$(datadir)/wine/wine.inf
 	\$(INSTALL_DATA) \$(srcdir)/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
 

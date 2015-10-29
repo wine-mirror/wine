@@ -52,10 +52,4 @@ MANPAGES = \
 
 EXTRALIBS = -lwine $(POLL_LIBS) $(RT_LIBS)
 
-.PHONY: install install-lib uninstall
-
-install install-lib:: wineserver-installed install-man-pages
-	$(INSTALL_PROGRAM) wineserver-installed $(DESTDIR)$(bindir)/wineserver
-
-uninstall::
-	$(RM) $(DESTDIR)$(bindir)/wineserver
+INSTALL_LIB = $(PROGRAMS)

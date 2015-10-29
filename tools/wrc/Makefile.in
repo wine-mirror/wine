@@ -19,10 +19,4 @@ wrc_EXTRADEFS = -DINCLUDEDIR="\"${includedir}\""
 
 EXTRALIBS = $(GETTEXTPO_LIBS) $(LIBWPP) $(LIBWINE_STATIC)
 
-.PHONY: install install-dev uninstall
-
-install install-dev:: wrc$(EXEEXT) install-man-pages
-	$(INSTALL_PROGRAM) wrc$(EXEEXT) $(DESTDIR)$(bindir)/wrc$(EXEEXT)
-
-uninstall::
-	$(RM) $(DESTDIR)$(bindir)/wrc$(EXEEXT)
+INSTALL_DEV = $(PROGRAMS)

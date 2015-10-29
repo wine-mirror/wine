@@ -12,10 +12,4 @@ C_SRCS = \
 	spec32.c \
 	utils.c
 
-.PHONY: install install-dev uninstall
-
-install install-dev:: winebuild$(EXEEXT) install-man-pages
-	$(INSTALL_PROGRAM) winebuild$(EXEEXT) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)
-
-uninstall::
-	$(RM) $(DESTDIR)$(bindir)/winebuild$(EXEEXT)
+INSTALL_DEV = $(PROGRAMS)

@@ -23,10 +23,4 @@ widl_EXTRADEFS = -DDEFAULT_INCLUDE_DIR=\"${includedir}/windows/\"
 
 EXTRALIBS = $(LIBWPP)
 
-.PHONY: install install-dev uninstall
-
-install install-dev:: widl$(EXEEXT) install-man-pages
-	$(INSTALL_PROGRAM) widl$(EXEEXT) $(DESTDIR)$(bindir)/widl$(EXEEXT)
-
-uninstall::
-	$(RM) $(DESTDIR)$(bindir)/widl$(EXEEXT)
+INSTALL_DEV = $(PROGRAMS)

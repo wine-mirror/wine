@@ -23,11 +23,10 @@ C_SRCS = \
 	symbol.c \
 	tlb.c
 
-.PHONY: install install-dev uninstall
+INSTALL_DEV = $(PROGRAMS)
 
-install install-dev:: winedump$(EXEEXT) install-man-pages
-	$(INSTALL_PROGRAM) winedump$(EXEEXT) $(DESTDIR)$(bindir)/winedump$(EXEEXT)
+install install-dev::
 	$(INSTALL_SCRIPT) $(srcdir)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl
 
 uninstall::
-	$(RM) $(DESTDIR)$(bindir)/function_grep.pl $(DESTDIR)$(bindir)/winedump$(EXEEXT)
+	$(RM) $(DESTDIR)$(bindir)/function_grep.pl

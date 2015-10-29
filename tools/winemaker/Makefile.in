@@ -3,9 +3,9 @@ MANPAGES = \
 	winemaker.fr.UTF-8.man.in \
 	winemaker.man.in
 
-.PHONY: install install-dev uninstall
+INSTALL_DEV = winemaker
 
-install install-dev:: install-man-pages
+install install-dev::
 	$(INSTALL_SCRIPT) $(srcdir)/winemaker $(DESTDIR)$(bindir)/winemaker
 
 uninstall::

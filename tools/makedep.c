@@ -154,6 +154,10 @@ struct makefile
     struct strarray imports;
     struct strarray delayimports;
     struct strarray extradllflags;
+    struct strarray install_lib;
+    struct strarray install_dev;
+    struct strarray install_lib_rules;
+    struct strarray install_dev_rules;
     struct list     sources;
     struct list     includes;
     const char     *base_dir;
@@ -1757,6 +1761,92 @@ static void output_include( struct incl_file *pFile, struct incl_file *owner )
 
 
 /*******************************************************************
+ *         add_install_rule
+ */
+static void add_install_rule( struct makefile *make, const char *target,
+                              const char *file, const char *dest )
+{
+    if (strarray_exists( &make->install_lib, target ))
+    {
+        strarray_add( &make->install_lib_rules, file );
+        strarray_add( &make->install_lib_rules, dest );
+    }
+    else if (strarray_exists( &make->install_dev, target ))
+    {
+        strarray_add( &make->install_dev_rules, file );
+        strarray_add( &make->install_dev_rules, dest );
+    }
+}
+
+
+/*******************************************************************
+ *         output_install_rules
+ *
+ * Rules are stored as a (file,dest) pair of values.
+ * The first char of dest indicates the type of install.
+ */
+static void output_install_rules( struct makefile *make, struct strarray files,
+                                  const char *target, struct strarray *phony_targets )
+{
+    unsigned int i;
+    char *install_sh;
+    struct strarray targets = empty_strarray;
+
+    if (!files.count) return;
+
+    for (i = 0; i < files.count; i += 2)
+        if (files.str[i + 1][0] >= 'a' && files.str[i + 1][0] <= 'z')  /* only for files in object dir */
+            strarray_add_uniq( &targets, files.str[i] );
+
+    output( "install %s::", target );
+    output_filenames_obj_dir( make, targets );
+    output( "\n" );
+
+    install_sh = top_dir_path( make, "tools/install-sh" );
+    for (i = 0; i < files.count; i += 2)
+    {
+        const char *file = files.str[i];
+        const char *dest = files.str[i + 1];
+
+        switch (*dest)
+        {
+        case 'd':  /* data file */
+            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s $(DESTDIR)%s\n",
+                    install_sh, obj_dir_path( make, file ), dest + 1 );
+            break;
+        case 'D':  /* data file in source dir */
+            output( "\t%s -m 644 $(INSTALL_DATA_FLAGS) %s $(DESTDIR)%s\n",
+                    install_sh, src_dir_path( make, file ), dest + 1 );
+            break;
+        case 'p':  /* program file */
+            output( "\tSTRIPPROG=\"$(STRIP)\" %s $(INSTALL_PROGRAM_FLAGS) %s $(DESTDIR)%s\n",
+                    install_sh, obj_dir_path( make, file ), dest + 1 );
+            break;
+        case 's':  /* script */
+            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s $(DESTDIR)%s\n",
+                    install_sh, obj_dir_path( make, file ), dest + 1 );
+            break;
+        case 'S':  /* script in source dir */
+            output( "\t%s $(INSTALL_SCRIPT_FLAGS) %s $(DESTDIR)%s\n",
+                    install_sh, src_dir_path( make, file ), dest + 1 );
+            break;
+        default:
+            assert(0);
+        }
+    }
+
+    output( "uninstall::\n" );
+    output( "\t$(RM)" );
+    for (i = 0; i < files.count; i += 2) output_filename( strmake( "$(DESTDIR)%s", files.str[i + 1] + 1 ));
+    output( "\n" );
+
+    strarray_add( phony_targets, "install" );
+    strarray_add( phony_targets, target );
+    strarray_add( phony_targets, "uninstall" );
+}
+
+
+/*******************************************************************
  *         output_sources
  */
 static struct strarray output_sources( struct makefile *make, struct strarray *testlist_files )
@@ -1933,18 +2023,13 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 if (lang)
                 {
                     *lang++ = 0;
-                    dir = strmake( "$(DESTDIR)$(mandir)/%s/man%s", lang, section );
+                    dir = strmake( "$(mandir)/%s/man%s", lang, section );
                 }
-                else dir = strmake( "$(DESTDIR)$(mandir)/man%s", section );
-                output( "install-man-pages:: %s\n", obj_dir_path( make, obj ));
-                output( "\t$(INSTALL_DATA) %s %s/%s.%s\n", obj_dir_path( make, obj ), dir, dest, section );
-                output( "uninstall::\n" );
-                output( "\t$(RM) %s/%s.%s\n", dir, dest, section );
+                else dir = strmake( "$(mandir)/man%s", section );
+                add_install_rule( make, dest, xstrdup(obj), strmake( "d%s/%s.%s", dir, dest, section ));
                 free( dest );
                 free( dir );
                 strarray_add( &all_targets, xstrdup(obj) );
-                strarray_add_uniq( &phony_targets, "install-man-pages" );
-                strarray_add_uniq( &phony_targets, "uninstall" );
             }
             else strarray_add( &clean_files, xstrdup(obj) );
             output( "%s: %s\n", obj_dir_path( make, obj ), source->filename );
@@ -1963,10 +2048,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             }
             if (source->file->flags & FLAG_INSTALL)
             {
-                output( "install install-lib::\n" );
-                output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s.ttf\n", ttf_file, obj );
-                output( "uninstall::\n" );
-                output( "\t$(RM) $(DESTDIR)$(fontdir)/%s.ttf\n", obj );
+                strarray_add( &make->install_lib_rules, ttf_file );
+                strarray_add( &make->install_lib_rules, strmake( "D$(fontdir)/%s.ttf", obj ));
             }
             if (source->file->flags & FLAG_SFD_FONTS)
             {
@@ -1981,18 +2064,9 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                     output( "%s: %s %s\n", obj_dir_path( make, font ),
                             tools_path( make, "sfnt2fon" ), ttf_file );
                     output( "\t%s -o $@ %s %s\n", tools_path( make, "sfnt2fon" ), ttf_file, args );
-                    output( "install install-lib:: %s\n", font );
-                    output( "\t$(INSTALL_DATA) %s $(DESTDIR)$(fontdir)/%s\n",
-                            obj_dir_path( make, font ), font );
-                    output( "uninstall::\n" );
-                    output( "\t$(RM) $(DESTDIR)$(fontdir)/%s\n", font );
+                    strarray_add( &make->install_lib_rules, xstrdup(font) );
+                    strarray_add( &make->install_lib_rules, strmake( "d$(fontdir)/%s", font ));
                 }
-            }
-            if (source->file->flags & (FLAG_INSTALL | FLAG_SFD_FONTS))
-            {
-                strarray_add_uniq( &phony_targets, "install" );
-                strarray_add_uniq( &phony_targets, "install-lib" );
-                strarray_add_uniq( &phony_targets, "uninstall" );
             }
             continue;  /* no dependencies */
         }
@@ -2367,6 +2441,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
 
     for (i = 0; i < make->programs.count; i++)
     {
+        char *program_installed = NULL;
         char *program = strmake( "%s%s", make->programs.str[i], exe_ext );
         struct strarray all_libs = empty_strarray;
         struct strarray objs = get_expanded_make_var_array( make,
@@ -2389,8 +2464,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             strarray_add( &all_libs, strmake( "-L%s", top_obj_dir_path( make, "libs/wine" )));
             if (ldrpath_local && ldrpath_install)
             {
-                char *program_installed = strmake( "%s-installed%s", make->programs.str[i], exe_ext );
-
+                program_installed = strmake( "%s-installed%s", make->programs.str[i], exe_ext );
                 output_filename( ldrpath_local );
                 output_filenames( all_libs );
                 output_filename( "$(LDFLAGS)" );
@@ -2409,6 +2483,9 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         output_filename( "$(LDFLAGS)" );
         output( "\n" );
         strarray_add( &all_targets, program );
+
+        add_install_rule( make, program, program_installed ? program_installed : program,
+                          strmake( "p$(bindir)/%s", program ));
     }
 
     if (all_targets.count)
@@ -2417,6 +2494,9 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         output_filenames_obj_dir( make, all_targets );
         output( "\n" );
     }
+
+    output_install_rules( make, make->install_lib_rules, "install-lib", &phony_targets );
+    output_install_rules( make, make->install_dev_rules, "install-dev", &phony_targets );
 
     strarray_addall( &clean_files, object_files );
     strarray_addall( &clean_files, crossobj_files );
@@ -2699,6 +2779,8 @@ static void update_makefile( const char *path )
     make->imports       = get_expanded_make_var_array( make, "IMPORTS" );
     make->delayimports  = get_expanded_make_var_array( make, "DELAYIMPORTS" );
     make->extradllflags = get_expanded_make_var_array( make, "EXTRADLLFLAGS" );
+    make->install_lib   = get_expanded_make_var_array( make, "INSTALL_LIB" );
+    make->install_dev   = get_expanded_make_var_array( make, "INSTALL_DEV" );
 
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
@@ -2707,6 +2789,9 @@ static void update_makefile( const char *path )
 
     for (i = 0; i < make->imports.count && !make->use_msvcrt; i++)
         make->use_msvcrt = !strncmp( make->imports.str[i], "msvcr", 5 );
+
+    make->install_lib_rules = empty_strarray;
+    make->install_dev_rules = empty_strarray;
 
     make->include_args = empty_strarray;
     make->define_args = empty_strarray;
