@@ -150,6 +150,7 @@ struct makefile
     struct strarray include_args;
     struct strarray define_args;
     struct strarray programs;
+    struct strarray scripts;
     struct strarray appmode;
     struct strarray imports;
     struct strarray delayimports;
@@ -2488,6 +2489,10 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                           strmake( "p$(bindir)/%s", program ));
     }
 
+    for (i = 0; i < make->scripts.count; i++)
+        add_install_rule( make, make->scripts.str[i], make->scripts.str[i],
+                          strmake( "S$(bindir)/%s", make->scripts.str[i] ));
+
     if (all_targets.count)
     {
         output( "all:" );
@@ -2775,6 +2780,7 @@ static void update_makefile( const char *path )
     make->importlib     = get_expanded_make_variable( make, "IMPORTLIB" );
 
     make->programs      = get_expanded_make_var_array( make, "PROGRAMS" );
+    make->scripts       = get_expanded_make_var_array( make, "SCRIPTS" );
     make->appmode       = get_expanded_make_var_array( make, "APPMODE" );
     make->imports       = get_expanded_make_var_array( make, "IMPORTS" );
     make->delayimports  = get_expanded_make_var_array( make, "DELAYIMPORTS" );

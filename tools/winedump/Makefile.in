@@ -1,5 +1,6 @@
 PROGRAMS = winedump
 MANPAGES = winedump.man.in
+SCRIPTS  = function_grep.pl
 
 C_SRCS = \
 	debug.c \
@@ -23,10 +24,4 @@ C_SRCS = \
 	symbol.c \
 	tlb.c
 
-INSTALL_DEV = $(PROGRAMS)
-
-install install-dev::
-	$(INSTALL_SCRIPT) $(srcdir)/function_grep.pl $(DESTDIR)$(bindir)/function_grep.pl
-
-uninstall::
-	$(RM) $(DESTDIR)$(bindir)/function_grep.pl
+INSTALL_DEV = $(PROGRAMS) $(SCRIPTS)
