@@ -696,6 +696,9 @@
 /* Define to 1 if you have the <pthread_np.h> header file. */
 #undef HAVE_PTHREAD_NP_H
 
+/* Define to 1 if you have the <pulse/pulseaudio.h> header file. */
+#undef HAVE_PULSE_PULSEAUDIO_H
+
 /* Define to 1 if you have the <pwd.h> header file. */
 #undef HAVE_PWD_H
 

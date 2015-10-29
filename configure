@@ -654,6 +654,8 @@ OSS4_CFLAGS
 ALSA_LIBS
 GSTREAMER_LIBS
 GSTREAMER_CFLAGS
+PULSE_CFLAGS
+PULSE_LIBS
 GETTEXTPO_LIBS
 Z_LIBS
 FREETYPE_LIBS
@@ -830,6 +832,7 @@ with_oss
 with_pcap
 with_png
 with_pthread
+with_pulse
 with_sane
 with_tiff
 with_v4l
@@ -1341,6 +1344,7 @@ enable_winemapi
 enable_winemp3_acm
 enable_wineoss_drv
 enable_wineps_drv
+enable_winepulse_drv
 enable_wineqtdecoder
 enable_winex11_drv
 enable_wing32
@@ -1523,6 +1527,8 @@ LCMS2_CFLAGS
 LCMS2_LIBS
 FREETYPE_CFLAGS
 FREETYPE_LIBS
+PULSE_CFLAGS
+PULSE_LIBS
 GSTREAMER_CFLAGS
 GSTREAMER_LIBS
 CAPI20_CFLAGS
@@ -2205,6 +2211,7 @@ Optional Packages:
   --without-pcap          do not use the Packet Capture library
   --without-png           do not use PNG
   --without-pthread       do not use the pthread library
+  --without-pulse         do not use PulseAudio sound support
   --without-sane          do not use SANE (scanner support)
   --without-tiff          do not use TIFF
   --without-v4l           do not use v4l1 (v4l support)
@@ -2265,6 +2272,9 @@ Some influential environment variables:
               C compiler flags for freetype2, overriding pkg-config
   FREETYPE_LIBS
               Linker flags for freetype2, overriding pkg-config
+  PULSE_CFLAGS
+              C compiler flags for libpulse, overriding pkg-config
+  PULSE_LIBS  Linker flags for libpulse, overriding pkg-config
   GSTREAMER_CFLAGS
               C compiler flags for gstreamer-app-0.10, overriding pkg-config
   GSTREAMER_LIBS
@@ -3449,6 +3459,12 @@ fi
 # Check whether --with-pthread was given.
 if test "${with_pthread+set}" = set; then :
   withval=$with_pthread; if test "x$withval" = "xno"; then ac_cv_header_pthread_h=no; fi
+fi
+
+
+# Check whether --with-pulse was given.
+if test "${with_pulse+set}" = set; then :
+  withval=$with_pulse;
 fi
 
 
@@ -12576,6 +12592,94 @@ esac
 fi
 fi
 
+PULSE_LIBS=""
+
+PULSE_CFLAGS=""
+
+if test "x$with_pulse" != "xno";
+then
+    if ${PULSE_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  PULSE_CFLAGS=`$PKG_CONFIG --cflags libpulse 2>/dev/null`
+fi
+fi
+
+if ${PULSE_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  PULSE_LIBS=`$PKG_CONFIG --libs libpulse 2>/dev/null`
+fi
+fi
+
+
+$as_echo "$as_me:${as_lineno-$LINENO}: libpulse cflags: $PULSE_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libpulse libs: $PULSE_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $PULSE_CFLAGS"
+for ac_header in pulse/pulseaudio.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "pulse/pulseaudio.h" "ac_cv_header_pulse_pulseaudio_h" "$ac_includes_default"
+if test "x$ac_cv_header_pulse_pulseaudio_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_PULSE_PULSEAUDIO_H 1
+_ACEOF
+ { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pa_stream_is_corked in -lpulse" >&5
+$as_echo_n "checking for pa_stream_is_corked in -lpulse... " >&6; }
+if ${ac_cv_lib_pulse_pa_stream_is_corked+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lpulse $PULSE_LIBS $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pa_stream_is_corked ();
+int
+main ()
+{
+return pa_stream_is_corked ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_pulse_pa_stream_is_corked=yes
+else
+  ac_cv_lib_pulse_pa_stream_is_corked=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pulse_pa_stream_is_corked" >&5
+$as_echo "$ac_cv_lib_pulse_pa_stream_is_corked" >&6; }
+if test "x$ac_cv_lib_pulse_pa_stream_is_corked" = xyes; then :
+  :
+fi
+
+fi
+
+done
+
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$PULSE_CFLAGS" || PULSE_CFLAGS=`echo " $PULSE_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$PULSE_LIBS" || PULSE_LIBS=`echo " $PULSE_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
+fi
+if test "$ac_cv_lib_pulse_pa_stream_is_corked" != "yes"; then :
+  case "x$with_pulse" in
+  x)   as_fn_append wine_notices "|libpulse ${notice_platform}development files not found or too old, Pulse won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "libpulse ${notice_platform}development files not found or too old, Pulse won't be supported.
+This is an error since --with-pulse was requested." "$LINENO" 5 ;;
+esac
+fi
+
 if test "x$with_gstreamer" != "xno"
 then
     if ${GSTREAMER_CFLAGS:+false} :; then :
@@ -13922,12 +14026,13 @@ fi
 
 test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 test -n "$COREAUDIO_LIBS" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
+test -n "$PULSE_LIBS" || enable_winepulse_drv=${enable_winepulse_drv:-no}
 test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
-if test "x$ALSA_LIBS$COREAUDIO_LIBS" = "x" -a \
+if test "x$ALSA_LIBS$COREAUDIO_LIBS$PULSE_LIBS" = "x" -a \
         "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
-        "x$with_alsa$with_coreaudio$with_oss" != xnonono
+        "x$with_alsa$with_coreaudio$with_oss$with_pulse" != xnononono
 then
     as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
 fi
@@ -17177,6 +17282,8 @@ FREETYPE_CFLAGS = $FREETYPE_CFLAGS
 FREETYPE_LIBS = $FREETYPE_LIBS
 Z_LIBS = $Z_LIBS
 GETTEXTPO_LIBS = $GETTEXTPO_LIBS
+PULSE_LIBS = $PULSE_LIBS
+PULSE_CFLAGS = $PULSE_CFLAGS
 GSTREAMER_CFLAGS = $GSTREAMER_CFLAGS
 GSTREAMER_LIBS = $GSTREAMER_LIBS
 ALSA_LIBS = $ALSA_LIBS
@@ -17954,6 +18061,7 @@ wine_fn_config_dll winemp3.acm enable_winemp3_acm
 wine_fn_config_dll wineoss.drv enable_wineoss_drv
 wine_fn_config_dll wineps.drv enable_wineps_drv clean,po
 wine_fn_config_dll wineps16.drv16 enable_win16
+wine_fn_config_dll winepulse.drv enable_winepulse_drv
 wine_fn_config_dll wineqtdecoder enable_wineqtdecoder
 wine_fn_config_dll winex11.drv enable_winex11_drv
 wine_fn_config_dll wing.dll16 enable_win16

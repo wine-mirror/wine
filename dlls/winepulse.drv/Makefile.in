@@ -1,0 +1,7 @@
+MODULE    = winepulse.drv
+IMPORTS   = dxguid uuid winmm user32 advapi32 ole32
+EXTRALIBS = $(PULSE_LIBS) $(PTHREAD_LIBS)
+EXTRAINCL = $(PULSE_CFLAGS)
+
+C_SRCS = \
+	mmdevdrv.c
