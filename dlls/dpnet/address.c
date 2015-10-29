@@ -159,6 +159,7 @@ static ULONG WINAPI IDirectPlay8AddressImpl_Release(IDirectPlay8Address *iface)
                     break;
             }
 
+            heap_free(entry->name);
             heap_free(entry);
         }
 
