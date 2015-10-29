@@ -4556,8 +4556,23 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
     DWRITE_MEASURING_MODE mode, const DWRITE_MATRIX *transform, UINT32 palette, IDWriteColorGlyphRunEnumerator **ret)
 {
     struct dwrite_colorglyphenum *colorglyphenum;
+    IDWriteFontFace2 *fontface2;
+    BOOL colorfont;
+    HRESULT hr;
 
     *ret = NULL;
+
+    hr = IDWriteFontFace_QueryInterface(run->fontFace, &IID_IDWriteFontFace2, (void**)&fontface2);
+    if (FAILED(hr)) {
+        WARN("failed to get IDWriteFontFace2, 0x%08x\n", hr);
+        return hr;
+    }
+
+    colorfont = IDWriteFontFace2_IsColorFont(fontface2);
+    IDWriteFontFace2_Release(fontface2);
+    if (!colorfont)
+        return DWRITE_E_NOCOLOR;
+
     colorglyphenum = heap_alloc(sizeof(*colorglyphenum));
     if (!colorglyphenum)
         return E_OUTOFMEMORY;

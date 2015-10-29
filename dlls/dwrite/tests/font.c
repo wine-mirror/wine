@@ -5074,10 +5074,8 @@ static void test_TranslateColorGlyphRun(void)
     layers = (void*)0xdeadbeef;
     hr = IDWriteFactory2_TranslateColorGlyphRun(factory2, 0.0, 0.0, &run, NULL,
         DWRITE_MEASURING_MODE_NATURAL, NULL, 0, &layers);
-todo_wine {
     ok(hr == DWRITE_E_NOCOLOR, "got 0x%08x\n", hr);
     ok(layers == NULL, "got %p\n", layers);
-}
     IDWriteFontFace_Release(fontface);
 
     /* Segoe UI Emoji, with color support */
