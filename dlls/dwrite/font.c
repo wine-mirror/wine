@@ -431,6 +431,8 @@ static ULONG WINAPI dwritefontface_Release(IDWriteFontFace2 *iface)
             if (This->files[i])
                 IDWriteFontFile_Release(This->files[i]);
         }
+        heap_free(This->streams);
+        heap_free(This->files);
 
         for (i = 0; i < sizeof(This->glyphs)/sizeof(This->glyphs[0]); i++)
             heap_free(This->glyphs[i]);
