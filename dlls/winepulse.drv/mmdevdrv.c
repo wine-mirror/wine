@@ -126,6 +126,8 @@ typedef struct _ACPacket {
 
 struct ACImpl {
     IAudioClient IAudioClient_iface;
+    IAudioRenderClient IAudioRenderClient_iface;
+    IAudioCaptureClient IAudioCaptureClient_iface;
     IMMDevice *parent;
     struct list entry;
     float vol[PA_CHANNELS_MAX];
@@ -152,10 +154,22 @@ struct ACImpl {
 static const WCHAR defaultW[] = {'P','u','l','s','e','a','u','d','i','o',0};
 
 static const IAudioClientVtbl AudioClient_Vtbl;
+static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
+static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
 
 static inline ACImpl *impl_from_IAudioClient(IAudioClient *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioClient_iface);
+}
+
+static inline ACImpl *impl_from_IAudioRenderClient(IAudioRenderClient *iface)
+{
+    return CONTAINING_RECORD(iface, ACImpl, IAudioRenderClient_iface);
+}
+
+static inline ACImpl *impl_from_IAudioCaptureClient(IAudioCaptureClient *iface)
+{
+    return CONTAINING_RECORD(iface, ACImpl, IAudioCaptureClient_iface);
 }
 
 /* Following pulseaudio design here, mainloop has the lock taken whenever
@@ -767,6 +781,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
         return E_OUTOFMEMORY;
 
     This->IAudioClient_iface.lpVtbl = &AudioClient_Vtbl;
+    This->IAudioRenderClient_iface.lpVtbl = &AudioRenderClient_Vtbl;
+    This->IAudioCaptureClient_iface.lpVtbl = &AudioCaptureClient_Vtbl;
     This->dataflow = dataflow;
     This->parent = dev;
     for (i = 0; i < PA_CHANNELS_MAX; ++i)
@@ -1557,6 +1573,16 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient *iface, REFIID riid,
     if (FAILED(hr))
         return hr;
 
+    if (IsEqualIID(riid, &IID_IAudioRenderClient)) {
+        if (This->dataflow != eRender)
+            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        *ppv = &This->IAudioRenderClient_iface;
+    } else if (IsEqualIID(riid, &IID_IAudioCaptureClient)) {
+        if (This->dataflow != eCapture)
+            return AUDCLNT_E_WRONG_ENDPOINT_TYPE;
+        *ppv = &This->IAudioCaptureClient_iface;
+    }
+
     if (*ppv) {
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
@@ -1583,6 +1609,281 @@ static const IAudioClientVtbl AudioClient_Vtbl =
     AudioClient_Reset,
     AudioClient_SetEventHandle,
     AudioClient_GetService
+};
+
+static HRESULT WINAPI AudioRenderClient_QueryInterface(
+        IAudioRenderClient *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAudioRenderClient))
+        *ppv = iface;
+    if (*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI AudioRenderClient_AddRef(IAudioRenderClient *iface)
+{
+    ACImpl *This = impl_from_IAudioRenderClient(iface);
+    return AudioClient_AddRef(&This->IAudioClient_iface);
+}
+
+static ULONG WINAPI AudioRenderClient_Release(IAudioRenderClient *iface)
+{
+    ACImpl *This = impl_from_IAudioRenderClient(iface);
+    return AudioClient_Release(&This->IAudioClient_iface);
+}
+
+static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
+        UINT32 frames, BYTE **data)
+{
+    ACImpl *This = impl_from_IAudioRenderClient(iface);
+    size_t avail, req, bytes = frames * pa_frame_size(&This->ss);
+    UINT32 pad;
+    HRESULT hr = S_OK;
+    int ret = -1;
+
+    TRACE("(%p)->(%u, %p)\n", This, frames, data);
+
+    if (!data)
+        return E_POINTER;
+    *data = NULL;
+
+    pthread_mutex_lock(&pulse_lock);
+    hr = pulse_stream_valid(This);
+    if (FAILED(hr) || This->locked) {
+        pthread_mutex_unlock(&pulse_lock);
+        return FAILED(hr) ? hr : AUDCLNT_E_OUT_OF_ORDER;
+    }
+    if (!frames) {
+        pthread_mutex_unlock(&pulse_lock);
+        return S_OK;
+    }
+
+    ACImpl_GetRenderPad(This, &pad);
+    avail = This->bufsize_frames - pad;
+    if (avail < frames || bytes > This->bufsize_bytes) {
+        pthread_mutex_unlock(&pulse_lock);
+        WARN("Wanted to write %u, but only %zu available\n", frames, avail);
+        return AUDCLNT_E_BUFFER_TOO_LARGE;
+    }
+
+    This->locked = frames;
+    req = bytes;
+    ret = pa_stream_begin_write(This->stream, &This->locked_ptr, &req);
+    if (ret < 0 || req < bytes) {
+        FIXME("%p Not using pulse locked data: %i %zu/%u %u/%u\n", This, ret, req/pa_frame_size(&This->ss), frames, pad, This->bufsize_frames);
+        if (ret >= 0)
+            pa_stream_cancel_write(This->stream);
+        *data = This->tmp_buffer;
+        This->locked_ptr = NULL;
+    } else
+        *data = This->locked_ptr;
+    pthread_mutex_unlock(&pulse_lock);
+    return hr;
+}
+
+static void pulse_free_noop(void *buf)
+{
+}
+
+static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
+        IAudioRenderClient *iface, UINT32 written_frames, DWORD flags)
+{
+    ACImpl *This = impl_from_IAudioRenderClient(iface);
+    UINT32 written_bytes = written_frames * pa_frame_size(&This->ss);
+
+    TRACE("(%p)->(%u, %x)\n", This, written_frames, flags);
+
+    pthread_mutex_lock(&pulse_lock);
+    if (!This->locked || !written_frames) {
+        if (This->locked_ptr)
+            pa_stream_cancel_write(This->stream);
+        This->locked = 0;
+        This->locked_ptr = NULL;
+        pthread_mutex_unlock(&pulse_lock);
+        return written_frames ? AUDCLNT_E_OUT_OF_ORDER : S_OK;
+    }
+
+    if (This->locked < written_frames) {
+        pthread_mutex_unlock(&pulse_lock);
+        return AUDCLNT_E_INVALID_SIZE;
+    }
+
+    if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
+        if (This->ss.format == PA_SAMPLE_U8)
+            memset(This->tmp_buffer, 128, written_bytes);
+        else
+            memset(This->tmp_buffer, 0, written_bytes);
+    }
+
+    This->locked = 0;
+    if (This->locked_ptr)
+        pa_stream_write(This->stream, This->locked_ptr, written_bytes, NULL, 0, PA_SEEK_RELATIVE);
+    else
+        pa_stream_write(This->stream, This->tmp_buffer, written_bytes, pulse_free_noop, 0, PA_SEEK_RELATIVE);
+    This->pad += written_bytes;
+    This->locked_ptr = NULL;
+    TRACE("Released %u, pad %zu\n", written_frames, This->pad / pa_frame_size(&This->ss));
+    assert(This->pad <= This->bufsize_bytes);
+
+    pthread_mutex_unlock(&pulse_lock);
+    return S_OK;
+}
+
+static const IAudioRenderClientVtbl AudioRenderClient_Vtbl = {
+    AudioRenderClient_QueryInterface,
+    AudioRenderClient_AddRef,
+    AudioRenderClient_Release,
+    AudioRenderClient_GetBuffer,
+    AudioRenderClient_ReleaseBuffer
+};
+
+static HRESULT WINAPI AudioCaptureClient_QueryInterface(
+        IAudioCaptureClient *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAudioCaptureClient))
+        *ppv = iface;
+    if (*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI AudioCaptureClient_AddRef(IAudioCaptureClient *iface)
+{
+    ACImpl *This = impl_from_IAudioCaptureClient(iface);
+    return IAudioClient_AddRef(&This->IAudioClient_iface);
+}
+
+static ULONG WINAPI AudioCaptureClient_Release(IAudioCaptureClient *iface)
+{
+    ACImpl *This = impl_from_IAudioCaptureClient(iface);
+    return IAudioClient_Release(&This->IAudioClient_iface);
+}
+
+static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
+        BYTE **data, UINT32 *frames, DWORD *flags, UINT64 *devpos,
+        UINT64 *qpcpos)
+{
+    ACImpl *This = impl_from_IAudioCaptureClient(iface);
+    HRESULT hr;
+    ACPacket *packet;
+
+    TRACE("(%p)->(%p, %p, %p, %p, %p)\n", This, data, frames, flags,
+            devpos, qpcpos);
+
+    if (!data || !frames || !flags)
+        return E_POINTER;
+
+    pthread_mutex_lock(&pulse_lock);
+    hr = pulse_stream_valid(This);
+    if (FAILED(hr) || This->locked) {
+        pthread_mutex_unlock(&pulse_lock);
+        return FAILED(hr) ? hr : AUDCLNT_E_OUT_OF_ORDER;
+    }
+
+    ACImpl_GetCapturePad(This, NULL);
+    if ((packet = This->locked_ptr)) {
+        *frames = This->capture_period / pa_frame_size(&This->ss);
+        *flags = 0;
+        if (packet->discont)
+            *flags |= AUDCLNT_BUFFERFLAGS_DATA_DISCONTINUITY;
+        if (devpos) {
+            if (packet->discont)
+                *devpos = (This->clock_written + This->capture_period) / pa_frame_size(&This->ss);
+            else
+                *devpos = This->clock_written / pa_frame_size(&This->ss);
+        }
+        if (qpcpos)
+            *qpcpos = packet->qpcpos;
+        *data = packet->data;
+    }
+    else
+        *frames = 0;
+    This->locked = *frames;
+    pthread_mutex_unlock(&pulse_lock);
+    return *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY;
+}
+
+static HRESULT WINAPI AudioCaptureClient_ReleaseBuffer(
+        IAudioCaptureClient *iface, UINT32 done)
+{
+    ACImpl *This = impl_from_IAudioCaptureClient(iface);
+
+    TRACE("(%p)->(%u)\n", This, done);
+
+    pthread_mutex_lock(&pulse_lock);
+    if (!This->locked && done) {
+        pthread_mutex_unlock(&pulse_lock);
+        return AUDCLNT_E_OUT_OF_ORDER;
+    }
+    if (done && This->locked != done) {
+        pthread_mutex_unlock(&pulse_lock);
+        return AUDCLNT_E_INVALID_SIZE;
+    }
+    if (done) {
+        ACPacket *packet = This->locked_ptr;
+        This->locked_ptr = NULL;
+        This->pad -= This->capture_period;
+        if (packet->discont)
+            This->clock_written += 2 * This->capture_period;
+        else
+            This->clock_written += This->capture_period;
+        list_add_tail(&This->packet_free_head, &packet->entry);
+    }
+    This->locked = 0;
+    pthread_mutex_unlock(&pulse_lock);
+    return S_OK;
+}
+
+static HRESULT WINAPI AudioCaptureClient_GetNextPacketSize(
+        IAudioCaptureClient *iface, UINT32 *frames)
+{
+    ACImpl *This = impl_from_IAudioCaptureClient(iface);
+
+    TRACE("(%p)->(%p)\n", This, frames);
+    if (!frames)
+        return E_POINTER;
+
+    pthread_mutex_lock(&pulse_lock);
+    ACImpl_GetCapturePad(This, NULL);
+    if (This->locked_ptr)
+        *frames = This->capture_period / pa_frame_size(&This->ss);
+    else
+        *frames = 0;
+    pthread_mutex_unlock(&pulse_lock);
+    return S_OK;
+}
+
+static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl =
+{
+    AudioCaptureClient_QueryInterface,
+    AudioCaptureClient_AddRef,
+    AudioCaptureClient_Release,
+    AudioCaptureClient_GetBuffer,
+    AudioCaptureClient_ReleaseBuffer,
+    AudioCaptureClient_GetNextPacketSize
 };
 
 HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
