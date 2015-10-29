@@ -330,6 +330,36 @@ HRESULT WINAPI WindowsSubstringWithSpecifiedLength(HSTRING str, UINT32 start, UI
 }
 
 /***********************************************************************
+ *      WindowsConcatString (combase.@)
+ */
+HRESULT WINAPI WindowsConcatString(HSTRING str1, HSTRING str2, HSTRING *out)
+{
+    struct hstring_private *priv1 = impl_from_HSTRING(str1);
+    struct hstring_private *priv2 = impl_from_HSTRING(str2);
+    struct hstring_private *priv;
+
+    TRACE("(%p, %p, %p)\n", str1, str2, out);
+
+    if (out == NULL)
+        return E_INVALIDARG;
+    if (str1 == NULL)
+        return WindowsDuplicateString(str2, out);
+    if (str2 == NULL)
+        return WindowsDuplicateString(str1, out);
+    if (!priv1->length && !priv2->length)
+    {
+        *out = NULL;
+        return S_OK;
+    }
+    if (!alloc_string(priv1->length + priv2->length, out))
+        return E_OUTOFMEMORY;
+    priv = impl_from_HSTRING(*out);
+    memcpy(priv->buffer, priv1->buffer, priv1->length * sizeof(*priv1->buffer));
+    memcpy(priv->buffer + priv1->length, priv2->buffer, priv2->length * sizeof(*priv2->buffer));
+    return S_OK;
+}
+
+/***********************************************************************
  *      WindowsIsStringEmpty (combase.@)
  */
 BOOL WINAPI WindowsIsStringEmpty(HSTRING str)
