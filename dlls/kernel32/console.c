@@ -3234,6 +3234,11 @@ BOOL WINAPI SetConsoleIcon(HICON icon)
     return FALSE;
 }
 
+DWORD WINAPI GetNumberOfConsoleFonts(void)
+{
+    return 1;
+}
+
 BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, LPCONSOLE_FONT_INFO fontinfo)
 {
     BOOL ret;

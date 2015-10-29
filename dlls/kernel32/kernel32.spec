@@ -753,7 +753,7 @@
 @ stdcall GetNumberFormatA(long long str ptr ptr long)
 # @ stub GetNumberFormatEx
 @ stdcall GetNumberFormatW(long long wstr ptr ptr long)
-@ stub GetNumberOfConsoleFonts
+@ stdcall GetNumberOfConsoleFonts()
 @ stdcall GetNumberOfConsoleInputEvents(long ptr)
 @ stdcall GetNumberOfConsoleMouseButtons(ptr)
 @ stdcall GetOEMCP()
