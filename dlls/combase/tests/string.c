@@ -124,6 +124,9 @@ static void test_create_delete(void)
      * length. According to MSDN this should be E_INVALIDARG, but it returns
      * 0x80000017 in practice. */
     ok(FAILED(pWindowsCreateStringReference(input_string, 5, &header, &str)), "Incorrect error handling\n");
+    /* If the input string is non-null, it must be null-terminated even if the
+     * length is zero. */
+    ok(FAILED(pWindowsCreateStringReference(input_string, 0, &header, &str)), "Incorrect error handling\n");
     ok(pWindowsCreateStringReference(input_string, 6, NULL, &str) == E_INVALIDARG, "Incorrect error handling\n");
     ok(pWindowsCreateStringReference(input_string, 6, &header, NULL) == E_INVALIDARG, "Incorrect error handling\n");
     ok(pWindowsCreateStringReference(NULL, 6, &header, &str) == E_POINTER, "Incorrect error handling\n");
@@ -138,7 +141,19 @@ static void test_create_delete(void)
     ok(str == NULL, "Empty string not a null string\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 
+    ok(pWindowsCreateString(input_string, 0, &str) == S_OK, "Failed to create string\n");
+    ok(str == NULL, "Empty string not a null string\n");
+    ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
+
     ok(pWindowsCreateStringReference(input_empty_string, 0, &header, &str) == S_OK, "Failed to create string\n");
+    ok(str == NULL, "Empty string not a null string\n");
+    ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsCreateString(NULL, 0, &str) == S_OK, "Failed to create string\n");
+    ok(str == NULL, "Empty string not a null string\n");
+    ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsCreateStringReference(NULL, 0, &header, &str) == S_OK, "Failed to create string\n");
     ok(str == NULL, "Empty string not a null string\n");
     ok(pWindowsDeleteString(str) == S_OK, "Failed to delete string\n");
 }

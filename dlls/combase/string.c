@@ -105,6 +105,8 @@ HRESULT WINAPI WindowsCreateStringReference(LPCWSTR ptr, UINT32 len,
 
     if (out == NULL || header == NULL)
         return E_INVALIDARG;
+    if (ptr != NULL && ptr[len] != '\0')
+        return E_INVALIDARG;
     if (len == 0)
     {
         *out = NULL;
@@ -112,8 +114,6 @@ HRESULT WINAPI WindowsCreateStringReference(LPCWSTR ptr, UINT32 len,
     }
     if (ptr == NULL)
         return E_POINTER;
-    if (ptr[len] != '\0')
-        return E_INVALIDARG;
     priv->buffer = (LPWSTR)ptr;
     priv->length = len;
     priv->reference = TRUE;
