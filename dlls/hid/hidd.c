@@ -99,6 +99,12 @@ BOOLEAN WINAPI HidD_GetProductString(HANDLE HidDeviceObject, PVOID Buffer, ULONG
     return DeviceIoControl(HidDeviceObject, IOCTL_HID_GET_PRODUCT_STRING, NULL, 0, Buffer, BufferLength, NULL, NULL);
 }
 
+BOOLEAN WINAPI HidD_GetSerialNumberString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
+{
+    TRACE("(%p %p %u)\n", HidDeviceObject, Buffer, BufferLength);
+    return DeviceIoControl(HidDeviceObject, IOCTL_HID_GET_SERIALNUMBER_STRING, NULL, 0, Buffer, BufferLength, NULL, NULL);
+}
+
 BOOLEAN WINAPI HidD_GetPreparsedData(HANDLE HidDeviceObject, PHIDP_PREPARSED_DATA *PreparsedData)
 {
     HID_COLLECTION_INFORMATION info;

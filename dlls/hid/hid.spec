@@ -12,7 +12,7 @@
 @ stub HidD_GetPhysicalDescriptor
 @ stdcall HidD_GetPreparsedData(ptr ptr)
 @ stdcall HidD_GetProductString(long ptr long)
-@ stub HidD_GetSerialNumberString
+@ stdcall HidD_GetSerialNumberString(long ptr long)
 @ stub HidD_Hello
 @ stub HidD_SetConfiguration
 @ stdcall HidD_SetFeature(long ptr long)
