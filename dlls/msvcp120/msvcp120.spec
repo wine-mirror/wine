@@ -1722,10 +1722,10 @@
 @ cdecl -arch=win64 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z(str ptr) tr2_sys__Stat
 @ stub -arch=win32 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z
 @ stub -arch=win64 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z
-@ cdecl -arch=win32 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PBD@Z(str) tr2_sys__Statvfs
-@ cdecl -arch=win64 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEBD@Z(str) tr2_sys__Statvfs
-@ cdecl -arch=win32 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PB_W@Z(wstr) tr2_sys__Statvfs_wchar
-@ cdecl -arch=win64 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEB_W@Z(wstr) tr2_sys__Statvfs_wchar
+@ cdecl -arch=win32 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PBD@Z(ptr str) tr2_sys__Statvfs
+@ cdecl -arch=win64 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEBD@Z(ptr str) tr2_sys__Statvfs
+@ cdecl -arch=win32 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PB_W@Z(ptr wstr) tr2_sys__Statvfs_wchar
+@ cdecl -arch=win64 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEB_W@Z(ptr wstr) tr2_sys__Statvfs_wchar
 @ cdecl -arch=arm ?_Swap_all@_Container_base0@std@@QAAXAAU12@@Z(ptr ptr) Container_base0_Swap_all
 @ thiscall -arch=i386 ?_Swap_all@_Container_base0@std@@QAEXAAU12@@Z(ptr ptr) Container_base0_Swap_all
 @ cdecl -arch=win64 ?_Swap_all@_Container_base0@std@@QEAAXAEAU12@@Z(ptr ptr) Container_base0_Swap_all

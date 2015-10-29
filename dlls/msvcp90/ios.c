@@ -14329,20 +14329,20 @@ int __cdecl tr2_sys__Rename(char const* old_path, char const* new_path)
 
 /* ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PBD@Z */
 /* ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEBD@Z */
-struct space_info __cdecl tr2_sys__Statvfs(const char* path)
+struct space_info* __cdecl tr2_sys__Statvfs(struct space_info *ret, const char* path)
 {
     ULARGE_INTEGER available, total, free;
-    struct space_info info;
+
     TRACE("(%s)\n", debugstr_a(path));
 
     if(!path || !GetDiskFreeSpaceExA(path, &available, &total, &free)) {
-        info.capacity = info.free = info.available = 0;
+        ret->capacity = ret->free = ret->available = 0;
     }else {
-        info.capacity = total.QuadPart;
-        info.free = free.QuadPart;
-        info.available = available.QuadPart;
+        ret->capacity = total.QuadPart;
+        ret->free = free.QuadPart;
+        ret->available = available.QuadPart;
     }
-    return info;
+    return ret;
 }
 
 /* ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z */
@@ -14919,20 +14919,20 @@ int __cdecl tr2_sys__Rename_wchar(WCHAR const* old_path, WCHAR const* new_path)
 
 /* ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PB_W@Z */
 /* ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEB_W@Z */
-struct space_info __cdecl tr2_sys__Statvfs_wchar(const WCHAR* path)
+struct space_info* __cdecl tr2_sys__Statvfs_wchar(struct space_info *ret, const WCHAR* path)
 {
     ULARGE_INTEGER available, total, free;
-    struct space_info info;
+
     TRACE("(%s)\n", debugstr_w(path));
 
     if(!path || !GetDiskFreeSpaceExW(path, &available, &total, &free)) {
-        info.capacity = info.free = info.available = 0;
+        ret->capacity = ret->free = ret->available = 0;
     }else {
-        info.capacity = total.QuadPart;
-        info.free = free.QuadPart;
-        info.available = available.QuadPart;
+        ret->capacity = total.QuadPart;
+        ret->free = free.QuadPart;
+        ret->available = available.QuadPart;
     }
-    return info;
+    return ret;
 }
 
 /* ??1_Winit@std@@QAE@XZ */
