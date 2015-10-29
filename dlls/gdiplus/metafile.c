@@ -908,6 +908,8 @@ static int CALLBACK get_metafile_type_proc(HDC hDC, HANDLETABLE *lpHTable, const
         else
             *result = MetafileTypeEmf;
     }
+    else if (lpEMFR->iType == EMR_HEADER)
+        return TRUE;
     else
         *result = MetafileTypeEmf;
 
