@@ -75,6 +75,10 @@ static pa_mainloop *pulse_ml;
 
 static pthread_mutex_t pulse_lock;
 
+/* Mixer format + period times */
+static WAVEFORMATEXTENSIBLE pulse_fmt[2];
+static REFERENCE_TIME pulse_min_period[2], pulse_def_period[2];
+
 static GUID pulse_render_guid =
 { 0xfd47d9cc, 0x4218, 0x4135, { 0x9c, 0xe2, 0x0c, 0x19, 0x5c, 0x87, 0x40, 0x5b } };
 static GUID pulse_capture_guid =
@@ -153,6 +157,128 @@ static void pulse_contextcallback(pa_context *c, void *userdata)
 }
 
 
+static void pulse_stream_state(pa_stream *s, void *user)
+{
+    pa_stream_state_t state = pa_stream_get_state(s);
+    TRACE("Stream state changed to %i\n", state);
+}
+
+static const enum pa_channel_position pulse_pos_from_wfx[] = {
+    PA_CHANNEL_POSITION_FRONT_LEFT,
+    PA_CHANNEL_POSITION_FRONT_RIGHT,
+    PA_CHANNEL_POSITION_FRONT_CENTER,
+    PA_CHANNEL_POSITION_LFE,
+    PA_CHANNEL_POSITION_REAR_LEFT,
+    PA_CHANNEL_POSITION_REAR_RIGHT,
+    PA_CHANNEL_POSITION_FRONT_LEFT_OF_CENTER,
+    PA_CHANNEL_POSITION_FRONT_RIGHT_OF_CENTER,
+    PA_CHANNEL_POSITION_REAR_CENTER,
+    PA_CHANNEL_POSITION_SIDE_LEFT,
+    PA_CHANNEL_POSITION_SIDE_RIGHT,
+    PA_CHANNEL_POSITION_TOP_CENTER,
+    PA_CHANNEL_POSITION_TOP_FRONT_LEFT,
+    PA_CHANNEL_POSITION_TOP_FRONT_CENTER,
+    PA_CHANNEL_POSITION_TOP_FRONT_RIGHT,
+    PA_CHANNEL_POSITION_TOP_REAR_LEFT,
+    PA_CHANNEL_POSITION_TOP_REAR_CENTER,
+    PA_CHANNEL_POSITION_TOP_REAR_RIGHT
+};
+
+static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
+    WAVEFORMATEX *wfx = &fmt->Format;
+    pa_stream *stream;
+    pa_channel_map map;
+    pa_sample_spec ss;
+    pa_buffer_attr attr;
+    int ret, i;
+    unsigned int length = 0;
+
+    pa_channel_map_init_auto(&map, 2, PA_CHANNEL_MAP_ALSA);
+    ss.rate = 48000;
+    ss.format = PA_SAMPLE_FLOAT32LE;
+    ss.channels = map.channels;
+
+    attr.maxlength = -1;
+    attr.tlength = -1;
+    attr.minreq = attr.fragsize = pa_frame_size(&ss);
+    attr.prebuf = 0;
+
+    stream = pa_stream_new(pulse_ctx, "format test stream", &ss, &map);
+    if (stream)
+        pa_stream_set_state_callback(stream, pulse_stream_state, NULL);
+    if (!stream)
+        ret = -1;
+    else if (render)
+        ret = pa_stream_connect_playback(stream, NULL, &attr,
+        PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS, NULL, NULL);
+    else
+        ret = pa_stream_connect_record(stream, NULL, &attr, PA_STREAM_START_CORKED|PA_STREAM_FIX_RATE|PA_STREAM_FIX_CHANNELS|PA_STREAM_EARLY_REQUESTS);
+    if (ret >= 0) {
+        while (pa_mainloop_iterate(pulse_ml, 1, &ret) >= 0 &&
+                pa_stream_get_state(stream) == PA_STREAM_CREATING)
+        {}
+        if (pa_stream_get_state(stream) == PA_STREAM_READY) {
+            ss = *pa_stream_get_sample_spec(stream);
+            map = *pa_stream_get_channel_map(stream);
+            if (render)
+                length = pa_stream_get_buffer_attr(stream)->minreq;
+            else
+                length = pa_stream_get_buffer_attr(stream)->fragsize;
+            pa_stream_disconnect(stream);
+            while (pa_mainloop_iterate(pulse_ml, 1, &ret) >= 0 &&
+                    pa_stream_get_state(stream) == PA_STREAM_READY)
+            {}
+        }
+    }
+    if (stream)
+        pa_stream_unref(stream);
+    if (length)
+        pulse_def_period[!render] = pulse_min_period[!render] = pa_bytes_to_usec(10 * length, &ss);
+    else
+        pulse_min_period[!render] = MinimumPeriod;
+    if (pulse_def_period[!render] <= DefaultPeriod)
+        pulse_def_period[!render] = DefaultPeriod;
+
+    wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    wfx->cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+    wfx->nChannels = ss.channels;
+    wfx->wBitsPerSample = 8 * pa_sample_size_of_format(ss.format);
+    wfx->nSamplesPerSec = ss.rate;
+    wfx->nBlockAlign = pa_frame_size(&ss);
+    wfx->nAvgBytesPerSec = wfx->nSamplesPerSec * wfx->nBlockAlign;
+    if (ss.format != PA_SAMPLE_S24_32LE)
+        fmt->Samples.wValidBitsPerSample = wfx->wBitsPerSample;
+    else
+        fmt->Samples.wValidBitsPerSample = 24;
+    if (ss.format == PA_SAMPLE_FLOAT32LE)
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+    else
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+
+    fmt->dwChannelMask = 0;
+    for (i = 0; i < map.channels; ++i)
+        switch (map.map[i]) {
+            default: FIXME("Unhandled channel %s\n", pa_channel_position_to_string(map.map[i])); break;
+            case PA_CHANNEL_POSITION_FRONT_LEFT: fmt->dwChannelMask |= SPEAKER_FRONT_LEFT; break;
+            case PA_CHANNEL_POSITION_MONO:
+            case PA_CHANNEL_POSITION_FRONT_CENTER: fmt->dwChannelMask |= SPEAKER_FRONT_CENTER; break;
+            case PA_CHANNEL_POSITION_FRONT_RIGHT: fmt->dwChannelMask |= SPEAKER_FRONT_RIGHT; break;
+            case PA_CHANNEL_POSITION_REAR_LEFT: fmt->dwChannelMask |= SPEAKER_BACK_LEFT; break;
+            case PA_CHANNEL_POSITION_REAR_CENTER: fmt->dwChannelMask |= SPEAKER_BACK_CENTER; break;
+            case PA_CHANNEL_POSITION_REAR_RIGHT: fmt->dwChannelMask |= SPEAKER_BACK_RIGHT; break;
+            case PA_CHANNEL_POSITION_LFE: fmt->dwChannelMask |= SPEAKER_LOW_FREQUENCY; break;
+            case PA_CHANNEL_POSITION_SIDE_LEFT: fmt->dwChannelMask |= SPEAKER_SIDE_LEFT; break;
+            case PA_CHANNEL_POSITION_SIDE_RIGHT: fmt->dwChannelMask |= SPEAKER_SIDE_RIGHT; break;
+            case PA_CHANNEL_POSITION_TOP_CENTER: fmt->dwChannelMask |= SPEAKER_TOP_CENTER; break;
+            case PA_CHANNEL_POSITION_TOP_FRONT_LEFT: fmt->dwChannelMask |= SPEAKER_TOP_FRONT_LEFT; break;
+            case PA_CHANNEL_POSITION_TOP_FRONT_CENTER: fmt->dwChannelMask |= SPEAKER_TOP_FRONT_CENTER; break;
+            case PA_CHANNEL_POSITION_TOP_FRONT_RIGHT: fmt->dwChannelMask |= SPEAKER_TOP_FRONT_RIGHT; break;
+            case PA_CHANNEL_POSITION_TOP_REAR_LEFT: fmt->dwChannelMask |= SPEAKER_TOP_BACK_LEFT; break;
+            case PA_CHANNEL_POSITION_TOP_REAR_CENTER: fmt->dwChannelMask |= SPEAKER_TOP_BACK_CENTER; break;
+            case PA_CHANNEL_POSITION_TOP_REAR_RIGHT: fmt->dwChannelMask |= SPEAKER_TOP_BACK_RIGHT; break;
+        }
+}
+
 /* some poorly-behaved applications call audio functions during DllMain, so we
  * have to do as much as possible without creating a new thread. this function
  * sets up a synchronous connection to verify the server is running and query
@@ -206,6 +332,9 @@ static HRESULT pulse_test_connect(void)
     TRACE("Test-connected to server %s with protocol version: %i.\n",
         pa_context_get_server(pulse_ctx),
         pa_context_get_server_protocol_version(pulse_ctx));
+
+    pulse_probe_settings(1, &pulse_fmt[0]);
+    pulse_probe_settings(0, &pulse_fmt[1]);
 
     pa_context_unref(pulse_ctx);
     pulse_ctx = NULL;
