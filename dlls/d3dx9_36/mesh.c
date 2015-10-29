@@ -3912,11 +3912,9 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memo
 
     if (!memory || !memory_size || !device || !frame_hierarchy || !alloc_hier)
         return D3DERR_INVALIDCALL;
-    if (load_user_data || anim_controller) {
-        if (load_user_data)
-            FIXME("Loading user data not implemented\n");
-        if (anim_controller)
-            FIXME("Animation controller creation not implemented\n");
+    if (load_user_data)
+    {
+        FIXME("Loading user data not implemented.\n");
         return E_NOTIMPL;
     }
 
@@ -3984,6 +3982,12 @@ HRESULT WINAPI D3DXLoadMeshHierarchyFromXInMemory(const void *memory, DWORD memo
     } else {
         *frame_hierarchy = first_frame;
         hr = D3D_OK;
+    }
+
+    if (anim_controller)
+    {
+        *anim_controller = NULL;
+        FIXME("Animation controller creation not implemented.\n");
     }
 
 cleanup:

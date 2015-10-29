@@ -2205,6 +2205,127 @@ static void D3DXLoadMeshTest(void)
             (char *)"texture.jpg", /* pTextureFilename */
         },
     };
+    static const char box_anim_xfile[] =
+        "xof 0303txt 0032"
+        "Mesh CubeMesh {"
+        "8;" /* DWORD nVertices; */
+        /* array Vector vertices[nVertices]; */
+        "0.0; 0.0; 0.0;,"
+        "0.0; 0.0; 1.0;,"
+        "0.0; 1.0; 0.0;,"
+        "0.0; 1.0; 1.0;,"
+        "1.0; 0.0; 0.0;,"
+        "1.0; 0.0; 1.0;,"
+        "1.0; 1.0; 0.0;,"
+        "1.0; 1.0; 1.0;;"
+        "6;" /* DWORD nFaces; */
+        /* array MeshFace faces[nFaces]; */
+        "4; 0, 1, 3, 2;," /* left side */
+        "4; 2, 3, 7, 6;," /* top side */
+        "4; 6, 7, 5, 4;," /* right side */
+        "4; 1, 0, 4, 5;," /* bottom side */
+        "4; 1, 5, 7, 3;," /* back side */
+        "4; 0, 2, 6, 4;;" /* front side */
+        "MeshNormals {"
+        "6;" /* DWORD nNormals; */
+        /* array Vector normals[nNormals]; */
+        "-1.0; 0.0; 0.0;,"
+        "0.0; 1.0; 0.0;,"
+        "1.0; 0.0; 0.0;,"
+        "0.0; -1.0; 0.0;,"
+        "0.0; 0.0; 1.0;,"
+        "0.0; 0.0; -1.0;;"
+        "6;" /* DWORD nFaceNormals; */
+        /* array MeshFace faceNormals[nFaceNormals]; */
+        "4; 0, 0, 0, 0;,"
+        "4; 1, 1, 1, 1;,"
+        "4; 2, 2, 2, 2;,"
+        "4; 3, 3, 3, 3;,"
+        "4; 4, 4, 4, 4;,"
+        "4; 5, 5, 5, 5;;"
+        "}"
+        "MeshMaterialList materials {"
+        "2;" /* DWORD nMaterials; */
+        "6;" /* DWORD nFaceIndexes; */
+        /* array DWORD faceIndexes[nFaceIndexes]; */
+        "0, 0, 0, 1, 1, 1;;"
+        "Material {"
+        /* ColorRGBA faceColor; */
+        "0.0; 0.0; 1.0; 1.0;;"
+        /* FLOAT power; */
+        "0.5;"
+        /* ColorRGB specularColor; */
+        "1.0; 1.0; 1.0;;"
+        /* ColorRGB emissiveColor; */
+        "0.0; 0.0; 0.0;;"
+        "}"
+        "Material {"
+        /* ColorRGBA faceColor; */
+        "1.0; 1.0; 1.0; 1.0;;"
+        /* FLOAT power; */
+        "1.0;"
+        /* ColorRGB specularColor; */
+        "1.0; 1.0; 1.0;;"
+        /* ColorRGB emissiveColor; */
+        "0.0; 0.0; 0.0;;"
+        "TextureFilename { \"texture.jpg\"; }"
+        "}"
+        "}"
+        "MeshVertexColors {"
+        "8;" /* DWORD nVertexColors; */
+        /* array IndexedColor vertexColors[nVertexColors]; */
+        "0; 0.0; 0.0; 0.0; 0.0;;"
+        "1; 0.0; 0.0; 1.0; 0.1;;"
+        "2; 0.0; 1.0; 0.0; 0.2;;"
+        "3; 0.0; 1.0; 1.0; 0.3;;"
+        "4; 1.0; 0.0; 0.0; 0.4;;"
+        "5; 1.0; 0.0; 1.0; 0.5;;"
+        "6; 1.0; 1.0; 0.0; 0.6;;"
+        "7; 1.0; 1.0; 1.0; 0.7;;"
+        "}"
+        "MeshTextureCoords {"
+        "8;" /* DWORD nTextureCoords; */
+        /* array Coords2d textureCoords[nTextureCoords]; */
+        "0.0; 1.0;,"
+        "1.0; 1.0;,"
+        "0.0; 0.0;,"
+        "1.0; 0.0;,"
+        "1.0; 1.0;,"
+        "0.0; 1.0;,"
+        "1.0; 0.0;,"
+        "0.0; 0.0;;"
+        "}"
+        "}"
+        "Frame CubeFrame {"
+        "FrameTransformMatrix {"
+        /* Matrix4x4 frameMatrix; */
+        "1.0, 0.0, 0.0, 0.0,"
+        "0.0, 1.0, 0.0, 0.0,"
+        "0.0, 0.0, 1.0, 0.0,"
+        "0.0, 0.0, 0.0, 1.0;;"
+        "}"
+        "{CubeMesh}"
+        "}"
+        "AnimationSet AnimationSet0 {"
+        "Animation Animation0 {"
+        "{CubeFrame}"
+        "AnimationKey {"
+        "2;" /* DWORD keyType; */
+        "9;" /* DWORD nKeys; */
+        /* array TimedFloatKeys keys[nKeys]; */
+        "10; 3; -100.0, 0.0, 0.0;;,"
+        "20; 3; -75.0,  0.0, 0.0;;,"
+        "30; 3; -50.0,  0.0, 0.0;;,"
+        "40; 3; -25.5,  0.0, 0.0;;,"
+        "50; 3; 0.0,    0.0, 0.0;;,"
+        "60; 3; 25.5,   0.0, 0.0;;,"
+        "70; 3; 50.0,   0.0, 0.0;;,"
+        "80; 3; 75.5,   0.0, 0.0;;,"
+        "90; 3; 100.0,  0.0, 0.0;;;"
+        "}"
+        "}"
+        "}";
+
     const DWORD box_fvf = D3DFVF_XYZ | D3DFVF_NORMAL | D3DFVF_DIFFUSE | D3DFVF_TEX1;
     /*________________________*/
     static const D3DXMATERIAL default_materials[] = {
@@ -2225,6 +2346,7 @@ static void D3DXLoadMeshTest(void)
     D3DXFRAME *frame_hier = NULL;
     D3DXMATRIX transform;
     struct test_context *test_context;
+    ID3DXAnimationController *controller;
 
     if (!(test_context = new_test_context()))
     {
@@ -2281,12 +2403,31 @@ static void D3DXLoadMeshTest(void)
         frame_hier = NULL;
     }
 
+    controller = (ID3DXAnimationController *)0xdeadbeef;
+    hr = D3DXLoadMeshHierarchyFromXInMemory(box_anim_xfile, sizeof(box_anim_xfile) - 1,
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, &controller);
+    todo_wine ok(hr == D3D_OK, "Expected D3D_OK, got %#x.\n", hr);
+    if (SUCCEEDED(hr))
+    {
+        ok(controller != NULL, "Animation Controller NULL.\n");
+
+        hr = D3DXFrameDestroy(frame_hier, &alloc_hier);
+        ok(hr == D3D_OK, "Expected D3D_OK, got %#x.\n", hr);
+        if (controller)
+            controller->lpVtbl->Release(controller);
+
+        frame_hier = NULL;
+    }
+
+    controller = (ID3DXAnimationController *)0xdeadbeef;
     hr = D3DXLoadMeshHierarchyFromXInMemory(box_xfile, sizeof(box_xfile) - 1,
-            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, NULL);
+            D3DXMESH_MANAGED, device, &alloc_hier, NULL, &frame_hier, &controller);
     ok(hr == D3D_OK, "Expected D3D_OK, got %#x\n", hr);
-    if (SUCCEEDED(hr)) {
+    if (SUCCEEDED(hr))
+    {
         D3DXMESHCONTAINER *container = frame_hier->pMeshContainer;
 
+        ok(!controller, "Animation Controller returned.\n");
         ok(frame_hier->Name == NULL, "Expected NULL, got '%s'\n", frame_hier->Name);
         D3DXMatrixIdentity(&transform);
         check_matrix(&frame_hier->TransformationMatrix, &transform);
