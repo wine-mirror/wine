@@ -121,6 +121,12 @@ static const struct object_ops console_input_events_ops =
     console_input_events_destroy      /* destroy */
 };
 
+struct font_info
+{
+    short int width;
+    short int height;
+};
+
 struct screen_buffer
 {
     struct object         obj;           /* object header */
@@ -139,6 +145,7 @@ struct screen_buffer
     unsigned short        attr;          /* default attribute for screen buffer */
     rectangle_t           win;           /* current visible window on the screen buffer *
 					  * as seen in wineconsole */
+    struct font_info      font;          /* console font information */
     struct fd            *fd;            /* for bare console, attached output fd */
 };
 
@@ -411,6 +418,8 @@ static struct screen_buffer *create_console_output( struct console_input *consol
     screen_buffer->win.top        = 0;
     screen_buffer->win.bottom     = screen_buffer->max_height - 1;
     screen_buffer->data           = NULL;
+    screen_buffer->font.width     = 0;
+    screen_buffer->font.height    = 0;
     list_add_head( &screen_buffer_list, &screen_buffer->entry );
 
     if (fd == -1)
@@ -1018,6 +1027,11 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
 
 	screen_buffer->max_width  = req->max_width;
 	screen_buffer->max_height = req->max_height;
+    }
+    if (req->mask & SET_CONSOLE_OUTPUT_INFO_FONT)
+    {
+        screen_buffer->font.width  = req->font_width;
+        screen_buffer->font.height = req->font_height;
     }
 
     return 1;
@@ -1676,6 +1690,8 @@ DECL_HANDLER(get_console_output_info)
         reply->win_bottom     = screen_buffer->win.bottom;
         reply->max_width      = screen_buffer->max_width;
         reply->max_height     = screen_buffer->max_height;
+        reply->font_width     = screen_buffer->font.width;
+        reply->font_height    = screen_buffer->font.height;
         release_object( screen_buffer );
     }
 }

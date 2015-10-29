@@ -1896,7 +1896,9 @@ struct set_console_output_info_request
     short int    win_bottom;
     short int    max_width;
     short int    max_height;
-    char __pad_46[2];
+    short int    font_width;
+    short int    font_height;
+    char __pad_50[6];
 };
 struct set_console_output_info_reply
 {
@@ -1908,6 +1910,7 @@ struct set_console_output_info_reply
 #define SET_CONSOLE_OUTPUT_INFO_ATTR            0x08
 #define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x10
 #define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x20
+#define SET_CONSOLE_OUTPUT_INFO_FONT            0x40
 
 
 
@@ -1932,7 +1935,9 @@ struct get_console_output_info_reply
     short int    win_bottom;
     short int    max_width;
     short int    max_height;
-    char __pad_34[6];
+    short int    font_width;
+    short int    font_height;
+    char __pad_38[2];
 };
 
 
@@ -6147,6 +6152,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 488
+#define SERVER_PROTOCOL_VERSION 489
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

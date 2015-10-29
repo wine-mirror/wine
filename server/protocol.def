@@ -1495,6 +1495,8 @@ struct console_renderer_event
     short int    win_bottom;
     short int    max_width;     /* maximum size (width x height) for the window */
     short int    max_height;
+    short int    font_width;    /* font size (width x height) */
+    short int    font_height;
 @END
 #define SET_CONSOLE_OUTPUT_INFO_CURSOR_GEOM     0x01
 #define SET_CONSOLE_OUTPUT_INFO_CURSOR_POS      0x02
@@ -1502,6 +1504,7 @@ struct console_renderer_event
 #define SET_CONSOLE_OUTPUT_INFO_ATTR            0x08
 #define SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW  0x10
 #define SET_CONSOLE_OUTPUT_INFO_MAX_SIZE        0x20
+#define SET_CONSOLE_OUTPUT_INFO_FONT            0x40
 
 
 /* Get info about a console (output only) */
@@ -1521,6 +1524,8 @@ struct console_renderer_event
     short int    win_bottom;
     short int    max_width;     /* maximum size (width x height) for the window */
     short int    max_height;
+    short int    font_width;    /* font size (width x height) */
+    short int    font_height;
 @END
 
 /* Add input records to a console input queue */

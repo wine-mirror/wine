@@ -1959,6 +1959,8 @@ static void dump_set_console_output_info_request( const struct set_console_outpu
     fprintf( stderr, ", win_bottom=%d", req->win_bottom );
     fprintf( stderr, ", max_width=%d", req->max_width );
     fprintf( stderr, ", max_height=%d", req->max_height );
+    fprintf( stderr, ", font_width=%d", req->font_width );
+    fprintf( stderr, ", font_height=%d", req->font_height );
 }
 
 static void dump_get_console_output_info_request( const struct get_console_output_info_request *req )
@@ -1981,6 +1983,8 @@ static void dump_get_console_output_info_reply( const struct get_console_output_
     fprintf( stderr, ", win_bottom=%d", req->win_bottom );
     fprintf( stderr, ", max_width=%d", req->max_width );
     fprintf( stderr, ", max_height=%d", req->max_height );
+    fprintf( stderr, ", font_width=%d", req->font_width );
+    fprintf( stderr, ", font_height=%d", req->font_height );
 }
 
 static void dump_write_console_input_request( const struct write_console_input_request *req )
