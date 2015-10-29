@@ -1846,6 +1846,7 @@ static void test_CustomFontCollection(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists, "got %d\n", exists);
     EXPECT_REF(string, 1);
+    IDWriteLocalizedStrings_Release(string);
 
     family3 = NULL;
     hr = IDWriteFont_GetFontFamily(idfont, &family3);
@@ -2869,6 +2870,7 @@ static void test_CreateStreamFromKey(void)
     ok(writetime != 0, "got %08x%08x\n", (UINT)(writetime >> 32), (UINT)writetime);
 
     IDWriteFontFileStream_Release(stream);
+    IDWriteFontFile_Release(file);
 
     IDWriteLocalFontFileLoader_Release(localloader);
     IDWriteFactory_Release(factory);
@@ -2947,6 +2949,7 @@ static void test_ReadFileFragment(void)
     ok(fragment == fragment2, "got %p, %p\n", fragment, fragment2);
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
 
+    IDWriteFontFile_Release(file);
     IDWriteFontFileStream_Release(stream);
     IDWriteLocalFontFileLoader_Release(localloader);
     IDWriteFactory_Release(factory);
