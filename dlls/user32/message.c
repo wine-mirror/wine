@@ -1872,6 +1872,7 @@ static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
         return EnableWindow( hwnd, wparam );
     case WM_WINE_SETACTIVEWINDOW:
         if (is_desktop_window( hwnd )) return 0;
+        if (!wparam && GetForegroundWindow() == hwnd) return 0;
         return (LRESULT)SetActiveWindow( (HWND)wparam );
     case WM_WINE_KEYBOARD_LL_HOOK:
     case WM_WINE_MOUSE_LL_HOOK:

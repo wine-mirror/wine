@@ -69,6 +69,7 @@ static DWORD num_settext_msgs;
 static HWND hwndMessage;
 static HWND hwndMain, hwndMain2;
 static HHOOK hhook;
+static BOOL app_activated, app_deactivated;
 
 static const char* szAWRClass = "Winsize";
 static HMENU hmenu;
@@ -816,6 +817,10 @@ static LRESULT WINAPI main_window_procA(HWND hwnd, UINT msg, WPARAM wparam, LPAR
             break;
         case WM_SETTEXT:
             num_settext_msgs++;
+            break;
+        case WM_ACTIVATEAPP:
+            if (wparam) app_activated = TRUE;
+            else app_deactivated = TRUE;
             break;
     }
 
@@ -8229,6 +8234,224 @@ static void test_GetMessagePos(void)
     DestroyWindow(button);
 }
 
+#define SET_FOREGROUND_STEAL_1          0x01
+#define SET_FOREGROUND_SET_1            0x02
+#define SET_FOREGROUND_STEAL_2          0x04
+#define SET_FOREGROUND_SET_2            0x08
+#define SET_FOREGROUND_INJECT           0x10
+
+struct set_foreground_thread_params
+{
+    UINT msg_quit, msg_command;
+    HWND window1, window2, thread_window;
+    HANDLE command_executed;
+};
+
+static DWORD WINAPI set_foreground_thread(void *params)
+{
+    struct set_foreground_thread_params *p = params;
+    MSG msg;
+
+    p->thread_window = CreateWindowExA(0, "static", "thread window", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 10, 10, 0, 0, 0, NULL);
+    SetEvent(p->command_executed);
+
+    while(GetMessageA(&msg, 0, 0, 0))
+    {
+        if (msg.message == p->msg_quit)
+            break;
+
+        if (msg.message == p->msg_command)
+        {
+            if (msg.wParam & SET_FOREGROUND_STEAL_1)
+            {
+                SetForegroundWindow(p->thread_window);
+                check_wnd_state(p->thread_window, p->thread_window, p->thread_window, 0);
+            }
+            if (msg.wParam & SET_FOREGROUND_INJECT)
+            {
+                SendNotifyMessageA(p->window1, WM_ACTIVATEAPP, 0, 0);
+            }
+            if (msg.wParam & SET_FOREGROUND_SET_1)
+            {
+                SetForegroundWindow(p->window1);
+                check_wnd_state(0, p->window1, 0, 0);
+            }
+            if (msg.wParam & SET_FOREGROUND_STEAL_2)
+            {
+                SetForegroundWindow(p->thread_window);
+                check_wnd_state(p->thread_window, p->thread_window, p->thread_window, 0);
+            }
+            if (msg.wParam & SET_FOREGROUND_SET_2)
+            {
+                SetForegroundWindow(p->window2);
+                check_wnd_state(0, p->window2, 0, 0);
+            }
+
+            SetEvent(p->command_executed);
+            continue;
+        }
+
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+    }
+
+    DestroyWindow(p->thread_window);
+    return 0;
+}
+
+static void test_activateapp(HWND window1)
+{
+    HWND window2, test_window;
+    HANDLE thread;
+    struct set_foreground_thread_params thread_params;
+    DWORD tid;
+    MSG msg;
+
+    window2 = CreateWindowExA(0, "static", "window 2", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            300, 0, 10, 10, 0, 0, 0, NULL);
+    thread_params.msg_quit = WM_USER;
+    thread_params.msg_command = WM_USER + 1;
+    thread_params.window1 = window1;
+    thread_params.window2 = window2;
+    thread_params.command_executed = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    thread = CreateThread(NULL, 0, set_foreground_thread, &thread_params, 0, &tid);
+    WaitForSingleObject(thread_params.command_executed, INFINITE);
+
+    SetForegroundWindow(window1);
+    check_wnd_state(window1, window1, window1, 0);
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+
+    /* Steal foreground: WM_ACTIVATEAPP(0) is delivered. */
+    app_activated = app_deactivated = FALSE;
+    PostThreadMessageA(tid, thread_params.msg_command, SET_FOREGROUND_STEAL_1, 0);
+    WaitForSingleObject(thread_params.command_executed, INFINITE);
+    test_window = GetForegroundWindow();
+    ok(test_window == thread_params.thread_window, "Expected foreground window %p, got %p\n",
+            thread_params.thread_window, test_window);
+    /* Active and Focus window are sometimes 0 on KDE. Ignore them.
+     * check_wnd_state(window1, thread_params.thread_window, window1, 0); */
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    check_wnd_state(0, thread_params.thread_window, 0, 0);
+    test_window = GetForegroundWindow();
+    ok(test_window == thread_params.thread_window, "Expected foreground window %p, got %p\n",
+            thread_params.thread_window, test_window);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    /* This message is reliable on Windows and inside a virtual desktop.
+     * It is unreliable on KDE (50/50) and never arrives on FVWM.
+     * ok(app_deactivated, "Expected WM_ACTIVATEAPP(0), did not receive it.\n"); */
+
+    /* Set foreground: WM_ACTIVATEAPP (1) is delivered. */
+    app_activated = app_deactivated = FALSE;
+    PostThreadMessageA(tid, thread_params.msg_command, SET_FOREGROUND_SET_1, 0);
+    WaitForSingleObject(thread_params.command_executed, INFINITE);
+    check_wnd_state(0, 0, 0, 0);
+    test_window = GetForegroundWindow();
+    ok(!test_window, "Expected foreground window 0, got %p\n", test_window);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(!= 0), did not expect it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    check_wnd_state(window1, window1, window1, 0);
+    test_window = GetForegroundWindow();
+    ok(test_window == window1, "Expected foreground window %p, got %p\n",
+            window1, test_window);
+    ok(app_activated, "Expected WM_ACTIVATEAPP(1), did not receive it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+
+    /* Steal foreground then set it back: No messages are delivered. */
+    app_activated = app_deactivated = FALSE;
+    PostThreadMessageA(tid, thread_params.msg_command, SET_FOREGROUND_STEAL_1 | SET_FOREGROUND_SET_1, 0);
+    WaitForSingleObject(thread_params.command_executed, INFINITE);
+    test_window = GetForegroundWindow();
+    ok(test_window == window1, "Expected foreground window %p, got %p\n",
+            window1, test_window);
+    check_wnd_state(window1, window1, window1, 0);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    test_window = GetForegroundWindow();
+    ok(test_window == window1, "Expected foreground window %p, got %p\n",
+            window1, test_window);
+    check_wnd_state(window1, window1, window1, 0);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+
+    /* This is not implemented with a plain WM_ACTIVATEAPP filter. */
+    app_activated = app_deactivated = FALSE;
+    PostThreadMessageA(tid, thread_params.msg_command, SET_FOREGROUND_STEAL_1
+            | SET_FOREGROUND_INJECT | SET_FOREGROUND_SET_1, 0);
+    WaitForSingleObject(thread_params.command_executed, INFINITE);
+    test_window = GetForegroundWindow();
+    ok(test_window == window1, "Expected foreground window %p, got %p\n",
+            window1, test_window);
+    check_wnd_state(window1, window1, window1, 0);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    test_window = GetForegroundWindow();
+    ok(test_window == window1, "Expected foreground window %p, got %p\n",
+            window1, test_window);
+    check_wnd_state(window1, window1, window1, 0);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    ok(app_deactivated, "Expected WM_ACTIVATEAPP(0), did not receive it.\n");
+
+    SetForegroundWindow(thread_params.thread_window);
+
+    /* Set foreground then remove: Both messages are delivered. */
+    app_activated = app_deactivated = FALSE;
+    PostThreadMessageA(tid, thread_params.msg_command, SET_FOREGROUND_SET_1 | SET_FOREGROUND_STEAL_2, 0);
+    WaitForSingleObject(thread_params.command_executed, INFINITE);
+    test_window = GetForegroundWindow();
+    ok(test_window == thread_params.thread_window, "Expected foreground window %p, got %p\n",
+            thread_params.thread_window, test_window);
+    check_wnd_state(0, thread_params.thread_window, 0, 0);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    test_window = GetForegroundWindow();
+    ok(test_window == thread_params.thread_window, "Expected foreground window %p, got %p\n",
+            thread_params.thread_window, test_window);
+    /* Active and focus are window1 on wine because the internal WM_WINE_SETACTIVEWINDOW(0)
+     * message is never generated. GetCapture() returns 0 though, so we'd get a test success
+     * in todo_wine in the line below.
+     * todo_wine check_wnd_state(0, thread_params.thread_window, 0, 0); */
+    ok(app_activated, "Expected WM_ACTIVATEAPP(1), did not receive it.\n");
+    todo_wine ok(app_deactivated, "Expected WM_ACTIVATEAPP(0), did not receive it.\n");
+
+    SetForegroundWindow(window1);
+    test_window = GetForegroundWindow();
+    ok(test_window == window1, "Expected foreground window %p, got %p\n",
+            window1, test_window);
+    check_wnd_state(window1, window1, window1, 0);
+
+    /* Switch to a different window from the same thread? No messages. */
+    app_activated = app_deactivated = FALSE;
+    PostThreadMessageA(tid, thread_params.msg_command, SET_FOREGROUND_STEAL_1 | SET_FOREGROUND_SET_2, 0);
+    WaitForSingleObject(thread_params.command_executed, INFINITE);
+    test_window = GetForegroundWindow();
+    ok(test_window == window1, "Expected foreground window %p, got %p\n",
+            window1, test_window);
+    check_wnd_state(window1, window1, window1, 0);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+    while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE)) DispatchMessageA(&msg);
+    test_window = GetForegroundWindow();
+    ok(test_window == window2, "Expected foreground window %p, got %p\n",
+            window2, test_window);
+    check_wnd_state(window2, window2, window2, 0);
+    ok(!app_activated, "Received WM_ACTIVATEAPP(1), did not expect it.\n");
+    ok(!app_deactivated, "Received WM_ACTIVATEAPP(0), did not expect it.\n");
+
+    PostThreadMessageA(tid, thread_params.msg_quit, 0, 0);
+    WaitForSingleObject(thread, INFINITE);
+
+    CloseHandle(thread_params.command_executed);
+    DestroyWindow(window2);
+}
+
 START_TEST(win)
 {
     char **argv;
@@ -8363,6 +8586,7 @@ START_TEST(win)
     test_window_without_child_style();
     test_smresult();
     test_GetMessagePos();
+    test_activateapp(hwndMain);
 
     /* add the tests above this line */
     if (hhook) UnhookWindowsHookEx(hhook);
