@@ -2057,7 +2057,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             }
             if (source->file->flags & FLAG_INSTALL)
             {
-                strarray_add( &make->install_lib_rules, ttf_file );
+                strarray_add( &make->install_lib_rules, strmake( "%s.ttf", obj ));
                 strarray_add( &make->install_lib_rules, strmake( "D$(fontdir)/%s.ttf", obj ));
             }
             if (source->file->flags & FLAG_SFD_FONTS)
