@@ -587,7 +587,7 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
   * cube - based on Greg Kreider's code.
   */
 
-  int i = 0, idx = 0;
+  int i = 1, idx = 0;
   int red, no_r, inc_r;
   int green, no_g, inc_g;
   int blue, no_b, inc_b;
