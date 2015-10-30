@@ -25,7 +25,8 @@
 #include "wine/test.h"
 
 #define expect(expected, got) ok(got == expected, "Expected %.8x, got %.8x\n", expected, got)
-#define expectf(expected, got) ok(fabs((expected) - (got)) < 0.0001, "Expected %f, got %f\n", (expected), (got))
+#define expectf_(expected, got, precision) ok(fabs((expected) - (got)) <= (precision), "Expected %f, got %f\n", (expected), (got))
+#define expectf(expected, got) expectf_((expected), (got), 0.001)
 
 static BOOL save_metafiles;
 
@@ -287,8 +288,11 @@ static void test_empty(void)
     GpMetafile *metafile;
     GpGraphics *graphics;
     HDC hdc;
+    GpRectF bounds;
+    GpUnit unit;
+    REAL xres, yres;
     HENHMETAFILE hemf, dummy;
-    BOOL ret;
+    MetafileHeader header;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
@@ -337,6 +341,20 @@ static void test_empty(void)
 
     save_metafile(metafile, "empty.emf");
 
+    stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
+    expect(Ok, stat);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(100.0, bounds.Width, 0.05);
+    expectf_(100.0, bounds.Height, 0.05);
+    expect(UnitPixel, unit);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &xres);
+    expect(Ok, stat);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)metafile, &yres);
+    expect(Ok, stat);
+
     stat = GdipGetHemfFromMetafile(metafile, &hemf);
     expect(Ok, stat);
 
@@ -348,8 +366,55 @@ static void test_empty(void)
 
     check_emfplus(hemf, empty_records, "empty emf");
 
-    ret = DeleteEnhMetaFile(hemf);
-    ok(ret != 0, "Failed to delete enhmetafile %p\n", hemf);
+    memset(&header, 0xaa, sizeof(header));
+    stat = GdipGetMetafileHeaderFromEmf(hemf, &header);
+    expect(Ok, stat);
+    todo_wine expect(MetafileTypeEmfPlusOnly, header.Type);
+    expect(U(header).EmfHeader.nBytes, header.Size);
+    todo_wine ok(header.Version == 0xdbc01001 || header.Version == 0xdbc01002, "Unexpected version %x\n", header.Version);
+    todo_wine expect(1, header.EmfPlusFlags); /* reference device was display, not printer */
+    todo_wine expectf(xres, header.DpiX);
+    todo_wine expectf(xres, U(header).EmfHeader.szlDevice.cx / (REAL)U(header).EmfHeader.szlMillimeters.cx * 25.4);
+    todo_wine expectf(yres, header.DpiY);
+    todo_wine expectf(yres, U(header).EmfHeader.szlDevice.cy / (REAL)U(header).EmfHeader.szlMillimeters.cy * 25.4);
+    expect(0, header.X);
+    expect(0, header.Y);
+    todo_wine expect(100, header.Width);
+    todo_wine expect(100, header.Height);
+    todo_wine expect(28, header.EmfPlusHeaderSize);
+    todo_wine expect(96, header.LogicalDpiX);
+    todo_wine expect(96, header.LogicalDpiX);
+    todo_wine expect(EMR_HEADER, U(header).EmfHeader.iType);
+    expect(0, U(header).EmfHeader.rclBounds.left);
+    expect(0, U(header).EmfHeader.rclBounds.top);
+    todo_wine expect(-1, U(header).EmfHeader.rclBounds.right);
+    todo_wine expect(-1, U(header).EmfHeader.rclBounds.bottom);
+    expect(0, U(header).EmfHeader.rclFrame.left);
+    expect(0, U(header).EmfHeader.rclFrame.top);
+    todo_wine expectf_(100.0, U(header).EmfHeader.rclFrame.right * xres / 2540.0, 2.0);
+    todo_wine expectf_(100.0, U(header).EmfHeader.rclFrame.bottom * yres / 2540.0, 2.0);
+
+    stat = GdipCreateMetafileFromEmf(hemf, TRUE, &metafile);
+    expect(Ok, stat);
+
+    stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
+    expect(Ok, stat);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    todo_wine expectf_(100.0, bounds.Width, 0.05);
+    todo_wine expectf_(100.0, bounds.Height, 0.05);
+    expect(UnitPixel, unit);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &xres);
+    expect(Ok, stat);
+    todo_wine expectf(header.DpiX, xres);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)metafile, &yres);
+    expect(Ok, stat);
+    todo_wine expectf(header.DpiY, yres);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
 }
 
 static const emfplus_record getdc_records[] = {
@@ -508,8 +573,11 @@ static void test_emfonly(void)
     GpImage *clone;
     GpGraphics *graphics;
     HDC hdc, metafile_dc;
+    GpRectF bounds;
+    GpUnit unit;
+    REAL xres, yres;
     HENHMETAFILE hemf;
-    BOOL ret;
+    MetafileHeader header;
     static const GpRectF frame = {0.0, 0.0, 100.0, 100.0};
     static const GpPointF dst_points[3] = {{0.0,0.0},{100.0,0.0},{0.0,100.0}};
     static const WCHAR description[] = {'w','i','n','e','t','e','s','t',0};
@@ -562,6 +630,20 @@ static void test_emfonly(void)
     check_metafile(metafile, emfonly_records, "emfonly metafile", dst_points, &frame, UnitPixel);
 
     save_metafile(metafile, "emfonly.emf");
+
+    stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
+    expect(Ok, stat);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(100.0, bounds.Width, 0.05);
+    expectf_(100.0, bounds.Height, 0.05);
+    expect(UnitPixel, unit);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &xres);
+    expect(Ok, stat);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)metafile, &yres);
+    expect(Ok, stat);
 
     stat = GdipCreateBitmapFromScan0(100, 100, 0, PixelFormat32bppARGB, NULL, &bitmap);
     expect(Ok, stat);
@@ -631,8 +713,55 @@ static void test_emfonly(void)
 
     check_emfplus(hemf, emfonly_records, "emfonly emf");
 
-    ret = DeleteEnhMetaFile(hemf);
-    ok(ret != 0, "Failed to delete enhmetafile %p\n", hemf);
+    memset(&header, 0xaa, sizeof(header));
+    stat = GdipGetMetafileHeaderFromEmf(hemf, &header);
+    expect(Ok, stat);
+    todo_wine expect(MetafileTypeEmf, header.Type);
+    expect(U(header).EmfHeader.nBytes, header.Size);
+    todo_wine expect(0x10000, header.Version);
+    expect(0, header.EmfPlusFlags);
+    todo_wine expectf(xres, header.DpiX);
+    todo_wine expectf(xres, U(header).EmfHeader.szlDevice.cx / (REAL)U(header).EmfHeader.szlMillimeters.cx * 25.4);
+    todo_wine expectf(yres, header.DpiY);
+    todo_wine expectf(yres, U(header).EmfHeader.szlDevice.cy / (REAL)U(header).EmfHeader.szlMillimeters.cy * 25.4);
+    expect(0, header.X);
+    expect(0, header.Y);
+    todo_wine expect(100, header.Width);
+    todo_wine expect(100, header.Height);
+    expect(0, header.EmfPlusHeaderSize);
+    expect(0, header.LogicalDpiX);
+    expect(0, header.LogicalDpiX);
+    todo_wine expect(EMR_HEADER, U(header).EmfHeader.iType);
+    todo_wine expect(25, U(header).EmfHeader.rclBounds.left);
+    todo_wine expect(25, U(header).EmfHeader.rclBounds.top);
+    todo_wine expect(74, U(header).EmfHeader.rclBounds.right);
+    todo_wine expect(74, U(header).EmfHeader.rclBounds.bottom);
+    expect(0, U(header).EmfHeader.rclFrame.left);
+    expect(0, U(header).EmfHeader.rclFrame.top);
+    todo_wine expectf_(100.0, U(header).EmfHeader.rclFrame.right * xres / 2540.0, 2.0);
+    todo_wine expectf_(100.0, U(header).EmfHeader.rclFrame.bottom * yres / 2540.0, 2.0);
+
+    stat = GdipCreateMetafileFromEmf(hemf, TRUE, &metafile);
+    expect(Ok, stat);
+
+    stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
+    expect(Ok, stat);
+    todo_wine expectf(0.0, bounds.X);
+    todo_wine expectf(0.0, bounds.Y);
+    todo_wine expectf_(100.0, bounds.Width, 0.05);
+    todo_wine expectf_(100.0, bounds.Height, 0.05);
+    expect(UnitPixel, unit);
+
+    stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &xres);
+    expect(Ok, stat);
+    todo_wine expectf(header.DpiX, xres);
+
+    stat = GdipGetImageVerticalResolution((GpImage*)metafile, &yres);
+    expect(Ok, stat);
+    todo_wine expectf(header.DpiY, yres);
+
+    stat = GdipDisposeImage((GpImage*)metafile);
+    expect(Ok, stat);
 }
 
 static const emfplus_record fillrect_records[] = {
