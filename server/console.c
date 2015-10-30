@@ -1781,7 +1781,7 @@ static int cgwe_enum( struct process* process, void* user)
 {
     if (process->console && process->console->renderer == current)
     {
-        *(struct console_input**)user = process->console;
+        *(struct console_input**)user = (struct console_input *)grab_object( process->console );
         return 1;
     }
     return 0;
