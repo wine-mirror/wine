@@ -641,6 +641,27 @@ exit:
 
 #endif /* HAVE_RESOLV */
 
+static const char *debugstr_query_request(const DNS_QUERY_REQUEST *req)
+{
+    if (!req)
+        return "(null)";
+
+    return wine_dbg_sprintf("{%d %s %s %x%08x %p %d %p %p}", req->Version,
+            debugstr_w(req->QueryName), dns_type_to_str(req->QueryType),
+            (UINT32)(req->QueryOptions>>32u), (UINT32)req->QueryOptions, req->pDnsServerList,
+            req->InterfaceIndex, req->pQueryCompletionCallback, req->pQueryContext);
+}
+
+/******************************************************************************
+ * DnsQueryEx           [DNSAPI.@]
+ *
+ */
+DNS_STATUS WINAPI DnsQueryEx(DNS_QUERY_REQUEST *request, DNS_QUERY_RESULT *result, DNS_QUERY_CANCEL *cancel)
+{
+    FIXME("(%s %p %p)\n", debugstr_query_request(request), result, cancel);
+    return DNS_ERROR_RCODE_NOT_IMPLEMENTED;
+}
+
 /******************************************************************************
  * DnsQuery_A           [DNSAPI.@]
  *

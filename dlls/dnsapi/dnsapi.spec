@@ -79,7 +79,7 @@
 @ stub DnsNotifyResolver
 @ stdcall DnsQuery_A(str long long ptr ptr ptr)
 @ stdcall DnsQueryConfig(long long wstr ptr ptr ptr)
-@ stub DnsQueryEx
+@ stdcall DnsQueryEx(ptr ptr ptr)
 @ stdcall DnsQuery_UTF8(str long long ptr ptr ptr)
 @ stdcall DnsQuery_W(wstr long long ptr ptr ptr)
 @ stub DnsRecordBuild_UTF8
