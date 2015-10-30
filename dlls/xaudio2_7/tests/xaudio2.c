@@ -766,6 +766,13 @@ static void test_looping(IXAudio2 *xa)
     ok(played - running_total == 22050 + 44100 * 2, "Got wrong samples played: %u\n", played - running_total);
     ok(nloopends == (played - running_total) / 88200 + 1, "Got wrong OnLoopEnd calls: %u\n", nloopends);
     running_total = played;
+
+    if(xaudio27)
+        IXAudio27SourceVoice_DestroyVoice((IXAudio27SourceVoice*)src);
+    else
+        IXAudio2SourceVoice_DestroyVoice(src);
+    IXAudio2MasteringVoice_DestroyVoice(master);
+    HeapFree(GetProcessHeap(), 0, (void*)buf.pAudioData);
 }
 
 static UINT32 test_DeviceDetails(IXAudio27 *xa)
