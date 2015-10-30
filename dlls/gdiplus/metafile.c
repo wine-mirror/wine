@@ -941,18 +941,87 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
     return Ok;
 }
 
-GpStatus WINGDIPAPI GdipGetMetafileHeaderFromEmf(HENHMETAFILE hEmf,
+static int CALLBACK get_emfplus_header_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR,
+    int nObj, LPARAM lpData)
+{
+    EmfPlusHeader *dst_header = (EmfPlusHeader*)lpData;
+
+    if (lpEMFR->iType == EMR_GDICOMMENT)
+    {
+        const EMRGDICOMMENT *comment = (const EMRGDICOMMENT*)lpEMFR;
+
+        if (comment->cbData >= 4 && memcmp(comment->Data, "EMF+", 4) == 0)
+        {
+            const EmfPlusRecordHeader *header = (const EmfPlusRecordHeader*)&comment->Data[4];
+
+            if (4 + sizeof(EmfPlusHeader) <= comment->cbData &&
+                header->Type == EmfPlusRecordTypeHeader)
+            {
+                memcpy(dst_header, header, sizeof(*dst_header));
+            }
+        }
+    }
+    else if (lpEMFR->iType == EMR_HEADER)
+        return TRUE;
+
+    return FALSE;
+}
+
+GpStatus WINGDIPAPI GdipGetMetafileHeaderFromEmf(HENHMETAFILE hemf,
     MetafileHeader *header)
 {
-    static int calls;
+    ENHMETAHEADER3 emfheader;
+    EmfPlusHeader emfplusheader;
+    MetafileType metafile_type;
 
-    if(!hEmf || !header)
+    TRACE("(%p,%p)\n", hemf, header);
+
+    if(!hemf || !header)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("not implemented\n");
+    if (GetEnhMetaFileHeader(hemf, sizeof(emfheader), (ENHMETAHEADER*)&emfheader) == 0)
+        return GenericError;
 
-    memset(header, 0, sizeof(MetafileHeader));
+    emfplusheader.Header.Type = 0;
+
+    EnumEnhMetaFile(NULL, hemf, get_emfplus_header_proc, &emfplusheader, NULL);
+
+    if (emfplusheader.Header.Type == EmfPlusRecordTypeHeader)
+    {
+        if ((emfplusheader.Header.Flags & 1) == 1)
+            metafile_type = MetafileTypeEmfPlusDual;
+        else
+            metafile_type = MetafileTypeEmfPlusOnly;
+    }
+    else
+        metafile_type = MetafileTypeEmf;
+
+    header->Type = metafile_type;
+    header->Size = emfheader.nBytes;
+    header->DpiX = (REAL)emfheader.szlDevice.cx * 25.4 / emfheader.szlMillimeters.cx;
+    header->DpiY = (REAL)emfheader.szlDevice.cy * 25.4 / emfheader.szlMillimeters.cy;
+    header->X = gdip_round((REAL)emfheader.rclFrame.left / 2540.0 * header->DpiX);
+    header->Y = gdip_round((REAL)emfheader.rclFrame.top / 2540.0 * header->DpiY);
+    header->Width = gdip_round((REAL)(emfheader.rclFrame.right - emfheader.rclFrame.left) / 2540.0 * header->DpiX);
+    header->Height = gdip_round((REAL)(emfheader.rclFrame.bottom - emfheader.rclFrame.top) / 2540.0 * header->DpiY);
+    header->EmfHeader = emfheader;
+
+    if (metafile_type == MetafileTypeEmfPlusDual || metafile_type == MetafileTypeEmfPlusOnly)
+    {
+        header->Version = emfplusheader.Version;
+        header->EmfPlusFlags = emfplusheader.EmfPlusFlags;
+        header->EmfPlusHeaderSize = emfplusheader.Header.Size;
+        header->LogicalDpiX = emfplusheader.LogicalDpiX;
+        header->LogicalDpiY = emfplusheader.LogicalDpiY;
+    }
+    else
+    {
+        header->Version = emfheader.nVersion;
+        header->EmfPlusFlags = 0;
+        header->EmfPlusHeaderSize = 0;
+        header->LogicalDpiX = 0;
+        header->LogicalDpiY = 0;
+    }
 
     return Ok;
 }
