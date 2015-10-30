@@ -193,6 +193,7 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
                                        MetafileFrameUnit frameUnit, GDIPCONST WCHAR *desc, GpMetafile **metafile)
 {
     HDC record_dc;
+    REAL dpix, dpiy;
     REAL framerect_factor_x, framerect_factor_y;
     RECT rc;
     GpStatus stat;
@@ -208,11 +209,14 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
         return NotImplemented;
     }
 
+    dpix = (REAL)GetDeviceCaps(hdc, HORZRES) / GetDeviceCaps(hdc, HORZSIZE) * 25.4;
+    dpiy = (REAL)GetDeviceCaps(hdc, VERTRES) / GetDeviceCaps(hdc, VERTSIZE) * 25.4;
+
     switch (frameUnit)
     {
     case MetafileFrameUnitPixel:
-        framerect_factor_x = 2540.0 / GetDeviceCaps(hdc, LOGPIXELSX);
-        framerect_factor_y = 2540.0 / GetDeviceCaps(hdc, LOGPIXELSY);
+        framerect_factor_x = 2540.0 / dpix;
+        framerect_factor_y = 2540.0 / dpiy;
         break;
     case MetafileFrameUnitPoint:
         framerect_factor_x = framerect_factor_y = 2540.0 / 72.0;
@@ -254,8 +258,8 @@ GpStatus WINGDIPAPI GdipRecordMetafile(HDC hdc, EmfType type, GDIPCONST GpRectF 
     (*metafile)->image.picture = NULL;
     (*metafile)->image.flags   = ImageFlagsNone;
     (*metafile)->image.palette = NULL;
-    (*metafile)->image.xres = 72.0;
-    (*metafile)->image.yres = 72.0;
+    (*metafile)->image.xres = dpix;
+    (*metafile)->image.yres = dpiy;
     (*metafile)->bounds = *frameRect;
     (*metafile)->unit = frameUnit;
     (*metafile)->metafile_type = type;
