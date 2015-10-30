@@ -1431,6 +1431,7 @@ static void test_readvaluechunk(void)
     ok(value[0] == 'c', "got %s\n", wine_dbgstr_w(value));
 
     IXmlReader_Release(reader);
+    IStream_Release(stream);
 }
 
 static struct test_entry cdata_tests[] = {
