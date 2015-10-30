@@ -2037,6 +2037,9 @@ static void test_external_connection(void)
     ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
 
+    IStream_Release(stream);
+    IStream_Release(stream2);
+
     /* Weak table marshaling does not increment external connections */
     hres = CreateStreamOnHGlobal(NULL, TRUE, &stream);
     ok(hres == S_OK, "CreateStreamOnHGlobal failed: %08x\n", hres);
@@ -2055,6 +2058,8 @@ static void test_external_connection(void)
     hres = CoReleaseMarshalData(stream);
     ok(hres == S_OK, "CoReleaseMarshalData failed: %08x\n", hres);
     ok(external_connections == 0, "external_connections = %d\n", external_connections);
+
+    IStream_Release(stream);
 }
 
 START_TEST(tmarshal)
