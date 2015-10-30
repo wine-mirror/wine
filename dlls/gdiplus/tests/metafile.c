@@ -401,17 +401,17 @@ static void test_empty(void)
     expect(Ok, stat);
     expectf(0.0, bounds.X);
     expectf(0.0, bounds.Y);
-    todo_wine expectf_(100.0, bounds.Width, 0.05);
-    todo_wine expectf_(100.0, bounds.Height, 0.05);
+    expectf_(100.0, bounds.Width, 0.05);
+    expectf_(100.0, bounds.Height, 0.05);
     expect(UnitPixel, unit);
 
     stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &xres);
     expect(Ok, stat);
-    todo_wine expectf(header.DpiX, xres);
+    expectf(header.DpiX, xres);
 
     stat = GdipGetImageVerticalResolution((GpImage*)metafile, &yres);
     expect(Ok, stat);
-    todo_wine expectf(header.DpiY, yres);
+    expectf(header.DpiY, yres);
 
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);
@@ -746,19 +746,19 @@ static void test_emfonly(void)
 
     stat = GdipGetImageBounds((GpImage*)metafile, &bounds, &unit);
     expect(Ok, stat);
-    todo_wine expectf(0.0, bounds.X);
-    todo_wine expectf(0.0, bounds.Y);
-    todo_wine expectf_(100.0, bounds.Width, 0.05);
-    todo_wine expectf_(100.0, bounds.Height, 0.05);
+    expectf(0.0, bounds.X);
+    expectf(0.0, bounds.Y);
+    expectf_(100.0, bounds.Width, 0.05);
+    expectf_(100.0, bounds.Height, 0.05);
     expect(UnitPixel, unit);
 
     stat = GdipGetImageHorizontalResolution((GpImage*)metafile, &xres);
     expect(Ok, stat);
-    todo_wine expectf(header.DpiX, xres);
+    expectf(header.DpiX, xres);
 
     stat = GdipGetImageVerticalResolution((GpImage*)metafile, &yres);
     expect(Ok, stat);
-    todo_wine expectf(header.DpiY, yres);
+    expectf(header.DpiY, yres);
 
     stat = GdipDisposeImage((GpImage*)metafile);
     expect(Ok, stat);

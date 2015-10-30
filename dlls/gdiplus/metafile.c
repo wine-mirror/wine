@@ -887,46 +887,6 @@ GpStatus WINGDIPAPI GdipEnumerateMetafileDestPointI(GpGraphics *graphics,
     return GdipEnumerateMetafileDestPoint(graphics, metafile, &ptf, callback, cb_data, attrs);
 }
 
-static int CALLBACK get_metafile_type_proc(HDC hDC, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR,
-    int nObj, LPARAM lpData)
-{
-    MetafileType *result = (MetafileType*)lpData;
-
-    if (lpEMFR->iType == EMR_GDICOMMENT)
-    {
-        const EMRGDICOMMENT *comment = (const EMRGDICOMMENT*)lpEMFR;
-
-        if (comment->cbData >= 4 && memcmp(comment->Data, "EMF+", 4) == 0)
-        {
-            const EmfPlusRecordHeader *header = (const EmfPlusRecordHeader*)&comment->Data[4];
-
-            if (4 + sizeof(EmfPlusRecordHeader) <= comment->cbData &&
-                header->Type == EmfPlusRecordTypeHeader)
-            {
-                if ((header->Flags & 1) == 1)
-                    *result = MetafileTypeEmfPlusDual;
-                else
-                    *result = MetafileTypeEmfPlusOnly;
-            }
-        }
-        else
-            *result = MetafileTypeEmf;
-    }
-    else if (lpEMFR->iType == EMR_HEADER)
-        return TRUE;
-    else
-        *result = MetafileTypeEmf;
-
-    return FALSE;
-}
-
-static MetafileType METAFILE_GetEmfType(HENHMETAFILE hemf)
-{
-    MetafileType result = MetafileTypeInvalid;
-    EnumEnhMetaFile(NULL, hemf, get_metafile_type_proc, &result, NULL);
-    return result;
-}
-
 GpStatus WINGDIPAPI GdipGetMetafileHeaderFromMetafile(GpMetafile * metafile,
     MetafileHeader * header)
 {
@@ -1069,21 +1029,17 @@ GpStatus WINGDIPAPI GdipGetMetafileHeaderFromStream(IStream *stream,
 GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     GpMetafile **metafile)
 {
-    ENHMETAHEADER header;
-    MetafileType metafile_type;
+    GpStatus stat;
+    MetafileHeader header;
 
     TRACE("(%p,%i,%p)\n", hemf, delete, metafile);
 
     if(!hemf || !metafile)
         return InvalidParameter;
 
-    if (GetEnhMetaFileHeader(hemf, sizeof(header), &header) == 0)
-        return GenericError;
-
-    metafile_type = METAFILE_GetEmfType(hemf);
-
-    if (metafile_type == MetafileTypeInvalid)
-        return GenericError;
+    stat = GdipGetMetafileHeaderFromEmf(hemf, &header);
+    if (stat != Ok)
+        return stat;
 
     *metafile = heap_alloc_zero(sizeof(GpMetafile));
     if (!*metafile)
@@ -1092,14 +1048,16 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromEmf(HENHMETAFILE hemf, BOOL delete,
     (*metafile)->image.type = ImageTypeMetafile;
     (*metafile)->image.format = ImageFormatEMF;
     (*metafile)->image.frame_count = 1;
-    (*metafile)->image.xres = (REAL)header.szlDevice.cx;
-    (*metafile)->image.yres = (REAL)header.szlDevice.cy;
-    (*metafile)->bounds.X = (REAL)header.rclBounds.left;
-    (*metafile)->bounds.Y = (REAL)header.rclBounds.top;
-    (*metafile)->bounds.Width = (REAL)(header.rclBounds.right - header.rclBounds.left);
-    (*metafile)->bounds.Height = (REAL)(header.rclBounds.bottom - header.rclBounds.top);
+    (*metafile)->image.xres = header.DpiX;
+    (*metafile)->image.yres = header.DpiY;
+    (*metafile)->bounds.X = (REAL)header.EmfHeader.rclFrame.left / 2540.0 * header.DpiX;
+    (*metafile)->bounds.Y = (REAL)header.EmfHeader.rclFrame.top / 2540.0 * header.DpiY;
+    (*metafile)->bounds.Width = (REAL)(header.EmfHeader.rclFrame.right - header.EmfHeader.rclFrame.left)
+                                / 2540.0 * header.DpiX;
+    (*metafile)->bounds.Height = (REAL)(header.EmfHeader.rclFrame.bottom - header.EmfHeader.rclFrame.top)
+                                 / 2540.0 * header.DpiY;
     (*metafile)->unit = UnitPixel;
-    (*metafile)->metafile_type = metafile_type;
+    (*metafile)->metafile_type = header.Type;
     (*metafile)->hemf = hemf;
     (*metafile)->preserve_hemf = !delete;
 
