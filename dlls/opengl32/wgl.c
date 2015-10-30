@@ -827,7 +827,7 @@ static BOOL is_extension_supported(const char* extension)
 
             /* Compare the major/minor version numbers of the native OpenGL library and what is required by the function.
              * The gl_version string is guaranteed to have at least a major/minor and sometimes it has a release number as well. */
-            if( (gl_version[0] >= version[0]) || ((gl_version[0] == version[0]) && (gl_version[2] >= version[2])) ) {
+            if( (gl_version[0] > version[0]) || ((gl_version[0] == version[0]) && (gl_version[2] >= version[2])) ) {
                 return TRUE;
             }
             WARN("The function requires OpenGL version '%c.%c' while your drivers only provide '%c.%c'\n", version[0], version[2], gl_version[0], gl_version[2]);
