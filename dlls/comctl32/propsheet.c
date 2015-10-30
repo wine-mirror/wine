@@ -2706,6 +2706,7 @@ static INT do_loop(const PropSheetInfo *psInfo)
     MSG msg;
     INT ret = -1;
     HWND hwnd = psInfo->hwnd;
+    HWND parent = psInfo->ppshheader.hwndParent;
 
     while(IsWindow(hwnd) && !psInfo->ended && (ret = GetMessageW(&msg, NULL, 0, 0)))
     {
@@ -2727,6 +2728,9 @@ static INT do_loop(const PropSheetInfo *psInfo)
 
     if(ret != -1)
         ret = psInfo->result;
+
+    if(parent)
+        EnableWindow(parent, TRUE);
 
     DestroyWindow(hwnd);
     return ret;
@@ -2754,10 +2758,7 @@ static INT_PTR PROPSHEET_PropertySheet(PropSheetInfo* psInfo, BOOL unicode)
   }
   bRet = PROPSHEET_CreateDialog(psInfo);
   if(!psInfo->isModeless)
-  {
       bRet = do_loop(psInfo);
-      if (parent) EnableWindow(parent, TRUE);
-  }
   return bRet;
 }
 
