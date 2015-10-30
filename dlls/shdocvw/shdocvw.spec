@@ -20,7 +20,7 @@
 123 stdcall -noname StopWatchAFORWARD(long str long long long)
 124 stdcall -noname StopWatchWFORWARD(long wstr long long long)
 125 stdcall -noname RunInstallUninstallStubs()
-130 stdcall -noname RunInstallUninstallStubs2()
+130 stdcall -noname RunInstallUninstallStubs2(long)
 131 stub -noname SHCreateSplashScreen
 135 stub -noname IsFileUrl
 136 stub -noname IsFileUrlW
