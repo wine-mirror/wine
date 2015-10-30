@@ -789,7 +789,7 @@ Use the --without-$1 option if you really want this.]) ;;
 esac])])
 
 AC_DEFUN([WINE_PRINT_MESSAGES],[ac_save_IFS="$IFS"
-if test "x$wine_notices != "x; then
+if test "x$wine_notices" != x; then
     echo >&AS_MESSAGE_FD
     IFS="|"
     for msg in $wine_notices; do

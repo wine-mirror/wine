@@ -19665,7 +19665,7 @@ then
 fi
 
 ac_save_IFS="$IFS"
-if test "x$wine_notices != "x; then
+if test "x$wine_notices" != x; then
     echo >&6
     IFS="|"
     for msg in $wine_notices; do
