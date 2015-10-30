@@ -594,10 +594,10 @@ static void X11DRV_PALETTE_FillDefaultColors( const PALETTEENTRY *sys_pal_templa
 
   if (palette_size <= NB_RESERVED_COLORS)
   	return;
-  while (i*i*i < (palette_size - NB_RESERVED_COLORS)) i++;
+  while (i*i*i <= (palette_size - NB_RESERVED_COLORS)) i++;
   no_r = no_g = no_b = --i;
-  if ((no_r * (no_g+1) * no_b) < (palette_size - NB_RESERVED_COLORS)) no_g++;
-  if ((no_r * no_g * (no_b+1)) < (palette_size - NB_RESERVED_COLORS)) no_b++;
+  if ((no_r * (no_g+1) * no_b) <= (palette_size - NB_RESERVED_COLORS)) no_g++;
+  if ((no_r * no_g * (no_b+1)) <= (palette_size - NB_RESERVED_COLORS)) no_b++;
   inc_r = (255 - NB_COLORCUBE_START_INDEX)/no_r;
   inc_g = (255 - NB_COLORCUBE_START_INDEX)/no_g;
   inc_b = (255 - NB_COLORCUBE_START_INDEX)/no_b;
