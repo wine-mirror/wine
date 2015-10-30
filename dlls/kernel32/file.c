@@ -2038,7 +2038,7 @@ HANDLE WINAPI FindFirstFileExW( LPCWSTR filename, FINDEX_INFO_LEVELS level,
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( &info->handle, GENERIC_READ, &attr, &io,
+    status = NtOpenFile( &info->handle, GENERIC_READ | SYNCHRONIZE, &attr, &io,
                          FILE_SHARE_READ | FILE_SHARE_WRITE,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
 
@@ -2440,7 +2440,7 @@ BOOL WINAPI SetFileAttributesW( LPCWSTR name, DWORD attributes )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
+    status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
 
     if (status == STATUS_SUCCESS)
@@ -2572,7 +2572,7 @@ DWORD WINAPI GetCompressedFileSizeW(
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
+    status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
 
     if (status == STATUS_SUCCESS)

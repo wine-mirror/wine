@@ -1547,7 +1547,7 @@ BOOL WINAPI WaitNamedPipeW (LPCWSTR name, DWORD nTimeOut)
     pipe_dev_name.Length = sizeof(leadin);
     pipe_dev_name.MaximumLength = sizeof(leadin);
     InitializeObjectAttributes(&attr,&pipe_dev_name, OBJ_CASE_INSENSITIVE, NULL, NULL);
-    status = NtOpenFile( &pipe_dev, FILE_READ_ATTRIBUTES, &attr,
+    status = NtOpenFile( &pipe_dev, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr,
                          &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,
                          FILE_SYNCHRONOUS_IO_NONALERT);
     if (status != ERROR_SUCCESS)

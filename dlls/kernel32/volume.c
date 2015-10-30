@@ -171,7 +171,7 @@ static BOOL open_device_root( LPCWSTR root, HANDLE *handle )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtOpenFile( handle, 0, &attr, &io, 0,
+    status = NtOpenFile( handle, SYNCHRONIZE, &attr, &io, 0,
                          FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     RtlFreeUnicodeString( &nt_name );
     if (status != STATUS_SUCCESS)
@@ -235,7 +235,7 @@ static void get_filesystem_label( const UNICODE_STRING *device, WCHAR *label, DW
 
     memcpy( name.Buffer, device->Buffer, device->Length );
     memcpy( name.Buffer + device->Length / sizeof(WCHAR), labelW, sizeof(labelW) );
-    if (!NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    if (!NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
                      FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT ))
     {
         char buffer[256], *p;
@@ -275,7 +275,7 @@ static DWORD get_filesystem_serial( const UNICODE_STRING *device )
 
     memcpy( name.Buffer, device->Buffer, device->Length );
     memcpy( name.Buffer + device->Length / sizeof(WCHAR), serialW, sizeof(serialW) );
-    if (!NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
+    if (!NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ|FILE_SHARE_WRITE,
                      FILE_SYNCHRONOUS_IO_NONALERT ))
     {
         char buffer[32];
@@ -765,7 +765,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
     attr.SecurityQualityOfService = NULL;
 
     nt_name.Length -= sizeof(WCHAR);  /* without trailing slash */
-    status = NtOpenFile( &handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
+    status = NtOpenFile( &handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, FILE_SHARE_READ | FILE_SHARE_WRITE,
                          FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     nt_name.Length += sizeof(WCHAR);
 
@@ -811,7 +811,7 @@ BOOL WINAPI GetVolumeInformationW( LPCWSTR root, LPWSTR label, DWORD label_len,
 
     /* we couldn't open the device, fallback to default strategy */
 
-    status = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    status = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     if (status != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError(status) );
