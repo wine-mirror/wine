@@ -143,7 +143,7 @@ static HANDLE open_vxd_handle( LPCWSTR name )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtCreateFile( &ret, 0, &attr, &io, NULL, 0,
+    status = NtCreateFile( &ret, SYNCHRONIZE, &attr, &io, NULL, 0,
                            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN_IF,
                            FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
     if (status)

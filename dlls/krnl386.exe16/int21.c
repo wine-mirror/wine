@@ -872,7 +872,7 @@ static HANDLE INT21_CreateMagicDeviceHandle( LPCWSTR name )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtCreateFile( &ret, GENERIC_READ|GENERIC_WRITE, &attr, &io, NULL, 0,
+    status = NtCreateFile( &ret, GENERIC_READ|GENERIC_WRITE|SYNCHRONIZE, &attr, &io, NULL, 0,
                            FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN_IF,
                            FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
     if (status)
