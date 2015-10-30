@@ -1996,7 +1996,7 @@ WCHAR * CDECL wine_get_dos_file_name( LPCSTR str )
 /*************************************************************************
  *           CreateSymbolicLinkW   (KERNEL32.@)
  */
-BOOL WINAPI CreateSymbolicLinkW(LPCWSTR link, LPCWSTR target, DWORD flags)
+BOOLEAN WINAPI CreateSymbolicLinkW(LPCWSTR link, LPCWSTR target, DWORD flags)
 {
     FIXME("(%s %s %d): stub\n", debugstr_w(link), debugstr_w(target), flags);
     return TRUE;
@@ -2005,7 +2005,7 @@ BOOL WINAPI CreateSymbolicLinkW(LPCWSTR link, LPCWSTR target, DWORD flags)
 /*************************************************************************
  *           CreateSymbolicLinkA   (KERNEL32.@)
  */
-BOOL WINAPI CreateSymbolicLinkA(LPCSTR link, LPCSTR target, DWORD flags)
+BOOLEAN WINAPI CreateSymbolicLinkA(LPCSTR link, LPCSTR target, DWORD flags)
 {
     FIXME("(%s %s %d): stub\n", debugstr_a(link), debugstr_a(target), flags);
     return TRUE;
