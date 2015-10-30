@@ -420,7 +420,7 @@ static inline DWORD get_security_file( LPCWSTR full_file_name, DWORD access, HAN
     attr.Attributes = OBJ_CASE_INSENSITIVE;
     attr.ObjectName = &file_nameW;
     attr.SecurityDescriptor = NULL;
-    status = NtCreateFile( file, access, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
+    status = NtCreateFile( file, access|SYNCHRONIZE, &attr, &io, NULL, FILE_FLAG_BACKUP_SEMANTICS,
                            FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE, FILE_OPEN,
                            FILE_OPEN_FOR_BACKUP_INTENT, NULL, 0 );
     RtlFreeUnicodeString( &file_nameW );
@@ -5891,7 +5891,7 @@ DWORD WINAPI SetSecurityInfo(HANDLE handle, SE_OBJECT_TYPE ObjectType,
                     attr.Attributes = 0;
                     attr.ObjectName = &name_info->Name;
                     attr.SecurityDescriptor = NULL;
-                    status = NtOpenFile(&parent, READ_CONTROL, &attr, &io,
+                    status = NtOpenFile(&parent, READ_CONTROL|SYNCHRONIZE, &attr, &io,
                             FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
                             FILE_OPEN_FOR_BACKUP_INTENT);
                     heap_free(name_info);
