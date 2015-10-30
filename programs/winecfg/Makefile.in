@@ -22,3 +22,5 @@ MANPAGES = winecfg.man.in
 SVG_SRCS = \
 	logo.svg \
 	winecfg.svg
+
+INSTALL_LIB = winecfg.exe winecfg

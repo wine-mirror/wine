@@ -21,28 +21,6 @@
 
 use strict;
 
-# Programs that we want to install in the bin directory too
-my %bin_install =
-(
-  "msiexec" => 1,
-  "notepad" => 1,
-  "regedit" => 1,
-  "regsvr32" => 1,
-  "wineboot" => 1,
-  "winecfg" => 1,
-  "wineconsole" => 1,
-  "winedbg" => 1,
-  "winefile" => 1,
-  "winemine" => 1,
-  "winepath" => 1,
-);
-
-# Programs that we don't want to install at all
-my %dont_install =
-(
-  "winetest" => 1,
-);
-
 # Dlls and programs that are 16-bit specific
 my %modules16 =
 (
@@ -265,18 +243,11 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
             $make{$var} = \@list;
-            ${$make{"=flags"}}{"clean"} = 1 if $var eq "PROGRAMS";
-            ${$make{"=flags"}}{"clean"} = 1 if $var eq "EXTRA_TARGETS";
-            next;
-        }
-        if (/^\s*INSTALL_(LIB|DEV)\s*=\s*/)
-        {
-            ${$make{"=flags"}}{$1 eq "LIB" ? "install-lib" : "install-dev"} = 1;
             next;
         }
         if (/(install-lib|install-dev|clean)\s*:/)
@@ -296,9 +267,24 @@ sub parse_makefile($)
 
     if ($file =~ /^programs\/([^\/]+)\/Makefile/)
     {
-        ${$make{"=flags"}}{"install"} = 1 unless $dont_install{$1};
-        ${$make{"=flags"}}{"installbin"} = 1 if $bin_install{$1};
+        my $prog = $1;
+        if (defined $make{"INSTALL_LIB"})
+        {
+            ${$make{"=flags"}}{"install"} = 1 if grep { "$prog.exe" eq $_; } @{$make{"INSTALL_LIB"}};
+            ${$make{"=flags"}}{"installbin"} = 1 if grep { $prog eq $_; } @{$make{"INSTALL_LIB"}};
+        }
+        else
+        {
+            ${$make{"=flags"}}{"install"} = 1;
+        }
     }
+
+    unless (defined $make{"MODULE"})
+    {
+        ${$make{"=flags"}}{"install-lib"} = 1 if defined $make{"INSTALL_LIB"};
+        ${$make{"=flags"}}{"install-dev"} = 1 if defined $make{"INSTALL_DEV"};
+    }
+    ${$make{"=flags"}}{"clean"} = 1 if defined $make{"PROGRAMS"} || defined $make{"EXTRA_TARGETS"};
 
     if (defined $make{"=flags"} && defined $make{"MODULE"})
     {

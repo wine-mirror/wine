@@ -2214,11 +2214,17 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         {
             strarray_add( &all_targets, strmake( "%s%s", make->module, dll_ext ));
             strarray_add( &all_targets, strmake( "%s.fake", make->module ));
+            add_install_rule( make, make->module, strmake( "%s%s", make->module, dll_ext ),
+                              strmake( "p$(dlldir)/%s%s", make->module, dll_ext ));
+            add_install_rule( make, make->module, strmake( "%s.fake", make->module ),
+                              strmake( "d$(fakedlldir)/%s", make->module ));
             output( "%s%s %s.fake:", module_path, dll_ext, module_path );
         }
         else
         {
             strarray_add( &all_targets, make->module );
+            add_install_rule( make, make->module, make->module,
+                              strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
             output( "%s:", module_path );
         }
         if (spec_file) output_filename( spec_file );
@@ -2253,6 +2259,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 output_filenames( target_flags );
                 if (make->is_win16) output_filename( "-m16" );
                 output( "\n" );
+                add_install_rule( make, make->importlib, strmake( "lib%s.def", make->importlib ),
+                                  strmake( "d$(dlldir)/lib%s.def", make->importlib ));
                 if (implib_objs.count)
                 {
                     strarray_add( &clean_files, strmake( "lib%s.def.a", make->importlib ));
@@ -2264,6 +2272,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                     output_filenames_obj_dir( make, implib_objs );
                     output( "\n" );
                     output( "\t$(RANLIB) $@\n" );
+                    add_install_rule( make, make->importlib, strmake( "lib%s.def.a", make->importlib ),
+                                      strmake( "d$(dlldir)/lib%s.def.a", make->importlib ));
                 }
             }
             else
@@ -2276,6 +2286,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 output_filenames( target_flags );
                 output_filenames_obj_dir( make, implib_objs );
                 output( "\n" );
+                add_install_rule( make, make->importlib, strmake( "lib%s.a", make->importlib ),
+                                  strmake( "d$(dlldir)/lib%s.a", make->importlib ));
             }
             if (crosstarget && !make->is_win16)
             {
@@ -2333,6 +2345,12 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 strarray_add( &phony_targets, "xmlpages" );
             }
             else output( "manpages htmlpages sgmlpages xmlpages::\n" );
+        }
+        else if (*dll_ext)
+        {
+            char *binary = replace_extension( make->module, ".exe", "" );
+            add_install_rule( make, binary, tools_dir_path( make, "wineapploader" ),
+                              strmake( "s$(bindir)/%s", binary ));
         }
     }
 
@@ -2819,6 +2837,7 @@ static void update_makefile( const char *path )
 
     make->install_lib_rules = empty_strarray;
     make->install_dev_rules = empty_strarray;
+    if (make->module && !make->install_lib.count) strarray_add( &make->install_lib, make->module );
 
     make->include_args = empty_strarray;
     make->define_args = empty_strarray;

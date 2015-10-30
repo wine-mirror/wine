@@ -8,3 +8,5 @@ C_SRCS = \
 RC_SRCS = regsvr32.rc
 
 MANPAGES = regsvr32.man.in
+
+INSTALL_LIB = regsvr32.exe regsvr32

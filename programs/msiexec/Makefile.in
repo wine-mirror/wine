@@ -11,3 +11,5 @@ RC_SRCS = rsrc.rc
 MANPAGES = msiexec.man.in
 
 SVG_SRCS = msiexec.svg
+
+INSTALL_LIB = msiexec.exe msiexec

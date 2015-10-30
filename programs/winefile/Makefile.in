@@ -12,3 +12,5 @@ RC_SRCS = winefile.rc
 MANPAGES = winefile.man.in
 
 SVG_SRCS = winefile.svg
+
+INSTALL_LIB = winefile.exe winefile

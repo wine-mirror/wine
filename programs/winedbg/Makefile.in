@@ -34,3 +34,5 @@ LEX_SRCS   = debug.l
 BISON_SRCS = dbg.y
 
 MANPAGES = winedbg.man.in
+
+INSTALL_LIB = winedbg.exe winedbg
