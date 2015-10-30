@@ -2391,6 +2391,7 @@ static void test_saxreader(void)
         hr = ISAXXMLReader_parse(reader, var);
         EXPECT_HR(hr, S_OK);
         ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", TRUE);
+        IStream_Release(stream);
         hr = ISAXXMLReader_putFeature(reader, _bstr_("http://xml.org/sax/features/namespaces"), VARIANT_TRUE);
         EXPECT_HR(hr, S_OK);
 
@@ -2414,6 +2415,7 @@ static void test_saxreader(void)
         hr = ISAXXMLReader_parse(reader, var);
         EXPECT_HR(hr, S_OK);
         ok_sequence(sequences, CONTENT_HANDLER_INDEX, test_seq, "content test attributes", FALSE);
+        IStream_Release(stream);
 
         hr = ISAXXMLReader_putFeature(reader, _bstr_("http://xml.org/sax/features/namespace-prefixes"), VARIANT_TRUE);
         EXPECT_HR(hr, S_OK);
