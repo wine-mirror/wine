@@ -20,6 +20,7 @@
 
 #include <stdarg.h>
 
+#include "assert.h"
 #include "locale.h"
 #include "errno.h"
 #include "limits.h"
@@ -649,33 +650,43 @@ _Locinfo* __thiscall _Locinfo__Addcats(_Locinfo *this, int category, const char 
     return _Locinfo__Locinfo_Addcats(this, category, locstr);
 }
 
-/* _Getcoll */
-ULONGLONG __cdecl _Getcoll(void)
+static _Collvec* getcoll(_Collvec *ret)
 {
-    union {
-        _Collvec collvec;
-        ULONGLONG ull;
-    } ret;
-
     TRACE("\n");
 
-    ret.collvec.page = ___lc_collate_cp_func();
+    ret->page = ___lc_collate_cp_func();
 #if _MSVCP_VER < 110
-    ret.collvec.handle = ___lc_handle_func()[LC_COLLATE];
+    ret->handle = ___lc_handle_func()[LC_COLLATE];
 #else
-    ret.collvec.lc_name = ___lc_locale_name_func()[LC_COLLATE];
+    ret->lc_name = ___lc_locale_name_func()[LC_COLLATE];
 #endif
-    return ret.ull;
+    return ret;
 }
+
+/* _Getcoll */
+#if defined(__i386__) || _MSVCP_VER<110
+ULONGLONG __cdecl _Getcoll(void)
+{
+    ULONGLONG ret;
+
+    C_ASSERT(sizeof(_Collvec) <= sizeof(ULONGLONG));
+
+    getcoll((_Collvec*)&ret);
+    return ret;
+}
+#else
+_Collvec* __cdecl _Getcoll(_Collvec *ret)
+{
+    return getcoll(ret);
+}
+#endif
 
 /* ?_Getcoll@_Locinfo@std@@QBE?AU_Collvec@@XZ */
 /* ?_Getcoll@_Locinfo@std@@QEBA?AU_Collvec@@XZ */
 DEFINE_THISCALL_WRAPPER(_Locinfo__Getcoll, 8)
 _Collvec* __thiscall _Locinfo__Getcoll(const _Locinfo *this, _Collvec *ret)
 {
-    ULONGLONG ull = _Getcoll();
-    memcpy(ret, &ull, sizeof(ull));
-    return ret;
+    return getcoll(ret);
 }
 
 /* _Getctype */
