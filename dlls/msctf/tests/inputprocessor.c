@@ -921,6 +921,7 @@ static void test_EnumInputProcessorInfo(void)
             if(IsEqualGUID(&g,&CLSID_FakeService))
                 found = TRUE;
         }
+        IEnumGUID_Release(ppEnum);
     }
     ok(found,"Did not find registered text service\n");
 }
@@ -943,6 +944,7 @@ static void test_EnumLanguageProfiles(void)
                 ok(IsEqualGUID(&profile.guidProfile,&CLSID_FakeService), "guidProfile Incorrect\n");
             }
         }
+        IEnumTfLanguageProfiles_Release(ppEnum);
     }
     ok(found,"Registered text service not found\n");
 }
