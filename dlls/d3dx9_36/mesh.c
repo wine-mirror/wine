@@ -7016,7 +7016,6 @@ HRESULT WINAPI D3DXWeldVertices(ID3DXMesh *mesh, DWORD flags, const D3DXWELDEPSI
     DWORD *point_reps = NULL;
     struct d3dx9_mesh *This = impl_from_ID3DXMesh(mesh);
     DWORD *vertex_face_map = NULL;
-    ID3DXBuffer *vertex_remap = NULL;
     BYTE *vertices = NULL;
 
     TRACE("mesh %p, flags %#x, epsilons %p, adjacency %p, adjacency_out %p, face_remap_out %p, vertex_remap_out %p.\n",
@@ -7183,7 +7182,6 @@ cleanup:
     HeapFree(GetProcessHeap(), 0, vertex_face_map);
     if (attributes) mesh->lpVtbl->UnlockAttributeBuffer(mesh);
     if (indices) mesh->lpVtbl->UnlockIndexBuffer(mesh);
-    if (vertex_remap) ID3DXBuffer_Release(vertex_remap);
     if (vertices) mesh->lpVtbl->UnlockVertexBuffer(mesh);
 
     return hr;
