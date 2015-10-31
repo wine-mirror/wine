@@ -347,7 +347,14 @@ BOOL VFWAPI DrawDibDraw(HDRAWDIB hdd, HDC hdc,
 
 #undef CHANGED
 
-    if ((dxDst == -1) && (dyDst == -1)) 
+    /* If source dimensions are not specified derive them from bitmap header */
+    if (dxSrc == -1 && dySrc == -1)
+    {
+        dxSrc = lpbi->biWidth;
+        dySrc = lpbi->biHeight;
+    }
+    /* If destination dimensions are not specified derive them from source */
+    if (dxDst == -1 && dyDst == -1)
     {
         dxDst = dxSrc;
         dyDst = dySrc;
