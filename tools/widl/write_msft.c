@@ -2078,6 +2078,10 @@ static void add_interface_typeinfo(msft_typelib_t *typelib, type_t *interface)
             add_interface_typeinfo(typelib, inherit);
     }
 
+    /* check typelib_idx again, it could have been added while resolving the parent interface */
+    if (-1 < interface->typelib_idx)
+        return;
+
     interface->typelib_idx = typelib->typelib_header.nrtypeinfos;
     msft_typeinfo = create_msft_typeinfo(typelib, TKIND_INTERFACE, interface->name, interface->attrs);
     msft_typeinfo->typeinfo->size = pointer_size;
