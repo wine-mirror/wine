@@ -1641,8 +1641,8 @@
 @ cdecl -arch=win64 ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@AEBV123@@Z(ptr) locale__Locimp__New_Locimp
 @ cdecl -arch=win32 ?_New_Locimp@_Locimp@locale@std@@CAPAV123@_N@Z(long) locale__Locimp__New_Locimp_transparent
 @ cdecl -arch=win64 ?_New_Locimp@_Locimp@locale@std@@CAPEAV123@_N@Z(long) locale__Locimp__New_Locimp_transparent
-@ stub -arch=win32 ?_Open_dir@sys@tr2@std@@YAPAXPADPBDAAHAAW4file_type@123@@Z
-@ stub -arch=win64 ?_Open_dir@sys@tr2@std@@YAPEAXPEADPEBDAEAHAEAW4file_type@123@@Z
+@ cdecl -arch=win32 ?_Open_dir@sys@tr2@std@@YAPAXPADPBDAAHAAW4file_type@123@@Z(ptr str long long) tr2_sys__Open_dir
+@ cdecl -arch=win64 ?_Open_dir@sys@tr2@std@@YAPEAXAEAY0BAE@DPEBDAEAHAEAW4file_type@123@@Z(ptr str long long) tr2_sys__Open_dir
 @ stub -arch=win32 ?_Open_dir@sys@tr2@std@@YAPAXPA_WPB_WAAHAAW4file_type@123@@Z
 @ stub -arch=win64 ?_Open_dir@sys@tr2@std@@YAPEAXPEA_WPEB_WAEAHAEAW4file_type@123@@Z
 @ cdecl -arch=arm ?_Orphan_all@_Container_base0@std@@QAAXXZ(ptr) Container_base0_Orphan_all

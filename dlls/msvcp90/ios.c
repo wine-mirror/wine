@@ -14439,6 +14439,45 @@ void __cdecl tr2_sys__Last_write_time_set(char const* path, __int64 newtime)
     CloseHandle(handle);
 }
 
+/* ?_Open_dir@sys@tr2@std@@YAPAXAAY0BAE@DPBDAAHAAW4file_type@123@@Z */
+/* ?_Open_dir@sys@tr2@std@@YAPEAXAEAY0BAE@DPEBDAEAHAEAW4file_type@123@@Z */
+void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, enum file_type* type)
+{
+    HANDLE handle;
+    WIN32_FIND_DATAA data;
+    char temppath[MAX_PATH];
+
+    TRACE("(%p %s %p %p)\n", target, debugstr_a(dest), err_code, type);
+    if(strlen(dest) > MAX_PATH - 3) {
+        *err_code = ERROR_BAD_PATHNAME;
+        return NULL;
+    }
+    strcpy(temppath, dest);
+    strcat(temppath, "\\*");
+
+    handle = FindFirstFileA(temppath, &data);
+    if(handle == INVALID_HANDLE_VALUE) {
+        *err_code = GetLastError();
+        return NULL;
+    }
+    while(!strcmp(data.cFileName, ".") || !strcmp(data.cFileName, "..")) {
+        if(!FindNextFileA(handle, &data)) {
+            *err_code = ERROR_SUCCESS;
+            *type = status_unknown;
+            FindClose(handle);
+            return NULL;
+        }
+    }
+
+    strcpy(target, data.cFileName);
+    *err_code = ERROR_SUCCESS;
+    if(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        *type = directory_file;
+    else
+        *type = regular_file;
+    return handle;
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64
