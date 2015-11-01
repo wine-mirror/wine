@@ -506,6 +506,7 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         {
             tmpshortpath[sp++] = *p++;
             tmpshortpath[sp++] = *p++;
+            lp += 2;
         }
         for (; *p && *p != '/' && *p != '\\'; p++);
         tmplen = p - (longpath + lp);
