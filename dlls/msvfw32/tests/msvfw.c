@@ -120,7 +120,7 @@ static void test_Locate(void)
 
         bo.biHeight = -bo.biHeight;
         err = ICDecompressQuery(h, &bi, &bo);
-        todo_wine ok(err == ICERR_OK, "Query cvid->RGB32 height<0: %d\n", err);
+        ok(err == ICERR_OK, "Query cvid->RGB32 height<0: %d\n", err);
         bo.biHeight = -bo.biHeight;
 
         ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
@@ -141,7 +141,7 @@ static void test_Locate(void)
         if (h) ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
         bo.biHeight = - bo.biHeight;
         h = ICLocate(ICTYPE_VIDEO, 0, &bi, &bo, ICMODE_DECOMPRESS);
-        todo_wine ok(h != 0, "cvid->RGB16 height<0 failed\n");
+        ok(h != 0, "cvid->RGB16 height<0 failed\n");
         if (h) ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
         bo.biHeight = - bo.biHeight;
 
@@ -151,7 +151,7 @@ static void test_Locate(void)
         if (h) ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
         bo.biHeight = - bo.biHeight;
         h = ICLocate(ICTYPE_VIDEO, 0, &bi, &bo, ICMODE_DECOMPRESS);
-        todo_wine ok(h != 0, "cvid->RGB32 height<0 failed\n");
+        ok(h != 0, "cvid->RGB32 height<0 failed\n");
         if (h) ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
         bo.biHeight = - bo.biHeight;
 

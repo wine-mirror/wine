@@ -141,6 +141,15 @@ int uvr, uvg, uvb;
         }
 }
 
+static inline long get_addr(BOOL inverted, unsigned long x, unsigned long y,
+                       int frm_stride, int bpp, unsigned int out_height)
+{
+    /* Returns the starting position of a line from top-down or bottom-up */
+    if (inverted)
+        return y * frm_stride + x * bpp;
+    else
+        return (out_height - 1 - y) * frm_stride + x * bpp;
+}
 
 #define MAKECOLOUR32(r,g,b) (((r) << 16) | ((g) << 8) | (b))
 /*#define MAKECOLOUR24(r,g,b) (((r) << 16) | ((g) << 8) | (b))*/
@@ -148,15 +157,17 @@ int uvr, uvg, uvb;
 #define MAKECOLOUR15(r,g,b) (((r) >> 3) << 10)| (((g) >> 3) << 5)| (((b) >> 3) << 0)
 
 /* ------------------------------------------------------------------------ */
-static void cvid_v1_32(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb)
+static void cvid_v1_32(unsigned char *frm, unsigned char *limit, int stride, BOOL inverted,
+    cvid_codebook *cb)
 {
 unsigned long *vptr = (unsigned long *)frm;
-#ifndef ORIGINAL
-int row_inc = -stride/4;
-#else
-int row_inc = stride/4;
-#endif
+int row_inc;
 int x, y;
+
+    if (!inverted)
+        row_inc = -stride/4;
+    else
+        row_inc = stride/4;
 
     /* fill 4x4 block of pixels with colour values from codebook */
     for (y = 0; y < 4; y++)
@@ -169,17 +180,18 @@ int x, y;
 
 
 /* ------------------------------------------------------------------------ */
-static void cvid_v4_32(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb0,
-    cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
+static void cvid_v4_32(unsigned char *frm, unsigned char *limit, int stride, BOOL inverted,
+    cvid_codebook *cb0, cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
 {
 unsigned long *vptr = (unsigned long *)frm;
-#ifndef ORIGINAL
-int row_inc = -stride/4;
-#else
-int row_inc = stride/4;
-#endif
+int row_inc;
 int x, y;
 cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
+
+    if (!inverted)
+        row_inc = -stride/4;
+    else
+        row_inc = stride/4;
 
     /* fill 4x4 block of pixels with colour values from codebooks */
     for (y = 0; y < 4; y++)
@@ -192,14 +204,16 @@ cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
 
 
 /* ------------------------------------------------------------------------ */
-static void cvid_v1_24(unsigned char *vptr, unsigned char *limit, int stride, cvid_codebook *cb)
+static void cvid_v1_24(unsigned char *vptr, unsigned char *limit, int stride, BOOL inverted,
+    cvid_codebook *cb)
 {
-#ifndef ORIGINAL
-int row_inc = -stride;
-#else
-int row_inc = stride;
-#endif
+int row_inc;
 int x, y;
+
+    if (!inverted)
+        row_inc = -stride;
+    else
+        row_inc = stride;
 
     /* fill 4x4 block of pixels with colour values from codebook */
     for (y = 0; y < 4; y++)
@@ -216,16 +230,17 @@ int x, y;
 
 
 /* ------------------------------------------------------------------------ */
-static void cvid_v4_24(unsigned char *vptr, unsigned char *limit, int stride, cvid_codebook *cb0,
-    cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
+static void cvid_v4_24(unsigned char *vptr, unsigned char *limit, int stride, BOOL inverted,
+    cvid_codebook *cb0, cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
 {
-#ifndef ORIGINAL
-int row_inc = -stride;
-#else
-int row_inc = stride;
-#endif
+int row_inc;
 cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
 int x, y;
+
+    if (!inverted)
+        row_inc = -stride;
+    else
+        row_inc = stride;
 
     /* fill 4x4 block of pixels with colour values from codebooks */
     for (y = 0; y < 4; y++)
@@ -242,15 +257,17 @@ int x, y;
 
 
 /* ------------------------------------------------------------------------ */
-static void cvid_v1_16(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb)
+static void cvid_v1_16(unsigned char *frm, unsigned char *limit, int stride, BOOL inverted,
+    cvid_codebook *cb)
 {
 unsigned short *vptr = (unsigned short *)frm;
-#ifndef ORIGINAL
-int row_inc = -stride/2;
-#else
-int row_inc = stride/2;
-#endif
+int row_inc;
 int x, y;
+
+    if (!inverted)
+        row_inc = -stride/2;
+    else
+        row_inc = stride/2;
 
     /* fill 4x4 block of pixels with colour values from codebook */
     for (y = 0; y < 4; y++)
@@ -263,17 +280,18 @@ int x, y;
 
 
 /* ------------------------------------------------------------------------ */
-static void cvid_v4_16(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb0,
-    cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
+static void cvid_v4_16(unsigned char *frm, unsigned char *limit, int stride, BOOL inverted,
+    cvid_codebook *cb0, cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
 {
 unsigned short *vptr = (unsigned short *)frm;
-#ifndef ORIGINAL
-int row_inc = -stride/2;
-#else
-int row_inc = stride/2;
-#endif
+int row_inc;
 cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
 int x, y;
+
+    if (!inverted)
+        row_inc = -stride/2;
+    else
+        row_inc = stride/2;
 
     /* fill 4x4 block of pixels with colour values from codebooks */
     for (y = 0; y < 4; y++)
@@ -285,15 +303,17 @@ int x, y;
 }
 
 /* ------------------------------------------------------------------------ */
-static void cvid_v1_15(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb)
+static void cvid_v1_15(unsigned char *frm, unsigned char *limit, int stride, BOOL inverted,
+    cvid_codebook *cb)
 {
 unsigned short *vptr = (unsigned short *)frm;
-#ifndef ORIGINAL
-int row_inc = -stride/2;
-#else
-int row_inc = stride/2;
-#endif
+int row_inc;
 int x, y;
+
+    if (!inverted)
+        row_inc = -stride/2;
+    else
+        row_inc = stride/2;
 
     /* fill 4x4 block of pixels with colour values from codebook */
     for (y = 0; y < 4; y++)
@@ -306,17 +326,18 @@ int x, y;
 
 
 /* ------------------------------------------------------------------------ */
-static void cvid_v4_15(unsigned char *frm, unsigned char *limit, int stride, cvid_codebook *cb0,
-    cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
+static void cvid_v4_15(unsigned char *frm, unsigned char *limit, int stride, BOOL inverted,
+    cvid_codebook *cb0, cvid_codebook *cb1, cvid_codebook *cb2, cvid_codebook *cb3)
 {
 unsigned short *vptr = (unsigned short *)frm;
-#ifndef ORIGINAL
-int row_inc = -stride/2;
-#else
-int row_inc = stride/2;
-#endif
+int row_inc;
 cvid_codebook * cb[] = {cb0,cb1,cb2,cb3};
 int x, y;
+
+    if (!inverted)
+        row_inc = -stride/2;
+    else
+        row_inc = stride/2;
 
     /* fill 4x4 block of pixels with colour values from codebooks */
     for (y = 0; y < 4; y++)
@@ -365,8 +386,9 @@ static void free_cvinfo( cinepak_info *cvinfo )
 }
 
 typedef void (*fn_cvid_v1)(unsigned char *frm, unsigned char *limit,
-                           int stride, cvid_codebook *cb);
-typedef void (*fn_cvid_v4)(unsigned char *frm, unsigned char *limit, int stride,
+                           int stride, BOOL inverted, cvid_codebook *cb);
+typedef void (*fn_cvid_v4)(unsigned char *frm, unsigned char *limit,
+                           int stride, BOOL inverted,
                            cvid_codebook *cb0, cvid_codebook *cb1,
                            cvid_codebook *cb2, cvid_codebook *cb3);
 
@@ -390,7 +412,7 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
                   x0, y0, x1, y1, ci, flag, mask;
     long top_size, chunk_size;
     unsigned char *frm_ptr;
-    unsigned int i, cur_strip;
+    unsigned int i, cur_strip, addr;
     int d0, d1, d2, d3, frm_stride, bpp = 3;
     fn_cvid_v1 cvid_v1 = cvid_v1_24;
     fn_cvid_v4 cvid_v4 = cvid_v4_24;
@@ -402,10 +424,13 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
       unsigned short height;
       unsigned short strips;
     } frame;
+    BOOL inverted;
 
     y = 0;
     y_bottom = 0;
     in_buffer = buf;
+    inverted = (int) out_height < 0;
+    if (inverted) out_height = -out_height;
 
     frame.flags = get_byte();
     frame.length = get_byte() << 16;
@@ -601,19 +626,15 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
                                 d2 = get_byte();
                                 d3 = get_byte();
                                 chunk_size -= 4;
-#ifdef ORIGINAL
-                                cvid_v4(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
-#else
-                                cvid_v4(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
-#endif
+
+                                addr = get_addr(inverted, x, y, frm_stride, bpp, out_height);
+                                cvid_v4(frm_ptr + addr, output, frm_stride, inverted, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
                                 }
                             else        /* 1 byte per block */
                                 {
-#ifdef ORIGINAL
-                                cvid_v1(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v1_codebook + get_byte());
-#else
-                                cvid_v1(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v1_codebook + get_byte());
-#endif
+                                addr = get_addr(inverted, x, y, frm_stride, bpp, out_height);
+                                cvid_v1(frm_ptr + addr, output, frm_stride, inverted, v1_codebook + get_byte());
+
                                 chunk_size--;
                                 }
 
@@ -657,20 +678,16 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
                                     d2 = get_byte();
                                     d3 = get_byte();
                                     chunk_size -= 4;
-#ifdef ORIGINAL
-                                    cvid_v4(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
-#else
-                                    cvid_v4(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
-#endif
+
+                                    addr = get_addr(inverted, x, y, frm_stride, bpp, out_height);
+                                    cvid_v4(frm_ptr + addr, output, frm_stride, inverted, v4_codebook+d0, v4_codebook+d1, v4_codebook+d2, v4_codebook+d3);
                                     }
                                 else        /* V1 */
                                     {
                                     chunk_size--;
-#ifdef ORIGINAL
-                                    cvid_v1(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v1_codebook + get_byte());
-#else
-                                    cvid_v1(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v1_codebook + get_byte());
-#endif
+
+                                    addr = get_addr(inverted, x, y, frm_stride, bpp, out_height);
+                                    cvid_v1(frm_ptr + addr, output, frm_stride, inverted, v1_codebook + get_byte());
                                     }
                                 }        /* else SKIP */
 
@@ -690,11 +707,9 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
                 case 0x3200:        /* each byte is a V1 codebook */
                     while((chunk_size > 0) && (y < y_bottom))
                         {
-#ifdef ORIGINAL
-                        cvid_v1(frm_ptr + (y * frm_stride + x * bpp), frm_end, frm_stride, v1_codebook + get_byte());
-#else
-                        cvid_v1(frm_ptr + ((out_height - 1 - y) * frm_stride + x * bpp), output, frm_stride, v1_codebook + get_byte());
-#endif
+                        addr = get_addr(inverted, x, y, frm_stride, bpp, out_height);
+                        cvid_v1(frm_ptr + addr, output, frm_stride, inverted, v1_codebook + get_byte());
+
                         chunk_size--;
                         x += 4;
                         if(x >= out_width)
@@ -782,7 +797,11 @@ static LRESULT ICCVID_DecompressQuery( ICCVID_Info *info, LPBITMAPINFO in, LPBIT
         if( in->bmiHeader.biPlanes != out->bmiHeader.biPlanes )
             return ICERR_BADFORMAT;
         if( in->bmiHeader.biHeight != out->bmiHeader.biHeight )
-            return ICERR_BADFORMAT;
+        {
+            if( in->bmiHeader.biHeight != -out->bmiHeader.biHeight )
+                return ICERR_BADFORMAT;
+            TRACE("Detected inverted height for video output\n");
+        }
         if( in->bmiHeader.biWidth != out->bmiHeader.biWidth )
             return ICERR_BADFORMAT;
 
@@ -887,6 +906,7 @@ static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD si
 
     width  = icd->lpbiInput->biWidth;
     height = icd->lpbiInput->biHeight;
+    if (-icd->lpbiOutput->biHeight == height) height = -height;
 
     decode_cinepak(info->cvinfo, icd->lpInput, icd->lpbiInput->biSizeImage,
                    icd->lpOutput, width, height, info->bits_per_pixel);
@@ -912,6 +932,7 @@ static LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWOR
 
     width  = icd->lpbiSrc->biWidth;
     height = icd->lpbiSrc->biHeight;
+    if (-icd->lpbiDst->biHeight == height) height = -height;
 
     decode_cinepak(info->cvinfo, icd->lpSrc, icd->lpbiSrc->biSizeImage,
                    icd->lpDst, width, height, info->bits_per_pixel);
