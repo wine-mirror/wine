@@ -11952,11 +11952,11 @@ msgstr "regsvr32: '%1!S!', '%2% DLL dosyasında yok.\n"
 
 #: regsvr32.rc:44
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr "regsvr32: '%!' DLL dosyası kaydedilemedi.\n"
+msgstr "regsvr32: '%1' DLL dosyası kaydedilemedi.\n"
 
 #: regsvr32.rc:45
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr "regsvr32: '%!' DLL dosyası başarıyla kaydedildi.\n"
+msgstr "regsvr32: '%1' DLL dosyası başarıyla kaydedildi.\n"
 
 #: regsvr32.rc:46
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
@@ -12874,7 +12874,7 @@ msgstr ""
 
 #: uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "uninstaller: '%c' geçersiz seçenek.\n"
+msgstr "uninstaller: '%1' geçersiz seçenek.\n"
 
 #: uninstaller.rc:35
 msgid ""
