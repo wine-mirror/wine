@@ -229,7 +229,15 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_Map(ID3D11DeviceContext
 static void STDMETHODCALLTYPE d3d11_immediate_context_Unmap(ID3D11DeviceContext *iface, ID3D11Resource *resource,
         UINT subresource_idx)
 {
-    FIXME("iface %p, resource %p, subresource_idx %u stub!\n", iface, resource, subresource_idx);
+    struct wined3d_resource *wined3d_resource;
+
+    TRACE("iface %p, resource %p, subresource_idx %u.\n", iface, resource, subresource_idx);
+
+    wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
+
+    wined3d_mutex_lock();
+    wined3d_resource_unmap(wined3d_resource, subresource_idx);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_PSSetConstantBuffers(ID3D11DeviceContext *iface,
