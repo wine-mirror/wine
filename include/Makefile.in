@@ -647,7 +647,6 @@ XTEMPLATE_SRCS = \
 SRCDIR_INCLUDES = \
 	$(IDL_TLB_SRCS) \
 	$(PUBLIC_IDL_H_SRCS) \
-	$(XTEMPLATE_SRCS) \
 	access.idl \
 	asynot.idl \
 	asysta.idl \
@@ -685,9 +684,9 @@ SRCDIR_INCLUDES = \
 IDL_H_SRCS = $(PUBLIC_IDL_H_SRCS) $(PRIVATE_IDL_H_SRCS)
 IDL_SRCS = $(IDL_H_SRCS) $(IDL_TLB_SRCS)
 
-OBJDIR_INCLUDES = $(PUBLIC_IDL_H_SRCS:.idl=.h) $(XTEMPLATE_SRCS:.x=.h)
+OBJDIR_INCLUDES = $(PUBLIC_IDL_H_SRCS:.idl=.h)
 
-all: $(IDL_H_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb) $(XTEMPLATE_SRCS:.x=.h)
+all: $(IDL_H_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb)
 
 .PHONY: install install-dev uninstall
 

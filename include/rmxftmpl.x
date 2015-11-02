@@ -17,6 +17,7 @@ xof 0302txt 0064
 
 #pragma xftmpl name D3DRM_XTEMPLATES
 #pragma xftmpl size D3DRM_XTEMPLATE_BYTES
+#pragma makedep install
 
 template Header
 {

@@ -432,7 +432,6 @@ sub assign_sources_to_makefiles(@)
 
     # add extra variables to include source list
     my $make = $makefiles{"include/Makefile"};
-    unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(XTEMPLATE_SRCS)";
     unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(PUBLIC_IDL_H_SRCS)";
     unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(IDL_TLB_SRCS)";
     unshift @{${$make}{"=IDL_SRCS"}}, "\$(IDL_H_SRCS) \$(IDL_TLB_SRCS)";

@@ -1702,6 +1702,10 @@ static void add_generated_sources( struct makefile *make )
         {
             add_generated_source( make, replace_extension( source->name, ".idl", "_r.res" ), NULL );
         }
+        if (strendswith( source->name, ".x" ))
+        {
+            add_generated_source( make, replace_extension( source->name, ".x", ".h" ), NULL );
+        }
         if (strendswith( source->name, ".y" ))
         {
             file = add_generated_source( make, replace_extension( source->name, ".y", ".tab.c" ), NULL );
@@ -1960,7 +1964,15 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                     tools_dir_path( make, "make_xftmpl" ), tools_ext, source->filename );
             output( "\t%s%s -H -o $@ %s\n",
                     tools_dir_path( make, "make_xftmpl" ), tools_ext, source->filename );
-            strarray_add( &clean_files, strmake( "%s.h", obj ));
+            if (source->file->flags & FLAG_INSTALL)
+            {
+                strarray_add( &make->install_dev_rules, source->name );
+                strarray_add( &make->install_dev_rules,
+                              strmake( "D$(includedir)/%s", get_include_install_path( source->name ) ));
+                strarray_add( &make->install_dev_rules, strmake( "%s.h", obj ));
+                strarray_add( &make->install_dev_rules,
+                              strmake( "d$(includedir)/%s.h", get_include_install_path( obj ) ));
+            }
             continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
