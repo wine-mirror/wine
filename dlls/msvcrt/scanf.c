@@ -671,7 +671,7 @@ int CDECL MSVCRT__stdio_common_vsscanf(unsigned __int64 options,
                                        MSVCRT__locale_t locale,
                                        __ms_va_list valist)
 {
-    if (options != 2)
+    if (options != UCRTBASE_SCANF_LEGACY_WIDE_SPECIFIERS)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     return MSVCRT_vsnscanf_l(input, length, format, locale, valist);
 }

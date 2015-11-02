@@ -724,9 +724,10 @@ int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MS
     struct _str_ctx_a ctx = {len, str};
     int ret;
 
-    if (options != 1 && options != 2)
+    if (options != UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION &&
+        options != UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    ret = pf_printf_a(options & 2 ? puts_clbk_str_c99_a : puts_clbk_str_a,
+    ret = pf_printf_a(options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR ? puts_clbk_str_c99_a : puts_clbk_str_a,
             &ctx, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
     return ret;
@@ -1170,9 +1171,10 @@ int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options, MSVCRT_wchar
     struct _str_ctx_w ctx = {len, str};
     int ret;
 
-    if (options != 1 && options != 2)
+    if (options != UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION &&
+        options != UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    ret = pf_printf_w(options & 2 ? puts_clbk_str_c99_w : puts_clbk_str_w,
+    ret = pf_printf_w(options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR ? puts_clbk_str_c99_w : puts_clbk_str_w,
             &ctx, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
     return ret;

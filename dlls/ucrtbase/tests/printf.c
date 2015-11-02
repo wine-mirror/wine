@@ -30,6 +30,12 @@
 
 #include "wine/test.h"
 
+#define UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION (0x0001)
+#define UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR      (0x0002)
+#define UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS           (0x0004)
+#define UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY      (0x0008)
+#define UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS     (0x0010)
+
 static int (__cdecl *p_vfprintf)(unsigned __int64 options, FILE *file, const char *format,
                                  void *locale, __ms_va_list valist);
 static int (__cdecl *p_vsprintf)(unsigned __int64 options, char *str, size_t len, const char *format,
@@ -91,7 +97,7 @@ static void test_snprintf (void)
     for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         const char *fmt  = tests[i];
         const int expect = strlen(fmt) > bufsiz ? -1 : strlen(fmt);
-        const int n      = vsprintf_wrapper (1, buffer, bufsiz, fmt);
+        const int n      = vsprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
         const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
         ok (n == expect, "\"%s\": expected %d, returned %d\n",
@@ -104,7 +110,7 @@ static void test_snprintf (void)
     for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         const char *fmt  = tests[i];
         const int expect = strlen(fmt);
-        const int n      = vsprintf_wrapper (2, buffer, bufsiz, fmt);
+        const int n      = vsprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
         const int valid  = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
 
         ok (n == expect, "\"%s\": expected %d, returned %d\n",
@@ -144,7 +150,7 @@ static void test_swprintf (void)
     for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt) > bufsiz ? -1 : wcslen(fmt);
-        const int n        = vswprintf_wrapper (1, buffer, bufsiz, fmt);
+        const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION, buffer, bufsiz, fmt);
         const int valid    = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
         WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
@@ -159,7 +165,7 @@ static void test_swprintf (void)
     for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
         const wchar_t *fmt = tests[i];
         const int expect   = wcslen(fmt);
-        const int n        = vswprintf_wrapper (2, buffer, bufsiz, fmt);
+        const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
         const int valid    = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
 
         WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
