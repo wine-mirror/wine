@@ -1224,6 +1224,7 @@ static void test_streamenum(void)
     static const WCHAR stmname[] = { 'C','O','N','T','E','N','T','S',0 };
     static const WCHAR stmname2[] = { 'A','B','C','D','E','F','G','H','I',0 };
     static const WCHAR stmname3[] = { 'A','B','C','D','E','F','G','H','I','J',0 };
+    static const STATSTG stat_null;
     STATSTG stat;
     IEnumSTATSTG *ee = NULL;
     ULONG count;
@@ -1269,10 +1270,12 @@ static void test_streamenum(void)
     r = IStorage_DestroyElement(stg, stmname);
     ok(r==S_OK, "IStorage->DestroyElement failed\n");
 
+    memset(&stat, 0xad, sizeof(stat));
     count = 0xf00;
     r = IEnumSTATSTG_Next(ee, 1, &stat, &count);
     ok(r==S_FALSE, "IEnumSTATSTG->Next failed\n");
     ok(count == 0, "count wrong\n");
+    ok(memcmp(&stat, &stat_null, sizeof(stat)) == 0, "stat is not zeroed\n");
 
     /* reset and try again */
     r = IEnumSTATSTG_Reset(ee);
@@ -2418,6 +2421,7 @@ static void test_fmtusertypestg(void)
     static const WCHAR fileW[] = {'f','m','t','t','e','s','t',0};
     static WCHAR userTypeW[] = {'S','t','g','U','s','r','T','y','p','e',0};
     static const WCHAR strmNameW[] = {1,'C','o','m','p','O','b','j',0};
+    static const STATSTG statstg_null;
 
     hr = StgCreateDocfile( fileW, STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_READWRITE, 0, &stg);
     ok(hr == S_OK, "should succeed, res=%x\n", hr);
@@ -2436,6 +2440,7 @@ static void test_fmtusertypestg(void)
             BOOL found = FALSE;
             STATSTG statstg;
             DWORD got;
+            memset(&statstg, 0xad, sizeof(statstg));
             while ((hr = IEnumSTATSTG_Next(stat, 1, &statstg, &got)) == S_OK && got == 1)
             {
                 if (strcmp_ww(statstg.pwcsName, strmNameW) == 0)
@@ -2444,6 +2449,7 @@ static void test_fmtusertypestg(void)
                     ok(0, "found unexpected stream or storage\n");
                 CoTaskMemFree(statstg.pwcsName);
             }
+            ok(memcmp(&statstg, &statstg_null, sizeof(statstg)) == 0, "statstg is not zeroed\n");
             ok(found == TRUE, "expected storage to contain stream \\0001CompObj\n");
             IEnumSTATSTG_Release(stat);
         }
@@ -2460,6 +2466,7 @@ static void test_fmtusertypestg(void)
             BOOL found = FALSE;
             STATSTG statstg;
             DWORD got;
+            memset(&statstg, 0xad, sizeof(statstg));
             while ((hr = IEnumSTATSTG_Next(stat, 1, &statstg, &got)) == S_OK && got == 1)
             {
                 if (strcmp_ww(statstg.pwcsName, strmNameW) == 0)
@@ -2468,6 +2475,7 @@ static void test_fmtusertypestg(void)
                     ok(0, "found unexpected stream or storage\n");
                 CoTaskMemFree(statstg.pwcsName);
             }
+            ok(memcmp(&statstg, &statstg_null, sizeof(statstg)) == 0, "statstg is not zeroed\n");
             ok(found == TRUE, "expected storage to contain stream \\0001CompObj\n");
             IEnumSTATSTG_Release(stat);
         }
