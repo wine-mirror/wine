@@ -1141,14 +1141,9 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromStream(IStream *stream,
 GpStatus WINGDIPAPI GdipSetMetafileDownLevelRasterizationLimit(GpMetafile *metafile,
     UINT limitDpi)
 {
-    static int calls;
-
     TRACE("(%p,%u)\n", metafile, limitDpi);
 
-    if(!(calls++))
-        FIXME("not implemented\n");
-
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipConvertToEmfPlus(const GpGraphics* ref,
