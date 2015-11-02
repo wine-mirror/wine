@@ -707,12 +707,19 @@ static HRESULT volume_resource_sub_resource_map(struct wined3d_resource *resourc
     return WINED3DERR_INVALIDCALL;
 }
 
+static HRESULT volume_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
+{
+    ERR("Not supported on sub-resources.\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 static const struct wined3d_resource_ops volume_resource_ops =
 {
     volume_resource_incref,
     volume_resource_decref,
     volume_unload,
     volume_resource_sub_resource_map,
+    volume_resource_sub_resource_unmap,
 };
 
 static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture *container,

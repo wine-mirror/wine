@@ -2158,6 +2158,7 @@ struct wined3d_resource_ops
     void (*resource_unload)(struct wined3d_resource *resource);
     HRESULT (*resource_sub_resource_map)(struct wined3d_resource *resource, unsigned int sub_resource_idx,
             struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags);
+    HRESULT (*resource_sub_resource_unmap)(struct wined3d_resource *resource, unsigned int sub_resource_idx);
 };
 
 struct wined3d_resource
@@ -2237,7 +2238,6 @@ struct wined3d_texture_ops
     void (*texture_sub_resource_validate_location)(struct wined3d_resource *sub_resource, DWORD location);
     void (*texture_sub_resource_upload_data)(struct wined3d_resource *sub_resource,
             const struct wined3d_context *context, const struct wined3d_sub_resource_data *data);
-    HRESULT (*texture_sub_resource_unmap)(struct wined3d_resource *sub_resource);
     void (*texture_prepare_texture)(struct wined3d_texture *texture,
             struct wined3d_context *context, BOOL srgb);
 };

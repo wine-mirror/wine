@@ -1149,12 +1149,25 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
     return wined3d_buffer_map(buffer, offset, size, (BYTE **)&map_desc->data, flags);
 }
 
+static HRESULT buffer_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
+{
+    if (sub_resource_idx)
+    {
+        WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
+        return E_INVALIDARG;
+    }
+
+    wined3d_buffer_unmap(buffer_from_resource(resource));
+    return WINED3D_OK;
+}
+
 static const struct wined3d_resource_ops buffer_resource_ops =
 {
     buffer_resource_incref,
     buffer_resource_decref,
     buffer_unload,
     buffer_resource_sub_resource_map,
+    buffer_resource_sub_resource_unmap,
 };
 
 static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device *device,

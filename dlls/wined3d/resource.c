@@ -304,6 +304,13 @@ HRESULT CDECL wined3d_resource_map(struct wined3d_resource *resource, unsigned i
     return resource->resource_ops->resource_sub_resource_map(resource, sub_resource_idx, map_desc, box, flags);
 }
 
+HRESULT CDECL wined3d_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
+{
+    TRACE("resource %p, sub_resource_idx %u.\n", resource, sub_resource_idx);
+
+    return resource->resource_ops->resource_sub_resource_unmap(resource, sub_resource_idx);
+}
+
 BOOL wined3d_resource_allocate_sysmem(struct wined3d_resource *resource)
 {
     void **p;

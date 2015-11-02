@@ -1207,12 +1207,19 @@ static HRESULT surface_resource_sub_resource_map(struct wined3d_resource *resour
     return WINED3DERR_INVALIDCALL;
 }
 
+static HRESULT surface_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
+{
+    ERR("Not supported on sub-resources.\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 static const struct wined3d_resource_ops surface_resource_ops =
 {
     surface_resource_incref,
     surface_resource_decref,
     surface_unload,
     surface_resource_sub_resource_map,
+    surface_resource_sub_resource_unmap,
 };
 
 static const struct wined3d_surface_ops surface_ops =

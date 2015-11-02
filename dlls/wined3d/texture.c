@@ -919,11 +919,6 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
     }
 }
 
-static HRESULT texture2d_sub_resource_unmap(struct wined3d_resource *sub_resource)
-{
-    return wined3d_surface_unmap(surface_from_resource(sub_resource));
-}
-
 static const struct wined3d_texture_ops texture2d_ops =
 {
     texture2d_sub_resource_load,
@@ -932,7 +927,6 @@ static const struct wined3d_texture_ops texture2d_ops =
     texture2d_sub_resource_invalidate_location,
     texture2d_sub_resource_validate_location,
     texture2d_sub_resource_upload_data,
-    texture2d_sub_resource_unmap,
     texture2d_prepare_texture,
 };
 
@@ -976,12 +970,23 @@ static HRESULT texture2d_resource_sub_resource_map(struct wined3d_resource *reso
     return wined3d_surface_map(surface_from_resource(sub_resource), map_desc, box, flags);
 }
 
+static HRESULT texture2d_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
+{
+    struct wined3d_resource *sub_resource;
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), sub_resource_idx)))
+        return E_INVALIDARG;
+
+    return wined3d_surface_unmap(surface_from_resource(sub_resource));
+}
+
 static const struct wined3d_resource_ops texture2d_resource_ops =
 {
     texture_resource_incref,
     texture_resource_decref,
     wined3d_texture_unload,
     texture2d_resource_sub_resource_map,
+    texture2d_resource_sub_resource_unmap,
 };
 
 static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
@@ -1312,11 +1317,6 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
     }
 }
 
-static HRESULT texture3d_sub_resource_unmap(struct wined3d_resource *sub_resource)
-{
-     return wined3d_volume_unmap(volume_from_resource(sub_resource));
-}
-
 static const struct wined3d_texture_ops texture3d_ops =
 {
     texture3d_sub_resource_load,
@@ -1325,7 +1325,6 @@ static const struct wined3d_texture_ops texture3d_ops =
     texture3d_sub_resource_invalidate_location,
     texture3d_sub_resource_validate_location,
     texture3d_sub_resource_upload_data,
-    texture3d_sub_resource_unmap,
     texture3d_prepare_texture,
 };
 
@@ -1340,12 +1339,23 @@ static HRESULT texture3d_resource_sub_resource_map(struct wined3d_resource *reso
     return wined3d_volume_map(volume_from_resource(sub_resource), map_desc, box, flags);
 }
 
+static HRESULT texture3d_resource_sub_resource_unmap(struct wined3d_resource *resource, unsigned int sub_resource_idx)
+{
+    struct wined3d_resource *sub_resource;
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), sub_resource_idx)))
+        return E_INVALIDARG;
+
+    return wined3d_volume_unmap(volume_from_resource(sub_resource));
+}
+
 static const struct wined3d_resource_ops texture3d_resource_ops =
 {
     texture_resource_incref,
     texture_resource_decref,
     wined3d_texture_unload,
     texture3d_resource_sub_resource_map,
+    texture3d_resource_sub_resource_unmap,
 };
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
@@ -1549,14 +1559,9 @@ HRESULT CDECL wined3d_texture_map(struct wined3d_texture *texture, unsigned int 
 
 HRESULT CDECL wined3d_texture_unmap(struct wined3d_texture *texture, unsigned int sub_resource_idx)
 {
-    struct wined3d_resource *sub_resource;
-
     TRACE("texture %p, sub_resource_idx %u.\n", texture, sub_resource_idx);
 
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
-        return WINED3DERR_INVALIDCALL;
-
-    return texture->texture_ops->texture_sub_resource_unmap(sub_resource);
+    return texture->resource.resource_ops->resource_sub_resource_unmap(&texture->resource, sub_resource_idx);
 }
 
 HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC *dc)
