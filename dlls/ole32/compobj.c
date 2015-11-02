@@ -1873,7 +1873,7 @@ HRESULT WINAPI CoInitialize(LPVOID lpReserved)
  * SEE ALSO
  *   CoUninitialize
  */
-HRESULT WINAPI CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
+HRESULT WINAPI DECLSPEC_HOTPATCH CoInitializeEx(LPVOID lpReserved, DWORD dwCoInit)
 {
   struct oletls *info = COM_CurrentInfo();
   HRESULT hr = S_OK;
