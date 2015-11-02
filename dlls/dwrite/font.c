@@ -4269,7 +4269,8 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
             if (type == DWRITE_TEXTURE_CLEARTYPE_3x1) {
                 for (y = 0; y < height; y++) {
                     for (x = 0; x < width; x++)
-                        dst[3*x] = dst[3*x+1] = dst[3*x+2] = (src[x / 8] & masks[x % 8]) ? DWRITE_ALPHA_MAX : 0;
+                        if (src[x / 8] & masks[x % 8])
+                            dst[3*x] = dst[3*x+1] = dst[3*x+2] = DWRITE_ALPHA_MAX;
                     src += glyph_bitmap.pitch;
                     dst += (analysis->bounds.right - analysis->bounds.left) * 3;
                 }
@@ -4277,7 +4278,8 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
             else {
                 for (y = 0; y < height; y++) {
                     for (x = 0; x < width; x++)
-                        dst[x] = (src[x / 8] & masks[x % 8]) ? DWRITE_ALPHA_MAX : 0;
+                        if (src[x / 8] & masks[x % 8])
+                            dst[x] = DWRITE_ALPHA_MAX;
                     src += get_dib_stride(width, 1);
                     dst += analysis->bounds.right - analysis->bounds.left;
                 }
@@ -4287,7 +4289,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
             /* at this point it's DWRITE_TEXTURE_CLEARTYPE_3x1 with 8bpp src bitmap */
             for (y = 0; y < height; y++) {
                 for (x = 0; x < width; x++)
-                    dst[3*x] = dst[3*x+1] = dst[3*x+2] = src[x];
+                    dst[3*x] = dst[3*x+1] = dst[3*x+2] = src[x] | dst[3*x];
                 src += glyph_bitmap.pitch;
                 dst += (analysis->bounds.right - analysis->bounds.left) * 3;
             }
