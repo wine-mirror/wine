@@ -130,6 +130,7 @@ struct ACImpl {
     IAudioCaptureClient IAudioCaptureClient_iface;
     IAudioClock IAudioClock_iface;
     IAudioClock2 IAudioClock2_iface;
+    IAudioStreamVolume IAudioStreamVolume_iface;
     IMMDevice *parent;
     struct list entry;
     float vol[PA_CHANNELS_MAX];
@@ -160,6 +161,7 @@ static const IAudioRenderClientVtbl AudioRenderClient_Vtbl;
 static const IAudioCaptureClientVtbl AudioCaptureClient_Vtbl;
 static const IAudioClockVtbl AudioClock_Vtbl;
 static const IAudioClock2Vtbl AudioClock2_Vtbl;
+static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl;
 
 static inline ACImpl *impl_from_IAudioClient(IAudioClient *iface)
 {
@@ -184,6 +186,11 @@ static inline ACImpl *impl_from_IAudioClock(IAudioClock *iface)
 static inline ACImpl *impl_from_IAudioClock2(IAudioClock2 *iface)
 {
     return CONTAINING_RECORD(iface, ACImpl, IAudioClock2_iface);
+}
+
+static inline ACImpl *impl_from_IAudioStreamVolume(IAudioStreamVolume *iface)
+{
+    return CONTAINING_RECORD(iface, ACImpl, IAudioStreamVolume_iface);
 }
 
 /* Following pulseaudio design here, mainloop has the lock taken whenever
@@ -799,6 +806,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->IAudioCaptureClient_iface.lpVtbl = &AudioCaptureClient_Vtbl;
     This->IAudioClock_iface.lpVtbl = &AudioClock_Vtbl;
     This->IAudioClock2_iface.lpVtbl = &AudioClock2_Vtbl;
+    This->IAudioStreamVolume_iface.lpVtbl = &AudioStreamVolume_Vtbl;
     This->dataflow = dataflow;
     This->parent = dev;
     for (i = 0; i < PA_CHANNELS_MAX; ++i)
@@ -1599,6 +1607,8 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient *iface, REFIID riid,
         *ppv = &This->IAudioCaptureClient_iface;
     } else if (IsEqualIID(riid, &IID_IAudioClock)) {
         *ppv = &This->IAudioClock_iface;
+    } else if (IsEqualIID(riid, &IID_IAudioStreamVolume)) {
+        *ppv = &This->IAudioStreamVolume_iface;
     }
 
     if (*ppv) {
@@ -2054,6 +2064,170 @@ static const IAudioClock2Vtbl AudioClock2_Vtbl =
     AudioClock2_AddRef,
     AudioClock2_Release,
     AudioClock2_GetDevicePosition
+};
+
+static HRESULT WINAPI AudioStreamVolume_QueryInterface(
+        IAudioStreamVolume *iface, REFIID riid, void **ppv)
+{
+    TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
+
+    if (!ppv)
+        return E_POINTER;
+    *ppv = NULL;
+
+    if (IsEqualIID(riid, &IID_IUnknown) ||
+        IsEqualIID(riid, &IID_IAudioStreamVolume))
+        *ppv = iface;
+    if (*ppv) {
+        IUnknown_AddRef((IUnknown*)*ppv);
+        return S_OK;
+    }
+
+    WARN("Unknown interface %s\n", debugstr_guid(riid));
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI AudioStreamVolume_AddRef(IAudioStreamVolume *iface)
+{
+    ACImpl *This = impl_from_IAudioStreamVolume(iface);
+    return IAudioClient_AddRef(&This->IAudioClient_iface);
+}
+
+static ULONG WINAPI AudioStreamVolume_Release(IAudioStreamVolume *iface)
+{
+    ACImpl *This = impl_from_IAudioStreamVolume(iface);
+    return IAudioClient_Release(&This->IAudioClient_iface);
+}
+
+static HRESULT WINAPI AudioStreamVolume_GetChannelCount(
+        IAudioStreamVolume *iface, UINT32 *out)
+{
+    ACImpl *This = impl_from_IAudioStreamVolume(iface);
+
+    TRACE("(%p)->(%p)\n", This, out);
+
+    if (!out)
+        return E_POINTER;
+
+    *out = This->ss.channels;
+
+    return S_OK;
+}
+
+struct pulse_info_cb_data {
+    UINT32 n;
+    float *levels;
+};
+
+static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
+        IAudioStreamVolume *iface, UINT32 count, const float *levels)
+{
+    ACImpl *This = impl_from_IAudioStreamVolume(iface);
+    HRESULT hr;
+    int i;
+
+    TRACE("(%p)->(%d, %p)\n", This, count, levels);
+
+    if (!levels)
+        return E_POINTER;
+
+    if (count != This->ss.channels)
+        return E_INVALIDARG;
+
+    pthread_mutex_lock(&pulse_lock);
+    hr = pulse_stream_valid(This);
+    if (FAILED(hr))
+        goto out;
+
+    for (i = 0; i < count; ++i)
+        This->vol[i] = levels[i];
+
+out:
+    pthread_mutex_unlock(&pulse_lock);
+    return hr;
+}
+
+static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
+        IAudioStreamVolume *iface, UINT32 count, float *levels)
+{
+    ACImpl *This = impl_from_IAudioStreamVolume(iface);
+    HRESULT hr;
+    int i;
+
+    TRACE("(%p)->(%d, %p)\n", This, count, levels);
+
+    if (!levels)
+        return E_POINTER;
+
+    if (count != This->ss.channels)
+        return E_INVALIDARG;
+
+    pthread_mutex_lock(&pulse_lock);
+    hr = pulse_stream_valid(This);
+    if (FAILED(hr))
+        goto out;
+
+    for (i = 0; i < count; ++i)
+        levels[i] = This->vol[i];
+
+out:
+    pthread_mutex_unlock(&pulse_lock);
+    return hr;
+}
+
+static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
+        IAudioStreamVolume *iface, UINT32 index, float level)
+{
+    ACImpl *This = impl_from_IAudioStreamVolume(iface);
+    HRESULT hr;
+    float volumes[PA_CHANNELS_MAX];
+
+    TRACE("(%p)->(%d, %f)\n", This, index, level);
+
+    if (level < 0.f || level > 1.f)
+        return E_INVALIDARG;
+
+    if (index >= This->ss.channels)
+        return E_INVALIDARG;
+
+    hr = AudioStreamVolume_GetAllVolumes(iface, This->ss.channels, volumes);
+    volumes[index] = level;
+    if (SUCCEEDED(hr))
+        hr = AudioStreamVolume_SetAllVolumes(iface, This->ss.channels, volumes);
+    return hr;
+}
+
+static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
+        IAudioStreamVolume *iface, UINT32 index, float *level)
+{
+    ACImpl *This = impl_from_IAudioStreamVolume(iface);
+    float volumes[PA_CHANNELS_MAX];
+    HRESULT hr;
+
+    TRACE("(%p)->(%d, %p)\n", This, index, level);
+
+    if (!level)
+        return E_POINTER;
+
+    if (index >= This->ss.channels)
+        return E_INVALIDARG;
+
+    hr = AudioStreamVolume_GetAllVolumes(iface, This->ss.channels, volumes);
+    if (SUCCEEDED(hr))
+        *level = volumes[index];
+    return hr;
+}
+
+static const IAudioStreamVolumeVtbl AudioStreamVolume_Vtbl =
+{
+    AudioStreamVolume_QueryInterface,
+    AudioStreamVolume_AddRef,
+    AudioStreamVolume_Release,
+    AudioStreamVolume_GetChannelCount,
+    AudioStreamVolume_SetChannelVolume,
+    AudioStreamVolume_GetChannelVolume,
+    AudioStreamVolume_SetAllVolumes,
+    AudioStreamVolume_GetAllVolumes
 };
 
 HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
