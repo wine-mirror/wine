@@ -1076,7 +1076,7 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     TRACE("(%p, %d, %p, %p)\n", hwmf, delete, placeable, metafile);
 
-    if(!hwmf || !metafile || !placeable)
+    if(!hwmf || !metafile)
         return InvalidParameter;
 
     *metafile = NULL;
@@ -1094,15 +1094,20 @@ GpStatus WINGDIPAPI GdipCreateMetafileFromWmf(HMETAFILE hwmf, BOOL delete,
 
     if (retval == Ok)
     {
-        (*metafile)->image.xres = (REAL)placeable->Inch;
-        (*metafile)->image.yres = (REAL)placeable->Inch;
-        (*metafile)->bounds.X = ((REAL)placeable->BoundingBox.Left) / ((REAL)placeable->Inch);
-        (*metafile)->bounds.Y = ((REAL)placeable->BoundingBox.Top) / ((REAL)placeable->Inch);
-        (*metafile)->bounds.Width = (REAL)(placeable->BoundingBox.Right -
-                                           placeable->BoundingBox.Left);
-        (*metafile)->bounds.Height = (REAL)(placeable->BoundingBox.Bottom -
-                                            placeable->BoundingBox.Top);
-        (*metafile)->metafile_type = MetafileTypeWmfPlaceable;
+        if (placeable)
+        {
+            (*metafile)->image.xres = (REAL)placeable->Inch;
+            (*metafile)->image.yres = (REAL)placeable->Inch;
+            (*metafile)->bounds.X = ((REAL)placeable->BoundingBox.Left) / ((REAL)placeable->Inch);
+            (*metafile)->bounds.Y = ((REAL)placeable->BoundingBox.Top) / ((REAL)placeable->Inch);
+            (*metafile)->bounds.Width = (REAL)(placeable->BoundingBox.Right -
+                                               placeable->BoundingBox.Left);
+            (*metafile)->bounds.Height = (REAL)(placeable->BoundingBox.Bottom -
+                                                placeable->BoundingBox.Top);
+            (*metafile)->metafile_type = MetafileTypeWmfPlaceable;
+        }
+        else
+            (*metafile)->metafile_type = MetafileTypeWmf;
         (*metafile)->image.format = ImageFormatWMF;
 
         if (delete) DeleteMetaFile(hwmf);

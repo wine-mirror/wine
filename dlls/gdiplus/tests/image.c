@@ -1544,6 +1544,22 @@ static void test_createfromwmf(void)
     GdipDisposeImage(img);
 }
 
+static void test_createfromwmf_noplaceable(void)
+{
+    HMETAFILE hwmf;
+    GpImage *img;
+    GpStatus stat;
+
+    hwmf = SetMetaFileBitsEx(sizeof(wmfimage)-sizeof(WmfPlaceableFileHeader),
+        wmfimage+sizeof(WmfPlaceableFileHeader));
+    ok(hwmf != 0, "SetMetaFileBitsEx failed\n");
+
+    stat = GdipCreateMetafileFromWmf(hwmf, TRUE, NULL, (GpMetafile**)&img);
+    expect(Ok, stat);
+
+    GdipDisposeImage(img);
+}
+
 static void test_resolution(void)
 {
     GpStatus stat;
@@ -4758,6 +4774,7 @@ START_TEST(image)
     test_getrawformat();
     test_loadwmf();
     test_createfromwmf();
+    test_createfromwmf_noplaceable();
     test_resolution();
     test_createhbitmap();
     test_getthumbnail();
