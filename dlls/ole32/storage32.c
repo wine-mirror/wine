@@ -1036,9 +1036,10 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     /*
      * Read the entry from the storage.
      */
-    StorageBaseImpl_ReadDirEntry(This->parentStorage,
+    hr = StorageBaseImpl_ReadDirEntry(This->parentStorage,
       currentSearchNode,
       &currentEntry);
+    if (FAILED(hr)) break;
 
     /*
      * Copy the information to the return buffer.
