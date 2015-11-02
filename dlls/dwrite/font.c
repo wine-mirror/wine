@@ -163,14 +163,14 @@ struct dwrite_glyphrunanalysis {
     LONG ref;
 
     DWRITE_RENDERING_MODE rendering_mode;
-    DWRITE_GLYPH_RUN run;
+    DWRITE_GLYPH_RUN run; /* glyphAdvances and glyphOffsets are not used */
     DWRITE_MATRIX m;
     FLOAT ppdip;
-    FLOAT originX;
-    FLOAT originY;
     UINT16 *glyphs;
-    FLOAT *advances;
-    DWRITE_GLYPH_OFFSET *offsets;
+    D2D_POINT_2F origin;
+    D2D_POINT_2F *advances;
+    D2D_POINT_2F *advanceoffsets;
+    D2D_POINT_2F *ascenderoffsets;
 
     UINT8 flags;
     RECT bounds;
@@ -4043,7 +4043,8 @@ static ULONG WINAPI glyphrunanalysis_Release(IDWriteGlyphRunAnalysis *iface)
             IDWriteFontFace_Release(This->run.fontFace);
         heap_free(This->glyphs);
         heap_free(This->advances);
-        heap_free(This->offsets);
+        heap_free(This->advanceoffsets);
+        heap_free(This->ascenderoffsets);
         heap_free(This->bitmap);
         heap_free(This);
     }
@@ -4055,7 +4056,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
 {
     struct dwrite_glyphbitmap glyph_bitmap;
     IDWriteFontFace2 *fontface2;
-    FLOAT origin_x;
+    D2D_POINT_2F origin;
     BOOL is_rtl;
     HRESULT hr;
     UINT32 i;
@@ -4075,7 +4076,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
     /* Start with empty bounds at (0,0) origin, returned bounds are not translated back to (0,0), e.g. for
        RTL run negative left bound is returned, same goes for vertical direction - top bound will be negative
        for any non-zero glyph ascender */
-    origin_x = 0.0;
+    origin.x = origin.y = 0.0f;
     is_rtl = analysis->run.bidiLevel & 1;
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
@@ -4085,29 +4086,46 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
         analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
 
     for (i = 0; i < analysis->run.glyphCount; i++) {
-        const DWRITE_GLYPH_OFFSET *offset = analysis->offsets ? &analysis->offsets[i] : NULL;
-        FLOAT advance = analysis->advances[i];
+        const D2D_POINT_2F *advanceoffset = analysis->advanceoffsets ? analysis->advanceoffsets + i : NULL;
+        const D2D_POINT_2F *ascenderoffset = analysis->ascenderoffsets ? analysis->ascenderoffsets + i : NULL;
+        const D2D_POINT_2F *advance = analysis->advances + i;
         RECT *bbox = &glyph_bitmap.bbox;
 
         glyph_bitmap.index = analysis->run.glyphIndices[i];
         freetype_get_glyph_bbox(&glyph_bitmap);
 
         if (is_rtl)
-            OffsetRect(bbox, origin_x - advance, 0);
+            OffsetRect(bbox, origin.x - advance->x, origin.y - advance->y);
         else
-            OffsetRect(bbox, origin_x, 0);
+            OffsetRect(bbox, origin.x, origin.y);
 
-        if (offset)
-            OffsetRect(bbox, is_rtl ? -offset->advanceOffset : offset->advanceOffset, is_rtl ? -offset->ascenderOffset : offset->ascenderOffset);
+        if (advanceoffset) {
+            FLOAT offset_x = advanceoffset->x + ascenderoffset->x;
+            FLOAT offset_y = advanceoffset->y + ascenderoffset->y;
+
+            if (is_rtl) {
+                offset_x *= -1.0f;
+                offset_y *= -1.0f;
+            }
+
+            OffsetRect(bbox, offset_x, offset_y);
+        }
 
         UnionRect(&analysis->bounds, &analysis->bounds, bbox);
-        origin_x += is_rtl ? -advance : advance;
+        if (is_rtl) {
+            origin.x -= advance->x;
+            origin.y -= advance->y;
+        }
+        else {
+            origin.x += advance->x;
+            origin.y += advance->y;
+        }
     }
 
     IDWriteFontFace2_Release(fontface2);
 
     /* translate to given run origin */
-    OffsetRect(&analysis->bounds, analysis->originX, analysis->originY);
+    OffsetRect(&analysis->bounds, analysis->origin.x, analysis->origin.y);
 
     analysis->flags |= RUNANALYSIS_BOUNDS_READY;
     *bounds = analysis->bounds;
@@ -4154,7 +4172,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     static const BYTE masks[8] = {0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01};
     struct dwrite_glyphbitmap glyph_bitmap;
     IDWriteFontFace2 *fontface2;
-    FLOAT origin_x;
+    D2D_POINT_2F origin;
     UINT32 i, size;
     BOOL is_rtl;
     HRESULT hr;
@@ -4171,7 +4189,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
         size *= 3;
     analysis->bitmap = heap_alloc_zero(size);
 
-    origin_x = 0.0;
+    origin.x = origin.y = 0.0f;
     is_rtl = analysis->run.bidiLevel & 1;
 
     memset(&glyph_bitmap, 0, sizeof(glyph_bitmap));
@@ -4183,8 +4201,9 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     bbox = &glyph_bitmap.bbox;
 
     for (i = 0; i < analysis->run.glyphCount; i++) {
-        const DWRITE_GLYPH_OFFSET *offset = analysis->offsets ? &analysis->offsets[i] : NULL;
-        FLOAT advance = analysis->advances[i];
+        const D2D_POINT_2F *advanceoffset = analysis->advanceoffsets ? analysis->advanceoffsets + i : NULL;
+        const D2D_POINT_2F *ascenderoffset = analysis->ascenderoffsets ? analysis->ascenderoffsets + i : NULL;
+        const D2D_POINT_2F *advance = analysis->advances + i;
         int x, y, width, height;
         BYTE *src, *dst;
         BOOL is_1bpp;
@@ -4193,7 +4212,14 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
         freetype_get_glyph_bbox(&glyph_bitmap);
 
         if (IsRectEmpty(bbox)) {
-            origin_x += is_rtl ? -advance : advance;
+            if (is_rtl) {
+                origin.x -= advance->x;
+                origin.y -= advance->y;
+            }
+            else {
+                origin.x += advance->x;
+                origin.y += advance->y;
+            }
             continue;
         }
 
@@ -4209,14 +4235,23 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
         is_1bpp = freetype_get_glyph_bitmap(&glyph_bitmap);
 
         if (is_rtl)
-            OffsetRect(bbox, origin_x - advance, 0);
+            OffsetRect(bbox, origin.x - advance->x, origin.y - advance->y);
         else
-            OffsetRect(bbox, origin_x, 0);
+            OffsetRect(bbox, origin.x, origin.y);
 
-        if (offset)
-            OffsetRect(bbox, is_rtl ? -offset->advanceOffset : offset->advanceOffset, is_rtl ? -offset->ascenderOffset : offset->ascenderOffset);
+        if (advanceoffset) {
+            FLOAT offset_x = advanceoffset->x + ascenderoffset->x;
+            FLOAT offset_y = advanceoffset->y + ascenderoffset->y;
 
-        OffsetRect(bbox, analysis->originX, analysis->originY);
+            if (is_rtl) {
+                offset_x *= -1.0f;
+                offset_y *= -1.0f;
+            }
+
+            OffsetRect(bbox, offset_x, offset_y);
+        }
+
+        OffsetRect(bbox, analysis->origin.x, analysis->origin.y);
 
         /* blit to analysis bitmap */
         dst = get_pixel_ptr(analysis->bitmap, type, bbox, &analysis->bounds);
@@ -4252,7 +4287,14 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
 
         heap_free(glyph_bitmap.buf);
 
-        origin_x += is_rtl ? -advance : advance;
+        if (is_rtl) {
+            origin.x -= advance->x;
+            origin.y -= advance->y;
+        }
+        else {
+            origin.x += advance->x;
+            origin.y += advance->y;
+        }
     }
 
     IDWriteFontFace2_Release(fontface2);
@@ -4262,15 +4304,15 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     /* we don't need this anymore */
     heap_free(analysis->glyphs);
     heap_free(analysis->advances);
-    heap_free(analysis->offsets);
+    heap_free(analysis->advanceoffsets);
+    heap_free(analysis->ascenderoffsets);
     IDWriteFontFace_Release(analysis->run.fontFace);
 
     analysis->glyphs = NULL;
     analysis->advances = NULL;
-    analysis->offsets = NULL;
+    analysis->advanceoffsets = NULL;
+    analysis->ascenderoffsets = NULL;
     analysis->run.glyphIndices = NULL;
-    analysis->run.glyphAdvances = NULL;
-    analysis->run.glyphOffsets = NULL;
     analysis->run.fontFace = NULL;
 }
 
@@ -4383,6 +4425,18 @@ static const struct IDWriteGlyphRunAnalysisVtbl glyphrunanalysisvtbl = {
     glyphrunanalysis_GetAlphaBlendParams
 };
 
+static inline void init_2d_vec(D2D_POINT_2F *vec, FLOAT length, BOOL is_vertical)
+{
+    if (is_vertical) {
+        vec->x = 0.0f;
+        vec->y = length;
+    }
+    else {
+        vec->x = length;
+        vec->y = 0.0f;
+    }
+}
+
 HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode, DWRITE_GLYPH_RUN const *run,
     FLOAT ppdip, const DWRITE_MATRIX *transform, DWRITE_GRID_FIT_MODE gridfit_mode, DWRITE_TEXT_ANTIALIAS_MODE aa_mode,
     FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
@@ -4406,22 +4460,32 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     analysis->flags = 0;
     analysis->bitmap = NULL;
     analysis->ppdip = ppdip;
-    analysis->originX = originX * ppdip;
-    analysis->originY = originY * ppdip;
+    analysis->origin.x = originX * ppdip;
+    analysis->origin.y = originY * ppdip;
     SetRectEmpty(&analysis->bounds);
     analysis->run = *run;
     IDWriteFontFace_AddRef(analysis->run.fontFace);
     analysis->glyphs = heap_alloc(run->glyphCount*sizeof(*run->glyphIndices));
-    analysis->advances = heap_alloc(run->glyphCount*sizeof(*run->glyphAdvances));
-    analysis->offsets = run->glyphOffsets ? heap_alloc(run->glyphCount*sizeof(*run->glyphOffsets)) : NULL;
-    if (!analysis->glyphs || !analysis->advances || (!analysis->offsets && run->glyphOffsets)) {
+    analysis->advances = heap_alloc(run->glyphCount*sizeof(*analysis->advances));
+    if (run->glyphOffsets) {
+        analysis->advanceoffsets = heap_alloc(run->glyphCount*sizeof(*analysis->advanceoffsets));
+        analysis->ascenderoffsets = heap_alloc(run->glyphCount*sizeof(*analysis->ascenderoffsets));
+    }
+    else {
+        analysis->advanceoffsets = NULL;
+        analysis->ascenderoffsets = NULL;
+    }
+
+    if (!analysis->glyphs || !analysis->advances || ((!analysis->advanceoffsets || !analysis->ascenderoffsets) && run->glyphOffsets)) {
         heap_free(analysis->glyphs);
         heap_free(analysis->advances);
-        heap_free(analysis->offsets);
+        heap_free(analysis->advanceoffsets);
+        heap_free(analysis->ascenderoffsets);
 
         analysis->glyphs = NULL;
         analysis->advances = NULL;
-        analysis->offsets = NULL;
+        analysis->advanceoffsets = NULL;
+        analysis->ascenderoffsets = NULL;
 
         IDWriteGlyphRunAnalysis_Release(&analysis->IDWriteGlyphRunAnalysis_iface);
         return E_OUTOFMEMORY;
@@ -4436,17 +4500,14 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
         memset(&analysis->m, 0, sizeof(analysis->m));
 
     analysis->run.glyphIndices = analysis->glyphs;
-    analysis->run.glyphAdvances = analysis->advances;
-    analysis->run.glyphOffsets = analysis->offsets;
+    analysis->run.glyphAdvances = NULL;
+    analysis->run.glyphOffsets = NULL;
 
     memcpy(analysis->glyphs, run->glyphIndices, run->glyphCount*sizeof(*run->glyphIndices));
 
     if (run->glyphAdvances) {
-        if (ppdip == 1.0f)
-            memcpy(analysis->advances, run->glyphAdvances, run->glyphCount*sizeof(*run->glyphAdvances));
-        else {
-            for (i = 0; i < run->glyphCount; i++)
-                analysis->advances[i] = run->glyphAdvances[i] * ppdip;
+        for (i = 0; i < run->glyphCount; i++) {
+            init_2d_vec(analysis->advances + i, run->glyphAdvances[i] * ppdip, run->isSideways);
         }
     }
     else {
@@ -4466,16 +4527,18 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
                 hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, run->glyphIndices + i, &a, run->isSideways);
                 if (FAILED(hr))
                     a = 0;
-                analysis->advances[i] = get_scaled_advance_width(a, run->fontEmSize, &metrics) * ppdip;
+                init_2d_vec(analysis->advances + i, get_scaled_advance_width(a, run->fontEmSize, &metrics) * ppdip,
+                    run->isSideways);
                 break;
             case DWRITE_MEASURING_MODE_GDI_CLASSIC:
             case DWRITE_MEASURING_MODE_GDI_NATURAL:
                 hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, run->fontEmSize, ppdip, transform,
                     measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->isSideways, 1, run->glyphIndices + i, &a);
                 if (FAILED(hr))
-                    analysis->advances[i] = 0.0;
+                    init_2d_vec(analysis->advances + i, 0.0f, FALSE);
                 else
-                    analysis->advances[i] = floorf(a * run->fontEmSize * ppdip / metrics.designUnitsPerEm + 0.5f);
+                    init_2d_vec(analysis->advances + i, floorf(a * run->fontEmSize * ppdip / metrics.designUnitsPerEm + 0.5f),
+                        run->isSideways);
                 break;
             default:
                 ;
@@ -4486,13 +4549,9 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     }
 
     if (run->glyphOffsets) {
-        if (ppdip == 1.0f)
-            memcpy(analysis->offsets, run->glyphOffsets, run->glyphCount*sizeof(*run->glyphOffsets));
-        else {
-            for (i = 0; i < run->glyphCount; i++) {
-                analysis->offsets[i].advanceOffset  = run->glyphOffsets[i].advanceOffset * ppdip;
-                analysis->offsets[i].ascenderOffset = run->glyphOffsets[i].ascenderOffset * ppdip;
-            }
+        for (i = 0; i < run->glyphCount; i++) {
+            init_2d_vec(analysis->advanceoffsets + i, run->glyphOffsets[i].advanceOffset * ppdip, run->isSideways);
+            init_2d_vec(analysis->ascenderoffsets + i, run->glyphOffsets[i].ascenderOffset * ppdip, !run->isSideways);
         }
     }
 
