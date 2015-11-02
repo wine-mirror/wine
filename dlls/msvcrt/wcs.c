@@ -1161,7 +1161,7 @@ static int puts_clbk_str_c99_w(void *ctx, int len, const MSVCRT_wchar_t *str)
 }
 
 /*********************************************************************
- *		__stdio_common_vsprintf (MSVCRT.@)
+ *		__stdio_common_vswprintf (MSVCRT.@)
  */
 int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options, MSVCRT_wchar_t *str, MSVCRT_size_t len, const MSVCRT_wchar_t *format,
                                           MSVCRT__locale_t locale, __ms_va_list valist )
