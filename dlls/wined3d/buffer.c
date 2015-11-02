@@ -1123,11 +1123,38 @@ static ULONG buffer_resource_decref(struct wined3d_resource *resource)
     return wined3d_buffer_decref(buffer_from_resource(resource));
 }
 
+static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
+{
+    struct wined3d_buffer *buffer = buffer_from_resource(resource);
+    UINT offset, size;
+
+    if (sub_resource_idx)
+    {
+        WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
+        return E_INVALIDARG;
+    }
+
+    if (box)
+    {
+        offset = box->left;
+        size = box->right - box->left;
+    }
+    else
+    {
+        offset = size = 0;
+    }
+
+    map_desc->row_pitch = map_desc->slice_pitch = buffer->desc.byte_width;
+    return wined3d_buffer_map(buffer, offset, size, (BYTE **)&map_desc->data, flags);
+}
+
 static const struct wined3d_resource_ops buffer_resource_ops =
 {
     buffer_resource_incref,
     buffer_resource_decref,
     buffer_unload,
+    buffer_resource_sub_resource_map,
 };
 
 static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device *device,

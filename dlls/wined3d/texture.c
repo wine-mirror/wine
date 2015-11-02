@@ -919,12 +919,6 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
     }
 }
 
-static HRESULT texture2d_sub_resource_map(struct wined3d_resource *sub_resource,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
-{
-    return wined3d_surface_map(surface_from_resource(sub_resource), map_desc, box, flags);
-}
-
 static HRESULT texture2d_sub_resource_unmap(struct wined3d_resource *sub_resource)
 {
     return wined3d_surface_unmap(surface_from_resource(sub_resource));
@@ -938,7 +932,6 @@ static const struct wined3d_texture_ops texture2d_ops =
     texture2d_sub_resource_invalidate_location,
     texture2d_sub_resource_validate_location,
     texture2d_sub_resource_upload_data,
-    texture2d_sub_resource_map,
     texture2d_sub_resource_unmap,
     texture2d_prepare_texture,
 };
@@ -972,11 +965,23 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
     wined3d_texture_unload_gl_texture(texture);
 }
 
-static const struct wined3d_resource_ops texture_resource_ops =
+static HRESULT texture2d_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
+{
+    struct wined3d_resource *sub_resource;
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), sub_resource_idx)))
+        return E_INVALIDARG;
+
+    return wined3d_surface_map(surface_from_resource(sub_resource), map_desc, box, flags);
+}
+
+static const struct wined3d_resource_ops texture2d_resource_ops =
 {
     texture_resource_incref,
     texture_resource_decref,
     wined3d_texture_unload,
+    texture2d_resource_sub_resource_map,
 };
 
 static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
@@ -1034,7 +1039,7 @@ static HRESULT cubetexture_init(struct wined3d_texture *texture, const struct wi
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 6, levels, desc,
-            surface_flags, device, parent, parent_ops, &texture_resource_ops)))
+            surface_flags, device, parent, parent_ops, &texture2d_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x\n", hr);
         return hr;
@@ -1152,7 +1157,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture2d_ops, 1, levels, desc,
-            surface_flags, device, parent, parent_ops, &texture_resource_ops)))
+            surface_flags, device, parent, parent_ops, &texture2d_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
@@ -1307,12 +1312,6 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
     }
 }
 
-static HRESULT texture3d_sub_resource_map(struct wined3d_resource *sub_resource,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
-{
-    return wined3d_volume_map(volume_from_resource(sub_resource), map_desc, box, flags);
-}
-
 static HRESULT texture3d_sub_resource_unmap(struct wined3d_resource *sub_resource)
 {
      return wined3d_volume_unmap(volume_from_resource(sub_resource));
@@ -1326,9 +1325,27 @@ static const struct wined3d_texture_ops texture3d_ops =
     texture3d_sub_resource_invalidate_location,
     texture3d_sub_resource_validate_location,
     texture3d_sub_resource_upload_data,
-    texture3d_sub_resource_map,
     texture3d_sub_resource_unmap,
     texture3d_prepare_texture,
+};
+
+static HRESULT texture3d_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
+{
+    struct wined3d_resource *sub_resource;
+
+    if (!(sub_resource = wined3d_texture_get_sub_resource(wined3d_texture_from_resource(resource), sub_resource_idx)))
+        return E_INVALIDARG;
+
+    return wined3d_volume_map(volume_from_resource(sub_resource), map_desc, box, flags);
+}
+
+static const struct wined3d_resource_ops texture3d_resource_ops =
+{
+    texture_resource_incref,
+    texture_resource_decref,
+    wined3d_texture_unload,
+    texture3d_resource_sub_resource_map,
 };
 
 static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
@@ -1398,7 +1415,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     }
 
     if (FAILED(hr = wined3d_texture_init(texture, &texture3d_ops, 1, levels, desc,
-            0, device, parent, parent_ops, &texture_resource_ops)))
+            0, device, parent, parent_ops, &texture3d_resource_ops)))
     {
         WARN("Failed to initialize texture, returning %#x.\n", hr);
         return hr;
@@ -1523,15 +1540,11 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
 HRESULT CDECL wined3d_texture_map(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
-    struct wined3d_resource *sub_resource;
-
     TRACE("texture %p, sub_resource_idx %u, map_desc %p, box %p, flags %#x.\n",
             texture, sub_resource_idx, map_desc, box, flags);
 
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
-        return WINED3DERR_INVALIDCALL;
-
-    return texture->texture_ops->texture_sub_resource_map(sub_resource, map_desc, box, flags);
+    return texture->resource.resource_ops->resource_sub_resource_map(&texture->resource, sub_resource_idx,
+            map_desc, box, flags);
 }
 
 HRESULT CDECL wined3d_texture_unmap(struct wined3d_texture *texture, unsigned int sub_resource_idx)

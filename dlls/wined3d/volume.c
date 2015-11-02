@@ -700,11 +700,19 @@ static ULONG volume_resource_decref(struct wined3d_resource *resource)
     return wined3d_texture_decref(volume->container);
 }
 
+static HRESULT volume_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
+        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
+{
+    ERR("Not supported on sub-resources.\n");
+    return WINED3DERR_INVALIDCALL;
+}
+
 static const struct wined3d_resource_ops volume_resource_ops =
 {
     volume_resource_incref,
     volume_resource_decref,
     volume_unload,
+    volume_resource_sub_resource_map,
 };
 
 static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture *container,
