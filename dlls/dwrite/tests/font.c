@@ -3507,6 +3507,7 @@ static void test_CreateGlyphRunAnalysis(void)
     DWRITE_GLYPH_OFFSET offsets[2];
     DWRITE_GLYPH_METRICS metrics;
     DWRITE_FONT_METRICS fm;
+    DWRITE_MATRIX m;
     int i;
 
     factory = create_factory();
@@ -3756,6 +3757,32 @@ static void test_CreateGlyphRunAnalysis(void)
     hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok((rect.right - rect.left) > 2 * advances[0], "got rect width %d for advance %f\n", rect.right - rect.left, advances[0]);
+    IDWriteGlyphRunAnalysis_Release(analysis);
+
+    /* with scaling transform */
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, NULL,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SetRectEmpty(&rect);
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!IsRectEmpty(&rect), "got rect width %d\n", rect.right - rect.left);
+    IDWriteGlyphRunAnalysis_Release(analysis);
+
+    memset(&m, 0, sizeof(m));
+    m.m11 = 2.0;
+    m.m22 = 1.0;
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, &m,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    SetRectEmpty(&rect2);
+    hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok((rect2.right - rect2.left) > (rect.right - rect.left), "got rect width %d\n", rect2.right - rect2.left);
     IDWriteGlyphRunAnalysis_Release(analysis);
 
     IDWriteFontFace_Release(face);

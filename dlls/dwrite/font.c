@@ -4084,6 +4084,8 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
     glyph_bitmap.emsize = analysis->run.fontEmSize * analysis->ppdip;
     glyph_bitmap.nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL ||
         analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
+    if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
+        glyph_bitmap.m = &analysis->m;
 
     for (i = 0; i < analysis->run.glyphCount; i++) {
         const D2D_POINT_2F *advanceoffset = analysis->advanceoffsets ? analysis->advanceoffsets + i : NULL;
@@ -4126,6 +4128,8 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
 
     /* translate to given run origin */
     OffsetRect(&analysis->bounds, analysis->origin.x, analysis->origin.y);
+    if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
+        OffsetRect(&analysis->bounds, analysis->m.dx, analysis->m.dy);
 
     analysis->flags |= RUNANALYSIS_BOUNDS_READY;
     *bounds = analysis->bounds;
@@ -4198,6 +4202,8 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
     glyph_bitmap.nohint = analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL ||
         analysis->rendering_mode == DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC;
     glyph_bitmap.type = type;
+    if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
+        glyph_bitmap.m = &analysis->m;
     bbox = &glyph_bitmap.bbox;
 
     for (i = 0; i < analysis->run.glyphCount; i++) {
@@ -4252,6 +4258,8 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
         }
 
         OffsetRect(bbox, analysis->origin.x, analysis->origin.y);
+        if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
+            OffsetRect(bbox, analysis->m.dx, analysis->m.dy);
 
         /* blit to analysis bitmap */
         dst = get_pixel_ptr(analysis->bitmap, type, bbox, &analysis->bounds);
@@ -4437,6 +4445,14 @@ static inline void init_2d_vec(D2D_POINT_2F *vec, FLOAT length, BOOL is_vertical
     }
 }
 
+static inline void transform_2d_vec(D2D_POINT_2F *vec, const DWRITE_MATRIX *m)
+{
+    D2D_POINT_2F ret;
+    ret.x = vec->x * m->m11 + vec->y * m->m21;
+    ret.y = vec->x * m->m12 + vec->y * m->m22;
+    *vec = ret;
+}
+
 HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEASURING_MODE measuring_mode, DWRITE_GLYPH_RUN const *run,
     FLOAT ppdip, const DWRITE_MATRIX *transform, DWRITE_GRID_FIT_MODE gridfit_mode, DWRITE_TEXT_ANTIALIAS_MODE aa_mode,
     FLOAT originX, FLOAT originY, IDWriteGlyphRunAnalysis **ret)
@@ -4503,11 +4519,16 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     analysis->run.glyphAdvances = NULL;
     analysis->run.glyphOffsets = NULL;
 
+    if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
+        transform_2d_vec(&analysis->origin, &analysis->m);
+
     memcpy(analysis->glyphs, run->glyphIndices, run->glyphCount*sizeof(*run->glyphIndices));
 
     if (run->glyphAdvances) {
         for (i = 0; i < run->glyphCount; i++) {
             init_2d_vec(analysis->advances + i, run->glyphAdvances[i] * ppdip, run->isSideways);
+            if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
+                transform_2d_vec(analysis->advances + i, &analysis->m);
         }
     }
     else {
@@ -4543,6 +4564,9 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
             default:
                 ;
             }
+
+            if (analysis->flags & RUNANALYSIS_USE_TRANSFORM)
+                transform_2d_vec(analysis->advances + i, &analysis->m);
         }
 
         IDWriteFontFace1_Release(fontface1);
@@ -4552,6 +4576,10 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
         for (i = 0; i < run->glyphCount; i++) {
             init_2d_vec(analysis->advanceoffsets + i, run->glyphOffsets[i].advanceOffset * ppdip, run->isSideways);
             init_2d_vec(analysis->ascenderoffsets + i, run->glyphOffsets[i].ascenderOffset * ppdip, !run->isSideways);
+            if (analysis->flags & RUNANALYSIS_USE_TRANSFORM) {
+                transform_2d_vec(analysis->advanceoffsets + i, &analysis->m);
+                transform_2d_vec(analysis->ascenderoffsets + i, &analysis->m);
+            }
         }
     }
 

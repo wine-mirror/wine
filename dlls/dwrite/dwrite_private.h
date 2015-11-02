@@ -201,6 +201,7 @@ struct dwrite_glyphbitmap {
     RECT bbox;
     BYTE *buf;
     DWRITE_TEXTURE_TYPE type;
+    DWRITE_MATRIX *m;
 };
 
 extern BOOL init_freetype(void) DECLSPEC_HIDDEN;

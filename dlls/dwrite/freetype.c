@@ -65,10 +65,13 @@ typedef struct
 
 #define MAKE_FUNCPTR(f) static typeof(f) * p##f = NULL
 MAKE_FUNCPTR(FT_Done_FreeType);
+MAKE_FUNCPTR(FT_Done_Glyph);
 MAKE_FUNCPTR(FT_Get_First_Char);
 MAKE_FUNCPTR(FT_Get_Kerning);
 MAKE_FUNCPTR(FT_Get_Sfnt_Table);
+MAKE_FUNCPTR(FT_Glyph_Copy);
 MAKE_FUNCPTR(FT_Glyph_Get_CBox);
+MAKE_FUNCPTR(FT_Glyph_Transform);
 MAKE_FUNCPTR(FT_Init_FreeType);
 MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
@@ -148,10 +151,13 @@ BOOL init_freetype(void)
 
 #define LOAD_FUNCPTR(f) if((p##f = wine_dlsym(ft_handle, #f, NULL, 0)) == NULL){WARN("Can't find symbol %s\n", #f); goto sym_not_found;}
     LOAD_FUNCPTR(FT_Done_FreeType)
+    LOAD_FUNCPTR(FT_Done_Glyph)
     LOAD_FUNCPTR(FT_Get_First_Char)
     LOAD_FUNCPTR(FT_Get_Kerning)
     LOAD_FUNCPTR(FT_Get_Sfnt_Table)
+    LOAD_FUNCPTR(FT_Glyph_Copy)
     LOAD_FUNCPTR(FT_Glyph_Get_CBox)
+    LOAD_FUNCPTR(FT_Glyph_Transform)
     LOAD_FUNCPTR(FT_Init_FreeType)
     LOAD_FUNCPTR(FT_Library_Version)
     LOAD_FUNCPTR(FT_Load_Glyph)
@@ -487,20 +493,61 @@ INT32 freetype_get_kerning_pair_adjustment(IDWriteFontFace2 *fontface, UINT16 le
     return adjustment;
 }
 
+static inline void ft_matrix_from_dwrite_matrix(const DWRITE_MATRIX *m, FT_Matrix *ft_matrix)
+{
+    ft_matrix->xx =  m->m11 * 0x10000;
+    ft_matrix->xy = -m->m21 * 0x10000;
+    ft_matrix->yx = -m->m12 * 0x10000;
+    ft_matrix->yy =  m->m22 * 0x10000;
+}
+
+/* Should be used only while holding 'freetype_cs' */
+static BOOL is_face_scalable(IDWriteFontFace2 *fontface)
+{
+    FT_Face face;
+    if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
+        return FT_IS_SCALABLE(face);
+    else
+        return FALSE;
+}
+
 void freetype_get_glyph_bbox(struct dwrite_glyphbitmap *bitmap)
 {
     FTC_ImageTypeRec imagetype;
     FT_BBox bbox = { 0 };
     FT_Glyph glyph;
 
+    EnterCriticalSection(&freetype_cs);
+
+    /* Some fonts provide mostly bitmaps and very few outlines, for example for .notdef,
+       disable transform if that's the case. */
+    if (bitmap->m) {
+        if (!is_face_scalable(bitmap->fontface))
+            bitmap->m = NULL;
+    }
+
     imagetype.face_id = bitmap->fontface;
     imagetype.width = 0;
     imagetype.height = bitmap->emsize;
-    imagetype.flags = FT_LOAD_DEFAULT;
+    imagetype.flags = bitmap->m ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
 
-    EnterCriticalSection(&freetype_cs);
-    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0)
-        pFT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
+    if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0) {
+        if (bitmap->m) {
+            FT_Glyph glyph_copy;
+
+            if (pFT_Glyph_Copy(glyph, &glyph_copy) == 0) {
+                FT_Matrix ft_matrix;
+
+                ft_matrix_from_dwrite_matrix(bitmap->m, &ft_matrix);
+                pFT_Glyph_Transform(glyph_copy, &ft_matrix, NULL);
+                pFT_Glyph_Get_CBox(glyph_copy, FT_GLYPH_BBOX_PIXELS, &bbox);
+                pFT_Done_Glyph(glyph_copy);
+            }
+        }
+        else
+            pFT_Glyph_Get_CBox(glyph, FT_GLYPH_BBOX_PIXELS, &bbox);
+    }
+
     LeaveCriticalSection(&freetype_cs);
 
     /* flip Y axis */
@@ -607,18 +654,42 @@ BOOL freetype_get_glyph_bitmap(struct dwrite_glyphbitmap *bitmap)
     BOOL ret = FALSE;
     FT_Glyph glyph;
 
+    EnterCriticalSection(&freetype_cs);
+
+    if (bitmap->m) {
+        if (!is_face_scalable(bitmap->fontface))
+            bitmap->m = NULL;
+    }
+
     imagetype.face_id = bitmap->fontface;
     imagetype.width = 0;
     imagetype.height = bitmap->emsize;
-    imagetype.flags = FT_LOAD_DEFAULT;
+    imagetype.flags = bitmap->m ? FT_LOAD_NO_BITMAP : FT_LOAD_DEFAULT;
 
-    EnterCriticalSection(&freetype_cs);
     if (pFTC_ImageCache_Lookup(image_cache, &imagetype, bitmap->index, &glyph, NULL) == 0) {
+        FT_Glyph glyph_copy;
+
+        if (bitmap->m) {
+            if (pFT_Glyph_Copy(glyph, &glyph_copy) == 0) {
+                FT_Matrix ft_matrix;
+
+                ft_matrix_from_dwrite_matrix(bitmap->m, &ft_matrix);
+                pFT_Glyph_Transform(glyph_copy, &ft_matrix, NULL);
+                glyph = glyph_copy;
+            }
+        }
+        else
+            glyph_copy = NULL;
+
         if (bitmap->type == DWRITE_TEXTURE_CLEARTYPE_3x1)
             ret = freetype_get_aa_glyph_bitmap(bitmap, glyph);
         else
             ret = freetype_get_aliased_glyph_bitmap(bitmap, glyph);
+
+        if (glyph_copy)
+            pFT_Done_Glyph(glyph_copy);
     }
+
     LeaveCriticalSection(&freetype_cs);
 
     return ret;
