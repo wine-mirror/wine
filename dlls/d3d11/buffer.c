@@ -312,7 +312,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_Map(ID3D10Buffer *iface, D3D10_MAP
 
     wined3d_mutex_lock();
     hr = wined3d_buffer_map(buffer->wined3d_buffer, 0, 0, (BYTE **)data,
-            wined3d_map_flags_from_d3d10_map_type(map_type));
+            wined3d_map_flags_from_d3d11_map_type(map_type));
     wined3d_mutex_unlock();
 
     return hr;

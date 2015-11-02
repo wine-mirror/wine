@@ -367,7 +367,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_Map(ID3D10Texture2D *iface, UIN
 
     wined3d_mutex_lock();
     if (SUCCEEDED(hr = wined3d_texture_map(texture->wined3d_texture, sub_resource_idx,
-            &wined3d_map_desc, NULL, wined3d_map_flags_from_d3d10_map_type(map_type))))
+            &wined3d_map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type))))
     {
         mapped_texture->pData = wined3d_map_desc.data;
         mapped_texture->RowPitch = wined3d_map_desc.row_pitch;
@@ -824,7 +824,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
 
     wined3d_mutex_lock();
     if (SUCCEEDED(hr = wined3d_texture_map(texture->wined3d_texture, sub_resource_idx,
-            &wined3d_map_desc, NULL, wined3d_map_flags_from_d3d10_map_type(map_type))))
+            &wined3d_map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type))))
     {
         mapped_texture->pData = wined3d_map_desc.data;
         mapped_texture->RowPitch = wined3d_map_desc.row_pitch;
