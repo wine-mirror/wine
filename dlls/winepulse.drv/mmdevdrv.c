@@ -157,6 +157,7 @@ struct ACImpl {
     IAudioClock IAudioClock_iface;
     IAudioClock2 IAudioClock2_iface;
     IAudioStreamVolume IAudioStreamVolume_iface;
+    IUnknown *marshal;
     IMMDevice *parent;
     struct list entry;
     float vol[PA_CHANNELS_MAX];
@@ -834,6 +835,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     ACImpl *This;
     int i;
     EDataFlow dataflow;
+    HRESULT hr;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
     if (IsEqualGUID(guid, &pulse_render_guid))
@@ -859,6 +861,12 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
     This->parent = dev;
     for (i = 0; i < PA_CHANNELS_MAX; ++i)
         This->vol[i] = 1.f;
+
+    hr = CoCreateFreeThreadedMarshaler((IUnknown*)This, &This->marshal);
+    if (hr) {
+        HeapFree(GetProcessHeap(), 0, This);
+        return hr;
+    }
     IMMDevice_AddRef(This->parent);
 
     *out = &This->IAudioClient_iface;
@@ -870,10 +878,13 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient 
 static HRESULT WINAPI AudioClient_QueryInterface(IAudioClient *iface,
         REFIID riid, void **ppv)
 {
+    ACImpl *This = impl_from_IAudioClient(iface);
+
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv)
         return E_POINTER;
+
     *ppv = NULL;
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IAudioClient))
         *ppv = iface;
@@ -881,6 +892,10 @@ static HRESULT WINAPI AudioClient_QueryInterface(IAudioClient *iface,
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
+
+    if (IsEqualIID(riid, &IID_IMarshal))
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
+
     WARN("Unknown interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
@@ -913,6 +928,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
             list_remove(&This->entry);
             pthread_mutex_unlock(&pulse_lock);
         }
+        IUnknown_Release(This->marshal);
         IMMDevice_Release(This->parent);
         HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
         HeapFree(GetProcessHeap(), 0, This);
@@ -1853,6 +1869,7 @@ static const IAudioClientVtbl AudioClient_Vtbl =
 static HRESULT WINAPI AudioRenderClient_QueryInterface(
         IAudioRenderClient *iface, REFIID riid, void **ppv)
 {
+    ACImpl *This = impl_from_IAudioRenderClient(iface);
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv)
@@ -1866,6 +1883,9 @@ static HRESULT WINAPI AudioRenderClient_QueryInterface(
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
+
+    if (IsEqualIID(riid, &IID_IMarshal))
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
 
     WARN("Unknown interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -1991,6 +2011,7 @@ static const IAudioRenderClientVtbl AudioRenderClient_Vtbl = {
 static HRESULT WINAPI AudioCaptureClient_QueryInterface(
         IAudioCaptureClient *iface, REFIID riid, void **ppv)
 {
+    ACImpl *This = impl_from_IAudioCaptureClient(iface);
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv)
@@ -2004,6 +2025,9 @@ static HRESULT WINAPI AudioCaptureClient_QueryInterface(
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
+
+    if (IsEqualIID(riid, &IID_IMarshal))
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
 
     WARN("Unknown interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
@@ -2145,6 +2169,9 @@ static HRESULT WINAPI AudioClock_QueryInterface(IAudioClock *iface,
         return S_OK;
     }
 
+    if (IsEqualIID(riid, &IID_IMarshal))
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
+
     WARN("Unknown interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
 }
@@ -2280,6 +2307,8 @@ static const IAudioClock2Vtbl AudioClock2_Vtbl =
 static HRESULT WINAPI AudioStreamVolume_QueryInterface(
         IAudioStreamVolume *iface, REFIID riid, void **ppv)
 {
+    ACImpl *This = impl_from_IAudioStreamVolume(iface);
+
     TRACE("(%p)->(%s, %p)\n", iface, debugstr_guid(riid), ppv);
 
     if (!ppv)
@@ -2293,6 +2322,9 @@ static HRESULT WINAPI AudioStreamVolume_QueryInterface(
         IUnknown_AddRef((IUnknown*)*ppv);
         return S_OK;
     }
+
+    if (IsEqualIID(riid, &IID_IMarshal))
+        return IUnknown_QueryInterface(This->marshal, riid, ppv);
 
     WARN("Unknown interface %s\n", debugstr_guid(riid));
     return E_NOINTERFACE;
