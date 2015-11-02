@@ -2597,7 +2597,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
         map_desc->row_pitch = surface->resource.width * format->byte_count;
     else
         map_desc->row_pitch = wined3d_surface_get_pitch(surface);
-    map_desc->slice_pitch = 0;
+    map_desc->slice_pitch = surface->resource.height * map_desc->row_pitch;
 
     if (!box)
     {
