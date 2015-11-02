@@ -154,15 +154,8 @@ PUBLIC_IDL_H_SRCS = \
 IDL_TLB_SRCS = \
 	stdole2.idl
 
-XTEMPLATE_SRCS = \
-	rmxftmpl.x
-
-SRCDIR_INCLUDES = \
-	$(IDL_TLB_SRCS) \
-	$(PUBLIC_IDL_H_SRCS) \
-	$(XTEMPLATE_SRCS) \
+HEADER_SRCS = \
 	accctrl.h \
-	access.idl \
 	aclapi.h \
 	aclui.h \
 	adshlp.h \
@@ -171,8 +164,6 @@ SRCDIR_INCLUDES = \
 	amaudio.h \
 	appcompatapi.h \
 	appmgmt.h \
-	asynot.idl \
-	asysta.idl \
 	atlbase.h \
 	atlcom.h \
 	atlwin.h \
@@ -180,23 +171,17 @@ SRCDIR_INCLUDES = \
 	audiosessiontypes.h \
 	aviriff.h \
 	avrt.h \
-	axcore.idl \
-	axextend.idl \
 	basetsd.h \
 	basetyps.h \
 	bcrypt.h \
 	bdaiface_enums.h \
 	bdatypes.h \
-	binres.idl \
 	bitsmsg.h \
 	cderr.h \
 	cfgmgr32.h \
 	cguid.h \
-	chprst.idl \
 	cierror.h \
 	clusapi.h \
-	cmdbas.idl \
-	cmdtxt.idl \
 	commctrl.h \
 	commctrl.rh \
 	commdlg.h \
@@ -204,7 +189,6 @@ SRCDIR_INCLUDES = \
 	corerror.h \
 	corhdr.h \
 	cpl.h \
-	crtrow.idl \
 	cryptdlg.h \
 	cryptuiapi.h \
 	custcntl.h \
@@ -244,13 +228,7 @@ SRCDIR_INCLUDES = \
 	d3dx9tex.h \
 	d3dx9xof.h \
 	davclnt.h \
-	dbccmd.idl \
-	dbcses.idl \
-	dbdsad.idl \
 	dbghelp.h \
-	dbinit.idl \
-	dbprop.idl \
-	dbs.idl \
 	dbt.h \
 	dciddi.h \
 	dciman.h \
@@ -285,7 +263,6 @@ SRCDIR_INCLUDES = \
 	ddrawgdi.h \
 	ddrawi.h \
 	delayloadhandler.h \
-	devenum.idl \
 	devguid.h \
 	devpkey.h \
 	devpropdef.h \
@@ -329,10 +306,8 @@ SRCDIR_INCLUDES = \
 	dxfile.h \
 	dxgiformat.h \
 	dxgitype.h \
-	dyngraph.idl \
 	errorrep.h \
 	errors.h \
-	errrec.idl \
 	evcode.h \
 	evntprov.h \
 	evntrace.h \
@@ -506,7 +481,6 @@ SRCDIR_INCLUDES = \
 	olectl.h \
 	oledberr.h \
 	oledlg.h \
-	opnrst.idl \
 	patchapi.h \
 	pdh.h \
 	pdhmsg.h \
@@ -534,10 +508,6 @@ SRCDIR_INCLUDES = \
 	richedit.h \
 	rmxfguid.h \
 	roapi.h \
-	row.idl \
-	rowchg.idl \
-	rowpos.idl \
-	rowpsc.idl \
 	rpc.h \
 	rpcasync.h \
 	rpcdce.h \
@@ -546,10 +516,6 @@ SRCDIR_INCLUDES = \
 	rpcnterr.h \
 	rpcproxy.h \
 	rpcsal.h \
-	rstbas.idl \
-	rstinf.idl \
-	rstloc.idl \
-	rstnot.idl \
 	rtutils.h \
 	scarderr.h \
 	schannel.h \
@@ -559,7 +525,6 @@ SRCDIR_INCLUDES = \
 	secext.h \
 	security.h \
 	sensapi.h \
-	sesprp.idl \
 	setupapi.h \
 	sfc.h \
 	shdispid.h \
@@ -575,7 +540,6 @@ SRCDIR_INCLUDES = \
 	sql.h \
 	sqlext.h \
 	sqltypes.h \
-	srcrst.idl \
 	srrestoreptapi.h \
 	sspi.h \
 	sti.h \
@@ -604,7 +568,6 @@ SRCDIR_INCLUDES = \
 	verrsrc.h \
 	vfw.h \
 	vfwmsgs.h \
-	vmrender.idl \
 	vsstyle.h \
 	vssym32.h \
 	vswriter.h \
@@ -674,11 +637,50 @@ SRCDIR_INCLUDES = \
 	xcmc.h \
 	xinput.h \
 	xmldom.h \
-	xmldom.idl \
 	xmldomdid.h \
-	xmldso.idl \
 	xmldsodid.h \
 	zmouse.h
+
+XTEMPLATE_SRCS = \
+	rmxftmpl.x
+
+SRCDIR_INCLUDES = \
+	$(IDL_TLB_SRCS) \
+	$(PUBLIC_IDL_H_SRCS) \
+	$(XTEMPLATE_SRCS) \
+	access.idl \
+	asynot.idl \
+	asysta.idl \
+	axcore.idl \
+	axextend.idl \
+	binres.idl \
+	chprst.idl \
+	cmdbas.idl \
+	cmdtxt.idl \
+	crtrow.idl \
+	dbccmd.idl \
+	dbcses.idl \
+	dbdsad.idl \
+	dbinit.idl \
+	dbprop.idl \
+	dbs.idl \
+	devenum.idl \
+	dyngraph.idl \
+	errrec.idl \
+	opnrst.idl \
+	row.idl \
+	rowchg.idl \
+	rowpos.idl \
+	rowpsc.idl \
+	rstbas.idl \
+	rstinf.idl \
+	rstloc.idl \
+	rstnot.idl \
+	sesprp.idl \
+	srcrst.idl \
+	vmrender.idl \
+	xmldom.idl \
+	xmldso.idl
 
 IDL_H_SRCS = $(PUBLIC_IDL_H_SRCS) $(PRIVATE_IDL_H_SRCS)
 IDL_SRCS = $(IDL_H_SRCS) $(IDL_TLB_SRCS)

@@ -378,10 +378,10 @@ sub assign_sources_to_makefiles(@)
             }
             if ($name =~ /stdole2\.idl$/) { push @{${$make}{"=IDL_TLB_SRCS"}}, $name; }
             elsif ($private_idl_headers{$name}) { push @{${$make}{"=SRCDIR_INCLUDES"}}, $name; }
-            elsif ($name =~ /\.h$/) { push @{${$make}{"=SRCDIR_INCLUDES"}}, $name; }
+            elsif ($name =~ /\.h$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
             elsif ($name =~ /\.x$/) { push @{${$make}{"=XTEMPLATE_SRCS"}}, $name; }
-            elsif ($name =~ /\.rh$/) { push @{${$make}{"=SRCDIR_INCLUDES"}}, $name; }
-            elsif ($name =~ /\.inl$/) { push @{${$make}{"=SRCDIR_INCLUDES"}}, $name; }
+            elsif ($name =~ /\.rh$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
+            elsif ($name =~ /\.inl$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
             elsif ($name =~ /\.idl$/) { push @{${$make}{"=PUBLIC_IDL_H_SRCS"}}, $name; }
             else { die "unknown file $name in include dir"; }
         }
@@ -549,6 +549,7 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "OBJC_SRCS" );
         replace_makefile_variable( $file, "RC_SRCS" );
         replace_makefile_variable( $file, "IDL_SRCS" );
+        replace_makefile_variable( $file, "HEADER_SRCS" );
         replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
         replace_makefile_variable( $file, "IN_SRCS" );
         replace_makefile_variable( $file, "IMPLIB_SRCS" );

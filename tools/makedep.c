@@ -1121,6 +1121,26 @@ static void parse_sfd_file( struct file *source, FILE *file )
 }
 
 
+static const struct
+{
+    const char *ext;
+    void (*parse)( struct file *file, FILE *f );
+} parse_functions[] =
+{
+    { ".c",   parse_c_file },
+    { ".h",   parse_c_file },
+    { ".inl", parse_c_file },
+    { ".l",   parse_c_file },
+    { ".m",   parse_c_file },
+    { ".rh",  parse_c_file },
+    { ".x",   parse_c_file },
+    { ".y",   parse_c_file },
+    { ".idl", parse_idl_file },
+    { ".rc",  parse_rc_file },
+    { ".in",  parse_in_file },
+    { ".sfd", parse_sfd_file }
+};
+
 /*******************************************************************
  *         load_file
  */
@@ -1128,7 +1148,7 @@ static struct file *load_file( const char *name )
 {
     struct file *file;
     FILE *f;
-    unsigned int hash = hash_filename( name );
+    unsigned int i, hash = hash_filename( name );
 
     LIST_FOR_EACH_ENTRY( file, &files[hash], struct file, entry )
         if (!strcmp( name, file->name )) return file;
@@ -1139,15 +1159,12 @@ static struct file *load_file( const char *name )
     input_file_name = file->name;
     input_line = 0;
 
-    if (strendswith( name, ".idl" )) parse_idl_file( file, f );
-    else if (strendswith( name, ".rc" )) parse_rc_file( file, f );
-    else if (strendswith( name, ".in" )) parse_in_file( file, f );
-    else if (strendswith( name, ".sfd" )) parse_sfd_file( file, f );
-    else if (strendswith( name, ".c" ) ||
-             strendswith( name, ".m" ) ||
-             strendswith( name, ".h" ) ||
-             strendswith( name, ".l" ) ||
-             strendswith( name, ".y" )) parse_c_file( file, f );
+    for (i = 0; i < sizeof(parse_functions) / sizeof(parse_functions[0]); i++)
+    {
+        if (!strendswith( name, parse_functions[i].ext )) continue;
+        parse_functions[i].parse( file, f );
+        break;
+    }
 
     fclose( f );
     input_file_name = NULL;
@@ -1781,6 +1798,19 @@ static void add_install_rule( struct makefile *make, const char *target,
 
 
 /*******************************************************************
+ *         get_include_install_path
+ *
+ * Determine the installation path for a given include file.
+ */
+static const char *get_include_install_path( const char *name )
+{
+    if (!strncmp( name, "wine/", 5 )) return name + 5;
+    if (!strncmp( name, "msvcrt/", 7 )) return name;
+    return strmake( "windows/%s", name );
+}
+
+
+/*******************************************************************
  *         output_install_rules
  *
  * Rules are stored as a (file,dest) pair of values.
@@ -2033,9 +2063,9 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 else dir = strmake( "$(mandir)/man%s", section );
                 add_install_rule( make, dest, xstrdup(obj), strmake( "d%s/%s.%s", dir, dest, section ));
                 symlinks = get_expanded_make_var_array( make, file_local_var( dest, "SYMLINKS" ));
-                for (j = 0; j < symlinks.count; j++)
-                    add_install_rule( make, symlinks.str[j], strmake( "%s.%s", dest, section ),
-                                      strmake( "y%s/%s.%s", dir, symlinks.str[j], section ));
+                for (i = 0; i < symlinks.count; i++)
+                    add_install_rule( make, symlinks.str[i], strmake( "%s.%s", dest, section ),
+                                      strmake( "y%s/%s.%s", dir, symlinks.str[i], section ));
                 free( dest );
                 free( dir );
                 strarray_add( &all_targets, xstrdup(obj) );
@@ -2093,6 +2123,20 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         else if (!strcmp( ext, "res" ))
         {
             strarray_add( &res_files, source->name );
+            continue;  /* no dependencies */
+        }
+        else if (!strcmp( ext, "h" ) || !strcmp( ext, "rh" ) || !strcmp( ext, "inl" ))  /* header file */
+        {
+            if (source->file->flags & FLAG_GENERATED)
+            {
+                strarray_add( &all_targets, source->name );
+            }
+            else
+            {
+                strarray_add( &make->install_dev_rules, source->name );
+                strarray_add( &make->install_dev_rules,
+                              strmake( "D$(includedir)/%s", get_include_install_path( source->name ) ));
+            }
             continue;  /* no dependencies */
         }
         else
@@ -2788,6 +2832,7 @@ static void update_makefile( const char *path )
         "IDL_SRCS",
         "BISON_SRCS",
         "LEX_SRCS",
+        "HEADER_SRCS",
         "XTEMPLATE_SRCS",
         "SVG_SRCS",
         "FONT_SRCS",
