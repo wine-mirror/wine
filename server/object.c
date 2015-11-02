@@ -242,7 +242,11 @@ void *create_named_object( struct namespace *namespace, const struct object_ops 
 {
     struct object *obj;
 
-    if (!name || !name->len) return alloc_object( ops );
+    if (!name || !name->len)
+    {
+        if ((obj = alloc_object( ops ))) clear_error();
+        return obj;
+    }
 
     if ((obj = find_object( namespace, name, attributes )))
     {

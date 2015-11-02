@@ -287,7 +287,11 @@ void *create_named_object_dir( struct directory *root, const struct unicode_str 
     struct object *obj, *new_obj = NULL;
     struct unicode_str new_name;
 
-    if (!name || !name->len) return alloc_object( ops );
+    if (!name || !name->len)
+    {
+        if ((new_obj = alloc_object( ops ))) clear_error();
+        return new_obj;
+    }
 
     if (!(obj = find_object_dir( root, name, attributes, &new_name ))) return NULL;
     if (!new_name.len)

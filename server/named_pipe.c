@@ -671,7 +671,11 @@ static struct named_pipe *create_named_pipe( struct directory *root, const struc
     struct named_pipe *pipe = NULL;
     struct unicode_str new_name;
 
-    if (!name || !name->len) return alloc_object( &named_pipe_ops );
+    if (!name || !name->len)
+    {
+        if ((pipe = alloc_object( &named_pipe_ops ))) clear_error();
+        return pipe;
+    }
 
     if (!(obj = find_object_dir( root, name, attr, &new_name )))
     {
