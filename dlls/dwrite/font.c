@@ -152,9 +152,10 @@ struct dwrite_fonttable {
     BOOL   exists;
 };
 
-enum runanalysis_readystate {
-    RUNANALYSIS_BOUNDS  = 1 << 0,
-    RUNANALYSIS_BITMAP  = 1 << 1,
+enum runanalysis_flags {
+    RUNANALYSIS_BOUNDS_READY  = 1 << 0,
+    RUNANALYSIS_BITMAP_READY  = 1 << 1,
+    RUNANALYSIS_USE_TRANSFORM = 1 << 2
 };
 
 struct dwrite_glyphrunanalysis {
@@ -163,6 +164,7 @@ struct dwrite_glyphrunanalysis {
 
     DWRITE_RENDERING_MODE rendering_mode;
     DWRITE_GLYPH_RUN run;
+    DWRITE_MATRIX m;
     FLOAT ppdip;
     FLOAT originX;
     FLOAT originY;
@@ -170,7 +172,7 @@ struct dwrite_glyphrunanalysis {
     FLOAT *advances;
     DWRITE_GLYPH_OFFSET *offsets;
 
-    UINT8 ready;
+    UINT8 flags;
     RECT bounds;
     BYTE *bitmap;
 };
@@ -4058,7 +4060,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
     HRESULT hr;
     UINT32 i;
 
-    if (analysis->ready & RUNANALYSIS_BOUNDS) {
+    if (analysis->flags & RUNANALYSIS_BOUNDS_READY) {
         *bounds = analysis->bounds;
         return;
     }
@@ -4107,7 +4109,7 @@ static void glyphrunanalysis_get_texturebounds(struct dwrite_glyphrunanalysis *a
     /* translate to given run origin */
     OffsetRect(&analysis->bounds, analysis->originX, analysis->originY);
 
-    analysis->ready |= RUNANALYSIS_BOUNDS;
+    analysis->flags |= RUNANALYSIS_BOUNDS_READY;
     *bounds = analysis->bounds;
 }
 
@@ -4255,7 +4257,7 @@ static void glyphrunanalysis_render(struct dwrite_glyphrunanalysis *analysis, DW
 
     IDWriteFontFace2_Release(fontface2);
 
-    analysis->ready |= RUNANALYSIS_BITMAP;
+    analysis->flags |= RUNANALYSIS_BITMAP_READY;
 
     /* we don't need this anymore */
     heap_free(analysis->glyphs);
@@ -4320,7 +4322,7 @@ static HRESULT WINAPI glyphrunanalysis_CreateAlphaTexture(IDWriteGlyphRunAnalysi
         BYTE *src, *dst;
         int y;
 
-        if (!(This->ready & RUNANALYSIS_BITMAP))
+        if (!(This->flags & RUNANALYSIS_BITMAP_READY))
             glyphrunanalysis_render(This, type);
 
         src = get_pixel_ptr(This->bitmap, type, &runbounds, &This->bounds);
@@ -4401,7 +4403,7 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
     analysis->IDWriteGlyphRunAnalysis_iface.lpVtbl = &glyphrunanalysisvtbl;
     analysis->ref = 1;
     analysis->rendering_mode = rendering_mode;
-    analysis->ready = 0;
+    analysis->flags = 0;
     analysis->bitmap = NULL;
     analysis->ppdip = ppdip;
     analysis->originX = originX * ppdip;
@@ -4424,6 +4426,14 @@ HRESULT create_glyphrunanalysis(DWRITE_RENDERING_MODE rendering_mode, DWRITE_MEA
         IDWriteGlyphRunAnalysis_Release(&analysis->IDWriteGlyphRunAnalysis_iface);
         return E_OUTOFMEMORY;
     }
+
+    /* check if transform is usable */
+    if (transform && memcmp(transform, &identity, sizeof(*transform))) {
+        analysis->m = *transform;
+        analysis->flags |= RUNANALYSIS_USE_TRANSFORM;
+    }
+    else
+        memset(&analysis->m, 0, sizeof(analysis->m));
 
     analysis->run.glyphIndices = analysis->glyphs;
     analysis->run.glyphAdvances = analysis->advances;
