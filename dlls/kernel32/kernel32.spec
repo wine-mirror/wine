@@ -1350,7 +1350,7 @@
 @ stdcall SetConsoleIcon(ptr)
 @ stdcall SetConsoleInputExeNameA(ptr)
 @ stdcall SetConsoleInputExeNameW(ptr)
-@ stub SetConsoleKeyShortcuts
+@ stdcall SetConsoleKeyShortcuts(long long ptr long)
 @ stub SetConsoleLocalEUDC
 @ stub SetConsoleMaximumWindowSize
 @ stub SetConsoleMenuClose
