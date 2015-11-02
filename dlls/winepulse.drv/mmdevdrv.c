@@ -1144,10 +1144,8 @@ static HRESULT pulse_spec_from_waveformat(ACImpl *This, const WAVEFORMATEX *fmt)
             }
         }
         This->map.channels = fmt->nChannels;
-        if (!mask || mask == SPEAKER_ALL)
+        if (!mask || (mask & (SPEAKER_ALL|SPEAKER_RESERVED)))
             mask = get_channel_mask(fmt->nChannels);
-        else if (mask == ~0U && fmt->nChannels == 1)
-            mask = SPEAKER_FRONT_CENTER;
         for (j = 0; j < sizeof(pulse_pos_from_wfx)/sizeof(*pulse_pos_from_wfx) && i < fmt->nChannels; ++j) {
             if (mask & (1 << j))
                 This->map.map[i++] = pulse_pos_from_wfx[j];
@@ -1430,79 +1428,147 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient *iface,
     ACImpl *This = impl_from_IAudioClient(iface);
     HRESULT hr = S_OK;
     WAVEFORMATEX *closest = NULL;
+    BOOL exclusive;
 
     TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
 
-    if (!fmt || (mode == AUDCLNT_SHAREMODE_SHARED && !out))
+    if (!fmt)
         return E_POINTER;
 
     if (out)
         *out = NULL;
-    if (mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
+
+    if (mode == AUDCLNT_SHAREMODE_EXCLUSIVE) {
+        exclusive = 1;
+        out = NULL;
+    } else if (mode == AUDCLNT_SHAREMODE_SHARED) {
+        exclusive = 0;
+        if (!out)
+            return E_POINTER;
+    } else
         return E_INVALIDARG;
-    if (mode == AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return This->dataflow == eCapture ? AUDCLNT_E_UNSUPPORTED_FORMAT : AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED;
-    switch (fmt->wFormatTag) {
-    case WAVE_FORMAT_EXTENSIBLE:
-        if (fmt->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-            return E_INVALIDARG;
-        dump_fmt(fmt);
-        break;
-    case WAVE_FORMAT_ALAW:
-    case WAVE_FORMAT_MULAW:
-    case WAVE_FORMAT_IEEE_FLOAT:
-    case WAVE_FORMAT_PCM:
-        dump_fmt(fmt);
-        break;
-    default:
-        dump_fmt(fmt);
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    }
+
     if (fmt->nChannels == 0)
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    closest = clone_format(fmt);
-    if (!closest) {
-        if (out)
-            *out = NULL;
-        return E_OUTOFMEMORY;
-    }
 
-    if (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE) {
-        UINT32 mask = 0, i, channels = 0;
+    closest = clone_format(fmt);
+    if (!closest)
+        return E_OUTOFMEMORY;
+
+    dump_fmt(fmt);
+
+    switch (fmt->wFormatTag) {
+    case WAVE_FORMAT_EXTENSIBLE: {
         WAVEFORMATEXTENSIBLE *ext = (WAVEFORMATEXTENSIBLE*)closest;
 
-        if ((fmt->nChannels > 1 && ext->dwChannelMask == SPEAKER_ALL) ||
-            (fmt->nChannels == 1 && ext->dwChannelMask == ~0U)) {
-            mask = ext->dwChannelMask;
-            channels = fmt->nChannels;
-        } else if (ext->dwChannelMask) {
-            for (i = 1; !(i & SPEAKER_RESERVED); i <<= 1) {
-                if (i & ext->dwChannelMask) {
-                    mask |= i;
-                    channels++;
-                }
-            }
-            if (channels < fmt->nChannels)
-                mask = get_channel_mask(fmt->nChannels);
-        } else
-            mask = ext->dwChannelMask;
-        if (ext->dwChannelMask != mask) {
-            ext->dwChannelMask = mask;
-            hr = S_FALSE;
+        if ((fmt->cbSize != sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX) &&
+             fmt->cbSize != sizeof(WAVEFORMATEXTENSIBLE)) ||
+            fmt->nBlockAlign != fmt->wBitsPerSample / 8 * fmt->nChannels ||
+            ext->Samples.wValidBitsPerSample > fmt->wBitsPerSample ||
+            fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec) {
+            hr = E_INVALIDARG;
+            break;
         }
+
+        if (exclusive) {
+            UINT32 mask = 0, i, channels = 0;
+
+            if (!(ext->dwChannelMask & (SPEAKER_ALL | SPEAKER_RESERVED))) {
+                for (i = 1; !(i & SPEAKER_RESERVED); i <<= 1) {
+                    if (i & ext->dwChannelMask) {
+                        mask |= i;
+                        channels++;
+                    }
+                }
+
+                if (channels != fmt->nChannels || (ext->dwChannelMask & ~mask)) {
+                    hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+                    break;
+                }
+            } else {
+                hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+                break;
+            }
+        }
+
+        if (IsEqualGUID(&ext->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT)) {
+            if (fmt->wBitsPerSample != 32) {
+                hr = E_INVALIDARG;
+                break;
+            }
+
+            if (ext->Samples.wValidBitsPerSample != fmt->wBitsPerSample) {
+                hr = S_FALSE;
+                ext->Samples.wValidBitsPerSample = fmt->wBitsPerSample;
+            }
+        } else if (IsEqualGUID(&ext->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM)) {
+            if (!fmt->wBitsPerSample || fmt->wBitsPerSample > 32 || fmt->wBitsPerSample % 8) {
+                hr = E_INVALIDARG;
+                break;
+            }
+
+            if (ext->Samples.wValidBitsPerSample != fmt->wBitsPerSample &&
+                !(fmt->wBitsPerSample == 32 &&
+                  ext->Samples.wValidBitsPerSample == 24)) {
+                hr = S_FALSE;
+                ext->Samples.wValidBitsPerSample = fmt->wBitsPerSample;
+                break;
+            }
+        } else {
+            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+            break;
+        }
+
+        break;
     }
 
-    if (hr == S_OK || !out) {
-        CoTaskMemFree(closest);
-        if (out)
-            *out = NULL;
-    } else if (closest) {
-        closest->nBlockAlign =
-            closest->nChannels * closest->wBitsPerSample / 8;
-        closest->nAvgBytesPerSec =
-            closest->nBlockAlign * closest->nSamplesPerSec;
-        *out = closest;
+    case WAVE_FORMAT_ALAW:
+    case WAVE_FORMAT_MULAW:
+        if (fmt->wBitsPerSample != 8) {
+            hr = E_INVALIDARG;
+            break;
+        }
+        /* Fall-through */
+    case WAVE_FORMAT_IEEE_FLOAT:
+        if (fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT && fmt->wBitsPerSample != 32) {
+            hr = E_INVALIDARG;
+            break;
+        }
+        /* Fall-through */
+    case WAVE_FORMAT_PCM:
+        if (fmt->wFormatTag == WAVE_FORMAT_PCM &&
+            (!fmt->wBitsPerSample || fmt->wBitsPerSample > 32 || fmt->wBitsPerSample % 8)) {
+            hr = E_INVALIDARG;
+            break;
+        }
+
+        if (fmt->nChannels > 2) {
+            hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+            break;
+        }
+        /*
+         * fmt->cbSize, fmt->nBlockAlign and fmt->nAvgBytesPerSec seem to be
+         * ignored, invalid values are happily accepted.
+         */
+        break;
+    default:
+        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        break;
     }
+
+    if (exclusive && hr != S_OK) {
+        hr = AUDCLNT_E_UNSUPPORTED_FORMAT;
+        CoTaskMemFree(closest);
+    } else if (hr != S_FALSE)
+        CoTaskMemFree(closest);
+    else
+        *out = closest;
+
+    /* Winepulse does not currently support exclusive mode, if you know of an
+     * application that uses it, I will correct this..
+     */
+    if (hr == S_OK && exclusive)
+        return This->dataflow == eCapture ? AUDCLNT_E_UNSUPPORTED_FORMAT : AUDCLNT_E_EXCLUSIVE_MODE_NOT_ALLOWED;
 
     TRACE("returning: %08x %p\n", hr, out ? *out : NULL);
     return hr;
