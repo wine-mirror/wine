@@ -415,6 +415,8 @@ sub assign_sources_to_makefiles(@)
             }
             elsif ($name =~ /\.idl$/)
             {
+                my %flags = get_makedep_flags( $file );
+                die "no makedep flags specified in $file" unless %flags;
                 push @{${$make}{"=IDL_SRCS"}}, $name;
                 ${${$make}{"=flags"}}{"clean"} = 1;
             }

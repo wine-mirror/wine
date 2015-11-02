@@ -23,6 +23,8 @@
  * compatible with XPCOM, usable in C code.
  */
 
+#pragma makedep header
+
 cpp_quote("#define GECKO_VERSION \"2.40\"")
 cpp_quote("#define GECKO_VERSION_STRING \"Wine Gecko \" GECKO_VERSION")
 
