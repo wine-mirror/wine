@@ -1031,7 +1031,10 @@ static HRESULT WINAPI IEnumSTATSTGImpl_Next(
     hr = IEnumSTATSTGImpl_GetNextRef(This, &currentSearchNode);
 
     if (FAILED(hr) || currentSearchNode == DIRENTRY_NULL)
+    {
+      memset(currentReturnStruct, 0, sizeof(*currentReturnStruct));
       break;
+    }
 
     /*
      * Read the entry from the storage.
