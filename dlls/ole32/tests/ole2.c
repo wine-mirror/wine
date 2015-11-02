@@ -1215,13 +1215,7 @@ static void test_OleLoad(IStorage *pStorage)
             hr = OleDraw(obj, DVASPECT_CONTENT, hdc, &rc);
             DeleteDC(hdc);
             if (fmt == CF_METAFILEPICT)
-            {
-            if (tymed == TYMED_HGLOBAL || tymed == TYMED_MFPICT)
                 ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, tymed = %u\n", hr, fmt, tymed);
-            else
-todo_wine
-                ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, tymed = %u\n", hr, fmt, tymed);
-            }
             else if (fmt == CF_ENHMETAFILE)
 todo_wine
                 ok(hr == S_OK, "OleDraw error %#x: cfFormat = %u, tymed = %u\n", hr, fmt, tymed);

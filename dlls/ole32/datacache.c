@@ -282,10 +282,10 @@ static DataCacheEntry *DataCache_GetEntryForFormatEtc(DataCache *This, const FOR
 /* checks that the clipformat and tymed are valid and returns an error if they
 * aren't and CACHE_S_NOTSUPPORTED if they are valid, but can't be rendered by
 * DataCache_Draw */
-static HRESULT check_valid_clipformat_and_tymed(CLIPFORMAT cfFormat, DWORD tymed)
+static HRESULT check_valid_clipformat_and_tymed(CLIPFORMAT cfFormat, DWORD tymed, BOOL load)
 {
     if (!cfFormat || !tymed ||
-        (cfFormat == CF_METAFILEPICT && tymed == TYMED_MFPICT) ||
+        (cfFormat == CF_METAFILEPICT && (tymed == TYMED_MFPICT || load)) ||
         (cfFormat == CF_BITMAP && tymed == TYMED_GDI) ||
         (cfFormat == CF_DIB && tymed == TYMED_HGLOBAL) ||
         (cfFormat == CF_ENHMETAFILE && tymed == TYMED_ENHMF))
@@ -299,11 +299,11 @@ static HRESULT check_valid_clipformat_and_tymed(CLIPFORMAT cfFormat, DWORD tymed
     }
 }
 
-static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DataCacheEntry **cache_entry)
+static HRESULT DataCache_CreateEntry(DataCache *This, const FORMATETC *formatetc, DataCacheEntry **cache_entry, BOOL load)
 {
     HRESULT hr;
 
-    hr = check_valid_clipformat_and_tymed(formatetc->cfFormat, formatetc->tymed);
+    hr = check_valid_clipformat_and_tymed(formatetc->cfFormat, formatetc->tymed, load);
     if (FAILED(hr))
         return hr;
     if (hr == CACHE_S_FORMATETC_NOTSUPPORTED)
@@ -1259,7 +1259,7 @@ static HRESULT add_cache_entry( DataCache *This, const FORMATETC *fmt, IStream *
 
     cache_entry = DataCache_GetEntryForFormatEtc( This, fmt );
     if (!cache_entry)
-        hr = DataCache_CreateEntry( This, fmt, &cache_entry );
+        hr = DataCache_CreateEntry( This, fmt, &cache_entry, TRUE );
     if (SUCCEEDED( hr ))
     {
         DataCacheEntry_DiscardData( cache_entry );
@@ -2007,7 +2007,7 @@ static HRESULT WINAPI DataCache_Cache(
         return CACHE_S_SAMECACHE;
     }
 
-    hr = DataCache_CreateEntry(This, pformatetc, &cache_entry);
+    hr = DataCache_CreateEntry(This, pformatetc, &cache_entry, FALSE);
 
     if (SUCCEEDED(hr))
     {
