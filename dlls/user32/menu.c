@@ -1458,6 +1458,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
         ** the menu owner has finished drawing.
         */
         DRAWITEMSTRUCT dis;
+        COLORREF old_bk, old_text;
 
         dis.CtlType   = ODT_MENU;
 	dis.CtlID     = 0;
@@ -1475,8 +1476,12 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
 	      "hwndItem=%p, hdc=%p, rcItem=%s\n", hwndOwner,
 	      dis.itemID, dis.itemState, dis.itemAction, dis.hwndItem,
 	      dis.hDC, wine_dbgstr_rect( &dis.rcItem));
+        old_bk = GetBkColor( hdc );
+        old_text = GetTextColor( hdc );
         SendMessageW( hwndOwner, WM_DRAWITEM, 0, (LPARAM)&dis );
         /* Draw the popup-menu arrow */
+        SetBkColor( hdc, old_bk );
+        SetTextColor( hdc, old_text );
         if (lpitem->fType & MF_POPUP)
             draw_popup_arrow( hdc, rect, arrow_bitmap_width,
                     arrow_bitmap_height);
