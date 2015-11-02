@@ -82,27 +82,15 @@ static int __cdecl vsprintf_wrapper(unsigned __int64 options, char *str,
 
 static void test_snprintf (void)
 {
-    struct snprintf_test {
-        const char *format;
-        int expected;
-    };
-    /* Legacy behaviour, not C99 compliant. */
-    const struct snprintf_test tests_legacy[] = {{"short", 5},
-                                                 {"justfit", 7},
-                                                 {"justfits", 8},
-                                                 {"muchlonger", -1}};
-    /* New C99 compliant behaviour. */
-    const struct snprintf_test tests_standard[] = {{"short", 5},
-                                                   {"justfit", 7},
-                                                   {"justfits", 8},
-                                                   {"muchlonger", 10}};
+    const char *tests[] = {"short", "justfit", "justfits", "muchlonger"};
     char buffer[8];
     const int bufsiz = sizeof buffer;
     unsigned int i;
 
-    for (i = 0; i < sizeof tests_legacy / sizeof tests_legacy[0]; i++) {
-        const char *fmt  = tests_legacy[i].format;
-        const int expect = tests_legacy[i].expected;
+    /* Legacy _snprintf style termination */
+    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+        const char *fmt  = tests[i];
+        const int expect = strlen(fmt) > bufsiz ? -1 : strlen(fmt);
         const int n      = vsprintf_wrapper (1, buffer, bufsiz, fmt);
         const int valid  = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
@@ -112,9 +100,10 @@ static void test_snprintf (void)
             "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
     }
 
-    for (i = 0; i < sizeof tests_standard / sizeof tests_standard[0]; i++) {
-        const char *fmt  = tests_standard[i].format;
-        const int expect = tests_standard[i].expected;
+    /* C99 snprintf style termination */
+    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+        const char *fmt  = tests[i];
+        const int expect = strlen(fmt);
         const int n      = vsprintf_wrapper (2, buffer, bufsiz, fmt);
         const int valid  = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
 
@@ -137,34 +126,24 @@ static int __cdecl vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
     __ms_va_end(valist);
     return ret;
 }
+
 static void test_swprintf (void)
 {
-    struct swprintf_test {
-        const wchar_t *format;
-        int expected;
-    };
     const wchar_t str_short[]      = {'s','h','o','r','t',0};
     const wchar_t str_justfit[]    = {'j','u','s','t','f','i','t',0};
     const wchar_t str_justfits[]   = {'j','u','s','t','f','i','t','s',0};
     const wchar_t str_muchlonger[] = {'m','u','c','h','l','o','n','g','e','r',0};
-    /* Legacy behaviour, not C99 compliant. */
-    const struct swprintf_test tests_legacy[] = {{str_short, 5},
-                                                 {str_justfit, 7},
-                                                 {str_justfits, 8},
-                                                 {str_muchlonger, -1}};
-    /* New C99 compliant behaviour. */
-    const struct swprintf_test tests_standard[] = {{str_short, 5},
-                                                   {str_justfit, 7},
-                                                   {str_justfits, 8},
-                                                   {str_muchlonger, 10}};
+    const wchar_t *tests[] = {str_short, str_justfit, str_justfits, str_muchlonger};
+
     wchar_t buffer[8];
     char narrow[8], narrow_fmt[16];
     const int bufsiz = sizeof buffer / sizeof buffer[0];
     unsigned int i;
 
-    for (i = 0; i < sizeof tests_legacy / sizeof tests_legacy[0]; i++) {
-        const wchar_t *fmt = tests_legacy[i].format;
-        const int expect   = tests_legacy[i].expected;
+    /* Legacy _snprintf style termination */
+    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+        const wchar_t *fmt = tests[i];
+        const int expect   = wcslen(fmt) > bufsiz ? -1 : wcslen(fmt);
         const int n        = vswprintf_wrapper (1, buffer, bufsiz, fmt);
         const int valid    = n < 0 ? bufsiz : (n == bufsiz ? n : n+1);
 
@@ -176,9 +155,10 @@ static void test_swprintf (void)
             "\"%s\": rendered \"%.*s\"\n", narrow_fmt, valid, narrow);
     }
 
-    for (i = 0; i < sizeof tests_standard / sizeof tests_standard[0]; i++) {
-        const wchar_t *fmt = tests_standard[i].format;
-        const int expect   = tests_standard[i].expected;
+    /* C99 snprintf style termination */
+    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+        const wchar_t *fmt = tests[i];
+        const int expect   = wcslen(fmt);
         const int n        = vswprintf_wrapper (2, buffer, bufsiz, fmt);
         const int valid    = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
 
