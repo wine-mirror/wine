@@ -4016,46 +4016,6 @@ unsigned int count_bits(unsigned int mask)
     return count;
 }
 
-/* Helper function for retrieving color info for ChoosePixelFormat and wglChoosePixelFormatARB.
- * The later function requires individual color components. */
-BOOL getColorBits(const struct wined3d_format *format,
-        BYTE *redSize, BYTE *greenSize, BYTE *blueSize, BYTE *alphaSize, BYTE *totalSize)
-{
-    TRACE("format %s.\n", debug_d3dformat(format->id));
-
-    switch (format->id)
-    {
-        case WINED3DFMT_B10G10R10A2_UNORM:
-        case WINED3DFMT_R10G10B10A2_UNORM:
-        case WINED3DFMT_B8G8R8X8_UNORM:
-        case WINED3DFMT_B8G8R8_UNORM:
-        case WINED3DFMT_B8G8R8A8_UNORM:
-        case WINED3DFMT_R8G8B8A8_UNORM:
-        case WINED3DFMT_B5G5R5X1_UNORM:
-        case WINED3DFMT_B5G5R5A1_UNORM:
-        case WINED3DFMT_B5G6R5_UNORM:
-        case WINED3DFMT_B4G4R4X4_UNORM:
-        case WINED3DFMT_B4G4R4A4_UNORM:
-        case WINED3DFMT_B2G3R3_UNORM:
-        case WINED3DFMT_P8_UINT_A8_UNORM:
-        case WINED3DFMT_P8_UINT:
-            break;
-        default:
-            FIXME("Unsupported format %s.\n", debug_d3dformat(format->id));
-            return FALSE;
-    }
-
-    *redSize = format->red_size;
-    *greenSize = format->green_size;
-    *blueSize = format->blue_size;
-    *alphaSize = format->alpha_size;
-    *totalSize = *redSize + *greenSize + *blueSize + *alphaSize;
-
-    TRACE("Returning red: %d, green: %d, blue: %d, alpha: %d, total: %d for format %s.\n",
-            *redSize, *greenSize, *blueSize, *alphaSize, *totalSize, debug_d3dformat(format->id));
-    return TRUE;
-}
-
 /* Helper function for retrieving depth/stencil info for ChoosePixelFormat and wglChoosePixelFormatARB */
 BOOL getDepthStencilBits(const struct wined3d_format *format, BYTE *depthSize, BYTE *stencilSize)
 {

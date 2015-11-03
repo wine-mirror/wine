@@ -1244,7 +1244,6 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         BOOL auxBuffers, BOOL findCompatible)
 {
     int iPixelFormat=0;
-    BYTE redBits, greenBits, blueBits, alphaBits, colorBits;
     BYTE depthBits=0, stencilBits=0;
     unsigned int current_value;
     unsigned int cfg_count = device->adapter->cfg_count;
@@ -1253,13 +1252,6 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
     TRACE("device %p, dc %p, color_format %s, ds_format %s, aux_buffers %#x, find_compatible %#x.\n",
             device, hdc, debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
             auxBuffers, findCompatible);
-
-    if (!getColorBits(color_format, &redBits, &greenBits, &blueBits, &alphaBits, &colorBits))
-    {
-        ERR("Unable to get color bits for format %s (%#x)!\n",
-                debug_d3dformat(color_format->id), color_format->id);
-        return 0;
-    }
 
     getDepthStencilBits(ds_format, &depthBits, &stencilBits);
 
@@ -1276,13 +1268,13 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         /* In window mode we need a window drawable format and double buffering. */
         if (!(cfg->windowDrawable && cfg->doubleBuffer))
             continue;
-        if (cfg->redSize < redBits)
+        if (cfg->redSize < color_format->red_size)
             continue;
-        if (cfg->greenSize < greenBits)
+        if (cfg->greenSize < color_format->green_size)
             continue;
-        if (cfg->blueSize < blueBits)
+        if (cfg->blueSize < color_format->blue_size)
             continue;
-        if (cfg->alphaSize < alphaBits)
+        if (cfg->alphaSize < color_format->alpha_size)
             continue;
         if (cfg->depthSize < depthBits)
             continue;
@@ -1299,14 +1291,14 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
             value += 1;
         if (cfg->stencilSize == stencilBits)
             value += 2;
-        if (cfg->alphaSize == alphaBits)
+        if (cfg->alphaSize == color_format->alpha_size)
             value += 4;
         /* We like to have aux buffers in backbuffer mode */
         if (auxBuffers && cfg->auxBuffers)
             value += 8;
-        if (cfg->redSize == redBits
-                && cfg->greenSize == greenBits
-                && cfg->blueSize == blueBits)
+        if (cfg->redSize == color_format->red_size
+                && cfg->greenSize == color_format->green_size
+                && cfg->blueSize == color_format->blue_size)
             value += 16;
 
         if (value > current_value)
@@ -1330,8 +1322,9 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         pfd.nVersion   = 1;
         pfd.dwFlags    = PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_DRAW_TO_WINDOW;/*PFD_GENERIC_ACCELERATED*/
         pfd.iPixelType = PFD_TYPE_RGBA;
-        pfd.cAlphaBits = alphaBits;
-        pfd.cColorBits = colorBits;
+        pfd.cAlphaBits = color_format->alpha_size;
+        pfd.cColorBits = color_format->red_size + color_format->green_size
+                + color_format->blue_size + color_format->alpha_size;
         pfd.cDepthBits = depthBits;
         pfd.cStencilBits = stencilBits;
         pfd.iLayerType = PFD_MAIN_PLANE;

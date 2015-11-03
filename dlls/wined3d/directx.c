@@ -4271,36 +4271,21 @@ HRESULT CDECL wined3d_get_adapter_raster_status(const struct wined3d *wined3d, U
 static BOOL wined3d_check_pixel_format_color(const struct wined3d_gl_info *gl_info,
         const struct wined3d_pixel_format *cfg, const struct wined3d_format *format)
 {
-    BYTE redSize, greenSize, blueSize, alphaSize, colorBits;
-
     /* Float formats need FBOs. If FBOs are used this function isn't called */
     if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
         return FALSE;
 
-    if(cfg->iPixelType == WGL_TYPE_RGBA_ARB) { /* Integer RGBA formats */
-        if (!getColorBits(format, &redSize, &greenSize, &blueSize, &alphaSize, &colorBits))
-        {
-            ERR("Unable to check compatibility for format %s.\n", debug_d3dformat(format->id));
-            return FALSE;
-        }
+    /* Probably a RGBA_float or color index mode. */
+    if (cfg->iPixelType != WGL_TYPE_RGBA_ARB)
+        return FALSE;
 
-        if(cfg->redSize < redSize)
-            return FALSE;
+    if (cfg->redSize < format->red_size
+            || cfg->greenSize < format->green_size
+            || cfg->blueSize < format->blue_size
+            || cfg->alphaSize < format->alpha_size)
+        return FALSE;
 
-        if(cfg->greenSize < greenSize)
-            return FALSE;
-
-        if(cfg->blueSize < blueSize)
-            return FALSE;
-
-        if(cfg->alphaSize < alphaSize)
-            return FALSE;
-
-        return TRUE;
-    }
-
-    /* Probably a RGBA_float or color index mode */
-    return FALSE;
+    return TRUE;
 }
 
 static BOOL wined3d_check_pixel_format_depth(const struct wined3d_gl_info *gl_info,
@@ -4479,17 +4464,15 @@ static BOOL CheckRenderTargetCapability(const struct wined3d_adapter *adapter,
         return FALSE;
     if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
     {
-        BYTE AdapterRed, AdapterGreen, AdapterBlue, AdapterAlpha, AdapterTotalSize;
-        BYTE CheckRed, CheckGreen, CheckBlue, CheckAlpha, CheckTotalSize;
         const struct wined3d_pixel_format *cfgs = adapter->cfgs;
         unsigned int i;
 
-        getColorBits(adapter_format, &AdapterRed, &AdapterGreen, &AdapterBlue, &AdapterAlpha, &AdapterTotalSize);
-        getColorBits(check_format, &CheckRed, &CheckGreen, &CheckBlue, &CheckAlpha, &CheckTotalSize);
-
-        /* In backbuffer mode the front and backbuffer share the same WGL pixelformat.
-         * The format must match in RGB, alpha is allowed to be different. (Only the backbuffer can have alpha) */
-        if (!((AdapterRed == CheckRed) && (AdapterGreen == CheckGreen) && (AdapterBlue == CheckBlue)))
+        /* In backbuffer mode the front and backbuffer share the same WGL
+         * pixelformat. The format must match in RGB, alpha is allowed to be
+         * different. (Only the backbuffer can have alpha.) */
+        if (adapter_format->red_size != check_format->red_size
+                || adapter_format->green_size != check_format->green_size
+                || adapter_format->blue_size != check_format->blue_size)
         {
             TRACE("[FAILED]\n");
             return FALSE;
