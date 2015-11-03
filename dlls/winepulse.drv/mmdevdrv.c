@@ -50,6 +50,7 @@
 #include "initguid.h"
 #include "ks.h"
 #include "ksmedia.h"
+#include "propkey.h"
 #include "mmdeviceapi.h"
 #include "audioclient.h"
 #include "endpointvolume.h"
@@ -3197,4 +3198,10 @@ HRESULT WINAPI AUDDRV_GetAudioSessionManager(IMMDevice *device,
     This->ref = 1;
     *out = &This->IAudioSessionManager2_iface;
     return S_OK;
+}
+
+HRESULT WINAPI AUDDRV_GetPropValue(GUID *guid, const PROPERTYKEY *prop, PROPVARIANT *out)
+{
+    TRACE("%s, (%s,%u), %p\n", wine_dbgstr_guid(guid), wine_dbgstr_guid(&prop->fmtid), prop->pid, out);
+    return E_NOTIMPL;
 }
