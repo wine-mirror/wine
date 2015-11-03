@@ -120,6 +120,21 @@ static void test_snprintf (void)
         ok (buffer[valid] == '\0',
             "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
     }
+
+    /* swprintf style termination */
+    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+        const char *fmt  = tests[i];
+        const int expect = strlen(fmt) >= bufsiz ? -2 : strlen(fmt);
+        const int n      = vsprintf_wrapper (0, buffer, bufsiz, fmt);
+        const int valid  = n < 0 ? bufsiz - 1 : n;
+
+        ok (n == expect, "\"%s\": expected %d, returned %d\n",
+            fmt, expect, n);
+        ok (!memcmp (fmt, buffer, valid),
+            "\"%s\": rendered \"%.*s\"\n", fmt, valid, buffer);
+        ok (buffer[valid] == '\0',
+            "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
+    }
 }
 
 static int __cdecl vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
@@ -167,6 +182,23 @@ static void test_swprintf (void)
         const int expect   = wcslen(fmt);
         const int n        = vswprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, buffer, bufsiz, fmt);
         const int valid    = n >= bufsiz ? bufsiz - 1 : n < 0 ? 0 : n;
+
+        WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
+        WideCharToMultiByte (CP_ACP, 0, fmt, -1, narrow_fmt, sizeof(narrow_fmt), NULL, NULL);
+        ok (n == expect, "\"%s\": expected %d, returned %d\n",
+            narrow_fmt, expect, n);
+        ok (!memcmp (fmt, buffer, valid * sizeof(wchar_t)),
+            "\"%s\": rendered \"%.*s\"\n", narrow_fmt, valid, narrow);
+        ok (buffer[valid] == '\0',
+            "\"%s\": Missing null termination (ret %d) - is %d\n", narrow_fmt, n, buffer[valid]);
+    }
+
+    /* swprintf style termination */
+    for (i = 0; i < sizeof tests / sizeof tests[0]; i++) {
+        const wchar_t *fmt = tests[i];
+        const int expect   = wcslen(fmt) >= bufsiz ? -2 : wcslen(fmt);
+        const int n        = vswprintf_wrapper (0, buffer, bufsiz, fmt);
+        const int valid    = n < 0 ? bufsiz - 1 : n;
 
         WideCharToMultiByte (CP_ACP, 0, buffer, -1, narrow, sizeof(narrow), NULL, NULL);
         WideCharToMultiByte (CP_ACP, 0, fmt, -1, narrow_fmt, sizeof(narrow_fmt), NULL, NULL);

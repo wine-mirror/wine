@@ -1130,6 +1130,9 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 #define UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY      (0x0008)
 #define UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS     (0x0010)
 
+#define UCRTBASE_PRINTF_TERMINATION_MASK                 (UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION | \
+                                                          UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
+
 #define UCRTBASE_SCANF_SECURECRT                         (0x0001)
 #define UCRTBASE_SCANF_LEGACY_WIDE_SPECIFIERS            (0x0002)
 #define UCRTBASE_SCANF_LEGACY_MSVCRT_COMPATIBILITY       (0x0004)

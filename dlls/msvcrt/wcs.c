@@ -701,10 +701,10 @@ static int puts_clbk_str_c99_a(void *ctx, int len, const char *str)
     if(!out->buf)
         return len;
 
-    if(out->len - 1 < len) {
-        memcpy(out->buf, str, out->len - 1);
-        out->buf += out->len - 1;
-        out->len = 1;
+    if(out->len < len) {
+        memcpy(out->buf, str, out->len);
+        out->buf += out->len;
+        out->len = 0;
         return len;
     }
 
@@ -724,12 +724,18 @@ int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MS
     struct _str_ctx_a ctx = {len, str};
     int ret;
 
-    if (options != UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION &&
-        options != UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
+    if (options & ~UCRTBASE_PRINTF_TERMINATION_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    ret = pf_printf_a(options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR ? puts_clbk_str_c99_a : puts_clbk_str_a,
+    ret = pf_printf_a(puts_clbk_str_c99_a,
             &ctx, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
+
+    if(options & UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
+        return ret>len ? -1 : ret;
+    if(ret>=len) {
+        if(len) str[len-1] = 0;
+        return (options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR) ? ret : -2;
+    }
     return ret;
 }
 
@@ -1148,10 +1154,10 @@ static int puts_clbk_str_c99_w(void *ctx, int len, const MSVCRT_wchar_t *str)
     if(!out->buf)
         return len;
 
-    if(out->len - 1 < len) {
-        memcpy(out->buf, str, (out->len - 1)*sizeof(MSVCRT_wchar_t));
-        out->buf += out->len - 1;
-        out->len = 1;
+    if(out->len < len) {
+        memcpy(out->buf, str, out->len*sizeof(MSVCRT_wchar_t));
+        out->buf += out->len;
+        out->len = 0;
         return len;
     }
 
@@ -1171,12 +1177,18 @@ int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options, MSVCRT_wchar
     struct _str_ctx_w ctx = {len, str};
     int ret;
 
-    if (options != UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION &&
-        options != UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR)
+    if (options & ~UCRTBASE_PRINTF_TERMINATION_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    ret = pf_printf_w(options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR ? puts_clbk_str_c99_w : puts_clbk_str_w,
+    ret = pf_printf_w(puts_clbk_str_c99_w,
             &ctx, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
+
+    if(options & UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
+        return ret>len ? -1 : ret;
+    if(ret>=len) {
+        if(len) str[len-1] = 0;
+        return (options & UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR) ? ret : -2;
+    }
     return ret;
 }
 
