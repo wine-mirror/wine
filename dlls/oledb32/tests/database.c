@@ -382,6 +382,8 @@ static void test_initializationstring(void)
 {
     static const WCHAR initstring_msdasql[] = {'P','r','o','v','i','d','e','r','=','M','S','D','A','S','Q','L','.','1',';',
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
+    static const WCHAR initstring_msdasql2[] = {'p','R','o','V','i','D','e','R','=','M','S','D','A','S','Q','L','.','1',';',
+         'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
     static const WCHAR initstring_sqloledb[] = {'P','r','o','v','i','d','e','r','=','S','Q','L','O','L','E','D','B','.','1',';',
          'D','a','t','a',' ','S','o','u','r','c','e','=','d','u','m','m','y', 0};
     IDataInitialize *datainit = NULL;
@@ -413,6 +415,13 @@ static void test_initializationstring(void)
                 CoTaskMemFree(initstring);
             }
 
+            IDBInitialize_Release(dbinit);
+
+            /* mixed casing string */
+            dbinit = NULL;
+            hr = IDataInitialize_GetDataSource(datainit, NULL, CLSCTX_INPROC_SERVER, (WCHAR*)initstring_msdasql2,
+                &IID_IDBInitialize, (IUnknown**)&dbinit);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
             IDBInitialize_Release(dbinit);
         }
         else

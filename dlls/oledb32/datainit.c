@@ -413,7 +413,7 @@ static HRESULT parse_init_string(const WCHAR *initstring, struct dbprops *props)
         if (scol) scol++;
         start = scol;
 
-        if (!strcmpW(name, providerW))
+        if (!strcmpiW(name, providerW))
         {
             SysFreeString(name);
             SysFreeString(value);
@@ -548,6 +548,29 @@ static void datasource_release(BOOL created, IUnknown **datasource)
     *datasource = NULL;
 }
 
+static inline WCHAR *strdupW(const WCHAR *src)
+{
+    WCHAR *dest;
+    if (!src) return NULL;
+    dest = heap_alloc((strlenW(src)+1)*sizeof(WCHAR));
+    if (dest)
+        strcpyW(dest, src);
+    return dest;
+}
+
+static WCHAR *strstriW(const WCHAR *str, const WCHAR *sub)
+{
+    LPWSTR strlower, sublower, r;
+    strlower = CharLowerW(strdupW(str));
+    sublower = CharLowerW(strdupW(sub));
+    r = strstrW(strlower, sublower);
+    if (r)
+        r = (LPWSTR)str + (r - strlower);
+    heap_free(strlower);
+    heap_free(sublower);
+    return r;
+}
+
 static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *outer, DWORD clsctx,
                                 LPWSTR initstring, REFIID riid, IUnknown **datasource)
 {
@@ -565,7 +588,7 @@ static HRESULT WINAPI datainit_GetDataSource(IDataInitialize *iface, IUnknown *o
 
     /* first get provider name */
     provclsid = IID_NULL;
-    if (initstring && (prov = strstrW(initstring, providerW)))
+    if (initstring && (prov = strstriW(initstring, providerW)))
     {
         WCHAR *start, *progid;
         int len;
