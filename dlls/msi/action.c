@@ -255,8 +255,7 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
                 len++;
                 break;
             default:
-                if (!count) in_quotes = FALSE;
-                else in_quotes = TRUE;
+                if (count) in_quotes = TRUE;
                 len++;
                 break;
             }
@@ -277,8 +276,7 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
                 break;
             default:
                 state = state_token;
-                if (!count) in_quotes = FALSE;
-                else in_quotes = TRUE;
+                if (count) in_quotes = TRUE;
                 len++;
                 break;
             }
@@ -287,6 +285,7 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
         default: break;
         }
         if (!ignore) *out++ = *p;
+        if (!count) in_quotes = FALSE;
     }
 
 done:

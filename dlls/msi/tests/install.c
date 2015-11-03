@@ -4716,11 +4716,14 @@ static void test_propcase(void)
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
-    r = MsiInstallProductA(msifile, "BLAHBLAH=\"Copyright \"\"My Company\"\" 2015\" MyProp=42");
+    r = MsiInstallProductA(msifile, "Prop1=\"Copyright \"\"My Company\"\" 2015\" MyProp=42");
     ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
-todo_wine
     ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
-todo_wine
+    ok(delete_pf("msitest", FALSE), "Directory not created\n");
+
+    r = MsiInstallProductA(msifile, "Prop1=\"\"\"install.exe\"\" /Install\" MyProp=\"42\"");
+    ok(r == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %u\n", r);
+    ok(delete_pf("msitest\\augustus", TRUE), "File not installed\n");
     ok(delete_pf("msitest", FALSE), "Directory not created\n");
 
 error:
