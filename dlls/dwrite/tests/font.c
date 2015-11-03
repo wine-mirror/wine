@@ -3495,7 +3495,7 @@ static void test_CreateGlyphRunAnalysis(void)
         DWRITE_RENDERING_MODE_NATURAL_SYMMETRIC,
     };
 
-    IDWriteGlyphRunAnalysis *analysis;
+    IDWriteGlyphRunAnalysis *analysis, *analysis2;
     IDWriteFactory *factory;
     DWRITE_GLYPH_RUN run;
     IDWriteFontFace *face;
@@ -3783,6 +3783,15 @@ static void test_CreateGlyphRunAnalysis(void)
     hr = IDWriteGlyphRunAnalysis_GetAlphaTextureBounds(analysis, DWRITE_TEXTURE_ALIASED_1x1, &rect2);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok((rect2.right - rect2.left) > (rect.right - rect.left), "got rect width %d\n", rect2.right - rect2.left);
+
+    /* instances are not reused for same runs */
+    hr = IDWriteFactory_CreateGlyphRunAnalysis(factory, &run, 1.0, &m,
+        DWRITE_RENDERING_MODE_ALIASED, DWRITE_MEASURING_MODE_NATURAL,
+        0.0, 0.0, &analysis2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(analysis2 != analysis, "got %p, previous instance %p\n", analysis2, analysis);
+    IDWriteGlyphRunAnalysis_Release(analysis2);
+
     IDWriteGlyphRunAnalysis_Release(analysis);
 
     IDWriteFontFace_Release(face);
