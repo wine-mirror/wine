@@ -423,6 +423,29 @@ static void test_printf_legacy_three_digit_exp(void)
     ok(!strcmp(buf, "1.230000E+123"), "buf = %s\n", buf);
 }
 
+static void test_printf_c99(void)
+{
+    char buf[20];
+
+    /* The msvcrt compatibility flag doesn't affect whether 'z' is interpreted
+     * as size_t size for integers. */
+    if (sizeof(void*) == 8) {
+        vsprintf_wrapper(0, buf, sizeof(buf), "%zx %d",
+                         (size_t) 0x12345678123456, 1);
+        ok(!strcmp(buf, "12345678123456 1"), "buf = %s\n", buf);
+        vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY,
+                         buf, sizeof(buf), "%zx %d", (size_t) 0x12345678123456, 1);
+        ok(!strcmp(buf, "12345678123456 1"), "buf = %s\n", buf);
+    } else {
+        vsprintf_wrapper(0, buf, sizeof(buf), "%zx %d",
+                         (size_t) 0x123456, 1);
+        ok(!strcmp(buf, "123456 1"), "buf = %s\n", buf);
+        vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY,
+                         buf, sizeof(buf), "%zx %d", (size_t) 0x123456, 1);
+        ok(!strcmp(buf, "123456 1"), "buf = %s\n", buf);
+    }
+}
+
 START_TEST(printf)
 {
     if (!init()) return;
@@ -434,4 +457,5 @@ START_TEST(printf)
     test_printf_legacy_wide();
     test_printf_legacy_msvcrt();
     test_printf_legacy_three_digit_exp();
+    test_printf_c99();
 }
