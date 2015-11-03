@@ -800,6 +800,7 @@ BOOL WINAPI MaskBlt(HDC hdcDest, INT nXDest, INT nYDest,
 
     /* combine both using the mask as a pattern brush */
     SelectObject(hDC2, hbrMask);
+    SetBrushOrgEx(hDC2, -xMask, -yMask, NULL);
     BitBlt(hDC2, 0, 0, nWidth, nHeight, hDC1, 0, 0, 0xac0744 ); /* (D & P) | (S & ~P) */ 
     SelectObject(hDC2, hbrTmp);
 
