@@ -519,7 +519,7 @@ static int puts_clbk_console_w(void *ctx, int len, const MSVCRT_wchar_t *str)
  */
 int CDECL _vcprintf(const char* format, __ms_va_list valist)
 {
-    return pf_printf_a(puts_clbk_console_a, NULL, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    return pf_printf_a(puts_clbk_console_a, NULL, format, NULL, 0, arg_clbk_valist, NULL, &valist);
 }
 
 /*********************************************************************
@@ -543,7 +543,7 @@ int CDECL _cprintf(const char* format, ...)
  */
 int CDECL _vcwprintf(const MSVCRT_wchar_t* format, __ms_va_list valist)
 {
-    return pf_printf_w(puts_clbk_console_w, NULL, format, NULL, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+    return pf_printf_w(puts_clbk_console_w, NULL, format, NULL, 0, arg_clbk_valist, NULL, &valist);
 }
 
 /*********************************************************************

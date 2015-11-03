@@ -688,7 +688,7 @@ int CDECL MSVCRT_vsnprintf( char *str, MSVCRT_size_t len,
     struct _str_ctx_a ctx = {len, str};
     int ret;
 
-    ret = pf_printf_a(puts_clbk_str_a, &ctx, format, NULL, FALSE, FALSE,
+    ret = pf_printf_a(puts_clbk_str_a, &ctx, format, NULL, 0,
             arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
     return ret;
@@ -727,7 +727,7 @@ int CDECL MSVCRT__stdio_common_vsprintf( unsigned __int64 options, char *str, MS
     if (options & ~UCRTBASE_PRINTF_TERMINATION_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     ret = pf_printf_a(puts_clbk_str_c99_a,
-            &ctx, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+            &ctx, format, locale, 0, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
 
     if(options & UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
@@ -749,7 +749,7 @@ int CDECL MSVCRT_vsnprintf_l( char *str, MSVCRT_size_t len, const char *format,
     struct _str_ctx_a ctx = {len, str};
     int ret;
 
-    ret = pf_printf_a(puts_clbk_str_a, &ctx, format, locale, FALSE, FALSE,
+    ret = pf_printf_a(puts_clbk_str_a, &ctx, format, locale, 0,
             arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
     return ret;
@@ -796,7 +796,7 @@ int CDECL MSVCRT_vsnprintf_s_l( char *str, MSVCRT_size_t sizeOfBuffer,
 
     ctx.len = len;
     ctx.buf = str;
-    ret = pf_printf_a(puts_clbk_str_a, &ctx, format, locale, FALSE, TRUE,
+    ret = pf_printf_a(puts_clbk_str_a, &ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
             arg_clbk_valist, NULL, &valist);
     puts_clbk_str_a(&ctx, 1, &nullbyte);
 
@@ -848,8 +848,9 @@ int CDECL MSVCRT_vsnprintf_s( char *str, MSVCRT_size_t sizeOfBuffer,
 /*********************************************************************
  *		__stdio_common_vsnprintf_s (MSVCRT.@)
  */
-int CDECL MSVCRT__stdio_common_vsnprintf_s( unsigned __int64 options, char *str, MSVCRT_size_t sizeOfBuffer, MSVCRT_size_t count, const char *format,
-                                      MSVCRT__locale_t locale, __ms_va_list valist )
+int CDECL MSVCRT__stdio_common_vsnprintf_s( unsigned __int64 options,
+        char *str, MSVCRT_size_t sizeOfBuffer, MSVCRT_size_t count,
+        const char *format, MSVCRT__locale_t locale, __ms_va_list valist )
 {
     return MSVCRT_vsnprintf_s_l(str, sizeOfBuffer, count, format, locale, valist);
 }
@@ -857,8 +858,9 @@ int CDECL MSVCRT__stdio_common_vsnprintf_s( unsigned __int64 options, char *str,
 /*********************************************************************
  *		__stdio_common_vsprintf_s (MSVCRT.@)
  */
-int CDECL MSVCRT__stdio_common_vsprintf_s( unsigned __int64 options, char *str, MSVCRT_size_t count, const char *format,
-                                      MSVCRT__locale_t locale, __ms_va_list valist )
+int CDECL MSVCRT__stdio_common_vsprintf_s( unsigned __int64 options,
+        char *str, MSVCRT_size_t count, const char *format,
+        MSVCRT__locale_t locale, __ms_va_list valist )
 {
     return MSVCRT_vsnprintf_s_l(str, INT_MAX, count, format, locale, valist);
 }
@@ -905,10 +907,12 @@ int CDECL MSVCRT__vscprintf_p_l(const char *format,
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return ret;
     } else if(ret == 0) {
-        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, FALSE, TRUE,
+        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale,
+                MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
                 arg_clbk_valist, NULL, &args);
     } else {
-        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, TRUE, TRUE,
+        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale,
+                MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
                 arg_clbk_positional, args_ctx, NULL);
     }
 
@@ -987,7 +991,7 @@ int CDECL MSVCRT_vsnwprintf(MSVCRT_wchar_t *str, MSVCRT_size_t len,
     struct _str_ctx_w ctx = {len, str};
     int ret;
 
-    ret = pf_printf_w(puts_clbk_str_w, &ctx, format, NULL, FALSE, FALSE,
+    ret = pf_printf_w(puts_clbk_str_w, &ctx, format, NULL, 0,
             arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
     return ret;
@@ -1004,7 +1008,7 @@ int CDECL MSVCRT_vsnwprintf_l(MSVCRT_wchar_t *str, MSVCRT_size_t len,
     struct _str_ctx_w ctx = {len, str};
     int ret;
 
-    ret = pf_printf_w(puts_clbk_str_w, &ctx, format, locale, FALSE, FALSE,
+    ret = pf_printf_w(puts_clbk_str_w, &ctx, format, locale, 0,
             arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
     return ret;
@@ -1029,10 +1033,11 @@ int CDECL MSVCRT_vswprintf_p_l(MSVCRT_wchar_t *buffer, MSVCRT_size_t length,
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return ret;
     } else if(ret == 0)
-        ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale, FALSE, TRUE,
+        ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
                 arg_clbk_valist, NULL, &args);
     else
-        ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale, TRUE, TRUE,
+        ret = pf_printf_w(puts_clbk_str_w, &puts_ctx, format, locale,
+                MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
                 arg_clbk_positional, args_ctx, NULL);
 
     puts_clbk_str_w(&puts_ctx, 1, &nullbyte);
@@ -1065,7 +1070,7 @@ int CDECL MSVCRT_vsnwprintf_s_l( MSVCRT_wchar_t *str, MSVCRT_size_t sizeOfBuffer
 
     ctx.len = len;
     ctx.buf = str;
-    ret = pf_printf_w(puts_clbk_str_w, &ctx, format, locale, FALSE, TRUE,
+    ret = pf_printf_w(puts_clbk_str_w, &ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
             arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
 
@@ -1170,8 +1175,9 @@ static int puts_clbk_str_c99_w(void *ctx, int len, const MSVCRT_wchar_t *str)
 /*********************************************************************
  *		__stdio_common_vswprintf (MSVCRT.@)
  */
-int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options, MSVCRT_wchar_t *str, MSVCRT_size_t len, const MSVCRT_wchar_t *format,
-                                          MSVCRT__locale_t locale, __ms_va_list valist )
+int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options,
+        MSVCRT_wchar_t *str, MSVCRT_size_t len, const MSVCRT_wchar_t *format,
+        MSVCRT__locale_t locale, __ms_va_list valist )
 {
     static const MSVCRT_wchar_t nullbyte = '\0';
     struct _str_ctx_w ctx = {len, str};
@@ -1180,7 +1186,7 @@ int CDECL MSVCRT__stdio_common_vswprintf( unsigned __int64 options, MSVCRT_wchar
     if (options & ~UCRTBASE_PRINTF_TERMINATION_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
     ret = pf_printf_w(puts_clbk_str_c99_w,
-            &ctx, format, locale, FALSE, FALSE, arg_clbk_valist, NULL, &valist);
+            &ctx, format, locale, 0, arg_clbk_valist, NULL, &valist);
     puts_clbk_str_w(&ctx, 1, &nullbyte);
 
     if(options & UCRTBASE_PRINTF_LEGACY_VSPRINTF_NULL_TERMINATION)
@@ -1367,10 +1373,11 @@ int CDECL MSVCRT_vsprintf_p_l(char *buffer, MSVCRT_size_t length, const char *fo
         *MSVCRT__errno() = MSVCRT_EINVAL;
         return ret;
     } else if(ret == 0)
-        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, FALSE, TRUE,
+        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
                 arg_clbk_valist, NULL, &args);
     else
-        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale, TRUE, TRUE,
+        ret = pf_printf_a(puts_clbk_str_a, &puts_ctx, format, locale,
+                MSVCRT_PRINTF_POSITIONAL_PARAMS | MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER,
                 arg_clbk_positional, args_ctx, NULL);
 
     puts_clbk_str_a(&puts_ctx, 1, &nullbyte);

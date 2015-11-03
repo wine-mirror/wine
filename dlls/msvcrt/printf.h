@@ -336,7 +336,7 @@ static inline void FUNC_NAME(pf_fixup_exponent)(char *buf)
 }
 
 int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const APICHAR *fmt,
-        MSVCRT__locale_t locale, BOOL positional_params, BOOL invoke_invalid_param_handler,
+        MSVCRT__locale_t locale, DWORD options,
         args_clbk pf_args, void *args_ctx, __ms_va_list *valist)
 {
     MSVCRT_pthreadlocinfo locinfo;
@@ -344,6 +344,8 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     APICHAR buf[32];
     int written = 0, pos, i;
     FUNC_NAME(pf_flags) flags;
+    BOOL positional_params = options & MSVCRT_PRINTF_POSITIONAL_PARAMS;
+    BOOL invoke_invalid_param_handler = options & MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER;
 
     TRACE("Format is: %s\n", FUNC_NAME(debugstr)(fmt));
 
@@ -701,8 +703,8 @@ static int FUNC_NAME(create_positional_ctx)(void *args_ctx, const APICHAR *forma
     printf_arg *args = args_ctx;
     int i, j;
 
-    i = FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk_str), &puts_ctx, format, NULL, TRUE, FALSE,
-            arg_clbk_type, args_ctx, NULL);
+    i = FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk_str), &puts_ctx, format, NULL,
+            MSVCRT_PRINTF_POSITIONAL_PARAMS, arg_clbk_type, args_ctx, NULL);
     if(i < 0)
         return i;
 
