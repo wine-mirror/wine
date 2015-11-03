@@ -1221,6 +1221,7 @@ enable_msvcp100
 enable_msvcp110
 enable_msvcp120
 enable_msvcp120_app
+enable_msvcp140
 enable_msvcp60
 enable_msvcp70
 enable_msvcp71
@@ -17865,6 +17866,7 @@ wine_fn_config_test dlls/msvcp110/tests msvcp110_test
 wine_fn_config_dll msvcp120 enable_msvcp120
 wine_fn_config_test dlls/msvcp120/tests msvcp120_test
 wine_fn_config_dll msvcp120_app enable_msvcp120_app
+wine_fn_config_dll msvcp140 enable_msvcp140
 wine_fn_config_dll msvcp60 enable_msvcp60
 wine_fn_config_test dlls/msvcp60/tests msvcp60_test
 wine_fn_config_dll msvcp70 enable_msvcp70
@@ -18057,7 +18059,7 @@ wine_fn_config_dll twain.dll16 enable_win16
 wine_fn_config_dll twain_32 enable_twain_32
 wine_fn_config_test dlls/twain_32/tests twain_32_test
 wine_fn_config_dll typelib.dll16 enable_win16
-wine_fn_config_dll ucrtbase enable_ucrtbase
+wine_fn_config_dll ucrtbase enable_ucrtbase implib
 wine_fn_config_test dlls/ucrtbase/tests ucrtbase_test
 wine_fn_config_dll unicows enable_unicows implib
 wine_fn_config_dll updspapi enable_updspapi

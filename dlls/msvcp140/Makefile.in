@@ -1,0 +1,14 @@
+MODULE = msvcp140.dll
+IMPORTS = ucrtbase
+EXTRADEFS = -D_MSVCP_VER=140
+PARENTSRC = ../msvcp90
+
+C_SRCS = \
+	exception.c \
+	ios.c \
+	locale.c \
+	math.c \
+	memory.c \
+	misc.c \
+	msvcp_main.c \
+	string.c

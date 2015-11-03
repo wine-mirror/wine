@@ -69,7 +69,55 @@ MSVCP_bool (__thiscall *critical_section_trylock)(critical_section*);
 #endif
 
 #define VERSION_STRING(ver) #ver
+#if _MSVCP_VER >= 140
+#define MSVCRT_NAME(ver) "ucrtbase.dll"
+#else
 #define MSVCRT_NAME(ver) "msvcr" VERSION_STRING(ver) ".dll"
+#endif
+
+#if _MSVCP_VER >= 140
+static void* __cdecl operator_new(MSVCP_size_t size)
+{
+    void *retval;
+    int freed;
+
+    do
+    {
+        retval = malloc(size);
+        if (retval)
+        {
+            TRACE("(%ld) returning %p\n", size, retval);
+            return retval;
+        }
+        freed = _callnewh(size);
+    } while (freed);
+
+    TRACE("(%ld) out of memory\n", size);
+    throw_exception(EXCEPTION_BAD_ALLOC, "bad allocation");
+    return NULL;
+}
+
+static void __cdecl operator_delete(void *mem)
+{
+    TRACE("(%p)\n", mem);
+    free(mem);
+}
+
+void __cdecl _invalid_parameter(const wchar_t *expr, const wchar_t *func, const wchar_t *file, unsigned int line, uintptr_t arg)
+{
+   _invalid_parameter_noinfo();
+}
+
+int __cdecl _scprintf(const char* fmt, ...)
+{
+    int ret;
+    __ms_va_list valist;
+    __ms_va_start(valist, fmt);
+    ret = __stdio_common_vsprintf(UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, fmt, NULL, valist);
+    __ms_va_end(valist);
+    return ret;
+}
+#endif
 
 static void init_cxx_funcs(void)
 {
@@ -77,6 +125,11 @@ static void init_cxx_funcs(void)
 
     if (!hmod) FIXME( "%s not loaded\n", MSVCRT_NAME(_MSVCP_VER) );
 
+#if _MSVCP_VER >= 140
+    MSVCRT_operator_new = operator_new;
+    MSVCRT_operator_delete = operator_delete;
+    MSVCRT_set_new_handler = (void*)GetProcAddress(hmod, "_set_new_handler");
+#else
     if (sizeof(void *) > sizeof(int))  /* 64-bit has different names */
     {
         MSVCRT_operator_new = (void*)GetProcAddress(hmod, "??2@YAPEAX_K@Z");
@@ -113,6 +166,7 @@ static void init_cxx_funcs(void)
 #endif
 #endif /* _MSVCP_VER >= 110 */
     }
+#endif
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)

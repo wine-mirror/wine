@@ -40,6 +40,7 @@ my @dll_groups =
   "msvcp100",
   "msvcp110",
   "msvcp120",
+  "msvcp140",
   "msvcp71",
   "msvcp80",
   "msvcp70",

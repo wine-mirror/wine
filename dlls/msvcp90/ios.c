@@ -35,6 +35,16 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 #define TICKSPERSEC       10000000
 #define TICKS_1601_TO_1970 (SECS_1601_TO_1970 * TICKSPERSEC)
 
+#if _MSVCP_VER >= 140
+FILE* __cdecl __acrt_iob_func(unsigned);
+#undef stdin
+#undef stdout
+#undef stderr
+#define stdin  __acrt_iob_func(STDIN_FILENO)
+#define stdout __acrt_iob_func(STDOUT_FILENO)
+#define stderr __acrt_iob_func(STDERR_FILENO)
+#endif
+
 /* ?_Index@ios_base@std@@0HA */
 int ios_base_Index = 0;
 /* ?_Sync@ios_base@std@@0_NA */
