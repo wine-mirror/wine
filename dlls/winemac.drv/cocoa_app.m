@@ -699,9 +699,9 @@ int macdrv_err_on;
         return TRUE;
     }
 
-    - (CGDisplayModeRef)modeMatchingMode:(CGDisplayModeRef)mode forDisplay:(CGDirectDisplayID)displayID
+    - (NSArray*)modesMatchingMode:(CGDisplayModeRef)mode forDisplay:(CGDirectDisplayID)displayID
     {
-        CGDisplayModeRef ret = NULL;
+        NSMutableArray* ret = [NSMutableArray array];
         NSDictionary* options = nil;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
@@ -715,10 +715,7 @@ int macdrv_err_on;
         {
             CGDisplayModeRef candidateMode = (CGDisplayModeRef)candidateModeObject;
             if ([self mode:candidateMode matchesMode:mode])
-            {
-                ret = candidateMode;
-                break;
-            }
+                [ret addObject:candidateModeObject];
         }
         return ret;
     }
@@ -743,11 +740,15 @@ int macdrv_err_on;
             }
             else // ... otherwise, try to restore just the one display
             {
-                mode = [self modeMatchingMode:mode forDisplay:displayID];
-                if (mode && CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr)
+                for (id modeObject in [self modesMatchingMode:mode forDisplay:displayID])
                 {
-                    [originalDisplayModes removeObjectForKey:displayIDKey];
-                    ret = TRUE;
+                    mode = (CGDisplayModeRef)modeObject;
+                    if (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr)
+                    {
+                        [originalDisplayModes removeObjectForKey:displayIDKey];
+                        ret = TRUE;
+                        break;
+                    }
                 }
             }
         }
@@ -755,6 +756,7 @@ int macdrv_err_on;
         {
             BOOL active = [NSApp isActive];
             CGDisplayModeRef currentMode;
+            NSArray* modes;
 
             currentMode = CGDisplayModeRetain((CGDisplayModeRef)[latentDisplayModes objectForKey:displayIDKey]);
             if (!currentMode)
@@ -771,8 +773,8 @@ int macdrv_err_on;
             CGDisplayModeRelease(currentMode);
             currentMode = NULL;
 
-            mode = [self modeMatchingMode:mode forDisplay:displayID];
-            if (!mode)
+            modes = [self modesMatchingMode:mode forDisplay:displayID];
+            if (!modes.count)
                 return FALSE;
 
             if ([originalDisplayModes count] || displaysCapturedForFullscreen ||
@@ -789,7 +791,17 @@ int macdrv_err_on;
                         originalMode = currentMode = CGDisplayCopyDisplayMode(displayID);
 
                     if (originalMode)
-                        ret = (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr);
+                    {
+                        for (id modeObject in modes)
+                        {
+                            mode = (CGDisplayModeRef)modeObject;
+                            if (CGDisplaySetDisplayMode(displayID, mode, NULL) == CGDisplayNoErr)
+                            {
+                                ret = TRUE;
+                                break;
+                            }
+                        }
+                    }
                     if (ret && !(currentMode && [self mode:mode matchesMode:currentMode]))
                         [originalDisplayModes setObject:(id)originalMode forKey:displayIDKey];
                     else if (![originalDisplayModes count])
