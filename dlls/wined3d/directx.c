@@ -4309,9 +4309,10 @@ static BOOL wined3d_check_pixel_format_depth(const struct wined3d_gl_info *gl_in
         return FALSE;
 
     /* Some cards like Intel i915 ones only offer D24S8 but lots of games also
-     * need a format without stencil, so allow more stencil bits than
-     * requested. */
-    if (cfg->stencilSize < format->stencil_size)
+     * need a format without stencil. We can allow a mismatch if the format
+     * doesn't have any stencil bits. If it does have stencil bits the size
+     * must match, or stencil wrapping would break. */
+    if (format->stencil_size && cfg->stencilSize != format->stencil_size)
         return FALSE;
 
     return TRUE;
