@@ -36,6 +36,27 @@
 #define UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY      (0x0008)
 #define UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS     (0x0010)
 
+static inline float __port_infinity(void)
+{
+    static const unsigned __inf_bytes = 0x7f800000;
+    return *(const float *)&__inf_bytes;
+}
+#define INFINITY __port_infinity()
+
+static inline float __port_nan(void)
+{
+    static const unsigned __nan_bytes = 0x7fc00000;
+    return *(const float *)&__nan_bytes;
+}
+#define NAN __port_nan()
+
+static inline float __port_ind(void)
+{
+    static const unsigned __ind_bytes = 0xffc00000;
+    return *(const float *)&__ind_bytes;
+}
+#define IND __port_ind()
+
 static int (__cdecl *p_vfprintf)(unsigned __int64 options, FILE *file, const char *format,
                                  void *locale, __ms_va_list valist);
 static int (__cdecl *p_vsprintf)(unsigned __int64 options, char *str, size_t len, const char *format,
@@ -336,6 +357,72 @@ static void test_vsnprintf_s(void)
     ok( !strcmp(out1, buffer), "buffer wrong, got=%s\n", buffer);
 }
 
+static void test_printf_legacy_wide(void)
+{
+    const wchar_t wide[] = {'A','B','C','D',0};
+    const char narrow[] = "abcd";
+    const char out[] = "abcd ABCD";
+    /* The legacy wide flag doesn't affect narrow printfs, so the same
+     * format should behave the same both with and without the flag. */
+    const char narrow_fmt[] = "%s %ls";
+    /* The standard behaviour is to use the same format as for the narrow
+     * case, while the legacy case has got a different meaning for %s. */
+    const wchar_t std_wide_fmt[] = {'%','s',' ','%','l','s',0};
+    const wchar_t legacy_wide_fmt[] = {'%','h','s',' ','%','s',0};
+    char buffer[20];
+    wchar_t wbuffer[20];
+
+    vsprintf_wrapper(0, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
+    ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
+    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS, buffer, sizeof(buffer), narrow_fmt, narrow, wide);
+    ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
+
+    vswprintf_wrapper(0, wbuffer, sizeof(wbuffer), std_wide_fmt, narrow, wide);
+    WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
+    ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
+    vswprintf_wrapper(UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS, wbuffer, sizeof(wbuffer), legacy_wide_fmt, narrow, wide);
+    WideCharToMultiByte(CP_ACP, 0, wbuffer, -1, buffer, sizeof(buffer), NULL, NULL);
+    ok(!strcmp(buffer, out), "buffer wrong, got=%s\n", buffer);
+}
+
+static void test_printf_legacy_msvcrt(void)
+{
+    char buf[50];
+
+    /* In standard mode, %F is a float format conversion, while it is a
+     * length modifier in legacy msvcrt mode. In legacy mode, N is also
+     * a length modifier. */
+    vsprintf_wrapper(0, buf, sizeof(buf), "%F", 1.23);
+    ok(!strcmp(buf, "1.230000"), "buf = %s\n", buf);
+    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%Fd %Nd", 123, 456);
+    ok(!strcmp(buf, "123 456"), "buf = %s\n", buf);
+
+    vsprintf_wrapper(0, buf, sizeof(buf), "%f %F %f %e %E %g %G", INFINITY, INFINITY, -INFINITY, INFINITY, INFINITY, INFINITY, INFINITY);
+    ok(!strcmp(buf, "inf INF -inf inf INF inf INF"), "buf = %s\n", buf);
+    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", INFINITY);
+    ok(!strcmp(buf, "1.#INF00"), "buf = %s\n", buf);
+    vsprintf_wrapper(0, buf, sizeof(buf), "%f %F", NAN, NAN);
+    ok(!strcmp(buf, "nan NAN"), "buf = %s\n", buf);
+    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", NAN);
+    ok(!strcmp(buf, "1.#QNAN0"), "buf = %s\n", buf);
+    vsprintf_wrapper(0, buf, sizeof(buf), "%f %F", IND, IND);
+    ok(!strcmp(buf, "-nan(ind) -NAN(IND)"), "buf = %s\n", buf);
+    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY, buf, sizeof(buf), "%f", IND);
+    ok(!strcmp(buf, "-1.#IND00"), "buf = %s\n", buf);
+}
+
+static void test_printf_legacy_three_digit_exp(void)
+{
+    char buf[20];
+
+    vsprintf_wrapper(0, buf, sizeof(buf), "%E", 1.23);
+    ok(!strcmp(buf, "1.230000E+00"), "buf = %s\n", buf);
+    vsprintf_wrapper(UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS, buf, sizeof(buf), "%E", 1.23);
+    ok(!strcmp(buf, "1.230000E+000"), "buf = %s\n", buf);
+    vsprintf_wrapper(0, buf, sizeof(buf), "%E", 1.23e+123);
+    ok(!strcmp(buf, "1.230000E+123"), "buf = %s\n", buf);
+}
+
 START_TEST(printf)
 {
     if (!init()) return;
@@ -344,4 +431,7 @@ START_TEST(printf)
     test_swprintf();
     test_fprintf();
     test_vsnprintf_s();
+    test_printf_legacy_wide();
+    test_printf_legacy_msvcrt();
+    test_printf_legacy_three_digit_exp();
 }

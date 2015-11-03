@@ -4998,7 +4998,11 @@ int CDECL MSVCRT__stdio_common_vfprintf(unsigned __int64 options, MSVCRT_FILE *f
 
     MSVCRT__lock_file(file);
     tmp_buf = add_std_buffer(file);
-    ret = pf_printf_a(puts_clbk_file_a, file, format, locale, 0, arg_clbk_valist, NULL, &valist);
+
+    if (options & ~UCRTBASE_PRINTF_MASK)
+        FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
+    ret = pf_printf_a(puts_clbk_file_a, file, format, locale,
+            options & UCRTBASE_PRINTF_MASK, arg_clbk_valist, NULL, &valist);
     if(tmp_buf) remove_std_buffer(file);
     MSVCRT__unlock_file(file);
 

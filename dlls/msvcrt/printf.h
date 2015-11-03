@@ -82,7 +82,7 @@ static inline int FUNC_NAME(pf_fill)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ct
 {
     int i, r = 0, written;
 
-    if(flags->Sign && !strchr("diaeEfgG", flags->Format))
+    if(flags->Sign && !strchr("diaeEfFgG", flags->Format))
         flags->Sign = 0;
 
     if(left && flags->Sign) {
@@ -206,8 +206,9 @@ static inline int FUNC_NAME(pf_output_format_str)(FUNC_NAME(puts_clbk) pf_puts, 
 }
 
 static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx,
-        const void *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT_pthreadlocinfo locinfo)
+        const void *str, int len, FUNC_NAME(pf_flags) *flags, MSVCRT_pthreadlocinfo locinfo, BOOL legacy_wide)
 {
+    BOOL complement_is_narrow = legacy_wide ? (sizeof(APICHAR)==sizeof(MSVCRT_wchar_t)) : FALSE;
 #ifdef PRINTF_WIDE
     static const MSVCRT_wchar_t nullW[] = {'(','n','u','l','l',')',0};
 
@@ -223,7 +224,7 @@ static inline int FUNC_NAME(pf_handle_string)(FUNC_NAME(puts_clbk) pf_puts, void
     if(flags->IntegerLength == 'h')
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locinfo);
 
-    if((flags->Format=='S' || flags->Format=='C') == (sizeof(APICHAR)==sizeof(MSVCRT_wchar_t)))
+    if((flags->Format=='S' || flags->Format=='C') == complement_is_narrow)
         return FUNC_NAME(pf_output_format_str)(pf_puts, puts_ctx, str, len, flags, locinfo);
     else
         return FUNC_NAME(pf_output_format_wstr)(pf_puts, puts_ctx, str, len, flags, locinfo);
@@ -304,7 +305,7 @@ static inline void FUNC_NAME(pf_integer_conv)(APICHAR *buf, int buf_len,
     }
 }
 
-static inline void FUNC_NAME(pf_fixup_exponent)(char *buf)
+static inline void FUNC_NAME(pf_fixup_exponent)(char *buf, BOOL three_digit_exp)
 {
     char* tmp = buf;
 
@@ -313,7 +314,11 @@ static inline void FUNC_NAME(pf_fixup_exponent)(char *buf)
 
     if(tmp[0] && (tmp[1]=='+' || tmp[1]=='-') &&
             isdigit(tmp[2]) && isdigit(tmp[3])) {
+#if _MSVCR_VER >= 140
+        BOOL two_digit_exp = !three_digit_exp;
+#else
         BOOL two_digit_exp = (MSVCRT__get_output_format() == MSVCRT__TWO_DIGIT_EXPONENT);
+#endif
 
         tmp += 2;
         if(isdigit(tmp[2])) {
@@ -346,6 +351,13 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
     FUNC_NAME(pf_flags) flags;
     BOOL positional_params = options & MSVCRT_PRINTF_POSITIONAL_PARAMS;
     BOOL invoke_invalid_param_handler = options & MSVCRT_PRINTF_INVOKE_INVALID_PARAM_HANDLER;
+#if _MSVCR_VER >= 140
+    BOOL legacy_wide = options & UCRTBASE_PRINTF_LEGACY_WIDE_SPECIFIERS;
+    BOOL legacy_msvcrt_compat = options & UCRTBASE_PRINTF_LEGACY_MSVCRT_COMPATIBILITY;
+    BOOL three_digit_exp = options & UCRTBASE_PRINTF_LEGACY_THREE_DIGIT_EXPONENTS;
+#else
+    BOOL legacy_wide = TRUE, legacy_msvcrt_compat = TRUE, three_digit_exp = TRUE;
+#endif
 
     TRACE("Format is: %s\n", FUNC_NAME(debugstr)(fmt));
 
@@ -461,7 +473,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                     p++;
             } else if(*p == 'w')
                 flags.WideString = *p++;
-            else if(*p == 'F' || *p == 'N')
+            else if((*p == 'F' || *p == 'N') && legacy_msvcrt_compat)
                 p++; /* ignore */
             else
                 break;
@@ -472,14 +484,14 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
         if(flags.Format == 's' || flags.Format == 'S') {
             i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx,
                     pf_args(args_ctx, pos, VT_PTR, valist).get_ptr,
-                    -1,  &flags, locinfo);
+                    -1,  &flags, locinfo, legacy_wide);
         } else if(flags.Format == 'c' || flags.Format == 'C') {
             int ch = pf_args(args_ctx, pos, VT_INT, valist).get_int;
 
             if((ch&0xff) != ch)
                 FIXME("multibyte characters printing not supported\n");
 
-            i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx, &ch, 1, &flags, locinfo);
+            i = FUNC_NAME(pf_handle_string)(pf_puts, puts_ctx, &ch, 1, &flags, locinfo, legacy_wide);
         } else if(flags.Format == 'p') {
             flags.Format = 'X';
             flags.PadZero = '0';
@@ -540,7 +552,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
 #endif
             if(tmp != buf)
                 HeapFree(GetProcessHeap(), 0, tmp);
-        } else if(flags.Format && strchr("aeEfgG", flags.Format)) {
+        } else if(flags.Format && strchr("aeEfFgG", flags.Format)) {
             char float_fmt[20], buf_a[32], *tmp = buf_a, *decimal_point;
             int len = flags.Precision + 10;
             double val = pf_args(args_ctx, pos, VT_R8, valist).get_double;
@@ -571,7 +583,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 }
             }
 
-            if(flags.Format=='f') {
+            if(flags.Format=='f' || flags.Format=='F') {
                 if(val>-10.0 && val<10.0)
                     i = 1;
                 else
@@ -594,9 +606,24 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 val = -val;
             }
 
-            sprintf(tmp, float_fmt, val);
-            if(toupper(flags.Format)=='E' || toupper(flags.Format)=='G')
-                FUNC_NAME(pf_fixup_exponent)(tmp);
+            if((inf || nan || ind) && !legacy_msvcrt_compat) {
+                static const char inf_str[] = "inf";
+                static const char ind_str[] = "nan(ind)";
+                static const char nan_str[] = "nan";
+                if(inf)
+                    sprintf(tmp, inf_str);
+                else if(ind)
+                    sprintf(tmp, ind_str);
+                else
+                    sprintf(tmp, nan_str);
+                if (strchr("EFG", flags.Format))
+                    for(i=0; tmp[i]; i++)
+                        tmp[i] = toupper(tmp[i]);
+            } else {
+                sprintf(tmp, float_fmt, val);
+                if(toupper(flags.Format)=='E' || toupper(flags.Format)=='G')
+                    FUNC_NAME(pf_fixup_exponent)(tmp, three_digit_exp);
+            }
 
             decimal_point = strchr(tmp, '.');
             if(decimal_point) {
