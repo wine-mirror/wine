@@ -245,7 +245,7 @@ static int parse_prop( const WCHAR *str, WCHAR *value, int *quotes )
             {
             case '"':
                 state = state_quote;
-                if (in_quotes && p[1] != '\"') count--;
+                if (in_quotes) count--;
                 else count++;
                 break;
             case ' ':
