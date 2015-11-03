@@ -2181,7 +2181,7 @@ static void add_union_typeinfo(msft_typelib_t *typelib, type_t *tunion)
 static void add_typedef_typeinfo(msft_typelib_t *typelib, type_t *tdef)
 {
     msft_typeinfo_t *msft_typeinfo = NULL;
-    int alignment, datatype1, datatype2, size;
+    int alignment, datatype1, datatype2, size, duplicate = 0;
     type_t *type;
 
     if (-1 < tdef->typelib_idx)
@@ -2194,6 +2194,8 @@ static void add_typedef_typeinfo(msft_typelib_t *typelib, type_t *tdef)
         tdef->typelib_idx = typelib->typelib_header.nrtypeinfos;
         msft_typeinfo = create_msft_typeinfo(typelib, TKIND_ALIAS, tdef->name, tdef->attrs);
     }
+    else
+        duplicate = 1;
 
     encode_type(typelib, get_type_vt(type), type,
                 &datatype1, &size, &alignment, &datatype2);
@@ -2205,6 +2207,10 @@ static void add_typedef_typeinfo(msft_typelib_t *typelib, type_t *tdef)
         msft_typeinfo->typeinfo->datatype2 = datatype2;
         msft_typeinfo->typeinfo->typekind |= (alignment << 11 | alignment << 6);
     }
+
+    /* avoid adding duplicate type definitions */
+    if (duplicate)
+        tdef->typelib_idx = type->typelib_idx;
 }
 
 static void add_coclass_typeinfo(msft_typelib_t *typelib, type_t *cls)
