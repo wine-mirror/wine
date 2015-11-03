@@ -1557,6 +1557,20 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     if (color_format->id == WINED3DFMT_P8_UINT)
         color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
 
+    /* When "always_offscreen" is enabled, we only use the drawable for
+     * presentation blits, and don't do any rendering to it. That means we
+     * don't need depth or stencil buffers, and can mostly ignore the render
+     * target format. This wouldn't necessarily be quite correct for 10bpc
+     * display modes, but we don't currently support those.
+     * Using the same format regardless of the color/depth/stencil targets
+     * makes it much less likely that different wined3d instances will set
+     * conflicting pixel formats. */
+    if (wined3d_settings.always_offscreen)
+    {
+        color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
+        ds_format = wined3d_get_format(gl_info, WINED3DFMT_UNKNOWN);
+    }
+
     /* Try to find a pixel format which matches our requirements. */
     pixel_format = context_choose_pixel_format(device, hdc, color_format, ds_format, auxBuffers, FALSE);
 
