@@ -869,7 +869,7 @@ int WINAPI AUDDRV_GetPriority(void)
     pthread_mutex_lock(&pulse_lock);
     hr = pulse_test_connect();
     pthread_mutex_unlock(&pulse_lock);
-    return SUCCEEDED(hr) ? Priority_Low : Priority_Unavailable;
+    return SUCCEEDED(hr) ? Priority_Preferred : Priority_Unavailable;
 }
 
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev, IAudioClient **out)
