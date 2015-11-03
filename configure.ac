@@ -1549,15 +1549,14 @@ then
 fi
 
 dnl **** Check for PulseAudio ****
-AC_SUBST(PULSE_LIBS,"")
-AC_SUBST(PULSE_CFLAGS,"")
 if test "x$with_pulse" != "xno";
 then
     WINE_PACKAGE_FLAGS(PULSE,[libpulse],,,,
         [AC_CHECK_HEADERS(pulse/pulseaudio.h,
-            [AC_CHECK_LIB(pulse, pa_stream_is_corked,[:],,[$PULSE_LIBS])])])
+            [AC_CHECK_LIB(pulse, pa_stream_is_corked,[:],[PULSE_LIBS=""],[$PULSE_LIBS])],
+            [PULSE_LIBS=""])])
 fi
-WINE_NOTICE_WITH(pulse, [test "$ac_cv_lib_pulse_pa_stream_is_corked" != "yes"],
+WINE_NOTICE_WITH(pulse, [test -z "$PULSE_LIBS"],
         [libpulse ${notice_platform}development files not found or too old, Pulse won't be supported.])
 
 dnl **** Check for gstreamer ****

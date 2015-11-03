@@ -654,8 +654,8 @@ OSS4_CFLAGS
 ALSA_LIBS
 GSTREAMER_LIBS
 GSTREAMER_CFLAGS
-PULSE_CFLAGS
 PULSE_LIBS
+PULSE_CFLAGS
 GETTEXTPO_LIBS
 Z_LIBS
 FREETYPE_LIBS
@@ -12592,10 +12592,6 @@ esac
 fi
 fi
 
-PULSE_LIBS=""
-
-PULSE_CFLAGS=""
-
 if test "x$with_pulse" != "xno";
 then
     if ${PULSE_CFLAGS:+false} :; then :
@@ -12660,8 +12656,12 @@ fi
 $as_echo "$ac_cv_lib_pulse_pa_stream_is_corked" >&6; }
 if test "x$ac_cv_lib_pulse_pa_stream_is_corked" = xyes; then :
   :
+else
+  PULSE_LIBS=""
 fi
 
+else
+  PULSE_LIBS=""
 fi
 
 done
@@ -12671,7 +12671,7 @@ test -z "$PULSE_CFLAGS" || PULSE_CFLAGS=`echo " $PULSE_CFLAGS" | sed 's/ -I\([^/
 test -z "$PULSE_LIBS" || PULSE_LIBS=`echo " $PULSE_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
-if test "$ac_cv_lib_pulse_pa_stream_is_corked" != "yes"; then :
+if test -z "$PULSE_LIBS"; then :
   case "x$with_pulse" in
   x)   as_fn_append wine_notices "|libpulse ${notice_platform}development files not found or too old, Pulse won't be supported." ;;
   xno) ;;
@@ -17282,8 +17282,8 @@ FREETYPE_CFLAGS = $FREETYPE_CFLAGS
 FREETYPE_LIBS = $FREETYPE_LIBS
 Z_LIBS = $Z_LIBS
 GETTEXTPO_LIBS = $GETTEXTPO_LIBS
-PULSE_LIBS = $PULSE_LIBS
 PULSE_CFLAGS = $PULSE_CFLAGS
+PULSE_LIBS = $PULSE_LIBS
 GSTREAMER_CFLAGS = $GSTREAMER_CFLAGS
 GSTREAMER_LIBS = $GSTREAMER_LIBS
 ALSA_LIBS = $ALSA_LIBS
