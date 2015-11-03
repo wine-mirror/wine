@@ -3054,6 +3054,7 @@ static void load_gl_funcs(struct wined3d_gl_info *gl_info)
     MAP_GL_FUNCTION(glDeleteShader, glDeleteObjectARB);
     MAP_GL_FUNCTION(glDetachShader, glDetachObjectARB);
     MAP_GL_FUNCTION(glDisableVertexAttribArray, glDisableVertexAttribArrayARB);
+    MAP_GL_FUNCTION(glDrawArraysInstanced, glDrawArraysInstancedARB);
     MAP_GL_FUNCTION(glDrawBuffers, glDrawBuffersARB);
     MAP_GL_FUNCTION(glDrawElementsInstanced, glDrawElementsInstancedARB);
     MAP_GL_FUNCTION(glEnableVertexAttribArray, glEnableVertexAttribArrayARB);
