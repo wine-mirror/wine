@@ -572,6 +572,11 @@ static HRESULT pulse_stream_valid(ACImpl *This) {
     return S_OK;
 }
 
+static void silence_buffer(pa_sample_format_t format, BYTE *buffer, UINT32 bytes)
+{
+    memset(buffer, format == PA_SAMPLE_U8 ? 0x80 : 0, bytes);
+}
+
 static void dump_attr(const pa_buffer_attr *attr) {
     TRACE("maxlength: %u\n", attr->maxlength);
     TRACE("minreq: %u\n", attr->minreq);
@@ -1315,7 +1320,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         else {
             ACPacket *cur_packet = (ACPacket*)((char*)This->tmp_buffer + This->bufsize_bytes);
             BYTE *data = This->tmp_buffer;
-            memset(This->tmp_buffer, This->ss.format == PA_SAMPLE_U8 ? 0x80 : 0, This->bufsize_bytes);
+            silence_buffer(This->ss.format, This->tmp_buffer, This->bufsize_bytes);
             list_init(&This->packet_free_head);
             list_init(&This->packet_filled_head);
             for (i = 0; i < capture_packets; ++i, ++cur_packet) {
@@ -1985,18 +1990,17 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         return AUDCLNT_E_INVALID_SIZE;
     }
 
-    if (flags & AUDCLNT_BUFFERFLAGS_SILENT) {
-        if (This->ss.format == PA_SAMPLE_U8)
-            memset(This->tmp_buffer, 128, written_bytes);
-        else
-            memset(This->tmp_buffer, 0, written_bytes);
+    This->locked = 0;
+    if (This->locked_ptr) {
+        if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+            silence_buffer(This->ss.format, This->locked_ptr, written_bytes);
+        pa_stream_write(This->stream, This->locked_ptr, written_bytes, NULL, 0, PA_SEEK_RELATIVE);
+    } else {
+        if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+            silence_buffer(This->ss.format, This->tmp_buffer, written_bytes);
+        pa_stream_write(This->stream, This->tmp_buffer, written_bytes, pulse_free_noop, 0, PA_SEEK_RELATIVE);
     }
 
-    This->locked = 0;
-    if (This->locked_ptr)
-        pa_stream_write(This->stream, This->locked_ptr, written_bytes, NULL, 0, PA_SEEK_RELATIVE);
-    else
-        pa_stream_write(This->stream, This->tmp_buffer, written_bytes, pulse_free_noop, 0, PA_SEEK_RELATIVE);
     This->pad += written_bytes;
     This->locked_ptr = NULL;
     TRACE("Released %u, pad %zu\n", written_frames, This->pad / pa_frame_size(&This->ss));
