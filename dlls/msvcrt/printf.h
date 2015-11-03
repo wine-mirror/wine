@@ -461,7 +461,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                     p++;
             } else if(*p == 'w')
                 flags.WideString = *p++;
-            else if(*p == 'F')
+            else if(*p == 'F' || *p == 'N')
                 p++; /* ignore */
             else
                 break;

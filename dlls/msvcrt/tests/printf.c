@@ -413,6 +413,11 @@ static void test_sprintf( void )
         ok(!strcmp(buffer,"0000000000000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
         ok( r==16, "return count wrong\n");
 
+        format = "%Np";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"0000000000000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
+        ok( r==16, "return count wrong\n");
+
         format = "%#-020p";
         r = sprintf(buffer,format,(void *)57);
         ok(!strcmp(buffer,"0X0000000000000039  "),"Pointer formatted incorrectly\n");
@@ -431,6 +436,11 @@ static void test_sprintf( void )
         ok( r==12, "return count wrong\n");
 
         format = "%Fp";
+        r = sprintf(buffer,format,(void *)57);
+        ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
+        ok( r==8, "return count wrong\n");
+
+        format = "%Np";
         r = sprintf(buffer,format,(void *)57);
         ok(!strcmp(buffer,"00000039"),"Pointer formatted incorrectly \"%s\"\n",buffer);
         ok( r==8, "return count wrong\n");
@@ -666,6 +676,11 @@ static void test_sprintf( void )
     ok( r==1, "return count wrong\n");
 
     format = "%F";
+    r = sprintf(buffer, format,-1);
+    ok(!strcmp(buffer,""), "failed\n");
+    ok( r==0, "return count wrong\n");
+
+    format = "%N";
     r = sprintf(buffer, format,-1);
     ok(!strcmp(buffer,""), "failed\n");
     ok( r==0, "return count wrong\n");
