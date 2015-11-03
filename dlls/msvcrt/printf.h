@@ -34,7 +34,7 @@ typedef struct FUNC_NAME(pf_flags_t)
 {
     APICHAR Sign, LeftAlign, Alternate, PadZero;
     int FieldLength, Precision;
-    APICHAR IntegerLength, IntegerDouble;
+    APICHAR IntegerLength, IntegerDouble, IntegerNative;
     APICHAR WideString;
     APICHAR Format;
 } FUNC_NAME(pf_flags);
@@ -470,7 +470,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
                 else if(isdigit(*(p+1)) || !*(p+1))
                     break;
                 else
-                    p++;
+                    flags.IntegerNative = *p++;
             } else if(*p == 'w')
                 flags.WideString = *p++;
             else if((*p == 'F' || *p == 'N') && legacy_msvcrt_compat)
@@ -533,7 +533,7 @@ int FUNC_NAME(pf_printf)(FUNC_NAME(puts_clbk) pf_puts, void *puts_ctx, const API
             if(!tmp)
                 return -1;
 
-            if(flags.IntegerDouble)
+            if(flags.IntegerDouble || (flags.IntegerNative && sizeof(void*) == 8))
                 FUNC_NAME(pf_integer_conv)(tmp, max_len, &flags, pf_args(args_ctx, pos,
                             VT_I8, valist).get_longlong);
             else if(flags.Format=='d' || flags.Format=='i')

@@ -422,6 +422,11 @@ static void test_sprintf( void )
         r = sprintf(buffer,format,(void *)57);
         ok(!strcmp(buffer,"0X0000000000000039  "),"Pointer formatted incorrectly\n");
         ok( r==20, "return count wrong\n");
+
+        format = "%Ix %d";
+        r = sprintf(buffer,format,(size_t)0x12345678123456,1);
+        ok(!strcmp(buffer,"12345678123456 1"),"buffer = %s\n",buffer);
+        ok( r==16, "return count wrong\n");
     }
     else
     {
@@ -449,6 +454,11 @@ static void test_sprintf( void )
         r = sprintf(buffer,format,(void *)57);
         ok(!strcmp(buffer,"0X00000039  "),"Pointer formatted incorrectly\n");
         ok( r==12, "return count wrong\n");
+
+        format = "%Ix %d";
+        r = sprintf(buffer,format,0x123456,1);
+        ok(!strcmp(buffer,"123456 1"),"buffer = %s\n",buffer);
+        ok( r==8, "return count wrong\n");
     }
 
     format = "%04s";
