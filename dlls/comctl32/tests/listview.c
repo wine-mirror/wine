@@ -5776,6 +5776,7 @@ static void test_oneclickactivate(void)
     ok(r == 0, "should return zero\n");
 
     SetForegroundWindow(hwndparent);
+    flush_events();
     fg = GetForegroundWindow();
     if (fg != hwndparent)
     {
