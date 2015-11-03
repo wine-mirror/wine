@@ -1139,4 +1139,6 @@ extern char* __cdecl __unDName(char *,const char*,int,malloc_func_t,free_func_t,
 #define UCRTBASE_SCANF_LEGACY_WIDE_SPECIFIERS            (0x0002)
 #define UCRTBASE_SCANF_LEGACY_MSVCRT_COMPATIBILITY       (0x0004)
 
+#define UCRTBASE_SCANF_MASK                              (0x0007)
+
 #endif /* __WINE_MSVCRT_H */

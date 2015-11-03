@@ -671,9 +671,15 @@ int CDECL MSVCRT__stdio_common_vsscanf(unsigned __int64 options,
                                        MSVCRT__locale_t locale,
                                        __ms_va_list valist)
 {
-    if (options != UCRTBASE_SCANF_LEGACY_WIDE_SPECIFIERS)
+    /* LEGACY_WIDE_SPECIFIERS only has got an effect on the wide
+     * scanf. LEGACY_MSVCRT_COMPATIBILITY affects parsing of nan/inf,
+     * but parsing of those isn't implemented at all yet. */
+    if (options & ~UCRTBASE_SCANF_MASK)
         FIXME("options %s not handled\n", wine_dbgstr_longlong(options));
-    return MSVCRT_vsnscanf_l(input, length, format, locale, valist);
+    if (options & UCRTBASE_SCANF_SECURECRT)
+        return MSVCRT_vsnscanf_s_l(input, length, format, locale, valist);
+    else
+        return MSVCRT_vsnscanf_l(input, length, format, locale, valist);
 }
 
 /*********************************************************************
