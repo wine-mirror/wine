@@ -96,6 +96,10 @@ DotNet Runtime
 M:	Vincent Povirk <vincent@codeweavers.com>
 F:	dlls/mscoree/
 
+GDI
+M:	Huw Davies <huw@codeweavers.com>
+F:	dlls/gdi32/
+
 GDIPlus
 M:	Vincent Povirk <vincent@codeweavers.com>
 F:	dlls/gdiplus/
@@ -140,6 +144,23 @@ Netstat
 M:	André Hentschel <nerv@dawncrow.de>
 F:	programs/netstat/
 
+OLE Embedding
+M:	Huw Davies <huw@codeweavers.com>
+F:	dlls/ole32/clipboard.c
+F:	dlls/ole32/datacache.c
+F:	dlls/ole32/defaulthandler.c
+F:	dlls/ole32/ole2.c
+F:	dlls/ole32/ole2impl.c
+F:	dlls/ole32/oleobj.c
+
+OLE RPC
+M:	Huw Davies <huw@codeweavers.com>
+F:	dlls/ole32/compobj.c
+F:	dlls/ole32/marshal.c
+F:	dlls/ole32/rpc.c
+F:	dlls/ole32/stubmanager.c
+F:	dlls/ole32/usrmarshal.c
+
 OLE Storage
 M:	Vincent Povirk <vincent@codeweavers.com>
 F:	dlls/ole32/filelockbytes.c
@@ -151,11 +172,27 @@ F:	dlls/ole32/tests/storage32.c
 
 OLE Typelibs
 P:	Andrew Eikum <aeikum@codeweavers.com>
+P:	Huw Davies <huw@codeweavers.com>
 F:	dlls/oleaut32/typelib.c
 
 OpenMP
 M:	Sebastian Lackner <sebastian@fds-team.de>
 F:	dlls/vcomp*/
+
+Printing
+M:	Huw Davies <huw@codeweavers.com>
+F:	dlls/localspl/
+F:	dlls/wineps.drv/
+F:	dlls/winspool.drv/
+
+Richedit
+M:	Huw Davies <huw@codeweavers.com>
+F:	dlls/riched20
+
+RPC Runtime
+P:	Huw Davies <huw@codeweavers.com>
+F:	dlls/rpcrt4
+F:	tools/widl
 
 Threadpool
 M:	Sebastian Lackner <sebastian@fds-team.de>
@@ -198,8 +235,9 @@ F:	dlls/msxml*/
 
 THE REST
 M:	Alexandre Julliard <julliard@winehq.org>
-P:	Sebastian Lackner <sebastian@fds-team.de>
 P:	Alex Henrie <alexhenrie24@gmail.com>
+P:	Huw Davies <huw@codeweavers.com>
+P:	Sebastian Lackner <sebastian@fds-team.de>
 P:	Vincent Povirk <vincent@codeweavers.com>
 F:	*
 F:	*/
