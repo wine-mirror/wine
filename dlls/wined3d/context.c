@@ -1244,7 +1244,6 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         BOOL auxBuffers, BOOL findCompatible)
 {
     int iPixelFormat=0;
-    BYTE depthBits=0, stencilBits=0;
     unsigned int current_value;
     unsigned int cfg_count = device->adapter->cfg_count;
     unsigned int i;
@@ -1252,8 +1251,6 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
     TRACE("device %p, dc %p, color_format %s, ds_format %s, aux_buffers %#x, find_compatible %#x.\n",
             device, hdc, debug_d3dformat(color_format->id), debug_d3dformat(ds_format->id),
             auxBuffers, findCompatible);
-
-    getDepthStencilBits(ds_format, &depthBits, &stencilBits);
 
     current_value = 0;
     for (i = 0; i < cfg_count; ++i)
@@ -1276,9 +1273,9 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
             continue;
         if (cfg->alphaSize < color_format->alpha_size)
             continue;
-        if (cfg->depthSize < depthBits)
+        if (cfg->depthSize < ds_format->depth_size)
             continue;
-        if (stencilBits && cfg->stencilSize != stencilBits)
+        if (ds_format->stencil_size && cfg->stencilSize != ds_format->stencil_size)
             continue;
         /* Check multisampling support. */
         if (cfg->numSamples)
@@ -1287,9 +1284,9 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         value = 1;
         /* We try to locate a format which matches our requirements exactly. In case of
          * depth it is no problem to emulate 16-bit using e.g. 24-bit, so accept that. */
-        if (cfg->depthSize == depthBits)
+        if (cfg->depthSize == ds_format->depth_size)
             value += 1;
-        if (cfg->stencilSize == stencilBits)
+        if (cfg->stencilSize == ds_format->stencil_size)
             value += 2;
         if (cfg->alphaSize == color_format->alpha_size)
             value += 4;
@@ -1325,8 +1322,8 @@ static int context_choose_pixel_format(const struct wined3d_device *device, HDC 
         pfd.cAlphaBits = color_format->alpha_size;
         pfd.cColorBits = color_format->red_size + color_format->green_size
                 + color_format->blue_size + color_format->alpha_size;
-        pfd.cDepthBits = depthBits;
-        pfd.cStencilBits = stencilBits;
+        pfd.cDepthBits = ds_format->depth_size;
+        pfd.cStencilBits = ds_format->stencil_size;
         pfd.iLayerType = PFD_MAIN_PLANE;
 
         iPixelFormat = ChoosePixelFormat(hdc, &pfd);
@@ -2245,21 +2242,17 @@ static void context_set_render_offscreen(struct wined3d_context *context, BOOL o
 static BOOL match_depth_stencil_format(const struct wined3d_format *existing,
         const struct wined3d_format *required)
 {
-    BYTE existing_depth, existing_stencil, required_depth, required_stencil;
-
     if (existing == required)
         return TRUE;
     if ((existing->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
             != (required->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT))
         return FALSE;
-
-    getDepthStencilBits(existing, &existing_depth, &existing_stencil);
-    getDepthStencilBits(required, &required_depth, &required_stencil);
-
-    if(existing_depth < required_depth) return FALSE;
-    /* If stencil bits are used the exact amount is required - otherwise wrapping
-     * won't work correctly */
-    if(required_stencil && required_stencil != existing_stencil) return FALSE;
+    if (existing->depth_size < required->depth_size)
+        return FALSE;
+    /* If stencil bits are used the exact amount is required - otherwise
+     * wrapping won't work correctly. */
+    if (required->stencil_size && required->stencil_size != existing->stencil_size)
+        return FALSE;
     return TRUE;
 }
 

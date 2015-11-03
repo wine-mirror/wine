@@ -4016,37 +4016,6 @@ unsigned int count_bits(unsigned int mask)
     return count;
 }
 
-/* Helper function for retrieving depth/stencil info for ChoosePixelFormat and wglChoosePixelFormatARB */
-BOOL getDepthStencilBits(const struct wined3d_format *format, BYTE *depthSize, BYTE *stencilSize)
-{
-    TRACE("format %s.\n", debug_d3dformat(format->id));
-
-    switch (format->id)
-    {
-        case WINED3DFMT_D16_LOCKABLE:
-        case WINED3DFMT_D16_UNORM:
-        case WINED3DFMT_S1_UINT_D15_UNORM:
-        case WINED3DFMT_X8D24_UNORM:
-        case WINED3DFMT_S4X4_UINT_D24_UNORM:
-        case WINED3DFMT_D24_UNORM_S8_UINT:
-        case WINED3DFMT_S8_UINT_D24_FLOAT:
-        case WINED3DFMT_D32_UNORM:
-        case WINED3DFMT_D32_FLOAT:
-        case WINED3DFMT_INTZ:
-            break;
-        default:
-            FIXME("Unsupported depth/stencil format %s.\n", debug_d3dformat(format->id));
-            return FALSE;
-    }
-
-    *depthSize = format->depth_size;
-    *stencilSize = format->stencil_size;
-
-    TRACE("Returning depthSize: %d and stencilSize: %d for format %s.\n",
-            *depthSize, *stencilSize, debug_d3dformat(format->id));
-    return TRUE;
-}
-
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
  * in the range 0.0f -> 1.0f. */

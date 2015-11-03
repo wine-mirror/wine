@@ -2903,8 +2903,6 @@ void state_pointsprite_w(struct wined3d_context *context,
 void state_pointsprite(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 
-BOOL getDepthStencilBits(const struct wined3d_format *format,
-        BYTE *depthSize, BYTE *stencilSize) DECLSPEC_HIDDEN;
 GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type) DECLSPEC_HIDDEN;
 
 /* Math utils */

@@ -4291,14 +4291,7 @@ static BOOL wined3d_check_pixel_format_color(const struct wined3d_gl_info *gl_in
 static BOOL wined3d_check_pixel_format_depth(const struct wined3d_gl_info *gl_info,
         const struct wined3d_pixel_format *cfg, const struct wined3d_format *format)
 {
-    BYTE depthSize, stencilSize;
     BOOL lockable = FALSE;
-
-    if (!getDepthStencilBits(format, &depthSize, &stencilSize))
-    {
-        ERR("Unable to check compatibility for format %s.\n", debug_d3dformat(format->id));
-        return FALSE;
-    }
 
     /* Float formats need FBOs. If FBOs are used this function isn't called */
     if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
@@ -4307,15 +4300,18 @@ static BOOL wined3d_check_pixel_format_depth(const struct wined3d_gl_info *gl_in
     if ((format->id == WINED3DFMT_D16_LOCKABLE) || (format->id == WINED3DFMT_D32_FLOAT))
         lockable = TRUE;
 
-    /* On some modern cards like the Geforce8/9 GLX doesn't offer some dephthstencil formats which D3D9 reports.
-     * We can safely report 'compatible' formats (e.g. D24 can be used for D16) as long as we aren't dealing with
-     * a lockable format. This also helps D3D <= 7 as they expect D16 which isn't offered without this on Geforce8 cards. */
-    if(!(cfg->depthSize == depthSize || (!lockable && cfg->depthSize > depthSize)))
+    /* On some modern cards like the Geforce8/9, GLX doesn't offer some
+     * dephth/stencil formats which D3D9 reports. We can safely report
+     * "compatible" formats (e.g. D24 can be used for D16) as long as we
+     * aren't dealing with a lockable format. This also helps D3D <= 7 as they
+     * expect D16 which isn't offered without this on Geforce8 cards. */
+    if (!(cfg->depthSize == format->depth_size || (!lockable && cfg->depthSize > format->depth_size)))
         return FALSE;
 
-    /* Some cards like Intel i915 ones only offer D24S8 but lots of games also need a format without stencil, so
-     * allow more stencil bits than requested. */
-    if(cfg->stencilSize < stencilSize)
+    /* Some cards like Intel i915 ones only offer D24S8 but lots of games also
+     * need a format without stencil, so allow more stencil bits than
+     * requested. */
+    if (cfg->stencilSize < format->stencil_size)
         return FALSE;
 
     return TRUE;
