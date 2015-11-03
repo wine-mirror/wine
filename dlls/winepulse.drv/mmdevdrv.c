@@ -2207,8 +2207,12 @@ static HRESULT WINAPI AudioClock_GetFrequency(IAudioClock *iface, UINT64 *freq)
 
     pthread_mutex_lock(&pulse_lock);
     hr = pulse_stream_valid(This);
-    if (SUCCEEDED(hr))
-        *freq = This->ss.rate * pa_frame_size(&This->ss);
+    if (SUCCEEDED(hr)) {
+        if (This->share == AUDCLNT_SHAREMODE_SHARED)
+            *freq = This->ss.rate * pa_frame_size(&This->ss);
+        else
+            *freq = This->ss.rate;
+    }
     pthread_mutex_unlock(&pulse_lock);
     return hr;
 }
@@ -2232,6 +2236,9 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
     }
 
     *pos = This->clock_written;
+
+    if (This->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
+        *pos /= pa_frame_size(&This->ss);
 
     /* Make time never go backwards */
     if (*pos < This->clock_lastpos)
@@ -2301,7 +2308,7 @@ static HRESULT WINAPI AudioClock2_GetDevicePosition(IAudioClock2 *iface,
 {
     ACImpl *This = impl_from_IAudioClock2(iface);
     HRESULT hr = AudioClock_GetPosition(&This->IAudioClock_iface, pos, qpctime);
-    if (SUCCEEDED(hr))
+    if (SUCCEEDED(hr) && This->share == AUDCLNT_SHAREMODE_SHARED)
         *pos /= pa_frame_size(&This->ss);
     return hr;
 }
