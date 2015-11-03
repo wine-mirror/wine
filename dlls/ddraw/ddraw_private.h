@@ -185,9 +185,6 @@ struct ddraw_surface
     /* Surface description, for GetAttachedSurface */
     DDSURFACEDESC2          surface_desc;
 
-    /* Misc things */
-    UINT                    mipmap_level;
-
     /* Clipper objects */
     struct ddraw_clipper *clipper;
     struct ddraw_palette *palette;

@@ -777,7 +777,6 @@ static HRESULT WINAPI ddraw_surface7_GetAttachedSurface(IDirectDrawSurface7 *ifa
              */
 
             TRACE("(%p): Returning surface %p\n", This, surf);
-            TRACE("(%p): mipmapcount=%d\n", This, surf->mipmap_level);
             *Surface = &surf->IDirectDrawSurface7_iface;
             ddraw_surface7_AddRef(*Surface);
             wined3d_mutex_unlock();
@@ -5108,8 +5107,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
         struct ddraw_palette *dst_pal, *src_pal;
         DDSURFACEDESC *src_desc, *dst_desc;
 
-        TRACE("Copying surface %p to surface %p (mipmap level %d).\n",
-                src_surface, dst_surface, src_surface->mipmap_level);
+        TRACE("Copying surface %p to surface %p.\n", src_surface, dst_surface);
 
         /* Suppress the ALLOCONLOAD flag */
         dst_surface->surface_desc.ddsCaps.dwCaps &= ~DDSCAPS_ALLOCONLOAD;
