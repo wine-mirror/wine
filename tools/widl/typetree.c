@@ -300,7 +300,12 @@ type_t *type_new_enum(const char *name, struct namespace *namespace, int defined
 type_t *type_new_struct(char *name, struct namespace *namespace, int defined, var_list_t *fields)
 {
     type_t *tag_type = name ? find_type(name, namespace, tsSTRUCT) : NULL;
-    type_t *t = make_type(TYPE_STRUCT);
+    type_t *t;
+
+    /* avoid creating duplicate typelib type entries */
+    if (tag_type && do_typelib) return tag_type;
+
+    t = make_type(TYPE_STRUCT);
     t->name = name;
     t->namespace = namespace;
 
