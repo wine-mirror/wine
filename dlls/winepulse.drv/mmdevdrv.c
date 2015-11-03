@@ -753,6 +753,12 @@ static HRESULT pulse_stream_connect(ACImpl *This, UINT32 period_bytes) {
     ret = InterlockedIncrement(&number);
     sprintf(buffer, "audio stream #%i", ret);
     This->stream = pa_stream_new(pulse_ctx, buffer, &This->ss, &This->map);
+
+    if (!This->stream) {
+        WARN("pa_stream_new returned error %i\n", pa_context_errno(pulse_ctx));
+        return AUDCLNT_E_ENDPOINT_CREATE_FAILED;
+    }
+
     pa_stream_set_state_callback(This->stream, pulse_stream_state, This);
     pa_stream_set_buffer_attr_callback(This->stream, pulse_attr_update, This);
     pa_stream_set_moved_callback(This->stream, pulse_attr_update, This);
