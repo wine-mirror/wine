@@ -1893,6 +1893,10 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
   {
     if (!type->name)
       type->name = gen_name();
+
+    /* replace existing attributes when generating a typelib */
+    if (do_typelib)
+        type->attrs = attrs;
   }
 
   LIST_FOR_EACH_ENTRY( decl, decls, const declarator_t, entry )

@@ -4297,7 +4297,7 @@ static const type_info info[] = {
 },
 {
   "cc",
-  "{00000000-0000-0000-0000-000000000000}",
+  "{016fe2ec-b2c8-45f8-b23b-39e53a75396c}",
   /*kind*/ TKIND_ENUM, /*flags*/ 0, /*align*/ 4, /*size*/ 4,
   /*#vtbl*/ 0, /*#func*/ 0
 },
