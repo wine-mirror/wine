@@ -123,7 +123,6 @@ static statement_t *make_statement_importlib(const char *str);
 static statement_t *make_statement_module(type_t *type);
 static statement_t *make_statement_typedef(var_list_t *names);
 static statement_t *make_statement_import(const char *str);
-static statement_t *make_statement_typedef(var_list_t *names);
 static statement_list_t *append_statement(statement_list_t *list, statement_t *stmt);
 static statement_list_t *append_statements(statement_list_t *, statement_list_t *);
 static attr_list_t *append_attribs(attr_list_t *, attr_list_t *);
@@ -1881,22 +1880,20 @@ static type_t *reg_typedefs(decl_spec_t *decl_spec, declarator_list_t *decls, at
   const declarator_t *decl;
   type_t *type = decl_spec->type;
 
+  if (is_attr(attrs, ATTR_UUID) && !is_attr(attrs, ATTR_PUBLIC))
+    attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
+
   /* We must generate names for tagless enum, struct or union.
      Typedef-ing a tagless enum, struct or union means we want the typedef
      to be included in a library hence the public attribute.  */
-  if ((type_get_type_detect_alias(type) == TYPE_ENUM ||
-       type_get_type_detect_alias(type) == TYPE_STRUCT ||
-       type_get_type_detect_alias(type) == TYPE_UNION ||
-       type_get_type_detect_alias(type) == TYPE_ENCAPSULATED_UNION) &&
-      !type->name)
+  if (type_get_type_detect_alias(type) == TYPE_ENUM ||
+      type_get_type_detect_alias(type) == TYPE_STRUCT ||
+      type_get_type_detect_alias(type) == TYPE_UNION ||
+      type_get_type_detect_alias(type) == TYPE_ENCAPSULATED_UNION)
   {
-    if (! is_attr(attrs, ATTR_PUBLIC) && ! is_attr (attrs, ATTR_HIDDEN))
-      attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
-    type->name = gen_name();
+    if (!type->name)
+      type->name = gen_name();
   }
-  else if (is_attr(attrs, ATTR_UUID) && !is_attr(attrs, ATTR_PUBLIC)
-	   && !is_attr(attrs, ATTR_HIDDEN))
-    attrs = append_attr( attrs, make_attr(ATTR_PUBLIC) );
 
   LIST_FOR_EACH_ENTRY( decl, decls, const declarator_t, entry )
   {
