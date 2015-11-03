@@ -403,9 +403,10 @@ typedef void (*fn_cvid_v4)(unsigned char *frm, unsigned char *limit,
  * out_height - the height of the output frame
  * bit_per_pixel - the number of bits per pixel allocated to the output
  *   frame (only 24 or 32 bpp are supported)
+ * inverted - if true the output frame is written top-down
  */
 static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
-           unsigned char *output, unsigned int out_width, unsigned int out_height, int bit_per_pixel)
+           unsigned char *output, unsigned int out_width, unsigned int out_height, int bit_per_pixel, BOOL inverted)
 {
     cvid_codebook *v4_codebook, *v1_codebook, *codebook = NULL;
     unsigned long x, y, y_bottom, cnum, strip_id, chunk_id,
@@ -424,13 +425,10 @@ static void decode_cinepak(cinepak_info *cvinfo, unsigned char *buf, int size,
       unsigned short height;
       unsigned short strips;
     } frame;
-    BOOL inverted;
 
     y = 0;
     y_bottom = 0;
     in_buffer = buf;
-    inverted = (int) out_height < 0;
-    if (inverted) out_height = -out_height;
 
     frame.flags = get_byte();
     frame.length = get_byte() << 16;
@@ -893,6 +891,7 @@ static LRESULT ICCVID_DecompressBegin( ICCVID_Info *info, LPBITMAPINFO in, LPBIT
 static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD size )
 {
     LONG width, height;
+    BOOL inverted;
 
     TRACE("ICM_DECOMPRESS %p %p %d\n", info, icd, size);
 
@@ -906,10 +905,10 @@ static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD si
 
     width  = icd->lpbiInput->biWidth;
     height = icd->lpbiInput->biHeight;
-    if (-icd->lpbiOutput->biHeight == height) height = -height;
+    inverted = -icd->lpbiOutput->biHeight == height;
 
     decode_cinepak(info->cvinfo, icd->lpInput, icd->lpbiInput->biSizeImage,
-                   icd->lpOutput, width, height, info->bits_per_pixel);
+                   icd->lpOutput, width, height, info->bits_per_pixel, inverted);
 
     return ICERR_OK;
 }
@@ -917,6 +916,7 @@ static LRESULT ICCVID_Decompress( ICCVID_Info *info, ICDECOMPRESS *icd, DWORD si
 static LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWORD size )
 {
     LONG width, height;
+    BOOL inverted;
 
     TRACE("ICM_DECOMPRESSEX %p %p %d\n", info, icd, size);
 
@@ -932,10 +932,10 @@ static LRESULT ICCVID_DecompressEx( ICCVID_Info *info, ICDECOMPRESSEX *icd, DWOR
 
     width  = icd->lpbiSrc->biWidth;
     height = icd->lpbiSrc->biHeight;
-    if (-icd->lpbiDst->biHeight == height) height = -height;
+    inverted = -icd->lpbiDst->biHeight == height;
 
     decode_cinepak(info->cvinfo, icd->lpSrc, icd->lpbiSrc->biSizeImage,
-                   icd->lpDst, width, height, info->bits_per_pixel);
+                   icd->lpDst, width, height, info->bits_per_pixel, inverted);
 
     return ICERR_OK;
 }
