@@ -434,7 +434,7 @@ static HRESULT pulse_connect(void)
     {
         if (!(pulse_thread = CreateThread(NULL, 0, pulse_mainloop_thread, NULL, 0, NULL)))
         {
-            ERR("Failed to create mainloop thread.");
+            ERR("Failed to create mainloop thread.\n");
             return E_FAIL;
         }
         SetThreadPriority(pulse_thread, THREAD_PRIORITY_TIME_CRITICAL);
