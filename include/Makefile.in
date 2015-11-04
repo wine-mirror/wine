@@ -1,25 +1,35 @@
 IDL_SRCS = \
+	access.idl \
 	activaut.idl \
 	activdbg.idl \
 	activscp.idl \
 	amstream.idl \
 	amvideo.idl \
 	asptlb.idl \
+	asynot.idl \
+	asysta.idl \
 	atliface.idl \
 	audioclient.idl \
 	audiopolicy.idl \
 	austream.idl \
+	axcore.idl \
+	axextend.idl \
 	bdaiface.idl \
+	binres.idl \
 	bits.idl \
 	bits1_5.idl \
 	bits2_0.idl \
 	bits2_5.idl \
 	bits3_0.idl \
+	chprst.idl \
+	cmdbas.idl \
+	cmdtxt.idl \
 	comcat.idl \
 	commoncontrols.idl \
 	control.idl \
 	cor.idl \
 	cordebug.idl \
+	crtrow.idl \
 	ctfutb.idl \
 	ctxtcall.idl \
 	d2d1.idl \
@@ -30,7 +40,14 @@ IDL_SRCS = \
 	d3d11sdklayers.idl \
 	d3dcommon.idl \
 	d3dx10core.idl \
+	dbccmd.idl \
+	dbcses.idl \
+	dbdsad.idl \
+	dbinit.idl \
+	dbprop.idl \
+	dbs.idl \
 	ddstream.idl \
+	devenum.idl \
 	devicetopology.idl \
 	dimm.idl \
 	dispex.idl \
@@ -43,7 +60,9 @@ IDL_SRCS = \
 	dxgi.idl \
 	dxgi1_2.idl \
 	dxva2api.idl \
+	dyngraph.idl \
 	endpointvolume.idl \
+	errrec.idl \
 	exdisp.idl \
 	fusion.idl \
 	gameux.idl \
@@ -96,6 +115,7 @@ IDL_SRCS = \
 	oleacc.idl \
 	oledb.idl \
 	oleidl.idl \
+	opnrst.idl \
 	optary.idl \
 	perhist.idl \
 	propidl.idl \
@@ -103,12 +123,22 @@ IDL_SRCS = \
 	pstore.idl \
 	qedit.idl \
 	richole.idl \
+	row.idl \
+	rowchg.idl \
+	rowpos.idl \
+	rowpsc.idl \
+	rstbas.idl \
+	rstinf.idl \
+	rstloc.idl \
+	rstnot.idl \
 	sensevts.idl \
 	servprov.idl \
+	sesprp.idl \
 	shdeprecated.idl \
 	shldisp.idl \
 	shobjidl.idl \
 	shtypes.idl \
+	srcrst.idl \
 	stdole2.idl \
 	strmif.idl \
 	structuredquerycondition.idl \
@@ -125,6 +155,7 @@ IDL_SRCS = \
 	urlhist.idl \
 	urlmon.idl \
 	vmr9.idl \
+	vmrender.idl \
 	vss.idl \
 	wbemcli.idl \
 	wbemdisp.idl \
@@ -148,6 +179,8 @@ IDL_SRCS = \
 	xapo.idl \
 	xaudio2.idl \
 	xaudio2fx.idl \
+	xmldom.idl \
+	xmldso.idl \
 	xmllite.idl
 
 HEADER_SRCS = \
@@ -639,55 +672,3 @@ HEADER_SRCS = \
 
 XTEMPLATE_SRCS = \
 	rmxftmpl.x
-
-SRCDIR_INCLUDES = \
-	access.idl \
-	asynot.idl \
-	asysta.idl \
-	axcore.idl \
-	axextend.idl \
-	binres.idl \
-	chprst.idl \
-	cmdbas.idl \
-	cmdtxt.idl \
-	crtrow.idl \
-	dbccmd.idl \
-	dbcses.idl \
-	dbdsad.idl \
-	dbinit.idl \
-	dbprop.idl \
-	dbs.idl \
-	devenum.idl \
-	dyngraph.idl \
-	errrec.idl \
-	opnrst.idl \
-	row.idl \
-	rowchg.idl \
-	rowpos.idl \
-	rowpsc.idl \
-	rstbas.idl \
-	rstinf.idl \
-	rstloc.idl \
-	rstnot.idl \
-	sesprp.idl \
-	srcrst.idl \
-	vmrender.idl \
-	xmldom.idl \
-	xmldso.idl
-
-install install-dev::
-	for f in $(SRCDIR_INCLUDES); do case $$f in \
-	  wine/*)   $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
-	  msvcrt/*) $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/$$f ;; \
-	  *)        $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/windows/$$f ;; \
-	esac; done
-
-# Don't just do a rm -rf on $(includedir) -- don't want to wipe out
-# anything extra the user may have put there.
-uninstall::
-	for f in $(SRCDIR_INCLUDES); do case $$f in \
-	  wine/*)   $(RM) $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
-	  msvcrt/*) $(RM) $(DESTDIR)$(includedir)/$$f ;; \
-	  *)        $(RM) $(DESTDIR)$(includedir)/windows/$$f ;; \
-	esac; done
-	-rmdir $(DESTDIR)$(includedir)/windows/ddk $(DESTDIR)$(includedir)/windows $(DESTDIR)$(includedir)/msvcrt/sys $(DESTDIR)$(includedir)/msvcrt

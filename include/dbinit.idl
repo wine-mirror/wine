@@ -16,6 +16,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep install
+#endif
+
 [
     object,
     uuid(0c733a8b-2a1c-11ce-ade5-00aa0044773d),
