@@ -18,7 +18,10 @@
  *
  */
 
+#if 0
+#pragma makedep install
 #pragma makedep typelib
+#endif
 
 #include <olectl.h>
 

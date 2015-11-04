@@ -1702,6 +1702,10 @@ static void add_generated_sources( struct makefile *make )
         {
             add_generated_source( make, replace_extension( source->name, ".idl", "_r.res" ), NULL );
         }
+        if (!source->file->flags && strendswith( source->name, ".idl" ))
+        {
+            add_generated_source( make, replace_extension( source->name, ".idl", ".h" ), NULL );
+        }
         if (strendswith( source->name, ".x" ))
         {
             add_generated_source( make, replace_extension( source->name, ".x", ".h" ), NULL );
@@ -2035,8 +2039,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             struct strarray targets = empty_strarray;
             char *dest;
 
-            if (!source->file->flags || find_include_file( make, strmake( "%s.h", obj )))
-                source->file->flags |= FLAG_IDL_HEADER;
+            if (!source->file->flags) source->file->flags |= FLAG_IDL_HEADER | FLAG_INSTALL;
+            if (find_include_file( make, strmake( "%s.h", obj ))) source->file->flags |= FLAG_IDL_HEADER;
 
             for (i = 0; i < sizeof(idl_outputs) / sizeof(idl_outputs[0]); i++)
             {
@@ -2046,6 +2050,19 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 strarray_add( &targets, dest );
             }
             if (source->file->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
+            if (source->file->flags & FLAG_INSTALL)
+            {
+                strarray_add( &make->install_dev_rules, xstrdup( source->filename ));
+                strarray_add( &make->install_dev_rules,
+                              strmake( "D$(includedir)/%s.idl", get_include_install_path( obj ) ));
+                if (source->file->flags & FLAG_IDL_HEADER)
+                {
+                    strarray_add( &make->install_dev_rules, strmake( "%s.h", obj ));
+                    strarray_add( &make->install_dev_rules,
+                                  strmake( "d$(includedir)/%s.h", get_include_install_path( obj ) ));
+                }
+            }
+            if (!targets.count) continue;
             output_filenames_obj_dir( make, targets );
             output( ": %s\n", tools_path( make, "widl" ));
             output( "\t%s -o $@", tools_path( make, "widl" ) );

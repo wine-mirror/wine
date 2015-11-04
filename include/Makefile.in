@@ -1,7 +1,4 @@
-PRIVATE_IDL_H_SRCS = \
-	wine/winedxgi.idl
-
-PUBLIC_IDL_H_SRCS = \
+IDL_SRCS = \
 	activaut.idl \
 	activdbg.idl \
 	activscp.idl \
@@ -112,6 +109,7 @@ PUBLIC_IDL_H_SRCS = \
 	shldisp.idl \
 	shobjidl.idl \
 	shtypes.idl \
+	stdole2.idl \
 	strmif.idl \
 	structuredquerycondition.idl \
 	taskschd.idl \
@@ -138,6 +136,7 @@ PUBLIC_IDL_H_SRCS = \
 	windows.foundation.idl \
 	wine/itss.idl \
 	wine/svcctl.idl \
+	wine/winedxgi.idl \
 	winsxs.idl \
 	wmiutils.idl \
 	wmp.idl \
@@ -150,9 +149,6 @@ PUBLIC_IDL_H_SRCS = \
 	xaudio2.idl \
 	xaudio2fx.idl \
 	xmllite.idl
-
-IDL_TLB_SRCS = \
-	stdole2.idl
 
 HEADER_SRCS = \
 	accctrl.h \
@@ -645,8 +641,6 @@ XTEMPLATE_SRCS = \
 	rmxftmpl.x
 
 SRCDIR_INCLUDES = \
-	$(IDL_TLB_SRCS) \
-	$(PUBLIC_IDL_H_SRCS) \
 	access.idl \
 	asynot.idl \
 	asysta.idl \
@@ -681,31 +675,17 @@ SRCDIR_INCLUDES = \
 	xmldom.idl \
 	xmldso.idl
 
-IDL_H_SRCS = $(PUBLIC_IDL_H_SRCS) $(PRIVATE_IDL_H_SRCS)
-IDL_SRCS = $(IDL_H_SRCS) $(IDL_TLB_SRCS)
-
-OBJDIR_INCLUDES = $(PUBLIC_IDL_H_SRCS:.idl=.h)
-
-all: $(IDL_H_SRCS:.idl=.h) $(IDL_TLB_SRCS:.idl=.tlb)
-
-.PHONY: install install-dev uninstall
-
-install install-dev:: $(OBJDIR_INCLUDES)
+install install-dev::
 	for f in $(SRCDIR_INCLUDES); do case $$f in \
 	  wine/*)   $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
 	  msvcrt/*) $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/$$f ;; \
 	  *)        $(INSTALL_DATA) $(srcdir)/$$f $(DESTDIR)$(includedir)/windows/$$f ;; \
 	esac; done
-	for f in $(OBJDIR_INCLUDES); do case $$f in \
-	  wine/*)   $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
-	  msvcrt/*) $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/$$f ;; \
-	  *)        $(INSTALL_DATA) $$f $(DESTDIR)$(includedir)/windows/$$f ;; \
-	esac; done
 
 # Don't just do a rm -rf on $(includedir) -- don't want to wipe out
 # anything extra the user may have put there.
 uninstall::
-	for f in $(SRCDIR_INCLUDES) $(OBJDIR_INCLUDES); do case $$f in \
+	for f in $(SRCDIR_INCLUDES); do case $$f in \
 	  wine/*)   $(RM) $(DESTDIR)$(includedir)/`expr $$f : 'wine/\(.*\)'` ;; \
 	  msvcrt/*) $(RM) $(DESTDIR)$(includedir)/$$f ;; \
 	  *)        $(RM) $(DESTDIR)$(includedir)/windows/$$f ;; \

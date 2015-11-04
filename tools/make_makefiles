@@ -373,16 +373,15 @@ sub assign_sources_to_makefiles(@)
             next if ($name =~ /\.in$/);
             if ($name =~ /^wine\// && !$exported_wine_headers{$name})
             {
-                if ($private_idl_headers{$name}) { push @{${$make}{"=PRIVATE_IDL_H_SRCS"}}, $name; }
+                if ($private_idl_headers{$name}) { push @{${$make}{"=IDL_SRCS"}}, $name; }
                 next;
             }
-            if ($name =~ /stdole2\.idl$/) { push @{${$make}{"=IDL_TLB_SRCS"}}, $name; }
-            elsif ($private_idl_headers{$name}) { push @{${$make}{"=SRCDIR_INCLUDES"}}, $name; }
+            if ($private_idl_headers{$name}) { push @{${$make}{"=SRCDIR_INCLUDES"}}, $name; }
             elsif ($name =~ /\.h$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
             elsif ($name =~ /\.x$/) { push @{${$make}{"=XTEMPLATE_SRCS"}}, $name; }
             elsif ($name =~ /\.rh$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
             elsif ($name =~ /\.inl$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
-            elsif ($name =~ /\.idl$/) { push @{${$make}{"=PUBLIC_IDL_H_SRCS"}}, $name; }
+            elsif ($name =~ /\.idl$/) { push @{${$make}{"=IDL_SRCS"}}, $name; }
             else { die "unknown file $name in include dir"; }
         }
         else
@@ -431,12 +430,6 @@ sub assign_sources_to_makefiles(@)
             }
         }
     }
-
-    # add extra variables to include source list
-    my $make = $makefiles{"include/Makefile"};
-    unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(PUBLIC_IDL_H_SRCS)";
-    unshift @{${$make}{"=SRCDIR_INCLUDES"}}, "\$(IDL_TLB_SRCS)";
-    unshift @{${$make}{"=IDL_SRCS"}}, "\$(IDL_H_SRCS) \$(IDL_TLB_SRCS)";
 
     # preserve shared source files from the parent makefile
     foreach my $file (@makefiles)
@@ -556,9 +549,6 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "IMPLIB_SRCS" );
         replace_makefile_variable( $file, "MANPAGES" );
         next unless $file eq "include/Makefile";
-        replace_makefile_variable( $file, "PRIVATE_IDL_H_SRCS" );
-        replace_makefile_variable( $file, "PUBLIC_IDL_H_SRCS" );
-        replace_makefile_variable( $file, "IDL_TLB_SRCS" );
         replace_makefile_variable( $file, "SRCDIR_INCLUDES" );
     }
 
