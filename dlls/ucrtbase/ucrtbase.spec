@@ -373,7 +373,7 @@
 @ cdecl _get_pgmptr(ptr)
 @ cdecl _get_printf_count_output() MSVCRT__get_printf_count_output
 @ stub _get_purecall_handler
-@ stub _get_stream_buffer_pointers
+@ cdecl _get_stream_buffer_pointers(ptr ptr ptr ptr) MSVCRT__get_stream_buffer_pointers
 @ cdecl _get_terminate() MSVCRT__get_terminate
 @ stub _get_thread_local_invalid_parameter_handler
 @ cdecl _get_timezone(ptr)

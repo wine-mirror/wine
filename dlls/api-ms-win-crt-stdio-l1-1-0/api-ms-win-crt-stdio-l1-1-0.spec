@@ -55,7 +55,7 @@
 @ cdecl _get_fmode(ptr) ucrtbase._get_fmode
 @ cdecl _get_osfhandle(long) ucrtbase._get_osfhandle
 @ cdecl _get_printf_count_output() ucrtbase._get_printf_count_output
-@ stub _get_stream_buffer_pointers
+@ cdecl _get_stream_buffer_pointers(ptr ptr ptr ptr) ucrtbase._get_stream_buffer_pointers
 @ cdecl _getc_nolock(ptr) ucrtbase._getc_nolock
 @ cdecl _getcwd(str long) ucrtbase._getcwd
 @ cdecl _getdcwd(long str long) ucrtbase._getdcwd

@@ -5303,3 +5303,18 @@ int CDECL MSVCRT__setmaxstdio(int newmax)
     MSVCRT_max_streams = newmax;
     return MSVCRT_max_streams;
 }
+
+/*********************************************************************
+ *		_get_stream_buffer_pointers (UCRTBASE.@)
+ */
+int CDECL MSVCRT__get_stream_buffer_pointers(MSVCRT_FILE *file, char*** base,
+                                             char*** ptr, int** count)
+{
+    if (base)
+        *base = &file->_base;
+    if (ptr)
+        *ptr = &file->_ptr;
+    if (count)
+        *count = &file->_cnt;
+    return 0;
+}
