@@ -518,6 +518,10 @@ struct wined3d_resource *wined3d_resource_from_d3d11_resource(ID3D11Resource *re
             return wined3d_texture_get_resource(unsafe_impl_from_ID3D11Texture2D(
                     (ID3D11Texture2D *)resource)->wined3d_texture);
 
+        case D3D11_RESOURCE_DIMENSION_TEXTURE3D:
+            return wined3d_texture_get_resource(unsafe_impl_from_ID3D11Texture3D(
+                    (ID3D11Texture3D *)resource)->wined3d_texture);
+
         default:
             FIXME("Unhandled resource dimension %#x.\n", dimension);
             return NULL;

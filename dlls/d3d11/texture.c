@@ -887,6 +887,14 @@ static const struct ID3D10Texture3DVtbl d3d10_texture3d_vtbl =
     d3d10_texture3d_GetDesc,
 };
 
+struct d3d_texture3d *unsafe_impl_from_ID3D11Texture3D(ID3D11Texture3D *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_texture3d_vtbl);
+    return impl_from_ID3D11Texture3D(iface);
+}
+
 static const struct wined3d_parent_ops d3d_texture3d_wined3d_parent_ops =
 {
     d3d_texture3d_wined3d_object_released,
