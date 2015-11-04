@@ -2443,6 +2443,148 @@ static void test_private_data(void)
     ok(!refcount, "Test object has %u references left.\n", refcount);
 }
 
+static void test_resource_map(void)
+{
+    D3D11_MAPPED_SUBRESOURCE mapped_subresource;
+    D3D11_TEXTURE3D_DESC texture3d_desc;
+    D3D11_TEXTURE2D_DESC texture2d_desc;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    ID3D11Texture3D *texture3d;
+    ID3D11Texture2D *texture2d;
+    ID3D11Buffer *buffer;
+    ID3D11Device *device;
+    ULONG refcount;
+    HRESULT hr;
+    DWORD data;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    buffer_desc.ByteWidth = 1024;
+    buffer_desc.Usage = D3D11_USAGE_STAGING;
+    buffer_desc.BindFlags = 0;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+    buffer_desc.MiscFlags = 0;
+    buffer_desc.StructureByteStride = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create a buffer, hr %#x.\n", hr);
+
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffer, 1, D3D11_MAP_READ, 0, &mapped_subresource);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    memset(&mapped_subresource, 0, sizeof(mapped_subresource));
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
+    ok(SUCCEEDED(hr), "Failed to map buffer, hr %#x.\n", hr);
+    ok(mapped_subresource.RowPitch == 1024, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 1024, "Got unexpected depth pitch %u.\n", mapped_subresource.DepthPitch);
+    *((DWORD *)mapped_subresource.pData) = 0xdeadbeef;
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)buffer, 0);
+
+    memset(&mapped_subresource, 0, sizeof(mapped_subresource));
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ, 0, &mapped_subresource);
+    ok(SUCCEEDED(hr), "Failed to map buffer, hr %#x.\n", hr);
+    ok(mapped_subresource.RowPitch == 1024, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 1024, "Got unexpected depth pitch %u.\n", mapped_subresource.DepthPitch);
+    data = *((DWORD *)mapped_subresource.pData);
+    ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)buffer, 0);
+
+    refcount = ID3D11Buffer_Release(buffer);
+    ok(!refcount, "Buffer has %u references left.\n", refcount);
+
+    texture2d_desc.Width = 512;
+    texture2d_desc.Height = 512;
+    texture2d_desc.MipLevels = 1;
+    texture2d_desc.ArraySize = 1;
+    texture2d_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture2d_desc.SampleDesc.Count = 1;
+    texture2d_desc.SampleDesc.Quality = 0;
+    texture2d_desc.Usage = D3D11_USAGE_STAGING;
+    texture2d_desc.BindFlags = 0;
+    texture2d_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+    texture2d_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
+    ok(SUCCEEDED(hr), "Failed to create 2d texture, hr %#x.\n", hr);
+
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture2d, 1, D3D11_MAP_READ, 0, &mapped_subresource);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    memset(&mapped_subresource, 0, sizeof(mapped_subresource));
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture2d, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
+    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    ok(mapped_subresource.RowPitch == 4 * 512, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 4 * 512 * 512, "Got unexpected depth pitch %u.\n",
+            mapped_subresource.DepthPitch);
+    *((DWORD *)mapped_subresource.pData) = 0xdeadbeef;
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)texture2d, 0);
+
+    memset(&mapped_subresource, 0, sizeof(mapped_subresource));
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture2d, 0, D3D11_MAP_READ, 0, &mapped_subresource);
+    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    ok(mapped_subresource.RowPitch == 4 * 512, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 4 * 512 * 512, "Got unexpected depth pitch %u.\n",
+            mapped_subresource.DepthPitch);
+    data = *((DWORD *)mapped_subresource.pData);
+    ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)texture2d, 0);
+
+    refcount = ID3D11Texture2D_Release(texture2d);
+    ok(!refcount, "2D texture has %u references left.\n", refcount);
+
+    texture3d_desc.Width = 64;
+    texture3d_desc.Height = 64;
+    texture3d_desc.Depth = 64;
+    texture3d_desc.MipLevels = 1;
+    texture3d_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    texture3d_desc.Usage = D3D11_USAGE_STAGING;
+    texture3d_desc.BindFlags = 0;
+    texture3d_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+    texture3d_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture3D(device, &texture3d_desc, NULL, &texture3d);
+    ok(SUCCEEDED(hr), "Failed to create 3d texture, hr %#x.\n", hr);
+
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture3d, 1, D3D11_MAP_READ, 0, &mapped_subresource);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    memset(&mapped_subresource, 0, sizeof(mapped_subresource));
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture3d, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
+    todo_wine ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    if (FAILED(hr)) goto done;
+    ok(mapped_subresource.RowPitch == 4 * 64, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 4 * 64 * 64, "Got unexpected depth pitch %u.\n",
+            mapped_subresource.DepthPitch);
+    *((DWORD *)mapped_subresource.pData) = 0xdeadbeef;
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)texture3d, 0);
+
+    memset(&mapped_subresource, 0, sizeof(mapped_subresource));
+    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture3d, 0, D3D11_MAP_READ, 0, &mapped_subresource);
+    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
+    ok(mapped_subresource.RowPitch == 4 * 64, "Got unexpected row pitch %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 4 * 64 * 64, "Got unexpected depth pitch %u.\n",
+            mapped_subresource.DepthPitch);
+    data = *((DWORD *)mapped_subresource.pData);
+    ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)texture3d, 0);
+
+done:
+    refcount = ID3D11Texture3D_Release(texture3d);
+    ok(!refcount, "3D texture has %u references left.\n", refcount);
+
+    ID3D11DeviceContext_Release(context);
+
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -2465,4 +2607,5 @@ START_TEST(d3d11)
     test_create_predicate();
     test_device_removed_reason();
     test_private_data();
+    test_resource_map();
 }
