@@ -123,6 +123,7 @@ static NTSTATUS (WINAPI * pRtlQueryRegistryValues)(IN ULONG, IN PCWSTR,IN PRTL_Q
 static NTSTATUS (WINAPI * pRtlCheckRegistryKey)(IN ULONG,IN PWSTR);
 static NTSTATUS (WINAPI * pRtlOpenCurrentUser)(IN ACCESS_MASK, PHANDLE);
 static NTSTATUS (WINAPI * pNtOpenKey)(PHANDLE, IN ACCESS_MASK, IN POBJECT_ATTRIBUTES);
+static NTSTATUS (WINAPI * pNtOpenKeyEx)(PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, ULONG);
 static NTSTATUS (WINAPI * pNtClose)(IN HANDLE);
 static NTSTATUS (WINAPI * pNtFlushKey)(HANDLE);
 static NTSTATUS (WINAPI * pNtDeleteKey)(HANDLE);
@@ -195,6 +196,7 @@ static BOOL InitFunctionPtrs(void)
 
     /* optional functions */
     pNtQueryLicenseValue = (void *)GetProcAddress(hntdll, "NtQueryLicenseValue");
+    pNtOpenKeyEx = (void *)GetProcAddress(hntdll, "NtOpenKeyEx");
 
     return TRUE;
 }
@@ -351,6 +353,18 @@ static void test_NtOpenKey(void)
     attr.Length *= 2;
     status = pNtOpenKey(&key, am, &attr);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
+
+    if (!pNtOpenKeyEx)
+    {
+        win_skip("NtOpenKeyEx not available\n");
+        return;
+    }
+
+    InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+    status = pNtOpenKeyEx(&key, KEY_WRITE|KEY_READ, &attr, 0);
+    ok(status == STATUS_SUCCESS, "NtOpenKeyEx Failed: 0x%08x\n", status);
+
+    pNtClose(key);
 }
 
 static void test_NtCreateKey(void)

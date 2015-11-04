@@ -213,6 +213,7 @@
 @ stdcall NtOpenIoCompletion(ptr long ptr)
 @ stdcall NtOpenJobObject(ptr long ptr)
 @ stdcall NtOpenKey(ptr long ptr)
+@ stdcall NtOpenKeyEx(ptr long ptr long)
 @ stdcall NtOpenKeyedEvent(ptr long ptr)
 @ stdcall NtOpenMutant(ptr long ptr)
 @ stub NtOpenObjectAuditAlarm
@@ -1128,6 +1129,7 @@
 @ stdcall ZwOpenIoCompletion(ptr long ptr) NtOpenIoCompletion
 @ stdcall ZwOpenJobObject(ptr long ptr) NtOpenJobObject
 @ stdcall ZwOpenKey(ptr long ptr) NtOpenKey
+@ stdcall ZwOpenKeyEx(ptr long ptr long) NtOpenKeyEx
 @ stdcall ZwOpenKeyedEvent(ptr long ptr) NtOpenKeyedEvent
 @ stdcall ZwOpenMutant(ptr long ptr) NtOpenMutant
 @ stub ZwOpenObjectAuditAlarm

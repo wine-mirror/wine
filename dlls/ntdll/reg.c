@@ -106,14 +106,10 @@ NTSTATUS WINAPI RtlpNtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJEC
 }
 
 /******************************************************************************
- * NtOpenKey [NTDLL.@]
- * ZwOpenKey [NTDLL.@]
- *
- *   OUT	HANDLE			retkey (returns 0 when failure)
- *   IN		ACCESS_MASK		access
- *   IN		POBJECT_ATTRIBUTES 	attr
+ * NtOpenKeyEx [NTDLL.@]
+ * ZwOpenKeyEx [NTDLL.@]
  */
-NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+NTSTATUS WINAPI NtOpenKeyEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, ULONG options )
 {
     NTSTATUS ret;
     DWORD len;
@@ -123,6 +119,8 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
     len = attr->ObjectName->Length;
     TRACE( "(%p,%s,%x,%p)\n", attr->RootDirectory,
            debugstr_us(attr->ObjectName), access, retkey );
+    if (options)
+        FIXME("options %x not implemented\n", options);
 
     if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
@@ -138,6 +136,19 @@ NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTR
     SERVER_END_REQ;
     TRACE("<- %p\n", *retkey);
     return ret;
+}
+
+/******************************************************************************
+ * NtOpenKey [NTDLL.@]
+ * ZwOpenKey [NTDLL.@]
+ *
+ *   OUT	HANDLE			retkey (returns 0 when failure)
+ *   IN		ACCESS_MASK		access
+ *   IN		POBJECT_ATTRIBUTES 	attr
+ */
+NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+{
+    return NtOpenKeyEx( retkey, access, attr, 0 );
 }
 
 /******************************************************************************
