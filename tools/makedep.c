@@ -2104,7 +2104,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             if (source->file->flags & FLAG_IDL_PROXY) strarray_add( &dlldata_files, source->name );
             if (source->file->flags & FLAG_INSTALL)
             {
-                strarray_add( &make->install_dev_rules, xstrdup( source->filename ));
+                strarray_add( &make->install_dev_rules, xstrdup( source->name ));
                 strarray_add( &make->install_dev_rules,
                               strmake( "D$(includedir)/%s.idl", get_include_install_path( obj ) ));
                 if (source->file->flags & FLAG_IDL_HEADER)
