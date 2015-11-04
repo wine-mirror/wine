@@ -25,6 +25,8 @@
 #include "windef.h"
 #include "winbase.h"
 #include "winternl.h"
+#include "ddk/ntddk.h"
+#include "ddk/ntifs.h"
 #include "ddk/wdm.h"
 #include "wine/debug.h"
 
@@ -35,4 +37,9 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     TRACE( "(%p, %s)\n", driver, debugstr_w(path->Buffer) );
 
     return STATUS_SUCCESS;
+}
+
+void WINAPI FltInitializePushLock( EX_PUSH_LOCK *lock )
+{
+    FIXME( "(%p): stub\n", lock );
 }

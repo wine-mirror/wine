@@ -97,7 +97,7 @@
 @ stub FltGetVolumeProperties
 @ stub FltInitializeFileLock
 @ stub FltInitializeOplock
-@ stub FltInitializePushLock
+@ stdcall FltInitializePushLock(ptr)
 @ stub FltIs32bitProcess
 @ stub FltIsCallbackDataDirty
 @ stub FltIsDirectory

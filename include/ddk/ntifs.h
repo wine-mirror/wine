@@ -19,6 +19,8 @@
 #ifndef __NTIFS_H__
 #define __NTIFS_H__
 
+typedef struct _EX_PUSH_LOCK EX_PUSH_LOCK, *PEX_PUSH_LOCK;
+
 typedef struct _KQUEUE
 {
   DISPATCHER_HEADER Header;
