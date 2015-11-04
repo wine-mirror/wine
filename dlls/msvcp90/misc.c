@@ -25,6 +25,7 @@
 
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
 #include "wine/debug.h"
 WINE_DEFAULT_DEBUG_CHANNEL(msvcp);
 
@@ -527,6 +528,101 @@ critical_section* __cdecl _Mtx_getconcrtcs(_Mtx_t *mtx)
 {
     return &(*mtx)->cs;
 }
+
+static inline LONG interlocked_dec_if_nonzero( LONG *dest )
+{
+    LONG val, tmp;
+    for (val = *dest;; val = tmp)
+    {
+        if (!val || (tmp = InterlockedCompareExchange( dest, val - 1, val )) == val)
+            break;
+    }
+    return val;
+}
+
+#define CND_TIMEDOUT 2
+
+typedef struct
+{
+    CONDITION_VARIABLE cv;
+} *_Cnd_t;
+
+static HANDLE keyed_event;
+
+int __cdecl _Cnd_init(_Cnd_t *cnd)
+{
+    *cnd = MSVCRT_operator_new(sizeof(**cnd));
+    InitializeConditionVariable(&(*cnd)->cv);
+
+    if(!keyed_event) {
+        HANDLE event;
+
+        NtCreateKeyedEvent(&event, GENERIC_READ|GENERIC_WRITE, NULL, 0);
+        if(InterlockedCompareExchangePointer(&keyed_event, event, NULL) != NULL)
+            NtClose(event);
+    }
+
+    return 0;
+}
+
+int __cdecl _Cnd_wait(_Cnd_t *cnd, _Mtx_t *mtx)
+{
+    CONDITION_VARIABLE *cv = &(*cnd)->cv;
+
+    InterlockedExchangeAdd( (LONG *)&cv->Ptr, 1 );
+    _Mtx_unlock(mtx);
+
+    NtWaitForKeyedEvent(keyed_event, &cv->Ptr, FALSE, NULL);
+
+    _Mtx_lock(mtx);
+    return 0;
+}
+
+int __cdecl _Cnd_timedwait(_Cnd_t *cnd, _Mtx_t *mtx, const xtime *xt)
+{
+    CONDITION_VARIABLE *cv = &(*cnd)->cv;
+    LARGE_INTEGER timeout;
+    NTSTATUS status;
+
+    InterlockedExchangeAdd( (LONG *)&cv->Ptr, 1 );
+    _Mtx_unlock(mtx);
+
+    timeout.QuadPart = (ULONGLONG)_Xtime_diff_to_millis(xt) * -10000;
+    status = NtWaitForKeyedEvent(keyed_event, &cv->Ptr, FALSE, &timeout);
+    if (status)
+    {
+        if (!interlocked_dec_if_nonzero( (LONG *)&cv->Ptr ))
+            status = NtWaitForKeyedEvent( keyed_event, &cv->Ptr, FALSE, NULL );
+    }
+
+    _Mtx_lock(mtx);
+    return status ? CND_TIMEDOUT : 0;
+}
+
+int __cdecl _Cnd_broadcast(_Cnd_t *cnd)
+{
+    CONDITION_VARIABLE *cv = &(*cnd)->cv;
+    LONG val = InterlockedExchange( (LONG *)&cv->Ptr, 0 );
+    while (val-- > 0)
+        NtReleaseKeyedEvent( keyed_event, &cv->Ptr, FALSE, NULL );
+    return 0;
+}
+
+int __cdecl _Cnd_signal(_Cnd_t *cnd)
+{
+    CONDITION_VARIABLE *cv = &(*cnd)->cv;
+    if (interlocked_dec_if_nonzero( (LONG *)&cv->Ptr ))
+        NtReleaseKeyedEvent( keyed_event, &cv->Ptr, FALSE, NULL );
+    return 0;
+}
+
+void __cdecl _Cnd_destroy(_Cnd_t *cnd)
+{
+    if(cnd) {
+        _Cnd_broadcast(cnd);
+        MSVCRT_operator_delete(*cnd);
+    }
+}
 #endif
 
 #if _MSVCP_VER == 100
@@ -681,6 +777,14 @@ void init_misc(void *base)
 
 #if _MSVCP_VER == 100
     iostream_category_ctor(&iostream_category);
+#endif
+}
+
+void free_misc(void)
+{
+#if _MSVCP_VER >= 110
+    if(keyed_event)
+        NtClose(keyed_event);
 #endif
 }
 

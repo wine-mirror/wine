@@ -134,6 +134,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
             free_io();
             free_locale();
             free_lockit();
+            free_misc();
             break;
     }
 

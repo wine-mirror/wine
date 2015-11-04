@@ -3670,15 +3670,15 @@
 @ cdecl -arch=win64 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z(ptr ptr long) msvcp120.?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z
 @ cdecl _Call_once(ptr ptr) msvcp120._Call_once
 @ cdecl _Call_onceEx(ptr ptr ptr) msvcp120._Call_onceEx
-@ stub _Cnd_broadcast
-@ stub _Cnd_destroy
+@ cdecl _Cnd_broadcast(ptr) msvcp120._Cnd_broadcast
+@ cdecl _Cnd_destroy(ptr) msvcp120._Cnd_destroy
 @ stub _Cnd_do_broadcast_at_thread_exit
-@ stub _Cnd_init
+@ cdecl _Cnd_init(ptr) msvcp120._Cnd_init
 @ stub _Cnd_register_at_thread_exit
-@ stub _Cnd_signal
-@ stub _Cnd_timedwait
+@ cdecl _Cnd_signal(ptr) msvcp120._Cnd_signal
+@ cdecl _Cnd_timedwait(ptr ptr ptr) msvcp120._Cnd_timedwait
 @ stub _Cnd_unregister_at_thread_exit
-@ stub _Cnd_wait
+@ cdecl _Cnd_wait(ptr ptr) msvcp120._Cnd_wait
 @ stub _Cosh
 @ extern _Denorm msvcp120._Denorm
 @ stub _Dint

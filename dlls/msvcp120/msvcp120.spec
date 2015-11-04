@@ -3670,15 +3670,15 @@
 @ cdecl -arch=win64 ?xsputn@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAA_JPEB_W_J@Z(ptr ptr long) basic_streambuf_wchar_xsputn
 @ cdecl _Call_once(ptr ptr)
 @ cdecl _Call_onceEx(ptr ptr ptr)
-@ stub _Cnd_broadcast
-@ stub _Cnd_destroy
+@ cdecl _Cnd_broadcast(ptr)
+@ cdecl _Cnd_destroy(ptr)
 @ stub _Cnd_do_broadcast_at_thread_exit
-@ stub _Cnd_init
+@ cdecl _Cnd_init(ptr)
 @ stub _Cnd_register_at_thread_exit
-@ stub _Cnd_signal
-@ stub _Cnd_timedwait
+@ cdecl _Cnd_signal(ptr)
+@ cdecl _Cnd_timedwait(ptr ptr ptr)
 @ stub _Cnd_unregister_at_thread_exit
-@ stub _Cnd_wait
+@ cdecl _Cnd_wait(ptr ptr)
 @ stub _Cosh
 @ extern _Denorm
 @ stub _Dint

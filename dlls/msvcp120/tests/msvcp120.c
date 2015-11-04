@@ -137,7 +137,7 @@ typedef struct
     DWORD  id;
 } _Thrd_t;
 
-#define TIMEDELTA 150  /* 150 ms uncertainty allowed */
+#define TIMEDELTA 250  /* 250 ms uncertainty allowed */
 
 typedef int (__cdecl *_Thrd_start_t)(void*);
 
@@ -160,6 +160,24 @@ _Thrd_t __cdecl i386_Thrd_current(void)
     return r.thr;
 }
 #endif
+
+/* mtx */
+typedef void *_Mtx_t;
+static int (__cdecl *p__Mtx_init)(_Mtx_t*, int);
+static void (__cdecl *p__Mtx_destroy)(_Mtx_t*);
+static int (__cdecl *p__Mtx_lock)(_Mtx_t*);
+static int (__cdecl *p__Mtx_unlock)(_Mtx_t*);
+
+/* cnd */
+typedef void *_Cnd_t;
+
+static int (__cdecl *p__Cnd_init)(_Cnd_t*);
+static void (__cdecl *p__Cnd_destroy)(_Cnd_t*);
+static int (__cdecl *p__Cnd_wait)(_Cnd_t*, _Mtx_t*);
+static int (__cdecl *p__Cnd_timedwait)(_Cnd_t*, _Mtx_t*, const xtime*);
+static int (__cdecl *p__Cnd_broadcast)(_Cnd_t*);
+static int (__cdecl *p__Cnd_signal)(_Cnd_t*);
+
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -304,6 +322,28 @@ static BOOL init(void)
             "_Thrd_create");
     SET(p__Thrd_join,
             "_Thrd_join");
+
+    SET(p__Mtx_init,
+            "_Mtx_init");
+    SET(p__Mtx_destroy,
+            "_Mtx_destroy");
+    SET(p__Mtx_lock,
+            "_Mtx_lock");
+    SET(p__Mtx_unlock,
+            "_Mtx_unlock");
+
+    SET(p__Cnd_init,
+            "_Cnd_init");
+    SET(p__Cnd_destroy,
+            "_Cnd_destroy");
+    SET(p__Cnd_wait,
+            "_Cnd_wait");
+    SET(p__Cnd_timedwait,
+            "_Cnd_timedwait");
+    SET(p__Cnd_broadcast,
+            "_Cnd_broadcast");
+    SET(p__Cnd_signal,
+            "_Cnd_signal");
 
     msvcr = GetModuleHandleA("msvcr120.dll");
     p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
@@ -1260,6 +1300,147 @@ static void test_thrd(void)
     ok(!CloseHandle(ta.hnd), "handle %p not closed\n", ta.hnd);
 }
 
+#define NUM_THREADS 10
+struct cndmtx
+{
+    HANDLE initialized;
+    int started;
+    int thread_no;
+
+    _Cnd_t cnd;
+    _Mtx_t mtx;
+    BOOL timed_wait;
+};
+
+static int __cdecl cnd_wait_thread(void *arg)
+{
+    struct cndmtx *cm = arg;
+    int r;
+
+    p__Mtx_lock(&cm->mtx);
+
+    if(InterlockedIncrement(&cm->started) == cm->thread_no)
+        SetEvent(cm->initialized);
+
+    if(cm->timed_wait) {
+        xtime xt;
+
+        p_xtime_get(&xt, 1);
+        xt.sec += 2;
+        r = p__Cnd_timedwait(&cm->cnd, &cm->mtx, &xt);
+        ok(!r, "timed wait failed\n");
+    } else {
+        r = p__Cnd_wait(&cm->cnd, &cm->mtx);
+        ok(!r, "wait failed\n");
+    }
+
+    p__Mtx_unlock(&cm->mtx);
+    return 0;
+}
+
+static void test_cnd(void)
+{
+    _Thrd_t threads[NUM_THREADS];
+    xtime xt, before, after;
+    MSVCRT_long diff;
+    struct cndmtx cm;
+    _Cnd_t cnd;
+    _Mtx_t mtx;
+    int r, i;
+
+    r = p__Cnd_init(&cnd);
+    ok(!r, "failed to init cnd\n");
+
+    r = p__Mtx_init(&mtx, 0);
+    ok(!r, "failed to init mtx\n");
+
+    if (0) /* crash on Windows */
+    {
+        p__Cnd_init(NULL);
+        p__Cnd_wait(NULL, &mtx);
+        p__Cnd_wait(&cnd, NULL);
+        p__Cnd_timedwait(NULL, &mtx, &xt);
+        p__Cnd_timedwait(&cnd, &mtx, &xt);
+    }
+    p__Cnd_destroy(NULL);
+
+    /* test _Cnd_signal/_Cnd_wait */
+    cm.initialized = CreateEventW(NULL, FALSE, FALSE, NULL);
+    cm.started = 0;
+    cm.thread_no = 1;
+    cm.cnd = cnd;
+    cm.mtx = mtx;
+    cm.timed_wait = FALSE;
+    p__Thrd_create(&threads[0], cnd_wait_thread, (void*)&cm);
+
+    WaitForSingleObject(cm.initialized, INFINITE);
+    p__Mtx_lock(&mtx);
+    p__Mtx_unlock(&mtx);
+
+    r = p__Cnd_signal(&cm.cnd);
+    ok(!r, "failed to signal\n");
+    p__Thrd_join(threads[0], NULL);
+
+    /* test _Cnd_timedwait time out */
+    p__Mtx_lock(&mtx);
+    p_xtime_get(&before, 1);
+    xt = before;
+    xt.sec += 1;
+    r = p__Cnd_timedwait(&cnd, &mtx, &xt);
+    p_xtime_get(&after, 1);
+    p__Mtx_unlock(&mtx);
+
+    diff = p__Xtime_diff_to_millis2(&after, &before);
+    ok(r == 2, "should have timed out\n");
+    ok(diff > 1000 - TIMEDELTA, "got %d\n", diff);
+
+    /* test _Cnd_timedwait */
+    cm.started = 0;
+    cm.timed_wait = TRUE;
+    p__Thrd_create(&threads[0], cnd_wait_thread, (void*)&cm);
+
+    WaitForSingleObject(cm.initialized, INFINITE);
+    p__Mtx_lock(&mtx);
+    p__Mtx_unlock(&mtx);
+
+    r = p__Cnd_signal(&cm.cnd);
+    ok(!r, "failed to signal\n");
+    p__Thrd_join(threads[0], NULL);
+
+    /* test _Cnd_broadcast */
+    cm.started = 0;
+    cm.thread_no = NUM_THREADS;
+    cm.timed_wait = FALSE;
+
+    for(i = 0; i < cm.thread_no; i++)
+        p__Thrd_create(&threads[i], cnd_wait_thread, (void*)&cm);
+
+    WaitForSingleObject(cm.initialized, INFINITE);
+    p__Mtx_lock(&mtx);
+    p__Mtx_unlock(&mtx);
+
+    r = p__Cnd_broadcast(&cnd);
+    ok(!r, "failed to broadcast\n");
+    for(i = 0; i < cm.thread_no; i++)
+        p__Thrd_join(threads[i], NULL);
+
+    /* test broadcast with _Cnd_destroy */
+    cm.started = 0;
+    for(i = 0; i < cm.thread_no; i++)
+        p__Thrd_create(&threads[i], cnd_wait_thread, (void*)&cm);
+
+    WaitForSingleObject(cm.initialized, INFINITE);
+    p__Mtx_lock(&mtx);
+    p__Mtx_unlock(&mtx);
+
+    p__Cnd_destroy(&cnd);
+    for(i = 0; i < cm.thread_no; i++)
+        p__Thrd_join(threads[i], NULL);
+
+    p__Mtx_destroy(&mtx);
+    CloseHandle(cm.initialized);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -1285,6 +1466,7 @@ START_TEST(msvcp120)
     test_tr2_sys__Last_write_time();
 
     test_thrd();
+    test_cnd();
 
     FreeLibrary(msvcp);
 }

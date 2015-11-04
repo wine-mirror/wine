@@ -629,3 +629,5 @@ static inline int mbstowcs_wrapper( size_t *ret, wchar_t *wcs, size_t size, cons
 #define mbstowcs_s( ret, wcs, size, mbs, count ) mbstowcs_wrapper( ret, wcs, size, mbs, count )
 #define hypotf( x, y ) ((float)hypot( (double)(x), (double)(y) ))
 #endif
+
+void free_misc(void);
