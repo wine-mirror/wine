@@ -92,6 +92,8 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static CRITICAL_SECTION wgl_section = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
+
 static inline struct opengl_funcs *get_dc_funcs( HDC hdc )
 {
     struct opengl_funcs *funcs = __wine_get_wgl_driver( hdc, WINE_WGL_DRIVER_VERSION );
@@ -1212,7 +1214,6 @@ static BOOL wglUseFontBitmaps_common( HDC hdc, DWORD first, DWORD count, DWORD l
      funcs->gl.p_glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
      for (glyph = first; glyph < first + count; glyph++) {
-         static const MAT2 identity = { {0,1},{0,0},{0,0},{0,1} };
          unsigned int needed_size, height, width, width_int;
 
          if (unicode)
@@ -1479,7 +1480,6 @@ static BOOL wglUseFontOutlines_common(HDC hdc,
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     UINT glyph;
-    const MAT2 identity = {{0,1},{0,0},{0,0},{0,1}};
     GLUtesselator *tess = NULL;
     LOGFONTW lf;
     HFONT old_font, unscaled_font;
