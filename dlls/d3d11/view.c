@@ -757,6 +757,15 @@ HRESULT d3d_depthstencil_view_create(struct d3d_device *device, ID3D11Resource *
     return S_OK;
 }
 
+struct d3d_depthstencil_view *unsafe_impl_from_ID3D11DepthStencilView(ID3D11DepthStencilView *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_depthstencil_view_vtbl);
+
+    return impl_from_ID3D11DepthStencilView(iface);
+}
+
 struct d3d_depthstencil_view *unsafe_impl_from_ID3D10DepthStencilView(ID3D10DepthStencilView *iface)
 {
     if (!iface)
