@@ -482,7 +482,33 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceCon
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetViewports(ID3D11DeviceContext *iface,
         UINT viewport_count, const D3D11_VIEWPORT *viewports)
 {
-    FIXME("iface %p, viewport_count %u, viewports %p stub!\n", iface, viewport_count, viewports);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct wined3d_viewport wined3d_vp;
+
+    TRACE("iface %p, viewport_count %u, viewports %p.\n", iface, viewport_count, viewports);
+
+    if (viewport_count > 1)
+        FIXME("Multiple viewports not implemented.\n");
+
+    if (!viewport_count)
+        return;
+
+    if (viewports[0].TopLeftX != (UINT)viewports[0].TopLeftX
+            || viewports[0].TopLeftY != (UINT)viewports[0].TopLeftY
+            || viewports[0].Width != (UINT)viewports[0].Width
+            || viewports[0].Height != (UINT)viewports[0].Height)
+        FIXME("Floating-point viewports not implemented.\n");
+
+    wined3d_vp.x = viewports[0].TopLeftX;
+    wined3d_vp.y = viewports[0].TopLeftY;
+    wined3d_vp.width = viewports[0].Width;
+    wined3d_vp.height = viewports[0].Height;
+    wined3d_vp.min_z = viewports[0].MinDepth;
+    wined3d_vp.max_z = viewports[0].MaxDepth;
+
+    wined3d_mutex_lock();
+    wined3d_device_set_viewport(device->wined3d_device, &wined3d_vp);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetScissorRects(ID3D11DeviceContext *iface,
