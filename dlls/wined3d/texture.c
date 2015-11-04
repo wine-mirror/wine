@@ -1547,23 +1547,6 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_texture_map(struct wined3d_texture *texture, unsigned int sub_resource_idx,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
-{
-    TRACE("texture %p, sub_resource_idx %u, map_desc %p, box %p, flags %#x.\n",
-            texture, sub_resource_idx, map_desc, box, flags);
-
-    return texture->resource.resource_ops->resource_sub_resource_map(&texture->resource, sub_resource_idx,
-            map_desc, box, flags);
-}
-
-HRESULT CDECL wined3d_texture_unmap(struct wined3d_texture *texture, unsigned int sub_resource_idx)
-{
-    TRACE("texture %p, sub_resource_idx %u.\n", texture, sub_resource_idx);
-
-    return texture->resource.resource_ops->resource_sub_resource_unmap(&texture->resource, sub_resource_idx);
-}
-
 HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned int sub_resource_idx, HDC *dc)
 {
     struct wined3d_resource *sub_resource;
