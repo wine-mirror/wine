@@ -2907,7 +2907,8 @@ static void update_makefile( const char *path )
     make->use_msvcrt = strarray_exists( &make->appmode, "-mno-cygwin" );
 
     for (i = 0; i < make->imports.count && !make->use_msvcrt; i++)
-        make->use_msvcrt = !strncmp( make->imports.str[i], "msvcr", 5 );
+        make->use_msvcrt = !strncmp( make->imports.str[i], "msvcr", 5 ) ||
+                           !strcmp( make->imports.str[i], "ucrtbase" );
 
     make->install_lib_rules = empty_strarray;
     make->install_dev_rules = empty_strarray;
