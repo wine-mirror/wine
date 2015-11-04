@@ -997,7 +997,7 @@ static int ConvertAttribWGLtoGLX(const int* iWGLAttr, int* oGLXAttr, struct wgl_
 
 static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
 {
-    int render_type=0, render_type_bit;
+    int render_type, render_type_bit;
     pglXGetFBConfigAttrib(display, fbconfig, GLX_RENDER_TYPE, &render_type_bit);
     switch(render_type_bit)
     {
@@ -1015,6 +1015,7 @@ static int get_render_type_from_fbconfig(Display *display, GLXFBConfig fbconfig)
             break;
         default:
             ERR("Unknown render_type: %x\n", render_type_bit);
+            render_type = 0;
     }
     return render_type;
 }
@@ -1787,7 +1788,7 @@ static BOOL glxdrv_wglCopyContext(struct wgl_context *src, struct wgl_context *d
  */
 static struct wgl_context *glxdrv_wglCreateContext( HDC hdc )
 {
-    struct wgl_context *ret = NULL;
+    struct wgl_context *ret;
     struct gl_drawable *gl;
 
     if (!(gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
@@ -2037,7 +2038,7 @@ static const GLubyte *wglGetString(GLenum name)
 static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wgl_context *hShareContext,
                                                               const int* attribList )
 {
-    struct wgl_context *ret = NULL;
+    struct wgl_context *ret;
     struct gl_drawable *gl;
     int err = 0;
 
@@ -2134,8 +2135,8 @@ static const char *X11DRV_wglGetExtensionsStringARB(HDC hdc)
 static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat, int iWidth, int iHeight,
                                                        const int *piAttribList )
 {
-    struct wgl_pbuffer* object = NULL;
-    const struct wgl_pixel_format *fmt = NULL;
+    struct wgl_pbuffer* object;
+    const struct wgl_pixel_format *fmt;
     int attribs[256];
     int nAttribs = 0;
 
@@ -2507,7 +2508,7 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
 {
     int attribs[256];
     int nAttribs = 0;
-    GLXFBConfig* cfgs = NULL;
+    GLXFBConfig* cfgs;
     int nCfgs = 0;
     int it;
     int fmt_id;
@@ -2613,7 +2614,7 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
                                                  UINT nAttributes, const int *piAttributes, int *piValues )
 {
     UINT i;
-    const struct wgl_pixel_format *fmt = NULL;
+    const struct wgl_pixel_format *fmt;
     int hTest;
     int tmp;
     int curGLXAttr = 0;
@@ -3029,7 +3030,7 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
 {
     struct wgl_context *ctx = NtCurrentTeb()->glContext;
     struct gl_drawable *gl;
-    BOOL ret = TRUE;
+    BOOL ret;
 
     TRACE("(%d)\n", interval);
 
