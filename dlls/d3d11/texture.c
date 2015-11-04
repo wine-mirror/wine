@@ -366,7 +366,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture2d_Map(ID3D10Texture2D *iface, UIN
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
     wined3d_mutex_lock();
-    if (SUCCEEDED(hr = wined3d_texture_map(texture->wined3d_texture, sub_resource_idx,
+    if (SUCCEEDED(hr = wined3d_resource_map(wined3d_texture_get_resource(texture->wined3d_texture), sub_resource_idx,
             &wined3d_map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type))))
     {
         mapped_texture->pData = wined3d_map_desc.data;
@@ -384,7 +384,7 @@ static void STDMETHODCALLTYPE d3d10_texture2d_Unmap(ID3D10Texture2D *iface, UINT
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
 
     wined3d_mutex_lock();
-    wined3d_texture_unmap(texture->wined3d_texture, sub_resource_idx);
+    wined3d_resource_unmap(wined3d_texture_get_resource(texture->wined3d_texture), sub_resource_idx);
     wined3d_mutex_unlock();
 }
 
@@ -823,7 +823,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_texture3d_Map(ID3D10Texture3D *iface, UIN
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
     wined3d_mutex_lock();
-    if (SUCCEEDED(hr = wined3d_texture_map(texture->wined3d_texture, sub_resource_idx,
+    if (SUCCEEDED(hr = wined3d_resource_map(wined3d_texture_get_resource(texture->wined3d_texture), sub_resource_idx,
             &wined3d_map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type))))
     {
         mapped_texture->pData = wined3d_map_desc.data;
@@ -842,7 +842,7 @@ static void STDMETHODCALLTYPE d3d10_texture3d_Unmap(ID3D10Texture3D *iface, UINT
     TRACE("iface %p, sub_resource_idx %u.\n", iface, sub_resource_idx);
 
     wined3d_mutex_lock();
-    wined3d_texture_unmap(texture->wined3d_texture, sub_resource_idx);
+    wined3d_resource_unmap(wined3d_texture_get_resource(texture->wined3d_texture), sub_resource_idx);
     wined3d_mutex_unlock();
 }
 
