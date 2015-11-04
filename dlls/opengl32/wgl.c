@@ -1057,7 +1057,7 @@ BOOL WINAPI wglGetPixelFormatAttribfvARB( HDC hdc, int format, int layer, UINT c
  */
 HPBUFFERARB WINAPI wglCreatePbufferARB( HDC hdc, int format, int width, int height, const int *attribs )
 {
-    HPBUFFERARB ret = 0;
+    HPBUFFERARB ret;
     struct wgl_pbuffer *pbuffer;
     struct opengl_funcs *funcs = get_dc_funcs( hdc );
 
@@ -1749,7 +1749,7 @@ GLint WINAPI glDebugEntry( GLint unknown1, GLint unknown2 )
 
 static GLubyte *filter_extensions_list(const char *extensions, const char *disabled)
 {
-    char *p, *str = NULL;
+    char *p, *str;
     const char *end;
 
     p = str = HeapAlloc(GetProcessHeap(), 0, strlen(extensions) + 2);
@@ -1785,7 +1785,7 @@ static GLuint *filter_extensions_index(const char *disabled)
 {
     const struct opengl_funcs *funcs = NtCurrentTeb()->glTable;
     const char *ext, *end, *gl_ext;
-    GLuint *disabled_exts = NULL, *new_disabled_exts;
+    GLuint *disabled_exts, *new_disabled_exts;
     unsigned int i = 0, j, disabled_size;
     GLint extensions_count;
 
