@@ -207,7 +207,7 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|IMPLIB_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -345,11 +345,7 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.sfd$/) { push @{${$make}{"=FONT_SRCS"}}, $name; }
         elsif ($name =~ /\.c$/)
         {
-            if (defined $flags{"implib"})
-            {
-                push @{${$make}{"=IMPLIB_SRCS"}}, $name;
-                ${${$make}{"=flags"}}{"staticimplib"} = 1;
-            }
+            ${${$make}{"=flags"}}{"staticimplib"} = 1 if defined $flags{"implib"};
             push @{${$make}{"=C_SRCS"}}, $name;
         }
         elsif ($name =~ /\.h$/)
@@ -500,7 +496,6 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "HEADER_SRCS" );
         replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
         replace_makefile_variable( $file, "IN_SRCS" );
-        replace_makefile_variable( $file, "IMPLIB_SRCS" );
         replace_makefile_variable( $file, "MANPAGES" );
     }
 

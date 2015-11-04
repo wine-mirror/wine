@@ -16,8 +16,6 @@ C_SRCS = \
 	keyboard.c \
 	mouse.c
 
-IMPLIB_SRCS = data_formats.c
-
 IDL_SRCS = dinput_classes.idl
 
 RC_SRCS = dinput.rc
