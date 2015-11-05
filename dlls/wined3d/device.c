@@ -4525,7 +4525,7 @@ HRESULT CDECL wined3d_device_reset(struct wined3d_device *device,
 
     if (device->onscreen_depth_stencil)
     {
-        wined3d_surface_decref(device->onscreen_depth_stencil);
+        wined3d_texture_decref(device->onscreen_depth_stencil->container);
         device->onscreen_depth_stencil = NULL;
     }
 
