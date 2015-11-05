@@ -504,10 +504,11 @@ static int ctl2_alloc_guid(
     offset = ctl2_find_guid(typelib, hash_key, &guid->guid);
     if (offset != -1)
     {
-        warning("duplicate uuid {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
-                guid->guid.Data1, guid->guid.Data2, guid->guid.Data3,
-                guid->guid.Data4[0], guid->guid.Data4[1], guid->guid.Data4[2], guid->guid.Data4[3],
-                guid->guid.Data4[4], guid->guid.Data4[5], guid->guid.Data4[6], guid->guid.Data4[7]);
+        if (pedantic)
+            warning("duplicate uuid {%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}\n",
+                    guid->guid.Data1, guid->guid.Data2, guid->guid.Data3,
+                    guid->guid.Data4[0], guid->guid.Data4[1], guid->guid.Data4[2], guid->guid.Data4[3],
+                    guid->guid.Data4[4], guid->guid.Data4[5], guid->guid.Data4[6], guid->guid.Data4[7]);
         return -1;
     }
 
