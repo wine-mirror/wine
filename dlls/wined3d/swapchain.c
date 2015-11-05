@@ -583,7 +583,7 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
                     fb->depth_stencil->width, fb->depth_stencil->height);
             if (ds == swapchain->device->onscreen_depth_stencil)
             {
-                wined3d_surface_decref(swapchain->device->onscreen_depth_stencil);
+                wined3d_texture_decref(swapchain->device->onscreen_depth_stencil->container);
                 swapchain->device->onscreen_depth_stencil = NULL;
             }
         }
