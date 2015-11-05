@@ -1500,10 +1500,10 @@ DECL_HANDLER(select)
             /* Optimization: ignore APC_NONE calls, they are only used to
              * wake up a thread, but since we got here the thread woke up already.
              */
-            if (apc->call.type != APC_NONE)
+            if (apc->call.type != APC_NONE &&
+                (reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
             {
-                if ((reply->apc_handle = alloc_handle( current->process, apc, SYNCHRONIZE, 0 )))
-                    reply->call = apc->call;
+                reply->call = apc->call;
                 release_object( apc );
                 break;
             }
