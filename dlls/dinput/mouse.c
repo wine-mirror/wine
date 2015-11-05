@@ -549,13 +549,13 @@ static HRESULT WINAPI SysMouseAImpl_Unacquire(LPDIRECTINPUTDEVICE8A iface)
 static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, DWORD len, LPVOID ptr)
 {
     SysMouseImpl *This = impl_from_IDirectInputDevice8W(iface);
+    TRACE("(%p)->(%u,%p)\n", This, len, ptr);
 
     if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
 
-    TRACE("(this=%p,0x%08x,%p):\n", This, len, ptr);
+    EnterCriticalSection(&This->base.crit);
     _dump_mouse_state(&This->m_state);
 
-    EnterCriticalSection(&This->base.crit);
     /* Copy the current mouse state */
     fill_DataFormat(ptr, len, &This->m_state, &This->base.data_format);
 
