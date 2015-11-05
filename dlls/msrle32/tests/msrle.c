@@ -132,7 +132,7 @@ static void test_raw_decompress(void)
     for (i = 0; i < sizeof(codecs) / sizeof(codecs[0]); i++)
     {
         memset(bits, i + 0xAF, bih->biSizeImage);
-todo_wine {
+
         /* Check which codec is able to decompress uncompressed data */
         hic = ICLocate(FCC('V', 'I', 'D', 'C'), codecs[i], bih, NULL, ICMODE_DECOMPRESS);
         ok(hic != NULL, "Test[%d]: Expected non-NULL return\n", i);
@@ -154,7 +154,6 @@ todo_wine {
 
         hr = ICClose(hic);
         ok(hr == ICERR_OK, "Test[%d]: Expected ICERR_OK, got %d\n", i, hr);
-}
     }
     HeapFree(GetProcessHeap(), 0, bits);
     HeapFree(GetProcessHeap(), 0, outbits);

@@ -212,7 +212,7 @@ static void test_Locate(void)
     bi.biCompression = BI_RGB;
     bo.biBitCount = bi.biBitCount = 8;
     h = ICLocate(ICTYPE_VIDEO, 0, &bi, &bo, ICMODE_DECOMPRESS);
-    todo_wine ok(h != 0, "RGB8->RGB identity failed\n");
+    ok(h != 0, "RGB8->RGB identity failed\n");
     if (h) ok(ICClose(h) == ICERR_OK,"ICClose failed\n");
 
     bi.biCompression = BI_RLE8;
