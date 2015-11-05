@@ -553,6 +553,8 @@ static HRESULT WINAPI SysMouseWImpl_GetDeviceState(LPDIRECTINPUTDEVICE8W iface, 
 
     if(This->base.acquired == 0) return DIERR_NOTACQUIRED;
 
+    check_dinput_events();
+
     EnterCriticalSection(&This->base.crit);
     _dump_mouse_state(&This->m_state);
 
