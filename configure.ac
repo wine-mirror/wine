@@ -1711,7 +1711,7 @@ WINE_WARNING_WITH(png,[test "x$ac_cv_lib_soname_png" = "x"],
 dnl **** Check for libtiff ****
 if test "x$with_tiff" != "xno"
 then
-    WINE_PACKAGE_FLAGS(TIFF,[libtiff],,,,
+    WINE_PACKAGE_FLAGS(TIFF,[libtiff-4],,,,
         [AC_CHECK_HEADERS([tiffio.h])
         if test "$ac_cv_header_tiffio_h" = "yes"
         then

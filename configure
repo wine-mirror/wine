@@ -2290,8 +2290,8 @@ Some influential environment variables:
   JPEG_LIBS   Linker flags for libjpeg, overriding pkg-config
   PNG_CFLAGS  C compiler flags for libpng, overriding pkg-config
   PNG_LIBS    Linker flags for libpng, overriding pkg-config
-  TIFF_CFLAGS C compiler flags for libtiff, overriding pkg-config
-  TIFF_LIBS   Linker flags for libtiff, overriding pkg-config
+  TIFF_CFLAGS C compiler flags for libtiff-4, overriding pkg-config
+  TIFF_LIBS   Linker flags for libtiff-4, overriding pkg-config
   MPG123_CFLAGS
               C compiler flags for libmpg123, overriding pkg-config
   MPG123_LIBS Linker flags for libmpg123, overriding pkg-config
@@ -13512,19 +13512,19 @@ if test "x$with_tiff" != "xno"
 then
     if ${TIFF_CFLAGS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
-  TIFF_CFLAGS=`$PKG_CONFIG --cflags libtiff 2>/dev/null`
+  TIFF_CFLAGS=`$PKG_CONFIG --cflags libtiff-4 2>/dev/null`
 fi
 fi
 
 if ${TIFF_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
-  TIFF_LIBS=`$PKG_CONFIG --libs libtiff 2>/dev/null`
+  TIFF_LIBS=`$PKG_CONFIG --libs libtiff-4 2>/dev/null`
 fi
 fi
 
 
-$as_echo "$as_me:${as_lineno-$LINENO}: libtiff cflags: $TIFF_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: libtiff libs: $TIFF_LIBS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libtiff-4 cflags: $TIFF_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: libtiff-4 libs: $TIFF_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $TIFF_CFLAGS"
 for ac_header in tiffio.h
