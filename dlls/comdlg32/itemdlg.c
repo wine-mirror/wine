@@ -2065,7 +2065,10 @@ static LRESULT on_wm_initdialog(HWND hwnd, LPARAM lParam)
     if(This->filterspec_count)
         events_OnTypeChange(This);
 
-    return TRUE;
+    if ((hitem = GetDlgItem(This->dlg_hwnd, IDC_FILENAME)))
+        SetFocus(hitem);
+
+    return FALSE;
 }
 
 static LRESULT on_wm_size(FileDialogImpl *This)
