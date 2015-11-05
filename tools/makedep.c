@@ -40,6 +40,7 @@ enum incl_type
     INCL_NORMAL,           /* #include "foo.h" */
     INCL_SYSTEM,           /* #include <foo.h> */
     INCL_IMPORT,           /* idl import "foo.idl" */
+    INCL_IMPORTLIB,        /* idl importlib "foo.tlb" */
     INCL_CPP_QUOTE,        /* idl cpp_quote("#include \"foo.h\"") */
     INCL_CPP_QUOTE_SYSTEM  /* idl cpp_quote("#include <foo.h>") */
 };
@@ -71,7 +72,7 @@ struct incl_file
     char              *sourcename;    /* source file name for generated headers */
     struct incl_file  *included_by;   /* file that included this one */
     int                included_line; /* line where this file was included */
-    int                system;        /* is it a system include (#include <name>) */
+    enum incl_type     type;          /* type of include */
     struct incl_file  *owner;
     unsigned int       files_count;   /* files in use */
     unsigned int       files_size;    /* total allocated size */
@@ -791,7 +792,7 @@ static struct incl_file *find_include_file( struct makefile *make, const char *n
  * Add an include file if it doesn't already exists.
  */
 static struct incl_file *add_include( struct makefile *make, struct incl_file *parent,
-                                      const char *name, int line, int system )
+                                      const char *name, int line, enum incl_type type )
 {
     struct incl_file *include;
 
@@ -810,7 +811,7 @@ static struct incl_file *add_include( struct makefile *make, struct incl_file *p
     include->name = xstrdup(name);
     include->included_by = parent;
     include->included_line = line;
-    include->system = system;
+    include->type = type;
     list_add_tail( &make->includes, &include->entry );
 found:
     parent->files[parent->files_count++] = include;
@@ -948,6 +949,21 @@ static void parse_idl_file( struct file *source, FILE *file )
         char quote;
         char *p = buffer;
         while (*p && isspace(*p)) p++;
+
+        if (!strncmp( p, "importlib", 9 ))
+        {
+            p += 9;
+            while (*p && isspace(*p)) p++;
+            if (*p++ != '(') continue;
+            while (*p && isspace(*p)) p++;
+            if (*p++ != '"') continue;
+            include = p;
+            while (*p && (*p != '"')) p++;
+            if (!*p) fatal_error( "malformed importlib directive\n" );
+            *p = 0;
+            add_dependency( source, include, INCL_IMPORTLIB );
+            continue;
+        }
 
         if (!strncmp( p, "import", 6 ))
         {
@@ -1280,6 +1296,16 @@ static struct file *open_include_file( struct makefile *make, struct incl_file *
         return file;
     }
 
+    /* check for corresponding tlb file in source dir */
+
+    if (strendswith( pFile->name, ".tlb" ) &&
+        (file = open_local_file( make, replace_extension( pFile->name, ".tlb", ".idl" ), &filename )))
+    {
+        pFile->sourcename = filename;
+        pFile->filename = obj_dir_path( make, pFile->name );
+        return file;
+    }
+
     /* now try in source dir */
     if ((file = open_local_file( make, pFile->name, &pFile->filename ))) return file;
 
@@ -1307,6 +1333,16 @@ static struct file *open_include_file( struct makefile *make, struct incl_file *
 
     if (strendswith( pFile->name, "tmpl.h" ) &&
         (file = open_global_header( make, replace_extension( pFile->name, ".h", ".x" ), &filename )))
+    {
+        pFile->sourcename = filename;
+        pFile->filename = top_obj_dir_path( make, strmake( "include/%s", pFile->name ));
+        return file;
+    }
+
+    /* check for corresponding .tlb file in global includes */
+
+    if (strendswith( pFile->name, ".tlb" ) &&
+        (file = open_global_header( make, replace_extension( pFile->name, ".tlb", ".idl" ), &filename )))
     {
         pFile->sourcename = filename;
         pFile->filename = top_obj_dir_path( make, strmake( "include/%s", pFile->name ));
@@ -1345,7 +1381,7 @@ static struct file *open_include_file( struct makefile *make, struct incl_file *
                 return file;
         }
     }
-    if (pFile->system) return NULL;  /* ignore system files we cannot find */
+    if (pFile->type == INCL_SYSTEM) return NULL;  /* ignore system files we cannot find */
 
     /* try in src file directory */
     if ((p = strrchr(pFile->included_by->filename, '/')))
@@ -1389,10 +1425,13 @@ static void add_all_includes( struct makefile *make, struct incl_file *parent, s
         {
         case INCL_NORMAL:
         case INCL_IMPORT:
-            add_include( make, parent, file->deps[i].name, file->deps[i].line, 0 );
+            add_include( make, parent, file->deps[i].name, file->deps[i].line, INCL_NORMAL );
+            break;
+        case INCL_IMPORTLIB:
+            add_include( make, parent, file->deps[i].name, file->deps[i].line, INCL_IMPORTLIB );
             break;
         case INCL_SYSTEM:
-            add_include( make, parent, file->deps[i].name, file->deps[i].line, 1 );
+            add_include( make, parent, file->deps[i].name, file->deps[i].line, INCL_SYSTEM );
             break;
         case INCL_CPP_QUOTE:
         case INCL_CPP_QUOTE_SYSTEM:
@@ -1407,16 +1446,8 @@ static void add_all_includes( struct makefile *make, struct incl_file *parent, s
  */
 static void parse_file( struct makefile *make, struct incl_file *source, int src )
 {
-    struct file *file;
+    struct file *file = src ? open_src_file( make, source ) : open_include_file( make, source );
 
-    /* don't try to open certain types of files */
-    if (strendswith( source->name, ".tlb" ))
-    {
-        source->filename = obj_dir_path( make, source->name );
-        return;
-    }
-
-    file = src ? open_src_file( make, source ) : open_include_file( make, source );
     if (!file) return;
 
     source->file = file;
@@ -1430,9 +1461,11 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
         {
             unsigned int i;
 
+            if (strendswith( source->name, ".tlb" )) return;  /* typelibs don't include anything */
+
             /* generated .h file always includes these */
-            add_include( make, source, "rpc.h", 0, 1 );
-            add_include( make, source, "rpcndr.h", 0, 1 );
+            add_include( make, source, "rpc.h", 0, INCL_NORMAL );
+            add_include( make, source, "rpcndr.h", 0, INCL_NORMAL );
             for (i = 0; i < file->deps_count; i++)
             {
                 switch (file->deps[i].type)
@@ -1440,18 +1473,19 @@ static void parse_file( struct makefile *make, struct incl_file *source, int src
                 case INCL_IMPORT:
                     if (strendswith( file->deps[i].name, ".idl" ))
                         add_include( make, source, replace_extension( file->deps[i].name, ".idl", ".h" ),
-                                     file->deps[i].line, 0 );
+                                     file->deps[i].line, INCL_NORMAL );
                     else
-                        add_include( make, source, file->deps[i].name, file->deps[i].line, 0 );
+                        add_include( make, source, file->deps[i].name, file->deps[i].line, INCL_NORMAL );
                     break;
                 case INCL_CPP_QUOTE:
-                    add_include( make, source, file->deps[i].name, file->deps[i].line, 0 );
+                    add_include( make, source, file->deps[i].name, file->deps[i].line, INCL_NORMAL );
                     break;
                 case INCL_CPP_QUOTE_SYSTEM:
-                    add_include( make, source, file->deps[i].name, file->deps[i].line, 1 );
+                    add_include( make, source, file->deps[i].name, file->deps[i].line, INCL_SYSTEM );
                     break;
                 case INCL_NORMAL:
                 case INCL_SYSTEM:
+                case INCL_IMPORTLIB:
                     break;
                 }
             }
@@ -1694,6 +1728,10 @@ static void add_generated_sources( struct makefile *make )
             add_dependency( file->file, replace_extension( source->name, ".idl", ".h" ), INCL_NORMAL );
             add_all_includes( make, file, file->file );
         }
+        if (source->file->flags & FLAG_IDL_TYPELIB)
+        {
+            add_generated_source( make, replace_extension( source->name, ".idl", ".tlb" ), NULL );
+        }
         if (source->file->flags & FLAG_IDL_REGTYPELIB)
         {
             add_generated_source( make, replace_extension( source->name, ".idl", "_t.res" ), NULL );
@@ -1701,6 +1739,10 @@ static void add_generated_sources( struct makefile *make )
         if (source->file->flags & FLAG_IDL_REGISTER)
         {
             add_generated_source( make, replace_extension( source->name, ".idl", "_r.res" ), NULL );
+        }
+        if (source->file->flags & FLAG_IDL_HEADER)
+        {
+            add_generated_source( make, replace_extension( source->name, ".idl", ".h" ), NULL );
         }
         if (!source->file->flags && strendswith( source->name, ".idl" ))
         {
@@ -1772,17 +1814,24 @@ static void output_filenames_obj_dir( struct makefile *make, struct strarray arr
 
 
 /*******************************************************************
- *         output_include
+ *         get_dependencies
  */
-static void output_include( struct incl_file *pFile, struct incl_file *owner )
+static void get_dependencies( struct strarray *deps, struct incl_file *file, struct incl_file *source )
 {
-    int i;
+    unsigned int i;
 
-    if (pFile->owner == owner) return;
-    if (!pFile->filename) return;
-    pFile->owner = owner;
-    output_filename( pFile->filename );
-    for (i = 0; i < pFile->files_count; i++) output_include( pFile->files[i], owner );
+    if (!file->filename) return;
+
+    if (file != source)
+    {
+        if (file->owner == source) return;  /* already processed */
+        if (file->type == INCL_IMPORTLIB &&
+            !(source->file->flags & (FLAG_IDL_TYPELIB | FLAG_IDL_REGTYPELIB)))
+            return;  /* library is imported only when building a typelib */
+        file->owner = source;
+        strarray_add( deps, file->filename );
+    }
+    for (i = 0; i < file->files_count; i++) get_dependencies( deps, file->files[i], source );
 }
 
 
@@ -1927,6 +1976,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
 
     LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
     {
+        struct strarray dependencies = empty_strarray;
         struct strarray extradefs;
         char *obj = xstrdup( source->name );
         char *ext = get_extension( obj );
@@ -1942,6 +1992,7 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
         }
 
         extradefs = get_expanded_make_var_array( make, file_local_var( obj, "EXTRADEFS" ));
+        get_dependencies( &dependencies, source, source );
 
         if (!strcmp( ext, "y" ))  /* yacc file */
         {
@@ -1960,7 +2011,6 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             else output( "%s.tab.c: %s\n", obj, source->filename );
 
             output( "\t$(BISON) -p %s_ -o $@ %s\n", obj, source->filename );
-            continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "x" ))  /* template file */
         {
@@ -1977,13 +2027,11 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 strarray_add( &make->install_dev_rules,
                               strmake( "d$(includedir)/%s.h", get_include_install_path( obj ) ));
             }
-            continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "l" ))  /* lex file */
         {
             output( "%s.yy.c: %s\n", obj_dir_path( make, obj ), source->filename );
             output( "\t$(FLEX) -o$@ %s\n", source->filename );
-            continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "rc" ))  /* resource file */
         {
@@ -2014,6 +2062,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 output( "\n" );
             }
             output( "%s.res:", obj_dir_path( make, obj ));
+            output_filenames( dependencies );
+            output( "\n" );
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
@@ -2033,6 +2083,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             }
             else output( "\n" );
             output( "%s.res:", obj_dir_path( make, obj ));
+            output_filenames( dependencies );
+            output( "\n" );
         }
         else if (!strcmp( ext, "idl" ))  /* IDL file */
         {
@@ -2075,6 +2127,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             output( "\n" );
             output_filenames_obj_dir( make, targets );
             output( ": %s", source->filename );
+            output_filenames( dependencies );
+            output( "\n" );
         }
         else if (!strcmp( ext, "in" ))  /* .in file or man page */
         {
@@ -2103,6 +2157,8 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             output( "%s: %s\n", obj_dir_path( make, obj ), source->filename );
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
             output( "%s:", obj_dir_path( make, obj ));
+            output_filenames( dependencies );
+            output( "\n" );
         }
         else if (!strcmp( ext, "sfd" ))  /* font file */
         {
@@ -2136,7 +2192,6 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                     strarray_add( &make->install_lib_rules, strmake( "d$(fontdir)/%s", font ));
                 }
             }
-            continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "svg" ))  /* svg file */
         {
@@ -2147,12 +2202,14 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 output( "\tCONVERT=\"%s\" ICOTOOL=\"%s\" RSVG=\"%s\" %s %s $@\n", convert, icotool, rsvg,
                         top_dir_path( make, "tools/buildimage" ), source->filename );
             }
-            continue;  /* no dependencies */
         }
         else if (!strcmp( ext, "res" ))
         {
             strarray_add( &res_files, source->name );
-            continue;  /* no dependencies */
+        }
+        else if (!strcmp( ext, "tlb" ))
+        {
+            strarray_add( &all_targets, source->name );
         }
         else if (!strcmp( ext, "h" ) || !strcmp( ext, "rh" ) || !strcmp( ext, "inl" ))  /* header file */
         {
@@ -2166,7 +2223,6 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
                 strarray_add( &make->install_dev_rules,
                               strmake( "D$(includedir)/%s", get_include_install_path( source->name ) ));
             }
-            continue;  /* no dependencies */
         }
         else
         {
@@ -2219,11 +2275,10 @@ static struct strarray output_sources( struct makefile *make, struct strarray *t
             output( "%s.o", obj_dir_path( make, obj ));
             if (crosstarget && need_cross) output( " %s.cross.o", obj_dir_path( make, obj ));
             output( ":" );
+            output_filenames( dependencies );
+            output( "\n" );
         }
         free( obj );
-
-        for (i = 0; i < source->files_count; i++) output_include( source->files[i], source );
-        output( "\n" );
     }
 
     /* rules for files that depend on multiple sources */
