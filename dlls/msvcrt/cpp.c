@@ -575,6 +575,16 @@ int __thiscall MSVCRT_type_info_before(type_info * _this, const type_info * rhs)
 }
 
 /******************************************************************
+ *		__std_type_info_compare (MSVCRT.@)
+ */
+int CDECL MSVCRT_type_info_compare(type_info * _this, const type_info * rhs)
+{
+    int ret = strcmp(_this->mangled + 1, rhs->mangled + 1);
+    TRACE("(%p %p) returning %d\n", _this, rhs, ret);
+    return ret;
+}
+
+/******************************************************************
  *		??1type_info@@UAE@XZ (MSVCRT.@)
  */
 DEFINE_THISCALL_WRAPPER(MSVCRT_type_info_dtor,4)

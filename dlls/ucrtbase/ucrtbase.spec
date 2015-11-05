@@ -142,7 +142,7 @@
 @ cdecl __setusermatherr(ptr) MSVCRT___setusermatherr
 @ stub __std_exception_copy
 @ stub __std_exception_destroy
-@ stub __std_type_info_compare
+@ cdecl __std_type_info_compare(ptr ptr) MSVCRT_type_info_compare
 @ stub __std_type_info_destroy_list
 @ stub __std_type_info_hash
 @ stub __std_type_info_name
