@@ -208,10 +208,10 @@ void device_switch_onscreen_ds(struct wined3d_device *device,
         surface_modify_ds_location(device->onscreen_depth_stencil, WINED3D_LOCATION_TEXTURE_RGB,
                 device->onscreen_depth_stencil->ds_current_size.cx,
                 device->onscreen_depth_stencil->ds_current_size.cy);
-        wined3d_surface_decref(device->onscreen_depth_stencil);
+        wined3d_texture_decref(device->onscreen_depth_stencil->container);
     }
     device->onscreen_depth_stencil = depth_stencil;
-    wined3d_surface_incref(device->onscreen_depth_stencil);
+    wined3d_texture_incref(device->onscreen_depth_stencil->container);
 }
 
 static BOOL is_full_clear(const struct wined3d_surface *target, const RECT *draw_rect, const RECT *clear_rect)
