@@ -1102,7 +1102,7 @@ HRESULT CDECL wined3d_device_uninit_3d(struct wined3d_device *device)
     {
         surface = device->onscreen_depth_stencil;
         device->onscreen_depth_stencil = NULL;
-        wined3d_surface_decref(surface);
+        wined3d_texture_decref(surface->container);
     }
 
     if (device->fb.depth_stencil)
