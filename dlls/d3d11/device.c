@@ -195,8 +195,14 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawIndexed(ID3D11DeviceCo
 static void STDMETHODCALLTYPE d3d11_immediate_context_Draw(ID3D11DeviceContext *iface,
         UINT vertex_count, UINT start_vertex_location)
 {
-    FIXME("iface %p, vertex_count %u, start_vertex_location %u stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, vertex_count %u, start_vertex_location %u.\n",
             iface, vertex_count, start_vertex_location);
+
+    wined3d_mutex_lock();
+    wined3d_device_draw_primitive(device->wined3d_device, start_vertex_location, vertex_count);
+    wined3d_mutex_unlock();
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_Map(ID3D11DeviceContext *iface, ID3D11Resource *resource,
