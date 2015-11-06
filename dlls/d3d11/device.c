@@ -709,8 +709,28 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_UpdateSubresource(ID3D11De
         ID3D11Resource *resource, UINT subresource_idx, const D3D11_BOX *box,
         const void *data, UINT row_pitch, UINT depth_pitch)
 {
-    FIXME("iface %p, resource %p, subresource_idx %u, box %p, data %p, row_pitch %u, depth_pitch %u stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct wined3d_resource *wined3d_resource;
+    struct wined3d_box wined3d_box;
+
+    TRACE("iface %p, resource %p, subresource_idx %u, box %p, data %p, row_pitch %u, depth_pitch %u.\n",
             iface, resource, subresource_idx, box, data, row_pitch, depth_pitch);
+
+    if (box)
+    {
+        wined3d_box.left = box->left;
+        wined3d_box.top = box->top;
+        wined3d_box.front = box->front;
+        wined3d_box.right = box->right;
+        wined3d_box.bottom = box->bottom;
+        wined3d_box.back = box->back;
+    }
+
+    wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
+    wined3d_mutex_lock();
+    wined3d_device_update_sub_resource(device->wined3d_device, wined3d_resource,
+            subresource_idx, box ? &wined3d_box : NULL, data, row_pitch, depth_pitch);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_CopyStructureCount(ID3D11DeviceContext *iface,
@@ -2684,27 +2704,15 @@ static void STDMETHODCALLTYPE d3d10_device_UpdateSubresource(ID3D10Device1 *ifac
         const void *data, UINT row_pitch, UINT depth_pitch)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct wined3d_resource *wined3d_resource;
-    struct wined3d_box wined3d_box;
+    ID3D11Resource *d3d11_resource;
 
     TRACE("iface %p, resource %p, subresource_idx %u, box %p, data %p, row_pitch %u, depth_pitch %u.\n",
             iface, resource, subresource_idx, box, data, row_pitch, depth_pitch);
 
-    if (box)
-    {
-        wined3d_box.left = box->left;
-        wined3d_box.top = box->top;
-        wined3d_box.front = box->front;
-        wined3d_box.right = box->right;
-        wined3d_box.bottom = box->bottom;
-        wined3d_box.back = box->back;
-    }
-
-    wined3d_resource = wined3d_resource_from_d3d10_resource(resource);
-    wined3d_mutex_lock();
-    wined3d_device_update_sub_resource(device->wined3d_device, wined3d_resource,
-            subresource_idx, box ? &wined3d_box : NULL, data, row_pitch, depth_pitch);
-    wined3d_mutex_unlock();
+    ID3D10Resource_QueryInterface(resource, &IID_ID3D11Resource, (void **)&d3d11_resource);
+    d3d11_immediate_context_UpdateSubresource(&device->immediate_context.ID3D11DeviceContext_iface,
+            d3d11_resource, subresource_idx, (const D3D11_BOX *)box, data, row_pitch, depth_pitch);
+    ID3D11Resource_Release(d3d11_resource);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *iface,
