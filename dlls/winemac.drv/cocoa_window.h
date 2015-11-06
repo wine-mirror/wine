@@ -56,7 +56,6 @@
 
     NSUInteger lastModifierFlags;
 
-    NSTimer* liveResizeDisplayTimer;
     NSRect frameAtResizeStart;
     BOOL resizingFromLeft, resizingFromTop;
 

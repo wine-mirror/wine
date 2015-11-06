@@ -293,8 +293,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 @property (assign, nonatomic) void* imeData;
 @property (nonatomic) BOOL commandDone;
 
-@property (retain, nonatomic) NSTimer* liveResizeDisplayTimer;
-
 @property (readonly, copy, nonatomic) NSArray* childWineWindows;
 
     - (void) updateColorSpace;
@@ -654,7 +652,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     @synthesize colorKeyed, colorKeyRed, colorKeyGreen, colorKeyBlue;
     @synthesize usePerPixelAlpha;
     @synthesize imeData, commandDone;
-    @synthesize liveResizeDisplayTimer;
 
     + (WineWindow*) createWindowWithFeatures:(const struct macdrv_window_features*)wf
                                  windowFrame:(NSRect)window_frame
@@ -744,8 +741,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     - (void) dealloc
     {
         [[NSNotificationCenter defaultCenter] removeObserver:self];
-        [liveResizeDisplayTimer invalidate];
-        [liveResizeDisplayTimer release];
         [queue release];
         [latentChildWindows release];
         [latentParentWindow release];
@@ -1556,16 +1551,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         [self checkTransparency];
     }
 
-    - (void) setLiveResizeDisplayTimer:(NSTimer*)newTimer
-    {
-        if (newTimer != liveResizeDisplayTimer)
-        {
-            [liveResizeDisplayTimer invalidate];
-            [liveResizeDisplayTimer release];
-            liveResizeDisplayTimer = [newTimer retain];
-        }
-    }
-
     - (void) makeFocused:(BOOL)activate
     {
         if (activate)
@@ -2248,8 +2233,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             [queue postEvent:event];
             macdrv_release_event(event);
         }
-
-        self.liveResizeDisplayTimer = nil;
     }
 
     - (void) windowDidEnterFullScreen:(NSNotification*)notification
@@ -2465,29 +2448,6 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
 
         frameAtResizeStart = [self frame];
         resizingFromLeft = resizingFromTop = FALSE;
-
-        // There's a strange restriction in window redrawing during Cocoa-
-        // managed window resizing.  Only calls to -[NSView setNeedsDisplay...]
-        // that happen synchronously when Cocoa tells us that our window size
-        // has changed or asynchronously in a short interval thereafter provoke
-        // the window to redraw.  Calls to those methods that happen asynchronously
-        // a half second or more after the last change of the window size aren't
-        // heeded until the next resize-related user event (e.g. mouse movement).
-        //
-        // Wine often has a significant delay between when it's been told that
-        // the window has changed size and when it can flush completed drawing.
-        // So, our windows would get stuck with incomplete drawing for as long
-        // as the user holds the mouse button down and doesn't move it.
-        //
-        // We address this by "manually" asking our windows to check if they need
-        // redrawing every so often (during live resize only).
-        self.liveResizeDisplayTimer = [NSTimer scheduledTimerWithTimeInterval:1.0/30.0
-                                                                       target:self
-                                                                     selector:@selector(displayIfNeeded)
-                                                                     userInfo:nil
-                                                                      repeats:YES];
-        [[NSRunLoop currentRunLoop] addTimer:liveResizeDisplayTimer
-                                     forMode:NSRunLoopCommonModes];
     }
 
     - (NSRect) windowWillUseStandardFrame:(NSWindow*)window defaultFrame:(NSRect)proposedFrame
