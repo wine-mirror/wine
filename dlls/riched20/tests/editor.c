@@ -3307,6 +3307,8 @@ static void test_ES_PASSWORD(void)
   DestroyWindow(hwndRichEdit);
 }
 
+LONG streamout_written = 0;
+
 static DWORD CALLBACK test_WM_SETTEXT_esCallback(DWORD_PTR dwCookie,
                                          LPBYTE pbBuff,
                                          LONG cb,
@@ -3318,6 +3320,7 @@ static DWORD CALLBACK test_WM_SETTEXT_esCallback(DWORD_PTR dwCookie,
     memcpy(*str, pbBuff, *pcb);
     *str += *pcb;
   }
+  streamout_written = *pcb;
   return 0;
 }
 
@@ -3442,6 +3445,7 @@ static void test_EM_STREAMOUT(void)
   EDITSTREAM es;
   char buf[1024] = {0};
   char * p;
+  LRESULT result;
 
   const char * TestItem1 = "TestSomeText";
   const char * TestItem2 = "TestSomeText\r";
@@ -3453,24 +3457,28 @@ static void test_EM_STREAMOUT(void)
   es.dwError = 0;
   es.pfnCallback = test_WM_SETTEXT_esCallback;
   memset(buf, 0, sizeof(buf));
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
   r = strlen(buf);
   ok(r == 12, "streamed text length is %d, expecting 12\n", r);
   ok(strcmp(buf, TestItem1) == 0,
         "streamed text different, got %s\n", buf);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
 
   /* RTF mode writes the final end of para \r if it's part of the selection */
   p = buf;
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF, (LPARAM)&es);
   ok (count_pars(buf) == 1, "got %s\n", buf);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
   p = buf;
   SendMessageA(hwndRichEdit, EM_SETSEL, 0, 12);
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
   ok (count_pars(buf) == 0, "got %s\n", buf);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
   p = buf;
   SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
   ok (count_pars(buf) == 1, "got %s\n", buf);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
 
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)TestItem2);
   p = buf;
@@ -3478,7 +3486,8 @@ static void test_EM_STREAMOUT(void)
   es.dwError = 0;
   es.pfnCallback = test_WM_SETTEXT_esCallback;
   memset(buf, 0, sizeof(buf));
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
   r = strlen(buf);
   /* Here again, \r gets converted to \r\n, like WM_GETTEXT */
   ok(r == 14, "streamed text length is %d, expecting 14\n", r);
@@ -3487,16 +3496,19 @@ static void test_EM_STREAMOUT(void)
 
   /* And again RTF mode writes the final end of para \r if it's part of the selection */
   p = buf;
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF, (LPARAM)&es);
   ok (count_pars(buf) == 2, "got %s\n", buf);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
   p = buf;
   SendMessageA(hwndRichEdit, EM_SETSEL, 0, 13);
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
   ok (count_pars(buf) == 1, "got %s\n", buf);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
   p = buf;
   SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_RTF|SFF_SELECTION, (LPARAM)&es);
   ok (count_pars(buf) == 2, "got %s\n", buf);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
 
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)TestItem3);
   p = buf;
@@ -3504,7 +3516,8 @@ static void test_EM_STREAMOUT(void)
   es.dwError = 0;
   es.pfnCallback = test_WM_SETTEXT_esCallback;
   memset(buf, 0, sizeof(buf));
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
+  ok(result == streamout_written, "got %ld expected %d\n", result, streamout_written);
   r = strlen(buf);
   ok(r == 14, "streamed text length is %d, expecting 14\n", r);
   ok(strcmp(buf, TestItem3) == 0,
@@ -3516,11 +3529,12 @@ static void test_EM_STREAMOUT(void)
   es.dwError = 0;
   es.pfnCallback = test_esCallback_written_1;
   memset(buf, 0, sizeof(buf));
-  SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
+  result = SendMessageA(hwndRichEdit, EM_STREAMOUT, SF_TEXT, (LPARAM)&es);
   r = strlen(buf);
   ok(r == 14, "streamed text length is %d, expecting 14\n", r);
   ok(strcmp(buf, TestItem3) == 0,
         "streamed text different, got %s\n", buf);
+  ok(result == 0, "got %ld expected 0\n", result);
 
 
   DestroyWindow(hwndRichEdit);
