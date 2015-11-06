@@ -172,14 +172,14 @@
   
   - ES_AUTOHSCROLL
   - ES_AUTOVSCROLL
-  - ES_CENTER
+  + ES_CENTER
   + ES_DISABLENOSCROLL (scrollbar is always visible)
   - ES_EX_NOCALLOLEINIT
-  - ES_LEFT
+  + ES_LEFT
   - ES_MULTILINE (currently single line controls aren't supported)
   - ES_NOIME
   - ES_READONLY (I'm not sure if beeping is the proper behaviour)
-  - ES_RIGHT
+  + ES_RIGHT
   - ES_SAVESEL
   - ES_SELFIME
   - ES_SUNKEN
@@ -1563,7 +1563,7 @@ static LRESULT ME_StreamIn(ME_TextEditor *editor, DWORD format, EDITSTREAM *stre
                           ME_GetTextLength(editor), FALSE);
     from = to = 0;
     ME_ClearTempStyle(editor);
-    ME_SetDefaultParaFormat(editor->pCursors[0].pPara->member.para.pFmt);
+    ME_SetDefaultParaFormat(editor, editor->pCursors[0].pPara->member.para.pFmt);
   }
 
 
@@ -2364,7 +2364,7 @@ ME_KeyDown(ME_TextEditor *editor, WORD nKey)
               ME_InsertTextFromCursor(editor, 0, &endl, 1,
                                       editor->pCursors[0].pRun->member.run.style);
               para = editor->pBuffer->pFirst->member.para.next_para;
-              ME_SetDefaultParaFormat(para->member.para.pFmt);
+              ME_SetDefaultParaFormat(editor, para->member.para.pFmt);
               para->member.para.nFlags = MEPF_REWRAP;
               editor->pCursors[0].pPara = para;
               editor->pCursors[0].pRun = ME_FindItemFwd(para, diRun);
@@ -2790,7 +2790,7 @@ static BOOL ME_ShowContextMenu(ME_TextEditor *editor, int x, int y)
   return TRUE;
 }
 
-ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
+ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10, DWORD csStyle)
 {
   ME_TextEditor *ed = ALLOC_OBJ(ME_TextEditor);
   int i;
@@ -2804,6 +2804,11 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10)
   ed->reOle = NULL;
   ed->bEmulateVersion10 = bEmulateVersion10;
   ed->styleFlags = 0;
+  ed->alignStyle = PFA_LEFT;
+  if (csStyle & ES_RIGHT)
+      ed->alignStyle = PFA_RIGHT;
+  if (csStyle & ES_CENTER)
+      ed->alignStyle = PFA_CENTER;
   ITextHost_TxGetPropertyBits(texthost,
                               (TXTBIT_RICHTEXT|TXTBIT_MULTILINE|
                                TXTBIT_READONLY|TXTBIT_USEPASSWORD|

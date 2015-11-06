@@ -391,6 +391,7 @@ typedef struct tagME_TextEditor
   ME_TextBuffer *pBuffer;
   ME_Cursor *pCursors;
   DWORD styleFlags;
+  DWORD alignStyle;
   DWORD exStyleFlags;
   int nCursors;
   SIZE sizeWindow;

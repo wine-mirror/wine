@@ -7965,6 +7965,76 @@ static void test_EM_SETFONTSIZE(void)
     DestroyWindow(richedit);
 }
 
+static void test_alignment_style(void)
+{
+    HWND richedit = NULL;
+    PARAFORMAT2 pf;
+    DWORD align_style[] = {ES_LEFT, ES_CENTER, ES_RIGHT, ES_RIGHT | ES_CENTER,
+                           ES_LEFT | ES_CENTER, ES_LEFT | ES_RIGHT,
+                           ES_LEFT | ES_RIGHT | ES_CENTER};
+    DWORD align_mask[] = {PFA_LEFT, PFA_CENTER, PFA_RIGHT, PFA_CENTER, PFA_CENTER,
+                          PFA_RIGHT, PFA_CENTER};
+    const char * streamtext =
+        "{\\rtf1\\ansi\\ansicpg1252\\deff0\\deflang12298{\\fonttbl{\\f0\\fswiss\\fprq2\\fcharset0 System;}}\r\n"
+        "\\viewkind4\\uc1\\pard\\f0\\fs17 TestSomeText\\par\r\n"
+        "}\r\n";
+    EDITSTREAM es;
+    int i;
+
+    for (i = 0; i < sizeof(align_style) / sizeof(align_style[0]); i++)
+    {
+        DWORD dwStyle, new_align;
+
+        richedit = new_windowW(RICHEDIT_CLASS20W, align_style[i], NULL);
+        memset(&pf, 0, sizeof(pf));
+        pf.cbSize = sizeof(PARAFORMAT2);
+        pf.dwMask = -1;
+
+        SendMessageW(richedit, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+        ok(pf.wAlignment == align_mask[i], "(i = %d) got %d expected %d\n",
+           i, pf.wAlignment, align_mask[i]);
+        dwStyle = GetWindowLongW(richedit, GWL_STYLE);
+        ok((i ? (dwStyle & align_style[i]) : (!(dwStyle & 0x0000000f))) ,
+           "(i = %d) didn't set right align style: 0x%x\n", i, dwStyle);
+
+
+        /* Based on test_reset_default_para_fmt() */
+        new_align = (align_mask[i] == PFA_LEFT) ? PFA_RIGHT : PFA_LEFT;
+        simulate_typing_characters(richedit, "123");
+
+        SendMessageW(richedit, EM_SETSEL, 0, -1);
+        pf.dwMask = PFM_ALIGNMENT;
+        pf.wAlignment = new_align;
+        SendMessageW(richedit, EM_SETPARAFORMAT, 0, (LPARAM)&pf);
+
+        SendMessageW(richedit, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+        ok(pf.wAlignment == new_align, "got %d expect %d\n", pf.wAlignment, new_align);
+
+        SendMessageW(richedit, EM_SETSEL, 0, -1);
+        SendMessageW(richedit, WM_CUT, 0, 0);
+
+        SendMessageW(richedit, EM_GETPARAFORMAT, 0, (LPARAM)&pf);
+        ok(pf.wAlignment == align_mask[i], "got %d exppect %d\n", pf.wAlignment, align_mask[i]);
+
+        DestroyWindow(richedit);
+    }
+
+    /* test with EM_STREAMIN */
+    richedit = new_windowW(RICHEDIT_CLASS20W, ES_CENTER, NULL);
+    simulate_typing_characters(richedit, "abc");
+    es.dwCookie = (DWORD_PTR)&streamtext;
+    es.dwError = 0;
+    es.pfnCallback = test_EM_STREAMIN_esCallback;
+    SendMessageW(richedit, EM_STREAMIN, SF_RTF, (LPARAM)&es);
+    SendMessageW(richedit, EM_SETSEL, 0, -1);
+    memset(&pf, 0, sizeof(pf));
+    pf.cbSize = sizeof(PARAFORMAT2);
+    pf.dwMask = -1;
+    SendMessageW(richedit, EM_GETPARAFORMAT, SCF_SELECTION, (LPARAM)&pf);
+    ok(pf.wAlignment == ES_CENTER, "got %d expected ES_CENTER\n", pf.wAlignment);
+    DestroyWindow(richedit);
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -8031,6 +8101,7 @@ START_TEST( editor )
   test_reset_default_para_fmt();
   test_EM_SETREADONLY();
   test_EM_SETFONTSIZE();
+  test_alignment_style();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
