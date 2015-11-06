@@ -2674,8 +2674,8 @@ LSTATUS WINAPI RegNotifyChangeKeyValue( HKEY hkey, BOOL fWatchSubTree,
           hEvent, fAsync);
 
     status = NtNotifyChangeKey( hkey, hEvent, NULL, NULL, &iosb,
-                                fdwNotifyFilter, fAsync, NULL, 0,
-                                fWatchSubTree);
+                                fdwNotifyFilter, fWatchSubTree, NULL, 0,
+                                fAsync);
 
     if (status && status != STATUS_TIMEOUT)
         return RtlNtStatusToDosError( status );

@@ -643,10 +643,10 @@ NTSTATUS WINAPI NtNotifyChangeKey(
 	IN PVOID ApcContext OPTIONAL,
 	OUT PIO_STATUS_BLOCK IoStatusBlock,
 	IN ULONG CompletionFilter,
-	IN BOOLEAN Asynchronous,
+	IN BOOLEAN WatchSubtree,
 	OUT PVOID ChangeBuffer,
 	IN ULONG Length,
-	IN BOOLEAN WatchSubtree)
+	IN BOOLEAN Asynchronous)
 {
     NTSTATUS ret;
 

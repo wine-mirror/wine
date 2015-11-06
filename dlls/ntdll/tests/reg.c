@@ -146,6 +146,7 @@ static NTSTATUS (WINAPI * pRtlFreeHeap)(PVOID, ULONG, PVOID);
 static LPVOID   (WINAPI * pRtlAllocateHeap)(PVOID,ULONG,ULONG);
 static NTSTATUS (WINAPI * pRtlZeroMemory)(PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlpNtQueryValueKey)(HANDLE,ULONG*,PBYTE,DWORD*,void *);
+static NTSTATUS (WINAPI * pNtNotifyChangeKey)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,ULONG,BOOLEAN,PVOID,ULONG,BOOLEAN);
 
 static HMODULE hntdll = 0;
 static int CurrentTest = 0;
@@ -183,6 +184,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtQueryInformationProcess)
     NTDLL_GET_PROC(NtSetValueKey)
     NTDLL_GET_PROC(NtOpenKey)
+    NTDLL_GET_PROC(NtNotifyChangeKey)
     NTDLL_GET_PROC(RtlFormatCurrentUserKeyPath)
     NTDLL_GET_PROC(RtlCompareUnicodeString)
     NTDLL_GET_PROC(RtlReAllocateHeap)
@@ -1502,6 +1504,28 @@ static void test_NtQueryKey(void)
     pNtClose(key);
 }
 
+static void test_notify(void)
+{
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK iosb;
+    NTSTATUS status;
+    HANDLE key, event;
+
+    InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+
+    status = pNtOpenKey(&key, KEY_ALL_ACCESS, &attr);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(event != NULL, "CreateEvent failed: %u\n", GetLastError());
+
+    status = pNtNotifyChangeKey(key, event, NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
+    todo_wine ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+
+    pNtClose(key);
+    pNtClose(event);
+}
+
 START_TEST(reg)
 {
     static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t',0};
@@ -1526,6 +1550,7 @@ START_TEST(reg)
     test_NtQueryLicenseKey();
     test_NtQueryValueKey();
     test_long_value_name();
+    test_notify();
     test_NtDeleteKey();
     test_symlinks();
     test_redirection();
