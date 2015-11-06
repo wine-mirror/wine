@@ -3466,6 +3466,227 @@ static void test_il_append_aligned(void)
     DestroyWindow(window);
 }
 
+static void test_fragment_coords(void)
+{
+    ID3D11RenderTargetView *backbuffer_rtv;
+    D3D11_SUBRESOURCE_DATA resource_data;
+    ID3D11InputLayout *input_layout;
+    ID3D11PixelShader *ps, *ps_frac;
+    D3D11_BUFFER_DESC buffer_desc;
+    ID3D11DeviceContext *context;
+    ID3D11Texture2D *backbuffer;
+    unsigned int stride, offset;
+    IDXGISwapChain *swapchain;
+    ID3D11Buffer *vb, *ps_cb;
+    ID3D11VertexShader *vs;
+    ID3D11Device *device;
+    D3D11_VIEWPORT vp;
+    ULONG refcount;
+    DWORD color;
+    HWND window;
+    HRESULT hr;
+
+    static const D3D11_INPUT_ELEMENT_DESC layout_desc[] =
+    {
+        {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0},
+    };
+    static const DWORD vs_code[] =
+    {
+#if 0
+        float4 main(float4 position : POSITION) : SV_POSITION
+        {
+            return position;
+        }
+#endif
+        0x43425844, 0xa7a2f22d, 0x83ff2560, 0xe61638bd, 0x87e3ce90, 0x00000001, 0x000000d8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x49534f50, 0x4e4f4954, 0xababab00,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+        0x00000000, 0x0000000f, 0x505f5653, 0x5449534f, 0x004e4f49, 0x52444853, 0x0000003c, 0x00010040,
+        0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float2 cutoff;
+
+        float4 main(float4 position : SV_POSITION) : SV_TARGET
+        {
+            float4 ret = float4(0.0, 0.0, 0.0, 1.0);
+
+            if (position.x > cutoff.x)
+                ret.y = 1.0;
+            if (position.y > cutoff.y)
+                ret.z = 1.0;
+
+            return ret;
+        }
+#endif
+        0x43425844, 0x49fc9e51, 0x8068867d, 0xf20cfa39, 0xb8099e6b, 0x00000001, 0x00000144, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x000000a8, 0x00000040,
+        0x0000002a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x08000031, 0x00100032,
+        0x00000000, 0x00208046, 0x00000000, 0x00000000, 0x00101046, 0x00000000, 0x0a000001, 0x00102062,
+        0x00000000, 0x00100106, 0x00000000, 0x00004002, 0x00000000, 0x3f800000, 0x3f800000, 0x00000000,
+        0x08000036, 0x00102092, 0x00000000, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x3f800000,
+        0x0100003e,
+    };
+    static const DWORD ps_frac_code[] =
+    {
+#if 0
+        float4 main(float4 position : SV_POSITION) : SV_TARGET
+        {
+            return float4(frac(position.xy), 0.0, 1.0);
+        }
+#endif
+        0x43425844, 0x86d9d78a, 0x190b72c2, 0x50841fd6, 0xdc24022e, 0x00000001, 0x000000f8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x0000005c, 0x00000040,
+        0x00000017, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x0500001a, 0x00102032, 0x00000000, 0x00101046, 0x00000000, 0x08000036, 0x001020c2, 0x00000000,
+        0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x3f800000, 0x0100003e,
+    };
+    static const struct
+    {
+        struct vec2 position;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f}},
+        {{-1.0f,  1.0f}},
+        {{ 1.0f, -1.0f}},
+        {{ 1.0f,  1.0f}},
+    };
+    static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
+    struct vec4 cutoff = {320.0f, 240.0f, 0.0f, 0.0f};
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+    window = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D11Texture2D, (void **)&backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateInputLayout(device, layout_desc, sizeof(layout_desc) / sizeof(*layout_desc),
+            vs_code, sizeof(vs_code), &input_layout);
+    ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = sizeof(quad);
+    buffer_desc.Usage = D3D11_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+    buffer_desc.StructureByteStride = 0;
+
+    resource_data.pSysMem = quad;
+    resource_data.SysMemPitch = 0;
+    resource_data.SysMemSlicePitch = 0;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &vb);
+    ok(SUCCEEDED(hr), "Failed to create vertex buffer, hr %#x.\n", hr);
+
+    buffer_desc.ByteWidth = sizeof(cutoff);
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+
+    resource_data.pSysMem = &cutoff;
+
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &ps_cb);
+    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateVertexShader(device, vs_code, sizeof(vs_code), NULL, &vs);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+    hr = ID3D11Device_CreatePixelShader(device, ps_frac_code, sizeof(ps_frac_code), NULL, &ps_frac);
+    ok(SUCCEEDED(hr), "Failed to create pixel shader, hr %#x.\n", hr);
+
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer, NULL, &backbuffer_rtv);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    ID3D11Device_GetImmediateContext(device, &context);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &backbuffer_rtv, NULL);
+    ID3D11DeviceContext_IASetInputLayout(context, input_layout);
+    ID3D11DeviceContext_IASetPrimitiveTopology(context, D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+    stride = sizeof(*quad);
+    offset = 0;
+    ID3D11DeviceContext_IASetVertexBuffers(context, 0, 1, &vb, &stride, &offset);
+    ID3D11DeviceContext_VSSetShader(context, vs, NULL, 0);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &ps_cb);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    vp.TopLeftX = 0.0f;
+    vp.TopLeftY = 0.0f;
+    vp.Width = 640.0f;
+    vp.Height = 480.0f;
+    vp.MinDepth = 0.0f;
+    vp.MaxDepth = 1.0f;
+    ID3D11DeviceContext_RSSetViewports(context, 1, &vp);
+
+    ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_rtv, red);
+
+    ID3D11DeviceContext_Draw(context, 4, 0);
+
+    color = get_texture_color(backbuffer, 319, 239);
+    ok(compare_color(color, 0xff000000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer, 320, 239);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer, 319, 240);
+    ok(compare_color(color, 0xffff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer, 320, 240);
+    ok(compare_color(color, 0xffffff00, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D11Buffer_Release(ps_cb);
+    cutoff.x = 16.0f;
+    cutoff.y = 16.0f;
+    hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &ps_cb);
+    ok(SUCCEEDED(hr), "Failed to create constant buffer, hr %#x.\n", hr);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &ps_cb);
+
+    ID3D11DeviceContext_Draw(context, 4, 0);
+
+    color = get_texture_color(backbuffer, 14, 14);
+    ok(compare_color(color, 0xff000000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer, 18, 14);
+    ok(compare_color(color, 0xff00ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer, 14, 18);
+    ok(compare_color(color, 0xffff0000, 1), "Got unexpected color 0x%08x.\n", color);
+    color = get_texture_color(backbuffer, 18, 18);
+    ok(compare_color(color, 0xffffff00, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D11DeviceContext_PSSetShader(context, ps_frac, NULL, 0);
+    ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_rtv, red);
+
+    ID3D11DeviceContext_Draw(context, 4, 0);
+
+    color = get_texture_color(backbuffer, 14, 14);
+    ok(compare_color(color, 0xff008080, 1), "Got unexpected color 0x%08x.\n", color);
+
+    ID3D11Buffer_Release(ps_cb);
+    ID3D11PixelShader_Release(ps_frac);
+    ID3D11PixelShader_Release(ps);
+    ID3D11VertexShader_Release(vs);
+    ID3D11Buffer_Release(vb);
+    ID3D11InputLayout_Release(input_layout);
+    ID3D11RenderTargetView_Release(backbuffer_rtv);
+    ID3D11Texture2D_Release(backbuffer);
+    IDXGISwapChain_Release(swapchain);
+    ID3D11DeviceContext_Release(context);
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    DestroyWindow(window);
+}
+
 static void test_resource_map(void)
 {
     D3D11_MAPPED_SUBRESOURCE mapped_subresource;
@@ -3634,5 +3855,6 @@ START_TEST(d3d11)
     test_texture();
     test_scissor();
     test_il_append_aligned();
+    test_fragment_coords();
     test_resource_map();
 }
