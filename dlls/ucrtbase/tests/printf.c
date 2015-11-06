@@ -156,6 +156,9 @@ static void test_snprintf (void)
         ok (buffer[valid] == '\0',
             "\"%s\": Missing null termination (ret %d) - is %d\n", fmt, n, buffer[valid]);
     }
+
+    ok (vsprintf_wrapper (UCRTBASE_PRINTF_STANDARD_SNPRINTF_BEHAVIOUR, NULL, 0, "abcd") == 4,
+        "Failure to snprintf to NULL\n");
 }
 
 static int __cdecl vswprintf_wrapper(unsigned __int64 options, wchar_t *str,
