@@ -450,7 +450,20 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SetPredication(ID3D11Devic
 static void STDMETHODCALLTYPE d3d11_immediate_context_GSSetShaderResources(ID3D11DeviceContext *iface,
         UINT start_slot, UINT view_count, ID3D11ShaderResourceView *const *views)
 {
-    FIXME("iface %p, start_slot %u, view_count %u, views %p stub!\n", iface, start_slot, view_count, views);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    unsigned int i;
+
+    TRACE("iface %p, start_slot %u, view_count %u, views %p.\n", iface, start_slot, view_count, views);
+
+    wined3d_mutex_lock();
+    for (i = 0; i < view_count; ++i)
+    {
+        struct d3d_shader_resource_view *view = unsafe_impl_from_ID3D11ShaderResourceView(views[i]);
+
+        wined3d_device_set_gs_resource_view(device->wined3d_device, start_slot + i,
+                view ? view->wined3d_view : NULL);
+    }
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_GSSetSamplers(ID3D11DeviceContext *iface,
