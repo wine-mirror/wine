@@ -501,7 +501,40 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DispatchIndirect(ID3D11Dev
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetState(ID3D11DeviceContext *iface,
         ID3D11RasterizerState *rasterizer_state)
 {
-    FIXME("iface %p, rasterizer_state %p stub!\n", iface, rasterizer_state);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    const D3D11_RASTERIZER_DESC *desc;
+
+    TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
+
+    wined3d_mutex_lock();
+    if (!(device->rasterizer_state = unsafe_impl_from_ID3D11RasterizerState(rasterizer_state)))
+    {
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, WINED3D_FILL_SOLID);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, WINED3D_CULL_CCW);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, FALSE);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, FALSE);
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ANTIALIASEDLINEENABLE, FALSE);
+        wined3d_mutex_unlock();
+        return;
+    }
+
+    desc = &device->rasterizer_state->desc;
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, desc->FillMode);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, desc->CullMode);
+    /* glFrontFace() */
+    if (desc->FrontCounterClockwise)
+        FIXME("Ignoring FrontCounterClockwise %#x.\n", desc->FrontCounterClockwise);
+    /* OpenGL style depth bias. */
+    if (desc->DepthBias || desc->SlopeScaledDepthBias)
+        FIXME("Ignoring depth bias.\n");
+    /* GL_DEPTH_CLAMP */
+    if (!desc->DepthClipEnable)
+        FIXME("Ignoring DepthClipEnable %#x.\n", desc->DepthClipEnable);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, desc->ScissorEnable);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, desc->MultisampleEnable);
+    wined3d_device_set_render_state(device->wined3d_device,
+            WINED3D_RS_ANTIALIASEDLINEENABLE, desc->AntialiasedLineEnable);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetViewports(ID3D11DeviceContext *iface,
@@ -2504,39 +2537,13 @@ static void STDMETHODCALLTYPE d3d10_device_DrawAuto(ID3D10Device1 *iface)
 static void STDMETHODCALLTYPE d3d10_device_RSSetState(ID3D10Device1 *iface, ID3D10RasterizerState *rasterizer_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    const D3D11_RASTERIZER_DESC *desc;
+    struct d3d_rasterizer_state *rasterizer_state_object;
 
     TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
 
-    wined3d_mutex_lock();
-    if (!(device->rasterizer_state = unsafe_impl_from_ID3D10RasterizerState(rasterizer_state)))
-    {
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, WINED3D_FILL_SOLID);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, WINED3D_CULL_CCW);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, FALSE);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, FALSE);
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ANTIALIASEDLINEENABLE, FALSE);
-        wined3d_mutex_unlock();
-        return;
-    }
-
-    desc = &device->rasterizer_state->desc;
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_FILLMODE, desc->FillMode);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_CULLMODE, desc->CullMode);
-    /* glFrontFace() */
-    if (desc->FrontCounterClockwise)
-        FIXME("Ignoring FrontCounterClockwise %#x.\n", desc->FrontCounterClockwise);
-    /* OpenGL style depth bias. */
-    if (desc->DepthBias || desc->SlopeScaledDepthBias)
-        FIXME("Ignoring depth bias.\n");
-    /* GL_DEPTH_CLAMP */
-    if (!desc->DepthClipEnable)
-        FIXME("Ignoring DepthClipEnable %#x.\n", desc->DepthClipEnable);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SCISSORTESTENABLE, desc->ScissorEnable);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEANTIALIAS, desc->MultisampleEnable);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_ANTIALIASEDLINEENABLE, desc->AntialiasedLineEnable);
-    wined3d_mutex_unlock();
+    rasterizer_state_object = unsafe_impl_from_ID3D10RasterizerState(rasterizer_state);
+    d3d11_immediate_context_RSSetState(&device->immediate_context.ID3D11DeviceContext_iface,
+            rasterizer_state_object ? &rasterizer_state_object->ID3D11RasterizerState_iface : NULL);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_RSSetViewports(ID3D10Device1 *iface,

@@ -863,6 +863,15 @@ HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d
     return S_OK;
 }
 
+struct d3d_rasterizer_state *unsafe_impl_from_ID3D11RasterizerState(ID3D11RasterizerState *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_rasterizer_state_vtbl);
+
+    return impl_from_ID3D11RasterizerState(iface);
+}
+
 struct d3d_rasterizer_state *unsafe_impl_from_ID3D10RasterizerState(ID3D10RasterizerState *iface)
 {
     if (!iface)

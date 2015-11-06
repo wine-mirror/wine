@@ -332,6 +332,7 @@ struct d3d_rasterizer_state
 
 HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, struct d3d_device *device,
         const D3D11_RASTERIZER_DESC *desc) DECLSPEC_HIDDEN;
+struct d3d_rasterizer_state *unsafe_impl_from_ID3D11RasterizerState(ID3D11RasterizerState *iface) DECLSPEC_HIDDEN;
 struct d3d_rasterizer_state *unsafe_impl_from_ID3D10RasterizerState(ID3D10RasterizerState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11SamplerState, ID3D10SamplerState */
