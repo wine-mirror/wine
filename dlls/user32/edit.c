@@ -2577,7 +2577,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 	LPWSTR p;
 	HRGN hrgn = 0;
 	LPWSTR buf = NULL;
-	UINT bufl = 0;
+	UINT bufl;
 
 	TRACE("%s, can_undo %d, send_update %d\n",
 	    debugstr_w(lpsz_replace), can_undo, send_update);
@@ -2726,8 +2726,7 @@ static void EDIT_EM_ReplaceSel(EDITSTATE *es, BOOL can_undo, LPCWSTR lpsz_replac
 			EDIT_EM_EmptyUndoBuffer(es);
 	}
 
-	if (bufl)
-		HeapFree(GetProcessHeap(), 0, buf);
+	HeapFree(GetProcessHeap(), 0, buf);
  
 	s += strl;
 
