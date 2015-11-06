@@ -5,8 +5,8 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-09-13 17:46+0200\n"
-"Last-Translator: Florian Pelz\n"
+"PO-Revision-Date: 2015-11-06 12:55+0100\n"
+"Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -7461,16 +7461,12 @@ msgid "&Convert..."
 msgstr "&Konvertieren..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Objekt"
+msgstr "%2-&Objekt %1"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Objekt"
+msgstr "&Objekt %1"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
