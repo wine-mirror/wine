@@ -131,6 +131,7 @@ void* CDECL MSVCRT_operator_new(MSVCRT_size_t size)
 {
   void *retval;
   int freed;
+  MSVCRT_new_handler_func handler;
 
   do
   {
@@ -141,12 +142,11 @@ void* CDECL MSVCRT_operator_new(MSVCRT_size_t size)
       return retval;
     }
 
-    LOCK_HEAP;
-    if(MSVCRT_new_handler)
-      freed = (*MSVCRT_new_handler)(size);
+    handler = MSVCRT_new_handler;
+    if(handler)
+      freed = (*handler)(size);
     else
       freed = 0;
-    UNLOCK_HEAP;
   } while(freed);
 
   TRACE("(%ld) out of memory\n", size);
