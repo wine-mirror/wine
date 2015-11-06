@@ -43,6 +43,8 @@
     void* surface;
     pthread_mutex_t* surface_mutex;
 
+    CGDirectDisplayID _lastDisplayID;
+
     NSBezierPath* shape;
     NSData* shapeData;
     BOOL shapeChangedSinceLastDraw;

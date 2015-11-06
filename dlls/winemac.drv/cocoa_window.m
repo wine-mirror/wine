@@ -19,6 +19,7 @@
  */
 
 #import <Carbon/Carbon.h>
+#import <CoreVideo/CoreVideo.h>
 
 #import "cocoa_window.h"
 
@@ -152,6 +153,100 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
 
 @interface NSWindow (WineAccessPrivateMethods)
     - (id) _displayChanged;
+@end
+
+
+@interface WineDisplayLink : NSObject
+{
+    CGDirectDisplayID _displayID;
+    CVDisplayLinkRef _link;
+    NSMutableSet* _windows;
+}
+
+    - (id) initWithDisplayID:(CGDirectDisplayID)displayID;
+
+    - (void) addWindow:(WineWindow*)window;
+    - (void) removeWindow:(WineWindow*)window;
+
+@end
+
+@implementation WineDisplayLink
+
+static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* inNow, const CVTimeStamp* inOutputTime, CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext);
+
+    - (id) initWithDisplayID:(CGDirectDisplayID)displayID
+    {
+        self = [super init];
+        if (self)
+        {
+            CVReturn status = CVDisplayLinkCreateWithCGDisplay(displayID, &_link);
+            if (status == kCVReturnSuccess && !_link)
+                status = kCVReturnError;
+            if (status == kCVReturnSuccess)
+                status = CVDisplayLinkSetOutputCallback(_link, WineDisplayLinkCallback, self);
+            if (status != kCVReturnSuccess)
+            {
+                [self release];
+                return nil;
+            }
+
+            _displayID = displayID;
+            _windows = [[NSMutableSet alloc] init];
+        }
+        return self;
+    }
+
+    - (void) dealloc
+    {
+        if (_link)
+        {
+            CVDisplayLinkStop(_link);
+            CVDisplayLinkRelease(_link);
+        }
+        [_windows release];
+        [super dealloc];
+    }
+
+    - (void) addWindow:(WineWindow*)window
+    {
+        @synchronized(self) {
+            BOOL needsStart = !_windows.count;
+            [_windows addObject:window];
+            if (needsStart)
+                CVDisplayLinkStart(_link);
+        }
+    }
+
+    - (void) removeWindow:(WineWindow*)window
+    {
+        @synchronized(self) {
+            BOOL wasRunning = _windows.count > 0;
+            [_windows removeObject:window];
+            if (wasRunning && !_windows.count)
+                CVDisplayLinkStop(_link);
+        }
+    }
+
+    - (void) fire
+    {
+        NSSet* windows;
+        @synchronized(self) {
+            windows = [_windows copy];
+        }
+        dispatch_async(dispatch_get_main_queue(), ^{
+            for (WineWindow* window in windows)
+                [window displayIfNeeded];
+        });
+        [windows release];
+    }
+
+static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* inNow, const CVTimeStamp* inOutputTime, CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext)
+{
+    WineDisplayLink* link = displayLinkContext;
+    [link fire];
+    return kCVReturnSuccess;
+}
+
 @end
 
 
@@ -592,6 +687,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         [window setAcceptsMouseMovedEvents:YES];
         [window setColorSpace:[NSColorSpace genericRGBColorSpace]];
         [window setDelegate:window];
+        [window setAutodisplay:NO];
         window.hwnd = hwnd;
         window.queue = queue;
         window->savedContentMinSize = NSZeroSize;
@@ -636,6 +732,11 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                selector:@selector(applicationDidUnhide)
                    name:NSApplicationDidUnhideNotification
                  object:NSApp];
+
+        [[[NSWorkspace sharedWorkspace] notificationCenter] addObserver:window
+                                                              selector:@selector(checkWineDisplayLink)
+                                                                  name:NSWorkspaceActiveSpaceDidChangeNotification
+                                                                object:[NSWorkspace sharedWorkspace]];
 
         return window;
     }
@@ -1207,6 +1308,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                     if ([self level] != [other level])
                         [self setLevel:[other level]];
                     [self orderWindow:orderingMode relativeTo:[other windowNumber]];
+                    [self checkWineDisplayLink];
 
                     // The above call to -[NSWindow orderWindow:relativeTo:] won't
                     // reorder windows which are both children of the same parent
@@ -1225,6 +1327,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
                 if (next && [self level] < [next level])
                     [self setLevel:[next level]];
                 [self orderFront:nil];
+                [self checkWineDisplayLink];
                 needAdjustWindowLevels = TRUE;
             }
 
@@ -1278,6 +1381,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         }
         else
             [self orderOut:nil];
+        [self checkWineDisplayLink];
         savedVisibleState = FALSE;
         if (wasVisible && wasOnActiveSpace && fullscreen)
             [controller updateFullscreenWindows];
@@ -1573,6 +1677,56 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         }
     }
 
+    - (void) checkWineDisplayLink
+    {
+        NSScreen* screen = self.screen;
+        if (![self isVisible] || ![self isOnActiveSpace] || [self isMiniaturized] || [self isEmptyShaped])
+            screen = nil;
+#if defined(MAC_OS_X_VERSION_10_9) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+        if ([self respondsToSelector:@selector(occlusionState)] && !(self.occlusionState & NSWindowOcclusionStateVisible))
+            screen = nil;
+#endif
+
+        NSNumber* displayIDNumber = [screen.deviceDescription objectForKey:@"NSScreenNumber"];
+        CGDirectDisplayID displayID = [displayIDNumber unsignedIntValue];
+        if (displayID == _lastDisplayID)
+            return;
+
+        static NSMutableDictionary* displayIDToDisplayLinkMap;
+        if (!displayIDToDisplayLinkMap)
+        {
+            displayIDToDisplayLinkMap = [[NSMutableDictionary alloc] init];
+
+            [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidChangeScreenParametersNotification
+                                                              object:NSApp
+                                                               queue:nil
+                                                          usingBlock:^(NSNotification *note){
+                NSMutableSet* badDisplayIDs = [NSMutableSet setWithArray:displayIDToDisplayLinkMap.allKeys];
+                NSSet* validDisplayIDs = [NSSet setWithArray:[[NSScreen screens] valueForKeyPath:@"deviceDescription.NSScreenNumber"]];
+                [badDisplayIDs minusSet:validDisplayIDs];
+                [displayIDToDisplayLinkMap removeObjectsForKeys:[badDisplayIDs allObjects]];
+            }];
+        }
+
+        if (_lastDisplayID)
+        {
+            WineDisplayLink* link = [displayIDToDisplayLinkMap objectForKey:[NSNumber numberWithUnsignedInt:_lastDisplayID]];
+            [link removeWindow:self];
+        }
+        if (displayID)
+        {
+            WineDisplayLink* link = [displayIDToDisplayLinkMap objectForKey:displayIDNumber];
+            if (!link)
+            {
+                link = [[[WineDisplayLink alloc] initWithDisplayID:displayID] autorelease];
+                [displayIDToDisplayLinkMap setObject:link forKey:displayIDNumber];
+            }
+            [link addWindow:self];
+            [self displayIfNeeded];
+        }
+        _lastDisplayID = displayID;
+    }
+
     - (BOOL) isEmptyShaped
     {
         return (self.shapeData.length == sizeof(CGRectZero) && !memcmp(self.shapeData.bytes, &CGRectZero, sizeof(CGRectZero)));
@@ -1674,6 +1828,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
             self.dockTile.contentView = nil;
             lastDockIconSnapshot = 0;
         }
+        [self checkWineDisplayLink];
     }
 
 
@@ -2046,6 +2201,16 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         [controller windowGotFocus:self];
     }
 
+    - (void) windowDidChangeOcclusionState:(NSNotification*)notification
+    {
+        [self checkWineDisplayLink];
+    }
+
+    - (void) windowDidChangeScreen:(NSNotification*)notification
+    {
+        [self checkWineDisplayLink];
+    }
+
     - (void)windowDidDeminiaturize:(NSNotification *)notification
     {
         WineApplicationController* controller = [WineApplicationController sharedController];
@@ -2072,6 +2237,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
         }
 
         [self windowDidResize:notification];
+        [self checkWineDisplayLink];
     }
 
     - (void) windowDidEndLiveResize:(NSNotification *)notification
@@ -2115,6 +2281,7 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     {
         if (fullscreen && [self isOnActiveSpace])
             [[WineApplicationController sharedController] updateFullscreenWindows];
+        [self checkWineDisplayLink];
     }
 
     - (void)windowDidMove:(NSNotification *)notification
