@@ -1546,6 +1546,14 @@ HRESULT d3d_shader_resource_view_create(struct d3d_device *device, ID3D11Resourc
     return S_OK;
 }
 
+struct d3d_shader_resource_view *unsafe_impl_from_ID3D11ShaderResourceView(ID3D11ShaderResourceView *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_shader_resource_view_vtbl);
+    return impl_from_ID3D11ShaderResourceView(iface);
+}
+
 struct d3d_shader_resource_view *unsafe_impl_from_ID3D10ShaderResourceView(ID3D10ShaderResourceView *iface)
 {
     if (!iface)
