@@ -835,7 +835,7 @@ static inline INT LISTBOX_lstrcmpiW( LCID lcid, LPCWSTR str1, LPCWSTR str2 )
  */
 static INT LISTBOX_FindStringPos( LB_DESCR *descr, LPCWSTR str, BOOL exact )
 {
-    INT index, min, max, res = -1;
+    INT index, min, max, res;
 
     if (!(descr->style & LBS_SORT)) return -1;  /* Add it at the end */
     min = 0;
@@ -878,7 +878,7 @@ static INT LISTBOX_FindStringPos( LB_DESCR *descr, LPCWSTR str, BOOL exact )
  */
 static INT LISTBOX_FindFileStrPos( LB_DESCR *descr, LPCWSTR str )
 {
-    INT min, max, res = -1;
+    INT min, max, res;
 
     if (!HAS_STRINGS(descr))
         return LISTBOX_FindStringPos( descr, str, FALSE );

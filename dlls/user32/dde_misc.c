@@ -1881,7 +1881,7 @@ static void WDML_RemoveAllLinks(WDML_INSTANCE* pInstance, WDML_CONV* pConv, WDML
 WDML_LINK* 	WDML_FindLink(WDML_INSTANCE* pInstance, HCONV hConv, WDML_SIDE side,
 			      HSZ hszItem, BOOL use_fmt, UINT uFmt)
 {
-    WDML_LINK*	pCurrent = NULL;
+    WDML_LINK*	pCurrent;
 
     for (pCurrent = pInstance->links[side]; pCurrent != NULL; pCurrent = pCurrent->next)
     {
@@ -2061,7 +2061,7 @@ WDML_CONV*	WDML_AddConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
 WDML_CONV*	WDML_FindConv(WDML_INSTANCE* pInstance, WDML_SIDE side,
 			      HSZ hszService, HSZ hszTopic)
 {
-    WDML_CONV*	pCurrent = NULL;
+    WDML_CONV*	pCurrent;
 
     for (pCurrent = pInstance->convs[side]; pCurrent != NULL; pCurrent = pCurrent->next)
     {

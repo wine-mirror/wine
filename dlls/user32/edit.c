@@ -498,7 +498,7 @@ static void EDIT_BuildLineDefs_ML(EDITSTATE *es, INT istart, INT iend, INT delta
 	LINEDEF *current_line;
 	LINEDEF *previous_line;
 	LINEDEF *start_line;
-	INT line_index = 0, nstart_line = 0, nstart_index = 0;
+	INT line_index = 0, nstart_line, nstart_index;
 	INT line_count = es->line_count;
 	INT orig_net_length;
 	RECT rc;
@@ -1079,7 +1079,7 @@ static LRESULT EDIT_EM_PosFromChar(EDITSTATE *es, INT index, BOOL after_wrap)
 	INT x = 0;
 	INT y = 0;
 	INT w;
-	INT lw = 0;
+	INT lw;
 	LINEDEF *line_def;
 
 	index = min(index, len);
@@ -4299,7 +4299,7 @@ static LRESULT EDIT_EM_GetThumb(EDITSTATE *es)
 static void EDIT_GetCompositionStr(HIMC hIMC, LPARAM CompFlag, EDITSTATE *es)
 {
     LONG buflen;
-    LPWSTR lpCompStr = NULL;
+    LPWSTR lpCompStr;
     LPSTR lpCompStrAttr = NULL;
     DWORD dwBufLenAttr;
 
@@ -4342,8 +4342,6 @@ static void EDIT_GetCompositionStr(HIMC hIMC, LPARAM CompFlag, EDITSTATE *es)
                     dwBufLenAttr);
             lpCompStrAttr[dwBufLenAttr] = 0;
         }
-        else
-            lpCompStrAttr = NULL;
     }
 
     /* check for change in composition start */

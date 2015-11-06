@@ -536,7 +536,7 @@ static BOOL get_base_keys( enum parameter_key index, HKEY *base_key, HKEY *volat
 /* load a value to a registry entry */
 static DWORD load_entry( struct sysparam_entry *entry, void *data, DWORD size )
 {
-    DWORD type, count = 0;
+    DWORD type, count;
     HKEY base_key, volatile_key;
 
     if (!get_base_keys( entry->regval[0], &base_key, &volatile_key )) return FALSE;

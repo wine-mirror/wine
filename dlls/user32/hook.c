@@ -475,7 +475,7 @@ LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL uni
 {
     struct user_thread_info *thread_info = get_user_thread_info();
     struct hook_info info;
-    DWORD_PTR ret = 0;
+    DWORD_PTR ret;
 
     USER_CheckNotLock();
 

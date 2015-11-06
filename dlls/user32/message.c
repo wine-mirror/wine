@@ -1996,7 +1996,7 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
     void*       ptr = NULL;
     int         size = 0;
     UINT_PTR    uiLo, uiHi;
-    LPARAM      lp = 0;
+    LPARAM      lp;
     HGLOBAL     hunlock = 0;
     int         i;
     DWORD       res;

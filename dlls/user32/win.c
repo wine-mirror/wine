@@ -354,7 +354,7 @@ static HWND *list_window_parents( HWND hwnd )
 {
     WND *win;
     HWND current, *list;
-    int i, pos = 0, size = 16, count = 0;
+    int i, pos = 0, size = 16, count;
 
     if (!(list = HeapAlloc( GetProcessHeap(), 0, size * sizeof(HWND) ))) return NULL;
 
@@ -1911,7 +1911,7 @@ BOOL WINAPI OpenIcon( HWND hwnd )
  */
 HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR title )
 {
-    HWND *list = NULL;
+    HWND *list;
     HWND retvalue = 0;
     int i = 0, len = 0;
     WCHAR *buffer = NULL;

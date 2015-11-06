@@ -489,7 +489,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
     POINT pos;
     SIZE size;
     DLG_TEMPLATE template;
-    DIALOGINFO * dlgInfo = NULL;
+    DIALOGINFO * dlgInfo;
     DWORD units = GetDialogBaseUnits();
     BOOL ownerEnabled = TRUE;
     HMENU hMenu = 0;
@@ -917,7 +917,7 @@ INT_PTR WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATEW temp
  */
 BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
 {
-    BOOL wasEnabled = TRUE;
+    BOOL wasEnabled;
     DIALOGINFO * dlgInfo;
     HWND owner;
 

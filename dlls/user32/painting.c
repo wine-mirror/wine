@@ -1220,7 +1220,7 @@ BOOL WINAPI RedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
     else  /* need to build a list of the region rectangles */
     {
         DWORD size;
-        RGNDATA *data = NULL;
+        RGNDATA *data;
 
         if (!(size = GetRegionData( hrgn, 0, NULL ))) return FALSE;
         if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;

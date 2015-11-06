@@ -1742,7 +1742,7 @@ static void MENU_DrawMenuItem( HWND hwnd, HMENU hmenu, HWND hwndOwner, HDC hdc, 
  */
 static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
 {
-    HBRUSH hPrevBrush = 0, brush = GetSysColorBrush( COLOR_MENU );
+    HBRUSH hPrevBrush, brush = GetSysColorBrush( COLOR_MENU );
     RECT rect;
     POPUPMENU *menu = MENU_GetMenu( hmenu );
 

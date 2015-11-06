@@ -1214,7 +1214,7 @@ static BOOL TEXT_GrayString(HDC hdc, HBRUSH hb, GRAYSTRINGPROC fn, LPARAM lp, IN
     HFONT hfsave;
     HDC memdc;
     int slen = len;
-    BOOL retval = TRUE;
+    BOOL retval;
     COLORREF fg, bg;
 
     if(!hdc) return FALSE;

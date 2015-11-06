@@ -1094,9 +1094,9 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
     struct cursoricon_object *info;
     DWORD *frame_rates = NULL;
     DWORD *frame_seq = NULL;
-    ani_header header = {0};
+    ani_header header;
     BOOL use_seq = FALSE;
-    HCURSOR cursor = 0;
+    HCURSOR cursor;
     UINT i;
     BOOL error = FALSE;
     HICON *frames;

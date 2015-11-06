@@ -71,7 +71,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     int bspace, bw, bh, theight, tleft, wwidth, wheight, wleft, wtop, bpos;
     int borheight, borwidth, iheight, ileft, iwidth, twidth, tiheight;
     NONCLIENTMETRICSW nclm;
-    HMONITOR monitor = 0;
+    HMONITOR monitor;
     MONITORINFO mon_info;
     LPCWSTR lpszText;
     WCHAR *buffer = NULL;

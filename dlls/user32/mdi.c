@@ -838,7 +838,7 @@ static void MDITile( HWND client, MDICLIENTINFO *ci, WPARAM wParam )
 static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
 {
     HMENU menu = GetMenu( frame );
-    HMENU  	hSysPopup = 0;
+    HMENU  	hSysPopup;
     HBITMAP hSysMenuBitmap = 0;
     HICON hIcon;
 
