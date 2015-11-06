@@ -234,9 +234,11 @@ int CDECL MSVCRT__set_new_mode(int mode)
  */
 int CDECL _callnewh(MSVCRT_size_t size)
 {
-  if(MSVCRT_new_handler)
-    (*MSVCRT_new_handler)(size);
-  return 0;
+  int ret = 0;
+  MSVCRT_new_handler_func handler = MSVCRT_new_handler;
+  if(handler)
+    ret = (*handler)(size) ? 1 : 0;
+  return ret;
 }
 
 /*********************************************************************
