@@ -1221,6 +1221,15 @@ HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3d_devic
     return S_OK;
 }
 
+struct d3d_sampler_state *unsafe_impl_from_ID3D11SamplerState(ID3D11SamplerState *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_sampler_state_vtbl);
+
+    return impl_from_ID3D11SamplerState(iface);
+}
+
 struct d3d_sampler_state *unsafe_impl_from_ID3D10SamplerState(ID3D10SamplerState *iface)
 {
     if (!iface)
