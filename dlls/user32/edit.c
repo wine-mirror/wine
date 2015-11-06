@@ -2883,7 +2883,7 @@ static void EDIT_EM_SetLimitText(EDITSTATE *es, UINT limit)
  */
 static int calc_min_set_margin_size(HDC dc, INT left, INT right)
 {
-    WCHAR magic_string[] = {'\'','*','*','\'', 0};
+    static const WCHAR magic_string[] = {'\'','*','*','\'', 0};
     SIZE sz;
 
     GetTextExtentPointW(dc, magic_string, sizeof(magic_string)/sizeof(WCHAR) - 1, &sz);
