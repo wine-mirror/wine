@@ -539,7 +539,19 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetViewports(ID3D11Devic
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSSetScissorRects(ID3D11DeviceContext *iface,
         UINT rect_count, const D3D11_RECT *rects)
 {
-    FIXME("iface %p, rect_count %u, rects %p stub!\n", iface, rect_count, rects);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, rect_count %u, rects %p.\n", iface, rect_count, rects);
+
+    if (rect_count > 1)
+        FIXME("Multiple scissor rects not implemented.\n");
+
+    if (!rect_count)
+        return;
+
+    wined3d_mutex_lock();
+    wined3d_device_set_scissor_rect(device->wined3d_device, rects);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion(ID3D11DeviceContext *iface,
