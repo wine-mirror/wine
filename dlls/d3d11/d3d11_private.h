@@ -297,6 +297,7 @@ struct d3d_blend_state
 
 HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *device,
         const D3D11_BLEND_DESC *desc) DECLSPEC_HIDDEN;
+struct d3d_blend_state *unsafe_impl_from_ID3D11BlendState(ID3D11BlendState *iface) DECLSPEC_HIDDEN;
 struct d3d_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface) DECLSPEC_HIDDEN;
 
 /* ID3D11DepthStencilState, ID3D10DepthStencilState */

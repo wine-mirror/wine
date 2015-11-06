@@ -452,8 +452,62 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetRenderTargetsAndUnord
 static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11DeviceContext *iface,
         ID3D11BlendState *blend_state, const FLOAT blend_factor[4], UINT sample_mask)
 {
-    FIXME("iface %p, blend_state %p, blend_factor {%.8e %.8e %.8e %.8e}, sample_mask 0x%08x stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    const D3D11_BLEND_DESC *desc;
+
+    TRACE("iface %p, blend_state %p, blend_factor {%.8e %.8e %.8e %.8e}, sample_mask 0x%08x.\n",
             iface, blend_state, blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3], sample_mask);
+
+    if (blend_factor[0] != 1.0f || blend_factor[1] != 1.0f || blend_factor[2] != 1.0f || blend_factor[3] != 1.0f)
+        FIXME("Ignoring blend factor {%.8e %.8e %.8e %.8e}.\n",
+                blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
+
+    wined3d_mutex_lock();
+    memcpy(device->blend_factor, blend_factor, 4 * sizeof(*blend_factor));
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEMASK, sample_mask);
+    if (!(device->blend_state = unsafe_impl_from_ID3D11BlendState(blend_state)))
+    {
+        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ALPHABLENDENABLE, FALSE);
+        wined3d_device_set_render_state(device->wined3d_device,
+                WINED3D_RS_COLORWRITEENABLE, D3D11_COLOR_WRITE_ENABLE_ALL);
+        wined3d_device_set_render_state(device->wined3d_device,
+                WINED3D_RS_COLORWRITEENABLE1, D3D11_COLOR_WRITE_ENABLE_ALL);
+        wined3d_device_set_render_state(device->wined3d_device,
+                WINED3D_RS_COLORWRITEENABLE2, D3D11_COLOR_WRITE_ENABLE_ALL);
+        wined3d_device_set_render_state(device->wined3d_device,
+                WINED3D_RS_COLORWRITEENABLE3, D3D11_COLOR_WRITE_ENABLE_ALL);
+        wined3d_mutex_unlock();
+        return;
+    }
+
+    desc = &device->blend_state->desc;
+    /* glSampleCoverage() */
+    if (desc->AlphaToCoverageEnable)
+        FIXME("Ignoring AlphaToCoverageEnable %#x.\n", desc->AlphaToCoverageEnable);
+    /* glEnableIndexedEXT(GL_BLEND, ...) */
+    FIXME("Per-rendertarget blend not implemented.\n");
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ALPHABLENDENABLE,
+            desc->RenderTarget[0].BlendEnable);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SRCBLEND, desc->RenderTarget[0].SrcBlend);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DESTBLEND, desc->RenderTarget[0].DestBlend);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BLENDOP, desc->RenderTarget[0].BlendOp);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SEPARATEALPHABLENDENABLE, TRUE);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SRCBLENDALPHA,
+            desc->RenderTarget[0].SrcBlendAlpha);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DESTBLENDALPHA,
+            desc->RenderTarget[0].DestBlendAlpha);
+    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BLENDOPALPHA,
+            desc->RenderTarget[0].BlendOpAlpha);
+    FIXME("Color mask > 3 not implemented.\n");
+    wined3d_device_set_render_state(device->wined3d_device,
+            WINED3D_RS_COLORWRITEENABLE, desc->RenderTarget[0].RenderTargetWriteMask);
+    wined3d_device_set_render_state(device->wined3d_device,
+            WINED3D_RS_COLORWRITEENABLE1, desc->RenderTarget[1].RenderTargetWriteMask);
+    wined3d_device_set_render_state(device->wined3d_device,
+            WINED3D_RS_COLORWRITEENABLE2, desc->RenderTarget[2].RenderTargetWriteMask);
+    wined3d_device_set_render_state(device->wined3d_device,
+            WINED3D_RS_COLORWRITEENABLE3, desc->RenderTarget[3].RenderTargetWriteMask);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetDepthStencilState(ID3D11DeviceContext *iface,
@@ -2436,60 +2490,14 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device1 *iface,
         ID3D10BlendState *blend_state, const FLOAT blend_factor[4], UINT sample_mask)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    const D3D11_BLEND_DESC *desc;
+    struct d3d_blend_state *blend_state_object;
 
     TRACE("iface %p, blend_state %p, blend_factor {%.8e %.8e %.8e %.8e}, sample_mask 0x%08x.\n",
             iface, blend_state, blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3], sample_mask);
 
-    if (blend_factor[0] != 1.0f || blend_factor[1] != 1.0f || blend_factor[2] != 1.0f || blend_factor[3] != 1.0f)
-        FIXME("Ignoring blend factor {%.8e %.8e %.8e %.8e}.\n",
-                blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3]);
-    wined3d_mutex_lock();
-    memcpy(device->blend_factor, blend_factor, 4 * sizeof(*blend_factor));
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_MULTISAMPLEMASK, sample_mask);
-    if (!(device->blend_state = unsafe_impl_from_ID3D10BlendState(blend_state)))
-    {
-        wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ALPHABLENDENABLE, FALSE);
-        wined3d_device_set_render_state(device->wined3d_device,
-                WINED3D_RS_COLORWRITEENABLE, D3D10_COLOR_WRITE_ENABLE_ALL);
-        wined3d_device_set_render_state(device->wined3d_device,
-                WINED3D_RS_COLORWRITEENABLE1, D3D10_COLOR_WRITE_ENABLE_ALL);
-        wined3d_device_set_render_state(device->wined3d_device,
-                WINED3D_RS_COLORWRITEENABLE2, D3D10_COLOR_WRITE_ENABLE_ALL);
-        wined3d_device_set_render_state(device->wined3d_device,
-                WINED3D_RS_COLORWRITEENABLE3, D3D10_COLOR_WRITE_ENABLE_ALL);
-        wined3d_mutex_unlock();
-        return;
-    }
-
-    desc = &device->blend_state->desc;
-    /* glSampleCoverage() */
-    if (desc->AlphaToCoverageEnable)
-        FIXME("Ignoring AlphaToCoverageEnable %#x.\n", desc->AlphaToCoverageEnable);
-    /* glEnableIndexedEXT(GL_BLEND, ...) */
-    FIXME("Per-rendertarget blend not implemented.\n");
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_ALPHABLENDENABLE,
-            desc->RenderTarget[0].BlendEnable);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SRCBLEND, desc->RenderTarget[0].SrcBlend);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DESTBLEND, desc->RenderTarget[0].DestBlend);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BLENDOP, desc->RenderTarget[0].BlendOp);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SEPARATEALPHABLENDENABLE, TRUE);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_SRCBLENDALPHA,
-            desc->RenderTarget[0].SrcBlendAlpha);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_DESTBLENDALPHA,
-            desc->RenderTarget[0].DestBlendAlpha);
-    wined3d_device_set_render_state(device->wined3d_device, WINED3D_RS_BLENDOPALPHA,
-            desc->RenderTarget[0].BlendOpAlpha);
-    FIXME("Color mask > 3 not implemented.\n");
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_COLORWRITEENABLE, desc->RenderTarget[0].RenderTargetWriteMask);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_COLORWRITEENABLE1, desc->RenderTarget[1].RenderTargetWriteMask);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_COLORWRITEENABLE2, desc->RenderTarget[2].RenderTargetWriteMask);
-    wined3d_device_set_render_state(device->wined3d_device,
-            WINED3D_RS_COLORWRITEENABLE3, desc->RenderTarget[3].RenderTargetWriteMask);
-    wined3d_mutex_unlock();
+    blend_state_object = unsafe_impl_from_ID3D10BlendState(blend_state);
+    d3d11_immediate_context_OMSetBlendState(&device->immediate_context.ID3D11DeviceContext_iface,
+            blend_state_object ? &blend_state_object->ID3D11BlendState_iface : NULL, blend_factor, sample_mask);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device1 *iface,

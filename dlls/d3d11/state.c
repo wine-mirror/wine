@@ -313,6 +313,15 @@ HRESULT d3d_blend_state_init(struct d3d_blend_state *state, struct d3d_device *d
     return S_OK;
 }
 
+struct d3d_blend_state *unsafe_impl_from_ID3D11BlendState(ID3D11BlendState *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_blend_state_vtbl);
+
+    return impl_from_ID3D11BlendState(iface);
+}
+
 struct d3d_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface)
 {
     if (!iface)
