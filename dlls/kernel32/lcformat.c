@@ -1742,6 +1742,93 @@ error:
  *        alternate calendars is determined.
  */
 
+enum enum_callback_type {
+    CALLBACK_ENUMPROC,
+    CALLBACK_ENUMPROCEX,
+    CALLBACK_ENUMPROCEXEX
+};
+
+struct enumdateformats_context {
+    enum enum_callback_type type;  /* callback kind */
+    union {
+        DATEFMT_ENUMPROCW    callback;     /* user callback pointer */
+        DATEFMT_ENUMPROCEXW  callbackex;
+    } u;
+    LCID  lcid;    /* locale of interest */
+    DWORD flags;
+    BOOL  unicode; /* A vs W callback type, only for regular and Ex callbacks */
+};
+
+/******************************************************************************
+ * NLS_EnumDateFormats <internal>
+ * Enumerates date formats for a specified locale.
+ *
+ * PARAMS
+ *    ctxt [I] enumeration context, see 'struct enumdateformats_context'
+ *
+ * RETURNS
+ *    Success: TRUE.
+ *    Failure: FALSE. Use GetLastError() to determine the cause.
+ */
+static BOOL NLS_EnumDateFormats(const struct enumdateformats_context *ctxt)
+{
+    WCHAR bufW[256];
+    char bufA[256];
+    LCTYPE lctype;
+    CALID cal_id;
+    INT ret;
+
+    if (!ctxt->u.callback)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (!GetLocaleInfoW(ctxt->lcid, LOCALE_ICALENDARTYPE|LOCALE_RETURN_NUMBER, (LPWSTR)&cal_id, sizeof(cal_id)/sizeof(WCHAR)))
+        return FALSE;
+
+    switch (ctxt->flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+    case DATE_SHORTDATE:
+        lctype = LOCALE_SSHORTDATE;
+        break;
+    case DATE_LONGDATE:
+        lctype = LOCALE_SLONGDATE;
+        break;
+    case DATE_YEARMONTH:
+        lctype = LOCALE_SYEARMONTH;
+        break;
+    default:
+        FIXME("Unknown date format (0x%08x)\n", ctxt->flags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    lctype |= ctxt->flags & LOCALE_USE_CP_ACP;
+    if (ctxt->unicode)
+        ret = GetLocaleInfoW(ctxt->lcid, lctype, bufW, sizeof(bufW)/sizeof(bufW[0]));
+    else
+        ret = GetLocaleInfoA(ctxt->lcid, lctype, bufA, sizeof(bufA)/sizeof(bufA[0]));
+
+    if (ret)
+    {
+        switch (ctxt->type)
+        {
+        case CALLBACK_ENUMPROC:
+            ctxt->u.callback(ctxt->unicode ? bufW : (WCHAR*)bufA);
+            break;
+        case CALLBACK_ENUMPROCEX:
+            ctxt->u.callbackex(ctxt->unicode ? bufW : (WCHAR*)bufA, cal_id);
+            break;
+        default:
+            ;
+        }
+    }
+
+    return TRUE;
+}
+
 /**************************************************************************
  *              EnumDateFormatsExA    (KERNEL32.@)
  *
@@ -1750,42 +1837,15 @@ error:
  */
 BOOL WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA proc, LCID lcid, DWORD flags)
 {
-    CALID cal_id;
-    char buf[256];
+    struct enumdateformats_context ctxt;
 
-    if (!proc)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    ctxt.type = CALLBACK_ENUMPROCEX;
+    ctxt.u.callbackex = (DATEFMT_ENUMPROCEXW)proc;
+    ctxt.lcid = lcid;
+    ctxt.flags = flags;
+    ctxt.unicode = FALSE;
 
-    if (!GetLocaleInfoW(lcid, LOCALE_ICALENDARTYPE|LOCALE_RETURN_NUMBER, (LPWSTR)&cal_id, sizeof(cal_id)/sizeof(WCHAR)))
-        return FALSE;
-
-    switch (flags & ~LOCALE_USE_CP_ACP)
-    {
-    case 0:
-    case DATE_SHORTDATE:
-        if (GetLocaleInfoA(lcid, LOCALE_SSHORTDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf, cal_id);
-        break;
-
-    case DATE_LONGDATE:
-        if (GetLocaleInfoA(lcid, LOCALE_SLONGDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf, cal_id);
-        break;
-
-    case DATE_YEARMONTH:
-        if (GetLocaleInfoA(lcid, LOCALE_SYEARMONTH | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf, cal_id);
-        break;
-
-    default:
-        FIXME("Unknown date format (%d)\n", flags);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    return TRUE;
+    return NLS_EnumDateFormats(&ctxt);
 }
 
 /**************************************************************************
@@ -1793,42 +1853,15 @@ BOOL WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA proc, LCID lcid, DWORD flags)
  */
 BOOL WINAPI EnumDateFormatsExW(DATEFMT_ENUMPROCEXW proc, LCID lcid, DWORD flags)
 {
-    CALID cal_id;
-    WCHAR buf[256];
+    struct enumdateformats_context ctxt;
 
-    if (!proc)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    ctxt.type = CALLBACK_ENUMPROCEX;
+    ctxt.u.callbackex = proc;
+    ctxt.lcid = lcid;
+    ctxt.flags = flags;
+    ctxt.unicode = TRUE;
 
-    if (!GetLocaleInfoW(lcid, LOCALE_ICALENDARTYPE|LOCALE_RETURN_NUMBER, (LPWSTR)&cal_id, sizeof(cal_id)/sizeof(WCHAR)))
-        return FALSE;
-
-    switch (flags & ~LOCALE_USE_CP_ACP)
-    {
-    case 0:
-    case DATE_SHORTDATE:
-        if (GetLocaleInfoW(lcid, LOCALE_SSHORTDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf, cal_id);
-        break;
-
-    case DATE_LONGDATE:
-        if (GetLocaleInfoW(lcid, LOCALE_SLONGDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf, cal_id);
-        break;
-
-    case DATE_YEARMONTH:
-        if (GetLocaleInfoW(lcid, LOCALE_SYEARMONTH | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf, cal_id);
-        break;
-
-    default:
-        FIXME("Unknown date format (%d)\n", flags);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    return TRUE;
+    return NLS_EnumDateFormats(&ctxt);
 }
 
 /**************************************************************************
@@ -1839,38 +1872,15 @@ BOOL WINAPI EnumDateFormatsExW(DATEFMT_ENUMPROCEXW proc, LCID lcid, DWORD flags)
  */
 BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
 {
-    char buf[256];
+    struct enumdateformats_context ctxt;
 
-    if (!proc)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    ctxt.type = CALLBACK_ENUMPROC;
+    ctxt.u.callback = (DATEFMT_ENUMPROCW)proc;
+    ctxt.lcid = lcid;
+    ctxt.flags = flags;
+    ctxt.unicode = FALSE;
 
-    switch (flags & ~LOCALE_USE_CP_ACP)
-    {
-    case 0:
-    case DATE_SHORTDATE:
-        if (GetLocaleInfoA(lcid, LOCALE_SSHORTDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf);
-        break;
-
-    case DATE_LONGDATE:
-        if (GetLocaleInfoA(lcid, LOCALE_SLONGDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf);
-        break;
-
-    case DATE_YEARMONTH:
-        if (GetLocaleInfoA(lcid, LOCALE_SYEARMONTH | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf);
-        break;
-
-    default:
-        FIXME("Unknown date format (%d)\n", flags);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    return TRUE;
+    return NLS_EnumDateFormats(&ctxt);
 }
 
 /**************************************************************************
@@ -1878,38 +1888,15 @@ BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
  */
 BOOL WINAPI EnumDateFormatsW(DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
 {
-    WCHAR buf[256];
+    struct enumdateformats_context ctxt;
 
-    if (!proc)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    ctxt.type = CALLBACK_ENUMPROC;
+    ctxt.u.callback = proc;
+    ctxt.lcid = lcid;
+    ctxt.flags = flags;
+    ctxt.unicode = TRUE;
 
-    switch (flags & ~LOCALE_USE_CP_ACP)
-    {
-    case 0:
-    case DATE_SHORTDATE:
-        if (GetLocaleInfoW(lcid, LOCALE_SSHORTDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf);
-        break;
-
-    case DATE_LONGDATE:
-        if (GetLocaleInfoW(lcid, LOCALE_SLONGDATE | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf);
-        break;
-
-    case DATE_YEARMONTH:
-        if (GetLocaleInfoW(lcid, LOCALE_SYEARMONTH | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf);
-        break;
-
-    default:
-        FIXME("Unknown date format (%d)\n", flags);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    return TRUE;
+    return NLS_EnumDateFormats(&ctxt);
 }
 
 /**************************************************************************
@@ -1971,14 +1958,8 @@ BOOL WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
     return TRUE;
 }
 
-enum enumcalendar_callback_type {
-    CALLBACK_ENUMPROC,
-    CALLBACK_ENUMPROCEX,
-    CALLBACK_ENUMPROCEXEX
-};
-
 struct enumcalendar_context {
-    enum enumcalendar_callback_type type;  /* callback kind */
+    enum enum_callback_type type;  /* callback kind */
     union {
         CALINFO_ENUMPROCW    callback;     /* user callback pointer */
         CALINFO_ENUMPROCEXW  callbackex;
