@@ -373,7 +373,7 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.man\.in$/)
         {
             push @{${$make}{"=MANPAGES"}}, $name;
-            ${${$make}{"=flags"}}{"manpage"} = 1;
+            ${${$make}{"=flags"}}{($file =~ /^programs\//) ? "manpage" : "clean"} = 1;
         }
         elsif ($name =~ /\.in$/)
         {

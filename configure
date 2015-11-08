@@ -18147,7 +18147,7 @@ wine_fn_config_makefile include enable_include clean,install-dev
 wine_fn_config_makefile libs/port enable_libs_port
 wine_fn_config_makefile libs/wine enable_libs_wine clean,config,install-dev,install-lib
 wine_fn_config_makefile libs/wpp enable_libs_wpp
-wine_fn_config_makefile loader enable_loader clean,config,install-lib,manpage
+wine_fn_config_makefile loader enable_loader clean,config,install-lib
 wine_fn_config_program arp enable_arp install
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
 wine_fn_config_program attrib enable_attrib install,po
@@ -18239,16 +18239,16 @@ wine_fn_config_test programs/wscript/tests wscript.exe_test
 wine_fn_config_program wusa enable_wusa install
 wine_fn_config_program xcopy enable_xcopy install,po
 wine_fn_config_test programs/xcopy/tests xcopy.exe_test
-wine_fn_config_makefile server enable_server clean,install-lib,manpage
+wine_fn_config_makefile server enable_server clean,install-lib
 wine_fn_config_tool tools clean
 wine_fn_config_tool tools/sfnt2fon clean
-wine_fn_config_tool tools/widl clean,install-dev,manpage
-wine_fn_config_tool tools/winebuild clean,install-dev,manpage
-wine_fn_config_tool tools/winedump clean,install-dev,manpage
-wine_fn_config_tool tools/winegcc clean,install-dev,manpage
-wine_fn_config_tool tools/winemaker install-dev,manpage
-wine_fn_config_tool tools/wmc clean,install-dev,manpage
-wine_fn_config_tool tools/wrc clean,install-dev,manpage
+wine_fn_config_tool tools/widl clean,install-dev
+wine_fn_config_tool tools/winebuild clean,install-dev
+wine_fn_config_tool tools/winedump clean,install-dev
+wine_fn_config_tool tools/winegcc clean,install-dev
+wine_fn_config_tool tools/winemaker clean,install-dev
+wine_fn_config_tool tools/wmc clean,install-dev
+wine_fn_config_tool tools/wrc clean,install-dev
 
 LINGUAS="\
 ar \
