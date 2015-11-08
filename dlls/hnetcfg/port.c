@@ -38,6 +38,7 @@ typedef struct fw_port
 {
     INetFwOpenPort INetFwOpenPort_iface;
     LONG refs;
+    BSTR name;
 } fw_port;
 
 static inline fw_port *impl_from_INetFwOpenPort( INetFwOpenPort *iface )
@@ -60,6 +61,7 @@ static ULONG WINAPI fw_port_Release(
     if (!refs)
     {
         TRACE("destroying %p\n", fw_port);
+        SysFreeString( fw_port->name );
         HeapFree( GetProcessHeap(), 0, fw_port );
     }
     return refs;
@@ -179,8 +181,14 @@ static HRESULT WINAPI fw_port_put_Name(
 {
     fw_port *This = impl_from_INetFwOpenPort( iface );
 
-    FIXME("%p %s\n", This, debugstr_w(name));
-    return E_NOTIMPL;
+    TRACE("%p %s\n", This, debugstr_w(name));
+
+    if (!(name = SysAllocString( name )))
+        return E_OUTOFMEMORY;
+
+    SysFreeString( This->name );
+    This->name = name;
+    return S_OK;
 }
 
 static HRESULT WINAPI fw_port_get_IpVersion(
@@ -352,6 +360,7 @@ HRESULT NetFwOpenPort_create( IUnknown *pUnkOuter, LPVOID *ppObj )
 
     fp->INetFwOpenPort_iface.lpVtbl = &fw_port_vtbl;
     fp->refs = 1;
+    fp->name = NULL;
 
     *ppObj = &fp->INetFwOpenPort_iface;
 
