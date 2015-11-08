@@ -1753,10 +1753,12 @@ struct enumdateformats_context {
     union {
         DATEFMT_ENUMPROCW    callback;     /* user callback pointer */
         DATEFMT_ENUMPROCEXW  callbackex;
+        DATEFMT_ENUMPROCEXEX callbackexex;
     } u;
-    LCID  lcid;    /* locale of interest */
-    DWORD flags;
-    BOOL  unicode; /* A vs W callback type, only for regular and Ex callbacks */
+    LCID   lcid;    /* locale of interest */
+    DWORD  flags;
+    LPARAM lParam;
+    BOOL   unicode; /* A vs W callback type, only for regular and Ex callbacks */
 };
 
 /******************************************************************************
@@ -1820,6 +1822,9 @@ static BOOL NLS_EnumDateFormats(const struct enumdateformats_context *ctxt)
             break;
         case CALLBACK_ENUMPROCEX:
             ctxt->u.callbackex(ctxt->unicode ? bufW : (WCHAR*)bufA, cal_id);
+            break;
+        case CALLBACK_ENUMPROCEXEX:
+            ctxt->u.callbackexex(bufW, cal_id, ctxt->lParam);
             break;
         default:
             ;
@@ -1895,6 +1900,22 @@ BOOL WINAPI EnumDateFormatsW(DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
     ctxt.lcid = lcid;
     ctxt.flags = flags;
     ctxt.unicode = TRUE;
+
+    return NLS_EnumDateFormats(&ctxt);
+}
+
+/**************************************************************************
+ *              EnumDateFormatsExEx	(KERNEL32.@)
+ */
+BOOL WINAPI EnumDateFormatsExEx(DATEFMT_ENUMPROCEXEX proc, const WCHAR *locale, DWORD flags, LPARAM lParam)
+{
+    struct enumdateformats_context ctxt;
+
+    ctxt.type = CALLBACK_ENUMPROCEXEX;
+    ctxt.u.callbackexex = proc;
+    ctxt.lcid = LocaleNameToLCID(locale, 0);
+    ctxt.flags = flags;
+    ctxt.lParam = lParam;
 
     return NLS_EnumDateFormats(&ctxt);
 }
