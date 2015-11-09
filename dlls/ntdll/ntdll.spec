@@ -205,7 +205,7 @@
 # @ stub NtModifyBootEntry
 @ stdcall NtNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long)
 @ stdcall NtNotifyChangeKey(long long ptr ptr ptr long long ptr long long)
-# @ stub NtNotifyChangeMultipleKeys
+@ stdcall NtNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long)
 @ stdcall NtOpenDirectoryObject(long long long)
 @ stdcall NtOpenEvent(long long long)
 @ stub NtOpenEventPair
@@ -1121,7 +1121,7 @@
 # @ stub ZwModifyBootEntry
 @ stdcall ZwNotifyChangeDirectoryFile(long long ptr ptr ptr ptr long long long) NtNotifyChangeDirectoryFile
 @ stdcall ZwNotifyChangeKey(long long ptr ptr ptr long long ptr long long) NtNotifyChangeKey
-# @ stub ZwNotifyChangeMultipleKeys
+@ stdcall ZwNotifyChangeMultipleKeys(long long ptr long ptr ptr ptr long long ptr long long) NtNotifyChangeMultipleKeys
 @ stdcall ZwOpenDirectoryObject(long long long) NtOpenDirectoryObject
 @ stdcall ZwOpenEvent(long long long) NtOpenEvent
 @ stub ZwOpenEventPair

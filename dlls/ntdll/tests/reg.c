@@ -147,6 +147,8 @@ static LPVOID   (WINAPI * pRtlAllocateHeap)(PVOID,ULONG,ULONG);
 static NTSTATUS (WINAPI * pRtlZeroMemory)(PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlpNtQueryValueKey)(HANDLE,ULONG*,PBYTE,DWORD*,void *);
 static NTSTATUS (WINAPI * pNtNotifyChangeKey)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,ULONG,BOOLEAN,PVOID,ULONG,BOOLEAN);
+static NTSTATUS (WINAPI * pNtNotifyChangeMultipleKeys)(HANDLE,ULONG,OBJECT_ATTRIBUTES*,HANDLE,PIO_APC_ROUTINE,
+                                                       void*,IO_STATUS_BLOCK*,ULONG,BOOLEAN,void*,ULONG,BOOLEAN);
 static NTSTATUS (WINAPI * pNtWaitForSingleObject)(HANDLE,BOOLEAN,const LARGE_INTEGER*);
 
 static HMODULE hntdll = 0;
@@ -201,6 +203,7 @@ static BOOL InitFunctionPtrs(void)
     /* optional functions */
     pNtQueryLicenseValue = (void *)GetProcAddress(hntdll, "NtQueryLicenseValue");
     pNtOpenKeyEx = (void *)GetProcAddress(hntdll, "NtOpenKeyEx");
+    pNtNotifyChangeMultipleKeys = (void *)GetProcAddress(hntdll, "NtNotifyChangeMultipleKeys");
 
     return TRUE;
 }
@@ -1516,7 +1519,6 @@ static void test_notify(void)
     NTSTATUS status;
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
-
     status = pNtOpenKey(&key, KEY_ALL_ACCESS, &attr);
     ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
@@ -1543,8 +1545,40 @@ static void test_notify(void)
     status = pNtDeleteKey(subkey);
     ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
     pNtClose(subkey);
-
     pNtClose(key);
+
+    if (pNtNotifyChangeMultipleKeys)
+    {
+        InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+        status = pNtOpenKey(&key, KEY_ALL_ACCESS, &attr);
+        ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+
+        status = pNtNotifyChangeMultipleKeys(key, 0, NULL, event, NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
+        ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+
+        timeout.QuadPart = 0;
+        status = pNtWaitForSingleObject(event, FALSE, &timeout);
+        ok(status == STATUS_TIMEOUT, "NtWaitForSingleObject returned %x\n", status);
+
+        attr.RootDirectory = key;
+        attr.ObjectName = &str;
+        pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
+        status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
+        ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+
+        status = pNtWaitForSingleObject(event, FALSE, &timeout);
+        ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+
+        status = pNtDeleteKey(subkey);
+        ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+        pNtClose(subkey);
+        pNtClose(key);
+    }
+    else
+    {
+        win_skip("NtNotifyChangeMultipleKeys not available\n");
+    }
+
     pNtClose(event);
 }
 
