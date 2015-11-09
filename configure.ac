@@ -717,7 +717,7 @@ case $host_os in
     case $host_os in
         mingw32*)
           crtlibs="-lmsvcrt"
-          AC_SUBST(SOCKET_LIBS,"-L\$(top_builddir)/dlls/ws2_32 -lws2_32") ;;
+          AC_SUBST(SOCKET_LIBS,"-lws2_32") ;;
     esac
 
     libwine_targets="libwine.dll libwine.a"

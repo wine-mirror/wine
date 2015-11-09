@@ -7980,7 +7980,7 @@ fi
     case $host_os in
         mingw32*)
           crtlibs="-lmsvcrt"
-          SOCKET_LIBS="-L\$(top_builddir)/dlls/ws2_32 -lws2_32"
+          SOCKET_LIBS="-lws2_32"
  ;;
     esac
 
