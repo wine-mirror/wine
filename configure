@@ -964,6 +964,7 @@ enable_avifil32
 enable_avrt
 enable_bcrypt
 enable_browseui
+enable_bthprops_cpl
 enable_cabinet
 enable_capi2032
 enable_cards
@@ -17465,6 +17466,7 @@ wine_fn_config_dll bcrypt enable_bcrypt
 wine_fn_config_test dlls/bcrypt/tests bcrypt_test
 wine_fn_config_dll browseui enable_browseui clean,po
 wine_fn_config_test dlls/browseui/tests browseui_test
+wine_fn_config_dll bthprops.cpl enable_bthprops_cpl
 wine_fn_config_dll cabinet enable_cabinet implib
 wine_fn_config_test dlls/cabinet/tests cabinet_test
 wine_fn_config_dll capi2032 enable_capi2032 implib
