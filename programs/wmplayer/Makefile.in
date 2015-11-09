@@ -1,0 +1,7 @@
+MODULE    = wmplayer.exe
+APPMODE   = -mwindows -municode
+
+RC_SRCS = version.rc
+
+C_SRCS = \
+	main.c

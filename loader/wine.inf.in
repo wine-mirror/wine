@@ -2519,6 +2519,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 11,,msxml6.dll
 11,,shdocvw.dll
 16422,Internet Explorer,iexplore.exe
+16422,Windows Media Player,wmplayer.exe
 11,,*
 
 [FakeDlls]
@@ -2567,6 +2568,7 @@ HKLM,%CurrentVersion%\Telephony\Country List\998,"SameAreaRule",,"G"
 16410,Microsoft,
 16412,Microsoft,
 16422,Internet Explorer,iexplore.exe
+16422,Windows Media Player,wmplayer.exe
 16427,System\OLE DB,oledb32.dll
 16427,System\OLE DB,msdaps.dll
 11,,*
