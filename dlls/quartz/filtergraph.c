@@ -913,6 +913,9 @@ static HRESULT WINAPI FilterGraph2_Connect(IFilterGraph2 *iface, IPin *ppinOut, 
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, ppinOut, ppinIn);
 
+    if(!ppinOut || !ppinIn)
+        return E_POINTER;
+
     if (TRACE_ON(quartz))
     {
         hr = IPin_QueryPinInfo(ppinIn, &PinInfo);
