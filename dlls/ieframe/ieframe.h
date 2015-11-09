@@ -230,6 +230,7 @@ struct InternetExplorer {
 
     HWND frame_hwnd;
     HWND status_hwnd;
+    HWND toolbar_hwnd;
     HMENU menu;
     BOOL nohome;
 
