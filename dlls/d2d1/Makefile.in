@@ -2,7 +2,6 @@ MODULE    = d2d1.dll
 IMPORTLIB = d2d1
 IMPORTS   = d3d10_1 dxguid uuid
 DELAYIMPORTS = dwrite
-CFLAGS += $(EXCESS_PRECISION_CFLAGS)
 
 C_SRCS = \
 	bitmap.c \
@@ -16,3 +15,5 @@ C_SRCS = \
 	wic_render_target.c
 
 RC_SRCS = version.rc
+
+geometry_EXTRADEFS = $(EXCESS_PRECISION_CFLAGS)
