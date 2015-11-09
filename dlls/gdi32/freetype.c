@@ -3839,6 +3839,82 @@ static void update_font_association_info(UINT current_ansi_codepage)
         RegDeleteTreeA(HKEY_LOCAL_MACHINE, font_assoc_reg_key);
 }
 
+static void set_multi_value_key(HKEY hkey, const WCHAR *name, const WCHAR *value, DWORD len)
+{
+    if (value)
+        RegSetValueExW(hkey, name, 0, REG_MULTI_SZ, (const BYTE *)value, len);
+    else if (name)
+        RegDeleteValueW(hkey, name);
+}
+
+static void update_font_system_link_info(UINT current_ansi_codepage)
+{
+    static const WCHAR system_link_simplified_chinese[] =
+        {'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','u','\0',
+         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'B','A','T','A','N','G','.','T','T','C',',','B','a','t','a','n','g','\0',
+         '\0'};
+    static const WCHAR system_link_traditional_chinese[] =
+        {'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','u','\0',
+         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'B','A','T','A','N','G','.','T','T','C',',','B','a','t','a','n','g','\0',
+         '\0'};
+    static const WCHAR system_link_japanese[] =
+        {'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
+         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
+         '\0'};
+    static const WCHAR system_link_korean[] =
+        {'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
+         'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
+         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         '\0'};
+    static const WCHAR system_link_non_cjk[] =
+        {'M','S','G','O','T','H','I','C','.','T','T','C',',','M','S',' ','U','I',' ','G','o','t','h','i','c','\0',
+         'M','I','N','G','L','I','U','.','T','T','C',',','P','M','i','n','g','L','i','U','\0',
+         'S','I','M','S','U','N','.','T','T','C',',','S','i','m','S','u','n','\0',
+         'G','U','L','I','M','.','T','T','C',',','G','u','l','i','m','\0',
+         '\0'};
+    HKEY hkey;
+
+    if (RegCreateKeyW(HKEY_LOCAL_MACHINE, system_link, &hkey) == ERROR_SUCCESS)
+    {
+        const WCHAR *link;
+        DWORD len;
+
+        switch (current_ansi_codepage)
+        {
+        case 932:
+            link = system_link_japanese;
+            len = sizeof(system_link_japanese);
+            break;
+        case 936:
+            link = system_link_simplified_chinese;
+            len = sizeof(system_link_simplified_chinese);
+            break;
+        case 949:
+            link = system_link_korean;
+            len = sizeof(system_link_korean);
+            break;
+        case 950:
+            link = system_link_traditional_chinese;
+            len = sizeof(system_link_traditional_chinese);
+            break;
+        default:
+            link = system_link_non_cjk;
+            len = sizeof(system_link_non_cjk);
+        }
+        set_multi_value_key(hkey, Lucida_Sans_Unicode, link, len);
+        set_multi_value_key(hkey, Microsoft_Sans_Serif, link, len);
+        set_multi_value_key(hkey, Tahoma, link, len);
+        RegCloseKey(hkey);
+    }
+}
+
 static void update_font_info(void)
 {
     static const WCHAR logpixels[] = { 'L','o','g','P','i','x','e','l','s',0 };
@@ -3951,10 +4027,13 @@ static void update_font_info(void)
     if (!done)
         FIXME("there is no font defaults for codepages %u,%u\n", ansi_cp, oem_cp);
 
-    /* update locale dependent font association info in registry.
+    /* update locale dependent font association info and font system link info in registry.
        update only when codepages changed, not logpixels. */
     if (strcmp(buf, cpbuf) != 0)
+    {
         update_font_association_info(ansi_cp);
+        update_font_system_link_info(ansi_cp);
+    }
 }
 
 static BOOL init_freetype(void)
