@@ -69,9 +69,10 @@ static inline const char *debugstr_run( const ME_Run *run )
 /* style.c */
 ME_Style *ME_MakeStyle(CHARFORMAT2W *style) DECLSPEC_HIDDEN;
 void ME_AddRefStyle(ME_Style *item) DECLSPEC_HIDDEN;
+void ME_DestroyStyle(ME_Style *item) DECLSPEC_HIDDEN;
 void ME_ReleaseStyle(ME_Style *item) DECLSPEC_HIDDEN;
 ME_Style *ME_GetInsertStyle(ME_TextEditor *editor, int nCursor) DECLSPEC_HIDDEN;
-ME_Style *ME_ApplyStyle(ME_Style *sSrc, CHARFORMAT2W *style) DECLSPEC_HIDDEN;
+ME_Style *ME_ApplyStyle(ME_TextEditor *ed, ME_Style *sSrc, CHARFORMAT2W *style) DECLSPEC_HIDDEN;
 HFONT ME_SelectStyleFont(ME_Context *c, ME_Style *s) DECLSPEC_HIDDEN;
 void ME_UnselectStyleFont(ME_Context *c, ME_Style *s, HFONT hOldFont) DECLSPEC_HIDDEN;
 void ME_InitCharFormat2W(CHARFORMAT2W *pFmt) DECLSPEC_HIDDEN;

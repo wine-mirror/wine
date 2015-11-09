@@ -695,7 +695,7 @@ void ME_SetSelectionCharFormat(ME_TextEditor *editor, CHARFORMAT2W *pFmt)
     ME_Style *s;
     if (!editor->pBuffer->pCharStyle)
       editor->pBuffer->pCharStyle = ME_GetInsertStyle(editor, 0);
-    s = ME_ApplyStyle(editor->pBuffer->pCharStyle, pFmt);
+    s = ME_ApplyStyle(editor, editor->pBuffer->pCharStyle, pFmt);
     ME_ReleaseStyle(editor->pBuffer->pCharStyle);
     editor->pBuffer->pCharStyle = s;
   } else {
@@ -753,7 +753,7 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
 
   for (run = start_run; run != end_run; run = ME_FindItemFwd( run, diRun ))
   {
-    ME_Style *new_style = ME_ApplyStyle(run->member.run.style, pFmt);
+    ME_Style *new_style = ME_ApplyStyle(editor, run->member.run.style, pFmt);
 
     add_undo_set_char_fmt( editor, run->member.run.para->nCharOfs + run->member.run.nCharOfs,
                            run->member.run.len, &run->member.run.style->fmt );

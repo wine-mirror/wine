@@ -533,7 +533,7 @@ void ME_RTFCharAttrHook(RTF_Info *info)
     ME_Style *style2;
     RTFFlushOutputBuffer(info);
     /* FIXME too slow ? how come ? */
-    style2 = ME_ApplyStyle(info->style, &fmt);
+    style2 = ME_ApplyStyle(info->editor, info->style, &fmt);
     ME_ReleaseStyle(info->style);
     info->style = style2;
     info->styleChanged = TRUE;
@@ -2920,6 +2920,7 @@ ME_TextEditor *ME_MakeEditor(ITextHost *texthost, BOOL bEmulateVersion10, DWORD 
 
   ed->wheel_remain = 0;
 
+  list_init( &ed->style_list );
   OleInitialize(NULL);
 
   return ed;
@@ -2929,6 +2930,7 @@ void ME_DestroyEditor(ME_TextEditor *editor)
 {
   ME_DisplayItem *pFirst = editor->pBuffer->pFirst;
   ME_DisplayItem *p = pFirst, *pNext = NULL;
+  ME_Style *s, *cursor2;
   int i;
 
   ME_ClearTempStyle(editor);
@@ -2938,6 +2940,10 @@ void ME_DestroyEditor(ME_TextEditor *editor)
     ME_DestroyDisplayItem(p);
     p = pNext;
   }
+
+  LIST_FOR_EACH_ENTRY_SAFE( s, cursor2, &editor->style_list, ME_Style, entry )
+      ME_DestroyStyle( s );
+
   ME_ReleaseStyle(editor->pBuffer->pDefaultStyle);
   for (i=0; i<HFONT_CACHE_SIZE; i++)
   {

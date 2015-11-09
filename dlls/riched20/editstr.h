@@ -78,6 +78,7 @@ typedef struct tagME_Style
   TEXTMETRICW tm; /* cached font metrics for the style */
   int nRefs; /* reference count */
   SCRIPT_CACHE script_cache;
+  struct list entry;
 } ME_Style;
 
 typedef enum {
@@ -444,6 +445,7 @@ typedef struct tagME_TextEditor
 
   BOOL bMouseCaptured;
   int wheel_remain;
+  struct list style_list;
 } ME_TextEditor;
 
 typedef struct tagME_Context
