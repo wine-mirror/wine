@@ -814,6 +814,7 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
         free(key->class);
         if (!(key->class = memdup( class->str, key->classlen ))) key->classlen = 0;
     }
+    touch_key( key->parent, REG_NOTIFY_CHANGE_NAME );
     grab_object( key );
     return key;
 }

@@ -1538,7 +1538,7 @@ static void test_notify(void)
     ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
 
     status = pNtWaitForSingleObject(event, FALSE, &timeout);
-    todo_wine ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
 
     status = pNtDeleteKey(subkey);
     ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
