@@ -39,6 +39,7 @@ typedef struct fw_port
     INetFwOpenPort INetFwOpenPort_iface;
     LONG refs;
     BSTR name;
+    NET_FW_IP_PROTOCOL protocol;
 } fw_port;
 
 static inline fw_port *impl_from_INetFwOpenPort( INetFwOpenPort *iface )
@@ -227,8 +228,13 @@ static HRESULT WINAPI fw_port_put_Protocol(
 {
     fw_port *This = impl_from_INetFwOpenPort( iface );
 
-    FIXME("%p %u\n", This, ipProtocol);
-    return E_NOTIMPL;
+    TRACE("%p %u\n", This, ipProtocol);
+
+    if (ipProtocol != NET_FW_IP_PROTOCOL_TCP && ipProtocol != NET_FW_IP_PROTOCOL_UDP)
+        return E_INVALIDARG;
+
+    This->protocol = ipProtocol;
+    return S_OK;
 }
 
 static HRESULT WINAPI fw_port_get_Port(
@@ -361,6 +367,7 @@ HRESULT NetFwOpenPort_create( IUnknown *pUnkOuter, LPVOID *ppObj )
     fp->INetFwOpenPort_iface.lpVtbl = &fw_port_vtbl;
     fp->refs = 1;
     fp->name = NULL;
+    fp->protocol = NET_FW_IP_PROTOCOL_TCP;
 
     *ppObj = &fp->INetFwOpenPort_iface;
 
