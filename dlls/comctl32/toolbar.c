@@ -3152,7 +3152,7 @@ TOOLBAR_CheckButton (TOOLBAR_INFO *infoPtr, INT Id, LPARAM lParam)
 
     bChecked = (btnPtr->fsState & TBSTATE_CHECKED) != 0;
 
-    if (LOWORD(lParam) == FALSE)
+    if (!LOWORD(lParam))
 	btnPtr->fsState &= ~TBSTATE_CHECKED;
     else {
 	if (btnPtr->fsStyle & BTNS_GROUP) {
@@ -3284,7 +3284,7 @@ TOOLBAR_EnableButton (TOOLBAR_INFO *infoPtr, INT Id, LPARAM lParam)
     bState = btnPtr->fsState & TBSTATE_ENABLED;
 
     /* update the toolbar button state */
-    if(LOWORD(lParam) == FALSE) {
+    if(!LOWORD(lParam)) {
  	btnPtr->fsState &= ~(TBSTATE_ENABLED | TBSTATE_PRESSED);
     } else {
 	btnPtr->fsState |= TBSTATE_ENABLED;
