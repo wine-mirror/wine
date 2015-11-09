@@ -754,13 +754,13 @@ static ULONG IEDocHost_release(DocHost *iface)
     return IWebBrowser2_Release(&This->IWebBrowser2_iface);
 }
 
-static void WINAPI DocHostContainer_GetDocObjRect(DocHost* This, RECT* rc)
+static void DocHostContainer_get_docobj_rect(DocHost *This, RECT *rc)
 {
     GetClientRect(This->frame_hwnd, rc);
     adjust_ie_docobj_rect(This->frame_hwnd, rc);
 }
 
-static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost *iface, LPCWSTR text)
+static HRESULT DocHostContainer_set_status_text(DocHost *iface, const WCHAR *text)
 {
     InternetExplorer *This = impl_from_DocHost(iface);
     return update_ie_statustext(This, text);
@@ -780,7 +780,7 @@ static void DocHostContainer_on_command_state_change(DocHost *iface, LONG comman
     }
 }
 
-static void WINAPI DocHostContainer_SetURL(DocHost* iface, LPCWSTR url)
+static void DocHostContainer_set_url(DocHost* iface, const WCHAR *url)
 {
     InternetExplorer *This = impl_from_DocHost(iface);
 
@@ -791,10 +791,10 @@ static void WINAPI DocHostContainer_SetURL(DocHost* iface, LPCWSTR url)
 static const IDocHostContainerVtbl DocHostContainerVtbl = {
     IEDocHost_addref,
     IEDocHost_release,
-    DocHostContainer_GetDocObjRect,
-    DocHostContainer_SetStatusText,
+    DocHostContainer_get_docobj_rect,
+    DocHostContainer_set_status_text,
     DocHostContainer_on_command_state_change,
-    DocHostContainer_SetURL
+    DocHostContainer_set_url
 };
 
 static HRESULT create_ie(InternetExplorer **ret_obj)

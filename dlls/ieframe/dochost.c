@@ -500,7 +500,7 @@ void create_doc_view_hwnd(DocHost *This)
         doc_view_atom = RegisterClassExW(&wndclass);
     }
 
-    This->container_vtbl->GetDocObjRect(This, &rect);
+    This->container_vtbl->get_docobj_rect(This, &rect);
     This->hwnd = CreateWindowExW(0, wszShell_DocObject_View,
          wszShell_DocObject_View,
          WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_TABSTOP,

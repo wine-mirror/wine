@@ -103,10 +103,10 @@ typedef struct _IDocHostContainerVtbl
 {
     ULONG (*addref)(DocHost*);
     ULONG (*release)(DocHost*);
-    void (WINAPI* GetDocObjRect)(DocHost*,RECT*);
-    HRESULT (WINAPI* SetStatusText)(DocHost*,LPCWSTR);
+    void (*get_docobj_rect)(DocHost*,RECT*);
+    HRESULT (*set_status_text)(DocHost*,const WCHAR*);
     void (*on_command_state_change)(DocHost*,LONG,BOOL);
-    void (WINAPI* SetURL)(DocHost*,LPCWSTR);
+    void (*set_url)(DocHost*,const WCHAR*);
 } IDocHostContainerVtbl;
 
 struct DocHost {
