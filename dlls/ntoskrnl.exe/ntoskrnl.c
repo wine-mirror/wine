@@ -2289,6 +2289,15 @@ BOOLEAN WINAPI ExAcquireResourceExclusiveLite( PERESOURCE resource, BOOLEAN wait
     return TRUE;
 }
 
+/***********************************************************************
+ *           ExDeleteResourceLite  (NTOSKRNL.EXE.@)
+ */
+NTSTATUS WINAPI ExDeleteResourceLite(PERESOURCE resource)
+{
+    FIXME("(%p): stub\n", resource);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 /*****************************************************
  *           ExInterlockedRemoveHeadList  (NTOSKRNL.EXE.@)
  */

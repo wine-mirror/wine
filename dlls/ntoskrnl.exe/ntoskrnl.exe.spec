@@ -125,7 +125,7 @@
 @ stdcall ExCreateCallback(ptr ptr long long)
 @ stub ExDeleteNPagedLookasideList
 @ stub ExDeletePagedLookasideList
-@ stub ExDeleteResourceLite
+@ stdcall ExDeleteResourceLite(ptr)
 @ stub ExDesktopObjectType
 @ stub ExDisableResourceBoostLite
 @ stub ExEnumHandleTable
