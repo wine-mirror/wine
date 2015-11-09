@@ -94,20 +94,19 @@ static load_dll_callback_t load_dll_callback;
 
 static const char *build_dir;
 static const char *default_dlldir;
-static const char *dll_prefix;
 static const char **dll_paths;
 static unsigned int nb_dll_paths;
 static int dll_path_maxlen;
 
 extern void mmap_init(void);
-extern const char *get_dlldir( const char **default_dlldir, const char **dll_prefix );
+extern const char *get_dlldir( const char **default_dlldir );
 
 /* build the dll load path from the WINEDLLPATH variable */
 static void build_dll_path(void)
 {
     int len, count = 0;
     char *p, *path = getenv( "WINEDLLPATH" );
-    const char *dlldir = get_dlldir( &default_dlldir, &dll_prefix );
+    const char *dlldir = get_dlldir( &default_dlldir );
 
     if (path)
     {
@@ -157,7 +156,6 @@ static void build_dll_path(void)
         if (len > dll_path_maxlen) dll_path_maxlen = len;
         dll_paths[nb_dll_paths++] = default_dlldir;
     }
-    dll_path_maxlen += strlen( dll_prefix ) - 1;
 }
 
 /* check if the library is the correct architecture */
@@ -244,7 +242,6 @@ static char *next_dll_path( struct dll_path_context *context )
     default:
         index -= 2;
         if (index >= nb_dll_paths) return NULL;
-        path = prepend( path + 1, dll_prefix, strlen( dll_prefix ));
         path = prepend( path, dll_paths[index], strlen( dll_paths[index] ));
         return path;
     }

@@ -138,7 +138,6 @@ static const char *tools_ext;
 static const char *exe_ext;
 static const char *dll_ext;
 static const char *man_ext;
-static const char *dll_prefix;
 static const char *crosstarget;
 static const char *fontforge;
 static const char *convert;
@@ -3131,7 +3130,6 @@ int main( int argc, char *argv[] )
     exe_ext      = get_expanded_make_variable( top_makefile, "EXEEXT" );
     man_ext      = get_expanded_make_variable( top_makefile, "api_manext" );
     dll_ext      = (exe_ext && !strcmp( exe_ext, ".exe" )) ? "" : ".so";
-    dll_prefix   = get_expanded_make_variable( top_makefile, "DLLPREFIX" );
     crosstarget  = get_expanded_make_variable( top_makefile, "CROSSTARGET" );
     fontforge    = get_expanded_make_variable( top_makefile, "FONTFORGE" );
     convert      = get_expanded_make_variable( top_makefile, "CONVERT" );
@@ -3142,7 +3140,6 @@ int main( int argc, char *argv[] )
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
     if (!exe_ext) exe_ext = "";
     if (!tools_ext) tools_ext = "";
-    if (!dll_prefix) dll_prefix = "";
     if (!man_ext) man_ext = "3w";
 
     for (i = 1; i < argc; i++) update_makefile( argv[i] );

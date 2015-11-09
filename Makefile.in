@@ -52,7 +52,6 @@ LIBS            = @LIBS@
 BISON           = @BISON@
 FLEX            = @FLEX@
 EXEEXT          = @EXEEXT@
-DLLPREFIX       = @DLLPREFIX@
 TOOLSEXT        = @TOOLSEXT@
 DLLTOOL         = @DLLTOOL@
 AR              = @AR@

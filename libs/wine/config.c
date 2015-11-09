@@ -249,10 +249,9 @@ static void init_server_dir( dev_t dev, ino_t ino )
 }
 
 /* retrieve the default dll dir */
-const char *get_dlldir( const char **default_dlldir, const char **dll_prefix )
+const char *get_dlldir( const char **default_dlldir )
 {
     *default_dlldir = DLLDIR;
-    *dll_prefix = "/" DLLPREFIX;
     return dlldir;
 }
 

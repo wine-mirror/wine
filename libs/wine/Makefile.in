@@ -98,7 +98,6 @@ EXTRA_OBJS = version.o
 config_EXTRADEFS = \
 	-DBINDIR='"${bindir}"' \
 	-DDLLDIR='"${dlldir}"' \
-	-DDLLPREFIX='"$(DLLPREFIX)"' \
 	-DLIB_TO_BINDIR=\"`$(MAKEDEP) -R ${libdir} ${bindir}`\" \
 	-DLIB_TO_DLLDIR=\"`$(MAKEDEP) -R ${libdir} ${dlldir}`\" \
 	-DBIN_TO_DLLDIR=\"`$(MAKEDEP) -R ${bindir} ${dlldir}`\" \
