@@ -1402,7 +1402,6 @@ enable_xmllite
 enable_xolehlp
 enable_xpsprint
 enable_xpssvcs
-enable_documentation
 enable_fonts
 enable_include
 enable_libs_port
@@ -18137,7 +18136,6 @@ wine_fn_config_test dlls/xmllite/tests xmllite_test
 wine_fn_config_dll xolehlp enable_xolehlp
 wine_fn_config_dll xpsprint enable_xpsprint
 wine_fn_config_dll xpssvcs enable_xpssvcs
-wine_fn_config_makefile documentation enable_documentation clean
 wine_fn_config_makefile fonts enable_fonts clean,install-lib
 wine_fn_config_makefile include enable_include clean,install-dev
 wine_fn_config_makefile libs/port enable_libs_port

@@ -112,13 +112,20 @@ include/stamp-h: $(srcdir)/include/config.h.in config.status
 clean:: __clean__
 distclean:: clean
 	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile Make.tmp .gitignore
-	$(RM) -r autom4te.cache
+	$(RM) -r autom4te.cache documentation/html documentation/api-guide documentation/api-guide-xml documentation/man$(api_manext)
 
 # Rules for uninstalling
 
 .PHONY: install install-lib install-dev uninstall __uninstall__
 uninstall:: __uninstall__
 	-rmdir $(DESTDIR)$(fontdir) $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir) $(DESTDIR)$(includedir)
+
+# Rules for API documentation
+
+install-manpages:: manpages
+	for i in documentation/man$(api_manext)/*.$(api_manext); do $(INSTALL_DATA) $$i $(DESTDIR)$(mandir)/$$i; done
+
+.PHONY: install-manpages
 
 # Dependencies between directories
 
