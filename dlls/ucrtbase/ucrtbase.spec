@@ -1874,8 +1874,8 @@
 @ cdecl -arch=arm,x86_64 _scalbf(float long) MSVCRT__scalbf
 @ cdecl _searchenv(str str ptr) MSVCRT__searchenv
 @ cdecl _searchenv_s(str str ptr long) MSVCRT__searchenv_s
-@ stub _seh_filter_dll
-@ stub _seh_filter_exe
+@ cdecl -arch=i386,x86_64,arm _seh_filter_dll(long ptr) __CppXcptFilter
+@ cdecl _seh_filter_exe(long ptr) _XcptFilter
 @ stub _set_FMA3_enable
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr)
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr)

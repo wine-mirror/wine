@@ -63,8 +63,8 @@
 @ stub _register_onexit_function
 @ stub _register_thread_local_exe_atexit_callback
 @ cdecl _resetstkoflw() ucrtbase._resetstkoflw
-@ stub _seh_filter_dll
-@ stub _seh_filter_exe
+@ cdecl -arch=i386,x86_64,arm _seh_filter_dll(long ptr) ucrtbase._seh_filter_dll
+@ cdecl _seh_filter_exe(long ptr) ucrtbase._seh_filter_exe
 @ cdecl _set_abort_behavior(long long) ucrtbase._set_abort_behavior
 @ cdecl _set_app_type(long) ucrtbase._set_app_type
 @ cdecl _set_controlfp(long long) ucrtbase._set_controlfp
