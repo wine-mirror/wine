@@ -111,7 +111,7 @@
 @ stub DbgPrompt
 @ stub DbgQueryDebugFilterState
 @ stub DbgSetDebugFilterState
-@ stub ExAcquireResourceExclusiveLite
+@ stdcall ExAcquireResourceExclusiveLite(ptr long)
 @ stub ExAcquireResourceSharedLite
 @ stub ExAcquireSharedStarveExclusive
 @ stub ExAcquireSharedWaitForExclusive
