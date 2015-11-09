@@ -508,3 +508,31 @@ void ME_ClearTempStyle(ME_TextEditor *editor)
   ME_ReleaseStyle(editor->pBuffer->pCharStyle);
   editor->pBuffer->pCharStyle = NULL;
 }
+
+/******************************************************************************
+ * ME_SetDefaultCharFormat
+ *
+ * Applies a style change to the default character style.
+ *
+ * The default style is special in that it is mutable - runs
+ * in the document that have this style should change if the
+ * default style changes.  That means we need to fix up this
+ * style manually.
+ */
+void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod)
+{
+    ME_Style *style, *def = editor->pBuffer->pDefaultStyle;
+
+    assert(mod->cbSize == sizeof(CHARFORMAT2W));
+    style = ME_ApplyStyle(def, mod);
+    def->fmt = style->fmt;
+    def->tm = style->tm;
+    if (def->font_cache)
+    {
+        release_font_cache( def->font_cache );
+        def->font_cache = NULL;
+    }
+    ScriptFreeCache( &def->script_cache );
+    ME_ReleaseStyle( style );
+    ME_MarkAllForWrapping( editor );
+}

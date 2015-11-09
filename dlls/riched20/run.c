@@ -763,25 +763,6 @@ void ME_SetCharFormat(ME_TextEditor *editor, ME_Cursor *start, ME_Cursor *end, C
   }
 }
 
-/******************************************************************************
- * ME_SetDefaultCharFormat
- * 
- * Applies a style change to the default character style.
- */     
-void ME_SetDefaultCharFormat(ME_TextEditor *editor, CHARFORMAT2W *mod)
-{
-  ME_Style *style;
-
-  assert(mod->cbSize == sizeof(CHARFORMAT2W));
-  style = ME_ApplyStyle(editor->pBuffer->pDefaultStyle, mod);
-  editor->pBuffer->pDefaultStyle->fmt = style->fmt;
-  editor->pBuffer->pDefaultStyle->tm = style->tm;
-  ScriptFreeCache( &editor->pBuffer->pDefaultStyle->script_cache );
-  ME_ReleaseStyle(style);
-  ME_MarkAllForWrapping(editor);
-  /*  pcf = editor->pBuffer->pDefaultStyle->fmt; */
-}
-
 static void ME_GetRunCharFormat(ME_TextEditor *editor, ME_DisplayItem *run, CHARFORMAT2W *pFmt)
 {
   ME_CopyCharFormat(pFmt, &run->member.run.style->fmt);
