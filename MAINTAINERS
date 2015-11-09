@@ -35,6 +35,7 @@ F:	dlls/mmdevapi/
 F:	dlls/winealsa.drv/
 F:	dlls/winecoreaudio.drv/
 F:	dlls/wineoss.drv/
+F:	dlls/winepulse.drv/
 F:	dlls/winmm/
 F:	dlls/x3daudio*/
 F:	dlls/xapofx*/
@@ -236,6 +237,7 @@ F:	dlls/msxml*/
 THE REST
 M:	Alexandre Julliard <julliard@winehq.org>
 P:	Alex Henrie <alexhenrie24@gmail.com>
+P:	Andrew Eikum <aeikum@codeweavers.com>
 P:	Huw Davies <huw@codeweavers.com>
 P:	Sebastian Lackner <sebastian@fds-team.de>
 P:	Vincent Povirk <vincent@codeweavers.com>
