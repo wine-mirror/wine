@@ -3238,6 +3238,7 @@ HKLM,%CurrentVersionNT%\SvcHost,"netsvcs",0x00010008,"Schedule"
 [Services]
 HKLM,%CurrentVersion%\RunServices,"winemenubuilder",2,"%11%\winemenubuilder.exe -a -r"
 HKLM,"System\CurrentControlSet\Services\Eventlog\Application",,16
+HKLM,"System\CurrentControlSet\Services\RpcSs",,16
 HKLM,"System\CurrentControlSet\Services\Tcpip\Parameters",,16
 HKLM,"System\CurrentControlSet\Services\VxD\MSTCP",,16
 HKLM,"System\CurrentControlSet\Services\Winsock\Parameters",,16
