@@ -147,6 +147,7 @@ static LPVOID   (WINAPI * pRtlAllocateHeap)(PVOID,ULONG,ULONG);
 static NTSTATUS (WINAPI * pRtlZeroMemory)(PVOID, ULONG);
 static NTSTATUS (WINAPI * pRtlpNtQueryValueKey)(HANDLE,ULONG*,PBYTE,DWORD*,void *);
 static NTSTATUS (WINAPI * pNtNotifyChangeKey)(HANDLE,HANDLE,PIO_APC_ROUTINE,PVOID,PIO_STATUS_BLOCK,ULONG,BOOLEAN,PVOID,ULONG,BOOLEAN);
+static NTSTATUS (WINAPI * pNtWaitForSingleObject)(HANDLE,BOOLEAN,const LARGE_INTEGER*);
 
 static HMODULE hntdll = 0;
 static int CurrentTest = 0;
@@ -195,6 +196,7 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(RtlZeroMemory)
     NTDLL_GET_PROC(RtlpNtQueryValueKey)
     NTDLL_GET_PROC(RtlOpenCurrentUser)
+    NTDLL_GET_PROC(NtWaitForSingleObject)
 
     /* optional functions */
     pNtQueryLicenseValue = (void *)GetProcAddress(hntdll, "NtQueryLicenseValue");
@@ -1507,9 +1509,11 @@ static void test_NtQueryKey(void)
 static void test_notify(void)
 {
     OBJECT_ATTRIBUTES attr;
+    LARGE_INTEGER timeout;
     IO_STATUS_BLOCK iosb;
+    UNICODE_STRING str;
+    HANDLE key, event, subkey;
     NTSTATUS status;
-    HANDLE key, event;
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
 
@@ -1520,7 +1524,25 @@ static void test_notify(void)
     ok(event != NULL, "CreateEvent failed: %u\n", GetLastError());
 
     status = pNtNotifyChangeKey(key, event, NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
-    todo_wine ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+
+    timeout.QuadPart = 0;
+    status = pNtWaitForSingleObject(event, FALSE, &timeout);
+    ok(status == STATUS_TIMEOUT, "NtWaitForSingleObject returned %x\n", status);
+
+    attr.RootDirectory = key;
+    attr.ObjectName = &str;
+
+    pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
+    status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
+    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+
+    status = pNtWaitForSingleObject(event, FALSE, &timeout);
+    todo_wine ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+
+    status = pNtDeleteKey(subkey);
+    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+    pNtClose(subkey);
 
     pNtClose(key);
     pNtClose(event);

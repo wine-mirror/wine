@@ -678,12 +678,12 @@ NTSTATUS WINAPI NtNotifyChangeKey(
  
     if (!Asynchronous)
     {
-        if (ret == STATUS_SUCCESS)
-            NtWaitForSingleObject( Event, FALSE, NULL );
+        if (ret == STATUS_PENDING)
+            ret = NtWaitForSingleObject( Event, FALSE, NULL );
         NtClose( Event );
     }
 
-    return STATUS_SUCCESS;
+    return ret;
 }
 
 /******************************************************************************
