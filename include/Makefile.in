@@ -245,6 +245,7 @@ HEADER_SRCS = \
 	d3drmwin.h \
 	d3dtypes.h \
 	d3dvec.inl \
+	d3dx10.h \
 	d3dx9.h \
 	d3dx9anim.h \
 	d3dx9core.h \
