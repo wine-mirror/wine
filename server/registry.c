@@ -2290,7 +2290,10 @@ DECL_HANDLER(set_registry_notification)
                 }
             }
             if (notify)
+            {
+                reset_event( event );
                 set_error( STATUS_PENDING );
+            }
             release_object( event );
         }
         release_object( key );

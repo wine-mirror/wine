@@ -1520,7 +1520,7 @@ static void test_notify(void)
     status = pNtOpenKey(&key, KEY_ALL_ACCESS, &attr);
     ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
-    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    event = CreateEventW(NULL, FALSE, TRUE, NULL);
     ok(event != NULL, "CreateEvent failed: %u\n", GetLastError());
 
     status = pNtNotifyChangeKey(key, event, NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
