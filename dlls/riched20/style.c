@@ -146,7 +146,7 @@ ME_Style *ME_MakeStyle(CHARFORMAT2W *style)
   assert(style->cbSize == sizeof(CHARFORMAT2W));
   s->fmt = *style;
   s->nRefs = 1;
-  s->hFont = NULL;
+  s->font_cache = NULL;
   memset(&s->tm, 0, sizeof(s->tm));
   s->tm.tmAscent = -1;
   s->script_cache = NULL;
@@ -383,8 +383,6 @@ HFONT ME_SelectStyleFont(ME_Context *c, ME_Style *s)
   {
     item = &c->editor->pFontCache[i];
     TRACE_(richedit_style)("font reused %d\n", i);
-
-    s->hFont = item->hFont;
     item->nRefs++;
   }
   else
@@ -397,44 +395,40 @@ HFONT ME_SelectStyleFont(ME_Context *c, ME_Style *s)
       DeleteObject(item->hFont);
       item->hFont = NULL;
     }
-    s->hFont = CreateFontIndirectW(&lf);
-    assert(s->hFont);
+    item->hFont = CreateFontIndirectW(&lf);
     TRACE_(richedit_style)("font created %d\n", nEmpty);
-    item->hFont = s->hFont;
     item->nRefs = 1;
     item->lfSpecs = lf;
   }
-  hOldFont = SelectObject(c->hDC, s->hFont);
+  s->font_cache = item;
+  hOldFont = SelectObject(c->hDC, item->hFont);
   /* should be cached too, maybe ? */
   GetTextMetricsW(c->hDC, &s->tm);
   return hOldFont;
 }
 
-void ME_UnselectStyleFont(ME_Context *c, ME_Style *s, HFONT hOldFont)
+static void release_font_cache(ME_FontCacheItem *item)
 {
-  int i;
-  
-  assert(s);
-  SelectObject(c->hDC, hOldFont);
-  for (i=0; i<HFONT_CACHE_SIZE; i++)
-  {
-    ME_FontCacheItem *pItem = &c->editor->pFontCache[i];
-    if (pItem->hFont == s->hFont && pItem->nRefs > 0)
+    if (item->nRefs > 0)
     {
-      pItem->nRefs--;
-      pItem->nAge = 0;
-      s->hFont = NULL;
-      return;
+        item->nRefs--;
+        item->nAge = 0;
     }
-  }
-  assert(0 == "UnselectStyleFont without SelectStyleFont");
 }
 
-static void ME_DestroyStyle(ME_Style *s) {
-  if (s->hFont)
+void ME_UnselectStyleFont(ME_Context *c, ME_Style *s, HFONT hOldFont)
+{
+  SelectObject(c->hDC, hOldFont);
+  release_font_cache(s->font_cache);
+  s->font_cache = NULL;
+}
+
+static void ME_DestroyStyle(ME_Style *s)
+{
+  if (s->font_cache)
   {
-    DeleteObject(s->hFont);
-    s->hFont = NULL;
+    release_font_cache( s->font_cache );
+    s->font_cache = NULL;
   }
   ScriptFreeCache( &s->script_cache );
   FREE_OBJ(s);
