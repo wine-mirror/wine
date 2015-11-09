@@ -430,6 +430,11 @@ static void add_tb_button(InternetExplorer *ie, int bmp, int cmd, int strId)
     SendMessageW(ie->toolbar_hwnd, TB_ADDBUTTONSW, 1, (LPARAM)&btn);
 }
 
+static void enable_toolbar_button(InternetExplorer *ie, int command, BOOL enable)
+{
+    SendMessageW(ie->toolbar_hwnd, TB_ENABLEBUTTON, command, enable);
+}
+
 static void create_rebar(InternetExplorer *ie)
 {
     HWND hwndRebar;
@@ -761,6 +766,20 @@ static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost *iface, LPCWSTR tex
     return update_ie_statustext(This, text);
 }
 
+static void DocHostContainer_on_command_state_change(DocHost *iface, LONG command, BOOL enable)
+{
+    InternetExplorer *This = impl_from_DocHost(iface);
+
+    switch(command) {
+    case CSC_NAVIGATEBACK:
+        enable_toolbar_button(This, ID_BROWSE_BACK, enable);
+        break;
+    case CSC_NAVIGATEFORWARD:
+        enable_toolbar_button(This, ID_BROWSE_FORWARD, enable);
+        break;
+    }
+}
+
 static void WINAPI DocHostContainer_SetURL(DocHost* iface, LPCWSTR url)
 {
     InternetExplorer *This = impl_from_DocHost(iface);
@@ -774,6 +793,7 @@ static const IDocHostContainerVtbl DocHostContainerVtbl = {
     IEDocHost_release,
     DocHostContainer_GetDocObjRect,
     DocHostContainer_SetStatusText,
+    DocHostContainer_on_command_state_change,
     DocHostContainer_SetURL
 };
 

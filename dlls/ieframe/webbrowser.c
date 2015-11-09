@@ -1204,6 +1204,10 @@ static HRESULT WINAPI DocHostContainer_SetStatusText(DocHost* This, LPCWSTR text
     return E_NOTIMPL;
 }
 
+static void DocHostContainer_on_command_state_change(DocHost *This, LONG command, BOOL enable)
+{
+}
+
 static void WINAPI DocHostContainer_SetURL(DocHost* This, LPCWSTR url)
 {
 }
@@ -1213,6 +1217,7 @@ static const IDocHostContainerVtbl DocHostContainerVtbl = {
     WebBrowser_release,
     DocHostContainer_GetDocObjRect,
     DocHostContainer_SetStatusText,
+    DocHostContainer_on_command_state_change,
     DocHostContainer_SetURL
 };
 
