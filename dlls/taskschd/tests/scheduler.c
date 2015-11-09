@@ -782,6 +782,7 @@ static void test_GetTask(void)
         {
             hr = ITaskFolder_DeleteTask(root, Wine_Task1, 0);
             ok(hr == S_OK, "DeleteTask error %#x\n", hr);
+            IRegisteredTask_Release(task1);
         }
     }
 
@@ -809,8 +810,10 @@ todo_wine
 
     for (i = 0; i < sizeof(open_existing_task)/sizeof(open_existing_task[0]); i++)
     {
-        hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, open_existing_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task1);
+        hr = ITaskFolder_RegisterTask(root, Wine_Task1, xmlW, open_existing_task[i].flags, v_null, v_null, TASK_LOGON_NONE, v_null, &task2);
         ok(hr == open_existing_task[i].hr, "%d: expected %#x, got %#x\n", i, open_existing_task[i].hr, hr);
+        if (hr == S_OK)
+            IRegisteredTask_Release(task2);
     }
 
     hr = IRegisteredTask_get_Name(task1, NULL);
@@ -944,6 +947,7 @@ todo_wine
     ok(hr == S_OK, "get_Name error %#x\n", hr);
     hr = IIDFromString(bstr, &iid);
     ok(hr == S_OK, "IIDFromString error %#x\n", hr);
+    SysFreeString(bstr);
 
     IRegisteredTask_Release(task1);
 
@@ -1006,7 +1010,10 @@ static void test_settings_v1(ITaskDefinition *taskdef, struct settings *test, st
     if (!def->restart_interval[0])
         ok(bstr == NULL, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     else
+    {
         ok(!lstrcmpW(bstr, def->restart_interval), "expected %s, got %s\n", wine_dbgstr_w(def->restart_interval), wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+    }
 
     hr = ITaskSettings_get_RestartCount(set, &vint);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
@@ -1052,7 +1059,10 @@ static void test_settings_v1(ITaskDefinition *taskdef, struct settings *test, st
     if (!test->delete_expired_task_after[0])
         ok(bstr == NULL, "expected NULL, got %s\n", wine_dbgstr_w(bstr));
     else
+    {
         ok(!lstrcmpW(bstr, test->delete_expired_task_after), "expected %s, got %s\n", wine_dbgstr_w(test->delete_expired_task_after), wine_dbgstr_w(bstr));
+        SysFreeString(bstr);
+    }
 
     hr = ITaskSettings_get_Priority(set, &vint);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
@@ -1094,7 +1104,11 @@ static void change_settings(ITaskDefinition *taskdef, struct settings *test)
 todo_wine
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);
     /* FIXME: Remove once implemented */
-    if (hr != S_OK) return;
+    if (hr != S_OK)
+    {
+        ITaskSettings_Release(set);
+        return;
+    }
 
     hr = ITaskSettings_put_RestartCount(set, test->restart_count);
     ok(hr == S_OK, "expected S_OK, got %#x\n", hr);

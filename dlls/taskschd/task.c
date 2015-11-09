@@ -2611,8 +2611,8 @@ static HRESULT WINAPI TaskService_Connect(ITaskService *iface, VARIANT server, V
     hr = RpcStringBindingComposeW(NULL, ncalrpc, NULL, NULL, NULL, &binding_str);
     if (hr != RPC_S_OK) return hr;
     hr = RpcBindingFromStringBindingW(binding_str, &rpc_handle);
-    if (hr != RPC_S_OK) return hr;
     RpcStringFreeW(&binding_str);
+    if (hr != RPC_S_OK) return hr;
 
     /* Make sure that the connection works */
     hr = SchRpcHighestVersion(&task_svc->version);
