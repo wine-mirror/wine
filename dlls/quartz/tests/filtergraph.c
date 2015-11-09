@@ -214,7 +214,6 @@ static void test_graph_builder(void)
     ok(hr == E_POINTER, "IGraphBuilder_Connect returned %x\n", hr);
 
     hr = IGraphBuilder_Connect(pgraph, pIn, pIn);
-todo_wine
     ok(hr == VFW_E_CANNOT_CONNECT, "IGraphBuilder_Connect returned %x\n", hr);
 
     if (pIn) IPin_Release(pIn);
