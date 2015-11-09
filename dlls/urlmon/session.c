@@ -555,7 +555,7 @@ static void ensure_useragent(void)
          '\\','5','.','0','\\','U','s','e','r',' ','A','g','e','n','t',
          '\\','P','o','s','t',' ','P','l','a','t','f','o','r','m',0};
     static const WCHAR ntW[] = {'N','T',' ',0};
-    static const WCHAR win64W[] = {'W','i','n','6','4',';',' ',0};
+    static const WCHAR win64W[] = {'W','i','n','6','4',';',' ','x','6','4',';',' ',0};
     static const WCHAR wow64W[] = {'W','O','W','6','4',';',' ',0};
     static const WCHAR emptyW[] = {0};
 
