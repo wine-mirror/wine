@@ -168,7 +168,7 @@
 @ stub ExRaiseStatus
 @ stub ExRegisterCallback
 @ stub ExReinitializeResourceLite
-@ stub ExReleaseResourceForThreadLite
+@ stdcall ExReleaseResourceForThreadLite(ptr long)
 @ stub ExSemaphoreObjectType
 @ stub ExSetResourceOwnerPointer
 @ stub ExSetTimerResolution
