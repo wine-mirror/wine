@@ -130,6 +130,7 @@
 @ stdcall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
 @ stdcall NtCreateKey(ptr long ptr long ptr long long)
+@ stdcall NtCreateKeyTransacted(ptr long ptr long ptr long long long)
 @ stdcall NtCreateKeyedEvent(ptr long ptr long)
 @ stdcall NtCreateMailslotFile(long long long long long long long long)
 @ stdcall NtCreateMutant(ptr long ptr long)
@@ -214,6 +215,8 @@
 @ stdcall NtOpenJobObject(ptr long ptr)
 @ stdcall NtOpenKey(ptr long ptr)
 @ stdcall NtOpenKeyEx(ptr long ptr long)
+@ stdcall NtOpenKeyTransacted(ptr long ptr long)
+@ stdcall NtOpenKeyTransactedEx(ptr long ptr long long)
 @ stdcall NtOpenKeyedEvent(ptr long ptr)
 @ stdcall NtOpenMutant(ptr long ptr)
 @ stub NtOpenObjectAuditAlarm
@@ -292,7 +295,7 @@
 @ stdcall NtReleaseSemaphore(long long ptr)
 @ stdcall NtRemoveIoCompletion(ptr ptr ptr ptr ptr)
 # @ stub NtRemoveProcessDebug
-# @ stub NtRenameKey
+@ stdcall NtRenameKey(long ptr)
 @ stdcall NtReplaceKey(ptr long ptr)
 @ stub NtReplyPort
 @ stdcall NtReplyWaitReceivePort(ptr ptr ptr ptr)
@@ -1047,6 +1050,7 @@
 @ stdcall ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
 @ stdcall ZwCreateKey(ptr long ptr long ptr long long) NtCreateKey
+@ stdcall ZwCreateKeyTransacted(ptr long ptr long ptr long long long) NtCreateKeyTransacted
 @ stdcall ZwCreateKeyedEvent(ptr long ptr long) NtCreateKeyedEvent
 @ stdcall ZwCreateMailslotFile(long long long long long long long long) NtCreateMailslotFile
 @ stdcall ZwCreateMutant(ptr long ptr long) NtCreateMutant
@@ -1130,6 +1134,8 @@
 @ stdcall ZwOpenJobObject(ptr long ptr) NtOpenJobObject
 @ stdcall ZwOpenKey(ptr long ptr) NtOpenKey
 @ stdcall ZwOpenKeyEx(ptr long ptr long) NtOpenKeyEx
+@ stdcall ZwOpenKeyTransacted(ptr long ptr long) NtOpenKeyTransacted
+@ stdcall ZwOpenKeyTransactedEx(ptr long ptr long long) NtOpenKeyTransactedEx
 @ stdcall ZwOpenKeyedEvent(ptr long ptr) NtOpenKeyedEvent
 @ stdcall ZwOpenMutant(ptr long ptr) NtOpenMutant
 @ stub ZwOpenObjectAuditAlarm
@@ -1208,7 +1214,7 @@
 @ stdcall ZwReleaseSemaphore(long long ptr) NtReleaseSemaphore
 @ stdcall ZwRemoveIoCompletion(ptr ptr ptr ptr ptr) NtRemoveIoCompletion
 # @ stub ZwRemoveProcessDebug
-# @ stub ZwRenameKey
+@ stdcall ZwRenameKey(long ptr) NtRenameKey
 @ stdcall ZwReplaceKey(ptr long ptr) NtReplaceKey
 @ stub ZwReplyPort
 @ stdcall ZwReplyWaitReceivePort(ptr ptr ptr ptr) NtReplyWaitReceivePort

@@ -84,6 +84,21 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
     return ret;
 }
 
+NTSTATUS WINAPI NtCreateKeyTransacted( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                                       ULONG TitleIndex, const UNICODE_STRING *class, ULONG options,
+                                       HANDLE transacted, ULONG *dispos )
+{
+    FIXME( "(%p,%s,%s,%x,%x,%p,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
+           debugstr_us(class), options, access, transacted, retkey );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS WINAPI NtRenameKey( HANDLE handle, UNICODE_STRING *name )
+{
+    FIXME( "(%p %s)\n", handle, debugstr_us(name) );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 /******************************************************************************
  *  RtlpNtCreateKey [NTDLL.@]
  *
@@ -149,6 +164,19 @@ NTSTATUS WINAPI NtOpenKeyEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
 NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     return NtOpenKeyEx( retkey, access, attr, 0 );
+}
+
+NTSTATUS WINAPI NtOpenKeyTransactedEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                                       ULONG options, HANDLE transaction )
+{
+    FIXME( "(%p %x %p %x %p)\n", retkey, access, attr, options, transaction );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+NTSTATUS WINAPI NtOpenKeyTransacted( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
+                                     HANDLE transaction )
+{
+    return NtOpenKeyTransactedEx( retkey, access, attr, 0, transaction );
 }
 
 /******************************************************************************
