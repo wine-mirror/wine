@@ -1920,6 +1920,64 @@ BOOL WINAPI EnumDateFormatsExEx(DATEFMT_ENUMPROCEXEX proc, const WCHAR *locale, 
     return NLS_EnumDateFormats(&ctxt);
 }
 
+struct enumtimeformats_context {
+    enum enum_callback_type type;  /* callback kind */
+    union {
+        TIMEFMT_ENUMPROCW  callback;     /* user callback pointer */
+    } u;
+    LCID   lcid;    /* locale of interest */
+    DWORD  flags;
+    BOOL   unicode; /* A vs W callback type, only for regular and Ex callbacks */
+};
+
+static BOOL NLS_EnumTimeFormats(struct enumtimeformats_context *ctxt)
+{
+    WCHAR bufW[256];
+    char bufA[256];
+    LCTYPE lctype;
+    INT ret;
+
+    if (!ctxt->u.callback)
+    {
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    switch (ctxt->flags & ~LOCALE_USE_CP_ACP)
+    {
+    case 0:
+        lctype = LOCALE_STIMEFORMAT;
+        break;
+    case TIME_NOSECONDS:
+        lctype = LOCALE_SSHORTTIME;
+        break;
+    default:
+        FIXME("Unknown time format (%d)\n", ctxt->flags);
+        SetLastError(ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    lctype |= ctxt->flags & LOCALE_USE_CP_ACP;
+    if (ctxt->unicode)
+        ret = GetLocaleInfoW(ctxt->lcid, lctype, bufW, sizeof(bufW)/sizeof(bufW[0]));
+    else
+        ret = GetLocaleInfoA(ctxt->lcid, lctype, bufA, sizeof(bufA)/sizeof(bufA[0]));
+
+    if (ret)
+    {
+        switch (ctxt->type)
+        {
+        case CALLBACK_ENUMPROC:
+            ctxt->u.callback(ctxt->unicode ? bufW : (WCHAR*)bufA);
+            break;
+        default:
+            ;
+        }
+    }
+
+    return TRUE;
+}
+
 /**************************************************************************
  *              EnumTimeFormatsA	(KERNEL32.@)
  *
@@ -1928,33 +1986,22 @@ BOOL WINAPI EnumDateFormatsExEx(DATEFMT_ENUMPROCEXEX proc, const WCHAR *locale, 
  */
 BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
 {
-    char buf[256];
+    struct enumtimeformats_context ctxt;
 
+    /* EnumTimeFormatsA doesn't support flags, EnumTimeFormatsW does. */
     if (flags & ~LOCALE_USE_CP_ACP)
     {
         SetLastError(ERROR_INVALID_FLAGS);
         return FALSE;
     }
 
-    if (!proc)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    ctxt.type = CALLBACK_ENUMPROC;
+    ctxt.u.callback = (TIMEFMT_ENUMPROCW)proc;
+    ctxt.lcid = lcid;
+    ctxt.flags = flags;
+    ctxt.unicode = FALSE;
 
-    switch (flags & ~LOCALE_USE_CP_ACP)
-    {
-    case 0:
-        if (GetLocaleInfoA(lcid, LOCALE_STIMEFORMAT | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf);
-        break;
-
-    default:
-        FIXME("Unknown time format (%d)\n", flags);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    return TRUE;
+    return NLS_EnumTimeFormats(&ctxt);
 }
 
 /**************************************************************************
@@ -1962,27 +2009,15 @@ BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
  */
 BOOL WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
 {
-    WCHAR buf[256];
+    struct enumtimeformats_context ctxt;
 
-    if (!proc)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
+    ctxt.type = CALLBACK_ENUMPROC;
+    ctxt.u.callback = proc;
+    ctxt.lcid = lcid;
+    ctxt.flags = flags;
+    ctxt.unicode = TRUE;
 
-    switch (flags & ~LOCALE_USE_CP_ACP)
-    {
-    case 0:
-        if (GetLocaleInfoW(lcid, LOCALE_STIMEFORMAT | (flags & LOCALE_USE_CP_ACP), buf, 256))
-            proc(buf);
-        break;
-
-    default:
-        FIXME("Unknown time format (%d)\n", flags);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-    return TRUE;
+    return NLS_EnumTimeFormats(&ctxt);
 }
 
 struct enumcalendar_context {

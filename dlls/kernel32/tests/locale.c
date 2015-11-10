@@ -3506,15 +3506,13 @@ static void test_EnumTimeFormatsW(void)
     date_fmt_bufW[0] = 0;
     ret = EnumTimeFormatsW(enum_datetime_procW, lcid, TIME_NOSECONDS);
     if (!ret && GetLastError() == ERROR_INVALID_FLAGS)
-        skip("EnumTimeFormatsW doesn't support TIME_NOSECONDS\n");
+        win_skip("EnumTimeFormatsW doesn't support TIME_NOSECONDS\n");
     else {
         char buf[256];
 
-    todo_wine
         ok(ret, "EnumTimeFormatsW(TIME_NOSECONDS) error %d\n", GetLastError());
         ret = GetLocaleInfoW(lcid, LOCALE_SSHORTTIME, bufW, sizeof(bufW)/sizeof(bufW[0]));
         ok(ret, "GetLocaleInfoW(LOCALE_SSHORTTIME) error %d\n", GetLastError());
-    todo_wine
         ok(!lstrcmpW(date_fmt_bufW, bufW), "expected \"%s\" got \"%s\"\n", wine_dbgstr_w(date_fmt_bufW),
             wine_dbgstr_w(bufW));
 
