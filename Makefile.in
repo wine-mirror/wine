@@ -118,7 +118,8 @@ distclean:: clean
 
 .PHONY: install install-lib install-dev uninstall __uninstall__
 uninstall:: __uninstall__
-	-rmdir $(DESTDIR)$(fontdir) $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir) $(DESTDIR)$(includedir)
+	-rmdir $(DESTDIR)$(fontdir) $(DESTDIR)$(datadir)/wine $(DESTDIR)$(fakedlldir) $(DESTDIR)$(dlldir) $(DESTDIR)$(includedir)/windows/ddk \
+	       $(DESTDIR)$(includedir)/windows $(DESTDIR)$(includedir)/msvcrt/sys $(DESTDIR)$(includedir)/msvcrt $(DESTDIR)$(includedir)
 
 # Rules for API documentation
 
