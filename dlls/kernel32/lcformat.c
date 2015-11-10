@@ -1924,9 +1924,11 @@ struct enumtimeformats_context {
     enum enum_callback_type type;  /* callback kind */
     union {
         TIMEFMT_ENUMPROCW  callback;     /* user callback pointer */
+        TIMEFMT_ENUMPROCEX callbackex;
     } u;
     LCID   lcid;    /* locale of interest */
     DWORD  flags;
+    LPARAM lParam;
     BOOL   unicode; /* A vs W callback type, only for regular and Ex callbacks */
 };
 
@@ -1969,6 +1971,9 @@ static BOOL NLS_EnumTimeFormats(struct enumtimeformats_context *ctxt)
         {
         case CALLBACK_ENUMPROC:
             ctxt->u.callback(ctxt->unicode ? bufW : (WCHAR*)bufA);
+            break;
+        case CALLBACK_ENUMPROCEX:
+            ctxt->u.callbackex(bufW, ctxt->lParam);
             break;
         default:
             ;
@@ -2015,6 +2020,23 @@ BOOL WINAPI EnumTimeFormatsW(TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags)
     ctxt.u.callback = proc;
     ctxt.lcid = lcid;
     ctxt.flags = flags;
+    ctxt.unicode = TRUE;
+
+    return NLS_EnumTimeFormats(&ctxt);
+}
+
+/**************************************************************************
+ *              EnumTimeFormatsEx	(KERNEL32.@)
+ */
+BOOL WINAPI EnumTimeFormatsEx(TIMEFMT_ENUMPROCEX proc, const WCHAR *locale, DWORD flags, LPARAM lParam)
+{
+    struct enumtimeformats_context ctxt;
+
+    ctxt.type = CALLBACK_ENUMPROCEX;
+    ctxt.u.callbackex = proc;
+    ctxt.lcid = LocaleNameToLCID(locale, 0);
+    ctxt.flags = flags;
+    ctxt.lParam = lParam;
     ctxt.unicode = TRUE;
 
     return NLS_EnumTimeFormats(&ctxt);

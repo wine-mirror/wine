@@ -428,7 +428,7 @@
 @ stdcall EnumSystemLocalesEx(ptr long long ptr)
 @ stdcall EnumSystemLocalesW(ptr long)
 @ stdcall EnumTimeFormatsA(ptr long long)
-# @ stub EnumTimeFormatsEx
+@ stdcall EnumTimeFormatsEx(ptr wstr long long)
 @ stdcall EnumTimeFormatsW(ptr long long)
 @ stdcall EnumUILanguagesA(ptr long long)
 @ stdcall EnumUILanguagesW(ptr long long)
