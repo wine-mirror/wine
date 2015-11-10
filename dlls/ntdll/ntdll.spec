@@ -130,7 +130,7 @@
 @ stdcall NtCreateJobObject(ptr long ptr)
 # @ stub NtCreateJobSet
 @ stdcall NtCreateKey(ptr long ptr long ptr long long)
-@ stdcall NtCreateKeyTransacted(ptr long ptr long ptr long long long)
+@ stdcall NtCreateKeyTransacted(ptr long ptr long ptr long long ptr)
 @ stdcall NtCreateKeyedEvent(ptr long ptr long)
 @ stdcall NtCreateMailslotFile(long long long long long long long long)
 @ stdcall NtCreateMutant(ptr long ptr long)
@@ -1050,7 +1050,7 @@
 @ stdcall ZwCreateJobObject(ptr long ptr) NtCreateJobObject
 # @ stub ZwCreateJobSet
 @ stdcall ZwCreateKey(ptr long ptr long ptr long long) NtCreateKey
-@ stdcall ZwCreateKeyTransacted(ptr long ptr long ptr long long long) NtCreateKeyTransacted
+@ stdcall ZwCreateKeyTransacted(ptr long ptr long ptr long long ptr) NtCreateKeyTransacted
 @ stdcall ZwCreateKeyedEvent(ptr long ptr long) NtCreateKeyedEvent
 @ stdcall ZwCreateMailslotFile(long long long long long long long long) NtCreateMailslotFile
 @ stdcall ZwCreateMutant(ptr long ptr long) NtCreateMutant
