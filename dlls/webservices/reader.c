@@ -379,6 +379,7 @@ enum reader_state
     READER_STATE_INITIAL,
     READER_STATE_BOF,
     READER_STATE_STARTELEMENT,
+    READER_STATE_STARTENDELEMENT,
     READER_STATE_TEXT,
     READER_STATE_ENDELEMENT,
     READER_STATE_COMMENT,
@@ -928,7 +929,7 @@ static HRESULT read_element( struct reader *reader )
     for (;;)
     {
         read_skip_whitespace( reader );
-        if (!read_cmp( reader, ">", 1 )) break;
+        if (!read_cmp( reader, ">", 1 ) || !read_cmp( reader, "/>", 2 )) break;
         if ((hr = read_attribute( reader, &attr )) != S_OK) goto error;
         if ((hr = append_attribute( elem, attr )) != S_OK)
         {
@@ -938,16 +939,24 @@ static HRESULT read_element( struct reader *reader )
     }
 
     read_skip_whitespace( reader );
-    if (read_cmp( reader, ">", 1 ))
+    if (read_cmp( reader, ">", 1 ) && read_cmp( reader, "/>", 2 ))
     {
         hr = WS_E_INVALID_FORMAT;
         goto error;
     }
 
     read_insert_node( reader, reader->current, node );
-    read_skip( reader, 1 );
-    reader->state = READER_STATE_STARTELEMENT;
-
+    if (!read_cmp( reader, "/>", 2 ))
+    {
+        read_skip( reader, 2 );
+        reader->current = reader->current->parent;
+        reader->state   = READER_STATE_STARTENDELEMENT;
+    }
+    else
+    {
+        read_skip( reader, 1 );
+        reader->state = READER_STATE_STARTELEMENT;
+    }
     return S_OK;
 
 error:
@@ -1056,6 +1065,7 @@ static HRESULT read_endelement( struct reader *reader )
     {
     case READER_STATE_TEXT:
     case READER_STATE_STARTELEMENT:
+    case READER_STATE_STARTENDELEMENT:
         break;
     default:
         return WS_E_INVALID_FORMAT;
