@@ -203,10 +203,20 @@ Uniscribe
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/usp10/
 
+Web Services
+M:	Hans Leidekker <hans@codeweavers.com>
+F:	dlls/webservices/
+
 Windows Imaging Component
 M:	Vincent Povirk <vincent@codeweavers.com>
 F:	dlls/windowscodecs/
 F:	dlls/windowscodecsext/
+
+Windows Management Instrumentation
+M:	Hans Leidekker <hans@codeweavers.com>
+F:	dlls/wbemdisp/
+F:	dlls/wbemprox/
+F:	dlls/wmiutils/
 
 Wine server, IPC
 M:	Alexandre Julliard <julliard@winehq.org>
@@ -216,6 +226,10 @@ F:	server/
 Winemaker
 M:	André Hentschel <nerv@dawncrow.de>
 F:	tools/winemaker
+
+WinHTTP
+M:	Hans Leidekker <hans@codeweavers.com>
+F:	dlls/winhttp/
 
 WPcap
 M:	André Hentschel <nerv@dawncrow.de>
