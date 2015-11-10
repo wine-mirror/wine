@@ -170,6 +170,23 @@ void ws_free( WS_HEAP *handle, void *ptr )
     HeapFree( heap->handle, 0, ptr );
 }
 
+/**************************************************************************
+ *          WsAlloc		[webservices.@]
+ */
+HRESULT WINAPI WsAlloc( WS_HEAP *handle, SIZE_T size, void **ptr, WS_ERROR *error )
+{
+    void *mem;
+
+    TRACE( "%p %u %p %p\n", handle, (ULONG)size, ptr, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!handle || !ptr) return E_INVALIDARG;
+
+    if (!(mem = ws_alloc( handle, size ))) return E_OUTOFMEMORY;
+    *ptr = mem;
+    return S_OK;
+}
+
 static struct heap *alloc_heap(void)
 {
     static const ULONG count = sizeof(heap_props)/sizeof(heap_props[0]);

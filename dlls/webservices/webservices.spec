@@ -9,7 +9,7 @@
 @ stub WsAddErrorString
 @ stub WsAddMappedHeader
 @ stub WsAddressMessage
-@ stub WsAlloc
+@ stdcall WsAlloc(ptr long ptr ptr)
 @ stub WsAsyncExecute
 @ stub WsCall
 @ stub WsCheckMustUnderstandHeaders

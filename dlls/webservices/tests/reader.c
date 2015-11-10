@@ -1453,6 +1453,32 @@ static void test_WsXmlStringEquals(void)
     ok( hr == S_OK, "got %08x\n", hr );
 }
 
+static void test_WsAlloc(void)
+{
+    HRESULT hr;
+    WS_HEAP *heap;
+    void *ptr;
+
+    hr = WsCreateHeap( 256, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    ptr = NULL;
+    hr = WsAlloc( NULL, 16, &ptr, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    ok( ptr == NULL, "ptr set\n" );
+
+    ptr = NULL;
+    hr = WsAlloc( heap, 512, &ptr, NULL );
+    todo_wine ok( hr == WS_E_QUOTA_EXCEEDED, "got %08x\n", hr );
+    todo_wine ok( ptr == NULL, "ptr not set\n" );
+
+    ptr = NULL;
+    hr = WsAlloc( heap, 16, &ptr, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( ptr != NULL, "ptr not set\n" );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -1468,4 +1494,5 @@ START_TEST(reader)
     test_WsReadType();
     test_WsGetXmlAttribute();
     test_WsXmlStringEquals();
+    test_WsAlloc();
 }
