@@ -705,11 +705,11 @@ COREFOUNDATION_LIBS
 LIBWINE_RULES
 SOCKET_LIBS
 DLLTOOL
-LOADER_RULES
 ALL_TEST_RESOURCES
 READELF
 OTOOL
 LDD
+LOADER_RULES
 LDRPATH_LOCAL
 LDRPATH_INSTALL
 DLLFLAGS
@@ -7139,6 +7139,8 @@ LDRPATH_INSTALL=""
 
 LDRPATH_LOCAL=""
 
+LOADER_RULES=""
+
 LIBEXT="so"
 DLLEXT=".so"
 IMPLIBEXT="def"
@@ -7862,11 +7864,6 @@ wine_binary="wine"
 test "x$enable_win64" != "xyes" || wine_binary="wine64"
 loader_programs="$wine_binary"
 libwine_soversion=`expr $libwine_version : '\([0-9]*\)\..*'`
-
-LOADER_RULES="
-all: wine.inf
-"
-
 
 case $host_os in
   cygwin*|mingw32*)

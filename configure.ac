@@ -677,6 +677,7 @@ AC_SUBST(dlldir,"\${libdir}/wine")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")
+AC_SUBST(LOADER_RULES,"")
 LIBEXT="so"
 DLLEXT=".so"
 IMPLIBEXT="def"
@@ -688,10 +689,6 @@ wine_binary="wine"
 test "x$enable_win64" != "xyes" || wine_binary="wine64"
 loader_programs="$wine_binary"
 libwine_soversion=`expr $libwine_version : '\([[0-9]]*\)\..*'`
-
-AC_SUBST(LOADER_RULES,["
-all: wine.inf
-"])
 
 case $host_os in
   cygwin*|mingw32*)

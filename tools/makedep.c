@@ -2155,9 +2155,8 @@ static struct strarray output_sources( const struct makefile *make, struct strar
                                       strmake( "y%s/%s.%s", dir, symlinks.str[i], section ));
                 free( dest );
                 free( dir );
-                strarray_add( &all_targets, xstrdup(obj) );
             }
-            else strarray_add( &clean_files, xstrdup(obj) );
+            strarray_add( &all_targets, xstrdup(obj) );
             output( "%s: %s\n", obj_dir_path( make, obj ), source->filename );
             output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
             output( "%s:", obj_dir_path( make, obj ));
