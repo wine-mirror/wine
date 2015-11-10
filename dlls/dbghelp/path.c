@@ -490,7 +490,13 @@ static BOOL CALLBACK module_find_cb(PCWSTR buffer, PVOID user)
                 if ((mapping = MapViewOfFile(hMap, FILE_MAP_READ, 0, 0, 0)) != NULL)
                 {
                     IMAGE_NT_HEADERS*   nth = RtlImageNtHeader(mapping);
-
+                    if (!nth)
+                    {
+                        UnmapViewOfFile(mapping);
+                        CloseHandle(hMap);
+                        CloseHandle(hFile);
+                        return FALSE;
+                    }
                     matched++;
                     timestamp = nth->FileHeader.TimeDateStamp;
                     size = nth->OptionalHeader.SizeOfImage;
