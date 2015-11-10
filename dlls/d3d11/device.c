@@ -1113,7 +1113,24 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_VSGetSamplers(ID3D11Device
 static void STDMETHODCALLTYPE d3d11_immediate_context_GetPredication(ID3D11DeviceContext *iface,
         ID3D11Predicate **predicate, BOOL *value)
 {
-    FIXME("iface %p, predicate %p, value %p stub!\n", iface, predicate, value);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct wined3d_query *wined3d_predicate;
+    struct d3d_query *predicate_impl;
+
+    TRACE("iface %p, predicate %p, value %p.\n", iface, predicate, value);
+
+    wined3d_mutex_lock();
+    if (!(wined3d_predicate = wined3d_device_get_predication(device->wined3d_device, value)))
+    {
+        wined3d_mutex_unlock();
+        *predicate = NULL;
+        return;
+    }
+
+    predicate_impl = wined3d_query_get_parent(wined3d_predicate);
+    wined3d_mutex_unlock();
+    *predicate = (ID3D11Predicate *)&predicate_impl->ID3D11Query_iface;
+    ID3D11Predicate_AddRef(*predicate);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_GSGetShaderResources(ID3D11DeviceContext *iface,
