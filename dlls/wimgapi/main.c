@@ -44,3 +44,9 @@ BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 
     return TRUE;
 }
+
+DWORD WINAPI WIMRegisterMessageCallback(HANDLE wim, FARPROC callback, PVOID data)
+{
+    FIXME("(%p %p %p) stub\n", wim, callback, data);
+    return 0;
+}

@@ -28,7 +28,7 @@
 @ stub WIMMountImageHandle
 @ stub WIMReadImageFile
 @ stub WIMRegisterLogFile
-@ stub WIMRegisterMessageCallback
+@ stdcall WIMRegisterMessageCallback(long ptr ptr)
 @ stub WIMRemountImage
 @ stub WIMSetBootImage
 @ stub WIMSetFileIOCallbackTemporaryPath
