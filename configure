@@ -963,6 +963,7 @@ enable_avicap32
 enable_avifil32
 enable_avrt
 enable_bcrypt
+enable_bluetoothapis
 enable_browseui
 enable_bthprops_cpl
 enable_cabinet
@@ -17465,6 +17466,7 @@ wine_fn_config_dll avifile.dll16 enable_win16
 wine_fn_config_dll avrt enable_avrt implib
 wine_fn_config_dll bcrypt enable_bcrypt
 wine_fn_config_test dlls/bcrypt/tests bcrypt_test
+wine_fn_config_dll bluetoothapis enable_bluetoothapis
 wine_fn_config_dll browseui enable_browseui clean,po
 wine_fn_config_test dlls/browseui/tests browseui_test
 wine_fn_config_dll bthprops.cpl enable_bthprops_cpl

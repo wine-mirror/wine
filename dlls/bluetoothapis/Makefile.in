@@ -1,0 +1,4 @@
+MODULE    = bluetoothapis.dll
+
+C_SRCS = \
+	main.c
