@@ -25,7 +25,22 @@ struct xmlbuf
 };
 
 void *ws_alloc( WS_HEAP *, SIZE_T ) DECLSPEC_HIDDEN;
+void *ws_realloc( WS_HEAP *, void *, SIZE_T ) DECLSPEC_HIDDEN;
 void ws_free( WS_HEAP *, void * ) DECLSPEC_HIDDEN;
+const char *debugstr_xmlstr( const WS_XML_STRING * ) DECLSPEC_HIDDEN;
+WS_XML_STRING *alloc_xml_string( const char *, ULONG ) DECLSPEC_HIDDEN;
+
+struct node
+{
+    WS_XML_ELEMENT_NODE hdr;
+    struct list         entry;
+    struct node        *parent;
+    struct list         children;
+};
+
+struct node *alloc_node( WS_XML_NODE_TYPE ) DECLSPEC_HIDDEN;
+void free_node( struct node * ) DECLSPEC_HIDDEN;
+void destroy_nodes( struct node * ) DECLSPEC_HIDDEN;
 
 static inline void *heap_alloc( SIZE_T size )
 {

@@ -29,7 +29,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(webservices);
 
-static const char *debugstr_xmlstr( const WS_XML_STRING *str )
+const char *debugstr_xmlstr( const WS_XML_STRING *str )
 {
     if (!str) return "(null)";
     return debugstr_an( (const char *)str->bytes, str->length );
@@ -164,6 +164,12 @@ void *ws_alloc( WS_HEAP *handle, SIZE_T size )
     return HeapAlloc( heap->handle, 0, size );
 }
 
+void *ws_realloc( WS_HEAP *handle, void *ptr, SIZE_T size )
+{
+    struct heap *heap = (struct heap *)handle;
+    return HeapReAlloc( heap->handle, 0, ptr, size );
+}
+
 void ws_free( WS_HEAP *handle, void *ptr )
 {
     struct heap *heap = (struct heap *)handle;
@@ -267,15 +273,7 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
     heap_free( heap );
 }
 
-struct node
-{
-    WS_XML_ELEMENT_NODE hdr;
-    struct list         entry;
-    struct node        *parent;
-    struct list         children;
-};
-
-static struct node *alloc_node( WS_XML_NODE_TYPE type )
+struct node *alloc_node( WS_XML_NODE_TYPE type )
 {
     struct node *ret;
 
@@ -296,7 +294,7 @@ static void free_attribute( WS_XML_ATTRIBUTE *attr )
     heap_free( attr );
 }
 
-static void free_node( struct node *node )
+void free_node( struct node *node )
 {
     if (!node) return;
     switch (node->hdr.node.nodeType)
@@ -336,7 +334,7 @@ static void free_node( struct node *node )
     heap_free( node );
 }
 
-static void destroy_nodes( struct node *node )
+void destroy_nodes( struct node *node )
 {
     struct list *ptr;
 
@@ -648,7 +646,7 @@ HRESULT WINAPI WsGetXmlAttribute( WS_XML_READER *handle, const WS_XML_STRING *at
     return E_NOTIMPL;
 }
 
-static WS_XML_STRING *alloc_xml_string( const char *data, ULONG len )
+WS_XML_STRING *alloc_xml_string( const char *data, ULONG len )
 {
     WS_XML_STRING *ret;
 

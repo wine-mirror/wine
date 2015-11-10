@@ -183,7 +183,7 @@
 @ stub WsWriteQualifiedName
 @ stub WsWriteStartAttribute
 @ stub WsWriteStartCData
-@ stub WsWriteStartElement
+@ stdcall WsWriteStartElement(ptr ptr ptr ptr ptr)
 @ stub WsWriteText
 @ stub WsWriteType
 @ stub WsWriteValue
