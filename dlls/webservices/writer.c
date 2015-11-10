@@ -138,6 +138,13 @@ static void write_insert_eof( struct writer *writer, struct node *eof )
     writer->current = eof;
 }
 
+static void write_insert_bof( struct writer *writer, struct node *bof )
+{
+    writer->root->parent = bof;
+    list_add_tail( &bof->children, &writer->root->entry );
+    writer->current = writer->root = bof;
+}
+
 static void write_insert_node( struct writer *writer, struct node *node )
 {
     node->parent = writer->current;
@@ -310,6 +317,7 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
                             ULONG count, WS_ERROR *error )
 {
     struct writer *writer = (struct writer *)handle;
+    struct node *node;
     HRESULT hr;
     ULONG i;
 
@@ -324,37 +332,41 @@ HRESULT WINAPI WsSetOutput( WS_XML_WRITER *handle, const WS_XML_WRITER_ENCODING 
         if (hr != S_OK) return hr;
     }
 
+    if ((hr = write_init_state( writer )) != S_OK) return hr;
+
     switch (encoding->encodingType)
     {
-        case WS_XML_WRITER_ENCODING_TYPE_TEXT:
+    case WS_XML_WRITER_ENCODING_TYPE_TEXT:
+    {
+        WS_XML_WRITER_TEXT_ENCODING *text = (WS_XML_WRITER_TEXT_ENCODING *)encoding;
+        if (text->charSet != WS_CHARSET_UTF8)
         {
-            WS_XML_WRITER_TEXT_ENCODING *text = (WS_XML_WRITER_TEXT_ENCODING *)encoding;
-            if (text->charSet != WS_CHARSET_UTF8)
-            {
-                FIXME( "charset %u not supported\n", text->charSet );
-                return E_NOTIMPL;
-            }
-            break;
-        }
-        default:
-            FIXME( "encoding type %u not supported\n", encoding->encodingType );
+            FIXME( "charset %u not supported\n", text->charSet );
             return E_NOTIMPL;
+        }
+        break;
+    }
+    default:
+        FIXME( "encoding type %u not supported\n", encoding->encodingType );
+        return E_NOTIMPL;
     }
     switch (output->outputType)
     {
-        case WS_XML_WRITER_OUTPUT_TYPE_BUFFER:
-        {
-            struct xmlbuf *xmlbuf;
+    case WS_XML_WRITER_OUTPUT_TYPE_BUFFER:
+    {
+        struct xmlbuf *xmlbuf;
 
-            if (!(xmlbuf = alloc_xmlbuf( writer->output_heap ))) return E_OUTOFMEMORY;
-            set_output_buffer( writer, xmlbuf );
-            break;
-        }
-        default:
-            FIXME( "output type %u not supported\n", output->outputType );
-            return E_NOTIMPL;
+        if (!(xmlbuf = alloc_xmlbuf( writer->output_heap ))) return E_OUTOFMEMORY;
+        set_output_buffer( writer, xmlbuf );
+        break;
+    }
+    default:
+        FIXME( "output type %u not supported\n", output->outputType );
+        return E_NOTIMPL;
     }
 
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
+    write_insert_bof( writer, node );
     return S_OK;
 }
 
@@ -367,6 +379,7 @@ HRESULT WINAPI WsSetOutputToBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer
 {
     struct writer *writer = (struct writer *)handle;
     struct xmlbuf *xmlbuf = (struct xmlbuf *)buffer;
+    struct node *node;
     HRESULT hr;
     ULONG i;
 
@@ -381,7 +394,11 @@ HRESULT WINAPI WsSetOutputToBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer
         if (hr != S_OK) return hr;
     }
 
+    if ((hr = write_init_state( writer )) != S_OK) return hr;
     set_output_buffer( writer, xmlbuf );
+
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
+    write_insert_bof( writer, node );
     return S_OK;
 }
 
