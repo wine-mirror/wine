@@ -1010,7 +1010,13 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_GSGetShader(ID3D11DeviceCo
 static void STDMETHODCALLTYPE d3d11_immediate_context_IAGetPrimitiveTopology(ID3D11DeviceContext *iface,
         D3D11_PRIMITIVE_TOPOLOGY *topology)
 {
-    FIXME("iface %p, topology %p stub!\n", iface, topology);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, topology %p.\n", iface, topology);
+
+    wined3d_mutex_lock();
+    wined3d_device_get_primitive_type(device->wined3d_device, (enum wined3d_primitive_type *)topology);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_VSGetShaderResources(ID3D11DeviceContext *iface,
