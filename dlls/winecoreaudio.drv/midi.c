@@ -437,9 +437,8 @@ static DWORD MIDIOut_LongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
             return MMSYSERR_ERROR;
         }
     }
-    else
-    {
-        FIXME("MOD_MIDIPORT\n");
+    else if (destinations[wDevID].caps.wTechnology == MOD_MIDIPORT) {
+        MIDIOut_Send(MIDIOutPort, destinations[wDevID].dest, lpData, lpMidiHdr->dwBufferLength);
     }
 
     lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
@@ -822,6 +821,7 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
     DWORD sendData = 0;
     int pos = 0;
     DWORD currentTime;
+    BOOL sysexStart;
 
     switch (msgid)
     {
@@ -836,26 +836,55 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
             if (src->state < 1)
             {
                 TRACE("input not started, thrown away\n");
-                goto done;
+                return NULL;
             }
-            /* FIXME skipping SysEx */
-            if (msg->data[0] == 0xF0)
-            {
-                FIXME("Starting System Exclusive\n");
-                src->state |= 2;
-            }
-            if (src->state & 2)
-            {
-                for (i = 0; i < msg->length; ++i)
-                {
-                    if (msg->data[i] == 0xF7)
-                    {
-                        FIXME("Ending System Exclusive\n");
-                        src->state &= ~2;
+
+            sysexStart = (msg->data[0] == 0xF0);
+
+            if (sysexStart || src->state & 2) {
+                int pos = 0;
+                int len = msg->length;
+
+                if (sysexStart) {
+                    TRACE("Receiving sysex message\n");
+                    src->state |= 2;
+                }
+
+                EnterCriticalSection(&midiInLock);
+                currentTime = GetTickCount() - src->startTime;
+
+                while (len) {
+                    LPMIDIHDR lpMidiHdr = src->lpQueueHdr;
+
+                    if (lpMidiHdr != NULL) {
+                        int copylen = min(len, lpMidiHdr->dwBufferLength - lpMidiHdr->dwBytesRecorded);
+                        memcpy(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded, msg->data + pos, copylen);
+                        lpMidiHdr->dwBytesRecorded += copylen;
+                        len -= copylen;
+                        pos += copylen;
+
+                        TRACE("Copied %d bytes of sysex message\n", copylen);
+
+                        if ((lpMidiHdr->dwBytesRecorded == lpMidiHdr->dwBufferLength) ||
+                            (*(BYTE*)(lpMidiHdr->lpData + lpMidiHdr->dwBytesRecorded - 1) == 0xF7)) {
+                            TRACE("Sysex message complete (or buffer limit reached), dispatching %d bytes\n", lpMidiHdr->dwBytesRecorded);
+                            src->lpQueueHdr = lpMidiHdr->lpNext;
+                            lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
+                            lpMidiHdr->dwFlags |= MHDR_DONE;
+                            MIDI_NotifyClient(msg->devID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, currentTime);
+                            src->state &= ~2;
+                        }
+                    }
+                    else {
+                        FIXME("Sysex data received but no buffer to store it!\n");
+                        break;
                     }
                 }
-                goto done;
+
+                LeaveCriticalSection(&midiInLock);
+                return NULL;
             }
+
             EnterCriticalSection(&midiInLock);
             currentTime = GetTickCount() - src->startTime;
 
@@ -889,7 +918,6 @@ static CFDataRef MIDIIn_MessageHandler(CFMessagePortRef local, SInt32 msgid, CFD
             CFRunLoopStop(CFRunLoopGetCurrent());
             break;
     }
-done:
     return NULL;
 }
 
