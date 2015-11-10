@@ -380,7 +380,7 @@ static void strarray_addall( struct strarray *array, struct strarray added )
 /*******************************************************************
  *         strarray_exists
  */
-static int strarray_exists( struct strarray *array, const char *str )
+static int strarray_exists( const struct strarray *array, const char *str )
 {
     unsigned int i;
 
@@ -403,12 +403,12 @@ static void strarray_add_uniq( struct strarray *array, const char *str )
  *
  * Find a value in a name/value pair string array.
  */
-static char *strarray_get_value( const struct strarray *array, const char *name )
+static const char *strarray_get_value( const struct strarray *array, const char *name )
 {
     unsigned int i;
 
     for (i = 0; i < array->count; i += 2)
-        if (!strcmp( array->str[i], name )) return xstrdup( array->str[i + 1] );
+        if (!strcmp( array->str[i], name )) return array->str[i + 1];
     return NULL;
 }
 
@@ -579,7 +579,7 @@ static char *concat_paths( const char *base, const char *path )
 /*******************************************************************
  *         base_dir_path
  */
-static char *base_dir_path( struct makefile *make, const char *path )
+static char *base_dir_path( const struct makefile *make, const char *path )
 {
     return concat_paths( make->base_dir, path );
 }
@@ -588,7 +588,7 @@ static char *base_dir_path( struct makefile *make, const char *path )
 /*******************************************************************
  *         obj_dir_path
  */
-static char *obj_dir_path( struct makefile *make, const char *path )
+static char *obj_dir_path( const struct makefile *make, const char *path )
 {
     return concat_paths( make->obj_dir, path );
 }
@@ -597,7 +597,7 @@ static char *obj_dir_path( struct makefile *make, const char *path )
 /*******************************************************************
  *         src_dir_path
  */
-static char *src_dir_path( struct makefile *make, const char *path )
+static char *src_dir_path( const struct makefile *make, const char *path )
 {
     if (make->src_dir) return concat_paths( make->src_dir, path );
     return obj_dir_path( make, path );
@@ -607,7 +607,7 @@ static char *src_dir_path( struct makefile *make, const char *path )
 /*******************************************************************
  *         top_obj_dir_path
  */
-static char *top_obj_dir_path( struct makefile *make, const char *path )
+static char *top_obj_dir_path( const struct makefile *make, const char *path )
 {
     return concat_paths( make->top_obj_dir, path );
 }
@@ -616,7 +616,7 @@ static char *top_obj_dir_path( struct makefile *make, const char *path )
 /*******************************************************************
  *         top_dir_path
  */
-static char *top_dir_path( struct makefile *make, const char *path )
+static char *top_dir_path( const struct makefile *make, const char *path )
 {
     if (make->top_src_dir) return concat_paths( make->top_src_dir, path );
     return top_obj_dir_path( make, path );
@@ -635,7 +635,7 @@ static char *root_dir_path( const char *path )
 /*******************************************************************
  *         tools_dir_path
  */
-static char *tools_dir_path( struct makefile *make, const char *path )
+static char *tools_dir_path( const struct makefile *make, const char *path )
 {
     if (tools_dir) return top_obj_dir_path( make, strmake( "%s/tools/%s", tools_dir, path ));
     return top_obj_dir_path( make, strmake( "tools/%s", path ));
@@ -645,7 +645,7 @@ static char *tools_dir_path( struct makefile *make, const char *path )
 /*******************************************************************
  *         tools_path
  */
-static char *tools_path( struct makefile *make, const char *name )
+static char *tools_path( const struct makefile *make, const char *name )
 {
     return strmake( "%s/%s%s", tools_dir_path( make, name ), name, tools_ext );
 }
@@ -764,7 +764,7 @@ static void add_dependency( struct file *file, const char *name, enum incl_type 
 /*******************************************************************
  *         find_src_file
  */
-static struct incl_file *find_src_file( struct makefile *make, const char *name )
+static struct incl_file *find_src_file( const struct makefile *make, const char *name )
 {
     struct incl_file *file;
 
@@ -776,7 +776,7 @@ static struct incl_file *find_src_file( struct makefile *make, const char *name 
 /*******************************************************************
  *         find_include_file
  */
-static struct incl_file *find_include_file( struct makefile *make, const char *name )
+static struct incl_file *find_include_file( const struct makefile *make, const char *name )
 {
     struct incl_file *file;
 
@@ -1191,7 +1191,7 @@ static struct file *load_file( const char *name )
 /*******************************************************************
  *         open_file
  */
-static struct file *open_file( struct makefile *make, const char *path, char **filename )
+static struct file *open_file( const struct makefile *make, const char *path, char **filename )
 {
     struct file *ret = load_file( base_dir_path( make, path ));
 
@@ -1205,7 +1205,7 @@ static struct file *open_file( struct makefile *make, const char *path, char **f
  *
  * Open a file in the source directory of the makefile.
  */
-static struct file *open_local_file( struct makefile *make, const char *path, char **filename )
+static struct file *open_local_file( const struct makefile *make, const char *path, char **filename )
 {
     char *src_path = root_dir_path( base_dir_path( make, path ));
     struct file *ret = load_file( src_path );
@@ -1230,7 +1230,7 @@ static struct file *open_local_file( struct makefile *make, const char *path, ch
  *
  * Open a file in the top-level source directory.
  */
-static struct file *open_global_file( struct makefile *make, const char *path, char **filename )
+static struct file *open_global_file( const struct makefile *make, const char *path, char **filename )
 {
     char *src_path = root_dir_path( path );
     struct file *ret = load_file( src_path );
@@ -1246,7 +1246,7 @@ static struct file *open_global_file( struct makefile *make, const char *path, c
  *
  * Open a file in the global include source directory.
  */
-static struct file *open_global_header( struct makefile *make, const char *path, char **filename )
+static struct file *open_global_header( const struct makefile *make, const char *path, char **filename )
 {
     return open_global_file( make, strmake( "include/%s", path ), filename );
 }
@@ -1255,7 +1255,7 @@ static struct file *open_global_header( struct makefile *make, const char *path,
 /*******************************************************************
  *         open_src_file
  */
-static struct file *open_src_file( struct makefile *make, struct incl_file *pFile )
+static struct file *open_src_file( const struct makefile *make, struct incl_file *pFile )
 {
     struct file *file = open_local_file( make, pFile->name, &pFile->filename );
 
@@ -1267,7 +1267,7 @@ static struct file *open_src_file( struct makefile *make, struct incl_file *pFil
 /*******************************************************************
  *         open_include_file
  */
-static struct file *open_include_file( struct makefile *make, struct incl_file *pFile )
+static struct file *open_include_file( const struct makefile *make, struct incl_file *pFile )
 {
     struct file *file = NULL;
     char *filename, *p;
@@ -1520,7 +1520,7 @@ static struct incl_file *add_src_file( struct makefile *make, const char *name )
 /*******************************************************************
  *         open_input_makefile
  */
-static FILE *open_input_makefile( struct makefile *make )
+static FILE *open_input_makefile( const struct makefile *make )
 {
     FILE *ret;
 
@@ -1542,9 +1542,9 @@ static FILE *open_input_makefile( struct makefile *make )
 /*******************************************************************
  *         get_make_variable
  */
-static char *get_make_variable( struct makefile *make, const char *name )
+static const char *get_make_variable( const struct makefile *make, const char *name )
 {
-    char *ret;
+    const char *ret;
 
     if ((ret = strarray_get_value( &cmdline_vars, name ))) return ret;
     if ((ret = strarray_get_value( &make->vars, name ))) return ret;
@@ -1556,14 +1556,15 @@ static char *get_make_variable( struct makefile *make, const char *name )
 /*******************************************************************
  *         get_expanded_make_variable
  */
-static char *get_expanded_make_variable( struct makefile *make, const char *name )
+static char *get_expanded_make_variable( const struct makefile *make, const char *name )
 {
-    char *p, *end, *var, *expand, *tmp;
+    const char *var;
+    char *p, *end, *expand, *tmp;
 
-    expand = get_make_variable( make, name );
-    if (!expand) return NULL;
+    var = get_make_variable( make, name );
+    if (!var) return NULL;
 
-    p = expand;
+    p = expand = xstrdup( var );
     while ((p = strchr( p, '$' )))
     {
         if (p[1] == '(')
@@ -1573,7 +1574,6 @@ static char *get_expanded_make_variable( struct makefile *make, const char *name
             if (strchr( p + 2, ':' )) fatal_error( "pattern replacement not supported for '%s'\n", p + 2 );
             var = get_make_variable( make, p + 2 );
             tmp = replace_substr( expand, p, end - p, var ? var : "" );
-            free( var );
             /* switch to the new string */
             p = tmp + (p - expand);
             free( expand );
@@ -1603,7 +1603,7 @@ static char *get_expanded_make_variable( struct makefile *make, const char *name
 /*******************************************************************
  *         get_expanded_make_var_array
  */
-static struct strarray get_expanded_make_var_array( struct makefile *make, const char *name )
+static struct strarray get_expanded_make_var_array( const struct makefile *make, const char *name )
 {
     struct strarray ret = empty_strarray;
     char *value, *token;
@@ -1772,7 +1772,7 @@ static void add_generated_sources( struct makefile *make )
             source->files = NULL;
         }
     }
-    if (get_make_variable( make, "TESTDLL" ))
+    if (make->testdll)
     {
         file = add_generated_source( make, "testlist.o", "testlist.c" );
         add_dependency( file->file, "wine/test.h", INCL_NORMAL );
@@ -1804,7 +1804,7 @@ static void create_dir( const char *dir )
 /*******************************************************************
  *         output_filenames_obj_dir
  */
-static void output_filenames_obj_dir( struct makefile *make, struct strarray array )
+static void output_filenames_obj_dir( const struct makefile *make, struct strarray array )
 {
     unsigned int i;
 
@@ -1837,7 +1837,7 @@ static void get_dependencies( struct strarray *deps, struct incl_file *file, str
 /*******************************************************************
  *         add_install_rule
  */
-static void add_install_rule( struct makefile *make, struct strarray *install_rules,
+static void add_install_rule( const struct makefile *make, struct strarray *install_rules,
                               const char *target, const char *file, const char *dest )
 {
     if (strarray_exists( &make->install_lib, target ))
@@ -1872,7 +1872,7 @@ static const char *get_include_install_path( const char *name )
  * Rules are stored as a (file,dest) pair of values.
  * The first char of dest indicates the type of install.
  */
-static void output_install_rules( struct makefile *make, struct strarray files,
+static void output_install_rules( const struct makefile *make, struct strarray files,
                                   const char *target, struct strarray *phony_targets )
 {
     unsigned int i;
@@ -1939,7 +1939,7 @@ static void output_install_rules( struct makefile *make, struct strarray files,
 /*******************************************************************
  *         output_sources
  */
-static struct strarray output_sources( struct makefile *make, struct strarray *testlist_files )
+static struct strarray output_sources( const struct makefile *make, struct strarray *testlist_files )
 {
     struct incl_file *source;
     unsigned int i, j;
@@ -2854,7 +2854,7 @@ static void output_gitignore( const char *dest, struct strarray files )
 /*******************************************************************
  *         output_top_variables
  */
-static void output_top_variables( struct makefile *make )
+static void output_top_variables( const struct makefile *make )
 {
     unsigned int i;
     struct strarray *vars = &top_makefile->vars;
@@ -2872,7 +2872,7 @@ static void output_top_variables( struct makefile *make )
 /*******************************************************************
  *         output_dependencies
  */
-static void output_dependencies( struct makefile *make )
+static void output_dependencies( const struct makefile *make )
 {
     struct strarray targets, testlist_files = empty_strarray, ignore_files = empty_strarray;
     char buffer[1024];
