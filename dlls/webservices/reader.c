@@ -1218,6 +1218,93 @@ HRESULT WINAPI WsReadToStartElement( WS_XML_READER *handle, const WS_XML_STRING 
     return read_to_startelement( reader, found );
 }
 
+static HRESULT read_move_to( struct reader *reader, WS_MOVE_TO move, BOOL *found )
+{
+    struct list *ptr;
+    BOOL success = FALSE;
+    HRESULT hr = S_OK;
+
+    if (!read_end_of_data( reader ))
+    {
+        while (reader->state != READER_STATE_EOF && (hr = read_node( reader )) == S_OK) { /* nothing */ };
+        if (hr != S_OK) return hr;
+    }
+    switch (move)
+    {
+    case WS_MOVE_TO_FIRST_NODE:
+        if ((ptr = list_head( &reader->current->parent->children )))
+        {
+            reader->current = LIST_ENTRY( ptr, struct node, entry );
+            success = TRUE;
+        }
+        break;
+
+    case WS_MOVE_TO_NEXT_NODE:
+        if ((ptr = list_next( &reader->current->parent->children, &reader->current->entry )))
+        {
+            reader->current = LIST_ENTRY( ptr, struct node, entry );
+            success = TRUE;
+        }
+        break;
+
+    case WS_MOVE_TO_PREVIOUS_NODE:
+        if ((ptr = list_prev( &reader->current->parent->children, &reader->current->entry )))
+        {
+            reader->current = LIST_ENTRY( ptr, struct node, entry );
+            success = TRUE;
+        }
+        break;
+
+    case WS_MOVE_TO_CHILD_NODE:
+        if ((ptr = list_head( &reader->current->children )))
+        {
+            reader->current = LIST_ENTRY( ptr, struct node, entry );
+            success = TRUE;
+        }
+        break;
+
+    case WS_MOVE_TO_BOF:
+        reader->current = reader->root;
+        success = TRUE;
+        break;
+
+    case WS_MOVE_TO_EOF:
+        if ((ptr = list_tail( &reader->root->children )))
+        {
+            reader->current = LIST_ENTRY( ptr, struct node, entry );
+            success = TRUE;
+        }
+        break;
+
+    default:
+        FIXME( "unhandled move %u\n", move );
+        return E_NOTIMPL;
+    }
+
+    if (found)
+    {
+        *found = success;
+        return S_OK;
+    }
+    return success ? S_OK : WS_E_INVALID_FORMAT;
+}
+
+/**************************************************************************
+ *          WsMoveReader		[webservices.@]
+ */
+HRESULT WINAPI WsMoveReader( WS_XML_READER *handle, WS_MOVE_TO move, BOOL *found, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %u %p %p\n", handle, move, found, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+    if (!reader->input_type) return WS_E_INVALID_OPERATION;
+
+    return read_move_to( reader, move, found );
+}
+
 static WCHAR *xmltext_to_widechar( WS_HEAP *heap, const WS_XML_TEXT *text )
 {
     WCHAR *ret;

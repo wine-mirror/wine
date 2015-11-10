@@ -93,7 +93,7 @@
 @ stub WsInitializeMessage
 @ stub WsMarkHeaderAsUnderstood
 @ stub WsMatchPolicyAlternative
-@ stub WsMoveReader
+@ stdcall WsMoveReader(ptr long ptr ptr)
 @ stub WsMoveWriter
 @ stub WsOpenChannel
 @ stub WsOpenListener
