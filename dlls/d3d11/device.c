@@ -1029,7 +1029,24 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_PSGetConstantBuffers(ID3D1
 static void STDMETHODCALLTYPE d3d11_immediate_context_IAGetInputLayout(ID3D11DeviceContext *iface,
         ID3D11InputLayout **input_layout)
 {
-    FIXME("iface %p, input_layout %p stub!\n", iface, input_layout);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct wined3d_vertex_declaration *wined3d_declaration;
+    struct d3d_input_layout *input_layout_impl;
+
+    TRACE("iface %p, input_layout %p.\n", iface, input_layout);
+
+    wined3d_mutex_lock();
+    if (!(wined3d_declaration = wined3d_device_get_vertex_declaration(device->wined3d_device)))
+    {
+        wined3d_mutex_unlock();
+        *input_layout = NULL;
+        return;
+    }
+
+    input_layout_impl = wined3d_vertex_declaration_get_parent(wined3d_declaration);
+    wined3d_mutex_unlock();
+    *input_layout = &input_layout_impl->ID3D11InputLayout_iface;
+    ID3D11InputLayout_AddRef(*input_layout);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_IAGetVertexBuffers(ID3D11DeviceContext *iface,
