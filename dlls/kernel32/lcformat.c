@@ -1930,6 +1930,12 @@ BOOL WINAPI EnumTimeFormatsA(TIMEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
 {
     char buf[256];
 
+    if (flags & ~LOCALE_USE_CP_ACP)
+    {
+        SetLastError(ERROR_INVALID_FLAGS);
+        return FALSE;
+    }
+
     if (!proc)
     {
         SetLastError(ERROR_INVALID_PARAMETER);

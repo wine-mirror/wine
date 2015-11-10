@@ -3520,14 +3520,13 @@ static void test_EnumTimeFormatsW(void)
 
         /* EnumTimeFormatsA doesn't support this flag */
         ret = EnumTimeFormatsA(enum_datetime_procA, lcid, TIME_NOSECONDS);
-    todo_wine {
         ok(!ret && GetLastError() == ERROR_INVALID_FLAGS, "EnumTimeFormatsA(TIME_NOSECONDS) ret %d, error %d\n", ret,
             GetLastError());
 
         ret = EnumTimeFormatsA(NULL, lcid, TIME_NOSECONDS);
         ok(!ret && GetLastError() == ERROR_INVALID_FLAGS, "EnumTimeFormatsA(TIME_NOSECONDS) ret %d, error %d\n", ret,
             GetLastError());
-    }
+
         /* And it's not supported by GetLocaleInfoA either */
         ret = GetLocaleInfoA(lcid, LOCALE_SSHORTTIME, buf, sizeof(buf)/sizeof(buf[0]));
         ok(!ret && GetLastError() == ERROR_INVALID_FLAGS, "GetLocaleInfoA(LOCALE_SSHORTTIME) ret %d, error %d\n", ret,
