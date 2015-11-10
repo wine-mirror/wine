@@ -161,12 +161,19 @@ static inline NSUInteger adjusted_modifiers_for_option_behavior(NSUInteger modif
     CGDirectDisplayID _displayID;
     CVDisplayLinkRef _link;
     NSMutableSet* _windows;
+
+    NSTimeInterval _actualRefreshPeriod;
+    NSTimeInterval _nominalRefreshPeriod;
 }
 
     - (id) initWithDisplayID:(CGDirectDisplayID)displayID;
 
     - (void) addWindow:(WineWindow*)window;
     - (void) removeWindow:(WineWindow*)window;
+
+    - (NSTimeInterval) refreshPeriod;
+
+    - (void) start;
 
 @end
 
@@ -234,10 +241,39 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             windows = [_windows copy];
         }
         dispatch_async(dispatch_get_main_queue(), ^{
+            BOOL anyDisplayed = FALSE;
             for (WineWindow* window in windows)
-                [window displayIfNeeded];
+            {
+                if ([window viewsNeedDisplay])
+                {
+                    [window displayIfNeeded];
+                    anyDisplayed = YES;
+                }
+            }
+            if (!anyDisplayed)
+                CVDisplayLinkStop(_link);
         });
         [windows release];
+    }
+
+    - (NSTimeInterval) refreshPeriod
+    {
+        if (_actualRefreshPeriod || (_actualRefreshPeriod = CVDisplayLinkGetActualOutputVideoRefreshPeriod(_link)))
+            return _actualRefreshPeriod;
+
+        if (_nominalRefreshPeriod)
+            return _nominalRefreshPeriod;
+
+        CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(_link);
+        if (time.flags & kCVTimeIsIndefinite)
+            return 1.0 / 60.0;
+        _nominalRefreshPeriod = time.timeValue / (double)time.timeScale;
+        return _nominalRefreshPeriod;
+    }
+
+    - (void) start
+    {
+        CVDisplayLinkStart(_link);
     }
 
 static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTimeStamp* inNow, const CVTimeStamp* inOutputTime, CVOptionFlags flagsIn, CVOptionFlags* flagsOut, void* displayLinkContext)
@@ -690,6 +726,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         window->savedContentMinSize = NSZeroSize;
         window->savedContentMaxSize = NSMakeSize(FLT_MAX, FLT_MAX);
         window->resizable = wf->resizable;
+        window->_lastDisplayTime = [[NSDate distantPast] timeIntervalSinceReferenceDate];
 
         [window registerForDraggedTypes:[NSArray arrayWithObjects:(NSString*)kUTTypeData,
                                                                   (NSString*)kUTTypeContent,
@@ -1663,21 +1700,8 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         }
     }
 
-    - (void) checkWineDisplayLink
+    - (NSMutableDictionary*) displayIDToDisplayLinkMap
     {
-        NSScreen* screen = self.screen;
-        if (![self isVisible] || ![self isOnActiveSpace] || [self isMiniaturized] || [self isEmptyShaped])
-            screen = nil;
-#if defined(MAC_OS_X_VERSION_10_9) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
-        if ([self respondsToSelector:@selector(occlusionState)] && !(self.occlusionState & NSWindowOcclusionStateVisible))
-            screen = nil;
-#endif
-
-        NSNumber* displayIDNumber = [screen.deviceDescription objectForKey:@"NSScreenNumber"];
-        CGDirectDisplayID displayID = [displayIDNumber unsignedIntValue];
-        if (displayID == _lastDisplayID)
-            return;
-
         static NSMutableDictionary* displayIDToDisplayLinkMap;
         if (!displayIDToDisplayLinkMap)
         {
@@ -1693,6 +1717,34 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
                 [displayIDToDisplayLinkMap removeObjectsForKeys:[badDisplayIDs allObjects]];
             }];
         }
+        return displayIDToDisplayLinkMap;
+    }
+
+    - (WineDisplayLink*) wineDisplayLink
+    {
+        if (!_lastDisplayID)
+            return nil;
+
+        NSMutableDictionary* displayIDToDisplayLinkMap = [self displayIDToDisplayLinkMap];
+        return [displayIDToDisplayLinkMap objectForKey:[NSNumber numberWithUnsignedInt:_lastDisplayID]];
+    }
+
+    - (void) checkWineDisplayLink
+    {
+        NSScreen* screen = self.screen;
+        if (![self isVisible] || ![self isOnActiveSpace] || [self isMiniaturized] || [self isEmptyShaped])
+            screen = nil;
+#if defined(MAC_OS_X_VERSION_10_9) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_9
+        if ([self respondsToSelector:@selector(occlusionState)] && !(self.occlusionState & NSWindowOcclusionStateVisible))
+            screen = nil;
+#endif
+
+        NSNumber* displayIDNumber = [screen.deviceDescription objectForKey:@"NSScreenNumber"];
+        CGDirectDisplayID displayID = [displayIDNumber unsignedIntValue];
+        if (displayID == _lastDisplayID)
+            return;
+
+        NSMutableDictionary* displayIDToDisplayLinkMap = [self displayIDToDisplayLinkMap];
 
         if (_lastDisplayID)
         {
@@ -2024,6 +2076,40 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
     {
         if (!self.disabled && !maximized)
             [super toggleFullScreen:sender];
+    }
+
+    - (void) setViewsNeedDisplay:(BOOL)value
+    {
+        if (value && ![self viewsNeedDisplay])
+        {
+            WineDisplayLink* link = [self wineDisplayLink];
+            if (link)
+            {
+                NSTimeInterval now = [[NSProcessInfo processInfo] systemUptime];
+                if (_lastDisplayTime + [link refreshPeriod] < now)
+                    [self setAutodisplay:YES];
+                else
+                {
+                    [link start];
+                    _lastDisplayTime = now;
+                }
+            }
+        }
+        [super setViewsNeedDisplay:value];
+    }
+
+    - (void) display
+    {
+        _lastDisplayTime = [[NSProcessInfo processInfo] systemUptime];
+        [super display];
+        [self setAutodisplay:NO];
+    }
+
+    - (void) displayIfNeeded
+    {
+        _lastDisplayTime = [[NSProcessInfo processInfo] systemUptime];
+        [super displayIfNeeded];
+        [self setAutodisplay:NO];
     }
 
     - (NSArray*) childWineWindows
