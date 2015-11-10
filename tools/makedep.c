@@ -316,7 +316,7 @@ static char *strmake( const char* fmt, ... )
         va_end(ap);
         if (n == -1) size *= 2;
         else if ((size_t)n >= size) size = n + 1;
-        else return p;
+        else return xrealloc( p, n + 1 );
         free(p);
     }
 }
@@ -327,8 +327,8 @@ static char *strmake( const char* fmt, ... )
  */
 static int strendswith( const char* str, const char* end )
 {
-    int l = strlen(str);
-    int m = strlen(end);
+    size_t l = strlen( str );
+    size_t m = strlen( end );
 
     return l >= m && strcmp(str + l - m, end) == 0;
 }
@@ -477,8 +477,8 @@ static char *get_extension( char *filename )
 static char *replace_extension( const char *name, const char *old_ext, const char *new_ext )
 {
     char *ret;
-    int name_len = strlen( name );
-    int ext_len = strlen( old_ext );
+    size_t name_len = strlen( name );
+    size_t ext_len = strlen( old_ext );
 
     if (name_len >= ext_len && !strcmp( name + name_len - ext_len, old_ext )) name_len -= ext_len;
     ret = xmalloc( name_len + strlen( new_ext ) + 1 );
@@ -507,9 +507,9 @@ static struct strarray strarray_replace_extension( const struct strarray *array,
 /*******************************************************************
  *         replace_substr
  */
-static char *replace_substr( const char *str, const char *start, unsigned int len, const char *replace )
+static char *replace_substr( const char *str, const char *start, size_t len, const char *replace )
 {
-    unsigned int pos = start - str;
+    size_t pos = start - str;
     char *ret = xmalloc( pos + strlen(replace) + strlen(start + len) + 1 );
     memcpy( ret, str, pos );
     strcpy( ret + pos, replace );
@@ -657,7 +657,7 @@ static char *tools_path( const struct makefile *make, const char *name )
 static char *get_line( FILE *file )
 {
     static char *buffer;
-    static unsigned int size;
+    static size_t size;
 
     if (!size)
     {
@@ -1385,7 +1385,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     /* try in src file directory */
     if ((p = strrchr(pFile->included_by->filename, '/')))
     {
-        int l = p - pFile->included_by->filename + 1;
+        size_t l = p - pFile->included_by->filename + 1;
         filename = xmalloc(l + strlen(pFile->name) + 1);
         memcpy( filename, pFile->included_by->filename, l );
         strcpy( filename + l, pFile->name );
