@@ -1406,6 +1406,53 @@ static void test_WsGetXmlAttribute(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsXmlStringEquals(void)
+{
+    BYTE bom[] = {0xef,0xbb,0xbf};
+    WS_XML_STRING str1 = {0, NULL}, str2 = {0, NULL};
+    HRESULT hr;
+
+    hr = WsXmlStringEquals( NULL, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsXmlStringEquals( &str1, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsXmlStringEquals( NULL, &str2, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsXmlStringEquals( &str1, &str2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    str1.length = 1;
+    str1.bytes  = (BYTE *)"a";
+    hr = WsXmlStringEquals( &str1, &str1, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    str2.length = 1;
+    str2.bytes  = (BYTE *)"b";
+    hr = WsXmlStringEquals( &str1, &str2, NULL );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+
+    str2.length = 1;
+    str2.bytes  = bom;
+    hr = WsXmlStringEquals( &str1, &str2, NULL );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+
+    str1.length = 3;
+    hr = WsXmlStringEquals( &str1, &str2, NULL );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+
+    str2.length = 3;
+    hr = WsXmlStringEquals( &str1, &str2, NULL );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+
+    str1.length = 3;
+    str1.bytes  = bom;
+    hr = WsXmlStringEquals( &str1, &str2, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -1420,4 +1467,5 @@ START_TEST(reader)
     test_WsReadNode();
     test_WsReadType();
     test_WsGetXmlAttribute();
+    test_WsXmlStringEquals();
 }

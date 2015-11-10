@@ -190,4 +190,4 @@
 @ stub WsWriteXmlBuffer
 @ stub WsWriteXmlBufferToBytes
 @ stub WsWriteXmlnsAttribute
-@ stub WsXmlStringEquals
+@ stdcall WsXmlStringEquals(ptr ptr ptr)

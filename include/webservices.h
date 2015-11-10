@@ -498,6 +498,7 @@ HRESULT WINAPI WsWriteStartElement(WS_XML_WRITER*, const WS_XML_STRING*, const W
                                    const WS_XML_STRING*, WS_ERROR*);
 HRESULT WINAPI WsWriteType(WS_XML_WRITER*, WS_TYPE_MAPPING, WS_TYPE, const void*, WS_WRITE_OPTION,
                            const void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsXmlStringEquals(const WS_XML_STRING*, const WS_XML_STRING*, WS_ERROR*);
 
 #define WS_S_ASYNC                          0x003d0000
 #define WS_S_END                            0x003d0001

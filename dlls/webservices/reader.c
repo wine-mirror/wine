@@ -1564,3 +1564,18 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
     reader->read_bufptr = reader->input_data;
     return S_OK;
 }
+
+/**************************************************************************
+ *          WsXmlStringEquals		[webservices.@]
+ */
+HRESULT WINAPI WsXmlStringEquals( const WS_XML_STRING *str1, const WS_XML_STRING *str2, WS_ERROR *error )
+{
+    TRACE( "%s %s %p\n", debugstr_xmlstr(str1), debugstr_xmlstr(str2), error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!str1 || !str2) return E_INVALIDARG;
+
+    if (str1->length != str2->length) return S_FALSE;
+    if (!memcmp( str1->bytes, str2->bytes, str1->length )) return S_OK;
+    return S_FALSE;
+}
