@@ -481,6 +481,7 @@ static void set_environment(LPCWSTR gre_path)
         strcpyW(path+len, gre_path);
         SetEnvironmentVariableW(pathW, path);
     }
+    heap_free(path);
 }
 
 static BOOL load_xul(const PRUnichar *gre_path)
