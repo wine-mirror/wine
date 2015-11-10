@@ -163,6 +163,14 @@ static const struct ID3D11QueryVtbl d3d11_query_vtbl =
     d3d11_query_GetDesc,
 };
 
+struct d3d_query *unsafe_impl_from_ID3D11Query(ID3D11Query *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == &d3d11_query_vtbl);
+    return CONTAINING_RECORD(iface, struct d3d_query, ID3D11Query_iface);
+}
+
 /* ID3D10Query methods */
 
 static inline struct d3d_query *impl_from_ID3D10Query(ID3D10Query *iface)

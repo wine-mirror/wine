@@ -483,7 +483,16 @@ static HRESULT STDMETHODCALLTYPE d3d11_immediate_context_GetData(ID3D11DeviceCon
 static void STDMETHODCALLTYPE d3d11_immediate_context_SetPredication(ID3D11DeviceContext *iface,
         ID3D11Predicate *predicate, BOOL value)
 {
-    FIXME("iface %p, predicate %p, value %#x stub!\n", iface, predicate, value);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct d3d_query *query;
+
+    TRACE("iface %p, predicate %p, value %#x.\n", iface, predicate, value);
+
+    query = unsafe_impl_from_ID3D11Query((ID3D11Query *)predicate);
+
+    wined3d_mutex_lock();
+    wined3d_device_set_predication(device->wined3d_device, query ? query->wined3d_query : NULL, value);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_GSSetShaderResources(ID3D11DeviceContext *iface,
