@@ -1268,18 +1268,19 @@ static void ME_RTFReadShpPictGroup( RTF_Info *info )
 static DWORD read_hex_data( RTF_Info *info, BYTE **out )
 {
     DWORD read = 0, size = 1024;
-    BYTE *buf = HeapAlloc( GetProcessHeap(), 0, size );
-    BYTE val;
+    BYTE *buf, val;
     BOOL flip;
 
     *out = NULL;
-    if (!buf) return 0;
 
     if (info->rtfClass != rtfText)
     {
         ERR("Called with incorrect token\n");
         return 0;
     }
+
+    buf = HeapAlloc( GetProcessHeap(), 0, size );
+    if (!buf) return 0;
 
     val = info->rtfMajor;
     for (flip = TRUE;; flip = !flip)
