@@ -1041,6 +1041,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
             if ([self level] > [child level])
                 [child setLevel:[self level]];
             [self addChildWindow:child ordered:NSWindowAbove];
+            [child checkWineDisplayLink];
             [latentChildWindows removeObjectIdenticalTo:child];
             child.latentParentWindow = nil;
             reordered = TRUE;
