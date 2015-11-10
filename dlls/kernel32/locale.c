@@ -1295,7 +1295,8 @@ INT WINAPI GetLocaleInfoA( LCID lcid, LCTYPE lctype, LPSTR buffer, INT len )
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    if (lctype & LOCALE_RETURN_GENITIVE_NAMES )
+    if (((lctype & ~LOCALE_LOCALEINFOFLAGSMASK) == LOCALE_SSHORTTIME) ||
+         (lctype & LOCALE_RETURN_GENITIVE_NAMES))
     {
         SetLastError( ERROR_INVALID_FLAGS );
         return 0;

@@ -3358,12 +3358,19 @@ static void test_EnumUILanguageA(void)
 }
 
 static char date_fmt_buf[1024];
+static WCHAR date_fmt_bufW[1024];
 
 static BOOL CALLBACK enum_datetime_procA(LPSTR fmt)
 {
     lstrcatA(date_fmt_buf, fmt);
     lstrcatA(date_fmt_buf, "\n");
     return TRUE;
+}
+
+static BOOL CALLBACK enum_datetime_procW(WCHAR *fmt)
+{
+    lstrcatW(date_fmt_bufW, fmt);
+    return FALSE;
 }
 
 static void test_EnumDateFormatsA(void)
@@ -3473,6 +3480,60 @@ static void test_EnumTimeFormatsA(void)
     ok(!lstrcmpA(date_fmt_buf, buf), "expected \"%s\" got \"%s\"\n", date_fmt_buf, buf);
 }
 
+static void test_EnumTimeFormatsW(void)
+{
+    LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+    WCHAR bufW[256];
+    BOOL ret;
+
+    date_fmt_bufW[0] = 0;
+    ret = EnumTimeFormatsW(enum_datetime_procW, lcid, 0);
+    ok(ret, "EnumTimeFormatsW(0) error %d\n", GetLastError());
+    ret = GetLocaleInfoW(lcid, LOCALE_STIMEFORMAT, bufW, sizeof(bufW)/sizeof(bufW[0]));
+    ok(ret, "GetLocaleInfoW(LOCALE_STIMEFORMAT) error %d\n", GetLastError());
+    ok(!lstrcmpW(date_fmt_bufW, bufW), "expected \"%s\" got \"%s\"\n", wine_dbgstr_w(date_fmt_bufW),
+        wine_dbgstr_w(bufW));
+
+    date_fmt_bufW[0] = 0;
+    ret = EnumTimeFormatsW(enum_datetime_procW, lcid, LOCALE_USE_CP_ACP);
+    ok(ret, "EnumTimeFormatsW(LOCALE_USE_CP_ACP) error %d\n", GetLastError());
+    ret = GetLocaleInfoW(lcid, LOCALE_STIMEFORMAT, bufW, sizeof(bufW)/sizeof(bufW[0]));
+    ok(ret, "GetLocaleInfoW(LOCALE_STIMEFORMAT) error %d\n", GetLastError());
+    ok(!lstrcmpW(date_fmt_bufW, bufW), "expected \"%s\" got \"%s\"\n", wine_dbgstr_w(date_fmt_bufW),
+        wine_dbgstr_w(bufW));
+
+    /* TIME_NOSECONDS is Win7+ feature */
+    date_fmt_bufW[0] = 0;
+    ret = EnumTimeFormatsW(enum_datetime_procW, lcid, TIME_NOSECONDS);
+    if (!ret && GetLastError() == ERROR_INVALID_FLAGS)
+        skip("EnumTimeFormatsW doesn't support TIME_NOSECONDS\n");
+    else {
+        char buf[256];
+
+    todo_wine
+        ok(ret, "EnumTimeFormatsW(TIME_NOSECONDS) error %d\n", GetLastError());
+        ret = GetLocaleInfoW(lcid, LOCALE_SSHORTTIME, bufW, sizeof(bufW)/sizeof(bufW[0]));
+        ok(ret, "GetLocaleInfoW(LOCALE_SSHORTTIME) error %d\n", GetLastError());
+    todo_wine
+        ok(!lstrcmpW(date_fmt_bufW, bufW), "expected \"%s\" got \"%s\"\n", wine_dbgstr_w(date_fmt_bufW),
+            wine_dbgstr_w(bufW));
+
+        /* EnumTimeFormatsA doesn't support this flag */
+        ret = EnumTimeFormatsA(enum_datetime_procA, lcid, TIME_NOSECONDS);
+    todo_wine {
+        ok(!ret && GetLastError() == ERROR_INVALID_FLAGS, "EnumTimeFormatsA(TIME_NOSECONDS) ret %d, error %d\n", ret,
+            GetLastError());
+
+        ret = EnumTimeFormatsA(NULL, lcid, TIME_NOSECONDS);
+        ok(!ret && GetLastError() == ERROR_INVALID_FLAGS, "EnumTimeFormatsA(TIME_NOSECONDS) ret %d, error %d\n", ret,
+            GetLastError());
+    }
+        /* And it's not supported by GetLocaleInfoA either */
+        ret = GetLocaleInfoA(lcid, LOCALE_SSHORTTIME, buf, sizeof(buf)/sizeof(buf[0]));
+        ok(!ret && GetLastError() == ERROR_INVALID_FLAGS, "GetLocaleInfoA(LOCALE_SSHORTTIME) ret %d, error %d\n", ret,
+            GetLastError());
+    }
+}
 static void test_GetCPInfo(void)
 {
     BOOL ret;
@@ -4506,6 +4567,7 @@ START_TEST(locale)
   InitFunctionPointers();
 
   test_EnumTimeFormatsA();
+  test_EnumTimeFormatsW();
   test_EnumDateFormatsA();
   test_GetLocaleInfoA();
   test_GetLocaleInfoW();
