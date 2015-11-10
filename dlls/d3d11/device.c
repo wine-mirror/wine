@@ -1148,7 +1148,12 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_SOGetTargets(ID3D11DeviceC
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetState(ID3D11DeviceContext *iface,
         ID3D11RasterizerState **rasterizer_state)
 {
-    FIXME("iface %p, rasterizer_state %p stub!\n", iface, rasterizer_state);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, rasterizer_state %p.\n", iface, rasterizer_state);
+
+    if ((*rasterizer_state = device->rasterizer_state ? &device->rasterizer_state->ID3D11RasterizerState_iface : NULL))
+        ID3D11RasterizerState_AddRef(*rasterizer_state);
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetViewports(ID3D11DeviceContext *iface,
