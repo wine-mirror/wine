@@ -2720,7 +2720,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
     for (i = 0; i < D3D10_SO_BUFFER_SLOT_COUNT; ++i)
     {
         ok(tmp_buffer[i] == so_buffer[i], "Got unexpected stream output %p in slot %u, expected %p.\n",
-                tmp_buffer[i], i, buffer[i]);
+                tmp_buffer[i], i, so_buffer[i]);
         ID3D10Buffer_Release(tmp_buffer[i]);
         todo_wine ok(offset[i] == ~0u, "Got unexpected stream output offset %u in slot %u.\n", offset[i], i);
     }
