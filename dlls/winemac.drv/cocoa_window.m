@@ -1841,7 +1841,12 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         }
 
         CGContextDrawImage(cgcontext, rect, windowImage);
-        [appImage drawInRect:NSMakeRect(156, 4, 96, 96)];
+        [appImage drawInRect:NSMakeRect(156, 4, 96, 96)
+                    fromRect:NSZeroRect
+                   operation:NSCompositeSourceOver
+                    fraction:1
+              respectFlipped:YES
+                       hints:nil];
 
         [dockIcon unlockFocus];
 
