@@ -253,7 +253,9 @@ void WINAPI WsFreeHeap( WS_HEAP *handle )
 struct node
 {
     WS_XML_ELEMENT_NODE hdr;
-    struct list entry;
+    struct list         entry;
+    struct node        *parent;
+    struct list         children;
 };
 
 static struct node *alloc_node( WS_XML_NODE_TYPE type )
@@ -263,6 +265,7 @@ static struct node *alloc_node( WS_XML_NODE_TYPE type )
     if (!(ret = heap_alloc_zero( sizeof(*ret) ))) return NULL;
     ret->hdr.node.nodeType = type;
     list_init( &ret->entry );
+    list_init( &ret->children );
     return ret;
 }
 
@@ -316,16 +319,18 @@ static void free_node( struct node *node )
     heap_free( node );
 }
 
-static void destroy_nodes( struct list *list )
+static void destroy_nodes( struct node *node )
 {
     struct list *ptr;
 
-    while ((ptr = list_head( list )))
+    if (!node) return;
+    while ((ptr = list_head( &node->children )))
     {
-        struct node *node = LIST_ENTRY( ptr, struct node, entry );
-        list_remove( &node->entry );
-        free_node( node );
+        struct node *child = LIST_ENTRY( ptr, struct node, entry );
+        list_remove( &child->entry );
+        destroy_nodes( child );
     }
+    free_node( node );
 }
 
 static const struct
@@ -369,7 +374,7 @@ struct reader
     ULONG                    read_pos;
     const char              *read_bufptr;
     enum reader_state        state;
-    struct list              nodes;
+    struct node             *root;
     struct node             *current;
     WS_XML_READER_INPUT_TYPE input_type;
     const char              *input_data;
@@ -417,18 +422,45 @@ static HRESULT get_reader_prop( struct reader *reader, WS_XML_READER_PROPERTY_ID
     return S_OK;
 }
 
+static void read_insert_eof( struct reader *reader, struct node *eof )
+{
+    if (!reader->root) reader->root = eof;
+    else
+    {
+        eof->parent = reader->root;
+        list_add_tail( &reader->root->children, &eof->entry );
+    }
+    reader->current = eof;
+}
+
+static void read_insert_bof( struct reader *reader, struct node *bof )
+{
+    reader->root->parent = bof;
+    list_add_tail( &bof->children, &reader->root->entry );
+    reader->current = reader->root = bof;
+}
+
+static void read_insert_node( struct reader *reader, struct node *parent, struct node *node )
+{
+    node->parent = parent;
+    if (node->parent == reader->root)
+    {
+        struct list *eof = list_tail( &reader->root->children );
+        list_add_before( eof, &node->entry );
+    }
+    else list_add_tail( &parent->children, &node->entry );
+    reader->current = node;
+}
+
 static HRESULT read_init_state( struct reader *reader )
 {
     struct node *node;
 
-    list_init( &reader->nodes );
+    destroy_nodes( reader->root );
+    reader->root = NULL;
     if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF ))) return E_OUTOFMEMORY;
-    list_add_tail( &reader->nodes, &node->entry );
-    reader->current     = node;
-    reader->state       = READER_STATE_INITIAL;
-    reader->read_size   = 0;
-    reader->read_pos    = 0;
-    reader->read_bufptr = NULL;
+    read_insert_eof( reader, node );
+    reader->state = READER_STATE_INITIAL;
     return S_OK;
 }
 
@@ -486,7 +518,7 @@ void WINAPI WsFreeReader( WS_XML_READER *handle )
     TRACE( "%p\n", handle );
 
     if (!reader) return;
-    destroy_nodes( &reader->nodes );
+    destroy_nodes( reader->root );
     heap_free( reader );
 }
 
@@ -848,7 +880,8 @@ static HRESULT read_element( struct reader *reader )
 
     if (read_end_of_data( reader ))
     {
-        reader->current = LIST_ENTRY( list_tail( &reader->nodes ), struct node, entry );
+        struct list *eof = list_tail( &reader->root->children );
+        reader->current = LIST_ENTRY( eof, struct node, entry );
         reader->state   = READER_STATE_EOF;
         return S_OK;
     }
@@ -893,11 +926,11 @@ static HRESULT read_element( struct reader *reader )
         hr = WS_E_INVALID_FORMAT;
         goto error;
     }
-    read_skip( reader, 1 );
 
-    list_add_after( &reader->current->entry, &node->entry );
-    reader->current = node;
-    reader->state   = READER_STATE_STARTELEMENT;
+    read_insert_node( reader, reader->current, node );
+    read_skip( reader, 1 );
+    reader->state = READER_STATE_STARTELEMENT;
+
     return S_OK;
 
 error:
@@ -932,9 +965,8 @@ static HRESULT read_text( struct reader *reader )
     }
     text->text = (WS_XML_TEXT *)utf8;
 
-    list_add_after( &reader->current->entry, &node->entry );
-    reader->current = node;
-    reader->state   = READER_STATE_TEXT;
+    read_insert_node( reader, reader->current, node );
+    reader->state = READER_STATE_TEXT;
     return S_OK;
 }
 
@@ -951,10 +983,9 @@ static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
     switch (reader->state)
     {
     case READER_STATE_INITIAL:
-    {
         if ((hr = read_xmldecl( reader )) != S_OK) return hr;
         break;
-    }
+
     case READER_STATE_STARTELEMENT:
         if (found) *found = TRUE;
         return S_OK;
@@ -975,16 +1006,48 @@ static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
     return hr;
 }
 
+static BOOL cmp_localname( const char *name1, ULONG len1, const char *name2, ULONG len2 )
+{
+    ULONG i;
+    if (len1 != len2) return FALSE;
+    for (i = 0; i < len1; i++) { if (toupper( name1[i] ) != toupper( name2[i] )) return FALSE; }
+    return TRUE;
+}
+
+static struct node *find_parent_element( struct node *node, const char *localname, ULONG len )
+{
+    struct node *parent;
+    WS_XML_STRING *name;
+
+    for (parent = node; parent; parent = parent->parent)
+    {
+        if (parent->hdr.node.nodeType != WS_XML_NODE_TYPE_ELEMENT) continue;
+        name = ((WS_XML_ELEMENT_NODE *)parent)->localName;
+        if (!cmp_localname( (const char *)name->bytes, name->length, localname, len )) continue;
+        return parent;
+    }
+    return NULL;
+}
+
 static HRESULT read_endelement( struct reader *reader )
 {
-    struct node *node;
-    unsigned int ch, skip;
+    struct node *node, *parent;
+    unsigned int len = 0, ch, skip;
+    const char *start;
 
-    if (reader->state != READER_STATE_TEXT) return WS_E_INVALID_FORMAT;
+    switch (reader->state)
+    {
+    case READER_STATE_TEXT:
+    case READER_STATE_STARTELEMENT:
+        break;
+    default:
+        return WS_E_INVALID_FORMAT;
+    }
 
     if (read_cmp( reader, "</", 2 )) return WS_E_INVALID_FORMAT;
     read_skip( reader, 2 );
 
+    start = read_current_ptr( reader );
     for (;;)
     {
         if (!(ch = read_utf8_char( reader, &skip ))) return WS_E_INVALID_FORMAT;
@@ -995,12 +1058,14 @@ static HRESULT read_endelement( struct reader *reader )
         }
         if (!read_isnamechar( ch )) return WS_E_INVALID_FORMAT;
         read_skip( reader, skip );
+        len += skip;
     }
+    if (!(parent = find_parent_element( reader->current, start, len )))
+        return WS_E_INVALID_FORMAT;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_END_ELEMENT ))) return E_OUTOFMEMORY;
-    list_add_after( &reader->current->entry, &node->entry );
-    reader->current = node;
-    reader->state   = READER_STATE_ENDELEMENT;
+    read_insert_node( reader, parent, node );
+    reader->state = READER_STATE_ENDELEMENT;
     return S_OK;
 }
 
@@ -1037,9 +1102,8 @@ static HRESULT read_comment( struct reader *reader )
     memcpy( comment->value.bytes, start, len );
     comment->value.length = len;
 
-    list_add_after( &reader->current->entry, &node->entry );
-    reader->current = node;
-    reader->state   = READER_STATE_COMMENT;
+    read_insert_node( reader, reader->current, node );
+    reader->state = READER_STATE_COMMENT;
     return S_OK;
 }
 
@@ -1051,7 +1115,8 @@ static HRESULT read_node( struct reader *reader )
     {
         if (read_end_of_data( reader ))
         {
-            reader->current = LIST_ENTRY( list_tail( &reader->nodes ), struct node, entry );
+            struct list *eof = list_tail( &reader->root->children );
+            reader->current = LIST_ENTRY( eof, struct node, entry );
             reader->state   = READER_STATE_EOF;
             return S_OK;
         }
@@ -1447,6 +1512,17 @@ static WS_CHARSET detect_charset( const unsigned char *data, ULONG size, ULONG *
     return ret;
 }
 
+static void set_input_buffer( struct reader *reader, const char *data, ULONG size )
+{
+    reader->input_type  = WS_XML_READER_INPUT_TYPE_BUFFER;
+    reader->input_data  = data;
+    reader->input_size  = size;
+
+    reader->read_size   = reader->input_size;
+    reader->read_pos    = 0;
+    reader->read_bufptr = reader->input_data;
+}
+
 /**************************************************************************
  *          WsSetInput		[webservices.@]
  */
@@ -1470,55 +1546,48 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
         if (hr != S_OK) return hr;
     }
 
-    destroy_nodes( &reader->nodes );
     if ((hr = read_init_state( reader )) != S_OK) return hr;
-
-    if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
-    list_add_head( &reader->nodes, &node->entry );
-    reader->current = node;
 
     switch (encoding->encodingType)
     {
-        case WS_XML_READER_ENCODING_TYPE_TEXT:
+    case WS_XML_READER_ENCODING_TYPE_TEXT:
+    {
+        WS_XML_READER_TEXT_ENCODING *text = (WS_XML_READER_TEXT_ENCODING *)encoding;
+        WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
+        WS_CHARSET charset = text->charSet;
+
+        if (input->inputType != WS_XML_READER_INPUT_TYPE_BUFFER)
         {
-            WS_XML_READER_TEXT_ENCODING *text = (WS_XML_READER_TEXT_ENCODING *)encoding;
-            WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
-            WS_CHARSET charset = text->charSet;
-
-            if (input->inputType != WS_XML_READER_INPUT_TYPE_BUFFER)
-            {
-                FIXME( "charset detection on input type %u not supported\n", input->inputType );
-                return E_NOTIMPL;
-            }
-
-            if (charset == WS_CHARSET_AUTO)
-                charset = detect_charset( buf->encodedData, buf->encodedDataSize, &offset );
-
-            hr = set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
-            if (hr != S_OK) return hr;
-            break;
-        }
-        default:
-            FIXME( "encoding type %u not supported\n", encoding->encodingType );
+            FIXME( "charset detection on input type %u not supported\n", input->inputType );
             return E_NOTIMPL;
+        }
+
+        if (charset == WS_CHARSET_AUTO)
+            charset = detect_charset( buf->encodedData, buf->encodedDataSize, &offset );
+
+        hr = set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
+        if (hr != S_OK) return hr;
+        break;
+    }
+    default:
+        FIXME( "encoding type %u not supported\n", encoding->encodingType );
+        return E_NOTIMPL;
     }
     switch (input->inputType)
     {
-        case WS_XML_READER_INPUT_TYPE_BUFFER:
-        {
-            WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
-
-            reader->input_type  = WS_XML_READER_INPUT_TYPE_BUFFER;
-            reader->input_data  = (const char *)buf->encodedData + offset;
-            reader->input_size  = buf->encodedDataSize - offset;
-            reader->read_bufptr = reader->input_data;
-            break;
-        }
-        default:
-            FIXME( "input type %u not supported\n", input->inputType );
-            return E_NOTIMPL;
+    case WS_XML_READER_INPUT_TYPE_BUFFER:
+    {
+        WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
+        set_input_buffer( reader, (const char *)buf->encodedData + offset, buf->encodedDataSize - offset );
+        break;
+    }
+    default:
+        FIXME( "input type %u not supported\n", input->inputType );
+        return E_NOTIMPL;
     }
 
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
+    read_insert_bof( reader, node );
     return S_OK;
 }
 
@@ -1547,21 +1616,15 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
         if (hr != S_OK) return hr;
     }
 
-    destroy_nodes( &reader->nodes );
     if ((hr = read_init_state( reader )) != S_OK) return hr;
-
-    if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
-    list_add_head( &reader->nodes, &node->entry );
-    reader->current = node;
 
     charset = detect_charset( xmlbuf->ptr, xmlbuf->size, &offset );
     hr = set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
     if (hr != S_OK) return hr;
 
-    reader->input_type  = WS_XML_READER_INPUT_TYPE_BUFFER;
-    reader->input_data  = (const char *)xmlbuf->ptr + offset;
-    reader->input_size  = xmlbuf->size - offset;
-    reader->read_bufptr = reader->input_data;
+    set_input_buffer( reader, (const char *)xmlbuf->ptr + offset, xmlbuf->size - offset );
+    if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
+    read_insert_bof( reader, node );
     return S_OK;
 }
 
