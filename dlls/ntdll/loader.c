@@ -2208,7 +2208,7 @@ overflow:
 static NTSTATUS load_dll( LPCWSTR load_path, LPCWSTR libname, DWORD flags, WINE_MODREF** pwm )
 {
     enum loadorder loadorder;
-    WCHAR buffer[32];
+    WCHAR buffer[64];
     WCHAR *filename;
     ULONG size;
     WINE_MODREF *main_exe;
