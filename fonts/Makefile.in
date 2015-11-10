@@ -11,7 +11,3 @@ FONT_SRCS = \
 	tahoma.sfd \
 	tahomabd.sfd \
 	wingding.sfd
-
-# Make sure that make_makefiles sees the generated rules
-install install-lib::
-clean::

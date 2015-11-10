@@ -266,13 +266,32 @@ sub get_makedep_flags($)
     my %flags;
 
     open FILE, $file or die "cannot open $file";
-    while (<FILE>)
+    if ($file =~ /\.sfd$/)
     {
-        next unless /^#\s*pragma\s+makedep\s+(.*)/;
-        foreach my $flag (split /\s+/, $1)
+        while (<FILE>)
         {
-            last if $flag eq "depend";
-            $flags{$flag} = 1;
+            next unless /^UComments:\s*\"(.*)\"$/;
+            foreach my $pragma (split /\+AAoA/, $1)
+            {
+                next unless $pragma =~ /^#\s*pragma\s+makedep\s+(.*)/;
+                foreach my $flag (split /\s+/, $1)
+                {
+                    $flags{$flag} = 1;
+                    last if $flag eq "font";
+                }
+            }
+        }
+    }
+    else
+    {
+        while (<FILE>)
+        {
+            next unless /^#\s*pragma\s+makedep\s+(.*)/;
+            foreach my $flag (split /\s+/, $1)
+            {
+                last if $flag eq "depend";
+                $flags{$flag} = 1;
+            }
         }
     }
     close FILE;
@@ -342,7 +361,12 @@ sub assign_sources_to_makefiles(@)
         elsif ($name =~ /\.rh$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
         elsif ($name =~ /\.inl$/) { push @{${$make}{"=HEADER_SRCS"}}, $name; }
         elsif ($name =~ /\.svg$/) { push @{${$make}{"=SVG_SRCS"}}, $name; }
-        elsif ($name =~ /\.sfd$/) { push @{${$make}{"=FONT_SRCS"}}, $name; }
+        elsif ($name =~ /\.sfd$/)
+        {
+            ${${$make}{"=flags"}}{"clean"} = 1 if defined $flags{"font"};
+            ${${$make}{"=flags"}}{"install-lib"} = 1 if defined $flags{"install"};
+            push @{${$make}{"=FONT_SRCS"}}, $name;
+        }
         elsif ($name =~ /\.c$/)
         {
             ${${$make}{"=flags"}}{"staticimplib"} = 1 if defined $flags{"implib"};
