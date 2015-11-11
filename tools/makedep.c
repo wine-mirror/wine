@@ -149,7 +149,7 @@ static const char *icotool;
 struct makefile
 {
     struct strarray vars;
-    struct strarray include_args;
+    struct strarray include_paths;
     struct strarray define_args;
     struct strarray programs;
     struct strarray scripts;
@@ -1397,9 +1397,9 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
         return file;
 
     /* now search in include paths */
-    for (i = 0; i < make->include_args.count; i++)
+    for (i = 0; i < make->include_paths.count; i++)
     {
-        const char *dir = make->include_args.str[i] + 2;  /* skip -I */
+        const char *dir = make->include_paths.str[i];
         const char *prefix = make->top_src_dir ? make->top_src_dir : make->top_obj_dir;
 
         if (prefix)
@@ -2002,10 +2002,11 @@ static struct strarray output_sources( const struct makefile *make, struct strar
     strarray_add( &includes, strmake( "-I%s", obj_dir_path( make, "" )));
     if (make->src_dir) strarray_add( &includes, strmake( "-I%s", make->src_dir ));
     if (make->parent_dir) strarray_add( &includes, strmake( "-I%s", src_dir_path( make, make->parent_dir )));
-    if (make->top_obj_dir) strarray_add( &includes, strmake( "-I%s", top_obj_dir_path( make, "include" )));
+    strarray_add( &includes, strmake( "-I%s", top_obj_dir_path( make, "include" )));
     if (make->top_src_dir) strarray_add( &includes, strmake( "-I%s", top_dir_path( make, "include" )));
     if (make->use_msvcrt) strarray_add( &includes, strmake( "-I%s", top_dir_path( make, "include/msvcrt" )));
-    strarray_addall( &includes, make->include_args );
+    for (i = 0; i < make->include_paths.count; i++)
+        strarray_add( &includes, strmake( "-I%s", obj_dir_path( make, make->include_paths.str[i] )));
 
     LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
     {
@@ -3004,14 +3005,14 @@ static void update_makefile( const char *path )
 
     if (make->module && !make->install_lib.count) strarray_add( &make->install_lib, make->module );
 
-    make->include_args = empty_strarray;
+    make->include_paths = empty_strarray;
     make->define_args = empty_strarray;
     strarray_add( &make->define_args, "-D__WINESRC__" );
 
     value = get_expanded_make_var_array( make, "EXTRAINCL" );
     for (i = 0; i < value.count; i++)
         if (!strncmp( value.str[i], "-I", 2 ))
-            strarray_add_uniq( &make->include_args, value.str[i] );
+            strarray_add_uniq( &make->include_paths, value.str[i] + 2 );
         else
             strarray_add_uniq( &make->define_args, value.str[i] );
     strarray_addall( &make->define_args, get_expanded_make_var_array( make, "EXTRADEFS" ));
