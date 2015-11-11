@@ -85,33 +85,68 @@ static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
     return TRUE;
 }
 
-static DWORD get_texture_color(ID3D10Texture2D *src_texture, unsigned int x, unsigned int y)
+struct texture_readback
 {
+    ID3D10Texture2D *texture;
     D3D10_MAPPED_TEXTURE2D mapped_texture;
+};
+
+static void get_texture_readback(ID3D10Texture2D *texture, struct texture_readback *rb)
+{
     D3D10_TEXTURE2D_DESC texture_desc;
-    ID3D10Texture2D *dst_texture;
     ID3D10Device *device;
-    DWORD color;
     HRESULT hr;
 
-    ID3D10Texture2D_GetDevice(src_texture, &device);
+    memset(rb, 0, sizeof(*rb));
 
-    ID3D10Texture2D_GetDesc(src_texture, &texture_desc);
+    ID3D10Texture2D_GetDevice(texture, &device);
+
+    ID3D10Texture2D_GetDesc(texture, &texture_desc);
     texture_desc.Usage = D3D10_USAGE_STAGING;
     texture_desc.BindFlags = 0;
     texture_desc.CPUAccessFlags = D3D10_CPU_ACCESS_READ;
     texture_desc.MiscFlags = 0;
-    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &dst_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    if (FAILED(hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &rb->texture)))
+    {
+        trace("Failed to create texture, hr %#x.\n", hr);
+        ID3D10Device_Release(device);
+        return;
+    }
 
-    ID3D10Device_CopyResource(device, (ID3D10Resource *)dst_texture, (ID3D10Resource *)src_texture);
-    hr = ID3D10Texture2D_Map(dst_texture, 0, D3D10_MAP_READ, 0, &mapped_texture);
-    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
-    color = *(DWORD *)(((BYTE *)mapped_texture.pData) + mapped_texture.RowPitch * y + x * 4);
-    ID3D10Texture2D_Unmap(dst_texture, 0);
+    ID3D10Device_CopyResource(device, (ID3D10Resource *)rb->texture, (ID3D10Resource *)texture);
+    if (FAILED(hr = ID3D10Texture2D_Map(rb->texture, 0, D3D10_MAP_READ, 0, &rb->mapped_texture)))
+    {
+        trace("Failed to map texture, hr %#x.\n", hr);
+        ID3D10Texture2D_Release(rb->texture);
+        rb->texture = NULL;
+    }
 
-    ID3D10Texture2D_Release(dst_texture);
     ID3D10Device_Release(device);
+}
+
+static DWORD get_readback_color(struct texture_readback *rb, unsigned int x, unsigned int y)
+{
+    return rb->texture
+            ? ((DWORD *)rb->mapped_texture.pData)[rb->mapped_texture.RowPitch * y / sizeof(DWORD)  + x] : 0xdeadbeef;
+}
+
+static void release_texture_readback(struct texture_readback *rb)
+{
+    if (!rb->texture)
+        return;
+
+    ID3D10Texture2D_Unmap(rb->texture, 0);
+    ID3D10Texture2D_Release(rb->texture);
+}
+
+static DWORD get_texture_color(ID3D10Texture2D *texture, unsigned int x, unsigned int y)
+{
+    struct texture_readback rb;
+    DWORD color;
+
+    get_texture_readback(texture, &rb);
+    color = get_readback_color(&rb, x, y);
+    release_texture_readback(&rb);
 
     return color;
 }
@@ -3179,6 +3214,7 @@ static void test_texture(void)
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Texture2D *backbuffer;
     unsigned int stride, offset;
+    struct texture_readback rb;
     IDXGISwapChain *swapchain;
     ID3D10Texture2D *texture;
     ID3D10VertexShader *vs;
@@ -3355,16 +3391,18 @@ static void test_texture(void)
 
     ID3D10Device_Draw(device, 4, 0);
 
+    get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_texture_color(backbuffer,  80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
+    release_texture_readback(&rb);
 
     ID3D10PixelShader_Release(ps);
     ID3D10VertexShader_Release(vs);
@@ -4047,6 +4085,7 @@ static void test_update_subresource(void)
     D3D10_BUFFER_DESC buffer_desc;
     ID3D10Texture2D *backbuffer;
     unsigned int stride, offset;
+    struct texture_readback rb;
     IDXGISwapChain *swapchain;
     ID3D10Texture2D *texture;
     ID3D10VertexShader *vs;
@@ -4227,15 +4266,17 @@ static void test_update_subresource(void)
     ID3D10Device_ClearRenderTargetView(device, backbuffer_rtv, red);
 
     ID3D10Device_Draw(device, 4, 0);
+    get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_texture_color(backbuffer,  80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
             ok(compare_color(color, 0x00000000, 0),
                     "Got unexpected color 0x%08x at (%u, %u).\n", color, j, i);
         }
     }
+    release_texture_readback(&rb);
 
     set_box(&box, 1, 1, 0, 3, 3, 1);
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)texture, 0, &box,
@@ -4253,30 +4294,34 @@ static void test_update_subresource(void)
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)texture, 0, &box,
             bitmap_data, sizeof(*bitmap_data), 0);
     ID3D10Device_Draw(device, 4, 0);
+    get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_texture_color(backbuffer,  80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
             ok(compare_color(color, expected_colors[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, expected_colors[j + i * 4]);
         }
     }
+    release_texture_readback(&rb);
 
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)texture, 0, NULL,
             bitmap_data, 4 * sizeof(*bitmap_data), 0);
     ID3D10Device_Draw(device, 4, 0);
+    get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_texture_color(backbuffer,  80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
+    release_texture_readback(&rb);
 
     ID3D10PixelShader_Release(ps);
     ID3D10VertexShader_Release(vs);
