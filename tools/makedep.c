@@ -489,6 +489,25 @@ static char *replace_extension( const char *name, const char *old_ext, const cha
 
 
 /*******************************************************************
+ *         replace_filename
+ */
+static char *replace_filename( const char *path, const char *name )
+{
+    const char *p;
+    char *ret;
+    size_t len;
+
+    if (!path) return xstrdup( name );
+    if (!(p = strrchr( path, '/' ))) return xstrdup( name );
+    len = p - path + 1;
+    ret = xmalloc( len + strlen( name ) + 1 );
+    memcpy( ret, path, len );
+    strcpy( ret + len, name );
+    return ret;
+}
+
+
+/*******************************************************************
  *         strarray_replace_extension
  */
 static struct strarray strarray_replace_extension( const struct strarray *array,
@@ -1201,6 +1220,22 @@ static struct file *open_file( const struct makefile *make, const char *path, ch
 
 
 /*******************************************************************
+ *         open_file_same_dir
+ *
+ * Open a file in the same directory as the parent.
+ */
+static struct file *open_file_same_dir( const struct incl_file *parent, const char *name, char **filename )
+{
+    char *src_path = replace_filename( parent->file->name, name );
+    struct file *ret = load_file( src_path );
+
+    if (ret) *filename = replace_filename( parent->filename, name );
+    free( src_path );
+    return ret;
+}
+
+
+/*******************************************************************
  *         open_local_file
  *
  * Open a file in the source directory of the makefile.
@@ -1270,7 +1305,7 @@ static struct file *open_src_file( const struct makefile *make, struct incl_file
 static struct file *open_include_file( const struct makefile *make, struct incl_file *pFile )
 {
     struct file *file = NULL;
-    char *filename, *p;
+    char *filename;
     unsigned int i, len;
 
     errno = ENOENT;
@@ -1383,15 +1418,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
     if (pFile->type == INCL_SYSTEM) return NULL;  /* ignore system files we cannot find */
 
     /* try in src file directory */
-    if ((p = strrchr(pFile->included_by->filename, '/')))
-    {
-        size_t l = p - pFile->included_by->filename + 1;
-        filename = xmalloc(l + strlen(pFile->name) + 1);
-        memcpy( filename, pFile->included_by->filename, l );
-        strcpy( filename + l, pFile->name );
-        if ((file = open_file( make, filename, &pFile->filename ))) return file;
-        free( filename );
-    }
+    if ((file = open_file_same_dir( pFile->included_by, pFile->name, &pFile->filename ))) return file;
 
     fprintf( stderr, "%s:%d: error: ", pFile->included_by->file->name, pFile->included_line );
     perror( pFile->name );
