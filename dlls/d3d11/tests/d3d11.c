@@ -80,36 +80,74 @@ static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
     return TRUE;
 }
 
-static DWORD get_texture_color(ID3D11Texture2D *src_texture, unsigned int x, unsigned int y)
+struct texture_readback
 {
-    D3D11_MAPPED_SUBRESOURCE mapped_texture;
+    ID3D11Resource *texture;
+    D3D11_MAPPED_SUBRESOURCE map_desc;
+    ID3D11DeviceContext *immediate_context;
+};
+
+static void get_texture_readback(ID3D11Texture2D *texture, struct texture_readback *rb)
+{
     D3D11_TEXTURE2D_DESC texture_desc;
-    ID3D11Texture2D *dst_texture;
-    ID3D11DeviceContext *context;
     ID3D11Device *device;
-    DWORD color;
     HRESULT hr;
 
-    ID3D11Texture2D_GetDevice(src_texture, &device);
-    ID3D11Device_GetImmediateContext(device, &context);
+    memset(rb, 0, sizeof(*rb));
 
-    ID3D11Texture2D_GetDesc(src_texture, &texture_desc);
+    ID3D11Texture2D_GetDevice(texture, &device);
+
+    ID3D11Texture2D_GetDesc(texture, &texture_desc);
     texture_desc.Usage = D3D11_USAGE_STAGING;
     texture_desc.BindFlags = 0;
     texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     texture_desc.MiscFlags = 0;
-    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &dst_texture);
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    if (FAILED(hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, (ID3D11Texture2D **)&rb->texture)))
+    {
+        trace("Failed to create texture, hr %#x.\n", hr);
+        ID3D11Device_Release(device);
+        return;
+    }
 
-    ID3D11DeviceContext_CopyResource(context, (ID3D11Resource *)dst_texture, (ID3D11Resource *)src_texture);
-    hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)dst_texture, 0, D3D11_MAP_READ, 0, &mapped_texture);
-    ok(SUCCEEDED(hr), "Failed to map texture, hr %#x.\n", hr);
-    color = *(DWORD *)(((BYTE *)mapped_texture.pData) + mapped_texture.RowPitch * y + x * 4);
-    ID3D11DeviceContext_Unmap(context, (ID3D11Resource *)dst_texture, 0);
+    ID3D11Device_GetImmediateContext(device, &rb->immediate_context);
 
-    ID3D11Texture2D_Release(dst_texture);
-    ID3D11DeviceContext_Release(context);
+    ID3D11DeviceContext_CopyResource(rb->immediate_context, rb->texture, (ID3D11Resource *)texture);
+    if (FAILED(hr = ID3D11DeviceContext_Map(rb->immediate_context, rb->texture, 0, D3D11_MAP_READ, 0, &rb->map_desc)))
+    {
+        trace("Failed to map texture, hr %#x.\n", hr);
+        ID3D11Resource_Release(rb->texture);
+        rb->texture = NULL;
+        ID3D11DeviceContext_Release(rb->immediate_context);
+        rb->immediate_context = NULL;
+    }
+
     ID3D11Device_Release(device);
+}
+
+static DWORD get_readback_color(struct texture_readback *rb, unsigned int x, unsigned int y)
+{
+    return rb->texture
+            ? ((DWORD *)rb->map_desc.pData)[rb->map_desc.RowPitch * y / sizeof(DWORD) + x] : 0xdeadbeef;
+}
+
+static void release_texture_readback(struct texture_readback *rb)
+{
+    if (!rb->texture)
+        return;
+
+    ID3D11DeviceContext_Unmap(rb->immediate_context, rb->texture, 0);
+    ID3D11Resource_Release(rb->texture);
+    ID3D11DeviceContext_Release(rb->immediate_context);
+}
+
+static DWORD get_texture_color(ID3D11Texture2D *texture, unsigned int x, unsigned int y)
+{
+    struct texture_readback rb;
+    DWORD color;
+
+    get_texture_readback(texture, &rb);
+    color = get_readback_color(&rb, x, y);
+    release_texture_readback(&rb);
 
     return color;
 }
@@ -2824,6 +2862,7 @@ static void test_texture(void)
     ID3D11DeviceContext *context;
     ID3D11Texture2D *backbuffer;
     unsigned int stride, offset;
+    struct texture_readback rb;
     IDXGISwapChain *swapchain;
     ID3D11Texture2D *texture;
     ID3D11VertexShader *vs;
@@ -3003,16 +3042,18 @@ static void test_texture(void)
 
     ID3D11DeviceContext_Draw(context, 4, 0);
 
+    get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_texture_color(backbuffer,  80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
+    release_texture_readback(&rb);
 
     ID3D11PixelShader_Release(ps);
     ID3D11VertexShader_Release(vs);
@@ -3710,6 +3751,7 @@ static void test_update_subresource(void)
     ID3D11DeviceContext *context;
     ID3D11Texture2D *backbuffer;
     unsigned int stride, offset;
+    struct texture_readback rb;
     IDXGISwapChain *swapchain;
     ID3D11Texture2D *texture;
     ID3D11VertexShader *vs;
@@ -3893,15 +3935,17 @@ static void test_update_subresource(void)
     ID3D11DeviceContext_ClearRenderTargetView(context, backbuffer_rtv, red);
 
     ID3D11DeviceContext_Draw(context, 4, 0);
+    get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_texture_color(backbuffer,  80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
             ok(compare_color(color, 0x00000000, 0),
                     "Got unexpected color 0x%08x at (%u, %u).\n", color, j, i);
         }
     }
+    release_texture_readback(&rb);
 
     set_box(&box, 1, 1, 0, 3, 3, 1);
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture, 0, &box,
@@ -3919,30 +3963,34 @@ static void test_update_subresource(void)
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture, 0, &box,
             bitmap_data, sizeof(*bitmap_data), 0);
     ID3D11DeviceContext_Draw(context, 4, 0);
+    get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_texture_color(backbuffer,  80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
             ok(compare_color(color, expected_colors[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, expected_colors[j + i * 4]);
         }
     }
+    release_texture_readback(&rb);
 
     ID3D11DeviceContext_UpdateSubresource(context, (ID3D11Resource *)texture, 0, NULL,
             bitmap_data, 4 * sizeof(*bitmap_data), 0);
     ID3D11DeviceContext_Draw(context, 4, 0);
+    get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
     {
         for (j = 0; j < 4; ++j)
         {
-            color = get_texture_color(backbuffer,  80 + j * 160, 60 + i * 120);
+            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
             ok(compare_color(color, bitmap_data[j + i * 4], 1),
                     "Got unexpected color 0x%08x at (%u, %u), expected 0x%08x.\n",
                     color, j, i, bitmap_data[j + i * 4]);
         }
     }
+    release_texture_readback(&rb);
 
     ID3D11PixelShader_Release(ps);
     ID3D11VertexShader_Release(vs);
