@@ -1208,13 +1208,17 @@ static struct file *load_file( const char *name )
 
 
 /*******************************************************************
- *         open_file
+ *         open_include_path_file
+ *
+ * Open a file from a directory on the include path.
  */
-static struct file *open_file( const struct makefile *make, const char *path, char **filename )
+static struct file *open_include_path_file( const struct makefile *make, const char *dir,
+                                            const char *name, char **filename )
 {
-    struct file *ret = load_file( base_dir_path( make, path ));
+    char *src_path = base_dir_path( make, concat_paths( dir, name ));
+    struct file *ret = load_file( src_path );
 
-    if (ret) *filename = xstrdup( path );
+    if (ret) *filename = src_dir_path( make, concat_paths( dir, name ));
     return ret;
 }
 
@@ -1411,7 +1415,7 @@ static struct file *open_include_file( const struct makefile *make, struct incl_
         }
         if (*dir != '/')
         {
-            if ((file = open_file( make, concat_paths( dir, pFile->name ), &pFile->filename )))
+            if ((file = open_include_path_file( make, dir, pFile->name, &pFile->filename )))
                 return file;
         }
     }
