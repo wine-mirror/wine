@@ -1515,21 +1515,27 @@ static void test_notify(void)
     LARGE_INTEGER timeout;
     IO_STATUS_BLOCK iosb;
     UNICODE_STRING str;
-    HANDLE key, event, subkey;
+    HANDLE key, events[2], subkey;
     NTSTATUS status;
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&key, KEY_ALL_ACCESS, &attr);
     ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
-    event = CreateEventW(NULL, FALSE, TRUE, NULL);
-    ok(event != NULL, "CreateEvent failed: %u\n", GetLastError());
+    events[0] = CreateEventW(NULL, FALSE, TRUE, NULL);
+    ok(events[0] != NULL, "CreateEvent failed: %u\n", GetLastError());
+    events[1] = CreateEventW(NULL, FALSE, TRUE, NULL);
+    ok(events[1] != NULL, "CreateEvent failed: %u\n", GetLastError());
 
-    status = pNtNotifyChangeKey(key, event, NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
+    status = pNtNotifyChangeKey(key, events[0], NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    status = pNtNotifyChangeKey(key, events[1], NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
     ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
 
     timeout.QuadPart = 0;
-    status = pNtWaitForSingleObject(event, FALSE, &timeout);
+    status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
+    ok(status == STATUS_TIMEOUT, "NtWaitForSingleObject returned %x\n", status);
+    status = pNtWaitForSingleObject(events[1], FALSE, &timeout);
     ok(status == STATUS_TIMEOUT, "NtWaitForSingleObject returned %x\n", status);
 
     attr.RootDirectory = key;
@@ -1539,13 +1545,37 @@ static void test_notify(void)
     status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
     ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
 
-    status = pNtWaitForSingleObject(event, FALSE, &timeout);
+    status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
+    todo_wine ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+    status = pNtWaitForSingleObject(events[1], FALSE, &timeout);
     ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+
+    status = pNtNotifyChangeKey(key, events[0], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    status = pNtNotifyChangeKey(key, events[1], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
 
     status = pNtDeleteKey(subkey);
     ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+
+    status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
+    todo_wine ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+    status = pNtWaitForSingleObject(events[1], FALSE, &timeout);
+    ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+
     pNtClose(subkey);
+
+    status = pNtNotifyChangeKey(key, events[0], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    status = pNtNotifyChangeKey(key, events[1], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+
     pNtClose(key);
+
+    status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
+    todo_wine ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+    status = pNtWaitForSingleObject(events[1], FALSE, &timeout);
+    ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
 
     if (pNtNotifyChangeMultipleKeys)
     {
@@ -1553,11 +1583,11 @@ static void test_notify(void)
         status = pNtOpenKey(&key, KEY_ALL_ACCESS, &attr);
         ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
-        status = pNtNotifyChangeMultipleKeys(key, 0, NULL, event, NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
+        status = pNtNotifyChangeMultipleKeys(key, 0, NULL, events[0], NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
         ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
 
         timeout.QuadPart = 0;
-        status = pNtWaitForSingleObject(event, FALSE, &timeout);
+        status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
         ok(status == STATUS_TIMEOUT, "NtWaitForSingleObject returned %x\n", status);
 
         attr.RootDirectory = key;
@@ -1566,7 +1596,7 @@ static void test_notify(void)
         status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
         ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
 
-        status = pNtWaitForSingleObject(event, FALSE, &timeout);
+        status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
         ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
 
         status = pNtDeleteKey(subkey);
@@ -1579,7 +1609,8 @@ static void test_notify(void)
         win_skip("NtNotifyChangeMultipleKeys not available\n");
     }
 
-    pNtClose(event);
+    pNtClose(events[0]);
+    pNtClose(events[1]);
 }
 
 START_TEST(reg)
