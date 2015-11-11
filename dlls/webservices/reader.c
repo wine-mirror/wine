@@ -659,7 +659,7 @@ WS_XML_STRING *alloc_xml_string( const char *data, ULONG len )
     return ret;
 }
 
-static WS_XML_UTF8_TEXT *alloc_utf8_text( const char *data, ULONG len )
+WS_XML_UTF8_TEXT *alloc_utf8_text( const char *data, ULONG len )
 {
     WS_XML_UTF8_TEXT *ret;
 

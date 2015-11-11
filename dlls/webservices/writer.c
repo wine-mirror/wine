@@ -738,3 +738,35 @@ error:
     free_node( node );
     return hr;
 }
+
+/**************************************************************************
+ *          WsWriteText		[webservices.@]
+ */
+HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    WS_XML_ELEMENT_NODE *elem;
+    WS_XML_UTF8_TEXT *src, *dst;
+
+    TRACE( "%p %p %p\n", handle, text, error );
+
+    if (!writer || !text) return E_INVALIDARG;
+
+    if (writer->state != WRITER_STATE_STARTATTRIBUTE)
+    {
+        FIXME( "can't handle writer state %u\n", writer->state );
+        return E_NOTIMPL;
+    }
+    if (text->textType != WS_XML_TEXT_TYPE_UTF8)
+    {
+        FIXME( "text type %u not supported\n", text->textType );
+        return E_NOTIMPL;
+    }
+    src = (WS_XML_UTF8_TEXT *)text;
+    if (!(dst = alloc_utf8_text( (const char *)src->value.bytes, src->value.length )))
+        return E_OUTOFMEMORY;
+
+    elem = (WS_XML_ELEMENT_NODE *)writer->current;
+    elem->attributes[elem->attributeCount - 1]->value = (WS_XML_TEXT *)dst;
+    return S_OK;
+}

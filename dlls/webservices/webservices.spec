@@ -184,7 +184,7 @@
 @ stdcall WsWriteStartAttribute(ptr ptr ptr ptr long ptr)
 @ stub WsWriteStartCData
 @ stdcall WsWriteStartElement(ptr ptr ptr ptr ptr)
-@ stub WsWriteText
+@ stdcall WsWriteText(ptr ptr ptr)
 @ stub WsWriteType
 @ stub WsWriteValue
 @ stub WsWriteXmlBuffer

@@ -404,6 +404,51 @@ static void test_WsWriteStartElement(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsWriteStartAttribute(void)
+{
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_XML_STRING prefix = {1, (BYTE *)"p"}, localname = {3, (BYTE *)"str"}, ns = {2, (BYTE *)"ns"};
+    WS_XML_UTF8_TEXT text;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, &prefix, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartAttribute( NULL, &prefix, &localname, &ns, FALSE, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    /* WsWriteStartAttribute doesn't output anything */
+    localname.length = 3;
+    localname.bytes  = (BYTE *)"len";
+    hr = WsWriteStartAttribute( writer, &prefix, &localname, &ns, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    text.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    text.value.length  = 1;
+    text.value.bytes   = (BYTE *)"0";
+    hr = WsWriteText( writer, &text.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    /* WsWriteEndAttribute doesn't output anything */
+    hr = WsWriteEndAttribute( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<p:str p:len=\"0\" xmlns:p=\"ns\"/>", __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -411,4 +456,5 @@ START_TEST(writer)
     test_WsSetOutput();
     test_WsSetOutputToBuffer();
     test_WsWriteStartElement();
+    test_WsWriteStartAttribute();
 }
