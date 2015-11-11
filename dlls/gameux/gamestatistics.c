@@ -264,7 +264,7 @@ static HRESULT GAMEUX_updateStatisticsFile(struct GAMEUX_STATS *stats)
                     }
 
                     if(SUCCEEDED(hr))
-                        hr = IXMLDOMNode_appendChild(categoryNode, statisticsNode, &statisticsNode);
+                        hr = IXMLDOMNode_appendChild(categoryNode, statisticsNode, NULL);
 
                     IXMLDOMElement_Release(statisticsElement);
                     IXMLDOMNode_Release(statisticsNode);
@@ -577,6 +577,8 @@ static HRESULT GAMEUX_loadStatisticsFromFile(struct GAMEUX_STATS *data)
                                 IXMLDOMNode_Release(statisticNode);
                             }
                         }
+
+                        IXMLDOMNodeList_Release(categoryChildren);
 
                         if(SUCCEEDED(hr))
                             hr = S_OK;
