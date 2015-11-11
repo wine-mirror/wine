@@ -908,18 +908,13 @@ static void enum_key( const struct key *key, int index, int info_class,
     case KeyFullInformation:
         for (i = 0; i <= key->last_subkey; i++)
         {
-            struct key *subkey = key->subkeys[i];
-            len = subkey->namelen / sizeof(WCHAR);
-            if (len > max_subkey) max_subkey = len;
-            len = subkey->classlen / sizeof(WCHAR);
-            if (len > max_class) max_class = len;
+            if (key->subkeys[i]->namelen > max_subkey) max_subkey = key->subkeys[i]->namelen;
+            if (key->subkeys[i]->classlen > max_class) max_class = key->subkeys[i]->classlen;
         }
         for (i = 0; i <= key->last_value; i++)
         {
-            len = key->values[i].namelen / sizeof(WCHAR);
-            if (len > max_value) max_value = len;
-            len = key->values[i].len;
-            if (len > max_data) max_data = len;
+            if (key->values[i].namelen > max_value) max_value = key->values[i].namelen;
+            if (key->values[i].len > max_data) max_data = key->values[i].len;
         }
         reply->max_subkey = max_subkey;
         reply->max_class  = max_class;

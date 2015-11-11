@@ -895,10 +895,10 @@ LSTATUS WINAPI RegQueryInfoKeyW( HKEY hkey, LPWSTR class, LPDWORD class_len, LPD
 
     if (class_len) *class_len = info->ClassLength / sizeof(WCHAR);
     if (subkeys) *subkeys = info->SubKeys;
-    if (max_subkey) *max_subkey = info->MaxNameLen;
-    if (max_class) *max_class = info->MaxClassLen;
+    if (max_subkey) *max_subkey = info->MaxNameLen / sizeof(WCHAR);
+    if (max_class) *max_class = info->MaxClassLen / sizeof(WCHAR);
     if (values) *values = info->Values;
-    if (max_value) *max_value = info->MaxValueNameLen;
+    if (max_value) *max_value = info->MaxValueNameLen / sizeof(WCHAR);
     if (max_data) *max_data = info->MaxValueDataLen;
     if (modif) *modif = *(FILETIME *)&info->LastWriteTime;
 
@@ -1090,10 +1090,10 @@ LSTATUS WINAPI RegQueryInfoKeyA( HKEY hkey, LPSTR class, LPDWORD class_len, LPDW
     else status = STATUS_SUCCESS;
 
     if (subkeys) *subkeys = info->SubKeys;
-    if (max_subkey) *max_subkey = info->MaxNameLen;
-    if (max_class) *max_class = info->MaxClassLen;
+    if (max_subkey) *max_subkey = info->MaxNameLen / sizeof(WCHAR);
+    if (max_class) *max_class = info->MaxClassLen / sizeof(WCHAR);
     if (values) *values = info->Values;
-    if (max_value) *max_value = info->MaxValueNameLen;
+    if (max_value) *max_value = info->MaxValueNameLen / sizeof(WCHAR);
     if (max_data) *max_data = info->MaxValueDataLen;
     if (modif) *modif = *(FILETIME *)&info->LastWriteTime;
 
