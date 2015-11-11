@@ -1234,7 +1234,8 @@ struct wined3d_buffer * CDECL wined3d_device_get_stream_output(struct wined3d_de
         return NULL;
     }
 
-    *offset = device->state.stream_output[idx].offset;
+    if (offset)
+        *offset = device->state.stream_output[idx].offset;
     return device->state.stream_output[idx].buffer;
 }
 
