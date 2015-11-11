@@ -906,6 +906,7 @@ static void enum_key( const struct key *key, int index, int info_class,
         reply->max_data   = 0;
         break;
     case KeyFullInformation:
+    case KeyCachedInformation:
         for (i = 0; i <= key->last_subkey; i++)
         {
             if (key->subkeys[i]->namelen > max_subkey) max_subkey = key->subkeys[i]->namelen;
@@ -920,7 +921,10 @@ static void enum_key( const struct key *key, int index, int info_class,
         reply->max_class  = max_class;
         reply->max_value  = max_value;
         reply->max_data   = max_data;
-        namelen = 0;  /* only return the class */
+        reply->namelen    = namelen;
+        if (info_class == KeyCachedInformation)
+            classlen = 0; /* don't return any data, only its size */
+        namelen = 0;  /* don't return name */
         break;
     default:
         set_error( STATUS_INVALID_PARAMETER );

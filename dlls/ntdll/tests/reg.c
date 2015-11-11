@@ -1466,12 +1466,14 @@ static void test_long_value_name(void)
 
 static void test_NtQueryKey(void)
 {
-    HANDLE key;
+    HANDLE key, subkey, subkey2;
     NTSTATUS status;
     OBJECT_ATTRIBUTES attr;
     ULONG length, len;
     KEY_NAME_INFORMATION *info = NULL;
+    KEY_CACHED_INFORMATION cached_info;
     UNICODE_STRING str;
+    DWORD dw;
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&key, KEY_READ, &attr);
@@ -1506,6 +1508,59 @@ static void test_NtQueryKey(void)
        wine_dbgstr_wn(winetestpath.Buffer, winetestpath.Length/sizeof(WCHAR)));
 
     HeapFree(GetProcessHeap(), 0, info);
+
+    attr.RootDirectory = key;
+    attr.ObjectName = &str;
+    pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
+    status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
+    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+
+    status = pNtQueryKey(subkey, KeyCachedInformation, &cached_info, sizeof(cached_info), &len);
+    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
+
+    if (status == STATUS_SUCCESS)
+    {
+        ok(len == sizeof(cached_info), "got unexpected length %d\n", len);
+        ok(cached_info.SubKeys == 0, "cached_info.SubKeys = %u\n", cached_info.SubKeys);
+        ok(cached_info.MaxNameLen == 0, "cached_info.MaxNameLen = %u\n", cached_info.MaxNameLen);
+        ok(cached_info.Values == 0, "cached_info.Values = %u\n", cached_info.Values);
+        ok(cached_info.MaxValueNameLen == 0, "cached_info.MaxValueNameLen = %u\n", cached_info.MaxValueNameLen);
+        ok(cached_info.MaxValueDataLen == 0, "cached_info.MaxValueDataLen = %u\n", cached_info.MaxValueDataLen);
+        ok(cached_info.NameLength == 22, "cached_info.NameLength = %u\n", cached_info.NameLength);
+    }
+
+    attr.RootDirectory = subkey;
+    attr.ObjectName = &str;
+    pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey2");
+    status = pNtCreateKey(&subkey2, GENERIC_ALL, &attr, 0, 0, 0, 0);
+    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+
+    pRtlCreateUnicodeStringFromAsciiz(&str, "val");
+    dw = 64;
+    status = pNtSetValueKey( subkey, &str, 0, REG_DWORD, &dw, sizeof(dw) );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+
+    status = pNtQueryKey(subkey, KeyCachedInformation, &cached_info, sizeof(cached_info), &len);
+    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
+
+    if (status == STATUS_SUCCESS)
+    {
+        ok(len == sizeof(cached_info), "got unexpected length %d\n", len);
+        ok(cached_info.SubKeys == 1, "cached_info.SubKeys = %u\n", cached_info.SubKeys);
+        ok(cached_info.MaxNameLen == 24, "cached_info.MaxNameLen = %u\n", cached_info.MaxNameLen);
+        ok(cached_info.Values == 1, "cached_info.Values = %u\n", cached_info.Values);
+        ok(cached_info.MaxValueNameLen == 6, "cached_info.MaxValueNameLen = %u\n", cached_info.MaxValueNameLen);
+        ok(cached_info.MaxValueDataLen == 4, "cached_info.MaxValueDataLen = %u\n", cached_info.MaxValueDataLen);
+        ok(cached_info.NameLength == 22, "cached_info.NameLength = %u\n", cached_info.NameLength);
+    }
+
+    status = pNtDeleteKey(subkey2);
+    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+    status = pNtDeleteKey(subkey);
+    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+
+    pNtClose(subkey2);
+    pNtClose(subkey);
     pNtClose(key);
 }
 

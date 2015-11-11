@@ -257,10 +257,11 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
 
     switch(info_class)
     {
-    case KeyBasicInformation: data_ptr = ((KEY_BASIC_INFORMATION *)info)->Name; break;
-    case KeyFullInformation:  data_ptr = ((KEY_FULL_INFORMATION *)info)->Class; break;
-    case KeyNodeInformation:  data_ptr = ((KEY_NODE_INFORMATION *)info)->Name;  break;
-    case KeyNameInformation:  data_ptr = ((KEY_NAME_INFORMATION *)info)->Name;  break;
+    case KeyBasicInformation:  data_ptr = ((KEY_BASIC_INFORMATION *)info)->Name; break;
+    case KeyFullInformation:   data_ptr = ((KEY_FULL_INFORMATION *)info)->Class; break;
+    case KeyNodeInformation:   data_ptr = ((KEY_NODE_INFORMATION *)info)->Name;  break;
+    case KeyNameInformation:   data_ptr = ((KEY_NAME_INFORMATION *)info)->Name;  break;
+    case KeyCachedInformation: data_ptr = ((KEY_CACHED_INFORMATION *)info)+1;    break;
     default:
         FIXME( "Information class %d not implemented\n", info_class );
         return STATUS_INVALID_PARAMETER;
@@ -331,6 +332,23 @@ static NTSTATUS enumerate_key( HANDLE handle, int index, KEY_INFORMATION_CLASS i
                     keyinfo.NameLength = reply->namelen;
                     memcpy( info, &keyinfo, min( length, fixed_size ) );
                 }
+                break;
+            case KeyCachedInformation:
+                {
+                    KEY_CACHED_INFORMATION keyinfo;
+                    fixed_size = sizeof(keyinfo);
+                    keyinfo.LastWriteTime.QuadPart = reply->modif;
+                    keyinfo.TitleIndex = 0;
+                    keyinfo.SubKeys = reply->subkeys;
+                    keyinfo.MaxNameLen = reply->max_subkey;
+                    keyinfo.Values = reply->values;
+                    keyinfo.MaxValueNameLen = reply->max_value;
+                    keyinfo.MaxValueDataLen = reply->max_data;
+                    keyinfo.NameLength = reply->namelen;
+                    memcpy( info, &keyinfo, min( length, fixed_size ) );
+                }
+                break;
+            default:
                 break;
             }
             *result_len = fixed_size + reply->total;
