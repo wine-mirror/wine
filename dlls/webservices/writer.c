@@ -73,6 +73,7 @@ struct writer
     enum writer_state         state;
     struct node              *root;
     struct node              *current;
+    WS_XML_STRING            *current_ns;
     WS_XML_WRITER_OUTPUT_TYPE output_type;
     struct xmlbuf            *output_buf;
     WS_HEAP                  *output_heap;
@@ -123,6 +124,7 @@ static HRESULT get_writer_prop( struct writer *writer, WS_XML_WRITER_PROPERTY_ID
 static void free_writer( struct writer *writer )
 {
     destroy_nodes( writer->root );
+    heap_free( writer->current_ns );
     WsFreeHeap( writer->output_heap );
     heap_free( writer );
 }
@@ -161,8 +163,11 @@ static HRESULT write_init_state( struct writer *writer )
 {
     struct node *node;
 
+    heap_free( writer->current_ns );
+    writer->current_ns = NULL;
     destroy_nodes( writer->root );
     writer->root = NULL;
+
     if (!(node = alloc_node( WS_XML_NODE_TYPE_EOF ))) return E_OUTOFMEMORY;
     write_insert_eof( writer, node );
     writer->state = WRITER_STATE_INITIAL;
@@ -476,6 +481,20 @@ static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
     return S_OK;
 }
 
+static inline BOOL is_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
+{
+    return (WsXmlStringEquals( writer->current_ns, ns, NULL ) == S_OK);
+}
+
+static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
+{
+    WS_XML_STRING *str;
+    if (!(str = alloc_xml_string( (const char *)ns->bytes, ns->length ))) return E_OUTOFMEMORY;
+    heap_free( writer->current_ns );
+    writer->current_ns = str;
+    return S_OK;
+}
+
 static HRESULT write_startelement( struct writer *writer )
 {
     WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)writer->current;
@@ -486,7 +505,7 @@ static HRESULT write_startelement( struct writer *writer )
 
     size = elem->localName->length + 1 /* '<' */;
     if (elem->prefix) size += elem->prefix->length + 1 /* ':' */;
-    if (elem->ns->length)
+    if (elem->ns->length && !is_current_namespace( writer, elem->ns ))
     {
         size += strlen(" xmlns") + elem->ns->length + 3 /* '=""' */;
         if (elem->prefix) size += elem->prefix->length + 1 /* ':' */;
@@ -504,8 +523,10 @@ static HRESULT write_startelement( struct writer *writer )
     {
         if ((hr = write_attribute( writer, elem->attributes[i] )) != S_OK) return hr;
     }
-    if (elem->ns->length)
+    if (elem->ns->length && !is_current_namespace( writer, elem->ns ))
     {
+        if ((hr = set_current_namespace( writer, elem->ns )) != S_OK) return hr;
+
         write_bytes( writer, (const BYTE *)" xmlns", 6 );
         if (elem->prefix)
         {
