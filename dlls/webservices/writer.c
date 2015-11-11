@@ -611,6 +611,28 @@ HRESULT WINAPI WsWriteEndElement( WS_XML_WRITER *handle, WS_ERROR *error )
 }
 
 /**************************************************************************
+ *          WsWriteEndStartElement		[webservices.@]
+ */
+HRESULT WINAPI WsWriteEndStartElement( WS_XML_WRITER *handle, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+    if (writer->state != WRITER_STATE_STARTELEMENT) return WS_E_INVALID_OPERATION;
+
+    if ((hr = write_startelement( writer )) != S_OK) return hr;
+    if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
+    write_char( writer, '>' );
+
+    writer->state = WRITER_STATE_ENDSTARTELEMENT;
+    return S_OK;
+}
+
+/**************************************************************************
  *          WsWriteStartElement		[webservices.@]
  */
 HRESULT WINAPI WsWriteStartElement( WS_XML_WRITER *handle, const WS_XML_STRING *prefix,
