@@ -173,7 +173,7 @@
 @ stub WsWriteElement
 @ stub WsWriteEndAttribute
 @ stub WsWriteEndCData
-@ stub WsWriteEndElement
+@ stdcall WsWriteEndElement(ptr ptr)
 @ stub WsWriteEndStartElement
 @ stub WsWriteEnvelopeEnd
 @ stub WsWriteEnvelopeStart

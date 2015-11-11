@@ -520,6 +520,75 @@ static HRESULT write_startelement( struct writer *writer )
     return S_OK;
 }
 
+static HRESULT write_endelement( struct writer *writer )
+{
+    WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)writer->current;
+    ULONG size;
+    HRESULT hr;
+
+    /* '</prefix:localname>' */
+
+    size = elem->localName->length + 3 /* '</>' */;
+    if (elem->prefix) size += elem->prefix->length + 1 /* ':' */;
+    if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
+
+    write_char( writer, '<' );
+    write_char( writer, '/' );
+    if (elem->prefix)
+    {
+        write_bytes( writer, elem->prefix->bytes, elem->prefix->length );
+        write_char( writer, ':' );
+    }
+    write_bytes( writer, elem->localName->bytes, elem->localName->length );
+    write_char( writer, '>' );
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsWriteEndElement		[webservices.@]
+ */
+HRESULT WINAPI WsWriteEndElement( WS_XML_WRITER *handle, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+
+    if (writer->state == WRITER_STATE_STARTELEMENT)
+    {
+        /* '/>' */
+        if ((hr = write_startelement( writer )) != S_OK) return hr;
+        if ((hr = write_grow_buffer( writer, 2 )) != S_OK) return hr;
+        write_char( writer, '/' );
+        write_char( writer, '>' );
+
+        writer->current = writer->current->parent;
+        writer->state   = WRITER_STATE_STARTENDELEMENT;
+        return S_OK;
+    }
+    else
+    {
+        struct node *node = alloc_node( WS_XML_NODE_TYPE_END_ELEMENT );
+        if (!node) return E_OUTOFMEMORY;
+
+        /* '</prefix:localname>' */
+        if ((hr = write_endelement( writer )) != S_OK)
+        {
+            free_node( node );
+            return hr;
+        }
+
+        write_insert_node( writer, node );
+        writer->current = node->parent;
+        writer->state   = WRITER_STATE_ENDELEMENT;
+        return S_OK;
+    }
+    return WS_E_INVALID_OPERATION;
+}
+
 /**************************************************************************
  *          WsWriteStartElement		[webservices.@]
  */
