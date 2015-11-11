@@ -1556,16 +1556,14 @@ static FILE *open_input_makefile( const struct makefile *make )
     FILE *ret;
 
     if (make->base_dir)
+    {
         input_file_name = base_dir_path( make, input_makefile_name );
-    else
-        input_file_name = output_makefile_name;  /* always use output name for main Makefile */
+        if (strendswith( input_makefile_name, ".in" )) input_file_name = root_dir_path( input_file_name );
+    }
+    else input_file_name = output_makefile_name;  /* always use output name for main Makefile */
 
     input_line = 0;
-    if (!(ret = fopen( input_file_name, "r" )))
-    {
-        input_file_name = root_dir_path( input_file_name );
-        if (!(ret = fopen( input_file_name, "r" ))) fatal_perror( "open" );
-    }
+    if (!(ret = fopen( input_file_name, "r" ))) fatal_perror( "open" );
     return ret;
 }
 
