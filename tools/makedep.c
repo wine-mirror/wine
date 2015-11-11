@@ -3124,7 +3124,7 @@ int main( int argc, char *argv[] )
 
         if (argc != 3)
         {
-            fprintf( stderr, "Option -r needs two directories\n%s", Usage );
+            fprintf( stderr, "Option -R needs two directories\n%s", Usage );
             exit( 1 );
         }
         relpath = get_relative_path( argv[1], argv[2] );
