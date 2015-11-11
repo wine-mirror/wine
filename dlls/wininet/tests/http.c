@@ -5646,6 +5646,7 @@ static void test_async_HttpSendRequestEx(const struct notification_data *nd)
     WaitForSingleObject( info.wait, 10000 );
     Sleep(100);
     CloseHandle( info.wait );
+    DeleteCriticalSection( &notification_cs );
 }
 
 static HINTERNET closetest_session, closetest_req, closetest_conn;
