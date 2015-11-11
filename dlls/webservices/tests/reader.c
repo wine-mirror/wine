@@ -29,7 +29,7 @@ static const char data2[] =
 
 static const char data3[] =
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-    "<text>test</text>";
+    "<text>test</TEXT>";
 
 static const char data4[] =
     "<?xml version=\"1.0\" encoding=\"utf-8\"?>\r\n"
@@ -60,6 +60,9 @@ static const char data8[] =
 
 static const char data9[] =
     "<text xml:attr=\"value\">test</text>";
+
+static const char data10[] =
+    "<a></b>";
 
 static void test_WsCreateError(void)
 {
@@ -584,6 +587,32 @@ static void test_WsFillReader(void)
     WS_XML_READER *reader;
     const WS_XML_NODE *node;
 
+    /* what happens of we don't call WsFillReader? */
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    hr = set_input( reader, data1, sizeof(data1) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    node = NULL;
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+    WsFreeReader( reader );
+
     hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
     ok( hr == S_OK, "got %08x\n", hr );
 
@@ -900,6 +929,22 @@ static void test_WsReadEndElement(void)
 
     hr = WsFillReader( reader, sizeof(data5) - 1, NULL, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadEndElement( reader, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    hr = set_input( reader, data10, sizeof(data10) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, sizeof(data10) - 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
 
     hr = WsReadEndElement( reader, NULL );
     ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
@@ -1479,6 +1524,122 @@ static void test_WsAlloc(void)
     WsFreeHeap( heap );
 }
 
+static void test_WsMoveReader(void)
+{
+    HRESULT hr;
+    WS_HEAP *heap;
+    WS_XML_READER *reader;
+    WS_XML_WRITER *writer;
+    WS_XML_BUFFER *buffer;
+    WS_XML_STRING localname = {1, (BYTE *)"a"}, localname2 = {1, (BYTE *)"b"}, ns = {0, NULL};
+    const WS_XML_NODE *node;
+    WS_XML_ELEMENT_NODE *elem;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveReader( NULL, WS_MOVE_TO_EOF, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    /* reader must be set to an XML buffer */
+    hr = WsMoveReader( reader, WS_MOVE_TO_EOF, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_input( reader, data8, sizeof(data8) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveReader( reader, WS_MOVE_TO_EOF, NULL, NULL );
+    todo_wine ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    WsFreeReader( reader );
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* <a><b/></a> */
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname2, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveReader( reader, WS_MOVE_TO_EOF, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = WsSetInputToBuffer( reader, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* first element is child node of BOF node */
+    hr = WsMoveReader( reader, WS_MOVE_TO_BOF, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveReader( reader, WS_MOVE_TO_CHILD_NODE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    elem = (WS_XML_ELEMENT_NODE *)node;
+    ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+    ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "a", 1 ), "wrong data\n" );
+
+    hr = WsMoveReader( reader, WS_MOVE_TO_CHILD_NODE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    elem = (WS_XML_ELEMENT_NODE *)node;
+    ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+    ok( elem->localName->length == 1, "got %u\n", elem->localName->length );
+    ok( !memcmp( elem->localName->bytes, "b", 1 ), "wrong data\n" );
+
+    hr = WsMoveReader( reader, WS_MOVE_TO_NEXT_NODE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", elem->node.nodeType );
+
+    /* EOF node is last child of BOF node */
+    hr = WsMoveReader( reader, WS_MOVE_TO_BOF, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsMoveReader( reader, WS_MOVE_TO_CHILD_NODE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+
+    hr = WsMoveReader( reader, WS_MOVE_TO_NEXT_NODE, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", elem->node.nodeType );
+
+    WsFreeReader( reader );
+    WsFreeWriter( writer );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -1495,4 +1656,5 @@ START_TEST(reader)
     test_WsGetXmlAttribute();
     test_WsXmlStringEquals();
     test_WsAlloc();
+    test_WsMoveReader();
 }
