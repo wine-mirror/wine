@@ -566,6 +566,23 @@ static HRESULT write_endelement( struct writer *writer )
 }
 
 /**************************************************************************
+ *          WsWriteEndAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsWriteEndAttribute( WS_XML_WRITER *handle, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+    if (writer->state != WRITER_STATE_STARTATTRIBUTE) return WS_E_INVALID_OPERATION;
+
+    writer->state = WRITER_STATE_STARTELEMENT;
+    return S_OK;
+}
+
+/**************************************************************************
  *          WsWriteEndElement		[webservices.@]
  */
 HRESULT WINAPI WsWriteEndElement( WS_XML_WRITER *handle, WS_ERROR *error )
