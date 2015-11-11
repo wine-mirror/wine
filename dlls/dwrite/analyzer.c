@@ -1198,9 +1198,11 @@ static void apply_cluster_spacing(FLOAT leading_spacing, FLOAT trailing_spacing,
         advance += trailing_spacing;
         modified_advances[end-1] += trailing_spacing;
     }
-    if (advance < min_advance_width) {
+
+    advance = min_advance_width - advance;
+    if (advance > 0.0f) {
         /* additional spacing is only applied to leading and trailing glyph */
-        FLOAT half = (min_advance_width - advance) / 2.0;
+        FLOAT half = advance / 2.0f;
 
         if (!reduced) {
             origin -= half;
@@ -1213,13 +1215,11 @@ static void apply_cluster_spacing(FLOAT leading_spacing, FLOAT trailing_spacing,
             modified_advances[end-1] += half;
         }
         else if (leading_spacing < 0.0) {
-            origin -= min_advance_width - advance;
-            modified_advances[start] += min_advance_width - advance;
+            origin -= advance;
+            modified_advances[start] += advance;
         }
         else
-            modified_advances[end-1] += min_advance_width - advance;
-
-        advance = min_advance_width;
+            modified_advances[end-1] += advance;
     }
 
     /* now apply positive spacing adjustments */
@@ -1317,7 +1317,6 @@ static HRESULT WINAPI dwritetextanalyzer1_ApplyCharacterSpacing(IDWriteTextAnaly
         return S_OK;
     }
 
-    start = 0;
     for (start = 0; start < len;) {
         UINT32 length = get_cluster_length(clustermap, start, len);
 
