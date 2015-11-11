@@ -1949,7 +1949,7 @@ static void output_install_rules( const struct makefile *make, struct strarray f
                     install_sh, src_dir_path( make, file ), dest + 1 );
             break;
         case 'y':  /* symlink */
-            output( "\t$(RM) $(DESTDIR)%s && $(LN_S) %s $(DESTDIR)%s\n", dest + 1, file, dest + 1 );
+            output( "\trm -f $(DESTDIR)%s && $(LN_S) %s $(DESTDIR)%s\n", dest + 1, file, dest + 1 );
             break;
         default:
             assert(0);
@@ -1957,7 +1957,7 @@ static void output_install_rules( const struct makefile *make, struct strarray f
     }
 
     output( "uninstall::\n" );
-    output( "\t$(RM)" );
+    output( "\trm -f" );
     for (i = 0; i < files.count; i += 2) output_filename( strmake( "$(DESTDIR)%s", files.str[i + 1] + 1 ));
     output( "\n" );
 
@@ -2190,7 +2190,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
             }
             strarray_add( &all_targets, xstrdup(obj) );
             output( "%s: %s\n", obj_dir_path( make, obj ), source->filename );
-            output( "\t$(SED_CMD) %s >$@ || ($(RM) $@ && false)\n", source->filename );
+            output( "\t$(SED_CMD) %s >$@ || (rm -f $@ && false)\n", source->filename );
             output( "%s:", obj_dir_path( make, obj ));
             output_filenames( dependencies );
             output( "\n" );
@@ -2431,7 +2431,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
                     output( "%s.def.a:", importlib_path );
                     output_filenames_obj_dir( make, implib_objs );
                     output( "\n" );
-                    output( "\t$(RM) $@\n" );
+                    output( "\trm -f $@\n" );
                     output( "\t$(AR) $(ARFLAGS) $@" );
                     output_filenames_obj_dir( make, implib_objs );
                     output( "\n" );
@@ -2525,7 +2525,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         strarray_add( &all_targets, make->staticlib );
         output( "%s:", obj_dir_path( make, make->staticlib ));
         output_filenames_obj_dir( make, object_files );
-        output( "\n\t$(RM) $@\n" );
+        output( "\n\trm -f $@\n" );
         output( "\t$(AR) $(ARFLAGS) $@" );
         output_filenames_obj_dir( make, object_files );
         output( "\n\t$(RANLIB) $@\n" );
@@ -2536,7 +2536,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
             strarray_add( &all_targets, name );
             output( "%s:", obj_dir_path( make, name ));
             output_filenames_obj_dir( make, crossobj_files );
-            output( "\n\t$(RM) $@\n" );
+            output( "\n\trm -f $@\n" );
             output( "\t%s-ar $(ARFLAGS) $@", crosstarget );
             output_filenames_obj_dir( make, crossobj_files );
             output( "\n\t%s-ranlib $@\n", crosstarget );
@@ -2622,7 +2622,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         output_filenames_obj_dir( make, ok_files );
         output( "\n" );
         output( "testclean::\n" );
-        output( "\t$(RM)" );
+        output( "\trm -f" );
         output_filenames_obj_dir( make, ok_files );
         output( "\n" );
         strarray_addall( &clean_files, ok_files );
@@ -2683,7 +2683,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         {
             output_filenames_obj_dir( make, symlinks );
             output( ": %s\n", obj_dir_path( make, program ));
-            output( "\t$(RM) $@ && $(LN_S) %s $@\n", obj_dir_path( make, program ));
+            output( "\trm -f $@ && $(LN_S) %s $@\n", obj_dir_path( make, program ));
             strarray_addall( &all_targets, symlinks );
         }
 
@@ -2717,7 +2717,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
     if (clean_files.count)
     {
         output( "%s::\n", obj_dir_path( make, "clean" ));
-        output( "\t$(RM)" );
+        output( "\trm -f" );
         output_filenames_obj_dir( make, clean_files );
         output( "\n" );
         if (make->obj_dir) output( "__clean__: %s\n", obj_dir_path( make, "clean" ));
