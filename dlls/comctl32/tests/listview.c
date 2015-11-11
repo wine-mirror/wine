@@ -5342,6 +5342,7 @@ static void test_header_notification2(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ITEMCHANGINGW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     parent_header_notify_seq[0].id = HDN_ITEMCHANGINGA;
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_notify_seq,
                 "header notify, parent", TRUE);
@@ -5350,6 +5351,7 @@ static void test_header_notification2(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ITEMCHANGEDW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     parent_header_notify_seq[0].id = HDN_ITEMCHANGEDA;
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_notify_seq,
                 "header notify, parent", TRUE);
@@ -5360,30 +5362,35 @@ static void test_header_notification2(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ITEMCLICKW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_click_seq,
                 "header notify, parent", FALSE);
     ok(nmhdr.hdr.code == HDN_ITEMCLICKA, "Expected ANSI notification code\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ITEMDBLCLICKW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "header notify, parent", FALSE);
     ok(nmhdr.hdr.code == HDN_ITEMDBLCLICKW, "Expected Unicode notification code\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_DIVIDERDBLCLICKW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_divider_dclick_seq,
                 "header notify, parent", TRUE);
     ok(nmhdr.hdr.code == HDN_DIVIDERDBLCLICKA, "Expected ANSI notification code\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_BEGINTRACKW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "header notify, parent", FALSE);
     ok(nmhdr.hdr.code == HDN_BEGINTRACKW, "Expected Unicode notification code\n");
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ENDTRACKW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     parent_header_notify_seq[0].id = HDN_ENDTRACKA;
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_notify_seq,
                 "header notify, parent", FALSE);
@@ -5391,6 +5398,7 @@ static void test_header_notification2(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_TRACKW;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     parent_header_notify_seq[0].id = HDN_TRACKA;
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_notify_seq,
                 "header notify, parent", FALSE);
@@ -5398,17 +5406,20 @@ static void test_header_notification2(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_BEGINDRAG;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 1, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "header notify, parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ENDDRAG;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     parent_header_notify_seq[0].id = HDN_ENDDRAG;
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_notify_seq,
                 "header notify, parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_FILTERCHANGE;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     parent_header_notify_seq[0].id = HDN_FILTERCHANGE;
     parent_header_notify_seq[0].flags |= optional; /* NT4 does not send this message */
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_header_notify_seq,
@@ -5417,21 +5428,25 @@ static void test_header_notification2(void)
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_BEGINFILTEREDIT;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "header notify, parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ENDFILTEREDIT;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "header notify, parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ITEMSTATEICONCLICK;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "header notify, parent", FALSE);
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
     nmhdr.hdr.code = HDN_ITEMKEYDOWN;
     ret = SendMessageW(list, WM_NOTIFY, 0, (LPARAM)&nmhdr);
+    ok(ret == 0, "got %d\n", ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
                 "header notify, parent", FALSE);
 
