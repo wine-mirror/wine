@@ -293,7 +293,20 @@ HRESULT WINAPI WsGetWriterProperty( WS_XML_WRITER *handle, WS_XML_WRITER_PROPERT
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!writer->output_type) return WS_E_INVALID_OPERATION;
-    return get_writer_prop( writer, id, buf, size );
+
+    switch (id)
+    {
+    case WS_XML_WRITER_PROPERTY_BYTES:
+    {
+        WS_BYTES *bytes = buf;
+        if (size != sizeof(*bytes)) return E_INVALIDARG;
+        bytes->bytes  = writer->output_buf->ptr;
+        bytes->length = writer->output_buf->size;
+        return S_OK;
+    }
+    default:
+        return get_writer_prop( writer, id, buf, size );
+    }
 }
 
 static void set_output_buffer( struct writer *writer, struct xmlbuf *xmlbuf )

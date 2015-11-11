@@ -120,13 +120,13 @@ static void test_WsCreateWriter(void)
     ok( hr == S_OK, "got %08x\n", hr );
     ok( max_size == 65536, "got %u\n", max_size );
 
-    buffers.bufferCount = 0xdeadbeef;
-    buffers.buffers = (WS_BYTES *)0xdeadbeef;
+    bytes.length = 0xdeadbeef;
+    bytes.bytes = (BYTE *)0xdeadbeef;
     size = sizeof(buffers);
-    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &buffers, size, NULL );
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
-    ok( !buffers.bufferCount, "got %u\n", buffers.bufferCount );
-    todo_wine ok( buffers.buffers != NULL, "got %p\n", buffers.buffers );
+    ok( !bytes.length, "got %u\n", bytes.length );
+    ok( bytes.bytes != NULL, "got %p\n", bytes.bytes );
 
     max_size = 0xdeadbeef;
     size = sizeof(max_size);
