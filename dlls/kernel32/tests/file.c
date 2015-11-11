@@ -1794,14 +1794,12 @@ static void test_DeleteFileA( void )
 
     SetLastError(0xdeadbeef);
     ret = DeleteFileA(temp_file);
-todo_wine
     ok(ret, "DeleteFile error %d\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = CloseHandle(hfile);
     ok(ret, "CloseHandle error %d\n", GetLastError());
     ret = DeleteFileA(temp_file);
-todo_wine
     ok(!ret, "DeleteFile should fail\n");
 
     SetLastError(0xdeadbeef);

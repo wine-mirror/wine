@@ -1683,8 +1683,7 @@ BOOL WINAPI DeleteFileW( LPCWSTR path )
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    status = NtCreateFile(&hFile, GENERIC_READ | GENERIC_WRITE | SYNCHRONIZE | DELETE,
-			  &attr, &io, NULL, 0,
+    status = NtCreateFile(&hFile, SYNCHRONIZE | DELETE, &attr, &io, NULL, 0,
 			  FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE,
 			  FILE_OPEN, FILE_DELETE_ON_CLOSE | FILE_NON_DIRECTORY_FILE, NULL, 0);
     if (status == STATUS_SUCCESS) status = NtClose(hFile);
