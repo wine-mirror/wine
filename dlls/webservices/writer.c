@@ -633,6 +633,49 @@ HRESULT WINAPI WsWriteEndStartElement( WS_XML_WRITER *handle, WS_ERROR *error )
 }
 
 /**************************************************************************
+ *          WsWriteStartAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsWriteStartAttribute( WS_XML_WRITER *handle, const WS_XML_STRING *prefix,
+                                      const WS_XML_STRING *localname, const WS_XML_STRING *ns,
+                                      BOOL single, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    WS_XML_ELEMENT_NODE *elem;
+    WS_XML_ATTRIBUTE *attr;
+    HRESULT hr = E_OUTOFMEMORY;
+
+    TRACE( "%p %s %s %s %d %p\n", handle, debugstr_xmlstr(prefix), debugstr_xmlstr(localname),
+           debugstr_xmlstr(ns), single, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !localname || !ns) return E_INVALIDARG;
+
+    if (writer->state != WRITER_STATE_STARTELEMENT) return WS_E_INVALID_OPERATION;
+    elem = (WS_XML_ELEMENT_NODE *)writer->current;
+
+    if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
+    attr->singleQuote = !!single;
+
+    if (prefix && !(attr->prefix = alloc_xml_string( (const char *)prefix->bytes, prefix->length )))
+        goto error;
+
+    if (!(attr->localName = alloc_xml_string( (const char *)localname->bytes, localname->length )))
+        goto error;
+
+    if (!(attr->ns = alloc_xml_string( (const char *)ns->bytes, ns->length )))
+        goto error;
+
+    if ((hr = append_attribute( elem, attr )) != S_OK) goto error;
+
+    writer->state = WRITER_STATE_STARTATTRIBUTE;
+    return S_OK;
+
+error:
+    free_attribute( attr );
+    return hr;
+}
+
+/**************************************************************************
  *          WsWriteStartElement		[webservices.@]
  */
 HRESULT WINAPI WsWriteStartElement( WS_XML_WRITER *handle, const WS_XML_STRING *prefix,

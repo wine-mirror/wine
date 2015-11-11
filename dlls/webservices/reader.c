@@ -284,7 +284,7 @@ struct node *alloc_node( WS_XML_NODE_TYPE type )
     return ret;
 }
 
-static void free_attribute( WS_XML_ATTRIBUTE *attr )
+void free_attribute( WS_XML_ATTRIBUTE *attr )
 {
     if (!attr) return;
     heap_free( attr->prefix );
@@ -807,7 +807,7 @@ static HRESULT read_xmldecl( struct reader *reader )
     return S_OK;
 }
 
-static HRESULT append_attribute( WS_XML_ELEMENT_NODE *elem, WS_XML_ATTRIBUTE *attr )
+HRESULT append_attribute( WS_XML_ELEMENT_NODE *elem, WS_XML_ATTRIBUTE *attr )
 {
     if (elem->attributeCount)
     {

@@ -181,7 +181,7 @@
 @ stub WsWriteMessageStart
 @ stub WsWriteNode
 @ stub WsWriteQualifiedName
-@ stub WsWriteStartAttribute
+@ stdcall WsWriteStartAttribute(ptr ptr ptr ptr long ptr)
 @ stub WsWriteStartCData
 @ stdcall WsWriteStartElement(ptr ptr ptr ptr ptr)
 @ stub WsWriteText
