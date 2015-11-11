@@ -4521,7 +4521,6 @@ if (0) /* crashes on native */
             }
         }
 
-        gasp = get_gasp_flags(fontface, emsize, 1.0f);
         /* IDWriteFontFace1 offers another variant of this method */
         if (fontface1) {
             for (i = 0; i < sizeof(recmode_tests1)/sizeof(recmode_tests1[0]); i++) {
