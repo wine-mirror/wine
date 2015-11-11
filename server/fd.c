@@ -1850,6 +1850,15 @@ struct fd *open_fd( struct fd *root, const char *name, int flags, mode_t *mode, 
             set_error( err );
             goto error;
         }
+
+        /* can't unlink files if we don't have permission to access */
+        if ((options & FILE_DELETE_ON_CLOSE) && !(flags & O_CREAT) &&
+            !(st.st_mode & (S_IWUSR | S_IWGRP | S_IWOTH)))
+        {
+            set_error( STATUS_CANNOT_DELETE );
+            goto error;
+        }
+
         fd->closed->unlink = (options & FILE_DELETE_ON_CLOSE) != 0;
         if (flags & O_TRUNC)
         {
