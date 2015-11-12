@@ -8858,6 +8858,124 @@ static void test_range_colorkey(void)
     DestroyWindow(window);
 }
 
+static void test_shademode(void)
+{
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    IDirect3DMaterial2 *background;
+    IDirect3DViewport2 *viewport;
+    IDirect3DDevice2 *device;
+    IDirectDrawSurface *rt;
+    DWORD color0, color1;
+    IDirectDraw2 *ddraw;
+    D3DLVERTEX *quad;
+    IDirect3D2 *d3d;
+    ULONG refcount;
+    UINT i, count;
+    HWND window;
+    HRESULT hr;
+    static D3DLVERTEX quad_strip[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}, 0, {0xffff0000}},
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xff00ff00}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0xff0000ff}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, 0, {0xffffffff}},
+    },
+    quad_list[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}, 0, {0xffff0000}},
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xff00ff00}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0xff0000ff}},
+
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0xff0000ff}},
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xff00ff00}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, 0, {0xffffffff}},
+    };
+    static const struct
+    {
+        DWORD primtype;
+        DWORD shademode;
+        DWORD color0, color1;
+    }
+    tests[] =
+    {
+        {D3DPT_TRIANGLESTRIP, D3DSHADE_FLAT,    0x00ff0000, 0x0000ff00},
+        {D3DPT_TRIANGLESTRIP, D3DSHADE_PHONG,   0x000dca28, 0x000d45c7},
+        {D3DPT_TRIANGLESTRIP, D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7},
+        {D3DPT_TRIANGLESTRIP, D3DSHADE_PHONG,   0x000dca28, 0x000d45c7},
+        {D3DPT_TRIANGLELIST,  D3DSHADE_FLAT,    0x00ff0000, 0x000000ff},
+        {D3DPT_TRIANGLELIST,  D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7},
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw2_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice2_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    background = create_diffuse_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, background);
+    hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
+    ok(SUCCEEDED(hr), "Failed to activate the viewport, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_FOGENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
+
+    /* Try it first with a TRIANGLESTRIP.  Do it with different geometry because
+     * the color fixups we have to do for FLAT shading will be dependent on that. */
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        hr = IDirect3DViewport2_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice2_SetRenderState(device, D3DRENDERSTATE_SHADEMODE, tests[i].shademode);
+        ok(hr == D3D_OK, "Failed to set shade mode, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice2_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        quad = tests[i].primtype == D3DPT_TRIANGLESTRIP ? quad_strip : quad_list;
+        count = tests[i].primtype == D3DPT_TRIANGLESTRIP ? 4 : 6;
+        hr = IDirect3DDevice2_DrawPrimitive(device, tests[i].primtype, D3DVT_LVERTEX, quad, count, 0);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color0 = get_surface_color(rt, 100, 100); /* Inside first triangle */
+        color1 = get_surface_color(rt, 500, 350); /* Inside second triangle */
+
+        /* For D3DSHADE_FLAT it should take the color of the first vertex of
+         * each triangle. This requires EXT_provoking_vertex or similar
+         * functionality being available. */
+        /* PHONG should be the same as GOURAUD, since no hardware implements
+         * this. */
+        ok(color0 == tests[i].color0, "Test %u shading has color0 %08x, expected %08x.\n",
+                i, color0, tests[i].color0);
+        ok(color1 == tests[i].color1, "Test %u shading has color1 %08x, expected %08x.\n",
+                i, color1, tests[i].color1);
+    }
+
+    destroy_viewport(device, viewport);
+    destroy_material(background);
+    IDirectDrawSurface_Release(rt);
+    IDirect3D2_Release(d3d);
+    refcount = IDirect3DDevice2_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw2)
 {
     IDirectDraw2 *ddraw;
@@ -8936,4 +9054,5 @@ START_TEST(ddraw2)
     test_color_fill();
     test_colorkey_precision();
     test_range_colorkey();
+    test_shademode();
 }
