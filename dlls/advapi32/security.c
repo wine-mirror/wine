@@ -19,6 +19,8 @@
  *
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 #include <string.h>
 
@@ -5312,7 +5314,7 @@ BOOL WINAPI DestroyPrivateObjectSecurity( PSECURITY_DESCRIPTOR* ObjectDescriptor
     return TRUE;
 }
 
-BOOL WINAPI CreateProcessAsUserA(
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessAsUserA(
         HANDLE hToken,
         LPCSTR lpApplicationName,
         LPSTR lpCommandLine,
@@ -5367,7 +5369,7 @@ BOOL WINAPI CreateProcessAsUserA(
     return ret;
 }
 
-BOOL WINAPI CreateProcessAsUserW(
+BOOL WINAPI DECLSPEC_HOTPATCH CreateProcessAsUserW(
         HANDLE hToken,
         LPCWSTR lpApplicationName,
         LPWSTR lpCommandLine,
