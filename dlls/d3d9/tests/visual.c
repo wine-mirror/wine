@@ -8095,23 +8095,70 @@ done:
     DestroyWindow(window);
 }
 
-static void shademode_test(void)
+static void test_shademode(void)
 {
-    /* Render a quad and try all of the different fixed function shading models. */
-    DWORD color0_gouraud = 0, color1_gouraud = 0;
-    DWORD primtype = D3DPT_TRIANGLESTRIP;
     IDirect3DVertexBuffer9 *vb_strip;
     IDirect3DVertexBuffer9 *vb_list;
-    DWORD shademode = D3DSHADE_FLAT;
+    IDirect3DVertexShader9 *vs;
+    IDirect3DPixelShader9 *ps;
     IDirect3DDevice9 *device;
     DWORD color0, color1;
     void *data = NULL;
     IDirect3D9 *d3d;
     ULONG refcount;
+    D3DCAPS9 caps;
     HWND window;
     HRESULT hr;
-    UINT i, j;
-
+    UINT i;
+    static const DWORD vs1_code[] =
+    {
+        0xfffe0101,                                                             /* vs_1_1          */
+        0x0000001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0 */
+        0x0000001f, 0x8000000a, 0x900f0001,                                     /* dcl_color0 v1   */
+        0x00000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0    */
+        0x00000001, 0xd00f0000, 0x90e40001,                                     /* mov oD0, v1     */
+        0x0000ffff
+    };
+    static const DWORD vs2_code[] =
+    {
+        0xfffe0200,                                                             /* vs_2_0          */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0 */
+        0x0200001f, 0x8000000a, 0x900f0001,                                     /* dcl_color0 v1   */
+        0x02000001, 0xc00f0000, 0x90e40000,                                     /* mov oPos, v0    */
+        0x02000001, 0xd00f0000, 0x90e40001,                                     /* mov oD0, v1     */
+        0x0000ffff
+    };
+    static const DWORD vs3_code[] =
+    {
+        0xfffe0300,                                                             /* vs_3_0          */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl_position v0 */
+        0x0200001f, 0x8000000a, 0x900f0001,                                     /* dcl_color0 v1   */
+        0x0200001f, 0x80000000, 0xe00f0000,                                     /* dcl_position o0 */
+        0x0200001f, 0x8000000a, 0xe00f0001,                                     /* dcl_color0 o1   */
+        0x02000001, 0xe00f0000, 0x90e40000,                                     /* mov o0, v0      */
+        0x02000001, 0xe00f0001, 0x90e40001,                                     /* mov o1, v1      */
+        0x0000ffff
+    };
+    static const DWORD ps1_code[] =
+    {
+        0xffff0101,                                                             /* ps_1_1          */
+        0x00000001, 0x800f0000, 0x90e40000,                                     /* mov r0, v0      */
+        0x0000ffff
+    };
+    static const DWORD ps2_code[] =
+    {
+        0xffff0200,                                                             /* ps_2_0          */
+        0x0200001f, 0x80000000, 0x900f0000,                                     /* dcl v0          */
+        0x02000001, 0x800f0800, 0x90e40000,                                     /* mov oC0, v0     */
+        0x0000ffff
+    };
+    static const DWORD ps3_code[] =
+    {
+        0xffff0300,                                                             /* ps_3_0          */
+        0x0200001f, 0x8000000a, 0x900f0000,                                     /* dcl_color0 v0   */
+        0x02000001, 0x800f0800, 0x90e40000,                                     /* mov oC0, v0     */
+        0x0000ffff
+    };
     static const struct
     {
         struct vec3 position;
@@ -8134,6 +8181,46 @@ static void shademode_test(void)
         {{-1.0f,  1.0f, 0.0f}, 0xff00ff00},
         {{ 1.0f,  1.0f, 0.0f}, 0xffffffff},
     };
+    static const struct test_shader
+    {
+        DWORD version;
+        const DWORD *code;
+    }
+    novs = {0, NULL},
+    vs_1 = {D3DVS_VERSION(1, 1), vs1_code},
+    vs_2 = {D3DVS_VERSION(2, 0), vs2_code},
+    vs_3 = {D3DVS_VERSION(3, 0), vs3_code},
+    nops = {0, NULL},
+    ps_1 = {D3DPS_VERSION(1, 1), ps1_code},
+    ps_2 = {D3DPS_VERSION(2, 0), ps2_code},
+    ps_3 = {D3DPS_VERSION(3, 0), ps3_code};
+    static const struct
+    {
+        const struct test_shader *vs, *ps;
+        DWORD primtype;
+        DWORD shademode;
+        DWORD color0, color1;
+        BOOL todo;
+    }
+    tests[] =
+    {
+        {&novs, &nops, D3DPT_TRIANGLESTRIP, D3DSHADE_FLAT,    0x00ff0000, 0x0000ff00, FALSE},
+        {&novs, &nops, D3DPT_TRIANGLESTRIP, D3DSHADE_PHONG,   0x000dca28, 0x000d45c7, FALSE},
+        {&novs, &nops, D3DPT_TRIANGLESTRIP, D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7, FALSE},
+        {&novs, &nops, D3DPT_TRIANGLESTRIP, D3DSHADE_PHONG,   0x000dca28, 0x000d45c7, FALSE},
+        {&novs, &nops, D3DPT_TRIANGLELIST,  D3DSHADE_FLAT,    0x00ff0000, 0x000000ff, FALSE},
+        {&novs, &nops, D3DPT_TRIANGLELIST,  D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7, FALSE},
+        {&vs_1, &ps_1, D3DPT_TRIANGLESTRIP, D3DSHADE_FLAT,    0x00ff0000, 0x0000ff00, FALSE},
+        {&vs_1, &ps_1, D3DPT_TRIANGLESTRIP, D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7, FALSE},
+        {&vs_1, &ps_1, D3DPT_TRIANGLELIST,  D3DSHADE_FLAT,    0x00ff0000, 0x000000ff, FALSE},
+        {&vs_1, &ps_1, D3DPT_TRIANGLELIST,  D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7, FALSE},
+        {&novs, &ps_1, D3DPT_TRIANGLESTRIP, D3DSHADE_FLAT,    0x00ff0000, 0x0000ff00, FALSE},
+        {&vs_1, &nops, D3DPT_TRIANGLESTRIP, D3DSHADE_FLAT,    0x00ff0000, 0x0000ff00, FALSE},
+        {&vs_2, &ps_2, D3DPT_TRIANGLESTRIP, D3DSHADE_FLAT,    0x00ff0000, 0x0000ff00, FALSE},
+        {&vs_2, &ps_2, D3DPT_TRIANGLESTRIP, D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7, FALSE},
+        {&vs_3, &ps_3, D3DPT_TRIANGLESTRIP, D3DSHADE_FLAT,    0x00ff0000, 0x0000ff00,  TRUE},
+        {&vs_3, &ps_3, D3DPT_TRIANGLESTRIP, D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7, FALSE},
+    };
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
             0, 0, 640, 480, NULL, NULL, NULL, NULL);
@@ -8147,6 +8234,8 @@ static void shademode_test(void)
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
 
     hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
     ok(hr == D3D_OK, "IDirect3DDevice9_SetFVF failed with %08x\n", hr);
@@ -8167,83 +8256,108 @@ static void shademode_test(void)
     hr = IDirect3DVertexBuffer9_Unlock(vb_list);
     ok(hr == D3D_OK, "IDirect3DVertexBuffer9_Unlock failed with %08x\n", hr);
 
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
     /* Try it first with a TRIANGLESTRIP.  Do it with different geometry because
      * the color fixups we have to do for FLAT shading will be dependent on that. */
-    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb_strip, 0, sizeof(quad_strip[0]));
-    ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x\n", hr);
 
-    /* First loop uses a TRIANGLESTRIP geometry, 2nd uses a TRIANGLELIST */
-    for (j=0; j<2; j++) {
-
-        /* Inner loop just changes the D3DRS_SHADEMODE */
-        for (i=0; i<3; i++) {
-            hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0, 0);
-            ok(hr == D3D_OK, "IDirect3DDevice9_Clear returned %08x\n", hr);
-
-            hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SHADEMODE, shademode);
-            ok(hr == D3D_OK, "IDirect3DDevice9_SetRenderState returned %08x\n", hr);
-
-            hr = IDirect3DDevice9_BeginScene(device);
-            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
-            hr = IDirect3DDevice9_DrawPrimitive(device, primtype, 0, 2);
-            ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
-            hr = IDirect3DDevice9_EndScene(device);
-            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
-
-            /* Sample two spots from the output */
-            color0 = getPixelColor(device, 100, 100); /* Inside first triangle */
-            color1 = getPixelColor(device, 500, 350); /* Inside second triangle */
-            switch(shademode) {
-                case D3DSHADE_FLAT:
-                    /* Should take the color of the first vertex of each triangle */
-                    if (0)
-                    {
-                        /* This test depends on EXT_provoking_vertex being
-                         * available. This extension is currently (20090810)
-                         * not common enough to let the test fail if it isn't
-                         * present. */
-                        ok(color0 == 0x00ff0000, "FLAT shading has color0 %08x, expected 0x00ff0000\n", color0);
-                        ok(color1 == 0x0000ff00, "FLAT shading has color1 %08x, expected 0x0000ff00\n", color1);
-                    }
-                    shademode = D3DSHADE_GOURAUD;
-                    break;
-                case D3DSHADE_GOURAUD:
-                    /* Should be an interpolated blend */
-
-                    ok(color_match(color0, D3DCOLOR_ARGB(0x00, 0x0d, 0xca, 0x28), 2),
-                       "GOURAUD shading has color0 %08x, expected 0x00dca28\n", color0);
-                    ok(color_match(color1, D3DCOLOR_ARGB(0x00, 0x0d, 0x45, 0xc7), 2),
-                       "GOURAUD shading has color1 %08x, expected 0x000d45c7\n", color1);
-
-                    color0_gouraud = color0;
-                    color1_gouraud = color1;
-
-                    shademode = D3DSHADE_PHONG;
-                    break;
-                case D3DSHADE_PHONG:
-                    /* Should be the same as GOURAUD, since no hardware implements this */
-                    ok(color_match(color0, D3DCOLOR_ARGB(0x00, 0x0d, 0xca, 0x28), 2),
-                       "PHONG shading has color0 %08x, expected 0x000dca28\n", color0);
-                    ok(color_match(color1, D3DCOLOR_ARGB(0x00, 0x0d, 0x45, 0xc7), 2),
-                       "PHONG shading has color1 %08x, expected 0x000d45c7\n", color1);
-
-                    ok(color0 == color0_gouraud, "difference between GOURAUD and PHONG shading detected: %08x %08x\n",
-                            color0_gouraud, color0);
-                    ok(color1 == color1_gouraud, "difference between GOURAUD and PHONG shading detected: %08x %08x\n",
-                            color1_gouraud, color1);
-                    break;
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        if (tests[i].vs->version)
+        {
+            if (caps.VertexShaderVersion >= tests[i].vs->version)
+            {
+                hr = IDirect3DDevice9_CreateVertexShader(device, tests[i].vs->code, &vs);
+                ok(hr == D3D_OK, "Failed to create vertex shader, hr %#x.\n", hr);
+                hr = IDirect3DDevice9_SetVertexShader(device, vs);
+                ok(hr == D3D_OK, "Failed to set vertex shader, hr %#x.\n", hr);
+            }
+            else
+            {
+                skip("Shader version unsupported, skipping some tests.\n");
+                continue;
             }
         }
+        else
+        {
+            vs = NULL;
+        }
+        if (tests[i].ps->version)
+        {
+            if (caps.PixelShaderVersion >= tests[i].ps->version)
+            {
+                hr = IDirect3DDevice9_CreatePixelShader(device, tests[i].ps->code, &ps);
+                ok(hr == D3D_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+                hr = IDirect3DDevice9_SetPixelShader(device, ps);
+                ok(hr == D3D_OK, "Failed to set pixel shader, hr %#x.\n", hr);
+            }
+            else
+            {
+                skip("Shader version unsupported, skipping some tests.\n");
+                if (vs)
+                {
+                    IDirect3DDevice9_SetVertexShader(device, NULL);
+                    IDirect3DVertexShader9_Release(vs);
+                }
+                continue;
+            }
+        }
+        else
+        {
+            ps = NULL;
+        }
 
-        hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
-        ok(hr == D3D_OK, "IDirect3DDevice9_Present failed with %08x\n", hr);
+        hr = IDirect3DDevice9_SetStreamSource(device, 0,
+                tests[i].primtype == D3DPT_TRIANGLESTRIP ? vb_strip : vb_list, 0, sizeof(quad_strip[0]));
+        ok(hr == D3D_OK, "Failed to set stream source, hr %#x.\n", hr);
 
-        /* Now, do it all over again with a TRIANGLELIST */
-        hr = IDirect3DDevice9_SetStreamSource(device, 0, vb_list, 0, sizeof(quad_list[0]));
-        ok(hr == D3D_OK, "IDirect3DDevice9_SetStreamSource failed with %08x\n", hr);
-        primtype = D3DPT_TRIANGLELIST;
-        shademode = D3DSHADE_FLAT;
+        hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+        ok(hr == D3D_OK, "Failed to clear, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SHADEMODE, tests[i].shademode);
+        ok(hr == D3D_OK, "Failed to set shade mode, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice9_BeginScene(device);
+        ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_DrawPrimitive(device, tests[i].primtype, 0, 2);
+        ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+        hr = IDirect3DDevice9_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color0 = getPixelColor(device, 100, 100); /* Inside first triangle */
+        color1 = getPixelColor(device, 500, 350); /* Inside second triangle */
+
+        /* For D3DSHADE_FLAT it should take the color of the first vertex of
+         * each triangle. This requires EXT_provoking_vertex or similar
+         * functionality being available. */
+        /* PHONG should be the same as GOURAUD, since no hardware implements
+         * this. */
+        if (tests[i].todo)
+        {
+            todo_wine ok(color0 == tests[i].color0, "Test %u shading has color0 %08x, expected %08x.\n",
+                    i, color0, tests[i].color0);
+            todo_wine ok(color1 == tests[i].color1, "Test %u shading has color1 %08x, expected %08x.\n",
+                    i, color1, tests[i].color1);
+        }
+        else
+        {
+            ok(color0 == tests[i].color0, "Test %u shading has color0 %08x, expected %08x.\n",
+                    i, color0, tests[i].color0);
+            ok(color1 == tests[i].color1, "Test %u shading has color1 %08x, expected %08x.\n",
+                    i, color1, tests[i].color1);
+        }
+        IDirect3DDevice9_SetVertexShader(device, NULL);
+        IDirect3DDevice9_SetPixelShader(device, NULL);
+
+        if (ps)
+            IDirect3DPixelShader9_Release(ps);
+        if (vs)
+            IDirect3DVertexShader9_Release(vs);
     }
+
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Failed to present, hr %#x.\n", hr);
 
     IDirect3DVertexBuffer9_Release(vb_strip);
     IDirect3DVertexBuffer9_Release(vb_list);
@@ -20318,7 +20432,7 @@ START_TEST(visual)
     offscreen_test();
     ds_size_test();
     test_blend();
-    shademode_test();
+    test_shademode();
     srgbtexture_test();
     release_buffer_test();
     float_texture_test();
