@@ -130,7 +130,7 @@
 @ stub NdisImmediateWritePortUshort
 @ stub NdisImmediateWriteSharedMemory
 @ stub NdisInitAnsiString
-@ stub NdisInitUnicodeString
+@ stdcall NdisInitUnicodeString(ptr wstr) ntdll.RtlInitUnicodeString
 @ stub NdisInitializeEvent
 @ stub NdisInitializeReadWriteLock
 @ stub NdisInitializeString
