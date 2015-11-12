@@ -1901,14 +1901,15 @@ static const char *get_include_install_path( const char *name )
  * Rules are stored as a (file,dest) pair of values.
  * The first char of dest indicates the type of install.
  */
-static void output_install_rules( const struct makefile *make, struct strarray files,
-                                  const char *target, struct strarray *phony_targets )
+static struct strarray output_install_rules( const struct makefile *make, struct strarray files,
+                                             const char *target, struct strarray *phony_targets )
 {
     unsigned int i;
     char *install_sh;
+    struct strarray uninstall = empty_strarray;
     struct strarray targets = empty_strarray;
 
-    if (!files.count) return;
+    if (!files.count) return uninstall;
 
     for (i = 0; i < files.count; i += 2)
         if (strchr( "dps", files.str[i + 1][0] ))  /* only for files copied from object dir */
@@ -1954,14 +1955,12 @@ static void output_install_rules( const struct makefile *make, struct strarray f
         }
     }
 
-    output( "uninstall::\n" );
-    output( "\trm -f" );
-    for (i = 0; i < files.count; i += 2) output_filename( strmake( "$(DESTDIR)%s", files.str[i + 1] + 1 ));
-    output( "\n" );
+    for (i = 0; i < files.count; i += 2)
+        strarray_add( &uninstall, strmake( "$(DESTDIR)%s", files.str[i + 1] + 1 ));
 
-    strarray_add( phony_targets, "install" );
-    strarray_add( phony_targets, target );
-    strarray_add( phony_targets, "uninstall" );
+    strarray_add_uniq( phony_targets, "install" );
+    strarray_add_uniq( phony_targets, target );
+    return uninstall;
 }
 
 
@@ -1976,6 +1975,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
     struct strarray crossobj_files = empty_strarray;
     struct strarray res_files = empty_strarray;
     struct strarray clean_files = empty_strarray;
+    struct strarray uninstall_files = empty_strarray;
     struct strarray po_files = empty_strarray;
     struct strarray mo_files = empty_strarray;
     struct strarray mc_files = empty_strarray;
@@ -2703,8 +2703,18 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         output( "\n" );
     }
 
-    output_install_rules( make, install_rules[INSTALL_LIB], "install-lib", &phony_targets );
-    output_install_rules( make, install_rules[INSTALL_DEV], "install-dev", &phony_targets );
+    strarray_addall( &uninstall_files, output_install_rules( make, install_rules[INSTALL_LIB],
+                                                             "install-lib", &phony_targets ));
+    strarray_addall( &uninstall_files, output_install_rules( make, install_rules[INSTALL_DEV],
+                                                             "install-dev", &phony_targets ));
+    if (uninstall_files.count)
+    {
+        output( "uninstall::\n" );
+        output( "\trm -f" );
+        output_filenames( uninstall_files );
+        output( "\n" );
+        strarray_add_uniq( &phony_targets, "uninstall" );
+    }
 
     strarray_addall( &clean_files, object_files );
     strarray_addall( &clean_files, crossobj_files );
