@@ -2556,7 +2556,7 @@ static DWORD wait_input_idle( HANDLE process, DWORD timeout )
 /***********************************************************************
  *           WinExec   (KERNEL32.@)
  */
-UINT WINAPI WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
+UINT WINAPI DECLSPEC_HOTPATCH WinExec( LPCSTR lpCmdLine, UINT nCmdShow )
 {
     PROCESS_INFORMATION info;
     STARTUPINFOA startup;
