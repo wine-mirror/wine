@@ -7095,13 +7095,8 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     GL_EXTCALL(glUseProgram(program_id));
     checkGLcall("glUseProgram");
 
-    /* Load the vertex and pixel samplers now. The function that finds the mappings makes sure
-     * that it stays the same for each vertexshader-pixelshader pair(=linked glsl program). If
-     * a pshader with fixed function pipeline is used there are no vertex samplers, and if a
-     * vertex shader with fixed function pixel processing is used we make sure that the card
-     * supports enough samplers to allow the max number of vertex samplers with all possible
-     * fixed function fragment processing setups. So once the program is linked these samplers
-     * won't change. */
+    /* Texture unit mapping is set up to be the same each time the shader
+     * program is used so we can hardcode the sampler uniform values. */
     shader_glsl_load_samplers(gl_info, priv, context->tex_unit_map, program_id);
 
     entry->constant_update_mask = 0;

@@ -2542,6 +2542,7 @@ static void context_map_stage(struct wined3d_context *context, DWORD stage, DWOR
     DWORD i = context->rev_tex_unit_map[unit];
     DWORD j = context->tex_unit_map[stage];
 
+    TRACE("Mapping stage %u to unit %u.\n", stage, unit);
     context->tex_unit_map[stage] = unit;
     if (i != WINED3D_UNMAPPED_STAGE && i != stage)
         context->tex_unit_map[i] = WINED3D_UNMAPPED_STAGE;
@@ -2688,8 +2689,7 @@ static void context_map_psamplers(struct wined3d_context *context, const struct 
 }
 
 static BOOL context_unit_free_for_vs(const struct wined3d_context *context,
-        const struct wined3d_shader_resource_info *ps_resource_info,
-        const struct wined3d_shader_resource_info *vs_resource_info, DWORD unit)
+        const struct wined3d_shader_resource_info *ps_resource_info, DWORD unit)
 {
     DWORD current_mapping = context->rev_tex_unit_map[unit];
 
@@ -2711,8 +2711,7 @@ static BOOL context_unit_free_for_vs(const struct wined3d_context *context,
         return !ps_resource_info[current_mapping].type;
     }
 
-    /* Used by a vertex sampler */
-    return !vs_resource_info[current_mapping - MAX_FRAGMENT_SAMPLERS].type;
+    return TRUE;
 }
 
 static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, const struct wined3d_state *state)
@@ -2738,18 +2737,15 @@ static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, cons
         DWORD vsampler_idx = i + MAX_FRAGMENT_SAMPLERS;
         if (vs_resource_info[i].type)
         {
-            if (context->tex_unit_map[vsampler_idx] != WINED3D_UNMAPPED_STAGE)
-            {
-                /* Already mapped somewhere */
-                continue;
-            }
-
             while (start >= 0)
             {
-                if (context_unit_free_for_vs(context, ps_resource_info, vs_resource_info, start))
+                if (context_unit_free_for_vs(context, ps_resource_info, start))
                 {
-                    context_map_stage(context, vsampler_idx, start);
-                    context_invalidate_state(context, STATE_SAMPLER(vsampler_idx));
+                    if (context->tex_unit_map[vsampler_idx] != start)
+                    {
+                        context_map_stage(context, vsampler_idx, start);
+                        context_invalidate_state(context, STATE_SAMPLER(vsampler_idx));
+                    }
 
                     --start;
                     break;
@@ -2757,6 +2753,8 @@ static void context_map_vsamplers(struct wined3d_context *context, BOOL ps, cons
 
                 --start;
             }
+            if (context->tex_unit_map[vsampler_idx] == WINED3D_UNMAPPED_STAGE)
+                WARN("Couldn't find a free texture unit for vertex sampler %u.\n", i);
         }
     }
 }
@@ -2765,13 +2763,12 @@ static void context_update_tex_unit_map(struct wined3d_context *context, const s
 {
     BOOL vs = use_vs(state);
     BOOL ps = use_ps(state);
-    /*
-     * Rules are:
-     * -> Pixel shaders need a 1:1 map. In theory the shader input could be mapped too, but
-     * that would be really messy and require shader recompilation
-     * -> When the mapping of a stage is changed, sampler and ALL texture stage states have
-     * to be reset. Because of that try to work with a 1:1 mapping as much as possible
-     */
+
+    /* Try to go for a 1:1 mapping of the samplers when possible. Pixel shaders
+     * need a 1:1 map at the moment.
+     * When the mapping of a stage is changed, sampler and ALL texture stage
+     * states have to be reset. */
+
     if (ps)
         context_map_psamplers(context, state);
     else
