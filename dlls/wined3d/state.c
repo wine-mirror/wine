@@ -176,11 +176,11 @@ static void state_shademode(struct wined3d_context *context, const struct wined3
             checkGLcall("glShadeModel(GL_FLAT)");
             break;
         case WINED3D_SHADE_GOURAUD:
+        /* WINED3D_SHADE_PHONG in practice is the same as WINED3D_SHADE_GOURAUD
+         * in D3D. */
+        case WINED3D_SHADE_PHONG:
             gl_info->gl_ops.gl.p_glShadeModel(GL_SMOOTH);
             checkGLcall("glShadeModel(GL_SMOOTH)");
-            break;
-        case WINED3D_SHADE_PHONG:
-            FIXME("WINED3D_SHADE_PHONG isn't supported.\n");
             break;
         default:
             FIXME("Unrecognized shade mode %#x.\n",
