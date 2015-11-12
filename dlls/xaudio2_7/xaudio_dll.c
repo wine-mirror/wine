@@ -633,6 +633,7 @@ static HRESULT WINAPI XA2SRC_FlushSourceBuffers(IXAudio2SourceVoice *iface)
     }
 
     This->nbufs -= to_flush;
+    This->cur_buf = (This->first_buf + This->nbufs) % XAUDIO2_MAX_QUEUED_BUFFERS;
 
     LeaveCriticalSection(&This->lock);
 
