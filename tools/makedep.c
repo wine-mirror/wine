@@ -145,6 +145,7 @@ static const char *fontforge;
 static const char *convert;
 static const char *rsvg;
 static const char *icotool;
+static const char *dlltool;
 
 struct makefile
 {
@@ -2612,6 +2613,18 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         strarray_addall( &all_targets, names );
     }
 
+    if (make->importlib && !make->module)  /* stand-alone import lib (for libwine) */
+    {
+        char *def_file = replace_extension( make->importlib, ".a", ".def" );
+
+        if (!strncmp( def_file, "lib", 3 )) def_file += 3;
+        output( "%s: %s\n", obj_dir_path( make, make->importlib ), src_dir_path( make, def_file ));
+        output( "\t%s -l $@ -d %s\n", dlltool, src_dir_path( make, def_file ));
+        add_install_rule( make, install_rules, make->importlib, make->importlib,
+                          strmake( "d$(libdir)/%s", make->importlib ));
+        strarray_add( &all_targets, make->importlib );
+    }
+
     if (make->testdll)
     {
         char *testmodule = replace_extension( make->testdll, ".dll", "_test.exe" );
@@ -3252,6 +3265,7 @@ int main( int argc, char *argv[] )
     convert      = get_expanded_make_variable( top_makefile, "CONVERT" );
     rsvg         = get_expanded_make_variable( top_makefile, "RSVG" );
     icotool      = get_expanded_make_variable( top_makefile, "ICOTOOL" );
+    dlltool      = get_expanded_make_variable( top_makefile, "DLLTOOL" );
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;

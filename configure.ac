@@ -719,23 +719,12 @@ case $host_os in
 
     AC_SUBST(LIBWINE_RULES,["
 SHAREDLIB = libwine.dll
+IMPORTLIB = libwine.a
 INSTALL_LIB = libwine.dll
+INSTALL_DEV = libwine.a
 libwine_LDFLAGS = -shared \$(srcdir)/wine.def 
 
-EXTRA_TARGETS = libwine.a
-
-all: libwine.a
-
-libwine.a: \$(srcdir)/wine.def
-	\$(DLLTOOL) -l \$@ -d \$(srcdir)/wine.def
-
 libwine.dll: \$(srcdir)/wine.def
-
-install install-dev:: libwine.a
-	\$(INSTALL_DATA) libwine.a \$(DESTDIR)\$(libdir)/libwine.a
-
-uninstall::
-	\$(RM) \$(DESTDIR)\$(libdir)/libwine.a
 "])
     ;;
 
