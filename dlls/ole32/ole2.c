@@ -171,7 +171,7 @@ DWORD WINAPI OleBuildVersion(void)
 /***********************************************************************
  *           OleInitialize       (OLE32.@)
  */
-HRESULT WINAPI OleInitialize(LPVOID reserved)
+HRESULT WINAPI DECLSPEC_HOTPATCH OleInitialize(LPVOID reserved)
 {
   HRESULT hr;
 
@@ -1235,7 +1235,7 @@ HRESULT WINAPI OleSetContainedObject(
  *  Success: S_OK.
  *  Failure: Any HRESULT code.
  */
-HRESULT WINAPI OleRun(LPUNKNOWN pUnknown)
+HRESULT WINAPI DECLSPEC_HOTPATCH OleRun(LPUNKNOWN pUnknown)
 {
     IRunnableObject *runable;
     HRESULT hres;

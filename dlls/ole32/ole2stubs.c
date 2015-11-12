@@ -19,6 +19,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "config.h"
+
 #include <stdarg.h>
 
 #include "windef.h"
@@ -63,7 +65,7 @@ HGLOBAL WINAPI OleGetIconOfClass(REFCLSID rclsid, LPOLESTR lpszLabel, BOOL fUseT
 /***********************************************************************
  *           OleRegEnumFormatEtc    [OLE32.@]
  */
-HRESULT     WINAPI OleRegEnumFormatEtc (
+HRESULT WINAPI DECLSPEC_HOTPATCH OleRegEnumFormatEtc (
   REFCLSID clsid,
   DWORD    dwDirection,
   LPENUMFORMATETC* ppenumFormatetc)
