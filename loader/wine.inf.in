@@ -635,6 +635,7 @@ HKLM,Software\Microsoft\DFS,,16
 HKLM,Software\Microsoft\Driver Signing,,16
 HKLM,Software\Microsoft\EnterpriseCertificates,,16
 HKLM,Software\Microsoft\EventSystem,,16
+HKLM,Software\Microsoft\MediaPlayer\PlayerUpgrade,"PlayerVersion",2,"12,0,7601,18840"
 HKLM,Software\Microsoft\MSMQ,,16
 HKLM,Software\Microsoft\Non-Driver Signing,,16
 HKLM,Software\Microsoft\Notepad\DefaultFonts,,16
@@ -675,6 +676,12 @@ HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-99
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-9948-00c04f98bbc9},"IsInstalled",2,1
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-9948-00c04f98bbc9},"Locale",2,"*"
 HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{de5aed00-a4bf-11d1-9948-00c04f98bbc9},"Version",2,"4,74,9273,0"
+
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6},,2,"Windows Media Player"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6},"ComponentID",2,"wmp"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6},"IsInstalled",2,1
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6},"Locale",2,"*"
+HKLM,SOFTWARE\Microsoft\Active Setup\Installed Components\{6BF52A52-394A-11d3-B153-00C04F79FAA6},"Version",2,"12,0,7601,18840"
 
 [Nls]
 HKLM,System\CurrentControlSet\Control\Nls\Codepage,"37",,""
