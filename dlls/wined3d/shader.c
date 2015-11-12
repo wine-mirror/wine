@@ -2209,7 +2209,7 @@ HRESULT CDECL wined3d_shader_set_local_constants_float(struct wined3d_shader *sh
 }
 
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
-        WORD swizzle_map, struct vs_compile_args *args)
+        WORD swizzle_map, struct vs_compile_args *args, const struct wined3d_d3d_info *d3d_info)
 {
     args->fog_src = state->render_states[WINED3D_RS_FOGTABLEMODE]
             == WINED3D_FOG_NONE ? VS_FOG_COORD : VS_FOG_Z;
@@ -2218,6 +2218,10 @@ void find_vs_compile_args(const struct wined3d_state *state, const struct wined3
     args->point_size = state->gl_primitive_type == GL_POINTS;
     args->per_vertex_point_size = shader->reg_maps.point_size;
     args->swizzle_map = swizzle_map;
+    if (d3d_info->emulated_flatshading)
+        args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+    else
+        args->flatshading = FALSE;
 }
 
 static BOOL match_usage(BYTE usage1, BYTE usage_idx1, BYTE usage2, BYTE usage_idx2)
@@ -2405,6 +2409,7 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         BOOL position_transformed, struct ps_compile_args *args, const struct wined3d_context *context)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     const struct wined3d_texture *texture;
     UINT i;
 
@@ -2608,6 +2613,9 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
 
     args->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
             && state->gl_primitive_type == GL_POINTS;
+
+    if (d3d_info->emulated_flatshading)
+        args->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
 }
 
 static HRESULT pixelshader_init(struct wined3d_shader *shader, struct wined3d_device *device,

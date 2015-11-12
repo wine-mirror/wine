@@ -4596,7 +4596,7 @@ static void find_arb_vs_compile_args(const struct wined3d_state *state,
     int i;
     WORD int_skip;
 
-    find_vs_compile_args(state, shader, context->stream_info.swizzle_map, &args->super);
+    find_vs_compile_args(state, shader, context->stream_info.swizzle_map, &args->super, d3d_info);
 
     args->clip.boolclip_compare = 0;
     if (use_ps(state))
@@ -6879,6 +6879,7 @@ static const struct StateEntryTemplate arbfp_fragmentstate_template[] =
     {STATE_TEXTURESTAGE(6,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(6, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), textransform      }, WINED3D_GL_EXT_NONE             },
     {STATE_TEXTURESTAGE(7,WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), {STATE_TEXTURESTAGE(7, WINED3D_TSS_TEXTURE_TRANSFORM_FLAGS), textransform      }, WINED3D_GL_EXT_NONE             },
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),             { STATE_RENDER(WINED3D_RS_SPECULARENABLE),            state_arb_specularenable}, WINED3D_GL_EXT_NONE             },
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                  { STATE_RENDER(WINED3D_RS_SHADEMODE),                 state_shademode         }, WINED3D_GL_EXT_NONE             },
     {0 /* Terminate */,                                   { 0,                                                  0                       }, WINED3D_GL_EXT_NONE             },
 };
 

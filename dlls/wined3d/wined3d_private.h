@@ -849,6 +849,7 @@ struct ps_compile_args {
     WORD shadow; /* MAX_FRAGMENT_SAMPLERS, 16 */
     WORD texcoords_initialized; /* MAX_TEXTURES, 8 */
     BOOL pointsprite;
+    BOOL flatshading;
 };
 
 enum fog_src_type {
@@ -862,7 +863,8 @@ struct vs_compile_args
     BYTE clip_enabled : 1;
     BYTE point_size : 1;
     BYTE per_vertex_point_size : 1;
-    BYTE padding : 5;
+    BYTE flatshading : 1;
+    BYTE padding : 4;
     WORD swizzle_map;   /* MAX_ATTRIBS, 16 */
 };
 
@@ -1317,6 +1319,7 @@ struct fragment_pipeline
 struct wined3d_vertex_caps
 {
     BOOL xyzrhw;
+    BOOL emulated_flatshading;
     BOOL ffp_generic_attributes;
     DWORD max_active_lights;
     DWORD max_vertex_blend_matrices;
@@ -1785,6 +1788,7 @@ struct wined3d_d3d_info
     struct wined3d_d3d_limits limits;
     struct wined3d_ffp_attrib_ops ffp_attrib_ops;
     BOOL xyzrhw;
+    BOOL emulated_flatshading;
     BOOL ffp_generic_attributes;
     BOOL vs_clipping;
     BOOL shader_color_key;
@@ -1880,7 +1884,8 @@ struct ffp_frag_settings
     unsigned char texcoords_initialized;
     unsigned char color_key_enabled : 1;
     unsigned char pointsprite : 1;
-    unsigned char padding : 6;
+    unsigned char flatshading : 1;
+    unsigned char padding : 5;
 };
 
 struct ffp_frag_desc
@@ -1939,7 +1944,8 @@ struct wined3d_ffp_vs_settings
     DWORD fog_mode        : 2;
     DWORD texcoords       : 8;  /* MAX_TEXTURES */
     DWORD ortho_fog       : 1;
-    DWORD padding         : 11;
+    DWORD flatshading     : 1;
+    DWORD padding         : 10;
 
     DWORD texgen[MAX_TEXTURES];
 };
@@ -2902,6 +2908,8 @@ void state_pointsprite_w(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 void state_pointsprite(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
+void state_shademode(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) DECLSPEC_HIDDEN;
 
 GLenum gl_primitive_type_from_d3d(enum wined3d_primitive_type primitive_type) DECLSPEC_HIDDEN;
 
@@ -3024,7 +3032,8 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
         const struct wined3d_context *context) DECLSPEC_HIDDEN;
 
 void find_vs_compile_args(const struct wined3d_state *state, const struct wined3d_shader *shader,
-        WORD swizzle_map, struct vs_compile_args *args) DECLSPEC_HIDDEN;
+        WORD swizzle_map, struct vs_compile_args *args,
+        const struct wined3d_d3d_info *d3d_info) DECLSPEC_HIDDEN;
 
 void string_buffer_clear(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;
 BOOL string_buffer_init(struct wined3d_string_buffer *buffer) DECLSPEC_HIDDEN;

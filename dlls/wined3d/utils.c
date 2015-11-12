@@ -4602,6 +4602,11 @@ void gen_ffp_frag_op(const struct wined3d_context *context, const struct wined3d
 
     settings->pointsprite = state->render_states[WINED3D_RS_POINTSPRITEENABLE]
             && state->gl_primitive_type == GL_POINTS;
+
+    if (d3d_info->emulated_flatshading)
+        settings->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+    else
+        settings->flatshading = FALSE;
 }
 
 const struct ffp_frag_desc *find_ffp_frag_shader(const struct wine_rb_tree *fragment_shaders,
@@ -4792,6 +4797,12 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         }
         if (d3d_info->limits.varying_count >= wined3d_max_compat_varyings(gl_info))
             settings->texcoords = (1u << MAX_TEXTURES) - 1;
+
+        if (d3d_info->emulated_flatshading)
+            settings->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+        else
+            settings->flatshading = FALSE;
+
         return;
     }
 
@@ -4871,6 +4882,11 @@ void wined3d_ffp_get_vs_settings(const struct wined3d_context *context,
         settings->fog_mode = WINED3D_FFP_VS_FOG_RANGE;
     else
         settings->fog_mode = WINED3D_FFP_VS_FOG_DEPTH;
+
+    if (d3d_info->emulated_flatshading)
+        settings->flatshading = state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT;
+    else
+        settings->flatshading = FALSE;
 
     settings->padding = 0;
 }

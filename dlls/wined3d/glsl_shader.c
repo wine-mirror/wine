@@ -1682,10 +1682,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                  * Writing gl_ClipVertex requires one uniform for each
                  * clipplane as well. */
                 max_constantsF = gl_info->limits.glsl_vs_float_constants - 3;
-                if(ctx_priv->cur_vs_args->clip_enabled)
-                {
+                if (vs_args->clip_enabled)
                     max_constantsF -= gl_info->limits.clipplanes;
-                }
                 max_constantsF -= count_bits(reg_maps->integer_constants);
                 /* Strictly speaking a bool only uses one scalar, but the nvidia(Linux) compiler doesn't pack them properly,
                  * so each scalar requires a full vec4. We could work around this by packing the booleans ourselves, but
@@ -1859,8 +1857,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
 
         if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT] && version->major < 3)
         {
-            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
-            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
+            declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_diffuse;\n");
+            declare_out_varying(gl_info, buffer, vs_args->flatshading, "vec4 ffp_varying_specular;\n");
             declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
             declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
         }
@@ -1895,9 +1893,9 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
             else
             {
                 if (glsl_is_color_reg_read(shader, 0))
-                    declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
+                    declare_in_varying(gl_info, buffer, ps_args->flatshading, "vec4 ffp_varying_diffuse;\n");
                 if (glsl_is_color_reg_read(shader, 1))
-                    declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
+                    declare_in_varying(gl_info, buffer, ps_args->flatshading, "vec4 ffp_varying_specular;\n");
                 declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
                 shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
                 declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
@@ -4959,7 +4957,7 @@ static void handle_ps3_input(struct shader_glsl_priv *priv,
 /* Context activation is done by the caller. */
 static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
         const struct wined3d_shader *vs, const struct wined3d_shader *ps,
-        BOOL per_vertex_point_size, const struct wined3d_gl_info *gl_info)
+        BOOL per_vertex_point_size, BOOL flatshading, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     GLuint ret = 0;
@@ -4989,8 +4987,8 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
 
         if (!legacy_context)
         {
-            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
-            declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
+            declare_out_varying(gl_info, buffer, flatshading, "vec4 ffp_varying_diffuse;\n");
+            declare_out_varying(gl_info, buffer, flatshading, "vec4 ffp_varying_specular;\n");
             declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
             declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
         }
@@ -5472,6 +5470,8 @@ static inline BOOL vs_args_equal(const struct vs_compile_args *stored, const str
         return FALSE;
     if (stored->per_vertex_point_size != new->per_vertex_point_size)
         return FALSE;
+    if (stored->flatshading != new->flatshading)
+        return FALSE;
     return stored->fog_src == new->fog_src;
 }
 
@@ -5844,8 +5844,8 @@ static GLuint shader_glsl_generate_ffp_vertex_shader(struct shader_glsl_priv *pr
     }
     else
     {
-        declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
-        declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
+        declare_out_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_diffuse;\n");
+        declare_out_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_specular;\n");
         declare_out_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
         declare_out_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
     }
@@ -6418,8 +6418,8 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     }
     else
     {
-        declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_diffuse;\n");
-        declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_specular;\n");
+        declare_in_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_diffuse;\n");
+        declare_in_varying(gl_info, buffer, settings->flatshading, "vec4 ffp_varying_specular;\n");
         declare_in_varying(gl_info, buffer, FALSE, "vec4 ffp_varying_texcoord[%u];\n", MAX_TEXTURES);
         shader_addline(buffer, "vec4 ffp_texcoord[%u];\n", MAX_TEXTURES);
         declare_in_varying(gl_info, buffer, FALSE, "float ffp_varying_fogcoord;\n");
@@ -6882,6 +6882,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
         struct shader_glsl_priv *priv, struct glsl_context_data *ctx_data)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     const struct ps_np2fixup_info *np2fixup_info = NULL;
     struct glsl_shader_prog_link *entry = NULL;
     struct wined3d_shader *vshader = NULL;
@@ -6917,9 +6918,10 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     else if (use_vs(state))
     {
         struct vs_compile_args vs_compile_args;
+
         vshader = state->shader[WINED3D_SHADER_TYPE_VERTEX];
 
-        find_vs_compile_args(state, vshader, context->stream_info.swizzle_map, &vs_compile_args);
+        find_vs_compile_args(state, vshader, context->stream_info.swizzle_map, &vs_compile_args, d3d_info);
         vs_id = find_glsl_vshader(context, &priv->shader_buffer, &priv->string_buffers, vshader, &vs_compile_args);
         vs_list = &vshader->linked_programs;
 
@@ -7003,7 +7005,9 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     {
         attribs_map = vshader->reg_maps.input_registers;
         reorder_shader_id = generate_param_reorder_function(priv, vshader, pshader,
-                state->gl_primitive_type == GL_POINTS && vshader->reg_maps.point_size, gl_info);
+                state->gl_primitive_type == GL_POINTS && vshader->reg_maps.point_size,
+                d3d_info->emulated_flatshading
+                && state->render_states[WINED3D_RS_SHADEMODE] == WINED3D_SHADE_FLAT, gl_info);
         TRACE("Attaching GLSL shader object %u to program %u.\n", reorder_shader_id, program_id);
         GL_EXTCALL(glAttachShader(program_id, reorder_shader_id));
         checkGLcall("glAttachShader");
@@ -7988,6 +7992,7 @@ static void glsl_vertex_pipe_vp_enable(const struct wined3d_gl_info *gl_info, BO
 static void glsl_vertex_pipe_vp_get_caps(const struct wined3d_gl_info *gl_info, struct wined3d_vertex_caps *caps)
 {
     caps->xyzrhw = TRUE;
+    caps->emulated_flatshading = !gl_info->supported[WINED3D_GL_LEGACY_CONTEXT];
     caps->ffp_generic_attributes = TRUE;
     caps->max_active_lights = MAX_ACTIVE_LIGHTS;
     caps->max_vertex_blend_matrices = MAX_VERTEX_BLENDS;
@@ -8059,6 +8064,9 @@ static void glsl_vertex_pipe_vp_free(struct wined3d_device *device)
     ctx.gl_info = &device->adapter->gl_info;
     wine_rb_destroy(&priv->ffp_vertex_shaders, shader_glsl_free_ffp_vertex_shader, &ctx);
 }
+
+static void glsl_vertex_pipe_nop(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id) {}
 
 static void glsl_vertex_pipe_shader(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
@@ -8230,6 +8238,12 @@ static void glsl_vertex_pipe_pointscale(struct wined3d_context *context,
         context->constant_update_mask |= WINED3D_SHADER_CONST_VS_POINTSIZE;
 }
 
+static void glsl_vertex_pipe_shademode(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_VERTEX;
+}
+
 static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
 {
     {STATE_VDECL,                                                {STATE_VDECL,                                                glsl_vertex_pipe_vdecl }, WINED3D_GL_EXT_NONE          },
@@ -8369,6 +8383,8 @@ static const struct StateEntryTemplate glsl_vertex_pipe_vp_states[] =
     {STATE_SAMPLER(7),                                           {0,                                                          NULL                   }, WINED3D_GL_NORMALIZED_TEXRECT},
     {STATE_SAMPLER(7),                                           {STATE_SAMPLER(7),                                           glsl_vertex_pipe_texmatrix_np2}, WINED3D_GL_EXT_NONE   },
     {STATE_POINT_ENABLE,                                         {STATE_POINT_ENABLE,                                         glsl_vertex_pipe_shader}, WINED3D_GL_EXT_NONE          },
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                         {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_vertex_pipe_nop   },  WINED3D_GL_LEGACY_CONTEXT   },
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                         {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_vertex_pipe_shademode}, WINED3D_GL_EXT_NONE       },
     {0 /* Terminate */,                                          {0,                                                          NULL                   }, WINED3D_GL_EXT_NONE          },
 };
 
@@ -8597,6 +8613,12 @@ static void glsl_fragment_pipe_color_key(struct wined3d_context *context,
     context->constant_update_mask |= WINED3D_SHADER_CONST_FFP_COLOR_KEY;
 }
 
+static void glsl_fragment_pipe_shademode(struct wined3d_context *context,
+        const struct wined3d_state *state, DWORD state_id)
+{
+    context->shader_update_mask |= 1 << WINED3D_SHADER_TYPE_PIXEL;
+}
+
 static const struct StateEntryTemplate glsl_fragment_pipe_state_template[] =
 {
     {STATE_VDECL,                                               {STATE_VDECL,                                                glsl_fragment_pipe_vdecl               }, WINED3D_GL_EXT_NONE },
@@ -8708,6 +8730,8 @@ static const struct StateEntryTemplate glsl_fragment_pipe_state_template[] =
     {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),               {STATE_TEXTURESTAGE(7, WINED3D_TSS_CONSTANT),                glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                   {STATE_RENDER(WINED3D_RS_SPECULARENABLE),                    glsl_fragment_pipe_invalidate_constants}, WINED3D_GL_EXT_NONE },
     {STATE_POINT_ENABLE,                                        {STATE_POINT_ENABLE,                                         glsl_fragment_pipe_shader              }, WINED3D_GL_EXT_NONE },
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                        {STATE_RENDER(WINED3D_RS_SHADEMODE),                         state_shademode                        }, WINED3D_GL_LEGACY_CONTEXT},
+    {STATE_RENDER(WINED3D_RS_SHADEMODE),                        {STATE_RENDER(WINED3D_RS_SHADEMODE),                         glsl_fragment_pipe_shademode           }, WINED3D_GL_EXT_NONE },
     {0 /* Terminate */,                                         {0,                                                          0                                      }, WINED3D_GL_EXT_NONE },
 };
 
