@@ -169,6 +169,7 @@ struct makefile
     const char     *parent_dir;
     const char     *module;
     const char     *testdll;
+    const char     *sharedlib;
     const char     *staticlib;
     const char     *importlib;
     int             use_msvcrt;
@@ -1896,6 +1897,42 @@ static const char *get_include_install_path( const char *name )
 
 
 /*******************************************************************
+ *         get_shared_library_name
+ *
+ * Determine possible names for a shared library with a version number.
+ */
+static struct strarray get_shared_lib_names( const char *libname )
+{
+    struct strarray ret = empty_strarray;
+    const char *ext, *p;
+    char *name, *first, *second;
+    size_t len = 0;
+
+    strarray_add( &ret, libname );
+
+    for (p = libname; (p = strchr( p, '.' )); p++)
+        if ((len = strspn( p + 1, "0123456789." ))) break;
+
+    if (!len) return ret;
+    ext = p + 1 + len;
+    if (*ext && ext[-1] == '.') ext--;
+
+    /* keep only the first group of digits */
+    name = xstrdup( libname );
+    first = name + (p - libname);
+    if ((second = strchr( first + 1, '.' )))
+    {
+        strcpy( second, ext );
+        strarray_add( &ret, xstrdup( name ));
+    }
+    /* now remove all digits */
+    strcpy( first, ext );
+    strarray_add( &ret, name );
+    return ret;
+}
+
+
+/*******************************************************************
  *         output_install_rules
  *
  * Rules are stored as a (file,dest) pair of values.
@@ -2541,6 +2578,36 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         }
     }
 
+    if (make->sharedlib)
+    {
+        char *basename, *p;
+        struct strarray names = get_shared_lib_names( make->sharedlib );
+        struct strarray all_libs = empty_strarray;
+
+        basename = xstrdup( make->sharedlib );
+        if ((p = strchr( basename, '.' ))) *p = 0;
+
+        strarray_addall( &all_libs, get_expanded_make_var_array( make,
+                                                                 file_local_var( basename, "LDFLAGS" )));
+        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+        strarray_addall( &all_libs, libs );
+
+        output( "%s:", obj_dir_path( make, make->sharedlib ));
+        output_filenames_obj_dir( make, object_files );
+        output( "\n" );
+        output( "\t$(CC) -o $@" );
+        output_filenames_obj_dir( make, object_files );
+        output_filenames( all_libs );
+        output_filename( "$(LDFLAGS)" );
+        output( "\n" );
+        for (i = 1; i < names.count; i++)
+        {
+            output( "%s: %s\n", obj_dir_path( make, names.str[i] ), obj_dir_path( make, names.str[i-1] ));
+            output( "\trm -f $@ && $(LN_S) %s $@\n", names.str[i-1] );
+        }
+        strarray_addall( &all_targets, names );
+    }
+
     if (make->testdll)
     {
         char *testmodule = replace_extension( make->testdll, ".dll", "_test.exe" );
@@ -2990,6 +3057,7 @@ static void update_makefile( const char *path )
     make->parent_dir    = get_expanded_make_variable( make, "PARENTSRC" );
     make->module        = get_expanded_make_variable( make, "MODULE" );
     make->testdll       = get_expanded_make_variable( make, "TESTDLL" );
+    make->sharedlib     = get_expanded_make_variable( make, "SHAREDLIB" );
     make->staticlib     = get_expanded_make_variable( make, "STATICLIB" );
     make->importlib     = get_expanded_make_variable( make, "IMPORTLIB" );
 
