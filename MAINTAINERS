@@ -225,7 +225,7 @@ F:	server/
 
 Winemaker
 M:	André Hentschel <nerv@dawncrow.de>
-F:	tools/winemaker
+F:	tools/winemaker/
 
 WinHTTP
 M:	Hans Leidekker <hans@codeweavers.com>
