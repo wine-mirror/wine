@@ -1509,7 +1509,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     /* Initialize the texture unit mapping to a 1:1 mapping */
     for (s = 0; s < MAX_COMBINED_SAMPLERS; ++s)
     {
-        if (s < gl_info->limits.fragment_samplers)
+        if (s < gl_info->limits.combined_samplers)
         {
             ret->tex_unit_map[s] = s;
             ret->rev_tex_unit_map[s] = s;
