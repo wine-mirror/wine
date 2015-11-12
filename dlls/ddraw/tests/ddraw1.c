@@ -5492,6 +5492,7 @@ static void test_lighting(void)
     if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
     {
         skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
         DestroyWindow(window);
         return;
     }
@@ -7729,6 +7730,148 @@ static void test_range_colorkey(void)
     DestroyWindow(window);
 }
 
+static void test_shademode(void)
+{
+    static D3DRECT clear_rect = {{0}, {0}, {640}, {480}};
+    IDirect3DExecuteBuffer *execute_buffer;
+    D3DEXECUTEBUFFERDESC exec_desc;
+    IDirect3DMaterial *background;
+    IDirect3DViewport *viewport;
+    IDirect3DDevice *device;
+    IDirectDrawSurface *rt;
+    const D3DLVERTEX *quad;
+    DWORD color0, color1;
+    UINT i, inst_length;
+    IDirectDraw *ddraw;
+    IDirect3D *d3d;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    void *ptr;
+    static const D3DLVERTEX quad_strip[] =
+    {
+        {{-1.0f}, {-1.0f}, {0.0f}, 0, {0xffff0000}},
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xff00ff00}},
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0xff0000ff}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, 0, {0xffffffff}},
+    },
+    quad_list[] =
+    {
+        {{ 1.0f}, {-1.0f}, {0.0f}, 0, {0xff0000ff}},
+        {{-1.0f}, {-1.0f}, {0.0f}, 0, {0xffff0000}},
+        {{-1.0f}, { 1.0f}, {0.0f}, 0, {0xff00ff00}},
+        {{ 1.0f}, { 1.0f}, {0.0f}, 0, {0xffffffff}},
+    };
+    static const struct
+    {
+        DWORD primtype;
+        DWORD shademode;
+        DWORD color0, color1;
+    }
+    tests[] =
+    {
+        {D3DPT_TRIANGLESTRIP, D3DSHADE_FLAT,    0x00ff0000, 0x000000ff},
+        {D3DPT_TRIANGLESTRIP, D3DSHADE_PHONG,   0x000dca28, 0x000d45c7},
+        {D3DPT_TRIANGLESTRIP, D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7},
+        {D3DPT_TRIANGLESTRIP, D3DSHADE_PHONG,   0x000dca28, 0x000d45c7},
+        {D3DPT_TRIANGLELIST,  D3DSHADE_FLAT,    0x000000ff, 0x0000ff00},
+        {D3DPT_TRIANGLELIST,  D3DSHADE_GOURAUD, 0x000dca28, 0x000d45c7},
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    if (!(device = create_device(ddraw, window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        IDirectDraw_Release(ddraw);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3DDevice_QueryInterface(device, &IID_IDirectDrawSurface, (void **)&rt);
+    ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+
+    background = create_diffuse_material(device, 1.0f, 1.0f, 1.0f, 1.0f);
+    viewport = create_viewport(device, 0, 0, 640, 480);
+    viewport_set_background(device, viewport, background);
+
+    memset(&exec_desc, 0, sizeof(exec_desc));
+    exec_desc.dwSize = sizeof(exec_desc);
+    exec_desc.dwFlags = D3DDEB_BUFSIZE | D3DDEB_CAPS;
+    exec_desc.dwBufferSize = 1024;
+    exec_desc.dwCaps = D3DDEBCAPS_SYSTEMMEMORY;
+
+    hr = IDirect3DDevice_CreateExecuteBuffer(device, &exec_desc, &execute_buffer, NULL);
+    ok(SUCCEEDED(hr), "Failed to create execute buffer, hr %#x.\n", hr);
+
+    /* Try it first with a TRIANGLESTRIP.  Do it with different geometry because
+     * the color fixups we have to do for FLAT shading will be dependent on that. */
+
+    for (i = 0; i < sizeof(tests) / sizeof(tests[0]); ++i)
+    {
+        hr = IDirect3DViewport_Clear(viewport, 1, &clear_rect, D3DCLEAR_TARGET);
+        ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x.\n", hr);
+
+        hr = IDirect3DExecuteBuffer_Lock(execute_buffer, &exec_desc);
+        ok(SUCCEEDED(hr), "Failed to lock execute buffer, hr %#x.\n", hr);
+
+        quad = tests[i].primtype == D3DPT_TRIANGLESTRIP ? quad_strip : quad_list;
+        memcpy(exec_desc.lpData, quad, sizeof(quad_strip));
+        ptr = ((BYTE *)exec_desc.lpData) + sizeof(quad_strip);
+        emit_set_rs(&ptr, D3DRENDERSTATE_CLIPPING, FALSE);
+        emit_set_rs(&ptr, D3DRENDERSTATE_ZENABLE, FALSE);
+        emit_set_rs(&ptr, D3DRENDERSTATE_FOGENABLE, FALSE);
+        emit_set_rs(&ptr, D3DRENDERSTATE_CULLMODE, D3DCULL_NONE);
+        emit_set_rs(&ptr, D3DRENDERSTATE_SHADEMODE, tests[i].shademode);
+
+        emit_process_vertices(&ptr, D3DPROCESSVERTICES_TRANSFORM, 0, 4);
+        if (tests[i].primtype == D3DPT_TRIANGLESTRIP)
+            emit_tquad(&ptr, 0);
+        else
+            emit_tquad_tlist(&ptr, 0);
+        emit_end(&ptr);
+        inst_length = (BYTE *)ptr - (BYTE *)exec_desc.lpData;
+        inst_length -= sizeof(quad_strip);
+
+        hr = IDirect3DExecuteBuffer_Unlock(execute_buffer);
+        ok(SUCCEEDED(hr), "Failed to unlock execute buffer, hr %#x.\n", hr);
+
+        hr = IDirect3DDevice2_BeginScene(device);
+        set_execute_data(execute_buffer, 4, sizeof(quad_strip), inst_length);
+        hr = IDirect3DDevice_Execute(device, execute_buffer, viewport, D3DEXECUTE_CLIPPED);
+        ok(SUCCEEDED(hr), "Failed to execute exec buffer, hr %#x.\n", hr);
+        hr = IDirect3DDevice2_EndScene(device);
+        ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+        color0 = get_surface_color(rt, 100, 100); /* Inside first triangle */
+        color1 = get_surface_color(rt, 500, 350); /* Inside second triangle */
+
+        /* For D3DSHADE_FLAT it should take the color of the first vertex of
+         * each triangle. This requires EXT_provoking_vertex or similar
+         * functionality being available. */
+        /* PHONG should be the same as GOURAUD, since no hardware implements
+         * this. */
+        ok(color0 == tests[i].color0, "Test %u shading has color0 %08x, expected %08x.\n",
+                i, color0, tests[i].color0);
+        ok(color1 == tests[i].color1, "Test %u shading has color1 %08x, expected %08x.\n",
+                i, color1, tests[i].color1);
+    }
+
+    IDirect3DExecuteBuffer_Release(execute_buffer);
+    destroy_viewport(device, viewport);
+    destroy_material(background);
+    IDirectDrawSurface_Release(rt);
+    IDirect3D_Release(d3d);
+    refcount = IDirect3DDevice_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirectDraw_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw1)
 {
     IDirectDraw *ddraw;
@@ -7800,4 +7943,5 @@ START_TEST(ddraw1)
     test_color_fill();
     test_colorkey_precision();
     test_range_colorkey();
+    test_shademode();
 }
