@@ -2600,10 +2600,14 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         output_filenames( all_libs );
         output_filename( "$(LDFLAGS)" );
         output( "\n" );
+        add_install_rule( make, install_rules, make->sharedlib, make->sharedlib,
+                          strmake( "p$(libdir)/%s", make->sharedlib ));
         for (i = 1; i < names.count; i++)
         {
             output( "%s: %s\n", obj_dir_path( make, names.str[i] ), obj_dir_path( make, names.str[i-1] ));
             output( "\trm -f $@ && $(LN_S) %s $@\n", names.str[i-1] );
+            add_install_rule( make, install_rules, names.str[i], names.str[i-1],
+                              strmake( "y$(libdir)/%s", names.str[i] ));
         }
         strarray_addall( &all_targets, names );
     }

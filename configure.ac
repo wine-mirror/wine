@@ -719,6 +719,7 @@ case $host_os in
 
     AC_SUBST(LIBWINE_RULES,["
 SHAREDLIB = libwine.dll
+INSTALL_LIB = libwine.dll
 libwine_LDFLAGS = -shared \$(srcdir)/wine.def 
 
 EXTRA_TARGETS = libwine.a
@@ -730,14 +731,11 @@ libwine.a: \$(srcdir)/wine.def
 
 libwine.dll: \$(srcdir)/wine.def
 
-install install-lib:: libwine.dll
-	\$(INSTALL_DATA) libwine.dll \$(DESTDIR)\$(libdir)/libwine.dll
-
 install install-dev:: libwine.a
 	\$(INSTALL_DATA) libwine.a \$(DESTDIR)\$(libdir)/libwine.a
 
 uninstall::
-	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.a libwine.dll
+	\$(RM) \$(DESTDIR)\$(libdir)/libwine.a
 "])
     ;;
 
@@ -858,17 +856,9 @@ uninstall::
 
     AC_SUBST(LIBWINE_RULES,["
 SHAREDLIB = libwine.$libwine_version.dylib
+INSTALL_LIB = libwine.$libwine_version.dylib libwine.$libwine_soversion.dylib
+INSTALL_DEV = libwine.dylib
 libwine_LDFLAGS = -dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version
-
-install install-lib:: libwine.$libwine_version.dylib
-	\$(INSTALL_PROGRAM) libwine.$libwine_version.dylib \$(DESTDIR)\$(libdir)/libwine.$libwine_version.dylib
-	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.$libwine_soversion.dylib && \$(LN_S) libwine.$libwine_version.dylib libwine.$libwine_soversion.dylib
-
-install install-dev::
-	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.dylib && \$(LN_S) libwine.$libwine_version.dylib libwine.dylib
-
-uninstall::
-	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.dylib libwine.$libwine_soversion.dylib libwine.$libwine_version.dylib
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["
@@ -903,13 +893,8 @@ $wine_binary $wine_binary-installed: wine_info.plist
 
     AC_SUBST(LIBWINE_RULES,["
 SHAREDLIB = libwine.so
+INSTALL_LIB = libwine.so
 libwine_LDFLAGS = -shared
-
-install install-lib:: libwine.so
-	\$(INSTALL_PROGRAM) libwine.so \$(DESTDIR)\$(libdir)/libwine.so
-
-uninstall::
-	\$(RM) \$(DESTDIR)\$(libdir)/libwine.so
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["
@@ -978,19 +963,11 @@ ${wine_binary}_LDFLAGS = $LDEXECFLAGS -lwine \$(PTHREAD_LIBS)
     fi
     AC_SUBST(LIBWINE_RULES,["
 SHAREDLIB = libwine.so.$libwine_version
+INSTALL_LIB = libwine.so.$libwine_version libwine.so.$libwine_soversion
+INSTALL_DEV = libwine.so
 libwine_LDFLAGS = $shared_ldflags
 
 libwine.so.$libwine_version: \$(srcdir)/wine.map
-
-install install-lib:: libwine.so.$libwine_version
-	\$(INSTALL_PROGRAM) libwine.so.$libwine_version \$(DESTDIR)\$(libdir)/libwine.so.$libwine_version
-	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so.$libwine_soversion && \$(LN_S) libwine.so.$libwine_version libwine.so.$libwine_soversion
-
-install install-dev::
-	cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so && \$(LN_S) libwine.so.$libwine_version libwine.so
-
-uninstall::
-	-cd \$(DESTDIR)\$(libdir) && \$(RM) libwine.so libwine.so.$libwine_soversion libwine.so.$libwine_version
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["
