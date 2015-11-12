@@ -93,7 +93,7 @@ struct key_value
 {
     WCHAR            *name;    /* value name */
     unsigned short    namelen; /* length of value name */
-    unsigned short    type;    /* value type */
+    unsigned int      type;    /* value type */
     data_size_t       len;     /* value data length in bytes */
     void             *data;    /* pointer to value data */
 };

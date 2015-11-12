@@ -530,14 +530,14 @@ static void test_NtQueryValueKey(void)
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING ValName;
     KEY_VALUE_BASIC_INFORMATION *basic_info;
-    KEY_VALUE_PARTIAL_INFORMATION *partial_info;
+    KEY_VALUE_PARTIAL_INFORMATION *partial_info, pi;
     KEY_VALUE_FULL_INFORMATION *full_info;
     DWORD len, expected;
 
     pRtlCreateUnicodeStringFromAsciiz(&ValName, "deletetest");
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
-    status = pNtOpenKey(&key, KEY_READ, &attr);
+    status = pNtOpenKey(&key, KEY_READ|KEY_SET_VALUE, &attr);
     ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
 
     len = FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[0]);
@@ -632,8 +632,18 @@ static void test_NtQueryValueKey(void)
     ok(len == expected, "NtQueryValueKey wrong len %u\n", len);
 
     HeapFree(GetProcessHeap(), 0, partial_info);
-
     pRtlFreeUnicodeString(&ValName);
+
+    pRtlCreateUnicodeStringFromAsciiz(&ValName, "custtest");
+    status = pNtSetValueKey(key, &ValName, 0, 0xff00ff00, NULL, 0);
+    ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08x\n", status);
+
+    status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, &pi, sizeof(pi), &len);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_BUFFER_TOO_SMALL instead of 0x%08x\n", status);
+    ok(pi.Type == 0xff00ff00, "Type=%x\n", pi.Type);
+    ok(pi.DataLength == 0, "DataLength=%u\n", pi.DataLength);
+    pRtlFreeUnicodeString(&ValName);
+
     pNtClose(key);
 }
 
