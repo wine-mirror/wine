@@ -48,23 +48,29 @@ WINE_DEFAULT_DEBUG_CHANNEL(reg);
 #define HKEY_SPECIAL_ROOT_LAST    HKEY_DYN_DATA
 
 static const WCHAR name_CLASSES_ROOT[] =
-    {'M','a','c','h','i','n','e','\\',
+    {'\\','R','e','g','i','s','t','r','y','\\',
+     'M','a','c','h','i','n','e','\\',
      'S','o','f','t','w','a','r','e','\\',
      'C','l','a','s','s','e','s',0};
 static const WCHAR name_LOCAL_MACHINE[] =
-    {'M','a','c','h','i','n','e',0};
+    {'\\','R','e','g','i','s','t','r','y','\\',
+     'M','a','c','h','i','n','e',0};
 static const WCHAR name_USERS[] =
-    {'U','s','e','r',0};
+    {'\\','R','e','g','i','s','t','r','y','\\',
+     'U','s','e','r',0};
 static const WCHAR name_PERFORMANCE_DATA[] =
-    {'P','e','r','f','D','a','t','a',0};
+    {'\\','R','e','g','i','s','t','r','y','\\',
+     'P','e','r','f','D','a','t','a',0};
 static const WCHAR name_CURRENT_CONFIG[] =
-    {'M','a','c','h','i','n','e','\\',
+    {'\\','R','e','g','i','s','t','r','y','\\',
+     'M','a','c','h','i','n','e','\\',
      'S','y','s','t','e','m','\\',
      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
      'H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s','\\',
      'C','u','r','r','e','n','t',0};
 static const WCHAR name_DYN_DATA[] =
-    {'D','y','n','D','a','t','a',0};
+    {'\\','R','e','g','i','s','t','r','y','\\',
+     'D','y','n','D','a','t','a',0};
 
 static const WCHAR * const root_key_names[] =
 {
