@@ -1410,6 +1410,7 @@ static void test_GetCharABCWidths(void)
 static void test_text_extents(void)
 {
     static const WCHAR wt[] = {'O','n','e','\n','t','w','o',' ','3',0};
+    static const WCHAR emptyW[] = {0};
     LPINT extents;
     INT i, len, fit1, fit2, extents2[3];
     LOGFONTA lf;
@@ -1428,8 +1429,19 @@ static void test_text_extents(void)
     hdc = GetDC(0);
     hfont = SelectObject(hdc, hfont);
     GetTextMetricsA(hdc, &tm);
-    GetTextExtentPointA(hdc, "o", 1, &sz);
+    ret = GetTextExtentPointA(hdc, "o", 1, &sz);
+    ok(ret, "got %d\n", ret);
     ok(sz.cy == tm.tmHeight, "cy %d tmHeight %d\n", sz.cy, tm.tmHeight);
+
+    memset(&sz, 0xcc, sizeof(sz));
+    ret = GetTextExtentPointA(hdc, "o", 0, &sz);
+    ok(ret, "got %d\n", ret);
+    ok(sz.cx == 0 && sz.cy == 0, "cx %d, cy %d\n", sz.cx, sz.cy);
+
+    memset(&sz, 0xcc, sizeof(sz));
+    ret = GetTextExtentPointA(hdc, "", 0, &sz);
+    ok(ret, "got %d\n", ret);
+    ok(sz.cx == 0 && sz.cy == 0, "cx %d, cy %d\n", sz.cx, sz.cy);
 
     SetLastError(0xdeadbeef);
     GetTextExtentExPointW(hdc, wt, 1, 1, &fit1, &fit2, &sz1);
@@ -1441,6 +1453,16 @@ static void test_text_extents(void)
         ReleaseDC(0, hdc);
         return;
     }
+
+    memset(&sz, 0xcc, sizeof(sz));
+    ret = GetTextExtentPointW(hdc, wt, 0, &sz);
+    ok(ret, "got %d\n", ret);
+    ok(sz.cx == 0 && sz.cy == 0, "cx %d, cy %d\n", sz.cx, sz.cy);
+
+    memset(&sz, 0xcc, sizeof(sz));
+    ret = GetTextExtentPointW(hdc, emptyW, 0, &sz);
+    ok(ret, "got %d\n", ret);
+    ok(sz.cx == 0 && sz.cy == 0, "cx %d, cy %d\n", sz.cx, sz.cy);
 
     len = lstrlenW(wt);
     extents = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len * sizeof extents[0]);
