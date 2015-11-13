@@ -1431,6 +1431,15 @@ NTSTATUS WINAPI ExCreateCallback(PCALLBACK_OBJECT *obj, POBJECT_ATTRIBUTES attr,
 
 
 /***********************************************************************
+ *           ExDeleteNPagedLookasideList   (NTOSKRNL.EXE.@)
+ */
+void WINAPI ExDeleteNPagedLookasideList( PNPAGED_LOOKASIDE_LIST lookaside )
+{
+    FIXME("(%p) stub\n", lookaside);
+}
+
+
+/***********************************************************************
  *           ExFreePool   (NTOSKRNL.EXE.@)
  */
 void WINAPI ExFreePool( void *ptr )
