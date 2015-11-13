@@ -124,7 +124,7 @@
 @ stub ExConvertExclusiveToSharedLite
 @ stdcall ExCreateCallback(ptr ptr long long)
 @ stdcall ExDeleteNPagedLookasideList(ptr)
-@ stub ExDeletePagedLookasideList
+@ stdcall ExDeletePagedLookasideList(ptr)
 @ stdcall ExDeleteResourceLite(ptr)
 @ stub ExDesktopObjectType
 @ stub ExDisableResourceBoostLite
