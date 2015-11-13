@@ -225,24 +225,13 @@ wine_fn_has_flag ()
 
 wine_fn_depend_rules ()
 {
-    if wine_fn_has_flag config
-    then
-        wine_fn_append_rule \
-"$ac_dir/Makefile: $srcdir/$ac_dir/Makefile.in Makefile config.status \$(MAKEDEP)
-	@./config.status --file $ac_dir/Makefile && \$(MAKEDEP) -iMakefile $ac_dir
-depend: $ac_dir/depend
-.PHONY: $ac_dir/depend
-$ac_dir/depend: \$(MAKEDEP) dummy
-	@./config.status --file $ac_dir/Makefile && \$(MAKEDEP) -iMakefile $ac_dir"
-    else
-        wine_fn_append_rule \
+    wine_fn_append_rule \
 "$ac_dir/Makefile: $srcdir/$ac_dir/Makefile.in Makefile \$(MAKEDEP)
 	\$(MAKEDEP) $ac_dir
 depend: $ac_dir/depend
 .PHONY: $ac_dir/depend
 $ac_dir/depend: \$(MAKEDEP) dummy
 	\$(MAKEDEP) $ac_dir"
-    fi
 }
 
 wine_fn_pot_rules ()

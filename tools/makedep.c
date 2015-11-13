@@ -180,7 +180,6 @@ struct makefile
 static struct makefile *top_makefile;
 
 static const char *output_makefile_name = "Makefile";
-static const char *input_makefile_name;
 static const char *input_file_name;
 static const char *output_file_name;
 static const char *temp_file_name;
@@ -193,8 +192,7 @@ static const char Usage[] =
     "Usage: makedep [options] directories\n"
     "Options:\n"
     "   -R from to  Compute the relative path between two directories\n"
-    "   -fxxx       Store output in file 'xxx' (default: Makefile)\n"
-    "   -ixxx       Read input from file 'xxx' (default: Makefile.in)\n";
+    "   -fxxx       Store output in file 'xxx' (default: Makefile)\n";
 
 
 #ifndef __GNUC__
@@ -1558,11 +1556,9 @@ static FILE *open_input_makefile( const struct makefile *make )
     FILE *ret;
 
     if (make->base_dir)
-    {
-        input_file_name = base_dir_path( make, input_makefile_name );
-        if (strendswith( input_makefile_name, ".in" )) input_file_name = root_dir_path( input_file_name );
-    }
-    else input_file_name = output_makefile_name;  /* always use output name for main Makefile */
+        input_file_name = root_dir_path( base_dir_path( make, strmake( "%s.in", output_makefile_name )));
+    else
+        input_file_name = output_makefile_name;  /* always use output name for main Makefile */
 
     input_line = 0;
     if (!(ret = fopen( input_file_name, "r" ))) fatal_perror( "open" );
@@ -3208,9 +3204,6 @@ static int parse_option( const char *opt )
     case 'f':
         if (opt[2]) output_makefile_name = opt + 2;
         break;
-    case 'i':
-        if (opt[2]) input_makefile_name = opt + 2;
-        break;
     case 'R':
         relative_dir_mode = 1;
         break;
@@ -3270,8 +3263,6 @@ int main( int argc, char *argv[] )
 #endif
 
     for (i = 0; i < HASH_SIZE; i++) list_init( &files[i] );
-
-    if (!input_makefile_name) input_makefile_name = strmake( "%s.in", output_makefile_name );
 
     top_makefile = parse_makefile( NULL, "# End of common header" );
 

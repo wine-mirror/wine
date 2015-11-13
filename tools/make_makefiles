@@ -202,7 +202,7 @@ sub parse_makefile($)
 
         if (/\@[A-Z_]+\@/)  # config.status substitution variable
         {
-            ${$make{"=flags"}}{"config"} = 1;
+            die "Configure substitution is not allowed in $file";
         }
         if (/^\s*(MODULE|IMPORTLIB|TESTDLL|PARENTSRC|APPMODE)\s*=\s*(.*)/)
         {
