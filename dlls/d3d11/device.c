@@ -1556,7 +1556,33 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetState(ID3D11DeviceCon
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetViewports(ID3D11DeviceContext *iface,
         UINT *viewport_count, D3D11_VIEWPORT *viewports)
 {
-    FIXME("iface %p, viewport_count %p, viewports %p stub!\n", iface, viewport_count, viewports);
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct wined3d_viewport wined3d_vp;
+
+    TRACE("iface %p, viewport_count %p, viewports %p.\n", iface, viewport_count, viewports);
+
+    if (!viewports)
+    {
+        *viewport_count = 1;
+        return;
+    }
+
+    if (!*viewport_count)
+        return;
+
+    wined3d_mutex_lock();
+    wined3d_device_get_viewport(device->wined3d_device, &wined3d_vp);
+    wined3d_mutex_unlock();
+
+    viewports[0].TopLeftX = wined3d_vp.x;
+    viewports[0].TopLeftY = wined3d_vp.y;
+    viewports[0].Width = wined3d_vp.width;
+    viewports[0].Height = wined3d_vp.height;
+    viewports[0].MinDepth = wined3d_vp.min_z;
+    viewports[0].MaxDepth = wined3d_vp.max_z;
+
+    if (*viewport_count > 1)
+        memset(&viewports[1], 0, (*viewport_count - 1) * sizeof(*viewports));
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_RSGetScissorRects(ID3D11DeviceContext *iface,
