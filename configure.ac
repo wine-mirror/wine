@@ -962,15 +962,6 @@ libwine_DEPS = wine.map
 ${wine_binary}_OBJS = main.o
 ${wine_binary}_LDFLAGS = $LDEXECFLAGS -lwine \$(PTHREAD_LIBS)
 "])
-    if test -z "$with_wine64"
-    then
-        AS_VAR_APPEND([LOADER_RULES],["
-install install-lib::
-	\$(INSTALL_DATA) \$(srcdir)/wine.desktop \$(DESTDIR)\$(datadir)/applications/wine.desktop
-uninstall::
-	\$(RM) \$(DESTDIR)\$(datadir)/applications/wine.desktop
-"])
-    fi
     ;;
 esac
 
@@ -3692,13 +3683,19 @@ clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
     loader_install="$loader_install wine.inf"
-    AS_VAR_APPEND([LOADER_RULES],["
-install install-lib::
-	\$(INSTALL_DATA) \$(srcdir)/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
-
+    WINE_APPEND_RULE(
+[install install-lib::
+	\$(INSTALL_DATA) $srcdir/loader/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
 uninstall::
-	\$(RM) \$(DESTDIR)\$(datadir)/wine/l_intl.nls
-"])
+	\$(RM) \$(DESTDIR)\$(datadir)/wine/l_intl.nls])
+    case $host_os in
+      cygwin*|mingw32*|darwin*|macosx*|linux-android*) ;;
+      *) WINE_APPEND_RULE(
+[install install-lib::
+	\$(INSTALL_DATA) $srcdir/loader/wine.desktop \$(DESTDIR)\$(datadir)/applications/wine.desktop
+uninstall::
+	\$(RM) \$(DESTDIR)\$(datadir)/applications/wine.desktop]) ;;
+    esac
 fi
 
 AS_VAR_APPEND([LOADER_RULES],["
