@@ -368,10 +368,18 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_DrawIndexedInstanced(ID3D1
         UINT instance_index_count, UINT instance_count, UINT start_index_location, INT base_vertex_location,
         UINT start_instance_location)
 {
-    FIXME("iface %p, instance_index_count %u, instance_count %u, start_index_location %u, "
-            "base_vertex_location %d, start_instance_location %u stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+
+    TRACE("iface %p, instance_index_count %u, instance_count %u, start_index_location %u, "
+            "base_vertex_location %d, start_instance_location %u.\n",
             iface, instance_index_count, instance_count, start_index_location,
             base_vertex_location, start_instance_location);
+
+    wined3d_mutex_lock();
+    wined3d_device_set_base_vertex_index(device->wined3d_device, base_vertex_location);
+    wined3d_device_draw_indexed_primitive_instanced(device->wined3d_device, start_index_location,
+            instance_index_count, start_instance_location, instance_count);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_DrawInstanced(ID3D11DeviceContext *iface,
