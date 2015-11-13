@@ -677,7 +677,7 @@ AC_SUBST(dlldir,"\${libdir}/wine")
 AC_SUBST(DLLFLAGS,"-D_REENTRANT")
 AC_SUBST(LDRPATH_INSTALL,"")
 AC_SUBST(LDRPATH_LOCAL,"")
-AC_SUBST(LOADER_RULES,"")
+AC_SUBST(LDEXECFLAGS,"")
 LIBEXT="so"
 DLLEXT=".so"
 IMPLIBEXT="def"
@@ -687,8 +687,7 @@ WINE_CONFIG_HELPERS
 
 wine_binary="wine"
 test "x$enable_win64" != "xyes" || wine_binary="wine64"
-loader_programs="$wine_binary"
-loader_install=""
+AC_SUBST(WINELOADER_PROGRAMS,"$wine_binary")
 libwine_soversion=`expr $libwine_version : '\([[0-9]]*\)\..*'`
 
 case $host_os in
@@ -850,16 +849,11 @@ INSTALL_DEV = libwine.dylib
 libwine_LDFLAGS = -dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version
 "])
 
-    AS_VAR_APPEND([LOADER_RULES],["
-${wine_binary}_OBJS = main.o
-${wine_binary}_LDFLAGS = $LDEXECFLAGS -lwine \$(PTHREAD_LIBS)
-${wine_binary}_DEPS = wine_info.plist
-"])
+    AC_SUBST(WINELOADER_DEPENDS,"wine_info.plist")
     ;;
 
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
-    LDEXECFLAGS=""
     dlldir="\${libdir}"
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                     [LDEXECFLAGS="-Wl,--export-dynamic"])
@@ -884,11 +878,6 @@ ${wine_binary}_DEPS = wine_info.plist
 SHAREDLIB = libwine.so
 INSTALL_LIB = libwine.so
 libwine_LDFLAGS = -shared
-"])
-
-    AS_VAR_APPEND([LOADER_RULES],["
-${wine_binary}_OBJS = main.o
-${wine_binary}_LDFLAGS = $LDEXECFLAGS -lwine \$(PTHREAD_LIBS)
 "])
     ;;
 
@@ -956,11 +945,6 @@ INSTALL_LIB = libwine.so.$libwine_version libwine.so.$libwine_soversion
 INSTALL_DEV = libwine.so
 libwine_LDFLAGS = $shared_ldflags
 libwine_DEPS = wine.map
-"])
-
-    AS_VAR_APPEND([LOADER_RULES],["
-${wine_binary}_OBJS = main.o
-${wine_binary}_LDFLAGS = $LDEXECFLAGS -lwine \$(PTHREAD_LIBS)
 "])
     ;;
 esac
@@ -1964,12 +1948,8 @@ case $host_os in
     case $host_cpu in
       *i[[3456789]]86*|x86_64*)
         test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/wine-preloader")
-        loader_programs="$loader_programs $wine_binary-preloader"
-        AS_VAR_APPEND([LOADER_RULES],["
-preloader_EXTRADEFS = $BUILTINFLAG
-${wine_binary}_preloader_OBJS = preloader.o
-${wine_binary}_preloader_LDFLAGS = -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000
-"]) ;;
+        WINELOADER_PROGRAMS="$WINELOADER_PROGRAMS $wine_binary-preloader"
+        ;;
     esac
     ;;
 esac
@@ -3421,7 +3401,7 @@ WINE_CONFIG_MAKEFILE([include],,[clean,install-dev])
 WINE_CONFIG_MAKEFILE([libs/port])
 WINE_CONFIG_MAKEFILE([libs/wine],,[clean,config,install-dev,install-lib])
 WINE_CONFIG_MAKEFILE([libs/wpp])
-WINE_CONFIG_MAKEFILE([loader],,[clean,config,install-lib])
+WINE_CONFIG_MAKEFILE([loader],,[clean,install-lib])
 WINE_CONFIG_PROGRAM(arp,,[install])
 WINE_CONFIG_PROGRAM(aspnet_regiis,,[install])
 WINE_CONFIG_PROGRAM(attrib,,[install,po])
@@ -3682,7 +3662,7 @@ $with_wine64/loader/wine-preloader:
 clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader])
 else
-    loader_install="$loader_install wine.inf"
+    AC_SUBST(WINELOADER_INSTALL,"wine.inf")
     WINE_APPEND_RULE(
 [install install-lib::
 	\$(INSTALL_DATA) $srcdir/loader/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
@@ -3697,11 +3677,6 @@ uninstall::
 	\$(RM) \$(DESTDIR)\$(datadir)/applications/wine.desktop]) ;;
     esac
 fi
-
-AS_VAR_APPEND([LOADER_RULES],["
-PROGRAMS = $loader_programs
-INSTALL_LIB = $loader_programs$loader_install
-"])
 
 if test "$srcdir" = .
 then

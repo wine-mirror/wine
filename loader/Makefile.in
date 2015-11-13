@@ -12,9 +12,21 @@ IN_SRCS = \
 	wine.inf.in \
 	wine_info.plist.in
 
-@LOADER_RULES@
+PROGRAMS = $(WINELOADER_PROGRAMS)
+INSTALL_LIB = $(WINELOADER_PROGRAMS) $(WINELOADER_INSTALL)
 
-# Make sure that make_makefiles sees the generated rules
-.PHONY: install install-lib uninstall
-install install-lib::
-clean::
+preloader_EXTRADEFS = $(MSVCRTFLAGS)
+
+wine_OBJS = main.o
+wine_DEPS = $(WINELOADER_DEPENDS)
+wine_LDFLAGS = $(LDEXECFLAGS) -lwine $(PTHREAD_LIBS)
+
+wine64_OBJS = main.o
+wine64_DEPS = $(WINELOADER_DEPENDS)
+wine64_LDFLAGS = $(LDEXECFLAGS) -lwine $(PTHREAD_LIBS)
+
+wine_preloader_OBJS = preloader.o
+wine_preloader_LDFLAGS = -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000
+
+wine64_preloader_OBJS = preloader.o
+wine64_preloader_LDFLAGS = -static -nostartfiles -nodefaultlibs -Wl,-Ttext=0x7c400000
