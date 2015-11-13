@@ -288,7 +288,7 @@ static void test_query_process(void)
     /* test ReturnLength */
     ReturnLength = 0;
     status = pNtQuerySystemInformation(SystemProcessInformation, NULL, 0, &ReturnLength);
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_LENGTH_MISMATCH got %08x\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH got %08x\n", status);
     ok( ReturnLength > 0 || broken(ReturnLength == 0) /* NT4, Win2K */,
         "Expected a ReturnLength to show the needed length\n");
 
@@ -1050,7 +1050,7 @@ static void test_query_process_debug_port(int argc, char **argv)
 
     status = pNtQueryInformationProcess(NULL, ProcessDebugPort,
             &debug_port, sizeof(debug_port), NULL);
-    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
+    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got %#x.\n", status);
 
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugPort,
             &debug_port, sizeof(debug_port) - 1, NULL);
@@ -1302,7 +1302,7 @@ static void test_query_process_debug_flags(int argc, char **argv)
 
     status = pNtQueryInformationProcess(NULL, ProcessDebugFlags,
             &debug_flags, sizeof(debug_flags), NULL);
-    ok(status == STATUS_INVALID_HANDLE || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "Expected STATUS_ACCESS_VIOLATION, got %#x.\n", status);
+    ok(status == STATUS_INVALID_HANDLE || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "Expected STATUS_INVALID_HANDLE, got %#x.\n", status);
 
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugFlags,
             &debug_flags, sizeof(debug_flags) - 1, NULL);

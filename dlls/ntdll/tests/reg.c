@@ -639,7 +639,7 @@ static void test_NtQueryValueKey(void)
     ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08x\n", status);
 
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, &pi, sizeof(pi), &len);
-    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_BUFFER_TOO_SMALL instead of 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
     ok(pi.Type == 0xff00ff00, "Type=%x\n", pi.Type);
     ok(pi.DataLength == 0, "DataLength=%u\n", pi.DataLength);
     pRtlFreeUnicodeString(&ValName);
