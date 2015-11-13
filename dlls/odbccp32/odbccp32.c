@@ -37,6 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(odbc);
 
 /* Registry key names */
 static const WCHAR drivers_key[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\','O','D','B','C','I','N','S','T','.','I','N','I','\\','O','D','B','C',' ','D','r','i','v','e','r','s',0};
+static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C',0};
 
 /* This config mode is known to be process-wide.
  * MSDN documentation suggests that the value is hidden somewhere in the registry but I haven't found it yet.
@@ -401,7 +402,6 @@ BOOL WINAPI SQLGetInstalledDrivers(LPSTR lpszBuf, WORD cbBufMax,
 
 static HKEY get_privateprofile_sectionkey(LPCWSTR section, LPCWSTR filename)
 {
-    static const WCHAR odbcW[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C','\\',0};
     HKEY hkey, hkeyfilename, hkeysection;
     LONG ret;
 
@@ -1165,7 +1165,6 @@ BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry
 {
     LONG ret;
     HKEY hkey;
-    WCHAR softwareodbc[] = {'S','o','f','t','w','a','r','e','\\','O','D','B','C',0};
 
     clear_errors();
     TRACE("%s %s %s %s\n", debugstr_w(lpszSection), debugstr_w(lpszEntry),
@@ -1177,7 +1176,7 @@ BOOL WINAPI SQLWritePrivateProfileStringW(LPCWSTR lpszSection, LPCWSTR lpszEntry
         return FALSE;
     }
 
-    if ((ret = RegCreateKeyW(HKEY_CURRENT_USER, softwareodbc, &hkey)) == ERROR_SUCCESS)
+    if ((ret = RegCreateKeyW(HKEY_CURRENT_USER, odbcW, &hkey)) == ERROR_SUCCESS)
     {
          HKEY hkeyfilename;
 
