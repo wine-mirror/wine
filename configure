@@ -18136,7 +18136,7 @@ wine_fn_config_program winemenubuilder enable_winemenubuilder install
 wine_fn_config_program winemine enable_winemine install,installbin,manpage,po
 wine_fn_config_program winemsibuilder enable_winemsibuilder install
 wine_fn_config_program winepath enable_winepath install,installbin,manpage
-wine_fn_config_program winetest enable_winetest clean,config
+wine_fn_config_program winetest enable_winetest clean
 wine_fn_config_program winevdm enable_win16 install
 wine_fn_config_program winhelp.exe16 enable_win16 install
 wine_fn_config_program winhlp32 enable_winhlp32 install,po
