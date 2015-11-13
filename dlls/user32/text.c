@@ -1316,11 +1316,14 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
     SIZE extent;
     int i, j;
     int start = x;
+    TEXTMETRICW tm;
 
     if (!lpstr || count == 0) return 0;
 
     if (!lpTabPos)
         cTabStops=0;
+
+    GetTextMetricsW( hdc, &tm );
 
     if (cTabStops == 1)
     {
@@ -1329,8 +1332,6 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
     }
     else
     {
-        TEXTMETRICW tm;
-        GetTextMetricsW( hdc, &tm );
         defWidth = 8 * tm.tmAveCharWidth;
     }
 
@@ -1398,6 +1399,10 @@ static LONG TEXT_TabbedTextOut( HDC hdc, INT x, INT y, LPCWSTR lpstr,
         count -= j;
         lpstr += j;
     }
+
+    if(!extent.cy)
+        extent.cy = tm.tmHeight;
+
     return MAKELONG(x - start, extent.cy);
 }
 
