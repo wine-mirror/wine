@@ -7865,6 +7865,7 @@ distclean::
 wine_binary="wine"
 test "x$enable_win64" != "xyes" || wine_binary="wine64"
 loader_programs="$wine_binary"
+loader_install=""
 libwine_soversion=`expr $libwine_version : '\([0-9]*\)\..*'`
 
 case $host_os in
@@ -14979,10 +14980,6 @@ ${wine_binary}_preloader_LDFLAGS = -static -nostartfiles -nodefaultlibs -Wl,-Tte
     esac
     ;;
 esac
-as_fn_append LOADER_RULES "
-PROGRAMS = $loader_programs
-INSTALL_LIB = $loader_programs
-"
 
 
 ac_save_CFLAGS="$CFLAGS"
@@ -18321,15 +18318,20 @@ $with_wine64/loader/wine-preloader:
 clean::
 	\$(RM) fonts server tools $with_wine64/loader/wine $with_wine64/loader/wine-preloader"
 else
+    loader_install="$loader_install wine.inf"
     as_fn_append LOADER_RULES "
-install install-lib:: wine.inf
-	\$(INSTALL_DATA) wine.inf \$(DESTDIR)\$(datadir)/wine/wine.inf
+install install-lib::
 	\$(INSTALL_DATA) \$(srcdir)/l_intl.nls \$(DESTDIR)\$(datadir)/wine/l_intl.nls
 
 uninstall::
-	\$(RM) \$(DESTDIR)\$(datadir)/wine/wine.inf \$(DESTDIR)\$(datadir)/wine/l_intl.nls
+	\$(RM) \$(DESTDIR)\$(datadir)/wine/l_intl.nls
 "
 fi
+
+as_fn_append LOADER_RULES "
+PROGRAMS = $loader_programs
+INSTALL_LIB = $loader_programs$loader_install
+"
 
 if test "$srcdir" = .
 then

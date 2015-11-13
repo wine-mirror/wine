@@ -2254,6 +2254,8 @@ static struct strarray output_sources( const struct makefile *make, struct strar
             output( "%s:", obj_dir_path( make, obj ));
             output_filenames( dependencies );
             output( "\n" );
+            add_install_rule( make, install_rules, obj, xstrdup( obj ),
+                              strmake( "d$(datadir)/wine/%s", obj ));
         }
         else if (!strcmp( ext, "sfd" ))  /* font file */
         {
