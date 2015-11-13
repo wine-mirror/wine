@@ -200,6 +200,10 @@ sub parse_makefile($)
         while (/\\$/) { chop; $_ .= <MAKE>; chomp; }  # merge continued lines
         next if (/^\s*$/);
 
+        if (/\@[A-Z_]+\@/)  # config.status substitution variable
+        {
+            ${$make{"=flags"}}{"config"} = 1;
+        }
         if (/^\s*(MODULE|IMPORTLIB|TESTDLL|PARENTSRC|APPMODE)\s*=\s*(.*)/)
         {
             my $var = $1;
@@ -207,7 +211,7 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES|EXTRA_OBJS|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -222,10 +226,6 @@ sub parse_makefile($)
         if (/^\s*(TOPSRCDIR|TOPOBJDIR|SRCDIR|VPATH)\s*=\s*(.*)/)
         {
             die "Variable $1 in $file.in is obsolete";
-        }
-        if (/\@[A-Z_]+\@/)  # config.status substitution variable
-        {
-            ${$make{"=flags"}}{"config"} = 1;
         }
     }
 
@@ -248,7 +248,7 @@ sub parse_makefile($)
         ${$make{"=flags"}}{"install-lib"} = 1 if defined $make{"INSTALL_LIB"};
         ${$make{"=flags"}}{"install-dev"} = 1 if defined $make{"INSTALL_DEV"};
     }
-    ${$make{"=flags"}}{"clean"} = 1 if defined $make{"PROGRAMS"} || defined $make{"EXTRA_TARGETS"};
+    ${$make{"=flags"}}{"clean"} = 1 if defined $make{"PROGRAMS"} || defined $make{"EXTRA_TARGETS"} || defined $make{"EXTRA_OBJS"};
 
     if (defined $make{"=flags"} && defined $make{"MODULE"})
     {

@@ -717,21 +717,18 @@ case $host_os in
           AC_SUBST(SOCKET_LIBS,"-lws2_32") ;;
     esac
 
-    AC_SUBST(LIBWINE_RULES,["
-SHAREDLIB = libwine.dll
-IMPORTLIB = libwine.a
-INSTALL_LIB = libwine.dll
-INSTALL_DEV = libwine.a
-libwine_LDFLAGS = -shared \$(srcdir)/wine.def 
-libwine_DEPS = wine.def
-"])
+    AC_SUBST(LIBWINE_SHAREDLIB,"libwine.dll")
+    AC_SUBST(LIBWINE_IMPORTLIB,"libwine.a")
+    AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.dll")
+    AC_SUBST(LIBWINE_INSTALL_DEV,"libwine.a")
+    AC_SUBST(LIBWINE_LDFLAGS,"-shared \$(srcdir)/wine.def")
+    AC_SUBST(LIBWINE_DEPENDS,"wine.def")
     ;;
 
   darwin*|macosx*)
     AC_CHECK_HEADERS(libunwind.h)
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
-    LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
     LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
     dnl declare needed frameworks
@@ -842,13 +839,10 @@ libwine_DEPS = wine.def
                                        AC_MSG_RESULT([[cross-compiling, assuming yes]]))
     fi
 
-    AC_SUBST(LIBWINE_RULES,["
-SHAREDLIB = libwine.$libwine_version.dylib
-INSTALL_LIB = libwine.$libwine_version.dylib libwine.$libwine_soversion.dylib
-INSTALL_DEV = libwine.dylib
-libwine_LDFLAGS = -dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version
-"])
-
+    AC_SUBST(LIBWINE_SHAREDLIB,"libwine.$libwine_version.dylib")
+    AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.$libwine_version.dylib libwine.$libwine_soversion.dylib")
+    AC_SUBST(LIBWINE_INSTALL_DEV,"libwine.dylib")
+    AC_SUBST(LIBWINE_LDFLAGS,["-dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"])
     AC_SUBST(WINELOADER_DEPENDS,"wine_info.plist")
     ;;
 
@@ -874,11 +868,9 @@ libwine_LDFLAGS = -dynamiclib -install_name @rpath/libwine.$libwine_soversion.dy
         ;;
     esac
 
-    AC_SUBST(LIBWINE_RULES,["
-SHAREDLIB = libwine.so
-INSTALL_LIB = libwine.so
-libwine_LDFLAGS = -shared
-"])
+    AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so")
+    AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so")
+    AC_SUBST(LIBWINE_LDFLAGS,"-shared")
     ;;
 
   *)
@@ -889,15 +881,15 @@ libwine_LDFLAGS = -shared
                               ac_cv_c_dll_gnuelf="yes",ac_cv_c_dll_gnuelf="no")])
     if test "$ac_cv_c_dll_gnuelf" = "yes"
     then
-      shared_ldflags="-shared"
+      LIBWINE_LDFLAGS="-shared"
       WINE_TRY_CFLAGS([-fPIC -shared -Wl,-soname,confest.so.1],
-                      [shared_ldflags="-shared -Wl,-soname,libwine.so.$libwine_soversion"],
+                      [LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so.$libwine_soversion"],
                       [WINE_TRY_CFLAGS([-fPIC -shared -Wl,-h,confest.so.1],
-                                       [shared_ldflags="-shared -Wl,-h,libwine.so.$libwine_soversion"])])
+                                       [LIBWINE_LDFLAGS="-shared -Wl,-h,libwine.so.$libwine_soversion"])])
 
       echo '{ global: *; };' >conftest.map
       WINE_TRY_CFLAGS([-fPIC -shared -Wl,--version-script=conftest.map],
-                      [shared_ldflags="$shared_ldflags -Wl,--version-script=\$(srcdir)/wine.map"])
+                      [LIBWINE_LDFLAGS="$LIBWINE_LDFLAGS -Wl,--version-script=\$(srcdir)/wine.map"])
       rm -f conftest.map
 
       WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
@@ -936,16 +928,13 @@ libwine_LDFLAGS = -shared
                                 ac_cv_c_dll_unixware="yes",ac_cv_c_dll_unixware="no")])
       if test "$ac_cv_c_dll_unixware" = "yes"
       then
-        shared_ldflags="-Wl,-G,-h,libwine.so.$libwine_soversion"
+        LIBWINE_LDFLAGS="-Wl,-G,-h,libwine.so.$libwine_soversion"
       fi
     fi
-    AC_SUBST(LIBWINE_RULES,["
-SHAREDLIB = libwine.so.$libwine_version
-INSTALL_LIB = libwine.so.$libwine_version libwine.so.$libwine_soversion
-INSTALL_DEV = libwine.so
-libwine_LDFLAGS = $shared_ldflags
-libwine_DEPS = wine.map
-"])
+    AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so.$libwine_version")
+    AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so.$libwine_version libwine.so.$libwine_soversion")
+    AC_SUBST(LIBWINE_INSTALL_DEV,"libwine.so")
+    AC_SUBST(LIBWINE_DEPENDS,"wine.map")
     ;;
 esac
 
@@ -3399,7 +3388,7 @@ WINE_CONFIG_DLL(xpssvcs)
 WINE_CONFIG_MAKEFILE([fonts],,[clean,install-lib])
 WINE_CONFIG_MAKEFILE([include],,[clean,install-dev])
 WINE_CONFIG_MAKEFILE([libs/port])
-WINE_CONFIG_MAKEFILE([libs/wine],,[clean,config,install-dev,install-lib])
+WINE_CONFIG_MAKEFILE([libs/wine],,[clean,implib,install-dev,install-lib])
 WINE_CONFIG_MAKEFILE([libs/wpp])
 WINE_CONFIG_MAKEFILE([loader],,[clean,install-lib])
 WINE_CONFIG_PROGRAM(arp,,[install])

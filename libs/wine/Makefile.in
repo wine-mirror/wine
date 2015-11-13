@@ -103,15 +103,16 @@ config_EXTRADEFS = \
 	-DBIN_TO_DLLDIR=\"`$(MAKEDEP) -R ${bindir} ${dlldir}`\" \
 	-DBIN_TO_DATADIR=\"`$(MAKEDEP) -R ${bindir} ${datadir}/wine`\"
 
+SHAREDLIB = $(LIBWINE_SHAREDLIB)
+IMPORTLIB = $(LIBWINE_IMPORTLIB)
+INSTALL_LIB = $(LIBWINE_INSTALL_LIB)
+INSTALL_DEV = $(LIBWINE_INSTALL_DEV)
+
+libwine_LDFLAGS = $(LIBWINE_LDFLAGS)
+libwine_DEPS = $(LIBWINE_DEPENDS)
+
 version.c: dummy
-	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-@PACKAGE_VERSION@") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || ($(RM) $@ && exit 1)
+	version=`(GIT_DIR=$(top_srcdir)/.git git describe HEAD 2>/dev/null || echo "wine-$(PACKAGE_VERSION)") | sed -n -e '$$s/\(.*\)/const char wine_build[] = "\1";/p'` && (echo $$version | cmp -s - $@) || echo $$version >$@ || ($(RM) $@ && exit 1)
 
 dummy:
-
-# Make sure that make_makefiles sees the generated rules
-.PHONY: dummy install install-lib install-dev uninstall
-install install-lib::
-install install-dev::
-clean::
-
-@LIBWINE_RULES@
+.PHONY: dummy

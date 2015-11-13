@@ -704,7 +704,12 @@ APPLICATIONSERVICES_LIBS
 FORCEFEEDBACK_LIBS
 IOKIT_LIBS
 COREFOUNDATION_LIBS
-LIBWINE_RULES
+LIBWINE_DEPENDS
+LIBWINE_LDFLAGS
+LIBWINE_INSTALL_DEV
+LIBWINE_INSTALL_LIB
+LIBWINE_IMPORTLIB
+LIBWINE_SHAREDLIB
 SOCKET_LIBS
 DLLTOOL
 WINELOADER_PROGRAMS
@@ -7987,14 +7992,17 @@ fi
  ;;
     esac
 
-    LIBWINE_RULES="
-SHAREDLIB = libwine.dll
-IMPORTLIB = libwine.a
-INSTALL_LIB = libwine.dll
-INSTALL_DEV = libwine.a
-libwine_LDFLAGS = -shared \$(srcdir)/wine.def
-libwine_DEPS = wine.def
-"
+    LIBWINE_SHAREDLIB="libwine.dll"
+
+    LIBWINE_IMPORTLIB="libwine.a"
+
+    LIBWINE_INSTALL_LIB="libwine.dll"
+
+    LIBWINE_INSTALL_DEV="libwine.a"
+
+    LIBWINE_LDFLAGS="-shared \$(srcdir)/wine.def"
+
+    LIBWINE_DEPENDS="wine.def"
 
     ;;
 
@@ -8013,7 +8021,6 @@ done
 
     LIBEXT="dylib"
     DLLFLAGS="$DLLFLAGS -fPIC"
-    LIBWINE_LDFLAGS="-multiply_defined suppress"
     LDRPATH_INSTALL="-Wl,-rpath,@loader_path/\`\$(MAKEDEP) -R \${bindir} \${libdir}\`"
     LDRPATH_LOCAL="-Wl,-rpath,@loader_path/\$(top_builddir)/libs/wine"
         COREFOUNDATION_LIBS="-framework CoreFoundation"
@@ -8231,13 +8238,13 @@ fi
 
     fi
 
-    LIBWINE_RULES="
-SHAREDLIB = libwine.$libwine_version.dylib
-INSTALL_LIB = libwine.$libwine_version.dylib libwine.$libwine_soversion.dylib
-INSTALL_DEV = libwine.dylib
-libwine_LDFLAGS = -dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version
-"
+    LIBWINE_SHAREDLIB="libwine.$libwine_version.dylib"
 
+    LIBWINE_INSTALL_LIB="libwine.$libwine_version.dylib libwine.$libwine_soversion.dylib"
+
+    LIBWINE_INSTALL_DEV="libwine.dylib"
+
+    LIBWINE_LDFLAGS="-dynamiclib -install_name @rpath/libwine.$libwine_soversion.dylib -Wl,-rpath,@loader_path/ -compatibility_version $libwine_soversion -current_version $libwine_version"
 
     WINELOADER_DEPENDS="wine_info.plist"
 
@@ -8385,11 +8392,11 @@ fi
         ;;
     esac
 
-    LIBWINE_RULES="
-SHAREDLIB = libwine.so
-INSTALL_LIB = libwine.so
-libwine_LDFLAGS = -shared
-"
+    LIBWINE_SHAREDLIB="libwine.so"
+
+    LIBWINE_INSTALL_LIB="libwine.so"
+
+    LIBWINE_LDFLAGS="-shared"
 
     ;;
 
@@ -8420,7 +8427,7 @@ fi
 $as_echo "$ac_cv_c_dll_gnuelf" >&6; }
     if test "$ac_cv_c_dll_gnuelf" = "yes"
     then
-      shared_ldflags="-shared"
+      LIBWINE_LDFLAGS="-shared"
       { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -shared -Wl,-soname,confest.so.1" >&5
 $as_echo_n "checking whether the compiler supports -fPIC -shared -Wl,-soname,confest.so.1... " >&6; }
 if ${ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1+:} false; then :
@@ -8444,7 +8451,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1" >&5
 $as_echo "$ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1" >&6; }
 if test "x$ac_cv_cflags__fPIC__shared__Wl__soname_confest_so_1" = xyes; then :
-  shared_ldflags="-shared -Wl,-soname,libwine.so.$libwine_soversion"
+  LIBWINE_LDFLAGS="-shared -Wl,-soname,libwine.so.$libwine_soversion"
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -fPIC -shared -Wl,-h,confest.so.1" >&5
 $as_echo_n "checking whether the compiler supports -fPIC -shared -Wl,-h,confest.so.1... " >&6; }
@@ -8469,7 +8476,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1" >&5
 $as_echo "$ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1" >&6; }
 if test "x$ac_cv_cflags__fPIC__shared__Wl__h_confest_so_1" = xyes; then :
-  shared_ldflags="-shared -Wl,-h,libwine.so.$libwine_soversion"
+  LIBWINE_LDFLAGS="-shared -Wl,-h,libwine.so.$libwine_soversion"
 fi
 fi
 
@@ -8497,7 +8504,7 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map" >&5
 $as_echo "$ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map" >&6; }
 if test "x$ac_cv_cflags__fPIC__shared__Wl___version_script_conftest_map" = xyes; then :
-  shared_ldflags="$shared_ldflags -Wl,--version-script=\$(srcdir)/wine.map"
+  LIBWINE_LDFLAGS="$LIBWINE_LDFLAGS -Wl,--version-script=\$(srcdir)/wine.map"
 fi
       rm -f conftest.map
 
@@ -8741,16 +8748,16 @@ fi
 $as_echo "$ac_cv_c_dll_unixware" >&6; }
       if test "$ac_cv_c_dll_unixware" = "yes"
       then
-        shared_ldflags="-Wl,-G,-h,libwine.so.$libwine_soversion"
+        LIBWINE_LDFLAGS="-Wl,-G,-h,libwine.so.$libwine_soversion"
       fi
     fi
-    LIBWINE_RULES="
-SHAREDLIB = libwine.so.$libwine_version
-INSTALL_LIB = libwine.so.$libwine_version libwine.so.$libwine_soversion
-INSTALL_DEV = libwine.so
-libwine_LDFLAGS = $shared_ldflags
-libwine_DEPS = wine.map
-"
+    LIBWINE_SHAREDLIB="libwine.so.$libwine_version"
+
+    LIBWINE_INSTALL_LIB="libwine.so.$libwine_version libwine.so.$libwine_soversion"
+
+    LIBWINE_INSTALL_DEV="libwine.so"
+
+    LIBWINE_DEPENDS="wine.map"
 
     ;;
 esac
@@ -18049,7 +18056,7 @@ wine_fn_config_dll xpssvcs enable_xpssvcs
 wine_fn_config_makefile fonts enable_fonts clean,install-lib
 wine_fn_config_makefile include enable_include clean,install-dev
 wine_fn_config_makefile libs/port enable_libs_port
-wine_fn_config_makefile libs/wine enable_libs_wine clean,config,install-dev,install-lib
+wine_fn_config_makefile libs/wine enable_libs_wine clean,implib,install-dev,install-lib
 wine_fn_config_makefile libs/wpp enable_libs_wpp
 wine_fn_config_makefile loader enable_loader clean,install-lib
 wine_fn_config_program arp enable_arp install
