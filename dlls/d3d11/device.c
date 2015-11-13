@@ -341,8 +341,20 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_IASetVertexBuffers(ID3D11D
 static void STDMETHODCALLTYPE d3d11_immediate_context_IASetIndexBuffer(ID3D11DeviceContext *iface,
         ID3D11Buffer *buffer, DXGI_FORMAT format, UINT offset)
 {
-    FIXME("iface %p, buffer %p, format %s, offset %u stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct d3d_buffer *buffer_impl = unsafe_impl_from_ID3D11Buffer(buffer);
+
+    TRACE("iface %p, buffer %p, format %s, offset %u.\n",
             iface, buffer, debug_dxgi_format(format), offset);
+
+    if (offset)
+        FIXME("offset %u not supported.\n", offset);
+
+    wined3d_mutex_lock();
+    wined3d_device_set_index_buffer(device->wined3d_device,
+            buffer_impl ? buffer_impl->wined3d_buffer : NULL,
+            wined3dformat_from_dxgi_format(format));
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_DrawIndexedInstanced(ID3D11DeviceContext *iface,
