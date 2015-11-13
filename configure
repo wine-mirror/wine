@@ -7523,11 +7523,9 @@ wine_fn_disabled_rules ()
     ac_extraclean="$ac_dir/Makefile"
     test "$srcdir" = . && ac_extraclean="$ac_extraclean $ac_dir/.gitignore"
 
-    wine_fn_append_rule \
-"__clean__: $ac_dir/clean
-.PHONY: $ac_dir/clean
-$ac_dir/clean: dummy
-	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_extraclean"
+    wine_fn_depend_rules
+    wine_fn_clean_rules $ac_clean
+    wine_fn_pot_rules
 }
 
 wine_fn_config_makefile ()
@@ -7605,6 +7603,7 @@ fi
                then
                    wine_fn_depend_rules
                    wine_fn_clean_rules $ac_clean
+                   wine_fn_pot_rules
                else
                    wine_fn_disabled_rules $ac_clean
                    return
