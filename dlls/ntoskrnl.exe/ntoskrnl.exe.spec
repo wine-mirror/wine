@@ -836,7 +836,7 @@
 @ stub PoStartNextPowerIrp
 @ stub PoUnregisterSystemState
 @ stdcall ProbeForRead(ptr long long)
-@ stub ProbeForWrite
+@ stdcall ProbeForWrite(ptr long long)
 @ stub PsAssignImpersonationToken
 @ stub PsChargePoolQuota
 @ stub PsChargeProcessNonPagedPoolQuota
