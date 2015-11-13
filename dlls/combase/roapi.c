@@ -18,6 +18,7 @@
 
 #include "objbase.h"
 #include "roapi.h"
+#include "hstring.h"
 
 #include "wine/debug.h"
 
@@ -44,4 +45,13 @@ HRESULT WINAPI RoInitialize(RO_INIT_TYPE type)
 void WINAPI RoUninitialize(void)
 {
     CoUninitialize();
+}
+
+/***********************************************************************
+ *      RoGetActivationFactory (combase.@)
+ */
+HRESULT WINAPI RoGetActivationFactory(HSTRING classid, REFIID iid, void **factory)
+{
+    FIXME("stub: %p %p %p\n", classid, iid, factory);
+    return E_NOTIMPL;
 }

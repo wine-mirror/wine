@@ -248,7 +248,7 @@
 @ stub RoFailFastWithErrorContext
 @ stub RoFreeParameterizedTypeExtra
 @ stub RoGetActivatableClassRegistration
-@ stub RoGetActivationFactory
+@ stdcall RoGetActivationFactory(ptr ptr ptr)
 @ stub RoGetAgileReference
 @ stub RoGetApartmentIdentifier
 @ stub RoGetErrorReportingFlags
