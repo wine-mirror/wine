@@ -723,8 +723,7 @@ IMPORTLIB = libwine.a
 INSTALL_LIB = libwine.dll
 INSTALL_DEV = libwine.a
 libwine_LDFLAGS = -shared \$(srcdir)/wine.def 
-
-libwine.dll: \$(srcdir)/wine.def
+libwine_DEPS = wine.def
 "])
     ;;
 
@@ -853,7 +852,7 @@ libwine_LDFLAGS = -dynamiclib -install_name @rpath/libwine.$libwine_soversion.dy
     AS_VAR_APPEND([LOADER_RULES],["
 ${wine_binary}_OBJS = main.o
 ${wine_binary}_LDFLAGS = $LDEXECFLAGS -lwine \$(PTHREAD_LIBS)
-$wine_binary $wine_binary-installed: wine_info.plist
+${wine_binary}_DEPS = wine_info.plist
 "])
     ;;
 
@@ -955,8 +954,7 @@ SHAREDLIB = libwine.so.$libwine_version
 INSTALL_LIB = libwine.so.$libwine_version libwine.so.$libwine_soversion
 INSTALL_DEV = libwine.so
 libwine_LDFLAGS = $shared_ldflags
-
-libwine.so.$libwine_version: \$(srcdir)/wine.map
+libwine_DEPS = wine.map
 "])
 
     AS_VAR_APPEND([LOADER_RULES],["

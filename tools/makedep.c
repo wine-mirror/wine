@@ -1866,6 +1866,28 @@ static void get_dependencies( struct strarray *deps, struct incl_file *file, str
 
 
 /*******************************************************************
+ *         get_local_dependencies
+ *
+ * Get the local dependencies of a given target.
+ */
+static struct strarray get_local_dependencies( const struct makefile *make, const char *name,
+                                               struct strarray targets )
+{
+    unsigned int i;
+    struct strarray deps = get_expanded_make_var_array( make, file_local_var( name, "DEPS" ));
+
+    for (i = 0; i < deps.count; i++)
+    {
+        if (strarray_exists( &targets, deps.str[i] ))
+            deps.str[i] = obj_dir_path( make, deps.str[i] );
+        else
+            deps.str[i] = src_dir_path( make, deps.str[i] );
+    }
+    return deps;
+}
+
+
+/*******************************************************************
  *         add_install_rule
  */
 static void add_install_rule( const struct makefile *make, struct strarray *install_rules,
@@ -2018,6 +2040,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
     struct strarray mo_files = empty_strarray;
     struct strarray mc_files = empty_strarray;
     struct strarray ok_files = empty_strarray;
+    struct strarray in_files = empty_strarray;
     struct strarray dlldata_files = empty_strarray;
     struct strarray c2man_files = empty_strarray;
     struct strarray implib_objs = empty_strarray;
@@ -2224,6 +2247,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
                 free( dest );
                 free( dir );
             }
+            strarray_add( &in_files, xstrdup(obj) );
             strarray_add( &all_targets, xstrdup(obj) );
             output( "%s: %s\n", obj_dir_path( make, obj ), source->filename );
             output( "\t$(SED_CMD) %s >$@ || (rm -f $@ && false)\n", source->filename );
@@ -2595,6 +2619,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
 
         output( "%s:", obj_dir_path( make, make->sharedlib ));
         output_filenames_obj_dir( make, object_files );
+        output_filenames( get_local_dependencies( make, basename, in_files ));
         output( "\n" );
         output( "\t$(CC) -o $@" );
         output_filenames_obj_dir( make, object_files );
@@ -2719,6 +2744,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         char *program_installed = NULL;
         char *program = strmake( "%s%s", make->programs.str[i], exe_ext );
         struct strarray all_libs = empty_strarray;
+        struct strarray deps = get_local_dependencies( make, make->programs.str[i], in_files );
         struct strarray objs = get_expanded_make_var_array( make,
                                                  file_local_var( make->programs.str[i], "OBJS" ));
         struct strarray symlinks = get_expanded_make_var_array( make,
@@ -2727,6 +2753,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         if (!objs.count) objs = object_files;
         output( "%s:", obj_dir_path( make, program ) );
         output_filenames_obj_dir( make, objs );
+        output_filenames( deps );
         output( "\n" );
         output( "\t$(CC) -o $@" );
         output_filenames_obj_dir( make, objs );
@@ -2748,6 +2775,7 @@ static struct strarray output_sources( const struct makefile *make, struct strar
                 output( "\n" );
                 output( "%s:", obj_dir_path( make, program_installed ) );
                 output_filenames_obj_dir( make, objs );
+                output_filenames( deps );
                 output( "\n" );
                 output( "\t$(CC) -o $@" );
                 output_filenames_obj_dir( make, objs );
