@@ -1621,7 +1621,7 @@ static HRESULT VARIANT_FormatDate(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   {
     USHORT usFlags = dwFlags & VARIANT_CALENDAR_HIJRI ? VAR_CALENDAR_HIJRI : 0;
 
-    hRes = VariantChangeTypeEx(&vDate, pVarIn, LCID_US, usFlags, VT_DATE);
+    hRes = VariantChangeTypeEx(&vDate, pVarIn, lcid, usFlags, VT_DATE);
     if (FAILED(hRes))
       return hRes;
     dateHeader = (FMT_DATE_HEADER*)(rgbTok + FmtGetPositive(header));
