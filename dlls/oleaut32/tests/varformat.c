@@ -558,6 +558,40 @@ static void test_VarWeekdayName(void)
   }
 }
 
+static void test_VarFormatFromTokens(void)
+{
+    static WCHAR number_fmt[] = {'#','#','#',',','#','#','0','.','0','0',0};
+    static const WCHAR number[] = {'6',',','9','0',0};
+    static const WCHAR number_us[] = {'6','9','0','.','0','0',0};
+
+    BYTE buff[256];
+    LCID lcid;
+    VARIANT var;
+    BSTR bstr;
+    HRESULT hres;
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(number);
+
+    lcid = MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT);
+    hres = VarTokenizeFormatString(number_fmt, buff, sizeof(buff), 1, 1, lcid, NULL);
+    ok(hres == S_OK, "VarTokenizeFormatString failed: %x\n", hres);
+    hres = VarFormatFromTokens(&var, number_fmt, buff, 0, &bstr, lcid);
+    ok(hres == S_OK, "VarFormatFromTokens failed: %x\n", hres);
+    ok(!strcmpW(bstr, number_us), "incorrectly formatted number: %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    lcid = MAKELCID(MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN), SORT_DEFAULT);
+    hres = VarTokenizeFormatString(number_fmt, buff, sizeof(buff), 1, 1, lcid, NULL);
+    ok(hres == S_OK, "VarTokenizeFormatString failed: %x\n", hres);
+    hres = VarFormatFromTokens(&var, number_fmt, buff, 0, &bstr, lcid);
+    ok(hres == S_OK, "VarFormatFromTokens failed: %x\n", hres);
+    ok(!strcmpW(bstr, number), "incorrectly formatted number: %s\n", wine_dbgstr_w(bstr));
+    SysFreeString(bstr);
+
+    VariantClear(&var);
+}
+
 START_TEST(varformat)
 {
   hOleaut32 = GetModuleHandleA("oleaut32.dll");
@@ -567,4 +601,5 @@ START_TEST(varformat)
   test_VarFormatNumber();
   test_VarFormat();
   test_VarWeekdayName();
+  test_VarFormatFromTokens();
 }

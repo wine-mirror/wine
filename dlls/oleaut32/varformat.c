@@ -1212,13 +1212,13 @@ static HRESULT VARIANT_FormatNumber(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   else
   {
     /* Get a number string from pVarIn, and parse it */
-    hRes = VariantChangeTypeEx(&vString, pVarIn, LCID_US, VARIANT_NOUSEROVERRIDE, VT_BSTR);
+    hRes = VariantChangeTypeEx(&vString, pVarIn, lcid, VARIANT_NOUSEROVERRIDE, VT_BSTR);
     if (FAILED(hRes))
       return hRes;
 
     np.cDig = sizeof(rgbDig);
     np.dwInFlags = NUMPRS_STD;
-    hRes = VarParseNumFromStr(V_BSTR(&vString), LCID_US, 0, &np, rgbDig);
+    hRes = VarParseNumFromStr(V_BSTR(&vString), lcid, 0, &np, rgbDig);
     if (FAILED(hRes))
       return hRes;
 
