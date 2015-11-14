@@ -1960,7 +1960,7 @@ static HRESULT VARIANT_FormatString(LPVARIANT pVarIn, LPOLESTR lpszFormat,
   }
   else
   {
-    hRes = VariantChangeTypeEx(&vStr, pVarIn, LCID_US, VARIANT_NOUSEROVERRIDE, VT_BSTR);
+    hRes = VariantChangeTypeEx(&vStr, pVarIn, lcid, VARIANT_NOUSEROVERRIDE, VT_BSTR);
     if (FAILED(hRes))
       return hRes;
 
