@@ -586,18 +586,6 @@ static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
   return strcmpiW(p1->lf.lfFaceName, p2->lf.lfFaceName);
 }
 
-#if 0
-static void walk_cache(void)
-{
-  int i;
-
-  EnterCriticalSection(&xrender_cs);
-  for(i=mru; i >= 0; i = glyphsetCache[i].next)
-    TRACE("item %d\n", i);
-  LeaveCriticalSection(&xrender_cs);
-}
-#endif
-
 static int LookupEntry(LFANDSIZE *plfsz)
 {
   int i, prev_i = -1;
