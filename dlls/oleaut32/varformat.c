@@ -51,15 +51,6 @@ static const WCHAR szPercent_d[] = { '%','d','\0' };
 static const WCHAR szPercentZeroTwo_d[] = { '%','0','2','d','\0' };
 static const WCHAR szPercentZeroStar_d[] = { '%','0','*','d','\0' };
 
-#if 0
-#define dump_tokens(rgb) do { \
-  int i_; TRACE("Tokens->{\n"); \
-  for (i_ = 0; i_ < rgb[0]; i_++) \
-    TRACE("%s0x%02x", i_?",":"",rgb[i_]); \
-  TRACE(" }\n"); \
-  } while(0)
-#endif
-
 /******************************************************************************
  * Variant-Formats {OLEAUT32}
  *
