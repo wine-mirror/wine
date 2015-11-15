@@ -229,6 +229,7 @@ UINT WINAPI auxGetDevCapsA(UINT_PTR uDeviceID, LPAUXCAPSA lpCaps, UINT uSize)
 	WideCharToMultiByte( CP_ACP, 0, acW.szPname, -1, acA.szPname,
                              sizeof(acA.szPname), NULL, NULL );
 	acA.wTechnology    = acW.wTechnology;
+	acA.wReserved1     = 0;
 	acA.dwSupport      = acW.dwSupport;
 	memcpy(lpCaps, &acA, min(uSize, sizeof(acA)));
     }
