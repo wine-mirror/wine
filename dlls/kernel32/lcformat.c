@@ -1916,6 +1916,7 @@ BOOL WINAPI EnumDateFormatsExEx(DATEFMT_ENUMPROCEXEX proc, const WCHAR *locale, 
     ctxt.lcid = LocaleNameToLCID(locale, 0);
     ctxt.flags = flags;
     ctxt.lParam = lParam;
+    ctxt.unicode = TRUE;
 
     return NLS_EnumDateFormats(&ctxt);
 }
