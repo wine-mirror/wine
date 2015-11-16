@@ -10,3 +10,5 @@ C_SRCS = \
 	query.c \
 	setupcab.c \
 	stringtable.c
+
+RC_SRCS = setupapi.rc
