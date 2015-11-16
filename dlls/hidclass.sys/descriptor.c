@@ -1028,7 +1028,11 @@ WINE_HIDP_PREPARSED_DATA* ParseDescriptor(BYTE *descriptor, unsigned int length)
     {
         TRACE("Descriptor[%i]: ", length);
         for (cidx = 0; cidx < length; cidx++)
+        {
             TRACE("%x ",descriptor[cidx]);
+            if (cidx % 80 == 0)
+                TRACE("\n");
+        }
         TRACE("\n");
     }
 
