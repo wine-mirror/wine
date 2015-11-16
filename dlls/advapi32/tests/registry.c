@@ -1513,39 +1513,6 @@ static void test_reg_delete_key(void)
     RegCloseKey(key);
 }
 
-static void test_reg_save_key(void)
-{
-    DWORD ret;
-
-    ret = RegSaveKeyA(hkey_main, "saved_key", NULL);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
-}
-
-static void test_reg_load_key(void)
-{
-    DWORD ret;
-    HKEY hkHandle;
-
-    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", "saved_key");
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
-
-    ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
-
-    RegCloseKey(hkHandle);
-}
-
-static void test_reg_unload_key(void)
-{
-    DWORD ret;
-
-    ret = RegUnLoadKeyA(HKEY_LOCAL_MACHINE, "Test");
-    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
-
-    DeleteFileA("saved_key");
-    DeleteFileA("saved_key.LOG");
-}
-
 static BOOL set_privileges(LPCSTR privilege, BOOL set)
 {
     TOKEN_PRIVILEGES tp;
@@ -1578,6 +1545,66 @@ static BOOL set_privileges(LPCSTR privilege, BOOL set)
 
     CloseHandle(hToken);
     return TRUE;
+}
+
+static void test_reg_save_key(void)
+{
+    DWORD ret;
+
+    if (!set_privileges(SE_BACKUP_NAME, TRUE) ||
+        !set_privileges(SE_RESTORE_NAME, FALSE))
+    {
+        win_skip("Failed to set SE_BACKUP_NAME privileges, skipping tests\n");
+        return;
+    }
+
+    ret = RegSaveKeyA(hkey_main, "saved_key", NULL);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    set_privileges(SE_BACKUP_NAME, FALSE);
+}
+
+static void test_reg_load_key(void)
+{
+    DWORD ret;
+    HKEY hkHandle;
+
+    if (!set_privileges(SE_RESTORE_NAME, TRUE) ||
+        !set_privileges(SE_BACKUP_NAME, FALSE))
+    {
+        win_skip("Failed to set SE_RESTORE_NAME privileges, skipping tests\n");
+        return;
+    }
+
+    ret = RegLoadKeyA(HKEY_LOCAL_MACHINE, "Test", "saved_key");
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    set_privileges(SE_RESTORE_NAME, FALSE);
+
+    ret = RegOpenKeyA(HKEY_LOCAL_MACHINE, "Test", &hkHandle);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    RegCloseKey(hkHandle);
+}
+
+static void test_reg_unload_key(void)
+{
+    DWORD ret;
+
+    if (!set_privileges(SE_RESTORE_NAME, TRUE) ||
+        !set_privileges(SE_BACKUP_NAME, FALSE))
+    {
+        win_skip("Failed to set SE_RESTORE_NAME privileges, skipping tests\n");
+        return;
+    }
+
+    ret = RegUnLoadKeyA(HKEY_LOCAL_MACHINE, "Test");
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    set_privileges(SE_RESTORE_NAME, FALSE);
+
+    DeleteFileA("saved_key");
+    DeleteFileA("saved_key.LOG");
 }
 
 /* tests that show that RegConnectRegistry and 
@@ -3275,19 +3302,9 @@ START_TEST(registry)
     test_classesroot();
     test_classesroot_enum();
     test_classesroot_mask();
-
-    /* SaveKey/LoadKey require the SE_BACKUP_NAME privilege to be set */
-    if (set_privileges(SE_BACKUP_NAME, TRUE) &&
-        set_privileges(SE_RESTORE_NAME, TRUE))
-    {
-        test_reg_save_key();
-        test_reg_load_key();
-        test_reg_unload_key();
-
-        set_privileges(SE_BACKUP_NAME, FALSE);
-        set_privileges(SE_RESTORE_NAME, FALSE);
-    }
-
+    test_reg_save_key();
+    test_reg_load_key();
+    test_reg_unload_key();
     test_reg_delete_tree();
     test_rw_order();
     test_deleted_key();

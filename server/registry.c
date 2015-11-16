@@ -2182,17 +2182,9 @@ DECL_HANDLER(delete_key_value)
 DECL_HANDLER(load_registry)
 {
     struct key *key, *parent;
-    struct token *token = thread_get_impersonation_token( current );
     struct unicode_str name;
 
-    const LUID_AND_ATTRIBUTES privs[] =
-    {
-        { SeBackupPrivilege,  0 },
-        { SeRestorePrivilege, 0 },
-    };
-
-    if (!token || !token_check_privileges( token, TRUE, privs,
-                                           sizeof(privs)/sizeof(privs[0]), NULL ))
+    if (!thread_single_check_privilege( current, &SeRestorePrivilege ))
     {
         set_error( STATUS_PRIVILEGE_NOT_HELD );
         return;
@@ -2214,16 +2206,8 @@ DECL_HANDLER(load_registry)
 DECL_HANDLER(unload_registry)
 {
     struct key *key;
-    struct token *token = thread_get_impersonation_token( current );
 
-    const LUID_AND_ATTRIBUTES privs[] =
-    {
-        { SeBackupPrivilege,  0 },
-        { SeRestorePrivilege, 0 },
-    };
-
-    if (!token || !token_check_privileges( token, TRUE, privs,
-                                           sizeof(privs)/sizeof(privs[0]), NULL ))
+    if (!thread_single_check_privilege( current, &SeRestorePrivilege ))
     {
         set_error( STATUS_PRIVILEGE_NOT_HELD );
         return;
