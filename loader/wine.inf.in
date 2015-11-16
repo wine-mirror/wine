@@ -635,6 +635,7 @@ HKLM,Software\Microsoft\DFS,,16
 HKLM,Software\Microsoft\Driver Signing,,16
 HKLM,Software\Microsoft\EnterpriseCertificates,,16
 HKLM,Software\Microsoft\EventSystem,,16
+HKLM,Software\Microsoft\MediaPlayer,"Installation DirectoryLFN",2,"%16422%\Windows Media Player"
 HKLM,Software\Microsoft\MediaPlayer\PlayerUpgrade,"PlayerVersion",2,"12,0,7601,18840"
 HKLM,Software\Microsoft\MSMQ,,16
 HKLM,Software\Microsoft\Non-Driver Signing,,16
