@@ -32,6 +32,7 @@
 #include "controls.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(user);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static USER_DRIVER null_driver, lazy_load_driver;
 
@@ -402,8 +403,8 @@ static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
     if (!parent || parent == get_user_thread_info()->msg_window) return TRUE;
     if (warned++) return FALSE;
 
-    MESSAGE( "Application tried to create a window, but no driver could be loaded.\n");
-    if (driver_load_error[0]) MESSAGE( "%s\n", driver_load_error );
+    ERR_(winediag)( "Application tried to create a window, but no driver could be loaded.\n" );
+    if (driver_load_error[0]) ERR_(winediag)( "%s\n", driver_load_error );
     return FALSE;
 }
 
