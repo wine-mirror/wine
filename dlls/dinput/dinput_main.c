@@ -339,6 +339,25 @@ static DWORD diactionformat_priorityW(LPDIACTIONFORMATW lpdiaf, DWORD genre)
     return priorityFlags;
 }
 
+#ifdef __i386__
+extern BOOL enum_callback_wrapper(void *callback, const void *instance, void *ref);
+__ASM_GLOBAL_FUNC( enum_callback_wrapper,
+    "pushl %ebp\n\t"
+    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+    "movl %esp,%ebp\n\t"
+    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+    "pushl 16(%ebp)\n\t"
+    "pushl 12(%ebp)\n\t"
+    "call *8(%ebp)\n\t"
+    "leave\n\t"
+    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+    __ASM_CFI(".cfi_same_value %ebp\n\t")
+    "ret" )
+#else
+#define enum_callback_wrapper(callback, instance, ref) (callback)((instance), (ref))
+#endif
+
 /******************************************************************************
  *	IDirectInputA_EnumDevices
  */
@@ -371,7 +390,7 @@ static HRESULT WINAPI IDirectInputAImpl_EnumDevices(
             TRACE("  - checking device %u ('%s')\n", i, dinput_devices[i]->name);
             r = dinput_devices[i]->enum_deviceA(dwDevType, dwFlags, &devInstance, This->dwVersion, j);
             if (r == S_OK)
-                if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
+                if (enum_callback_wrapper(lpCallback, &devInstance, pvRef) == DIENUM_STOP)
                     return S_OK;
         }
     }
@@ -411,7 +430,7 @@ static HRESULT WINAPI IDirectInputWImpl_EnumDevices(
             TRACE("  - checking device %u ('%s')\n", i, dinput_devices[i]->name);
             r = dinput_devices[i]->enum_deviceW(dwDevType, dwFlags, &devInstance, This->dwVersion, j);
             if (r == S_OK)
-                if (lpCallback(&devInstance,pvRef) == DIENUM_STOP)
+                if (enum_callback_wrapper(lpCallback, &devInstance, pvRef) == DIENUM_STOP)
                     return S_OK;
         }
     }
