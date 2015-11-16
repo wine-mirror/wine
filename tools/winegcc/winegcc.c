@@ -171,6 +171,7 @@ static const struct
 {
     { "macos",   PLATFORM_APPLE },
     { "darwin",  PLATFORM_APPLE },
+    { "android", PLATFORM_ANDROID },
     { "solaris", PLATFORM_SOLARIS },
     { "cygwin",  PLATFORM_CYGWIN },
     { "mingw32", PLATFORM_WINDOWS },
@@ -229,6 +230,8 @@ static const enum target_cpu build_cpu = CPU_ARM64;
 
 #ifdef __APPLE__
 static enum target_platform build_platform = PLATFORM_APPLE;
+#elif defined(__ANDROID__)
+static enum target_platform build_platform = PLATFORM_ANDROID;
 #elif defined(__sun)
 static enum target_platform build_platform = PLATFORM_SOLARIS;
 #elif defined(__CYGWIN__)
@@ -384,6 +387,7 @@ static const strarray* get_lddllflags( const struct options *opts, const strarra
         }
         break;
 
+    case PLATFORM_ANDROID:
     case PLATFORM_SOLARIS:
     case PLATFORM_UNSPECIFIED:
         strarray_add( flags, "-shared" );
@@ -1120,6 +1124,9 @@ static void build(struct options* opts)
             strarray_add(link_args, strmake("-Wl,-M,%s", mapfile));
             strarray_add(tmp_files, mapfile);
         }
+        break;
+    case PLATFORM_ANDROID:
+        /* not supported on Android */
         break;
     default:
         if (opts->image_base)
