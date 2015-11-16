@@ -110,12 +110,7 @@ static void test_add(void)
 
     /* Test empty type */
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v emptyType /t \"\" /d WineTest /f", &r);
-    todo_wine ok(r == REG_EXIT_SUCCESS || broken(r == REG_EXIT_FAILURE /* WinXP */),
-        "got exit code %u\n", r);
-    if (r == REG_EXIT_SUCCESS)
-        todo_wine verify_reg(hkey, "emptyType", REG_SZ, "", 1, 0);
-    else
-        todo_wine win_skip("broken reg.exe detected\n");
+    ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
 
     /* Test input key formats */
     run_reg_exe("reg add \\HKCU\\" KEY_BASE "\\keytest0 /f", &r);
