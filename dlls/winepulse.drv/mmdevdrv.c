@@ -285,6 +285,8 @@ static void pulse_contextcallback(pa_context *c, void *userdata)
     switch (pa_context_get_state(c)) {
         default:
             FIXME("Unhandled state: %i\n", pa_context_get_state(c));
+            return;
+
         case PA_CONTEXT_CONNECTING:
         case PA_CONTEXT_UNCONNECTED:
         case PA_CONTEXT_AUTHORIZING:
