@@ -331,7 +331,8 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
 }
 
 static const WCHAR classes_rootW[] =
-    {'M','a','c','h','i','n','e','\\','S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s',0};
+    {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e',
+     '\\','S','o','f','t','w','a','r','e','\\','C','l','a','s','s','e','s',0};
 
 static HKEY classes_root_hkey;
 
