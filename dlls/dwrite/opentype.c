@@ -748,6 +748,7 @@ HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count,
     }
     else if (DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]) == MS_OTTO_TAG)
     {
+        *font_count = 1;
         *file_type = DWRITE_FONT_FILE_TYPE_CFF;
         face = DWRITE_FONT_FACE_TYPE_CFF;
     }
