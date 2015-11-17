@@ -187,7 +187,7 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
     size_t len;
     WCHAR* buf = NULL;
 
-    snprintf(display_key_name, sizeof(display_key_name), "Display 0x%08x", displayID);
+    snprintf(display_key_name, sizeof(display_key_name), "Display 0x%08x", CGDisplayUnitNumber(displayID));
     /* @@ Wine registry key: HKLM\Software\Wine\Mac Driver\Initial Display Mode\Display 0xnnnnnnnn */
     if (RegCreateKeyExA(parent_hkey, display_key_name, 0, NULL,
                         REG_OPTION_VOLATILE, KEY_WRITE, NULL, &display_hkey, NULL))
@@ -328,7 +328,7 @@ static struct display_mode_descriptor* create_original_display_mode_descriptor(C
 
     init_original_display_mode();
 
-    snprintf(display_key, sizeof(display_key), display_key_format, displayID);
+    snprintf(display_key, sizeof(display_key), display_key_format, CGDisplayUnitNumber(displayID));
     /* @@ Wine registry key: HKLM\Software\Wine\Mac Driver\Initial Display Mode\Display 0xnnnnnnnn */
     if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, display_key, 0, KEY_READ, &hkey))
         return NULL;
