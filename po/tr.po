@@ -3185,7 +3185,7 @@ msgstr "&Sekmeleri Göster"
 msgid "Show"
 msgstr "Göster"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "Gizle"
 
@@ -8568,6 +8568,64 @@ msgstr "Pencere Seç"
 msgid "&More Windows..."
 msgstr "&Daha Fazla Pencere..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "Gizle"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "Diğer"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "Göster"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "&Pencere"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "&Simge Durumuna Küçült"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "Yakınlaştır"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "&Öne Getir"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "Kağıt &Boyutu:"
@@ -12951,10 +13009,6 @@ msgstr ""
 "yanıt vermiyor.\n"
 "\n"
 "Eğer işlemi sonlandırırsanız, tüm kaydedilmemiş verileri kaybedebilirsiniz."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

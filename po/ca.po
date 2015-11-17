@@ -3201,7 +3201,7 @@ msgstr "Mostra &pestanyes"
 msgid "Show"
 msgstr "Mostra"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "Amaga"
 
@@ -8612,6 +8612,64 @@ msgstr "Selecciona finestra"
 msgid "&More Windows..."
 msgstr "&Més finestres..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "Amaga"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "Altra"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "Mostra"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "&Finestra"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "&Minimitza"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "Apropa"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "En primer te&rme"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "&Mida de paper:"
@@ -13062,10 +13120,6 @@ msgstr ""
 "respon.\n"
 "\n"
 "Si termineu el procés, podeu perdre totes les dades no desades."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

@@ -3161,7 +3161,7 @@ msgstr ""
 msgid "Show"
 msgstr ""
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr ""
 
@@ -8561,6 +8561,51 @@ msgstr "انتخاب &همه\tCtrl+A"
 msgid "&More Windows..."
 msgstr "ذخیره &به نام..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr ""
+
+#: winemac.rc:33
+msgid "Hide %@"
+msgstr ""
+
+#: winemac.rc:35
+msgid "Hide Others"
+msgstr ""
+
+#: winemac.rc:36
+msgid "Show All"
+msgstr ""
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+msgid "Window"
+msgstr "انتخاب &همه\tCtrl+A"
+
+#: winemac.rc:41
+msgid "Minimize"
+msgstr ""
+
+#: winemac.rc:42
+msgid "Zoom"
+msgstr ""
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+msgid "Bring All to Front"
+msgstr ""
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr ""
@@ -12549,10 +12594,6 @@ msgid ""
 "responding.\n"
 "\n"
 "If you terminate the process you may lose all unsaved data."
-msgstr ""
-
-#: wineboot.rc:42
-msgid "Wine"
 msgstr ""
 
 #: wineboot.rc:46

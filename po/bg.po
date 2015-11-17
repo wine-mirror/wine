@@ -3195,7 +3195,7 @@ msgstr ""
 msgid "Show"
 msgstr ""
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr ""
 
@@ -8725,6 +8725,54 @@ msgstr ""
 msgid "&More Windows..."
 msgstr "&Още прозорци..."
 
+#: winemac.rc:32 wineboot.rc:42
+#, fuzzy
+msgid "Wine"
+msgstr "Wine Помощ"
+
+#: winemac.rc:33
+msgid "Hide %@"
+msgstr ""
+
+#: winemac.rc:35
+msgid "Hide Others"
+msgstr ""
+
+#: winemac.rc:36
+msgid "Show All"
+msgstr ""
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+msgid "Window"
+msgstr "Отвори в &нов прозорец"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "Mi&nimize"
+msgid "Minimize"
+msgstr "&Намали"
+
+#: winemac.rc:42
+msgid "Zoom"
+msgstr ""
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+msgid "Bring All to Front"
+msgstr ""
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "Раз&мер на хартията:"
@@ -12776,11 +12824,6 @@ msgid ""
 "\n"
 "If you terminate the process you may lose all unsaved data."
 msgstr ""
-
-#: wineboot.rc:42
-#, fuzzy
-msgid "Wine"
-msgstr "Wine Помощ"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

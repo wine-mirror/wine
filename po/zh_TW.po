@@ -3150,7 +3150,7 @@ msgstr "顯示分頁(&T)"
 msgid "Show"
 msgstr "顯示"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "隱藏"
 
@@ -8572,6 +8572,64 @@ msgstr "選擇視窗"
 msgid "&More Windows..."
 msgstr "更多視窗(&M)..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "隱藏"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "其他"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "顯示"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "視窗(&W)"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "最小化(&M)"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "放大"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "移到最前面(&B)"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "紙張大小(&Z)："
@@ -13037,10 +13095,6 @@ msgstr ""
 "正在模擬關機，但此程式沒有反應。\n"
 "\n"
 "如果您中斷行程，可能會遺失尚未儲存的資料。"
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

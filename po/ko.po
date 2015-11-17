@@ -3184,7 +3184,7 @@ msgstr "탭 보이기(&T)"
 msgid "Show"
 msgstr "보여주기"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "숨기기"
 
@@ -8620,6 +8620,64 @@ msgstr "창 선택"
 msgid "&More Windows..."
 msgstr "더 많은 창들(&M)..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "숨기기"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "다른 문제"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "보여주기"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "창(&W)"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "최소화(&M)"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "확대"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "앞으로 가져오기(&B)"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "종이 크기(&Z):"
@@ -13156,10 +13214,6 @@ msgstr ""
 "\n"
 "만약 당신이 이 프로세스를 끝낸다면 저장 하지 않은 모든 데이터를 잃어버릴 것입"
 "니다."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

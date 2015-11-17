@@ -3205,7 +3205,7 @@ msgstr "Afficher les &onglets"
 msgid "Show"
 msgstr "Afficher"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "Cacher"
 
@@ -8623,6 +8623,64 @@ msgstr "Sélection de fenêtre"
 msgid "&More Windows..."
 msgstr "&Plus de fenêtres..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "Cacher"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "Autre"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "Afficher"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "&Fenêtre"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "&Réduire"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "Zoom avant"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "Toujours &visible"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "&Taille du papier :"
@@ -13095,10 +13153,6 @@ msgstr ""
 "mais ce programme ne répond pas.\n"
 "\n"
 "Si vous l'arrêtez, vous pouvez perdre toutes les données non enregistrées."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

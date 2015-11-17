@@ -3183,7 +3183,7 @@ msgstr "Show &Tabs"
 msgid "Show"
 msgstr "Show"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "Hide"
 
@@ -8568,6 +8568,50 @@ msgstr "Select Window"
 msgid "&More Windows..."
 msgstr "&More Windows..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+msgid "Hide %@"
+msgstr "Hide %@"
+
+#: winemac.rc:35
+msgid "Hide Others"
+msgstr "Hide Others"
+
+#: winemac.rc:36
+msgid "Show All"
+msgstr "Show All"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr "Quit %@"
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr "Quit"
+
+#: winemac.rc:40
+msgid "Window"
+msgstr "Window"
+
+#: winemac.rc:41
+msgid "Minimize"
+msgstr "Minimize"
+
+#: winemac.rc:42
+msgid "Zoom"
+msgstr "Zoom"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr "Enter Full Screen"
+
+#: winemac.rc:44
+msgid "Bring All to Front"
+msgstr "Bring All to Front"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "Paper Si&ze:"
@@ -12942,10 +12986,6 @@ msgstr ""
 "responding.\n"
 "\n"
 "If you terminate the process you may lose all unsaved data."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

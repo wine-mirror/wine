@@ -60,6 +60,8 @@ int use_precise_scrolling = TRUE;
 int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
 HMODULE macdrv_module = 0;
 
+CFDictionaryRef localized_strings;
+
 
 /**************************************************************************
  *              debugstr_cf
@@ -200,6 +202,58 @@ static void setup_options(void)
 
 
 /***********************************************************************
+ *              load_strings
+ */
+static void load_strings(HINSTANCE instance)
+{
+    static const unsigned int ids[] = {
+        STRING_MENU_WINE,
+        STRING_MENU_ITEM_HIDE_APPNAME,
+        STRING_MENU_ITEM_HIDE,
+        STRING_MENU_ITEM_HIDE_OTHERS,
+        STRING_MENU_ITEM_SHOW_ALL,
+        STRING_MENU_ITEM_QUIT_APPNAME,
+        STRING_MENU_ITEM_QUIT,
+
+        STRING_MENU_WINDOW,
+        STRING_MENU_ITEM_MINIMIZE,
+        STRING_MENU_ITEM_ZOOM,
+        STRING_MENU_ITEM_ENTER_FULL_SCREEN,
+        STRING_MENU_ITEM_BRING_ALL_TO_FRONT,
+    };
+    CFMutableDictionaryRef dict;
+    int i;
+
+    dict = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks,
+                                     &kCFTypeDictionaryValueCallBacks);
+    if (!dict)
+    {
+        ERR("Failed to create localized strings dictionary\n");
+        return;
+    }
+
+    for (i = 0; i < sizeof(ids) / sizeof(ids[0]); i++)
+    {
+        LPCWSTR str;
+        int len = LoadStringW(instance, ids[i], (LPWSTR)&str, 0);
+        if (str && len)
+        {
+            CFNumberRef key = CFNumberCreate(NULL, kCFNumberIntType, &ids[i]);
+            CFStringRef value = CFStringCreateWithCharacters(NULL, (UniChar*)str, len);
+            if (key && value)
+                CFDictionarySetValue(dict, key, value);
+            else
+                ERR("Failed to add string ID 0x%04x %s\n", ids[i], debugstr_wn(str, len));
+        }
+        else
+            ERR("Failed to load string ID 0x%04x\n", ids[i]);
+    }
+
+    localized_strings = dict;
+}
+
+
+/***********************************************************************
  *              process_attach
  */
 static BOOL process_attach(void)
@@ -212,6 +266,7 @@ static BOOL process_attach(void)
         return FALSE;
 
     setup_options();
+    load_strings(macdrv_module);
 
     if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
 

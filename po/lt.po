@@ -3187,7 +3187,7 @@ msgstr "Rodyti &korteles"
 msgid "Show"
 msgstr "Rodyti"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "Slėpti"
 
@@ -8572,6 +8572,64 @@ msgstr "Išrinkti langą"
 msgid "&More Windows..."
 msgstr "&Daugiau langų..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "Slėpti"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "Kita"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "Rodyti"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "&Langas"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "Susk&leisti"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "Didinti"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "Perkelti į &priekį"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "Popieriaus &dydis:"
@@ -12957,10 +13015,6 @@ msgstr ""
 "Vyksta simuliuotas atsijungimas ar stabdymas, bet ši programa neatsako.\n"
 "\n"
 "Jei nutrauksite procesą, tai galite prarasti visus neišsaugotus duomenis."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

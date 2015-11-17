@@ -99,6 +99,9 @@
 #endif
 
 
+#include "macdrv_res.h"
+
+
 /* Must match the values of Cocoa's NSDragOperation enum. */
 enum {
     DRAG_OP_NONE    = 0,
@@ -156,6 +159,7 @@ extern int allow_immovable_windows DECLSPEC_HIDDEN;
 extern int cursor_clipping_locks_windows DECLSPEC_HIDDEN;
 extern int use_precise_scrolling DECLSPEC_HIDDEN;
 extern int gl_surface_mode DECLSPEC_HIDDEN;
+extern CFDictionaryRef localized_strings DECLSPEC_HIDDEN;
 
 extern int macdrv_start_cocoa_app(unsigned long long tickcount) DECLSPEC_HIDDEN;
 extern void macdrv_window_rejected_focus(const struct macdrv_event *event) DECLSPEC_HIDDEN;

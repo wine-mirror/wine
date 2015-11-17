@@ -17953,7 +17953,7 @@ wine_fn_config_lib winecrt0
 wine_fn_config_dll wined3d enable_wined3d implib
 wine_fn_config_dll winegstreamer enable_winegstreamer
 wine_fn_config_dll winejoystick.drv enable_winejoystick_drv
-wine_fn_config_dll winemac.drv enable_winemac_drv
+wine_fn_config_dll winemac.drv enable_winemac_drv po
 wine_fn_config_dll winemapi enable_winemapi
 wine_fn_config_dll winemp3.acm enable_winemp3_acm
 wine_fn_config_dll wineoss.drv enable_wineoss_drv

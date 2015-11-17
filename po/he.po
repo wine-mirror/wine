@@ -3190,7 +3190,7 @@ msgstr "ה&צגת הלשוניות"
 msgid "Show"
 msgstr "הצגה"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "הסתרה"
 
@@ -8874,6 +8874,64 @@ msgstr "בחירת חלון"
 msgid "&More Windows..."
 msgstr "חלונות &נוספים..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "הסתרה"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "אחר"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "הצגה"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "&חלון"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "מ&זעור"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "התקרבות"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "&קידום לחזית"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "גודל ה&נייר:"
@@ -12917,10 +12975,6 @@ msgstr ""
 "מתבצעת הדמייה של ניתוק או כיבוי, אך תכנית זו אינה מגיבה.\n"
 "\n"
 "אם התהליך יחוסל יתכן שכל הנתונים שלא נשמרו ילכו לאיבוד."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

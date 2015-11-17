@@ -3205,7 +3205,7 @@ msgstr ""
 msgid "Show"
 msgstr "Прикажи"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "Сакриј"
 
@@ -8934,6 +8934,61 @@ msgstr "Избор"
 msgid "&More Windows..."
 msgstr "&Више прозора..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "Сакриј"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "Остало"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "Прикажи"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "&Прозор"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "Mi&nimize"
+msgid "Minimize"
+msgstr "&Умањи"
+
+#: winemac.rc:42
+#, fuzzy
+msgid "Zoom"
+msgstr "Увећај"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+msgid "Bring All to Front"
+msgstr ""
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr ""
@@ -13054,10 +13109,6 @@ msgstr ""
 "одговара.\n"
 "\n"
 "Ако окончате процес, све несачуване радње ће бити изгубљене."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

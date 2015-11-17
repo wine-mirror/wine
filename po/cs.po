@@ -3129,7 +3129,7 @@ msgstr "Zobrazi&t záložky"
 msgid "Show"
 msgstr "Rozbalit"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "Skrýt"
 
@@ -8547,6 +8547,64 @@ msgstr "Vybrat okno"
 msgid "&More Windows..."
 msgstr "&Více oken..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "Skrýt"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "Jiné"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "Rozbalit"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "&Okno"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "&Minimalizovat"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "Přiblížit"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "Přenést do popředí"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "&Velikost papíru:"
@@ -12824,10 +12882,6 @@ msgstr ""
 "Probíhá simulované odhlášení či vypnutí, ale program neodpovídá.\n"
 "\n"
 "Pokud proces ukončíte, můžete přijít o všechna neuložená data."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

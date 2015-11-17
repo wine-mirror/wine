@@ -3224,7 +3224,7 @@ msgstr "Pokaži &zavihke"
 msgid "Show"
 msgstr "Pokaži"
 
-#: hhctrl.rc:43
+#: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
 msgstr "Skrij"
 
@@ -8718,6 +8718,64 @@ msgstr "Izbira okna"
 msgid "&More Windows..."
 msgstr "&Več oken ..."
 
+#: winemac.rc:32 wineboot.rc:42
+msgid "Wine"
+msgstr "Wine"
+
+#: winemac.rc:33
+#, fuzzy
+#| msgid "Hide"
+msgid "Hide %@"
+msgstr "Skrij"
+
+#: winemac.rc:35
+#, fuzzy
+#| msgid "Other"
+msgid "Hide Others"
+msgstr "Drugo"
+
+#: winemac.rc:36
+#, fuzzy
+#| msgid "Show"
+msgid "Show All"
+msgstr "Pokaži"
+
+#: winemac.rc:37
+msgid "Quit %@"
+msgstr ""
+
+#: winemac.rc:38
+msgid "Quit"
+msgstr ""
+
+#: winemac.rc:40
+#, fuzzy
+#| msgid "&Window"
+msgid "Window"
+msgstr "&Okno"
+
+#: winemac.rc:41
+#, fuzzy
+#| msgid "&Minimize"
+msgid "Minimize"
+msgstr "S&krči"
+
+#: winemac.rc:42
+#, fuzzy
+#| msgid "Zoom in"
+msgid "Zoom"
+msgstr "Približaj"
+
+#: winemac.rc:43
+msgid "Enter Full Screen"
+msgstr ""
+
+#: winemac.rc:44
+#, fuzzy
+#| msgid "&Bring To Front"
+msgid "Bring All to Front"
+msgstr "V &ospredje"
+
 #: wineps.rc:31
 msgid "Paper Si&ze:"
 msgstr "Veli&kost papirja:"
@@ -13120,10 +13178,6 @@ msgstr ""
 "Izvajanje simulirane odjave oziroma izklopa, vendar se program ne odziva.\n"
 "\n"
 "Če se odločite za končanje programa, lahko izgubite neshranjene podatke."
-
-#: wineboot.rc:42
-msgid "Wine"
-msgstr "Wine"
 
 #: wineboot.rc:46
 msgid "The Wine configuration in %s is being updated, please wait..."

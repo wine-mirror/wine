@@ -32,6 +32,18 @@ static NSString* const WineAppWaitQueryResponseMode = @"WineAppWaitQueryResponse
 int macdrv_err_on;
 
 
+/***********************************************************************
+ *              WineLocalizedString
+ *
+ * Look up a localized string by its ID in the dictionary.
+ */
+static NSString* WineLocalizedString(unsigned int stringID)
+{
+    NSNumber* key = [NSNumber numberWithUnsignedInt:stringID];
+    return [(NSDictionary*)localized_strings objectForKey:key];
+}
+
+
 @implementation WineApplication
 
 @synthesize wineController;
@@ -215,46 +227,58 @@ int macdrv_err_on;
             mainMenu = [[[NSMenu alloc] init] autorelease];
 
             // Application menu
-            submenu = [[[NSMenu alloc] initWithTitle:@"Wine"] autorelease];
+            submenu = [[[NSMenu alloc] initWithTitle:WineLocalizedString(STRING_MENU_WINE)] autorelease];
             bundleName = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleNameKey];
 
             if ([bundleName length])
-                title = [NSString stringWithFormat:@"Hide %@", bundleName];
+                title = [NSString stringWithFormat:WineLocalizedString(STRING_MENU_ITEM_HIDE_APPNAME), bundleName];
             else
-                title = @"Hide";
+                title = WineLocalizedString(STRING_MENU_ITEM_HIDE);
             item = [submenu addItemWithTitle:title action:@selector(hide:) keyEquivalent:@""];
 
-            item = [submenu addItemWithTitle:@"Hide Others" action:@selector(hideOtherApplications:) keyEquivalent:@"h"];
+            item = [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_HIDE_OTHERS)
+                                      action:@selector(hideOtherApplications:)
+                               keyEquivalent:@"h"];
             [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSAlternateKeyMask];
 
-            item = [submenu addItemWithTitle:@"Show All" action:@selector(unhideAllApplications:) keyEquivalent:@""];
+            item = [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_SHOW_ALL)
+                                      action:@selector(unhideAllApplications:)
+                               keyEquivalent:@""];
 
             [submenu addItem:[NSMenuItem separatorItem]];
 
             if ([bundleName length])
-                title = [NSString stringWithFormat:@"Quit %@", bundleName];
+                title = [NSString stringWithFormat:WineLocalizedString(STRING_MENU_ITEM_QUIT_APPNAME), bundleName];
             else
-                title = @"Quit";
+                title = WineLocalizedString(STRING_MENU_ITEM_QUIT);
             item = [submenu addItemWithTitle:title action:@selector(terminate:) keyEquivalent:@"q"];
             [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSAlternateKeyMask];
             item = [[[NSMenuItem alloc] init] autorelease];
-            [item setTitle:@"Wine"];
+            [item setTitle:WineLocalizedString(STRING_MENU_WINE)];
             [item setSubmenu:submenu];
             [mainMenu addItem:item];
 
             // Window menu
-            submenu = [[[NSMenu alloc] initWithTitle:@"Window"] autorelease];
-            [submenu addItemWithTitle:@"Minimize" action:@selector(performMiniaturize:) keyEquivalent:@""];
-            [submenu addItemWithTitle:@"Zoom" action:@selector(performZoom:) keyEquivalent:@""];
+            submenu = [[[NSMenu alloc] initWithTitle:WineLocalizedString(STRING_MENU_WINDOW)] autorelease];
+            [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_MINIMIZE)
+                               action:@selector(performMiniaturize:)
+                        keyEquivalent:@""];
+            [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_ZOOM)
+                               action:@selector(performZoom:)
+                        keyEquivalent:@""];
             if ([NSWindow instancesRespondToSelector:@selector(toggleFullScreen:)])
             {
-                item = [submenu addItemWithTitle:@"Enter Full Screen" action:@selector(toggleFullScreen:) keyEquivalent:@"f"];
+                item = [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_ENTER_FULL_SCREEN)
+                                          action:@selector(toggleFullScreen:)
+                                   keyEquivalent:@"f"];
                 [item setKeyEquivalentModifierMask:NSCommandKeyMask | NSAlternateKeyMask | NSControlKeyMask];
             }
             [submenu addItem:[NSMenuItem separatorItem]];
-            [submenu addItemWithTitle:@"Bring All to Front" action:@selector(arrangeInFront:) keyEquivalent:@""];
+            [submenu addItemWithTitle:WineLocalizedString(STRING_MENU_ITEM_BRING_ALL_TO_FRONT)
+                               action:@selector(arrangeInFront:)
+                        keyEquivalent:@""];
             item = [[[NSMenuItem alloc] init] autorelease];
-            [item setTitle:@"Window"];
+            [item setTitle:WineLocalizedString(STRING_MENU_WINDOW)];
             [item setSubmenu:submenu];
             [mainMenu addItem:item];
 
