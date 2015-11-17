@@ -8350,36 +8350,31 @@ $as_echo "$ac_cv_cflags__Wl___enable_new_dtags" >&6; }
 if test "x$ac_cv_cflags__Wl___enable_new_dtags" = xyes; then :
   LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"
 fi
-
-    case $host_cpu in
-      *i[3456789]86* | x86_64)
-        { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,--section-start,.interp=0x7bf00400" >&5
-$as_echo_n "checking whether the compiler supports -Wl,--section-start,.interp=0x7bf00400... " >&6; }
-if ${ac_cv_cflags__Wl___section_start__interp_0x7bf00400+:} false; then :
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the compiler supports -Wl,-pie" >&5
+$as_echo_n "checking whether the compiler supports -Wl,-pie... " >&6; }
+if ${ac_cv_cflags__Wl__pie+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_wine_try_cflags_saved=$CFLAGS
-CFLAGS="$CFLAGS -Wl,--section-start,.interp=0x7bf00400"
+CFLAGS="$CFLAGS -Wl,-pie"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 int main(int argc, char **argv) { return 0; }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_cflags__Wl___section_start__interp_0x7bf00400=yes
+  ac_cv_cflags__Wl__pie=yes
 else
-  ac_cv_cflags__Wl___section_start__interp_0x7bf00400=no
+  ac_cv_cflags__Wl__pie=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 CFLAGS=$ac_wine_try_cflags_saved
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl___section_start__interp_0x7bf00400" >&5
-$as_echo "$ac_cv_cflags__Wl___section_start__interp_0x7bf00400" >&6; }
-if test "x$ac_cv_cflags__Wl___section_start__interp_0x7bf00400" = xyes; then :
-  LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_cflags__Wl__pie" >&5
+$as_echo "$ac_cv_cflags__Wl__pie" >&6; }
+if test "x$ac_cv_cflags__Wl__pie" = xyes; then :
+  LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,-pie"
 fi
-        ;;
-    esac
 
     LIBWINE_SHAREDLIB="libwine.so"
 

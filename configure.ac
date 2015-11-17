@@ -860,13 +860,8 @@ case $host_os in
 
     WINE_TRY_CFLAGS([-Wl,--enable-new-dtags],
                     [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,--enable-new-dtags"])
-
-    case $host_cpu in
-      *i[[3456789]]86* | x86_64)
-        WINE_TRY_CFLAGS([-Wl,--section-start,.interp=0x7bf00400],
-                        [LDEXECFLAGS="$LDEXECFLAGS -Wl,--section-start,.interp=0x7bf00400"])
-        ;;
-    esac
+    WINE_TRY_CFLAGS([-Wl,-pie],
+                    [LDRPATH_INSTALL="$LDRPATH_INSTALL -Wl,-pie"])
 
     AC_SUBST(LIBWINE_SHAREDLIB,"libwine.so")
     AC_SUBST(LIBWINE_INSTALL_LIB,"libwine.so")
