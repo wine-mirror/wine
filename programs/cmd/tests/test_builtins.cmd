@@ -1493,6 +1493,28 @@ for /f "tokens=3,2,3*" %%i in ("a b c d e f g") do echo h=%%h i=%%i j=%%j k=%%k 
 cd ..
 rd /s/q foobar
 
+echo ------------ Testing del ------------
+echo abc > file
+echo deleting 'file'
+del file
+if errorlevel 0 (
+    echo errorlevel is 0, good
+) else (
+    echo unexpected errorlevel, got %errorlevel%
+)
+if not exist file (
+    echo successfully deleted 'file'
+) else (
+    echo error deleting 'file'
+)
+echo attempting to delete 'file', even though it is not present
+del file
+if errorlevel 0 (
+    echo errorlevel is 0, good
+) else (
+    echo unexpected errorlevel, got %errorlevel%
+)
+
 echo ------------ Testing del /a ------------
 del /f/q *.test > nul
 echo r > r.test

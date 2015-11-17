@@ -1410,10 +1410,8 @@ BOOL WCMD_delete (WCHAR *args) {
 
         argsProcessed = TRUE;
         found = WCMD_delete_one(thisArg);
-        if (!found) {
-            errorlevel = 1;
+        if (!found)
             WCMD_output_stderr(WCMD_LoadMessage(WCMD_FILENOTFOUND), thisArg);
-        }
         foundAny |= found;
     }
 
