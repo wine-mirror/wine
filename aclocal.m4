@@ -330,9 +330,11 @@ wine_fn_disabled_rules ()
     ac_extraclean="$ac_dir/Makefile"
     test "$srcdir" = . && ac_extraclean="$ac_extraclean $ac_dir/.gitignore"
 
-    wine_fn_depend_rules
-    wine_fn_clean_rules $ac_clean
-    wine_fn_pot_rules
+    wine_fn_append_rule \
+"__clean__: $ac_dir/clean
+.PHONY: $ac_dir/clean
+$ac_dir/clean: dummy
+	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean $ac_extraclean"
 }
 
 wine_fn_config_makefile ()
@@ -397,7 +399,7 @@ wine_fn_config_dll ()
 
     AS_VAR_IF([$ac_enable],[no],
               dnl enable_win16 is special in that it disables import libs too
-              [if wine_fn_has_flag implib && test "$ac_enable" != enable_win16
+              [if test "$ac_enable" != enable_win16
                then
                    wine_fn_depend_rules
                    wine_fn_clean_rules $ac_clean
