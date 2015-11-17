@@ -1928,6 +1928,7 @@ case $build_os in
 esac
 
 case $host_os in
+  linux-android*) ;;
   linux*)
     case $host_cpu in
       *i[[3456789]]86*|x86_64*)
