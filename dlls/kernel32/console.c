@@ -211,15 +211,18 @@ static BOOL put_console_into_raw_mode(int fd)
 static BOOL restore_console_mode(HANDLE hin)
 {
     int         fd;
-    BOOL        ret;
+    BOOL        ret = TRUE;
 
-    if (!S_termios_raw ||
-        RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != KERNEL32_CONSOLE_SHELL)
-        return TRUE;
-    if ((fd = get_console_bare_fd(hin)) == -1) return FALSE;
-    ret = tcsetattr(fd, TCSANOW, &S_termios) >= 0;
-    close(fd);
-    TERM_Exit();
+    if (S_termios_raw)
+    {
+        if ((fd = get_console_bare_fd(hin)) == -1) return FALSE;
+        ret = tcsetattr(fd, TCSANOW, &S_termios) >= 0;
+        close(fd);
+    }
+
+    if (RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle == KERNEL32_CONSOLE_SHELL)
+        TERM_Exit();
+
     return ret;
 }
 
