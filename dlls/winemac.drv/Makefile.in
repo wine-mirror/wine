@@ -28,3 +28,5 @@ OBJC_SRCS = \
 	cocoa_opengl.m \
 	cocoa_status_item.m \
 	cocoa_window.m
+
+RC_SRCS = winemac.rc
