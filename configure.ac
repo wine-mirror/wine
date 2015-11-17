@@ -848,7 +848,6 @@ case $host_os in
 
   linux-android*)
     DLLFLAGS="$DLLFLAGS -fPIC"
-    dlldir="\${libdir}"
     WINE_TRY_CFLAGS([-fPIC -Wl,--export-dynamic],
                     [LDEXECFLAGS="-Wl,--export-dynamic"])
     WINE_TRY_CFLAGS([-fPIC -Wl,--rpath,\$ORIGIN/../lib],
