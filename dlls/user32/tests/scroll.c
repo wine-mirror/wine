@@ -74,10 +74,10 @@ static void scrollbar_test_track(void)
     mainwnd = create_main_test_wnd();
 
     /* test that scrollbar tracking is terminated when
-     * the control looses mouse capture */
+     * the control loses mouse capture */
     SendMessageA( hScroll, WM_LBUTTONDOWN, 0, MAKELPARAM( 1, 1));
-    /* a normal return from the sendmessage */
-    /* not normal for instance by closing the windws */
+    /* a normal return from SendMessage */
+    /* not normal for instances such as closing the window */
     ok( IsWindow( hScroll), "Scrollbar has gone!\n");
 
     DestroyWindow(hScroll);

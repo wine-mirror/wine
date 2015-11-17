@@ -1426,7 +1426,7 @@ stringtable
 				else
 					sttres = tagstt;
 			 }
-			 /* Else were done */
+			 /* Else, we're done */
 		}
 		free(tagstt_memopt);
 		tagstt_memopt = NULL;

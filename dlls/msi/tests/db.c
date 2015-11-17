@@ -7265,7 +7265,7 @@ static void test_forcecodepage(void)
     create_file_data("forcecodepage.idt", "\r\n\r\n9999\t_ForceCodepage\r\n", 0);
 
     r = MsiDatabaseImportA(hdb, CURR_DIR, "forcecodepage.idt");
-    ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_SUCCESS, got %d\n", r);
+    ok(r == ERROR_FUNCTION_FAILED, "Expected ERROR_FUNCTION_FAILED, got %d\n", r);
 
     MsiCloseHandle(hdb);
     DeleteFileA(msifile);

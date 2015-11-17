@@ -69,7 +69,7 @@
  * are available (most notably the REGISTER/UNREGISTER and CONNECT_CONFIRM messages
  * to the callback function). To be correct in every situation, all the basic
  * exchanges are made using the 'pure' DDE protocol. A (future !) enhancement would
- * be to provide a new protocol in the case were both partners are handled by DDEML.
+ * be to provide a new protocol in the case where both partners are handled by DDEML.
  *
  * The StringHandles are in fact stored as local atoms. So an HSZ and a (local) atom
  * can be used interchangeably. However, in order to keep track of the allocated HSZ,

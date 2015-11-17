@@ -3510,7 +3510,7 @@ static HRESULT WINAPI ddraw_surface7_IsLost(IDirectDrawSurface7 *iface)
 
     switch(hr)
     {
-        /* D3D8 and 9 loose full devices, thus there's only a DEVICELOST error.
+        /* D3D8 and 9 lose full devices, thus there's only a DEVICELOST error.
          * WineD3D uses the same error for surfaces
          */
         case WINED3DERR_DEVICELOST:         return DDERR_SURFACELOST;

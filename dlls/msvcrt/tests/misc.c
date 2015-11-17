@@ -263,7 +263,7 @@ static void test__get_doserrno(void)
     out = 0xdeadbeef;
     ret = p_get_doserrno(&out);
     ok(ret == 0, "Expected _get_doserrno to return 0, got %d\n", ret);
-    ok(out == ERROR_INVALID_CMM, "Expected output variable to be ERROR_INVAID_CMM, got %d\n", out);
+    ok(out == ERROR_INVALID_CMM, "Expected output variable to be ERROR_INVALID_CMM, got %d\n", out);
 }
 
 static void test__get_errno(void)

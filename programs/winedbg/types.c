@@ -324,7 +324,7 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, struct dbg_lv
         result->addr.Offset += index * (DWORD)length;
     }
     /* FIXME: the following statement is not always true (and can lead to buggy behavior).
-     * There is no way to tell were the deref:ed value is...
+     * There is no way to tell where the deref:ed value is...
      * For example:
      *	x is a pointer to struct s, x being on the stack
      *		=> lvalue is in debuggee, result is in debugger
