@@ -1163,6 +1163,9 @@ typedef struct _CALLBACK_OBJECT
     UCHAR reserved[3];
 } CALLBACK_OBJECT, *PCALLBACK_OBJECT;
 
+typedef NTSTATUS (NTAPI EX_CALLBACK_FUNCTION)(void *CallbackContext, void *Argument1, void *Argument2);
+typedef EX_CALLBACK_FUNCTION *PEX_CALLBACK_FUNCTION;
+
 NTSTATUS WINAPI ObCloseHandle(IN HANDLE handle);
 
 #ifdef NONAMELESSUNION
