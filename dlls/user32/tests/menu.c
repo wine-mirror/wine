@@ -848,6 +848,41 @@ static void test_menu_bmp_and_string(void)
     ok( HBMMENU_POPUP_CLOSE == mii.hbmpItem, "Item info did not get the right hbitmap: got %p  expected %p\n",
         mii.hbmpItem, HBMMENU_POPUP_CLOSE);
 
+    memset(&mii, 0x81, sizeof(mii));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_STATE | MIIM_ID | MIIM_TYPE | MIIM_DATA;
+    mii.dwTypeData = (LPSTR)bmfill;
+    mii.cch = sizeof(bmfill);
+    mii.dwItemData = 0x81818181;
+    got = GetMenuItemInfoA(hsysmenu, SC_RESTORE, FALSE, &mii);
+    ok(got, "GetMenuItemInfo failed\n");
+todo_wine
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == SC_RESTORE, "expected SC_RESTORE, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0, "expected 0, got %#lx\n", mii.dwItemData);
+todo_wine
+    ok(mii.dwTypeData == (LPSTR)bmfill, "expected %p, got %p\n", bmfill, mii.dwTypeData);
+    ok(mii.cch != 0, "cch should not be 0\n");
+    ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
+
+    mii.cbSize = sizeof(mii);
+    mii.fMask = MIIM_TYPE;
+    mii.hbmpItem = (HBITMAP)0x81818181;
+    got = GetMenuItemInfoA(hsysmenu, SC_CLOSE, FALSE, &mii);
+    ok(got, "GetMenuItemInfo failed\n");
+todo_wine
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == SC_RESTORE, "expected SC_RESTORE, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0, "expected 0, got %#lx\n", mii.dwItemData);
+todo_wine
+    ok(mii.dwTypeData == (LPSTR)bmfill, "expected %p, got %p\n", bmfill, mii.dwTypeData);
+    ok(mii.cch != 0, "cch should not be 0\n");
+    ok(mii.hbmpItem == HBMMENU_POPUP_CLOSE, "expected HBMMENU_POPUP_CLOSE, got %p\n", mii.hbmpItem);
+
     SetWindowLongPtrA( hwnd, GWLP_WNDPROC, (LONG_PTR)menu_ownerdraw_wnd_proc);
 
     if( winetest_debug)
@@ -3658,8 +3693,11 @@ static void test_emptypopup(void)
 
 static void test_AppendMenu(void)
 {
+    static char string[] = "string";
     MENUITEMINFOA mii;
     HMENU hmenu, hsubmenu;
+    HBITMAP hbmp;
+    char buf[16];
     BOOL ret;
 
     hmenu = CreateMenu();
@@ -3771,6 +3809,325 @@ if (0) /* FIXME: uncomment once Wine is fixed */
 if (0) /* FIXME: uncomment once Wine is fixed */
     check_menu_items(hmenu, 207, MF_SEPARATOR, MFS_GRAYED);
     DestroyMenu(hmenu);
+
+    hbmp = CreateBitmap(1, 1, 1, 1, NULL);
+    hmenu = CreateMenu();
+    ok(hmenu != 0, "CreateMenu failed\n");
+
+    /* menu item with a string and a bitmap */
+    memset(&mii, 0, sizeof(mii));
+    mii.cbSize = sizeof(mii);
+    mii.fMask = MIIM_STRING | MIIM_BITMAP;
+    mii.dwTypeData = string;
+    mii.cch = strlen(string);
+    mii.hbmpItem = hbmp;
+    ret = InsertMenuItemA(hmenu, 0, TRUE, &mii);
+    ok(ret, "InsertMenuItem failed\n");
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_STRING | MIIM_BITMAP;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == hbmp, "expected %p, got %p\n", hbmp, mii.hbmpItem);
+
+    memset(&mii, 0x81, sizeof(mii));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_TYPE;
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_BITMAP, "expected MF_BITMAP, got %#x\n", mii.fType);
+    ok(mii.fState == 0x81818181, "expected 0x81818181, got %#x\n", mii.fState);
+    ok(mii.wID == 0x81818181, "expected 0x81818181, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == (LPSTR)hbmp, "expected %p, got %p\n", hbmp, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(mii.hbmpItem == hbmp, "expected %p, got %p\n", hbmp, mii.hbmpItem);
+
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_STATE | MIIM_ID | MIIM_TYPE | MIIM_DATA;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_BITMAP, "expected MF_BITMAP, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0, "expected 0, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == (LPSTR)hbmp, "expected %p, got %p\n", hbmp, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(mii.hbmpItem == hbmp, "expected %p, got %p\n", hbmp, mii.hbmpItem);
+
+    DestroyMenu(hmenu);
+    DeleteObject(hbmp);
+
+    hmenu = CreateMenu();
+    ok(hmenu != 0, "CreateMenu failed\n");
+
+    /* menu item with a string and a "magic" bitmap */
+    memset(&mii, 0, sizeof(mii));
+    mii.cbSize = sizeof(mii);
+    mii.fMask = MIIM_STRING | MIIM_BITMAP;
+    mii.dwTypeData = string;
+    mii.cch = strlen(string);
+    mii.hbmpItem = HBMMENU_POPUP_RESTORE;
+    ret = InsertMenuItemA(hmenu, 0, TRUE, &mii);
+    ok(ret, "InsertMenuItem failed\n");
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_STRING | MIIM_BITMAP;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
+
+    memset(&mii, 0x81, sizeof(mii));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_TYPE;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+todo_wine
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == 0x81818181, "expected 0x81818181, got %#x\n", mii.fState);
+    ok(mii.wID == 0x81818181, "expected 0x81818181, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+todo_wine
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
+
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_STATE | MIIM_ID | MIIM_TYPE | MIIM_DATA;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+todo_wine
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0, "expected 0, got %#lx\n", mii.dwItemData);
+todo_wine
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+todo_wine
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
+
+    DestroyMenu(hmenu);
+
+    hbmp = CreateBitmap(1, 1, 1, 1, NULL);
+    hmenu = CreateMenu();
+    ok(hmenu != 0, "CreateMenu failed\n");
+
+    /* menu item with a string */
+    memset(&mii, 0, sizeof(mii));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_STATE | MIIM_ID | MIIM_TYPE | MIIM_DATA;
+    mii.dwItemData = (ULONG_PTR)hbmp;
+    mii.dwTypeData = string;
+    mii.cch = strlen(string);
+    mii.hbmpItem = hbmp;
+    ret = InsertMenuItemA(hmenu, 0, TRUE, &mii);
+    ok(ret, "InsertMenuItem failed\n");
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_STATE | MIIM_ID | MIIM_TYPE | MIIM_DATA;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == (ULONG_PTR)hbmp, "expected %p, got %#lx\n", hbmp, mii.dwItemData);
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == 0, "expected 0, got %p\n", mii.hbmpItem);
+
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_TYPE;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == 0x81818181, "expected 0x81818181, got %#x\n", mii.fState);
+    ok(mii.wID == 0x81818181, "expected 0x81818181, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == 0, "expected 0, got %p\n", mii.hbmpItem);
+
+    DestroyMenu(hmenu);
+    DeleteObject(hbmp);
+
+    /* menu item with a string */
+    hbmp = CreateBitmap(1, 1, 1, 1, NULL);
+    hmenu = CreateMenu();
+    ok(hmenu != 0, "CreateMenu failed\n");
+    memset(&mii, 0, sizeof(mii));
+    mii.cbSize = sizeof(mii);
+    mii.fMask = MIIM_STRING;
+    mii.dwTypeData = string;
+    mii.cch = strlen(string);
+    ret = InsertMenuItemA(hmenu, 0, TRUE, &mii);
+    ok(ret, "InsertMenuItem failed\n");
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_STRING | MIIM_BITMAP;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == 0, "expected 0, got %p\n", mii.hbmpItem);
+
+    /* add "magic" bitmap to a menu item */
+    mii.fMask = MIIM_BITMAP;
+    mii.hbmpItem = HBMMENU_POPUP_RESTORE;
+    ret = SetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "SetMenuItemInfo failed\n");
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_STRING | MIIM_BITMAP;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
+
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_TYPE;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+todo_wine
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == 0x81818181, "expected 0x81818181, got %#x\n", mii.fState);
+    ok(mii.wID == 0x81818181, "expected 0x81818181, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+todo_wine
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+todo_wine
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
+
+    /* replace "magic" bitmap by a normal one */
+    mii.fMask = MIIM_BITMAP;
+    mii.hbmpItem = hbmp;
+    ret = SetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "SetMenuItemInfo failed\n");
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_FTYPE | MIIM_STATE | MIIM_ID | MIIM_SUBMENU | MIIM_STRING | MIIM_BITMAP;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
+    ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
+    ok(mii.hbmpItem == hbmp, "expected %p, got %p\n", hbmp, mii.hbmpItem);
+
+    memset(&mii, 0x81, sizeof(mii));
+    memset(buf, 0x81, sizeof(buf));
+    mii.cbSize = sizeof(mii);
+    mii.fMask  = MIIM_TYPE;
+    mii.dwTypeData = buf;
+    mii.cch = sizeof(buf);
+    mii.dwItemData = 0x81818181;
+    ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
+    ok(ret, "GetMenuItemInfo failed\n");
+    ok(mii.fType == MF_BITMAP, "expected MF_BITMAP, got %#x\n", mii.fType);
+    ok(mii.fState == 0x81818181, "expected 0x81818181, got %#x\n", mii.fState);
+    ok(mii.wID == 0x81818181, "expected 0x81818181, got %#x\n", mii.wID);
+    ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
+    ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
+    ok(mii.dwTypeData == (LPSTR)hbmp, "expected %p, got %p\n", hbmp, mii.dwTypeData);
+    ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
+    ok(mii.hbmpItem == hbmp, "expected %p, got %p\n", hbmp, mii.hbmpItem);
+
+    DestroyMenu(hmenu);
+    DeleteObject(hbmp);
 }
 
 START_TEST(menu)
