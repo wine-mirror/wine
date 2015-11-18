@@ -856,13 +856,11 @@ static void test_menu_bmp_and_string(void)
     mii.dwItemData = 0x81818181;
     got = GetMenuItemInfoA(hsysmenu, SC_RESTORE, FALSE, &mii);
     ok(got, "GetMenuItemInfo failed\n");
-todo_wine
     ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
     ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
     ok(mii.wID == SC_RESTORE, "expected SC_RESTORE, got %#x\n", mii.wID);
     ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
     ok(mii.dwItemData == 0, "expected 0, got %#lx\n", mii.dwItemData);
-todo_wine
     ok(mii.dwTypeData == (LPSTR)bmfill, "expected %p, got %p\n", bmfill, mii.dwTypeData);
     ok(mii.cch != 0, "cch should not be 0\n");
     ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
@@ -872,13 +870,11 @@ todo_wine
     mii.hbmpItem = (HBITMAP)0x81818181;
     got = GetMenuItemInfoA(hsysmenu, SC_CLOSE, FALSE, &mii);
     ok(got, "GetMenuItemInfo failed\n");
-todo_wine
     ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
     ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
     ok(mii.wID == SC_RESTORE, "expected SC_RESTORE, got %#x\n", mii.wID);
     ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
     ok(mii.dwItemData == 0, "expected 0, got %#lx\n", mii.dwItemData);
-todo_wine
     ok(mii.dwTypeData == (LPSTR)bmfill, "expected %p, got %p\n", bmfill, mii.dwTypeData);
     ok(mii.cch != 0, "cch should not be 0\n");
     ok(mii.hbmpItem == HBMMENU_POPUP_CLOSE, "expected HBMMENU_POPUP_CLOSE, got %p\n", mii.hbmpItem);
@@ -3917,13 +3913,11 @@ if (0) /* FIXME: uncomment once Wine is fixed */
     mii.dwItemData = 0x81818181;
     ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
     ok(ret, "GetMenuItemInfo failed\n");
-todo_wine
     ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
     ok(mii.fState == 0x81818181, "expected 0x81818181, got %#x\n", mii.fState);
     ok(mii.wID == 0x81818181, "expected 0x81818181, got %#x\n", mii.wID);
     ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
     ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
-todo_wine
     ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
     ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
     ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
@@ -3938,16 +3932,13 @@ todo_wine
     mii.dwItemData = 0x81818181;
     ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
     ok(ret, "GetMenuItemInfo failed\n");
-todo_wine
     ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
     ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
     ok(mii.wID == 0, "expected 0, got %#x\n", mii.wID);
     ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
     ok(mii.dwItemData == 0, "expected 0, got %#lx\n", mii.dwItemData);
-todo_wine
     ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
     ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
-todo_wine
     ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
     ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
 
@@ -4071,16 +4062,13 @@ todo_wine
     mii.dwItemData = 0x81818181;
     ret = GetMenuItemInfoA(hmenu, 0, TRUE, &mii);
     ok(ret, "GetMenuItemInfo failed\n");
-todo_wine
     ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
     ok(mii.fState == 0x81818181, "expected 0x81818181, got %#x\n", mii.fState);
     ok(mii.wID == 0x81818181, "expected 0x81818181, got %#x\n", mii.wID);
     ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
     ok(mii.dwItemData == 0x81818181, "expected 0x81818181, got %#lx\n", mii.dwItemData);
-todo_wine
     ok(mii.dwTypeData == buf, "expected %p, got %p\n", buf, mii.dwTypeData);
     ok(mii.cch == 6, "expected 6, got %u\n", mii.cch);
-todo_wine
     ok(!strcmp(buf, string), "expected %s, got %s\n", string, buf);
     ok(mii.hbmpItem == HBMMENU_POPUP_RESTORE, "expected HBMMENU_POPUP_RESTORE, got %p\n", mii.hbmpItem);
 

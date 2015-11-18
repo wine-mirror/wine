@@ -4566,7 +4566,7 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
         SetLastError( ERROR_MENU_ITEM_NOT_FOUND);
         return FALSE;
     }
-    
+
     if( lpmii->fMask & MIIM_TYPE) {
         if( lpmii->fMask & ( MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP)) {
             WARN("invalid combination of fMask bits used\n");
@@ -4575,7 +4575,8 @@ static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT item, BOOL bypos,
             return FALSE;
         }
 	lpmii->fType = menu->fType & MENUITEMINFO_TYPE_MASK;
-        if( menu->hbmpItem) lpmii->fType |= MFT_BITMAP;
+        if (menu->hbmpItem && !IS_MAGIC_BITMAP(menu->hbmpItem))
+            lpmii->fType |= MFT_BITMAP;
 	lpmii->hbmpItem = menu->hbmpItem; /* not on Win9x/ME */
         if( lpmii->fType & MFT_BITMAP) {
 	    lpmii->dwTypeData = (LPWSTR) menu->hbmpItem;
