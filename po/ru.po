@@ -5,14 +5,14 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-08-19 08:15+0300\n"
+"PO-Revision-Date: 2015-11-18 20:30+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"X-Generator: Poedit 1.6.10\n"
+"X-Generator: Poedit 1.8.6\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -7458,16 +7458,12 @@ msgid "&Convert..."
 msgstr "&Конвертировать..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Объект"
+msgstr "%1 &объект %2"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Объект"
+msgstr "&Объект %1"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8581,58 +8577,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Спрятать"
+msgstr "Скрыть %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Другой"
+msgstr "Скрыть остальные"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Показать"
+msgstr "Показать все"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Закрыть %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Выход"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Окно"
+msgstr "Окно"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Свернуть"
+msgstr "Свернуть"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "Приблизить"
+msgstr "Изменить масштаб"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Переход в полноэкранный режим"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "&На передний план"
+msgstr "Все окна на передний план"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -12941,6 +12923,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Программа удаления приложений Wine\n"
+"\n"
+"Удаляет приложения из текущего префикса Wine.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -12955,6 +12941,17 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"Вызов:\n"
+"  uninstaller [параметры]\n"
+"\n"
+"Параметры:\n"
+"  --help\t    показать эту справку.\n"
+"  --list\t    показать список всех приложений, установленных в этом "
+"префиксе.\n"
+"  --remove {GUID}   удалить указанное приложение.\n"
+"\t\t    GUID установленного приложения можно получить с помощью '--list'.\n"
+"  [без параметров]       запустить графическую версию этой программы.\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
