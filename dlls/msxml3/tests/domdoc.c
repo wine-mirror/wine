@@ -481,7 +481,7 @@ static const char szExampleXML[] =
 "        <d>D1 field</d>\n"
 "        <description xmlns:foo='http://www.winehq.org' xmlns:bar='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
 "            <html xmlns='http://www.w3.org/1999/xhtml'>\n"
-"                This is <strong>a</strong> <i>description</i>. <bar:x/>\n"
+"                This is <strong>a</strong>  <i>description</i>. <bar:x/>\n"
 "            </html>\n"
 "            <html xml:space='preserve' xmlns='http://www.w3.org/1999/xhtml'>\n"
 "                This is <strong>a</strong> <i>description</i> with preserved whitespace. <bar:x/>\n"
@@ -4200,11 +4200,11 @@ static inline void _check_ws_preserved(int line, IXMLDOMDocument2* doc, char con
     helper_ole_check(IXMLDOMNode_get_text(node1, &bstr));
     if (str)
     {
-        helper_expect_bstr_and_release(bstr, str);
+        todo_wine helper_expect_bstr_and_release(bstr, str);
     }
     else
     {
-        helper_expect_bstr_and_release(bstr, "\n                This is a description. \n            ");
+        helper_expect_bstr_and_release(bstr, "\n                This is a  description. \n            ");
     }
     IXMLDOMNode_Release(node1);
 
