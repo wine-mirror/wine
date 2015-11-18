@@ -52,6 +52,12 @@ struct d2d_clip_stack
     unsigned int count;
 };
 
+struct d2d_error_state
+{
+    HRESULT code;
+    D2D1_TAG tag1, tag2;
+};
+
 struct d2d_shape_resources
 {
     ID3D10InputLayout *il;
@@ -76,6 +82,7 @@ struct d2d_d3d_render_target
     ID3D10RasterizerState *rs;
     ID3D10BlendState *bs;
 
+    struct d2d_error_state error;
     D2D1_DRAWING_STATE_DESCRIPTION drawing_state;
     IDWriteRenderingParams *text_rendering_params;
 

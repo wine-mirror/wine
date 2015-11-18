@@ -682,6 +682,17 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillGeometry(ID2D1RenderTarg
 
     TRACE("iface %p, geometry %p, brush %p, opacity_brush %p.\n", iface, geometry, brush, opacity_brush);
 
+    if (FAILED(render_target->error.code))
+        return;
+
+    if (opacity_brush && brush_impl->type != D2D_BRUSH_TYPE_BITMAP)
+    {
+        render_target->error.code = D2DERR_INCOMPATIBLE_BRUSH_TYPES;
+        render_target->error.tag1 = render_target->drawing_state.tag1;
+        render_target->error.tag2 = render_target->drawing_state.tag2;
+        return;
+    }
+
     if (opacity_brush)
         FIXME("Ignoring opacity brush %p.\n", opacity_brush);
 
@@ -1226,20 +1237,26 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
 
 static void STDMETHODCALLTYPE d2d_d3d_render_target_BeginDraw(ID2D1RenderTarget *iface)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
     TRACE("iface %p.\n", iface);
+
+    memset(&render_target->error, 0, sizeof(render_target->error));
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_d3d_render_target_EndDraw(ID2D1RenderTarget *iface,
         D2D1_TAG *tag1, D2D1_TAG *tag2)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
+
     TRACE("iface %p, tag1 %p, tag2 %p.\n", iface, tag1, tag2);
 
     if (tag1)
-        *tag1 = 0;
+        *tag1 = render_target->error.tag1;
     if (tag2)
-        *tag2 = 0;
+        *tag1 = render_target->error.tag2;
 
-    return S_OK;
+    return render_target->error.code;
 }
 
 static D2D1_PIXEL_FORMAT * STDMETHODCALLTYPE d2d_d3d_render_target_GetPixelFormat(ID2D1RenderTarget *iface,
