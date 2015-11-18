@@ -1565,7 +1565,8 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
      * Using the same format regardless of the color/depth/stencil targets
      * makes it much less likely that different wined3d instances will set
      * conflicting pixel formats. */
-    if (wined3d_settings.always_offscreen)
+    if (wined3d_settings.offscreen_rendering_mode != ORM_BACKBUFFER
+            && wined3d_settings.always_offscreen)
     {
         color_format = wined3d_get_format(gl_info, WINED3DFMT_B8G8R8A8_UNORM);
         ds_format = wined3d_get_format(gl_info, WINED3DFMT_UNKNOWN);
