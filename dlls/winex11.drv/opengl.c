@@ -1264,18 +1264,15 @@ static GLXContext create_glxcontext(Display *display, struct wgl_context *contex
 {
     GLXContext ctx;
 
-    /* We use indirect rendering for rendering to bitmaps. See get_formats for a comment about this. */
-    BOOL indirect = !(context->fmt->dwFlags & PFD_DRAW_TO_BITMAP);
-
     if(context->gl3_context)
     {
         if(context->numAttribs)
-            ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, indirect, context->attribList);
+            ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, GL_TRUE, context->attribList);
         else
-            ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, indirect, NULL);
+            ctx = pglXCreateContextAttribsARB(gdi_display, context->fmt->fbconfig, shareList, GL_TRUE, NULL);
     }
     else if(context->vis)
-        ctx = pglXCreateContext(gdi_display, context->vis, shareList, indirect);
+        ctx = pglXCreateContext(gdi_display, context->vis, shareList, GL_TRUE);
     else /* Create a GLX Context for a pbuffer */
         ctx = pglXCreateNewContext(gdi_display, context->fmt->fbconfig, context->fmt->render_type, shareList, TRUE);
 
