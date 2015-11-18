@@ -2885,7 +2885,7 @@ void surface_load_fb_texture(struct wined3d_surface *surface, BOOL srgb, struct 
         context_restore(context, restore_rt);
 }
 
-void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
+static void surface_prepare_rb(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info, BOOL multisample)
 {
     if (multisample)
     {
