@@ -481,7 +481,7 @@ static const char szExampleXML[] =
 "        <d>D1 field</d>\n"
 "        <description xmlns:foo='http://www.winehq.org' xmlns:bar='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
 "            <html xmlns='http://www.w3.org/1999/xhtml'>\n"
-"                This is<strong> a</strong>  <i>description</i>. <bar:x/>\n"
+"                This is<strong> a</strong>  <i>description</i><dot>. </dot><bar:x/>\n"
 "            </html>\n"
 "            <html xml:space='preserve' xmlns='http://www.w3.org/1999/xhtml'>\n"
 "                This is <strong>a</strong> <i>description</i> with preserved whitespace. <bar:x/>\n"
@@ -4163,11 +4163,11 @@ static inline void _check_ws_ignored(int line, IXMLDOMDocument2* doc, char const
     helper_expect_list_and_release(list, "E1.E5.E1.E2.D1 E2.E5.E1.E2.D1");
 
     helper_ole_check(IXMLDOMNode_get_childNodes(node1, &list));
-    helper_expect_list_and_release(list, "T1.E1.E5.E1.E2.D1 E2.E1.E5.E1.E2.D1 E3.E1.E5.E1.E2.D1 T4.E1.E5.E1.E2.D1 E5.E1.E5.E1.E2.D1");
+    helper_expect_list_and_release(list, "T1.E1.E5.E1.E2.D1 E2.E1.E5.E1.E2.D1 E3.E1.E5.E1.E2.D1 E4.E1.E5.E1.E2.D1 E5.E1.E5.E1.E2.D1");
     helper_ole_check(IXMLDOMNode_get_text(node1, &bstr));
     if (str)
     {
-        helper_expect_bstr_and_release(bstr, str);
+        todo_wine helper_expect_bstr_and_release(bstr, str);
     }
     else
     {
@@ -4196,7 +4196,7 @@ static inline void _check_ws_preserved(int line, IXMLDOMDocument2* doc, char con
     helper_expect_list_and_release(list, "E2.E10.E2.E2.D1 E4.E10.E2.E2.D1");
 
     helper_ole_check(IXMLDOMNode_get_childNodes(node1, &list));
-    helper_expect_list_and_release(list, "T1.E2.E10.E2.E2.D1 E2.E2.E10.E2.E2.D1 T3.E2.E10.E2.E2.D1 E4.E2.E10.E2.E2.D1 T5.E2.E10.E2.E2.D1 E6.E2.E10.E2.E2.D1 T7.E2.E10.E2.E2.D1");
+    helper_expect_list_and_release(list, "T1.E2.E10.E2.E2.D1 E2.E2.E10.E2.E2.D1 T3.E2.E10.E2.E2.D1 E4.E2.E10.E2.E2.D1 E5.E2.E10.E2.E2.D1 E6.E2.E10.E2.E2.D1 T7.E2.E10.E2.E2.D1");
     helper_ole_check(IXMLDOMNode_get_text(node1, &bstr));
     if (str)
     {
@@ -4204,7 +4204,7 @@ static inline void _check_ws_preserved(int line, IXMLDOMDocument2* doc, char con
     }
     else
     {
-        helper_expect_bstr_and_release(bstr, "\n                This is a  description. \n            ");
+        todo_wine helper_expect_bstr_and_release(bstr, "\n                This is a  description. \n            ");
     }
     IXMLDOMNode_Release(node1);
 
