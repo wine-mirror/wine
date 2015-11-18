@@ -150,7 +150,7 @@ static int (__cdecl *p__Thrd_join)(_Thrd_t, int*);
 
 #ifdef __i386__
 static ULONGLONG (__cdecl *p_i386_Thrd_current)(void);
-_Thrd_t __cdecl i386_Thrd_current(void)
+static _Thrd_t __cdecl i386_Thrd_current(void)
 {
     union {
         _Thrd_t thr;
