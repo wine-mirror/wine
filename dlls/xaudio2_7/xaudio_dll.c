@@ -1801,7 +1801,7 @@ struct xaudio2_cf {
     DWORD version;
 };
 
-struct xaudio2_cf *impl_from_IClassFactory(IClassFactory *iface)
+static struct xaudio2_cf *impl_from_IClassFactory(IClassFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct xaudio2_cf, IClassFactory_iface);
 }

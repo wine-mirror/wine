@@ -648,7 +648,7 @@ struct xapo_cf {
     const CLSID *class;
 };
 
-struct xapo_cf *xapo_impl_from_IClassFactory(IClassFactory *iface)
+static struct xapo_cf *xapo_impl_from_IClassFactory(IClassFactory *iface)
 {
     return CONTAINING_RECORD(iface, struct xapo_cf, IClassFactory_iface);
 }

@@ -94,7 +94,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
-XA2SourceImpl *impl_from_IXAudio27SourceVoice(IXAudio27SourceVoice *iface)
+static XA2SourceImpl *impl_from_IXAudio27SourceVoice(IXAudio27SourceVoice *iface)
 {
     return CONTAINING_RECORD(iface, XA2SourceImpl, IXAudio27SourceVoice_iface);
 }
@@ -581,7 +581,7 @@ const IXAudio27Vtbl XAudio27_Vtbl = {
     XA27_SetDebugConfiguration
 };
 
-XA2SourceImpl *impl_from_IXAudio23SourceVoice(IXAudio23SourceVoice *iface)
+static XA2SourceImpl *impl_from_IXAudio23SourceVoice(IXAudio23SourceVoice *iface)
 {
     return CONTAINING_RECORD(iface, XA2SourceImpl, IXAudio23SourceVoice_iface);
 }
@@ -830,7 +830,7 @@ const IXAudio23SourceVoiceVtbl XAudio23SourceVoice_Vtbl = {
     XA23SRC_GetFrequencyRatio,
 };
 
-XA2SubmixImpl *impl_from_IXAudio23SubmixVoice(IXAudio23SubmixVoice *iface)
+static XA2SubmixImpl *impl_from_IXAudio23SubmixVoice(IXAudio23SubmixVoice *iface)
 {
     return CONTAINING_RECORD(iface, XA2SubmixImpl, IXAudio23SubmixVoice_iface);
 }
@@ -1007,7 +1007,7 @@ const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl = {
     XA23SUB_DestroyVoice
 };
 
-IXAudio2Impl *impl_from_IXAudio23MasteringVoice(IXAudio23MasteringVoice *iface)
+static IXAudio2Impl *impl_from_IXAudio23MasteringVoice(IXAudio23MasteringVoice *iface)
 {
     return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio23MasteringVoice_iface);
 }
@@ -1436,7 +1436,7 @@ const IXAudio22Vtbl XAudio22_Vtbl = {
     XA22_SetDebugConfiguration
 };
 
-XA2SourceImpl *impl_from_IXAudio20SourceVoice(IXAudio20SourceVoice *iface)
+static XA2SourceImpl *impl_from_IXAudio20SourceVoice(IXAudio20SourceVoice *iface)
 {
     return CONTAINING_RECORD(iface, XA2SourceImpl, IXAudio20SourceVoice_iface);
 }
@@ -1686,7 +1686,7 @@ const IXAudio20SourceVoiceVtbl XAudio20SourceVoice_Vtbl = {
     XA20SRC_GetFrequencyRatio,
 };
 
-XA2SubmixImpl *impl_from_IXAudio20SubmixVoice(IXAudio20SubmixVoice *iface)
+static XA2SubmixImpl *impl_from_IXAudio20SubmixVoice(IXAudio20SubmixVoice *iface)
 {
     return CONTAINING_RECORD(iface, XA2SubmixImpl, IXAudio20SubmixVoice_iface);
 }
@@ -1864,7 +1864,7 @@ const IXAudio20SubmixVoiceVtbl XAudio20SubmixVoice_Vtbl = {
     XA20SUB_DestroyVoice
 };
 
-IXAudio2Impl *impl_from_IXAudio20MasteringVoice(IXAudio20MasteringVoice *iface)
+static IXAudio2Impl *impl_from_IXAudio20MasteringVoice(IXAudio20MasteringVoice *iface)
 {
     return CONTAINING_RECORD(iface, IXAudio2Impl, IXAudio20MasteringVoice_iface);
 }
