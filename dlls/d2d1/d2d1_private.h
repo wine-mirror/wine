@@ -62,7 +62,7 @@ struct d2d_shape_resources
 {
     ID3D10InputLayout *il;
     ID3D10VertexShader *vs;
-    ID3D10PixelShader *ps[D2D_BRUSH_TYPE_COUNT];
+    ID3D10PixelShader *ps[D2D_BRUSH_TYPE_COUNT][D2D_BRUSH_TYPE_COUNT + 1];
 };
 
 struct d2d_d3d_render_target
@@ -163,10 +163,10 @@ void d2d_linear_gradient_brush_init(struct d2d_brush *brush, ID2D1Factory *facto
 void d2d_bitmap_brush_init(struct d2d_brush *brush, ID2D1Factory *factory,
         ID2D1Bitmap *bitmap, const D2D1_BITMAP_BRUSH_PROPERTIES *bitmap_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc) DECLSPEC_HIDDEN;
-void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target,
-        enum d2d_shape_type shape_type) DECLSPEC_HIDDEN;
-HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target,
-        ID3D10Buffer **ps_cb) DECLSPEC_HIDDEN;
+void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
+        struct d2d_d3d_render_target *render_target, enum d2d_shape_type shape_type) DECLSPEC_HIDDEN;
+HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
+        struct d2d_d3d_render_target *render_target, ID3D10Buffer **ps_cb) DECLSPEC_HIDDEN;
 struct d2d_brush *unsafe_impl_from_ID2D1Brush(ID2D1Brush *iface) DECLSPEC_HIDDEN;
 
 struct d2d_stroke_style

@@ -127,9 +127,9 @@ static void d2d_clip_stack_pop(struct d2d_clip_stack *stack)
     --stack->count;
 }
 
-static void d2d_draw(struct d2d_d3d_render_target *render_target, enum d2d_shape_type shape_type,
+static void d2d_rt_draw(struct d2d_d3d_render_target *render_target, enum d2d_shape_type shape_type,
         ID3D10Buffer *ib, unsigned int index_count, ID3D10Buffer *vb, unsigned int vb_stride,
-        ID3D10Buffer *vs_cb, ID3D10Buffer *ps_cb, struct d2d_brush *brush)
+        ID3D10Buffer *vs_cb, ID3D10Buffer *ps_cb, struct d2d_brush *brush, struct d2d_brush *opacity_brush)
 {
     struct d2d_shape_resources *shape_resources = &render_target->shape_resources[shape_type];
     ID3D10Device *device = render_target->device;
@@ -183,9 +183,9 @@ static void d2d_draw(struct d2d_d3d_render_target *render_target, enum d2d_shape
     ID3D10Device_RSSetState(device, render_target->rs);
     ID3D10Device_OMSetRenderTargets(device, 1, &render_target->view, NULL);
     if (brush)
-        d2d_brush_bind_resources(brush, render_target, shape_type);
+        d2d_brush_bind_resources(brush, opacity_brush, render_target, shape_type);
     else
-        ID3D10Device_PSSetShader(device, shape_resources->ps[D2D_BRUSH_TYPE_SOLID]);
+        ID3D10Device_PSSetShader(device, shape_resources->ps[D2D_BRUSH_TYPE_SOLID][D2D_BRUSH_TYPE_COUNT]);
 
     if (ib)
         ID3D10Device_DrawIndexed(device, index_count, 0, 0);
@@ -239,7 +239,7 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
 
     if (!refcount)
     {
-        unsigned int i, j;
+        unsigned int i, j, k;
 
         d2d_clip_stack_cleanup(&render_target->clip_stack);
         if (render_target->text_rendering_params)
@@ -252,8 +252,11 @@ static ULONG STDMETHODCALLTYPE d2d_d3d_render_target_Release(ID2D1RenderTarget *
         {
             for (j = 0; j < D2D_BRUSH_TYPE_COUNT; ++j)
             {
-                if (render_target->shape_resources[i].ps[j])
-                    ID3D10PixelShader_Release(render_target->shape_resources[i].ps[j]);
+                for (k = 0; k < D2D_BRUSH_TYPE_COUNT + 1; ++k)
+                {
+                    if (render_target->shape_resources[i].ps[j][k])
+                        ID3D10PixelShader_Release(render_target->shape_resources[i].ps[j][k]);
+                }
             }
             ID3D10VertexShader_Release(render_target->shape_resources[i].vs);
             ID3D10InputLayout_Release(render_target->shape_resources[i].il);
@@ -665,6 +668,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawGeometry(ID2D1RenderTarg
 static void STDMETHODCALLTYPE d2d_d3d_render_target_FillGeometry(ID2D1RenderTarget *iface,
         ID2D1Geometry *geometry, ID2D1Brush *brush, ID2D1Brush *opacity_brush)
 {
+    struct d2d_brush *opacity_brush_impl = unsafe_impl_from_ID2D1Brush(opacity_brush);
     struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     struct d2d_brush *brush_impl = unsafe_impl_from_ID2D1Brush(brush);
     const struct d2d_geometry *geometry_impl;
@@ -692,9 +696,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillGeometry(ID2D1RenderTarg
         render_target->error.tag2 = render_target->drawing_state.tag2;
         return;
     }
-
-    if (opacity_brush)
-        FIXME("Ignoring opacity brush %p.\n", opacity_brush);
 
     geometry_impl = unsafe_impl_from_ID2D1Geometry(geometry);
 
@@ -736,7 +737,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillGeometry(ID2D1RenderTarg
         return;
     }
 
-    if (FAILED(hr = d2d_brush_get_ps_cb(brush_impl, render_target, &ps_cb)))
+    if (FAILED(hr = d2d_brush_get_ps_cb(brush_impl, opacity_brush_impl, render_target, &ps_cb)))
     {
         WARN("Failed to get ps constant buffer, hr %#x.\n", hr);
         ID3D10Buffer_Release(vs_cb);
@@ -766,8 +767,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillGeometry(ID2D1RenderTarg
             goto done;
         }
 
-        d2d_draw(render_target, D2D_SHAPE_TYPE_TRIANGLE, ib, 3 * geometry_impl->face_count, vb,
-                sizeof(*geometry_impl->vertices), vs_cb, ps_cb, brush_impl);
+        d2d_rt_draw(render_target, D2D_SHAPE_TYPE_TRIANGLE, ib, 3 * geometry_impl->face_count, vb,
+                sizeof(*geometry_impl->vertices), vs_cb, ps_cb, brush_impl, opacity_brush_impl);
 
         ID3D10Buffer_Release(vb);
         ID3D10Buffer_Release(ib);
@@ -784,8 +785,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_FillGeometry(ID2D1RenderTarg
             goto done;
         }
 
-        d2d_draw(render_target, D2D_SHAPE_TYPE_BEZIER, NULL, 3 * geometry_impl->bezier_count, vb,
-                sizeof(*geometry_impl->beziers->v), vs_cb, ps_cb, brush_impl);
+        d2d_rt_draw(render_target, D2D_SHAPE_TYPE_BEZIER, NULL, 3 * geometry_impl->bezier_count, vb,
+                sizeof(*geometry_impl->beziers->v), vs_cb, ps_cb, brush_impl, opacity_brush_impl);
 
         ID3D10Buffer_Release(vb);
     }
@@ -1228,8 +1229,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_Clear(ID2D1RenderTarget *ifa
         return;
     }
 
-    d2d_draw(render_target, D2D_SHAPE_TYPE_TRIANGLE, render_target->ib, 6,
-            render_target->vb, render_target->vb_stride, vs_cb, ps_cb, NULL);
+    d2d_rt_draw(render_target, D2D_SHAPE_TYPE_TRIANGLE, render_target->ib, 6,
+            render_target->vb, render_target->vb_stride, vs_cb, ps_cb, NULL, NULL);
 
     ID3D10Buffer_Release(ps_cb);
     ID3D10Buffer_Release(vs_cb);
@@ -1549,7 +1550,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     D3D10_BUFFER_DESC buffer_desc;
     D3D10_BLEND_DESC blend_desc;
     ID3D10Resource *resource;
-    unsigned int i, j;
+    unsigned int i, j, k;
     HRESULT hr;
 
     static const D3D10_INPUT_ELEMENT_DESC il_desc_triangle[] =
@@ -1785,7 +1786,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
 
     if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
             ps_code_triangle_solid, sizeof(ps_code_triangle_solid),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].ps[D2D_BRUSH_TYPE_SOLID])))
+            &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].ps[D2D_BRUSH_TYPE_SOLID][D2D_BRUSH_TYPE_COUNT])))
     {
         WARN("Failed to create triangle/solid pixel shader, hr %#x.\n", hr);
         goto err;
@@ -1793,7 +1794,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
 
     if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
             ps_code_triangle_bitmap, sizeof(ps_code_triangle_bitmap),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].ps[D2D_BRUSH_TYPE_BITMAP])))
+            &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].ps[D2D_BRUSH_TYPE_BITMAP][D2D_BRUSH_TYPE_COUNT])))
     {
         WARN("Failed to create triangle/bitmap pixel shader, hr %#x.\n", hr);
         goto err;
@@ -1801,7 +1802,7 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
 
     if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
             ps_code_bezier_solid, sizeof(ps_code_bezier_solid),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER].ps[D2D_BRUSH_TYPE_SOLID])))
+            &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER].ps[D2D_BRUSH_TYPE_SOLID][D2D_BRUSH_TYPE_COUNT])))
     {
         WARN("Failed to create bezier/solid pixel shader, hr %#x.\n", hr);
         goto err;
@@ -1917,8 +1918,11 @@ err:
     {
         for (j = 0; j < D2D_BRUSH_TYPE_COUNT; ++j)
         {
-            if (render_target->shape_resources[i].ps[j])
-                ID3D10PixelShader_Release(render_target->shape_resources[i].ps[j]);
+            for (k = 0; k < D2D_BRUSH_TYPE_COUNT + 1; ++k)
+            {
+                if (render_target->shape_resources[i].ps[j][k])
+                    ID3D10PixelShader_Release(render_target->shape_resources[i].ps[j][k]);
+            }
         }
         if (render_target->shape_resources[i].vs)
             ID3D10VertexShader_Release(render_target->shape_resources[i].vs);

@@ -23,6 +23,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
+struct d2d_bitmap_brush_cb
+{
+    float _11, _21, _31, pad0;
+    float _12, _22, _32, opacity;
+    BOOL ignore_alpha, pad1, pad2, pad3;
+};
+
 static inline struct d2d_gradient *impl_from_ID2D1GradientStopCollection(ID2D1GradientStopCollection *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_gradient, ID2D1GradientStopCollection_iface);
@@ -730,44 +737,31 @@ static D3D10_TEXTURE_ADDRESS_MODE texture_address_mode_from_extend_mode(D2D1_EXT
     }
 }
 
-HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target,
-        ID3D10Buffer **ps_cb)
+static BOOL d2d_brush_fill_cb(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target, void *cb)
 {
-    D3D10_SUBRESOURCE_DATA buffer_data;
-    D3D10_BUFFER_DESC buffer_desc;
-    struct
-    {
-        float _11, _21, _31, pad0;
-        float _12, _22, _32, opacity;
-        BOOL ignore_alpha;
-    } bitmap_brush_cb;
-    D2D1_COLOR_F color;
-    HRESULT hr;
-
-    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = 0;
-    buffer_desc.MiscFlags = 0;
-
-    buffer_data.SysMemPitch = 0;
-    buffer_data.SysMemSlicePitch = 0;
+    struct d2d_bitmap_brush_cb *bitmap_brush_cb;
+    D2D1_COLOR_F *color;
 
     if (brush->type == D2D_BRUSH_TYPE_SOLID)
     {
-        color = brush->u.solid.color;
-        color.a *= brush->opacity;
-        color.r *= color.a;
-        color.g *= color.a;
-        color.b *= color.a;
+        color = cb;
 
-        buffer_desc.ByteWidth = sizeof(color);
-        buffer_data.pSysMem = &color;
+        *color = brush->u.solid.color;
+        color->a *= brush->opacity;
+        color->r *= color->a;
+        color->g *= color->a;
+        color->b *= color->a;
+
+        return TRUE;
     }
-    else if (brush->type == D2D_BRUSH_TYPE_BITMAP)
+
+    if (brush->type == D2D_BRUSH_TYPE_BITMAP)
     {
         struct d2d_bitmap *bitmap = brush->u.bitmap.bitmap;
         D2D_MATRIX_3X2_F w, b;
         float dpi_scale, d;
+
+        bitmap_brush_cb = cb;
 
         /* Scale for dpi. */
         w = render_target->drawing_state.transform;
@@ -797,76 +791,149 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_d3d_render_targe
         d = b._11 * b._22 - b._21 * b._12;
         if (d != 0.0f)
         {
-            bitmap_brush_cb._11 = b._22 / d;
-            bitmap_brush_cb._21 = -b._21 / d;
-            bitmap_brush_cb._31 = (b._21 * b._32 - b._31 * b._22) / d;
-            bitmap_brush_cb._12 = -b._12 / d;
-            bitmap_brush_cb._22 = b._11 / d;
-            bitmap_brush_cb._32 = -(b._11 * b._32 - b._31 * b._12) / d;
+            bitmap_brush_cb->_11 = b._22 / d;
+            bitmap_brush_cb->_21 = -b._21 / d;
+            bitmap_brush_cb->_31 = (b._21 * b._32 - b._31 * b._22) / d;
+            bitmap_brush_cb->_12 = -b._12 / d;
+            bitmap_brush_cb->_22 = b._11 / d;
+            bitmap_brush_cb->_32 = -(b._11 * b._32 - b._31 * b._12) / d;
         }
-        bitmap_brush_cb.opacity = brush->opacity;
-        bitmap_brush_cb.ignore_alpha = bitmap->format.alphaMode == D2D1_ALPHA_MODE_IGNORE;
+        bitmap_brush_cb->opacity = brush->opacity;
+        bitmap_brush_cb->ignore_alpha = bitmap->format.alphaMode == D2D1_ALPHA_MODE_IGNORE;
 
-        buffer_desc.ByteWidth = sizeof(bitmap_brush_cb);
-        buffer_data.pSysMem = &bitmap_brush_cb;
+        return TRUE;
     }
-    else
+
+    FIXME("Unhandled brush type %#x.\n", brush->type);
+    return FALSE;
+}
+
+HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
+        struct d2d_d3d_render_target *render_target, ID3D10Buffer **ps_cb)
+{
+    D3D10_SUBRESOURCE_DATA buffer_data;
+    D3D10_BUFFER_DESC buffer_desc;
+    BYTE *cb_data;
+    HRESULT hr;
+
+    static const size_t brush_sizes[] =
     {
-        FIXME("Unhandled brush type %#x.\n", brush->type);
+        /* D2D_BRUSH_TYPE_SOLID */  sizeof(D2D1_COLOR_F),
+        /* D2D_BRUSH_TYPE_LINEAR */ 0,
+        /* D2D_BRUSH_TYPE_BITMAP */ sizeof(struct d2d_bitmap_brush_cb),
+    };
+
+    buffer_desc.Usage = D3D10_USAGE_DEFAULT;
+    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = 0;
+    buffer_desc.MiscFlags = 0;
+
+    buffer_data.SysMemPitch = 0;
+    buffer_data.SysMemSlicePitch = 0;
+
+    if (brush->type >= sizeof(brush_sizes) / sizeof(*brush_sizes))
+    {
+        ERR("Unhandled brush type %#x.\n", brush->type);
+        return E_NOTIMPL;
+    }
+
+    buffer_desc.ByteWidth = brush_sizes[brush->type];
+    if (opacity_brush)
+    {
+        if (opacity_brush->type >= sizeof(brush_sizes) / sizeof(*brush_sizes))
+        {
+            ERR("Unhandled opacity brush type %#x.\n", brush->type);
+            return E_NOTIMPL;
+        }
+        buffer_desc.ByteWidth += brush_sizes[opacity_brush->type];
+    }
+
+    if (!(cb_data = HeapAlloc(GetProcessHeap(), 0, buffer_desc.ByteWidth)))
+    {
+        ERR("Failed to allocate constant buffer data.\n");
+        return E_OUTOFMEMORY;
+    }
+    buffer_data.pSysMem = cb_data;
+
+    if (!d2d_brush_fill_cb(brush, render_target, cb_data))
+    {
+        HeapFree(GetProcessHeap(), 0, cb_data);
+        return E_NOTIMPL;
+    }
+    cb_data += brush_sizes[brush->type];
+    if (opacity_brush && !d2d_brush_fill_cb(opacity_brush, render_target, cb_data))
+    {
+        HeapFree(GetProcessHeap(), 0, cb_data);
         return E_NOTIMPL;
     }
 
     if (FAILED(hr = ID3D10Device_CreateBuffer(render_target->device, &buffer_desc, &buffer_data, ps_cb)))
         ERR("Failed to create constant buffer, hr %#x.\n", hr);
+    HeapFree(GetProcessHeap(), 0, cb_data);
 
     return hr;
 }
 
-void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_d3d_render_target *render_target,
-        enum d2d_shape_type shape_type)
+static void d2d_brush_bind_bitmap(struct d2d_brush *brush, ID3D10Device *device,
+        unsigned int resource_idx, unsigned int sampler_idx)
 {
-    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
-    ID3D10Device *device = render_target->device;
-    ID3D10PixelShader *ps;
     HRESULT hr;
 
+    ID3D10Device_PSSetShaderResources(device, resource_idx, 1, &brush->u.bitmap.bitmap->view);
+    if (!brush->u.bitmap.sampler_state)
+    {
+        D3D10_SAMPLER_DESC sampler_desc;
+
+        if (brush->u.bitmap.interpolation_mode == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR)
+            sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
+        else
+            sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
+        sampler_desc.AddressU = texture_address_mode_from_extend_mode(brush->u.bitmap.extend_mode_x);
+        sampler_desc.AddressV = texture_address_mode_from_extend_mode(brush->u.bitmap.extend_mode_y);
+        sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_CLAMP;
+        sampler_desc.MipLODBias = 0.0f;
+        sampler_desc.MaxAnisotropy = 0;
+        sampler_desc.ComparisonFunc = D3D10_COMPARISON_NEVER;
+        sampler_desc.BorderColor[0] = 0.0f;
+        sampler_desc.BorderColor[1] = 0.0f;
+        sampler_desc.BorderColor[2] = 0.0f;
+        sampler_desc.BorderColor[3] = 0.0f;
+        sampler_desc.MinLOD = 0.0f;
+        sampler_desc.MaxLOD = 0.0f;
+
+        if (FAILED(hr = ID3D10Device_CreateSamplerState(device,
+                        &sampler_desc, &brush->u.bitmap.sampler_state)))
+            ERR("Failed to create sampler state, hr %#x.\n", hr);
+    }
+    ID3D10Device_PSSetSamplers(device, sampler_idx, 1, &brush->u.bitmap.sampler_state);
+}
+
+void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_brush *opacity_brush,
+        struct d2d_d3d_render_target *render_target, enum d2d_shape_type shape_type)
+{
+    static const float blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
+    unsigned int resource_idx = 0, sampler_idx = 0;
+    ID3D10Device *device = render_target->device;
+    enum d2d_brush_type opacity_brush_type;
+    ID3D10PixelShader *ps;
+
     ID3D10Device_OMSetBlendState(device, render_target->bs, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
-    if (!(ps = render_target->shape_resources[shape_type].ps[brush->type]))
-        FIXME("No pixel shader for shape type %#x and brush type %#x.\n", shape_type, brush->type);
+    opacity_brush_type = opacity_brush ? opacity_brush->type : D2D_BRUSH_TYPE_COUNT;
+    if (!(ps = render_target->shape_resources[shape_type].ps[brush->type][opacity_brush_type]))
+        FIXME("No pixel shader for shape type %#x and brush types %#x/%#x.\n",
+                shape_type, brush->type, opacity_brush_type);
     ID3D10Device_PSSetShader(device, ps);
 
     if (brush->type == D2D_BRUSH_TYPE_BITMAP)
-    {
-        ID3D10Device_PSSetShaderResources(device, 0, 1, &brush->u.bitmap.bitmap->view);
-        if (!brush->u.bitmap.sampler_state)
-        {
-            D3D10_SAMPLER_DESC sampler_desc;
-
-            if (brush->u.bitmap.interpolation_mode == D2D1_BITMAP_INTERPOLATION_MODE_NEAREST_NEIGHBOR)
-                sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_POINT;
-            else
-                sampler_desc.Filter = D3D10_FILTER_MIN_MAG_MIP_LINEAR;
-            sampler_desc.AddressU = texture_address_mode_from_extend_mode(brush->u.bitmap.extend_mode_x);
-            sampler_desc.AddressV = texture_address_mode_from_extend_mode(brush->u.bitmap.extend_mode_y);
-            sampler_desc.AddressW = D3D10_TEXTURE_ADDRESS_CLAMP;
-            sampler_desc.MipLODBias = 0.0f;
-            sampler_desc.MaxAnisotropy = 0;
-            sampler_desc.ComparisonFunc = D3D10_COMPARISON_NEVER;
-            sampler_desc.BorderColor[0] = 0.0f;
-            sampler_desc.BorderColor[1] = 0.0f;
-            sampler_desc.BorderColor[2] = 0.0f;
-            sampler_desc.BorderColor[3] = 0.0f;
-            sampler_desc.MinLOD = 0.0f;
-            sampler_desc.MaxLOD = 0.0f;
-
-            if (FAILED(hr = ID3D10Device_CreateSamplerState(device,
-                    &sampler_desc, &brush->u.bitmap.sampler_state)))
-                ERR("Failed to create sampler state, hr %#x.\n", hr);
-        }
-        ID3D10Device_PSSetSamplers(device, 0, 1, &brush->u.bitmap.sampler_state);
-    }
+        d2d_brush_bind_bitmap(brush, device, resource_idx++, sampler_idx++);
     else if (brush->type != D2D_BRUSH_TYPE_SOLID)
-    {
         FIXME("Unhandled brush type %#x.\n", brush->type);
+
+    if (opacity_brush)
+    {
+        if (opacity_brush->type == D2D_BRUSH_TYPE_BITMAP)
+            d2d_brush_bind_bitmap(opacity_brush, device, resource_idx++, sampler_idx++);
+        else if (opacity_brush->type != D2D_BRUSH_TYPE_SOLID)
+            FIXME("Unhandled opacity brush type %#x.\n", opacity_brush->type);
     }
 }
