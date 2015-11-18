@@ -320,7 +320,8 @@ static void test_output(const char *out_data, DWORD out_size, const char *exp_da
             /* If we rewind to the beginning of the line, don't increment line number */
             line--;
         }
-        else if (!is_exp_resync || !err)
+        else if (!is_exp_resync || !err ||
+                 (is_exp_resync && is_out_resync && err))
         {
             exp_ptr = exp_nl+1;
             if(exp_nl+1 < exp_data+exp_size && exp_nl[0] == '\r' && exp_nl[1] == '\n')
