@@ -82,6 +82,21 @@ struct d2d_cdt
     const D2D1_POINT_2F *vertices;
 };
 
+struct d2d_geometry_intersection
+{
+    size_t figure_idx;
+    size_t segment_idx;
+    float t;
+    D2D1_POINT_2F p;
+};
+
+struct d2d_geometry_intersections
+{
+    struct d2d_geometry_intersection *intersections;
+    size_t intersections_size;
+    size_t intersection_count;
+};
+
 struct d2d_fp_two_vec2
 {
     float x[2];
@@ -1458,6 +1473,41 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
     return TRUE;
 }
 
+static BOOL d2d_geometry_intersections_add(struct d2d_geometry_intersections *i,
+        size_t figure_idx, size_t segment_idx, float t, D2D1_POINT_2F p)
+{
+    struct d2d_geometry_intersection *intersection;
+
+    if (!d2d_array_reserve((void **)&i->intersections, &i->intersections_size,
+            i->intersection_count + 1, sizeof(*i->intersections)))
+    {
+        ERR("Failed to grow intersections array.\n");
+        return FALSE;
+    }
+
+    intersection = &i->intersections[i->intersection_count++];
+    intersection->figure_idx = figure_idx;
+    intersection->segment_idx = segment_idx;
+    intersection->t = t;
+    intersection->p = p;
+
+    return TRUE;
+}
+
+static int d2d_geometry_intersections_compare(const void *a, const void *b)
+{
+    const struct d2d_geometry_intersection *i0 = a;
+    const struct d2d_geometry_intersection *i1 = b;
+
+    if (i0->figure_idx != i1->figure_idx)
+        return i0->figure_idx - i1->figure_idx;
+    if (i0->segment_idx != i1->segment_idx)
+        return i0->segment_idx - i1->segment_idx;
+    if (i0->t != i1->t)
+        return i0->t > i1->t ? 1 : -1;
+    return 0;
+}
+
 /* Intersect the geometry's segments with themselves. This uses the
  * straightforward approach of testing everything against everything, but
  * there certainly exist more scalable algorithms for this. */
@@ -1465,21 +1515,21 @@ static BOOL d2d_cdt_insert_segments(struct d2d_cdt *cdt, struct d2d_geometry *ge
 static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
 {
     D2D1_POINT_2F p0, p1, q0, q1, v_p, v_q, v_qp, intersection;
+    struct d2d_geometry_intersections intersections = {0};
     struct d2d_figure *figure_p, *figure_q;
-    size_t i, j, k, l, min_j, min_l, max_l;
+    size_t i, j, k, l, max_l;
+    BOOL ret = FALSE;
     float s, t, det;
 
     for (i = 0; i < geometry->u.path.figure_count; ++i)
     {
         figure_p = &geometry->u.path.figures[i];
         p0 = figure_p->vertices[figure_p->vertex_count - 1];
-        min_j = 0;
-        min_l = 0;
         for (k = 0; k < figure_p->vertex_count; p0 = p1, ++k)
         {
             p1 = figure_p->vertices[k];
             d2d_point_subtract(&v_p, &p1, &p0);
-            for (j = min_j, min_j = 0, l = min_l, min_l = 0; j < i || (j == i && k); ++j, l = 0)
+            for (j = 0; j < i || (j == i && k); ++j)
             {
                 figure_q = &geometry->u.path.figures[j];
 
@@ -1490,8 +1540,8 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
                     continue;
 
                 max_l = j == i ? k - 1 : figure_q->vertex_count;
-                q0 = figure_q->vertices[l == 0 ? figure_q->vertex_count - 1 : l - 1];
-                for (; l < max_l; q0 = q1, ++l)
+                q0 = figure_q->vertices[figure_q->vertex_count - 1];
+                for (l = 0; l < max_l; q0 = q1, ++l)
                 {
                     q1 = figure_q->vertices[l];
                     d2d_point_subtract(&v_q, &q1, &q0);
@@ -1510,31 +1560,38 @@ static BOOL d2d_geometry_intersect_self(struct d2d_geometry *geometry)
                     intersection.x = p0.x + v_p.x * s;
                     intersection.y = p0.y + v_p.y * s;
 
-                    if (t > 0.0f && t < 1.0f)
-                    {
-                        if (!d2d_figure_insert_vertex(figure_q, l, intersection))
-                            return FALSE;
-                        if (j == i)
-                            ++k;
-                        ++max_l;
-                        ++l;
-                    }
+                    if (t > 0.0f && t < 1.0f
+                            && !d2d_geometry_intersections_add(&intersections, j, l, t, intersection))
+                        goto done;
 
-                    if (s > 0.0f && s < 1.0f)
-                    {
-                        if (!d2d_figure_insert_vertex(figure_p, k, intersection))
-                            return FALSE;
-                        min_j = j;
-                        min_l = l+1;
-                        p1 = intersection;
-                        d2d_point_subtract(&v_p, &p1, &p0);
-                    }
+                    if (s > 0.0f && s < 1.0f
+                            && !d2d_geometry_intersections_add(&intersections, i, k, s, intersection))
+                        goto done;
                 }
             }
         }
     }
 
-    return TRUE;
+    qsort(intersections.intersections, intersections.intersection_count,
+            sizeof(*intersections.intersections), d2d_geometry_intersections_compare);
+    for (i = 0; i < intersections.intersection_count; ++i)
+    {
+        const struct d2d_geometry_intersection *inter = &intersections.intersections[i];
+
+        if (!i || inter->figure_idx != intersections.intersections[i - 1].figure_idx)
+            j = 0;
+
+        if (!d2d_figure_insert_vertex(&geometry->u.path.figures[inter->figure_idx],
+                inter->segment_idx + j, inter->p))
+            goto done;
+        ++j;
+    }
+
+    ret = TRUE;
+
+done:
+    HeapFree(GetProcessHeap(), 0, intersections.intersections);
+    return ret;
 }
 
 static HRESULT d2d_path_geometry_triangulate(struct d2d_geometry *geometry)
