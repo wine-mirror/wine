@@ -765,6 +765,7 @@ case $host_os in
             dnl CoreServices needed by AudioUnit
             AC_SUBST(COREAUDIO_LIBS,"-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI")
         fi
+        enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
         dnl Check for the AUGraphAddNode function
         ac_save_LIBS="$LIBS"
         LIBS="$LIBS $COREAUDIO_LIBS"
@@ -932,8 +933,10 @@ case $host_os in
     ;;
 esac
 
+enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
+test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 dnl Check for cross compiler to build test programs
 AC_SUBST(CROSSTARGET,"")
@@ -1448,6 +1451,7 @@ then
 fi
 WINE_NOTICE_WITH(pulse, [test -z "$PULSE_LIBS"],
         [libpulse ${notice_platform}development files not found or too old, Pulse won't be supported.])
+test -n "$PULSE_LIBS" || enable_winepulse_drv=${enable_winepulse_drv:-no}
 
 dnl **** Check for gstreamer ****
 if test "x$with_gstreamer" != "xno"
@@ -1489,6 +1493,7 @@ then
 #endif]], [[snd_pcm_hw_params_get_access_mask(NULL, NULL)]])],
                         [ALSA_LIBS="-lasound"])])
 fi
+test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 
 dnl **** Check for OSSv4 ****
 if test "x$with_oss" != xno
@@ -1510,6 +1515,7 @@ then
         WINE_NOTICE([OSS sound system found but too old (OSSv4 needed), OSS won't be supported.])
     fi
 fi
+test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 
 dnl **** Check for capi4linux ****
 if test "x$with_capi" != "xno"
@@ -1678,16 +1684,8 @@ then
     WINE_CHECK_SONAME(netapi,libnetapi_init,,[AC_DEFINE_UNQUOTED(SONAME_LIBNETAPI,["libnetapi.$LIBEXT"])])
 fi
 
-dnl **** Disable unsupported winmm drivers ****
-test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
-test -n "$COREAUDIO_LIBS" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-test -n "$PULSE_LIBS" || enable_winepulse_drv=${enable_winepulse_drv:-no}
-test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
-test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
-
 dnl **** Check for any sound system ****
-if test "x$ALSA_LIBS$COREAUDIO_LIBS$PULSE_LIBS" = "x" -a \
-        "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
+if test "x$enable_winealsa_drv$enable_winecoreaudio_drv$enable_winepulse_drv$enable_wineoss_drv" = xnononono -a \
         "x$with_alsa$with_coreaudio$with_oss$with_pulse" != xnononono
 then
     WINE_WARNING([No sound system was found. Windows applications will be silent.])

@@ -8087,6 +8087,7 @@ done
                         COREAUDIO_LIBS="-framework CoreAudio -framework AudioUnit -framework CoreServices -framework AudioToolbox -framework CoreMIDI"
 
         fi
+        enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-yes}
                 ac_save_LIBS="$LIBS"
         LIBS="$LIBS $COREAUDIO_LIBS"
         for ac_func in AUGraphAddNode
@@ -8747,8 +8748,10 @@ $as_echo "$ac_cv_c_dll_unixware" >&6; }
     ;;
 esac
 
+enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
 enable_wineqtdecoder=${enable_wineqtdecoder:-no}
 enable_winemac_drv=${enable_winemac_drv:-no}
+test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
 
 CROSSTARGET=""
 
@@ -12582,6 +12585,7 @@ if test -z "$PULSE_LIBS"; then :
 This is an error since --with-pulse was requested." "$LINENO" 5 ;;
 esac
 fi
+test -n "$PULSE_LIBS" || enable_winepulse_drv=${enable_winepulse_drv:-no}
 
 if test "x$with_gstreamer" != "xno"
 then
@@ -12801,6 +12805,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
 
 fi
+test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
 
 if test "x$with_oss" != xno
 then
@@ -12834,6 +12839,7 @@ fi
         as_fn_append wine_notices "|OSS sound system found but too old (OSSv4 needed), OSS won't be supported."
     fi
 fi
+test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
 
 if test "x$with_capi" != "xno"
 then
@@ -13927,14 +13933,7 @@ _ACEOF
 fi
 fi
 
-test -n "$ALSA_LIBS" || enable_winealsa_drv=${enable_winealsa_drv:-no}
-test -n "$COREAUDIO_LIBS" || enable_winecoreaudio_drv=${enable_winecoreaudio_drv:-no}
-test -n "$PULSE_LIBS" || enable_winepulse_drv=${enable_winepulse_drv:-no}
-test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
-test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDLib_h" = "yes" || enable_winejoystick_drv=${enable_winejoystick_drv:-no}
-
-if test "x$ALSA_LIBS$COREAUDIO_LIBS$PULSE_LIBS" = "x" -a \
-        "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes -a \
+if test "x$enable_winealsa_drv$enable_winecoreaudio_drv$enable_winepulse_drv$enable_wineoss_drv" = xnononono -a \
         "x$with_alsa$with_coreaudio$with_oss$with_pulse" != xnononono
 then
     as_fn_append wine_warnings "|No sound system was found. Windows applications will be silent."
