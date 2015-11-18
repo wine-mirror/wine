@@ -1622,6 +1622,50 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         0x00000010, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
         0x06000036, 0x001020f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_code_triangle_solid_bitmap[] =
+    {
+#if 0
+        float4 color;
+
+        float3x2 transform;
+        float opacity;
+        bool ignore_alpha;
+
+        SamplerState s;
+        Texture2D t;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            float2 texcoord;
+            float4 ret;
+
+            texcoord.x = position.x * transform._11 + position.y * transform._21 + transform._31;
+            texcoord.y = position.x * transform._12 + position.y * transform._22 + transform._32;
+            ret = t.Sample(s, texcoord) * opacity;
+            if (ignore_alpha)
+                ret.a = opacity;
+
+            return color * ret.a;
+        }
+#endif
+        0x43425844, 0x2260a2ae, 0x81907b3e, 0xcaf27063, 0xccb83ef2, 0x00000001, 0x00000208, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x0000016c, 0x00000040,
+        0x0000005b, 0x04000059, 0x00208e46, 0x00000000, 0x00000004, 0x0300005a, 0x00106000, 0x00000000,
+        0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0800000f, 0x00100012, 0x00000000,
+        0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000001, 0x08000000, 0x00100012, 0x00000000,
+        0x0010000a, 0x00000000, 0x0020802a, 0x00000000, 0x00000001, 0x0800000f, 0x00100042, 0x00000000,
+        0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000002, 0x08000000, 0x00100022, 0x00000000,
+        0x0010002a, 0x00000000, 0x0020802a, 0x00000000, 0x00000002, 0x09000045, 0x001000f2, 0x00000000,
+        0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x08000038, 0x00100012,
+        0x00000000, 0x0010003a, 0x00000000, 0x0020803a, 0x00000000, 0x00000002, 0x0b000037, 0x00100012,
+        0x00000000, 0x0020800a, 0x00000000, 0x00000003, 0x0020803a, 0x00000000, 0x00000002, 0x0010000a,
+        0x00000000, 0x08000038, 0x001020f2, 0x00000000, 0x00100006, 0x00000000, 0x00208e46, 0x00000000,
+        0x00000000, 0x0100003e,
+    };
     static const DWORD ps_code_triangle_bitmap[] =
     {
 #if 0
@@ -1805,6 +1849,8 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
     {
         {ps_code_triangle_solid, sizeof(ps_code_triangle_solid),
                 D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_SOLID, D2D_BRUSH_TYPE_COUNT},
+        {ps_code_triangle_solid_bitmap, sizeof(ps_code_triangle_solid_bitmap),
+            D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_SOLID, D2D_BRUSH_TYPE_BITMAP},
         {ps_code_triangle_bitmap, sizeof(ps_code_triangle_bitmap),
                 D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_BITMAP, D2D_BRUSH_TYPE_COUNT},
         {ps_code_triangle_bitmap_solid, sizeof(ps_code_triangle_bitmap_solid),
