@@ -481,7 +481,7 @@ static const char szExampleXML[] =
 "        <d>D1 field</d>\n"
 "        <description xmlns:foo='http://www.winehq.org' xmlns:bar='urn:uuid:86B2F87F-ACB6-45cd-8B77-9BDB92A01A29'>\n"
 "            <html xmlns='http://www.w3.org/1999/xhtml'>\n"
-"                This is<strong> a</strong>  <i>description</i><dot>. </dot><bar:x/>\n"
+"                <![CDATA[]]> This is<strong> a</strong>  <i>description</i><dot>. </dot><bar:x/>\n"
 "            </html>\n"
 "            <html xml:space='preserve' xmlns='http://www.w3.org/1999/xhtml'>\n"
 "                This is <strong>a</strong> <i>description</i> with preserved whitespace. <bar:x/>\n"
@@ -4163,7 +4163,9 @@ static inline void _check_ws_ignored(int line, IXMLDOMDocument2* doc, char const
     helper_expect_list_and_release(list, "E1.E5.E1.E2.D1 E2.E5.E1.E2.D1");
 
     helper_ole_check(IXMLDOMNode_get_childNodes(node1, &list));
-    helper_expect_list_and_release(list, "T1.E1.E5.E1.E2.D1 E2.E1.E5.E1.E2.D1 E3.E1.E5.E1.E2.D1 E4.E1.E5.E1.E2.D1 E5.E1.E5.E1.E2.D1");
+    helper_expect_list_and_release(list,
+            "[4]1.E1.E5.E1.E2.D1 T2.E1.E5.E1.E2.D1 E3.E1.E5.E1.E2.D1 "
+            "E4.E1.E5.E1.E2.D1 E5.E1.E5.E1.E2.D1 E6.E1.E5.E1.E2.D1");
     helper_ole_check(IXMLDOMNode_get_text(node1, &bstr));
     if (str)
     {
@@ -4171,7 +4173,7 @@ static inline void _check_ws_ignored(int line, IXMLDOMDocument2* doc, char const
     }
     else
     {
-        todo_wine helper_expect_bstr_and_release(bstr, "This is a description.");
+        todo_wine helper_expect_bstr_and_release(bstr, " This is a description.");
     }
     IXMLDOMNode_Release(node1);
 
@@ -4196,7 +4198,10 @@ static inline void _check_ws_preserved(int line, IXMLDOMDocument2* doc, char con
     helper_expect_list_and_release(list, "E2.E10.E2.E2.D1 E4.E10.E2.E2.D1");
 
     helper_ole_check(IXMLDOMNode_get_childNodes(node1, &list));
-    helper_expect_list_and_release(list, "T1.E2.E10.E2.E2.D1 E2.E2.E10.E2.E2.D1 T3.E2.E10.E2.E2.D1 E4.E2.E10.E2.E2.D1 E5.E2.E10.E2.E2.D1 E6.E2.E10.E2.E2.D1 T7.E2.E10.E2.E2.D1");
+    helper_expect_list_and_release(list,
+            "T1.E2.E10.E2.E2.D1 [4]2.E2.E10.E2.E2.D1 T3.E2.E10.E2.E2.D1 "
+            "E4.E2.E10.E2.E2.D1 T5.E2.E10.E2.E2.D1 E6.E2.E10.E2.E2.D1 "
+            "E7.E2.E10.E2.E2.D1 E8.E2.E10.E2.E2.D1 T9.E2.E10.E2.E2.D1");
     helper_ole_check(IXMLDOMNode_get_text(node1, &bstr));
     if (str)
     {
@@ -4204,7 +4209,7 @@ static inline void _check_ws_preserved(int line, IXMLDOMDocument2* doc, char con
     }
     else
     {
-        todo_wine helper_expect_bstr_and_release(bstr, "\n                This is a  description. \n            ");
+        todo_wine helper_expect_bstr_and_release(bstr, "\n                 This is a  description. \n            ");
     }
     IXMLDOMNode_Release(node1);
 
@@ -4311,8 +4316,8 @@ static void test_whitespace(void)
     ole_check(IXMLDOMDocument2_put_preserveWhiteSpace(doc2, VARIANT_FALSE));
 
     /* the trailing "\n            " isn't there, because it was ws-only node */
-    check_ws_ignored(doc1, "\n                This is a description. ");
-    check_ws_preserved(doc2, "This is a description.");
+    check_ws_ignored(doc1, " This is a description. ");
+    check_ws_preserved(doc2, " This is a description.");
 
     /* it takes effect on reload */
     ole_check(IXMLDOMDocument2_get_preserveWhiteSpace(doc1, &b));
@@ -4602,7 +4607,7 @@ if (0)
     ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_("//test:c"), &list));
     expect_list_and_release(list, "E3.E3.E2.D1 E3.E4.E2.D1");
     ole_check(IXMLDOMNode_selectNodes(elem1Node, _bstr_(".//test:x"), &list));
-    expect_list_and_release(list, "E5.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1");
+    expect_list_and_release(list, "E6.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1");
 
     /* SelectionNamespaces syntax error - the namespaces doesn't work anymore but the value is stored */
     ole_expect(IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionNamespaces"),
@@ -6894,7 +6899,7 @@ static const xslpattern_test_t xslpattern_test[] = {
 
 static const xslpattern_test_t xslpattern_test_no_ns[] = {
     /* prefixes don't need to be registered, you may use them as they are in the doc */
-    { "//bar:x", "E5.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1" },
+    { "//bar:x", "E6.E1.E5.E1.E2.D1 E6.E2.E5.E1.E2.D1" },
     /* prefixes must be explicitly specified in the name */
     { "//foo:elem", "" },
     { "//foo:c", "E3.E4.E2.D1" },
