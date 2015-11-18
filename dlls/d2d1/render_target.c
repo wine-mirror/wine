@@ -1663,6 +1663,66 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         0x00000000, 0x0020800a, 0x00000000, 0x00000002, 0x0020803a, 0x00000000, 0x00000001, 0x0010003a,
         0x00000000, 0x05000036, 0x00102072, 0x00000000, 0x00100246, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_code_triangle_bitmap_bitmap[] =
+    {
+#if 0
+        struct brush
+        {
+            float3x2 transform;
+            float opacity;
+            bool ignore_alpha;
+        } brush0, brush1;
+
+        SamplerState s0, s1;
+        Texture2D t0, t1;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            float2 texcoord;
+            float opacity;
+            float4 ret;
+
+            texcoord.x = position.x * brush0.transform._11 + position.y * brush0.transform._21 + brush0.transform._31;
+            texcoord.y = position.x * brush0.transform._12 + position.y * brush0.transform._22 + brush0.transform._32;
+            ret = t0.Sample(s0, texcoord) * brush0.opacity;
+            if (brush0.ignore_alpha)
+                ret.a = brush0.opacity;
+
+            texcoord.x = position.x * brush1.transform._11 + position.y * brush1.transform._21 + brush1.transform._31;
+            texcoord.y = position.x * brush1.transform._12 + position.y * brush1.transform._22 + brush1.transform._32;
+            opacity = t1.Sample(s1, texcoord).a * brush1.opacity;
+            if (brush1.ignore_alpha)
+                opacity = brush1.opacity;
+
+            return ret * opacity;
+        }
+#endif
+        0x43425844, 0x8eee6bfc, 0x57b72708, 0xa0f7c086, 0x867c11ec, 0x00000001, 0x00000310, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000274, 0x00000040,
+        0x0000009d, 0x04000059, 0x00208e46, 0x00000000, 0x00000006, 0x0300005a, 0x00106000, 0x00000000,
+        0x0300005a, 0x00106000, 0x00000001, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04001858,
+        0x00107000, 0x00000001, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065,
+        0x001020f2, 0x00000000, 0x02000068, 0x00000002, 0x0800000f, 0x00100012, 0x00000000, 0x00101046,
+        0x00000000, 0x00208046, 0x00000000, 0x00000003, 0x08000000, 0x00100012, 0x00000000, 0x0010000a,
+        0x00000000, 0x0020802a, 0x00000000, 0x00000003, 0x0800000f, 0x00100042, 0x00000000, 0x00101046,
+        0x00000000, 0x00208046, 0x00000000, 0x00000004, 0x08000000, 0x00100022, 0x00000000, 0x0010002a,
+        0x00000000, 0x0020802a, 0x00000000, 0x00000004, 0x09000045, 0x001000f2, 0x00000000, 0x00100046,
+        0x00000000, 0x00107e46, 0x00000001, 0x00106000, 0x00000001, 0x08000038, 0x00100012, 0x00000000,
+        0x0010003a, 0x00000000, 0x0020803a, 0x00000000, 0x00000004, 0x0b000037, 0x00100012, 0x00000000,
+        0x0020800a, 0x00000000, 0x00000005, 0x0020803a, 0x00000000, 0x00000004, 0x0010000a, 0x00000000,
+        0x0800000f, 0x00100022, 0x00000000, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000000,
+        0x08000000, 0x00100012, 0x00000001, 0x0010001a, 0x00000000, 0x0020802a, 0x00000000, 0x00000000,
+        0x0800000f, 0x00100022, 0x00000000, 0x00101046, 0x00000000, 0x00208046, 0x00000000, 0x00000001,
+        0x08000000, 0x00100022, 0x00000001, 0x0010001a, 0x00000000, 0x0020802a, 0x00000000, 0x00000001,
+        0x09000045, 0x001000f2, 0x00000001, 0x00100046, 0x00000001, 0x00107e46, 0x00000000, 0x00106000,
+        0x00000000, 0x08000038, 0x001000f2, 0x00000001, 0x00100e46, 0x00000001, 0x00208ff6, 0x00000000,
+        0x00000001, 0x0b000037, 0x00100082, 0x00000001, 0x0020800a, 0x00000000, 0x00000002, 0x0020803a,
+        0x00000000, 0x00000001, 0x0010003a, 0x00000001, 0x07000038, 0x001020f2, 0x00000000, 0x00100006,
+        0x00000000, 0x00100e46, 0x00000001, 0x0100003e,
+    };
     /* The basic idea here is to evaluate the implicit form of the curve in
      * texture space. "t.z" determines which side of the curve is shaded. */
     static const DWORD ps_code_bezier_solid[] =
@@ -1688,6 +1748,25 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         0x07000038, 0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x0010102a, 0x00000001, 0x07000031,
         0x00100012, 0x00000000, 0x0010000a, 0x00000000, 0x00004001, 0x00000000, 0x0304000d, 0x0010000a,
         0x00000000, 0x06000036, 0x001020f2, 0x00000000, 0x00208e46, 0x00000000, 0x00000000, 0x0100003e,
+    };
+    static const struct brush_shader
+    {
+        const void *byte_code;
+        size_t byte_code_size;
+        enum d2d_shape_type shape_type;
+        enum d2d_brush_type brush_type;
+        enum d2d_brush_type opacity_brush_type;
+    }
+    brush_shaders[] =
+    {
+        {ps_code_triangle_solid, sizeof(ps_code_triangle_solid),
+                D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_SOLID, D2D_BRUSH_TYPE_COUNT},
+        {ps_code_triangle_bitmap, sizeof(ps_code_triangle_bitmap),
+                D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_BITMAP, D2D_BRUSH_TYPE_COUNT},
+        {ps_code_triangle_bitmap_bitmap, sizeof(ps_code_triangle_bitmap_bitmap),
+                D2D_SHAPE_TYPE_TRIANGLE, D2D_BRUSH_TYPE_BITMAP, D2D_BRUSH_TYPE_BITMAP},
+        {ps_code_bezier_solid, sizeof(ps_code_bezier_solid),
+                D2D_SHAPE_TYPE_BEZIER, D2D_BRUSH_TYPE_SOLID, D2D_BRUSH_TYPE_COUNT},
     };
     static const struct
     {
@@ -1784,28 +1863,16 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         goto err;
     }
 
-    if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
-            ps_code_triangle_solid, sizeof(ps_code_triangle_solid),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].ps[D2D_BRUSH_TYPE_SOLID][D2D_BRUSH_TYPE_COUNT])))
+    for (i = 0; i < sizeof(brush_shaders) / sizeof(*brush_shaders); ++i)
     {
-        WARN("Failed to create triangle/solid pixel shader, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
-            ps_code_triangle_bitmap, sizeof(ps_code_triangle_bitmap),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_TRIANGLE].ps[D2D_BRUSH_TYPE_BITMAP][D2D_BRUSH_TYPE_COUNT])))
-    {
-        WARN("Failed to create triangle/bitmap pixel shader, hr %#x.\n", hr);
-        goto err;
-    }
-
-    if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device,
-            ps_code_bezier_solid, sizeof(ps_code_bezier_solid),
-            &render_target->shape_resources[D2D_SHAPE_TYPE_BEZIER].ps[D2D_BRUSH_TYPE_SOLID][D2D_BRUSH_TYPE_COUNT])))
-    {
-        WARN("Failed to create bezier/solid pixel shader, hr %#x.\n", hr);
-        goto err;
+        const struct brush_shader *bs = &brush_shaders[i];
+        if (FAILED(hr = ID3D10Device_CreatePixelShader(render_target->device, bs->byte_code, bs->byte_code_size,
+                &render_target->shape_resources[bs->shape_type].ps[bs->brush_type][bs->opacity_brush_type])))
+        {
+            WARN("Failed to create pixel shader for shape type %#x and brush types %#x/%#x.\n",
+                    bs->shape_type, bs->brush_type, bs->opacity_brush_type);
+            goto err;
+        }
     }
 
     buffer_desc.ByteWidth = sizeof(indices);
