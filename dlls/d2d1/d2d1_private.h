@@ -85,6 +85,7 @@ struct d2d_d3d_render_target
     struct d2d_error_state error;
     D2D1_DRAWING_STATE_DESCRIPTION drawing_state;
     IDWriteRenderingParams *text_rendering_params;
+    IDWriteRenderingParams *default_text_rendering_params;
 
     D2D1_PIXEL_FORMAT format;
     D2D1_SIZE_U pixel_size;
