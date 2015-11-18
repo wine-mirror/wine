@@ -1950,6 +1950,10 @@ if exist baz\lala (echo file created in read-only dir) else echo file not create
 cd .. & rd /s/q foobar
 
 echo ------------ Testing assoc ------------
+rem Modifying associations requires some privileges...
+net session >nul 2>&1
+if errorlevel 1 goto :SkipAssoc
+
 rem FIXME Can't test error messages in the current test system, so we have to use some kludges
 rem FIXME Revise once || conditional execution is fixed
 mkdir foobar & cd foobar
@@ -1978,8 +1982,25 @@ cmd /c tmp.cmd > baz
 type baz
 echo ---
 cd .. & rd /s/q foobar
+goto ContinueFType
+:SkipAssoc
+echo --- setting association
+echo ---
+echo .foo=bar
+echo .foo=bar
+echo +++
+echo .foo=bar
+echo --- resetting association
+echo ---
+echo +++
+echo ---
 
+
+:ContinueFType
 echo ------------ Testing ftype ------------
+rem Modifying associations requires some privileges...
+net session >nul 2>&1
+if errorlevel 1 goto :SkipFType
 rem FIXME Can't test error messages in the current test system, so we have to use some kludges
 rem FIXME Revise once || conditional execution is fixed
 mkdir foobar & cd foobar
@@ -2020,7 +2041,19 @@ regedit /s regCleanup.reg
 set WINE_FOO=
 endlocal
 cd .. & rd /s/q foobar
+goto ContinueCall
+:SkipFType
+echo --- setting association
+echo ---
+echo footype=foo_opencmd
+echo .foo=footype
+echo footype=foo_opencmd
+echo +++
+echo footype=foo_opencmd
+echo --- resetting association
+echo original value
 
+:ContinueCall
 echo ------------ Testing CALL ------------
 mkdir foobar & cd foobar
 echo --- external script
