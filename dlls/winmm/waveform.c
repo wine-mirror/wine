@@ -2629,6 +2629,7 @@ UINT WINAPI waveOutGetDevCapsA(UINT_PTR uDeviceID, LPWAVEOUTCAPSA lpCaps,
 	wocA.dwFormats      = wocW.dwFormats;
 	wocA.wChannels      = wocW.wChannels;
 	wocA.dwSupport      = wocW.dwSupport;
+	wocA.wReserved1     = 0;
 	memcpy(lpCaps, &wocA, min(uSize, sizeof(wocA)));
     }
     return ret;
@@ -3354,6 +3355,7 @@ UINT WINAPI waveInGetDevCapsA(UINT_PTR uDeviceID, LPWAVEINCAPSA lpCaps, UINT uSi
                              sizeof(wicA.szPname), NULL, NULL );
 	wicA.dwFormats      = wicW.dwFormats;
 	wicA.wChannels      = wicW.wChannels;
+	wicA.wReserved1     = 0;
 	memcpy(lpCaps, &wicA, min(uSize, sizeof(wicA)));
     }
     return ret;

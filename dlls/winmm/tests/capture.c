@@ -316,6 +316,7 @@ static void wave_in_test_device(UINT_PTR device)
     GetSystemInfo(&sSysInfo);
     dwPageSize = sSysInfo.dwPageSize;
 
+    memset(&capsA, 0xff, sizeof(capsA));
     rc=waveInGetDevCapsA(device,&capsA,sizeof(capsA));
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_BADDEVICEID ||
        rc==MMSYSERR_NODRIVER,
@@ -323,11 +324,14 @@ static void wave_in_test_device(UINT_PTR device)
        dev_name(device),wave_in_error(rc));
     if (rc==MMSYSERR_BADDEVICEID || rc==MMSYSERR_NODRIVER)
         return;
+    ok(capsA.wReserved1 != 0xffff, "got %u\n", capsA.wReserved1);
 
+    memset(&capsW, 0xcc, sizeof(capsW));
     rc=waveInGetDevCapsW(device,&capsW,sizeof(capsW));
     ok(rc==MMSYSERR_NOERROR || rc==MMSYSERR_NOTSUPPORTED,
        "waveInGetDevCapsW(%s): MMSYSERR_NOERROR or MMSYSERR_NOTSUPPORTED "
        "expected, got %s\n",dev_name(device),wave_in_error(rc));
+    ok(capsW.wReserved1 == 0, "got %u\n", capsW.wReserved1);
 
     rc=waveInGetDevCapsA(device,NULL,sizeof(capsA));
     ok(rc==MMSYSERR_INVALPARAM,
