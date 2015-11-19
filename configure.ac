@@ -1650,7 +1650,9 @@ if test "x$ac_cv_lib_openal" = xyes
 then
     AC_CACHE_CHECK([for openal-soft], ac_cv_have_openalsoft,
         AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-            [[#include <AL/alext.h>
+            [[#include <AL/al.h>
+#include <AL/alc.h>
+#include <AL/alext.h>
 LPALCRENDERSAMPLESSOFT x;]])],[ac_cv_have_openalsoft=yes],[ac_cv_have_openalsoft=no]))
 fi
 if test "x$ac_cv_have_openalsoft" != xyes

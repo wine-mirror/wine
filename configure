@@ -13694,6 +13694,8 @@ if ${ac_cv_have_openalsoft+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+#include <AL/al.h>
+#include <AL/alc.h>
 #include <AL/alext.h>
 LPALCRENDERSAMPLESSOFT x;
 int
