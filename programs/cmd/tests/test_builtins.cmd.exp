@@ -331,7 +331,7 @@ N
 @todo_wine@'@drive@@shortpath@ABCDEFGHIJK.LMNOP'@or_broken@''
 ''@or_broken@'%~ai'
 ''@or_broken@'%~ai'
-'--a------'@or_broken@'%~ai'
+'--a------'@or_broken@'--a--------'@or_broken@'%~ai'
 '5'@or_broken@'%~zi'
 ''@or_broken@'%~ti'
 ''@or_broken@'%~ti'
