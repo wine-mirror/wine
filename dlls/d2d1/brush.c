@@ -860,8 +860,7 @@ HRESULT d2d_brush_get_ps_cb(struct d2d_brush *brush, struct d2d_brush *opacity_b
         HeapFree(GetProcessHeap(), 0, cb_data);
         return E_NOTIMPL;
     }
-    cb_data += brush_sizes[brush->type];
-    if (opacity_brush && !d2d_brush_fill_cb(opacity_brush, render_target, cb_data))
+    if (opacity_brush && !d2d_brush_fill_cb(opacity_brush, render_target, cb_data + brush_sizes[brush->type]))
     {
         HeapFree(GetProcessHeap(), 0, cb_data);
         return E_NOTIMPL;
