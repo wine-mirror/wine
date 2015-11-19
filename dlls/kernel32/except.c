@@ -192,7 +192,8 @@ static BOOL	start_debugger(PEXCEPTION_POINTERS epointers, HANDLE hEvent)
     BOOL		ret = FALSE;
     char 		buffer[256];
 
-    static const WCHAR AeDebugW[] = {'M','a','c','h','i','n','e','\\',
+    static const WCHAR AeDebugW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                     'M','a','c','h','i','n','e','\\',
                                      'S','o','f','t','w','a','r','e','\\',
                                      'M','i','c','r','o','s','o','f','t','\\',
                                      'W','i','n','d','o','w','s',' ','N','T','\\',

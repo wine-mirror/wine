@@ -100,11 +100,11 @@ static void create_scsi_entry( PSCSI_ADDRESS scsi_addr, LPCSTR lpDriver, UINT uD
     HANDLE lunKey;
     DWORD disp;
 
-    if (create_key( 0, "Machine\\HARDWARE\\DEVICEMAP", &scsiKey, &disp )) return;
+    if (create_key( 0, "\\Registry\\Machine\\HARDWARE\\DEVICEMAP", &scsiKey, &disp )) return;
     NtClose( scsiKey );
 
     /* Ensure there is Scsi key */
-    if (create_key( 0, "Machine\\HARDWARE\\DEVICEMAP\\Scsi", &scsiKey, &disp )) return;
+    if (create_key( 0, "\\Registry\\Machine\\HARDWARE\\DEVICEMAP\\Scsi", &scsiKey, &disp )) return;
 
     snprintf(buffer,sizeof(buffer),"Scsi Port %d",scsi_addr->PortNumber);
     if (create_key( scsiKey, buffer, &portKey, &disp )) return;
@@ -398,7 +398,7 @@ void convert_old_config(void)
     DWORD disp;
 
     /* create some hardware keys (FIXME: should not be done here) */
-    if (create_key( 0, "Machine\\HARDWARE", &key, &disp )) return;
+    if (create_key( 0, "\\Registry\\Machine\\HARDWARE", &key, &disp )) return;
     NtClose( key );
     if (disp != REG_OPENED_EXISTING_KEY) create_hardware_branch();
 }

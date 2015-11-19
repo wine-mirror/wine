@@ -62,13 +62,13 @@ static const union cptable *mac_cptable;
 static const union cptable *unix_cptable;  /* NULL if UTF8 */
 
 static const WCHAR szLocaleKeyName[] = {
-    'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+    '\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
     'C','o','n','t','r','o','l','\\','N','l','s','\\','L','o','c','a','l','e',0
 };
 
 static const WCHAR szLangGroupsKeyName[] = {
-    'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+    '\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
     'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
     'C','o','n','t','r','o','l','\\','N','l','s','\\',
     'L','a','n','g','u','a','g','e',' ','G','r','o','u','p','s',0
@@ -875,7 +875,7 @@ void LOCALE_InitRegistry(void)
     if (locale_update_registry( hkey, lc_ctypeW, lcid_LC_CTYPE, NULL, 0 ))
     {
         static const WCHAR codepageW[] =
-            {'M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
+            {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\','S','y','s','t','e','m','\\',
              'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
              'C','o','n','t','r','o','l','\\','N','l','s','\\','C','o','d','e','p','a','g','e',0};
 

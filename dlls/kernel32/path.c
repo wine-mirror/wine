@@ -120,7 +120,8 @@ static BOOL add_boot_rename_entry( LPCWSTR source, LPCWSTR dest, DWORD flags )
     static const WCHAR ValueName[] = {'P','e','n','d','i','n','g',
                                       'F','i','l','e','R','e','n','a','m','e',
                                       'O','p','e','r','a','t','i','o','n','s',0};
-    static const WCHAR SessionW[] = {'M','a','c','h','i','n','e','\\',
+    static const WCHAR SessionW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                     'M','a','c','h','i','n','e','\\',
                                      'S','y','s','t','e','m','\\',
                                      'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
                                      'C','o','n','t','r','o','l','\\',

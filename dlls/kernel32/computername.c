@@ -50,7 +50,8 @@
 WINE_DEFAULT_DEBUG_CHANNEL(computername);
 
 /* Registry key and value names */
-static const WCHAR ComputerW[] = {'M','a','c','h','i','n','e','\\',
+static const WCHAR ComputerW[] = {'\\','R','e','g','i','s','t','r','y','\\',
+                                  'M','a','c','h','i','n','e','\\',
                                   'S','y','s','t','e','m','\\',
                                   'C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t','\\',
                                   'C','o','n','t','r','o','l','\\',
