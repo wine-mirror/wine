@@ -1055,12 +1055,12 @@
 @ stdcall RtlInitUnicodeString(ptr wstr) ntdll.RtlInitUnicodeString
 @ stdcall RtlInitializeBitMap(ptr long long) ntdll.RtlInitializeBitMap
 @ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr) ntdll.RtlInitializeGenericTable
-@ stub RtlInitializeGenericTableAvl
+@ stdcall RtlInitializeGenericTableAvl(ptr ptr ptr ptr ptr) ntdll.RtlInitializeGenericTableAvl
 @ stub RtlInitializeRangeList
 @ stdcall RtlInitializeSid(ptr ptr long) ntdll.RtlInitializeSid
 @ stub RtlInitializeUnicodePrefix
 @ stub RtlInsertElementGenericTable
-@ stub RtlInsertElementGenericTableAvl
+@ stdcall RtlInsertElementGenericTableAvl(ptr ptr long ptr) ntdll.RtlInsertElementGenericTableAvl
 @ stub RtlInsertElementGenericTableFull
 @ stub RtlInsertElementGenericTableFullAvl
 @ stub RtlInsertUnicodePrefix

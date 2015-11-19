@@ -45,6 +45,7 @@
 #include "wine/unicode.h"
 #include "ntdll_misc.h"
 #include "inaddr.h"
+#include "ddk/ntddk.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
@@ -1594,4 +1595,21 @@ void WINAPI RtlGetCurrentProcessorNumberEx(PROCESSOR_NUMBER *processor)
     processor->Group = 0;
     processor->Number = NtGetCurrentProcessorNumber();
     processor->Reserved = 0;
+}
+
+/***********************************************************************
+ *           RtlInitializeGenericTableAvl  (NTDLL.@)
+ */
+void WINAPI RtlInitializeGenericTableAvl(PRTL_AVL_TABLE table, PRTL_AVL_COMPARE_ROUTINE compare,
+                                         PRTL_AVL_ALLOCATE_ROUTINE allocate, PRTL_AVL_FREE_ROUTINE free, void *context)
+{
+    FIXME("%p %p %p %p %p: stub\n", table, compare, allocate, free, context);
+}
+
+/***********************************************************************
+ *           RtlInsertElementGenericTableAvl  (NTDLL.@)
+ */
+void WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE table, void *buffer, ULONG size, BOOL *element)
+{
+    FIXME("%p %p %u %p: stub\n", table, buffer, size, element);
 }

@@ -686,7 +686,7 @@
 @ stdcall RtlInitializeCriticalSectionAndSpinCount(ptr long)
 @ stdcall RtlInitializeCriticalSectionEx(ptr long long)
 @ stdcall RtlInitializeGenericTable(ptr ptr ptr ptr ptr)
-# @ stub RtlInitializeGenericTableAvl
+@ stdcall RtlInitializeGenericTableAvl(ptr ptr ptr ptr ptr)
 @ stdcall RtlInitializeHandleTable(long long ptr)
 @ stub RtlInitializeRXact
 # @ stub RtlInitializeRangeList
@@ -696,7 +696,7 @@
 @ stdcall RtlInitializeSid(ptr ptr long)
 # @ stub RtlInitializeStackTraceDataBase
 @ stub RtlInsertElementGenericTable
-# @ stub RtlInsertElementGenericTableAvl
+@ stdcall RtlInsertElementGenericTableAvl(ptr ptr long ptr)
 @ cdecl -arch=x86_64 RtlInstallFunctionTableCallback(long long long ptr ptr wstr)
 @ stdcall RtlInt64ToUnicodeString(int64 long ptr)
 @ stdcall RtlIntegerToChar(long long long ptr)

@@ -149,6 +149,43 @@ typedef struct _KWAIT_BLOCK {
     USHORT WaitType;
 } KWAIT_BLOCK, *PKWAIT_BLOCK, *RESTRICTED_POINTER PRKWAIT_BLOCK;
 
+typedef struct _RTL_BALANCED_LINKS {
+    struct _RTL_BALANCED_LINKS *Parent;
+    struct _RTL_BALANCED_LINKS *LeftChild;
+    struct _RTL_BALANCED_LINKS *RightChild;
+    CHAR Balance;
+    UCHAR Reserved[3];
+} RTL_BALANCED_LINKS;
+typedef RTL_BALANCED_LINKS *PRTL_BALANCED_LINKS;
+
+struct _RTL_AVL_TABLE;
+
+typedef enum _RTL_GENERIC_COMPARE_RESULTS {
+    GenericLessThan,
+    GenericGreaterThan,
+    GenericEqual
+} RTL_GENERIC_COMPARE_RESULTS;
+
+typedef RTL_GENERIC_COMPARE_RESULTS (WINAPI *PRTL_AVL_COMPARE_ROUTINE)(struct _RTL_AVL_TABLE *, void *, void *);
+
+typedef void (WINAPI *PRTL_AVL_ALLOCATE_ROUTINE)(struct _RTL_AVL_TABLE *, LONG);
+
+typedef void (WINAPI *PRTL_AVL_FREE_ROUTINE )(struct _RTL_AVL_TABLE *, void *buffer);
+
+typedef struct _RTL_AVL_TABLE {
+    RTL_BALANCED_LINKS BalancedRoot;
+    void *OrderedPointer;
+    ULONG WhichOrderedElement;
+    ULONG NumberGenericTableElements;
+    ULONG DepthOfTree;
+    PRTL_BALANCED_LINKS RestartKey;
+    ULONG DeleteCount;
+    PRTL_AVL_COMPARE_ROUTINE CompareRoutine;
+    PRTL_AVL_ALLOCATE_ROUTINE AllocateRoutine;
+    PRTL_AVL_FREE_ROUTINE FreeRoutine;
+    void *TableContext;
+} RTL_AVL_TABLE, *PRTL_AVL_TABLE;
+
 typedef VOID (WINAPI *PDRIVER_NOTIFICATION_CALLBACK_ROUTINE)(PVOID,PVOID);
 typedef VOID (WINAPI *PDRIVER_REINITIALIZE)(PDRIVER_OBJECT,PVOID,ULONG);
 typedef VOID (WINAPI *PLOAD_IMAGE_NOTIFY_ROUTINE)(PUNICODE_STRING,HANDLE,PIMAGE_INFO);
@@ -160,5 +197,7 @@ NTSTATUS  WINAPI IoQueryDeviceDescription(PINTERFACE_TYPE,PULONG,PCONFIGURATION_
 void      WINAPI IoRegisterDriverReinitialization(PDRIVER_OBJECT,PDRIVER_REINITIALIZE,PVOID);
 NTSTATUS  WINAPI IoRegisterShutdownNotification(PDEVICE_OBJECT);
 NTSTATUS  WINAPI PsSetLoadImageNotifyRoutine(PLOAD_IMAGE_NOTIFY_ROUTINE);
+void      WINAPI RtlInitializeGenericTableAvl(PRTL_AVL_TABLE,PRTL_AVL_COMPARE_ROUTINE,PRTL_AVL_ALLOCATE_ROUTINE, PRTL_AVL_FREE_ROUTINE,void *);
+void      WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE,void *,ULONG,BOOL*);
 
 #endif
