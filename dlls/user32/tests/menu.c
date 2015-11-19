@@ -3789,6 +3789,8 @@ static void test_AppendMenu(void)
     mii.cbSize = sizeof(mii);
     mii.fMask = MIIM_SUBMENU;
     mii.hSubMenu = (HMENU)204;
+    /* make sure the menu handle is truly invalid */
+    while (IsMenu( mii.hSubMenu )) mii.hSubMenu = (HMENU)((ULONG_PTR)mii.hSubMenu + 1);
     ret = InsertMenuItemA(hmenu, 0, TRUE, &mii);
     ok(!ret, "InsertMenuItem should fail\n");
     ret = SetMenuItemInfoA(hmenu, 0, TRUE, &mii);
