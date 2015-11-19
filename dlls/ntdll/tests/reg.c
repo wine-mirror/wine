@@ -340,6 +340,7 @@ static void test_NtOpenKey(void)
     NTSTATUS status;
     OBJECT_ATTRIBUTES attr;
     ACCESS_MASK am = KEY_READ;
+    UNICODE_STRING str;
 
     /* All NULL */
     status = pNtOpenKey(NULL, 0, NULL);
@@ -360,6 +361,27 @@ static void test_NtOpenKey(void)
     attr.Length *= 2;
     status = pNtOpenKey(&key, am, &attr);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
+
+    /* Calling without parent key requres full registry path. */
+    pRtlCreateUnicodeStringFromAsciiz( &str, "Machine" );
+    InitializeObjectAttributes(&attr, &str, 0, 0, 0);
+    status = pNtOpenKey(&key, KEY_READ, &attr);
+    todo_wine ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtOpenKey Failed: 0x%08x\n", status);
+    if (!status)
+        pNtClose(key);
+
+    /* Open is case sensitive unless OBJ_CASE_INSENSITIVE is specified. */
+    pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\Machine" );
+    status = pNtOpenKey(&key, KEY_READ, &attr);
+    todo_wine ok(status == STATUS_OBJECT_PATH_NOT_FOUND, "NtOpenKey Failed: 0x%08x\n", status);
+    if (!status)
+        pNtClose(key);
+
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    status = pNtOpenKey(&key, KEY_READ, &attr);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    if (!status)
+        pNtClose(key);
 
     if (!pNtOpenKeyEx)
     {
