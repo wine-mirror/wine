@@ -1964,7 +1964,11 @@ static void test_iconsize(void)
 static void test_create_destroy(void)
 {
     HIMAGELIST himl;
+    IImageList *imgl;
+    INT cx, cy;
     BOOL rc;
+    HRESULT hr;
+    INT ret;
 
     /* list with zero or negative image dimensions */
     himl = ImageList_Create(0, 0, ILC_COLOR16, 0, 3);
@@ -1984,6 +1988,46 @@ static void test_create_destroy(void)
 
     rc = ImageList_Destroy((HIMAGELIST)0xdeadbeef);
     ok(rc == FALSE, "ImageList_Destroy(0xdeadbeef) should fail and not crash\n");
+
+    /* DDB image lists */
+    himl = ImageList_Create(0, 14, ILC_COLORDDB, 4, 4);
+    ok(himl != NULL, "got %p\n", himl);
+    imgl = (IImageList*)himl;
+    IImageList_GetIconSize(imgl, &cx, &cy);
+    ok (cx == 0, "Wrong cx (%i)\n", cx);
+    ok (cy == 14, "Wrong cy (%i)\n", cy);
+    ImageList_Destroy(himl);
+
+    himl = ImageList_Create(0, 0, ILC_COLORDDB, 4, 4);
+    ok(himl != NULL, "got %p\n", himl);
+    imgl = (IImageList*)himl;
+    IImageList_GetIconSize(imgl, &cx, &cy);
+    ok (cx == 0, "Wrong cx (%i)\n", cx);
+    ok (cy == 0, "Wrong cy (%i)\n", cy);
+    ImageList_Destroy(himl);
+
+    himl = ImageList_Create(0, 0, ILC_COLORDDB, 0, 4);
+    ok(himl != NULL, "got %p\n", himl);
+    imgl = (IImageList*)himl;
+    IImageList_GetIconSize(imgl, &cx, &cy);
+    ok (cx == 0, "Wrong cx (%i)\n", cx);
+    ok (cy == 0, "Wrong cy (%i)\n", cy);
+
+    hr = IImageList_SetImageCount(imgl, 3);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IImageList_GetImageCount(imgl, &ret);
+    ok(hr == S_OK && ret == 3, "invalid image count after increase\n");
+
+    /* Trying to actually add an image causes a crash on Windows */
+    ImageList_Destroy(himl);
+
+    /* Negative values fail */
+    himl = ImageList_Create(-1, -1, ILC_COLORDDB, 4, 4);
+    ok(himl == NULL, "got %p\n", himl);
+    himl = ImageList_Create(-1, 1, ILC_COLORDDB, 4, 4);
+    ok(himl == NULL, "got %p\n", himl);
+    himl = ImageList_Create(1, -1, ILC_COLORDDB, 4, 4);
+    ok(himl == NULL, "got %p\n", himl);
 }
 
 static void test_IImageList_Clone(void)

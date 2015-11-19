@@ -776,7 +776,8 @@ ImageList_Create (INT cx, INT cy, UINT flags,
 
     TRACE("(%d %d 0x%x %d %d)\n", cx, cy, flags, cInitial, cGrow);
 
-    if (cx <= 0 || cy <= 0) return NULL;
+    if (cx < 0 || cy < 0) return NULL;
+    if (!((flags&ILC_COLORDDB) == ILC_COLORDDB) && (cx == 0 || cy == 0)) return NULL;
 
     /* Create the IImageList interface for the image list */
     if (FAILED(ImageListImpl_CreateInstance(NULL, &IID_IImageList, (void **)&himl)))
@@ -1830,8 +1831,6 @@ BOOL WINAPI
 ImageList_GetIconSize (HIMAGELIST himl, INT *cx, INT *cy)
 {
     if (!is_valid(himl) || !cx || !cy)
-	return FALSE;
-    if ((himl->cx <= 0) || (himl->cy <= 0))
 	return FALSE;
 
     *cx = himl->cx;
