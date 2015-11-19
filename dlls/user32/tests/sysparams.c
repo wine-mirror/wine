@@ -1552,10 +1552,10 @@ static void test_SPI_SETNONCLIENTMETRICS( void )               /*     44 */
     ok( Ncmcur.iSmCaptionHeight == expect,
         "SmCaptionHeight: %d expected %d\n", Ncmcur.iSmCaptionHeight, expect);
 
-    ok( Ncmcur.iCaptionWidth == 8 ||
-        Ncmcur.iCaptionWidth == 12 || /* Vista, W7b */
+    /* iCaptionWidth depends on a version, could be 8, 12 (Vista, Win7), 13 */
+    ok( (Ncmcur.iCaptionWidth >= 8 && Ncmcur.iCaptionWidth <= 13) ||
         Ncmcur.iCaptionWidth == Ncmstart.iCaptionWidth, /* with windows XP theme,  the value never changes */
-        "CaptionWidth: %d expected 8, 12 or %d\n", Ncmcur.iCaptionWidth, Ncmstart.iCaptionWidth);
+        "CaptionWidth: %d expected from [8, 13] or %d\n", Ncmcur.iCaptionWidth, Ncmstart.iCaptionWidth);
     ok( Ncmcur.iScrollWidth == 8,
         "ScrollWidth: %d expected 8\n", Ncmcur.iScrollWidth);
     ok( Ncmcur.iScrollHeight == 8,
