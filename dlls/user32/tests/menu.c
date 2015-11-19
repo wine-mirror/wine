@@ -405,6 +405,191 @@ static void test_getmenubarinfo(void)
     DestroyWindow(hwnd);
 }
 
+static void test_system_menu(void)
+{
+    WCHAR testW[] = {'t','e','s','t',0};
+    BOOL ret;
+    HMENU menu;
+    HWND hwnd;
+    MENUITEMINFOA info;
+    MENUITEMINFOW infoW;
+    char buffer[80];
+    char found[0x200];
+    int i, res;
+
+    hwnd = CreateWindowExA(0, (LPCSTR)MAKEINTATOM(atomMenuCheckClass), NULL,
+                           WS_SYSMENU | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 100, 100,
+                           NULL, NULL, NULL, NULL);
+    ok(hwnd != NULL, "CreateWindowEx failed with error %d\n", GetLastError());
+    menu = GetSystemMenu( hwnd, FALSE );
+    ok( menu != NULL, "no system menu\n" );
+
+    for (i = 0xf000; i < 0xf200; i++)
+    {
+        memset( &info, 0xcc, sizeof(info) );
+        info.cbSize = sizeof(info);
+        info.fMask = MIIM_STRING | MIIM_FTYPE | MIIM_ID;
+        info.dwTypeData = buffer;
+        info.cch = sizeof( buffer );
+        ret = GetMenuItemInfoA( menu, i, FALSE, &info );
+        if (ret) trace( "found %x: '%s'\n", i, buffer );
+        switch (i)
+        {
+        case SC_RESTORE:
+        case SC_SIZE:
+        case SC_MOVE:
+        case SC_MINIMIZE:
+        case SC_MAXIMIZE:
+        case SC_CLOSE:
+            ok( ret, "%x menu item not found\n", i );
+            break;
+        case SC_SCREENSAVE+1:  /* used for the 'About Wine' entry, don't test */
+            break;
+        default:
+            ok( !ret, "%x menu item found\n", i );
+            break;
+        }
+        found[i - 0xf000] = ret;
+    }
+
+    for (i = 0xf000; i < 0xf200; i++)
+    {
+        res = CheckMenuItem( menu, i, 0 );
+        if (res == -1) ok( !found[i - 0xf000], "could not check existent item %x\n", i );
+        else ok( found[i - 0xf000], "could check non-existent item %x\n", i );
+
+        res = EnableMenuItem( menu, i, 0 );
+        if (res == -1) ok( !found[i - 0xf000], "could not enable existent item %x\n", i );
+        else ok( found[i - 0xf000], "could enable non-existent item %x\n", i );
+
+        res = GetMenuState( menu, i, 0 );
+        if (res == -1) ok( !found[i - 0xf000], "could not get state existent item %x\n", i );
+        else ok( found[i - 0xf000], "could get state of non-existent item %x\n", i );
+
+        if (!found[i - 0xf000])  /* don't remove the existing ones */
+        {
+            ret = RemoveMenu( menu, i, 0 );
+            ok( !ret, "could remove non-existent item %x\n", i );
+        }
+
+        ret = ModifyMenuA( menu, i, 0, i, "test" );
+        if (i == SC_TASKLIST) ok( ret, "failed to modify SC_TASKLIST\n" );
+        else if (!ret) ok( !found[i - 0xf000], "could not modify existent item %x\n", i );
+        else ok( found[i - 0xf000], "could modify non-existent item %x\n", i );
+
+        ret = ModifyMenuW( menu, i, 0, i, testW );
+        if (i == SC_TASKLIST) ok( ret, "failed to modify SC_TASKLIST\n" );
+        else if (!ret) ok( !found[i - 0xf000], "could not modify existent item %x\n", i );
+        else ok( found[i - 0xf000], "could modify non-existent item %x\n", i );
+
+        ret = ModifyMenuA( menu, i, MF_BYPOSITION, i, "test" );
+        ok( !ret, "could modify non-existent item %x\n", i );
+
+        strcpy( buffer, "test" );
+        memset( &info, 0xcc, sizeof(info) );
+        info.cbSize = sizeof(info);
+        info.fMask = MIIM_STRING | MIIM_ID;
+        info.wID = i;
+        info.dwTypeData = buffer;
+        info.cch = strlen( buffer );
+        ret = SetMenuItemInfoA( menu, i, FALSE, &info );
+        if (i == SC_TASKLIST) ok( ret, "failed to set SC_TASKLIST\n" );
+        else if (!ret) ok( !found[i - 0xf000], "could not set existent item %x\n", i );
+        else ok( found[i - 0xf000], "could set non-existent item %x\n", i );
+        ret = SetMenuItemInfoA( menu, i, TRUE, &info );
+        ok( !ret, "could modify non-existent item %x\n", i );
+
+        memset( &infoW, 0xcc, sizeof(infoW) );
+        infoW.cbSize = sizeof(infoW);
+        infoW.fMask = MIIM_STRING | MIIM_ID;
+        infoW.wID = i;
+        infoW.dwTypeData = testW;
+        infoW.cch = lstrlenW( testW );
+        ret = SetMenuItemInfoW( menu, i, FALSE, &infoW );
+        if (i == SC_TASKLIST) ok( ret, "failed to set SC_TASKLIST\n" );
+        else if (!ret) ok( !found[i - 0xf000], "could not set existent item %x\n", i );
+        else ok( found[i - 0xf000], "could set non-existent item %x\n", i );
+        ret = SetMenuItemInfoW( menu, i, TRUE, &infoW );
+        ok( !ret, "could modify non-existent item %x\n", i );
+    }
+
+    /* confirm that SC_TASKLIST still does not exist */
+    for (i = 0xf000; i < 0xf200; i++)
+    {
+        memset( &info, 0xcc, sizeof(info) );
+        info.cbSize = sizeof(info);
+        info.fMask = MIIM_STRING | MIIM_FTYPE | MIIM_ID;
+        info.dwTypeData = buffer;
+        info.cch = sizeof( buffer );
+        ret = GetMenuItemInfoA( menu, i, FALSE, &info );
+        switch (i)
+        {
+        case SC_RESTORE:
+        case SC_SIZE:
+        case SC_MOVE:
+        case SC_MINIMIZE:
+        case SC_MAXIMIZE:
+        case SC_CLOSE:
+            ok( ret, "%x menu item not found\n", i );
+            break;
+        case SC_SCREENSAVE+1:  /* used for the 'About Wine' entry, don't test */
+            break;
+        default:
+            ok( !ret, "%x menu item found\n", i );
+            break;
+        }
+    }
+
+    /* now a normal (non-system) menu */
+
+    menu = CreateMenu();
+    ok( menu != NULL, "CreateMenu failed with error %d\n", GetLastError() );
+
+    res = CheckMenuItem( menu, SC_TASKLIST, 0 );
+    ok( res == -1, "CheckMenuItem succeeded\n" );
+    res = EnableMenuItem( menu, SC_TASKLIST, 0 );
+    ok( res == -1, "EnableMenuItem succeeded\n" );
+    res = GetMenuState( menu, SC_TASKLIST, 0 );
+    ok( res == -1, "GetMenuState succeeded\n" );
+    ret = RemoveMenu( menu, SC_TASKLIST, 0 );
+    ok( !ret, "RemoveMenu succeeded\n" );
+    ret = ModifyMenuA( menu, SC_TASKLIST, 0, SC_TASKLIST, "test" );
+    ok( ret, "ModifyMenuA failed err %d\n", GetLastError() );
+    ret = ModifyMenuW( menu, SC_TASKLIST, 0, SC_TASKLIST, testW );
+    ok( ret, "ModifyMenuW failed err %d\n", GetLastError() );
+    ret = ModifyMenuA( menu, SC_TASKLIST-1, 0, SC_TASKLIST, "test" );
+    ok( !ret, "ModifyMenu succeeded on SC_TASKLIST-1\n" );
+    strcpy( buffer, "test" );
+    memset( &info, 0xcc, sizeof(info) );
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_STRING | MIIM_ID;
+    info.wID = SC_TASKLIST;
+    info.dwTypeData = buffer;
+    info.cch = strlen( buffer );
+    ret = SetMenuItemInfoA( menu, SC_TASKLIST, FALSE, &info );
+    ok( ret, "failed to set SC_TASKLIST\n" );
+    ret = SetMenuItemInfoA( menu, SC_TASKLIST+1, FALSE, &info );
+    ok( !ret, "succeeded setting SC_TASKLIST+1\n" );
+    ret = SetMenuItemInfoA( menu, SC_TASKLIST, TRUE, &info );
+    ok( !ret, "succeeded setting by position\n" );
+
+    memset( &infoW, 0xcc, sizeof(infoW) );
+    infoW.cbSize = sizeof(infoW);
+    infoW.fMask = MIIM_STRING | MIIM_ID;
+    infoW.wID = SC_TASKLIST;
+    infoW.dwTypeData = testW;
+    infoW.cch = lstrlenW( testW );
+    ret = SetMenuItemInfoW( menu, SC_TASKLIST, FALSE, &infoW );
+    ok( ret, "failed to set SC_TASKLIST\n" );
+    ret = SetMenuItemInfoW( menu, SC_TASKLIST+1, FALSE, &infoW );
+    ok( !ret, "succeeded setting SC_TASKLIST+1\n" );
+    ret = SetMenuItemInfoW( menu, SC_TASKLIST, TRUE, &infoW );
+    ok( !ret, "succeeded setting by position\n" );
+
+    DestroyMenu( menu );
+    DestroyWindow( hwnd );
+}
+
 /* demonstrates that windows locks the menu object so that it is still valid
  * even after a client calls DestroyMenu on it */
 static void test_menu_locked_by_window(void)
@@ -4123,6 +4308,7 @@ if (0) /* FIXME: uncomment once Wine is fixed */
 START_TEST(menu)
 {
     init_function_pointers();
+    register_menu_check_class();
 
     /* Wine defines MENUITEMINFO for W2K and above. NT4 and below can't
      * handle that.
@@ -4136,9 +4322,8 @@ START_TEST(menu)
         test_menu_resource_layout();
         test_InsertMenu();
         test_menualign();
+        test_system_menu();
     }
-
-    register_menu_check_class();
 
     test_menu_locked_by_window();
     test_subpopup_locked_by_menu();
