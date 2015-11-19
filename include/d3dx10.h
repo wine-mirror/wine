@@ -28,5 +28,6 @@
 
 #include "d3d10.h"
 #include "d3dx10core.h"
+#include "d3dx10async.h"
 
 #endif
