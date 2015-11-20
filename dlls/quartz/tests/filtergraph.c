@@ -1942,9 +1942,7 @@ static void test_aggregate_filter_graph(void)
     ok(punk != &unk_outer.IUnknown_iface, "punk = %p, expected not %p\n", punk, &unk_outer.IUnknown_iface);
     IUnknown_Release(punk);
 
-todo_wine
     ok(unk_outer.AddRef_called == 0, "IUnknownImpl_AddRef called %d times\n", unk_outer.AddRef_called);
-todo_wine
     ok(unk_outer.Release_called == 0, "IUnknownImpl_Release called %d times\n", unk_outer.Release_called);
     unk_outer.AddRef_called = 0;
     unk_outer.Release_called = 0;
