@@ -141,9 +141,15 @@ static NTSTATUS create_key( HKEY *retkey, ACCESS_MASK access, OBJECT_ATTRIBUTES 
 
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
     {
+        static const WCHAR registry_root[] = {'\\','R','e','g','i','s','t','r','y','\\'};
         WCHAR *buffer = attr->ObjectName->Buffer;
         DWORD attrs, pos = 0, i = 0, len = attr->ObjectName->Length / sizeof(WCHAR);
         UNICODE_STRING str;
+
+        /* don't try to create registry root */
+        if (!attr->RootDirectory && len > sizeof(registry_root)/sizeof(WCHAR) &&
+            !memicmpW( buffer, registry_root, sizeof(registry_root)/sizeof(WCHAR)))
+            i += sizeof(registry_root)/sizeof(WCHAR);
 
         while (i < len && buffer[i] != '\\') i++;
         if (i == len && !force_wow32) return status;
