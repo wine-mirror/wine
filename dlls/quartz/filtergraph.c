@@ -1169,6 +1169,8 @@ error:
         CoTaskMemFree(ppins);
     }
 
+    IEnumMoniker_Release(pEnumMoniker);
+
 out:
     if (penummt)
         IEnumMediaTypes_Release(penummt);
