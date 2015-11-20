@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-09-09 22:11+0300\n"
+"PO-Revision-Date: 2015-11-20 09:57+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -8577,58 +8577,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Slėpti"
+msgstr "Slėpti %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Kita"
+msgstr "Slėpti kitas"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Rodyti"
+msgstr "Rodyti visas"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Baigti %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Baigti"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Langas"
+msgstr "Langas"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "Susk&leisti"
+msgstr "Suskleisti"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
 msgstr "Didinti"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Visame ekrane"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "Perkelti į &priekį"
+msgstr "Perkelti visas į priekį"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
