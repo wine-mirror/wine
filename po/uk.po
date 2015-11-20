@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-10-17 15:42+0200\n"
+"PO-Revision-Date: 2015-11-20 13:01+0200\n"
 "Last-Translator: Andrey Gusev <andrey.goosev@gmail.com>\n"
 "Language-Team: Ukrainian\n"
 "Language: uk\n"
@@ -8653,58 +8653,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Приховати"
+msgstr "Приховати %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Інший"
+msgstr "Приховати інші"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Показувати"
+msgstr "Показати всі"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Завершити %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Вийти"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "Ві&кно"
+msgstr "Вікно"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "З&горнути"
+msgstr "Зменшити"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
 msgstr "Збільшити"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Повноекранний режим"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "&На передній план"
+msgstr "Все на передній план"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -13022,6 +13008,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Програма видалення додатків Wine\n"
+"\n"
+"Видалення програм з поточного префікса Wine.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -13036,6 +13026,16 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"Використання:\n"
+"  uninstaller [параметри]\n"
+"\n"
+"Опції:\n"
+"  --help\t    Показати цю інформацію.\n"
+"  --list\t    Список всіх програм в цьому префіксі.\n"
+"  --remove {GUID}   Видалити вказану програму.\n"
+"\t\t    Для визначення GUID використовуйте команду '--list'.\n"
+"  [без параметрів]       Запуск графічної версії цієї програми.\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
