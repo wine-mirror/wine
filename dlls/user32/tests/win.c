@@ -2000,10 +2000,12 @@ static BOOL mdi_RegisterWindowClasses(void)
 
 static void test_mdi(void)
 {
+    static const DWORD style[] = { 0, WS_HSCROLL, WS_VSCROLL, WS_HSCROLL | WS_VSCROLL };
     HWND mdi_hwndMain, mdi_client;
     CLIENTCREATESTRUCT client_cs;
     RECT rc;
-    /*MSG msg;*/
+    DWORD i;
+    MSG msg;
 
     if (!mdi_RegisterWindowClasses()) assert(0);
 
@@ -2019,6 +2021,142 @@ static void test_mdi(void)
 
     client_cs.hWindowMenu = 0;
     client_cs.idFirstChild = 1;
+
+    for (i = 0; i < sizeof(style)/sizeof(style[0]); i++)
+    {
+        HWND mdi_child;
+        SCROLLINFO si;
+        BOOL ret, gotit;
+
+        mdi_client = CreateWindowExA(0, "mdiclient", NULL,
+                                 WS_CHILD | style[i],
+                                 0, 0, rc.right, rc.bottom,
+                                 mdi_hwndMain, 0, 0, &client_cs);
+        ok(mdi_client != 0, "MDI client creation failed\n");
+
+        mdi_child = CreateWindowExA(WS_EX_MDICHILD, "MDI_child_Class_1", "MDI child",
+                                0,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                CW_USEDEFAULT, CW_USEDEFAULT,
+                                mdi_client, 0, 0,
+                                mdi_lParam_test_message);
+        ok(mdi_child != 0, "MDI child creation failed\n");
+
+        si.cbSize = sizeof(si);
+        si.fMask = SIF_ALL;
+        ret = GetScrollInfo(mdi_client, SB_HORZ, &si);
+        if (style[i] & (WS_HSCROLL | WS_VSCROLL))
+        {
+            ok(ret, "style %#x: GetScrollInfo(SB_HORZ) failed\n", style[i]);
+            ok(si.nPage == 0, "expected 0\n");
+            ok(si.nPos == 0, "expected 0\n");
+            ok(si.nTrackPos == 0, "expected 0\n");
+            ok(si.nMin == 0, "expected 0\n");
+            ok(si.nMax == 100, "expected 100\n");
+        }
+        else
+            ok(!ret, "style %#x: GetScrollInfo(SB_HORZ) should fail\n", style[i]);
+
+        ret = GetScrollInfo(mdi_client, SB_VERT, &si);
+        if (style[i] & (WS_HSCROLL | WS_VSCROLL))
+        {
+            ok(ret, "style %#x: GetScrollInfo(SB_VERT) failed\n", style[i]);
+            ok(si.nPage == 0, "expected 0\n");
+            ok(si.nPos == 0, "expected 0\n");
+            ok(si.nTrackPos == 0, "expected 0\n");
+            ok(si.nMin == 0, "expected 0\n");
+            ok(si.nMax == 100, "expected 100\n");
+        }
+        else
+            ok(!ret, "style %#x: GetScrollInfo(SB_VERT) should fail\n", style[i]);
+
+        SetWindowPos(mdi_child, 0, -100, -100, 0, 0, SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOSIZE);
+
+        si.cbSize = sizeof(si);
+        si.fMask = SIF_ALL;
+        ret = GetScrollInfo(mdi_client, SB_HORZ, &si);
+        if (style[i] & (WS_HSCROLL | WS_VSCROLL))
+        {
+            ok(ret, "style %#x: GetScrollInfo(SB_HORZ) failed\n", style[i]);
+            ok(si.nPage == 0, "expected 0\n");
+            ok(si.nPos == 0, "expected 0\n");
+            ok(si.nTrackPos == 0, "expected 0\n");
+            ok(si.nMin == 0, "expected 0\n");
+            ok(si.nMax == 100, "expected 100\n");
+        }
+        else
+            ok(!ret, "style %#x: GetScrollInfo(SB_HORZ) should fail\n", style[i]);
+
+        ret = GetScrollInfo(mdi_client, SB_VERT, &si);
+        if (style[i] & (WS_HSCROLL | WS_VSCROLL))
+        {
+            ok(ret, "style %#x: GetScrollInfo(SB_VERT) failed\n", style[i]);
+            ok(si.nPage == 0, "expected 0\n");
+            ok(si.nPos == 0, "expected 0\n");
+            ok(si.nTrackPos == 0, "expected 0\n");
+            ok(si.nMin == 0, "expected 0\n");
+            ok(si.nMax == 100, "expected 100\n");
+        }
+        else
+            ok(!ret, "style %#x: GetScrollInfo(SB_VERT) should fail\n", style[i]);
+
+        gotit = FALSE;
+        while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
+        {
+            if (msg.message == WM_MOUSEMOVE || msg.message == WM_PAINT)
+            {
+                DispatchMessageA(&msg);
+                continue;
+            }
+
+            if (msg.message == 0x003f) /* WM_MDICALCCHILDSCROLL ??? */
+            {
+                ok(msg.hwnd == mdi_client, "message 0x003f should be posted to mdiclient\n");
+                gotit = TRUE;
+            }
+            else
+todo_wine
+                ok(msg.hwnd != mdi_client, "message %04x should not be posted to mdiclient\n", msg.message);
+            DispatchMessageA(&msg);
+        }
+todo_wine
+        ok(gotit, "message 0x003f should appear after SetWindowPos\n");
+
+        si.cbSize = sizeof(si);
+        si.fMask = SIF_ALL;
+        ret = GetScrollInfo(mdi_client, SB_HORZ, &si);
+        if (style[i] & (WS_HSCROLL | WS_VSCROLL))
+        {
+            ok(ret, "style %#x: GetScrollInfo(SB_HORZ) failed\n", style[i]);
+todo_wine
+            ok(si.nPage != 0, "expected !0\n");
+            ok(si.nPos == 0, "expected 0\n");
+            ok(si.nTrackPos == 0, "expected 0\n");
+            ok(si.nMin != 0, "expected !0\n");
+            ok(si.nMax != 100, "expected !100\n");
+        }
+        else
+todo_wine
+            ok(!ret, "style %#x: GetScrollInfo(SB_HORZ) should fail\n", style[i]);
+
+        ret = GetScrollInfo(mdi_client, SB_VERT, &si);
+        if (style[i] & (WS_HSCROLL | WS_VSCROLL))
+        {
+            ok(ret, "style %#x: GetScrollInfo(SB_VERT) failed\n", style[i]);
+todo_wine
+            ok(si.nPage != 0, "expected !0\n");
+            ok(si.nPos == 0, "expected 0\n");
+            ok(si.nTrackPos == 0, "expected 0\n");
+            ok(si.nMin != 0, "expected !0\n");
+            ok(si.nMax != 100, "expected !100\n");
+        }
+        else
+todo_wine
+            ok(!ret, "style %#x: GetScrollInfo(SB_VERT) should fail\n", style[i]);
+
+        DestroyWindow(mdi_child);
+        DestroyWindow(mdi_client);
+    }
 
     /* MDIClient without MDIS_ALLCHILDSTYLES */
     mdi_client = CreateWindowExA(0, "mdiclient",
