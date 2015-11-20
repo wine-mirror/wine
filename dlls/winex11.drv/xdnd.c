@@ -383,6 +383,7 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     IDropTarget *dropTarget;
     DWORD effect = XDNDDropEffect;
     int accept = 0; /* Assume we're not accepting */
+    BOOL drop_file = TRUE;
 
     TRACE("\n");
 
@@ -397,26 +398,33 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
         pointl.y = XDNDxy.y;
         hr = IDropTarget_Drop(dropTarget, &XDNDDataObject, MK_LBUTTON,
                               pointl, &effect);
-        if (SUCCEEDED(hr))
+        if (hr == S_OK)
         {
             if (effect != DROPEFFECT_NONE)
             {
                 TRACE("drop succeeded\n");
                 accept = 1;
+                drop_file = FALSE;
             }
             else
                 TRACE("the application refused the drop\n");
         }
-        else
+        else if (FAILED(hr))
             WARN("drop failed, error 0x%08X\n", hr);
+        else
+        {
+            WARN("drop returned 0x%08X\n", hr);
+            drop_file = FALSE;
+        }
         IDropTarget_Release(dropTarget);
     }
-    else
+
+    if (drop_file)
     {
-        /* Only send WM_DROPFILES if there is no drop target. Doing both
-         * causes winamp to duplicate the dropped files (#29081) */
+        /* Only send WM_DROPFILES if Drop didn't succeed or DROPEFFECT_NONE was set.
+         * Doing both causes winamp to duplicate the dropped files (#29081) */
         if ((GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
-                (effect & DROPEFFECT_COPY) &&
+                (XDNDDropEffect & DROPEFFECT_COPY) &&
                 X11DRV_XDND_HasHDROP())
         {
             HRESULT hr = X11DRV_XDND_SendDropFiles( hWnd );
