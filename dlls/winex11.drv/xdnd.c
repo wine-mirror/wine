@@ -339,9 +339,8 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
 
     if (XDNDAccepted)
         accept = 1;
-    else if (dropTarget == NULL &&
-            (GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
-            (effect & DROPEFFECT_COPY) &&
+    else if ((GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
+            (X11DRV_XDND_XdndActionToDROPEFFECT(event->data.l[4]) & DROPEFFECT_COPY) &&
             X11DRV_XDND_HasHDROP())
     {
         accept = 1;
