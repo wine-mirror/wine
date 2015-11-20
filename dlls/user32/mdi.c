@@ -1709,6 +1709,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
     SCROLLINFO info;
     RECT childRect, clientRect;
     HWND *list;
+    DWORD style;
 
     GetClientRect( hwnd, &clientRect );
     SetRectEmpty( &childRect );
@@ -1718,7 +1719,7 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
         int i;
         for (i = 0; list[i]; i++)
         {
-            DWORD style = GetWindowLongW( list[i], GWL_STYLE );
+            style = GetWindowLongW( list[i], GWL_STYLE );
             if (style & WS_MAXIMIZE)
             {
                 HeapFree( GetProcessHeap(), 0, list );
@@ -1740,22 +1741,29 @@ void WINAPI CalcChildScroll( HWND hwnd, INT scroll )
     info.cbSize = sizeof(info);
     info.fMask = SIF_POS | SIF_RANGE;
 
-    /* set the specific */
+    /* set the specific values and apply but only if window style allows */
+    style = GetWindowLongW( hwnd, GWL_STYLE );
     switch( scroll )
     {
 	case SB_BOTH:
 	case SB_HORZ:
-			info.nMin = childRect.left;
-			info.nMax = childRect.right - clientRect.right;
-			info.nPos = clientRect.left - childRect.left;
-			SetScrollInfo(hwnd, SB_HORZ, &info, TRUE);
+                        if (style & (WS_HSCROLL | WS_VSCROLL))
+                        {
+                            info.nMin = childRect.left;
+                            info.nMax = childRect.right - clientRect.right;
+                            info.nPos = clientRect.left - childRect.left;
+                            SetScrollInfo(hwnd, SB_HORZ, &info, TRUE);
+                        }
 			if (scroll == SB_HORZ) break;
 			/* fall through */
 	case SB_VERT:
-			info.nMin = childRect.top;
-			info.nMax = childRect.bottom - clientRect.bottom;
-			info.nPos = clientRect.top - childRect.top;
-			SetScrollInfo(hwnd, SB_VERT, &info, TRUE);
+                        if (style & (WS_HSCROLL | WS_VSCROLL))
+                        {
+                            info.nMin = childRect.top;
+                            info.nMax = childRect.bottom - clientRect.bottom;
+                            info.nPos = clientRect.top - childRect.top;
+                            SetScrollInfo(hwnd, SB_VERT, &info, TRUE);
+                        }
 			break;
     }
 }

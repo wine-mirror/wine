@@ -2136,7 +2136,6 @@ todo_wine
             ok(si.nMax != 100, "expected !100\n");
         }
         else
-todo_wine
             ok(!ret, "style %#x: GetScrollInfo(SB_HORZ) should fail\n", style[i]);
 
         ret = GetScrollInfo(mdi_client, SB_VERT, &si);
@@ -2151,7 +2150,6 @@ todo_wine
             ok(si.nMax != 100, "expected !100\n");
         }
         else
-todo_wine
             ok(!ret, "style %#x: GetScrollInfo(SB_VERT) should fail\n", style[i]);
 
         DestroyWindow(mdi_child);
