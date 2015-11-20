@@ -203,6 +203,8 @@ then
         AC_MSG_ERROR([--enable-win64 and --with-wine64 are mutually exclusive.
 --enable-win64 should be used in the 64-bit build tree, --with-wine64 in the 32-bit Wow64 build tree.])
     fi
+    test "$srcdir" != . || AC_MSG_ERROR([--with-wine64 cannot be used when building inside the source tree.
+You should create a separate build directory and run configure from there.])
     enable_fonts=${enable_fonts:-no}
     enable_server=${enable_server:-no}
 elif test "x$enable_win64" = "xyes"
