@@ -2076,7 +2076,7 @@ void queue_cleanup_window( struct thread *thread, user_handle_t win )
     thread_input_cleanup_window( queue, win );
 }
 
-/* post a message to a window; used by socket handling */
+/* post a message to a window */
 void post_message( user_handle_t win, unsigned int message, lparam_t wparam, lparam_t lparam )
 {
     struct message *msg;
