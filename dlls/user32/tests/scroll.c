@@ -525,6 +525,49 @@ static void scrollbar_test_init(void)
     UnregisterClassA(cls_name, wc.hInstance);
 }
 
+static void test_SetScrollInfo(void)
+{
+    SCROLLINFO si;
+    HWND mainwnd;
+    BOOL ret;
+
+    mainwnd = create_main_test_wnd();
+
+    ret = IsWindowEnabled(hScroll);
+    ok(ret, "scroll bar disabled\n");
+
+    EnableScrollBar(hScroll, SB_CTL, ESB_DISABLE_BOTH);
+
+    ret = IsWindowEnabled(hScroll);
+    ok(!ret, "scroll bar disabled\n");
+
+    memset(&si, 0, sizeof(si));
+    si.cbSize = sizeof(si);
+    si.fMask = 0xf;
+    ret = GetScrollInfo(hScroll, SB_CTL, &si);
+    ok(ret, "got %d\n", ret);
+
+    /* SetScrollInfo */
+    memset(&si, 0, sizeof(si));
+    si.cbSize = sizeof(si);
+    ret = IsWindowEnabled(hScroll);
+    ok(!ret, "scroll bar disabled\n");
+    si.fMask = SIF_POS|SIF_RANGE|SIF_PAGE|SIF_DISABLENOSCROLL;
+    si.nMax = 100;
+    si.nPos = 0;
+    si.nPage = 100;
+    SetScrollInfo(hScroll, SB_CTL, &si, TRUE);
+    ret = IsWindowEnabled(hScroll);
+    ok(!ret, "scroll bar enabled\n");
+
+    si.fMask = 0xf;
+    ret = GetScrollInfo(hScroll, SB_CTL, &si);
+    ok(ret, "got %d\n", ret);
+
+    DestroyWindow(hScroll);
+    DestroyWindow(mainwnd);
+}
+
 START_TEST ( scroll )
 {
     WNDCLASSA wc;
@@ -548,6 +591,7 @@ START_TEST ( scroll )
     test_ShowScrollBar();
     test_GetScrollBarInfo();
     scrollbar_test_track();
+    test_SetScrollInfo();
 
     /* Some test results vary depending of theming being active or not */
     hUxtheme = LoadLibraryA("uxtheme.dll");
