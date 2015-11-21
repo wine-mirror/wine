@@ -8477,58 +8477,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "隐藏"
+msgstr "隐藏 %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "I/O Other"
 msgid "Hide Others"
-msgstr "I/O 其他"
+msgstr "隐藏其他"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "显示"
+msgstr "显示全部"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "退出 %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "退出"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "窗口(&W)"
+msgstr "窗口"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "最小化(&M)"
+msgstr "最小化"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "放大"
+msgstr "缩放"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "全屏"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "移到最前面(&B)"
+msgstr "前置全部窗口"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -12662,10 +12648,8 @@ msgid "Select Drive Letter"
 msgstr "选择驱动器盘符"
 
 #: winecfg.rc:232
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Drive configuration"
-msgstr "Wine 设置"
+msgstr "驱动器设置"
 
 #: winecfg.rc:233
 msgid ""
@@ -12738,14 +12722,12 @@ msgid "&Test Sound"
 msgstr "测试音频(&T)"
 
 #: winecfg.rc:277 winecfg.rc:90
-#, fuzzy
-#| msgid "Wine configuration"
 msgid "Speaker configuration"
-msgstr "Wine 设置"
+msgstr "扬声器设置"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr ""
+msgstr "扬声器："
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -12969,10 +12951,8 @@ msgid "Letter"
 msgstr "盘符"
 
 #: winecfg.rc:78
-#, fuzzy
-#| msgid "New Folder"
 msgid "Target folder"
-msgstr "新文件夹"
+msgstr "目标文件夹"
 
 #: winecfg.rc:79
 msgid ""
