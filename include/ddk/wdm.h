@@ -400,7 +400,6 @@ typedef struct _KAPC {
   BOOLEAN  Inserted;
 } KAPC, *PKAPC, *RESTRICTED_POINTER PRKAPC;
 
-#include <pshpack1.h>
 typedef struct _IRP {
   CSHORT  Type;
   USHORT  Size;
@@ -456,7 +455,6 @@ typedef struct _IRP {
   } Tail;
 } IRP;
 typedef struct _IRP *PIRP;
-#include <poppack.h>
 
 typedef VOID (WINAPI *PINTERFACE_REFERENCE)(
   PVOID  Context);
@@ -833,7 +831,9 @@ typedef NTSTATUS (WINAPI *PIO_COMPLETION_ROUTINE)(
 #define SL_INVOKE_ON_SUCCESS            0x40
 #define SL_INVOKE_ON_ERROR              0x80
 
-#include <pshpack1.h>
+#if !defined(_WIN64)
+#include <pshpack4.h>
+#endif
 typedef struct _IO_STACK_LOCATION {
   UCHAR  MajorFunction;
   UCHAR  MinorFunction;
@@ -974,7 +974,9 @@ typedef struct _IO_STACK_LOCATION {
   PIO_COMPLETION_ROUTINE  CompletionRoutine;
   PVOID  Context;
 } IO_STACK_LOCATION, *PIO_STACK_LOCATION;
+#if !defined(_WIN64)
 #include <poppack.h>
+#endif
 
 /* MDL definitions */
 
