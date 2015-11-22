@@ -339,7 +339,21 @@ static DWORD diactionformat_priorityW(LPDIACTIONFORMATW lpdiaf, DWORD genre)
     return priorityFlags;
 }
 
-#ifdef __i386__
+#if defined __i386__ && defined _MSC_VER
+__declspec(naked) BOOL enum_callback_wrapper(void *callback, const void *instance, void *ref)
+{
+    __asm
+    {
+        push ebp
+        mov ebp, esp
+        push [ebp+16]
+        push [ebp+12]
+        call [ebp+8]
+        leave
+        ret
+    }
+}
+#elif defined __i386__ && defined __GNUC__
 extern BOOL enum_callback_wrapper(void *callback, const void *instance, void *ref);
 __ASM_GLOBAL_FUNC( enum_callback_wrapper,
     "pushl %ebp\n\t"
