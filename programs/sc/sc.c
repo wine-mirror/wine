@@ -285,15 +285,14 @@ int wmain( int argc, const WCHAR *argv[] )
         if (service)
         {
             SERVICE_FAILURE_ACTIONSW sfa;
-            if (!parse_failure_params( argc - 3, argv + 3, &sfa ))
+            if (parse_failure_params( argc - 3, argv + 3, &sfa ))
             {
-                WINE_WARN("failed to parse failure parameters\n");
-                CloseServiceHandle( manager );
-                return 1;
+                ret = ChangeServiceConfig2W( service, SERVICE_CONFIG_FAILURE_ACTIONS, &sfa );
+                if (!ret) WINE_TRACE("failed to set service failure actions %u\n", GetLastError());
+                HeapFree( GetProcessHeap(), 0, sfa.lpsaActions );
             }
-            ret = ChangeServiceConfig2W( service, SERVICE_CONFIG_FAILURE_ACTIONS, &sfa );
-            if (!ret) WINE_TRACE("failed to set service failure actions %u\n", GetLastError());
-            HeapFree( GetProcessHeap(), 0, sfa.lpsaActions );
+            else
+                WINE_WARN("failed to parse failure parameters\n");
             CloseServiceHandle( service );
         }
         else WINE_TRACE("failed to open service %u\n", GetLastError());
