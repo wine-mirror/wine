@@ -20391,6 +20391,75 @@ static void test_uninitialized_varyings(void)
     DestroyWindow(window);
 }
 
+static void test_multisample_init(void)
+{
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    IDirect3DSurface9 *back, *multi;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+    D3DCOLOR color;
+    unsigned int x, y;
+    struct surface_readback rb;
+    BOOL all_zero = TRUE;
+
+    window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (FAILED(IDirect3D9_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_A8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES, NULL)))
+    {
+        skip("Multisampling not supported for D3DFMT_A8R8G8B8, skipping multisample init test.\n");
+        goto done;
+    }
+
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &back);
+    ok(SUCCEEDED(hr), "Failed to get back buffer, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateRenderTarget(device, 640, 480, D3DFMT_A8R8G8B8,
+            D3DMULTISAMPLE_2_SAMPLES, 0, FALSE, &multi, NULL);
+    ok(SUCCEEDED(hr), "Failed to create multisampled render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, multi, NULL, back, NULL, D3DTEXF_POINT);
+    ok(SUCCEEDED(hr), "StretchRect failed, hr %#x.\n", hr);
+
+    get_rt_readback(back, &rb);
+    for (y = 0; y < 480; ++y)
+    {
+        for (x = 0; x < 640; x++)
+        {
+            color = get_readback_color(&rb, x, y);
+            if (!color_match(color, 0x00000000, 0))
+            {
+                all_zero = FALSE;
+                break;
+            }
+        }
+        if (!all_zero)
+            break;
+    }
+    release_surface_readback(&rb);
+    ok(all_zero, "Got unexpected color 0x%08x, position %ux%u.\n", color, x, y);
+
+    IDirect3DSurface9_Release(multi);
+    IDirect3DSurface9_Release(back);
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 START_TEST(visual)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -20511,4 +20580,5 @@ START_TEST(visual)
     test_depthbias();
     test_flip();
     test_uninitialized_varyings();
+    test_multisample_init();
 }
