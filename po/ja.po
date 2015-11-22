@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-07-22 00:22+0900\n"
+"PO-Revision-Date: 2015-11-22 13:05+0900\n"
 "Last-Translator: Akihiro Sagawa <sagawa.aki@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
@@ -3180,7 +3180,7 @@ msgstr "表示"
 
 #: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
-msgstr "非表示"
+msgstr "隠す"
 
 #: hhctrl.rc:44 ieframe.rc:68 shdoclc.rc:167 shdoclc.rc:191
 msgid "Stop"
@@ -7445,16 +7445,12 @@ msgid "&Convert..."
 msgstr "変換(&C)..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "オブジェクト(&O)"
+msgstr "%1 %2 オブジェクト(&O)"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "オブジェクト(&O)"
+msgstr "%1 オブジェクト(&O)"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -8567,58 +8563,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "非表示"
+msgstr "%@ を隠す"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "その他"
+msgstr "ほかを隠す"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "表示"
+msgstr "すべてを表示"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "%@ を終了"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "終了"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "ウィンドウ(&W)"
+msgstr "ウィンドウ"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "最小化(&M)"
+msgstr "しまう"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "拡大"
+msgstr "拡大／縮小"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "フルスクリーンにする"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "手前に表示(&B)"
+msgstr "すべてを手前に移動"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -9664,7 +9646,7 @@ msgstr "DEL <ファイル名> はファイルやファイル群を削除しま�
 
 #: cmd.rc:65
 msgid "DIR lists the contents of a directory.\n"
-msgstr "DIR はディレクトリの内容を一覧表示します。\n"
+msgstr "DIR はディレクトリ内容の一覧を表示します。\n"
 
 #: cmd.rc:75
 msgid ""
@@ -12904,18 +12886,17 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "uninstaller: GUID '%1' のアプリケーションは見つかりませんでした\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"uninstaller: --remove オプションはアプリケーション GUID の指定が必要です\n"
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "エラー: 無効なオプション '%c'。\n"
+msgstr "uninstaller: 無効なオプション [%1]\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -12924,6 +12905,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Wine アプリケーション アンインストーラ\n"
+"\n"
+"アプリケーションを現在の Wine プレフィックスからアンインストールします。\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -12938,6 +12923,17 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"使い方:\n"
+"  uninstaller [オプション群]\n"
+"\n"
+"オプション:\n"
+"  --help\t    この情報を表示する。\n"
+"  --list\t    この Wine プレフィックスにインストールされた全アプリ\n"
+"\t\t    ケーションの一覧を表示する。\n"
+"  --remove\t    指定のアプリケーションをアンインストールする。\n"
+"\t\t    アプリケーション GUID を割り出すため --list をつかう。\n"
+"  [オプションなし]  このプログラムのグラフィカル版を起動する。\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
