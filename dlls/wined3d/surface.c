@@ -1149,10 +1149,18 @@ static void surface_unload(struct wined3d_resource *resource)
          * but we can't set the sysmem INDRAWABLE because when we're rendering the swapchain
          * or the depth stencil into an FBO the texture or render buffer will be removed
          * and all flags get lost */
-        surface_prepare_system_memory(surface);
-        memset(surface->resource.heap_memory, 0, surface->resource.size);
-        surface_validate_location(surface, WINED3D_LOCATION_SYSMEM);
-        surface_invalidate_location(surface, ~WINED3D_LOCATION_SYSMEM);
+        if (resource->usage & WINED3DUSAGE_DEPTHSTENCIL)
+        {
+            surface_validate_location(surface, WINED3D_LOCATION_DISCARDED);
+            surface_invalidate_location(surface, ~WINED3D_LOCATION_DISCARDED);
+        }
+        else
+        {
+            surface_prepare_system_memory(surface);
+            memset(surface->resource.heap_memory, 0, surface->resource.size);
+            surface_validate_location(surface, WINED3D_LOCATION_SYSMEM);
+            surface_invalidate_location(surface, ~WINED3D_LOCATION_SYSMEM);
+        }
 
         /* We also get here when the ddraw swapchain is destroyed, for example
          * for a mode switch. In this case this surface won't necessarily be
