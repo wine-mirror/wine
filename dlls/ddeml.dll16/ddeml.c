@@ -496,6 +496,7 @@ UINT16 WINAPI DdeQueryConvInfo16(HCONV hConv, DWORD idTransaction,
     ret = DdeQueryConvInfo(hConv, idTransaction, &ci32);
     if (ret == 0) return 0;
 
+    ci16.cb = lpConvInfo->cb;
     ci16.hUser = ci32.hUser;
     ci16.hConvPartner = ci32.hConvPartner;
     ci16.hszSvcPartner = ci32.hszSvcPartner;
