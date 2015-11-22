@@ -816,8 +816,9 @@ static BOOL
 TREEVIEW_HasChildren(const TREEVIEW_INFO *infoPtr, TREEVIEW_ITEM *item)
 {
     TREEVIEW_UpdateDispInfo(infoPtr, item, TVIF_CHILDREN);
-
-    return item->cChildren > 0;
+    /* Protect for a case when callback field is not changed by a host,
+       otherwise negative values trigger normal notifications. */
+    return item->cChildren != 0 && item->cChildren != I_CHILDRENCALLBACK;
 }
 
 static INT TREEVIEW_NotifyFormat (TREEVIEW_INFO *infoPtr, HWND hwndFrom, UINT nCommand)

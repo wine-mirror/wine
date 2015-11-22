@@ -1193,7 +1193,9 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
 
             case TVN_ENDLABELEDITA: return TRUE;
             case TVN_ITEMEXPANDINGA:
-                ok(pTreeView->itemNew.mask ==
+              {
+                UINT newmask = pTreeView->itemNew.mask & ~TVIF_CHILDREN;
+                ok(newmask ==
                    (TVIF_HANDLE | TVIF_SELECTEDIMAGE | TVIF_IMAGE | TVIF_PARAM | TVIF_STATE),
                    "got wrong mask %x\n", pTreeView->itemNew.mask);
                 ok(pTreeView->itemOld.mask == 0,
@@ -1207,6 +1209,7 @@ static LRESULT CALLBACK parent_wnd_proc(HWND hWnd, UINT message, WPARAM wParam, 
                   ok(ret == TRUE, "got %lu\n", ret);
                 }
                 break;
+              }
             case TVN_ITEMEXPANDEDA:
                 ok(pTreeView->itemNew.mask & TVIF_STATE, "got wrong mask %x\n", pTreeView->itemNew.mask);
                 ok(pTreeView->itemNew.state & (TVIS_EXPANDED|TVIS_EXPANDEDONCE),
@@ -1529,6 +1532,7 @@ static void test_get_insertmarkcolor(void)
 
 static void test_expandnotify(void)
 {
+    HTREEITEM hitem;
     HWND hTree;
     BOOL ret;
     TVITEMA item;
@@ -1678,6 +1682,22 @@ static void test_expandnotify(void)
     ret = SendMessageA(hTree, WM_KEYDOWN, VK_ADD, 0);
     expect(FALSE, ret);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_expand_empty_kb_seq, "expand node with no children", FALSE);
+
+    /* stay on current selection and set non-zero children count */
+    hitem = (HTREEITEM)SendMessageA(hTree, TVM_GETNEXTITEM, TVGN_CARET, 0);
+    ok(hitem != NULL, "got %p\n", hitem);
+
+    item.hItem = hitem;
+    item.mask = TVIF_CHILDREN;
+    item.cChildren = 0x80000000;
+
+    ret = SendMessageA(hTree, TVM_SETITEMA, 0, (LPARAM)&item);
+    expect(TRUE, ret);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    ret = SendMessageA(hTree, WM_KEYDOWN, VK_ADD, 0);
+    expect(FALSE, ret);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, parent_collapse_2nd_kb_seq, "expand node with children", FALSE);
 
     DestroyWindow(hTree);
 }
