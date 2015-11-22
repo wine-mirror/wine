@@ -952,11 +952,11 @@ goto :TestForR
 del temp.bat 2>nul
 call :WriteLine set WINE_found=N
 for /l %%i in (1,1,%WINE_expectedresults%) do (
-  call :WriteLine if "%%%%WINE_expectedresults.%%i%%%%"=="%%%%1" set WINE_found=Y
+  call :WriteLine if "%%%%WINE_expectedresults.%%i%%%%"=="%%%%~1" set WINE_found=Y
   call :WriteLine if "%%%%WINE_found%%%%"=="Y" set WINE_expectedresults.%%i=
   call :WriteLine if "%%%%WINE_found%%%%"=="Y" goto :eof
 )
-call :WriteLine echo Got unexpected result: "%%%%1"
+call :WriteLine echo Got unexpected result: "%%%%~1"
 goto :eof
 
 :WriteLine
@@ -984,7 +984,7 @@ set WINE_expectedresults.2=%WINE_CURDIR%\bar\.
 set WINE_expectedresults.3=%WINE_CURDIR%\baz\.
 set WINE_expectedresults.4=%WINE_CURDIR%\foo\.
 call :SetExpected
-for /R %%i in (.) do call temp.bat %%i
+for /R %%i in (.) do call temp.bat "%%i"
 call :ValidateExpected
 
 echo Plain directory enumeration from provided root
@@ -995,7 +995,7 @@ set WINE_expectedresults.3=%WINE_CURDIR%\baz\.
 set WINE_expectedresults.4=%WINE_CURDIR%\foo\.
 if "%CD%"=="" goto :SkipBrokenNT4
 call :SetExpected
-for /R "%WINE_CURDIR%" %%i in (.) do call temp.bat %%i
+for /R "%WINE_CURDIR%" %%i in (.) do call temp.bat "%%i"
 call :ValidateExpected
 :SkipBrokenNT4
 
@@ -1004,7 +1004,7 @@ set WINE_expectedresults=2
 set WINE_expectedresults.1=%WINE_CURDIR%\baz\bazbaz
 set WINE_expectedresults.2=%WINE_CURDIR%\bazbaz
 call :SetExpected
-for /R %%i in (baz*) do call temp.bat %%i
+for /R %%i in (baz*) do call temp.bat "%%i"
 call :ValidateExpected
 
 echo File enumeration from provided root
@@ -1012,7 +1012,7 @@ set WINE_expectedresults=2
 set WINE_expectedresults.1=%WINE_CURDIR%\baz\bazbaz
 set WINE_expectedresults.2=%WINE_CURDIR%\bazbaz
 call :SetExpected
-for /R %%i in (baz*) do call temp.bat %%i
+for /R %%i in (baz*) do call temp.bat "%%i"
 call :ValidateExpected
 
 echo Mixed enumeration
@@ -1024,7 +1024,7 @@ set WINE_expectedresults.4=%WINE_CURDIR%\baz\bazbaz
 set WINE_expectedresults.5=%WINE_CURDIR%\bazbaz
 set WINE_expectedresults.6=%WINE_CURDIR%\foo\.
 call :SetExpected
-for /R %%i in (. baz*) do call temp.bat %%i
+for /R %%i in (. baz*) do call temp.bat "%%i"
 call :ValidateExpected
 
 echo Mixed enumeration from provided root
@@ -1036,7 +1036,7 @@ set WINE_expectedresults.4=%WINE_CURDIR%\baz\bazbaz
 set WINE_expectedresults.5=%WINE_CURDIR%\bazbaz
 set WINE_expectedresults.6=%WINE_CURDIR%\foo\.
 call :SetExpected
-for /R %%i in (. baz*) do call temp.bat %%i
+for /R %%i in (. baz*) do call temp.bat "%%i"
 call :ValidateExpected
 
 echo With duplicates enumeration
@@ -1054,7 +1054,7 @@ set WINE_expectedresults.10=%WINE_CURDIR%\foo\bazbaz
 set WINE_expectedresults.11=%WINE_CURDIR%\foo\fred
 set WINE_expectedresults.12=%WINE_CURDIR%\fred
 call :SetExpected
-for /R %%i in (baz* bazbaz fred ba*) do call temp.bat %%i
+for /R %%i in (baz* bazbaz fred ba*) do call temp.bat "%%i"
 call :ValidateExpected
 
 echo Strip missing wildcards, keep unwildcarded names
@@ -1066,7 +1066,7 @@ set WINE_expectedresults.4=%WINE_CURDIR%\bazbaz
 set WINE_expectedresults.5=%WINE_CURDIR%\foo\jim
 set WINE_expectedresults.6=%WINE_CURDIR%\jim
 call :SetExpected
-for /R %%i in (baz* fred* jim) do call temp.bat %%i
+for /R %%i in (baz* fred* jim) do call temp.bat "%%i"
 call :ValidateExpected
 
 echo for /R passed
@@ -2490,7 +2490,7 @@ cmd /e:oN /C tmp.cmd
 
 rem FIXME: creating file before setting envvar value to prevent parsing-time evaluation (due to EnableDelayedExpansion not being implemented/available yet)
 echo --- setlocal with corresponding endlocal
-rem %CD% does not tork on NT4 so use the following workaround
+rem %CD% does not work on NT4 so use the following workaround
 for /d %%i in (.) do set WINE_CURDIR=%%~dpnxi
 echo @echo off> test.cmd
 echo echo %%WINE_VAR%%>> test.cmd
@@ -2520,7 +2520,7 @@ echo cd foobar2>> test.cmd
 echo echo %%WINE_VAR%%>> test.cmd
 echo for /d %%%%i in (.) do echo %%%%~dpnxi>> test.cmd
 set WINE_VAR=globalval
-rem %CD% does not tork on NT4 so use the following workaround
+rem %CD% does not work on NT4 so use the following workaround
 for /d %%i in (.) do set WINE_CURDIR=%%~dpnxi
 call test.cmd
 echo %WINE_VAR%
@@ -2532,7 +2532,7 @@ echo --- setlocal within same batch program
 set WINE_var1=one
 set WINE_var2=
 set WINE_var3=
-rem %CD% does not tork on NT4 so use the following workaround
+rem %CD% does not work on NT4 so use the following workaround
 for /d %%i in (.) do set WINE_CURDIR=%%~dpnxi
 setlocal
 set WINE_var2=two
@@ -2564,7 +2564,7 @@ echo --- Mismatched set and end locals
 mkdir foodir2 2>nul
 mkdir foodir3 2>nul
 mkdir foodir4 2>nul
-rem %CD% does not tork on NT4 so use the following workaround
+rem %CD% does not work on NT4 so use the following workaround
 for /d %%i in (.) do set WINE_curdir=%%~dpnxi
 
 echo @echo off> 2set1end.cmd
@@ -2597,7 +2597,7 @@ rem -- setlocal1 == this batch, should never be used inside a called routine
 setlocal
 set WINE_var=value2
 cd foodir2
-call %WINE_CURDIR%\2set1end.cmd
+call "%WINE_CURDIR%\2set1end.cmd"
 echo Finished:
 echo %WINE_VAR%
 for /d %%i in (.) do echo %%~dpnxi
@@ -2612,7 +2612,7 @@ rem -- setlocal1 == this batch, should never be used inside a called routine
 setlocal
 set WINE_var=value2
 cd foodir2
-call %WINE_CURDIR%\1set2end.cmd
+call "%WINE_CURDIR%\1set2end.cmd"
 echo Finished:
 echo %WINE_VAR%
 for /d %%i in (.) do echo %%~dpnxi
