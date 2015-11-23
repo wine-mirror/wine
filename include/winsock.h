@@ -730,16 +730,18 @@ typedef struct WS(WSAData)
 #  define IP_TTL                 7
 #  define IP_TOS                 8
 #  define IP_DONTFRAGMENT        9
+#  define IP_RECEIVE_BROADCAST   22
 # else
-#  define WS_IP_OPTIONS          1
-#  define WS_IP_MULTICAST_IF     2
-#  define WS_IP_MULTICAST_TTL    3
-#  define WS_IP_MULTICAST_LOOP   4
-#  define WS_IP_ADD_MEMBERSHIP   5
-#  define WS_IP_DROP_MEMBERSHIP  6
-#  define WS_IP_TTL              7
-#  define WS_IP_TOS              8
-#  define WS_IP_DONTFRAGMENT     9
+#  define WS_IP_OPTIONS           1
+#  define WS_IP_MULTICAST_IF      2
+#  define WS_IP_MULTICAST_TTL     3
+#  define WS_IP_MULTICAST_LOOP    4
+#  define WS_IP_ADD_MEMBERSHIP    5
+#  define WS_IP_DROP_MEMBERSHIP   6
+#  define WS_IP_TTL               7
+#  define WS_IP_TOS               8
+#  define WS_IP_DONTFRAGMENT      9
+#  define WS_IP_RECEIVE_BROADCAST 22
 # endif
 #endif
 

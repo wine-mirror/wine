@@ -373,6 +373,7 @@ static inline const char *debugstr_sockopt(int level, int optname)
             DEBUG_SOCKOPT(WS_SO_SNDBUF);
             DEBUG_SOCKOPT(WS_SO_SNDTIMEO);
             DEBUG_SOCKOPT(WS_SO_TYPE);
+            DEBUG_SOCKOPT(WS_SO_UPDATE_CONNECT_CONTEXT);
         }
         break;
 
@@ -409,6 +410,7 @@ static inline const char *debugstr_sockopt(int level, int optname)
         switch(optname)
         {
             DEBUG_SOCKOPT(WS_IP_ADD_MEMBERSHIP);
+            DEBUG_SOCKOPT(WS_IP_DONTFRAGMENT);
             DEBUG_SOCKOPT(WS_IP_DROP_MEMBERSHIP);
             DEBUG_SOCKOPT(WS_IP_HDRINCL);
             DEBUG_SOCKOPT(WS_IP_MULTICAST_IF);
@@ -416,10 +418,10 @@ static inline const char *debugstr_sockopt(int level, int optname)
             DEBUG_SOCKOPT(WS_IP_MULTICAST_TTL);
             DEBUG_SOCKOPT(WS_IP_OPTIONS);
             DEBUG_SOCKOPT(WS_IP_PKTINFO);
+            DEBUG_SOCKOPT(WS_IP_RECEIVE_BROADCAST);
             DEBUG_SOCKOPT(WS_IP_TOS);
             DEBUG_SOCKOPT(WS_IP_TTL);
             DEBUG_SOCKOPT(WS_IP_UNICAST_IF);
-            DEBUG_SOCKOPT(WS_IP_DONTFRAGMENT);
         }
         break;
 
