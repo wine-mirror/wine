@@ -850,7 +850,6 @@ static const KeyEntry EmacsStdKeyMap[] =
     {/*VK_HOME*/ 0x24,	WCEL_MoveToBeg		},
     {/*VK_RIGHT*/0x27,	WCEL_MoveRight 		},
     {/*VK_LEFT*/ 0x25,	WCEL_MoveLeft 		},
-    {/*VK_DEL*/  0x2e,  WCEL_DeleteCurrChar     },
     {/*VK_INSERT*/0x2d, WCEL_ToggleInsert 	},
     {	0,		NULL 			}
 };
@@ -874,7 +873,6 @@ static const KeyEntry Win32StdKeyMap[] =
     {/*VK_END*/  0x23,	WCEL_MoveToEnd 		},
     {/*VK_UP*/   0x26, 	WCEL_MoveToPrevHist 	},
     {/*VK_DOWN*/ 0x28,	WCEL_MoveToNextHist	},
-    {/*VK_DEL*/  0x2e,	WCEL_DeleteCurrChar	},
     {/*VK_INSERT*/0x2d, WCEL_ToggleInsert 	},
     {/*VK_F8*/   0x77,	WCEL_FindPrevInHist	},
     {	0,		NULL 			}
