@@ -787,9 +787,9 @@ static void WCEL_ToggleInsert(WCEL_Context* ctx)
 #define CTRL(x)	((x) - '@')
 static const KeyEntry StdKeyMap[] =
 {
-    {/*BACK*/0x08,	WCEL_DeletePrevChar 	},
-    {/*RETURN*/0x0d,	WCEL_Done		},
-    {/*DEL*/127,	WCEL_DeleteCurrChar 	},
+    {/*VK_BACK*/  0x08, WCEL_DeletePrevChar     },
+    {/*VK_RETURN*/0x0d, WCEL_Done               },
+    {/*VK_DELETE*/0x2e, WCEL_DeleteCurrChar     },
     {	0,		NULL			}
 };
 
@@ -857,7 +857,7 @@ static const KeyEntry EmacsStdKeyMap[] =
 
 static const KeyMap EmacsKeyMap[] =
 {
-    {0,                  1, StdKeyMap},
+    {0,                  0, StdKeyMap},
     {0,                  0, EmacsStdKeyMap},
     {RIGHT_ALT_PRESSED,  1, EmacsKeyMapAlt},	/* right alt  */
     {LEFT_ALT_PRESSED,   1, EmacsKeyMapAlt},	/* left  alt  */
@@ -891,7 +891,7 @@ static const KeyEntry Win32KeyMapCtrl[] =
 
 static const KeyMap Win32KeyMap[] =
 {
-    {0,                  1, StdKeyMap},
+    {0,                  0, StdKeyMap},
     {0,                  0, Win32StdKeyMap},
     {RIGHT_CTRL_PRESSED, 0, Win32KeyMapCtrl},
     {LEFT_CTRL_PRESSED,  0, Win32KeyMapCtrl},
