@@ -892,6 +892,7 @@ static const KeyEntry Win32KeyMapCtrl[] =
 static const KeyMap Win32KeyMap[] =
 {
     {0,                  0, StdKeyMap},
+    {SHIFT_PRESSED,      0, StdKeyMap},
     {0,                  0, Win32StdKeyMap},
     {RIGHT_CTRL_PRESSED, 0, Win32KeyMapCtrl},
     {LEFT_CTRL_PRESSED,  0, Win32KeyMapCtrl},
