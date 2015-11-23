@@ -1384,6 +1384,98 @@ static void test_CreatePipe(void)
     SleepEx(0, TRUE); /* get rid of apc */
 }
 
+static void test_CloseHandle(void)
+{
+    static const char testdata[] = "Hello World";
+    HANDLE hpipe, hfile;
+    char buffer[32];
+    DWORD numbytes;
+    BOOL ret;
+
+    hpipe = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX,
+                             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                             1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(hpipe != INVALID_HANDLE_VALUE, "CreateNamedPipe failed with %u\n", GetLastError());
+
+    hfile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile failed with %u\n", GetLastError());
+
+    numbytes = 0xdeadbeef;
+    ret = WriteFile(hpipe, testdata, sizeof(testdata), &numbytes, NULL);
+    ok(ret, "WriteFile failed with %u\n", GetLastError());
+    ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
+
+    numbytes = 0xdeadbeef;
+    ret = PeekNamedPipe(hfile, NULL, 0, NULL, &numbytes, NULL);
+    ok(ret, "PeekNamedPipe failed with %u\n", GetLastError());
+    ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
+
+    ret = CloseHandle(hpipe);
+    ok(ret, "CloseHandle failed with %u\n", GetLastError());
+
+    numbytes = 0xdeadbeef;
+    memset(buffer, 0, sizeof(buffer));
+    ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
+    todo_wine ok(ret, "ReadFile failed with %u\n", GetLastError());
+    ok(numbytes == 0, "expected 0, got %u\n", numbytes);
+
+    numbytes = 0xdeadbeef;
+    memset(buffer, 0, sizeof(buffer));
+    ret = ReadFile(hfile, buffer, sizeof(buffer), &numbytes, NULL);
+    ok(ret, "ReadFile failed with %u\n", GetLastError());
+    ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
+
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
+    ok(!ret, "ReadFile unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
+
+    CloseHandle(hfile);
+
+    /* repeat test with hpipe <-> hfile swapped */
+
+    hpipe = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX,
+                             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+                             1, 1024, 1024, NMPWAIT_USE_DEFAULT_WAIT, NULL);
+    ok(hpipe != INVALID_HANDLE_VALUE, "CreateNamedPipe failed with %u\n", GetLastError());
+
+    hfile = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hfile != INVALID_HANDLE_VALUE, "CreateFile failed with %u\n", GetLastError());
+
+    numbytes = 0xdeadbeef;
+    ret = WriteFile(hfile, testdata, sizeof(testdata), &numbytes, NULL);
+    ok(ret, "WriteFile failed with %u\n", GetLastError());
+    ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
+
+    numbytes = 0xdeadbeef;
+    ret = PeekNamedPipe(hpipe, NULL, 0, NULL, &numbytes, NULL);
+    ok(ret, "PeekNamedPipe failed with %u\n", GetLastError());
+    ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
+
+    ret = CloseHandle(hfile);
+    ok(ret, "CloseHandle failed with %u\n", GetLastError());
+
+    numbytes = 0xdeadbeef;
+    memset(buffer, 0, sizeof(buffer));
+    ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
+    todo_wine ok(ret || broken(GetLastError() == ERROR_MORE_DATA) /* >= Win 8 */,
+                 "ReadFile failed with %u\n", GetLastError());
+    ok(numbytes == 0, "expected 0, got %u\n", numbytes);
+
+    numbytes = 0xdeadbeef;
+    memset(buffer, 0, sizeof(buffer));
+    ret = ReadFile(hpipe, buffer, sizeof(buffer), &numbytes, NULL);
+    ok(ret, "ReadFile failed with %u\n", GetLastError());
+    ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
+
+    SetLastError(0xdeadbeef);
+    ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
+    ok(!ret, "ReadFile unexpectedly succeeded\n");
+    ok(GetLastError() == ERROR_BROKEN_PIPE, "expected ERROR_BROKEN_PIPE, got %u\n", GetLastError());
+
+    CloseHandle(hpipe);
+}
+
 struct named_pipe_client_params
 {
     DWORD security_flags;
@@ -2175,6 +2267,7 @@ START_TEST(pipe)
     test_CreateNamedPipe(PIPE_TYPE_BYTE);
     test_CreateNamedPipe(PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE);
     test_CreatePipe();
+    test_CloseHandle();
     test_impersonation();
     test_overlapped();
     test_NamedPipeHandleState();
