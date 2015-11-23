@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "wine/unicode.h"
+
 extern HINSTANCE hwldap32 DECLSPEC_HIDDEN;
 
 ULONG map_error( int ) DECLSPEC_HIDDEN;
@@ -34,6 +36,17 @@ static inline char *strdupU( const char *src )
     dst = HeapAlloc( GetProcessHeap(), 0, (strlen( src ) + 1) * sizeof(char) );
     if (dst)
         strcpy( dst, src );
+    return dst;
+}
+
+static inline WCHAR *strdupW( const WCHAR *src )
+{
+    WCHAR *dst;
+
+    if (!src) return NULL;
+    dst = HeapAlloc( GetProcessHeap(), 0, (strlenW( src ) + 1) * sizeof(WCHAR) );
+    if (dst)
+        strcpyW( dst, src );
     return dst;
 }
 
