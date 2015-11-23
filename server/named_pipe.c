@@ -1013,11 +1013,14 @@ DECL_HANDLER(get_named_pipe_info)
     }
 
     reply->flags        = client ? client->pipe_flags : server->pipe_flags;
-    reply->sharing      = server->pipe->sharing;
-    reply->maxinstances = server->pipe->maxinstances;
-    reply->instances    = server->pipe->instances;
-    reply->insize       = server->pipe->insize;
-    reply->outsize      = server->pipe->outsize;
+    if (server)
+    {
+        reply->sharing      = server->pipe->sharing;
+        reply->maxinstances = server->pipe->maxinstances;
+        reply->instances    = server->pipe->instances;
+        reply->insize       = server->pipe->insize;
+        reply->outsize      = server->pipe->outsize;
+    }
 
     if (client)
         release_object(client);

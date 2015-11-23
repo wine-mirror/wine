@@ -1387,9 +1387,9 @@ static void test_CreatePipe(void)
 static void test_CloseHandle(void)
 {
     static const char testdata[] = "Hello World";
+    DWORD state, numbytes;
     HANDLE hpipe, hfile;
     char buffer[32];
-    DWORD numbytes;
     BOOL ret;
 
     hpipe = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX,
@@ -1425,6 +1425,9 @@ static void test_CloseHandle(void)
     ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
 
+    ret = GetNamedPipeHandleStateA(hfile, &state, NULL, NULL, NULL, NULL, 0);
+    ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
+
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
     ok(!ret, "ReadFile unexpectedly succeeded\n");
@@ -1458,6 +1461,9 @@ static void test_CloseHandle(void)
     ret = ReadFile(hfile, buffer, sizeof(buffer), &numbytes, NULL);
     todo_wine ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
+
+    ret = GetNamedPipeHandleStateA(hfile, &state, NULL, NULL, NULL, NULL, 0);
+    ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
@@ -1507,6 +1513,9 @@ static void test_CloseHandle(void)
     ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == sizeof(testdata), "expected sizeof(testdata), got %u\n", numbytes);
 
+    ret = GetNamedPipeHandleStateA(hpipe, &state, NULL, NULL, NULL, NULL, 0);
+    ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
+
     SetLastError(0xdeadbeef);
     ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
     ok(!ret, "ReadFile unexpectedly succeeded\n");
@@ -1540,6 +1549,9 @@ static void test_CloseHandle(void)
     ret = ReadFile(hpipe, buffer, sizeof(buffer), &numbytes, NULL);
     todo_wine ok(ret, "ReadFile failed with %u\n", GetLastError());
     ok(numbytes == 0, "expected 0, got %u\n", numbytes);
+
+    ret = GetNamedPipeHandleStateA(hpipe, &state, NULL, NULL, NULL, NULL, 0);
+    ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
