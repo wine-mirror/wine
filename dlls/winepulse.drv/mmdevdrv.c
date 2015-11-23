@@ -442,7 +442,7 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
 static HRESULT pulse_connect(void)
 {
     int len;
-    WCHAR path[PATH_MAX], *name;
+    WCHAR path[MAX_PATH], *name;
     char *str;
 
     if (!pulse_thread)
@@ -521,7 +521,7 @@ static void pulse_phys_speakers_cb(pa_context *c, const pa_sink_info *i, int eol
 static HRESULT pulse_test_connect(void)
 {
     int len, ret;
-    WCHAR path[PATH_MAX], *name;
+    WCHAR path[MAX_PATH], *name;
     char *str;
     pa_operation *o;
 
