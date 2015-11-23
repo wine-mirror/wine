@@ -1441,10 +1441,12 @@ TREEVIEW_RemoveAllChildren(TREEVIEW_INFO *infoPtr, const TREEVIEW_ITEM *parentIt
 static void
 TREEVIEW_UnlinkItem(const TREEVIEW_ITEM *item)
 {
-    TREEVIEW_ITEM *parentItem = item->parent;
+    TREEVIEW_ITEM *parentItem;
 
     assert(item != NULL);
     assert(item->parent != NULL); /* i.e. it must not be the root */
+
+    parentItem = item->parent;
 
     if (parentItem->firstChild == item)
 	parentItem->firstChild = item->nextSibling;
