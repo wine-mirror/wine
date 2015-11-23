@@ -1427,6 +1427,9 @@ static void test_CloseHandle(void)
 
     ret = GetNamedPipeHandleStateA(hfile, &state, NULL, NULL, NULL, NULL, 0);
     ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
+    state = PIPE_READMODE_MESSAGE | PIPE_WAIT;
+    ret = SetNamedPipeHandleState(hfile, &state, NULL, NULL);
+    ok(ret, "SetNamedPipeHandleState failed with %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
@@ -1464,6 +1467,9 @@ static void test_CloseHandle(void)
 
     ret = GetNamedPipeHandleStateA(hfile, &state, NULL, NULL, NULL, NULL, 0);
     ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
+    state = PIPE_READMODE_MESSAGE | PIPE_WAIT;
+    ret = SetNamedPipeHandleState(hfile, &state, NULL, NULL);
+    ok(ret, "SetNamedPipeHandleState failed with %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(hfile, buffer, 0, &numbytes, NULL);
@@ -1515,6 +1521,9 @@ static void test_CloseHandle(void)
 
     ret = GetNamedPipeHandleStateA(hpipe, &state, NULL, NULL, NULL, NULL, 0);
     ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
+    state = PIPE_READMODE_MESSAGE | PIPE_WAIT;
+    ret = SetNamedPipeHandleState(hpipe, &state, NULL, NULL);
+    ok(ret, "SetNamedPipeHandleState failed with %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);
@@ -1552,6 +1561,9 @@ static void test_CloseHandle(void)
 
     ret = GetNamedPipeHandleStateA(hpipe, &state, NULL, NULL, NULL, NULL, 0);
     ok(ret, "GetNamedPipeHandleState failed with %u\n", GetLastError());
+    state = PIPE_READMODE_MESSAGE | PIPE_WAIT;
+    ret = SetNamedPipeHandleState(hpipe, &state, NULL, NULL);
+    ok(ret, "SetNamedPipeHandleState failed with %u\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = ReadFile(hpipe, buffer, 0, &numbytes, NULL);

@@ -1046,7 +1046,11 @@ DECL_HANDLER(set_named_pipe_info)
         client = (struct pipe_client *)get_handle_obj( current->process, req->handle,
                                                        0, &pipe_client_ops );
         if (!client) return;
-        server = client->server;
+        if (!(server = client->server))
+        {
+            release_object( client );
+            return;
+        }
     }
 
     if ((req->flags & ~(NAMED_PIPE_MESSAGE_STREAM_READ | NAMED_PIPE_NONBLOCKING_MODE)) ||
