@@ -1533,6 +1533,7 @@ typedef struct tagCURSORINFO
 } CURSORINFO, *PCURSORINFO, *LPCURSORINFO;
 
 #define CURSOR_SHOWING 0x00000001
+#define CURSOR_SUPPRESSED 0x00000002
 
 /* this is the 6 byte accel struct used in Win32 when presented to the user */
 typedef struct tagACCEL
