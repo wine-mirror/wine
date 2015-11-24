@@ -201,6 +201,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_CreateSwapChain(IDXGIFactory1 *ifa
             min_buffer_count = 1;
             break;
 
+        case DXGI_SWAP_EFFECT_FLIP_DISCARD:
         case DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL:
             min_buffer_count = 2;
             break;
