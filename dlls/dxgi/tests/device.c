@@ -1051,7 +1051,7 @@ static void test_swapchain_parameters(void)
     HRESULT hr;
     unsigned int i, j;
     ULONG refcount;
-    DXGI_USAGE usage, expected_usage;
+    DXGI_USAGE usage, expected_usage, broken_usage;
     HWND window;
     static const struct
     {
@@ -1191,13 +1191,14 @@ static void test_swapchain_parameters(void)
             hr = IDXGISwapChain_GetBuffer(swapchain, j, &IID_IDXGIResource, (void **)&resource);
             ok(SUCCEEDED(hr), "GetBuffer(%u) failed, hr %#x, test %u.\n", hr, i, j);
 
-            expected_usage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER;
-
             /* Buffers > 0 are supposed to be read only. This is the case except that in
-             * fullscreen mode the last backbuffer (BufferCount - 1) is writeable. This
-             * is not the case if an unsupported refresh rate is passed for some reason,
-             * probably because the invalid refresh rate triggers a kinda-sorta windowed
-             * mode.
+             * fullscreen mode on Windows <= 8 the last backbuffer (BufferCount - 1) is
+             * writeable. This is not the case if an unsupported refresh rate is passed
+             * for some reason, probably because the invalid refresh rate triggers a
+             * kinda-sorta windowed mode.
+             *
+             * On Windows 10 all buffers > 0 are read-only. Mark the earlier behavior
+             * broken.
              *
              * This last buffer acts as a shadow frontbuffer. Writing to it doesn't show
              * the draw on the screen right away (Aero on or off doesn't matter), but
@@ -1206,12 +1207,15 @@ static void test_swapchain_parameters(void)
              * Note that if the application doesn't have focused creating a fullscreen
              * swapchain returns DXGI_STATUS_OCCLUDED and we get a windowed swapchain,
              * so use the Windowed property of the swapchain that was actually created. */
+            expected_usage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER | DXGI_USAGE_READ_ONLY;
+            broken_usage = DXGI_USAGE_RENDER_TARGET_OUTPUT | DXGI_USAGE_BACK_BUFFER;
+
             if (desc.Windowed || j < tests[i].highest_accessible_buffer)
-                expected_usage |= DXGI_USAGE_READ_ONLY;
+                broken_usage |= DXGI_USAGE_READ_ONLY;
 
             hr = IDXGIResource_GetUsage(resource, &usage);
             ok(SUCCEEDED(hr), "Failed to get resource usage, hr %#x, test %u, buffer %u.\n", hr, i, j);
-            ok(usage == expected_usage, "Got usage %x, expected %x, test %u, buffer %u.\n",
+            ok(usage == expected_usage || broken(usage == broken_usage), "Got usage %x, expected %x, test %u, buffer %u.\n",
                     usage, expected_usage, i, j);
 
             IDXGIResource_Release(resource);
