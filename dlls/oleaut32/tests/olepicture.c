@@ -1079,18 +1079,14 @@ static void test_load_save_bmp(void)
     size = -1;
     hr = IPicture_SaveAsFile(pic, dst_stream, TRUE, &size);
     ok(hr == S_OK, "IPicture_SaveasFile error %#x\n", hr);
-todo_wine
     ok(size == 66, "expected 66, got %d\n", size);
     mem = GlobalLock(hmem);
-todo_wine
     ok(!memcmp(&mem[0], "BM", 2), "got wrong bmp header %04x\n", mem[0]);
     GlobalUnlock(hmem);
 
     size = -1;
     hr = IPicture_SaveAsFile(pic, dst_stream, FALSE, &size);
-todo_wine
     ok(hr == E_FAIL, "expected E_FAIL, got %#x\n", hr);
-todo_wine
     ok(size == -1, "expected -1, got %d\n", size);
 
     offset.QuadPart = 0;
@@ -1157,15 +1153,12 @@ static void test_load_save_icon(void)
 todo_wine
     ok(size == 766, "expected 766, got %d\n", size);
     mem = GlobalLock(hmem);
-todo_wine
     ok(mem[0] == 0x00010000, "got wrong icon header %04x\n", mem[0]);
     GlobalUnlock(hmem);
 
     size = -1;
     hr = IPicture_SaveAsFile(pic, dst_stream, FALSE, &size);
-todo_wine
     ok(hr == E_FAIL, "expected E_FAIL, got %#x\n", hr);
-todo_wine
     ok(size == -1, "expected -1, got %d\n", size);
 
     offset.QuadPart = 0;
@@ -1231,13 +1224,11 @@ static void test_load_save_empty_picture(void)
     size = -1;
     hr = IPicture_SaveAsFile(pic, dst_stream, TRUE, &size);
     ok(hr == S_OK, "IPicture_SaveasFile error %#x\n", hr);
-todo_wine
     ok(size == -1, "expected -1, got %d\n", size);
 
     size = -1;
     hr = IPicture_SaveAsFile(pic, dst_stream, FALSE, &size);
     ok(hr == S_OK, "IPicture_SaveasFile error %#x\n", hr);
-todo_wine
     ok(size == -1, "expected -1, got %d\n", size);
 
     hr = IPicture_QueryInterface(pic, &IID_IPersistStream, (void **)&src_stream);
