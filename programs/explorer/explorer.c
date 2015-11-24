@@ -683,12 +683,11 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
     static const WCHAR arg_select[] = {'/','s','e','l','e','c','t',','};
     static const WCHAR arg_desktop[] = {'/','d','e','s','k','t','o','p'};
 
-    LPWSTR p, p2;
+    LPWSTR p = commandline;
 
-    p2 = commandline;
-    p = strchrW(commandline,'/');
-    while(p)
+    while (*p)
     {
+        while (isspaceW(*p)) p++;
         if (strncmpW(p, arg_n, sizeof(arg_n)/sizeof(WCHAR))==0)
         {
             parameters->explorer_mode = FALSE;
@@ -717,15 +716,12 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
             p += sizeof(arg_desktop)/sizeof(WCHAR);
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
-        else p++;
-
-        p2 = p;
-        p = strchrW(p,'/');
-    }
-    if (p2 && *p2)
-    {
-        /* left over command line is generally the path to be opened */
-        copy_path_string(parameters->root,p2);
+        else
+        {
+            /* left over command line is generally the path to be opened */
+            copy_path_string(parameters->root,p);
+            break;
+        }
     }
 }
 
