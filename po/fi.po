@@ -8566,58 +8566,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Piilota"
+msgstr "Piilota %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Muu"
+msgstr "Piilota muut"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Näytä"
+msgstr "Näytä kaikki"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Lopeta %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Lopeta"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Ikkuna"
+msgstr "Ikkuna"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "P&ienennä"
+msgstr "Pienennä"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "Lähennä"
+msgstr "Zoomaa"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Siirry kokoruututilaan"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "Tuo &eteen"
+msgstr "Tuo kaikki eteen"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
