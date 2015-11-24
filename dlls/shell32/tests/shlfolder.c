@@ -5224,6 +5224,63 @@ static void test_SHCreateShellFolderViewEx(void)
     IShellFolder_Release(desktop);
 }
 
+static void test_DataObject(void)
+{
+    IShellFolder *desktop;
+    IDataObject *data_obj;
+    HRESULT hres;
+    IEnumIDList *peidl;
+    LPITEMIDLIST apidl;
+    FORMATETC fmt;
+    DWORD cf_shellidlist;
+    STGMEDIUM medium;
+
+    SHGetDesktopFolder(&desktop);
+
+    hres = IShellFolder_EnumObjects(desktop, NULL,
+            SHCONTF_NONFOLDERS|SHCONTF_FOLDERS|SHCONTF_INCLUDEHIDDEN, &peidl);
+    ok(hres == S_OK, "got %x\n", hres);
+
+    if(IEnumIDList_Next(peidl, 1, &apidl, NULL) != S_OK) {
+        skip("no files on desktop - skipping GetDataObject tests\n");
+        IEnumIDList_Release(peidl);
+        IShellFolder_Release(desktop);
+        return;
+    }
+    IEnumIDList_Release(peidl);
+
+    hres = IShellFolder_GetUIObjectOf(desktop, NULL, 1, (LPCITEMIDLIST*)&apidl,
+            &IID_IDataObject, NULL, (void**)&data_obj);
+    ok(hres == S_OK, "got %x\n", hres);
+    pILFree(apidl);
+    IShellFolder_Release(desktop);
+
+    cf_shellidlist = RegisterClipboardFormatW(CFSTR_SHELLIDLISTW);
+    fmt.cfFormat = cf_shellidlist;
+    fmt.ptd = NULL;
+    fmt.dwAspect = DVASPECT_CONTENT;
+    fmt.lindex = -1;
+    fmt.tymed = TYMED_HGLOBAL;
+    hres = IDataObject_QueryGetData(data_obj, &fmt);
+    ok(hres == S_OK, "got %x\n", hres);
+
+    fmt.tymed = TYMED_HGLOBAL | TYMED_ISTREAM;
+    hres = IDataObject_QueryGetData(data_obj, &fmt);
+    ok(hres == S_OK, "got %x\n", hres);
+
+    fmt.tymed = TYMED_ISTREAM;
+    hres = IDataObject_QueryGetData(data_obj, &fmt);
+    todo_wine ok(hres == S_FALSE, "got %x\n", hres);
+
+    fmt.tymed = TYMED_HGLOBAL | TYMED_ISTREAM;
+    hres = IDataObject_GetData(data_obj, &fmt, &medium);
+    ok(hres == S_OK, "got %x\n", hres);
+    ok(medium.tymed == TYMED_HGLOBAL, "medium.tymed = %x\n", medium.tymed);
+    ReleaseStgMedium(&medium);
+
+    IDataObject_Release(data_obj);
+}
+
 START_TEST(shlfolder)
 {
     init_function_pointers();
@@ -5264,6 +5321,7 @@ START_TEST(shlfolder)
     test_SHCreateDefaultContextMenu();
     test_SHCreateShellFolderView();
     test_SHCreateShellFolderViewEx();
+    test_DataObject();
 
     OleUninitialize();
 }
