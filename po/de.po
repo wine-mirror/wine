@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-11-06 12:55+0100\n"
+"PO-Revision-Date: 2015-11-24 19:33+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3191,7 +3191,7 @@ msgstr "Anzeigen"
 
 #: hhctrl.rc:43 winemac.rc:34
 msgid "Hide"
-msgstr "Verstecken"
+msgstr "Ausblenden"
 
 #: hhctrl.rc:44 ieframe.rc:68 shdoclc.rc:167 shdoclc.rc:191
 msgid "Stop"
@@ -8592,58 +8592,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Verstecken"
+msgstr "%@ ausblenden"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Andere"
+msgstr "Andere ausblenden"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Anzeigen"
+msgstr "Alle anzeigen"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "%@ beenden"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Beenden"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Fenster"
+msgstr "Fenster"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Minimieren"
+msgstr "Minimieren"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "Ver&größern"
+msgstr "Zoom"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Vollbildmodus"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "&In den Vordergrund holen"
+msgstr "Alle in den Vordergrund holen"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -11300,11 +11286,11 @@ msgstr ""
 
 #: oleview.rc:122
 msgid "Show or hide the toolbar"
-msgstr "Symbolleiste zeigen oder verstecken"
+msgstr "Symbolleiste anzeigen oder ausblenden"
 
 #: oleview.rc:123
 msgid "Show or hide the status bar"
-msgstr "Statusleiste zeigen oder verstecken"
+msgstr "Statusleiste anzeigen oder ausblenden"
 
 #: oleview.rc:124
 msgid "Refresh all lists"
@@ -11909,7 +11895,7 @@ msgstr "Entfernt Schlüssel aus den Favoriten"
 
 #: regedit.rc:166
 msgid "Shows or hides the status bar"
-msgstr "Zeigt oder versteckt die Statusleiste"
+msgstr "Blendet die Statusleiste ein oder aus"
 
 #: regedit.rc:167
 msgid "Change position of split between two panes"
@@ -12199,7 +12185,7 @@ msgstr "Nach Programmstart &minimieren"
 
 #: taskmgr.rc:47
 msgid "&Hide When Minimized"
-msgstr "&Verstecken, wenn minimiert"
+msgstr "&Ausblenden, wenn minimiert"
 
 #: taskmgr.rc:49 taskmgr.rc:257
 msgid "&Show 16-bit tasks"
@@ -12678,7 +12664,7 @@ msgstr ""
 
 #: taskmgr.rc:191
 msgid "Hide the Task Manager when it is minimized"
-msgstr "Versteckt den Task-Manager, wenn er minimiert ist"
+msgstr "Blendet den Task-Manager aus, wenn er minimiert ist"
 
 #: taskmgr.rc:192
 msgid "Force Task Manager to update now, regardless of Update Speed setting"
