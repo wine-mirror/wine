@@ -97,6 +97,7 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSW lpCaps, DWORD dwSize)
     strcpyW(lpCaps->szPname, ini);
     lpCaps->szPname[9] = '0' + wDevID; /* 6  at max */
     lpCaps->wTechnology = wDevID == 2 ? AUXCAPS_CDAUDIO : AUXCAPS_AUXIN;
+    lpCaps->wReserved1 = 0;
     lpCaps->dwSupport = AUXCAPS_VOLUME | AUXCAPS_LRVOLUME;
 
     return MMSYSERR_NOERROR;
