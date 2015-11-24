@@ -1028,10 +1028,10 @@ HRESULT WINAPI IDirectInputDevice2WImpl_SetCooperativeLevel(LPDIRECTINPUTDEVICE8
 
     if (hwnd && GetWindowLongW(hwnd, GWL_STYLE) & WS_CHILD) return E_HANDLE;
 
-    if (dwflags == (DISCL_NONEXCLUSIVE | DISCL_BACKGROUND))
+    if (!hwnd && dwflags == (DISCL_NONEXCLUSIVE | DISCL_BACKGROUND))
         hwnd = GetDesktopWindow();
 
-    if (!hwnd) return E_HANDLE;
+    if (!IsWindow(hwnd)) return E_HANDLE;
 
     /* For security reasons native does not allow exclusive background level
        for mouse and keyboard only */
