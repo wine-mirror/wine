@@ -436,15 +436,22 @@ static HRESULT WINAPI d3d9_GetDeviceCaps(IDirect3D9Ex *iface, UINT adapter, D3DD
 static HMONITOR WINAPI d3d9_GetAdapterMonitor(IDirect3D9Ex *iface, UINT adapter)
 {
     struct d3d9 *d3d9 = impl_from_IDirect3D9Ex(iface);
-    HMONITOR ret;
+    struct wined3d_output_desc desc;
+    HRESULT hr;
 
     TRACE("iface %p, adapter %u.\n", iface, adapter);
 
     wined3d_mutex_lock();
-    ret = wined3d_get_adapter_monitor(d3d9->wined3d, adapter);
+    hr = wined3d_get_output_desc(d3d9->wined3d, adapter, &desc);
     wined3d_mutex_unlock();
 
-    return ret;
+    if (FAILED(hr))
+    {
+        WARN("Failed to get output desc, hr %#x.\n", hr);
+        return NULL;
+    }
+
+    return desc.monitor;
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_CreateDevice(IDirect3D9Ex *iface, UINT adapter,

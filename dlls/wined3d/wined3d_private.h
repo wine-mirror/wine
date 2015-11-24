@@ -1799,7 +1799,7 @@ struct wined3d_d3d_info
 struct wined3d_adapter
 {
     UINT ordinal;
-    POINT monitorPoint;
+    POINT monitor_position;
     enum wined3d_format_id screen_format;
 
     struct wined3d_gl_info  gl_info;

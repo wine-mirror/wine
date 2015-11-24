@@ -1998,6 +1998,15 @@ struct wined3d_shader_desc
     unsigned int max_version;
 };
 
+struct wined3d_output_desc
+{
+    WCHAR device_name[CCHDEVICENAME];
+    RECT desktop_rect;
+    BOOL attached_to_desktop;
+    enum wined3d_display_rotation rotation;
+    HMONITOR monitor;
+};
+
 struct wined3d_parent_ops
 {
     void (__stdcall *wined3d_object_destroyed)(void *parent);
@@ -2094,11 +2103,12 @@ HRESULT __cdecl wined3d_get_adapter_identifier(const struct wined3d *wined3d, UI
         DWORD flags, struct wined3d_adapter_identifier *identifier);
 UINT __cdecl wined3d_get_adapter_mode_count(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_format_id format_id, enum wined3d_scanline_ordering scanline_ordering);
-HMONITOR __cdecl wined3d_get_adapter_monitor(const struct wined3d *wined3d, UINT adapter_idx);
 HRESULT __cdecl wined3d_get_adapter_raster_status(const struct wined3d *wined3d, UINT adapter_idx,
         struct wined3d_raster_status *raster_status);
 HRESULT __cdecl wined3d_get_device_caps(const struct wined3d *wined3d, UINT adapter_idx,
         enum wined3d_device_type device_type, WINED3DCAPS *caps);
+HRESULT __cdecl wined3d_get_output_desc(const struct wined3d *wined3d, unsigned int adapter_idx,
+        struct wined3d_output_desc *desc);
 ULONG __cdecl wined3d_incref(struct wined3d *wined3d);
 HRESULT __cdecl wined3d_register_software_device(struct wined3d *wined3d, void *init_function);
 HRESULT __cdecl wined3d_set_adapter_display_mode(struct wined3d *wined3d,

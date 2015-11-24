@@ -1271,6 +1271,61 @@ static void test_maximum_frame_latency(void)
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_output_desc(void)
+{
+    DXGI_OUTPUT_DESC desc;
+    IDXGIFactory *factory;
+    IDXGIAdapter *adapter;
+    IDXGIOutput *output;
+    unsigned int i, j;
+    HRESULT hr;
+
+    hr = CreateDXGIFactory(&IID_IDXGIFactory, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create DXGI factory, hr %#x.\n", hr);
+
+    for (i = 0; ; ++i)
+    {
+        hr = IDXGIFactory_EnumAdapters(factory, i, &adapter);
+        if (hr == DXGI_ERROR_NOT_FOUND)
+            break;
+        ok(SUCCEEDED(hr), "Failed to enumerate adapter %u, hr %#x.\n", i, hr);
+
+        for (j = 0; ; ++j)
+        {
+            MONITORINFOEXW monitor_info;
+            BOOL ret;
+
+            hr = IDXGIAdapter_EnumOutputs(adapter, j, &output);
+            if (hr == DXGI_ERROR_NOT_FOUND)
+                break;
+            ok(SUCCEEDED(hr), "Failed to enumerate output %u on adapter %u, hr %#x.\n", j, i, hr);
+
+            hr = IDXGIOutput_GetDesc(output, NULL);
+            ok(hr == E_INVALIDARG, "Got unexpected hr %#x for output %u on adapter %u.\n", hr, j, i);
+            hr = IDXGIOutput_GetDesc(output, &desc);
+            ok(SUCCEEDED(hr), "Failed to get desc for output %u on adapter %u, hr %#x.\n", j, i, hr);
+
+            monitor_info.cbSize = sizeof(monitor_info);
+            ret = GetMonitorInfoW(desc.Monitor, (MONITORINFO *)&monitor_info);
+            ok(ret, "Failed to get monitor info.\n");
+            ok(!lstrcmpW(desc.DeviceName, monitor_info.szDevice), "Got unexpected device name %s, expected %s.\n",
+                    wine_dbgstr_w(desc.DeviceName), wine_dbgstr_w(monitor_info.szDevice));
+            ok(!memcmp(&desc.DesktopCoordinates, &monitor_info.rcMonitor, sizeof(desc.DesktopCoordinates)),
+                    "Got unexpected desktop coordinates {%d, %d, %d, %d}, expected {%d, %d, %d, %d}.\n",
+                    desc.DesktopCoordinates.left, desc.DesktopCoordinates.top,
+                    desc.DesktopCoordinates.right, desc.DesktopCoordinates.bottom,
+                    monitor_info.rcMonitor.left, monitor_info.rcMonitor.top,
+                    monitor_info.rcMonitor.right, monitor_info.rcMonitor.bottom);
+
+            IDXGIOutput_Release(output);
+        }
+
+        IDXGIAdapter_Release(adapter);
+    }
+
+    IDXGIFactory_Release(factory);
+}
+
 START_TEST(device)
 {
     pCreateDXGIFactory1 = (void *)GetProcAddress(GetModuleHandleA("dxgi.dll"), "CreateDXGIFactory1");
@@ -1289,4 +1344,5 @@ START_TEST(device)
     test_swapchain_resize();
     test_swapchain_parameters();
     test_maximum_frame_latency();
+    test_output_desc();
 }

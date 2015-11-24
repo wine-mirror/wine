@@ -121,9 +121,33 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetParent(IDXGIOutput *iface,
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput *iface, DXGI_OUTPUT_DESC *desc)
 {
-    FIXME("iface %p, desc %p stub!\n", iface, desc);
+    struct dxgi_output *output = impl_from_IDXGIOutput(iface);
+    struct wined3d_output_desc wined3d_desc;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, desc %p.\n", iface, desc);
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    wined3d_mutex_lock();
+    hr = wined3d_get_output_desc(output->adapter->parent->wined3d,
+            output->adapter->ordinal, &wined3d_desc);
+    wined3d_mutex_unlock();
+
+    if (FAILED(hr))
+    {
+        WARN("Failed to get output desc, hr %#x.\n", hr);
+        return hr;
+    }
+
+    memcpy(desc->DeviceName, wined3d_desc.device_name, sizeof(desc->DeviceName));
+    desc->DesktopCoordinates = wined3d_desc.desktop_rect;
+    desc->AttachedToDesktop = wined3d_desc.attached_to_desktop;
+    desc->Rotation = wined3d_desc.rotation;
+    desc->Monitor = wined3d_desc.monitor;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_output_GetDisplayModeList(IDXGIOutput *iface,

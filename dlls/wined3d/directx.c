@@ -3851,14 +3851,37 @@ HRESULT CDECL wined3d_register_software_device(struct wined3d *wined3d, void *in
     return WINED3D_OK;
 }
 
-HMONITOR CDECL wined3d_get_adapter_monitor(const struct wined3d *wined3d, UINT adapter_idx)
+HRESULT CDECL wined3d_get_output_desc(const struct wined3d *wined3d, unsigned int adapter_idx,
+        struct wined3d_output_desc *desc)
 {
-    TRACE("wined3d %p, adapter_idx %u.\n", wined3d, adapter_idx);
+    enum wined3d_display_rotation rotation;
+    const struct wined3d_adapter *adapter;
+    struct wined3d_display_mode mode;
+    HMONITOR monitor;
+    HRESULT hr;
+
+    TRACE("wined3d %p, adapter_idx %u, desc %p.\n", wined3d, adapter_idx, desc);
 
     if (adapter_idx >= wined3d->adapter_count)
-        return NULL;
+        return WINED3DERR_INVALIDCALL;
 
-    return MonitorFromPoint(wined3d->adapters[adapter_idx].monitorPoint, MONITOR_DEFAULTTOPRIMARY);
+    adapter = &wined3d->adapters[adapter_idx];
+    if (!(monitor = MonitorFromPoint(adapter->monitor_position, MONITOR_DEFAULTTOPRIMARY)))
+        return WINED3DERR_INVALIDCALL;
+
+    if (FAILED(hr = wined3d_get_adapter_display_mode(wined3d, adapter_idx, &mode, &rotation)))
+        return hr;
+
+    memcpy(desc->device_name, adapter->DeviceName, sizeof(desc->device_name));
+    SetRect(&desc->desktop_rect, 0, 0, mode.width, mode.height);
+    OffsetRect(&desc->desktop_rect, adapter->monitor_position.x, adapter->monitor_position.y);
+    /* FIXME: We should get this from EnumDisplayDevices() when the adapters
+     * are created. */
+    desc->attached_to_desktop = TRUE;
+    desc->rotation = rotation;
+    desc->monitor = monitor;
+
+    return WINED3D_OK;
 }
 
 /* FIXME: GetAdapterModeCount and EnumAdapterModes currently only returns modes
@@ -5813,8 +5836,6 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
     TRACE("adapter %p, ordinal %u.\n", adapter, ordinal);
 
     adapter->ordinal = ordinal;
-    adapter->monitorPoint.x = -1;
-    adapter->monitorPoint.y = -1;
 
 /* Dynamically load all GL core functions */
 #ifdef USE_WIN32_OPENGL
@@ -5929,8 +5950,6 @@ static void wined3d_adapter_init_nogl(struct wined3d_adapter *adapter, UINT ordi
 
     memset(adapter, 0, sizeof(*adapter));
     adapter->ordinal = ordinal;
-    adapter->monitorPoint.x = -1;
-    adapter->monitorPoint.y = -1;
 
     adapter->driver_info.name = "Display";
     adapter->driver_info.description = "WineD3D DirectDraw Emulation";
