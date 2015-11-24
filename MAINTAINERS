@@ -22,6 +22,7 @@ Descriptions of section entries used here:
 	P: Other knowledgeable person. FullName <address@domain>
 	F: Files and directories with wildcard patterns.
 	   One pattern per line.  Multiple F: lines acceptable.
+	W: Link to additional information.
 
 Maintainers List
 
@@ -257,3 +258,7 @@ P:	Sebastian Lackner <sebastian@fds-team.de>
 P:	Vincent Povirk <vincent@codeweavers.com>
 F:	*
 F:	*/
+
+Stable Branch
+M:	Michael Stefaniuc <mstefani@winehq.org>
+W:	http://wiki.winehq.org/StableRules
