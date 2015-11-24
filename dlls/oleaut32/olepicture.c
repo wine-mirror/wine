@@ -831,19 +831,6 @@ static HRESULT WINAPI OLEPictureImpl_PictureChanged(IPicture *iface)
 }
 
 /************************************************************************
- * OLEPictureImpl_SaveAsFile
- */
-static HRESULT WINAPI OLEPictureImpl_SaveAsFile(IPicture *iface,
-						IStream *pstream,
-						BOOL SaveMemCopy,
-						LONG *pcbSize)
-{
-  OLEPictureImpl *This = impl_from_IPicture(iface);
-  FIXME("(%p)->(%p, %d, %p), hacked stub.\n", This, pstream, SaveMemCopy, pcbSize);
-  return IStream_Write(pstream,This->data,This->datalen,(ULONG*)pcbSize);
-}
-
-/************************************************************************
  * OLEPictureImpl_get_Attributes
  */
 static HRESULT WINAPI OLEPictureImpl_get_Attributes(IPicture *iface,
@@ -1952,6 +1939,85 @@ static HRESULT WINAPI OLEPictureImpl_GetSizeMax(IPersistStream *iface, ULARGE_IN
     return hr;
 }
 
+/************************************************************************
+ * OLEPictureImpl_SaveAsFile
+ */
+static HRESULT WINAPI OLEPictureImpl_SaveAsFile(IPicture *iface,
+    IStream *stream, BOOL mem_copy, LONG *size)
+{
+    OLEPictureImpl *This = impl_from_IPicture(iface);
+    void *data;
+    unsigned int data_size;
+    ULONG written;
+    HRESULT hr;
+
+    FIXME("(%p)->(%p,%d,%p): semi-stub\n", This, stream, mem_copy, size);
+
+    switch (This->desc.picType)
+    {
+    case PICTYPE_NONE:
+        return S_OK;
+
+    case PICTYPE_ICON:
+        if (!mem_copy) return E_FAIL;
+
+        if (This->bIsDirty || !This->data)
+        {
+            if (!serializeIcon(This->desc.icon.hicon, &data, &data_size))
+                return E_FAIL;
+            HeapFree(GetProcessHeap(), 0, This->data);
+            This->data = data;
+            This->datalen = data_size;
+        }
+        hr = IStream_Write(stream, This->data, This->datalen, &written);
+        if (hr == S_OK && size) *size = written;
+        return hr;
+
+    case PICTYPE_BITMAP:
+        if (!mem_copy) return E_FAIL;
+
+        if (This->bIsDirty || !This->data)
+        {
+            switch (This->keepOrigFormat ? This->loadtime_format : BITMAP_FORMAT_BMP)
+            {
+            case BITMAP_FORMAT_BMP:
+                hr = serializeBMP(This->desc.bmp.hbitmap, &data, &data_size);
+                if (hr != S_OK) return hr;
+                break;
+            case BITMAP_FORMAT_JPEG:
+                FIXME("BITMAP_FORMAT_JPEG is not implemented\n");
+                return E_NOTIMPL;
+            case BITMAP_FORMAT_GIF:
+                FIXME("BITMAP_FORMAT_GIF is not implemented\n");
+                return E_NOTIMPL;
+            case BITMAP_FORMAT_PNG:
+                FIXME("BITMAP_FORMAT_PNG is not implemented\n");
+                return E_NOTIMPL;
+            default:
+                FIXME("PICTYPE_BITMAP/%#x is not implemented\n", This->loadtime_format);
+                return E_NOTIMPL;
+            }
+
+            HeapFree(GetProcessHeap(), 0, This->data);
+            This->data = data;
+            This->datalen = data_size;
+        }
+        hr = IStream_Write(stream, This->data, This->datalen, &written);
+        if (hr == S_OK && size) *size = written;
+        return hr;
+
+    case PICTYPE_METAFILE:
+        FIXME("PICTYPE_METAFILE is not implemented\n");
+        return E_NOTIMPL;
+    case PICTYPE_ENHMETAFILE:
+        FIXME("ENHMETAFILE is not implemented\n");
+        return E_NOTIMPL;
+    default:
+        FIXME("%#x is not implemented\n", This->desc.picType);
+        break;
+    }
+    return E_NOTIMPL;
+}
 
 /************************************************************************
  *    IDispatch
