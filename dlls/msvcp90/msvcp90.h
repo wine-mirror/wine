@@ -94,7 +94,7 @@ basic_string_char* __thiscall MSVCP_basic_string_char_ctor(basic_string_char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr(basic_string_char*, const char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_ctor_cstr_len(basic_string_char*, const char*, MSVCP_size_t);
 basic_string_char* __thiscall MSVCP_basic_string_char_copy_ctor(basic_string_char*, const basic_string_char*);
-void __thiscall MSVCP_basic_string_char_dtor(basic_string_char*);
+void* __thiscall MSVCP_basic_string_char_dtor(basic_string_char*);
 const char* __thiscall MSVCP_basic_string_char_c_str(const basic_string_char*);
 void __thiscall MSVCP_basic_string_char_clear(basic_string_char*);
 basic_string_char* __thiscall MSVCP_basic_string_char_append_ch(basic_string_char*, char);
@@ -123,7 +123,7 @@ typedef struct
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr(basic_string_wchar*, const wchar_t*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_cstr_len(basic_string_wchar*, const wchar_t*, MSVCP_size_t);
-void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
+void* __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar*);
 const wchar_t* __thiscall MSVCP_basic_string_wchar_c_str(const basic_string_wchar*);
 void __thiscall MSVCP_basic_string_wchar_clear(basic_string_wchar*);
 basic_string_wchar* __thiscall MSVCP_basic_string_wchar_append_ch(basic_string_wchar*, wchar_t);

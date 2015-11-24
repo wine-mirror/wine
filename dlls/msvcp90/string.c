@@ -973,10 +973,11 @@ basic_string_char* __thiscall MSVCP_basic_string_char_ctor_ptr_ptr(basic_string_
 /* ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QAE@XZ */
 /* ??1?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_char_dtor, 4)
-void __thiscall MSVCP_basic_string_char_dtor(basic_string_char *this)
+void* __thiscall MSVCP_basic_string_char_dtor(basic_string_char *this)
 {
     TRACE("%p\n", this);
     basic_string_char_tidy(this, TRUE, 0);
+    return NULL;  /* FEAR 1 installer expects EAX set to 0 */
 }
 
 /* ?size@?$basic_string@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@QBEIXZ */
@@ -2785,10 +2786,11 @@ basic_string_wchar* __thiscall MSVCP_basic_string_wchar_ctor_ptr_ptr(basic_strin
 /* ??1?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QAE@XZ */
 /* ??1?$basic_string@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@QEAA@XZ */
 DEFINE_THISCALL_WRAPPER(MSVCP_basic_string_wchar_dtor, 4)
-void __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar *this)
+void* __thiscall MSVCP_basic_string_wchar_dtor(basic_string_wchar *this)
 {
     TRACE("%p\n", this);
     basic_string_wchar_tidy(this, TRUE, 0);
+    return NULL;  /* FEAR 1 installer expects EAX set to 0 */
 }
 
 /* ?size@?$basic_string@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@QBEIXZ */

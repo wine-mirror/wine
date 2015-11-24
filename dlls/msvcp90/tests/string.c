@@ -63,7 +63,7 @@ static basic_string_char* (__cdecl *p_basic_string_char_concatenate_cstr)(basic_
 static basic_string_char* (__thiscall *p_basic_string_char_ctor)(basic_string_char*);
 static basic_string_char* (__thiscall *p_basic_string_char_copy_ctor)(basic_string_char*, basic_string_char*);
 static basic_string_char* (__thiscall *p_basic_string_char_ctor_cstr)(basic_string_char*, const char*);
-static void (__thiscall *p_basic_string_char_dtor)(basic_string_char*);
+static void* (__thiscall *p_basic_string_char_dtor)(basic_string_char*);
 static basic_string_char* (__thiscall *p_basic_string_char_erase)(basic_string_char*, size_t, size_t);
 static basic_string_char* (__thiscall *p_basic_string_char_assign_cstr_len)(basic_string_char*, const char*, size_t);
 static const char* (__thiscall *p_basic_string_char_cstr)(basic_string_char*);
@@ -85,7 +85,7 @@ static size_t *p_basic_string_char_npos;
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_ctor)(basic_string_wchar*);
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_copy_ctor)(basic_string_wchar*, basic_string_wchar*);
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_ctor_cstr)(basic_string_wchar*, const wchar_t*);
-static void (__thiscall *p_basic_string_wchar_dtor)(basic_string_wchar*);
+static void* (__thiscall *p_basic_string_wchar_dtor)(basic_string_wchar*);
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_erase)(basic_string_wchar*, size_t, size_t);
 static basic_string_wchar* (__thiscall *p_basic_string_wchar_assign_cstr_len)(basic_string_wchar*, const wchar_t*, size_t);
 static const wchar_t* (__thiscall *p_basic_string_wchar_cstr)(basic_string_wchar*);
@@ -767,6 +767,26 @@ static void test_basic_string_char_find_last_not_of(void) {
     }
 }
 
+static void test_basic_string_dtor(void) {
+#ifdef __i386__
+    static const wchar_t qwerty[] = { 'q','w','e','r','t','y',0 };
+    basic_string_wchar str1;
+    basic_string_char str2;
+    void *ret;
+
+    /* FEAR 1 installer expects that string destructors set EAX to
+     * zero on return (see bug 37358). */
+
+    call_func2(p_basic_string_wchar_ctor_cstr, &str1, qwerty);
+    ret = call_func1(p_basic_string_wchar_dtor, &str1);
+    ok(ret == NULL, "expected NULL, got %p\n", ret);
+
+    call_func2(p_basic_string_char_ctor_cstr, &str2, "qwerty");
+    ret = call_func1(p_basic_string_char_dtor, &str2);
+    ok(ret == NULL, "expected NULL, got %p\n", ret);
+#endif
+}
+
 START_TEST(string)
 {
     if(!init())
@@ -783,6 +803,7 @@ START_TEST(string)
     test_basic_string_wchar();
     test_basic_string_wchar_swap();
     test_basic_string_char_find_last_not_of();
+    test_basic_string_dtor();
 
     ok(!invalid_parameter, "invalid_parameter_handler was invoked too many times\n");
 
