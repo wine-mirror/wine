@@ -598,7 +598,7 @@ void flush_window_surfaces( BOOL idle )
     now = GetTickCount();
     if (idle) last_idle = now;
     /* if not idle, we only flush if there's evidence that the app never goes idle */
-    else if ((int)(now - last_idle) < 1000) goto done;
+    else if ((int)(now - last_idle) < 50) goto done;
 
     LIST_FOR_EACH_ENTRY( surface, &window_surfaces, struct window_surface, entry )
         surface->funcs->flush( surface );
