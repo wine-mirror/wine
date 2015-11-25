@@ -30,6 +30,7 @@
 #include <wsnwlink.h>
 #include <mswsock.h>
 #include <mstcpip.h>
+#include <iphlpapi.h>
 #include <stdio.h>
 #include "wine/test.h"
 
@@ -75,6 +76,10 @@ static int   (WINAPI *pWSALookupServiceNextW)(HANDLE,DWORD,LPDWORD,LPWSAQUERYSET
 static int   (WINAPI *pWSAEnumNameSpaceProvidersA)(LPDWORD,LPWSANAMESPACE_INFOA);
 static int   (WINAPI *pWSAEnumNameSpaceProvidersW)(LPDWORD,LPWSANAMESPACE_INFOW);
 static int   (WINAPI *pWSAPoll)(WSAPOLLFD *,ULONG,INT);
+
+/* Function pointers from iphlpapi */
+static DWORD (WINAPI *pGetAdaptersInfo)(PIP_ADAPTER_INFO,PULONG);
+static DWORD (WINAPI *pGetIpForwardTable)(PMIB_IPFORWARDTABLE,PULONG,BOOL);
 
 /**************** Structs and typedefs ***************/
 
@@ -1207,7 +1212,7 @@ static void Init (void)
 {
     WORD ver = MAKEWORD (2, 2);
     WSADATA data;
-    HMODULE hws2_32 = GetModuleHandleA("ws2_32.dll");
+    HMODULE hws2_32 = GetModuleHandleA("ws2_32.dll"), hiphlpapi;
 
     pfreeaddrinfo = (void *)GetProcAddress(hws2_32, "freeaddrinfo");
     pgetaddrinfo = (void *)GetProcAddress(hws2_32, "getaddrinfo");
@@ -1222,6 +1227,13 @@ static void Init (void)
     pWSAEnumNameSpaceProvidersA = (void *)GetProcAddress(hws2_32, "WSAEnumNameSpaceProvidersA");
     pWSAEnumNameSpaceProvidersW = (void *)GetProcAddress(hws2_32, "WSAEnumNameSpaceProvidersW");
     pWSAPoll = (void *)GetProcAddress(hws2_32, "WSAPoll");
+
+    hiphlpapi = LoadLibraryA("iphlpapi.dll");
+    if (hiphlpapi)
+    {
+        pGetIpForwardTable = (void *)GetProcAddress(hiphlpapi, "GetIpForwardTable");
+        pGetAdaptersInfo = (void *)GetProcAddress(hiphlpapi, "GetAdaptersInfo");
+    }
 
     ok ( WSAStartup ( ver, &data ) == 0, "WSAStartup failed\n" );
     tls = TlsAlloc();
@@ -4450,6 +4462,88 @@ static void test_dns(void)
  * definition in unistd.h. Define it here to get rid of the warning. */
 
 int WINAPI gethostname(char *name, int namelen);
+
+static void test_gethostbyname(void)
+{
+    struct hostent *he;
+    struct in_addr **addr_list;
+    char name[256], first_ip[16];
+    int ret, i;
+    PMIB_IPFORWARDTABLE routes = NULL;
+    PIP_ADAPTER_INFO adapters = NULL, k;
+    DWORD adap_size = 0, route_size = 0;
+    BOOL found_default = FALSE;
+    BOOL local_ip = FALSE;
+
+    ret = gethostname(name, sizeof(name));
+    ok(ret == 0, "gethostname() call failed: %d\n", WSAGetLastError());
+
+    he = gethostbyname(name);
+    ok(he != NULL, "gethostbyname(\"%s\") failed: %d\n", name, WSAGetLastError());
+    addr_list = (struct in_addr **)he->h_addr_list;
+    strcpy(first_ip, inet_ntoa(*addr_list[0]));
+
+    trace("List of local IPs:\n");
+    for(i = 0; addr_list[i] != NULL; i++)
+    {
+        char *ip = inet_ntoa(*addr_list[i]);
+        if (!strcmp(ip, "127.0.0.1"))
+            local_ip = TRUE;
+        trace("%s\n", ip);
+    }
+
+    if (local_ip)
+    {
+        ok (i == 1, "expected 127.0.0.1 to be the only IP returned\n");
+        skip("Only the loopback address is present, skipping tests\n");
+        return;
+    }
+
+    if (!pGetAdaptersInfo || !pGetIpForwardTable)
+    {
+        win_skip("GetAdaptersInfo and/or GetIpForwardTable not found, skipping tests\n");
+        return;
+    }
+
+    ret = pGetAdaptersInfo(NULL, &adap_size);
+    ok (ret  == ERROR_BUFFER_OVERFLOW, "GetAdaptersInfo failed with a different error: %d\n", ret);
+    ret = pGetIpForwardTable(NULL, &route_size, FALSE);
+    ok (ret == ERROR_INSUFFICIENT_BUFFER, "GetIpForwardTable failed with a different error: %d\n", ret);
+
+    adapters = HeapAlloc(GetProcessHeap(), 0, adap_size);
+    routes = HeapAlloc(GetProcessHeap(), 0, route_size);
+
+    ret = pGetAdaptersInfo(adapters, &adap_size);
+    ok (ret  == NO_ERROR, "GetAdaptersInfo failed, error: %d\n", ret);
+    ret = pGetIpForwardTable(routes, &route_size, FALSE);
+    ok (ret == NO_ERROR, "GetIpForwardTable failed, error: %d\n", ret);
+
+    for (i = 0; !found_default && i < routes->dwNumEntries; i++)
+    {
+        /* default route (ip 0.0.0.0) ? */
+        if (routes->table[i].dwForwardDest) continue;
+
+        for (k = adapters; k != NULL; k = k->Next)
+        {
+            char *ip;
+
+            if (k->Index != routes->table[i].dwForwardIfIndex) continue;
+
+            /* the first IP returned from gethostbyname must be a default route */
+            ip = k->IpAddressList.IpAddress.String;
+            if (!strcmp(first_ip, ip))
+            {
+                found_default = TRUE;
+                break;
+            }
+        }
+    }
+todo_wine
+    ok (found_default, "failed to find the first IP from gethostbyname!\n");
+
+    HeapFree(GetProcessHeap(), 0, adapters);
+    HeapFree(GetProcessHeap(), 0, routes);
+}
 
 static void test_gethostbyname_hack(void)
 {
@@ -9461,6 +9555,7 @@ START_TEST( sock )
     test_addr_to_print();
     test_ioctlsocket();
     test_dns();
+    test_gethostbyname();
     test_gethostbyname_hack();
     test_gethostname();
 
