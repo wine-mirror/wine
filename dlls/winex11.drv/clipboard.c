@@ -2448,7 +2448,7 @@ static int X11DRV_CLIPBOARD_QueryAvailableData(Display *display)
     /* Read the TARGETS property contents */
     if (!XGetWindowProperty(display, xe.xselection.requestor, xe.xselection.property,
         0, 0x3FFF, True, AnyPropertyType/*XA_ATOM*/, &atype, &aformat, &cSelectionTargets, 
-        &remain, (unsigned char**)&targetList) != Success)
+        &remain, (unsigned char**)&targetList))
     {
        TRACE("Type %lx,Format %d,nItems %ld, Remain %ld\n",
              atype, aformat, cSelectionTargets, remain);
@@ -2583,7 +2583,7 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
     for (;;)
     {
         if (XGetWindowProperty(display, w, prop, pos, INT_MAX / 4, False,
-                               AnyPropertyType, atype, &aformat, &nitems, &remain, &buffer) != Success)
+                               AnyPropertyType, atype, &aformat, &nitems, &remain, &buffer))
         {
             WARN("Failed to read property\n");
             HeapFree( GetProcessHeap(), 0, val );
@@ -3354,7 +3354,7 @@ static Atom X11DRV_SelectionRequest_MULTIPLE( HWND hWnd, XSelectionRequestEvent 
     if (!XGetWindowProperty(display, pevent->requestor, rprop,
                             0, 0x3FFF, False, AnyPropertyType, &atype,&aformat,
                             &cTargetPropList, &remain,
-                            (unsigned char**)&targetPropList) != Success)
+                            (unsigned char**)&targetPropList))
     {
         if (TRACE_ON(clipboard))
         {
