@@ -1041,7 +1041,7 @@ static void test_menu_bmp_and_string(void)
     mii.dwItemData = 0x81818181;
     got = GetMenuItemInfoA(hsysmenu, SC_RESTORE, FALSE, &mii);
     ok(got, "GetMenuItemInfo failed\n");
-    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok((mii.fType & ~(MFT_RIGHTJUSTIFY|MFT_RIGHTORDER)) == MFT_STRING, "expected MFT_STRING, got %#x\n", mii.fType);
     ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
     ok(mii.wID == SC_RESTORE, "expected SC_RESTORE, got %#x\n", mii.wID);
     ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
@@ -1055,7 +1055,7 @@ static void test_menu_bmp_and_string(void)
     mii.hbmpItem = (HBITMAP)0x81818181;
     got = GetMenuItemInfoA(hsysmenu, SC_CLOSE, FALSE, &mii);
     ok(got, "GetMenuItemInfo failed\n");
-    ok(mii.fType == MF_STRING, "expected MF_STRING, got %#x\n", mii.fType);
+    ok((mii.fType & ~(MFT_RIGHTJUSTIFY|MFT_RIGHTORDER)) == MFT_STRING, "expected MFT_STRING, got %#x\n", mii.fType);
     ok(mii.fState == MF_ENABLED, "expected MF_ENABLED, got %#x\n", mii.fState);
     ok(mii.wID == SC_RESTORE, "expected SC_RESTORE, got %#x\n", mii.wID);
     ok(mii.hSubMenu == 0, "expected 0, got %p\n", mii.hSubMenu);
@@ -2731,7 +2731,8 @@ static void check_menu_items(HMENU hmenu, UINT checked_cmd, UINT checked_type,
 
         if (mii.hSubMenu)
         {
-            ok(mii.wID == (UINT_PTR)mii.hSubMenu, "id %u: wID should be equal to hSubMenu\n", checked_cmd);
+            ok(mii.wID == (UINT_PTR)mii.hSubMenu, "id %u: wID %x should be equal to hSubMenu %p\n",
+               checked_cmd, mii.wID, mii.hSubMenu);
             if (!GetMenuItemCount(mii.hSubMenu))
             {
                 ok(mii.fType == checked_type, "id %u: expected fType %04x, got %04x\n", checked_cmd, checked_type, mii.fType);
@@ -3872,6 +3873,12 @@ static void test_emptypopup(void)
     ok(ret, "DestroyMenu failed with error %d\n", GetLastError());
 }
 
+static HMENU get_bad_hmenu( UINT_PTR id )
+{
+    while (IsMenu( (HMENU)id )) id++;
+    return (HMENU)id;
+}
+
 static void test_AppendMenu(void)
 {
     static char string[] = "string";
@@ -3890,16 +3897,18 @@ static void test_AppendMenu(void)
 
     hmenu = CreateMenu();
     ok(hmenu != 0, "CreateMenu failed\n");
-    ret = AppendMenuA(hmenu, MF_POPUP, 202, "item 1");
+    hsubmenu = get_bad_hmenu( 202 );
+    ret = AppendMenuA(hmenu, MF_POPUP, (UINT_PTR)hsubmenu, "item 1");
     ok(ret, "AppendMenu failed\n");
-    check_menu_items(hmenu, 202, MF_STRING, 0);
+    check_menu_items(hmenu, (UINT_PTR)hsubmenu, MF_STRING, 0);
     DestroyMenu(hmenu);
 
     hmenu = CreateMenu();
     ok(hmenu != 0, "CreateMenu failed\n");
-    ret = AppendMenuA(hmenu, MF_OWNERDRAW | MF_POPUP, 203, "item 1");
+    hsubmenu = get_bad_hmenu( 203 );
+    ret = AppendMenuA(hmenu, MF_OWNERDRAW | MF_POPUP, (UINT_PTR)hsubmenu, "item 1");
     ok(ret, "AppendMenu failed\n");
-    check_menu_items(hmenu, 203, MF_OWNERDRAW, 0);
+    check_menu_items(hmenu, (UINT_PTR)hsubmenu, MF_OWNERDRAW, 0);
     DestroyMenu(hmenu);
 
     hmenu = CreateMenu();
@@ -3967,15 +3976,14 @@ static void test_AppendMenu(void)
     ret = AppendMenuA(hmenu, MF_STRING, 204, "item 1");
     ok(ret, "AppendMenu failed\n");
     check_menu_items(hmenu, 204, MF_STRING, 0);
-    ret = ModifyMenuA(hmenu, 0, MF_POPUP | MF_BYPOSITION, 205, "item 2");
+    hsubmenu = get_bad_hmenu( 205 );
+    ret = ModifyMenuA(hmenu, 0, MF_POPUP | MF_BYPOSITION, (UINT_PTR)hsubmenu, "item 2");
     ok(ret, "ModifyMenu failed\n");
-    check_menu_items(hmenu, 205, MF_STRING, 0);
+    check_menu_items(hmenu, (UINT_PTR)hsubmenu, MF_STRING, 0);
     memset(&mii, 0, sizeof(mii));
     mii.cbSize = sizeof(mii);
     mii.fMask = MIIM_SUBMENU;
-    mii.hSubMenu = (HMENU)204;
-    /* make sure the menu handle is truly invalid */
-    while (IsMenu( mii.hSubMenu )) mii.hSubMenu = (HMENU)((ULONG_PTR)mii.hSubMenu + 1);
+    mii.hSubMenu = get_bad_hmenu( 204 );
     ret = InsertMenuItemA(hmenu, 0, TRUE, &mii);
     ok(!ret, "InsertMenuItem should fail\n");
     ret = SetMenuItemInfoA(hmenu, 0, TRUE, &mii);
