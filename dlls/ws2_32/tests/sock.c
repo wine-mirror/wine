@@ -213,11 +213,11 @@ static int tcp_socketpair(SOCKET *src, SOCKET *dst)
     *src = INVALID_SOCKET;
     *dst = INVALID_SOCKET;
 
-    *src = socket(AF_INET, SOCK_STREAM, 0);
+    *src = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (*src == INVALID_SOCKET)
         goto end;
 
-    server = socket(AF_INET, SOCK_STREAM, 0);
+    server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     if (server == INVALID_SOCKET)
         goto end;
 
@@ -1101,9 +1101,13 @@ static void test_WithWSAStartup(void)
 {
     WSADATA data;
     WORD version = MAKEWORD( 2, 2 );
-    INT res;
+    INT res, socks, i, j;
+    SOCKET sock;
     LPVOID ptr;
-    SOCKET src, dst;
+    struct
+    {
+        SOCKET src, dst, dup_src, dup_dst;
+    } pairs[128];
     DWORD error;
 
     res = WSAStartup( version, &data );
@@ -1112,9 +1116,26 @@ static void test_WithWSAStartup(void)
     ptr = gethostbyname("localhost");
     ok(ptr != NULL, "gethostbyname() failed unexpectedly: %d\n", WSAGetLastError());
 
-    ok(!tcp_socketpair(&src, &dst), "creating socket pair failed\n");
+    /* Alloc some sockets to check if they are destroyed on WSACleanup */
+    for (socks = 0; socks < sizeof(pairs) / sizeof(pairs[0]); socks++)
+    {
+        WSAPROTOCOL_INFOA info;
+        if (tcp_socketpair(&pairs[socks].src, &pairs[socks].dst)) break;
 
-    res = send(src, "TEST", 4, 0);
+        memset(&info, 0, sizeof(info));
+        ok(!WSADuplicateSocketA(pairs[socks].src, GetCurrentProcessId(), &info),
+           "WSADuplicateSocketA should have worked\n");
+        pairs[socks].dup_src = WSASocketA(0, 0, 0, &info, 0, 0);
+        ok(pairs[socks].dup_src != SOCKET_ERROR, "expected != -1\n");
+
+        memset(&info, 0, sizeof(info));
+        ok(!WSADuplicateSocketA(pairs[socks].dst, GetCurrentProcessId(), &info),
+           "WSADuplicateSocketA should have worked\n");
+        pairs[socks].dup_dst = WSASocketA(0, 0, 0, &info, 0, 0);
+        ok(pairs[socks].dup_dst != SOCKET_ERROR, "expected != -1\n");
+    }
+
+    res = send(pairs[0].src, "TEST", 4, 0);
     ok(res == 4, "send failed with error %d\n", WSAGetLastError());
 
     WSACleanup();
@@ -1125,20 +1146,50 @@ static void test_WithWSAStartup(void)
     /* show that sockets are destroyed automatically after WSACleanup */
     todo_wine {
     SetLastError(0xdeadbeef);
-    res = send(src, "TEST", 4, 0);
+    res = send(pairs[0].src, "TEST", 4, 0);
     error = WSAGetLastError();
     ok(res == SOCKET_ERROR, "send should have failed\n");
     ok(error == WSAENOTSOCK, "expected 10038, got %d\n", error);
 
     SetLastError(0xdeadbeef);
-    res = closesocket(dst);
+    res = send(pairs[0].dst, "TEST", 4, 0);
     error = WSAGetLastError();
-    ok(res == SOCKET_ERROR, "closesocket should have failed\n");
+    ok(res == SOCKET_ERROR, "send should have failed\n");
     ok(error == WSAENOTSOCK, "expected 10038, got %d\n", error);
+
+    /* Check that all sockets were destroyed */
+    for (i = 0; i < socks; i++)
+    {
+        for (j = 0; j < 4; j++)
+        {
+            struct sockaddr_in saddr;
+            int size = sizeof(saddr);
+            switch(j)
+            {
+                case 0: sock = pairs[i].src; break;
+                case 1: sock = pairs[i].dup_src; break;
+                case 2: sock = pairs[i].dst; break;
+                case 3: sock = pairs[i].dup_dst; break;
+            }
+
+            SetLastError(0xdeadbeef);
+            res = getsockname(sock, (struct sockaddr *)&saddr, &size);
+            error = WSAGetLastError();
+            ok(res == SOCKET_ERROR, "Test[%d]: getsockname should have failed\n", i);
+            ok(error == WSAENOTSOCK, "Test[%d]: expected 10038, got %d\n", i, error);
+        }
     }
 
-    closesocket(src);
-    closesocket(dst);
+    }
+
+    /* While wine is not fixed, close all sockets manually */
+    for (i = 0; i < socks; i++)
+    {
+        closesocket(pairs[i].src);
+        closesocket(pairs[i].dst);
+        closesocket(pairs[i].dup_src);
+        closesocket(pairs[i].dup_dst);
+    }
 
     res = WSACleanup();
     ok(res == 0, "expected 0, got %d\n", res);
