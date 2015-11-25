@@ -606,10 +606,14 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_OMSetBlendState(ID3D11Devi
         ID3D11BlendState *blend_state, const FLOAT blend_factor[4], UINT sample_mask)
 {
     struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    static const float default_blend_factor[] = {1.0f, 1.0f, 1.0f, 1.0f};
     const D3D11_BLEND_DESC *desc;
 
-    TRACE("iface %p, blend_state %p, blend_factor {%.8e %.8e %.8e %.8e}, sample_mask 0x%08x.\n",
-            iface, blend_state, blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3], sample_mask);
+    TRACE("iface %p, blend_state %p, blend_factor %p, sample_mask 0x%08x.\n",
+            iface, blend_state, blend_factor, sample_mask);
+
+    if (!blend_factor)
+        blend_factor = default_blend_factor;
 
     if (blend_factor[0] != 1.0f || blend_factor[1] != 1.0f || blend_factor[2] != 1.0f || blend_factor[3] != 1.0f)
         FIXME("Ignoring blend factor {%.8e %.8e %.8e %.8e}.\n",
@@ -3063,8 +3067,8 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device1 *iface,
     struct d3d_device *device = impl_from_ID3D10Device(iface);
     struct d3d_blend_state *blend_state_object;
 
-    TRACE("iface %p, blend_state %p, blend_factor {%.8e %.8e %.8e %.8e}, sample_mask 0x%08x.\n",
-            iface, blend_state, blend_factor[0], blend_factor[1], blend_factor[2], blend_factor[3], sample_mask);
+    TRACE("iface %p, blend_state %p, blend_factor %p, sample_mask 0x%08x.\n",
+            iface, blend_state, blend_factor, sample_mask);
 
     blend_state_object = unsafe_impl_from_ID3D10BlendState(blend_state);
     d3d11_immediate_context_OMSetBlendState(&device->immediate_context.ID3D11DeviceContext_iface,
