@@ -80,7 +80,7 @@ void abort_dochost_tasks(DocHost *This, task_proc_t proc)
     }
 }
 
-void on_commandstate_change(DocHost *doc_host, LONG command, VARIANT_BOOL enable)
+void on_commandstate_change(DocHost *doc_host, LONG command, BOOL enable)
 {
     DISPPARAMS dispparams;
     VARIANTARG params[2];
