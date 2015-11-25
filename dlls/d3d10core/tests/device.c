@@ -2223,6 +2223,7 @@ float4 main(float4 color : COLOR) : SV_TARGET
     D3D10_BUFFER_DESC buffer_desc;
     D3D10_BLEND_DESC blend_desc;
     ID3D10Texture2D *ds_texture;
+    float tmp_blend_factor[4];
     float blend_factor[4];
     ID3D10Device *device;
     BOOL predicate_value;
@@ -2559,7 +2560,30 @@ float4 main(float4 color : COLOR) : SV_TARGET
     hr = ID3D10Device_CreatePredicate(device, &predicate_desc, &predicate);
     ok(SUCCEEDED(hr), "Failed to create predicate, hr %#x.\n", hr);
 
+    /* Verify the behavior of set state methods. */
+
+    blend_factor[0] = 0.1f;
+    blend_factor[1] = 0.2f;
+    blend_factor[2] = 0.3f;
+    blend_factor[3] = 0.4f;
+    ID3D10Device_OMSetBlendState(device, blend_state, blend_factor, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_OMGetBlendState(device, &tmp_blend_state, tmp_blend_factor, &sample_mask);
+    ok(tmp_blend_factor[0] == 0.1f && tmp_blend_factor[1] == 0.2f
+            && tmp_blend_factor[2] == 0.3f && tmp_blend_factor[3] == 0.4f,
+            "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_blend_factor[0], tmp_blend_factor[1], tmp_blend_factor[2], tmp_blend_factor[3]);
+    ID3D10BlendState_Release(tmp_blend_state);
+
+    ID3D10Device_OMSetBlendState(device, blend_state, NULL, D3D10_DEFAULT_SAMPLE_MASK);
+    ID3D10Device_OMGetBlendState(device, &tmp_blend_state, tmp_blend_factor, &sample_mask);
+    ok(tmp_blend_factor[0] == 1.0f && tmp_blend_factor[1] == 1.0f
+            && tmp_blend_factor[2] == 1.0f && tmp_blend_factor[3] == 1.0f,
+            "Got unexpected blend factor {%.8e, %.8e, %.8e, %.8e}.\n",
+            tmp_blend_factor[0], tmp_blend_factor[1], tmp_blend_factor[2], tmp_blend_factor[3]);
+    ID3D10BlendState_Release(tmp_blend_state);
+
     /* Setup state. */
+
     ID3D10Device_VSSetConstantBuffers(device, 0, D3D10_COMMONSHADER_CONSTANT_BUFFER_API_SLOT_COUNT, cb);
     ID3D10Device_VSSetShaderResources(device, 0, D3D10_COMMONSHADER_INPUT_RESOURCE_SLOT_COUNT, srv);
     ID3D10Device_VSSetSamplers(device, 0, D3D10_COMMONSHADER_SAMPLER_SLOT_COUNT, sampler);
