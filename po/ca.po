@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-05-12 12:16-0700\n"
+"PO-Revision-Date: 2015-11-25 19:47-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -13,7 +13,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.7.5\n"
+"X-Generator: Poedit 1.8.6\n"
 
 #: appwiz.rc:58
 msgid "Install/Uninstall"
@@ -24,7 +24,7 @@ msgid ""
 "To install a new program from a floppy disk, CD-ROM drive, or your hard "
 "drive, click Install."
 msgstr ""
-"Per a instal·lar un programa nou des d'un disquet, disc compact o el vostre "
+"Per a instal·lar un programa nou des d'un disquet, disc compacte o el vostre "
 "disc dur, feu clic en Instal·la."
 
 #: appwiz.rc:62
@@ -286,7 +286,7 @@ msgstr "Forma d'ona"
 
 #: avifil32.rc:32
 msgid "All multimedia files"
-msgstr "Tots el fitxers de multimèdia"
+msgstr "Tots els fitxers de multimèdia"
 
 #: avifil32.rc:34
 msgid "video"
@@ -704,7 +704,7 @@ msgstr "Còpies"
 
 #: comdlg32.rc:377
 msgid "Number of &copies:"
-msgstr "Nombre de &copies:"
+msgstr "Nombre de &còpies:"
 
 #: comdlg32.rc:379
 msgid "C&ollate"
@@ -964,14 +964,14 @@ msgstr ""
 
 #: comdlg32.rc:60
 msgid "The 'from' entry cannot exceed the 'to' entry."
-msgstr "La entrada 'de' no pot superar la entrada 'a'."
+msgstr "L'entrada 'de' no pot superar l'entrada 'a'."
 
 #: comdlg32.rc:62
 msgid ""
 "Margins overlap or fall outside Paper boundaries.\n"
 "Please reenter margins."
 msgstr ""
-"Els marges es superposen o cauen fora dels límits de la pàgina.\n"
+"Els marges se superposen o cauen fora dels límits de la pàgina.\n"
 "Si us plau, reintrodueix els marges."
 
 #: comdlg32.rc:64
@@ -1015,7 +1015,7 @@ msgid ""
 "Before you can perform printer-related tasks such as page setup or printing "
 "a document, you need to install a printer. Please install one and retry."
 msgstr ""
-"Abans que pugueu realitzar tasques relacionats amb la impressora com a "
+"Abans que pugueu realitzar tasques relacionades amb la impressora com a "
 "configurar la pàgina o imprimir un document, cal instal·lar una impressora. "
 "Si us plau, instal·leu una i torneu a intentar."
 
@@ -1049,7 +1049,7 @@ msgstr "Llest"
 
 #: comdlg32.rc:84
 msgid "Paused; "
-msgstr "Pausada; "
+msgstr "En pausa; "
 
 #: comdlg32.rc:85
 msgid "Error; "
@@ -1428,7 +1428,7 @@ msgstr "Component de domini"
 
 #: crypt32.rc:82
 msgid "Street Address"
-msgstr "Direcció de correu"
+msgstr "Adreça de correu"
 
 #: crypt32.rc:83
 msgid "Serial Number"
@@ -1564,7 +1564,7 @@ msgstr "Resum de Certificat CA anterior"
 
 #: crypt32.rc:116
 msgid "Virtual Base CRL Number"
-msgstr "Número CRL de base Vvrtual"
+msgstr "Número CRL de base Virtual"
 
 #: crypt32.rc:117
 msgid "Next CRL Publish"
@@ -1780,7 +1780,7 @@ msgstr "Personal"
 
 #: crypt32.rc:174
 msgid "Intermediate Certification Authorities"
-msgstr "Autoritats intermedis de certificació"
+msgstr "Autoritats intermèdies de certificació"
 
 #: crypt32.rc:175
 msgid "Other People"
@@ -1935,7 +1935,7 @@ msgstr "Reemplaçat"
 
 #: crypt32.rc:216
 msgid "Operation Ceased"
-msgstr "Operació cessat"
+msgstr "Operació cessada"
 
 #: crypt32.rc:217
 msgid "Certificate Hold"
@@ -1955,7 +1955,7 @@ msgstr "No disponible"
 
 #: crypt32.rc:221
 msgid "Meets Criteria="
-msgstr "Arriba als criteri="
+msgstr "Assoleix els criteris="
 
 #: crypt32.rc:222 cryptui.rc:166 oleaut32.rc:32 wininet.rc:83 ipconfig.rc:47
 msgid "Yes"
@@ -2087,7 +2087,7 @@ msgstr "&Mostra:"
 
 #: cryptui.rc:205
 msgid "&Edit Properties..."
-msgstr "&Edita els propietats..."
+msgstr "&Edita les propietats..."
 
 #: cryptui.rc:206
 msgid "&Copy to File..."
@@ -2131,15 +2131,15 @@ msgstr "Finalitats de certificat"
 
 #: cryptui.rc:244
 msgid "&Enable all purposes for this certificate"
-msgstr "&Habilita aquest certificat per a tots els finalitats"
+msgstr "&Habilita aquest certificat per a totes les finalitats"
 
 #: cryptui.rc:246
 msgid "D&isable all purposes for this certificate"
-msgstr "&Inhabilita aquest certificat per a tots els finalitats"
+msgstr "&Inhabilita aquest certificat per a totes les finalitats"
 
 #: cryptui.rc:248
 msgid "Enable &only the following purposes for this certificate:"
-msgstr "Habilita aquest certificat per a &només els següents finalitats:"
+msgstr "Habilita aquest certificat per a &només les finalitats següents:"
 
 #: cryptui.rc:253
 msgid "Add &Purpose..."
@@ -2192,8 +2192,8 @@ msgstr ""
 "certificats i llistes de certificats de confiança d'un fitxer a un magatzem "
 "de certificats.\n"
 "\n"
-"Es pot utilitzar un certificat per a identificar-vos o el ordinador amb el "
-"que esteu comunicant. També es pot utilitzar per a l'autenticació, i per a "
+"Es pot utilitzar un certificat per a identificar-vos o l'ordinador amb el "
+"qual esteu comunicant. També es pot utilitzar per a l'autenticació, i per a "
 "signar els missatges. Els magatzems de certificats són conjunts de "
 "certificats, llistes de revocació de certificats i llistes de certificats de "
 "confiança.\n"
@@ -2299,7 +2299,7 @@ msgstr "Finalitat de certificat"
 msgid ""
 "Select one or more purposes to be listed when Advanced Purposes is selected."
 msgstr ""
-"Selecciona una o més finalitats per a allistar quan es seleccionen les "
+"Selecciona una o més finalitats per a allistar quan se seleccionen les "
 "finalitats avançades."
 
 #: cryptui.rc:361
@@ -2331,8 +2331,8 @@ msgstr ""
 "certificats i llistes de certificats de confiança d'un magatzem de "
 "certificats a un fitxer.\n"
 "\n"
-"Es pot utilitzar un certificat per a identificar-vos o el ordinador amb el "
-"que esteu comunicant. També es pot utilitzar per a l'autenticació, i per a "
+"Es pot utilitzar un certificat per a identificar-vos o l'ordinador amb el "
+"qual esteu comunicant. També es pot utilitzar per a l'autenticació, i per a "
 "signar els missatges. Els magatzems de certificats són conjunts de "
 "certificats, llistes de revocació de certificats i llistes de confiança de "
 "certificats.\n"
@@ -2406,7 +2406,7 @@ msgstr "S'està acabant l'Assistent d'Exportació de Certificats"
 
 #: cryptui.rc:441
 msgid "You have successfully completed the Certificate Export Wizard."
-msgstr "Heu acabat amb èxit l'Assistent d'Exportació de Certificats"
+msgstr "Heu acabat amb èxit l'Assistent d'Exportació de Certificats."
 
 #: cryptui.rc:30 cryptui.rc:93
 msgid "Certificate"
@@ -2447,7 +2447,7 @@ msgstr "No s'ha pogut verificar totes les finalitats d'aquest certificat."
 
 #: cryptui.rc:37
 msgid "This certificate is intended for the following purposes:"
-msgstr "Aquest certificat es destina per als finalitats següents:"
+msgstr "Aquest certificat es destina per a les finalitats següents:"
 
 #: cryptui.rc:38
 msgid "Issued to: "
@@ -2801,7 +2801,7 @@ msgid ""
 "Software signed by these publishers will no longer be trusted.\n"
 "Are you sure you want to remove these certificates?"
 msgstr ""
-"Programari signat per aquests publicador ja no serà de confiança\n"
+"Programari signat per aquests publicadors ja no serà de confiança\n"
 "Esteu segur que voleu eliminar aquests certificats?"
 
 #: cryptui.rc:120
@@ -2838,7 +2838,7 @@ msgstr "Permet la comunicació segura a través d'Internet"
 
 #: cryptui.rc:129
 msgid "Allows data to be signed with the current time"
-msgstr "Permet que les dades es signin amb l'hora actual"
+msgstr "Permet que les dades se signin amb l'hora actual"
 
 #: cryptui.rc:130
 msgid "Allows you to digitally sign a certificate trust list"
@@ -2902,11 +2902,11 @@ msgstr "Exporta claus"
 
 #: cryptui.rc:168
 msgid "The export was successful."
-msgstr "La exportació ha tingut èxit."
+msgstr "L'exportació ha tingut èxit."
 
 #: cryptui.rc:169
 msgid "The export failed."
-msgstr "La exportació ha fallat."
+msgstr "L'exportació ha fallat."
 
 #: cryptui.rc:170
 msgid "Export Private Key"
@@ -3118,7 +3118,7 @@ msgstr "S&incronitza"
 
 #: hhctrl.rc:60 hhctrl.rc:73 shdoclc.rc:41 winhlp32.rc:89
 msgid "&Back"
-msgstr "Ena&rrere"
+msgstr "Enda&rrere"
 
 #: hhctrl.rc:61 hhctrl.rc:74
 msgid "&Forward"
@@ -3344,8 +3344,7 @@ msgstr "Pàgina d'inici"
 
 #: inetcpl.rc:50
 msgid "You can choose the address that will be used as your home page."
-msgstr ""
-"Podeu triar la direcció que s'utilitzarà com a la vostra pàgina d'inici."
+msgstr "Podeu triar l'adreça que s'utilitzarà com la vostra pàgina d'inici."
 
 #: inetcpl.rc:53
 msgid "&Current page"
@@ -3403,7 +3402,7 @@ msgid ""
 "List of websites you have accessed."
 msgstr ""
 "Historial\n"
-"Llista de llocs web a que heu accedit."
+"Llista de llocs web als quals heu accedit."
 
 #: inetcpl.rc:77
 msgid ""
@@ -3411,7 +3410,7 @@ msgid ""
 "Usernames and other information you have entered into forms."
 msgstr ""
 "Dades de formulari\n"
-"Noms d'usuari i altra informació que hageu introduït en formularis."
+"Noms d'usuari i altra informació que hàgiu introduït en formularis."
 
 #: inetcpl.rc:79
 msgid ""
@@ -3419,7 +3418,7 @@ msgid ""
 "Saved passwords you have entered into forms."
 msgstr ""
 "Contrasenyes\n"
-"Contrasenyes desades que hageu introduït en formularis."
+"Contrasenyes desades que hàgiu introduït en formularis."
 
 #: inetcpl.rc:82 progman.rc:67
 msgid "Delete"
@@ -3519,7 +3518,7 @@ msgstr "Botons"
 
 #: joy.rc:63
 msgid "Test Force Feedback"
-msgstr "Prova de retroacció de forç"
+msgstr "Prova de retroacció de força"
 
 #: joy.rc:67
 msgid "Available Effects"
@@ -3707,7 +3706,7 @@ msgstr "Èxit.\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
-msgstr "La funció és invàlid.\n"
+msgstr "La funció és invàlida.\n"
 
 #: winerror.mc:36
 msgid "File not found.\n"
@@ -3935,7 +3934,7 @@ msgstr "Hi ha massa sessions de xarxa.\n"
 
 #: winerror.mc:316
 msgid "Sharing paused.\n"
-msgstr "S'ha pausat la compartició.\n"
+msgstr "La compartició està en pausa.\n"
 
 #: winerror.mc:321
 msgid "Request not accepted.\n"
@@ -3943,7 +3942,7 @@ msgstr "No s'ha acceptat la sol·licitud.\n"
 
 #: winerror.mc:326
 msgid "Redirector paused.\n"
-msgstr "S'ha pausat el redirector.\n"
+msgstr "El redirector està en pausa.\n"
 
 #: winerror.mc:331
 msgid "File exists.\n"
@@ -3955,7 +3954,7 @@ msgstr "No es pot crear.\n"
 
 #: winerror.mc:341
 msgid "Int24 failure.\n"
-msgstr "Ha hagut una fallada d'Int24.\n"
+msgstr "Hi ha hagut una fallada d'Int24.\n"
 
 #: winerror.mc:346
 msgid "Out of structures.\n"
@@ -4099,7 +4098,7 @@ msgstr "La cerca és negativa.\n"
 
 #: winerror.mc:531
 msgid "Drive is a JOIN target.\n"
-msgstr "L'unitat és un destinatari JOIN.\n"
+msgstr "La unitat és un destinatari JOIN.\n"
 
 #: winerror.mc:536
 msgid "Drive is already JOINed.\n"
@@ -4159,7 +4158,7 @@ msgstr "El camí està en ús com a JOIN.\n"
 
 #: winerror.mc:606
 msgid "Path is busy.\n"
-msgstr "El camí està ocupada.\n"
+msgstr "El camí està ocupat.\n"
 
 #: winerror.mc:611
 msgid "Already a SUBST target.\n"
@@ -4191,7 +4190,7 @@ msgstr "Hi ha massa TCB.\n"
 
 #: winerror.mc:646
 msgid "Signal refused.\n"
-msgstr "S'ha refusat la senyal.\n"
+msgstr "S'ha refusat el senyal.\n"
 
 #: winerror.mc:651
 msgid "Segment discarded.\n"
@@ -4211,11 +4210,11 @@ msgstr "Els paràmetres a DosExecPgm són dolents.\n"
 
 #: winerror.mc:671
 msgid "Path is invalid.\n"
-msgstr "El camí es invàlid.\n"
+msgstr "El camí és invàlid.\n"
 
 #: winerror.mc:676
 msgid "Signal pending.\n"
-msgstr "La senyal està pendent.\n"
+msgstr "El senyal està pendent.\n"
 
 #: winerror.mc:681
 msgid "Max system-wide thread count reached.\n"
@@ -4711,7 +4710,7 @@ msgstr "El servei no és implementat per exe.\n"
 
 #: winerror.mc:1296
 msgid "End of media.\n"
-msgstr "És el fi del mitjà.\n"
+msgstr "És la fi del suport.\n"
 
 #: winerror.mc:1301
 msgid "Filemark detected.\n"
@@ -4719,7 +4718,7 @@ msgstr "S'ha detectat una marca de fitxer.\n"
 
 #: winerror.mc:1306
 msgid "Beginning of media.\n"
-msgstr "És el començament del mitjà.\n"
+msgstr "És el començament del suport.\n"
 
 #: winerror.mc:1311
 msgid "Setmark detected.\n"
@@ -4739,19 +4738,19 @@ msgstr "La longitud de bloc és invàlida.\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned.\n"
-msgstr "El dispositiu no està particionat.\n"
+msgstr "El dispositiu no té partició.\n"
 
 #: winerror.mc:1336
 msgid "Unable to lock media.\n"
-msgstr "No es pot bloquejar el mitjà.\n"
+msgstr "No es pot bloquejar el suport.\n"
 
 #: winerror.mc:1341
 msgid "Unable to unload media.\n"
-msgstr "No es pot descarregar el mitjà.\n"
+msgstr "No es pot descarregar el suport.\n"
 
 #: winerror.mc:1346
 msgid "Media changed.\n"
-msgstr "S'ha canviat el mitjà.\n"
+msgstr "S'ha canviat el suport.\n"
 
 #: winerror.mc:1351
 msgid "I/O bus reset.\n"
@@ -4759,7 +4758,7 @@ msgstr "S'ha restablert el bus E/S.\n"
 
 #: winerror.mc:1356
 msgid "No media in drive.\n"
-msgstr "No hi ha cap mitjà en la unitat.\n"
+msgstr "No hi ha cap suport en la unitat.\n"
 
 #: winerror.mc:1361
 msgid "No Unicode translation.\n"
@@ -4799,7 +4798,7 @@ msgstr "S'ha superat el temps d'espera de sol·licitud de servei.\n"
 
 #: winerror.mc:1406
 msgid "Floppy ID address mark not found.\n"
-msgstr "No s'ha trobat la marca de direcció d'ID de disquet.\n"
+msgstr "No s'ha trobat la marca d'adreça d'ID de disquet.\n"
 
 #: winerror.mc:1411
 msgid "Floppy reports wrong cylinder.\n"
@@ -4815,7 +4814,7 @@ msgstr "Els registres de disquet són inconsistents.\n"
 
 #: winerror.mc:1426
 msgid "Hard disk recalibrate failed.\n"
-msgstr "La recalibració del disc dur ha fallat.\n"
+msgstr "El recalibratge del disc dur ha fallat.\n"
 
 #: winerror.mc:1431
 msgid "Hard disk operation failed.\n"
@@ -4827,7 +4826,7 @@ msgstr "La reinicialització del disc dur ha fallat.\n"
 
 #: winerror.mc:1441
 msgid "End of tape media.\n"
-msgstr "És el fi del mitjà de cinta.\n"
+msgstr "És la fi del suport de cinta.\n"
 
 #: winerror.mc:1446
 msgid "Not enough server memory.\n"
@@ -5055,7 +5054,7 @@ msgstr "Hi ha hagut un conflicte de credencials de sessió.\n"
 
 #: winerror.mc:1731
 msgid "Remote session limit exceeded.\n"
-msgstr "S'ha superat el límit de sessions remots.\n"
+msgstr "S'ha superat el límit de sessions remotes.\n"
 
 #: winerror.mc:1736
 msgid "Duplicate domain or workgroup name.\n"
@@ -5067,7 +5066,7 @@ msgstr "No hi ha cap xarxa.\n"
 
 #: winerror.mc:1746
 msgid "Operation canceled by user.\n"
-msgstr "El usuari ha cancel·lat la operació.\n"
+msgstr "L'usuari ha cancel·lat l'operació.\n"
 
 #: winerror.mc:1751
 msgid "File has a user-mapped section.\n"
@@ -5083,11 +5082,11 @@ msgstr "S'ha tancat la connexió amb gràcia.\n"
 
 #: winerror.mc:1766
 msgid "Address already associated with transport endpoint.\n"
-msgstr "La direcció ja està associada amb el punt final de transport.\n"
+msgstr "L'adreça ja està associada amb el punt final de transport.\n"
 
 #: winerror.mc:1771
 msgid "Address not associated with transport endpoint.\n"
-msgstr "La direcció no està associada amb el punt final de transport.\n"
+msgstr "L'adreça no està associada amb el punt final de transport.\n"
 
 #: winerror.mc:1776
 msgid "Connection invalid.\n"
@@ -5103,7 +5102,7 @@ msgstr "La xarxa és inabastable.\n"
 
 #: winerror.mc:1791
 msgid "Host unreachable.\n"
-msgstr "L'equip és inabastable.\n"
+msgstr "La màquina és inabastable.\n"
 
 #: winerror.mc:1796
 msgid "Protocol unreachable.\n"
@@ -5183,7 +5182,7 @@ msgstr "Només s'admet quan es connecta.\n"
 
 #: winerror.mc:1891
 msgid "Perform operation even when nothing changed.\n"
-msgstr "Realitza l'operació tot i que no hagi canviat res.\n"
+msgstr "Realitza l'operació encara que no hagi canviat res.\n"
 
 #: winerror.mc:1896
 msgid "The user profile is invalid.\n"
@@ -5215,7 +5214,7 @@ msgstr "La contrasenya és massa complex per al LM.\n"
 
 #: winerror.mc:1931
 msgid "Unknown revision.\n"
-msgstr "La revisió és desconegut.\n"
+msgstr "La revisió és desconeguda.\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
@@ -5311,7 +5310,7 @@ msgstr "Les hores de sessió són invàlides.\n"
 
 #: winerror.mc:2051
 msgid "Invalid workstation.\n"
-msgstr "La estació de treball és invàlida.\n"
+msgstr "L'estació de treball és invàlida.\n"
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
@@ -5747,7 +5746,7 @@ msgstr "La pantalla ja s'ha bloquejat.\n"
 
 #: winerror.mc:2601
 msgid "Window handles have different parents.\n"
-msgstr "Les identificadors de finestre tenen pares diferents.\n"
+msgstr "Els identificadors de finestra tenen pares diferents.\n"
 
 #: winerror.mc:2606
 msgid "Not a child window.\n"
@@ -5851,7 +5850,7 @@ msgstr "El servei d'instal·lació ha fallat.\n"
 
 #: winerror.mc:2731
 msgid "Installation aborted by user.\n"
-msgstr "El usuari ha avortat la instal·lació.\n"
+msgstr "L'usuari ha avortat la instal·lació.\n"
 
 #: winerror.mc:2736
 msgid "Installation failure.\n"
@@ -5931,7 +5930,7 @@ msgstr "La interfície d'usuari de l'instal·lador ha fallat.\n"
 
 #: winerror.mc:2831
 msgid "Failed to open installation log file.\n"
-msgstr "Ha fallat la obertura del fitxer de registre d'instal·lació.\n"
+msgstr "Ha fallat l'obertura del fitxer de registre d'instal·lació.\n"
 
 #: winerror.mc:2836
 msgid "Installation language not supported.\n"
@@ -6007,7 +6006,7 @@ msgstr "No es permet la instal·lació remota.\n"
 
 #: winerror.mc:2926
 msgid "Reboot initiated after successful install.\n"
-msgstr "S'ha iniciat un reinici desprès d'instal·lació amb èxit.\n"
+msgstr "S'ha iniciat un reinici després d'instal·lació amb èxit.\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
@@ -6051,7 +6050,7 @@ msgstr "El valor de temps d'espera és invàlid.\n"
 
 #: winerror.mc:2981
 msgid "Object UUID not found.\n"
-msgstr "No s'ha trobat l'UUID del objecte.\n"
+msgstr "No s'ha trobat l'UUID de l'objecte.\n"
 
 #: winerror.mc:2986
 msgid "UUID already registered.\n"
@@ -6263,23 +6262,23 @@ msgstr "Hi ha hagut un error RPCInternal.\n"
 
 #: winerror.mc:3251
 msgid "RPC divide-by-zero.\n"
-msgstr "Ha hagut una divisió per zero RPC.\n"
+msgstr "Hi ha hagut una divisió per zero RPC.\n"
 
 #: winerror.mc:3256
 msgid "Address error.\n"
-msgstr "Ha hagut un error d'adreça.\n"
+msgstr "Hi ha hagut un error d'adreça.\n"
 
 #: winerror.mc:3261
 msgid "Floating-point divide-by-zero.\n"
-msgstr "Ha hagut una divisió per zero de coma flotant.\n"
+msgstr "Hi ha hagut una divisió per zero de coma flotant.\n"
 
 #: winerror.mc:3266
 msgid "Floating-point underflow.\n"
-msgstr "Ha hagut un desbordament underflow de punt flotant.\n"
+msgstr "Hi ha hagut un desbordament underflow de punt flotant.\n"
 
 #: winerror.mc:3271
 msgid "Floating-point overflow.\n"
-msgstr "Ha hagut un desbordament overflow de punt flotant.\n"
+msgstr "Hi ha hagut un desbordament overflow de punt flotant.\n"
 
 #: winerror.mc:3276
 msgid "No more entries.\n"
@@ -6331,7 +6330,7 @@ msgstr "La memòria intermèdia d'usuari és invàlida.\n"
 
 #: winerror.mc:3336
 msgid "Unrecognized media.\n"
-msgstr "No es reconeix el mitjà.\n"
+msgstr "No es reconeix el suport.\n"
 
 #: winerror.mc:3341
 msgid "No trust secret.\n"
@@ -6759,11 +6758,11 @@ msgstr "&Atributs:"
 
 #: mshtml.rc:39
 msgid "Hyperlink"
-msgstr "Hiperenllaç"
+msgstr "Enllaç"
 
 #: mshtml.rc:42
 msgid "Hyperlink Information"
-msgstr "Informació d'hiperenllaç"
+msgstr "Informació d'enllaç"
 
 #: mshtml.rc:43 winecfg.rc:245
 msgid "&Type:"
@@ -6929,7 +6928,7 @@ msgstr "kB/s"
 
 #: msvfw32.rc:28
 msgid "Full Frames (Uncompressed)"
-msgstr "Fotogrames plenes (sense compressió)"
+msgstr "Fotogrames plens (sense compressió)"
 
 #: msvidc32.rc:29
 msgid "Wine Video 1 video codec"
@@ -7308,7 +7307,7 @@ msgstr "enfocable"
 #: oleacc.rc:119
 msgctxt "object state"
 msgid "selectable"
-msgstr "sel·lecionable"
+msgstr "seleccionable"
 
 #: oleacc.rc:120
 msgctxt "object state"
@@ -7470,22 +7469,16 @@ msgstr "Afegeix control"
 
 # Including the ellipsis would make this string too long
 #: oledlg.rc:35
-#, fuzzy
-#| msgid "&Font..."
 msgid "&Convert..."
-msgstr "T&ipus de lletra"
+msgstr "&Converteix..."
 
 #: oledlg.rc:36
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 %2 &Object"
-msgstr "&Objecte"
+msgstr "%1 %2 &Objecte"
 
 #: oledlg.rc:34
-#, fuzzy
-#| msgid "&Object"
 msgid "%1 &Object"
-msgstr "&Objecte"
+msgstr "%1 &Objecte"
 
 #: oledlg.rc:33 oleview.rc:40
 msgid "&Object"
@@ -7616,7 +7609,7 @@ msgstr "Bits d'aturada"
 
 #: setupapi.rc:39
 msgid "Copying Files..."
-msgstr "S'està copiant fitxers..."
+msgstr "S'estan copiant els fitxers..."
 
 #: setupapi.rc:45
 msgid "Destination:"
@@ -7862,7 +7855,7 @@ msgstr "Vista d'&edició"
 
 #: shdoclc.rc:219 shdoclc.rc:233
 msgid "Scroll Here"
-msgstr "Desplaça-te fins aquí"
+msgstr "Desplaça't fins aquí"
 
 #: shdoclc.rc:221
 msgid "Top"
@@ -7882,11 +7875,11 @@ msgstr "Pàgina avall"
 
 #: shdoclc.rc:227
 msgid "Scroll Up"
-msgstr "Desplaça-te amunt"
+msgstr "Desplaça't amunt"
 
 #: shdoclc.rc:228
 msgid "Scroll Down"
-msgstr "Desplaça-te avall"
+msgstr "Desplaça't avall"
 
 #: shdoclc.rc:235
 msgid "Left Edge"
@@ -7898,7 +7891,7 @@ msgstr "Vora dreta"
 
 #: shdoclc.rc:238
 msgid "Page Left"
-msgstr "Pagina a la esquerra"
+msgstr "Pàgina a l'esquerra"
 
 #: shdoclc.rc:239
 msgid "Page Right"
@@ -7906,11 +7899,11 @@ msgstr "Pàgina a la dreta"
 
 #: shdoclc.rc:241
 msgid "Scroll Left"
-msgstr "Desplaça-te a la esquerra"
+msgstr "Desplaça't a l'esquerra"
 
 #: shdoclc.rc:242
 msgid "Scroll Right"
-msgstr "Desplaça-te a la dreta"
+msgstr "Desplaça't a la dreta"
 
 #: shdoclc.rc:28
 msgid "Wine Internet Explorer"
@@ -8063,7 +8056,7 @@ msgstr "S'està executant en %s"
 
 #: shell32.rc:329
 msgid "Wine was brought to you by:"
-msgstr "El Wine s'us ha dut per:"
+msgstr "Teniu el Wine gràcies a:"
 
 #: shell32.rc:337
 msgid ""
@@ -8376,11 +8369,9 @@ msgid ""
 msgstr ""
 "Aquesta carpeta ja conté una carpeta anomenada '%1'.\n"
 "\n"
-"Si els fitxers en la carpeta destinatari tenen els mateixos noms que els "
-"fitxers\n"
-"en la carpeta seleccionada seran substituits. Encara voleu desplaçar o "
-"copiar\n"
-"la carpeta?"
+"Si els fitxers en la carpeta de destinació tenen els mateixos noms que els\n"
+"fitxers en la carpeta seleccionada, seran substituïts. Encara voleu\n"
+"desplaçar o copiar la carpeta?"
 
 #: shell32.rc:238
 msgid "New Folder"
@@ -8393,7 +8384,7 @@ msgstr "Tauler de Control del Wine"
 #: shell32.rc:195
 msgid "Unable to display Run File dialog box (internal error)"
 msgstr ""
-"No es pot mostrar el quadre de diàleg de execució de fitxer (error intern)"
+"No es pot mostrar el quadre de diàleg d'execució de fitxer (error intern)"
 
 #: shell32.rc:196
 msgid "Unable to display Browse dialog box (internal error)"
@@ -8617,58 +8608,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Amaga"
+msgstr "Amaga %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Altra"
+msgstr "Amaga les altres"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Mostra"
+msgstr "Mostra'ls tots"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Surt %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Surt"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Finestra"
+msgstr "Finestra"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Minimitza"
+msgstr "Minimitza"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "Apropa"
+msgstr "Escala"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Pantalla completa"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "En primer te&rme"
+msgstr "Porta'ls totes al primer terme"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -8799,7 +8776,7 @@ msgid ""
 "Cannot perform this operation while media data is still playing. Reset the "
 "device, or wait until the data is finished playing."
 msgstr ""
-"No es pot realitzar aquesta operació mentre les dades de mitjà encara "
+"No es pot realitzar aquesta operació mentre les dades de suport encara "
 "s'estan reproduint. Reinicialitzeu el dispositiu, o espereu fins que les "
 "dades terminin de reproduir."
 
@@ -8923,7 +8900,7 @@ msgstr ""
 
 #: winmm.rc:71
 msgid "The specified integer is invalid for this command."
-msgstr "El nombre enter especificat es invàlid per a aquest ordre."
+msgstr "El nombre enter especificat és invàlid per a aquest ordre."
 
 #: winmm.rc:72
 msgid ""
@@ -8971,7 +8948,7 @@ msgid ""
 "access error."
 msgstr ""
 "Hi ha un problema amb el controlador de dispositiu. El conductor s'ha "
-"tancat. No es pot accedir al error."
+"tancat. No es pot accedir a l'error."
 
 #: winmm.rc:80
 msgid "Cannot use 'all' as the device name with the specified command."
@@ -9010,16 +8987,12 @@ msgstr ""
 "de disc o que encara estigueu connectat a la xarxa."
 
 #: winmm.rc:86
-#, fuzzy
-#| msgid ""
-#| "Cannot find the specified device. Make sure it is installed or that the "
-#| "device name is spelled correctly."
 msgid ""
 "Cannot find the specified device. Make sure it is installed and that the "
 "device name is spelled correctly."
 msgstr ""
 "No es pot trobar el dispositiu especificat. Assegureu-vos que estigui "
-"instal·lat o que el nom de dispositiu estigui escrit correctament."
+"instal·lat i que el nom de dispositiu estigui correctament escrit."
 
 #: winmm.rc:87
 msgid ""
@@ -9115,7 +9088,7 @@ msgid ""
 "sequence, and then try again."
 msgstr ""
 "No es pot dur a terme els ordres en l'ordre especificat. Corregiu la "
-"seqüència de ordres i després torneu a intentar."
+"seqüència d'ordres i després torneu a intentar."
 
 #: winmm.rc:102
 msgid ""
@@ -9347,24 +9320,20 @@ msgstr ""
 "espai de disc o que encara estigueu connectat a la xarxa."
 
 #: winmm.rc:136
-#, fuzzy
-#| msgid "Wine Mono Installer"
 msgid "Wine Sound Mapper"
-msgstr "Instal·lador del Wine Mono"
+msgstr "Assignador de sons del Wine"
 
 #: winmm.rc:137
-#, fuzzy
-#| msgid "column"
 msgid "Volume"
-msgstr "columna"
+msgstr "Volum"
 
 #: winmm.rc:138
 msgid "Master Volume"
-msgstr ""
+msgstr "Volum mestre"
 
 #: winmm.rc:139
 msgid "Mute"
-msgstr ""
+msgstr "Silencia"
 
 #: winspool.rc:37
 msgid "Print to File"
@@ -9413,7 +9382,7 @@ msgstr "Comparació veritable"
 
 #: wldap32.rc:37
 msgid "Authentication Method Not Supported"
-msgstr "Mètode de autenticació no compatible"
+msgstr "Mètode d'autenticació no compatible"
 
 #: wldap32.rc:38
 msgid "Strong Authentication Required"
@@ -9469,7 +9438,7 @@ msgstr "Cap objecte així"
 
 #: wldap32.rc:63
 msgid "Alias Problem"
-msgstr "Problema de àlies"
+msgstr "Problema d'àlies"
 
 #: wldap32.rc:64
 msgid "Invalid DN Syntax"
@@ -9525,7 +9494,7 @@ msgstr "Violació de nom"
 
 #: wldap32.rc:95
 msgid "Object Class Violation"
-msgstr "Violació de classe de objecte"
+msgstr "Violació de classe d'objecte"
 
 #: wldap32.rc:96
 msgid "Not allowed on Non-leaf"
@@ -9617,7 +9586,7 @@ msgstr "Bucle en processar referències"
 
 #: wldap32.rc:127
 msgid "Referral hop limit exceeded"
-msgstr "Límit de salta de referències superat"
+msgstr "Límit de salt de referències superat"
 
 #: attrib.rc:30 cmd.rc:361
 msgid ""
@@ -9720,12 +9689,12 @@ msgid ""
 "called procedure are inherited by the caller.\n"
 msgstr ""
 "CALL <nom de fitxer batch> s'utilitza dins un fitxer batch per a executar\n"
-"ordres d'un altre fitxer batch. Quan es surt del fitxer batch, el control\n"
+"ordres d'un altre fitxer batch. Quan se surt del fitxer batch, el control\n"
 "retorna al fitxer que l'ha trucat. L'ordre CALL pot proveir paràmetres al\n"
 "procediment trucat.\n"
 "\n"
 "El procediment trucant hereta els canvis al directori per defecte,\n"
-"variables d'entorn etc. fets dins d'un procediment trucat.\n"
+"variables d'entorn, etc. fets dins d'un procediment trucat.\n"
 
 #: cmd.rc:44
 msgid ""
@@ -9782,7 +9751,7 @@ msgstr ""
 "el dispositiu de terminal abans d'executar-se.\n"
 "\n"
 "ECHO OFF desfà l'efecte d'un ECHO ON anterior (ECHO està OFF per defecte).\n"
-"Precedir l'ordre ECHO OFF amb la signe @ prevé que es mostri.\n"
+"Precedir l'ordre ECHO OFF amb el signe @ prevé que es mostri.\n"
 
 #: cmd.rc:78
 msgid "ERASE <filename> deletes a file or set of files.\n"
@@ -9819,8 +9788,8 @@ msgstr ""
 "L'ordre GOTO transfereix l'execució a una altra declaració en un fitxer\n"
 "batch.\n"
 "\n"
-"L'etiqueta que és la destinació d'un GOTO pot ser de fins 255 caràcters de\n"
-"longitud però no pot incloure espais (això és diferent d'altres sistemes\n"
+"L'etiqueta que és la destinació d'un GOTO pot ser de fins a 255 caràcters\n"
+"de longitud però no pot incloure espais (això és diferent d'altres sistemes\n"
 "operatius). Si dos o més etiquetes idèntiques existeixen en un fitxer\n"
 "batch, el primer sempre s'executarà. Intentar fer GOTO a una etiqueta no\n"
 "existent termina l'execució del fitxer batch.\n"
@@ -9910,7 +9879,7 @@ msgstr ""
 "PATH mostra o canvia la ruta de cerca del cmd.\n"
 "\n"
 "Introduir PATH mostrarà la configuració PATH actual (inicialment treta del\n"
-"registre). Per a canviar la configuració feu el ordre PATH amb el valor\n"
+"registre). Per a canviar la configuració, feu l'ordre PATH amb el valor\n"
 "nou.\n"
 "\n"
 "També és possible modificar la PATH utilitzant la variable d'entorn PATH,\n"
@@ -10027,11 +9996,11 @@ msgstr ""
 "\n"
 "SET <variable>=<valor>\n"
 "\n"
-"on <variable> i <valor> són cadenes de caràcters. No ha d'haver cap espai\n"
-"abans del signe igual, ni pot el nom de la variable tenir espais\n"
+"on <variable> i <valor> són cadenes de caràcters. No hi ha d'haver cap\n"
+"espai abans del signe igual, ni pot el nom de la variable tenir espais\n"
 "incrustats.\n"
 "\n"
-"Sota el Wine, l'entorn del sistema operatiu subjacent es inclou en l'entorn\n"
+"Sota el Wine, l'entorn del sistema operatiu subjacent s'inclou en l'entorn\n"
 "Win32, hi haurà en general, per tant, molts més valors que en una\n"
 "implementació nativa de Win32. Tingueu en compte que no és possible afectar\n"
 "l'entorn del sistema operatiu des de dins del cmd.\n"
@@ -10043,7 +10012,7 @@ msgid ""
 "called from the command line.\n"
 msgstr ""
 "S'utilitza SHIFT en un fitxer batch per a eliminar un paràmetre del cap de\n"
-"la llista, de manera que el paràmetre 2 es converteix en el paràmetre 1\n"
+"la llista, de manera que el paràmetre 2 es converteix en el paràmetre 1,\n"
 "etc. No té cap efecte si es truca des de la línia d'ordres.\n"
 
 #: cmd.rc:212 start.rc:56
@@ -10084,24 +10053,24 @@ msgstr ""
 "start [opcions] nom_de_fitxer_de_document\n"
 "\n"
 "Opcions:\n"
-"\"títol\"           Especifica el títol de les finistres filles.\n"
+"\"títol\"           Especifica el títol de les finestres filles.\n"
 "/d directori      Inicia el programa en el directori especificat.\n"
 "/b                No creïs una consola nova per al programa.\n"
 "/i                Inicia el programa amb variables d'entorn fresques.\n"
 "/min              Inicia el programa minimitzat.\n"
 "/max              Inicia el programa maximitzat.\n"
-"/low              Inicia el programa en la clase de prioritat idle.\n"
-"/normal           Inicia el programa en la clase de prioritat normal.\n"
-"/high             Inicia el programa en la clase de prioritat high.\n"
-"/realtime         Inicia el programa en la clase de prioritat realtime.\n"
-"/abovenormal      Inicia el programa en la clase de prioritat abovenormal.\n"
-"/belownormal      Inicia el programa en la clase de prioritat belownormal.\n"
+"/low              Inicia el programa en la classe de prioritat idle.\n"
+"/normal           Inicia el programa en la classe de prioritat normal.\n"
+"/high             Inicia el programa en la classe de prioritat high.\n"
+"/realtime         Inicia el programa en la classe de prioritat realtime.\n"
+"/abovenormal      Inicia el programa en la classe de prioritat abovenormal.\n"
+"/belownormal      Inicia el programa en la classe de prioritat belownormal.\n"
 "/node n           Inicia el programa en el node NUMA especificat.\n"
-"/affinity máscara Inicia el programa amb la máscara d'afinitat\n"
+"/affinity màscara Inicia el programa amb la màscara d'afinitat\n"
 "                  especificada.\n"
 "/wait             Espera que el programa iniciat termini, llavors surt amb\n"
 "                  el seu codi de sortida.\n"
-"/unix             Uitilitza un nom de fitxer de Unix i inicia el fitxer com\n"
+"/unix             Utilitza un nom de fitxer d'Unix i inicia el fitxer com\n"
 "                  el Windows Explorer.\n"
 "/ProgIDOpen       Obre un document utilitzant la progID especificada.\n"
 "/?                Mostra aquesta ajuda i surt.\n"
@@ -10120,7 +10089,8 @@ msgid ""
 "redirected). No check is made that the file is readable text.\n"
 msgstr ""
 "TYPE <nom de fitxer> copia <nom de fitxer> al dispositiu de consola (o un\n"
-"altre lloc si es redirieix). No es comprova que el fitxer és text llegible.\n"
+"altre lloc si es redirigeix). No es comprova que el fitxer sigui text\n"
+"llegible.\n"
 
 #: cmd.rc:253
 msgid ""
@@ -10169,7 +10139,7 @@ msgstr ""
 "SETLOCAL comença la localització de canvis en l'entorn en un fitxer batch.\n"
 "\n"
 "Els canvis d'entorn fets després d'un SETLOCAL són locals al fitxer batch,\n"
-"i es conserven fins que la propera ENDLOCAL es trobi (o al final del\n"
+"i es conserven fins que es trobi la següent ENDLOCAL (o al final del\n"
 "fitxer, el que passi primer), al qual punt la configuració de l'entorn\n"
 "anterior es restaura.\n"
 
@@ -10316,7 +10286,7 @@ msgstr ""
 "MORE\t\tMostra la sortida en pàgines\n"
 "MOVE\t\tDesplaça un fitxer, conjunt de fitxers o arbre de directori\n"
 "PATH\t\tEstableix o mostra la ruta de cerca\n"
-"PAUSE\t\tSuspén l'execució d'un fitxer batch\n"
+"PAUSE\t\tSuspèn l'execució d'un fitxer batch\n"
 "POPD\t\tRestaura el directori a l'últim desat amb la PUSHD\n"
 "PROMPT\t\tCanvia l'indicador d'ordres\n"
 "PUSHD\t\tCanvia a un directori nou, desant l'actual\n"
@@ -10501,7 +10471,7 @@ msgstr ""
 
 #: cmd.rc:393
 msgid "Division by zero error.\n"
-msgstr "Havia un error de divisió per zero.\n"
+msgstr "Hi ha hagut un error de divisió per zero.\n"
 
 #: cmd.rc:394
 msgid "Expected an operand.\n"
@@ -10557,7 +10527,7 @@ msgid ""
 "Error: Setting the system hostname is not possible with the hostname "
 "utility.\n"
 msgstr ""
-"Error: Definir el nom d'equip del sistema no és possible amb la utilitat "
+"Error: Definir el nom de màquina del sistema no és possible amb la utilitat "
 "hostname.\n"
 
 #: ipconfig.rc:30
@@ -10588,7 +10558,7 @@ msgstr "Adreça IPv4"
 
 #: ipconfig.rc:37
 msgid "Hostname"
-msgstr "Nom d'equip"
+msgstr "Nom de màquina"
 
 #: ipconfig.rc:38
 msgid "Node type"
@@ -10616,7 +10586,7 @@ msgstr "Encaminament IP habilitat"
 
 #: ipconfig.rc:45
 msgid "Physical address"
-msgstr "Direcció física"
+msgstr "Adreça física"
 
 #: ipconfig.rc:46
 msgid "DHCP enabled"
@@ -10739,7 +10709,7 @@ msgstr "%1      %2      %3      Recursos oberts: %4!u!\n"
 
 #: net.rc:48
 msgid "Paused"
-msgstr "Pausat"
+msgstr "En pausa"
 
 #: net.rc:49
 msgid "Disconnected"
@@ -10747,7 +10717,7 @@ msgstr "Desconnectat"
 
 #: net.rc:50
 msgid "A network error occurred"
-msgstr "Ha hagut un error de xarxa"
+msgstr "Hi ha hagut un error de xarxa"
 
 #: net.rc:51
 msgid "Connection is being made"
@@ -11276,7 +11246,7 @@ msgstr "Visualitzador d'ITypeLib"
 
 #: oleview.rc:99
 msgid "OleView - OLE/COM Object Viewer"
-msgstr "OleView - Visualitzador de Objectes OLE/COM"
+msgstr "OleView - Visualitzador d'Objectes OLE/COM"
 
 #: oleview.rc:100
 msgid "version 1.0"
@@ -11308,11 +11278,11 @@ msgstr "Tanca l'aplicació. Demana desar els canvis"
 
 #: oleview.rc:111
 msgid "Create an instance of the selected object"
-msgstr "Crea una instància del objecte seleccionat"
+msgstr "Crea una instància de l'objecte seleccionat"
 
 #: oleview.rc:112
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "Crea una instància del objecte seleccionat en una màquina específica"
+msgstr "Crea una instància de l'objecte seleccionat en una màquina específica"
 
 #: oleview.rc:113
 msgid "Release the currently selected object instance"
@@ -11320,7 +11290,7 @@ msgstr "Lliura la instància d'objecte actualment seleccionada"
 
 #: oleview.rc:114
 msgid "Copy the GUID of the currently selected item to the clipboard"
-msgstr "Copia la GUID de l'element actualment seleccionada al porta-retalls"
+msgstr "Copia la GUID de l'element actualment seleccionat al porta-retalls"
 
 #: oleview.rc:115
 msgid "Display the viewer for the selected item"
@@ -11334,7 +11304,7 @@ msgstr "Canvia entre els modes de visualització expert i novell"
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
 msgstr ""
-"Alterna la visualització de les categories de component que no es suposen "
+"Alterna la visualització de les categories de component que no se suposen "
 "ser visibles"
 
 #: oleview.rc:122
@@ -11351,7 +11321,7 @@ msgstr "Actualitza totes les llistes"
 
 #: oleview.rc:125
 msgid "Display program information, version number and copyright"
-msgstr "Mostra informació de programa, nombre de versió i drets de autor"
+msgstr "Mostra informació de programa, nombre de versió i drets d'autor"
 
 #: oleview.rc:116
 msgid "Ask for an in-process server when calling CoGetClassObject"
@@ -11499,11 +11469,11 @@ msgstr "&Finestres"
 
 #: progman.rc:50
 msgid "&Overlapped\tShift+F5"
-msgstr "&Superposats\tShift+F5"
+msgstr "&Superposats\tMaj+F5"
 
 #: progman.rc:51
 msgid "&Side by side\tShift+F4"
-msgstr "&Junts\tShift+F4"
+msgstr "&Junts\tMaj+F4"
 
 #: progman.rc:52
 msgid "&Arrange Icons"
@@ -11692,7 +11662,7 @@ msgstr "REG QUERY nom_de_clau [/v nom_de_valor | /ve] [/s]\n"
 
 #: reg.rc:34
 msgid "The operation completed successfully\n"
-msgstr "La operació s'ha acabat amb èxit\n"
+msgstr "L'operació s'ha acabat amb èxit\n"
 
 #: reg.rc:35
 msgid "Error: Invalid key name\n"
@@ -11783,7 +11753,7 @@ msgstr "&Elimina preferit..."
 
 #: regedit.rc:82
 msgid "&About Registry Editor"
-msgstr "&Quant al Editor de Registre"
+msgstr "&Quant a l'Editor de Registre"
 
 #: regedit.rc:91
 msgid "Modify Binary Data..."
@@ -11889,7 +11859,7 @@ msgstr "Conté ordres per a accedir a les claus freqüentment utilitzades"
 msgid ""
 "Contains commands for displaying help and information about registry editor"
 msgstr ""
-"Conté ordres per a mostrar ajuda i informació quant al editor de registre"
+"Conté ordres per a mostrar ajuda i informació quant a l'editor de registre"
 
 #: regedit.rc:142
 msgid "Contains commands for creating new keys or values"
@@ -11977,7 +11947,7 @@ msgstr "Troba una cadena de text en una clau, un valor o unes dades"
 
 #: regedit.rc:173
 msgid "Finds next occurrence of text specified in previous search"
-msgstr "Troba la aparició següent del text especificat en la cerca anterior"
+msgstr "Troba l'aparició següent del text especificat en la cerca anterior"
 
 #: regedit.rc:147
 msgid "Modifies the value's data"
@@ -12070,7 +12040,7 @@ msgid ""
 "Provides DLL registration services.\n"
 "\n"
 msgstr ""
-"Utilitat de Wine de registració DLL\n"
+"Utilitat del Wine de registració DLL\n"
 "\n"
 "Proveeix serveis de registració DLL.\n"
 "\n"
@@ -12096,7 +12066,7 @@ msgstr ""
 "  [/s]  Mode silent (no es mostrarà cap missatge).\n"
 "  [/i]  Truca DllInstall, passant una [línia d'ordres] opcional.\n"
 "\tQuan s'utilitza amb [/u], es truca DllInstall en el mode de "
-"desinstalació.\n"
+"desinstal·lació.\n"
 "  [/n]  No truquis DllRegisterServer. S'ha d'utilitzar aquesta opció amb [/"
 "i].\n"
 "\n"
@@ -12225,7 +12195,7 @@ msgstr "Error: No es pot terminar el procés \"%1\".\n"
 
 #: taskkill.rc:43
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "Error: No es permet l'auto-terminació de procés.\n"
+msgstr "Error: No es permet l'autoterminació de procés.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
@@ -12595,8 +12565,8 @@ msgstr "Selecció de columnes"
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
 msgstr ""
-"Seleccioneu els columnes que apareixeran a la pàgina Procés del "
-"Administrador de Tasques."
+"Seleccioneu les columnes que apareixeran a la pàgina Procés de "
+"l'Administrador de Tasques."
 
 #: taskmgr.rc:521
 msgid "&Image Name"
@@ -12786,7 +12756,7 @@ msgstr "Mostra temes d'ajuda de l'Administrador de Tasques"
 
 #: taskmgr.rc:212
 msgid "Displays program information, version number, and copyright"
-msgstr "Mostra informació de programa, nombre de versió i drets de autor"
+msgstr "Mostra informació de programa, nombre de versió i drets d'autor"
 
 #: taskmgr.rc:213
 msgid "Exits the Task Manager application"
@@ -13020,7 +12990,7 @@ msgstr "Procés inactiu del sistema"
 
 #: taskmgr.rc:323
 msgid "Not Responding"
-msgstr "No està respondent"
+msgstr "No està responent"
 
 #: taskmgr.rc:324
 msgid "Running"
@@ -13040,24 +13010,23 @@ msgid ""
 "executable.\n"
 "Do you want to remove the uninstall entry from the registry?"
 msgstr ""
-"L'execució de l'ordre de desinstal·lació '%s' ha fallat, potser perquè el "
-"executable manqui.\n"
+"L'execució de l'ordre de desinstal·lació '%s' ha fallat, potser perquè "
+"l'executable manqui.\n"
 "Voleu eliminar l'entrada de desinstal·lació del registre?"
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr ""
+msgstr "desinstal·lador: No s'ha trobat l'aplicació amb la GUID '%s'\n"
 
 #: uninstaller.rc:32
 msgid ""
 "uninstaller: The option '--remove' must be followed by an application GUID\n"
 msgstr ""
+"desinstal·lador: Una GUID d'aplicació ha de seguir l'opció '--remove'\n"
 
 #: uninstaller.rc:33
-#, fuzzy
-#| msgid "Error: Invalid option '%c'.\n"
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "Error: Opció invàlida '%c'.\n"
+msgstr "desinstal·lador: Opció invàlida [%1]\n"
 
 #: uninstaller.rc:35
 msgid ""
@@ -13066,6 +13035,10 @@ msgid ""
 "Uninstall applications from the current Wine prefix.\n"
 "\n"
 msgstr ""
+"Desinstal·lador d'aplicacions del Wine\n"
+"\n"
+"Desinstal·la aplicacions des del prefix actual del Wine.\n"
+"\n"
 
 #: uninstaller.rc:43
 msgid ""
@@ -13080,10 +13053,21 @@ msgid ""
 "  [no option]       Launch the graphical version of this program.\n"
 "\n"
 msgstr ""
+"Ús:\n"
+"  uninstaller [opcions]\n"
+"\n"
+"Opcions:\n"
+"  --help\t    Mostra aquesta informació.\n"
+"  --list\t    Llista totes les aplicacions instal·lades en aquest prefix\n"
+"\t\t    del Wine.\n"
+"  --remove {GUID}   Desinstal·la l'aplicació especificada.\n"
+"\t\t    Usa '--list' per a determinar la GUID de l'aplicació.\n"
+"  [no option]       Executa la versió gràfica d'aquest programa.\n"
+"\n"
 
 #: view.rc:36
 msgid "&Pan"
-msgstr "&Barrit"
+msgstr "Des&plaça"
 
 #: view.rc:38
 msgid "&Scale to Window"
@@ -13095,7 +13079,7 @@ msgstr "A l'&esquerra"
 
 #: view.rc:41
 msgid "&Right"
-msgstr "Al &dreta"
+msgstr "A la &dreta"
 
 #: view.rc:49
 msgid "Regular Metafile Viewer"
@@ -13162,7 +13146,7 @@ msgid ""
 msgstr ""
 "El Wine pot imitar versions de Windows diferents per a cada aplicació. "
 "Aquesta pestanya s'enllaça a les pestanyes Biblioteques i Gràfics per a "
-"permetre-vos canviar la configuració del sistema o d'una aplicació en "
+"permetre-us canviar la configuració del sistema o d'una aplicació en "
 "aquelles pestanyes també."
 
 #: winecfg.rc:159
@@ -13349,7 +13333,7 @@ msgstr "Configuració d'altaveus"
 
 #: winecfg.rc:280
 msgid "Speakers:"
-msgstr "Altaveus"
+msgstr "Altaveus:"
 
 #: winecfg.rc:288
 msgid "Appearance"
@@ -13457,7 +13441,7 @@ msgstr "(Defecte del sistema)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr "Envolvent 5.1"
+msgstr "Envoltant 5.1"
 
 #: winecfg.rc:92
 msgid "Quadraphonic"
@@ -13476,7 +13460,7 @@ msgid ""
 "Changing the load order of this library is not recommended.\n"
 "Are you sure you want to do this?"
 msgstr ""
-"Canviar l'ordre de carga d'aquesta biblioteca no es recomana.\n"
+"No es recomana canviar l'ordre de càrrega d'aquesta biblioteca.\n"
 "Esteu segur que voleu fer això?"
 
 #: winecfg.rc:55
@@ -13547,8 +13531,8 @@ msgid ""
 msgstr ""
 "No podeu afegir més unitats.\n"
 "\n"
-"Cada unitat ha de tenir una lletra, d'A a Z, així que no podeu tenir més de "
-"26."
+"Cada unitat ha de tenir una lletra, de la A a la Z, així que no en podeu "
+"tenir més de 26."
 
 #: winecfg.rc:75
 msgid "System drive"
@@ -13573,7 +13557,7 @@ msgstr "Lletra"
 
 #: winecfg.rc:78
 msgid "Target folder"
-msgstr "Carpeta destinatària"
+msgstr "Carpeta de destinació"
 
 #: winecfg.rc:79
 msgid ""
@@ -13695,11 +13679,11 @@ msgstr "Element ressaltat"
 
 #: winecfg.rc:127
 msgid "Active Title Bar Gradient"
-msgstr "Gradient de barra de títol actiu"
+msgstr "Degradat de barra de títol actiu"
 
 #: winecfg.rc:128
 msgid "Inactive Title Bar Gradient"
-msgstr "Gradient de barra de títol inactiu"
+msgstr "Degradat de barra de títol inactiu"
 
 #: winecfg.rc:129
 msgid "Menu Highlight"
@@ -13730,16 +13714,12 @@ msgid "Command history"
 msgstr "Historial d'ordres"
 
 #: wineconsole.rc:69
-#, fuzzy
-#| msgid "Buffer zone"
 msgid "&Buffer size:"
-msgstr "Zona de memòria intermèdia"
+msgstr "&Mida de memòria intermèdia:"
 
 #: wineconsole.rc:72
-#, fuzzy
-#| msgid "&Remove doubles"
 msgid "&Remove duplicates"
-msgstr "&Elimina dobles"
+msgstr "&Elimina els duplicats"
 
 #: wineconsole.rc:74
 msgid "Popup menu"
@@ -13754,22 +13734,16 @@ msgid "S&hift"
 msgstr "&Maj"
 
 #: wineconsole.rc:78
-#, fuzzy
-#| msgid "&Close console"
 msgid "Console"
-msgstr "&Tanca la consola"
+msgstr "Consola"
 
 #: wineconsole.rc:79
-#, fuzzy
-#| msgid "Quick edit"
 msgid "&Quick Edit mode"
-msgstr "Edició ràpida"
+msgstr "Mode d'edició &ràpida"
 
 #: wineconsole.rc:80
-#, fuzzy
-#| msgid "&Expert mode"
 msgid "&Insert mode"
-msgstr "Mode &expert"
+msgstr "Mode d'&inserció"
 
 #: wineconsole.rc:88
 msgid "&Font"
@@ -14071,7 +14045,7 @@ msgstr "&Barra d'unitats"
 
 #: winefile.rc:68
 msgid "F&ull Screen\tCtrl+Shift+S"
-msgstr "&Pantalla completa\tCtrl+Shift+S"
+msgstr "&Pantalla completa\tCtrl+Maj+S"
 
 #: winefile.rc:74
 msgid "New &Window"
@@ -14172,7 +14146,7 @@ msgstr "S'està aplicant la configuració de lletra"
 
 #: winefile.rc:91
 msgid "Error while selecting new font."
-msgstr "Hi ha hagut un error al seleccionar el tipus de lletra nou."
+msgstr "Hi ha hagut un error en seleccionar el tipus de lletra nou."
 
 #: winefile.rc:96
 msgid "Wine File Manager"
@@ -14587,7 +14561,7 @@ msgstr "&Cap ajust de línia"
 
 #: wordpad.rc:261
 msgid "Wrap text by the &window border"
-msgstr "Ajusta el text pela vora de la &ventana"
+msgstr "Ajusta el text pela vora de la &finestra"
 
 #: wordpad.rc:262
 msgid "Wrap text by the &margin"
@@ -14891,14 +14865,14 @@ msgstr ""
 "[/I]  Presumeix directori si la destinació no existeix i s'estan copiant\n"
 "\tdos o més fitxers.\n"
 "[/S]  Copia els directoris i subdirectoris.\n"
-"[/E]  Copia els directoris i subdirectoris, incloent els buits.\n"
+"[/E]  Copia els directoris i subdirectoris, incloent-hi els buits.\n"
 "[/Q]  No mostris els noms durant la còpia, és a dir, sigues silent.\n"
 "[/F]  Mostra els noms complets de la font i el destinatari durant la còpia.\n"
 "[/L]  Simula l'operació, mostrant els noms que es copiarien.\n"
 "[/W]  Pregunta abans de començar l'operació de còpia.\n"
 "[/T]  Crea una estructura de directoris buits però no copiïs els fitxers.\n"
-"[/Y]  Reprimeix el preguntar al sobreescriure els fitxers.\n"
-"[/-Y] Habilita el preguntar al sobreescriure els fitxers.\n"
+"[/Y]  Elimina les preguntes abans de sobreescriure fitxers.\n"
+"[/-Y] Habilita les preguntes abans de sobreescriure fitxers.\n"
 "[/P]  Pregunta sobre cada fitxer font abans de copiar.\n"
 "[/N]  Copia utilitzant els noms curts.\n"
 "[/U]  Copia només els fitxers que ja existeixin a la destinació.\n"
