@@ -6575,8 +6575,8 @@ static void test_WSAPoll(void)
     ok(POLL_ISSET(fdRead, POLLWRNORM), "fdRead socket events incorrect\n");
     len = sizeof(id);
     id = 0xdeadbeef;
-    ok(!getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len),
-       "getsockopt failed with %d\n",WSAGetLastError());
+    err = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
+    ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
     ok(id == 0, "expected 0, got %d\n", id);
 
     /* Test data receiving notifications */
@@ -6655,8 +6655,8 @@ static void test_WSAPoll(void)
     ok(ret == 0, "expected 0, got %d\n", ret);
     len = sizeof(id);
     id = 0xdeadbeef;
-    ok(!getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len),
-       "getsockopt failed with %d\n", WSAGetLastError());
+    err = getsockopt(fdWrite, SOL_SOCKET, SO_ERROR, (char*)&id, &len);
+    ok(!err, "getsockopt failed with %d\n", WSAGetLastError());
     ok(id == WSAECONNREFUSED, "expected 10061, got %d\n", id);
     closesocket(fdWrite);
 
