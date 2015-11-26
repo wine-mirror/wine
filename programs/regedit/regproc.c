@@ -641,7 +641,7 @@ static void processRegLinesA(FILE *in, char* first_chars)
             /* Do we need to expand the buffer ? */
             assert (s >= line && s <= line + lineSize);
             size_remaining = lineSize - (s-line);
-            if (size_remaining < 2) /* room for 1 character and the \0 */
+            if (size_remaining < 3) /* need at least 3 bytes of room for \r\n\0 */
             {
                 char *new_buffer;
                 size_t new_size = lineSize + REG_VAL_BUF_SIZE;
