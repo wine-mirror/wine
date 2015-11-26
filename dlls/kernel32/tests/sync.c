@@ -59,6 +59,7 @@ static BOOLEAN (WINAPI *pTryAcquireSRWLockShared)(PSRWLOCK);
 
 static NTSTATUS (WINAPI *pNtAllocateVirtualMemory)(HANDLE, PVOID *, ULONG, SIZE_T *, ULONG, ULONG);
 static NTSTATUS (WINAPI *pNtFreeVirtualMemory)(HANDLE, PVOID *, SIZE_T *, ULONG);
+static NTSTATUS (WINAPI *pNtWaitForSingleObject)(HANDLE, BOOLEAN, const LARGE_INTEGER *);
 static NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
 
 static void test_signalandwait(void)
@@ -1075,6 +1076,8 @@ static HANDLE modify_handle(HANDLE handle, DWORD modify)
 static void test_WaitForSingleObject(void)
 {
     HANDLE signaled, nonsignaled, invalid;
+    LARGE_INTEGER timeout;
+    NTSTATUS status;
     DWORD ret;
 
     signaled = CreateEventW(NULL, TRUE, TRUE, NULL);
@@ -1144,12 +1147,29 @@ static void test_WaitForSingleObject(void)
     ok(ret == WAIT_OBJECT_0, "expected WAIT_OBJECT_0, got %d\n", ret);
     ok(GetLastError() == 0xdeadbeef, "expected 0xdeadbeef, got %d\n", GetLastError());
 
+    /* pseudo handles are allowed in WaitForSingleObject and NtWaitForSingleObject */
+    ret = WaitForSingleObject(GetCurrentProcess(), 100);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", ret);
+
+    ret = WaitForSingleObject(GetCurrentThread(), 100);
+    ok(ret == WAIT_TIMEOUT, "expected WAIT_TIMEOUT, got %u\n", ret);
+
+    timeout.QuadPart = -1000000;
+    status = pNtWaitForSingleObject(GetCurrentProcess(), FALSE, &timeout);
+    ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08x\n", status);
+
+    timeout.QuadPart = -1000000;
+    status = pNtWaitForSingleObject(GetCurrentThread(), FALSE, &timeout);
+    ok(status == STATUS_TIMEOUT, "expected STATUS_TIMEOUT, got %08x\n", status);
+
     CloseHandle(signaled);
     CloseHandle(nonsignaled);
 }
 
 static void test_WaitForMultipleObjects(void)
 {
+    LARGE_INTEGER timeout;
+    NTSTATUS status;
     DWORD r;
     int i;
     HANDLE maxevents[MAXIMUM_WAIT_OBJECTS];
@@ -1180,20 +1200,46 @@ static void test_WaitForMultipleObjects(void)
         SetEvent(maxevents[i]);
 
     /* a manual-reset event remains signaled, an auto-reset event is cleared */
-    r = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
-    ok( r == WAIT_OBJECT_0, "should signal lowest handle first, got %d\n", r);
-    r = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
-    ok( r == WAIT_OBJECT_0, "should signal handle #0 first, got %d\n", r);
+    status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
+    ok(status == STATUS_WAIT_0, "should signal lowest handle first, got %08x\n", status);
+    status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
+    ok(status == STATUS_WAIT_0, "should signal handle #0 first, got %08x\n", status);
     ok(ResetEvent(maxevents[0]), "ResetEvent\n");
     for (i=1; i<MAXIMUM_WAIT_OBJECTS; i++)
     {
         /* the lowest index is checked first and remaining events are untouched */
-        r = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
-        ok( r == WAIT_OBJECT_0+i, "should signal handle #%d first, got %d\n", i, r);
+        status = pNtWaitForMultipleObjects(MAXIMUM_WAIT_OBJECTS, maxevents, TRUE, FALSE, NULL);
+        ok(status == STATUS_WAIT_0 + i, "should signal handle #%d first, got %08x\n", i, status);
     }
 
     for (i=0; i<MAXIMUM_WAIT_OBJECTS; i++)
         if (maxevents[i]) CloseHandle(maxevents[i]);
+
+    /* in contrast to WaitForSingleObject, pseudo handles are not allowed in
+     * WaitForMultipleObjects and NtWaitForMultipleObjects */
+    maxevents[0] = GetCurrentProcess();
+    SetLastError(0xdeadbeef);
+    r = WaitForMultipleObjects(1, maxevents, FALSE, 100);
+    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %u\n", r);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
+                 "expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+
+    maxevents[0] = GetCurrentThread();
+    SetLastError(0xdeadbeef);
+    r = WaitForMultipleObjects(1, maxevents, FALSE, 100);
+    todo_wine ok(r == WAIT_FAILED, "expected WAIT_FAILED, got %u\n", r);
+    todo_wine ok(GetLastError() == ERROR_INVALID_HANDLE,
+                 "expected ERROR_INVALID_HANDLE, got %u\n", GetLastError());
+
+    timeout.QuadPart = -1000000;
+    maxevents[0] = GetCurrentProcess();
+    status = pNtWaitForMultipleObjects(1, maxevents, TRUE, FALSE, &timeout);
+    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08x\n", status);
+
+    timeout.QuadPart = -1000000;
+    maxevents[0] = GetCurrentThread();
+    status = pNtWaitForMultipleObjects(1, maxevents, TRUE, FALSE, &timeout);
+    todo_wine ok(status == STATUS_INVALID_HANDLE, "expected STATUS_INVALID_HANDLE, got %08x\n", status);
 }
 
 static BOOL g_initcallback_ret, g_initcallback_called;
@@ -2526,6 +2572,7 @@ START_TEST(sync)
     pTryAcquireSRWLockShared = (void *)GetProcAddress(hdll, "TryAcquireSRWLockShared");
     pNtAllocateVirtualMemory = (void *)GetProcAddress(hntdll, "NtAllocateVirtualMemory");
     pNtFreeVirtualMemory = (void *)GetProcAddress(hntdll, "NtFreeVirtualMemory");
+    pNtWaitForSingleObject = (void *)GetProcAddress(hntdll, "NtWaitForSingleObject");
     pNtWaitForMultipleObjects = (void *)GetProcAddress(hntdll, "NtWaitForMultipleObjects");
 
     argc = winetest_get_mainargs( &argv );
