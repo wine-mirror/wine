@@ -4468,7 +4468,7 @@ static void test_gethostbyname(void)
     struct hostent *he;
     struct in_addr **addr_list;
     char name[256], first_ip[16];
-    int ret, i;
+    int ret, i, count;
     PMIB_IPFORWARDTABLE routes = NULL;
     PIP_ADAPTER_INFO adapters = NULL, k;
     DWORD adap_size = 0, route_size = 0;
@@ -4484,9 +4484,9 @@ static void test_gethostbyname(void)
     strcpy(first_ip, inet_ntoa(*addr_list[0]));
 
     trace("List of local IPs:\n");
-    for(i = 0; addr_list[i] != NULL; i++)
+    for(count = 0; addr_list[count] != NULL; count++)
     {
-        char *ip = inet_ntoa(*addr_list[i]);
+        char *ip = inet_ntoa(*addr_list[count]);
         if (!strcmp(ip, "127.0.0.1"))
             local_ip = TRUE;
         trace("%s\n", ip);
@@ -4494,7 +4494,7 @@ static void test_gethostbyname(void)
 
     if (local_ip)
     {
-        ok (i == 1, "expected 127.0.0.1 to be the only IP returned\n");
+        ok (count == 1, "expected 127.0.0.1 to be the only IP returned\n");
         skip("Only the loopback address is present, skipping tests\n");
         return;
     }
@@ -4517,6 +4517,13 @@ static void test_gethostbyname(void)
     ok (ret  == NO_ERROR, "GetAdaptersInfo failed, error: %d\n", ret);
     ret = pGetIpForwardTable(routes, &route_size, FALSE);
     ok (ret == NO_ERROR, "GetIpForwardTable failed, error: %d\n", ret);
+
+    /* This test only has meaning if there is more than one IP configured */
+    if (adapters->Next == NULL && count == 1)
+    {
+        skip("Only one IP is present, skipping tests\n");
+        goto cleanup;
+    }
 
     for (i = 0; !found_default && i < routes->dwNumEntries; i++)
     {
@@ -4541,6 +4548,7 @@ static void test_gethostbyname(void)
 todo_wine
     ok (found_default, "failed to find the first IP from gethostbyname!\n");
 
+cleanup:
     HeapFree(GetProcessHeap(), 0, adapters);
     HeapFree(GetProcessHeap(), 0, routes);
 }
