@@ -630,11 +630,13 @@ static void test_CreateCompatibleDC(void)
 
 static void test_DC_bitmap(void)
 {
+    PIXELFORMATDESCRIPTOR descr;
     HDC hdc, hdcmem;
     DWORD bits[64];
     HBITMAP hbmp, oldhbmp;
     COLORREF col;
     int i, bitspixel;
+    int ret, ret2;
 
     /* fill bitmap data with b&w pattern */
     for( i = 0; i < 64; i++) bits[i] = i & 1 ? 0 : 0xffffff;
@@ -645,7 +647,31 @@ static void test_DC_bitmap(void)
     /* create a memory dc */
     hdcmem = CreateCompatibleDC( hdc);
     ok( hdcmem != NULL, "CreateCompatibleDC rets %p\n", hdcmem);
-    /* tests */
+
+    /* test DescribePixelFormat with descr == NULL */
+    ret2 = DescribePixelFormat(hdcmem, 0, sizeof(descr), NULL);
+    ok(ret2 > 0, "expected ret2 > 0, got %d\n", ret2);
+    ret = DescribePixelFormat(hdcmem, 1, sizeof(descr), NULL);
+    ok(ret == ret2, "expected ret == %d, got %d\n", ret2, ret);
+    ret = DescribePixelFormat(hdcmem, 0x10000, sizeof(descr), NULL);
+    ok(ret == ret2, "expected ret == %d, got %d\n", ret2, ret);
+
+    /* test DescribePixelFormat with descr != NULL */
+    memset(&descr, 0, sizeof(descr));
+    ret = DescribePixelFormat(hdcmem, 0, sizeof(descr), &descr);
+    ok(ret == 0, "expected ret == 0, got %d\n", ret);
+    ok(descr.nSize == 0, "expected descr.nSize == 0, got %d\n", descr.nSize);
+
+    memset(&descr, 0, sizeof(descr));
+    ret = DescribePixelFormat(hdcmem, 1, sizeof(descr), &descr);
+    ok(ret == ret2, "expected ret == %d, got %d\n", ret2, ret);
+    ok(descr.nSize == sizeof(descr), "expected desc.nSize == sizeof(descr), got %d\n", descr.nSize);
+
+    memset(&descr, 0, sizeof(descr));
+    ret = DescribePixelFormat(hdcmem, 0x10000, sizeof(descr), &descr);
+    ok(ret == 0, "expected ret == 0, got %d\n", ret);
+    ok(descr.nSize == 0, "expected descr.nSize == 0, got %d\n", descr.nSize);
+
     /* test monochrome bitmap: should always work */
     hbmp = CreateBitmap(32, 32, 1, 1, bits);
     ok( hbmp != NULL, "CreateBitmap returns %p\n", hbmp);

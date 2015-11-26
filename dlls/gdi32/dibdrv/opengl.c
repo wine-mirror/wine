@@ -149,7 +149,8 @@ static int dibdrv_wglDescribePixelFormat( HDC hdc, int fmt, UINT size, PIXELFORM
 {
     int ret = sizeof(pixel_formats) / sizeof(pixel_formats[0]);
 
-    if (fmt <= 0 || fmt > ret) return ret;
+    if (!descr) return ret;
+    if (fmt <= 0 || fmt > ret) return 0;
     if (size < sizeof(*descr)) return 0;
 
     memset( descr, 0, sizeof(*descr) );
