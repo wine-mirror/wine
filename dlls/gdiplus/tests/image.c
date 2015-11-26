@@ -4699,10 +4699,10 @@ static void test_createeffect(void)
     CGpEffect *effect;
     HMODULE mod = GetModuleHandleA("gdiplus.dll");
     int i;
-    const GUID effectlist[] =
-               {BlurEffectGuid, SharpenEffectGuid, ColorMatrixEffectGuid, ColorLUTEffectGuid,
-                BrightnessContrastEffectGuid, HueSaturationLightnessEffectGuid, LevelsEffectGuid,
-                TintEffectGuid, ColorBalanceEffectGuid, RedEyeCorrectionEffectGuid, ColorCurveEffectGuid};
+    const GUID * const effectlist[] =
+               {&BlurEffectGuid, &SharpenEffectGuid, &ColorMatrixEffectGuid, &ColorLUTEffectGuid,
+                &BrightnessContrastEffectGuid, &HueSaturationLightnessEffectGuid, &LevelsEffectGuid,
+                &TintEffectGuid, &ColorBalanceEffectGuid, &RedEyeCorrectionEffectGuid, &ColorCurveEffectGuid};
 
     pGdipCreateEffect = (void*)GetProcAddress( mod, "GdipCreateEffect");
     pGdipDeleteEffect = (void*)GetProcAddress( mod, "GdipDeleteEffect");
@@ -4719,9 +4719,9 @@ static void test_createeffect(void)
     stat = pGdipCreateEffect(noneffect, &effect);
     todo_wine expect(Win32Error, stat);
 
-    for(i=0; i < sizeof(effectlist) / sizeof(GUID); i++)
+    for(i=0; i < sizeof(effectlist) / sizeof(effectlist[0]); i++)
     {
-        stat = pGdipCreateEffect(effectlist[i], &effect);
+        stat = pGdipCreateEffect(*effectlist[i], &effect);
         todo_wine expect(Ok, stat);
         if(stat == Ok)
         {
