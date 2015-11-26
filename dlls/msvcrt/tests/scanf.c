@@ -165,7 +165,7 @@ static void test_sscanf( void )
     ret = sscanf(buffer, "%lld", &result64);
     ok(ret == 1, "Wrong number of arguments read: %d\n", ret);
     ret = sprintf(buffer1, "%lld", result64);
-    ok(ret==14 || broken(ret==10), "sprintf retuned %d\n", ret);
+    ok(ret==14 || broken(ret==10), "sprintf returned %d\n", ret);
     if(ret == 14)
         ok(!strcmp(buffer, buffer1), "got %s, expected %s\n", buffer1, buffer);
 

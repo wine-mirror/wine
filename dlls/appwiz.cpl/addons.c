@@ -403,7 +403,7 @@ static enum install_res install_from_cache(void)
         return INSTALL_NEXT;
 
     if(!sha_check(cache_file_name)) {
-        WARN("could not validate check sum\n");
+        WARN("could not validate checksum\n");
         DeleteFileW(cache_file_name);
         heap_free(cache_file_name);
         return INSTALL_NEXT;

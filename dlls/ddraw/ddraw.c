@@ -991,7 +991,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
     ddraw->cooperative_level = cooplevel;
     ddraw->dest_window = window;
 
-    TRACE("SetCooperativeLevel retuning DD_OK\n");
+    TRACE("SetCooperativeLevel returning DD_OK\n");
     hr = DD_OK;
 done:
     ddraw->flags &= ~DDRAW_SCL_RECURSIVE;

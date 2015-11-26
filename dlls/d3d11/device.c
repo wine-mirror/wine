@@ -2103,7 +2103,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDomainShader(ID3D11Device *i
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateComputeShader(ID3D11Device *iface, const void *byte_code,
         SIZE_T byte_code_length, ID3D11ClassLinkage *class_linkage, ID3D11ComputeShader **shader)
 {
-    FIXME("iface %p, byte_code %p, byte_code_lenghth %lu, class_linkage %p, shader %p stub!\n",
+    FIXME("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p stub!\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
     return E_NOTIMPL;

@@ -378,12 +378,12 @@ static void test_changesize( DWORD style)
     /* first make it slightly smaller */
     MoveWindow( hCombo, 10, 10, clwidth - 2, clheight - 2, TRUE);
     GetClientRect( hCombo, &rc);
-    ok( rc.right - rc.left == clwidth - 2, "clientrect witdh is %d vs %d\n",
+    ok( rc.right - rc.left == clwidth - 2, "clientrect width is %d vs %d\n",
             rc.right - rc.left, clwidth - 2);
     ok( rc.bottom - rc.top == clheight, "clientrect height is %d vs %d\n",
                 rc.bottom - rc.top, clheight);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&rc);
-    ok( rc.right - rc.left == clwidth - 2, "drop-down rect witdh is %d vs %d\n",
+    ok( rc.right - rc.left == clwidth - 2, "drop-down rect width is %d vs %d\n",
             rc.right - rc.left, clwidth - 2);
     ok( rc.bottom - rc.top == ddheight, "drop-down rect height is %d vs %d\n",
             rc.bottom - rc.top, ddheight);
@@ -392,12 +392,12 @@ static void test_changesize( DWORD style)
     /* new cx, cy is slightly bigger than the initial values */
     MoveWindow( hCombo, 10, 10, clwidth + 2, clheight + 2, TRUE);
     GetClientRect( hCombo, &rc);
-    ok( rc.right - rc.left == clwidth + 2, "clientrect witdh is %d vs %d\n",
+    ok( rc.right - rc.left == clwidth + 2, "clientrect width is %d vs %d\n",
             rc.right - rc.left, clwidth + 2);
     ok( rc.bottom - rc.top == clheight, "clientrect height is %d vs %d\n",
             rc.bottom - rc.top, clheight);
     SendMessageA(hCombo, CB_GETDROPPEDCONTROLRECT, 0, (LPARAM)&rc);
-    ok( rc.right - rc.left == clwidth + 2, "drop-down rect witdh is %d vs %d\n",
+    ok( rc.right - rc.left == clwidth + 2, "drop-down rect width is %d vs %d\n",
             rc.right - rc.left, clwidth + 2);
     todo_wine {
         ok( rc.bottom - rc.top == clheight + 2, "drop-down rect height is %d vs %d\n",

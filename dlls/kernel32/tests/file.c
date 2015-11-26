@@ -3956,8 +3956,8 @@ static void test_GetFileInformationByHandleEx(void)
     ret = pGetFileInformationByHandleEx(file, FileStandardInfo, buffer, sizeof(buffer));
     ok(ret, "GetFileInformationByHandleEx: failed to get FileStandardInfo, %u\n", GetLastError());
     standardInfo = (FILE_STANDARD_INFO *)buffer;
-    ok(standardInfo->NumberOfLinks == 1, "GetFileInformationByHandleEx: Unexpcted number of links\n");
-    ok(standardInfo->DeletePending == FALSE, "GetFileInformationByHandleEx: Unexpcted pending delete\n");
+    ok(standardInfo->NumberOfLinks == 1, "GetFileInformationByHandleEx: Unexpected number of links\n");
+    ok(standardInfo->DeletePending == FALSE, "GetFileInformationByHandleEx: Unexpected pending delete\n");
     ok(standardInfo->Directory == FALSE, "GetFileInformationByHandleEx: Incorrect directory flag\n");
 
     /* Test FileNameInfo */
