@@ -145,10 +145,10 @@ HLOCAL GRPFILE_ReadGroupFile(const char* path);
 BOOL   GRPFILE_WriteGroupFile(HLOCAL hGroup);
 
 ATOM   GROUP_RegisterGroupWinClass(void);
-HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT showcmd,
-		      INT x, INT y, INT width, INT heiht,
+HLOCAL GROUP_AddGroup(LPCSTR lpszName, LPCSTR lpszGrpFile, INT nCmdShow,
+		      INT x, INT y, INT width, INT height,
 		      INT iconx, INT icony,
-		      BOOL bModifiedFileName, BOOL bOverwriteFileOk,
+		      BOOL bFileNameModified, BOOL bOverwriteFileOk,
 		      /* FIXME shouldn't be necessary */
 		      BOOL bSuppressShowWindow);
 VOID   GROUP_NewGroup(void);
