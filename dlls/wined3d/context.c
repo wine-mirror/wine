@@ -1129,6 +1129,11 @@ BOOL context_set_current(struct wined3d_context *ctx)
         }
         else
         {
+            if (wglGetCurrentContext())
+            {
+                TRACE("Flushing context %p before switching to %p.\n", old, ctx);
+                glFlush();
+            }
             old->current = 0;
         }
     }
