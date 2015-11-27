@@ -1011,25 +1011,6 @@ static inline void save_fpu( CONTEXT *context )
 
 
 /***********************************************************************
- *           save_fpux
- *
- * Save the thread FPU extended context.
- */
-static inline void save_fpux( CONTEXT *context )
-{
-#ifdef __GNUC__
-    /* we have to enforce alignment by hand */
-    char buffer[sizeof(XMM_SAVE_AREA32) + 16];
-    XMM_SAVE_AREA32 *state = (XMM_SAVE_AREA32 *)(((ULONG_PTR)buffer + 15) & ~15);
-
-    __asm__ __volatile__( "fxsave %0" : "=m" (*state) );
-    context->ContextFlags |= CONTEXT_EXTENDED_REGISTERS;
-    memcpy( context->ExtendedRegisters, state, sizeof(*state) );
-#endif
-}
-
-
-/***********************************************************************
  *           restore_fpu
  *
  * Restore the FPU context to a sigcontext.
