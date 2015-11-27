@@ -3436,6 +3436,8 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
         {ARB_SHADER_BIT_ENCODING,          MAKEDWORD_VERSION(3, 3)},
         {ARB_TIMER_QUERY,                  MAKEDWORD_VERSION(3, 3)},
 
+        {ARB_ES2_COMPATIBILITY,            MAKEDWORD_VERSION(4, 1)},
+
         {ARB_MAP_BUFFER_ALIGNMENT,         MAKEDWORD_VERSION(4, 2)},
 
         {ARB_DEBUG_OUTPUT,                 MAKEDWORD_VERSION(4, 3)},
