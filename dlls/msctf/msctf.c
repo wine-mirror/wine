@@ -53,7 +53,7 @@ typedef struct
 typedef struct {
     TF_LANGUAGEPROFILE      LanguageProfile;
     ITfTextInputProcessor   *pITfTextInputProcessor;
-    ITfThreadMgr            *pITfThreadMgr;
+    ITfThreadMgrEx          *pITfThreadMgrEx;
     ITfKeyEventSink         *pITfKeyEventSink;
     TfClientId              tid;
 } ActivatedTextService;
@@ -287,7 +287,7 @@ DWORD enumerate_Cookie(DWORD magic, DWORD *index)
 /*****************************************************************************
  * Active Text Service Management
  *****************************************************************************/
-static HRESULT activate_given_ts(ActivatedTextService *actsvr, ITfThreadMgr* tm)
+static HRESULT activate_given_ts(ActivatedTextService *actsvr, ITfThreadMgrEx *tm)
 {
     HRESULT hr;
 
@@ -299,7 +299,7 @@ static HRESULT activate_given_ts(ActivatedTextService *actsvr, ITfThreadMgr* tm)
         &IID_ITfTextInputProcessor, (void**)&actsvr->pITfTextInputProcessor);
     if (FAILED(hr)) return hr;
 
-    hr = ITfTextInputProcessor_Activate(actsvr->pITfTextInputProcessor, tm, actsvr->tid);
+    hr = ITfTextInputProcessor_Activate(actsvr->pITfTextInputProcessor, (ITfThreadMgr *)tm, actsvr->tid);
     if (FAILED(hr))
     {
         ITfTextInputProcessor_Release(actsvr->pITfTextInputProcessor);
@@ -307,8 +307,8 @@ static HRESULT activate_given_ts(ActivatedTextService *actsvr, ITfThreadMgr* tm)
         return hr;
     }
 
-    actsvr->pITfThreadMgr = tm;
-    ITfThreadMgr_AddRef(tm);
+    actsvr->pITfThreadMgrEx = tm;
+    ITfThreadMgrEx_AddRef(tm);
     return hr;
 }
 
@@ -320,9 +320,9 @@ static HRESULT deactivate_given_ts(ActivatedTextService *actsvr)
     {
         hr = ITfTextInputProcessor_Deactivate(actsvr->pITfTextInputProcessor);
         ITfTextInputProcessor_Release(actsvr->pITfTextInputProcessor);
-        ITfThreadMgr_Release(actsvr->pITfThreadMgr);
+        ITfThreadMgrEx_Release(actsvr->pITfThreadMgrEx);
         actsvr->pITfTextInputProcessor = NULL;
-        actsvr->pITfThreadMgr = NULL;
+        actsvr->pITfThreadMgrEx = NULL;
     }
 
     return hr;
@@ -351,7 +351,7 @@ HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp)
     ActivatedTextService *actsvr;
     ITfCategoryMgr *catmgr;
     AtsEntry *entry;
-    ITfThreadMgr *tm = TlsGetValue(tlsIndex);
+    ITfThreadMgrEx *tm = TlsGetValue(tlsIndex);
     ITfClientId *clientid;
 
     if (!tm) return E_UNEXPECTED;
@@ -359,7 +359,7 @@ HRESULT add_active_textservice(TF_LANGUAGEPROFILE *lp)
     actsvr = HeapAlloc(GetProcessHeap(),0,sizeof(ActivatedTextService));
     if (!actsvr) return E_OUTOFMEMORY;
 
-    ITfThreadMgr_QueryInterface(tm,&IID_ITfClientId,(LPVOID)&clientid);
+    ITfThreadMgrEx_QueryInterface(tm, &IID_ITfClientId, (void **)&clientid);
     ITfClientId_GetClientId(clientid, &lp->clsid, &actsvr->tid);
     ITfClientId_Release(clientid);
 
@@ -426,7 +426,7 @@ BOOL get_active_textservice(REFCLSID rclsid, TF_LANGUAGEPROFILE *profile)
     return FALSE;
 }
 
-HRESULT activate_textservices(ITfThreadMgr *tm)
+HRESULT activate_textservices(ITfThreadMgrEx *tm)
 {
     HRESULT hr = S_OK;
     AtsEntry *ats;

@@ -327,29 +327,15 @@ static ULONG WINAPI ThreadMgr_Release(ITfThreadMgrEx *iface)
  * ITfThreadMgr functions
  *****************************************************/
 
-static HRESULT WINAPI ThreadMgr_fnActivate(ITfThreadMgrEx *iface, TfClientId *ptid)
+static HRESULT WINAPI ThreadMgr_Activate(ITfThreadMgrEx *iface, TfClientId *id)
 {
     ThreadMgr *This = impl_from_ITfThreadMgrEx(iface);
 
-    TRACE("(%p) %p\n",This, ptid);
-
-    if (!ptid)
-        return E_INVALIDARG;
-
-    if (!processId)
-    {
-        GUID guid;
-        CoCreateGuid(&guid);
-        ITfClientId_GetClientId(&This->ITfClientId_iface, &guid, &processId);
-    }
-
-    activate_textservices((ITfThreadMgr *)iface);
-    This->activationCount++;
-    *ptid = processId;
-    return S_OK;
+    TRACE("(%p) %p\n", This, id);
+    return ITfThreadMgrEx_ActivateEx(iface, id, 0);
 }
 
-static HRESULT WINAPI ThreadMgr_fnDeactivate(ITfThreadMgrEx *iface)
+static HRESULT WINAPI ThreadMgr_Deactivate(ITfThreadMgrEx *iface)
 {
     ThreadMgr *This = impl_from_ITfThreadMgrEx(iface);
     TRACE("(%p)\n",This);
@@ -597,8 +583,25 @@ static HRESULT WINAPI ThreadMgr_ActivateEx(ITfThreadMgrEx *iface, TfClientId *id
 {
     ThreadMgr *This = impl_from_ITfThreadMgrEx(iface);
 
-    FIXME("STUB:(%p)\n", This);
-    return E_NOTIMPL;
+    TRACE("(%p) %p, %#x\n", This, id, flags);
+
+    if (!id)
+        return E_INVALIDARG;
+
+    if (flags)
+        FIXME("Unimplemented flags %#x\n", flags);
+
+    if (!processId)
+    {
+        GUID guid;
+        CoCreateGuid(&guid);
+        ITfClientId_GetClientId(&This->ITfClientId_iface, &guid, &processId);
+    }
+
+    activate_textservices(iface);
+    This->activationCount++;
+    *id = processId;
+    return S_OK;
 }
 
 static HRESULT WINAPI ThreadMgr_GetActiveFlags(ITfThreadMgrEx *iface, DWORD *flags)
@@ -614,8 +617,8 @@ static const ITfThreadMgrExVtbl ThreadMgrExVtbl =
     ThreadMgr_QueryInterface,
     ThreadMgr_AddRef,
     ThreadMgr_Release,
-    ThreadMgr_fnActivate,
-    ThreadMgr_fnDeactivate,
+    ThreadMgr_Activate,
+    ThreadMgr_Deactivate,
     ThreadMgr_CreateDocumentMgr,
     ThreadMgr_EnumDocumentMgrs,
     ThreadMgr_GetFocus,
