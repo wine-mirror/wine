@@ -1937,6 +1937,7 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
                    surface->header.rect.top + coords.visrect.top,
                    coords.visrect.right - coords.visrect.left,
                    coords.visrect.bottom - coords.visrect.top );
+        XFlush( gdi_display );
     }
     reset_bounds( &surface->bounds );
     window_surface->funcs->unlock( window_surface );
