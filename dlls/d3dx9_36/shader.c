@@ -372,7 +372,7 @@ HRESULT WINAPI D3DXAssembleShaderFromFileW(const WCHAR *filename, const D3DXMACR
     WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
 
     EnterCriticalSection(&from_file_mutex);
-    hr = ID3DXInclude_Open(include, D3D_INCLUDE_LOCAL, filename_a, NULL, &buffer, &len);
+    hr = ID3DXInclude_Open(include, D3DXINC_LOCAL, filename_a, NULL, &buffer, &len);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&from_file_mutex);
@@ -507,7 +507,7 @@ HRESULT WINAPI D3DXCompileShaderFromFileW(const WCHAR *filename, const D3DXMACRO
     WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, filename_len, NULL, NULL);
 
     EnterCriticalSection(&from_file_mutex);
-    hr = ID3DXInclude_Open(include, D3D_INCLUDE_LOCAL, filename_a, NULL, &buffer, &len);
+    hr = ID3DXInclude_Open(include, D3DXINC_LOCAL, filename_a, NULL, &buffer, &len);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&from_file_mutex);
@@ -630,7 +630,7 @@ HRESULT WINAPI D3DXPreprocessShaderFromFileW(const WCHAR *filename, const D3DXMA
     WideCharToMultiByte(CP_ACP, 0, filename, -1, filename_a, len, NULL, NULL);
 
     EnterCriticalSection(&from_file_mutex);
-    hr = ID3DXInclude_Open(include, D3D_INCLUDE_LOCAL, filename_a, NULL, &buffer, &len);
+    hr = ID3DXInclude_Open(include, D3DXINC_LOCAL, filename_a, NULL, &buffer, &len);
     if (FAILED(hr))
     {
         LeaveCriticalSection(&from_file_mutex);
