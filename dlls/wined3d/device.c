@@ -294,6 +294,7 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
     const RECT *clear_rect = (rect_count > 0 && rects) ? (const RECT *)rects : NULL;
     const struct wined3d_gl_info *gl_info;
     UINT drawable_width, drawable_height;
+    struct wined3d_color corrected_color;
     struct wined3d_context *context;
     GLbitfield clear_mask = 0;
     BOOL render_offscreen;
@@ -399,6 +400,34 @@ void device_clear_render_targets(struct wined3d_device *device, UINT rt_count, c
             {
                 surface_validate_location(rt, rt->container->resource.draw_binding);
                 surface_invalidate_location(rt, ~rt->container->resource.draw_binding);
+            }
+        }
+
+        if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB]
+                && device->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
+        {
+            if (fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE)
+            {
+                if (rt_count > 1)
+                    WARN("Clearing multiple sRGB render targets with no GL_ARB_framebuffer_sRGB "
+                            "support, this might cause graphical issues.\n");
+
+                corrected_color.r = color->r < wined3d_srgb_const1[0]
+                        ? color->r * wined3d_srgb_const0[3]
+                        : pow(color->r, wined3d_srgb_const0[0]) * wined3d_srgb_const0[1]
+                        - wined3d_srgb_const0[2];
+                corrected_color.r = min(max(corrected_color.r, 0.0f), 1.0f);
+                corrected_color.g = color->g < wined3d_srgb_const1[0]
+                        ? color->g * wined3d_srgb_const0[3]
+                        : pow(color->g, wined3d_srgb_const0[0]) * wined3d_srgb_const0[1]
+                        - wined3d_srgb_const0[2];
+                corrected_color.g = min(max(corrected_color.g, 0.0f), 1.0f);
+                corrected_color.b = color->b < wined3d_srgb_const1[0]
+                        ? color->b * wined3d_srgb_const0[3]
+                        : pow(color->b, wined3d_srgb_const0[0]) * wined3d_srgb_const0[1]
+                        - wined3d_srgb_const0[2];
+                corrected_color.b = min(max(corrected_color.b, 0.0f), 1.0f);
+                color = &corrected_color;
             }
         }
 

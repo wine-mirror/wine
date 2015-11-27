@@ -905,7 +905,6 @@ static void clear_test(void)
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     ULONG refcount;
-    D3DCAPS9 caps;
     HWND window;
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -1155,9 +1154,6 @@ static void clear_test(void)
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
     /* Test D3DRS_SRGBWRITEENABLE interactions with clears. */
-    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
-    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
-
     hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x7f7f7f7f, 0.0, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
@@ -1195,10 +1191,7 @@ static void clear_test(void)
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
 
     color = getPixelColor(device, 320, 240);
-    if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_POSTBLENDSRGBCONVERT)
-        ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
-    else
-        todo_wine ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
+    ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable sRGB write, hr %#x.\n", hr);
@@ -1250,10 +1243,7 @@ static void clear_test(void)
     ok(SUCCEEDED(hr), "Failed to blit surface, hr %#x.\n", hr);
 
     color = getPixelColor(device, 320, 240);
-    if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_POSTBLENDSRGBCONVERT)
-        ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
-    else
-        todo_wine ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
+    ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
 
     hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, FALSE);
     ok(SUCCEEDED(hr), "Failed to disable sRGB write, hr %#x.\n", hr);
