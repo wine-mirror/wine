@@ -1,16 +1,12 @@
-The Wine development release 1.8-rc1 is now available.
-
-This is the first release candidate for the upcoming Wine 1.8. Please
-give this release a good testing to help us make 1.8 as good as
-possible.
+The Wine development release 1.8-rc2 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/1.8/wine-1.8-rc1.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8-rc1.tar.bz2
+  http://dl.winehq.org/wine/source/1.8/wine-1.8-rc2.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8-rc2.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -26,199 +22,223 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.8-rc1 (total 54):
+Bugs fixed in 1.8-rc2 (total 45):
 
-   8712  amstream video demo does not play because of IDirectDrawMediaStreamImpl_CreateSample stub
-   9872  Leisure Suite Larry 7 fails to run in WinXP mode
-  16782  Sea3D chat text unreadable
-  21879  Word95 can't create new document
-  23817  Creative Writer 2 can't show images in .max files
-  25263  Biet-O-Matic calculates shipping cost wrong for German locale
-  25843  Wine causes terminal to lose some inputrc settings
-  26034  DNAsp5 crashes when trying to copy text from an output
-  27664  Various Telltale games crash on startup when a joystick is plugged in (application provides EnumDevice callback with wrong calling convention)
-  27859  Task Coach: Crashes on start (uses python2.7)
-  28729  EasyBCD: bcdedit complains about lack of privileges (import of registry hive using native API fails/wineserver token privilege check)
-  29206  Mystery Cases - Madame Fate (Bigfish games): Director Player Error:  Unable to load movie playlist
-  30588  Houdini 12.x (3D animation tool) crashes on startup
-  30855  Rhymes (Russian rhymes dictionary) doesn't work correctly
-  31889  Cmd testrunner fails in case of mismatches on synchronization lines
-  32639  Sega Rally Revo sound stuttering
-  32701  The Dame In Black Case: installer fails when registering msdxm6.ocx (needs 'HKLM\\Software\\Microsoft\\MediaPlayer' key 'Installation DirectoryLFN' value)
-  33718  comctl32:propsheet Add button test failure
-  34123  Sonic & All-Stars Racing Transformed: the game fails to initiate due to Wine failing to mount its CD images
-  34261  Sonic and All-Stars Racing Transformed (Steam) crashes during intro video
-  34953  Message "Application tried to create a window, but no driver could be loaded. Make sure that your X server is running and that $DISPLAY is set correctly." cannot be suppressed
-  35659  Dassault Systemes CATIA v5 reports 'no certified opengl libary has been found. Check your system installation' on startup (opengl32.dll version resource 'LegalCopyright' mismatch)
-  35688  iMesh 7.x reports 'You are using an older version of Windows Media Player!' (needs WMP 10 version registry key)
-  35718  Multiple games have extreme flicker, stutter, slowdown (Path of Exile, Roller Coaster Tycoon, Counter Strike: Global Offensive, Warframe, Crysis, Anno 1602,  Splinter Cell: Blacklist)
-  35970  Wine del returns 1 on error unlike on Windows
-  36255  World of tanks doesn't run after upgrade to 0.9
-  36428  valgrind shows a possible leak in scrrun/tests/dictionary.c
-  37161  D3D_SHADER_VARIABLE_FLAGS is not defined in d3dcommon
-  37200  Warhammer 40k: Kill Team (Steam version) does not start
-  37203  Age of Empires II Conquerors 800x600 launch screen black on wine versions later than 1.7.13
-  37595  cls command does not fill screen attributes
-  37799  Children of the Nile: crash on start when not using virtual desktop
-  37881  Multiple applications crash on unimplemented function msvcp120.dll._Cnd_init (Livescribe Echo Desktop 3.0, Acrobat Reader DC 2015)
-  37955  USB DAC sound problems
-  37994  AVRStudio 4.18: Editor window text rendered incorrectly (transparent tab characters)
-  38103  Process Hacker 2.x needs ntoskrnl.exe.ProbeForRead
-  38252  Candleworks FX Trade Station 2 updater crashes
-  38391  Deus Ex: Human Revolution does not properly detect speaker configuration
-  38427  Desura client 0.0.20.2 crashes on unimplemented function msvcp120.dll._Thrd_current
-  38600  Planetary Annihilation needs msvcp110.dll._Cnd_init
-  39018  A9CAD fails to start, throws 'X Error of failed request:  BadValue (integer parameter out of range for operation)'
-  39045  Accuweather.com download page displays only the background image in built-in iexplore
-  39212  cmd:batch fails if privileges not high enough
-  39230  odbccp32:misc fails if privileges not high enough
-  39323  StarForce 3.x: Protection Environment Driver v1.x 'sfdrv01.sys' crashes on unimplemented function ntoskrnl.exe.ExDeleteNPagedLookasideList (Blazing Angels Squadrons of WWII Demo)
-  39347  World of Warships 0.4.x/0.5.x: incorrect water surface height calculated for unknown reasons, causing ships to appear floating in the air (with GLSL shader backend)
-  39362  Blazblue Calamity Trigger crash on press start screen
-  39384  Tencent QQ 7.6 frame manager kernel driver 'QQFrmMgr.sys' crashes on unimplemented function ntoskrnl.exe.CmRegisterCallback
-  39426  skype crash - unimplemented combase.dll.RoGetActivationFactory
-  39468  Adobe Photoshop CS2 installer triggers __stack_chk_fail() on Wine builtin 'msiexec'
-  39517  No music or voices in Skyrim after intro video
-  39581  iMesh 7.x installer warns about old version of Microsoft Windows Media Player (missing 'HKLM\\SOFTWARE\\Microsoft\\Active Setup\\Installed Components\\{6BF52A52-394A-11d3-B153-00C04F79FAA6}' registry key)
-  39613  Microsoft .NET Framework 1.1 fails to install with Wine 1.3.2+
-  39630  Issue while building wow64 for Slackware 14.1
+   5627  Install can not find WORDPAD for README
+   6176  Rhino 3D v3 (CAD app) crashes on startup (OpenGL/DIB driver needs to return max index for NULL PIXELFORMATDESCRIPTOR)
+   9095  DM Genie 2.x fails on startup with 'ITypeInfo_fnInvoke failed to convert param 1 to VT_VARIANT|VT_ARRAY|VT_BYREF from VT_I2|VT_BYREF'
+   9435  MDI child window outside main window gives scrollbars
+  18378  NFS 4 Road Challenge: Installation of 4.50 patch fails
+  20948  Eclipse (Europa) Links from Welcome window do not work
+  22417  Roblox fails to start games, reports 'RobloxApp(13): Unknown error 0x800703E6'
+  22691  Drag-and-drop doesn't work in CDBurnerXP 4.2+ audio disc mode
+  24208  Eclipse (Europa) - html-based Welcome window is blank
+  24473  IRPF Bolsa software doesn't work
+  24747  MP3VCR 0.4.17 (VB6 app) crashes when clicking 'presets' button or doing other actions (change skin, load radio station)
+  25064  Solo on Keyboard 9.0.5: Clicking on HTML page no effect.
+  28029  Gunz launcher runs explorer instead of the game's launcher
+  28589  Poor performance in Diner Dash 5
+  31537  Encore 5 crashes when opening .enc files
+  31629  Diner Dash 2: Moving mouse causes graphics to jump around
+  31998  Avseq crashes in <How to Play> menu when multisampling enabled in Wine
+  32006  Multiple games and applications need 'IDXGIOutput::GetDesc' method implementation (Direct3D10 SDK samples, Need for Speed Most Wanted 2012)
+  33258  Visio 2010 and Office 2010 can't be installed in the same prefix
+  33720  user32:menu
+  33736  Excel Viewer 2007: "Open" button does not work on Vista+
+  34175  Shift-backspace doesn't work as backspace in cmd
+  35418  some drawing operations in Mixcraft 6 are very slow with client-side graphics enabled
+  35422  Dashlane (password and forms-fill manager) fails to install
+  35610  The of user32:msg tests fail in the Hebrew locale
+  35655  3Dmark 2000 shows considerable performance drop after Wine 1.7.13 (expensive GetPixelFormat() called too frequently)
+  35734  Pokemon Zeta 1.3.28 crashes on startup (ASProtect SKE v2.72)
+  35975  Comanche 3 shows only gray screen
+  36081  mshtml/dom test crashes
+  36086  Installation of Half-Life Opposing Force fails due to file "ereg.dll" being read-only
+  36900  Star Wars Galactic Battlegrounds Clone Campaigns: no video (regression)
+  36932  BreezeBrowser: cannot expand directories in file browser
+  36970  Blue Iris 3.x (video surveillance software) crashes after 30 seconds
+  37358  FEAR 1: Installer says "wrong serial" even if entered correctly
+  37859  BOINC 6.x/7.x take a long time to "start" when launched from boincmgr
+  37939  Keyboard doesnt work for Project IGI 2
+  37944  Origin's updater crashes before finishing the download process
+  38669  IBM Endpoint Manager (IEM) Console 9.1 installer hangs at 'Evaluating launch conditions' stage
+  39039  Popup tooltips missing and buttons don't work on mageia.org/en/downloads/
+  39247  user32:sysparams fails in a Japanese locale
+  39445  Drag and drop in Foxit Reader doesn't work anymore
+  39536  Multiple games render black/garbled screen when anti-aliasing enabled (Guild Wars, Eve Online, Gear Grinder)
+  39635  Hungarian Excel Viewer 2007: "Open" dialog on Win8 does not refresh correctly
+  39648  MTA: San Andreas 1.5: failure to process 64-bit FairplayKD.sys driver IRPs due to incorrect alignment/packing of I/O manager structures
+  39665  dinput: MotoGP 3 demo fails to accept key presses to control the driver.
 
 ----------------------------------------------------------------
 
-Changes since 1.7.55:
+Changes since 1.8-rc1:
 
-Alexandre Julliard (13):
-      winegcc: Force stack alignment on all x86 platforms.
-      winegcc: Disable setting image base address on Android.
-      make_makefiles: Configure substitutions are allowed in the top makefile.
-      configure: Build binaries as PIE on Android.
-      configure: Disable the preloader on Android.
-      configure: Use the standard dll directory on Android.
-      makefiles: Generate makefiles and po rules only for disabled dlls.
-      winex11: Always create direct rendering OpenGL contexts.
-      winex11: Make OpenGL traces more compact and readable.
-      user32/tests: Fix a test that assumes that a menu handle is invalid.
-      user32: Add workaround for removed SC_TASKLIST system menu item.
-      configure: Don't allow doing a 32-bit Wow64 build from inside the source tree.
-      advapi32: Don't try to create the registry root.
+Adam Martinson (1):
+      kernel32/tests: Add tests for closing named pipes with CloseHandle.
 
-Alistair Leslie-Hughes (2):
-      odbccp32/test: Correct tests without privileges.
-      configure: Correctly detect OpenAL.
+Akihiro Sagawa (1):
+      po: Update Japanese translation.
 
-Andrew Eikum (2):
-      user32: Use font default height if GetTextExtentPoint returns empty rectangle.
-      kernel32: Always uninitialize the terminal for the console shell process.
+Alex Henrie (1):
+      po: Update Catalan translation.
 
-Andrew Nguyen (1):
-      dinput: Allow EnumDevices callback functions with broken calling conventions.
+Alexandre Julliard (10):
+      winex11: Fix a copy&paste typo in the initial position of a window.
+      kernel32/tests: Avoid testing the D: drive which may not exist.
+      explorer: Treat unrecognized options as a file to open.
+      Revert "oleaut32: Implement a better stub for IPicture::SaveAsFile."
+      user32/tests: Fix a few more menu test failures on Windows.
+      user32/tests: Fix a few msg test failures on Windows 7.
+      gdiplus/tests: Check the correct fallback font when Arial is missing.
+      user32: Reduce the idle timeout before flushing surfaces to make it less noticeable.
+      gdi32: Periodically flush a window surface if the app is continuously painting.
+      winex11: Flush the output of a flushed surface right away.
+
+Alistair Leslie-Hughes (3):
+      include: Add d3dx10async.h.
+      d3d11: Make blend_factor optional in d3d11_immediate_context_OMSetBlendState().
+      d3d10core/tests: Add test for NULL blend factor in OMSetBlendState().
+
+Andrew Eikum (1):
+      Revert "explorerframe: Allow treeview expandos to open with a single click.".
 
 Andrey Gusev (2):
-      wine.inf: Add HKLM\Software\Microsoft\MediaPlayer\Installation DirectoryLFN key.
-      po: Update Ukrainian translation.
+      Assorted typos fixes.
+      progman: Fix GROUP_AddGroup() declaration.
 
-André Hentschel (2):
-      winepulse: Avoid 32-bit calculation with 64-bit result (Coverity).
-      winepulse: Add missing return after default case in a switch (Coverity).
+André Hentschel (1):
+      ws2_32/tests: Don't test function directly when reporting WSAGetLastError().
 
-Aric Stewart (2):
-      hidclass.sys: Break the report descriptor into multiple lines.
-      comctl32: ILC_COLORDDB imagelists can be created with 0 sizes.
+Bernhard Übelacker (1):
+      dinput: Fail in SetCooperativeLevel on invalid hwnd.
 
-Aurimas Fišeras (1):
-      po: Update Lithuanian translation.
+Bruno Jesus (7):
+      msacm32: Remove dead code from acmFormatDetailsW.
+      ws2_32: Add a couple of options to sockopt debug.
+      comctl32: Respect an assert in TREEVIEW_RemoveAllChildren.
+      msacm32/tests: Add some acmStreamPrepareHeader and acmStreamConvert tests.
+      ws2_32/tests: Add more tests related to WSACleanup.
+      ws2_32/tests: Check if the first IP is a default route in gethostbyname.
+      ws2_32/tests: Ensure we have more than one IP to test gethostbyname.
 
-Austin English (3):
-      user32: Use winediag debug channel for some error messages.
-      opengl32: Add "Not Microsoft" to Copyright string to satisfy CATIA.
-      ntoskrnl.exe: Add CmRegisterCallback/CmUnRegisterCallback stub.
+Dmitry Timoshkov (4):
+      comctl32/tests: Add a test for system class properties.
+      oleaut32/tests: Add some tests for IPicture::SaveAsFile.
+      oleaut32: Implement a better stub for IPicture::SaveAsFile.
+      oleaut32: Grow the marshalling buffer exponentially.
 
-Bruno Jesus (1):
-      user32: Don't add scroll bars to mdiclient if the window style doesn't allow it.
+François Gouget (3):
+      cmd/tests: Fix the builtin tests when the current directory contains a space.
+      d2d1: Remove WINAPI on static functions where not needed.
+      xaudio2_7: Make some functions static.
 
-Dmitry Timoshkov (3):
-      user32/tests: Add more tests for mixed menu with strings and bitmaps.
-      user32: Menu item with a "magic" bitmap should not have MFT_BITMAP type set.
-      user32/tests: Add some tests for mdiclient scrolling.
+Henri Verbeet (1):
+      dxgi: Implement dxgi_output_GetDesc().
 
-François Gouget (7):
-      cmd/tests: Fix handling of synchronization line mismatches.
-      cmd/tests: Use net session to verify we have sufficient privileges.
-      wined3d: Make surface_prepare_rb() static.
-      configure: Clean up the winmm module checks.
-      msvcp120/tests: Make i386_Thrd_current() static.
-      advapi32: Fix the FILE_DIR_DISALLOWED spelling.
-      cmd/tests: Fix the %~a check on Windows >= 8.
+Hugh McMaster (3):
+      kernel32: Use virtual-key codes in the console StdKeyMap.
+      kernel32: Interpret Shift-Backspace as Backspace when using the Win32 keymap in wineconsole.
+      kernel32: Remove un-needed VK_DEL entries from the console keymap.
 
-Henri Verbeet (9):
-      d2d1: Validate brush types in d2d_d3d_render_target_FillGeometry().
-      d2d1: Add support for opacity brushes.
-      d2d1: Add a pixel shader for triangle/bitmap/bitmap draws.
-      d2d1: Add a pixel shader for triangle/bitmap/solid draws.
-      d2d1/tests: Add some tests for opacity brushes.
-      d2d1: Add a pixel shader for triangle/solid/bitmap draws.
-      d2d1: Take the recommended rendering mode into account in d2d_d3d_render_target_DrawGlyphRun().
-      d2d1: Calculate intersections in a more robust way in d2d_geometry_intersect_self().
-      wined3d: Ignore "always_offscreen" for ORM_BACKBUFFER in context_create().
+Jacek Caban (4):
+      mshtml/tests: Fixed tests on win10.
+      mshtml: Added IHTMLDOMAttribute2::put_value implementation.
+      wininet: Improved debug traces.
+      ieframe: Silence some noisy FIXMEs.
 
-Hugh McMaster (4):
-      reg/tests: Fix the add empty type test.
-      cmd: Set colour attributes when clearing the screen with 'cls'.
-      cmd: 'del' should set %errorlevel% to zero, not one, on error.
-      Assorted spelling and grammar fixes.
+Jactry Zeng (1):
+      po: Update Simplified Chinese translation.
 
-Jacek Caban (5):
-      ole32: Use absolute key path in create_classes_root_hkey.
-      mshtml: Added support for getElementsByTagName in document fragment nodes.
-      ntdll: Added more NtOpenKey tests.
-      kernel32: Call registry functions with full key path.
-      mshtml: Make msec argument of setTimeout optional.
+Jiaxing Wang (1):
+      regedit: Need 3 bytes of room at end of buffer for \r\n\0 to avoid endless loop.
 
-Józef Kucia (1):
-      d3d11: Implement d3d11_immediate_context_RSGetViewports().
+Joachim Priesner (1):
+      kernel32/tests: Add tests for GetDriveType with invalid drive spec.
 
-Ken Thomases (3):
-      winemac: Add resource file.
-      winemac: Enable localization of strings used to build Mac menus.
-      winemac: Use the display unit number rather than display ID for the initial display mode registry key.
+Julian Rüger (1):
+      po: Update German translation.
 
-Nikolay Sivov (12):
-      gdi32/tests: Some empty string tests for GetTextExtentPoint.
-      comctl32/tests: Enable visual tests in interactive mode, fix build failure.
-      winex11: Remove tracing function that was never used.
-      oleaut32: Remove unused tracing macro.
-      user32/tests: Use separate test window for each scrollbar test.
-      kernel32: Fix context initialization for EnumDateFormatsExEx.
-      winmm: Initialize AUXCAPSA.wReserved1 returned from auxGetDevCapsA() (Coverity).
-      dwrite: Return face count of 1 for CFF file type.
-      po: Update Russian translation.
-      d2d1: Properly free brush data buffer is created from.
-      user32/tests: Relax iCaptionWidth test to fix some failures.
-      winmm: Initialize reserved fields of data returned by waveOutGetDevCapsA and waveInGetDevCapsA (Coverity).
+Lauri Kenttä (1):
+      po: Update Finnish translation.
 
-Piotr Caban (10):
-      oleaut32: Take lcid into account while parsing input variant in VARIANT_FormatNumber.
-      oleaut32: Take lcid into account while parsing input variant in VARIANT_FormatDate.
-      oleaut32: Take lcid into account while parsing input variant in VARIANT_FormatString.
-      msxml3/tests: Add more IXMLDOMNode_get_text tests.
-      msxml3/tests: Add tests for sub-nodes whitespaces trimming while getting node text.
-      msxml3/tests: Show that sub-elements should not be divided with ' ' in IXMLDOMNode_get_text.
-      msxml3/tests: Add CDATA block to whitespace trimming tests.
-      winex11.drv: Send WM_DROPFILES if IDropTarget_Drop failed or DROPEFFECT_NONE was set.
-      winex11.drv: Inform x11 that we're interested in drop if windows expects WM_DROPFILES message.
-      winex11.drv: Don't call IDropTarget::{DragOver,DragLeave,Drop} functions if DragEnter fails.
+Michael Müller (1):
+      msvcp90: Basic_string_wchar_dtor should set EAX to 0 on i386.
 
-Qian Hong (3):
-      atl100: Implemented semi stub AtlAxCreateControlLic and AtlAxCreateControlLicEx.
-      ntoskrnl.exe: Add PsRemoveCreateThreadNotifyRoutine stub.
-      server: Remove out of date comment.
+Michael Stefaniuc (2):
+      maintainers: Add section for the Stable branch.
+      ieframe: Use BOOL instead of VARIANT_BOOL in on_commandstate_change().
 
-Sebastian Lackner (2):
-      ntdll/tests: Print the correct status code in ok() messages.
-      server: Do not require SeBackupPrivilege in load_registry and unload_registry.
+Nikolay Sivov (17):
+      user32/tests: Some tests for SetScrollInfo().
+      dplayx: Fix a possible memory leak on error path (Coverity).
+      ddeml: Don't trash 'cb' field of structure returned by DdeQueryConvInfo16() (Coverity).
+      wininet: Remove a bit of dead code (Coverity).
+      wldap32: Properly implement ldap_encode_sort_control[A, W] (Coverity).
+      d2d1: Fix a copy-paste issue in EndDraw() (Coverity).
+      comctl32/treeview: Use consistent format for hex values in traces.
+      comctl32: Item with negative cChildren acts as if it actually had children.
+      user32: Don't overwrite 'cb' field with uninitialized data in DdeQueryConvInfo() (Coverity).
+      crypt32: Fix key name null termination (Coverity).
+      sc: Fix service handle leak on error path (Coverity).
+      wineoss: Initialized wReserved1 field returned to auxGetDevCapsW().
+      winmm: For consistency forward wReserved1 values from -W to -A calls too.
+      winmm/tests: Remove unreliable tests.
+      winex11: Simplify XGetWindowProperty return code checks (Clang).
+      d3dx9: Use proper enum member (Clang).
+      ntdll: Remove unused helper (Clang).
 
-Vincent Povirk (1):
-      setupapi: Add a manifest to indicate the tests don't need elevation.
+Piotr Caban (2):
+      msxml3/tests: Run IXMLDOMNode::get_text whitespace tests on other msxml versions.
+      shell32: Improved IDataObject::QueryGetData implementation.
+
+Rafał Harabień (1):
+      include/ddk: Fix memory layout of IRP and IO_STACK_LOCATION in wine64.
+
+Sebastian Lackner (7):
+      kernel32/tests: Add tests for sending empty message in combination with CloseHandle.
+      kernel32/tests: Add tests for calling WriteFile on pipe when other end is closed.
+      server: Fix crash when calling GetNamedPipeHandleState on partially closed pipe.
+      server: Fix crash when calling SetNamedPipeHandleState on partially closed pipe.
+      kernel32/tests: Add tests for calling wait functions with pseudo handles.
+      kernel32/tests: Avoid busy-looping in APC deadlock tests.
+      gdi32: Add check for NULL pointer in dibdrv_wglDescribePixelFormat.
+
+Sergey Isakov (2):
+      msi/tests: Simplify the logic in an if condition.
+      tapi32: Simplify the logic in an if condition.
+
+Stefan Dösinger (8):
+      wined3d: Support loading renderbuffers in surface_load_location.
+      wined3d: Discard depth stencils on unload.
+      d3d9/tests: Multisampled render targets are zeroed on creation.
+      d3d8/tests: Multisampled render targets are zeroed on creation.
+      d3dx9_36: Replace powf(2, unsigned int) with (1u << unsigned int).
+      include: Add DXGI_SWAP_EFFECT_FLIP_DISCARD.
+      dxgi/tests: Test DXGI_SWAP_EFFECT_FLIP_DISCARD.
+      dxgi/tests: Windows 10 properly makes buffers read only.
+
+Svante Signell (1):
+      winepulse.drv: Avoid PATH_MAX in Windows code.
+
+Thomas Faber (7):
+      dinput: Implement MSVC version of enum_callback_wrapper.
+      d3dxof: Avoid undefined behavior in parse_object_parts.
+      quartz: Fix IEnumMoniker reference leak in FilterGraph2_Connect.
+      quartz/tests: Test aggregation with CLSID_FilterMapper2.
+      quartz/tests: Test aggregation with CLSID_FilterGraph.
+      ntdll/tests: Fix build with PSDK headers.
+      gdiplus/tests: Fix build with MSVC.
+
+Vijay Kiran Kamuju (1):
+      wine.inf: Install wordpad in Program FilesWindows NT\Accessories.
+
+Vincent Povirk (5):
+      advapi32/tests: Skip test when registry virtualization can't delete values.
+      atl100/tests: Check Administrators group if UAC is disabled.
+      comctl32/tests: Accept touchscreen-related messages in button tests.
+      d3d8/tests: Accept CURSOR_SUPPRESSED in cursor flags.
+      d3d9/tests: Accept CURSOR_SUPPRESSED in cursor flags.
 
 --
 Alexandre Julliard
