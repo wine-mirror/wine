@@ -586,6 +586,33 @@ static void test_prepareheader(void)
     memset(&hdr, 0, sizeof(hdr));
     hdr.cbStruct = sizeof(hdr);
     hdr.pbSrc = input;
+    hdr.cbSrcLength = 0; /* invalid source length */
+    hdr.pbDst = pcm;
+    hdr.cbDstLength = sizeof(pcm);
+
+    mr = acmStreamPrepareHeader(has, &hdr, 0);
+todo_wine
+    ok(mr == MMSYSERR_INVALPARAM, "expected 0x0b, got 0x%x\n", mr);
+
+    hdr.cbSrcLength = src->wfx.nBlockAlign - 1; /* less than block align */
+    mr = acmStreamPrepareHeader(has, &hdr, 0);
+todo_wine
+    ok(mr == ACMERR_NOTPOSSIBLE, "expected 0x200, got 0x%x\n", mr);
+
+    hdr.cbSrcLength = src->wfx.nBlockAlign;
+    mr = acmStreamPrepareHeader(has, &hdr, 1); /* invalid use of reserved parameter */
+todo_wine
+    ok(mr == MMSYSERR_INVALFLAG, "expected 0x0a, got 0x%x\n", mr);
+
+    mr = acmStreamPrepareHeader(has, &hdr, 0);
+    ok(mr == MMSYSERR_NOERROR, "prepare failed: 0x%x\n", mr);
+
+    mr = acmStreamUnprepareHeader(has, &hdr, 0);
+    ok(mr == MMSYSERR_NOERROR, "unprepare failed: 0x%x\n", mr);
+
+    memset(&hdr, 0, sizeof(hdr));
+    hdr.cbStruct = sizeof(hdr);
+    hdr.pbSrc = input;
     hdr.cbSrcLength = sizeof(input);
     hdr.pbDst = pcm;
     hdr.cbDstLength = sizeof(pcm);
@@ -638,7 +665,8 @@ todo_wine
         ok(hdr.fdwStatus == ACMSTREAMHEADER_STATUSF_DONE, "header wasn't unprepared: 0x%x\n", hdr.fdwStatus);
     }
     else
-        ok(mr == MMSYSERR_INVALPARAM, "expected 11, got %d\n", mr);
+todo_wine
+        ok(mr == MMSYSERR_INVALPARAM, "expected 0x0b, got 0x%x\n", mr);
 
     memset(&hdr, 0, sizeof(hdr));
     hdr.cbStruct = sizeof(hdr);
