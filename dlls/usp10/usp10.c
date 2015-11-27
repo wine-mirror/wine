@@ -719,11 +719,6 @@ static inline void *heap_alloc_zero(SIZE_T size)
     return HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size);
 }
 
-static inline void *heap_realloc_zero(LPVOID mem, SIZE_T size)
-{
-    return HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, size);
-}
-
 static inline BOOL heap_free(LPVOID mem)
 {
     return HeapFree(GetProcessHeap(), 0, mem);
