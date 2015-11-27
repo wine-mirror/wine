@@ -534,11 +534,14 @@ const struct gdi_dc_funcs dib_driver =
  * can paint to the same window.
  */
 
+#define FLUSH_PERIOD 50  /* time in ms since drawing started for forcing a surface flush */
+
 struct windrv_physdev
 {
     struct gdi_physdev     dev;
     struct dibdrv_physdev *dibdrv;
     struct window_surface *surface;
+    DWORD                  start_ticks;
 };
 
 static const struct gdi_dc_funcs window_driver;
@@ -548,20 +551,23 @@ static inline struct windrv_physdev *get_windrv_physdev( PHYSDEV dev )
     return (struct windrv_physdev *)dev;
 }
 
-static inline void lock_surface( struct window_surface *surface )
+static inline void lock_surface( struct windrv_physdev *dev )
 {
     GDI_CheckNotLock();
-    surface->funcs->lock( surface );
+    dev->surface->funcs->lock( dev->surface );
+    if (is_rect_empty( dev->dibdrv->bounds )) dev->start_ticks = GetTickCount();
 }
 
-static inline void unlock_surface( struct window_surface *surface )
+static inline void unlock_surface( struct windrv_physdev *dev )
 {
-    surface->funcs->unlock( surface );
+    dev->surface->funcs->unlock( dev->surface );
+    if (GetTickCount() - dev->start_ticks > FLUSH_PERIOD) dev->surface->funcs->flush( dev->surface );
 }
 
 static void unlock_bits_surface( struct gdi_image_bits *bits )
 {
-    unlock_surface( bits->param );
+    struct window_surface *surface = bits->param;
+    surface->funcs->unlock( surface );
 }
 
 void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
@@ -618,10 +624,10 @@ static BOOL windrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *dst,
     struct windrv_physdev *physdev = get_windrv_physdev( dst_dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dst_dev = GET_NEXT_PHYSDEV( dst_dev, pAlphaBlend );
     ret = dst_dev->funcs->pAlphaBlend( dst_dev, dst, src_dev, src, func );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -631,10 +637,10 @@ static BOOL windrv_Arc( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pArc );
     ret = dev->funcs->pArc( dev, left, top, right, bottom, xstart, ystart, xend, yend );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -644,10 +650,10 @@ static BOOL windrv_ArcTo( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pArc );
     ret = dev->funcs->pArcTo( dev, left, top, right, bottom, xstart, ystart, xend, yend );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -657,10 +663,10 @@ static DWORD windrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const struct gdi_
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     DWORD ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pBlendImage );
     ret = dev->funcs->pBlendImage( dev, info, bits, src, dst, blend );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -670,10 +676,10 @@ static BOOL windrv_Chord( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pChord );
     ret = dev->funcs->pChord( dev, left, top, right, bottom, xstart, ystart, xend, yend );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -708,10 +714,10 @@ static BOOL windrv_Ellipse( PHYSDEV dev, INT left, INT top, INT right, INT botto
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pEllipse );
     ret = dev->funcs->pEllipse( dev, left, top, right, bottom );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -720,10 +726,10 @@ static BOOL windrv_ExtFloodFill( PHYSDEV dev, INT x, INT y, COLORREF color, UINT
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pExtFloodFill );
     ret = dev->funcs->pExtFloodFill( dev, x, y, color, type );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -733,10 +739,10 @@ static BOOL windrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags, const RECT
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pExtTextOut );
     ret = dev->funcs->pExtTextOut( dev, x, y, flags, rect, str, count, dx );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -746,7 +752,7 @@ static DWORD windrv_GetImage( PHYSDEV dev, BITMAPINFO *info,
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     DWORD ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pGetImage );
     ret = dev->funcs->pGetImage( dev, info, bits, src );
 
@@ -769,7 +775,7 @@ static DWORD windrv_GetImage( PHYSDEV dev, BITMAPINFO *info,
         bits->free = unlock_bits_surface;
         bits->param = physdev->surface;
     }
-    else unlock_surface( physdev->surface );
+    else unlock_surface( physdev );
     return ret;
 }
 
@@ -778,10 +784,10 @@ static COLORREF windrv_GetPixel( PHYSDEV dev, INT x, INT y )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     COLORREF ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pGetPixel );
     ret = dev->funcs->pGetPixel( dev, x, y );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -791,10 +797,10 @@ static BOOL windrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pGradientFill );
     ret = dev->funcs->pGradientFill( dev, vert_array, nvert, grad_array, ngrad, mode );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -803,10 +809,10 @@ static BOOL windrv_LineTo( PHYSDEV dev, INT x, INT y )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pLineTo );
     ret = dev->funcs->pLineTo( dev, x, y );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -815,10 +821,10 @@ static BOOL windrv_PaintRgn( PHYSDEV dev, HRGN rgn )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pPaintRgn );
     ret = dev->funcs->pPaintRgn( dev, rgn );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -827,10 +833,10 @@ static BOOL windrv_PatBlt( PHYSDEV dev, struct bitblt_coords *dst, DWORD rop )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pPatBlt );
     ret = dev->funcs->pPatBlt( dev, dst, rop );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -840,10 +846,10 @@ static BOOL windrv_Pie( PHYSDEV dev, INT left, INT top, INT right, INT bottom,
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pPie );
     ret = dev->funcs->pPie( dev, left, top, right, bottom, xstart, ystart, xend, yend );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -852,10 +858,10 @@ static BOOL windrv_PolyPolygon( PHYSDEV dev, const POINT *points, const INT *cou
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pPolyPolygon );
     ret = dev->funcs->pPolyPolygon( dev, points, counts, polygons );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -864,10 +870,10 @@ static BOOL windrv_PolyPolyline( PHYSDEV dev, const POINT *points, const DWORD *
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pPolyPolyline );
     ret = dev->funcs->pPolyPolyline( dev, points, counts, lines );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -876,10 +882,10 @@ static BOOL windrv_Polygon( PHYSDEV dev, const POINT *points, INT count )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pPolygon );
     ret = dev->funcs->pPolygon( dev, points, count );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -888,10 +894,10 @@ static BOOL windrv_Polyline( PHYSDEV dev, const POINT *points, INT count )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pPolyline );
     ret = dev->funcs->pPolyline( dev, points, count );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -902,10 +908,10 @@ static DWORD windrv_PutImage( PHYSDEV dev, HRGN clip, BITMAPINFO *info,
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     DWORD ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pPutImage );
     ret = dev->funcs->pPutImage( dev, clip, info, bits, src, dst, rop );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -914,10 +920,10 @@ static BOOL windrv_Rectangle( PHYSDEV dev, INT left, INT top, INT right, INT bot
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pRectangle );
     ret = dev->funcs->pRectangle( dev, left, top, right, bottom );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -927,10 +933,10 @@ static BOOL windrv_RoundRect( PHYSDEV dev, INT left, INT top, INT right, INT bot
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pRoundRect );
     ret = dev->funcs->pRoundRect( dev, left, top, right, bottom, ell_width, ell_height );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -947,11 +953,11 @@ static INT windrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     INT ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pSetDIBitsToDevice );
     ret = dev->funcs->pSetDIBitsToDevice( dev, x_dst, y_dst, cx, cy,
                                           x_src, y_src, startscan, lines, bits, src_info, coloruse );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -972,10 +978,10 @@ static COLORREF windrv_SetPixel( PHYSDEV dev, INT x, INT y, COLORREF color )
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     COLORREF ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pSetPixel );
     ret = dev->funcs->pSetPixel( dev, x, y, color );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -985,10 +991,10 @@ static BOOL windrv_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
     struct windrv_physdev *physdev = get_windrv_physdev( dst_dev );
     BOOL ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dst_dev = GET_NEXT_PHYSDEV( dst_dev, pStretchBlt );
     ret = dst_dev->funcs->pStretchBlt( dst_dev, dst, src_dev, src, rop );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
@@ -999,11 +1005,11 @@ static INT windrv_StretchDIBits( PHYSDEV dev, INT x_dst, INT y_dst, INT width_ds
     struct windrv_physdev *physdev = get_windrv_physdev( dev );
     INT ret;
 
-    lock_surface( physdev->surface );
+    lock_surface( physdev );
     dev = GET_NEXT_PHYSDEV( dev, pStretchDIBits );
     ret = dev->funcs->pStretchDIBits( dev, x_dst, y_dst, width_dst, height_dst,
                                       x_src, y_src, width_src, height_src, bits, src_info, coloruse, rop );
-    unlock_surface( physdev->surface );
+    unlock_surface( physdev );
     return ret;
 }
 
