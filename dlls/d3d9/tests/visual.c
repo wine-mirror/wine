@@ -873,7 +873,27 @@ done:
 
 static void clear_test(void)
 {
-    /* Tests the correctness of clearing parameters */
+    static const D3DMATRIX mat =
+    {{{
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f,
+    }}};
+    static const struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0xff7f7f7f},
+        {{ 1.0f, -1.0f, 0.1f}, 0xff7f7f7f},
+        {{-1.0f,  1.0f, 0.1f}, 0xff7f7f7f},
+        {{ 1.0f,  1.0f, 0.1f}, 0xff7f7f7f},
+    };
+    IDirect3DSurface9 *surface0, *surface1, *backbuffer;
+    IDirect3DTexture9 *texture;
     HRESULT hr;
     D3DRECT rect[2];
     D3DRECT rect_negneg;
@@ -885,6 +905,7 @@ static void clear_test(void)
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     ULONG refcount;
+    D3DCAPS9 caps;
     HWND window;
 
     window = CreateWindowA("static", "d3d9_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
@@ -1133,6 +1154,134 @@ static void clear_test(void)
 
     IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
 
+    /* Test D3DRS_SRGBWRITEENABLE interactions with clears. */
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x7f7f7f7f, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x007f7f7f, 1), "Clear has color %08x.\n", color);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable sRGB write, hr %#x.\n", hr);
+
+    /* Draw something to make sure the SRGBWRITEENABLE setting is applied. */
+    hr = IDirect3DDevice9_SetTransform(device, D3DTS_WORLD, &mat);
+    ok(SUCCEEDED(hr), "Failed to set world matrix, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CLIPPING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable clipping, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable z test, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_FOGENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable fog, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_STENCILENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable stencil test, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_CULLMODE, D3DCULL_NONE);
+    ok(SUCCEEDED(hr), "Failed to disable culling, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable lighting, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(SUCCEEDED(hr), "Failed to set FVF, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x7f7f7f7f, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_POSTBLENDSRGBCONVERT)
+        ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
+    else
+        todo_wine ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable sRGB write, hr %#x.\n", hr);
+
+    /* Switching to a new render target seems to be enough to make Windows pick
+     * up on the changed render state. */
+    hr = IDirect3DDevice9_CreateTexture(device, 128, 128, 2, D3DUSAGE_RENDERTARGET,
+            D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &texture, NULL);
+    ok(SUCCEEDED(hr), "Failed to create the offscreen render target, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_GetBackBuffer(device, 0, 0, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get backbuffer, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 0, &surface0);
+    ok(SUCCEEDED(hr), "Failed to get offscreen surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, surface0);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x7f7f7f7f, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, surface0, NULL, backbuffer, NULL, D3DTEXF_NONE);
+    ok(SUCCEEDED(hr), "Failed to blit surface, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 64, 64);
+    ok(color_match(color, 0x007f7f7f, 1), "Clear has color %08x.\n", color);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, TRUE);
+    ok(SUCCEEDED(hr), "Failed to enable sRGB write, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, surface0);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitiveUP(device, D3DPT_TRIANGLESTRIP, 2, quad, sizeof(quad));
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x7f7f7f7f, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, surface0, NULL, backbuffer, NULL, D3DTEXF_NONE);
+    ok(SUCCEEDED(hr), "Failed to blit surface, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    if (caps.PrimitiveMiscCaps & D3DPMISCCAPS_POSTBLENDSRGBCONVERT)
+        ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
+    else
+        todo_wine ok(color_match(color, 0x00bbbbbb, 1), "Clear has color %08x.\n", color);
+
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_SRGBWRITEENABLE, FALSE);
+    ok(SUCCEEDED(hr), "Failed to disable sRGB write, hr %#x.\n", hr);
+    /* Switching to another surface of the same texture is also enough to make
+     * the setting "stick". */
+    hr = IDirect3DTexture9_GetSurfaceLevel(texture, 1, &surface1);
+    ok(SUCCEEDED(hr), "Failed to get offscreen surface, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, surface1);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0x7f7f7f7f, 0.0, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x\n", hr);
+
+    hr = IDirect3DDevice9_SetRenderTarget(device, 0, backbuffer);
+    ok(SUCCEEDED(hr), "Failed to set render target, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_StretchRect(device, surface1, NULL, backbuffer, NULL, D3DTEXF_NONE);
+    ok(SUCCEEDED(hr), "Failed to blit surface, hr %#x.\n", hr);
+
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x007f7f7f, 1), "Clear has color %08x.\n", color);
+
+    IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+
+    IDirect3DSurface9_Release(surface1);
+    IDirect3DSurface9_Release(surface0);
+    IDirect3DSurface9_Release(backbuffer);
+    IDirect3DTexture9_Release(texture);
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
 done:
