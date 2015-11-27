@@ -4561,6 +4561,8 @@ static void test_EM_REPLACESEL(int redraw)
     int r;
     GETTEXTEX getText;
     CHARRANGE cr;
+    CHAR rtfstream[] = "{\\rtf1 TestSomeText}";
+    CHAR urtfstream[] = "{\\urtf1 TestSomeText}";
 
     /* sending some text to the window */
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"testing selection");
@@ -4832,6 +4834,48 @@ static void test_EM_REPLACESEL(int redraw)
     /* Test number of lines reported after EM_REPLACESEL */
     r = SendMessageA(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 7, "EM_GETLINECOUNT returned %d, expected 7\n", r);
+
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
+    r = SendMessageA(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)rtfstream);
+    todo_wine ok(r == 12, "EM_REPLACESEL returned %d, expected 12\n", r);
+    r = SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
+    ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
+    todo_wine ok(cr.cpMin == 12, "EM_EXGETSEL returned cpMin=%d, expected 12\n", cr.cpMin);
+    todo_wine ok(cr.cpMax == 12, "EM_EXGETSEL returned cpMax=%d, expected 12\n", cr.cpMax);
+    SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
+    todo_wine ok(!strcmp(buffer, "TestSomeText"), "WM_GETTEXT returned incorrect string\n");
+
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
+    r = SendMessageA(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)urtfstream);
+    todo_wine ok(r == 12, "EM_REPLACESEL returned %d, expected 12\n", r);
+    r = SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
+    ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
+    todo_wine ok(cr.cpMin == 12, "EM_EXGETSEL returned cpMin=%d, expected 12\n", cr.cpMin);
+    todo_wine ok(cr.cpMax == 12, "EM_EXGETSEL returned cpMax=%d, expected 12\n", cr.cpMax);
+    SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
+    todo_wine ok(!strcmp(buffer, "TestSomeText"), "WM_GETTEXT returned incorrect string\n");
+
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"Wine");
+    SendMessageA(hwndRichEdit, EM_SETSEL, 1, 2);
+    todo_wine r = SendMessageA(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)rtfstream);
+    todo_wine ok(r == 12, "EM_REPLACESEL returned %d, expected 12\n", r);
+    r = SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
+    ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
+    todo_wine ok(cr.cpMin == 13, "EM_EXGETSEL returned cpMin=%d, expected 13\n", cr.cpMin);
+    todo_wine ok(cr.cpMax == 13, "EM_EXGETSEL returned cpMax=%d, expected 13\n", cr.cpMax);
+    SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
+    todo_wine ok(!strcmp(buffer, "WTestSomeTextne"), "WM_GETTEXT returned incorrect string\n");
+
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"{\\rtf1 Wine}");
+    SendMessageA(hwndRichEdit, EM_SETSEL, 1, 2);
+    todo_wine r = SendMessageA(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)rtfstream);
+    todo_wine ok(r == 12, "EM_REPLACESEL returned %d, expected 12\n", r);
+    r = SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
+    ok(0 == r, "EM_EXGETSEL returned %d, expected 0\n", r);
+    todo_wine ok(cr.cpMin == 13, "EM_EXGETSEL returned cpMin=%d, expected 13\n", cr.cpMin);
+    todo_wine ok(cr.cpMax == 13, "EM_EXGETSEL returned cpMax=%d, expected 13\n", cr.cpMax);
+    SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
+    todo_wine ok(!strcmp(buffer, "WTestSomeTextne"), "WM_GETTEXT returned incorrect string\n");
 
     if (!redraw)
         /* This is needed to avoid interferring with keybd_event calls
