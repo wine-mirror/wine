@@ -507,7 +507,7 @@ SQLRETURN WINAPI   SQLAllocStmt(SQLHDBC ConnectionHandle,
 SQLRETURN WINAPI   SQLBindCol(SQLHSTMT StatementHandle,
 		   SQLUSMALLINT ColumnNumber, SQLSMALLINT TargetType,
 		   SQLPOINTER TargetValue, SQLINTEGER BufferLength,
-	   	   SQLINTEGER *StrLen_or_Ind);
+		   SQLLEN *StrLen_or_Ind);
 
 #if (ODBCVER >= 0x0300)
 SQLRETURN WINAPI   SQLBindParam(SQLHSTMT StatementHandle,
