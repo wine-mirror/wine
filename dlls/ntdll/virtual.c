@@ -1550,7 +1550,7 @@ BOOL virtual_handle_stack_fault( void *addr )
             if ((char *)page >= (char *)NtCurrentTeb()->DeallocationStack + 2*page_size)
             {
                 vprot = view->prot[((char *)page - page_size - (char *)view->base) >> page_shift];
-                VIRTUAL_SetProt( view, (char *)page - page_size, page_size, vprot | VPROT_GUARD );
+                VIRTUAL_SetProt( view, (char *)page - page_size, page_size, vprot | VPROT_COMMITTED | VPROT_GUARD );
             }
             ret = TRUE;
         }
