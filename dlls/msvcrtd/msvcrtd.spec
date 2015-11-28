@@ -1,6 +1,6 @@
 # msvcrtd.dll - MS VC++ Run Time Library
 
-@ cdecl -norelay $I10_OUTPUT(double long long long ptr) msvcrt.$I10_OUTPUT
+@ cdecl -norelay $I10_OUTPUT(double long long ptr) msvcrt.$I10_OUTPUT
 @ thiscall -arch=i386 ??0__non_rtti_object@@QAE@ABV0@@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QAE@ABV0@@Z
 @ cdecl -arch=win64 ??0__non_rtti_object@@QEAA@AEBV0@@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QEAA@AEBV0@@Z
 @ thiscall -arch=i386 ??0__non_rtti_object@@QAE@PBD@Z(ptr ptr) msvcrt.??0__non_rtti_object@@QAE@PBD@Z

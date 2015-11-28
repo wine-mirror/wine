@@ -773,7 +773,7 @@
 @ cdecl -arch=win64 ?xsgetn@streambuf@@UEAAHPEADH@Z(ptr ptr long) msvcirt.?xsgetn@streambuf@@UEAAHPEADH@Z
 @ thiscall -arch=win32 ?xsputn@streambuf@@UAEHPBDH@Z(ptr ptr long) msvcirt.?xsputn@streambuf@@UAEHPBDH@Z
 @ cdecl -arch=win64 ?xsputn@streambuf@@UEAAHPEBDH@Z(ptr ptr long) msvcirt.?xsputn@streambuf@@UEAAHPEBDH@Z
-@ cdecl -norelay $I10_OUTPUT(double long long long ptr) msvcrt.$I10_OUTPUT
+@ cdecl -norelay $I10_OUTPUT(double long long ptr) msvcrt.$I10_OUTPUT
 @ cdecl -arch=i386 _CIacos() msvcrt._CIacos
 @ cdecl -arch=i386 _CIasin() msvcrt._CIasin
 @ cdecl -arch=i386 _CIatan() msvcrt._CIatan
