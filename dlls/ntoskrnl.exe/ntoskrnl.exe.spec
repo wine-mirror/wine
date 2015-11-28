@@ -688,7 +688,7 @@
 @ stub MmLockPagableDataSection
 @ stub MmLockPagableImageSection
 @ stdcall MmLockPagableSectionByHandle(ptr)
-@ stdcall MmMapIoSpace(long long long long)
+@ stdcall MmMapIoSpace(int64 long long)
 @ stub MmMapLockedPages
 @ stdcall MmMapLockedPagesSpecifyCache(ptr long long ptr long long)
 @ stub MmMapLockedPagesWithReservedMapping
