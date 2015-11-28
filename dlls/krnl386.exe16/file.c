@@ -539,6 +539,9 @@ INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
                                         LPCSTR def_val, LPSTR buffer,
                                         UINT16 len, LPCSTR filename )
 {
+    TRACE("(%s, %s, %s, %p, %u, %s)\n", debugstr_a(section), debugstr_a(entry),
+          debugstr_a(def_val), buffer, len, debugstr_a(filename));
+
     if (!section)
     {
         if (buffer && len) buffer[0] = 0;
@@ -572,7 +575,12 @@ INT16 WINAPI GetPrivateProfileString16( LPCSTR section, LPCSTR entry,
         {
             char *p = strchr( src, '=' );
 
-            if (!p) p = src + strlen(src);
+            /* A valid entry is formed by name = value */
+            if (!p)
+            {
+                src += strlen(src) + 1;
+                continue;
+            }
             if (p - src < len)
             {
                 memcpy( buffer, src, p - src );
