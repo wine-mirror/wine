@@ -60,7 +60,7 @@
 @ stdcall ImeEnumRegisterWord(ptr wstr long wstr ptr)
 @ stdcall ImeEscape(long long ptr)
 @ stdcall ImeGetImeMenuItems(long long long ptr ptr long)
-@ stdcall ImeGetRegisterWordStyle(wstr long wstr)
+@ stdcall ImeGetRegisterWordStyle(long ptr)
 @ stdcall ImeInquire(ptr wstr wstr)
 @ stdcall ImeProcessKey(long long long ptr)
 @ stdcall ImeRegisterWord(wstr long wstr)
