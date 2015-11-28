@@ -200,6 +200,10 @@ Threadpool
 M:	Sebastian Lackner <sebastian@fds-team.de>
 F:	dlls/ntdll/threadpool.c
 
+Timezone database
+M:	Sebastian Lackner <sebastian@fds-team.de>
+F:	loader/wine.inf.in
+
 Uniscribe
 M:	Aric Stewart <aric@codeweavers.com>
 F:	dlls/usp10/
