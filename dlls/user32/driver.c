@@ -216,7 +216,7 @@ static UINT CDECL nulldrv_GetKeyboardLayoutList( INT size, HKL *layouts )
     baselayout = GetUserDefaultLCID();
     langid = PRIMARYLANGID(LANGIDFROMLCID(baselayout));
     if (langid == LANG_CHINESE || langid == LANG_JAPANESE || langid == LANG_KOREAN)
-        baselayout |= 0xe001 << 16; /* IME */
+        baselayout = MAKELONG( baselayout, 0xe001 ); /* IME */
     else
         baselayout |= baselayout << 16;
 
