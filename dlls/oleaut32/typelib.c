@@ -4486,9 +4486,9 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     /* We'll set up a ptr to the main library block, which is the last one. */
 
-    for(pBlk = pFirstBlk, order = pHeader->first_blk - 1, i = 0;
+    for(pBlk = pFirstBlk, order = pHeader->first_blk - 1;
 	  pBlkEntry[order].next != 0;
-	  order = pBlkEntry[order].next - 1, i++) {
+	  order = pBlkEntry[order].next - 1) {
        pBlk = (char*)pBlk + pBlkEntry[order].len;
     }
     pLibBlk = pBlk;
