@@ -1613,6 +1613,7 @@ static void test_ck_default(void)
 static void test_ck_complex(void)
 {
     IDirectDrawSurface7 *surface, *mipmap, *tmp;
+    D3DDEVICEDESC7 device_desc;
     DDSCAPS2 caps = {DDSCAPS_COMPLEX, 0, 0, {0}};
     DDSURFACEDESC2 surface_desc;
     IDirect3DDevice7 *device;
@@ -1632,6 +1633,8 @@ static void test_ck_complex(void)
         DestroyWindow(window);
         return;
     }
+    hr = IDirect3DDevice7_GetCaps(device, &device_desc);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
     hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
     ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
     hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
@@ -1728,6 +1731,72 @@ static void test_ck_complex(void)
 
     refcount = IDirectDrawSurface7_Release(surface);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+    if (!(device_desc.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_CUBEMAP))
+    {
+        skip("Device does not support cubemaps.\n");
+        goto cleanup;
+    }
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP;
+    surface_desc.ddsCaps.dwCaps2 = DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES;
+    surface_desc.dwWidth = 128;
+    surface_desc.dwHeight = 128;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+
+    hr = IDirectDrawSurface7_GetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    color_key.dwColorSpaceLowValue = 0x0000ff00;
+    color_key.dwColorSpaceHighValue = 0x0000ff00;
+    hr = IDirectDrawSurface7_SetColorKey(surface, DDCKEY_SRCBLT, &color_key);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    caps.dwCaps2 = DDSCAPS2_CUBEMAP_NEGATIVEZ;
+    hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &mipmap);
+    ok(SUCCEEDED(hr), "Failed to get attached surface, i %u, hr %#x.\n", i, hr);
+
+    hr = IDirectDrawSurface7_GetColorKey(mipmap, DDCKEY_SRCBLT, &color_key);
+    ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x.\n", hr);
+    color_key.dwColorSpaceLowValue = 0x000000ff;
+    color_key.dwColorSpaceHighValue = 0x000000ff;
+    hr = IDirectDrawSurface7_SetColorKey(mipmap, DDCKEY_SRCBLT, &color_key);
+    todo_wine ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+
+    color_key.dwColorSpaceLowValue = 0;
+    color_key.dwColorSpaceHighValue = 0;
+    hr = IDirectDrawSurface7_GetColorKey(mipmap, DDCKEY_SRCBLT, &color_key);
+    todo_wine ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    todo_wine ok(color_key.dwColorSpaceLowValue == 0x000000ff, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceLowValue);
+    todo_wine ok(color_key.dwColorSpaceHighValue == 0x000000ff, "Got unexpected value 0x%08x.\n",
+            color_key.dwColorSpaceHighValue);
+
+    IDirectDrawSurface_AddRef(mipmap);
+    for (i = 0; i < 7; ++i)
+    {
+        hr = IDirectDrawSurface7_GetAttachedSurface(mipmap, &caps, &tmp);
+        ok(SUCCEEDED(hr), "Failed to get attached surface, i %u, hr %#x.\n", i, hr);
+        hr = IDirectDrawSurface7_GetColorKey(tmp, DDCKEY_SRCBLT, &color_key);
+        ok(hr == DDERR_NOCOLORKEY, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+        color_key.dwColorSpaceLowValue = 0x000000ff;
+        color_key.dwColorSpaceHighValue = 0x000000ff;
+        hr = IDirectDrawSurface7_SetColorKey(tmp, DDCKEY_SRCBLT, &color_key);
+        ok(hr == DDERR_NOTONMIPMAPSUBLEVEL, "Got unexpected hr %#x, i %u.\n", hr, i);
+
+        IDirectDrawSurface_Release(mipmap);
+        mipmap = tmp;
+    }
+
+    IDirectDrawSurface7_Release(mipmap);
+
+    refcount = IDirectDrawSurface7_Release(surface);
+    ok(!refcount, "Got unexpected refcount %u.\n", refcount);
+
+cleanup:
     IDirectDraw7_Release(ddraw);
     refcount = IDirect3DDevice7_Release(device);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
