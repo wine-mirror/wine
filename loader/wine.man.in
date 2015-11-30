@@ -26,8 +26,7 @@ For running CUI executables (Windows console programs), use
 .B wineconsole
 instead of
 .BR wine .
-This will display all the output in a separate windows (this requires X11 to
-run). Not using
+This will display the output in a separate window. Not using
 .B wineconsole
 for CUI programs will only provide very limited console support, and your
 program might not function properly.
