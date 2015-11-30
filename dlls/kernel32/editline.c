@@ -98,7 +98,9 @@ static void WCEL_Dump(WCEL_Context* ctx, const char* pfx)
 
 static BOOL WCEL_Get(WCEL_Context* ctx, INPUT_RECORD* ir)
 {
-    if (ReadConsoleInputW(ctx->hConIn, ir, 1, NULL)) return TRUE;
+    DWORD num_read;
+
+    if (ReadConsoleInputW(ctx->hConIn, ir, 1, &num_read)) return TRUE;
     ctx->error = 1;
     return FALSE;
 }
