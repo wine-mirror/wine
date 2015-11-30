@@ -311,11 +311,6 @@ static void release_client_site(WebBrowser *This)
         IOleInPlaceUIWindow_Release(This->uiwindow);
         This->uiwindow = NULL;
     }
-
-    if(This->sink) {
-        IAdviseSink_Release(This->sink);
-        This->sink = NULL;
-    }
 }
 
 typedef struct {

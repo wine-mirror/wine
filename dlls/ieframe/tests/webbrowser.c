@@ -4003,6 +4003,7 @@ static void test_SetAdvise(void)
     IWebBrowser2 *browser;
     IViewObject2 *view;
     IAdviseSink *sink;
+    IOleObject *oleobj;
     DWORD aspects, flags;
 
     if (!(browser = create_webbrowser())) return;
@@ -4031,9 +4032,38 @@ static void test_SetAdvise(void)
     ok(!flags, "got %08x\n", aspects);
     ok(sink == &test_sink, "got %p\n", sink);
 
+    hr = IWebBrowser2_QueryInterface(browser, &IID_IOleObject, (void **)&oleobj);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    SET_EXPECT(GetContainer);
+    SET_EXPECT(Site_GetWindow);
+    SET_EXPECT(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    SET_EXPECT(Invoke_AMBIENT_SILENT);
+    hr = IOleObject_SetClientSite(oleobj, &ClientSite);
+    ok(hr == S_OK, "got %08x\n", hr);
+    CHECK_CALLED(GetContainer);
+    CHECK_CALLED(Site_GetWindow);
+    CHECK_CALLED(Invoke_AMBIENT_OFFLINEIFNOTCONNECTED);
+    CHECK_CALLED(Invoke_AMBIENT_SILENT);
+
+    sink = (IAdviseSink *)0xdeadbeef;
+    hr = IViewObject2_GetAdvise(view, &aspects, &flags, &sink);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(sink == &test_sink, "got %p\n", sink);
+
+    hr = IOleObject_SetClientSite(oleobj, NULL);
+    ok(hr == S_OK, "got %08x\n", hr);
+
+    aspects = flags = 0xdeadbeef;
+    sink = (IAdviseSink *)0xdeadbeef;
+    hr = IViewObject2_GetAdvise(view, &aspects, &flags, &sink);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(sink == &test_sink, "got %p\n", sink);
+
     hr = IViewObject2_SetAdvise(view, 0, 0, NULL);
     ok(hr == S_OK, "got %08x\n", hr);
 
+    IOleObject_Release(oleobj);
     IViewObject2_Release(view);
     IWebBrowser2_Release(browser);
 }
