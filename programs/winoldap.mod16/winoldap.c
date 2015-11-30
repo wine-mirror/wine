@@ -76,14 +76,13 @@ WORD WINAPI WinMain16( HINSTANCE16 inst, HINSTANCE16 prev, LPSTR cmdline, WORD s
         if (wait_input_idle( info.hProcess, 10000 ) == WAIT_FAILED)
             WINE_WARN("WaitForInputIdle failed: Error %d\n", GetLastError() );
         ReleaseThunkLock( &count );
-
         WaitForSingleObject( info.hProcess, INFINITE );
+        RestoreThunkLock( count );
+
         GetExitCodeProcess( info.hProcess, &exit_code );
         CloseHandle( info.hThread );
         CloseHandle( info.hProcess );
     }
-    else
-        ReleaseThunkLock( &count );
 
     HeapFree( GetProcessHeap(), 0, cmdline );
     ExitThread( exit_code );
