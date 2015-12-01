@@ -1024,6 +1024,9 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
     case DISPID_BEFORESCRIPTEXECUTE: /* FIXME: IE10 */
         break;
 
+    case DISPID_PRIVACYIMPACTEDSTATECHANGE:
+        break;
+
     default:
         ok(0, "unexpected dispIdMember %d\n", dispIdMember);
     }
