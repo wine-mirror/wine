@@ -730,7 +730,17 @@ static HRESULT test_secondary8(LPGUID lpGuid, BOOL play,
                 ok(rc==DS_OK,"IDirectSoundBuffer_SetVolume(secondary) failed: %08x\n",rc);
                 rc=IDirectSoundBuffer_SetPan(secondary,0);
                 ok(rc==DS_OK,"IDirectSoundBuffer_SetPan(secondary) failed: %08x\n",rc);
+            } else {
+                LONG pan;
+
+                rc=IDirectSoundBuffer_GetPan(secondary,&pan);
+                ok(rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer_GetPan() "
+                   "should have returned DSERR_CONTROLUNAVAIL, returned: %08x\n", rc);
+                rc=IDirectSoundBuffer_SetPan(secondary,0);
+                ok(rc==DSERR_CONTROLUNAVAIL,"IDirectSoundBuffer_SetPan() "
+                   "should have returned DSERR_CONTROLUNAVAIL, returned: %08x\n", rc);
             }
+
             if (has_duplicate) {
                 LPDIRECTSOUNDBUFFER duplicated=NULL;
 
