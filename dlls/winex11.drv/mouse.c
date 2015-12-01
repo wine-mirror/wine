@@ -520,6 +520,21 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     return grab_clipping_window( &rect );
 }
 
+
+/***********************************************************************
+ *		is_old_motion_event
+ */
+static BOOL is_old_motion_event( unsigned long serial )
+{
+    struct x11drv_thread_data *thread_data = x11drv_thread_data();
+
+    if (!thread_data->warp_serial) return FALSE;
+    if ((long)(serial - thread_data->warp_serial) < 0) return TRUE;
+    thread_data->warp_serial = 0;  /* we caught up now */
+    return FALSE;
+}
+
+
 /***********************************************************************
  *		send_mouse_input
  *
@@ -1576,20 +1591,11 @@ void X11DRV_MotionNotify( HWND hwnd, XEvent *xev )
     input.u.mi.time        = EVENT_x11_time_to_win32_time( event->time );
     input.u.mi.dwExtraInfo = 0;
 
-    if (!hwnd)
+    if (!hwnd && is_old_motion_event( event->serial ))
     {
-        struct x11drv_thread_data *thread_data = x11drv_thread_data();
-        if (thread_data->warp_serial)
-        {
-            if ((long)(event->serial - thread_data->warp_serial) < 0)
-            {
-                TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, event->serial );
-                return;
-            }
-            thread_data->warp_serial = 0;  /* we caught up now */
-        }
+        TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, event->serial );
+        return;
     }
-
     send_mouse_input( hwnd, event->window, event->state, &input );
 }
 
@@ -1677,14 +1683,10 @@ static void X11DRV_RawMotion( XGenericEventCookie *xev )
         break;
     }
 
-    if (broken_rawevents && thread_data->warp_serial)
+    if (broken_rawevents && is_old_motion_event( xev->serial ))
     {
-        if ((long)(xev->serial - thread_data->warp_serial) < 0)
-        {
-            TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, xev->serial );
-            return;
-        }
-        thread_data->warp_serial = 0;  /* we caught up now */
+        TRACE( "pos %d,%d old serial %lu, ignoring\n", input.u.mi.dx, input.u.mi.dy, xev->serial );
+        return;
     }
 
     TRACE( "pos %d,%d (event %f,%f)\n", input.u.mi.dx, input.u.mi.dy, dx, dy );
