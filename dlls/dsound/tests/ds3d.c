@@ -805,9 +805,7 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
         bufdesc.dwFlags=DSBCAPS_GETCURRENTPOSITION2;
         if (has_3dbuffer)
             bufdesc.dwFlags|=DSBCAPS_CTRL3D;
-        else
-            bufdesc.dwFlags|=
-                (DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN);
+        bufdesc.dwFlags|= DSBCAPS_CTRLFREQUENCY|DSBCAPS_CTRLVOLUME|DSBCAPS_CTRLPAN;
         bufdesc.dwBufferBytes=align(wfx.nAvgBytesPerSec*BUFFER_LEN/1000,
                                     wfx.nBlockAlign);
         bufdesc.lpwfxFormat=&wfx;

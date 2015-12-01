@@ -649,12 +649,16 @@ static HRESULT test_secondary8(LPGUID lpGuid, BOOL play,
             ok(rc==DSERR_INVALIDPARAM,
                "IDirectSound8_CreateSoundBuffer(secondary) should have "
                "returned DSERR_INVALIDPARAM, returned %08x\n", rc);
-            if (secondary)
-            {
-                ref=IDirectSoundBuffer_Release(secondary);
-                ok(ref==0,"IDirectSoundBuffer_Release() primary has %d references, should have 0\n",ref);
-            }
             init_format(&wfx,WAVE_FORMAT_PCM,22050,16,1);
+
+            /* Invalid flag combination */
+            bufdesc.dwFlags|=DSBCAPS_CTRLPAN;
+            rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
+            todo_wine
+            ok(rc==DSERR_INVALIDPARAM,
+               "IDirectSound8_CreateSoundBuffer(secondary) should have "
+               "returned DSERR_INVALIDPARAM, returned %08x\n", rc);
+            bufdesc.dwFlags&=~DSBCAPS_CTRLPAN;
         }
 
         if (winetest_interactive) {
