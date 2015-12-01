@@ -259,6 +259,9 @@ BOOL WINAPI SHFreeShared(HANDLE hShared, DWORD dwProcId)
 
   TRACE("(%p %d)\n", hShared, dwProcId);
 
+  if (!hShared)
+    return TRUE;
+
   /* Get a copy of the handle for our process, closing the source handle */
   hClose = SHMapHandle(hShared, dwProcId, GetCurrentProcessId(),
                        FILE_MAP_ALL_ACCESS,DUPLICATE_CLOSE_SOURCE);
