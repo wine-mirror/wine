@@ -516,6 +516,11 @@ static void test_alloc_shared(int argc, char **argv)
         ret = pSHFreeShared(hmem2, procid);
         ok(ret, "SHFreeShared failed: %u\n", GetLastError());
     }
+
+    SetLastError(0xdeadbeef);
+    ret = pSHFreeShared(NULL, procid);
+    ok(ret, "SHFreeShared failed: %u\n", GetLastError());
+    ok(GetLastError() == 0xdeadbeef, "last error should not have changed, got %u\n", GetLastError());
 }
 
 static void test_alloc_shared_remote(DWORD procid, HANDLE hmem)
