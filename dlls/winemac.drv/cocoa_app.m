@@ -1745,7 +1745,23 @@ static NSString* WineLocalizedString(unsigned int stringID)
 
         if (windowBroughtForward)
         {
-            [[windowBroughtForward ancestorWineWindow] postBroughtForwardEvent];
+            WineWindow* ancestor = [windowBroughtForward ancestorWineWindow];
+            NSInteger ancestorNumber = [ancestor windowNumber];
+            NSInteger ancestorLevel = [ancestor level];
+
+            for (NSNumber* windowNumberObject in [NSWindow windowNumbersWithOptions:0])
+            {
+                NSInteger windowNumber = [windowNumberObject integerValue];
+                if (windowNumber == ancestorNumber)
+                    break;
+                WineWindow* otherWindow = (WineWindow*)[NSApp windowWithWindowNumber:windowNumber];
+                if ([otherWindow isKindOfClass:[WineWindow class]] && [otherWindow screen] &&
+                    [otherWindow level] <= ancestorLevel && otherWindow == [otherWindow ancestorWineWindow])
+                {
+                    [ancestor postBroughtForwardEvent];
+                    break;
+                }
+            }
             if (!process && ![windowBroughtForward isKeyWindow] && !windowBroughtForward.disabled && !windowBroughtForward.noActivate)
                 [self windowGotFocus:windowBroughtForward];
         }
