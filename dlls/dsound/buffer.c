@@ -586,9 +586,7 @@ static HRESULT WINAPI IDirectSoundBufferImpl_SetPan(IDirectSoundBuffer8 *iface, 
 		return DSERR_INVALIDPARAM;
 	}
 
-	/* You cannot use both pan and 3D controls */
-	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN) ||
-	    (This->dsbd.dwFlags & DSBCAPS_CTRL3D)) {
+	if (!(This->dsbd.dwFlags & DSBCAPS_CTRLPAN)) {
 		WARN("control unavailable\n");
 		return DSERR_CONTROLUNAVAIL;
 	}

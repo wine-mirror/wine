@@ -892,7 +892,6 @@ static HRESULT test_secondary(LPGUID lpGuid, int play,
                 rc=IDirectSoundBuffer_GetPan(secondary,&pan);
                 ok(rc==DS_OK,"IDirectSoundBuffer_GetPan() failed, returned: %08x\n", rc);
                 rc=IDirectSoundBuffer_SetPan(secondary,0);
-                todo_wine
                 ok(rc==DS_OK,"IDirectSoundBuffer_SetPan() failed, returned: %08x\n", rc);
             }
 
