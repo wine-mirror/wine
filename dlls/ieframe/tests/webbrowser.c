@@ -114,7 +114,7 @@ DEFINE_EXPECT(Invoke_NAVIGATECOMPLETE2);
 DEFINE_EXPECT(Invoke_PROGRESSCHANGE);
 DEFINE_EXPECT(Invoke_DOCUMENTCOMPLETE);
 DEFINE_EXPECT(Invoke_WINDOWCLOSING);
-DEFINE_EXPECT(Invoke_282);
+DEFINE_EXPECT(Invoke_SETPHISHINGFILTERSTATUS);
 DEFINE_EXPECT(EnableModeless_TRUE);
 DEFINE_EXPECT(EnableModeless_FALSE);
 DEFINE_EXPECT(GetHostInfo);
@@ -1017,11 +1017,11 @@ static HRESULT WINAPI WebBrowserEvents2_Invoke(IDispatch *iface, DISPID dispIdMe
         return S_OK;
     }
 
-    case 282: /* FIXME */
-        CHECK_EXPECT2(Invoke_282);
+    case DISPID_SETPHISHINGFILTERSTATUS: /* FIXME */
+        CHECK_EXPECT2(Invoke_SETPHISHINGFILTERSTATUS);
         break;
 
-    case 290: /* FIXME: IE10 */
+    case DISPID_BEFORESCRIPTEXECUTE: /* FIXME: IE10 */
         break;
 
     default:
@@ -2891,7 +2891,7 @@ static void test_download(DWORD flags)
     SET_EXPECT(DocHost_EnableModeless_FALSE);
     SET_EXPECT(DocHost_EnableModeless_TRUE);
     SET_EXPECT(Invoke_SETSECURELOCKICON);
-    SET_EXPECT(Invoke_282);
+    SET_EXPECT(Invoke_SETPHISHINGFILTERSTATUS);
     SET_EXPECT(EnableModeless_FALSE);
 
     if(!(flags & DWL_REFRESH)) {
@@ -2960,7 +2960,7 @@ static void test_download(DWORD flags)
     CLEAR_CALLED(DocHost_EnableModeless_FALSE); /* IE 7 */
     CLEAR_CALLED(DocHost_EnableModeless_TRUE); /* IE 7 */
     todo_wine CHECK_CALLED(Invoke_SETSECURELOCKICON);
-    CLEAR_CALLED(Invoke_282); /* IE 7 */
+    CLEAR_CALLED(Invoke_SETPHISHINGFILTERSTATUS); /* IE 7 */
     if(is_first_load)
         todo_wine CHECK_CALLED(EnableModeless_FALSE);
     else

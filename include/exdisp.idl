@@ -476,6 +476,17 @@ dispinterface DWebBrowserEvents2
             [in] VARIANT *RedirectURL,
             [in] VARIANT *Frame,
             [in] VARIANT *StatusCode);
+
+    [id(DISPID_BEFORESCRIPTEXECUTE)]
+    void BeforeScriptExecute([in] IDispatch *pDispWindow);
+
+    [id(DISPID_WEBWORKERSTARTED)]
+    void WebWorkerStarted(
+            [in] DWORD dwUniqueID,
+            [in] BSTR bstrWorkerLabel);
+
+    [id(DISPID_WEBWORKERFINISHED)]
+    void WebWorkerFinsihed([in] DWORD dwUniqueID);
 }
 
 [
