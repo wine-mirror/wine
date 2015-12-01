@@ -10266,6 +10266,9 @@ static LRESULT LISTVIEW_LButtonDown(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, IN
       }
     }
 
+    if (!infoPtr->bFocus)
+        SetFocus(infoPtr->hwndSelf);
+
     if (infoPtr->dwLvExStyle & LVS_EX_ONECLICKACTIVATE)
         if(lvHitTestInfo.iItem != -1) notify_itemactivate(infoPtr,&lvHitTestInfo);
   }
@@ -10351,9 +10354,6 @@ static LRESULT LISTVIEW_LButtonUp(LISTVIEW_INFO *infoPtr, WORD wKey, INT x, INT 
             GetDoubleClickTime(),
             LISTVIEW_DelayedEditItem);
     }
-
-    if (!infoPtr->bFocus)
-        SetFocus(infoPtr->hwndSelf);
 
     return 0;
 }
