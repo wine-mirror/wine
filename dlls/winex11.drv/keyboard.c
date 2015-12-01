@@ -2566,6 +2566,14 @@ INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
             e.keycode = XKeysymToKeycode(e.display, XK_KP_Decimal);
     }
 
+    /* Ctrl-Space generates space on Windows */
+    if (e.state == ControlMask && virtKey == VK_SPACE)
+    {
+        bufW[0] = ' ';
+        ret = 1;
+        goto found;
+    }
+
     if (!e.keycode && virtKey != VK_NONAME)
       {
 	WARN_(key)("Unknown virtual key %X !!!\n", virtKey);
