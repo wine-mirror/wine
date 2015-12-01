@@ -24,6 +24,7 @@
 #include "d3d.h"
 
 static HRESULT (WINAPI *pDirectDrawCreateEx)(GUID *guid, void **ddraw, REFIID iid, IUnknown *outer_unknown);
+static BOOL is_ddraw64 = sizeof(DWORD) != sizeof(DWORD *);
 static DEVMODEW registry_mode;
 
 struct vec2
@@ -4669,7 +4670,10 @@ static void test_texturemanage(void)
         ddsd.dwHeight = 4;
 
         hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
-        ok(hr == tests[i].hr, "Got unexpected, hr %#x, case %u.\n", hr, i);
+        if (tests[i].hr == DD_OK && is_ddraw64 && (tests[i].caps_in & DDSCAPS_TEXTURE))
+            todo_wine ok(hr == E_NOINTERFACE, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        else
+            ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, tests[i].hr);
         if (FAILED(hr))
             continue;
 
@@ -6379,13 +6383,12 @@ static void test_set_surface_desc(void)
         }
 
         hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
-        ok(SUCCEEDED(hr) || hr == DDERR_NODIRECTDRAWHW, "Failed to create surface, hr %#x.\n", hr);
+        if (is_ddraw64 && (invalid_caps_tests[i].caps & DDSCAPS_TEXTURE))
+            todo_wine ok(hr == E_NOINTERFACE, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        else
+            ok(hr == DD_OK || hr == DDERR_NODIRECTDRAWHW, "Test %u: Got unexpected hr %#x.\n", i, hr);
         if (FAILED(hr))
-        {
-            skip("Cannot create a %s surface, skipping vidmem SetSurfaceDesc test.\n",
-                    invalid_caps_tests[i].name);
-            goto done;
-        }
+            continue;
 
         reset_ddsd(&ddsd);
         ddsd.dwFlags = DDSD_LPSURFACE;
@@ -6410,7 +6413,6 @@ static void test_set_surface_desc(void)
         IDirectDrawSurface7_Release(surface);
     }
 
-done:
     ref = IDirectDraw7_Release(ddraw);
     ok(ref == 0, "Ddraw object not properly released, refcount %u.\n", ref);
     DestroyWindow(window);
@@ -7058,7 +7060,8 @@ static void test_private_data(void)
     hal_caps.dwSize = sizeof(hal_caps);
     hr = IDirectDraw7_GetCaps(ddraw, &hal_caps, NULL);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
-    if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) == (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP))
+    if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) == (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)
+            && !is_ddraw64)
     {
         reset_ddsd(&surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_MIPMAPCOUNT;
@@ -7378,7 +7381,8 @@ static void test_mipmap_lock(void)
     hal_caps.dwSize = sizeof(hal_caps);
     hr = IDirectDraw7_GetCaps(ddraw, &hal_caps, NULL);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
-    if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) != (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP))
+    if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) != (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)
+            || is_ddraw64)
     {
         skip("Mipmapped textures not supported, skipping mipmap lock test.\n");
         IDirectDraw7_Release(ddraw);
@@ -7442,7 +7446,8 @@ static void test_palette_complex(void)
     hal_caps.dwSize = sizeof(hal_caps);
     hr = IDirectDraw7_GetCaps(ddraw, &hal_caps, NULL);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
-    if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) != (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP))
+    if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) != (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)
+            || is_ddraw64)
     {
         skip("Mipmapped textures not supported, skipping mipmap palette test.\n");
         IDirectDraw7_Release(ddraw);
@@ -8381,6 +8386,13 @@ static void test_resource_priority(void)
         surface_desc.ddsCaps.dwCaps = test_data[i].caps;
         surface_desc.ddsCaps.dwCaps2 = test_data[i].caps2;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        if (is_ddraw64 && (test_data[i].caps & DDSCAPS_TEXTURE))
+        {
+            todo_wine ok(hr == E_NOINTERFACE, "Got unexpected hr %#x, type %s.\n", hr, test_data[i].name);
+            if (SUCCEEDED(hr))
+                IDirectDrawSurface7_Release(surface);
+            continue;
+        }
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, type %s.\n", hr, test_data[i].name);
 
         /* Priority == NULL segfaults. */
@@ -8410,6 +8422,9 @@ static void test_resource_priority(void)
 
         IDirectDrawSurface7_Release(surface);
     }
+
+    if (is_ddraw64)
+        goto done;
 
     memset(&surface_desc, 0, sizeof(surface_desc));
     surface_desc.dwSize = sizeof(surface_desc);
