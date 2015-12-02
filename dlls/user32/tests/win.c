@@ -39,6 +39,10 @@
 #define SPI_GETDESKWALLPAPER 0x0073
 #endif
 
+#ifndef WM_SYSTIMER
+#define WM_SYSTIMER 0x0118
+#endif
+
 #define LONG_PTR INT_PTR
 #define ULONG_PTR UINT_PTR
 
@@ -183,6 +187,8 @@ static BOOL ignore_message( UINT message )
     return (message >= 0xc000 ||
             message == WM_GETICON ||
             message == WM_GETOBJECT ||
+            message == WM_TIMER ||
+            message == WM_SYSTIMER ||
             message == WM_TIMECHANGE ||
             message == WM_DEVICECHANGE);
 }
@@ -3435,7 +3441,7 @@ static BOOL peek_message( MSG *msg )
     do
     {
         ret = PeekMessageA(msg, 0, 0, 0, PM_REMOVE);
-    } while (ret && (msg->message == WM_TIMER || ignore_message(msg->message)));
+    } while (ret && ignore_message(msg->message));
     return ret;
 }
 
@@ -3599,7 +3605,7 @@ static void test_mouse_input(HWND hwnd)
     /* FIXME: SetCursorPos in Wine generates additional WM_MOUSEMOVE message */
     while (PeekMessageA(&msg, 0, 0, 0, PM_REMOVE))
     {
-        if (msg.message == WM_TIMER || ignore_message(msg.message)) continue;
+        if (ignore_message(msg.message)) continue;
         ok(msg.hwnd == popup && msg.message == WM_MOUSEMOVE,
            "hwnd %p message %04x\n", msg.hwnd, msg.message);
         DispatchMessageA(&msg);
