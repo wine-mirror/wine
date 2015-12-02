@@ -1041,6 +1041,7 @@ static DWORD simd_fault_handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_R
 static const BYTE simd_exception_test[] = {
     0x83, 0xec, 0x4,                     /* sub $0x4, %esp       */
     0x0f, 0xae, 0x1c, 0x24,              /* stmxcsr (%esp)       */
+    0x8b, 0x04, 0x24,                    /* mov    (%esp),%eax   * store mxcsr */
     0x66, 0x81, 0x24, 0x24, 0xff, 0xfd,  /* andw $0xfdff,(%esp)  * enable divide by */
     0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%esp)       * zero exceptions  */
     0x6a, 0x01,                          /* push   $0x1          */
@@ -1051,7 +1052,7 @@ static const BYTE simd_exception_test[] = {
     0x0f, 0x57, 0xc0,                    /* xorps  %xmm0,%xmm0   * clear divisor  */
     0x0f, 0x5e, 0xc8,                    /* divps  %xmm0,%xmm1   * generate fault */
     0x83, 0xc4, 0x10,                    /* add    $0x10,%esp    */
-    0x66, 0x81, 0x0c, 0x24, 0x00, 0x02,  /* orw    $0x200,(%esp) * disable exceptions */
+    0x89, 0x04, 0x24,                    /* mov    %eax,(%esp)   * restore to old mxcsr */
     0x0f, 0xae, 0x14, 0x24,              /* ldmxcsr (%esp)       */
     0x83, 0xc4, 0x04,                    /* add    $0x4,%esp     */
     0xc3,                                /* ret */
