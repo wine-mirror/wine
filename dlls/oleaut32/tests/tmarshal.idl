@@ -185,6 +185,9 @@ library TestTypelib
 
         [id(DISPID_TM_VARARG_REF_RUN), vararg]
         HRESULT VarArg_Ref_Run([in] BSTR name, [in] SAFEARRAY(VARIANT) *params, [out, retval] VARIANT *result);
+
+        [id(DISPID_TM_COCLASS)]
+        HRESULT Coclass([in] ApplicationObject2 *param);
     }
 
     [

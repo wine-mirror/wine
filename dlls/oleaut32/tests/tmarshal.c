@@ -598,7 +598,7 @@ static HRESULT WINAPI Widget_CloneCoclass(
     ApplicationObject2 **ppVal)
 {
     trace("CloneCoclass()\n");
-    return S_OK;
+    return Widget_QueryInterface(iface, &IID_IWidget, (void **)ppVal);
 }
 
 static HRESULT WINAPI Widget_Value(
@@ -909,6 +909,14 @@ static HRESULT WINAPI Widget_VarArg_Ref_Run(
     return S_OK;
 }
 
+static HRESULT WINAPI Widget_Coclass(
+    IWidget *iface, ApplicationObject2 *param)
+{
+    trace("Coclass(%p)\n", param);
+    ok(param == (ApplicationObject2 *)iface, "expected param == %p, got %p\n", iface, param);
+    return S_OK;
+}
+
 static const struct IWidgetVtbl Widget_VTable =
 {
     Widget_QueryInterface,
@@ -948,7 +956,8 @@ static const struct IWidgetVtbl Widget_VTable =
     Widget_pos_restrict,
     Widget_neg_restrict,
     Widget_VarArg_Run,
-    Widget_VarArg_Ref_Run
+    Widget_VarArg_Ref_Run,
+    Widget_Coclass,
 };
 
 static HRESULT WINAPI StaticWidget_QueryInterface(IStaticWidget *iface, REFIID riid, void **ppvObject)
@@ -1494,8 +1503,22 @@ static void test_typelibmarshal(void)
        excepinfo.wCode, excepinfo.scode);
 
     ok(V_VT(&varresult) == VT_DISPATCH, "V_VT(&varresult) was %d instead of VT_DISPATCH\n", V_VT(&varresult));
-    ok(!V_DISPATCH(&varresult), "V_DISPATCH(&varresult) should be NULL instead of %p\n", V_DISPATCH(&varresult));
+    ok(V_DISPATCH(&varresult) != NULL, "expected V_DISPATCH(&varresult) != NULL\n");
+
+    /* call Coclass with VT_DISPATCH type */
+    vararg[0] = varresult;
+    dispparams.cNamedArgs = 0;
+    dispparams.rgdispidNamedArgs = NULL;
+    dispparams.cArgs = 1;
+    dispparams.rgvarg = vararg;
+    VariantInit(&varresult);
+    hr = IDispatch_Invoke(pDispatch, DISPID_TM_COCLASS, &IID_NULL, LOCALE_NEUTRAL, DISPATCH_METHOD, &dispparams, &varresult, &excepinfo, NULL);
+    todo_wine ok_ole_success(hr, IDispatch_Invoke);
+    ok(excepinfo.wCode == 0x0 && excepinfo.scode == S_OK,
+        "EXCEPINFO differs from expected: wCode = 0x%x, scode = 0x%08x\n",
+        excepinfo.wCode, excepinfo.scode);
     VariantClear(&varresult);
+    VariantClear(&vararg[0]);
 
     /* call Value with a VT_VARIANT|VT_BYREF type */
     V_VT(&vararg[0]) = VT_VARIANT|VT_BYREF;
