@@ -240,6 +240,9 @@ static Bool filter_event( Display *display, XEvent *event, char *arg )
     case ButtonPress:
     case ButtonRelease:
         return (mask & QS_MOUSEBUTTON) != 0;
+#ifdef GenericEvent
+    case GenericEvent:
+#endif
     case MotionNotify:
     case EnterNotify:
     case LeaveNotify:
