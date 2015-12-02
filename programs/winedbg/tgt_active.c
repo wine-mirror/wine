@@ -678,6 +678,63 @@ static HANDLE create_temp_file(void)
                         NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, 0 );
 }
 
+static const struct
+{
+    int type;
+    int platform;
+    int major;
+    int minor;
+    const char *str;
+}
+version_table[] =
+{
+    { 0,                   VER_PLATFORM_WIN32s,        2,  0, "2.0" },
+    { 0,                   VER_PLATFORM_WIN32s,        3,  0, "3.0" },
+    { 0,                   VER_PLATFORM_WIN32s,        3, 10, "3.1" },
+    { 0,                   VER_PLATFORM_WIN32_WINDOWS, 4,  0, "95" },
+    { 0,                   VER_PLATFORM_WIN32_WINDOWS, 4, 10, "98" },
+    { 0,                   VER_PLATFORM_WIN32_WINDOWS, 4, 90, "ME" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      3, 51, "NT 3.51" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      4,  0, "NT 4.0" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      5,  0, "2000" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      5,  1, "XP" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      5,  2, "XP" },
+    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      5,  2, "Server 2003" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      6,  0, "Vista" },
+    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      6,  0, "Server 2008" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      6,  1, "7" },
+    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      6,  1, "Server 2008 R2" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      6,  2, "8" },
+    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      6,  2, "Server 2012" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,      6,  3, "8.1" },
+    { VER_NT_SERVER,       VER_PLATFORM_WIN32_NT,      6,  3, "Server 2012 R2" },
+    { VER_NT_WORKSTATION,  VER_PLATFORM_WIN32_NT,     10,  0, "10" },
+};
+
+static const char *get_windows_version(void)
+{
+    OSVERSIONINFOEXW info = { sizeof(OSVERSIONINFOEXW) };
+    static char str[64];
+    int i;
+
+    GetVersionExW( (OSVERSIONINFOW *)&info );
+
+    for (i = 0; i < sizeof(version_table) / sizeof(version_table[0]); i++)
+    {
+        if (version_table[i].type == info.wProductType &&
+            version_table[i].platform == info.dwPlatformId &&
+            version_table[i].major == info.dwMajorVersion &&
+            version_table[i].minor == info.dwMinorVersion)
+        {
+            return version_table[i].str;
+        }
+    }
+
+    snprintf( str, sizeof(str), "%d.%d (%d)", info.dwMajorVersion,
+              info.dwMinorVersion, info.wProductType );
+    return str;
+}
+
 static void output_system_info(void)
 {
 #ifdef __i386__
@@ -705,6 +762,7 @@ static void output_system_info(void)
     dbg_printf( "System information:\n" );
     if (wine_get_build_id) dbg_printf( "    Wine build: %s\n", wine_get_build_id() );
     dbg_printf( "    Platform: %s%s\n", platform, is_wow64 ? " (WOW64)" : "" );
+    dbg_printf( "    Version: Windows %s\n", get_windows_version() );
     if (wine_get_host_version)
     {
         const char *sysname, *release;
