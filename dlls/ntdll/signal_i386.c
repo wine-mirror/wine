@@ -2163,7 +2163,7 @@ static void fpe_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         /* TODO:
          * Behaviour only tested for divide-by-zero exceptions
          * Check for other SIMD exceptions as well */
-        if(siginfo->si_code != FPE_FLTDIV)
+        if(siginfo->si_code != FPE_FLTDIV && siginfo->si_code != FPE_FLTINV)
             FIXME("untested SIMD exception: %#x. Might not work correctly\n",
                   siginfo->si_code);
 
