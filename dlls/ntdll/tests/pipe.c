@@ -126,7 +126,7 @@ static NTSTATUS create_pipe(PHANDLE handle, ULONG sharing, ULONG options)
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    timeout.QuadPart = -100000000000ll;
+    timeout.QuadPart = -100000000;
 
     res = pNtCreateNamedPipeFile(handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, sharing,  2 /*FILE_CREATE*/,
                                  options, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
@@ -152,7 +152,7 @@ static void test_create_invalid(void)
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    timeout.QuadPart = -100000000000ll;
+    timeout.QuadPart = -100000000;
 
 /* create a pipe with FILE_OVERWRITE */
     res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ, 4 /*FILE_OVERWRITE*/,
@@ -521,7 +521,7 @@ static void test_filepipeinfo(void)
     attr.SecurityDescriptor       = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    timeout.QuadPart = -100000000000ll;
+    timeout.QuadPart = -100000000;
 
     /* test with INVALID_HANDLE_VALUE */
     res = pNtQueryInformationFile(INVALID_HANDLE_VALUE, &iosb, &fpi, sizeof(fpi), (FILE_INFORMATION_CLASS)23);
