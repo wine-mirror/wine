@@ -572,7 +572,7 @@ DWORD WINAPI Win32DeleteFileAW(LPCVOID path)
  *  dest       [I]   path to target file to move to
  *
  * RETURNS
- *  ERORR_SUCCESS if successful
+ *  ERROR_SUCCESS if successful
  */
 static DWORD SHNotifyMoveFileW(LPCWSTR src, LPCWSTR dest)
 {

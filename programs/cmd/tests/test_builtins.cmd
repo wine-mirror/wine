@@ -973,7 +973,7 @@ del temp.bat 2>nul
 goto :eof
 
 :TestForR
-rem %CD% does not tork on NT4 so use the following workaround
+rem %CD% does not work on NT4 so use the following workaround
 for /d %%i in (.) do set WINE_CURDIR=%%~dpnxi
 
 echo --- for /R

@@ -2091,7 +2091,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
     return IClassFactory_QueryInterface(factory, riid, ppv);
 }
 
-/* returns TRUE if there is more data avilable in the buffer, FALSE if the
+/* returns TRUE if there is more data available in the buffer, FALSE if the
  * buffer's data has all been queued */
 static BOOL xa2buffer_queue_period(XA2SourceImpl *src, XA2Buffer *buf, ALuint al_buf)
 {

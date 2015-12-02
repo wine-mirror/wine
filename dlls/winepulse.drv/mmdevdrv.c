@@ -506,7 +506,7 @@ fail:
     return E_FAIL;
 }
 
-/* For default Pulseaudio render device, OR together all of the
+/* For default PulseAudio render device, OR together all of the
  * PKEY_AudioEndpoint_PhysicalSpeakers values of the sinks. */
 static void pulse_phys_speakers_cb(pa_context *c, const pa_sink_info *i, int eol, void *userdata)
 {
@@ -801,7 +801,7 @@ static HRESULT pulse_stream_connect(ACImpl *This, UINT32 period_bytes) {
     pa_stream_set_buffer_attr_callback(This->stream, pulse_attr_update, This);
     pa_stream_set_moved_callback(This->stream, pulse_attr_update, This);
 
-    /* Pulseaudio will fill in correct values */
+    /* PulseAudio will fill in correct values */
     attr.minreq = attr.fragsize = period_bytes;
     attr.maxlength = attr.tlength = This->bufsize_bytes;
     attr.prebuf = pa_frame_size(&This->ss);
@@ -2991,7 +2991,7 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
     if (context)
         FIXME("Notifications not supported yet\n");
 
-    TRACE("Pulseaudio does not support session volume control\n");
+    TRACE("PulseAudio does not support session volume control\n");
 
     pthread_mutex_lock(&pulse_lock);
     session->master_vol = level;
@@ -3127,7 +3127,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
     if (context)
         FIXME("Notifications not supported yet\n");
 
-    TRACE("Pulseaudio does not support session volume control\n");
+    TRACE("PulseAudio does not support session volume control\n");
 
     pthread_mutex_lock(&pulse_lock);
     session->channel_vols[index] = level;
@@ -3175,7 +3175,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
     if (context)
         FIXME("Notifications not supported yet\n");
 
-    TRACE("Pulseaudio does not support session volume control\n");
+    TRACE("PulseAudio does not support session volume control\n");
 
     pthread_mutex_lock(&pulse_lock);
     for(i = 0; i < count; ++i)

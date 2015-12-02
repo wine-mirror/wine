@@ -776,7 +776,7 @@ static HRESULT UNIXFS_initialize_target_folder(UnixFolder *This, const char *szB
         current = ILGetNext(current);
     };
 
-    /* Build the path and compute the attributes*/
+    /* Build the path and compute the attributes */
     This->m_dwAttributes = 
             dwAttributes|SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR|SFGAO_CANRENAME;
     This->m_pszPath = pNextDir = SHAlloc(dwPathLen);

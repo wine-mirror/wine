@@ -1193,7 +1193,7 @@ static void test_swapchain_parameters(void)
 
             /* Buffers > 0 are supposed to be read only. This is the case except that in
              * fullscreen mode on Windows <= 8 the last backbuffer (BufferCount - 1) is
-             * writeable. This is not the case if an unsupported refresh rate is passed
+             * writable. This is not the case if an unsupported refresh rate is passed
              * for some reason, probably because the invalid refresh rate triggers a
              * kinda-sorta windowed mode.
              *

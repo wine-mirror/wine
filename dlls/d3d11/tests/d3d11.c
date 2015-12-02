@@ -1917,7 +1917,7 @@ static void test_create_sampler_state(void)
         ok(d3d10_desc.Filter == expected_desc.Filter,
                 "Test %u: Got unexpected filter %#x.\n", i, d3d10_desc.Filter);
         ok(d3d10_desc.AddressU == expected_desc.AddressU,
-                "Test %u: Got unexpected adress u %u.\n", i, d3d10_desc.AddressU);
+                "Test %u: Got unexpected address u %u.\n", i, d3d10_desc.AddressU);
         ok(d3d10_desc.AddressV == expected_desc.AddressV,
                 "Test %u: Got unexpected address v %u.\n", i, d3d10_desc.AddressV);
         ok(d3d10_desc.AddressW == expected_desc.AddressW,

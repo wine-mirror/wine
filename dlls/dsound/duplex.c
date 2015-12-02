@@ -67,7 +67,7 @@ static void fullduplex_destroy(IDirectSoundFullDuplexImpl *This)
 }
 
 /*******************************************************************************
- * IUnknown implemetation for DirectSoundFullDuplex
+ * IUnknown implementation for DirectSoundFullDuplex
  */
 static inline IDirectSoundFullDuplexImpl *impl_from_IUnknown(IUnknown *iface)
 {

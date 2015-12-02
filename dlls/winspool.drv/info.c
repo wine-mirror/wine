@@ -317,7 +317,7 @@ static const printenv_t * const all_printenv[] = {&env_x86, &env_x64, &env_win40
  *
  * NOTES
  *  An empty string is handled the same way as NULL.
- *  SetLastEror(ERROR_INVALID_ENVIRONMENT) is called on Failure
+ *  SetLastError(ERROR_INVALID_ENVIRONMENT) is called on Failure
  *  
  */
 
