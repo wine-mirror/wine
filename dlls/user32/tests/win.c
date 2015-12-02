@@ -6841,11 +6841,11 @@ static void test_fullscreen(void)
             /* Windows makes a maximized window slightly larger (to hide the borders?) */
             fixup = min(abs(rc.left), abs(rc.top));
             InflateRect(&rc, -fixup, -fixup);
-            ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
-               rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
+            ok(rc.left >= mi.rcMonitor.left && rc.top >= mi.rcMonitor.top &&
+               rc.right <= mi.rcMonitor.right && rc.bottom <= mi.rcMonitor.bottom,
                "%#x/%#x: window rect %d,%d-%d,%d must be in %d,%d-%d,%d\n",
                ex_style, style, rc.left, rc.top, rc.right, rc.bottom,
-               mi.rcWork.left, mi.rcWork.top, mi.rcWork.right, mi.rcWork.bottom);
+               mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right, mi.rcMonitor.bottom);
             DestroyWindow(hwnd);
 
             style = t_style[i] | WS_MAXIMIZE | WS_MAXIMIZEBOX;
@@ -6863,8 +6863,8 @@ static void test_fullscreen(void)
                    rc.right >= mi.rcMonitor.right && rc.bottom >= mi.rcMonitor.bottom,
                    "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
             else
-                ok(rc.left >= mi.rcWork.left && rc.top <= mi.rcWork.top &&
-                   rc.right <= mi.rcWork.right && rc.bottom <= mi.rcWork.bottom,
+                ok(rc.left >= mi.rcMonitor.left && rc.top >= mi.rcMonitor.top &&
+                   rc.right <= mi.rcMonitor.right && rc.bottom <= mi.rcMonitor.bottom,
                    "%#x/%#x: window rect %d,%d-%d,%d\n", ex_style, style, rc.left, rc.top, rc.right, rc.bottom);
             DestroyWindow(hwnd);
         }
