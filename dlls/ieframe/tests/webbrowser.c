@@ -2877,7 +2877,7 @@ static void test_download(DWORD flags)
     test_ready_state((flags & (DWL_FROM_PUT_HREF|DWL_FROM_GOBACK|DWL_FROM_GOFORWARD|DWL_REFRESH))
                      ? READYSTATE_COMPLETE : READYSTATE_LOADING);
 
-    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)|DWL_FROM_GOFORWARD))
+    if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)|DWL_FROM_GOFORWARD|DWL_REFRESH))
         SET_EXPECT(Invoke_PROPERTYCHANGE);
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
@@ -2946,7 +2946,7 @@ static void test_download(DWORD flags)
 
     if(flags & (DWL_EXPECT_BEFORE_NAVIGATE|(is_http ? DWL_FROM_PUT_HREF : 0)))
         todo_wine CHECK_CALLED(Invoke_PROPERTYCHANGE);
-    else if(flags & DWL_FROM_GOFORWARD)
+    else if(flags & (DWL_FROM_GOFORWARD|DWL_REFRESH))
         CLEAR_CALLED(Invoke_PROPERTYCHANGE); /* called by IE11 */
 
     if(flags & DWL_EXPECT_BEFORE_NAVIGATE) {
