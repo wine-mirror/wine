@@ -47,7 +47,9 @@ static BOOL UpdateSCMStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode,
     status.dwServiceType = SERVICE_WIN32_OWN_PROCESS;
     status.dwCurrentState = dwCurrentState;
 
-    if (dwCurrentState == SERVICE_START_PENDING)
+    if (dwCurrentState == SERVICE_START_PENDING
+            || dwCurrentState == SERVICE_STOP_PENDING
+            || dwCurrentState == SERVICE_STOPPED)
         status.dwControlsAccepted = 0;
     else
     {
@@ -81,8 +83,6 @@ static BOOL UpdateSCMStatus(DWORD dwCurrentState, DWORD dwWin32ExitCode,
 
 static void WINAPI ServiceCtrlHandler(DWORD code)
 {
-    DWORD state = SERVICE_RUNNING;
-
     WINE_TRACE("%d\n", code);
 
     switch (code)
@@ -91,14 +91,12 @@ static void WINAPI ServiceCtrlHandler(DWORD code)
         case SERVICE_CONTROL_STOP:
             UpdateSCMStatus(SERVICE_STOP_PENDING, NO_ERROR, 0);
             KillService();
-            state = SERVICE_STOPPED;
             break;
         default:
             fprintf(stderr, "Unhandled service control code: %d\n", code);
+            UpdateSCMStatus(SERVICE_RUNNING, NO_ERROR, 0);
             break;
     }
-
-    UpdateSCMStatus(state, NO_ERROR, 0);
 }
 
 static DWORD WINAPI ServiceExecutionThread(LPVOID param)
@@ -150,10 +148,7 @@ static void WINAPI ServiceMain(DWORD argc, LPSTR *argv)
     }
 
     UpdateSCMStatus(SERVICE_RUNNING, NO_ERROR, 0);
-
-    WaitForSingleObject(kill_event, INFINITE);
-    KillService();
-
+    WaitForSingleObject(thread, INFINITE);
     UpdateSCMStatus(SERVICE_STOPPED, NO_ERROR, 0);
 }
 
