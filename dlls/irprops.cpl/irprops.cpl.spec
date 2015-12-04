@@ -15,7 +15,7 @@
 @ stub BluetoothFindFirstProfileDescriptor
 @ stub BluetoothFindFirstProtocolDescriptorStack
 @ stub BluetoothFindFirstProtocolEntry
-@ stub BluetoothFindFirstRadio
+@ stdcall BluetoothFindFirstRadio(ptr ptr) bthprops.cpl.BluetoothFindFirstRadio
 @ stub BluetoothFindFirstService
 @ stub BluetoothFindNextBrowseGroup
 @ stub BluetoothFindNextClassId
@@ -28,7 +28,7 @@
 @ stub BluetoothFindProfileDescriptorClose
 @ stub BluetoothFindProtocolDescriptorStackClose
 @ stub BluetoothFindProtocolEntryClose
-@ stub BluetoothFindRadioClose
+@ stdcall BluetoothFindRadioClose(ptr) bthprops.cpl.BluetoothFindRadioClose
 @ stub BluetoothFindServiceClose
 @ stub BluetoothGetDeviceInfo
 @ stub BluetoothGetRadioInfo

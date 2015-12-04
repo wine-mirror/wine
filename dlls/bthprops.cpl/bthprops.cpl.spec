@@ -18,7 +18,7 @@
 @ stub BluetoothFindFirstProfileDescriptor
 @ stub BluetoothFindFirstProtocolDescriptorStack
 @ stub BluetoothFindFirstProtocolEntry
-@ stub BluetoothFindFirstRadio
+@ stdcall BluetoothFindFirstRadio(ptr ptr)
 @ stub BluetoothFindFirstService
 @ stub BluetoothFindFirstServiceEx
 @ stub BluetoothFindNextBrowseGroup
@@ -32,7 +32,7 @@
 @ stub BluetoothFindProfileDescriptorClose
 @ stub BluetoothFindProtocolDescriptorStackClose
 @ stub BluetoothFindProtocolEntryClose
-@ stub BluetoothFindRadioClose
+@ stdcall BluetoothFindRadioClose(ptr)
 @ stub BluetoothFindServiceClose
 @ stub BluetoothGetDeviceInfo
 @ stub BluetoothGetRadioInfo

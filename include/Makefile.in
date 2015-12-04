@@ -208,6 +208,8 @@ HEADER_SRCS = \
 	bdaiface_enums.h \
 	bdatypes.h \
 	bitsmsg.h \
+	bluetoothapis.h \
+	bthsdpdef.h \
 	cderr.h \
 	cfgmgr32.h \
 	cguid.h \
