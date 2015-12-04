@@ -3051,6 +3051,7 @@ static void test_credentials(void)
 
 static void test_IWinHttpRequest(void)
 {
+    static const WCHAR data_start[] = {'<','!','D','O','C','T','Y','P','E',' ','h','t','m','l',' ','P','U','B','L','I','C'};
     static const WCHAR usernameW[] = {'u','s','e','r','n','a','m','e',0};
     static const WCHAR passwordW[] = {'p','a','s','s','w','o','r','d',0};
     static const WCHAR url1W[] = {'h','t','t','p',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
@@ -3358,6 +3359,7 @@ static void test_IWinHttpRequest(void)
 
     hr = IWinHttpRequest_get_ResponseText( req, &response );
     ok( hr == S_OK, "got %08x\n", hr );
+    ok( !memcmp(response, data_start, sizeof(data_start)), "got %s\n", wine_dbgstr_wn(response, 32) );
     SysFreeString( response );
 
     hr = IWinHttpRequest_get_Status( req, NULL );
