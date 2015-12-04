@@ -29,6 +29,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static const struct ddraw *exclusive_ddraw;
+static HWND exclusive_window;
 
 /* Device identifier. Don't relay it to WineD3D */
 static const DDDEVICEIDENTIFIER2 deviceidentifier =
@@ -900,6 +901,12 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
         }
     }
 
+    if ((cooplevel & DDSCL_EXCLUSIVE) && exclusive_window != window)
+    {
+        ddraw->device_state = DDRAW_DEVICE_STATE_NOT_RESTORED;
+        exclusive_window = window;
+    }
+
     if (cooplevel & DDSCL_MULTITHREADED && !(ddraw->cooperative_level & DDSCL_MULTITHREADED))
         wined3d_device_set_multithreaded(ddraw->wined3d_device);
 
@@ -927,7 +934,6 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
                 wined3d_rendertarget_view_incref(dsv);
         }
 
-        ddraw->device_state = DDRAW_DEVICE_STATE_NOT_RESTORED;
         ddraw_destroy_swapchain(ddraw);
     }
 
@@ -4707,9 +4713,14 @@ static void CDECL device_parent_activate(struct wined3d_device_parent *device_pa
     TRACE("device_parent %p, activate %#x.\n", device_parent, activate);
 
     if (!activate)
+    {
         ddraw->device_state = DDRAW_DEVICE_STATE_LOST;
+        exclusive_window = NULL;
+    }
     else
+    {
         InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_NOT_RESTORED, DDRAW_DEVICE_STATE_LOST);
+    }
 }
 
 void ddraw_update_lost_surfaces(struct ddraw *ddraw)
