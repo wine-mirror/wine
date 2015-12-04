@@ -93,7 +93,7 @@ static void set_buffer(LPWSTR *buffer, LPCWSTR string)
 
     if (string == NULL)
         string = empty_string;
-    CoGetMalloc(1, &malloc);
+    CoGetMalloc(MEMCTX_TASK, &malloc);
 
     cb = (strlenW(string) + 1)*sizeof(WCHAR);
     if (*buffer == NULL || cb > IMalloc_GetSize(malloc, *buffer))
