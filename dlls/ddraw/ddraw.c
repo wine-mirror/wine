@@ -927,6 +927,7 @@ static HRESULT ddraw_set_cooperative_level(struct ddraw *ddraw, HWND window,
                 wined3d_rendertarget_view_incref(dsv);
         }
 
+        ddraw->device_state = DDRAW_DEVICE_STATE_NOT_RESTORED;
         ddraw_destroy_swapchain(ddraw);
     }
 
@@ -2183,7 +2184,7 @@ static HRESULT WINAPI ddraw7_TestCooperativeLevel(IDirectDraw7 *iface)
 
     TRACE("iface %p.\n", iface);
 
-    return ddraw->device_state == DDRAW_DEVICE_STATE_OK ? DD_OK : DDERR_NOEXCLUSIVEMODE;
+    return ddraw->device_state == DDRAW_DEVICE_STATE_LOST ? DDERR_NOEXCLUSIVEMODE : DD_OK;
 }
 
 static HRESULT WINAPI ddraw4_TestCooperativeLevel(IDirectDraw4 *iface)
@@ -4706,9 +4707,23 @@ static void CDECL device_parent_activate(struct wined3d_device_parent *device_pa
     TRACE("device_parent %p, activate %#x.\n", device_parent, activate);
 
     if (!activate)
-        InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_LOST, DDRAW_DEVICE_STATE_OK);
+        ddraw->device_state = DDRAW_DEVICE_STATE_LOST;
     else
-        InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_OK, DDRAW_DEVICE_STATE_LOST);
+        InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_NOT_RESTORED, DDRAW_DEVICE_STATE_LOST);
+}
+
+void ddraw_update_lost_surfaces(struct ddraw *ddraw)
+{
+    struct ddraw_surface *surface;
+
+    if (ddraw->device_state != DDRAW_DEVICE_STATE_NOT_RESTORED)
+        return;
+
+    LIST_FOR_EACH_ENTRY(surface, &ddraw->surface_list, struct ddraw_surface, surface_list_entry)
+    {
+        surface->is_lost = TRUE;
+    }
+    ddraw->device_state = DDRAW_DEVICE_STATE_OK;
 }
 
 static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,
@@ -4738,6 +4753,8 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
 
     ddraw_surface_init(ddraw_surface, ddraw, wined3d_texture_get_parent(wined3d_texture), surface, parent_ops);
     *parent = ddraw_surface;
+
+    ddraw_update_lost_surfaces(ddraw);
     list_add_head(&ddraw->surface_list, &ddraw_surface->surface_list_entry);
 
     TRACE("Created ddraw surface %p.\n", ddraw_surface);

@@ -2492,7 +2492,6 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
 #define SFLAG_DIBSECTION        0x00000001 /* Has a DIB section attached for GetDC. */
 #define SFLAG_DISCARD           0x00000002 /* ??? */
 #define SFLAG_NONPOW2           0x00000004 /* Surface sizes are not a power of 2 */
-#define SFLAG_LOST              0x00000008 /* Surface lost flag for ddraw. */
 #define SFLAG_CLIENT            0x00000010 /* GL_APPLE_client_storage is used with this surface. */
 #define SFLAG_DCINUSE           0x00000020 /* Set between GetDC and ReleaseDC calls. */
 

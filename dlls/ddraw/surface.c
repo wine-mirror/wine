@@ -3507,22 +3507,13 @@ static HRESULT WINAPI d3d_texture1_Initialize(IDirect3DTexture *iface,
 static HRESULT WINAPI ddraw_surface7_IsLost(IDirectDrawSurface7 *iface)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    HRESULT hr;
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    hr = wined3d_surface_is_lost(surface->wined3d_surface);
-    wined3d_mutex_unlock();
+    if (surface->ddraw->device_state != DDRAW_DEVICE_STATE_OK || surface->is_lost)
+        return DDERR_SURFACELOST;
 
-    switch(hr)
-    {
-        /* D3D8 and 9 lose full devices, thus there's only a DEVICELOST error.
-         * WineD3D uses the same error for surfaces
-         */
-        case WINED3DERR_DEVICELOST:         return DDERR_SURFACELOST;
-        default:                            return hr;
-    }
+    return DD_OK;
 }
 
 static HRESULT WINAPI ddraw_surface4_IsLost(IDirectDrawSurface4 *iface)
@@ -3575,15 +3566,13 @@ static HRESULT WINAPI ddraw_surface1_IsLost(IDirectDrawSurface *iface)
 static HRESULT WINAPI ddraw_surface7_Restore(IDirectDrawSurface7 *iface)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    HRESULT hr;
 
     TRACE("iface %p.\n", iface);
 
-    wined3d_mutex_lock();
-    hr = wined3d_surface_restore(surface->wined3d_surface);
-    wined3d_mutex_unlock();
+    ddraw_update_lost_surfaces(surface->ddraw);
+    surface->is_lost = FALSE;
 
-    return hr;
+    return DD_OK;
 }
 
 static HRESULT WINAPI ddraw_surface4_Restore(IDirectDrawSurface4 *iface)

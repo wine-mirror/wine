@@ -1161,12 +1161,6 @@ static void surface_unload(struct wined3d_resource *resource)
             surface_validate_location(surface, WINED3D_LOCATION_SYSMEM);
             surface_invalidate_location(surface, ~WINED3D_LOCATION_SYSMEM);
         }
-
-        /* We also get here when the ddraw swapchain is destroyed, for example
-         * for a mode switch. In this case this surface won't necessarily be
-         * an implicit surface. We have to mark it lost so that the
-         * application can restore it after the mode switch. */
-        surface->flags |= SFLAG_LOST;
     }
     else
     {
@@ -1922,22 +1916,6 @@ struct wined3d_resource * CDECL wined3d_surface_get_resource(struct wined3d_surf
     TRACE("surface %p.\n", surface);
 
     return &surface->resource;
-}
-
-HRESULT CDECL wined3d_surface_is_lost(const struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    /* D3D8 and 9 lose full devices, ddraw only surfaces. */
-    return surface->flags & SFLAG_LOST ? WINED3DERR_DEVICELOST : WINED3D_OK;
-}
-
-HRESULT CDECL wined3d_surface_restore(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    surface->flags &= ~SFLAG_LOST;
-    return WINED3D_OK;
 }
 
 DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
@@ -4157,8 +4135,7 @@ HRESULT surface_load_location(struct wined3d_surface *surface, struct wined3d_co
     if (!surface->locations)
     {
         ERR("Surface %p does not have any up to date location.\n", surface);
-        surface->flags |= SFLAG_LOST;
-        return WINED3DERR_DEVICELOST;
+        return WINED3DERR_INVALIDCALL;
     }
 
     switch (location)

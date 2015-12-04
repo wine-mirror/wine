@@ -53,7 +53,6 @@
 #define WINED3DERR_DRIVERINTERNALERROR                          MAKE_WINED3DHRESULT(2087)
 #define WINED3DERR_NOTFOUND                                     MAKE_WINED3DHRESULT(2150)
 #define WINED3DERR_MOREDATA                                     MAKE_WINED3DHRESULT(2151)
-#define WINED3DERR_DEVICELOST                                   MAKE_WINED3DHRESULT(2152)
 #define WINED3DERR_DEVICENOTRESET                               MAKE_WINED3DHRESULT(2153)
 #define WINED3DERR_NOTAVAILABLE                                 MAKE_WINED3DHRESULT(2154)
 #define WINED3DERR_OUTOFVIDEOMEMORY                             MAKE_WINED3DHRESULT(380)
@@ -2497,12 +2496,10 @@ DWORD __cdecl wined3d_surface_get_pitch(const struct wined3d_surface *surface);
 struct wined3d_resource * __cdecl wined3d_surface_get_resource(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc);
 ULONG __cdecl wined3d_surface_incref(struct wined3d_surface *surface);
-HRESULT __cdecl wined3d_surface_is_lost(const struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_map(struct wined3d_surface *surface,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags);
 void __cdecl wined3d_surface_preload(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc);
-HRESULT __cdecl wined3d_surface_restore(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y);
 HRESULT __cdecl wined3d_surface_unmap(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_update_overlay(struct wined3d_surface *surface, const RECT *src_rect,

@@ -66,6 +66,7 @@ enum ddraw_device_state
 {
     DDRAW_DEVICE_STATE_OK,
     DDRAW_DEVICE_STATE_LOST,
+    DDRAW_DEVICE_STATE_NOT_RESTORED,
 };
 
 struct ddraw
@@ -126,6 +127,7 @@ HRESULT ddraw_init(struct ddraw *ddraw, DWORD flags, enum wined3d_device_type de
 void ddraw_d3dcaps1_from_7(D3DDEVICEDESC *caps1, D3DDEVICEDESC7 *caps7) DECLSPEC_HIDDEN;
 void ddraw_destroy_swapchain(struct ddraw *ddraw) DECLSPEC_HIDDEN;
 HRESULT ddraw_get_d3dcaps(const struct ddraw *ddraw, D3DDEVICEDESC7 *caps) DECLSPEC_HIDDEN;
+void ddraw_update_lost_surfaces(struct ddraw *ddraw) DECLSPEC_HIDDEN;
 
 static inline void ddraw_set_swapchain_window(struct ddraw *ddraw, HWND window)
 {
@@ -181,6 +183,7 @@ struct ddraw_surface
      * but no pointer to prevent temptations to traverse it in the wrong direction.
      */
     BOOL                    is_complex_root;
+    BOOL is_lost;
 
     /* Surface description, for GetAttachedSurface */
     DDSURFACEDESC2          surface_desc;
