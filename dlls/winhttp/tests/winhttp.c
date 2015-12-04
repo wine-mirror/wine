@@ -38,6 +38,7 @@ DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 static const WCHAR test_useragent[] =
     {'W','i','n','e',' ','R','e','g','r','e','s','s','i','o','n',' ','T','e','s','t',0};
 static const WCHAR test_winehq[] = {'t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',0};
+static const WCHAR test_winehq_https[] = {'h','t','t','p','s',':','/','/','t','e','s','t','.','w','i','n','e','h','q','.','o','r','g',':','4','4','3',0};
 static const WCHAR localhostW[] = {'l','o','c','a','l','h','o','s','t',0};
 
 static BOOL proxy_active(void)
@@ -3560,6 +3561,31 @@ static void test_IWinHttpRequest(void)
     SysFreeString( today );
     VariantClear( &proxy_server );
     VariantClear( &bypass_list );
+
+    hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    url = SysAllocString( test_winehq_https );
+    method = SysAllocString( method3W );
+    V_VT( &async ) = VT_BOOL;
+    V_BOOL( &async ) = VARIANT_FALSE;
+    hr = IWinHttpRequest_Open( req, method, url, async );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( method );
+    SysFreeString( url );
+
+    V_VT( &data ) = VT_BSTR;
+    V_BSTR( &data ) = NULL;
+    hr = IWinHttpRequest_Send( req, data );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = IWinHttpRequest_get_ResponseText( req, &response );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !memcmp(response, data_start, sizeof(data_start)), "got %s\n", wine_dbgstr_wn(response, 32) );
+    SysFreeString( response );
+
+    IWinHttpRequest_Release( req );
+
     CoUninitialize();
 }
 
