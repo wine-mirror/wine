@@ -2840,14 +2840,15 @@ enum coords_relative
 /* Get/set information about a user object (window station or desktop) */
 @REQ(set_user_object_info)
     obj_handle_t handle;          /* handle to the object */
-    unsigned int flags;           /* information to set */
+    unsigned int flags;           /* information to set/get */
     unsigned int obj_flags;       /* new object flags */
 @REPLY
     int          is_desktop;      /* is object a desktop? */
     unsigned int old_obj_flags;   /* old object flags */
     VARARG(name,unicode_str);     /* object name */
 @END
-#define SET_USER_OBJECT_FLAGS 1
+#define SET_USER_OBJECT_SET_FLAGS       1
+#define SET_USER_OBJECT_GET_FULL_NAME   2
 
 
 /* Register a hotkey */

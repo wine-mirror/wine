@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include "windef.h"
 #include "winbase.h"
 #include "winver.h"
@@ -2040,10 +2041,28 @@ HWND WINAPI GetDesktopWindow(void)
         WCHAR windir[MAX_PATH];
         WCHAR app[MAX_PATH + sizeof(explorer)/sizeof(WCHAR)];
         WCHAR cmdline[MAX_PATH + (sizeof(explorer) + sizeof(args))/sizeof(WCHAR)];
+        WCHAR desktop[MAX_PATH];
         void *redir;
+
+        SERVER_START_REQ( set_user_object_info )
+        {
+            req->handle = wine_server_obj_handle( GetThreadDesktop(GetCurrentThreadId()) );
+            req->flags  = SET_USER_OBJECT_GET_FULL_NAME;
+            wine_server_set_reply( req, desktop, sizeof(desktop) - sizeof(WCHAR) );
+            if (!wine_server_call( req ))
+            {
+                size_t size = wine_server_reply_size( reply );
+                desktop[size / sizeof(WCHAR)] = 0;
+                TRACE( "starting explorer for desktop %s\n", debugstr_w(desktop) );
+            }
+            else
+                desktop[0] = 0;
+        }
+        SERVER_END_REQ;
 
         memset( &si, 0, sizeof(si) );
         si.cb = sizeof(si);
+        si.lpDesktop = *desktop ? desktop : NULL;
         si.dwFlags = STARTF_USESTDHANDLES;
         si.hStdInput  = 0;
         si.hStdOutput = 0;

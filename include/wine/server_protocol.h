@@ -4009,7 +4009,8 @@ struct set_user_object_info_reply
     unsigned int old_obj_flags;
     /* VARARG(name,unicode_str); */
 };
-#define SET_USER_OBJECT_FLAGS 1
+#define SET_USER_OBJECT_SET_FLAGS       1
+#define SET_USER_OBJECT_GET_FULL_NAME   2
 
 
 
@@ -6152,6 +6153,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 489
+#define SERVER_PROTOCOL_VERSION 490
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -424,13 +424,13 @@ void close_thread_desktop( struct thread *thread )
 }
 
 /* set the reply data from the object name */
-static void set_reply_data_obj_name( struct object *obj )
+static void set_reply_data_obj_name( struct object *obj, int full_name )
 {
     data_size_t len;
     const WCHAR *ptr, *name = get_object_name( obj, &len );
 
     /* if there is a backslash return the part of the name after it */
-    if (name && (ptr = memchrW( name, '\\', len/sizeof(WCHAR) )))
+    if (name && !full_name && (ptr = memchrW( name, '\\', len/sizeof(WCHAR) )))
     {
         len -= (ptr + 1 - name) * sizeof(WCHAR);
         name = ptr + 1;
@@ -657,14 +657,14 @@ DECL_HANDLER(set_user_object_info)
         struct desktop *desktop = (struct desktop *)obj;
         reply->is_desktop = 1;
         reply->old_obj_flags = desktop->flags;
-        if (req->flags & SET_USER_OBJECT_FLAGS) desktop->flags = req->obj_flags;
+        if (req->flags & SET_USER_OBJECT_SET_FLAGS) desktop->flags = req->obj_flags;
     }
     else if (obj->ops == &winstation_ops)
     {
         struct winstation *winstation = (struct winstation *)obj;
         reply->is_desktop = 0;
         reply->old_obj_flags = winstation->flags;
-        if (req->flags & SET_USER_OBJECT_FLAGS) winstation->flags = req->obj_flags;
+        if (req->flags & SET_USER_OBJECT_SET_FLAGS) winstation->flags = req->obj_flags;
     }
     else
     {
@@ -672,7 +672,8 @@ DECL_HANDLER(set_user_object_info)
         release_object( obj );
         return;
     }
-    if (get_reply_max_size()) set_reply_data_obj_name( obj );
+    if (get_reply_max_size())
+        set_reply_data_obj_name( obj, (req->flags & SET_USER_OBJECT_GET_FULL_NAME) != 0 );
     release_object( obj );
 }
 
@@ -688,7 +689,7 @@ DECL_HANDLER(enum_winstation)
         unsigned int access = WINSTA_ENUMERATE;
         if (req->index > index++) continue;
         if (!check_object_access( &winsta->obj, &access )) continue;
-        set_reply_data_obj_name( &winsta->obj );
+        set_reply_data_obj_name( &winsta->obj, 0 );
         clear_error();
         reply->next = index;
         return;
@@ -714,7 +715,7 @@ DECL_HANDLER(enum_desktop)
         if (req->index > index++) continue;
         if (!desktop->obj.name) continue;
         if (!check_object_access( &desktop->obj, &access )) continue;
-        set_reply_data_obj_name( &desktop->obj );
+        set_reply_data_obj_name( &desktop->obj, 0 );
         release_object( winstation );
         clear_error();
         reply->next = index;
