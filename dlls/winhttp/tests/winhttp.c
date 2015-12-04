@@ -2903,7 +2903,7 @@ static void test_connection_info( int port )
     memset( &info, 0, sizeof(info) );
     ret = WinHttpQueryOption( req, WINHTTP_OPTION_CONNECTION_INFO, &info, &size );
     ok( ret, "failed to retrieve connection info %u\n", GetLastError() );
-    ok( info.cbSize == sizeof(info), "wrong size %u\n", info.cbSize );
+    ok( info.cbSize == sizeof(info) || info.cbSize == sizeof(info) - sizeof(info.cbSize) /* Win7 */, "wrong size %u\n", info.cbSize );
 
     ret = WinHttpReceiveResponse( req, NULL );
     ok( ret, "failed to receive response %u\n", GetLastError() );
@@ -2912,7 +2912,7 @@ static void test_connection_info( int port )
     memset( &info, 0, sizeof(info) );
     ret = WinHttpQueryOption( req, WINHTTP_OPTION_CONNECTION_INFO, &info, &size );
     ok( ret, "failed to retrieve connection info %u\n", GetLastError() );
-    ok( info.cbSize == sizeof(info), "wrong size %u\n", info.cbSize );
+    ok( info.cbSize == sizeof(info) || info.cbSize == sizeof(info) - sizeof(info.cbSize) /* Win7 */, "wrong size %u\n", info.cbSize );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
