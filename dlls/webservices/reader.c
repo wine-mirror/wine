@@ -321,6 +321,7 @@ void free_node( struct node *node )
     {
         WS_XML_COMMENT_NODE *comment = (WS_XML_COMMENT_NODE *)node;
         heap_free( comment->value.bytes );
+        break;
     }
     case WS_XML_NODE_TYPE_END_ELEMENT:
     case WS_XML_NODE_TYPE_EOF:
