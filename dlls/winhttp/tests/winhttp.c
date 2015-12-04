@@ -970,8 +970,9 @@ static void CALLBACK cert_error(HINTERNET handle, DWORD_PTR ctx, DWORD status, L
 
 static void test_secure_connection(void)
 {
+    static const char data_start[] = "<!DOCTYPE html PUBLIC";
     HINTERNET ses, con, req;
-    DWORD size, status, policy, bitness, read_size, err;
+    DWORD size, status, policy, bitness, read_size, err, available_size;
     BOOL ret;
     CERT_CONTEXT *cert;
     WINHTTP_CERTIFICATE_INFO info;
@@ -1050,6 +1051,11 @@ static void test_secure_connection(void)
     ret = WinHttpReceiveResponse(req, NULL);
     ok(ret, "failed to receive response %u\n", GetLastError());
 
+    available_size = 0;
+    ret = WinHttpQueryDataAvailable(req, &available_size);
+    ok(ret, "failed to query available data %u\n", GetLastError());
+    ok(available_size > 2014, "available_size = %u\n", available_size);
+
     status = 0xdeadbeef;
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
@@ -1068,8 +1074,11 @@ static void test_secure_connection(void)
         ok(ret == TRUE, "WinHttpReadData failed: %u.\n", GetLastError());
         if (!size) break;
         read_size += size;
+
+        if (read_size <= 32)
+            ok(!memcmp(buffer, data_start, sizeof(data_start)-1), "not expected: %.32s\n", buffer);
     }
-    ok(read_size > 2014, "read_size = %u\n", read_size);
+    ok(read_size >= available_size, "read_size = %u, available_size = %u\n", read_size, available_size);
 
 cleanup:
     WinHttpCloseHandle(req);
