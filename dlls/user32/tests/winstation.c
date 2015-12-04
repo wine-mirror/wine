@@ -23,6 +23,9 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "winternl.h"
+
+static NTSTATUS (WINAPI *pNtQueryObject)(HANDLE, OBJECT_INFORMATION_CLASS, PVOID, ULONG, PULONG);
 
 #define DESKTOP_ALL_ACCESS 0x01ff
 
@@ -388,12 +391,14 @@ static void test_enumdesktops(void)
 
 static void test_getuserobjectinformation(void)
 {
-    HDESK desk;
-    WCHAR bufferW[20];
-    char buffer[20];
-    WCHAR foobarTestW[] = {'f','o','o','b','a','r','T','e','s','t',0};
+    WCHAR foobarTestW[] = {'\\','f','o','o','b','a','r','T','e','s','t',0};
     WCHAR DesktopW[] = {'D','e','s','k','t','o','p',0};
+    OBJECT_NAME_INFORMATION *name_info;
+    WCHAR bufferW[20];
+    char buffer[64];
+    NTSTATUS status;
     DWORD size;
+    HDESK desk;
     BOOL ret;
 
     desk = CreateDesktopA("foobarTest", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL);
@@ -440,8 +445,15 @@ static void test_getuserobjectinformation(void)
     ok(ret, "GetUserObjectInformationW returned %x\n", ret);
     ok(GetLastError() == 0xdeadbeef, "LastError is set to %08x\n", GetLastError());
 
-    ok(lstrcmpW(bufferW, foobarTestW) == 0, "Buffer is not set to 'foobarTest'\n");
+    ok(lstrcmpW(bufferW, foobarTestW + 1) == 0, "Buffer is not set to 'foobarTest'\n");
     ok(size == 22, "size is set to %d\n", size);  /* 22 bytes in 'foobarTest\0' in Unicode */
+
+    /* ObjectNameInformation does not return the full desktop name */
+    name_info = (OBJECT_NAME_INFORMATION *)buffer;
+    status = pNtQueryObject(desk, ObjectNameInformation, name_info, sizeof(buffer), NULL);
+    ok(!status, "expected STATUS_SUCCESS, got %08x\n", status);
+    todo_wine ok(lstrcmpW(name_info->Name.Buffer, foobarTestW) == 0,
+                 "expected '\\foobarTest', got %s\n", wine_dbgstr_w(name_info->Name.Buffer));
 
     /** Tests for UOI_TYPE **/
 
@@ -935,6 +947,9 @@ static void test_foregroundwindow(void)
 
 START_TEST(winstation)
 {
+    HMODULE hntdll = GetModuleHandleA("ntdll.dll");
+    pNtQueryObject = (void *)GetProcAddress(hntdll, "NtQueryObject");
+
     /* Check whether this platform supports WindowStation calls */
 
     SetLastError( 0xdeadbeef );
