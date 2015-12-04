@@ -52,6 +52,15 @@ HRESULT WINAPI ClearDownloadCache(void)
 }
 
 /******************************************************************
+ *  CopyPDBs   (FUSION.@)
+ */
+HRESULT WINAPI CopyPDBs(void *unknown)
+{
+    FIXME("(%p) stub!\n", unknown);
+    return E_NOTIMPL;
+}
+
+/******************************************************************
  *  CreateInstallReferenceEnum   (FUSION.@)
  */
 HRESULT WINAPI CreateInstallReferenceEnum(IInstallReferenceEnum **ppRefEnum,
