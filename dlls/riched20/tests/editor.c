@@ -3997,6 +3997,41 @@ static void test_EM_SETTEXTEX(void)
   result = strcmp(bufACP, "TestUTF8WithBOM");
   ok(result == 0, "EM_SETTEXTEX: Test UTF8 with BOM set wrong text: Result: %s\n", bufACP);
 
+  /* Test multibyte character */
+  if (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_JAPANESE)
+    skip("Skip multibyte character tests on non-Japanese platform\n");
+  else
+  {
+    SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
+    setText.flags = ST_SELECTION;
+    setText.codepage = CP_ACP;
+    result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)"abc\x8e\xf0");
+    todo_wine ok(result == 5, "EM_SETTEXTEX incorrectly returned %d, expected 5\n", result);
+    result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)bufACP);
+    ok(result == 5, "WM_GETTEXT incorrectly returned %d, expected 5\n", result);
+    ok(!strcmp(bufACP, "abc\x8e\xf0"),
+       "EM_SETTEXTEX: Test multibyte character set wrong text: Result: %s\n", bufACP);
+
+    setText.flags = ST_DEFAULT;
+    setText.codepage = CP_ACP;
+    result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)"abc\x8e\xf0");
+    ok(result == 1, "EM_SETTEXTEX incorrectly returned %d, expected 1\n", result);
+    result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)bufACP);
+    ok(result == 5, "WM_GETTEXT incorrectly returned %d, expected 5\n", result);
+    ok(!strcmp(bufACP, "abc\x8e\xf0"),
+       "EM_SETTEXTEX: Test multibyte character set wrong text: Result: %s\n", bufACP);
+
+    SendMessageA(hwndRichEdit, EM_SETSEL, 0, -1);
+    setText.flags = ST_SELECTION;
+    setText.codepage = CP_ACP;
+    result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)"{\\rtf abc\x8e\xf0}");
+    todo_wine ok(result == 4, "EM_SETTEXTEX incorrectly returned %d, expected 4\n", result);
+    result = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)bufACP);
+    ok(result == 5, "WM_GETTEXT incorrectly returned %d, expected 5\n", result);
+    todo_wine ok(!strcmp(bufACP, "abc\x8e\xf0"),
+                 "EM_SETTEXTEX: Test multibyte character set wrong text: Result: %s\n", bufACP);
+  }
+
   DestroyWindow(hwndRichEdit);
 }
 
@@ -4834,6 +4869,34 @@ static void test_EM_REPLACESEL(int redraw)
     /* Test number of lines reported after EM_REPLACESEL */
     r = SendMessageA(hwndRichEdit, EM_GETLINECOUNT, 0, 0);
     ok(r == 7, "EM_GETLINECOUNT returned %d, expected 7\n", r);
+
+    /* Test with  multibyte character */
+    if (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_JAPANESE)
+        skip("Skip multibyte character tests on non-Japanese platform\n");
+    else
+    {
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
+        r = SendMessageA(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)"abc\x8e\xf0");
+        todo_wine ok(r == 5, "EM_REPLACESEL returned %d, expected 5\n", r);
+        r = SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
+        ok(r == 0, "EM_EXGETSEL returned %d, expected 0\n", r);
+        ok(cr.cpMin == 4, "EM_EXGETSEL returned cpMin=%d, expected 4\n", cr.cpMin);
+        ok(cr.cpMax == 4, "EM_EXGETSEL returned cpMax=%d, expected 4\n", cr.cpMax);
+        r = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
+        ok(!strcmp(buffer, "abc\x8e\xf0"), "WM_GETTEXT returned incorrect string\n");
+        ok(r == 5, "WM_GETTEXT returned %d, expected 5\n", r);
+
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
+        r = SendMessageA(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)"{\\rtf abc\x8e\xf0}");
+        todo_wine ok(r == 4, "EM_REPLACESEL returned %d, expected 4\n", r);
+        r = SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
+        ok(r == 0, "EM_EXGETSEL returned %d, expected 0\n", r);
+        todo_wine ok(cr.cpMin == 4, "EM_EXGETSEL returned cpMin=%d, expected 4\n", cr.cpMin);
+        todo_wine ok(cr.cpMax == 4, "EM_EXGETSEL returned cpMax=%d, expected 4\n", cr.cpMax);
+        r = SendMessageA(hwndRichEdit, WM_GETTEXT, 1024, (LPARAM)buffer);
+        todo_wine ok(!strcmp(buffer, "abc\x8e\xf0"), "WM_GETTEXT returned incorrect string\n");
+        todo_wine ok(r == 5, "WM_GETTEXT returned %d, expected 5\n", r);
+    }
 
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, 0);
     r = SendMessageA(hwndRichEdit, EM_REPLACESEL, 0, (LPARAM)rtfstream);
