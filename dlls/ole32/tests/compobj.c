@@ -2619,6 +2619,51 @@ static void test_CoWaitForMultipleHandles(void)
     CoUninitialize();
 }
 
+static void test_CoGetMalloc(void)
+{
+    IMalloc *imalloc;
+    HRESULT hr;
+
+if (0) /* crashes on native */
+    hr = CoGetMalloc(0, NULL);
+
+    imalloc = (void*)0xdeadbeef;
+    hr = CoGetMalloc(0, &imalloc);
+todo_wine {
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(imalloc == NULL, "got %p\n", imalloc);
+}
+    imalloc = (void*)0xdeadbeef;
+    hr = CoGetMalloc(MEMCTX_SHARED, &imalloc);
+todo_wine {
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(imalloc == NULL, "got %p\n", imalloc);
+}
+    imalloc = (void*)0xdeadbeef;
+    hr = CoGetMalloc(MEMCTX_MACSYSTEM, &imalloc);
+todo_wine {
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(imalloc == NULL, "got %p\n", imalloc);
+}
+    imalloc = (void*)0xdeadbeef;
+    hr = CoGetMalloc(MEMCTX_UNKNOWN, &imalloc);
+todo_wine {
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(imalloc == NULL, "got %p\n", imalloc);
+}
+    imalloc = (void*)0xdeadbeef;
+    hr = CoGetMalloc(MEMCTX_SAME, &imalloc);
+todo_wine {
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(imalloc == NULL, "got %p\n", imalloc);
+}
+    imalloc = NULL;
+    hr = CoGetMalloc(MEMCTX_TASK, &imalloc);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(imalloc != NULL, "got %p\n", imalloc);
+    IMalloc_Release(imalloc);
+}
+
 static void init_funcs(void)
 {
     HMODULE hOle32 = GetModuleHandleA("ole32");
@@ -2681,4 +2726,5 @@ START_TEST(compobj)
     test_OleRegGetMiscStatus();
     test_CoCreateGuid();
     test_CoWaitForMultipleHandles();
+    test_CoGetMalloc();
 }
