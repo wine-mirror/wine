@@ -3676,8 +3676,9 @@ static void test_EM_SETTEXTEX(void)
 
   setText.codepage = CP_ACP;
   setText.flags = ST_SELECTION;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText,
-              (LPARAM)"{\\rtf 1\\par 2\\par 3\\par 4\\par 5\\par 6\\par 7\\par 8\\par 9\\par}");
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText,
+                        (LPARAM)"{\\rtf 1\\par 2\\par 3\\par 4\\par 5\\par 6\\par 7\\par 8\\par 9\\par}");
+  todo_wine ok(result == 18, "EM_SETTEXTEX returned %d, expected 18\n", result);
   si.cbSize = sizeof(si);
   si.fMask = SIF_ALL;
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
@@ -3692,8 +3693,9 @@ static void test_EM_SETTEXTEX(void)
   hwndRichEdit = new_richedit(NULL);
   setText.codepage = CP_ACP;
   setText.flags = ST_SELECTION;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText,
-              (LPARAM)"{\\rtf 1\\par 2\\par 3\\par 4\\par 5\\par 6\\par 7\\par 8\\par 9\\par}");
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText,
+                        (LPARAM)"{\\rtf 1\\par 2\\par 3\\par 4\\par 5\\par 6\\par 7\\par 8\\par 9\\par}");
+  todo_wine ok(result == 18, "EM_SETTEXTEX returned %d, expected 18\n", result);
   si.cbSize = sizeof(si);
   si.fMask = SIF_ALL;
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
@@ -3706,8 +3708,9 @@ static void test_EM_SETTEXTEX(void)
    * but this time it is because the selection is at the beginning. */
   setText.codepage = CP_ACP;
   setText.flags = ST_DEFAULT;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText,
-              (LPARAM)"{\\rtf 1\\par 2\\par 3\\par 4\\par 5\\par 6\\par 7\\par 8\\par 9\\par}");
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText,
+                        (LPARAM)"{\\rtf 1\\par 2\\par 3\\par 4\\par 5\\par 6\\par 7\\par 8\\par 9\\par}");
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   si.cbSize = sizeof(si);
   si.fMask = SIF_ALL;
   GetScrollInfo(hwndRichEdit, SB_VERT, &si);
@@ -3724,7 +3727,8 @@ static void test_EM_SETTEXTEX(void)
   getText.lpUsedDefChar = NULL;
 
   setText.flags = 0;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
   ok(lstrcmpW(buf, TestItem1) == 0,
       "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
@@ -3739,7 +3743,8 @@ static void test_EM_SETTEXTEX(void)
   getText.lpDefaultChar = NULL;
   getText.lpUsedDefChar = NULL;
   setText.flags = 0;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem2);
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem2);
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
   ok(lstrcmpW(buf, TestItem2) == 0,
       "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
@@ -3784,7 +3789,8 @@ static void test_EM_SETTEXTEX(void)
   getText.lpDefaultChar = NULL;
   getText.lpUsedDefChar = NULL;
   setText.flags = 0;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem3);
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem3);
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
   ok(lstrcmpW(buf, TestItem3_after) == 0,
       "EM_SETTEXTEX did not convert properly\n");
@@ -3797,7 +3803,8 @@ static void test_EM_SETTEXTEX(void)
   getText.lpDefaultChar = NULL;
   getText.lpUsedDefChar = NULL;
   setText.flags = 0;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem3alt);
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem3alt);
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
   ok(lstrcmpW(buf, TestItem3_after) == 0,
       "EM_SETTEXTEX did not convert properly\n");
@@ -3810,7 +3817,8 @@ static void test_EM_SETTEXTEX(void)
   getText.lpDefaultChar = NULL;
   getText.lpUsedDefChar = NULL;
   setText.flags = 0;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem4);
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem4);
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
   ok(lstrcmpW(buf, TestItem4_after) == 0,
       "EM_SETTEXTEX did not convert properly\n");
@@ -3825,7 +3833,8 @@ static void test_EM_SETTEXTEX(void)
 
   /* put some text back: !ST_SELECTION && Unicode && !\rtf */
   setText.flags = 0;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   /* select some text */
   cr.cpMax = 1;
   cr.cpMin = 3;
@@ -3840,7 +3849,8 @@ static void test_EM_SETTEXTEX(void)
   
   /* put some text back: !ST_SELECTION && Unicode && !\rtf */
   setText.flags = 0;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)TestItem1);
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   /* select some text */
   cr.cpMax = 1;
   cr.cpMin = 3;
@@ -3878,7 +3888,8 @@ static void test_EM_SETTEXTEX(void)
   getText.lpUsedDefChar = NULL;
 
   setText.flags = 0;
-  SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)buf);
+  result = SendMessageA(hwndRichEdit, EM_SETTEXTEX, (WPARAM)&setText, (LPARAM)buf);
+  ok(result == 1, "EM_SETTEXTEX returned %d, expected 1\n", result);
   SendMessageA(hwndRichEdit, EM_GETTEXTEX, (WPARAM)&getText, (LPARAM)buf);
   ok(lstrcmpW(buf, TestItem1) == 0,
       "EM_GETTEXTEX results not what was set by EM_SETTEXTEX\n");
