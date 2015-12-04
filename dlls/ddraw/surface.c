@@ -1239,6 +1239,13 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
 
     wined3d_mutex_lock();
 
+    if (!(dst_impl->ddraw->cooperative_level & DDSCL_EXCLUSIVE))
+    {
+        WARN("Not in exclusive mode.\n");
+        wined3d_mutex_unlock();
+        return DDERR_NOEXCLUSIVEMODE;
+    }
+
     tmp_rtv = ddraw_surface_get_rendertarget_view(dst_impl);
     tmp = dst_impl->wined3d_surface;
     texture = dst_impl->wined3d_texture;
