@@ -567,22 +567,33 @@ INT nulldrv_StretchDIBits( PHYSDEV dev, INT xDst, INT yDst, INT widthDst, INT he
     err = dev->funcs->pPutImage( dev, clip, dst_info, &src_bits, &src, &dst, rop );
     if (err == ERROR_BAD_FORMAT)
     {
+        DWORD dst_colors = dst_info->bmiHeader.biClrUsed;
+
         /* 1-bpp destination without a color table requires a fake 1-entry table
-         * that contains only the background color */
-        if (dst_info->bmiHeader.biBitCount == 1 && !dst_info->bmiHeader.biClrUsed)
+         * that contains only the background color; except with a 1-bpp source,
+         * in which case it uses the source colors */
+        if (dst_info->bmiHeader.biBitCount == 1 && !dst_colors)
         {
-            COLORREF color = GetBkColor( dev->hdc );
-            dst_info->bmiColors[0].rgbRed      = GetRValue( color );
-            dst_info->bmiColors[0].rgbGreen    = GetGValue( color );
-            dst_info->bmiColors[0].rgbBlue     = GetBValue( color );
-            dst_info->bmiColors[0].rgbReserved = 0;
-            dst_info->bmiHeader.biClrUsed = 1;
+            if (src_info->bmiHeader.biBitCount > 1)
+            {
+                COLORREF color = GetBkColor( dev->hdc );
+                dst_info->bmiColors[0].rgbRed      = GetRValue( color );
+                dst_info->bmiColors[0].rgbGreen    = GetGValue( color );
+                dst_info->bmiColors[0].rgbBlue     = GetBValue( color );
+                dst_info->bmiColors[0].rgbReserved = 0;
+                dst_info->bmiHeader.biClrUsed = 1;
+            }
+            else
+            {
+                memcpy( dst_info->bmiColors, src_info->bmiColors, 2 * sizeof(dst_info->bmiColors[0]) );
+                dst_info->bmiHeader.biClrUsed = 2;
+            }
         }
 
         if (!(err = convert_bits( src_info, &src, dst_info, &src_bits )))
         {
             /* get rid of the fake 1-bpp table */
-            if (dst_info->bmiHeader.biClrUsed == 1) dst_info->bmiHeader.biClrUsed = 0;
+            dst_info->bmiHeader.biClrUsed = dst_colors;
             err = dev->funcs->pPutImage( dev, clip, dst_info, &src_bits, &src, &dst, rop );
         }
     }
