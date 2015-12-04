@@ -25,9 +25,6 @@ appname=`basename "$0" .exe`.exe
 # first try explicit WINELOADER
 if [ -x "$WINELOADER" ]; then exec "$WINELOADER" "$appname" "$@"; fi
 
-# then default bin directory
-if [ -x "@bindir@/wine" ]; then exec "@bindir@/wine" "$appname" "$@"; fi
-
 # now try the directory containing $0
 appdir=""
 case "$0" in
@@ -47,6 +44,21 @@ case "$0" in
     ;;
 esac
 if [ -x "$appdir/wine" ]; then exec "$appdir/wine" "$appname" "$@"; fi
+if [ -x "$appdir/wine64" ]; then exec "$appdir/wine64" "$appname" "$@"; fi
 
-# finally look in PATH
-exec wine "$appname" "$@"
+# now look in PATH
+saved_ifs=$IFS
+IFS=:
+for d in $PATH
+do
+  IFS=$saved_ifs
+  if [ -x "$d/wine" ]; then exec "$d/wine" "$appname" "$@"; fi
+  if [ -x "$d/wine64" ]; then exec "$d/wine64" "$appname" "$@"; fi
+done
+
+# finally, the default bin directory
+if [ -x "@bindir@/wine" ]; then exec "@bindir@/wine" "$appname" "$@"; fi
+if [ -x "@bindir@/wine64" ]; then exec "@bindir@/wine64" "$appname" "$@"; fi
+
+echo "$0: the Wine loader is missing"
+exit 1
