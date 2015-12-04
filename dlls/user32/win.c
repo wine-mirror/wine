@@ -2033,45 +2033,39 @@ HWND WINAPI GetDesktopWindow(void)
 
     if (!thread_info->top_window)
     {
-        USEROBJECTFLAGS flags;
-        if (!GetUserObjectInformationW( GetProcessWindowStation(), UOI_FLAGS, &flags,
-                                        sizeof(flags), NULL ) || (flags.dwFlags & WSF_VISIBLE))
+        static const WCHAR explorer[] = {'\\','e','x','p','l','o','r','e','r','.','e','x','e',0};
+        static const WCHAR args[] = {' ','/','d','e','s','k','t','o','p',0};
+        STARTUPINFOW si;
+        PROCESS_INFORMATION pi;
+        WCHAR windir[MAX_PATH];
+        WCHAR app[MAX_PATH + sizeof(explorer)/sizeof(WCHAR)];
+        WCHAR cmdline[MAX_PATH + (sizeof(explorer) + sizeof(args))/sizeof(WCHAR)];
+        void *redir;
+
+        memset( &si, 0, sizeof(si) );
+        si.cb = sizeof(si);
+        si.dwFlags = STARTF_USESTDHANDLES;
+        si.hStdInput  = 0;
+        si.hStdOutput = 0;
+        si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
+
+        GetSystemDirectoryW( windir, MAX_PATH );
+        strcpyW( app, windir );
+        strcatW( app, explorer );
+        strcpyW( cmdline, app );
+        strcatW( cmdline, args );
+
+        Wow64DisableWow64FsRedirection( &redir );
+        if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS,
+                            NULL, windir, &si, &pi ))
         {
-            static const WCHAR explorer[] = {'\\','e','x','p','l','o','r','e','r','.','e','x','e',0};
-            static const WCHAR args[] = {' ','/','d','e','s','k','t','o','p',0};
-            STARTUPINFOW si;
-            PROCESS_INFORMATION pi;
-            WCHAR windir[MAX_PATH];
-            WCHAR app[MAX_PATH + sizeof(explorer)/sizeof(WCHAR)];
-            WCHAR cmdline[MAX_PATH + (sizeof(explorer) + sizeof(args))/sizeof(WCHAR)];
-            void *redir;
-
-            memset( &si, 0, sizeof(si) );
-            si.cb = sizeof(si);
-            si.dwFlags = STARTF_USESTDHANDLES;
-            si.hStdInput  = 0;
-            si.hStdOutput = 0;
-            si.hStdError  = GetStdHandle( STD_ERROR_HANDLE );
-
-            GetSystemDirectoryW( windir, MAX_PATH );
-            strcpyW( app, windir );
-            strcatW( app, explorer );
-            strcpyW( cmdline, app );
-            strcatW( cmdline, args );
-
-            Wow64DisableWow64FsRedirection( &redir );
-            if (CreateProcessW( app, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS,
-                                NULL, windir, &si, &pi ))
-            {
-                TRACE( "started explorer pid %04x tid %04x\n", pi.dwProcessId, pi.dwThreadId );
-                WaitForInputIdle( pi.hProcess, 10000 );
-                CloseHandle( pi.hThread );
-                CloseHandle( pi.hProcess );
-            }
-            else WARN( "failed to start explorer, err %d\n", GetLastError() );
-            Wow64RevertWow64FsRedirection( redir );
+            TRACE( "started explorer pid %04x tid %04x\n", pi.dwProcessId, pi.dwThreadId );
+            WaitForInputIdle( pi.hProcess, 10000 );
+            CloseHandle( pi.hThread );
+            CloseHandle( pi.hProcess );
         }
-        else TRACE( "not starting explorer since winstation is not visible\n" );
+        else WARN( "failed to start explorer, err %d\n", GetLastError() );
+        Wow64RevertWow64FsRedirection( redir );
 
         SERVER_START_REQ( get_desktop_window )
         {
