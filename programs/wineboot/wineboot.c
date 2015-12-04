@@ -1152,7 +1152,6 @@ static const struct option long_options[] =
 
 int main( int argc, char *argv[] )
 {
-    extern HANDLE CDECL __wine_make_process_system(void);
     static const WCHAR RunW[] = {'R','u','n',0};
     static const WCHAR RunOnceW[] = {'R','u','n','O','n','c','e',0};
     static const WCHAR RunServicesW[] = {'R','u','n','S','e','r','v','i','c','e','s',0};
