@@ -2035,7 +2035,7 @@ msgstr "Sertifikatregler"
 
 #: cryptdlg.rc:31
 msgid "Policy Identifier: "
-msgstr "ID for regel:"
+msgstr "ID for regel: "
 
 #: cryptdlg.rc:32
 msgid "Policy Qualifier Info"
@@ -3451,7 +3451,7 @@ msgstr "Oppsett av Wine Internet Explorer og relaterte innstillinger"
 
 #: inetcpl.rc:33
 msgid "Security settings for zone: "
-msgstr "Sikkerhetsinnstillinger for sone:"
+msgstr "Sikkerhetsinnstillinger for sone: "
 
 #: inetcpl.rc:34
 msgid "Custom"
@@ -13388,7 +13388,7 @@ msgstr "(Ingen)"
 
 #: winecfg.rc:86
 msgid "Audio test failed!"
-msgstr "Lydtesten feilet"
+msgstr "Lydtesten feilet!"
 
 #: winecfg.rc:88
 msgid "(System default)"
