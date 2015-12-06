@@ -13016,7 +13016,7 @@ msgstr ""
 
 #: uninstaller.rc:31
 msgid "uninstaller: The application with GUID '%1' was not found\n"
-msgstr "desinstal·lador: No s'ha trobat l'aplicació amb la GUID '%s'\n"
+msgstr "desinstal·lador: No s'ha trobat l'aplicació amb la GUID '%1'\n"
 
 #: uninstaller.rc:32
 msgid ""
