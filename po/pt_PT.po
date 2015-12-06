@@ -2369,7 +2369,7 @@ msgstr "X.509 codificado em &DER (*.cer)"
 
 #: cryptui.rc:410
 msgid "Ba&se64-encoded X.509 (*.cer):"
-msgstr "X509 codificado em Base64 (*.cer)"
+msgstr "X509 codificado em Base64 (*.cer):"
 
 #: cryptui.rc:412
 msgid "&Cryptographic Message Syntax Standard/PKCS #7 Message (*.p7b)"
@@ -2441,7 +2441,7 @@ msgstr "Todos os propósitos deste certificado não foram verificados."
 
 #: cryptui.rc:37
 msgid "This certificate is intended for the following purposes:"
-msgstr "Este certificado é intencionado com os seguintes propósitos::"
+msgstr "Este certificado é intencionado com os seguintes propósitos:"
 
 #: cryptui.rc:38
 msgid "Issued to: "

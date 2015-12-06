@@ -13900,7 +13900,7 @@ msgstr "Poslední změna:"
 
 #: winefile.rc:171
 msgid "Cop&yright:"
-msgstr "Autorská práva"
+msgstr "Autorská práva:"
 
 #: winefile.rc:173
 msgid "Size:"

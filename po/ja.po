@@ -13583,7 +13583,7 @@ msgstr "コマンド履歴"
 
 #: wineconsole.rc:69
 msgid "&Buffer size:"
-msgstr "バッファ サイズ(&B)"
+msgstr "バッファ サイズ(&B):"
 
 #: wineconsole.rc:72
 msgid "&Remove duplicates"

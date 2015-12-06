@@ -13451,7 +13451,7 @@ msgstr ""
 
 #: winefile.rc:171
 msgid "Cop&yright:"
-msgstr "Kop&irajto::"
+msgstr "Kop&irajto:"
 
 #: winefile.rc:173
 msgid "Size:"
