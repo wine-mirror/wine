@@ -2064,6 +2064,7 @@ msgid "General"
 msgstr "عام"
 
 #: cryptui.rc:191
+#, fuzzy
 msgid "&Install Certificate..."
 msgstr "معلومات"
 
@@ -2084,6 +2085,7 @@ msgid "&Copy to File..."
 msgstr "ا&نسخ إلى ملف..."
 
 #: cryptui.rc:210
+#, fuzzy
 msgid "Certification Path"
 msgstr "معلومات"
 
@@ -13330,6 +13332,7 @@ msgid "Nati&ve then Builtin"
 msgstr "الأصليّة ثمّ المضمّنة"
 
 #: winecfg.rc:220
+#, fuzzy
 msgid "Select Drive Letter"
 msgstr "اختر ال&كل\tCtrl+A"
 
