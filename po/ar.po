@@ -52,7 +52,7 @@ msgstr "&إزالة"
 
 #: appwiz.rc:75
 msgid "Support Information"
-msgstr "&معلومات الدّعم"
+msgstr "معلومات الدّعم"
 
 #: appwiz.rc:78 avifil32.rc:54 comctl32.rc:55 comdlg32.rc:231 comdlg32.rc:261
 #: comdlg32.rc:304 comdlg32.rc:358 comdlg32.rc:397 comdlg32.rc:451 credui.rc:52
