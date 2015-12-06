@@ -2199,7 +2199,7 @@ msgstr "&Filnavn:"
 
 #: cryptui.rc:296 cryptui.rc:318 cryptui.rc:432 winecfg.rc:309
 msgid "B&rowse..."
-msgstr "&Bla …"
+msgstr "&Bla..."
 
 #: cryptui.rc:297
 msgid ""
@@ -3251,23 +3251,23 @@ msgstr "Vind&u"
 
 #: ieframe.rc:34 view.rc:33 winhlp32.rc:32
 msgid "&Open..."
-msgstr "&Åpne …"
+msgstr "&Åpne..."
 
 #: ieframe.rc:36 notepad.rc:33 wordpad.rc:34
 msgid "Save &as..."
-msgstr "L&agre som …"
+msgstr "L&agre som..."
 
 #: ieframe.rc:38
 msgid "Print &format..."
-msgstr "Utskri&ftformat …"
+msgstr "Utskri&ftformat..."
 
 #: ieframe.rc:39
 msgid "Pr&int..."
-msgstr "Skr&iv ut …"
+msgstr "Skr&iv ut..."
 
 #: ieframe.rc:40 wordpad.rc:37
 msgid "Print previe&w"
-msgstr "Forhånds&visning …"
+msgstr "Forhånds&visning..."
 
 #: ieframe.rc:47
 msgid "&Toolbars"
@@ -3365,11 +3365,11 @@ msgstr ""
 
 #: inetcpl.rc:59
 msgid "Delete &files..."
-msgstr "Slett &filer …"
+msgstr "Slett &filer..."
 
 #: inetcpl.rc:60
 msgid "&Settings..."
-msgstr "Inn&stillinger …"
+msgstr "Inn&stillinger..."
 
 #: inetcpl.rc:68
 msgid "Delete browsing history"
@@ -3435,11 +3435,11 @@ msgstr ""
 
 #: inetcpl.rc:114
 msgid "Certificates..."
-msgstr "Sertifikater …"
+msgstr "Sertifikater..."
 
 #: inetcpl.rc:115
 msgid "Publishers..."
-msgstr "Utgivere …"
+msgstr "Utgivere..."
 
 #: inetcpl.rc:31
 msgid "Internet Settings"
@@ -6783,7 +6783,7 @@ msgstr "HTML-dokument"
 
 #: mshtml.rc:29
 msgid "Downloading from %s..."
-msgstr "Laster ned fra «%s» …"
+msgstr "Laster ned fra «%s» ..."
 
 #: mshtml.rc:28
 msgid "Done"
@@ -10431,7 +10431,7 @@ msgstr "Klarte ikke finne PATH\n"
 
 #: cmd.rc:383
 msgid "Press any key to continue... "
-msgstr "Trykk en tast for å fortsette …"
+msgstr "Trykk en tast for å fortsette ... "
 
 #: cmd.rc:384
 msgid "Wine Command Prompt"
@@ -11753,7 +11753,7 @@ msgstr "&Om Registerredigering"
 
 #: regedit.rc:91
 msgid "Modify Binary Data..."
-msgstr "Endre binærdata …"
+msgstr "Endre binærdata..."
 
 #: regedit.rc:218
 msgid "Export registry"
@@ -13943,7 +13943,7 @@ msgstr "Klarte ikke lagre"
 
 #: winedbg.rc:44
 msgid "Loading detailed information, please wait..."
-msgstr "Laster detaljert informasjon. Vent litt …"
+msgstr "Laster detaljert informasjon. Vent litt ..."
 
 #: winefile.rc:29
 msgid "&Open\tEnter"
@@ -13967,7 +13967,7 @@ msgstr "&Stasjon"
 
 #: winefile.rc:44
 msgid "Connect &Network Drive..."
-msgstr "Koble til &nettverkstasjon …"
+msgstr "Koble til &nettverkstasjon..."
 
 #: winefile.rc:45
 msgid "&Disconnect Network Drive"
@@ -13999,7 +13999,7 @@ msgstr "Sorter etter &dato"
 
 #: winefile.rc:59
 msgid "Filter by&..."
-msgstr "Filtrer &etter …"
+msgstr "Filtrer &etter..."
 
 #: winefile.rc:66
 msgid "&Drive Bar"
