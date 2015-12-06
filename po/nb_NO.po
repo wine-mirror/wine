@@ -3267,7 +3267,7 @@ msgstr "Skr&iv ut..."
 
 #: ieframe.rc:40 wordpad.rc:37
 msgid "Print previe&w"
-msgstr "Forhånds&visning..."
+msgstr "Forhånds&visning"
 
 #: ieframe.rc:47
 msgid "&Toolbars"
@@ -11431,7 +11431,7 @@ msgstr "&Kopier...\tF8"
 
 #: progman.rc:38
 msgid "&Properties\tAlt+Enter"
-msgstr "&Egenskaper …\tAlt+Enter"
+msgstr "&Egenskaper\tAlt+Enter"
 
 #: progman.rc:40
 msgid "&Execute..."
@@ -13955,7 +13955,7 @@ msgstr "Gi &nytt navn..."
 
 #: winefile.rc:34
 msgid "Propert&ies\tAlt+Enter"
-msgstr "&Egenskaper …\tAlt+Enter"
+msgstr "&Egenskaper\tAlt+Enter"
 
 #: winefile.rc:38
 msgid "Cr&eate Directory..."
