@@ -3313,10 +3313,10 @@ msgctxt "home page"
 msgid "Home"
 msgstr "Inici"
 
-# Including the ellipsis would make this string too long
+# FIXME: The ellipsis makes this string too long (or not?)
 #: ieframe.rc:71 winhlp32.rc:69
 msgid "Print..."
-msgstr "Imprimeix"
+msgstr "Imprimeix..."
 
 #: ieframe.rc:76
 msgid "Address"
@@ -9649,10 +9649,10 @@ msgstr "Ana&lògic"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-# Including the ellipsis would make this string too long
+# FIXME: The ellipsis makes this string too long (or not?)
 #: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
-msgstr "T&ipus de lletra"
+msgstr "T&ipus de lletra..."
 
 #: clock.rc:37
 msgid "&Without Titlebar"
