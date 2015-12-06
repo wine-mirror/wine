@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-11-24 19:33+0100\n"
+"PO-Revision-Date: 2015-12-07 00:44+0100\n"
 "Last-Translator: Julian Rüger\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -9863,7 +9863,7 @@ msgstr ""
 "\n"
 "Durch Eingabe von PATH wird die aktuelle PATH-Einstellung angezeigt (der\n"
 "Initialwert wird aus der Registrierung ausgelesen). Um diese Einstellung zu\n"
-"ändern, kann dem PATH-Befehl der neue Wert als Argument übergegeben werden.\n"
+"ändern, kann dem PATH-Befehl der neue Wert als Argument übergeben werden.\n"
 "\n"
 "Es ist möglich, den Suchpfad mit Hilfe der PATH-Umgebungsvariable zu\n"
 "modifizieren. Zum Beispiel:\n"
@@ -10120,10 +10120,10 @@ msgid ""
 msgstr ""
 "SETLOCAL startet die Begrenzung der Gültigkeit von Änderungen.\n"
 "\n"
-"Änderungen der Umgebung nach SETLOCAL sind lokal zur\n"
-"Stapelverarbeitungsdatei und werden bis zum nächsten ENDLOCAL vorgehalten\n"
-"(oder bis zum Ende der Datei falls dies zuerst kommt). Ab diesem Punkt wirt\n"
-"die vorherige Umgebung wiederhergestellt.\n"
+"Änderungen der Umgebung nach SETLOCAL sind nur innerhalb der\n"
+"Stapelverarbeitungsdatei gültig und werden bis zum nächsten ENDLOCAL\n"
+"(oder dem Ende der aktuellen Datei) vorgehalten. Ab diesem Punkt wird die\n"
+"vorherige Umgebung wiederhergestellt.\n"
 
 #: cmd.rc:275
 msgid ""
@@ -12157,19 +12157,19 @@ msgstr "Prozess \"%1\" mit der PID %2!u! wurde zum Beenden gezwungen.\n"
 
 #: taskkill.rc:40
 msgid "Error: Could not find process \"%1\".\n"
-msgstr "Fehler: Konnte Prozess \"%1\" nicht finden.\n"
+msgstr "Fehler: Prozess \"%1\" konnte nicht gefunden werden.\n"
 
 #: taskkill.rc:41
 msgid "Error: Unable to enumerate the process list.\n"
-msgstr "Fehler: Konnte die Prozessliste nicht enumerieren.\n"
+msgstr "Fehler: Die Prozessliste konnte nicht enumeriert werden.\n"
 
 #: taskkill.rc:42
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "Fehler: Konnte Prozess \"%1\" nicht beenden.\n"
+msgstr "Fehler: Prozess \"%1\" konnte nicht beendet werden.\n"
 
 #: taskkill.rc:43
 msgid "Error: Process self-termination is not permitted.\n"
-msgstr "Fehler: Eigenen Prozess beenden ist nicht gestattet.\n"
+msgstr "Fehler: Selbstterminierung von Prozessen ist nicht gestattet.\n"
 
 #: taskmgr.rc:37 taskmgr.rc:108
 msgid "&New Task (Run...)"
