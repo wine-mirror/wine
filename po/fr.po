@@ -848,7 +848,7 @@ msgstr "Le fichier n'existe pas"
 
 #: comdlg32.rc:40
 msgid "The selection contains a non-folder object"
-msgstr "La sélection contient un objet non-dossier"
+msgstr "La sélection contient un élément qui n'est pas un dossier"
 
 #: comdlg32.rc:45
 msgid "Up One Level"
@@ -1489,7 +1489,7 @@ msgstr "Contraintes de nom"
 
 #: crypt32.rc:97
 msgid "Policy Mappings"
-msgstr "Mappings de politiques"
+msgstr "Correspondance de politiques"
 
 #: crypt32.rc:98
 msgid "Policy Constraints"
@@ -1505,7 +1505,7 @@ msgstr "Politiques applicatives"
 
 #: crypt32.rc:101
 msgid "Application Policy Mappings"
-msgstr "Mappings de politiques applicatives"
+msgstr "Correspondances de politiques applicatives"
 
 #: crypt32.rc:102
 msgid "Application Policy Constraints"
@@ -6671,7 +6671,7 @@ msgstr "Cette connexion réseau n'existe pas.\n"
 
 #: winerror.mc:3746
 msgid "Connection reset by peer.\n"
-msgstr "Connexion cloturée par le pair.\n"
+msgstr "Connexion fermée par le pair.\n"
 
 #: localspl.rc:31 localui.rc:31 winspool.rc:30
 msgid "Local Port"
@@ -9723,11 +9723,13 @@ msgid ""
 "called procedure are inherited by the caller.\n"
 msgstr ""
 "CALL <fichierbatch> sert à appeler un fichier batch depuis un autre fichier\n"
-"batch. Quand le fichier batch sort, le contrôle revient au fichier qui l'a\n"
-"appelé. La commande CALL doit être suivie des de la procédure appelée.\n"
+"batch. Quand le fichier appelé sort, le contrôle revient au fichier "
+"appelant.\n"
+"La commande CALL peut fournir des paramètres à la procédure appelée.\n"
 "\n"
-"Les changements de répertoire courant, de variables d'environnement etc.\n"
-"effectués dans une procédure appelée sont transmis à l'appelant.\n"
+"Les changements de répertoire courant, de variables d'environnement et "
+"autres\n"
+"effectués dans une procédure appelée sont répercutés dans l'appelant.\n"
 
 #: cmd.rc:44
 msgid ""
@@ -9797,7 +9799,7 @@ msgid ""
 "\n"
 "The % sign must be doubled when using FOR in a batch file.\n"
 msgstr ""
-"L1 commande FOR sert à exécuter une commande pour chaque fichier d'une\n"
+"La commande FOR sert à exécuter une commande pour chaque fichier d'une\n"
 "liste de fichiers.\n"
 "\n"
 "Usage : FOR %variable IN (liste) DO commande\n"
@@ -9910,8 +9912,8 @@ msgid ""
 msgstr ""
 "PATH affiche ou change le chemin de recherche de cmd.\n"
 "\n"
-"Entrer PATH seul affiche le réglage courant de PATH (dont la valeur\n"
-"initiale provient de la base de registre). Pour changer le réglage, faites\n"
+"Entrer PATH seul affiche la valeur courante de PATH (qui vient\n"
+"initialement de la base de registre). Pour changer le réglage, faites\n"
 "suivre la commande PATH par la nouvelle valeur.\n"
 "\n"
 "Il est aussi possible de modifier le PATH en utilisant la variable\n"
@@ -9974,9 +9976,9 @@ msgstr ""
 "lecteur courant) suivi d'un signe « plus grand que » (>).\n"
 "(c.-à-d. la commande PROMPT $p$g).\n"
 "\n"
-"L'invite peut aussi être adaptée en modifiant la variable d'environnement\n"
-"PROMPT ; ainsi la commande « SET PROMPT=texte » a le même effet que\n"
-"« PROMPT texte ».\n"
+"L'invite peut aussi être modifiée via la variable d'environnement PROMPT ;\n"
+"ainsi la commande « SET PROMPT=texte » a le même effet que « PROMPT "
+"texte ».\n"
 
 #: cmd.rc:173
 msgid ""
@@ -10104,8 +10106,8 @@ msgstr ""
 "/affinity masque Lancer le programme avec le masque d'affinité spécifié.\n"
 "/wait            Attendre que le programme lancé se termine, puis renvoyer\n"
 "                 son code de sortie.\n"
-"/unix            Utiliser un chemin Unix et lancer le fichier comme windows\n"
-"                 explorer.\n"
+"/unix            Interpréter fichier_programme ou fichier_document comme un\n"
+"                 chemin Unix.\n"
 "/ProgIDOpen      Ouvrir un document via le programme identifié par progID.\n"
 "/?               Afficher cette aide et se terminer.\n"
 
@@ -10207,11 +10209,9 @@ msgstr ""
 "Syntaxe : ASSOC [.ext[=[typeFichier]]]\n"
 "\n"
 "ASSOC sans paramètre affiche les associations d'extensions de fichiers en\n"
-"cours.\n"
-"Si utilisé uniquement avec une extension de fichier, affiche l'association\n"
-"actuelle.\n"
-"Si aucun type de fichiers n'est spécifié après le signe égal, supprime\n"
-"l'association courante, si elle existe.\n"
+"cours. Si utilisé uniquement avec une extension de fichier, affiche\n"
+"l'association actuelle. Si aucun type de fichier n'est spécifié après le\n"
+"signe égal, supprime l'association courante, si elle existe.\n"
 
 #: cmd.rc:300
 msgid ""
@@ -10226,15 +10226,15 @@ msgid ""
 "Specifying no open command after the equal sign removes the command string\n"
 "associated to the specified file type.\n"
 msgstr ""
-"FTYPE affiche ou modifie les commandes d'ouvertures associées à des types\n"
+"FTYPE affiche ou modifie les commandes d'ouverture associées à des types\n"
 "de fichiers.\n"
 "\n"
 "Syntaxe : FTYPE [typeFichier[=[commandeOuverture]]]\n"
 "\n"
 "Sans paramètre, affiche les types de fichiers pour lesquels des chaînes de\n"
 "commande d'ouverture sont actuellement définies.\n"
-"Si seul un type de fichier est utilisé, affiche la chaîne de commande\n"
-"d'ouverture associée, si elle existe.\n"
+"Si seul un type de fichier est spécifié, affiche la chaîne de commande\n"
+"d'ouverture associée si elle existe.\n"
 "Ne spécifier aucune commande après le signe égal supprime la commande\n"
 "d'ouverture associée au type de fichier spécifié.\n"
 
@@ -10250,8 +10250,8 @@ msgid ""
 msgstr ""
 "CHOICE affiche un message et bloque jusqu'à ce que l'utilisateur appuie sur\n"
 "une des touches spécifiées dans une liste configurable.\n"
-"CHOICE est principalement utilisé pour construire une sélection de menu\n"
-"dans un fichier batch.\n"
+"CHOICE est principalement utilisé pour construire un menu dans un fichier\n"
+"batch.\n"
 
 #: cmd.rc:312
 msgid ""
@@ -10807,11 +10807,11 @@ msgstr "Octets"
 
 #: netstat.rc:39
 msgid "Unicast packets"
-msgstr "Paquets monodiffusion"
+msgstr "Paquets unicast"
 
 #: netstat.rc:40
 msgid "Non-unicast packets"
-msgstr "Paquets non monodiffusion"
+msgstr "Paquets non unicast"
 
 #: netstat.rc:41
 msgid "Discards"
@@ -12126,7 +12126,7 @@ msgid ""
 "regsvr32: Invalid or unrecognized switch [%1]\n"
 "\n"
 msgstr ""
-"regsvr32: Option [%1] invalide ou non reconnue\n"
+"regsvr32 : Option [%1] invalide ou non reconnue\n"
 "\n"
 
 #: regsvr32.rc:42
@@ -13492,7 +13492,7 @@ msgstr "(Valeur par défaut du système)"
 
 #: winecfg.rc:91
 msgid "5.1 Surround"
-msgstr "Ambiophonique 5.1"
+msgstr "Multicanal 5.1"
 
 #: winecfg.rc:92
 msgid "Quadraphonic"
