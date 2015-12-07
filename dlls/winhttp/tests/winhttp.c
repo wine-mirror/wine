@@ -3574,15 +3574,15 @@ static void test_IWinHttpRequest(void)
     SysFreeString( method );
     SysFreeString( url );
 
-    V_VT( &data ) = VT_BSTR;
-    V_BSTR( &data ) = NULL;
-    hr = IWinHttpRequest_Send( req, data );
-    ok( hr == S_OK, "got %08x\n", hr );
-
-    hr = IWinHttpRequest_get_ResponseText( req, &response );
-    ok( hr == S_OK, "got %08x\n", hr );
-    ok( !memcmp(response, data_start, sizeof(data_start)), "got %s\n", wine_dbgstr_wn(response, 32) );
-    SysFreeString( response );
+    hr = IWinHttpRequest_Send( req, empty );
+    ok( hr == S_OK || broken(hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_INVALID_SERVER_RESPONSE )), "got %08x\n", hr );
+    if (hr == S_OK)
+    {
+        hr = IWinHttpRequest_get_ResponseText( req, &response );
+        ok( hr == S_OK, "got %08x\n", hr );
+        ok( !memcmp(response, data_start, sizeof(data_start)), "got %s\n", wine_dbgstr_wn(response, 32) );
+        SysFreeString( response );
+    }
 
     IWinHttpRequest_Release( req );
 
