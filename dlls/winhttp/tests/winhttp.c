@@ -2005,18 +2005,25 @@ static const char noauthmsg[] =
 "Server: winetest\r\n"
 "Connection: close\r\n"
 "WWW-Authenticate: Basic realm=\"placebo\"\r\n"
+"Content-Length: 12\r\n"
+"Content-Type: text/plain\r\n"
 "\r\n";
 
 static const char okauthmsg[] =
 "HTTP/1.1 200 OK\r\n"
 "Server: winetest\r\n"
 "Connection: close\r\n"
+"Content-Length: 11\r\n"
+"Content-Type: text/plain\r\n"
 "\r\n";
 
 static const char headmsg[] =
 "HTTP/1.1 200 OK\r\n"
 "Content-Length: 100\r\n"
 "\r\n";
+
+static const char unauthorized[] = "Unauthorized";
+static const char hello_world[] = "Hello World";
 
 struct server_info
 {
@@ -2079,9 +2086,15 @@ static DWORD CALLBACK server_thread(LPVOID param)
         if (strstr(buffer, "/auth"))
         {
             if (strstr(buffer, "Authorization: Basic dXNlcjpwd2Q="))
+            {
                 send(c, okauthmsg, sizeof okauthmsg - 1, 0);
+                send(c, hello_world, sizeof hello_world - 1, 0);
+            }
             else
+            {
                 send(c, noauthmsg, sizeof noauthmsg - 1, 0);
+                send(c, unauthorized, sizeof unauthorized - 1, 0);
+            }
         }
         if (strstr(buffer, "/big"))
         {
@@ -2223,6 +2236,7 @@ static void test_basic_authentication(int port)
     static WCHAR pass2W[] = {'p','w','d','2',0};
     HINTERNET ses, con, req;
     DWORD status, size, error, supported, first, target;
+    char buffer[32];
     BOOL ret;
 
     ses = WinHttpOpen(test_useragent, WINHTTP_ACCESS_TYPE_NO_PROXY, NULL, NULL, 0);
@@ -2295,6 +2309,14 @@ static void test_basic_authentication(int port)
     ok(ret, "failed to query status code %u\n", GetLastError());
     ok(status == HTTP_STATUS_DENIED, "request failed unexpectedly %u\n", status);
 
+    size = 0;
+    ret = WinHttpReadData(req, buffer, sizeof(buffer), &size);
+    ok(ret, "failed to read data %u\n", GetLastError());
+todo_wine
+    ok(size == 12, "expected 12, got %u\n", size);
+todo_wine
+    ok(!memcmp(buffer, unauthorized, 12), "got %s\n", buffer);
+
     supported = first = target = 0xdeadbeef;
     SetLastError(0xdeadbeef);
     ret = WinHttpQueryAuthSchemes(req, &supported, &first, &target);
@@ -2355,6 +2377,12 @@ static void test_basic_authentication(int port)
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
     ok(status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status);
+
+    size = 0;
+    ret = WinHttpReadData(req, buffer, sizeof(buffer), &size);
+    ok(ret, "failed to read data %u\n", GetLastError());
+    ok(size == 11, "expected 11, got %u\n", size);
+    ok(!memcmp(buffer, hello_world, 11), "got %s\n", buffer);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
