@@ -989,6 +989,52 @@ static void FixedAdjustWindowRectEx(RECT* rc, LONG style, BOOL menu, LONG exstyl
 	rc->bottom += GetSystemMetrics(SM_CYHSCROLL);
 }
 
+/* reimplement it to check that the Wine algorithm gives the correct result */
+static void wine_AdjustWindowRectEx( RECT *rect, LONG style, BOOL menu, LONG exStyle )
+{
+    int adjust;
+
+    if ((exStyle & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) ==
+        WS_EX_STATICEDGE)
+    {
+        adjust = 1; /* for the outer frame always present */
+    }
+    else
+    {
+        adjust = 0;
+        if ((exStyle & WS_EX_DLGMODALFRAME) ||
+            (style & (WS_THICKFRAME|WS_DLGFRAME))) adjust = 2; /* outer */
+    }
+    if (style & WS_THICKFRAME)
+        adjust += GetSystemMetrics(SM_CXFRAME) - GetSystemMetrics(SM_CXDLGFRAME); /* The resize border */
+    if ((style & (WS_BORDER|WS_DLGFRAME)) ||
+        (exStyle & WS_EX_DLGMODALFRAME))
+        adjust++; /* The other border */
+
+    InflateRect (rect, adjust, adjust);
+
+    if ((style & WS_CAPTION) == WS_CAPTION)
+    {
+        if (exStyle & WS_EX_TOOLWINDOW)
+            rect->top -= GetSystemMetrics(SM_CYSMCAPTION);
+        else
+            rect->top -= GetSystemMetrics(SM_CYCAPTION);
+    }
+    if (menu) rect->top -= GetSystemMetrics(SM_CYMENU);
+
+    if (exStyle & WS_EX_CLIENTEDGE)
+        InflateRect(rect, GetSystemMetrics(SM_CXEDGE), GetSystemMetrics(SM_CYEDGE));
+
+    if (style & WS_VSCROLL)
+    {
+        if((exStyle & WS_EX_LEFTSCROLLBAR) != 0)
+            rect->left  -= GetSystemMetrics(SM_CXVSCROLL);
+        else
+            rect->right += GetSystemMetrics(SM_CXVSCROLL);
+    }
+    if (style & WS_HSCROLL) rect->bottom += GetSystemMetrics(SM_CYHSCROLL);
+}
+
 static void test_nonclient_area(HWND hwnd)
 {
     DWORD style, exstyle;
@@ -1011,6 +1057,14 @@ static void test_nonclient_area(HWND hwnd)
     MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
     FixedAdjustWindowRectEx(&rc, style, menu, exstyle);
 
+    ok(EqualRect(&rc, &rc_window),
+       "window rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d, win=(%d,%d)-(%d,%d), calc=(%d,%d)-(%d,%d)\n",
+       style, exstyle, menu, rc_window.left, rc_window.top, rc_window.right, rc_window.bottom,
+       rc.left, rc.top, rc.right, rc.bottom);
+
+    CopyRect(&rc, &rc_client);
+    MapWindowPoints(hwnd, 0, (LPPOINT)&rc, 2);
+    wine_AdjustWindowRectEx(&rc, style, menu, exstyle);
     ok(EqualRect(&rc, &rc_window),
        "window rect does not match: style:exstyle=0x%08x:0x%08x, menu=%d, win=(%d,%d)-(%d,%d), calc=(%d,%d)-(%d,%d)\n",
        style, exstyle, menu, rc_window.left, rc_window.top, rc_window.right, rc_window.bottom,
@@ -4747,26 +4801,16 @@ static BOOL AWR_init(void)
 
 static void test_AWR_window_size(BOOL menu)
 {
-    LONG styles[] = {
-	WS_POPUP,
-	WS_MAXIMIZE, WS_BORDER, WS_DLGFRAME, 
-	WS_SYSMENU, 
-	WS_THICKFRAME,
-	WS_MINIMIZEBOX, WS_MAXIMIZEBOX,
-	WS_HSCROLL, WS_VSCROLL
+    static const DWORD styles[] = {
+        WS_POPUP, WS_MAXIMIZE, WS_BORDER, WS_DLGFRAME, WS_CAPTION, WS_SYSMENU,
+        WS_THICKFRAME, WS_MINIMIZEBOX, WS_MAXIMIZEBOX, WS_HSCROLL, WS_VSCROLL
     };
-    LONG exStyles[] = {
-	WS_EX_CLIENTEDGE,
-	WS_EX_TOOLWINDOW, WS_EX_WINDOWEDGE,
-	WS_EX_APPWINDOW,
-#if 0
-	/* These styles have problems on (at least) WinXP (SP2) and Wine */
-	WS_EX_DLGMODALFRAME, 
-	WS_EX_STATICEDGE, 
-#endif
+    static const DWORD exStyles[] = {
+	WS_EX_CLIENTEDGE, WS_EX_TOOLWINDOW, WS_EX_WINDOWEDGE, WS_EX_APPWINDOW,
+	WS_EX_DLGMODALFRAME, WS_EX_DLGMODALFRAME | WS_EX_STATICEDGE
     };
 
-    int i;    
+    unsigned int i;
 
     /* A exhaustive check of all the styles takes too long
      * so just do a (hopefully representative) sample
@@ -4776,6 +4820,33 @@ static void test_AWR_window_size(BOOL menu)
     for (i = 0; i < COUNTOF(exStyles); ++i) {
         test_AWRwindow(szAWRClass, WS_POPUP, exStyles[i], menu);
         test_AWRwindow(szAWRClass, WS_THICKFRAME, exStyles[i], menu);
+    }
+}
+
+static void test_AWR_flags(void)
+{
+    static const DWORD styles[] = { WS_POPUP, WS_BORDER, WS_DLGFRAME, WS_THICKFRAME };
+    static const DWORD exStyles[] = { WS_EX_CLIENTEDGE, WS_EX_TOOLWINDOW, WS_EX_WINDOWEDGE,
+                                      WS_EX_APPWINDOW, WS_EX_DLGMODALFRAME, WS_EX_STATICEDGE };
+
+    DWORD i, j, k, style, exstyle;
+    RECT rect, rect2;
+
+    for (i = 0; i < (1 << COUNTOF(styles)); i++)
+    {
+        for (k = style = 0; k < COUNTOF(styles); k++) if (i & (1 << k)) style |= styles[k];
+
+        for (j = 0; j < (1 << COUNTOF(exStyles)); j++)
+        {
+            for (k = exstyle = 0; k < COUNTOF(exStyles); k++) if (j & (1 << k)) exstyle |= exStyles[k];
+            SetRect( &rect, 100, 100, 200, 200 );
+            rect2 = rect;
+            AdjustWindowRectEx( &rect, style, FALSE, exstyle );
+            wine_AdjustWindowRectEx( &rect2, style, FALSE, exstyle );
+            ok( EqualRect( &rect, &rect2 ), "rects do not match: win %d,%d-%d,%d wine %d,%d-%d,%d\n",
+                rect.left, rect.top, rect.right, rect.bottom,
+                rect2.left, rect2.top, rect2.right, rect2.bottom );
+        }
     }
 }
 #undef COUNTOF
@@ -4803,6 +4874,7 @@ static void test_AdjustWindowRect(void)
 
     test_AWR_window_size(FALSE);
     test_AWR_window_size(TRUE);
+    test_AWR_flags();
 
     DestroyMenu(hmenu);
 }

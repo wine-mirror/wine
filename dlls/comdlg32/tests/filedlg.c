@@ -781,7 +781,7 @@ static UINT_PTR WINAPI template_hook_arrange(HWND dlgChild, UINT msg, WPARAM wPa
                 ok( wrcParent.right - wrcParent.left == expectx,
                         "Wrong width of dialog %d, expected %d\n",
                         wrcParent.right - wrcParent.left, expectx);
-            } else todo_wine {
+            } else {
                 /* with the OFN_ENABLESIZING flag */
                 ok( wrcParent.bottom - wrcParent.top > expecty,
                         "Wrong height of dialog %d, expected more than %d\n",

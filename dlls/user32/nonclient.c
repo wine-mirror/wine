@@ -98,7 +98,7 @@ NC_AdjustRectOuter (LPRECT rect, DWORD style, BOOL menu, DWORD exStyle)
         if ((exStyle & WS_EX_DLGMODALFRAME) ||
             (style & (WS_THICKFRAME|WS_DLGFRAME))) adjust = 2; /* outer */
     }
-    if ((style & WS_THICKFRAME) && !(exStyle & WS_EX_DLGMODALFRAME))
+    if (style & WS_THICKFRAME)
         adjust +=  ( GetSystemMetrics (SM_CXFRAME)
                    - GetSystemMetrics (SM_CXDLGFRAME)); /* The resize border */
     if ((style & (WS_BORDER|WS_DLGFRAME)) ||
