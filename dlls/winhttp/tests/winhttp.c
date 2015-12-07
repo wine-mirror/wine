@@ -1061,7 +1061,7 @@ static void test_secure_connection(void)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed unexpectedly %u\n", GetLastError());
-    ok(status == 200, "request failed unexpectedly %u\n", status);
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status);
 
     size = 0;
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_RAW_HEADERS_CRLF, NULL, NULL, &size, NULL);
@@ -1125,7 +1125,7 @@ static void test_request_parameter_defaults(void)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed unexpectedly %u\n", GetLastError());
-    ok(status == 200, "request failed unexpectedly %u\n", status);
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status);
 
     WinHttpCloseHandle(req);
 
@@ -1161,7 +1161,7 @@ static void test_request_parameter_defaults(void)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed unexpectedly %u\n", GetLastError());
-    ok(status == 200, "request failed unexpectedly %u\n", status);
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status);
 
 done:
     WinHttpCloseHandle(req);
@@ -2176,7 +2176,7 @@ static void test_basic_request(int port, const WCHAR *verb, const WCHAR *path)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
-    ok(status == 200, "request failed unexpectedly %u\n", status);
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status);
 
     supported = first = target = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -2293,7 +2293,7 @@ static void test_basic_authentication(int port)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
-    ok(status == 401, "request failed unexpectedly %u\n", status);
+    ok(status == HTTP_STATUS_DENIED, "request failed unexpectedly %u\n", status);
 
     supported = first = target = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -2354,7 +2354,7 @@ static void test_basic_authentication(int port)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
-    ok(status == 200, "request failed unexpectedly %u\n", status);
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
@@ -2390,7 +2390,7 @@ static void test_basic_authentication(int port)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
-    ok(status == 200, "request failed unexpectedly %u\n", status);
+    ok(status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
@@ -2424,7 +2424,7 @@ static void test_basic_authentication(int port)
     size = sizeof(status);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL);
     ok(ret, "failed to query status code %u\n", GetLastError());
-    ok(status == 401, "request failed unexpectedly %u\n", status);
+    ok(status == HTTP_STATUS_DENIED, "request failed unexpectedly %u\n", status);
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
@@ -2506,7 +2506,7 @@ static void test_no_content(int port)
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
                               NULL, &status, &size, NULL);
     ok(ret, "expected success\n");
-    ok(status == 204, "expected status 204, got %d\n", status);
+    ok(status == HTTP_STATUS_NO_CONTENT, "expected status 204, got %d\n", status);
 
     SetLastError(0xdeadbeef);
     size = sizeof(status);
@@ -2580,14 +2580,14 @@ static void test_head_request(int port)
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_STATUS_CODE | WINHTTP_QUERY_FLAG_NUMBER,
                               NULL, &status, &size, NULL);
     ok(ret, "failed to get status code %u\n", GetLastError());
-    ok(status == 200, "got %u\n", status);
+    ok(status == HTTP_STATUS_OK, "got %u\n", status);
 
     len = 0xdeadbeef;
     size = sizeof(len);
     ret = WinHttpQueryHeaders(req, WINHTTP_QUERY_CONTENT_LENGTH | WINHTTP_QUERY_FLAG_NUMBER,
                               NULL, &len, &size, 0);
     ok(ret, "failed to get content-length header %u\n", GetLastError());
-    ok(len == 100, "got %u\n", len);
+    ok(len == HTTP_STATUS_CONTINUE, "got %u\n", len);
 
     count = 0xdeadbeef;
     ret = WinHttpQueryDataAvailable(req, &count);
@@ -2783,7 +2783,7 @@ static void test_cookies( int port )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
-    ok( status == 200, "request failed unexpectedly %u\n", status );
+    ok( status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status );
 
     WinHttpCloseHandle( req );
 
@@ -2800,7 +2800,7 @@ static void test_cookies( int port )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
-    ok( status == 200, "request failed unexpectedly %u\n", status );
+    ok( status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
@@ -2821,7 +2821,7 @@ static void test_cookies( int port )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
-    ok( status == 200, "request failed unexpectedly %u\n", status );
+    ok( status == HTTP_STATUS_OK, "request failed unexpectedly %u\n", status );
 
     WinHttpCloseHandle( req );
 
@@ -2838,7 +2838,7 @@ static void test_cookies( int port )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
-    ok( status == 200 || broken(status == 400), "request failed unexpectedly %u\n", status );
+    ok( status == HTTP_STATUS_OK || broken(status == HTTP_STATUS_BAD_REQUEST), "request failed unexpectedly %u\n", status );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
@@ -2863,7 +2863,7 @@ static void test_cookies( int port )
     size = sizeof(status);
     ret = WinHttpQueryHeaders( req, WINHTTP_QUERY_STATUS_CODE|WINHTTP_QUERY_FLAG_NUMBER, NULL, &status, &size, NULL );
     ok( ret, "failed to query status code %u\n", GetLastError() );
-    ok( status == 400, "request failed unexpectedly %u\n", status );
+    ok( status == HTTP_STATUS_BAD_REQUEST, "request failed unexpectedly %u\n", status );
 
     WinHttpCloseHandle( req );
     WinHttpCloseHandle( con );
