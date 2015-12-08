@@ -33,5 +33,6 @@
 
 #include "d3d10_1.h"
 #include "d3d11.h"
+#include "d3dx10.h"
 #include "d3d10_1shader.h"
 #include "d3d11shader.h"
