@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-11-25 19:47-0700\n"
+"PO-Revision-Date: 2015-12-07 09:53-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -3313,7 +3313,6 @@ msgctxt "home page"
 msgid "Home"
 msgstr "Inici"
 
-# FIXME: The ellipsis makes this string too long (or not?)
 #: ieframe.rc:71 winhlp32.rc:69
 msgid "Print..."
 msgstr "Imprimeix..."
@@ -9649,7 +9648,6 @@ msgstr "Ana&lògic"
 msgid "Digi&tal"
 msgstr "Digi&tal"
 
-# FIXME: The ellipsis makes this string too long (or not?)
 #: clock.rc:35 notepad.rc:53 winecfg.rc:303 winefile.rc:63 wordpad.rc:84
 msgid "&Font..."
 msgstr "T&ipus de lletra..."
@@ -13679,11 +13677,11 @@ msgstr "Element ressaltat"
 
 #: winecfg.rc:127
 msgid "Active Title Bar Gradient"
-msgstr "Degradat de barra de títol actiu"
+msgstr "Títol actiu--Degradat"
 
 #: winecfg.rc:128
 msgid "Inactive Title Bar Gradient"
-msgstr "Degradat de barra de títol inactiu"
+msgstr "Títol inactiu--Degradat"
 
 #: winecfg.rc:129
 msgid "Menu Highlight"
