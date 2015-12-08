@@ -1167,7 +1167,8 @@ GetEffectiveRightsFromAclW( PACL pacl, PTRUSTEEW pTrustee, PACCESS_MASK pAccessR
 PSID_IDENTIFIER_AUTHORITY WINAPI
 GetSidIdentifierAuthority( PSID pSid )
 {
-	return RtlIdentifierAuthoritySid(pSid);
+    SetLastError(ERROR_SUCCESS);
+    return RtlIdentifierAuthoritySid(pSid);
 }
 
 /******************************************************************************

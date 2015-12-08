@@ -132,6 +132,7 @@ static NTSTATUS (WINAPI *pRtlAnsiStringToUnicodeString)(PUNICODE_STRING,PCANSI_S
 static BOOL     (WINAPI *pGetWindowsAccountDomainSid)(PSID,PSID,DWORD*);
 static void     (WINAPI *pRtlInitAnsiString)(PANSI_STRING,PCSZ);
 static NTSTATUS (WINAPI *pRtlFreeUnicodeString)(PUNICODE_STRING);
+static PSID_IDENTIFIER_AUTHORITY (WINAPI *pGetSidIdentifierAuthority)(PSID);
 
 static HMODULE hmod;
 static int     myARGC;
@@ -196,6 +197,7 @@ static void init(void)
     pGetAclInformation = (void *)GetProcAddress(hmod, "GetAclInformation");
     pGetAce = (void *)GetProcAddress(hmod, "GetAce");
     pGetWindowsAccountDomainSid = (void *)GetProcAddress(hmod, "GetWindowsAccountDomainSid");
+    pGetSidIdentifierAuthority = (void *)GetProcAddress(hmod, "GetSidIdentifierAuthority");
 
     myARGC = winetest_get_mainargs( &myARGV );
 }
@@ -6040,6 +6042,34 @@ static void test_GetWindowsAccountDomainSid(void)
     HeapFree(GetProcessHeap(), 0, user);
 }
 
+static void test_GetSidIdentifierAuthority(void)
+{
+    char buffer[SECURITY_MAX_SID_SIZE];
+    PSID authority_sid = (PSID *)buffer;
+    PSID_IDENTIFIER_AUTHORITY id;
+    BOOL ret;
+
+    if (!pGetSidIdentifierAuthority)
+    {
+        win_skip("GetSidIdentifierAuthority not available\n");
+        return;
+    }
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = IsValidSid(authority_sid);
+    ok(!ret, "expected FALSE, got %u\n", ret);
+
+    SetLastError(0xdeadbeef);
+    id = GetSidIdentifierAuthority(authority_sid);
+    ok(id != NULL, "got NULL pointer as identifier authority\n");
+    ok(GetLastError() == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    id = GetSidIdentifierAuthority(NULL);
+    ok(id != NULL, "got NULL pointer as identifier authority\n");
+    ok(GetLastError() == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", GetLastError());
+}
+
 START_TEST(security)
 {
     init();
@@ -6084,4 +6114,5 @@ START_TEST(security)
     test_AdjustTokenPrivileges();
     test_AddAce();
     test_system_security_access();
+    test_GetSidIdentifierAuthority();
 }
