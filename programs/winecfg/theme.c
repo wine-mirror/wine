@@ -750,7 +750,7 @@ static void init_shell_folder_listview_headers(HWND dialog) {
     LoadStringW(GetModuleHandleW(NULL), IDS_LINKS_TO, szLinksTo, sizeof(szLinksTo)/sizeof(WCHAR));
 
     GetClientRect(GetDlgItem(dialog, IDC_LIST_SFPATHS), &viewRect);
-    width = (viewRect.right - viewRect.left) / 4;
+    width = (viewRect.right - viewRect.left) / 3;
 
     listColumn.mask = LVCF_TEXT | LVCF_WIDTH | LVCF_SUBITEM;
     listColumn.pszText = szShellFolder;
