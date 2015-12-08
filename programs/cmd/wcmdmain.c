@@ -2422,6 +2422,8 @@ int wmain (int argc, WCHAR *argvW[])
   /* Until we start to read from the keyboard, stay as non-interactive */
   interactive = FALSE;
 
+  SetEnvironmentVariableW(promptW, defaultpromptW);
+
   if (opt_c || opt_k) {
       int     len;
       WCHAR   *q1 = NULL,*q2 = NULL,*p;
@@ -2683,7 +2685,6 @@ int wmain (int argc, WCHAR *argvW[])
  *	Loop forever getting commands and executing them.
  */
 
-  SetEnvironmentVariableW(promptW, defaultpromptW);
   interactive = TRUE;
   if (!opt_k) WCMD_version ();
   while (TRUE) {
