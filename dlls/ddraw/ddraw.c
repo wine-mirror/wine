@@ -1120,7 +1120,6 @@ static HRESULT WINAPI ddraw7_SetDisplayMode(IDirectDraw7 *iface, DWORD width, DW
 
     /* TODO: The possible return values from msdn suggest that the screen mode
      * can't be changed if a surface is locked or some drawing is in progress. */
-    /* TODO: Lose the primary surface. */
     if (SUCCEEDED(hr = wined3d_set_adapter_display_mode(ddraw->wined3d, WINED3DADAPTER_DEFAULT, &mode)))
         ddraw->flags |= DDRAW_RESTORE_MODE;
 
@@ -4675,6 +4674,8 @@ static void CDECL device_parent_wined3d_device_created(struct wined3d_device_par
 
 /* This is run from device_process_message() in wined3d, we can't take the
  * wined3d mutex. */
+/* FIXME: We only get mode change notifications in exclusive mode, but we
+ * should mark surfaces as lost on mode changes in DDSCL_NORMAL mode as well. */
 static void CDECL device_parent_mode_changed(struct wined3d_device_parent *device_parent)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
@@ -4704,6 +4705,8 @@ static void CDECL device_parent_mode_changed(struct wined3d_device_parent *devic
     if (!SetWindowPos(ddraw->swapchain_window, HWND_TOP, r->left, r->top,
                       r->right - r->left, r->bottom - r->top, SWP_SHOWWINDOW | SWP_NOACTIVATE))
         ERR("Failed to resize window.\n");
+
+    InterlockedCompareExchange(&ddraw->device_state, DDRAW_DEVICE_STATE_NOT_RESTORED, DDRAW_DEVICE_STATE_OK);
 }
 
 static void CDECL device_parent_activate(struct wined3d_device_parent *device_parent, BOOL activate)
