@@ -103,19 +103,21 @@ static IDWriteTextAnalysisSink analysissink = { &analysissinkvtbl };
 static HRESULT WINAPI analysissource_QueryInterface(IDWriteTextAnalysisSource *iface,
     REFIID riid, void **obj)
 {
-    ok(0, "QueryInterface not expected\n");
-    return E_NOTIMPL;
+    if (IsEqualIID(riid, &IID_IDWriteTextAnalysisSource) || IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IDWriteTextAnalysisSource_AddRef(iface);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
 }
 
 static ULONG WINAPI analysissource_AddRef(IDWriteTextAnalysisSource *iface)
 {
-    ok(0, "AddRef not expected\n");
     return 2;
 }
 
 static ULONG WINAPI analysissource_Release(IDWriteTextAnalysisSource *iface)
 {
-    ok(0, "Release not expected\n");
     return 1;
 }
 
@@ -3657,6 +3659,250 @@ static void test_SetWordWrapping(void)
     IDWriteFactory_Release(factory);
 }
 
+/* Collection dedicated to fallback testing */
+
+static const WCHAR g_blahfontW[] = {'B','l','a','h',0};
+static HRESULT WINAPI fontcollection_QI(IDWriteFontCollection *iface, REFIID riid, void **obj)
+{
+    if (IsEqualIID(riid, &IID_IDWriteFontCollection) || IsEqualIID(riid, &IID_IUnknown)) {
+        *obj = iface;
+        IDWriteFontCollection_AddRef(iface);
+        return S_OK;
+    }
+
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI fontcollection_AddRef(IDWriteFontCollection *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI fontcollection_Release(IDWriteFontCollection *iface)
+{
+    return 1;
+}
+
+static UINT32 WINAPI fontcollection_GetFontFamilyCount(IDWriteFontCollection *iface)
+{
+    ok(0, "unexpected call\n");
+    return 0;
+}
+
+static HRESULT WINAPI fontcollection_GetFontFamily(IDWriteFontCollection *iface, UINT32 index, IDWriteFontFamily **family)
+{
+    if (index == 123456) {
+        IDWriteFactory *factory = create_factory();
+        IDWriteFontCollection *syscollection;
+        BOOL exists;
+        HRESULT hr;
+
+        hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontCollection_FindFamilyName(syscollection, tahomaW, &index, &exists);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontCollection_GetFontFamily(syscollection, index, family);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        IDWriteFontCollection_Release(syscollection);
+        IDWriteFactory_Release(factory);
+        return S_OK;
+    }
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fontcollection_FindFamilyName(IDWriteFontCollection *iface, WCHAR const *name, UINT32 *index, BOOL *exists)
+{
+    if (!lstrcmpW(name, g_blahfontW)) {
+        *index = 123456;
+        *exists = TRUE;
+        return S_OK;
+    }
+    ok(0, "unexpected call, name %s\n", wine_dbgstr_w(name));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI fontcollection_GetFontFromFontFace(IDWriteFontCollection *iface, IDWriteFontFace *face, IDWriteFont **font)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IDWriteFontCollectionVtbl fallbackcollectionvtbl = {
+    fontcollection_QI,
+    fontcollection_AddRef,
+    fontcollection_Release,
+    fontcollection_GetFontFamilyCount,
+    fontcollection_GetFontFamily,
+    fontcollection_FindFamilyName,
+    fontcollection_GetFontFromFontFace
+};
+
+static IDWriteFontCollection fallbackcollection = { &fallbackcollectionvtbl };
+
+static void test_MapCharacters(void)
+{
+    static const WCHAR strW[] = {'a','b','c',0};
+    static const WCHAR str2W[] = {'a',0x3058,'b',0};
+    IDWriteLocalizedStrings *strings;
+    IDWriteFontFallback *fallback;
+    IDWriteFactory2 *factory2;
+    IDWriteFactory *factory;
+    UINT32 mappedlength;
+    IDWriteFont *font;
+    WCHAR buffW[50];
+    BOOL exists;
+    FLOAT scale;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
+    IDWriteFactory_Release(factory);
+    if (hr != S_OK) {
+        win_skip("MapCharacters() is not supported\n");
+        return;
+    }
+
+    fallback = NULL;
+    hr = IDWriteFactory2_GetSystemFontFallback(factory2, &fallback);
+todo_wine
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+if (hr == S_OK) {
+    ok(fallback != NULL, "got %p\n", fallback);
+
+    mappedlength = 1;
+    scale = 0.0f;
+    font = (void*)0xdeadbeef;
+    hr = IDWriteFontFallback_MapCharacters(fallback, NULL, 0, 0, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(mappedlength == 0, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font == NULL, "got %p\n", font);
+
+    /* zero length source */
+    g_source = strW;
+    mappedlength = 1;
+    scale = 0.0f;
+    font = (void*)0xdeadbeef;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 0, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 0, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font == NULL, "got %p\n", font);
+
+    g_source = strW;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+    IDWriteFont_Release(font);
+
+    /* same latin text, full length */
+    g_source = strW;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 3, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+    IDWriteFont_Release(font);
+
+    /* string 'a\x3058b' */
+    g_source = str2W;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+    IDWriteFont_Release(font);
+
+    g_source = str2W;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 1, 2, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+
+    /* font returned for Hiragana character, check if it supports Latin too */
+    exists = FALSE;
+    hr = IDWriteFont_HasCharacter(font, 'b', &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists, "got %d\n", exists);
+
+    IDWriteFont_Release(font);
+
+    /* Try with explicit collection, Tahoma will be forced. */
+    /* 1. Latin part */
+    g_source = str2W;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, &fallbackcollection, g_blahfontW, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+
+    exists = FALSE;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
+    ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
+    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, tahomaW), "%s\n", wine_dbgstr_w(buffW));
+    IDWriteLocalizedStrings_Release(strings);
+
+    IDWriteFont_Release(font);
+
+    /* 2. Hiragana character, force Tahoma font does not support Japanese */
+    g_source = str2W;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 1, 1, &fallbackcollection, g_blahfontW, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+
+    exists = FALSE;
+    hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
+    ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
+    hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(lstrcmpW(buffW, tahomaW), "%s\n", wine_dbgstr_w(buffW));
+    IDWriteLocalizedStrings_Release(strings);
+
+    IDWriteFont_Release(font);
+    IDWriteFontFallback_Release(fallback);
+}
+    IDWriteFactory2_Release(factory2);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -3702,6 +3948,7 @@ START_TEST(layout)
     test_SetReadingDirection();
     test_pixelsnapping();
     test_SetWordWrapping();
+    test_MapCharacters();
 
     IDWriteFactory_Release(factory);
 }
