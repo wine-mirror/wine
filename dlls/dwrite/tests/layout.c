@@ -3903,6 +3903,162 @@ if (hr == S_OK) {
     IDWriteFactory2_Release(factory2);
 }
 
+static void test_FontFallbackBuilder(void)
+{
+    static const WCHAR localeW[] = {'l','o','c','a','l','e',0};
+    static const WCHAR strW[] = {'A',0};
+    IDWriteFontFallbackBuilder *builder;
+    IDWriteFontFallback *fallback;
+    DWRITE_UNICODE_RANGE range;
+    IDWriteFactory2 *factory2;
+    IDWriteFactory *factory;
+    const WCHAR *familyW;
+    UINT32 mappedlength;
+    IDWriteFont *font;
+    FLOAT scale;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_QueryInterface(factory, &IID_IDWriteFactory2, (void**)&factory2);
+    IDWriteFactory_Release(factory);
+
+    if (factory2)
+        hr = IDWriteFactory2_CreateFontFallbackBuilder(factory2, &builder);
+
+    if (hr != S_OK) {
+        skip("IDWriteFontFallbackBuilder is not supported\n");
+        return;
+    }
+
+    hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, NULL, 0, NULL, 0, NULL, NULL, NULL, 0.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    range.first = 'A';
+    range.last = 'B';
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 0, NULL, 0, NULL, NULL, NULL, 0.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 0, NULL, 0, NULL, NULL, NULL, 1.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* negative scaling factor */
+    range.first = range.last = 0;
+    familyW = g_blahfontW;
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, -1.0f);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* empty range */
+    range.first = range.last = 0;
+    familyW = g_blahfontW;
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 1.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.first = range.last = 0;
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 2.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.first = range.last = 'A';
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 3.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.first = 'B';
+    range.last = 'A';
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, NULL, NULL, NULL, 4.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+if (0) /* crashes on native */
+    hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, NULL);
+
+    hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* fallback font missing from system collection */
+    g_source = strW;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = (void*)0xdeadbeef;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 1.0f, "got %f\n", scale);
+    ok(font == NULL, "got %p\n", font);
+
+    IDWriteFontFallback_Release(fallback);
+
+    /* remap with custom collection */
+    range.first = range.last = 'A';
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, NULL, NULL, 5.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    g_source = strW;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 5.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+    IDWriteFont_Release(font);
+
+    IDWriteFontFallback_Release(fallback);
+
+    range.first = 'B';
+    range.last = 'A';
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, NULL, NULL, 6.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    g_source = strW;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 5.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+    IDWriteFont_Release(font);
+
+    IDWriteFontFallback_Release(fallback);
+
+    /* explicit locale */
+    range.first = 'A';
+    range.last = 'B';
+    hr = IDWriteFontFallbackBuilder_AddMapping(builder, &range, 1, &familyW, 1, &fallbackcollection, localeW, NULL, 6.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFallbackBuilder_CreateFontFallback(builder, &fallback);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    g_source = strW;
+    mappedlength = 0;
+    scale = 0.0f;
+    font = NULL;
+    hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(mappedlength == 1, "got %u\n", mappedlength);
+    ok(scale == 5.0f, "got %f\n", scale);
+    ok(font != NULL, "got %p\n", font);
+    IDWriteFont_Release(font);
+
+    IDWriteFontFallbackBuilder_Release(builder);
+    IDWriteFactory2_Release(factory2);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -3949,6 +4105,7 @@ START_TEST(layout)
     test_pixelsnapping();
     test_SetWordWrapping();
     test_MapCharacters();
+    test_FontFallbackBuilder();
 
     IDWriteFactory_Release(factory);
 }
