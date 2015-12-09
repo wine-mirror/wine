@@ -3356,6 +3356,31 @@ BOOL WINAPI EnumDesktopWindows( HDESK desktop, WNDENUMPROC func, LPARAM lparam )
 }
 
 
+#ifdef __i386__
+/* Some apps pass a non-stdcall proc to EnumChildWindows,
+ * so we need a small assembly wrapper to call the proc.
+ */
+extern LRESULT enum_callback_wrapper( WNDENUMPROC proc, HWND hwnd, LPARAM lparam );
+__ASM_GLOBAL_FUNC( enum_callback_wrapper,
+    "pushl %ebp\n\t"
+    __ASM_CFI(".cfi_adjust_cfa_offset 4\n\t")
+    __ASM_CFI(".cfi_rel_offset %ebp,0\n\t")
+    "movl %esp,%ebp\n\t"
+    __ASM_CFI(".cfi_def_cfa_register %ebp\n\t")
+    "pushl 16(%ebp)\n\t"
+    "pushl 12(%ebp)\n\t"
+    "call *8(%ebp)\n\t"
+    "leave\n\t"
+    __ASM_CFI(".cfi_def_cfa %esp,4\n\t")
+    __ASM_CFI(".cfi_same_value %ebp\n\t")
+    "ret" )
+#else
+static inline LRESULT enum_callback_wrapper( WNDENUMPROC proc, HWND hwnd, LPARAM lparam )
+{
+    return proc( hwnd, lparam );
+}
+#endif /* __i386__ */
+
 /**********************************************************************
  *           WIN_EnumChildWindows
  *
@@ -3373,7 +3398,7 @@ static BOOL WIN_EnumChildWindows( HWND *list, WNDENUMPROC func, LPARAM lParam )
         /* Build children list first */
         childList = WIN_ListChildren( *list );
 
-        ret = func( *list, lParam );
+        ret = enum_callback_wrapper( func, *list, lParam );
 
         if (childList)
         {
