@@ -6023,10 +6023,7 @@ static const char *shader_glsl_get_ffp_fragment_op_arg(struct wined3d_string_buf
             break;
 
         case WINED3DTA_CURRENT:
-            if (!stage)
-                ret = "ffp_varying_diffuse";
-            else
-                ret = "ret";
+            ret = "ret";
             break;
 
         case WINED3DTA_TEXTURE:
@@ -6128,8 +6125,6 @@ static void shader_glsl_ffp_fragment_op(struct wined3d_string_buffer *buffer, un
     switch (op)
     {
         case WINED3D_TOP_DISABLE:
-            if (!stage)
-                shader_addline(buffer, "%s%s = ffp_varying_diffuse%s;\n", dstreg, dstmask, dstmask);
             break;
 
         case WINED3D_TOP_SELECT_ARG1:
@@ -6262,7 +6257,6 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
     BYTE lum_map = 0, bump_map = 0, tex_map = 0, tss_const_map = 0;
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
-    const char *final_combiner_src = "ret";
     UINT lowest_disabled_stage;
     GLuint shader_id;
     DWORD arg0, arg1, arg2;
@@ -6453,7 +6447,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
     if (lowest_disabled_stage < 7 && settings->emul_clipplanes)
         shader_addline(buffer, "if (any(lessThan(ffp_texcoord[7], vec4(0.0)))) discard;\n");
 
-    /* Generate texture sampling instructions) */
+    /* Generate texture sampling instructions */
     for (stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
     {
         const char *texture_function, *coord_mask;
@@ -6602,17 +6596,15 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
         shader_addline(buffer, "    discard;\n");
     }
 
+    shader_addline(buffer, "ret = ffp_varying_diffuse;\n");
+
     /* Generate the main shader */
     for (stage = 0; stage < MAX_TEXTURES; ++stage)
     {
         BOOL op_equal;
 
         if (settings->op[stage].cop == WINED3D_TOP_DISABLE)
-        {
-            if (!stage)
-                final_combiner_src = "ffp_varying_diffuse";
             break;
-        }
 
         if (settings->op[stage].cop == WINED3D_TOP_SELECT_ARG1
                 && settings->op[stage].aop == WINED3D_TOP_SELECT_ARG1)
@@ -6637,8 +6629,6 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
             shader_glsl_ffp_fragment_op(buffer, stage, TRUE, FALSE, settings->op[stage].dst,
                     settings->op[stage].cop, settings->op[stage].carg0,
                     settings->op[stage].carg1, settings->op[stage].carg2);
-            if (!stage)
-                shader_addline(buffer, "ret.w = ffp_varying_diffuse.w;\n");
         }
         else if (op_equal)
         {
@@ -6657,7 +6647,7 @@ static GLuint shader_glsl_generate_ffp_fragment_shader(struct shader_glsl_priv *
         }
     }
 
-    shader_addline(buffer, "gl_FragData[0] = ffp_varying_specular * specular_enable + %s;\n", final_combiner_src);
+    shader_addline(buffer, "gl_FragData[0] = ffp_varying_specular * specular_enable + ret;\n");
 
     if (settings->sRGB_write)
         shader_glsl_generate_srgb_write_correction(buffer);
