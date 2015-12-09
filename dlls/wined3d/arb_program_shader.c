@@ -6082,8 +6082,7 @@ static const char *get_argreg(struct wined3d_string_buffer *buffer, DWORD argnum
             ret = "fragment.color.primary"; break;
 
         case WINED3DTA_CURRENT:
-            if (!stage) ret = "fragment.color.primary";
-            else ret = "ret";
+            ret = "ret";
             break;
 
         case WINED3DTA_TEXTURE:
@@ -6163,8 +6162,6 @@ static void gen_ffp_instr(struct wined3d_string_buffer *buffer, unsigned int sta
     switch (op)
     {
         case WINED3D_TOP_DISABLE:
-            if (!stage)
-                shader_addline(buffer, "MOV %s%s, fragment.color.primary;\n", dstreg, dstmask);
             break;
 
         case WINED3D_TOP_SELECT_ARG2:
@@ -6309,7 +6306,6 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     DWORD arg0, arg1, arg2;
     BOOL tempreg_used = FALSE, tfactor_used = FALSE;
     BOOL op_equal;
-    const char *final_combiner_src = "ret";
     BOOL custom_linear_fog = FALSE;
     struct color_fixup_masks masks;
 
@@ -6440,7 +6436,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     if (tempreg_used || settings->sRGB_write)
         shader_addline(&buffer, "MOV tempreg, 0.0;\n");
 
-    /* Generate texture sampling instructions) */
+    /* Generate texture sampling instructions */
     for (stage = 0; stage < MAX_TEXTURES && settings->op[stage].cop != WINED3D_TOP_DISABLE; ++stage)
     {
         if (!tex_read[stage])
@@ -6516,15 +6512,13 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
         shader_addline(&buffer, "KIL -TMP;\n"); /* discard if true */
     }
 
+    shader_addline(&buffer, "MOV ret, fragment.color.primary;\n");
+
     /* Generate the main shader */
     for (stage = 0; stage < MAX_TEXTURES; ++stage)
     {
         if (settings->op[stage].cop == WINED3D_TOP_DISABLE)
-        {
-            if (!stage)
-                final_combiner_src = "fragment.color.primary";
             break;
-        }
 
         if (settings->op[stage].cop == WINED3D_TOP_SELECT_ARG1
                 && settings->op[stage].aop == WINED3D_TOP_SELECT_ARG1)
@@ -6549,8 +6543,6 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
             gen_ffp_instr(&buffer, stage, TRUE, FALSE, settings->op[stage].dst,
                           settings->op[stage].cop, settings->op[stage].carg0,
                           settings->op[stage].carg1, settings->op[stage].carg2);
-            if (!stage)
-                shader_addline(&buffer, "MOV ret.w, fragment.color.primary.w;\n");
         }
         else if (op_equal)
         {
@@ -6569,7 +6561,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
 
     if (settings->sRGB_write || custom_linear_fog)
     {
-        shader_addline(&buffer, "MAD ret, fragment.color.secondary, specular_enable, %s;\n", final_combiner_src);
+        shader_addline(&buffer, "MAD ret, fragment.color.secondary, specular_enable, ret;\n");
         if (settings->sRGB_write)
             arbfp_add_sRGB_correction(&buffer, "ret", "arg0", "arg1", "arg2", "tempreg", FALSE);
         if (custom_linear_fog)
@@ -6578,8 +6570,7 @@ static GLuint gen_arbfp_ffp_shader(const struct ffp_frag_settings *settings, con
     }
     else
     {
-        shader_addline(&buffer, "MAD result.color, fragment.color.secondary, specular_enable, %s;\n",
-                final_combiner_src);
+        shader_addline(&buffer, "MAD result.color, fragment.color.secondary, specular_enable, ret;\n");
     }
 
     /* Footer */
