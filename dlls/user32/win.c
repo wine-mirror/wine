@@ -3682,7 +3682,7 @@ BOOL WINAPI SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWO
 {
     BOOL ret;
 
-    TRACE("(%p,%08x,%d,%x): stub!\n", hwnd, key, alpha, flags);
+    TRACE("(%p,%08x,%d,%x)\n", hwnd, key, alpha, flags);
 
     SERVER_START_REQ( set_window_layered_info )
     {
