@@ -1273,27 +1273,27 @@ static void test_query_process_debug_object_handle(int argc, char **argv)
 
 static void test_query_process_debug_flags(int argc, char **argv)
 {
+    static const DWORD test_flags[] = { DEBUG_PROCESS,
+                                        DEBUG_ONLY_THIS_PROCESS,
+                                        DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS,
+                                        CREATE_SUSPENDED };
     DWORD debug_flags = 0xdeadbeef;
     char cmdline[MAX_PATH];
     PROCESS_INFORMATION pi;
     STARTUPINFOA si = { 0 };
     NTSTATUS status;
+    DEBUG_EVENT ev;
+    DWORD result;
     BOOL ret;
+    int i, j;
 
-    sprintf(cmdline, "%s %s %s", argv[0], argv[1], "debuggee");
+    /* test invalid arguments */
+    status = pNtQueryInformationProcess(NULL, ProcessDebugFlags, NULL, 0, NULL);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH || broken(status == STATUS_INVALID_INFO_CLASS) /* WOW64 */,
+            "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
 
-    si.cb = sizeof(si);
-    ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS, NULL, NULL, &si, &pi);
-    ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
-    if (!ret) return;
-
-    status = pNtQueryInformationProcess(NULL, ProcessDebugFlags,
-            NULL, 0, NULL);
-    ok(status == STATUS_INFO_LENGTH_MISMATCH || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
-
-    status = pNtQueryInformationProcess(NULL, ProcessDebugFlags,
-            NULL, sizeof(debug_flags), NULL);
-    ok(status == STATUS_INVALID_HANDLE || status == STATUS_ACCESS_VIOLATION || broken(status == STATUS_INVALID_INFO_CLASS) /* W7PROX64 (32-bit) */,
+    status = pNtQueryInformationProcess(NULL, ProcessDebugFlags, NULL, sizeof(debug_flags), NULL);
+    ok(status == STATUS_INVALID_HANDLE || status == STATUS_ACCESS_VIOLATION || broken(status == STATUS_INVALID_INFO_CLASS) /* WOW64 */,
             "Expected STATUS_INVALID_HANDLE, got %#x.\n", status);
 
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugFlags,
@@ -1302,45 +1302,131 @@ static void test_query_process_debug_flags(int argc, char **argv)
 
     status = pNtQueryInformationProcess(NULL, ProcessDebugFlags,
             &debug_flags, sizeof(debug_flags), NULL);
-    ok(status == STATUS_INVALID_HANDLE || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "Expected STATUS_INVALID_HANDLE, got %#x.\n", status);
+    ok(status == STATUS_INVALID_HANDLE || broken(status == STATUS_INVALID_INFO_CLASS) /* WOW64 */,
+            "Expected STATUS_INVALID_HANDLE, got %#x.\n", status);
 
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugFlags,
             &debug_flags, sizeof(debug_flags) - 1, NULL);
-    ok(status == STATUS_INFO_LENGTH_MISMATCH || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
 
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugFlags,
             &debug_flags, sizeof(debug_flags) + 1, NULL);
-    ok(status == STATUS_INFO_LENGTH_MISMATCH || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %#x.\n", status);
 
+    /* test ProcessDebugFlags of current process */
     status = pNtQueryInformationProcess(GetCurrentProcess(), ProcessDebugFlags,
             &debug_flags, sizeof(debug_flags), NULL);
-    ok(!status || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "NtQueryInformationProcess failed, status %#x.\n", status);
-    ok(debug_flags == TRUE|| broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "Expected flag TRUE, got %x.\n", debug_flags);
+    ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
+    ok(debug_flags == TRUE, "Expected flag TRUE, got %x.\n", debug_flags);
 
-    status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugFlags,
-            &debug_flags, sizeof(debug_flags), NULL);
-    ok(!status || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "NtQueryInformationProcess failed, status %#x.\n", status);
-    ok(debug_flags == FALSE || broken(status == STATUS_INVALID_INFO_CLASS) /* NT4 */, "Expected flag FALSE, got %x.\n", debug_flags);
-
-    for (;;)
+    for (i = 0; i < sizeof(test_flags)/sizeof(test_flags[0]); i++)
     {
-        DEBUG_EVENT ev;
+        DWORD expected_flags = !(test_flags[i] & DEBUG_ONLY_THIS_PROCESS);
+        sprintf(cmdline, "%s %s %s", argv[0], argv[1], "debuggee");
 
-        ret = WaitForDebugEvent(&ev, INFINITE);
-        ok(ret, "WaitForDebugEvent failed, last error %#x.\n", GetLastError());
-        if (!ret) break;
+        si.cb = sizeof(si);
+        ret = CreateProcessA(NULL, cmdline, NULL, NULL, FALSE, test_flags[i], NULL, NULL, &si, &pi);
+        ok(ret, "CreateProcess failed, last error %#x.\n", GetLastError());
 
-        if (ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
+        if (!(test_flags[i] & (DEBUG_PROCESS | DEBUG_ONLY_THIS_PROCESS)))
+        {
+            /* test ProcessDebugFlags before attaching with debugger */
+            status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugFlags,
+                    &debug_flags, sizeof(debug_flags), NULL);
+            ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
+            ok(debug_flags == TRUE, "Expected flag TRUE, got %x.\n", debug_flags);
 
-        ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
-        ok(ret, "ContinueDebugEvent failed, last error %#x.\n", GetLastError());
-        if (!ret) break;
+            ret = DebugActiveProcess(pi.dwProcessId);
+            ok(ret, "DebugActiveProcess failed, last error %#x.\n", GetLastError());
+            expected_flags = FALSE;
+        }
+
+        /* test ProcessDebugFlags after attaching with debugger */
+        status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugFlags,
+                &debug_flags, sizeof(debug_flags), NULL);
+        ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
+        if (!expected_flags)
+            ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
+        else
+            todo_wine
+            ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
+
+        if (!(test_flags[i] & CREATE_SUSPENDED))
+        {
+            /* Continue a couple of times to make sure the process is fully initialized,
+             * otherwise Windows XP deadlocks in the following DebugActiveProcess(). */
+            for (;;)
+            {
+                ret = WaitForDebugEvent(&ev, 1000);
+                ok(ret, "WaitForDebugEvent failed, last error %#x.\n", GetLastError());
+                if (!ret) break;
+
+                if (ev.dwDebugEventCode == LOAD_DLL_DEBUG_EVENT) break;
+
+                ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
+                ok(ret, "ContinueDebugEvent failed, last error %#x.\n", GetLastError());
+                if (!ret) break;
+            }
+
+            result = SuspendThread(pi.hThread);
+            ok(result == 0, "Expected 0, got %u.\n", result);
+        }
+
+        ret = DebugActiveProcessStop(pi.dwProcessId);
+        ok(ret, "DebugActiveProcessStop failed, last error %#x.\n", GetLastError());
+
+        /* test ProcessDebugFlags after detaching debugger */
+        status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugFlags,
+                &debug_flags, sizeof(debug_flags), NULL);
+        ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
+        if (expected_flags)
+            ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
+        else
+            todo_wine
+            ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
+
+        ret = DebugActiveProcess(pi.dwProcessId);
+        ok(ret, "DebugActiveProcess failed, last error %#x.\n", GetLastError());
+
+        /* test ProcessDebugFlags after re-attaching debugger */
+        status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugFlags,
+                &debug_flags, sizeof(debug_flags), NULL);
+        ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
+        ok(debug_flags == FALSE, "Expected flag FALSE, got %x.\n", debug_flags);
+
+        result = ResumeThread(pi.hThread);
+        todo_wine ok(result == 2, "Expected 2, got %u.\n", result);
+
+        /* Wait until the process is terminated. On Windows XP the process randomly
+         * gets stuck in a non-continuable exception, so stop after 100 iterations.
+         * On Windows 2003, the debugged process disappears (or stops?) without
+         * any EXIT_PROCESS_DEBUG_EVENT after a couple of events. */
+        for (j = 0; j < 100; j++)
+        {
+            ret = WaitForDebugEvent(&ev, 1000);
+            ok(ret || broken(GetLastError() == ERROR_SEM_TIMEOUT),
+                "WaitForDebugEvent failed, last error %#x.\n", GetLastError());
+            if (!ret) break;
+
+            if (ev.dwDebugEventCode == EXIT_PROCESS_DEBUG_EVENT) break;
+
+            ret = ContinueDebugEvent(ev.dwProcessId, ev.dwThreadId, DBG_CONTINUE);
+            ok(ret, "ContinueDebugEvent failed, last error %#x.\n", GetLastError());
+            if (!ret) break;
+        }
+        ok(j < 100 || broken(j >= 100) /* Win XP */, "Expected less than 100 debug events.\n");
+
+        /* test ProcessDebugFlags after process has terminated */
+        status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugFlags,
+                &debug_flags, sizeof(debug_flags), NULL);
+        ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
+        ok(debug_flags == FALSE, "Expected flag FALSE, got %x.\n", debug_flags);
+
+        ret = CloseHandle(pi.hThread);
+        ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
+        ret = CloseHandle(pi.hProcess);
+        ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
     }
-
-    ret = CloseHandle(pi.hThread);
-    ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
-    ret = CloseHandle(pi.hProcess);
-    ok(ret, "CloseHandle failed, last error %#x.\n", GetLastError());
 }
 
 static void test_readvirtualmemory(void)
