@@ -57,6 +57,7 @@
 #include "audiopolicy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -1336,9 +1337,16 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
         const pa_buffer_attr *attr = pa_stream_get_buffer_attr(This->stream);
         /* Update frames according to new size */
         dump_attr(attr);
-        if (This->dataflow == eRender)
+        if (This->dataflow == eRender) {
+            if (attr->tlength < This->bufsize_bytes) {
+                const char *latenv = getenv("PULSE_LATENCY_MSEC");
+                if (latenv && *latenv)
+                    ERR_(winediag)("PulseAudio buffer too small (%u < %u) - PULSE_LATENCY_MSEC is %s\n", attr->tlength, This->bufsize_bytes, latenv);
+                else
+                    ERR_(winediag)("PulseAudio buffer too small (%u < %u)\n", attr->tlength, This->bufsize_bytes);
+            }
             This->bufsize_bytes = attr->tlength;
-        else {
+        } else {
             This->capture_period = period_bytes = attr->fragsize;
             if ((unalign = This->bufsize_bytes % period_bytes))
                 This->bufsize_bytes += period_bytes - unalign;
