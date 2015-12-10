@@ -4994,3 +4994,25 @@ void wined3d_release_dc(HWND window, HDC dc)
     else if (!ReleaseDC(window, dc))
         ERR("Failed to release device context %p, last error %#x.\n", dc, GetLastError());
 }
+
+BOOL wined3d_clip_blit(const RECT *clip_rect, RECT *clipped, RECT *other)
+{
+    RECT orig = *clipped;
+    float scale_x = (float)(orig.right - orig.left) / (float)(other->right - other->left);
+    float scale_y = (float)(orig.bottom - orig.top) / (float)(other->bottom - other->top);
+
+    IntersectRect(clipped, clipped, clip_rect);
+
+    if (IsRectEmpty(clipped))
+    {
+        SetRectEmpty(other);
+        return FALSE;
+    }
+
+    other->left += (LONG)((clipped->left - orig.left) / scale_x);
+    other->top += (LONG)((clipped->top - orig.top) / scale_y);
+    other->right -= (LONG)((orig.right - clipped->right) / scale_x);
+    other->bottom -= (LONG)((orig.bottom - clipped->bottom) / scale_y);
+
+    return TRUE;
+}

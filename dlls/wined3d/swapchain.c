@@ -467,13 +467,21 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
             swapchain->device->xScreenSpace + swapchain->device->cursorWidth - swapchain->device->xHotSpot,
             swapchain->device->yScreenSpace + swapchain->device->cursorHeight - swapchain->device->yHotSpot,
         };
+        RECT src_rect =
+        {
+            0, 0,
+            swapchain->device->cursor_texture->resource.width,
+            swapchain->device->cursor_texture->resource.height
+        };
+        const RECT clip_rect = {0, 0, back_buffer->resource.width, back_buffer->resource.height};
 
         TRACE("Rendering the software cursor.\n");
 
         if (swapchain->desc.windowed)
             MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&destRect, 2);
-        wined3d_surface_blt(back_buffer, &destRect, cursor, NULL, WINEDDBLT_ALPHATEST,
-                NULL, WINED3D_TEXF_POINT);
+        if (wined3d_clip_blit(&clip_rect, &destRect, &src_rect))
+            wined3d_surface_blt(back_buffer, &destRect, cursor, &src_rect, WINEDDBLT_ALPHATEST,
+                    NULL, WINED3D_TEXF_POINT);
     }
 
     TRACE("Presenting HDC %p.\n", context->hdc);
