@@ -1,7 +1,7 @@
 @ stub EvtArchiveExportedLog
 @ stub EvtCancel
 @ stub EvtClearLog
-@ stub EvtClose
+@ stdcall EvtClose(ptr)
 @ stub EvtCreateBookmark
 @ stub EvtCreateRenderContext
 @ stub EvtExportLog
