@@ -7774,6 +7774,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
                 TRACE("Color keying not supported with converted textures.\n");
                 return FALSE;
             }
+        case WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST:
         case WINED3D_BLIT_OP_COLOR_BLIT:
             break;
 
@@ -7828,7 +7829,7 @@ static BOOL arbfp_blit_supported(const struct wined3d_gl_info *gl_info,
     }
 }
 
-static void arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
+static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_op op, DWORD filter,
         struct wined3d_surface *src_surface, const RECT *src_rect_in,
         struct wined3d_surface *dst_surface, const RECT *dst_rect_in,
         const struct wined3d_color_key *color_key)
@@ -7836,6 +7837,7 @@ static void arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
     struct wined3d_context *context;
     RECT src_rect = *src_rect_in;
     RECT dst_rect = *dst_rect_in;
+    struct wined3d_color_key alpha_test_key;
 
     /* Activate the destination context, set it up for blitting */
     context = context_acquire(device, dst_surface);
@@ -7863,6 +7865,14 @@ static void arbfp_blit_surface(struct wined3d_device *device, DWORD filter,
 
     if (!wined3d_resource_is_offscreen(&dst_surface->container->resource))
         surface_translate_drawable_coords(dst_surface, context->win_handle, &dst_rect);
+
+    if (op == WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST)
+    {
+        const struct wined3d_format *fmt = src_surface->resource.format;
+        alpha_test_key.color_space_low_value = 0;
+        alpha_test_key.color_space_high_value = ~(((1u << fmt->alpha_size) - 1) << fmt->alpha_offset);
+        color_key = &alpha_test_key;
+    }
 
     arbfp_blit_set(device->blit_priv, context, src_surface, color_key);
 
