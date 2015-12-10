@@ -27,6 +27,7 @@
 #include <winhttp.h>
 #include <wincrypt.h>
 #include <winreg.h>
+#include <stdio.h>
 #include <initguid.h>
 #include <httprequest.h>
 #include <httprequestid.h>
@@ -2095,6 +2096,7 @@ static DWORD CALLBACK server_thread(LPVOID param)
                 send(c, noauthmsg, sizeof noauthmsg - 1, 0);
                 send(c, unauthorized, sizeof unauthorized - 1, 0);
             }
+            continue;
         }
         if (strstr(buffer, "/big"))
         {
@@ -2311,11 +2313,15 @@ static void test_basic_authentication(int port)
 
     size = 0;
     ret = WinHttpReadData(req, buffer, sizeof(buffer), &size);
-    ok(ret, "failed to read data %u\n", GetLastError());
+    error = GetLastError();
+    ok(ret || broken(error == ERROR_WINHTTP_SHUTDOWN || error == ERROR_WINHTTP_TIMEOUT) /* XP */, "failed to read data %u\n", GetLastError());
+    if (ret)
+    {
 todo_wine
-    ok(size == 12, "expected 12, got %u\n", size);
+        ok(size == 12, "expected 12, got %u\n", size);
 todo_wine
-    ok(!memcmp(buffer, unauthorized, 12), "got %s\n", buffer);
+        ok(!memcmp(buffer, unauthorized, 12), "got %s\n", buffer);
+    }
 
     supported = first = target = 0xdeadbeef;
     SetLastError(0xdeadbeef);
@@ -2380,9 +2386,13 @@ todo_wine
 
     size = 0;
     ret = WinHttpReadData(req, buffer, sizeof(buffer), &size);
-    ok(ret, "failed to read data %u\n", GetLastError());
-    ok(size == 11, "expected 11, got %u\n", size);
-    ok(!memcmp(buffer, hello_world, 11), "got %s\n", buffer);
+    error = GetLastError();
+    ok(ret || broken(error == ERROR_WINHTTP_SHUTDOWN || error == ERROR_WINHTTP_TIMEOUT) /* XP */, "failed to read data %u\n", GetLastError());
+    if (ret)
+    {
+        ok(size == 11, "expected 11, got %u\n", size);
+        ok(!memcmp(buffer, hello_world, 11), "got %s\n", buffer);
+    }
 
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(con);
@@ -3078,7 +3088,7 @@ static void test_credentials(void)
     WinHttpCloseHandle(ses);
 }
 
-static void test_IWinHttpRequest(void)
+static void test_IWinHttpRequest(int port)
 {
     static const WCHAR data_start[] = {'<','!','D','O','C','T','Y','P','E',' ','h','t','m','l',' ','P','U','B','L','I','C'};
     static const WCHAR usernameW[] = {'u','s','e','r','n','a','m','e',0};
@@ -3096,6 +3106,7 @@ static void test_IWinHttpRequest(void)
     static const WCHAR dateW[] = {'D','a','t','e',0};
     static const WCHAR test_dataW[] = {'t','e','s','t','d','a','t','a',128,0};
     static const WCHAR utf8W[] = {'u','t','f','-','8',0};
+    static const WCHAR unauthW[] = {'U','n','a','u','t','h','o','r','i','z','e','d',0};
     HRESULT hr;
     IWinHttpRequest *req;
     BSTR method, url, username, password, response = NULL, status_text = NULL, headers = NULL;
@@ -3108,6 +3119,7 @@ static void test_IWinHttpRequest(void)
     IStream *stream, *stream2;
     LARGE_INTEGER pos;
     char buf[128];
+    WCHAR bufW[128];
     DWORD count;
 
     GetSystemTime( &st );
@@ -3611,6 +3623,42 @@ static void test_IWinHttpRequest(void)
         ok( !memcmp(response, data_start, sizeof(data_start)), "got %s\n", wine_dbgstr_wn(response, 32) );
         SysFreeString( response );
     }
+
+    IWinHttpRequest_Release( req );
+
+    hr = CoCreateInstance( &CLSID_WinHttpRequest, NULL, CLSCTX_INPROC_SERVER, &IID_IWinHttpRequest, (void **)&req );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    sprintf( buf, "http://localhost:%d/auth", port );
+    MultiByteToWideChar( CP_ACP, 0, buf, -1, bufW, sizeof(bufW)/sizeof(bufW[0]) );
+    url = SysAllocString( bufW );
+    method = SysAllocString( method3W );
+    V_VT( &async ) = VT_BOOL;
+    V_BOOL( &async ) = VARIANT_FALSE;
+    hr = IWinHttpRequest_Open( req, method, url, async );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( method );
+    SysFreeString( url );
+
+    hr = IWinHttpRequest_get_Status( req, &status );
+    ok( hr == HRESULT_FROM_WIN32( ERROR_WINHTTP_CANNOT_CALL_BEFORE_SEND ), "got %08x\n", hr );
+
+    V_VT( &data ) = VT_BSTR;
+    V_BSTR( &data ) = SysAllocString( test_dataW );
+    hr = IWinHttpRequest_Send( req, data );
+    ok( hr == S_OK, "got %08x\n", hr );
+    SysFreeString( V_BSTR( &data ) );
+
+    hr = IWinHttpRequest_get_ResponseText( req, &response );
+    ok( hr == S_OK, "got %08x\n", hr );
+todo_wine
+    ok( !memcmp( response, unauthW, sizeof(unauthW) ), "got %s\n", wine_dbgstr_w(response) );
+    SysFreeString( response );
+
+    status = 0xdeadbeef;
+    hr = IWinHttpRequest_get_Status( req, &status );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( status == HTTP_STATUS_DENIED, "got %d\n", status );
 
     IWinHttpRequest_Release( req );
 
@@ -4152,7 +4200,6 @@ START_TEST (winhttp)
     test_Timeouts();
     test_resolve_timeout();
     test_credentials();
-    test_IWinHttpRequest();
     test_IWinHttpRequest_Invoke();
     test_WinHttpDetectAutoProxyConfigUrl();
     test_WinHttpGetIEProxyConfigForCurrentUser();
@@ -4170,6 +4217,7 @@ START_TEST (winhttp)
     if (ret != WAIT_OBJECT_0)
         return;
 
+    test_IWinHttpRequest(si.port);
     test_connection_info(si.port);
     test_basic_request(si.port, NULL, basicW);
     test_no_headers(si.port);
