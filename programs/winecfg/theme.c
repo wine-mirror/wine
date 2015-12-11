@@ -1214,8 +1214,17 @@ ThemeDlgProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
                             int index = SendDlgItemMessageW(hDlg, IDC_SYSPARAM_COMBO, CB_GETCURSEL, 0, 0);
 
                             index = SendDlgItemMessageW(hDlg, IDC_SYSPARAM_COMBO, CB_GETITEMDATA, index, 0);
-                            metrics[index].size = atoi(text);
-                            HeapFree(GetProcessHeap(), 0, text);
+
+                            if (text)
+                            {
+                                metrics[index].size = atoi(text);
+                                HeapFree(GetProcessHeap(), 0, text);
+                            }
+                            else
+                            {
+                                /* for empty string set to minimum value */
+                                SendDlgItemMessageW(hDlg, IDC_SYSPARAM_SIZE_UD, UDM_GETRANGE32, (WPARAM)&metrics[index].size, 0);
+                            }
 
                             SendMessageW(GetParent(hDlg), PSM_CHANGED, 0, 0);
                             break;
