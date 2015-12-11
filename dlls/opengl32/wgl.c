@@ -881,7 +881,8 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
             unsigned int i;
             static const struct { const char *name, *alt; } alternatives[] =
             {
-                { "glCopyTexSubImage3DEXT", "glCopyTexSubImage3D" },  /* needed by RuneScape */
+                { "glCopyTexSubImage3DEXT", "glCopyTexSubImage3D" },     /* needed by RuneScape */
+                { "glVertexAttribDivisor", "glVertexAttribDivisorARB"},  /* needed by Caffeine */
             };
 
             for (i = 0; i < sizeof(alternatives)/sizeof(alternatives[0]); i++)
