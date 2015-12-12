@@ -1,12 +1,12 @@
-The Wine development release 1.8-rc3 is now available.
+The Wine development release 1.8-rc4 is now available.
 
 What's new in this release (see below for details):
   - Bug fixes only, we are in code freeze.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/1.8/wine-1.8-rc3.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8-rc3.tar.bz2
+  http://dl.winehq.org/wine/source/1.8/wine-1.8-rc4.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8-rc4.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -22,181 +22,140 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 1.8-rc3 (total 40):
+Bugs fixed in 1.8-rc4 (total 26):
 
-   8775  spider solitaire from XP fails to flash card when you ask for hint
-   9491  CListCtrl:GetSubItemRect doesn't work for the label row
-   9919  Microsoft Access Snapshot Viewer 10.0 install fails (GetPrivateProfileString16 must only return valid key names)
-  11627  Need for Speed 2 SE 3dfx demo fails to start
-  15083  ReadConsoleInputW() returns wrong values for CTRL+SPACE
-  15866  MechCommander 2: DSERR_CONTROLUNAVAIL errors
-  20480  Soldier of Fortune II Multiplayer Main Menu won't show up (ATI specific)
-  22922  Black and White 2 1.2 is slow, gives GL errors
-  24388  Exposure 3.0 crashes while creating exposure image
-  26317  AVRStudio 4 installer fails, reports 'The application is already installed'
-  27165  ffdshow A/V config tool: drop-down list doesn't appear
-  29595  Microsoft Software Jukebox needs  HKLM\Software\Classes\Applications\iexplore.exe\shell\open\command key
-  29788  Microsoft Word 2007 needs unimplemented function propsys.dll.PSGetPropertyDescriptionListFromString for saving a file when winver set to Vista or later
-  32621  Mouse pointer jumps on opening/closing WinUAE settings window
-  34086  MS Paint shows some images messed up.
-  35330  Typo: "in a separate windows" on the Man Page (at http://www.winehq.org/docs/wine )
-  35941  ncurses is installed but not detected by configure.
-  36345  TGB Dual 8.3 ( Game Boy/Game Boy COLOR emulator) crashes when loading a ROM
-  37308  PCB123 v2.1.0.7000: slow screen redrawing
-  37894  EarthQuake3D (Earthquake monitor) fails to update data, reports 'Error: Server Connection Problem'
-  38559  GTA4: crash after benchmark has completed
-  38633  SiN Gold (GOG.com) intro videos get frozen
-  38851  Wine64 build produces extra warning in secur32 comparing to Wine32 build
-  38926  WineHQ should build vanilla Wine binary packages of the biweekly releases for major distros
-  38974  Red Faction Guerilla: texture smearing at the side of the screen
-  38993  Memory Blocks for Windows 3.x has missing tile animation
-  39465  Gif Movie Gear 2.63 about window's gif only animates when mouse is moving (ReleaseDC should force surface flush when main thread is idling)
-  39564  Paranormal State: Poison Spring (Steam) crashes on exit with built-in msctf.dll
-  39580  AVISave[A,W] is using va_* instead of __ms_va_* definitions for va_list
-  39600  Bad sound with Steam Games
-  39607  Broken Image in Fitting Window.
-  39634  Git v2.6.3 (MSYS2 based): 'rebase.exe' fails on post-install steps (commit page when handling stack fault)
-  39670  Eclipse (Europa) does not start
-  39673  Logical error in comparison (misprint)
-  39683  CreateRestrictedToken() uses wrong enum value for default impersonation level
-  39691  TI Derive 6 hangs when clicking on the edit menu item
-  39693  SQLBindCol prototype is wrong
-  39705  Some programs crash/hang when switching desktop screens
-  39706  Gazillionaire (Win16 game using VB3 runtime) refuses to start
-  39719  Alex Hunter (hidden object game): custom mouse pointer gets stuck (temporarily) when hitting the top of the screen
+   8258  Dolphin Smalltalk IDE fails when requesting trial on urlmon.dll.URLOpenBlockingStreamA
+  16698  Sandboxie installer needs 'HKLM\\System\\CurrentControlSet\\Services\\Eventlog\\System' registry key
+  17501  Cockpit Crash hangs
+  17814  HLMV from Source SDK crashes while starting
+  18964  BioEdit: Minimized windows icons become garbaged
+  19041  WinNER5 database client crashes on startup
+  23377  Buried in Time demo does not start
+  31817  Tencent RTX Client 2010 installer fails to register Shell extension handler 'RTXShlMenu.dll' (missing 'HKCR\\*\\shellex\\ContextMenuHandlers' and 'HKCR\\folder\shellex\ContextMenuHandlers' registry keys)
+  31862  "The Network" demo fails to start without native d3dx9
+  32383  Configure script can't find 32-bit freetype libraries on 64-bit debian squeeze
+  32655  Miro 5.x/6.x installer does not go beyond "initializing..." phase
+  33438  Wine builtin 'explorer' crashes in Win98 mode when browsing virtual 'C:' drive
+  33917  Voyage: Journey to the Moon demo shows white screen
+  34308  Gazillionaire has transparency issues
+  36726  DVD Profiler: black squares in the gui
+  37899  Adobe Photoshop 5.0: Type tool fails with stack overflow
+  38293  Setting PROMPT in a batch file resets on exit of batch file
+  38371  Winfiol crashes when changing program preferences
+  38480  RuneScape crashes when switching to OpenGL renderer (glCopyTexSubImage3DEXT blacklisted by extension filtering)
+  38723  Ad-Aware 11.6.306.7947 wants msi.dll.MsiJoinTransaction
+  38778  Blade of Darkness demo hangs with a black screen on start
+  39119  Heroes of the Storm 13.0.37117 crashes on exit needing wevtapi.dll.EvtClose
+  39535  PowerISO 6.4 (32 bits) crashes on installation (needs fusion.dll.CopyPDBs)
+  39710  Hitman 2: Silent Assassin shows wrong colors with environment bump mapping
+  39747  Original War: user interface gets corrupted after opening the help screen
+  39758  Desktop Holiday Light app crashes
 
 ----------------------------------------------------------------
 
-Changes since 1.8-rc2:
+Changes since 1.8-rc3:
 
-Alexandre Julliard (11):
-      winoldapp: Grab the Win16 lock again before exiting.
-      Revert "user.exe: Release the Win16 lock due to loading 32-bit dlls in CreateWindow."
-      winex11: Add a helper function to check a motion event against the serial number.
-      winex11: Ignore EnterNotify events that are older than the last mouse wrap.
-      kernel32: Also check OS version to detect old binaries in GlobalMemoryStatus.
-      winex11: Include raw motion events in the QS_MOUSEMOVE event filter.
-      ntdll/tests: Use more reasonable timeouts and avoid long long constants.
-      user32/tests: Maximized windows can be full-screen in recent Windows.
-      user32/tests: Also ignore WM_SYSTIMER messages in input tests.
-      tools: Allow running installed builtin apps even when the 32-bit loader is missing.
-      gdi32: Fix StretchDIBits color mapping for monochrome bitmaps without a color table.
+Alex Henrie (3):
+      winecfg: Widen "Folder" column to accommodate Catalan translation.
+      ieframe: Widen toolbar buttons to accommodate Catalan translation.
+      po: Update Catalan translation.
 
-Alistair Leslie-Hughes (1):
-      webservices: Add missing break.
+Alexandre Julliard (5):
+      user32: Fix WS_EX_DLGMODALFRAME handling in AdjustWindowRect and add more tests.
+      opengl32: Make it possible to use an alternative in wglGetProcAddress when an extension is missing.
+      user32: SetLayeredWindowAttributes is no longer a stub.
+      user32: Preserve the surface contents when changing the WS_EX_LAYERED bit.
+      Revert "opengl32: Store alternative function in wglGetProcAddress."
 
-Austin English (3):
-      iexplore: Add 'HKCR\Applications\iexplore.exe\shell\open\command' key.
-      wine.inf: Add "HKLM\System\CurrentControlSet\Services\Eventlog\System" key.
-      wine.inf: Add HKCR\folder\shellex\ContextMenuHandlers and HKCR\*\shellex\ContextMenuHandlers keys.
+Alistair Leslie-Hughes (3):
+      configure: Create d3dx10 import library.
+      dxguid: Include d3dx10.h.
+      wevtapi: Add EvtClose stub.
+
+Andrew Eikum (1):
+      winepulse.drv: Print a winediag error when PA buffer size is too small.
+
+Austin English (1):
+      fusion: Add a stub for CopyPDBs.
 
 Boyuan Yang (1):
-      po: Update Simplified Chinese translation.
-
-Bruno Jesus (2):
-      msacm32/tests: Add more acmStreamPrepareHeader tests.
-      krnl386.exe16: Skip invalid entries in GetPrivateProfileString16.
+      readme: Add Simplified Chinese translation.
 
 Dmitry Timoshkov (6):
-      oleaut32: Simplify 'for' loop.
-      widl: Fixup the defaultvalue(BSTR) expression type like midl does.
-      winhttp/tests: Accept Windows7 return value for WinHttpQueryOption(WINHTTP_OPTION_CONNECTION_INFO).
-      winhttp/tests: For a secure connection check what WinHttpQueryDataAvailable() returns as well as first chunk of actual data.
-      winhttp/tests: Add a test for data returned by IWinHttpRequest::get_ResponseText().
-      winhttp/tests: Add a test for data returned by IWinHttpRequest::get_ResponseText() using an https connection.
+      winhttp/tests: Fix spurious crashes under Windows.
+      winhttp/tests: Fix a typo.
+      winhttp/tests: Use symbolic names for http status codes.
+      winhttp/tests: Send a not empty payload in the server authorization response, check the received data on the client side.
+      user32: Call the EnumChildWindows callback using a wrapper.
+      winhttp/tests: Add an authentication test using IWinHttpRequest.
 
-François Gouget (1):
-      Assorted spelling fixes.
+François Gouget (15):
+      po: Fix some trailing space and exclamation mark issues in the Norwegian Bokmål translation.
+      po: Fix ellipsis issues in the Norwegian Bokmål translation.
+      po: Remove some extraneous ellipses in the Norwegian Bokmål translation.
+      po: Fuzzy some incorrect Arabic translations.
+      po: Fuzzy an incomplete Croatian translation.
+      po: Remove an unwanted shortcut key in the Arabic translation.
+      po: Fix a printf-format specified in the Catalan translation.
+      po: Remove a superfluous trailing space in a Japanese translation.
+      po: Fix trailing colon issues in the Czech, Esperanto Japanese and Portuguese (Portugal) translations.
+      po: Add a couple of missing ellipses to the Catalan translation.
+      po: French translation tweaks and fixes.
+      winecfg: Tweak sizes and alignments so the 'Font' button does not clip in Portuguese (Portugal).
+      po: Translate 'batch file' to French.
+      po: Tweak the French TYPE and ASSOC usage messages.
+      po: Use lowercase+underscore names for the replaceable parts of the French usage messages.
 
-Gerald Pfeifer (2):
-      krnl386.exe16: Avoid shift overflows in DMA_ioport_out.
-      user32: Avoid shift overflow in nulldrv_GetKeyboardLayoutList.
+Henri Verbeet (1):
+      ddraw: Mark surfaces as lost on mode changes.
 
-Hans Leidekker (1):
-      ieframe: Don't release the advise sink in IOleObject::SetClientSite.
-
-Henri Verbeet (4):
-      ddraw/tests: 64-bit ddraw doesn't support textures.
-      ddraw: Return DDERR_NOEXCLUSIVEMODE in ddraw_surface7_Flip() when not in exclusive mode.
-      ddraw: Mark surfaces as lost when the device window is deactivated.
-      ddraw: Do not mark surfaces as lost unconditionally when setting the cooperative level.
-
-Hugh McMaster (4):
-      loader: Fix a typo and improve a sentence in wine.man.in.
-      kernel32: Replace NULL argument with pointer to DWORD.
-      winex11.drv: Ctrl-Space should generate space, not 0.
-      user32/tests: Add tests for VK_SPACE, Shift-Space and Ctrl-Space.
+Hugh McMaster (1):
+      cmd: Do not overwrite a user-specified Prompt variable.
 
 Jacek Caban (3):
-      exdisp.idl: Added new DWebBrowserEvents2 members declarations.
-      ieframe: Fixed tests on some VMs.
-      ieframe: Fixed tests on some VMs.
+      mshtml: Fixed nsIHttpChannelInternal declaration.
+      mshtml: Return success in SetCorsIncludeCredentials and SetCorsMode.
+      mshtml: Properly return NULL parentElement.
 
-Jactry Zeng (1):
-      riched20/tests: Test EM_REPLACESEL with rtf stream.
+Jactry Zeng (2):
+      riched20/tests: Test EM_SETTEXT and EM_REPLACESEL with multibyte character.
+      riched20/tests: Add return tests for EM_SETTEXTEX.
 
-Ken Thomases (2):
-      winemac: Remove a window from the NSWorkspace notification center when it's deallocated.
-      winemac: Don't post a WINDOW_BROUGHT_FORWARD event for a click on a window which is already frontmost in its level.
+Julian Rüger (1):
+      po: Update German translation.
 
-Matteo Bruni (7):
-      msctf: Add a partial implementation of ITfThreadMgrEx_ActivateEx().
-      d3dx9: Don't take the fastpath when converting between texture formats of different type.
-      wined3d: Flush the GL context before switching away from it.
-      wined3d: Add ARB_ES2_COMPATIBILITY entry to the core extensions table.
-      include: Add missing D3DPMISCCAPS_POSTBLENDSRGBCONVERT flag.
-      wined3d: Respect D3DRS_SRGBWRITEENABLE in clears.
-      wined3d: Handle D3DRS_SRGBWRITEENABLE in clears when ARB_framebuffer_sRGB is not supported.
+Józef Kucia (4):
+      wined3d: Use correct initial color for FFP texture blending in GLSL backend.
+      wined3d: Use correct initial color for FFP texture blending in ARB program shader backend.
+      d3d9/tests: Add tests for FFP texture blending.
+      d3d8/tests: Port test_texture_blending() from d3d9.
+
+Ken Thomases (1):
+      loader: Add the CFBundleAllowMixedLocalizations key to the embedded Info.plist to allow Cocoa to localize its strings.
 
 Michael Müller (1):
-      winedbg: Print windows version in system info.
+      advapi32: Set last error to ERROR_SUCCESS in GetSidIdentifierAuthority.
 
-Michael Stefaniuc (3):
-      dsound/tests: Version differences in flag handling for 3d buffers.
-      dsound/tests: Test Pan for 3D secondary buffers too.
-      dsound: A version 1 3d secondary buffer allows SetPan().
+Nikolay Sivov (4):
+      po: Update Russian translation.
+      dwrite/tests: Some tests for MapCharacters().
+      dwrite/tests: Some tests for fallback builder.
+      winecfg: Fix a crash on empty size field in Desktop Integration.
 
-Nikolay Sivov (8):
-      usp10: Remove unused helper (Clang).
-      avifil32: Use __ms_va* varargs variant for AVISave[A,W].
-      odbc32: Fix SQLBindCol prototype.
-      oleaut32/tests: Some tests for SafeArrayDestroyData().
-      oledlg: Replace existing menu item in case of empty object too.
-      advapi32: Use proper enum member to initialize SECURITY_IMPERSONATION_LEVEL variable (Clang).
-      ole32/tests: Some tests for CoGetMalloc().
-      browseui: Use defined context kind constant with CoGetMalloc().
+Piotr Caban (1):
+      ole32: Fix minimal size check of compound file in StgOpenStorage.
 
-Olivier F. R. Dierick (2):
-      shlwapi: SHFreeShared returns TRUE when passed NULL handle.
-      shlwapi/tests: Test SHFreeShared with NULL handle.
+Sebastian Lackner (3):
+      opengl32: Store alternative function in wglGetProcAddress.
+      ntdll/tests: Add more tests for ProcessDebugFlags.
+      opengl32: Add alternative function for glVertexAttribDivisor.
 
-Piotr Caban (2):
-      comctl32: Set listview focus in WM_LBUTTONDOWN.
-      msiexec: Avoid broken pipe error caused by setting SERVICE_STOPPED state twice.
+Stefan Dösinger (2):
+      wined3d: Restore WINEDDBLT_ALPHATEST support.
+      wined3d: Clip software cursor blits.
 
-Qian Hong (3):
-      ntdll/tests: Add SIMD exception test for floating point invalid operation fault.
-      ntdll: Silence useless fixme message when handling SIMD floating point invalid operation exception.
-      ntdll/tests: Restore old value in a more context independent way.
-
-Sebastian Lackner (14):
-      winex11.drv: Fix specfile entry for X11DRV_ScrollDC.
-      winemac.drv: Fix specfile entry for ImeGetRegisterWordStyle.
-      wined3d: Fix specfile entry for wined3d_swapchain_get_back_buffer.
-      msvcrt: Fix specfile entry for $I10_OUTPUT and _wcstod_l.
-      ntoskrnl.exe: Fix specfile entry for MmMapIoSpace.
-      ntdll: Commit new guard pages in virtual_handle_stack_fault.
-      kernel32/tests: Add tests for committing stack guard pages.
-      wine.inf: Add information for delayed end of DST in Europe/Istanbul.
-      maintainers: Add section for timezone database.
-      oleaut32/tests: Add test for calling method with coclass argument.
-      server: Check winstation visibility in server to avoid race-conditions.
-      user32/tests: Add test to check ObjectNameInformation for desktop objects.
-      user32: Make sure explorer.exe process is spawned for the correct desktop.
-      wineboot: Remove unused declaration for __wine_make_process_system.
-
-Stefan Dösinger (1):
-      ddraw/tests: Test color keys on cube map surfaces.
+Viliam Lejcik (1):
+      kernel32/nls: Regional settings translation for Czech and Slovak.
 
 --
 Alexandre Julliard
