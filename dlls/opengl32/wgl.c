@@ -884,15 +884,15 @@ PROC WINAPI wglGetProcAddress( LPCSTR name )
                 { "glCopyTexSubImage3DEXT", "glCopyTexSubImage3D" },  /* needed by RuneScape */
             };
 
-            WARN("Extension %s required for %s not supported\n", ext_ret->extension, name);
-            driver_func = NULL;
-
-            for (i = 0; i < sizeof(alternatives)/sizeof(alternatives[0]) && !driver_func; i++)
+            for (i = 0; i < sizeof(alternatives)/sizeof(alternatives[0]); i++)
             {
                 if (strcmp( name, alternatives[i].name )) continue;
-                WARN("Trying alternative %s for %s\n", alternatives[i].alt, name );
-                driver_func = wglGetProcAddress( alternatives[i].alt );
+                WARN("Extension %s required for %s not supported, trying %s\n",
+                    ext_ret->extension, name, alternatives[i].alt );
+                return wglGetProcAddress( alternatives[i].alt );
             }
+            WARN("Extension %s required for %s not supported\n", ext_ret->extension, name);
+            return NULL;
         }
 
         if (driver_func == NULL)
