@@ -388,6 +388,7 @@ struct strarray *get_as_command(void)
         if (force_pointer_size)
             strarray_add_one( args, (force_pointer_size == 8) ? "-m64" : "-m32" );
         if (cpu_option) strarray_add_one( args, strmake("-mcpu=%s", cpu_option) );
+        if (arch_option) strarray_add_one( args, strmake("-march=%s", arch_option) );
         return args;
     }
 

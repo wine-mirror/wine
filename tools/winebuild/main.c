@@ -89,6 +89,7 @@ struct strarray *cc_command = NULL;
 struct strarray *ld_command = NULL;
 struct strarray *nm_command = NULL;
 char *cpu_option = NULL;
+char *arch_option = NULL;
 
 #ifdef __thumb__
 int thumb_mode = 1;
@@ -408,6 +409,7 @@ static char **parse_options( int argc, char **argv, DLLSPEC *spec )
             else if (!strcmp( optarg, "arm" )) thumb_mode = 0;
             else if (!strcmp( optarg, "thumb" )) thumb_mode = 1;
             else if (!strncmp( optarg, "cpu=", 4 )) cpu_option = xstrdup( optarg + 4 );
+            else if (!strncmp( optarg, "arch=", 5 )) arch_option = xstrdup( optarg + 5 );
             else fatal_error( "Unknown -m option '%s'\n", optarg );
             break;
         case 'M':
