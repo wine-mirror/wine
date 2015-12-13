@@ -1101,7 +1101,7 @@ struct compare
 {
     DWORD width, height;
     DWORD caps, caps2;
-    UINT mips;
+    UINT mipmaps;
 };
 
 static HRESULT WINAPI CubeTestPaletteEnum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
@@ -1121,9 +1121,9 @@ static HRESULT WINAPI CubeTestPaletteEnum(IDirectDrawSurface7 *surface, DDSURFAC
 
 static HRESULT WINAPI CubeTestLvl2Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
 {
-    UINT *mips = context;
+    UINT *mipmaps = context;
 
-    (*mips)++;
+    (*mipmaps)++;
     IDirectDrawSurface7_EnumAttachedSurfaces(surface,
                                              context,
                                              CubeTestLvl2Enum);
@@ -1133,7 +1133,7 @@ static HRESULT WINAPI CubeTestLvl2Enum(IDirectDrawSurface7 *surface, DDSURFACEDE
 
 static HRESULT WINAPI CubeTestLvl1Enum(IDirectDrawSurface7 *surface, DDSURFACEDESC2 *desc, void *context)
 {
-    UINT mips = 0;
+    UINT mipmaps = 0;
     UINT *num = context;
     static const struct compare expected[] =
     {
@@ -1175,16 +1175,16 @@ static HRESULT WINAPI CubeTestLvl1Enum(IDirectDrawSurface7 *surface, DDSURFACEDE
         },
     };
 
-    mips = 0;
+    mipmaps = 0;
     IDirectDrawSurface7_EnumAttachedSurfaces(surface,
-                                             &mips,
+                                             &mipmaps,
                                              CubeTestLvl2Enum);
 
     ok(desc->dwWidth == expected[*num].width, "Surface width is %d expected %d\n", desc->dwWidth, expected[*num].width);
     ok(desc->dwHeight == expected[*num].height, "Surface height is %d expected %d\n", desc->dwHeight, expected[*num].height);
     ok(desc->ddsCaps.dwCaps == expected[*num].caps, "Surface caps are %08x expected %08x\n", desc->ddsCaps.dwCaps, expected[*num].caps);
     ok(desc->ddsCaps.dwCaps2 == expected[*num].caps2, "Surface caps2 are %08x expected %08x\n", desc->ddsCaps.dwCaps2, expected[*num].caps2);
-    ok(mips == expected[*num].mips, "Surface has %d mipmaps, expected %d\n", mips, expected[*num].mips);
+    ok(mipmaps == expected[*num].mipmaps, "Surface has %d mipmaps, expected %d\n", mipmaps, expected[*num].mipmaps);
 
     (*num)++;
 
