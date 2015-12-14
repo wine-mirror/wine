@@ -8068,6 +8068,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         const struct wined3d_state *state, DWORD state_id)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
+    BOOL normal = !!(context->stream_info.use_map & (1u << WINED3D_FFP_NORMAL));
     BOOL transformed = context->stream_info.position_transformed;
     BOOL wasrhw = context->last_was_rhw;
     unsigned int i;
@@ -8093,7 +8094,8 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
         /* Because of settings->texcoords, we have to regenerate the vertex
          * shader on a vdecl change if there aren't enough varyings to just
          * always output all the texture coordinates. */
-        if (gl_info->limits.glsl_varyings < wined3d_max_compat_varyings(gl_info))
+        if (gl_info->limits.glsl_varyings < wined3d_max_compat_varyings(gl_info)
+                || normal != context->last_was_normal)
             context->shader_update_mask |= 1u << WINED3D_SHADER_TYPE_VERTEX;
 
         if (use_ps(state)
@@ -8112,6 +8114,7 @@ static void glsl_vertex_pipe_vdecl(struct wined3d_context *context,
     }
 
     context->last_was_vshader = use_vs(state);
+    context->last_was_normal = normal;
 }
 
 static void glsl_vertex_pipe_vs(struct wined3d_context *context,

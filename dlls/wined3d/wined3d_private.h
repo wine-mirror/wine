@@ -1175,6 +1175,7 @@ struct wined3d_context
     DWORD last_was_rhw : 1;             /* true iff last draw_primitive was in xyzrhw mode */
     DWORD last_was_pshader : 1;
     DWORD last_was_vshader : 1;
+    DWORD last_was_normal : 1;
     DWORD namedArraysLoaded : 1;
     DWORD numberedArraysLoaded : 1;
     DWORD last_was_blit : 1;
@@ -1185,17 +1186,17 @@ struct wined3d_context
     DWORD current : 1;
     DWORD destroyed : 1;
     DWORD valid : 1;
-    DWORD use_immediate_mode_draw : 1;
     DWORD texShaderBumpMap : 8;         /* MAX_TEXTURES, 8 */
     DWORD lastWasPow2Texture : 8;       /* MAX_TEXTURES, 8 */
     DWORD fixed_function_usage_map : 8; /* MAX_TEXTURES, 8 */
     DWORD lowest_disabled_stage : 4;    /* Max MAX_TEXTURES, 8 */
+    DWORD use_immediate_mode_draw : 1;
     DWORD rebind_fbo : 1;
     DWORD needs_set : 1;
     DWORD hdc_is_private : 1;
     DWORD hdc_has_format : 1;           /* only meaningful if hdc_is_private */
     DWORD update_shader_resource_bindings : 1;
-    DWORD padding : 15;
+    DWORD padding : 14;
     DWORD shader_update_mask;
     DWORD constant_update_mask;
     DWORD                   numbered_array_mask;
