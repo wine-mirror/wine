@@ -506,7 +506,7 @@
 @ stdcall RtlCreateTimerQueue(ptr)
 @ stdcall RtlCreateUnicodeString(ptr wstr)
 @ stdcall RtlCreateUnicodeStringFromAsciiz(ptr str)
-@ stub RtlCreateUserProcess
+@ stdcall RtlCreateUserProcess(ptr long ptr ptr ptr long long long long ptr)
 @ stub RtlCreateUserSecurityObject
 @ stdcall RtlCreateUserThread(long ptr long ptr long long ptr ptr ptr ptr)
 @ stub RtlCustomCPToUnicodeN

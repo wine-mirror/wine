@@ -1613,3 +1613,16 @@ void WINAPI RtlInsertElementGenericTableAvl(PRTL_AVL_TABLE table, void *buffer, 
 {
     FIXME("%p %p %u %p: stub\n", table, buffer, size, element);
 }
+
+/**********************************************************************
+ *           RtlCreateUserProcess [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlCreateUserProcess(UNICODE_STRING *path, ULONG attributes, RTL_USER_PROCESS_PARAMETERS *parameters,
+                                     SECURITY_DESCRIPTOR *process_descriptor, SECURITY_DESCRIPTOR *thread_descriptor,
+                                     HANDLE parent, BOOLEAN inherit, HANDLE debug, HANDLE exception,
+                                     RTL_USER_PROCESS_INFORMATION *info)
+{
+    FIXME("(%p %u %p %p %p %p %d %p %p %p): stub\n", path, attributes, parameters, process_descriptor, thread_descriptor,
+                                     parent, inherit, debug, exception, info);
+    return STATUS_NOT_IMPLEMENTED;
+}
