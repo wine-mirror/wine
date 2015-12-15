@@ -628,3 +628,12 @@ RETERR16 WINAPI CtlSetLddPath16(LOGDISKID16 ldid, LPSTR szPath)
     ldd.pszPath = szPath;
     return CtlSetLdd16(&ldd);
 }
+
+/***********************************************************************
+ *		DiBuildDriverIndex  (SETUPX.412)
+ */
+RETERR16 WINAPI DiBuildDriverIndex16( WORD w1 )
+{
+    FIXME( "%x: stub\n", w1 );
+    return 0;
+}
