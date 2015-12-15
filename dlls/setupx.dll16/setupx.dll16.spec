@@ -205,7 +205,7 @@
 409  stub     IPGETDRIVERVERSION
 410  stub     IpGetVersionString #(str str ptr word str)
 411  pascal   VcpExplain(ptr long) VcpExplain16
-412  stub     DiBuildDriverIndex #(word)
+412  pascal   DiBuildDriverIndex(word) DiBuildDriverIndex16
 413  stub     DiAddSingleInfToDrvIdx #(str word word)
 414  stub     FCEGETFLAGS
 450  stub     UiMakeDlgNonBold #(word)
