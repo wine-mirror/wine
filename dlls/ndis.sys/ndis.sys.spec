@@ -12,7 +12,7 @@
 @ stub NdisAllocateBufferPool
 @ stub NdisAllocateFromBlockPool
 @ stub NdisAllocateMemory
-@ stub NdisAllocateMemoryWithTag
+@ stdcall NdisAllocateMemoryWithTag(ptr long long)
 @ stub NdisAllocatePacket
 @ stub NdisAllocatePacketPool
 @ stub NdisAllocatePacketPoolEx
