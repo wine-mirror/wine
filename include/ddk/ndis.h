@@ -1,7 +1,7 @@
 /*
- * ndis.sys
+ * ndis.h
  *
- * Copyright 2014 Austin English
+ * Copyright 2015 Austin English
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -17,29 +17,14 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#ifndef _NDIS_
+#define _NDIS_
 
-#include <stdarg.h>
+typedef void *NDIS_HANDLE, *PNDIS_HANDLE;
+typedef int   NDIS_STATUS, *PNDIS_STATUS;
 
-#include "ntstatus.h"
-#define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "winternl.h"
-#include "ddk/wdm.h"
-#include "ddk/ndis.h"
-#include "wine/debug.h"
+#define NDIS_STATUS_FAILURE                                ((NDIS_STATUS) STATUS_UNSUCCESSFUL)
 
-WINE_DEFAULT_DEBUG_CHANNEL(ndis);
+NDIS_STATUS WINAPI NdisAllocateMemoryWithTag(void **, UINT, ULONG);
 
-NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
-{
-    TRACE("(%p, %s)\n", driver, debugstr_w(path->Buffer));
-
-    return STATUS_SUCCESS;
-}
-
-NDIS_STATUS WINAPI NdisAllocateMemoryWithTag(void **address, UINT length, ULONG tag)
-{
-    FIXME("(%p, %u, %u): stub\n", address, length, tag);
-    return NDIS_STATUS_FAILURE;
-}
+#endif /* _NDIS_ */

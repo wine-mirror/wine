@@ -276,6 +276,7 @@ HEADER_SRCS = \
 	ddk/hidtypes.h \
 	ddk/imm.h \
 	ddk/mountmgr.h \
+	ddk/ndis.h \
 	ddk/ntddcdvd.h \
 	ddk/ntddk.h \
 	ddk/ntddser.h \
