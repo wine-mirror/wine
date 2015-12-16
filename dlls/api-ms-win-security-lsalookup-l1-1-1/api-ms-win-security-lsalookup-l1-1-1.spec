@@ -1,0 +1,16 @@
+@ stub EnumerateIdentityProviders
+@ stub GetDefaultIdentityProvider
+@ stub GetIdentityProviderInfoByGUID
+@ stub GetIdentityProviderInfoByName
+@ stub LookupAccountNameLocalA
+@ stub LookupAccountNameLocalW
+@ stub LookupAccountSidLocalA
+@ stub LookupAccountSidLocalW
+@ stub LsaLookupClose
+@ stub LsaLookupFreeMemory
+@ stub LsaLookupGetDomainInfo
+@ stub LsaLookupManageSidNameMapping
+@ stub LsaLookupOpenLocalPolicy
+@ stub LsaLookupTranslateNames
+@ stub LsaLookupTranslateSids
+@ stub ReleaseIdentityProviderEnumContext
