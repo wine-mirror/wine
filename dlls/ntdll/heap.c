@@ -266,7 +266,8 @@ static inline void notify_free( void const *ptr )
 static inline void notify_realloc( void const *ptr, SIZE_T size_old, SIZE_T size_new )
 {
 #ifdef VALGRIND_RESIZEINPLACE_BLOCK
-    VALGRIND_RESIZEINPLACE_BLOCK( ptr, size_old, size_new, 0 );
+    /* zero is not a valid size */
+    VALGRIND_RESIZEINPLACE_BLOCK( ptr, size_old ? size_old : 1, size_new ? size_new : 1, 0 );
 #endif
 }
 
