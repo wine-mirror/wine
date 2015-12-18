@@ -132,6 +132,9 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         return status;
     }
 
+    ext = device->DeviceExtension;
+    InitializeListHead(&ext->irp_queue);
+
     TRACE("Created device %p\n",device);
     status = minidriver->AddDevice(minidriver->minidriver.DriverObject, device);
     if (status != STATUS_SUCCESS)
@@ -160,7 +163,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
         return status;
     }
 
-    ext = device->DeviceExtension;
     ext->information.VendorID = attr.VendorID;
     ext->information.ProductID = attr.ProductID;
     ext->information.VersionNumber = attr.VersionNumber;
@@ -233,7 +235,6 @@ NTSTATUS WINAPI PNP_AddDevice(DRIVER_OBJECT *driver, DEVICE_OBJECT *PDO)
     HID_LinkDevice(device, serial, interface);
 
     ext->poll_interval = DEFAULT_POLL_INTERVAL;
-    InitializeListHead(&ext->irp_queue);
 
     ext->ring_buffer = RingBuffer_Create(sizeof(HID_XFER_PACKET) + ext->preparseData->caps.InputReportByteLength);
 
