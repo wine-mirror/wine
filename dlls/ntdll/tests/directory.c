@@ -60,6 +60,7 @@ static struct testfile_s {
     int nfound;               /* How many were found (expect 1) */
     WCHAR nameW[20];          /* unicode version of name (filled in later) */
 } testfiles[] = {
+    { 0, 0, FILE_ATTRIBUTE_NORMAL,    "longfilename.tmp", NULL, "normal" },
     { 0, 0, FILE_ATTRIBUTE_NORMAL,    "n.tmp", NULL, "normal" },
     { 1, 0, FILE_ATTRIBUTE_HIDDEN,    "h.tmp", NULL, "hidden" },
     { 1, 0, FILE_ATTRIBUTE_SYSTEM,    "s.tmp", NULL, "system" },
@@ -234,10 +235,17 @@ static void test_flags_NtQueryDirectoryFile(OBJECT_ATTRIBUTES *attr, const char 
 static void test_NtQueryDirectoryFile(void)
 {
     OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING ntdirname;
+    UNICODE_STRING ntdirname, mask;
     char testdirA[MAX_PATH];
     WCHAR testdirW[MAX_PATH];
     int i;
+    IO_STATUS_BLOCK io;
+    WCHAR short_name[12];
+    UINT data_size;
+    BYTE data[8192];
+    FILE_BOTH_DIRECTORY_INFORMATION *fbdi = (FILE_BOTH_DIRECTORY_INFORMATION*)data;
+    DWORD status;
+    HANDLE dirh;
 
     /* Clean up from prior aborted run, if any, then set up test files */
     ok(GetTempPathA(MAX_PATH, testdirA), "couldn't get temp dir\n");
@@ -260,8 +268,6 @@ static void test_NtQueryDirectoryFile(void)
 
     for (i = 0; testfiles[i].name; i++)
     {
-        UNICODE_STRING mask;
-
         if (testfiles[i].nameW[0] == '.') continue;  /* . and .. as masks are broken on Windows */
         mask.Buffer = testfiles[i].nameW;
         mask.Length = mask.MaximumLength = lstrlenW(testfiles[i].nameW) * sizeof(WCHAR);
@@ -270,6 +276,35 @@ static void test_NtQueryDirectoryFile(void)
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, TRUE, TRUE);
         test_flags_NtQueryDirectoryFile(&attr, testdirA, &mask, TRUE, FALSE);
     }
+
+    /* short path passed as mask */
+    status = pNtOpenFile(&dirh, SYNCHRONIZE | FILE_LIST_DIRECTORY, &attr, &io, FILE_SHARE_READ,
+            FILE_SYNCHRONOUS_IO_NONALERT | FILE_OPEN_FOR_BACKUP_INTENT | FILE_DIRECTORY_FILE);
+    ok(status == STATUS_SUCCESS, "failed to open dir '%s'\n", testdirA);
+    if (status != STATUS_SUCCESS) {
+        skip("can't test if we can't open the directory\n");
+        return;
+    }
+    mask.Buffer = testfiles[0].nameW;
+    mask.Length = mask.MaximumLength = lstrlenW(testfiles[0].nameW) * sizeof(WCHAR);
+    data_size = offsetof(FILE_BOTH_DIRECTORY_INFORMATION, FileName[256]);
+    pNtQueryDirectoryFile(dirh, 0, NULL, NULL, &io, data, data_size,
+            FileBothDirectoryInformation, TRUE, &mask, FALSE);
+    ok(U(io).Status == STATUS_SUCCESS, "failed to query directory; status %x\n", U(io).Status);
+    ok(fbdi->ShortName[0], "ShortName is empty\n");
+
+    mask.Length = mask.MaximumLength = fbdi->ShortNameLength;
+    memcpy(short_name, fbdi->ShortName, mask.Length);
+    mask.Buffer = short_name;
+    pNtQueryDirectoryFile(dirh, 0, NULL, NULL, &io, data, data_size,
+            FileBothDirectoryInformation, TRUE, &mask, TRUE);
+    ok(U(io).Status == STATUS_SUCCESS, "failed to query directory status %x\n", U(io).Status);
+    ok(fbdi->FileNameLength == strlen(testfiles[0].name)*sizeof(WCHAR) &&
+            !memcmp(fbdi->FileName, testfiles[0].nameW, fbdi->FileNameLength),
+            "incorrect long file name: %s\n", wine_dbgstr_wn(fbdi->FileName,
+                fbdi->FileNameLength/sizeof(WCHAR)));
+
+    pNtClose(dirh);
 
 done:
     tear_down_attribute_test(testdirA);
