@@ -305,17 +305,13 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
         XDNDLastDropTargetWnd = dropTargetWindow;
         if (dropTarget)
         {
+            DWORD effect_ignore = effect;
             hr = IDropTarget_DragEnter(dropTarget, &XDNDDataObject,
                                        MK_LBUTTON, pointl, &effect);
-            if (SUCCEEDED(hr))
+            if (hr == S_OK)
             {
-                if (effect != DROPEFFECT_NONE)
-                {
-                    XDNDAccepted = TRUE;
-                    TRACE("the application accepted the drop\n");
-                }
-                else
-                    TRACE("the application refused the drop\n");
+                XDNDAccepted = TRUE;
+                TRACE("the application accepted the drop (effect = %d)\n", effect_ignore);
             }
             else
                 WARN("IDropTarget_DragEnter failed, error 0x%08X\n", hr);
@@ -340,7 +336,7 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
     if (XDNDAccepted)
         accept = 1;
     else if ((GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
-            (X11DRV_XDND_XdndActionToDROPEFFECT(event->data.l[4]) & DROPEFFECT_COPY) &&
+            (effect & DROPEFFECT_COPY) &&
             X11DRV_XDND_HasHDROP())
     {
         accept = 1;
