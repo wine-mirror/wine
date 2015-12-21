@@ -51,6 +51,7 @@ static const WCHAR strWineFontData[] = {'_','_','W','I','N','E','_','F','O','N',
 static const WCHAR strWineFontData_a[] =
                                {'_','_','W','I','N','E','_','F','O','N','T','D','L','G','D','A','T','A','_','A',0};
 static const WCHAR chooseFontW[] = {'C','H','O','O','S','E','_','F','O','N','T',0};
+static const WCHAR fontsizefmtW[] = {'%','d',0};
 
 /* image list with TrueType bitmaps and more */
 static HIMAGELIST himlTT = 0;
@@ -417,16 +418,15 @@ static BOOL AddFontSizeToCombo3(HWND hwnd, UINT h, const CHOOSEFONTW *lpcf)
 {
     int j;
     WCHAR buffer[20];
-    static const WCHAR strFormat[] = {'%','2','d',0};
 
     if (  (!(lpcf->Flags & CF_LIMITSIZE))  ||
             ((lpcf->Flags & CF_LIMITSIZE) && (h >= lpcf->nSizeMin) && (h <= lpcf->nSizeMax)))
     {
-        wsprintfW(buffer, strFormat, h);
+        sprintfW(buffer, fontsizefmtW, h);
         j=SendMessageW(hwnd, CB_FINDSTRINGEXACT, -1, (LPARAM)buffer);
         if (j==CB_ERR)
         {
-            j=SendMessageW(hwnd, CB_ADDSTRING, 0, (LPARAM)buffer);
+            j=SendMessageW(hwnd, CB_INSERTSTRING, -1, (LPARAM)buffer);
             if (j!=CB_ERR) j = SendMessageW(hwnd, CB_SETITEMDATA, j, h);
             if (j==CB_ERR) return TRUE;
         }
@@ -534,7 +534,6 @@ static INT AddFontStyle( const ENUMLOGFONTEXW *lpElfex, const NEWTEXTMETRICEXW *
 
 static void CFn_FitFontSize( HWND hDlg, int points)
 {
-    static const WCHAR fmtW[] = {'%','d',0};
     WCHAR buffW[16];
     int i,n;
 
@@ -554,7 +553,7 @@ static void CFn_FitFontSize( HWND hDlg, int points)
     }
 
     /* no default matching size, set text manually */
-    sprintfW(buffW, fmtW, points);
+    sprintfW(buffW, fontsizefmtW, points);
     SetDlgItemTextW(hDlg, cmb3, buffW);
 }
 
