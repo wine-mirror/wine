@@ -654,7 +654,6 @@ static HRESULT test_secondary8(LPGUID lpGuid, BOOL play,
             /* Invalid flag combination */
             bufdesc.dwFlags|=DSBCAPS_CTRLPAN;
             rc=IDirectSound8_CreateSoundBuffer(dso,&bufdesc,&secondary,NULL);
-            todo_wine
             ok(rc==DSERR_INVALIDPARAM,
                "IDirectSound8_CreateSoundBuffer(secondary) should have "
                "returned DSERR_INVALIDPARAM, returned %08x\n", rc);
