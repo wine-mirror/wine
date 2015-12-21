@@ -559,6 +559,7 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
     if (!token) return token;
 
     /* copy groups */
+    token->primary_group = NULL;
     LIST_FOR_EACH_ENTRY( group, &src_token->groups, struct group, entry )
     {
         size_t size = FIELD_OFFSET( struct group, sid.SubAuthority[group->sid.SubAuthorityCount] );
@@ -570,8 +571,9 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
         }
         memcpy( newgroup, group, size );
         list_add_tail( &token->groups, &newgroup->entry );
+        if (src_token->primary_group == &group->sid)
+            token->primary_group = &newgroup->sid;
     }
-    token->primary_group = src_token->primary_group;
     assert( token->primary_group );
 
     /* copy privileges */
