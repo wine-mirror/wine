@@ -448,7 +448,14 @@ static void sax_characters(void *ctx, const xmlChar *ch, int len)
             (!ctxt->node->last ||
             ((ctxt->node->last && (cur == '<' || ctxt->node->last->type != XML_TEXT_NODE))
            )))
+        {
+            /* Keep information about ignorable whitespace text node in previous or parent node */
+            if (ctxt->node->last)
+                *(DWORD*)&ctxt->node->last->_private |= NODE_PRIV_TRAILING_IGNORABLE_WS;
+            else if (ctxt->node->type != XML_DOCUMENT_NODE)
+                *(DWORD*)&ctxt->node->_private |= NODE_PRIV_CHILD_IGNORABLE_WS;
             return;
+        }
     }
 
     xmlSAX2Characters(ctxt, ch, len);

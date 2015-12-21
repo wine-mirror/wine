@@ -398,7 +398,7 @@ HRESULT node_get_next_sibling(xmlnode *This, IXMLDOMNode **ret)
 
 static int node_get_inst_cnt(xmlNodePtr node)
 {
-    int ret = *(LONG *)&node->_private;
+    int ret = *(LONG *)&node->_private & NODE_PRIV_REFCOUNT_MASK;
     xmlNodePtr child;
 
     /* add attribute counts */
@@ -429,7 +429,8 @@ int xmlnode_get_inst_cnt(xmlnode *node)
     return node_get_inst_cnt(node->node);
 }
 
-/* _private field holds a number of COM instances spawned from this libxml2 node */
+/* _private field holds a number of COM instances spawned from this libxml2 node
+ * most significant bits are used to store information about ignorrable whitespace nodes */
 static void xmlnode_add_ref(xmlNodePtr node)
 {
     if (node->type == XML_DOCUMENT_NODE) return;
