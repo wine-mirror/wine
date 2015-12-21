@@ -314,7 +314,10 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
                 TRACE("the application accepted the drop (effect = %d)\n", effect_ignore);
             }
             else
+            {
+                XDNDAccepted = FALSE;
                 WARN("IDropTarget_DragEnter failed, error 0x%08X\n", hr);
+            }
             IDropTarget_Release(dropTarget);
         }
     }
