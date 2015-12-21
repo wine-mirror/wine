@@ -14478,6 +14478,32 @@ void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, e
     return handle;
 }
 
+/* ?_Read_dir@sys@tr2@std@@YAPADAAY0BAE@DPAXAAW4file_type@123@@Z */
+/* ?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z */
+char* __cdecl tr2_sys__Read_dir(char* target, void* handle, enum file_type* type)
+{
+    WIN32_FIND_DATAA data;
+    TRACE("(%p %p %p)\n", target, handle, type);
+    if(!FindNextFileA(handle, &data)) {
+        *type = status_unknown;
+        *target = '\0';
+        return target;
+    }
+    while(!strcmp(data.cFileName, ".") || !strcmp(data.cFileName, "..")) {
+        if(!FindNextFileA(handle, &data)) {
+            *type = status_unknown;
+            return NULL;
+        }
+    }
+
+    strcpy(target, data.cFileName);
+    if(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+        *type = directory_file;
+    else
+        *type = regular_file;
+    return target;
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64
