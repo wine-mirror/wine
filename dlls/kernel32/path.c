@@ -334,10 +334,10 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
         /* check for path delimiters and reproduce them */
         if (shortpath[sp] == '\\' || shortpath[sp] == '/')
         {
-            if (!lp || tmplongpath[lp-1] != '\\')
+            if (!lp || (tmplongpath[lp-1] != '\\' && tmplongpath[lp-1] != '/'))
             {
-                /* strip double "\\" */
-                tmplongpath[lp++] = '\\';
+                /* strip double delimiters */
+                tmplongpath[lp++] = shortpath[sp];
             }
             tmplongpath[lp] = 0; /* terminate string */
             sp++;
@@ -492,10 +492,10 @@ DWORD WINAPI GetShortPathNameW( LPCWSTR longpath, LPWSTR shortpath, DWORD shortl
         /* check for path delimiters and reproduce them */
         if (longpath[lp] == '\\' || longpath[lp] == '/')
         {
-            if (!sp || tmpshortpath[sp-1] != '\\')
+            if (!sp || (tmpshortpath[sp-1] != '\\' && tmpshortpath[sp-1] != '/'))
             {
-                /* strip double "\\" */
-                tmpshortpath[sp] = '\\';
+                /* strip double delimiters */
+                tmpshortpath[sp] = longpath[lp];
                 sp++;
             }
             tmpshortpath[sp] = 0; /* terminate string */
