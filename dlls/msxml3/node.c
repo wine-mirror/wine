@@ -429,6 +429,19 @@ int xmlnode_get_inst_cnt(xmlnode *node)
     return node_get_inst_cnt(node->node);
 }
 
+/* _private field holds a number of COM instances spawned from this libxml2 node */
+static void xmlnode_add_ref(xmlNodePtr node)
+{
+    if (node->type == XML_DOCUMENT_NODE) return;
+    InterlockedIncrement((LONG*)&node->_private);
+}
+
+static void xmlnode_release(xmlNodePtr node)
+{
+    if (node->type == XML_DOCUMENT_NODE) return;
+    InterlockedDecrement((LONG*)&node->_private);
+}
+
 HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT *ref_child,
         IXMLDOMNode **ret)
 {
@@ -489,6 +502,7 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
 
     if(before)
     {
+        xmlNodePtr new_node;
         xmlnode *before_node_obj = get_node_obj(before);
 
         /* refs count including subtree */
@@ -496,19 +510,35 @@ HRESULT node_insert_before(xmlnode *This, IXMLDOMNode *new_child, const VARIANT 
             refcount = xmlnode_get_inst_cnt(node_obj);
 
         if (refcount) xmldoc_add_refs(before_node_obj->node->doc, refcount);
-        node_obj->node = xmlAddPrevSibling(before_node_obj->node, node_obj->node);
+        new_node = xmlAddPrevSibling(before_node_obj->node, node_obj->node);
+        if (new_node != node_obj->node)
+        {
+            if (refcount != 1)
+                FIXME("referenced xmlNode was freed, expect crashes\n");
+            xmlnode_add_ref(new_node);
+            node_obj->node = new_node;
+        }
         if (refcount) xmldoc_release_refs(doc, refcount);
         node_obj->parent = This->parent;
     }
     else
     {
+        xmlNodePtr new_node;
+
         if (doc != This->node->doc)
             refcount = xmlnode_get_inst_cnt(node_obj);
 
         if (refcount) xmldoc_add_refs(This->node->doc, refcount);
         /* xmlAddChild doesn't unlink node from previous parent */
         xmlUnlinkNode(node_obj->node);
-        node_obj->node = xmlAddChild(This->node, node_obj->node);
+        new_node = xmlAddChild(This->node, node_obj->node);
+        if (new_node != node_obj->node)
+        {
+            if (refcount != 1)
+                FIXME("referenced xmlNode was freed, expect crashes\n");
+            xmlnode_add_ref(new_node);
+            node_obj->node = new_node;
+        }
         if (refcount) xmldoc_release_refs(doc, refcount);
         node_obj->parent = This->iface;
     }
@@ -1390,19 +1420,6 @@ HRESULT node_get_base_name(xmlnode *This, BSTR *name)
     TRACE("returning %s\n", debugstr_w(*name));
 
     return S_OK;
-}
-
-/* _private field holds a number of COM instances spawned from this libxml2 node */
-static void xmlnode_add_ref(xmlNodePtr node)
-{
-    if (node->type == XML_DOCUMENT_NODE) return;
-    InterlockedIncrement((LONG*)&node->_private);
-}
-
-static void xmlnode_release(xmlNodePtr node)
-{
-    if (node->type == XML_DOCUMENT_NODE) return;
-    InterlockedDecrement((LONG*)&node->_private);
 }
 
 void destroy_xmlnode(xmlnode *This)
