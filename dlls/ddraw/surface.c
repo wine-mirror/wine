@@ -2377,9 +2377,12 @@ static HRESULT WINAPI ddraw_surface7_GetPriority(IDirectDrawSurface7 *iface, DWO
         WARN("Called on offscreenplain surface, returning DDERR_INVALIDOBJECT.\n");
         hr = DDERR_INVALIDOBJECT;
     }
-    else if (!(surface->surface_desc.ddsCaps.dwCaps2 & managed) || !surface->wined3d_texture)
+    else if (!(surface->surface_desc.ddsCaps.dwCaps2 & managed)
+            || (surface->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)
+            || ((surface->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
+                    && !(surface->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_POSITIVEX)))
     {
-        WARN("Called on non-managed texture or mipmap sublevel, returning DDERR_INVALIDPARAMS.\n");
+        WARN("Called on non-managed texture, mipmap sublevel or non +X toplevel surface, returning DDERR_INVALIDPARAMS.\n");
         hr = DDERR_INVALIDPARAMS;
     }
     else
