@@ -4577,6 +4577,27 @@ static void test_EM_EXSETSEL(void)
         check_EM_EXSETSEL(hwndRichEdit, &exsetsel_tests[i], i);
     }
 
+    if (!is_lang_japanese)
+        skip("Skip multibyte character tests on non-Japanese platform\n");
+    else
+    {
+        CHARRANGE cr;
+        char bufA[MAX_BUF_LEN] = {0};
+        LRESULT result;
+
+        /* Test with multibyte character */
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"abcdef\x8e\xf0ghijk");
+        /*                                                 012345     6  78901 */
+        cr.cpMin = 4, cr.cpMax = 8;
+        result =  SendMessageA(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr);
+        ok(result == 8, "EM_EXSETSEL return %ld expected 8\n", result);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, sizeof(bufA), (LPARAM)bufA);
+        ok(!strcmp(bufA, "ef\x8e\xf0g"), "EM_GETSELTEXT return incorrect string\n");
+        SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
+        ok(cr.cpMin == 4, "Selection start incorrectly: %d expected 4\n", cr.cpMin);
+        ok(cr.cpMax == 8, "Selection end incorrectly: %d expected 8\n", cr.cpMax);
+    }
+
     DestroyWindow(hwndRichEdit);
 }
 
@@ -4601,7 +4622,7 @@ static void check_EM_SETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) 
 
 static void test_EM_SETSEL(void)
 {
-    char buffA[32];
+    char buffA[32] = {0};
     HWND hwndRichEdit = new_richedit(NULL);
     int i;
     const int num_tests = sizeof(exsetsel_tests)/sizeof(struct exsetsel_s);
@@ -4619,6 +4640,25 @@ static void test_EM_SETSEL(void)
     buffA[0] = 123;
     SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffA);
     ok(buffA[0] == 0, "selection text %s\n", buffA);
+
+    if (!is_lang_japanese)
+        skip("Skip multibyte character tests on non-Japanese platform\n");
+    else
+    {
+        int sel_start, sel_end;
+        LRESULT result;
+
+        /* Test with multibyte character */
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"abcdef\x8e\xf0ghijk");
+        /*                                                 012345     6  78901 */
+        result =  SendMessageA(hwndRichEdit, EM_SETSEL, 4, 8);
+        ok(result == 8, "EM_SETSEL return %ld expected 8\n", result);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, sizeof(buffA), (LPARAM)buffA);
+        ok(!strcmp(buffA, "ef\x8e\xf0g"), "EM_GETSELTEXT return incorrect string\n");
+        result = SendMessageA(hwndRichEdit, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+        ok(sel_start == 4, "Selection start incorrectly: %d expected 4\n", sel_start);
+        ok(sel_end == 8, "Selection end incorrectly: %d expected 8\n", sel_end);
+    }
 
     DestroyWindow(hwndRichEdit);
 }
