@@ -466,8 +466,7 @@ struct apartment_loaded_dll
     BOOL multi_threaded;
 };
 
-static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','e','a','d','W','n','d','C','l','a','s','s',' ',
-                                       '0','x','#','#','#','#','#','#','#','#',' ',0};
+static const WCHAR wszAptWinClass[] = {'O','l','e','M','a','i','n','T','h','r','e','a','d','W','n','d','C','l','a','s','s',0};
 
 /*****************************************************************************
  * This section contains OpenDllList implementation
