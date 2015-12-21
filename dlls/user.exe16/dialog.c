@@ -658,7 +658,7 @@ LRESULT WINAPI SendDlgItemMessage16( HWND16 hwnd, INT16 id, UINT16 msg,
  */
 void WINAPI MapDialogRect16( HWND16 hwnd, LPRECT16 rect )
 {
-    RECT rect32;
+    RECT rect32 = { rect->left, rect->top, rect->right, rect->bottom };
     MapDialogRect( WIN_Handle32(hwnd), &rect32 );
     rect->left   = rect32.left;
     rect->right  = rect32.right;
