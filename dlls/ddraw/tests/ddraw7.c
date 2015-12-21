@@ -8436,7 +8436,10 @@ static void test_lost_device(void)
 static void test_resource_priority(void)
 {
     IDirectDrawSurface7 *surface, *mipmap;
+    D3DDEVICEDESC7 device_desc;
     DDSURFACEDESC2 surface_desc;
+    IDirect3D7 *d3d;
+    IDirect3DDevice7 *device;
     IDirectDraw7 *ddraw;
     ULONG refcount;
     HWND window;
@@ -8460,16 +8463,28 @@ static void test_resource_priority(void)
         {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0, "sysmem texture", DDERR_INVALIDPARAMS, FALSE},
         {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, "managed texture", DD_OK, FALSE},
         {DDSCAPS_TEXTURE, DDSCAPS2_D3DTEXTUREMANAGE, "managed texture", DD_OK, FALSE},
+        {DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP,
+                DDSCAPS2_CUBEMAP | DDSCAPS2_CUBEMAP_ALLFACES | DDSCAPS2_TEXTUREMANAGE,
+                "cubemap", DD_OK, FALSE},
         {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0, "vidmem offscreenplain", DDERR_INVALIDOBJECT, TRUE},
         {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0, "sysmem offscreenplain", DDERR_INVALIDOBJECT, TRUE},
     };
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
-    ddraw = create_ddraw();
-    ok(!!ddraw, "Failed to create a ddraw object.\n");
-    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
-    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+    if (!(device = create_device(window, DDSCL_NORMAL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        DestroyWindow(window);
+        return;
+    }
+    hr = IDirect3DDevice7_GetCaps(device, &device_desc);
+    ok(SUCCEEDED(hr), "Failed to get device caps, hr %#x.\n", hr);
+    hr = IDirect3DDevice7_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get d3d interface, hr %#x.\n", hr);
+    hr = IDirect3D7_QueryInterface(d3d, &IID_IDirectDraw7, (void **)&ddraw);
+    ok(SUCCEEDED(hr), "Failed to get ddraw interface, hr %#x.\n", hr);
+    IDirect3D7_Release(d3d);
 
     memset(&hal_caps, 0, sizeof(hal_caps));
     hal_caps.dwSize = sizeof(hal_caps);
@@ -8490,6 +8505,12 @@ static void test_resource_priority(void)
         surface_desc.dwWidth = 32;
         surface_desc.dwHeight = 32;
         surface_desc.ddsCaps.dwCaps = test_data[i].caps;
+        if ((test_data[i].caps2 & DDSCAPS2_CUBEMAP)
+                && !(device_desc.dpcTriCaps.dwTextureCaps & D3DPTEXTURECAPS_CUBEMAP))
+        {
+            skip("Device does not support cubemaps.\n");
+            continue;
+        }
         surface_desc.ddsCaps.dwCaps2 = test_data[i].caps2;
         hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
         if (is_ddraw64 && (test_data[i].caps & DDSCAPS_TEXTURE))
@@ -8526,6 +8547,20 @@ static void test_resource_priority(void)
                 ok(priority == 0xdeadbeef, "Got unexpected priority %u, type %s.\n", priority, test_data[i].name);
         }
 
+        if (test_data[i].caps2 & DDSCAPS2_CUBEMAP)
+        {
+            caps.dwCaps2 = DDSCAPS2_CUBEMAP_NEGATIVEZ;
+            priority = 0xdeadbeef;
+            hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &mipmap);
+            ok(SUCCEEDED(hr), "Failed to get attached surface, i %u, hr %#x.\n", i, hr);
+            /* IDirectDrawSurface7_SetPriority crashes when called on non-positive X surfaces on Windows */
+            hr = IDirectDrawSurface7_GetPriority(mipmap, &priority);
+            ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x, type %s.\n", hr, test_data[i].name);
+            ok(priority == 0xdeadbeef, "Got unexpected priority %u, type %s.\n", priority, test_data[i].name);
+
+            IDirectDrawSurface7_Release(mipmap);
+        }
+
         IDirectDrawSurface7_Release(surface);
     }
 
@@ -8542,6 +8577,7 @@ static void test_resource_priority(void)
     U2(surface_desc).dwMipMapCount = 2;
     hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
     ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    caps.dwCaps2 = 0;
     hr = IDirectDrawSurface7_GetAttachedSurface(surface, &caps, &mipmap);
     ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
 
@@ -8559,7 +8595,8 @@ static void test_resource_priority(void)
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
 
 done:
-    refcount = IDirectDraw7_Release(ddraw);
+    IDirectDraw7_Release(ddraw);
+    refcount = IDirect3DDevice7_Release(device);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
     DestroyWindow(window);
 }
