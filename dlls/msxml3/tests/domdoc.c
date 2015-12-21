@@ -3138,8 +3138,7 @@ static void test_get_text(void)
     {
         r = IXMLDOMNode_get_text( nodeRoot, &str );
         ok( r == S_OK, "ret %08x\n", r );
-        ok( compareIgnoreReturns(str, _bstr_("fn1.txt\n\n fn2.txt \n\nf1\n")), "wrong get_text: %s\n", wine_dbgstr_w(str));
-        SysFreeString(str);
+        expect_bstr_eq_and_free(str, "fn1.txt\n \nfn2.txt\n \nf1");
 
         IXMLDOMNode_Release(nodeRoot);
     }
