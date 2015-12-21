@@ -76,6 +76,7 @@ static BOOL   (WINAPI *pActivateActCtx)(HANDLE,ULONG_PTR*);
 static HANDLE (WINAPI *pCreateActCtxW)(PCACTCTXW);
 static BOOL   (WINAPI *pDeactivateActCtx)(DWORD,ULONG_PTR);
 static BOOL   (WINAPI *pGetCurrentActCtx)(HANDLE *);
+static BOOL   (WINAPI *pQueryActCtxW)(DWORD,HANDLE,void*,ULONG,void*,SIZE_T,SIZE_T*);
 static void   (WINAPI *pReleaseActCtx)(HANDLE);
 
 /* encoded DRAWITEMSTRUCT into an LPARAM */
@@ -7742,6 +7743,7 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 
 	case WM_USER+10:
 	{
+	    ACTIVATION_CONTEXT_BASIC_INFORMATION basicinfo;
 	    HANDLE handle, event = (HANDLE)lParam;
 	    BOOL ret;
 
@@ -7749,6 +7751,14 @@ static LRESULT MsgCheckProc (BOOL unicode, HWND hwnd, UINT message,
 	    ret = pGetCurrentActCtx(&handle);
 	    ok(ret, "failed to get current context, %u\n", GetLastError());
 	    ok(handle == 0, "got active context %p\n", handle);
+
+	    memset(&basicinfo, 0xff, sizeof(basicinfo));
+	    ret = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, handle, 0, ActivationContextBasicInformation,
+	        &basicinfo, sizeof(basicinfo), NULL);
+	    ok(ret, "got %d, error %d\n", ret, GetLastError());
+	    ok(basicinfo.hActCtx == NULL, "got %p\n", basicinfo.hActCtx);
+	    ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
+
 	    if (event) SetEvent(event);
 	    return 1;
 	}
@@ -14915,6 +14925,7 @@ static void init_funcs(void)
     X(CreateActCtxW);
     X(DeactivateActCtx);
     X(GetCurrentActCtx);
+    X(QueryActCtxW);
     X(ReleaseActCtx);
 #undef X
 }
