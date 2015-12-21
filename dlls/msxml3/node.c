@@ -742,7 +742,7 @@ static inline xmlChar* trim_whitespace(xmlChar* str)
     return ret;
 }
 
-static xmlChar* do_get_text(xmlNodePtr node)
+static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, BOOL *trail_ig_ws)
 {
     xmlNodePtr child;
     xmlChar* str;
@@ -751,20 +751,42 @@ static xmlChar* do_get_text(xmlNodePtr node)
     if (!node->children)
     {
         str = xmlNodeGetContent(node);
+        *trail_ig_ws = *(DWORD*)&node->_private & NODE_PRIV_CHILD_IGNORABLE_WS;
     }
     else
     {
-        xmlElementType prev_type = XML_TEXT_NODE;
+        BOOL ig_ws = FALSE;
         xmlChar* tmp;
         str = xmlStrdup(BAD_CAST "");
+
+        if (node->type != XML_DOCUMENT_NODE)
+            ig_ws = *(DWORD*)&node->_private & NODE_PRIV_CHILD_IGNORABLE_WS;
+        *trail_ig_ws = FALSE;
+
         for (child = node->children; child != NULL; child = child->next)
         {
             switch (child->type)
             {
             case XML_ELEMENT_NODE:
-                tmp = do_get_text(child);
+                tmp = do_get_text(child, FALSE, trail_ig_ws);
                 break;
             case XML_TEXT_NODE:
+                tmp = xmlNodeGetContent(child);
+                if (!preserving && tmp[0])
+                {
+                    xmlChar *beg;
+
+                    for (beg = tmp; *beg; beg++)
+                        if (!isspace(*beg)) break;
+
+                    if (!*beg)
+                    {
+                        ig_ws = TRUE;
+                        xmlFree(tmp);
+                        tmp = NULL;
+                    }
+                    break;
+                }
             case XML_CDATA_SECTION_NODE:
             case XML_ENTITY_REF_NODE:
             case XML_ENTITY_NODE:
@@ -779,14 +801,24 @@ static xmlChar* do_get_text(xmlNodePtr node)
             {
                 if (*tmp)
                 {
-                    if (prev_type == XML_ELEMENT_NODE && child->type == XML_ELEMENT_NODE)
+                    if (ig_ws && str[0])
                         str = xmlStrcat(str, BAD_CAST " ");
                     str = xmlStrcat(str, tmp);
-                    prev_type = child->type;
+                    ig_ws = FALSE;
                 }
                 xmlFree(tmp);
             }
+
+            if (!ig_ws)
+            {
+                ig_ws = *(DWORD*)&child->_private & NODE_PRIV_TRAILING_IGNORABLE_WS;
+            }
+            if (!ig_ws)
+                ig_ws = *trail_ig_ws;
+            *trail_ig_ws = FALSE;
         }
+
+        *trail_ig_ws = ig_ws;
     }
 
     switch (node->type)
@@ -797,7 +829,7 @@ static xmlChar* do_get_text(xmlNodePtr node)
     case XML_ENTITY_NODE:
     case XML_DOCUMENT_NODE:
     case XML_DOCUMENT_FRAG_NODE:
-        if (!preserving)
+        if (trim && !preserving)
             str = trim_whitespace(str);
         break;
     default:
@@ -811,10 +843,11 @@ HRESULT node_get_text(const xmlnode *This, BSTR *text)
 {
     BSTR str = NULL;
     xmlChar *content;
+    BOOL tmp;
 
     if (!text) return E_INVALIDARG;
 
-    content = do_get_text(This->node);
+    content = do_get_text(This->node, TRUE, &tmp);
     if (content)
     {
         str = bstr_from_xmlChar(content);
