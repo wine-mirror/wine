@@ -2729,7 +2729,6 @@ static void test_StartupNoConsole(void)
     char                buffer[MAX_PATH];
     STARTUPINFOA        startup;
     PROCESS_INFORMATION info;
-    DWORD               code;
 
     if (!pNtCurrentTeb)
     {
@@ -2746,7 +2745,6 @@ static void test_StartupNoConsole(void)
     ok(CreateProcessA(NULL, buffer, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &startup,
                       &info), "CreateProcess\n");
     ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
-    ok(GetExitCodeProcess(info.hProcess, &code), "Getting exit code\n");
     WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
     okChildInt("StartupInfoA", "hStdInput", (UINT)INVALID_HANDLE_VALUE);
     okChildInt("StartupInfoA", "hStdOutput", (UINT)INVALID_HANDLE_VALUE);
