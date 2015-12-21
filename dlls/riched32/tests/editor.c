@@ -1228,6 +1228,173 @@ static void test_enter(void)
   DestroyWindow(hwndRichEdit);
 }
 
+struct exsetsel_s {
+  LONG min;
+  LONG max;
+  LRESULT expected_retval;
+  int expected_getsel_start;
+  int expected_getsel_end;
+  BOOL result_todo;
+  BOOL sel_todo;
+};
+
+static const struct exsetsel_s exsetsel_tests[] = {
+  /* sanity tests */
+  {5, 10, 10, 5, 10, 0, 0 },
+  {15, 17, 17, 15, 17, 0, 0 },
+  /* test cpMax > strlen() */
+  {0, 100, 19, 0, 19, 1, 0 },
+  /* test cpMin < 0 && cpMax >= 0 after cpMax > strlen() */
+  {-1, 1, 17, 17, 17, 1, 0 },
+  /* test cpMin == cpMax */
+  {5, 5, 5, 5, 5, 0, 0 },
+  /* test cpMin < 0 && cpMax >= 0 (bug 4462) */
+  {-1, 0, 5, 5, 5, 0, 0 },
+  {-1, 17, 5, 5, 5, 0, 0 },
+  {-1, 18, 5, 5, 5, 0, 0 },
+  /* test cpMin < 0 && cpMax < 0 */
+  {-1, -1, 17, 17, 17, 0, 0 },
+  {-4, -5, 17, 17, 17, 0, 0 },
+  /* test cpMin >=0 && cpMax < 0 (bug 6814) */
+  {0, -1, 19, 0, 19, 1, 0 },
+  {17, -5, 19, 17, 19, 1, 0 },
+  {18, -3, 19, 17, 19, 1, 1 },
+  /* test if cpMin > cpMax */
+  {15, 19, 19, 15, 19, 1, 0 },
+  {19, 15, 19, 15, 19, 1, 0 },
+  /* cpMin == strlen() && cpMax > cpMin */
+  {17, 18, 17, 17, 17, 1, 1 },
+  {17, 50, 19, 17, 19, 1, 0 },
+};
+
+static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) {
+    CHARRANGE cr;
+    LRESULT result;
+    int start, end;
+
+    cr.cpMin = setsel->min;
+    cr.cpMax = setsel->max;
+    result = SendMessageA(hwnd, EM_EXSETSEL, 0, (LPARAM)&cr);
+
+    if (setsel->result_todo)
+        todo_wine ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
+    else
+        ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
+
+    SendMessageA(hwnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+
+    if (setsel->sel_todo) {
+        todo_wine {
+            ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
+        }
+    } else {
+        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
+    }
+}
+
+static void test_EM_EXSETSEL(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    int i;
+    const int num_tests = sizeof(exsetsel_tests)/sizeof(struct exsetsel_s);
+
+    /* sending some text to the window */
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"testing selection");
+    /*                                                 01234567890123456 */
+
+    for (i = 0; i < num_tests; i++) {
+        check_EM_EXSETSEL(hwndRichEdit, &exsetsel_tests[i], i);
+    }
+
+    if (!is_lang_japanese)
+        skip("Skip multibyte character tests on non-Japanese platform\n");
+    else
+    {
+        CHARRANGE cr;
+        LRESULT result;
+#define MAX_BUF_LEN 1024
+        char bufA[MAX_BUF_LEN] = {0};
+
+        /* Test with multibyte character */
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"abcdef\x8e\xf0ghijk");
+        /*                                                 012345  6   7 8901 */
+        cr.cpMin = 4, cr.cpMax = 8;
+        result =  SendMessageA(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr);
+        todo_wine ok(result == 7, "EM_EXSETSEL return %ld expected 7\n", result);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, sizeof(bufA), (LPARAM)bufA);
+        todo_wine ok(!strcmp(bufA, "ef\x8e\xf0"), "EM_GETSELTEXT return incorrect string\n");
+        SendMessageA(hwndRichEdit, EM_EXGETSEL, 0, (LPARAM)&cr);
+        ok(cr.cpMin == 4, "Selection start incorrectly: %d expected 4\n", cr.cpMin);
+        ok(cr.cpMax == 8, "Selection end incorrectly: %d expected 8\n", cr.cpMax);
+    }
+
+    DestroyWindow(hwndRichEdit);
+}
+
+static void check_EM_SETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) {
+    LRESULT result;
+    int start, end;
+
+    result = SendMessageA(hwnd, EM_SETSEL, setsel->min, setsel->max);
+
+    if (setsel->result_todo)
+        todo_wine ok(result == setsel->expected_retval, "EM_SETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
+    else
+        ok(result == setsel->expected_retval, "EM_SETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
+
+    SendMessageA(hwnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
+
+    if (setsel->sel_todo) {
+        todo_wine {
+            ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
+        }
+    } else {
+        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
+    }
+}
+
+static void test_EM_SETSEL(void)
+{
+    char buffA[32] = {0};
+    HWND hwndRichEdit = new_richedit(NULL);
+    int i;
+    const int num_tests = sizeof(exsetsel_tests)/sizeof(struct exsetsel_s);
+
+    /* sending some text to the window */
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"testing selection");
+    /*                                                 01234567890123456 */
+
+    for (i = 0; i < num_tests; i++) {
+        check_EM_SETSEL(hwndRichEdit, &exsetsel_tests[i], i);
+    }
+
+    SendMessageA(hwndRichEdit, EM_SETSEL, 17, 18);
+    buffA[0] = 123;
+    SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffA);
+    ok(buffA[0] == 0, "selection text %s\n", buffA);
+
+    if (!is_lang_japanese)
+        skip("Skip multibyte character tests on non-Japanese platform\n");
+    else
+    {
+        int sel_start, sel_end;
+        LRESULT result;
+
+        /* Test with multibyte character */
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"abcdef\x8e\xf0ghijk");
+        /*                                                 012345  6   7 8901 */
+        result =  SendMessageA(hwndRichEdit, EM_SETSEL, 4, 8);
+        todo_wine ok(result == 7, "EM_SETSEL return %ld expected 7\n", result);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, sizeof(buffA), (LPARAM)buffA);
+        todo_wine ok(!strcmp(buffA, "ef\x8e\xf0"), "EM_GETSELTEXT return incorrect string\n");
+        result = SendMessageA(hwndRichEdit, EM_GETSEL, (WPARAM)&sel_start, (LPARAM)&sel_end);
+        ok(sel_start == 4, "Selection start incorrectly: %d expected 4\n", sel_start);
+        ok(sel_end == 8, "Selection end incorrectly: %d expected 8\n", sel_end);
+    }
+
+    DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   MSG msg;
@@ -1254,6 +1421,8 @@ START_TEST( editor )
   test_EM_GETOPTIONS();
   test_autoscroll();
   test_enter();
+  test_EM_EXSETSEL();
+  test_EM_SETSEL();
 
   /* Set the environment variable WINETEST_RICHED32 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.
