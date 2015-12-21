@@ -723,30 +723,14 @@ HRESULT node_clone(xmlnode *This, VARIANT_BOOL deep, IXMLDOMNode **cloneNode)
     return S_OK;
 }
 
-static inline xmlChar* trim_whitespace(xmlChar* str)
-{
-    xmlChar* ret = str;
-    int len;
-
-    if (!str)
-        return NULL;
-
-    while (*ret && isspace(*ret))
-        ++ret;
-    len = xmlStrlen(ret);
-    if (len)
-        while (isspace(ret[len-1])) --len;
-
-    ret = xmlStrndup(ret, len);
-    xmlFree(str);
-    return ret;
-}
-
-static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, BOOL *trail_ig_ws)
+static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, DWORD *first, DWORD *last, BOOL *trail_ig_ws)
 {
     xmlNodePtr child;
     xmlChar* str;
     BOOL preserving = is_preserving_whitespace(node);
+
+    *first = -1;
+    *last = 0;
 
     if (!node->children)
     {
@@ -757,6 +741,7 @@ static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, BOOL *trail_ig_ws)
     {
         BOOL ig_ws = FALSE;
         xmlChar* tmp;
+        DWORD pos = 0;
         str = xmlStrdup(BAD_CAST "");
 
         if (node->type != XML_DOCUMENT_NODE)
@@ -767,9 +752,17 @@ static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, BOOL *trail_ig_ws)
         {
             switch (child->type)
             {
-            case XML_ELEMENT_NODE:
-                tmp = do_get_text(child, FALSE, trail_ig_ws);
+            case XML_ELEMENT_NODE: {
+                DWORD node_first, node_last;
+
+                tmp = do_get_text(child, FALSE, &node_first, &node_last, trail_ig_ws);
+
+                if (node_first!=-1 && pos+node_first<*first)
+                    *first = pos+node_first;
+                if (node_last && pos+node_last>*last)
+                    *last = pos+node_last;
                 break;
+            }
             case XML_TEXT_NODE:
                 tmp = xmlNodeGetContent(child);
                 if (!preserving && tmp[0])
@@ -797,17 +790,22 @@ static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, BOOL *trail_ig_ws)
                 break;
             }
 
-            if (tmp)
+            if ((tmp && *tmp) || child->type==XML_CDATA_SECTION_NODE)
             {
-                if (*tmp)
+                if (ig_ws && str[0])
                 {
-                    if (ig_ws && str[0])
-                        str = xmlStrcat(str, BAD_CAST " ");
-                    str = xmlStrcat(str, tmp);
-                    ig_ws = FALSE;
+                    str = xmlStrcat(str, BAD_CAST " ");
+                    pos++;
                 }
-                xmlFree(tmp);
+                if (tmp && *tmp) str = xmlStrcat(str, tmp);
+                if (child->type==XML_CDATA_SECTION_NODE && pos<*first)
+                    *first = pos;
+                if (tmp && *tmp) pos += xmlStrlen(tmp);
+                if (child->type==XML_CDATA_SECTION_NODE && pos>*last)
+                    *last = pos;
+                ig_ws = FALSE;
             }
+            if (tmp) xmlFree(tmp);
 
             if (!ig_ws)
             {
@@ -830,7 +828,23 @@ static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, BOOL *trail_ig_ws)
     case XML_DOCUMENT_NODE:
     case XML_DOCUMENT_FRAG_NODE:
         if (trim && !preserving)
-            str = trim_whitespace(str);
+        {
+            xmlChar* ret = str;
+            int len;
+
+            if (!str)
+                break;
+
+            for (ret = str; *ret && isspace(*ret) && (*first)--; ret++)
+                if (*last) (*last)--;
+            for (len = xmlStrlen(ret)-1; len >= 0 && len >= *last; len--)
+                if(!isspace(ret[len])) break;
+
+            ret = xmlStrndup(ret, len+1);
+            xmlFree(str);
+            str = ret;
+            break;
+        }
         break;
     default:
         break;
@@ -843,11 +857,12 @@ HRESULT node_get_text(const xmlnode *This, BSTR *text)
 {
     BSTR str = NULL;
     xmlChar *content;
+    DWORD first, last;
     BOOL tmp;
 
     if (!text) return E_INVALIDARG;
 
-    content = do_get_text(This->node, TRUE, &tmp);
+    content = do_get_text(This->node, TRUE, &first, &last, &tmp);
     if (content)
     {
         str = bstr_from_xmlChar(content);
