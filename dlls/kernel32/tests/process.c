@@ -33,11 +33,14 @@
 #include "wincon.h"
 #include "winnls.h"
 #include "winternl.h"
+#include "tlhelp32.h"
 
 #include "wine/test.h"
 
 /* PROCESS_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
 #define PROCESS_ALL_ACCESS_NT4 (PROCESS_ALL_ACCESS & ~0xf000)
+/* THREAD_ALL_ACCESS in Vista+ PSDKs is incompatible with older Windows versions */
+#define THREAD_ALL_ACCESS_NT4 (STANDARD_RIGHTS_REQUIRED | SYNCHRONIZE | 0x3ff)
 
 #define expect_eq_d(expected, actual) \
     do { \
@@ -79,6 +82,11 @@ static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
 static BOOL   (WINAPI *pProcessIdToSessionId)(DWORD,DWORD*);
 static DWORD  (WINAPI *pWTSGetActiveConsoleSessionId)(void);
+static HANDLE (WINAPI *pCreateToolhelp32Snapshot)(DWORD, DWORD);
+static BOOL   (WINAPI *pProcess32First)(HANDLE, PROCESSENTRY32*);
+static BOOL   (WINAPI *pProcess32Next)(HANDLE, PROCESSENTRY32*);
+static BOOL   (WINAPI *pThread32First)(HANDLE, THREADENTRY32*);
+static BOOL   (WINAPI *pThread32Next)(HANDLE, THREADENTRY32*);
 static BOOL   (WINAPI *pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP,SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*,DWORD*);
 
 /* ############################### */
@@ -238,6 +246,11 @@ static BOOL init(void)
     pGetNumaProcessorNode = (void *)GetProcAddress(hkernel32, "GetNumaProcessorNode");
     pProcessIdToSessionId = (void *)GetProcAddress(hkernel32, "ProcessIdToSessionId");
     pWTSGetActiveConsoleSessionId = (void *)GetProcAddress(hkernel32, "WTSGetActiveConsoleSessionId");
+    pCreateToolhelp32Snapshot = (void *)GetProcAddress(hkernel32, "CreateToolhelp32Snapshot");
+    pProcess32First = (void *)GetProcAddress(hkernel32, "Process32First");
+    pProcess32Next = (void *)GetProcAddress(hkernel32, "Process32Next");
+    pThread32First = (void *)GetProcAddress(hkernel32, "Thread32First");
+    pThread32Next = (void *)GetProcAddress(hkernel32, "Thread32Next");
     pGetLogicalProcessorInformationEx = (void *)GetProcAddress(hkernel32, "GetLogicalProcessorInformationEx");
 
     return TRUE;
@@ -290,6 +303,8 @@ static void     doChild(const char* file, const char* option)
     char                bufA[MAX_PATH];
     WCHAR               bufW[MAX_PATH];
     HANDLE              hFile = CreateFileA(file, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    HANDLE              snapshot;
+    PROCESSENTRY32      pe;
     BOOL ret;
 
     if (hFile == INVALID_HANDLE_VALUE) return;
@@ -343,6 +358,26 @@ static void     doChild(const char* file, const char* option)
     }
     childPrintf(hFile, "CommandLineA=%s\n", encodeA(GetCommandLineA()));
     childPrintf(hFile, "CommandLineW=%s\n\n", encodeW(GetCommandLineW()));
+
+    /* output toolhelp information */
+    snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %u\n", GetLastError());
+    memset(&pe, 0, sizeof(pe));
+    pe.dwSize = sizeof(pe);
+    if (pProcess32First(snapshot, &pe))
+    {
+        while (pe.th32ProcessID != GetCurrentProcessId())
+            if (!pProcess32Next(snapshot, &pe)) break;
+    }
+    CloseHandle(snapshot);
+    ok(pe.th32ProcessID == GetCurrentProcessId(), "failed to find current process in snapshot\n");
+    childPrintf(hFile,
+                "[Toolhelp]\ncntUsage=%u\nth32DefaultHeapID=%lu\n"
+                "th32ModuleID=%u\ncntThreads=%u\nth32ParentProcessID=%u\n"
+                "pcPriClassBase=%u\ndwFlags=%u\nszExeFile=%s\n\n",
+                pe.cntUsage, pe.th32DefaultHeapID, pe.th32ModuleID,
+                pe.cntThreads, pe.th32ParentProcessID, pe.pcPriClassBase,
+                pe.dwFlags, encodeA(pe.szExeFile));
 
     /* output of environment (Ansi) */
     ptrA_save = ptrA = GetEnvironmentStringsA();
@@ -1066,6 +1101,112 @@ static void test_Directory(void)
                        NULL, "non\\existent\\directory", &startup, &info), "CreateProcess\n");
     ok(GetLastError() == ERROR_DIRECTORY, "Expected ERROR_DIRECTORY, got %d\n", GetLastError());
     ok(!TerminateProcess(info.hProcess, 0), "Child process should not exist\n");
+}
+
+static void test_Toolhelp(void)
+{
+    char                buffer[MAX_PATH];
+    STARTUPINFOA        startup;
+    PROCESS_INFORMATION info;
+    HANDLE              process, thread, snapshot;
+    PROCESSENTRY32      pe;
+    THREADENTRY32       te;
+    DWORD               ret;
+    int                 i;
+
+    memset(&startup, 0, sizeof(startup));
+    startup.cb = sizeof(startup);
+    startup.dwFlags = STARTF_USESHOWWINDOW;
+    startup.wShowWindow = SW_SHOWNORMAL;
+
+    get_file_name(resfile);
+    sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed\n");
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    okChildInt("Toolhelp", "cntUsage", 0);
+    okChildInt("Toolhelp", "th32DefaultHeapID", 0);
+    okChildInt("Toolhelp", "th32ModuleID", 0);
+    okChildInt("Toolhelp", "th32ParentProcessID", GetCurrentProcessId());
+    todo_wine okChildInt("Toolhelp", "pcPriClassBase", 8);
+    okChildInt("Toolhelp", "dwFlags", 0);
+
+    release_memory();
+    DeleteFileA(resfile);
+
+    get_file_name(resfile);
+    sprintf(buffer, "\"%s\" tests/process.c nested \"%s\"", selfname, resfile);
+    ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, 0L, NULL, NULL, &startup, &info), "CreateProcess failed\n");
+    ok(WaitForSingleObject(info.hProcess, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+
+    process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, info.dwProcessId);
+    ok(process != NULL, "OpenProcess failed %u\n", GetLastError());
+    CloseHandle(process);
+
+    CloseHandle(info.hProcess);
+    CloseHandle(info.hThread);
+
+    for (i = 0; i < 20; i++)
+    {
+        SetLastError(0xdeadbeef);
+        process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, info.dwProcessId);
+        ok(process || GetLastError() == ERROR_INVALID_PARAMETER, "OpenProcess failed %u\n", GetLastError());
+        if (!process) break;
+        CloseHandle(process);
+        Sleep(100);
+    }
+    /* The following test fails randomly on some Windows versions, but Gothic 2 depends on it */
+    todo_wine ok(i < 20 || broken(i == 20), "process object not released\n");
+
+    snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %u\n", GetLastError());
+    memset(&pe, 0, sizeof(pe));
+    pe.dwSize = sizeof(pe);
+    if (pProcess32First(snapshot, &pe))
+    {
+        while (pe.th32ParentProcessID != info.dwProcessId)
+            if (!pProcess32Next(snapshot, &pe)) break;
+    }
+    CloseHandle(snapshot);
+    ok(pe.th32ParentProcessID == info.dwProcessId, "failed to find nested child process\n");
+
+    process = OpenProcess(PROCESS_ALL_ACCESS_NT4, FALSE, pe.th32ProcessID);
+    ok(process != NULL, "OpenProcess failed %u\n", GetLastError());
+
+    snapshot = pCreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0);
+    ok(snapshot != INVALID_HANDLE_VALUE, "CreateToolhelp32Snapshot failed %u\n", GetLastError());
+    memset(&te, 0, sizeof(te));
+    te.dwSize = sizeof(te);
+    if (pThread32First(snapshot, &te))
+    {
+        while (te.th32OwnerProcessID != pe.th32ProcessID)
+            if (!pThread32Next(snapshot, &te)) break;
+    }
+    CloseHandle(snapshot);
+    ok(te.th32OwnerProcessID == pe.th32ProcessID, "failed to find suspended thread\n");
+
+    thread = OpenThread(THREAD_ALL_ACCESS_NT4, FALSE, te.th32ThreadID);
+    ok(thread != NULL, "OpenThread failed %u\n", GetLastError());
+    ret = ResumeThread(thread);
+    ok(ret == 1, "expected 1, got %u\n", ret);
+    CloseHandle(thread);
+
+    ok(WaitForSingleObject(process, 30000) == WAIT_OBJECT_0, "Child process termination\n");
+    CloseHandle(process);
+
+    WritePrivateProfileStringA(NULL, NULL, NULL, resfile);
+    okChildInt("Toolhelp", "cntUsage", 0);
+    okChildInt("Toolhelp", "th32DefaultHeapID", 0);
+    okChildInt("Toolhelp", "th32ModuleID", 0);
+    okChildInt("Toolhelp", "th32ParentProcessID", info.dwProcessId);
+    todo_wine okChildInt("Toolhelp", "pcPriClassBase", 8);
+    okChildInt("Toolhelp", "dwFlags", 0);
+
+    release_memory();
+    DeleteFileA(resfile);
 }
 
 static BOOL is_str_env_drive_dir(const char* str)
@@ -3026,6 +3167,23 @@ START_TEST(process)
             Sleep(100);
             return;
         }
+        else if (!strcmp(myARGV[2], "nested") && myARGC >= 4)
+        {
+            char                buffer[MAX_PATH];
+            STARTUPINFOA        startup;
+            PROCESS_INFORMATION info;
+
+            memset(&startup, 0, sizeof(startup));
+            startup.cb = sizeof(startup);
+            startup.dwFlags = STARTF_USESHOWWINDOW;
+            startup.wShowWindow = SW_SHOWNORMAL;
+
+            sprintf(buffer, "\"%s\" tests/process.c dump \"%s\"", selfname, myARGV[3]);
+            ok(CreateProcessA(NULL, buffer, NULL, NULL, FALSE, CREATE_SUSPENDED, NULL, NULL, &startup, &info), "CreateProcess failed\n");
+            CloseHandle(info.hProcess);
+            CloseHandle(info.hThread);
+            return;
+        }
 
         ok(0, "Unexpected command %s\n", myARGV[2]);
         return;
@@ -3036,6 +3194,7 @@ START_TEST(process)
     test_Startup();
     test_CommandLine();
     test_Directory();
+    test_Toolhelp();
     test_Environment();
     test_SuspendFlag();
     test_DebuggingFlag();
