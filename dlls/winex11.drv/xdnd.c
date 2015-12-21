@@ -325,7 +325,7 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
         if (dropTarget)
         {
             hr = IDropTarget_DragOver(dropTarget, MK_LBUTTON, pointl, &effect);
-            if (SUCCEEDED(hr))
+            if (hr != S_OK)
                 XDNDDropEffect = effect;
             else
                 WARN("IDropTarget_DragOver failed, error 0x%08X\n", hr);
