@@ -1176,7 +1176,7 @@ static enum fill_status fill_cdromdrive( struct table *table, const struct expr 
 
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
-    for (i = 0; i < sizeof(drives); i++)
+    for (i = 0; i < 26; i++)
     {
         if (drives & (1 << i))
         {
@@ -1598,7 +1598,7 @@ static enum fill_status fill_datafile( struct table *table, const struct expr *c
 
     dirstack = alloc_dirstack(2);
 
-    for (i = 0; i < sizeof(drives); i++)
+    for (i = 0; i < 26; i++)
     {
         if (!(drives & (1 << i))) continue;
 
@@ -1719,7 +1719,7 @@ static enum fill_status fill_directory( struct table *table, const struct expr *
 
     dirstack = alloc_dirstack(2);
 
-    for (i = 0; i < sizeof(drives); i++)
+    for (i = 0; i < 26; i++)
     {
         if (!(drives & (1 << i))) continue;
 
@@ -1831,7 +1831,7 @@ static enum fill_status fill_diskdrive( struct table *table, const struct expr *
 
     if (!resize_table( table, 2, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
-    for (i = 0; i < sizeof(drives); i++)
+    for (i = 0; i < 26; i++)
     {
         if (drives & (1 << i))
         {
@@ -1895,7 +1895,7 @@ static enum fill_status fill_diskpartition( struct table *table, const struct ex
 
     if (!resize_table( table, 4, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
-    for (i = 0; i < sizeof(drives); i++)
+    for (i = 0; i < 26; i++)
     {
         if (drives & (1 << i))
         {
@@ -1962,7 +1962,7 @@ static enum fill_status fill_logicaldisk( struct table *table, const struct expr
 
     if (!resize_table( table, 4, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
-    for (i = 0; i < sizeof(drives); i++)
+    for (i = 0; i < 26; i++)
     {
         if (drives & (1 << i))
         {
