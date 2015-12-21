@@ -292,6 +292,7 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
     BOOL                unixabsolute;
     WIN32_FIND_DATAW    wfd;
     HANDLE              goit;
+    BOOL                is_legal_8dot3;
 
     if (!shortpath)
     {
@@ -365,7 +366,7 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
             }
         }
 
-        /* Check if the file exists and use the existing file name */
+        /* Check if the file exists */
         goit = FindFirstFileW(tmplongpath, &wfd);
         if (goit == INVALID_HANDLE_VALUE)
         {
@@ -374,7 +375,12 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
             return 0;
         }
         FindClose(goit);
-        strcpyW(tmplongpath + lp, wfd.cFileName);
+
+        is_legal_8dot3 = FALSE;
+        CheckNameLegalDOS8Dot3W(tmplongpath + lp, NULL, 0, NULL, &is_legal_8dot3);
+        /* Use the existing file name if it's a short name */
+        if (is_legal_8dot3)
+            strcpyW(tmplongpath + lp, wfd.cFileName);
         lp += strlenW(tmplongpath + lp);
         sp += tmplen;
     }

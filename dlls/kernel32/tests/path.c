@@ -868,7 +868,6 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
        "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
     tmpstr[len] = tolower(tmpstr[len]);
     ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
-    todo_wine
     ok(lstrcmpA(tmpstr,tmpstr1)==0,
        "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
     sprintf(tmpstr,"%s/%s",SHORTDIR,SHORTFILE);
