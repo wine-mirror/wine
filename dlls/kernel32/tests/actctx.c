@@ -40,6 +40,7 @@ static BOOL   (WINAPI *pIsDebuggerPresent)(void);
 static BOOL   (WINAPI *pQueryActCtxW)(DWORD,HANDLE,PVOID,ULONG,PVOID,SIZE_T,SIZE_T*);
 static VOID   (WINAPI *pReleaseActCtx)(HANDLE);
 static BOOL   (WINAPI *pFindActCtxSectionGuid)(DWORD,const GUID*,ULONG,const GUID*,PACTCTX_SECTION_KEYED_DATA);
+static BOOL   (WINAPI *pZombifyActCtx)(HANDLE);
 
 static NTSTATUS(NTAPI *pRtlFindActivationContextSectionString)(DWORD,const GUID *,ULONG,PUNICODE_STRING,PACTCTX_SECTION_KEYED_DATA);
 static BOOLEAN (NTAPI *pRtlCreateUnicodeStringFromAsciiz)(PUNICODE_STRING, PCSZ);
@@ -2425,6 +2426,7 @@ static BOOL init_funcs(void)
     X(QueryActCtxW);
     X(ReleaseActCtx);
     X(FindActCtxSectionGuid);
+    X(ZombifyActCtx);
 
     hLibrary = GetModuleHandleA("ntdll.dll");
     X(RtlFindActivationContextSectionString);
@@ -2433,6 +2435,77 @@ static BOOL init_funcs(void)
 #undef X
 
     return TRUE;
+}
+
+static void test_ZombifyActCtx(void)
+{
+    ACTIVATION_CONTEXT_BASIC_INFORMATION basicinfo;
+    ULONG_PTR cookie;
+    HANDLE handle, current;
+    BOOL ret;
+
+    SetLastError(0xdeadbeef);
+    ret = pZombifyActCtx(NULL);
+todo_wine
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
+
+    handle = create_manifest("test.manifest", testdep_manifest3, __LINE__);
+
+    ret = pGetCurrentActCtx(&current);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(current == NULL, "got %p\n", current);
+
+    ret = pActivateActCtx(handle, &cookie);
+    ok(ret, "ActivateActCtx failed: %u\n", GetLastError());
+
+    ret = pGetCurrentActCtx(&current);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(handle == current, "got %p, %p\n", current, handle);
+
+    memset(&basicinfo, 0xff, sizeof(basicinfo));
+    ret = pQueryActCtxW(0, handle, 0, ActivationContextBasicInformation,
+        &basicinfo, sizeof(basicinfo), NULL);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(basicinfo.hActCtx == handle, "got %p\n", basicinfo.hActCtx);
+    ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
+
+    memset(&basicinfo, 0xff, sizeof(basicinfo));
+    ret = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, 0, ActivationContextBasicInformation,
+        &basicinfo, sizeof(basicinfo), NULL);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(basicinfo.hActCtx == handle, "got %p\n", basicinfo.hActCtx);
+    ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
+
+    ret = pZombifyActCtx(handle);
+todo_wine
+    ok(ret, "got %d\n", ret);
+
+    memset(&basicinfo, 0xff, sizeof(basicinfo));
+    ret = pQueryActCtxW(0, handle, 0, ActivationContextBasicInformation,
+        &basicinfo, sizeof(basicinfo), NULL);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(basicinfo.hActCtx == handle, "got %p\n", basicinfo.hActCtx);
+    ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
+
+    memset(&basicinfo, 0xff, sizeof(basicinfo));
+    ret = pQueryActCtxW(QUERY_ACTCTX_FLAG_USE_ACTIVE_ACTCTX, NULL, 0, ActivationContextBasicInformation,
+        &basicinfo, sizeof(basicinfo), NULL);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(basicinfo.hActCtx == handle, "got %p\n", basicinfo.hActCtx);
+    ok(basicinfo.dwFlags == 0, "got %x\n", basicinfo.dwFlags);
+
+    ret = pGetCurrentActCtx(&current);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(current == handle, "got %p\n", current);
+
+    /* one more time */
+    ret = pZombifyActCtx(handle);
+todo_wine
+    ok(ret, "got %d\n", ret);
+
+    ret = pDeactivateActCtx(0, cookie);
+    ok(ret, "DeactivateActCtx failed: %u\n", GetLastError());
+    pReleaseActCtx(handle);
 }
 
 START_TEST(actctx)
@@ -2457,5 +2530,6 @@ START_TEST(actctx)
     test_actctx();
     test_CreateActCtx();
     test_findsectionstring();
+    test_ZombifyActCtx();
     run_child_process();
 }
