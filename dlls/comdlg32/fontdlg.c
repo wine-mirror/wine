@@ -753,6 +753,9 @@ static LRESULT CFn_WMInitDialog(HWND hDlg, LPARAM lParam, LPCHOOSEFONTW lpcf)
         SendMessageW(hDlg, WM_COMMAND, MAKEWPARAM(cmb5, CBN_SELCHANGE),
                 (LPARAM)GetDlgItem(hDlg,cmb5));
     }
+    /* limit text length user can type in as font size */
+    SendDlgItemMessageW(hDlg, cmb3, CB_LIMITTEXT, 5, 0);
+
     if ((lpcf->Flags & CF_USESTYLE) && lpcf->lpszStyle)
     {
         j=SendDlgItemMessageW(hDlg,cmb2,CB_FINDSTRING,-1,(LPARAM)lpcf->lpszStyle);
