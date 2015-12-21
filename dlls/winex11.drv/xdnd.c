@@ -339,12 +339,10 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
     if (XDNDAccepted)
         accept = 1;
     else if ((GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
-            (effect & DROPEFFECT_COPY) &&
             X11DRV_XDND_HasHDROP())
     {
         accept = 1;
         effect = DROPEFFECT_COPY;
-        XDNDDropEffect = effect;
     }
 
     TRACE("action req: %ld accept(%d) at x(%d),y(%d)\n",
@@ -432,7 +430,6 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
         /* Only send WM_DROPFILES if Drop didn't succeed or DROPEFFECT_NONE was set.
          * Doing both causes winamp to duplicate the dropped files (#29081) */
         if ((GetWindowLongW( hWnd, GWL_EXSTYLE ) & WS_EX_ACCEPTFILES) &&
-                (XDNDDropEffect & DROPEFFECT_COPY) &&
                 X11DRV_XDND_HasHDROP())
         {
             HRESULT hr = X11DRV_XDND_SendDropFiles( hWnd );
