@@ -513,7 +513,7 @@ struct thread *create_process( int fd, struct thread *parent_thread, int inherit
     process->priority        = PROCESS_PRIOCLASS_NORMAL;
     process->suspend         = 0;
     process->is_system       = 0;
-    process->debug_children  = 0;
+    process->debug_children  = 1;
     process->is_terminating  = 0;
     process->job             = NULL;
     process->console         = NULL;
@@ -1228,7 +1228,7 @@ DECL_HANDLER(new_process)
     else if (parent->debugger && parent->debug_children)
     {
         set_process_debugger( process, parent->debugger );
-        process->debug_children = 1;
+        /* debug_children is set to 1 by default */
     }
 
     if (!(req->create_flags & CREATE_NEW_PROCESS_GROUP))
@@ -1359,6 +1359,7 @@ DECL_HANDLER(get_process_info)
         reply->end_time         = process->end_time;
         reply->cpu              = process->cpu;
         reply->debugger_present = !!process->debugger;
+        reply->debug_children   = process->debug_children;
         release_object( process );
     }
 }

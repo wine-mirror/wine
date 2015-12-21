@@ -857,7 +857,8 @@ struct get_process_info_reply
     int          exit_code;
     int          priority;
     cpu_type_t   cpu;
-    int          debugger_present;
+    short int    debugger_present;
+    short int    debug_children;
 };
 
 
@@ -6153,6 +6154,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 490
+#define SERVER_PROTOCOL_VERSION 491
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

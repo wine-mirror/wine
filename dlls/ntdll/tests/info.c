@@ -1345,11 +1345,7 @@ static void test_query_process_debug_flags(int argc, char **argv)
         status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugFlags,
                 &debug_flags, sizeof(debug_flags), NULL);
         ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
-        if (!expected_flags)
-            ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
-        else
-            todo_wine
-            ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
+        ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
 
         if (!(test_flags[i] & CREATE_SUSPENDED))
         {
@@ -1379,11 +1375,7 @@ static void test_query_process_debug_flags(int argc, char **argv)
         status = pNtQueryInformationProcess(pi.hProcess, ProcessDebugFlags,
                 &debug_flags, sizeof(debug_flags), NULL);
         ok(!status, "NtQueryInformationProcess failed, status %#x.\n", status);
-        if (expected_flags)
-            ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
-        else
-            todo_wine
-            ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
+        ok(debug_flags == expected_flags, "Expected flag %x, got %x.\n", expected_flags, debug_flags);
 
         ret = DebugActiveProcess(pi.dwProcessId);
         ok(ret, "DebugActiveProcess failed, last error %#x.\n", GetLastError());

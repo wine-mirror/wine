@@ -760,6 +760,7 @@ C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, exit_code) == 48 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, priority) == 52 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, cpu) == 56 );
 C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, debugger_present) == 60 );
+C_ASSERT( FIELD_OFFSET(struct get_process_info_reply, debug_children) == 62 );
 C_ASSERT( sizeof(struct get_process_info_reply) == 64 );
 C_ASSERT( FIELD_OFFSET(struct set_process_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_process_info_request, mask) == 16 );

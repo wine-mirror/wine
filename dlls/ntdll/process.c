@@ -339,7 +339,7 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     req->handle = wine_server_obj_handle( ProcessHandle );
                     if ((ret = wine_server_call( req )) == STATUS_SUCCESS)
                     {
-                        *(DWORD *)ProcessInformation = !reply->debugger_present;
+                        *(DWORD *)ProcessInformation = reply->debug_children;
                     }
                 }
                 SERVER_END_REQ;

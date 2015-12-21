@@ -818,7 +818,8 @@ struct rawinput_device
     int          exit_code;        /* process exit code */
     int          priority;         /* priority class */
     cpu_type_t   cpu;              /* CPU that this process is running on */
-    int          debugger_present; /* process is being debugged */
+    short int    debugger_present; /* process is being debugged */
+    short int    debug_children;   /* inherit debugger to child processes */
 @END
 
 

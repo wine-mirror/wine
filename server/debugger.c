@@ -443,6 +443,7 @@ static int debugger_attach( struct process *process, struct thread *debugger )
         resume_process( process );
         return 0;
     }
+    process->debug_children = 0;
     return 1;
 
  error:
@@ -483,7 +484,6 @@ int debugger_detach( struct process *process, struct thread *debugger )
 
     /* remove relationships between process and its debugger */
     process->debugger = NULL;
-    process->debug_children = 0;
     if (!set_process_debug_flag( process, 0 )) clear_error();  /* ignore error */
 
     /* from this function */
