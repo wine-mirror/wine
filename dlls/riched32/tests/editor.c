@@ -35,6 +35,7 @@
 #include <wine/test.h>
 
 static HMODULE hmoduleRichEdit;
+static BOOL is_lang_japanese;
 
 static HWND new_window(LPCSTR lpClassName, DWORD dwStyle, HWND parent) {
   HWND hwnd;
@@ -496,6 +497,32 @@ static void test_EM_LINELENGTH(void)
     result = SendMessageA(hwndRichEdit, EM_LINELENGTH, offset_test[i][0], 0);
     ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
        offset_test[i][0], result, offset_test[i][1]);
+  }
+
+  /* Test with multibyte character */
+  if (!is_lang_japanese)
+    skip("Skip multibyte character tests on non-Japanese platform\n");
+  else
+  {
+    const char *text1 =
+          "wine\n"
+          "richedit\x8e\xf0\n"
+          "wine";
+    static int offset_test1[3][3] = {
+           {0, 4},  /* Line 1: |wine\n */
+           {5, 10, 1}, /* Line 2: |richedit\x8e\xf0\n */
+           {16, 4}, /* Line 3: |wine */
+    };
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
+    for (i = 0; i < sizeof(offset_test1)/sizeof(offset_test1[0]); i++) {
+      result = SendMessageA(hwndRichEdit, EM_LINELENGTH, offset_test1[i][0], 0);
+      if (offset_test1[i][2])
+        todo_wine ok(result == offset_test1[i][1], "Length of line at offset %d is %ld, expected %d\n",
+                     offset_test1[i][0], result, offset_test1[i][1]);
+      else
+        ok(result == offset_test1[i][1], "Length of line at offset %d is %ld, expected %d\n",
+           offset_test1[i][0], result, offset_test1[i][1]);
+    }
   }
 
   DestroyWindow(hwndRichEdit);
@@ -1211,6 +1238,7 @@ START_TEST( editor )
    * RICHED32.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibraryA("riched32.dll");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
+  is_lang_japanese = (PRIMARYLANGID(GetUserDefaultLangID()) == LANG_JAPANESE);
 
   test_WM_SETTEXT();
   test_EM_GETTEXTRANGE();
