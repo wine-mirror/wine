@@ -828,6 +828,7 @@ static DWORD get_image_dib_info( dib_info *dib, BITMAPINFO *info,
         bits->ptr = dib->bits.ptr;
         bits->is_copy = FALSE;
         bits->free = NULL;
+        bits->param = NULL;
         if (dib->stride < 0) bits->ptr = (char *)bits->ptr + (dib->height - 1) * dib->stride;
         src->x += dib->rect.left;
         src->y += dib->rect.top;
