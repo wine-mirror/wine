@@ -129,6 +129,9 @@ static enum file_type (__cdecl *p_tr2_sys__Stat)(char const*, int *);
 static enum file_type (__cdecl *p_tr2_sys__Lstat)(char const*, int *);
 static __int64 (__cdecl *p_tr2_sys__Last_write_time)(char const*);
 static void (__cdecl *p_tr2_sys__Last_write_time_set)(char const*, __int64);
+static void* (__cdecl *p_tr2_sys__Open_dir)(char*, char const*, int *, enum file_type*);
+static char* (__cdecl *p_tr2_sys__Read_dir)(char*, void*, enum file_type*);
+static void (__cdecl *p_tr2_sys__Close_dir)(void*);
 
 /* thrd */
 typedef struct
@@ -256,6 +259,12 @@ static BOOL init(void)
                 "?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z");
         SET(p_tr2_sys__Last_write_time_set,
                 "?_Last_write_time@sys@tr2@std@@YAXPEBD_J@Z");
+        SET(p_tr2_sys__Open_dir,
+                "?_Open_dir@sys@tr2@std@@YAPEAXAEAY0BAE@DPEBDAEAHAEAW4file_type@123@@Z");
+        SET(p_tr2_sys__Read_dir,
+                "?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z");
+        SET(p_tr2_sys__Close_dir,
+                "?_Close_dir@sys@tr2@std@@YAXPEAX@Z");
         SET(p__Thrd_current,
                 "_Thrd_current");
     } else {
@@ -303,6 +312,12 @@ static BOOL init(void)
                 "?_Last_write_time@sys@tr2@std@@YA_JPBD@Z");
         SET(p_tr2_sys__Last_write_time_set,
                 "?_Last_write_time@sys@tr2@std@@YAXPBD_J@Z");
+        SET(p_tr2_sys__Open_dir,
+                "?_Open_dir@sys@tr2@std@@YAPAXAAY0BAE@DPBDAAHAAW4file_type@123@@Z");
+        SET(p_tr2_sys__Read_dir,
+                "?_Read_dir@sys@tr2@std@@YAPADAAY0BAE@DPAXAAW4file_type@123@@Z");
+        SET(p_tr2_sys__Close_dir,
+                "?_Close_dir@sys@tr2@std@@YAXPAX@Z");
 #ifdef __i386__
         SET(p_i386_Thrd_current,
                 "_Thrd_current");
@@ -1211,6 +1226,99 @@ static void test_tr2_sys__Last_write_time(void)
     ok(ret == 1, "test_tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
 }
 
+static void test_tr2_sys__dir_operation(void)
+{
+    char *file_name, first_file_name[MAX_PATH], dest[MAX_PATH], longer_path[MAX_PATH];
+    HANDLE file, result_handle;
+    enum file_type type;
+    int err, num_of_f1 = 0, num_of_f2 = 0, num_of_sub_dir = 0, num_of_other_files = 0;
+
+    CreateDirectoryA("tr2_test_dir", NULL);
+    file = CreateFileA("tr2_test_dir/f1", 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+    file = CreateFileA("tr2_test_dir/f2", 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+    CreateDirectoryA("tr2_test_dir/sub_dir", NULL);
+    file = CreateFileA("tr2_test_dir/sub_dir/sub_f1", 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    CloseHandle(file);
+
+    memset(longer_path, 0, MAX_PATH);
+    GetCurrentDirectoryA(MAX_PATH, longer_path);
+    strcat(longer_path, "\\tr2_test_dir\\");
+    while(lstrlenA(longer_path) < MAX_PATH-1)
+        strcat(longer_path, "s");
+    ok(lstrlenA(longer_path) == MAX_PATH-1, "tr2_sys__Open_dir(): expect MAX_PATH, got %d\n", lstrlenA(longer_path));
+    memset(first_file_name, 0, MAX_PATH);
+    type = err =  0xdeadbeef;
+    result_handle = NULL;
+    result_handle = p_tr2_sys__Open_dir(first_file_name, longer_path, &err, &type);
+    ok(result_handle == NULL, "tr2_sys__Open_dir(): expect NULL, got %p\n", result_handle);
+    ok(!*first_file_name, "tr2_sys__Open_dir(): expect: 0, got %s\n", first_file_name);
+    ok(err == ERROR_BAD_PATHNAME, "tr2_sys__Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
+    ok((int)type == 0xdeadbeef, "tr2_sys__Open_dir(): expect 0xdeadbeef, got %d\n", type);
+
+    memset(first_file_name, 0, MAX_PATH);
+    memset(dest, 0, MAX_PATH);
+    err = type = 0xdeadbeef;
+    result_handle = NULL;
+    result_handle = p_tr2_sys__Open_dir(first_file_name, "tr2_test_dir", &err, &type);
+    ok(result_handle != NULL, "tr2_sys__Open_dir(): expect: not NULL, got %p\n", result_handle);
+    ok(err == ERROR_SUCCESS, "tr2_sys__Open_dir(): expect: ERROR_SUCCESS, got %d\n", err);
+    file_name = first_file_name;
+    while(*file_name) {
+        if (!strcmp(file_name, "f1")) {
+            ++num_of_f1;
+            ok(type == regular_file, "expect regular_file, got %d\n", type);
+        }else if(!strcmp(file_name, "f2")) {
+            ++num_of_f2;
+            ok(type == regular_file, "expect regular_file, got %d\n", type);
+        }else if(!strcmp(file_name, "sub_dir")) {
+            ++num_of_sub_dir;
+            ok(type == directory_file, "expect directory_file, got %d\n", type);
+        }else {
+            ++num_of_other_files;
+        }
+        file_name = p_tr2_sys__Read_dir(dest, result_handle, &type);
+    }
+    p_tr2_sys__Close_dir(result_handle);
+    ok(result_handle != NULL, "tr2_sys__Open_dir(): expect: not NULL, got %p\n", result_handle);
+    ok(num_of_f1 == 1, "found f1 %d times\n", num_of_f1);
+    ok(num_of_f2 == 1, "found f2 %d times\n", num_of_f2);
+    ok(num_of_sub_dir == 1, "found sub_dir %d times\n", num_of_sub_dir);
+    ok(num_of_other_files == 0, "found %d other files\n", num_of_other_files);
+
+    memset(first_file_name, 0, MAX_PATH);
+    err = type = 0xdeadbeef;
+    result_handle = file;
+    result_handle = p_tr2_sys__Open_dir(first_file_name, "not_exist", &err, &type);
+    ok(result_handle == NULL, "tr2_sys__Open_dir(): expect: NULL, got %p\n", result_handle);
+    todo_wine ok(err == ERROR_BAD_PATHNAME, "tr2_sys__Open_dir(): expect: ERROR_BAD_PATHNAME, got %d\n", err);
+    ok((int)type == 0xdeadbeef, "tr2_sys__Open_dir(): expect: 0xdeadbeef, got %d\n", type);
+    ok(!*first_file_name, "tr2_sys__Open_dir(): expect: 0, got %s\n", first_file_name);
+
+    CreateDirectoryA("empty_dir", NULL);
+    memset(first_file_name, 0, MAX_PATH);
+    err = type = 0xdeadbeef;
+    result_handle = file;
+    result_handle = p_tr2_sys__Open_dir(first_file_name, "empty_dir", &err, &type);
+    ok(result_handle == NULL, "tr2_sys__Open_dir(): expect: NULL, got %p\n", result_handle);
+    ok(err == ERROR_SUCCESS, "tr2_sys__Open_dir(): expect: ERROR_SUCCESS, got %d\n", err);
+    ok(type == status_unknown, "tr2_sys__Open_dir(): expect: status_unknown, got %d\n", type);
+    ok(!*first_file_name, "tr2_sys__Open_dir(): expect: 0, got %s\n", first_file_name);
+    p_tr2_sys__Close_dir(result_handle);
+    ok(result_handle == NULL, "tr2_sys__Open_dir(): expect: NULL, got %p\n", result_handle);
+
+    ok(RemoveDirectoryA("empty_dir"), "expect empty_dir to exist\n");
+    ok(DeleteFileA("tr2_test_dir/sub_dir/sub_f1"), "expect tr2_test_dir/sub_dir/sub_f1 to exist\n");
+    ok(RemoveDirectoryA("tr2_test_dir/sub_dir"), "expect tr2_test_dir/sub_dir to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f2"), "expect tr2_test_dir/f2 to exist\n");
+    ok(RemoveDirectoryA("tr2_test_dir"), "expect tr2_test_dir to exist\n");
+}
+
 static int __cdecl thrd_thread(void *arg)
 {
     _Thrd_t *thr = arg;
@@ -1464,6 +1572,7 @@ START_TEST(msvcp120)
     test_tr2_sys__Statvfs();
     test_tr2_sys__Stat();
     test_tr2_sys__Last_write_time();
+    test_tr2_sys__dir_operation();
 
     test_thrd();
     test_cnd();
