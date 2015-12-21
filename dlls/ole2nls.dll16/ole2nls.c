@@ -104,10 +104,9 @@ INT16 WINAPI LCMapString16(LCID lcid, DWORD mapflags, LPCSTR srcstr, INT16 srcle
 /***********************************************************************
  *           CompareStringA       (OLE2NLS.8)
  */
-UINT16 WINAPI CompareString16(DWORD lcid,DWORD fdwStyle,
-                              LPCSTR s1,DWORD l1,LPCSTR s2,DWORD l2)
+INT16 WINAPI CompareString16(LCID lcid, DWORD flags, LPCSTR str1, INT16 len1, LPCSTR str2, INT16 len2)
 {
-	return (UINT16)CompareStringA(lcid,fdwStyle,s1,l1,s2,l2);
+    return CompareStringA(lcid, flags, str1, len1, str2, len2);
 }
 
 /******************************************************************************
