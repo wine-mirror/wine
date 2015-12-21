@@ -46,6 +46,7 @@ static CHAR string1[MAX_PATH], string2[MAX_PATH], string3[MAX_PATH];
        format, string1, string2, string3);
 
 static HMODULE hmoduleRichEdit;
+static BOOL is_lang_japanese;
 
 static HWND new_window(LPCSTR lpClassName, DWORD dwStyle, HWND parent) {
   HWND hwnd;
@@ -484,6 +485,28 @@ static void test_EM_LINELENGTH(void)
     result = SendMessageA(hwndRichEdit, EM_LINELENGTH, offset_test[i][0], 0);
     ok(result == offset_test[i][1], "Length of line at offset %d is %ld, expected %d\n",
         offset_test[i][0], result, offset_test[i][1]);
+  }
+
+  /* Test with multibyte character */
+  if (!is_lang_japanese)
+    skip("Skip multibyte character tests on non-Japanese platform\n");
+  else
+  {
+    const char *text1 =
+          "wine\n"
+          "richedit\x8e\xf0\n"
+          "wine";
+    int offset_test1[3][2] = {
+           {0, 4},  /* Line 1: |wine\n */
+           {5, 9},  /* Line 2: |richedit\x8e\xf0\n */
+           {15, 4}, /* Line 3: |wine */
+    };
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
+    for (i = 0; i < sizeof(offset_test1)/sizeof(offset_test1[0]); i++) {
+      result = SendMessageA(hwndRichEdit, EM_LINELENGTH, offset_test1[i][0], 0);
+      ok(result == offset_test1[i][1], "Length of line at offset %d is %ld, expected %d\n",
+         offset_test1[i][0], result, offset_test1[i][1]);
+    }
   }
 
   DestroyWindow(hwndRichEdit);
@@ -4009,7 +4032,7 @@ static void test_EM_SETTEXTEX(void)
   ok(result == 0, "EM_SETTEXTEX: Test UTF8 with BOM set wrong text: Result: %s\n", bufACP);
 
   /* Test multibyte character */
-  if (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_JAPANESE)
+  if (!is_lang_japanese)
     skip("Skip multibyte character tests on non-Japanese platform\n");
   else
   {
@@ -4882,7 +4905,7 @@ static void test_EM_REPLACESEL(int redraw)
     ok(r == 7, "EM_GETLINECOUNT returned %d, expected 7\n", r);
 
     /* Test with  multibyte character */
-    if (PRIMARYLANGID(GetUserDefaultLangID()) != LANG_JAPANESE)
+    if (!is_lang_japanese)
         skip("Skip multibyte character tests on non-Japanese platform\n");
     else
     {
@@ -8160,6 +8183,7 @@ START_TEST( editor )
    * RICHED20.DLL, so the linker doesn't actually link to it. */
   hmoduleRichEdit = LoadLibraryA("riched20.dll");
   ok(hmoduleRichEdit != NULL, "error: %d\n", (int) GetLastError());
+  is_lang_japanese = (PRIMARYLANGID(GetUserDefaultLangID()) == LANG_JAPANESE);
 
   test_WM_CHAR();
   test_EM_FINDTEXT(FALSE);
