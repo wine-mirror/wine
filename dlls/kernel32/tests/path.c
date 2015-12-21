@@ -2138,9 +2138,7 @@ static void test_relative_path(void)
 
     strcpy(buf, "deadbeef");
     ret = pGetLongPathNameA(".\\..\\foo\\file", buf, MAX_PATH);
-    todo_wine
     ok(ret, "GetLongPathName error %d\n", GetLastError());
-    todo_wine
     ok(!strcmp(buf, ".\\..\\foo\\file"), "expected .\\..\\foo\\file, got %s\n", buf);
     strcpy(buf, "deadbeef");
     ret = GetShortPathNameA(".\\..\\foo\\file", buf, MAX_PATH);

@@ -349,6 +349,7 @@ DWORD WINAPI GetLongPathNameW( LPCWSTR shortpath, LPWSTR longpath, DWORD longlen
         {
             tmplongpath[lp++] = *p++;
             tmplongpath[lp++] = *p++;
+            sp += 2;
         }
         for (; *p && *p != '/' && *p != '\\'; p++);
         tmplen = p - (shortpath + sp);
