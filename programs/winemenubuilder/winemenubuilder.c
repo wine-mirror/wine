@@ -2102,15 +2102,12 @@ static void free_native_mime_types(struct list *native_mime_types)
         HeapFree(GetProcessHeap(), 0, mime_type_entry->mimeType);
         HeapFree(GetProcessHeap(), 0, mime_type_entry);
     }
-    HeapFree(GetProcessHeap(), 0, native_mime_types);
 }
 
-static BOOL build_native_mime_types(const char *xdg_data_home, struct list **mime_types)
+static BOOL build_native_mime_types(const char *xdg_data_home, struct list *mime_types)
 {
     char *xdg_data_dirs;
     BOOL ret;
-
-    *mime_types = NULL;
 
     xdg_data_dirs = getenv("XDG_DATA_DIRS");
     if (xdg_data_dirs == NULL)
@@ -2120,39 +2117,29 @@ static BOOL build_native_mime_types(const char *xdg_data_home, struct list **mim
 
     if (xdg_data_dirs)
     {
-        *mime_types = HeapAlloc(GetProcessHeap(), 0, sizeof(struct list));
-        if (*mime_types)
-        {
-            const char *begin;
-            char *end;
+        const char *begin;
+        char *end;
 
-            list_init(*mime_types);
-            ret = add_mimes(xdg_data_home, *mime_types);
-            if (ret)
+        ret = add_mimes(xdg_data_home, mime_types);
+        if (ret)
+        {
+            for (begin = xdg_data_dirs; (end = strchr(begin, ':')); begin = end + 1)
             {
-                for (begin = xdg_data_dirs; (end = strchr(begin, ':')); begin = end + 1)
-                {
-                    *end = '\0';
-                    ret = add_mimes(begin, *mime_types);
-                    *end = ':';
-                    if (!ret)
-                        break;
-                }
-                if (ret)
-                    ret = add_mimes(begin, *mime_types);
+                *end = '\0';
+                ret = add_mimes(begin, mime_types);
+                *end = ':';
+                if (!ret)
+                    break;
             }
+            if (ret)
+                ret = add_mimes(begin, mime_types);
         }
-        else
-            ret = FALSE;
         HeapFree(GetProcessHeap(), 0, xdg_data_dirs);
     }
     else
         ret = FALSE;
-    if (!ret && *mime_types)
-    {
-        free_native_mime_types(*mime_types);
-        *mime_types = NULL;
-    }
+    if (!ret)
+        free_native_mime_types(mime_types);
     return ret;
 }
 
@@ -2557,7 +2544,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
 {
     static const WCHAR openW[] = {'o','p','e','n',0};
     struct wine_rb_tree mimeProgidTree;
-    struct list *nativeMimeTypes = NULL;
+    struct list nativeMimeTypes;
     LSTATUS ret = 0;
     int i;
     BOOL hasChanged = FALSE;
@@ -2567,6 +2554,8 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
         WINE_ERR("wine_rb_init failed\n");
         return FALSE;
     }
+
+    list_init(&nativeMimeTypes);
     if (!build_native_mime_types(xdg_data_home, &nativeMimeTypes))
     {
         WINE_ERR("could not build native MIME types\n");
@@ -2634,7 +2623,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
             if (contentTypeW)
                 strlwrW(contentTypeW);
 
-            if (!freedesktop_mime_type_for_extension(nativeMimeTypes, extensionA, extensionW, &mimeTypeA))
+            if (!freedesktop_mime_type_for_extension(&nativeMimeTypes, extensionA, extensionW, &mimeTypeA))
                 goto end;
 
             if (mimeTypeA == NULL)
@@ -2780,7 +2769,7 @@ static BOOL generate_associations(const char *xdg_data_home, const char *package
     }
 
     wine_rb_destroy(&mimeProgidTree, winemenubuilder_rb_destroy, NULL);
-    free_native_mime_types(nativeMimeTypes);
+    free_native_mime_types(&nativeMimeTypes);
     return hasChanged;
 }
 
