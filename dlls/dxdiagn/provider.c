@@ -346,6 +346,7 @@ static inline HRESULT add_bool_property(IDxDiagContainerImpl_Container *node, co
 static inline HRESULT add_ull_as_bstr_property(IDxDiagContainerImpl_Container *node, const WCHAR *propName, ULONGLONG data )
 {
     IDxDiagContainerImpl_Property *prop;
+    HRESULT hr;
 
     prop = allocate_property_information(propName);
     if (!prop)
@@ -354,7 +355,12 @@ static inline HRESULT add_ull_as_bstr_property(IDxDiagContainerImpl_Container *n
     V_VT(&prop->vProp) = VT_UI8;
     V_UI8(&prop->vProp) = data;
 
-    VariantChangeType(&prop->vProp, &prop->vProp, 0, VT_BSTR);
+    hr = VariantChangeType(&prop->vProp, &prop->vProp, 0, VT_BSTR);
+    if (FAILED(hr))
+    {
+        free_property_information(prop);
+        return hr;
+    }
 
     list_add_tail(&node->properties, &prop->entry);
     ++node->nProperties;
