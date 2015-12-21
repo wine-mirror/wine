@@ -386,7 +386,7 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     if (XDNDAccepted)
     {
         dropTarget = get_droptarget_pointer(XDNDLastDropTargetWnd);
-        if (dropTarget)
+        if (dropTarget && effect!=DROPEFFECT_NONE)
         {
             HRESULT hr;
             POINTL pointl;
@@ -413,6 +413,13 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
                 WARN("drop returned 0x%08X\n", hr);
                 drop_file = FALSE;
             }
+            IDropTarget_Release(dropTarget);
+        }
+        else if (dropTarget)
+        {
+            HRESULT hr = IDropTarget_DragLeave(dropTarget);
+            if (FAILED(hr))
+                WARN("IDropTarget_DragLeave failed, error 0x%08X\n", hr);
             IDropTarget_Release(dropTarget);
         }
     }
