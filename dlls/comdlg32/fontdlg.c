@@ -1011,7 +1011,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
             /* face name */
             i=SendDlgItemMessageW(hDlg,cmb1,CB_GETCURSEL,0,0);
             if (i==CB_ERR)
-                i=GetDlgItemTextW( hDlg, cmb1, str, 256 );
+                GetDlgItemTextW( hDlg, cmb1, str, sizeof(str)/sizeof(str[0]) );
             else
             {
                 SendDlgItemMessageW(hDlg,cmb1,CB_GETLBTEXT,i,
