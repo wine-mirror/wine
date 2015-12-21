@@ -116,11 +116,18 @@ BOOL WINAPI GetICMProfileA(HDC hdc, LPDWORD size, LPSTR filename)
 
     TRACE("%p, %p, %p\n", hdc, size, filename);
 
-    if (!hdc || !size || !filename) return FALSE;
+    if (!hdc || !size) return FALSE;
 
     if (GetICMProfileW(hdc, &buflen, filenameW))
     {
         int len = WideCharToMultiByte(CP_ACP, 0, filenameW, -1, NULL, 0, NULL, NULL);
+
+        if (!filename)
+        {
+            *size = len;
+            return FALSE;
+        }
+
         if (*size >= len)
         {
             WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, *size, NULL, NULL);
