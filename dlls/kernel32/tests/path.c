@@ -861,14 +861,25 @@ static void test_PathNameA(CHAR *curdir, CHAR curDrive, CHAR otherDrive)
   /* Don't Starve relies on GetLongPathName returning the passed in filename,
      even if the actual file on disk has a different case or separator */
   if (pGetLongPathNameA) {
+    int len = lstrlenA(LONGDIR) + 1;
     sprintf(tmpstr,"%s/%s",LONGDIR,LONGFILE);
     ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
     ok(lstrcmpiA(tmpstr,tmpstr1)==0,
+       "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
+    tmpstr[len] = tolower(tmpstr[len]);
+    ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
+    todo_wine
+    ok(lstrcmpA(tmpstr,tmpstr1)==0,
        "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
     sprintf(tmpstr,"%s/%s",SHORTDIR,SHORTFILE);
     ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
     ok(lstrcmpiA(tmpstr,tmpstr1)==0,
        "GetLongPathNameA returned '%s' instead of '%s'\n",tmpstr1,tmpstr);
+    len = lstrlenA(SHORTDIR) + 1;
+    tmpstr[len] = toupper(tmpstr[len]);
+    ok(GetLongPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetLongPathNameA failed\n");
+    ok(lstrcmpiA(tmpstr,tmpstr1)==0 && lstrcmpA(tmpstr,tmpstr1) != 0,
+       "GetLongPathNameA returned '%s' instead of '%s/%s'\n",tmpstr1,SHORTDIR,SHORTFILE);
   }
   sprintf(tmpstr,"%s/%s",SHORTDIR,SHORTFILE);
   ok(GetShortPathNameA(tmpstr,tmpstr1,MAX_PATH),"GetShortPathNameA failed\n");
