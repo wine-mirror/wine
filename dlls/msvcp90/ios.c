@@ -14504,6 +14504,15 @@ char* __cdecl tr2_sys__Read_dir(char* target, void* handle, enum file_type* type
     return target;
 }
 
+/* ?_Close_dir@sys@tr2@std@@YAXPAX@Z */
+/* ?_Close_dir@sys@tr2@std@@YAXPEAX@Z */
+void __cdecl tr2_sys__Close_dir(void* handle)
+{
+    TRACE("(%p)\n", handle);
+
+    FindClose(handle);
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64

@@ -1126,8 +1126,8 @@
 @ cdecl -arch=win64 ?_Callfns@ios_base@std@@AEAAXW4event@12@@Z(ptr long) msvcp120.?_Callfns@ios_base@std@@AEAAXW4event@12@@Z
 @ extern -arch=win32 ?_Clocptr@_Locimp@locale@std@@0PAV123@A msvcp120.?_Clocptr@_Locimp@locale@std@@0PAV123@A
 @ extern -arch=win64 ?_Clocptr@_Locimp@locale@std@@0PEAV123@EA msvcp120.?_Clocptr@_Locimp@locale@std@@0PEAV123@EA
-@ stub -arch=win32 ?_Close_dir@sys@tr2@std@@YAXPAX@Z
-@ stub -arch=win64 ?_Close_dir@sys@tr2@std@@YAXPEAX@Z
+@ cdecl -arch=win32 ?_Close_dir@sys@tr2@std@@YAXPAX@Z(ptr) msvcp120.?_Close_dir@sys@tr2@std@@YAXPAX@Z
+@ cdecl -arch=win64 ?_Close_dir@sys@tr2@std@@YAXPEAX@Z(ptr) msvcp120.?_Close_dir@sys@tr2@std@@YAXPEAX@Z
 @ cdecl -arch=win32 ?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z(str str long) msvcp120.?_Copy_file@sys@tr2@std@@YAHPBD0_N@Z
 @ cdecl -arch=win64 ?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z(str str long) msvcp120.?_Copy_file@sys@tr2@std@@YAHPEBD0_N@Z
 @ cdecl -arch=win32 ?_Copy_file@sys@tr2@std@@YAHPB_W0_N@Z(wstr wstr long) msvcp120.?_Copy_file@sys@tr2@std@@YAHPB_W0_N@Z
