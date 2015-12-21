@@ -1735,7 +1735,7 @@
 @ cdecl -ret64 _strtoi64(str ptr long) MSVCRT_strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
 @ stub _strtoimax_l
-@ stub _strtol_l
+@ cdecl _strtol_l(str ptr long ptr) MSVCRT__strtol_l
 @ stub _strtold_l
 @ cdecl -ret64 _strtoll_l(str ptr long ptr) MSVCRT_strtoi64_l
 @ cdecl -ret64 _strtoui64(str ptr long) MSVCRT_strtoui64

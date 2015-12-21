@@ -1446,7 +1446,7 @@
 @ cdecl -ret64 _strtoi64(str ptr long) msvcr120._strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) msvcr120._strtoi64_l
 @ stub _strtoimax_l
-@ stub _strtol_l
+@ cdecl _strtol_l(str ptr long ptr) msvcr120._strtol_l
 @ stub _strtold_l
 @ cdecl -ret64 _strtoll_l(str ptr long ptr) msvcr120._strtoll_l
 @ cdecl -ret64 _strtoui64(str ptr long) msvcr120._strtoui64

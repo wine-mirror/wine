@@ -1045,7 +1045,7 @@
 @ cdecl _strtod_l(str ptr ptr) MSVCRT_strtod_l
 @ cdecl -ret64 _strtoi64(str ptr long) MSVCRT_strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
-@ stub _strtol_l
+@ cdecl _strtol_l(str ptr long ptr) MSVCRT__strtol_l
 @ cdecl -ret64 _strtoui64(str ptr long) MSVCRT_strtoui64
 @ cdecl -ret64 _strtoui64_l(str ptr long ptr) MSVCRT_strtoui64_l
 @ cdecl _strtoul_l(str ptr long ptr) MSVCRT_strtoul_l

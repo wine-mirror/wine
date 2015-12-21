@@ -34,7 +34,7 @@
 @ cdecl -ret64 _strtoi64(str ptr long) ucrtbase._strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) ucrtbase._strtoi64_l
 @ stub _strtoimax_l
-@ stub _strtol_l
+@ cdecl _strtol_l(str ptr long ptr) ucrtbase._strtol_l
 @ stub _strtold_l
 @ cdecl -ret64 _strtoll_l(str ptr long ptr) ucrtbase._strtoll_l
 @ cdecl -ret64 _strtoui64(str ptr long) ucrtbase._strtoui64
