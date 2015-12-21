@@ -55,7 +55,6 @@ static void test_GetICMProfileA( HDC dc )
     size = 0;
     ret = GetICMProfileA( dc, &size, NULL );
     ok( !ret, "GetICMProfileA succeeded\n" );
-todo_wine
     ok( size > 0, "got %u\n", size );
 
     size = MAX_PATH;
