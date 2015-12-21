@@ -520,6 +520,9 @@ unsigned int CDECL _mbcjmstojis(unsigned int c)
  */
 unsigned char* CDECL _mbsdec(const unsigned char* start, const unsigned char* cur)
 {
+  if(start >= cur)
+    return NULL;
+
   if(get_mbcinfo()->ismbcodepage)
     return (unsigned char *)(_ismbstrail(start,cur-1) ? cur - 2 : cur -1);
 
