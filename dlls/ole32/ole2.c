@@ -873,21 +873,13 @@ HRESULT WINAPI OleRegGetMiscStatus(
 {
   static const WCHAR miscstatusW[] = {'M','i','s','c','S','t','a','t','u','s',0};
   static const WCHAR dfmtW[] = {'%','d',0};
-  WCHAR   keyName[60];
-  HKEY    clsidKey;
+  WCHAR   keyName[16];
   HKEY    miscStatusKey;
   HKEY    aspectKey;
   LONG    result;
+  HRESULT hr;
 
-  /*
-   * Build the key name we're looking for
-   */
-  sprintfW( keyName, clsidfmtW,
-            clsid->Data1, clsid->Data2, clsid->Data3,
-            clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
-            clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
-
-  TRACE("(%s, %d, %p)\n", debugstr_w(keyName), dwAspect, pdwStatus);
+  TRACE("(%s, %d, %p)\n", debugstr_guid(clsid), dwAspect, pdwStatus);
 
   if (!pdwStatus) return E_INVALIDARG;
 
@@ -895,26 +887,11 @@ HRESULT WINAPI OleRegGetMiscStatus(
 
   if (actctx_get_miscstatus(clsid, dwAspect, pdwStatus)) return S_OK;
 
-  /*
-   * Open the class id Key
-   */
-  result = open_classes_key(HKEY_CLASSES_ROOT, keyName, MAXIMUM_ALLOWED, &clsidKey);
-  if (result != ERROR_SUCCESS)
-    return REGDB_E_CLASSNOTREG;
+  hr = COM_OpenKeyForCLSID(clsid, miscstatusW, KEY_READ, &miscStatusKey);
+  if (FAILED(hr))
+    /* missing key is not a failure */
+    return hr == REGDB_E_KEYMISSING ? S_OK : hr;
 
-  /*
-   * Get the MiscStatus
-   */
-  result = open_classes_key(clsidKey, miscstatusW, MAXIMUM_ALLOWED, &miscStatusKey);
-  if (result != ERROR_SUCCESS)
-  {
-    RegCloseKey(clsidKey);
-    return S_OK;
-  }
-
-  /*
-   * Read the default value
-   */
   OLEUTL_ReadRegistryDWORDValue(miscStatusKey, pdwStatus);
 
   /*
@@ -922,19 +899,14 @@ HRESULT WINAPI OleRegGetMiscStatus(
    */
   sprintfW(keyName, dfmtW, dwAspect);
 
-  result = open_classes_key(miscStatusKey, keyName, MAXIMUM_ALLOWED, &aspectKey);
+  result = open_classes_key(miscStatusKey, keyName, KEY_READ, &aspectKey);
   if (result == ERROR_SUCCESS)
   {
     OLEUTL_ReadRegistryDWORDValue(aspectKey, pdwStatus);
     RegCloseKey(aspectKey);
   }
 
-  /*
-   * Cleanup
-   */
   RegCloseKey(miscStatusKey);
-  RegCloseKey(clsidKey);
-
   return S_OK;
 }
 
