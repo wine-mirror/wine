@@ -154,6 +154,6 @@
 @ cdecl tmpfile() ucrtbase.tmpfile
 @ cdecl tmpfile_s(ptr) ucrtbase.tmpfile_s
 @ cdecl tmpnam(ptr) ucrtbase.tmpnam
-@ stub tmpnam_s
+@ cdecl tmpnam_s(ptr long) ucrtbase.tmpnam_s
 @ cdecl ungetc(long ptr) ucrtbase.ungetc
 @ cdecl ungetwc(long ptr) ucrtbase.ungetwc
