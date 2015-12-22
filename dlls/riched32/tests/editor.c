@@ -130,22 +130,33 @@ static void test_WM_SETTEXT(void)
 static void test_WM_GETTEXTLENGTH(void)
 {
     HWND hwndRichEdit = new_richedit(NULL);
-    static const char text3[] = "aaa\r\nbbb\r\nccc\r\nddd\r\neee";
-    static const char text4[] = "aaa\r\nbbb\r\nccc\r\nddd\r\neee\r\n";
+    static const char text1[] = "aaa\r\nbbb\r\nccc\r\nddd\r\neee";
+    static const char text2[] = "aaa\r\nbbb\r\nccc\r\nddd\r\neee\r\n";
+    static const char text3[] = "abcdef\x8e\xf0";
     int result;
 
     /* Test for WM_GETTEXTLENGTH */
-    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text3);
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
     result = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(result == lstrlenA(text3),
-        "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
-        result, lstrlenA(text3));
+    ok(result == lstrlenA(text1),
+       "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
+       result, lstrlenA(text1));
 
-    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text4);
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
     result = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
-    ok(result == lstrlenA(text4),
-        "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
-        result, lstrlenA(text4));
+    ok(result == lstrlenA(text2),
+       "WM_GETTEXTLENGTH reports incorrect length %d, expected %d\n",
+       result, lstrlenA(text2));
+
+    /* Test with multibyte character */
+    if (!is_lang_japanese)
+        skip("Skip multibyte character tests on non-Japanese platform\n");
+    else
+    {
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text3);
+        result = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+        ok(result == 8, "WM_GETTEXTLENGTH returned %d, expected 8\n", result);
+    }
 
     DestroyWindow(hwndRichEdit);
 }
