@@ -84,6 +84,7 @@ static	void	CALLBACK	JOY_Timer(HWND hWnd, UINT wMsg, UINT_PTR wTimer, DWORD dwTi
 {
     int			i;
     WINE_JOYSTICK*	joy;
+    MMRESULT		res;
     JOYINFO		ji;
     LONG		pos;
     unsigned 		buttonChange;
@@ -93,7 +94,12 @@ static	void	CALLBACK	JOY_Timer(HWND hWnd, UINT wMsg, UINT_PTR wTimer, DWORD dwTi
 
 	if (joy->hCapture != hWnd) continue;
 
-	joyGetPos(i, &ji);
+	res = joyGetPos(i, &ji);
+	if (res != JOYERR_NOERROR) {
+	    WARN("joyGetPos failed: %08x\n", res);
+	    continue;
+	}
+
 	pos = MAKELONG(ji.wXpos, ji.wYpos);
 
 	if (!joy->bChanged ||
