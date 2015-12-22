@@ -663,6 +663,7 @@ struct MSVCRT__stat64 {
 #define MSVCRT_WEOF (MSVCRT_wint_t)(0xFFFF)
 #define MSVCRT_EOF       (-1)
 #define MSVCRT_TMP_MAX   0x7fff
+#define MSVCRT_TMP_MAX_S 0x7fffffff
 #define MSVCRT_RAND_MAX  0x7fff
 #define MSVCRT_BUFSIZ    512
 

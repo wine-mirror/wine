@@ -2073,7 +2073,7 @@
 @ cdecl tmpfile() msvcr120.tmpfile
 @ cdecl tmpfile_s(ptr) msvcr120.tmpfile_s
 @ cdecl tmpnam(ptr) msvcr120.tmpnam
-@ stub tmpnam_s
+@ cdecl tmpnam_s(ptr long) msvcr120.tmpnam_s
 @ cdecl tolower(long) msvcr120.tolower
 @ cdecl toupper(long) msvcr120.toupper
 @ stub towctrans
