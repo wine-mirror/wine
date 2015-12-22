@@ -1312,6 +1312,7 @@ enable_sxs
 enable_t2embed
 enable_tapi32
 enable_taskschd
+enable_tdi_sys
 enable_traffic
 enable_twain_32
 enable_ucrtbase
@@ -17884,6 +17885,7 @@ wine_fn_config_dll t2embed enable_t2embed
 wine_fn_config_dll tapi32 enable_tapi32 implib
 wine_fn_config_dll taskschd enable_taskschd clean
 wine_fn_config_test dlls/taskschd/tests taskschd_test
+wine_fn_config_dll tdi.sys enable_tdi_sys
 wine_fn_config_dll toolhelp.dll16 enable_win16
 wine_fn_config_dll traffic enable_traffic
 wine_fn_config_dll twain.dll16 enable_win16
