@@ -14483,18 +14483,16 @@ void* __cdecl tr2_sys__Open_dir(char* target, char const* dest, int* err_code, e
 char* __cdecl tr2_sys__Read_dir(char* target, void* handle, enum file_type* type)
 {
     WIN32_FIND_DATAA data;
+
     TRACE("(%p %p %p)\n", target, handle, type);
-    if(!FindNextFileA(handle, &data)) {
-        *type = status_unknown;
-        *target = '\0';
-        return target;
-    }
-    while(!strcmp(data.cFileName, ".") || !strcmp(data.cFileName, "..")) {
+
+    do {
         if(!FindNextFileA(handle, &data)) {
             *type = status_unknown;
-            return NULL;
+            *target = '\0';
+            return target;
         }
-    }
+    } while(!strcmp(data.cFileName, ".") || !strcmp(data.cFileName, ".."));
 
     strcpy(target, data.cFileName);
     if(data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
