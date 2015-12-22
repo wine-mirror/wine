@@ -596,17 +596,27 @@ static void test_EM_GETSELTEXT(void)
 
     SendMessageA(hwndRichEdit, EM_SETSEL, 4, 12);
     result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
-    ok(result == 8, "EM_GETTEXTRANGE returned %ld\n", result);
-    ok(!strcmp(expect1, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
+    ok(result == 8, "EM_GETSELTEXT returned %ld\n", result);
+    ok(!strcmp(expect1, buffer), "EM_GETSELTEXT filled %s\n", buffer);
 
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
 
     SendMessageA(hwndRichEdit, EM_SETSEL, 4, 11);
     result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
-    ok(result == 7, "EM_GETTEXTRANGE returned %ld\n", result);
+    ok(result == 7, "EM_GETSELTEXT returned %ld\n", result);
+    ok(!strcmp(expect2, buffer), "EM_GETSELTEXT filled %s\n", buffer);
 
-    ok(!strcmp(expect2, buffer), "EM_GETTEXTRANGE filled %s\n", buffer);
-
+    /* Test with multibyte character */
+    if (!is_lang_japanese)
+        skip("Skip multibyte character tests on non-Japanese platform\n");
+    else
+    {
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"abcdef\x8e\xf0ghijk");
+        SendMessageA(hwndRichEdit, EM_SETSEL, 4, 8);
+        result = SendMessageA(hwndRichEdit, EM_GETSELTEXT, 0, (LPARAM)buffer);
+        ok(result == 4, "EM_GETSELTEXT returned %ld\n", result);
+        todo_wine ok(!strcmp("ef\x8e\xf0", buffer), "EM_GETSELTEXT filled %s\n", buffer);
+    }
 
     DestroyWindow(hwndRichEdit);
 }
