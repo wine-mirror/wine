@@ -234,7 +234,7 @@ static int source_display(const char* sourcefile, int start, int end)
                  * OK, I guess the user doesn't really want to see it
                  * after all.
                  */
-                ol = source_add_file(sourcefile, NULL);
+                source_add_file(sourcefile, NULL);
                 return FALSE;
             }
         }
