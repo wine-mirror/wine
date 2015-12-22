@@ -814,7 +814,6 @@ LONG WINAPI mmioWrite(HMMIO hmmio, HPCSTR pch, LONG cch)
     if (wm->info.cchBuffer) {
 	LONG	bytesW = 0;
 
-        count = 0;
         while (cch) {
             if (wm->info.pchNext != wm->info.pchEndWrite) {
                 count = wm->info.pchEndWrite - wm->info.pchNext;
