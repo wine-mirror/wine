@@ -677,47 +677,26 @@ HRESULT WINAPI OleRegGetUserType(
 	DWORD dwFormOfType,
 	LPOLESTR* pszUserType)
 {
-  WCHAR   keyName[60];
   DWORD   dwKeyType;
   DWORD   cbData;
   HKEY    clsidKey;
-  LONG    hres;
+  HRESULT hres;
+  LONG    ret;
 
-  /*
-   * Initialize the out parameter.
-   */
+  TRACE("(%s, %d, %p)\n", debugstr_guid(clsid), dwFormOfType, pszUserType);
+
   *pszUserType = NULL;
 
-  /*
-   * Build the key name we're looking for
-   */
-  sprintfW( keyName, clsidfmtW,
-            clsid->Data1, clsid->Data2, clsid->Data3,
-            clsid->Data4[0], clsid->Data4[1], clsid->Data4[2], clsid->Data4[3],
-            clsid->Data4[4], clsid->Data4[5], clsid->Data4[6], clsid->Data4[7] );
-
-  TRACE("(%s, %d, %p)\n", debugstr_w(keyName), dwFormOfType, pszUserType);
-
-  /*
-   * Open the class id Key
-   */
-  hres = open_classes_key(HKEY_CLASSES_ROOT, keyName, MAXIMUM_ALLOWED, &clsidKey);
-  if (hres != ERROR_SUCCESS)
-    return REGDB_E_CLASSNOTREG;
+  hres = COM_OpenKeyForCLSID(clsid, NULL, KEY_READ, &clsidKey);
+  if (FAILED(hres))
+    return hres;
 
   /*
    * Retrieve the size of the name string.
    */
   cbData = 0;
 
-  hres = RegQueryValueExW(clsidKey,
-			  emptyW,
-			  NULL,
-			  &dwKeyType,
-			  NULL,
-			  &cbData);
-
-  if (hres!=ERROR_SUCCESS)
+  if (RegQueryValueExW(clsidKey, emptyW, NULL, &dwKeyType, NULL, &cbData))
   {
     RegCloseKey(clsidKey);
     return REGDB_E_READREGDB;
@@ -734,7 +713,7 @@ HRESULT WINAPI OleRegGetUserType(
     return E_OUTOFMEMORY;
   }
 
-  hres = RegQueryValueExW(clsidKey,
+  ret = RegQueryValueExW(clsidKey,
 			  emptyW,
 			  NULL,
 			  &dwKeyType,
@@ -743,11 +722,10 @@ HRESULT WINAPI OleRegGetUserType(
 
   RegCloseKey(clsidKey);
 
-  if (hres != ERROR_SUCCESS)
+  if (ret != ERROR_SUCCESS)
   {
     CoTaskMemFree(*pszUserType);
     *pszUserType = NULL;
-
     return REGDB_E_READREGDB;
   }
 
