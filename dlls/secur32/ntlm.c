@@ -1630,7 +1630,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
     PSecBufferDesc pMessage, ULONG MessageSeqNo, PULONG pfQOP)
 {
     PNegoHelper helper;
-    ULONG fQOP = 0;
     UINT i;
     int token_idx;
     SECURITY_STATUS ret;
@@ -1689,7 +1688,6 @@ SECURITY_STATUS SEC_ENTRY ntlm_VerifySignature(PCtxtHandle phContext,
         ret = SEC_E_OK;
 
     HeapFree(GetProcessHeap(), 0, local_buff);
-    pfQOP = &fQOP;
 
     return ret;
 
