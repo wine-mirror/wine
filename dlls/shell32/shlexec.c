@@ -1565,7 +1565,6 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     WCHAR *wszApplicationName, *wszParameters, *wszDir, *wcmd;
     DWORD dwApplicationNameLen = MAX_PATH+2;
     DWORD parametersLen = sizeof(parametersBuffer) / sizeof(WCHAR);
-    DWORD dirLen = sizeof(dirBuffer) / sizeof(WCHAR);
     DWORD wcmdLen = sizeof(wcmdBuffer) / sizeof(WCHAR);
     DWORD len;
     SHELLEXECUTEINFOW sei_tmp;	/* modifiable copy of SHELLEXECUTEINFO struct */
@@ -1625,11 +1624,8 @@ static BOOL SHELL_execute( LPSHELLEXECUTEINFOW sei, SHELL_ExecuteW32 execfunc )
     if (sei_tmp.lpDirectory)
     {
         len = lstrlenW(sei_tmp.lpDirectory) + 1;
-        if (len > dirLen)
-        {
+        if (len > sizeof(dirBuffer) / sizeof(WCHAR))
             wszDir = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR));
-            dirLen = len;
-        }
 	strcpyW(wszDir, sei_tmp.lpDirectory);
     }
     else
