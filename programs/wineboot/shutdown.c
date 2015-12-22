@@ -133,7 +133,6 @@ static INT_PTR CALLBACK endtask_dlg_proc( HWND hwnd, UINT msg, WPARAM wparam, LP
     {
     case WM_INITDIALOG:
         SetWindowLongPtrW( hwnd, DWLP_USER, lparam );
-        data = (struct endtask_dlg_data *)lparam;
         ShowWindow( hwnd, SW_SHOWNORMAL );
         return TRUE;
     case WM_COMMAND:
