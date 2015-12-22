@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-11-18 20:30+0300\n"
+"PO-Revision-Date: 2015-12-23 01:22+0300\n"
 "Last-Translator: Nikolay Sivov <nsivov@codeweavers.com>\n"
 "Language-Team: Russian\n"
 "Language: ru\n"
@@ -1042,7 +1042,7 @@ msgstr "Выберите папку"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "Размер шрифта должен быть числом."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
