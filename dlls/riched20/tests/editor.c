@@ -8241,6 +8241,37 @@ static void test_alignment_style(void)
     DestroyWindow(richedit);
 }
 
+static void test_WM_GETTEXTLENGTH(void)
+{
+    HWND hwndRichEdit = new_richedit(NULL);
+    static const char text1[] = "aaa\r\nbbb\r\nccc\r\nddd\r\neee";
+    static const char text2[] = "aaa\r\nbbb\r\nccc\r\nddd\r\neee\r\n";
+    static const char text3[] = "abcdef\x8e\xf0";
+    int result;
+
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
+    result = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(result == lstrlenA(text1), "WM_GETTEXTLENGTH returned %d, expected %d\n",
+       result, lstrlenA(text1));
+
+    SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text2);
+    result = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+    ok(result == lstrlenA(text2), "WM_GETTEXTLENGTH returned %d, expected %d\n",
+       result, lstrlenA(text2));
+
+    /* Test with multibyte character */
+    if (!is_lang_japanese)
+        skip("Skip multibyte character tests on non-Japanese platform\n");
+    else
+    {
+        SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text3);
+        result = SendMessageA(hwndRichEdit, WM_GETTEXTLENGTH, 0, 0);
+        todo_wine ok(result == 8, "WM_GETTEXTLENGTH returned %d, expected 8\n", result);
+    }
+
+    DestroyWindow(hwndRichEdit);
+}
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -8285,6 +8316,7 @@ START_TEST( editor )
   test_EM_FORMATRANGE();
   test_unicode_conversions();
   test_EM_GETTEXTLENGTHEX();
+  test_WM_GETTEXTLENGTH();
   test_EM_REPLACESEL(1);
   test_EM_REPLACESEL(0);
   test_WM_NOTIFY();
