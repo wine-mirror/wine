@@ -4726,13 +4726,8 @@ static HRESULT WINAPI ddraw_surface7_SetColorKey(IDirectDrawSurface7 *iface, DWO
 
     TRACE("iface %p, flags %#x, color_key %p.\n", iface, flags, color_key);
 
-    wined3d_mutex_lock();
-    if (!surface->wined3d_texture)
-    {
-        wined3d_mutex_unlock();
+    if (surface->surface_desc.ddsCaps.dwCaps2 & DDSCAPS2_MIPMAPSUBLEVEL)
         return DDERR_NOTONMIPMAPSUBLEVEL;
-    }
-    wined3d_mutex_unlock();
 
     return ddraw_surface_set_color_key(surface, flags, color_key);
 }

@@ -1764,15 +1764,15 @@ static void test_ck_complex(void)
     color_key.dwColorSpaceLowValue = 0x000000ff;
     color_key.dwColorSpaceHighValue = 0x000000ff;
     hr = IDirectDrawSurface7_SetColorKey(mipmap, DDCKEY_SRCBLT, &color_key);
-    todo_wine ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to set color key, hr %#x.\n", hr);
 
     color_key.dwColorSpaceLowValue = 0;
     color_key.dwColorSpaceHighValue = 0;
     hr = IDirectDrawSurface7_GetColorKey(mipmap, DDCKEY_SRCBLT, &color_key);
-    todo_wine ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
-    todo_wine ok(color_key.dwColorSpaceLowValue == 0x000000ff, "Got unexpected value 0x%08x.\n",
+    ok(SUCCEEDED(hr), "Failed to get color key, hr %#x.\n", hr);
+    ok(color_key.dwColorSpaceLowValue == 0x000000ff, "Got unexpected value 0x%08x.\n",
             color_key.dwColorSpaceLowValue);
-    todo_wine ok(color_key.dwColorSpaceHighValue == 0x000000ff, "Got unexpected value 0x%08x.\n",
+    ok(color_key.dwColorSpaceHighValue == 0x000000ff, "Got unexpected value 0x%08x.\n",
             color_key.dwColorSpaceHighValue);
 
     IDirectDrawSurface_AddRef(mipmap);
