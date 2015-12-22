@@ -111,7 +111,7 @@
 @ cdecl _wsopen_s(ptr wstr long long long) ucrtbase._wsopen_s
 @ cdecl _wtempnam(wstr wstr) ucrtbase._wtempnam
 @ cdecl _wtmpnam(ptr) ucrtbase._wtmpnam
-@ stub _wtmpnam_s
+@ cdecl _wtmpnam_s(ptr long) ucrtbase._wtmpnam_s
 @ cdecl clearerr(ptr) ucrtbase.clearerr
 @ stub clearerr_s
 @ cdecl fclose(ptr) ucrtbase.fclose

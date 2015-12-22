@@ -664,7 +664,7 @@
 @ cdecl _wstrtime(ptr) MSVCRT__wstrtime
 @ cdecl _wsystem(wstr)
 @ cdecl _wtempnam(wstr wstr) MSVCRT__wtempnam
-@ cdecl _wtmpnam(ptr) MSVCRT_wtmpnam
+@ cdecl _wtmpnam(ptr) MSVCRT__wtmpnam
 @ cdecl _wtof(wstr) MSVCRT__wtof
 @ cdecl _wtoi(wstr) MSVCRT__wtoi
 @ cdecl -ret64 _wtoi64(wstr) MSVCRT__wtoi64

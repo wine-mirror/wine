@@ -1607,8 +1607,8 @@
 @ cdecl _wstrtime_s(ptr long)
 @ cdecl _wsystem(wstr)
 @ cdecl _wtempnam(wstr wstr) MSVCRT__wtempnam
-@ cdecl _wtmpnam(ptr) MSVCRT_wtmpnam
-@ stub _wtmpnam_s
+@ cdecl _wtmpnam(ptr) MSVCRT__wtmpnam
+@ cdecl _wtmpnam_s(ptr long) MSVCRT__wtmpnam_s
 @ cdecl _wtof(wstr) MSVCRT__wtof
 @ cdecl _wtof_l(wstr ptr) MSVCRT__wtof_l
 @ cdecl _wtoi(wstr) MSVCRT__wtoi
