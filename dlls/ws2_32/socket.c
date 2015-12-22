@@ -773,6 +773,17 @@ static const int ws_eai_map[][2] =
     { 0, 0 }
 };
 
+static const int ws_poll_map[][2] =
+{
+    MAP_OPTION( POLLERR ),
+    MAP_OPTION( POLLHUP ),
+    MAP_OPTION( POLLNVAL ),
+    MAP_OPTION( POLLWRNORM ),
+    MAP_OPTION( POLLWRBAND ),
+    MAP_OPTION( POLLRDNORM ),
+    { WS_POLLRDBAND, POLLPRI }
+};
+
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
 #ifndef HAVE_STRUCT_MSGHDR_MSG_ACCRIGHTS
@@ -1413,6 +1424,40 @@ convert_socktype_u2w(int unixsocktype) {
 	    return ws_socktype_map[i][0];
     FIXME("unhandled UNIX socket type %d\n", unixsocktype);
     return -1;
+}
+
+static int convert_poll_w2u(int events)
+{
+    int i, ret;
+    for (i = ret = 0; events && i < sizeof(ws_poll_map) / sizeof(ws_poll_map[0]); i++)
+    {
+        if (ws_poll_map[i][0] & events)
+        {
+            ret |= ws_poll_map[i][1];
+            events &= ~ws_poll_map[i][0];
+        }
+    }
+
+    if (events)
+        FIXME("Unsupported WSAPoll() flags 0x%x\n", events);
+    return ret;
+}
+
+static int convert_poll_u2w(int events)
+{
+    int i, ret;
+    for (i = ret = 0; events && i < sizeof(ws_poll_map) / sizeof(ws_poll_map[0]); i++)
+    {
+        if (ws_poll_map[i][1] & events)
+        {
+            ret |= ws_poll_map[i][0];
+            events &= ~ws_poll_map[i][1];
+        }
+    }
+
+    if (events)
+        FIXME("Unsupported poll() flags 0x%x\n", events);
+    return ret;
 }
 
 static int set_ipx_packettype(int sock, int ptype)
@@ -5224,6 +5269,55 @@ int WINAPI WS_select(int nfds, WS_fd_set *ws_readfds,
     if (ret == -1) SetLastError(wsaErrno());
     else ret = get_poll_results( ws_readfds, ws_writefds, ws_exceptfds, pollfds );
     HeapFree( GetProcessHeap(), 0, pollfds );
+    return ret;
+}
+
+/***********************************************************************
+ *     WSAPoll
+ */
+int WINAPI WSAPoll(WSAPOLLFD *wfds, ULONG count, int timeout)
+{
+    int i, ret;
+    struct pollfd *ufds;
+
+    if (!count)
+    {
+        SetLastError(WSAEINVAL);
+        return SOCKET_ERROR;
+    }
+    if (!wfds)
+    {
+        SetLastError(WSAEFAULT);
+        return SOCKET_ERROR;
+    }
+
+    if (!(ufds = HeapAlloc(GetProcessHeap(), 0, count * sizeof(ufds[0]))))
+    {
+        SetLastError(WSAENOBUFS);
+        return SOCKET_ERROR;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        ufds[i].fd = get_sock_fd(wfds[i].fd, 0, NULL);
+        ufds[i].events = convert_poll_w2u(wfds[i].events);
+        ufds[i].revents = 0;
+    }
+
+    ret = do_poll(ufds, count, timeout);
+
+    for (i = 0; i < count; i++)
+    {
+        if (ufds[i].fd != -1)
+        {
+            release_sock_fd(wfds[i].fd, ufds[i].fd);
+            wfds[i].revents = convert_poll_u2w(ufds[i].revents);
+        }
+        else
+            wfds[i].revents = WS_POLLNVAL;
+    }
+
+    HeapFree(GetProcessHeap(), 0, ufds);
     return ret;
 }
 
