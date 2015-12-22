@@ -1656,7 +1656,7 @@
 @ cdecl _wstrtime_s(ptr long) msvcr120._wstrtime_s
 @ cdecl _wtempnam(wstr wstr) msvcr120._wtempnam
 @ cdecl _wtmpnam(ptr) msvcr120._wtmpnam
-@ stub _wtmpnam_s
+@ cdecl _wtmpnam_s(ptr long) msvcr120._wtmpnam_s
 @ cdecl _wtof(wstr) msvcr120._wtof
 @ cdecl _wtof_l(wstr ptr) msvcr120._wtof_l
 @ cdecl _wtoi(wstr) msvcr120._wtoi
