@@ -2629,34 +2629,29 @@ if (0) /* crashes on native */
 
     imalloc = (void*)0xdeadbeef;
     hr = CoGetMalloc(0, &imalloc);
-todo_wine {
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(imalloc == NULL, "got %p\n", imalloc);
-}
+
     imalloc = (void*)0xdeadbeef;
     hr = CoGetMalloc(MEMCTX_SHARED, &imalloc);
-todo_wine {
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(imalloc == NULL, "got %p\n", imalloc);
-}
+
     imalloc = (void*)0xdeadbeef;
     hr = CoGetMalloc(MEMCTX_MACSYSTEM, &imalloc);
-todo_wine {
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(imalloc == NULL, "got %p\n", imalloc);
-}
+
     imalloc = (void*)0xdeadbeef;
     hr = CoGetMalloc(MEMCTX_UNKNOWN, &imalloc);
-todo_wine {
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(imalloc == NULL, "got %p\n", imalloc);
-}
+
     imalloc = (void*)0xdeadbeef;
     hr = CoGetMalloc(MEMCTX_SAME, &imalloc);
-todo_wine {
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(imalloc == NULL, "got %p\n", imalloc);
-}
+
     imalloc = NULL;
     hr = CoGetMalloc(MEMCTX_TASK, &imalloc);
     ok(hr == S_OK, "got 0x%08x\n", hr);

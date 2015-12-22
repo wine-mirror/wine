@@ -368,17 +368,22 @@ static const IMallocVtbl VT_IMalloc32 =
  * Retrieves the current IMalloc interface for the process.
  *
  * PARAMS
- *  dwMemContext [I]
- *  lpMalloc     [O] Address where memory allocator object will be stored.
+ *  context [I] Should always be MEMCTX_TASK.
+ *  imalloc [O] Address where memory allocator object will be stored.
  *
  * RETURNS
  *	Success: S_OK.
  *  Failure: HRESULT code.
  */
-HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, LPMALLOC *lpMalloc)
+HRESULT WINAPI CoGetMalloc(DWORD context, IMalloc **imalloc)
 {
-        *lpMalloc = &Malloc32.IMalloc_iface;
-        return S_OK;
+    if (context != MEMCTX_TASK) {
+        *imalloc = NULL;
+        return E_INVALIDARG;
+    }
+
+    *imalloc = &Malloc32.IMalloc_iface;
+    return S_OK;
 }
 
 /***********************************************************************
