@@ -52,9 +52,9 @@
 #define _UNLOCK_FILE_(file) MSVCRT__unlock_file(MSVCRT_stdin)
 #ifdef WIDE_SCANF
 #ifdef SECURE
-#define _FUNCTION_ static int MSVCRT_vcwscanf_s_l(const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vcwscanf_s_l(const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #else  /* SECURE */
-#define _FUNCTION_ static int MSVCRT_vcwscanf_l(const char *format, MSVCRT__locale_t locale, __ms_va_list ap)
+#define _FUNCTION_ static int MSVCRT_vcwscanf_l(const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, __ms_va_list ap)
 #endif /* SECURE */
 #else  /* WIDE_SCANF */
 #ifdef SECURE

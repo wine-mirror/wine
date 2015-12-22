@@ -550,7 +550,7 @@ int CDECL _cscanf_s_l(const char *format, MSVCRT__locale_t locale, ...)
 /*********************************************************************
  *		_cwscanf (MSVCRT.@)
  */
-int CDECL _cwscanf(const char *format, ...)
+int CDECL _cwscanf(const MSVCRT_wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -564,7 +564,7 @@ int CDECL _cwscanf(const char *format, ...)
 /*********************************************************************
  *		_cwscanf_l (MSVCRT.@)
  */
-int CDECL _cwscanf_l(const char *format, MSVCRT__locale_t locale, ...)
+int CDECL _cwscanf_l(const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
@@ -578,7 +578,7 @@ int CDECL _cwscanf_l(const char *format, MSVCRT__locale_t locale, ...)
 /*********************************************************************
  *		_cwscanf_s (MSVCRT.@)
  */
-int CDECL _cwscanf_s(const char *format, ...)
+int CDECL _cwscanf_s(const MSVCRT_wchar_t *format, ...)
 {
     __ms_va_list valist;
     int res;
@@ -592,7 +592,7 @@ int CDECL _cwscanf_s(const char *format, ...)
 /*********************************************************************
  *		_cwscanf_s_l (MSVCRT.@)
  */
-int CDECL _cwscanf_s_l(const char *format, MSVCRT__locale_t locale, ...)
+int CDECL _cwscanf_s_l(const MSVCRT_wchar_t *format, MSVCRT__locale_t locale, ...)
 {
     __ms_va_list valist;
     int res;
