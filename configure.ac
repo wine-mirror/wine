@@ -1191,7 +1191,7 @@ dnl **** Check for libxml2 ****
 if test "x$with_xml" != "xno"
 then
     WINE_PACKAGE_FLAGS(XML2,[libxml-2.0],[-lxml2],
-                       [`xml2-config --cflags 2>/dev/null`],[`xml2-config --libs 2>/dev/null`],
+                       [`${XML2_CONFIG:-xml2-config} --cflags 2>/dev/null`],[`${XML2_CONFIG:-xml2-config} --libs 2>/dev/null`],
         [AC_CHECK_HEADERS([libxml/parser.h libxml/xmlsave.h libxml/SAX2.h])
         if test "$ac_cv_header_libxml_parser_h" = "yes" -a "$ac_cv_header_libxml_xmlsave_h" = "yes" -a "$ac_cv_header_libxml_SAX2_h" = "yes"
         then
@@ -1220,7 +1220,7 @@ WINE_WARNING_WITH(xml,[test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"],
 if test "x$with_xslt" != "xno"
 then
     WINE_PACKAGE_FLAGS(XSLT,[libxslt],[-lxml2],
-                       [`xslt-config --cflags 2>/dev/null`],[`xslt-config --libs 2>/dev/null`],
+                       [`${XSLT_CONFIG:-xslt-config} --cflags 2>/dev/null`],[`${XSLT_CONFIG:-xslt-config} --libs 2>/dev/null`],
         [AC_CHECK_HEADERS([libxslt/pattern.h libxslt/transform.h],,,
         [#ifdef HAVE_LIBXSLT_PATTERN_H
 # include <libxslt/pattern.h>
@@ -1291,7 +1291,7 @@ WINE_NOTICE_WITH(curses,[test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurse
 dnl **** Check for SANE ****
 if test "x$with_sane" != "xno"
 then
-    WINE_PACKAGE_FLAGS(SANE,[libsane],,[`sane-config --cflags 2>/dev/null`],[`sane-config --ldflags 2>/dev/null`],
+    WINE_PACKAGE_FLAGS(SANE,[libsane],,[`${SANE_CONFIG:-sane-config} --cflags 2>/dev/null`],[`${SANE_CONFIG:-sane-config} --ldflags 2>/dev/null`],
         [AC_CHECK_HEADER(sane/sane.h,
             [WINE_CHECK_SONAME(sane,sane_init,,[SANE_CFLAGS=""],[$SANE_LIBS])],
             [SANE_CFLAGS=""])])
@@ -1311,7 +1311,7 @@ dnl **** Check for libgphoto2 ****
 if test "x$with_gphoto" != "xno"
 then
     WINE_PACKAGE_FLAGS(GPHOTO2,[libgphoto2],[-lgphoto2],
-                       [`gphoto2-config --cflags 2>/dev/null`],[`gphoto2-config --libs 2>/dev/null`],
+                       [`${GPHOTO2_CONFIG:-gphoto2-config} --cflags 2>/dev/null`],[`${GPHOTO2_CONFIG:-gphoto2-config} --libs 2>/dev/null`],
         [AC_CHECK_HEADER(gphoto2-camera.h,
                         [AC_CHECK_LIB(gphoto2,gp_camera_new,
                                       [AC_DEFINE(HAVE_GPHOTO2, 1, [Define if we have the libgphoto2 development environment])],
@@ -1319,8 +1319,8 @@ then
                                       [$GPHOTO2_LIBS])],
                         [GPHOTO2_LIBS=""; GPHOTO2_CFLAGS=""])])
     WINE_PACKAGE_FLAGS(GPHOTO2_PORT,[libgphoto2_port],[-lgphoto2_port],
-                       [`gphoto2-port-config --cflags 2>/dev/null`],
-                       [`gphoto2-port-config --libs 2>/dev/null`],
+                       [`${GPHOTO2_PORT_CONFIG:-gphoto2-port-config} --cflags 2>/dev/null`],
+                       [`${GPHOTO2_PORT_CONFIG:-gphoto2-port-config} --libs 2>/dev/null`],
         [AC_CHECK_HEADER(gphoto2-port.h,
                         [AC_CHECK_LIB(gphoto2_port,gp_port_info_list_new,
                                       [AC_DEFINE(HAVE_GPHOTO2_PORT, 1, [Define if we have the libgphoto2_port development environment])],
@@ -1382,8 +1382,8 @@ dnl **** Check for FreeType 2 ****
 if test "x$with_freetype" != "xno"
 then
     WINE_PACKAGE_FLAGS(FREETYPE,[freetype2],[-lfreetype],
-                       [`(freetype-config --cflags || freetype2-config --cflags) 2>/dev/null`],
-                       [`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`],
+                       [`(${FREETYPE_CONFIG:-freetype-config} --cflags || ${FREETYPE2_CONFIG:-freetype2-config} --cflags) 2>/dev/null`],
+                       [`(${FREETYPE_CONFIG:-freetype-config} --libs || ${FREETYPE2_CONFIG:-freetype2-config} --libs) 2>/dev/null`],
         [AC_CHECK_HEADERS([ft2build.h])
         if test "$ac_cv_header_ft2build_h" = "yes"
         then
@@ -1538,8 +1538,8 @@ AC_SUBST(CUPS_CFLAGS,"")
 if test "x$with_cups" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_cups_cflags=`cups-config --cflags 2>/dev/null`
-    ac_cups_libs=`cups-config --ldflags 2>/dev/null`
+    ac_cups_cflags=`${CUPS_CONFIG:-cups-config} --cflags 2>/dev/null`
+    ac_cups_libs=`${CUPS_CONFIG:-cups-config} --ldflags 2>/dev/null`
     CPPFLAGS="$CPPFLAGS $ac_cups_cflags"
     AC_CHECK_HEADERS(cups/cups.h,
             [WINE_CHECK_SONAME(cups,cupsGetDefault,
