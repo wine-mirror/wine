@@ -352,12 +352,13 @@ static DWORD create_handle_for_service(struct service_entry *entry, DWORD dwDesi
         return ERROR_NOT_ENOUGH_SERVER_MEMORY;
     }
 
+    if (dwDesiredAccess & MAXIMUM_ALLOWED)
+        dwDesiredAccess |= SERVICE_ALL_ACCESS;
+
     service->hdr.type = SC_HTYPE_SERVICE;
     service->hdr.access = dwDesiredAccess;
     RtlMapGenericMask(&service->hdr.access, &g_svc_generic);
     service->service_entry = entry;
-    if (dwDesiredAccess & MAXIMUM_ALLOWED)
-        dwDesiredAccess |= SERVICE_ALL_ACCESS;
 
     *phService = &service->hdr;
     return ERROR_SUCCESS;
