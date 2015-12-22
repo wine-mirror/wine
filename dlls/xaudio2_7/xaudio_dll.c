@@ -1689,7 +1689,13 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
         goto exit;
     }
 
-    IAudioClient_Start(This->aclient);
+    hr = IAudioClient_Start(This->aclient);
+    if (FAILED(hr))
+    {
+        WARN("Start(IAudioClient) failed: %08x\n", hr);
+        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        goto exit;
+    }
 
     if(This->version <= 20)
         *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio20MasteringVoice_iface;
