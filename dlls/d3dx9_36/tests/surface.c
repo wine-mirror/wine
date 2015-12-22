@@ -1277,14 +1277,14 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
     header = ID3DXBuffer_GetBufferPointer(buffer);
 
     ok(header->magic == MAKEFOURCC('D','D','S',' '), "Invalid DDS signature.\n");
-    todo_wine ok(header->size == 124, "Invalid DDS size %u.\n", header->size);
+    ok(header->size == 124, "Invalid DDS size %u.\n", header->size);
     ok(header->height == 4, "Got unexpected height %u.\n", header->height);
     ok(header->width == 4, "Got unexpected width %u.\n", header->width);
-    todo_wine ok(!header->depth, "Got unexpected depth %u.\n", header->depth);
-    todo_wine ok(!header->miplevels, "Got unexpected miplevels %u.\n", header->miplevels);
-    todo_wine ok(!header->pitch_or_linear_size, "Got unexpected pitch_or_linear_size %u.\n", header->pitch_or_linear_size);
+    ok(!header->depth, "Got unexpected depth %u.\n", header->depth);
+    ok(!header->miplevels, "Got unexpected miplevels %u.\n", header->miplevels);
+    ok(!header->pitch_or_linear_size, "Got unexpected pitch_or_linear_size %u.\n", header->pitch_or_linear_size);
     todo_wine ok(header->caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %x.\n", header->caps);
-    todo_wine ok(header->flags == (DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT),
+    ok(header->flags == (DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT),
             "Got unexpected flags %x.\n", header->flags);
     ID3DXBuffer_Release(buffer);
 
