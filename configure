@@ -10897,13 +10897,13 @@ then
   XML2_CFLAGS=`$PKG_CONFIG --cflags libxml-2.0 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || XML2_CFLAGS=${XML2_CFLAGS:-`xml2-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || XML2_CFLAGS=${XML2_CFLAGS:-`${XML2_CONFIG:-xml2-config} --cflags 2>/dev/null`}
 if ${XML2_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
   XML2_LIBS=`$PKG_CONFIG --libs libxml-2.0 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || XML2_LIBS=${XML2_LIBS:-`xml2-config --libs 2>/dev/null`}
+test "$cross_compiling" = yes || XML2_LIBS=${XML2_LIBS:-`${XML2_CONFIG:-xml2-config} --libs 2>/dev/null`}
 XML2_LIBS=${XML2_LIBS:-"-lxml2"}
 $as_echo "$as_me:${as_lineno-$LINENO}: libxml-2.0 cflags: $XML2_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: libxml-2.0 libs: $XML2_LIBS" >&5
@@ -11211,13 +11211,13 @@ then
   XSLT_CFLAGS=`$PKG_CONFIG --cflags libxslt 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || XSLT_CFLAGS=${XSLT_CFLAGS:-`xslt-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || XSLT_CFLAGS=${XSLT_CFLAGS:-`${XSLT_CONFIG:-xslt-config} --cflags 2>/dev/null`}
 if ${XSLT_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
   XSLT_LIBS=`$PKG_CONFIG --libs libxslt 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || XSLT_LIBS=${XSLT_LIBS:-`xslt-config --libs 2>/dev/null`}
+test "$cross_compiling" = yes || XSLT_LIBS=${XSLT_LIBS:-`${XSLT_CONFIG:-xslt-config} --libs 2>/dev/null`}
 XSLT_LIBS=${XSLT_LIBS:-"-lxml2"}
 $as_echo "$as_me:${as_lineno-$LINENO}: libxslt cflags: $XSLT_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: libxslt libs: $XSLT_LIBS" >&5
@@ -11749,13 +11749,13 @@ then
   SANE_CFLAGS=`$PKG_CONFIG --cflags libsane 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || SANE_CFLAGS=${SANE_CFLAGS:-`sane-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || SANE_CFLAGS=${SANE_CFLAGS:-`${SANE_CONFIG:-sane-config} --cflags 2>/dev/null`}
 if ${SANE_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
   SANE_LIBS=`$PKG_CONFIG --libs libsane 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || SANE_LIBS=${SANE_LIBS:-`sane-config --ldflags 2>/dev/null`}
+test "$cross_compiling" = yes || SANE_LIBS=${SANE_LIBS:-`${SANE_CONFIG:-sane-config} --ldflags 2>/dev/null`}
 
 $as_echo "$as_me:${as_lineno-$LINENO}: libsane cflags: $SANE_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: libsane libs: $SANE_LIBS" >&5
@@ -11907,13 +11907,13 @@ then
   GPHOTO2_CFLAGS=`$PKG_CONFIG --cflags libgphoto2 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || GPHOTO2_CFLAGS=${GPHOTO2_CFLAGS:-`gphoto2-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || GPHOTO2_CFLAGS=${GPHOTO2_CFLAGS:-`${GPHOTO2_CONFIG:-gphoto2-config} --cflags 2>/dev/null`}
 if ${GPHOTO2_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
   GPHOTO2_LIBS=`$PKG_CONFIG --libs libgphoto2 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || GPHOTO2_LIBS=${GPHOTO2_LIBS:-`gphoto2-config --libs 2>/dev/null`}
+test "$cross_compiling" = yes || GPHOTO2_LIBS=${GPHOTO2_LIBS:-`${GPHOTO2_CONFIG:-gphoto2-config} --libs 2>/dev/null`}
 GPHOTO2_LIBS=${GPHOTO2_LIBS:-"-lgphoto2"}
 $as_echo "$as_me:${as_lineno-$LINENO}: libgphoto2 cflags: $GPHOTO2_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: libgphoto2 libs: $GPHOTO2_LIBS" >&5
@@ -11979,13 +11979,13 @@ test -z "$GPHOTO2_LIBS" || GPHOTO2_LIBS=`echo " $GPHOTO2_LIBS" | sed 's/ -L\([^/
   GPHOTO2_PORT_CFLAGS=`$PKG_CONFIG --cflags libgphoto2_port 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || GPHOTO2_PORT_CFLAGS=${GPHOTO2_PORT_CFLAGS:-`gphoto2-port-config --cflags 2>/dev/null`}
+test "$cross_compiling" = yes || GPHOTO2_PORT_CFLAGS=${GPHOTO2_PORT_CFLAGS:-`${GPHOTO2_PORT_CONFIG:-gphoto2-port-config} --cflags 2>/dev/null`}
 if ${GPHOTO2_PORT_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
   GPHOTO2_PORT_LIBS=`$PKG_CONFIG --libs libgphoto2_port 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-`gphoto2-port-config --libs 2>/dev/null`}
+test "$cross_compiling" = yes || GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-`${GPHOTO2_PORT_CONFIG:-gphoto2-port-config} --libs 2>/dev/null`}
 GPHOTO2_PORT_LIBS=${GPHOTO2_PORT_LIBS:-"-lgphoto2_port"}
 $as_echo "$as_me:${as_lineno-$LINENO}: libgphoto2_port cflags: $GPHOTO2_PORT_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: libgphoto2_port libs: $GPHOTO2_PORT_LIBS" >&5
@@ -12220,13 +12220,13 @@ then
   FREETYPE_CFLAGS=`$PKG_CONFIG --cflags freetype2 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || FREETYPE_CFLAGS=${FREETYPE_CFLAGS:-`(freetype-config --cflags || freetype2-config --cflags) 2>/dev/null`}
+test "$cross_compiling" = yes || FREETYPE_CFLAGS=${FREETYPE_CFLAGS:-`(${FREETYPE_CONFIG:-freetype-config} --cflags || ${FREETYPE2_CONFIG:-freetype2-config} --cflags) 2>/dev/null`}
 if ${FREETYPE_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
   FREETYPE_LIBS=`$PKG_CONFIG --libs freetype2 2>/dev/null`
 fi
 fi
-test "$cross_compiling" = yes || FREETYPE_LIBS=${FREETYPE_LIBS:-`(freetype-config --libs || freetype2-config --libs) 2>/dev/null`}
+test "$cross_compiling" = yes || FREETYPE_LIBS=${FREETYPE_LIBS:-`(${FREETYPE_CONFIG:-freetype-config} --libs || ${FREETYPE2_CONFIG:-freetype2-config} --libs) 2>/dev/null`}
 FREETYPE_LIBS=${FREETYPE_LIBS:-"-lfreetype"}
 $as_echo "$as_me:${as_lineno-$LINENO}: freetype2 cflags: $FREETYPE_CFLAGS" >&5
 $as_echo "$as_me:${as_lineno-$LINENO}: freetype2 libs: $FREETYPE_LIBS" >&5
@@ -12953,8 +12953,8 @@ CUPS_CFLAGS=""
 if test "x$with_cups" != "xno"
 then
     ac_save_CPPFLAGS="$CPPFLAGS"
-    ac_cups_cflags=`cups-config --cflags 2>/dev/null`
-    ac_cups_libs=`cups-config --ldflags 2>/dev/null`
+    ac_cups_cflags=`${CUPS_CONFIG:-cups-config} --cflags 2>/dev/null`
+    ac_cups_libs=`${CUPS_CONFIG:-cups-config} --ldflags 2>/dev/null`
     CPPFLAGS="$CPPFLAGS $ac_cups_cflags"
     for ac_header in cups/cups.h
 do :
