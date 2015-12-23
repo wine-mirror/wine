@@ -479,6 +479,31 @@ LSTATUS WINAPI RegCreateKeyA( HKEY hkey, LPCSTR lpSubKey, PHKEY phkResult )
 }
 
 
+/******************************************************************************
+ * RegCreateKeyTransactedW   [ADVAPI32.@]
+ */
+LSTATUS WINAPI RegCreateKeyTransactedW( HKEY hkey, LPCWSTR name, DWORD reserved, LPWSTR class,
+                                        DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
+                                        PHKEY retkey, LPDWORD dispos, HANDLE transaction, PVOID reserved2 )
+{
+    FIXME( "(%p,%s,%u,%s,%u,%u,%p,%p,%p,%p,%p): stub\n", hkey, debugstr_w(name), reserved,
+           debugstr_w(class), options, access, sa, retkey, dispos, transaction, reserved2 );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+
+/******************************************************************************
+ * RegCreateKeyTransactedA   [ADVAPI32.@]
+ */
+LSTATUS WINAPI RegCreateKeyTransactedA( HKEY hkey, LPCSTR name, DWORD reserved, LPSTR class,
+                                        DWORD options, REGSAM access, SECURITY_ATTRIBUTES *sa,
+                                        PHKEY retkey, LPDWORD dispos, HANDLE transaction, PVOID reserved2 )
+{
+    FIXME( "(%p,%s,%u,%s,%u,%u,%p,%p,%p,%p,%p): stub\n", hkey, debugstr_a(name), reserved,
+           debugstr_a(class), options, access, sa, retkey, dispos, transaction, reserved2 );
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
 
 /******************************************************************************
  * RegOpenKeyExW   [ADVAPI32.@]

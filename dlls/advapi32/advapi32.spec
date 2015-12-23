@@ -581,8 +581,8 @@
 @ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr)
 @ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr)
 @ stdcall RegCreateKeyW(long wstr ptr)
-# @ stub RegCreateKeyTransactedA
-# @ stub RegCreateKeyTransactedW
+@ stdcall RegCreateKeyTransactedA(long str long ptr long long ptr ptr ptr long ptr)
+@ stdcall RegCreateKeyTransactedW(long wstr long ptr long long ptr ptr ptr long ptr)
 @ stdcall RegDeleteKeyA(long str)
 @ stdcall RegDeleteKeyExA(long str long long)
 @ stdcall RegDeleteKeyExW(long wstr long long)
