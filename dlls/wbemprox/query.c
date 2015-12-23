@@ -108,10 +108,31 @@ static HRESULT eval_strcmp( UINT op, const WCHAR *lstr, const WCHAR *rstr, LONGL
     return S_OK;
 }
 
-static inline BOOL is_strcmp( const struct complex_expr *expr )
+static BOOL is_int( CIMTYPE type )
 {
-    return ((expr->left->type == EXPR_PROPVAL && expr->right->type == EXPR_SVAL) ||
-            (expr->left->type == EXPR_SVAL && expr->right->type == EXPR_PROPVAL));
+    switch (type)
+    {
+    case CIM_SINT8:
+    case CIM_SINT16:
+    case CIM_SINT32:
+    case CIM_SINT64:
+    case CIM_UINT8:
+    case CIM_UINT16:
+    case CIM_UINT32:
+    case CIM_UINT64:
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+static inline BOOL is_strcmp( const struct complex_expr *expr, UINT ltype, UINT rtype )
+{
+    if ((ltype == CIM_STRING || is_int( ltype )) && expr->left->type == EXPR_PROPVAL &&
+        expr->right->type == EXPR_SVAL) return TRUE;
+    else if ((rtype == CIM_STRING || is_int( rtype )) && expr->right->type == EXPR_PROPVAL &&
+             expr->left->type == EXPR_SVAL) return TRUE;
+    return FALSE;
 }
 
 static inline BOOL is_boolcmp( const struct complex_expr *expr, UINT ltype, UINT rtype )
@@ -186,6 +207,41 @@ static UINT resolve_type( UINT left, UINT right )
     return CIM_ILLEGAL;
 }
 
+static const WCHAR *format_int( WCHAR *buf, CIMTYPE type, LONGLONG val )
+{
+    static const WCHAR fmt_signedW[] = {'%','d',0};
+    static const WCHAR fmt_unsignedW[] = {'%','u',0};
+    static const WCHAR fmt_signed64W[] = {'%','I','6','4','d',0};
+    static const WCHAR fmt_unsigned64W[] = {'%','I','6','4','u',0};
+
+    switch (type)
+    {
+    case CIM_SINT8:
+    case CIM_SINT16:
+    case CIM_SINT32:
+        sprintfW( buf, fmt_signedW, val );
+        return buf;
+
+    case CIM_UINT8:
+    case CIM_UINT16:
+    case CIM_UINT32:
+        sprintfW( buf, fmt_unsignedW, val );
+        return buf;
+
+    case CIM_SINT64:
+        wsprintfW( buf, fmt_signed64W, val );
+        return buf;
+
+    case CIM_UINT64:
+        wsprintfW( buf, fmt_unsigned64W, val );
+        return buf;
+
+    default:
+        ERR( "unhandled type %u\n", type );
+        return NULL;
+    }
+}
+
 static HRESULT eval_binary( const struct table *table, UINT row, const struct complex_expr *expr,
                             LONGLONG *val, UINT *type )
 {
@@ -202,10 +258,16 @@ static HRESULT eval_binary( const struct table *table, UINT row, const struct co
     if (is_boolcmp( expr, ltype, rtype ))
         return eval_boolcmp( expr->op, lval, rval, ltype, rtype, val );
 
-    if (is_strcmp( expr ))
+    if (is_strcmp( expr, ltype, rtype ))
     {
-        const WCHAR *lstr = (const WCHAR *)(INT_PTR)lval;
-        const WCHAR *rstr = (const WCHAR *)(INT_PTR)rval;
+        const WCHAR *lstr, *rstr;
+        WCHAR lbuf[21], rbuf[21];
+
+        if (is_int( ltype )) lstr = format_int( lbuf, ltype, lval );
+        else lstr = (const WCHAR *)(INT_PTR)lval;
+
+        if (is_int( rtype )) rstr = format_int( rbuf, ltype, rval );
+        else rstr = (const WCHAR *)(INT_PTR)rval;
 
         return eval_strcmp( expr->op, lstr, rstr, val );
     }
