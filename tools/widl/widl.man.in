@@ -61,6 +61,8 @@ binary resource file containing the type library is generated instead.
 .IP "\fB-L \fIpath\fR"
 Add a directory to the library search path for imported typelibs. The
 option can be specified multiple times.
+.IP \fB--oldtlb\fR
+Generate a type library in the old format (SLTG format).
 .PP
 .B UUID file options:
 .IP "\fB-u\fR"

@@ -21,7 +21,8 @@ SOURCES = \
 	widl.c \
 	widl.man.in \
 	wpp.c \
-	write_msft.c
+	write_msft.c \
+	write_sltg.c
 
 widl_EXTRADEFS = \
 	-DINCLUDEDIR="\"${includedir}\"" \
