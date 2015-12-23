@@ -28,6 +28,13 @@ Maintainers List
 
 		-----------------------------------
 
+ARM, ARM64
+M:	André Hentschel <nerv@dawncrow.de>
+F:	dlls/dbghelp/cpu_arm*
+F:	dlls/msvcrt/except_arm.c
+F:	dlls/ntdll/signal_arm*
+F:	programs/winedbg/be_arm*
+
 Audio I/O
 M:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/dsound/
@@ -41,13 +48,6 @@ F:	dlls/winmm/
 F:	dlls/x3daudio*/
 F:	dlls/xapofx*/
 F:	dlls/xaudio*/
-
-ARM, ARM64
-M:	André Hentschel <nerv@dawncrow.de>
-F:	dlls/dbghelp/cpu_arm*
-F:	dlls/msvcrt/except_arm.c
-F:	dlls/ntdll/signal_arm*
-F:	programs/winedbg/be_arm*
 
 Common Controls Library
 P:	Nikolay Sivov <nsivov@codeweavers.com>
@@ -113,8 +113,8 @@ F:	dlls/hidclass.sys/
 
 HTML rendering (Gecko)
 M:	Jacek Caban <jacek@codeweavers.com>
-F:	dlls/mshtml/
 F:	dlls/ieframe/
+F:	dlls/mshtml/
 F:	dlls/shdocvw/
 
 Input methods
@@ -131,8 +131,8 @@ F:	dlls/winemac.drv/
 
 Media format conversion
 M:	Andrew Eikum <aeikum@codeweavers.com>
-F:	dlls/msacm32/
 F:	dlls/*.acm/
+F:	dlls/msacm32/
 
 Microsoft C Runtime
 M:	Piotr Caban <piotr@codeweavers.com>
