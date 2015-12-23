@@ -305,6 +305,8 @@ static const WCHAR prop_servicepackminorW[] =
     {'S','e','r','v','i','c','e','P','a','c','k','M','i','n','o','r','V','e','r','s','i','o','n',0};
 static const WCHAR prop_servicetypeW[] =
     {'S','e','r','v','i','c','e','T','y','p','e',0};
+static const WCHAR prop_settingidW[] =
+    {'S','e','t','t','i','n','g','I','D',0};
 static const WCHAR prop_smbiosbiosversionW[] =
     {'S','M','B','I','O','S','B','I','O','S','V','e','r','s','i','o','n',0};
 static const WCHAR prop_startmodeW[] =
@@ -485,7 +487,8 @@ static const struct column col_networkadapterconfig[] =
     { prop_indexW,                CIM_UINT32|COL_FLAG_KEY, VT_I4 },
     { prop_ipconnectionmetricW,   CIM_UINT32, VT_I4 },
     { prop_ipenabledW,            CIM_BOOLEAN },
-    { prop_macaddressW,           CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_macaddressW,           CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_settingidW,            CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_os[] =
 {
@@ -880,6 +883,7 @@ struct record_networkadapterconfig
     UINT32              ipconnectionmetric;
     int                 ipenabled;
     const WCHAR        *mac_address;
+    const WCHAR        *settingid;
 };
 struct record_operatingsystem
 {
@@ -2189,6 +2193,17 @@ static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *li
     ret->ptr   = ptr;
     return ret;
 }
+static WCHAR *get_settingid( UINT32 index )
+{
+    GUID guid;
+    WCHAR *ret, *str;
+    memset( &guid, 0, sizeof(guid) );
+    guid.Data1 = index;
+    UuidToStringW( &guid, &str );
+    ret = heap_strdupW( str );
+    RpcStringFreeW( &str );
+    return ret;
+}
 
 static enum fill_status fill_networkadapterconfig( struct table *table, const struct expr *cond )
 {
@@ -2230,6 +2245,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         rec->ipconnectionmetric   = 20;
         rec->ipenabled            = -1;
         rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
+        rec->settingid            = get_settingid( rec->index );
         if (!match_row( table, row, cond, &status ))
         {
             free_row_values( table, row );
