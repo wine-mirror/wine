@@ -3353,6 +3353,7 @@ INT WINAPI CompareStringEx(LPCWSTR locale, DWORD flags, LPCWSTR str1, INT len1,
     DWORD semistub_flags = NORM_LINGUISTIC_CASING|LINGUISTIC_IGNORECASE|0x10000000;
     /* 0x10000000 is related to diacritics in Arabic, Japanese, and Hebrew */
     INT ret;
+    static int once;
 
     if (version) FIXME("unexpected version parameter\n");
     if (reserved) FIXME("unexpected reserved value\n");
@@ -3371,7 +3372,10 @@ INT WINAPI CompareStringEx(LPCWSTR locale, DWORD flags, LPCWSTR str1, INT len1,
     }
 
     if (flags & semistub_flags)
-        FIXME("semi-stub behavor for flag(s) 0x%x\n", flags & semistub_flags);
+    {
+        if (!once++)
+            FIXME("semi-stub behavior for flag(s) 0x%x\n", flags & semistub_flags);
+    }
 
     if (len1 < 0) len1 = strlenW(str1);
     if (len2 < 0) len2 = strlenW(str2);
