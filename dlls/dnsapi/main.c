@@ -93,6 +93,38 @@ VOID WINAPI DnsFlushResolverCache(void)
     FIXME(": stub\n");
 }
 
+/******************************************************************************
+ * DnsFlushResolverCacheEntry_A               [DNSAPI.@]
+ *
+ */
+BOOL WINAPI DnsFlushResolverCacheEntry_A( PCSTR entry )
+{
+    FIXME( "%s: stub\n", debugstr_a(entry) );
+    if (!entry) return FALSE;
+    return TRUE;
+}
+
+/******************************************************************************
+ * DnsFlushResolverCacheEntry_UTF8               [DNSAPI.@]
+ *
+ */
+BOOL WINAPI DnsFlushResolverCacheEntry_UTF8( PCSTR entry )
+{
+    FIXME( "%s: stub\n", debugstr_a(entry) );
+    if (!entry) return FALSE;
+    return TRUE;
+}
+
+/******************************************************************************
+ * DnsFlushResolverCacheEntry_W               [DNSAPI.@]
+ *
+ */
+BOOL WINAPI DnsFlushResolverCacheEntry_W( PCWSTR entry )
+{
+    FIXME( "%s: stub\n", debugstr_w(entry) );
+    if (!entry) return FALSE;
+    return TRUE;
+}
 
 /******************************************************************************
  * DnsReleaseContextHandle                [DNSAPI.@]
