@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-11-20 09:57+0300\n"
+"PO-Revision-Date: 2015-12-23 17:35+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -1042,7 +1042,7 @@ msgstr "Parinkite aplanką"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "Šrifto dydis turi būti skaičius."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
