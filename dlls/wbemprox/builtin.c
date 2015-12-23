@@ -173,6 +173,8 @@ static const WCHAR prop_descriptionW[] =
     {'D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR prop_deviceidW[] =
     {'D','e','v','i','c','e','I','d',0};
+static const WCHAR prop_dhcpenabledW[] =
+    {'D','H','C','P','E','n','a','b','l','e','d',0};
 static const WCHAR prop_directionW[] =
     {'D','i','r','e','c','t','i','o','n',0};
 static const WCHAR prop_displaynameW[] =
@@ -475,6 +477,7 @@ static const struct column col_networkadapterconfig[] =
 {
     { prop_defaultipgatewayW,   CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
     { prop_descriptionW,        CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_dhcpenabledW,        CIM_BOOLEAN },
     { prop_dnshostnameW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_indexW,              CIM_UINT32|COL_FLAG_KEY, VT_I4 },
     { prop_ipconnectionmetricW, CIM_UINT32, VT_I4 },
@@ -867,6 +870,7 @@ struct record_networkadapterconfig
 {
     const struct array *defaultipgateway;
     const WCHAR        *description;
+    int                 dhcpenabled;
     const WCHAR        *dnshostname;
     UINT32              index;
     UINT32              ipconnectionmetric;
@@ -2182,6 +2186,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         rec = (struct record_networkadapterconfig *)(table->data + offset);
         rec->defaultipgateway   = get_defaultipgateway( aa->FirstGatewayAddress );
         rec->description        = heap_strdupW( aa->Description );
+        rec->dhcpenabled        = -1;
         rec->dnshostname        = get_dnshostname( aa->FirstUnicastAddress );
         rec->index              = aa->u.s.IfIndex;
         rec->ipconnectionmetric = 20;
