@@ -471,6 +471,7 @@ static const struct column col_networkadapter[] =
 };
 static const struct column col_networkadapterconfig[] =
 {
+    { prop_descriptionW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_dnshostnameW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_indexW,              CIM_UINT32|COL_FLAG_KEY, VT_I4 },
     { prop_ipconnectionmetricW, CIM_UINT32, VT_I4 },
@@ -861,6 +862,7 @@ struct record_networkadapter
 };
 struct record_networkadapterconfig
 {
+    const WCHAR *description;
     const WCHAR *dnshostname;
     UINT32       index;
     UINT32       ipconnectionmetric;
@@ -2142,6 +2144,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 
         rec = (struct record_networkadapterconfig *)(table->data + offset);
+        rec->description        = heap_strdupW( aa->Description );
         rec->dnshostname        = get_dnshostname( aa->FirstUnicastAddress );
         rec->index              = aa->u.s.IfIndex;
         rec->ipconnectionmetric = 20;
