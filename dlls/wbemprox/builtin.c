@@ -165,6 +165,8 @@ static const WCHAR prop_currentverticalresW[] =
     {'C','u','r','r','e','n','t','V','e','r','t','i','c','a','l','R','e','s','o','l','u','t','i','o','n',0};
 static const WCHAR prop_datawidthW[] =
     {'D','a','t','a','W','i','d','t','h',0};
+static const WCHAR prop_defaultipgatewayW[] =
+    {'D','e','f','a','u','l','t','I','P','G','a','t','e','w','a','y',0};
 static const WCHAR prop_defaultvalueW[] =
     {'D','e','f','a','u','l','t','V','a','l','u','e',0};
 static const WCHAR prop_descriptionW[] =
@@ -471,6 +473,7 @@ static const struct column col_networkadapter[] =
 };
 static const struct column col_networkadapterconfig[] =
 {
+    { prop_defaultipgatewayW,   CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
     { prop_descriptionW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_dnshostnameW,        CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_indexW,              CIM_UINT32|COL_FLAG_KEY, VT_I4 },
@@ -862,12 +865,13 @@ struct record_networkadapter
 };
 struct record_networkadapterconfig
 {
-    const WCHAR *description;
-    const WCHAR *dnshostname;
-    UINT32       index;
-    UINT32       ipconnectionmetric;
-    int          ipenabled;
-    const WCHAR *mac_address;
+    const struct array *defaultipgateway;
+    const WCHAR        *description;
+    const WCHAR        *dnshostname;
+    UINT32              index;
+    UINT32              ipconnectionmetric;
+    int                 ipenabled;
+    const WCHAR        *mac_address;
 };
 struct record_operatingsystem
 {
@@ -2112,6 +2116,38 @@ static WCHAR *get_dnshostname( IP_ADAPTER_UNICAST_ADDRESS *addr )
                       0, NI_NAMEREQD )) return NULL;
     return heap_strdupW( buf );
 }
+static struct array *get_defaultipgateway( IP_ADAPTER_GATEWAY_ADDRESS *list )
+{
+    IP_ADAPTER_GATEWAY_ADDRESS *gateway;
+    struct array *ret;
+    ULONG buflen, i = 0, count = 0;
+    WCHAR **ptr, buf[54]; /* max IPv6 address length */
+
+    if (!list) return NULL;
+    for (gateway = list; gateway; gateway = gateway->Next) count++;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = heap_alloc( sizeof(*ptr) * count )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    for (gateway = list; gateway; gateway = gateway->Next)
+    {
+        buflen = sizeof(buf)/sizeof(buf[0]);
+        if (WSAAddressToStringW( gateway->Address.lpSockaddr, gateway->Address.iSockaddrLength,
+                                 NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
+        {
+            for (; i > 0; i--) heap_free( ptr[i - 1] );
+            heap_free( ptr );
+            heap_free( ret );
+            return NULL;
+        }
+    }
+    ret->count = count;
+    ret->ptr   = ptr;
+    return ret;
+}
 
 static enum fill_status fill_networkadapterconfig( struct table *table, const struct expr *cond )
 {
@@ -2121,11 +2157,11 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
     DWORD size = 0, ret;
     enum fill_status status = FILL_STATUS_UNFILTERED;
 
-    ret = GetAdaptersAddresses( AF_UNSPEC, 0, NULL, NULL, &size );
+    ret = GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, NULL, &size );
     if (ret != ERROR_BUFFER_OVERFLOW) return FILL_STATUS_FAILED;
 
     if (!(buffer = heap_alloc( size ))) return FILL_STATUS_FAILED;
-    if (GetAdaptersAddresses( AF_UNSPEC, 0, NULL, buffer, &size ))
+    if (GetAdaptersAddresses( AF_UNSPEC, GAA_FLAG_INCLUDE_ALL_GATEWAYS, NULL, buffer, &size ))
     {
         heap_free( buffer );
         return FILL_STATUS_FAILED;
@@ -2144,6 +2180,7 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 
         rec = (struct record_networkadapterconfig *)(table->data + offset);
+        rec->defaultipgateway   = get_defaultipgateway( aa->FirstGatewayAddress );
         rec->description        = heap_strdupW( aa->Description );
         rec->dnshostname        = get_dnshostname( aa->FirstUnicastAddress );
         rec->index              = aa->u.s.IfIndex;
