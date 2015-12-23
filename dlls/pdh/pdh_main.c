@@ -1269,3 +1269,21 @@ PDH_STATUS WINAPI PdhSetDefaultRealTimeDataSource( DWORD source )
     FIXME("%u\n", source);
     return ERROR_SUCCESS;
 }
+
+/***********************************************************************
+ *              PdhGetLogFileTypeA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetLogFileTypeA(PDH_HLOG log, DWORD *type)
+{
+    FIXME("%p, %p: stub\n", log, type);
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhGetLogFileTypeW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhGetLogFileTypeW(PDH_HLOG log, DWORD *type)
+{
+    FIXME("%p, %p: stub\n", log, type);
+    return PDH_NOT_IMPLEMENTED;
+}
