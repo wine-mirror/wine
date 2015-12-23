@@ -28,7 +28,7 @@
 @ stub D3DXComputeTangentFrame(ptr long)
 @ stdcall D3DXComputeTangentFrameEx(ptr long long long long long long long long long ptr float float float ptr ptr)
 @ stub D3DXConcatenateMeshes(ptr long long ptr ptr ptr ptr ptr)
-@ stub D3DXConvertMeshSubsetToSingleStrip(ptr long long ptr ptr)
+@ stdcall D3DXConvertMeshSubsetToSingleStrip(ptr long long ptr ptr)
 @ stub D3DXConvertMeshSubsetToStrips(ptr long long ptr ptr ptr ptr)
 @ stub D3DXCreateAnimationController(long long long long ptr)
 @ stdcall D3DXCreateBox(ptr float float float ptr ptr)
