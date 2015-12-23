@@ -841,7 +841,8 @@ HRESULT get_propval( const struct view *view, UINT index, const WCHAR *name, VAR
         CIMTYPE basetype = view->table->columns[column].type & CIM_TYPE_MASK;
 
         val_ptr = to_safearray( (const struct array *)(INT_PTR)val, basetype );
-        if (!vartype) vartype = to_vartype( basetype ) | VT_ARRAY;
+        if (!val_ptr) vartype = VT_NULL;
+        else if (!vartype) vartype = to_vartype( basetype ) | VT_ARRAY;
         goto done;
     }
     switch (view->table->columns[column].type & COL_TYPE_MASK)
