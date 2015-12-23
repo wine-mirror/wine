@@ -27,6 +27,8 @@
 
 #include "wine/test.h"
 
+BOOL WINAPI DnsFlushResolverCacheEntry_A(PCSTR);
+
 static const struct
 {
     LPCSTR name;
@@ -202,8 +204,27 @@ static void test_DnsNameCompare_A( void )
     ok( DnsNameCompare_A( a_dot_b, b_dot_a_dot ) == FALSE, "succeeded unexpectedly\n" );
 }
 
+static void test_DnsFlushResolverCacheEntry_A(void)
+{
+    BOOL ret;
+    DWORD err;
+
+    SetLastError( 0xdeadbeef );
+    ret = DnsFlushResolverCacheEntry_A( NULL );
+    err = GetLastError();
+    ok( !ret, "got %d\n", ret );
+    ok( err == 0xdeadbeef, "got %u\n", err );
+
+    ret = DnsFlushResolverCacheEntry_A( "localhost" );
+    ok( ret, "got %d\n", ret );
+
+    ret = DnsFlushResolverCacheEntry_A( "nxdomain.test.winehq.org" );
+    ok( ret, "got %d\n", ret );
+}
+
 START_TEST(name)
 {
     test_DnsValidateName_A();
     test_DnsNameCompare_A();
+    test_DnsFlushResolverCacheEntry_A();
 }

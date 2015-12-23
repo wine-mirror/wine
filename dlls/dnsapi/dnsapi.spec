@@ -32,9 +32,9 @@
 @ stdcall DnsExtractRecordsFromMessage_W(ptr long ptr)
 @ stub DnsFindAuthoritativeZone
 @ stdcall DnsFlushResolverCache()
-@ stub DnsFlushResolverCacheEntry_A
-@ stub DnsFlushResolverCacheEntry_UTF8
-@ stub DnsFlushResolverCacheEntry_W
+@ stdcall DnsFlushResolverCacheEntry_A(str)
+@ stdcall DnsFlushResolverCacheEntry_UTF8(str)
+@ stdcall DnsFlushResolverCacheEntry_W(wstr)
 @ stdcall DnsFree(ptr long)
 @ stub DnsFreeAdapterInformation
 @ stub DnsFreeNetworkInformation
