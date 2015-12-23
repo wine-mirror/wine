@@ -171,7 +171,6 @@ sub PARSE_REQUESTS()
             print SERVER_PROT "};\n";
             print SERVER_PROT "struct ${name}_reply\n{\n";
             print SERVER_PROT "    struct reply_header __header;\n";
-            die "request $name too large ($offset)" if ($offset > $max_req_size);
             $offset = 8;
             $state++;
             next;
