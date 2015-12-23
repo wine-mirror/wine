@@ -183,6 +183,8 @@ static const WCHAR prop_diskindexW[] =
     {'D','i','s','k','I','n','d','e','x',0};
 static const WCHAR prop_dnshostnameW[] =
     {'D','N','S','H','o','s','t','N','a','m','e',0};
+static const WCHAR prop_dnsserversearchorderW[] =
+    {'D','N','S','S','e','r','v','e','r','S','e','a','r','c','h','O','r','d','e','r',0};
 static const WCHAR prop_domainW[] =
     {'D','o','m','a','i','n',0};
 static const WCHAR prop_domainroleW[] =
@@ -475,14 +477,15 @@ static const struct column col_networkadapter[] =
 };
 static const struct column col_networkadapterconfig[] =
 {
-    { prop_defaultipgatewayW,   CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
-    { prop_descriptionW,        CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_dhcpenabledW,        CIM_BOOLEAN },
-    { prop_dnshostnameW,        CIM_STRING|COL_FLAG_DYNAMIC },
-    { prop_indexW,              CIM_UINT32|COL_FLAG_KEY, VT_I4 },
-    { prop_ipconnectionmetricW, CIM_UINT32, VT_I4 },
-    { prop_ipenabledW,          CIM_BOOLEAN },
-    { prop_macaddressW,         CIM_STRING|COL_FLAG_DYNAMIC }
+    { prop_defaultipgatewayW,     CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
+    { prop_descriptionW,          CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_dhcpenabledW,          CIM_BOOLEAN },
+    { prop_dnshostnameW,          CIM_STRING|COL_FLAG_DYNAMIC },
+    { prop_dnsserversearchorderW, CIM_STRING|CIM_FLAG_ARRAY|COL_FLAG_DYNAMIC },
+    { prop_indexW,                CIM_UINT32|COL_FLAG_KEY, VT_I4 },
+    { prop_ipconnectionmetricW,   CIM_UINT32, VT_I4 },
+    { prop_ipenabledW,            CIM_BOOLEAN },
+    { prop_macaddressW,           CIM_STRING|COL_FLAG_DYNAMIC }
 };
 static const struct column col_os[] =
 {
@@ -872,6 +875,7 @@ struct record_networkadapterconfig
     const WCHAR        *description;
     int                 dhcpenabled;
     const WCHAR        *dnshostname;
+    const struct array *dnsserversearchorder;
     UINT32              index;
     UINT32              ipconnectionmetric;
     int                 ipenabled;
@@ -2152,6 +2156,39 @@ static struct array *get_defaultipgateway( IP_ADAPTER_GATEWAY_ADDRESS *list )
     ret->ptr   = ptr;
     return ret;
 }
+static struct array *get_dnsserversearchorder( IP_ADAPTER_DNS_SERVER_ADDRESS *list )
+{
+    IP_ADAPTER_DNS_SERVER_ADDRESS *server;
+    struct array *ret;
+    ULONG buflen, i = 0, count = 0;
+    WCHAR **ptr, *p, buf[54]; /* max IPv6 address length */
+
+    if (!list) return NULL;
+    for (server = list; server; server = server->Next) count++;
+
+    if (!(ret = heap_alloc( sizeof(*ret) ))) return NULL;
+    if (!(ptr = heap_alloc( sizeof(*ptr) * count )))
+    {
+        heap_free( ret );
+        return NULL;
+    }
+    for (server = list; server; server = server->Next)
+    {
+        buflen = sizeof(buf)/sizeof(buf[0]);
+        if (WSAAddressToStringW( server->Address.lpSockaddr, server->Address.iSockaddrLength,
+                                 NULL, buf, &buflen) || !(ptr[i++] = heap_strdupW( buf )))
+        {
+            for (; i > 0; i--) heap_free( ptr[i - 1] );
+            heap_free( ptr );
+            heap_free( ret );
+            return NULL;
+        }
+        if ((p = strrchrW( ptr[i - 1], ':' ))) *p = 0;
+    }
+    ret->count = count;
+    ret->ptr   = ptr;
+    return ret;
+}
 
 static enum fill_status fill_networkadapterconfig( struct table *table, const struct expr *cond )
 {
@@ -2184,14 +2221,15 @@ static enum fill_status fill_networkadapterconfig( struct table *table, const st
         if (aa->IfType == IF_TYPE_SOFTWARE_LOOPBACK) continue;
 
         rec = (struct record_networkadapterconfig *)(table->data + offset);
-        rec->defaultipgateway   = get_defaultipgateway( aa->FirstGatewayAddress );
-        rec->description        = heap_strdupW( aa->Description );
-        rec->dhcpenabled        = -1;
-        rec->dnshostname        = get_dnshostname( aa->FirstUnicastAddress );
-        rec->index              = aa->u.s.IfIndex;
-        rec->ipconnectionmetric = 20;
-        rec->ipenabled          = -1;
-        rec->mac_address        = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
+        rec->defaultipgateway     = get_defaultipgateway( aa->FirstGatewayAddress );
+        rec->description          = heap_strdupW( aa->Description );
+        rec->dhcpenabled          = -1;
+        rec->dnshostname          = get_dnshostname( aa->FirstUnicastAddress );
+        rec->dnsserversearchorder = get_dnsserversearchorder( aa->FirstDnsServerAddress );
+        rec->index                = aa->u.s.IfIndex;
+        rec->ipconnectionmetric   = 20;
+        rec->ipenabled            = -1;
+        rec->mac_address          = get_mac_address( aa->PhysicalAddress, aa->PhysicalAddressLength );
         if (!match_row( table, row, cond, &status ))
         {
             free_row_values( table, row );
