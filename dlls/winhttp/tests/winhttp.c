@@ -2317,9 +2317,7 @@ static void test_basic_authentication(int port)
     ok(ret || broken(error == ERROR_WINHTTP_SHUTDOWN || error == ERROR_WINHTTP_TIMEOUT) /* XP */, "failed to read data %u\n", GetLastError());
     if (ret)
     {
-todo_wine
         ok(size == 12, "expected 12, got %u\n", size);
-todo_wine
         ok(!memcmp(buffer, unauthorized, 12), "got %s\n", buffer);
     }
 
@@ -3651,7 +3649,6 @@ static void test_IWinHttpRequest(int port)
 
     hr = IWinHttpRequest_get_ResponseText( req, &response );
     ok( hr == S_OK, "got %08x\n", hr );
-todo_wine
     ok( !memcmp( response, unauthW, sizeof(unauthW) ), "got %s\n", wine_dbgstr_w(response) );
     SysFreeString( response );
 
