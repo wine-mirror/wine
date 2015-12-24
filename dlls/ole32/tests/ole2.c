@@ -1496,6 +1496,39 @@ static IDataObjectVtbl DataObjectVtbl =
 
 static IDataObject DataObject = { &DataObjectVtbl };
 
+static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
+{
+    *ppv = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown)) *ppv = iface;
+    if (*ppv)
+    {
+        IUnknown_AddRef((IUnknown *)*ppv);
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
+{
+    ok(0, "unexpected AddRef\n");
+    return 2;
+}
+
+static ULONG WINAPI Unknown_Release(IUnknown *iface)
+{
+    ok(0, "unexpected Release\n");
+    return 1;
+}
+
+static const IUnknownVtbl UnknownVtbl =
+{
+    Unknown_QueryInterface,
+    Unknown_AddRef,
+    Unknown_Release
+};
+
+static IUnknown unknown = { &UnknownVtbl };
+
 static void test_data_cache(void)
 {
     HRESULT hr;
@@ -1565,6 +1598,17 @@ static void test_data_cache(void)
 
     hr = StgCreateDocfile(NULL, STGM_READWRITE | STGM_CREATE | STGM_SHARE_EXCLUSIVE | STGM_DELETEONRELEASE, 0, &pStorage);
     ok_ole_success(hr, "StgCreateDocfile");
+
+    /* aggregation */
+
+    /* requested is not IUnknown */
+    hr = CreateDataCache(&unknown, &CLSID_NULL, &IID_IOleCache2, (void**)&pOleCache);
+todo_wine
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    hr = CreateDataCache(&unknown, &CLSID_NULL, &IID_IUnknown, (void**)&pOleCache);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IOleCache2_Release(pOleCache);
 
     /* Test with new data */
 
@@ -2214,34 +2258,6 @@ static void test_runnable(void)
     g_showRunnable = TRUE;
 }
 
-static HRESULT WINAPI Unknown_QueryInterface(IUnknown *iface, REFIID riid, void **ppv)
-{
-    *ppv = NULL;
-    if (IsEqualIID(riid, &IID_IUnknown)) *ppv = iface;
-    if (*ppv)
-    {
-        IUnknown_AddRef((IUnknown *)*ppv);
-        return S_OK;
-    }
-    return E_NOINTERFACE;
-}
-
-static ULONG WINAPI Unknown_AddRef(IUnknown *iface)
-{
-    return 2;
-}
-
-static ULONG WINAPI Unknown_Release(IUnknown *iface)
-{
-    return 1;
-}
-
-static const IUnknownVtbl UnknownVtbl =
-{
-    Unknown_QueryInterface,
-    Unknown_AddRef,
-    Unknown_Release
-};
 
 static HRESULT WINAPI OleRun_QueryInterface(IRunnableObject *iface, REFIID riid, void **ppv)
 {
@@ -2314,7 +2330,6 @@ static const IRunnableObjectVtbl oleruntestvtbl =
     OleRun_SetContainedObject
 };
 
-static IUnknown unknown = { &UnknownVtbl };
 static IRunnableObject testrunnable = { &oleruntestvtbl };
 
 static void test_OleRun(void)
