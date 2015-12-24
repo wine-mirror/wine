@@ -484,7 +484,7 @@ static IOleObject OleObject = { &OleObjectVtbl };
 static HRESULT WINAPI OleObjectPersistStg_QueryInterface(IPersistStorage *iface, REFIID riid, void **ppv)
 {
     trace("OleObjectPersistStg_QueryInterface\n");
-    return IUnknown_QueryInterface((IUnknown *)&OleObject, riid, ppv);
+    return IOleObject_QueryInterface(&OleObject, riid, ppv);
 }
 
 static ULONG WINAPI OleObjectPersistStg_AddRef(IPersistStorage *iface)
@@ -582,7 +582,7 @@ static IPersistStorage OleObjectPersistStg = { &OleObjectPersistStgVtbl };
 
 static HRESULT WINAPI OleObjectCache_QueryInterface(IOleCache *iface, REFIID riid, void **ppv)
 {
-    return IUnknown_QueryInterface((IUnknown *)&OleObject, riid, ppv);
+    return IOleObject_QueryInterface(&OleObject, riid, ppv);
 }
 
 static ULONG WINAPI OleObjectCache_AddRef(IOleCache *iface)
@@ -708,7 +708,7 @@ static ULONG WINAPI OleObjectCF_Release(IClassFactory *iface)
 
 static HRESULT WINAPI OleObjectCF_CreateInstance(IClassFactory *iface, IUnknown *punkOuter, REFIID riid, void **ppv)
 {
-    return IUnknown_QueryInterface((IUnknown *)&OleObject, riid, ppv);
+    return IOleObject_QueryInterface(&OleObject, riid, ppv);
 }
 
 static HRESULT WINAPI OleObjectCF_LockServer(IClassFactory *iface, BOOL lock)
@@ -729,7 +729,7 @@ static IClassFactory OleObjectCF = { &OleObjectCFVtbl };
 
 static HRESULT WINAPI OleObjectRunnable_QueryInterface(IRunnableObject *iface, REFIID riid, void **ppv)
 {
-    return IUnknown_QueryInterface((IUnknown *)&OleObject, riid, ppv);
+    return IOleObject_QueryInterface(&OleObject, riid, ppv);
 }
 
 static ULONG WINAPI OleObjectRunnable_AddRef(IRunnableObject *iface)
@@ -1912,13 +1912,13 @@ static void test_data_cache_dib_contents_stream(int num)
     CLSID cls;
     SIZEL sz;
 
-    hr = CreateDataCache( NULL, &CLSID_Picture_Metafile, &IID_IUnknown, (void *)&unk );
+    hr = CreateDataCache( NULL, &CLSID_Picture_Metafile, &IID_IUnknown, (void **)&unk );
     ok( SUCCEEDED(hr), "got %08x\n", hr );
-    hr = IUnknown_QueryInterface( unk, &IID_IPersistStorage, (void *)&persist );
+    hr = IUnknown_QueryInterface( unk, &IID_IPersistStorage, (void **)&persist );
     ok( SUCCEEDED(hr), "got %08x\n", hr );
-    hr = IUnknown_QueryInterface( unk, &IID_IDataObject, (void *)&data );
+    hr = IUnknown_QueryInterface( unk, &IID_IDataObject, (void **)&data );
     ok( SUCCEEDED(hr), "got %08x\n", hr );
-    hr = IUnknown_QueryInterface( unk, &IID_IViewObject2, (void *)&view );
+    hr = IUnknown_QueryInterface( unk, &IID_IViewObject2, (void **)&view );
     ok( SUCCEEDED(hr), "got %08x\n", hr );
 
     stg = create_storage( num );
@@ -2333,7 +2333,7 @@ static void test_OleLockRunning(void)
 {
     HRESULT hr;
 
-    hr = OleLockRunning((LPUNKNOWN)&unknown, TRUE, FALSE);
+    hr = OleLockRunning(&unknown, TRUE, FALSE);
     ok(hr == S_OK, "OleLockRunning failed 0x%08x\n", hr);
 }
 
