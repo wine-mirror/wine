@@ -111,7 +111,7 @@ static FORMATETC *g_expected_fetc = NULL;
 
 static BOOL g_showRunnable = TRUE;
 static BOOL g_isRunning = TRUE;
-static BOOL g_failGetMiscStatus;
+static HRESULT g_GetMiscStatusFailsWith = S_OK;
 static HRESULT g_QIFailsWith;
 
 static UINT cf_test_1, cf_test_2, cf_test_3;
@@ -421,12 +421,15 @@ static HRESULT WINAPI OleObject_EnumAdvise
 static HRESULT WINAPI OleObject_GetMiscStatus
 (
     IOleObject *iface,
-    DWORD dwAspect,
+    DWORD aspect,
     DWORD *pdwStatus
 )
 {
     CHECK_EXPECTED_METHOD("OleObject_GetMiscStatus");
-    if(!g_failGetMiscStatus)
+
+    ok(aspect == DVASPECT_CONTENT, "got aspect %d\n", aspect);
+
+    if (g_GetMiscStatusFailsWith == S_OK)
     {
         *pdwStatus = OLEMISC_RECOMPOSEONRESIZE;
         return S_OK;
@@ -434,7 +437,7 @@ static HRESULT WINAPI OleObject_GetMiscStatus
     else
     {
         *pdwStatus = 0x1234;
-        return E_FAIL;
+        return g_GetMiscStatusFailsWith;
     }
 }
 
@@ -917,6 +920,30 @@ static void test_OleCreate(IStorage *pStorage)
         { "OleObject_Release", TEST_OPTIONAL /* NT4 only */ },
         { NULL, 0 }
     };
+    static const struct expected_method methods_olerender_draw_with_site[] =
+    {
+        { "OleObject_QueryInterface", 0 },
+        { "OleObject_AddRef", 0 },
+        { "OleObject_QueryInterface", 0 },
+        { "OleObject_AddRef", 0 },
+        { "OleObject_GetMiscStatus", 0 },
+        { "OleObject_QueryInterface", 0 },
+        { "OleObjectPersistStg_AddRef", 0 },
+        { "OleObjectPersistStg_InitNew", 0 },
+        { "OleObjectPersistStg_Release", 0 },
+        { "OleObject_SetClientSite", 0 },
+        { "OleObject_Release", 0 },
+        { "OleObject_QueryInterface", 0 },
+        { "OleObjectRunnable_AddRef", 0 },
+        { "OleObjectRunnable_Run", 0 },
+        { "OleObjectRunnable_Release", 0 },
+        { "OleObject_QueryInterface", 0 },
+        { "OleObjectCache_AddRef", 0 },
+        { "OleObjectCache_Cache", 0 },
+        { "OleObjectCache_Release", 0 },
+        { "OleObject_Release", 0 },
+        { NULL, 0 }
+    };
     static const struct expected_method methods_olerender_format[] =
     {
         { "OleObject_QueryInterface", 0 },
@@ -1019,6 +1046,23 @@ static void test_OleCreate(IStorage *pStorage)
     IOleObject_Release(pObject);
     CHECK_NO_EXTRA_METHODS();
 
+    expected_method_list = methods_olerender_draw_with_site;
+    trace("OleCreate with OLERENDER_DRAW, with site:\n");
+    hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, (IOleClientSite*)0xdeadbeef, pStorage, (void **)&pObject);
+    ok_ole_success(hr, "OleCreate");
+    IOleObject_Release(pObject);
+    CHECK_NO_EXTRA_METHODS();
+
+    /* GetMiscStatus fails */
+    g_GetMiscStatusFailsWith = 0x8fafefaf;
+    expected_method_list = methods_olerender_draw_with_site;
+    trace("OleCreate with OLERENDER_DRAW, with site:\n");
+    hr = OleCreate(&CLSID_Equation3, &IID_IOleObject, OLERENDER_DRAW, NULL, (IOleClientSite*)0xdeadbeef, pStorage, (void **)&pObject);
+    ok_ole_success(hr, "OleCreate");
+    IOleObject_Release(pObject);
+    CHECK_NO_EXTRA_METHODS();
+    g_GetMiscStatusFailsWith = S_OK;
+
     formatetc.cfFormat = CF_TEXT;
     formatetc.ptd = NULL;
     formatetc.dwAspect = DVASPECT_CONTENT;
@@ -1092,7 +1136,7 @@ static void test_OleLoad(IStorage *pStorage)
 
     /* Test once with IOleObject_GetMiscStatus failing */
     expected_method_list = methods_oleload;
-    g_failGetMiscStatus = TRUE;
+    g_GetMiscStatusFailsWith = E_FAIL;
     trace("OleLoad:\n");
     hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);
     ok(hr == S_OK ||
@@ -1108,9 +1152,9 @@ static void test_OleLoad(IStorage *pStorage)
         IOleObject_Release(pObject);
         CHECK_NO_EXTRA_METHODS();
     }
+    g_GetMiscStatusFailsWith = S_OK;
 
     /* Test again, let IOleObject_GetMiscStatus succeed. */
-    g_failGetMiscStatus = FALSE;
     expected_method_list = methods_oleload;
     trace("OleLoad:\n");
     hr = OleLoad(pStorage, &IID_IOleObject, (IOleClientSite *)0xdeadbeef, (void **)&pObject);

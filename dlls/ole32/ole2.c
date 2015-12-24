@@ -2545,7 +2545,7 @@ HRESULT WINAPI OleCreate(
         if (SUCCEEDED(hres))
         {
             DWORD dwStatus;
-            hres = IOleObject_GetMiscStatus(pOleObject, DVASPECT_CONTENT, &dwStatus);
+            IOleObject_GetMiscStatus(pOleObject, DVASPECT_CONTENT, &dwStatus);
         }
     }
 
