@@ -487,7 +487,7 @@ static void test_query_handle(void)
     /* Request the needed length : a SystemInformationLength greater than one struct sets ReturnLength */
     ReturnLength = 0xdeadbeef;
     status = pNtQuerySystemInformation(SystemHandleInformation, shi, SystemInformationLength, &ReturnLength);
-    todo_wine ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "Expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status);
     ok( ReturnLength != 0xdeadbeef, "Expected valid ReturnLength\n" );
 
     SystemInformationLength = ReturnLength;
@@ -503,13 +503,13 @@ static void test_query_handle(void)
     }
     ok( status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status );
     ExpectedLength = FIELD_OFFSET(SYSTEM_HANDLE_INFORMATION, Handle[shi->Count]);
-    todo_wine ok( ReturnLength == ExpectedLength || broken(ReturnLength == ExpectedLength - sizeof(DWORD)), /* Vista / 2008 */
-                  "Expected length %u, got %u\n", ExpectedLength, ReturnLength );
-    todo_wine ok( shi->Count > 1, "Expected more than 1 handle, got %u\n", shi->Count );
+    ok( ReturnLength == ExpectedLength || broken(ReturnLength == ExpectedLength - sizeof(DWORD)), /* Vista / 2008 */
+        "Expected length %u, got %u\n", ExpectedLength, ReturnLength );
+    ok( shi->Count > 1, "Expected more than 1 handle, got %u\n", shi->Count );
     for (i = 0, found = FALSE; i < shi->Count && !found; i++)
         found = (shi->Handle[i].OwnerPid == GetCurrentProcessId()) &&
                 ((HANDLE)(ULONG_PTR)shi->Handle[i].HandleValue == EventHandle);
-    todo_wine ok( found, "Expected to find event handle in handle list\n" );
+    ok( found, "Expected to find event handle in handle list\n" );
 
     CloseHandle(EventHandle);
 

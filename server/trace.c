@@ -1142,6 +1142,23 @@ static void dump_varargs_rawinput_devices(const char *prefix, data_size_t size )
     fputc( '}', stderr );
 }
 
+static void dump_varargs_handle_infos( const char *prefix, data_size_t size )
+{
+    const struct handle_info *handle;
+
+    fprintf( stderr, "%s{", prefix );
+    while (size >= sizeof(*handle))
+    {
+        handle = cur_data;
+        fprintf( stderr, "{owner=%04x,handle=%04x,access=%08x}",
+                 handle->owner, handle->handle, handle->access );
+        size -= sizeof(*handle);
+        remove_data( sizeof(*handle) );
+        if (size) fputc( ',', stderr );
+    }
+    fputc( '}', stderr );
+}
+
 typedef void (*dump_func)( const void *req );
 
 /* Everything below this line is generated automatically by tools/make_requests */
@@ -3838,6 +3855,16 @@ static void dump_get_security_object_reply( const struct get_security_object_rep
     dump_varargs_security_descriptor( ", sd=", cur_size );
 }
 
+static void dump_get_system_handles_request( const struct get_system_handles_request *req )
+{
+}
+
+static void dump_get_system_handles_reply( const struct get_system_handles_reply *req )
+{
+    fprintf( stderr, " count=%08x", req->count );
+    dump_varargs_handle_infos( ", data=", cur_size );
+}
+
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
@@ -4501,6 +4528,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_set_token_default_dacl_request,
     (dump_func)dump_set_security_object_request,
     (dump_func)dump_get_security_object_request,
+    (dump_func)dump_get_system_handles_request,
     (dump_func)dump_create_mailslot_request,
     (dump_func)dump_set_mailslot_info_request,
     (dump_func)dump_create_directory_request,
@@ -4773,6 +4801,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     NULL,
     NULL,
     (dump_func)dump_get_security_object_reply,
+    (dump_func)dump_get_system_handles_reply,
     (dump_func)dump_create_mailslot_reply,
     (dump_func)dump_set_mailslot_info_reply,
     (dump_func)dump_create_directory_reply,
@@ -5045,6 +5074,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "set_token_default_dacl",
     "set_security_object",
     "get_security_object",
+    "get_system_handles",
     "create_mailslot",
     "set_mailslot_info",
     "create_directory",

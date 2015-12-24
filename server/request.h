@@ -333,6 +333,7 @@ DECL_HANDLER(get_token_default_dacl);
 DECL_HANDLER(set_token_default_dacl);
 DECL_HANDLER(set_security_object);
 DECL_HANDLER(get_security_object);
+DECL_HANDLER(get_system_handles);
 DECL_HANDLER(create_mailslot);
 DECL_HANDLER(set_mailslot_info);
 DECL_HANDLER(create_directory);
@@ -608,6 +609,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_token_default_dacl,
     (req_handler)req_set_security_object,
     (req_handler)req_get_security_object,
+    (req_handler)req_get_system_handles,
     (req_handler)req_create_mailslot,
     (req_handler)req_set_mailslot_info,
     (req_handler)req_create_directory,
@@ -2083,6 +2085,9 @@ C_ASSERT( FIELD_OFFSET(struct get_security_object_request, security_info) == 16 
 C_ASSERT( sizeof(struct get_security_object_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct get_security_object_reply, sd_len) == 8 );
 C_ASSERT( sizeof(struct get_security_object_reply) == 16 );
+C_ASSERT( sizeof(struct get_system_handles_request) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_system_handles_reply, count) == 8 );
+C_ASSERT( sizeof(struct get_system_handles_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_mailslot_request, access) == 12 );
 C_ASSERT( FIELD_OFFSET(struct create_mailslot_request, attributes) == 16 );
 C_ASSERT( FIELD_OFFSET(struct create_mailslot_request, rootdir) == 20 );

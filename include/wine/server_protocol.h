@@ -4655,6 +4655,29 @@ struct get_security_object_reply
 };
 
 
+struct handle_info
+{
+    process_id_t owner;
+    obj_handle_t handle;
+    unsigned int access;
+};
+
+
+struct get_system_handles_request
+{
+    struct request_header __header;
+    char __pad_12[4];
+};
+struct get_system_handles_reply
+{
+    struct reply_header __header;
+    unsigned int    count;
+    /* VARARG(data,handle_infos); */
+    char __pad_12[4];
+};
+
+
+
 struct create_mailslot_request
 {
     struct request_header __header;
@@ -5560,6 +5583,7 @@ enum request
     REQ_set_token_default_dacl,
     REQ_set_security_object,
     REQ_get_security_object,
+    REQ_get_system_handles,
     REQ_create_mailslot,
     REQ_set_mailslot_info,
     REQ_create_directory,
@@ -5836,6 +5860,7 @@ union generic_request
     struct set_token_default_dacl_request set_token_default_dacl_request;
     struct set_security_object_request set_security_object_request;
     struct get_security_object_request get_security_object_request;
+    struct get_system_handles_request get_system_handles_request;
     struct create_mailslot_request create_mailslot_request;
     struct set_mailslot_info_request set_mailslot_info_request;
     struct create_directory_request create_directory_request;
@@ -6110,6 +6135,7 @@ union generic_reply
     struct set_token_default_dacl_reply set_token_default_dacl_reply;
     struct set_security_object_reply set_security_object_reply;
     struct get_security_object_reply get_security_object_reply;
+    struct get_system_handles_reply get_system_handles_reply;
     struct create_mailslot_reply create_mailslot_reply;
     struct set_mailslot_info_reply set_mailslot_info_reply;
     struct create_directory_reply create_directory_reply;
@@ -6154,6 +6180,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 491
+#define SERVER_PROTOCOL_VERSION 492
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -745,3 +745,59 @@ DECL_HANDLER(get_security_object)
 
     release_object( obj );
 }
+
+struct enum_handle_info
+{
+    unsigned int count;
+    struct handle_info *handle;
+};
+
+static int enum_handles( struct process *process, void *user )
+{
+    struct enum_handle_info *info = user;
+    struct handle_table *table = process->handles;
+    struct handle_entry *entry;
+    struct handle_info *handle;
+    unsigned int i;
+
+    if (!table)
+        return 0;
+
+    for (i = 0, entry = table->entries; i <= table->last; i++, entry++)
+    {
+        if (!entry->ptr) continue;
+        if (!info->handle)
+        {
+            info->count++;
+            continue;
+        }
+        assert( info->count );
+        handle = info->handle++;
+        handle->owner  = process->id;
+        handle->handle = index_to_handle(i);
+        handle->access = entry->access & ~RESERVED_ALL;
+        info->count--;
+    }
+
+    return 0;
+}
+
+DECL_HANDLER(get_system_handles)
+{
+    struct enum_handle_info info;
+    struct handle_info *handle;
+    data_size_t max_handles = get_reply_max_size() / sizeof(*handle);
+
+    info.handle = NULL;
+    info.count  = 0;
+    enum_processes( enum_handles, &info );
+    reply->count = info.count;
+
+    if (max_handles < info.count)
+        set_error( STATUS_BUFFER_TOO_SMALL );
+    else if ((handle = set_reply_data_size( info.count * sizeof(*handle) )))
+    {
+        info.handle = handle;
+        enum_processes( enum_handles, &info );
+    }
+}
