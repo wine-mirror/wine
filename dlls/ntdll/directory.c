@@ -331,28 +331,19 @@ static char *get_default_com_device( int num )
 {
     char *ret = NULL;
 
-    if (!num || num > 9) return ret;
+    if (num < 1 || num > 256) return NULL;
 #ifdef linux
-    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/ttyS0") );
-    if (ret)
-    {
-        strcpy( ret, "/dev/ttyS0" );
-        ret[strlen(ret) - 1] = '0' + num - 1;
-    }
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/ttyS256") );
+    if (!ret) return NULL;
+    sprintf( ret, "/dev/ttyS%d", num - 1 );
 #elif defined(__FreeBSD__) || defined(__FreeBSD_kernel__)
-    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/cuau0") );
-    if (ret)
-    {
-        strcpy( ret, "/dev/cuau0" );
-        ret[strlen(ret) - 1] = '0' + num - 1;
-    }
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/cuau256") );
+    if (!ret) return NULL;
+    sprintf( ret, "/dev/cuau%d", num - 1 );
 #elif defined(__DragonFly__)
-    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/cuaa0") );
-    if (ret)
-    {
-        strcpy( ret, "/dev/cuaa0" );
-        ret[strlen(ret) - 1] = '0' + num - 1;
-    }
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/cuaa256") );
+    if (!ret) return NULL;
+    sprintf( ret, "/dev/cuaa%d", num - 1 );
 #else
     FIXME( "no known default for device com%d\n", num );
 #endif
@@ -369,14 +360,11 @@ static char *get_default_lpt_device( int num )
 {
     char *ret = NULL;
 
-    if (!num || num > 9) return ret;
+    if (num < 1 || num > 256) return NULL;
 #ifdef linux
-    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/lp0") );
-    if (ret)
-    {
-        strcpy( ret, "/dev/lp0" );
-        ret[strlen(ret) - 1] = '0' + num - 1;
-    }
+    ret = RtlAllocateHeap( GetProcessHeap(), 0, sizeof("/dev/lp256") );
+    if (!ret) return NULL;
+    sprintf( ret, "/dev/lp%d", num - 1 );
 #else
     FIXME( "no known default for device lpt%d\n", num );
 #endif
