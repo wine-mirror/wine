@@ -2574,21 +2574,12 @@ HRESULT WINAPI OleCreate(
     if (((renderopt == OLERENDER_DRAW) || (renderopt == OLERENDER_FORMAT)) &&
         SUCCEEDED(hres))
     {
-        IRunnableObject *pRunnable;
-        IOleCache *pOleCache;
-        HRESULT hres2;
-
-        hres2 = IUnknown_QueryInterface(pUnk, &IID_IRunnableObject, (void **)&pRunnable);
-        if (SUCCEEDED(hres2))
-        {
-            hres = IRunnableObject_Run(pRunnable, NULL);
-            IRunnableObject_Release(pRunnable);
-        }
-
+        hres = OleRun(pUnk);
         if (SUCCEEDED(hres))
         {
-            hres2 = IUnknown_QueryInterface(pUnk, &IID_IOleCache, (void **)&pOleCache);
-            if (SUCCEEDED(hres2))
+            IOleCache *pOleCache;
+
+            if (SUCCEEDED(IUnknown_QueryInterface(pUnk, &IID_IOleCache, (void **)&pOleCache)))
             {
                 DWORD dwConnection;
                 if (renderopt == OLERENDER_DRAW && !pFormatEtc) {
