@@ -5417,8 +5417,8 @@ static void get_loop_control_const(const struct wined3d_shader_instruction *ins,
 static void record_instruction(struct list *list, const struct wined3d_shader_instruction *ins)
 {
     unsigned int i;
-    struct wined3d_shader_dst_param *dst_param = NULL;
-    struct wined3d_shader_src_param *src_param = NULL, *rel_addr = NULL;
+    struct wined3d_shader_dst_param *dst_param;
+    struct wined3d_shader_src_param *src_param = NULL, *rel_addr;
     struct recorded_instruction *rec = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*rec));
     if(!rec)
     {

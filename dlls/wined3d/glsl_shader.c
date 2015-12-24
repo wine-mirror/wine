@@ -1284,7 +1284,7 @@ static void shader_glsl_load_constants(void *shader_priv, struct wined3d_context
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct shader_glsl_priv *priv = shader_priv;
     float position_fixup[4];
-    DWORD update_mask = 0;
+    DWORD update_mask;
 
     struct glsl_shader_prog_link *prog = ctx_data->glsl_program;
     UINT constant_version;
@@ -2065,8 +2065,6 @@ static const char * const shift_glsl_tab[] = {
 static void shader_glsl_gen_modifier(enum wined3d_shader_src_modifier src_modifier,
         const char *in_reg, const char *in_regswizzle, char *out_str)
 {
-    out_str[0] = 0;
-
     switch (src_modifier)
     {
     case WINED3DSPSM_DZ: /* Need to handle this in the instructions itself (texld & texcrd). */
@@ -3107,7 +3105,7 @@ static void shader_glsl_dot(const struct wined3d_shader_instruction *ins)
     struct glsl_src_param src0_param;
     struct glsl_src_param src1_param;
     DWORD dst_write_mask, src_write_mask;
-    unsigned int dst_size = 0;
+    unsigned int dst_size;
 
     dst_write_mask = shader_glsl_append_dst(buffer, ins);
     dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
@@ -4960,7 +4958,7 @@ static GLuint generate_param_reorder_function(struct shader_glsl_priv *priv,
         BOOL per_vertex_point_size, BOOL flatshading, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_string_buffer *buffer = &priv->shader_buffer;
-    GLuint ret = 0;
+    GLuint ret;
     DWORD ps_major = ps ? ps->reg_maps.shader_version.major : 0;
     unsigned int i;
     const char *semantic_name;
@@ -6878,7 +6876,7 @@ static void set_glsl_shader_program(const struct wined3d_context *context, const
     struct wined3d_shader *vshader = NULL;
     struct wined3d_shader *gshader = NULL;
     struct wined3d_shader *pshader = NULL;
-    GLuint program_id = 0;
+    GLuint program_id;
     GLuint reorder_shader_id = 0;
     unsigned int i;
     GLuint vs_id = 0;

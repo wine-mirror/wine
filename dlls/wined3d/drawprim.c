@@ -99,7 +99,7 @@ static void drawStridedSlow(const struct wined3d_device *device, struct wined3d_
         const struct wined3d_stream_info *si, UINT NumVertexes, GLenum glPrimType,
         const void *idxData, UINT idxSize, UINT startIdx)
 {
-    unsigned int               textureNo    = 0;
+    unsigned int               textureNo;
     const WORD                *pIdxBufS     = NULL;
     const DWORD               *pIdxBufL     = NULL;
     UINT vx_index;

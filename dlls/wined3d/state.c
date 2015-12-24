@@ -3198,7 +3198,7 @@ static void load_tex_coords(const struct wined3d_context *context, const struct 
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int mapped_stage = 0;
-    unsigned int textureNo = 0;
+    unsigned int textureNo;
 
     for (textureNo = 0; textureNo < context->d3d_info->limits.ffp_blend_stages; ++textureNo)
     {

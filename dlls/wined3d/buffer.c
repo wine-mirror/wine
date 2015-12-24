@@ -650,7 +650,7 @@ drop_query:
 static void buffer_direct_upload(struct wined3d_buffer *This, const struct wined3d_gl_info *gl_info, DWORD flags)
 {
     BYTE *map;
-    UINT start = 0, len = 0;
+    UINT start, len;
 
     /* This potentially invalidates the element array buffer binding, but the
      * caller always takes care of this. */
@@ -722,7 +722,7 @@ void buffer_internal_preload(struct wined3d_buffer *buffer, struct wined3d_conte
 {
     DWORD flags = buffer->flags & (WINED3D_BUFFER_SYNC | WINED3D_BUFFER_DISCARD);
     struct wined3d_device *device = buffer->resource.device;
-    UINT start = 0, end = 0, len = 0, vertices;
+    UINT start, end, len, vertices;
     const struct wined3d_gl_info *gl_info;
     BOOL decl_changed = FALSE;
     unsigned int i, j;
