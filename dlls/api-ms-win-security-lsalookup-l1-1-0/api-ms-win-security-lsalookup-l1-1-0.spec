@@ -1,0 +1,11 @@
+@ stub LookupAccountNameLocalA
+@ stub LookupAccountNameLocalW
+@ stub LookupAccountSidLocalA
+@ stub LookupAccountSidLocalW
+@ stub LsaLookupClose
+@ stub LsaLookupFreeMemory
+@ stub LsaLookupGetDomainInfo
+@ stub LsaLookupManageSidNameMapping
+@ stub LsaLookupOpenLocalPolicy
+@ stub LsaLookupTranslateNames
+@ stub LsaLookupTranslateSids
