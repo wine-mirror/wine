@@ -685,6 +685,9 @@ HRESULT WINAPI OleRegGetUserType(
 
   TRACE("(%s, %d, %p)\n", debugstr_guid(clsid), dwFormOfType, pszUserType);
 
+  if (!pszUserType)
+    return E_INVALIDARG;
+
   *pszUserType = NULL;
 
   hres = COM_OpenKeyForCLSID(clsid, NULL, KEY_READ, &clsidKey);

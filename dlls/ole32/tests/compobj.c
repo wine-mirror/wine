@@ -271,12 +271,12 @@ static const char actctx_manifest[] =
 "              progid=\"ProgId.ProgId\""
 "              miscStatusIcon=\"recomposeonresize\""
 "    />"
-"    <comClass clsid=\"{0be35203-8f91-11ce-9de3-00aa004bb851}\""
+"    <comClass description=\"CustomFont Description\" clsid=\"{0be35203-8f91-11ce-9de3-00aa004bb851}\""
 "              progid=\"CustomFont\""
 "              miscStatusIcon=\"recomposeonresize\""
 "              miscStatusContent=\"insideout\""
 "    />"
-"    <comClass clsid=\"{0be35203-8f91-11ce-9de3-00aa004bb852}\""
+"    <comClass description=\"StdFont Description\" clsid=\"{0be35203-8f91-11ce-9de3-00aa004bb852}\""
 "              progid=\"StdFont\""
 "    />"
 "    <comClass clsid=\"{62222222-1234-1234-1234-56789abcdef0}\" >"
@@ -2225,6 +2225,55 @@ static void test_OleRegGetMiscStatus(void)
     }
 }
 
+static void test_OleRegGetUserType(void)
+{
+    static const WCHAR stdfont_usertypeW[] = {'S','t','a','n','d','a','r','d',' ','F','o','n','t',0};
+    static const WCHAR stdfont2_usertypeW[] = {'C','L','S','I','D','_','S','t','d','F','o','n','t',0};
+    ULONG_PTR cookie;
+    HANDLE handle;
+    HRESULT hr;
+    WCHAR *str;
+    DWORD form;
+
+    for (form = 0; form <= USERCLASSTYPE_APPNAME+1; form++) {
+        hr = OleRegGetUserType(&CLSID_Testclass, form, NULL);
+        ok(hr == E_INVALIDARG, "form %u: got 0x%08x\n", form, hr);
+
+        str = (void*)0xdeadbeef;
+        hr = OleRegGetUserType(&CLSID_Testclass, form, &str);
+        ok(hr == REGDB_E_CLASSNOTREG, "form %u: got 0x%08x\n", form, hr);
+        ok(str == NULL, "form %u: got %p\n", form, str);
+
+        /* same string returned for StdFont for all form types */
+        str = NULL;
+        hr = OleRegGetUserType(&CLSID_StdFont, form, &str);
+        ok(hr == S_OK, "form %u: got 0x%08x\n", form, hr);
+        ok(!lstrcmpW(str, stdfont_usertypeW) || !lstrcmpW(str, stdfont2_usertypeW) /* winxp */,
+            "form %u, got %s\n", form, wine_dbgstr_w(str));
+        CoTaskMemFree(str);
+    }
+
+    if ((handle = activate_context(actctx_manifest, &cookie)))
+    {
+        for (form = 0; form <= USERCLASSTYPE_APPNAME+1; form++) {
+            str = (void*)0xdeadbeef;
+            hr = OleRegGetUserType(&CLSID_Testclass, form, &str);
+            ok(hr == REGDB_E_CLASSNOTREG, "form %u: got 0x%08x\n", form, hr);
+            ok(str == NULL, "form %u: got %s\n", form, wine_dbgstr_w(str));
+
+            /* same string returned for StdFont for all form types */
+            str = NULL;
+            hr = OleRegGetUserType(&CLSID_StdFont, form, &str);
+            ok(hr == S_OK, "form %u: got 0x%08x\n", form, hr);
+            ok(!lstrcmpW(str, stdfont_usertypeW) || !lstrcmpW(str, stdfont2_usertypeW) /* winxp */,
+                "form %u, got %s\n", form, wine_dbgstr_w(str));
+            CoTaskMemFree(str);
+        }
+
+        pDeactivateActCtx(0, cookie);
+        pReleaseActCtx(handle);
+    }
+}
 static void test_CoCreateGuid(void)
 {
     HRESULT hr;
@@ -2722,4 +2771,5 @@ START_TEST(compobj)
     test_CoCreateGuid();
     test_CoWaitForMultipleHandles();
     test_CoGetMalloc();
+    test_OleRegGetUserType();
 }
