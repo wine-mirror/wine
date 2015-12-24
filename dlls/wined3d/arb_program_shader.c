@@ -3218,8 +3218,8 @@ static void vshader_add_footer(struct shader_arb_ctx_priv *priv_ctx,
     }
     else if (args->clip.boolclip.clip_texcoord)
     {
+        static const char component[4] = {'x', 'y', 'z', 'w'};
         unsigned int cur_clip = 0;
-        char component[4] = {'x', 'y', 'z', 'w'};
         const char *zero = arb_get_helper_value(WINED3D_SHADER_TYPE_VERTEX, ARB_ZERO);
 
         for (i = 0; i < gl_info->limits.clipplanes; ++i)

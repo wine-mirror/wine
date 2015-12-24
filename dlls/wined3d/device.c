@@ -679,7 +679,7 @@ static void create_dummy_textures(struct wined3d_device *device, struct wined3d_
     count = min(MAX_COMBINED_SAMPLERS, gl_info->limits.combined_samplers);
     for (i = 0; i < count; ++i)
     {
-        DWORD color = 0x000000ff;
+        static const DWORD color = 0x000000ff;
 
         /* Make appropriate texture active */
         context_active_texture(context, gl_info, i);
