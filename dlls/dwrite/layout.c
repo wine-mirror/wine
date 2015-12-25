@@ -326,6 +326,8 @@ static inline struct dwrite_textformat *impl_from_IDWriteTextFormat1(IDWriteText
     return CONTAINING_RECORD(iface, struct dwrite_textformat, IDWriteTextFormat1_iface);
 }
 
+static struct dwrite_textformat *unsafe_impl_from_IDWriteTextFormat(IDWriteTextFormat*);
+
 static inline struct dwrite_trimmingsign *impl_from_IDWriteInlineObject(IDWriteInlineObject *iface)
 {
     return CONTAINING_RECORD(iface, struct dwrite_trimmingsign, IDWriteInlineObject_iface);
@@ -3896,9 +3898,28 @@ static const IDWriteTextAnalysisSourceVtbl dwritetextlayoutsourcevtbl = {
 
 static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, IDWriteTextFormat *format)
 {
+    struct dwrite_textformat *textformat;
     IDWriteTextFormat1 *format1;
     UINT32 len;
     HRESULT hr;
+
+    if ((textformat = unsafe_impl_from_IDWriteTextFormat(format))) {
+        layout->format = textformat->format;
+
+        layout->format.locale = heap_strdupW(textformat->format.locale);
+        layout->format.family_name = heap_strdupW(textformat->format.family_name);
+        if (!layout->format.locale || !layout->format.family_name)
+            return E_OUTOFMEMORY;
+
+        if (layout->format.trimmingsign)
+            IDWriteInlineObject_AddRef(layout->format.trimmingsign);
+        if (layout->format.collection)
+            IDWriteFontCollection_AddRef(layout->format.collection);
+        if (layout->format.fallback)
+            IDWriteFontFallback_AddRef(layout->format.fallback);
+
+        return S_OK;
+    }
 
     layout->format.weight  = IDWriteTextFormat_GetFontWeight(format);
     layout->format.style   = IDWriteTextFormat_GetFontStyle(format);
@@ -4598,6 +4619,12 @@ static const IDWriteTextFormat1Vtbl dwritetextformatvtbl = {
     dwritetextformat1_SetFontFallback,
     dwritetextformat1_GetFontFallback
 };
+
+static struct dwrite_textformat *unsafe_impl_from_IDWriteTextFormat(IDWriteTextFormat *iface)
+{
+    return (iface->lpVtbl == (IDWriteTextFormatVtbl*)&dwritetextformatvtbl) ?
+        CONTAINING_RECORD(iface, struct dwrite_textformat, IDWriteTextFormat1_iface) : NULL;
+}
 
 HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *collection, DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style,
     DWRITE_FONT_STRETCH stretch, FLOAT size, const WCHAR *locale, IDWriteTextFormat **format)
