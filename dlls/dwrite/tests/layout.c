@@ -4130,6 +4130,53 @@ static void test_SetTypography(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_SetLastLineWrapping(void)
+{
+    static const WCHAR strW[] = {'a',0};
+    IDWriteTextLayout2 *layout2;
+    IDWriteTextFormat1 *format1;
+    IDWriteTextLayout *layout;
+    IDWriteTextFormat *format;
+    IDWriteFactory *factory;
+    HRESULT hr;
+    BOOL ret;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
+    IDWriteTextFormat_Release(format);
+    if (hr != S_OK) {
+        win_skip("SetLastLineWrapping() is not supported\n");
+        IDWriteFactory_Release(factory);
+        return;
+    }
+
+    ret = IDWriteTextFormat1_GetLastLineWrapping(format1);
+    ok(ret, "got %d\n", ret);
+
+    hr = IDWriteTextFormat1_SetLastLineWrapping(format1, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, (IDWriteTextFormat*)format1, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextLayout_Release(layout);
+
+    ret = IDWriteTextLayout2_GetLastLineWrapping(layout2);
+    ok(!ret, "got %d\n", ret);
+
+    hr = IDWriteTextLayout2_SetLastLineWrapping(layout2, TRUE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -4178,6 +4225,7 @@ START_TEST(layout)
     test_MapCharacters();
     test_FontFallbackBuilder();
     test_SetTypography();
+    test_SetLastLineWrapping();
 
     IDWriteFactory_Release(factory);
 }
