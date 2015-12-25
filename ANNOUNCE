@@ -1,18 +1,16 @@
-The Wine team is proud to announce that the stable release Wine 1.8
-is now available.
+The Wine development release 1.9.0 is now available.
 
-This release represents 17 months of development effort and around
-13,000 individual changes. The main highlights are the implementation
-of DirectWrite and Direct2D, and the new Pulse Audio driver.
-
-It also contains a lot of improvements across the board, as well as
-support for many new applications and games. See the release notes
-below for a summary of the major changes.
+What's new in this release (see below for details):
+  - A number of fixes that were deferred during code freeze.
+  - WSAPoll implementation.
+  - Standard font dialog fixes.
+  - X11 drag&drop improvements.
+  - Various bug fixes.
 
 The source is available from the following locations:
 
-  http://dl.winehq.org/wine/source/1.8/wine-1.8.tar.bz2
-  http://mirrors.ibiblio.org/wine/source/1.8/wine-1.8.tar.bz2
+  http://dl.winehq.org/wine/source/1.9/wine-1.9.0.tar.bz2
+  http://mirrors.ibiblio.org/wine/source/1.9/wine-1.9.0.tar.bz2
 
 Binary packages for various distributions will be available from:
 
@@ -28,427 +26,240 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-What's new in Wine 1.8
-======================
-
-
-*** Text and fonts
-
-- DirectWrite is implemented, and works for a number of
-  applications. The implemented functionality includes:
-  - Font file loading from system or custom font collections.
-  - Building font families by combining similar font faces.
-  - Font matching algorithm using weight/width/slope model.
-  - Basic text layout support.
-  - Bi-directional level resolution and line breaks resolution.
-  - GDI interoperability API, including rendering to DIB section base target.
-  - Rendering to arbitrary target with generic rendering interface.
-  - Generating black&white and grayscale alpha bitmaps.
-
-- Bold glyphs can be synthesized for outline fonts.
-
-- Multiple replacements can be specified for a single font by using a
-  multi-string entry under HKCU\Software\Wine\Fonts\Replacements.
-
-- Vertical text uses the Unicode data tables for more accurate
-  character ranges support.
-
-- Character tables are based on version 8.0.0 of the Unicode Standard.
-
-- The built-in Wingdings font contains more glyphs.
-
-- Unicode bracketing pairs are supported in Uniscribe.
-
-- The RichEdit control uses Uniscribe for more accurate text rendering.
-
-- Hebrew and Arabic Mac OS code pages are supported. This improves
-  support for loading translated font names from Mac OS font files.
-
-
-*** Graphics
-
-- Direct2D is supported. Among the implemented features are:
-  - DXGI surface and WIC bitmap render targets.
-  - Geometries defined by straight lines and cubic Bézier curves.
-  - Drawing text.
-  - Bitmaps.
-  - Solid color brushes and bitmap brushes.
-  - Opacity brushes.
-
-- PNG files can be encoded in interlaced mode.
-
-- Gamma information can be loaded from PNG files.
-
-- Animated GIFs are correctly supported in GdiPlus.
-
-
-*** Direct3D
-
-- Direct3D 11 is supported, to about the same level as Direct3D 10.
-
-- Simple applications using Direct3D 10 are supported. There are still
-  many unimplemented features.  Direct3D 10 requires support for at
-  least OpenGL 3.2 and GLSL 1.50. Some of the changes and supported
-  features include:
-  - Several resource update operations are implemented.
-  - Many more shader model 4 opcode are recognized.
-  - Constant buffers are supported.
-  - The various resource views are implemented.
-  - The various state objects are implemented.
-  - Stateblocks are implemented.
-
-- A number of new DXGI 1.1 interfaces are implemented. This benefits Direct3D
-  10 and 11 applications.
-
-- Direct3D applications correctly minimize and restore the display
-  mode on focus loss.
-
-- Fixed function vertex blending is implemented. This requires GLSL support.
-
-- Per-vertex point sizes are supported. This requires GLSL support.
-
-- The wined3d graphics card database recognizes more graphics
-  cards. The graphics card detection code is simplified and
-  improved. More reasonable fallbacks are picked for unrecognized
-  graphics cards.
-
-- On drivers that support it, GL_ARB_texture_mirror_clamp_to_edge or
-  GL_EXT_texture_mirror_clamp are used to implement the "mirror once"
-  texture addressing mode. Previously this required
-  GL_ATI_texture_mirror_once.
-
-- GL_ARB_depth_clamp is no longer required to correctly draw pre-transformed
-  vertices with disabled z-buffering. This helps older graphics cards that
-  can't correctly implement GL_ARB_depth_clamp.
-
-- On drivers that support it, GL_ARB_blend_func_extended is used to
-  implement the D3DBLEND_SRCALPHASAT blend factor.
-
-- On drivers that support it, GL_ARB_sampler_objects is used to apply
-  sampler states independently of the texture object they apply
-  to. This helps applications that bind the same texture to multiple
-  texture stages, but with different sampler states.
-
-- On drivers that support it, GL_EXT_texture_snorm is used to support
-  signed (normalized) texture formats. These are typically used for
-  bump mapping. Previously these formats required either
-  GL_NV_texture_shader, or fixups when loading and using them.
-
-- On drivers that support is, GL_ARB_timer_query is used to support
-  Direct3D 9 timestamp queries.
-
-- Texture format restrictions are more strictly enforced. This allows
-  applications to fall back to a different format instead of continuing with
-  broken rendering.
-
-- Direct3D 9 D3DTSS_CONSTANT texture stage constants are supported.
-
-- Color keyed blits can be done by the graphics card. Previously these
-  needed to be done by the CPU.
-
-- NV12 surfaces are supported. This is used by some applications for
-  playing back video.
-
-- ATI1N textures and surfaces are supported, in addition to ATI2N
-  textures and surfaces. This requires support for
-  GL_ARB_texture_compression_rgtc from the OpenGL driver.
-
-- When GLSL is supported, lighting for Direct3D 1-3 is more
-  correct. However, for most application the difference will only be
-  very slight.
-
-- The IDirect3DSwapChain9Ex interface is supported.
-
-- OpenGL core contexts, OpenGL ES contexts, and multi-threaded OpenGL
-  command submission (known as "CSMT") have been added, however that
-  work is not finished yet.
-
-
-*** DirectDraw
-
-- SetCooperativeLevel() works better, affecting DirectDraw exclusive
-  mode in particular.
-
-- DirectDraw surface flipping is more correct. This affects applications that
-  use more than 1 back buffer in particular.
-
-- DirectDraw palette handling is better supported. This mostly affects
-  older applications using 8-bpp display modes (but not exclusively.)
-
-- "Client memory" surfaces are better supported, in particular related
-  to the handling of pitch and texture compression.
-
-
-*** Audio and video
-
-- A Pulse Audio driver is implemented. It is selected automatically
-  when Pulse Audio is running.
-
-- 5.1 surround sound is supported in DirectSound. Stereo is the
-  default, but other speaker configurations can be set through the
-  Audio tab in Winecfg.
-
-- XAudio2 is implemented, based on the OpenAL Soft library.
-
-- The OpenAL library defaults to the native version.
-
-- The Video Mixing Renderer version 7 is implemented.
-
-- AVI file encoding and compression is implemented.
-
-
-*** Kernel
-
-- Wine can be configured to report the Windows version as 'Windows
-  8.1' and 'Windows 10'.
-
-- Keyed event synchronization objects are implemented.
-
-- The "init once" synchronization mechanism is supported.
-
-- Condition variables are implemented.
-
-- Slim Reader/Writer locks are implemented.
-
-- Activation contexts are used for loading DLLs, type libraries, and
-  COM classes, avoiding the need for explicit registration.
-
-- Windows devices support read and write operations in addition to I/O
-  controls. They can be remapped directly to existing Unix devices.
-
-- Thread local storage is supported in dynamically loaded libraries.
-
-- Process jobs are implemented.
-
-- The Task Scheduler service is implemented.
-
-- The UTF-7 encoding is supported.
-
-- ATL thunk emulation supports a wider range of possible instructions.
-
-- Process and thread affinity is supported even with a large number of
-  processors.
-
-- Dynamic DST (Daylight Saving Time) is supported through the
-  registry. Timezone data is updated for a number of timezones.
-
-- USER_SHARED_DATA access is emulated on x86-64 platforms.
-
-- The new thread pool API is supported.
-
-- OpenMP (parallel programming API) is implemented.
-
-- Preliminary support for HID devices is implemented, but it's not
-  enabled yet.
-
-
-*** User interface
-
-- There is an optional Start Menu in desktop mode, that can be enabled
-  on a per-desktop basis by setting "EnableShell" to "Y" under
-  HKCU\Software\Wine\Explorer\Desktops\<name>.
-
-- The standard Open File dialog supports a drop-down menu for file
-  manipulations.
-
-- The 'My Documents' folder links to the XDG or Mac OS X 'Documents'
-  folder if it exists.
-
-- Many more shell Known Folders are supported.
-
-- Scrollbar theming is implemented. Theming of other controls also
-  works better.
-
-- The Toolbar common control can save and restore its state.
-
-
-*** Mac OS X support
-
-- The 64-bit architecture is supported on Mac OS X; however, it's not
-  100% compatible with Win64, because of the OS X non-standard 64-bit
-  ABI.
-
-- Memory size is reported accurately on Mac OS X.
-
-- Joysticks are supported at the WinMM level on Mac OS X.
-
-- Debugging information and stack unwinding are improved on Mac OS X.
-
-- Trash folder enumeration is supported on Mac OS X.
-
-- All mouse events are supported in the system tray with the Mac driver.
-
-- Window maximization is supported in the Mac driver.
-
-- The Cocoa-style full-screen mode is supported in the Mac driver.
-
-- Multiple keyboard layouts are supported in the Mac driver.
-
-
-*** X11 driver
-
-- X Drag & Drop protocol version 5 is supported.
-
-- Flashing a window caption is implemented in the X11 driver using the
-  NET_WM_STATE_DEMANDS_ATTENTION style.
-
-
-*** OLE / COM
-
-- OLE Storage files support file locking, and sizes larger than 4 GB.
-
-- Type libraries are registered correctly on 64-bit setups.
-
-- 32-bit type libraries can be loaded from 64-bit programs.
-
-- The OLE data cache supports DIB images.
-
-- The RPC interface to control Windows services is compatible with the
-  native version.
-
-- OLE Accessible Objects are implemented for better accessibility support.
-
-
-*** Internet and networking
-
-- The Gecko engine is updated to the version from Firefox 40. Many
-  more objects and properties are implemented in MSHTML.
-
-- Internet proxies can be configured automatically.
-
-- RPC over HTTP supports the NTLM and Negotiate authentication
-  schemes.
-
-- The Web Services API is partially implemented.
-
-- Download of Gecko and Mono add-ons can be canceled from the
-  progress dialog.
-
-- Conditional compilation is supported in JavaScript.
-
-- Arrays, math functions, and exception unwinding are implemented in
-  VBScript.
-
-- Remote network shares can be configured using Samba's NetAPI library.
-
-- The Packet Capture DLL is implemented.
-
-- Network interface change notifications are implemented.
-
-- IPv6 DNS addresses are supported in IphlpAPI.
-
-- The Deflate content encoding is supported in Wininet.
-
-- The TransmitFile API is implemented in Windows Sockets.
-
-- The BITS file transfer service is better supported.
-
-
-*** Printing
-
-- Vertical text is supported when printing through the PostScript driver.
-
-- The PostScript driver generates standard glyph names when possible.
-
-- Monochrome printers are better supported, in particular when
-  printing color images.
-
-- Collation is supported in the PostScript driver.
-
-
-*** Miscellaneous
-
-- Windows Management Instrumentation (WMI) implements several more
-  WBEM system classes.
-
-- Applying installation patches is better supported in MSI.
-
-- Hyperlink controls are supported in installers.
-
-- More recent versions of the C/C++ runtimes are supported, including
-  the new UCRTBASE library. The old MSVCIRT C++ runtime is also
-  partially implemented.
-
-- Version 9, 10, and 11 of ATL (Active Template Library) are
-  implemented.
-
-- The Windows Scripting Runtime supports many more classes, including
-  file and folder collections and dictionaries.
-
-- Writing XML files is implemented.
-
-- The Invariant locale is supported.
-
-
-*** Built-in applications
-
-- The 'taskmgr' application displays whether processes are running
-  under WoW64.
-
-- The 'regedit' tool better supports import/export of registry files.
-
-- The 'wineconsole' tool supports configuring the insert/overwrite
-  mode in the settings dialog.
-
-
-*** Platform-specific changes
-
-- System and hardware information is properly reported on ARM
-  platforms.
-
-- WoW64 mode is supported for the ARM64 platform.
-
-- The 64-bit architecture is supported on Android.
-
-- Binaries are built as PIE on Android, for compatibility with Android
-  version 5.
-
-
-*** Build environment
-
-- Source files can be shared across DLLs, to allow building multiple
-  versions of a DLL from the same source. This is more compatible than
-  forwarding calls to a single master DLL. It's used mainly for the
-  C/C++ runtime libraries.
-
-- #pragma directives are supported in various source files to specify
-  dependencies, for more accurate makefile generation.
-
-- The IDL compiler supports WinRT namespaces.
-
-- The message compiler uses mo files instead of po files for faster
-  processing.
-
-- Architecture-specific compile flags like -march= are supported in
-  Winegcc and passed along to the assembler.
-
-
-*** New external dependencies
-
-- liblcms2 is used instead of liblcms version 1.
-
-- libnetapi from Samba is used for configuring remote network shares.
-
-- libpcap is used to implement the Packet Capture DLL.
-
-- libpulse is used by the Pulse Audio driver.
-
-- The OpenAL Soft library is used to implement XAudio2.
-
-- The prelink tool is no longer necessary as long as the linker
-  supports the -Ttext-segment option.
-
-
-*** Known issues
-
-- Since the support for OpenGL core contexts in WineD3D is not
-  complete enough yet, Direct3D 10 and 11 need to be supported in a
-  legacy context / the compatibility profile, which means that they
-  currently don't work on Mesa.
-
-- Setting the PULSE_LATENCY_MSEC variable was sometimes necessary with
-  the Alsa audio driver, but it can cause trouble with the Pulse
-  driver. It is recommended to unset the variable.
+Bugs fixed in 1.9.0 (total 43):
+
+   3611  CorelDRAW 9: copy/paste of graphics elements between multiple instances of the program doesn't work
+   8097  Pazuru Alfabet picture display flicker
+  14290  winhelp: temporary 100% CPU use when loading some help files
+  15253  VB6 application doesn't fully render text using custom bitmap font (only one character shown)
+  15951  Origin Pro 6.1 / 7.5 / 8.0 / 8.5: Matrix menu commands don't work (dialog for auto-spacing of levels, colors or linestyles in contour-plots not shown)
+  17310  Window looses its top returning from fullscreen and is undragable from normal means
+  18347  Multiple applications crash on unimplemented function gdiplus.dll.GdipImageSetAbort (Cooliris, IPLA 0.9)
+  20208  Liquid Story Binder - 'z' location broken and window management issues
+  22871  MinGW gdb 5.2.1 crashes when trying to enter commands
+  22966  Restricted Area: incorrect rendering of character animations
+  25104  ChooseFont dialog does not support non standard font sizes
+  26769  Unable to play mms in Windows Media Player [9|10] with builtin wininet
+  28915  Eclipse Indigo SR1 (3.7.1) C++ IDE complains "'Periodic workspace save.' has encountered a problem." (java expects NtWriteFile to support FILE_WRITE_TO_END_OF_FILE)
+  29455  Call of Duty 4: persons are not visible
+  30621  Web Forum Reader 3.0 shows empty/white page when adding website resource (embedded browser)
+  30678  Phantasy Star Online: Ambition of The Illuminus (PSU: AOTI): resolution dropdown box empty
+  30811  Music in Alpha Centauri stutters
+  32650  LibreOffice 4 beta UI quite slow
+  32926  PPTV 3.2.1 crashes after installation
+  33101  FlashDevelop 4.3.0 (.NET 2.0 app) crashes on startup with 'Initialization failed. Please, run FlashDevelop again.'
+  33641  MS Comptes Bancaires 9.0 crashes on startup
+  33651  HeeksCAD & HeeksCNC fails
+  33737  PowerPoint Viewer 2010 cannot start when Windows version is Vista or later ('IFileDialogCustomize::MakeProminent' and 'IFileDialogCustomize::SetControlItemState' are stubs)
+  34312  3d chat client for there.com crashes
+  35187  Jade Empire Special Edition configuration tool always resetting video settings
+  35605  3Dmark 2000: Choosing "Run Default Benchmark" says "Benchmark Aborted!"
+  35693  Kaspersky Internet Security 2010 service installation fails due to missing TDI wrapper library 'tdi.sys'
+  37457  Musedit crashes when trying to transcribe from a midi file
+  37580  Spotify "Browse" GUI not present.
+  37646  valgrind shows an invalid free in advpack/tests/install.c
+  38076  GameRanger: unimplemented function dnsapi.dll.DnsFlushResolverCacheEntry_A
+  38321  Game Heroes 3.5 In The Wake Of Gods (Heroes III of Might And Magic mod): Mouse pointer disappears after click
+  38580  Secret Files 1-2, UFO:Extraterrestrials Gold: hardware mouse pointer missing/corrupted
+  38601  Planetary Annihilation needs WS2_32.dll.WSAPoll
+  38734  Application Impact Telemetry Static Analyzer from Windows SDK 8.1 App Certification Kit needs api-ms-win-core-path-l1-1-0.dll
+  38818  Umax Astra 4100 USB scanner driver installer needs setupx.dll16.DiBuildDriverIndex in Win9X mode
+  39611  Any Video Converter (AVC) crashes after converting a video, needs msvcr100.dll._wtmpnam_s
+  39678  Zararadio can not read folder/file name path with Latin characters
+  39764  An attempt to do automatic authentication unexpectedly drops the payload from server response
+  39769  Caffeine Demo fails to start with NVIDIA: Extension GL_VERSION_3_3 required for glVertexAttribDivisor not supported
+  39770  "Enter/Exit Full Screen" menu isn't localized
+  39789  Reusing xmlhttprequest doesn't clear previous headers
+  39811  GetLongPathName not working on case insensitive filesystems when short path is passed
+
+----------------------------------------------------------------
+
+Changes since 1.8:
+
+Alex Henrie (2):
+      kernel32: Add TRACE to SetCommState.
+      ntdll: Increase maximum number of autodetected COM/LPT ports to 256.
+
+Alexandre Julliard (1):
+      secur32/tests: Don't check the exact number of cipher bits.
+
+Alistair Leslie-Hughes (2):
+      oledb32: Convert to a BSTR to work out it size.
+      oledb32: GetConversionSize shouldn't fail for null variants.
+
+Andrew Eikum (1):
+      maintainers: Alphabetize.
+
+Andrey Melnikov (1):
+      gdi32: Handle NULL filename in GetICMProfileA().
+
+André Hentschel (14):
+      winmm: Remove a dead assignment (Clang).
+      shell32: Minor cleanup of SHELL_execute (Clang).
+      xaudio2_7: Check return of IAudioClient_Start (Coverity).
+      wininet: Return the correct error code (Clang).
+      msvcrt: Don't continue on demangle failure (Coverity).
+      mmdevapi: Skip device if GetId fails (Coverity).
+      winmm: Respect return value from joyGetPos (Coverity).
+      version: Remove dead assignments (Clang).
+      services: Fix access adjustment by reordering code (Clang).
+      setupapi: Remove dead code (Clang).
+      secur32: Ignore pfQOP in VerifySignature (Clang).
+      sane.ds: Remove dead code (Clang).
+      wineboot: Remove dead code (Clang).
+      winedbg: Remove a dead assignment (Clang).
+
+Aurimas Fišeras (1):
+      po: Update Lithuanian translation.
+
+Austin English (10):
+      iexplore: Sync registry and program resource values.
+      setupx.dll16: Add DiBuildDriverIndex stub.
+      tdi.sys: Add a stub dll.
+      api-ms-win-core-path-l1-1-0: Add stub dll.
+      hal: Add READ_PORT_ULONG stub.
+      kernel32: Make CompareStringEx semi-stub flag FIXME only show once.
+      pdh: Add PdhGetLogFileTypeA/W stubs.
+      setupapi: Add SetupDiSelectBestCompatDrv stubs.
+      ntoskrnl.exe: Add RtlInitializeGenericTableAvl/RtlInsertElementGenericTableAvl stubs.
+      api-ms-win-security-lsalookup-l1-1-0: New dll.
+
+Bruno Jesus (1):
+      ws2_32: Add WSAPoll() implementation.
+
+Changhui Liu (2):
+      hidclass.sys: Initialize ext->irp_queue immediately after HID_CreateDevice.
+      hidclass.sys: Properly print 80 bytes in first line when tracing ParseDescriptor.
+
+Hans Leidekker (11):
+      qmgr: Use the full path for HTTP downloads.
+      dnsapi: Add a stub implementation of DnsFlushResolverCacheEntry_A/UTF8/W.
+      winhttp: Don't drain content until authorization is handled successfully.
+      wbemdisp: Calculate the object count returned from ISWbemObjectSet::get_Count just once.
+      wbemprox: Support string literals in comparisons with integer properties.
+      wbemprox: Implement Win32_NetworkAdapterConfiguration.Description.
+      wbemprox: Implement Win32_NetworkAdapterConfiguration.DefaultIPGateway.
+      wbemprox: Set correct variant type if array property value is NULL.
+      wbemprox: Implement Win32_NetworkAdapterConfiguration.DHCPEnabled.
+      wbemprox: Implement Win32_NetworkAdapterConfiguration.DNSServerSearchOrder.
+      wbemprox: Implement Win32_NetworkAdapterConfiguration.SettingID.
+
+Jacek Caban (2):
+      mshtml: Added IHTMLWindow::get_clientInformation implementation.
+      mshtml: Added nsIChannel::Cancel implementation.
+
+Jactry Zeng (10):
+      riched32/tests: Test EM_LINELENGTH with multibyte character.
+      riched20/tests: Test EM_LINELENGTH with multibyte character.
+      riched20/tests: Add multibyte character tests for selection.
+      riched32/tests: Add tests for selection.
+      riched20/tests: Test EM_GETTEXTRANGE with multibyte character.
+      riched32/tests: Test EM_GETTEXTRANGE with multibyte character.
+      riched20/tests: Test EM_GETSELTEXT with multibyte character.
+      riched32/tests: Test EM_GETSELTEXT with multibyte character.
+      riched20/tests: Add tests for WM_GETTEXTLENGTH.
+      riched32/tests: Test WM_GETTEXTLENGTH with multibyte character.
+
+Jeremy White (7):
+      kernel32/tests: Add path tests for the ./../foo case.
+      kernel32: Advance over the input buffer when stripping ./.
+      kernel32/tests: Add tests for GetLongPathName using a slash delimiter.
+      kernel32/tests: Add a test for GetShortPathName using a slash delimieter.
+      kernel32: Preserve a '/' delimiter in GetLongPathName and GetShortPathName.
+      kernel32/tests: Test GetLongPathNameA when the file name case differs from the input.
+      kernel32: Revise GetLongPathNameA to avoid overriding the input on long names.
+
+Joachim Priesner (1):
+      wbemprox: Iterate over all drives instead of just the first four.
+
+Lauri Kenttä (1):
+      po: Update Finnish translation.
+
+Michael Stefaniuc (3):
+      dsound: Fail to create a version 8 3d buffer with DSBCAPS_CTRLPAN.
+      dsound: Simplify error handling when creating a sound buffer.
+      dsound: Use a better name for IDirectSoundBufferImpl_Create().
+
+Nikolay Sivov (32):
+      kernel32/tests: Some tests for ZombifyActCtx().
+      user32/tests: One more activation context test for interthread SendMessage.
+      user.exe: Fix MapDialogRect() to actually convert passed rectangle (Coverity).
+      ole2nls: Fix CompareString() prototype.
+      ntdll: Trace RTL_BITMAP api arguments as unsigned when appropriate.
+      dxdiagn: Improve error handling when converting to VT_BSTR (Coverity).
+      regedit: Fix potential buffer leak, simplify error handling (Coverity).
+      winemenubuilder: Simplify MIME types list management.
+      gdi32: Initialize 'param' field (Coverity).
+      comdlg32/fontdlg: Limit text length user can type in as font point size.
+      comdlg32/fontdlg: Allow font sizes outside of defaults set.
+      comdlg32/fontdlg: Fix string format for sizes added to listbox.
+      comdlg32/fontdlg: Remove dead assignment (Coverity).
+      msvcrt: Fix char to int promotion that breaks pattern lookup.
+      msvcrt: Fix cwscanf* prototypes.
+      po: Update Russian translation.
+      msxml3: Clear request headers on Open().
+      ole32: Fix parameter validation for CoGetMalloc().
+      ole32: Simplify OleRegGetMiscStatus() using existing helper, use read-only key permissions.
+      ole32: Simplify OleRegGetUserType() using existing helper.
+      ole32/tests: Some tests for OleRegGetUserType().
+      ole32: Ignore GetMiscStatus() returned value in OleCreate().
+      ole32: Use OleRun() in OleCreate() instead of unrolling what it does.
+      ole32/tests: Remove some casts we don't need, fix a couple of others.
+      ole32/tests: Simple test for aggregation in CreateDataCache().
+      dwrite/tests: One more test for duplicates in IDWriteTypography.
+      dwrite: Store per-range typography property.
+      dwrite: Optimize for the most common case of layout object initialization.
+      dwrite: Store last line wrapping property.
+      dwrite: Store optical alignment property.
+      dwrite: Locale layout ranged attribute is case-insensitive.
+      dwrite: Fix identical ranges merging.
+
+Paul Gofman (1):
+      msvcrt: Rename __libm_sse2_* functions to fix compilation when using Intel compiler.
+
+Piotr Caban (17):
+      winex11.drv: Ignore effect returned in IDropTarget::DragEnter.
+      winex11.drv: Call DragLeave instead of Drop if DROPEFFECT_NONE was set.
+      winex11.drv: Only update drop effect if IDropTarget::DragOver returned S_OK.
+      winex11.drv: Reset XDNDAccepted flag if IDropTarget::DragEnter fails.
+      winex11.drv: XDNDDropEffect stores OLE Drag&Drop effect so don't use it WS_EX_ACCEPTFILES related drops.
+      msvcrt: Add _strtol_l implementation.
+      msvcrt: Return error if last known character is further in the string then current character.
+      ole32: Fix apartment window class name.
+      msxml3: Update xmlNode reference count when nodes are merged in node_insert_before.
+      msxml3: Store information about ignorrable whitespace nodes in xmlNode._private variable.
+      msxml3: Reimplement node_get_text helper so it uses information about ignorred white space nodes.
+      msxml3: Add support for CDATA nodes in node_get_text.
+      msxml3/tests: Use exact comparison in IXMLDOMNode::get_text tests.
+      ntdll: Fix NtQueryDirectoryFile behavior on short file names on case insensitive file systems.
+      msvcp110: Always return empty string in _Read_dir on end of enumeration or error.
+      msvcrt: Add tmpnam_s implementation.
+      msvcrt: Add _wtmpnam_s implementation.
+
+Riccardo Bortolato (2):
+      ddraw: Check if surface is a mipmap sublevel or a non-positive X top level surface through caps in ddraw_surface7_GetPriority().
+      ddraw7/tests: Test GetPriority() on cubemap surfaces.
+
+Sebastian Lackner (8):
+      kernel32/tests: Remove unnecessary call to GetExitCodeProcess in process tests.
+      ntdll: ProcessDebugFlags should return debug_children flag instead of !debugger_present.
+      server: Fix assignment of primary_group in token_duplicate.
+      tools: Remove redundant check for request size in make_requests.
+      advapi32: Add stubs for RegCreateKeyTransacted[A/W] functions.
+      ntdll/tests: Add more tests for SystemHandleInformation.
+      kernel32/tests: Add test for process object destruction.
+      pdh: Fix prototype of PdhGetLogFileType[A/W].
+
+Thomas Faller (1):
+      ntdll: Fix valgrind heap realloc notifications.
+
+Thomas Petazzoni (1):
+      configure: Allow to override the location of the *-config scripts.
+
+YongHao Hu (3):
+      msvcp110: Add tr2_sys__Read_dir implementation.
+      msvcp110: Add tr2_sys__Close_dir implementation.
+      msvcp120/tests: Add tests of tr2_sys__Open_dir, tr2_sys__Read_dir and tr2_sys__Close_dir.
 
 --
 Alexandre Julliard
