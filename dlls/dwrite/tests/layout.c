@@ -1982,6 +1982,7 @@ todo_wine {
 
 static void test_SetLocaleName(void)
 {
+    static const WCHAR eNuSW[] = {'e','N','-','u','S',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     WCHAR buffW[LOCALE_NAME_MAX_LENGTH+sizeof(strW)/sizeof(WCHAR)];
     IDWriteTextFormat *format;
@@ -2018,9 +2019,11 @@ if (0) /* crashes on native */
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, NULL, 1, NULL);
 
     buffW[0] = 0;
-    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(WCHAR), NULL);
+    range.length = 0;
+    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(WCHAR), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, strW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(range.startPosition == 0 && range.length == 1, "got %u,%u\n", range.startPosition, range.length);
 
     /* get with a shorter buffer */
     buffW[0] = 0xa;
@@ -2042,6 +2045,29 @@ if (0) /* crashes on native */
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(WCHAR), NULL);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, strW), "got %s\n", wine_dbgstr_w(buffW));
+
+    /* set initial locale name for whole text, except with a different casing */
+    range.startPosition = 0;
+    range.length = 4;
+    hr = IDWriteTextLayout_SetLocaleName(layout, eNuSW, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    buffW[0] = 0;
+    range.length = 0;
+    hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(WCHAR), &range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine {
+    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
+    ok(range.startPosition == 0 && range.length == ~0u, "got %u,%u\n", range.startPosition, range.length);
+}
+    /* check what's returned for positions after the text */
+    buffW[0] = 0;
+    range.length = 0;
+    hr = IDWriteTextLayout_GetLocaleName(layout, 100, buffW, sizeof(buffW)/sizeof(WCHAR), &range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
+todo_wine
+    ok(range.startPosition == 0 && range.length == ~0u, "got %u,%u\n", range.startPosition, range.length);
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);

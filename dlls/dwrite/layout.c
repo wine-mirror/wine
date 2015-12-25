@@ -1600,7 +1600,7 @@ static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum l
     case LAYOUT_RANGE_ATTR_FONTCOLL:
         return range->collection == value->u.collection;
     case LAYOUT_RANGE_ATTR_LOCALE:
-        return strcmpW(range->locale, value->u.locale) == 0;
+        return strcmpiW(range->locale, value->u.locale) == 0;
     case LAYOUT_RANGE_ATTR_FONTFAMILY:
         return strcmpW(range->fontfamily, value->u.fontfamily) == 0;
     case LAYOUT_RANGE_ATTR_SPACING:
@@ -1632,7 +1632,7 @@ static inline BOOL is_same_layout_attributes(struct layout_range_header const *h
                left->underline == right->underline &&
                left->pair_kerning == right->pair_kerning &&
                left->collection == right->collection &&
-              !strcmpW(left->locale, right->locale) &&
+              !strcmpiW(left->locale, right->locale) &&
               !strcmpW(left->fontfamily, right->fontfamily);
     }
     case LAYOUT_RANGE_STRIKETHROUGH:
@@ -1973,7 +1973,7 @@ static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_
         changed = set_layout_range_iface_attr((IUnknown**)&dest->collection, (IUnknown*)value->u.collection);
         break;
     case LAYOUT_RANGE_ATTR_LOCALE:
-        changed = strcmpW(dest->locale, value->u.locale) != 0;
+        changed = strcmpiW(dest->locale, value->u.locale) != 0;
         if (changed)
             strcpyW(dest->locale, value->u.locale);
         break;
