@@ -50,6 +50,7 @@ struct dwrite_textformat_data {
     DWRITE_FLOW_DIRECTION flow;
     DWRITE_LINE_SPACING_METHOD spacingmethod;
     DWRITE_VERTICAL_GLYPH_ORIENTATION vertical_orientation;
+    DWRITE_OPTICAL_ALIGNMENT optical_alignment;
 
     FLOAT spacing;
     FLOAT baseline;
@@ -405,6 +406,15 @@ static HRESULT set_fontfallback_for_format(struct dwrite_textformat_data *format
     format->fallback = fallback;
     if (fallback)
         IDWriteFontFallback_AddRef(fallback);
+    return S_OK;
+}
+
+static HRESULT format_set_optical_alignment(struct dwrite_textformat_data *format,
+    DWRITE_OPTICAL_ALIGNMENT alignment)
+{
+    if ((UINT32)alignment > DWRITE_OPTICAL_ALIGNMENT_NO_SIDE_BEARINGS)
+        return E_INVALIDARG;
+    format->optical_alignment = alignment;
     return S_OK;
 }
 
@@ -3217,15 +3227,15 @@ static BOOL WINAPI dwritetextlayout2_GetLastLineWrapping(IDWriteTextLayout2 *ifa
 static HRESULT WINAPI dwritetextlayout2_SetOpticalAlignment(IDWriteTextLayout2 *iface, DWRITE_OPTICAL_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p)->(%d): stub\n", This, alignment);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, alignment);
+    return IDWriteTextFormat1_SetOpticalAlignment(&This->IDWriteTextFormat1_iface, alignment);
 }
 
 static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextlayout2_GetOpticalAlignment(IDWriteTextLayout2 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_OPTICAL_ALIGNMENT_NONE;
+    TRACE("(%p)\n", This);
+    return IDWriteTextFormat1_GetOpticalAlignment(&This->IDWriteTextFormat1_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout2_SetFontFallback(IDWriteTextLayout2 *iface, IDWriteFontFallback *fallback)
@@ -3627,15 +3637,15 @@ static BOOL WINAPI dwritetextformat1_layout_GetLastLineWrapping(IDWriteTextForma
 static HRESULT WINAPI dwritetextformat1_layout_SetOpticalAlignment(IDWriteTextFormat1 *iface, DWRITE_OPTICAL_ALIGNMENT alignment)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d): stub\n", This, alignment);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, alignment);
+    return format_set_optical_alignment(&This->format, alignment);
 }
 
 static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextformat1_layout_GetOpticalAlignment(IDWriteTextFormat1 *iface)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_OPTICAL_ALIGNMENT_NONE;
+    TRACE("(%p)\n", This);
+    return This->format.optical_alignment;
 }
 
 static HRESULT WINAPI dwritetextformat1_layout_SetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback *fallback)
@@ -3969,11 +3979,14 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
     if (hr == S_OK) {
         layout->format.vertical_orientation = IDWriteTextFormat1_GetVerticalGlyphOrientation(format1);
+        layout->format.optical_alignment = IDWriteTextFormat1_GetOpticalAlignment(format1);
         IDWriteTextFormat1_GetFontFallback(format1, &layout->format.fallback);
         IDWriteTextFormat1_Release(format1);
     }
-    else
+    else {
         layout->format.vertical_orientation = DWRITE_VERTICAL_GLYPH_ORIENTATION_DEFAULT;
+        layout->format.optical_alignment = DWRITE_OPTICAL_ALIGNMENT_NONE;
+    }
 
     return IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
 }
@@ -4563,15 +4576,15 @@ static BOOL WINAPI dwritetextformat1_GetLastLineWrapping(IDWriteTextFormat1 *ifa
 static HRESULT WINAPI dwritetextformat1_SetOpticalAlignment(IDWriteTextFormat1 *iface, DWRITE_OPTICAL_ALIGNMENT alignment)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d): stub\n", This, alignment);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%d)\n", This, alignment);
+    return format_set_optical_alignment(&This->format, alignment);
 }
 
 static DWRITE_OPTICAL_ALIGNMENT WINAPI dwritetextformat1_GetOpticalAlignment(IDWriteTextFormat1 *iface)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-    FIXME("(%p): stub\n", This);
-    return DWRITE_OPTICAL_ALIGNMENT_NONE;
+    TRACE("(%p)\n", This);
+    return This->format.optical_alignment;
 }
 
 static HRESULT WINAPI dwritetextformat1_SetFontFallback(IDWriteTextFormat1 *iface, IDWriteFontFallback *fallback)
@@ -4654,6 +4667,7 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.fontsize = size;
     This->format.stretch = stretch;
     This->format.textalignment = DWRITE_TEXT_ALIGNMENT_LEADING;
+    This->format.optical_alignment = DWRITE_OPTICAL_ALIGNMENT_NONE;
     This->format.paralign = DWRITE_PARAGRAPH_ALIGNMENT_NEAR;
     This->format.wrapping = DWRITE_WORD_WRAPPING_WRAP;
     This->format.last_line_wrapping = TRUE;

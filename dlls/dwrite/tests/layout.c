@@ -4177,6 +4177,74 @@ static void test_SetLastLineWrapping(void)
     IDWriteFactory_Release(factory);
 }
 
+static void test_SetOpticalAlignment(void)
+{
+    static const WCHAR strW[] = {'a',0};
+    DWRITE_OPTICAL_ALIGNMENT alignment;
+    IDWriteTextLayout2 *layout2;
+    IDWriteTextFormat1 *format1;
+    IDWriteTextLayout *layout;
+    IDWriteTextFormat *format;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat1, (void**)&format1);
+    IDWriteTextFormat_Release(format);
+    if (hr != S_OK) {
+        win_skip("SetOpticalAlignment() is not supported\n");
+        IDWriteFactory_Release(factory);
+        return;
+    }
+
+    alignment = IDWriteTextFormat1_GetOpticalAlignment(format1);
+    ok(alignment == DWRITE_OPTICAL_ALIGNMENT_NONE, "got %d\n", alignment);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, (IDWriteTextFormat*)format1, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout2, (void**)&layout2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat1_Release(format1);
+
+    alignment = IDWriteTextLayout2_GetOpticalAlignment(layout2);
+    ok(alignment == DWRITE_OPTICAL_ALIGNMENT_NONE, "got %d\n", alignment);
+
+    hr = IDWriteTextLayout2_QueryInterface(layout2, &IID_IDWriteTextFormat1, (void**)&format1);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    alignment = IDWriteTextFormat1_GetOpticalAlignment(format1);
+    ok(alignment == DWRITE_OPTICAL_ALIGNMENT_NONE, "got %d\n", alignment);
+
+    hr = IDWriteTextLayout2_SetOpticalAlignment(layout2, DWRITE_OPTICAL_ALIGNMENT_NO_SIDE_BEARINGS);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout2_SetOpticalAlignment(layout2, DWRITE_OPTICAL_ALIGNMENT_NO_SIDE_BEARINGS+1);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    alignment = IDWriteTextFormat1_GetOpticalAlignment(format1);
+    ok(alignment == DWRITE_OPTICAL_ALIGNMENT_NO_SIDE_BEARINGS, "got %d\n", alignment);
+
+    hr = IDWriteTextFormat1_SetOpticalAlignment(format1, DWRITE_OPTICAL_ALIGNMENT_NONE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextFormat1_SetOpticalAlignment(format1, DWRITE_OPTICAL_ALIGNMENT_NO_SIDE_BEARINGS+1);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    alignment = IDWriteTextLayout2_GetOpticalAlignment(layout2);
+    ok(alignment == DWRITE_OPTICAL_ALIGNMENT_NONE, "got %d\n", alignment);
+
+    IDWriteTextLayout2_Release(layout2);
+    IDWriteTextFormat1_Release(format1);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -4226,6 +4294,7 @@ START_TEST(layout)
     test_FontFallbackBuilder();
     test_SetTypography();
     test_SetLastLineWrapping();
+    test_SetOpticalAlignment();
 
     IDWriteFactory_Release(factory);
 }
