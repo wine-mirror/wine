@@ -1611,13 +1611,13 @@ static void test_typography(void)
     count = IDWriteTypography_GetFontFeatureCount(typography);
     ok(count == 2, "got %u\n", count);
 
-    memset(&feature, 0, sizeof(feature));
+    memset(&feature, 0xcc, sizeof(feature));
     hr = IDWriteTypography_GetFontFeature(typography, 0, &feature);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(feature.nameTag == DWRITE_FONT_FEATURE_TAG_KERNING, "got tag %x\n", feature.nameTag);
     ok(feature.parameter == 1, "got %u\n", feature.parameter);
 
-    memset(&feature, 0, sizeof(feature));
+    memset(&feature, 0xcc, sizeof(feature));
     hr = IDWriteTypography_GetFontFeature(typography, 1, &feature);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(feature.nameTag == DWRITE_FONT_FEATURE_TAG_KERNING, "got tag %x\n", feature.nameTag);
@@ -1625,6 +1625,21 @@ static void test_typography(void)
 
     hr = IDWriteTypography_GetFontFeature(typography, 2, &feature);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+
+    /* duplicated with same parameter value */
+    feature.nameTag = DWRITE_FONT_FEATURE_TAG_KERNING;
+    feature.parameter = 0;
+    hr = IDWriteTypography_AddFontFeature(typography, feature);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = IDWriteTypography_GetFontFeatureCount(typography);
+    ok(count == 3, "got %u\n", count);
+
+    memset(&feature, 0xcc, sizeof(feature));
+    hr = IDWriteTypography_GetFontFeature(typography, 2, &feature);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(feature.nameTag == DWRITE_FONT_FEATURE_TAG_KERNING, "got tag %x\n", feature.nameTag);
+    ok(feature.parameter == 0, "got %u\n", feature.parameter);
 
     IDWriteTypography_Release(typography);
     IDWriteFactory_Release(factory);
