@@ -4074,6 +4074,62 @@ if (0) /* crashes on native */
     IDWriteFactory2_Release(factory2);
 }
 
+static void test_SetTypography(void)
+{
+    static const WCHAR strW[] = {'a','f','i','b',0};
+    IDWriteTypography *typography, *typography2;
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    DWRITE_TEXT_RANGE range;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextFormat_Release(format);
+
+    hr = IDWriteFactory_CreateTypography(factory, &typography);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    EXPECT_REF(typography, 1);
+    range.startPosition = 0;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetTypography(layout, typography, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(typography, 2);
+
+    hr = IDWriteTextLayout_GetTypography(layout, 0, &typography2, NULL);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(typography2 == typography, "got %p, expected %p\n", typography2, typography);
+    IDWriteTypography_Release(typography2);
+    IDWriteTypography_Release(typography);
+
+    hr = IDWriteFactory_CreateTypography(factory, &typography2);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 0;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetTypography(layout, typography2, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    EXPECT_REF(typography2, 2);
+    IDWriteTypography_Release(typography2);
+
+    hr = IDWriteTextLayout_GetTypography(layout, 0, &typography, &range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(range.length == 1, "got %u\n", range.length);
+
+    IDWriteTypography_Release(typography);
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -4121,6 +4177,7 @@ START_TEST(layout)
     test_SetWordWrapping();
     test_MapCharacters();
     test_FontFallbackBuilder();
+    test_SetTypography();
 
     IDWriteFactory_Release(factory);
 }
