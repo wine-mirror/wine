@@ -119,7 +119,7 @@ static inline bstr_t *bstr_from_str(BSTR str)
 
 static inline bstr_cache_entry_t *get_cache_entry(size_t size)
 {
-    unsigned cache_idx = FIELD_OFFSET(bstr_t, u.ptr[size-1])/BUCKET_SIZE;
+    unsigned cache_idx = FIELD_OFFSET(bstr_t, u.ptr[size+sizeof(WCHAR)-1])/BUCKET_SIZE;
     return bstr_cache_enabled && cache_idx < sizeof(bstr_cache)/sizeof(*bstr_cache)
         ? bstr_cache + cache_idx
         : NULL;
@@ -127,14 +127,14 @@ static inline bstr_cache_entry_t *get_cache_entry(size_t size)
 
 static bstr_t *alloc_bstr(size_t size)
 {
-    bstr_cache_entry_t *cache_entry = get_cache_entry(size+sizeof(WCHAR));
+    bstr_cache_entry_t *cache_entry = get_cache_entry(size);
     bstr_t *ret;
 
     if(cache_entry) {
         EnterCriticalSection(&cs_bstr_cache);
 
         if(!cache_entry->cnt) {
-            cache_entry = get_cache_entry(size+sizeof(WCHAR)+BUCKET_SIZE);
+            cache_entry = get_cache_entry(size+BUCKET_SIZE);
             if(cache_entry && !cache_entry->cnt)
                 cache_entry = NULL;
         }
@@ -258,7 +258,7 @@ void WINAPI SysFreeString(BSTR str)
         return;
 
     bstr = bstr_from_str(str);
-    cache_entry = get_cache_entry(bstr->size+sizeof(WCHAR));
+    cache_entry = get_cache_entry(bstr->size);
     if(cache_entry) {
         unsigned i;
 
