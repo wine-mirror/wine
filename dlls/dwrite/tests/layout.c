@@ -2056,17 +2056,17 @@ if (0) /* crashes on native */
     range.length = 0;
     hr = IDWriteTextLayout_GetLocaleName(layout, 0, buffW, sizeof(buffW)/sizeof(WCHAR), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
+todo_wine
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
     ok(range.startPosition == 0 && range.length == ~0u, "got %u,%u\n", range.startPosition, range.length);
-}
+
     /* check what's returned for positions after the text */
     buffW[0] = 0;
     range.length = 0;
     hr = IDWriteTextLayout_GetLocaleName(layout, 100, buffW, sizeof(buffW)/sizeof(WCHAR), &range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
 todo_wine
+    ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
     ok(range.startPosition == 0 && range.length == ~0u, "got %u,%u\n", range.startPosition, range.length);
 
     IDWriteTextLayout_Release(layout);
