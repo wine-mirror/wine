@@ -149,12 +149,9 @@ static bstr_t *alloc_bstr(size_t size)
 
         if(cache_entry) {
             if(WARN_ON(heap)) {
-                size_t tail;
-
-                memset(ret, ARENA_INUSE_FILLER, FIELD_OFFSET(bstr_t, u.ptr[size+sizeof(WCHAR)]));
-                tail = bstr_alloc_size(size) - FIELD_OFFSET(bstr_t, u.ptr[size+sizeof(WCHAR)]);
-                if(tail)
-                    memset(ret->u.ptr+size+sizeof(WCHAR), ARENA_TAIL_FILLER, tail);
+                size_t fill_size = (FIELD_OFFSET(bstr_t, u.ptr[size])+2*sizeof(WCHAR)-1) & ~(sizeof(WCHAR)-1);
+                memset(ret, ARENA_INUSE_FILLER, fill_size);
+                memset((char *)ret+fill_size, ARENA_TAIL_FILLER, bstr_alloc_size(size)-fill_size);
             }
             ret->size = size;
             return ret;
@@ -418,10 +415,11 @@ BSTR WINAPI SysAllocStringByteLen(LPCSTR str, UINT len)
 
     if(str) {
         memcpy(bstr->u.ptr, str, len);
-        bstr->u.ptr[len] = bstr->u.ptr[len+1] = 0;
+        bstr->u.ptr[len] = 0;
     }else {
-        memset(bstr->u.ptr, 0, len+sizeof(WCHAR));
+        memset(bstr->u.ptr, 0, len+1);
     }
+    bstr->u.str[(len+sizeof(WCHAR)-1)/sizeof(WCHAR)] = 0;
 
     return bstr->u.str;
 }

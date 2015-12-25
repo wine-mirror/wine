@@ -5444,7 +5444,9 @@ static void test_SysAllocStringByteLen(void)
 {
   const OLECHAR szTest[10] = { 'T','e','s','t','\0' };
   const CHAR szTestA[6] = { 'T','e','s','t','\0','?' };
+  char *buf;
   BSTR str;
+  int i;
 
   if (sizeof(void *) == 4)  /* not limited to 0x80000000 on Win64 */
   {
@@ -5487,6 +5489,7 @@ static void test_SysAllocStringByteLen(void)
 
     ok (bstr->dwLen == 3, "Expected 3, got %d\n", bstr->dwLen);
     ok (!lstrcmpA((LPCSTR)bstr->szString, szTestTruncA), "String different\n");
+    ok (!bstr->szString[2], "String not terminated\n");
     SysFreeString(str);
   }
 
@@ -5500,6 +5503,32 @@ static void test_SysAllocStringByteLen(void)
     ok (!lstrcmpW(bstr->szString, szTest), "String different\n");
     SysFreeString(str);
   }
+
+  /* Make sure terminating null is aligned properly */
+  buf = HeapAlloc(GetProcessHeap(), 0, 1025);
+  ok (buf != NULL, "Expected non-NULL\n");
+  for (i = 0; i < 1024; i++)
+  {
+    LPINTERNAL_BSTR bstr;
+
+    str = SysAllocStringByteLen(NULL, i);
+    ok (str != NULL, "Expected non-NULL\n");
+    bstr = Get(str);
+    ok (bstr->dwLen == i, "Expected %d, got %d\n", i, bstr->dwLen);
+    ok (!bstr->szString[(i+sizeof(WCHAR)-1)/sizeof(WCHAR)], "String not terminated\n");
+    SysFreeString(str);
+
+    memset(buf, 0xaa, 1025);
+    str = SysAllocStringByteLen(buf, i);
+    ok (str != NULL, "Expected non-NULL\n");
+    bstr = Get(str);
+    ok (bstr->dwLen == i, "Expected %d, got %d\n", i, bstr->dwLen);
+    buf[i] = 0;
+    ok (!lstrcmpA((LPCSTR)bstr->szString, buf), "String different\n");
+    ok (!bstr->szString[(i+sizeof(WCHAR)-1)/sizeof(WCHAR)], "String not terminated\n");
+    SysFreeString(str);
+  }
+  HeapFree(GetProcessHeap(), 0, buf);
 }
 
 static void test_SysReAllocString(void)
