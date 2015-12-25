@@ -1036,7 +1036,7 @@ msgstr "Valitse kansio"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "Fonttikoon täytyy olla luku."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
