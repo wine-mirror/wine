@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-10-03 11:45+0100\n"
+"PO-Revision-Date: 2015-12-26 15:07+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -8628,58 +8628,44 @@ msgid "Wine"
 msgstr "Wine"
 
 #: winemac.rc:33
-#, fuzzy
-#| msgid "Hide"
 msgid "Hide %@"
-msgstr "Cacher"
+msgstr "Cacher %@"
 
 #: winemac.rc:35
-#, fuzzy
-#| msgid "Other"
 msgid "Hide Others"
-msgstr "Autre"
+msgstr "Cacher les autres"
 
 #: winemac.rc:36
-#, fuzzy
-#| msgid "Show"
 msgid "Show All"
-msgstr "Afficher"
+msgstr "Tout afficher"
 
 #: winemac.rc:37
 msgid "Quit %@"
-msgstr ""
+msgstr "Quitter %@"
 
 #: winemac.rc:38
 msgid "Quit"
-msgstr ""
+msgstr "Quitter"
 
 #: winemac.rc:40
-#, fuzzy
-#| msgid "&Window"
 msgid "Window"
-msgstr "&Fenêtre"
+msgstr "Fenêtre"
 
 #: winemac.rc:41
-#, fuzzy
-#| msgid "&Minimize"
 msgid "Minimize"
-msgstr "&Réduire"
+msgstr "Réduire"
 
 #: winemac.rc:42
-#, fuzzy
-#| msgid "Zoom in"
 msgid "Zoom"
-msgstr "Zoom avant"
+msgstr "Zoom"
 
 #: winemac.rc:43
 msgid "Enter Full Screen"
-msgstr ""
+msgstr "Plein écran"
 
 #: winemac.rc:44
-#, fuzzy
-#| msgid "&Bring To Front"
 msgid "Bring All to Front"
-msgstr "Toujours &visible"
+msgstr "Tout amener à l'avant-plan"
 
 #: wineps.rc:31
 msgid "Paper Si&ze:"
@@ -13113,7 +13099,7 @@ msgstr ""
 "\n"
 "Options :\n"
 "  --help\t    Afficher ces informations.\n"
-"  --list\t    Lister toutes les applications installées dans ce préfix "
+"  --list\t    Lister toutes les applications installées dans ce préfixe "
 "Wine.\n"
 "  --remove {GUID}   Désinstaller l'application spécifiée.\n"
 "\t\t    Utilisez « --list » pour déterminer le GUID de l'application.\n"
