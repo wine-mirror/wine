@@ -491,7 +491,7 @@ HKLM,%CurrentVersionNT%\FontSubstitutes,,16
 HKLM,%CurrentVersionNT%\Gre_Initialize,,16
 HKLM,%CurrentVersionNT%\Hotfix\Q246009,"Installed",,"1"
 HKLM,%CurrentVersionNT%\Image File Execution Options,,16
-HKLM,%CurrentVersionNT%\Language Pack,,16
+HKLM,%CurrentVersionNT%\LanguagePack,,16
 HKLM,%CurrentVersionNT%\NetworkCards,,16
 HKLM,%CurrentVersionNT%\OpenGLDrivers,,16
 HKLM,%CurrentVersionNT%\Perflib,,16
@@ -3334,7 +3334,7 @@ HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Fonts,"SymbolicLin
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\FontSubstitutes,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\FontSubstitutes"
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Gre_Initialize,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Gre_Initialize"
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Image File Execution Options,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options"
-HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Language Pack,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Language Pack"
+HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\LanguagePack,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\LanguagePack"
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\NetworkCards,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\NetworkCards"
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Perflib,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Perflib"
 HKLM,Software\Wow6432Node\Microsoft\Windows NT\CurrentVersion\Ports,"SymbolicLinkValue",0x60000,"\Registry\Machine\Software\Microsoft\Windows NT\CurrentVersion\Ports"
