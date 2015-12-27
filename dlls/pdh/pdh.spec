@@ -5,8 +5,8 @@
 @ stdcall PdhAddCounterW(ptr wstr long ptr)
 @ stdcall PdhAddEnglishCounterA(ptr str long ptr)
 @ stdcall PdhAddEnglishCounterW(ptr wstr long ptr)
-@ stub PdhBindInputDataSourceA
-@ stub PdhBindInputDataSourceW
+@ stdcall PdhBindInputDataSourceA(ptr str)
+@ stdcall PdhBindInputDataSourceW(ptr wstr)
 @ stub PdhBrowseCountersA
 @ stub PdhBrowseCountersHA
 @ stub PdhBrowseCountersHW
