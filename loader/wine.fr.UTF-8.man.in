@@ -24,11 +24,11 @@ Pour déboguer wine, utilisez plutôt
 Pour exécuter des applications en ligne de commande (programmes Windows
 console), préférez
 .BR wineconsole .
-Cela permet d'afficher la sortie dans une fenêtre séparée (nécessite X11).
+Cela permet d'afficher la sortie dans une fenêtre séparée.
 Si vous n'utilisez pas
 .B wineconsole
 pour les programmes en ligne de commande, le support console sera très limité et votre
-programme peut ne pas fonctionner correctement.
+programme pourrait ne pas fonctionner correctement.
 .PP
 Lorsque wine est invoqué avec
 .B --help
