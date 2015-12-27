@@ -37,6 +37,7 @@
 #include "winerror.h"
 #include "winternl.h"
 #include "winuser.h"
+#include "sddl.h"
 #include "advapi32_misc.h"
 
 #include "wine/unicode.h"
@@ -623,6 +624,21 @@ LSTATUS WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
     return RegOpenKeyExA( hkey, name, 0, MAXIMUM_ALLOWED, retkey );
 }
 
+static WCHAR *get_thread_token_user_sid(HANDLE token)
+{
+    WCHAR *sidstring = NULL;
+    TOKEN_USER *info;
+    DWORD len = 0;
+
+    GetTokenInformation(token, TokenUser, NULL, 0, &len);
+
+    info = heap_alloc(len);
+    if (GetTokenInformation(token, TokenUser, info, len, &len))
+        ConvertSidToStringSidW(info->User.Sid, &sidstring);
+    heap_free(info);
+
+    return sidstring;
+}
 
 /******************************************************************************
  * RegOpenCurrentUser   [ADVAPI32.@]
@@ -646,7 +662,37 @@ LSTATUS WINAPI RegOpenKeyA( HKEY hkey, LPCSTR name, PHKEY retkey )
  */
 LSTATUS WINAPI RegOpenCurrentUser( REGSAM access, PHKEY retkey )
 {
-    return RegOpenKeyExA( HKEY_CURRENT_USER, "", 0, access, retkey );
+    WCHAR *sidstring = NULL;
+    HANDLE threadtoken;
+    LSTATUS ret;
+
+    /* get current user SID */
+    if (OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &threadtoken))
+    {
+       sidstring = get_thread_token_user_sid(threadtoken);
+       CloseHandle(threadtoken);
+    }
+
+    if (!sidstring)
+    {
+        ImpersonateSelf(SecurityIdentification);
+        if (OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, FALSE, &threadtoken))
+        {
+            sidstring = get_thread_token_user_sid(threadtoken);
+            CloseHandle(threadtoken);
+        }
+        RevertToSelf();
+    }
+
+    if (sidstring)
+    {
+        ret = RegOpenKeyExW( HKEY_USERS, sidstring, 0, access, retkey );
+        LocalFree(sidstring);
+    }
+    else
+        ret = RegOpenKeyExA( HKEY_CURRENT_USER, "", 0, access, retkey );
+
+    return ret;
 }
 
 

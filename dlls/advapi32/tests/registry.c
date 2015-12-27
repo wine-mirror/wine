@@ -3300,6 +3300,18 @@ static void test_delete_key_value(void)
     RegCloseKey(subkey);
 }
 
+static void test_RegOpenCurrentUser(void)
+{
+    HKEY key;
+    LONG ret;
+
+    key = HKEY_CURRENT_USER;
+    ret = RegOpenCurrentUser(KEY_READ, &key);
+    ok(!ret, "got %d, error %d\n", ret, GetLastError());
+    ok(key != HKEY_CURRENT_USER, "got %p\n", key);
+    RegCloseKey(key);
+}
+
 START_TEST(registry)
 {
     /* Load pointers for functions that are not available in all Windows versions */
@@ -3332,6 +3344,7 @@ START_TEST(registry)
     test_deleted_key();
     test_delete_value();
     test_delete_key_value();
+    test_RegOpenCurrentUser();
 
     /* cleanup */
     delete_key( hkey_main );
