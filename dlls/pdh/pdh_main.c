@@ -1287,3 +1287,21 @@ PDH_STATUS WINAPI PdhGetLogFileTypeW(PDH_HLOG log, DWORD *type)
     FIXME("%p, %p: stub\n", log, type);
     return PDH_NOT_IMPLEMENTED;
 }
+
+/***********************************************************************
+ *              PdhBindInputDataSourceA   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhBindInputDataSourceA(PDH_HLOG *source, const char *filenamelist)
+{
+    FIXME("%p %s: stub\n", source, debugstr_a(filenamelist));
+    return PDH_NOT_IMPLEMENTED;
+}
+
+/***********************************************************************
+ *              PdhBindInputDataSourceW   (PDH.@)
+ */
+PDH_STATUS WINAPI PdhBindInputDataSourceW(PDH_HLOG *source, const WCHAR *filenamelist)
+{
+    FIXME("%p %s: stub\n", source, debugstr_w(filenamelist));
+    return PDH_NOT_IMPLEMENTED;
+}
