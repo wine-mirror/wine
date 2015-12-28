@@ -105,6 +105,15 @@ float CDECL MSVCRT__copysignf( float num, float sign )
     return signbit(num) ? -num : num;
 }
 
+/*********************************************************************
+ *      _nextafterf (MSVCRT.@)
+ */
+float CDECL MSVCRT__nextafterf( float num, float next )
+{
+    if (!finitef(num) || !finitef(next)) *MSVCRT__errno() = MSVCRT_EDOM;
+    return nextafterf( num, next );
+}
+
 #endif
 #if defined(__x86_64__) || defined(__arm__)
 
@@ -134,15 +143,6 @@ float CDECL MSVCRT__logbf( float num )
 {
     if (!finitef(num)) *MSVCRT__errno() = MSVCRT_EDOM;
     return logbf(num);
-}
-
-/*********************************************************************
- *      _nextafterf (MSVCRT.@)
- */
-float CDECL MSVCRT__nextafterf( float num, float next )
-{
-    if (!finitef(num) || !finitef(next)) *MSVCRT__errno() = MSVCRT_EDOM;
-    return nextafterf( num, next );
 }
 
 /*********************************************************************
