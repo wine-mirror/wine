@@ -2058,7 +2058,8 @@ if (0) /* crashes on native */
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
-    ok(range.startPosition == 0 && range.length == ~0u, "got %u,%u\n", range.startPosition, range.length);
+    ok((range.startPosition == 0 && range.length == ~0u) ||
+        broken(range.startPosition == 0 && range.length == 4) /* vista/win7 */, "got %u,%u\n", range.startPosition, range.length);
 
     /* check what's returned for positions after the text */
     buffW[0] = 0;
@@ -2067,7 +2068,8 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
     ok(!lstrcmpW(buffW, enusW), "got %s\n", wine_dbgstr_w(buffW));
-    ok(range.startPosition == 0 && range.length == ~0u, "got %u,%u\n", range.startPosition, range.length);
+    ok((range.startPosition == 0 && range.length == ~0u) ||
+        broken(range.startPosition == 4 && range.length == ~0u-4) /* vista/win7 */, "got %u,%u\n", range.startPosition, range.length);
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
