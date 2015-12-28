@@ -3234,6 +3234,27 @@ static ULONG WINAPI systemfontfileenumerator_Release(IDWriteFontFileEnumerator *
     return ref;
 }
 
+static HRESULT create_local_file_reference(IDWriteFactory2 *factory, const WCHAR *filename, IDWriteFontFile **file)
+{
+    HRESULT hr;
+
+    /* Fonts installed in 'Fonts' system dir don't get full path in registry font files cache */
+    if (!strchrW(filename, '\\')) {
+        static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
+        WCHAR fullpathW[MAX_PATH];
+
+        GetWindowsDirectoryW(fullpathW, sizeof(fullpathW)/sizeof(WCHAR));
+        strcatW(fullpathW, fontsW);
+        strcatW(fullpathW, filename);
+
+        hr = IDWriteFactory2_CreateFontFileReference(factory, fullpathW, NULL, file);
+    }
+    else
+        hr = IDWriteFactory2_CreateFontFileReference(factory, filename, NULL, file);
+
+    return hr;
+}
+
 static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFileEnumerator *iface, IDWriteFontFile **file)
 {
     struct system_fontfile_enumerator *enumerator = impl_from_IDWriteFontFileEnumerator(iface);
@@ -3266,19 +3287,7 @@ static HRESULT WINAPI systemfontfileenumerator_GetCurrentFontFile(IDWriteFontFil
         return E_FAIL;
     }
 
-    /* Fonts installed in 'Fonts' system dir don't get full path in registry font files cache */
-    if (!strchrW(filename, '\\')) {
-        static const WCHAR fontsW[] = {'\\','f','o','n','t','s','\\',0};
-        WCHAR fullpathW[MAX_PATH];
-
-        GetWindowsDirectoryW(fullpathW, sizeof(fullpathW)/sizeof(WCHAR));
-        strcatW(fullpathW, fontsW);
-        strcatW(fullpathW, filename);
-
-        hr = IDWriteFactory2_CreateFontFileReference(enumerator->factory, fullpathW, NULL, file);
-    }
-    else
-        hr = IDWriteFactory2_CreateFontFileReference(enumerator->factory, filename, NULL, file);
+    hr = create_local_file_reference(enumerator->factory, filename, file);
 
     heap_free(value);
     heap_free(filename);
@@ -3379,56 +3388,145 @@ HRESULT get_system_fontcollection(IDWriteFactory2 *factory, IDWriteFontCollectio
     return hr;
 }
 
-static HRESULT WINAPI eudcfontfileenumerator_QueryInterface(IDWriteFontFileEnumerator *iface, REFIID riid, void **obj)
+static HRESULT eudc_collection_add_family(IDWriteFactory2 *factory, struct dwrite_fontcollection *collection,
+    const WCHAR *keynameW, const WCHAR *pathW)
 {
-    *obj = NULL;
+    static const WCHAR defaultfontW[] = {'S','y','s','t','e','m','D','e','f','a','u','l','t','E','U','D','C','F','o','n','t',0};
+    static const WCHAR emptyW[] = {0};
+    IDWriteLocalizedStrings *names;
+    DWRITE_FONT_FACE_TYPE face_type;
+    DWRITE_FONT_FILE_TYPE file_type;
+    BOOL supported;
+    UINT32 face_count, i;
+    IDWriteFontFile *file;
+    HRESULT hr;
+    struct dwrite_fontfamily_data *family_data;
 
-    if (IsEqualIID(riid, &IID_IDWriteFontFileEnumerator) || IsEqualIID(riid, &IID_IUnknown)) {
-        IDWriteFontFileEnumerator_AddRef(iface);
-        *obj = iface;
-        return S_OK;
+    /* create font file from this path */
+    hr = create_local_file_reference(factory, pathW, &file);
+    if (FAILED(hr))
+        return S_FALSE;
+
+    /* failed font files are skipped */
+    hr = IDWriteFontFile_Analyze(file, &supported, &file_type, &face_type, &face_count);
+    if (FAILED(hr) || !supported || face_count == 0) {
+        TRACE("unsupported font (%p, 0x%08x, %d, %u)\n", file, hr, supported, face_count);
+        IDWriteFontFile_Release(file);
+        return S_FALSE;
     }
 
-    return E_NOINTERFACE;
+    /* create and init new family */
+
+    /* Family names are added for non-specific locale, represented with empty string.
+       Default family appears with empty family name. */
+    create_localizedstrings(&names);
+    if (!strcmpiW(keynameW, defaultfontW))
+        add_localizedstring(names, emptyW, emptyW);
+    else
+        add_localizedstring(names, emptyW, keynameW);
+
+    hr = init_fontfamily_data(names, &family_data);
+    IDWriteLocalizedStrings_Release(names);
+    if (hr != S_OK) {
+        IDWriteFontFile_Release(file);
+        return hr;
+    }
+
+    /* fill with faces */
+    for (i = 0; i < face_count; i++) {
+        struct dwrite_font_data *font_data;
+
+        /* alloc and init new font data structure */
+        hr = init_font_data(factory, file, face_type, i, &names, &font_data);
+        if (FAILED(hr))
+            continue;
+
+        IDWriteLocalizedStrings_Release(names);
+
+        /* add font to family */
+        hr = fontfamily_add_font(family_data, font_data);
+        if (hr != S_OK)
+            release_font_data(font_data);
+    }
+
+    /* add family to collection */
+    hr = fontcollection_add_family(collection, family_data);
+    if (FAILED(hr))
+        release_fontfamily_data(family_data);
+    IDWriteFontFile_Release(file);
+
+    return hr;
 }
 
-static ULONG WINAPI eudcfontfileenumerator_AddRef(IDWriteFontFileEnumerator *iface)
+HRESULT get_eudc_fontcollection(IDWriteFactory2 *factory, IDWriteFontCollection **ret)
 {
-    return 2;
-}
+    static const WCHAR eudckeyfmtW[] = {'E','U','D','C','\\','%','u',0};
+    struct dwrite_fontcollection *collection;
+    static const WCHAR emptyW[] = {0};
+    WCHAR eudckeypathW[16];
+    HKEY eudckey;
+    DWORD index;
+    BOOL exists;
+    LONG retval;
+    HRESULT hr;
+    UINT32 i;
 
-static ULONG WINAPI eudcfontfileenumerator_Release(IDWriteFontFileEnumerator *iface)
-{
-    return 1;
-}
+    TRACE("building EUDC font collection for factory %p, ACP %u\n", factory, GetACP());
 
-static HRESULT WINAPI eudcfontfileenumerator_GetCurrentFontFile(IDWriteFontFileEnumerator *iface, IDWriteFontFile **file)
-{
-    *file = NULL;
-    return E_FAIL;
-}
+    *ret = NULL;
 
-static HRESULT WINAPI eudcfontfileenumerator_MoveNext(IDWriteFontFileEnumerator *iface, BOOL *current)
-{
-    *current = FALSE;
+    collection = heap_alloc(sizeof(struct dwrite_fontcollection));
+    if (!collection) return E_OUTOFMEMORY;
+
+    hr = init_font_collection(collection, FALSE);
+    if (FAILED(hr)) {
+        heap_free(collection);
+        return hr;
+    }
+
+    *ret = &collection->IDWriteFontCollection_iface;
+
+    /* return empty collection if EUDC fonts are not configured */
+    sprintfW(eudckeypathW, eudckeyfmtW, GetACP());
+    if (RegOpenKeyExW(HKEY_CURRENT_USER, eudckeypathW, 0, GENERIC_READ, &eudckey))
+        return S_OK;
+
+    retval = ERROR_SUCCESS;
+    index = 0;
+    while (retval != ERROR_NO_MORE_ITEMS) {
+        WCHAR keynameW[64], pathW[MAX_PATH];
+        DWORD type, path_len, name_len;
+
+        path_len = sizeof(pathW)/sizeof(*pathW);
+        name_len = sizeof(keynameW)/sizeof(*keynameW);
+        retval = RegEnumValueW(eudckey, index++, keynameW, &name_len, NULL, &type, (BYTE*)pathW, &path_len);
+        if (retval || type != REG_SZ)
+            continue;
+
+        hr = eudc_collection_add_family(factory, collection, keynameW, pathW);
+        if (hr != S_OK)
+            WARN("failed to add family %s, path %s\n", debugstr_w(keynameW), debugstr_w(pathW));
+    }
+    RegCloseKey(eudckey);
+
+    /* try to add global default if not defined for specific codepage */
+    exists = FALSE;
+    hr = IDWriteFontCollection_FindFamilyName(&collection->IDWriteFontCollection_iface, emptyW,
+        &index, &exists);
+    if (FAILED(hr) || !exists) {
+        const WCHAR globaldefaultW[] = {'E','U','D','C','.','T','T','E',0};
+        hr = eudc_collection_add_family(factory, collection, emptyW, globaldefaultW);
+        if (hr != S_OK)
+            WARN("failed to add global default EUDC font, 0x%08x\n", hr);
+    }
+
+    /* EUDC collection offers simulated faces too */
+    for (i = 0; i < collection->family_count; i++) {
+        fontfamily_add_bold_simulated_face(collection->family_data[i]);
+        fontfamily_add_oblique_simulated_face(collection->family_data[i]);
+    }
+
     return S_OK;
-}
-
-static const struct IDWriteFontFileEnumeratorVtbl eudcfontfileenumeratorvtbl =
-{
-    eudcfontfileenumerator_QueryInterface,
-    eudcfontfileenumerator_AddRef,
-    eudcfontfileenumerator_Release,
-    eudcfontfileenumerator_MoveNext,
-    eudcfontfileenumerator_GetCurrentFontFile
-};
-
-static IDWriteFontFileEnumerator eudc_fontfile_enumerator = { &eudcfontfileenumeratorvtbl };
-
-HRESULT get_eudc_fontcollection(IDWriteFactory2 *factory, IDWriteFontCollection **collection)
-{
-    TRACE("building EUDC font collection for factory %p\n", factory);
-    return create_font_collection(factory, &eudc_fontfile_enumerator, FALSE, collection);
 }
 
 static HRESULT WINAPI dwritefontfile_QueryInterface(IDWriteFontFile *iface, REFIID riid, void **obj)
