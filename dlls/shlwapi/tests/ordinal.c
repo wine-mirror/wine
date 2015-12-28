@@ -70,6 +70,7 @@ static HRESULT (WINAPI *pSKDeleteValueW)(DWORD, LPCWSTR, LPCWSTR);
 static HRESULT (WINAPI *pSKAllocValueW)(DWORD, LPCWSTR, LPCWSTR, DWORD*, void**, DWORD*);
 static HWND    (WINAPI *pSHSetParentHwnd)(HWND, HWND);
 static HRESULT (WINAPI *pIUnknown_GetClassID)(IUnknown*, CLSID*);
+static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO2*);
 
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
@@ -3073,6 +3074,8 @@ static void init_pointers(void)
     MAKEFUNC(SKDeleteValueW, 518);
     MAKEFUNC(SKAllocValueW, 519);
 #undef MAKEFUNC
+
+    pDllGetVersion = (void*)GetProcAddress(hShlwapi, "DllGetVersion");
 }
 
 static void test_SHSetParentHwnd(void)
@@ -3246,6 +3249,14 @@ if (0) /* crashes on native systems */
         "got wrong clsid %s\n", wine_dbgstr_guid(&clsid));
 }
 
+static void test_DllGetVersion(void)
+{
+    HRESULT hr;
+
+    hr = pDllGetVersion(NULL);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+}
+
 START_TEST(ordinal)
 {
     char **argv;
@@ -3301,6 +3312,7 @@ START_TEST(ordinal)
     test_SHGetShellKey();
     test_SHSetParentHwnd();
     test_IUnknown_GetClassID();
+    test_DllGetVersion();
 
     FreeLibrary(hshell32);
     FreeLibrary(hmlang);
