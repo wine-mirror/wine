@@ -4273,6 +4273,60 @@ static void test_SetOpticalAlignment(void)
     IDWriteFactory_Release(factory);
 }
 
+static const struct drawcall_entry drawunderline_seq[] = {
+    { DRAW_GLYPHRUN, {'a','e',0x0300,0} }, /* reported runs can't mix different underline values */
+    { DRAW_GLYPHRUN, {'d',0} },
+    { DRAW_UNDERLINE },
+    { DRAW_LAST_KIND }
+};
+
+static void test_SetUnderline(void)
+{
+    static const WCHAR strW[] = {'a','e',0x0300,'d',0}; /* accent grave */
+    DWRITE_CLUSTER_METRICS clusters[4];
+    IDWriteTextFormat *format;
+    IDWriteTextLayout *layout;
+    DWRITE_TEXT_RANGE range;
+    IDWriteFactory *factory;
+    UINT32 count;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextFormat_Release(format);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, sizeof(clusters)/sizeof(clusters[0]), &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 3, "got %u\n", count);
+
+    range.startPosition = 0;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetUnderline(layout, TRUE, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, sizeof(clusters)/sizeof(clusters[0]), &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 3, "got %u\n", count);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, drawunderline_seq, "draw underline test", TRUE);
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     static const WCHAR ctrlstrW[] = {0x202a,0};
@@ -4323,6 +4377,7 @@ START_TEST(layout)
     test_SetTypography();
     test_SetLastLineWrapping();
     test_SetOpticalAlignment();
+    test_SetUnderline();
 
     IDWriteFactory_Release(factory);
 }
