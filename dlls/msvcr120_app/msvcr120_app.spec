@@ -1962,9 +1962,9 @@
 @ stub nearbyint
 @ stub nearbyintf
 @ stub nearbyintl
-@ stub nextafter
-@ stub nextafterf
-@ stub nextafterl
+@ cdecl nextafter(double double) msvcr120.nextafter
+@ cdecl nextafterf(float float) msvcr120.nextafterf
+@ cdecl nextafterl(double double) msvcr120.nextafterl
 @ stub nexttoward
 @ stub nexttowardf
 @ stub nexttowardl

@@ -293,9 +293,9 @@
 @ stub nearbyint
 @ stub nearbyintf
 @ stub nearbyintl
-@ stub nextafter
-@ stub nextafterf
-@ stub nextafterl
+@ cdecl nextafter(double double) ucrtbase.nextafter
+@ cdecl nextafterf(float float) ucrtbase.nextafterf
+@ cdecl nextafterl(double double) ucrtbase.nextafterl
 @ stub nexttoward
 @ stub nexttowardf
 @ stub nexttowardl

@@ -2434,9 +2434,9 @@
 @ stub nearbyint
 @ stub nearbyintf
 @ stub nearbyintl
-@ stub nextafter
-@ stub nextafterf
-@ stub nextafterl
+@ cdecl nextafter(double double) MSVCRT__nextafter
+@ cdecl nextafterf(float float) MSVCRT__nextafterf
+@ cdecl nextafterl(double double) MSVCRT__nextafter
 @ stub nexttoward
 @ stub nexttowardf
 @ stub nexttowardl
