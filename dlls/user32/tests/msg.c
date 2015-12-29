@@ -32,6 +32,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "winnls.h"
+#include "dbt.h"
 
 #include "wine/test.h"
 
@@ -4520,6 +4521,49 @@ static void test_MsgWaitForMultipleObjects(HWND hwnd)
     ok(ret == WAIT_IO_COMPLETION, "MsgWaitForMultipleObjectsEx returned %x\n", ret);
 }
 
+static void test_WM_DEVICECHANGE(HWND hwnd)
+{
+    DWORD ret;
+    MSG msg;
+    int i;
+    static const WPARAM wparams[] = {0,
+                                     DBT_DEVNODES_CHANGED,
+                                     DBT_QUERYCHANGECONFIG,
+                                     DBT_CONFIGCHANGED,
+                                     DBT_CONFIGCHANGECANCELED,
+                                     DBT_NO_DISK_SPACE,
+                                     DBT_LOW_DISK_SPACE,
+                                     DBT_CONFIGMGPRIVATE, /* 0x7fff */
+                                     DBT_DEVICEARRIVAL,   /* 0x8000 */
+                                     DBT_DEVICEQUERYREMOVE,
+                                     DBT_DEVICEQUERYREMOVEFAILED,
+                                     DBT_DEVICEREMOVEPENDING,
+                                     DBT_DEVICEREMOVECOMPLETE,
+                                     DBT_DEVICETYPESPECIFIC,
+                                     DBT_CUSTOMEVENT};
+
+    for (i = 0; i < sizeof(wparams)/sizeof(wparams[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ret = PostMessageA(hwnd, WM_DEVICECHANGE, wparams[i], 0);
+        if (wparams[i] & 0x8000)
+        {
+            ok(ret == FALSE, "PostMessage should returned %d\n", ret);
+            ok(GetLastError() == ERROR_MESSAGE_SYNC_ONLY, "PostMessage error %08x\n", GetLastError());
+        }
+        else
+        {
+            todo_wine {
+                ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
+                ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjects returned %x\n", ret);
+                memset(&msg, 0, sizeof(msg));
+                ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should succeed\n");
+                ok(msg.message == WM_DEVICECHANGE, "got %04x instead of WM_DEVICECHANGE\n", msg.message);
+            }
+        }
+    }
+}
+
 static DWORD CALLBACK show_window_thread(LPVOID arg)
 {
    HWND hwnd = arg;
@@ -4911,6 +4955,7 @@ static void test_messages(void)
     flush_sequence();
 
     test_MsgWaitForMultipleObjects(hparent);
+    test_WM_DEVICECHANGE(hparent);
 
     /* the following test causes an exception in user.exe under win9x */
     if (!PostMessageW( hparent, WM_USER, 0, 0 ))
