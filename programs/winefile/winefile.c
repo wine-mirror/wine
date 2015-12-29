@@ -1634,9 +1634,10 @@ static void WineFile_OnRun( HWND hwnd )
 	static const WCHAR shell32_dll[] = {'S','H','E','L','L','3','2','.','D','L','L',0};
         void (WINAPI *pRunFileDlgAW )(HWND, HICON, LPWSTR, LPWSTR, LPWSTR, DWORD);
 	HMODULE hshell = GetModuleHandleW( shell32_dll );
+	HICON hIcon = LoadIconW(Globals.hInstance, MAKEINTRESOURCEW(IDI_WINEFILE));
 
 	pRunFileDlgAW = (void*)GetProcAddress(hshell, (LPCSTR)61);
-	if (pRunFileDlgAW) pRunFileDlgAW( hwnd, 0, NULL, NULL, NULL, RFF_NODEFAULT);
+	if (pRunFileDlgAW) pRunFileDlgAW( hwnd, hIcon, NULL, NULL, NULL, RFF_NODEFAULT);
 }
 
 static INT_PTR CALLBACK DestinationDlgProc(HWND hwnd, UINT nmsg, WPARAM wparam, LPARAM lparam)
