@@ -943,7 +943,7 @@ void ME_RTFTblAttrHook(RTF_Info *info)
         ME_DisplayItem *para = info->editor->pCursors[0].pPara;
         PARAFORMAT2 *pFmt = para->member.para.pFmt;
         pFmt->rgxTabs[cellNum] &= ~0x00FFFFFF;
-        pFmt->rgxTabs[cellNum] = 0x00FFFFFF & info->rtfParam;
+        pFmt->rgxTabs[cellNum] |= 0x00FFFFFF & info->rtfParam;
       }
       info->tableDef->numCellsDefined++;
       break;
