@@ -616,7 +616,7 @@ static int EnumFuncs(ITypeInfo *pTypeInfo, TYPEATTR *pTypeAttr, HTREEITEM hParen
         }
 
         bstrParamNames = HeapAlloc(GetProcessHeap(), 0,
-                sizeof(BSTR*)*(pFuncDesc->cParams+1));
+                sizeof(BSTR)*(pFuncDesc->cParams+1));
         if(FAILED(ITypeInfo_GetNames(pTypeInfo, pFuncDesc->memid, bstrParamNames,
                 pFuncDesc->cParams+1, &namesNo)))
         {
