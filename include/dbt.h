@@ -30,6 +30,10 @@
 # define DECL_WINELIB_DBT_TYPE_AW(type)  typedef WINELIB_NAME_AW(type##_) type;
 #endif
 
+#define DBT_DEVNODES_CHANGED            0x0007
+#define DBT_QUERYCHANGECONFIG           0x0017
+#define DBT_CONFIGCHANGED               0x0018
+#define DBT_CONFIGCHANGECANCELED        0x0019
 #define DBT_NO_DISK_SPACE               0x0047
 #define DBT_LOW_DISK_SPACE              0x0048
 #define DBT_CONFIGMGPRIVATE             0x7FFF
