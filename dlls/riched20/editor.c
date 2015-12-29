@@ -547,7 +547,8 @@ void ME_RTFParAttrHook(RTF_Info *info)
   PARAFORMAT2 fmt;
   fmt.cbSize = sizeof(fmt);
   fmt.dwMask = 0;
-  
+  fmt.wEffects = 0;
+
   switch(info->rtfMinor)
   {
   case rtfParDef: /* restores default paragraph attributes */
