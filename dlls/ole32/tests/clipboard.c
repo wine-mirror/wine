@@ -1539,6 +1539,38 @@ static void test_getdatahere(void)
 
 }
 
+static DWORD CALLBACK test_data_obj(void *arg)
+{
+    IDataObject *data_obj = arg;
+
+    IDataObject_Release(data_obj);
+    return 0;
+}
+
+static void test_multithreaded_clipboard(void)
+{
+    IDataObject *data_obj;
+    HANDLE thread;
+    HRESULT hr;
+    DWORD ret;
+
+    OleInitialize(NULL);
+
+    hr = OleGetClipboard(&data_obj);
+    ok(hr == S_OK, "OleGetClipboard returned %x\n", hr);
+
+    thread = CreateThread(NULL, 0, test_data_obj, data_obj, 0, NULL);
+    ok(thread != NULL, "CreateThread failed (%d)\n", GetLastError());
+    ret = WaitForSingleObject(thread, 5000);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %x\n", ret);
+
+    hr = OleGetClipboard(&data_obj);
+    ok(hr == S_OK, "OleGetClipboard returned %x\n", hr);
+    IDataObject_Release(data_obj);
+
+    OleUninitialize();
+}
+
 START_TEST(clipboard)
 {
     test_set_clipboard();
@@ -1546,4 +1578,5 @@ START_TEST(clipboard)
     test_flushed_getdata();
     test_nonole_clipboard();
     test_getdatahere();
+    test_multithreaded_clipboard();
 }
