@@ -1836,6 +1836,9 @@ BOOL16 WINAPI IsDialogMessage16( HWND16 hwndDlg, MSG16 *msg16 )
         msg.message = msg16->message;
         msg.wParam  = msg16->wParam;
         msg.lParam  = msg16->lParam;
+        msg.time    = msg16->time;
+        msg.pt.x    = msg16->pt.x;
+        msg.pt.y    = msg16->pt.y;
         return IsDialogMessageA( hwndDlg32, &msg );
     }
 
