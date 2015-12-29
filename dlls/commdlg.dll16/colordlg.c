@@ -62,6 +62,9 @@ BOOL16 WINAPI ChooseColor16( LPCHOOSECOLOR16 cc16 )
     cc32.lpCustColors = MapSL( cc16->lpCustColors );
     cc32.Flags        = cc16->Flags & ~(CC_ENABLETEMPLATE | CC_ENABLETEMPLATEHANDLE | CC_ENABLEHOOK);
     cc32.lCustData    = cc16->lCustData;
+    cc32.hInstance    = NULL;
+    cc32.lpfnHook     = NULL;
+    cc32.lpTemplateName = NULL;
 
     if (cc16->Flags & (CC_ENABLETEMPLATE | CC_ENABLETEMPLATEHANDLE))
         FIXME( "custom templates no longer supported, using default\n" );
