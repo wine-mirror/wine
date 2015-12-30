@@ -422,9 +422,10 @@ static const unsigned int message_unicode_flags[] =
 };
 
 /* check whether a given message type includes pointers */
-static inline BOOL is_pointer_message( UINT message )
+static inline BOOL is_pointer_message( UINT message, WPARAM wparam )
 {
     if (message >= 8*sizeof(message_pointer_flags)) return FALSE;
+    if (message == WM_DEVICECHANGE && !(wparam & 0x8000)) return FALSE;
     return (message_pointer_flags[message / 32] & SET(message)) != 0;
 }
 
@@ -3490,7 +3491,7 @@ BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 {
     struct send_message_info info;
 
-    if (is_pointer_message(msg))
+    if (is_pointer_message( msg, wparam ))
     {
         SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
@@ -3515,7 +3516,7 @@ BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
 {
     struct send_message_info info;
 
-    if (is_pointer_message(msg))
+    if (is_pointer_message( msg, wparam ))
     {
         SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
@@ -3540,7 +3541,7 @@ BOOL WINAPI SendMessageCallbackA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 {
     struct send_message_info info;
 
-    if (is_pointer_message(msg))
+    if (is_pointer_message( msg, wparam ))
     {
         SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
@@ -3568,7 +3569,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 {
     struct send_message_info info;
 
-    if (is_pointer_message(msg))
+    if (is_pointer_message( msg, wparam ))
     {
         SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
@@ -3638,7 +3639,7 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     struct send_message_info info;
 
-    if (is_pointer_message( msg ))
+    if (is_pointer_message( msg, wparam ))
     {
         SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;
@@ -3687,7 +3688,7 @@ BOOL WINAPI PostThreadMessageW( DWORD thread, UINT msg, WPARAM wparam, LPARAM lp
 {
     struct send_message_info info;
 
-    if (is_pointer_message( msg ))
+    if (is_pointer_message( msg, wparam ))
     {
         SetLastError( ERROR_MESSAGE_SYNC_ONLY );
         return FALSE;

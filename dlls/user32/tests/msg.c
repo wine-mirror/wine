@@ -4553,13 +4553,11 @@ static void test_WM_DEVICECHANGE(HWND hwnd)
         }
         else
         {
-            todo_wine {
-                ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
-                ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjects returned %x\n", ret);
-                memset(&msg, 0, sizeof(msg));
-                ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should succeed\n");
-                ok(msg.message == WM_DEVICECHANGE, "got %04x instead of WM_DEVICECHANGE\n", msg.message);
-            }
+            ret = MsgWaitForMultipleObjects(0, NULL, FALSE, 0, QS_POSTMESSAGE);
+            ok(ret == WAIT_OBJECT_0, "MsgWaitForMultipleObjects returned %x\n", ret);
+            memset(&msg, 0, sizeof(msg));
+            ok(PeekMessageA(&msg, 0, 0, 0, PM_REMOVE), "PeekMessage should succeed\n");
+            ok(msg.message == WM_DEVICECHANGE, "got %04x instead of WM_DEVICECHANGE\n", msg.message);
         }
     }
 }
