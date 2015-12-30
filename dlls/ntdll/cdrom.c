@@ -667,7 +667,7 @@ static NTSTATUS CDROM_Open(int fd, int* dev)
     NTSTATUS ret = STATUS_SUCCESS;
     int         empty = -1;
 
-    fstat(fd, &st);
+    if (fstat(fd, &st) == -1) return FILE_GetNtStatus();
 
     RtlEnterCriticalSection( &cache_section );
     for (*dev = 0; *dev < MAX_CACHE_ENTRIES; (*dev)++)
@@ -2834,7 +2834,7 @@ NTSTATUS CDROM_DeviceIoControl(HANDLE hDevice,
 {
     DWORD       sz = 0;
     NTSTATUS    status = STATUS_SUCCESS;
-    int fd, needs_close, dev;
+    int fd, needs_close, dev = 0;
 
     TRACE("%p %s %p %d %p %d %p\n",
           hDevice, iocodex(dwIoControlCode), lpInBuffer, nInBufferSize,
