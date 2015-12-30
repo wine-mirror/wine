@@ -958,6 +958,7 @@ then
                            do
                                case "$1" in
                                  *-gcc) CROSSTARGET=`expr "$1" : '\(.*\)-gcc'` ;;
+                                 *-clang) CROSSTARGET=`expr "$1" : '\(.*\)-clang'` ;;
                                esac
                                shift
                            done],
