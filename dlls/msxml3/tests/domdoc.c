@@ -4822,7 +4822,8 @@ if (0)
 
 static void test_cloneNode(void )
 {
-    IXMLDOMDocument *doc, *doc2;
+    IXMLDOMDocument2 *doc, *doc_clone;
+    IXMLDOMDocument *doc2;
     VARIANT_BOOL b;
     IXMLDOMNodeList *pList;
     IXMLDOMNamedNodeMap *mapAttr;
@@ -4831,14 +4832,52 @@ static void test_cloneNode(void )
     IXMLDOMNode *node, *attr;
     IXMLDOMNode *node_clone;
     IXMLDOMNode *node_first;
+    VARIANT v;
     HRESULT hr;
 
-    doc = create_document(&IID_IXMLDOMDocument);
+    doc = create_document(&IID_IXMLDOMDocument2);
 
-    ole_check(IXMLDOMDocument_loadXML(doc, _bstr_(complete4A), &b));
+    hr = IXMLDOMDocument2_loadXML(doc, _bstr_(complete4A), &b);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(b == VARIANT_TRUE, "failed to load XML string\n");
 
-    hr = IXMLDOMDocument_selectSingleNode(doc, _bstr_("lc/pr"), &node);
+    hr = IXMLDOMDocument2_getProperty(doc, _bstr_("SelectionLanguage"), &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("XSLPattern")), "got prop value %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    V_BSTR(&v) = _bstr_("XPath");
+    V_VT(&v) = VT_BSTR;
+    hr = IXMLDOMDocument2_setProperty(doc, _bstr_("SelectionLanguage"), v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    VariantClear(&v);
+
+    /* clone document node */
+    hr = IXMLDOMDocument2_cloneNode(doc, VARIANT_TRUE, &node);
+    ok( hr == S_OK, "ret %08x\n", hr );
+    ok( node != NULL, "node %p\n", node );
+
+    hr = IXMLDOMNode_get_childNodes(node, &pList);
+    ok( hr == S_OK, "ret %08x\n", hr );
+    length = 0;
+    hr = IXMLDOMNodeList_get_length(pList, &length);
+    ok( hr == S_OK, "ret %08x\n", hr );
+    ok(length == 2, "got %d\n", length);
+    IXMLDOMNodeList_Release(pList);
+
+    hr = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMDocument2, (void**)&doc_clone);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    /* cloned document inherits properties */
+    hr = IXMLDOMDocument2_getProperty(doc_clone, _bstr_("SelectionLanguage"), &v);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(V_BSTR(&v), _bstr_("XPath")), "got prop value %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    IXMLDOMDocument2_Release(doc_clone);
+    IXMLDOMNode_Release(node);
+
+    hr = IXMLDOMDocument2_selectSingleNode(doc, _bstr_("lc/pr"), &node);
     ok( hr == S_OK, "ret %08x\n", hr );
     ok( node != NULL, "node %p\n", node );
 
@@ -4926,7 +4965,7 @@ static void test_cloneNode(void )
     IXMLDOMNode_Release(node_clone);
 
     IXMLDOMNode_Release(node);
-    IXMLDOMDocument_Release(doc);
+    IXMLDOMDocument2_Release(doc);
     free_bstrs();
 }
 
