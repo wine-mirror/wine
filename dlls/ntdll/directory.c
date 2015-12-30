@@ -993,7 +993,7 @@ static void add_fs_cache( dev_t dev, fsid_t fsid, BOOLEAN case_sensitive )
  */
 static int get_dir_case_sensitivity_attr( const char *dir )
 {
-    char *mntpoint = NULL;
+    char *mntpoint;
     struct attrlist attr;
     struct vol_caps caps;
     struct get_fsid get_fsid;

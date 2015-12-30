@@ -748,8 +748,8 @@ static NTSTATUS CDROM_GetDeviceNumber(int dev, STORAGE_DEVICE_NUMBER* devnum)
 static NTSTATUS CDROM_GetDriveGeometry(int dev, int fd, DISK_GEOMETRY* dg)
 {
   CDROM_TOC     toc;
-  NTSTATUS      ret = 0;
-  int           fsize = 0;
+  NTSTATUS      ret;
+  int           fsize;
 
   if ((ret = CDROM_ReadTOC(dev, fd, &toc)) != 0) return ret;
 
@@ -2432,7 +2432,7 @@ static NTSTATUS DVD_ReadKey(int fd, PDVD_COPY_PROTECT_KEY key)
 static NTSTATUS DVD_GetRegion(int fd, PDVD_REGION region)
 {
 #if defined(linux)
-    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    NTSTATUS ret;
     dvd_struct dvd;
     dvd_authinfo auth_info;
 
@@ -2460,7 +2460,7 @@ static NTSTATUS DVD_GetRegion(int fd, PDVD_REGION region)
     dk_dvd_read_structure_t dvd;
     DVDRegionPlaybackControlInfo rpc;
     DVDCopyrightInfo copy;
-    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    NTSTATUS ret;
 
     key.format = kDVDKeyFormatRegionState;
     key.keyClass = kDVDKeyClassCSS_CPPM_CPRM;
@@ -2636,7 +2636,7 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
 	break;
     }
 #elif defined(__APPLE__)
-    NTSTATUS ret = STATUS_NOT_SUPPORTED;
+    NTSTATUS ret;
     dk_dvd_read_structure_t dvdrs;
     union
     {
@@ -2771,7 +2771,7 @@ static NTSTATUS DVD_ReadStructure(int dev, const DVD_READ_STRUCTURE *structure, 
 static NTSTATUS GetInquiryData(int fd, PSCSI_ADAPTER_BUS_INFO BufferOut, DWORD OutBufferSize)
 {
 #ifdef HAVE_SG_IO_HDR_T_INTERFACE_ID
-    PSCSI_INQUIRY_DATA pInquiryData = NULL;
+    PSCSI_INQUIRY_DATA pInquiryData;
     UCHAR sense_buffer[32];
     int iochk, version;
     sg_io_hdr_t iocmd;

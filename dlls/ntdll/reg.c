@@ -532,7 +532,7 @@ NTSTATUS WINAPI NtQueryValueKey( HANDLE handle, const UNICODE_STRING *name,
 {
     NTSTATUS ret;
     UCHAR *data_ptr;
-    unsigned int fixed_size = 0, min_size = 0;
+    unsigned int fixed_size, min_size;
 
     TRACE( "(%p,%s,%d,%p,%d)\n", handle, debugstr_us(name), info_class, info, length );
 

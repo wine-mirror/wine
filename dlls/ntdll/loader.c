@@ -1865,7 +1865,7 @@ static NTSTATUS load_builtin_dll( LPCWSTR load_path, LPCWSTR path, HANDLE file,
     char error[256], dllname[MAX_PATH];
     const WCHAR *name, *p;
     DWORD len, i;
-    void *handle = NULL;
+    void *handle;
     struct builtin_load_info info, *prev_info;
 
     /* Fix the name in case we have a full path and extension */

@@ -463,7 +463,7 @@ NTSTATUS WINAPI RtlCreateUserThread( HANDLE process, const SECURITY_DESCRIPTOR *
     pthread_t pthread_id;
     pthread_attr_t attr;
     struct ntdll_thread_data *thread_data;
-    struct startup_info *info = NULL;
+    struct startup_info *info;
     HANDLE handle = 0, actctx = 0;
     TEB *teb = NULL;
     DWORD tid = 0;
@@ -732,7 +732,7 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
 {
     NTSTATUS ret;
     DWORD dummy, i;
-    BOOL self = FALSE;
+    BOOL self;
 
 #ifdef __i386__
     /* on i386 debug registers always require a server call */
@@ -746,6 +746,8 @@ NTSTATUS WINAPI NtSetContextThread( HANDLE handle, const CONTEXT *context )
                 ntdll_get_thread_data()->dr6 == context->Dr6 &&
                 ntdll_get_thread_data()->dr7 == context->Dr7);
     }
+#else
+    self = FALSE;
 #endif
 
     if (!self)

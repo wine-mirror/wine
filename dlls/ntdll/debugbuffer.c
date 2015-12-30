@@ -91,7 +91,7 @@ static void dump_DEBUG_BUFFER(const DEBUG_BUFFER *iBuf)
 
 PDEBUG_BUFFER WINAPI RtlCreateQueryDebugBuffer(IN ULONG iSize, IN BOOLEAN iEventPair) 
 {
-   PDEBUG_BUFFER oBuf = NULL;
+   PDEBUG_BUFFER oBuf;
    FIXME("(%d, %d): stub\n", iSize, iEventPair);
    if (iSize < sizeof(DEBUG_BUFFER)) {
      iSize = sizeof(DEBUG_BUFFER);
