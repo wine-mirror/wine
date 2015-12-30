@@ -171,21 +171,21 @@ LIBS="$ac_wine_check_funcs_save_LIBS"])
 
 dnl **** Check for a mingw program, trying the various mingw prefixes ****
 dnl
-dnl Usage: WINE_CHECK_MINGW_PROG(variable,prog,[value-if-not-found],[path])
+dnl Usage: WINE_CHECK_MINGW_PROG(variable,[value-if-not-found],[path])
 dnl
 AC_DEFUN([WINE_CHECK_MINGW_PROG],
 [case "$host_cpu" in
   i[[3456789]]86*)
     ac_prefix_list="m4_foreach([ac_wine_prefix],[w64-mingw32, pc-mingw32, mingw32msvc, mingw32],
-                        m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-ac_wine_prefix-$2 ]))
-                        mingw32-$2" ;;
+                        m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-ac_wine_prefix-gcc ]))
+                        mingw32-gcc" ;;
   x86_64)
     ac_prefix_list="m4_foreach([ac_wine_prefix],[pc-mingw32, w64-mingw32, mingw32msvc],
-                        m4_foreach([ac_wine_cpu],[x86_64,amd64],[ac_wine_cpu-ac_wine_prefix-$2 ]))" ;;
+                        m4_foreach([ac_wine_cpu],[x86_64,amd64],[ac_wine_cpu-ac_wine_prefix-gcc ]))" ;;
   *)
     ac_prefix_list="" ;;
 esac
-AC_CHECK_PROGS([$1],[$ac_prefix_list],[$3],[$4])])
+AC_CHECK_PROGS([$1],[$ac_prefix_list],[$2],[$3])])
 
 
 dnl **** Define helper functions for creating config.status files ****

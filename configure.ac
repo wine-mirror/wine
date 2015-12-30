@@ -944,7 +944,7 @@ dnl Check for cross compiler to build test programs
 AC_SUBST(CROSSTARGET,"")
 if test "$cross_compiling" = "no" -a "x$enable_tests" != xno -a "$LIBEXT" != "dll"
 then
-    WINE_CHECK_MINGW_PROG(CROSSCC,gcc,false)
+    WINE_CHECK_MINGW_PROG(CROSSCC,false)
     if test "$CROSSCC" != "false"
     then
         ac_save_CC="$CC"
