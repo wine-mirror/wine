@@ -661,69 +661,73 @@ HRESULT WINAPI RevokeDragDrop(HWND hwnd)
 
 /***********************************************************************
  *           OleRegGetUserType (OLE32.@)
- *
- * This implementation of OleRegGetUserType ignores the dwFormOfType
- * parameter and always returns the full name of the object. This is
- * not too bad since this is the case for many objects because of the
- * way they are registered.
  */
-HRESULT WINAPI OleRegGetUserType(
-	REFCLSID clsid,
-	DWORD dwFormOfType,
-	LPOLESTR* pszUserType)
+HRESULT WINAPI OleRegGetUserType(REFCLSID clsid, DWORD form, LPOLESTR *usertype)
 {
-  DWORD   dwKeyType;
-  DWORD   cbData;
-  HKEY    clsidKey;
+  static const WCHAR auxusertypeW[] = {'A','u','x','U','s','e','r','T','y','p','e','\\','%','d',0};
+  DWORD valuetype, valuelen;
+  WCHAR auxkeynameW[16];
+  HKEY    usertypekey;
   HRESULT hres;
   LONG    ret;
 
-  TRACE("(%s, %d, %p)\n", debugstr_guid(clsid), dwFormOfType, pszUserType);
+  TRACE("(%s, %u, %p)\n", debugstr_guid(clsid), form, usertype);
 
-  if (!pszUserType)
+  if (!usertype)
     return E_INVALIDARG;
 
-  *pszUserType = NULL;
+  *usertype = NULL;
 
-  hres = COM_OpenKeyForCLSID(clsid, NULL, KEY_READ, &clsidKey);
+  /* Return immediately if it's not registered. */
+  hres = COM_OpenKeyForCLSID(clsid, NULL, KEY_READ, &usertypekey);
   if (FAILED(hres))
     return hres;
 
-  /*
-   * Retrieve the size of the name string.
-   */
-  cbData = 0;
+  valuelen = 0;
 
-  if (RegQueryValueExW(clsidKey, emptyW, NULL, &dwKeyType, NULL, &cbData))
+  /* Try additional types if requested. If they don't exist fall back to USERCLASSTYPE_FULL. */
+  if (form != USERCLASSTYPE_FULL)
   {
-    RegCloseKey(clsidKey);
+    HKEY auxkey;
+
+    sprintfW(auxkeynameW, auxusertypeW, form);
+    if (COM_OpenKeyForCLSID(clsid, auxkeynameW, KEY_READ, &auxkey) == S_OK)
+    {
+      if (!RegQueryValueExW(auxkey, emptyW, NULL, &valuetype, NULL, &valuelen) && valuelen)
+      {
+        RegCloseKey(usertypekey);
+        usertypekey = auxkey;
+      }
+      else
+        RegCloseKey(auxkey);
+    }
+  }
+
+  valuelen = 0;
+  if (RegQueryValueExW(usertypekey, emptyW, NULL, &valuetype, NULL, &valuelen))
+  {
+    RegCloseKey(usertypekey);
     return REGDB_E_READREGDB;
   }
 
-  /*
-   * Allocate a buffer for the registry value.
-   */
-  *pszUserType = CoTaskMemAlloc(cbData);
-
-  if (*pszUserType==NULL)
+  *usertype = CoTaskMemAlloc(valuelen);
+  if (!*usertype)
   {
-    RegCloseKey(clsidKey);
+    RegCloseKey(usertypekey);
     return E_OUTOFMEMORY;
   }
 
-  ret = RegQueryValueExW(clsidKey,
+  ret = RegQueryValueExW(usertypekey,
 			  emptyW,
 			  NULL,
-			  &dwKeyType,
-			  (LPBYTE) *pszUserType,
-			  &cbData);
-
-  RegCloseKey(clsidKey);
-
+			  &valuetype,
+			  (LPBYTE)*usertype,
+			  &valuelen);
+  RegCloseKey(usertypekey);
   if (ret != ERROR_SUCCESS)
   {
-    CoTaskMemFree(*pszUserType);
-    *pszUserType = NULL;
+    CoTaskMemFree(*usertype);
+    *usertype = NULL;
     return REGDB_E_READREGDB;
   }
 

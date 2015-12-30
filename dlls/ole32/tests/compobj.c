@@ -2229,11 +2229,29 @@ static void test_OleRegGetUserType(void)
 {
     static const WCHAR stdfont_usertypeW[] = {'S','t','a','n','d','a','r','d',' ','F','o','n','t',0};
     static const WCHAR stdfont2_usertypeW[] = {'C','L','S','I','D','_','S','t','d','F','o','n','t',0};
+    static const WCHAR clsidkeyW[] = {'C','L','S','I','D',0};
+    static const WCHAR defvalueW[] = {'D','e','f','a','u','l','t',' ','N','a','m','e',0};
+    static const WCHAR auxvalue0W[] = {'A','u','x',' ','N','a','m','e',' ','0',0};
+    static const WCHAR auxvalue2W[] = {'A','u','x',' ','N','a','m','e',' ','2',0};
+    static const WCHAR auxvalue3W[] = {'A','u','x',' ','N','a','m','e',' ','3',0};
+    static const WCHAR auxvalue4W[] = {'A','u','x',' ','N','a','m','e',' ','4',0};
+
+    static const char auxvalues[][16] = {
+        "Aux Name 0",
+        "Aux Name 1",
+        "Aux Name 2",
+        "Aux Name 3",
+        "Aux Name 4"
+    };
+
+    HKEY clsidhkey, hkey, auxhkey, classkey;
+    DWORD form, ret, disposition;
+    WCHAR clsidW[39];
     ULONG_PTR cookie;
     HANDLE handle;
     HRESULT hr;
     WCHAR *str;
-    DWORD form;
+    int i;
 
     for (form = 0; form <= USERCLASSTYPE_APPNAME+1; form++) {
         hr = OleRegGetUserType(&CLSID_Testclass, form, NULL);
@@ -2273,7 +2291,93 @@ static void test_OleRegGetUserType(void)
         pDeactivateActCtx(0, cookie);
         pReleaseActCtx(handle);
     }
+
+    /* test using registered CLSID */
+    StringFromGUID2(&CLSID_non_existent, clsidW, sizeof(clsidW)/sizeof(clsidW[0]));
+
+    ret = RegCreateKeyExW(HKEY_CLASSES_ROOT, clsidkeyW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &clsidhkey, &disposition);
+    if (ret == ERROR_ACCESS_DENIED)
+    {
+        skip("Failed to create test key, skipping some of OleRegGetUserType() tests.\n");
+        return;
+    }
+
+    ok(!ret, "failed to create a key %d, error %d\n", ret, GetLastError());
+
+    ret = RegCreateKeyExW(clsidhkey, clsidW, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &classkey, NULL);
+    ok(!ret, "failed to create a key %d, error %d\n", ret, GetLastError());
+
+    ret = RegSetValueExW(classkey, NULL, 0, REG_SZ, (const BYTE*)defvalueW, sizeof(defvalueW));
+    ok(!ret, "got %d, error %d\n", ret, GetLastError());
+
+    ret = RegCreateKeyExA(classkey, "AuxUserType", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &auxhkey, NULL);
+    ok(!ret, "got %d, error %d\n", ret, GetLastError());
+
+    /* populate AuxUserType */
+    for (i = 0; i <= 4; i++) {
+        char name[16];
+
+        sprintf(name, "AuxUserType\\%d", i);
+        ret = RegCreateKeyExA(classkey, name, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL);
+        ok(!ret, "got %d, error %d\n", ret, GetLastError());
+
+        ret = RegSetValueExA(hkey, NULL, 0, REG_SZ, (const BYTE*)auxvalues[i], strlen(auxvalues[i]));
+        ok(!ret, "got %d, error %d\n", ret, GetLastError());
+        RegCloseKey(hkey);
+    }
+
+    str = NULL;
+    hr = OleRegGetUserType(&CLSID_non_existent, 0, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, auxvalue0W), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    str = NULL;
+    hr = OleRegGetUserType(&CLSID_non_existent, USERCLASSTYPE_FULL, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, defvalueW), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    str = NULL;
+    hr = OleRegGetUserType(&CLSID_non_existent, USERCLASSTYPE_SHORT, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, auxvalue2W), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    str = NULL;
+    hr = OleRegGetUserType(&CLSID_non_existent, USERCLASSTYPE_APPNAME, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, auxvalue3W), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    str = NULL;
+    hr = OleRegGetUserType(&CLSID_non_existent, USERCLASSTYPE_APPNAME+1, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, auxvalue4W), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    str = NULL;
+    hr = OleRegGetUserType(&CLSID_non_existent, USERCLASSTYPE_APPNAME+2, &str);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(!lstrcmpW(str, defvalueW), "got %s\n", wine_dbgstr_w(str));
+    CoTaskMemFree(str);
+
+    /* registry cleanup */
+    for (i = 0; i <= 4; i++)
+    {
+        char name[2];
+        sprintf(name, "%d", i);
+        RegDeleteKeyA(auxhkey, name);
+    }
+    RegCloseKey(auxhkey);
+    RegDeleteKeyA(classkey, "AuxUserType");
+    RegCloseKey(classkey);
+    RegDeleteKeyW(clsidhkey, clsidW);
+    RegCloseKey(clsidhkey);
+    if (disposition == REG_CREATED_NEW_KEY)
+        RegDeleteKeyA(HKEY_CLASSES_ROOT, "CLSID");
 }
+
 static void test_CoCreateGuid(void)
 {
     HRESULT hr;
