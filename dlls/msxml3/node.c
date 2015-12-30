@@ -778,8 +778,8 @@ static xmlChar* do_get_text(xmlNodePtr node, BOOL trim, DWORD *first, DWORD *las
                         xmlFree(tmp);
                         tmp = NULL;
                     }
-                    break;
                 }
+                break;
             case XML_CDATA_SECTION_NODE:
             case XML_ENTITY_REF_NODE:
             case XML_ENTITY_NODE:
