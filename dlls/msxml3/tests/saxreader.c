@@ -298,7 +298,10 @@ static inline void flush_sequence(struct call_sequence **seg, int sequence_index
             SysFreeString(call_seq->sequence[i].attributes[j].uriW);
             SysFreeString(call_seq->sequence[i].attributes[j].localW);
             SysFreeString(call_seq->sequence[i].attributes[j].qnameW);
+            SysFreeString(call_seq->sequence[i].attributes[j].valueW);
         }
+        HeapFree(GetProcessHeap(), 0, call_seq->sequence[i].attributes);
+        call_seq->sequence[i].attr_count = 0;
 
         SysFreeString(call_seq->sequence[i].arg1W);
         SysFreeString(call_seq->sequence[i].arg2W);
