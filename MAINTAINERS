@@ -266,3 +266,9 @@ F:	*/
 Stable Branch
 M:	Michael Stefaniuc <mstefani@winehq.org>
 W:	http://wiki.winehq.org/StableRules
+
+Staging Branch
+M:	Sebastian Lackner <sebastian@fds-team.de>
+M:	Michael Müller <michael@fds-team.de>
+P:	Erich E. Hoover <erich.e.hoover@wine-staging.com>
+W:	https://wine-staging.com/
