@@ -1684,6 +1684,7 @@ static void test_XMLHTTP(void)
     hr = GetHGlobalFromStream((IStream*)V_UNKNOWN(&varbody), &g);
     EXPECT_HR(hr, S_OK);
     ok(g != NULL, "got %p\n", g);
+    VariantClear(&varbody);
 
     IDispatch_Release(event);
 
