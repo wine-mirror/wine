@@ -1316,6 +1316,7 @@ static void test_XDR_datatypes(void)
             EXPECT_HR(hr, S_FALSE);
             ok(V_VT(&type) == VT_NULL, "%s: got type %i\n", ptr->query, V_VT(&type));
         }
+        VariantClear(&type);
 
         VariantClear(&v);
         hr = IXMLDOMNode_get_nodeTypedValue(node, &v);
