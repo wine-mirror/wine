@@ -6303,6 +6303,7 @@ static void test_GetCharWidth32(void)
 
 static void test_fake_bold_font(void)
 {
+    static const MAT2 x2_mat = { {0,2}, {0,0}, {0,0}, {0,2} };
     HDC hdc;
     LOGFONTA lf;
     BOOL ret;
@@ -6310,8 +6311,10 @@ static void test_fake_bold_font(void)
         TEXTMETRICA tm;
         ABC abc;
         INT w;
+        GLYPHMETRICS gm;
     } data[2];
     int i;
+    DWORD r;
 
     if (!pGetCharWidth32A || !pGetCharABCWidthsA) {
         win_skip("GetCharWidth32A/GetCharABCWidthA is not available on this platform\n");
@@ -6338,6 +6341,8 @@ static void test_fake_bold_font(void)
         ret = pGetCharABCWidthsA(hdc, 0x76, 0x76, &data[i].abc);
         ok(ret, "got %d\n", ret);
         data[i].w = data[i].abc.abcA + data[i].abc.abcB + data[i].abc.abcC;
+        r = GetGlyphOutlineA(hdc, 0x76, GGO_METRICS, &data[i].gm, 0, NULL, &x2_mat);
+        ok(r != GDI_ERROR, "got %d\n", ret);
 
         SelectObject(hdc, hfont_old);
         DeleteObject(hfont);
@@ -6360,6 +6365,10 @@ static void test_fake_bold_font(void)
     ok(data[0].w + 1 == data[1].w,
        "expected %d, got %d\n", data[0].w + 1, data[1].w);
 
+    todo_wine ok(data[0].gm.gmCellIncX + 1 == data[1].gm.gmCellIncX,
+       "expected %d, got %d\n", data[0].gm.gmCellIncX + 1, data[1].gm.gmCellIncX);
+    ok(data[0].gm.gmCellIncY == data[1].gm.gmCellIncY,
+       "expected %d, got %d\n", data[0].gm.gmCellIncY, data[1].gm.gmCellIncY);
 }
 
 static void test_bitmap_font_glyph_index(void)
