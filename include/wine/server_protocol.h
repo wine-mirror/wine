@@ -4222,6 +4222,13 @@ struct set_caret_info_reply
 #define SET_CARET_POS        0x01
 #define SET_CARET_HIDE       0x02
 #define SET_CARET_STATE      0x04
+enum caret_state
+{
+    CARET_STATE_OFF,
+    CARET_STATE_ON,
+    CARET_STATE_TOGGLE,
+    CARET_STATE_ON_IF_MOVED
+};
 
 
 
@@ -6157,6 +6164,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 500
+#define SERVER_PROTOCOL_VERSION 501
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

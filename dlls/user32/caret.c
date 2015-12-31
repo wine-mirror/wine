@@ -86,7 +86,7 @@ static void CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT_PTR id, DWORD cti
         req->x      = 0;
         req->y      = 0;
         req->hide   = 0;
-        req->state  = -1;  /* toggle current state */
+        req->state  = CARET_STATE_TOGGLE;
         if ((ret = !wine_server_call( req )))
         {
             hwnd      = wine_server_ptr_handle( reply->full_handle );
@@ -256,7 +256,7 @@ BOOL WINAPI SetCaretPos( INT x, INT y )
         req->x      = x;
         req->y      = y;
         req->hide   = 0;
-        req->state  = 1;
+        req->state  = CARET_STATE_ON_IF_MOVED;
         if ((ret = !wine_server_call_err( req )))
         {
             hwnd      = wine_server_ptr_handle( reply->full_handle );
@@ -300,7 +300,7 @@ BOOL WINAPI HideCaret( HWND hwnd )
         req->x      = 0;
         req->y      = 0;
         req->hide   = 1;
-        req->state  = 0;
+        req->state  = CARET_STATE_OFF;
         if ((ret = !wine_server_call_err( req )))
         {
             hwnd      = wine_server_ptr_handle( reply->full_handle );
@@ -339,7 +339,7 @@ BOOL WINAPI ShowCaret( HWND hwnd )
         req->x      = 0;
         req->y      = 0;
         req->hide   = -1;
-        req->state  = 1;
+        req->state  = CARET_STATE_ON;
         if ((ret = !wine_server_call_err( req )))
         {
             hwnd      = wine_server_ptr_handle( reply->full_handle );

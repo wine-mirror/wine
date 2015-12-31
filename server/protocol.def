@@ -2968,7 +2968,7 @@ enum coords_relative
     int            x;             /* caret x position */
     int            y;             /* caret y position */
     int            hide;          /* increment for hide count (can be negative to show it) */
-    int            state;         /* caret state (1=on, 0=off, -1=toggle current state) */
+    int            state;         /* caret state (see below) */
 @REPLY
     user_handle_t  full_handle;   /* handle to the current caret window */
     rectangle_t    old_rect;      /* previous caret rectangle */
@@ -2978,6 +2978,13 @@ enum coords_relative
 #define SET_CARET_POS        0x01  /* set the caret position from x,y */
 #define SET_CARET_HIDE       0x02  /* increment the caret hide count */
 #define SET_CARET_STATE      0x04  /* set the caret on/off state */
+enum caret_state
+{
+    CARET_STATE_OFF,        /* off */
+    CARET_STATE_ON,         /* on */
+    CARET_STATE_TOGGLE,     /* toggle current state */
+    CARET_STATE_ON_IF_MOVED /* on if the position differs, unchanged otherwise */
+};
 
 
 /* Set a window hook */
