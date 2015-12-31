@@ -6304,12 +6304,14 @@ static void test_GetCharWidth32(void)
 static void test_fake_bold_font(void)
 {
     HDC hdc;
-    HFONT hfont, hfont_old;
     LOGFONTA lf;
     BOOL ret;
-    TEXTMETRICA tm[2];
-    ABC abc[2];
-    INT w[2];
+    struct glyph_data {
+        TEXTMETRICA tm;
+        ABC abc;
+        INT w;
+    } data[2];
+    int i;
 
     if (!pGetCharWidth32A || !pGetCharABCWidthsA) {
         win_skip("GetCharWidth32A/GetCharABCWidthA is not available on this platform\n");
@@ -6319,44 +6321,44 @@ static void test_fake_bold_font(void)
     /* Test outline font */
     memset(&lf, 0, sizeof(lf));
     strcpy(lf.lfFaceName, "Wingdings");
-    lf.lfWeight = FW_NORMAL;
     lf.lfCharSet = SYMBOL_CHARSET;
-    hfont = CreateFontIndirectA(&lf);
 
     hdc = GetDC(NULL);
-    hfont_old = SelectObject(hdc, hfont);
 
-    /* base metrics */
-    ret = GetTextMetricsA(hdc, &tm[0]);
-    ok(ret, "got %d\n", ret);
-    ret = pGetCharABCWidthsA(hdc, 0x76, 0x76, &abc[0]);
-    ok(ret, "got %d\n", ret);
+    for (i = 0; i <= 1; i++)
+    {
+        HFONT hfont, hfont_old;
 
-    lf.lfWeight = FW_BOLD;
-    hfont = CreateFontIndirectA(&lf);
-    DeleteObject(SelectObject(hdc, hfont));
+        lf.lfWeight = i ? FW_BOLD : FW_NORMAL;
+        hfont = CreateFontIndirectA(&lf);
+        hfont_old = SelectObject(hdc, hfont);
 
-    /* bold metrics */
-    ret = GetTextMetricsA(hdc, &tm[1]);
-    ok(ret, "got %d\n", ret);
-    ret = pGetCharABCWidthsA(hdc, 0x76, 0x76, &abc[1]);
-    ok(ret, "got %d\n", ret);
+        ret = GetTextMetricsA(hdc, &data[i].tm);
+        ok(ret, "got %d\n", ret);
+        ret = pGetCharABCWidthsA(hdc, 0x76, 0x76, &data[i].abc);
+        ok(ret, "got %d\n", ret);
+        data[i].w = data[i].abc.abcA + data[i].abc.abcB + data[i].abc.abcC;
 
-    DeleteObject(SelectObject(hdc, hfont_old));
+        SelectObject(hdc, hfont_old);
+        DeleteObject(hfont);
+    }
     ReleaseDC(NULL, hdc);
 
     /* compare results (outline) */
-    ok(tm[0].tmHeight == tm[1].tmHeight, "expected %d, got %d\n", tm[0].tmHeight, tm[1].tmHeight);
-    ok(tm[0].tmAscent == tm[1].tmAscent, "expected %d, got %d\n", tm[0].tmAscent, tm[1].tmAscent);
-    ok(tm[0].tmDescent == tm[1].tmDescent, "expected %d, got %d\n", tm[0].tmDescent, tm[1].tmDescent);
-    ok((tm[0].tmAveCharWidth + 1) == tm[1].tmAveCharWidth,
-       "expected %d, got %d\n", tm[0].tmAveCharWidth + 1, tm[1].tmAveCharWidth);
-    ok((tm[0].tmMaxCharWidth + 1) == tm[1].tmMaxCharWidth,
-       "expected %d, got %d\n", tm[0].tmMaxCharWidth + 1, tm[1].tmMaxCharWidth);
-    ok(tm[0].tmOverhang == tm[1].tmOverhang, "expected %d, got %d\n", tm[0].tmOverhang, tm[1].tmOverhang);
-    w[0] = abc[0].abcA + abc[0].abcB + abc[0].abcC;
-    w[1] = abc[1].abcA + abc[1].abcB + abc[1].abcC;
-    ok((w[0] + 1) == w[1], "expected %d, got %d\n", w[0] + 1, w[1]);
+    ok(data[0].tm.tmHeight == data[1].tm.tmHeight,
+       "expected %d, got %d\n", data[0].tm.tmHeight, data[1].tm.tmHeight);
+    ok(data[0].tm.tmAscent == data[1].tm.tmAscent,
+       "expected %d, got %d\n", data[0].tm.tmAscent, data[1].tm.tmAscent);
+    ok(data[0].tm.tmDescent == data[1].tm.tmDescent,
+       "expected %d, got %d\n", data[0].tm.tmDescent, data[1].tm.tmDescent);
+    ok(data[0].tm.tmAveCharWidth + 1 == data[1].tm.tmAveCharWidth,
+       "expected %d, got %d\n", data[0].tm.tmAveCharWidth + 1, data[1].tm.tmAveCharWidth);
+    ok(data[0].tm.tmMaxCharWidth + 1 == data[1].tm.tmMaxCharWidth,
+       "expected %d, got %d\n", data[0].tm.tmMaxCharWidth + 1, data[1].tm.tmMaxCharWidth);
+    ok(data[0].tm.tmOverhang == data[1].tm.tmOverhang,
+       "expected %d, got %d\n", data[0].tm.tmOverhang, data[1].tm.tmOverhang);
+    ok(data[0].w + 1 == data[1].w,
+       "expected %d, got %d\n", data[0].w + 1, data[1].w);
 
 }
 
