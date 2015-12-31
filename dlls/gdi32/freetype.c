@@ -1942,9 +1942,17 @@ static inline DWORD get_ntm_flags( FT_Face ft_face )
 {
     DWORD flags = 0;
     FT_ULong table_size = 0;
+    FT_WinFNT_HeaderRec winfnt_header;
 
     if (ft_face->style_flags & FT_STYLE_FLAG_ITALIC) flags |= NTM_ITALIC;
     if (ft_face->style_flags & FT_STYLE_FLAG_BOLD)   flags |= NTM_BOLD;
+
+    /* fixup the flag for our fake-bold implementation. */
+    if (!FT_IS_SCALABLE( ft_face ) &&
+        !pFT_Get_WinFNT_Header( ft_face, &winfnt_header ) &&
+        winfnt_header.weight > FW_NORMAL )
+        flags |= NTM_BOLD;
+
     if (flags == 0) flags = NTM_REGULAR;
 
     if (!pFT_Load_Sfnt_Table( ft_face, FT_MAKE_TAG( 'C','F','F',' ' ), 0, NULL, &table_size ))
