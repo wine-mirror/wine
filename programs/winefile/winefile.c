@@ -4214,7 +4214,7 @@ static void InitInstance(HINSTANCE hinstance)
 	wcChild.cbClsExtra    = 0;
 	wcChild.cbWndExtra    = 0;
 	wcChild.hInstance     = hinstance;
-	wcChild.hIcon         = 0;
+	wcChild.hIcon         = LoadIconW(hinstance, MAKEINTRESOURCEW(IDI_WINEFILE));
 	wcChild.hCursor       = LoadCursorW(0, (LPCWSTR)IDC_ARROW);
 	wcChild.hbrBackground = 0;
 	wcChild.lpszMenuName  = 0;
