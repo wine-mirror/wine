@@ -8474,16 +8474,16 @@ static void test_shademode(void)
          * this. */
         if (tests[i].todo)
         {
-            todo_wine ok(color0 == tests[i].color0, "Test %u shading has color0 %08x, expected %08x.\n",
+            todo_wine ok(color_match(color0, tests[i].color0, 1), "Test %u shading has color0 %08x, expected %08x.\n",
                     i, color0, tests[i].color0);
-            todo_wine ok(color1 == tests[i].color1, "Test %u shading has color1 %08x, expected %08x.\n",
+            todo_wine ok(color_match(color1, tests[i].color1, 1), "Test %u shading has color1 %08x, expected %08x.\n",
                     i, color1, tests[i].color1);
         }
         else
         {
-            ok(color0 == tests[i].color0, "Test %u shading has color0 %08x, expected %08x.\n",
+            ok(color_match(color0, tests[i].color0, 1), "Test %u shading has color0 %08x, expected %08x.\n",
                     i, color0, tests[i].color0);
-            ok(color1 == tests[i].color1, "Test %u shading has color1 %08x, expected %08x.\n",
+            ok(color_match(color1, tests[i].color1, 1), "Test %u shading has color1 %08x, expected %08x.\n",
                     i, color1, tests[i].color1);
         }
         IDirect3DDevice9_SetVertexShader(device, NULL);
