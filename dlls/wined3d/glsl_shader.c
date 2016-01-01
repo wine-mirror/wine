@@ -2914,7 +2914,7 @@ static void shader_glsl_binop(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_XOR:  op = "^";  break;
         default:
             op = "<unhandled operator>";
-            FIXME("Opcode %#x not yet handled in GLSL\n", ins->handler_idx);
+            FIXME("Opcode %s not yet handled in GLSL.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
             break;
     }
 
@@ -3200,7 +3200,7 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
         case WINED3DSIH_ROUND_NI: instruction = "floor"; break;
         case WINED3DSIH_SQRT: instruction = "sqrt"; break;
         default: instruction = "";
-            FIXME("Opcode %#x not yet handled in GLSL\n", ins->handler_idx);
+            FIXME("Opcode %s not yet handled in GLSL.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
             break;
     }
 
@@ -3389,7 +3389,7 @@ static void shader_glsl_compare(const struct wined3d_shader_instruction *ins)
             case WINED3DSIH_SLT: compare = "lessThan"; break;
             case WINED3DSIH_SGE: compare = "greaterThanEqual"; break;
             default: compare = "";
-                FIXME("Can't handle opcode %#x\n", ins->handler_idx);
+                FIXME("Can't handle opcode %s.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
         }
 
         shader_addline(ins->ctx->buffer, "vec%d(%s(%s, %s)));\n", mask_size, compare,
@@ -3413,7 +3413,7 @@ static void shader_glsl_compare(const struct wined3d_shader_instruction *ins)
                 shader_addline(ins->ctx->buffer, "step(%s, %s));\n", src1_param.param_str, src0_param.param_str);
                 break;
             default:
-                FIXME("Can't handle opcode %#x\n", ins->handler_idx);
+                FIXME("Can't handle opcode %s.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
         }
 
     }
@@ -7941,7 +7941,7 @@ static void shader_glsl_handle_instruction(const struct wined3d_shader_instructi
     /* Unhandled opcode */
     if (!hw_fct)
     {
-        FIXME("Backend can't handle opcode %#x\n", ins->handler_idx);
+        FIXME("Backend can't handle opcode %s.\n", debug_d3dshaderinstructionhandler(ins->handler_idx));
         return;
     }
     hw_fct(ins);

@@ -178,6 +178,14 @@ static const char * const semantic_names[] =
     /* WINED3D_DECL_USAGE_SAMPLE        */ "SAMPLE",
 };
 
+const char *debug_d3dshaderinstructionhandler(enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx)
+{
+    if (handler_idx >= sizeof(shader_opcode_names) / sizeof(*shader_opcode_names))
+        return wine_dbg_sprintf("UNRECOGNIZED(%#x)", handler_idx);
+
+    return shader_opcode_names[handler_idx];
+}
+
 static const char *shader_semantic_name_from_usage(enum wined3d_decl_usage usage)
 {
     if (usage >= sizeof(semantic_names) / sizeof(*semantic_names))
