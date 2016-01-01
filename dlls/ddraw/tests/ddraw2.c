@@ -9054,9 +9054,9 @@ static void test_shademode(void)
          * functionality being available. */
         /* PHONG should be the same as GOURAUD, since no hardware implements
          * this. */
-        ok(color0 == tests[i].color0, "Test %u shading has color0 %08x, expected %08x.\n",
+        ok(compare_color(color0, tests[i].color0, 1), "Test %u shading has color0 %08x, expected %08x.\n",
                 i, color0, tests[i].color0);
-        ok(color1 == tests[i].color1, "Test %u shading has color1 %08x, expected %08x.\n",
+        ok(compare_color(color1, tests[i].color1, 1), "Test %u shading has color1 %08x, expected %08x.\n",
                 i, color1, tests[i].color1);
     }
 
