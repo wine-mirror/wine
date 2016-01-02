@@ -4126,7 +4126,7 @@ HRESULT WINAPI PrintDlgExA(LPPRINTDLGEXA lppd)
         hr = E_FAIL;
 
     lppd->hDevMode = update_devmode_handleA(lppd->hDevMode, dm);
-    if (!hr && lppd->hDevMode) {
+    if (hr == S_OK && lppd->hDevMode) {
         if (lppd->Flags & PD_RETURNDC) {
             lppd->hDC = CreateDCA(dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, dm);
             if (!lppd->hDC)
@@ -4274,7 +4274,7 @@ HRESULT WINAPI PrintDlgExW(LPPRINTDLGEXW lppd)
         hr = E_FAIL;
 
     lppd->hDevMode = update_devmode_handleW(lppd->hDevMode, dm);
-    if (!hr && lppd->hDevMode) {
+    if (hr == S_OK && lppd->hDevMode) {
         if (lppd->Flags & PD_RETURNDC) {
             lppd->hDC = CreateDCW(dbuf->pDriverPath, pbuf->pPrinterName, pbuf->pPortName, dm);
             if (!lppd->hDC)
