@@ -1723,6 +1723,50 @@ static void test_dynamic_unwind(void)
 #endif  /* __x86_64__ */
 
 #if defined(__i386__) || defined(__x86_64__)
+
+static void test_debug_registers(void)
+{
+    static const struct
+    {
+        ULONG_PTR dr0, dr1, dr2, dr3, dr6, dr7;
+    }
+    tests[] =
+    {
+        { 0x42424240, 0, 0x126bb070, 0x0badbad0, 0, 0xffff0115 },
+        { 0x42424242, 0, 0x100f0fe7, 0x0abebabe, 0, 0x115 },
+    };
+    NTSTATUS status;
+    CONTEXT ctx;
+    int i;
+
+    for (i = 0; i < sizeof(tests)/sizeof(tests[0]); i++)
+    {
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+        ctx.Dr0 = tests[i].dr0;
+        ctx.Dr1 = tests[i].dr1;
+        ctx.Dr2 = tests[i].dr2;
+        ctx.Dr3 = tests[i].dr3;
+        ctx.Dr6 = tests[i].dr6;
+        ctx.Dr7 = tests[i].dr7;
+
+        status = pNtSetContextThread(GetCurrentThread(), &ctx);
+        ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %08x\n", status);
+
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.ContextFlags = CONTEXT_DEBUG_REGISTERS;
+
+        status = pNtGetContextThread(GetCurrentThread(), &ctx);
+        ok(status == STATUS_SUCCESS, "NtGetContextThread failed with %08x\n", status);
+        ok(ctx.Dr0 == tests[i].dr0, "test %d: expected %lx, got %lx\n", i, tests[i].dr0, (DWORD_PTR)ctx.Dr0);
+        ok(ctx.Dr1 == tests[i].dr1, "test %d: expected %lx, got %lx\n", i, tests[i].dr1, (DWORD_PTR)ctx.Dr1);
+        ok(ctx.Dr2 == tests[i].dr2, "test %d: expected %lx, got %lx\n", i, tests[i].dr2, (DWORD_PTR)ctx.Dr2);
+        ok(ctx.Dr3 == tests[i].dr3, "test %d: expected %lx, got %lx\n", i, tests[i].dr3, (DWORD_PTR)ctx.Dr3);
+        ok((ctx.Dr6 &  0xf00f) == tests[i].dr6, "test %d: expected %lx, got %lx\n", i, tests[i].dr6, (DWORD_PTR)ctx.Dr6);
+        ok((ctx.Dr7 & ~0xdc00) == tests[i].dr7, "test %d: expected %lx, got %lx\n", i, tests[i].dr7, (DWORD_PTR)ctx.Dr7);
+    }
+}
+
 static DWORD outputdebugstring_exceptions;
 
 static LONG CALLBACK outputdebugstring_vectored_handler(EXCEPTION_POINTERS *ExceptionInfo)
@@ -1946,6 +1990,7 @@ START_TEST(exception)
     test_unwind();
     test_exceptions();
     test_rtlraiseexception();
+    test_debug_registers();
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
     test_vectored_continue_handler();
@@ -1965,6 +2010,7 @@ START_TEST(exception)
     pRtlLookupFunctionEntry            = (void *)GetProcAddress( hntdll,
                                                                  "RtlLookupFunctionEntry" );
 
+    test_debug_registers();
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
     test_vectored_continue_handler();
