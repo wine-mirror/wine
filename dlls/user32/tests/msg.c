@@ -24,6 +24,7 @@
 #define WINVER 0x0600 /* for WM_GETTITLEBARINFOEX */
 
 #include <assert.h>
+#include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -5936,7 +5937,96 @@ static const struct message WmSetPosComboSeq[] =
     { 0 }
 };
 
-static WNDPROC old_combobox_proc;
+static const struct message WMSetFocusComboBoxSeq[] =
+{
+    { WM_SETFOCUS, sent },
+    { WM_KILLFOCUS, sent|parent },
+    { WM_SETFOCUS, sent },
+    { WM_COMMAND, sent|defwinproc },
+    { EM_SETSEL, sent|defwinproc|wparam|lparam, 0, INT_MAX },
+    { WM_CTLCOLOREDIT, sent|defwinproc|optional },/* Not sent on W2000, XP or Server 2003 */
+    { WM_CTLCOLOREDIT, sent|parent|optional },/* Not sent on W2000, XP or Server 2003 */
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_COMBOBOX, CBN_SETFOCUS) },
+    { 0 }
+};
+
+static const struct message SetFocusButtonSeq[] =
+{
+    { WM_KILLFOCUS, sent },
+    { CB_GETCOMBOBOXINFO, sent|optional },/* Windows 2000 */
+    { 0x0167, sent|optional },/* Undocumented message. Sent on all versions except Windows 2000 */
+    { WM_LBUTTONUP, sent|defwinproc },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_COMBOBOX, CBN_SELENDCANCEL) },
+    { EM_SETSEL, sent|defwinproc|wparam|lparam, 0, 0 },
+    { WM_CTLCOLOREDIT, sent|defwinproc|optional },/* Not sent on W2000, XP or Server 2003 */
+    { WM_CTLCOLOREDIT, sent|parent|optional },/* Not sent on W2000, XP or Server 2003 */
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_COMBOBOX, CBN_KILLFOCUS) },
+    { WM_CTLCOLORBTN, sent|parent },
+    { 0 }
+};
+
+static const struct message SetFocusComboBoxSeq[] =
+{
+    { WM_CTLCOLORBTN, sent|parent },
+    { WM_SETFOCUS, sent },
+    { WM_KILLFOCUS, sent|defwinproc },
+    { WM_SETFOCUS, sent },
+    { WM_COMMAND, sent|defwinproc },
+    { EM_SETSEL, sent|defwinproc|wparam|lparam, 0, INT_MAX },
+    { WM_CTLCOLOREDIT, sent|defwinproc|optional },/* Not sent on W2000, XP or Server 2003 */
+    { WM_CTLCOLOREDIT, sent|parent|optional },/* Not sent on W2000, XP or Server 2003 */
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_COMBOBOX, CBN_SETFOCUS) },
+    { 0 }
+};
+
+static const struct message SetFocusButtonSeq2[] =
+{
+    { WM_KILLFOCUS, sent },
+    { CB_GETCOMBOBOXINFO, sent|optional },/* Windows 2000 */
+    { 0x0167, sent|optional },/* Undocumented message. Sent on all versions except Windows 2000 */
+    { WM_LBUTTONUP, sent|defwinproc },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_COMBOBOX, CBN_SELENDCANCEL) },
+    { EM_SETSEL, sent|defwinproc|wparam|lparam, 0, 0 },
+    { WM_CTLCOLOREDIT, sent|defwinproc },
+    { WM_CTLCOLOREDIT, sent|parent },
+    { WM_COMMAND, sent|parent|wparam, MAKEWPARAM(ID_COMBOBOX, CBN_KILLFOCUS) },
+    { WM_CTLCOLORBTN, sent|parent },
+    { 0 }
+};
+
+static WNDPROC old_combobox_proc, edit_window_proc;
+
+static LRESULT CALLBACK combobox_subclass_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    static LONG defwndproc_counter = 0;
+    LRESULT ret;
+    struct recvd_message msg;
+
+    /* do not log painting messages */
+    if (message != WM_PAINT &&
+        message != WM_NCPAINT &&
+        message != WM_SYNCPAINT &&
+        message != WM_ERASEBKGND &&
+        message != WM_NCHITTEST &&
+        message != WM_GETTEXT &&
+        !ignore_message( message ))
+    {
+        msg.hwnd = hwnd;
+        msg.message = message;
+        msg.flags = sent|wparam|lparam;
+        if (defwndproc_counter) msg.flags |= defwinproc;
+        msg.wParam = wParam;
+        msg.lParam = lParam;
+        msg.descr = "combo";
+        add_message(&msg);
+    }
+
+    defwndproc_counter++;
+    ret = CallWindowProcA(edit_window_proc, hwnd, message, wParam, lParam);
+    defwndproc_counter--;
+
+    return ret;
+}
 
 static LRESULT CALLBACK combobox_hook_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -5987,8 +6077,11 @@ static void subclass_combobox(void)
 
 static void test_combobox_messages(void)
 {
-    HWND parent, combo;
+    HWND parent, combo, button, edit;
     LRESULT ret;
+    BOOL (WINAPI *pGetComboBoxInfo)(HWND, PCOMBOBOXINFO);
+    COMBOBOXINFO cbInfo;
+    BOOL res;
 
     subclass_combobox();
 
@@ -6027,6 +6120,65 @@ static void test_combobox_messages(void)
     SetWindowPos(combo, 0, 10, 10, 120, 130, SWP_NOZORDER);
     ok_sequence(WmSetPosComboSeq, "repositioning messages on a ComboBox", FALSE);
 
+    DestroyWindow(combo);
+    DestroyWindow(parent);
+
+    /* Start again. Test combobox text selection when getting and losing focus */
+    pGetComboBoxInfo = (void *)GetProcAddress(GetModuleHandleA("user32.dll"), "GetComboBoxInfo");
+    if (!pGetComboBoxInfo)
+    {
+        win_skip("GetComboBoxInfo is not available\n");
+        return;
+    }
+
+    parent = CreateWindowExA(0, "TestParentClass", "Parent", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                             10, 10, 300, 300, NULL, NULL, NULL, NULL);
+    ok(parent != 0, "Failed to create parent window\n");
+
+    combo = CreateWindowExA(0, "my_combobox_class", "test", WS_CHILD | WS_VISIBLE | CBS_DROPDOWN,
+                            5, 5, 100, 100, parent, (HMENU)ID_COMBOBOX, NULL, NULL);
+    ok(combo != 0, "Failed to create combobox window\n");
+
+    cbInfo.cbSize = sizeof(COMBOBOXINFO);
+    SetLastError(0xdeadbeef);
+    res = pGetComboBoxInfo(combo, &cbInfo);
+    ok(res, "Failed to get COMBOBOXINFO structure; LastError: %u\n", GetLastError());
+    edit = cbInfo.hwndItem;
+
+    edit_window_proc = (WNDPROC)SetWindowLongPtrA(edit, GWLP_WNDPROC, (ULONG_PTR)combobox_subclass_proc);
+
+    button = CreateWindowExA(0, "Button", "OK", WS_CHILD | WS_VISIBLE | BS_DEFPUSHBUTTON,
+                             5, 50, 100, 20, parent, NULL,
+                             (HINSTANCE)GetWindowLongPtrA(parent, GWLP_HINSTANCE), NULL);
+    ok(button != 0, "Failed to create button window\n");
+
+    flush_sequence();
+    log_all_parent_messages++;
+    SendMessageA(combo, WM_SETFOCUS, 0, (LPARAM)edit);
+    log_all_parent_messages--;
+    ok_sequence(WMSetFocusComboBoxSeq, "WM_SETFOCUS on a ComboBox", TRUE);
+
+    flush_sequence();
+    log_all_parent_messages++;
+    SetFocus(button);
+    log_all_parent_messages--;
+    ok_sequence(SetFocusButtonSeq, "SetFocus on a Button", TRUE);
+
+    SendMessageA(combo, WM_SETTEXT, 0, (LPARAM)"Wine Test");
+
+    flush_sequence();
+    log_all_parent_messages++;
+    SetFocus(combo);
+    log_all_parent_messages--;
+    ok_sequence(SetFocusComboBoxSeq, "SetFocus on a ComboBox", TRUE);
+
+    flush_sequence();
+    log_all_parent_messages++;
+    SetFocus(button);
+    log_all_parent_messages--;
+    ok_sequence(SetFocusButtonSeq2, "SetFocus on a Button (2)", TRUE);
+
+    DestroyWindow(button);
     DestroyWindow(combo);
     DestroyWindow(parent);
 }
