@@ -1889,14 +1889,14 @@ static void test_SHGetFolderPathA(void)
     if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
 
     hr = pSHGetFolderPathA( 0, CSIDL_PROGRAM_FILES, 0, SHGFP_TYPE_CURRENT, path );
-    ok( !hr, "SHGetFolderPathA failed %x\n", hr );
+    ok( hr == S_OK, "SHGetFolderPathA failed %x\n", hr );
     hr = pSHGetFolderPathA( 0, CSIDL_PROGRAM_FILESX86, 0, SHGFP_TYPE_CURRENT, path_x86 );
     if (hr == E_FAIL)
     {
         win_skip( "Program Files (x86) not supported\n" );
         return;
     }
-    ok( !hr, "SHGetFolderPathA failed %x\n", hr );
+    ok( hr == S_OK, "SHGetFolderPathA failed %x\n", hr );
     if (is_win64)
     {
         ok( lstrcmpiA( path, path_x86 ), "paths are identical '%s'\n", path );
@@ -1924,14 +1924,14 @@ static void test_SHGetFolderPathA(void)
     }
 
     hr = pSHGetFolderPathA( 0, CSIDL_PROGRAM_FILES_COMMON, 0, SHGFP_TYPE_CURRENT, path );
-    ok( !hr, "SHGetFolderPathA failed %x\n", hr );
+    ok( hr == S_OK, "SHGetFolderPathA failed %x\n", hr );
     hr = pSHGetFolderPathA( 0, CSIDL_PROGRAM_FILES_COMMONX86, 0, SHGFP_TYPE_CURRENT, path_x86 );
     if (hr == E_FAIL)
     {
         win_skip( "Common Files (x86) not supported\n" );
         return;
     }
-    ok( !hr, "SHGetFolderPathA failed %x\n", hr );
+    ok( hr == S_OK, "SHGetFolderPathA failed %x\n", hr );
     if (is_win64)
     {
         ok( lstrcmpiA( path, path_x86 ), "paths are identical '%s'\n", path );
