@@ -1800,11 +1800,12 @@ __ASM_GLOBAL_FUNC( RtlCaptureContext,
                    "ret" );
 
 /***********************************************************************
- *           set_cpu_context
+ *           set_full_cpu_context
  *
  * Set the new CPU context.
  */
-__ASM_GLOBAL_FUNC( set_cpu_context,
+extern void set_full_cpu_context( const CONTEXT *context );
+__ASM_GLOBAL_FUNC( set_full_cpu_context,
                    "subq $40,%rsp\n\t"
                    __ASM_CFI(".cfi_adjust_cfa_offset 40\n\t")
                    "ldmxcsr 0x34(%rdi)\n\t"         /* context->MxCsr */
@@ -1851,6 +1852,25 @@ __ASM_GLOBAL_FUNC( set_cpu_context,
                    "movq 0x78(%rdi),%rax\n\t"       /* context->Rax */
                    "movq 0xb0(%rdi),%rdi\n\t"       /* context->Rdi */
                    "iretq" );
+
+
+/***********************************************************************
+ *           set_cpu_context
+ *
+ * Set the new CPU context. Used by NtSetContextThread.
+ */
+void set_cpu_context( const CONTEXT *context )
+{
+    DWORD flags = context->ContextFlags & ~CONTEXT_AMD64;
+    if (flags & CONTEXT_FULL)
+    {
+        if (!(flags & CONTEXT_CONTROL))
+            FIXME( "setting partial context (%x) not supported\n", flags );
+        else
+            set_full_cpu_context( context );
+    }
+}
+
 
 /***********************************************************************
  *           copy_context
