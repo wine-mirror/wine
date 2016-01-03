@@ -3836,11 +3836,26 @@ BOOL WINAPI GetLogicalProcessorInformation(PSYSTEM_LOGICAL_PROCESSOR_INFORMATION
 /***********************************************************************
  *           GetLogicalProcessorInformationEx   (KERNEL32.@)
  */
-BOOL WINAPI GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationship, PSYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX buffer, PDWORD pBufLen)
+BOOL WINAPI GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP relationship, SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *buffer, DWORD *len)
 {
-    FIXME("(%u,%p,%p): stub\n", relationship, buffer, pBufLen);
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
+    NTSTATUS status;
+
+    TRACE("(%u,%p,%p)\n", relationship, buffer, len);
+
+    if (!len)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship),
+        buffer, *len, len );
+    if (status != STATUS_SUCCESS)
+    {
+        SetLastError( RtlNtStatusToDosError( status ) );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 /***********************************************************************

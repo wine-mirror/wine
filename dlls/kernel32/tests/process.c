@@ -2982,8 +2982,14 @@ static void test_GetLogicalProcessorInformationEx(void)
     }
 
     ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, NULL);
-    ok(!ret, "got %d, error %d\n", ret, GetLastError());
+    ok(!ret && GetLastError() == ERROR_INVALID_PARAMETER, "got %d, error %d\n", ret, GetLastError());
 
+    len = 0;
+    ret = pGetLogicalProcessorInformationEx(RelationProcessorCore, NULL, &len);
+todo_wine {
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
+    ok(len > 0, "got %u\n", len);
+}
     len = 0;
     ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len);
 todo_wine {

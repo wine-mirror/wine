@@ -687,6 +687,13 @@ static void test_query_logicalprocex(void)
         return;
 
     len = 0;
+    relationship = RelationProcessorCore;
+    status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len);
+todo_wine {
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
+    ok(len > 0, "got %u\n", len);
+}
+    len = 0;
     relationship = RelationAll;
     status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len);
 todo_wine {
