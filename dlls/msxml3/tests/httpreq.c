@@ -1752,6 +1752,7 @@ static void test_safe_httpreq(void)
     test_open(xhr, "GET", "http://www.test.winehq.org/tests/hello.html", E_ACCESSDENIED);
 
     IXMLHttpRequest_Release(xhr);
+    free_bstrs();
 }
 
 START_TEST(httpreq)
