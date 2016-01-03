@@ -87,7 +87,7 @@ static BOOL   (WINAPI *pProcess32First)(HANDLE, PROCESSENTRY32*);
 static BOOL   (WINAPI *pProcess32Next)(HANDLE, PROCESSENTRY32*);
 static BOOL   (WINAPI *pThread32First)(HANDLE, THREADENTRY32*);
 static BOOL   (WINAPI *pThread32Next)(HANDLE, THREADENTRY32*);
-
+static BOOL   (WINAPI *pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP,SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*,DWORD*);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -251,6 +251,7 @@ static BOOL init(void)
     pProcess32Next = (void *)GetProcAddress(hkernel32, "Process32Next");
     pThread32First = (void *)GetProcAddress(hkernel32, "Thread32First");
     pThread32Next = (void *)GetProcAddress(hkernel32, "Thread32Next");
+    pGetLogicalProcessorInformationEx = (void *)GetProcAddress(hkernel32, "GetLogicalProcessorInformationEx");
 
     return TRUE;
 }
@@ -3107,6 +3108,37 @@ todo_wine
     CloseHandle(hproc);
 }
 
+static void test_GetLogicalProcessorInformationEx(void)
+{
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
+    DWORD len;
+    BOOL ret;
+
+    if (!pGetLogicalProcessorInformationEx)
+    {
+        win_skip("GetLogicalProcessorInformationEx() is not supported\n");
+        return;
+    }
+
+    ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, NULL);
+    ok(!ret, "got %d, error %d\n", ret, GetLastError());
+
+    len = 0;
+    ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len);
+todo_wine {
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
+    ok(len > 0, "got %u\n", len);
+}
+
+if (len) {
+    info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+    ret = pGetLogicalProcessorInformationEx(RelationAll, info, &len);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(info->Size > 0, "got %u\n", info->Size);
+    HeapFree(GetProcessHeap(), 0, info);
+}
+}
+
 START_TEST(process)
 {
     HANDLE job;
@@ -3153,6 +3185,7 @@ START_TEST(process)
         ok(0, "Unexpected command %s\n", myARGV[2]);
         return;
     }
+
     test_process_info();
     test_TerminateProcess();
     test_Startup();
@@ -3177,6 +3210,7 @@ START_TEST(process)
     test_StartupNoConsole();
     test_GetNumaProcessorNode();
     test_session_info();
+    test_GetLogicalProcessorInformationEx();
 
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
