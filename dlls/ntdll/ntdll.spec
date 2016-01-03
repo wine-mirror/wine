@@ -276,6 +276,7 @@
 @ stdcall NtQuerySystemEnvironmentValue(ptr ptr long ptr)
 @ stdcall NtQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr)
 @ stdcall NtQuerySystemInformation(long long long long)
+@ stdcall NtQuerySystemInformationEx(long ptr long ptr long ptr)
 @ stdcall NtQuerySystemTime(ptr)
 @ stdcall NtQueryTimer(ptr long ptr long ptr)
 @ stdcall NtQueryTimerResolution(long long long)
@@ -1196,6 +1197,7 @@
 @ stdcall ZwQuerySystemEnvironmentValue(ptr ptr long ptr) NtQuerySystemEnvironmentValue
 @ stdcall ZwQuerySystemEnvironmentValueEx(ptr ptr ptr ptr ptr) NtQuerySystemEnvironmentValueEx
 @ stdcall ZwQuerySystemInformation(long long long long) NtQuerySystemInformation
+@ stdcall ZwQuerySystemInformationEx(long ptr long ptr long ptr) NtQuerySystemInformationEx
 @ stdcall ZwQuerySystemTime(ptr) NtQuerySystemTime
 @ stdcall ZwQueryTimer(ptr long ptr long ptr) NtQueryTimer
 @ stdcall ZwQueryTimerResolution(long long long) NtQueryTimerResolution

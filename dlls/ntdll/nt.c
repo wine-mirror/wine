@@ -2139,6 +2139,18 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 }
 
 /******************************************************************************
+ * NtQuerySystemInformationEx [NTDLL.@]
+ * ZwQuerySystemInformationEx [NTDLL.@]
+ */
+NTSTATUS WINAPI NtQuerySystemInformationEx(SYSTEM_INFORMATION_CLASS SystemInformationClass,
+    void *Query, ULONG QueryLength, void *SystemInformation, ULONG Length, ULONG *ResultLength)
+{
+    FIXME("(0x%08x,%p,%u,%p,%u,%p) stub\n", SystemInformationClass, Query, QueryLength, SystemInformation,
+        Length, ResultLength);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  * NtSetSystemInformation [NTDLL.@]
  * ZwSetSystemInformation [NTDLL.@]
  */

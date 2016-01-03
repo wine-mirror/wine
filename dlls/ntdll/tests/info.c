@@ -88,7 +88,7 @@ static BOOL InitFunctionPtrs(void)
     /* starting with Win7 */
     pNtQuerySystemInformationEx = (void *) GetProcAddress(hntdll, "NtQuerySystemInformationEx");
     if (!pNtQuerySystemInformationEx)
-        skip("NtQuerySystemInformationEx() is not supported, some tests will be skipped.\n");
+        win_skip("NtQuerySystemInformationEx() is not supported, some tests will be skipped.\n");
 
     pGetLogicalProcessorInformationEx = (void *) GetProcAddress(hkernel32, "GetLogicalProcessorInformationEx");
 
@@ -689,15 +689,17 @@ static void test_query_logicalprocex(void)
     len = 0;
     relationship = RelationAll;
     status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len);
+todo_wine {
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
     ok(len > 0, "got %u\n", len);
-
+}
     len2 = 0;
     ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len2);
+todo_wine
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
     ok(len == len2, "got %u, expected %u\n", len2, len);
 
-    if (len == len2) {
+    if (len && len == len2) {
         infoex = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
         infoex2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
 
