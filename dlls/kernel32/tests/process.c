@@ -79,6 +79,7 @@ static BOOL   (WINAPI *pGetNumaProcessorNode)(UCHAR, PUCHAR);
 static NTSTATUS (WINAPI *pNtQueryInformationProcess)(HANDLE, PROCESSINFOCLASS, PVOID, ULONG, PULONG);
 static BOOL   (WINAPI *pProcessIdToSessionId)(DWORD,DWORD*);
 static DWORD  (WINAPI *pWTSGetActiveConsoleSessionId)(void);
+static BOOL   (WINAPI *pGetLogicalProcessorInformationEx)(LOGICAL_PROCESSOR_RELATIONSHIP,SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX*,DWORD*);
 
 /* ############################### */
 static char     base[MAX_PATH];
@@ -237,6 +238,8 @@ static BOOL init(void)
     pGetNumaProcessorNode = (void *)GetProcAddress(hkernel32, "GetNumaProcessorNode");
     pProcessIdToSessionId = (void *)GetProcAddress(hkernel32, "ProcessIdToSessionId");
     pWTSGetActiveConsoleSessionId = (void *)GetProcAddress(hkernel32, "WTSGetActiveConsoleSessionId");
+    pGetLogicalProcessorInformationEx = (void *)GetProcAddress(hkernel32, "GetLogicalProcessorInformationEx");
+
     return TRUE;
 }
 
@@ -2966,6 +2969,37 @@ todo_wine
     CloseHandle(hproc);
 }
 
+static void test_GetLogicalProcessorInformationEx(void)
+{
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *info;
+    DWORD len;
+    BOOL ret;
+
+    if (!pGetLogicalProcessorInformationEx)
+    {
+        win_skip("GetLogicalProcessorInformationEx() is not supported\n");
+        return;
+    }
+
+    ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, NULL);
+    ok(!ret, "got %d, error %d\n", ret, GetLastError());
+
+    len = 0;
+    ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len);
+todo_wine {
+    ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
+    ok(len > 0, "got %u\n", len);
+}
+
+if (len) {
+    info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
+    ret = pGetLogicalProcessorInformationEx(RelationAll, info, &len);
+    ok(ret, "got %d, error %d\n", ret, GetLastError());
+    ok(info->Size > 0, "got %u\n", info->Size);
+    HeapFree(GetProcessHeap(), 0, info);
+}
+}
+
 START_TEST(process)
 {
     HANDLE job;
@@ -2995,6 +3029,7 @@ START_TEST(process)
         ok(0, "Unexpected command %s\n", myARGV[2]);
         return;
     }
+
     test_process_info();
     test_TerminateProcess();
     test_Startup();
@@ -3018,6 +3053,7 @@ START_TEST(process)
     test_StartupNoConsole();
     test_GetNumaProcessorNode();
     test_session_info();
+    test_GetLogicalProcessorInformationEx();
 
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched

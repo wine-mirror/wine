@@ -842,6 +842,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     Unknown71,
     Unknown72,
     SystemLogicalProcessorInformation = 73,
+    SystemLogicalProcessorInformationEx = 107,
     SystemInformationClassMax
 } SYSTEM_INFORMATION_CLASS, *PSYSTEM_INFORMATION_CLASS;
 
