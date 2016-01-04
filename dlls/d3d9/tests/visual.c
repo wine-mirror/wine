@@ -20678,7 +20678,6 @@ static void test_texture_blending(void)
 
     const struct test
     {
-        BOOL todo;
         DWORD tex_op_caps;
         D3DCOLOR expected_color;
         struct texture_stage stage[8];
@@ -20686,7 +20685,6 @@ static void test_texture_blending(void)
     tests[] =
     {
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE,
             0x80ffff02,
             {
@@ -20699,7 +20697,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1,
             0x80ffff02,
             {
@@ -20715,7 +20712,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1,
             0x80ffff02,
             {
@@ -20732,7 +20728,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1,
             0x80ffff02,
             {
@@ -20749,7 +20744,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1,
             0x00000000,
             {
@@ -20766,7 +20760,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_SUBTRACT,
             0x80f0f000,
             {
@@ -20792,7 +20785,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_SUBTRACT,
             0x71f0f000,
             {
@@ -20824,7 +20816,6 @@ static void test_texture_blending(void)
         },
 
         {
-            TRUE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP | D3DTEXOPCAPS_MODULATE,
             0x80ff0000,
             {
@@ -20853,7 +20844,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP | D3DTEXOPCAPS_MODULATE,
             0x80ff0000,
             {
@@ -20881,7 +20871,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            TRUE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP | D3DTEXOPCAPS_MODULATE,
             0x80ff0000,
             {
@@ -20911,7 +20900,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP | D3DTEXOPCAPS_MODULATE,
             0x00ff0000,
             {
@@ -20943,7 +20931,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP | D3DTEXOPCAPS_MODULATE,
             0x80ff0000,
             {
@@ -20976,7 +20963,6 @@ static void test_texture_blending(void)
         },
 
         {
-            TRUE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP | D3DTEXOPCAPS_MODULATE
                     | D3DTEXOPCAPS_ADD,
             0x80ff0000,
@@ -21011,7 +20997,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            TRUE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP | D3DTEXOPCAPS_MODULATE
                     | D3DTEXOPCAPS_MODULATE2X,
             0x80ff0000,
@@ -21046,7 +21031,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            TRUE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP | D3DTEXOPCAPS_MODULATE
                     | D3DTEXOPCAPS_MODULATE2X,
             0x80ffff00,
@@ -21083,7 +21067,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP,
             0x01234567,
             {
@@ -21137,7 +21120,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP,
             0x00234567,
             {
@@ -21188,7 +21170,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP,
             0x01234567,
             {
@@ -21242,7 +21223,6 @@ static void test_texture_blending(void)
             },
         },
         {
-            FALSE,
             D3DTEXOPCAPS_DISABLE | D3DTEXOPCAPS_SELECTARG1 | D3DTEXOPCAPS_BUMPENVMAP,
             0x01234567,
             {
@@ -21424,16 +21404,8 @@ static void test_texture_blending(void)
 
         get_rt_readback(backbuffer, &rb);
         color = get_readback_color(&rb, 320, 240);
-        if (current_test->todo)
-        {
-            todo_wine ok(color_match(color, current_test->expected_color, 1),
-                    "Test %u: Got color 0x%08x, expected 0x%08x.\n", i, color, current_test->expected_color);
-        }
-        else
-        {
-            ok(color_match(color, current_test->expected_color, 1),
-                    "Test %u: Got color 0x%08x, expected 0x%08x.\n", i, color, current_test->expected_color);
-        }
+        ok(color_match(color, current_test->expected_color, 1),
+                "Test %u: Got color 0x%08x, expected 0x%08x.\n", i, color, current_test->expected_color);
         release_surface_readback(&rb);
         hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
         ok(SUCCEEDED(hr), "Test %u: Present failed, hr %#x.\n", i, hr);
