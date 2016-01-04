@@ -3191,6 +3191,7 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     /* TODO: Possibly make this a table for faster lookups */
     switch (ins->handler_idx)
     {
+        case WINED3DSIH_IMAX: instruction = "max"; break;
         case WINED3DSIH_MIN: instruction = "min"; break;
         case WINED3DSIH_MAX: instruction = "max"; break;
         case WINED3DSIH_ABS: instruction = "abs"; break;
@@ -7874,7 +7875,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IF                    */ shader_glsl_if,
     /* WINED3DSIH_IFC                   */ shader_glsl_ifc,
     /* WINED3DSIH_IGE                   */ shader_glsl_relop,
-    /* WINED3DSIH_IMAX                  */ NULL,
+    /* WINED3DSIH_IMAX                  */ shader_glsl_map2gl,
     /* WINED3DSIH_IMIN                  */ NULL,
     /* WINED3DSIH_IMUL                  */ shader_glsl_imul,
     /* WINED3DSIH_ISHL                  */ shader_glsl_binop,
