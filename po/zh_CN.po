@@ -12513,11 +12513,11 @@ msgstr "Windows 注册信息"
 
 #: winecfg.rc:144
 msgid "&Owner:"
-msgstr "姓名："
+msgstr "姓名(&O)："
 
 #: winecfg.rc:146
 msgid "Organi&zation:"
-msgstr "组织(_Z)："
+msgstr "组织(&Z)："
 
 #: winecfg.rc:154
 msgid "Application settings"
