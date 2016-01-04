@@ -1113,6 +1113,33 @@ void CDECL wined3d_buffer_unmap(struct wined3d_buffer *buffer)
     }
 }
 
+HRESULT wined3d_buffer_upload_data(struct wined3d_buffer *buffer,
+        const struct wined3d_box *box, const void *data)
+{
+    UINT offset, size;
+    HRESULT hr;
+    BYTE *ptr;
+
+    if (box)
+    {
+        offset = box->left;
+        size = box->right - box->left;
+    }
+    else
+    {
+        offset = 0;
+        size = buffer->resource.size;
+    }
+
+    if (FAILED(hr = wined3d_buffer_map(buffer, offset, size, &ptr, 0)))
+        return hr;
+
+    memcpy(ptr, data, size);
+
+    wined3d_buffer_unmap(buffer);
+    return WINED3D_OK;
+}
+
 static ULONG buffer_resource_incref(struct wined3d_resource *resource)
 {
     return wined3d_buffer_incref(buffer_from_resource(resource));
@@ -1240,20 +1267,13 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
 
     if (data)
     {
-        BYTE *ptr;
-
-        hr = wined3d_buffer_map(buffer, 0, size, &ptr, 0);
-        if (FAILED(hr))
+        if (FAILED(hr = wined3d_buffer_upload_data(buffer, NULL, data->data)))
         {
-            ERR("Failed to map buffer, hr %#x\n", hr);
+            ERR("Failed to upload data, hr %#x.\n", hr);
             buffer_unload(&buffer->resource);
             resource_cleanup(&buffer->resource);
             return hr;
         }
-
-        memcpy(ptr, data->data, size);
-
-        wined3d_buffer_unmap(buffer);
     }
 
     buffer->maps = HeapAlloc(GetProcessHeap(), 0, sizeof(*buffer->maps));

@@ -3989,6 +3989,23 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     TRACE("device %p, resource %p, sub_resource_idx %u, box %p, data %p, row_pitch %u, depth_pitch %u.\n",
             device, resource, sub_resource_idx, box, data, row_pitch, depth_pitch);
 
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        struct wined3d_buffer *buffer = buffer_from_resource(resource);
+        HRESULT hr;
+
+        if (sub_resource_idx > 0)
+        {
+            WARN("Invalid sub_resource_idx %u.\n", sub_resource_idx);
+            return;
+        }
+
+        if (FAILED(hr = wined3d_buffer_upload_data(buffer, box, data)))
+            WARN("Failed to update buffer data, hr %#x.\n", hr);
+
+        return;
+    }
+
     if (resource->type != WINED3D_RTYPE_TEXTURE)
     {
         FIXME("Not implemented for %s resources.\n", debug_d3dresourcetype(resource->type));
