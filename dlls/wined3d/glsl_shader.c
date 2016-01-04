@@ -3191,14 +3191,14 @@ static void shader_glsl_map2gl(const struct wined3d_shader_instruction *ins)
     /* TODO: Possibly make this a table for faster lookups */
     switch (ins->handler_idx)
     {
-        case WINED3DSIH_IMAX: instruction = "max"; break;
-        case WINED3DSIH_IMIN: instruction = "min"; break;
-        case WINED3DSIH_MIN: instruction = "min"; break;
-        case WINED3DSIH_MAX: instruction = "max"; break;
         case WINED3DSIH_ABS: instruction = "abs"; break;
-        case WINED3DSIH_FRC: instruction = "fract"; break;
         case WINED3DSIH_DSX: instruction = "dFdx"; break;
         case WINED3DSIH_DSY: instruction = "ycorrection.y * dFdy"; break;
+        case WINED3DSIH_FRC: instruction = "fract"; break;
+        case WINED3DSIH_IMAX: instruction = "max"; break;
+        case WINED3DSIH_IMIN: instruction = "min"; break;
+        case WINED3DSIH_MAX: instruction = "max"; break;
+        case WINED3DSIH_MIN: instruction = "min"; break;
         case WINED3DSIH_ROUND_NI: instruction = "floor"; break;
         case WINED3DSIH_SQRT: instruction = "sqrt"; break;
         default: instruction = "";
