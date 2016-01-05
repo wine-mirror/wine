@@ -3112,6 +3112,7 @@ static void context_load_shader_resources(struct wined3d_context *context, const
 
 static void context_bind_shader_resources(struct wined3d_context *context, const struct wined3d_state *state)
 {
+    const struct wined3d_device *device = context->swapchain->device;
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct wined3d_shader_sampler_map_entry *entry;
     struct wined3d_shader_resource_view *view;
@@ -3119,6 +3120,7 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
     struct wined3d_texture *texture;
     struct wined3d_shader *shader;
     unsigned int i, j, count;
+    GLuint sampler_name;
 
     static const struct
     {
@@ -3161,7 +3163,15 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
                 continue;
             }
 
-            if (!(sampler = state->sampler[shader_types[i].type][entry->sampler_idx]))
+            if (entry->sampler_idx == WINED3D_SAMPLER_DEFAULT)
+            {
+                sampler_name = device->default_sampler;
+            }
+            else if ((sampler = state->sampler[shader_types[i].type][entry->sampler_idx]))
+            {
+                sampler_name = sampler->name;
+            }
+            else
             {
                 WARN("No sampler object bound at index %u, %u.\n", shader_types[i].type, entry->sampler_idx);
                 continue;
@@ -3171,7 +3181,7 @@ static void context_bind_shader_resources(struct wined3d_context *context, const
             context_active_texture(context, gl_info, shader_types[i].base_idx + entry->bind_idx);
             wined3d_texture_bind(texture, context, FALSE);
 
-            GL_EXTCALL(glBindSampler(shader_types[i].base_idx + entry->bind_idx, sampler->name));
+            GL_EXTCALL(glBindSampler(shader_types[i].base_idx + entry->bind_idx, sampler_name));
             checkGLcall("glBindSampler");
         }
     }

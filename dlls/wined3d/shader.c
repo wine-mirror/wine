@@ -1068,6 +1068,11 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 shader_record_sample(reg_maps, ins.src[1].reg.idx[0].offset,
                         ins.src[2].reg.idx[0].offset, reg_maps->sampler_map.count);
             }
+            else if (ins.handler_idx == WINED3DSIH_LD)
+            {
+                shader_record_sample(reg_maps, ins.src[1].reg.idx[0].offset,
+                        WINED3D_SAMPLER_DEFAULT, reg_maps->sampler_map.count);
+            }
 
             if (ins.predicate)
                 if (!shader_record_register_usage(shader, reg_maps, &ins.predicate->reg,

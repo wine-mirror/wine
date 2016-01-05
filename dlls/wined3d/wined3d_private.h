@@ -597,6 +597,8 @@ struct wined3d_shader_resource_info
     enum wined3d_data_type data_type;
 };
 
+#define WINED3D_SAMPLER_DEFAULT ~0x0u
+
 struct wined3d_shader_sampler_map_entry
 {
     unsigned int resource_idx;
