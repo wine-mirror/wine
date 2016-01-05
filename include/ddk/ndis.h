@@ -23,8 +23,15 @@
 typedef void *NDIS_HANDLE, *PNDIS_HANDLE;
 typedef int   NDIS_STATUS, *PNDIS_STATUS;
 
+typedef struct _NDIS_SPIN_LOCK
+{
+  KSPIN_LOCK SpinLock;
+  KIRQL      OldIrql;
+} NDIS_SPIN_LOCK, *PNDIS_SPIN_LOCK;
+
 #define NDIS_STATUS_FAILURE                                ((NDIS_STATUS) STATUS_UNSUCCESSFUL)
 
 NDIS_STATUS WINAPI NdisAllocateMemoryWithTag(void **, UINT, ULONG);
+void WINAPI NdisAllocateSpinLock(NDIS_SPIN_LOCK *);
 
 #endif /* _NDIS_ */

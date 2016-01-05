@@ -43,3 +43,8 @@ NDIS_STATUS WINAPI NdisAllocateMemoryWithTag(void **address, UINT length, ULONG 
     FIXME("(%p, %u, %u): stub\n", address, length, tag);
     return NDIS_STATUS_FAILURE;
 }
+
+void WINAPI NdisAllocateSpinLock(NDIS_SPIN_LOCK *lock)
+{
+    FIXME("(%p): stub\n", lock);
+}
