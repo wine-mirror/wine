@@ -141,6 +141,16 @@ typedef struct {
     wchar_t fillch;
 } basic_ios_wchar;
 
+#if _MSVCP_VER >= 110
+typedef struct {
+    int padding;
+    int vtordisp;
+} basic_ios_vtordisp;
+#define BASIC_IOS_VTORDISP_SIZE sizeof(basic_ios_vtordisp)
+#else
+#define BASIC_IOS_VTORDISP_SIZE 0
+#endif
+
 typedef struct _basic_ostream_char {
     const int *vbtable;
     /* virtual inheritance
@@ -384,162 +394,195 @@ extern const vtable_ptr MSVCP_basic_stringbuf_wchar_vtable;
 extern const vtable_ptr MSVCP_basic_stringbuf_short_vtable;
 
 /* ??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_ostream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_char), VBTABLE_ALIGN)};
+const int basic_ostream_char_vbtable[] = {0,
+    ALIGNED_SIZE(sizeof(basic_ostream_char), VBTABLE_ALIGN)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_char_vtable;
 
 /* ??_8?$basic_ostream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_ostream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_wchar), VBTABLE_ALIGN)};
+const int basic_ostream_wchar_vbtable[] = {0,
+    ALIGNED_SIZE(sizeof(basic_ostream_wchar), VBTABLE_ALIGN)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ostream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_wchar_vtable;
 
 /* ??_8?$basic_ostream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_ostream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_ostream_wchar), VBTABLE_ALIGN)};
+const int basic_ostream_short_vbtable[] = {0,
+    ALIGNED_SIZE(sizeof(basic_ostream_wchar), VBTABLE_ALIGN)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ostream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostream_short_vtable;
 
 /* ??_8?$basic_istream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_istream_char_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_char), VBTABLE_ALIGN)};
+const int basic_istream_char_vbtable[] = {0,
+    ALIGNED_SIZE(sizeof(basic_istream_char), VBTABLE_ALIGN)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_istream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_char_vtable;
 
 /* ??_8?$basic_istream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_istream_wchar_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_wchar), VBTABLE_ALIGN)};
+const int basic_istream_wchar_vbtable[] = {0,
+    ALIGNED_SIZE(sizeof(basic_istream_wchar), VBTABLE_ALIGN)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_istream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_wchar_vtable;
 
 /* ??_8?$basic_istream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_istream_short_vbtable[] = {0, ALIGNED_SIZE(sizeof(basic_istream_wchar), VBTABLE_ALIGN)};
+const int basic_istream_short_vbtable[] = {0,
+    ALIGNED_SIZE(sizeof(basic_istream_wchar), VBTABLE_ALIGN)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_istream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istream_short_vtable;
 
 /* ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
-const int basic_iostream_char_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_char), VBTABLE_ALIGN)};
+const int basic_iostream_char_vbtable1[] = {0,
+    ALIGNED_SIZE(sizeof(basic_iostream_char), VBTABLE_ALIGN)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
-const int basic_iostream_char_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_char), VBTABLE_ALIGN)-FIELD_OFFSET(basic_iostream_char, base2)};
+const int basic_iostream_char_vbtable2[] = {0,
+    ALIGNED_SIZE(sizeof(basic_iostream_char), VBTABLE_ALIGN)-FIELD_OFFSET(basic_iostream_char, base2)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_iostream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_char_vtable;
 
 /* ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ */
-const int basic_iostream_wchar_vbtable1[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_wchar), VBTABLE_ALIGN)};
+const int basic_iostream_wchar_vbtable1[] = {0,
+    ALIGNED_SIZE(sizeof(basic_iostream_wchar), VBTABLE_ALIGN)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ */
-const int basic_iostream_wchar_vbtable2[] = {0, ALIGNED_SIZE(sizeof(basic_iostream_wchar), VBTABLE_ALIGN)-FIELD_OFFSET(basic_iostream_wchar, base2)};
+const int basic_iostream_wchar_vbtable2[] = {0,
+    ALIGNED_SIZE(sizeof(basic_iostream_wchar), VBTABLE_ALIGN)-FIELD_OFFSET(basic_iostream_wchar, base2)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_iostream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_wchar_vtable;
 /* ??_7?$basic_iostream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_iostream_short_vtable;
 
 /* ??_8?$basic_ofstream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_ofstream_char_vbtable[] = {0, sizeof(basic_ofstream_char)};
+const int basic_ofstream_char_vbtable[] = {0,
+    sizeof(basic_ofstream_char)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ofstream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ofstream_char_vtable;
 
 /* ??_8?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_ofstream_wchar_vbtable[] = {0, sizeof(basic_ofstream_wchar)};
+const int basic_ofstream_wchar_vbtable[] = {0,
+    sizeof(basic_ofstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ofstream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ofstream_wchar_vtable;
 
 /* ??_8?$basic_ofstream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_ofstream_short_vbtable[] = {0, sizeof(basic_ofstream_wchar)};
+const int basic_ofstream_short_vbtable[] = {0,
+    sizeof(basic_ofstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ofstream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ofstream_short_vtable;
 
 /* ??_8?$basic_ifstream@DU?$char_traits@D@std@@@std@@7B@ */
-const int basic_ifstream_char_vbtable[] = {0, sizeof(basic_ifstream_char)};
+const int basic_ifstream_char_vbtable[] = {0,
+    sizeof(basic_ifstream_char)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ifstream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ifstream_char_vtable;
 
 /* ??_8?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@7B@ */
-const int basic_ifstream_wchar_vbtable[] = {0, sizeof(basic_ifstream_wchar)};
+const int basic_ifstream_wchar_vbtable[] = {0,
+    sizeof(basic_ifstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ifstream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ifstream_wchar_vtable;
 
 /* ??_8?$basic_ifstream@GU?$char_traits@G@std@@@std@@7B@ */
-const int basic_ifstream_short_vbtable[] = {0, sizeof(basic_ifstream_wchar)};
+const int basic_ifstream_short_vbtable[] = {0,
+    sizeof(basic_ifstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ifstream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ifstream_short_vtable;
 
 /* ??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
-const int basic_fstream_char_vbtable1[] = {0, sizeof(basic_fstream_char)};
+const int basic_fstream_char_vbtable1[] = {0,
+    sizeof(basic_fstream_char)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
-const int basic_fstream_char_vbtable2[] = {0, sizeof(basic_fstream_char)-FIELD_OFFSET(basic_fstream_char, base.base2)};
+const int basic_fstream_char_vbtable2[] = {0,
+    sizeof(basic_fstream_char)-FIELD_OFFSET(basic_fstream_char, base.base2)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_fstream@DU?$char_traits@D@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_fstream_char_vtable;
 
 /* ??_8?$basic_fstream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_fstream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ */
-const int basic_fstream_wchar_vbtable1[] = {0, sizeof(basic_fstream_wchar)};
+const int basic_fstream_wchar_vbtable1[] = {0,
+    sizeof(basic_fstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_8?$basic_fstream@_WU?$char_traits@_W@std@@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@ */
 /* ??_8?$basic_fstream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ */
-const int basic_fstream_wchar_vbtable2[] = {0, sizeof(basic_fstream_wchar)-FIELD_OFFSET(basic_fstream_wchar, base.base2)};
+const int basic_fstream_wchar_vbtable2[] = {0,
+    sizeof(basic_fstream_wchar)-FIELD_OFFSET(basic_fstream_wchar, base.base2)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_fstream@_WU?$char_traits@_W@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_fstream_wchar_vtable;
 /* ??_7?$basic_fstream@GU?$char_traits@G@std@@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_fstream_short_vtable;
 
 /* ??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@ */
-const int basic_ostringstream_char_vbtable[] = {0, sizeof(basic_ostringstream_char)};
+const int basic_ostringstream_char_vbtable[] = {0,
+    sizeof(basic_ostringstream_char)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostringstream_char_vtable;
 
 /* ??_8?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B@ */
-const int basic_ostringstream_wchar_vbtable[] = {0, sizeof(basic_ostringstream_wchar)};
+const int basic_ostringstream_wchar_vbtable[] = {0,
+    sizeof(basic_ostringstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ostringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostringstream_wchar_vtable;
 
 /* ??_8?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B@ */
-const int basic_ostringstream_short_vbtable[] = {0, sizeof(basic_ostringstream_wchar)};
+const int basic_ostringstream_short_vbtable[] = {0,
+    sizeof(basic_ostringstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_ostringstream_short_vtable;
 
 /* ??_8?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@ */
-const int basic_istringstream_char_vbtable[] = {0, sizeof(basic_istringstream_char)};
+const int basic_istringstream_char_vbtable[] = {0,
+    sizeof(basic_istringstream_char)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istringstream_char_vtable;
 
 /* ??_8?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B@ */
-const int basic_istringstream_wchar_vbtable[] = {0, sizeof(basic_istringstream_wchar)};
+const int basic_istringstream_wchar_vbtable[] = {0,
+    sizeof(basic_istringstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_istringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istringstream_wchar_vtable;
 
 /* ??_8?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B@ */
-const int basic_istringstream_short_vbtable[] = {0, sizeof(basic_istringstream_wchar)};
+const int basic_istringstream_short_vbtable[] = {0,
+    sizeof(basic_istringstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_istringstream_short_vtable;
 
 /* ??_8?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@ */
-const int basic_stringstream_char_vbtable1[] = {0, sizeof(basic_stringstream_char)};
+const int basic_stringstream_char_vbtable1[] = {0,
+    sizeof(basic_stringstream_char)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_8?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@ */
-const int basic_stringstream_char_vbtable2[] = {0, sizeof(basic_stringstream_char)-FIELD_OFFSET(basic_stringstream_char, base.base2)};
+const int basic_stringstream_char_vbtable2[] = {0,
+    sizeof(basic_stringstream_char)-FIELD_OFFSET(basic_stringstream_char, base.base2)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_stringstream_char_vtable;
 
 /* ??_8?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@ */
-const int basic_stringstream_wchar_vbtable1[] = {0, sizeof(basic_stringstream_wchar)};
+const int basic_stringstream_wchar_vbtable1[] = {0,
+    sizeof(basic_stringstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_8?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@ */
-const int basic_stringstream_wchar_vbtable2[] = {0, sizeof(basic_stringstream_wchar)-FIELD_OFFSET(basic_stringstream_wchar, base.base2)};
+const int basic_stringstream_wchar_vbtable2[] = {0,
+    sizeof(basic_stringstream_wchar)-FIELD_OFFSET(basic_stringstream_wchar, base.base2)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_stringstream@_WU?$char_traits@_W@std@@V?$allocator@_W@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_stringstream_wchar_vtable;
 
 /* ??_8?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@ */
-const int basic_stringstream_short_vbtable1[] = {0, sizeof(basic_stringstream_wchar)};
+const int basic_stringstream_short_vbtable1[] = {0,
+    sizeof(basic_stringstream_wchar)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_8?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@ */
-const int basic_stringstream_short_vbtable2[] = {0, sizeof(basic_stringstream_wchar)-FIELD_OFFSET(basic_stringstream_wchar, base.base2)};
+const int basic_stringstream_short_vbtable2[] = {0,
+    sizeof(basic_stringstream_wchar)-FIELD_OFFSET(basic_stringstream_wchar, base.base2)+BASIC_IOS_VTORDISP_SIZE};
 /* ??_7?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@6B@ */
 extern const vtable_ptr MSVCP_basic_stringstream_short_vtable;
 
 /* ??_7strstreambuf@std@@6B */
 extern const vtable_ptr MSVCP_strstreambuf_vtable;
 
-static const int ostrstream_vbtable[] = {0, sizeof(ostrstream)};
+static const int ostrstream_vbtable[] = {0, sizeof(ostrstream)+BASIC_IOS_VTORDISP_SIZE};
 extern const vtable_ptr MSVCP_ostrstream_vtable;
 
-static const int istrstream_vbtable[] = {0, sizeof(istrstream)};
+static const int istrstream_vbtable[] = {0, sizeof(istrstream)+BASIC_IOS_VTORDISP_SIZE};
 
-static const int strstream_vbtable1[] = {0, sizeof(strstream)};
-static const int strstream_vbtable2[] = {0, sizeof(strstream)-FIELD_OFFSET(strstream, base.base2)};
+static const int strstream_vbtable1[] = {0, sizeof(strstream)+BASIC_IOS_VTORDISP_SIZE};
+static const int strstream_vbtable2[] = {0,
+    sizeof(strstream)-FIELD_OFFSET(strstream, base.base2)+BASIC_IOS_VTORDISP_SIZE};
 extern const vtable_ptr MSVCP_strstream_vtable;
 
 DEFINE_RTTI_DATA0(iosb, 0, ".?AV?$_Iosb@H@std@@")
@@ -6185,6 +6228,9 @@ basic_ostream_char* __thiscall basic_ostream_char_ctor(basic_ostream_char *this,
     if(virt_init) {
         this->vbtable = basic_ostream_char_vbtable;
         base = basic_ostream_char_get_basic_ios(this);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)base)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(base);
     }else {
         base = basic_ostream_char_get_basic_ios(this);
@@ -6208,6 +6254,9 @@ basic_ostream_char* __thiscall basic_ostream_char_ctor_uninitialized(basic_ostre
     if(virt_init) {
         this->vbtable = basic_ostream_char_vbtable;
         base = basic_ostream_char_get_basic_ios(this);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)base)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(base);
     }else {
         base = basic_ostream_char_get_basic_ios(this);
@@ -7008,6 +7057,9 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_ctor(basic_ostream_wchar *th
     if(virt_init) {
         this->vbtable = basic_ostream_wchar_vbtable;
         base = basic_ostream_wchar_get_basic_ios(this);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)base)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(base);
     }else {
         base = basic_ostream_wchar_get_basic_ios(this);
@@ -7042,6 +7094,9 @@ basic_ostream_wchar* __thiscall basic_ostream_wchar_ctor_uninitialized(basic_ost
     if(virt_init) {
         this->vbtable = basic_ostream_wchar_vbtable;
         base = basic_ostream_wchar_get_basic_ios(this);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)base)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(base);
     }else {
         base = basic_ostream_wchar_get_basic_ios(this);
@@ -8054,6 +8109,9 @@ basic_istream_char* __thiscall basic_istream_char_ctor_init(basic_istream_char *
     if(virt_init) {
         this->vbtable = basic_istream_char_vbtable;
         base = basic_istream_char_get_basic_ios(this);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)base)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(base);
     }else {
         base = basic_istream_char_get_basic_ios(this);
@@ -8086,6 +8144,9 @@ basic_istream_char* __thiscall basic_istream_char_ctor_uninitialized(basic_istre
     if(virt_init) {
         this->vbtable = basic_istream_char_vbtable;
         base = basic_istream_char_get_basic_ios(this);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)base)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(base);
     }else {
         base = basic_istream_char_get_basic_ios(this);
@@ -9489,6 +9550,9 @@ basic_istream_wchar* __thiscall basic_istream_wchar_ctor_init(basic_istream_wcha
     if(virt_init) {
         this->vbtable = basic_istream_wchar_vbtable;
         base = basic_istream_wchar_get_basic_ios(this);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)base)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(base);
     }else {
         base = basic_istream_wchar_get_basic_ios(this);
@@ -9543,6 +9607,9 @@ basic_istream_wchar* __thiscall basic_istream_wchar_ctor_uninitialized(
     if(virt_init) {
         this->vbtable = basic_istream_wchar_vbtable;
         base = basic_istream_wchar_get_basic_ios(this);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)base)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(base);
     }else {
         base = basic_istream_wchar_get_basic_ios(this);
@@ -11032,6 +11099,9 @@ basic_iostream_char* __thiscall basic_iostream_char_ctor(basic_iostream_char *th
         this->base1.vbtable = basic_iostream_char_vbtable1;
         this->base2.vbtable = basic_iostream_char_vbtable2;
         basic_ios = basic_istream_char_get_basic_ios(&this->base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base1);
@@ -11127,6 +11197,9 @@ basic_iostream_wchar* __thiscall basic_iostream_wchar_ctor(basic_iostream_wchar 
         this->base1.vbtable = basic_iostream_wchar_vbtable1;
         this->base2.vbtable = basic_iostream_wchar_vbtable2;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base1);
@@ -11237,6 +11310,9 @@ basic_ofstream_char* __thiscall basic_ofstream_char_ctor(basic_ofstream_char *th
     if(virt_init) {
         this->base.vbtable = basic_ofstream_char_vbtable;
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
@@ -11261,6 +11337,9 @@ basic_ofstream_char* __thiscall basic_ofstream_char_ctor_file(
     if(virt_init) {
         this->base.vbtable = basic_ofstream_char_vbtable;
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
@@ -11458,6 +11537,9 @@ basic_ofstream_wchar* __thiscall basic_ofstream_wchar_ctor(basic_ofstream_wchar 
     if(virt_init) {
         this->base.vbtable = basic_ofstream_wchar_vbtable;
         basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
@@ -11492,6 +11574,9 @@ basic_ofstream_wchar* __thiscall basic_ofstream_wchar_ctor_file(
     if(virt_init) {
         this->base.vbtable = basic_ofstream_wchar_vbtable;
         basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
@@ -11746,6 +11831,9 @@ basic_ifstream_char* __thiscall basic_ifstream_char_ctor(basic_ifstream_char *th
     if(virt_init) {
         this->base.vbtable = basic_ifstream_char_vbtable;
         basic_ios = basic_istream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base);
@@ -11770,6 +11858,9 @@ basic_ifstream_char* __thiscall basic_ifstream_char_ctor_file(
     if(virt_init) {
         this->base.vbtable = basic_ifstream_char_vbtable;
         basic_ios = basic_istream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base);
@@ -11976,6 +12067,9 @@ basic_ifstream_wchar* __thiscall basic_ifstream_wchar_ctor(basic_ifstream_wchar 
     if(virt_init) {
         this->base.vbtable = basic_ifstream_wchar_vbtable;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
@@ -12010,6 +12104,9 @@ basic_ifstream_wchar* __thiscall basic_ifstream_wchar_ctor_file(
     if(virt_init) {
         this->base.vbtable = basic_ifstream_wchar_vbtable;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
@@ -12283,6 +12380,9 @@ basic_fstream_char* __thiscall basic_fstream_char_ctor(basic_fstream_char *this,
         this->base.base1.vbtable = basic_fstream_char_vbtable1;
         this->base.base2.vbtable = basic_fstream_char_vbtable2;
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
@@ -12308,6 +12408,9 @@ basic_fstream_char* __thiscall basic_fstream_char_ctor_file(basic_fstream_char *
         this->base.base1.vbtable = basic_fstream_char_vbtable1;
         this->base.base2.vbtable = basic_fstream_char_vbtable2;
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
@@ -12515,6 +12618,9 @@ basic_fstream_wchar* __thiscall basic_fstream_wchar_ctor(basic_fstream_wchar *th
         this->base.base1.vbtable = basic_fstream_wchar_vbtable1;
         this->base.base2.vbtable = basic_fstream_wchar_vbtable2;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
@@ -12550,6 +12656,9 @@ basic_fstream_wchar* __thiscall basic_fstream_wchar_ctor_file(basic_fstream_wcha
         this->base.base1.vbtable = basic_fstream_wchar_vbtable1;
         this->base.base2.vbtable = basic_fstream_wchar_vbtable2;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
@@ -12822,6 +12931,9 @@ basic_ostringstream_char* __thiscall basic_ostringstream_char_ctor_str(basic_ost
     if(virt_init) {
         this->base.vbtable = basic_ostringstream_char_vbtable;
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
@@ -12846,6 +12958,9 @@ basic_ostringstream_char* __thiscall basic_ostringstream_char_ctor_mode(
     if(virt_init) {
         this->base.vbtable = basic_ostringstream_char_vbtable;
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
@@ -12963,6 +13078,9 @@ basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_ctor_str(basic_o
     if(virt_init) {
         this->base.vbtable = basic_ostringstream_wchar_vbtable;
         basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
@@ -12998,6 +13116,9 @@ basic_ostringstream_wchar* __thiscall basic_ostringstream_wchar_ctor_mode(
     if(virt_init) {
         this->base.vbtable = basic_ostringstream_wchar_vbtable;
         basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_wchar_get_basic_ios(&this->base);
@@ -13145,6 +13266,9 @@ basic_istringstream_char* __thiscall basic_istringstream_char_ctor_str(basic_ist
     if(virt_init) {
         this->base.vbtable = basic_istringstream_char_vbtable;
         basic_ios = basic_istream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base);
@@ -13169,6 +13293,9 @@ basic_istringstream_char* __thiscall basic_istringstream_char_ctor_mode(
     if(virt_init) {
         this->base.vbtable = basic_istringstream_char_vbtable;
         basic_ios = basic_istream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base);
@@ -13286,6 +13413,9 @@ basic_istringstream_wchar* __thiscall basic_istringstream_wchar_ctor_str(basic_i
     if(virt_init) {
         this->base.vbtable = basic_istringstream_wchar_vbtable;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
@@ -13321,6 +13451,9 @@ basic_istringstream_wchar* __thiscall basic_istringstream_wchar_ctor_mode(
     if(virt_init) {
         this->base.vbtable = basic_istringstream_wchar_vbtable;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base);
@@ -13469,6 +13602,9 @@ basic_stringstream_char* __thiscall basic_stringstream_char_ctor_str(basic_strin
         this->base.base1.vbtable = basic_stringstream_char_vbtable1;
         this->base.base2.vbtable = basic_stringstream_char_vbtable2;
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
@@ -13494,6 +13630,9 @@ basic_stringstream_char* __thiscall basic_stringstream_char_ctor_mode(
         this->base.base1.vbtable = basic_stringstream_char_vbtable1;
         this->base.base2.vbtable = basic_stringstream_char_vbtable2;
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
@@ -13613,6 +13752,9 @@ basic_stringstream_wchar* __thiscall basic_stringstream_wchar_ctor_str(basic_str
         this->base.base1.vbtable = basic_stringstream_wchar_vbtable1;
         this->base.base2.vbtable = basic_stringstream_wchar_vbtable2;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
@@ -13649,6 +13791,9 @@ basic_stringstream_wchar* __thiscall basic_stringstream_wchar_ctor_mode(
         this->base.base1.vbtable = basic_stringstream_wchar_vbtable1;
         this->base.base2.vbtable = basic_stringstream_wchar_vbtable2;
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_wchar_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_wchar_get_basic_ios(&this->base.base1);
@@ -14194,6 +14339,9 @@ ostrstream* __thiscall ostrstream_ctor(ostrstream *this, char *buf, streamsize s
     if(virt_init) {
         this->base.vbtable = ostrstream_vbtable;
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_ostream_char_get_basic_ios(&this->base);
@@ -14700,6 +14848,9 @@ strstream* __thiscall strstream_ctor(strstream *this, char *buf, streamsize size
         this->base.base1.vbtable = strstream_vbtable1;
         this->base.base2.vbtable = strstream_vbtable2;
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
+#if _MSVCP_VER >= 110
+        ((basic_ios_vtordisp*)basic_ios)[-1].vtordisp = 0;
+#endif
         basic_ios_char_ctor(basic_ios);
     }else {
         basic_ios = basic_istream_char_get_basic_ios(&this->base.base1);
