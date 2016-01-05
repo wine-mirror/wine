@@ -2128,6 +2128,9 @@ struct wined3d_device
     UINT dummy_texture_3d[MAX_COMBINED_SAMPLERS];
     UINT dummy_texture_cube[MAX_COMBINED_SAMPLERS];
 
+    /* Default sampler used to emulate the direct resource access without using wined3d_sampler */
+    GLuint default_sampler;
+
     /* Command stream */
     struct wined3d_cs *cs;
 
