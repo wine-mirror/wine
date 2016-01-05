@@ -1653,7 +1653,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Blt(IDirectDrawSurface7 *
     switch(hr)
     {
         case WINED3DERR_NOTAVAILABLE:       return DDERR_UNSUPPORTED;
-        case WINED3DERR_WRONGTEXTUREFORMAT: return DDERR_INVALIDPIXELFORMAT;
         default:                            return hr;
     }
 }
@@ -4164,7 +4163,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_BltFast(IDirectDrawSurfac
     switch(hr)
     {
         case WINED3DERR_NOTAVAILABLE:           return DDERR_UNSUPPORTED;
-        case WINED3DERR_WRONGTEXTUREFORMAT:     return DDERR_INVALIDPIXELFORMAT;
         default:                                return hr;
     }
 }

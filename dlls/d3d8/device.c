@@ -1288,7 +1288,7 @@ static HRESULT WINAPI d3d8_device_GetDepthStencilSurface(IDirect3DDevice8 *iface
     }
     else
     {
-        hr = WINED3DERR_NOTFOUND;
+        hr = D3DERR_NOTFOUND;
         *depth_stencil = NULL;
     }
     wined3d_mutex_unlock();

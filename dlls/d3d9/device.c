@@ -1525,7 +1525,7 @@ static HRESULT WINAPI d3d9_device_GetRenderTarget(IDirect3DDevice9Ex *iface, DWO
     }
     else
     {
-        hr = WINED3DERR_NOTFOUND;
+        hr = D3DERR_NOTFOUND;
         *surface = NULL;
     }
     wined3d_mutex_unlock();
@@ -1571,7 +1571,7 @@ static HRESULT WINAPI d3d9_device_GetDepthStencilSurface(IDirect3DDevice9Ex *ifa
     }
     else
     {
-        hr = WINED3DERR_NOTFOUND;
+        hr = D3DERR_NOTFOUND;
         *depth_stencil = NULL;
     }
     wined3d_mutex_unlock();
