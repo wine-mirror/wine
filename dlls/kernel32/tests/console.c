@@ -2681,6 +2681,69 @@ static void test_GetConsoleFontSize(HANDLE std_output)
     ok(!c.Y, "got %d, expected 0\n", c.Y);
 }
 
+static void test_GetLargestConsoleWindowSize(HANDLE std_output)
+{
+    COORD c, font;
+    RECT r;
+    LONG workarea_w, workarea_h, maxcon_w, maxcon_h;
+    CONSOLE_FONT_INFO cfi;
+    DWORD index, i;
+    HMODULE hmod;
+    DWORD (WINAPI *pGetNumberOfConsoleFonts)(void);
+    BOOL (WINAPI *pSetConsoleFont)(HANDLE, DWORD);
+
+    memset(&c, 10, sizeof(COORD));
+    SetLastError(0xdeadbeef);
+    c = GetLargestConsoleWindowSize(NULL);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!c.X, "got %d, expected 0\n", c.X);
+    ok(!c.Y, "got %d, expected 0\n", c.Y);
+
+    memset(&c, 10, sizeof(COORD));
+    SetLastError(0xdeadbeef);
+    c = GetLargestConsoleWindowSize(GetStdHandle(STD_INPUT_HANDLE));
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!c.X, "got %d, expected 0\n", c.X);
+    ok(!c.Y, "got %d, expected 0\n", c.Y);
+
+    SystemParametersInfoW(SPI_GETWORKAREA, 0, &r, 0);
+    workarea_w = r.right - r.left;
+    workarea_h = r.bottom - r.top - GetSystemMetrics(SM_CYCAPTION);
+
+    GetCurrentConsoleFont(std_output, FALSE, &cfi);
+    index = cfi.nFont; /* save current font index */
+
+    hmod = GetModuleHandleA("kernel32.dll");
+    pGetNumberOfConsoleFonts = (void *)GetProcAddress(hmod, "GetNumberOfConsoleFonts");
+    if (!pGetNumberOfConsoleFonts)
+    {
+        win_skip("GetNumberOfConsoleFonts is not available\n");
+        return;
+    }
+    pSetConsoleFont = (void *)GetProcAddress(hmod, "SetConsoleFont");
+    if (!pSetConsoleFont)
+    {
+        win_skip("SetConsoleFont is not available\n");
+        return;
+    }
+
+    for (i = 0; i < pGetNumberOfConsoleFonts(); i++)
+    {
+        pSetConsoleFont(std_output, i);
+        memset(&c, 10, sizeof(COORD));
+        SetLastError(0xdeadbeef);
+        c = GetLargestConsoleWindowSize(std_output);
+        ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+        GetCurrentConsoleFont(std_output, FALSE, &cfi);
+        font = GetConsoleFontSize(std_output, cfi.nFont);
+        maxcon_w = workarea_w / font.X;
+        maxcon_h = workarea_h / font.Y;
+        ok(c.X == maxcon_w || c.X == maxcon_w - 1 /* Win10 */, "got %d, expected %d\n", c.X, maxcon_w);
+        ok(c.Y == maxcon_h || c.Y == maxcon_h - 1 /* Win10 */, "got %d, expected %d\n", c.Y, maxcon_h);
+    }
+    pSetConsoleFont(std_output, index); /* restore original font size */
+}
+
 START_TEST(console)
 {
     static const char font_name[] = "Lucida Console";
@@ -2826,4 +2889,5 @@ START_TEST(console)
     test_ReadConsoleOutputAttribute(hConOut);
     test_GetCurrentConsoleFont(hConOut);
     test_GetConsoleFontSize(hConOut);
+    test_GetLargestConsoleWindowSize(hConOut);
 }
