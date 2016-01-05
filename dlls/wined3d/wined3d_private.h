@@ -2337,14 +2337,12 @@ void wined3d_texture_set_swapchain(struct wined3d_texture *texture,
 
 const char *wined3d_debug_location(DWORD location) DECLSPEC_HIDDEN;
 
-#define WINED3D_VFLAG_CLIENT_STORAGE    0x00000001
-
 struct wined3d_volume
 {
     struct wined3d_resource resource;
     struct wined3d_texture *container;
 
-    DWORD flags, locations;
+    DWORD locations;
     GLint texture_level;
     DWORD download_count;
     GLuint pbo;
@@ -2497,7 +2495,6 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
 #define SFLAG_DIBSECTION        0x00000001 /* Has a DIB section attached for GetDC. */
 #define SFLAG_DISCARD           0x00000002 /* ??? */
 #define SFLAG_NONPOW2           0x00000004 /* Surface sizes are not a power of 2 */
-#define SFLAG_CLIENT            0x00000010 /* GL_APPLE_client_storage is used with this surface. */
 #define SFLAG_DCINUSE           0x00000020 /* Set between GetDC and ReleaseDC calls. */
 
 struct wined3d_sampler

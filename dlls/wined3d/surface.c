@@ -589,37 +589,13 @@ static void surface_evict_sysmem(struct wined3d_surface *surface)
 {
     /* In some conditions the surface memory must not be freed:
      * WINED3D_TEXTURE_CONVERTED: Converting the data back would take too long
-     * WINED3D_TEXTURE_DYNAMIC_MAP: Avoid freeing the data for performance
-     * SFLAG_CLIENT: OpenGL uses our memory as backup */
-    if (surface->resource.map_count || surface->flags & SFLAG_CLIENT
-            || surface->container->flags & (WINED3D_TEXTURE_CONVERTED | WINED3D_TEXTURE_PIN_SYSMEM
-            | WINED3D_TEXTURE_DYNAMIC_MAP))
+     * WINED3D_TEXTURE_DYNAMIC_MAP: Avoid freeing the data for performance */
+    if (surface->resource.map_count || surface->container->flags & (WINED3D_TEXTURE_CONVERTED
+            | WINED3D_TEXTURE_PIN_SYSMEM | WINED3D_TEXTURE_DYNAMIC_MAP))
         return;
 
     wined3d_resource_free_sysmem(&surface->resource);
     surface_invalidate_location(surface, WINED3D_LOCATION_SYSMEM);
-}
-
-static void surface_release_client_storage(struct wined3d_surface *surface)
-{
-    struct wined3d_context *context = context_acquire(surface->resource.device, NULL);
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    if (surface->container->texture_rgb.name)
-    {
-        wined3d_texture_bind_and_dirtify(surface->container, context, FALSE);
-        gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
-                GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    }
-    if (surface->container->texture_srgb.name)
-    {
-        wined3d_texture_bind_and_dirtify(surface->container, context, TRUE);
-        gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
-                GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, NULL);
-    }
-    wined3d_texture_force_reload(surface->container);
-
-    context_release(context);
 }
 
 static BOOL surface_use_pbo(const struct wined3d_surface *surface)
@@ -2643,13 +2619,7 @@ HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
     /* Create a DIB section if there isn't a dc yet. */
     if (!surface->hDC)
     {
-        if (surface->flags & SFLAG_CLIENT)
-        {
-            surface_load_location(surface, context, WINED3D_LOCATION_SYSMEM);
-            surface_release_client_storage(surface);
-        }
-        hr = surface_create_dib_section(surface);
-        if (FAILED(hr))
+        if (FAILED(hr = surface_create_dib_section(surface)))
         {
             if (context)
                 context_release(context);

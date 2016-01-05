@@ -230,8 +230,6 @@ static BOOL wined3d_volume_can_evict(const struct wined3d_volume *volume)
         return FALSE;
     if (volume->resource.format->convert)
         return FALSE;
-    if (volume->flags & WINED3D_VFLAG_CLIENT_STORAGE)
-        return FALSE;
 
     return TRUE;
 }
@@ -455,7 +453,6 @@ static void volume_unload(struct wined3d_resource *resource)
     }
 
     /* The texture name is managed by the container. */
-    volume->flags &= ~WINED3D_VFLAG_CLIENT_STORAGE;
 
     resource_unload(resource);
 }

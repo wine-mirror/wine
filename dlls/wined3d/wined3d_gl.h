@@ -38,7 +38,6 @@ enum wined3d_gl_extension
     WINED3D_GL_EXT_NONE,
 
     /* APPLE */
-    APPLE_CLIENT_STORAGE,
     APPLE_FENCE,
     APPLE_FLOAT_PIXELS,
     APPLE_FLUSH_BUFFER_RANGE,

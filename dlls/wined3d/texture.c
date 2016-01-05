@@ -863,7 +863,6 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
         struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i]);
         GLsizei height = surface->pow2Height;
         GLsizei width = surface->pow2Width;
-        const BYTE *mem = NULL;
 
         if (texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
         {
@@ -874,48 +873,9 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
         TRACE("surface %p, target %#x, level %d, width %d, height %d.\n",
                 surface, surface->texture_target, surface->texture_level, width, height);
 
-        if (gl_info->supported[APPLE_CLIENT_STORAGE])
-        {
-            if (surface->flags & (SFLAG_NONPOW2 | SFLAG_DIBSECTION)
-                    || texture->flags & WINED3D_TEXTURE_CONVERTED
-                    || !surface->resource.heap_memory)
-            {
-                /* In some cases we want to disable client storage.
-                 * SFLAG_NONPOW2 has a bigger opengl texture than the client memory, and different pitches
-                 * SFLAG_DIBSECTION: Dibsections may have read / write protections on the memory. Avoid issues...
-                 * WINED3D_TEXTURE_CONVERTED: The conversion destination memory is freed after loading the surface
-                 * heap_memory == NULL: Not defined in the extension. Seems to disable client storage effectively
-                 */
-                surface->flags &= ~SFLAG_CLIENT;
-            }
-            else
-            {
-                surface->flags |= SFLAG_CLIENT;
-                mem = surface->resource.heap_memory;
-
-                gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-                checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-            }
-        }
-
-        if (texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED && mem)
-        {
-            GL_EXTCALL(glCompressedTexImage2D(surface->texture_target, surface->texture_level,
-                    internal, width, height, 0, surface->resource.size, mem));
-            checkGLcall("glCompressedTexImage2D");
-        }
-        else
-        {
-            gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
-                    internal, width, height, 0, format->glFormat, format->glType, mem);
-            checkGLcall("glTexImage2D");
-        }
-
-        if (mem)
-        {
-            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-        }
+        gl_info->gl_ops.gl.p_glTexImage2D(surface->texture_target, surface->texture_level,
+                internal, width, height, 0, format->glFormat, format->glType, NULL);
+        checkGLcall("glTexImage2D");
     }
 }
 
@@ -1291,29 +1251,12 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
     for (i = 0; i < sub_count; ++i)
     {
         struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
-        void *mem = NULL;
-
-        if (gl_info->supported[APPLE_CLIENT_STORAGE] && !format->convert
-                && volume_prepare_system_memory(volume))
-        {
-            TRACE("Enabling GL_UNPACK_CLIENT_STORAGE_APPLE for volume %p\n", volume);
-            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
-            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE)");
-            mem = volume->resource.heap_memory;
-            volume->flags |= WINED3D_VFLAG_CLIENT_STORAGE;
-        }
 
         GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, volume->texture_level,
                 srgb ? format->glGammaInternal : format->glInternal,
                 volume->resource.width, volume->resource.height, volume->resource.depth,
-                0, format->glFormat, format->glType, mem));
+                0, format->glFormat, format->glType, NULL));
         checkGLcall("glTexImage3D");
-
-        if (mem)
-        {
-            gl_info->gl_ops.gl.p_glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE);
-            checkGLcall("glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_FALSE)");
-        }
     }
 }
 
