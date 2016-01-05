@@ -1360,6 +1360,22 @@ DWORD WINAPI GetConsoleTitleW(LPWSTR title, DWORD size)
     return ret;
 }
 
+static COORD get_largest_console_window_size(HANDLE hConsole)
+{
+    COORD c = {0,0};
+
+    SERVER_START_REQ(get_console_output_info)
+    {
+        req->handle = console_handle_unmap(hConsole);
+        if (!wine_server_call_err(req))
+        {
+            c.X = reply->max_width;
+            c.Y = reply->max_height;
+        }
+    }
+    SERVER_END_REQ;
+    return c;
+}
 
 /***********************************************************************
  *            GetLargestConsoleWindowSize   (KERNEL32.@)
@@ -1378,8 +1394,7 @@ DWORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 	COORD c;
 	DWORD w;
     } x;
-    x.c.X = 80;
-    x.c.Y = 24;
+    x.c = get_largest_console_window_size(hConsoleOutput);
     TRACE("(%p), returning %dx%d (%x)\n", hConsoleOutput, x.c.X, x.c.Y, x.w);
     return x.w;
 }
@@ -1399,12 +1414,11 @@ DWORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 COORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
     COORD c;
-    c.X = 80;
-    c.Y = 24;
+    c = get_largest_console_window_size(hConsoleOutput);
     TRACE("(%p), returning %dx%d\n", hConsoleOutput, c.X, c.Y);
     return c;
 }
-#endif /* defined(__i386__) */
+#endif /* !defined(__i386__) */
 
 static WCHAR*	S_EditString /* = NULL */;
 static unsigned S_EditStrPos /* = 0 */;
