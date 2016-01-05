@@ -709,11 +709,26 @@ void __asm_dummy_vtables(void) {
     __ASM_VTABLE(ios_base,
             VTABLE_ADD_FUNC(ios_base_vector_dtor));
     __ASM_VTABLE(basic_ios_char,
-            VTABLE_ADD_FUNC(basic_ios_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ios_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ios_wchar,
-            VTABLE_ADD_FUNC(basic_ios_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ios_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ios_short,
-            VTABLE_ADD_FUNC(basic_ios_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ios_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_streambuf_char,
             VTABLE_ADD_FUNC(basic_streambuf_char_vector_dtor)
 #if _MSVCP_VER >= 100
@@ -892,59 +907,194 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_wchar_sync)
             VTABLE_ADD_FUNC(basic_streambuf_wchar_imbue));
     __ASM_VTABLE(basic_ostream_char,
-            VTABLE_ADD_FUNC(basic_ostream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ostream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ostream_wchar,
-            VTABLE_ADD_FUNC(basic_ostream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ostream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ostream_short,
-            VTABLE_ADD_FUNC(basic_ostream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ostream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_istream_char,
-            VTABLE_ADD_FUNC(basic_istream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_istream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_istream_wchar,
-            VTABLE_ADD_FUNC(basic_istream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_istream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_istream_short,
-            VTABLE_ADD_FUNC(basic_istream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_istream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_iostream_char,
-            VTABLE_ADD_FUNC(basic_iostream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_iostream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_iostream_wchar,
-            VTABLE_ADD_FUNC(basic_iostream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_iostream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_iostream_short,
-            VTABLE_ADD_FUNC(basic_iostream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_iostream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ofstream_char,
-            VTABLE_ADD_FUNC(basic_ofstream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ofstream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ofstream_wchar,
-            VTABLE_ADD_FUNC(basic_ofstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ofstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ofstream_short,
-            VTABLE_ADD_FUNC(basic_ofstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ofstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ifstream_char,
-            VTABLE_ADD_FUNC(basic_ifstream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ifstream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ifstream_wchar,
-            VTABLE_ADD_FUNC(basic_ifstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ifstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ifstream_short,
-            VTABLE_ADD_FUNC(basic_ifstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ifstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_fstream_char,
-            VTABLE_ADD_FUNC(basic_fstream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_fstream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_fstream_wchar,
-            VTABLE_ADD_FUNC(basic_fstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_fstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_fstream_short,
-            VTABLE_ADD_FUNC(basic_fstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_fstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ostringstream_char,
-            VTABLE_ADD_FUNC(basic_ostringstream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ostringstream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ostringstream_wchar,
-            VTABLE_ADD_FUNC(basic_ostringstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ostringstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_ostringstream_short,
-            VTABLE_ADD_FUNC(basic_ostringstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_ostringstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_istringstream_char,
-            VTABLE_ADD_FUNC(basic_istringstream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_istringstream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_istringstream_wchar,
-            VTABLE_ADD_FUNC(basic_istringstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_istringstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_istringstream_short,
-            VTABLE_ADD_FUNC(basic_istringstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_istringstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_stringstream_char,
-            VTABLE_ADD_FUNC(basic_stringstream_char_vector_dtor));
+            VTABLE_ADD_FUNC(basic_stringstream_char_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_stringstream_wchar,
-            VTABLE_ADD_FUNC(basic_stringstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_stringstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(basic_stringstream_short,
-            VTABLE_ADD_FUNC(basic_stringstream_wchar_vector_dtor));
+            VTABLE_ADD_FUNC(basic_stringstream_wchar_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(strstreambuf,
             VTABLE_ADD_FUNC(strstreambuf_vector_dtor)
             VTABLE_ADD_FUNC(strstreambuf_overflow)
@@ -963,9 +1113,19 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(basic_streambuf_char_sync)
             VTABLE_ADD_FUNC(basic_streambuf_char_imbue));
     __ASM_VTABLE(ostrstream,
-            VTABLE_ADD_FUNC(ostrstream_vector_dtor));
+            VTABLE_ADD_FUNC(ostrstream_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
     __ASM_VTABLE(strstream,
-            VTABLE_ADD_FUNC(strstream_vector_dtor));
+            VTABLE_ADD_FUNC(strstream_vector_dtor)
+#if _MSVCP_VER >= 110
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp1)
+            VTABLE_ADD_FUNC(basic_ios__Add_vtordisp2)
+#endif
+            );
 #ifndef __GNUC__
 }
 #endif
@@ -5439,6 +5599,18 @@ void __thiscall ios_base_swap(ios_base *this, ios_base *r)
     this->vtable = tmp.vtable;
     tmp.vtable = r->vtable;
     *r = tmp;
+}
+
+DEFINE_THISCALL_WRAPPER(basic_ios__Add_vtordisp1, 4)
+void __thiscall basic_ios__Add_vtordisp1(void *this)
+{
+    WARN("should not be called (%p)\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(basic_ios__Add_vtordisp2, 4)
+void __thiscall basic_ios__Add_vtordisp2(void *this)
+{
+    WARN("should not be called (%p)\n", this);
 }
 
 /* ??0?$basic_ios@DU?$char_traits@D@std@@@std@@IAE@XZ */
