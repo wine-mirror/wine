@@ -16,7 +16,7 @@
 @ stub NdisAllocatePacket
 @ stub NdisAllocatePacketPool
 @ stub NdisAllocatePacketPoolEx
-@ stub NdisAllocateSpinLock
+@ stdcall NdisAllocateSpinLock(ptr)
 @ stub NdisAnsiStringToUnicodeString
 @ stub NdisBufferLength
 @ stub NdisBufferVirtualAddress
