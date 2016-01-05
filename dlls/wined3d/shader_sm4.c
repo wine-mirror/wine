@@ -274,7 +274,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_IMUL,                   WINED3DSIH_IMUL,                "II",   "II"},
     {WINED3D_SM4_OP_ISHL,                   WINED3DSIH_ISHL,                "I",    "II"},
     {WINED3D_SM4_OP_ITOF,                   WINED3DSIH_ITOF,                "F",    "I"},
-    {WINED3D_SM4_OP_LD,                     WINED3DSIH_LD,                  "U",    "FR"},
+    {WINED3D_SM4_OP_LD,                     WINED3DSIH_LD,                  "U",    "IR"},
     {WINED3D_SM4_OP_LOG,                    WINED3DSIH_LOG,                 "F",    "F"},
     {WINED3D_SM4_OP_LOOP,                   WINED3DSIH_LOOP,                "",     ""},
     {WINED3D_SM4_OP_LT,                     WINED3DSIH_LT,                  "U",    "FF"},
