@@ -95,7 +95,6 @@ static void pcap_handler_callback(u_char *user_data, const struct pcap_pkthdr *h
     TRACE("(%p %p %p)\n", user_data, h, p);
     pcb = (PCAP_HANDLER_CALLBACK *)user_data;
     pcb->pfn_cb(pcb->user_data, h, p);
-    HeapFree(GetProcessHeap(), 0, pcb);
     TRACE("Callback COMPLETED\n");
 }
 
@@ -107,11 +106,10 @@ int CDECL wine_pcap_dispatch(pcap_t *p, int cnt,
 
     if (callback)
     {
-        PCAP_HANDLER_CALLBACK *pcb;
-        pcb = HeapAlloc(GetProcessHeap(), 0, sizeof(PCAP_HANDLER_CALLBACK));
-        pcb->pfn_cb = callback;
-        pcb->user_data = user;
-        return pcap_dispatch(p, cnt, pcap_handler_callback, (unsigned char*)pcb);
+        PCAP_HANDLER_CALLBACK pcb;
+        pcb.pfn_cb = callback;
+        pcb.user_data = user;
+        return pcap_dispatch(p, cnt, pcap_handler_callback, (unsigned char *)&pcb);
     }
 
     return pcap_dispatch(p, cnt, NULL, user);
@@ -200,11 +198,10 @@ int CDECL wine_pcap_loop(pcap_t *p, int cnt,
 
     if (callback)
     {
-        PCAP_HANDLER_CALLBACK *pcb;
-        pcb = HeapAlloc(GetProcessHeap(), 0, sizeof(PCAP_HANDLER_CALLBACK));
-        pcb->pfn_cb = callback;
-        pcb->user_data = user;
-        return pcap_loop(p, cnt, pcap_handler_callback, (unsigned char*)pcb);
+        PCAP_HANDLER_CALLBACK pcb;
+        pcb.pfn_cb = callback;
+        pcb.user_data = user;
+        return pcap_loop(p, cnt, pcap_handler_callback, (unsigned char *)&pcb);
     }
 
     return pcap_loop(p, cnt, NULL, user);
