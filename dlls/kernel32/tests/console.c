@@ -2787,6 +2787,17 @@ START_TEST(console)
     testScroll(hConOut, sbi.dwSize);
     /* will test sb creation / modification / codepage handling */
     testScreenBuffer(hConOut);
+
+    /* clear duplicated console font table */
+    CloseHandle(hConIn);
+    CloseHandle(hConOut);
+    FreeConsole();
+    ok(AllocConsole(), "Couldn't alloc console\n");
+    hConIn = CreateFileA("CONIN$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    hConOut = CreateFileA("CONOUT$", GENERIC_READ|GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
+    ok(hConIn != INVALID_HANDLE_VALUE, "Opening ConIn\n");
+    ok(hConOut != INVALID_HANDLE_VALUE, "Opening ConOut\n");
+
     testCtrlHandler();
     /* still to be done: access rights & access on objects */
 
