@@ -23,8 +23,8 @@
 #error Wine should not include tchar.h internally
 #endif
 
-#if defined(_UNICODE) || defined(_MBCS)
-#error You must use msvcrt when building in Unicode/MBCS mode
+#if !defined(__MSVCRT__) && (defined(_UNICODE) || defined(_MBCS))
+#error You must use msvcrt when building in Unicode/MBCS mode [-mno-cygwin]
 #endif
 
 #ifdef __cplusplus
