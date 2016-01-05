@@ -1345,7 +1345,7 @@
 @ stub SetConsoleCursorMode
 @ stdcall SetConsoleCursorPosition(long long)
 @ stdcall SetConsoleDisplayMode(long long ptr)
-@ stub SetConsoleFont
+@ stdcall SetConsoleFont(long long)
 @ stub SetConsoleHardwareState
 @ stdcall SetConsoleIcon(ptr)
 @ stdcall SetConsoleInputExeNameA(ptr)

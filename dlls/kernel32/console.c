@@ -3256,6 +3256,12 @@ DWORD WINAPI GetNumberOfConsoleFonts(void)
     return 1;
 }
 
+BOOL WINAPI SetConsoleFont(HANDLE hConsole, DWORD index)
+{
+    FIXME("(%p, %u): stub!\n", hConsole, index);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
 
 BOOL WINAPI SetConsoleKeyShortcuts(BOOL set, BYTE keys, VOID *a, DWORD b)
 {
