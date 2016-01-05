@@ -277,7 +277,6 @@ void WINAPI SysFreeString(BSTR str)
 
             if(WARN_ON(heap)) {
                 unsigned n = bstr_alloc_size(bstr->size) / sizeof(DWORD) - 1;
-                bstr->size = ARENA_FREE_FILLER;
                 for(i=0; i<n; i++)
                     bstr->u.dwptr[i] = ARENA_FREE_FILLER;
             }
