@@ -5577,6 +5577,82 @@ static void test_swvp_buffer(void)
     DestroyWindow(window);
 }
 
+static void test_managed_buffer(void)
+{
+    static const unsigned int vertex_count = 1024;
+    IDirect3DVertexBuffer8 *buffer;
+    D3DVERTEXBUFFER_DESC desc;
+    IDirect3DDevice8 *device;
+    struct vec3 *ptr, *ptr2;
+    IDirect3D8 *d3d8;
+    unsigned int i;
+    UINT refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    d3d8 = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d8, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d8, window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D8_Release(d3d8);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice8_CreateVertexBuffer(device, vertex_count * sizeof(*ptr), 0, 0, D3DPOOL_MANAGED, &buffer);
+    ok(SUCCEEDED(hr), "Failed to create buffer, hr %#x.\n", hr);
+    hr = IDirect3DVertexBuffer8_GetDesc(buffer, &desc);
+    ok(SUCCEEDED(hr), "Failed to get desc, hr %#x.\n", hr);
+    ok(desc.Pool == D3DPOOL_MANAGED, "Got unexpected pool %#x.\n", desc.Pool);
+    ok(!desc.Usage, "Got unexpected usage %#x.\n", desc.Usage);
+
+    hr = IDirect3DVertexBuffer8_Lock(buffer, 0, vertex_count * sizeof(*ptr), (BYTE **)&ptr, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Failed to lock buffer, hr %#x.\n", hr);
+    for (i = 0; i < vertex_count; ++i)
+    {
+        ptr[i].x = i * 1.0f;
+        ptr[i].y = i * 2.0f;
+        ptr[i].z = i * 3.0f;
+    }
+    hr = IDirect3DVertexBuffer8_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock buffer, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ);
+    ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_SetStreamSource(device, 0, buffer, sizeof(*ptr));
+    ok(SUCCEEDED(hr), "Failed to set stream source, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_BeginScene(device);
+    ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
+    ok(SUCCEEDED(hr), "Failed to draw, hr %#x.\n", hr);
+    hr = IDirect3DDevice8_EndScene(device);
+    ok(SUCCEEDED(hr), "Failed to end scene, hr %#x.\n", hr);
+
+    hr = IDirect3DVertexBuffer8_Lock(buffer, 0, vertex_count * sizeof(*ptr2), (BYTE **)&ptr2, D3DLOCK_DISCARD);
+    ok(SUCCEEDED(hr), "Failed to lock buffer, hr %#x.\n", hr);
+    ok(ptr2 == ptr, "Got unexpected ptr2 %p, expected %p.\n", ptr2, ptr);
+    for (i = 0; i < vertex_count; ++i)
+    {
+        if (ptr2[i].x != i * 1.0f || ptr2[i].y != i * 2.0f || ptr2[i].z != i * 3.0f)
+        {
+            ok(FALSE, "Got unexpected vertex %u {%.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e}.\n",
+                    i, ptr2[i].x, ptr2[i].y, ptr2[i].z, i * 1.0f, i * 2.0f, i * 3.0f);
+            break;
+        }
+    }
+    hr = IDirect3DVertexBuffer8_Unlock(buffer);
+    ok(SUCCEEDED(hr), "Failed to unlock buffer, hr %#x.\n", hr);
+
+    IDirect3DVertexBuffer8_Release(buffer);
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+    IDirect3D8_Release(d3d8);
+    DestroyWindow(window);
+}
+
 static void test_npot_textures(void)
 {
     IDirect3DDevice8 *device = NULL;
@@ -7530,6 +7606,7 @@ START_TEST(device)
     test_surface_blocks();
     test_set_palette();
     test_swvp_buffer();
+    test_managed_buffer();
     test_npot_textures();
     test_volume_locking();
     test_update_volumetexture();
