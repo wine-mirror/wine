@@ -5,7 +5,7 @@
 5 pascal SysReAllocStringLen(ptr str word) SysReAllocStringLen16
 6 pascal SysFreeString(segstr)		SysFreeString16
 7 pascal SysStringLen(segstr)		SysStringLen16
-8 stub VARIANTINIT
+8 pascal VariantInit(ptr) VariantInit16
 9 stub VARIANTCLEAR
 10 stub VARIANTCOPY
 11 stub VARIANTCOPYIND

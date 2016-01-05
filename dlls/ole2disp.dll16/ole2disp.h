@@ -39,4 +39,43 @@ INT16  WINAPI SysReAllocString16(LPBSTR16,LPCOLESTR16);
 int    WINAPI SysReAllocStringLen16(BSTR16*, const char*,  int);
 int    WINAPI SysStringLen16(BSTR16);
 
+typedef struct tagVARIANT16 {
+    VARTYPE vt;
+    WORD wReserved1;
+    WORD wReserved2;
+    WORD wReserved3;
+    union {
+                    BYTE bVal;
+                    SHORT iVal;
+                    LONG lVal;
+                    FLOAT fltVal;
+                    DOUBLE dblVal;
+                    VARIANT_BOOL boolVal;
+                    SCODE scode;
+                    DATE date;
+/* BSTR16 */        SEGPTR bstrVal;
+                    CY cyVal;
+/* IUnknown* */     SEGPTR punkVal;
+/* IDispatch* */    SEGPTR pdispVal;
+/* SAFEARRAY* */    SEGPTR parray;
+/* BYTE* */         SEGPTR pbVal;
+/* SHORT* */        SEGPTR piVal;
+/* LONG* */         SEGPTR plVal;
+/* FLOAT* */        SEGPTR pfltVal;
+/* DOUBLE* */       SEGPTR pdblVal;
+/* VARIANT_BOOL* */ SEGPTR pboolVal;
+/* SCODE* */        SEGPTR pscode;
+/* DATE* */         SEGPTR pdate;
+/* BSTR16* */       SEGPTR pbstrVal;
+/* VARIANT16* */    SEGPTR pvarVal;
+/* void* */         SEGPTR byref;
+/* CY* */           SEGPTR pcyVal;
+/* IUnknown** */    SEGPTR ppunkVal;
+/* IDispatch** */   SEGPTR ppdispVal;
+/* SAFEARRAY** */   SEGPTR pparray;
+    } u;
+} VARIANT16;
+
+typedef VARIANT16 VARIANTARG16;
+
 #endif /* !defined(__WINE_OLEAUT32_OLE2DISP_H) */

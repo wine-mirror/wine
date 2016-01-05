@@ -276,3 +276,12 @@ HRESULT WINAPI SetErrorInfo16(ULONG dwReserved, IErrorInfo *perrinfo)
         FIXME("stub: (%d, %p)\n", dwReserved, perrinfo);
         return E_INVALIDARG;
 }
+
+/******************************************************************************
+ * VariantInit [OLE2DISP.8]
+ */
+void WINAPI VariantInit16(VARIANTARG16 *v)
+{
+    TRACE("(%p)\n", v);
+    v->vt = VT_EMPTY;
+}
