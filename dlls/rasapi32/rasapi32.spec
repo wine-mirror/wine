@@ -64,6 +64,8 @@
 @ stdcall RasSetAutodialParamW(long ptr long)
 @ stub RasSetCredentialsA
 @ stub RasSetCredentialsW
+@ stdcall RasSetCustomAuthDataA(str str ptr long)
+@ stdcall RasSetCustomAuthDataW(wstr wstr ptr long)
 @ stdcall RasSetEntryDialParamsA(str ptr long)
 @ stdcall RasSetEntryDialParamsW(wstr ptr long)
 @ stdcall RasSetEntryPropertiesA(str str ptr long ptr long)

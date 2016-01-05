@@ -493,6 +493,9 @@ DWORD WINAPI RasSetAutodialAddressW(LPCWSTR,DWORD,LPRASAUTODIALENTRYW,DWORD,DWOR
 DWORD WINAPI RasSetAutodialParamA(DWORD,LPVOID,DWORD);
 DWORD WINAPI RasSetAutodialParamW(DWORD,LPVOID,DWORD);
 #define      RasSetAutodialParam WINELIB_NAME_AW(RasSetAutodialParam)
+DWORD WINAPI RasSetCustomAuthDataA(const CHAR *,const CHAR *,BYTE *,DWORD);
+DWORD WINAPI RasSetCustomAuthDataW(const WCHAR *,const WCHAR *,BYTE *,DWORD);
+#define      RasSetCustomAuthData WINELIB_NAME_AW(RasSetCustomAuthData)
 DWORD WINAPI RasSetEntryDialParamsA(LPCSTR,LPRASDIALPARAMSA,BOOL);
 DWORD WINAPI RasSetEntryDialParamsW(LPCWSTR,LPRASDIALPARAMSW,BOOL);
 #define      RasSetEntryDialParams WINELIB_NAME_AW(RasSetEntryDialParams)
