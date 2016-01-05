@@ -1203,7 +1203,7 @@ static HRESULT buffer_init(struct wined3d_buffer *buffer, struct wined3d_device 
     TRACE("size %#x, usage %#x, format %s, memory @ %p, iface @ %p.\n", buffer->resource.size, buffer->resource.usage,
             debug_d3dformat(buffer->resource.format->id), buffer->resource.heap_memory, buffer);
 
-    if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING)
+    if (device->create_parms.flags & WINED3DCREATE_SOFTWARE_VERTEXPROCESSING || pool == WINED3D_POOL_MANAGED)
     {
         /* SWvp always returns the same pointer in buffer maps and retains data in DISCARD maps.
          * Keep a system memory copy of the buffer to provide the same behavior to the application.
