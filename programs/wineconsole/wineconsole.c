@@ -424,11 +424,15 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
     if (strcmpiW(data->curcfg.face_name, cfg->face_name) || data->curcfg.cell_width != cfg->cell_width ||
         data->curcfg.cell_height != cfg->cell_height || data->curcfg.font_weight != cfg->font_weight)
     {
+        RECT r;
         data->fnSetFont(data, cfg->face_name, cfg->cell_height, cfg->font_weight);
+        SystemParametersInfoW(SPI_GETWORKAREA, 0, &r, 0);
         SERVER_START_REQ(set_console_output_info)
         {
             req->handle = wine_server_obj_handle( data->hConOut );
-            req->mask = SET_CONSOLE_OUTPUT_INFO_FONT;
+            req->mask = SET_CONSOLE_OUTPUT_INFO_MAX_SIZE | SET_CONSOLE_OUTPUT_INFO_FONT;
+            req->max_width  = (r.right - r.left) / cfg->cell_width;
+            req->max_height = (r.bottom - r.top - GetSystemMetrics(SM_CYCAPTION)) / cfg->cell_height;
             req->font_width = cfg->cell_width;
             req->font_height = cfg->cell_height;
             wine_server_call( req );

@@ -1018,13 +1018,6 @@ static int set_console_output_info( struct screen_buffer *screen_buffer,
     }
     if (req->mask & SET_CONSOLE_OUTPUT_INFO_MAX_SIZE)
     {
-	/* can only be done by renderer */
-	if (current->process->console != screen_buffer->input)
-	{
-	    set_error( STATUS_INVALID_PARAMETER );
-	    return 0;
-	}
-
 	screen_buffer->max_width  = req->max_width;
 	screen_buffer->max_height = req->max_height;
     }
