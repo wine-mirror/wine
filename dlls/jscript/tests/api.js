@@ -1869,6 +1869,16 @@ ok(tmp === undefined, "func() = " + tmp);
 tmp = func.toString();
 ok(tmp == "function anonymous() {\n\n}", "func.toString() = " + tmp);
 
+// Function constructor called as function
+func = Function("return 3;");
+
+tmp = func();
+ok(tmp === 3, "func() = " + tmp);
+ok(func.call() === 3, "func.call() = " + tmp);
+ok(func.length === 0, "func.length = " + func.length);
+tmp = func.toString();
+ok(tmp === "function anonymous() {\nreturn 3;\n}", "func.toString() = " + tmp);
+
 func = (function() {
         var tmp = 3;
         return new Function("return tmp;");
