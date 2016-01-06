@@ -449,6 +449,7 @@ static ALenum get_al_format(const WAVEFORMATEX *fmt)
             case 8:
                 return AL_FORMAT_71CHN8;
             }
+            break;
         case 16:
             switch(fmt->nChannels){
             case 1:
