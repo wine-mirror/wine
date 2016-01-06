@@ -85,8 +85,6 @@ static const WCHAR class_physicalmediaW[] =
     {'W','i','n','3','2','_','P','h','y','s','i','c','a','l','M','e','d','i','a',0};
 static const WCHAR class_physicalmemoryW[] =
     {'W','i','n','3','2','_','P','h','y','s','i','c','a','l','M','e','m','o','r','y',0};
-static const WCHAR class_qualifiersW[] =
-    {'_','_','Q','U','A','L','I','F','I','E','R','S',0};
 static const WCHAR class_printerW[] =
     {'W','i','n','3','2','_','P','r','i','n','t','e','r',0};
 static const WCHAR class_process_getowner_outW[] =
@@ -96,6 +94,8 @@ static const WCHAR class_processorW[] =
     {'W','i','n','3','2','_','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR class_processor2W[] =
     {'C','I','M','_','P','r','o','c','e','s','s','o','r',0};
+static const WCHAR class_qualifiersW[] =
+    {'_','_','Q','U','A','L','I','F','I','E','R','S',0};
 static const WCHAR class_sidW[] =
     {'W','i','n','3','2','_','S','I','D',0};
 static const WCHAR class_sounddeviceW[] =
@@ -357,6 +357,8 @@ static const WCHAR prop_videoarchitectureW[] =
     {'V','i','d','e','o','A','r','c','h','i','t','e','c','t','u','r','e',0};
 static const WCHAR prop_videomemorytypeW[] =
     {'V','i','d','e','o','M','e','m','o','r','y','T','y','p','e',0};
+static const WCHAR prop_videomodedescriptionW[] =
+    {'V','i','d','e','o','M','o','d','e','D','e','s','c','r','i','p','t','i','o','n',0};
 static const WCHAR prop_videoprocessorW[] =
     {'V','i','d','e','o','P','r','o','c','e','s','s','o','r',0};
 static const WCHAR prop_volumenameW[] =
@@ -657,6 +659,7 @@ static const struct column col_videocontroller[] =
     { prop_pnpdeviceidW,          CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_videoarchitectureW,    CIM_UINT16, VT_I4 },
     { prop_videomemorytypeW,      CIM_UINT16, VT_I4 },
+    { prop_videomodedescriptionW, CIM_STRING|COL_FLAG_DYNAMIC },
     { prop_videoprocessorW,       CIM_STRING|COL_FLAG_DYNAMIC }
 };
 
@@ -1052,6 +1055,7 @@ struct record_videocontroller
     const WCHAR *pnpdevice_id;
     UINT16       videoarchitecture;
     UINT16       videomemorytype;
+    const WCHAR *videomodedescription;
     const WCHAR *videoprocessor;
 };
 #include "poppack.h"
@@ -2938,16 +2942,16 @@ static WCHAR *get_pnpdeviceid( DXGI_ADAPTER_DESC *desc )
 
 static enum fill_status fill_videocontroller( struct table *table, const struct expr *cond )
 {
-
+    static const WCHAR fmtW[] = {'%','u',' ','x',' ','%','u',' ','x',' ','%','I','6','4','u',' ','c','o','l','o','r','s',0};
     struct record_videocontroller *rec;
     HRESULT hr;
     IDXGIFactory *factory = NULL;
     IDXGIAdapter *adapter = NULL;
     DXGI_ADAPTER_DESC desc;
-    UINT hres = 1024, vres = 768, vidmem = 512 * 1024 * 1024;
+    UINT row = 0, hres = 1024, vres = 768, vidmem = 512 * 1024 * 1024;
     const WCHAR *name = videocontroller_deviceidW;
     enum fill_status status = FILL_STATUS_UNFILTERED;
-    UINT row = 0;
+    WCHAR mode[44];
 
     if (!resize_table( table, 1, sizeof(*rec) )) return FILL_STATUS_FAILED;
 
@@ -2983,6 +2987,8 @@ done:
     rec->pnpdevice_id          = get_pnpdeviceid( &desc );
     rec->videoarchitecture     = 2; /* Unknown */
     rec->videomemorytype       = 2; /* Unknown */
+    wsprintfW( mode, fmtW, hres, vres, (UINT64)1 << rec->current_bitsperpixel );
+    rec->videomodedescription  = heap_strdupW( mode );
     rec->videoprocessor        = heap_strdupW( name );
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
