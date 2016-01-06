@@ -2686,9 +2686,11 @@ static void test_GetLargestConsoleWindowSize(HANDLE std_output)
     COORD c, font;
     RECT r;
     LONG workarea_w, workarea_h, maxcon_w, maxcon_h;
+    CONSOLE_SCREEN_BUFFER_INFO sbi;
     CONSOLE_FONT_INFO cfi;
     DWORD index, i;
     HMODULE hmod;
+    BOOL ret;
     DWORD (WINAPI *pGetNumberOfConsoleFonts)(void);
     BOOL (WINAPI *pSetConsoleFont)(HANDLE, DWORD);
 
@@ -2740,6 +2742,13 @@ static void test_GetLargestConsoleWindowSize(HANDLE std_output)
         maxcon_h = workarea_h / font.Y;
         ok(c.X == maxcon_w || c.X == maxcon_w - 1 /* Win10 */, "got %d, expected %d\n", c.X, maxcon_w);
         ok(c.Y == maxcon_h || c.Y == maxcon_h - 1 /* Win10 */, "got %d, expected %d\n", c.Y, maxcon_h);
+
+        ret = GetConsoleScreenBufferInfo(std_output, &sbi);
+        ok(ret, "GetConsoleScreenBufferInfo failed %u\n", GetLastError());
+        ok(sbi.dwMaximumWindowSize.X == min(c.X, sbi.dwSize.X), "got %d, expected %d\n",
+           sbi.dwMaximumWindowSize.X, min(c.X, sbi.dwSize.X));
+        ok(sbi.dwMaximumWindowSize.Y == min(c.Y, sbi.dwSize.Y), "got %d, expected %d\n",
+           sbi.dwMaximumWindowSize.Y, min(c.Y, sbi.dwSize.Y));
     }
     pSetConsoleFont(std_output, index); /* restore original font size */
 }

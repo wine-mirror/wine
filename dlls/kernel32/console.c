@@ -2160,8 +2160,8 @@ BOOL WINAPI GetConsoleScreenBufferInfo(HANDLE hConsoleOutput, LPCONSOLE_SCREEN_B
             csbi->srWindow.Right        = reply->win_right;
             csbi->srWindow.Top          = reply->win_top;
             csbi->srWindow.Bottom       = reply->win_bottom;
-            csbi->dwMaximumWindowSize.X = reply->max_width;
-            csbi->dwMaximumWindowSize.Y = reply->max_height;
+            csbi->dwMaximumWindowSize.X = min(reply->width, reply->max_width);
+            csbi->dwMaximumWindowSize.Y = min(reply->height, reply->max_height);
         }
     }
     SERVER_END_REQ;
