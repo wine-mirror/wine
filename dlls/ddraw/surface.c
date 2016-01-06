@@ -5733,6 +5733,13 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         return DDERR_INVALIDCAPS;
     }
 
+    if ((desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP) && !(desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE))
+    {
+        WARN("DDSCAPS_MIPMAP requested without DDSCAPS_TEXTURE.\n");
+        HeapFree(GetProcessHeap(), 0, texture);
+        return DDERR_INVALIDCAPS;
+    }
+
     if ((desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP_ALLFACES)
             && !(desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP))
     {
