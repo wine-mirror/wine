@@ -1176,6 +1176,7 @@ enable_msctfp
 enable_msdaps
 enable_msdelta
 enable_msdmo
+enable_msdrm
 enable_msftedit
 enable_msg711_acm
 enable_msgsm32_acm
@@ -17667,6 +17668,7 @@ wine_fn_config_dll msdaps enable_msdaps clean
 wine_fn_config_dll msdelta enable_msdelta
 wine_fn_config_dll msdmo enable_msdmo implib
 wine_fn_config_test dlls/msdmo/tests msdmo_test
+wine_fn_config_dll msdrm enable_msdrm
 wine_fn_config_dll msftedit enable_msftedit
 wine_fn_config_dll msg711.acm enable_msg711_acm
 wine_fn_config_dll msgsm32.acm enable_msgsm32_acm

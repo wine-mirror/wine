@@ -1,0 +1,4 @@
+MODULE    = msdrm.dll
+
+C_SRCS = \
+	main.c
