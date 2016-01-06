@@ -2530,6 +2530,9 @@ static HRESULT WINAPI MediaSeeking_ConvertTimeFormat(IMediaSeeking *iface, LONGL
     if (!pSourceFormat)
         pSourceFormat = &This->timeformatseek;
 
+    if (!pTargetFormat)
+        pTargetFormat = &This->timeformatseek;
+
     if (IsEqualGUID(pTargetFormat, pSourceFormat))
         *pTarget = Source;
     else
