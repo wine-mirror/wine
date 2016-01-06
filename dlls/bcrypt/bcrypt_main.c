@@ -27,7 +27,9 @@
 #include "winbase.h"
 #include "ntsecapi.h"
 #include "bcrypt.h"
+
 #include "wine/debug.h"
+#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
@@ -78,24 +80,72 @@ NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE algorithm, UCHAR *buffer, ULON
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS WINAPI BCryptOpenAlgorithmProvider(BCRYPT_ALG_HANDLE *algorithm, LPCWSTR algorithmId,
-                                            LPCWSTR implementation, DWORD flags)
+#define MAGIC_ALG  (('A' << 24) | ('L' << 16) | ('G' << 8) | '0')
+struct object
 {
-    FIXME("%p, %s, %s, %08x - stub\n", algorithm, wine_dbgstr_w(algorithmId), wine_dbgstr_w(implementation), flags);
+    ULONG magic;
+};
 
-    if (!algorithm)
-        return STATUS_INVALID_PARAMETER;
+enum alg_id
+{
+    ALG_ID_SHA1   = 1,
+    ALG_ID_SHA256 = 2,
+    ALG_ID_SHA384 = 3,
+    ALG_ID_SHA512 = 4
+};
 
-    *algorithm = NULL;
+struct algorithm
+{
+    struct object hdr;
+    enum alg_id   id;
+};
 
-    return STATUS_NOT_IMPLEMENTED;
+NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR id, LPCWSTR implementation, DWORD flags )
+{
+    struct algorithm *alg;
+    enum alg_id alg_id;
+
+    TRACE( "%p, %s, %s, %08x\n", handle, wine_dbgstr_w(id), wine_dbgstr_w(implementation), flags );
+
+    if (!handle || !id) return STATUS_INVALID_PARAMETER;
+    if (flags)
+    {
+        FIXME( "unimplemented flags %08x\n", flags );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (!strcmpW( id, BCRYPT_SHA1_ALGORITHM )) alg_id = ALG_ID_SHA1;
+    else if (!strcmpW( id, BCRYPT_SHA256_ALGORITHM )) alg_id = ALG_ID_SHA256;
+    else if (!strcmpW( id, BCRYPT_SHA384_ALGORITHM )) alg_id = ALG_ID_SHA384;
+    else if (!strcmpW( id, BCRYPT_SHA512_ALGORITHM )) alg_id = ALG_ID_SHA512;
+    else
+    {
+        FIXME( "algorithm %s not supported\n", debugstr_w(id) );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    if (!implementation || strcmpW( implementation, MS_PRIMITIVE_PROVIDER ))
+    {
+        FIXME( "implementation %s not supported\n", debugstr_w(implementation) );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (!(alg = HeapAlloc( GetProcessHeap(), 0, sizeof(*alg) ))) return STATUS_NO_MEMORY;
+    alg->hdr.magic = MAGIC_ALG;
+    alg->id        = alg_id;
+
+    *handle = alg;
+    return STATUS_SUCCESS;
 }
 
-NTSTATUS WINAPI BCryptCloseAlgorithmProvider(BCRYPT_ALG_HANDLE algorithm, DWORD flags)
+NTSTATUS WINAPI BCryptCloseAlgorithmProvider( BCRYPT_ALG_HANDLE handle, DWORD flags )
 {
-    FIXME("%p, %08x - stub\n", algorithm, flags);
+    struct algorithm *alg = handle;
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE( "%p, %08x\n", handle, flags );
+
+    if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
+    HeapFree( GetProcessHeap(), 0, alg );
+    return STATUS_SUCCESS;
 }
 
 NTSTATUS WINAPI BCryptGetFipsAlgorithmMode(BOOLEAN *enabled)
