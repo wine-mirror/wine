@@ -1,4 +1,5 @@
 /*
+ * Copyright 2005 Antoine Chavasse (a.chavasse@gmail.com)
  * Copyright 2011-2014 Henri Verbeet for CodeWeavers
  * Copyright 2012-2014 Stefan Dösinger for CodeWeavers
  *
@@ -6017,17 +6018,37 @@ static void test_create_surface_pitch(void)
     DestroyWindow(window);
 }
 
-static void test_mipmap_lock(void)
+static void test_mipmap(void)
 {
     IDirectDrawSurface *surface1;
     IDirectDrawSurface2 *surface, *surface2;
     DDSURFACEDESC surface_desc;
     IDirectDraw2 *ddraw;
+    unsigned int i;
     ULONG refcount;
     HWND window;
     HRESULT hr;
     DDSCAPS caps = {DDSCAPS_COMPLEX};
     DDCAPS hal_caps;
+
+    static const struct
+    {
+        DWORD flags;
+        DWORD caps;
+        DWORD width;
+        DWORD height;
+        DWORD mipmap_count_in;
+        HRESULT hr;
+        DWORD mipmap_count_out;
+    }
+    tests[] =
+    {
+        {DDSD_MIPMAPCOUNT, DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 128, 32, 3, DD_OK,               3},
+        {DDSD_MIPMAPCOUNT, DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 128, 32, 0, DDERR_INVALIDPARAMS, 0},
+        {0,                DDSCAPS_TEXTURE | DDSCAPS_MIPMAP,                   128, 32, 0, DD_OK,               1},
+        {0,                DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 128, 32, 0, DD_OK,               6},
+        {0,                DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP, 32,  64, 0, DD_OK,               6},
+    };
 
     window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -6042,42 +6063,62 @@ static void test_mipmap_lock(void)
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
     if ((hal_caps.ddsCaps.dwCaps & (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP)) != (DDSCAPS_TEXTURE | DDSCAPS_MIPMAP))
     {
-        skip("Mipmapped textures not supported, skipping mipmap lock test.\n");
+        skip("Mipmapped textures not supported, skipping tests.\n");
         IDirectDraw2_Release(ddraw);
         DestroyWindow(window);
         return;
     }
 
-    memset(&surface_desc, 0, sizeof(surface_desc));
-    surface_desc.dwSize = sizeof(surface_desc);
-    surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_MIPMAPCOUNT;
-    surface_desc.dwWidth = 4;
-    surface_desc.dwHeight = 4;
-    U2(surface_desc).dwMipMapCount = 2;
-    surface_desc.ddsCaps.dwCaps = DDSCAPS_TEXTURE | DDSCAPS_COMPLEX | DDSCAPS_MIPMAP
-            | DDSCAPS_SYSTEMMEMORY;
-    hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
-    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n", hr);
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | tests[i].flags;
+        surface_desc.ddsCaps.dwCaps = tests[i].caps;
+        surface_desc.dwWidth = tests[i].width;
+        surface_desc.dwHeight = tests[i].height;
+        if (tests[i].flags & DDSD_MIPMAPCOUNT)
+            U2(surface_desc).dwMipMapCount = tests[i].mipmap_count_in;
+        hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface1, NULL);
+        ok(hr == tests[i].hr, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        if (FAILED(hr))
+            continue;
 
-    hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface2, (void **)&surface);
-    ok(SUCCEEDED(hr), "Failed to get IDirectDrawSurface2 interface, hr %#x.\n", hr);
-    IDirectDrawSurface_Release(surface1);
-    hr = IDirectDrawSurface2_GetAttachedSurface(surface, &caps, &surface2);
-    ok(SUCCEEDED(hr), "Failed to get attached surface, hr %#x.\n", hr);
+        hr = IDirectDrawSurface_QueryInterface(surface1, &IID_IDirectDrawSurface2, (void **)&surface);
+        ok(SUCCEEDED(hr), "Test %u: Failed to get IDirectDrawSurface2 interface, hr %#x.\n", i, hr);
+        IDirectDrawSurface_Release(surface1);
 
-    memset(&surface_desc, 0, sizeof(surface_desc));
-    surface_desc.dwSize = sizeof(surface_desc);
-    hr = IDirectDrawSurface2_Lock(surface, NULL, &surface_desc, 0, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
-    memset(&surface_desc, 0, sizeof(surface_desc));
-    surface_desc.dwSize = sizeof(surface_desc);
-    hr = IDirectDrawSurface2_Lock(surface2, NULL, &surface_desc, 0, NULL);
-    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
-    IDirectDrawSurface2_Unlock(surface2, NULL);
-    IDirectDrawSurface2_Unlock(surface, NULL);
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        hr = IDirectDrawSurface2_GetSurfaceDesc(surface, &surface_desc);
+        ok(SUCCEEDED(hr), "Test %u: Failed to get surface desc, hr %#x.\n", i, hr);
+        ok(surface_desc.dwFlags & DDSD_MIPMAPCOUNT,
+                "Test %u: Got unexpected flags %#x.\n", i, surface_desc.dwFlags);
+        ok(U2(surface_desc).dwMipMapCount == tests[i].mipmap_count_out,
+                "Test %u: Got unexpected mipmap count %u.\n", i, U2(surface_desc).dwMipMapCount);
 
-    IDirectDrawSurface2_Release(surface2);
-    IDirectDrawSurface2_Release(surface);
+        if (U2(surface_desc).dwMipMapCount > 1)
+        {
+            hr = IDirectDrawSurface2_GetAttachedSurface(surface, &caps, &surface2);
+            ok(SUCCEEDED(hr), "Test %u: Failed to get attached surface, hr %#x.\n", i, hr);
+
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface2_Lock(surface, NULL, &surface_desc, 0, NULL);
+            ok(SUCCEEDED(hr), "Test %u: Failed to lock surface, hr %#x.\n", i, hr);
+            memset(&surface_desc, 0, sizeof(surface_desc));
+            surface_desc.dwSize = sizeof(surface_desc);
+            hr = IDirectDrawSurface2_Lock(surface2, NULL, &surface_desc, 0, NULL);
+            ok(SUCCEEDED(hr), "Test %u: Failed to lock surface, hr %#x.\n", i, hr);
+            IDirectDrawSurface2_Unlock(surface2, NULL);
+            IDirectDrawSurface2_Unlock(surface, NULL);
+
+            IDirectDrawSurface2_Release(surface2);
+        }
+
+        IDirectDrawSurface2_Release(surface);
+    }
+
     refcount = IDirectDraw2_Release(ddraw);
     ok(!refcount, "Got unexpected refcount %u.\n", refcount);
     DestroyWindow(window);
@@ -9133,7 +9174,7 @@ START_TEST(ddraw2)
     test_surface_attachment();
     test_pixel_format();
     test_create_surface_pitch();
-    test_mipmap_lock();
+    test_mipmap();
     test_palette_complex();
     test_p8_rgb_blit();
     test_material();
