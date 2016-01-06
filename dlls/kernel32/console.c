@@ -1398,19 +1398,9 @@ DWORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
     TRACE("(%p), returning %dx%d (%x)\n", hConsoleOutput, x.c.X, x.c.Y, x.w);
     return x.w;
 }
-#endif /* defined(__i386__) */
 
+#else
 
-/***********************************************************************
- *            GetLargestConsoleWindowSize   (KERNEL32.@)
- *
- * NOTE
- *	This should return a COORD, but calling convention for returning
- *      structures is different between Windows and gcc on i386.
- *
- * VERSION: [!i386]
- */
-#ifndef __i386__
 COORD WINAPI GetLargestConsoleWindowSize(HANDLE hConsoleOutput)
 {
     COORD c;
