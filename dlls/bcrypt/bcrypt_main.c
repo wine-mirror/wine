@@ -20,6 +20,9 @@
 #include "config.h"
 
 #include <stdarg.h>
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+#include <CommonCrypto/CommonDigest.h>
+#endif
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -81,6 +84,7 @@ NTSTATUS WINAPI BCryptGenRandom(BCRYPT_ALG_HANDLE algorithm, UCHAR *buffer, ULON
 }
 
 #define MAGIC_ALG  (('A' << 24) | ('L' << 16) | ('G' << 8) | '0')
+#define MAGIC_HASH (('H' << 24) | ('A' << 16) | ('S' << 8) | 'H')
 struct object
 {
     ULONG magic;
@@ -159,6 +163,59 @@ NTSTATUS WINAPI BCryptGetFipsAlgorithmMode(BOOLEAN *enabled)
     return STATUS_SUCCESS;
 }
 
+#ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
+struct hash
+{
+    struct object hdr;
+    enum alg_id   alg_id;
+    union
+    {
+        CC_SHA1_CTX   sha1_ctx;
+        CC_SHA256_CTX sha256_ctx;
+        CC_SHA512_CTX sha512_ctx;
+    } u;
+};
+
+static NTSTATUS hash_init( struct hash *hash )
+{
+    switch (hash->alg_id)
+    {
+    case ALG_ID_SHA1:
+        CC_SHA1_Init( &hash->u.sha1_ctx );
+        break;
+
+    case ALG_ID_SHA256:
+        CC_SHA256_Init( &hash->u.sha256_ctx );
+        break;
+
+    case ALG_ID_SHA384:
+        CC_SHA384_Init( &hash->u.sha512_ctx );
+        break;
+
+    case ALG_ID_SHA512:
+        CC_SHA512_Init( &hash->u.sha512_ctx );
+        break;
+
+    default:
+        ERR( "unhandled id %u\n", hash->alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+    return STATUS_SUCCESS;
+}
+#else
+struct hash
+{
+    struct object hdr;
+    enum alg_id   alg_id;
+};
+
+static NTSTATUS hash_init( struct hash *hash )
+{
+    ERR( "support for hashes not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
+}
+#endif
+
 NTSTATUS WINAPI BCryptGetProperty(BCRYPT_HANDLE obj, LPCWSTR prop, UCHAR *buffer, ULONG count, ULONG *res, ULONG flags)
 {
     FIXME("%p, %s, %p, %u, %p, %08x - stub\n", obj, wine_dbgstr_w(prop), buffer, count, res, flags);
@@ -166,10 +223,44 @@ NTSTATUS WINAPI BCryptGetProperty(BCRYPT_HANDLE obj, LPCWSTR prop, UCHAR *buffer
     return STATUS_NOT_IMPLEMENTED;
 }
 
-NTSTATUS WINAPI BCryptCreateHash(BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDLE* hash, UCHAR* hashobject,
-				 ULONG hashobjectlen, UCHAR *secret, ULONG secretlen, ULONG flags)
+NTSTATUS WINAPI BCryptCreateHash( BCRYPT_ALG_HANDLE algorithm, BCRYPT_HASH_HANDLE *handle, UCHAR *object, ULONG objectlen,
+                                  UCHAR *secret, ULONG secretlen, ULONG flags )
 {
-    FIXME("%p, %p, %p, %u, %p, %u, %08x - stub\n", algorithm, hash, hashobject, hashobjectlen, secret, secretlen, flags);
+    struct algorithm *alg = algorithm;
+    struct hash *hash;
+    NTSTATUS status;
 
-    return STATUS_NOT_IMPLEMENTED;
+    TRACE( "%p, %p, %p, %u, %p, %u, %08x - stub\n", algorithm, handle, object, objectlen,
+           secret, secretlen, flags );
+    if (flags)
+    {
+        FIXME( "unimplemented flags %08x\n", flags );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (!alg || alg->hdr.magic != MAGIC_ALG) return STATUS_INVALID_HANDLE;
+    if (object) FIXME( "ignoring object buffer\n" );
+
+    if (!(hash = HeapAlloc( GetProcessHeap(), 0, sizeof(*hash) ))) return STATUS_NO_MEMORY;
+    hash->hdr.magic = MAGIC_HASH;
+    hash->alg_id    = alg->id;
+    if ((status = hash_init( hash )) != STATUS_SUCCESS)
+    {
+        HeapFree( GetProcessHeap(), 0, hash );
+        return status;
+    }
+
+    *handle = hash;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI BCryptDestroyHash( BCRYPT_HASH_HANDLE handle )
+{
+    struct hash *hash = handle;
+
+    TRACE( "%p\n", handle );
+
+    if (!hash || hash->hdr.magic != MAGIC_HASH) return STATUS_INVALID_HANDLE;
+    HeapFree( GetProcessHeap(), 0, hash );
+    return STATUS_SUCCESS;
 }

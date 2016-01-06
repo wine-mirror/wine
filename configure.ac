@@ -393,6 +393,7 @@ AC_CHECK_HEADERS(\
 	AudioUnit/AudioComponent.h \
 	CL/cl.h \
 	Carbon/Carbon.h \
+	CommonCrypto/CommonDigest.h \
 	CoreAudio/CoreAudio.h \
 	CoreServices/CoreServices.h \
 	DiskArbitration/DiskArbitration.h \
