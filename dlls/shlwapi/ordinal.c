@@ -4045,7 +4045,7 @@ BOOL WINAPI IsOS(DWORD feature)
     case OS_SMALLBUSINESSSERVER:
         ISOS_RETURN(platform == VER_PLATFORM_WIN32_NT)
     case OS_TABLETPC:
-        FIXME("(OS_TABLEPC) What should we return here?\n");
+        FIXME("(OS_TABLETPC) What should we return here?\n");
         return FALSE;
     case OS_SERVERADMINUI:
         FIXME("(OS_SERVERADMINUI) What should we return here?\n");
