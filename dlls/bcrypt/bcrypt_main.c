@@ -202,6 +202,32 @@ static NTSTATUS hash_init( struct hash *hash )
     }
     return STATUS_SUCCESS;
 }
+
+static void hash_update( struct hash *hash, UCHAR *input, ULONG size )
+{
+    switch (hash->alg_id)
+    {
+    case ALG_ID_SHA1:
+        CC_SHA1_Update( &hash->u.sha1_ctx, input, size );
+        break;
+
+    case ALG_ID_SHA256:
+        CC_SHA256_Update( &hash->u.sha256_ctx, input, size );
+        break;
+
+    case ALG_ID_SHA384:
+        CC_SHA384_Update( &hash->u.sha512_ctx, input, size );
+        break;
+
+    case ALG_ID_SHA512:
+        CC_SHA512_Update( &hash->u.sha512_ctx, input, size );
+        break;
+
+    default:
+        ERR( "unhandled id %u\n", hash->alg_id );
+        break;
+    }
+}
 #else
 struct hash
 {
@@ -213,6 +239,11 @@ static NTSTATUS hash_init( struct hash *hash )
 {
     ERR( "support for hashes not available at build time\n" );
     return STATUS_NOT_IMPLEMENTED;
+}
+
+static void hash_update( struct hash *hash, UCHAR *input, ULONG size )
+{
+    ERR( "support for hashes not available at build time\n" );
 }
 #endif
 
@@ -408,5 +439,18 @@ NTSTATUS WINAPI BCryptDestroyHash( BCRYPT_HASH_HANDLE handle )
 
     if (!hash || hash->hdr.magic != MAGIC_HASH) return STATUS_INVALID_HANDLE;
     HeapFree( GetProcessHeap(), 0, hash );
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS WINAPI BCryptHashData( BCRYPT_HASH_HANDLE handle, UCHAR *input, ULONG size, ULONG flags )
+{
+    struct hash *hash = handle;
+
+    TRACE( "%p, %p, %u, %08x\n", handle, input, size, flags );
+
+    if (!hash || hash->hdr.magic != MAGIC_HASH) return STATUS_INVALID_HANDLE;
+    if (!input) return STATUS_INVALID_PARAMETER;
+
+    hash_update( hash, input, size );
     return STATUS_SUCCESS;
 }

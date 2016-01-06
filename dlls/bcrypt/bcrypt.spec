@@ -29,7 +29,7 @@
 @ stub BCryptGenerateSymmetricKey
 @ stdcall BCryptGetFipsAlgorithmMode(ptr)
 @ stdcall BCryptGetProperty(ptr wstr ptr long ptr long)
-@ stub BCryptHashData
+@ stdcall BCryptHashData(ptr ptr long long)
 @ stub BCryptImportKey
 @ stub BCryptImportKeyPair
 @ stdcall BCryptOpenAlgorithmProvider(ptr wstr wstr long)
