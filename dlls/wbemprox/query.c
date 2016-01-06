@@ -266,7 +266,7 @@ static HRESULT eval_binary( const struct table *table, UINT row, const struct co
         if (is_int( ltype )) lstr = format_int( lbuf, ltype, lval );
         else lstr = (const WCHAR *)(INT_PTR)lval;
 
-        if (is_int( rtype )) rstr = format_int( rbuf, ltype, rval );
+        if (is_int( rtype )) rstr = format_int( rbuf, rtype, rval );
         else rstr = (const WCHAR *)(INT_PTR)rval;
 
         return eval_strcmp( expr->op, lstr, rstr, val );
