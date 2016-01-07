@@ -42,6 +42,11 @@ struct device_desc
     DWORD flags;
 };
 
+static BOOL adapter_is_warp(const D3DADAPTER_IDENTIFIER9 *identifier)
+{
+    return !strcmp(identifier->Driver, "d3d10warp.dll");
+}
+
 static BOOL color_match(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
 {
     unsigned int i;
@@ -642,6 +647,81 @@ static void test_get_adapter_displaymode_ex(void)
 out:
     IDirect3D9_Release(d3d9);
     IDirect3D9Ex_Release(d3d9ex);
+}
+
+static void test_create_depth_stencil_surface_ex(void)
+{
+    static const struct
+    {
+        DWORD usage;
+        HRESULT hr;
+        BOOL broken_warp;
+    }
+    tests[] =
+    {
+        {0,                           D3D_OK,             FALSE},
+        {D3DUSAGE_DEPTHSTENCIL,       D3DERR_INVALIDCALL, FALSE},
+        {D3DUSAGE_RESTRICTED_CONTENT, D3D_OK,             TRUE},
+    };
+
+    D3DADAPTER_IDENTIFIER9 identifier;
+    D3DSURFACE_DESC surface_desc;
+    IDirect3DDevice9Ex *device;
+    IDirect3DSurface9 *surface;
+    IDirect3D9 *d3d;
+    unsigned int i;
+    HWND window;
+    HRESULT hr;
+    ULONG ref;
+    BOOL warp;
+
+    window = create_window();
+
+    if (!(device = create_device(window, NULL)))
+    {
+        skip("Failed to create a D3D device.\n");
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9Ex_GetDirect3D(device, &d3d);
+    ok(SUCCEEDED(hr), "Failed to get Direct3D9, hr %#x.\n", hr);
+    hr = IDirect3D9_GetAdapterIdentifier(d3d, D3DADAPTER_DEFAULT, 0, &identifier);
+    ok(SUCCEEDED(hr), "Failed to get adapter identifier, hr %#x.\n", hr);
+    warp = adapter_is_warp(&identifier);
+    IDirect3D9_Release(d3d);
+
+    for (i = 0; i < sizeof(tests) / sizeof(*tests); ++i)
+    {
+        surface = (IDirect3DSurface9 *)0xdeadbeef;
+        hr = IDirect3DDevice9Ex_CreateDepthStencilSurfaceEx(device, 64, 64, D3DFMT_D24S8,
+                D3DMULTISAMPLE_NONE, 0, TRUE, &surface, NULL, tests[i].usage);
+        ok(hr == tests[i].hr || broken(warp && tests[i].broken_warp),
+                "Test %u: Got unexpected hr %#x.\n", i, hr);
+        if (SUCCEEDED(hr))
+        {
+            hr = IDirect3DSurface9_GetDesc(surface, &surface_desc);
+            ok(SUCCEEDED(hr), "Test %u: GetDesc failed, hr %#x.\n", i, hr);
+            ok(surface_desc.Type == D3DRTYPE_SURFACE, "Test %u: Got unexpected type %#x.\n",
+                    i, surface_desc.Type);
+            ok(surface_desc.Pool == D3DPOOL_DEFAULT, "Test %u: Got unexpected pool %#x.\n",
+                    i,  surface_desc.Pool);
+            ok(surface_desc.Usage == (tests[i].usage | D3DUSAGE_DEPTHSTENCIL),
+                    "Test %u: Got unexpected usage %#x.\n", i, surface_desc.Usage);
+
+            ref = IDirect3DSurface9_Release(surface);
+            ok(!ref, "Test %u: Surface has %u references left.\n", i, ref);
+        }
+        else
+        {
+            ok(surface == (IDirect3DSurface9 *)0xdeadbeef || broken(warp && tests[i].broken_warp),
+                    "Test %u: Got unexpected surface pointer %p.\n", i, surface);
+        }
+    }
+
+    ref = IDirect3DDevice9Ex_Release(device);
+    ok(!ref, "Device has %u references left.\n", ref);
+    DestroyWindow(window);
 }
 
 static void test_user_memory(void)
@@ -3078,6 +3158,7 @@ START_TEST(d3d9ex)
     test_swapchain_get_displaymode_ex();
     test_get_adapter_luid();
     test_get_adapter_displaymode_ex();
+    test_create_depth_stencil_surface_ex();
     test_user_memory();
     test_reset();
     test_reset_resources();
