@@ -190,7 +190,7 @@ void WINAPI StopWatch_MarkJavaStop(LPCWSTR lpszEvent, HWND hWnd, DWORD dwReserve
  */
 DWORD WINAPI GetPerfTime(void)
 {
-  static LARGE_INTEGER iCounterFreq = { 0 };
+  static LARGE_INTEGER iCounterFreq = { {0} };
   LARGE_INTEGER iCounter;
 
   TRACE("()\n");
