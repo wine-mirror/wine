@@ -465,6 +465,7 @@ static ALenum get_al_format(const WAVEFORMATEX *fmt)
             case 8:
                 return AL_FORMAT_71CHN16;
             }
+            break;
         }
     }else if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
             (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
