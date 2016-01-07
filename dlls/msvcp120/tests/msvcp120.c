@@ -1549,6 +1549,55 @@ static void test_cnd(void)
     CloseHandle(cm.initialized);
 }
 
+static struct {
+    struct {
+        int value;
+        int todo;
+    } arch[2];
+    const char* export_name;
+} vbtable_size_exports_list[] = {
+    {{{0x20, FALSE}, {0x20, FALSE}}, "??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@"},
+    {{{0x10, FALSE}, {0x10, FALSE}}, "??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@"},
+    {{{0x20, FALSE}, {0x20, FALSE}}, "??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@"},
+    {{{0x10, FALSE}, {0x10, FALSE}}, "??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@"},
+    {{{0x20, FALSE}, {0x20, FALSE}}, "??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_istream@_WU?$char_traits@_W@std@@@1@@"},
+    {{{0x10, FALSE}, {0x10, FALSE}}, "??_8?$basic_iostream@_WU?$char_traits@_W@std@@@std@@7B?$basic_ostream@_WU?$char_traits@_W@std@@@1@@"},
+    {{{0x18, FALSE}, {0x18, FALSE}}, "??_8?$basic_istream@DU?$char_traits@D@std@@@std@@7B@"},
+    {{{0x18, FALSE}, {0x18, FALSE}}, "??_8?$basic_istream@GU?$char_traits@G@std@@@std@@7B@"},
+    {{{0x18, FALSE}, {0x18, FALSE}}, "??_8?$basic_istream@_WU?$char_traits@_W@std@@@std@@7B@"},
+    {{{ 0x8, TRUE},  {0x10, FALSE}}, "??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@"},
+    {{{ 0x8, TRUE},  {0x10, FALSE}}, "??_8?$basic_ostream@GU?$char_traits@G@std@@@std@@7B@"},
+    {{{ 0x8, TRUE},  {0x10, FALSE}}, "??_8?$basic_ostream@_WU?$char_traits@_W@std@@@std@@7B@"},
+    {{{ 0x0, FALSE}, { 0x0, FALSE}}, 0}
+};
+
+static void test_vbtable_size_exports(void)
+{
+    int i;
+    const int *p_vbtable;
+    int arch_idx;
+
+    if(sizeof(void*) == 8)
+        arch_idx = 1;
+    else
+        arch_idx = 0;
+
+    for (i = 0; vbtable_size_exports_list[i].export_name; i++)
+    {
+        SET(p_vbtable, vbtable_size_exports_list[i].export_name);
+
+        ok(p_vbtable[0] == 0, "vbtable[0] wrong, got 0x%x\n", p_vbtable[0]);
+
+        if (vbtable_size_exports_list[i].arch[arch_idx].todo)
+            todo_wine
+            ok(p_vbtable[1] == vbtable_size_exports_list[i].arch[arch_idx].value,
+                    "%d: %s[1] wrong, got 0x%x\n", i, vbtable_size_exports_list[i].export_name, p_vbtable[1]);
+        else
+            ok(p_vbtable[1] == vbtable_size_exports_list[i].arch[arch_idx].value,
+                    "%d: %s[1] wrong, got 0x%x\n", i, vbtable_size_exports_list[i].export_name, p_vbtable[1]);
+    }
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -1576,6 +1625,8 @@ START_TEST(msvcp120)
 
     test_thrd();
     test_cnd();
+
+    test_vbtable_size_exports();
 
     FreeLibrary(msvcp);
 }
