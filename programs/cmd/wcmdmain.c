@@ -1364,7 +1364,7 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
     if (cmdList && (*cmdList)->pipeFile[0] != 0x00) {
         WINE_TRACE("Input coming from %s\n", wine_dbgstr_w((*cmdList)->pipeFile));
         h = CreateFileW((*cmdList)->pipeFile, GENERIC_READ,
-                  FILE_SHARE_READ, &sa, OPEN_EXISTING,
+                  FILE_SHARE_READ | FILE_SHARE_WRITE, &sa, OPEN_EXISTING,
                   FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, NULL);
         if (h == INVALID_HANDLE_VALUE) {
           WCMD_print_error ();
@@ -1425,8 +1425,8 @@ void WCMD_execute (const WCHAR *command, const WCHAR *redirects,
 
       } else {
         WCHAR *param = WCMD_parameter(p, 0, NULL, FALSE, FALSE);
-        h = CreateFileW(param, GENERIC_WRITE, 0, &sa, creationDisposition,
-                        FILE_ATTRIBUTE_NORMAL, NULL);
+        h = CreateFileW(param, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_DELETE,
+                        &sa, creationDisposition, FILE_ATTRIBUTE_NORMAL, NULL);
         if (h == INVALID_HANDLE_VALUE) {
           WCMD_print_error ();
           heap_free(cmd);
