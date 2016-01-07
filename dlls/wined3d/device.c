@@ -4508,6 +4508,7 @@ static void delete_opengl_contexts(struct wined3d_device *device, struct wined3d
     device->blitter->free_private(device);
     device->shader_backend->shader_free_private(device);
     destroy_dummy_textures(device, gl_info);
+    destroy_default_sampler(device);
 
     context_release(context);
 
@@ -4565,6 +4566,7 @@ static HRESULT create_primary_opengl_context(struct wined3d_device *device, stru
     swapchain->context[0] = context;
     swapchain->num_contexts = 1;
     create_dummy_textures(device, context);
+    create_default_sampler(device);
     context_release(context);
 
     return WINED3D_OK;
