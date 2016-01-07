@@ -1,7 +1,7 @@
 /*
  * Typelib (SLTG) generation
  *
- * Copyright 2015 Dmitry Timoshkov
+ * Copyright 2015,2016 Dmitry Timoshkov
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -75,7 +75,83 @@ struct sltg_typelib
     int block_count;
     int first_block;
     short typeinfo_count;
+    int typeinfo_size;
+    struct sltg_block *typeinfo;
 };
+
+#include "pshpack1.h"
+struct sltg_typeinfo_header
+{
+    short magic;
+    int href_offset;
+    int res06;
+    int member_offset;
+    int res0e;
+    int version;
+    int res16;
+    struct
+    {
+        unsigned unknown1  : 3;
+        unsigned flags     : 13;
+        unsigned unknown2  : 8;
+        unsigned typekind  : 8;
+    } misc;
+    int res1e;
+};
+
+struct sltg_member_header
+{
+    short res00;
+    short res02;
+    char res04;
+    int extra;
+};
+
+struct sltg_variable
+{
+    char magic; /* 0x0a */
+    char flags;
+    short next;
+    short name;
+    short byte_offs; /* pos in struct, or offset to const type or const data (if flags & 0x08) */
+    short type; /* if flags & 0x02 this is the type, else offset to type */
+    int memid;
+    short helpcontext;
+    short helpstring;
+    short varflags; /* only present if magic & 0x20 */
+};
+
+struct sltg_tail
+{
+    short cFuncs;
+    short cVars;
+    short cImplTypes;
+    short res06; /* always 0000 */
+    short funcs_off; /* offset to functions (starting from the member header) */
+    short vars_off; /* offset to vars (starting from the member header) */
+    short impls_off; /* offset to implemented types (starting from the member header) */
+    short funcs_bytes; /* bytes used by function data */
+    short vars_bytes; /* bytes used by var data */
+    short impls_bytes; /* bytes used by implemented type data */
+    short tdescalias_vt; /* for TKIND_ALIAS */
+    short res16; /* always ffff */
+    short res18; /* always 0000 */
+    short res1a; /* always 0000 */
+    short simple_alias; /* tdescalias_vt is a vt rather than an offset? */
+    short res1e; /* always 0000 */
+    short cbSizeInstance;
+    short cbAlignment;
+    short res24; /* always ffff */
+    short res26; /* always ffff */
+    short cbSizeVft;
+    short res2a; /* always ffff */
+    short res2c; /* always ffff */
+    short res2e; /* always ffff */
+    short res30; /* always ffff */
+    short res32; /* unknown */
+    short type_bytes; /* bytes used by type descriptions */
+};
+#include "poppack.h"
 
 static void init_sltg_data(struct sltg_data *data)
 {
@@ -254,6 +330,52 @@ static void add_library_block(struct sltg_typelib *typelib)
     add_block(typelib, block, size, "dir");
 }
 
+static const char *new_index_name(void)
+{
+    static char name[11] = "AAAAAAAAAA";
+    static int pos = 0;
+    char *new_name;
+
+    if (name[pos] == 'Z')
+    {
+        pos++;
+        if (pos > 9)
+            error("too many index names\n");
+    }
+
+    name[pos]++;
+
+    new_name = xmalloc(sizeof(name));
+    strcpy(new_name, name);
+    return new_name;
+}
+
+static void sltg_add_typeinfo(struct sltg_typelib *sltg, void *data, int length, const char *name)
+{
+    chat("sltg_add_typeinfo: %p,%d,%s\n", data, length, name);
+
+    sltg->typeinfo = xrealloc(sltg->typeinfo, sizeof(sltg->typeinfo[0]) * (sltg->typeinfo_count + 1));
+    sltg->typeinfo[sltg->typeinfo_count].length = length;
+    sltg->typeinfo[sltg->typeinfo_count].data = data;
+    sltg->typeinfo[sltg->typeinfo_count].index_string = 0;
+    sltg->typeinfo_count++;
+    sltg->typeinfo_size += length;
+}
+
+static void append_data(struct sltg_data *block, const void *data, int size)
+{
+    int new_size = block->size + size;
+
+    if (new_size > block->allocated)
+    {
+        block->allocated = max(block->allocated * 2, new_size);
+        block->data = xrealloc(block->data, block->allocated);
+    }
+
+    memcpy(block->data + block->size, data, size);
+    block->size = new_size;
+}
+
 static void add_typedef_typeinfo(struct sltg_typelib *typelib, type_t *type)
 {
     error("add_typedef_typeinfo: %s not implemented\n", type->name);
@@ -269,9 +391,387 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *type)
     error("add_interface_typeinfo: %s not implemented\n", type->name);
 }
 
+static const char *add_typeinfo_block(struct sltg_typelib *typelib, const type_t *type, short kind)
+{
+    struct sltg_data block;
+    const char *index_name, *other_name;
+    short val;
+    void *p;
+    int helpcontext = 0;
+    GUID guid = { 0 };
+    const expr_t *expr;
+
+    index_name = new_index_name();
+    other_name = new_index_name();
+
+    expr = get_attrp(type->attrs, ATTR_HELPCONTEXT);
+    if (expr) helpcontext = expr->cval;
+
+    p = get_attrp(type->attrs, ATTR_UUID);
+    if (p) guid = *(GUID *)p;
+
+    init_sltg_data(&block);
+
+    val = strlen(index_name);
+    append_data(&block, &val, sizeof(val));
+    append_data(&block, index_name, val);
+    val = strlen(other_name);
+    append_data(&block, &val, sizeof(val));
+    append_data(&block, other_name, val);
+    val = -1; /* res1a */
+    append_data(&block, &val, sizeof(val));
+    val = add_name(&typelib->name_table, type->name); /* name offset */
+    append_data(&block, &val, sizeof(val));
+    val = 0; /* FIXME: helpstring */
+    append_data(&block, &val, sizeof(val));
+    val = -1; /* res20 */
+    append_data(&block, &val, sizeof(val));
+    append_data(&block, &helpcontext, sizeof(helpcontext));
+    val = -1; /* res26 */
+    append_data(&block, &val, sizeof(val));
+    append_data(&block, &guid, sizeof(guid));
+    append_data(&block, &kind, sizeof(kind));
+
+    sltg_add_typeinfo(typelib, block.data, block.size, index_name);
+
+    return index_name;
+}
+
+static void init_typeinfo(struct sltg_typeinfo_header *ti, const type_t *type, int kind)
+{
+    ti->magic = 0x0501;
+    ti->href_offset = -1;
+    ti->res06 = -1;
+    ti->member_offset = sizeof(*ti);
+    ti->res0e = -1;
+    ti->version = get_attrv(type->attrs, ATTR_VERSION);
+    ti->res16 = 0xfffe0000;
+    ti->misc.unknown1 = 0x02;
+    ti->misc.flags = 0; /* FIXME */
+    ti->misc.unknown2 = 0x02;
+    ti->misc.typekind = kind;
+    ti->res1e = -1;
+}
+
+static void dump_var_desc(const char *data, int size)
+{
+    const unsigned char *p = (const unsigned char *)data;
+    int i;
+
+    if (!(debuglevel & (DEBUGLEVEL_TRACE | DEBUGLEVEL_CHAT))) return;
+
+    chat("dump_var_desc: size %d bytes\n", size);
+
+    for (i = 0; i < size; i++)
+        fprintf(stderr, " %02x", *p++);
+
+    fprintf(stderr, "\n");
+}
+
+static int get_element_size(type_t *type)
+{
+    int vt = get_type_vt(type);
+
+    switch (vt)
+    {
+    case VT_I1:
+    case VT_UI1:
+        return 1;
+
+    case VT_UI2:
+    case VT_I2:
+    case VT_BOOL:
+        return 2;
+
+    case VT_INT:
+    case VT_UINT:
+    case VT_I4:
+    case VT_UI4:
+    case VT_R4:
+    case VT_ERROR:
+    case VT_HRESULT:
+        return 4;
+
+    case VT_R8:
+    case VT_I8:
+    case VT_UI8:
+    case VT_CY:
+    case VT_DATE:
+        return 8;
+
+    case VT_DECIMAL:
+        return 16;
+
+    case VT_PTR:
+    case VT_UNKNOWN:
+    case VT_DISPATCH:
+    case VT_BSTR:
+    case VT_LPSTR:
+    case VT_LPWSTR:
+        return 4;
+
+    case VT_VOID:
+        return 0;
+
+    case VT_VARIANT:
+        return 16;
+
+    default:
+        error("get_element_size: unrecognized vt %d\n", vt);
+        break;
+    }
+
+    return 0;
+}
+
+static short write_var_desc(struct sltg_data *data, type_t *type, short flags, short base_offset, int *size_instance)
+{
+    short vt, desc_offset;
+
+    chat("write_var_desc: type %p, type->name %s\n",
+         type, type->name ? type->name : "NULL");
+
+    if (is_array(type) && !type_array_is_decl_as_ptr(type))
+    {
+        int num_dims, elements, array_start, size, array_size;
+        type_t *atype;
+        struct
+        {
+            short cDims;
+            short fFeatures;
+            int cbElements;
+            int cLocks;
+            int pvData;
+            int bound[2];
+        } *array;
+        int *bound;
+        short vt_off[2];
+
+        elements = 1;
+        num_dims = 0;
+
+        atype = type;
+
+        while (is_array(atype) && !type_array_is_decl_as_ptr(atype))
+        {
+            num_dims++;
+            elements *= type_array_get_dim(atype);
+
+            atype = type_array_get_element_type(atype);
+        }
+
+        chat("write_var_desc: VT_CARRAY: %d dimensions, %d elements\n", num_dims, elements);
+
+        array_start = data->size;
+
+        size = sizeof(*array) + (num_dims - 1) * 8 /* sizeof(SAFEARRAYBOUND) */;
+        array = xmalloc(size);
+
+        array->cDims = num_dims;
+        array->fFeatures = 0x0004; /* FADF_EMBEDDED */
+        array->cbElements = get_element_size(atype);
+        array->cLocks = 0;
+        array->pvData = 0;
+
+        bound = array->bound;
+
+        array_size = array->cbElements;
+        atype = type;
+
+        while (is_array(atype) && !type_array_is_decl_as_ptr(atype))
+        {
+            bound[0] = type_array_get_dim(atype);
+            array_size *= bound[0];
+            bound[1] = 0;
+            bound += 2;
+
+            atype = type_array_get_element_type(atype);
+        }
+
+        *size_instance += array_size;
+        size_instance = NULL; /* don't account for element size */
+
+        append_data(data, array, size);
+
+        desc_offset = data->size;
+
+        vt_off[0] = VT_CARRAY;
+        vt_off[1] = array_start + base_offset;
+        append_data(data, vt_off, sizeof(vt_off));
+
+        /* fall through to write array element description */
+        type = atype;
+    }
+    else
+        desc_offset = data->size;
+
+    vt = get_type_vt(type);
+
+    if (vt == VT_PTR)
+    {
+        type_t *ref = is_ptr(type) ? type_pointer_get_ref_type(type) : type_array_get_element_type(type);
+
+        if (is_ptr(ref))
+        {
+            chat("write_var_desc: vt VT_PTR | 0x0400\n");
+            vt = VT_PTR | 0x0400;
+            append_data(data, &vt, sizeof(vt));
+            write_var_desc(data, ref, 0, base_offset, size_instance);
+        }
+        else
+            write_var_desc(data, ref, 0x0e00, base_offset, size_instance);
+        return desc_offset;
+    }
+
+    chat("write_var_desc: vt %d, flags %04x\n", vt, flags);
+
+    if (size_instance)
+        *size_instance += get_element_size(type);
+
+    vt |= flags;
+    append_data(data, &vt, sizeof(vt));
+
+    return desc_offset;
+}
+
+static void init_sltg_tail(struct sltg_tail *tail)
+{
+    tail->cFuncs = 0;
+    tail->cVars = 0;
+    tail->cImplTypes = 0;
+    tail->res06 = 0;
+    tail->funcs_off = -1;
+    tail->vars_off = 0;
+    tail->impls_off = -1;
+    tail->funcs_bytes = -1;
+    tail->vars_bytes = 0;
+    tail->impls_bytes = -1;
+    tail->tdescalias_vt = -1;
+    tail->res16 = -1;
+    tail->res18 = 0;
+    tail->res1a = 0;
+    tail->simple_alias = 0;
+    tail->res1e = 0;
+    tail->cbSizeInstance = 0;
+    tail->cbAlignment = 4;
+    tail->res24 = -1;
+    tail->res26 = -1;
+    tail->cbSizeVft = 0;
+    tail->res2a = -1;
+    tail->res2c = -1;
+    tail->res2e = -1;
+    tail->res30 = -1;
+    tail->res32 = 0;
+    tail->type_bytes = 0;
+}
+
 static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
 {
-    error("add_structure_typeinfo: %s not implemented\n", type->name);
+    struct sltg_data data, *var_data = NULL;
+    const char *index_name;
+    struct sltg_typeinfo_header ti;
+    struct sltg_member_header member;
+    struct sltg_tail tail;
+    int member_offset, var_count = 0, var_data_size = 0, size_instance = 0;
+    short *type_desc_offset = NULL;
+
+    chat("add_structure_typeinfo: %s\n", type->name);
+
+    init_sltg_data(&data);
+
+    index_name = add_typeinfo_block(typelib, type, TKIND_RECORD);
+
+    init_typeinfo(&ti, type, TKIND_RECORD);
+    append_data(&data, &ti, sizeof(ti));
+
+    if (type_struct_get_fields(type))
+    {
+        int i = 0;
+        var_t *var;
+
+        var_count = list_count(type_struct_get_fields(type));
+
+        var_data = xmalloc(var_count * sizeof(*var_data));
+        type_desc_offset = xmalloc(var_count * sizeof(*type_desc_offset));
+
+        LIST_FOR_EACH_ENTRY(var, type_struct_get_fields(type), var_t, entry)
+        {
+            short base_offset;
+
+            chat("add_structure_typeinfo: var %p, name %s, type %p\n",
+                 var, var->name, var->declspec.type);
+
+            init_sltg_data(&var_data[i]);
+
+            base_offset = var_data_size + (i + 1) * sizeof(struct sltg_variable);
+            type_desc_offset[i] = write_var_desc(&var_data[i], var->declspec.type, 0, base_offset, &size_instance);
+            dump_var_desc(var_data[i].data, var_data[i].size);
+
+            if (var_data[i].size > sizeof(short))
+                var_data_size += var_data[i].size;
+            i++;
+        }
+    }
+
+    member_offset = data.size;
+
+    member.res00 = 0x0001;
+    member.res02 = 0xffff;
+    member.res04 = 0x01;
+    member.extra = var_data_size + var_count * sizeof(struct sltg_variable);
+    append_data(&data, &member, sizeof(member));
+
+    var_data_size = 0;
+
+    if (type_struct_get_fields(type))
+    {
+        int i = 0;
+        short next = member_offset;
+        var_t *var;
+
+        LIST_FOR_EACH_ENTRY(var, type_struct_get_fields(type), var_t, entry)
+        {
+            struct sltg_variable variable;
+
+            next += sizeof(variable);
+
+            variable.magic = 0x2a; /* always write flags to simplify calculations */
+            variable.name = add_name(&typelib->name_table, var->name);
+            variable.byte_offs = 0;
+            if (var_data[i].size > sizeof(short))
+            {
+                variable.flags = 0;
+                var_data_size = next - member_offset + type_desc_offset[i];
+                variable.type = var_data_size;
+                next += var_data[i].size;
+            }
+            else
+            {
+                variable.flags = 0x02;
+                variable.type = *(short *)var_data[i].data;
+            }
+            variable.next = i < var_count - 1 ? next - member_offset : -1;
+            variable.memid = 0x40000000 + i;
+            variable.helpcontext = -2; /* 0xfffe */
+            variable.helpstring = -1;
+            variable.varflags = 0;
+
+            append_data(&data, &variable, sizeof(variable));
+            if (var_data[i].size > sizeof(short))
+                append_data(&data, var_data[i].data, var_data[i].size);
+
+            i++;
+        }
+    }
+
+    init_sltg_tail(&tail);
+    tail.cVars = var_count;
+    tail.vars_bytes = var_data_size;
+    tail.cbSizeInstance = size_instance;
+    tail.type_bytes = data.size - member_offset - sizeof(member);
+    append_data(&data, &tail, sizeof(tail));
+
+    add_block(typelib, data.data, data.size, index_name);
 }
 
 static void add_enum_typeinfo(struct sltg_typelib *typelib, type_t *type)
@@ -409,7 +909,7 @@ static void sltg_write_header(struct sltg_typelib *sltg, int *library_block_star
     {
         entry.length = sltg->blocks[i].length;
         entry.index_string = sltg->blocks[i].index_string;
-        entry.next = header.first_blk + i;
+        entry.next = header.first_blk + i + 1; /* point to next block */
         chat("sltg_write_header: writing block entry %d: length %#x, index_string %#x, next %#x\n",
              i, entry.length, entry.index_string, entry.next);
         put_data(&entry, sizeof(entry));
@@ -417,7 +917,7 @@ static void sltg_write_header(struct sltg_typelib *sltg, int *library_block_star
 
     /* library block length includes helpstrings and name table */
     entry.length = sltg->blocks[sltg->block_count - 1].length + 0x40 /* pad after library block */ +
-                   sizeof(sltg->typeinfo_count) + 4 /* library block offset */ + 6 /* dummy help strings */ +
+                   sizeof(sltg->typeinfo_count) + sltg->typeinfo_size + 4 /* library block offset */ + 6 /* dummy help strings */ +
                    12 /* name table header */ + 0x200 /* name table hash */ + sltg->name_table.size;
     entry.index_string = sltg->blocks[sltg->block_count - 1].index_string;
     entry.next = 0;
@@ -450,7 +950,15 @@ static void sltg_write_header(struct sltg_typelib *sltg, int *library_block_star
 
 static void sltg_write_typeinfo(struct sltg_typelib *typelib)
 {
+    short i;
+
     put_data(&typelib->typeinfo_count, sizeof(typelib->typeinfo_count));
+
+    for (i = 0; i < typelib->typeinfo_count; i++)
+    {
+        chat("sltg_write_typeinfo: writing block %d: %d bytes\n", i, typelib->typeinfo[i].length);
+        put_data(typelib->typeinfo[i].data, typelib->typeinfo[i].length);
+    }
 }
 
 static void sltg_write_helpstrings(struct sltg_typelib *typelib)
@@ -538,8 +1046,13 @@ int create_sltg_typelib(typelib_t *typelib)
     struct sltg_typelib sltg;
     const statement_t *stmt;
 
+    if (pointer_size != 4)
+        error("Only 32-bit platform is supported\n");
+
     sltg.typelib = typelib;
     sltg.typeinfo_count = 0;
+    sltg.typeinfo_size = 0;
+    sltg.typeinfo = NULL;
     sltg.blocks = NULL;
     sltg.block_count = 0;
     sltg.first_block = 1;
