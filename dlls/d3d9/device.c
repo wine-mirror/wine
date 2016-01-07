@@ -3352,16 +3352,28 @@ static HRESULT WINAPI d3d9_device_CreateDepthStencilSurfaceEx(IDirect3DDevice9Ex
         UINT width, UINT height, D3DFORMAT format, D3DMULTISAMPLE_TYPE multisample_type, DWORD multisample_quality,
         BOOL discard, IDirect3DSurface9 **surface, HANDLE *shared_handle, DWORD usage)
 {
-    FIXME("iface %p, width %u, height %u, format %#x, multisample_type %#x, multisample_quality %u,\n"
-            "discard %#x, surface %p, shared_handle %p, usage %#x stub!\n",
+    struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
+    DWORD flags = WINED3D_SURFACE_MAPPABLE;
+
+    TRACE("iface %p, width %u, height %u, format %#x, multisample_type %#x, multisample_quality %u, "
+            "discard %#x, surface %p, shared_handle %p, usage %#x.\n",
             iface, width, height, format, multisample_type, multisample_quality,
             discard, surface, shared_handle, usage);
 
-    *surface = NULL;
+    if (usage & D3DUSAGE_DEPTHSTENCIL)
+    {
+        WARN("Invalid usage %#x.\n", usage);
+        return D3DERR_INVALIDCALL;
+    }
+
     if (shared_handle)
         FIXME("Resource sharing not implemented, *shared_handle %p.\n", *shared_handle);
 
-    return E_NOTIMPL;
+    if (discard)
+        flags |= WINED3D_SURFACE_DISCARD;
+
+    return d3d9_device_create_surface(device, width, height, format, flags, surface,
+            D3DUSAGE_DEPTHSTENCIL | usage, D3DPOOL_DEFAULT, multisample_type, multisample_quality, NULL);
 }
 
 static HRESULT WINAPI DECLSPEC_HOTPATCH d3d9_device_ResetEx(IDirect3DDevice9Ex *iface,
