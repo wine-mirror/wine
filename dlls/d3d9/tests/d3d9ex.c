@@ -622,7 +622,7 @@ static void test_get_adapter_displaymode_ex(void)
     todo_wine ok(S2(U1(startmode)).dmDisplayOrientation == DMDO_180 && rotation == D3DDISPLAYROTATION_180,
             "rotation is %d instead of %d\n", rotation, S2(U1(startmode)).dmDisplayOrientation);
 
-    trace("GetAdapterDisplayModeEx returned Width = %d,Height = %d, RefreshRate = %d, Format = %x, ScanLineOrdering = %x, rotation = %d\n",
+    trace("GetAdapterDisplayModeEx returned Width = %d, Height = %d, RefreshRate = %d, Format = %x, ScanLineOrdering = %x, rotation = %d\n",
           mode_ex.Width, mode_ex.Height, mode_ex.RefreshRate, mode_ex.Format, mode_ex.ScanLineOrdering, rotation);
 
     /* test GetAdapterDisplayModeEx with null pointer for D3DDISPLAYROTATION */
