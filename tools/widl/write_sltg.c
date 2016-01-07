@@ -192,10 +192,15 @@ static int add_name(struct sltg_data *name_table, const char *name)
 {
     int name_offset = name_table->size;
     int new_size = name_table->size + strlen(name) + 1 + 8;
+    int aligned_size;
 
     chat("add_name: %s\n", name);
 
-    new_size = (new_size + 1) & ~1; /* align */
+    aligned_size = (new_size + 0x1f) & ~0x1f;
+    if (aligned_size - new_size < 4)
+        new_size = aligned_size;
+    else
+        new_size = (new_size + 1) & ~1;
 
     if (new_size > name_table->allocated)
     {
