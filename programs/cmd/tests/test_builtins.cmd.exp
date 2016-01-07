@@ -1207,7 +1207,7 @@ passed
 --- a batch file can delete itself
 file correctly deleted
 --- a batch file can alter itself
-@todo_wine@bar
+bar
 ---------- Testing copy
 Passed: Found expected dummy.file
 Passed: Found expected dir1\file1
