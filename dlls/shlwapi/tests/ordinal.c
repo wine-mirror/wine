@@ -72,6 +72,23 @@ static HWND    (WINAPI *pSHSetParentHwnd)(HWND, HWND);
 static HRESULT (WINAPI *pIUnknown_GetClassID)(IUnknown*, CLSID*);
 static HRESULT (WINAPI *pDllGetVersion)(DLLVERSIONINFO2*);
 
+typedef struct SHELL_USER_SID {
+    SID_IDENTIFIER_AUTHORITY sidAuthority;
+    DWORD                    dwUserGroupID;
+    DWORD                    dwUserID;
+} SHELL_USER_SID, *PSHELL_USER_SID;
+typedef struct SHELL_USER_PERMISSION {
+
+    SHELL_USER_SID susID;
+    DWORD          dwAccessType;
+    BOOL           fInherit;
+    DWORD          dwAccessMask;
+    DWORD          dwInheritMask;
+    DWORD          dwInheritAccessMask;
+} SHELL_USER_PERMISSION, *PSHELL_USER_PERMISSION;
+
+static SECURITY_DESCRIPTOR* (WINAPI *pGetShellSecurityDescriptor)(const SHELL_USER_PERMISSION**,int);
+
 static HMODULE hmlang;
 static HRESULT (WINAPI *pLcidToRfc1766A)(LCID, LPSTR, INT);
 
@@ -676,39 +693,22 @@ static void test_fdsa(void)
     HeapFree(GetProcessHeap(), 0, mem);
 }
 
-
-typedef struct SHELL_USER_SID {
-    SID_IDENTIFIER_AUTHORITY sidAuthority;
-    DWORD                    dwUserGroupID;
-    DWORD                    dwUserID;
-} SHELL_USER_SID, *PSHELL_USER_SID;
-typedef struct SHELL_USER_PERMISSION {
-    SHELL_USER_SID susID;
-    DWORD          dwAccessType;
-    BOOL           fInherit;
-    DWORD          dwAccessMask;
-    DWORD          dwInheritMask;
-    DWORD          dwInheritAccessMask;
-} SHELL_USER_PERMISSION, *PSHELL_USER_PERMISSION;
 static void test_GetShellSecurityDescriptor(void)
 {
-    SHELL_USER_PERMISSION supCurrentUserFull = {
+    static const SHELL_USER_PERMISSION supCurrentUserFull = {
         { {SECURITY_NULL_SID_AUTHORITY}, 0, 0 },
         ACCESS_ALLOWED_ACE_TYPE, FALSE,
         GENERIC_ALL, 0, 0 };
 #define MY_INHERITANCE 0xBE /* invalid value to proof behavior */
-    SHELL_USER_PERMISSION supEveryoneDenied = {
+    static const SHELL_USER_PERMISSION supEveryoneDenied = {
         { {SECURITY_WORLD_SID_AUTHORITY}, SECURITY_WORLD_RID, 0 },
         ACCESS_DENIED_ACE_TYPE, TRUE,
         GENERIC_WRITE, MY_INHERITANCE | 0xDEADBA00, GENERIC_READ };
-    PSHELL_USER_PERMISSION rgsup[2] = {
+    const SHELL_USER_PERMISSION* rgsup[2] = {
         &supCurrentUserFull, &supEveryoneDenied,
     };
     SECURITY_DESCRIPTOR* psd;
-    SECURITY_DESCRIPTOR* (WINAPI*pGetShellSecurityDescriptor)(PSHELL_USER_PERMISSION*,int);
     void *pChrCmpIW = GetProcAddress(hShlwapi, "ChrCmpIW");
-
-    pGetShellSecurityDescriptor=(void*)GetProcAddress(hShlwapi,(char*)475);
 
     if(!pGetShellSecurityDescriptor)
     {
@@ -3064,6 +3064,7 @@ static void init_pointers(void)
     MAKEFUNC(SHFormatDateTimeA, 353);
     MAKEFUNC(SHFormatDateTimeW, 354);
     MAKEFUNC(SHIShellFolder_EnumObjects, 404);
+    MAKEFUNC(GetShellSecurityDescriptor, 475);
     MAKEFUNC(SHGetObjectCompatFlags, 476);
     MAKEFUNC(IUnknown_QueryServiceExec, 484);
     MAKEFUNC(SHGetShellKey, 491);

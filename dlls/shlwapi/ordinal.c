@@ -4842,7 +4842,7 @@ typedef struct SHELL_USER_PERMISSION { /* ...and this should be in shlwapi.h */
  * NOTES
  *  Call should free returned descriptor with LocalFree
  */
-PSECURITY_DESCRIPTOR WINAPI GetShellSecurityDescriptor(PSHELL_USER_PERMISSION *apUserPerm, int cUserPerm)
+PSECURITY_DESCRIPTOR WINAPI GetShellSecurityDescriptor(const PSHELL_USER_PERMISSION *apUserPerm, int cUserPerm)
 {
     PSID *sidlist;
     PSID  cur_user = NULL;
