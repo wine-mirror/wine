@@ -1,7 +1,7 @@
 /*
  *    Text layout/format tests
  *
- * Copyright 2012, 2014-2015 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -257,6 +257,7 @@ static const char *get_draw_kind_name(unsigned short kind)
 struct drawcall_entry {
     enum drawcall_kind kind;
     WCHAR string[10]; /* only meaningful for DrawGlyphRun() */
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
 };
 
 struct drawcall_sequence
@@ -363,6 +364,18 @@ static void ok_sequence_(struct drawcall_sequence **seq, int sequence_index,
             else
                 ok_(file, line) (cmp == 0, "%s: glyphrun string %s was expected, but got %s instead\n",
                     context, wine_dbgstr_w(expected->string), wine_dbgstr_w(actual->string));
+        }
+        else if ((expected->kind & DRAW_KINDS_MASK) == DRAW_UNDERLINE) {
+            int cmp = lstrcmpW(expected->locale, actual->locale);
+            if (cmp != 0 && todo) {
+                failcount++;
+            todo_wine
+                ok_(file, line) (0, "%s: underline locale %s was expected, but got %s instead\n",
+                    context, wine_dbgstr_w(expected->locale), wine_dbgstr_w(actual->locale));
+            }
+            else
+                ok_(file, line) (cmp == 0, "%s: underline locale %s was expected, but got %s instead\n",
+                    context, wine_dbgstr_w(expected->locale), wine_dbgstr_w(actual->locale));
         }
         expected++;
         actual++;
@@ -536,6 +549,7 @@ static HRESULT WINAPI testrenderer_DrawUnderline(IDWriteTextRenderer *iface,
     entry.kind = DRAW_UNDERLINE;
     if (effect)
         entry.kind |= DRAW_EFFECT;
+    lstrcpyW(entry.locale, underline->localeName);
     add_call(sequences, RENDERER_ID, &entry);
     return S_OK;
 }
@@ -1348,7 +1362,7 @@ static const struct drawcall_entry draw_seq[] = {
     { DRAW_GLYPHRUN|DRAW_EFFECT, {'n',0} },
     { DRAW_GLYPHRUN, {'g',0}     },
     { DRAW_INLINE },
-    { DRAW_UNDERLINE },
+    { DRAW_UNDERLINE, {0}, {'r','u',0} },
     { DRAW_STRIKETHROUGH },
     { DRAW_LAST_KIND }
 };
@@ -4276,12 +4290,28 @@ static void test_SetOpticalAlignment(void)
 static const struct drawcall_entry drawunderline_seq[] = {
     { DRAW_GLYPHRUN, {'a','e',0x0300,0} }, /* reported runs can't mix different underline values */
     { DRAW_GLYPHRUN, {'d',0} },
-    { DRAW_UNDERLINE },
+    { DRAW_UNDERLINE, {0}, {'e','n','-','u','s',0} },
+    { DRAW_LAST_KIND }
+};
+
+static const struct drawcall_entry drawunderline2_seq[] = {
+    { DRAW_GLYPHRUN, {'a',0} },
+    { DRAW_GLYPHRUN, {'e',0} },
+    { DRAW_UNDERLINE, {0}, {'e','n','-','u','s',0} },
+    { DRAW_LAST_KIND }
+};
+
+static const struct drawcall_entry drawunderline3_seq[] = {
+    { DRAW_GLYPHRUN, {'a',0} },
+    { DRAW_GLYPHRUN, {'e',0} },
+    { DRAW_UNDERLINE, {0}, {'e','n','-','c','a',0} },
+    { DRAW_UNDERLINE, {0}, {'e','n','-','u','s',0} },
     { DRAW_LAST_KIND }
 };
 
 static void test_SetUnderline(void)
 {
+    static const WCHAR encaW[] = {'e','n','-','C','A',0};
     static const WCHAR strW[] = {'a','e',0x0300,'d',0}; /* accent grave */
     DWRITE_CLUSTER_METRICS clusters[4];
     IDWriteTextFormat *format;
@@ -4299,7 +4329,6 @@ static void test_SetUnderline(void)
 
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 4, format, 1000.0, 1000.0, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    IDWriteTextFormat_Release(format);
 
     count = 0;
     hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, sizeof(clusters)/sizeof(clusters[0]), &count);
@@ -4324,6 +4353,41 @@ todo_wine
     ok_sequence(sequences, RENDERER_ID, drawunderline_seq, "draw underline test", TRUE);
 
     IDWriteTextLayout_Release(layout);
+
+    /* 2 characters, same font, significantly different font size. Set underline for both, see how many
+       underline drawing calls is there. */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 2, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 0;
+    range.length = 2;
+    hr = IDWriteTextLayout_SetUnderline(layout, TRUE, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 0;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetFontSize(layout, 100.0f, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0f, 0.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, drawunderline2_seq, "draw underline test 2", TRUE);
+
+    /* now set different locale for second char, draw again */
+    range.startPosition = 0;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetLocaleName(layout, encaW, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0f, 0.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, drawunderline3_seq, "draw underline test 2", TRUE);
+
+    IDWriteTextLayout_Release(layout);
+
+    IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
 
