@@ -815,12 +815,16 @@ enum wined3d_display_rotation
 #define WINED3DUSAGE_NPATCHES                                   0x00000100
 #define WINED3DUSAGE_DYNAMIC                                    0x00000200
 #define WINED3DUSAGE_AUTOGENMIPMAP                              0x00000400
+#define WINED3DUSAGE_RESTRICTED_CONTENT                         0x00000800
+#define WINED3DUSAGE_RESTRICT_SHARED_RESOURCE_DRIVER            0x00001000
+#define WINED3DUSAGE_RESTRICT_SHARED_RESOURCE                   0x00002000
 #define WINED3DUSAGE_DMAP                                       0x00004000
-#define WINED3DUSAGE_MASK                                       0x00004fff
-#define WINED3DUSAGE_TEXTURE                                    0x10000000
-#define WINED3DUSAGE_OWNDC                                      0x20000000
-#define WINED3DUSAGE_STATICDECL                                 0x40000000
-#define WINED3DUSAGE_OVERLAY                                    0x80000000
+#define WINED3DUSAGE_TEXTAPI                                    0x10000000
+#define WINED3DUSAGE_MASK                                       0x10007fff
+#define WINED3DUSAGE_TEXTURE                                    0x01000000
+#define WINED3DUSAGE_OWNDC                                      0x02000000
+#define WINED3DUSAGE_STATICDECL                                 0x04000000
+#define WINED3DUSAGE_OVERLAY                                    0x08000000
 
 #define WINED3DUSAGE_QUERY_LEGACYBUMPMAP                        0x00008000
 #define WINED3DUSAGE_QUERY_FILTER                               0x00020000
