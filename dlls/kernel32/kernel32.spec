@@ -1429,7 +1429,7 @@
 # @ stub SetProcessUserModeExceptionPolicy
 @ stdcall SetProcessWorkingSetSize(long long long)
 # @ stub SetProcessWorkingSetSizeEx
-# @ stub SetSearchPathMode
+@ stdcall SetSearchPathMode(long)
 @ stdcall SetStdHandle(long long)
 # @ stub SetStdHandleEx
 @ stdcall SetSystemFileCacheSize(long long long)

@@ -2088,3 +2088,10 @@ BOOL WINAPI CheckNameLegalDOS8Dot3W(const WCHAR *name, char *oemname, DWORD oemn
 
     return TRUE;
 }
+
+BOOL WINAPI SetSearchPathMode(DWORD flags)
+{
+    FIXME("(%x): stub\n", flags);
+    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+    return FALSE;
+}
