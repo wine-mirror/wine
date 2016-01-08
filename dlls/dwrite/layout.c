@@ -1,7 +1,7 @@
 /*
  *    Text format and layout
  *
- * Copyright 2012, 2014-2015 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -3923,7 +3923,11 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
         layout->format.locale = heap_strdupW(textformat->format.locale);
         layout->format.family_name = heap_strdupW(textformat->format.family_name);
         if (!layout->format.locale || !layout->format.family_name)
+        {
+            heap_free(layout->format.locale);
+            heap_free(layout->format.family_name);
             return E_OUTOFMEMORY;
+        }
 
         if (layout->format.trimmingsign)
             IDWriteInlineObject_AddRef(layout->format.trimmingsign);
@@ -4662,6 +4666,8 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     This->format.family_len = strlenW(family_name);
     This->format.locale = heap_strdupW(locale);
     This->format.locale_len = strlenW(locale);
+    /* force locale name to lower case, layout will inherit this modified value */
+    strlwrW(This->format.locale);
     This->format.weight = weight;
     This->format.style = style;
     This->format.fontsize = size;
