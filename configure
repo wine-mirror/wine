@@ -8765,6 +8765,8 @@ CROSSTARGET=""
 if test "$cross_compiling" = "no" -a "x$enable_tests" != xno -a "$LIBEXT" != "dll"
 then
     case "$host_cpu" in
+  arm*)
+    ac_prefix_list="armv7-w64-mingw32-clang armv7-w64-mingw32-gcc" ;;
   i[3456789]86*)
     ac_prefix_list="i686-w64-mingw32-gcc i586-w64-mingw32-gcc i486-w64-mingw32-gcc i386-w64-mingw32-gcc i686-pc-mingw32-gcc i586-pc-mingw32-gcc i486-pc-mingw32-gcc i386-pc-mingw32-gcc i686-mingw32msvc-gcc i586-mingw32msvc-gcc i486-mingw32msvc-gcc i386-mingw32msvc-gcc i686-mingw32-gcc i586-mingw32-gcc i486-mingw32-gcc i386-mingw32-gcc
                      i686-w64-mingw32-clang i586-w64-mingw32-clang i486-w64-mingw32-clang i386-w64-mingw32-clang

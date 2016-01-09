@@ -175,6 +175,8 @@ dnl Usage: WINE_CHECK_MINGW_PROG(variable,[value-if-not-found],[path])
 dnl
 AC_DEFUN([WINE_CHECK_MINGW_PROG],
 [case "$host_cpu" in
+  arm*)
+    ac_prefix_list="armv7-w64-mingw32-clang armv7-w64-mingw32-gcc" ;;
   i[[3456789]]86*)
     ac_prefix_list="m4_foreach([ac_wine_prefix],[w64-mingw32, pc-mingw32, mingw32msvc, mingw32],
                         m4_foreach([ac_wine_cpu],[i686,i586,i486,i386],[ac_wine_cpu-ac_wine_prefix-gcc ]))
