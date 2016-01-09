@@ -1229,9 +1229,12 @@ TRACKBAR_SetPos (TRACKBAR_INFO *infoPtr, BOOL fPosition, LONG lPosition)
 
     if (infoPtr->lPos > infoPtr->lRangeMax)
 	infoPtr->lPos = infoPtr->lRangeMax;
-    infoPtr->flags |= TB_THUMBPOSCHANGED;
 
-    if (fPosition && oldPos != lPosition) TRACKBAR_InvalidateThumbMove(infoPtr, oldPos, lPosition);
+    if (fPosition && oldPos != lPosition)
+    {
+        TRACKBAR_UpdateThumb(infoPtr);
+        TRACKBAR_InvalidateThumbMove(infoPtr, oldPos, lPosition);
+    }
 
     return 0;
 }

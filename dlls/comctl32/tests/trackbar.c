@@ -32,6 +32,16 @@
 static const DWORD defaultstyle = WS_VISIBLE | TBS_TOOLTIPS | TBS_ENABLESELRANGE | TBS_FIXEDLENGTH | TBS_AUTOTICKS;
 static HWND hWndParent;
 
+static LRESULT WINAPI trackbar_no_wmpaint_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    WNDPROC oldproc = (WNDPROC)GetWindowLongPtrA(hwnd, GWLP_USERDATA);
+
+    if (message == WM_PAINT)
+        return 0;
+
+    return CallWindowProcA(oldproc, hwnd, message, wParam, lParam);
+}
+
 static struct msg_sequence *sequences[NUM_MSG_SEQUENCE];
 
 static const struct message empty_seq[] = {
@@ -465,6 +475,15 @@ static HWND create_trackbar(DWORD style, HWND parent){
     return hWndTrack;
 }
 
+static HWND create_trackbar2(DWORD style, HWND parent)
+{
+    RECT rect;
+    GetClientRect(parent, &rect);
+    return CreateWindowA(TRACKBAR_CLASSA, "Trackbar Control", style,
+                              rect.right, rect.bottom, 100, 50,
+                              parent, NULL, GetModuleHandleA(NULL), NULL);
+}
+
 /* test functions for setters, getters, and sequences */
 
 static void test_trackbar_buddy(void)
@@ -595,6 +614,8 @@ static void test_page_size(void)
 static void test_position(void)
 {
     HWND hWndTrackbar;
+    RECT rect, rect2;
+    WNDPROC oldproc;
     int r;
 
     hWndTrackbar = create_trackbar(defaultstyle, hWndParent);
@@ -624,6 +645,34 @@ static void test_position(void)
 
     ok_sequence(sequences, TRACKBAR_SEQ_INDEX, position_test_seq, "position test sequence", TRUE);
     ok_sequence(sequences, PARENT_SEQ_INDEX, parent_position_test_seq, "parent position test sequence", TRUE);
+
+    DestroyWindow(hWndTrackbar);
+
+    hWndTrackbar = create_trackbar2(defaultstyle, hWndParent);
+    ok(hWndTrackbar != NULL, "Expected non NULL value\n");
+
+    /* subclassing procedure blocks WM_PAINT */
+    oldproc = (WNDPROC)SetWindowLongPtrA(hWndTrackbar, GWLP_WNDPROC, (LONG_PTR)trackbar_no_wmpaint_proc);
+    SetWindowLongPtrA(hWndTrackbar, GWLP_USERDATA, (LONG_PTR)oldproc);
+
+    memset(&rect, 0, sizeof(rect));
+    memset(&rect2, 0, sizeof(rect2));
+
+    SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect);
+
+    /* without repaint */
+    SendMessageA(hWndTrackbar, TBM_SETPOS, FALSE, 25);
+    r = SendMessageA(hWndTrackbar, TBM_GETPOS, 0, 0);
+    ok(r == 25, "got %d\n", r);
+    SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect2);
+    ok(rect.left == rect2.left, "got %d\n", rect.left);
+
+    /* with repaint */
+    SendMessageA(hWndTrackbar, TBM_SETPOS, TRUE, 30);
+    r = SendMessageA(hWndTrackbar, TBM_GETPOS, 0, 0);
+    ok(r == 30, "got %d\n", r);
+    SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect2);
+    ok(rect.left != rect2.left, "got %d\n", rect.left);
 
     DestroyWindow(hWndTrackbar);
 }
