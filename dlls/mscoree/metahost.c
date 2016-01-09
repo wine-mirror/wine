@@ -126,11 +126,6 @@ static void CDECL set_print_handler_dummy(MonoPrintCallback callback)
 {
 }
 
-static void missing_runtime_message(void)
-{
-    MESSAGE("wine: Install Mono for Windows to run .NET applications.\n");
-}
-
 static HRESULT load_mono(LPCWSTR mono_path)
 {
     static const WCHAR lib[] = {'\\','l','i','b',0};
@@ -277,7 +272,7 @@ static HRESULT CLRRuntimeInfo_GetRuntimeHost(CLRRuntimeInfo *This, RuntimeHost *
 
     if (!get_mono_path(mono_path))
     {
-        missing_runtime_message();
+        ERR("Wine Mono is not installed\n");
         return CLR_E_SHIM_RUNTIME;
     }
 
@@ -1305,8 +1300,6 @@ HRESULT get_runtime_info(LPCWSTR exefile, LPCWSTR version, LPCWSTR config_file,
                         &IID_ICLRRuntimeInfo, (void **)result);
             }
         }
-
-        missing_runtime_message();
 
         return CLR_E_SHIM_RUNTIME;
     }
