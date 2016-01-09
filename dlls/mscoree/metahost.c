@@ -589,112 +589,22 @@ static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path)
     return (attributes != INVALID_FILE_ATTRIBUTES);
 }
 
-static BOOL get_mono_path_from_registry(LPWSTR path)
-{
-    static const WCHAR mono_key[] = {'S','o','f','t','w','a','r','e','\\','N','o','v','e','l','l','\\','M','o','n','o',0};
-    static const WCHAR defaul_clr[] = {'D','e','f','a','u','l','t','C','L','R',0};
-    static const WCHAR install_root[] = {'S','d','k','I','n','s','t','a','l','l','R','o','o','t',0};
-    static const WCHAR slash[] = {'\\',0};
-
-    WCHAR version[64], version_key[MAX_PATH];
-    DWORD len;
-    HKEY key;
-    WCHAR dll_path[MAX_PATH];
-
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, mono_key, 0, KEY_READ, &key))
-        return FALSE;
-
-    len = sizeof(version);
-    if (RegQueryValueExW(key, defaul_clr, 0, NULL, (LPBYTE)version, &len))
-    {
-        RegCloseKey(key);
-        return FALSE;
-    }
-    RegCloseKey(key);
-
-    lstrcpyW(version_key, mono_key);
-    lstrcatW(version_key, slash);
-    lstrcatW(version_key, version);
-
-    if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, version_key, 0, KEY_READ, &key))
-        return FALSE;
-
-    len = sizeof(WCHAR) * MAX_PATH;
-    if (RegQueryValueExW(key, install_root, 0, NULL, (LPBYTE)path, &len))
-    {
-        RegCloseKey(key);
-        return FALSE;
-    }
-    RegCloseKey(key);
-
-    return find_mono_dll(path, dll_path);
-}
-
-static BOOL get_mono_path_from_folder(LPCWSTR folder, LPWSTR mono_path)
-{
-    static const WCHAR mono_two_dot_zero[] = {'\\','m','o','n','o','-','2','.','0', 0};
-    WCHAR mono_dll_path[MAX_PATH];
-    BOOL found = FALSE;
-
-    strcpyW(mono_path, folder);
-
-    strcatW(mono_path, mono_two_dot_zero);
-
-    found = find_mono_dll(mono_path, mono_dll_path);
-
-    return found;
-}
-
 static BOOL get_mono_path(LPWSTR path)
 {
-    static const WCHAR subdir_mono[] = {'\\','m','o','n','o',0};
-    static const WCHAR sibling_mono[] = {'\\','.','.','\\','m','o','n','o',0};
-    WCHAR base_path[MAX_PATH];
-    const char *unix_data_dir;
-    WCHAR *dos_data_dir;
-    BOOL build_tree = FALSE;
-    static WCHAR* (CDECL *wine_get_dos_file_name)(const char*);
+    static const WCHAR subdir_mono[] = {'\\','m','o','n','o','\\','m','o','n','o','-','2','.','0', 0};
+    WCHAR base_path[MAX_PATH], mono_dll_path[MAX_PATH];
 
-    /* First try c:\windows\mono */
+    /* c:\windows\mono\mono-2.0 */
     GetWindowsDirectoryW(base_path, MAX_PATH);
     strcatW(base_path, subdir_mono);
 
-    if (get_mono_path_from_folder(base_path, path))
+    if (find_mono_dll(base_path, mono_dll_path))
+    {
+        strcpyW(path, base_path);
         return TRUE;
-
-    /* Next: /usr/share/wine/mono */
-    unix_data_dir = wine_get_data_dir();
-
-    if (!unix_data_dir)
-    {
-        unix_data_dir = wine_get_build_dir();
-        build_tree = TRUE;
     }
 
-    if (unix_data_dir)
-    {
-        if (!wine_get_dos_file_name)
-            wine_get_dos_file_name = (void*)GetProcAddress(GetModuleHandleA("kernel32"), "wine_get_dos_file_name");
-
-        if (wine_get_dos_file_name)
-        {
-            dos_data_dir = wine_get_dos_file_name(unix_data_dir);
-
-            if (dos_data_dir)
-            {
-                strcpyW(base_path, dos_data_dir);
-                strcatW(base_path, build_tree ? sibling_mono : subdir_mono);
-
-                HeapFree(GetProcessHeap(), 0, dos_data_dir);
-
-                if (get_mono_path_from_folder(base_path, path))
-                    return TRUE;
-            }
-        }
-    }
-
-    /* Last: the registry */
-    return get_mono_path_from_registry(path);
+    return FALSE;
 }
 
 struct InstalledRuntimeEnum
