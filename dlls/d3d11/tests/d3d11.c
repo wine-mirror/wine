@@ -4425,6 +4425,96 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_multisample_init(void)
+{
+    D3D11_TEXTURE2D_DESC desc;
+    ID3D11Texture2D *backbuffer, *multi;
+    ID3D11Device *device;
+    ID3D11DeviceContext *context;
+    ULONG refcount;
+    DWORD color;
+    HRESULT hr;
+    unsigned int x, y;
+    struct texture_readback rb;
+    BOOL all_zero = TRUE;
+    UINT count = 0;
+    HWND window;
+    IDXGISwapChain *swapchain;
+    ID3D11RenderTargetView *rtview;
+    static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &count);
+    todo_wine ok(SUCCEEDED(hr), "Failed to get quality levels, hr %#x.\n", hr);
+    if (!count)
+    {
+        skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM, skipping tests.\n");
+        goto done;
+    }
+
+    window = CreateWindowA("static", "d3d11_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+        0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_ID3D11Texture2D, (void **)&backbuffer);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)backbuffer, NULL, &rtview);
+    ok(SUCCEEDED(hr), "Failed to create rendertarget view, hr %#x.\n", hr);
+
+    ID3D11Device_GetImmediateContext(device, &context);
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtview, white);
+
+    desc.Width = 640;
+    desc.Height = 480;
+    desc.MipLevels = 1;
+    desc.ArraySize = 1;
+    desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.SampleDesc.Count = 2;
+    desc.SampleDesc.Quality = 0;
+    desc.Usage = D3D11_USAGE_DEFAULT;
+    desc.BindFlags = D3D11_BIND_RENDER_TARGET;
+    desc.CPUAccessFlags = 0;
+    desc.MiscFlags = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &multi);
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+
+    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
+    ID3D11DeviceContext_ResolveSubresource(context, (ID3D11Resource *)backbuffer, 0,
+            (ID3D11Resource *)multi, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
+
+    get_texture_readback(backbuffer, &rb);
+    for (y = 0; y < 480; ++y)
+    {
+        for (x = 0; x < 640; ++x)
+        {
+            color = get_readback_color(&rb, x, y);
+            if (!compare_color(color, 0x00000000, 0))
+            {
+                all_zero = FALSE;
+                break;
+            }
+        }
+        if (!all_zero)
+            break;
+    }
+    release_texture_readback(&rb);
+    ok(all_zero, "Got unexpected color 0x%08x, position %ux%u.\n", color, x, y);
+
+    ID3D11DeviceContext_Release(context);
+    ID3D11RenderTargetView_Release(rtview);
+    ID3D11Texture2D_Release(backbuffer);
+    IDXGISwapChain_Release(swapchain);
+    ID3D11Texture2D_Release(multi);
+    DestroyWindow(window);
+done:
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -4454,4 +4544,5 @@ START_TEST(d3d11)
     test_fragment_coords();
     test_update_subresource();
     test_resource_map();
+    test_multisample_init();
 }
