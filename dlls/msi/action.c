@@ -4135,7 +4135,6 @@ static UINT ITERATE_PublishIcon(MSIRECORD *row, LPVOID param)
         if (rc != ERROR_SUCCESS)
         {
             ERR("Failed to get stream\n");
-            CloseHandle(the_file);  
             DeleteFileW(FilePath);
             break;
         }
