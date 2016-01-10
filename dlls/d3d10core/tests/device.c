@@ -3584,10 +3584,10 @@ static void test_texture(void)
     ID3D10Device_VSSetShader(device, vs);
     ID3D10Device_PSSetConstantBuffers(device, 0, 1, &cb);
 
-    vp.TopLeftX = 0.0f;
-    vp.TopLeftY = 0.0f;
-    vp.Width = 640.0f;
-    vp.Height = 480.0f;
+    vp.TopLeftX = 0;
+    vp.TopLeftY = 0;
+    vp.Width = 640;
+    vp.Height = 480;
     vp.MinDepth = 0.0f;
     vp.MaxDepth = 1.0f;
     ID3D10Device_RSSetViewports(device, 1, &vp);
