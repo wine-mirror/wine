@@ -46,6 +46,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
+#define E_INVALIDARG16 MAKE_SCODE(SEVERITY_ERROR, FACILITY_NULL, 3)
 
 static HICON convert_icon_to_32( HICON16 icon16 )
 {
@@ -296,8 +297,14 @@ HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
 
 	TRACE("(%x, %p)\n", pstg, pclsid);
 
-	if(pclsid==NULL)
-		return E_POINTER;
+	if (!pclsid)
+	    return E_INVALIDARG16;
+
+	memset(pclsid, 0, sizeof(*pclsid));
+
+	if (!pstg)
+	    return E_INVALIDARG16;
+
 	/*
 	 * read a STATSTG structure (contains the clsid) from the storage
 	 */
