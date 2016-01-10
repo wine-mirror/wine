@@ -35,7 +35,7 @@
 35 pascal RegisterActiveObject(ptr ptr long ptr) RegisterActiveObject16
 36 stub REVOKEACTIVEOBJECT
 37 stub GETACTIVEOBJECT
-38 stub SAFEARRAYALLOCDESCRIPTOR
+38 pascal SafeArrayAllocDescriptor(word ptr) SafeArrayAllocDescriptor16
 39 stub SAFEARRAYALLOCDATA
 40 stub SAFEARRAYDESTROYDESCRIPTOR
 41 stub SAFEARRAYDESTROYDATA
