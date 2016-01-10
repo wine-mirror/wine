@@ -1035,7 +1035,7 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
 	
 	memset(&desc, 0, sizeof(desc));
 	desc.dwSize = sizeof(desc);
-	desc.dwFlags = DSBCAPS_CTRLFX | DSBCAPS_CTRLPAN | DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS;
+        desc.dwFlags = DSBCAPS_CTRLFX | DSBCAPS_CTRLVOLUME | DSBCAPS_GLOBALFOCUS;
 	desc.dwBufferBytes = DSBSIZE_MIN;
 	desc.dwReserved = 0;
 	desc.lpwfxFormat = &format;
@@ -1046,14 +1046,14 @@ static HRESULT WINAPI IDirectMusicPerformance8Impl_CreateStandardAudioPath(IDire
                 desc.dwFlags |= DSBCAPS_CTRL3D | DSBCAPS_CTRLFREQUENCY | DSBCAPS_MUTE3DATMAXDISTANCE;
 		break;
 	case DMUS_APATH_DYNAMIC_MONO:
-	        desc.dwFlags |= DSBCAPS_CTRLFREQUENCY;
+                desc.dwFlags |= DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY;
 		break;
 	case DMUS_APATH_SHARED_STEREOPLUSREVERB:
 	        /* normally we have to create 2 buffers (one for music other for reverb)
 		 * in this case. See msdn
                  */
 	case DMUS_APATH_DYNAMIC_STEREO:
-		desc.dwFlags |= DSBCAPS_CTRLFREQUENCY;
+                desc.dwFlags |= DSBCAPS_CTRLPAN | DSBCAPS_CTRLFREQUENCY;
 		format.nChannels = 2;
 		format.nBlockAlign *= 2;
 		format.nAvgBytesPerSec *=2;
