@@ -17,7 +17,7 @@
 17 stub OLELOCKRUNNING
 18 pascal ReadClassStg(segptr ptr) ReadClassStg16
 19 pascal WriteClassStg(segptr ptr) WriteClassStg16
-20 stub READCLASSSTM
+20 pascal ReadClassStm(segptr ptr) ReadClassStm16
 21 stub WRITECLASSSTM
 22 stub BINDMONIKER
 23 stub MKPARSEDISPLAYNAME
