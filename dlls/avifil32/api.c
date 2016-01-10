@@ -2289,8 +2289,8 @@ HRESULT WINAPIV AVISaveA(LPCSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK l
 
     if (nStreams <= 0) return AVIERR_BADPARAM;
 
-    streams = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(void *));
-    options = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(void *));
+    streams = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(*streams));
+    options = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(*options));
     if (!streams || !options)
     {
         ret = AVIERR_MEMORY;
@@ -2303,8 +2303,8 @@ HRESULT WINAPIV AVISaveA(LPCSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK l
     __ms_va_start(vl, lpOptions);
     for (i = 1; i < nStreams; i++)
     {
-        streams[i] = va_arg(vl, void *);
-        options[i] = va_arg(vl, void *);
+        streams[i] = va_arg(vl, PAVISTREAM);
+        options[i] = va_arg(vl, PAVICOMPRESSOPTIONS);
     }
     __ms_va_end(vl);
 
@@ -2332,8 +2332,8 @@ HRESULT WINAPIV AVISaveW(LPCWSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK 
 
     if (nStreams <= 0) return AVIERR_BADPARAM;
 
-    streams = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(void *));
-    options = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(void *));
+    streams = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(*streams));
+    options = HeapAlloc(GetProcessHeap(), 0, nStreams * sizeof(*options));
     if (!streams || !options)
     {
         ret = AVIERR_MEMORY;
@@ -2346,8 +2346,8 @@ HRESULT WINAPIV AVISaveW(LPCWSTR szFile, CLSID * pclsidHandler, AVISAVECALLBACK 
     __ms_va_start(vl, lpOptions);
     for (i = 1; i < nStreams; i++)
     {
-        streams[i] = va_arg(vl, void *);
-        options[i] = va_arg(vl, void *);
+        streams[i] = va_arg(vl, PAVISTREAM);
+        options[i] = va_arg(vl, PAVICOMPRESSOPTIONS);
     }
     __ms_va_end(vl);
 
