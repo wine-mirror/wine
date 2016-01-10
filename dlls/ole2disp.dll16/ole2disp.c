@@ -30,6 +30,7 @@
 #include "ole2.h"
 #include "oleauto.h"
 #include "winerror.h"
+#include "wownt32.h"
 #include "wine/windef16.h"
 #include "wine/winbase16.h"
 
@@ -38,6 +39,56 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
+
+#define E_OUTOFMEMORY16 MAKE_SCODE(SEVERITY_ERROR, FACILITY_NULL, 2)
+#define E_INVALIDARG16  MAKE_SCODE(SEVERITY_ERROR, FACILITY_NULL, 3)
+
+/* 16-bit SAFEARRAY implementation */
+typedef struct tagSAFEARRAYBOUND16
+{
+    ULONG cElements;
+    LONG  lLbound;
+} SAFEARRAYBOUND16;
+
+typedef struct tagSAFEARRAY16
+{
+    USHORT cDims;
+    USHORT fFeatures;
+    USHORT cbElements;
+    USHORT cLocks;
+    ULONG  handle;
+    SEGPTR pvData;
+    SAFEARRAYBOUND16 rgsabound[1];
+} SAFEARRAY16;
+
+static SEGPTR safearray_alloc(ULONG size)
+{
+    HANDLE16 h;
+    return WOWGlobalAllocLock16(GPTR, size, &h);
+}
+
+/******************************************************************************
+ *    SafeArrayAllocDescriptor [OLE2DISP.38]
+ */
+HRESULT WINAPI SafeArrayAllocDescriptor16(UINT16 dims, SEGPTR *ret)
+{
+    SAFEARRAY16 *sa;
+    ULONG size;
+
+    TRACE("%u, %p\n", dims, ret);
+
+    if (!dims)
+        return E_INVALIDARG16;
+
+    size = sizeof(SAFEARRAY16) + sizeof(SAFEARRAYBOUND16) * (dims - 1);
+    *ret = safearray_alloc(size);
+    if (!*ret)
+        return E_OUTOFMEMORY16;
+
+    sa = MapSL(*ret);
+    sa->cDims = dims;
+    return S_OK;
+}
 
 /* This implementation of the BSTR API is 16-bit only. It
    represents BSTR as a 16:16 far pointer, and the strings
