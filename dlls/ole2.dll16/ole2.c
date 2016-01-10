@@ -274,6 +274,9 @@ HRESULT WINAPI OleFlushClipboard16(void)
   return OleFlushClipboard();
 }
 
+#define GET_SEGPTR_METHOD_ADDR(ifacename,segptr,methodname) \
+    ((SEGPTR)((const ifacename##Vtbl*)MapSL((SEGPTR)((ifacename*)MapSL(segptr))->lpVtbl))->methodname)
+
 /***********************************************************************
  *    ReadClassStg (OLE2.18)
  *
@@ -308,17 +311,15 @@ HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
 	/*
 	 * read a STATSTG structure (contains the clsid) from the storage
 	 */
-	args[0] = (DWORD)pstg;	/* iface */
+	args[0] = pstg; /* iface */
 	args[1] = WOWGlobalAllocLock16( 0, sizeof(STATSTG16), &hstatstg );
 	args[2] = STATFLAG_DEFAULT;
 
 	if (!WOWCallback16Ex(
-	    (DWORD)((const IStorage16Vtbl*)MapSL(
-			(SEGPTR)((LPSTORAGE16)MapSL(pstg))->lpVtbl)
-	    )->Stat,
+	    GET_SEGPTR_METHOD_ADDR(IStorage16, pstg, Stat),
 	    WCB16_PASCAL,
 	    3*sizeof(DWORD),
-	    (LPVOID)args,
+	    args,
 	    (LPDWORD)&hres
 	)) {
 	    WOWGlobalUnlockFree16(args[1]);
@@ -333,6 +334,58 @@ HRESULT WINAPI ReadClassStg16(SEGPTR pstg, CLSID *pclsid)
 		TRACE("clsid is %s\n", debugstr_guid(&statstg.clsid));
 	}
 	return hres;
+}
+
+/***********************************************************************
+ *    ReadClassStm (OLE2.20)
+ */
+HRESULT WINAPI ReadClassStm16(SEGPTR stream, CLSID *clsid)
+{
+    HANDLE16 hclsid, hread;
+    HRESULT hres;
+    DWORD args[4];
+
+    TRACE("(0x%x, %p)\n", stream, clsid);
+
+    if (!clsid)
+        return E_INVALIDARG16;
+
+    memset(clsid, 0, sizeof(*clsid));
+
+    if (!stream)
+        return E_INVALIDARG16;
+
+    args[0] = stream; /* iface */
+    args[1] = WOWGlobalAllocLock16( 0, sizeof(CLSID), &hclsid );
+    args[2] = sizeof(CLSID);
+    args[3] = WOWGlobalAllocLock16( 0, sizeof(ULONG), &hread );
+
+    if (WOWCallback16Ex(
+        GET_SEGPTR_METHOD_ADDR(IStream16, stream, Read),
+        WCB16_PASCAL,
+        4*sizeof(DWORD),
+        args,
+        (DWORD*)&hres))
+    {
+        ULONG readlen;
+
+        memcpy(&readlen, MapSL(args[3]), sizeof(readlen));
+        if (readlen == sizeof(CLSID))
+            memcpy(clsid, MapSL(args[1]), sizeof(CLSID));
+        else
+            hres = STG_E_READFAULT;
+
+        TRACE("clsid is %s\n", debugstr_guid(clsid));
+    }
+    else
+    {
+        ERR("CallTo16 IStream16::Read() failed, hres %x\n", hres);
+        hres = E_FAIL;
+    }
+    WOWGlobalUnlockFree16(args[1]);
+    WOWGlobalUnlockFree16(args[3]);
+
+    return hres;
 }
 
 /***********************************************************************
