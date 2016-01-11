@@ -4054,6 +4054,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
         free_layout_range(strike);
         free_layout_range(effect);
         free_layout_range(spacing);
+        free_layout_range(typography);
         hr = E_OUTOFMEMORY;
         goto fail;
     }
