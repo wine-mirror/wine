@@ -24,13 +24,6 @@ import "audiosessiontypes.h";
 cpp_quote("#include <pshpack1.h>")
 
 [
-    uuid(5a508685-a254-4fba-9b82-9a24b00306af)
-]
-coclass XAudio2 {
-    interface IUnknown;
-}
-
-[
     uuid(fac23f48-31f5-45a8-b49b-5225d61401aa)
 ]
 coclass XAudio20 {
@@ -76,6 +69,13 @@ coclass XAudio25 {
     uuid(3eda9b49-2085-498b-9bb2-39a6778493de)
 ]
 coclass XAudio26 {
+    interface IUnknown;
+}
+
+[
+    uuid(5a508685-a254-4fba-9b82-9a24b00306af)
+]
+coclass XAudio27 {
     interface IUnknown;
 }
 

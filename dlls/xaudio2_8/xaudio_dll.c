@@ -54,7 +54,7 @@ HRESULT WINAPI XAudio2Create(IXAudio2 **ppxa2, UINT32 flags, XAUDIO2_PROCESSOR p
     IXAudio27 *xa27;
 
     /* create XAudio2 2.8 instance */
-    hr = CoCreateInstance(&CLSID_XAudio2, NULL, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_XAudio27, NULL, CLSCTX_INPROC_SERVER,
             &IID_IXAudio2, (void**)&xa2);
     if(FAILED(hr))
         return hr;
@@ -81,13 +81,13 @@ HRESULT WINAPI XAudio2Create(IXAudio2 **ppxa2, UINT32 flags, XAUDIO2_PROCESSOR p
 
 HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
 {
-    return CoCreateInstance(&CLSID_AudioVolumeMeter, NULL, CLSCTX_INPROC_SERVER,
+    return CoCreateInstance(&CLSID_AudioVolumeMeter27, NULL, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)out);
 }
 
 HRESULT WINAPI CreateAudioReverb(IUnknown **out)
 {
-    return CoCreateInstance(&CLSID_AudioReverb, NULL, CLSCTX_INPROC_SERVER,
+    return CoCreateInstance(&CLSID_AudioReverb27, NULL, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void**)out);
 }
 

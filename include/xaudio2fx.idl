@@ -19,13 +19,6 @@
 import "unknwn.idl";
 
 [
-    uuid(cac1105f-619b-4d04-831a-44e1cbf12d57)
-]
-coclass AudioVolumeMeter {
-    interface IUnknown;
-}
-
-[
     uuid(c0c56f46-29b1-44e9-9939-a32ce86867e2)
 ]
 coclass AudioVolumeMeter20 {
@@ -75,9 +68,9 @@ coclass AudioVolumeMeter26 {
 }
 
 [
-    uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
+    uuid(cac1105f-619b-4d04-831a-44e1cbf12d57)
 ]
-coclass AudioReverb {
+coclass AudioVolumeMeter27 {
     interface IUnknown;
 }
 
@@ -127,5 +120,12 @@ coclass AudioReverb25 {
     uuid(cecec95a-d894-491a-bee3-5e106fb59f2d)
 ]
 coclass AudioReverb26 {
+    interface IUnknown;
+}
+
+[
+    uuid(6a93130e-1d53-41d1-a9cf-e758800bb179)
+]
+coclass AudioReverb27 {
     interface IUnknown;
 }

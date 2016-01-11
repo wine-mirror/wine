@@ -25,7 +25,7 @@
     threading(both),
     uuid(5a508685-a254-4fba-9b82-9a24b00306af)
 ]
-coclass XAudio2 { interface IXAudio2; }
+coclass XAudio27 { interface IXAudio27; }
 
 [
     helpstring("XAudio2 Volume Meter Class"),

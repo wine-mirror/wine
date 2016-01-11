@@ -2033,58 +2033,58 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         factory = make_xaudio2_factory(25);
     }else if(IsEqualGUID(rclsid, &CLSID_XAudio26)){
         factory = make_xaudio2_factory(26);
-    }else if(IsEqualGUID(rclsid, &CLSID_XAudio2)){
+    }else if(IsEqualGUID(rclsid, &CLSID_XAudio27)){
         factory = make_xaudio2_factory(27);
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter20)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 20);
+        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 20);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter21)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 21);
+        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 21);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter22)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 22);
+        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 22);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter23)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 23);
+        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 23);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter24)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 24);
+        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 24);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter25)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 25);
+        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 25);
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter26)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 26);
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter)){
-        factory = make_xapo_factory(&CLSID_AudioVolumeMeter, 27);
+        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 26);
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter27)){
+        factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 27);
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb20)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 20);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 20);
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb21) ||
             IsEqualGUID(rclsid, &CLSID_WINE_FXReverb10)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 21);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 21);
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb22) ||
             IsEqualGUID(rclsid, &CLSID_WINE_FXReverb11)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 22);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 22);
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb23) ||
             IsEqualGUID(rclsid, &CLSID_WINE_FXReverb12)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 23);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 23);
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb24) ||
             IsEqualGUID(rclsid, &CLSID_WINE_FXReverb13)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 24);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 24);
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb25)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 25);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 25);
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb26) ||
             IsEqualGUID(rclsid, &CLSID_WINE_FXReverb14)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 26);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 26);
 
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb) ||
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb27) ||
             IsEqualGUID(rclsid, &CLSID_WINE_FXReverb15)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 27);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 27);
 
     }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXReverb28)){
-        factory = make_xapo_factory(&CLSID_AudioReverb, 28);
+        factory = make_xapo_factory(&CLSID_AudioReverb27, 28);
 
 
     }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ10)){
