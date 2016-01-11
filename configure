@@ -8750,7 +8750,7 @@ test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDL
 
 CROSSTARGET=""
 
-if test "$cross_compiling" = "no" -a "x$enable_tests" != xno -a "$LIBEXT" != "dll"
+if test "x$enable_tests" != xno -a "$LIBEXT" != "dll"
 then
     case "$host_cpu" in
   arm*)

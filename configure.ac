@@ -943,7 +943,7 @@ test "$ac_cv_header_linux_joystick_h" = "yes" -o "$ac_cv_header_IOKit_hid_IOHIDL
 
 dnl Check for cross compiler to build test programs
 AC_SUBST(CROSSTARGET,"")
-if test "$cross_compiling" = "no" -a "x$enable_tests" != xno -a "$LIBEXT" != "dll"
+if test "x$enable_tests" != xno -a "$LIBEXT" != "dll"
 then
     WINE_CHECK_MINGW_PROG(CROSSCC,false)
     if test "$CROSSCC" != "false"
