@@ -2010,11 +2010,12 @@ static void test_lnks(void)
     okChildInt("argcA", 4);
     okChildString("argvA3", "Lnk");
 
-    /* Lnk's ContextMenuHandler has priority over an explicit class */
-    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, "shlexec.shlexec");
+    /* An explicit class overrides lnk's ContextMenuHandler */
+    rc=shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, "shlexec.shlexec");
     ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
-    okChildInt("argcA", 4);
-    okChildString("argvA3", "Lnk");
+    okChildInt("argcA", 5);
+    okChildString("argvA3", "Open");
+    okChildString("argvA4", filename);
 
     if (dllver.dwMajorVersion>=6)
     {
