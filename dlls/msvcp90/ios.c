@@ -14756,6 +14756,19 @@ void __cdecl tr2_sys__Close_dir(void* handle)
     FindClose(handle);
 }
 
+/* ?_Link@sys@tr2@std@@YAHPBD0@Z */
+/* ?_Link@sys@tr2@std@@YAHPEBD0@Z */
+int __cdecl tr2_sys__Link(char const* existing_path, char const* new_path)
+{
+    TRACE("(%s %s)\n", debugstr_a(existing_path), debugstr_a(new_path));
+    if(!existing_path || !new_path)
+        return ERROR_INVALID_PARAMETER;
+
+    if(CreateHardLinkA(new_path, existing_path, NULL))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64

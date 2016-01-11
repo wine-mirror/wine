@@ -132,6 +132,7 @@ static void (__cdecl *p_tr2_sys__Last_write_time_set)(char const*, __int64);
 static void* (__cdecl *p_tr2_sys__Open_dir)(char*, char const*, int *, enum file_type*);
 static char* (__cdecl *p_tr2_sys__Read_dir)(char*, void*, enum file_type*);
 static void (__cdecl *p_tr2_sys__Close_dir)(void*);
+static int (__cdecl *p_tr2_sys__Link)(char const*, char const*);
 
 /* thrd */
 typedef struct
@@ -265,6 +266,8 @@ static BOOL init(void)
                 "?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z");
         SET(p_tr2_sys__Close_dir,
                 "?_Close_dir@sys@tr2@std@@YAXPEAX@Z");
+        SET(p_tr2_sys__Link,
+                "?_Link@sys@tr2@std@@YAHPEBD0@Z");
         SET(p__Thrd_current,
                 "_Thrd_current");
     } else {
@@ -318,6 +321,8 @@ static BOOL init(void)
                 "?_Read_dir@sys@tr2@std@@YAPADAAY0BAE@DPAXAAW4file_type@123@@Z");
         SET(p_tr2_sys__Close_dir,
                 "?_Close_dir@sys@tr2@std@@YAXPAX@Z");
+        SET(p_tr2_sys__Link,
+                "?_Link@sys@tr2@std@@YAHPBD0@Z");
 #ifdef __i386__
         SET(p_i386_Thrd_current,
                 "_Thrd_current");
@@ -1319,6 +1324,90 @@ static void test_tr2_sys__dir_operation(void)
     ok(RemoveDirectoryA("tr2_test_dir"), "expect tr2_test_dir to exist\n");
 }
 
+static void test_tr2_sys__Link(void)
+{
+    int ret, i;
+    HANDLE file, h1, h2;
+    BY_HANDLE_FILE_INFORMATION info1, info2;
+    char temp_path[MAX_PATH], current_path[MAX_PATH];
+    LARGE_INTEGER file_size;
+    struct {
+        char const *existing_path;
+        char const *new_path;
+        MSVCP_bool fail_if_exists;
+        int last_error;
+    } tests[] = {
+        { "f1", "f1_link", TRUE, ERROR_SUCCESS },
+        { "f1", "tr2_test_dir\\f1_link", TRUE, ERROR_SUCCESS },
+        { "tr2_test_dir\\f1_link", "tr2_test_dir\\f1_link_link", TRUE, ERROR_SUCCESS },
+        { "tr2_test_dir", "dir_link", TRUE, ERROR_ACCESS_DENIED },
+        { NULL, "NULL_link", TRUE, ERROR_INVALID_PARAMETER },
+        { "f1", NULL, TRUE, ERROR_INVALID_PARAMETER },
+        { "not_exist", "not_exist_link", TRUE, ERROR_FILE_NOT_FOUND },
+        { "f1", "not_exist_dir\\f1_link", TRUE, ERROR_PATH_NOT_FOUND }
+    };
+
+    memset(current_path, 0, MAX_PATH);
+    GetCurrentDirectoryA(MAX_PATH, current_path);
+    memset(temp_path, 0, MAX_PATH);
+    GetTempPathA(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
+
+    ret = p_tr2_sys__Make_dir("tr2_test_dir");
+    ok(ret == 1, "test_tr2_sys__Make_dir(): expect 1 got %d\n", ret);
+    file = CreateFileA("f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 7;
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        errno = 0xdeadbeef;
+        ret = p_tr2_sys__Link(tests[i].existing_path, tests[i].new_path);
+        ok(ret == tests[i].last_error, "tr2_sys__Link(): test %d expect: %d, got %d\n",
+                i+1, tests[i].last_error, ret);
+        ok(errno == 0xdeadbeef, "tr2_sys__Link(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
+        if(ret == ERROR_SUCCESS)
+            ok(p_tr2_sys__File_size(tests[i].existing_path) == p_tr2_sys__File_size(tests[i].new_path),
+                    "tr2_sys__Link(): test %d failed, two files' size are not equal\n", i+1);
+    }
+
+    ok(DeleteFileA("f1"), "expect f1 to exist\n");
+    ok(p_tr2_sys__File_size("f1_link") == p_tr2_sys__File_size("tr2_test_dir/f1_link") &&
+            p_tr2_sys__File_size("tr2_test_dir/f1_link") == p_tr2_sys__File_size("tr2_test_dir/f1_link_link"),
+            "tr2_sys__Link(): expect links' size are equal, got %s\n", debugstr_longlong(p_tr2_sys__File_size("tr2_test_dir/f1_link_link")));
+    ok(p_tr2_sys__File_size("f1_link") == 7, "tr2_sys__Link(): expect f1_link's size equals to 7, got %s\n", debugstr_longlong(p_tr2_sys__File_size("f1_link")));
+
+    file = CreateFileA("f1_link", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 20;
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+    h1 = CreateFileA("f1_link", 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, 0, 0);
+    ok(h1 != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(GetFileInformationByHandle(h1, &info1), "GetFileInformationByHandle failed\n");
+    CloseHandle(h1);
+    h2 = CreateFileA("tr2_test_dir/f1_link", 0, FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+            NULL, OPEN_EXISTING, 0, 0);
+    ok(h2 != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    ok(GetFileInformationByHandle(h2, &info2), "GetFileInformationByHandle failed\n");
+    CloseHandle(h2);
+    ok(info1.nFileIndexHigh == info2.nFileIndexHigh
+            && info1.nFileIndexLow == info2.nFileIndexLow,
+            "tr2_sys__Link(): test %d expect two files equivalent\n", i+1);
+    ok(p_tr2_sys__File_size("f1_link") == 20, "tr2_sys__Link(): expect f1_link's size equals to 20, got %s\n", debugstr_longlong(p_tr2_sys__File_size("f1_link")));
+
+    ok(DeleteFileA("f1_link"), "expect f1_link to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f1_link"), "expect tr2_test_dir/f1_link to exist\n");
+    ok(DeleteFileA("tr2_test_dir/f1_link_link"), "expect tr2_test_dir/f1_link_link to exist\n");
+    ret = p_tr2_sys__Remove_dir("tr2_test_dir");
+    ok(ret == 1, "tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
+    ok(SetCurrentDirectoryA(current_path), "SetCurrentDirectoryA failed\n");
+}
+
 static int __cdecl thrd_thread(void *arg)
 {
     _Thrd_t *thr = arg;
@@ -1608,6 +1697,7 @@ START_TEST(msvcp120)
     test_tr2_sys__Stat();
     test_tr2_sys__Last_write_time();
     test_tr2_sys__dir_operation();
+    test_tr2_sys__Link();
 
     test_thrd();
     test_cnd();

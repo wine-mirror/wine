@@ -1531,8 +1531,8 @@
 @ stub -arch=arm ?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z
 @ stub -arch=i386 ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z
 @ stub -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z
-@ stub -arch=win32 ?_Link@sys@tr2@std@@YAHPBD0@Z
-@ stub -arch=win64 ?_Link@sys@tr2@std@@YAHPEBD0@Z
+@ cdecl -arch=win32 ?_Link@sys@tr2@std@@YAHPBD0@Z(str str) msvcp120.?_Link@sys@tr2@std@@YAHPBD0@Z
+@ cdecl -arch=win64 ?_Link@sys@tr2@std@@YAHPEBD0@Z(str str) msvcp120.?_Link@sys@tr2@std@@YAHPEBD0@Z
 @ stub -arch=win32 ?_Link@sys@tr2@std@@YAHPB_W0@Z
 @ stub -arch=win64 ?_Link@sys@tr2@std@@YAHPEB_W0@Z
 @ cdecl -arch=win32 ?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z(ptr ptr long) msvcp120.?_Locimp_Addfac@_Locimp@locale@std@@CAXPAV123@PAVfacet@23@I@Z
