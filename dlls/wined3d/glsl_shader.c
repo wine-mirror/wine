@@ -7911,6 +7911,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMAX                  */ shader_glsl_map2gl,
     /* WINED3DSIH_IMIN                  */ shader_glsl_map2gl,
     /* WINED3DSIH_IMUL                  */ shader_glsl_imul,
+    /* WINED3DSIH_INE                   */ NULL,
     /* WINED3DSIH_ISHL                  */ shader_glsl_binop,
     /* WINED3DSIH_ITOF                  */ shader_glsl_to_float,
     /* WINED3DSIH_LABEL                 */ shader_glsl_label,
