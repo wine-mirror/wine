@@ -302,11 +302,6 @@ install-dev:: $ac_dir/install-dev"
 wine_fn_clean_rules ()
 {
     ac_clean=$[@]
-    ac_extraclean="$ac_dir/Makefile"
-    test "$srcdir" = . && ac_extraclean="$ac_extraclean $ac_dir/.gitignore"
-    case $ac_dir in
-        */tests) ac_extraclean="$ac_extraclean $ac_dir/testlist.c" ;;
-    esac
 
     if wine_fn_has_flag clean
     then
@@ -320,24 +315,18 @@ wine_fn_clean_rules ()
     fi
         wine_fn_append_rule \
 "__clean__: $ac_dir/clean
-.PHONY: $ac_dir/clean
-distclean::
-	\$(RM) $ac_extraclean"
+.PHONY: $ac_dir/clean"
 }
 
 wine_fn_disabled_rules ()
 {
     ac_clean=$[@]
-    ac_extraclean="$ac_dir/Makefile"
-    test "$srcdir" = . && ac_extraclean="$ac_extraclean $ac_dir/.gitignore"
 
     wine_fn_append_rule \
 "__clean__: $ac_dir/clean
 .PHONY: $ac_dir/clean
 $ac_dir/clean: dummy
-	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean
-distclean::
-	\$(RM) $ac_extraclean"
+	\$(RM) \$(CLEAN_FILES:%=$ac_dir/%) $ac_clean"
 }
 
 wine_fn_config_makefile ()

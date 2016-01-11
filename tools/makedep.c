@@ -2843,6 +2843,24 @@ static struct strarray output_sources( const struct makefile *make )
         strarray_add( &phony_targets, obj_dir_path( make, "clean" ));
     }
 
+    if (make->subdirs.count)
+    {
+        struct strarray distclean_files = empty_strarray;
+        for (i = 0; i < make->subdirs.count; i++)
+        {
+            strarray_add( &distclean_files, base_dir_path( make->submakes[i], output_makefile_name ));
+            if (!make->src_dir)
+                strarray_add( &distclean_files, base_dir_path( make->submakes[i], ".gitignore" ));
+            if (make->submakes[i]->testdll)
+                strarray_add( &distclean_files, base_dir_path( make->submakes[i], "testlist.c" ));
+        }
+        output( "distclean::\n");
+        output( "\trm -f" );
+        output_filenames( distclean_files );
+        output( "\n" );
+        strarray_add( &phony_targets, "distclean" );
+    }
+
     if (phony_targets.count)
     {
         output( ".PHONY:" );
