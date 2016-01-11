@@ -72,6 +72,7 @@ ICOTOOL         = @ICOTOOL@
 MSGFMT          = @MSGFMT@
 CROSSTARGET     = @CROSSTARGET@
 LINGUAS         = @LINGUAS@
+SUBDIRS         = @SUBDIRS@
 RUNTESTFLAGS    = -q -P wine
 MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
 WINEBUILD       = $(TOOLSDIR)/tools/winebuild/winebuild$(TOOLSEXT)

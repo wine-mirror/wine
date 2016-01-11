@@ -2573,7 +2573,9 @@ CLEAN_FILES = *.o *.a *.so *.res *.fake *.ok *.tab.[[ch]] *.yy.c
 .MAKEFILEDEPS:
 all: Makefile
 Makefile: $srcdir/Makefile.in config.status \$(MAKEDEP)
-	@./config.status Make.tmp Makefile])
+	@./config.status Make.tmp Makefile
+depend: \$(MAKEDEP) dummy
+	\$(MAKEDEP)])
 
 test "$srcdir" = . && WINE_APPEND_RULE(
 [all: .gitignore
@@ -3575,7 +3577,7 @@ fi
 AC_CONFIG_COMMANDS([Makefile], [wine_fn_output_makefile Makefile],
 [wine_fn_output_makefile ()
 {
-    cat Make.tmp - <<\_WINE_EOF >\$tmp/makefile && mv -f \$tmp/makefile \$[]1 && rm -f Make.tmp && "$wine_makedep" . && return
+    cat Make.tmp - <<\_WINE_EOF >\$tmp/makefile && mv -f \$tmp/makefile \$[]1 && rm -f Make.tmp && "$wine_makedep" && return
 `cat $wine_rules_file`
 _WINE_EOF
     AS_ERROR([could not create Makefile])
