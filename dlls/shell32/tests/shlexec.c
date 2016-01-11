@@ -251,6 +251,8 @@ static BOOL create_test_association(const char* extension)
     sprintf(class, "shlexec%s", extension);
     rc=RegCreateKeyExA(HKEY_CLASSES_ROOT, extension, 0, NULL, 0, KEY_SET_VALUE,
                        NULL, &hkey, NULL);
+    ok(rc == ERROR_SUCCESS || rc == ERROR_ACCESS_DENIED,
+       "could not create association %s (rc=%d)\n", class, rc);
     if (rc != ERROR_SUCCESS)
         return FALSE;
 
