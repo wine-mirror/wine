@@ -464,6 +464,33 @@ static NTSTATUS HID_get_feature(DEVICE_OBJECT *device, IRP *irp)
     return rc;
 }
 
+static NTSTATUS HID_set_feature(DEVICE_OBJECT *device, IRP *irp)
+{
+    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    HID_XFER_PACKET packet;
+    NTSTATUS rc;
+
+    irp->IoStatus.Information = 0;
+
+    TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", device, irpsp->Parameters.DeviceIoControl.InputBufferLength, irp->AssociatedIrp.SystemBuffer);
+    packet.reportBuffer = irp->AssociatedIrp.SystemBuffer;
+    packet.reportId = ((char*)irp->AssociatedIrp.SystemBuffer)[0];
+    packet.reportBufferLen = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+    TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
+
+    rc = call_minidriver(IOCTL_HID_SET_FEATURE, device, NULL, 0, &packet, sizeof(packet));
+
+    irp->IoStatus.u.Status = rc;
+    if (irp->IoStatus.u.Status == STATUS_SUCCESS)
+        irp->IoStatus.Information = irpsp->Parameters.DeviceIoControl.InputBufferLength;
+    else
+        irp->IoStatus.Information = 0;
+
+    TRACE_(hid_report)("Result 0x%x set %li bytes\n", rc, irp->IoStatus.Information);
+
+    return rc;
+}
+
 NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
 {
     NTSTATUS rc = STATUS_SUCCESS;
@@ -581,6 +608,9 @@ NTSTATUS WINAPI HID_Device_ioctl(DEVICE_OBJECT *device, IRP *irp)
         }
         case IOCTL_HID_GET_FEATURE:
             rc = HID_get_feature(device, irp);
+            break;
+        case IOCTL_HID_SET_FEATURE:
+            rc = HID_set_feature(device, irp);
             break;
         default:
         {
