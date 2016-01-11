@@ -2904,7 +2904,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             skiptransform = should_skip_transform(&m, &det);
     }
 
-#define SNAP_COORD(x) renderer_apply_snapping((x), skiptransform, ppdip, det, &m)
+#define SNAP_COORD(x) (disabled ? (x) : renderer_apply_snapping((x), skiptransform, ppdip, det, &m))
     /* 1. Regular runs */
     LIST_FOR_EACH_ENTRY(run, &This->eruns, struct layout_effective_run, entry) {
         const struct regular_layout_run *regular = &run->run->u.regular;
@@ -2934,7 +2934,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
         IDWriteTextRenderer_DrawGlyphRun(renderer,
             context,
             run->origin_x + run->align_dx + origin_x,
-            disabled ? run->origin_y + origin_y : SNAP_COORD(run->origin_y + origin_y),
+            SNAP_COORD(run->origin_y + origin_y),
             This->measuringmode,
             &glyph_run,
             &descr,
@@ -2946,7 +2946,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
         IDWriteTextRenderer_DrawInlineObject(renderer,
             context,
             inlineobject->origin_x + inlineobject->align_dx + origin_x,
-            disabled ? inlineobject->origin_y + origin_y : SNAP_COORD(inlineobject->origin_y + origin_y),
+            SNAP_COORD(inlineobject->origin_y + origin_y),
             inlineobject->object,
             inlineobject->is_sideways,
             inlineobject->is_rtl,
@@ -2960,7 +2960,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
         IDWriteTextRenderer_DrawStrikethrough(renderer,
             context,
             s->run->origin_x,
-            disabled ? s->run->origin_y : SNAP_COORD(s->run->origin_y),
+            SNAP_COORD(s->run->origin_y),
             &s->s,
             NULL);
     }
