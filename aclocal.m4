@@ -231,8 +231,6 @@ wine_fn_has_flag ()
 wine_fn_depend_rules ()
 {
     wine_fn_append_file SUBDIRS $ac_dir
-    wine_fn_append_rule \
-"Makefile: $srcdir/$ac_dir/Makefile.in"
 }
 
 wine_fn_pot_rules ()

@@ -2845,15 +2845,22 @@ static struct strarray output_sources( const struct makefile *make )
 
     if (make->subdirs.count)
     {
+        struct strarray makefile_deps = empty_strarray;
         struct strarray distclean_files = empty_strarray;
+
         for (i = 0; i < make->subdirs.count; i++)
         {
+            strarray_add( &makefile_deps, top_dir_path( make, base_dir_path( make->submakes[i],
+                                                         strmake ( "%s.in", output_makefile_name ))));
             strarray_add( &distclean_files, base_dir_path( make->submakes[i], output_makefile_name ));
             if (!make->src_dir)
                 strarray_add( &distclean_files, base_dir_path( make->submakes[i], ".gitignore" ));
             if (make->submakes[i]->testdll)
                 strarray_add( &distclean_files, base_dir_path( make->submakes[i], "testlist.c" ));
         }
+        output( "Makefile:" );
+        output_filenames( makefile_deps );
+        output( "\n" );
         output( "distclean::\n");
         output( "\trm -f" );
         output_filenames( distclean_files );
