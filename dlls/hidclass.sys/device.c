@@ -607,16 +607,29 @@ NTSTATUS WINAPI HID_Device_read(DEVICE_OBJECT *device, IRP *irp)
 NTSTATUS WINAPI HID_Device_write(DEVICE_OBJECT *device, IRP *irp)
 {
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
+    HID_XFER_PACKET packet;
+    NTSTATUS rc;
 
     irp->IoStatus.Information = 0;
 
-    TRACE("Buffer length %i\n", irpsp->Parameters.Write.Length);
+    TRACE_(hid_report)("Device %p Buffer length %i Buffer %p\n", device, irpsp->Parameters.Write.Length, irp->AssociatedIrp.SystemBuffer);
+    packet.reportBuffer = irp->AssociatedIrp.SystemBuffer;
+    packet.reportId = ((char*)irp->AssociatedIrp.SystemBuffer)[0];
+    packet.reportBufferLen = irpsp->Parameters.Write.Length;
+    TRACE_(hid_report)("(id %i, len %i buffer %p)\n", packet.reportId, packet.reportBufferLen, packet.reportBuffer);
 
-    FIXME("device %p\n", device);
+    rc = call_minidriver(IOCTL_HID_WRITE_REPORT, device, NULL, 0, &packet, sizeof(packet));
 
-    irp->IoStatus.u.Status = STATUS_SUCCESS;
+    irp->IoStatus.u.Status = rc;
+    if (irp->IoStatus.u.Status == STATUS_SUCCESS)
+        irp->IoStatus.Information = irpsp->Parameters.Write.Length;
+    else
+        irp->IoStatus.Information = 0;
+
+    TRACE_(hid_report)("Result 0x%x wrote %li bytes\n", rc, irp->IoStatus.Information);
+
     IoCompleteRequest( irp, IO_NO_INCREMENT );
-    return STATUS_SUCCESS;
+    return rc;
 }
 
 NTSTATUS WINAPI HID_Device_create(DEVICE_OBJECT *device, IRP *irp)
