@@ -699,7 +699,7 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
     if(pOuter)
         return CLASS_E_NOAGGREGATION;
 
-    if(IsEqualGUID(This->class, &CLSID_AudioVolumeMeter)){
+    if(IsEqualGUID(This->class, &CLSID_AudioVolumeMeter27)){
         VUMeterImpl *object;
 
         object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -715,7 +715,7 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
             HeapFree(GetProcessHeap(), 0, object);
             return hr;
         }
-    }else if(IsEqualGUID(This->class, &CLSID_AudioReverb)){
+    }else if(IsEqualGUID(This->class, &CLSID_AudioReverb27)){
         ReverbImpl *object;
 
         object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));

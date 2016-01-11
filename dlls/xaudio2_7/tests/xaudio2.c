@@ -249,7 +249,7 @@ static void test_simple_streaming(IXAudio2 *xa)
     if(xaudio27){
         IXAPO *xapo;
 
-        hr = CoCreateInstance(&CLSID_AudioVolumeMeter, NULL,
+        hr = CoCreateInstance(&CLSID_AudioVolumeMeter27, NULL,
                 CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&vumeter);
         ok(hr == S_OK, "CoCreateInstance(AudioVolumeMeter) failed: %08x\n", hr);
 
@@ -834,7 +834,7 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
         &CLSID_AudioVolumeMeter24,
         &CLSID_AudioVolumeMeter25,
         &CLSID_AudioVolumeMeter26,
-        &CLSID_AudioVolumeMeter
+        &CLSID_AudioVolumeMeter27
     };
 
     static const GUID *ar_clsids[] = {
@@ -845,7 +845,7 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
         &CLSID_AudioReverb24,
         &CLSID_AudioReverb25,
         &CLSID_AudioReverb26,
-        &CLSID_AudioReverb
+        &CLSID_AudioReverb27
     };
 
     xapofxdll = LoadLibraryA(module);
@@ -973,7 +973,7 @@ static void test_xapo_creation_modern(const char *module)
         }
 
         /* test legacy CLSID */
-        hr = pCreateFX(&CLSID_AudioVolumeMeter, &fx_unk, NULL, 0);
+        hr = pCreateFX(&CLSID_AudioVolumeMeter27, &fx_unk, NULL, 0);
         ok(hr == S_OK, "%s: CreateFX(CLSID_AudioVolumeMeter) failed: %08x\n", module, hr);
         if(SUCCEEDED(hr)){
             IXAPO *xapo;
@@ -1060,7 +1060,7 @@ START_TEST(xaudio2)
     test_xapo_creation();
 
     /* XAudio 2.7 (Jun 2010 DirectX) */
-    hr = CoCreateInstance(&CLSID_XAudio2, NULL, CLSCTX_INPROC_SERVER,
+    hr = CoCreateInstance(&CLSID_XAudio27, NULL, CLSCTX_INPROC_SERVER,
             &IID_IXAudio27, (void**)&xa27);
     if(hr == S_OK){
         xaudio27 = TRUE;
