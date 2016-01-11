@@ -86,6 +86,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_IF                    */ "if",
     /* WINED3DSIH_IFC                   */ "ifc",
     /* WINED3DSIH_IGE                   */ "ige",
+    /* WINED3DSIH_ILT                   */ "ilt",
     /* WINED3DSIH_IMAX                  */ "imax",
     /* WINED3DSIH_IMIN                  */ "imin",
     /* WINED3DSIH_IMUL                  */ "imul",
