@@ -198,7 +198,7 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
     sei.hkeyClass=NULL;
     sei.dwHotKey=0;
     U(sei).hIcon=NULL;
-    sei.hProcess=NULL; /* Out */
+    sei.hProcess=(HANDLE)0xdeadbeef; /* Out */
 
     DeleteFileA(child_file);
     SetLastError(0xcafebabe);
@@ -221,6 +221,9 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
         else todo_wine
             ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
     }
+    else
+        ok(sei.hProcess==NULL, "%s returned a process handle %p\n", shell_call, sei.hProcess);
+
     /* The child process may have changed the result file, so let profile
      * functions know about it
      */
