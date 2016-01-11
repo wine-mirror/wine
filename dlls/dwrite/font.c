@@ -608,7 +608,7 @@ HRESULT new_glyph_outline(UINT32 count, struct glyph_outline **ret)
     outline->points = points;
     outline->tags = tags;
     outline->count = count;
-    outline->advance = 0.0;
+    outline->advance = 0.0f;
 
     *ret = outline;
     return S_OK;
@@ -659,7 +659,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace2 *iface,
     UINT32 count, BOOL is_sideways, BOOL is_rtl, IDWriteGeometrySink *sink)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    FLOAT advance = 0.0;
+    FLOAT advance = 0.0f;
     HRESULT hr;
     UINT32 g;
 
@@ -676,7 +676,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace2 *iface,
         ID2D1SimplifiedGeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
 
     for (g = 0; g < count; g++) {
-        FLOAT xoffset = 0.0, yoffset = 0.0;
+        FLOAT xoffset = 0.0f, yoffset = 0.0f;
         struct glyph_outline *outline;
 
         /* FIXME: cache outlines */
@@ -692,7 +692,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphRunOutline(IDWriteFontFace2 *iface,
         }
 
         if (g == 0)
-            advance = is_rtl ? -outline->advance : 0.0;
+            advance = is_rtl ? -outline->advance : 0.0f;
 
         xoffset += advance;
         translate_glyph_outline(outline, xoffset, yoffset);
@@ -845,13 +845,13 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleMetrics(IDWriteFontFace2 *
 
     TRACE("(%p)->(%.2f %.2f %p %p)\n", This, em_size, pixels_per_dip, m, metrics);
 
-    if (em_size <= 0.0 || pixels_per_dip <= 0.0) {
+    if (em_size <= 0.0f || pixels_per_dip <= 0.0f) {
         memset(metrics, 0, sizeof(*metrics));
         return E_INVALIDARG;
     }
 
     em_size *= pixels_per_dip;
-    if (m && m->m22 != 0.0)
+    if (m && m->m22 != 0.0f)
         em_size *= fabs(m->m22);
 
     scale = em_size / design->designUnitsPerEm;
@@ -947,13 +947,13 @@ static HRESULT WINAPI dwritefontface1_GetGdiCompatibleGlyphAdvances(IDWriteFontF
     TRACE("(%p)->(%.2f %.2f %p %d %d %u %p %p)\n", This, em_size, ppdip, m,
         use_gdi_natural, is_sideways, glyph_count, glyphs, advances);
 
-    if (em_size < 0.0 || ppdip <= 0.0) {
+    if (em_size < 0.0f || ppdip <= 0.0f) {
         memset(advances, 0, sizeof(*advances) * glyph_count);
         return E_INVALIDARG;
     }
 
     em_size *= ppdip;
-    if (em_size == 0.0) {
+    if (em_size == 0.0f) {
         memset(advances, 0, sizeof(*advances) * glyph_count);
         return S_OK;
     }

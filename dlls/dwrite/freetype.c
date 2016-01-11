@@ -269,8 +269,8 @@ BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
 
 static inline void ft_vector_to_d2d_point(const FT_Vector *v, D2D1_POINT_2F *p)
 {
-    p->x = v->x / 64.0;
-    p->y = v->y / 64.0;
+    p->x = v->x / 64.0f;
+    p->y = v->y / 64.0f;
 }
 
 /* Convert the quadratic Beziers to cubic Beziers. */

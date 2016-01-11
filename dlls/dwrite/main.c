@@ -921,7 +921,7 @@ static HRESULT WINAPI dwritefactory_CreateMonitorRenderingParams(IDWriteFactory2
     if (!fixme_once++)
         FIXME("(%p): monitor setting ignored\n", monitor);
 
-    hr = IDWriteFactory2_CreateCustomRenderingParams(iface, 0.0, 0.0, 1.0, 0.0, DWRITE_PIXEL_GEOMETRY_FLAT, DWRITE_RENDERING_MODE_DEFAULT,
+    hr = IDWriteFactory2_CreateCustomRenderingParams(iface, 0.0f, 0.0f, 1.0f, 0.0f, DWRITE_PIXEL_GEOMETRY_FLAT, DWRITE_RENDERING_MODE_DEFAULT,
         DWRITE_GRID_FIT_MODE_DEFAULT, &params2);
     *params = (IDWriteRenderingParams*)params2;
     return hr;
@@ -936,7 +936,7 @@ static HRESULT WINAPI dwritefactory_CreateCustomRenderingParams(IDWriteFactory2 
 
     TRACE("(%p)->(%f %f %f %d %d %p)\n", This, gamma, enhancedContrast, cleartype_level, geometry, mode, params);
 
-    hr = IDWriteFactory2_CreateCustomRenderingParams(iface, gamma, enhancedContrast, 1.0, cleartype_level, geometry,
+    hr = IDWriteFactory2_CreateCustomRenderingParams(iface, gamma, enhancedContrast, 1.0f, cleartype_level, geometry,
         mode, DWRITE_GRID_FIT_MODE_DEFAULT, &params2);
     *params = (IDWriteRenderingParams*)params2;
     return hr;

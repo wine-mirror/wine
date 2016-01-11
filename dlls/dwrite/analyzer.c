@@ -1056,8 +1056,8 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
             a = 0;
 
         advances[i] = get_scaled_advance_width(a, emSize, &metrics);
-        offsets[i].advanceOffset = 0.0;
-        offsets[i].ascenderOffset = 0.0;
+        offsets[i].advanceOffset = 0.0f;
+        offsets[i].ascenderOffset = 0.0f;
     }
 
     /* FIXME: actually apply features */
@@ -1105,11 +1105,11 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
         hr = IDWriteFontFace1_GetGdiCompatibleGlyphAdvances(fontface1, emSize, ppdip,
             transform, use_gdi_natural, is_sideways, 1, &glyphs[i], &a);
         if (FAILED(hr))
-            advances[i] = 0.0;
+            advances[i] = 0.0f;
         else
             advances[i] = floorf(a * emSize * ppdip / metrics.designUnitsPerEm + 0.5f) / ppdip;
-        offsets[i].advanceOffset = 0.0;
-        offsets[i].ascenderOffset = 0.0;
+        offsets[i].advanceOffset = 0.0f;
+        offsets[i].ascenderOffset = 0.0f;
     }
 
     /* FIXME: actually apply features */
@@ -1120,7 +1120,7 @@ static HRESULT WINAPI dwritetextanalyzer_GetGdiCompatibleGlyphPlacements(IDWrite
 
 static inline FLOAT get_cluster_advance(const FLOAT *advances, UINT32 start, UINT32 end)
 {
-    FLOAT advance = 0.0;
+    FLOAT advance = 0.0f;
     for (; start < end; start++)
         advance += advances[start];
     return advance;
@@ -1130,9 +1130,9 @@ static void apply_single_glyph_spacing(FLOAT leading_spacing, FLOAT trailing_spa
     FLOAT min_advance_width, UINT32 g, FLOAT const *advances, DWRITE_GLYPH_OFFSET const *offsets,
     DWRITE_SHAPING_GLYPH_PROPERTIES const *props, FLOAT *modified_advances, DWRITE_GLYPH_OFFSET *modified_offsets)
 {
-    BOOL reduced = leading_spacing < 0.0 || trailing_spacing < 0.0;
+    BOOL reduced = leading_spacing < 0.0f || trailing_spacing < 0.0f;
     FLOAT advance = advances[g];
-    FLOAT origin = 0.0;
+    FLOAT origin = 0.0f;
 
     if (props[g].isZeroWidthSpace) {
         modified_advances[g] = advances[g];
@@ -1141,32 +1141,32 @@ static void apply_single_glyph_spacing(FLOAT leading_spacing, FLOAT trailing_spa
     }
 
     /* first apply negative spacing and check if we hit minimum width */
-    if (leading_spacing < 0.0) {
+    if (leading_spacing < 0.0f) {
         advance += leading_spacing;
         origin -= leading_spacing;
     }
-    if (trailing_spacing < 0.0)
+    if (trailing_spacing < 0.0f)
         advance += trailing_spacing;
 
     if (advance < min_advance_width) {
-        FLOAT half = (min_advance_width - advance) / 2.0;
+        FLOAT half = (min_advance_width - advance) / 2.0f;
 
         if (!reduced)
             origin -= half;
-        else if (leading_spacing < 0.0 && trailing_spacing < 0.0)
+        else if (leading_spacing < 0.0f && trailing_spacing < 0.0f)
             origin -= half;
-        else if (leading_spacing < 0.0)
+        else if (leading_spacing < 0.0f)
             origin -= min_advance_width - advance;
 
         advance = min_advance_width;
     }
 
     /* now apply positive spacing adjustments */
-    if (leading_spacing > 0.0) {
+    if (leading_spacing > 0.0f) {
         advance += leading_spacing;
         origin -= leading_spacing;
     }
-    if (trailing_spacing > 0.0)
+    if (trailing_spacing > 0.0f)
         advance += trailing_spacing;
 
     modified_advances[g] = advance;
@@ -1180,21 +1180,21 @@ static void apply_cluster_spacing(FLOAT leading_spacing, FLOAT trailing_spacing,
     UINT32 start, UINT32 end, FLOAT const *advances, DWRITE_GLYPH_OFFSET const *offsets,
     FLOAT *modified_advances, DWRITE_GLYPH_OFFSET *modified_offsets)
 {
-    BOOL reduced = leading_spacing < 0.0 || trailing_spacing < 0.0;
+    BOOL reduced = leading_spacing < 0.0f || trailing_spacing < 0.0f;
     FLOAT advance = get_cluster_advance(advances, start, end);
-    FLOAT origin = 0.0;
+    FLOAT origin = 0.0f;
     UINT16 g;
 
     modified_advances[start] = advances[start];
     modified_advances[end-1] = advances[end-1];
 
     /* first apply negative spacing and check if we hit minimum width */
-    if (leading_spacing < 0.0) {
+    if (leading_spacing < 0.0f) {
         advance += leading_spacing;
         modified_advances[start] += leading_spacing;
         origin -= leading_spacing;
     }
-    if (trailing_spacing < 0.0) {
+    if (trailing_spacing < 0.0f) {
         advance += trailing_spacing;
         modified_advances[end-1] += trailing_spacing;
     }
@@ -1209,12 +1209,12 @@ static void apply_cluster_spacing(FLOAT leading_spacing, FLOAT trailing_spacing,
             modified_advances[start] += half;
             modified_advances[end-1] += half;
         }
-        else if (leading_spacing < 0.0 && trailing_spacing < 0.0) {
+        else if (leading_spacing < 0.0f && trailing_spacing < 0.0f) {
             origin -= half;
             modified_advances[start] += half;
             modified_advances[end-1] += half;
         }
-        else if (leading_spacing < 0.0) {
+        else if (leading_spacing < 0.0f) {
             origin -= advance;
             modified_advances[start] += advance;
         }
@@ -1223,11 +1223,11 @@ static void apply_cluster_spacing(FLOAT leading_spacing, FLOAT trailing_spacing,
     }
 
     /* now apply positive spacing adjustments */
-    if (leading_spacing > 0.0) {
+    if (leading_spacing > 0.0f) {
         modified_advances[start] += leading_spacing;
         origin -= leading_spacing;
     }
-    if (trailing_spacing > 0.0)
+    if (trailing_spacing > 0.0f)
         modified_advances[end-1] += trailing_spacing;
 
     for (g = start; g < end; g++) {
@@ -1305,13 +1305,13 @@ static HRESULT WINAPI dwritetextanalyzer1_ApplyCharacterSpacing(IDWriteTextAnaly
     TRACE("(%.2f %.2f %.2f %u %u %p %p %p %p %p %p)\n", leading_spacing, trailing_spacing, min_advance_width,
         len, glyph_count, clustermap, advances, offsets, props, modified_advances, modified_offsets);
 
-    if (min_advance_width < 0.0) {
+    if (min_advance_width < 0.0f) {
         memset(modified_advances, 0, glyph_count*sizeof(*modified_advances));
         return E_INVALIDARG;
     }
 
     /* minimum advance is not applied if no adjustments were made */
-    if (leading_spacing == 0.0 && trailing_spacing == 0.0) {
+    if (leading_spacing == 0.0f && trailing_spacing == 0.0f) {
         memmove(modified_advances, advances, glyph_count*sizeof(*advances));
         memmove(modified_offsets, offsets, glyph_count*sizeof(*offsets));
         return S_OK;
@@ -1469,10 +1469,10 @@ static HRESULT WINAPI dwritetextanalyzer2_GetGlyphOrientationTransform(IDWriteTe
     DWRITE_GLYPH_ORIENTATION_ANGLE angle, BOOL is_sideways, FLOAT originX, FLOAT originY, DWRITE_MATRIX *m)
 {
     static const DWRITE_MATRIX transforms[] = {
-        {  1.0,  0.0,  0.0,  1.0, 0.0, 0.0 },
-        {  0.0,  1.0, -1.0,  0.0, 0.0, 0.0 },
-        { -1.0,  0.0,  0.0, -1.0, 0.0, 0.0 },
-        {  0.0, -1.0,  1.0,  0.0, 0.0, 0.0 }
+        {  1.0f,  0.0f,  0.0f,  1.0f, 0.0f, 0.0f },
+        {  0.0f,  1.0f, -1.0f,  0.0f, 0.0f, 0.0f },
+        { -1.0f,  0.0f,  0.0f, -1.0f, 0.0f, 0.0f },
+        {  0.0f, -1.0f,  1.0f,  0.0f, 0.0f, 0.0f }
     };
 
     TRACE("(%d %d %.2f %.2f %p)\n", angle, is_sideways, originX, originY, m);
@@ -1506,7 +1506,7 @@ static HRESULT WINAPI dwritetextanalyzer2_GetGlyphOrientationTransform(IDWriteTe
 
     /* shift components represent transform necessary to get from original point to
        rotated one in new coordinate system */
-    if ((originX != 0.0 || originY != 0.0) && angle != DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES) {
+    if ((originX != 0.0f || originY != 0.0f) && angle != DWRITE_GLYPH_ORIENTATION_ANGLE_0_DEGREES) {
         m->dx = originX - (m->m11 * originX + m->m21 * originY);
         m->dy = originY - (m->m12 * originX + m->m22 * originY);
     }

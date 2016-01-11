@@ -461,7 +461,7 @@ static HRESULT WINAPI rendertarget_SetPixelsPerDip(IDWriteBitmapRenderTarget1 *i
 
     TRACE("(%p)->(%.2f)\n", This, ppdip);
 
-    if (ppdip <= 0.0)
+    if (ppdip <= 0.0f)
         return E_INVALIDARG;
 
     This->ppdip = ppdip;
