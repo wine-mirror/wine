@@ -2083,10 +2083,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
             IsEqualGUID(rclsid, &CLSID_WINE_FXReverb15)){
         factory = make_xapo_factory(&CLSID_AudioReverb27, 27);
 
-    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXReverb28)){
-        factory = make_xapo_factory(&CLSID_AudioReverb27, 28);
-
-
     }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ10)){
         factory = make_xapo_factory(&CLSID_FXEQ, 21);
     }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ11)){
@@ -2099,14 +2095,48 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         factory = make_xapo_factory(&CLSID_FXEQ, 26);
     }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ15)){
         factory = make_xapo_factory(&CLSID_FXEQ, 27);
-    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ28)){
-        factory = make_xapo_factory(&CLSID_FXEQ, 28);
     }
 
     if(!factory) return CLASS_E_CLASSNOTAVAILABLE;
 
     return IClassFactory_QueryInterface(factory, riid, ppv);
 }
+
+#if XAUDIO2_VER >= 8
+HRESULT WINAPI XAudio2Create(IXAudio2 **ppxa2, UINT32 flags, XAUDIO2_PROCESSOR proc)
+{
+    HRESULT hr;
+    IXAudio2 *xa2;
+    IXAudio27 *xa27;
+    IClassFactory *cf;
+
+    cf = make_xaudio2_factory(28);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IXAudio2, (void**)&xa2);
+    IClassFactory_Release(cf);
+    if(FAILED(hr))
+        return hr;
+
+    hr = IXAudio2_QueryInterface(xa2, &IID_IXAudio27, (void**)&xa27);
+    if(FAILED(hr)){
+        IXAudio2_Release(xa2);
+        return hr;
+    }
+
+    hr = IXAudio27_Initialize(xa27, flags, proc);
+    if(FAILED(hr)){
+        IXAudio27_Release(xa27);
+        IXAudio2_Release(xa2);
+        return hr;
+    }
+
+    IXAudio27_Release(xa27);
+
+    *ppxa2 = xa2;
+
+    return S_OK;
+}
+#endif /* XAUDIO2_VER >= 8 */
 
 /* returns TRUE if there is more data available in the buffer, FALSE if the
  * buffer's data has all been queued */

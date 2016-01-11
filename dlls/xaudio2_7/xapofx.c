@@ -777,3 +777,86 @@ IClassFactory *make_xapo_factory(REFCLSID clsid, DWORD version)
     ret->ref = 0;
     return &ret->IClassFactory_iface;
 }
+
+#if XAUDIO2_VER >= 8
+HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
+{
+    IClassFactory *cf;
+    HRESULT hr;
+
+    cf = make_xapo_factory(&CLSID_AudioVolumeMeter27, 28);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
+
+    IClassFactory_Release(cf);
+
+    return hr;
+}
+
+HRESULT WINAPI CreateAudioReverb(IUnknown **out)
+{
+    IClassFactory *cf;
+    HRESULT hr;
+
+    cf = make_xapo_factory(&CLSID_AudioReverb27, 28);
+
+    hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
+
+    IClassFactory_Release(cf);
+
+    return hr;
+}
+
+HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out, void *initdata, UINT32 initdata_bytes)
+{
+    HRESULT hr;
+    IUnknown *obj;
+    const GUID *class = NULL;
+    IClassFactory *cf;
+
+    *out = NULL;
+
+    if(IsEqualGUID(clsid, &CLSID_FXReverb27) ||
+            IsEqualGUID(clsid, &CLSID_FXReverb))
+        class = &CLSID_AudioReverb27;
+    else if(IsEqualGUID(clsid, &CLSID_FXEQ27) ||
+            IsEqualGUID(clsid, &CLSID_FXEQ))
+        class = &CLSID_FXEQ;
+
+    if(class){
+        cf = make_xapo_factory(class, 20 + XAUDIO2_VER);
+
+        hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
+        IClassFactory_Release(cf);
+        if(FAILED(hr))
+            return hr;
+    }else{
+        hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&obj);
+        if(FAILED(hr)){
+            WARN("CoCreateInstance failed: %08x\n", hr);
+            return hr;
+        }
+    }
+
+    if(initdata && initdata_bytes > 0){
+        IXAPO *xapo;
+
+        hr = IUnknown_QueryInterface(obj, &IID_IXAPO, (void**)&xapo);
+        if(SUCCEEDED(hr)){
+            hr = IXAPO_Initialize(xapo, initdata, initdata_bytes);
+
+            IXAPO_Release(xapo);
+
+            if(FAILED(hr)){
+                WARN("Initialize failed: %08x\n", hr);
+                IUnknown_Release(obj);
+                return hr;
+            }
+        }
+    }
+
+    *out = obj;
+
+    return S_OK;
+}
+#endif /* XAUDIO2_VER >= 8 */
