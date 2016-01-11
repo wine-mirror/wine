@@ -2143,26 +2143,26 @@ static dde_tests_t dde_tests[] =
 {
     /* Test passing and not passing command-line
      * argument, no DDE */
-    {"", NULL, NULL, NULL, NULL, FALSE, ""},
-    {"\"%1\"", NULL, NULL, NULL, NULL, TRUE, ""},
+    {"", NULL, NULL, NULL, NULL, 0, ""},
+    {"\"%1\"", NULL, NULL, NULL, NULL, 1, ""},
 
     /* Test passing and not passing command-line
      * argument, with DDE */
-    {"", "[open(\"%1\")]", "shlexec", "dde", NULL, FALSE, "[open(\"%s\")]"},
-    {"\"%1\"", "[open(\"%1\")]", "shlexec", "dde", NULL, TRUE, "[open(\"%s\")]"},
+    {"", "[open(\"%1\")]", "shlexec", "dde", NULL, 0, "[open(\"%s\")]"},
+    {"\"%1\"", "[open(\"%1\")]", "shlexec", "dde", NULL, 1, "[open(\"%s\")]"},
 
     /* Test unquoted %1 in command and ddeexec
      * (test filename has space) */
     {"%1", "[open(%1)]", "shlexec", "dde", NULL, 2, "[open(%s)]", TRUE /* before vista */},
 
     /* Test ifexec precedence over ddeexec */
-    {"", "[open(\"%1\")]", "shlexec", "dde", "[ifexec(\"%1\")]", FALSE, "[ifexec(\"%s\")]"},
+    {"", "[open(\"%1\")]", "shlexec", "dde", "[ifexec(\"%1\")]", 0, "[ifexec(\"%s\")]"},
 
     /* Test default DDE topic */
-    {"", "[open(\"%1\")]", "shlexec", NULL, NULL, FALSE, "[open(\"%s\")]"},
+    {"", "[open(\"%1\")]", "shlexec", NULL, NULL, 0, "[open(\"%s\")]"},
 
     /* Test default DDE application */
-    {"", "[open(\"%1\")]", NULL, "dde", NULL, FALSE, "[open(\"%s\")]"},
+    {"", "[open(\"%1\")]", NULL, "dde", NULL, 0, "[open(\"%s\")]"},
 
     {NULL}
 };
