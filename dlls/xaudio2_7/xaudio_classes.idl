@@ -119,3 +119,26 @@ coclass FXEQ14 { interface IXAPO; }
 ]
 coclass FXEQ15 { interface IXAPO; }
 #endif /* XAUDIO2_VER == 7 */
+
+#if XAUDIO2_VER == 6
+[
+    helpstring("XAudio2.6 Class"),
+    threading(both),
+    uuid(3eda9b49-2085-498b-9bb2-39a6778493de)
+]
+coclass XAudio26 { interface IXAudio27; }
+
+[
+    helpstring("XAudio2.6 AudioReverb Class"),
+    threading(both),
+    uuid(cecec95a-d894-491a-bee3-5e106fb59f2d)
+]
+coclass AudioReverb26 { interface IXAPO; }
+
+[
+    helpstring("XAudio2.6 AudioVolumeMeter Class"),
+    threading(both),
+    uuid(e48c5a3f-93ef-43bb-a092-2c7ceb946f27)
+]
+coclass AudioVolumeMeter26 { interface IXAPO; }
+#endif /* XAUDIO2_VER == 6 */
