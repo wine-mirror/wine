@@ -2025,7 +2025,7 @@ static struct strarray output_install_rules( const struct makefile *make, struct
 /*******************************************************************
  *         output_sources
  */
-static struct strarray output_sources( const struct makefile *make, struct strarray *testlist_files )
+static struct strarray output_sources( const struct makefile *make )
 {
     struct incl_file *source;
     unsigned int i, j;
@@ -2736,7 +2736,6 @@ static struct strarray output_sources( const struct makefile *make, struct strar
         strarray_add( &phony_targets, "check" );
         strarray_add( &phony_targets, "test" );
         strarray_add( &phony_targets, "testclean" );
-        *testlist_files = strarray_replace_extension( &ok_files, ".ok", "" );
     }
 
     for (i = 0; i < make->programs.count; i++)
@@ -2947,9 +2946,19 @@ static void rename_temp_file_if_changed( const char *dest )
 /*******************************************************************
  *         output_testlist
  */
-static void output_testlist( const char *dest, struct strarray files )
+static void output_testlist( const struct makefile *make )
 {
-    int i;
+    const char *dest = base_dir_path( make, "testlist.c" );
+    struct strarray files = empty_strarray;
+    struct incl_file *source;
+    unsigned int i;
+
+    LIST_FOR_EACH_ENTRY( source, &make->sources, struct incl_file, entry )
+    {
+        if (source->file->flags & FLAG_GENERATED) continue;
+        if (!strendswith( source->name, ".c" )) continue;
+        strarray_add( &files, replace_extension( source->name, ".c", "" ));
+    }
 
     output_file = create_temp_file( dest );
 
@@ -3022,7 +3031,7 @@ static void output_top_variables( const struct makefile *make )
 static void output_dependencies( const struct makefile *make )
 {
     static const char separator[] = "### Dependencies";
-    struct strarray targets, testlist_files = empty_strarray, ignore_files = empty_strarray;
+    struct strarray targets, ignore_files = empty_strarray;
     char buffer[1024];
     FILE *src_file;
     int found = 0;
@@ -3042,7 +3051,7 @@ static void output_dependencies( const struct makefile *make )
     input_file_name = NULL;
 
     if (!found) output( "\n%s (everything below this line is auto-generated; DO NOT EDIT!!)\n", separator );
-    targets = output_sources( make, &testlist_files );
+    targets = output_sources( make );
 
     fclose( output_file );
     output_file = NULL;
@@ -3050,11 +3059,12 @@ static void output_dependencies( const struct makefile *make )
 
     strarray_add( &ignore_files, ".gitignore" );
     strarray_add( &ignore_files, "Makefile" );
-    if (testlist_files.count) strarray_add( &ignore_files, "testlist.c" );
+    if (make->testdll)
+    {
+        output_testlist( make );
+        strarray_add( &ignore_files, "testlist.c" );
+    }
     strarray_addall( &ignore_files, targets );
-
-    if (testlist_files.count)
-        output_testlist( base_dir_path( make, "testlist.c" ), testlist_files );
     if (!make->src_dir && make->base_dir)
         output_gitignore( base_dir_path( make, ".gitignore" ), ignore_files );
 
