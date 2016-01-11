@@ -523,13 +523,7 @@ static NTSTATUS FILE_AsyncReadService( void *user, IO_STATUS_BLOCK *iosb,
             if (fileio->already >= fileio->count || fileio->avail_mode)
                 status = STATUS_SUCCESS;
             else
-            {
-                /* if we only have to read the available data, and none is available,
-                 * simply cancel the request. If data was available, it has been read
-                 * while in by previous call (NtDelayExecution)
-                 */
-                status = (fileio->avail_mode) ? STATUS_SUCCESS : STATUS_PENDING;
-            }
+                status = STATUS_PENDING;
         }
         break;
 
