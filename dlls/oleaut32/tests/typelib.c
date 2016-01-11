@@ -37,6 +37,7 @@
 #include "ocidl.h"
 #include "shlwapi.h"
 #include "tmarshal.h"
+#include "olectl.h"
 
 #include "test_reg.h"
 #include "test_tlb.h"
@@ -156,6 +157,12 @@ static LONG WINAPI invoketest_putref_testprop2(IInvokeTest *iface, IUnknown *i)
     return 6;
 }
 
+static HRESULT WINAPI invoketest_testfunc(IInvokeTest *iface, int i, int *p)
+{
+    *p = i+1;
+    return S_OK;
+}
+
 static const IInvokeTestVtbl invoketestvtbl = {
     invoketest_QueryInterface,
     invoketest_AddRef,
@@ -166,7 +173,8 @@ static const IInvokeTestVtbl invoketestvtbl = {
     invoketest_Invoke,
     invoketest_get_test,
     invoketest_putref_testprop,
-    invoketest_putref_testprop2
+    invoketest_putref_testprop2,
+    invoketest_testfunc
 };
 
 static IInvokeTest invoketest = { &invoketestvtbl };
@@ -667,6 +675,33 @@ static void write_typelib(int res_no, const char *filename)
     CloseHandle( file );
 }
 
+static void test_invoke_func(ITypeInfo *typeinfo)
+{
+    DISPID named_args[3] = { DISPID_THIS };
+    VARIANT args[3], res;
+    DISPPARAMS dp = {args, named_args, 1, 0};
+    UINT i;
+    HRESULT hres;
+
+    V_VT(args) = VT_INT;
+    V_INT(args) = 3;
+    V_VT(&res) = VT_ERROR;
+    hres = ITypeInfo_Invoke(typeinfo, &invoketest, 3, DISPATCH_METHOD, &dp, &res, NULL, &i);
+    ok(hres == S_OK, "got 0x%08x\n", hres);
+    ok(V_VT(&res) == VT_I4, "got %d\n", V_VT(&res));
+    ok(V_I4(&res) == 4, "got %d\n", V_I4(&res));
+
+    V_VT(args) = VT_DISPATCH;
+    V_DISPATCH(args) = (IDispatch*)&invoketest;
+    V_VT(args+1) = VT_INT;
+    V_INT(args+1) = 3;
+    V_VT(&res) = VT_ERROR;
+    dp.cNamedArgs = 1;
+    dp.cArgs = 2;
+    hres = ITypeInfo_Invoke(typeinfo, &invoketest, 3, DISPATCH_METHOD, &dp, &res, NULL, &i);
+    ok(hres == DISP_E_BADPARAMCOUNT, "got 0x%08x\n", hres);
+}
+
 static const char *create_test_typelib(int res_no)
 {
     static char filename[MAX_PATH];
@@ -958,6 +993,8 @@ static void test_TypeInfo(void)
     V_I4(&res) = 0;
     hr = ITypeInfo_Invoke(pTypeInfo, &invoketest, 2, DISPATCH_PROPERTYPUT, &dispparams, &res, NULL, &i);
     ok(hr == DISP_E_MEMBERNOTFOUND, "got 0x%08x, %d\n", hr, i);
+
+    test_invoke_func(pTypeInfo);
 
     ITypeInfo_Release(pTypeInfo);
     ITypeLib_Release(pTypeLib);
