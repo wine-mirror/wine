@@ -234,3 +234,26 @@ coclass AudioReverb22 { interface IXAPO; }
 ]
 coclass AudioVolumeMeter22 { interface IXAPO; }
 #endif /* XAUDIO2_VER == 2 */
+
+#if XAUDIO2_VER == 1
+[
+    helpstring("XAudio2.1 Class"),
+    threading(both),
+    uuid(e21a7345-eb21-468e-be50-804db97cf708)
+]
+coclass XAudio21 { interface IXAudio22; }
+
+[
+    helpstring("XAudio2.1 AudioReverb Class"),
+    threading(both),
+    uuid(f4769300-b949-4df9-b333-00d33932e9a6)
+]
+coclass AudioReverb21 { interface IXAPO; }
+
+[
+    helpstring("XAudio2.1 AudioVolumeMeter Class"),
+    threading(both),
+    uuid(c1e3f122-a2ea-442c-854f-20d98f8357a1)
+]
+coclass AudioVolumeMeter21 { interface IXAPO; }
+#endif /* XAUDIO2_VER == 1 */
