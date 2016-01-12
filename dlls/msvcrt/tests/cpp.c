@@ -452,8 +452,7 @@ static void test_exception(void)
   {
     /* Check the rtti */
     type_info *ti = p__RTtypeid(&e);
-    ok (ti && ti->mangled &&
-        !strcmp(ti->mangled, ".?AVexception@@"), "bad rtti for e\n");
+    ok (ti && !strcmp(ti->mangled, ".?AVexception@@"), "bad rtti for e\n");
 
     if (ti)
     {
@@ -1036,15 +1035,13 @@ static void test_rtti(void)
   child_class_sig0_rtti.object_locator.type_hierarchy = RTTI_REF_SIG0(child_class_sig0_rtti, object_hierarchy, base);
 
   ti = p__RTtypeid(&simple_class_sig0);
-  ok (ti && ti->mangled && !strcmp(ti->mangled, "simple_class"),
-          "incorrect rtti data\n");
+  ok (ti && !strcmp(ti->mangled, "simple_class"), "incorrect rtti data\n");
 
   casted = p__RTCastToVoid(&simple_class_sig0);
   ok (casted == (void*)&simple_class_sig0, "failed cast to void\n");
 
   ti = p__RTtypeid(&child_class_sig0);
-  ok (ti && ti->mangled && !strcmp(ti->mangled, "child_class"),
-          "incorrect rtti data\n");
+  ok (ti && !strcmp(ti->mangled, "child_class"), "incorrect rtti data\n");
 
   casted = p__RTCastToVoid(&child_class_sig0);
   ok (casted == (void*)&child_class_sig0, "failed cast to void\n");
@@ -1064,15 +1061,13 @@ static void test_rtti(void)
   }
 
   ti = p__RTtypeid(&simple_class);
-  ok (ti && ti->mangled && !strcmp(ti->mangled, "simple_class"),
-          "incorrect rtti data\n");
+  ok (ti && !strcmp(ti->mangled, "simple_class"), "incorrect rtti data\n");
 
   casted = p__RTCastToVoid(&simple_class);
   ok (casted == (void*)&simple_class, "failed cast to void\n");
 
   ti = p__RTtypeid(&child_class);
-  ok (ti && ti->mangled && !strcmp(ti->mangled, "child_class"),
-        "incorrect rtti data\n");
+  ok (ti && !strcmp(ti->mangled, "child_class"), "incorrect rtti data\n");
 
   casted = p__RTCastToVoid(&child_class);
   ok (casted == (void*)&child_class, "failed cast to void\n");
