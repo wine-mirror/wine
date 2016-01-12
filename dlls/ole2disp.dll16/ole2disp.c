@@ -72,6 +72,23 @@ static void safearray_free(SEGPTR ptr)
     WOWGlobalUnlockFree16(ptr);
 }
 
+static ULONG safearray_getcellcount(const SAFEARRAY16 *sa)
+{
+    const SAFEARRAYBOUND16 *sab = sa->rgsabound;
+    USHORT count = sa->cDims;
+    ULONG cells = 1;
+
+    while (count--)
+    {
+        if (!sab->cElements)
+            return 0;
+        cells *= sab->cElements;
+        sab++;
+    }
+
+    return cells;
+}
+
 /******************************************************************************
  *    SafeArrayAllocDescriptor [OLE2DISP.38]
  */
@@ -93,6 +110,23 @@ HRESULT WINAPI SafeArrayAllocDescriptor16(UINT16 dims, SEGPTR *ret)
     sa = MapSL(*ret);
     sa->cDims = dims;
     return S_OK;
+}
+
+/******************************************************************************
+ *    SafeArrayAllocData [OLE2DISP.39]
+ */
+HRESULT WINAPI SafeArrayAllocData16(SAFEARRAY16 *sa)
+{
+    ULONG size;
+
+    TRACE("%p\n", sa);
+
+    if (!sa)
+        return E_INVALIDARG16;
+
+    size = safearray_getcellcount(sa);
+    sa->pvData = safearray_alloc(size * sa->cbElements);
+    return sa->pvData ? S_OK : E_OUTOFMEMORY16;
 }
 
 /******************************************************************************
