@@ -986,10 +986,47 @@ static inline BOOL layout_is_erun_rtl(const struct layout_effective_run *erun)
     return erun->run->u.regular.run.bidiLevel & 1;
 }
 
+/* A set of parameters that additionally slits resulting runs. It happens after shaping and all text processing,
+   no glyph changes are possible. It's understandable for effects, because DrawGlyphRun() will report them,
+   but it also happens for decorations, so every effective run has uniform underline/strikethough/effect tuple. */
+struct layout_final_splitting_params {
+    BOOL strikethrough;
+    BOOL underline;
+    IUnknown *effect;
+};
+
+static inline BOOL layout_get_strikethrough_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
+{
+    struct layout_range_header *h = get_layout_range_header_by_pos(&layout->strike_ranges, pos);
+    return ((struct layout_range_bool*)h)->value;
+}
+
+static inline BOOL layout_get_underline_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
+{
+    struct layout_range_header *h = get_layout_range_header_by_pos(&layout->ranges, pos);
+    return ((struct layout_range_bool*)h)->value;
+}
+
+static void layout_splitting_params_from_pos(struct dwrite_textlayout *layout, UINT32 pos,
+    struct layout_final_splitting_params *params)
+{
+    params->strikethrough = layout_get_strikethrough_from_pos(layout, pos);
+    params->underline = layout_get_underline_from_pos(layout, pos);
+    params->effect = layout_get_effect_from_pos(layout, pos);
+}
+
+static BOOL is_same_splitting_params(const struct layout_final_splitting_params *left,
+    const struct layout_final_splitting_params *right)
+{
+    return left->strikethrough == right->strikethrough &&
+           left->underline == right->underline &&
+           left->effect == right->effect;
+}
+
 /* Effective run is built from consecutive clusters of a single nominal run, 'first_cluster' is 0 based cluster index,
    'cluster_count' indicates how many clusters to add, including first one. */
 static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const struct layout_run *r, UINT32 first_cluster,
-    UINT32 cluster_count, UINT32 line, FLOAT origin_x, BOOL strikethrough)
+    UINT32 cluster_count, UINT32 line, FLOAT origin_x, struct layout_final_splitting_params *params)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     UINT32 i, start, length, last_cluster;
@@ -1073,7 +1110,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     /* Strikethrough style is guaranteed to be consistent within effective run,
        it's width equals to run width, thikness and offset are derived from
        font metrics, rest of the values are from layout or run itself */
-    if (strikethrough) {
+    if (params->strikethrough) {
         DWRITE_FONT_METRICS metrics = { 0 };
         struct layout_strikethrough *s;
 
@@ -1132,11 +1169,6 @@ static HRESULT layout_set_line_metrics(struct dwrite_textlayout *layout, DWRITE_
     return S_OK;
 }
 
-static inline BOOL layout_get_strikethrough_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
-{
-    struct layout_range_header *h = get_layout_range_header_by_pos(&layout->strike_ranges, pos);
-    return ((struct layout_range_bool*)h)->value;
-}
 
 static inline struct layout_effective_run *layout_get_next_erun(struct dwrite_textlayout *layout,
     const struct layout_effective_run *cur)
@@ -1390,9 +1422,11 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
     }
 }
 
+
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
+    struct layout_final_splitting_params prev_params, params;
     struct layout_effective_inline *inrun;
     struct layout_effective_run *erun;
     const struct layout_run *run;
@@ -1400,7 +1434,6 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     FLOAT width, origin_x, origin_y;
     UINT32 i, start, line, textpos;
     HRESULT hr;
-    BOOL s[2];
 
     if (!(layout->recompute & RECOMPUTE_EFFECTIVE_RUNS))
         return S_OK;
@@ -1414,17 +1447,19 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
     line = 0;
     run = layout->clusters[0].run;
     memset(&metrics, 0, sizeof(metrics));
-    s[0] = s[1] = layout_get_strikethrough_from_pos(layout, 0);
+
+    layout_splitting_params_from_pos(layout, 0, &params);
+    prev_params = params;
 
     for (i = 0, start = 0, textpos = 0, width = 0.0f; i < layout->cluster_count; i++) {
         BOOL overflow;
 
-        s[1] = layout_get_strikethrough_from_pos(layout, textpos);
+        layout_splitting_params_from_pos(layout, textpos, &params);
 
         /* switched to next nominal run, at this point all previous pending clusters are already
            checked for layout line overflow, so new effective run will fit in current line */
-        if (run != layout->clusters[i].run || s[0] != s[1]) {
-            hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, s[0]);
+        if (run != layout->clusters[i].run || !is_same_splitting_params(&prev_params, &params)) {
+            hr = layout_add_effective_run(layout, run, start, i - start, line, origin_x, &prev_params);
             if (FAILED(hr))
                 return hr;
             origin_x += is_rtl ? -get_cluster_range_width(layout, start, i) :
@@ -1452,7 +1487,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
                 last_cluster = i ? i - 1 : i;
 
             if (i >= start) {
-                hr = layout_add_effective_run(layout, run, start, last_cluster - start + 1, line, origin_x, s[0]);
+                hr = layout_add_effective_run(layout, run, start, last_cluster - start + 1, line, origin_x, &prev_params);
                 if (FAILED(hr))
                     return hr;
                 /* we don't need to update origin for next run as we're going to wrap */
@@ -1524,7 +1559,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             width += layout->clustermetrics[i].width;
         }
 
-        s[0] = s[1];
+        prev_params = params;
         textpos += layout->clustermetrics[i].length;
     }
 
