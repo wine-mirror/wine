@@ -3002,8 +3002,8 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     LIST_FOR_EACH_ENTRY(s, &This->strikethrough, struct layout_strikethrough, entry) {
         IDWriteTextRenderer_DrawStrikethrough(renderer,
             context,
-            s->run->origin_x,
-            SNAP_COORD(s->run->origin_y),
+            s->run->origin_x + run->align_dx + origin_x,
+            SNAP_COORD(s->run->origin_y + origin_y),
             &s->s,
             s->run->effect);
     }
