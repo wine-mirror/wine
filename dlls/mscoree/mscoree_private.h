@@ -70,7 +70,7 @@ struct RuntimeHost
 {
     ICorRuntimeHost ICorRuntimeHost_iface;
     ICLRRuntimeHost ICLRRuntimeHost_iface;
-    const CLRRuntimeInfo *version;
+    CLRRuntimeInfo *version;
     struct list domains;
     MonoDomain *default_domain;
     CRITICAL_SECTION lock;
@@ -143,6 +143,7 @@ extern MonoClass* (CDECL *mono_class_from_mono_type)(MonoType *type) DECLSPEC_HI
 extern MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_space, const char *name) DECLSPEC_HIDDEN;
 extern MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count) DECLSPEC_HIDDEN;
 extern MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name) DECLSPEC_HIDDEN;
+extern void (CDECL *mono_domain_set_config)(MonoDomain *domain,const char *base_dir,const char *config_file_name) DECLSPEC_HIDDEN;
 extern int (CDECL *mono_jit_exec)(MonoDomain *domain, MonoAssembly *assembly, int argc, char *argv[]) DECLSPEC_HIDDEN;
 extern MonoDomain* (CDECL *mono_jit_init_version)(const char *domain_name, const char *runtime_version) DECLSPEC_HIDDEN;
 extern MonoImage* (CDECL *mono_image_open_from_module_handle)(HMODULE module_handle, char* fname, UINT has_entry_point, MonoImageOpenStatus* status) DECLSPEC_HIDDEN;
@@ -164,7 +165,7 @@ extern void (CDECL *mono_trace_set_printerr_handler)(MonoPrintCallback callback)
 /* loaded runtime interfaces */
 extern void expect_no_runtimes(void) DECLSPEC_HIDDEN;
 
-extern HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version, RuntimeHost** result) DECLSPEC_HIDDEN;
+extern HRESULT RuntimeHost_Construct(CLRRuntimeInfo *runtime_version, RuntimeHost** result) DECLSPEC_HIDDEN;
 
 extern void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode) DECLSPEC_HIDDEN;
 

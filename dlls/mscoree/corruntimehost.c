@@ -104,8 +104,11 @@ end:
     return res;
 }
 
-static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, MonoDomain **result)
+static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *config_path, MonoDomain **result)
 {
+    WCHAR config_dir[MAX_PATH];
+    WCHAR base_dir[MAX_PATH];
+    char *base_dirA, *config_pathA, *slash;
     HRESULT res=S_OK;
 
     EnterCriticalSection(&This->lock);
@@ -113,6 +116,48 @@ static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, MonoDomain **resu
     if (This->default_domain) goto end;
 
     res = RuntimeHost_AddDomain(This, &This->default_domain);
+
+    if (!config_path)
+    {
+        DWORD len = sizeof(config_dir)/sizeof(*config_dir);
+
+        static const WCHAR machine_configW[] = {'\\','C','O','N','F','I','G','\\','m','a','c','h','i','n','e','.','c','o','n','f','i','g',0};
+
+        res = ICLRRuntimeInfo_GetRuntimeDirectory(&This->version->ICLRRuntimeInfo_iface,
+                config_dir, &len);
+        if (FAILED(res))
+            goto end;
+
+        lstrcatW(config_dir, machine_configW);
+
+        config_path = config_dir;
+    }
+
+    config_pathA = WtoA(config_path);
+    if (!config_pathA)
+    {
+        res = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    GetModuleFileNameW(NULL, base_dir, sizeof(base_dir) / sizeof(*base_dir));
+    base_dirA = WtoA(base_dir);
+    if (!base_dirA)
+    {
+        HeapFree(GetProcessHeap(), 0, config_pathA);
+        res = E_OUTOFMEMORY;
+        goto end;
+    }
+
+    slash = strrchr(base_dirA, '\\');
+    if (slash)
+        *slash = 0;
+
+    TRACE("setting base_dir: %s, config_path: %s\n", base_dirA, config_pathA);
+    mono_domain_set_config(This->default_domain, base_dirA, config_pathA);
+
+    HeapFree(GetProcessHeap(), 0, config_pathA);
+    HeapFree(GetProcessHeap(), 0, base_dirA);
 
 end:
     *result = This->default_domain;
@@ -241,7 +286,7 @@ void RuntimeHost_ExitProcess(RuntimeHost *This, INT exitcode)
     MonoDomain *domain;
     MonoObject *dummy;
 
-    hr = RuntimeHost_GetDefaultDomain(This, &domain);
+    hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
     if (FAILED(hr))
     {
         ERR("Cannot get domain, hr=%x\n", hr);
@@ -371,7 +416,7 @@ static HRESULT WINAPI corruntimehost_Start(
 
     TRACE("%p\n", This);
 
-    return RuntimeHost_GetDefaultDomain(This, &dummy);
+    return RuntimeHost_GetDefaultDomain(This, NULL, &dummy);
 }
 
 static HRESULT WINAPI corruntimehost_Stop(
@@ -401,7 +446,7 @@ static HRESULT WINAPI corruntimehost_GetDefaultDomain(
 
     TRACE("(%p)\n", iface);
 
-    hr = RuntimeHost_GetDefaultDomain(This, &domain);
+    hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
 
     if (SUCCEEDED(hr))
     {
@@ -459,7 +504,7 @@ static HRESULT WINAPI corruntimehost_CreateDomainSetup(
 
     TRACE("(%p)\n", iface);
 
-    hr = RuntimeHost_GetDefaultDomain(This, &domain);
+    hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
 
     if (SUCCEEDED(hr))
         hr = RuntimeHost_CreateManagedInstance(This, classnameW, domain, &obj);
@@ -625,7 +670,7 @@ static HRESULT WINAPI CLRRuntimeHost_ExecuteInDefaultAppDomain(ICLRRuntimeHost* 
     TRACE("(%p,%s,%s,%s,%s)\n", iface, debugstr_w(pwzAssemblyPath),
         debugstr_w(pwzTypeName), debugstr_w(pwzMethodName), debugstr_w(pwzArgument));
 
-    hr = RuntimeHost_GetDefaultDomain(This, &domain);
+    hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
 
     if (SUCCEEDED(hr))
     {
@@ -717,7 +762,7 @@ HRESULT RuntimeHost_CreateManagedInstance(RuntimeHost *This, LPCWSTR name,
     MonoObject *obj;
 
     if (!domain)
-        hr = RuntimeHost_GetDefaultDomain(This, &domain);
+        hr = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
 
     if (SUCCEEDED(hr))
     {
@@ -921,7 +966,7 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
         hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
 
     if (SUCCEEDED(hr))
-        hr = RuntimeHost_GetDefaultDomain(host, &domain);
+        hr = RuntimeHost_GetDefaultDomain(host, NULL, &domain);
 
     if (SUCCEEDED(hr))
     {
@@ -1077,7 +1122,15 @@ __int32 WINAPI _CorExeMain(void)
         hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
 
         if (SUCCEEDED(hr))
-            hr = RuntimeHost_GetDefaultDomain(host, &domain);
+        {
+            WCHAR config_file[MAX_PATH];
+            static const WCHAR dotconfig[] = {'.','c','o','n','f','i','g',0};
+
+            strcpyW(config_file, filename);
+            strcatW(config_file, dotconfig);
+
+            hr = RuntimeHost_GetDefaultDomain(host, config_file, &domain);
+        }
 
         if (SUCCEEDED(hr))
         {
@@ -1157,7 +1210,7 @@ void runtimehost_uninit(void)
     }
 }
 
-HRESULT RuntimeHost_Construct(const CLRRuntimeInfo *runtime_version, RuntimeHost** result)
+HRESULT RuntimeHost_Construct(CLRRuntimeInfo *runtime_version, RuntimeHost** result)
 {
     RuntimeHost *This;
 
@@ -1342,7 +1395,7 @@ HRESULT create_monodata(REFIID riid, LPVOID *ppObj )
         hr = ICLRRuntimeInfo_GetRuntimeHost(info, &host);
 
         if (SUCCEEDED(hr))
-            hr = RuntimeHost_GetDefaultDomain(host, &domain);
+            hr = RuntimeHost_GetDefaultDomain(host, NULL, &domain);
 
         if (SUCCEEDED(hr))
         {
