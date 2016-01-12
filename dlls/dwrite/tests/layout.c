@@ -2998,7 +2998,7 @@ static void test_SetDrawingEffect(void)
     flush_sequence(sequences, RENDERER_ID);
     hr = IDWriteTextLayout_Draw(layout, NULL, &testrenderer, 0.0, 0.0);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok_sequence(sequences, RENDERER_ID, draweffect2_seq, "effect draw test 2", TRUE);
+    ok_sequence(sequences, RENDERER_ID, draweffect2_seq, "effect draw test 2", FALSE);
     IDWriteTextLayout_Release(layout);
 
     /* Inline object - effect set for same range */

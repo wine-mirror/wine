@@ -184,6 +184,7 @@ struct layout_effective_run {
     UINT32 start;           /* relative text position, 0 means first text position of a nominal run */
     UINT32 length;          /* length in codepoints that this run covers */
     UINT32 glyphcount;      /* total glyph count in this run */
+    IUnknown *effect;       /* original reference is kept only at range level */
     FLOAT origin_x;         /* baseline X position */
     FLOAT origin_y;         /* baseline Y position */
     FLOAT align_dx;         /* adjustment from text alignment */
@@ -1106,6 +1107,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     for (i = 0; i < length; i++)
         run->clustermap[i] = r->u.regular.clustermap[start + i] - r->u.regular.clustermap[start];
 
+    run->effect = params->effect;
     list_add_tail(&layout->eruns, &run->entry);
 
     /* Strikethrough style is guaranteed to be consistent within effective run,
@@ -2979,7 +2981,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             This->measuringmode,
             &glyph_run,
             &descr,
-            NULL);
+            run->effect);
     }
 
     /* 2. Inline objects */
