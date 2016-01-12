@@ -686,7 +686,7 @@
 @ cdecl asin(double) MSVCRT_asin
 @ cdecl atan(double) MSVCRT_atan
 @ cdecl atan2(double double) MSVCRT_atan2
-@ cdecl atexit(ptr) MSVCRT_atexit
+@ cdecl -private atexit(ptr) MSVCRT_atexit  # not imported to avoid conflicts with Mingw
 @ cdecl atof(str) MSVCRT_atof
 @ cdecl atoi(str) MSVCRT_atoi
 @ cdecl atol(str) ntdll.atol

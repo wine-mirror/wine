@@ -638,7 +638,7 @@
 @ cdecl asin(double) msvcrt.asin
 @ cdecl atan(double) msvcrt.atan
 @ cdecl atan2(double double) msvcrt.atan2
-@ cdecl atexit(ptr) msvcrt.atexit
+@ cdecl -private atexit(ptr) msvcrt.atexit
 @ cdecl atof(str) msvcrt.atof
 @ cdecl atoi(str) msvcrt.atoi
 @ cdecl atol(str) msvcrt.atol

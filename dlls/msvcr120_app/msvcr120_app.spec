@@ -1694,7 +1694,7 @@
 @ stub atanh
 @ stub atanhf
 @ stub atanhl
-@ cdecl atexit(ptr) msvcr120.atexit
+@ cdecl -private atexit(ptr) msvcr120.atexit
 @ cdecl atof(str) msvcr120.atof
 @ cdecl atoi(str) msvcr120.atoi
 @ cdecl atol(str) msvcr120.atol
