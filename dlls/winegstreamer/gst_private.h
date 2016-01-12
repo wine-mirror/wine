@@ -42,6 +42,12 @@ IUnknown * CALLBACK Gstreamer_Mp3_create(IUnknown *pUnkOuter, HRESULT *phr);
 IUnknown * CALLBACK Gstreamer_YUV_create(IUnknown *pUnkOuter, HRESULT *phr);
 IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr);
 
-void g_thread_impl_init(void);
 DWORD Gstreamer_init(void);
+
+GstFlowReturn got_data(GstPad *pad, GstBuffer *buf) DECLSPEC_HIDDEN;
+GstFlowReturn request_buffer(GstPad *pad, guint64 ofs, guint size, GstCaps *caps, GstBuffer **buf) DECLSPEC_HIDDEN;
+void Gstreamer_transform_pad_added(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
+
+void start_dispatch_thread(void) DECLSPEC_HIDDEN;
+
 #endif /* __GST_PRIVATE_INCLUDED__ */

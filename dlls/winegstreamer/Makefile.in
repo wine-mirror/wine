@@ -4,7 +4,7 @@ EXTRAINCL = $(GSTREAMER_CFLAGS)
 EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 
 C_SRCS = \
-	glibthread.c \
+	gst_cbs.c \
 	gstdemux.c \
 	gsttffilter.c \
 	main.c

@@ -254,7 +254,6 @@ DWORD Gstreamer_init(void) {
         argv[0] = argv0;
         argv[1] = argv1;
         argv[2] = NULL;
-        g_thread_impl_init();
         inited = gst_init_check(&argc, &argv, &err);
         HeapFree(GetProcessHeap(), 0, argv);
         if (err) {
@@ -269,6 +268,8 @@ DWORD Gstreamer_init(void) {
                                (LPCWSTR)hInst, &newhandle);
             if (!newhandle)
                 ERR("Could not pin module %p\n", hInst);
+
+            start_dispatch_thread();
         }
     }
     return inited;

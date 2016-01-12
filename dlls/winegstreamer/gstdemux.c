@@ -27,6 +27,7 @@
 
 #include "gst_private.h"
 #include "gst_guids.h"
+#include "gst_cbs.h"
 
 #include "vfwmsgs.h"
 #include "amvideo.h"
@@ -43,6 +44,8 @@
 #include "ksmedia.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gstreamer);
+
+static pthread_key_t wine_gst_key;
 
 typedef struct GSTOutPin GSTOutPin;
 typedef struct GSTInPin {
@@ -96,6 +99,17 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This);
 static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface);
 static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface);
+
+void mark_wine_thread(void)
+{
+    /* set it to non-NULL to indicate that this is a Wine thread */
+    pthread_setspecific(wine_gst_key, &wine_gst_key);
+}
+
+BOOL is_wine_thread(void)
+{
+    return pthread_getspecific(wine_gst_key) != NULL;
+}
 
 static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt) {
     WAVEFORMATEXTENSIBLE *wfe;
@@ -466,7 +480,7 @@ static DWORD CALLBACK push_data(LPVOID iface) {
         }
 
         IMediaSample_GetPointer(buf, &data);
-        gstbuf = gst_app_buffer_new(data, IMediaSample_GetActualDataLength(buf), release_sample, buf);
+        gstbuf = gst_app_buffer_new(data, IMediaSample_GetActualDataLength(buf), release_sample_wrapper, buf);
         if (!gstbuf) {
             IMediaSample_Release(buf);
             break;
@@ -621,7 +635,7 @@ static GstFlowReturn request_buffer_sink(GstPad *pad, guint64 ofs, guint size, G
     }
     IMediaSample_SetActualDataLength(sample, size);
     IMediaSample_GetPointer(sample, &ptr);
-    *buf = gst_app_buffer_new(ptr, size, release_sample, sample);
+    *buf = gst_app_buffer_new(ptr, size, release_sample_wrapper, sample);
     if (!*buf) {
         IMediaSample_Release(sample);
         ERR("Out of memory\n");
@@ -682,7 +696,8 @@ static DWORD CALLBACK push_data_init(LPVOID iface) {
     return 0;
 }
 
-static void removed_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This) {
+static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user) {
+    GSTImpl *This = (GSTImpl*)user;
     int x;
     GSTOutPin *pin;
 
@@ -728,11 +743,11 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     typename = gst_structure_get_name(arg);
 
     mypad = gst_pad_new(NULL, GST_PAD_SINK);
-    gst_pad_set_chain_function(mypad, got_data_sink);
-    gst_pad_set_event_function(mypad, event_sink);
-    gst_pad_set_bufferalloc_function(mypad, request_buffer_sink);
-    gst_pad_set_acceptcaps_function(mypad, accept_caps_sink);
-    gst_pad_set_setcaps_function(mypad, setcaps_sink);
+    gst_pad_set_chain_function(mypad, got_data_sink_wrapper);
+    gst_pad_set_event_function(mypad, event_sink_wrapper);
+    gst_pad_set_bufferalloc_function(mypad, request_buffer_sink_wrapper);
+    gst_pad_set_acceptcaps_function(mypad, accept_caps_sink_wrapper);
+    gst_pad_set_setcaps_function(mypad, setcaps_sink_wrapper);
 
     if (!strcmp(typename, "audio/x-raw-int") ||
         !strcmp(typename, "audio/x-raw-float")) {
@@ -766,7 +781,8 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     }
 }
 
-static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImpl *This) {
+static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, gpointer user) {
+    GSTImpl *This = (GSTImpl*)user;
     int x;
 
     if (gst_pad_is_linked(pad))
@@ -858,18 +874,13 @@ static gboolean activate_push(GstPad *pad, gboolean activate) {
     return TRUE;
 }
 
-static void no_more_pads(GstElement *decodebin, GSTImpl *This) {
+static void no_more_pads(GstElement *decodebin, gpointer user) {
+    GSTImpl *This = (GSTImpl*)user;
     TRACE("Done\n");
     SetEvent(This->event);
 }
 
-typedef enum {
-  GST_AUTOPLUG_SELECT_TRY,
-  GST_AUTOPLUG_SELECT_EXPOSE,
-  GST_AUTOPLUG_SELECT_SKIP
-} GstAutoplugSelectResult;
-
-static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, GSTImpl *This) {
+static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user) {
     const char *name = gst_element_factory_get_longname(fact);
 
     if (strstr(name, "Player protection")) {
@@ -904,7 +915,7 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data) {
     return GST_BUS_DROP;
 }
 
-static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, GSTImpl *This) {
+static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user) {
     gchar *strcaps = gst_caps_to_string(caps);
     FIXME("Could not find a filter for caps: %s\n", strcaps);
     g_free(strcaps);
@@ -928,7 +939,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
 
     if (!This->bus) {
         This->bus = gst_bus_new();
-        gst_bus_set_sync_handler(This->bus, watch_bus, This);
+        gst_bus_set_sync_handler(This->bus, watch_bus_wrapper, This);
     }
 
     This->gstfilter = gst_element_factory_make("decodebin2", NULL);
@@ -938,21 +949,21 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         return E_FAIL;
     }
     gst_element_set_bus(This->gstfilter, This->bus);
-    g_signal_connect(This->gstfilter, "new-decoded-pad", G_CALLBACK(existing_new_pad), This);
-    g_signal_connect(This->gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad), This);
-    g_signal_connect(This->gstfilter, "autoplug-select", G_CALLBACK(autoplug_blacklist), This);
-    g_signal_connect(This->gstfilter, "unknown-type", G_CALLBACK(unknown_type), This);
+    g_signal_connect(This->gstfilter, "new-decoded-pad", G_CALLBACK(existing_new_pad_wrapper), This);
+    g_signal_connect(This->gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), This);
+    g_signal_connect(This->gstfilter, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), This);
+    g_signal_connect(This->gstfilter, "unknown-type", G_CALLBACK(unknown_type_wrapper), This);
 
     This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
-    gst_pad_set_getrange_function(This->my_src, request_buffer_src);
-    gst_pad_set_checkgetrange_function(This->my_src, check_get_range);
-    gst_pad_set_query_function(This->my_src, query_function);
-    gst_pad_set_activatepush_function(This->my_src, activate_push);
-    gst_pad_set_event_function(This->my_src, event_src);
+    gst_pad_set_getrange_function(This->my_src, request_buffer_src_wrapper);
+    gst_pad_set_checkgetrange_function(This->my_src, check_get_range_wrapper);
+    gst_pad_set_query_function(This->my_src, query_function_wrapper);
+    gst_pad_set_activatepush_function(This->my_src, activate_push_wrapper);
+    gst_pad_set_event_function(This->my_src, event_src_wrapper);
     gst_pad_set_element_private (This->my_src, This);
     This->their_sink = gst_element_get_static_pad(This->gstfilter, "sink");
 
-    g_signal_connect(This->gstfilter, "no-more-pads", G_CALLBACK(no_more_pads), This);
+    g_signal_connect(This->gstfilter, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), This);
     ret = gst_pad_link(This->my_src, This->their_sink);
     gst_object_unref(This->their_sink);
     if (ret < 0) {
@@ -1041,6 +1052,8 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *punkout, HRESULT *phr) {
         *phr = E_FAIL;
         return NULL;
     }
+
+    mark_wine_thread();
 
     This = CoTaskMemAlloc(sizeof(*This));
     obj = (IUnknown*)This;
@@ -1150,6 +1163,8 @@ static HRESULT WINAPI GST_Stop(IBaseFilter *iface) {
 
     TRACE("()\n");
 
+    mark_wine_thread();
+
     if (This->gstfilter)
         gst_element_set_state(This->gstfilter, GST_STATE_READY);
     return S_OK;
@@ -1164,6 +1179,8 @@ static HRESULT WINAPI GST_Pause(IBaseFilter *iface) {
 
     if (!This->gstfilter)
         return VFW_E_NOT_CONNECTED;
+
+    mark_wine_thread();
 
     gst_element_get_state(This->gstfilter, &now, NULL, -1);
     if (now == GST_STATE_PAUSED)
@@ -1186,6 +1203,8 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart) {
     HRESULT hr_any = VFW_E_NOT_CONNECTED;
 
     TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
+
+    mark_wine_thread();
 
     if (!This->gstfilter)
         return VFW_E_NOT_CONNECTED;
@@ -1235,6 +1254,8 @@ static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout,
     GstStateChangeReturn ret;
 
     TRACE("(%d, %p)\n", dwMilliSecsTimeout, pState);
+
+    mark_wine_thread();
 
     if (!This->gstfilter) {
         *pState = State_Stopped;
@@ -1290,6 +1311,7 @@ static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface) {
     GSTOutPin *This = impl_from_IMediaSeeking(iface);
     GstEvent *ev = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, 0, GST_SEEK_TYPE_NONE, -1, GST_SEEK_TYPE_NONE, -1);
     TRACE("(%p) New rate %g\n", iface, This->seek.dRate);
+    mark_wine_thread();
     gst_pad_push_event(This->my_sink, ev);
     return S_OK;
 }
@@ -1315,6 +1337,8 @@ static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFER
 
     if (!pos)
         return E_POINTER;
+
+    mark_wine_thread();
 
     if (!This->their_src) {
         *pos = This->seek.llCurrent;
@@ -1351,6 +1375,8 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface, REFERENCE_T
     GstSeekFlags f = 0;
     GstSeekType curtype, stoptype;
     GstEvent *e;
+
+    mark_wine_thread();
 
     if (!This->seek.llDuration)
         return E_NOTIMPL;
@@ -1425,6 +1451,7 @@ static ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
 static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
     GSTOutPin *pin = impl_from_IQualityControl(iface);
     REFERENCE_TIME late = qm.Late;
+    mark_wine_thread();
     if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
         late = -qm.TimeStamp;
     gst_pad_push_event(pin->my_sink, gst_event_new_qos(1000./qm.Proportion, late*100, qm.TimeStamp*100));
@@ -1473,6 +1500,8 @@ static ULONG WINAPI GSTOutPin_Release(IPin *iface) {
     GSTOutPin *This = (GSTOutPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
     TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
+
+    mark_wine_thread();
 
     if (!refCount) {
         if (This->their_src)
@@ -1608,6 +1637,7 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This) {
     ULONG i;
     GSTOutPin **ppOldPins = This->ppPins;
     TRACE("(%p)\n", This);
+    mark_wine_thread();
 
     if (!This->gstfilter)
         return S_OK;
@@ -1656,6 +1686,8 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
 
     TRACE("(%p/%p)->(%p, %p)\n", This, iface, pReceivePin, pmt);
     dump_AM_MEDIA_TYPE(pmt);
+
+    mark_wine_thread();
 
     EnterCriticalSection(This->pin.pCritSec);
     if (!This->pin.pConnectedTo) {
@@ -1710,6 +1742,8 @@ static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface) {
     GSTInPin *This = (GSTInPin*)iface;
     FILTER_STATE state;
     TRACE("()\n");
+
+    mark_wine_thread();
 
     hr = IBaseFilter_GetState(This->pin.pinInfo.pFilter, INFINITE, &state);
     EnterCriticalSection(This->pin.pCritSec);
@@ -1830,3 +1864,175 @@ static const IPinVtbl GST_InputPin_Vtbl = {
     GSTInPin_EndFlush,
     GSTInPin_NewSegment
 };
+
+pthread_mutex_t cb_list_lock = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cb_list_cond = PTHREAD_COND_INITIALIZER;
+struct list cb_list = LIST_INIT(cb_list);
+
+void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
+{
+    struct cb_data *cbdata = user;
+
+    TRACE("got cb type: 0x%x\n", cbdata->type);
+
+    switch(cbdata->type)
+    {
+    case WATCH_BUS:
+        {
+            struct watch_bus_data *data = &cbdata->u.watch_bus_data;
+            cbdata->u.watch_bus_data.ret = watch_bus(data->bus, data->msg, data->user);
+            break;
+        }
+    case EXISTING_NEW_PAD:
+        {
+            struct existing_new_pad_data *data = &cbdata->u.existing_new_pad_data;
+            existing_new_pad(data->bin, data->pad, data->last, data->user);
+            break;
+        }
+    case CHECK_GET_RANGE:
+        {
+            struct check_get_range_data *data = &cbdata->u.check_get_range_data;
+            cbdata->u.check_get_range_data.ret = check_get_range(data->pad);
+            break;
+        }
+    case QUERY_FUNCTION:
+        {
+            struct query_function_data *data = &cbdata->u.query_function_data;
+            cbdata->u.query_function_data.ret = query_function(data->pad, data->query);
+            break;
+        }
+    case ACTIVATE_PUSH:
+        {
+            struct activate_push_data *data = &cbdata->u.activate_push_data;
+            cbdata->u.activate_push_data.ret = activate_push(data->pad, data->activate);
+            break;
+        }
+    case NO_MORE_PADS:
+        {
+            struct no_more_pads_data *data = &cbdata->u.no_more_pads_data;
+            no_more_pads(data->decodebin, data->user);
+            break;
+        }
+    case REQUEST_BUFFER_SRC:
+        {
+            struct request_buffer_src_data *data = &cbdata->u.request_buffer_src_data;
+            cbdata->u.request_buffer_src_data.ret = request_buffer_src(data->pad,
+                    data->ofs, data->len, data->buf);
+            break;
+        }
+    case EVENT_SRC:
+        {
+            struct event_src_data *data = &cbdata->u.event_src_data;
+            cbdata->u.event_src_data.ret = event_src(data->pad, data->event);
+            break;
+        }
+    case EVENT_SINK:
+        {
+            struct event_sink_data *data = &cbdata->u.event_sink_data;
+            cbdata->u.event_sink_data.ret = event_sink(data->pad, data->event);
+            break;
+        }
+    case REQUEST_BUFFER_SINK:
+        {
+            struct request_buffer_sink_data *data = &cbdata->u.request_buffer_sink_data;
+            cbdata->u.request_buffer_sink_data.ret = request_buffer_sink(data->pad,
+                    data->ofs, data->size, data->caps, data->buf);
+            break;
+        }
+    case ACCEPT_CAPS_SINK:
+        {
+            struct accept_caps_sink_data *data = &cbdata->u.accept_caps_sink_data;
+            cbdata->u.accept_caps_sink_data.ret = accept_caps_sink(data->pad, data->caps);
+            break;
+        }
+    case SETCAPS_SINK:
+        {
+            struct setcaps_sink_data *data = &cbdata->u.setcaps_sink_data;
+            cbdata->u.setcaps_sink_data.ret = setcaps_sink(data->pad, data->caps);
+            break;
+        }
+    case GOT_DATA_SINK:
+        {
+            struct got_data_sink_data *data = &cbdata->u.got_data_sink_data;
+            cbdata->u.got_data_sink_data.ret = got_data_sink(data->pad, data->buf);
+            break;
+        }
+    case GOT_DATA:
+        {
+            struct got_data_data *data = &cbdata->u.got_data_data;
+            cbdata->u.got_data_data.ret = got_data(data->pad, data->buf);
+            break;
+        }
+    case REQUEST_BUFFER:
+        {
+            struct request_buffer_data *data = &cbdata->u.request_buffer_data;
+            cbdata->u.request_buffer_data.ret = request_buffer(data->pad,
+                    data->ofs, data->size, data->caps, data->buf);
+            break;
+        }
+    case REMOVED_DECODED_PAD:
+        {
+            struct removed_decoded_pad_data *data = &cbdata->u.removed_decoded_pad_data;
+            removed_decoded_pad(data->bin, data->pad, data->user);
+            break;
+        }
+    case AUTOPLUG_BLACKLIST:
+        {
+            struct autoplug_blacklist_data *data = &cbdata->u.autoplug_blacklist_data;
+            cbdata->u.autoplug_blacklist_data.ret = autoplug_blacklist(data->bin,
+                    data->pad, data->caps, data->fact, data->user);
+            break;
+        }
+    case UNKNOWN_TYPE:
+        {
+            struct unknown_type_data *data = &cbdata->u.unknown_type_data;
+            unknown_type(data->bin, data->pad, data->caps, data->user);
+            break;
+        }
+    case RELEASE_SAMPLE:
+        {
+            struct release_sample_data *data = &cbdata->u.release_sample_data;
+            release_sample(data->data);
+            break;
+        }
+    case TRANSFORM_PAD_ADDED:
+        {
+            struct transform_pad_added_data *data = &cbdata->u.transform_pad_added_data;
+            Gstreamer_transform_pad_added(data->filter, data->pad, data->user);
+            break;
+        }
+    }
+
+    pthread_mutex_lock(&cbdata->lock);
+    cbdata->finished = 1;
+    pthread_cond_broadcast(&cbdata->cond);
+    pthread_mutex_unlock(&cbdata->lock);
+}
+
+static DWORD WINAPI dispatch_thread(void *user)
+{
+    struct cb_data *cbdata;
+
+    pthread_mutex_lock(&cb_list_lock);
+
+    while(1){
+        pthread_cond_wait(&cb_list_cond, &cb_list_lock);
+
+        while(!list_empty(&cb_list)){
+            cbdata = LIST_ENTRY(list_head(&cb_list), struct cb_data, entry);
+            list_remove(&cbdata->entry);
+
+            TrySubmitThreadpoolCallback(&perform_cb, cbdata, NULL);
+        }
+    }
+
+    pthread_mutex_unlock(&cb_list_lock);
+
+    return 0;
+}
+
+void start_dispatch_thread(void)
+{
+    pthread_key_create(&wine_gst_key, NULL);
+    CloseHandle(CreateThread(NULL, 0, &dispatch_thread, NULL, 0, NULL));
+}
