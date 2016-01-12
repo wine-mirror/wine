@@ -3005,7 +3005,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             s->run->origin_x,
             SNAP_COORD(s->run->origin_y),
             &s->s,
-            NULL);
+            s->run->effect);
     }
 #undef SNAP_COORD
 
