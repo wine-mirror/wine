@@ -102,6 +102,7 @@ struct layout_range_attr_value {
 
 enum layout_range_kind {
     LAYOUT_RANGE_REGULAR,
+    LAYOUT_RANGE_UNDERLINE,
     LAYOUT_RANGE_STRIKETHROUGH,
     LAYOUT_RANGE_EFFECT,
     LAYOUT_RANGE_SPACING,
@@ -121,7 +122,6 @@ struct layout_range {
     FLOAT fontsize;
     DWRITE_FONT_STRETCH stretch;
     IDWriteInlineObject *object;
-    BOOL underline;
     BOOL pair_kerning;
     IDWriteFontCollection *collection;
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
@@ -234,6 +234,7 @@ struct dwrite_textlayout {
     UINT32 len;
     struct dwrite_textformat_data format;
     struct list strike_ranges;
+    struct list underline_ranges;
     struct list typographies;
     struct list effects;
     struct list spacing;
@@ -1627,7 +1628,7 @@ static BOOL is_same_layout_attrvalue(struct layout_range_header const *h, enum l
     case LAYOUT_RANGE_ATTR_EFFECT:
         return range_iface->iface == value->u.effect;
     case LAYOUT_RANGE_ATTR_UNDERLINE:
-        return range->underline == value->u.underline;
+        return range_bool->value == value->u.underline;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
         return range_bool->value == value->u.strikethrough;
     case LAYOUT_RANGE_ATTR_PAIR_KERNING:
@@ -1664,12 +1665,12 @@ static inline BOOL is_same_layout_attributes(struct layout_range_header const *h
                left->stretch == right->stretch &&
                left->fontsize == right->fontsize &&
                left->object == right->object &&
-               left->underline == right->underline &&
                left->pair_kerning == right->pair_kerning &&
                left->collection == right->collection &&
               !strcmpiW(left->locale, right->locale) &&
               !strcmpW(left->fontfamily, right->fontfamily);
     }
+    case LAYOUT_RANGE_UNDERLINE:
     case LAYOUT_RANGE_STRIKETHROUGH:
     {
         struct layout_range_bool const *left = (struct layout_range_bool const*)hleft;
@@ -1722,7 +1723,6 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
         range->stretch = layout->format.stretch;
         range->fontsize = layout->format.fontsize;
         range->object = NULL;
-        range->underline = FALSE;
         range->pair_kerning = FALSE;
 
         range->fontfamily = heap_strdupW(layout->format.family_name);
@@ -1739,6 +1739,7 @@ static struct layout_range_header *alloc_layout_range(struct dwrite_textlayout *
         h = &range->h;
         break;
     }
+    case LAYOUT_RANGE_UNDERLINE:
     case LAYOUT_RANGE_STRIKETHROUGH:
     {
         struct layout_range_bool *range;
@@ -1813,6 +1814,7 @@ static struct layout_range_header *alloc_layout_range_from(struct layout_range_h
         ret = &range->h;
         break;
     }
+    case LAYOUT_RANGE_UNDERLINE:
     case LAYOUT_RANGE_STRIKETHROUGH:
     {
         struct layout_range_bool *strike = heap_alloc(sizeof(*strike));
@@ -1890,6 +1892,11 @@ static void free_layout_ranges_list(struct dwrite_textlayout *layout)
     struct layout_range_header *cur, *cur2;
 
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->ranges, struct layout_range_header, entry) {
+        list_remove(&cur->entry);
+        free_layout_range(cur);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->underline_ranges, struct layout_range_header, entry) {
         list_remove(&cur->entry);
         free_layout_range(cur);
     }
@@ -1993,8 +2000,8 @@ static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_
         changed = set_layout_range_iface_attr((IUnknown**)&dest_iface->iface, (IUnknown*)value->u.effect);
         break;
     case LAYOUT_RANGE_ATTR_UNDERLINE:
-        changed = dest->underline != value->u.underline;
-        dest->underline = value->u.underline;
+        changed = dest_bool->value != value->u.underline;
+        dest_bool->value = value->u.underline;
         break;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
         changed = dest_bool->value != value->u.strikethrough;
@@ -2069,12 +2076,14 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
     case LAYOUT_RANGE_ATTR_STRETCH:
     case LAYOUT_RANGE_ATTR_FONTSIZE:
     case LAYOUT_RANGE_ATTR_INLINE:
-    case LAYOUT_RANGE_ATTR_UNDERLINE:
     case LAYOUT_RANGE_ATTR_PAIR_KERNING:
     case LAYOUT_RANGE_ATTR_FONTCOLL:
     case LAYOUT_RANGE_ATTR_LOCALE:
     case LAYOUT_RANGE_ATTR_FONTFAMILY:
         ranges = &layout->ranges;
+        break;
+    case LAYOUT_RANGE_ATTR_UNDERLINE:
+        ranges = &layout->underline_ranges;
         break;
     case LAYOUT_RANGE_ATTR_STRIKETHROUGH:
         ranges = &layout->strike_ranges;
@@ -2778,15 +2787,12 @@ static HRESULT WINAPI dwritetextlayout_GetUnderline(IDWriteTextLayout2 *iface,
     UINT32 position, BOOL *underline, DWRITE_TEXT_RANGE *r)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
-    struct layout_range *range;
+    struct layout_range_bool *range;
 
     TRACE("(%p)->(%u %p %p)\n", This, position, underline, r);
 
-    if (position >= This->len)
-        return S_OK;
-
-    range = get_layout_range_by_pos(This, position);
-    *underline = range->underline;
+    range = (struct layout_range_bool*)get_layout_range_header_by_pos(&This->underline_ranges, position);
+    *underline = range->value;
 
     return return_range(&range->h, r);
 }
@@ -4032,7 +4038,7 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
 
 static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
 {
-    struct layout_range_header *range, *strike, *effect, *spacing, *typography;
+    struct layout_range_header *range, *strike, *underline, *effect, *spacing, *typography;
     static const DWRITE_TEXT_RANGE r = { 0, ~0u };
     HRESULT hr;
 
@@ -4057,6 +4063,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     list_init(&layout->runs);
     list_init(&layout->ranges);
     list_init(&layout->strike_ranges);
+    list_init(&layout->underline_ranges);
     list_init(&layout->effects);
     list_init(&layout->spacing);
     list_init(&layout->typographies);
@@ -4081,12 +4088,14 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
 
     range = alloc_layout_range(layout, &r, LAYOUT_RANGE_REGULAR);
     strike = alloc_layout_range(layout, &r, LAYOUT_RANGE_STRIKETHROUGH);
+    underline = alloc_layout_range(layout, &r, LAYOUT_RANGE_UNDERLINE);
     effect = alloc_layout_range(layout, &r, LAYOUT_RANGE_EFFECT);
     spacing = alloc_layout_range(layout, &r, LAYOUT_RANGE_SPACING);
     typography = alloc_layout_range(layout, &r, LAYOUT_RANGE_TYPOGRAPHY);
-    if (!range || !strike || !effect || !spacing || !typography) {
+    if (!range || !strike || !effect || !spacing || !typography || !underline) {
         free_layout_range(range);
         free_layout_range(strike);
+        free_layout_range(underline);
         free_layout_range(effect);
         free_layout_range(spacing);
         free_layout_range(typography);
@@ -4096,6 +4105,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
 
     list_add_head(&layout->ranges, &range->entry);
     list_add_head(&layout->strike_ranges, &strike->entry);
+    list_add_head(&layout->underline_ranges, &underline->entry);
     list_add_head(&layout->effects, &effect->entry);
     list_add_head(&layout->spacing, &spacing->entry);
     list_add_head(&layout->typographies, &typography->entry);
