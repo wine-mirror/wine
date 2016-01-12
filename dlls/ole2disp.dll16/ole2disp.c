@@ -67,6 +67,11 @@ static SEGPTR safearray_alloc(ULONG size)
     return WOWGlobalAllocLock16(GPTR, size, &h);
 }
 
+static void safearray_free(SEGPTR ptr)
+{
+    WOWGlobalUnlockFree16(ptr);
+}
+
 /******************************************************************************
  *    SafeArrayAllocDescriptor [OLE2DISP.38]
  */
@@ -87,6 +92,26 @@ HRESULT WINAPI SafeArrayAllocDescriptor16(UINT16 dims, SEGPTR *ret)
 
     sa = MapSL(*ret);
     sa->cDims = dims;
+    return S_OK;
+}
+
+/******************************************************************************
+ *    SafeArrayDestroyDescriptor [OLE2DISP.40]
+ */
+HRESULT WINAPI SafeArrayDestroyDescriptor16(SEGPTR s)
+{
+    TRACE("0x%08x\n", s);
+
+    if (s)
+    {
+        SAFEARRAY16 *sa = MapSL(s);
+
+        if (sa->cLocks)
+            return DISP_E_ARRAYISLOCKED;
+
+        safearray_free(s);
+    }
+
     return S_OK;
 }
 

@@ -37,7 +37,7 @@
 37 stub GETACTIVEOBJECT
 38 pascal SafeArrayAllocDescriptor(word ptr) SafeArrayAllocDescriptor16
 39 stub SAFEARRAYALLOCDATA
-40 stub SAFEARRAYDESTROYDESCRIPTOR
+40 pascal SafeArrayDestroyDescriptor(segptr) SafeArrayDestroyDescriptor16
 41 stub SAFEARRAYDESTROYDATA
 42 stub SAFEARRAYREDIM
 43 stub VARI2FROMI4
