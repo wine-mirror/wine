@@ -1,4 +1,4 @@
 @ stdcall -private DllCanUnloadNow()
-@ stdcall -private DllGetClassObject(ptr ptr ptr) xaudio2_7.DllGetClassObject
+@ stdcall -private DllGetClassObject(ptr ptr ptr)
 @ stdcall -private DllRegisterServer()
 @ stdcall -private DllUnregisterServer()
