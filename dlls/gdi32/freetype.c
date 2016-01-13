@@ -6444,6 +6444,57 @@ static BOOL check_unicode_tategaki(WCHAR uchar)
     return (orientation ==  1 || orientation == 3);
 }
 
+static FT_Vector get_advance_metric(GdiFont *incoming_font, GdiFont *font,
+                                    const FT_Glyph_Metrics *metrics,
+                                    const FT_Matrix *transMat, BOOL vertical_metrics)
+{
+    FT_Vector adv;
+    FT_Fixed base_advance, em_scale = 0;
+    BOOL fixed_pitch_full = FALSE;
+
+    if (vertical_metrics)
+        base_advance = metrics->vertAdvance;
+    else
+        base_advance = metrics->horiAdvance;
+
+    adv.x = base_advance;
+    adv.y = 0;
+
+    /* In fixed-pitch font, we adjust the fullwidth character advance so that
+       they have double halfwidth character width. E.g. if the font is 19 ppem,
+       we return 20 (not 19) for fullwidth characters as we return 10 for
+       halfwidth characters. */
+    if(FT_IS_SCALABLE(incoming_font->ft_face) &&
+       (incoming_font->potm || get_outline_text_metrics(incoming_font)) &&
+       !font->fake_bold &&
+       !(incoming_font->potm->otmTextMetrics.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
+        UINT avg_advance;
+        em_scale = MulDiv(incoming_font->ppem, 1 << 16,
+                          incoming_font->ft_face->units_per_EM);
+        avg_advance = pFT_MulFix(incoming_font->ntmAvgWidth, em_scale);
+        fixed_pitch_full = (avg_advance > 0 &&
+                            (base_advance + 63) >> 6 ==
+                            pFT_MulFix(incoming_font->ntmAvgWidth*2, em_scale));
+        if (fixed_pitch_full && !transMat)
+            adv.x = (avg_advance * 2) << 6;
+    }
+
+    if (transMat) {
+        pFT_Vector_Transform(&adv, transMat);
+        if (fixed_pitch_full && adv.y == 0) {
+            FT_Vector vec;
+            vec.x = incoming_font->ntmAvgWidth;
+            vec.y = 0;
+            pFT_Vector_Transform(&vec, transMat);
+            adv.x = (pFT_MulFix(vec.x, em_scale) * 2) << 6;
+        }
+    }
+
+    adv.x = (adv.x + 63) & -64;
+    adv.y = -((adv.y + 63) & -64);
+    return adv;
+}
+
 static unsigned int get_native_glyph_outline(FT_Outline *outline, unsigned int buflen, char *buf)
 {
     TTPOLYGONHEADER *pph;
@@ -6656,7 +6707,8 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     DWORD width, height, pitch, needed = 0;
     FT_Bitmap ft_bitmap;
     FT_Error err;
-    INT left, right, top = 0, bottom = 0, adv;
+    INT left, right, top = 0, bottom = 0;
+    FT_Vector adv;
     INT origin_x = 0, origin_y = 0;
     FT_Angle angle = 0;
     FT_Int load_flags = FT_LOAD_DEFAULT | FT_LOAD_IGNORE_GLOBAL_ADVANCE_WIDTH;
@@ -6668,8 +6720,6 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     BOOL tategaki = (font->name[0] == '@');
     BOOL vertical_metrics;
     UINT original_index;
-    LONG avgAdvance = 0;
-    FT_Fixed em_scale;
 
     TRACE("%p, %04x, %08x, %p, %08x, %p, %p\n", font, glyph, format, lpgm,
 	  buflen, buf, lpmat);
@@ -6868,32 +6918,13 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         /* metrics.width = min( metrics.width, ptm->tmMaxCharWidth << 6 ); */
     }
 
-    em_scale = MulDiv(incoming_font->ppem, 1 << 16, incoming_font->ft_face->units_per_EM);
-
-    if(FT_IS_SCALABLE(incoming_font->ft_face) && !font->fake_bold) {
-        TEXTMETRICW tm;
-        if (get_text_metrics(incoming_font, &tm) &&
-            !(tm.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
-            avgAdvance = pFT_MulFix(incoming_font->ntmAvgWidth, em_scale);
-            if (avgAdvance &&
-                (metrics.horiAdvance+63) >> 6 == pFT_MulFix(incoming_font->ntmAvgWidth*2, em_scale))
-                TRACE("Fixed-pitch full-width character detected\n");
-            else
-                avgAdvance = 0; /* cancel this feature */
-        }
-    }
-
     if(!needsTransform) {
         left = (INT)(metrics.horiBearingX) & -64;
         right = (INT)((metrics.horiBearingX + metrics.width) + 63) & -64;
-        if (!avgAdvance)
-            adv = (INT)(metrics.horiAdvance + 63) >> 6;
-        else
-            adv = (INT)avgAdvance * 2;
-
 	top = (metrics.horiBearingY + 63) & -64;
 	bottom = (metrics.horiBearingY - metrics.height) & -64;
-	gm.gmCellIncX = adv;
+	adv = get_advance_metric(incoming_font, font, &metrics, NULL, vertical_metrics);
+	gm.gmCellIncX = adv.x >> 6;
 	gm.gmCellIncY = 0;
         origin_x = left;
         origin_y = top;
@@ -6949,36 +6980,11 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
         }
 
 	TRACE("transformed box: (%d,%d - %d,%d)\n", left, top, right, bottom);
-        if (vertical_metrics)
-            vec.x = metrics.vertAdvance;
-        else
-            vec.x = metrics.horiAdvance;
-	vec.y = 0;
-	pFT_Vector_Transform(&vec, &transMat);
-	gm.gmCellIncY = -((vec.y+63) >> 6);
-	if (!avgAdvance || vec.y)
-	    gm.gmCellIncX = (vec.x+63) >> 6;
-	else {
-	    vec.x = incoming_font->ntmAvgWidth;
-	    vec.y = 0;
-	    pFT_Vector_Transform(&vec, &transMat);
-	    gm.gmCellIncX = pFT_MulFix(vec.x, em_scale) * 2;
-	}
+        adv = get_advance_metric(incoming_font, font, &metrics, &transMat, vertical_metrics);
+        gm.gmCellIncX = adv.x >> 6;
+        gm.gmCellIncY = adv.y >> 6;
 
-        if (vertical_metrics)
-            vec.x = metrics.vertAdvance;
-        else
-            vec.x = metrics.horiAdvance;
-        vec.y = 0;
-        pFT_Vector_Transform(&vec, &transMatUnrotated);
-        if (!avgAdvance || vec.y)
-            adv = (vec.x+63) >> 6;
-        else {
-            vec.x = incoming_font->ntmAvgWidth;
-            vec.y = 0;
-            pFT_Vector_Transform(&vec, &transMatUnrotated);
-            adv = pFT_MulFix(vec.x, em_scale) * 2;
-        }
+        adv = get_advance_metric(incoming_font, font, &metrics, &transMatUnrotated, vertical_metrics);
 
         vec.x = lsb;
         vec.y = 0;
@@ -7001,7 +7007,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     gm.gmptGlyphOrigin.x = origin_x >> 6;
     gm.gmptGlyphOrigin.y = origin_y >> 6;
     if (!abc->abcB) abc->abcB = 1;
-    abc->abcC = adv - abc->abcA - abc->abcB;
+    abc->abcC = (adv.x >> 6) - abc->abcA - abc->abcB;
 
     TRACE("%u,%u,%s,%d,%d\n", gm.gmBlackBoxX, gm.gmBlackBoxY,
           wine_dbgstr_point(&gm.gmptGlyphOrigin),
