@@ -275,7 +275,7 @@ static void     get_file_name(char* buf)
  *		static void     childPrintf
  *
  */
-static void     childPrintf(HANDLE h, const char* fmt, ...)
+static void WINETEST_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
 {
     va_list     valist;
     char        buffer[1024+4*MAX_LISTED_ENV_VAR];
@@ -312,10 +312,10 @@ static void     doChild(const char* file, const char* option)
     /* output of startup info (Ansi) */
     GetStartupInfoA(&siA);
     childPrintf(hFile,
-                "[StartupInfoA]\ncb=%08ld\nlpDesktop=%s\nlpTitle=%s\n"
-                "dwX=%lu\ndwY=%lu\ndwXSize=%lu\ndwYSize=%lu\n"
-                "dwXCountChars=%lu\ndwYCountChars=%lu\ndwFillAttribute=%lu\n"
-                "dwFlags=%lu\nwShowWindow=%u\n"
+                "[StartupInfoA]\ncb=%08u\nlpDesktop=%s\nlpTitle=%s\n"
+                "dwX=%u\ndwY=%u\ndwXSize=%u\ndwYSize=%u\n"
+                "dwXCountChars=%u\ndwYCountChars=%u\ndwFillAttribute=%u\n"
+                "dwFlags=%u\nwShowWindow=%u\n"
                 "hStdInput=%lu\nhStdOutput=%lu\nhStdError=%lu\n\n",
                 siA.cb, encodeA(siA.lpDesktop), encodeA(siA.lpTitle),
                 siA.dwX, siA.dwY, siA.dwXSize, siA.dwYSize,
@@ -339,10 +339,10 @@ static void     doChild(const char* file, const char* option)
     memset(&siW, 0, sizeof(siW));
     GetStartupInfoW(&siW);
     childPrintf(hFile,
-                "[StartupInfoW]\ncb=%08ld\nlpDesktop=%s\nlpTitle=%s\n"
-                "dwX=%lu\ndwY=%lu\ndwXSize=%lu\ndwYSize=%lu\n"
-                "dwXCountChars=%lu\ndwYCountChars=%lu\ndwFillAttribute=%lu\n"
-                "dwFlags=%lu\nwShowWindow=%u\n"
+                "[StartupInfoW]\ncb=%08u\nlpDesktop=%s\nlpTitle=%s\n"
+                "dwX=%u\ndwY=%u\ndwXSize=%u\ndwYSize=%u\n"
+                "dwXCountChars=%u\ndwYCountChars=%u\ndwFillAttribute=%u\n"
+                "dwFlags=%u\nwShowWindow=%u\n"
                 "hStdInput=%lu\nhStdOutput=%lu\nhStdError=%lu\n\n",
                 siW.cb, encodeW(siW.lpDesktop), encodeW(siW.lpTitle),
                 siW.dwX, siW.dwY, siW.dwXSize, siW.dwYSize,
@@ -445,9 +445,9 @@ static void     doChild(const char* file, const char* option)
         childPrintf(hFile, "InputCP=%d\nOutputCP=%d\n",
                     GetConsoleCP(), GetConsoleOutputCP());
         if (GetConsoleMode(hConIn, &modeIn))
-            childPrintf(hFile, "InputMode=%ld\n", modeIn);
+            childPrintf(hFile, "InputMode=%u\n", modeIn);
         if (GetConsoleMode(hConOut, &modeOut))
-            childPrintf(hFile, "OutputMode=%ld\n", modeOut);
+            childPrintf(hFile, "OutputMode=%u\n", modeOut);
 
         /* now that we have written all relevant information, let's change it */
         SetLastError(0xdeadbeef);
