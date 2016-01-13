@@ -651,10 +651,7 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
     }
 }
 
-static inline FLOAT get_scaled_font_metric(UINT32 metric, FLOAT emSize, const DWRITE_FONT_METRICS *metrics)
-{
-    return (FLOAT)metric * emSize / (FLOAT)metrics->designUnitsPerEm;
-}
+#define SCALE_FONT_METRIC(metric, emSize, metrics) ((FLOAT)(metric) * (emSize) / (FLOAT)(metrics)->designUnitsPerEm)
 
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
@@ -878,8 +875,8 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         else
             IDWriteFontFace_GetMetrics(run->run.fontFace, &fontmetrics);
 
-        r->baseline = get_scaled_font_metric(fontmetrics.ascent, run->run.fontEmSize, &fontmetrics);
-        r->height = get_scaled_font_metric(fontmetrics.ascent + fontmetrics.descent, run->run.fontEmSize, &fontmetrics);
+        r->baseline = SCALE_FONT_METRIC(fontmetrics.ascent, run->run.fontEmSize, &fontmetrics);
+        r->height = SCALE_FONT_METRIC(fontmetrics.ascent + fontmetrics.descent, run->run.fontEmSize, &fontmetrics);
 
         layout_set_cluster_metrics(layout, r, &cluster);
 
@@ -1135,8 +1132,9 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
             IDWriteFontFace_GetMetrics(r->u.regular.run.fontFace, &metrics);
 
         s->s.width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
-        s->s.thickness = metrics.strikethroughThickness;
-        s->s.offset = metrics.strikethroughPosition;
+        s->s.thickness = SCALE_FONT_METRIC(metrics.strikethroughThickness, r->u.regular.run.fontEmSize, &metrics);
+        /* Negative offset moves it above baseline as Y coordinate grows downward. */
+        s->s.offset = -SCALE_FONT_METRIC(metrics.strikethroughPosition, r->u.regular.run.fontEmSize, &metrics);
         s->s.readingDirection = layout->format.readingdir;
         s->s.flowDirection = layout->format.flow;
         s->s.localeName = r->u.regular.descr.localeName;
