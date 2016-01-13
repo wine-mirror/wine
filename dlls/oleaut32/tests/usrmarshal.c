@@ -767,7 +767,7 @@ static void test_marshal_VARIANT(void)
     double d;
     void *mem;
     DWORD *wirev;
-    BSTR b;
+    BSTR b, b2;
     WCHAR str[] = {'m','a','r','s','h','a','l',' ','t','e','s','t',0};
     SAFEARRAYBOUND sab;
     LPSAFEARRAY lpsa, lpsa2, lpsa_copy;
@@ -1237,15 +1237,21 @@ static void test_marshal_VARIANT(void)
     ok(*wirev, "wv[6] %08x\n", *wirev); /* win2k: this is b. winxp: this is (char*)b + 1 */
     wirev++;
     check_bstr(wirev, b);
+    b2 = SysAllocString(str);
+    b2[0] = 0;
+    V_VT(&v2) = VT_BSTR | VT_BYREF;
+    V_BSTRREF(&v2) = &b2;
+    mem = b2;
     VariantInit(&v2);
     stubMsg.Buffer = buffer;
     next = VARIANT_UserUnmarshal(&umcb.Flags, buffer, &v2);
     ok(next == buffer + stubMsg.BufferLength, "got %p expect %p\n", next, buffer + stubMsg.BufferLength);
+    ok(mem == b2, "BSTR should be reused\n");
     ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
     ok(SysStringByteLen(*V_BSTRREF(&v)) == SysStringByteLen(*V_BSTRREF(&v2)), "bstr string lens differ\n");
     ok(!memcmp(*V_BSTRREF(&v), *V_BSTRREF(&v2), SysStringByteLen(*V_BSTRREF(&v))), "bstrs differ\n");
 
-    VARIANT_UserFree(&umcb.Flags, &v2);
+    SysFreeString(b2);
     HeapFree(GetProcessHeap(), 0, oldbuffer);
     SysFreeString(b);
 
