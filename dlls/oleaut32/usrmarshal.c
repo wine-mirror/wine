@@ -349,10 +349,6 @@ static unsigned char *interface_variant_unmarshal(ULONG *pFlags, unsigned char *
   ptr = *(DWORD*)Buffer;
   Buffer += sizeof(DWORD);
 
-  /* Clear any existing interface which WdtpInterfacePointer_UserUnmarshal()
-     would try to release.  This has been done already with a VariantClear(). */
-  *ppunk = NULL;
-
   if(!ptr)
       return Buffer;
 
@@ -528,8 +524,14 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
             memset(V_BYREF(pvar), 0, mem_size);
         }
 
-        if(!(header->vt & VT_ARRAY))
+        if(!(header->vt & VT_ARRAY)
+                && (header->vt & VT_TYPEMASK) != VT_BSTR
+                && (header->vt & VT_TYPEMASK) != VT_VARIANT
+                && (header->vt & VT_TYPEMASK) != VT_UNKNOWN
+                && (header->vt & VT_TYPEMASK) != VT_DISPATCH
+                && (header->vt & VT_TYPEMASK) != VT_RECORD)
             memcpy(V_BYREF(pvar), Pos, type_size);
+
         if((header->vt & VT_TYPEMASK) != VT_VARIANT)
             Pos += type_size;
         else
@@ -540,6 +542,14 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
         VariantClear(pvar);
         if(header->vt & VT_ARRAY)
             V_ARRAY(pvar) = NULL;
+        else if((header->vt & VT_TYPEMASK) == VT_BSTR)
+            V_BSTR(pvar) = NULL;
+        else if((header->vt & VT_TYPEMASK) == VT_UNKNOWN)
+            V_UNKNOWN(pvar) = NULL;
+        else if((header->vt & VT_TYPEMASK) == VT_DISPATCH)
+            V_DISPATCH(pvar) = NULL;
+        else if((header->vt & VT_TYPEMASK) == VT_RECORD)
+            V_RECORD(pvar) = NULL;
         else if((header->vt & VT_TYPEMASK) == VT_DECIMAL)
             memcpy(pvar, Pos, type_size);
         else
@@ -564,11 +574,9 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
         switch (header->vt)
         {
         case VT_BSTR:
-            V_BSTR(pvar) = NULL;
             Pos = BSTR_UserUnmarshal(pFlags, Pos, &V_BSTR(pvar));
             break;
         case VT_BSTR | VT_BYREF:
-            *V_BSTRREF(pvar) = NULL;
             Pos = BSTR_UserUnmarshal(pFlags, Pos, V_BSTRREF(pvar));
             break;
         case VT_VARIANT | VT_BYREF:
