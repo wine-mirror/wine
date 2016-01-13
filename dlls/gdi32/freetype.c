@@ -162,6 +162,7 @@ MAKE_FUNCPTR(FT_Render_Glyph);
 MAKE_FUNCPTR(FT_Select_Charmap);
 MAKE_FUNCPTR(FT_Set_Charmap);
 MAKE_FUNCPTR(FT_Set_Pixel_Sizes);
+MAKE_FUNCPTR(FT_Vector_Length);
 MAKE_FUNCPTR(FT_Vector_Transform);
 MAKE_FUNCPTR(FT_Vector_Unit);
 static FT_Error (*pFT_Outline_Embolden)(FT_Outline *, FT_Pos);
@@ -4084,6 +4085,7 @@ static BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Select_Charmap)
     LOAD_FUNCPTR(FT_Set_Charmap)
     LOAD_FUNCPTR(FT_Set_Pixel_Sizes)
+    LOAD_FUNCPTR(FT_Vector_Length)
     LOAD_FUNCPTR(FT_Vector_Transform)
     LOAD_FUNCPTR(FT_Vector_Unit)
 #undef LOAD_FUNCPTR
@@ -6384,6 +6386,20 @@ static inline BOOL is_identity_MAT2(const MAT2 *matrix)
     return !memcmp(matrix, &identity, sizeof(MAT2));
 }
 
+static inline FT_Vector normalize_vector(FT_Vector *vec)
+{
+    FT_Vector out;
+    FT_Fixed len;
+    len = pFT_Vector_Length(vec);
+    if (len) {
+        out.x = (vec->x << 6) / len;
+        out.y = (vec->y << 6) / len;
+    }
+    else
+        out.x = out.y = 0;
+    return out;
+}
+
 static void synthesize_bold_glyph(FT_GlyphSlot glyph, LONG ppem, FT_Glyph_Metrics *metrics)
 {
     FT_Error err;
@@ -6409,8 +6425,6 @@ static void synthesize_bold_glyph(FT_GlyphSlot glyph, LONG ppem, FT_Glyph_Metric
         metrics->height = bbox.yMax - bbox.yMin;
         metrics->horiBearingX = bbox.xMin;
         metrics->horiBearingY = bbox.yMax;
-        metrics->horiAdvance += (1 << 6);
-        metrics->vertAdvance += (1 << 6);
         metrics->vertBearingX = metrics->horiBearingX - metrics->horiAdvance / 2;
         metrics->vertBearingY = (metrics->vertAdvance - metrics->height) / 2;
         break;
@@ -6466,7 +6480,6 @@ static FT_Vector get_advance_metric(GdiFont *incoming_font, GdiFont *font,
        halfwidth characters. */
     if(FT_IS_SCALABLE(incoming_font->ft_face) &&
        (incoming_font->potm || get_outline_text_metrics(incoming_font)) &&
-       !font->fake_bold &&
        !(incoming_font->potm->otmTextMetrics.tmPitchAndFamily & TMPF_FIXED_PITCH)) {
         UINT avg_advance;
         em_scale = MulDiv(incoming_font->ppem, 1 << 16,
@@ -6487,6 +6500,18 @@ static FT_Vector get_advance_metric(GdiFont *incoming_font, GdiFont *font,
             vec.y = 0;
             pFT_Vector_Transform(&vec, transMat);
             adv.x = (pFT_MulFix(vec.x, em_scale) * 2) << 6;
+        }
+    }
+
+    if (font->fake_bold) {
+        if (!transMat)
+            adv.x += 1 << 6;
+        else {
+            FT_Vector fake_bold_adv, vec = { 1 << 6, 0 };
+            pFT_Vector_Transform(&vec, transMat);
+            fake_bold_adv = normalize_vector(&vec);
+            adv.x += fake_bold_adv.x;
+            adv.y += fake_bold_adv.y;
         }
     }
 

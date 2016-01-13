@@ -6365,7 +6365,7 @@ static void test_fake_bold_font(void)
     ok(data[0].w + 1 == data[1].w,
        "expected %d, got %d\n", data[0].w + 1, data[1].w);
 
-    todo_wine ok(data[0].gm.gmCellIncX + 1 == data[1].gm.gmCellIncX,
+    ok(data[0].gm.gmCellIncX + 1 == data[1].gm.gmCellIncX,
        "expected %d, got %d\n", data[0].gm.gmCellIncX + 1, data[1].gm.gmCellIncX);
     ok(data[0].gm.gmCellIncY == data[1].gm.gmCellIncY,
        "expected %d, got %d\n", data[0].gm.gmCellIncY, data[1].gm.gmCellIncY);
