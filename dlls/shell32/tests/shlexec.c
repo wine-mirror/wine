@@ -164,17 +164,17 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
                                 LPCSTR parameters, LPCSTR directory,
                                 LPCSTR class)
 {
+    char smask[11];
     SHELLEXECUTEINFOA sei;
     BOOL success;
     INT_PTR rc;
 
+    /* Add some flags so we can wait for the child process */
+    mask |= SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE;
+
     strcpy(shell_call, "ShellExecuteEx(");
-    if (mask)
-    {
-        char smask[11];
-        sprintf(smask, "0x%x", mask);
-        strcat_param(shell_call, "mask", smask);
-    }
+    sprintf(smask, "0x%x", mask);
+    strcat_param(shell_call, "mask", smask);
     strcat_param(shell_call, "verb", verb);
     strcat_param(shell_call, "file", file);
     strcat_param(shell_call, "params", parameters);
@@ -185,7 +185,7 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
         trace("%s\n", shell_call);
 
     sei.cbSize=sizeof(sei);
-    sei.fMask=SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE | mask;
+    sei.fMask=mask;
     sei.hwnd=NULL;
     sei.lpVerb=verb;
     sei.lpFile=file;
