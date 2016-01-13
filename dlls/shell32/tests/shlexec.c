@@ -951,7 +951,7 @@ static void test_lpFile_parsed(void)
     /* error should be SE_ERR_FNF, not SE_ERR_NOASSOC */
     sprintf(fileA, "\"%s\\drawback_file.noassoc\" foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    ok(rc == SE_ERR_FNF, "%s succeeded: rc=%lu\n", shell_call, rc);
+    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
 
     /* ""command"" not works on wine (and real win9x and w2k) */
     sprintf(fileA, "\"\"%s\\simple.shlexec\"\"", tmpdir);
@@ -966,11 +966,11 @@ static void test_lpFile_parsed(void)
 
     /* is SEE_MASK_DOENVSUBST default flag? Should only be when XP emulates 9x (XP bug or real 95 or ME behavior ?) */
     rc=shell_execute(NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL);
-    todo_wine ok(rc == SE_ERR_FNF, "%s succeeded: rc=%lu\n", shell_call, rc);
+    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
 
     /* quoted */
     rc=shell_execute(NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL);
-    todo_wine ok(rc == SE_ERR_FNF, "%s succeeded: rc=%lu\n", shell_call, rc);
+    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
 
     /* test SEE_MASK_DOENVSUBST works */
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
@@ -2114,7 +2114,7 @@ static void test_exes(void)
         {
             rc=shell_execute(NULL, filename, params, NULL);
             todo_wine {
-                ok(rc==SE_ERR_NOASSOC, "%s succeeded: rc=%lu\n", shell_call, rc);
+                ok(rc==SE_ERR_NOASSOC, "%s returned %lu\n", shell_call, rc);
             }
         }
     }
