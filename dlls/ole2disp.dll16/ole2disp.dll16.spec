@@ -18,8 +18,8 @@
 18 pascal -ret16 SafeArrayGetElemsize(ptr) SafeArrayGetElemsize16
 19 stub SAFEARRAYGETUBOUND
 20 stub SAFEARRAYGETLBOUND
-21 stub SAFEARRAYLOCK
-22 stub SAFEARRAYUNLOCK
+21 pascal SafeArrayLock(ptr) SafeArrayLock16
+22 pascal SafeArrayUnlock(ptr) SafeArrayUnlock16
 23 stub SAFEARRAYACCESSDATA
 24 stub SAFEARRAYUNACCESSDATA
 25 stub SAFEARRAYGETELEMENT
