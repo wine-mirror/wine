@@ -108,6 +108,40 @@ USHORT WINAPI SafeArrayGetElemsize16(SAFEARRAY16 *sa)
 }
 
 /******************************************************************************
+ *    SafeArrayLock [OLE2DISP.21]
+ */
+HRESULT WINAPI SafeArrayLock16(SAFEARRAY16 *sa)
+{
+    TRACE("(%p)\n", sa);
+
+    if (!sa)
+        return E_INVALIDARG16;
+
+    if (sa->cLocks == 0xffff)
+        return E_UNEXPECTED;
+
+    sa->cLocks++;
+    return S_OK;
+}
+
+/******************************************************************************
+ *    SafeArrayUnlock [OLE2DISP.22]
+ */
+HRESULT WINAPI SafeArrayUnlock16(SAFEARRAY16 *sa)
+{
+    TRACE("(%p)\n", sa);
+
+    if (!sa)
+        return E_INVALIDARG16;
+
+    if (sa->cLocks == 0)
+        return E_UNEXPECTED;
+
+    sa->cLocks--;
+    return S_OK;
+}
+
+/******************************************************************************
  *    SafeArrayAllocDescriptor [OLE2DISP.38]
  */
 HRESULT WINAPI SafeArrayAllocDescriptor16(UINT16 dims, SEGPTR *ret)
