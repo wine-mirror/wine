@@ -90,6 +90,15 @@ static ULONG safearray_getcellcount(const SAFEARRAY16 *sa)
 }
 
 /******************************************************************************
+ *    SafeArrayGetDim [OLE2DISP.17]
+ */
+USHORT WINAPI SafeArrayGetDim16(SAFEARRAY16 *sa)
+{
+    TRACE("(%p)\n", sa);
+    return sa->cDims;
+}
+
+/******************************************************************************
  *    SafeArrayAllocDescriptor [OLE2DISP.38]
  */
 HRESULT WINAPI SafeArrayAllocDescriptor16(UINT16 dims, SEGPTR *ret)
