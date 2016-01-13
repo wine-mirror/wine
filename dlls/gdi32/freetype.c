@@ -6400,40 +6400,32 @@ static inline FT_Vector normalize_vector(FT_Vector *vec)
     return out;
 }
 
-static void synthesize_bold_glyph(FT_GlyphSlot glyph, LONG ppem, FT_Glyph_Metrics *metrics)
+static BOOL get_bold_glyph_outline(FT_GlyphSlot glyph, LONG ppem, FT_Glyph_Metrics *metrics)
 {
     FT_Error err;
-    static UINT once;
+    FT_Pos strength;
+    FT_BBox bbox;
 
-    switch(glyph->format) {
-    case FT_GLYPH_FORMAT_OUTLINE:
-    {
-        FT_Pos strength;
-        FT_BBox bbox;
-        if(!pFT_Outline_Embolden)
-            break;
+    if(glyph->format != FT_GLYPH_FORMAT_OUTLINE)
+        return FALSE;
+    if(!pFT_Outline_Embolden)
+        return FALSE;
 
-        strength = MulDiv(ppem, 1 << 6, 24);
-        err = pFT_Outline_Embolden(&glyph->outline, strength);
-        if(err) {
-            TRACE("FT_Ouline_Embolden returns %d, ignored\n", err);
-            break;
-        }
-
-        pFT_Outline_Get_CBox(&glyph->outline, &bbox);
-        metrics->width = bbox.xMax - bbox.xMin;
-        metrics->height = bbox.yMax - bbox.yMin;
-        metrics->horiBearingX = bbox.xMin;
-        metrics->horiBearingY = bbox.yMax;
-        metrics->vertBearingX = metrics->horiBearingX - metrics->horiAdvance / 2;
-        metrics->vertBearingY = (metrics->vertAdvance - metrics->height) / 2;
-        break;
+    strength = MulDiv(ppem, 1 << 6, 24);
+    err = pFT_Outline_Embolden(&glyph->outline, strength);
+    if(err) {
+        TRACE("FT_Ouline_Embolden returns %d\n", err);
+        return FALSE;
     }
-    default:
-        if (!once++)
-            WARN("Emboldening format 0x%x is not supported\n", glyph->format);
-        return;
-    }
+
+    pFT_Outline_Get_CBox(&glyph->outline, &bbox);
+    metrics->width = bbox.xMax - bbox.xMin;
+    metrics->height = bbox.yMax - bbox.yMin;
+    metrics->horiBearingX = bbox.xMin;
+    metrics->horiBearingY = bbox.yMax;
+    metrics->vertBearingX = metrics->horiBearingX - metrics->horiAdvance / 2;
+    metrics->vertBearingY = (metrics->vertAdvance - metrics->height) / 2;
+    return TRUE;
 }
 
 static inline BYTE get_max_level( UINT format )
@@ -6926,7 +6918,7 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 
     metrics = ft_face->glyph->metrics;
     if(font->fake_bold)
-        synthesize_bold_glyph(ft_face->glyph, font->ppem, &metrics);
+        get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics);
 
     /* Some poorly-created fonts contain glyphs that exceed the boundaries set
      * by the text metrics. The proper behavior is to clip the glyph metrics to
