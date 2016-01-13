@@ -1,5 +1,5 @@
 TESTDLL  = bcrypt.dll
-IMPORTS  = user32
+IMPORTS  = bcrypt user32
 
 C_SRCS = \
 	bcrypt.c

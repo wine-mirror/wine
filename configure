@@ -17379,7 +17379,7 @@ wine_fn_config_dll avifil32 enable_avifil32 clean,implib,po
 wine_fn_config_test dlls/avifil32/tests avifil32_test
 wine_fn_config_dll avifile.dll16 enable_win16
 wine_fn_config_dll avrt enable_avrt implib
-wine_fn_config_dll bcrypt enable_bcrypt
+wine_fn_config_dll bcrypt enable_bcrypt implib
 wine_fn_config_test dlls/bcrypt/tests bcrypt_test
 wine_fn_config_dll bluetoothapis enable_bluetoothapis
 wine_fn_config_dll browseui enable_browseui clean,po
