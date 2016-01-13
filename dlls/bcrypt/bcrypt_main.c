@@ -18,10 +18,14 @@
  */
 
 #include "config.h"
+#include "wine/port.h"
 
 #include <stdarg.h>
 #ifdef HAVE_COMMONCRYPTO_COMMONDIGEST_H
 #include <CommonCrypto/CommonDigest.h>
+#elif defined(SONAME_LIBGNUTLS)
+#include <gnutls/gnutls.h>
+#include <gnutls/crypto.h>
 #endif
 
 #include "ntstatus.h"
@@ -32,9 +36,87 @@
 #include "bcrypt.h"
 
 #include "wine/debug.h"
+#include "wine/library.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
+
+static HINSTANCE instance;
+
+#if defined(SONAME_LIBGNUTLS) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
+
+static void *libgnutls_handle;
+#define MAKE_FUNCPTR(f) static typeof(f) * p##f
+MAKE_FUNCPTR(gnutls_global_deinit);
+MAKE_FUNCPTR(gnutls_global_init);
+MAKE_FUNCPTR(gnutls_global_set_log_function);
+MAKE_FUNCPTR(gnutls_global_set_log_level);
+MAKE_FUNCPTR(gnutls_hash);
+MAKE_FUNCPTR(gnutls_hash_deinit);
+MAKE_FUNCPTR(gnutls_hash_init);
+MAKE_FUNCPTR(gnutls_perror);
+#undef MAKE_FUNCPTR
+
+static void gnutls_log( int level, const char *msg )
+{
+    TRACE( "<%d> %s", level, msg );
+}
+
+static BOOL gnutls_initialize(void)
+{
+    int ret;
+
+    if (!(libgnutls_handle = wine_dlopen( SONAME_LIBGNUTLS, RTLD_NOW, NULL, 0 )))
+    {
+        ERR_(winediag)( "failed to load libgnutls, no support for crypto hashes\n" );
+        return FALSE;
+    }
+
+#define LOAD_FUNCPTR(f) \
+    if (!(p##f = wine_dlsym( libgnutls_handle, #f, NULL, 0 ))) \
+    { \
+        ERR( "failed to load %s\n", #f ); \
+        goto fail; \
+    }
+
+    LOAD_FUNCPTR(gnutls_global_deinit)
+    LOAD_FUNCPTR(gnutls_global_init)
+    LOAD_FUNCPTR(gnutls_global_set_log_function)
+    LOAD_FUNCPTR(gnutls_global_set_log_level)
+    LOAD_FUNCPTR(gnutls_hash);
+    LOAD_FUNCPTR(gnutls_hash_deinit);
+    LOAD_FUNCPTR(gnutls_hash_init);
+    LOAD_FUNCPTR(gnutls_perror)
+#undef LOAD_FUNCPTR
+
+    if ((ret = pgnutls_global_init()) != GNUTLS_E_SUCCESS)
+    {
+        pgnutls_perror( ret );
+        goto fail;
+    }
+
+    if (TRACE_ON( bcrypt ))
+    {
+        pgnutls_global_set_log_level( 4 );
+        pgnutls_global_set_log_function( gnutls_log );
+    }
+
+    return TRUE;
+
+fail:
+    wine_dlclose( libgnutls_handle, NULL, 0 );
+    libgnutls_handle = NULL;
+    return FALSE;
+}
+
+static void gnutls_uninitialize(void)
+{
+    pgnutls_global_deinit();
+    wine_dlclose( libgnutls_handle, NULL, 0 );
+    libgnutls_handle = NULL;
+}
+#endif /* SONAME_LIBGNUTLS && !HAVE_COMMONCRYPTO_COMMONDIGEST_H */
 
 NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
                                      BCRYPT_ALGORITHM_IDENTIFIER **ppAlgList, ULONG dwFlags)
@@ -203,7 +285,7 @@ static NTSTATUS hash_init( struct hash *hash )
     return STATUS_SUCCESS;
 }
 
-static void hash_update( struct hash *hash, UCHAR *input, ULONG size )
+static NTSTATUS hash_update( struct hash *hash, UCHAR *input, ULONG size )
 {
     switch (hash->alg_id)
     {
@@ -225,8 +307,9 @@ static void hash_update( struct hash *hash, UCHAR *input, ULONG size )
 
     default:
         ERR( "unhandled id %u\n", hash->alg_id );
-        break;
+        return STATUS_NOT_IMPLEMENTED;
     }
+    return STATUS_SUCCESS;
 }
 
 static NTSTATUS hash_finish( struct hash *hash, UCHAR *output, ULONG size )
@@ -255,6 +338,58 @@ static NTSTATUS hash_finish( struct hash *hash, UCHAR *output, ULONG size )
     }
     return STATUS_SUCCESS;
 }
+#elif defined(SONAME_LIBGNUTLS)
+struct hash
+{
+    struct object    hdr;
+    enum alg_id      alg_id;
+    gnutls_hash_hd_t handle;
+};
+
+static NTSTATUS hash_init( struct hash *hash )
+{
+    gnutls_digest_algorithm_t alg;
+
+    if (!libgnutls_handle) return STATUS_INTERNAL_ERROR;
+
+    switch (hash->alg_id)
+    {
+    case ALG_ID_SHA1:
+        alg = GNUTLS_DIG_SHA1;
+        break;
+
+    case ALG_ID_SHA256:
+        alg = GNUTLS_DIG_SHA256;
+        break;
+
+    case ALG_ID_SHA384:
+        alg = GNUTLS_DIG_SHA384;
+        break;
+
+    case ALG_ID_SHA512:
+        alg = GNUTLS_DIG_SHA512;
+        break;
+
+    default:
+        ERR( "unhandled id %u\n", hash->alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if (pgnutls_hash_init( &hash->handle, alg )) return STATUS_INTERNAL_ERROR;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS hash_update( struct hash *hash, UCHAR *input, ULONG size )
+{
+    if (pgnutls_hash( hash->handle, input, size )) return STATUS_INTERNAL_ERROR;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS hash_finish( struct hash *hash, UCHAR *output, ULONG size )
+{
+    pgnutls_hash_deinit( hash->handle, output );
+    return STATUS_SUCCESS;
+}
 #else
 struct hash
 {
@@ -268,9 +403,10 @@ static NTSTATUS hash_init( struct hash *hash )
     return STATUS_NOT_IMPLEMENTED;
 }
 
-static void hash_update( struct hash *hash, UCHAR *input, ULONG size )
+static NTSTATUS hash_update( struct hash *hash, UCHAR *input, ULONG size )
 {
     ERR( "support for hashes not available at build time\n" );
+    return STATUS_NOT_IMPLEMENTED;
 }
 
 static NTSTATUS hash_finish( struct hash *hash, UCHAR *output, ULONG size )
@@ -484,8 +620,7 @@ NTSTATUS WINAPI BCryptHashData( BCRYPT_HASH_HANDLE handle, UCHAR *input, ULONG s
     if (!hash || hash->hdr.magic != MAGIC_HASH) return STATUS_INVALID_HANDLE;
     if (!input) return STATUS_INVALID_PARAMETER;
 
-    hash_update( hash, input, size );
-    return STATUS_SUCCESS;
+    return hash_update( hash, input, size );
 }
 
 NTSTATUS WINAPI BCryptFinishHash( BCRYPT_HASH_HANDLE handle, UCHAR *output, ULONG size, ULONG flags )
@@ -498,4 +633,26 @@ NTSTATUS WINAPI BCryptFinishHash( BCRYPT_HASH_HANDLE handle, UCHAR *output, ULON
     if (!output) return STATUS_INVALID_PARAMETER;
 
     return hash_finish( hash, output, size );
+}
+
+BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
+{
+    switch (reason)
+    {
+    case DLL_PROCESS_ATTACH:
+        instance = hinst;
+        DisableThreadLibraryCalls( hinst );
+#if defined(SONAME_LIBGNUTLS) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+        gnutls_initialize();
+#endif
+        break;
+
+    case DLL_PROCESS_DETACH:
+        if (reserved) break;
+#if defined(SONAME_LIBGNUTLS) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+        gnutls_uninitialize();
+#endif
+        break;
+    }
+    return TRUE;
 }
