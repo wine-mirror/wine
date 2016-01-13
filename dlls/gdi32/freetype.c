@@ -6917,8 +6917,10 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
     }
 
     metrics = ft_face->glyph->metrics;
-    if(font->fake_bold)
-        get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics);
+    if(font->fake_bold) {
+        if (!get_bold_glyph_outline(ft_face->glyph, font->ppem, &metrics) && metrics.width)
+            metrics.width += 1 << 6;
+    }
 
     /* Some poorly-created fonts contain glyphs that exceed the boundaries set
      * by the text metrics. The proper behavior is to clip the glyph metrics to
@@ -7068,7 +7070,17 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
 	    INT w = min( pitch, (ft_face->glyph->bitmap.width + 7) >> 3 );
 	    INT h = min( height, ft_face->glyph->bitmap.rows );
 	    while(h--) {
-	        memcpy(dst, src, w);
+		if (!font->fake_bold)
+		    memcpy(dst, src, w);
+		else {
+		    INT x;
+		    dst[0] = 0;
+		    for (x = 0; x < w; x++) {
+			dst[x  ] = (dst[x] & 0x80) | (src[x] >> 1) | src[x];
+			if (x+1 < pitch)
+			    dst[x+1] = (src[x] & 0x01) << 7;
+		    }
+		}
 		src += ft_face->glyph->bitmap.pitch;
 		dst += pitch;
 	    }
@@ -7124,8 +7136,12 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
             INT x;
             memset( buf, 0, needed );
             while(h--) {
-                for(x = 0; x < pitch && x < ft_face->glyph->bitmap.width; x++)
-                    if (src[x / 8] & masks[x % 8]) dst[x] = max_level;
+                for(x = 0; x < pitch && x < ft_face->glyph->bitmap.width; x++) {
+                    if (src[x / 8] & masks[x % 8]) {
+                        dst[x] = max_level;
+                        if (font->fake_bold && x+1 < pitch) dst[x+1] = max_level;
+                    }
+                }
                 src += ft_face->glyph->bitmap.pitch;
                 dst += pitch;
             }
@@ -7199,7 +7215,10 @@ static DWORD get_glyph_outline(GdiFont *incoming_font, UINT glyph, UINT format,
                 for (x = 0; x < width && x < ft_face->glyph->bitmap.width; x++)
                 {
                     if ( src[x / 8] & masks[x % 8] )
+                    {
                         ((unsigned int *)dst)[x] = ~0u;
+                        if (font->fake_bold && x+1 < width) ((unsigned int *)dst)[x+1] = ~0u;
+                    }
                 }
                 src += src_pitch;
                 dst += pitch;
