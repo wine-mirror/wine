@@ -1636,6 +1636,53 @@ static void test_ostream_print_ushort(void)
     call_func1(p_basic_stringstream_wchar_vbase_dtor, &wss);
 }
 
+static struct {
+    int value[2];
+    const char* export_name;
+} vbtable_size_exports_list[] = {
+    {{0x60, 0xb0}, "??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@"},
+    {{0x58, 0xa0}, "??_8?$basic_fstream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@"},
+    {{0x60, 0xb0}, "??_8?$basic_fstream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@"},
+    {{0x58, 0xa0}, "??_8?$basic_fstream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@"},
+    {{0x5c, 0xa8}, "??_8?$basic_ifstream@DU?$char_traits@D@std@@@std@@7B@"},
+    {{0x5c, 0xa8}, "??_8?$basic_ifstream@GU?$char_traits@G@std@@@std@@7B@"},
+    {{ 0xc, 0x18}, "??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@"},
+    {{ 0x4,  0x8}, "??_8?$basic_iostream@DU?$char_traits@D@std@@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@"},
+    {{ 0xc, 0x18}, "??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@"},
+    {{ 0x4,  0x8}, "??_8?$basic_iostream@GU?$char_traits@G@std@@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@"},
+    {{ 0x8, 0x10}, "??_8?$basic_istream@DU?$char_traits@D@std@@@std@@7B@"},
+    {{ 0x8, 0x10}, "??_8?$basic_istream@GU?$char_traits@G@std@@@std@@7B@"},
+    {{0x54, 0x98}, "??_8?$basic_istringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@"},
+    {{0x54, 0x98}, "??_8?$basic_istringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B@"},
+    {{0x58, 0xa0}, "??_8?$basic_ofstream@DU?$char_traits@D@std@@@std@@7B@"},
+    {{0x58, 0xa0}, "??_8?$basic_ofstream@GU?$char_traits@G@std@@@std@@7B@"},
+    {{ 0x4,  0x8}, "??_8?$basic_ostream@DU?$char_traits@D@std@@@std@@7B@"},
+    {{ 0x4,  0x8}, "??_8?$basic_ostream@GU?$char_traits@G@std@@@std@@7B@"},
+    {{0x50, 0x90}, "??_8?$basic_ostringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B@"},
+    {{0x50, 0x90}, "??_8?$basic_ostringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B@"},
+    {{0x58, 0xa0}, "??_8?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B?$basic_istream@DU?$char_traits@D@std@@@1@@"},
+    {{0x50, 0x90}, "??_8?$basic_stringstream@DU?$char_traits@D@std@@V?$allocator@D@2@@std@@7B?$basic_ostream@DU?$char_traits@D@std@@@1@@"},
+    {{0x58, 0xa0}, "??_8?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B?$basic_istream@GU?$char_traits@G@std@@@1@@"},
+    {{0x50, 0x90}, "??_8?$basic_stringstream@GU?$char_traits@G@std@@V?$allocator@G@2@@std@@7B?$basic_ostream@GU?$char_traits@G@std@@@1@@"},
+    {{0x00, 0x00}, 0}
+};
+
+static void test_vbtable_size_exports(void)
+{
+    int i;
+    const int *p_vbtable;
+    int arch_idx = (sizeof(void*) == 8);
+
+    for (i = 0; vbtable_size_exports_list[i].export_name; i++)
+    {
+        SET(p_vbtable, vbtable_size_exports_list[i].export_name);
+
+        ok(p_vbtable[0] == 0, "vbtable[0] wrong, got 0x%x\n", p_vbtable[0]);
+        ok(p_vbtable[1] == vbtable_size_exports_list[i].value[arch_idx],
+                "%d: %s[1] wrong, got 0x%x\n", i, vbtable_size_exports_list[i].export_name, p_vbtable[1]);
+    }
+}
+
 
 START_TEST(ios)
 {
@@ -1652,6 +1699,8 @@ START_TEST(ios)
     test_istream_tellg();
     test_istream_getline();
     test_ostream_print_ushort();
+
+    test_vbtable_size_exports();
 
     FreeLibrary(msvcp);
 }
