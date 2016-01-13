@@ -79,6 +79,12 @@ struct sltg_typelib
     struct sltg_block *typeinfo;
 };
 
+struct sltg_hrefmap
+{
+    int href_count;
+    int *href;
+};
+
 #include "pshpack1.h"
 struct sltg_typeinfo_header
 {
@@ -151,6 +157,30 @@ struct sltg_tail
     short res32; /* unknown */
     short type_bytes; /* bytes used by type descriptions */
 };
+
+struct sltg_hrefinfo
+{
+    char magic; /* 0xdf */
+    char res01; /* 0x00 */
+    char res02[0x42]; /* 0xff... */
+    int number; /* this is 8 times the number of refs */
+    /* Now we have number bytes (8 for each ref) of SLTG_UnknownRefInfo */
+
+    short res50;/* 0xffff */
+    char res52; /* 0x01 */
+    int res53;  /* 0x00000000 */
+    /*    Now we have number/8 SLTG_Names (first WORD is no of bytes in the ascii
+     *    string).  Strings look like "*\Rxxxx*#n".  If xxxx == ffff then the
+     *    ref refers to the nth type listed in this library (0 based).  Else
+     *    the xxxx (which maybe fewer than 4 digits) is the offset into the name
+     *    table to a string "*\G{<guid>}#1.0#0#C:\WINNT\System32\stdole32.tlb#"
+     *    The guid is the typelib guid; the ref again refers to the nth type of
+     *    the imported typelib.
+     */
+
+    char resxx; /* 0xdf */
+};
+
 #include "poppack.h"
 
 static void init_sltg_data(struct sltg_data *data)
@@ -442,7 +472,8 @@ static const char *add_typeinfo_block(struct sltg_typelib *typelib, const type_t
     return index_name;
 }
 
-static void init_typeinfo(struct sltg_typeinfo_header *ti, const type_t *type, int kind)
+static void init_typeinfo(struct sltg_typeinfo_header *ti, const type_t *type, short kind,
+                          const struct sltg_hrefmap *hrefmap)
 {
     ti->magic = 0x0501;
     ti->href_offset = -1;
@@ -456,6 +487,61 @@ static void init_typeinfo(struct sltg_typeinfo_header *ti, const type_t *type, i
     ti->misc.unknown2 = 0x02;
     ti->misc.typekind = kind;
     ti->res1e = -1;
+
+    if (hrefmap->href_count)
+    {
+        char name[64];
+        int i, hrefinfo_size;
+
+        hrefinfo_size = sizeof(struct sltg_hrefinfo);
+
+        for (i = 0; i < hrefmap->href_count; i++)
+        {
+            sprintf(name, "*\\Rffff*#%x", hrefmap->href[i]);
+            hrefinfo_size += 8 + 2 + strlen(name);
+        }
+
+        ti->href_offset = ti->member_offset;
+        ti->member_offset += hrefinfo_size;
+    }
+}
+
+static void write_hrefmap(struct sltg_data *data, const struct sltg_hrefmap *hrefmap)
+{
+    struct sltg_hrefinfo hrefinfo;
+    char name[64];
+    int i;
+
+    if (!hrefmap->href_count) return;
+
+    hrefinfo.magic = 0xdf;
+    hrefinfo.res01 = 0;
+    memset(hrefinfo.res02, 0xff, sizeof(hrefinfo.res02));
+    hrefinfo.number = hrefmap->href_count * 8;
+    hrefinfo.res50 = -1;
+    hrefinfo.res52 = 1;
+    hrefinfo.res53 = 0;
+    hrefinfo.resxx = 0xdf;
+
+    append_data(data, &hrefinfo, offsetof(struct sltg_hrefinfo, res50));
+
+    for (i = 0; i < hrefmap->href_count; i++)
+        append_data(data, "\xff\xff\xff\xff\xff\xff\xff\xff", 8);
+
+    append_data(data, &hrefinfo.res50, 7);
+
+    for (i = 0; i < hrefmap->href_count; i++)
+    {
+        short len;
+
+        sprintf(name, "*\\Rffff*#%x", hrefmap->href[i]);
+        len = strlen(name);
+
+        append_data(data, &len, sizeof(len));
+        append_data(data, name, len);
+    }
+
+    append_data(data, &hrefinfo.resxx, sizeof(hrefinfo.resxx));
 }
 
 static void dump_var_desc(const char *data, int size)
@@ -521,6 +607,9 @@ static int get_element_size(type_t *type)
     case VT_VARIANT:
         return 16;
 
+    case VT_USERDEFINED:
+        return 0;
+
     default:
         error("get_element_size: unrecognized vt %d\n", vt);
         break;
@@ -529,9 +618,41 @@ static int get_element_size(type_t *type)
     return 0;
 }
 
-static short write_var_desc(struct sltg_data *data, type_t *type, short flags, short base_offset, int *size_instance)
+static int local_href(struct sltg_hrefmap *hrefmap, int typelib_href)
 {
-    short vt, desc_offset;
+    int i, href = -1;
+
+    for (i = 0; i < hrefmap->href_count; i++)
+    {
+        if (hrefmap->href[i] == typelib_href)
+        {
+            href = i;
+            break;
+        }
+    }
+
+    if (href == -1)
+    {
+        href = hrefmap->href_count;
+
+        if (hrefmap->href)
+            hrefmap->href = xrealloc(hrefmap->href, sizeof(*hrefmap->href) * (hrefmap->href_count + 1));
+        else
+            hrefmap->href = xmalloc(sizeof(*hrefmap->href));
+
+        hrefmap->href[hrefmap->href_count] = typelib_href;
+        hrefmap->href_count++;
+    }
+
+    chat("typelib href %d mapped to local href %d\n", typelib_href, href);
+
+    return href << 2;
+}
+
+static short write_var_desc(struct sltg_data *data, type_t *type, short flags, short base_offset,
+                            int *size_instance, struct sltg_hrefmap *hrefmap)
+{
+    short vt, vt_flags, desc_offset;
 
     chat("write_var_desc: type %p, type->name %s\n",
          type, type->name ? type->name : "NULL");
@@ -621,20 +742,39 @@ static short write_var_desc(struct sltg_data *data, type_t *type, short flags, s
             chat("write_var_desc: vt VT_PTR | 0x0400\n");
             vt = VT_PTR | 0x0400;
             append_data(data, &vt, sizeof(vt));
-            write_var_desc(data, ref, 0, base_offset, size_instance);
+            write_var_desc(data, ref, 0, base_offset, size_instance, hrefmap);
         }
         else
-            write_var_desc(data, ref, 0x0e00, base_offset, size_instance);
+            write_var_desc(data, ref, 0x0e00, base_offset, size_instance, hrefmap);
         return desc_offset;
     }
 
     chat("write_var_desc: vt %d, flags %04x\n", vt, flags);
 
+    vt_flags = vt | flags;
+    append_data(data, &vt_flags, sizeof(vt_flags));
+
+    if (vt == VT_USERDEFINED)
+    {
+        short href;
+
+        while (type->typelib_idx < 0 && type_is_alias(type))
+            type = type_alias_get_aliasee_type(type);
+
+        chat("write_var_desc: VT_USERDEFINED, type %p, name %s, real type %d, href %d\n",
+             type, type->name, type_get_type(type), type->typelib_idx);
+
+        if (type->typelib_idx == -1)
+            error("write_var_desc: trying to ref not added type\n");
+
+        href = local_href(hrefmap, type->typelib_idx);
+        chat("write_var_desc: VT_USERDEFINED, local href %d\n", href);
+
+        append_data(data, &href, sizeof(href));
+    }
+
     if (size_instance)
         *size_instance += get_element_size(type);
-
-    vt |= flags;
-    append_data(data, &vt, sizeof(vt));
 
     return desc_offset;
 }
@@ -673,6 +813,7 @@ static void init_sltg_tail(struct sltg_tail *tail)
 static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
 {
     struct sltg_data data, *var_data = NULL;
+    struct sltg_hrefmap hrefmap;
     const char *index_name;
     struct sltg_typeinfo_header ti;
     struct sltg_member_header member;
@@ -680,14 +821,16 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
     int member_offset, var_count = 0, var_data_size = 0, size_instance = 0;
     short *type_desc_offset = NULL;
 
-    chat("add_structure_typeinfo: %s\n", type->name);
+    chat("add_structure_typeinfo: type %p, type->name %s\n", type, type->name);
+
+    type->typelib_idx = typelib->block_count;
+
+    hrefmap.href_count = 0;
+    hrefmap.href = NULL;
 
     init_sltg_data(&data);
 
     index_name = add_typeinfo_block(typelib, type, TKIND_RECORD);
-
-    init_typeinfo(&ti, type, TKIND_RECORD);
-    append_data(&data, &ti, sizeof(ti));
 
     if (type_struct_get_fields(type))
     {
@@ -709,7 +852,7 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
             init_sltg_data(&var_data[i]);
 
             base_offset = var_data_size + (i + 1) * sizeof(struct sltg_variable);
-            type_desc_offset[i] = write_var_desc(&var_data[i], var->declspec.type, 0, base_offset, &size_instance);
+            type_desc_offset[i] = write_var_desc(&var_data[i], var->declspec.type, 0, base_offset, &size_instance, &hrefmap);
             dump_var_desc(var_data[i].data, var_data[i].size);
 
             if (var_data[i].size > sizeof(short))
@@ -717,6 +860,11 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
             i++;
         }
     }
+
+    init_typeinfo(&ti, type, TKIND_RECORD, &hrefmap);
+    append_data(&data, &ti, sizeof(ti));
+
+    write_hrefmap(&data, &hrefmap);
 
     member_offset = data.size;
 
