@@ -1091,6 +1091,7 @@ void WINAPI LPSAFEARRAY_UserFree(ULONG *pFlags, LPSAFEARRAY *ppsa)
     TRACE("("); dump_user_flags(pFlags); TRACE(", &%p\n", *ppsa);
 
     SafeArrayDestroy(*ppsa);
+    *ppsa = NULL;
 }
 
 

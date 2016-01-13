@@ -277,6 +277,7 @@ static void test_marshal_LPSAFEARRAY(void)
     ok(lpsa2->cLocks == 0, "got lock count %u, expected 0\n", lpsa2->cLocks);
     init_user_marshal_cb(&umcb, &stub_msg, &rpc_msg, NULL, 0, MSHCTX_DIFFERENTMACHINE);
     LPSAFEARRAY_UserFree(&umcb.Flags, &lpsa2);
+    ok(!lpsa2, "lpsa2 was not set to 0 by LPSAFEARRAY_UserFree\n");
     HeapFree(GetProcessHeap(), 0, buffer);
     lpsa->cLocks = 0;
     hr = SafeArrayDestroy(lpsa);
