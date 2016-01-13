@@ -1371,8 +1371,7 @@ static void test_marshal_VARIANT(void)
     ok(next == buffer + expected, "got %p expect %p\n", next, buffer + expected);
     ok(V_VT(&v) == V_VT(&v2), "got vt %d expect %d\n", V_VT(&v), V_VT(&v2));
     ok(lpsa2 == lpsa_copy, "safearray should be reused\n");
-    todo_wine ok(mem == lpsa2->pvData, "safearray data should be reused\n");
-    if(mem != lpsa2->pvData) CoTaskMemFree(mem);
+    ok(mem == lpsa2->pvData, "safearray data should be reused\n");
     ok(SafeArrayGetDim(*V_ARRAYREF(&v)) == SafeArrayGetDim(*V_ARRAYREF(&v2)), "array dims differ\n");
     SafeArrayGetLBound(*V_ARRAYREF(&v), 1, &bound);
     SafeArrayGetLBound(*V_ARRAYREF(&v2), 1, &bound2);

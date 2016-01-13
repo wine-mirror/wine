@@ -1008,7 +1008,26 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
     wiresab = (SAFEARRAYBOUND *)Buffer;
     Buffer += sizeof(wiresab[0]) * wiresa->cDims;
 
-    if(vt)
+    if(*ppsa && (*ppsa)->cDims==wiresa->cDims)
+    {
+        if(((*ppsa)->fFeatures & ~FADF_AUTOSETFLAGS) != (wiresa->fFeatures & ~FADF_AUTOSETFLAGS))
+            RpcRaiseException(DISP_E_BADCALLEE);
+
+        if(SAFEARRAY_GetCellCount(*ppsa)*(*ppsa)->cbElements != cell_count*elem_mem_size(wiresa, sftype))
+        {
+            if((*ppsa)->fFeatures & (FADF_AUTO|FADF_STATIC|FADF_EMBEDDED|FADF_FIXEDSIZE))
+                RpcRaiseException(DISP_E_BADCALLEE);
+
+            hr = SafeArrayDestroyData(*ppsa);
+            if(FAILED(hr))
+                RpcRaiseException(hr);
+        }
+        memcpy((*ppsa)->rgsabound, wiresab, sizeof(*wiresab)*wiresa->cDims);
+
+        if((*ppsa)->fFeatures & FADF_HAVEVARTYPE)
+            ((DWORD*)(*ppsa))[-1] = vt;
+    }
+    else if(vt)
     {
         SafeArrayDestroy(*ppsa);
         *ppsa = SafeArrayCreateEx(vt, wiresa->cDims, wiresab, NULL);
@@ -1028,11 +1047,10 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
     (*ppsa)->fFeatures |= (wiresa->fFeatures & ~(FADF_AUTOSETFLAGS));
     /* FIXME: there should be a limit on how large wiresa->cbElements can be */
     (*ppsa)->cbElements = elem_mem_size(wiresa, sftype);
-    (*ppsa)->cLocks = 0;
 
     /* SafeArrayCreateEx allocates the data for us, but
      * SafeArrayAllocDescriptor doesn't */
-    if(!vt)
+    if(!(*ppsa)->pvData)
     {
         hr = SafeArrayAllocData(*ppsa);
         if (FAILED(hr))
