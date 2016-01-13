@@ -520,10 +520,16 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
         {
             VariantClear(pvar);
             V_BYREF(pvar) = CoTaskMemAlloc(mem_size);
+            memset(V_BYREF(pvar), 0, mem_size);
         }
         else if (!V_BYREF(pvar))
+        {
             V_BYREF(pvar) = CoTaskMemAlloc(mem_size);
-        memcpy(V_BYREF(pvar), Pos, type_size);
+            memset(V_BYREF(pvar), 0, mem_size);
+        }
+
+        if(!(header->vt & VT_ARRAY))
+            memcpy(V_BYREF(pvar), Pos, type_size);
         if((header->vt & VT_TYPEMASK) != VT_VARIANT)
             Pos += type_size;
         else
@@ -532,7 +538,9 @@ unsigned char * WINAPI VARIANT_UserUnmarshal(ULONG *pFlags, unsigned char *Buffe
     else
     {
         VariantClear(pvar);
-        if((header->vt & VT_TYPEMASK) == VT_DECIMAL)
+        if(header->vt & VT_ARRAY)
+            V_ARRAY(pvar) = NULL;
+        else if((header->vt & VT_TYPEMASK) == VT_DECIMAL)
             memcpy(pvar, Pos, type_size);
         else
             memcpy(&pvar->n1.n2.n3, Pos, type_size);
@@ -963,6 +971,7 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
 
     if (!ptr)
     {
+        SafeArrayDestroy(*ppsa);
         *ppsa = NULL;
 
         TRACE("NULL safe array unmarshaled\n");
@@ -1001,11 +1010,13 @@ unsigned char * WINAPI LPSAFEARRAY_UserUnmarshal(ULONG *pFlags, unsigned char *B
 
     if(vt)
     {
+        SafeArrayDestroy(*ppsa);
         *ppsa = SafeArrayCreateEx(vt, wiresa->cDims, wiresab, NULL);
         if (!*ppsa) RpcRaiseException(E_OUTOFMEMORY);
     }
     else
     {
+        SafeArrayDestroy(*ppsa);
         if (FAILED(SafeArrayAllocDescriptor(wiresa->cDims, ppsa)))
             RpcRaiseException(E_OUTOFMEMORY);
         memcpy((*ppsa)->rgsabound, wiresab, sizeof(SAFEARRAYBOUND) * wiresa->cDims);
