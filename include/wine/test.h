@@ -98,20 +98,15 @@ extern int winetest_vok( int condition, const char *msg, __winetest_va_list ap )
 extern void winetest_vskip( const char *msg, __winetest_va_list ap );
 
 #ifdef __GNUC__
+# define WINETEST_PRINTF_ATTR(fmt,args) __attribute__((format (printf,fmt,args)))
+#else
+# define WINETEST_PRINTF_ATTR(fmt,args)
+#endif
 
-extern void __winetest_cdecl winetest_ok( int condition, const char *msg, ... ) __attribute__((format (printf,2,3) ));
-extern void __winetest_cdecl winetest_skip( const char *msg, ... ) __attribute__((format (printf,1,2)));
-extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) __attribute__((format (printf,1,2)));
-extern void __winetest_cdecl winetest_trace( const char *msg, ... ) __attribute__((format (printf,1,2)));
-
-#else /* __GNUC__ */
-
-extern void __winetest_cdecl winetest_ok( int condition, const char *msg, ... );
-extern void __winetest_cdecl winetest_skip( const char *msg, ... );
-extern void __winetest_cdecl winetest_win_skip( const char *msg, ... );
-extern void __winetest_cdecl winetest_trace( const char *msg, ... );
-
-#endif /* __GNUC__ */
+extern void __winetest_cdecl winetest_ok( int condition, const char *msg, ... ) WINETEST_PRINTF_ATTR(2,3);
+extern void __winetest_cdecl winetest_skip( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
+extern void __winetest_cdecl winetest_win_skip( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
+extern void __winetest_cdecl winetest_trace( const char *msg, ... ) WINETEST_PRINTF_ATTR(1,2);
 
 #define ok_(file, line)       (winetest_set_location(file, line), 0) ? (void)0 : winetest_ok
 #define skip_(file, line)     (winetest_set_location(file, line), 0) ? (void)0 : winetest_skip
