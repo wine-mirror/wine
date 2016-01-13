@@ -99,6 +99,15 @@ USHORT WINAPI SafeArrayGetDim16(SAFEARRAY16 *sa)
 }
 
 /******************************************************************************
+ *    SafeArrayGetElemsize [OLE2DISP.18]
+ */
+USHORT WINAPI SafeArrayGetElemsize16(SAFEARRAY16 *sa)
+{
+    TRACE("(%p)\n", sa);
+    return sa->cbElements;
+}
+
+/******************************************************************************
  *    SafeArrayAllocDescriptor [OLE2DISP.38]
  */
 HRESULT WINAPI SafeArrayAllocDescriptor16(UINT16 dims, SEGPTR *ret)
