@@ -23,12 +23,30 @@
 #define NONAMELESSUNION
 #define COBJMACROS
 
+#include "initguid.h"
 #include "xaudio_private.h"
 #include "xapofx.h"
 
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
+
+#ifdef XAPOFX1_VER
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
+{
+    TRACE("(%p, %d, %p)\n", hinstDLL, reason, pReserved);
+
+    switch (reason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinstDLL );
+        break;
+    }
+    return TRUE;
+}
+#endif /* XAPOFX1_VER */
 
 typedef struct _VUMeterImpl {
     IXAPO IXAPO_iface;
@@ -860,3 +878,43 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out, void *initdata, UINT32 in
     return S_OK;
 }
 #endif /* XAUDIO2_VER >= 8 */
+
+#ifdef XAPOFX1_VER
+HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out)
+{
+    HRESULT hr;
+    IUnknown *obj;
+    const GUID *class = NULL;
+    IClassFactory *cf;
+
+    TRACE("%s %p\n", debugstr_guid(clsid), out);
+
+    *out = NULL;
+
+    if(IsEqualGUID(clsid, &CLSID_FXReverb27) ||
+            IsEqualGUID(clsid, &CLSID_FXReverb))
+        class = &CLSID_AudioReverb27;
+    else if(IsEqualGUID(clsid, &CLSID_FXEQ27) ||
+            IsEqualGUID(clsid, &CLSID_FXEQ))
+        class = &CLSID_FXEQ;
+
+    if(class){
+        cf = make_xapo_factory(class, 20 + XAUDIO2_VER);
+
+        hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
+        IClassFactory_Release(cf);
+        if(FAILED(hr))
+            return hr;
+    }else{
+        hr = CoCreateInstance(clsid, NULL, CLSCTX_INPROC_SERVER, &IID_IUnknown, (void**)&obj);
+        if(FAILED(hr)){
+            WARN("CoCreateInstance failed: %08x\n", hr);
+            return hr;
+        }
+    }
+
+    *out = obj;
+
+    return S_OK;
+}
+#endif /* XAPOFX1_VER */

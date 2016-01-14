@@ -1,5 +1,7 @@
+EXTRADEFS = -DXAPOFX1_VER=5 -DXAUDIO2_VER=7
 MODULE    = xapofx1_5.dll
 IMPORTS   = ole32
+PARENTSRC = ../xaudio2_7
 
 C_SRCS = \
-	main.c
+	xapofx.c

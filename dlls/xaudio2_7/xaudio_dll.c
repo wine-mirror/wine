@@ -22,8 +22,6 @@
 #define NONAMELESSUNION
 #define COBJMACROS
 
-#include "initguid.h"
-
 #include "xaudio_private.h"
 
 #include "ole2.h"
@@ -2070,8 +2068,7 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
             IsEqualGUID(rclsid, &CLSID_WINE_FXReverb14)){
         factory = make_xapo_factory(&CLSID_AudioReverb27, 26);
 
-    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb27) ||
-            IsEqualGUID(rclsid, &CLSID_WINE_FXReverb15)){
+    }else if(IsEqualGUID(rclsid, &CLSID_AudioReverb27)){
         factory = make_xapo_factory(&CLSID_AudioReverb27, 27);
 
     }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ10)){
@@ -2084,8 +2081,6 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         factory = make_xapo_factory(&CLSID_FXEQ, 24);
     }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ14)){
         factory = make_xapo_factory(&CLSID_FXEQ, 26);
-    }else if(IsEqualGUID(rclsid, &CLSID_WINE_FXEQ15)){
-        factory = make_xapo_factory(&CLSID_FXEQ, 27);
     }
 
     if(!factory) return CLASS_E_CLASSNOTAVAILABLE;
