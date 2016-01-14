@@ -20,10 +20,10 @@
  */
 
 #include "config.h"
-#include <gst/app/gstappsink.h>
-#include <gst/app/gstappsrc.h>
-#include <gst/app/gstappbuffer.h>
-#include <gst/gstutils.h>
+
+#include <gst/gst.h>
+#include <gst/video/video.h>
+#include <gst/audio/audio.h>
 
 #include "gst_private.h"
 #include "gst_guids.h"
@@ -63,7 +63,7 @@ typedef struct GSTImpl {
 
     LONGLONG filesize;
 
-    BOOL discont, initial;
+    BOOL discont, initial, ignore_flush;
     GstElement *gstfilter;
     GstPad *my_src, *their_sink;
     GstBus *bus;
@@ -80,12 +80,15 @@ struct GSTOutPin {
 
     GstPad *their_src;
     GstPad *my_sink;
+    GstBufferPool *gstpool;
     int isaud, isvid;
     AM_MEDIA_TYPE * pmt;
     HANDLE caps_event;
     GstSegment *segment;
     SourceSeeking seek;
 };
+
+const char* media_quark_string = "media-sample";
 
 static const WCHAR wcsInputPinName[] = {'i','n','p','u','t',' ','p','i','n',0};
 static const IMediaSeekingVtbl GST_Seeking_Vtbl;
@@ -115,13 +118,10 @@ static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
 {
     WAVEFORMATEXTENSIBLE *wfe;
     WAVEFORMATEX *wfx;
-    GstStructure *arg;
     gint32 depth = 0, bpp = 0;
-    const char *typename;
+    GstAudioInfo ainfo;
 
-    arg = gst_caps_get_structure(caps, 0);
-    typename = gst_structure_get_name(arg);
-    if (!typename)
+    if (!gst_audio_info_from_caps (&ainfo, caps))
         return FALSE;
 
     wfe = CoTaskMemAlloc(sizeof(*wfe));
@@ -137,12 +137,12 @@ static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
     amt->pUnk = NULL;
 
     wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    if (!gst_structure_get_int(arg, "channels", (INT*)&wfx->nChannels))
-        return FALSE;
-    if (!gst_structure_get_int(arg, "rate", (INT*)&wfx->nSamplesPerSec))
-        return FALSE;
-    gst_structure_get_int(arg, "width", &depth);
-    gst_structure_get_int(arg, "depth", &bpp);
+
+    wfx->nChannels = ainfo.channels;
+    wfx->nSamplesPerSec = ainfo.rate;
+    depth = GST_AUDIO_INFO_WIDTH(&ainfo);
+    bpp = GST_AUDIO_INFO_DEPTH(&ainfo);
+
     if (!depth || depth > 32 || depth % 8)
         depth = bpp;
     else if (!bpp)
@@ -160,7 +160,7 @@ static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
         default:
         wfe->dwChannelMask = 0;
     }
-    if (!strcmp(typename, "audio/x-raw-float")) {
+    if (GST_AUDIO_INFO_IS_FLOAT(&ainfo)) {
         wfe->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
         wfx->wBitsPerSample = wfe->Samples.wValidBitsPerSample = 32;
     } else {
@@ -179,19 +179,15 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
 {
     VIDEOINFOHEADER *vih = CoTaskMemAlloc(sizeof(*vih));
     BITMAPINFOHEADER *bih = &vih->bmiHeader;
-    GstStructure *arg;
     gint32 width = 0, height = 0, nom = 0, denom = 0;
-    const char *typename;
+    GstVideoInfo vinfo;
 
-    arg = gst_caps_get_structure(caps, 0);
-    typename = gst_structure_get_name(arg);
-    if (!typename)
+    if (!gst_video_info_from_caps (&vinfo, caps))
         return FALSE;
-
-    if (!gst_structure_get_int(arg, "width", &width) ||
-        !gst_structure_get_int(arg, "height", &height) ||
-        !gst_structure_get_fraction(arg, "framerate", &nom, &denom))
-        return FALSE;
+    width = vinfo.width;
+    height = vinfo.height;
+    nom = vinfo.fps_n;
+    denom = vinfo.fps_d;
 
     amt->formattype = FORMAT_VideoInfo;
     amt->pbFormat = (BYTE*)vih;
@@ -201,9 +197,8 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
     amt->pUnk = NULL;
     ZeroMemory(vih, sizeof(*vih));
     amt->majortype = MEDIATYPE_Video;
-    if (!strcmp(typename, "video/x-raw-rgb")) {
-        if (!gst_structure_get_int(arg, "bpp", (INT*)&bih->biBitCount))
-            return FALSE;
+    if (GST_VIDEO_INFO_IS_RGB(&vinfo)) {
+        bih->biBitCount = GST_VIDEO_FORMAT_INFO_BITS(vinfo.finfo);
         switch (bih->biBitCount) {
             case 16: amt->subtype = MEDIASUBTYPE_RGB555; break;
             case 24: amt->subtype = MEDIASUBTYPE_RGB24; break;
@@ -215,7 +210,7 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
         bih->biCompression = BI_RGB;
     } else {
         amt->subtype = MEDIATYPE_Video;
-        if (!gst_structure_get_fourcc(arg, "format", &amt->subtype.Data1))
+        if (!(amt->subtype.Data1 = gst_video_format_to_fourcc(vinfo.finfo->format)))
             return FALSE;
         switch (amt->subtype.Data1) {
             case mmioFOURCC('I','4','2','0'):
@@ -257,8 +252,7 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
 
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
-    if (!strcmp(typename, "audio/x-raw-int") ||
-        !strcmp(typename, "audio/x-raw-float")) {
+    if (!strcmp(typename, "audio/x-raw")) {
         if (!pin->isaud) {
             ERR("Setting audio caps on non-audio pad?\n");
             return FALSE;
@@ -267,8 +261,7 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
         FreeMediaType(&amt);
         TRACE("+%i\n", ret);
         return ret;
-    } else if (!strcmp(typename, "video/x-raw-rgb")
-               || !strcmp(typename, "video/x-raw-yuv")) {
+    } else if (!strcmp(typename, "video/x-raw")) {
         if (!pin->isvid) {
             ERR("Setting video caps on non-video pad?\n");
             return FALSE;
@@ -296,15 +289,13 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
 
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
-    if (!strcmp(typename, "audio/x-raw-int") ||
-        !strcmp(typename, "audio/x-raw-float")) {
+    if (!strcmp(typename, "audio/x-raw")) {
         if (!pin->isaud) {
             ERR("Setting audio caps on non-audio pad?\n");
             return FALSE;
         }
         ret = amt_from_gst_caps_audio(caps, &amt);
-    } else if (!strcmp(typename, "video/x-raw-rgb")
-               || !strcmp(typename, "video/x-raw-yuv")) {
+    } else if (!strcmp(typename, "video/x-raw")) {
         if (!pin->isvid) {
             ERR("Setting video caps on non-video pad?\n");
             return FALSE;
@@ -322,6 +313,23 @@ static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
     FreeMediaType(pin->pmt);
     *pin->pmt = amt;
     return TRUE;
+}
+
+static gboolean query_sink(GstPad *pad, GstObject *parent, GstQuery *query)
+{
+    switch (GST_QUERY_TYPE (query)) {
+        case GST_QUERY_ACCEPT_CAPS:
+        {
+            GstCaps *caps;
+            gboolean res;
+            gst_query_parse_accept_caps(query, &caps);
+            res = accept_caps_sink(pad, caps);
+            gst_query_set_accept_caps_result(query, res);
+            return TRUE; /* FIXME */
+        }
+        default:
+            return gst_pad_query_default (pad, parent, query);
+    }
 }
 
 static gboolean gst_base_src_perform_seek(GSTImpl *This, GstEvent *event)
@@ -358,26 +366,26 @@ static gboolean gst_base_src_perform_seek(GSTImpl *This, GstEvent *event)
         if (This->pInputPin.pReader)
             IAsyncReader_BeginFlush(This->pInputPin.pReader);
         if (thread)
-            gst_pad_activate_push(This->my_src, 0);
+            gst_pad_set_active(This->my_src, 1);
     }
 
     This->nextofs = This->start = cur;
 
     /* and prepare to continue streaming */
     if (flush) {
-        tevent = gst_event_new_flush_stop();
+        tevent = gst_event_new_flush_stop(TRUE);
         gst_event_set_seqnum(tevent, seqnum);
         gst_pad_push_event(This->my_src, tevent);
         if (This->pInputPin.pReader)
             IAsyncReader_EndFlush(This->pInputPin.pReader);
         if (thread)
-            gst_pad_activate_push(This->my_src, 1);
+            gst_pad_set_active(This->my_src, 1);
     }
 
     return res;
 }
 
-static gboolean event_src(GstPad *pad, GstEvent *event)
+static gboolean event_src(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     GSTImpl *This = gst_pad_get_element_private(pad);
 
@@ -402,34 +410,45 @@ static gboolean event_src(GstPad *pad, GstEvent *event)
             FIXME("%p (%u) stub\n", event, event->type);
         case GST_EVENT_TAG:
         case GST_EVENT_QOS:
-            return gst_pad_event_default(pad, event);
+            return gst_pad_event_default(pad, parent, event);
     }
     return TRUE;
 }
 
-static gboolean event_sink(GstPad *pad, GstEvent *event)
+static gboolean event_sink(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     GSTOutPin *pin = gst_pad_get_element_private(pad);
 
     TRACE("%p %p\n", pad, event);
 
     switch (event->type) {
-        case GST_EVENT_NEWSEGMENT: {
-            gboolean update;
+        case GST_EVENT_SEGMENT: {
             gdouble rate, applied_rate;
-            GstFormat format;
-            gint64 start, stop, pos;
-            gst_event_parse_new_segment_full(event, &update, &rate, &applied_rate, &format, &start, &stop, &pos);
-            if (format != GST_FORMAT_TIME) {
-                FIXME("Ignoring new segment because of format %i\n", format);
+            gint64 stop, pos;
+            const GstSegment *segment;
+
+            gst_event_parse_segment(event, &segment);
+
+            pos = segment->position;
+            stop = segment->stop;
+            rate = segment->rate;
+            applied_rate = segment->applied_rate;
+
+            if (segment->format != GST_FORMAT_TIME) {
+                FIXME("Ignoring new segment because of format %i\n", segment->format);
                 return TRUE;
             }
-            gst_segment_set_newsegment_full(pin->segment, update, rate, applied_rate, format, start, stop, pos);
+
+            gst_segment_copy_into(segment, pin->segment);
+
             pos /= 100;
+
             if (stop > 0)
                 stop /= 100;
+
             if (pin->pin.pin.pConnectedTo)
                 IPin_NewSegment(pin->pin.pin.pConnectedTo, pos, stop, rate*applied_rate);
+
             return TRUE;
         }
         case GST_EVENT_EOS:
@@ -437,6 +456,17 @@ static gboolean event_sink(GstPad *pad, GstEvent *event)
                 IPin_EndOfStream(pin->pin.pin.pConnectedTo);
             return TRUE;
         case GST_EVENT_FLUSH_START:
+            if (((GSTImpl *)pin->pin.pin.pinInfo.pFilter)->ignore_flush) {
+                /* gst-plugins-base prior to 1.7 contains a bug which causes
+                 * our sink pins to receive a flush-start event when the
+                 * decodebin changes from PAUSED to READY (including
+                 * PLAYING->PAUSED->READY), but no matching flush-stop event is
+                 * sent. See <gst-plugins-base.git:60bad4815db966a8e4). Here we
+                 * unset the flushing flag to avoid the problem. */
+                TRACE("Working around gst <1.7 bug, ignoring FLUSH_START\n");
+                GST_PAD_UNSET_FLUSHING (pad);
+                return TRUE;
+            }
             if (pin->pin.pin.pConnectedTo)
                 IPin_BeginFlush(pin->pin.pin.pConnectedTo);
             return TRUE;
@@ -445,9 +475,14 @@ static gboolean event_sink(GstPad *pad, GstEvent *event)
             if (pin->pin.pin.pConnectedTo)
                 IPin_EndFlush(pin->pin.pin.pConnectedTo);
             return TRUE;
+        case GST_EVENT_CAPS: {
+            GstCaps *caps;
+            gst_event_parse_caps(event, &caps);
+            return setcaps_sink(pad, caps);
+        }
         default:
-            FIXME("%p stub %s\n", event, gst_event_type_get_name(event->type));
-            return gst_pad_event_default(pad, event);
+            TRACE("%p stub %s\n", event, gst_event_type_get_name(event->type));
+            return gst_pad_event_default(pad, parent, event);
     }
 }
 
@@ -471,14 +506,20 @@ static DWORD CALLBACK push_data(LPVOID iface)
     else
         maxlen = This->stop;
 
+    TRACE("Waiting..\n");
+
+    WaitForSingleObject(This->event, INFINITE);
+
     TRACE("Starting..\n");
     for (;;) {
         REFERENCE_TIME tStart, tStop;
         ULONG len;
         GstBuffer *gstbuf;
+        gsize bufsize;
         BYTE *data;
         int ret;
 
+        TRACE("pAlloc: %p\n", This->pInputPin.pAlloc);
         hr = IMemAllocator_GetBuffer(This->pInputPin.pAlloc, &buf, NULL, NULL, 0);
         if (FAILED(hr))
             break;
@@ -507,12 +548,15 @@ static DWORD CALLBACK push_data(LPVOID iface)
         }
 
         IMediaSample_GetPointer(buf, &data);
-        gstbuf = gst_app_buffer_new(data, IMediaSample_GetActualDataLength(buf), release_sample_wrapper, buf);
+        bufsize = IMediaSample_GetActualDataLength(buf);
+        gstbuf = gst_buffer_new_wrapped_full(0, data, bufsize, 0, bufsize, buf, release_sample_wrapper);
+        IMediaSample_AddRef(buf);
+        gst_mini_object_set_qdata(GST_MINI_OBJECT(gstbuf), g_quark_from_static_string(media_quark_string), buf, release_sample_wrapper);
         if (!gstbuf) {
             IMediaSample_Release(buf);
             break;
         }
-        gstbuf->duration = gstbuf->timestamp = -1;
+        gstbuf->duration = gstbuf->pts = -1;
         ret = gst_pad_push(This->my_src, gstbuf);
         if (ret >= 0)
             hr = S_OK;
@@ -520,10 +564,8 @@ static DWORD CALLBACK push_data(LPVOID iface)
             ERR("Sending returned: %i\n", ret);
         if (ret == GST_FLOW_ERROR)
             hr = E_FAIL;
-        else if (ret == GST_FLOW_WRONG_STATE)
+        else if (ret == GST_FLOW_FLUSHING)
             hr = VFW_E_WRONG_STATE;
-        else if (ret == GST_FLOW_RESEND)
-            hr = S_FALSE;
         if (hr != S_OK)
             break;
     }
@@ -548,13 +590,14 @@ static HRESULT WINAPI GST_OutPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *p
     return S_OK;
 }
 
-static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf)
+static GstFlowReturn got_data_sink(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
     GSTOutPin *pin = gst_pad_get_element_private(pad);
     GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
-    IMediaSample *sample;
     HRESULT hr;
-    BOOL freeSamp = FALSE;
+    BYTE *ptr = NULL;
+    IMediaSample *sample;
+    GstMapInfo info;
 
     TRACE("%p %p\n", pad, buf);
 
@@ -562,44 +605,46 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf)
         gst_buffer_unref(buf);
         TRACE("Triggering %p %p\n", pad, pin->caps_event);
         SetEvent(pin->caps_event);
+        return GST_FLOW_OK;
+    }
+
+    hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
+
+    if (hr == VFW_E_NOT_CONNECTED) {
+        gst_buffer_unref(buf);
         return GST_FLOW_NOT_LINKED;
     }
 
-    if (GST_IS_APP_BUFFER(buf)) {
-        sample = GST_APP_BUFFER(buf)->priv;
-        TRACE("Pushing buffer\n");
-    } else if (buf->parent && GST_IS_APP_BUFFER(buf->parent)) {
-        sample = GST_APP_BUFFER(buf->parent)->priv;
-        TRACE("Pushing sub-buffer\n");
-    } else {
-        BYTE *ptr = NULL;
-        hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
-        freeSamp = TRUE;
-        if (hr == VFW_E_NOT_CONNECTED) {
-            gst_buffer_unref(buf);
-            return GST_FLOW_NOT_LINKED;
-        }
-        if (FAILED(hr)) {
-            gst_buffer_unref(buf);
-            ERR("Didn't get a GST_APP_BUFFER, and could not get a delivery buffer (%x), returning GST_FLOW_WRONG_STATE\n", hr);
-            return GST_FLOW_WRONG_STATE;
-        }
-        TRACE("Did not get a GST_APP_BUFFER, creating a sample\n");
-        IMediaSample_GetPointer(sample, &ptr);
-        memcpy(ptr, GST_BUFFER_DATA(buf), GST_BUFFER_SIZE(buf));
+    if (FAILED(hr)) {
+        gst_buffer_unref(buf);
+        ERR("Could not get a delivery buffer (%x), returning GST_FLOW_FLUSHING\n", hr);
+        return GST_FLOW_FLUSHING;
     }
-    IMediaSample_SetActualDataLength(sample, GST_BUFFER_SIZE(buf));
 
-    if (GST_BUFFER_TIMESTAMP_IS_VALID(buf)) {
-        REFERENCE_TIME rtStart = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, buf->timestamp);
+    gst_buffer_map(buf, &info, GST_MAP_READ);
+
+    hr = IMediaSample_SetActualDataLength(sample, info.size);
+    if(FAILED(hr)){
+        WARN("SetActualDataLength failed: %08x\n", hr);
+        return GST_FLOW_FLUSHING;
+    }
+
+    IMediaSample_GetPointer(sample, &ptr);
+
+    memcpy(ptr, info.data, info.size);
+
+    gst_buffer_unmap(buf, &info);
+
+    if (GST_BUFFER_PTS_IS_VALID(buf)) {
+        REFERENCE_TIME rtStart = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, buf->pts);
         if (rtStart >= 0)
             rtStart /= 100;
 
         if (GST_BUFFER_DURATION_IS_VALID(buf)) {
-            REFERENCE_TIME tStart = buf->timestamp / 100;
-            REFERENCE_TIME tStop = (buf->timestamp + buf->duration) / 100;
+            REFERENCE_TIME tStart = buf->pts / 100;
+            REFERENCE_TIME tStop = (buf->pts + buf->duration) / 100;
             REFERENCE_TIME rtStop;
-            rtStop = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, buf->timestamp + buf->duration);
+            rtStop = gst_segment_to_running_time(pin->segment, GST_FORMAT_TIME, buf->pts + buf->duration);
             if (rtStop >= 0)
                 rtStop /= 100;
             TRACE("Current time on %p: %i to %i ms\n", pin, (int)(rtStart / 10000), (int)(rtStop / 10000));
@@ -615,73 +660,33 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf)
     }
 
     IMediaSample_SetDiscontinuity(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DISCONT));
-    IMediaSample_SetPreroll(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_PREROLL));
+    IMediaSample_SetPreroll(sample, GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_LIVE));
     IMediaSample_SetSyncPoint(sample, !GST_BUFFER_FLAG_IS_SET(buf, GST_BUFFER_FLAG_DELTA_UNIT));
 
     if (!pin->pin.pin.pConnectedTo)
         hr = VFW_E_NOT_CONNECTED;
     else
         hr = IMemInputPin_Receive(pin->pin.pMemInputPin, sample);
-    TRACE("sending sample: %08x\n", hr);
+
+    TRACE("sending sample returned: %08x\n", hr);
+
     gst_buffer_unref(buf);
-    if (freeSamp)
-        IMediaSample_Release(sample);
+    IMediaSample_Release(sample);
+
     if (hr == VFW_E_NOT_CONNECTED)
         return GST_FLOW_NOT_LINKED;
-    else if (FAILED(hr))
-        return GST_FLOW_WRONG_STATE;
-    if (hr != S_OK)
-        return GST_FLOW_RESEND;
+
+    if (FAILED(hr))
+        return GST_FLOW_FLUSHING;
+
     return GST_FLOW_OK;
 }
 
-static GstFlowReturn request_buffer_sink(GstPad *pad, guint64 ofs, guint size, GstCaps *caps, GstBuffer **buf)
-{
-    GSTOutPin *pin = gst_pad_get_element_private(pad);
-    GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
-    IMediaSample *sample;
-    BYTE *ptr;
-    HRESULT hr;
-
-    TRACE("%p %s %i %p %p\n", pad, wine_dbgstr_longlong(ofs), size, caps, buf);
-
-    if (This->initial) {
-        int ret;
-        ret = setcaps_sink(pad, caps);
-        if (!ret)
-            return GST_FLOW_NOT_NEGOTIATED;
-        *buf = gst_buffer_new_and_alloc(size);
-        return GST_FLOW_OK;
-    }
-
-    if (caps && caps != GST_PAD_CAPS(pad))
-        if (!setcaps_sink(pad, caps))
-            return GST_FLOW_NOT_NEGOTIATED;
-
-    hr = BaseOutputPinImpl_GetDeliveryBuffer(&pin->pin, &sample, NULL, NULL, 0);
-    if (hr == VFW_E_NOT_CONNECTED)
-        return GST_FLOW_NOT_LINKED;
-    if (FAILED(hr)) {
-        ERR("Could not get output buffer: %08x\n", hr);
-        *buf = NULL;
-        return GST_FLOW_WRONG_STATE;
-    }
-    IMediaSample_SetActualDataLength(sample, size);
-    IMediaSample_GetPointer(sample, &ptr);
-    *buf = gst_app_buffer_new(ptr, size, release_sample_wrapper, sample);
-    if (!*buf) {
-        IMediaSample_Release(sample);
-        ERR("Out of memory\n");
-        return GST_FLOW_ERROR;
-    }
-    gst_buffer_set_caps(*buf, caps);
-    return GST_FLOW_OK;
-}
-
-static GstFlowReturn request_buffer_src(GstPad *pad, guint64 ofs, guint len, GstBuffer **buf)
+static GstFlowReturn request_buffer_src(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf)
 {
     GSTImpl *This = gst_pad_get_element_private(pad);
-    int ret;
+    HRESULT hr;
+    GstMapInfo info;
 
     TRACE("%p %s %i %p\n", pad, wine_dbgstr_longlong(ofs), len, buf);
 
@@ -690,22 +695,21 @@ static GstFlowReturn request_buffer_src(GstPad *pad, guint64 ofs, guint len, Gst
         ofs = This->nextpullofs;
     if (ofs >= This->filesize) {
         WARN("Reading past eof: %s, %u\n", wine_dbgstr_longlong(ofs), len);
-        return GST_FLOW_UNEXPECTED;
+        return GST_FLOW_EOS;
     }
     if (len + ofs > This->filesize)
         len = This->filesize - ofs;
     This->nextpullofs = ofs + len;
 
-    ret = gst_pad_alloc_buffer(This->my_src, ofs, len, NULL, buf);
-    if (ret >= 0) {
-        HRESULT hr;
-        hr = IAsyncReader_SyncRead(This->pInputPin.pReader, ofs, len, GST_BUFFER_DATA(*buf));
-        if (FAILED(hr)) {
-            ERR("Returned %08x\n", hr);
-            return GST_FLOW_ERROR;
-        }
+    *buf = gst_buffer_new_and_alloc(len);
+    gst_buffer_map(*buf, &info, GST_MAP_WRITE);
+    hr = IAsyncReader_SyncRead(This->pInputPin.pReader, ofs, len, info.data);
+    gst_buffer_unmap(*buf, &info);
+    if (FAILED(hr)) {
+        ERR("Returned %08x\n", hr);
+        return GST_FLOW_ERROR;
     }
-    return ret;
+    return GST_FLOW_OK;
 }
 
 static DWORD CALLBACK push_data_init(LPVOID iface)
@@ -716,7 +720,7 @@ static DWORD CALLBACK push_data_init(LPVOID iface)
     TRACE("Starting..\n");
     for (;;) {
         GstBuffer *buf;
-        GstFlowReturn ret = request_buffer_src(This->my_src, ofs, 4096, &buf);
+        GstFlowReturn ret = request_buffer_src(This->my_src, NULL, ofs, 4096, &buf);
         if (ret < 0) {
             ERR("Obtaining buffer returned: %i\n", ret);
             break;
@@ -756,7 +760,7 @@ out:
     LeaveCriticalSection(&This->filter.csFilter);
 }
 
-static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImpl *This)
+static void init_new_decoded_pad(GstElement *bin, GstPad *pad, GSTImpl *This)
 {
     HRESULT hr;
     PIN_INFO piOutput;
@@ -769,44 +773,45 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     GSTOutPin *pin;
     int ret;
     int isvid = 0, isaud = 0;
+    gchar my_name[1024];
 
-    TRACE("%p %p %p %u\n", This, bin, pad, last);
+    TRACE("%p %p %p\n", This, bin, pad);
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)This;
     name = gst_pad_get_name(pad);
     MultiByteToWideChar(CP_UNIXCP, 0, name, -1, piOutput.achName, sizeof(piOutput.achName) / sizeof(piOutput.achName[0]) - 1);
     TRACE("Name: %s\n", name);
+    strcpy(my_name, "qz_sink_");
+    strcat(my_name, name);
     g_free(name);
     piOutput.achName[sizeof(piOutput.achName) / sizeof(piOutput.achName[0]) - 1] = 0;
 
-    caps = gst_pad_get_caps_reffed(pad);
+    caps = gst_pad_query_caps(pad, NULL);
+    caps = gst_caps_make_writable(caps);
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
 
-    mypad = gst_pad_new(NULL, GST_PAD_SINK);
+    mypad = gst_pad_new(my_name, GST_PAD_SINK);
     gst_pad_set_chain_function(mypad, got_data_sink_wrapper);
     gst_pad_set_event_function(mypad, event_sink_wrapper);
-    gst_pad_set_bufferalloc_function(mypad, request_buffer_sink_wrapper);
-    gst_pad_set_acceptcaps_function(mypad, accept_caps_sink_wrapper);
-    gst_pad_set_setcaps_function(mypad, setcaps_sink_wrapper);
+    gst_pad_set_query_function(mypad, query_sink_wrapper);
 
-    if (!strcmp(typename, "audio/x-raw-int") ||
-        !strcmp(typename, "audio/x-raw-float")) {
+    if (!strcmp(typename, "audio/x-raw")) {
         isaud = 1;
-    } else if (!strcmp(typename, "video/x-raw-rgb")
-               || !strcmp(typename, "video/x-raw-yuv")) {
+    } else if (!strcmp(typename, "video/x-raw")) {
         isvid = 1;
     } else {
         FIXME("Unknown type \'%s\'\n", typename);
         return;
     }
-    GST_PAD_CAPS(mypad) = GST_CAPS_ANY;
+
     hr = GST_AddPin(This, &piOutput, &amt);
     if (FAILED(hr)) {
         ERR("%08x\n", hr);
         return;
     }
+
     pin = This->ppPins[This->cStreams - 1];
     gst_pad_set_element_private(mypad, pin);
     pin->my_sink = mypad;
@@ -815,27 +820,30 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
 
     gst_segment_init(pin->segment, GST_FORMAT_TIME);
     ret = gst_pad_link(pad, mypad);
-    gst_pad_activate_push(mypad, 1);
+
+    gst_pad_set_active(mypad, 1);
+
     TRACE("Linking: %i\n", ret);
+
     if (ret >= 0) {
         pin->their_src = pad;
         gst_object_ref(pin->their_src);
     }
 }
 
-static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, gpointer user)
+static void existing_new_pad(GstElement *bin, GstPad *pad, gpointer user)
 {
     GSTImpl *This = (GSTImpl*)user;
     int x;
 
-    TRACE("%p %p %p %u\n", This, bin, pad, last);
+    TRACE("%p %p %p\n", This, bin, pad);
 
     if (gst_pad_is_linked(pad))
         return;
 
     /* Still holding our own lock */
     if (This->initial) {
-        init_new_decoded_pad(bin, pad, last, This);
+        init_new_decoded_pad(bin, pad, This);
         return;
     }
 
@@ -853,17 +861,11 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, gpoint
             }
         }
     }
-    init_new_decoded_pad(bin, pad, last, This);
+    init_new_decoded_pad(bin, pad, This);
     LeaveCriticalSection(&This->filter.csFilter);
 }
 
-static gboolean check_get_range(GstPad *pad)
-{
-    TRACE("%p\n", pad);
-    return TRUE;
-}
-
-static gboolean query_function(GstPad *pad, GstQuery *query)
+static gboolean query_function(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     GSTImpl *This = gst_pad_get_element_private(pad);
     GstFormat format;
@@ -879,7 +881,7 @@ static gboolean query_function(GstPad *pad, GstQuery *query)
                 gst_query_set_duration (query, GST_FORMAT_PERCENT, GST_FORMAT_PERCENT_MAX);
                 return TRUE;
             }
-            ret = gst_pad_query_convert (pad, GST_FORMAT_BYTES, This->filesize, &format, &duration);
+            ret = gst_pad_query_convert (pad, GST_FORMAT_BYTES, This->filesize, format, &duration);
             gst_query_set_duration(query, format, duration);
             return ret;
         case GST_QUERY_SEEKING:
@@ -889,10 +891,13 @@ static gboolean query_function(GstPad *pad, GstQuery *query)
                 return FALSE;
             gst_query_set_seeking(query, GST_FORMAT_BYTES, 1, 0, This->filesize);
             return TRUE;
+        case GST_QUERY_SCHEDULING:
+            gst_query_set_scheduling(query, GST_SCHEDULING_FLAG_SEEKABLE, 1, -1, 0);
+            gst_query_add_scheduling_mode(query, GST_PAD_MODE_PUSH);
+            gst_query_add_scheduling_mode(query, GST_PAD_MODE_PULL);
+            return TRUE;
         default:
-            FIXME("Unhandled query type %i\n", GST_QUERY_TYPE(query));
-        case GST_QUERY_URI:
-        case GST_QUERY_CONVERT:
+            TRACE("Unhandled query type: %s\n", GST_QUERY_TYPE_NAME(query));
             return FALSE;
     }
 }
@@ -926,6 +931,20 @@ static gboolean activate_push(GstPad *pad, gboolean activate)
     }
     LeaveCriticalSection(&This->filter.csFilter);
     return TRUE;
+}
+
+static gboolean activate_mode(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
+{
+    TRACE("%p %p 0x%x %u\n", pad, parent, mode, activate);
+    switch (mode) {
+      case GST_PAD_MODE_PULL:
+        return TRUE;
+      case GST_PAD_MODE_PUSH:
+        return activate_push(pad, activate);
+      default:
+        return FALSE;
+    }
+    return FALSE;
 }
 
 static void no_more_pads(GstElement *decodebin, gpointer user)
@@ -988,7 +1007,6 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     HRESULT hr;
     int ret, i;
     LONGLONG avail, duration;
-    GstFormat format = GST_FORMAT_TIME;
     GstStaticPadTemplate src_template = GST_STATIC_PAD_TEMPLATE(
         "quartz_src",
         GST_PAD_SRC,
@@ -1002,33 +1020,31 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
 
     if (!This->bus) {
         This->bus = gst_bus_new();
-        gst_bus_set_sync_handler(This->bus, watch_bus_wrapper, This);
+        gst_bus_set_sync_handler(This->bus, watch_bus_wrapper, This, NULL);
     }
 
-    This->gstfilter = gst_element_factory_make("decodebin2", NULL);
+    This->gstfilter = gst_element_factory_make("decodebin", NULL);
     if (!This->gstfilter) {
         FIXME("Could not make source filter, are gstreamer-plugins-* installed for %u bits?\n",
               8 * (int)sizeof(void*));
         return E_FAIL;
     }
     gst_element_set_bus(This->gstfilter, This->bus);
-    g_signal_connect(This->gstfilter, "new-decoded-pad", G_CALLBACK(existing_new_pad_wrapper), This);
+    g_signal_connect(This->gstfilter, "pad-added", G_CALLBACK(existing_new_pad_wrapper), This);
     g_signal_connect(This->gstfilter, "pad-removed", G_CALLBACK(removed_decoded_pad_wrapper), This);
     g_signal_connect(This->gstfilter, "autoplug-select", G_CALLBACK(autoplug_blacklist_wrapper), This);
     g_signal_connect(This->gstfilter, "unknown-type", G_CALLBACK(unknown_type_wrapper), This);
 
     This->my_src = gst_pad_new_from_static_template(&src_template, "quartz-src");
     gst_pad_set_getrange_function(This->my_src, request_buffer_src_wrapper);
-    gst_pad_set_checkgetrange_function(This->my_src, check_get_range_wrapper);
     gst_pad_set_query_function(This->my_src, query_function_wrapper);
-    gst_pad_set_activatepush_function(This->my_src, activate_push_wrapper);
+    gst_pad_set_activatemode_function(This->my_src, activate_mode_wrapper);
     gst_pad_set_event_function(This->my_src, event_src_wrapper);
     gst_pad_set_element_private (This->my_src, This);
     This->their_sink = gst_element_get_static_pad(This->gstfilter, "sink");
 
     g_signal_connect(This->gstfilter, "no-more-pads", G_CALLBACK(no_more_pads_wrapper), This);
     ret = gst_pad_link(This->my_src, This->their_sink);
-    gst_object_unref(This->their_sink);
     if (ret < 0) {
         ERR("Returns: %i\n", ret);
         return E_FAIL;
@@ -1039,7 +1055,6 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     This->initial = This->discont = TRUE;
     ResetEvent(This->event);
     gst_element_set_state(This->gstfilter, GST_STATE_PLAYING);
-    gst_pad_set_active(This->my_src, 1);
     WaitForSingleObject(This->event, -1);
     gst_element_get_state(This->gstfilter, NULL, NULL, -1);
 
@@ -1050,7 +1065,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         FIXME("GStreamer could not find any streams\n");
         hr = E_FAIL;
     } else {
-        gst_pad_query_duration(This->ppPins[0]->their_src, &format, &duration);
+        gst_pad_query_duration(This->ppPins[0]->their_src, GST_FORMAT_TIME, &duration);
         for (i = 0; i < This->cStreams; ++i) {
             This->ppPins[i]->seek.llDuration = This->ppPins[i]->seek.llStop = duration / 100;
             This->ppPins[i]->seek.llCurrent = 0;
@@ -1061,12 +1076,18 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         hr = S_OK;
     }
     *props = This->props;
+
+    This->ignore_flush = TRUE;
     gst_element_set_state(This->gstfilter, GST_STATE_READY);
     gst_element_get_state(This->gstfilter, NULL, NULL, -1);
-    if (This->push_thread)
-        gst_pad_activate_push(This->my_src, 0);
+    This->ignore_flush = FALSE;
 
     This->initial = FALSE;
+
+    /* don't set active during test-play, as we don't want to push/pull data
+     * from the source yet */
+    gst_pad_set_active(This->my_src, 1);
+
     This->nextofs = This->nextpullofs = 0;
     return hr;
 }
@@ -1184,7 +1205,7 @@ static void GST_Destroy(GSTImpl *This)
             pinref = IPin_Release((IPin *)&This->pInputPin);
     }
     if (This->bus) {
-        gst_bus_set_sync_handler(This->bus, NULL, NULL);
+        gst_bus_set_sync_handler(This->bus, NULL, NULL, NULL);
         gst_object_unref(This->bus);
     }
     BaseFilter_Destroy(&This->filter);
@@ -1241,8 +1262,12 @@ static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
 
     mark_wine_thread();
 
-    if (This->gstfilter)
+    if (This->gstfilter) {
+        This->ignore_flush = TRUE;
         gst_element_set_state(This->gstfilter, GST_STATE_READY);
+        gst_element_get_state(This->gstfilter, NULL, NULL, -1);
+        This->ignore_flush = FALSE;
+    }
     return S_OK;
 }
 
@@ -1304,23 +1329,16 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
     }
 
     EnterCriticalSection(&This->filter.csFilter);
-    gst_pad_set_blocked(This->my_src, 0);
-    gst_pad_set_blocked(This->their_sink, 0);
     gst_element_set_state(This->gstfilter, GST_STATE_PLAYING);
     This->filter.rtStreamStart = tStart;
 
     for (i = 0; i < This->cStreams; i++) {
         hr = BaseOutputPinImpl_Active((BaseOutputPin *)This->ppPins[i]);
         if (SUCCEEDED(hr)) {
-            gst_pad_set_blocked(This->ppPins[i]->my_sink, 0);
-            if (This->ppPins[i]->their_src)
-                gst_pad_set_blocked(This->ppPins[i]->their_src, 0);
             hr_any = hr;
         }
     }
     hr = hr_any;
-    if (SUCCEEDED(hr))
-        gst_pad_set_active(This->my_src, 1);
     LeaveCriticalSection(&This->filter.csFilter);
 
     return hr;
@@ -1425,7 +1443,6 @@ static ULONG WINAPI GST_Seeking_Release(IMediaSeeking *iface)
 static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFERENCE_TIME *pos)
 {
     GSTOutPin *This = impl_from_IMediaSeeking(iface);
-    GstFormat format = GST_FORMAT_TIME;
 
     TRACE("(%p)->(%p)\n", This, pos);
 
@@ -1443,7 +1460,7 @@ static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFER
             return E_NOTIMPL;
     }
 
-    if (!gst_pad_query_position(This->their_src, &format, pos)) {
+    if (!gst_pad_query_position(This->their_src, GST_FORMAT_TIME, pos)) {
         WARN("Could not query position\n");
         return E_NOTIMPL;
     }
@@ -1455,10 +1472,13 @@ static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFER
 static GstSeekType type_from_flags(DWORD flags)
 {
     switch (flags & AM_SEEKING_PositioningBitsMask) {
-    case AM_SEEKING_NoPositioning: return GST_SEEK_TYPE_NONE;
-    case AM_SEEKING_AbsolutePositioning: return GST_SEEK_TYPE_SET;
-    case AM_SEEKING_RelativePositioning: return GST_SEEK_TYPE_CUR;
-    case AM_SEEKING_IncrementalPositioning: return GST_SEEK_TYPE_END;
+    case AM_SEEKING_NoPositioning:
+        return GST_SEEK_TYPE_NONE;
+    case AM_SEEKING_AbsolutePositioning:
+    case AM_SEEKING_RelativePositioning:
+        return GST_SEEK_TYPE_SET;
+    case AM_SEEKING_IncrementalPositioning:
+        return GST_SEEK_TYPE_END;
     }
     return GST_SEEK_TYPE_NONE;
 }
@@ -1472,6 +1492,7 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     GstSeekFlags f = 0;
     GstSeekType curtype, stoptype;
     GstEvent *e;
+    gint64 stop_pos = 0, curr_pos = 0;
 
     TRACE("(%p)->(%p, 0x%x, %p, 0x%x)\n", This, pCur, curflags, pStop, stopflags);
 
@@ -1493,7 +1514,17 @@ static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
     if (!(curflags & AM_SEEKING_NoFlush))
         f |= GST_SEEK_FLAG_FLUSH;
 
-    e = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, f, curtype, pCur ? *pCur * 100 : -1, stoptype, pStop ? *pStop * 100 : -1);
+    if (((curflags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_RelativePositioning) ||
+        ((stopflags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_RelativePositioning)) {
+        gint64 tmp_pos;
+        gst_pad_query_position (This->my_sink, GST_FORMAT_TIME, &tmp_pos);
+        if ((curflags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_RelativePositioning)
+            curr_pos = tmp_pos;
+        if ((stopflags & AM_SEEKING_PositioningBitsMask) == AM_SEEKING_RelativePositioning)
+            stop_pos = tmp_pos;
+    }
+
+    e = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, f, curtype, pCur ? curr_pos + *pCur * 100 : -1, stoptype, pStop ? stop_pos + *pStop * 100 : -1);
     if (gst_pad_push_event(This->my_sink, e))
         return S_OK;
     else
@@ -1555,7 +1586,7 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
     mark_wine_thread();
     if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
         late = -qm.TimeStamp;
-    gst_pad_push_event(pin->my_sink, gst_event_new_qos(1000./qm.Proportion, late*100, qm.TimeStamp*100));
+    gst_pad_push_event(pin->my_sink, gst_event_new_qos(late <= 0 ? GST_QOS_TYPE_OVERFLOW : GST_QOS_TYPE_UNDERFLOW, 1000./qm.Proportion, late*100, qm.TimeStamp*100));
     return S_OK;
 }
 
@@ -1610,13 +1641,17 @@ static ULONG WINAPI GSTOutPin_Release(IPin *iface)
     mark_wine_thread();
 
     if (!refCount) {
-        if (This->their_src)
+        if (This->their_src) {
             gst_pad_unlink(This->their_src, This->my_sink);
+            gst_object_unref(This->their_src);
+        }
         gst_object_unref(This->my_sink);
         CloseHandle(This->caps_event);
         DeleteMediaType(This->pmt);
         FreeMediaType(&This->pin.pin.mtCurrent);
         gst_segment_free(This->segment);
+        if(This->gstpool)
+            gst_object_unref(This->gstpool);
         if (This->pin.pAllocator)
             IMemAllocator_Release(This->pin.pAllocator);
         CoTaskMemFree(This);
@@ -1734,6 +1769,7 @@ static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDI
     hr = BaseOutputPin_Construct(&GST_OutputPin_Vtbl, sizeof(GSTOutPin), piOutput, &output_BaseOutputFuncTable, &This->filter.csFilter, (IPin**)(This->ppPins + This->cStreams));
     if (SUCCEEDED(hr)) {
         GSTOutPin *pin = This->ppPins[This->cStreams];
+        memset((char*)pin + sizeof(pin->pin), 0, sizeof(GSTOutPin) - sizeof(pin->pin));
         pin->pmt = CoTaskMemAlloc(sizeof(AM_MEDIA_TYPE));
         CopyMediaType(pin->pmt, amt);
         pin->pin.pin.pinInfo.pFilter = (LPVOID)This;
@@ -1762,9 +1798,8 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This)
     gst_element_set_bus(This->gstfilter, NULL);
     gst_element_set_state(This->gstfilter, GST_STATE_NULL);
     gst_pad_unlink(This->my_src, This->their_sink);
-    if (This->push_thread)
-        gst_pad_activate_push(This->my_src, 0);
     gst_object_unref(This->my_src);
+    gst_object_unref(This->their_sink);
     This->my_src = This->their_sink = NULL;
 
     for (i = 0; i < This->cStreams; i++) {
@@ -1841,6 +1876,7 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
             This->pin.pConnectedTo = pReceivePin;
             IPin_AddRef(pReceivePin);
             hr = IMemAllocator_Commit(This->pAlloc);
+            SetEvent(((GSTImpl*)This->pin.pinInfo.pFilter)->event);
         } else {
             GST_RemoveOutputPins((GSTImpl *)This->pin.pinInfo.pFilter);
             if (This->pReader)
@@ -2013,25 +2049,19 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
     case EXISTING_NEW_PAD:
         {
             struct existing_new_pad_data *data = &cbdata->u.existing_new_pad_data;
-            existing_new_pad(data->bin, data->pad, data->last, data->user);
-            break;
-        }
-    case CHECK_GET_RANGE:
-        {
-            struct check_get_range_data *data = &cbdata->u.check_get_range_data;
-            cbdata->u.check_get_range_data.ret = check_get_range(data->pad);
+            existing_new_pad(data->bin, data->pad, data->user);
             break;
         }
     case QUERY_FUNCTION:
         {
             struct query_function_data *data = &cbdata->u.query_function_data;
-            cbdata->u.query_function_data.ret = query_function(data->pad, data->query);
+            cbdata->u.query_function_data.ret = query_function(data->pad, data->parent, data->query);
             break;
         }
-    case ACTIVATE_PUSH:
+    case ACTIVATE_MODE:
         {
-            struct activate_push_data *data = &cbdata->u.activate_push_data;
-            cbdata->u.activate_push_data.ret = activate_push(data->pad, data->activate);
+            struct activate_mode_data *data = &cbdata->u.activate_mode_data;
+            cbdata->u.activate_mode_data.ret = activate_mode(data->pad, data->parent, data->mode, data->activate);
             break;
         }
     case NO_MORE_PADS:
@@ -2043,27 +2073,20 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
     case REQUEST_BUFFER_SRC:
         {
             struct request_buffer_src_data *data = &cbdata->u.request_buffer_src_data;
-            cbdata->u.request_buffer_src_data.ret = request_buffer_src(data->pad,
+            cbdata->u.request_buffer_src_data.ret = request_buffer_src(data->pad, data->parent,
                     data->ofs, data->len, data->buf);
             break;
         }
     case EVENT_SRC:
         {
             struct event_src_data *data = &cbdata->u.event_src_data;
-            cbdata->u.event_src_data.ret = event_src(data->pad, data->event);
+            cbdata->u.event_src_data.ret = event_src(data->pad, data->parent, data->event);
             break;
         }
     case EVENT_SINK:
         {
             struct event_sink_data *data = &cbdata->u.event_sink_data;
-            cbdata->u.event_sink_data.ret = event_sink(data->pad, data->event);
-            break;
-        }
-    case REQUEST_BUFFER_SINK:
-        {
-            struct request_buffer_sink_data *data = &cbdata->u.request_buffer_sink_data;
-            cbdata->u.request_buffer_sink_data.ret = request_buffer_sink(data->pad,
-                    data->ofs, data->size, data->caps, data->buf);
+            cbdata->u.event_sink_data.ret = event_sink(data->pad, data->parent, data->event);
             break;
         }
     case ACCEPT_CAPS_SINK:
@@ -2081,20 +2104,13 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
     case GOT_DATA_SINK:
         {
             struct got_data_sink_data *data = &cbdata->u.got_data_sink_data;
-            cbdata->u.got_data_sink_data.ret = got_data_sink(data->pad, data->buf);
+            cbdata->u.got_data_sink_data.ret = got_data_sink(data->pad, data->parent, data->buf);
             break;
         }
     case GOT_DATA:
         {
             struct got_data_data *data = &cbdata->u.got_data_data;
-            cbdata->u.got_data_data.ret = got_data(data->pad, data->buf);
-            break;
-        }
-    case REQUEST_BUFFER:
-        {
-            struct request_buffer_data *data = &cbdata->u.request_buffer_data;
-            cbdata->u.request_buffer_data.ret = request_buffer(data->pad,
-                    data->ofs, data->size, data->caps, data->buf);
+            cbdata->u.got_data_data.ret = got_data(data->pad, data->parent, data->buf);
             break;
         }
     case REMOVED_DECODED_PAD:
@@ -2126,6 +2142,13 @@ void CALLBACK perform_cb(TP_CALLBACK_INSTANCE *instance, void *user)
         {
             struct transform_pad_added_data *data = &cbdata->u.transform_pad_added_data;
             Gstreamer_transform_pad_added(data->filter, data->pad, data->user);
+            break;
+        }
+    case QUERY_SINK:
+        {
+            struct query_sink_data *data = &cbdata->u.query_sink_data;
+            cbdata->u.query_sink_data.ret = query_sink(data->pad, data->parent,
+                    data->query);
             break;
         }
     }

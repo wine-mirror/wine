@@ -1460,7 +1460,7 @@ test -n "$PULSE_LIBS" || enable_winepulse_drv=${enable_winepulse_drv:-no}
 dnl **** Check for gstreamer ****
 if test "x$with_gstreamer" != "xno"
 then
-    WINE_PACKAGE_FLAGS(GSTREAMER,[gstreamer-app-0.10],,,,
+    WINE_PACKAGE_FLAGS(GSTREAMER,[gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0],,,,
         [ac_gst_incl=""
         for i in $GSTREAMER_CFLAGS
         do
@@ -1471,19 +1471,18 @@ then
         GSTREAMER_CFLAGS=$ac_gst_incl
         CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
         AC_CHECK_HEADER([gst/gstpad.h],
-            [AC_CHECK_HEADER([gst/app/gstappsink.h],
-                 [AC_MSG_CHECKING([whether gint64 defined by gst/app/gstappsink.h is indeed 64-bit])
-                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gst/app/gstappsink.h>]],
+            [AC_CHECK_HEADER([gst/gst.h],
+                 [AC_MSG_CHECKING([whether gint64 defined by gst/gst.h is indeed 64-bit])
+                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gst/gst.h>]],
                                                      [[static int a[sizeof(gint64) > 4 ? 1 : -1]; if (a[0]) return 0;]])],
                     [AC_MSG_RESULT([yes])
-                     AC_CHECK_LIB(gstreamer-0.10,gst_pad_get_caps_reffed,
-                       [AC_CHECK_LIB(gstapp-0.10,gst_app_buffer_new,[:],,[$GSTREAMER_LIBS])])],
+                     AC_CHECK_LIB(gstreamer-1.0,gst_pad_new,[:],,[$GSTREAMER_LIBS])],
                     [AC_MSG_RESULT([no])])])],
             [GSTREAMER_CFLAGS=""])])
 fi
-WINE_NOTICE_WITH(gstreamer,[test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes],
-                 [gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled])
-test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
+WINE_NOTICE_WITH(gstreamer,[test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes],
+                 [gstreamer-1.0 base plugins ${notice_platform}development files not found, gstreamer support disabled])
+test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 
 dnl **** Check for ALSA 1.x ****
 AC_SUBST(ALSA_LIBS,"")

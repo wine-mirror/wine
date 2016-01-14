@@ -2290,9 +2290,11 @@ Some influential environment variables:
               C compiler flags for libpulse, overriding pkg-config
   PULSE_LIBS  Linker flags for libpulse, overriding pkg-config
   GSTREAMER_CFLAGS
-              C compiler flags for gstreamer-app-0.10, overriding pkg-config
+              C compiler flags for gstreamer-1.0 gstreamer-video-1.0
+              gstreamer-audio-1.0, overriding pkg-config
   GSTREAMER_LIBS
-              Linker flags for gstreamer-app-0.10, overriding pkg-config
+              Linker flags for gstreamer-1.0 gstreamer-video-1.0
+              gstreamer-audio-1.0, overriding pkg-config
   CAPI20_CFLAGS
               C compiler flags for capi20, overriding pkg-config
   CAPI20_LIBS Linker flags for capi20, overriding pkg-config
@@ -12591,19 +12593,19 @@ if test "x$with_gstreamer" != "xno"
 then
     if ${GSTREAMER_CFLAGS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
-  GSTREAMER_CFLAGS=`$PKG_CONFIG --cflags gstreamer-app-0.10 2>/dev/null`
+  GSTREAMER_CFLAGS=`$PKG_CONFIG --cflags gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 2>/dev/null`
 fi
 fi
 
 if ${GSTREAMER_LIBS:+false} :; then :
   if ${PKG_CONFIG+:} false; then :
-  GSTREAMER_LIBS=`$PKG_CONFIG --libs gstreamer-app-0.10 2>/dev/null`
+  GSTREAMER_LIBS=`$PKG_CONFIG --libs gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 2>/dev/null`
 fi
 fi
 
 
-$as_echo "$as_me:${as_lineno-$LINENO}: gstreamer-app-0.10 cflags: $GSTREAMER_CFLAGS" >&5
-$as_echo "$as_me:${as_lineno-$LINENO}: gstreamer-app-0.10 libs: $GSTREAMER_LIBS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 cflags: $GSTREAMER_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: gstreamer-1.0 gstreamer-video-1.0 gstreamer-audio-1.0 libs: $GSTREAMER_LIBS" >&5
 ac_save_CPPFLAGS=$CPPFLAGS
 CPPFLAGS="$CPPFLAGS $GSTREAMER_CFLAGS"
 ac_gst_incl=""
@@ -12617,13 +12619,13 @@ ac_gst_incl=""
         CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
         ac_fn_c_check_header_mongrel "$LINENO" "gst/gstpad.h" "ac_cv_header_gst_gstpad_h" "$ac_includes_default"
 if test "x$ac_cv_header_gst_gstpad_h" = xyes; then :
-  ac_fn_c_check_header_mongrel "$LINENO" "gst/app/gstappsink.h" "ac_cv_header_gst_app_gstappsink_h" "$ac_includes_default"
-if test "x$ac_cv_header_gst_app_gstappsink_h" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether gint64 defined by gst/app/gstappsink.h is indeed 64-bit" >&5
-$as_echo_n "checking whether gint64 defined by gst/app/gstappsink.h is indeed 64-bit... " >&6; }
+  ac_fn_c_check_header_mongrel "$LINENO" "gst/gst.h" "ac_cv_header_gst_gst_h" "$ac_includes_default"
+if test "x$ac_cv_header_gst_gst_h" = xyes; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether gint64 defined by gst/gst.h is indeed 64-bit" >&5
+$as_echo_n "checking whether gint64 defined by gst/gst.h is indeed 64-bit... " >&6; }
                   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <gst/app/gstappsink.h>
+#include <gst/gst.h>
 int
 main ()
 {
@@ -12635,13 +12637,13 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_pad_get_caps_reffed in -lgstreamer-0.10" >&5
-$as_echo_n "checking for gst_pad_get_caps_reffed in -lgstreamer-0.10... " >&6; }
-if ${ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed+:} false; then :
+                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_pad_new in -lgstreamer-1.0" >&5
+$as_echo_n "checking for gst_pad_new in -lgstreamer-1.0... " >&6; }
+if ${ac_cv_lib_gstreamer_1_0_gst_pad_new+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgstreamer-0.10  $LIBS"
+LIBS="-lgstreamer-1.0 $GSTREAMER_LIBS $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -12651,67 +12653,28 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char gst_pad_get_caps_reffed ();
+char gst_pad_new ();
 int
 main ()
 {
-return gst_pad_get_caps_reffed ();
+return gst_pad_new ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed=yes
+  ac_cv_lib_gstreamer_1_0_gst_pad_new=yes
 else
-  ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed=no
+  ac_cv_lib_gstreamer_1_0_gst_pad_new=no
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed" >&5
-$as_echo "$ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed" >&6; }
-if test "x$ac_cv_lib_gstreamer_0_10_gst_pad_get_caps_reffed" = xyes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_app_buffer_new in -lgstapp-0.10" >&5
-$as_echo_n "checking for gst_app_buffer_new in -lgstapp-0.10... " >&6; }
-if ${ac_cv_lib_gstapp_0_10_gst_app_buffer_new+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lgstapp-0.10 $GSTREAMER_LIBS $LIBS"
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char gst_app_buffer_new ();
-int
-main ()
-{
-return gst_app_buffer_new ();
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_gstapp_0_10_gst_app_buffer_new=yes
-else
-  ac_cv_lib_gstapp_0_10_gst_app_buffer_new=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gstapp_0_10_gst_app_buffer_new" >&5
-$as_echo "$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" >&6; }
-if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_gstreamer_1_0_gst_pad_new" >&5
+$as_echo "$ac_cv_lib_gstreamer_1_0_gst_pad_new" >&6; }
+if test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes; then :
   :
-fi
-
 fi
 
 else
@@ -12732,15 +12695,15 @@ test -z "$GSTREAMER_CFLAGS" || GSTREAMER_CFLAGS=`echo " $GSTREAMER_CFLAGS" | sed
 test -z "$GSTREAMER_LIBS" || GSTREAMER_LIBS=`echo " $GSTREAMER_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
-if test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes; then :
+if test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes; then :
   case "x$with_gstreamer" in
-  x)   as_fn_append wine_notices "|gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled" ;;
+  x)   as_fn_append wine_notices "|gstreamer-1.0 base plugins ${notice_platform}development files not found, gstreamer support disabled" ;;
   xno) ;;
-  *)   as_fn_error $? "gstreamer-0.10 base plugins ${notice_platform}development files not found, gstreamer support disabled
+  *)   as_fn_error $? "gstreamer-1.0 base plugins ${notice_platform}development files not found, gstreamer support disabled
 This is an error since --with-gstreamer was requested." "$LINENO" 5 ;;
 esac
 fi
-test "x$ac_cv_lib_gstapp_0_10_gst_app_buffer_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
+test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 
 ALSA_LIBS=""
 

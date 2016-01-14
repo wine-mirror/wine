@@ -18,10 +18,7 @@
 
 #include "config.h"
 
-#include <gst/app/gstappsink.h>
-#include <gst/app/gstappsrc.h>
-#include <gst/app/gstappbuffer.h>
-#include <gst/gstutils.h>
+#include <gst/gst.h>
 
 #include "wine/list.h"
 
@@ -88,35 +85,23 @@ GstBusSyncReply watch_bus_wrapper(GstBus *bus, GstMessage *msg, gpointer user)
     return cbdata.u.watch_bus_data.ret;
 }
 
-void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gboolean last,
-        gpointer user)
+void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
 {
     struct cb_data cbdata = { EXISTING_NEW_PAD };
 
     cbdata.u.existing_new_pad_data.bin = bin;
     cbdata.u.existing_new_pad_data.pad = pad;
-    cbdata.u.existing_new_pad_data.last = last;
     cbdata.u.existing_new_pad_data.user = user;
 
     call_cb(&cbdata);
 }
 
-gboolean check_get_range_wrapper(GstPad *pad)
-{
-    struct cb_data cbdata = { CHECK_GET_RANGE };
-
-    cbdata.u.check_get_range_data.pad = pad;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.check_get_range_data.ret;
-}
-
-gboolean query_function_wrapper(GstPad *pad, GstQuery *query)
+gboolean query_function_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct cb_data cbdata = { QUERY_FUNCTION };
 
     cbdata.u.query_function_data.pad = pad;
+    cbdata.u.query_function_data.parent = parent;
     cbdata.u.query_function_data.query = query;
 
     call_cb(&cbdata);
@@ -124,16 +109,18 @@ gboolean query_function_wrapper(GstPad *pad, GstQuery *query)
     return cbdata.u.query_function_data.ret;
 }
 
-gboolean activate_push_wrapper(GstPad *pad, gboolean activate)
+gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate)
 {
-    struct cb_data cbdata = { ACTIVATE_PUSH };
+    struct cb_data cbdata = { ACTIVATE_MODE };
 
-    cbdata.u.activate_push_data.pad = pad;
-    cbdata.u.activate_push_data.activate = activate;
+    cbdata.u.activate_mode_data.pad = pad;
+    cbdata.u.activate_mode_data.parent = parent;
+    cbdata.u.activate_mode_data.mode = mode;
+    cbdata.u.activate_mode_data.activate = activate;
 
     call_cb(&cbdata);
 
-    return cbdata.u.activate_push_data.ret;
+    return cbdata.u.activate_mode_data.ret;
 }
 
 void no_more_pads_wrapper(GstElement *decodebin, gpointer user)
@@ -146,12 +133,13 @@ void no_more_pads_wrapper(GstElement *decodebin, gpointer user)
     call_cb(&cbdata);
 }
 
-GstFlowReturn request_buffer_src_wrapper(GstPad *pad, guint64 ofs, guint len,
+GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len,
         GstBuffer **buf)
 {
     struct cb_data cbdata = { REQUEST_BUFFER_SRC };
 
     cbdata.u.request_buffer_src_data.pad = pad;
+    cbdata.u.request_buffer_src_data.parent = parent;
     cbdata.u.request_buffer_src_data.ofs = ofs;
     cbdata.u.request_buffer_src_data.len = len;
     cbdata.u.request_buffer_src_data.buf = buf;
@@ -161,11 +149,12 @@ GstFlowReturn request_buffer_src_wrapper(GstPad *pad, guint64 ofs, guint len,
     return cbdata.u.request_buffer_src_data.ret;
 }
 
-gboolean event_src_wrapper(GstPad *pad, GstEvent *event)
+gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct cb_data cbdata = { EVENT_SRC };
 
     cbdata.u.event_src_data.pad = pad;
+    cbdata.u.event_src_data.parent = parent;
     cbdata.u.event_src_data.event = event;
 
     call_cb(&cbdata);
@@ -173,32 +162,17 @@ gboolean event_src_wrapper(GstPad *pad, GstEvent *event)
     return cbdata.u.event_src_data.ret;
 }
 
-gboolean event_sink_wrapper(GstPad *pad, GstEvent *event)
+gboolean event_sink_wrapper(GstPad *pad, GstObject *parent, GstEvent *event)
 {
     struct cb_data cbdata = { EVENT_SINK };
 
     cbdata.u.event_sink_data.pad = pad;
+    cbdata.u.event_sink_data.parent = parent;
     cbdata.u.event_sink_data.event = event;
 
     call_cb(&cbdata);
 
     return cbdata.u.event_sink_data.ret;
-}
-
-GstFlowReturn request_buffer_sink_wrapper(GstPad *pad, guint64 ofs, guint size,
-        GstCaps *caps, GstBuffer **buf)
-{
-    struct cb_data cbdata = { REQUEST_BUFFER_SINK };
-
-    cbdata.u.request_buffer_sink_data.pad = pad;
-    cbdata.u.request_buffer_sink_data.ofs = ofs;
-    cbdata.u.request_buffer_sink_data.size = size;
-    cbdata.u.request_buffer_sink_data.caps = caps;
-    cbdata.u.request_buffer_sink_data.buf = buf;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.request_buffer_sink_data.ret;
 }
 
 gboolean accept_caps_sink_wrapper(GstPad *pad, GstCaps *caps)
@@ -225,11 +199,12 @@ gboolean setcaps_sink_wrapper(GstPad *pad, GstCaps *caps)
     return cbdata.u.setcaps_sink_data.ret;
 }
 
-GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstBuffer *buf)
+GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
     struct cb_data cbdata = { GOT_DATA_SINK };
 
     cbdata.u.got_data_sink_data.pad = pad;
+    cbdata.u.got_data_sink_data.parent = parent;
     cbdata.u.got_data_sink_data.buf = buf;
 
     call_cb(&cbdata);
@@ -237,32 +212,17 @@ GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstBuffer *buf)
     return cbdata.u.got_data_sink_data.ret;
 }
 
-GstFlowReturn got_data_wrapper(GstPad *pad, GstBuffer *buf)
+GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf)
 {
     struct cb_data cbdata = { GOT_DATA };
 
     cbdata.u.got_data_data.pad = pad;
+    cbdata.u.got_data_data.parent = parent;
     cbdata.u.got_data_data.buf = buf;
 
     call_cb(&cbdata);
 
     return cbdata.u.got_data_data.ret;
-}
-
-GstFlowReturn request_buffer_wrapper(GstPad *pad, guint64 ofs, guint size,
-        GstCaps *caps, GstBuffer **buf)
-{
-    struct cb_data cbdata = { REQUEST_BUFFER };
-
-    cbdata.u.request_buffer_data.pad = pad;
-    cbdata.u.request_buffer_data.ofs = ofs;
-    cbdata.u.request_buffer_data.size = size;
-    cbdata.u.request_buffer_data.caps = caps;
-    cbdata.u.request_buffer_data.buf = buf;
-
-    call_cb(&cbdata);
-
-    return cbdata.u.request_buffer_data.ret;
 }
 
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user)
@@ -322,4 +282,15 @@ void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpoi
     cbdata.u.transform_pad_added_data.user = user;
 
     call_cb(&cbdata);
+}
+
+gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
+{
+    struct cb_data cbdata = { QUERY_SINK,
+        { .query_sink_data = {pad, parent, query} }
+    };
+
+    call_cb(&cbdata);
+
+    return cbdata.u.query_sink_data.ret;
 }

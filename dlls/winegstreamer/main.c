@@ -22,9 +22,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include <gst/app/gstappsink.h>
-#include <gst/app/gstappsrc.h>
-#include <gst/app/gstappbuffer.h>
+#include <gst/gst.h>
 
 #include "windef.h"
 #include "winbase.h"

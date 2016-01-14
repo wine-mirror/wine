@@ -32,24 +32,22 @@ typedef enum {
 enum CB_TYPE {
     WATCH_BUS,
     EXISTING_NEW_PAD,
-    CHECK_GET_RANGE,
     QUERY_FUNCTION,
-    ACTIVATE_PUSH,
+    ACTIVATE_MODE,
     NO_MORE_PADS,
     REQUEST_BUFFER_SRC,
     EVENT_SRC,
     EVENT_SINK,
-    REQUEST_BUFFER_SINK,
     ACCEPT_CAPS_SINK,
     SETCAPS_SINK,
     GOT_DATA_SINK,
     GOT_DATA,
-    REQUEST_BUFFER,
     REMOVED_DECODED_PAD,
     AUTOPLUG_BLACKLIST,
     UNKNOWN_TYPE,
     RELEASE_SAMPLE,
-    TRANSFORM_PAD_ADDED
+    TRANSFORM_PAD_ADDED,
+    QUERY_SINK
 };
 
 struct cb_data {
@@ -64,29 +62,28 @@ struct cb_data {
         struct existing_new_pad_data {
             GstElement *bin;
             GstPad *pad;
-            gboolean last;
             gpointer user;
         } existing_new_pad_data;
-        struct check_get_range_data {
-            GstPad *pad;
-            gboolean ret;
-        } check_get_range_data;
         struct query_function_data {
             GstPad *pad;
+            GstObject *parent;
             GstQuery *query;
             gboolean ret;
         } query_function_data;
-        struct activate_push_data {
+        struct activate_mode_data {
             GstPad *pad;
+            GstObject *parent;
+            GstPadMode mode;
             gboolean activate;
             gboolean ret;
-        } activate_push_data;
+        } activate_mode_data;
         struct no_more_pads_data {
             GstElement *decodebin;
             gpointer user;
         } no_more_pads_data;
         struct request_buffer_src_data {
             GstPad *pad;
+            GstObject *parent;
             guint64 ofs;
             guint len;
             GstBuffer **buf;
@@ -94,22 +91,16 @@ struct cb_data {
         } request_buffer_src_data;
         struct event_src_data {
             GstPad *pad;
+            GstObject *parent;
             GstEvent *event;
             gboolean ret;
         } event_src_data;
         struct event_sink_data {
             GstPad *pad;
+            GstObject *parent;
             GstEvent *event;
             gboolean ret;
         } event_sink_data;
-        struct request_buffer_sink_data {
-            GstPad *pad;
-            guint64 ofs;
-            guint size;
-            GstCaps *caps;
-            GstBuffer **buf;
-            GstFlowReturn ret;
-        } request_buffer_sink_data;
         struct accept_caps_sink_data {
             GstPad *pad;
             GstCaps *caps;
@@ -122,22 +113,16 @@ struct cb_data {
         } setcaps_sink_data;
         struct got_data_sink_data {
             GstPad *pad;
+            GstObject *parent;
             GstBuffer *buf;
             GstFlowReturn ret;
         } got_data_sink_data;
         struct got_data_data {
             GstPad *pad;
+            GstObject *parent;
             GstBuffer *buf;
             GstFlowReturn ret;
         } got_data_data;
-        struct request_buffer_data {
-            GstPad *pad;
-            guint64 ofs;
-            guint size;
-            GstCaps *caps;
-            GstBuffer **buf;
-            GstFlowReturn ret;
-        } request_buffer_data;
         struct removed_decoded_pad_data {
             GstElement *bin;
             GstPad *pad;
@@ -165,6 +150,12 @@ struct cb_data {
             GstPad *pad;
             gpointer user;
         } transform_pad_added_data;
+        struct query_sink_data {
+            GstPad *pad;
+            GstObject *parent;
+            GstQuery *query;
+            gboolean ret;
+        } query_sink_data;
     } u;
 
     int finished;
@@ -181,24 +172,22 @@ BOOL is_wine_thread(void) DECLSPEC_HIDDEN;
 void mark_wine_thread(void) DECLSPEC_HIDDEN;
 
 GstBusSyncReply watch_bus_wrapper(GstBus *bus, GstMessage *msg, gpointer user) DECLSPEC_HIDDEN;
-void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gboolean last, gpointer user) DECLSPEC_HIDDEN;
-gboolean check_get_range_wrapper(GstPad *pad) DECLSPEC_HIDDEN;
-gboolean query_function_wrapper(GstPad *pad, GstQuery *query) DECLSPEC_HIDDEN;
-gboolean activate_push_wrapper(GstPad *pad, gboolean activate) DECLSPEC_HIDDEN;
+void existing_new_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
+gboolean query_function_wrapper(GstPad *pad, GstObject *parent, GstQuery *query) DECLSPEC_HIDDEN;
+gboolean activate_mode_wrapper(GstPad *pad, GstObject *parent, GstPadMode mode, gboolean activate) DECLSPEC_HIDDEN;
 void no_more_pads_wrapper(GstElement *decodebin, gpointer user) DECLSPEC_HIDDEN;
-GstFlowReturn request_buffer_src_wrapper(GstPad *pad, guint64 ofs, guint len, GstBuffer **buf) DECLSPEC_HIDDEN;
-gboolean event_src_wrapper(GstPad *pad, GstEvent *event) DECLSPEC_HIDDEN;
-gboolean event_sink_wrapper(GstPad *pad, GstEvent *event) DECLSPEC_HIDDEN;
-GstFlowReturn request_buffer_sink_wrapper(GstPad *pad, guint64 ofs, guint size, GstCaps *caps, GstBuffer **buf) DECLSPEC_HIDDEN;
+GstFlowReturn request_buffer_src_wrapper(GstPad *pad, GstObject *parent, guint64 ofs, guint len, GstBuffer **buf) DECLSPEC_HIDDEN;
+gboolean event_src_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DECLSPEC_HIDDEN;
+gboolean event_sink_wrapper(GstPad *pad, GstObject *parent, GstEvent *event) DECLSPEC_HIDDEN;
 gboolean accept_caps_sink_wrapper(GstPad *pad, GstCaps *caps) DECLSPEC_HIDDEN;
 gboolean setcaps_sink_wrapper(GstPad *pad, GstCaps *caps) DECLSPEC_HIDDEN;
-GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstBuffer *buf) DECLSPEC_HIDDEN;
-GstFlowReturn got_data_wrapper(GstPad *pad, GstBuffer *buf) DECLSPEC_HIDDEN;
-GstFlowReturn request_buffer_wrapper(GstPad *pad, guint64 ofs, guint size, GstCaps *caps, GstBuffer **buf) DECLSPEC_HIDDEN;
+GstFlowReturn got_data_sink_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
+GstFlowReturn got_data_wrapper(GstPad *pad, GstObject *parent, GstBuffer *buf) DECLSPEC_HIDDEN;
 void removed_decoded_pad_wrapper(GstElement *bin, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
 GstAutoplugSelectResult autoplug_blacklist_wrapper(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user) DECLSPEC_HIDDEN;
 void unknown_type_wrapper(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user) DECLSPEC_HIDDEN;
 void release_sample_wrapper(gpointer data) DECLSPEC_HIDDEN;
 void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpointer user) DECLSPEC_HIDDEN;
+gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query) DECLSPEC_HIDDEN;
 
 #endif
