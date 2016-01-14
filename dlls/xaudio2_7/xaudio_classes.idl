@@ -64,13 +64,6 @@ coclass FXReverb11 { interface IXAPO; }
 coclass FXReverb12 { interface IXAPO; }
 
 [
-    helpstring("XAPOFX1.3 FXReverb Class (Wine)"),
-    threading(both),
-    uuid(a90bc001-e897-e897-7439-43FF02000103)
-]
-coclass FXReverb13 { interface IXAPO; }
-
-[
     helpstring("XAPOFX1.1 FXEQ Class (Wine)"),
     threading(both),
     uuid(a90bc001-e897-e897-7439-43FF00000101)
@@ -83,13 +76,6 @@ coclass FXEQ11 { interface IXAPO; }
     uuid(a90bc001-e897-e897-7439-43FF00000102)
 ]
 coclass FXEQ12 { interface IXAPO; }
-
-[
-    helpstring("XAPOFX1.3 FXEQ Class (Wine)"),
-    threading(both),
-    uuid(a90bc001-e897-e897-7439-43FF00000103)
-]
-coclass FXEQ13 { interface IXAPO; }
 #endif /* XAUDIO2_VER == 7 */
 
 #if XAUDIO2_VER == 6

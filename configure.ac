@@ -1662,6 +1662,7 @@ fi
 if test "x$ac_cv_have_openalsoft" != xyes
 then
     WINE_NOTICE([openal-soft ${notice_platform}development files not found (or too old), XAudio2 won't be supported])
+    enable_xapofx1_3=${enable_xapofx1_3:-no}
     enable_xapofx1_4=${enable_xapofx1_4:-no}
     enable_xapofx1_5=${enable_xapofx1_5:-no}
     enable_xaudio2_0=${enable_xaudio2_0:-no}
