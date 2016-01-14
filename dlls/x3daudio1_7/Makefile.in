@@ -1,5 +1,6 @@
+EXTRADEFS = -DX3DAUDIO1_VER=7 -DXAUDIO2_VER=7
 MODULE    = x3daudio1_7.dll
-IMPORTS   = xaudio2_8
+PARENTSRC = ../xaudio2_7
 
 C_SRCS = \
-	main.c
+	x3daudio.c

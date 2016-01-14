@@ -1662,6 +1662,7 @@ fi
 if test "x$ac_cv_have_openalsoft" != xyes
 then
     WINE_NOTICE([openal-soft ${notice_platform}development files not found (or too old), XAudio2 won't be supported])
+    enable_x3daudio1_7=${enable_x3daudio1_7:-no}
     enable_xapofx1_1=${enable_xapofx1_1:-no}
     enable_xapofx1_2=${enable_xapofx1_2:-no}
     enable_xapofx1_3=${enable_xapofx1_3:-no}
@@ -3391,7 +3392,7 @@ WINE_CONFIG_DLL(xaudio2_5,,[clean])
 WINE_CONFIG_DLL(xaudio2_6,,[clean])
 WINE_CONFIG_DLL(xaudio2_7,,[clean])
 WINE_CONFIG_TEST(dlls/xaudio2_7/tests)
-WINE_CONFIG_DLL(xaudio2_8,,[clean,implib])
+WINE_CONFIG_DLL(xaudio2_8,,[clean])
 WINE_CONFIG_DLL(xinput1_1)
 WINE_CONFIG_DLL(xinput1_2)
 WINE_CONFIG_DLL(xinput1_3,,[implib],[xinput])

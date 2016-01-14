@@ -25,6 +25,23 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
 
+#ifdef X3DAUDIO1_VER
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD reason, void *pReserved)
+{
+    TRACE("(%p, %d, %p)\n", hinstDLL, reason, pReserved);
+
+    switch (reason)
+    {
+    case DLL_WINE_PREATTACH:
+        return FALSE;  /* prefer native version */
+    case DLL_PROCESS_ATTACH:
+        DisableThreadLibraryCalls( hinstDLL );
+        break;
+    }
+    return TRUE;
+}
+#endif /* X3DAUDIO1_VER */
+
 #if XAUDIO2_VER >= 8
 HRESULT CDECL X3DAudioInitialize(UINT32 chanmask, float speedofsound,
         X3DAUDIO_HANDLE handle)
@@ -32,7 +49,17 @@ HRESULT CDECL X3DAudioInitialize(UINT32 chanmask, float speedofsound,
     FIXME("0x%x, %f, %p: Stub!\n", chanmask, speedofsound, handle);
     return S_OK;
 }
+#endif /* XAUDIO2_VER >= 8 */
 
+#ifdef X3DAUDIO1_VER
+void CDECL LEGACY_X3DAudioInitialize(UINT32 chanmask, float speedofsound,
+        X3DAUDIO_HANDLE handle)
+{
+    FIXME("0x%x, %f, %p: Stub!\n", chanmask, speedofsound, handle);
+}
+#endif /* X3DAUDIO1_VER */
+
+#if XAUDIO2_VER >= 8 || defined X3DAUDIO1_VER
 void CDECL X3DAudioCalculate(const X3DAUDIO_HANDLE handle,
         const X3DAUDIO_LISTENER *listener, const X3DAUDIO_EMITTER *emitter,
         UINT32 flags, X3DAUDIO_DSP_SETTINGS *out)
@@ -52,4 +79,4 @@ void CDECL X3DAudioCalculate(const X3DAUDIO_HANDLE handle,
     out->EmitterVelocityComponent = 0;
     out->ListenerVelocityComponent = 0;
 }
-#endif /* XAUDIO2_VER >= 8 */
+#endif /* XAUDIO2_VER >= 8 || defined X3DAUDIO1_VER */
