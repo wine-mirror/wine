@@ -48,20 +48,6 @@ coclass AudioReverb { interface IUnknown; }
     uuid(962f5027-99be-4692-a468-85802cf8de61)
 ]
 coclass XACT31 { interface IUnknown; }
-
-[
-    helpstring("XAPOFX1.1 FXReverb Class (Wine)"),
-    threading(both),
-    uuid(a90bc001-e897-e897-7439-43FF02000101)
-]
-coclass FXReverb11 { interface IXAPO; }
-
-[
-    helpstring("XAPOFX1.1 FXEQ Class (Wine)"),
-    threading(both),
-    uuid(a90bc001-e897-e897-7439-43FF00000101)
-]
-coclass FXEQ11 { interface IXAPO; }
 #endif /* XAUDIO2_VER == 7 */
 
 #if XAUDIO2_VER == 6
