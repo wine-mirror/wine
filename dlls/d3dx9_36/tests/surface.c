@@ -200,7 +200,6 @@ struct dds_pixel_format
 
 struct dds_header
 {
-    DWORD magic;
     DWORD size;
     DWORD flags;
     DWORD height;
@@ -222,7 +221,6 @@ static void fill_dds_header(struct dds_header *header)
 {
     memset(header, 0, sizeof(*header));
 
-    header->magic = MAKEFOURCC('D','D','S',' ');
     header->size = sizeof(*header);
     header->flags = DDS_CAPS | DDS_WIDTH | DDS_HEIGHT | DDS_PIXELFORMAT;
     header->height = 4;
@@ -250,10 +248,12 @@ static void check_dds_pixel_format_(unsigned int line,
     D3DXIMAGE_INFO info;
     struct
     {
+        DWORD magic;
         struct dds_header header;
         BYTE data[256];
     } dds;
 
+    dds.magic = MAKEFOURCC('D','D','S',' ');
     fill_dds_header(&dds.header);
     dds.header.pixel_format.flags = flags;
     dds.header.pixel_format.fourcc = fourcc;
@@ -281,6 +281,7 @@ static void test_dds_header_handling(void)
     D3DXIMAGE_INFO info;
     struct
     {
+        DWORD magic;
         struct dds_header header;
         BYTE data[4096 * 1024];
     } *dds;
@@ -399,9 +400,10 @@ static void test_dds_header_handling(void)
 
     for (i = 0; i < sizeof(tests) / sizeof(tests[0]); i++)
     {
-        DWORD file_size = sizeof(dds->header) + tests[i].pixel_data_size;
+        DWORD file_size = sizeof(dds->magic) + sizeof(dds->header) + tests[i].pixel_data_size;
         assert(file_size <= sizeof(*dds));
 
+        dds->magic = MAKEFOURCC('D','D','S',' ');
         fill_dds_header(&dds->header);
         dds->header.flags |= tests[i].flags;
         dds->header.width = tests[i].width;
@@ -1234,7 +1236,12 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
     RECT rect;
     ID3DXBuffer *buffer;
     IDirect3DSurface9 *surface;
-    struct dds_header *header;
+    struct
+    {
+         DWORD magic;
+         struct dds_header header;
+         BYTE *data;
+    } *dds;
 
     hr = IDirect3DDevice9_CreateOffscreenPlainSurface(device, 4, 4, D3DFMT_A8R8G8B8, D3DPOOL_SCRATCH, &surface, NULL);
     if (FAILED(hr)) {
@@ -1257,35 +1264,35 @@ static void test_D3DXSaveSurfaceToFileInMemory(IDirect3DDevice9 *device)
     todo_wine ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
     if (SUCCEEDED(hr))
     {
-        header = ID3DXBuffer_GetBufferPointer(buffer);
+        dds = ID3DXBuffer_GetBufferPointer(buffer);
 
-        ok(header->magic == MAKEFOURCC('D','D','S',' '), "Invalid DDS signature.\n");
-        ok(header->size == 124, "Invalid DDS size %u.\n", header->size);
-        ok(!header->height, "Got unexpected height %u.\n", header->height);
-        ok(!header->width, "Got unexpected width %u.\n", header->width);
-        ok(!header->depth, "Got unexpected depth %u.\n", header->depth);
-        ok(!header->miplevels, "Got unexpected miplevels %u.\n", header->miplevels);
-        ok(!header->pitch_or_linear_size, "Got unexpected pitch_or_linear_size %u.\n", header->pitch_or_linear_size);
-        ok(header->caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %x.\n", header->caps);
-        ok(header->flags == (DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT),
-                "Got unexpected flags %x.\n", header->flags);
+        ok(dds->magic == MAKEFOURCC('D','D','S',' '), "Got unexpected DDS signature %#x.\n", dds->magic);
+        ok(dds->header.size == sizeof(dds->header), "Got unexpected DDS size %u.\n", dds->header.size);
+        ok(!dds->header.height, "Got unexpected height %u.\n", dds->header.height);
+        ok(!dds->header.width, "Got unexpected width %u.\n", dds->header.width);
+        ok(!dds->header.depth, "Got unexpected depth %u.\n", dds->header.depth);
+        ok(!dds->header.miplevels, "Got unexpected miplevels %u.\n", dds->header.miplevels);
+        ok(!dds->header.pitch_or_linear_size, "Got unexpected pitch_or_linear_size %u.\n", dds->header.pitch_or_linear_size);
+        ok(dds->header.caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %#x.\n", dds->header.caps);
+        ok(dds->header.flags == (DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT),
+                "Got unexpected flags %#x.\n", dds->header.flags);
         ID3DXBuffer_Release(buffer);
     }
 
     hr = D3DXSaveSurfaceToFileInMemory(&buffer, D3DXIFF_DDS, surface, NULL, NULL);
     ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
-    header = ID3DXBuffer_GetBufferPointer(buffer);
 
-    ok(header->magic == MAKEFOURCC('D','D','S',' '), "Invalid DDS signature.\n");
-    ok(header->size == 124, "Invalid DDS size %u.\n", header->size);
-    ok(header->height == 4, "Got unexpected height %u.\n", header->height);
-    ok(header->width == 4, "Got unexpected width %u.\n", header->width);
-    ok(!header->depth, "Got unexpected depth %u.\n", header->depth);
-    ok(!header->miplevels, "Got unexpected miplevels %u.\n", header->miplevels);
-    ok(!header->pitch_or_linear_size, "Got unexpected pitch_or_linear_size %u.\n", header->pitch_or_linear_size);
-    todo_wine ok(header->caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %x.\n", header->caps);
-    ok(header->flags == (DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT),
-            "Got unexpected flags %x.\n", header->flags);
+    dds = ID3DXBuffer_GetBufferPointer(buffer);
+    ok(dds->magic == MAKEFOURCC('D','D','S',' '), "Got unexpected DDS signature %#x.\n", dds->magic);
+    ok(dds->header.size == sizeof(dds->header), "Got unexpected DDS size %u.\n", dds->header.size);
+    ok(dds->header.height == 4, "Got unexpected height %u.\n", dds->header.height);
+    ok(dds->header.width == 4, "Got unexpected width %u.\n", dds->header.width);
+    ok(!dds->header.depth, "Got unexpected depth %u.\n", dds->header.depth);
+    ok(!dds->header.miplevels, "Got unexpected miplevels %u.\n", dds->header.miplevels);
+    ok(!dds->header.pitch_or_linear_size, "Got unexpected pitch_or_linear_size %u.\n", dds->header.pitch_or_linear_size);
+    todo_wine ok(dds->header.caps == (DDS_CAPS_TEXTURE | DDSCAPS_ALPHA), "Got unexpected caps %#x.\n", dds->header.caps);
+    ok(dds->header.flags == (DDS_CAPS | DDS_HEIGHT | DDS_WIDTH | DDS_PIXELFORMAT),
+            "Got unexpected flags %#x.\n", dds->header.flags);
     ID3DXBuffer_Release(buffer);
 
     IDirect3DSurface9_Release(surface);
