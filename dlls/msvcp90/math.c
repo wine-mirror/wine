@@ -659,6 +659,54 @@ BOOLEAN __cdecl std_numeric_limits_bool_min(void) { return FALSE; }
 /* ?min@?$numeric_limits@_W@std@@SA_WXZ -> public: static wchar_t __cdecl std::numeric_limits<wchar_t>::min(void) */
 WCHAR __cdecl std_numeric_limits_wchar_t_min(void) { return 0; }
 
+/* ?lowest@?$numeric_limits@C@std@@SACXZ */
+signed char __cdecl std_numeric_limits_signed_char_lowest(void) { return SCHAR_MIN; }
+
+/* ?lowest@?$numeric_limits@D@std@@SADXZ */
+char __cdecl std_numeric_limits_char_lowest(void) { return CHAR_MIN; }
+
+/* ?lowest@?$numeric_limits@E@std@@SAEXZ */
+unsigned char __cdecl std_numeric_limits_unsigned_char_lowest(void) { return 0; }
+
+/* ?lowest@?$numeric_limits@F@std@@SAFXZ */
+short __cdecl std_numeric_limits_short_lowest(void) { return SHRT_MIN; }
+
+/* ?lowest@?$numeric_limits@G@std@@SAGXZ */
+unsigned short __cdecl std_numeric_limits_unsigned_short_lowest(void) { return 0; }
+
+/* ?lowest@?$numeric_limits@H@std@@SAHXZ */
+int __cdecl std_numeric_limits_int_lowest(void) { return INT_MIN; }
+
+/* ?lowest@?$numeric_limits@I@std@@SAIXZ */
+unsigned int __cdecl std_numeric_limits_unsigned_int_lowest(void) { return 0; }
+
+/* ?lowest@?$numeric_limits@J@std@@SAJXZ */
+LONG __cdecl std_numeric_limits_long_lowest(void) { return LONG_MIN; }
+
+/* ?lowest@?$numeric_limits@K@std@@SAKXZ */
+ULONG __cdecl std_numeric_limits_unsigned_long_lowest(void) { return 0; }
+
+/* ?lowest@?$numeric_limits@M@std@@SAMXZ */
+float __cdecl std_numeric_limits_float_lowest(void) { return -FLT_MAX; }
+
+/* ?lowest@?$numeric_limits@N@std@@SANXZ */
+double __cdecl std_numeric_limits_double_lowest(void) { return -DBL_MAX; }
+
+/* ?lowest@?$numeric_limits@O@std@@SAOXZ */
+LDOUBLE __cdecl std_numeric_limits_long_double_lowest(void) { return -LDBL_MAX; }
+
+/* ?lowest@?$numeric_limits@_J@std@@SA_JXZ */
+__int64 __cdecl std_numeric_limits_int64_lowest(void) { return I64_MIN; }
+
+/* ?lowest@?$numeric_limits@_K@std@@SA_KXZ */
+unsigned __int64 __cdecl std_numeric_limits_unsigned_int64_lowest(void) { return 0; }
+
+/* ?lowest@?$numeric_limits@_N@std@@SA_NXZ */
+BOOLEAN __cdecl std_numeric_limits_bool_lowest(void) { return FALSE; }
+
+/* ?lowest@?$numeric_limits@_W@std@@SA_WXZ */
+WCHAR __cdecl std_numeric_limits_wchar_t_lowest(void) { return 0; }
+
 /* ?quiet_NaN@?$numeric_limits@C@std@@SACXZ -> public: static signed char __cdecl std::numeric_limits<signed char>::quiet_NaN(void) */
 signed char __cdecl std_numeric_limits_signed_char_quiet_NaN(void) { return 0; }
 

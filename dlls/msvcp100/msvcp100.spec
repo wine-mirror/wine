@@ -2113,22 +2113,22 @@
 @ cdecl -arch=win64 ?length@?$codecvt@GDH@std@@QEBAHAEBHPEBD1_K@Z(ptr ptr str str long) codecvt_wchar_length
 @ thiscall -arch=win32 ?length@?$codecvt@_WDH@std@@QBEHABHPBD1I@Z(ptr ptr str str long) codecvt_wchar_length
 @ cdecl -arch=win64 ?length@?$codecvt@_WDH@std@@QEBAHAEBHPEBD1_K@Z(ptr ptr str str long) codecvt_wchar_length
-@ stub ?lowest@?$numeric_limits@C@std@@SACXZ
-@ stub ?lowest@?$numeric_limits@D@std@@SADXZ
-@ stub ?lowest@?$numeric_limits@E@std@@SAEXZ
-@ stub ?lowest@?$numeric_limits@F@std@@SAFXZ
-@ stub ?lowest@?$numeric_limits@G@std@@SAGXZ
-@ stub ?lowest@?$numeric_limits@H@std@@SAHXZ
-@ stub ?lowest@?$numeric_limits@I@std@@SAIXZ
-@ stub ?lowest@?$numeric_limits@J@std@@SAJXZ
-@ stub ?lowest@?$numeric_limits@K@std@@SAKXZ
-@ stub ?lowest@?$numeric_limits@M@std@@SAMXZ
-@ stub ?lowest@?$numeric_limits@N@std@@SANXZ
-@ stub ?lowest@?$numeric_limits@O@std@@SAOXZ
-@ stub ?lowest@?$numeric_limits@_J@std@@SA_JXZ
-@ stub ?lowest@?$numeric_limits@_K@std@@SA_KXZ
-@ stub ?lowest@?$numeric_limits@_N@std@@SA_NXZ
-@ stub ?lowest@?$numeric_limits@_W@std@@SA_WXZ
+@ cdecl ?lowest@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_lowest
+@ cdecl ?lowest@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_lowest
+@ cdecl ?lowest@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_lowest
+@ cdecl ?lowest@?$numeric_limits@F@std@@SAFXZ() std_numeric_limits_short_lowest
+@ cdecl ?lowest@?$numeric_limits@G@std@@SAGXZ() std_numeric_limits_unsigned_short_lowest
+@ cdecl ?lowest@?$numeric_limits@H@std@@SAHXZ() std_numeric_limits_int_lowest
+@ cdecl ?lowest@?$numeric_limits@I@std@@SAIXZ() std_numeric_limits_unsigned_int_lowest
+@ cdecl ?lowest@?$numeric_limits@J@std@@SAJXZ() std_numeric_limits_long_lowest
+@ cdecl ?lowest@?$numeric_limits@K@std@@SAKXZ() std_numeric_limits_unsigned_long_lowest
+@ cdecl ?lowest@?$numeric_limits@M@std@@SAMXZ() std_numeric_limits_float_lowest
+@ cdecl ?lowest@?$numeric_limits@N@std@@SANXZ() std_numeric_limits_double_lowest
+@ cdecl ?lowest@?$numeric_limits@O@std@@SAOXZ() std_numeric_limits_long_double_lowest
+@ cdecl -ret64 ?lowest@?$numeric_limits@_J@std@@SA_JXZ() std_numeric_limits_int64_lowest
+@ cdecl -ret64 ?lowest@?$numeric_limits@_K@std@@SA_KXZ() std_numeric_limits_unsigned_int64_lowest
+@ cdecl ?lowest@?$numeric_limits@_N@std@@SA_NXZ() std_numeric_limits_bool_lowest
+@ cdecl ?lowest@?$numeric_limits@_W@std@@SA_WXZ() std_numeric_limits_wchar_t_lowest
 @ cdecl ?max@?$numeric_limits@C@std@@SACXZ() std_numeric_limits_signed_char_max
 @ cdecl ?max@?$numeric_limits@D@std@@SADXZ() std_numeric_limits_char_max
 @ cdecl ?max@?$numeric_limits@E@std@@SAEXZ() std_numeric_limits_unsigned_char_max
