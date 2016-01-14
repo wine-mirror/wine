@@ -682,6 +682,7 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
     static const WCHAR arg_root[] = {'/','r','o','o','t',','};
     static const WCHAR arg_select[] = {'/','s','e','l','e','c','t',','};
     static const WCHAR arg_desktop[] = {'/','d','e','s','k','t','o','p'};
+    static const WCHAR arg_desktop_quotes[] = {'"','/','d','e','s','k','t','o','p'};
 
     LPWSTR p = commandline;
 
@@ -714,6 +715,12 @@ static void parse_command_line(LPWSTR commandline,parameters_struct *parameters)
         else if (strncmpW(p, arg_desktop, sizeof(arg_desktop)/sizeof(WCHAR))==0)
         {
             p += sizeof(arg_desktop)/sizeof(WCHAR);
+            manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
+        }
+        /* workaround for Worms Armageddon that hardcodes a /desktop option with quotes */
+        else if (strncmpW(p, arg_desktop_quotes, sizeof(arg_desktop_quotes)/sizeof(WCHAR))==0)
+        {
+            p += sizeof(arg_desktop_quotes)/sizeof(WCHAR);
             manage_desktop( p );  /* the rest of the command line is handled by desktop mode */
         }
         else
