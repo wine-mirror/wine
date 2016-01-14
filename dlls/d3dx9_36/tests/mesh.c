@@ -11100,6 +11100,66 @@ static void test_compute_normals(void)
     free_test_context(test_context);
 }
 
+static void D3DXCreateAnimationControllerTest(void)
+{
+    HRESULT hr;
+    ID3DXAnimationController *animation;
+    UINT value;
+
+    hr = D3DXCreateAnimationController(0, 0, 0, 0, NULL);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+
+    hr = D3DXCreateAnimationController(0, 1, 1, 1, &animation);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(!animation, "Got unexpected animation %p.\n", animation);
+
+    hr = D3DXCreateAnimationController(1, 0, 1, 1, &animation);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(!animation, "Got unexpected animation %p.\n", animation);
+
+    hr = D3DXCreateAnimationController(1, 1, 0, 1, &animation);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(!animation, "Got unexpected animation %p.\n", animation);
+
+    hr = D3DXCreateAnimationController(1, 1, 1, 0, &animation);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+    ok(!animation, "Got unexpected animation %p.\n", animation);
+
+    hr = D3DXCreateAnimationController(1, 1, 1, 1, &animation);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+
+    value = animation->lpVtbl->GetMaxNumAnimationOutputs(animation);
+    ok(value == 1, "Got unexpected value %u.\n", value);
+
+    value = animation->lpVtbl->GetMaxNumAnimationSets(animation);
+    ok(value == 1, "Got unexpected value %u.\n", value);
+
+    value = animation->lpVtbl->GetMaxNumTracks(animation);
+    ok(value == 1, "Got unexpected value %u.\n", value);
+
+    value = animation->lpVtbl->GetMaxNumEvents(animation);
+    ok(value == 1, "Got unexpected value %u.\n", value);
+
+    animation->lpVtbl->Release(animation);
+
+    hr = D3DXCreateAnimationController(100, 101, 102, 103, &animation);
+    ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
+
+    value = animation->lpVtbl->GetMaxNumAnimationOutputs(animation);
+    ok(value == 100, "Got unexpected value %u.\n", value);
+
+    value = animation->lpVtbl->GetMaxNumAnimationSets(animation);
+    ok(value == 101, "Got unexpected value %u.\n", value);
+
+    value = animation->lpVtbl->GetMaxNumTracks(animation);
+    ok(value == 102, "Got unexpected value %u.\n", value);
+
+    value = animation->lpVtbl->GetMaxNumEvents(animation);
+    ok(value == 103, "Got unexpected value %u.\n", value);
+
+    animation->lpVtbl->Release(animation);
+}
+
 START_TEST(mesh)
 {
     D3DXBoundProbeTest();
@@ -11116,6 +11176,7 @@ START_TEST(mesh)
     D3DXCreateCylinderTest();
     D3DXCreateTextTest();
     D3DXCreateTorusTest();
+    D3DXCreateAnimationControllerTest();
     test_get_decl_length();
     test_get_decl_vertex_size();
     test_fvf_decl_conversion();
