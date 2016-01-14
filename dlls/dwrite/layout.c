@@ -190,7 +190,8 @@ struct layout_effective_run {
     FLOAT align_dx;         /* adjustment from text alignment */
     FLOAT width;            /* run width */
     UINT16 *clustermap;     /* effective clustermap, allocated separately, is not reused from nominal map */
-    UINT32 line;
+    UINT32 line;            /* 0-based line index in line metrics array */
+    BOOL underlined;        /* set if this run is underlined */
 };
 
 struct layout_effective_inline {
@@ -204,6 +205,12 @@ struct layout_effective_inline {
     BOOL  is_sideways;
     BOOL  is_rtl;
     UINT32 line;
+};
+
+struct layout_underline {
+    struct list entry;
+    const struct layout_effective_run *run;
+    DWRITE_UNDERLINE u;
 };
 
 struct layout_strikethrough {
@@ -244,6 +251,7 @@ struct dwrite_textlayout {
     /* lists ready to use by Draw() */
     struct list eruns;
     struct list inlineobjects;
+    struct list underlines;
     struct list strikethrough;
     USHORT recompute;
 
@@ -459,6 +467,7 @@ static void free_layout_eruns(struct dwrite_textlayout *layout)
     struct layout_effective_inline *in, *in2;
     struct layout_effective_run *cur, *cur2;
     struct layout_strikethrough *s, *s2;
+    struct layout_underline *u, *u2;
 
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &layout->eruns, struct layout_effective_run, entry) {
         list_remove(&cur->entry);
@@ -469,6 +478,11 @@ static void free_layout_eruns(struct dwrite_textlayout *layout)
     LIST_FOR_EACH_ENTRY_SAFE(in, in2, &layout->inlineobjects, struct layout_effective_inline, entry) {
         list_remove(&in->entry);
         heap_free(in);
+    }
+
+    LIST_FOR_EACH_ENTRY_SAFE(u, u2, &layout->underlines, struct layout_underline, entry) {
+        list_remove(&u->entry);
+        heap_free(u);
     }
 
     LIST_FOR_EACH_ENTRY_SAFE(s, s2, &layout->strikethrough, struct layout_strikethrough, entry) {
@@ -1002,7 +1016,7 @@ static inline BOOL layout_get_strikethrough_from_pos(struct dwrite_textlayout *l
 
 static inline BOOL layout_get_underline_from_pos(struct dwrite_textlayout *layout, UINT32 pos)
 {
-    struct layout_range_header *h = get_layout_range_header_by_pos(&layout->ranges, pos);
+    struct layout_range_header *h = get_layout_range_header_by_pos(&layout->underline_ranges, pos);
     return ((struct layout_range_bool*)h)->value;
 }
 
@@ -1020,6 +1034,24 @@ static BOOL is_same_splitting_params(const struct layout_final_splitting_params 
     return left->strikethrough == right->strikethrough &&
            left->underline == right->underline &&
            left->effect == right->effect;
+}
+
+static void layout_get_erun_font_metrics(struct dwrite_textlayout *layout, struct layout_effective_run *erun,
+    DWRITE_FONT_METRICS *metrics)
+{
+    memset(metrics, 0, sizeof(*metrics));
+    if (is_layout_gdi_compatible(layout)) {
+        HRESULT hr = IDWriteFontFace_GetGdiCompatibleMetrics(
+            erun->run->u.regular.run.fontFace,
+            erun->run->u.regular.run.fontEmSize,
+            layout->ppdip,
+            &layout->transform,
+            metrics);
+        if (FAILED(hr))
+            WARN("failed to get font metrics, 0x%08x\n", hr);
+    }
+    else
+        IDWriteFontFace_GetMetrics(erun->run->u.regular.run.fontFace, metrics);
 }
 
 /* Effective run is built from consecutive clusters of a single nominal run, 'first_cluster' is 0 based cluster index,
@@ -1105,32 +1137,21 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         run->clustermap[i] = r->u.regular.clustermap[start + i] - r->u.regular.clustermap[start];
 
     run->effect = params->effect;
+    run->underlined = params->underline;
     list_add_tail(&layout->eruns, &run->entry);
 
     /* Strikethrough style is guaranteed to be consistent within effective run,
        it's width equals to run width, thikness and offset are derived from
        font metrics, rest of the values are from layout or run itself */
     if (params->strikethrough) {
-        DWRITE_FONT_METRICS metrics = { 0 };
         struct layout_strikethrough *s;
+        DWRITE_FONT_METRICS metrics;
 
         s = heap_alloc(sizeof(*s));
         if (!s)
             return E_OUTOFMEMORY;
 
-        if (is_layout_gdi_compatible(layout)) {
-            HRESULT hr = IDWriteFontFace_GetGdiCompatibleMetrics(
-                r->u.regular.run.fontFace,
-                r->u.regular.run.fontEmSize,
-                layout->ppdip,
-                &layout->transform,
-                &metrics);
-            if (FAILED(hr))
-                WARN("failed to get font metrics, 0x%08x\n", hr);
-        }
-        else
-            IDWriteFontFace_GetMetrics(r->u.regular.run.fontFace, &metrics);
-
+        layout_get_erun_font_metrics(layout, run, &metrics);
         s->s.width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
         s->s.thickness = SCALE_FONT_METRIC(metrics.strikethroughThickness, r->u.regular.run.fontEmSize, &metrics);
         /* Negative offset moves it above baseline as Y coordinate grows downward. */
@@ -1180,6 +1201,20 @@ static inline struct layout_effective_run *layout_get_next_erun(struct dwrite_te
         e = list_head(&layout->eruns);
     else
         e = list_next(&layout->eruns, &cur->entry);
+    if (!e)
+        return NULL;
+    return LIST_ENTRY(e, struct layout_effective_run, entry);
+}
+
+static inline struct layout_effective_run *layout_get_prev_erun(struct dwrite_textlayout *layout,
+    const struct layout_effective_run *cur)
+{
+    struct list *e;
+
+    if (!cur)
+        e = list_tail(&layout->eruns);
+    else
+        e = list_prev(&layout->eruns, &cur->entry);
     if (!e)
         return NULL;
     return LIST_ENTRY(e, struct layout_effective_run, entry);
@@ -1423,13 +1458,107 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
     }
 }
 
+struct layout_underline_splitting_params {
+    const WCHAR *locale; /* points to range data, no additional allocation */
+    IUnknown *effect;    /* does not hold another reference */
+};
+
+static void init_u_splitting_params_from_erun(struct layout_effective_run *erun,
+    struct layout_underline_splitting_params *params)
+{
+    params->locale = erun->run->u.regular.descr.localeName;
+    params->effect = erun->effect;
+}
+
+static BOOL is_same_u_splitting(struct layout_underline_splitting_params *left,
+    struct layout_underline_splitting_params *right)
+{
+    return left->effect == right->effect && !strcmpiW(left->locale, right->locale);
+}
+
+static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct layout_effective_run *first,
+    struct layout_effective_run *last)
+{
+    struct layout_underline_splitting_params params, prev_params;
+    struct layout_effective_run *cur;
+    DWRITE_FONT_METRICS metrics;
+    FLOAT thickness, offset;
+
+    if (first == layout_get_prev_erun(layout, last)) {
+        layout_get_erun_font_metrics(layout, first, &metrics);
+        thickness = SCALE_FONT_METRIC(metrics.underlineThickness, first->run->u.regular.run.fontEmSize, &metrics);
+        offset = SCALE_FONT_METRIC(metrics.underlinePosition, first->run->u.regular.run.fontEmSize, &metrics);
+    }
+    else {
+        FLOAT width = 0.0f;
+
+        /* Single underline is added for consecutive underlined runs. In this case underline parameters are
+           calculated as weighted average, where run width acts as a weight. */
+        thickness = offset = 0.0f;
+        cur = first;
+        do {
+            layout_get_erun_font_metrics(layout, cur, &metrics);
+
+            thickness += SCALE_FONT_METRIC(metrics.underlineThickness, cur->run->u.regular.run.fontEmSize, &metrics) * cur->width;
+            offset += SCALE_FONT_METRIC(metrics.underlinePosition, cur->run->u.regular.run.fontEmSize, &metrics) * cur->width;
+            width += cur->width;
+
+            cur = layout_get_next_erun(layout, cur);
+        } while (cur != last);
+
+        thickness /= width;
+        offset /= width;
+    }
+
+    cur = first;
+    prev_params = params;
+    do {
+        struct layout_effective_run *next, *w;
+        struct layout_underline *u;
+
+        init_u_splitting_params_from_erun(cur, &prev_params);
+        while ((next = layout_get_next_erun(layout, cur)) != last) {
+            init_u_splitting_params_from_erun(next, &params);
+            if (!is_same_u_splitting(&prev_params, &params))
+                break;
+            cur = next;
+        }
+
+        u = heap_alloc(sizeof(*u));
+        if (!u)
+            return E_OUTOFMEMORY;
+
+        w = cur;
+        u->u.width = 0.0f;
+        while (w != next) {
+            u->u.width += w->width;
+            w = layout_get_next_erun(layout, w);
+        }
+
+        u->u.thickness = thickness;
+        /* Font metrics convention is to have it negative when below baseline, for rendering
+           however Y grows from baseline down for horizontal baseline. */
+        u->u.offset = -offset;
+        u->u.runHeight = 0.0f; /* FIXME */
+        u->u.readingDirection = layout->format.readingdir;
+        u->u.flowDirection = layout->format.flow;
+        u->u.localeName = cur->run->u.regular.descr.localeName;
+        u->u.measuringMode = layout->measuringmode;
+        u->run = cur;
+        list_add_tail(&layout->underlines, &u->entry);
+
+        cur = next;
+    } while (cur != last);
+
+    return S_OK;
+}
 
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
     struct layout_final_splitting_params prev_params, params;
+    struct layout_effective_run *erun, *first_underlined;
     struct layout_effective_inline *inrun;
-    struct layout_effective_run *erun;
     const struct layout_run *run;
     DWRITE_LINE_METRICS metrics;
     FLOAT width, origin_x, origin_y;
@@ -1478,17 +1607,21 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
             UINT32 strlength, last_cluster, index;
             FLOAT descent, trailingspacewidth;
+            struct layout_final_splitting_params *p;
 
             if (!overflow) {
                 width += layout->clustermetrics[i].width;
                 metrics.length += layout->clustermetrics[i].length;
                 last_cluster = i;
+                p = &params;
             }
-            else
+            else {
                 last_cluster = i ? i - 1 : i;
+                p = &prev_params;
+            }
 
             if (i >= start) {
-                hr = layout_add_effective_run(layout, run, start, last_cluster - start + 1, line, origin_x, &prev_params);
+                hr = layout_add_effective_run(layout, run, start, last_cluster - start + 1, line, origin_x, p);
                 if (FAILED(hr))
                     return hr;
                 /* we don't need to update origin for next run as we're going to wrap */
@@ -1571,6 +1704,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
     /* Now all line info is here, update effective runs positions in flow direction */
     erun = layout_get_next_erun(layout, NULL);
+    first_underlined = erun && erun->underlined ? erun : NULL;
+
     inrun = layout_get_next_inline_run(layout, NULL);
 
     origin_y = 0.0f;
@@ -1582,6 +1717,13 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         while (erun && erun->line == line) {
             erun->origin_y = origin_y;
             erun = layout_get_next_erun(layout, erun);
+
+            if (first_underlined && (!erun || !erun->underlined)) {
+                layout_add_underline(layout, first_underlined, erun);
+                first_underlined = NULL;
+            }
+            else if (!first_underlined && erun && erun->underlined)
+                first_underlined = erun;
         }
 
         /* Same for inline runs */
@@ -2913,6 +3055,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     struct layout_effective_inline *inlineobject;
     struct layout_effective_run *run;
     struct layout_strikethrough *s;
+    struct layout_underline *u;
     FLOAT det = 0.0f, ppdip = 0.0f;
     DWRITE_MATRIX m = { 0 };
     HRESULT hr;
@@ -2994,7 +3137,15 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             inlineobject->effect);
     }
 
-    /* TODO: 3. Underlines */
+    /* 3. Underlines */
+    LIST_FOR_EACH_ENTRY(u, &This->underlines, struct layout_underline, entry) {
+        IDWriteTextRenderer_DrawUnderline(renderer,
+            context,
+            u->run->origin_x + run->align_dx + origin_x,
+            SNAP_COORD(u->run->origin_y + origin_y),
+            &u->u,
+            u->run->effect);
+    }
 
     /* 4. Strikethrough */
     LIST_FOR_EACH_ENTRY(s, &This->strikethrough, struct layout_strikethrough, entry) {
@@ -4059,6 +4210,7 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
     layout->minwidth = 0.0f;
     list_init(&layout->eruns);
     list_init(&layout->inlineobjects);
+    list_init(&layout->underlines);
     list_init(&layout->strikethrough);
     list_init(&layout->runs);
     list_init(&layout->ranges);
