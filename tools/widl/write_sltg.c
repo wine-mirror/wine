@@ -183,6 +183,12 @@ struct sltg_hrefinfo
 
 #include "poppack.h"
 
+static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type);
+static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *type);
+static void add_enum_typeinfo(struct sltg_typelib *typelib, type_t *type);
+static void add_union_typeinfo(struct sltg_typelib *typelib, type_t *type);
+static void add_coclass_typeinfo(struct sltg_typelib *typelib, type_t *type);
+
 static void init_sltg_data(struct sltg_data *data)
 {
     data->size = 0;
@@ -644,8 +650,8 @@ static int local_href(struct sltg_hrefmap *hrefmap, int typelib_href)
     return href << 2;
 }
 
-static short write_var_desc(struct sltg_data *data, type_t *type, short flags, short base_offset,
-                            int *size_instance, struct sltg_hrefmap *hrefmap)
+static short write_var_desc(struct sltg_typelib *typelib, struct sltg_data *data, type_t *type, short flags,
+                            short base_offset, int *size_instance, struct sltg_hrefmap *hrefmap)
 {
     short vt, vt_flags, desc_offset;
 
@@ -737,10 +743,10 @@ static short write_var_desc(struct sltg_data *data, type_t *type, short flags, s
             chat("write_var_desc: vt VT_PTR | 0x0400\n");
             vt = VT_PTR | 0x0400;
             append_data(data, &vt, sizeof(vt));
-            write_var_desc(data, ref, 0, base_offset, size_instance, hrefmap);
+            write_var_desc(typelib, data, ref, 0, base_offset, size_instance, hrefmap);
         }
         else
-            write_var_desc(data, ref, 0x0e00, base_offset, size_instance, hrefmap);
+            write_var_desc(typelib, data, ref, 0x0e00, base_offset, size_instance, hrefmap);
         return desc_offset;
     }
 
@@ -758,6 +764,33 @@ static short write_var_desc(struct sltg_data *data, type_t *type, short flags, s
 
         chat("write_var_desc: VT_USERDEFINED, type %p, name %s, real type %d, href %d\n",
              type, type->name, type_get_type(type), type->typelib_idx);
+
+        if (type->typelib_idx == -1)
+        {
+            chat("write_var_desc: trying to ref not added type\n");
+
+            switch (type_get_type(type))
+            {
+            case TYPE_STRUCT:
+                add_structure_typeinfo(typelib, type);
+                break;
+            case TYPE_INTERFACE:
+                add_interface_typeinfo(typelib, type);
+                break;
+            case TYPE_ENUM:
+                add_enum_typeinfo(typelib, type);
+                break;
+            case TYPE_UNION:
+                add_union_typeinfo(typelib, type);
+                break;
+            case TYPE_COCLASS:
+                add_coclass_typeinfo(typelib, type);
+                break;
+            default:
+                error("write_var_desc: VT_USERDEFINED - unhandled type %d\n",
+                      type_get_type(type));
+            }
+        }
 
         if (type->typelib_idx == -1)
             error("write_var_desc: trying to ref not added type\n");
@@ -816,6 +849,8 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
     int member_offset, var_count = 0, var_data_size = 0, size_instance = 0;
     short *type_desc_offset = NULL;
 
+    if (type->typelib_idx != -1) return;
+
     chat("add_structure_typeinfo: type %p, type->name %s\n", type, type->name);
 
     type->typelib_idx = typelib->block_count;
@@ -824,8 +859,6 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
     hrefmap.href = NULL;
 
     init_sltg_data(&data);
-
-    index_name = add_typeinfo_block(typelib, type, TKIND_RECORD);
 
     if (type_struct_get_fields(type))
     {
@@ -841,13 +874,13 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
         {
             short base_offset;
 
-            chat("add_structure_typeinfo: var %p, name %s, type %p\n",
-                 var, var->name, var->declspec.type);
+            chat("add_structure_typeinfo: var %p (%s), type %p (%s)\n",
+                 var, var->name, var->declspec.type, var->declspec.type->name);
 
             init_sltg_data(&var_data[i]);
 
             base_offset = var_data_size + (i + 1) * sizeof(struct sltg_variable);
-            type_desc_offset[i] = write_var_desc(&var_data[i], var->declspec.type, 0, base_offset, &size_instance, &hrefmap);
+            type_desc_offset[i] = write_var_desc(typelib, &var_data[i], var->declspec.type, 0, base_offset, &size_instance, &hrefmap);
             dump_var_desc(var_data[i].data, var_data[i].size);
 
             if (var_data[i].size > sizeof(short))
@@ -855,6 +888,8 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
             i++;
         }
     }
+
+    index_name = add_typeinfo_block(typelib, type, TKIND_RECORD);
 
     init_typeinfo(&ti, type, TKIND_RECORD, &hrefmap);
     append_data(&data, &ti, sizeof(ti));
