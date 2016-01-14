@@ -477,6 +477,8 @@ static void test_editselection(void)
 
     /* Now what is the selection - still empty */
     SendMessageA(hCombo, CB_GETEDITSEL, (WPARAM)&start, (WPARAM)&end);
+    ok(start==0, "Unexpected start position for selection %d\n", start);
+    ok(end==0, "Unexpected end position for selection %d\n", end);
     len = SendMessageA(hCombo, CB_GETEDITSEL, 0,0);
     ok(LOWORD(len)==0, "Unexpected start position for selection %d\n", LOWORD(len));
     ok(HIWORD(len)==0, "Unexpected end position for selection %d\n", HIWORD(len));
@@ -484,6 +486,8 @@ static void test_editselection(void)
     /* Give it focus, and it gets selected */
     SendMessageA(hCombo, WM_SETFOCUS, 0, (LPARAM)hEdit);
     SendMessageA(hCombo, CB_GETEDITSEL, (WPARAM)&start, (WPARAM)&end);
+    ok(start==0, "Unexpected start position for selection %d\n", start);
+    ok(end==6, "Unexpected end position for selection %d\n", end);
     len = SendMessageA(hCombo, CB_GETEDITSEL, 0,0);
     ok(LOWORD(len)==0, "Unexpected start position for selection %d\n", LOWORD(len));
     ok(HIWORD(len)==6, "Unexpected end position for selection %d\n", HIWORD(len));
@@ -524,6 +528,8 @@ static void test_editselection(void)
 
     /* Now what is the selection */
     SendMessageA(hCombo, CB_GETEDITSEL, (WPARAM)&start, (WPARAM)&end);
+    ok(start==0, "Unexpected start position for selection %d\n", start);
+    ok(end==6, "Unexpected end position for selection %d\n", end);
     len = SendMessageA(hCombo, CB_GETEDITSEL, 0,0);
     ok(LOWORD(len)==0, "Unexpected start position for selection %d\n", LOWORD(len));
     ok(HIWORD(len)==6, "Unexpected end position for selection %d\n", HIWORD(len));
