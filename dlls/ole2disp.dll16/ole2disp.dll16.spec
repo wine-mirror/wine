@@ -20,8 +20,8 @@
 20 stub SAFEARRAYGETLBOUND
 21 pascal SafeArrayLock(ptr) SafeArrayLock16
 22 pascal SafeArrayUnlock(ptr) SafeArrayUnlock16
-23 stub SAFEARRAYACCESSDATA
-24 stub SAFEARRAYUNACCESSDATA
+23 pascal SafeArrayAccessData(ptr ptr) SafeArrayAccessData16
+24 pascal SafeArrayUnaccessData(ptr) SafeArrayUnaccessData16
 25 stub SAFEARRAYGETELEMENT
 26 stub SAFEARRAYPUTELEMENT
 27 stub SAFEARRAYCOPY
