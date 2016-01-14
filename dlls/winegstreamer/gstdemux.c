@@ -111,12 +111,14 @@ BOOL is_wine_thread(void)
     return pthread_getspecific(wine_gst_key) != NULL;
 }
 
-static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt) {
+static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt)
+{
     WAVEFORMATEXTENSIBLE *wfe;
     WAVEFORMATEX *wfx;
     GstStructure *arg;
     gint32 depth = 0, bpp = 0;
     const char *typename;
+
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
     if (!typename)
@@ -173,20 +175,24 @@ static gboolean amt_from_gst_caps_audio(GstCaps *caps, AM_MEDIA_TYPE *amt) {
     return TRUE;
 }
 
-static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt) {
+static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt)
+{
     VIDEOINFOHEADER *vih = CoTaskMemAlloc(sizeof(*vih));
     BITMAPINFOHEADER *bih = &vih->bmiHeader;
     GstStructure *arg;
     gint32 width = 0, height = 0, nom = 0, denom = 0;
     const char *typename;
+
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
     if (!typename)
         return FALSE;
+
     if (!gst_structure_get_int(arg, "width", &width) ||
         !gst_structure_get_int(arg, "height", &height) ||
         !gst_structure_get_fraction(arg, "framerate", &nom, &denom))
         return FALSE;
+
     amt->formattype = FORMAT_VideoInfo;
     amt->pbFormat = (BYTE*)vih;
     amt->cbFormat = sizeof(*vih);
@@ -239,12 +245,16 @@ static gboolean amt_from_gst_caps_video(GstCaps *caps, AM_MEDIA_TYPE *amt) {
     return TRUE;
 }
 
-static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps) {
+static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps)
+{
     GSTOutPin *pin = gst_pad_get_element_private(pad);
     AM_MEDIA_TYPE amt;
     GstStructure *arg;
     const char *typename;
     gboolean ret;
+
+    TRACE("%p %p\n", pad, caps);
+
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
     if (!strcmp(typename, "audio/x-raw-int") ||
@@ -273,13 +283,17 @@ static gboolean accept_caps_sink(GstPad *pad, GstCaps *caps) {
     }
 }
 
-static gboolean setcaps_sink(GstPad *pad, GstCaps *caps) {
+static gboolean setcaps_sink(GstPad *pad, GstCaps *caps)
+{
     GSTOutPin *pin = gst_pad_get_element_private(pad);
     GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
     AM_MEDIA_TYPE amt;
     GstStructure *arg;
     const char *typename;
     gboolean ret;
+
+    TRACE("%p %p\n", pad, caps);
+
     arg = gst_caps_get_structure(caps, 0);
     typename = gst_structure_get_name(arg);
     if (!strcmp(typename, "audio/x-raw-int") ||
@@ -323,6 +337,8 @@ static gboolean gst_base_src_perform_seek(GSTImpl *This, GstEvent *event)
     GstEvent *tevent;
     BOOL thread = !!This->push_thread;
 
+    TRACE("%p %p\n", This, event);
+
     gst_event_parse_seek(event, &rate, &seek_format, &flags,
                          &cur_type, &cur, &stop_type, &stop);
 
@@ -361,8 +377,12 @@ static gboolean gst_base_src_perform_seek(GSTImpl *This, GstEvent *event)
     return res;
 }
 
-static gboolean event_src(GstPad *pad, GstEvent *event) {
+static gboolean event_src(GstPad *pad, GstEvent *event)
+{
     GSTImpl *This = gst_pad_get_element_private(pad);
+
+    TRACE("%p %p\n", pad, event);
+
     switch (event->type) {
         case GST_EVENT_SEEK:
             return gst_base_src_perform_seek(This, event);
@@ -387,8 +407,12 @@ static gboolean event_src(GstPad *pad, GstEvent *event) {
     return TRUE;
 }
 
-static gboolean event_sink(GstPad *pad, GstEvent *event) {
+static gboolean event_sink(GstPad *pad, GstEvent *event)
+{
     GSTOutPin *pin = gst_pad_get_element_private(pad);
+
+    TRACE("%p %p\n", pad, event);
+
     switch (event->type) {
         case GST_EVENT_NEWSEGMENT: {
             gboolean update;
@@ -427,13 +451,15 @@ static gboolean event_sink(GstPad *pad, GstEvent *event) {
     }
 }
 
-static void release_sample(void *data) {
+static void release_sample(void *data)
+{
     ULONG ret;
     ret = IMediaSample_Release((IMediaSample *)data);
     TRACE("Releasing %p returns %u\n", data, ret);
 }
 
-static DWORD CALLBACK push_data(LPVOID iface) {
+static DWORD CALLBACK push_data(LPVOID iface)
+{
     LONGLONG maxlen, curlen;
     GSTImpl *This = iface;
     IMediaSample *buf;
@@ -444,6 +470,7 @@ static DWORD CALLBACK push_data(LPVOID iface) {
         IAsyncReader_Length(This->pInputPin.pReader, &maxlen, &curlen);
     else
         maxlen = This->stop;
+
     TRACE("Starting..\n");
     for (;;) {
         REFERENCE_TIME tStart, tStop;
@@ -514,18 +541,22 @@ static DWORD CALLBACK push_data(LPVOID iface) {
     return 0;
 }
 
-static HRESULT WINAPI GST_OutPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt) {
+static HRESULT WINAPI GST_OutPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
+{
     GSTOutPin *pin = (GSTOutPin*)iface;
     FIXME("stub %p\n", pin);
     return S_OK;
 }
 
-static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
+static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf)
+{
     GSTOutPin *pin = gst_pad_get_element_private(pad);
     GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
     IMediaSample *sample;
     HRESULT hr;
     BOOL freeSamp = FALSE;
+
+    TRACE("%p %p\n", pad, buf);
 
     if (This->initial) {
         gst_buffer_unref(buf);
@@ -604,14 +635,16 @@ static GstFlowReturn got_data_sink(GstPad *pad, GstBuffer *buf) {
     return GST_FLOW_OK;
 }
 
-static GstFlowReturn request_buffer_sink(GstPad *pad, guint64 ofs, guint size, GstCaps *caps, GstBuffer **buf) {
+static GstFlowReturn request_buffer_sink(GstPad *pad, guint64 ofs, guint size, GstCaps *caps, GstBuffer **buf)
+{
     GSTOutPin *pin = gst_pad_get_element_private(pad);
     GSTImpl *This = (GSTImpl *)pin->pin.pin.pinInfo.pFilter;
     IMediaSample *sample;
     BYTE *ptr;
     HRESULT hr;
 
-    TRACE("Requesting buffer\n");
+    TRACE("%p %s %i %p %p\n", pad, wine_dbgstr_longlong(ofs), size, caps, buf);
+
     if (This->initial) {
         int ret;
         ret = setcaps_sink(pad, caps);
@@ -645,12 +678,14 @@ static GstFlowReturn request_buffer_sink(GstPad *pad, guint64 ofs, guint size, G
     return GST_FLOW_OK;
 }
 
-static GstFlowReturn request_buffer_src(GstPad *pad, guint64 ofs, guint len, GstBuffer **buf) {
+static GstFlowReturn request_buffer_src(GstPad *pad, guint64 ofs, guint len, GstBuffer **buf)
+{
     GSTImpl *This = gst_pad_get_element_private(pad);
     int ret;
 
+    TRACE("%p %s %i %p\n", pad, wine_dbgstr_longlong(ofs), len, buf);
+
     *buf = NULL;
-    TRACE("Requesting %s %u\n", wine_dbgstr_longlong(ofs), len);
     if (ofs == (guint64)-1)
         ofs = This->nextpullofs;
     if (ofs >= This->filesize) {
@@ -673,7 +708,8 @@ static GstFlowReturn request_buffer_src(GstPad *pad, guint64 ofs, guint len, Gst
     return ret;
 }
 
-static DWORD CALLBACK push_data_init(LPVOID iface) {
+static DWORD CALLBACK push_data_init(LPVOID iface)
+{
     GSTImpl *This = iface;
     DWORD64 ofs = 0;
 
@@ -696,10 +732,13 @@ static DWORD CALLBACK push_data_init(LPVOID iface) {
     return 0;
 }
 
-static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user) {
+static void removed_decoded_pad(GstElement *bin, GstPad *pad, gpointer user)
+{
     GSTImpl *This = (GSTImpl*)user;
     int x;
     GSTOutPin *pin;
+
+    TRACE("%p %p %p\n", This, bin, pad);
 
     EnterCriticalSection(&This->filter.csFilter);
     for (x = 0; x < This->cStreams; ++x) {
@@ -717,7 +756,8 @@ out:
     LeaveCriticalSection(&This->filter.csFilter);
 }
 
-static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImpl *This) {
+static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GSTImpl *This)
+{
     HRESULT hr;
     PIN_INFO piOutput;
     const char *typename;
@@ -729,6 +769,8 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     GSTOutPin *pin;
     int ret;
     int isvid = 0, isaud = 0;
+
+    TRACE("%p %p %p %u\n", This, bin, pad, last);
 
     piOutput.dir = PINDIR_OUTPUT;
     piOutput.pFilter = (IBaseFilter *)This;
@@ -781,9 +823,12 @@ static void init_new_decoded_pad(GstElement *bin, GstPad *pad, gboolean last, GS
     }
 }
 
-static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, gpointer user) {
+static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, gpointer user)
+{
     GSTImpl *This = (GSTImpl*)user;
     int x;
+
+    TRACE("%p %p %p %u\n", This, bin, pad, last);
 
     if (gst_pad_is_linked(pad))
         return;
@@ -812,15 +857,20 @@ static void existing_new_pad(GstElement *bin, GstPad *pad, gboolean last, gpoint
     LeaveCriticalSection(&This->filter.csFilter);
 }
 
-static gboolean check_get_range(GstPad *pad) {
+static gboolean check_get_range(GstPad *pad)
+{
+    TRACE("%p\n", pad);
     return TRUE;
 }
 
-static gboolean query_function(GstPad *pad, GstQuery *query) {
+static gboolean query_function(GstPad *pad, GstQuery *query)
+{
     GSTImpl *This = gst_pad_get_element_private(pad);
     GstFormat format;
     int ret;
     LONGLONG duration;
+
+    TRACE("%p %p %p\n", This, pad, query);
 
     switch (GST_QUERY_TYPE(query)) {
         case GST_QUERY_DURATION:
@@ -847,8 +897,12 @@ static gboolean query_function(GstPad *pad, GstQuery *query) {
     }
 }
 
-static gboolean activate_push(GstPad *pad, gboolean activate) {
+static gboolean activate_push(GstPad *pad, gboolean activate)
+{
     GSTImpl *This = gst_pad_get_element_private(pad);
+
+    TRACE("%p %p %u\n", This, pad, activate);
+
     EnterCriticalSection(&This->filter.csFilter);
     if (!activate) {
         TRACE("Deactivating\n");
@@ -874,13 +928,15 @@ static gboolean activate_push(GstPad *pad, gboolean activate) {
     return TRUE;
 }
 
-static void no_more_pads(GstElement *decodebin, gpointer user) {
+static void no_more_pads(GstElement *decodebin, gpointer user)
+{
     GSTImpl *This = (GSTImpl*)user;
-    TRACE("Done\n");
+    TRACE("%p %p\n", This, decodebin);
     SetEvent(This->event);
 }
 
-static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user) {
+static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, GstCaps *caps, GstElementFactory *fact, gpointer user)
+{
     const char *name = gst_element_factory_get_longname(fact);
 
     if (strstr(name, "Player protection")) {
@@ -895,10 +951,14 @@ static GstAutoplugSelectResult autoplug_blacklist(GstElement *bin, GstPad *pad, 
     return GST_AUTOPLUG_SELECT_TRY;
 }
 
-static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data) {
+static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data)
+{
     GSTImpl *This = data;
     GError *err = NULL;
     gchar *dbg_info = NULL;
+
+    TRACE("%p %p %p\n", This, bus, msg);
+
     if (GST_MESSAGE_TYPE(msg) & GST_MESSAGE_ERROR) {
         gst_message_parse_error(msg, &err, &dbg_info);
         FIXME("%s: %s\n", GST_OBJECT_NAME(msg->src), err->message);
@@ -915,13 +975,15 @@ static GstBusSyncReply watch_bus(GstBus *bus, GstMessage *msg, gpointer data) {
     return GST_BUS_DROP;
 }
 
-static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user) {
+static void unknown_type(GstElement *bin, GstPad *pad, GstCaps *caps, gpointer user)
+{
     gchar *strcaps = gst_caps_to_string(caps);
     FIXME("Could not find a filter for caps: %s\n", strcaps);
     g_free(strcaps);
 }
 
-static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props) {
+static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTIES *props)
+{
     GSTImpl *This = (GSTImpl*)pPin->pin.pinInfo.pFilter;
     HRESULT hr;
     int ret, i;
@@ -934,6 +996,7 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
         GST_STATIC_CAPS_ANY);
 
     TRACE("%p %p %p\n", pPin, pConnectPin, props);
+
     This->props = *props;
     IAsyncReader_Length(pPin->pReader, &This->filesize, &avail);
 
@@ -1008,14 +1071,15 @@ static HRESULT GST_Connect(GSTInPin *pPin, IPin *pConnectPin, ALLOCATOR_PROPERTI
     return hr;
 }
 
-static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface ) {
+static inline GSTOutPin *impl_from_IMediaSeeking( IMediaSeeking *iface )
+{
     return CONTAINING_RECORD(iface, GSTOutPin, seek.IMediaSeeking_iface);
 }
 
 static IPin* WINAPI GST_GetPin(BaseFilter *iface, int pos)
 {
     GSTImpl *This = (GSTImpl *)iface;
-    TRACE("Asking for pos %x\n", pos);
+    TRACE("%p: Asking for pos %x\n", This, pos);
 
     if (pos > This->cStreams || pos < 0)
         return NULL;
@@ -1034,6 +1098,7 @@ static IPin* WINAPI GST_GetPin(BaseFilter *iface, int pos)
 static LONG WINAPI GST_GetPinCount(BaseFilter *iface)
 {
     GSTImpl *This = (GSTImpl *)iface;
+    TRACE("%p -> %u\n", This, This->cStreams + 1);
     return (This->cStreams + 1);
 }
 
@@ -1042,10 +1107,13 @@ static const BaseFilterFuncTable BaseFuncTable = {
     GST_GetPinCount
 };
 
-IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *punkout, HRESULT *phr) {
+IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *pUnkOuter, HRESULT *phr)
+{
     IUnknown *obj = NULL;
     PIN_INFO *piInput;
     GSTImpl *This;
+
+    TRACE("%p %p\n", pUnkOuter, phr);
 
     if (!Gstreamer_init())
     {
@@ -1081,15 +1149,19 @@ IUnknown * CALLBACK Gstreamer_Splitter_create(IUnknown *punkout, HRESULT *phr) {
     This->pInputPin.pin.pCritSec = &This->filter.csFilter;
     ZeroMemory(&This->pInputPin.pin.mtCurrent, sizeof(AM_MEDIA_TYPE));
     *phr = S_OK;
+
+    TRACE("returning %p\n", obj);
+
     return obj;
 }
 
-static void GST_Destroy(GSTImpl *This) {
+static void GST_Destroy(GSTImpl *This)
+{
     IPin *connected = NULL;
     ULONG pinref;
     HRESULT hr;
 
-    TRACE("Destroying\n");
+    TRACE("Destroying %p\n", This);
 
     CloseHandle(This->event);
 
@@ -1119,9 +1191,11 @@ static void GST_Destroy(GSTImpl *This) {
     CoTaskMemFree(This);
 }
 
-static HRESULT WINAPI GST_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID *ppv) {
+static HRESULT WINAPI GST_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID *ppv)
+{
     GSTImpl *This = (GSTImpl *)iface;
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -1146,7 +1220,8 @@ static HRESULT WINAPI GST_QueryInterface(IBaseFilter *iface, REFIID riid, LPVOID
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI GST_Release(IBaseFilter *iface) {
+static ULONG WINAPI GST_Release(IBaseFilter *iface)
+{
     GSTImpl *This = (GSTImpl *)iface;
     ULONG refCount = InterlockedDecrement(&This->filter.refCount);
 
@@ -1158,10 +1233,11 @@ static ULONG WINAPI GST_Release(IBaseFilter *iface) {
     return refCount;
 }
 
-static HRESULT WINAPI GST_Stop(IBaseFilter *iface) {
+static HRESULT WINAPI GST_Stop(IBaseFilter *iface)
+{
     GSTImpl *This = (GSTImpl *)iface;
 
-    TRACE("()\n");
+    TRACE("(%p)\n", This);
 
     mark_wine_thread();
 
@@ -1170,12 +1246,14 @@ static HRESULT WINAPI GST_Stop(IBaseFilter *iface) {
     return S_OK;
 }
 
-static HRESULT WINAPI GST_Pause(IBaseFilter *iface) {
+static HRESULT WINAPI GST_Pause(IBaseFilter *iface)
+{
     HRESULT hr = S_OK;
     GSTImpl *This = (GSTImpl *)iface;
     GstState now;
     GstStateChangeReturn ret;
-    TRACE("()\n");
+
+    TRACE("(%p)\n", This);
 
     if (!This->gstfilter)
         return VFW_E_NOT_CONNECTED;
@@ -1195,14 +1273,15 @@ static HRESULT WINAPI GST_Pause(IBaseFilter *iface) {
     return hr;
 }
 
-static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart) {
+static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart)
+{
     HRESULT hr = S_OK;
     GSTImpl *This = (GSTImpl *)iface;
     ULONG i;
     GstState now;
     HRESULT hr_any = VFW_E_NOT_CONNECTED;
 
-    TRACE("(%s)\n", wine_dbgstr_longlong(tStart));
+    TRACE("(%p)->(%s)\n", This, wine_dbgstr_longlong(tStart));
 
     mark_wine_thread();
 
@@ -1247,13 +1326,14 @@ static HRESULT WINAPI GST_Run(IBaseFilter *iface, REFERENCE_TIME tStart) {
     return hr;
 }
 
-static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState) {
+static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout, FILTER_STATE *pState)
+{
     GSTImpl *This = (GSTImpl *)iface;
     HRESULT hr = S_OK;
     GstState now, pending;
     GstStateChangeReturn ret;
 
-    TRACE("(%d, %p)\n", dwMilliSecsTimeout, pState);
+    TRACE("(%p)->(%d, %p)\n", This, dwMilliSecsTimeout, pState);
 
     mark_wine_thread();
 
@@ -1276,7 +1356,8 @@ static HRESULT WINAPI GST_GetState(IBaseFilter *iface, DWORD dwMilliSecsTimeout,
     }
 }
 
-static HRESULT WINAPI GST_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin) {
+static HRESULT WINAPI GST_FindPin(IBaseFilter *iface, LPCWSTR Id, IPin **ppPin)
+{
     FIXME("(%p)->(%s,%p) stub\n", iface, debugstr_w(Id), ppPin);
     return E_NOTIMPL;
 }
@@ -1299,41 +1380,54 @@ static const IBaseFilterVtbl GST_Vtbl = {
     BaseFilterImpl_QueryVendorInfo
 };
 
-static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface) {
+static HRESULT WINAPI GST_ChangeCurrent(IMediaSeeking *iface)
+{
+    GSTOutPin *This = impl_from_IMediaSeeking(iface);
+    TRACE("(%p)\n", This);
     return S_OK;
 }
 
-static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface) {
+static HRESULT WINAPI GST_ChangeStop(IMediaSeeking *iface)
+{
+    GSTOutPin *This = impl_from_IMediaSeeking(iface);
+    TRACE("(%p)\n", This);
     return S_OK;
 }
 
-static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface) {
+static HRESULT WINAPI GST_ChangeRate(IMediaSeeking *iface)
+{
     GSTOutPin *This = impl_from_IMediaSeeking(iface);
     GstEvent *ev = gst_event_new_seek(This->seek.dRate, GST_FORMAT_TIME, 0, GST_SEEK_TYPE_NONE, -1, GST_SEEK_TYPE_NONE, -1);
-    TRACE("(%p) New rate %g\n", iface, This->seek.dRate);
+    TRACE("(%p) New rate %g\n", This, This->seek.dRate);
     mark_wine_thread();
     gst_pad_push_event(This->my_sink, ev);
     return S_OK;
 }
 
-static HRESULT WINAPI GST_Seeking_QueryInterface(IMediaSeeking *iface, REFIID riid, void **ppv) {
+static HRESULT WINAPI GST_Seeking_QueryInterface(IMediaSeeking *iface, REFIID riid, void **ppv)
+{
     GSTOutPin *This = impl_from_IMediaSeeking(iface);
     return IUnknown_QueryInterface((IUnknown *)This, riid, ppv);
 }
 
-static ULONG WINAPI GST_Seeking_AddRef(IMediaSeeking *iface) {
+static ULONG WINAPI GST_Seeking_AddRef(IMediaSeeking *iface)
+{
     GSTOutPin *This = impl_from_IMediaSeeking(iface);
     return IUnknown_AddRef((IUnknown *)This);
 }
 
-static ULONG WINAPI GST_Seeking_Release(IMediaSeeking *iface) {
+static ULONG WINAPI GST_Seeking_Release(IMediaSeeking *iface)
+{
     GSTOutPin *This = impl_from_IMediaSeeking(iface);
     return IUnknown_Release((IUnknown *)This);
 }
 
-static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFERENCE_TIME *pos) {
+static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFERENCE_TIME *pos)
+{
     GSTOutPin *This = impl_from_IMediaSeeking(iface);
     GstFormat format = GST_FORMAT_TIME;
+
+    TRACE("(%p)->(%p)\n", This, pos);
 
     if (!pos)
         return E_POINTER;
@@ -1358,7 +1452,8 @@ static HRESULT WINAPI GST_Seeking_GetCurrentPosition(IMediaSeeking *iface, REFER
     return S_OK;
 }
 
-static GstSeekType type_from_flags(DWORD flags) {
+static GstSeekType type_from_flags(DWORD flags)
+{
     switch (flags & AM_SEEKING_PositioningBitsMask) {
     case AM_SEEKING_NoPositioning: return GST_SEEK_TYPE_NONE;
     case AM_SEEKING_AbsolutePositioning: return GST_SEEK_TYPE_SET;
@@ -1368,13 +1463,17 @@ static GstSeekType type_from_flags(DWORD flags) {
     return GST_SEEK_TYPE_NONE;
 }
 
-
-static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface, REFERENCE_TIME *pCur, DWORD curflags, REFERENCE_TIME *pStop, DWORD stopflags) {
+static HRESULT WINAPI GST_Seeking_SetPositions(IMediaSeeking *iface,
+        REFERENCE_TIME *pCur, DWORD curflags, REFERENCE_TIME *pStop,
+        DWORD stopflags)
+{
     HRESULT hr;
     GSTOutPin *This = impl_from_IMediaSeeking(iface);
     GstSeekFlags f = 0;
     GstSeekType curtype, stoptype;
     GstEvent *e;
+
+    TRACE("(%p)->(%p, 0x%x, %p, 0x%x)\n", This, pCur, curflags, pStop, stopflags);
 
     mark_wine_thread();
 
@@ -1448,9 +1547,11 @@ static ULONG WINAPI GST_QualityControl_Release(IQualityControl *iface)
     return IPin_Release((IPin*)pin);
 }
 
-static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm) {
+static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFilter *sender, Quality qm)
+{
     GSTOutPin *pin = impl_from_IQualityControl(iface);
     REFERENCE_TIME late = qm.Late;
+    TRACE("(%p)->(%p, qm)\n", pin, sender);
     mark_wine_thread();
     if (qm.Late < 0 && -qm.Late > qm.TimeStamp)
         late = -qm.TimeStamp;
@@ -1460,6 +1561,8 @@ static HRESULT WINAPI GST_QualityControl_Notify(IQualityControl *iface, IBaseFil
 
 static HRESULT WINAPI GST_QualityControl_SetSink(IQualityControl *iface, IQualityControl *tonotify)
 {
+    GSTOutPin *pin = impl_from_IQualityControl(iface);
+    TRACE("(%p)->(%p)\n", pin, pin);
     /* Do nothing */
     return S_OK;
 }
@@ -1472,10 +1575,11 @@ static const IQualityControlVtbl GSTOutPin_QualityControl_Vtbl = {
     GST_QualityControl_SetSink
 };
 
-static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **ppv) {
+static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **ppv)
+{
     GSTOutPin *This = (GSTOutPin *)iface;
 
-    TRACE("(%s, %p)\n", debugstr_guid(riid), ppv);
+    TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppv);
 
     *ppv = NULL;
 
@@ -1496,10 +1600,12 @@ static HRESULT WINAPI GSTOutPin_QueryInterface(IPin *iface, REFIID riid, void **
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI GSTOutPin_Release(IPin *iface) {
+static ULONG WINAPI GSTOutPin_Release(IPin *iface)
+{
     GSTOutPin *This = (GSTOutPin *)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.pin.refCount);
-    TRACE("(%p)->() Release from %d\n", iface, refCount + 1);
+
+    TRACE("(%p)->() Release from %d\n", This, refCount + 1);
 
     mark_wine_thread();
 
@@ -1523,16 +1629,23 @@ static HRESULT WINAPI GSTOutPin_GetMediaType(BasePin *iface, int iPosition, AM_M
 {
     GSTOutPin *This = (GSTOutPin *)iface;
 
+    TRACE("(%p)->(%i, %p)\n", This, iPosition, pmt);
+
     if (iPosition < 0)
         return E_INVALIDARG;
+
     if (iPosition > 0)
         return VFW_S_NO_MORE_ITEMS;
+
     CopyMediaType(pmt, This->pmt);
+
     return S_OK;
 }
 
 static HRESULT WINAPI GSTOutPin_DecideBufferSize(BaseOutputPin *iface, IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *ppropInputRequest)
 {
+    GSTOutPin *This = (GSTOutPin *)iface;
+    TRACE("(%p)->(%p, %p)\n", This, pAlloc, ppropInputRequest);
     /* Unused */
     return S_OK;
 }
@@ -1542,6 +1655,8 @@ static HRESULT WINAPI GSTOutPin_DecideAllocator(BaseOutputPin *iface, IMemInputP
     HRESULT hr;
     GSTOutPin *This = (GSTOutPin *)iface;
     GSTImpl *GSTfilter = (GSTImpl*)This->pin.pin.pinInfo.pFilter;
+
+    TRACE("(%p)->(%p, %p)\n", This, pPin, pAlloc);
 
     *pAlloc = NULL;
     if (GSTfilter->pInputPin.pAlloc)
@@ -1611,7 +1726,8 @@ static const BaseOutputPinFuncTable output_BaseOutputFuncTable = {
     GSTOutPin_BreakConnect
 };
 
-static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt) {
+static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDIA_TYPE *amt)
+{
     HRESULT hr;
     This->ppPins = CoTaskMemRealloc(This->ppPins, (This->cStreams + 1) * sizeof(IPin *));
 
@@ -1632,10 +1748,12 @@ static HRESULT GST_AddPin(GSTImpl *This, const PIN_INFO *piOutput, const AM_MEDI
     return hr;
 }
 
-static HRESULT GST_RemoveOutputPins(GSTImpl *This) {
+static HRESULT GST_RemoveOutputPins(GSTImpl *This)
+{
     HRESULT hr;
     ULONG i;
     GSTOutPin **ppOldPins = This->ppPins;
+
     TRACE("(%p)\n", This);
     mark_wine_thread();
 
@@ -1663,7 +1781,8 @@ static HRESULT GST_RemoveOutputPins(GSTImpl *This) {
     return S_OK;
 }
 
-static ULONG WINAPI GSTInPin_Release(IPin *iface) {
+static ULONG WINAPI GSTInPin_Release(IPin *iface)
+{
     GSTInPin *This = (GSTInPin*)iface;
     ULONG refCount = InterlockedDecrement(&This->pin.refCount);
 
@@ -1679,7 +1798,8 @@ static ULONG WINAPI GSTInPin_Release(IPin *iface) {
         return refCount;
 }
 
-static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt) {
+static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin, const AM_MEDIA_TYPE *pmt)
+{
     PIN_DIRECTION pindirReceive;
     HRESULT hr = S_OK;
     GSTInPin *This = (GSTInPin*)iface;
@@ -1737,11 +1857,13 @@ static HRESULT WINAPI GSTInPin_ReceiveConnection(IPin *iface, IPin *pReceivePin,
     return hr;
 }
 
-static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface) {
+static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface)
+{
     HRESULT hr;
     GSTInPin *This = (GSTInPin*)iface;
     FILTER_STATE state;
-    TRACE("()\n");
+
+    TRACE("(%p)\n", This);
 
     mark_wine_thread();
 
@@ -1763,7 +1885,8 @@ static HRESULT WINAPI GSTInPin_Disconnect(IPin *iface) {
     return hr;
 }
 
-static HRESULT WINAPI GSTInPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt) {
+static HRESULT WINAPI GSTInPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt)
+{
     GSTInPin *This = (GSTInPin*)iface;
 
     TRACE("(%p)->(%p)\n", This, pmt);
@@ -1774,7 +1897,8 @@ static HRESULT WINAPI GSTInPin_QueryAccept(IPin *iface, const AM_MEDIA_TYPE *pmt
     return S_FALSE;
 }
 
-static HRESULT WINAPI GSTInPin_EndOfStream(IPin *iface) {
+static HRESULT WINAPI GSTInPin_EndOfStream(IPin *iface)
+{
     GSTInPin *pin = (GSTInPin*)iface;
     GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
 
@@ -1782,7 +1906,8 @@ static HRESULT WINAPI GSTInPin_EndOfStream(IPin *iface) {
     return S_OK;
 }
 
-static HRESULT WINAPI GSTInPin_BeginFlush(IPin *iface) {
+static HRESULT WINAPI GSTInPin_BeginFlush(IPin *iface)
+{
     GSTInPin *pin = (GSTInPin*)iface;
     GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
 
@@ -1790,7 +1915,8 @@ static HRESULT WINAPI GSTInPin_BeginFlush(IPin *iface) {
     return S_OK;
 }
 
-static HRESULT WINAPI GSTInPin_EndFlush(IPin *iface) {
+static HRESULT WINAPI GSTInPin_EndFlush(IPin *iface)
+{
     GSTInPin *pin = (GSTInPin*)iface;
     GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
 
@@ -1798,7 +1924,8 @@ static HRESULT WINAPI GSTInPin_EndFlush(IPin *iface) {
     return S_OK;
 }
 
-static HRESULT WINAPI GSTInPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate) {
+static HRESULT WINAPI GSTInPin_NewSegment(IPin *iface, REFERENCE_TIME tStart, REFERENCE_TIME tStop, double dRate)
+{
     GSTInPin *pin = (GSTInPin*)iface;
     GSTImpl *This = (GSTImpl*)pin->pin.pinInfo.pFilter;
 

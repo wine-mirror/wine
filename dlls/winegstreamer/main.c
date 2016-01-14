@@ -242,7 +242,8 @@ void dump_AM_MEDIA_TYPE(const AM_MEDIA_TYPE * pmt)
     TRACE("\t%s\n\t%s\n\t...\n\t%s\n", debugstr_guid(&pmt->majortype), debugstr_guid(&pmt->subtype), debugstr_guid(&pmt->formattype));
 }
 
-DWORD Gstreamer_init(void) {
+DWORD Gstreamer_init(void)
+{
     static int inited;
 
     if (!inited) {
@@ -251,6 +252,9 @@ DWORD Gstreamer_init(void) {
         char **argv = HeapAlloc(GetProcessHeap(), 0, sizeof(char *)*3);
         int argc = 2;
         GError *err = NULL;
+
+        TRACE("initializing\n");
+
         argv[0] = argv0;
         argv[1] = argv1;
         argv[2] = NULL;
