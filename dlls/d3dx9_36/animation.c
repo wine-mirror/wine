@@ -27,6 +27,11 @@ struct d3dx9_animation_controller
 {
     ID3DXAnimationController ID3DXAnimationController_iface;
     LONG ref;
+
+    UINT max_outputs;
+    UINT max_sets;
+    UINT max_tracks;
+    UINT max_events;
 };
 
 static inline struct d3dx9_animation_controller *impl_from_ID3DXAnimationController(ID3DXAnimationController *iface)
@@ -78,30 +83,38 @@ static ULONG WINAPI d3dx9_animation_controller_Release(ID3DXAnimationController 
 
 static UINT WINAPI d3dx9_animation_controller_GetMaxNumAnimationOutputs(ID3DXAnimationController *iface)
 {
-    FIXME("iface %p stub.\n", iface);
+    struct d3dx9_animation_controller *animation = impl_from_ID3DXAnimationController(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return animation->max_outputs;
 }
 
 static UINT WINAPI d3dx9_animation_controller_GetMaxNumAnimationSets(ID3DXAnimationController *iface)
 {
-    FIXME("iface %p stub.\n", iface);
+    struct d3dx9_animation_controller *animation = impl_from_ID3DXAnimationController(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return animation->max_sets;
 }
 
 static UINT WINAPI d3dx9_animation_controller_GetMaxNumTracks(ID3DXAnimationController *iface)
 {
-    FIXME("iface %p stub.\n", iface);
+    struct d3dx9_animation_controller *animation = impl_from_ID3DXAnimationController(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return animation->max_tracks;
 }
 
 static UINT WINAPI d3dx9_animation_controller_GetMaxNumEvents(ID3DXAnimationController *iface)
 {
-    FIXME("iface %p stub.\n", iface);
+    struct d3dx9_animation_controller *animation = impl_from_ID3DXAnimationController(iface);
 
-    return 0;
+    TRACE("iface %p.\n", iface);
+
+    return animation->max_events;
 }
 
 static HRESULT WINAPI d3dx9_animation_controller_RegisterAnimationOutput(ID3DXAnimationController *iface,
@@ -445,6 +458,10 @@ HRESULT WINAPI D3DXCreateAnimationController(UINT max_outputs, UINT max_sets,
 
     object->ID3DXAnimationController_iface.lpVtbl = &d3dx9_animation_controller_vtbl;
     object->ref = 1;
+    object->max_outputs = max_outputs;
+    object->max_sets    = max_sets;
+    object->max_tracks  = max_tracks;
+    object->max_events  = max_events;
 
     *controller = &object->ID3DXAnimationController_iface;
 
