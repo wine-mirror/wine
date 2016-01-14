@@ -2158,8 +2158,10 @@ static BOOL set_layout_range_attrval(struct layout_range_header *h, enum layout_
         break;
     case LAYOUT_RANGE_ATTR_LOCALE:
         changed = strcmpiW(dest->locale, value->u.locale) != 0;
-        if (changed)
+        if (changed) {
             strcpyW(dest->locale, value->u.locale);
+            strlwrW(dest->locale);
+        }
         break;
     case LAYOUT_RANGE_ATTR_FONTFAMILY:
         changed = strcmpW(dest->fontfamily, value->u.fontfamily) != 0;
