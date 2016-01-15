@@ -455,6 +455,17 @@ static HRESULT DataObjectImpl_CreateComplex(LPDATAOBJECT *lplpdataobj)
     return S_OK;
 }
 
+static void test_get_clipboard_unitialized(void)
+{
+    HRESULT hr;
+    IDataObject *pDObj;
+
+    pDObj = (IDataObject *)0xdeadbeef;
+    hr = OleGetClipboard(&pDObj);
+    todo_wine ok(hr == S_OK, "OleGetClipboard() got 0x%08x instead of 0x%08x\n", hr, S_OK);
+    if (pDObj && pDObj != (IDataObject *)0xdeadbeef) IDataObject_Release(pDObj);
+}
+
 static void test_get_clipboard(void)
 {
     HRESULT hr;
@@ -1592,6 +1603,7 @@ static void test_get_clipboard_locked(void)
 
 START_TEST(clipboard)
 {
+    test_get_clipboard_unitialized();
     test_set_clipboard();
     test_consumer_refs();
     test_flushed_getdata();
