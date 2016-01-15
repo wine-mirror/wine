@@ -3880,9 +3880,13 @@ static const IDWriteFontFileStreamVtbl localfontfilestreamvtbl =
     localfontfilestream_GetLastWriteTime
 };
 
-static HRESULT create_localfontfilestream(const void *file_ptr, UINT64 size, struct local_cached_stream *entry, IDWriteFontFileStream** iface)
+static HRESULT create_localfontfilestream(const void *file_ptr, UINT64 size, struct local_cached_stream *entry, IDWriteFontFileStream **ret)
 {
-    struct dwrite_localfontfilestream *This = heap_alloc(sizeof(struct dwrite_localfontfilestream));
+    struct dwrite_localfontfilestream *This;
+
+    *ret = NULL;
+
+    This = heap_alloc(sizeof(struct dwrite_localfontfilestream));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -3893,7 +3897,7 @@ static HRESULT create_localfontfilestream(const void *file_ptr, UINT64 size, str
     This->size = size;
     This->entry = entry;
 
-    *iface = &This->IDWriteFontFileStream_iface;
+    *ret = &This->IDWriteFontFileStream_iface;
     return S_OK;
 }
 
@@ -4060,9 +4064,13 @@ static const struct IDWriteLocalFontFileLoaderVtbl localfontfileloadervtbl = {
     localfontfileloader_GetLastWriteTimeFromKey
 };
 
-HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface)
+HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader **ret)
 {
-    struct dwrite_localfontfileloader *This = heap_alloc(sizeof(struct dwrite_localfontfileloader));
+    struct dwrite_localfontfileloader *This;
+
+    *ret = NULL;
+
+    This = heap_alloc(sizeof(struct dwrite_localfontfileloader));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -4070,7 +4078,7 @@ HRESULT create_localfontfileloader(IDWriteLocalFontFileLoader** iface)
     This->ref = 1;
     list_init(&This->streams);
 
-    *iface = &This->IDWriteLocalFontFileLoader_iface;
+    *ret = &This->IDWriteLocalFontFileLoader_iface;
     return S_OK;
 }
 
