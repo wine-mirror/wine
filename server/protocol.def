@@ -3331,10 +3331,7 @@ struct handle_info
 /* Create a symbolic link object */
 @REQ(create_symlink)
     unsigned int   access;        /* access flags */
-    unsigned int   attributes;    /* object attributes */
-    obj_handle_t   rootdir;       /* root directory */
-    data_size_t    name_len;      /* length of the symlink name in bytes */
-    VARARG(name,unicode_str,name_len); /* symlink name */
+    VARARG(objattr,object_attributes); /* object attributes */
     VARARG(target_name,unicode_str);   /* target name */
 @REPLY
     obj_handle_t   handle;        /* handle to the symlink */

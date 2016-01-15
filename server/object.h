@@ -222,7 +222,8 @@ extern void init_directories(void);
 /* symbolic link functions */
 
 extern struct symlink *create_symlink( struct directory *root, const struct unicode_str *name,
-                                       unsigned int attr, const struct unicode_str *target );
+                                       unsigned int attr, const struct unicode_str *target,
+                                       const struct security_descriptor *sd );
 
 /* global variables */
 

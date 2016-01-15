@@ -636,35 +636,31 @@ NTSTATUS WINAPI NtOpenSymbolicLinkObject(OUT PHANDLE LinkHandle, IN ACCESS_MASK 
  *  Failure: An NTSTATUS error code.
  */
 NTSTATUS WINAPI NtCreateSymbolicLinkObject(OUT PHANDLE SymbolicLinkHandle,IN ACCESS_MASK DesiredAccess,
-	                                   IN POBJECT_ATTRIBUTES ObjectAttributes,
-                                           IN PUNICODE_STRING TargetName)
+	                                   POBJECT_ATTRIBUTES attr, PUNICODE_STRING TargetName)
 {
     NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     if (!SymbolicLinkHandle || !TargetName) return STATUS_ACCESS_VIOLATION;
     if (!TargetName->Buffer) return STATUS_INVALID_PARAMETER;
 
     TRACE("(%p,0x%08x,%s -> %s)\n", SymbolicLinkHandle, DesiredAccess,
-          debugstr_ObjectAttributes(ObjectAttributes), debugstr_us(TargetName));
+          debugstr_ObjectAttributes(attr), debugstr_us(TargetName));
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
     SERVER_START_REQ(create_symlink)
     {
         req->access = DesiredAccess;
-        req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( ObjectAttributes ? ObjectAttributes->RootDirectory : 0 );
-        if (ObjectAttributes && ObjectAttributes->ObjectName)
-        {
-            req->name_len = ObjectAttributes->ObjectName->Length;
-            wine_server_add_data(req, ObjectAttributes->ObjectName->Buffer,
-                                 ObjectAttributes->ObjectName->Length);
-        }
-        else
-            req->name_len = 0;
+        wine_server_add_data( req, objattr, len );
         wine_server_add_data(req, TargetName->Buffer, TargetName->Length);
         ret = wine_server_call( req );
         *SymbolicLinkHandle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     return ret;
 }
 

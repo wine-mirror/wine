@@ -463,15 +463,15 @@ void init_directories(void)
     create_unix_device( dir_device, &null_str, "/dev/null" );
 
     /* symlinks */
-    link_dosdev    = create_symlink( root_directory, &link_dosdev_str, 0, &dir_global_str );
-    link_global1   = create_symlink( dir_global, &link_global_str, 0, &dir_global_str );
-    link_global2   = create_symlink( dir_basenamed, &link_global_str, 0, &dir_basenamed_str );
-    link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str );
-    link_nul       = create_symlink( dir_global, &link_nul_str, 0, &dir_null_str );
-    link_pipe      = create_symlink( dir_global, &link_pipe_str, 0, &dir_named_pipe_str );
-    link_mailslot  = create_symlink( dir_global, &link_mailslot_str, 0, &dir_mailslot_str );
-    link_0         = create_symlink( dir_sessions, &link_0_str, 0, &dir_basenamed_str );
-    link_session   = create_symlink( dir_basenamed, &link_session_str, 0, &link_sessions_str );
+    link_dosdev    = create_symlink( root_directory, &link_dosdev_str, 0, &dir_global_str, NULL );
+    link_global1   = create_symlink( dir_global, &link_global_str, 0, &dir_global_str, NULL );
+    link_global2   = create_symlink( dir_basenamed, &link_global_str, 0, &dir_basenamed_str, NULL );
+    link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str, NULL );
+    link_nul       = create_symlink( dir_global, &link_nul_str, 0, &dir_null_str, NULL );
+    link_pipe      = create_symlink( dir_global, &link_pipe_str, 0, &dir_named_pipe_str, NULL );
+    link_mailslot  = create_symlink( dir_global, &link_mailslot_str, 0, &dir_mailslot_str, NULL );
+    link_0         = create_symlink( dir_sessions, &link_0_str, 0, &dir_basenamed_str, NULL );
+    link_session   = create_symlink( dir_basenamed, &link_session_str, 0, &link_sessions_str, NULL );
     make_object_static( (struct object *)link_dosdev );
     make_object_static( (struct object *)link_global1 );
     make_object_static( (struct object *)link_global2 );

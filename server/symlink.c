@@ -132,7 +132,8 @@ static void symlink_destroy( struct object *obj )
 }
 
 struct symlink *create_symlink( struct directory *root, const struct unicode_str *name,
-                                unsigned int attr, const struct unicode_str *target )
+                                unsigned int attr, const struct unicode_str *target,
+                                const struct security_descriptor *sd )
 {
     struct symlink *symlink;
 
@@ -145,7 +146,13 @@ struct symlink *create_symlink( struct directory *root, const struct unicode_str
         (get_error() != STATUS_OBJECT_NAME_EXISTS))
     {
         if ((symlink->target = memdup( target->str, target->len )))
+        {
             symlink->len = target->len;
+            if (sd)
+                default_set_sd( &symlink->obj, sd,
+                                OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
+        }
         else
         {
             release_object( symlink );
@@ -162,23 +169,20 @@ DECL_HANDLER(create_symlink)
     struct symlink *symlink;
     struct unicode_str name, target;
     struct directory *root = NULL;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
 
-    if (req->name_len > get_req_data_size())
+    if (!objattr) return;
+
+    target.str = (const WCHAR *)get_req_data() + sizeof(*objattr) / sizeof(WCHAR) +
+                  objattr->sd_len / sizeof(WCHAR) + name.len / sizeof(WCHAR);
+    target.len = get_req_data_size() - ((const char *)target.str - (const char *)get_req_data());
+
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
+
+    if ((symlink = create_symlink( root, &name, objattr->attributes, &target, sd )))
     {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-    name.str   = get_req_data();
-    target.str = name.str + req->name_len / sizeof(WCHAR);
-    name.len   = (target.str - name.str) * sizeof(WCHAR);
-    target.len = ((get_req_data_size() - name.len) / sizeof(WCHAR)) * sizeof(WCHAR);
-
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    if ((symlink = create_symlink( root, &name, req->attributes, &target )))
-    {
-        reply->handle = alloc_handle( current->process, symlink, req->access, req->attributes );
+        reply->handle = alloc_handle( current->process, symlink, req->access, objattr->attributes );
         release_object( symlink );
     }
 

@@ -4760,12 +4760,8 @@ struct create_symlink_request
 {
     struct request_header __header;
     unsigned int   access;
-    unsigned int   attributes;
-    obj_handle_t   rootdir;
-    data_size_t    name_len;
-    /* VARARG(name,unicode_str,name_len); */
+    /* VARARG(objattr,object_attributes); */
     /* VARARG(target_name,unicode_str); */
-    char __pad_28[4];
 };
 struct create_symlink_reply
 {
