@@ -4673,12 +4673,10 @@ struct create_mailslot_request
 {
     struct request_header __header;
     unsigned int   access;
-    unsigned int   attributes;
-    obj_handle_t   rootdir;
     timeout_t      read_timeout;
     unsigned int   max_msgsize;
-    /* VARARG(name,unicode_str); */
-    char __pad_36[4];
+    /* VARARG(objattr,object_attributes); */
+    char __pad_28[4];
 };
 struct create_mailslot_reply
 {
@@ -6169,6 +6167,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 495
+#define SERVER_PROTOCOL_VERSION 496
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

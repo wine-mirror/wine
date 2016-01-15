@@ -3627,6 +3627,8 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
 {
     LARGE_INTEGER timeout;
     NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     TRACE("%p %08x %p %p %08x %08x %08x %p\n",
               pHandle, DesiredAccess, attr, IoStatusBlock,
@@ -3635,6 +3637,8 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
     if (!pHandle) return STATUS_ACCESS_VIOLATION;
     if (!attr) return STATUS_INVALID_PARAMETER;
     if (!attr->ObjectName) return STATUS_OBJECT_PATH_SYNTAX_BAD;
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
     /*
      *  For a NULL TimeOut pointer set the default timeout value
@@ -3647,17 +3651,15 @@ NTSTATUS WINAPI NtCreateMailslotFile(PHANDLE pHandle, ULONG DesiredAccess,
     SERVER_START_REQ( create_mailslot )
     {
         req->access = DesiredAccess;
-        req->attributes = attr->Attributes;
-        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
         req->max_msgsize = MaxMessageSize;
         req->read_timeout = timeout.QuadPart;
-        wine_server_add_data( req, attr->ObjectName->Buffer,
-                              attr->ObjectName->Length );
+        wine_server_add_data( req, objattr, len );
         ret = wine_server_call( req );
         if( ret == STATUS_SUCCESS )
             *pHandle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
- 
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     return ret;
 }

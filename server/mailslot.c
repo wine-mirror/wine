@@ -395,7 +395,8 @@ void create_mailslot_device( struct directory *root, const struct unicode_str *n
 
 static struct mailslot *create_mailslot( struct directory *root,
                                          const struct unicode_str *name, unsigned int attr,
-                                         int max_msgsize, timeout_t read_timeout )
+                                         int max_msgsize, timeout_t read_timeout,
+                                         const struct security_descriptor *sd )
 {
     struct object *obj;
     struct unicode_str new_name;
@@ -442,6 +443,8 @@ static struct mailslot *create_mailslot( struct directory *root,
     mailslot->max_msgsize = max_msgsize;
     mailslot->read_timeout = read_timeout;
     list_init( &mailslot->writers );
+    if (sd) default_set_sd( &mailslot->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                            DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
 
     if (!socketpair( PF_UNIX, SOCK_DGRAM, 0, fds ))
     {
@@ -508,16 +511,16 @@ DECL_HANDLER(create_mailslot)
     struct mailslot *mailslot;
     struct unicode_str name;
     struct directory *root = NULL;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
 
-    reply->handle = 0;
-    get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
+    if (!objattr) return;
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
-    if ((mailslot = create_mailslot( root, &name, req->attributes, req->max_msgsize,
-                                     req->read_timeout )))
+    if ((mailslot = create_mailslot( root, &name, objattr->attributes, req->max_msgsize,
+                                     req->read_timeout, sd )))
     {
-        reply->handle = alloc_handle( current->process, mailslot, req->access, req->attributes );
+        reply->handle = alloc_handle( current->process, mailslot, req->access, objattr->attributes );
         release_object( mailslot );
     }
 

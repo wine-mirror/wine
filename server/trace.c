@@ -3866,11 +3866,9 @@ static void dump_get_system_handles_reply( const struct get_system_handles_reply
 static void dump_create_mailslot_request( const struct create_mailslot_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
-    fprintf( stderr, ", rootdir=%04x", req->rootdir );
     dump_timeout( ", read_timeout=", &req->read_timeout );
     fprintf( stderr, ", max_msgsize=%08x", req->max_msgsize );
-    dump_varargs_unicode_str( ", name=", cur_size );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 
 static void dump_create_mailslot_reply( const struct create_mailslot_reply *req )
