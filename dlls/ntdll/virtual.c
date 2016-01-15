@@ -2477,7 +2477,6 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
     SERVER_START_REQ( create_mapping )
     {
         req->access      = access;
-        req->attributes  = (attr) ? attr->Attributes : 0;
         req->file_handle = wine_server_obj_handle( file );
         req->size        = size ? size->QuadPart : 0;
         req->protect     = vprot;

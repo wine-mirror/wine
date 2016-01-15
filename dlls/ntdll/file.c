@@ -232,7 +232,6 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
         SERVER_START_REQ( create_file )
         {
             req->access     = access;
-            req->attributes = attr->Attributes;
             req->sharing    = sharing;
             req->create     = disposition;
             req->options    = options;
@@ -3522,7 +3521,6 @@ NTSTATUS WINAPI NtCreateNamedPipeFile( PHANDLE handle, ULONG access,
     SERVER_START_REQ( create_named_pipe )
     {
         req->access  = access;
-        req->attributes = attr->Attributes;
         req->options = options;
         req->sharing = sharing;
         req->flags = 

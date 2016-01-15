@@ -678,12 +678,14 @@ DECL_HANDLER(create_mapping)
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
         return;
 
-    if ((obj = create_mapping( root, &name, req->attributes, req->size, req->protect, req->file_handle, sd )))
+    if ((obj = create_mapping( root, &name, objattr->attributes,
+                               req->size, req->protect, req->file_handle, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
+            reply->handle = alloc_handle( current->process, obj, req->access, objattr->attributes );
         else
-            reply->handle = alloc_handle_no_access_check( current->process, obj, req->access, req->attributes );
+            reply->handle = alloc_handle_no_access_check( current->process, obj,
+                                                          req->access, objattr->attributes );
         release_object( obj );
     }
 

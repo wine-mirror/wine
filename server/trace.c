@@ -1077,7 +1077,7 @@ static void dump_varargs_object_attributes( const char *prefix, data_size_t size
     if (size >= sizeof(struct object_attributes))
     {
         const WCHAR *str;
-        fprintf( stderr, "rootdir=%04x", objattr->rootdir );
+        fprintf( stderr, "rootdir=%04x,attributes=%08x", objattr->rootdir, objattr->attributes );
         if (objattr->sd_len > size - sizeof(*objattr) ||
             objattr->name_len > size - sizeof(*objattr) - objattr->sd_len)
             return;
@@ -1496,7 +1496,6 @@ static void dump_select_reply( const struct select_reply *req )
 static void dump_create_event_request( const struct create_event_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", manual_reset=%d", req->manual_reset );
     fprintf( stderr, ", initial_state=%d", req->initial_state );
     dump_varargs_object_attributes( ", objattr=", cur_size );
@@ -1540,7 +1539,6 @@ static void dump_open_event_reply( const struct open_event_reply *req )
 static void dump_create_keyed_event_request( const struct create_keyed_event_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 
@@ -1565,7 +1563,6 @@ static void dump_open_keyed_event_reply( const struct open_keyed_event_reply *re
 static void dump_create_mutex_request( const struct create_mutex_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", owned=%d", req->owned );
     dump_varargs_object_attributes( ", objattr=", cur_size );
 }
@@ -1601,7 +1598,6 @@ static void dump_open_mutex_reply( const struct open_mutex_reply *req )
 static void dump_create_semaphore_request( const struct create_semaphore_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", initial=%08x", req->initial );
     fprintf( stderr, ", max=%08x", req->max );
     dump_varargs_object_attributes( ", objattr=", cur_size );
@@ -1650,7 +1646,6 @@ static void dump_open_semaphore_reply( const struct open_semaphore_reply *req )
 static void dump_create_file_request( const struct create_file_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", sharing=%08x", req->sharing );
     fprintf( stderr, ", create=%d", req->create );
     fprintf( stderr, ", options=%08x", req->options );
@@ -2115,7 +2110,6 @@ static void dump_read_change_reply( const struct read_change_reply *req )
 static void dump_create_mapping_request( const struct create_mapping_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", protect=%08x", req->protect );
     dump_uint64( ", size=", &req->size );
     fprintf( stderr, ", file_handle=%04x", req->file_handle );
@@ -2878,7 +2872,6 @@ static void dump_get_irp_result_reply( const struct get_irp_result_reply *req )
 static void dump_create_named_pipe_request( const struct create_named_pipe_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", options=%08x", req->options );
     fprintf( stderr, ", sharing=%08x", req->sharing );
     fprintf( stderr, ", maxinstances=%08x", req->maxinstances );
@@ -4260,7 +4253,6 @@ static void dump_set_suspend_context_request( const struct set_suspend_context_r
 static void dump_create_job_request( const struct create_job_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 

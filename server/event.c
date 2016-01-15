@@ -301,12 +301,14 @@ DECL_HANDLER(create_event)
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
         return;
 
-    if ((event = create_event( root, &name, req->attributes, req->manual_reset, req->initial_state, sd )))
+    if ((event = create_event( root, &name, objattr->attributes,
+                               req->manual_reset, req->initial_state, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, event, req->access, req->attributes );
+            reply->handle = alloc_handle( current->process, event, req->access, objattr->attributes );
         else
-            reply->handle = alloc_handle_no_access_check( current->process, event, req->access, req->attributes );
+            reply->handle = alloc_handle_no_access_check( current->process, event,
+                                                          req->access, objattr->attributes );
         release_object( event );
     }
 
@@ -386,12 +388,13 @@ DECL_HANDLER(create_keyed_event)
 
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
-    if ((event = create_keyed_event( root, &name, req->attributes, sd )))
+    if ((event = create_keyed_event( root, &name, objattr->attributes, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, event, req->access, req->attributes );
+            reply->handle = alloc_handle( current->process, event, req->access, objattr->attributes );
         else
-            reply->handle = alloc_handle_no_access_check( current->process, event, req->access, req->attributes );
+            reply->handle = alloc_handle_no_access_check( current->process, event,
+                                                          req->access, objattr->attributes );
         release_object( event );
     }
     if (root) release_object( root );

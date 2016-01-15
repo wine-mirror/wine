@@ -225,12 +225,13 @@ DECL_HANDLER(create_mutex)
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
         return;
 
-    if ((mutex = create_mutex( root, &name, req->attributes, req->owned, sd )))
+    if ((mutex = create_mutex( root, &name, objattr->attributes, req->owned, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, mutex, req->access, req->attributes );
+            reply->handle = alloc_handle( current->process, mutex, req->access, objattr->attributes );
         else
-            reply->handle = alloc_handle_no_access_check( current->process, mutex, req->access, req->attributes );
+            reply->handle = alloc_handle_no_access_check( current->process, mutex,
+                                                          req->access, objattr->attributes );
         release_object( mutex );
     }
 

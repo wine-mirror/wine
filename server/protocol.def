@@ -392,9 +392,10 @@ struct security_descriptor
 
 struct object_attributes
 {
-    obj_handle_t rootdir; /* root directory */
-    data_size_t sd_len;   /* length of security_descriptor data. may be 0 */
-    data_size_t name_len; /* length of the name string. may be 0 */
+    obj_handle_t rootdir;       /* root directory */
+    unsigned int attributes;    /* object attributes */
+    data_size_t  sd_len;        /* length of security_descriptor data. may be 0 */
+    data_size_t  name_len;      /* length of the name string. may be 0 */
     /* VARARG(sd,security_descriptor); */
     /* VARARG(name,unicode_str); */
 };
@@ -1012,7 +1013,6 @@ struct rawinput_device
 /* Create an event */
 @REQ(create_event)
     unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
     int          manual_reset;  /* manual reset event */
     int          initial_state; /* initial state of the event */
     VARARG(objattr,object_attributes); /* object attributes */
@@ -1048,7 +1048,6 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Create a keyed event */
 @REQ(create_keyed_event)
     unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
     VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;        /* handle to the event */
@@ -1068,7 +1067,6 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Create a mutex */
 @REQ(create_mutex)
     unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
     int          owned;         /* initially owned? */
     VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
@@ -1098,7 +1096,6 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Create a semaphore */
 @REQ(create_semaphore)
     unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
     unsigned int initial;       /* initial count */
     unsigned int max;           /* maximum count */
     VARARG(objattr,object_attributes); /* object attributes */
@@ -1136,7 +1133,6 @@ enum event_op { PULSE_EVENT, SET_EVENT, RESET_EVENT };
 /* Create a file */
 @REQ(create_file)
     unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
     unsigned int sharing;       /* sharing flags */
     int          create;        /* file create action */
     unsigned int options;       /* file options */
@@ -1636,7 +1632,6 @@ enum char_info_mode
 /* Create a file mapping */
 @REQ(create_mapping)
     unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
     unsigned int protect;       /* protection flags (see below) */
     mem_size_t   size;          /* mapping size */
     obj_handle_t file_handle;   /* file handle */
@@ -2372,7 +2367,6 @@ enum message_type
 /* Create a named pipe */
 @REQ(create_named_pipe)
     unsigned int   access;
-    unsigned int   attributes;   /* object attributes */
     unsigned int   options;
     unsigned int   sharing;
     unsigned int   maxinstances;
@@ -3643,7 +3637,6 @@ struct handle_info
 /* Create a new job object */
 @REQ(create_job)
     unsigned int access;          /* wanted access rights */
-    unsigned int attributes;      /* object attributes */
     VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;          /* handle to the job */

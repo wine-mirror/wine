@@ -193,12 +193,13 @@ DECL_HANDLER(create_semaphore)
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
         return;
 
-    if ((sem = create_semaphore( root, &name, req->attributes, req->initial, req->max, sd )))
+    if ((sem = create_semaphore( root, &name, objattr->attributes, req->initial, req->max, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, sem, req->access, req->attributes );
+            reply->handle = alloc_handle( current->process, sem, req->access, objattr->attributes );
         else
-            reply->handle = alloc_handle_no_access_check( current->process, sem, req->access, req->attributes );
+            reply->handle = alloc_handle_no_access_check( current->process, sem,
+                                                          req->access, objattr->attributes );
         release_object( sem );
     }
 

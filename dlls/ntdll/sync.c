@@ -121,6 +121,7 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
     if (!*ret) return STATUS_NO_MEMORY;
 
     (*ret)->rootdir = wine_server_obj_handle( attr->RootDirectory );
+    (*ret)->attributes = attr->Attributes;
 
     if (attr->SecurityDescriptor)
     {
@@ -180,7 +181,6 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
     SERVER_START_REQ( create_semaphore )
     {
         req->access  = access;
-        req->attributes = (attr) ? attr->Attributes : 0;
         req->initial = InitialCount;
         req->max     = MaximumCount;
         wine_server_add_data( req, objattr, len );
@@ -289,7 +289,6 @@ NTSTATUS WINAPI NtCreateEvent( PHANDLE EventHandle, ACCESS_MASK DesiredAccess,
     SERVER_START_REQ( create_event )
     {
         req->access = DesiredAccess;
-        req->attributes = (attr) ? attr->Attributes : 0;
         req->manual_reset = (type == NotificationEvent);
         req->initial_state = InitialState;
         wine_server_add_data( req, objattr, len );
@@ -459,7 +458,6 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
     SERVER_START_REQ( create_mutex )
     {
         req->access  = access;
-        req->attributes = (attr) ? attr->Attributes : 0;
         req->owned   = InitialOwner;
         wine_server_add_data( req, objattr, len );
         status = wine_server_call( req );
@@ -549,7 +547,6 @@ NTSTATUS WINAPI NtCreateJobObject( PHANDLE handle, ACCESS_MASK access, const OBJ
     SERVER_START_REQ( create_job )
     {
         req->access = access;
-        req->attributes = attr ? attr->Attributes : 0;
         wine_server_add_data( req, objattr, len );
         ret = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );
@@ -1080,7 +1077,6 @@ NTSTATUS WINAPI NtCreateKeyedEvent( HANDLE *handle, ACCESS_MASK access,
     SERVER_START_REQ( create_keyed_event )
     {
         req->access = access;
-        req->attributes = attr ? attr->Attributes : 0;
         wine_server_add_data( req, objattr, len );
         ret = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );

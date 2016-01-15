@@ -944,7 +944,7 @@ DECL_HANDLER(create_named_pipe)
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
         return;
 
-    pipe = create_named_pipe( root, &name, req->attributes | OBJ_OPENIF, sd );
+    pipe = create_named_pipe( root, &name, objattr->attributes | OBJ_OPENIF, sd );
 
     if (root) release_object( root );
     if (!pipe) return;
@@ -982,7 +982,7 @@ DECL_HANDLER(create_named_pipe)
     server = create_pipe_server( pipe, req->options, req->flags );
     if (server)
     {
-        reply->handle = alloc_handle( current->process, server, req->access, req->attributes );
+        reply->handle = alloc_handle( current->process, server, req->access, objattr->attributes );
         server->pipe->instances++;
         if (sd) default_set_sd( &server->obj, sd, OWNER_SECURITY_INFORMATION |
                                                   GROUP_SECURITY_INFORMATION |

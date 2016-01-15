@@ -1549,12 +1549,13 @@ DECL_HANDLER(create_job)
 
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
-    if ((job = create_job_object( root, &name, req->attributes, sd )))
+    if ((job = create_job_object( root, &name, objattr->attributes, sd )))
     {
         if (get_error() == STATUS_OBJECT_NAME_EXISTS)
-            reply->handle = alloc_handle( current->process, job, req->access, req->attributes );
+            reply->handle = alloc_handle( current->process, job, req->access, objattr->attributes );
         else
-            reply->handle = alloc_handle_no_access_check( current->process, job, req->access, req->attributes );
+            reply->handle = alloc_handle_no_access_check( current->process, job,
+                                                          req->access, objattr->attributes );
         release_object( job );
     }
     if (root) release_object( root );
