@@ -331,7 +331,7 @@ float CDECL MSVCRT__scalbf(float num, MSVCRT_long power)
 /*********************************************************************
  *      modff (MSVCRT.@)
  */
-double CDECL MSVCRT_modff( float x, float *iptr )
+float CDECL MSVCRT_modff( float x, float *iptr )
 {
   return modff( x, iptr );
 }
