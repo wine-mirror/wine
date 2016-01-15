@@ -38,8 +38,13 @@ static void (ALC_APIENTRY *palcRenderSamplesSOFT)(ALCdevice*, ALCvoid*, ALCsizei
 
 static HINSTANCE instance;
 
-#define COMPAT_E_INVALID_CALL(v) (v == 20) ? E_INVALIDARG : XAUDIO2_E_INVALID_CALL
-#define COMPAT_E_DEVICE_INVALIDATED(v) (v == 20) ? XAUDIO20_E_DEVICE_INVALIDATED : XAUDIO2_E_DEVICE_INVALIDATED
+#if XAUDIO2_VER == 0
+#define COMPAT_E_INVALID_CALL E_INVALIDARG
+#define COMPAT_E_DEVICE_INVALIDATED XAUDIO20_E_DEVICE_INVALIDATED
+#else
+#define COMPAT_E_INVALID_CALL XAUDIO2_E_INVALID_CALL
+#define COMPAT_E_DEVICE_INVALIDATED XAUDIO2_E_DEVICE_INVALIDATED
+#endif
 
 static void dump_fmt(const WAVEFORMATEX *fmt)
 {
@@ -506,7 +511,7 @@ static HRESULT WINAPI XA2SRC_SubmitSourceBuffer(IXAudio2SourceVoice *iface,
     if(This->nbufs >= XAUDIO2_MAX_QUEUED_BUFFERS){
         TRACE("Too many buffers queued!\n");
         LeaveCriticalSection(&This->lock);
-        return COMPAT_E_INVALID_CALL(This->xa2->version);
+        return COMPAT_E_INVALID_CALL;
     }
 
     buf_idx = (This->first_buf + This->nbufs) % XAUDIO2_MAX_QUEUED_BUFFERS;
@@ -517,10 +522,10 @@ static HRESULT WINAPI XA2SRC_SubmitSourceBuffer(IXAudio2SourceVoice *iface,
      * but pBuffer itself may be reused immediately */
     memcpy(&buf->xa2buffer, pBuffer, sizeof(*pBuffer));
 
-    if(This->xa2->version == 20){
-        if(buf->xa2buffer.LoopCount == XAUDIO20_LOOP_INFINITE)
-            buf->xa2buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
-    }
+#if XAUDIO2_VER == 0
+    if(buf->xa2buffer.LoopCount == XAUDIO20_LOOP_INFINITE)
+        buf->xa2buffer.LoopCount = XAUDIO2_LOOP_INFINITE;
+#endif
 
     /* convert samples offsets to bytes */
     if(This->fmt->wFormatTag == WAVE_FORMAT_ADPCM){
@@ -551,29 +556,29 @@ static HRESULT WINAPI XA2SRC_SubmitSourceBuffer(IXAudio2SourceVoice *iface,
         if(buf->xa2buffer.LoopBegin >= buf->play_end_bytes){
             /* this actually crashes on native xaudio 2.7 */
             LeaveCriticalSection(&This->lock);
-            return COMPAT_E_INVALID_CALL(This->xa2->version);
+            return COMPAT_E_INVALID_CALL;
         }
 
         buf->loop_end_bytes = buf->xa2buffer.LoopBegin + buf->xa2buffer.LoopLength;
 
         /* xaudio 2.7 allows some invalid looping setups, but later versions
          * return an error */
-        if(This->xa2->version > 27){
-            if(buf->loop_end_bytes > buf->play_end_bytes){
-                LeaveCriticalSection(&This->lock);
-                return COMPAT_E_INVALID_CALL(This->xa2->version);
-            }
-
-            if(buf->loop_end_bytes <= buf->xa2buffer.PlayBegin){
-                LeaveCriticalSection(&This->lock);
-                return COMPAT_E_INVALID_CALL(This->xa2->version);
-            }
-        }else{
-            if(buf->loop_end_bytes <= buf->xa2buffer.PlayBegin){
-                buf->xa2buffer.LoopCount = 0;
-                buf->loop_end_bytes = buf->play_end_bytes;
-            }
+#if XAUDIO2_VER > 7
+        if(buf->loop_end_bytes > buf->play_end_bytes){
+            LeaveCriticalSection(&This->lock);
+            return COMPAT_E_INVALID_CALL;
         }
+
+        if(buf->loop_end_bytes <= buf->xa2buffer.PlayBegin){
+            LeaveCriticalSection(&This->lock);
+            return COMPAT_E_INVALID_CALL;
+        }
+#else
+        if(buf->loop_end_bytes <= buf->xa2buffer.PlayBegin){
+            buf->xa2buffer.LoopCount = 0;
+            buf->loop_end_bytes = buf->play_end_bytes;
+        }
+#endif
     }else{
         buf->xa2buffer.LoopLength = buf->xa2buffer.PlayLength;
         buf->xa2buffer.LoopBegin = buf->xa2buffer.PlayBegin;
@@ -743,7 +748,7 @@ static HRESULT WINAPI XA2SRC_SetSourceSampleRate(
 
     if(This->nbufs){
         LeaveCriticalSection(&This->lock);
-        return COMPAT_E_INVALID_CALL(This->xa2->version);
+        return COMPAT_E_INVALID_CALL;
     }
 
     This->fmt->nSamplesPerSec = NewSourceSampleRate;
@@ -1191,12 +1196,13 @@ static HRESULT WINAPI IXAudio2Impl_QueryInterface(IXAudio2 *iface, REFIID riid,
         *ppvObject = &This->IXAudio2_iface;
     else if(IsEqualGUID(riid, &IID_IXAudio27)){
         /* all xaudio versions before 28 share an IID */
-        if(This->version == 20)
-            *ppvObject = &This->IXAudio20_iface;
-        else if(This->version == 21 || This->version == 22)
-            *ppvObject = &This->IXAudio22_iface;
-        else
-            *ppvObject = &This->IXAudio27_iface;
+#if XAUDIO2_VER == 0
+        *ppvObject = &This->IXAudio20_iface;
+#elif XAUDIO2_VER == 1 || XAUDIO2_VER == 2
+        *ppvObject = &This->IXAudio22_iface;
+#else
+        *ppvObject = &This->IXAudio27_iface;
+#endif
     }else
         *ppvObject = NULL;
 
@@ -1408,14 +1414,15 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
 
     alSourcePlay(src->al_src);
 
-    if(This->version == 20)
-        *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio20SourceVoice_iface;
-    else if(This->version <= 23)
-        *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio23SourceVoice_iface;
-    else if(This->version <= 27)
-        *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio27SourceVoice_iface;
-    else
-        *ppSourceVoice = &src->IXAudio2SourceVoice_iface;
+#if XAUDIO2_VER == 0
+    *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio20SourceVoice_iface;
+#elif XAUDIO2_VER <= 3
+    *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio23SourceVoice_iface;
+#elif XAUDIO2_VER <= 7
+    *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio27SourceVoice_iface;
+#else
+    *ppSourceVoice = &src->IXAudio2SourceVoice_iface;
+#endif
 
     TRACE("Created source voice: %p\n", src);
 
@@ -1463,12 +1470,13 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
 
     LeaveCriticalSection(&This->lock);
 
-    if(This->version == 20)
-        *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio20SubmixVoice_iface;
-    else if(This->version <= 23)
-        *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio23SubmixVoice_iface;
-    else
-        *ppSubmixVoice = &sub->IXAudio2SubmixVoice_iface;
+#if XAUDIO2_VER == 0
+    *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio20SubmixVoice_iface;
+#elif XAUDIO2_VER <= 3
+    *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio23SubmixVoice_iface;
+#else
+    *ppSubmixVoice = &sub->IXAudio2SubmixVoice_iface;
+#endif
 
     TRACE("Created submix voice: %p\n", sub);
 
@@ -1525,7 +1533,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     /* there can only be one Mastering Voice, so just build it into XA2 */
     if(This->aclient){
         LeaveCriticalSection(&This->lock);
-        return COMPAT_E_INVALID_CALL(This->version);
+        return COMPAT_E_INVALID_CALL;
     }
 
     if(!deviceId){
@@ -1539,7 +1547,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     hr = IMMDeviceEnumerator_GetDevice(This->devenum, deviceId, &dev);
     if(FAILED(hr)){
         WARN("GetDevice failed: %08x\n", hr);
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1548,7 +1556,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     if(FAILED(hr)){
         WARN("Activate(IAudioClient) failed: %08x\n", hr);
         IMMDevice_Release(dev);
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1557,13 +1565,13 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     hr = IAudioClient_GetMixFormat(This->aclient, &fmt);
     if(FAILED(hr)){
         WARN("GetMixFormat failed: %08x\n", hr);
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
     if(sizeof(WAVEFORMATEX) + fmt->cbSize > sizeof(WAVEFORMATEXTENSIBLE)){
         FIXME("Mix format doesn't fit into WAVEFORMATEXTENSIBLE!\n");
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1587,7 +1595,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     if(hr == S_FALSE){
         if(sizeof(WAVEFORMATEX) + fmt->cbSize > sizeof(WAVEFORMATEXTENSIBLE)){
             FIXME("Mix format doesn't fit into WAVEFORMATEXTENSIBLE!\n");
-            hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+            hr = COMPAT_E_DEVICE_INVALIDATED;
             goto exit;
         }
         memcpy(&This->fmt, fmt, sizeof(WAVEFORMATEX) + fmt->cbSize);
@@ -1598,7 +1606,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     hr = IAudioClient_GetDevicePeriod(This->aclient, &period, NULL);
     if(FAILED(hr)){
         WARN("GetDevicePeriod failed: %08x\n", hr);
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1610,7 +1618,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
             0, &This->fmt.Format, NULL);
     if(FAILED(hr)){
         WARN("Initialize failed: %08x\n", hr);
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1619,7 +1627,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     hr = IAudioClient_SetEventHandle(This->aclient, This->mmevt);
     if(FAILED(hr)){
         WARN("Initialize failed: %08x\n", hr);
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1627,7 +1635,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
             (void**)&This->render);
     if(FAILED(hr)){
         WARN("GetService(IAudioRenderClient) failed: %08x\n", hr);
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1665,27 +1673,27 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
 
     if(!attrs[5]){
         WARN("OpenAL can't output samples in this format\n");
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
     This->al_device = palcLoopbackOpenDeviceSOFT(NULL);
     if(!This->al_device){
         WARN("alcLoopbackOpenDeviceSOFT failed\n");
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
     This->al_ctx = alcCreateContext(This->al_device, attrs);
     if(!This->al_ctx){
         WARN("alcCreateContext failed\n");
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
     if(alcMakeContextCurrent(This->al_ctx) == ALC_FALSE){
         WARN("alcMakeContextCurrent failed\n");
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
@@ -1693,16 +1701,17 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     if (FAILED(hr))
     {
         WARN("Start(IAudioClient) failed: %08x\n", hr);
-        hr = COMPAT_E_DEVICE_INVALIDATED(This->version);
+        hr = COMPAT_E_DEVICE_INVALIDATED;
         goto exit;
     }
 
-    if(This->version <= 20)
-        *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio20MasteringVoice_iface;
-    else if(This->version <= 23)
-        *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio23MasteringVoice_iface;
-    else
-        *ppMasteringVoice = &This->IXAudio2MasteringVoice_iface;
+#if XAUDIO2_VER == 0
+    *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio20MasteringVoice_iface;
+#elif XAUDIO2_VER <= 3
+    *ppMasteringVoice = (IXAudio2MasteringVoice*)&This->IXAudio23MasteringVoice_iface;
+#else
+    *ppMasteringVoice = &This->IXAudio2MasteringVoice_iface;
+#endif
 
 exit:
     if(FAILED(hr)){
@@ -1804,7 +1813,6 @@ static const IXAudio2Vtbl XAudio2_Vtbl =
 struct xaudio2_cf {
     IClassFactory IClassFactory_iface;
     LONG ref;
-    DWORD version;
 };
 
 static struct xaudio2_cf *impl_from_IClassFactory(IClassFactory *iface)
@@ -1944,11 +1952,6 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     object->IXAudio23MasteringVoice_iface.lpVtbl = &XAudio23MasteringVoice_Vtbl;
     object->IXAudio2MasteringVoice_iface.lpVtbl = &XAudio2MasteringVoice_Vtbl;
 
-    if(IsEqualGUID(riid, &IID_IXAudio27))
-        object->version = This->version;
-    else /* only xaudio 2.8 has a different IID */
-        object->version = 28;
-
     list_init(&object->source_voices);
     list_init(&object->submix_voices);
 
@@ -1973,7 +1976,7 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
 
     IXAudio2_StartEngine(&object->IXAudio2_iface);
 
-    TRACE("Created XAudio version %u: %p\n", object->version, object);
+    TRACE("Created XAudio version %u: %p\n", 20 + XAUDIO2_VER, object);
 
     return hr;
 }
@@ -1993,11 +1996,10 @@ static const IClassFactoryVtbl XAudio2CF_Vtbl =
     XAudio2CF_LockServer
 };
 
-static IClassFactory *make_xaudio2_factory(DWORD version)
+static IClassFactory *make_xaudio2_factory(void)
 {
     struct xaudio2_cf *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xaudio2_cf));
     ret->IClassFactory_iface.lpVtbl = &XAudio2CF_Vtbl;
-    ret->version = version;
     ret->ref = 0;
     return &ret->IClassFactory_iface;
 }
@@ -2008,22 +2010,15 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
 
     TRACE("(%s, %s, %p)\n", debugstr_guid(rclsid), debugstr_guid(riid), ppv);
 
-    if(IsEqualGUID(rclsid, &CLSID_XAudio20)){
-        factory = make_xaudio2_factory(20);
-    }else if(IsEqualGUID(rclsid, &CLSID_XAudio21)){
-        factory = make_xaudio2_factory(21);
-    }else if(IsEqualGUID(rclsid, &CLSID_XAudio22)){
-        factory = make_xaudio2_factory(22);
-    }else if(IsEqualGUID(rclsid, &CLSID_XAudio23)){
-        factory = make_xaudio2_factory(23);
-    }else if(IsEqualGUID(rclsid, &CLSID_XAudio24)){
-        factory = make_xaudio2_factory(24);
-    }else if(IsEqualGUID(rclsid, &CLSID_XAudio25)){
-        factory = make_xaudio2_factory(25);
-    }else if(IsEqualGUID(rclsid, &CLSID_XAudio26)){
-        factory = make_xaudio2_factory(26);
-    }else if(IsEqualGUID(rclsid, &CLSID_XAudio27)){
-        factory = make_xaudio2_factory(27);
+    if(IsEqualGUID(rclsid, &CLSID_XAudio20) ||
+            IsEqualGUID(rclsid, &CLSID_XAudio21) ||
+            IsEqualGUID(rclsid, &CLSID_XAudio22) ||
+            IsEqualGUID(rclsid, &CLSID_XAudio23) ||
+            IsEqualGUID(rclsid, &CLSID_XAudio24) ||
+            IsEqualGUID(rclsid, &CLSID_XAudio25) ||
+            IsEqualGUID(rclsid, &CLSID_XAudio26) ||
+            IsEqualGUID(rclsid, &CLSID_XAudio27)){
+        factory = make_xaudio2_factory();
 
     }else if(IsEqualGUID(rclsid, &CLSID_AudioVolumeMeter20)){
         factory = make_xapo_factory(&CLSID_AudioVolumeMeter27, 20);
@@ -2080,7 +2075,7 @@ HRESULT WINAPI XAudio2Create(IXAudio2 **ppxa2, UINT32 flags, XAUDIO2_PROCESSOR p
     IXAudio27 *xa27;
     IClassFactory *cf;
 
-    cf = make_xaudio2_factory(28);
+    cf = make_xaudio2_factory();
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IXAudio2, (void**)&xa2);
     IClassFactory_Release(cf);
@@ -2291,11 +2286,12 @@ static void do_engine_tick(IXAudio2Impl *This)
         }
 
         if(src->cb){
-            if(This->version == 20)
-                IXAudio20VoiceCallback_OnVoiceProcessingPassStart((IXAudio20VoiceCallback*)src->cb);
-            else
-                /* TODO: detect incoming underrun and inform callback */
-                IXAudio2VoiceCallback_OnVoiceProcessingPassStart(src->cb, 0);
+#if XAUDIO2_VER == 0
+            IXAudio20VoiceCallback_OnVoiceProcessingPassStart((IXAudio20VoiceCallback*)src->cb);
+#else
+            /* TODO: detect incoming underrun and inform callback */
+            IXAudio2VoiceCallback_OnVoiceProcessingPassStart(src->cb, 0);
+#endif
         }
 
         update_source_state(src);

@@ -109,8 +109,6 @@ struct _IXAudio2Impl {
     HANDLE engine, mmevt;
     BOOL stop_engine;
 
-    DWORD version;
-
     struct list source_voices;
     struct list submix_voices;
 
