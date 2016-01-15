@@ -90,6 +90,17 @@ DirectInput
 P:	Andrew Eikum <aeikum@codeweavers.com>
 F:	dlls/dinput/
 
+DirectShow
+P:	Andrew Eikum <aeikum@codeweavers.com>
+F:	dlls/amstream/
+F:	dlls/mciqtz32/
+F:	dlls/qcap/
+F:	dlls/qedit/
+F:	dlls/quartz/
+F:	dlls/strmbase/
+F:	dlls/winegstreamer/
+F:	dlls/wineqtdecoder/
+
 DirectWrite
 M:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/dwrite/
