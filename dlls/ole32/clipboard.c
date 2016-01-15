@@ -2201,6 +2201,7 @@ HRESULT WINAPI OleGetClipboard(IDataObject **obj)
     TRACE("(%p)\n", obj);
 
     if(!obj) return E_INVALIDARG;
+    *obj = NULL;
 
     if(FAILED(hr = get_ole_clipbrd(&clipbrd))) return hr;
 
