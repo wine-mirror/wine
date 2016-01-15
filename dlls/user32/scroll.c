@@ -1096,7 +1096,6 @@ static void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt)
 void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
 {
     MSG msg;
-    INT xoffset = 0, yoffset = 0;
 
     if (scrollbar != SB_CTL)
     {
@@ -1117,8 +1116,8 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
             msg.message == WM_MOUSEMOVE ||
             (msg.message == WM_SYSTIMER && msg.wParam == SCROLL_TIMER))
         {
-            pt.x = (short)LOWORD(msg.lParam) + xoffset;
-            pt.y = (short)HIWORD(msg.lParam) + yoffset;
+            pt.x = (short)LOWORD(msg.lParam);
+            pt.y = (short)HIWORD(msg.lParam);
             SCROLL_HandleScrollEvent( hwnd, scrollbar, msg.message, pt );
         }
         else
