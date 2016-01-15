@@ -4710,9 +4710,7 @@ struct create_directory_request
 {
     struct request_header __header;
     unsigned int   access;
-    unsigned int   attributes;
-    obj_handle_t   rootdir;
-    /* VARARG(directory_name,unicode_str); */
+    /* VARARG(objattr,object_attributes); */
 };
 struct create_directory_reply
 {

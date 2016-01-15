@@ -3892,9 +3892,7 @@ static void dump_set_mailslot_info_reply( const struct set_mailslot_info_reply *
 static void dump_create_directory_request( const struct create_directory_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
-    fprintf( stderr, ", rootdir=%04x", req->rootdir );
-    dump_varargs_unicode_str( ", directory_name=", cur_size );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 
 static void dump_create_directory_reply( const struct create_directory_reply *req )

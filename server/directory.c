@@ -189,7 +189,8 @@ static void directory_destroy( struct object *obj )
 }
 
 static struct directory *create_directory( struct directory *root, const struct unicode_str *name,
-                                           unsigned int attr, unsigned int hash_size )
+                                           unsigned int attr, unsigned int hash_size,
+                                           const struct security_descriptor *sd )
 {
     struct directory *dir;
 
@@ -201,6 +202,8 @@ static struct directory *create_directory( struct directory *root, const struct 
             release_object( dir );
             dir = NULL;
         }
+        if (sd) default_set_sd( &dir->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
     }
     return dir;
 }
@@ -440,19 +443,19 @@ void init_directories(void)
     struct keyed_event *keyed_event;
     unsigned int i;
 
-    root_directory = create_directory( NULL, NULL, 0, HASH_SIZE );
-    dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE );
-    dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE );
-    dir_objtype    = create_directory( root_directory, &dir_objtype_str, 0, HASH_SIZE );
-    dir_sessions   = create_directory( root_directory, &dir_sessions_str, 0, HASH_SIZE );
-    dir_kernel     = create_directory( root_directory, &dir_kernel_str, 0, HASH_SIZE );
+    root_directory = create_directory( NULL, NULL, 0, HASH_SIZE, NULL );
+    dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE, NULL );
+    dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE, NULL );
+    dir_objtype    = create_directory( root_directory, &dir_objtype_str, 0, HASH_SIZE, NULL );
+    dir_sessions   = create_directory( root_directory, &dir_sessions_str, 0, HASH_SIZE, NULL );
+    dir_kernel     = create_directory( root_directory, &dir_kernel_str, 0, HASH_SIZE, NULL );
     make_object_static( &root_directory->obj );
     make_object_static( &dir_driver->obj );
     make_object_static( &dir_objtype->obj );
 
-    dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE );
+    dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE, NULL );
     /* use a larger hash table for this one since it can contain a lot of objects */
-    dir_basenamed  = create_directory( NULL, &dir_basenamed_str, 0, 37 );
+    dir_basenamed  = create_directory( NULL, &dir_basenamed_str, 0, 37, NULL );
 
     /* devices */
     create_named_pipe_device( dir_device, &named_pipe_str );
@@ -501,15 +504,15 @@ DECL_HANDLER(create_directory)
 {
     struct unicode_str name;
     struct directory *dir, *root = NULL;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
 
-    reply->handle = 0;
-    get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
+    if (!objattr) return;
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
-    if ((dir = create_directory( root, &name, req->attributes, HASH_SIZE )))
+    if ((dir = create_directory( root, &name, objattr->attributes, HASH_SIZE, sd )))
     {
-        reply->handle = alloc_handle( current->process, dir, req->access, req->attributes );
+        reply->handle = alloc_handle( current->process, dir, req->access, objattr->attributes );
         release_object( dir );
     }
 

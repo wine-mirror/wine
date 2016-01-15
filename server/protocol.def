@@ -3300,9 +3300,7 @@ struct handle_info
 /* Create a directory object */
 @REQ(create_directory)
     unsigned int   access;        /* access flags */
-    unsigned int   attributes;    /* object attributes */
-    obj_handle_t   rootdir;       /* root directory */
-    VARARG(directory_name,unicode_str); /* Directory name */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t   handle;        /* handle to the directory */
 @END

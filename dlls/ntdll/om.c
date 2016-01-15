@@ -478,25 +478,27 @@ NTSTATUS WINAPI NtOpenDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK Desir
  *  Failure: An NTSTATUS error code.
  */
 NTSTATUS WINAPI NtCreateDirectoryObject(PHANDLE DirectoryHandle, ACCESS_MASK DesiredAccess,
-                                        POBJECT_ATTRIBUTES ObjectAttributes)
+                                        OBJECT_ATTRIBUTES *attr )
 {
     NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     if (!DirectoryHandle) return STATUS_ACCESS_VIOLATION;
-    TRACE("(%p,0x%08x,%s)\n", DirectoryHandle, DesiredAccess, debugstr_ObjectAttributes(ObjectAttributes));
+    TRACE("(%p,0x%08x,%s)\n", DirectoryHandle, DesiredAccess, debugstr_ObjectAttributes(attr));
+
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
 
     SERVER_START_REQ(create_directory)
     {
         req->access = DesiredAccess;
-        req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( ObjectAttributes ? ObjectAttributes->RootDirectory : 0 );
-        if (ObjectAttributes && ObjectAttributes->ObjectName)
-            wine_server_add_data(req, ObjectAttributes->ObjectName->Buffer,
-                                 ObjectAttributes->ObjectName->Length);
+        wine_server_add_data( req, objattr, len );
         ret = wine_server_call( req );
         *DirectoryHandle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     return ret;
 }
 
