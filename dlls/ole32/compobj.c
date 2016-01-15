@@ -1972,6 +1972,8 @@ void WINAPI DECLSPEC_HOTPATCH CoUninitialize(void)
 
   if (!--info->inits)
   {
+    if (info->ole_inits)
+      WARN("uninitializing apartment while Ole is still initialized\n");
     apartment_release(info->apt);
     info->apt = NULL;
   }

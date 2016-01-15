@@ -2181,6 +2181,73 @@ static void test_CoInitializeEx(void)
     OleUninitialize();
 }
 
+static void test_OleInitialize_InitCounting(void)
+{
+    HRESULT hr;
+    IUnknown *pUnk;
+    REFCLSID rclsid = &CLSID_InternetZoneManager;
+
+    /* 1. OleInitialize fails but OleUnintialize is still called: apartment stays inited */
+    hr = pCoInitializeEx(NULL, COINIT_MULTITHREADED);
+    ok(hr == S_OK, "CoInitializeEx(COINIT_MULTITHREADED) failed with error 0x%08x\n", hr);
+
+    hr = OleInitialize(NULL);
+    ok(hr == RPC_E_CHANGED_MODE, "OleInitialize should have returned 0x%08x instead of 0x%08x\n", RPC_E_CHANGED_MODE, hr);
+    OleUninitialize();
+
+    pUnk = (IUnknown *)0xdeadbeef;
+    hr = CoCreateInstance(rclsid, NULL, 0x17, &IID_IUnknown, (void **)&pUnk);
+    ok(hr == S_OK, "CoCreateInstance should have returned 0x%08x instead of 0x%08x\n", S_OK, hr);
+    if (pUnk) IUnknown_Release(pUnk);
+
+    CoUninitialize();
+
+    /* 2. Extra multiple OleUninitialize: apartment stays inited until CoUnitialize */
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "CoInitialize() failed with error 0x%08x\n", hr);
+
+    hr = OleInitialize(NULL);
+    ok(hr == S_OK, "OleInitialize should have returned 0x%08x instead of 0x%08x\n", S_OK, hr);
+    OleUninitialize();
+    OleUninitialize();
+    OleUninitialize();
+
+    pUnk = (IUnknown *)0xdeadbeef;
+    hr = CoCreateInstance(rclsid, NULL, 0x17, &IID_IUnknown, (void **)&pUnk);
+    ok(hr == S_OK, "CoCreateInstance should have returned 0x%08x instead of 0x%08x\n", S_OK, hr);
+    if (pUnk) IUnknown_Release(pUnk);
+
+    CoUninitialize();
+
+    pUnk = (IUnknown *)0xdeadbeef;
+    hr = CoCreateInstance(rclsid, NULL, 0x17, &IID_IUnknown, (void **)&pUnk);
+    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned 0x%08x instead of 0x%08x\n", CO_E_NOTINITIALIZED, hr);
+    if (pUnk) IUnknown_Release(pUnk);
+
+    /* 3. CoUninitialize does not formally deinit Ole */
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "CoInitialize() failed with error 0x%08x\n", hr);
+
+    hr = OleInitialize(NULL);
+    ok(hr == S_OK, "OleInitialize should have returned 0x%08x instead of 0x%08x\n", S_OK, hr);
+
+    CoUninitialize();
+    CoUninitialize();
+
+    pUnk = (IUnknown *)0xdeadbeef;
+    hr = CoCreateInstance(rclsid, NULL, 0x17, &IID_IUnknown, (void **)&pUnk);
+    ok(hr == CO_E_NOTINITIALIZED, "CoCreateInstance should have returned 0x%08x instead of 0x%08x\n", CO_E_NOTINITIALIZED, hr);
+      /* COM is not initialized anymore */
+    if (pUnk) IUnknown_Release(pUnk);
+
+    hr = OleInitialize(NULL);
+    ok(hr == S_FALSE, "OleInitialize should have returned 0x%08x instead of 0x%08x\n", S_FALSE, hr);
+      /* ... but native OleInit returns S_FALSE as if Ole is considered initialized */
+
+    OleUninitialize();
+
+}
+
 static void test_OleRegGetMiscStatus(void)
 {
     ULONG_PTR cookie;
@@ -2871,6 +2938,7 @@ START_TEST(compobj)
     test_CoGetContextToken();
     test_TreatAsClass();
     test_CoInitializeEx();
+    test_OleInitialize_InitCounting();
     test_OleRegGetMiscStatus();
     test_CoCreateGuid();
     test_CoWaitForMultipleHandles();

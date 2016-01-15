@@ -186,6 +186,8 @@ HRESULT WINAPI DECLSPEC_HOTPATCH OleInitialize(LPVOID reserved)
 
   if (!COM_CurrentInfo()->ole_inits)
     hr = S_OK;
+  else
+    hr = S_FALSE;
 
   /*
    * Then, it has to initialize the OLE specific modules.
@@ -229,6 +231,11 @@ void WINAPI DECLSPEC_HOTPATCH OleUninitialize(void)
 {
   TRACE("()\n");
 
+  if (COM_CurrentInfo()->ole_inits == 0)
+  {
+    WARN("ole_inits is already 0\n");
+    return ;
+  }
   /*
    * If we hit the bottom of the lock stack, free the libraries.
    */
