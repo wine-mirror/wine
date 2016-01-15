@@ -923,8 +923,10 @@ DECL_HANDLER(create_named_pipe)
     struct pipe_server *server;
     struct unicode_str name;
     struct directory *root = NULL;
-    const struct object_attributes *objattr = get_req_data();
     const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+
+    if (!objattr) return;
 
     if (!req->sharing || (req->sharing & ~(FILE_SHARE_READ | FILE_SHARE_WRITE)) ||
         (!(req->flags & NAMED_PIPE_MESSAGE_STREAM_WRITE) && (req->flags & NAMED_PIPE_MESSAGE_STREAM_READ)))
@@ -932,14 +934,6 @@ DECL_HANDLER(create_named_pipe)
         set_error( STATUS_INVALID_PARAMETER );
         return;
     }
-
-    reply->handle = 0;
-
-    if (!objattr_is_valid( objattr, get_req_data_size() ))
-        return;
-
-    sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
-    objattr_get_name( objattr, &name );
 
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
         return;

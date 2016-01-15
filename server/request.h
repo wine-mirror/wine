@@ -46,6 +46,8 @@ extern void fatal_error( const char *err, ... );
 
 extern const char *get_config_dir(void);
 extern void *set_reply_data_size( data_size_t size );
+extern const struct object_attributes *get_req_object_attributes( const struct security_descriptor **sd,
+                                                                  struct unicode_str *name );
 extern int receive_fd( struct process *process );
 extern int send_client_fd( struct process *process, int fd, obj_handle_t handle );
 extern void read_request( struct thread *thread );

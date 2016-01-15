@@ -65,6 +65,8 @@
 
 #include "file.h"
 #include "process.h"
+#include "thread.h"
+#include "security.h"
 #define WANT_REQUEST_HANDLERS
 #include "request.h"
 
@@ -161,6 +163,31 @@ void *set_reply_data_size( data_size_t size )
     if (size && !(current->reply_data = mem_alloc( size ))) size = 0;
     current->reply_size = size;
     return current->reply_data;
+}
+
+/* return object attributes from the current request */
+const struct object_attributes *get_req_object_attributes( const struct security_descriptor **sd,
+                                                           struct unicode_str *name )
+{
+    const struct object_attributes *attr = get_req_data();
+    data_size_t size = get_req_data_size();
+
+    if ((size < sizeof(*attr)) || (size - sizeof(*attr) < attr->sd_len) ||
+        (size - sizeof(*attr) - attr->sd_len < attr->name_len))
+    {
+        set_error( STATUS_ACCESS_VIOLATION );
+        return NULL;
+    }
+    if (attr->sd_len && !sd_is_valid( (const struct security_descriptor *)(attr + 1), attr->sd_len ))
+    {
+        set_error( STATUS_INVALID_SECURITY_DESCR );
+        return NULL;
+    }
+
+    *sd = attr->sd_len ? (const struct security_descriptor *)(attr + 1) : NULL;
+    name->len = (attr->name_len / sizeof(WCHAR)) * sizeof(WCHAR);
+    name->str = (const WCHAR *)(attr + 1) + attr->sd_len / sizeof(WCHAR);
+    return attr;
 }
 
 /* write the remaining part of the reply */

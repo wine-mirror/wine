@@ -179,16 +179,10 @@ DECL_HANDLER(create_semaphore)
     struct semaphore *sem;
     struct unicode_str name;
     struct directory *root = NULL;
-    const struct object_attributes *objattr = get_req_data();
     const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
 
-    reply->handle = 0;
-
-    if (!objattr_is_valid( objattr, get_req_data_size() ))
-        return;
-
-    sd = objattr->sd_len ? (const struct security_descriptor *)(objattr + 1) : NULL;
-    objattr_get_name( objattr, &name );
+    if (!objattr) return;
 
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
         return;
