@@ -81,7 +81,7 @@ static void test_ID3DXBuffer(void)
     ok(!size, "GetBufferSize failed, got %u, expected %u\n", size, 0);
 
     count = ID3DXBuffer_Release(buffer);
-    ok(!count, "ID3DBuffer has %u references left\n", count);
+    ok(!count, "ID3DXBuffer has %u references left\n", count);
 
     hr = D3DXCreateBuffer(3, &buffer);
     ok(hr == D3D_OK, "D3DXCreateBuffer failed, got %#x, expected %#x\n", hr, D3D_OK);
@@ -90,7 +90,7 @@ static void test_ID3DXBuffer(void)
     ok(size == 3, "GetBufferSize failed, got %u, expected %u\n", size, 3);
 
     count = ID3DXBuffer_Release(buffer);
-    ok(!count, "ID3DBuffer has %u references left\n", count);
+    ok(!count, "ID3DXBuffer has %u references left\n", count);
 }
 
 static void test_ID3DXSprite(IDirect3DDevice9 *device)
