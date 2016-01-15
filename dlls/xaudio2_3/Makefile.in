@@ -1,6 +1,6 @@
 EXTRADEFS = -DXAUDIO2_VER=3
 MODULE    = xaudio2_3.dll
-IMPORTS   = advapi32 kernel32 ole32 user32 uuid
+IMPORTS   = advapi32 ole32 user32 uuid
 EXTRALIBS = $(OPENAL_LIBS)
 PARENTSRC = ../xaudio2_7
 
