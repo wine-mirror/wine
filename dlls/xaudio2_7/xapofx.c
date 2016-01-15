@@ -53,8 +53,6 @@ typedef struct _VUMeterImpl {
     IXAPOParameters IXAPOParameters_iface;
 
     LONG ref;
-
-    DWORD version;
 } VUMeterImpl;
 
 static VUMeterImpl *VUMeterImpl_from_IXAPO(IXAPO *iface)
@@ -258,8 +256,6 @@ typedef struct _ReverbImpl {
     IXAPOParameters IXAPOParameters_iface;
 
     LONG ref;
-
-    DWORD version;
 } ReverbImpl;
 
 static ReverbImpl *ReverbImpl_from_IXAPO(IXAPO *iface)
@@ -461,8 +457,6 @@ typedef struct _EQImpl {
     IXAPOParameters IXAPOParameters_iface;
 
     LONG ref;
-
-    DWORD version;
 } EQImpl;
 
 static EQImpl *EQImpl_from_IXAPO(IXAPO *iface)
@@ -662,7 +656,6 @@ static const IXAPOParametersVtbl EQXAPOParameters_Vtbl = {
 struct xapo_cf {
     IClassFactory IClassFactory_iface;
     LONG ref;
-    DWORD version;
     const CLSID *class;
 };
 
@@ -726,14 +719,13 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
 
         object->IXAPO_iface.lpVtbl = &VUMXAPO_Vtbl;
         object->IXAPOParameters_iface.lpVtbl = &VUMXAPOParameters_Vtbl;
-        object->version = This->version;
 
         hr = IXAPO_QueryInterface(&object->IXAPO_iface, riid, ppobj);
         if(FAILED(hr)){
             HeapFree(GetProcessHeap(), 0, object);
             return hr;
         }
-    }else if(IsEqualGUID(This->class, &CLSID_AudioReverb27)){
+    }else if(IsEqualGUID(This->class, &CLSID_FXReverb)){
         ReverbImpl *object;
 
         object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
@@ -742,7 +734,6 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
 
         object->IXAPO_iface.lpVtbl = &RVBXAPO_Vtbl;
         object->IXAPOParameters_iface.lpVtbl = &RVBXAPOParameters_Vtbl;
-        object->version = This->version;
 
         hr = IXAPO_QueryInterface(&object->IXAPO_iface, riid, ppobj);
         if(FAILED(hr)){
@@ -758,7 +749,6 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
 
         object->IXAPO_iface.lpVtbl = &EQXAPO_Vtbl;
         object->IXAPOParameters_iface.lpVtbl = &EQXAPOParameters_Vtbl;
-        object->version = This->version;
 
         hr = IXAPO_QueryInterface(&object->IXAPO_iface, riid, ppobj);
         if(FAILED(hr)){
@@ -766,6 +756,7 @@ static HRESULT WINAPI xapocf_CreateInstance(IClassFactory *iface, IUnknown *pOut
             return hr;
         }
     }else
+        /* TODO FXECHO, FXMasteringLimiter, */
         return E_INVALIDARG;
 
     return S_OK;
@@ -786,11 +777,10 @@ static const IClassFactoryVtbl xapo_Vtbl =
     xapocf_LockServer
 };
 
-IClassFactory *make_xapo_factory(REFCLSID clsid, DWORD version)
+IClassFactory *make_xapo_factory(REFCLSID clsid)
 {
     struct xapo_cf *ret = HeapAlloc(GetProcessHeap(), 0, sizeof(struct xapo_cf));
     ret->IClassFactory_iface.lpVtbl = &xapo_Vtbl;
-    ret->version = version;
     ret->class = clsid;
     ret->ref = 0;
     return &ret->IClassFactory_iface;
@@ -802,7 +792,7 @@ HRESULT WINAPI CreateAudioVolumeMeter(IUnknown **out)
     IClassFactory *cf;
     HRESULT hr;
 
-    cf = make_xapo_factory(&CLSID_AudioVolumeMeter27, 28);
+    cf = make_xapo_factory(&CLSID_AudioVolumeMeter27);
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
 
@@ -816,7 +806,7 @@ HRESULT WINAPI CreateAudioReverb(IUnknown **out)
     IClassFactory *cf;
     HRESULT hr;
 
-    cf = make_xapo_factory(&CLSID_AudioReverb27, 28);
+    cf = make_xapo_factory(&CLSID_FXReverb);
 
     hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)out);
 
@@ -836,13 +826,13 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out, void *initdata, UINT32 in
 
     if(IsEqualGUID(clsid, &CLSID_FXReverb27) ||
             IsEqualGUID(clsid, &CLSID_FXReverb))
-        class = &CLSID_AudioReverb27;
+        class = &CLSID_FXReverb;
     else if(IsEqualGUID(clsid, &CLSID_FXEQ27) ||
             IsEqualGUID(clsid, &CLSID_FXEQ))
         class = &CLSID_FXEQ;
 
     if(class){
-        cf = make_xapo_factory(class, 20 + XAUDIO2_VER);
+        cf = make_xapo_factory(class);
 
         hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
         IClassFactory_Release(cf);
@@ -893,13 +883,14 @@ HRESULT CDECL CreateFX(REFCLSID clsid, IUnknown **out)
 
     if(IsEqualGUID(clsid, &CLSID_FXReverb27) ||
             IsEqualGUID(clsid, &CLSID_FXReverb))
-        class = &CLSID_AudioReverb27;
+        class = &CLSID_FXReverb;
     else if(IsEqualGUID(clsid, &CLSID_FXEQ27) ||
             IsEqualGUID(clsid, &CLSID_FXEQ))
         class = &CLSID_FXEQ;
+    /* TODO FXECHO, FXMasteringLimiter, */
 
     if(class){
-        cf = make_xapo_factory(class, 20 + XAUDIO2_VER);
+        cf = make_xapo_factory(class);
 
         hr = IClassFactory_CreateInstance(cf, NULL, &IID_IUnknown, (void**)&obj);
         IClassFactory_Release(cf);
