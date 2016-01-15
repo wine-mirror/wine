@@ -169,8 +169,16 @@ void *set_reply_data_size( data_size_t size )
 const struct object_attributes *get_req_object_attributes( const struct security_descriptor **sd,
                                                            struct unicode_str *name )
 {
+    static const struct object_attributes empty_attributes;
     const struct object_attributes *attr = get_req_data();
     data_size_t size = get_req_data_size();
+
+    if (!size)
+    {
+        *sd = NULL;
+        name->len = 0;
+        return &empty_attributes;
+    }
 
     if ((size < sizeof(*attr)) || (size - sizeof(*attr) < attr->sd_len) ||
         (size - sizeof(*attr) - attr->sd_len < attr->name_len))

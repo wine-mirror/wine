@@ -1074,20 +1074,27 @@ static void dump_varargs_object_attributes( const char *prefix, data_size_t size
     const struct object_attributes *objattr = cur_data;
 
     fprintf( stderr,"%s{", prefix );
-    if (size >= sizeof(struct object_attributes))
+    if (size)
     {
         const WCHAR *str;
-        fprintf( stderr, "rootdir=%04x,attributes=%08x", objattr->rootdir, objattr->attributes );
-        if (objattr->sd_len > size - sizeof(*objattr) ||
-            objattr->name_len > size - sizeof(*objattr) - objattr->sd_len)
+
+        if (size < sizeof(*objattr) ||
+            (size - sizeof(*objattr) < objattr->sd_len) ||
+            (size - sizeof(*objattr) - objattr->sd_len < objattr->name_len))
+        {
+            fprintf( stderr, "***invalid***}" );
+            remove_data( size );
             return;
+        }
+
+        fprintf( stderr, "rootdir=%04x,attributes=%08x", objattr->rootdir, objattr->attributes );
         dump_inline_security_descriptor( ",sd=", (const struct security_descriptor *)(objattr + 1), objattr->sd_len );
         str = (const WCHAR *)objattr + (sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR);
         fprintf( stderr, ",name=L\"" );
         dump_strW( str, objattr->name_len / sizeof(WCHAR), stderr, "\"\"" );
         fputc( '\"', stderr );
         remove_data( ((sizeof(*objattr) + objattr->sd_len) / sizeof(WCHAR)) * sizeof(WCHAR) +
-                     objattr->name_len );
+                     (objattr->name_len / sizeof(WCHAR)) * sizeof(WCHAR) );
     }
     fputc( '}', stderr );
 }
@@ -3928,10 +3935,7 @@ static void dump_get_directory_entry_reply( const struct get_directory_entry_rep
 static void dump_create_symlink_request( const struct create_symlink_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
-    fprintf( stderr, ", rootdir=%04x", req->rootdir );
-    fprintf( stderr, ", name_len=%u", req->name_len );
-    dump_varargs_unicode_str( ", name=", min(cur_size,req->name_len) );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
     dump_varargs_unicode_str( ", target_name=", cur_size );
 }
 

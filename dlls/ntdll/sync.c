@@ -86,13 +86,7 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
     *ret = NULL;
     *ret_len = 0;
 
-    if (!attr)
-    {
-        *ret = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
-        if (!*ret) return STATUS_NO_MEMORY;
-        *ret_len = len;
-        return STATUS_SUCCESS;
-    }
+    if (!attr) return STATUS_SUCCESS;
 
     if ((sd = attr->SecurityDescriptor))
     {
