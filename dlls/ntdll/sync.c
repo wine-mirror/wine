@@ -1153,29 +1153,30 @@ NTSTATUS WINAPI NtReleaseKeyedEvent( HANDLE handle, const void *key,
  *
  */
 NTSTATUS WINAPI NtCreateIoCompletion( PHANDLE CompletionPort, ACCESS_MASK DesiredAccess,
-                                      POBJECT_ATTRIBUTES ObjectAttributes, ULONG NumberOfConcurrentThreads )
+                                      POBJECT_ATTRIBUTES attr, ULONG NumberOfConcurrentThreads )
 {
     NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
 
-    TRACE("(%p, %x, %p, %d)\n", CompletionPort, DesiredAccess,
-          ObjectAttributes, NumberOfConcurrentThreads);
+    TRACE("(%p, %x, %p, %d)\n", CompletionPort, DesiredAccess, attr, NumberOfConcurrentThreads);
 
     if (!CompletionPort)
         return STATUS_INVALID_PARAMETER;
 
+    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+
     SERVER_START_REQ( create_completion )
     {
         req->access     = DesiredAccess;
-        req->attributes = ObjectAttributes ? ObjectAttributes->Attributes : 0;
-        req->rootdir    = wine_server_obj_handle( ObjectAttributes ? ObjectAttributes->RootDirectory : 0 );
         req->concurrent = NumberOfConcurrentThreads;
-        if (ObjectAttributes && ObjectAttributes->ObjectName)
-            wine_server_add_data( req, ObjectAttributes->ObjectName->Buffer,
-                                       ObjectAttributes->ObjectName->Length );
+        wine_server_add_data( req, objattr, len );
         if (!(status = wine_server_call( req )))
             *CompletionPort = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     return status;
 }
 

@@ -4980,11 +4980,9 @@ struct create_completion_request
 {
     struct request_header __header;
     unsigned int access;
-    unsigned int attributes;
     unsigned int concurrent;
-    obj_handle_t rootdir;
-    /* VARARG(filename,unicode_str); */
-    char __pad_28[4];
+    /* VARARG(objattr,object_attributes); */
+    char __pad_20[4];
 };
 struct create_completion_reply
 {
@@ -6161,6 +6159,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 496
+#define SERVER_PROTOCOL_VERSION 497
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

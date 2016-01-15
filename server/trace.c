@@ -4087,10 +4087,8 @@ static void dump_get_token_statistics_reply( const struct get_token_statistics_r
 static void dump_create_completion_request( const struct create_completion_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
     fprintf( stderr, ", concurrent=%08x", req->concurrent );
-    fprintf( stderr, ", rootdir=%04x", req->rootdir );
-    dump_varargs_unicode_str( ", filename=", cur_size );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 
 static void dump_create_completion_reply( const struct create_completion_reply *req )

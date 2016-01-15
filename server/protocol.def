@@ -3466,10 +3466,8 @@ struct handle_info
 /* Create I/O completion port */
 @REQ(create_completion)
     unsigned int access;          /* desired access to a port */
-    unsigned int attributes;      /* object attributes */
     unsigned int concurrent;      /* max number of concurrent active threads */
-    obj_handle_t rootdir;         /* root directory */
-    VARARG(filename,unicode_str); /* port name */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;          /* port handle */
 @END

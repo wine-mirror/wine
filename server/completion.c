@@ -130,7 +130,9 @@ static unsigned int completion_map_access( struct object *obj, unsigned int acce
     return access & ~(GENERIC_READ | GENERIC_WRITE | GENERIC_EXECUTE | GENERIC_ALL);
 }
 
-static struct completion *create_completion( struct directory *root, const struct unicode_str *name, unsigned int attr, unsigned int concurrent )
+static struct completion *create_completion( struct directory *root, const struct unicode_str *name,
+                                             unsigned int attr, unsigned int concurrent,
+                                             const struct security_descriptor *sd )
 {
     struct completion *completion;
 
@@ -140,6 +142,9 @@ static struct completion *create_completion( struct directory *root, const struc
         {
             list_init( &completion->queue );
             completion->depth = 0;
+            if (sd) default_set_sd( &completion->obj, sd,
+                                    OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                    DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
         }
     }
 
@@ -175,16 +180,15 @@ DECL_HANDLER(create_completion)
     struct completion *completion;
     struct unicode_str name;
     struct directory *root = NULL;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
 
-    reply->handle = 0;
+    if (!objattr) return;
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
-    get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    if ( (completion = create_completion( root, &name, req->attributes, req->concurrent )) != NULL )
+    if ((completion = create_completion( root, &name, objattr->attributes, req->concurrent, sd )))
     {
-        reply->handle = alloc_handle( current->process, completion, req->access, req->attributes );
+        reply->handle = alloc_handle( current->process, completion, req->access, objattr->attributes );
         release_object( completion );
     }
 
