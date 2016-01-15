@@ -2441,10 +2441,8 @@ static void dump_set_registry_notification_request( const struct set_registry_no
 static void dump_create_timer_request( const struct create_timer_request *req )
 {
     fprintf( stderr, " access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
-    fprintf( stderr, ", rootdir=%04x", req->rootdir );
     fprintf( stderr, ", manual=%d", req->manual );
-    dump_varargs_unicode_str( ", name=", cur_size );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
 }
 
 static void dump_create_timer_reply( const struct create_timer_reply *req )

@@ -745,25 +745,26 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
                               IN const OBJECT_ATTRIBUTES *attr OPTIONAL,
                               IN TIMER_TYPE timer_type)
 {
-    DWORD       len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
-    NTSTATUS    status;
-
-    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
+    NTSTATUS status;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     if (timer_type != NotificationTimer && timer_type != SynchronizationTimer)
         return STATUS_INVALID_PARAMETER;
 
+    if ((status = alloc_object_attributes( attr, &objattr, &len ))) return status;
+
     SERVER_START_REQ( create_timer )
     {
         req->access  = access;
-        req->attributes = (attr) ? attr->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
         req->manual  = (timer_type == NotificationTimer);
-        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        wine_server_add_data( req, objattr, len );
         status = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
+
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     return status;
 
 }

@@ -2601,11 +2601,9 @@ struct create_timer_request
 {
     struct request_header __header;
     unsigned int access;
-    unsigned int attributes;
-    obj_handle_t rootdir;
     int          manual;
-    /* VARARG(name,unicode_str); */
-    char __pad_28[4];
+    /* VARARG(objattr,object_attributes); */
+    char __pad_20[4];
 };
 struct create_timer_reply
 {
@@ -6171,6 +6169,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 494
+#define SERVER_PROTOCOL_VERSION 495
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

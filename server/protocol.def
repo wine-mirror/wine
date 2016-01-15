@@ -1950,10 +1950,8 @@ enum char_info_mode
 /* Create a waitable timer */
 @REQ(create_timer)
     unsigned int access;        /* wanted access rights */
-    unsigned int attributes;    /* object attributes */
-    obj_handle_t rootdir;       /* root directory */
     int          manual;        /* manual reset */
-    VARARG(name,unicode_str);   /* object name */
+    VARARG(objattr,object_attributes); /* object attributes */
 @REPLY
     obj_handle_t handle;        /* handle to the timer */
 @END

@@ -1352,10 +1352,8 @@ C_ASSERT( FIELD_OFFSET(struct set_registry_notification_request, subtree) == 20 
 C_ASSERT( FIELD_OFFSET(struct set_registry_notification_request, filter) == 24 );
 C_ASSERT( sizeof(struct set_registry_notification_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct create_timer_request, access) == 12 );
-C_ASSERT( FIELD_OFFSET(struct create_timer_request, attributes) == 16 );
-C_ASSERT( FIELD_OFFSET(struct create_timer_request, rootdir) == 20 );
-C_ASSERT( FIELD_OFFSET(struct create_timer_request, manual) == 24 );
-C_ASSERT( sizeof(struct create_timer_request) == 32 );
+C_ASSERT( FIELD_OFFSET(struct create_timer_request, manual) == 16 );
+C_ASSERT( sizeof(struct create_timer_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct create_timer_reply, handle) == 8 );
 C_ASSERT( sizeof(struct create_timer_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct open_timer_request, access) == 12 );

@@ -80,7 +80,7 @@ static const struct object_ops timer_ops =
 
 /* create a timer object */
 static struct timer *create_timer( struct directory *root, const struct unicode_str *name,
-                                   unsigned int attr, int manual )
+                                   unsigned int attr, int manual, const struct security_descriptor *sd )
 {
     struct timer *timer;
 
@@ -95,6 +95,9 @@ static struct timer *create_timer( struct directory *root, const struct unicode_
             timer->period   = 0;
             timer->timeout  = NULL;
             timer->thread   = NULL;
+            if (sd) default_set_sd( &timer->obj, sd,
+                                    OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                    DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
         }
     }
     return timer;
@@ -232,15 +235,15 @@ DECL_HANDLER(create_timer)
     struct timer *timer;
     struct unicode_str name;
     struct directory *root = NULL;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
 
-    reply->handle = 0;
-    get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
+    if (!objattr) return;
+    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
-    if ((timer = create_timer( root, &name, req->attributes, req->manual )))
+    if ((timer = create_timer( root, &name, objattr->attributes, req->manual, sd )))
     {
-        reply->handle = alloc_handle( current->process, timer, req->access, req->attributes );
+        reply->handle = alloc_handle( current->process, timer, req->access, objattr->attributes );
         release_object( timer );
     }
 
