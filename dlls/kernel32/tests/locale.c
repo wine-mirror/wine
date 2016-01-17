@@ -97,6 +97,7 @@ static INT (WINAPI *pCompareStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT
 static INT (WINAPI *pGetGeoInfoA)(GEOID, GEOTYPE, LPSTR, INT, LANGID);
 static INT (WINAPI *pGetGeoInfoW)(GEOID, GEOTYPE, LPWSTR, INT, LANGID);
 static BOOL (WINAPI *pEnumSystemGeoID)(GEOCLASS, GEOID, GEO_ENUMPROC);
+static BOOL (WINAPI *pGetSystemPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*);
 
 static void InitFunctionPointers(void)
 {
@@ -125,6 +126,7 @@ static void InitFunctionPointers(void)
   X(GetGeoInfoA);
   X(GetGeoInfoW);
   X(EnumSystemGeoID);
+  X(GetSystemPreferredUILanguages);
 #undef X
 }
 
@@ -4559,6 +4561,204 @@ static void test_invariant(void)
   }
 }
 
+static void test_GetSystemPreferredUILanguages(void)
+{
+    BOOL ret;
+    ULONG count, size, size_id, size_name, size_buffer;
+    WCHAR *buffer;
+
+
+    if (!pGetSystemPreferredUILanguages)
+    {
+        win_skip("GetSystemPreferredUILanguages is not available.\n");
+        return;
+    }
+
+    /* (in)valid first parameter */
+    count = 0xdeadbeef;
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(0, &count, NULL, &size);
+    todo_wine
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    todo_wine
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+
+    count = 0xdeadbeef;
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_FULL_LANGUAGE, &count, NULL, &size);
+    ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    count = 0xdeadbeef;
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID | MUI_FULL_LANGUAGE, &count, NULL, &size);
+    ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    count = 0xdeadbeef;
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID | MUI_LANGUAGE_NAME, &count, NULL, &size);
+    ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    count = 0xdeadbeef;
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID | MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
+    todo_wine
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    todo_wine
+    ok(size % 5 == 1, "Expected size (%d) %% 5 == 1\n", size);
+
+    count = 0xdeadbeef;
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME | MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
+    todo_wine
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    todo_wine
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+
+    /* second parameter
+     * ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, NULL, NULL, &size);
+     * -> unhandled exception c0000005
+     */
+
+    /* invalid third parameter */
+    count = 0xdeadbeef;
+    size = 1;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size);
+    ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
+    ok(ERROR_INVALID_PARAMETER == GetLastError(),
+       "Expected error ERROR_INVALID_PARAMETER, got %d\n", GetLastError());
+
+    /* fourth parameter
+     * ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, NULL);
+     * -> unhandled exception c0000005
+     */
+
+    count = 0xdeadbeef;
+    size_id = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size_id);
+    todo_wine
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    todo_wine
+    ok(size_id  % 5 == 1, "Expected size (%d) %% 5 == 1\n", size_id);
+
+    count = 0xdeadbeef;
+    size_name = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME, &count, NULL, &size_name);
+    todo_wine
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    todo_wine
+    ok(size_name % 6 == 1, "Expected size (%d) %% 6 == 1\n", size_name);
+
+    size_buffer = max(size_id, size_name);
+    if(!size_buffer)
+    {
+        skip("No vaild buffer size\n");
+        return;
+    }
+
+    buffer = HeapAlloc(GetProcessHeap(), 0, size_buffer * sizeof(WCHAR));
+    if (!buffer)
+    {
+        skip("Failed to allocate memory with size %d\n", size_buffer * sizeof(WCHAR));
+        return;
+    }
+
+    count = 0xdeadbeef;
+    size = size_buffer;
+    memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(0, &count, buffer, &size);
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+    if (ret && size % 6 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    count = 0xdeadbeef;
+    size = size_buffer;
+    memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, buffer, &size);
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    ok(size % 5 == 1, "Expected size (%d) %% 5 == 1\n", size);
+    if (ret && size % 5 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    count = 0xdeadbeef;
+    size = size_buffer;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME, &count, buffer, &size);
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+    if (ret && size % 5 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    count = 0xdeadbeef;
+    size = 0;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
+    ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
+    ok(count, "Expected count > 0\n");
+    ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
+    if (ret && size % 6 == 1)
+        ok(!buffer[size -2] && !buffer[size -1],
+           "Expected last two WCHARs being empty, got 0x%x 0x%x\n",
+           buffer[size -2], buffer[size -1]);
+
+    count = 0xdeadbeef;
+    size = 1;
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, buffer, &size);
+    ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+       "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    count = 0xdeadbeef;
+    size = size_id -1;
+    memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, buffer, &size);
+    ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+       "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+
+    count = 0xdeadbeef;
+    size = size_id -2;
+    memset(buffer, 0x5a, size_buffer * sizeof(WCHAR));
+    SetLastError(0xdeadbeef);
+    ret = pGetSystemPreferredUILanguages(0, &count, buffer, &size);
+    ok(!ret, "Expected GetSystemPreferredUILanguages to fail\n");
+    ok(ERROR_INSUFFICIENT_BUFFER == GetLastError(),
+       "Expected error ERROR_INSUFFICIENT_BUFFER, got %d\n", GetLastError());
+}
+
 START_TEST(locale)
 {
   InitFunctionPointers();
@@ -4600,6 +4800,7 @@ START_TEST(locale)
   test_GetGeoInfo();
   test_EnumSystemGeoID();
   test_invariant();
+  test_GetSystemPreferredUILanguages();
   /* this requires collation table patch to make it MS compatible */
   if (0) test_sorting();
 }
