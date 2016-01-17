@@ -24,7 +24,7 @@
 @ stub GetProcessPreferredUILanguages
 @ stdcall GetSystemDefaultLCID() kernel32.GetSystemDefaultLCID
 @ stdcall GetSystemDefaultLangID() kernel32.GetSystemDefaultLangID
-@ stub GetSystemPreferredUILanguages
+@ stdcall GetSystemPreferredUILanguages(long ptr ptr ptr) kernel32.GetSystemPreferredUILanguages
 @ stdcall GetThreadLocale() kernel32.GetThreadLocale
 @ stdcall GetThreadPreferredUILanguages(long ptr ptr ptr) kernel32.GetThreadPreferredUILanguages
 @ stdcall GetThreadUILanguage() kernel32.GetThreadUILanguage
