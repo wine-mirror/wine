@@ -139,6 +139,44 @@ static IDWriteFontFace *create_fontface(IDWriteFactory *factory)
     return fontface;
 }
 
+static IDWriteFont *get_font(IDWriteFactory *factory, const WCHAR *name, DWRITE_FONT_STYLE style)
+{
+    IDWriteFontCollection *collection;
+    IDWriteFontFamily *family;
+    IDWriteFont *font = NULL;
+    UINT32 index;
+    BOOL exists;
+    HRESULT hr;
+
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    index = ~0;
+    exists = FALSE;
+    hr = IDWriteFontCollection_FindFamilyName(collection, name, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (!exists) goto not_found;
+
+    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, style, &font);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFontFamily_Release(family);
+not_found:
+    IDWriteFontCollection_Release(collection);
+    return font;
+}
+
+static IDWriteFont *get_tahoma_instance(IDWriteFactory *factory, DWRITE_FONT_STYLE style)
+{
+    IDWriteFont *font = get_font(factory, tahomaW, style);
+    ok(font != NULL, "failed to get Tahoma\n");
+    return font;
+}
+
 static WCHAR *create_testfontfile(const WCHAR *filename)
 {
     static WCHAR pathW[MAX_PATH];
@@ -1344,14 +1382,16 @@ todo_wine
 
 static void test_GetMetrics(void)
 {
+    DWRITE_FONT_METRICS metrics, metrics2;
     IDWriteGdiInterop *interop;
-    DWRITE_FONT_METRICS metrics;
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
     OUTLINETEXTMETRICW otm;
+    IDWriteFontFile *file;
     IDWriteFont1 *font1;
     IDWriteFont *font;
     LOGFONTW logfont;
+    UINT32 count;
     HRESULT hr;
     HDC hdc;
     HFONT hfont;
@@ -1481,9 +1521,47 @@ if (0) /* crashes on native */
         win_skip("DWRITE_FONT_METRICS1 is not supported.\n");
 
     IDWriteFontFace_Release(fontface);
-
     IDWriteFont_Release(font);
     IDWriteGdiInterop_Release(interop);
+
+    /* bold simulation affects returned font metrics */
+    font = get_tahoma_instance(factory, DWRITE_FONT_STYLE_NORMAL);
+
+    /* create regulat Tahoma with bold simulation */
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 1;
+    hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    IDWriteFontFace_GetMetrics(fontface, &metrics);
+    ok(IDWriteFontFace_GetSimulations(fontface) == 0, "wrong simulations flags\n");
+    IDWriteFontFace_Release(fontface);
+
+    hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TRUETYPE, 1, &file,
+        0, DWRITE_FONT_SIMULATIONS_BOLD, &fontface);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteFontFace_GetMetrics(fontface, &metrics2);
+    ok(IDWriteFontFace_GetSimulations(fontface) == DWRITE_FONT_SIMULATIONS_BOLD, "wrong simulations flags\n");
+
+    ok(metrics.ascent == metrics2.ascent, "got %u, %u\n", metrics2.ascent, metrics.ascent);
+    ok(metrics.descent == metrics2.descent, "got %u, %u\n", metrics2.descent, metrics.descent);
+    ok(metrics.lineGap == metrics2.lineGap, "got %d, %d\n", metrics2.lineGap, metrics.lineGap);
+    ok(metrics.capHeight == metrics2.capHeight, "got %u, %u\n", metrics2.capHeight, metrics.capHeight);
+    ok(metrics.xHeight == metrics2.xHeight, "got %u, %u\n", metrics2.xHeight, metrics.xHeight);
+    ok(metrics.underlinePosition == metrics2.underlinePosition, "got %d, %d\n", metrics2.underlinePosition,
+        metrics.underlinePosition);
+    ok(metrics.underlineThickness == metrics2.underlineThickness, "got %u, %u\n", metrics2.underlineThickness,
+        metrics.underlineThickness);
+    ok(metrics.strikethroughPosition == metrics2.strikethroughPosition, "got %d, %d\n", metrics2.strikethroughPosition,
+        metrics.strikethroughPosition);
+    ok(metrics.strikethroughThickness == metrics2.strikethroughThickness, "got %u, %u\n", metrics2.strikethroughThickness,
+        metrics.strikethroughThickness);
+
+    IDWriteFontFile_Release(file);
+    IDWriteFont_Release(font);
+
     IDWriteFactory_Release(factory);
 }
 
@@ -2319,43 +2397,7 @@ static void test_GetFontFromFontFace(void)
     DELETE_FONTFILE(path);
 }
 
-static IDWriteFont *get_font(IDWriteFactory *factory, const WCHAR *name, DWRITE_FONT_STYLE style)
-{
-    IDWriteFontCollection *collection;
-    IDWriteFontFamily *family;
-    IDWriteFont *font = NULL;
-    UINT32 index;
-    BOOL exists;
-    HRESULT hr;
 
-    hr = IDWriteFactory_GetSystemFontCollection(factory, &collection, FALSE);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    index = ~0;
-    exists = FALSE;
-    hr = IDWriteFontCollection_FindFamilyName(collection, name, &index, &exists);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    if (!exists) goto not_found;
-
-    hr = IDWriteFontCollection_GetFontFamily(collection, index, &family);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL,
-        DWRITE_FONT_STRETCH_NORMAL, style, &font);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-
-    IDWriteFontFamily_Release(family);
-not_found:
-    IDWriteFontCollection_Release(collection);
-    return font;
-}
-
-static IDWriteFont *get_tahoma_instance(IDWriteFactory *factory, DWRITE_FONT_STYLE style)
-{
-    IDWriteFont *font = get_font(factory, tahomaW, style);
-    ok(font != NULL, "failed to get Tahoma\n");
-    return font;
-}
 
 static void test_GetFirstMatchingFont(void)
 {
