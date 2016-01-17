@@ -7646,7 +7646,7 @@ static void test_surface_blocks(void)
     IDirect3DSurface9 *surface;
     D3DLOCKED_RECT locked_rect;
     IDirect3DDevice9 *device;
-    unsigned int i, j, w, h;
+    unsigned int i, j, k, w, h;
     BOOL surface_only;
     IDirect3D9 *d3d;
     ULONG refcount;
@@ -7655,6 +7655,21 @@ static void test_surface_blocks(void)
     RECT rect;
     BOOL tex_pow2, cube_pow2;
     D3DCAPS9 caps;
+    static const RECT invalid[] =
+    {
+        {60, 60, 60, 68},       /* 0 height */
+        {60, 60, 68, 60},       /* 0 width */
+        {68, 60, 60, 68},       /* left > right */
+        {60, 68, 68, 60},       /* top > bottom */
+        {-8, 60,  0, 68},       /* left < surface */
+        {60, -8, 68,  0},       /* top < surface */
+        {-16, 60, -8, 68},      /* right < surface */
+        {60, -16, 68, -8},      /* bottom < surface */
+        {60, 60, 136, 68},      /* right > surface */
+        {60, 60, 68, 136},      /* bottom > surface */
+        {136, 60, 144, 68},     /* left > surface */
+        {60, 136, 68, 144},     /* top > surface */
+    };
 
     window = CreateWindowA("d3d9_test_wc", "d3d9_test", WS_OVERLAPPEDWINDOW,
             0, 0, 640, 480, 0, 0, 0, 0);
@@ -7896,6 +7911,19 @@ static void test_surface_blocks(void)
                         "Partial block lock %s, expected %s, format %s, pool %s.\n",
                         SUCCEEDED(hr) ? "succeeded" : "failed",
                         pools[j].success ? "success" : "failure", formats[i].name, pools[j].name);
+                if (SUCCEEDED(hr))
+                {
+                    hr = IDirect3DSurface9_UnlockRect(surface);
+                    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+                }
+            }
+
+            for (k = 0; k < sizeof(invalid) / sizeof(*invalid); ++k)
+            {
+                hr = IDirect3DSurface9_LockRect(surface, &locked_rect, &invalid[k], 0);
+                ok(FAILED(hr) == !pools[j].success, "Invalid lock %s(%#x), expected %s, format %s, pool %s, case %u.\n",
+                        SUCCEEDED(hr) ? "succeeded" : "failed", hr, pools[j].success ? "success" : "failure",
+                        formats[i].name, pools[j].name, k);
                 if (SUCCEEDED(hr))
                 {
                     hr = IDirect3DSurface9_UnlockRect(surface);
