@@ -123,6 +123,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_POW                   */ "pow",
     /* WINED3DSIH_RCP                   */ "rcp",
     /* WINED3DSIH_REP                   */ "rep",
+    /* WINED3DSIH_RESINFO               */ "resinfo",
     /* WINED3DSIH_RET                   */ "ret",
     /* WINED3DSIH_ROUND_NI              */ "round_ni",
     /* WINED3DSIH_RSQ                   */ "rsq",
@@ -1872,6 +1873,16 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                     && (ins.flags & WINED3DSI_TEXLD_PROJECT))
             {
                 TRACE("p");
+            }
+            else if (ins.handler_idx == WINED3DSIH_RESINFO
+                    && ins.flags)
+            {
+                switch (ins.flags)
+                {
+                    case WINED3DSI_RESINFO_RCP_FLOAT: TRACE("_rcpFloat"); break;
+                    case WINED3DSI_RESINFO_UINT: TRACE("_uint"); break;
+                    default: TRACE("_unrecognized(%#x)", ins.flags);
+                }
             }
 
             for (i = 0; i < ins.dst_count; ++i)

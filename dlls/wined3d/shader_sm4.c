@@ -29,6 +29,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT    24
 #define WINED3D_SM4_INSTRUCTION_LENGTH_MASK     (0x1fu << WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT)
 
+#define WINED3D_SM4_INSTRUCTION_FLAGS_SHIFT     11
+#define WINED3D_SM4_INSTRUCTION_FLAGS_MASK      (0x3u << WINED3D_SM4_INSTRUCTION_FLAGS_SHIFT)
+
 #define WINED3D_SM4_RESOURCE_TYPE_SHIFT         11
 #define WINED3D_SM4_RESOURCE_TYPE_MASK          (0xfu << WINED3D_SM4_RESOURCE_TYPE_SHIFT)
 
@@ -120,6 +123,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_MUL                  = 0x38,
     WINED3D_SM4_OP_NE                   = 0x39,
     WINED3D_SM4_OP_OR                   = 0x3c,
+    WINED3D_SM4_OP_RESINFO              = 0x3d,
     WINED3D_SM4_OP_RET                  = 0x3e,
     WINED3D_SM4_OP_ROUND_NI             = 0x41,
     WINED3D_SM4_OP_RSQ                  = 0x44,
@@ -296,6 +300,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_MUL,                    WINED3DSIH_MUL,                 "F",    "FF"},
     {WINED3D_SM4_OP_NE,                     WINED3DSIH_NE,                  "U",    "FF"},
     {WINED3D_SM4_OP_OR,                     WINED3DSIH_OR,                  "U",    "UU"},
+    {WINED3D_SM4_OP_RESINFO,                WINED3DSIH_RESINFO,             "F",    "IR"},
     {WINED3D_SM4_OP_RET,                    WINED3DSIH_RET,                 "",     ""},
     {WINED3D_SM4_OP_ROUND_NI,               WINED3DSIH_ROUND_NI,            "F",    "F"},
     {WINED3D_SM4_OP_RSQ,                    WINED3DSIH_RSQ,                 "F",    "F"},
@@ -888,6 +893,8 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     }
     else
     {
+        ins->flags = (opcode_token & WINED3D_SM4_INSTRUCTION_FLAGS_MASK) >> WINED3D_SM4_INSTRUCTION_FLAGS_SHIFT;
+
         for (i = 0; i < ins->dst_count; ++i)
         {
             if (!(shader_sm4_read_dst_param(priv, &p, map_data_type(opcode_info->dst_info[i]), &priv->dst_param[i])))
