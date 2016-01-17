@@ -1538,6 +1538,12 @@ static BOOL surface_check_block_align(struct wined3d_surface *surface, const str
             && box->bottom == surface->resource.height)
         return TRUE;
 
+    if ((box->left >= box->right)
+            || (box->top >= box->bottom)
+            || (box->right > surface->resource.width)
+            || (box->bottom > surface->resource.height))
+        return FALSE;
+
     /* This assumes power of two block sizes, but NPOT block sizes would be
      * silly anyway. */
     width_mask = surface->resource.format->block_width - 1;

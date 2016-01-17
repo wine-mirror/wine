@@ -7944,7 +7944,7 @@ static void test_surface_blocks(void)
         rect.right = formats[i].block_width;
         rect.bottom = formats[i].block_height;
         hr = IDirect3DTexture9_LockRect(texture, 1, &locked_rect, &rect, 0);
-        todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+        ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
         if (SUCCEEDED(hr))
             IDirect3DTexture9_UnlockRect(texture, 1);
 
