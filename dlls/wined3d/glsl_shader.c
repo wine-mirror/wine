@@ -4240,6 +4240,77 @@ static unsigned int shader_glsl_find_sampler(const struct wined3d_shader_sampler
     return ~0u;
 }
 
+static void shader_glsl_resinfo(const struct wined3d_shader_instruction *ins)
+{
+    static const unsigned int texture_size_component_count[] =
+    {
+        0, /* WINED3D_SHADER_RESOURCE_NONE */
+        1, /* WINED3D_SHADER_RESOURCE_BUFFER */
+        1, /* WINED3D_SHADER_RESOURCE_TEXTURE_1D */
+        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_2D */
+        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMS */
+        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_3D */
+        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_CUBE */
+        2, /* WINED3D_SHADER_RESOURCE_TEXTURE_1DARRAY */
+        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DARRAY */
+        3, /* WINED3D_SHADER_RESOURCE_TEXTURE_2DMSARRAY */
+    };
+
+    const struct wined3d_shader_version *version = &ins->ctx->reg_maps->shader_version;
+    const struct wined3d_gl_info *gl_info = ins->ctx->gl_info;
+    enum wined3d_shader_resource_type resource_type;
+    unsigned int resource_idx, sampler_idx, i;
+    enum wined3d_data_type dst_data_type;
+    struct glsl_src_param lod_param;
+    char dst_swizzle[6];
+    DWORD write_mask;
+
+    dst_data_type = ins->dst[0].reg.data_type;
+    if (ins->flags == WINED3DSI_RESINFO_UINT)
+        dst_data_type = WINED3D_DATA_UINT;
+    else if (ins->flags)
+        FIXME("Unhandled flags %#x.\n", ins->flags);
+
+    write_mask = shader_glsl_append_dst_ext(ins->ctx->buffer, ins, &ins->dst[0], dst_data_type);
+    shader_glsl_get_swizzle(&ins->src[1], FALSE, write_mask, dst_swizzle);
+
+    resource_idx = ins->src[1].reg.idx[0].offset;
+    resource_type = ins->ctx->reg_maps->resource_info[resource_idx].type;
+    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_0, &lod_param);
+    sampler_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map,
+            resource_idx, WINED3D_SAMPLER_DEFAULT);
+
+    if (resource_type >= ARRAY_SIZE(texture_size_component_count))
+    {
+        ERR("Unexpected resource type %#x.\n", resource_type);
+        resource_type = WINED3D_SHADER_RESOURCE_TEXTURE_2D;
+    }
+
+    if (dst_data_type == WINED3D_DATA_UINT)
+        shader_addline(ins->ctx->buffer, "uvec4(");
+    else
+        shader_addline(ins->ctx->buffer, "vec4(");
+
+    shader_addline(ins->ctx->buffer, "textureSize(%s_sampler%u, %s), ",
+            shader_glsl_get_prefix(version->type), sampler_idx, lod_param.param_str);
+
+    for (i = 0; i < 3 - texture_size_component_count[resource_type]; ++i)
+        shader_addline(ins->ctx->buffer, "0, ");
+
+    if (gl_info->supported[ARB_TEXTURE_QUERY_LEVELS])
+    {
+        shader_addline(ins->ctx->buffer, "textureQueryLevels(%s_sampler%u)",
+                shader_glsl_get_prefix(version->type), sampler_idx);
+    }
+    else
+    {
+        FIXME("textureQueryLevels is not supported, returning 1 mipmap level.\n");
+        shader_addline(ins->ctx->buffer, "1");
+    }
+
+    shader_addline(ins->ctx->buffer, ")%s);\n", dst_swizzle);
+}
+
 /* FIXME: The current implementation does not handle multisample textures correctly. */
 static void shader_glsl_ld(const struct wined3d_shader_instruction *ins)
 {
@@ -7948,7 +8019,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_POW                   */ shader_glsl_pow,
     /* WINED3DSIH_RCP                   */ shader_glsl_scalar_op,
     /* WINED3DSIH_REP                   */ shader_glsl_rep,
-    /* WINED3DSIH_RESINFO               */ NULL,
+    /* WINED3DSIH_RESINFO               */ shader_glsl_resinfo,
     /* WINED3DSIH_RET                   */ shader_glsl_ret,
     /* WINED3DSIH_ROUND_NI              */ shader_glsl_map2gl,
     /* WINED3DSIH_RSQ                   */ shader_glsl_scalar_op,
