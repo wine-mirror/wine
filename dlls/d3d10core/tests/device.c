@@ -3289,54 +3289,36 @@ static void test_texture(void)
         0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
         0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
     };
-    static const DWORD ps_ld_0_code[] =
+    static const DWORD ps_ld_code[] =
     {
 #if 0
         Texture2D t;
 
-        float4 main(float4 position : SV_POSITION) : SV_TARGET
-        {
-            float3 p = float3(position.x / 640.0f, position.y / 480.0f, 0.0f);
-            p *= float3(4.0f, 4.0f, 1.0f);
-            return t.Load(int3(p));
-        }
-#endif
-        0x43425844, 0x0aef49ac, 0x02fa5594, 0xfb8a34cd, 0x8e03ee1d, 0x00000001, 0x00000168, 0x00000003,
-        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
-        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
-        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x000000cc, 0x00000040,
-        0x00000033, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000,
-        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x05000036, 0x00100032,
-        0x00000000, 0x00101046, 0x00000000, 0x08000036, 0x001000c2, 0x00000000, 0x00004002, 0x00000000,
-        0x00000000, 0x00000000, 0x00000000, 0x0a000038, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000,
-        0x00004002, 0x3bcccccd, 0x3c088889, 0x3f800000, 0x3f800000, 0x0500001b, 0x001000f2, 0x00000000,
-        0x00100e46, 0x00000000, 0x0700002d, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00107e46,
-        0x00000000, 0x0100003e,
-    };
-    static const DWORD ps_ld_1_code[] =
-    {
-#if 0
-        Texture2D t;
+        float miplevel;
 
         float4 main(float4 position : SV_POSITION) : SV_TARGET
         {
-            float3 p = float3(position.x / 640.0f, position.y / 480.0f, 1.0f);
-            p *= float3(2.0f, 2.0f, 1.0f);
+            float3 p;
+            t.GetDimensions(miplevel, p.x, p.y, p.z);
+            p.z = miplevel;
+            p *= float3(position.x / 640.0f, position.y / 480.0f, 1.0f);
             return t.Load(int3(p));
         }
 #endif
-        0x43425844, 0xd43b0155, 0x1ae5af92, 0x34e50992, 0x5e7a0d1a, 0x00000001, 0x00000154, 0x00000003,
+        0x43425844, 0xbdda6bdf, 0xc6ffcdf1, 0xa58596b3, 0x822383f0, 0x00000001, 0x000001ac, 0x00000003,
         0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
         0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
         0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
-        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x000000b8, 0x00000040,
-        0x0000002e, 0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000,
-        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0a000038, 0x00100032,
-        0x00000000, 0x00101046, 0x00000000, 0x00004002, 0x3b4ccccd, 0x3b888889, 0x00000000, 0x00000000,
-        0x0500001b, 0x00100032, 0x00000000, 0x00100046, 0x00000000, 0x08000036, 0x001000c2, 0x00000000,
-        0x00004002, 0x00000000, 0x00000000, 0x00000001, 0x00000001, 0x0700002d, 0x001020f2, 0x00000000,
-        0x00100e46, 0x00000000, 0x00107e46, 0x00000000, 0x0100003e,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x00000110, 0x00000040,
+        0x00000044, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x04001858, 0x00107000, 0x00000000,
+        0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x02000068, 0x00000001, 0x0600001c, 0x00100012, 0x00000000, 0x0020800a, 0x00000000, 0x00000000,
+        0x0700003d, 0x001000f2, 0x00000000, 0x0010000a, 0x00000000, 0x00107e46, 0x00000000, 0x07000038,
+        0x00100032, 0x00000000, 0x00100046, 0x00000000, 0x00101046, 0x00000000, 0x06000036, 0x001000c2,
+        0x00000000, 0x00208006, 0x00000000, 0x00000000, 0x0a000038, 0x001000f2, 0x00000000, 0x00100e46,
+        0x00000000, 0x00004002, 0x3acccccd, 0x3b088889, 0x3f800000, 0x3f800000, 0x0500001b, 0x001000f2,
+        0x00000000, 0x00100e46, 0x00000000, 0x0700002d, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000,
+        0x00107e46, 0x00000000, 0x0100003e,
     };
     static const DWORD ps_sample_code[] =
     {
@@ -3393,8 +3375,7 @@ static void test_texture(void)
         0x001020f2, 0x00000000, 0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000,
         0x0020800a, 0x00000000, 0x00000000, 0x0100003e,
     };
-    static const struct shader ps_ld_0 = {ps_ld_0_code, sizeof(ps_ld_0_code)};
-    static const struct shader ps_ld_1 = {ps_ld_1_code, sizeof(ps_ld_1_code)};
+    static const struct shader ps_ld = {ps_ld_code, sizeof(ps_ld_code)};
     static const struct shader ps_sample = {ps_sample_code, sizeof(ps_sample_code)};
     static const struct shader ps_sample_l = {ps_sample_l_code, sizeof(ps_sample_l_code)};
     static const struct
@@ -3485,6 +3466,7 @@ static void test_texture(void)
         0xffff0000, 0xffff0000, 0xffffffff, 0xffffffff,
         0xffff0000, 0xffff0000, 0xffffffff, 0xffffffff,
     };
+    static const DWORD zero_colors[4 * 4] = {0};
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
 
     static const struct test
@@ -3500,8 +3482,16 @@ static void test_texture(void)
     }
     tests[] =
     {
-        {&ps_ld_0,     &rgba_texture, D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
-        {&ps_ld_1,     &rgba_texture, D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, level_1_colors},
+        {&ps_ld,       &rgba_texture, D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
+        {&ps_ld,       &rgba_texture, D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, level_1_colors},
+        {&ps_ld,       &rgba_texture, D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  2.0f, level_2_colors},
+        {&ps_ld,       &rgba_texture, D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  3.0f, zero_colors},
+        {&ps_ld,       &bc1_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_ld,       &bc1_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
+        {&ps_ld,       &bc2_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_ld,       &bc2_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
+        {&ps_ld,       &bc3_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_ld,       &bc3_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
         {&ps_sample,   &bc1_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
         {&ps_sample,   &bc2_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
         {&ps_sample,   &bc3_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
