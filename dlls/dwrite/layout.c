@@ -999,9 +999,10 @@ static inline BOOL layout_is_erun_rtl(const struct layout_effective_run *erun)
     return erun->run->u.regular.run.bidiLevel & 1;
 }
 
-/* A set of parameters that additionally slits resulting runs. It happens after shaping and all text processing,
-   no glyph changes are possible. It's understandable for effects, because DrawGlyphRun() will report them,
-   but it also happens for decorations, so every effective run has uniform underline/strikethough/effect tuple. */
+/* A set of parameters that additionally splits resulting runs. It happens after shaping and all text processing,
+   no glyph changes are possible. It's understandable for drawing effects, because DrawGlyphRun() reports them as
+   one of the arguments, but it also happens for decorations, so every effective run has uniform
+   underline/strikethough/effect tuple. */
 struct layout_final_splitting_params {
     BOOL strikethrough;
     BOOL underline;
@@ -1141,7 +1142,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
     list_add_tail(&layout->eruns, &run->entry);
 
     /* Strikethrough style is guaranteed to be consistent within effective run,
-       it's width equals to run width, thikness and offset are derived from
+       its width equals to run width, thickness and offset are derived from
        font metrics, rest of the values are from layout or run itself */
     if (params->strikethrough) {
         struct layout_strikethrough *s;
@@ -2200,7 +2201,7 @@ static inline HRESULT return_range(const struct layout_range_header *h, DWRITE_T
     return S_OK;
 }
 
-/* Set attribute value for given range, does all needed splitting/merging of existing ranges. */
+/* Sets attribute value for given range, does all needed splitting/merging of existing ranges. */
 static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layout_range_attr_kind attr, struct layout_range_attr_value *value)
 {
     struct layout_range_header *cur, *right, *left, *outer;

@@ -2737,7 +2737,7 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     /* for known weight values use appropriate names */
     else if (is_known_weight_value(font->weight, weightW)) {
     }
-    /* use Wnnn format as a fallback in case weight is not one of defined values */
+    /* use Wnnn format as a fallback in case weight is not one of known values */
     else {
         static const WCHAR fmtW[] = {'W','%','d',0};
         sprintfW(weightW, fmtW, font->weight);
@@ -3592,7 +3592,8 @@ static HRESULT WINAPI dwritefontfile_GetLoader(IDWriteFontFile *iface, IDWriteFo
     return S_OK;
 }
 
-static HRESULT WINAPI dwritefontfile_Analyze(IDWriteFontFile *iface, BOOL *isSupportedFontType, DWRITE_FONT_FILE_TYPE *fontFileType, DWRITE_FONT_FACE_TYPE *fontFaceType, UINT32 *numberOfFaces)
+static HRESULT WINAPI dwritefontfile_Analyze(IDWriteFontFile *iface, BOOL *isSupportedFontType, DWRITE_FONT_FILE_TYPE *fontFileType,
+    DWRITE_FONT_FACE_TYPE *fontFaceType, UINT32 *numberOfFaces)
 {
     struct dwrite_fontfile *This = impl_from_IDWriteFontFile(iface);
     IDWriteFontFileStream *stream;
@@ -3937,7 +3938,7 @@ static ULONG WINAPI localfontfileloader_Release(IDWriteLocalFontFileLoader *ifac
         struct local_cached_stream *stream, *stream2;
 
         /* This will detach all entries from cache. Entries are released together with streams,
-           so stream controls its lifetime. */
+           so stream controls cache entry lifetime. */
         LIST_FOR_EACH_ENTRY_SAFE(stream, stream2, &This->streams, struct local_cached_stream, entry)
             list_init(&stream->entry);
 

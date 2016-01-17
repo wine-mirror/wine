@@ -1302,7 +1302,7 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
     return exists ? S_OK : E_FAIL;
 }
 
-/* Provides a conversion from DWRITE to OpenType name ids, input id be valid, it's not checked. */
+/* Provides a conversion from DWRITE to OpenType name ids, input id should be valid, it's not checked. */
 HRESULT opentype_get_font_info_strings(const void *table_data, DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings)
 {
     return opentype_get_font_strings_from_id(table_data, dwriteid_to_opentypeid[id], strings);

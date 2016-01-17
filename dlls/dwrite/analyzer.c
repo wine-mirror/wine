@@ -34,7 +34,7 @@ extern const unsigned short wine_scripts_table[];
 struct dwritescript_properties {
     DWRITE_SCRIPT_PROPERTIES props;
     UINT32 scripttag;    /* OpenType script tag */
-    UINT32 scriptalttag; /* Version 2 tag, 0 is not defined */
+    UINT32 scriptalttag; /* Version 2 tag, 0 if not defined */
     BOOL is_complex;
     const struct scriptshaping_ops *ops;
 };
@@ -1273,15 +1273,15 @@ static inline UINT32 get_cluster_length(UINT16 const *clustermap, UINT32 start, 
       If it's the case advance width is incremented up to minimum value.
 
       Important part is the direction in which this increment is applied;
-      it depends on from which directions total cluster advance was trimmed
+      it depends on direction from which total cluster advance was trimmed
       at step 1. So it could be incremented from leading, trailing, or both
       sides. When applied to both sides, each side gets half of difference
-      that bring advance to minimum width.
+      that brings advance to minimum width.
 
    3. Positive adjustments
 
-      After minimum width rule was applied, positive spacing is applied in same
-      way as negative ones on step 1.
+      After minimum width rule was applied, positive spacing is applied in the same
+      way as negative one on step 1.
 
    Glyph offset for leading glyph is adjusted too in a way that glyph origin
    keeps its position in coordinate system where initial advance width is counted
