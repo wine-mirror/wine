@@ -672,7 +672,14 @@ static void test_position(void)
     r = SendMessageA(hWndTrackbar, TBM_GETPOS, 0, 0);
     ok(r == 30, "got %d\n", r);
     SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect2);
-    ok(rect.left != rect2.left, "got %d\n", rect.left);
+    ok(rect.left != rect2.left, "got %d, expected %d\n", rect2.left, rect.left);
+
+    /* now move it with keys */
+    SendMessageA(hWndTrackbar, WM_KEYDOWN, VK_END, 0);
+    r = SendMessageA(hWndTrackbar, TBM_GETPOS, 0, 0);
+    ok(r == 100, "got %d\n", r);
+    SendMessageA(hWndTrackbar, TBM_GETTHUMBRECT, 0, (LPARAM)&rect);
+    ok(rect.left != rect2.left, "got %d, expected %d\n", rect.left, rect2.left);
 
     DestroyWindow(hWndTrackbar);
 }
