@@ -175,22 +175,6 @@ extern WORD opentype_get_gasp_flags(const WORD*,UINT32,INT) DECLSPEC_HIDDEN;
 extern HRESULT bidi_computelevels(const WCHAR*,UINT32,UINT8,UINT8*,UINT8*) DECLSPEC_HIDDEN;
 extern WCHAR bidi_get_mirrored_char(WCHAR) DECLSPEC_HIDDEN;
 
-enum outline_point_tag {
-    OUTLINE_POINT_START  = 1 << 0,
-    OUTLINE_POINT_END    = 1 << 1,
-    OUTLINE_POINT_BEZIER = 1 << 2,
-    OUTLINE_POINT_LINE   = 1 << 3
-};
-
-struct glyph_outline {
-    D2D1_POINT_2F *points;
-    UINT8 *tags;
-    UINT16 count;
-    FLOAT  advance;
-};
-
-extern HRESULT new_glyph_outline(UINT32,struct glyph_outline**) DECLSPEC_HIDDEN;
-
 /* FreeType integration */
 struct dwrite_glyphbitmap {
     IDWriteFontFace2 *fontface;
@@ -209,7 +193,8 @@ extern void release_freetype(void) DECLSPEC_HIDDEN;
 extern HRESULT freetype_get_design_glyph_metrics(IDWriteFontFace2*,UINT16,UINT16,DWRITE_GLYPH_METRICS*) DECLSPEC_HIDDEN;
 extern void freetype_notify_cacheremove(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern BOOL freetype_is_monospaced(IDWriteFontFace2*) DECLSPEC_HIDDEN;
-extern HRESULT freetype_get_glyph_outline(IDWriteFontFace2*,FLOAT,UINT16,USHORT,struct glyph_outline**) DECLSPEC_HIDDEN;
+extern HRESULT freetype_get_glyphrun_outline(IDWriteFontFace2*,FLOAT,UINT16 const*,FLOAT const*, DWRITE_GLYPH_OFFSET const*,
+    UINT32,BOOL,IDWriteGeometrySink*) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphcount(IDWriteFontFace2*) DECLSPEC_HIDDEN;
 extern UINT16 freetype_get_glyphindex(IDWriteFontFace2*,UINT32,INT) DECLSPEC_HIDDEN;
 extern BOOL freetype_has_kerning_pairs(IDWriteFontFace2*) DECLSPEC_HIDDEN;

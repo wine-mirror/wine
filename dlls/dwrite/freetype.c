@@ -77,6 +77,7 @@ MAKE_FUNCPTR(FT_Library_Version);
 MAKE_FUNCPTR(FT_Load_Glyph);
 MAKE_FUNCPTR(FT_New_Memory_Face);
 MAKE_FUNCPTR(FT_Outline_Copy);
+MAKE_FUNCPTR(FT_Outline_Decompose);
 MAKE_FUNCPTR(FT_Outline_Done);
 MAKE_FUNCPTR(FT_Outline_Get_Bitmap);
 MAKE_FUNCPTR(FT_Outline_New);
@@ -163,6 +164,7 @@ BOOL init_freetype(void)
     LOAD_FUNCPTR(FT_Load_Glyph)
     LOAD_FUNCPTR(FT_New_Memory_Face)
     LOAD_FUNCPTR(FT_Outline_Copy)
+    LOAD_FUNCPTR(FT_Outline_Decompose)
     LOAD_FUNCPTR(FT_Outline_Done)
     LOAD_FUNCPTR(FT_Outline_Get_Bitmap)
     LOAD_FUNCPTR(FT_Outline_New)
@@ -267,16 +269,69 @@ BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
     return is_monospaced;
 }
 
-static inline void ft_vector_to_d2d_point(const FT_Vector *v, D2D1_POINT_2F *p)
+struct decompose_context {
+    IDWriteGeometrySink *sink;
+    FLOAT xoffset;
+    FLOAT yoffset;
+    BOOL figure_started;
+    BOOL figure_closed;
+    BOOL move_to;     /* last call was 'move_to' */
+    FT_Vector origin; /* 'pen' position from last call */
+};
+
+static inline void ft_vector_to_d2d_point(const FT_Vector *v, FLOAT xoffset, FLOAT yoffset, D2D1_POINT_2F *p)
 {
-    p->x = v->x / 64.0f;
-    p->y = v->y / 64.0f;
+    p->x = (v->x / 64.0f) + xoffset;
+    p->y = (v->y / 64.0f) + yoffset;
 }
 
-/* Convert the quadratic Beziers to cubic Beziers. */
-static void get_cubic_glyph_outline(const FT_Outline *outline, short point, short first_pt,
-    short contour, FT_Vector *cubic_control)
+static int decompose_move_to(const FT_Vector *to, void *user)
 {
+    struct decompose_context *ctxt = (struct decompose_context*)user;
+    D2D1_POINT_2F point;
+
+    if (ctxt->figure_started) {
+        ID2D1SimplifiedGeometrySink_EndFigure(ctxt->sink, D2D1_FIGURE_END_CLOSED);
+        ctxt->figure_closed = TRUE;
+    }
+    else
+        ctxt->figure_closed = FALSE;
+    ctxt->figure_started = TRUE;
+
+    ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, &point);
+    ID2D1SimplifiedGeometrySink_BeginFigure(ctxt->sink, point, D2D1_FIGURE_BEGIN_FILLED);
+    ctxt->move_to = TRUE;
+    ctxt->origin = *to;
+    return 0;
+}
+
+static int decompose_line_to(const FT_Vector *to, void *user)
+{
+    struct decompose_context *ctxt = (struct decompose_context*)user;
+    /* special case for empty contours, in a way freetype returns them */
+    if (ctxt->move_to && !memcmp(to, &ctxt->origin, sizeof(*to))) {
+        ID2D1SimplifiedGeometrySink_EndFigure(ctxt->sink, D2D1_FIGURE_END_CLOSED);
+        ctxt->figure_closed = TRUE;
+    }
+    else {
+        D2D1_POINT_2F point;
+        ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, &point);
+        ID2D1SimplifiedGeometrySink_AddLines(ctxt->sink, &point, 1);
+        ctxt->figure_closed = FALSE;
+    }
+    ctxt->move_to = FALSE;
+    ctxt->origin = *to;
+    return 0;
+}
+
+static int decompose_conic_to(const FT_Vector *control, const FT_Vector *to, void *user)
+{
+    struct decompose_context *ctxt = (struct decompose_context*)user;
+    D2D1_POINT_2F points[3];
+    FT_Vector cubic[3];
+
+    /* convert from quadratic to cubic */
+
     /*
        The parametric eqn for a cubic Bezier is, from PLRM:
        r(t) = at^3 + bt^2 + ct + r0
@@ -294,107 +349,84 @@ static void get_cubic_glyph_outline(const FT_Outline *outline, short point, shor
        and of course r0 = p0, r3 = p2
     */
 
-    /* FIXME: Possible optimization in endpoint calculation
-       if there are two consecutive curves */
-    cubic_control[0] = outline->points[point-1];
-    if (!(outline->tags[point-1] & FT_Curve_Tag_On)) {
-        cubic_control[0].x += outline->points[point].x + 1;
-        cubic_control[0].y += outline->points[point].y + 1;
-        cubic_control[0].x >>= 1;
-        cubic_control[0].y >>= 1;
-    }
-    if (point+1 > outline->contours[contour])
-        cubic_control[3] = outline->points[first_pt];
-    else {
-        cubic_control[3] = outline->points[point+1];
-        if (!(outline->tags[point+1] & FT_Curve_Tag_On)) {
-            cubic_control[3].x += outline->points[point].x + 1;
-            cubic_control[3].y += outline->points[point].y + 1;
-            cubic_control[3].x >>= 1;
-            cubic_control[3].y >>= 1;
-        }
-    }
-
     /* r1 = 1/3 p0 + 2/3 p1
        r2 = 1/3 p2 + 2/3 p1 */
-    cubic_control[1].x = (2 * outline->points[point].x + 1) / 3;
-    cubic_control[1].y = (2 * outline->points[point].y + 1) / 3;
-    cubic_control[2] = cubic_control[1];
-    cubic_control[1].x += (cubic_control[0].x + 1) / 3;
-    cubic_control[1].y += (cubic_control[0].y + 1) / 3;
-    cubic_control[2].x += (cubic_control[3].x + 1) / 3;
-    cubic_control[2].y += (cubic_control[3].y + 1) / 3;
+    cubic[0].x = (2 * control->x + 1) / 3;
+    cubic[0].y = (2 * control->y + 1) / 3;
+    cubic[1] = cubic[0];
+    cubic[0].x += (ctxt->origin.x + 1) / 3;
+    cubic[0].y += (ctxt->origin.y + 1) / 3;
+    cubic[1].x += (to->x + 1) / 3;
+    cubic[1].y += (to->y + 1) / 3;
+    cubic[2] = *to;
+
+    ft_vector_to_d2d_point(cubic, ctxt->xoffset, ctxt->yoffset, points);
+    ft_vector_to_d2d_point(cubic + 1, ctxt->xoffset, ctxt->yoffset, points + 1);
+    ft_vector_to_d2d_point(cubic + 2, ctxt->xoffset, ctxt->yoffset, points + 2);
+    ID2D1SimplifiedGeometrySink_AddBeziers(ctxt->sink, (D2D1_BEZIER_SEGMENT*)points, 1);
+    ctxt->figure_closed = FALSE;
+    ctxt->move_to = FALSE;
+    ctxt->origin = *to;
+    return 0;
 }
 
-static short get_outline_data(const FT_Outline *outline, struct glyph_outline *ret)
+static int decompose_cubic_to(const FT_Vector *control1, const FT_Vector *control2,
+    const FT_Vector *to, void *user)
 {
-    short contour, point = 0, first_pt, count;
+    struct decompose_context *ctxt = (struct decompose_context*)user;
+    D2D1_POINT_2F points[3];
 
-    for (contour = 0, count = 0; contour < outline->n_contours; contour++) {
-        first_pt = point;
-        if (ret) {
-            ft_vector_to_d2d_point(&outline->points[point], &ret->points[count]);
-            ret->tags[count] = OUTLINE_POINT_START;
-            if (count)
-                ret->tags[count-1] |= OUTLINE_POINT_END;
-        }
-
-        point++;
-        count++;
-
-        while (point <= outline->contours[contour]) {
-            do {
-                if (outline->tags[point] & FT_Curve_Tag_On) {
-                    if (ret) {
-                        ft_vector_to_d2d_point(&outline->points[point], &ret->points[count]);
-                        ret->tags[count] |= OUTLINE_POINT_LINE;
-                    }
-
-                    point++;
-                    count++;
-                }
-                else {
-
-                    if (ret) {
-                        FT_Vector cubic_control[4];
-
-                        get_cubic_glyph_outline(outline, point, first_pt, contour, cubic_control);
-                        ft_vector_to_d2d_point(&cubic_control[1], &ret->points[count]);
-                        ft_vector_to_d2d_point(&cubic_control[2], &ret->points[count+1]);
-                        ft_vector_to_d2d_point(&cubic_control[3], &ret->points[count+2]);
-                        ret->tags[count] = OUTLINE_POINT_BEZIER;
-                        ret->tags[count+1] = OUTLINE_POINT_BEZIER;
-                        ret->tags[count+2] = OUTLINE_POINT_BEZIER;
-                    }
-
-                    count += 3;
-                    point++;
-                }
-            } while (point <= outline->contours[contour] &&
-                    (outline->tags[point] & FT_Curve_Tag_On) ==
-                    (outline->tags[point-1] & FT_Curve_Tag_On));
-
-            if (point <= outline->contours[contour] &&
-               outline->tags[point] & FT_Curve_Tag_On)
-            {
-                /* This is the closing pt of a bezier, but we've already
-                   added it, so just inc point and carry on */
-                point++;
-            }
-        }
-    }
-
-    if (ret)
-        ret->tags[count-1] |= OUTLINE_POINT_END;
-
-    return count;
+    ft_vector_to_d2d_point(control1, ctxt->xoffset, ctxt->yoffset, points);
+    ft_vector_to_d2d_point(control2, ctxt->xoffset, ctxt->yoffset, points + 1);
+    ft_vector_to_d2d_point(to, ctxt->xoffset, ctxt->yoffset, points + 2);
+    ID2D1SimplifiedGeometrySink_AddBeziers(ctxt->sink, (D2D1_BEZIER_SEGMENT*)points, 1);
+    ctxt->figure_closed = FALSE;
+    ctxt->move_to = FALSE;
+    ctxt->origin = *to;
+    return 0;
 }
 
-HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, USHORT simulations, struct glyph_outline **ret)
+static void decompose_outline(FT_Outline *outline, FLOAT xoffset, FLOAT yoffset, IDWriteGeometrySink *sink)
+{
+    static const FT_Outline_Funcs decompose_funcs = {
+        decompose_move_to,
+        decompose_line_to,
+        decompose_conic_to,
+        decompose_cubic_to,
+        0,
+        0
+    };
+    struct decompose_context context;
+
+    context.sink = sink;
+    context.xoffset = xoffset;
+    context.yoffset = yoffset;
+    context.figure_started = FALSE;
+    context.figure_closed = FALSE;
+    context.move_to = FALSE;
+    context.origin.x = 0;
+    context.origin.y = 0;
+
+    pFT_Outline_Decompose(outline, &decompose_funcs, &context);
+
+    if (!context.figure_closed && outline->n_points)
+        ID2D1SimplifiedGeometrySink_EndFigure(sink, D2D1_FIGURE_END_CLOSED);
+}
+
+HRESULT freetype_get_glyphrun_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 const *glyphs, FLOAT const *advances,
+    DWRITE_GLYPH_OFFSET const *offsets, UINT32 count, BOOL is_rtl, IDWriteGeometrySink *sink)
 {
     FTC_ScalerRec scaler;
+    USHORT simulations;
     HRESULT hr = S_OK;
     FT_Size size;
+
+    if (!count)
+        return S_OK;
+
+    ID2D1SimplifiedGeometrySink_SetFillMode(sink, D2D1_FILL_MODE_WINDING);
+
+    simulations = IDWriteFontFace2_GetSimulations(fontface);
 
     scaler.face_id = fontface;
     scaler.width  = emSize;
@@ -405,26 +437,45 @@ HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UIN
 
     EnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupSize(cache_manager, &scaler, &size) == 0) {
-         if (pFT_Load_Glyph(size->face, index, FT_LOAD_NO_BITMAP) == 0) {
-             FT_Outline *outline = &size->face->glyph->outline;
-             short count;
-             FT_Matrix m;
+        FLOAT advance = 0.0f;
+        UINT32 g;
 
-             m.xx = 1 << 16;
-             m.xy = simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
-             m.yx = 0;
-             m.yy = -(1 << 16); /* flip Y axis */
+        for (g = 0; g < count; g++) {
+            if (pFT_Load_Glyph(size->face, glyphs[g], FT_LOAD_NO_BITMAP) == 0) {
+                FLOAT ft_advance = size->face->glyph->metrics.horiAdvance >> 6;
+                FT_Outline *outline = &size->face->glyph->outline;
+                FLOAT xoffset = 0.0f, yoffset = 0.0f;
+                FT_Matrix m;
 
-             pFT_Outline_Transform(outline, &m);
+                m.xx = 1 << 16;
+                m.xy = simulations & DWRITE_FONT_SIMULATIONS_OBLIQUE ? (1 << 16) / 3 : 0;
+                m.yx = 0;
+                m.yy = -(1 << 16); /* flip Y axis */
 
-             count = get_outline_data(outline, NULL);
-             hr = new_glyph_outline(count, ret);
-             if (hr == S_OK) {
-                 get_outline_data(outline, *ret);
-                 (*ret)->advance = size->face->glyph->metrics.horiAdvance >> 6;
-             }
-         }
+                pFT_Outline_Transform(outline, &m);
+
+                /* glyph offsets act as current glyph adjustment */
+                if (offsets) {
+                    xoffset += is_rtl ? -offsets[g].advanceOffset : offsets[g].advanceOffset;
+                    yoffset -= offsets[g].ascenderOffset;
+                }
+
+                if (g == 0 && is_rtl)
+                    advance = advances ? -advances[g] : -ft_advance;
+
+                xoffset += advance;
+                decompose_outline(outline, xoffset, yoffset, sink);
+
+                /* update advance to next glyph */
+                if (advances)
+                    advance += is_rtl ? -advances[g] : advances[g];
+                else
+                    advance += is_rtl ? -ft_advance : ft_advance;
+            }
+        }
     }
+    else
+        hr = E_FAIL;
     LeaveCriticalSection(&freetype_cs);
 
     return hr;
@@ -775,9 +826,9 @@ BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
     return FALSE;
 }
 
-HRESULT freetype_get_glyph_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 index, USHORT simulations, struct glyph_outline **ret)
+HRESULT freetype_get_glyphrun_outline(IDWriteFontFace2 *fontface, FLOAT emSize, UINT16 const *glyphs, FLOAT const *advances,
+    DWRITE_GLYPH_OFFSET const *offsets, UINT32 count, BOOL is_rtl, IDWriteGeometrySink *sink)
 {
-    *ret = NULL;
     return E_NOTIMPL;
 }
 
