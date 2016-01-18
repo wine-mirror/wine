@@ -30,7 +30,7 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_INSTRUCTION_LENGTH_MASK     (0x1fu << WINED3D_SM4_INSTRUCTION_LENGTH_SHIFT)
 
 #define WINED3D_SM4_INSTRUCTION_FLAGS_SHIFT     11
-#define WINED3D_SM4_INSTRUCTION_FLAGS_MASK      (0x3u << WINED3D_SM4_INSTRUCTION_FLAGS_SHIFT)
+#define WINED3D_SM4_INSTRUCTION_FLAGS_MASK      (0x7u << WINED3D_SM4_INSTRUCTION_FLAGS_SHIFT)
 
 #define WINED3D_SM4_RESOURCE_TYPE_SHIFT         11
 #define WINED3D_SM4_RESOURCE_TYPE_MASK          (0xfu << WINED3D_SM4_RESOURCE_TYPE_SHIFT)
@@ -74,6 +74,8 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 
 #define WINED3D_SM4_ADDRESSING_RELATIVE         0x2
 #define WINED3D_SM4_ADDRESSING_OFFSET           0x1
+
+#define WINED3D_SM4_INSTRUCTION_FLAG_SATURATE   0x4
 
 enum wined3d_sm4_opcode
 {
@@ -900,7 +902,15 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
     }
     else
     {
+        enum wined3d_shader_dst_modifier instruction_dst_modifier = WINED3DSPDM_NONE;
+
         ins->flags = (opcode_token & WINED3D_SM4_INSTRUCTION_FLAGS_MASK) >> WINED3D_SM4_INSTRUCTION_FLAGS_SHIFT;
+
+        if (ins->flags & WINED3D_SM4_INSTRUCTION_FLAG_SATURATE)
+        {
+            ins->flags &= ~WINED3D_SM4_INSTRUCTION_FLAG_SATURATE;
+            instruction_dst_modifier = WINED3DSPDM_SATURATE;
+        }
 
         for (i = 0; i < ins->dst_count; ++i)
         {
@@ -909,6 +919,7 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
                 ins->handler_idx = WINED3DSIH_TABLE_SIZE;
                 return;
             }
+            priv->dst_param[i].modifiers |= instruction_dst_modifier;
         }
 
         for (i = 0; i < ins->src_count; ++i)
