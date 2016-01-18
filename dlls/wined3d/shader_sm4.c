@@ -154,6 +154,7 @@ enum wined3d_sm4_register_type
     WINED3D_SM4_RT_RESOURCE     = 0x7,
     WINED3D_SM4_RT_CONSTBUFFER  = 0x8,
     WINED3D_SM4_RT_PRIMID       = 0xb,
+    WINED3D_SM4_RT_DEPTHOUT     = 0xc,
     WINED3D_SM4_RT_NULL         = 0xd,
 };
 
@@ -336,7 +337,7 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* UNKNOWN */                       0,
     /* UNKNOWN */                       0,
     /* WINED3D_SM4_RT_PRIMID */         WINED3DSPR_PRIMID,
-    /* UNKNOWN */                       0,
+    /* WINED3D_SM4_RT_DEPTHOUT */       WINED3DSPR_DEPTHOUT,
     /* WINED3D_SM4_RT_NULL */           WINED3DSPR_NULL,
 };
 
