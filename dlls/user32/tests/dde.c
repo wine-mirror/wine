@@ -2457,7 +2457,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
         ok(size == 12, "Expected 12, got %d, msg_index=%d\n", size, msg_index);
 
         size = DdeGetData(hdata, NULL, 0, 0);
-        ok((buffer = HeapAlloc(GetProcessHeap(), 0, size)) != NULL, "should not be null\n");
+        ok((buffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, size)) != NULL, "should not be null\n");
         rsize = DdeGetData(hdata, buffer, size, 0);
         ok(rsize == size, "Incorrect size returned, expected %d got %d, msg_index=%d\n",
            size, rsize, msg_index);
@@ -2550,6 +2550,7 @@ static HDDEDATA CALLBACK server_end_to_end_callback(UINT uType, UINT uFmt, HCONV
             ok( 0, "Invalid message %u\n", msg_index );
             break;
         }
+        HeapFree(GetProcessHeap(), 0, buffer);
         return (HDDEDATA) DDE_FACK;
     }
     case XTYP_DISCONNECT:
