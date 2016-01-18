@@ -42,10 +42,15 @@ typedef struct _XA2Buffer {
 typedef struct _IXAudio2Impl IXAudio2Impl;
 
 typedef struct _XA2SourceImpl {
-    IXAudio20SourceVoice IXAudio20SourceVoice_iface;
-    IXAudio23SourceVoice IXAudio23SourceVoice_iface;
-    IXAudio27SourceVoice IXAudio27SourceVoice_iface;
     IXAudio2SourceVoice IXAudio2SourceVoice_iface;
+
+#if XAUDIO2_VER == 0
+    IXAudio20SourceVoice IXAudio20SourceVoice_iface;
+#elif XAUDIO2_VER <= 3
+    IXAudio23SourceVoice IXAudio23SourceVoice_iface;
+#elif XAUDIO2_VER <= 7
+    IXAudio27SourceVoice IXAudio27SourceVoice_iface;
+#endif
 
     IXAudio2Impl *xa2;
 
@@ -82,9 +87,13 @@ typedef struct _XA2SourceImpl {
 } XA2SourceImpl;
 
 typedef struct _XA2SubmixImpl {
-    IXAudio20SubmixVoice IXAudio20SubmixVoice_iface;
-    IXAudio23SubmixVoice IXAudio23SubmixVoice_iface;
     IXAudio2SubmixVoice IXAudio2SubmixVoice_iface;
+
+#if XAUDIO2_VER == 0
+    IXAudio20SubmixVoice IXAudio20SubmixVoice_iface;
+#elif XAUDIO2_VER <= 3
+    IXAudio23SubmixVoice IXAudio23SubmixVoice_iface;
+#endif
 
     BOOL in_use;
 
@@ -94,13 +103,22 @@ typedef struct _XA2SubmixImpl {
 } XA2SubmixImpl;
 
 struct _IXAudio2Impl {
-    IXAudio20 IXAudio20_iface;
-    IXAudio22 IXAudio22_iface;
-    IXAudio27 IXAudio27_iface;
     IXAudio2 IXAudio2_iface;
-    IXAudio20MasteringVoice IXAudio20MasteringVoice_iface;
-    IXAudio23MasteringVoice IXAudio23MasteringVoice_iface;
     IXAudio2MasteringVoice IXAudio2MasteringVoice_iface;
+
+#if XAUDIO2_VER == 0
+    IXAudio20 IXAudio20_iface;
+#elif XAUDIO2_VER <= 2
+    IXAudio22 IXAudio22_iface;
+#elif XAUDIO2_VER <= 7
+    IXAudio27 IXAudio27_iface;
+#endif
+
+#if XAUDIO2_VER == 0
+    IXAudio20MasteringVoice IXAudio20MasteringVoice_iface;
+#elif XAUDIO2_VER <= 3
+    IXAudio23MasteringVoice IXAudio23MasteringVoice_iface;
+#endif
 
     LONG ref;
 
@@ -135,19 +153,25 @@ struct _IXAudio2Impl {
     BOOL running;
 };
 
-extern const IXAudio27SourceVoiceVtbl XAudio27SourceVoice_Vtbl DECLSPEC_HIDDEN;
-extern const IXAudio27Vtbl XAudio27_Vtbl DECLSPEC_HIDDEN;
-
-extern const IXAudio23SourceVoiceVtbl XAudio23SourceVoice_Vtbl DECLSPEC_HIDDEN;
-extern const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl DECLSPEC_HIDDEN;
-extern const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl DECLSPEC_HIDDEN;
-
-extern const IXAudio22Vtbl XAudio22_Vtbl DECLSPEC_HIDDEN;
-
-extern const IXAudio20Vtbl XAudio20_Vtbl DECLSPEC_HIDDEN;
+#if XAUDIO2_VER == 0
 extern const IXAudio20SourceVoiceVtbl XAudio20SourceVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio20SubmixVoiceVtbl XAudio20SubmixVoice_Vtbl DECLSPEC_HIDDEN;
 extern const IXAudio20MasteringVoiceVtbl XAudio20MasteringVoice_Vtbl DECLSPEC_HIDDEN;
+#elif XAUDIO2_VER <= 3
+extern const IXAudio23SourceVoiceVtbl XAudio23SourceVoice_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio23SubmixVoiceVtbl XAudio23SubmixVoice_Vtbl DECLSPEC_HIDDEN;
+extern const IXAudio23MasteringVoiceVtbl XAudio23MasteringVoice_Vtbl DECLSPEC_HIDDEN;
+#elif XAUDIO2_VER <= 7
+extern const IXAudio27SourceVoiceVtbl XAudio27SourceVoice_Vtbl DECLSPEC_HIDDEN;
+#endif
+
+#if XAUDIO2_VER == 0
+extern const IXAudio20Vtbl XAudio20_Vtbl DECLSPEC_HIDDEN;
+#elif XAUDIO2_VER <= 2
+extern const IXAudio22Vtbl XAudio22_Vtbl DECLSPEC_HIDDEN;
+#elif XAUDIO2_VER <= 7
+extern const IXAudio27Vtbl XAudio27_Vtbl DECLSPEC_HIDDEN;
+#endif
 
 extern IClassFactory *make_xapo_factory(REFCLSID clsid) DECLSPEC_HIDDEN;
 extern HRESULT xaudio2_initialize(IXAudio2Impl *This, UINT32 flags, XAUDIO2_PROCESSOR proc) DECLSPEC_HIDDEN;

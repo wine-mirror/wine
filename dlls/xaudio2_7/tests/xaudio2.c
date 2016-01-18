@@ -1087,6 +1087,9 @@ START_TEST(xaudio2)
         hr = pXAudio2Create(&xa, 0, XAUDIO2_DEFAULT_PROCESSOR);
         ok(hr == S_OK, "XAudio2Create failed: %08x\n", hr);
 
+        hr = IXAudio2_QueryInterface(xa, &IID_IXAudio27, (void**)&xa27);
+        ok(hr == E_NOINTERFACE, "XA28 object should support IXAudio27, gave: %08x\n", hr);
+
         has_devices = check_has_devices(xa);
         if(has_devices){
             test_simple_streaming(xa);

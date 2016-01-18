@@ -1198,10 +1198,12 @@ static HRESULT WINAPI IXAudio2Impl_QueryInterface(IXAudio2 *iface, REFIID riid,
         /* all xaudio versions before 28 share an IID */
 #if XAUDIO2_VER == 0
         *ppvObject = &This->IXAudio20_iface;
-#elif XAUDIO2_VER == 1 || XAUDIO2_VER == 2
+#elif XAUDIO2_VER <= 2
         *ppvObject = &This->IXAudio22_iface;
-#else
+#elif XAUDIO2_VER <= 7
         *ppvObject = &This->IXAudio27_iface;
+#else
+        *ppvObject = NULL;
 #endif
     }else
         *ppvObject = NULL;
@@ -1374,10 +1376,15 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
 
         list_add_head(&This->source_voices, &src->entry);
 
-        src->IXAudio20SourceVoice_iface.lpVtbl = &XAudio20SourceVoice_Vtbl;
-        src->IXAudio23SourceVoice_iface.lpVtbl = &XAudio23SourceVoice_Vtbl;
-        src->IXAudio27SourceVoice_iface.lpVtbl = &XAudio27SourceVoice_Vtbl;
         src->IXAudio2SourceVoice_iface.lpVtbl = &XAudio2SourceVoice_Vtbl;
+
+#if XAUDIO2_VER == 0
+        src->IXAudio20SourceVoice_iface.lpVtbl = &XAudio20SourceVoice_Vtbl;
+#elif XAUDIO2_VER <= 3
+        src->IXAudio23SourceVoice_iface.lpVtbl = &XAudio23SourceVoice_Vtbl;
+#elif XAUDIO2_VER <= 7
+        src->IXAudio27SourceVoice_iface.lpVtbl = &XAudio27SourceVoice_Vtbl;
+#endif
 
         InitializeCriticalSection(&src->lock);
         src->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": XA2SourceImpl.lock");
@@ -1458,9 +1465,13 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
 
         list_add_head(&This->submix_voices, &sub->entry);
 
-        sub->IXAudio20SubmixVoice_iface.lpVtbl = &XAudio20SubmixVoice_Vtbl;
-        sub->IXAudio23SubmixVoice_iface.lpVtbl = &XAudio23SubmixVoice_Vtbl;
         sub->IXAudio2SubmixVoice_iface.lpVtbl = &XAudio2SubmixVoice_Vtbl;
+
+#if XAUDIO2_VER == 0
+        sub->IXAudio20SubmixVoice_iface.lpVtbl = &XAudio20SubmixVoice_Vtbl;
+#elif XAUDIO2_VER <= 3
+        sub->IXAudio23SubmixVoice_iface.lpVtbl = &XAudio23SubmixVoice_Vtbl;
+#endif
 
         InitializeCriticalSection(&sub->lock);
         sub->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": XA2SubmixImpl.lock");
@@ -1944,13 +1955,22 @@ static HRESULT WINAPI XAudio2CF_CreateInstance(IClassFactory *iface, IUnknown *p
     if(!object)
         return E_OUTOFMEMORY;
 
-    object->IXAudio20_iface.lpVtbl = &XAudio20_Vtbl;
-    object->IXAudio22_iface.lpVtbl = &XAudio22_Vtbl;
-    object->IXAudio27_iface.lpVtbl = &XAudio27_Vtbl;
     object->IXAudio2_iface.lpVtbl = &XAudio2_Vtbl;
-    object->IXAudio20MasteringVoice_iface.lpVtbl = &XAudio20MasteringVoice_Vtbl;
-    object->IXAudio23MasteringVoice_iface.lpVtbl = &XAudio23MasteringVoice_Vtbl;
     object->IXAudio2MasteringVoice_iface.lpVtbl = &XAudio2MasteringVoice_Vtbl;
+
+#if XAUDIO2_VER == 0
+    object->IXAudio20_iface.lpVtbl = &XAudio20_Vtbl;
+#elif XAUDIO2_VER <= 2
+    object->IXAudio22_iface.lpVtbl = &XAudio22_Vtbl;
+#elif XAUDIO2_VER <= 7
+    object->IXAudio27_iface.lpVtbl = &XAudio27_Vtbl;
+#endif
+
+#if XAUDIO2_VER == 0
+    object->IXAudio20MasteringVoice_iface.lpVtbl = &XAudio20MasteringVoice_Vtbl;
+#elif XAUDIO2_VER <= 3
+    object->IXAudio23MasteringVoice_iface.lpVtbl = &XAudio23MasteringVoice_Vtbl;
+#endif
 
     list_init(&object->source_voices);
     list_init(&object->submix_voices);
