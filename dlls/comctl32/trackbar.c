@@ -1821,7 +1821,7 @@ TRACKBAR_KeyDown (TRACKBAR_INFO *infoPtr, INT nVirtKey)
     }
 
     if (pos != infoPtr->lPos) {
-	infoPtr->flags |=TB_THUMBPOSCHANGED;
+	TRACKBAR_UpdateThumb (infoPtr);
 	TRACKBAR_InvalidateThumbMove (infoPtr, pos, infoPtr->lPos);
     }
 
