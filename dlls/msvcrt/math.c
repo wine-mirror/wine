@@ -2684,6 +2684,27 @@ int CDECL MSVCR120__dsign(double x)
     return signbit(x) ? 0x8000 : 0;
 }
 
+
+/*********************************************************************
+ *      _dpcomp (MSVCR120.@)
+ */
+int CDECL MSVCR120__dpcomp(double x, double y)
+{
+    if(isnan(x) || isnan(y))
+        return 0;
+
+    if(x == y) return 2;
+    return x < y ? 1 : 4;
+}
+
+/*********************************************************************
+ *      _fdpcomp (MSVCR120.@)
+ */
+int CDECL MSVCR120__fdpcomp(float x, float y)
+{
+    return MSVCR120__dpcomp(x, y);
+}
+
 /*********************************************************************
  *      fminf (MSVCR120.@)
  */

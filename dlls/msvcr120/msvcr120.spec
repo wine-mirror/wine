@@ -1110,7 +1110,7 @@
 @ cdecl _difftime32(long long) MSVCRT__difftime32
 @ cdecl _difftime64(long long) MSVCRT__difftime64
 @ stub _dosmaperr
-@ stub _dpcomp
+@ cdecl _dpcomp(double double) MSVCR120__dpcomp
 @ cdecl _dsign(double) MSVCR120__dsign
 @ extern _dstbias MSVCRT__dstbias
 @ cdecl _dtest(ptr) MSVCR120__dtest
@@ -1144,7 +1144,7 @@
 @ cdecl _fcvt_s(ptr long double long ptr ptr) MSVCRT__fcvt_s
 @ cdecl _fdclass(float) MSVCR120__fdclass
 @ cdecl _fdopen(long str) MSVCRT__fdopen
-@ stub _fdpcomp
+@ cdecl _fdpcomp(float float) MSVCR120__fdpcomp
 @ cdecl _fdsign(float) MSVCR120__fdsign
 @ cdecl _fdtest(ptr) MSVCR120__fdtest
 @ cdecl _fflush_nolock(ptr) MSVCRT__fflush_nolock
@@ -1392,7 +1392,7 @@
 @ cdecl _jn(long double) MSVCRT__jn
 @ cdecl _kbhit()
 @ cdecl _ldclass(double) MSVCR120__ldclass
-@ stub _ldpcomp
+@ cdecl _ldpcomp(double double) MSVCR120__dpcomp
 @ cdecl _ldsign(double) MSVCR120__dsign
 @ cdecl _ldtest(ptr) MSVCR120__ldtest
 @ cdecl _lfind(ptr ptr ptr long ptr)
