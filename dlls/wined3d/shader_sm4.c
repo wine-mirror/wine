@@ -175,6 +175,7 @@ enum wined3d_sm4_input_primitive_type
 
 enum wined3d_sm4_swizzle_type
 {
+    WINED3D_SM4_SWIZZLE_NONE            = 0x0,
     WINED3D_SM4_SWIZZLE_VEC4            = 0x1,
     WINED3D_SM4_SWIZZLE_SCALAR          = 0x2,
 };
@@ -725,6 +726,10 @@ static BOOL shader_sm4_read_src_param(struct wined3d_sm4_data *priv, const DWORD
 
         switch (swizzle_type)
         {
+            case WINED3D_SM4_SWIZZLE_NONE:
+                src_param->swizzle = WINED3DSP_NOSWIZZLE;
+                break;
+
             case WINED3D_SM4_SWIZZLE_SCALAR:
                 src_param->swizzle = (token & WINED3D_SM4_SWIZZLE_MASK) >> WINED3D_SM4_SWIZZLE_SHIFT;
                 src_param->swizzle = (src_param->swizzle & 0x3) * 0x55;
