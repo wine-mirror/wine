@@ -4324,7 +4324,7 @@ static void shader_glsl_ld(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &lod_param);
     sampler_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map,
             ins->src[1].reg.idx[0].offset, WINED3D_SAMPLER_DEFAULT);
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, ins->src[1].swizzle,
             NULL, NULL, lod_param.param_str, "%s", coord_param.param_str);
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
@@ -4339,7 +4339,7 @@ static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[0], sample_function.coord_mask, &coord_param);
     sampler_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map,
             ins->src[1].reg.idx[0].offset, ins->src[2].reg.idx[0].offset);
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, ins->src[1].swizzle,
             NULL, NULL, NULL, "%s", coord_param.param_str);
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
@@ -4356,7 +4356,7 @@ static void shader_glsl_sample_lod(const struct wined3d_shader_instruction *ins)
     shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &lod_param);
     sampler_idx = shader_glsl_find_sampler(&ins->ctx->reg_maps->sampler_map,
             ins->src[1].reg.idx[0].offset, ins->src[2].reg.idx[0].offset);
-    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, WINED3DSP_NOSWIZZLE,
+    shader_glsl_gen_sample_code(ins, sampler_idx, &sample_function, ins->src[1].swizzle,
             NULL, NULL, lod_param.param_str, "%s", coord_param.param_str);
     shader_glsl_release_sample_function(ins->ctx, &sample_function);
 }
