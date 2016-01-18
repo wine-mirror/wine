@@ -2438,6 +2438,70 @@ static void _test_item_ScriptXtoX(SCRIPT_ANALYSIS *psa, int cChars, int cGlyphs,
     }
 }
 
+#define test_caret_item_ScriptXtoCP(a,b,c,d,e,f) _test_caret_item_ScriptXtoCP(__LINE__,a,b,c,d,e,f)
+
+static void _test_caret_item_ScriptXtoCP(int line, SCRIPT_ANALYSIS *psa, int cChars, int cGlyphs, const int* offsets, const WORD *pwLogClust, const int* piAdvance )
+{
+    int iX, iCP, i;
+    int icChars, icGlyphs;
+    int piCP;
+    int clusterSize;
+    HRESULT hr;
+    SCRIPT_VISATTR psva[10];
+    int piTrailing;
+    int direction;
+
+    memset(psva,0,sizeof(psva));
+    direction = (psa->fRTL)?-1:+1;
+
+    for(iX = -1, i = iCP = 0; i < cChars; i++)
+    {
+        if (offsets[i] != iX)
+        {
+            iX = offsets[i];
+            iCP = i;
+        }
+        icChars = cChars;
+        icGlyphs = cGlyphs;
+        hr = ScriptXtoCP(iX, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piCP, &piTrailing);
+        ok_(__FILE__,line)(hr == S_OK, "ScriptXtoCP: should return S_OK not %08x\n", hr);
+        ok_(__FILE__,line)(piCP == iCP, "ScriptXtoCP: iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
+        ok_(__FILE__,line)(piTrailing == 0, "ScriptXtoCP: iX=%d should return piTrailing=0 not %d\n", iX, piTrailing);
+    }
+
+    for(iX = -2, i = 0; i < cChars; i++)
+    {
+        if (offsets[i]+direction != iX)
+        {
+            iX = offsets[i] + direction;
+            iCP = i;
+        }
+        icChars = cChars;
+        icGlyphs = cGlyphs;
+        hr = ScriptXtoCP(iX, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piCP, &piTrailing);
+        ok_(__FILE__,line)(hr == S_OK, "ScriptXtoCP leading: should return S_OK not %08x\n", hr);
+        ok_(__FILE__,line)(piCP == iCP, "ScriptXtoCP leading: iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
+        ok_(__FILE__,line)(piTrailing == 0, "ScriptXtoCP leading: iX=%d should return piTrailing=0 not %d\n", iX, piTrailing);
+    }
+
+    for(clusterSize = 0, iCP = 0, iX = -2, i = 0; i < cChars; i++)
+    {
+        clusterSize++;
+        if (offsets[i] != offsets[i+1])
+        {
+            iX = offsets[i+1]-direction;
+            icChars = cChars;
+            icGlyphs = cGlyphs;
+            hr = ScriptXtoCP(iX, icChars, icGlyphs, pwLogClust, psva, piAdvance, psa, &piCP, &piTrailing);
+            ok_(__FILE__,line)(hr == S_OK, "ScriptXtoCP trailing: should return S_OK not %08x\n", hr);
+            ok_(__FILE__,line)(piCP == iCP, "ScriptXtoCP trailing: iX=%d should return piCP=%d not %d\n", iX, iCP, piCP);
+            ok_(__FILE__,line)(piTrailing == clusterSize, "ScriptXtoCP trailing: iX=%d should return piTrailing=%d not %d\n", iX, clusterSize, piTrailing);
+            iCP = i+1;
+            clusterSize = 0;
+        }
+    }
+}
+
 static void test_ScriptXtoX(void)
 /****************************************************************************************
  *  This routine tests the ScriptXtoCP and ScriptCPtoX functions using static variables *
@@ -2446,17 +2510,28 @@ static void test_ScriptXtoX(void)
     WORD pwLogClust[10] = {0, 0, 0, 1, 1, 2, 2, 3, 3, 3};
     WORD pwLogClust_RTL[10] = {3, 3, 3, 2, 2, 1, 1, 0, 0, 0};
     WORD pwLogClust_2[7] = {4, 3, 3, 2, 1, 0 ,0};
+    WORD pwLogClust_3[17] = {0, 1, 1, 1, 1, 4, 5, 6, 6, 8, 8, 8, 8, 11, 11, 13, 13};
+    WORD pwLogClust_3_RTL[17] = {13, 13, 11, 11, 8, 8, 8, 8, 6, 6, 5, 4, 1, 1, 1, 1, 0};
     int piAdvance[10] = {201, 190, 210, 180, 170, 204, 189, 195, 212, 203};
     int piAdvance_2[5] = {39, 26, 19, 17, 11};
+    int piAdvance_3[15] = {6, 6, 0, 0, 10, 5, 10, 0, 12, 0, 0, 9, 0, 10, 0};
     static const int offsets[13] = {0, 67, 134, 201, 296, 391, 496, 601, 1052, 1503, 1954, 1954, 1954};
     static const int offsets_RTL[13] = {781, 721, 661, 601, 496, 391, 296, 201, 134, 67, 0, 0, 0};
     static const int offsets_2[10] = {112, 101, 92, 84, 65, 39, 19, 0, 0, 0};
-    SCRIPT_VISATTR psva[10];
+
+    static const int offsets_3[19] = {0, 6, 6, 6, 6, 12, 22, 27, 27, 37, 37, 37, 37, 49, 49, 58, 58, 68, 68};
+    static const int offsets_3_RTL[19] = {68, 68, 58, 58, 49, 49, 49, 49, 37, 37, 27, 22, 12, 12, 12, 12, 6, 6};
+
+    SCRIPT_VISATTR psva[15];
     SCRIPT_ANALYSIS sa;
-    int iX;
+    SCRIPT_ITEM items[2];
+    int iX, i;
     int piCP;
     int piTrailing;
     HRESULT hr;
+    static const WCHAR hebrW[] = { 0x5be, 0};
+    static const WCHAR thaiW[] = { 0xe2a, 0};
+    const SCRIPT_PROPERTIES **ppScriptProperties;
 
     memset(&sa, 0 , sizeof(SCRIPT_ANALYSIS));
     memset(psva, 0, sizeof(psva));
@@ -2518,6 +2593,34 @@ static void test_ScriptXtoX(void)
     sa.fRTL = TRUE;
     test_item_ScriptXtoX(&sa, 10, 10, offsets_RTL, pwLogClust_RTL, piAdvance);
     test_item_ScriptXtoX(&sa, 7, 5, offsets_2, pwLogClust_2, piAdvance_2);
+
+    /* Get thai eScript, This will do LTR and fNeedsCaretInfo */
+    hr = ScriptItemize(thaiW, 1, 2, NULL, NULL, items, &i);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(i == 1, "got %d\n", i);
+    sa = items[0].a;
+
+    test_caret_item_ScriptXtoCP(&sa, 17, 15, offsets_3, pwLogClust_3, piAdvance_3);
+
+    /* Get hebrew eScript, This will do RTL and fNeedsCaretInfo */
+    hr = ScriptItemize(hebrW, 1, 2, NULL, NULL, items, &i);
+    ok(hr == S_OK, "got %08x\n", hr);
+    ok(i == 1, "got %d\n", i);
+    sa = items[0].a;
+
+    /* Note: This behavior CHANGED in uniscribe versions...
+     *       so we only want to test if fNeedsCaretInfo is set */
+    hr = ScriptGetProperties(&ppScriptProperties, &i);
+    if (ppScriptProperties[sa.eScript]->fNeedsCaretInfo)
+    {
+        test_caret_item_ScriptXtoCP(&sa, 17, 15, offsets_3_RTL, pwLogClust_3_RTL, piAdvance_3);
+        hr = ScriptXtoCP(0, 17, 15, pwLogClust_3_RTL, psva, piAdvance_3, &sa, &piCP, &piTrailing);
+        ok(hr == S_OK, "ScriptXtoCP: should return S_OK not %08x\n", hr);
+        ok(piCP == 16, "ScriptXtoCP: iX=0 should return piCP=16 not %d\n", piCP);
+        ok(piTrailing == 1, "ScriptXtoCP: iX=0 should return piTrailing=1 not %d\n", piTrailing);
+    }
+    else
+        win_skip("Uniscribe version too old to test Hebrew clusters\n");
 }
 
 static void test_ScriptString(HDC hdc)

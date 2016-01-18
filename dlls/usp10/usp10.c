@@ -26,6 +26,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -2573,9 +2574,100 @@ HRESULT WINAPI ScriptCPtoX(int iCP,
     return S_OK;
 }
 
+/* Count the number of characters in a cluster and its starting index*/
+static inline BOOL get_cluster_data(const WORD *pwLogClust, int cChars, int cluster_index, int *cluster_size, int *start_index)
+{
+    int size = 0;
+    int i;
+
+    for (i = 0; i < cChars; i++)
+    {
+        if (pwLogClust[i] == cluster_index)
+        {
+            if (!size && start_index)
+            {
+                *start_index = i;
+                if (!cluster_size)
+                    return TRUE;
+            }
+            size++;
+        }
+        else if (size) break;
+    }
+    if (cluster_size)
+        *cluster_size = size;
+
+    return (size > 0);
+}
+
+/*
+    To handle multi-glyph clusters we need to find all the glyphs that are
+    represented in the cluster. This involves finding the glyph whose
+    index is the cluster index as well as whose glyph indices are greater than
+    our cluster index but not part of a new cluster.
+
+    Then we sum all those glyphs' advances.
+*/
+static inline int get_cluster_advance(const int* piAdvance,
+                                      const SCRIPT_VISATTR *psva,
+                                      const WORD *pwLogClust, int cGlyphs,
+                                      int cChars, int cluster, int direction)
+{
+    int glyph_start;
+    int glyph_end;
+    int i, advance;
+
+    if (direction > 0)
+        i = 0;
+    else
+        i = (cChars - 1);
+
+    for (glyph_start = -1, glyph_end = -1; i < cChars && i >= 0 && (glyph_start < 0 || glyph_end < 0); i+=direction)
+    {
+        if (glyph_start < 0 && pwLogClust[i] != cluster) continue;
+        if (pwLogClust[i] == cluster && glyph_start < 0) glyph_start = pwLogClust[i];
+        if (glyph_start >= 0 && glyph_end < 0 && pwLogClust[i] != cluster) glyph_end = pwLogClust[i];
+    }
+    if (glyph_end < 0)
+    {
+        if (direction > 0)
+            glyph_end = cGlyphs;
+        else
+        {
+            /* Don't fully understand multi-glyph reversed clusters yet,
+             * do they occur for real or just in our test? */
+            FIXME("multi-glyph reversed clusters found\n");
+            glyph_end = glyph_start + 1;
+        }
+    }
+
+    /* Check for fClusterStart, finding this generally would mean a malformed set of data */
+    for (i = glyph_start+1; i< glyph_end; i++)
+    {
+        if (psva[i].fClusterStart)
+        {
+            glyph_end = i;
+            break;
+        }
+    }
+
+    for (advance = 0, i = glyph_start; i < glyph_end; i++)
+        advance += piAdvance[i];
+
+    return advance;
+}
+
+
 /***********************************************************************
  *      ScriptXtoCP (USP10.@)
  *
+ * Basic algorithm :
+ *  use piAdvance to find the cluster we are looking at
+ *  Find the character that is the first character of the cluster
+ *  That is our base piCP
+ *  If the script snaps to cluster boundries (Hebrew, Indic, Thai) then we
+ *  are good Otherwise if the cluster is larger than 1 glyph we need to
+ *  determine how far through the cluster to advance the cursor.
  */
 HRESULT WINAPI ScriptXtoCP(int iX,
                            int cChars,
@@ -2587,16 +2679,11 @@ HRESULT WINAPI ScriptXtoCP(int iX,
                            int *piCP,
                            int *piTrailing)
 {
-    int item;
-    float iPosX;
-    float iLastPosX;
-    int iSpecial = -1;
-    int iCluster = -1;
-    int clust_size = 1;
-    int cjump = 0;
-    int advance;
-    float special_size = 0.0;
     int direction = 1;
+    int iPosX;
+    int i;
+    int glyph_index, cluster_index;
+    int cluster_size;
 
     TRACE("(%d,%d,%d,%p,%p,%p,%p,%p,%p)\n",
           iX, cChars, cGlyphs, pwLogClust, psva, piAdvance,
@@ -2605,128 +2692,156 @@ HRESULT WINAPI ScriptXtoCP(int iX,
     if (psa->fRTL && ! psa->fLogicalOrder)
         direction = -1;
 
-    if (direction<0)
+    /* Handle an iX < 0 */
+    if (iX < 0)
     {
-        int max_clust = pwLogClust[0];
-
-        if (iX < 0)
+        if (direction < 0)
         {
             *piCP = cChars;
             *piTrailing = 0;
-            return S_OK;
         }
+        else
+        {
+            *piCP = -1;
+            *piTrailing = 1;
+        }
+        return S_OK;
+    }
 
-        for (item=0; item < cChars; item++)
-            if (pwLogClust[item] > max_clust)
+    /* Looking for non-reversed clusters in a reversed string */
+    if (direction < 0)
+    {
+        int max_clust = pwLogClust[0];
+        for (i=0; i< cChars; i++)
+            if (pwLogClust[i] > max_clust)
             {
-                ERR("We do not handle non reversed clusters properly\n");
+                FIXME("We do not handle non reversed clusters properly\n");
                 break;
             }
     }
 
-    if (iX < 0)
+    /* find the glyph_index based in iX */
+    if (direction > 0)
     {
-        *piCP = -1;
-        *piTrailing = 1;
-        return S_OK;
+        for (glyph_index = -1, iPosX = iX; iPosX >=0 && glyph_index < cGlyphs; iPosX -= piAdvance[glyph_index+1], glyph_index++)
+            ;
+    }
+    else
+    {
+        for (glyph_index = -1, iPosX = iX; iPosX > 0 && glyph_index < cGlyphs; iPosX -= piAdvance[glyph_index+1], glyph_index++)
+            ;
     }
 
-    iPosX = iLastPosX = 0;
-    if (direction > 0)
-        item = 0;
-    else
-        item = cChars - 1;
-    for (; iPosX <= iX && item < cChars && item >= 0; item+=direction)
+    TRACE("iPosX %i ->  glyph_index %i (%i)\n", iPosX, glyph_index, cGlyphs);
+
+    *piTrailing = 0;
+    if (glyph_index >= 0 && glyph_index < cGlyphs)
     {
-        iLastPosX = iPosX;
-        if (iSpecial == -1 &&
-             (iCluster == -1 ||
-              (iCluster != -1 &&
-                 ((direction > 0 && iCluster+clust_size <= item) ||
-                  (direction < 0 && iCluster-clust_size >= item))
-              )
-             )
-            )
+        /* find the cluster */
+        if (direction > 0 )
+            for (i = 0, cluster_index = pwLogClust[0]; i < cChars && pwLogClust[i] <= glyph_index; cluster_index=pwLogClust[i++])
+                ;
+        else
+            for (i = 0, cluster_index = pwLogClust[0]; i < cChars && pwLogClust[i] >= glyph_index; cluster_index=pwLogClust[i++])
+                ;
+
+        TRACE("cluster_index %i\n", cluster_index);
+
+        if (direction < 0 && iPosX >= 0 && glyph_index != cluster_index)
         {
-            int check;
-            int clust = pwLogClust[item];
+            /* We are off the end of the string */
+            *piCP = -1;
+            *piTrailing = 1;
+            return S_OK;
+        }
 
-            iCluster = -1;
-            cjump = 0;
-            clust_size = get_cluster_size(pwLogClust, cChars, item, direction,
-                                          &iCluster, &check);
-            advance = get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, clust, direction);
+        get_cluster_data(pwLogClust, cChars, cluster_index, &cluster_size, &i);
 
-            if (check >= cChars && direction > 0)
+        TRACE("first char index %i\n",i);
+        if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
+        {
+            /* Check trailing */
+            if (glyph_index != cluster_index ||
+                (direction > 0 && abs(iPosX) <= (piAdvance[glyph_index] / 2)) ||
+                (direction < 0 && abs(iPosX) >= (piAdvance[glyph_index] / 2)))
+                *piTrailing = cluster_size;
+        }
+        else
+        {
+            if (cluster_size > 1)
             {
-                int glyph;
-                for (glyph = clust; glyph < cGlyphs; glyph++)
-                    special_size += get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, glyph, direction);
-                iSpecial = item;
-                special_size /= (cChars - item);
-                iPosX += special_size;
-            }
-            else
-            {
-                if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
+                /* Be part way through the glyph cluster based on size and position */
+                int cluster_advance = get_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, cluster_index, direction);
+                double cluster_part_width = cluster_advance / (float)cluster_size;
+                double adv;
+                int part_index;
+
+                /* back up to the beginning of the cluster */
+                for (adv = iPosX, part_index = cluster_index; part_index <= glyph_index; part_index++)
+                    adv += piAdvance[part_index];
+                if (adv > iX) adv = iX;
+
+                TRACE("Multi-char cluster, no snap\n");
+                TRACE("cluster size %i, pre-cluster iPosX %f\n",cluster_size, adv);
+                TRACE("advance %i divides into %f per char\n", cluster_advance, cluster_part_width);
+                if (direction > 0)
                 {
-                    if (!cjump)
-                        iPosX += advance;
-                    cjump++;
+                    for (part_index = 0; adv >= 0; adv-=cluster_part_width, part_index++)
+                        ;
+                    if (part_index) part_index--;
                 }
                 else
-                    iPosX += advance / (float)clust_size;
-            }
-        }
-        else if (iSpecial != -1)
-            iPosX += special_size;
-        else /* (iCluster != -1) */
-        {
-            int adv = get_glyph_cluster_advance(piAdvance, psva, pwLogClust, cGlyphs, cChars, pwLogClust[iCluster], direction);
-            if (scriptInformation[psa->eScript].props.fNeedsCaretInfo)
-            {
-                if (!cjump)
-                    iPosX += adv;
-                cjump++;
+                {
+                    for (part_index = 0; adv > 0; adv-=cluster_part_width, part_index++)
+                        ;
+                    if (part_index > cluster_size)
+                    {
+                        adv += cluster_part_width;
+                        part_index=cluster_size;
+                    }
+                }
+
+                TRACE("base_char %i part_index %i, leftover advance %f\n",i, part_index, adv);
+
+                if (direction > 0)
+                    i += part_index;
+                else
+                    i += (cluster_size - part_index);
+
+                /* Check trailing */
+                if ((direction > 0 && fabs(adv) <= (cluster_part_width / 2.0)) ||
+                    (direction < 0 && adv && fabs(adv) >= (cluster_part_width / 2.0)))
+                    *piTrailing = 1;
             }
             else
-                iPosX += adv / (float)clust_size;
+            {
+                /* Check trailing */
+                if ((direction > 0 && abs(iPosX) <= (piAdvance[glyph_index] / 2)) ||
+                    (direction < 0 && abs(iPosX) >= (piAdvance[glyph_index] / 2)))
+                    *piTrailing = 1;
+            }
         }
-    }
-
-    if (direction > 0)
-    {
-        if (iPosX > iX)
-            item--;
-        if (item < cChars && ((iPosX - iLastPosX) / 2.0) + iX >= iPosX)
-        {
-            if (scriptInformation[psa->eScript].props.fNeedsCaretInfo && clust_size > 1)
-                item+=(clust_size-1);
-            *piTrailing = 1;
-        }
-        else
-            *piTrailing = 0;
     }
     else
     {
-        if (iX == iLastPosX)
-            item++;
-        if (iX >= iLastPosX && iX <= iPosX)
-            item++;
+        TRACE("Point falls outside of string\n");
+        if (glyph_index < 0)
+            i = cChars-1;
+        else /* (glyph_index >= cGlyphs) */
+            i = cChars;
 
-        if (iLastPosX == iX)
-            *piTrailing = 0;
-        else if (item < 0 || ((iLastPosX - iPosX) / 2.0) + iX <= iLastPosX)
+        /* If not snaping in the reverse direction (such as Hebrew) Then 0
+           point flow to the next character */
+        if (direction < 0)
         {
-            if (scriptInformation[psa->eScript].props.fNeedsCaretInfo && clust_size > 1)
-                item-=(clust_size-1);
-            *piTrailing = 1;
+            if (!scriptInformation[psa->eScript].props.fNeedsCaretInfo && abs(iPosX) == piAdvance[glyph_index])
+                i++;
+            else
+                *piTrailing = 1;
         }
-        else
-            *piTrailing = 0;
     }
 
-    *piCP = item;
+    *piCP = i;
 
     TRACE("*piCP=%d\n", *piCP);
     TRACE("*piTrailing=%d\n", *piTrailing);
