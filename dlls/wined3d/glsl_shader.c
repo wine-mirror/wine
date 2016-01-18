@@ -3019,7 +3019,6 @@ static void shader_glsl_udiv(const struct wined3d_shader_instruction *ins)
 
     if (ins->dst[0].reg.type != WINED3DSPR_NULL)
     {
-
         if (ins->dst[1].reg.type != WINED3DSPR_NULL)
         {
             char dst_mask[6];
@@ -3027,15 +3026,15 @@ static void shader_glsl_udiv(const struct wined3d_shader_instruction *ins)
             write_mask = shader_glsl_get_write_mask(&ins->dst[0], dst_mask);
             shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
             shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &src1_param);
-            shader_addline(buffer, "tmp0%s = %s / %s;\n",
+            shader_addline(buffer, "tmp0%s = uintBitsToFloat(%s / %s);\n",
                     dst_mask, src0_param.param_str, src1_param.param_str);
 
             write_mask = shader_glsl_append_dst_ext(buffer, ins, &ins->dst[1], ins->dst[1].reg.data_type);
             shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src0_param);
             shader_glsl_add_src_param(ins, &ins->src[1], write_mask, &src1_param);
-            shader_addline(buffer, "%s %% %s));\n", src0_param.param_str, src1_param.param_str);
+            shader_addline(buffer, "%s %% %s);\n", src0_param.param_str, src1_param.param_str);
 
-            shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], ins->dst[0].reg.data_type);
+            shader_glsl_append_dst_ext(buffer, ins, &ins->dst[0], WINED3D_DATA_FLOAT);
             shader_addline(buffer, "tmp0%s);\n", dst_mask);
         }
         else
