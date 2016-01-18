@@ -11595,6 +11595,22 @@ CPPFLAGS=$ac_save_CPPFLAGS
 test -z "$GNUTLS_CFLAGS" || GNUTLS_CFLAGS=`echo " $GNUTLS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
 test -z "$GNUTLS_LIBS" || GNUTLS_LIBS=`echo " $GNUTLS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
+    ac_wine_check_funcs_save_LIBS="$LIBS"
+LIBS="$LIBS $GNUTLS_LIBS"
+for ac_func in gnutls_hash
+do :
+  ac_fn_c_check_func "$LINENO" "gnutls_hash" "ac_cv_func_gnutls_hash"
+if test "x$ac_cv_func_gnutls_hash" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GNUTLS_HASH 1
+_ACEOF
+
+else
+  as_fn_append wine_notices "|libgnutls ${notice_platform}development files too old, no bcrypt hash support."
+fi
+done
+
+LIBS="$ac_wine_check_funcs_save_LIBS"
 fi
 if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
   case "x$with_gnutls" in

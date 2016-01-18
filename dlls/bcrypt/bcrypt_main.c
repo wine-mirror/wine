@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(bcrypt);
 
 static HINSTANCE instance;
 
-#if defined(SONAME_LIBGNUTLS) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#if defined(HAVE_GNUTLS_HASH) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static void *libgnutls_handle;
@@ -116,7 +116,7 @@ static void gnutls_uninitialize(void)
     wine_dlclose( libgnutls_handle, NULL, 0 );
     libgnutls_handle = NULL;
 }
-#endif /* SONAME_LIBGNUTLS && !HAVE_COMMONCRYPTO_COMMONDIGEST_H */
+#endif /* HAVE_GNUTLS_HASH && !HAVE_COMMONCRYPTO_COMMONDIGEST_H */
 
 NTSTATUS WINAPI BCryptEnumAlgorithms(ULONG dwAlgOperations, ULONG *pAlgCount,
                                      BCRYPT_ALGORITHM_IDENTIFIER **ppAlgList, ULONG dwFlags)
@@ -338,7 +338,7 @@ static NTSTATUS hash_finish( struct hash *hash, UCHAR *output, ULONG size )
     }
     return STATUS_SUCCESS;
 }
-#elif defined(SONAME_LIBGNUTLS)
+#elif defined(HAVE_GNUTLS_HASH)
 struct hash
 {
     struct object    hdr;
@@ -642,14 +642,14 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     case DLL_PROCESS_ATTACH:
         instance = hinst;
         DisableThreadLibraryCalls( hinst );
-#if defined(SONAME_LIBGNUTLS) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#if defined(HAVE_GNUTLS_HASH) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
         gnutls_initialize();
 #endif
         break;
 
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-#if defined(SONAME_LIBGNUTLS) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
+#if defined(HAVE_GNUTLS_HASH) && !defined(HAVE_COMMONCRYPTO_COMMONDIGEST_H)
         gnutls_uninitialize();
 #endif
         break;

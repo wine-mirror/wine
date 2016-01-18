@@ -228,6 +228,9 @@
 /* Define to 1 if you have the `getuid' function. */
 #undef HAVE_GETUID
 
+/* Define to 1 if you have the `gnutls_hash' function. */
+#undef HAVE_GNUTLS_HASH
+
 /* Define if we have the libgphoto2 development environment */
 #undef HAVE_GPHOTO2
 
