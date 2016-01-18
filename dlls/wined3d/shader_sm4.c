@@ -621,9 +621,6 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
     {
         DWORD m = *(*ptr)++;
 
-        /* FIXME: This will probably break down at some point. The SM4
-         * modifiers look like flags, while wined3d currently has an enum
-         * with possible combinations, e.g. WINED3DSPSM_ABSNEG. */
         switch (m)
         {
             case 0x41:
@@ -632,6 +629,10 @@ static BOOL shader_sm4_read_param(struct wined3d_sm4_data *priv, const DWORD **p
 
             case 0x81:
                 *modifier = WINED3DSPSM_ABS;
+                break;
+
+            case 0xc1:
+                *modifier = WINED3DSPSM_ABSNEG;
                 break;
 
             default:
