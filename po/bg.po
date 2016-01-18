@@ -12871,7 +12871,9 @@ msgstr ""
 "приложенията настройки."
 
 #: winecfg.rc:159
-msgid "&Add application..."
+#, fuzzy
+#| msgid "&Add application..."
+msgid "Add appli&cation..."
 msgstr "&Добавяне на приложение..."
 
 #: winecfg.rc:160
@@ -12934,9 +12936,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr "Нова библиотечна замяна:"
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "&Добави"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr ""
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -12964,7 +12966,9 @@ msgid "&Native (Windows)"
 msgstr "&Собствена (Windows)"
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
+#, fuzzy
+#| msgid "Bui&ltin then Native"
+msgid "Buil&tin then Native"
 msgstr "В&градена, после собствена"
 
 #: winecfg.rc:212
@@ -12989,11 +12993,14 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:236
-msgid "&Add..."
+#, fuzzy
+#| msgid "&Add..."
+msgid "A&dd..."
 msgstr "&Добави..."
 
 #: winecfg.rc:238
-msgid "Auto&detect"
+#, fuzzy
+msgid "Aut&odetect"
 msgstr "&Открий"
 
 #: winecfg.rc:241
@@ -13001,7 +13008,9 @@ msgid "&Path:"
 msgstr "&Път:"
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
+#, fuzzy
+#| msgid "Show &Advanced"
+msgid "Show Advan&ced"
 msgstr "Покажи допълнителните"
 
 #: winecfg.rc:249
@@ -13021,7 +13030,9 @@ msgid "S&erial:"
 msgstr "&Номер:"
 
 #: winecfg.rc:258
-msgid "Show &dot files"
+#, fuzzy
+#| msgid "Show &dot files"
+msgid "&Show dot files"
 msgstr "Показвай файловете, започващи с точка"
 
 #: winecfg.rc:265
@@ -13106,7 +13117,9 @@ msgid "Select the Unix target directory, please."
 msgstr "Изберете Unix директория"
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
+#, fuzzy
+#| msgid "Hide &Advanced"
+msgid "Hide Advan&ced"
 msgstr "Скрий допълнителните"
 
 #: winecfg.rc:39
@@ -14317,6 +14330,10 @@ msgstr "Съхрани &като..."
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr ""
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "&Добави"
 
 #: wordpad.rc:251
 #, fuzzy

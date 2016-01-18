@@ -13140,8 +13140,8 @@ msgstr ""
 "到這個分頁， 除了調整預設設定， 也能調整個別程式的設定。"
 
 #: winecfg.rc:159
-msgid "&Add application..."
-msgstr "新增程式設定(&A)..."
+msgid "Add appli&cation..."
+msgstr "新增程式設定(&C)..."
 
 #: winecfg.rc:160
 msgid "&Remove application"
@@ -13200,9 +13200,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr "新增函式庫覆載(&N)："
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "新增(&A)"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr "新增(&D)"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13229,8 +13229,8 @@ msgid "&Native (Windows)"
 msgstr "原生(Windows)(&N)"
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
-msgstr "內建先於原生(&L)"
+msgid "Buil&tin then Native"
+msgstr "內建先於原生(&T)"
 
 #: winecfg.rc:212
 msgid "Nati&ve then Builtin"
@@ -13253,20 +13253,20 @@ msgid ""
 msgstr "連線到掛載管理員時失敗，無法編輯磁碟組態。"
 
 #: winecfg.rc:236
-msgid "&Add..."
-msgstr "加入(&A)..."
+msgid "A&dd..."
+msgstr "加入(&D)..."
 
 #: winecfg.rc:238
-msgid "Auto&detect"
-msgstr "自動偵測(&D)"
+msgid "Aut&odetect"
+msgstr "自動偵測(&O)"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "路徑(&P)："
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
-msgstr "顯示進階選項(&A)"
+msgid "Show Advan&ced"
+msgstr "顯示進階選項(&C)"
 
 #: winecfg.rc:249
 msgid "De&vice:"
@@ -13285,8 +13285,8 @@ msgid "S&erial:"
 msgstr "序號(&E)："
 
 #: winecfg.rc:258
-msgid "Show &dot files"
-msgstr "顯示隱藏檔案(&D)"
+msgid "&Show dot files"
+msgstr "顯示隱藏檔案(&S)"
 
 #: winecfg.rc:265
 msgid "Driver diagnostics"
@@ -13367,8 +13367,8 @@ msgid "Select the Unix target directory, please."
 msgstr "請選擇 Unix 資料夾。"
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
-msgstr "隱藏進階選項(&A)"
+msgid "Hide Advan&ced"
+msgstr "隱藏進階選項(&C)"
 
 #: winecfg.rc:39
 msgid "(No Theme)"
@@ -14541,6 +14541,10 @@ msgstr "分頁"
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr "定位停點"
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "新增(&A)"
 
 #: wordpad.rc:251
 msgid "Remove al&l"

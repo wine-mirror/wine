@@ -13107,7 +13107,9 @@ msgstr ""
 "innstillinger for hele systemet eller enkelte programmer der også."
 
 #: winecfg.rc:159
-msgid "&Add application..."
+#, fuzzy
+#| msgid "&Add application..."
+msgid "Add appli&cation..."
 msgstr "Legg til progr&am..."
 
 #: winecfg.rc:160
@@ -13168,9 +13170,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr "Ny overstyring for bibliotek:"
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "&Legg til"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr ""
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13197,7 +13199,9 @@ msgid "&Native (Windows)"
 msgstr "I&nnfødt (Windows)"
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
+#, fuzzy
+#| msgid "Bui&ltin then Native"
+msgid "Buil&tin then Native"
 msgstr "&Innebygget så innfødt"
 
 #: winecfg.rc:212
@@ -13221,19 +13225,25 @@ msgstr ""
 "redigeres."
 
 #: winecfg.rc:236
-msgid "&Add..."
+#, fuzzy
+#| msgid "&Add..."
+msgid "A&dd..."
 msgstr "&Legg til..."
 
 #: winecfg.rc:238
-msgid "Auto&detect"
-msgstr "&Automatisk"
+#, fuzzy
+#| msgid "Autodetect"
+msgid "Aut&odetect"
+msgstr "Finn automatisk"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Sti:"
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
+#, fuzzy
+#| msgid "Show &Advanced"
+msgid "Show Advan&ced"
 msgstr "Avansert visning"
 
 #: winecfg.rc:249
@@ -13253,7 +13263,9 @@ msgid "S&erial:"
 msgstr "S&erienummer:"
 
 #: winecfg.rc:258
-msgid "Show &dot files"
+#, fuzzy
+#| msgid "Show &dot files"
+msgid "&Show dot files"
 msgstr "Vis .-filer"
 
 #: winecfg.rc:265
@@ -13335,7 +13347,9 @@ msgid "Select the Unix target directory, please."
 msgstr "Velg Unix-målkatalogen."
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
+#, fuzzy
+#| msgid "Hide &Advanced"
+msgid "Hide Advan&ced"
 msgstr "Enkel visning"
 
 #: winecfg.rc:39
@@ -14512,6 +14526,10 @@ msgstr "Tabulatorer"
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr "Tabulatorstopp"
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "&Legg til"
 
 #: wordpad.rc:251
 msgid "Remove al&l"

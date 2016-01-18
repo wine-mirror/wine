@@ -13305,7 +13305,9 @@ msgstr ""
 "podešavanje aplikacija u istim tabovima."
 
 #: winecfg.rc:159
-msgid "&Add application..."
+#, fuzzy
+#| msgid "&Add application..."
+msgid "Add appli&cation..."
 msgstr "&Dodaj aplikaciju..."
 
 #: winecfg.rc:160
@@ -13368,9 +13370,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr "&Novo podešavanje biblioteke:"
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "&Dodaj"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr ""
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13398,7 +13400,9 @@ msgid "&Native (Windows)"
 msgstr "&Native (Windows)"
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
+#, fuzzy
+#| msgid "Bui&ltin then Native"
+msgid "Buil&tin then Native"
 msgstr "Bui&ltin pa Native"
 
 #: winecfg.rc:212
@@ -13424,11 +13428,14 @@ msgstr ""
 "izmeniti."
 
 #: winecfg.rc:236
-msgid "&Add..."
+#, fuzzy
+#| msgid "&Add..."
+msgid "A&dd..."
 msgstr "&Dodaj..."
 
 #: winecfg.rc:238
-msgid "Auto&detect"
+#, fuzzy
+msgid "Aut&odetect"
 msgstr "Auto&matski"
 
 #: winecfg.rc:241
@@ -13436,7 +13443,9 @@ msgid "&Path:"
 msgstr "&Putanja:"
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
+#, fuzzy
+#| msgid "Show &Advanced"
+msgid "Show Advan&ced"
 msgstr "Pokaži &Napredno"
 
 #: winecfg.rc:249
@@ -13456,7 +13465,9 @@ msgid "S&erial:"
 msgstr "S&erijski:"
 
 #: winecfg.rc:258
-msgid "Show &dot files"
+#, fuzzy
+#| msgid "Show &dot files"
+msgid "&Show dot files"
 msgstr "Prikaži &dot fajlove"
 
 #: winecfg.rc:265
@@ -13541,7 +13552,9 @@ msgid "Select the Unix target directory, please."
 msgstr "Izaberite unix glavni direktorijum, molim."
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
+#, fuzzy
+#| msgid "Hide &Advanced"
+msgid "Hide Advan&ced"
 msgstr "Sakrij &Napredno"
 
 #: winecfg.rc:39
@@ -14797,6 +14810,10 @@ msgstr "Sačuvaj &kao..."
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr ""
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "&Dodaj"
 
 #: wordpad.rc:251
 #, fuzzy

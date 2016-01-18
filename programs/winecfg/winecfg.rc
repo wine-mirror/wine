@@ -33,8 +33,8 @@ BEGIN
     IDS_TAB_DLLS            "Libraries"
     IDS_TAB_DRIVES          "Drives"
     IDS_CHOOSE_PATH         "Select the Unix target directory, please."
-    IDS_HIDE_ADVANCED       "Hide &Advanced"
-    IDS_SHOW_ADVANCED       "Show &Advanced"
+    IDS_HIDE_ADVANCED       "Hide Advan&ced"
+    IDS_SHOW_ADVANCED       "Show Advan&ced"
     IDS_NOTHEME             "(No Theme)"
     IDS_TAB_GRAPHICS        "Graphics"
     IDS_TAB_DESKTOP_INTEGRATION "Desktop Integration"
@@ -155,7 +155,7 @@ BEGIN
                     IDC_STATIC,15,15,227,45
     CONTROL         "",IDC_APP_LISTVIEW,"SysListView32",WS_BORDER | WS_TABSTOP | LVS_LIST | LVS_SINGLESEL | LVS_SHOWSELALWAYS,
                     15,60,230,110
-    PUSHBUTTON	    "&Add application...",IDC_APP_ADDAPP, 15,174,112,14
+    PUSHBUTTON	    "Add appli&cation...",IDC_APP_ADDAPP, 15,174,112,14
     PUSHBUTTON	    "&Remove application",IDC_APP_REMOVEAPP, 133,174,112,14
     LTEXT           "&Windows Version:",IDC_STATIC,17,196,80,8
     COMBOBOX        IDC_WINVER,100,194,145,56,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP    
@@ -192,7 +192,7 @@ BEGIN
                     ,IDC_STATIC,16,16,228,32
     LTEXT           "&New override for library:",IDC_STATIC,16,58,220,8
     COMBOBOX        IDC_DLLCOMBO,16,68,140,14,CBS_DROPDOWN | WS_VSCROLL | WS_TABSTOP | CBS_SORT | CBS_LOWERCASE
-    PUSHBUTTON      "&Add",IDC_DLLS_ADDDLL, 164,68,82,13
+    PUSHBUTTON      "A&dd",IDC_DLLS_ADDDLL, 164,68,82,13
     LTEXT           "Existing &overrides:",IDC_STATIC,16,86,100,8
     LISTBOX         IDC_DLLS_LIST,16,96,140,112,WS_BORDER | WS_TABSTOP | WS_VSCROLL
     PUSHBUTTON      "&Edit...",IDC_DLLS_EDITDLL,164,96,82,14
@@ -207,7 +207,7 @@ BEGIN
     GROUPBOX        "Load order",IDC_STATIC,8,4,144,66
     CONTROL         "&Builtin (Wine)",IDC_RAD_BUILTIN,"Button", BS_AUTORADIOBUTTON | WS_GROUP,16,14,125,10
     CONTROL         "&Native (Windows)",IDC_RAD_NATIVE,"Button", BS_AUTORADIOBUTTON,16,24,125,10
-    CONTROL         "Bui&ltin then Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,125,10
+    CONTROL         "Buil&tin then Native",IDC_RAD_BUILTIN_NATIVE,"Button", BS_AUTORADIOBUTTON,16,34,125,10
     CONTROL         "Nati&ve then Builtin",IDC_RAD_NATIVE_BUILTIN,"Button", BS_AUTORADIOBUTTON,16,44,125,10
     CONTROL         "&Disable",IDC_RAD_DISABLE,"Button", BS_AUTORADIOBUTTON,16,54,125,10
     DEFPUSHBUTTON   "OK",IDOK,8,74,45,14,WS_GROUP
@@ -232,9 +232,9 @@ BEGIN
     LTEXT           "Failed to connect to the mount manager, the drive configuration cannot be edited.", IDC_STATIC_MOUNTMGR_ERROR, 15,30,190,76
     CONTROL         "",IDC_LIST_DRIVES,"SysListView32",LVS_REPORT | LVS_AUTOARRANGE | LVS_ALIGNLEFT |
                     LVS_SINGLESEL | WS_BORDER | WS_TABSTOP, 15,18,232,76
-    PUSHBUTTON      "&Add...",IDC_BUTTON_ADD,15,98,53,14
+    PUSHBUTTON      "A&dd...",IDC_BUTTON_ADD,15,98,53,14
     PUSHBUTTON      "&Remove",IDC_BUTTON_REMOVE,72,98,53,14
-    PUSHBUTTON      "Auto&detect",IDC_BUTTON_AUTODETECT,146,98,100,14
+    PUSHBUTTON      "Aut&odetect",IDC_BUTTON_AUTODETECT,146,98,100,14
 
     /* editing drive details */
     LTEXT           "&Path:",IDC_STATIC_PATH,15,123,42,9
@@ -244,7 +244,7 @@ BEGIN
     LTEXT           "&Type:",IDC_STATIC_TYPE,15,138,42,10
     COMBOBOX        IDC_COMBO_TYPE,59,135,77,60,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     
-    PUSHBUTTON      "Show &Advanced",IDC_BUTTON_SHOW_HIDE_ADVANCED,146,135,100,13
+    PUSHBUTTON      "Show Advan&ced",IDC_BUTTON_SHOW_HIDE_ADVANCED,146,135,100,13
     LTEXT           "De&vice:",IDC_STATIC_DEVICE,15,153,42,9
     EDITTEXT        IDC_EDIT_DEVICE,59,150,122,13,ES_AUTOHSCROLL | WS_TABSTOP
     PUSHBUTTON      "Bro&wse...",IDC_BUTTON_BROWSE_DEVICE,186,150,60,13
@@ -254,7 +254,7 @@ BEGIN
     LTEXT           "S&erial:",IDC_STATIC_SERIAL,15,183,42,12
     EDITTEXT        IDC_EDIT_SERIAL,59,180,78,13,ES_AUTOHSCROLL | WS_TABSTOP
 
-    CONTROL         "Show &dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
+    CONTROL         "&Show dot files",IDC_SHOW_DOT_FILES,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,8,205,230,8
 END
 
 IDD_AUDIOCFG DIALOG  0, 0, 260, 220

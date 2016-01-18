@@ -12533,8 +12533,8 @@ msgstr ""
 "示”标签页中作不同的设置。"
 
 #: winecfg.rc:159
-msgid "&Add application..."
-msgstr "增加程序设置(&A)..."
+msgid "Add appli&cation..."
+msgstr "增加程序设置(&C)..."
 
 #: winecfg.rc:160
 msgid "&Remove application"
@@ -12593,9 +12593,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr "新增函数库顶替(&N)："
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "添加(&A)"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr "添加(&D)"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -12622,8 +12622,8 @@ msgid "&Native (Windows)"
 msgstr "原装(Windows)(&N)"
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
-msgstr "内建先于原装(&L)"
+msgid "Buil&tin then Native"
+msgstr "内建先于原装(&T)"
 
 #: winecfg.rc:212
 msgid "Nati&ve then Builtin"
@@ -12644,20 +12644,20 @@ msgid ""
 msgstr "无法连接到挂载管理器。不能修改驱动器配置。"
 
 #: winecfg.rc:236
-msgid "&Add..."
-msgstr "添加(&A)..."
+msgid "A&dd..."
+msgstr "添加(&D)..."
 
 #: winecfg.rc:238
-msgid "Auto&detect"
-msgstr "自动侦测(&D)"
+msgid "Aut&odetect"
+msgstr "自动侦测(&O)"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "路径(&P)："
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
-msgstr "显示高级选项(&A)"
+msgid "Show Advan&ced"
+msgstr "显示高级选项(&C)"
 
 #: winecfg.rc:249
 msgid "De&vice:"
@@ -12676,8 +12676,8 @@ msgid "S&erial:"
 msgstr "序列号(&E)："
 
 #: winecfg.rc:258
-msgid "Show &dot files"
-msgstr "显示隐藏文件(&D)"
+msgid "&Show dot files"
+msgstr "显示隐藏文件(&S)"
 
 #: winecfg.rc:265
 msgid "Driver diagnostics"
@@ -12756,8 +12756,8 @@ msgid "Select the Unix target directory, please."
 msgstr "请选择目标 Unix 文件夹。"
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
-msgstr "隐藏高级选项(&A)"
+msgid "Hide Advan&ced"
+msgstr "隐藏高级选项(&C)"
 
 #: winecfg.rc:39
 msgid "(No Theme)"
@@ -13916,6 +13916,10 @@ msgstr "制表位"
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr "制表位宽度"
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "添加(&A)"
 
 #: wordpad.rc:251
 msgid "Remove al&l"

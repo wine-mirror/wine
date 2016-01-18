@@ -13021,7 +13021,7 @@ msgstr ""
 
 #: winecfg.rc:159
 #, fuzzy
-msgid "&Add application..."
+msgid "Add appli&cation..."
 msgstr "יישום"
 
 #: winecfg.rc:160
@@ -13084,9 +13084,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr ""
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "הו&ספה"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr ""
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13118,7 +13118,7 @@ msgstr "י&ציאה מ־Windows"
 
 #: winecfg.rc:211
 #, fuzzy
-msgid "Bui&ltin then Native"
+msgid "Buil&tin then Native"
 msgstr "מובנה, טבעי"
 
 #: winecfg.rc:212
@@ -13144,12 +13144,12 @@ msgstr ""
 
 #: winecfg.rc:236
 #, fuzzy
-msgid "&Add..."
+msgid "A&dd..."
 msgstr "הו&ספה"
 
 #: winecfg.rc:238
 #, fuzzy
-msgid "Auto&detect"
+msgid "Aut&odetect"
 msgstr "זיהוי אוטומטי"
 
 #: winecfg.rc:241
@@ -13159,7 +13159,7 @@ msgstr "ה&נתיב המלא:"
 
 #: winecfg.rc:248 winecfg.rc:38
 #, fuzzy
-msgid "Show &Advanced"
+msgid "Show Advan&ced"
 msgstr "הצגת אפשרויות מ&תקדמות"
 
 #: winecfg.rc:249
@@ -13181,7 +13181,7 @@ msgstr ""
 
 #: winecfg.rc:258
 #, fuzzy
-msgid "Show &dot files"
+msgid "&Show dot files"
 msgstr "אין עוד קבצים\n"
 
 #: winecfg.rc:265
@@ -13273,7 +13273,7 @@ msgstr "נא לבחור את תיקיית היעד בלינוקס בבקשה."
 
 #: winecfg.rc:37
 #, fuzzy
-msgid "Hide &Advanced"
+msgid "Hide Advan&ced"
 msgstr "ה&סתרת האפשרויות המתקדמות"
 
 #: winecfg.rc:39
@@ -14534,6 +14534,10 @@ msgstr "טאבים"
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr "טאבי עצירה"
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "הו&ספה"
 
 #: wordpad.rc:251
 msgid "Remove al&l"

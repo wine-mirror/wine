@@ -13057,7 +13057,9 @@ msgstr ""
 "çapındaki veya uygulamaya özel ayarları yapmanıza izin verir."
 
 #: winecfg.rc:159
-msgid "&Add application..."
+#, fuzzy
+#| msgid "&Add application..."
+msgid "Add appli&cation..."
 msgstr "Uygulama &Ekle..."
 
 #: winecfg.rc:160
@@ -13118,9 +13120,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr "Kitaplık için yeni öncelik:"
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "&Ekle"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr ""
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13147,7 +13149,9 @@ msgid "&Native (Windows)"
 msgstr "&Doğal (Windows)"
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
+#, fuzzy
+#| msgid "Bui&ltin then Native"
+msgid "Buil&tin then Native"
 msgstr "Önce Yer&leşik sonra Doğal"
 
 #: winecfg.rc:212
@@ -13170,11 +13174,15 @@ msgstr ""
 "Bağlama yöneticisine bağlanılamadı, sürücü yapılandırması düzenlenemiyor."
 
 #: winecfg.rc:236
-msgid "&Add..."
+#, fuzzy
+#| msgid "&Add..."
+msgid "A&dd..."
 msgstr "&Ekle..."
 
 #: winecfg.rc:238
-msgid "Auto&detect"
+#, fuzzy
+#| msgid "Autodetect"
+msgid "Aut&odetect"
 msgstr "Otomatik &Algıla"
 
 #: winecfg.rc:241
@@ -13182,7 +13190,9 @@ msgid "&Path:"
 msgstr "&Yol:"
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
+#, fuzzy
+#| msgid "Show &Advanced"
+msgid "Show Advan&ced"
 msgstr "Gelişmiş Ayarlar"
 
 #: winecfg.rc:249
@@ -13202,7 +13212,9 @@ msgid "S&erial:"
 msgstr "S&eri No:"
 
 #: winecfg.rc:258
-msgid "Show &dot files"
+#, fuzzy
+#| msgid "Show &dot files"
+msgid "&Show dot files"
 msgstr "Noktayla başlayan dosyaları göster"
 
 #: winecfg.rc:265
@@ -13282,7 +13294,9 @@ msgid "Select the Unix target directory, please."
 msgstr "Lütfen Unix hedef dizinini seçin."
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
+#, fuzzy
+#| msgid "Hide &Advanced"
+msgid "Hide Advan&ced"
 msgstr "Temel Ayarlar"
 
 #: winecfg.rc:39
@@ -14446,6 +14460,10 @@ msgstr "Sekmeler"
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr "Sekme durmaları"
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "&Ekle"
 
 #: wordpad.rc:251
 msgid "Remove al&l"

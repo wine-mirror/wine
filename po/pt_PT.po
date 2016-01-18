@@ -13085,7 +13085,9 @@ msgstr ""
 "definições por aplicação ou no sistema também nessas abas."
 
 #: winecfg.rc:159
-msgid "&Add application..."
+#, fuzzy
+#| msgid "&Add application..."
+msgid "Add appli&cation..."
 msgstr "&Adicionar aplicação..."
 
 #: winecfg.rc:160
@@ -13146,9 +13148,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr "&Nova substituição para:"
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "&Adicionar"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr ""
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13175,7 +13177,9 @@ msgid "&Native (Windows)"
 msgstr "&Nativa (Windows)"
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
+#, fuzzy
+#| msgid "Bui&ltin then Native"
+msgid "Buil&tin then Native"
 msgstr "E&mbutida depois Nativa"
 
 #: winecfg.rc:212
@@ -13201,19 +13205,25 @@ msgstr ""
 "ser editada."
 
 #: winecfg.rc:236
-msgid "&Add..."
+#, fuzzy
+#| msgid "&Add..."
+msgid "A&dd..."
 msgstr "&Adicionar..."
 
 #: winecfg.rc:238
-msgid "Auto&detect"
-msgstr "Auto&detectar"
+#, fuzzy
+#| msgid "Autodetect"
+msgid "Aut&odetect"
+msgstr "Auto detectar"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Localização:"
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
+#, fuzzy
+#| msgid "Show &Advanced"
+msgid "Show Advan&ced"
 msgstr "&Avançado"
 
 #: winecfg.rc:249
@@ -13233,7 +13243,9 @@ msgid "S&erial:"
 msgstr "Nº S&erie:"
 
 #: winecfg.rc:258
-msgid "Show &dot files"
+#, fuzzy
+#| msgid "Show &dot files"
+msgid "&Show dot files"
 msgstr "Mostrar &ficheiros com pontos"
 
 #: winecfg.rc:265
@@ -13315,7 +13327,9 @@ msgid "Select the Unix target directory, please."
 msgstr "Por favor, seleccione o directório Unix de destino."
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
+#, fuzzy
+#| msgid "Hide &Advanced"
+msgid "Hide Advan&ced"
 msgstr "&Ocultar"
 
 #: winecfg.rc:39
@@ -14497,6 +14511,10 @@ msgstr "Tabulações"
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr "Marca de tabulação"
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "&Adicionar"
 
 #: wordpad.rc:251
 msgid "Remove al&l"

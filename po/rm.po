@@ -12517,8 +12517,9 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:159
-msgid "&Add application..."
-msgstr ""
+#, fuzzy
+msgid "Add appli&cation..."
+msgstr "&Annotaziun..."
 
 #: winecfg.rc:160
 #, fuzzy
@@ -12577,8 +12578,8 @@ msgstr ""
 msgid "&New override for library:"
 msgstr ""
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
+#: winecfg.rc:196
+msgid "A&dd"
 msgstr ""
 
 #: winecfg.rc:197
@@ -12609,7 +12610,7 @@ msgid "&Native (Windows)"
 msgstr ""
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
+msgid "Buil&tin then Native"
 msgstr ""
 
 #: winecfg.rc:212
@@ -12632,11 +12633,11 @@ msgid ""
 msgstr ""
 
 #: winecfg.rc:236
-msgid "&Add..."
+msgid "A&dd..."
 msgstr ""
 
 #: winecfg.rc:238
-msgid "Auto&detect"
+msgid "Aut&odetect"
 msgstr ""
 
 #: winecfg.rc:241
@@ -12644,7 +12645,7 @@ msgid "&Path:"
 msgstr ""
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
+msgid "Show Advan&ced"
 msgstr ""
 
 #: winecfg.rc:249
@@ -12664,7 +12665,7 @@ msgid "S&erial:"
 msgstr ""
 
 #: winecfg.rc:258
-msgid "Show &dot files"
+msgid "&Show dot files"
 msgstr ""
 
 #: winecfg.rc:265
@@ -12747,7 +12748,7 @@ msgid "Select the Unix target directory, please."
 msgstr ""
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
+msgid "Hide Advan&ced"
 msgstr ""
 
 #: winecfg.rc:39
@@ -13896,6 +13897,10 @@ msgstr ""
 
 #: wordpad.rc:245
 msgid "Tab stops"
+msgstr ""
+
+#: wordpad.rc:247
+msgid "&Add"
 msgstr ""
 
 #: wordpad.rc:251

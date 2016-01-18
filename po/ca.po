@@ -13152,7 +13152,9 @@ msgstr ""
 "aquelles pestanyes també."
 
 #: winecfg.rc:159
-msgid "&Add application..."
+#, fuzzy
+#| msgid "&Add application..."
+msgid "Add appli&cation..."
 msgstr "A&fegeix aplicació..."
 
 #: winecfg.rc:160
@@ -13213,9 +13215,9 @@ msgstr ""
 msgid "&New override for library:"
 msgstr "Reemplaçament &nou per a la biblioteca:"
 
-#: winecfg.rc:196 wordpad.rc:247
-msgid "&Add"
-msgstr "&Afegeix"
+#: winecfg.rc:196
+msgid "A&dd"
+msgstr ""
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13242,7 +13244,9 @@ msgid "&Native (Windows)"
 msgstr "&Nativa (Windows)"
 
 #: winecfg.rc:211
-msgid "Bui&ltin then Native"
+#, fuzzy
+#| msgid "Bui&ltin then Native"
+msgid "Buil&tin then Native"
 msgstr "In&terna, després Nativa"
 
 #: winecfg.rc:212
@@ -13266,19 +13270,25 @@ msgstr ""
 "es pot editar."
 
 #: winecfg.rc:236
-msgid "&Add..."
+#, fuzzy
+#| msgid "&Add..."
+msgid "A&dd..."
 msgstr "A&fegeix..."
 
 #: winecfg.rc:238
-msgid "Auto&detect"
-msgstr "Auto&detecta"
+#, fuzzy
+#| msgid "Autodetect"
+msgid "Aut&odetect"
+msgstr "Autodetecta"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Camí:"
 
 #: winecfg.rc:248 winecfg.rc:38
-msgid "Show &Advanced"
+#, fuzzy
+#| msgid "Show &Advanced"
+msgid "Show Advan&ced"
 msgstr "&Vista avançada"
 
 #: winecfg.rc:249
@@ -13298,7 +13308,9 @@ msgid "S&erial:"
 msgstr "&Serial:"
 
 #: winecfg.rc:258
-msgid "Show &dot files"
+#, fuzzy
+#| msgid "Show &dot files"
+msgid "&Show dot files"
 msgstr "&Mostra els fitxers de punt"
 
 #: winecfg.rc:265
@@ -13378,7 +13390,9 @@ msgid "Select the Unix target directory, please."
 msgstr "Seleccioneu el directori de destinació d'Unix, si us plau."
 
 #: winecfg.rc:37
-msgid "Hide &Advanced"
+#, fuzzy
+#| msgid "Hide &Advanced"
+msgid "Hide Advan&ced"
 msgstr "&Vista bàsica"
 
 #: winecfg.rc:39
@@ -14548,6 +14562,10 @@ msgstr "Tabuladors"
 #: wordpad.rc:245
 msgid "Tab stops"
 msgstr "Aturades de tabulador"
+
+#: wordpad.rc:247
+msgid "&Add"
+msgstr "&Afegeix"
 
 #: wordpad.rc:251
 msgid "Remove al&l"
