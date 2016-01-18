@@ -67,7 +67,7 @@ static HANDLE dde_ready_event;
  * ShellExecute wrappers
  *
  ***/
-static void dump_child(void);
+static void dump_child_(const char* file, int line);
 
 static HANDLE hEvent;
 static void init_event(const char* child_file)
@@ -95,21 +95,21 @@ static int _todo_wait = 0;
 
 static char shell_call[2048]="";
 static int bad_shellexecute = 0;
-static INT_PTR shell_execute(LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR directory)
+static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR filename, LPCSTR parameters, LPCSTR directory)
 {
     INT_PTR rc, rcEmpty = 0;
 
     if(!verb)
-        rcEmpty = shell_execute("", file, parameters, directory);
+        rcEmpty = shell_execute_(file, line, "", filename, parameters, directory);
 
     strcpy(shell_call, "ShellExecute(");
     strcat_param(shell_call, "verb", verb);
-    strcat_param(shell_call, "file", file);
+    strcat_param(shell_call, "file", filename);
     strcat_param(shell_call, "params", parameters);
     strcat_param(shell_call, "dir", directory);
     strcat(shell_call, ")");
     if (winetest_debug > 1)
-        trace("%s\n", shell_call);
+        trace_(file, line)("Called %s\n", shell_call);
 
     DeleteFileA(child_file);
     SetLastError(0xcafebabe);
@@ -118,7 +118,7 @@ static INT_PTR shell_execute(LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR
      * association it displays the 'Open With' dialog and I could not find
      * a flag to prevent this.
      */
-    rc=(INT_PTR)ShellExecuteA(NULL, verb, file, parameters, directory, SW_HIDE);
+    rc=(INT_PTR)ShellExecuteA(NULL, verb, filename, parameters, directory, SW_HIDE);
 
     if (rc > 32)
     {
@@ -138,31 +138,36 @@ static INT_PTR shell_execute(LPCSTR verb, LPCSTR file, LPCSTR parameters, LPCSTR
             }
         }
         if (!_todo_wait)
-            ok(wait_rc==WAIT_OBJECT_0 || rc <= 32, "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
+            ok_(file, line)(wait_rc==WAIT_OBJECT_0 || rc <= 32,
+                            "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
         else todo_wine
-            ok(wait_rc==WAIT_OBJECT_0 || rc <= 32, "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
+            ok_(file, line)(wait_rc==WAIT_OBJECT_0 || rc <= 32,
+                            "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
     }
     /* The child process may have changed the result file, so let profile
      * functions know about it
      */
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
     if (rc > 32)
-        dump_child();
+        dump_child_(file, line);
 
     if(!verb)
     {
         if (rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */
             bad_shellexecute = 1;
-        ok(rc == rcEmpty || broken(rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */,
-           "%s Got different return value with empty string: %lu %lu\n", shell_call, rc, rcEmpty);
+        ok_(file, line)(rc == rcEmpty || broken(rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */,
+                        "%s Got different return value with empty string: %lu %lu\n", shell_call, rc, rcEmpty);
     }
 
     return rc;
 }
+#define shell_execute(verb, filename, parameters, directory) \
+    shell_execute_(__FILE__, __LINE__, verb, filename, parameters, directory)
 
-static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
-                                LPCSTR parameters, LPCSTR directory,
-                                LPCSTR class)
+static INT_PTR shell_execute_ex_(const char* file, int line,
+                                 DWORD mask, LPCSTR verb, LPCSTR filename,
+                                 LPCSTR parameters, LPCSTR directory,
+                                 LPCSTR class)
 {
     char smask[11];
     SHELLEXECUTEINFOA sei;
@@ -176,19 +181,19 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
     sprintf(smask, "0x%x", mask);
     strcat_param(shell_call, "mask", smask);
     strcat_param(shell_call, "verb", verb);
-    strcat_param(shell_call, "file", file);
+    strcat_param(shell_call, "file", filename);
     strcat_param(shell_call, "params", parameters);
     strcat_param(shell_call, "dir", directory);
     strcat_param(shell_call, "class", class);
     strcat(shell_call, ")");
     if (winetest_debug > 1)
-        trace("%s\n", shell_call);
+        trace_(file, line)("Called %s\n", shell_call);
 
     sei.cbSize=sizeof(sei);
     sei.fMask=mask;
     sei.hwnd=NULL;
     sei.lpVerb=verb;
-    sei.lpFile=file;
+    sei.lpFile=filename;
     sei.lpParameters=parameters;
     sei.lpDirectory=directory;
     sei.nShow=SW_SHOWNORMAL;
@@ -204,8 +209,8 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
     SetLastError(0xcafebabe);
     success=ShellExecuteExA(&sei);
     rc=(INT_PTR)sei.hInstApp;
-    ok((success && rc > 32) || (!success && rc <= 32),
-       "%s rc=%d and hInstApp=%ld is not allowed\n", shell_call, success, rc);
+    ok_(file, line)((success && rc > 32) || (!success && rc <= 32),
+                    "%s rc=%d and hInstApp=%ld is not allowed\n", shell_call, success, rc);
 
     if (rc > 32)
     {
@@ -213,27 +218,28 @@ static INT_PTR shell_execute_ex(DWORD mask, LPCSTR verb, LPCSTR file,
         if (sei.hProcess!=NULL)
         {
             wait_rc=WaitForSingleObject(sei.hProcess, 5000);
-            ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject(hProcess) returned %d\n", wait_rc);
+            ok_(file, line)(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject(hProcess) returned %d\n", wait_rc);
         }
         wait_rc=WaitForSingleObject(hEvent, 5000);
         if (!_todo_wait)
-            ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
+            ok_(file, line)(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
         else todo_wine
-            ok(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
+            ok_(file, line)(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
     }
     else
-        ok(sei.hProcess==NULL, "%s returned a process handle %p\n", shell_call, sei.hProcess);
+       ok_(file, line)(sei.hProcess==NULL, "%s returned a process handle %p\n", shell_call, sei.hProcess);
 
     /* The child process may have changed the result file, so let profile
      * functions know about it
      */
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
     if (rc > 32)
-        dump_child();
+        dump_child_(file, line);
 
     return rc;
 }
-
+#define shell_execute_ex(mask, verb, filename, parameters, directory, class) \
+    shell_execute_ex_(__FILE__, __LINE__, mask, verb, filename, parameters, directory, class)
 
 
 /***
@@ -661,7 +667,7 @@ static char* getChildString(const char* sect, const char* key)
     return ret;
 }
 
-static void dump_child(void)
+static void dump_child_(const char* file, int line)
 {
     if (winetest_debug > 1)
     {
@@ -670,14 +676,14 @@ static void dump_child(void)
         int i, c;
 
         str=getChildString("Arguments", "cmdlineA");
-        trace("cmdlineA='%s'\n", str);
+        trace_(file, line)("cmdlineA='%s'\n", str);
         c=GetPrivateProfileIntA("Arguments", "argcA", -1, child_file);
-        trace("argcA=%d\n",c);
+        trace_(file, line)("argcA=%d\n",c);
         for (i=0;i<c;i++)
         {
             sprintf(key, "argvA%d", i);
             str=getChildString("Arguments", key);
-            trace("%s='%s'\n", key, str);
+            trace_(file, line)("%s='%s'\n", key, str);
         }
     }
 }
