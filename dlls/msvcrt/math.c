@@ -73,6 +73,17 @@ int CDECL MSVCRT__set_SSE2_enable(int flag)
     return sse2_enabled;
 }
 
+#ifdef _WIN64
+/*********************************************************************
+ *      _set_FMA3_enable (MSVCR120.@)
+ */
+int CDECL MSVCRT__set_FMA3_enable(int flag)
+{
+    FIXME("(%x) stub\n", flag);
+    return 0;
+}
+#endif
+
 #if defined(__x86_64__) || defined(__arm__) || _MSVCR_VER>=120
 
 /*********************************************************************
