@@ -2046,13 +2046,21 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
     return IClassFactory_QueryInterface(factory, riid, ppv);
 }
 
+HRESULT xaudio2_initialize(IXAudio2Impl *This, UINT32 flags, XAUDIO2_PROCESSOR proc)
+{
+    if(flags)
+        FIXME("Unimplemented flags: 0x%x\n", flags);
+    return S_OK;
+}
+
 #if XAUDIO2_VER >= 8
 HRESULT WINAPI XAudio2Create(IXAudio2 **ppxa2, UINT32 flags, XAUDIO2_PROCESSOR proc)
 {
     HRESULT hr;
     IXAudio2 *xa2;
-    IXAudio27 *xa27;
     IClassFactory *cf;
+
+    TRACE("%p 0x%x 0x%x\n", ppxa2, flags, proc);
 
     cf = make_xaudio2_factory();
 
@@ -2061,20 +2069,11 @@ HRESULT WINAPI XAudio2Create(IXAudio2 **ppxa2, UINT32 flags, XAUDIO2_PROCESSOR p
     if(FAILED(hr))
         return hr;
 
-    hr = IXAudio2_QueryInterface(xa2, &IID_IXAudio27, (void**)&xa27);
+    hr = xaudio2_initialize(impl_from_IXAudio2(xa2), flags, proc);
     if(FAILED(hr)){
         IXAudio2_Release(xa2);
         return hr;
     }
-
-    hr = IXAudio27_Initialize(xa27, flags, proc);
-    if(FAILED(hr)){
-        IXAudio27_Release(xa27);
-        IXAudio2_Release(xa2);
-        return hr;
-    }
-
-    IXAudio27_Release(xa27);
 
     *ppxa2 = xa2;
 

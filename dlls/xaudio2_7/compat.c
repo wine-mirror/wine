@@ -468,7 +468,7 @@ static HRESULT WINAPI XA27_Initialize(IXAudio27 *iface, UINT32 flags,
 {
     IXAudio2Impl *This = impl_from_IXAudio27(iface);
     TRACE("(%p)->(0x%x, 0x%x)\n", This, flags, processor);
-    return S_OK;
+    return xaudio2_initialize(This, flags, processor);
 }
 
 static HRESULT WINAPI XA27_RegisterForCallbacks(IXAudio27 *iface,
@@ -1305,7 +1305,7 @@ static HRESULT WINAPI XA22_Initialize(IXAudio22 *iface, UINT32 flags,
 {
     IXAudio2Impl *This = impl_from_IXAudio22(iface);
     TRACE("(%p)->(0x%x, 0x%x)\n", This, flags, processor);
-    return S_OK;
+    return xaudio2_initialize(This, flags, processor);
 }
 
 static HRESULT WINAPI XA22_RegisterForCallbacks(IXAudio22 *iface,
@@ -2163,7 +2163,7 @@ static HRESULT WINAPI XA20_Initialize(IXAudio20 *iface, UINT32 flags,
 {
     IXAudio2Impl *This = impl_from_IXAudio20(iface);
     TRACE("(%p)->(0x%x, 0x%x)\n", This, flags, processor);
-    return S_OK;
+    return xaudio2_initialize(This, flags, processor);
 }
 
 static HRESULT WINAPI XA20_RegisterForCallbacks(IXAudio20 *iface,
