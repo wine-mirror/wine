@@ -1001,11 +1001,14 @@ interface IXAudio27 : IUnknown
         [in, defaultvalue(NULL)] void* pReserved);
 }
 
+/* XAudio2 2.8's IXAudio2 is identical to 2.9's */
+cpp_quote("DEFINE_GUID(IID_IXAudio28, 0x60d8dac8, 0x5aa1, 0x4e8e, 0xb5, 0x97, 0x2f, 0x5e, 0x28, 0x83, 0xd4, 0x84);")
+
 [
     object,
-    uuid(60d8dac8-5aa1-4e8e-b597-2f5e2883d484),
+    uuid(2b02e3cf-2e0b-4ec3-be45-1b2a3fe7210d)
 ]
-/* XAudio2 2.8's IXAudio2 interface. */
+/* XAudio2 2.9's IXAudio2 interface. */
 interface IXAudio2 : IUnknown
 {
     HRESULT RegisterForCallbacks([in] IXAudio2EngineCallback* pCallback);

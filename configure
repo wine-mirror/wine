@@ -1408,6 +1408,7 @@ enable_xaudio2_5
 enable_xaudio2_6
 enable_xaudio2_7
 enable_xaudio2_8
+enable_xaudio2_9
 enable_xinput1_1
 enable_xinput1_2
 enable_xinput1_3
@@ -13720,6 +13721,7 @@ then
     enable_xaudio2_6=${enable_xaudio2_6:-no}
     enable_xaudio2_7=${enable_xaudio2_7:-no}
     enable_xaudio2_8=${enable_xaudio2_8:-no}
+    enable_xaudio2_9=${enable_xaudio2_9:-no}
 fi
 
 if test "$ac_cv_header_kstat_h" = "yes"
@@ -18035,6 +18037,7 @@ wine_fn_config_dll xaudio2_6 enable_xaudio2_6 clean
 wine_fn_config_dll xaudio2_7 enable_xaudio2_7 clean
 wine_fn_config_test dlls/xaudio2_7/tests xaudio2_7_test
 wine_fn_config_dll xaudio2_8 enable_xaudio2_8 clean
+wine_fn_config_dll xaudio2_9 enable_xaudio2_9 clean
 wine_fn_config_dll xinput1_1 enable_xinput1_1
 wine_fn_config_dll xinput1_2 enable_xinput1_2
 wine_fn_config_dll xinput1_3 enable_xinput1_3 implib xinput

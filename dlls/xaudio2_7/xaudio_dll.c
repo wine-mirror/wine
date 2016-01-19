@@ -1192,6 +1192,7 @@ static HRESULT WINAPI IXAudio2Impl_QueryInterface(IXAudio2 *iface, REFIID riid,
     TRACE("(%p)->(%s, %p)\n", This, debugstr_guid(riid), ppvObject);
 
     if(IsEqualGUID(riid, &IID_IUnknown) ||
+            IsEqualGUID(riid, &IID_IXAudio28) ||
             IsEqualGUID(riid, &IID_IXAudio2))
         *ppvObject = &This->IXAudio2_iface;
     else if(IsEqualGUID(riid, &IID_IXAudio27)){

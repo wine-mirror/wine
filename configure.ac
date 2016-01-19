@@ -1685,6 +1685,7 @@ then
     enable_xaudio2_6=${enable_xaudio2_6:-no}
     enable_xaudio2_7=${enable_xaudio2_7:-no}
     enable_xaudio2_8=${enable_xaudio2_8:-no}
+    enable_xaudio2_9=${enable_xaudio2_9:-no}
 fi
 
 dnl **** Check for libkstat ****
@@ -3401,6 +3402,7 @@ WINE_CONFIG_DLL(xaudio2_6,,[clean])
 WINE_CONFIG_DLL(xaudio2_7,,[clean])
 WINE_CONFIG_TEST(dlls/xaudio2_7/tests)
 WINE_CONFIG_DLL(xaudio2_8,,[clean])
+WINE_CONFIG_DLL(xaudio2_9,,[clean])
 WINE_CONFIG_DLL(xinput1_1)
 WINE_CONFIG_DLL(xinput1_2)
 WINE_CONFIG_DLL(xinput1_3,,[implib],[xinput])

@@ -78,6 +78,14 @@
  *     Change parameter of IXAudio2::CreateMasteringVoice
  *     Add Flags parameter to IXAudio2SourceVoice::GetState
  *     Add IXAudio2MasteringVoice::GetChannelMask
+ *     Add DisableLateField member to XAUDIO2FX_REVERB_PARAMETERS
+ *
+ * 2.9
+ *   Change IID_IXAudio2
+ *   New flags: XAUDIO2_STOP_ENGINE_WHEN_IDLE, XAUDIO2_1024_QUANTUM,
+ *       XAUDIO2_NO_VIRTUAL_AUDIO_CLIENT
+ *   ABI break:
+ *     Add SideDelay member to XAUDIO2FX_REVERB_PARAMETERS
  */
 
 #include "config.h"
