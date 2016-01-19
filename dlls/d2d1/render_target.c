@@ -1436,6 +1436,8 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_SetDpi(ID2D1RenderTarget *if
         dpi_x = 96.0f;
         dpi_y = 96.0f;
     }
+    else if (dpi_x == 0.0f || dpi_y == 0.0f)
+        return;
 
     render_target->dpi_x = dpi_x;
     render_target->dpi_y = dpi_y;

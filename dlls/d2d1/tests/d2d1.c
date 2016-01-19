@@ -587,6 +587,19 @@ static void test_clip(void)
     ok(dpi_x == 96.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
     ok(dpi_y == 96.0f, "Got unexpected dpi_y %.8e.\n", dpi_y);
 
+    ID2D1RenderTarget_SetDpi(rt, 192.0f, 192.0f);
+    ID2D1RenderTarget_SetDpi(rt, 0.0f, 96.0f);
+    ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
+    ok(dpi_x == 192.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
+    ok(dpi_y == 192.0f, "Got unexpected dpi_y %.8e.\n", dpi_y);
+
+    ID2D1RenderTarget_SetDpi(rt, 96.0f, 0.0f);
+    ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
+    ok(dpi_x == 192.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
+    ok(dpi_y == 192.0f, "Got unexpected dpi_y %.8e.\n", dpi_y);
+
+    ID2D1RenderTarget_SetDpi(rt, 96.0f, 96.0f);
+
     /* Transformations apply to clip rects, the effective clip rect is the
      * (axis-aligned) bounding box of the transformed clip rect. */
     set_point(&point, 320.0f, 240.0f);
