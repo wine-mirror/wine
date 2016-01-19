@@ -112,9 +112,9 @@ static ULONG WINAPI IMAPIMalloc_fnRelease(LPMALLOC iface)
 /**************************************************************************
  * IMAPIMalloc_Alloc
  */
-static LPVOID WINAPI IMAPIMalloc_fnAlloc(LPMALLOC iface, DWORD cb)
+static LPVOID WINAPI IMAPIMalloc_fnAlloc(LPMALLOC iface, SIZE_T cb)
 {
-    TRACE("(%p)->(%d)\n", iface, cb);
+    TRACE("(%p)->(%ld)\n", iface, cb);
 
     return LocalAlloc(LMEM_FIXED, cb);
 }
@@ -122,9 +122,9 @@ static LPVOID WINAPI IMAPIMalloc_fnAlloc(LPMALLOC iface, DWORD cb)
 /**************************************************************************
  * IMAPIMalloc_Realloc
  */
-static LPVOID WINAPI IMAPIMalloc_fnRealloc(LPMALLOC iface, LPVOID pv, DWORD cb)
+static LPVOID WINAPI IMAPIMalloc_fnRealloc(LPMALLOC iface, LPVOID pv, SIZE_T cb)
 {
-    TRACE("(%p)->(%p, %d)\n", iface, pv, cb);
+    TRACE("(%p)->(%p, %ld)\n", iface, pv, cb);
 
     if (!pv)
         return LocalAlloc(LMEM_FIXED, cb);
@@ -148,7 +148,7 @@ static void WINAPI IMAPIMalloc_fnFree(LPMALLOC iface, LPVOID pv)
 /**************************************************************************
  * IMAPIMalloc_GetSize
  */
-static DWORD WINAPI IMAPIMalloc_fnGetSize(LPMALLOC iface, LPVOID pv)
+static SIZE_T WINAPI IMAPIMalloc_fnGetSize(LPMALLOC iface, LPVOID pv)
 {
     TRACE("(%p)->(%p)\n", iface, pv);
     return LocalSize(pv);

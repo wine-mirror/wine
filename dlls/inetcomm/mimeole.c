@@ -2821,7 +2821,7 @@ static ULONG WINAPI MimeAlloc_Release(
 
 static LPVOID WINAPI MimeAlloc_Alloc(
         IMimeAllocator* iface,
-        ULONG cb)
+        SIZE_T cb)
 {
     return CoTaskMemAlloc(cb);
 }
@@ -2829,7 +2829,7 @@ static LPVOID WINAPI MimeAlloc_Alloc(
 static LPVOID WINAPI MimeAlloc_Realloc(
         IMimeAllocator* iface,
         LPVOID pv,
-        ULONG cb)
+        SIZE_T cb)
 {
     return CoTaskMemRealloc(pv, cb);
 }
@@ -2841,7 +2841,7 @@ static void WINAPI MimeAlloc_Free(
     CoTaskMemFree(pv);
 }
 
-static ULONG WINAPI MimeAlloc_GetSize(
+static SIZE_T WINAPI MimeAlloc_GetSize(
         IMimeAllocator* iface,
         LPVOID pv)
 {
