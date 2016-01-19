@@ -4070,7 +4070,8 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     if (box)
     {
         if (box->left >= box->right || box->right > sub_resource->width
-                || box->top >= box->bottom || box->bottom > sub_resource->height)
+                || box->top >= box->bottom || box->bottom > sub_resource->height
+                || box->front >= box->back)
         {
             WARN("Invalid box (%u, %u, %u)->(%u, %u, %u) specified.\n",
                     box->left, box->top, box->front, box->right, box->bottom, box->back);
