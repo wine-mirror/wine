@@ -498,3 +498,11 @@ void CDECL MSVCR120__vacopy(__ms_va_list *dest, __ms_va_list src)
 {
     __ms_va_copy(*dest, src);
 }
+
+/*********************************************************************
+ * _crt_debugger_hook (MSVCR80.@)
+ */
+void CDECL MSVCRT__crt_debugger_hook(int reserved)
+{
+    WARN("(%x)\n", reserved);
+}

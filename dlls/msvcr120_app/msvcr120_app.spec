@@ -1038,8 +1038,8 @@
 @ cdecl _copysignf(float float) msvcr120._copysignf
 @ cdecl _creat(str long) msvcr120._creat
 @ cdecl _create_locale(long str) msvcr120._create_locale
-@ stub -arch=i386 _crt_debugger_hook
-@ stub -arch=arm,win64 __crt_debugger_hook
+@ cdecl -arch=i386 _crt_debugger_hook(long) msvcr120._crt_debugger_hook
+@ cdecl -arch=arm,win64 __crt_debugger_hook(long) msvcr120.__crt_debugger_hook
 @ cdecl _ctime32(ptr) msvcr120._ctime32
 @ cdecl _ctime32_s(str long ptr) msvcr120._ctime32_s
 @ cdecl _ctime64(ptr) msvcr120._ctime64
