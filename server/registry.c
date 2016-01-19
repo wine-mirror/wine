@@ -101,7 +101,7 @@ struct key_value
 #define MIN_SUBKEYS  8   /* min. number of allocated subkeys per key */
 #define MIN_VALUES   8   /* min. number of allocated values per key */
 
-#define MAX_NAME_LEN  255    /* max. length of a key name */
+#define MAX_NAME_LEN  256    /* max. length of a key name */
 #define MAX_VALUE_LEN 16383  /* max. length of a value name */
 
 /* the root of the registry tree */
@@ -575,7 +575,7 @@ static struct key *alloc_subkey( struct key *parent, const struct unicode_str *n
 
     if (name->len > MAX_NAME_LEN * sizeof(WCHAR))
     {
-        set_error( STATUS_NAME_TOO_LONG );
+        set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
     if (parent->last_subkey + 1 == parent->nb_subkeys)

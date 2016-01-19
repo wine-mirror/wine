@@ -107,8 +107,8 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
 
     if (attr->ObjectName)
     {
-        if (attr->ObjectName->Length >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
-        len += attr->ObjectName->Length & ~(sizeof(WCHAR) - 1);
+        if (attr->ObjectName->Length & (sizeof(WCHAR) - 1)) return STATUS_OBJECT_NAME_INVALID;
+        len += attr->ObjectName->Length;
     }
 
     *ret = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
@@ -142,7 +142,7 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
     if (attr->ObjectName)
     {
         unsigned char *ptr = (unsigned char *)(*ret + 1) + (*ret)->sd_len;
-        (*ret)->name_len = attr->ObjectName->Length & ~(sizeof(WCHAR) - 1);
+        (*ret)->name_len = attr->ObjectName->Length;
         memcpy( ptr, attr->ObjectName->Buffer, (*ret)->name_len );
     }
 

@@ -33,6 +33,12 @@ static NTSTATUS (WINAPI *pNtCreateEvent) ( PHANDLE, ACCESS_MASK, const POBJECT_A
 static NTSTATUS (WINAPI *pNtOpenEvent)   ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES);
 static NTSTATUS (WINAPI *pNtPulseEvent)  ( HANDLE, PULONG );
 static NTSTATUS (WINAPI *pNtQueryEvent)  ( HANDLE, EVENT_INFORMATION_CLASS, PVOID, ULONG, PULONG );
+static NTSTATUS (WINAPI *pNtCreateJobObject)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES );
+static NTSTATUS (WINAPI *pNtCreateKey)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, ULONG,
+                                        const UNICODE_STRING *, ULONG, PULONG );
+static NTSTATUS (WINAPI *pNtDeleteKey)( HANDLE );
+static NTSTATUS (WINAPI *pNtCreateMailslotFile)( PHANDLE, ACCESS_MASK, POBJECT_ATTRIBUTES, PIO_STATUS_BLOCK,
+                                                 ULONG, ULONG, ULONG, PLARGE_INTEGER );
 static NTSTATUS (WINAPI *pNtCreateMutant)( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES, BOOLEAN );
 static NTSTATUS (WINAPI *pNtOpenMutant)  ( PHANDLE, ACCESS_MASK, const POBJECT_ATTRIBUTES );
 static NTSTATUS (WINAPI *pNtCreateSemaphore)( PHANDLE, ACCESS_MASK,const POBJECT_ATTRIBUTES,LONG,LONG );
@@ -354,6 +360,198 @@ static void test_name_collisions(void)
 
     pRtlFreeUnicodeString(&str);
     pNtClose(dir);
+}
+
+static void test_name_limits(void)
+{
+    static const WCHAR pipeW[]     = {'\\','D','e','v','i','c','e','\\','N','a','m','e','d','P','i','p','e','\\'};
+    static const WCHAR mailslotW[] = {'\\','D','e','v','i','c','e','\\','M','a','i','l','S','l','o','t','\\'};
+    static const WCHAR registryW[] = {'\\','R','E','G','I','S','T','R','Y','\\','M','a','c','h','i','n','e','\\','S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\'};
+    OBJECT_ATTRIBUTES attr;
+    IO_STATUS_BLOCK iosb;
+    LARGE_INTEGER size, timeout;
+    UNICODE_STRING str, target;
+    NTSTATUS status;
+    HANDLE ret;
+    DWORD i;
+
+    InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
+    str.Buffer = HeapAlloc( GetProcessHeap(), 0, 65536 + sizeof(registryW));
+    str.MaximumLength = 65534;
+    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i] = 'a';
+
+    if (!(attr.RootDirectory = get_base_dir()))
+    {
+        win_skip( "couldn't find the BaseNamedObjects dir\n" );
+        return;
+    }
+
+    str.Length = 67;
+    status = pNtCreateMutant( &ret, GENERIC_ALL, &attr, FALSE );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateMutant failed %x\n", str.Length, status );
+    status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr, 1, 2 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSemaphore failed %x\n", str.Length, status );
+    status = pNtCreateEvent( &ret, GENERIC_ALL, &attr, 1, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateEvent failed %x\n", str.Length, status );
+    status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateKeyedEvent failed %x\n", str.Length, status );
+    status = pNtCreateTimer( &ret, GENERIC_ALL, &attr, NotificationTimer );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateTimer failed %x\n", str.Length, status );
+    status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateCompletion failed %x\n", str.Length, status );
+    status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateJobObject failed %x\n", str.Length, status );
+    status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateDirectoryObject failed %x\n", str.Length, status );
+    pRtlCreateUnicodeStringFromAsciiz( &target, "\\DosDevices" );
+    status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, &attr, &target );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSymbolicLinkObject failed %x\n", str.Length, status );
+    size.QuadPart = 4096;
+    status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSection failed %x\n", str.Length, status );
+
+    str.Length = 65532;
+    status = pNtCreateMutant( &ret, GENERIC_ALL, &attr, FALSE );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateMutant failed %x\n", str.Length, status );
+    pNtClose( ret );
+    status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr, 1, 2 );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateSemaphore failed %x\n", str.Length, status );
+    pNtClose( ret );
+    status = pNtCreateEvent( &ret, GENERIC_ALL, &attr, 1, 0 );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateEvent failed %x\n", str.Length, status );
+    pNtClose( ret );
+    status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr, 0 );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateKeyedEvent failed %x\n", str.Length, status );
+    pNtClose( ret );
+    status = pNtCreateTimer( &ret, GENERIC_ALL, &attr, NotificationTimer );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateTimer failed %x\n", str.Length, status );
+    pNtClose( ret );
+    status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr, 0 );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateCompletion failed %x\n", str.Length, status );
+    pNtClose( ret );
+    status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateJobObject failed %x\n", str.Length, status );
+    pNtClose( ret );
+    status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateDirectoryObject failed %x\n", str.Length, status );
+    pNtClose( ret );
+    status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, &attr, &target );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateSymbolicLinkObject failed %x\n", str.Length, status );
+    pNtClose( ret );
+    size.QuadPart = 4096;
+    status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateSection failed %x\n", str.Length, status );
+    pNtClose( ret );
+
+    str.Length = 65534;
+    status = pNtCreateMutant( &ret, GENERIC_ALL, &attr, FALSE );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateMutant failed %x\n", str.Length, status );
+    status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr, 1, 2 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSemaphore failed %x\n", str.Length, status );
+    status = pNtCreateEvent( &ret, GENERIC_ALL, &attr, 1, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateEvent failed %x\n", str.Length, status );
+    status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateKeyedEvent failed %x\n", str.Length, status );
+    status = pNtCreateTimer( &ret, GENERIC_ALL, &attr, NotificationTimer );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateTimer failed %x\n", str.Length, status );
+    status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateCompletion failed %x\n", str.Length, status );
+    status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateJobObject failed %x\n", str.Length, status );
+    status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateDirectoryObject failed %x\n", str.Length, status );
+    status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, &attr, &target );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSymbolicLinkObject failed %x\n", str.Length, status );
+    size.QuadPart = 4096;
+    status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSection failed %x\n", str.Length, status );
+
+    /* named pipes */
+    memcpy( str.Buffer, pipeW, sizeof(pipeW) );
+    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + sizeof(pipeW)/sizeof(WCHAR)] = 'a';
+    str.Length = 67;
+    attr.RootDirectory = 0;
+    attr.Attributes = OBJ_CASE_INSENSITIVE;
+    timeout.QuadPart = -10000;
+    status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateNamedPipeFile failed %x\n", str.Length, status );
+    str.Length = 65532;
+    status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateNamedPipeFile failed %x\n", str.Length, status );
+    pNtClose( ret );
+    str.Length = 65534;
+    status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateNamedPipeFile failed %x\n", str.Length, status );
+
+    /* mailslots */
+    memcpy( str.Buffer, mailslotW, sizeof(mailslotW) );
+    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + sizeof(mailslotW)/sizeof(WCHAR)] = 'a';
+    str.Length = 67;
+    status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
+    str.Length = 65532;
+    status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
+    pNtClose( ret );
+    str.Length = 65534;
+    status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
+    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
+
+    /* registry keys */
+    memcpy( str.Buffer, registryW, sizeof(registryW) );
+    for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + sizeof(registryW)/sizeof(WCHAR)] = 'a';
+    str.Length = sizeof(registryW) + 250 * sizeof(WCHAR) + 1;
+    status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+    ok( status == STATUS_OBJECT_NAME_INVALID ||
+        status == STATUS_INVALID_PARAMETER ||
+        broken( status == STATUS_SUCCESS ), /* wow64 */
+        "%u: NtCreateKey failed %x\n", str.Length, status );
+    if (!status)
+    {
+        pNtDeleteKey( ret );
+        pNtClose( ret );
+    }
+    str.Length = sizeof(registryW) + 256 * sizeof(WCHAR);
+    status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+    ok( status == STATUS_SUCCESS, "%u: NtCreateKey failed %x\n", str.Length, status );
+    pNtDeleteKey( ret );
+    pNtClose( ret );
+    str.Length++;
+    status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+    ok( status == STATUS_OBJECT_NAME_INVALID ||
+        status == STATUS_INVALID_PARAMETER ||
+        broken( status == STATUS_SUCCESS ), /* win7 */
+        "%u: NtCreateKey failed %x\n", str.Length, status );
+    if (!status)
+    {
+        pNtDeleteKey( ret );
+        pNtClose( ret );
+    }
+    str.Length++;
+    status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "%u: NtCreateKey failed %x\n", str.Length, status );
+    str.Length = 2000;
+    status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "%u: NtCreateKey failed %x\n", str.Length, status );
+    /* some Windows versions change the error past 2050 chars, others past 4066 chars, some don't */
+    str.Length = 5000;
+    status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+    ok( status == STATUS_BUFFER_OVERFLOW ||
+        status == STATUS_BUFFER_TOO_SMALL ||
+        status == STATUS_INVALID_PARAMETER,
+        "%u: NtCreateKey failed %x\n", str.Length, status );
+    str.Length = 65534;
+    status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+    ok( status == STATUS_OBJECT_NAME_INVALID ||
+        status == STATUS_BUFFER_OVERFLOW ||
+        status == STATUS_BUFFER_TOO_SMALL,
+        "%u: NtCreateKey failed %x\n", str.Length, status );
+
+    pRtlFreeUnicodeString( &str );
+    pRtlFreeUnicodeString( &target );
 }
 
 static void test_directory(void)
@@ -1206,6 +1404,10 @@ START_TEST(om)
     pRtlCreateUnicodeStringFromAsciiz = (void *)GetProcAddress(hntdll, "RtlCreateUnicodeStringFromAsciiz");
     pRtlFreeUnicodeString   = (void *)GetProcAddress(hntdll, "RtlFreeUnicodeString");
     pNtCreateEvent          = (void *)GetProcAddress(hntdll, "NtCreateEvent");
+    pNtCreateJobObject      = (void *)GetProcAddress(hntdll, "NtCreateJobObject");
+    pNtCreateKey            = (void *)GetProcAddress(hntdll, "NtCreateKey");
+    pNtDeleteKey            = (void *)GetProcAddress(hntdll, "NtDeleteKey");
+    pNtCreateMailslotFile   = (void *)GetProcAddress(hntdll, "NtCreateMailslotFile");
     pNtCreateMutant         = (void *)GetProcAddress(hntdll, "NtCreateMutant");
     pNtOpenEvent            = (void *)GetProcAddress(hntdll, "NtOpenEvent");
     pNtQueryEvent           = (void *)GetProcAddress(hntdll, "NtQueryEvent");
@@ -1234,6 +1436,7 @@ START_TEST(om)
     test_case_sensitive();
     test_namespace_pipe();
     test_name_collisions();
+    test_name_limits();
     test_directory();
     test_symboliclink();
     test_query_object();

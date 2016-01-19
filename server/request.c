@@ -191,9 +191,13 @@ const struct object_attributes *get_req_object_attributes( const struct security
         set_error( STATUS_INVALID_SECURITY_DESCR );
         return NULL;
     }
-
+    if ((attr->name_len & (sizeof(WCHAR) - 1)) || attr->name_len >= 65534)
+    {
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return NULL;
+    }
     *sd = attr->sd_len ? (const struct security_descriptor *)(attr + 1) : NULL;
-    name->len = (attr->name_len / sizeof(WCHAR)) * sizeof(WCHAR);
+    name->len = attr->name_len;
     name->str = (const WCHAR *)(attr + 1) + attr->sd_len / sizeof(WCHAR);
     return attr;
 }

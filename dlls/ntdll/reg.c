@@ -42,8 +42,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
-/* maximum length of a key name in bytes (without terminating null) */
-#define MAX_NAME_LENGTH  (255 * sizeof(WCHAR))
 /* maximum length of a value name in bytes (without terminating null) */
 #define MAX_VALUE_LENGTH (16383 * sizeof(WCHAR))
 
@@ -61,7 +59,6 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
 
     if (!retkey || !attr) return STATUS_ACCESS_VIOLATION;
     if (attr->Length > sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
-    if (attr->ObjectName->Length > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
     TRACE( "(%p,%s,%s,%x,%x,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
            debugstr_us(class), options, access, retkey );
@@ -130,24 +127,20 @@ NTSTATUS WINAPI RtlpNtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJEC
 NTSTATUS WINAPI NtOpenKeyEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, ULONG options )
 {
     NTSTATUS ret;
-    DWORD len;
 
     if (!retkey || !attr) return STATUS_ACCESS_VIOLATION;
     if (attr->Length > sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
-    len = attr->ObjectName->Length;
     TRACE( "(%p,%s,%x,%p)\n", attr->RootDirectory,
            debugstr_us(attr->ObjectName), access, retkey );
     if (options)
         FIXME("options %x not implemented\n", options);
-
-    if (len > MAX_NAME_LENGTH) return STATUS_BUFFER_OVERFLOW;
 
     SERVER_START_REQ( open_key )
     {
         req->parent     = wine_server_obj_handle( attr->RootDirectory );
         req->access     = access;
         req->attributes = attr->Attributes;
-        wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         ret = wine_server_call( req );
         *retkey = wine_server_ptr_handle( reply->hkey );
     }
