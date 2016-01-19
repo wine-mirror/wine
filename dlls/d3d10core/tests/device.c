@@ -4582,6 +4582,9 @@ static void test_update_subresource(void)
     set_box(&box, 4, 4, 0, 3, 1, 1);
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)texture, 0, &box,
             bitmap_data, sizeof(*bitmap_data), 0);
+    set_box(&box, 0, 0, 0, 4, 4, 0);
+    ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)texture, 0, &box,
+            bitmap_data, 4 * sizeof(*bitmap_data), 0);
     ID3D10Device_Draw(device, 4, 0);
     get_texture_readback(backbuffer, &rb);
     for (i = 0; i < 4; ++i)
