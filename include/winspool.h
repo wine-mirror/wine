@@ -1789,6 +1789,12 @@ BOOL WINAPI DeletePrintProvidorW(LPWSTR pName, LPWSTR pEnvironment,
 				 LPWSTR pPrintProvidorName);
 #define DeletePrintProvidor WINELIB_NAME_AW(DeletePrintProvidor)
 
+DWORD WINAPI EnumPrinterKeyA(HANDLE printer, const CHAR *key,
+                             CHAR *subkey, DWORD size, DWORD *needed);
+DWORD WINAPI EnumPrinterKeyW(HANDLE printer, const WCHAR *key,
+                             WCHAR *subkey, DWORD size, DWORD *needed);
+#define EnumPrinterKey WINELIB_NAME_AW(EnumPrinterKey)
+
 DWORD WINAPI EnumPrinterDataExA(HANDLE hPrinter, LPCSTR pKeyName,
 				LPBYTE pEnumValues, DWORD cbEnumValues,
 				LPDWORD pcbEnumValues, LPDWORD pnEnumValues);

@@ -7527,6 +7527,26 @@ DWORD WINAPI EnumPrinterDataW( HANDLE hPrinter, DWORD dwIndex, LPWSTR pValueName
 }
 
 /*****************************************************************************
+ *          EnumPrinterKeyA [WINSPOOL.@]
+ *
+ */
+DWORD WINAPI EnumPrinterKeyA(HANDLE printer, const CHAR *key, CHAR *subkey, DWORD size, DWORD *needed)
+{
+    FIXME("%p %s %p %x %p\n", printer, debugstr_a(key), subkey, size, needed);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/*****************************************************************************
+ *          EnumPrinterKeyW [WINSPOOL.@]
+ *
+ */
+DWORD WINAPI EnumPrinterKeyW(HANDLE printer, const WCHAR *key, WCHAR *subkey, DWORD size, DWORD *needed)
+{
+    FIXME("%p %s %p %x %p\n", printer, debugstr_w(key), subkey, size, needed);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
+
+/*****************************************************************************
  *          EnumPrintProcessorDatatypesA [WINSPOOL.@]
  *
  */

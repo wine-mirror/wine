@@ -124,6 +124,8 @@
 @ stdcall EnumPrinterDriversW(wstr wstr long ptr long ptr ptr)
 @ stdcall EnumPrintersA(long ptr long ptr long ptr ptr)
 @ stdcall EnumPrintersW(long ptr long ptr long ptr ptr)
+@ stdcall EnumPrinterKeyA(long str ptr long ptr)
+@ stdcall EnumPrinterKeyW(long wstr ptr long ptr)
 @ stdcall ExtDeviceMode(long long ptr str str ptr str long)
 @ stdcall FindClosePrinterChangeNotification(long)
 @ stdcall FindFirstPrinterChangeNotification(long long long ptr)
