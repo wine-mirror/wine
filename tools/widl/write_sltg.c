@@ -147,8 +147,8 @@ struct sltg_tail
     short res1e; /* always 0000 */
     short cbSizeInstance;
     short cbAlignment;
-    short res24; /* always ffff */
-    short res26; /* always ffff */
+    short res24;
+    short res26;
     short cbSizeVft;
     short res2a; /* always ffff */
     short res2c; /* always ffff */
@@ -179,6 +179,30 @@ struct sltg_hrefinfo
      */
 
     char resxx; /* 0xdf */
+};
+
+struct sltg_function
+{
+    char magic; /* 0x4c, 0xcb or 0x8b with optional SLTG_FUNCTION_FLAGS_PRESENT flag */
+    char flags; /* high nibble is INVOKE_KIND, low nibble = 2 */
+    short next; /* byte offset from beginning of group to next fn */
+    short name; /* Offset within name table to name */
+    int dispid; /* dispid */
+    short helpcontext; /* helpcontext (again 1 is special) */
+    short helpstring; /* helpstring offset to offset */
+    short arg_off; /* offset to args from start of block */
+    char nacc; /* lowest 3bits are CALLCONV, rest are no of args */
+    char retnextopt; /* if 0x80 bit set ret type follows else next WORD
+                        is offset to ret type. No of optional args is
+                        middle 6 bits */
+    short rettype; /* return type VT_?? or offset to ret type */
+    short vtblpos; /* position in vtbl? */
+    short funcflags; /* present if magic & 0x20 */
+/* Param list starts, repeat next two as required */
+#if 0
+    WORD name; /* offset to 2nd letter of name */
+    WORD+ type; /* VT_ of param */
+#endif
 };
 
 #include "poppack.h"
@@ -422,11 +446,6 @@ static void add_module_typeinfo(struct sltg_typelib *typelib, type_t *type)
     error("add_module_typeinfo: %s not implemented\n", type->name);
 }
 
-static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *type)
-{
-    error("add_interface_typeinfo: %s not implemented\n", type->name);
-}
-
 static const char *add_typeinfo_block(struct sltg_typelib *typelib, const type_t *type, short kind)
 {
     struct sltg_data block;
@@ -487,7 +506,7 @@ static void init_typeinfo(struct sltg_typeinfo_header *ti, const type_t *type, s
     ti->misc.flags = 0; /* FIXME */
     ti->misc.unknown2 = 0x02;
     ti->misc.typekind = kind;
-    ti->res1e = -1;
+    ti->res1e = 0;
 
     if (hrefmap->href_count)
     {
@@ -715,8 +734,12 @@ static short write_var_desc(struct sltg_typelib *typelib, struct sltg_data *data
             atype = type_array_get_element_type(atype);
         }
 
-        *size_instance += array_size;
-        size_instance = NULL; /* don't account for element size */
+        if (size_instance)
+        {
+            *size_instance += array_size;
+            size_instance = NULL; /* don't account for element size */
+        }
+
 
         append_data(data, array, size);
 
@@ -814,10 +837,10 @@ static void init_sltg_tail(struct sltg_tail *tail)
     tail->cImplTypes = 0;
     tail->res06 = 0;
     tail->funcs_off = -1;
-    tail->vars_off = 0;
+    tail->vars_off = -1;
     tail->impls_off = -1;
     tail->funcs_bytes = -1;
-    tail->vars_bytes = 0;
+    tail->vars_bytes = -1;
     tail->impls_bytes = -1;
     tail->tdescalias_vt = -1;
     tail->res16 = -1;
@@ -858,8 +881,6 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
     hrefmap.href_count = 0;
     hrefmap.href = NULL;
 
-    init_sltg_data(&data);
-
     if (type_struct_get_fields(type))
     {
         int i = 0;
@@ -888,6 +909,8 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
             i++;
         }
     }
+
+    init_sltg_data(&data);
 
     index_name = add_typeinfo_block(typelib, type, TKIND_RECORD);
 
@@ -949,9 +972,390 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
 
     init_sltg_tail(&tail);
     tail.cVars = var_count;
+    tail.vars_off = 0;
     tail.vars_bytes = var_data_size;
     tail.cbSizeInstance = size_instance;
     tail.type_bytes = data.size - member_offset - sizeof(member);
+    append_data(&data, &tail, sizeof(tail));
+
+    add_block(typelib, data.data, data.size, index_name);
+}
+
+static importinfo_t *find_importinfo(typelib_t *typelib, const char *name)
+{
+    importlib_t *importlib;
+
+    LIST_FOR_EACH_ENTRY(importlib, &typelib->importlibs, importlib_t, entry)
+    {
+        int i;
+
+        for (i = 0; i < importlib->ntypeinfos; i++)
+        {
+            if (!strcmp(name, importlib->importinfos[i].name))
+            {
+                chat("Found %s in importlib list\n", name);
+                return &importlib->importinfos[i];
+            }
+        }
+    }
+
+    return NULL;
+}
+
+static int get_func_flags(const var_t *func, int *dispid, int *invokekind, int *helpcontext, const char **helpstring)
+{
+    static int dispid_base = 0x60000000;
+    const attr_t *attr;
+    int flags;
+
+    *dispid = dispid_base++;
+    *invokekind = 1 /* INVOKE_FUNC */;
+    *helpcontext = -2;
+    *helpstring = NULL;
+
+    if (!func->attrs) return 0;
+
+    flags = 0;
+
+    LIST_FOR_EACH_ENTRY(attr, func->attrs, const attr_t, entry)
+    {
+        expr_t *expr = attr->u.pval;
+        switch(attr->type)
+        {
+        case ATTR_BINDABLE:
+            flags |= 0x4; /* FUNCFLAG_FBINDABLE */
+            break;
+        case ATTR_DEFAULTBIND:
+            flags |= 0x20; /* FUNCFLAG_FDEFAULTBIND */
+            break;
+        case ATTR_DEFAULTCOLLELEM:
+            flags |= 0x100; /* FUNCFLAG_FDEFAULTCOLLELEM */
+            break;
+        case ATTR_DISPLAYBIND:
+            flags |= 0x10; /* FUNCFLAG_FDISPLAYBIND */
+            break;
+        case ATTR_HELPCONTEXT:
+            *helpcontext = expr->u.lval;
+            break;
+        case ATTR_HELPSTRING:
+            *helpstring = attr->u.pval;
+            break;
+        case ATTR_HIDDEN:
+            flags |= 0x40; /* FUNCFLAG_FHIDDEN */
+            break;
+        case ATTR_ID:
+            *dispid = expr->cval;
+            break;
+        case ATTR_IMMEDIATEBIND:
+            flags |= 0x1000; /* FUNCFLAG_FIMMEDIATEBIND */
+            break;
+        case ATTR_NONBROWSABLE:
+            flags |= 0x400; /* FUNCFLAG_FNONBROWSABLE */
+            break;
+        case ATTR_PROPGET:
+            *invokekind = 0x2; /* INVOKE_PROPERTYGET */
+            break;
+        case ATTR_PROPPUT:
+            *invokekind = 0x4; /* INVOKE_PROPERTYPUT */
+            break;
+        case ATTR_PROPPUTREF:
+            *invokekind = 0x8; /* INVOKE_PROPERTYPUTREF */
+            break;
+        /* FIXME: FUNCFLAG_FREPLACEABLE */
+        case ATTR_REQUESTEDIT:
+            flags |= 0x8; /* FUNCFLAG_FREQUESTEDIT */
+            break;
+        case ATTR_RESTRICTED:
+            flags |= 0x1; /* FUNCFLAG_FRESTRICTED */
+            break;
+        case ATTR_SOURCE:
+            flags |= 0x2; /* FUNCFLAG_FSOURCE */
+            break;
+        case ATTR_UIDEFAULT:
+            flags |= 0x200; /* FUNCFLAG_FUIDEFAULT */
+            break;
+        case ATTR_USESGETLASTERROR:
+            flags |= 0x80; /* FUNCFLAG_FUSESGETLASTERROR */
+            break;
+        default:
+            break;
+        }
+    }
+
+    return flags;
+}
+
+static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, var_t *func,
+                         int idx, short base_offset, struct sltg_hrefmap *hrefmap)
+{
+    struct sltg_data ret_data, *arg_data;
+    int arg_count = 0, arg_data_size, optional = 0, defaults = 0, old_size;
+    int funcflags = 0, dispid, invokekind = 1 /* INVOKE_FUNC */, helpcontext;
+    const char *helpstring;
+    const var_t *arg;
+    short ret_desc_offset, *arg_desc_offset, arg_offset;
+    struct sltg_function func_desc;
+
+    chat("add_func_desc: %s, idx %#x\n", func->name, idx);
+
+    old_size = data->size;
+
+    init_sltg_data(&ret_data);
+    ret_desc_offset = write_var_desc(typelib, &ret_data, type_function_get_rettype(func->declspec.type),
+                                     0, base_offset, NULL, hrefmap);
+    dump_var_desc(ret_data.data, ret_data.size);
+
+    arg_data_size = 0;
+    arg_offset = base_offset + sizeof(struct sltg_function);
+
+    if (ret_data.size > sizeof(short))
+    {
+        arg_data_size += ret_data.size;
+        arg_offset += ret_data.size;
+    }
+
+    if (type_function_get_args(func->declspec.type))
+    {
+        int i = 0;
+
+        arg_count = list_count(type_function_get_args(func->declspec.type));
+
+        arg_data = xmalloc(arg_count * sizeof(*arg_data));
+        arg_desc_offset = xmalloc(arg_count * sizeof(*arg_desc_offset));
+
+        arg_offset += arg_count * 2 * sizeof(short);
+
+        LIST_FOR_EACH_ENTRY(arg, type_function_get_args(func->declspec.type), const var_t, entry)
+        {
+            const attr_t *attr;
+
+            chat("add_func_desc: arg[%d] %p (%s), type %p (%s)\n",
+                 i, arg, arg->name, arg->declspec.type, arg->declspec.type->name);
+
+            init_sltg_data(&arg_data[i]);
+
+            arg_desc_offset[i] = write_var_desc(typelib, &arg_data[i], arg->declspec.type, 0, arg_offset, NULL, hrefmap);
+            dump_var_desc(arg_data[i].data, arg_data[i].size);
+
+            if (arg_data[i].size > sizeof(short))
+            {
+                arg_data_size += arg_data[i].size;
+                arg_offset += arg_data[i].size;
+            }
+
+            i++;
+
+            if (!arg->attrs) continue;
+
+            LIST_FOR_EACH_ENTRY(attr, arg->attrs, const attr_t, entry)
+            {
+                if (attr->type == ATTR_DEFAULTVALUE)
+                    defaults++;
+                else if(attr->type == ATTR_OPTIONAL)
+                    optional++;
+            }
+        }
+    }
+
+    funcflags = get_func_flags(func, &dispid, &invokekind, &helpcontext, &helpstring);
+
+    if (base_offset != -1)
+        chat("add_func_desc: flags %#x, dispid %#x, invokekind %d, helpcontext %#x, helpstring %s\n",
+             funcflags, dispid, invokekind, helpcontext, helpstring);
+
+    func_desc.magic = 0x6c; /* always write flags to simplify calculations */
+    func_desc.flags = (invokekind << 4) | 0x02;
+    if (idx & 0x80000000)
+    {
+        func_desc.next = -1;
+        idx &= ~0x80000000;
+    }
+    else
+        func_desc.next = base_offset + sizeof(func_desc) + arg_data_size + arg_count * 2 * sizeof(short);
+    func_desc.name = base_offset != -1 ? add_name(&typelib->name_table, func->name) : -1;
+    func_desc.dispid = dispid;
+    func_desc.helpcontext = helpcontext;
+    func_desc.helpstring = (helpstring && base_offset != -1) ? add_name(&typelib->name_table, helpstring) : -1;
+    func_desc.arg_off = arg_count ? base_offset + sizeof(func_desc) : -1;
+    func_desc.nacc = (arg_count << 3) | 4 /* CC_STDCALL */;
+    func_desc.retnextopt = (optional << 1);
+    if (ret_data.size > sizeof(short))
+    {
+        func_desc.rettype = base_offset + sizeof(func_desc) + ret_desc_offset;
+        if (arg_count)
+            func_desc.arg_off += ret_data.size;
+    }
+    else
+    {
+        func_desc.retnextopt |= 0x80;
+        func_desc.rettype = *(short *)ret_data.data;
+    }
+    func_desc.vtblpos = idx * pointer_size;
+    func_desc.funcflags = funcflags;
+
+    append_data(data, &func_desc, sizeof(func_desc));
+
+    arg_offset = base_offset + sizeof(struct sltg_function);
+
+    if (ret_data.size > sizeof(short))
+    {
+        append_data(data, ret_data.data, ret_data.size);
+        func_desc.arg_off += ret_data.size;
+        arg_offset += ret_data.size;
+    }
+
+    if (arg_count)
+    {
+        int i = 0;
+
+        arg_offset += arg_count * 2 * sizeof(short);
+
+        LIST_FOR_EACH_ENTRY(arg, type_function_get_args(func->declspec.type), const var_t, entry)
+        {
+            short name, type_offset;
+
+            name = base_offset != -1 ? add_name(&typelib->name_table, arg->name) : -1;
+            append_data(data, &name, sizeof(name));
+
+            if (arg_data[i].size > sizeof(short))
+            {
+                type_offset = (arg_offset + arg_desc_offset[i]);
+                arg_offset += arg_data[i].size;
+            }
+            else
+                type_offset = *(short *)arg_data[i].data;
+
+            append_data(data, &type_offset, sizeof(type_offset));
+
+            if (base_offset != -1)
+                chat("add_func_desc: arg[%d] - name %s (%#x), type_offset %#x\n",
+                     i, arg->name, name, type_offset);
+
+            i++;
+        }
+
+        for (i = 0; i < arg_count; i++)
+        {
+            if (arg_data[i].size > sizeof(short))
+                append_data(data, arg_data[i].data, arg_data[i].size);
+        }
+    }
+
+    return data->size - old_size;
+}
+
+static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
+{
+    const statement_t *stmt_func;
+    importinfo_t *ref_importinfo = NULL;
+    type_t *inherit;
+    struct sltg_data data;
+    struct sltg_hrefmap hrefmap;
+    const char *index_name;
+    struct sltg_typeinfo_header ti;
+    struct sltg_member_header member;
+    struct sltg_tail tail;
+    int member_offset, base_offset, func_count, func_data_size, i;
+
+    if (iface->typelib_idx != -1) return;
+
+    chat("add_interface_typeinfo: type %p, type->name %s\n", iface, iface->name);
+
+    if (!iface->details.iface)
+    {
+        error("interface %s is referenced but not defined\n", iface->name);
+        return;
+    }
+
+    if (is_attr(iface->attrs, ATTR_DISPINTERFACE))
+    {
+        error("support for dispinterface %s is not implemented\n", iface->name);
+        return;
+    }
+
+    inherit = type_iface_get_inherit(iface);
+
+    if (inherit)
+    {
+        chat("add_interface_typeinfo: inheriting from base interface %s\n", inherit->name);
+
+        warning("inheriting from base interface %s is not implemented\n", inherit->name);
+
+        ref_importinfo = find_importinfo(typelib->typelib, inherit->name);
+
+        if (!ref_importinfo && type_iface_get_inherit(inherit))
+            add_interface_typeinfo(typelib, inherit);
+
+        if (ref_importinfo)
+            error("support for imported interfaces is not implemented\n");
+    }
+
+    /* check typelib_idx again, it could have been added while resolving the parent interface */
+    if (iface->typelib_idx != -1) return;
+
+    iface->typelib_idx = typelib->block_count;
+
+    /* pass 1: calculate function descriptions data size */
+    hrefmap.href_count = 0;
+    hrefmap.href = NULL;
+
+    init_sltg_data(&data);
+
+    STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(iface))
+    {
+        add_func_desc(typelib, &data, stmt_func->u.var, -1, -1, &hrefmap);
+    }
+
+    func_data_size = data.size;
+
+    /* pass 2: write function descriptions */
+    init_sltg_data(&data);
+
+    func_count = list_count(type_iface_get_stmts(iface));
+
+    index_name = add_typeinfo_block(typelib, iface, TKIND_INTERFACE);
+
+    init_typeinfo(&ti, iface, TKIND_INTERFACE, &hrefmap);
+    append_data(&data, &ti, sizeof(ti));
+
+    write_hrefmap(&data, &hrefmap);
+
+    member_offset = data.size;
+
+    member.res00 = 0x0001;
+    member.res02 = 0xffff;
+    member.res04 = 0x01;
+    member.extra = func_data_size;
+    append_data(&data, &member, sizeof(member));
+
+    base_offset = 0;
+
+    /* inheriting from base interface is not implemented yet
+    if (type_iface_get_inherit(iface))
+        add_impl_type(typeinfo, type_iface_get_inherit(iface), ref_importinfo);
+    */
+
+    i = 0;
+
+    STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(iface))
+    {
+        if (i == func_count - 1) i |= 0x80000000;
+
+        base_offset += add_func_desc(typelib, &data, stmt_func->u.var, i, base_offset, &hrefmap);
+        i++;
+    }
+
+    init_sltg_tail(&tail);
+
+    tail.cFuncs = func_count;
+    tail.funcs_off = 0;
+    tail.funcs_bytes = func_data_size;
+    tail.cbSizeInstance = pointer_size;
+    tail.cbAlignment = pointer_size;
+    tail.cbSizeVft = func_count * pointer_size;
+    tail.type_bytes = data.size - member_offset - sizeof(member);
+    tail.res24 = 0;
+    tail.res26 = 0;
     append_data(&data, &tail, sizeof(tail));
 
     add_block(typelib, data.data, data.size, index_name);
