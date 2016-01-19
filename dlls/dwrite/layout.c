@@ -1546,7 +1546,8 @@ static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct lay
            however Y grows from baseline down for horizontal baseline. */
         u->u.offset = -offset;
         u->u.runHeight = 0.0f; /* FIXME */
-        u->u.readingDirection = layout->format.readingdir;
+        u->u.readingDirection = is_run_rtl(cur) ? DWRITE_READING_DIRECTION_RIGHT_TO_LEFT :
+            DWRITE_READING_DIRECTION_LEFT_TO_RIGHT;
         u->u.flowDirection = layout->format.flow;
         u->u.localeName = cur->run->u.regular.descr.localeName;
         u->u.measuringMode = layout->measuringmode;
