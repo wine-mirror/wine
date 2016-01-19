@@ -4004,6 +4004,14 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
 
     if (src_box)
     {
+        if (src_box->front >= src_box->back)
+        {
+            WARN("Invalid box (%u, %u, %u)->(%u, %u, %u) specified.\n",
+                    src_box->left, src_box->top, src_box->front,
+                    src_box->right, src_box->bottom, src_box->back);
+            return WINED3DERR_INVALIDCALL;
+        }
+
         src_rect.left = src_box->left;
         src_rect.top = src_box->top;
         src_rect.right = src_box->right;
