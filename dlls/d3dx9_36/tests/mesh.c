@@ -11109,21 +11109,25 @@ static void D3DXCreateAnimationControllerTest(void)
     hr = D3DXCreateAnimationController(0, 0, 0, 0, NULL);
     ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
 
+    animation = (void*)0xdeadbeef;
     hr = D3DXCreateAnimationController(0, 1, 1, 1, &animation);
     ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
-    ok(!animation, "Got unexpected animation %p.\n", animation);
+    ok(animation == (void*)0xdeadbeef, "Got unexpected animation %p.\n", animation);
 
+    animation = (void*)0xdeadbeef;
     hr = D3DXCreateAnimationController(1, 0, 1, 1, &animation);
     ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
-    ok(!animation, "Got unexpected animation %p.\n", animation);
+    ok(animation == (void*)0xdeadbeef, "Got unexpected animation %p.\n", animation);
 
+    animation = (void*)0xdeadbeef;
     hr = D3DXCreateAnimationController(1, 1, 0, 1, &animation);
     ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
-    ok(!animation, "Got unexpected animation %p.\n", animation);
+    ok(animation == (void*)0xdeadbeef, "Got unexpected animation %p.\n", animation);
 
+    animation = (void*)0xdeadbeef;
     hr = D3DXCreateAnimationController(1, 1, 1, 0, &animation);
     ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
-    ok(!animation, "Got unexpected animation %p.\n", animation);
+    ok(animation == (void*)0xdeadbeef, "Got unexpected animation %p.\n", animation);
 
     hr = D3DXCreateAnimationController(1, 1, 1, 1, &animation);
     ok(hr == D3D_OK, "Got unexpected hr returned %#x.\n", hr);
