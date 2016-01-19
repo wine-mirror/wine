@@ -104,7 +104,7 @@
 @ stub _mbscspn_l
 @ cdecl _mbsdec(ptr ptr) ucrtbase._mbsdec
 @ stub _mbsdec_l
-@ stub _mbsdup
+@ cdecl _mbsdup(str) ucrtbase._mbsdup
 @ cdecl _mbsicmp(str str) ucrtbase._mbsicmp
 @ stub _mbsicmp_l
 @ cdecl _mbsicoll(str str) ucrtbase._mbsicoll

@@ -56,9 +56,9 @@
 @ cdecl _wasctime_s(ptr long ptr) ucrtbase._wasctime_s
 @ stub _wcsftime_l
 @ cdecl _wctime32(ptr) ucrtbase._wctime32
-@ stub _wctime32_s
+@ cdecl _wctime32_s(ptr long ptr) ucrtbase._wctime32_s
 @ cdecl _wctime64(ptr) ucrtbase._wctime64
-@ stub _wctime64_s
+@ cdecl _wctime64_s(ptr long ptr) ucrtbase._wctime64_s
 @ cdecl _wstrdate(ptr) ucrtbase._wstrdate
 @ cdecl _wstrdate_s(ptr long) ucrtbase._wstrdate_s
 @ cdecl _wstrtime(ptr) ucrtbase._wstrtime

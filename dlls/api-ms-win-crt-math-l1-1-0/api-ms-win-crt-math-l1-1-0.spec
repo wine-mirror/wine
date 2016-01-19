@@ -55,7 +55,7 @@
 @ stub _dexp
 @ stub _dlog
 @ stub _dnorm
-@ stub _dpcomp
+@ cdecl _dpcomp(double double) ucrtbase._dpcomp
 @ stub _dpoly
 @ stub _dscale
 @ cdecl _dsign(double) ucrtbase._dsign
@@ -69,7 +69,7 @@
 @ stub _fdlog
 @ stub _fdnorm
 @ cdecl _fdopen(long str) ucrtbase._fdopen
-@ stub _fdpcomp
+@ cdecl _fdpcomp(float float) ucrtbase._fdpcomp
 @ stub _fdpoly
 @ stub _fdscale
 @ cdecl _fdsign(float) ucrtbase._fdsign
@@ -93,7 +93,7 @@
 @ cdecl _ldclass(double) ucrtbase._ldclass
 @ stub _ldexp
 @ stub _ldlog
-@ stub _ldpcomp
+@ cdecl _ldpcomp(double double) ucrtbase._ldpcomp
 @ stub _ldpoly
 @ stub _ldscale
 @ cdecl _ldsign(double) ucrtbase._ldsign
@@ -117,7 +117,7 @@
 @ cdecl -arch=arm,x86_64 _nextafterf(float float) ucrtbase._nextafterf
 @ cdecl _scalb(double long) ucrtbase._scalb
 @ cdecl -arch=arm,x86_64 _scalbf(float long) ucrtbase._scalbf
-@ stub _set_FMA3_enable
+@ cdecl -arch=win64 _set_FMA3_enable(long) ucrtbase._set_FMA3_enable
 @ cdecl -arch=i386 _set_SSE2_enable(long) ucrtbase._set_SSE2_enable
 @ cdecl _y0(double) ucrtbase._y0
 @ cdecl _y1(double) ucrtbase._y1
@@ -246,9 +246,9 @@
 @ cdecl fmax(double double) ucrtbase.fmax
 @ cdecl fmaxf(float float) ucrtbase.fmaxf
 @ cdecl fmaxl(double double) ucrtbase.fmaxl
-@ stub fmin
-@ stub fminf
-@ stub fminl
+@ cdecl fmin(double double) ucrtbase.fmin
+@ cdecl fminf(float float) ucrtbase.fminf
+@ cdecl fminl(double double) ucrtbase.fminl
 @ cdecl fmod(double double) ucrtbase.fmod
 @ cdecl -arch=arm,x86_64 fmodf(float float) ucrtbase.fmodf
 @ cdecl frexp(double ptr) ucrtbase.frexp

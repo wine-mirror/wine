@@ -255,7 +255,7 @@
 @ cdecl _difftime64(long long) MSVCRT__difftime64
 @ stub _dlog
 @ stub _dnorm
-@ stub _dpcomp
+@ cdecl _dpcomp(double double) MSVCR120__dpcomp
 @ stub _dpoly
 @ stub _dscale
 @ cdecl _dsign(double) MSVCR120__dsign
@@ -296,7 +296,7 @@
 @ stub _fdlog
 @ stub _fdnorm
 @ cdecl _fdopen(long str) MSVCRT__fdopen
-@ stub _fdpcomp
+@ cdecl _fdpcomp(float float) MSVCR120__fdpcomp
 @ stub _fdpoly
 @ stub _fdscale
 @ cdecl _fdsign(float) MSVCR120__fdsign
@@ -534,7 +534,7 @@
 @ cdecl _ldclass(double) MSVCR120__ldclass
 @ stub _ldexp
 @ stub _ldlog
-@ stub _ldpcomp
+@ cdecl _ldpcomp(double double) MSVCR120__dpcomp
 @ stub _ldpoly
 @ stub _ldscale
 @ cdecl _ldsign(double) MSVCR120__dsign
@@ -623,7 +623,7 @@
 @ stub _mbscspn_l
 @ cdecl _mbsdec(ptr ptr)
 @ stub _mbsdec_l
-@ stub _mbsdup
+@ stub _mbsdup(str)
 @ cdecl _mbsicmp(str str)
 @ stub _mbsicmp_l
 @ cdecl _mbsicoll(str str)
@@ -1876,7 +1876,7 @@
 @ cdecl _searchenv_s(str str ptr long) MSVCRT__searchenv_s
 @ cdecl -arch=i386,x86_64,arm _seh_filter_dll(long ptr) __CppXcptFilter
 @ cdecl _seh_filter_exe(long ptr) _XcptFilter
-@ stub _set_FMA3_enable
+@ cdecl -arch=win64 _set_FMA3_enable(long) MSVCRT__set_FMA3_enable
 @ stdcall -arch=i386 _seh_longjmp_unwind4(ptr)
 @ stdcall -arch=i386 _seh_longjmp_unwind(ptr)
 @ cdecl -arch=i386 _set_SSE2_enable(long) MSVCRT__set_SSE2_enable
@@ -2057,9 +2057,9 @@
 @ cdecl _wcsupr_s_l(wstr long ptr) MSVCRT__wcsupr_s_l
 @ cdecl _wcsxfrm_l(ptr wstr long ptr) MSVCRT__wcsxfrm_l
 @ cdecl _wctime32(ptr) MSVCRT__wctime32
-@ stub _wctime32_s
+@ cdecl _wctime32_s(ptr long ptr) MSVCRT__wctime32_s
 @ cdecl _wctime64(ptr) MSVCRT__wctime64
-@ stub _wctime64_s
+@ cdecl _wctime64_s(ptr long ptr) MSVCRT__wctime64_s
 @ cdecl _wctomb_l(ptr long ptr) MSVCRT__wctomb_l
 @ cdecl _wctomb_s_l(ptr ptr long long ptr) MSVCRT__wctomb_s_l
 @ stub _wctype
@@ -2310,9 +2310,9 @@
 @ cdecl fmax(double double) MSVCR120_fmax
 @ cdecl fmaxf(float float) MSVCR120_fmaxf
 @ cdecl fmaxl(double double) MSVCR120_fmax
-@ stub fmin
-@ stub fminf
-@ stub fminl
+@ cdecl fmin(double double) MSVCR120_fmin
+@ cdecl fminf(float float) MSVCR120_fminf
+@ cdecl fminl(double double) MSVCR120_fmin
 @ cdecl fmod(double double) MSVCRT_fmod
 @ cdecl -arch=arm,x86_64 fmodf(float float) MSVCRT_fmodf
 @ cdecl fopen(str str) MSVCRT_fopen
