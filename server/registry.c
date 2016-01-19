@@ -759,7 +759,8 @@ static struct key *open_key( struct key *key, const struct unicode_str *name, un
 /* create a subkey */
 static struct key *create_key( struct key *key, const struct unicode_str *name,
                                const struct unicode_str *class, unsigned int options,
-                               unsigned int access, unsigned int attributes, int *created )
+                               unsigned int access, unsigned int attributes,
+                               const struct security_descriptor *sd, int *created )
 {
     int index;
     struct unicode_str token, next;
@@ -806,6 +807,9 @@ static struct key *create_key( struct key *key, const struct unicode_str *name,
     if (options & REG_OPTION_CREATE_LINK) key->flags |= KEY_SYMLINK;
     if (options & REG_OPTION_VOLATILE) key->flags |= KEY_VOLATILE;
     else key->flags |= KEY_DIRTY;
+
+    if (sd) default_set_sd( &key->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                            DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
 
     if (debug_level > 1) dump_operation( key, NULL, "Create" );
     if (class && class->len)
@@ -2021,33 +2025,30 @@ DECL_HANDLER(create_key)
     struct key *key = NULL, *parent;
     struct unicode_str name, class;
     unsigned int access = req->access;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+
+    if (!objattr) return;
 
     if (!is_wow64_thread( current )) access = (access & ~KEY_WOW64_32KEY) | KEY_WOW64_64KEY;
 
-    reply->hkey = 0;
+    class.str = get_req_data_after_objattr( objattr, &class.len );
+    class.len = (class.len / sizeof(WCHAR)) * sizeof(WCHAR);
 
-    if (req->namelen > get_req_data_size())
+    if (!objattr->rootdir && name.len >= sizeof(root_name) &&
+        !memicmpW( name.str, root_name, sizeof(root_name)/sizeof(WCHAR) ))
     {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
+        name.str += sizeof(root_name)/sizeof(WCHAR);
+        name.len -= sizeof(root_name);
     }
-    class.str = (const WCHAR *)get_req_data() + req->namelen / sizeof(WCHAR);
-    class.len = ((get_req_data_size() - req->namelen) / sizeof(WCHAR)) * sizeof(WCHAR);
-    get_req_path( &name, !req->parent );
-    if (name.str > class.str)
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-    name.len = (class.str - name.str) * sizeof(WCHAR);
 
     /* NOTE: no access rights are required from the parent handle to create a key */
-    if ((parent = get_parent_hkey_obj( req->parent )))
+    if ((parent = get_parent_hkey_obj( objattr->rootdir )))
     {
         if ((key = create_key( parent, &name, &class, req->options, access,
-                               req->attributes, &reply->created )))
+                               objattr->attributes, sd, &reply->created )))
         {
-            reply->hkey = alloc_handle( current->process, key, access, req->attributes );
+            reply->hkey = alloc_handle( current->process, key, access, objattr->attributes );
             release_object( key );
         }
         release_object( parent );
@@ -2194,7 +2195,7 @@ DECL_HANDLER(load_registry)
     {
         int dummy;
         get_req_path( &name, !req->hkey );
-        if ((key = create_key( parent, &name, NULL, 0, KEY_WOW64_64KEY, 0, &dummy )))
+        if ((key = create_key( parent, &name, NULL, 0, KEY_WOW64_64KEY, 0, NULL, &dummy )))
         {
             load_registry( key, req->file );
             release_object( key );

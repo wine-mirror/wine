@@ -2308,12 +2308,9 @@ static void dump_write_process_memory_request( const struct write_process_memory
 
 static void dump_create_key_request( const struct create_key_request *req )
 {
-    fprintf( stderr, " parent=%04x", req->parent );
-    fprintf( stderr, ", access=%08x", req->access );
-    fprintf( stderr, ", attributes=%08x", req->attributes );
+    fprintf( stderr, " access=%08x", req->access );
     fprintf( stderr, ", options=%08x", req->options );
-    fprintf( stderr, ", namelen=%u", req->namelen );
-    dump_varargs_unicode_str( ", name=", min(cur_size,req->namelen) );
+    dump_varargs_object_attributes( ", objattr=", cur_size );
     dump_varargs_unicode_str( ", class=", cur_size );
 }
 

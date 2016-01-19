@@ -2393,13 +2393,11 @@ struct write_process_memory_reply
 struct create_key_request
 {
     struct request_header __header;
-    obj_handle_t parent;
     unsigned int access;
-    unsigned int attributes;
     unsigned int options;
-    data_size_t  namelen;
-    /* VARARG(name,unicode_str,namelen); */
+    /* VARARG(objattr,object_attributes); */
     /* VARARG(class,unicode_str); */
+    char __pad_20[4];
 };
 struct create_key_reply
 {
@@ -6159,6 +6157,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 497
+#define SERVER_PROTOCOL_VERSION 498
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

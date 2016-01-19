@@ -1820,12 +1820,9 @@ enum char_info_mode
 
 /* Create a registry key */
 @REQ(create_key)
-    obj_handle_t parent;       /* handle to the parent key */
     unsigned int access;       /* desired access rights */
-    unsigned int attributes;   /* object attributes */
     unsigned int options;      /* creation options */
-    data_size_t  namelen;      /* length of key name in bytes */
-    VARARG(name,unicode_str,namelen);  /* key name */
+    VARARG(objattr,object_attributes); /* object attributes */
     VARARG(class,unicode_str);         /* class name */
 @REPLY
     obj_handle_t hkey;         /* handle to the created key */

@@ -56,6 +56,8 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
                              PULONG dispos )
 {
     NTSTATUS ret;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     if (!retkey || !attr) return STATUS_ACCESS_VIOLATION;
     if (attr->Length > sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
@@ -64,14 +66,13 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
     TRACE( "(%p,%s,%s,%x,%x,%p)\n", attr->RootDirectory, debugstr_us(attr->ObjectName),
            debugstr_us(class), options, access, retkey );
 
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
     SERVER_START_REQ( create_key )
     {
-        req->parent     = wine_server_obj_handle( attr->RootDirectory );
         req->access     = access;
-        req->attributes = attr->Attributes;
         req->options    = options;
-        req->namelen    = attr->ObjectName->Length;
-        wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        wine_server_add_data( req, objattr, len );
         if (class) wine_server_add_data( req, class->Buffer, class->Length );
         if (!(ret = wine_server_call( req )))
         {
@@ -80,7 +81,9 @@ NTSTATUS WINAPI NtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
         }
     }
     SERVER_END_REQ;
+
     TRACE("<- %p\n", *retkey);
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     return ret;
 }
 
