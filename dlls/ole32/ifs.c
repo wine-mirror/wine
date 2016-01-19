@@ -143,8 +143,8 @@ static BOOL RemoveMemoryLocation(LPCVOID pMem)
 /******************************************************************************
  *	IMalloc32_QueryInterface	[VTABLE]
  */
-static HRESULT WINAPI IMalloc_fnQueryInterface(LPMALLOC iface,REFIID refiid,LPVOID *obj) {
-
+static HRESULT WINAPI IMalloc_fnQueryInterface(IMalloc *iface, REFIID refiid, void **obj)
+{
 	TRACE("(%s,%p)\n",debugstr_guid(refiid),obj);
 
 	if (IsEqualIID(&IID_IUnknown,refiid) || IsEqualIID(&IID_IMalloc,refiid)) {
@@ -157,21 +157,22 @@ static HRESULT WINAPI IMalloc_fnQueryInterface(LPMALLOC iface,REFIID refiid,LPVO
 /******************************************************************************
  *	IMalloc32_AddRefRelease		[VTABLE]
  */
-static ULONG WINAPI IMalloc_fnAddRefRelease (LPMALLOC iface) {
+static ULONG WINAPI IMalloc_fnAddRefRelease(IMalloc *iface)
+{
 	return 1;
 }
 
 /******************************************************************************
  *	IMalloc32_Alloc 		[VTABLE]
  */
-static LPVOID WINAPI IMalloc_fnAlloc(LPMALLOC iface, DWORD cb) {
+static void * WINAPI IMalloc_fnAlloc(IMalloc *iface, SIZE_T cb)
+{
+	void *addr;
 
-	LPVOID addr;
-
-	TRACE("(%d)\n",cb);
+	TRACE("(%ld)\n",cb);
 
 	if(Malloc32.pSpy) {
-	    DWORD preAllocResult;
+	    SIZE_T preAllocResult;
 	    
 	    EnterCriticalSection(&IMalloc32_SpyCS);
 	    preAllocResult = IMallocSpy_PreAlloc(Malloc32.pSpy, cb);
@@ -198,14 +199,14 @@ static LPVOID WINAPI IMalloc_fnAlloc(LPMALLOC iface, DWORD cb) {
 /******************************************************************************
  * IMalloc32_Realloc [VTABLE]
  */
-static LPVOID WINAPI IMalloc_fnRealloc(LPMALLOC iface,LPVOID pv,DWORD cb) {
+static void * WINAPI IMalloc_fnRealloc(IMalloc *iface, void *pv, SIZE_T cb)
+{
+	void *pNewMemory;
 
-	LPVOID pNewMemory;
-
-	TRACE("(%p,%d)\n",pv,cb);
+	TRACE("(%p,%ld)\n",pv,cb);
 
 	if(Malloc32.pSpy) {
-	    LPVOID pRealMemory;
+	    void *pRealMemory;
 	    BOOL fSpyed;
 
 	    EnterCriticalSection(&IMalloc32_SpyCS);
@@ -250,8 +251,8 @@ static LPVOID WINAPI IMalloc_fnRealloc(LPMALLOC iface,LPVOID pv,DWORD cb) {
 /******************************************************************************
  * IMalloc32_Free [VTABLE]
  */
-static VOID WINAPI IMalloc_fnFree(LPMALLOC iface,LPVOID pv) {
-
+static void WINAPI IMalloc_fnFree(IMalloc *iface, void *pv)
+{
         BOOL fSpyed = FALSE;
 
 	TRACE("(%p)\n",pv);
@@ -286,9 +287,9 @@ static VOID WINAPI IMalloc_fnFree(LPMALLOC iface,LPVOID pv) {
  *      win95:  size allocated (4 byte boundarys)
  *      win2k:  size originally requested !!! (allocated on 8 byte boundarys)
  */
-static DWORD WINAPI IMalloc_fnGetSize(LPMALLOC iface,LPVOID pv) {
-
-	DWORD cb;
+static SIZE_T WINAPI IMalloc_fnGetSize(IMalloc *iface, void *pv)
+{
+        SIZE_T cb;
         BOOL fSpyed = FALSE;
 
 	TRACE("(%p)\n",pv);
@@ -311,8 +312,8 @@ static DWORD WINAPI IMalloc_fnGetSize(LPMALLOC iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc32_DidAlloc [VTABLE]
  */
-static INT WINAPI IMalloc_fnDidAlloc(LPMALLOC iface,LPVOID pv) {
-
+static INT WINAPI IMalloc_fnDidAlloc(IMalloc *iface, void *pv)
+{
         BOOL fSpyed = FALSE;
 	int didAlloc;
 
@@ -335,7 +336,8 @@ static INT WINAPI IMalloc_fnDidAlloc(LPMALLOC iface,LPVOID pv) {
 /******************************************************************************
  * IMalloc32_HeapMinimize [VTABLE]
  */
-static VOID WINAPI IMalloc_fnHeapMinimize(LPMALLOC iface) {
+static void WINAPI IMalloc_fnHeapMinimize(IMalloc *iface)
+{
 	TRACE("()\n");
 
 	if(Malloc32.pSpy) {
@@ -398,7 +400,7 @@ HRESULT WINAPI CoGetMalloc(DWORD context, IMalloc **imalloc)
  * 	Success: Pointer to newly allocated memory block.
  *  Failure: NULL.
  */
-LPVOID WINAPI CoTaskMemAlloc(ULONG size)
+LPVOID WINAPI CoTaskMemAlloc(SIZE_T size)
 {
         return IMalloc_Alloc(&Malloc32.IMalloc_iface,size);
 }
@@ -432,7 +434,7 @@ VOID WINAPI CoTaskMemFree(LPVOID ptr)
  * 	Success: Pointer to newly allocated memory block.
  *  Failure: NULL.
  */
-LPVOID WINAPI CoTaskMemRealloc(LPVOID pvOld, ULONG size)
+LPVOID WINAPI CoTaskMemRealloc(LPVOID pvOld, SIZE_T size)
 {
         return IMalloc_Realloc(&Malloc32.IMalloc_iface, pvOld, size);
 }
