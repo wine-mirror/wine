@@ -242,7 +242,7 @@
 @ cdecl _create_locale(long str) MSVCRT__create_locale
 @ stub _crt_at_quick_exit
 @ cdecl _crt_atexit(ptr) MSVCRT__crt_atexit
-@ stub _crt_debugger_hook
+@ cdecl _crt_debugger_hook(long) MSVCRT__crt_debugger_hook
 @ cdecl _ctime32(ptr) MSVCRT__ctime32
 @ cdecl _ctime32_s(str long ptr) MSVCRT__ctime32_s
 @ cdecl _ctime64(ptr) MSVCRT__ctime64

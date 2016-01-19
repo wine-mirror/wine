@@ -30,7 +30,7 @@
 @ cdecl _controlfp_s(ptr long long) ucrtbase._controlfp_s
 @ stub _crt_at_quick_exit
 @ cdecl _crt_atexit(ptr) ucrtbase._crt_atexit
-@ stub _crt_debugger_hook
+@ cdecl _crt_debugger_hook(long) ucrtbase._crt_debugger_hook
 @ cdecl _endthread() ucrtbase._endthread
 @ cdecl _endthreadex(long) ucrtbase._endthreadex
 @ cdecl _errno() ucrtbase._errno
