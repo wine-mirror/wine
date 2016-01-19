@@ -198,7 +198,7 @@ static const struct message forward_erasebkgnd_parent_seq[] = {
     { 0 }
 };
 
-static const struct message ownderdata_select_focus_parent_seq[] = {
+static const struct message ownerdata_select_focus_parent_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
     { WM_NOTIFY, sent|id, 0, 0, LVN_GETDISPINFOA },
     { WM_NOTIFY, sent|id|optional, 0, 0, LVN_GETDISPINFOA }, /* version 4.7x */
@@ -3146,7 +3146,7 @@ static void test_ownerdata(void)
     res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
     expect(TRUE, res);
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, ownderdata_select_focus_parent_seq,
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_select_focus_parent_seq,
                 "ownerdata select notification", TRUE);
 
     flush_sequences(sequences, NUM_MSG_SEQUENCES);
@@ -3157,7 +3157,7 @@ static void test_ownerdata(void)
     res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
     expect(TRUE, res);
 
-    ok_sequence(sequences, PARENT_SEQ_INDEX, ownderdata_select_focus_parent_seq,
+    ok_sequence(sequences, PARENT_SEQ_INDEX, ownerdata_select_focus_parent_seq,
                 "ownerdata focus notification", TRUE);
 
     /* select all, check notifications */
