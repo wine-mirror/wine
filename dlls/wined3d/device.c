@@ -4002,15 +4002,25 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
     }
     src_surface = surface_from_resource(tmp);
 
+    if (src_box)
+    {
+        src_rect.left = src_box->left;
+        src_rect.top = src_box->top;
+        src_rect.right = src_box->right;
+        src_rect.bottom = src_box->bottom;
+    }
+    else
+    {
+        src_rect.left = 0;
+        src_rect.top = 0;
+        src_rect.right = src_surface->resource.width;
+        src_rect.bottom = src_surface->resource.height;
+    }
+
     dst_rect.left = dst_x;
     dst_rect.top = dst_y;
-    dst_rect.right = dst_x + (src_box->right - src_box->left);
-    dst_rect.bottom = dst_y + (src_box->bottom - src_box->top);
-
-    src_rect.left = src_box->left;
-    src_rect.top = src_box->top;
-    src_rect.right = src_box->right;
-    src_rect.bottom = src_box->bottom;
+    dst_rect.right = dst_x + (src_rect.right - src_rect.left);
+    dst_rect.bottom = dst_y + (src_rect.bottom - src_rect.top);
 
     if (FAILED(hr = wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
         ERR("Failed to blit, hr %#x.\n", hr);
