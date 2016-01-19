@@ -205,6 +205,22 @@ struct sltg_function
 #endif
 };
 
+struct sltg_impl_info
+{
+    short res00;
+    short next;
+    short res04;
+    char impltypeflags;
+    char res07;
+    short res08;
+    short ref;
+    short res0c;
+    short res0e;
+    short res10;
+    short res12;
+    short pos;
+};
+
 #include "poppack.h"
 
 static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type);
@@ -1244,18 +1260,39 @@ static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, v
     return data->size - old_size;
 }
 
+static void write_impl_href(struct sltg_data *data, short href)
+{
+    struct sltg_impl_info impl_info;
+
+    impl_info.res00 = 0x004a;
+    impl_info.next = -1;
+    impl_info.res04 = -1;
+    impl_info.impltypeflags = 0;
+    impl_info.res07 = 0x80;
+    impl_info.res08 = 0x0012;
+    impl_info.ref = href;
+    impl_info.res0c = 0x4001;
+    impl_info.res0e = -2; /* 0xfffe */
+    impl_info.res10 = -1;
+    impl_info.res12 = 0x001d;
+    impl_info.pos = 0;
+
+    append_data(data, &impl_info, sizeof(impl_info));
+}
+
 static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
 {
     const statement_t *stmt_func;
     importinfo_t *ref_importinfo = NULL;
-    type_t *inherit;
+    short inherit_href = -1;
     struct sltg_data data;
     struct sltg_hrefmap hrefmap;
     const char *index_name;
     struct sltg_typeinfo_header ti;
     struct sltg_member_header member;
     struct sltg_tail tail;
-    int member_offset, base_offset, func_count, func_data_size, i;
+    int member_offset, base_offset, func_data_size, i;
+    int func_count, inherited_func_count = 0;
 
     if (iface->typelib_idx != -1) return;
 
@@ -1273,13 +1310,16 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
         return;
     }
 
-    inherit = type_iface_get_inherit(iface);
+    hrefmap.href_count = 0;
+    hrefmap.href = NULL;
 
-    if (inherit)
+    if (type_iface_get_inherit(iface))
     {
-        chat("add_interface_typeinfo: inheriting from base interface %s\n", inherit->name);
+        type_t *inherit;
 
-        warning("inheriting from base interface %s is not implemented\n", inherit->name);
+        inherit = type_iface_get_inherit(iface);
+
+        chat("add_interface_typeinfo: inheriting from base interface %s\n", inherit->name);
 
         ref_importinfo = find_importinfo(typelib->typelib, inherit->name);
 
@@ -1288,6 +1328,14 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
 
         if (ref_importinfo)
             error("support for imported interfaces is not implemented\n");
+
+        inherit_href = local_href(&hrefmap, inherit->typelib_idx);
+
+        while (inherit)
+        {
+            inherited_func_count += list_count(type_iface_get_stmts(inherit));
+            inherit = type_iface_get_inherit(inherit);
+        }
     }
 
     /* check typelib_idx again, it could have been added while resolving the parent interface */
@@ -1296,9 +1344,6 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
     iface->typelib_idx = typelib->block_count;
 
     /* pass 1: calculate function descriptions data size */
-    hrefmap.href_count = 0;
-    hrefmap.href = NULL;
-
     init_sltg_data(&data);
 
     STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(iface))
@@ -1321,19 +1366,21 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
     write_hrefmap(&data, &hrefmap);
 
     member_offset = data.size;
+    base_offset = 0;
 
     member.res00 = 0x0001;
     member.res02 = 0xffff;
     member.res04 = 0x01;
     member.extra = func_data_size;
+    if (inherit_href != -1)
+    {
+        member.extra += sizeof(struct sltg_impl_info);
+        base_offset += sizeof(struct sltg_impl_info);
+    }
     append_data(&data, &member, sizeof(member));
 
-    base_offset = 0;
-
-    /* inheriting from base interface is not implemented yet
-    if (type_iface_get_inherit(iface))
-        add_impl_type(typeinfo, type_iface_get_inherit(iface), ref_importinfo);
-    */
+    if (inherit_href != -1)
+        write_impl_href(&data, inherit_href);
 
     i = 0;
 
@@ -1341,7 +1388,8 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
     {
         if (i == func_count - 1) i |= 0x80000000;
 
-        base_offset += add_func_desc(typelib, &data, stmt_func->u.var, i, base_offset, &hrefmap);
+        base_offset += add_func_desc(typelib, &data, stmt_func->u.var,
+                                     inherited_func_count + i, base_offset, &hrefmap);
         i++;
     }
 
@@ -1352,10 +1400,18 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
     tail.funcs_bytes = func_data_size;
     tail.cbSizeInstance = pointer_size;
     tail.cbAlignment = pointer_size;
-    tail.cbSizeVft = func_count * pointer_size;
+    tail.cbSizeVft = (inherited_func_count + func_count) * pointer_size;
     tail.type_bytes = data.size - member_offset - sizeof(member);
     tail.res24 = 0;
     tail.res26 = 0;
+    if (inherit_href != -1)
+    {
+        tail.cImplTypes++;
+        tail.impls_off = 0;
+        tail.impls_bytes = 0;
+
+        tail.funcs_off += sizeof(struct sltg_impl_info);
+    }
     append_data(&data, &tail, sizeof(tail));
 
     add_block(typelib, data.data, data.size, index_name);
