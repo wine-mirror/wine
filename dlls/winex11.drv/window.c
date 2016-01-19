@@ -128,7 +128,7 @@ static void remove_startup_notification(Display *display, Window window)
 
     pos = snprintf(message, sizeof(message), "remove: ID=");
     message[pos++] = '"';
-    for (i = 0; id[i] && pos < sizeof(message) - 2; i++)
+    for (i = 0; id[i] && pos < sizeof(message) - 3; i++)
     {
         if (id[i] == '"' || id[i] == '\\')
             message[pos++] = '\\';
