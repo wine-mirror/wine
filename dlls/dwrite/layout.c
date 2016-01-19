@@ -428,6 +428,11 @@ static HRESULT format_set_optical_alignment(struct dwrite_textformat_data *forma
     return S_OK;
 }
 
+static BOOL is_run_rtl(const struct layout_effective_run *run)
+{
+    return run->run->u.regular.run.bidiLevel & 1;
+}
+
 static struct layout_run *alloc_layout_run(enum layout_run_kind kind)
 {
     struct layout_run *ret;
@@ -3144,7 +3149,8 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     LIST_FOR_EACH_ENTRY(u, &This->underlines, struct layout_underline, entry) {
         IDWriteTextRenderer_DrawUnderline(renderer,
             context,
-            u->run->origin_x + run->align_dx + origin_x,
+            /* horizontal underline always grows from left to right, width is always added to origin regardless of run direction */
+            (is_run_rtl(u->run) ? u->run->origin_x - u->run->width : u->run->origin_x) + run->align_dx + origin_x,
             SNAP_COORD(u->run->origin_y + origin_y),
             &u->u,
             u->run->effect);
