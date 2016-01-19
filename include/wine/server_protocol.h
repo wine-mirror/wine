@@ -2541,10 +2541,8 @@ struct delete_key_value_reply
 struct load_registry_request
 {
     struct request_header __header;
-    obj_handle_t hkey;
     obj_handle_t file;
-    /* VARARG(name,unicode_str); */
-    char __pad_20[4];
+    /* VARARG(objattr,object_attributes); */
 };
 struct load_registry_reply
 {
@@ -6157,6 +6155,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 498
+#define SERVER_PROTOCOL_VERSION 499
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

@@ -660,6 +660,8 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
     NTSTATUS ret;
     HANDLE hive;
     IO_STATUS_BLOCK io;
+    data_size_t len;
+    struct object_attributes *objattr;
 
     TRACE("(%p,%p)\n", attr, file);
 
@@ -667,17 +669,18 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
                        FILE_OPEN, 0, NULL, 0);
     if (ret) return ret;
 
+    if ((ret = alloc_object_attributes( attr, &objattr, &len ))) return ret;
+
     SERVER_START_REQ( load_registry )
     {
-        req->hkey = wine_server_obj_handle( attr->RootDirectory );
         req->file = wine_server_obj_handle( hive );
-        wine_server_add_data(req, attr->ObjectName->Buffer, attr->ObjectName->Length);
+        wine_server_add_data( req, objattr, len );
         ret = wine_server_call( req );
     }
     SERVER_END_REQ;
 
     NtClose(hive);
-   
+    RtlFreeHeap( GetProcessHeap(), 0, objattr );
     return ret;
 }
 

@@ -2184,6 +2184,8 @@ DECL_HANDLER(load_registry)
 {
     struct key *key, *parent;
     struct unicode_str name;
+    const struct security_descriptor *sd;
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
 
     if (!thread_single_check_privilege( current, &SeRestorePrivilege ))
     {
@@ -2191,11 +2193,17 @@ DECL_HANDLER(load_registry)
         return;
     }
 
-    if ((parent = get_parent_hkey_obj( req->hkey )))
+    if (!objattr->rootdir && name.len >= sizeof(root_name) &&
+        !memicmpW( name.str, root_name, sizeof(root_name)/sizeof(WCHAR) ))
+    {
+        name.str += sizeof(root_name)/sizeof(WCHAR);
+        name.len -= sizeof(root_name);
+    }
+
+    if ((parent = get_parent_hkey_obj( objattr->rootdir )))
     {
         int dummy;
-        get_req_path( &name, !req->hkey );
-        if ((key = create_key( parent, &name, NULL, 0, KEY_WOW64_64KEY, 0, NULL, &dummy )))
+        if ((key = create_key( parent, &name, NULL, 0, KEY_WOW64_64KEY, 0, sd, &dummy )))
         {
             load_registry( key, req->file );
             release_object( key );

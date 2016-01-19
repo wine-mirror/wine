@@ -1916,9 +1916,8 @@ enum char_info_mode
 
 /* Load a registry branch from a file */
 @REQ(load_registry)
-    obj_handle_t hkey;         /* root key to load to */
     obj_handle_t file;         /* file to load from */
-    VARARG(name,unicode_str);  /* subkey name */
+    VARARG(objattr,object_attributes); /* object attributes */
 @END
 
 
