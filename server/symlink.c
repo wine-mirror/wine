@@ -174,9 +174,8 @@ DECL_HANDLER(create_symlink)
 
     if (!objattr) return;
 
-    target.str = (const WCHAR *)get_req_data() + sizeof(*objattr) / sizeof(WCHAR) +
-                  objattr->sd_len / sizeof(WCHAR) + name.len / sizeof(WCHAR);
-    target.len = get_req_data_size() - ((const char *)target.str - (const char *)get_req_data());
+    target.str = get_req_data_after_objattr( objattr, &target.len );
+    target.len = (target.len / sizeof(WCHAR)) * sizeof(WCHAR);
 
     if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 

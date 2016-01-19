@@ -711,8 +711,7 @@ DECL_HANDLER(create_file)
         if (!root_fd) return;
     }
 
-    name = (const char *)get_req_data() + sizeof(*objattr) + objattr->sd_len;
-    name_len = get_req_data_size() - sizeof(*objattr) - objattr->sd_len;
+    name = get_req_data_after_objattr( objattr, &name_len );
 
     reply->handle = 0;
     if ((file = create_file( root_fd, name, name_len, req->access, req->sharing,

@@ -198,6 +198,15 @@ const struct object_attributes *get_req_object_attributes( const struct security
     return attr;
 }
 
+/* return a pointer to the request data following an object attributes structure */
+const void *get_req_data_after_objattr( const struct object_attributes *attr, data_size_t *len )
+{
+    const void *ptr = (const WCHAR *)((const struct object_attributes *)get_req_data() + 1) +
+                       attr->sd_len / sizeof(WCHAR) + attr->name_len / sizeof(WCHAR);
+    *len = get_req_data_size() - ((const char *)ptr - (const char *)get_req_data());
+    return ptr;
+}
+
 /* write the remaining part of the reply */
 void write_reply( struct thread *thread )
 {
