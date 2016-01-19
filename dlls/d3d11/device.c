@@ -820,10 +820,31 @@ static void STDMETHODCALLTYPE d3d11_immediate_context_CopySubresourceRegion(ID3D
         ID3D11Resource *dst_resource, UINT dst_subresource_idx, UINT dst_x, UINT dst_y, UINT dst_z,
         ID3D11Resource *src_resource, UINT src_subresource_idx, const D3D11_BOX *src_box)
 {
-    FIXME("iface %p, dst_resource %p, dst_subresource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
-            "src_resource %p, src_subresource_idx %u, src_box %p stub!\n",
+    struct d3d_device *device = device_from_immediate_ID3D11DeviceContext(iface);
+    struct wined3d_resource *wined3d_dst_resource, *wined3d_src_resource;
+    struct wined3d_box wined3d_src_box;
+
+    TRACE("iface %p, dst_resource %p, dst_subresource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
+            "src_resource %p, src_subresource_idx %u, src_box %p.\n",
             iface, dst_resource, dst_subresource_idx, dst_x, dst_y, dst_z,
             src_resource, src_subresource_idx, src_box);
+
+    if (src_box)
+    {
+        wined3d_src_box.left = src_box->left;
+        wined3d_src_box.top = src_box->top;
+        wined3d_src_box.front = src_box->front;
+        wined3d_src_box.right = src_box->right;
+        wined3d_src_box.bottom = src_box->bottom;
+        wined3d_src_box.back = src_box->back;
+    }
+
+    wined3d_dst_resource = wined3d_resource_from_d3d11_resource(dst_resource);
+    wined3d_src_resource = wined3d_resource_from_d3d11_resource(src_resource);
+    wined3d_mutex_lock();
+    wined3d_device_copy_sub_resource_region(device->wined3d_device, wined3d_dst_resource, dst_subresource_idx,
+            dst_x, dst_y, dst_z, wined3d_src_resource, src_subresource_idx, src_box ? &wined3d_src_box : NULL);
+    wined3d_mutex_unlock();
 }
 
 static void STDMETHODCALLTYPE d3d11_immediate_context_CopyResource(ID3D11DeviceContext *iface,
