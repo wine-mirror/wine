@@ -301,7 +301,7 @@ void free_node( struct node *node )
     {
     case WS_XML_NODE_TYPE_ELEMENT:
     {
-        WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)node;
+        WS_XML_ELEMENT_NODE *elem = &node->hdr;
         ULONG i;
 
         for (i = 0; i < elem->attributeCount; i++) free_attribute( elem->attributes[i] );
@@ -389,12 +389,12 @@ struct reader
 {
     ULONG                    read_size;
     ULONG                    read_pos;
-    const char              *read_bufptr;
+    const unsigned char     *read_bufptr;
     enum reader_state        state;
     struct node             *root;
     struct node             *current;
     WS_XML_READER_INPUT_TYPE input_type;
-    const char              *input_data;
+    const unsigned char     *input_data;
     ULONG                    input_size;
     ULONG                    prop_count;
     WS_XML_READER_PROPERTY   prop[sizeof(reader_props)/sizeof(reader_props[0])];
@@ -647,7 +647,7 @@ HRESULT WINAPI WsGetXmlAttribute( WS_XML_READER *handle, const WS_XML_STRING *at
     return E_NOTIMPL;
 }
 
-WS_XML_STRING *alloc_xml_string( const char *data, ULONG len )
+WS_XML_STRING *alloc_xml_string( const unsigned char *data, ULONG len )
 {
     WS_XML_STRING *ret;
 
@@ -660,7 +660,7 @@ WS_XML_STRING *alloc_xml_string( const char *data, ULONG len )
     return ret;
 }
 
-WS_XML_UTF8_TEXT *alloc_utf8_text( const char *data, ULONG len )
+WS_XML_UTF8_TEXT *alloc_utf8_text( const unsigned char *data, ULONG len )
 {
     WS_XML_UTF8_TEXT *ret;
 
@@ -679,7 +679,7 @@ static inline BOOL read_end_of_data( struct reader *reader )
     return reader->read_pos >= reader->read_size;
 }
 
-static inline const char *read_current_ptr( struct reader *reader )
+static inline const unsigned char *read_current_ptr( struct reader *reader )
 {
     return &reader->read_bufptr[reader->read_pos];
 }
@@ -709,7 +709,7 @@ static inline unsigned int read_utf8_char( struct reader *reader, unsigned int *
 {
     unsigned int len, res;
     unsigned char ch = reader->read_bufptr[reader->read_pos];
-    const char *end;
+    const unsigned char *end;
 
     if (reader->read_pos >= reader->read_size) return 0;
 
@@ -773,7 +773,7 @@ static inline void read_skip_whitespace( struct reader *reader )
 
 static inline int read_cmp( struct reader *reader, const char *str, int len )
 {
-    const char *ptr = read_current_ptr( reader );
+    const unsigned char *ptr = read_current_ptr( reader );
 
     if (len < 0) len = strlen( str );
     if (reader->read_pos + len > reader->read_size) return -1;
@@ -827,7 +827,7 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     WS_XML_ATTRIBUTE *attr;
     WS_XML_UTF8_TEXT *text;
     unsigned int len = 0, ch, skip, quote;
-    const char *start;
+    const unsigned char *start;
     HRESULT hr = WS_E_INVALID_FORMAT;
 
     if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
@@ -875,7 +875,7 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
         free_attribute( attr );
         return E_OUTOFMEMORY;
     }
-    attr->value = (WS_XML_TEXT *)text;
+    attr->value = &text->text;
     attr->singleQuote = (quote == '\'');
 
     *ret = attr;
@@ -889,7 +889,7 @@ error:
 static HRESULT read_element( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
-    const char *start;
+    const unsigned char *start;
     struct node *node;
     WS_XML_ELEMENT_NODE *elem;
     WS_XML_ATTRIBUTE *attr;
@@ -966,7 +966,7 @@ error:
 static HRESULT read_text( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
-    const char *start;
+    const unsigned char *start;
     struct node *node;
     WS_XML_TEXT_NODE *text;
     WS_XML_UTF8_TEXT *utf8;
@@ -988,7 +988,7 @@ static HRESULT read_text( struct reader *reader )
         heap_free( node );
         return E_OUTOFMEMORY;
     }
-    text->text = (WS_XML_TEXT *)utf8;
+    text->text = &utf8->text;
 
     read_insert_node( reader, reader->current, node );
     reader->state = READER_STATE_TEXT;
@@ -1031,7 +1031,7 @@ static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
     return hr;
 }
 
-static BOOL cmp_localname( const char *name1, ULONG len1, const char *name2, ULONG len2 )
+static BOOL cmp_localname( const unsigned char *name1, ULONG len1, const unsigned char *name2, ULONG len2 )
 {
     ULONG i;
     if (len1 != len2) return FALSE;
@@ -1039,7 +1039,7 @@ static BOOL cmp_localname( const char *name1, ULONG len1, const char *name2, ULO
     return TRUE;
 }
 
-static struct node *find_parent_element( struct node *node, const char *localname, ULONG len )
+static struct node *find_parent_element( struct node *node, const unsigned char *localname, ULONG len )
 {
     struct node *parent;
     WS_XML_STRING *name;
@@ -1048,7 +1048,7 @@ static struct node *find_parent_element( struct node *node, const char *localnam
     {
         if (parent->hdr.node.nodeType != WS_XML_NODE_TYPE_ELEMENT) continue;
         name = ((WS_XML_ELEMENT_NODE *)parent)->localName;
-        if (!cmp_localname( (const char *)name->bytes, name->length, localname, len )) continue;
+        if (!cmp_localname( name->bytes, name->length, localname, len )) continue;
         return parent;
     }
     return NULL;
@@ -1058,7 +1058,7 @@ static HRESULT read_endelement( struct reader *reader )
 {
     struct node *node, *parent;
     unsigned int len = 0, ch, skip;
-    const char *start;
+    const unsigned char *start;
 
     switch (reader->state)
     {
@@ -1098,7 +1098,7 @@ static HRESULT read_endelement( struct reader *reader )
 static HRESULT read_comment( struct reader *reader )
 {
     unsigned int len = 0, ch, skip;
-    const char *start;
+    const unsigned char *start;
     struct node *node;
     WS_XML_COMMENT_NODE *comment;
 
@@ -1340,10 +1340,10 @@ static WCHAR *xmltext_to_widechar( WS_HEAP *heap, const WS_XML_TEXT *text )
 #define MAX_UINT32  0xffffffff
 #define MAX_UINT64  (((UINT64)0xffffffff << 32) | 0xffffffff)
 
-static HRESULT str_to_int64( const char *str, ULONG len, INT64 min, INT64 max, INT64 *ret )
+static HRESULT str_to_int64( const unsigned char *str, ULONG len, INT64 min, INT64 max, INT64 *ret )
 {
     BOOL negative = FALSE;
-    const char *ptr = str;
+    const unsigned char *ptr = str;
 
     *ret = 0;
     while (len && read_isspace( *ptr )) { ptr++; len--; }
@@ -1378,9 +1378,9 @@ static HRESULT str_to_int64( const char *str, ULONG len, INT64 min, INT64 max, I
     return S_OK;
 }
 
-static HRESULT str_to_uint64( const char *str, ULONG len, UINT64 max, UINT64 *ret )
+static HRESULT str_to_uint64( const unsigned char *str, ULONG len, UINT64 max, UINT64 *ret )
 {
-    const char *ptr = str;
+    const unsigned char *ptr = str;
 
     *ret = 0;
     while (len && read_isspace( *ptr )) { ptr++; len--; }
@@ -1464,7 +1464,7 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
         INT64 val;
 
         if (value_size != sizeof(INT8)) return E_INVALIDARG;
-        hr = str_to_int64( (const char *)utf8->value.bytes, utf8->value.length, MIN_INT8, MAX_INT8, &val );
+        hr = str_to_int64( utf8->value.bytes, utf8->value.length, MIN_INT8, MAX_INT8, &val );
         if (hr != S_OK) return hr;
         *ret = val;
         break;
@@ -1477,7 +1477,7 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
         INT64 val;
 
         if (value_size != sizeof(INT16)) return E_INVALIDARG;
-        hr = str_to_int64( (const char *)utf8->value.bytes, utf8->value.length, MIN_INT16, MAX_INT16, &val );
+        hr = str_to_int64( utf8->value.bytes, utf8->value.length, MIN_INT16, MAX_INT16, &val );
         if (hr != S_OK) return hr;
         *ret = val;
         break;
@@ -1490,7 +1490,7 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
         INT64 val;
 
         if (value_size != sizeof(INT32)) return E_INVALIDARG;
-        hr = str_to_int64( (const char *)utf8->value.bytes, utf8->value.length, MIN_INT32, MAX_INT32, &val );
+        hr = str_to_int64( utf8->value.bytes, utf8->value.length, MIN_INT32, MAX_INT32, &val );
         if (hr != S_OK) return hr;
         *ret = val;
         break;
@@ -1502,7 +1502,7 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
         HRESULT hr;
 
         if (value_size != sizeof(INT64)) return E_INVALIDARG;
-        hr = str_to_int64( (const char *)utf8->value.bytes, utf8->value.length, MIN_INT64, MAX_INT64, &val );
+        hr = str_to_int64( utf8->value.bytes, utf8->value.length, MIN_INT64, MAX_INT64, &val );
         if (hr != S_OK) return hr;
         *ret = val;
         break;
@@ -1515,7 +1515,7 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
         UINT64 val;
 
         if (value_size != sizeof(UINT8)) return E_INVALIDARG;
-        hr = str_to_uint64( (const char *)utf8->value.bytes, utf8->value.length, MAX_UINT8, &val );
+        hr = str_to_uint64( utf8->value.bytes, utf8->value.length, MAX_UINT8, &val );
         if (hr != S_OK) return hr;
         *ret = val;
         break;
@@ -1528,7 +1528,7 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
         UINT64 val;
 
         if (value_size != sizeof(UINT16)) return E_INVALIDARG;
-        hr = str_to_uint64( (const char *)utf8->value.bytes, utf8->value.length, MAX_UINT16, &val );
+        hr = str_to_uint64( utf8->value.bytes, utf8->value.length, MAX_UINT16, &val );
         if (hr != S_OK) return hr;
         *ret = val;
         break;
@@ -1541,7 +1541,7 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
         UINT64 val;
 
         if (value_size != sizeof(UINT32)) return E_INVALIDARG;
-        hr = str_to_uint64( (const char *)utf8->value.bytes, utf8->value.length, MAX_UINT32, &val );
+        hr = str_to_uint64( utf8->value.bytes, utf8->value.length, MAX_UINT32, &val );
         if (hr != S_OK) return hr;
         *ret = val;
         break;
@@ -1553,7 +1553,7 @@ HRESULT WINAPI WsReadType( WS_XML_READER *handle, WS_TYPE_MAPPING mapping, WS_TY
         HRESULT hr;
 
         if (value_size != sizeof(UINT64)) return E_INVALIDARG;
-        hr = str_to_uint64( (const char *)utf8->value.bytes, utf8->value.length, MAX_UINT64, &val );
+        hr = str_to_uint64( utf8->value.bytes, utf8->value.length, MAX_UINT64, &val );
         if (hr != S_OK) return hr;
         *ret = val;
         break;
@@ -1625,7 +1625,7 @@ static WS_CHARSET detect_charset( const unsigned char *data, ULONG size, ULONG *
     return ret;
 }
 
-static void set_input_buffer( struct reader *reader, const char *data, ULONG size )
+static void set_input_buffer( struct reader *reader, const unsigned char *data, ULONG size )
 {
     reader->input_type  = WS_XML_READER_INPUT_TYPE_BUFFER;
     reader->input_data  = data;
@@ -1691,7 +1691,7 @@ HRESULT WINAPI WsSetInput( WS_XML_READER *handle, const WS_XML_READER_ENCODING *
     case WS_XML_READER_INPUT_TYPE_BUFFER:
     {
         WS_XML_READER_BUFFER_INPUT *buf = (WS_XML_READER_BUFFER_INPUT *)input;
-        set_input_buffer( reader, (const char *)buf->encodedData + offset, buf->encodedDataSize - offset );
+        set_input_buffer( reader, (const unsigned char *)buf->encodedData + offset, buf->encodedDataSize - offset );
         break;
     }
     default:
@@ -1735,7 +1735,7 @@ HRESULT WINAPI WsSetInputToBuffer( WS_XML_READER *handle, WS_XML_BUFFER *buffer,
     hr = set_reader_prop( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, sizeof(charset) );
     if (hr != S_OK) return hr;
 
-    set_input_buffer( reader, (const char *)xmlbuf->ptr + offset, xmlbuf->size - offset );
+    set_input_buffer( reader, (const unsigned char *)xmlbuf->ptr + offset, xmlbuf->size - offset );
     if (!(node = alloc_node( WS_XML_NODE_TYPE_BOF ))) return E_OUTOFMEMORY;
     read_insert_bof( reader, node );
     return S_OK;

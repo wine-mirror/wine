@@ -69,7 +69,7 @@ enum writer_state
 struct writer
 {
     ULONG                     write_pos;
-    char                     *write_bufptr;
+    unsigned char            *write_bufptr;
     enum writer_state         state;
     struct node              *root;
     struct node              *current;
@@ -439,7 +439,7 @@ static HRESULT write_grow_buffer( struct writer *writer, ULONG size )
     return S_OK;
 }
 
-static inline void write_char( struct writer *writer, char ch )
+static inline void write_char( struct writer *writer, unsigned char ch )
 {
     writer->write_bufptr[writer->write_pos++] = ch;
 }
@@ -489,7 +489,7 @@ static inline BOOL is_current_namespace( struct writer *writer, const WS_XML_STR
 static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
 {
     WS_XML_STRING *str;
-    if (!(str = alloc_xml_string( (const char *)ns->bytes, ns->length ))) return E_OUTOFMEMORY;
+    if (!(str = alloc_xml_string( ns->bytes, ns->length ))) return E_OUTOFMEMORY;
     heap_free( writer->current_ns );
     writer->current_ns = str;
     return S_OK;
@@ -497,7 +497,7 @@ static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING
 
 static HRESULT write_startelement( struct writer *writer )
 {
-    WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)writer->current;
+    WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
     ULONG size, i;
     HRESULT hr;
 
@@ -673,13 +673,13 @@ HRESULT WINAPI WsWriteStartAttribute( WS_XML_WRITER *handle, const WS_XML_STRING
     if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
     attr->singleQuote = !!single;
 
-    if (prefix && !(attr->prefix = alloc_xml_string( (const char *)prefix->bytes, prefix->length )))
+    if (prefix && !(attr->prefix = alloc_xml_string( prefix->bytes, prefix->length )))
         goto error;
 
-    if (!(attr->localName = alloc_xml_string( (const char *)localname->bytes, localname->length )))
+    if (!(attr->localName = alloc_xml_string( localname->bytes, localname->length )))
         goto error;
 
-    if (!(attr->ns = alloc_xml_string( (const char *)ns->bytes, ns->length )))
+    if (!(attr->ns = alloc_xml_string( ns->bytes, ns->length )))
         goto error;
 
     if ((hr = append_attribute( elem, attr )) != S_OK) goto error;
@@ -721,13 +721,13 @@ HRESULT WINAPI WsWriteStartElement( WS_XML_WRITER *handle, const WS_XML_STRING *
     if (!(node = alloc_node( WS_XML_NODE_TYPE_ELEMENT ))) return E_OUTOFMEMORY;
     elem = (WS_XML_ELEMENT_NODE *)node;
 
-    if (prefix && !(elem->prefix = alloc_xml_string( (const char *)prefix->bytes, prefix->length )))
+    if (prefix && !(elem->prefix = alloc_xml_string( prefix->bytes, prefix->length )))
         goto error;
 
-    if (!(elem->localName = alloc_xml_string( (const char *)localname->bytes, localname->length )))
+    if (!(elem->localName = alloc_xml_string( localname->bytes, localname->length )))
         goto error;
 
-    if (!(elem->ns = alloc_xml_string( (const char *)ns->bytes, ns->length )))
+    if (!(elem->ns = alloc_xml_string( ns->bytes, ns->length )))
         goto error;
 
     write_insert_node( writer, node );
@@ -763,7 +763,7 @@ HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_E
         return E_NOTIMPL;
     }
     src = (WS_XML_UTF8_TEXT *)text;
-    if (!(dst = alloc_utf8_text( (const char *)src->value.bytes, src->value.length )))
+    if (!(dst = alloc_utf8_text( src->value.bytes, src->value.length )))
         return E_OUTOFMEMORY;
 
     elem = (WS_XML_ELEMENT_NODE *)writer->current;
