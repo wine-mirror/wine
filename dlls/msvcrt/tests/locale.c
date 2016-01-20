@@ -671,12 +671,12 @@ static void test__Gettnames(void)
         return;
 
     ret = _Gettnames();
-    size = ret->data-(char*)ret;
+    size = ret->str[0]-(char*)ret;
     /* Newer version of the structure stores both ascii and unicode strings.
      * Unicode strings are only initialized on Windows 7
      */
     if(sizeof(void*) == 8)
-        ok(size==0x2c0 || broken(size==0x170), "structure size: %x\n", size);
+        ok(size==0x2c0 || broken(size==0x168), "structure size: %x\n", size);
     else
         ok(size==0x164 || broken(size==0xb8), "structure size: %x\n", size);
 
