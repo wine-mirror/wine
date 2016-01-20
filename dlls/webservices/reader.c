@@ -944,10 +944,9 @@ static HRESULT read_element( struct reader *reader )
     }
     if (!len) goto error;
 
+    if ((hr = parse_name( start, len, &elem->prefix, &elem->localName )) != S_OK) goto error;
+    if (!elem->prefix->length) elem->prefix->bytes = NULL;
     hr = E_OUTOFMEMORY;
-    if (!(elem->localName = alloc_xml_string( start, len ))) goto error;
-    if (!(elem->prefix = alloc_xml_string( NULL, 0 ))) goto error;
-    elem->prefix->bytes = NULL;
     if (!(elem->ns = alloc_xml_string( NULL, 0 ))) goto error;
 
     for (;;)
@@ -1064,16 +1063,23 @@ static BOOL cmp_localname( const unsigned char *name1, ULONG len1, const unsigne
     return TRUE;
 }
 
-static struct node *find_parent_element( struct node *node, const unsigned char *localname, ULONG len )
+static struct node *find_parent_element( struct node *node, const WS_XML_STRING *prefix,
+                                         const WS_XML_STRING *localname )
 {
     struct node *parent;
-    WS_XML_STRING *name;
+    const WS_XML_STRING *str;
 
     for (parent = node; parent; parent = parent->parent)
     {
         if (parent->hdr.node.nodeType != WS_XML_NODE_TYPE_ELEMENT) continue;
-        name = ((WS_XML_ELEMENT_NODE *)parent)->localName;
-        if (!cmp_localname( name->bytes, name->length, localname, len )) continue;
+        if (!localname) return parent;
+
+        str = parent->hdr.prefix;
+        if (!cmp_localname( str->bytes, str->length, prefix->bytes, prefix->length )) continue;
+
+        str = parent->hdr.localName;
+        if (!cmp_localname( str->bytes, str->length, localname->bytes, localname->length )) continue;
+
         return parent;
     }
     return NULL;
@@ -1084,6 +1090,8 @@ static HRESULT read_endelement( struct reader *reader )
     struct node *node, *parent;
     unsigned int len = 0, ch, skip;
     const unsigned char *start;
+    WS_XML_STRING *prefix, *localname;
+    HRESULT hr;
 
     switch (reader->state)
     {
@@ -1111,8 +1119,12 @@ static HRESULT read_endelement( struct reader *reader )
         read_skip( reader, skip );
         len += skip;
     }
-    if (!(parent = find_parent_element( reader->current, start, len )))
-        return WS_E_INVALID_FORMAT;
+
+    if ((hr = parse_name( start, len, &prefix, &localname )) != S_OK) return hr;
+    parent = find_parent_element( reader->current, prefix, localname );
+    heap_free( prefix );
+    heap_free( localname );
+    if (!parent) return WS_E_INVALID_FORMAT;
 
     if (!(node = alloc_node( WS_XML_NODE_TYPE_END_ELEMENT ))) return E_OUTOFMEMORY;
     read_insert_node( reader, parent, node );
