@@ -261,7 +261,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
     NTSTATUS ntrc;
 
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    events[0] = CreateEventA(NULL, FALSE, FALSE, NULL);
+    events[0] = CreateEventA(NULL, TRUE, FALSE, NULL);
     events[1] = ext->halt_event;
 
     if (ext->information.Polled)
@@ -336,11 +336,12 @@ static DWORD CALLBACK hid_device_thread(void *args)
 
             if (ntrc == STATUS_PENDING)
             {
-                rc = WaitForMultipleObjects(2, events, FALSE, INFINITE);
-
-                if (rc == WAIT_OBJECT_0 + 1)
-                    exit_now = TRUE;
+                WaitForMultipleObjects(2, events, FALSE, INFINITE);
             }
+
+            rc = WaitForSingleObject(ext->halt_event, 0);
+            if (rc == WAIT_OBJECT_0)
+                exit_now = TRUE;
 
             if (!exit_now && irp->IoStatus.u.Status == STATUS_SUCCESS)
             {
@@ -368,7 +369,7 @@ static DWORD CALLBACK hid_device_thread(void *args)
 void HID_StartDeviceThread(DEVICE_OBJECT *device)
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    ext->halt_event = CreateEventA(NULL, FALSE, FALSE, NULL);
+    ext->halt_event = CreateEventA(NULL, TRUE, FALSE, NULL);
     ext->thread = CreateThread(NULL, 0, hid_device_thread, device, 0, NULL);
 }
 
