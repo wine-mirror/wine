@@ -290,6 +290,55 @@ typedef enum {
     WS_WRITE_NILLABLE_POINTER = 4
 } WS_WRITE_OPTION;
 
+typedef struct _WS_BOOL_DESCRIPTION {
+    BOOL value;
+} WS_BOOL_DESCRIPTION;
+
+typedef struct _WS_INT8_DESCRIPTION {
+    char minValue;
+    char maxValue;
+} WS_INT8_DESCRIPTION;
+
+typedef struct _WS_INT16_DESCRIPTION {
+    short minValue;
+    short maxValue;
+} WS_INT16_DESCRIPTION;
+
+typedef struct _WS_INT32_DESCRIPTION {
+    int minValue;
+    int maxValue;
+} WS_INT32_DESCRIPTION;
+
+typedef struct _WS_INT64_DESCRIPTION {
+    __int64 minValue;
+    __int64 maxValue;
+} WS_INT64_DESCRIPTION;
+
+typedef struct _WS_UINT8_DESCRIPTION {
+    BYTE minValue;
+    BYTE maxValue;
+} WS_UINT8_DESCRIPTION;
+
+typedef struct _WS_UINT16_DESCRIPTION {
+    USHORT minValue;
+    USHORT maxValue;
+} WS_UINT16_DESCRIPTION;
+
+typedef struct _WS_UINT32_DESCRIPTION {
+    ULONG minValue;
+    ULONG maxValue;
+} WS_UINT32_DESCRIPTION;
+
+typedef struct _WS_UINT64_DESCRIPTION {
+    unsigned __int64 minValue;
+    unsigned __int64 maxValue;
+} WS_UINT64_DESCRIPTION;
+
+typedef struct _WS_WSZ_DESCRIPTION {
+    ULONG minCharCount;
+    ULONG maxCharCount;
+} WS_WSZ_DESCRIPTION;
+
 typedef enum {
     WS_TYPE_ATTRIBUTE_FIELD_MAPPING,
     WS_ATTRIBUTE_FIELD_MAPPING,
@@ -367,6 +416,13 @@ typedef struct _WS_ATTRIBUTE_DESCRIPTION {
     void *typeDescription;
 } WS_ATTRIBUTE_DESCRIPTION;
 
+typedef struct _WS_ELEMENT_DESCRIPTION {
+    WS_XML_STRING *elementLocalName;
+    WS_XML_STRING *elementNs;
+    WS_TYPE type;
+    void *typeDescription;
+} WS_ELEMENT_DESCRIPTION;
+
 typedef struct _WS_STRING {
     ULONG length;
     WCHAR *chars;
@@ -430,6 +486,25 @@ typedef struct _WS_XML_UTF8_TEXT {
     WS_XML_STRING value;
 } WS_XML_UTF8_TEXT;
 
+typedef enum {
+    WS_BOOL_VALUE_TYPE,
+    WS_INT8_VALUE_TYPE,
+    WS_INT16_VALUE_TYPE,
+    WS_INT32_VALUE_TYPE,
+    WS_INT64_VALUE_TYPE,
+    WS_UINT8_VALUE_TYPE,
+    WS_UINT16_VALUE_TYPE,
+    WS_UINT32_VALUE_TYPE,
+    WS_UINT64_VALUE_TYPE,
+    WS_FLOAT_VALUE_TYPE,
+    WS_DOUBLE_VALUE_TYPE,
+    WS_DECIMAL_VALUE_TYPE,
+    WS_DATETIME_VALUE_TYPE,
+    WS_TIMESPAN_VALUE_TYPE,
+    WS_GUID_VALUE_TYPE,
+    WS_DURATION_VALUE_TYPE
+} WS_VALUE_TYPE;
+
 typedef struct _WS_XML_ATTRIBUTE {
     BYTE singleQuote;
     BYTE isXmlNs;
@@ -491,6 +566,7 @@ HRESULT WINAPI WsMoveReader(WS_XML_READER*, WS_MOVE_TO, BOOL*, WS_ERROR*);
 HRESULT WINAPI WsMoveWriter(WS_XML_WRITER*, WS_MOVE_TO, BOOL*, WS_ERROR*);
 HRESULT WINAPI WsReadAttribute(WS_XML_READER*, const WS_ATTRIBUTE_DESCRIPTION*, WS_READ_OPTION,
                                WS_HEAP*, void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsReadEndAttribute(WS_XML_READER*, WS_ERROR*);
 HRESULT WINAPI WsReadEndElement(WS_XML_READER*, WS_ERROR*);
 HRESULT WINAPI WsReadNode(WS_XML_READER*, WS_ERROR*);
 HRESULT WINAPI WsReadStartAttribute(WS_XML_READER*, ULONG, WS_ERROR*);
@@ -508,6 +584,11 @@ HRESULT WINAPI WsSetOutput(WS_XML_WRITER*, const WS_XML_WRITER_ENCODING*, const 
                            const WS_XML_WRITER_PROPERTY*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsSetOutputToBuffer(WS_XML_WRITER*, WS_XML_BUFFER*, const WS_XML_WRITER_PROPERTY*,
                                    ULONG, WS_ERROR*);
+HRESULT WINAPI WsSkipNode(WS_XML_READER*, WS_ERROR*);
+HRESULT WINAPI WsWriteAttribute(WS_XML_WRITER*, const WS_ATTRIBUTE_DESCRIPTION*, WS_WRITE_OPTION,
+                                const void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsWriteElement(WS_XML_WRITER*, const WS_ELEMENT_DESCRIPTION*, WS_WRITE_OPTION,
+                              const void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsWriteEndAttribute(WS_XML_WRITER*, WS_ERROR*);
 HRESULT WINAPI WsWriteEndElement(WS_XML_WRITER*, WS_ERROR*);
 HRESULT WINAPI WsWriteEndStartElement(WS_XML_WRITER*, WS_ERROR*);
@@ -518,6 +599,11 @@ HRESULT WINAPI WsWriteStartElement(WS_XML_WRITER*, const WS_XML_STRING*, const W
 HRESULT WINAPI WsWriteText(WS_XML_WRITER*, const WS_XML_TEXT*, WS_ERROR*);
 HRESULT WINAPI WsWriteType(WS_XML_WRITER*, WS_TYPE_MAPPING, WS_TYPE, const void*, WS_WRITE_OPTION,
                            const void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsWriteValue(WS_XML_WRITER*, WS_VALUE_TYPE, const void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsWriteXmlBuffer(WS_XML_WRITER*, WS_XML_BUFFER*, WS_ERROR*);
+HRESULT WINAPI WsWriteXmlBufferToBytes(WS_XML_WRITER*, WS_XML_BUFFER*, const WS_XML_WRITER_ENCODING*,
+                                       const WS_XML_WRITER_PROPERTY*, ULONG, WS_HEAP*, void**,
+                                       ULONG*, WS_ERROR*);
 HRESULT WINAPI WsXmlStringEquals(const WS_XML_STRING*, const WS_XML_STRING*, WS_ERROR*);
 
 #define WS_S_ASYNC                          0x003d0000
