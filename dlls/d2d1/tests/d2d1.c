@@ -2441,6 +2441,82 @@ static void test_opacity_brush(void)
     DestroyWindow(window);
 }
 
+static void test_create_target(void)
+{
+    IDXGISwapChain *swapchain;
+    ID2D1Factory *factory;
+    ID2D1RenderTarget *rt;
+    ID3D10Device1 *device;
+    IDXGISurface *surface;
+    HWND window;
+    HRESULT hr;
+    static const struct
+    {
+        float dpi_x, dpi_y;
+        float rt_dpi_x, rt_dpi_y;
+        HRESULT hr;
+    }
+    create_dpi_tests[] =
+    {
+        {   0.0f,   0.0f, 96.0f, 96.0f, S_OK },
+        { 192.0f,   0.0f, 96.0f, 96.0f, E_INVALIDARG },
+        {   0.0f, 192.0f, 96.0f, 96.0f, E_INVALIDARG },
+        { 192.0f, -10.0f, 96.0f, 96.0f, E_INVALIDARG },
+        { -10.0f, 192.0f, 96.0f, 96.0f, E_INVALIDARG },
+        {  48.0f,  96.0f, 48.0f, 96.0f, S_OK },
+    };
+    unsigned int i;
+
+    if (!(device = create_device()))
+    {
+        skip("Failed to create device, skipping tests.\n");
+        return;
+    }
+    window = CreateWindowA("static", "d2d1_test", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    swapchain = create_swapchain(device, window, TRUE);
+    hr = IDXGISwapChain_GetBuffer(swapchain, 0, &IID_IDXGISurface, (void **)&surface);
+    ok(SUCCEEDED(hr), "Failed to get buffer, hr %#x.\n", hr);
+
+    hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory, NULL, (void **)&factory);
+    ok(SUCCEEDED(hr), "Failed to create factory, hr %#x.\n", hr);
+
+    for (i = 0; i < sizeof(create_dpi_tests) / sizeof(*create_dpi_tests); ++i)
+    {
+        D2D1_RENDER_TARGET_PROPERTIES desc;
+        float dpi_x, dpi_y;
+
+        desc.type = D2D1_RENDER_TARGET_TYPE_DEFAULT;
+        desc.pixelFormat.format = DXGI_FORMAT_UNKNOWN;
+        desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
+        desc.dpiX = create_dpi_tests[i].dpi_x;
+        desc.dpiY = create_dpi_tests[i].dpi_y;
+        desc.usage = D2D1_RENDER_TARGET_USAGE_NONE;
+        desc.minLevel = D2D1_FEATURE_LEVEL_DEFAULT;
+
+        hr = ID2D1Factory_CreateDxgiSurfaceRenderTarget(factory, surface, &desc, &rt);
+        ok(hr == create_dpi_tests[i].hr, "Wrong return code, hr %#x, expected %#x, test %u.\n", hr,
+            create_dpi_tests[i].hr, i);
+
+        if (FAILED(hr))
+            continue;
+
+        ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
+        ok(dpi_x == create_dpi_tests[i].rt_dpi_x, "Wrong dpi_x %.8e, expected %.8e, test %u\n",
+            dpi_x, create_dpi_tests[i].rt_dpi_x, i);
+        ok(dpi_y == create_dpi_tests[i].rt_dpi_y, "Wrong dpi_y %.8e, expected %.8e, test %u\n",
+            dpi_y, create_dpi_tests[i].rt_dpi_y, i);
+
+        ID2D1RenderTarget_Release(rt);
+    }
+
+    ID2D1Factory_Release(factory);
+    IDXGISurface_Release(surface);
+    IDXGISwapChain_Release(swapchain);
+    ID3D10Device1_Release(device);
+    DestroyWindow(window);
+}
+
 START_TEST(d2d1)
 {
     test_clip();
@@ -2453,4 +2529,5 @@ START_TEST(d2d1)
     test_shared_bitmap();
     test_bitmap_updates();
     test_opacity_brush();
+    test_create_target();
 }

@@ -2038,6 +2038,18 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         0.0f, 1.0f,
         0.0f, 0.0f,
     };
+    float dpi_x, dpi_y;
+
+    dpi_x = desc->dpiX;
+    dpi_y = desc->dpiY;
+
+    if (dpi_x == 0.0f && dpi_y == 0.0f)
+    {
+        dpi_x = 96.0f;
+        dpi_y = 96.0f;
+    }
+    else if (dpi_x <= 0.0f || dpi_y <= 0.0f)
+        return E_INVALIDARG;
 
     if (desc->type != D2D1_RENDER_TARGET_TYPE_DEFAULT && desc->type != D2D1_RENDER_TARGET_TYPE_HARDWARE)
         WARN("Ignoring render target type %#x.\n", desc->type);
@@ -2228,14 +2240,8 @@ HRESULT d2d_d3d_render_target_init(struct d2d_d3d_render_target *render_target, 
         goto err;
     }
 
-    render_target->dpi_x = desc->dpiX;
-    render_target->dpi_y = desc->dpiY;
-
-    if (render_target->dpi_x == 0.0f && render_target->dpi_y == 0.0f)
-    {
-        render_target->dpi_x = 96.0f;
-        render_target->dpi_y = 96.0f;
-    }
+    render_target->dpi_x = dpi_x;
+    render_target->dpi_y = dpi_y;
 
     return S_OK;
 
