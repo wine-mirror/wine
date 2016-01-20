@@ -1528,6 +1528,9 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
                 size += ret*sizeof(MSVCRT_wchar_t);
             }
         }
+#if _MSVCR_VER >= 110
+        size += LCIDToLocaleName(lcid[MSVCRT_LC_TIME], NULL, 0, 0)*sizeof(MSVCRT_wchar_t);
+#endif
 
         locinfo->lc_time_curr = MSVCRT_malloc(size);
         if(!locinfo->lc_time_curr) {
@@ -1568,7 +1571,13 @@ static MSVCRT_pthreadlocinfo create_locinfo(int category,
                         (MSVCRT_wchar_t*)&locinfo->lc_time_curr->data[ret], size-ret)*sizeof(MSVCRT_wchar_t);
             }
         }
+#if _MSVCR_VER >= 110
+        locinfo->lc_time_curr->locname = (MSVCRT_wchar_t*)&locinfo->lc_time_curr->data[ret];
+        LCIDToLocaleName(lcid[MSVCRT_LC_TIME], locinfo->lc_time_curr->locname,
+                (size-ret)/sizeof(MSVCRT_wchar_t), 0);
+#else
         locinfo->lc_time_curr->lcid = lcid[MSVCRT_LC_TIME];
+#endif
     }
 
     return locinfo;

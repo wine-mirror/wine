@@ -946,6 +946,7 @@ static inline BOOL strftime_date(char *str, MSVCRT_size_t *pos, MSVCRT_size_t ma
     char *format;
     SYSTEMTIME st;
     MSVCRT_size_t ret;
+    LCID lcid;
 
     st.wYear = mstm->tm_year + 1900;
     st.wMonth = mstm->tm_mon + 1;
@@ -956,10 +957,16 @@ static inline BOOL strftime_date(char *str, MSVCRT_size_t *pos, MSVCRT_size_t ma
     st.wSecond = mstm->tm_sec;
     st.wMilliseconds = 0;
 
+#if _MSVCR_VER < 110
+    lcid = time_data->lcid;
+#else
+    lcid = LocaleNameToLCID(time_data->locname, 0);
+#endif
+
     format = alternate ? time_data->str.names.date : time_data->str.names.short_date;
-    ret = GetDateFormatA(time_data->lcid, 0, &st, format, NULL, 0);
+    ret = GetDateFormatA(lcid, 0, &st, format, NULL, 0);
     if(ret && ret<max-*pos)
-        ret = GetDateFormatA(time_data->lcid, 0, &st, format, str+*pos, max-*pos);
+        ret = GetDateFormatA(lcid, 0, &st, format, str+*pos, max-*pos);
     if(!ret) {
         *str = 0;
         *MSVCRT__errno() = MSVCRT_EINVAL;
@@ -978,6 +985,7 @@ static inline BOOL strftime_time(char *str, MSVCRT_size_t *pos, MSVCRT_size_t ma
 {
     SYSTEMTIME st;
     MSVCRT_size_t ret;
+    LCID lcid;
 
     st.wYear = mstm->tm_year + 1900;
     st.wMonth = mstm->tm_mon + 1;
@@ -988,9 +996,15 @@ static inline BOOL strftime_time(char *str, MSVCRT_size_t *pos, MSVCRT_size_t ma
     st.wSecond = mstm->tm_sec;
     st.wMilliseconds = 0;
 
-    ret = GetTimeFormatA(time_data->lcid, 0, &st, time_data->str.names.time, NULL, 0);
+#if _MSVCR_VER < 110
+    lcid = time_data->lcid;
+#else
+    lcid = LocaleNameToLCID(time_data->locname, 0);
+#endif
+
+    ret = GetTimeFormatA(lcid, 0, &st, time_data->str.names.time, NULL, 0);
     if(ret && ret<max-*pos)
-        ret = GetTimeFormatA(time_data->lcid, 0, &st, time_data->str.names.time,
+        ret = GetTimeFormatA(lcid, 0, &st, time_data->str.names.time,
                 str+*pos, max-*pos);
     if(!ret) {
         *str = 0;
