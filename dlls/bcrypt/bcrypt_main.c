@@ -438,6 +438,11 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
             value = OBJECT_LENGTH_SHA1;
             break;
         }
+        else if (!strcmpW( prop, BCRYPT_HASH_LENGTH ))
+        {
+            value = HASH_DIGEST_LENGTH_SHA1;
+            break;
+        }
         FIXME( "unsupported sha1 algorithm property %s\n", debugstr_w(prop) );
         return STATUS_NOT_IMPLEMENTED;
 
@@ -445,6 +450,11 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
         if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
         {
             value = OBJECT_LENGTH_SHA256;
+            break;
+        }
+        else if (!strcmpW( prop, BCRYPT_HASH_LENGTH ))
+        {
+            value = HASH_DIGEST_LENGTH_SHA256;
             break;
         }
         FIXME( "unsupported sha256 algorithm property %s\n", debugstr_w(prop) );
@@ -456,6 +466,11 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
             value = OBJECT_LENGTH_SHA384;
             break;
         }
+        else if (!strcmpW( prop, BCRYPT_HASH_LENGTH ))
+        {
+            value = HASH_DIGEST_LENGTH_SHA384;
+            break;
+        }
         FIXME( "unsupported sha384 algorithm property %s\n", debugstr_w(prop) );
         return STATUS_NOT_IMPLEMENTED;
 
@@ -463,6 +478,11 @@ static NTSTATUS get_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *buf,
         if (!strcmpW( prop, BCRYPT_OBJECT_LENGTH ))
         {
             value = OBJECT_LENGTH_SHA512;
+            break;
+        }
+        else if (!strcmpW( prop, BCRYPT_HASH_LENGTH ))
+        {
+            value = HASH_DIGEST_LENGTH_SHA512;
             break;
         }
         FIXME( "unsupported sha512 algorithm property %s\n", debugstr_w(prop) );

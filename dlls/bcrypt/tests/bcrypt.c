@@ -123,6 +123,12 @@ static void test_sha1(void)
     ok(len != 0xdeadbeef, "len not set\n");
     ok(size == sizeof(len), "got %u\n", size);
 
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_HASH_LENGTH, (UCHAR *)&len , sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len == 20, "got %u\n", len);
+    ok(size == sizeof(len), "got %u\n", size);
+
     hash = NULL;
     len = sizeof(buf);
     ret = BCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
@@ -194,6 +200,12 @@ static void test_sha256(void)
     ret = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len , sizeof(len), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(len != 0xdeadbeef, "len not set\n");
+    ok(size == sizeof(len), "got %u\n", size);
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_HASH_LENGTH, (UCHAR *)&len , sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len == 32, "got %u\n", len);
     ok(size == sizeof(len), "got %u\n", size);
 
     hash = NULL;
@@ -269,6 +281,12 @@ static void test_sha384(void)
     ok(len != 0xdeadbeef, "len not set\n");
     ok(size == sizeof(len), "got %u\n", size);
 
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_HASH_LENGTH, (UCHAR *)&len , sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len == 48, "got %u\n", len);
+    ok(size == sizeof(len), "got %u\n", size);
+
     hash = NULL;
     len = sizeof(buf);
     ret = BCryptCreateHash(alg, &hash, buf, len, NULL, 0, 0);
@@ -341,6 +359,12 @@ static void test_sha512(void)
     ret = BCryptGetProperty(alg, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len , sizeof(len), &size, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
     ok(len != 0xdeadbeef, "len not set\n");
+    ok(size == sizeof(len), "got %u\n", size);
+
+    len = size = 0xdeadbeef;
+    ret = BCryptGetProperty(alg, BCRYPT_HASH_LENGTH, (UCHAR *)&len , sizeof(len), &size, 0);
+    ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
+    ok(len == 64, "got %u\n", len);
     ok(size == sizeof(len), "got %u\n", size);
 
     hash = NULL;
