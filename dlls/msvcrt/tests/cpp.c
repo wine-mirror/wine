@@ -1326,6 +1326,8 @@ static void test_demangle(void)
 /* 129 */ {"??$run@XVTask_Render_Preview@@@QtConcurrent@@YA?AV?$QFuture@X@@PEAVTask_Render_Preview@@P82@EAAXXZ@Z",
            "class QFuture<void> __cdecl QtConcurrent::run<void,class Task_Render_Preview>(class Task_Render_Preview * __ptr64,void (__cdecl Task_Render_Preview::*)(void) __ptr64)",
            "??$run@XVTask_Render_Preview@@@QtConcurrent@@YA?AV?$QFuture@X@@PEAVTask_Render_Preview@@P82@EAAXXZ@Z"},
+/* 130 */ {"??_E?$TStrArray@$$BY0BAA@D$0BA@@@UAEPAXI@Z",
+           "public: virtual void * __thiscall TStrArray<char [256],16>::`vector deleting destructor'(unsigned int)"},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;

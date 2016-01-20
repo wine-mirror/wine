@@ -992,7 +992,37 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
             }
             break;
         case '$':
-            if (*sym->current == 'C')
+            if (*sym->current == 'B')
+            {
+                unsigned            mark = sym->stack.num;
+                struct datatype_t   sub_ct;
+                const char*         arr = NULL;
+                sym->current++;
+
+                /* multidimensional arrays */
+                if (*sym->current == 'Y')
+                {
+                    const char* n1;
+                    int num;
+
+                    sym->current++;
+                    if (!(n1 = get_number(sym))) goto done;
+                    num = atoi(n1);
+
+                    while (num--)
+                        arr = str_printf(sym, "%s[%s]", arr, get_number(sym));
+                }
+
+                if (!demangle_datatype(sym, &sub_ct, pmt_ref, FALSE)) goto done;
+
+                if (arr)
+                    ct->left = str_printf(sym, "%s %s", sub_ct.left, arr);
+                else
+                    ct->left = sub_ct.left;
+                ct->right = sub_ct.right;
+                sym->stack.num = mark;
+            }
+            else if (*sym->current == 'C')
             {
                 const char *ptr, *ptr_modif;
 
