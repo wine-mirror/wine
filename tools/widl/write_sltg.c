@@ -1020,11 +1020,9 @@ static importinfo_t *find_importinfo(typelib_t *typelib, const char *name)
 
 static int get_func_flags(const var_t *func, int *dispid, int *invokekind, int *helpcontext, const char **helpstring)
 {
-    static int dispid_base = 0x60000000;
     const attr_t *attr;
     int flags;
 
-    *dispid = dispid_base++;
     *invokekind = 1 /* INVOKE_FUNC */;
     *helpcontext = -2;
     *helpstring = NULL;
@@ -1102,17 +1100,17 @@ static int get_func_flags(const var_t *func, int *dispid, int *invokekind, int *
 }
 
 static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, var_t *func,
-                         int idx, short base_offset, struct sltg_hrefmap *hrefmap)
+                         int idx, int dispid, short base_offset, struct sltg_hrefmap *hrefmap)
 {
     struct sltg_data ret_data, *arg_data;
     int arg_count = 0, arg_data_size, optional = 0, defaults = 0, old_size;
-    int funcflags = 0, dispid, invokekind = 1 /* INVOKE_FUNC */, helpcontext;
+    int funcflags = 0, invokekind = 1 /* INVOKE_FUNC */, helpcontext;
     const char *helpstring;
     const var_t *arg;
     short ret_desc_offset, *arg_desc_offset, arg_offset;
     struct sltg_function func_desc;
 
-    chat("add_func_desc: %s, idx %#x\n", func->name, idx);
+    chat("add_func_desc: %s, idx %#x, dispid %#x\n", func->name, idx, dispid);
 
     old_size = data->size;
 
@@ -1293,6 +1291,7 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
     struct sltg_tail tail;
     int member_offset, base_offset, func_data_size, i;
     int func_count, inherited_func_count = 0;
+    int dispid, inherit_level = 0;
 
     if (iface->typelib_idx != -1) return;
 
@@ -1333,6 +1332,7 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
 
         while (inherit)
         {
+            inherit_level++;
             inherited_func_count += list_count(type_iface_get_stmts(inherit));
             inherit = type_iface_get_inherit(inherit);
         }
@@ -1348,7 +1348,7 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
 
     STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(iface))
     {
-        add_func_desc(typelib, &data, stmt_func->u.var, -1, -1, &hrefmap);
+        add_func_desc(typelib, &data, stmt_func->u.var, -1, -1, -1, &hrefmap);
     }
 
     func_data_size = data.size;
@@ -1383,13 +1383,16 @@ static void add_interface_typeinfo(struct sltg_typelib *typelib, type_t *iface)
         write_impl_href(&data, inherit_href);
 
     i = 0;
+    dispid = 0x60000000 | (inherit_level << 16);
 
     STATEMENTS_FOR_EACH_FUNC(stmt_func, type_iface_get_stmts(iface))
     {
-        if (i == func_count - 1) i |= 0x80000000;
+        int idx = inherited_func_count + i;
+
+        if (i == func_count - 1) idx |= 0x80000000;
 
         base_offset += add_func_desc(typelib, &data, stmt_func->u.var,
-                                     inherited_func_count + i, base_offset, &hrefmap);
+                                     idx, dispid + i, base_offset, &hrefmap);
         i++;
     }
 
