@@ -209,7 +209,7 @@ NTSTATUS WINAPI BCryptOpenAlgorithmProvider( BCRYPT_ALG_HANDLE *handle, LPCWSTR 
         FIXME( "algorithm %s not supported\n", debugstr_w(id) );
         return STATUS_NOT_IMPLEMENTED;
     }
-    if (!implementation || strcmpW( implementation, MS_PRIMITIVE_PROVIDER ))
+    if (implementation && strcmpW( implementation, MS_PRIMITIVE_PROVIDER ))
     {
         FIXME( "implementation %s not supported\n", debugstr_w(implementation) );
         return STATUS_NOT_IMPLEMENTED;
