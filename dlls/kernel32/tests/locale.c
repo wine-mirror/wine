@@ -4678,7 +4678,7 @@ static void test_GetSystemPreferredUILanguages(void)
     buffer = HeapAlloc(GetProcessHeap(), 0, size_buffer * sizeof(WCHAR));
     if (!buffer)
     {
-        skip("Failed to allocate memory with size %d\n", size_buffer * sizeof(WCHAR));
+        skip("Failed to allocate memory for %d chars\n", size_buffer);
         return;
     }
 
