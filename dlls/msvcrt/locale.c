@@ -580,6 +580,14 @@ void* CDECL _Gettnames(void)
 }
 
 /*********************************************************************
+ *              _W_Gettnames (MSVCR110.@)
+ */
+void* CDECL _W_Gettnames(void)
+{
+    return _Gettnames();
+}
+
+/*********************************************************************
  *		__crtLCMapStringA (MSVCRT.@)
  */
 int CDECL __crtLCMapStringA(

@@ -4,7 +4,7 @@
 @ cdecl _Strftime(str long str ptr ptr) ucrtbase._Strftime
 @ cdecl _W_Getdays() ucrtbase._W_Getdays
 @ cdecl _W_Getmonths() ucrtbase._W_Getmonths
-@ stub _W_Gettnames
+@ cdecl _W_Gettnames() ucrtbase._W_Gettnames
 @ stub _Wcsftime
 @ cdecl __daylight() ucrtbase.__daylight
 @ cdecl __dstbias() ucrtbase.__dstbias
