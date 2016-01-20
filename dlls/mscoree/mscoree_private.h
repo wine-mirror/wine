@@ -128,11 +128,11 @@ typedef enum {
 	MONO_IMAGE_IMAGE_INVALID
 } MonoImageOpenStatus;
 
-typedef MonoAssembly* (*MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
+typedef MonoAssembly* (CDECL *MonoAssemblyPreLoadFunc)(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
 
-typedef void (*MonoProfileFunc)(MonoProfiler *prof);
+typedef void (CDECL *MonoProfileFunc)(MonoProfiler *prof);
 
-typedef void (*MonoPrintCallback) (const char *string, INT is_stdout);
+typedef void (CDECL *MonoPrintCallback) (const char *string, INT is_stdout);
 
 extern BOOL is_mono_started DECLSPEC_HIDDEN;
 

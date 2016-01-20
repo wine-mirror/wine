@@ -110,11 +110,11 @@ static BOOL get_mono_path(LPWSTR path);
 
 static BOOL find_mono_dll(LPCWSTR path, LPWSTR dll_path);
 
-static MonoAssembly* mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
+static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data);
 
-static void mono_shutdown_callback_fn(MonoProfiler *prof);
+static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof);
 
-static void mono_print_handler_fn(const char *string, INT is_stdout);
+static void CDECL mono_print_handler_fn(const char *string, INT is_stdout);
 
 static MonoImage* CDECL image_open_module_handle_dummy(HMODULE module_handle,
     char* fname, UINT has_entry_point, MonoImageOpenStatus* status)
@@ -249,12 +249,12 @@ fail:
     return E_FAIL;
 }
 
-static void mono_shutdown_callback_fn(MonoProfiler *prof)
+static void CDECL mono_shutdown_callback_fn(MonoProfiler *prof)
 {
     is_mono_shutdown = TRUE;
 }
 
-static void mono_print_handler_fn(const char *string, INT is_stdout)
+static void CDECL mono_print_handler_fn(const char *string, INT is_stdout)
 {
     wine_dbg_printf("%s", string);
 }
@@ -1144,7 +1144,7 @@ HRESULT get_file_from_strongname(WCHAR* stringnameW, WCHAR* assemblies_path, int
     return hr;
 }
 
-static MonoAssembly* mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
+static MonoAssembly* CDECL mono_assembly_preload_hook_fn(MonoAssemblyName *aname, char **assemblies_path, void *user_data)
 {
     HRESULT hr;
     MonoAssembly *result=NULL;
