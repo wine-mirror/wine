@@ -1551,7 +1551,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateMasteringVoice(IXAudio2 *iface,
     if(!deviceId){
         if(This->ndevs == 0){
             LeaveCriticalSection(&This->lock);
-            return ERROR_NOT_FOUND;
+            return E_NOTFOUND;
         }
         deviceId = This->devids[0];
     }
