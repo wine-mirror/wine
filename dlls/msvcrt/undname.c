@@ -859,14 +859,55 @@ static BOOL demangle_datatype(struct parsed_symbol* sym, struct datatype_t* ct,
     case 'P': /* Pointer */
         if (isdigit(*sym->current))
 	{
-            /* FIXME: P6 = Function pointer, others who knows.. */
-            if (*sym->current++ == '6')
+            /* FIXME:
+             *   P6 = Function pointer
+             *   P8 = Member function pointer
+             *   others who knows.. */
+            if (*sym->current == '8')
             {
                 char*                   args = NULL;
                 const char*             call_conv;
                 const char*             exported;
                 struct datatype_t       sub_ct;
                 unsigned                mark = sym->stack.num;
+                const char*             class;
+                const char*             modifier;
+                const char*             ptr_modif;
+
+                sym->current++;
+
+                if (!(class = get_class_name(sym)))
+                    goto done;
+                if (!get_modifier(sym, &modifier, &ptr_modif))
+                    goto done;
+                if (modifier)
+                    modifier = str_printf(sym, "%s %s", modifier, ptr_modif);
+                else if(ptr_modif[0])
+                    modifier = str_printf(sym, " %s", ptr_modif);
+                if (!get_calling_convention(*sym->current++,
+                            &call_conv, &exported,
+                            sym->flags & ~UNDNAME_NO_ALLOCATION_LANGUAGE))
+                    goto done;
+                if (!demangle_datatype(sym, &sub_ct, pmt_ref, FALSE))
+                    goto done;
+
+                args = get_args(sym, pmt_ref, TRUE, '(', ')');
+                if (!args) goto done;
+                sym->stack.num = mark;
+
+                ct->left  = str_printf(sym, "%s%s (%s %s::*",
+                        sub_ct.left, sub_ct.right, call_conv, class);
+                ct->right = str_printf(sym, ")%s%s", args, modifier);
+            }
+            else if (*sym->current == '6')
+            {
+                char*                   args = NULL;
+                const char*             call_conv;
+                const char*             exported;
+                struct datatype_t       sub_ct;
+                unsigned                mark = sym->stack.num;
+
+                sym->current++;
 
                 if (!get_calling_convention(*sym->current++,
                                             &call_conv, &exported, 

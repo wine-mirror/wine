@@ -1323,6 +1323,9 @@ static void test_demangle(void)
 /* 128 */ {"??Xstd@@YAAEAV?$complex@M@0@AEAV10@AEBV10@@Z",
            "class std::complex<float> & std::operator*=(class std::complex<float> &,class std::complex<float> const &)",
            "??Xstd@@YAAEAV?$complex@M@0@AEAV10@AEBV10@@Z", 2},
+/* 129 */ {"??$run@XVTask_Render_Preview@@@QtConcurrent@@YA?AV?$QFuture@X@@PEAVTask_Render_Preview@@P82@EAAXXZ@Z",
+           "class QFuture<void> __cdecl QtConcurrent::run<void,class Task_Render_Preview>(class Task_Render_Preview * __ptr64,void (__cdecl Task_Render_Preview::*)(void) __ptr64)",
+           "??$run@XVTask_Render_Preview@@@QtConcurrent@@YA?AV?$QFuture@X@@PEAVTask_Render_Preview@@P82@EAAXXZ@Z"},
     };
     int i, num_test = (sizeof(test)/sizeof(test[0]));
     char* name;
