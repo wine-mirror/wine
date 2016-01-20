@@ -3245,6 +3245,7 @@ static void dump_create_winstation_request( const struct create_winstation_reque
     fprintf( stderr, " flags=%08x", req->flags );
     fprintf( stderr, ", access=%08x", req->access );
     fprintf( stderr, ", attributes=%08x", req->attributes );
+    fprintf( stderr, ", rootdir=%04x", req->rootdir );
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 
@@ -3257,6 +3258,7 @@ static void dump_open_winstation_request( const struct open_winstation_request *
 {
     fprintf( stderr, " access=%08x", req->access );
     fprintf( stderr, ", attributes=%08x", req->attributes );
+    fprintf( stderr, ", rootdir=%04x", req->rootdir );
     dump_varargs_unicode_str( ", name=", cur_size );
 }
 

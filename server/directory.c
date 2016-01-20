@@ -380,6 +380,8 @@ void init_directories(void)
     static const WCHAR dir_objtypeW[] = {'O','b','j','e','c','t','T','y','p','e','s'};
     static const WCHAR dir_sessionsW[] = {'S','e','s','s','i','o','n','s'};
     static const WCHAR dir_kernelW[] = {'K','e','r','n','e','l','O','b','j','e','c','t','s'};
+    static const WCHAR dir_windowsW[] = {'W','i','n','d','o','w','s'};
+    static const WCHAR dir_winstationsW[] = {'W','i','n','d','o','w','S','t','a','t','i','o','n','s'};
     static const struct unicode_str dir_global_str = {dir_globalW, sizeof(dir_globalW)};
     static const struct unicode_str dir_driver_str = {dir_driverW, sizeof(dir_driverW)};
     static const struct unicode_str dir_device_str = {dir_deviceW, sizeof(dir_deviceW)};
@@ -390,6 +392,8 @@ void init_directories(void)
     static const struct unicode_str dir_objtype_str = {dir_objtypeW, sizeof(dir_objtypeW)};
     static const struct unicode_str dir_sessions_str = {dir_sessionsW, sizeof(dir_sessionsW)};
     static const struct unicode_str dir_kernel_str = {dir_kernelW, sizeof(dir_kernelW)};
+    static const struct unicode_str dir_windows_str = {dir_windowsW, sizeof(dir_windowsW)};
+    static const struct unicode_str dir_winstations_str = {dir_winstationsW, sizeof(dir_winstationsW)};
 
     /* symlinks */
     static const WCHAR link_dosdevW[] = {'D','o','s','D','e','v','i','c','e','s'};
@@ -438,7 +442,7 @@ void init_directories(void)
     };
     static const struct unicode_str keyed_event_crit_sect_str = {keyed_event_crit_sectW, sizeof(keyed_event_crit_sectW)};
 
-    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions, *dir_kernel;
+    struct directory *dir_driver, *dir_device, *dir_global, *dir_basenamed, *dir_sessions, *dir_kernel, *dir_windows, *dir_winstation;
     struct symlink *link_dosdev, *link_global1, *link_global2, *link_local, *link_nul, *link_pipe, *link_mailslot, *link_0, *link_session;
     struct keyed_event *keyed_event;
     unsigned int i;
@@ -449,9 +453,12 @@ void init_directories(void)
     dir_objtype    = create_directory( root_directory, &dir_objtype_str, 0, HASH_SIZE, NULL );
     dir_sessions   = create_directory( root_directory, &dir_sessions_str, 0, HASH_SIZE, NULL );
     dir_kernel     = create_directory( root_directory, &dir_kernel_str, 0, HASH_SIZE, NULL );
+    dir_windows    = create_directory( root_directory, &dir_windows_str, 0, HASH_SIZE, NULL );
+    dir_winstation = create_directory( dir_windows, &dir_winstations_str, 0, HASH_SIZE, NULL );
     make_object_static( &root_directory->obj );
     make_object_static( &dir_driver->obj );
     make_object_static( &dir_objtype->obj );
+    make_object_static( &dir_winstation->obj );
 
     dir_global     = create_directory( NULL, &dir_global_str, 0, HASH_SIZE, NULL );
     /* use a larger hash table for this one since it can contain a lot of objects */
@@ -497,6 +504,7 @@ void init_directories(void)
     release_object( dir_basenamed );
     release_object( dir_sessions );
     release_object( dir_kernel );
+    release_object( dir_windows );
 }
 
 /* create a directory object */

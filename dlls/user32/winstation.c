@@ -28,6 +28,8 @@
 #include "winerror.h"
 #include "wingdi.h"
 #include "winuser.h"
+#include "winternl.h"
+#include "ddk/wdm.h"
 #include "wine/server.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -53,6 +55,27 @@ static BOOL CALLBACK enum_names_WtoA( LPWSTR name, LPARAM lparam )
     return data->func( buffer, data->lparam );
 }
 
+/* return a handle to the directory where window station objects are created */
+static HANDLE get_winstations_dir_handle(void)
+{
+    static HANDLE handle = NULL;
+    static const WCHAR basenameW[] = {'\\','W','i','n','d','o','w','s','\\',
+                                      'W','i','n','d','o','w','S','t','a','t','i','o','n','s',0};
+    UNICODE_STRING str;
+    OBJECT_ATTRIBUTES attr;
+
+    if (!handle)
+    {
+        HANDLE dir;
+
+        RtlInitUnicodeString( &str, basenameW );
+        InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
+        NtOpenDirectoryObject( &dir, DIRECTORY_CREATE_OBJECT | DIRECTORY_TRAVERSE, &attr );
+        if (InterlockedCompareExchangePointer( &handle, dir, 0 ) != 0) /* someone beat us here */
+            CloseHandle( dir );
+    }
+    return handle;
+}
 
 /***********************************************************************
  *              CreateWindowStationA  (USER32.@)
@@ -93,6 +116,7 @@ HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD reserved, ACCESS_MASK a
         req->access     = access;
         req->attributes = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
                           ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
+        req->rootdir    = wine_server_obj_handle( get_winstations_dir_handle() );
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         /* it doesn't seem to set last error */
         wine_server_call( req );
@@ -137,6 +161,7 @@ HWINSTA WINAPI OpenWindowStationW( LPCWSTR name, BOOL inherit, ACCESS_MASK acces
     {
         req->access     = access;
         req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
+        req->rootdir    = wine_server_obj_handle( get_winstations_dir_handle() );
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
         if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
     }

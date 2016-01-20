@@ -3795,7 +3795,9 @@ struct create_winstation_request
     unsigned int flags;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     /* VARARG(name,unicode_str); */
+    char __pad_28[4];
 };
 struct create_winstation_reply
 {
@@ -3811,8 +3813,8 @@ struct open_winstation_request
     struct request_header __header;
     unsigned int access;
     unsigned int attributes;
+    obj_handle_t rootdir;
     /* VARARG(name,unicode_str); */
-    char __pad_20[4];
 };
 struct open_winstation_reply
 {
@@ -6155,6 +6157,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 499
+#define SERVER_PROTOCOL_VERSION 500
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

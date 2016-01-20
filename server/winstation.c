@@ -99,8 +99,8 @@ static const struct object_ops desktop_ops =
 #define DESKTOP_ALL_ACCESS 0x01ff
 
 /* create a winstation object */
-static struct winstation *create_winstation( const struct unicode_str *name, unsigned int attr,
-                                             unsigned int flags )
+static struct winstation *create_winstation( struct directory *root, const struct unicode_str *name,
+                                             unsigned int attr, unsigned int flags )
 {
     struct winstation *winstation;
 
@@ -113,7 +113,7 @@ static struct winstation *create_winstation( const struct unicode_str *name, uns
         return NULL;
     }
 
-    if ((winstation = create_named_object( winstation_namespace, &winstation_ops, name, attr )))
+    if ((winstation = create_named_object_dir( root, name, attr, &winstation_ops )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -443,27 +443,36 @@ DECL_HANDLER(create_winstation)
 {
     struct winstation *winstation;
     struct unicode_str name;
+    struct directory *root = NULL;
 
     reply->handle = 0;
     get_req_unicode_str( &name );
-    if ((winstation = create_winstation( &name, req->attributes, req->flags )))
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 ))) return;
+
+    if ((winstation = create_winstation( root, &name, req->attributes, req->flags )))
     {
         reply->handle = alloc_handle( current->process, winstation, req->access, req->attributes );
         release_object( winstation );
     }
+    if (root) release_object( root );
 }
 
 /* open a handle to a window station */
 DECL_HANDLER(open_winstation)
 {
+    struct winstation *winstation;
     struct unicode_str name;
+    struct directory *root = NULL;
 
     get_req_unicode_str( &name );
-    if (winstation_namespace)
-        reply->handle = open_object( winstation_namespace, &name, &winstation_ops, req->access,
-                                     req->attributes );
-    else
-        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 ))) return;
+
+    if ((winstation = open_object_dir( root, &name, req->attributes, &winstation_ops )))
+    {
+        reply->handle = alloc_handle( current->process, &winstation->obj, req->access, req->attributes );
+        release_object( winstation );
+    }
+    if (root) release_object( root );
 }
 
 
