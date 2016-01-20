@@ -49,6 +49,7 @@ struct winstation
     struct list        desktops;           /* list of desktops of this winstation */
     struct clipboard  *clipboard;          /* clipboard information */
     struct atom_table *atom_table;         /* global atom table */
+    struct namespace  *desktop_names;      /* namespace for desktops of this winstation */
 };
 
 struct global_cursor

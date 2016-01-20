@@ -452,8 +452,8 @@ static void test_getuserobjectinformation(void)
     name_info = (OBJECT_NAME_INFORMATION *)buffer;
     status = pNtQueryObject(desk, ObjectNameInformation, name_info, sizeof(buffer), NULL);
     ok(!status, "expected STATUS_SUCCESS, got %08x\n", status);
-    todo_wine ok(lstrcmpW(name_info->Name.Buffer, foobarTestW) == 0,
-                 "expected '\\foobarTest', got %s\n", wine_dbgstr_w(name_info->Name.Buffer));
+    ok(lstrcmpW(name_info->Name.Buffer, foobarTestW) == 0,
+       "expected '\\foobarTest', got %s\n", wine_dbgstr_w(name_info->Name.Buffer));
 
     /** Tests for UOI_TYPE **/
 

@@ -42,7 +42,6 @@
 
 
 static struct list winstation_list = LIST_INIT(winstation_list);
-static struct namespace *winstation_namespace;
 
 static void winstation_dump( struct object *obj, int verbose );
 static struct object_type *winstation_get_type( struct object *obj );
@@ -104,9 +103,6 @@ static struct winstation *create_winstation( struct directory *root, const struc
 {
     struct winstation *winstation;
 
-    if (!winstation_namespace && !(winstation_namespace = create_namespace( 7 )))
-        return NULL;
-
     if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
     {
         set_error( STATUS_INVALID_PARAMETER );
@@ -123,6 +119,11 @@ static struct winstation *create_winstation( struct directory *root, const struc
             winstation->atom_table = NULL;
             list_add_tail( &winstation_list, &winstation->entry );
             list_init( &winstation->desktops );
+            if (!(winstation->desktop_names = create_namespace( 7 )))
+            {
+                release_object( winstation );
+                return NULL;
+            }
         }
     }
     return winstation;
@@ -157,6 +158,7 @@ static void winstation_destroy( struct object *obj )
     list_remove( &winstation->entry );
     if (winstation->clipboard) release_object( winstation->clipboard );
     if (winstation->atom_table) release_object( winstation->atom_table );
+    free( winstation->desktop_names );
 }
 
 static unsigned int winstation_map_access( struct object *obj, unsigned int access )
@@ -177,32 +179,6 @@ struct winstation *get_process_winstation( struct process *process, unsigned int
                                                 access, &winstation_ops );
 }
 
-/* build the full name of a desktop object */
-static WCHAR *build_desktop_name( const struct unicode_str *name,
-                                  struct winstation *winstation, struct unicode_str *res )
-{
-    const WCHAR *winstation_name;
-    WCHAR *full_name;
-    data_size_t winstation_len;
-
-    if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return NULL;
-    }
-
-    if (!(winstation_name = get_object_name( &winstation->obj, &winstation_len )))
-        winstation_len = 0;
-
-    res->len = winstation_len + name->len + sizeof(WCHAR);
-    if (!(full_name = mem_alloc( res->len ))) return NULL;
-    memcpy( full_name, winstation_name, winstation_len );
-    full_name[winstation_len / sizeof(WCHAR)] = '\\';
-    memcpy( full_name + winstation_len / sizeof(WCHAR) + 1, name->str, name->len );
-    res->str = full_name;
-    return full_name;
-}
-
 /* retrieve a pointer to a desktop object */
 struct desktop *get_desktop_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
@@ -214,12 +190,14 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
                                        unsigned int flags, struct winstation *winstation )
 {
     struct desktop *desktop;
-    struct unicode_str full_str;
-    WCHAR *full_name;
 
-    if (!(full_name = build_desktop_name( name, winstation, &full_str ))) return NULL;
+    if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return NULL;
+    }
 
-    if ((desktop = create_named_object( winstation_namespace, &desktop_ops, &full_str, attr )))
+    if ((desktop = create_named_object( winstation->desktop_names, &desktop_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -238,7 +216,6 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             list_init( &desktop->hotkeys );
         }
     }
-    free( full_name );
     return desktop;
 }
 
@@ -423,21 +400,6 @@ void close_thread_desktop( struct thread *thread )
     if (handle) close_handle( thread->process, handle );
 }
 
-/* set the reply data from the object name */
-static void set_reply_data_obj_name( struct object *obj, int full_name )
-{
-    data_size_t len;
-    const WCHAR *ptr, *name = get_object_name( obj, &len );
-
-    /* if there is a backslash return the part of the name after it */
-    if (name && !full_name && (ptr = memchrW( name, '\\', len/sizeof(WCHAR) )))
-    {
-        len -= (ptr + 1 - name) * sizeof(WCHAR);
-        name = ptr + 1;
-    }
-    if (name) set_reply_data( name, min( len, get_reply_max_size() ));
-}
-
 /* create a window station */
 DECL_HANDLER(create_winstation)
 {
@@ -547,15 +509,8 @@ DECL_HANDLER(open_desktop)
 
     if (winstation)
     {
-        struct unicode_str full_str;
-        WCHAR *full_name;
-
-        if ((full_name = build_desktop_name( &name, winstation, &full_str )))
-        {
-            reply->handle = open_object( winstation_namespace, &full_str, &desktop_ops, req->access,
-                                         req->attributes );
-            free( full_name );
-        }
+        reply->handle = open_object( winstation->desktop_names, &name, &desktop_ops,
+                                     req->access, req->attributes );
         release_object( winstation );
     }
 }
@@ -658,6 +613,7 @@ DECL_HANDLER(set_thread_desktop)
 DECL_HANDLER(set_user_object_info)
 {
     struct object *obj;
+    data_size_t len;
 
     if (!(obj = get_handle_obj( current->process, req->handle, 0, NULL ))) return;
 
@@ -681,8 +637,30 @@ DECL_HANDLER(set_user_object_info)
         release_object( obj );
         return;
     }
-    if (get_reply_max_size())
-        set_reply_data_obj_name( obj, (req->flags & SET_USER_OBJECT_GET_FULL_NAME) != 0 );
+    if (obj->ops == &desktop_ops && get_reply_max_size() && (req->flags & SET_USER_OBJECT_GET_FULL_NAME))
+    {
+        struct desktop *desktop = (struct desktop *)obj;
+        data_size_t winstation_len, desktop_len;
+        const WCHAR *winstation_name = get_object_name( &desktop->winstation->obj, &winstation_len );
+        const WCHAR *desktop_name = get_object_name( obj, &desktop_len );
+        WCHAR *full_name;
+
+        if (!winstation_name) winstation_len = 0;
+        if (!desktop_name) desktop_len = 0;
+        len = winstation_len + desktop_len + sizeof(WCHAR);
+        if ((full_name = mem_alloc( len )))
+        {
+            memcpy( full_name, winstation_name, winstation_len );
+            full_name[winstation_len / sizeof(WCHAR)] = '\\';
+            memcpy( full_name + winstation_len / sizeof(WCHAR) + 1, desktop_name, desktop_len );
+            set_reply_data_ptr( full_name, min( len, get_reply_max_size() ));
+        }
+    }
+    else
+    {
+        const WCHAR *name = get_object_name( obj, &len );
+        if (name) set_reply_data( name, min( len, get_reply_max_size() ));
+    }
     release_object( obj );
 }
 
@@ -692,15 +670,18 @@ DECL_HANDLER(enum_winstation)
 {
     unsigned int index = 0;
     struct winstation *winsta;
+    const WCHAR *name;
+    data_size_t len;
 
     LIST_FOR_EACH_ENTRY( winsta, &winstation_list, struct winstation, entry )
     {
         unsigned int access = WINSTA_ENUMERATE;
         if (req->index > index++) continue;
         if (!check_object_access( &winsta->obj, &access )) continue;
-        set_reply_data_obj_name( &winsta->obj, 0 );
         clear_error();
         reply->next = index;
+        if ((name = get_object_name( &winsta->obj, &len )))
+            set_reply_data( name, min( len, get_reply_max_size() ));
         return;
     }
     set_error( STATUS_NO_MORE_ENTRIES );
@@ -713,6 +694,8 @@ DECL_HANDLER(enum_desktop)
     struct winstation *winstation;
     struct desktop *desktop;
     unsigned int index = 0;
+    const WCHAR *name;
+    data_size_t len;
 
     if (!(winstation = (struct winstation *)get_handle_obj( current->process, req->winstation,
                                                             WINSTA_ENUMDESKTOPS, &winstation_ops )))
@@ -724,7 +707,8 @@ DECL_HANDLER(enum_desktop)
         if (req->index > index++) continue;
         if (!desktop->obj.name) continue;
         if (!check_object_access( &desktop->obj, &access )) continue;
-        set_reply_data_obj_name( &desktop->obj, 0 );
+        if ((name = get_object_name( &desktop->obj, &len )))
+            set_reply_data( name, min( len, get_reply_max_size() ));
         release_object( winstation );
         clear_error();
         reply->next = index;
