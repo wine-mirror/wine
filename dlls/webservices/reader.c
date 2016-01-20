@@ -822,6 +822,32 @@ HRESULT append_attribute( WS_XML_ELEMENT_NODE *elem, WS_XML_ATTRIBUTE *attr )
     return S_OK;
 }
 
+static HRESULT parse_name( const unsigned char *str, unsigned int len,
+                           WS_XML_STRING **prefix, WS_XML_STRING **localname )
+{
+    const unsigned char *name_ptr = str, *prefix_ptr = NULL;
+    unsigned int i, name_len = len, prefix_len = 0;
+
+    for (i = 0; i < len; i++)
+    {
+        if (str[i] == ':')
+        {
+            prefix_ptr = str;
+            prefix_len = i;
+            name_ptr = &str[i + 1];
+            name_len -= i + 1;
+            break;
+        }
+    }
+    if (!(*prefix = alloc_xml_string( prefix_ptr, prefix_len ))) return E_OUTOFMEMORY;
+    if (!(*localname = alloc_xml_string( name_ptr, name_len )))
+    {
+        heap_free( *prefix );
+        return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
 static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
 {
     WS_XML_ATTRIBUTE *attr;
@@ -842,10 +868,9 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     }
     if (!len) goto error;
 
+    if ((hr = parse_name( start, len, &attr->prefix, &attr->localName )) != S_OK) goto error;
+    if (!attr->prefix->length) attr->prefix->bytes = NULL;
     hr = E_OUTOFMEMORY;
-    if (!(attr->localName = alloc_xml_string( start, len ))) goto error;
-    if (!(attr->prefix = alloc_xml_string( NULL, 0 ))) goto error;
-    attr->prefix->bytes = NULL;
     if (!(attr->ns = alloc_xml_string( NULL, 0 ))) goto error;
     attr->ns->bytes = NULL;
 
