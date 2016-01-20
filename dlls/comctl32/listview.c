@@ -8808,6 +8808,7 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
     if (infoPtr->dwStyle & LVS_OWNERDATA)
     {
 	INT nOldCount = infoPtr->nItemCount;
+	infoPtr->nItemCount = nItems;
 
 	if (nItems < nOldCount)
 	{
@@ -8820,7 +8821,6 @@ static BOOL LISTVIEW_SetItemCount(LISTVIEW_INFO *infoPtr, INT nItems, DWORD dwFl
 	    }
 	}
 
-	infoPtr->nItemCount = nItems;
 	LISTVIEW_UpdateScroll(infoPtr);
 
 	/* the flags are valid only in ownerdata report and list modes */

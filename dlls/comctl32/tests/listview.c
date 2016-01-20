@@ -3418,6 +3418,28 @@ static void test_ownerdata(void)
     style = GetWindowLongPtrA(hwnd, GWL_STYLE);
     ok(style & LVS_SORTDESCENDING, "Expected LVS_SORTDESCENDING to be set\n");
     DestroyWindow(hwnd);
+
+    /* The focused item is updated after the invalidation */
+    hwnd = create_listview_control(LVS_OWNERDATA | LVS_REPORT);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 3, 0);
+    expect(TRUE, res);
+
+    memset(&item, 0, sizeof(item));
+    item.stateMask = LVIS_FOCUSED;
+    item.state     = LVIS_FOCUSED;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, res);
+
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 0, 0);
+    expect(TRUE, res);
+    ok_sequence(sequences, PARENT_SEQ_INDEX, empty_seq,
+                "ownerdata setitemcount", FALSE);
+
+    res = SendMessageA(hwnd, LVM_GETNEXTITEM, -1, LVNI_FOCUSED);
+    expect(-1, res);
+    DestroyWindow(hwnd);
 }
 
 static void test_norecompute(void)
