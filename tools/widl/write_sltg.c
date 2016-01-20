@@ -354,28 +354,37 @@ static void init_library(struct sltg_typelib *sltg)
     }
 }
 
-static void add_block(struct sltg_typelib *sltg, void *data, int length, const char *name)
+static void add_block_index(struct sltg_typelib *sltg, void *data, int length, int index)
 {
-    chat("add_block: %p,%d,\"%s\"\n", data, length, name);
-
     sltg->blocks = xrealloc(sltg->blocks, sizeof(sltg->blocks[0]) * (sltg->block_count + 1));
     sltg->blocks[sltg->block_count].length = length;
     sltg->blocks[sltg->block_count].data = data;
-    sltg->blocks[sltg->block_count].index_string = add_index(&sltg->index, name);
+    sltg->blocks[sltg->block_count].index_string = index;
     sltg->block_count++;
 }
 
-static void add_library_block(struct sltg_typelib *typelib)
+static void add_block(struct sltg_typelib *sltg, void *data, int size, const char *name)
+{
+    struct sltg_block *block = xmalloc(sizeof(*block));
+    int index;
+
+    chat("add_block: %p,%d,\"%s\"\n", data, size, name);
+
+    index = add_index(&sltg->index, name);
+
+    add_block_index(sltg, data, size, index);
+}
+
+static void *create_library_block(struct sltg_typelib *typelib, int *size, int *index)
 {
     void *block;
     short *p;
-    int size;
 
-    size = sizeof(short) * 9 + sizeof(int) * 3 + sizeof(GUID);
-    if (typelib->library.helpstring) size += strlen(typelib->library.helpstring);
-    if (typelib->library.helpfile) size += strlen(typelib->library.helpfile);
+    *size = sizeof(short) * 9 + sizeof(int) * 3 + sizeof(GUID);
+    if (typelib->library.helpstring) *size += strlen(typelib->library.helpstring);
+    if (typelib->library.helpfile) *size += strlen(typelib->library.helpfile);
 
-    block = xmalloc(size);
+    block = xmalloc(*size);
     p = block;
     *p++ = 0x51cc; /* magic */
     *p++ = 3; /* res02 */
@@ -408,7 +417,9 @@ static void add_library_block(struct sltg_typelib *typelib)
     p += 2;
     *(GUID *)p = typelib->library.uuid;
 
-    add_block(typelib, block, size, "dir");
+    *index = add_index(&typelib->index, "dir");
+
+    return block;
 }
 
 static const char *new_index_name(void)
@@ -1687,6 +1698,8 @@ int create_sltg_typelib(typelib_t *typelib)
 {
     struct sltg_typelib sltg;
     const statement_t *stmt;
+    void *library_block;
+    int library_block_size, library_block_index;
 
     if (pointer_size != 4)
         error("Only 32-bit platform is supported\n");
@@ -1703,11 +1716,13 @@ int create_sltg_typelib(typelib_t *typelib)
     init_name_table(&sltg.name_table);
     init_library(&sltg);
 
-    add_library_block(&sltg);
+    library_block = create_library_block(&sltg, &library_block_size, &library_block_index);
 
     if (typelib->stmts)
         LIST_FOR_EACH_ENTRY(stmt, typelib->stmts, const statement_t, entry)
             add_statement(&sltg, stmt);
+
+    add_block_index(&sltg, library_block, library_block_size, library_block_index);
 
     save_all_changes(&sltg);
 
