@@ -516,9 +516,13 @@ static void test_name_limits(void)
     }
     str.Length = sizeof(registryW) + 256 * sizeof(WCHAR);
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
-    ok( status == STATUS_SUCCESS, "%u: NtCreateKey failed %x\n", str.Length, status );
-    pNtDeleteKey( ret );
-    pNtClose( ret );
+    ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+        "%u: NtCreateKey failed %x\n", str.Length, status );
+    if (!status)
+    {
+        pNtDeleteKey( ret );
+        pNtClose( ret );
+    }
     str.Length++;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
     ok( status == STATUS_OBJECT_NAME_INVALID ||
