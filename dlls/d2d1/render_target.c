@@ -888,6 +888,7 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawText(ID2D1RenderTarget *
         const WCHAR *string, UINT32 string_len, IDWriteTextFormat *text_format, const D2D1_RECT_F *layout_rect,
         ID2D1Brush *brush, D2D1_DRAW_TEXT_OPTIONS options, DWRITE_MEASURING_MODE measuring_mode)
 {
+    struct d2d_d3d_render_target *render_target = impl_from_ID2D1RenderTarget(iface);
     IDWriteTextLayout *text_layout;
     IDWriteFactory *dwrite_factory;
     D2D1_POINT_2F origin;
@@ -898,9 +899,6 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawText(ID2D1RenderTarget *
             iface, debugstr_wn(string, string_len), string_len, text_format, layout_rect,
             brush, options, measuring_mode);
 
-    if (measuring_mode != DWRITE_MEASURING_MODE_NATURAL)
-        FIXME("Ignoring measuring mode %#x.\n", measuring_mode);
-
     if (FAILED(hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED,
             &IID_IDWriteFactory, (IUnknown **)&dwrite_factory)))
     {
@@ -908,8 +906,13 @@ static void STDMETHODCALLTYPE d2d_d3d_render_target_DrawText(ID2D1RenderTarget *
         return;
     }
 
-    hr = IDWriteFactory_CreateTextLayout(dwrite_factory, string, string_len, text_format,
-            layout_rect->right - layout_rect->left, layout_rect->bottom - layout_rect->top, &text_layout);
+    if (measuring_mode == DWRITE_MEASURING_MODE_NATURAL)
+        hr = IDWriteFactory_CreateTextLayout(dwrite_factory, string, string_len, text_format,
+                layout_rect->right - layout_rect->left, layout_rect->bottom - layout_rect->top, &text_layout);
+    else
+        hr = IDWriteFactory_CreateGdiCompatibleTextLayout(dwrite_factory, string, string_len, text_format,
+                layout_rect->right - layout_rect->left, layout_rect->bottom - layout_rect->top, render_target->dpi_x / 96.0f,
+                (DWRITE_MATRIX*)&render_target->drawing_state.transform, measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, &text_layout);
     IDWriteFactory_Release(dwrite_factory);
     if (FAILED(hr))
     {
