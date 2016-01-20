@@ -593,6 +593,16 @@ static void test_clip(void)
     ok(dpi_x == 192.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
     ok(dpi_y == 192.0f, "Got unexpected dpi_y %.8e.\n", dpi_y);
 
+    ID2D1RenderTarget_SetDpi(rt, -10.0f, 96.0f);
+    ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
+    ok(dpi_x == 192.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
+    ok(dpi_y == 192.0f, "Got unexpected dpi_y %.8e.\n", dpi_y);
+
+    ID2D1RenderTarget_SetDpi(rt, 96.0f, -10.0f);
+    ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
+    ok(dpi_x == 192.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
+    ok(dpi_y == 192.0f, "Got unexpected dpi_y %.8e.\n", dpi_y);
+
     ID2D1RenderTarget_SetDpi(rt, 96.0f, 0.0f);
     ID2D1RenderTarget_GetDpi(rt, &dpi_x, &dpi_y);
     ok(dpi_x == 192.0f, "Got unexpected dpi_x %.8e.\n", dpi_x);
