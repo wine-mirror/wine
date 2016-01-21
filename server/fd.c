@@ -1952,7 +1952,7 @@ void set_fd_signaled( struct fd *fd, int signaled )
     if (signaled) wake_up( fd->user, 0 );
 }
 
-/* set or clear the fd signaled state */
+/* check if fd is signaled */
 int is_fd_signaled( struct fd *fd )
 {
     return fd->signaled;
