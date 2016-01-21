@@ -1268,10 +1268,10 @@ then
         [AC_CHECK_HEADER(gnutls/gnutls.h,
             [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gnutls/gnutls.h>
 #include <gnutls/crypto.h>]], [[static typeof(gnutls_mac_get_key_size) *func; if (func) return 0;]])],
-                [WINE_CHECK_SONAME(gnutls,gnutls_global_init,,[GNUTLS_CFLAGS=""],[$GNUTLS_LIBS],[[libgnutls\\(-deb0\\)\\{0,1\\}]])])],
+                [WINE_CHECK_SONAME(gnutls,gnutls_global_init,,[GNUTLS_CFLAGS=""],[$GNUTLS_LIBS],[[libgnutls\\(-deb0\\)\\{0,1\\}]])
+                 WINE_CHECK_LIB_FUNCS(gnutls_hash,[$GNUTLS_LIBS],,
+                                      [WINE_NOTICE([libgnutls ${notice_platform}development files too old, no bcrypt hash support.])])])],
             [GNUTLS_CFLAGS=""])])
-    WINE_CHECK_LIB_FUNCS(gnutls_hash,[$GNUTLS_LIBS],,
-                         [WINE_NOTICE([libgnutls ${notice_platform}development files too old, no bcrypt hash support.])])
 fi
 WINE_WARNING_WITH(gnutls,[test "x$ac_cv_lib_soname_gnutls" = "x"],
                  [libgnutls ${notice_platform}development files not found, no schannel support.])

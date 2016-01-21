@@ -11585,18 +11585,7 @@ _ACEOF
 
 
 fi
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-else
-  GNUTLS_CFLAGS=""
-fi
-
-
-CPPFLAGS=$ac_save_CPPFLAGS
-test -z "$GNUTLS_CFLAGS" || GNUTLS_CFLAGS=`echo " $GNUTLS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
-test -z "$GNUTLS_LIBS" || GNUTLS_LIBS=`echo " $GNUTLS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
-
-    ac_wine_check_funcs_save_LIBS="$LIBS"
+                 ac_wine_check_funcs_save_LIBS="$LIBS"
 LIBS="$LIBS $GNUTLS_LIBS"
 for ac_func in gnutls_hash
 do :
@@ -11612,6 +11601,17 @@ fi
 done
 
 LIBS="$ac_wine_check_funcs_save_LIBS"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+else
+  GNUTLS_CFLAGS=""
+fi
+
+
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$GNUTLS_CFLAGS" || GNUTLS_CFLAGS=`echo " $GNUTLS_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$GNUTLS_LIBS" || GNUTLS_LIBS=`echo " $GNUTLS_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
 fi
 if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
   case "x$with_gnutls" in
