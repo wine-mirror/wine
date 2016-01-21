@@ -5398,9 +5398,12 @@ static void test_SysAllocString(void)
   if (str)
   {
     LPINTERNAL_BSTR bstr = Get(str);
+    DWORD_PTR p = (DWORD_PTR)str;
+    int align = sizeof(void *);
 
     ok (bstr->dwLen == 8, "Expected 8, got %d\n", bstr->dwLen);
     ok (!lstrcmpW(bstr->szString, szTest), "String different\n");
+    ok ((p & ~(align-1)) == p, "Not aligned to %d\n", align);
     SysFreeString(str);
   }
 }

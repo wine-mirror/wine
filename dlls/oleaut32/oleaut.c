@@ -84,6 +84,9 @@ static CRITICAL_SECTION_DEBUG cs_bstr_cache_dbg =
 static CRITICAL_SECTION cs_bstr_cache = { &cs_bstr_cache_dbg, -1, 0, 0, 0, 0 };
 
 typedef struct {
+#ifdef _WIN64
+    DWORD pad;
+#endif
     DWORD size;
     union {
         char ptr[1];
