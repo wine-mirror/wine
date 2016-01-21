@@ -453,6 +453,7 @@ static inline void write_bytes( struct writer *writer, const BYTE *bytes, ULONG 
 static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
 {
     WS_XML_UTF8_TEXT *text = (WS_XML_UTF8_TEXT *)attr->value;
+    unsigned char quote = attr->singleQuote ? '\'' : '"';
     ULONG size;
     HRESULT hr;
 
@@ -471,11 +472,9 @@ static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
     }
     write_bytes( writer, attr->localName->bytes, attr->localName->length );
     write_char( writer, '=' );
-    if (attr->singleQuote) write_char( writer, '\'' );
-    else write_char( writer, '"' );
+    write_char( writer, quote );
     if (text) write_bytes( writer, text->value.bytes, text->value.length );
-    if (attr->singleQuote) write_char( writer, '\'' );
-    else write_char( writer, '"' );
+    write_char( writer, quote );
 
     /* FIXME: ignoring namespace */
     return S_OK;
