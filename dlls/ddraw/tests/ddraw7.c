@@ -10544,6 +10544,170 @@ static void test_shademode(void)
     DestroyWindow(window);
 }
 
+static void test_lockrect_invalid(void)
+{
+    unsigned int i, r;
+    IDirectDraw7 *ddraw;
+    IDirectDrawSurface7 *surface;
+    HWND window;
+    HRESULT hr;
+    DDSURFACEDESC2 surface_desc;
+    DDSURFACEDESC2 locked_desc;
+    DDCAPS hal_caps;
+    DWORD needed_caps = DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY;
+    static RECT valid[] =
+    {
+        {60, 60, 68, 68},
+        {60, 60, 60, 68},
+        {60, 60, 68, 60},
+        {120, 60, 128, 68},
+        {60, 120, 68, 128},
+    };
+    static RECT invalid[] =
+    {
+        {68, 60, 60, 68},       /* left > right */
+        {60, 68, 68, 60},       /* top > bottom */
+        {-8, 60,  0, 68},       /* left < surface */
+        {60, -8, 68,  0},       /* top < surface */
+        {-16, 60, -8, 68},      /* right < surface */
+        {60, -16, 68, -8},      /* bottom < surface */
+        {60, 60, 136, 68},      /* right > surface */
+        {60, 60, 68, 136},      /* bottom > surface */
+        {136, 60, 144, 68},     /* left > surface */
+        {60, 136, 68, 144},     /* top > surface */
+    };
+    static const struct
+    {
+        DWORD caps, caps2;
+        const char *name;
+        HRESULT hr;
+    }
+    resources[] =
+    {
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_SYSTEMMEMORY, 0, "sysmem offscreenplain", DDERR_INVALIDPARAMS},
+        {DDSCAPS_OFFSCREENPLAIN | DDSCAPS_VIDEOMEMORY, 0, "vidmem offscreenplain", DDERR_INVALIDPARAMS},
+        {DDSCAPS_TEXTURE | DDSCAPS_SYSTEMMEMORY, 0, "sysmem texture", DD_OK},
+        {DDSCAPS_TEXTURE | DDSCAPS_VIDEOMEMORY, 0, "vidmem texture", DDERR_INVALIDPARAMS},
+        {DDSCAPS_TEXTURE, DDSCAPS2_TEXTUREMANAGE, "managed texture", DD_OK},
+    };
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    memset(&hal_caps, 0, sizeof(hal_caps));
+    hal_caps.dwSize = sizeof(hal_caps);
+    hr = IDirectDraw7_GetCaps(ddraw, &hal_caps, NULL);
+    ok(SUCCEEDED(hr), "Failed to get caps, hr %#x.\n", hr);
+    if ((hal_caps.ddsCaps.dwCaps & needed_caps) != needed_caps
+            || !(hal_caps.ddsCaps.dwCaps & DDSCAPS2_TEXTUREMANAGE))
+    {
+        skip("Required surface types not supported, skipping test.\n");
+        goto done;
+    }
+
+    for (r = 0; r < sizeof(resources) / sizeof(*resources); ++r)
+    {
+        memset(&surface_desc, 0, sizeof(surface_desc));
+        surface_desc.dwSize = sizeof(surface_desc);
+        surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT;
+        surface_desc.ddsCaps.dwCaps = resources[r].caps;
+        surface_desc.ddsCaps.dwCaps2 = resources[r].caps2;
+        surface_desc.dwWidth = 128;
+        surface_desc.dwHeight = 128;
+        U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+        U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
+        U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 32;
+        U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0xff0000;
+        U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x00ff00;
+        U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x0000ff;
+
+        hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        if (is_ddraw64 && (resources[r].caps & DDSCAPS_TEXTURE))
+        {
+            todo_wine ok(hr == E_NOINTERFACE, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
+            if (SUCCEEDED(hr))
+                IDirectDrawSurface7_Release(surface);
+            continue;
+        }
+        ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, type %s.\n", hr, resources[r].name);
+
+        /* Crashes in ddraw7
+        hr = IDirectDrawSurface7_Lock(surface, NULL, NULL, DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x, type %s.\n", hr, resources[r].name);
+        */
+
+        for (i = 0; i < sizeof(valid) / sizeof(*valid); ++i)
+        {
+            RECT *rect = &valid[i];
+
+            memset(&locked_desc, 0, sizeof(locked_desc));
+            locked_desc.dwSize = sizeof(locked_desc);
+
+            hr = IDirectDrawSurface7_Lock(surface, rect, &locked_desc, DDLOCK_WAIT, NULL);
+            ok(SUCCEEDED(hr), "Lock failed (%#x) for rect [%d, %d]->[%d, %d], type %s.\n",
+                    hr, rect->left, rect->top, rect->right, rect->bottom, resources[r].name);
+
+            hr = IDirectDrawSurface7_Unlock(surface, NULL);
+            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
+        }
+
+        for (i = 0; i < sizeof(invalid) / sizeof(*invalid); ++i)
+        {
+            RECT *rect = &invalid[i];
+
+            memset(&locked_desc, 1, sizeof(locked_desc));
+            locked_desc.dwSize = sizeof(locked_desc);
+
+            hr = IDirectDrawSurface7_Lock(surface, rect, &locked_desc, DDLOCK_WAIT, NULL);
+            if (SUCCEEDED(resources[r].hr))
+                todo_wine ok(hr == resources[r].hr, "Lock returned %#x for rect [%d, %d]->[%d, %d], type %s.\n",
+                        hr, rect->left, rect->top, rect->right, rect->bottom, resources[r].name);
+            else
+                ok(hr == resources[r].hr, "Lock returned %#x for rect [%d, %d]->[%d, %d], type %s.\n",
+                        hr, rect->left, rect->top, rect->right, rect->bottom, resources[r].name);
+            if (SUCCEEDED(hr))
+            {
+                hr = IDirectDrawSurface7_Unlock(surface, NULL);
+                ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
+            }
+            else
+                ok(!locked_desc.lpSurface, "Got unexpected lpSurface %p.\n", locked_desc.lpSurface);
+        }
+
+        hr = IDirectDrawSurface7_Lock(surface, NULL, &locked_desc, DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Lock(rect = NULL) failed, hr %#x, type %s.\n",
+                hr, resources[r].name);
+        hr = IDirectDrawSurface7_Lock(surface, NULL, &locked_desc, DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_SURFACEBUSY, "Double lock(rect = NULL) returned %#x, type %s.\n",
+                hr, resources[r].name);
+        hr = IDirectDrawSurface7_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
+
+        hr = IDirectDrawSurface7_Lock(surface, &valid[0], &locked_desc, DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Lock(rect = [%d, %d]->[%d, %d]) failed (%#x).\n",
+                valid[0].left, valid[0].top, valid[0].right, valid[0].bottom, hr);
+        hr = IDirectDrawSurface7_Lock(surface, &valid[0], &locked_desc, DDLOCK_WAIT, NULL);
+        ok(hr == DDERR_SURFACEBUSY, "Double lock(rect = [%d, %d]->[%d, %d]) failed (%#x).\n",
+                valid[0].left, valid[0].top, valid[0].right, valid[0].bottom, hr);
+
+        /* Locking a different rectangle returns DD_OK, but it seems to break the surface.
+         * Afterwards unlocking the surface fails(NULL rectangle or both locked rectangles) */
+
+        hr = IDirectDrawSurface7_Unlock(surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, type %s.\n", hr, resources[r].name);
+
+        IDirectDrawSurface7_Release(surface);
+    }
+
+done:
+    IDirectDraw7_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -10641,4 +10805,5 @@ START_TEST(ddraw7)
     test_colorkey_precision();
     test_range_colorkey();
     test_shademode();
+    test_lockrect_invalid();
 }
