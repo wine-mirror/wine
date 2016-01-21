@@ -360,7 +360,8 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
     if (*old!=NULL) {
       BSTR old_copy = *old;
       DWORD newbytelen = len*sizeof(WCHAR);
-      bstr_t *bstr = HeapReAlloc(GetProcessHeap(),0,((DWORD*)*old)-1,bstr_alloc_size(newbytelen));
+      bstr_t *old_bstr = bstr_from_str(*old);
+      bstr_t *bstr = HeapReAlloc(GetProcessHeap(), 0, old_bstr, bstr_alloc_size(newbytelen));
       *old = bstr->u.str;
       bstr->size = newbytelen;
       /* Subtle hidden feature: The old string data is still there
