@@ -880,6 +880,11 @@ static HRESULT WINAPI dwritefontface1_GetKerningPairAdjustments(IDWriteFontFace2
         return E_INVALIDARG;
     }
 
+    if (!This->has_kerning_pairs) {
+        memset(adjustments, 0, count*sizeof(INT32));
+        return S_OK;
+    }
+
     for (i = 0; i < count-1; i++)
         adjustments[i] = freetype_get_kerning_pair_adjustment(iface, indices[i], indices[i+1]);
     adjustments[count-1] = 0;
