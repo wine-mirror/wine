@@ -1063,8 +1063,8 @@ static BOOL cmp_localname( const unsigned char *name1, ULONG len1, const unsigne
     return TRUE;
 }
 
-static struct node *find_parent_element( struct node *node, const WS_XML_STRING *prefix,
-                                         const WS_XML_STRING *localname )
+struct node *find_parent_element( struct node *node, const WS_XML_STRING *prefix,
+                                  const WS_XML_STRING *localname )
 {
     struct node *parent;
     const WS_XML_STRING *str;

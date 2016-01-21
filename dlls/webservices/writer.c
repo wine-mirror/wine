@@ -546,9 +546,12 @@ static HRESULT write_startelement( struct writer *writer )
 
 static HRESULT write_endelement( struct writer *writer )
 {
-    WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)writer->current;
+    struct node *node = find_parent_element( writer->current, NULL, NULL );
+    WS_XML_ELEMENT_NODE *elem = &node->hdr;
     ULONG size;
     HRESULT hr;
+
+    if (!elem) return WS_E_INVALID_FORMAT;
 
     /* '</prefix:localname>' */
 
