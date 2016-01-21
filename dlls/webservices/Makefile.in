@@ -1,5 +1,6 @@
 MODULE    = webservices.dll
 IMPORTLIB = webservices
+IMPORTS   = user32
 
 C_SRCS = \
 	main.c \
