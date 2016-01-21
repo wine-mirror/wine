@@ -792,3 +792,41 @@ HRESULT WINAPI WsWriteXmlBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer, W
     write_bytes( writer, xmlbuf->ptr, xmlbuf->size );
     return S_OK;
 }
+
+/**************************************************************************
+ *          WsWriteXmlBufferToBytes		[webservices.@]
+ */
+HRESULT WINAPI WsWriteXmlBufferToBytes( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer,
+                                        const WS_XML_WRITER_ENCODING *encoding,
+                                        const WS_XML_WRITER_PROPERTY *properties, ULONG count,
+                                        WS_HEAP *heap, void **bytes, ULONG *size, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    struct xmlbuf *xmlbuf = (struct xmlbuf *)buffer;
+    HRESULT hr;
+    char *buf;
+    ULONG i;
+
+    TRACE( "%p %p %p %p %u %p %p %p %p\n", handle, buffer, encoding, properties, count, heap,
+           bytes, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !xmlbuf || !heap || !bytes) return E_INVALIDARG;
+
+    if (encoding && encoding->encodingType != WS_XML_WRITER_ENCODING_TYPE_TEXT)
+    {
+        FIXME( "encoding type %u not supported\n", encoding->encodingType );
+        return E_NOTIMPL;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        hr = set_writer_prop( writer, properties[i].id, properties[i].value, properties[i].valueSize );
+        if (hr != S_OK) return hr;
+    }
+
+    if (!(buf = ws_alloc( heap, xmlbuf->size ))) return WS_E_QUOTA_EXCEEDED;
+    memcpy( buf, xmlbuf->ptr, xmlbuf->size );
+    *bytes = buf;
+    return S_OK;
+}
