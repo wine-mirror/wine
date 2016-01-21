@@ -1472,15 +1472,13 @@ then
         done
         GSTREAMER_CFLAGS=$ac_gst_incl
         CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
-        AC_CHECK_HEADER([gst/gstpad.h],
-            [AC_CHECK_HEADER([gst/gst.h],
-                 [AC_MSG_CHECKING([whether gint64 defined by gst/gst.h is indeed 64-bit])
-                  AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gst/gst.h>]],
-                                                     [[static int a[sizeof(gint64) > 4 ? 1 : -1]; if (a[0]) return 0;]])],
-                    [AC_MSG_RESULT([yes])
-                     AC_CHECK_LIB(gstreamer-1.0,gst_pad_new,[:],,[$GSTREAMER_LIBS])],
-                    [AC_MSG_RESULT([no])])])],
-            [GSTREAMER_CFLAGS=""])])
+        AC_CHECK_HEADER([gst/gst.h],
+            [AC_MSG_CHECKING([whether gint64 defined by gst/gst.h is indeed 64-bit])
+              AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <gst/gst.h>]],
+                                                 [[static int a[sizeof(gint64) > 4 ? 1 : -1]; if (a[0]) return 0;]])],
+                [AC_MSG_RESULT([yes])
+                 AC_CHECK_LIB(gstreamer-1.0,gst_pad_new,[:],,[$GSTREAMER_LIBS])],
+                [AC_MSG_RESULT([no])])])])
 fi
 WINE_NOTICE_WITH(gstreamer,[test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes],
                  [gstreamer-1.0 base plugins ${notice_platform}development files not found, gstreamer support disabled])

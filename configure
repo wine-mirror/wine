@@ -12634,13 +12634,11 @@ ac_gst_incl=""
         done
         GSTREAMER_CFLAGS=$ac_gst_incl
         CPPFLAGS="$ac_save_CPPFLAGS $GSTREAMER_CFLAGS"
-        ac_fn_c_check_header_mongrel "$LINENO" "gst/gstpad.h" "ac_cv_header_gst_gstpad_h" "$ac_includes_default"
-if test "x$ac_cv_header_gst_gstpad_h" = xyes; then :
-  ac_fn_c_check_header_mongrel "$LINENO" "gst/gst.h" "ac_cv_header_gst_gst_h" "$ac_includes_default"
+        ac_fn_c_check_header_mongrel "$LINENO" "gst/gst.h" "ac_cv_header_gst_gst_h" "$ac_includes_default"
 if test "x$ac_cv_header_gst_gst_h" = xyes; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether gint64 defined by gst/gst.h is indeed 64-bit" >&5
 $as_echo_n "checking whether gint64 defined by gst/gst.h is indeed 64-bit... " >&6; }
-                  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+              cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <gst/gst.h>
 int
@@ -12654,7 +12652,7 @@ _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-                     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_pad_new in -lgstreamer-1.0" >&5
+                 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for gst_pad_new in -lgstreamer-1.0" >&5
 $as_echo_n "checking for gst_pad_new in -lgstreamer-1.0... " >&6; }
 if ${ac_cv_lib_gstreamer_1_0_gst_pad_new+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -12699,11 +12697,6 @@ else
 $as_echo "no" >&6; }
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-
-
-else
-  GSTREAMER_CFLAGS=""
 fi
 
 
