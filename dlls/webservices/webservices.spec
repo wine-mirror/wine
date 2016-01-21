@@ -187,7 +187,7 @@
 @ stdcall WsWriteText(ptr ptr ptr)
 @ stub WsWriteType
 @ stub WsWriteValue
-@ stub WsWriteXmlBuffer
+@ stdcall WsWriteXmlBuffer(ptr ptr ptr)
 @ stub WsWriteXmlBufferToBytes
 @ stub WsWriteXmlnsAttribute
 @ stdcall WsXmlStringEquals(ptr ptr ptr)

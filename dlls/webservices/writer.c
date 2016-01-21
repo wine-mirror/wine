@@ -773,3 +773,22 @@ HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_E
     elem->attributes[elem->attributeCount - 1]->value = (WS_XML_TEXT *)dst;
     return S_OK;
 }
+
+/**************************************************************************
+ *          WsWriteXmlBuffer		[webservices.@]
+ */
+HRESULT WINAPI WsWriteXmlBuffer( WS_XML_WRITER *handle, WS_XML_BUFFER *buffer, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    struct xmlbuf *xmlbuf = (struct xmlbuf *)buffer;
+    HRESULT hr;
+
+    TRACE( "%p %p %p\n", handle, buffer, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !xmlbuf) return E_INVALIDARG;
+
+    if ((hr = write_grow_buffer( writer, xmlbuf->size )) != S_OK) return hr;
+    write_bytes( writer, xmlbuf->ptr, xmlbuf->size );
+    return S_OK;
+}
