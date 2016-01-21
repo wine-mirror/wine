@@ -263,7 +263,7 @@ BOOL freetype_is_monospaced(IDWriteFontFace2 *fontface)
 
     EnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
-        is_monospaced = FT_IS_FIXED_WIDTH(face);
+        is_monospaced = !!FT_IS_FIXED_WIDTH(face);
     LeaveCriticalSection(&freetype_cs);
 
     return is_monospaced;
@@ -520,7 +520,7 @@ BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
 
     EnterCriticalSection(&freetype_cs);
     if (pFTC_Manager_LookupFace(cache_manager, fontface, &face) == 0)
-        has_kerning_pairs = FT_HAS_KERNING(face);
+        has_kerning_pairs = !!FT_HAS_KERNING(face);
     LeaveCriticalSection(&freetype_cs);
 
     return has_kerning_pairs;

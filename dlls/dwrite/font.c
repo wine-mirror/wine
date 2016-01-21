@@ -2,7 +2,7 @@
  *    Font and collections
  *
  * Copyright 2011 Huw Davies
- * Copyright 2012, 2014-2015 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2016 Nikolay Sivov for CodeWeavers
  * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -202,6 +202,8 @@ struct dwrite_fontface {
     DWRITE_CARET_METRICS caret;
     INT charmap;
     BOOL is_symbol;
+    BOOL has_kerning_pairs : 1;
+    BOOL is_monospaced : 1;
 
     struct dwrite_fonttable cmap;
     struct dwrite_fonttable vdmx;
@@ -808,7 +810,7 @@ static BOOL WINAPI dwritefontface1_IsMonospacedFont(IDWriteFontFace2 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
     TRACE("(%p)\n", This);
-    return freetype_is_monospaced(iface);
+    return This->is_monospaced;
 }
 
 static HRESULT WINAPI dwritefontface1_GetDesignGlyphAdvances(IDWriteFontFace2 *iface,
@@ -889,7 +891,7 @@ static BOOL WINAPI dwritefontface1_HasKerningPairs(IDWriteFontFace2 *iface)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
     TRACE("(%p)\n", This);
-    return freetype_has_kerning_pairs(iface);
+    return This->has_kerning_pairs;
 }
 
 static HRESULT WINAPI dwritefontface1_GetRecommendedRenderingMode(IDWriteFontFace2 *iface,
@@ -3623,6 +3625,8 @@ HRESULT create_fontface(DWRITE_FONT_FACE_TYPE facetype, UINT32 files_number, IDW
         }
     }
     fontface->charmap = freetype_get_charmap_index(&fontface->IDWriteFontFace2_iface, &fontface->is_symbol);
+    fontface->has_kerning_pairs = freetype_has_kerning_pairs(&fontface->IDWriteFontFace2_iface);
+    fontface->is_monospaced = freetype_is_monospaced(&fontface->IDWriteFontFace2_iface);
 
     *ret = &fontface->IDWriteFontFace2_iface;
     return S_OK;
