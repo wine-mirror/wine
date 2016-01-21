@@ -269,11 +269,7 @@ static const struct fd_ops named_pipe_device_fd_ops =
 
 static void named_pipe_dump( struct object *obj, int verbose )
 {
-    struct named_pipe *pipe = (struct named_pipe *) obj;
-    assert( obj->ops == &named_pipe_ops );
-    fprintf( stderr, "Named pipe " );
-    dump_object_name( &pipe->obj );
-    fprintf( stderr, "\n" );
+    fputs( "Named pipe\n", stderr );
 }
 
 static unsigned int named_pipe_map_access( struct object *obj, unsigned int access )
@@ -443,8 +439,7 @@ static void pipe_client_destroy( struct object *obj)
 
 static void named_pipe_device_dump( struct object *obj, int verbose )
 {
-    assert( obj->ops == &named_pipe_device_ops );
-    fprintf( stderr, "Named pipe device\n" );
+    fputs( "Named pipe device\n", stderr );
 }
 
 static struct object_type *named_pipe_device_get_type( struct object *obj )

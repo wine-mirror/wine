@@ -153,6 +153,7 @@ static void handle_table_dump( struct object *obj, int verbose )
         if (!entry->ptr) continue;
         fprintf( stderr, "    %04x: %p %08x ",
                  index_to_handle(i), entry->ptr, entry->access );
+        dump_object_name( entry->ptr );
         entry->ptr->ops->dump( entry->ptr, 0 );
     }
 }

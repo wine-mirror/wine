@@ -124,9 +124,7 @@ static void semaphore_dump( struct object *obj, int verbose )
 {
     struct semaphore *sem = (struct semaphore *)obj;
     assert( obj->ops == &semaphore_ops );
-    fprintf( stderr, "Semaphore count=%d max=%d ", sem->count, sem->max );
-    dump_object_name( &sem->obj );
-    fputc( '\n', stderr );
+    fprintf( stderr, "Semaphore count=%d max=%d\n", sem->count, sem->max );
 }
 
 static struct object_type *semaphore_get_type( struct object *obj )

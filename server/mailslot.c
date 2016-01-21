@@ -325,8 +325,7 @@ static void mailslot_queue_async( struct fd *fd, const async_data_t *data, int t
 
 static void mailslot_device_dump( struct object *obj, int verbose )
 {
-    assert( obj->ops == &mailslot_device_ops );
-    fprintf( stderr, "Mail slot device\n" );
+    fputs( "Mailslot device\n", stderr );
 }
 
 static struct object_type *mailslot_device_get_type( struct object *obj )

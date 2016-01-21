@@ -314,11 +314,7 @@ static void set_irp_result( struct irp_call *irp, unsigned int status,
 
 static void device_dump( struct object *obj, int verbose )
 {
-    struct device *device = (struct device *)obj;
-
-    fprintf( stderr, "Device " );
-    dump_object_name( &device->obj );
-    fputc( '\n', stderr );
+    fputs( "Device\n", stderr );
 }
 
 static struct object_type *device_get_type( struct object *obj )

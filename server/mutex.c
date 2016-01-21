@@ -138,9 +138,7 @@ static void mutex_dump( struct object *obj, int verbose )
 {
     struct mutex *mutex = (struct mutex *)obj;
     assert( obj->ops == &mutex_ops );
-    fprintf( stderr, "Mutex count=%u owner=%p ", mutex->count, mutex->owner );
-    dump_object_name( &mutex->obj );
-    fputc( '\n', stderr );
+    fprintf( stderr, "Mutex count=%u owner=%p\n", mutex->count, mutex->owner );
 }
 
 static struct object_type *mutex_get_type( struct object *obj )

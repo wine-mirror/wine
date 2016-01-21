@@ -108,11 +108,7 @@ static struct directory *dir_objtype;
 
 static void object_type_dump( struct object *obj, int verbose )
 {
-    assert( obj->ops == &object_type_ops );
-
-    fputs( "Object type ", stderr );
-    dump_object_name( obj );
-    fputc( '\n', stderr );
+    fputs( "Object type\n", stderr );
 }
 
 static struct object_type *object_type_get_type( struct object *obj )
@@ -124,11 +120,7 @@ static struct object_type *object_type_get_type( struct object *obj )
 
 static void directory_dump( struct object *obj, int verbose )
 {
-    assert( obj->ops == &directory_ops );
-
-    fputs( "Directory ", stderr );
-    dump_object_name( obj );
-    fputc( '\n', stderr );
+    fputs( "Directory\n", stderr );
 }
 
 static struct object_type *directory_get_type( struct object *obj )

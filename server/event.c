@@ -153,10 +153,8 @@ static void event_dump( struct object *obj, int verbose )
 {
     struct event *event = (struct event *)obj;
     assert( obj->ops == &event_ops );
-    fprintf( stderr, "Event manual=%d signaled=%d ",
+    fprintf( stderr, "Event manual=%d signaled=%d\n",
              event->manual_reset, event->signaled );
-    dump_object_name( &event->obj );
-    fputc( '\n', stderr );
 }
 
 static struct object_type *event_get_type( struct object *obj )
@@ -230,11 +228,7 @@ struct keyed_event *get_keyed_event_obj( struct process *process, obj_handle_t h
 
 static void keyed_event_dump( struct object *obj, int verbose )
 {
-    struct keyed_event *event = (struct keyed_event *)obj;
-    assert( obj->ops == &keyed_event_ops );
-    fprintf( stderr, "Keyed event " );
-    dump_object_name( &event->obj );
-    fputc( '\n', stderr );
+    fputs( "Keyed event\n", stderr );
 }
 
 static struct object_type *keyed_event_get_type( struct object *obj )

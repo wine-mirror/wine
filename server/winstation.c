@@ -133,10 +133,8 @@ static void winstation_dump( struct object *obj, int verbose )
 {
     struct winstation *winstation = (struct winstation *)obj;
 
-    fprintf( stderr, "Winstation flags=%x clipboard=%p atoms=%p ",
+    fprintf( stderr, "Winstation flags=%x clipboard=%p atoms=%p\n",
              winstation->flags, winstation->clipboard, winstation->atom_table );
-    dump_object_name( &winstation->obj );
-    fputc( '\n', stderr );
 }
 
 static struct object_type *winstation_get_type( struct object *obj )
@@ -223,10 +221,8 @@ static void desktop_dump( struct object *obj, int verbose )
 {
     struct desktop *desktop = (struct desktop *)obj;
 
-    fprintf( stderr, "Desktop flags=%x winstation=%p top_win=%p hooks=%p ",
+    fprintf( stderr, "Desktop flags=%x winstation=%p top_win=%p hooks=%p\n",
              desktop->flags, desktop->winstation, desktop->top_window, desktop->global_hooks );
-    dump_object_name( &desktop->obj );
-    fputc( '\n', stderr );
 }
 
 static struct object_type *desktop_get_type( struct object *obj )

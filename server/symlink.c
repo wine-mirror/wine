@@ -77,11 +77,9 @@ static void symlink_dump( struct object *obj, int verbose )
     struct symlink *symlink = (struct symlink *)obj;
     assert( obj->ops == &symlink_ops );
 
-    fprintf( stderr, "Symlink " );
-    dump_object_name( obj );
-    fprintf( stderr, " -> L\"" );
+    fputs( "Symlink target=\"", stderr );
     dump_strW( symlink->target, symlink->len / sizeof(WCHAR), stderr, "\"\"" );
-    fprintf( stderr, "\"\n" );
+    fputs( "\"\n", stderr );
 }
 
 static struct object_type *symlink_get_type( struct object *obj )

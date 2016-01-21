@@ -68,12 +68,14 @@ void dump_objects(void)
     {
         struct object *ptr = LIST_ENTRY( p, struct object, obj_list );
         fprintf( stderr, "%p:%d: ", ptr, ptr->refcount );
+        dump_object_name( ptr );
         ptr->ops->dump( ptr, 1 );
     }
     LIST_FOR_EACH( p, &object_list )
     {
         struct object *ptr = LIST_ENTRY( p, struct object, obj_list );
         fprintf( stderr, "%p:%d: ", ptr, ptr->refcount );
+        dump_object_name( ptr );
         ptr->ops->dump( ptr, 1 );
     }
 }
@@ -267,16 +269,24 @@ void *create_named_object( struct namespace *namespace, const struct object_ops 
     return obj;
 }
 
+/* recursive helper for dump_object_name */
+static void dump_name( struct object *obj )
+{
+    struct object_name *name = obj->name;
+
+    if (!name) return;
+    if (name->parent) dump_name( name->parent );
+    fputs( "\\\\", stderr );
+    dump_strW( name->name, name->len / sizeof(WCHAR), stderr, "[]" );
+}
+
 /* dump the name of an object to stderr */
 void dump_object_name( struct object *obj )
 {
-    if (!obj->name) fprintf( stderr, "name=\"\"" );
-    else
-    {
-        fprintf( stderr, "name=L\"" );
-        dump_strW( obj->name->name, obj->name->len/sizeof(WCHAR), stderr, "\"\"" );
-        fputc( '\"', stderr );
-    }
+    if (!obj->name) return;
+    fputc( '[', stderr );
+    dump_name( obj );
+    fputs( "] ", stderr );
 }
 
 /* unlink a named object from its namespace, without freeing the object itself */

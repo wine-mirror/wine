@@ -184,10 +184,8 @@ static void timer_dump( struct object *obj, int verbose )
 {
     struct timer *timer = (struct timer *)obj;
     assert( obj->ops == &timer_ops );
-    fprintf( stderr, "Timer manual=%d when=%s period=%u ",
+    fprintf( stderr, "Timer manual=%d when=%s period=%u\n",
              timer->manual, get_timeout_str(timer->when), timer->period );
-    dump_object_name( &timer->obj );
-    fputc( '\n', stderr );
 }
 
 static struct object_type *timer_get_type( struct object *obj )

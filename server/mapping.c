@@ -604,12 +604,10 @@ static void mapping_dump( struct object *obj, int verbose )
     struct mapping *mapping = (struct mapping *)obj;
     assert( obj->ops == &mapping_ops );
     fprintf( stderr, "Mapping size=%08x%08x prot=%08x fd=%p header_size=%08x base=%08lx "
-             "shared_file=%p ",
+             "shared_file=%p\n",
              (unsigned int)(mapping->size >> 32), (unsigned int)mapping->size,
              mapping->protect, mapping->fd, mapping->header_size,
              (unsigned long)mapping->base, mapping->shared_file );
-    dump_object_name( &mapping->obj );
-    fputc( '\n', stderr );
 }
 
 static struct object_type *mapping_get_type( struct object *obj )
