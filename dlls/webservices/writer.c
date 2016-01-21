@@ -454,20 +454,24 @@ static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
 {
     WS_XML_UTF8_TEXT *text = (WS_XML_UTF8_TEXT *)attr->value;
     unsigned char quote = attr->singleQuote ? '\'' : '"';
+    const WS_XML_STRING *prefix;
     ULONG size;
     HRESULT hr;
+
+    if (attr->prefix) prefix = attr->prefix;
+    else prefix = writer->current->hdr.prefix;
 
     /* ' prefix:attr="value"' */
 
     size = attr->localName->length + 4 /* ' =""' */;
-    if (attr->prefix) size += attr->prefix->length + 1 /* ':' */;
+    if (prefix) size += prefix->length + 1 /* ':' */;
     if (text) size += text->value.length;
     if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
 
     write_char( writer, ' ' );
-    if (attr->prefix)
+    if (prefix)
     {
-        write_bytes( writer, attr->prefix->bytes, attr->prefix->length );
+        write_bytes( writer, prefix->bytes, prefix->length );
         write_char( writer, ':' );
     }
     write_bytes( writer, attr->localName->bytes, attr->localName->length );
