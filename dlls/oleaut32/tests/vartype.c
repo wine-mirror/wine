@@ -6369,9 +6369,15 @@ static void test_bstr_cache(void)
     ok(str == str2, "str != str2\n");
     SysFreeString(str2);
 
-    /* Fill the bucket with cached entries. */
+    /* Fill the bucket with cached entries.
+       We roll our own, to show that the cache doesn't use
+       the bstr length field to determine bucket allocation. */
     for(i=0; i < sizeof(strs)/sizeof(*strs); i++)
-        strs[i] = SysAllocStringLen(NULL, 24);
+    {
+        DWORD_PTR *ptr = CoTaskMemAlloc(64);
+        ptr[0] = 0;
+        strs[i] = (BSTR)(ptr + 1);
+    }
     for(i=0; i < sizeof(strs)/sizeof(*strs); i++)
         SysFreeString(strs[i]);
 

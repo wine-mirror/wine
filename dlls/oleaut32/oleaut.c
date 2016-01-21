@@ -120,12 +120,25 @@ static inline bstr_t *bstr_from_str(BSTR str)
     return CONTAINING_RECORD(str, bstr_t, u.str);
 }
 
-static inline bstr_cache_entry_t *get_cache_entry(size_t size)
+static inline bstr_cache_entry_t *get_cache_entry_from_idx(unsigned cache_idx)
 {
-    unsigned cache_idx = FIELD_OFFSET(bstr_t, u.ptr[size+sizeof(WCHAR)-1])/BUCKET_SIZE;
     return bstr_cache_enabled && cache_idx < sizeof(bstr_cache)/sizeof(*bstr_cache)
         ? bstr_cache + cache_idx
         : NULL;
+}
+
+static inline bstr_cache_entry_t *get_cache_entry(size_t size)
+{
+    unsigned cache_idx = FIELD_OFFSET(bstr_t, u.ptr[size+sizeof(WCHAR)-1])/BUCKET_SIZE;
+    return get_cache_entry_from_idx(cache_idx);
+}
+
+static inline bstr_cache_entry_t *get_cache_entry_from_alloc_size(SIZE_T alloc_size)
+{
+    unsigned cache_idx;
+    if (alloc_size < BUCKET_SIZE) return NULL;
+    cache_idx = (alloc_size - BUCKET_SIZE) / BUCKET_SIZE;
+    return get_cache_entry_from_idx(cache_idx);
 }
 
 static bstr_t *alloc_bstr(size_t size)
@@ -234,6 +247,16 @@ BSTR WINAPI SysAllocString(LPCOLESTR str)
     return SysAllocStringLen(str, lstrlenW(str));
 }
 
+static inline IMalloc *get_malloc(void)
+{
+    static IMalloc *malloc;
+
+    if (!malloc)
+        CoGetMalloc(1, &malloc);
+
+    return malloc;
+}
+
 /******************************************************************************
  *		SysFreeString	[OLEAUT32.6]
  *
@@ -253,12 +276,19 @@ void WINAPI SysFreeString(BSTR str)
 {
     bstr_cache_entry_t *cache_entry;
     bstr_t *bstr;
+    IMalloc *malloc = get_malloc();
+    SIZE_T alloc_size;
 
     if(!str)
         return;
 
     bstr = bstr_from_str(str);
-    cache_entry = get_cache_entry(bstr->size);
+
+    alloc_size = IMalloc_GetSize(malloc, bstr);
+    if (alloc_size == ~0UL)
+        return;
+
+    cache_entry = get_cache_entry_from_alloc_size(alloc_size);
     if(cache_entry) {
         unsigned i;
 
