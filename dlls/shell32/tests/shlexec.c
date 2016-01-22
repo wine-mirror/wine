@@ -94,6 +94,7 @@ static int _todo_wait = 0;
 #define todo_wait for (_todo_wait = 1; _todo_wait; _todo_wait = 0)
 
 static char shell_call[2048];
+static char assoc_desc[2048];
 static int shell_call_traced;
 static void WINETEST_PRINTF_ATTR(2,3) _okShell(int condition, const char *msg, ...)
 {
@@ -105,6 +106,8 @@ static void WINETEST_PRINTF_ATTR(2,3) _okShell(int condition, const char *msg, .
     if (!condition && winetest_debug <= 1 && !shell_call_traced)
     {
         printf("Called %s\n", shell_call);
+        if (*assoc_desc)
+            printf("%s\n", assoc_desc);
         shell_call_traced=1;
     }
 
@@ -115,6 +118,10 @@ static void WINETEST_PRINTF_ATTR(2,3) _okShell(int condition, const char *msg, .
 #define okShell_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : _okShell
 #define okShell okShell_(__FILE__, __LINE__)
 
+void reset_association_description(void)
+{
+    *assoc_desc = '\0';
+}
 
 static int bad_shellexecute = 0;
 static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR filename, LPCSTR parameters, LPCSTR directory)
@@ -134,6 +141,8 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
     if (winetest_debug > 1)
     {
         trace_(file, line)("Called %s\n", shell_call);
+        if (*assoc_desc)
+            trace_(file, line)("%s\n", assoc_desc);
         shell_call_traced=1;
     }
 
@@ -217,6 +226,8 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     if (winetest_debug > 1)
     {
         trace_(file, line)("Called %s\n", shell_call);
+        if (*assoc_desc)
+            trace_(file, line)("%s\n", assoc_desc);
         shell_call_traced=1;
     }
 
@@ -403,6 +414,17 @@ static void create_test_verb_dde(const char* extension, const char* verb,
     char* cmd;
     LONG rc;
 
+    strcpy(assoc_desc, "Assoc ");
+    strcat_param(assoc_desc, "ext", extension);
+    strcat_param(assoc_desc, "verb", verb);
+    sprintf(shell, "%d", rawcmd);
+    strcat_param(assoc_desc, "rawcmd", shell);
+    strcat_param(assoc_desc, "cmdtail", cmdtail);
+    strcat_param(assoc_desc, "ddeexec", ddeexec);
+    strcat_param(assoc_desc, "app", application);
+    strcat_param(assoc_desc, "topic", topic);
+    strcat_param(assoc_desc, "ifexec", ifexec);
+
     sprintf(shell, "shlexec%s\\shell", extension);
     rc=RegOpenKeyExA(HKEY_CLASSES_ROOT, shell, 0,
                      KEY_CREATE_SUB_KEY, &hkey_shell);
@@ -479,11 +501,16 @@ static void create_test_verb_dde(const char* extension, const char* verb,
     CloseHandle(hkey_cmd);
 }
 
+/* Creates a class' non-DDE test verb.
+ * This function is meant to be used to create long term test verbs and thus
+ * does not trace them.
+ */
 static void create_test_verb(const char* extension, const char* verb,
                              int rawcmd, const char* cmdtail)
 {
     create_test_verb_dde(extension, verb, rawcmd, cmdtail, NULL, NULL,
                          NULL, NULL);
+    reset_association_description();
 }
 
 /***
@@ -2340,6 +2367,7 @@ static void test_dde(void)
             sprintf(params, test->expectedDdeExec, filename);
             okChildPath("ddeExec", params);
         }
+        reset_association_description();
 
         delete_test_association(".sde");
         test++;
@@ -2514,6 +2542,7 @@ static void test_dde_default_app(void)
                    test->expectedDdeApplication[which], ddeApplication);
             }
         }
+        reset_association_description();
 
         delete_test_association(".sde");
         test++;
