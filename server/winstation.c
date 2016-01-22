@@ -253,6 +253,7 @@ static void desktop_destroy( struct object *obj )
     if (desktop->global_hooks) release_object( desktop->global_hooks );
     if (desktop->close_timeout) remove_timeout_user( desktop->close_timeout );
     list_remove( &desktop->entry );
+    unlink_named_object( obj );
     release_object( desktop->winstation );
 }
 
