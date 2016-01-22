@@ -309,7 +309,7 @@ void WINAPI SysFreeString(BSTR str)
             cache_entry->cnt++;
 
             if(WARN_ON(heap)) {
-                unsigned n = bstr_alloc_size(bstr->size) / sizeof(DWORD) - 1;
+                unsigned n = (alloc_size-FIELD_OFFSET(bstr_t, u.ptr))/sizeof(DWORD);
                 for(i=0; i<n; i++)
                     bstr->u.dwptr[i] = ARENA_FREE_FILLER;
             }
