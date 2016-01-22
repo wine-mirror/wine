@@ -93,7 +93,29 @@ static void strcat_param(char* str, const char* name, const char* param)
 static int _todo_wait = 0;
 #define todo_wait for (_todo_wait = 1; _todo_wait; _todo_wait = 0)
 
-static char shell_call[2048]="";
+static char shell_call[2048];
+static int shell_call_traced;
+static void WINETEST_PRINTF_ATTR(2,3) _okShell(int condition, const char *msg, ...)
+{
+    va_list valist;
+
+    /* Note: if winetest_debug > 1 the ShellExecute() command has already been
+     * traced.
+     */
+    if (!condition && winetest_debug <= 1 && !shell_call_traced)
+    {
+        printf("Called %s\n", shell_call);
+        shell_call_traced=1;
+    }
+
+    va_start(valist, msg);
+    winetest_vok(condition, msg, valist);
+    va_end(valist);
+}
+#define okShell_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : _okShell
+#define okShell okShell_(__FILE__, __LINE__)
+
+
 static int bad_shellexecute = 0;
 static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR filename, LPCSTR parameters, LPCSTR directory)
 {
@@ -102,6 +124,7 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
     if(!verb)
         rcEmpty = shell_execute_(file, line, "", filename, parameters, directory);
 
+    shell_call_traced=0;
     strcpy(shell_call, "ShellExecute(");
     strcat_param(shell_call, "verb", verb);
     strcat_param(shell_call, "file", filename);
@@ -109,7 +132,10 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
     strcat_param(shell_call, "dir", directory);
     strcat(shell_call, ")");
     if (winetest_debug > 1)
+    {
         trace_(file, line)("Called %s\n", shell_call);
+        shell_call_traced=1;
+    }
 
     DeleteFileA(child_file);
     SetLastError(0xcafebabe);
@@ -138,11 +164,11 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
             }
         }
         if (!_todo_wait)
-            ok_(file, line)(wait_rc==WAIT_OBJECT_0 || rc <= 32,
-                            "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
+            okShell_(file, line)(wait_rc==WAIT_OBJECT_0 || rc <= 32,
+                                 "WaitForSingleObject returned %d\n", wait_rc);
         else todo_wine
-            ok_(file, line)(wait_rc==WAIT_OBJECT_0 || rc <= 32,
-                            "%s WaitForSingleObject returned %d\n", shell_call, wait_rc);
+            okShell_(file, line)(wait_rc==WAIT_OBJECT_0 || rc <= 32,
+                                 "WaitForSingleObject returned %d\n", wait_rc);
     }
     /* The child process may have changed the result file, so let profile
      * functions know about it
@@ -155,8 +181,9 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
     {
         if (rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */
             bad_shellexecute = 1;
-        ok_(file, line)(rc == rcEmpty || broken(rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */,
-                        "%s Got different return value with empty string: %lu %lu\n", shell_call, rc, rcEmpty);
+        okShell_(file, line)(rc == rcEmpty ||
+                             broken(rc != rcEmpty && rcEmpty == SE_ERR_NOASSOC) /* NT4 */,
+                             "Got different return value with empty string: %lu %lu\n", rc, rcEmpty);
     }
 
     return rc;
@@ -177,6 +204,7 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     /* Add some flags so we can wait for the child process */
     mask |= SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE;
 
+    shell_call_traced=0;
     strcpy(shell_call, "ShellExecuteEx(");
     sprintf(smask, "0x%x", mask);
     strcat_param(shell_call, "mask", smask);
@@ -187,7 +215,10 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     strcat_param(shell_call, "class", class);
     strcat(shell_call, ")");
     if (winetest_debug > 1)
+    {
         trace_(file, line)("Called %s\n", shell_call);
+        shell_call_traced=1;
+    }
 
     sei.cbSize=sizeof(sei);
     sei.fMask=mask;
@@ -209,8 +240,9 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     SetLastError(0xcafebabe);
     success=ShellExecuteExA(&sei);
     rc=(INT_PTR)sei.hInstApp;
-    ok_(file, line)((success && rc > 32) || (!success && rc <= 32),
-                    "%s rc=%d and hInstApp=%ld is not allowed\n", shell_call, success, rc);
+    okShell_(file, line)((success && rc > 32) || (!success && rc <= 32),
+                         "rc=%d and hInstApp=%ld is not allowed\n",
+                         success, rc);
 
     if (rc > 32)
     {
@@ -218,16 +250,21 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
         if (sei.hProcess!=NULL)
         {
             wait_rc=WaitForSingleObject(sei.hProcess, 5000);
-            ok_(file, line)(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject(hProcess) returned %d\n", wait_rc);
+            okShell_(file, line)(wait_rc==WAIT_OBJECT_0,
+                                 "WaitForSingleObject(hProcess) returned %d\n",
+                                 wait_rc);
         }
         wait_rc=WaitForSingleObject(hEvent, 5000);
         if (!_todo_wait)
-            ok_(file, line)(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
+            okShell_(file, line)(wait_rc==WAIT_OBJECT_0,
+                                 "WaitForSingleObject returned %d\n", wait_rc);
         else todo_wine
-            ok_(file, line)(wait_rc==WAIT_OBJECT_0, "WaitForSingleObject returned %d\n", wait_rc);
+            okShell_(file, line)(wait_rc==WAIT_OBJECT_0,
+                                 "WaitForSingleObject returned %d\n", wait_rc);
     }
     else
-       ok_(file, line)(sei.hProcess==NULL, "%s returned a process handle %p\n", shell_call, sei.hProcess);
+        okShell_(file, line)(sei.hProcess==NULL,
+                             "returned a process handle %p\n", sei.hProcess);
 
     /* The child process may have changed the result file, so let profile
      * functions know about it
@@ -731,12 +768,12 @@ static void _okChildString(const char* file, int line, const char* key, const ch
     result=getChildString("Arguments", key);
     if (!result)
     {
-        ok_(file, line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
+        okShell_(file, line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
         return;
     }
-    ok_(file, line)(lstrcmpiA(result, expected) == 0 ||
-                    broken(lstrcmpiA(result, bad) == 0),
-                    "%s expected '%s', got '%s'\n", key, expected, result);
+    okShell_(file, line)(lstrcmpiA(result, expected) == 0 ||
+                         broken(lstrcmpiA(result, bad) == 0),
+                         "%s expected '%s', got '%s'\n", key, expected, result);
 }
 
 static void _okChildPath(const char* file, int line, const char* key, const char* expected)
@@ -745,27 +782,27 @@ static void _okChildPath(const char* file, int line, const char* key, const char
     result=getChildString("Arguments", key);
     if (!result)
     {
-        ok_(file, line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
+        okShell_(file,line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
         return;
     }
-    ok_(file, line)(StrCmpPath(result, expected) == 0,
-                    "%s expected '%s', got '%s'\n", key, expected, result);
+    okShell_(file,line)(StrCmpPath(result, expected) == 0,
+                        "%s expected '%s', got '%s'\n", key, expected, result);
 }
 
 static void _okChildInt(const char* file, int line, const char* key, int expected)
 {
     INT result;
     result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
-    ok_(file, line)(result == expected,
-                    "%s expected %d, but got %d\n", key, expected, result);
+    okShell_(file,line)(result == expected,
+                        "%s expected %d, but got %d\n", key, expected, result);
 }
 
 static void _okChildIntBroken(const char* file, int line, const char* key, int expected)
 {
     INT result;
     result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
-    ok_(file, line)(result == expected || broken(result != expected),
-                    "%s expected %d, but got %d\n", key, expected, result);
+    okShell_(file,line)(result == expected || broken(result != expected),
+                        "%s expected %d, but got %d\n", key, expected, result);
 }
 
 #define okChildString(key, expected) _okChildString(__FILE__, __LINE__, (key), (expected), (expected))
