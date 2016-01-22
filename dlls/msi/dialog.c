@@ -2229,6 +2229,7 @@ static UINT msi_dialog_pathedit_control( msi_dialog *dialog, MSIRECORD *rec )
     control->attributes = MSI_RecordGetInteger( rec, 8 );
     prop = MSI_RecordGetString( rec, 9 );
     control->property = msi_dialog_dup_property( dialog, prop, FALSE );
+    control->update = msi_dialog_update_pathedit;
 
     info->dialog = dialog;
     info->control = control;
