@@ -174,7 +174,7 @@ static bstr_t *alloc_bstr(size_t size)
         }
     }
 
-    ret = HeapAlloc(GetProcessHeap(), 0, bstr_alloc_size(size));
+    ret = CoTaskMemAlloc(bstr_alloc_size(size));
     if(ret)
         ret->size = size;
     return ret;
@@ -321,7 +321,7 @@ void WINAPI SysFreeString(BSTR str)
         LeaveCriticalSection(&cs_bstr_cache);
     }
 
-    HeapFree(GetProcessHeap(), 0, bstr);
+    CoTaskMemFree(bstr);
 }
 
 /******************************************************************************
@@ -388,30 +388,25 @@ int WINAPI SysReAllocStringLen(BSTR* old, const OLECHAR* str, unsigned int len)
 {
     /* Detect integer overflow. */
     if (len >= ((UINT_MAX-sizeof(WCHAR)-sizeof(DWORD))/sizeof(WCHAR)))
-	return 0;
+	return FALSE;
 
     if (*old!=NULL) {
-      BSTR old_copy = *old;
       DWORD newbytelen = len*sizeof(WCHAR);
       bstr_t *old_bstr = bstr_from_str(*old);
-      bstr_t *bstr = HeapReAlloc(GetProcessHeap(), 0, old_bstr, bstr_alloc_size(newbytelen));
+      bstr_t *bstr = CoTaskMemRealloc(old_bstr, bstr_alloc_size(newbytelen));
+
+      if (!bstr) return FALSE;
+
       *old = bstr->u.str;
       bstr->size = newbytelen;
-      /* Subtle hidden feature: The old string data is still there
-       * when 'in' is NULL!
-       * Some Microsoft program needs it.
-       * FIXME: Is it a sideeffect of BSTR caching?
-       */
-      if (str && old_copy!=str) memmove(*old, str, newbytelen);
-      (*old)[len] = 0;
+      /* The old string data is still there when str is NULL */
+      if (str && old_bstr->u.str != str) memmove(bstr->u.str, str, newbytelen);
+      bstr->u.str[len] = 0;
     } else {
-      /*
-       * Allocate the new string
-       */
       *old = SysAllocStringLen(str, len);
     }
 
-    return 1;
+    return TRUE;
 }
 
 /******************************************************************************
