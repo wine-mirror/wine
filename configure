@@ -1133,6 +1133,7 @@ enable_initpki
 enable_inkobj
 enable_inseng
 enable_iphlpapi
+enable_irprops_cpl
 enable_itircl
 enable_itss
 enable_joy_cpl
@@ -17599,6 +17600,7 @@ wine_fn_config_dll inkobj enable_inkobj
 wine_fn_config_dll inseng enable_inseng clean
 wine_fn_config_dll iphlpapi enable_iphlpapi implib
 wine_fn_config_test dlls/iphlpapi/tests iphlpapi_test
+wine_fn_config_dll irprops.cpl enable_irprops_cpl
 wine_fn_config_dll itircl enable_itircl
 wine_fn_config_dll itss enable_itss clean
 wine_fn_config_test dlls/itss/tests itss_test

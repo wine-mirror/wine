@@ -262,6 +262,10 @@ my @dll_groups =
   "api-ms-win-core-winrt-l1-1-0",
   "api-ms-win-core-winrt-string-l1-1-0",
  ],
+ [
+  "bthprops.cpl",
+  "irprops.cpl",
+ ],
 );
 
 my $update_flags = 0;
