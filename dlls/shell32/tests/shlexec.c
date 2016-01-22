@@ -983,48 +983,48 @@ static void test_lpFile_parsed(void)
     /* existing "drawback_file.noassoc" prevents finding "drawback_file.noassoc foo.shlexec" on wine */
     sprintf(fileA, "%s\\drawback_file.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    okShell(rc > 32, "failed: rc=%lu\n", rc);
 
     /* if quoted, existing "drawback_file.noassoc" not prevents finding "drawback_file.noassoc foo.shlexec" on wine */
     sprintf(fileA, "\"%s\\drawback_file.noassoc foo.shlexec\"", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    ok(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
-       "%s failed: rc=%lu\n", shell_call, rc);
+    okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
+            "failed: rc=%lu\n", rc);
 
     /* error should be SE_ERR_FNF, not SE_ERR_NOASSOC */
     sprintf(fileA, "\"%s\\drawback_file.noassoc\" foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
 
     /* ""command"" not works on wine (and real win9x and w2k) */
     sprintf(fileA, "\"\"%s\\simple.shlexec\"\"", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    todo_wine ok(rc > 32 || broken(rc == SE_ERR_FNF) /* Win9x/2000 */,
-                 "%s failed: rc=%lu\n", shell_call, rc);
+    todo_wine okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win9x/2000 */,
+                      "failed: rc=%lu\n", rc);
 
     /* nonexisting "drawback_nonexist.noassoc" not prevents finding "drawback_nonexist.noassoc foo.shlexec" on wine */
     sprintf(fileA, "%s\\drawback_nonexist.noassoc foo.shlexec", tmpdir);
     rc=shell_execute(NULL, fileA, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    okShell(rc > 32, "failed: rc=%lu\n", rc);
 
     /* is SEE_MASK_DOENVSUBST default flag? Should only be when XP emulates 9x (XP bug or real 95 or ME behavior ?) */
     rc=shell_execute(NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL);
-    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    todo_wine okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
 
     /* quoted */
     rc=shell_execute(NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL);
-    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    todo_wine okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
 
     /* test SEE_MASK_DOENVSUBST works */
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
                         NULL, "%TMPDIR%\\simple.shlexec", NULL, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    okShell(rc > 32, "failed: rc=%lu\n", rc);
 
     /* quoted lpFile does not work on real win95 and nt4 */
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST | SEE_MASK_FLAG_NO_UI,
                         NULL, "\"%TMPDIR%\\simple.shlexec\"", NULL, NULL, NULL);
-    ok(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
-       "%s failed: rc=%lu\n", shell_call, rc);
+    okShell(rc > 32 || broken(rc == SE_ERR_FNF) /* Win95/NT4 */,
+            "failed: rc=%lu\n", rc);
 }
 
 typedef struct
@@ -1487,7 +1487,7 @@ static void test_argify(void)
 
         /* trace("***** verb='%s' params='%s'\n", test->verb, test->params); */
         rc = shell_execute_ex(SEE_MASK_DOENVSUBST, test->verb, fileA, test->params, NULL, NULL);
-        ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+        okShell(rc > 32, "failed: rc=%lu\n", rc);
 
         count = 0;
         while (test->cmd.args[count])
@@ -1508,11 +1508,11 @@ static void test_argify(void)
         if (cmd) cmd += strlen(test->verb);
         if (!cmd) cmd = "(null)";
         if ((test->todo & 0x2) == 0)
-            ok(!strcmp(cmd, test->cmd.cmd) || broken(!strcmp(cmd, bad->cmd)),
-               "%s: the cmdline is '%s' instead of '%s'\n", shell_call, cmd, test->cmd.cmd);
+            okShell(!strcmp(cmd, test->cmd.cmd) || broken(!strcmp(cmd, bad->cmd)),
+                    "the cmdline is '%s' instead of '%s'\n", cmd, test->cmd.cmd);
         else todo_wine
-            ok(!strcmp(cmd, test->cmd.cmd) || broken(!strcmp(cmd, bad->cmd)),
-               "%s: the cmdline is '%s' instead of '%s'\n", shell_call, cmd, test->cmd.cmd);
+            okShell(!strcmp(cmd, test->cmd.cmd) || broken(!strcmp(cmd, bad->cmd)),
+                    "the cmdline is '%s' instead of '%s'\n", cmd, test->cmd.cmd);
 
         for (i = 0; i < count - 1; i++)
         {
@@ -1537,7 +1537,7 @@ static void test_argify(void)
 
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu\n", shell_call, rc);
+    okShell(rc > 32, "failed: rc=%lu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", fileA);
 }
@@ -1592,10 +1592,9 @@ static void test_filename(void)
         }
         if (rc > 32)
             rc=33;
-        ok(rc==test->rc ||
-           broken(quotedfile && rc == SE_ERR_FNF), /* NT4 */
-           "%s failed: rc=%ld err=%u\n", shell_call,
-           rc, GetLastError());
+        okShell(rc==test->rc ||
+                broken(quotedfile && rc == SE_ERR_FNF), /* NT4 */
+                "failed: rc=%ld err=%u\n", rc, GetLastError());
         if (rc == 33)
         {
             const char* verb;
@@ -1637,13 +1636,11 @@ static void test_filename(void)
             rc=33;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%ld err=%u\n", shell_call,
-               rc, GetLastError());
+            okShell(rc==test->rc, "failed: rc=%ld err=%u\n", rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%ld err=%u\n", shell_call,
-               rc, GetLastError());
+            okShell(rc==test->rc, "failed: rc=%ld err=%u\n", rc, GetLastError());
         }
         if (rc==0)
         {
@@ -1706,8 +1703,7 @@ static void test_filename(void)
          */
         sprintf(filename, "\"%s\\test file.shlexec\"", tmpdir);
         rc=shell_execute(NULL, filename, NULL, NULL);
-        ok(rc > 32, "%s failed: rc=%ld err=%u\n", shell_call, rc,
-           GetLastError());
+        okShell(rc > 32, "failed: rc=%ld err=%u\n", rc, GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
         sprintf(filename, "%s\\test file.shlexec", tmpdir);
@@ -1818,20 +1814,20 @@ static void test_fileurls(void)
         if (test->flags & URL_SUCCESS)
         {
             if ((test->todo & 0x1) == 0)
-                ok(rc > 32, "%s failed: bad rc=%lu\n", shell_call, rc);
+                okShell(rc > 32, "failed: bad rc=%lu\n", rc);
             else todo_wine
-                ok(rc > 32, "%s failed: bad rc=%lu\n", shell_call, rc);
+                okShell(rc > 32, "failed: bad rc=%lu\n", rc);
         }
         else
         {
             if ((test->todo & 0x1) == 0)
-                ok(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
+                okShell(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
                    broken(rc == SE_ERR_ACCESSDENIED) /* win2000 */,
-                   "%s failed: bad rc=%lu\n", shell_call, rc);
+                   "failed: bad rc=%lu\n", rc);
             else todo_wine
-                ok(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
-                   broken(rc == SE_ERR_ACCESSDENIED) /* win2000 */,
-                   "%s failed: bad rc=%lu\n", shell_call, rc);
+                okShell(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
+                        broken(rc == SE_ERR_ACCESSDENIED) /* win2000 */,
+                        "failed: bad rc=%lu\n", rc);
         }
         if (rc == 33)
         {
@@ -2030,7 +2026,7 @@ static void test_lnks(void)
         /* Should open through our association */
         sprintf(filename, "%s\\test_shortcut_shlexec.lnk", tmpdir);
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
-        ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+        okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
         okChildInt("argcA", 5);
         okChildString("argvA3", "Open");
         sprintf(params, "%s\\test file.shlexec", tmpdir);
@@ -2038,7 +2034,7 @@ static void test_lnks(void)
         okChildPath("argvA4", filename);
 
         todo_wait rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_DOENVSUBST, NULL, "%TMPDIR%\\test_shortcut_shlexec.lnk", NULL, NULL, NULL);
-        ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+        okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
         okChildInt("argcA", 5);
         todo_wine okChildString("argvA3", "Open");
         sprintf(params, "%s\\test file.shlexec", tmpdir);
@@ -2049,13 +2045,13 @@ static void test_lnks(void)
     /* Should just run our executable */
     sprintf(filename, "%s\\test_shortcut_exe.lnk", tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
-    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+    okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
     okChildInt("argcA", 4);
     okChildString("argvA3", "Lnk");
 
     /* An explicit class overrides lnk's ContextMenuHandler */
     rc=shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, "shlexec.shlexec");
-    ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+    okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
     okChildInt("argcA", 5);
     okChildString("argvA3", "Open");
     okChildString("argvA4", filename);
@@ -2075,8 +2071,7 @@ static void test_lnks(void)
             c++;
         }
         rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, NULL);
-        ok(rc > 32, "%s failed: rc=%lu err=%u\n", shell_call, rc,
-           GetLastError());
+        okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
         okChildInt("argcA", 4);
         okChildString("argvA3", "Lnk");
     }
@@ -2094,13 +2089,11 @@ static void test_lnks(void)
             rc=33;
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc, "%s failed: rc=%lu err=%u\n", shell_call,
-               rc, GetLastError());
+            okShell(rc==test->rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc, "%s failed: rc=%lu err=%u\n", shell_call,
-               rc, GetLastError());
+            okShell(rc==test->rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
         }
         if (rc==0)
         {
@@ -2146,7 +2139,7 @@ static void test_exes(void)
     /* We need NOZONECHECKS on Win2003 to block a dialog */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params,
                         NULL, NULL);
-    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
+    okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
 
@@ -2157,7 +2150,7 @@ static void test_exes(void)
         {
             rc=shell_execute(NULL, filename, params, NULL);
             todo_wine {
-                ok(rc==SE_ERR_NOASSOC, "%s returned %lu\n", shell_call, rc);
+                okShell(rc==SE_ERR_NOASSOC, "returned %lu\n", rc);
             }
         }
     }
@@ -2169,11 +2162,11 @@ static void test_exes(void)
     /* test combining executable and parameters */
     sprintf(filename, "%s shlexec \"%s\" Exec", argv0, child_file);
     rc = shell_execute(NULL, filename, NULL, NULL);
-    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
 
     sprintf(filename, "\"%s\" shlexec \"%s\" Exec", argv0, child_file);
     rc = shell_execute(NULL, filename, NULL, NULL);
-    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
 }
 
 typedef struct
@@ -2333,7 +2326,7 @@ static void test_dde(void)
         dde_ready_event = CreateEventA(NULL, FALSE, FALSE, "winetest_shlexec_dde_ready");
         rc = shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, filename, NULL, NULL, NULL);
         CloseHandle(dde_ready_event);
-        ok(32 < rc, "%s failed: rc=%lu err=%u\n", shell_call, rc, GetLastError());
+        okShell(32 < rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
 
         if (32 < rc)
         {
@@ -2498,13 +2491,13 @@ static void test_dde_default_app(void)
 
         if ((test->todo & 0x1)==0)
         {
-            ok(rc==test->rc[which], "%s failed: rc=%lu err=%u\n", shell_call,
-               rc, GetLastError());
+            okShell(rc==test->rc[which], "failed: rc=%lu err=%u\n",
+                    rc, GetLastError());
         }
         else todo_wine
         {
-            ok(rc==test->rc[which], "%s failed: rc=%lu err=%u\n", shell_call,
-               rc, GetLastError());
+            okShell(rc==test->rc[which], "failed: rc=%lu err=%u\n",
+                    rc, GetLastError());
         }
         if (rc == 33)
         {
@@ -2699,7 +2692,7 @@ static void test_directory(void)
     SetCurrentDirectoryA(tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, NULL, NULL);
-    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
+    okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
     todo_wine okChildPath("longPath", path);
@@ -2707,12 +2700,12 @@ static void test_directory(void)
 
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, NULL, NULL);
-    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
 
     /* Explicitly specify the directory to use */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, tmpdir, NULL);
-    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
+    okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
     todo_wine okChildPath("longPath", path);
@@ -2720,11 +2713,11 @@ static void test_directory(void)
     /* Specify it through an environment variable */
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, "%TMPDIR%", NULL);
-    todo_wine ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    todo_wine okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
 
     rc=shell_execute_ex(SEE_MASK_DOENVSUBST|SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, "%TMPDIR%", NULL);
-    ok(rc > 32, "%s returned %lu\n", shell_call, rc);
+    okShell(rc > 32, "returned %lu\n", rc);
     okChildInt("argcA", 4);
     okChildString("argvA3", "Exec");
     todo_wine okChildPath("longPath", path);
@@ -2733,7 +2726,7 @@ static void test_directory(void)
     sprintf(dirpath, "%s:%s", curdir, tmpdir);
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS|SEE_MASK_FLAG_NO_UI,
                         NULL, "test2.exe", params, dirpath, NULL);
-    ok(rc == SE_ERR_FNF, "%s returned %lu\n", shell_call, rc);
+    okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
 }
 
 START_TEST(shlexec)
