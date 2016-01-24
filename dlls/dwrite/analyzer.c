@@ -524,7 +524,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                 break;
             /* LB21a */
             case b_HL:
-                if (i < count-2)
+                if (i < count-1)
                     switch (break_class[i+1])
                     {
                     case b_HY:
