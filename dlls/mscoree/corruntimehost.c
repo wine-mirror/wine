@@ -984,13 +984,13 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
 
         if (fixup->fixup->type & COR_VTABLE_32BIT)
         {
-            DWORD *vtable = fixup->vtable;
-            DWORD *tokens = fixup->tokens;
+            void **vtable = fixup->vtable;
+            ULONG_PTR *tokens = fixup->tokens;
             for (i=0; i<fixup->fixup->count; i++)
             {
-                TRACE("%x\n", tokens[i]);
-                vtable[i] = PtrToUint(mono_marshal_get_vtfixup_ftnptr(
-                    image, tokens[i], fixup->fixup->type));
+                TRACE("%#lx\n", tokens[i]);
+                vtable[i] = mono_marshal_get_vtfixup_ftnptr(
+                    image, tokens[i], fixup->fixup->type);
             }
         }
 
@@ -1029,10 +1029,11 @@ static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
     fixup->vtable = (BYTE*)hmodule + vtable_fixup->rva;
     fixup->done = FALSE;
 
+    TRACE("vtable_fixup->type=0x%x\n",vtable_fixup->type);
     if (vtable_fixup->type & COR_VTABLE_32BIT)
     {
-        DWORD *vtable = fixup->vtable;
-        DWORD *tokens;
+        void **vtable = fixup->vtable;
+        ULONG_PTR *tokens;
         int i;
         struct vtable_fixup_thunk *thunks = fixup->thunk_code;
 
@@ -1047,7 +1048,7 @@ static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
             thunks[i].fixup = fixup;
             thunks[i].function = ReallyFixupVTable;
             thunks[i].vtable_entry = &vtable[i];
-            vtable[i] = PtrToUint(&thunks[i]);
+            vtable[i] = &thunks[i];
         }
     }
     else
