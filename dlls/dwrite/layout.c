@@ -1485,7 +1485,6 @@ static BOOL is_same_u_splitting(struct layout_underline_splitting_params *left,
 static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct layout_effective_run *first,
     struct layout_effective_run *last)
 {
-    struct layout_underline_splitting_params params, prev_params;
     struct layout_effective_run *cur;
     DWRITE_FONT_METRICS metrics;
     FLOAT thickness, offset;
@@ -1517,8 +1516,8 @@ static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct lay
     }
 
     cur = first;
-    prev_params = params;
     do {
+        struct layout_underline_splitting_params params, prev_params;
         struct layout_effective_run *next, *w;
         struct layout_underline *u;
 
