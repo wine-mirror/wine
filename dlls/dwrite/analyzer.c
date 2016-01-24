@@ -522,8 +522,9 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
             case b_BB:
                 set_break_condition(i, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
-            /* LB21a */
+            /* LB21a, LB21b */
             case b_HL:
+                /* LB21a */
                 if (i < count-1)
                     switch (break_class[i+1])
                     {
@@ -531,6 +532,9 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                     case b_BA:
                         set_break_condition(i+1, BreakConditionAfter, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                     }
+                /* LB21b */
+                if (i > 0 && break_class[i-1] == b_SY)
+                    set_break_condition(i, BreakConditionBefore, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, &state);
                 break;
             /* LB22 */
             case b_IN:
@@ -540,6 +544,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
                     {
                         case b_AL:
                         case b_HL:
+                        case b_EX:
                         case b_ID:
                         case b_IN:
                         case b_NU:
