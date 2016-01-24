@@ -146,6 +146,35 @@ struct strsid_entry
 #define STRSID_OK     0
 #define STRSID_OPT    1
 
+#define SID_SLOTS 4
+static char debugsid_str[SID_SLOTS][256];
+static int debugsid_index = 0;
+static const char* debugstr_sid(PSID sid)
+{
+    LPSTR sidstr;
+    DWORD le = GetLastError();
+    char* res = debugsid_str[debugsid_index];
+    debugsid_index = (debugsid_index + 1) % SID_SLOTS;
+    if (!pConvertSidToStringSidA)
+        strcpy(res, "missing ConvertSidToStringSidA");
+    else if (!pConvertSidToStringSidA(sid, &sidstr))
+        sprintf(res, "ConvertSidToStringSidA failed le=%u", GetLastError());
+    else if (strlen(sidstr) > sizeof(*debugsid_str) - 1)
+    {
+        memcpy(res, sidstr, sizeof(*debugsid_str) - 4);
+        strcpy(res + sizeof(*debugsid_str) - 4, "...");
+        LocalFree(sidstr);
+    }
+    else
+    {
+        strcpy(res, sidstr);
+        LocalFree(sidstr);
+    }
+    /* Restore the last error in case ConvertSidToStringSidA() modified it */
+    SetLastError(le);
+    return res;
+}
+
 struct sidRef
 {
     SID_IDENTIFIER_AUTHORITY auth;
@@ -240,7 +269,8 @@ static void test_owner_equal(HANDLE Handle, PSID expected, int line)
     res = GetSecurityDescriptorOwner(queriedSD, &owner, &owner_defaulted);
     ok_(__FILE__, line)(res, "GetSecurityDescriptorOwner failed with error %d\n", GetLastError());
 
-    ok_(__FILE__, line)(EqualSid(owner, expected), "Owner SIDs are not equal\n");
+    ok_(__FILE__, line)(EqualSid(owner, expected), "Owner SIDs are not equal %s != %s\n",
+                        debugstr_sid(owner), debugstr_sid(expected));
     ok_(__FILE__, line)(!owner_defaulted, "Defaulted is true\n");
 
     HeapFree(GetProcessHeap(), 0, queriedSD);
@@ -258,7 +288,8 @@ static void test_group_equal(HANDLE Handle, PSID expected, int line)
     res = GetSecurityDescriptorGroup(queriedSD, &group, &group_defaulted);
     ok_(__FILE__, line)(res, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
 
-    ok_(__FILE__, line)(EqualSid(group, expected), "Group SIDs are not equal\n");
+    ok_(__FILE__, line)(EqualSid(group, expected), "Group SIDs are not equal %s != %s\n",
+                        debugstr_sid(group), debugstr_sid(expected));
     ok_(__FILE__, line)(!group_defaulted, "Defaulted is true\n");
 
     HeapFree(GetProcessHeap(), 0, queriedSD);
@@ -2186,7 +2217,8 @@ static void check_wellknown_name(const char* name, WELL_KNOWN_SID_TYPE result)
     ok(ret, "Failed to lookup account name %s\n",name);
     ok(sid_size != 0, "sid_size was zero\n");
 
-    ok(EqualSid(psid,wk_sid),"(%s) Sids fail to match well known sid!\n",name);
+    ok(EqualSid(psid,wk_sid),"%s Sid %s fails to match well known sid %s!\n",
+       name, debugstr_sid(psid), debugstr_sid(wk_sid));
 
     ok(!lstrcmpA(account, wk_account), "Expected %s , got %s\n", account, wk_account);
     ok(!lstrcmpA(domain, wk_domain), "Expected %s, got %s\n", wk_domain, domain);
@@ -3145,9 +3177,9 @@ static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD 
         bret = EqualSid(&ace->SidStart, user_sid);
         if (todo_sid)
             todo_wine
-            ok_(__FILE__, line)(bret, "Current User ACE != Current User SID\n");
+                ok_(__FILE__, line)(bret, "Current User ACE (%s) != Current User SID (%s)\n", debugstr_sid(&ace->SidStart), debugstr_sid(user_sid));
         else
-            ok_(__FILE__, line)(bret, "Current User ACE != Current User SID\n");
+            ok_(__FILE__, line)(bret, "Current User ACE (%s) != Current User SID (%s)\n", debugstr_sid(&ace->SidStart), debugstr_sid(user_sid));
 
         if (todo_flags)
             todo_wine
@@ -3171,9 +3203,9 @@ static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD 
         bret = EqualSid(&ace->SidStart, admin_sid);
         if (todo_sid)
             todo_wine
-            ok_(__FILE__, line)(bret, "Administators Group ACE != Administators Group SID\n");
+            ok_(__FILE__, line)(bret, "Administators Group ACE (%s) != Administators Group SID (%s)\n", debugstr_sid(&ace->SidStart), debugstr_sid(admin_sid));
         else
-            ok_(__FILE__, line)(bret, "Administators Group ACE != Administators Group SID\n");
+            ok_(__FILE__, line)(bret, "Administators Group ACE (%s) != Administators Group SID (%s)\n", debugstr_sid(&ace->SidStart), debugstr_sid(admin_sid));
 
         if (todo_flags)
             todo_wine
@@ -3591,7 +3623,8 @@ static void test_GetNamedSecurityInfoA(void)
         bret = pGetAce(pDacl, 0, (VOID **)&ace);
         ok(bret, "Failed to get Current User ACE.\n");
         bret = EqualSid(&ace->SidStart, user_sid);
-        todo_wine ok(bret, "Current User ACE != Current User SID.\n");
+        todo_wine ok(bret, "Current User ACE (%s) != Current User SID (%s).\n",
+                     debugstr_sid(&ace->SidStart), debugstr_sid(user_sid));
         ok(((ACE_HEADER *)ace)->AceFlags == 0,
            "Current User ACE has unexpected flags (0x%x != 0x0)\n", ((ACE_HEADER *)ace)->AceFlags);
         ok(ace->Mask == 0x1f01ff, "Current User ACE has unexpected mask (0x%x != 0x1f01ff)\n",
@@ -3603,7 +3636,8 @@ static void test_GetNamedSecurityInfoA(void)
         ok(bret, "Failed to get Administators Group ACE.\n");
         bret = EqualSid(&ace->SidStart, admin_sid);
         todo_wine ok(bret || broken(!bret) /* win2k */,
-                     "Administators Group ACE != Administators Group SID.\n");
+                     "Administators Group ACE (%s) != Administators Group SID (%s).\n",
+                     debugstr_sid(&ace->SidStart), debugstr_sid(admin_sid));
         ok(((ACE_HEADER *)ace)->AceFlags == 0,
            "Administators Group ACE has unexpected flags (0x%x != 0x0)\n", ((ACE_HEADER *)ace)->AceFlags);
         ok(ace->Mask == 0x1f01ff || broken(ace->Mask == GENERIC_ALL) /* win2k */,
@@ -3737,14 +3771,15 @@ static void test_GetNamedSecurityInfoA(void)
     bret = GetSecurityDescriptorOwner(pSD, &owner, &owner_defaulted);
     ok(bret, "GetSecurityDescriptorOwner failed with error %d\n", GetLastError());
     ok(owner != NULL, "owner should not be NULL\n");
-    ok(EqualSid(owner, admin_sid), "MACHINE\\Software owner SID != Administrators SID.\n");
+    ok(EqualSid(owner, admin_sid), "MACHINE\\Software owner SID (%s) != Administrators SID (%s).\n", debugstr_sid(owner), debugstr_sid(admin_sid));
 
     bret = GetSecurityDescriptorGroup(pSD, &group, &group_defaulted);
     ok(bret, "GetSecurityDescriptorGroup failed with error %d\n", GetLastError());
     ok(group != NULL, "group should not be NULL\n");
     ok(EqualSid(group, admin_sid) || broken(EqualSid(group, system_sid)) /* before Win7 */
        || broken(((SID*)group)->SubAuthority[0] == SECURITY_NT_NON_UNIQUE) /* Vista */,
-       "MACHINE\\Software group SID != Local System SID.\n");
+       "MACHINE\\Software group SID (%s) != Local System SID (%s or %s)\n",
+       debugstr_sid(group), debugstr_sid(admin_sid), debugstr_sid(system_sid));
     LocalFree(pSD);
 
     /* Test querying the DACL of a built-in registry key */
@@ -4379,7 +4414,8 @@ static void test_GetSecurityInfo(void)
         bret = pGetAce(pDacl, 0, (VOID **)&ace);
         ok(bret, "Failed to get Current User ACE.\n");
         bret = EqualSid(&ace->SidStart, user_sid);
-        todo_wine ok(bret, "Current User ACE != Current User SID.\n");
+        todo_wine ok(bret, "Current User ACE (%s) != Current User SID (%s).\n",
+                     debugstr_sid(&ace->SidStart), debugstr_sid(user_sid));
         ok(((ACE_HEADER *)ace)->AceFlags == 0,
            "Current User ACE has unexpected flags (0x%x != 0x0)\n", ((ACE_HEADER *)ace)->AceFlags);
         ok(ace->Mask == 0x1f01ff, "Current User ACE has unexpected mask (0x%x != 0x1f01ff)\n",
@@ -4390,7 +4426,7 @@ static void test_GetSecurityInfo(void)
         bret = pGetAce(pDacl, 1, (VOID **)&ace);
         ok(bret, "Failed to get Administators Group ACE.\n");
         bret = EqualSid(&ace->SidStart, admin_sid);
-        todo_wine ok(bret, "Administators Group ACE != Administators Group SID.\n");
+        todo_wine ok(bret, "Administators Group ACE (%s) != Administators Group SID (%s).\n", debugstr_sid(&ace->SidStart), debugstr_sid(admin_sid));
         ok(((ACE_HEADER *)ace)->AceFlags == 0,
            "Administators Group ACE has unexpected flags (0x%x != 0x0)\n", ((ACE_HEADER *)ace)->AceFlags);
         ok(ace->Mask == 0x1f01ff, "Administators Group ACE has unexpected mask (0x%x != 0x1f01ff)\n",
@@ -4539,7 +4575,8 @@ static void test_EqualSid(void)
 
     SetLastError(0xdeadbeef);
     ret = EqualSid(sid1, sid2);
-    ok(ret, "Same sids should have been equal\n");
+    ok(ret, "Same sids should have been equal %s != %s\n",
+       debugstr_sid(sid1), debugstr_sid(sid2));
     ok(GetLastError() == ERROR_SUCCESS ||
        broken(GetLastError() == 0xdeadbeef), /* NT4 */
        "EqualSid should have set last error to ERROR_SUCCESS instead of %d\n",
@@ -5683,7 +5720,6 @@ static void test_TokenIntegrityLevel(void)
     HANDLE token;
     DWORD size;
     DWORD res;
-    char *sidname = NULL;
     static SID medium_level = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
                                                     {SECURITY_MANDATORY_HIGH_RID}};
     static SID high_level = {SID_REVISION, 1, {SECURITY_MANDATORY_LABEL_AUTHORITY},
@@ -5715,14 +5751,10 @@ static void test_TokenIntegrityLevel(void)
     ok(tml->Label.Attributes == (SE_GROUP_INTEGRITY | SE_GROUP_INTEGRITY_ENABLED),
         "got 0x%x (expected 0x%x)\n", tml->Label.Attributes, (SE_GROUP_INTEGRITY | SE_GROUP_INTEGRITY_ENABLED));
 
-    SetLastError(0xdeadbeef);
-    res = pConvertSidToStringSidA(tml->Label.Sid, &sidname);
-    ok(res, "got %u and %u\n", res, GetLastError());
-
     ok(EqualSid(tml->Label.Sid, &medium_level) || EqualSid(tml->Label.Sid, &high_level),
-        "got %s (expected 'S-1-16-8192' or 'S-1-16-12288')\n", sidname);
+       "got %s (expected %s or %s)\n", debugstr_sid(tml->Label.Sid),
+       debugstr_sid(&medium_level), debugstr_sid(&high_level));
 
-    LocalFree(sidname);
     CloseHandle(token);
 }
 
@@ -6037,7 +6069,8 @@ static void test_GetWindowsAccountDomainSid(void)
     InitializeSid(domain_sid2, &domain_ident, 4);
     for (i = 0; i < 4; i++)
         *GetSidSubAuthority(domain_sid2, i) = *GetSidSubAuthority(user_sid, i);
-    ok(EqualSid(domain_sid, domain_sid2), "unexpected domain sid\n");
+    ok(EqualSid(domain_sid, domain_sid2), "unexpected domain sid %s != %s\n",
+       debugstr_sid(domain_sid), debugstr_sid(domain_sid2));
 
     HeapFree(GetProcessHeap(), 0, user);
 }
