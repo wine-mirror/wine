@@ -2187,6 +2187,8 @@ DECL_HANDLER(load_registry)
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
 
+    if (!objattr) return;
+
     if (!thread_single_check_privilege( current, &SeRestorePrivilege ))
     {
         set_error( STATUS_PRIVILEGE_NOT_HELD );
