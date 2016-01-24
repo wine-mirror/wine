@@ -601,7 +601,7 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
     }
     metrics->length = length;
 
-    position = stop_position;
+    position = run->descr.textPosition + stop_position;
     if (stop_glyph == run->glyphcount)
         breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionAfter;
     else {
