@@ -75,7 +75,7 @@ BOOL WINAPI Ctl3dIsAutoSubclass(void)
 
 BOOL WINAPI Ctl3dRegister(HINSTANCE hInst)
 {
-    return FALSE;
+    return TRUE;
 }
 
 BOOL WINAPI Ctl3dSubclassCtl(HWND hwnd)
