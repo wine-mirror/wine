@@ -919,7 +919,75 @@ static const struct vtable_fixup_thunk thunk_template = {
 
 #include "poppack.h"
 
-#else /* !defined(__i386__) */
+#elif __x86_64__ /* !__i386__ */
+
+# define CAN_FIXUP_VTABLE 1
+
+#include "pshpack1.h"
+
+struct vtable_fixup_thunk
+{
+    /* push %rbp;
+       mov %rsp, %rbp
+       sub $0x80, %rsp ; 0x8*4 + 0x10*4 + 0x20
+    */
+    BYTE i1[11];
+    /*
+        mov %rcx, 0x60(%rsp); mov %rdx, 0x68(%rsp); mov %r8, 0x70(%rsp); mov %r9, 0x78(%rsp);
+        movaps %xmm0,0x20(%rsp); ...; movaps %xmm3,0x50(%esp)
+    */
+    BYTE i2[40];
+    /* mov function,%rax */
+    BYTE i3[2];
+    void (CDECL *function)(struct dll_fixup *);
+    /* mov fixup,%rcx */
+    BYTE i4[2];
+    struct dll_fixup *fixup;
+    /* call *%rax */
+    BYTE i5[2];
+    /*
+        mov 0x60(%rsp),%rcx; mov 0x68(%rsp),%rdx; mov 0x70(%rsp),%r8; mov 0x78(%rsp),%r9;
+        movaps 0x20(%rsp),xmm0; ...; movaps 0x50(%esp),xmm3
+    */
+    BYTE i6[40];
+    /* mov %rbp, %rsp
+       pop %rbp
+    */
+    BYTE i7[4];
+    /* mov vtable_entry, %rax */
+    BYTE i8[2];
+    void *vtable_entry;
+    /* mov [%rax],%rax
+       jmp %rax */
+    BYTE i9[5];
+};
+
+static const struct vtable_fixup_thunk thunk_template = {
+    {0x55,0x48,0x89,0xE5,  0x48,0x81,0xEC,0x80,0x00,0x00,0x00},
+    {0x48,0x89,0x4C,0x24,0x60, 0x48,0x89,0x54,0x24,0x68,
+     0x4C,0x89,0x44,0x24,0x70, 0x4C,0x89,0x4C,0x24,0x78,
+     0x0F,0x29,0x44,0x24,0x20, 0x0F,0x29,0x4C,0x24,0x30,
+     0x0F,0x29,0x54,0x24,0x40, 0x0F,0x29,0x5C,0x24,0x50,
+    },
+    {0x48,0xB8},
+    NULL,
+    {0x48,0xB9},
+    NULL,
+    {0xFF,0xD0},
+    {0x48,0x8B,0x4C,0x24,0x60, 0x48,0x8B,0x54,0x24,0x68,
+     0x4C,0x8B,0x44,0x24,0x70, 0x4C,0x8B,0x4C,0x24,0x78,
+     0x0F,0x28,0x44,0x24,0x20, 0x0F,0x28,0x4C,0x24,0x30,
+     0x0F,0x28,0x54,0x24,0x40, 0x0F,0x28,0x5C,0x24,0x50,
+     },
+    {0x48,0x89,0xEC, 0x5D},
+    {0x48,0xB8},
+    NULL,
+    {0x48,0x8B,0x00,0xFF,0xE0}
+};
+
+#include "poppack.h"
+
+#else /* !__i386__ && !__x86_64__ */
 
 # define CAN_FIXUP_VTABLE 0
 
@@ -982,7 +1050,11 @@ static void CDECL ReallyFixupVTable(struct dll_fixup *fixup)
         /* Mono needs an image that belongs to an assembly. */
         image = mono_assembly_get_image(assembly);
 
+#if __x86_64__
+        if (fixup->fixup->type & COR_VTABLE_64BIT)
+#else
         if (fixup->fixup->type & COR_VTABLE_32BIT)
+#endif
         {
             void **vtable = fixup->vtable;
             ULONG_PTR *tokens = fixup->tokens;
@@ -1030,15 +1102,16 @@ static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
     fixup->done = FALSE;
 
     TRACE("vtable_fixup->type=0x%x\n",vtable_fixup->type);
+#if __x86_64__
+    if (vtable_fixup->type & COR_VTABLE_64BIT)
+#else
     if (vtable_fixup->type & COR_VTABLE_32BIT)
+#endif
     {
         void **vtable = fixup->vtable;
         ULONG_PTR *tokens;
         int i;
         struct vtable_fixup_thunk *thunks = fixup->thunk_code;
-
-        if (sizeof(void*) > 4)
-            ERR("32-bit fixup in 64-bit mode; broken image?\n");
 
         tokens = fixup->tokens = HeapAlloc(GetProcessHeap(), 0, sizeof(*tokens) * vtable_fixup->count);
         memcpy(tokens, vtable, sizeof(*tokens) * vtable_fixup->count);
