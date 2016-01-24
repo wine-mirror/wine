@@ -584,7 +584,7 @@ NTSTATUS WINAPI BCryptGetProperty( BCRYPT_HANDLE handle, LPCWSTR prop, UCHAR *bu
         return get_hash_property( hash->alg_id, prop, buffer, count, res );
     }
     default:
-        WARN( "unknown magic %08x", object->magic );
+        WARN( "unknown magic %08x\n", object->magic );
         return STATUS_INVALID_HANDLE;
     }
 }
