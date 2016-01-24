@@ -1084,7 +1084,6 @@ if (0) {/* crashes on native */
     metrics.supportsSideways = TRUE;
     hr = IDWriteInlineObject_GetMetrics(sign, &metrics);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(metrics.width > 0.0, "got %.2f\n", metrics.width);
     ok(metrics.height == 0.0, "got %.2f\n", metrics.height);
     ok(metrics.baseline == 0.0, "got %.2f\n", metrics.baseline);
@@ -1786,7 +1785,6 @@ todo_wine
 
     hr = IDWriteInlineObject_GetMetrics(trimm, &inline_metrics);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(inline_metrics.width > 0.0 && inline_metrics.width == metrics[0].width, "got %.2f, expected %.2f\n",
         inline_metrics.width, metrics[0].width);
 
@@ -3314,7 +3312,6 @@ static void test_SetTextAlignment(void)
     hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
-todo_wine
     ok(metrics.width == 5*clusters[0].width, "got %.2f\n", metrics.width);
     ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
     IDWriteTextLayout_Release(layout);
@@ -3705,11 +3702,13 @@ static void test_pixelsnapping(void)
 
 static void test_SetWordWrapping(void)
 {
-    static const WCHAR strW[] = {'a',0};
+    static const WCHAR strW[] = {'a',' ','s','o','m','e',' ','t','e','x','t',' ','a','n','d',
+        ' ','a',' ','b','i','t',' ','m','o','r','e','\n','b'};
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
     DWRITE_WORD_WRAPPING v;
+    UINT32 count;
     HRESULT hr;
 
     factory = create_factory();
@@ -3721,7 +3720,7 @@ static void test_SetWordWrapping(void)
     v = IDWriteTextFormat_GetWordWrapping(format);
     ok(v == DWRITE_WORD_WRAPPING_WRAP, "got %d\n", v);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, sizeof(strW)/sizeof(WCHAR), format, 10.0f, 100.0f, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     v = IDWriteTextLayout_GetWordWrapping(layout);
@@ -3735,6 +3734,24 @@ static void test_SetWordWrapping(void)
 
     v = IDWriteTextFormat_GetWordWrapping(format);
     ok(v == DWRITE_WORD_WRAPPING_WRAP, "got %d\n", v);
+
+    /* disable wrapping, text has explicit newline */
+    hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_NO_WRAP);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, NULL, 0, &count);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 2, "got %u\n", count);
+
+    hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_WRAP);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, NULL, 0, &count);
+    ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
+    ok(count > 2, "got %u\n", count);
 
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);

@@ -1606,7 +1606,8 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         }
 
         overflow = layout->clustermetrics[i].canWrapLineAfter &&
-            (width + layout->clustermetrics[i].width > layout->metrics.layoutWidth);
+            (width + layout->clustermetrics[i].width > layout->metrics.layoutWidth) &&
+            (layout->format.wrapping != DWRITE_WORD_WRAPPING_NO_WRAP);
         /* check if we got new */
         if (overflow ||
             layout->clustermetrics[i].isNewline || /* always wrap on new line */
