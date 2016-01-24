@@ -92,7 +92,7 @@ static void test_sha1(void)
     alg = NULL;
     ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA1_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set");
+    ok(alg != NULL, "alg not set\n");
 
     len = size = 0xdeadbeef;
     ret = BCryptGetProperty(NULL, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
@@ -171,7 +171,7 @@ static void test_sha256(void)
     alg = NULL;
     ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA256_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set");
+    ok(alg != NULL, "alg not set\n");
 
     len = size = 0xdeadbeef;
     ret = BCryptGetProperty(NULL, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
@@ -250,7 +250,7 @@ static void test_sha384(void)
     alg = NULL;
     ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA384_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set");
+    ok(alg != NULL, "alg not set\n");
 
     len = size = 0xdeadbeef;
     ret = BCryptGetProperty(NULL, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
@@ -330,7 +330,7 @@ static void test_sha512(void)
     alg = NULL;
     ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_SHA512_ALGORITHM, MS_PRIMITIVE_PROVIDER, 0);
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
-    ok(alg != NULL, "alg not set");
+    ok(alg != NULL, "alg not set\n");
 
     len = size = 0xdeadbeef;
     ret = BCryptGetProperty(NULL, BCRYPT_OBJECT_LENGTH, (UCHAR *)&len, sizeof(len), &size, 0);
