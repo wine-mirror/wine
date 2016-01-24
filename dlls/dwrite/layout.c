@@ -3151,7 +3151,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
         IDWriteTextRenderer_DrawUnderline(renderer,
             context,
             /* horizontal underline always grows from left to right, width is always added to origin regardless of run direction */
-            (is_run_rtl(u->run) ? u->run->origin_x - u->run->width : u->run->origin_x) + run->align_dx + origin_x,
+            (is_run_rtl(u->run) ? u->run->origin_x - u->run->width : u->run->origin_x) + u->run->align_dx + origin_x,
             SNAP_COORD(u->run->origin_y + origin_y),
             &u->u,
             u->run->effect);
@@ -3161,7 +3161,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
     LIST_FOR_EACH_ENTRY(s, &This->strikethrough, struct layout_strikethrough, entry) {
         IDWriteTextRenderer_DrawStrikethrough(renderer,
             context,
-            s->run->origin_x + run->align_dx + origin_x,
+            s->run->origin_x + s->run->align_dx + origin_x,
             SNAP_COORD(s->run->origin_y + origin_y),
             &s->s,
             s->run->effect);
