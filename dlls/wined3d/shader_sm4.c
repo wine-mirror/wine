@@ -144,6 +144,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY  = 0x5c,
     WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE  = 0x5d,
     WINED3D_SM4_OP_DCL_VERTICES_OUT     = 0x5e,
+    WINED3D_SM4_OP_DCL_TEMPS            = 0x68,
 };
 
 enum wined3d_sm4_register_type
@@ -323,6 +324,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY,    WINED3DSIH_DCL_OUTPUT_TOPOLOGY, "",     ""},
     {WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE,    WINED3DSIH_DCL_INPUT_PRIMITIVE, "",     ""},
     {WINED3D_SM4_OP_DCL_VERTICES_OUT,       WINED3DSIH_DCL_VERTICES_OUT,    "",     ""},
+    {WINED3D_SM4_OP_DCL_TEMPS,              WINED3DSIH_DCL_TEMPS,           "",     ""},
 };
 
 static const enum wined3d_shader_register_type register_type_table[] =
@@ -896,7 +898,8 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
             ins->declaration.primitive_type = input_primitive_type_table[primitive_type];
         }
     }
-    else if (opcode == WINED3D_SM4_OP_DCL_VERTICES_OUT)
+    else if (opcode == WINED3D_SM4_OP_DCL_VERTICES_OUT
+            || opcode == WINED3D_SM4_OP_DCL_TEMPS)
     {
         ins->declaration.count = *p++;
     }
