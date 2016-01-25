@@ -5970,7 +5970,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
     /* If the surface is of the 'ALLOCONLOAD' type, ignore the LPSURFACE
      * field. Frank Herbert's Dune specifies a NULL pointer for lpSurface. */
-    if ((desc->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD) || !desc->lpSurface)
+    if (desc->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD)
         desc->dwFlags &= ~DDSD_LPSURFACE;
     if (desc->dwFlags & DDSD_LPSURFACE)
     {
@@ -5984,6 +5984,13 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         if (version < 4)
         {
             WARN("User memory surfaces not supported before version 4.\n");
+            HeapFree(GetProcessHeap(), 0, texture);
+            return DDERR_INVALIDPARAMS;
+        }
+
+        if (!desc->lpSurface)
+        {
+            WARN("NULL surface memory pointer specified.\n");
             HeapFree(GetProcessHeap(), 0, texture);
             return DDERR_INVALIDPARAMS;
         }

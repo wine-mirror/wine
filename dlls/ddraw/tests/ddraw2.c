@@ -5979,7 +5979,6 @@ static void test_create_surface_pitch(void)
         surface_desc.dwWidth = 63;
         surface_desc.dwHeight = 63;
         U1(surface_desc).lPitch = test_data[i].pitch_in;
-        surface_desc.lpSurface = mem;
         surface_desc.ddpfPixelFormat.dwSize = sizeof(surface_desc.ddpfPixelFormat);
         surface_desc.ddpfPixelFormat.dwFlags = DDPF_RGB;
         U1(surface_desc.ddpfPixelFormat).dwRGBBitCount = 32;
@@ -5987,6 +5986,13 @@ static void test_create_surface_pitch(void)
         U3(surface_desc.ddpfPixelFormat).dwGBitMask = 0x0000ff00;
         U4(surface_desc.ddpfPixelFormat).dwBBitMask = 0x000000ff;
         hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        if (test_data[i].flags_in & DDSD_LPSURFACE)
+        {
+            HRESULT expected_hr = SUCCEEDED(test_data[i].hr) ? DDERR_INVALIDPARAMS : test_data[i].hr;
+            ok(hr == expected_hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, expected_hr);
+            surface_desc.lpSurface = mem;
+            hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &surface, NULL);
+        }
         ok(hr == test_data[i].hr || (test_data[i].placement == DDSCAPS_VIDEOMEMORY && hr == DDERR_NODIRECTDRAWHW),
                 "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
         if (FAILED(hr))
