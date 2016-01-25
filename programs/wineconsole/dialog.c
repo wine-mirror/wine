@@ -190,12 +190,15 @@ static LRESULT WINAPI WCUSER_FontPreviewProc(HWND hWnd, UINT msg, WPARAM wParam,
             hFont = (HFONT)GetWindowLongPtrW(hWnd, 0);
             if (hFont)
             {
+                COLORREF bkcolor;
                 WCHAR ascii[] = {'A','S','C','I','I',':',' ','a','b','c','X','Y','Z','\0'};
                 WCHAR buf[256];
                 int   len;
 
                 hOldFont = SelectObject(ps.hdc, hFont);
-                SetBkColor(ps.hdc, WCUSER_ColorMap[GetWindowLongW(GetDlgItem(di->hDlg, IDC_FNT_COLOR_BK), 0)]);
+                bkcolor = WCUSER_ColorMap[GetWindowLongW(GetDlgItem(di->hDlg, IDC_FNT_COLOR_BK), 0)];
+                FillRect(ps.hdc, &ps.rcPaint, CreateSolidBrush(bkcolor));
+                SetBkColor(ps.hdc, bkcolor);
                 SetTextColor(ps.hdc, WCUSER_ColorMap[GetWindowLongW(GetDlgItem(di->hDlg, IDC_FNT_COLOR_FG), 0)]);
                 len = LoadStringW(GetModuleHandleW(NULL), IDS_FNT_PREVIEW,
                                   buf, sizeof(buf) / sizeof(buf[0]));
