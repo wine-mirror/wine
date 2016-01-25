@@ -38,6 +38,8 @@ static void (ALC_APIENTRY *palcRenderSamplesSOFT)(ALCdevice*, ALCvoid*, ALCsizei
 
 static HINSTANCE instance;
 
+#define IN_AL_PERIODS 4
+
 #if XAUDIO2_VER == 0
 #define COMPAT_E_INVALID_CALL E_INVALIDARG
 #define COMPAT_E_DEVICE_INVALIDATED XAUDIO20_E_DEVICE_INVALIDATED
@@ -2133,6 +2135,30 @@ static BOOL xa2buffer_queue_period(XA2SourceImpl *src, XA2Buffer *buf, ALuint al
     return buf->offs_bytes < buf->cur_end_bytes;
 }
 
+#if XAUDIO2_VER > 0
+static UINT32 get_underrun_warning(XA2SourceImpl *src)
+{
+    UINT32 period_bytes = src->xa2->period_frames * src->submit_blocksize;
+    UINT32 total = 0, i;
+
+    for(i = 0; i < src->nbufs && total < IN_AL_PERIODS * period_bytes; ++i){
+        XA2Buffer *buf = &src->buffers[(src->first_buf + i) % XAUDIO2_MAX_QUEUED_BUFFERS];
+        total += buf->cur_end_bytes - buf->offs_bytes;
+        if(buf->xa2buffer.LoopCount == XAUDIO2_LOOP_INFINITE)
+            return 0;
+        if(buf->xa2buffer.LoopCount > 0){
+            total += (buf->loop_end_bytes - buf->xa2buffer.LoopBegin) * (buf->xa2buffer.LoopCount - buf->looped);
+            total += buf->play_end_bytes - buf->loop_end_bytes;
+        }
+    }
+
+    if(total >= IN_AL_PERIODS * period_bytes)
+        return 0;
+
+    return ((IN_AL_PERIODS * period_bytes - total) / period_bytes + 1) * period_bytes;
+}
+#endif
+
 /* Looping:
  *
  * The looped section of a buffer is a subset of the play area which is looped
@@ -2148,7 +2174,7 @@ static BOOL xa2buffer_queue_period(XA2SourceImpl *src, XA2Buffer *buf, ALuint al
  *
  * In the simple case, playback will start at PlayBegin. At LoopEnd, playback
  * will move to LoopBegin and repeat that loop LoopCount times. Then, playback
- * will cease at LoopEnd.
+ * will cease at PlayEnd.
  *
  * If PlayLength is zero, then PlayEnd is the end of the buffer.
  *
@@ -2208,9 +2234,9 @@ static void update_source_state(XA2SourceImpl *src)
 
     alGetSourcei(src->al_src, AL_BYTE_OFFSET, &bufpos);
 
-    /* maintain 4 periods in AL */
+    /* maintain IN_AL_PERIODS periods in AL */
     while(src->cur_buf != (src->first_buf + src->nbufs) % XAUDIO2_MAX_QUEUED_BUFFERS &&
-            src->in_al_bytes - bufpos < 4 * src->xa2->period_frames * src->submit_blocksize){
+            src->in_al_bytes - bufpos < IN_AL_PERIODS * src->xa2->period_frames * src->submit_blocksize){
         TRACE("%p: going to queue a period from buffer %u\n", src, src->cur_buf);
 
         /* starting from an empty buffer */
@@ -2288,8 +2314,11 @@ static void do_engine_tick(IXAudio2Impl *This)
 #if XAUDIO2_VER == 0
             IXAudio20VoiceCallback_OnVoiceProcessingPassStart((IXAudio20VoiceCallback*)src->cb);
 #else
-            /* TODO: detect incoming underrun and inform callback */
-            IXAudio2VoiceCallback_OnVoiceProcessingPassStart(src->cb, 0);
+            UINT32 underrun;
+            underrun = get_underrun_warning(src);
+            if(underrun > 0)
+                TRACE("Calling OnVoiceProcessingPassStart with BytesRequired: %u\n", underrun);
+            IXAudio2VoiceCallback_OnVoiceProcessingPassStart(src->cb, underrun);
 #endif
         }
 
