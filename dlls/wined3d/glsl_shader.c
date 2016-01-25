@@ -1734,8 +1734,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
     for (i = 0; i < reg_maps->sampler_map.count; ++i)
     {
         struct wined3d_shader_sampler_map_entry *entry;
+        const char *sampler_type_prefix, *sampler_type;
         BOOL shadow_sampler, tex_rect;
-        const char *sampler_type;
 
         entry = &reg_maps->sampler_map.entries[i];
 
@@ -1743,6 +1743,28 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
         {
             ERR("Invalid resource index %u.\n", entry->resource_idx);
             continue;
+        }
+
+        switch (reg_maps->resource_info[entry->resource_idx].data_type)
+        {
+            case WINED3D_DATA_FLOAT:
+            case WINED3D_DATA_UNORM:
+            case WINED3D_DATA_SNORM:
+                sampler_type_prefix = "";
+                break;
+
+            case WINED3D_DATA_INT:
+                sampler_type_prefix = "i";
+                break;
+
+            case WINED3D_DATA_UINT:
+                sampler_type_prefix = "u";
+                break;
+
+            default:
+                sampler_type_prefix = "";
+                ERR("Unhandled resource data type %#x.\n", reg_maps->resource_info[i].data_type);
+                break;
         }
 
         shadow_sampler = version->type == WINED3D_SHADER_TYPE_PIXEL && (ps_args->shadow & (1u << entry->sampler_idx));
@@ -1792,7 +1814,8 @@ static void shader_generate_glsl_declarations(const struct wined3d_context *cont
                 FIXME("Unhandled resource type %#x.\n", reg_maps->resource_info[i].type);
                 break;
         }
-        shader_addline(buffer, "uniform %s %s_sampler%u;\n", sampler_type, prefix, entry->bind_idx);
+        shader_addline(buffer, "uniform %s%s %s_sampler%u;\n",
+                sampler_type_prefix, sampler_type, prefix, entry->bind_idx);
     }
 
     /* Declare uniforms for NP2 texcoord fixup:
