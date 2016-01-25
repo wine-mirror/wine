@@ -3,7 +3,7 @@
 @ stub WlanConnect
 @ stub WlanDeleteProfile
 @ stub WlanDisconnect
-@ stub WlanEnumInterfaces
+@ stdcall WlanEnumInterfaces(long ptr ptr)
 @ stub WlanExtractPsdIEDataList
 @ stub WlanFreeMemory
 @ stub WlanGetAvailableNetworkList
