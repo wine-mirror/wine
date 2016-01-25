@@ -536,7 +536,7 @@ HRESULT WINAPI LoadRegTypeLib(
         res= LoadTypeLib(bstr, ppTLib);
         SysFreeString(bstr);
 
-        if (*ppTLib)
+        if ((wVerMajor!=0xffff || wVerMinor!=0xffff) && *ppTLib)
         {
             TLIBATTR *attr;
 
