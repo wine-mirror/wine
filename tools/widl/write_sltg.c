@@ -696,8 +696,8 @@ static int local_href(struct sltg_hrefmap *hrefmap, int typelib_href)
     return href << 2;
 }
 
-static short write_var_desc(struct sltg_typelib *typelib, struct sltg_data *data, type_t *type, short flags,
-                            short base_offset, int *size_instance, struct sltg_hrefmap *hrefmap)
+static short write_var_desc(struct sltg_typelib *typelib, struct sltg_data *data, type_t *type, short param_flags,
+                            short flags, short base_offset, int *size_instance, struct sltg_hrefmap *hrefmap)
 {
     short vt, vt_flags, desc_offset;
 
@@ -790,19 +790,19 @@ static short write_var_desc(struct sltg_typelib *typelib, struct sltg_data *data
 
         if (is_ptr(ref))
         {
-            chat("write_var_desc: vt VT_PTR | 0x0400\n");
-            vt = VT_PTR | 0x0400;
+            chat("write_var_desc: vt VT_PTR | 0x0400 | %04x\n",  param_flags);
+            vt = VT_PTR | 0x0400 | param_flags;
             append_data(data, &vt, sizeof(vt));
-            write_var_desc(typelib, data, ref, 0, base_offset, size_instance, hrefmap);
+            write_var_desc(typelib, data, ref, 0, 0, base_offset, size_instance, hrefmap);
         }
         else
-            write_var_desc(typelib, data, ref, 0x0e00, base_offset, size_instance, hrefmap);
+            write_var_desc(typelib, data, ref, param_flags, 0x0e00, base_offset, size_instance, hrefmap);
         return desc_offset;
     }
 
     chat("write_var_desc: vt %d, flags %04x\n", vt, flags);
 
-    vt_flags = vt | flags;
+    vt_flags = vt | flags | param_flags;
     append_data(data, &vt_flags, sizeof(vt_flags));
 
     if (vt == VT_USERDEFINED)
@@ -928,7 +928,8 @@ static void add_structure_typeinfo(struct sltg_typelib *typelib, type_t *type)
             init_sltg_data(&var_data[i]);
 
             base_offset = var_data_size + (i + 1) * sizeof(struct sltg_variable);
-            type_desc_offset[i] = write_var_desc(typelib, &var_data[i], var->declspec.type, 0, base_offset, &size_instance, &hrefmap);
+            type_desc_offset[i] = write_var_desc(typelib, &var_data[i], var->declspec.type, 0, 0,
+                                                 base_offset, &size_instance, &hrefmap);
             dump_var_desc(var_data[i].data, var_data[i].size);
 
             if (var_data[i].size > sizeof(short))
@@ -1110,6 +1111,47 @@ static int get_func_flags(const var_t *func, int *dispid, int *invokekind, int *
     return flags;
 }
 
+static int get_param_flags(const var_t *param)
+{
+    const attr_t *attr;
+    int flags, in, out;
+
+    if (!param->attrs) return 0;
+
+    flags = 0;
+    in = out = 0;
+
+    LIST_FOR_EACH_ENTRY(attr, param->attrs, const attr_t, entry)
+    {
+        switch(attr->type)
+        {
+        case ATTR_IN:
+            in++;
+            break;
+        case ATTR_OUT:
+            out++;
+            break;
+        case ATTR_PARAMLCID:
+            flags |= 0x2000;
+            break;
+        case ATTR_RETVAL:
+            flags |= 0x80;
+            break;
+        default:
+            chat("unhandled param attr %d\n", attr->type);
+            break;
+        }
+    }
+
+    if (out)
+        flags |= in ? 0x8000 : 0x4000;
+    else if (!in)
+        flags |= 0xc000;
+
+    return flags;
+}
+
+
 static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, var_t *func,
                          int idx, int dispid, short base_offset, struct sltg_hrefmap *hrefmap)
 {
@@ -1127,7 +1169,7 @@ static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, v
 
     init_sltg_data(&ret_data);
     ret_desc_offset = write_var_desc(typelib, &ret_data, type_function_get_rettype(func->declspec.type),
-                                     0, base_offset, NULL, hrefmap);
+                                     0, 0, base_offset, NULL, hrefmap);
     dump_var_desc(ret_data.data, ret_data.size);
 
     arg_data_size = 0;
@@ -1153,13 +1195,16 @@ static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, v
         LIST_FOR_EACH_ENTRY(arg, type_function_get_args(func->declspec.type), const var_t, entry)
         {
             const attr_t *attr;
+            short param_flags = get_param_flags(arg);
 
             chat("add_func_desc: arg[%d] %p (%s), type %p (%s)\n",
                  i, arg, arg->name, arg->declspec.type, arg->declspec.type->name);
 
             init_sltg_data(&arg_data[i]);
 
-            arg_desc_offset[i] = write_var_desc(typelib, &arg_data[i], arg->declspec.type, 0, arg_offset, NULL, hrefmap);
+
+            arg_desc_offset[i] = write_var_desc(typelib, &arg_data[i], arg->declspec.type, param_flags, 0,
+                                                arg_offset, NULL, hrefmap);
             dump_var_desc(arg_data[i].data, arg_data[i].size);
 
             if (arg_data[i].size > sizeof(short))
