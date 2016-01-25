@@ -1240,7 +1240,6 @@ static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, v
             short name, type_offset;
 
             name = base_offset != -1 ? add_name(&typelib->name_table, arg->name) : -1;
-            append_data(data, &name, sizeof(name));
 
             if (arg_data[i].size > sizeof(short))
             {
@@ -1248,8 +1247,12 @@ static int add_func_desc(struct sltg_typelib *typelib, struct sltg_data *data, v
                 arg_offset += arg_data[i].size;
             }
             else
+            {
+                name |= 1;
                 type_offset = *(short *)arg_data[i].data;
+            }
 
+            append_data(data, &name, sizeof(name));
             append_data(data, &type_offset, sizeof(type_offset));
 
             if (base_offset != -1)
