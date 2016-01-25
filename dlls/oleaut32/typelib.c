@@ -323,7 +323,7 @@ static HRESULT query_typelib_path( REFGUID guid, WORD wMaj, WORD wMin,
             WCHAR *nameW;
             DWORD len;
 
-            if (tlib->major_version != wMaj || tlib->minor_version < wMin)
+            if ((wMaj != 0xffff || wMin != 0xffff) && (tlib->major_version != wMaj || tlib->minor_version < wMin))
                 return TYPE_E_LIBNOTREGISTERED;
 
             nameW = (WCHAR*)((BYTE*)data.lpSectionBase + tlib->name_offset);

@@ -5626,6 +5626,11 @@ static void test_LoadRegTypeLib(void)
     ok(hr == TYPE_E_LIBNOTREGISTERED || broken(hr == S_OK) /* winxp */, "got 0x%08x\n", hr);
     SysFreeString(path);
 
+    path = NULL;
+    hr = QueryPathOfRegTypeLib(&LIBID_TestTypelib, 0xffff, 0xffff, LOCALE_NEUTRAL, &path);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    SysFreeString(path);
+
     /* manifest version is 2.0, actual is 1.0 */
     hr = LoadRegTypeLib(&LIBID_register_test, 1, 0, LOCALE_NEUTRAL, &tl);
     ok(hr == TYPE_E_LIBNOTREGISTERED || broken(hr == S_OK) /* winxp */, "got 0x%08x\n", hr);
