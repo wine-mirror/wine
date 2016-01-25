@@ -2944,6 +2944,75 @@ static void test_texture(void)
         0x00000000, 0x00100e46, 0x00000000, 0x0700002d, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000,
         0x00107e46, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_ld_sint8_code[] =
+    {
+#if 0
+        Texture2D<int4> t;
+
+        float4 main(float4 position : SV_POSITION) : SV_TARGET
+        {
+            float3 p, s;
+            int4 c;
+
+            p = float3(position.x / 640.0f, position.y / 480.0f, 0.0f);
+            t.GetDimensions(0, s.x, s.y, s.z);
+            p *= s;
+
+            c = t.Load(int3(p));
+            return (max(c / (float4)127, (float4)-1) + (float4)1) / 2.0f;
+        }
+#endif
+        0x43425844, 0xb3d0b0fc, 0x0e486f4a, 0xf67eec12, 0xfb9dd52f, 0x00000001, 0x00000240, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x000001a4, 0x00000040,
+        0x00000069, 0x04001858, 0x00107000, 0x00000000, 0x00003333, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000002, 0x0700003d, 0x001000f2,
+        0x00000000, 0x00004001, 0x00000000, 0x00107e46, 0x00000000, 0x0a000038, 0x00100032, 0x00000001,
+        0x00101046, 0x00000000, 0x00004002, 0x3acccccd, 0x3b088889, 0x00000000, 0x00000000, 0x08000036,
+        0x001000c2, 0x00000001, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x07000038,
+        0x001000f2, 0x00000000, 0x00100f46, 0x00000000, 0x00100e46, 0x00000001, 0x0500001b, 0x001000f2,
+        0x00000000, 0x00100e46, 0x00000000, 0x0700002d, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000,
+        0x00107e46, 0x00000000, 0x0500002b, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x0a000038,
+        0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0x3c010204, 0x3c010204, 0x3c010204,
+        0x3c010204, 0x0a000034, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0xbf800000,
+        0xbf800000, 0xbf800000, 0xbf800000, 0x0a000000, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000,
+        0x00004002, 0x3f800000, 0x3f800000, 0x3f800000, 0x3f800000, 0x0a000038, 0x001020f2, 0x00000000,
+        0x00100e46, 0x00000000, 0x00004002, 0x3f000000, 0x3f000000, 0x3f000000, 0x3f000000, 0x0100003e,
+    };
+    static const DWORD ps_ld_uint8_code[] =
+    {
+#if 0
+        Texture2D<uint4> t;
+
+        float4 main(float4 position : SV_POSITION) : SV_TARGET
+        {
+            float3 p, s;
+
+            p = float3(position.x / 640.0f, position.y / 480.0f, 0.0f);
+            t.GetDimensions(0, s.x, s.y, s.z);
+            p *= s;
+
+            return t.Load(int3(p)) / (float4)255;
+        }
+#endif
+        0x43425844, 0xd09917eb, 0x4508a07e, 0xb0b7250a, 0x228c1f0e, 0x00000001, 0x000001c8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x52444853, 0x0000012c, 0x00000040,
+        0x0000004b, 0x04001858, 0x00107000, 0x00000000, 0x00004444, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000002, 0x0700003d, 0x001000f2,
+        0x00000000, 0x00004001, 0x00000000, 0x00107e46, 0x00000000, 0x0a000038, 0x00100032, 0x00000001,
+        0x00101046, 0x00000000, 0x00004002, 0x3acccccd, 0x3b088889, 0x00000000, 0x00000000, 0x08000036,
+        0x001000c2, 0x00000001, 0x00004002, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x07000038,
+        0x001000f2, 0x00000000, 0x00100f46, 0x00000000, 0x00100e46, 0x00000001, 0x0500001b, 0x001000f2,
+        0x00000000, 0x00100e46, 0x00000000, 0x0700002d, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000,
+        0x00107e46, 0x00000000, 0x05000056, 0x001000f2, 0x00000000, 0x00100e46, 0x00000000, 0x0a000038,
+        0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00004002, 0x3b808081, 0x3b808081, 0x3b808081,
+        0x3b808081, 0x0100003e,
+    };
     static const DWORD ps_sample_code[] =
     {
 #if 0
@@ -3000,6 +3069,8 @@ static void test_texture(void)
         0x0020800a, 0x00000000, 0x00000000, 0x0100003e,
     };
     static const struct shader ps_ld = {ps_ld_code, sizeof(ps_ld_code)};
+    static const struct shader ps_ld_sint8 = {ps_ld_sint8_code, sizeof(ps_ld_sint8_code)};
+    static const struct shader ps_ld_uint8 = {ps_ld_uint8_code, sizeof(ps_ld_uint8_code)};
     static const struct shader ps_sample = {ps_sample_code, sizeof(ps_sample_code)};
     static const struct shader ps_sample_l = {ps_sample_l_code, sizeof(ps_sample_l_code)};
     static const struct
@@ -3062,6 +3133,10 @@ static void test_texture(void)
     static const struct texture bc1_texture = {8, 8, 1, DXGI_FORMAT_BC1_UNORM, {{bc1_data, 2 * 8}}};
     static const struct texture bc2_texture = {8, 8, 1, DXGI_FORMAT_BC2_UNORM, {{bc2_data, 2 * 16}}};
     static const struct texture bc3_texture = {8, 8, 1, DXGI_FORMAT_BC3_UNORM, {{bc3_data, 2 * 16}}};
+    static const struct texture sint8_texture = {4, 4, 1, DXGI_FORMAT_R8G8B8A8_SINT,
+            {{rgba_level_0, 4 * sizeof(*rgba_level_0)}}};
+    static const struct texture uint8_texture = {4, 4, 1, DXGI_FORMAT_R8G8B8A8_UINT,
+            {{rgba_level_0, 4 * sizeof(*rgba_level_0)}}};
     static const DWORD level_1_colors[] =
     {
         0xffffffff, 0xffffffff, 0xff0000ff, 0xff0000ff,
@@ -3090,6 +3165,13 @@ static void test_texture(void)
         0xffff0000, 0xffff0000, 0xffffffff, 0xffffffff,
         0xffff0000, 0xffff0000, 0xffffffff, 0xffffffff,
     };
+    static const DWORD sint8_colors[] =
+    {
+        0x7e80807e, 0x7e807e7e, 0x7e807e80, 0x7e7e7e80,
+        0x7e7e8080, 0x7e7e7f7f, 0x7e808080, 0x7effffff,
+        0x7e7e7e7e, 0x7e7e7e7e, 0x7e7e7e7e, 0x7e808080,
+        0x7e7e7e7e, 0x7e7f7f7f, 0x7e7f7f7f, 0x7e7f7f7f,
+    };
     static const DWORD zero_colors[4 * 4] = {0};
     static const float red[] = {1.0f, 0.0f, 0.0f, 0.5f};
 
@@ -3106,47 +3188,49 @@ static void test_texture(void)
     }
     tests[] =
     {
-        {&ps_ld,       &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
-        {&ps_ld,       &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, level_1_colors},
-        {&ps_ld,       &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  2.0f, level_2_colors},
-        {&ps_ld,       &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  3.0f, zero_colors},
-        {&ps_ld,       &bc1_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
-        {&ps_ld,       &bc1_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
-        {&ps_ld,       &bc2_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
-        {&ps_ld,       &bc2_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
-        {&ps_ld,       &bc3_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
-        {&ps_ld,       &bc3_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
-        {&ps_sample,   &bc1_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
-        {&ps_sample,   &bc2_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
-        {&ps_sample,   &bc3_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
-        {&ps_sample,   &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
-        {&ps_sample,   &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX, -1.0f, rgba_level_0},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.4f, rgba_level_0},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.5f, level_1_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  1.0f, level_1_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  1.4f, level_1_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  1.5f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  2.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  3.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  4.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 0.0f, 0.0f, D3D11_FLOAT32_MAX,  1.5f, lerp_1_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX, -2.0f, rgba_level_0},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX, -1.0f, level_1_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX,  1.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX,  1.5f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f, -9.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f, -1.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f,  0.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f,  1.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f,  9.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f, -9.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f, -1.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f,  0.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f,  1.0f, level_2_colors},
-        {&ps_sample_l, &rgba_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f,  9.0f, level_2_colors},
+        {&ps_ld,       &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
+        {&ps_ld,       &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, level_1_colors},
+        {&ps_ld,       &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  2.0f, level_2_colors},
+        {&ps_ld,       &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  3.0f, zero_colors},
+        {&ps_ld,       &bc1_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_ld,       &bc1_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
+        {&ps_ld,       &bc2_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_ld,       &bc2_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
+        {&ps_ld,       &bc3_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_ld,       &bc3_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  1.0f, zero_colors},
+        {&ps_ld_sint8, &sint8_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, sint8_colors},
+        {&ps_ld_uint8, &uint8_texture, D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
+        {&ps_sample,   &bc1_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_sample,   &bc2_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_sample,   &bc3_texture,   D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
+        {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
+        {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX, -1.0f, rgba_level_0},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.4f, rgba_level_0},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.5f, level_1_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  1.0f, level_1_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  1.4f, level_1_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  1.5f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  2.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  3.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  4.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 0.0f, 0.0f, D3D11_FLOAT32_MAX,  1.5f, lerp_1_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX, -2.0f, rgba_level_0},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX, -1.0f, level_1_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX,  1.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 0.0f, D3D11_FLOAT32_MAX,  1.5f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f, -9.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f, -1.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f,  0.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f,  1.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_POINT_MIP_LINEAR, 2.0f, 2.0f,              2.0f,  9.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f, -9.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f, -1.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f,  0.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f,  1.0f, level_2_colors},
+        {&ps_sample_l, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 2.0f,              2.0f,  9.0f, level_2_colors},
     };
 
     if (!(device = create_device(NULL)))
