@@ -3850,6 +3850,11 @@ BOOL WINAPI GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP rela
 
     status = NtQuerySystemInformationEx( SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship),
         buffer, *len, len );
+    if (status == STATUS_INFO_LENGTH_MISMATCH)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return FALSE;
+    }
     if (status != STATUS_SUCCESS)
     {
         SetLastError( RtlNtStatusToDosError( status ) );
