@@ -2986,24 +2986,19 @@ static void test_GetLogicalProcessorInformationEx(void)
 
     len = 0;
     ret = pGetLogicalProcessorInformationEx(RelationProcessorCore, NULL, &len);
-todo_wine {
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
     ok(len > 0, "got %u\n", len);
-}
+
     len = 0;
     ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len);
-todo_wine {
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
     ok(len > 0, "got %u\n", len);
-}
 
-if (len) {
     info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
     ret = pGetLogicalProcessorInformationEx(RelationAll, info, &len);
     ok(ret, "got %d, error %d\n", ret, GetLastError());
     ok(info->Size > 0, "got %u\n", info->Size);
     HeapFree(GetProcessHeap(), 0, info);
-}
 }
 
 START_TEST(process)

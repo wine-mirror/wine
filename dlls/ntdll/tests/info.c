@@ -689,24 +689,23 @@ static void test_query_logicalprocex(void)
     len = 0;
     relationship = RelationProcessorCore;
     status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len);
-todo_wine {
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
     ok(len > 0, "got %u\n", len);
-}
+
     len = 0;
     relationship = RelationAll;
     status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), NULL, 0, &len);
-todo_wine {
     ok(status == STATUS_INFO_LENGTH_MISMATCH, "got 0x%08x\n", status);
     ok(len > 0, "got %u\n", len);
-}
+
     len2 = 0;
     ret = pGetLogicalProcessorInformationEx(RelationAll, NULL, &len2);
-todo_wine
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %d, error %d\n", ret, GetLastError());
     ok(len == len2, "got %u, expected %u\n", len2, len);
 
     if (len && len == len2) {
+        int j, i;
+
         infoex = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
         infoex2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len);
 
@@ -717,6 +716,58 @@ todo_wine
         ret = pGetLogicalProcessorInformationEx(RelationAll, infoex2, &len2);
         ok(ret, "got %d, error %d\n", ret, GetLastError());
         ok(!memcmp(infoex, infoex2, len), "returned info data mismatch\n");
+
+        for(i = 0; i < len; ){
+            SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *ex = (void*)(((char *)infoex) + i);
+
+            ok(ex->Relationship >= RelationProcessorCore && ex->Relationship <= RelationGroup,
+                    "Got invalid relationship value: 0x%x\n", ex->Relationship);
+
+            trace("infoex[%u].Size: %u\n", i, ex->Size);
+            switch(ex->Relationship){
+            case RelationProcessorCore:
+            case RelationProcessorPackage:
+                trace("infoex[%u].Relationship: 0x%x (Core == 0x0 or Package == 0x3)\n", i, ex->Relationship);
+                trace("infoex[%u].Processor.Flags: 0x%x\n", i, ex->Processor.Flags);
+                trace("infoex[%u].Processor.EfficiencyClass: 0x%x\n", i, ex->Processor.EfficiencyClass);
+                trace("infoex[%u].Processor.GroupCount: 0x%x\n", i, ex->Processor.GroupCount);
+                for(j = 0; j < ex->Processor.GroupCount; ++j){
+                    trace("infoex[%u].Processor.GroupMask[%u].Mask: 0x%lx\n", i, j, ex->Processor.GroupMask[j].Mask);
+                    trace("infoex[%u].Processor.GroupMask[%u].Group: 0x%x\n", i, j, ex->Processor.GroupMask[j].Group);
+                }
+                break;
+            case RelationNumaNode:
+                trace("infoex[%u].Relationship: 0x%x (NumaNode)\n", i, ex->Relationship);
+                trace("infoex[%u].NumaNode.NodeNumber: 0x%x\n", i, ex->NumaNode.NodeNumber);
+                trace("infoex[%u].NumaNode.GroupMask.Mask: 0x%lx\n", i, ex->NumaNode.GroupMask.Mask);
+                trace("infoex[%u].NumaNode.GroupMask.Group: 0x%x\n", i, ex->NumaNode.GroupMask.Group);
+                break;
+            case RelationCache:
+                trace("infoex[%u].Relationship: 0x%x (Cache)\n", i, ex->Relationship);
+                trace("infoex[%u].Cache.Level: 0x%x\n", i, ex->Cache.Level);
+                trace("infoex[%u].Cache.Associativity: 0x%x\n", i, ex->Cache.Associativity);
+                trace("infoex[%u].Cache.LineSize: 0x%x\n", i, ex->Cache.LineSize);
+                trace("infoex[%u].Cache.CacheSize: 0x%x\n", i, ex->Cache.CacheSize);
+                trace("infoex[%u].Cache.Type: 0x%x\n", i, ex->Cache.Type);
+                trace("infoex[%u].Cache.GroupMask.Mask: 0x%lx\n", i, ex->Cache.GroupMask.Mask);
+                trace("infoex[%u].Cache.GroupMask.Group: 0x%x\n", i, ex->Cache.GroupMask.Group);
+                break;
+            case RelationGroup:
+                trace("infoex[%u].Relationship: 0x%x (Group)\n", i, ex->Relationship);
+                trace("infoex[%u].Group.MaximumGroupCount: 0x%x\n", i, ex->Group.MaximumGroupCount);
+                trace("infoex[%u].Group.ActiveGroupCount: 0x%x\n", i, ex->Group.ActiveGroupCount);
+                for(j = 0; j < ex->Group.ActiveGroupCount; ++j){
+                    trace("infoex[%u].Group.GroupInfo[%u].MaximumProcessorCount: 0x%x\n", i, j, ex->Group.GroupInfo[j].MaximumProcessorCount);
+                    trace("infoex[%u].Group.GroupInfo[%u].ActiveProcessorCount: 0x%x\n", i, j, ex->Group.GroupInfo[j].ActiveProcessorCount);
+                    trace("infoex[%u].Group.GroupInfo[%u].ActiveProcessorMask: 0x%lx\n", i, j, ex->Group.GroupInfo[j].ActiveProcessorMask);
+                }
+                break;
+            default:
+                break;
+            }
+
+            i += ex->Size;
+        }
 
         HeapFree(GetProcessHeap(), 0, infoex);
         HeapFree(GetProcessHeap(), 0, infoex2);
