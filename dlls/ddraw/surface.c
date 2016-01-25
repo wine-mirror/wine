@@ -5968,10 +5968,6 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         }
     }
 
-    /* If the surface is of the 'ALLOCONLOAD' type, ignore the LPSURFACE
-     * field. Frank Herbert's Dune specifies a NULL pointer for lpSurface. */
-    if (desc->ddsCaps.dwCaps & DDSCAPS_ALLOCONLOAD)
-        desc->dwFlags &= ~DDSD_LPSURFACE;
     if (desc->dwFlags & DDSD_LPSURFACE)
     {
         if (wined3d_desc.pool != WINED3D_POOL_SYSTEM_MEM)

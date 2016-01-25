@@ -7298,7 +7298,7 @@ static void test_create_surface_pitch(void)
 
     static const struct
     {
-        DWORD placement;
+        DWORD caps;
         DWORD flags_in;
         DWORD pitch_in;
         HRESULT hr;
@@ -7308,38 +7308,70 @@ static void test_create_surface_pitch(void)
     }
     test_data[] =
     {
-        {DDSCAPS_VIDEOMEMORY,   0,                                              0,      DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x100},
-        {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                                     0x104,  DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x100},
-        {DDSCAPS_VIDEOMEMORY,   DDSD_PITCH,                                     0x0f8,  DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x100},
-        {DDSCAPS_VIDEOMEMORY,   DDSD_LPSURFACE | DDSD_PITCH,                    0x100,  DDERR_INVALIDCAPS,
-                                0,                                              0,      0    },
-        {DDSCAPS_SYSTEMMEMORY,  0,                                              0,      DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x0fc},
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                                     0x104,  DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x0fc},
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH,                                     0x0f8,  DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x0fc},
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_PITCH | DDSD_LINEARSIZE,                   0,      DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x0fc},
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE,                                 0,      DDERR_INVALIDPARAMS,
-                                0,                                              0,      0    },
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_PITCH,                    0x100,  DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x100},
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_PITCH,                    0x0fe,  DDERR_INVALIDPARAMS,
-                                0,                                              0,      0    },
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_PITCH,                    0x0fc,  DD_OK,
-                                DDSD_PITCH,                                     0x0fc,  0x0fc},
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_PITCH,                    0x0f8,  DDERR_INVALIDPARAMS,
-                                0,                                              0,      0    },
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_LINEARSIZE,               0x100,  DDERR_INVALIDPARAMS,
-                                0,                                              0,      0    },
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_LINEARSIZE,               0x3f00, DDERR_INVALIDPARAMS,
-                                0,                                              0,      0    },
-        {DDSCAPS_SYSTEMMEMORY,  DDSD_LPSURFACE | DDSD_PITCH | DDSD_LINEARSIZE,  0x100,  DD_OK,
-                                DDSD_PITCH,                                     0x100,  0x100},
+        /* 0 */
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                0,                                              0,      DD_OK,
+                DDSD_PITCH,                                     0x100,  0x100},
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_PITCH,                                     0x104,  DD_OK,
+                DDSD_PITCH,                                     0x100,  0x100},
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_PITCH,                                     0x0f8,  DD_OK,
+                DDSD_PITCH,                                     0x100,  0x100},
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE | DDSD_PITCH,                    0x100,  DDERR_INVALIDCAPS,
+                0,                                              0,      0    },
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                0,                                              0,      DD_OK,
+                DDSD_PITCH,                                     0x100,  0x0fc},
+        /* 5 */
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_PITCH,                                     0x104,  DD_OK,
+                DDSD_PITCH,                                     0x100,  0x0fc},
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_PITCH,                                     0x0f8,  DD_OK,
+                DDSD_PITCH,                                     0x100,  0x0fc},
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_PITCH | DDSD_LINEARSIZE,                   0,      DD_OK,
+                DDSD_PITCH,                                     0x100,  0x0fc},
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE,                                 0,      DDERR_INVALIDPARAMS,
+                0,                                              0,      0    },
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE | DDSD_PITCH,                    0x100,  DD_OK,
+                DDSD_PITCH,                                     0x100,  0x100},
+        /* 10 */
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE | DDSD_PITCH,                    0x0fe,  DDERR_INVALIDPARAMS,
+                0,                                              0,      0    },
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE | DDSD_PITCH,                    0x0fc,  DD_OK,
+                DDSD_PITCH,                                     0x0fc,  0x0fc},
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE | DDSD_PITCH,                    0x0f8,  DDERR_INVALIDPARAMS,
+                0,                                              0,      0    },
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE | DDSD_LINEARSIZE,               0x100,  DDERR_INVALIDPARAMS,
+                0,                                              0,      0    },
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE | DDSD_LINEARSIZE,               0x3f00, DDERR_INVALIDPARAMS,
+                0,                                              0,      0    },
+        /* 15 */
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_OFFSCREENPLAIN,
+                DDSD_LPSURFACE | DDSD_PITCH | DDSD_LINEARSIZE,  0x100,  DD_OK,
+                DDSD_PITCH,                                     0x100,  0x100},
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
+                0,                                              0,      DD_OK,
+                DDSD_PITCH,                                     0x100,  0    },
+        {DDSCAPS_VIDEOMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
+                DDSD_LPSURFACE | DDSD_PITCH,                    0x100,  DDERR_INVALIDCAPS,
+                0,                                              0,      0    },
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
+                0,                                              0,      DD_OK,
+                DDSD_PITCH,                                     0x100,  0    },
+        {DDSCAPS_SYSTEMMEMORY | DDSCAPS_TEXTURE | DDSCAPS_ALLOCONLOAD,
+                DDSD_LPSURFACE | DDSD_PITCH,                    0x100,  DD_OK,
+                DDSD_PITCH,                                     0x100,  0    },
     };
     DWORD flags_mask = DDSD_PITCH | DDSD_LPSURFACE | DDSD_LINEARSIZE;
 
@@ -7357,7 +7389,7 @@ static void test_create_surface_pitch(void)
         memset(&surface_desc, 0, sizeof(surface_desc));
         surface_desc.dwSize = sizeof(surface_desc);
         surface_desc.dwFlags = DDSD_CAPS | DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | test_data[i].flags_in;
-        surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | test_data[i].placement;
+        surface_desc.ddsCaps.dwCaps = test_data[i].caps;
         surface_desc.dwWidth = 63;
         surface_desc.dwHeight = 63;
         U1(surface_desc).lPitch = test_data[i].pitch_in;
@@ -7375,8 +7407,12 @@ static void test_create_surface_pitch(void)
             surface_desc.lpSurface = mem;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &surface, NULL);
         }
-        ok(hr == test_data[i].hr || (test_data[i].placement == DDSCAPS_VIDEOMEMORY && hr == DDERR_NODIRECTDRAWHW),
-                "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
+        if ((test_data[i].caps & DDSCAPS_VIDEOMEMORY) && hr == DDERR_NODIRECTDRAWHW)
+            continue;
+        if (is_ddraw64 && (test_data[i].caps & DDSCAPS_TEXTURE) && SUCCEEDED(test_data[i].hr))
+            todo_wine ok(hr == E_NOINTERFACE, "Test %u: Got unexpected hr %#x.\n", i, hr);
+        else
+            ok(hr == test_data[i].hr, "Test %u: Got unexpected hr %#x, expected %#x.\n", i, hr, test_data[i].hr);
         if (FAILED(hr))
             continue;
 
@@ -7387,14 +7423,18 @@ static void test_create_surface_pitch(void)
         ok((surface_desc.dwFlags & flags_mask) == test_data[i].flags_out,
                 "Test %u: Got unexpected flags %#x, expected %#x.\n",
                 i, surface_desc.dwFlags & flags_mask, test_data[i].flags_out);
-        if (sizeof(void *) != sizeof(DWORD) && test_data[i].pitch_out32 != test_data[i].pitch_out64)
-            todo_wine ok(U1(surface_desc).lPitch == test_data[i].pitch_out64,
-                    "Test %u: Got unexpected pitch %u, expected %u.\n",
-                    i, U1(surface_desc).lPitch, test_data[i].pitch_out64);
-        else
-            ok(U1(surface_desc).lPitch == test_data[i].pitch_out32,
-                    "Test %u: Got unexpected pitch %u, expected %u.\n",
-                    i, U1(surface_desc).lPitch, test_data[i].pitch_out32);
+        /* The pitch for textures seems to be implementation specific. */
+        if (!(test_data[i].caps & DDSCAPS_TEXTURE))
+        {
+            if (is_ddraw64 && test_data[i].pitch_out32 != test_data[i].pitch_out64)
+                todo_wine ok(U1(surface_desc).lPitch == test_data[i].pitch_out64,
+                        "Test %u: Got unexpected pitch %u, expected %u.\n",
+                        i, U1(surface_desc).lPitch, test_data[i].pitch_out64);
+            else
+                ok(U1(surface_desc).lPitch == test_data[i].pitch_out32,
+                        "Test %u: Got unexpected pitch %u, expected %u.\n",
+                        i, U1(surface_desc).lPitch, test_data[i].pitch_out32);
+        }
         ok(!surface_desc.lpSurface, "Test %u: Got unexpected lpSurface %p.\n", i, surface_desc.lpSurface);
 
         IDirectDrawSurface7_Release(surface);
