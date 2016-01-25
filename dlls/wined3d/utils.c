@@ -192,6 +192,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_R16G16B16A16_FLOAT, WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_D32_FLOAT,          WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_S8_UINT_D24_FLOAT,  WINED3DFMT_FLAG_FLOAT},
+    {WINED3DFMT_R8G8B8A8_UINT,      WINED3DFMT_FLAG_INTEGER},
 };
 
 struct wined3d_format_block_info
@@ -1087,6 +1088,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             | WINED3DFMT_FLAG_RENDERTARGET |  WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE
             | WINED3DFMT_FLAG_VTF,
             WINED3D_GL_EXT_NONE,        NULL},
+    {WINED3DFMT_R8G8B8A8_UINT,          GL_RGBA8UI,                       GL_RGBA8UI,                             0,
+            GL_RGBA_INTEGER,            GL_UNSIGNED_INT_8_8_8_8_REV,      0,
+            WINED3DFMT_FLAG_TEXTURE,
+            ARB_TEXTURE_RGB10_A2UI,     NULL},
     {WINED3DFMT_R8G8B8X8_UNORM,         GL_RGB8,                          GL_RGB8,                                0,
             GL_RGBA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
@@ -1809,6 +1814,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
         if (status == GL_FRAMEBUFFER_COMPLETE
                 && ((format->flags[type] & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
                 || !(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
+                && !(format->flags[type] & WINED3DFMT_FLAG_INTEGER)
                 && format->id != WINED3DFMT_NULL && format->id != WINED3DFMT_P8_UINT
                 && format->glFormat != GL_LUMINANCE && format->glFormat != GL_LUMINANCE_ALPHA
                 && (format->red_size || format->alpha_size))
