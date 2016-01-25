@@ -441,7 +441,12 @@ void     WINECON_SetConfig(struct inner_data* data, const struct config_data* cf
     }
     if (data->curcfg.def_attr != cfg->def_attr)
     {
+        DWORD screen_size, written;
+        COORD top_left = {0,0};
+
         data->curcfg.def_attr = cfg->def_attr;
+        screen_size = cfg->win_width * (cfg->win_height + 1);
+        FillConsoleOutputAttribute(data->hConOut, cfg->def_attr, screen_size, top_left, &written);
         SetConsoleTextAttribute(data->hConOut, cfg->def_attr);
     }
     /* now let's look at the window / sb size changes...
