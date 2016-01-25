@@ -8627,9 +8627,11 @@ static void test_timers(void)
 
 static void test_timers_no_wnd(void)
 {
+    static UINT_PTR ids[0xffff];
     UINT_PTR id, id2;
     DWORD start;
     MSG msg;
+    int i;
 
     count = 0;
     id = SetTimer(NULL, 0, 100, callback_count);
@@ -8664,6 +8666,18 @@ static void test_timers_no_wnd(void)
        count, TIMER_COUNT_EXPECTED);
     KillTimer(NULL, id);
     /* Note: SetSystemTimer doesn't support a NULL window, see test_timers */
+
+    /* Check what happens when we're running out of timers */
+    for (i=0; i<sizeof(ids)/sizeof(ids[0]); i++)
+    {
+        SetLastError(0xdeadbeef);
+        ids[i] = SetTimer(NULL, 0, USER_TIMER_MAXIMUM, tfunc);
+        if (!ids[i]) break;
+    }
+    ok(i != sizeof(ids)/sizeof(ids[0]), "all timers were created successfully\n");
+    ok(GetLastError()==ERROR_NO_MORE_USER_HANDLES || broken(GetLastError()==0xdeadbeef),
+            "GetLastError() = %d\n", GetLastError());
+    while (i > 0) KillTimer(NULL, ids[--i]);
 }
 
 static void test_timers_exception(DWORD code)
