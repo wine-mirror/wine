@@ -2581,13 +2581,21 @@ DECL_HANDLER(set_win_timer)
         }
         else
         {
+            lparam_t end_id = queue->next_timer_id;
+
             /* find a free id for it */
-            do
+            while (1)
             {
                 id = queue->next_timer_id;
                 if (--queue->next_timer_id <= 0x100) queue->next_timer_id = 0x7fff;
+
+                if (!find_timer( queue, 0, req->msg, id )) break;
+                if (queue->next_timer_id == end_id)
+                {
+                    set_win32_error( ERROR_NO_MORE_USER_HANDLES );
+                    return;
+                }
             }
-            while (find_timer( queue, 0, req->msg, id ));
         }
     }
 
