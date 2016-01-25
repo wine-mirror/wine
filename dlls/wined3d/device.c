@@ -790,11 +790,13 @@ static void create_default_sampler(struct wined3d_device *device)
     {
         GL_EXTCALL(glGenSamplers(1, &device->default_sampler));
         checkGLcall("glGenSamplers");
+        GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MAG_FILTER, GL_NEAREST));
+        GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_MIN_FILTER, GL_NEAREST_MIPMAP_NEAREST));
         if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
         {
             GL_EXTCALL(glSamplerParameteri(device->default_sampler, GL_TEXTURE_SRGB_DECODE_EXT, GL_SKIP_DECODE_EXT));
-            checkGLcall("glSamplerParamteri");
         }
+        checkGLcall("glSamplerParamteri");
     }
     else
     {
