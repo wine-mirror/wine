@@ -655,6 +655,7 @@ HEADER_SRCS = \
 	winuser.h \
 	winuser.rh \
 	winver.h \
+	wlanapi.h \
 	wmistr.h \
 	wnaspi32.h \
 	wownt32.h \

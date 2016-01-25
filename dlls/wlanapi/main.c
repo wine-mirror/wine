@@ -24,7 +24,15 @@
 #include "winbase.h"
 #include "wine/debug.h"
 
+#include "wlanapi.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(wlanapi);
+
+DWORD WINAPI WlanEnumInterfaces(HANDLE client, void *reserved, WLAN_INTERFACE_INFO_LIST **interface_list)
+{
+    FIXME("(%p, %p, %p) stub\n", client, reserved, interface_list);
+    return ERROR_CALL_NOT_IMPLEMENTED;
+}
 
 DWORD WINAPI WlanOpenHandle(DWORD clientVersion, PVOID reserved,
         PDWORD negotiatedVersion, PHANDLE clientHandle)
