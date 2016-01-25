@@ -98,6 +98,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_R8G8B8A8_UNORM,             8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
     {WINED3DFMT_R8G8B8A8_UNORM_SRGB,        8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
     {WINED3DFMT_R8G8B8A8_UINT,              8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
+    {WINED3DFMT_R8G8B8A8_SINT,              8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
     {WINED3DFMT_R8G8B8X8_UNORM,             8,  8,  8,  0,   0,  8, 16,  0,    4,   0,     0},
     {WINED3DFMT_R16G16_UNORM,              16, 16,  0,  0,   0, 16,  0,  0,    4,   0,     0},
     {WINED3DFMT_B10G10R10A2_UNORM,         10, 10, 10,  2,  20, 10,  0, 30,    4,   0,     0},
@@ -193,6 +194,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_D32_FLOAT,          WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_S8_UINT_D24_FLOAT,  WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_R8G8B8A8_UINT,      WINED3DFMT_FLAG_INTEGER},
+    {WINED3DFMT_R8G8B8A8_SINT,      WINED3DFMT_FLAG_INTEGER},
 };
 
 struct wined3d_format_block_info
@@ -1092,6 +1094,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_RGBA_INTEGER,            GL_UNSIGNED_INT_8_8_8_8_REV,      0,
             WINED3DFMT_FLAG_TEXTURE,
             ARB_TEXTURE_RGB10_A2UI,     NULL},
+    {WINED3DFMT_R8G8B8A8_SINT,          GL_RGBA8I,                        GL_RGBA8I,                              0,
+            GL_RGBA_INTEGER,            GL_BYTE,                          0,
+            WINED3DFMT_FLAG_TEXTURE,
+            EXT_TEXTURE_INTEGER,        NULL},
     {WINED3DFMT_R8G8B8X8_UNORM,         GL_RGB8,                          GL_RGB8,                                0,
             GL_RGBA,                    GL_UNSIGNED_INT_8_8_8_8_REV,      0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
