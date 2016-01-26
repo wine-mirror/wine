@@ -2015,6 +2015,7 @@ static void resolve_depth_buffer(struct wined3d_state *state)
 {
     struct wined3d_texture *texture = state->textures[0];
     struct wined3d_surface *depth_stencil, *surface;
+    RECT src_rect, dst_rect;
 
     if (!texture || texture->resource.type != WINED3D_RTYPE_TEXTURE_2D
             || !(texture->resource.format_flags & WINED3DFMT_FLAG_DEPTH))
@@ -2023,7 +2024,9 @@ static void resolve_depth_buffer(struct wined3d_state *state)
     if (!(depth_stencil = wined3d_rendertarget_view_get_surface(state->fb->depth_stencil)))
         return;
 
-    wined3d_surface_blt(surface, NULL, depth_stencil, NULL, 0, NULL, WINED3D_TEXF_POINT);
+    SetRect(&dst_rect, 0, 0, surface->resource.width, surface->resource.height);
+    SetRect(&src_rect, 0, 0, depth_stencil->resource.width, depth_stencil->resource.height);
+    wined3d_surface_blt(surface, &dst_rect, depth_stencil, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
 void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
