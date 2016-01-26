@@ -3229,23 +3229,12 @@ static HRESULT WINAPI dwritetextlayout_GetClusterMetrics(IDWriteTextLayout2 *ifa
     return max_count >= This->cluster_count ? S_OK : E_NOT_SUFFICIENT_BUFFER;
 }
 
-/* Only to be used with DetermineMinWidth() to find the longest cluster sequence that we don't want to try
-   too hard to break. */
-static inline BOOL is_terminal_cluster(struct dwrite_textlayout *layout, UINT32 index)
-{
-    if (layout->clustermetrics[index].isWhitespace || layout->clustermetrics[index].isNewline ||
-       (index == layout->cluster_count - 1))
-        return TRUE;
-    /* check next one */
-    return (index < layout->cluster_count - 1) && layout->clustermetrics[index+1].isWhitespace;
-}
-
 static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *iface, FLOAT* min_width)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout2(iface);
+    UINT32 start;
     FLOAT width;
     HRESULT hr;
-    UINT32 i;
 
     TRACE("(%p)->(%p)\n", This, min_width);
 
@@ -3260,20 +3249,30 @@ static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *ifa
     if (FAILED(hr))
         return hr;
 
-    for (i = 0; i < This->cluster_count;) {
-        if (is_terminal_cluster(This, i)) {
-            width = This->clustermetrics[i].width;
-            i++;
-        }
-        else {
-            width = 0.0f;
-            while (!is_terminal_cluster(This, i)) {
-                width += This->clustermetrics[i].width;
-                i++;
-            }
-            /* count last one too */
-            width += This->clustermetrics[i].width;
-        }
+    /* Find widest word without emergency breaking between clusters, trailing whitespaces
+       preceding breaking point do not contribute to word width. */
+    for (start = 0; start < This->cluster_count;) {
+        UINT32 end = start, j, next;
+
+        /* Last cluster always could be wrapped after. */
+        while (!This->clustermetrics[end].canWrapLineAfter)
+            end++;
+        /* make is so current cluster range that we can wrap after is [start,end) */
+        end++;
+
+        next = end;
+
+        /* Ignore trailing whitespace clusters, in case of single space range will
+           be reduced to empty range, or [start,start+1). */
+        while ((end - 1) >= start && This->clustermetrics[end-1].isWhitespace)
+            end--;
+
+        /* check if cluster range exceeds last minimal width */
+        width = 0.0f;
+        for (j = start; j < end; j++)
+            width += This->clustermetrics[j].width;
+
+        start = next;
 
         if (width > This->minwidth)
             This->minwidth = width;

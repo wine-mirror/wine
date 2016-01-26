@@ -2347,10 +2347,21 @@ if (hr == S_OK) {
 
 static void test_DetermineMinWidth(void)
 {
+    struct minwidth_test {
+        const WCHAR text[10];    /* text to create a layout for */
+        const WCHAR mintext[10]; /* text that represents sequence of minimal width */
+    } minwidth_tests[] = {
+        { {' ','a','b',' ',0}, {'a','b',0} },
+        { {'a','\n',' ',' ',0}, {'a',0} },
+        { {'a','\n',' ',' ','b',0}, {'b',0} },
+        { {'a','b','c','\n',' ',' ','b',0}, {'a','b','c',0} },
+    };
     static const WCHAR strW[] = {'a','b','c','d',0};
+    DWRITE_CLUSTER_METRICS metrics[10];
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
+    UINT32 count, i, j;
     FLOAT minwidth;
     HRESULT hr;
 
@@ -2365,13 +2376,34 @@ static void test_DetermineMinWidth(void)
 
     hr = IDWriteTextLayout_DetermineMinWidth(layout, NULL);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
-
-    minwidth = 0.0;
-    hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(minwidth > 0.0, "got %.2f\n", minwidth);
-
     IDWriteTextLayout_Release(layout);
+
+    for (i = 0; i < sizeof(minwidth_tests)/sizeof(minwidth_tests[0]); i++) {
+        FLOAT width = 0.0f;
+
+        /* measure expected width */
+        hr = IDWriteFactory_CreateTextLayout(factory, minwidth_tests[i].mintext, lstrlenW(minwidth_tests[i].mintext), format, 1000.0f, 1000.0f, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        for (j = 0; j < count; j++)
+            width += metrics[j].width;
+
+        IDWriteTextLayout_Release(layout);
+
+        hr = IDWriteFactory_CreateTextLayout(factory, minwidth_tests[i].text, lstrlenW(minwidth_tests[i].text), format, 1000.0f, 1000.0f, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        minwidth = 0.0f;
+        hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(minwidth == width, "test %u: expected width %f, got %f\n", i, width, minwidth);
+
+        IDWriteTextLayout_Release(layout);
+    }
+
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
