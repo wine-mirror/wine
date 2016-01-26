@@ -1138,7 +1138,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     }
     else if (!input_signature->elements && reg_maps->input_registers)
     {
-        unsigned int count = count_bits(reg_maps->input_registers);
+        unsigned int count = wined3d_popcount(reg_maps->input_registers);
         struct wined3d_shader_signature_element *e;
         unsigned int i;
 
@@ -1165,7 +1165,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
     }
     else if (reg_maps->output_registers)
     {
-        unsigned int count = count_bits(reg_maps->output_registers);
+        unsigned int count = wined3d_popcount(reg_maps->output_registers);
         struct wined3d_shader_signature_element *e;
 
         if (!(output_signature->elements = HeapAlloc(GetProcessHeap(), 0, sizeof(*output_signature->elements) * count)))

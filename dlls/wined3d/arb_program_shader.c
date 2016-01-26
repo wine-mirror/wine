@@ -798,7 +798,7 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
             DWORD highest_constf = 0, clip_limit;
 
             max_constantsF -= reserved_vs_const(shader_data, reg_maps, gl_info);
-            max_constantsF -= count_bits(reg_maps->integer_constants);
+            max_constantsF -= wined3d_popcount(reg_maps->integer_constants);
             max_constantsF -= gl_info->reserved_arb_constants;
 
             for (i = 0; i < shader->limits->constant_float; ++i)
@@ -819,7 +819,7 @@ static void shader_generate_arb_declarations(const struct wined3d_shader *shader
             else
             {
                 unsigned int mask = ctx->cur_vs_args->clip.boolclip.clipplane_mask;
-                clip_limit = min(count_bits(mask), 4);
+                clip_limit = min(wined3d_popcount(mask), 4);
             }
             *num_clipplanes = min(clip_limit, max_constantsF - highest_constf - 1);
             max_constantsF -= *num_clipplanes;

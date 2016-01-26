@@ -4048,17 +4048,6 @@ void get_fog_start_end(const struct wined3d_context *context, const struct wined
     }
 }
 
-/* This small helper function is used to convert a bitmask into the number of masked bits */
-unsigned int count_bits(unsigned int mask)
-{
-    unsigned int count;
-    for (count = 0; mask; ++count)
-    {
-        mask &= mask - 1;
-    }
-    return count;
-}
-
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
  * in the range 0.0f -> 1.0f. */
