@@ -3868,6 +3868,7 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
 {
     struct wined3d_surface *dst_surface, *src_surface;
     struct wined3d_texture *dst_texture, *src_texture;
+    RECT dst_rect, src_rect;
     unsigned int i, count;
     HRESULT hr;
 
@@ -3929,8 +3930,11 @@ void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
         dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture, i));
         src_surface = surface_from_resource(wined3d_texture_get_sub_resource(src_texture, i));
 
-        if (FAILED(hr = wined3d_surface_blt(dst_surface, NULL, src_surface, NULL, 0, NULL, WINED3D_TEXF_POINT)))
-            ERR("Failed to blit, subresource %u, hr %#x.\n", i, hr);
+        SetRect(&dst_rect, 0, 0, dst_surface->resource.width, dst_surface->resource.height);
+        SetRect(&src_rect, 0, 0, src_surface->resource.width, src_surface->resource.height);
+        if (FAILED(hr = wined3d_surface_blt(dst_surface, &dst_rect,
+                src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
+            ERR("Failed to blit, sub-resource %u, hr %#x.\n", i, hr);
     }
 }
 
