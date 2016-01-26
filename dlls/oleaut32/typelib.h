@@ -386,7 +386,7 @@ typedef struct {
 	SLTG_Name other_name; /* Another one of these weird names */
 	WORD res1a;	      /* 0xffff */
 	WORD name_offs;	      /* offset to name in name table */
-	WORD more_bytes;      /* if this is non-zero we get this many
+	WORD hlpstr_len;      /* if this is non-zero we get this many
 				 bytes before the next element, which seem
 				 to reference the docstring of the type ? */
 	WORD res20;	      /* 0xffff */

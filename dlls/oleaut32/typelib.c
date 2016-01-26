@@ -3667,6 +3667,88 @@ static BOOL TLB_GUIDFromString(const char *str, GUID *guid)
   return TRUE;
 }
 
+struct bitstream
+{
+    const BYTE *buffer;
+    DWORD       length;
+    WORD        current;
+};
+
+static const char *lookup_code(const BYTE *table, DWORD table_size, struct bitstream *bits)
+{
+    const BYTE *p = table;
+
+    while (p < table + table_size && *p == 0x80)
+    {
+        if (p + 2 >= table + table_size) return NULL;
+
+        if (!(bits->current & 0xff))
+        {
+            if (!bits->length) return NULL;
+            bits->current = (*bits->buffer << 8) | 1;
+            bits->buffer++;
+            bits->length--;
+        }
+
+        if (bits->current & 0x8000)
+        {
+            p += 3;
+        }
+        else
+        {
+            p = table + (*(p + 2) | (*(p + 1) << 8));
+        }
+
+        bits->current <<= 1;
+    }
+
+    if (p + 1 < table + table_size && *(p + 1))
+    {
+        /* FIXME: Whats the meaning of *p? */
+        const BYTE *q = p + 1;
+        while (q < table + table_size && *q) q++;
+        return (q < table + table_size) ? (const char *)(p + 1) : NULL;
+    }
+
+    return NULL;
+}
+
+static const TLBString *decode_string(const BYTE *table, const char *stream, DWORD stream_length, ITypeLibImpl *lib)
+{
+    DWORD buf_size, table_size;
+    const char *p;
+    struct bitstream bits;
+    BSTR buf;
+    TLBString *tlbstr;
+
+    if (!stream_length) return NULL;
+
+    bits.buffer = (const BYTE *)stream;
+    bits.length = stream_length;
+    bits.current = 0;
+
+    buf_size = *(const WORD *)table;
+    table += sizeof(WORD);
+    table_size = *(const DWORD *)table;
+    table += sizeof(DWORD);
+
+    buf = SysAllocStringLen(NULL, buf_size);
+    buf[0] = 0;
+
+    while ((p = lookup_code(table, table_size, &bits)))
+    {
+        int len;
+        if (buf[0]) wcscat(buf, L" ");
+        len = wcslen(buf);
+        MultiByteToWideChar(CP_ACP, 0, p, -1, buf + len, buf_size - len);
+    }
+
+    tlbstr = TLB_append_str(&lib->string_list, buf);
+    SysFreeString(buf);
+
+    return tlbstr;
+}
+
 static WORD SLTG_ReadString(const char *ptr, const TLBString **pStr, ITypeLibImpl *lib)
 {
     WORD bytelen;
@@ -4345,7 +4427,7 @@ typedef struct {
   char *other_name;
   WORD res1a;
   WORD name_offs;
-  WORD more_bytes;
+  WORD hlpstr_len;
   char *extra;
   WORD res20;
   DWORD helpcontext;
@@ -4371,6 +4453,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     SLTG_LibBlk *pLibBlk;
     SLTG_InternalOtherTypeInfo *pOtherTypeInfoBlks;
     char *pNameTable, *ptr;
+    const BYTE *hlp_strings;
     int i;
     DWORD len, order;
     ITypeInfoImpl **ppTypeInfoImpl;
@@ -4464,7 +4547,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	}
 	pOtherTypeInfoBlks[i].res1a = *(WORD*)(ptr + len + 4);
 	pOtherTypeInfoBlks[i].name_offs = *(WORD*)(ptr + len + 8);
-	extra = pOtherTypeInfoBlks[i].more_bytes = *(WORD*)(ptr + 8 + len);
+	extra = pOtherTypeInfoBlks[i].hlpstr_len = *(WORD*)(ptr + 8 + len);
 	if(extra) {
 	    pOtherTypeInfoBlks[i].extra = malloc(extra);
 	    memcpy(pOtherTypeInfoBlks[i].extra, ptr + 10, extra);
@@ -4481,6 +4564,10 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 
     /* Get the next DWORD */
     len = *(DWORD*)ptr;
+
+    hlp_strings = (const BYTE *)ptr + sizeof(DWORD);
+    TRACE("max help string length %#x, help strings length %#lx\n",
+        *(WORD *)hlp_strings, *(DWORD *)(hlp_strings + 2));
 
     /* Now add this to pLibBLk look at what we're pointing at and
        possibly add 0x20, then add 0x216, sprinkle a bit a magic
@@ -4546,6 +4633,7 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
       (*ppTypeInfoImpl)->index = i;
       (*ppTypeInfoImpl)->Name = SLTG_ReadName(pNameTable, pOtherTypeInfoBlks[i].name_offs, pTypeLibImpl);
       (*ppTypeInfoImpl)->dwHelpContext = pOtherTypeInfoBlks[i].helpcontext;
+      (*ppTypeInfoImpl)->DocString = decode_string(hlp_strings, pOtherTypeInfoBlks[i].extra, pOtherTypeInfoBlks[i].hlpstr_len, pTypeLibImpl);
       (*ppTypeInfoImpl)->guid = TLB_append_guid(&pTypeLibImpl->guid_list, &pOtherTypeInfoBlks[i].uuid, 2);
       (*ppTypeInfoImpl)->typeattr.typekind = pTIHeader->typekind;
       (*ppTypeInfoImpl)->typeattr.wMajorVerNum = pTIHeader->major_version;
