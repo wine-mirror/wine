@@ -3202,14 +3202,13 @@ const char *debug_d3dresourcetype(enum wined3d_resource_type resource_type)
 {
     switch (resource_type)
     {
-#define RES_TO_STR(res) case res: return #res
-        RES_TO_STR(WINED3D_RTYPE_SURFACE);
-        RES_TO_STR(WINED3D_RTYPE_VOLUME);
-        RES_TO_STR(WINED3D_RTYPE_TEXTURE);
-        RES_TO_STR(WINED3D_RTYPE_VOLUME_TEXTURE);
-        RES_TO_STR(WINED3D_RTYPE_CUBE_TEXTURE);
-        RES_TO_STR(WINED3D_RTYPE_BUFFER);
-#undef  RES_TO_STR
+#define WINED3D_TO_STR(x) case x: return #x
+        WINED3D_TO_STR(WINED3D_RTYPE_SURFACE);
+        WINED3D_TO_STR(WINED3D_RTYPE_VOLUME);
+        WINED3D_TO_STR(WINED3D_RTYPE_VOLUME_TEXTURE);
+        WINED3D_TO_STR(WINED3D_RTYPE_BUFFER);
+        WINED3D_TO_STR(WINED3D_RTYPE_TEXTURE_2D);
+#undef WINED3D_TO_STR
         default:
             FIXME("Unrecognized resource type %#x.\n", resource_type);
             return "unrecognized";

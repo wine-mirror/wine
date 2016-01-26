@@ -5660,8 +5660,9 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
     struct wined3d_display_mode mode;
     DDSURFACEDESC2 *desc, *mip_desc;
     struct ddraw_texture *texture;
-    UINT layers, levels, i, j;
+    unsigned int layers = 1;
     unsigned int pitch = 0;
+    UINT levels, i, j;
     HRESULT hr;
 
     TRACE("ddraw %p, surface_desc %p, surface %p, outer_unknown %p, version %u.\n",
@@ -5793,6 +5794,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         ddrawformat_from_wined3dformat(&desc->u4.ddpfPixelFormat, mode.format_id);
     }
 
+    wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     wined3d_desc.format = wined3dformat_from_ddrawformat(&desc->u4.ddpfPixelFormat);
     if (wined3d_desc.format == WINED3DFMT_UNKNOWN)
     {
@@ -5908,9 +5910,12 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             DWORD usage = 0;
 
             if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
-                rtype = WINED3D_RTYPE_CUBE_TEXTURE;
+            {
+                usage |= WINED3DUSAGE_LEGACY_CUBEMAP;
+                rtype = WINED3D_RTYPE_TEXTURE_2D;
+            }
             else if (desc->ddsCaps.dwCaps & DDSCAPS_TEXTURE)
-                rtype = WINED3D_RTYPE_TEXTURE;
+                rtype = WINED3D_RTYPE_TEXTURE_2D;
             else
                 rtype = WINED3D_RTYPE_SURFACE;
 
@@ -6060,13 +6065,8 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
     if (desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
     {
-        wined3d_desc.resource_type = WINED3D_RTYPE_CUBE_TEXTURE;
+        wined3d_desc.usage |= WINED3DUSAGE_LEGACY_CUBEMAP;
         layers = 6;
-    }
-    else
-    {
-        wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE;
-        layers = 1;
     }
 
     /* Some applications assume surfaces will always be mapped at the same

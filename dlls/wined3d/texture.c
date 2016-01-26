@@ -1450,16 +1450,15 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
 
     switch (desc->resource_type)
     {
-        case WINED3D_RTYPE_TEXTURE:
-            hr = texture_init(object, desc, level_count, surface_flags, device, parent, parent_ops);
+        case WINED3D_RTYPE_TEXTURE_2D:
+            if (desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+                hr = cubetexture_init(object, desc, level_count, surface_flags, device, parent, parent_ops);
+            else
+                hr = texture_init(object, desc, level_count, surface_flags, device, parent, parent_ops);
             break;
 
         case WINED3D_RTYPE_VOLUME_TEXTURE:
             hr = volumetexture_init(object, desc, level_count, device, parent, parent_ops);
-            break;
-
-        case WINED3D_RTYPE_CUBE_TEXTURE:
-            hr = cubetexture_init(object, desc, level_count, surface_flags, device, parent, parent_ops);
             break;
 
         default:

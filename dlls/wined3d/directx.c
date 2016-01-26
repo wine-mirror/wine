@@ -4619,21 +4619,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
 
     switch (resource_type)
     {
-        case WINED3D_RTYPE_CUBE_TEXTURE:
-            format_flags |= WINED3DFMT_FLAG_TEXTURE;
-            allowed_usage = WINED3DUSAGE_AUTOGENMIPMAP
-                    | WINED3DUSAGE_DYNAMIC
-                    | WINED3DUSAGE_RENDERTARGET
-                    | WINED3DUSAGE_SOFTWAREPROCESSING
-                    | WINED3DUSAGE_QUERY_FILTER
-                    | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING
-                    | WINED3DUSAGE_QUERY_SRGBREAD
-                    | WINED3DUSAGE_QUERY_SRGBWRITE
-                    | WINED3DUSAGE_QUERY_VERTEXTEXTURE
-                    | WINED3DUSAGE_QUERY_WRAPANDMIP;
-            gl_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
-            break;
-
         case WINED3D_RTYPE_SURFACE:
             if (!CheckSurfaceCapability(adapter, adapter_format, format, wined3d->flags & WINED3D_NO3D))
             {
@@ -4647,19 +4632,12 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             gl_type = WINED3D_GL_RES_TYPE_RB;
             break;
 
-        case WINED3D_RTYPE_TEXTURE:
-            if ((usage & WINED3DUSAGE_DEPTHSTENCIL)
-                    && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_SHADOW)
-                    && !gl_info->supported[ARB_SHADOW])
-            {
-                TRACE("[FAILED] - No shadow sampler support.\n");
-                return WINED3DERR_NOTAVAILABLE;
-            }
-
+        case WINED3D_RTYPE_TEXTURE_2D:
             format_flags |= WINED3DFMT_FLAG_TEXTURE;
             allowed_usage = WINED3DUSAGE_AUTOGENMIPMAP
                     | WINED3DUSAGE_DEPTHSTENCIL
                     | WINED3DUSAGE_DYNAMIC
+                    | WINED3DUSAGE_LEGACY_CUBEMAP
                     | WINED3DUSAGE_RENDERTARGET
                     | WINED3DUSAGE_SOFTWAREPROCESSING
                     | WINED3DUSAGE_QUERY_FILTER
@@ -4670,6 +4648,18 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
                     | WINED3DUSAGE_QUERY_VERTEXTEXTURE
                     | WINED3DUSAGE_QUERY_WRAPANDMIP;
             gl_type = WINED3D_GL_RES_TYPE_TEX_2D;
+            if (usage & WINED3DUSAGE_LEGACY_CUBEMAP)
+            {
+                allowed_usage &= ~(WINED3DUSAGE_DEPTHSTENCIL | WINED3DUSAGE_QUERY_LEGACYBUMPMAP);
+                gl_type = WINED3D_GL_RES_TYPE_TEX_CUBE;
+            }
+            else if ((usage & WINED3DUSAGE_DEPTHSTENCIL)
+                    && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_SHADOW)
+                    && !gl_info->supported[ARB_SHADOW])
+            {
+                TRACE("[FAILED] - No shadow sampler support.\n");
+                return WINED3DERR_NOTAVAILABLE;
+            }
             break;
 
         case WINED3D_RTYPE_VOLUME_TEXTURE:

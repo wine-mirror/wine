@@ -2340,7 +2340,7 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_surface *so
 
     /* FIXME: Multisampled conversion? */
     wined3d_resource_get_desc(&source->resource, &desc);
-    desc.resource_type = WINED3D_RTYPE_TEXTURE;
+    desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     desc.format = to_fmt;
     desc.usage = 0;
     desc.pool = WINED3D_POOL_SCRATCH;

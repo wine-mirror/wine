@@ -821,7 +821,7 @@ static HRESULT swapchain_init(struct wined3d_swapchain *swapchain, struct wined3
 
     TRACE("Creating front buffer.\n");
 
-    texture_desc.resource_type = WINED3D_RTYPE_TEXTURE;
+    texture_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     texture_desc.format = swapchain->desc.backbuffer_format;
     texture_desc.multisample_type = swapchain->desc.multisample_type;
     texture_desc.multisample_quality = swapchain->desc.multisample_quality;

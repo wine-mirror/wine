@@ -2796,10 +2796,7 @@ static inline struct wined3d_surface *wined3d_rendertarget_view_get_surface(
     struct wined3d_resource *resource;
     struct wined3d_texture *texture;
 
-    if (!view)
-        return NULL;
-
-    if (view->resource->type != WINED3D_RTYPE_TEXTURE && view->resource->type != WINED3D_RTYPE_CUBE_TEXTURE)
+    if (!view || view->resource->type != WINED3D_RTYPE_TEXTURE_2D)
         return NULL;
 
     texture = wined3d_texture_from_resource(view->resource);

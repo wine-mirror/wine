@@ -611,7 +611,7 @@ static HRESULT CDECL reset_enum_callback(struct wined3d_resource *resource)
     {
         struct d3d9_surface *surface;
 
-        if (desc.resource_type == WINED3D_RTYPE_TEXTURE)
+        if (desc.resource_type == WINED3D_RTYPE_TEXTURE_2D)
         {
             IUnknown *parent = wined3d_resource_get_parent(resource);
             IDirect3DBaseTexture9 *texture;
@@ -1119,7 +1119,7 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, UINT width
             device, width, height, format, flags, surface, usage, pool,
             multisample_type, multisample_quality);
 
-    desc.resource_type = WINED3D_RTYPE_TEXTURE;
+    desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
     desc.format = wined3dformat_from_d3dformat(format);
     desc.multisample_type = multisample_type;
     desc.multisample_quality = multisample_quality;
