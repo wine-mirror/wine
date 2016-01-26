@@ -966,21 +966,26 @@ struct linebreaks_test {
 };
 
 static struct linebreaks_test linebreaks_tests[] = {
-    { {'A','-','B',' ','C',0x58a,'D',0x2010,'E',0x2012,'F',0x2013,'\t',0},
+    { {'A','-','B',' ','C',0x58a,'D',0x2010,'E',0x2012,'F',0x2013,'\t',0xc,0xb,0x2028,0x2029,0x200b,0},
       {
-          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     TRUE,  FALSE },
-          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, FALSE, FALSE },
-          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     TRUE,  FALSE }
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     0, 0 },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     1, 0 },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     0, 0 },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     0, 0 },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_CAN_BREAK,     0, 0 },
+          { DWRITE_BREAK_CONDITION_CAN_BREAK,     DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 0, 0 },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, 1, 0 },
+          { DWRITE_BREAK_CONDITION_MAY_NOT_BREAK, DWRITE_BREAK_CONDITION_MUST_BREAK,    1, 0 },
+          { DWRITE_BREAK_CONDITION_MUST_BREAK,    DWRITE_BREAK_CONDITION_MUST_BREAK,    1, 0 },
+          { DWRITE_BREAK_CONDITION_MUST_BREAK,    DWRITE_BREAK_CONDITION_MUST_BREAK,    1, 0 },
+          { DWRITE_BREAK_CONDITION_MUST_BREAK,    DWRITE_BREAK_CONDITION_MUST_BREAK,    1, 0 },
+          { DWRITE_BREAK_CONDITION_MUST_BREAK,    DWRITE_BREAK_CONDITION_CAN_BREAK,     0, 0 },
       }
     },
     { { 0 } }
@@ -988,6 +993,7 @@ static struct linebreaks_test linebreaks_tests[] = {
 
 static void compare_breakpoints(const struct linebreaks_test *test, DWRITE_LINE_BREAKPOINT *actual)
 {
+    static const char *conditions[] = {"N","CB","NB","B"};
     const WCHAR *text = test->text;
     int cmp = memcmp(test->bp, actual, sizeof(*actual)*BREAKPOINT_COUNT);
     ok(!cmp, "%s: got wrong breakpoint data\n", wine_dbgstr_w(test->text));
@@ -995,16 +1001,16 @@ static void compare_breakpoints(const struct linebreaks_test *test, DWRITE_LINE_
         int i = 0;
         while (*text) {
             ok(!memcmp(&test->bp[i], &actual[i], sizeof(*actual)),
-                "%s: got (%d, %d, %d, %d), expected (%d, %d, %d, %d)\n",
+                "%s: got [%s, %s] (%s, %s), expected [%s, %s] (%s, %s)\n",
                 wine_dbgstr_wn(&test->text[i], 1),
-                g_actual_bp[i].breakConditionBefore,
-                g_actual_bp[i].breakConditionAfter,
-                g_actual_bp[i].isWhitespace,
-                g_actual_bp[i].isSoftHyphen,
-                test->bp[i].breakConditionBefore,
-                test->bp[i].breakConditionAfter,
-                test->bp[i].isWhitespace,
-                test->bp[i].isSoftHyphen);
+                conditions[g_actual_bp[i].breakConditionBefore],
+                conditions[g_actual_bp[i].breakConditionAfter],
+                g_actual_bp[i].isWhitespace ? "WS"  : "0",
+                g_actual_bp[i].isSoftHyphen ? "SHY" : "0",
+                conditions[test->bp[i].breakConditionBefore],
+                conditions[test->bp[i].breakConditionAfter],
+                test->bp[i].isWhitespace ? "WS"  : "0",
+                test->bp[i].isSoftHyphen ? "SHY" : "0");
             text++;
             i++;
         }
@@ -1016,6 +1022,7 @@ static void test_AnalyzeLineBreakpoints(void)
     static const WCHAR emptyW[] = {0};
     const struct linebreaks_test *ptr = linebreaks_tests;
     IDWriteTextAnalyzer *analyzer;
+    UINT32 i = 0;
     HRESULT hr;
 
     hr = IDWriteFactory_CreateTextAnalyzer(factory, &analyzer);
@@ -1027,13 +1034,24 @@ static void test_AnalyzeLineBreakpoints(void)
 
     while (*ptr->text)
     {
+        UINT32 len;
+
         g_source = ptr->text;
+        len = lstrlenW(g_source);
+
+        if (len > BREAKPOINT_COUNT) {
+            ok(0, "test %u: increase BREAKPOINT_COUNT to at least %u\n", i, len);
+            i++;
+            ptr++;
+            continue;
+        }
 
         memset(g_actual_bp, 0, sizeof(g_actual_bp));
-        hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource, 0, lstrlenW(g_source), &analysissink);
+        hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &analysissource, 0, len, &analysissink);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         compare_breakpoints(ptr, g_actual_bp);
 
+        i++;
         ptr++;
     }
 

@@ -1660,6 +1660,11 @@ static void test_typography(void)
 
 static void test_GetClusterMetrics(void)
 {
+    static const WCHAR str_white_spaceW[] = {
+        /* BK - FORM FEED, LINE TABULATION, LINE SEP, PARA SEP */ 0xc, 0xb, 0x2028, 0x2029,
+        /* ZW - ZERO WIDTH SPACE */ 0x200b,
+        /* SP - SPACE  */ 0x20
+    };
     static const WCHAR str5W[] = {'a','\r','b','\n','c','\n','\r','d','\r','\n','e',0xb,'f',0xc,
         'g',0x0085,'h',0x2028,'i',0x2029,0};
     static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
@@ -1986,6 +1991,24 @@ todo_wine {
         ok(metrics[i].length == 1, "%d: got %d\n", i, metrics[i].length);
 
     IDWriteTextLayout_Release(layout);
+
+    /* Test whitespace resolution from linebreaking classes BK, ZW, and SP */
+    hr = IDWriteFactory_CreateTextLayout(factory, str_white_spaceW, sizeof(str_white_spaceW)/sizeof(WCHAR), format,
+        100.0f, 200.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 20, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 6, "got %u\n", count);
+
+    ok(metrics[0].isWhitespace == 1, "got %d\n", metrics[0].isWhitespace);
+    ok(metrics[1].isWhitespace == 1, "got %d\n", metrics[1].isWhitespace);
+    ok(metrics[2].isWhitespace == 1, "got %d\n", metrics[2].isWhitespace);
+    ok(metrics[3].isWhitespace == 1, "got %d\n", metrics[3].isWhitespace);
+    ok(metrics[4].isWhitespace == 0, "got %d\n", metrics[4].isWhitespace);
+    ok(metrics[5].isWhitespace == 1, "got %d\n", metrics[5].isWhitespace);
 
     IDWriteInlineObject_Release(trimm);
     IDWriteTextFormat_Release(format);
