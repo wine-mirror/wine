@@ -309,6 +309,8 @@ static HRESULT WINAPI d3d9_CheckDeviceMultiSampleType(IDirect3D9Ex *iface, UINT 
     hr = wined3d_check_device_multisample_type(d3d9->wined3d, adapter, device_type,
             wined3dformat_from_d3dformat(format), windowed, multisample_type, levels);
     wined3d_mutex_unlock();
+    if (hr == WINED3DERR_NOTAVAILABLE && levels)
+        *levels = 1;
 
     return hr;
 }
