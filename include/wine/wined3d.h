@@ -1472,9 +1472,9 @@ enum wined3d_display_rotation
 #define WINED3D_PALETTE_ALLOW_256                               0x00000002
 #define WINED3D_PALETTE_ALPHA                                   0x00000004
 
-#define WINED3D_SURFACE_MAPPABLE                                0x00000001
-#define WINED3D_SURFACE_DISCARD                                 0x00000002
-#define WINED3D_SURFACE_PIN_SYSMEM                              0x00000004
+#define WINED3D_TEXTURE_CREATE_MAPPABLE                         0x00000001
+#define WINED3D_TEXTURE_CREATE_DISCARD                          0x00000002
+#define WINED3D_TEXTURE_CREATE_PIN_SYSMEM                       0x00000004
 
 #define WINED3D_APPEND_ALIGNED_ELEMENT                          0xffffffff
 
@@ -2529,7 +2529,7 @@ HRESULT __cdecl wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigne
         struct wined3d_texture *src_texture, unsigned int src_idx, const RECT *src_rect_in, DWORD flags,
         const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter);
 HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
-        UINT level_count, DWORD surface_flags, const struct wined3d_sub_resource_data *data, void *parent,
+        UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);
 ULONG __cdecl wined3d_texture_decref(struct wined3d_texture *texture);
 void __cdecl wined3d_texture_generate_mipmaps(struct wined3d_texture *texture);

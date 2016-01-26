@@ -4816,7 +4816,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     }
 
     if (FAILED(hr = wined3d_texture_create(ddraw->wined3d_device, desc, 1,
-            WINED3D_SURFACE_MAPPABLE, NULL, ddraw, &ddraw_frontbuffer_parent_ops, texture)))
+            WINED3D_TEXTURE_CREATE_MAPPABLE, NULL, ddraw, &ddraw_frontbuffer_parent_ops, texture)))
     {
         WARN("Failed to create texture, hr %#x.\n", hr);
         return hr;

@@ -2345,7 +2345,8 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_surface *so
     desc.usage = 0;
     desc.pool = WINED3D_POOL_SCRATCH;
     if (FAILED(wined3d_texture_create(source->resource.device, &desc, 1,
-            WINED3D_SURFACE_MAPPABLE | WINED3D_SURFACE_DISCARD, NULL, NULL, &wined3d_null_parent_ops, &ret)))
+            WINED3D_TEXTURE_CREATE_MAPPABLE | WINED3D_TEXTURE_CREATE_DISCARD,
+            NULL, NULL, &wined3d_null_parent_ops, &ret)))
     {
         ERR("Failed to create a destination surface for conversion.\n");
         return NULL;
@@ -5351,8 +5352,8 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     struct wined3d_device *device = container->resource.device;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     const struct wined3d_format *format = wined3d_get_format(gl_info, desc->format);
+    BOOL lockable = flags & WINED3D_TEXTURE_CREATE_MAPPABLE;
     UINT multisample_quality = desc->multisample_quality;
-    BOOL lockable = flags & WINED3D_SURFACE_MAPPABLE;
     unsigned int resource_size;
     HRESULT hr;
 
@@ -5410,7 +5411,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     list_init(&surface->overlays);
 
     /* Flags */
-    if (flags & WINED3D_SURFACE_DISCARD)
+    if (flags & WINED3D_TEXTURE_CREATE_DISCARD)
         surface->flags |= SFLAG_DISCARD;
     if (lockable || desc->format == WINED3DFMT_D16_LOCKABLE)
         surface->resource.access_flags |= WINED3D_RESOURCE_ACCESS_CPU;
