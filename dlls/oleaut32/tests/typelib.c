@@ -1656,7 +1656,6 @@ static void test_CreateTypeLib(SYSKIND sys) {
     static OLECHAR dualW[] = {'d','u','a','l',0};
     static OLECHAR coclassW[] = {'c','o','c','l','a','s','s',0};
     static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0x3213,0};
-    static const WCHAR defaultQW[] = {'d','e','f','a','u','l','t','?',0};
     static OLECHAR func1W[] = {'f','u','n','c','1',0};
     static OLECHAR func2W[] = {'f','u','n','c','2',0};
     static OLECHAR prop1W[] = {'P','r','o','p','1',0};
@@ -1701,6 +1700,8 @@ static void test_CreateTypeLib(SYSKIND sys) {
     TYPEKIND kind;
     DESCKIND desckind;
     BINDPTR bindptr;
+    char nameA[16];
+    WCHAR nameW[16];
 
     switch(sys){
     case SYS_WIN32:
@@ -2197,6 +2198,9 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ok(hres == S_OK, "got %08x\n", hres);
     SysFreeString(V_BSTR(&paramdescex.varDefaultValue));
 
+    WideCharToMultiByte(CP_ACP, 0, defaultW, -1, nameA, sizeof(nameA), NULL, NULL);
+    MultiByteToWideChar(CP_ACP, 0, nameA, -1, nameW, sizeof(nameW)/sizeof(nameW[0]));
+
     hres = ITypeInfo2_GetFuncDesc(ti2, 3, &pfuncdesc);
     ok(hres == S_OK, "got %08x\n", hres);
 
@@ -2222,7 +2226,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
             U(*edesc).paramdesc.pparamdescex->cBytes);
     ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
             V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
-    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), defaultQW),
+    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), nameW),
             "got: %s\n",
             wine_dbgstr_w(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue)));
 
@@ -2234,7 +2238,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
             U(*edesc).paramdesc.pparamdescex->cBytes);
     ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
             V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
-    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), defaultQW),
+    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), nameW),
             "got: %s\n",
             wine_dbgstr_w(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue)));
 
@@ -3020,7 +3024,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
             U(*edesc).paramdesc.pparamdescex->cBytes);
     ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
             V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
-    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), defaultQW),
+    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), nameW),
             "got: %s\n",
             wine_dbgstr_w(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue)));
 
@@ -3032,7 +3036,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
             U(*edesc).paramdesc.pparamdescex->cBytes);
     ok(V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue) == VT_BSTR, "got: %d\n",
             V_VT(&U(*edesc).paramdesc.pparamdescex->varDefaultValue));
-    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), defaultQW),
+    ok(!lstrcmpW(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue), nameW),
             "got: %s\n",
             wine_dbgstr_w(V_BSTR(&U(*edesc).paramdesc.pparamdescex->varDefaultValue)));
 
