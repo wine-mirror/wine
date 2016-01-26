@@ -4430,7 +4430,7 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
     if (quality_levels)
     {
         if (multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
-            *quality_levels = gl_info->limits.samples;
+            *quality_levels = wined3d_log2i(gl_info->limits.samples);
         else
             *quality_levels = 1;
     }
