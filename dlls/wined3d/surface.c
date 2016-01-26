@@ -2887,7 +2887,7 @@ static void surface_prepare_rb(struct wined3d_surface *surface, const struct win
          * AMD has a similar feature called Enhanced Quality Anti-Aliasing (EQAA),
          * but it does not have an equivalent OpenGL extension. */
         if (surface->resource.multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
-            samples = surface->resource.multisample_quality;
+            samples = 1u << (surface->resource.multisample_quality + 1);
         else
             samples = surface->resource.multisample_type;
 
