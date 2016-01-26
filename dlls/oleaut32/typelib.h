@@ -382,7 +382,6 @@ typedef struct {
 /* we then get 0x40 bytes worth of 0xffff or small numbers followed by
    nrOfFileBlks - 2 of these */
 typedef struct {
-	WORD small_no;
 	SLTG_Name index_name; /* This refers to a name in the directory */
 	SLTG_Name other_name; /* Another one of these weird names */
 	WORD res1a;	      /* 0xffff */
@@ -394,6 +393,7 @@ typedef struct {
 	DWORD helpcontext;
 	WORD res26;	      /* 0xffff */
         GUID uuid;
+        WORD typekind;
 } SLTG_OtherTypeInfo;
 
 /* Next we get WORD 0x0003 followed by a DWORD which if we add to

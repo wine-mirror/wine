@@ -4341,7 +4341,6 @@ static void SLTG_ProcessModule(char *pBlk, ITypeInfoImpl *pTI,
 /* Because SLTG_OtherTypeInfo is such a painful struct, we make a more
    manageable copy of it into this */
 typedef struct {
-  WORD small_no;
   char *index_name;
   char *other_name;
   WORD res1a;
@@ -4352,6 +4351,7 @@ typedef struct {
   DWORD helpcontext;
   WORD res26;
   GUID uuid;
+  WORD typekind;
 } SLTG_InternalOtherTypeInfo;
 
 /****************************************************************************
@@ -4370,7 +4370,6 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     LPVOID pBlk, pFirstBlk;
     SLTG_LibBlk *pLibBlk;
     SLTG_InternalOtherTypeInfo *pOtherTypeInfoBlks;
-    char *pAfterOTIBlks = NULL;
     char *pNameTable, *ptr;
     int i;
     DWORD len, order;
@@ -4437,9 +4436,10 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
     len += 0x40;
 
     /* And now TypeInfoCount of SLTG_OtherTypeInfo */
+    pTypeLibImpl->TypeInfoCount = *(WORD *)((char *)pLibBlk + len);
+    len += sizeof(WORD);
 
     pOtherTypeInfoBlks = calloc(pTypeLibImpl->TypeInfoCount, sizeof(*pOtherTypeInfoBlks));
-
 
     ptr = (char*)pLibBlk + len;
 
@@ -4447,43 +4447,40 @@ static ITypeLib2* ITypeLib2_Constructor_SLTG(LPVOID pLib, DWORD dwTLBLength)
 	WORD w, extra;
 	len = 0;
 
-	pOtherTypeInfoBlks[i].small_no = *(WORD*)ptr;
-
-	w = *(WORD*)(ptr + 2);
+	w = *(WORD*)ptr;
 	if(w != 0xffff) {
 	    len += w;
 	    pOtherTypeInfoBlks[i].index_name = malloc(w + 1);
-	    memcpy(pOtherTypeInfoBlks[i].index_name, ptr + 4, w);
+	    memcpy(pOtherTypeInfoBlks[i].index_name, ptr + 2, w);
 	    pOtherTypeInfoBlks[i].index_name[w] = '\0';
 	}
-	w = *(WORD*)(ptr + 4 + len);
+	w = *(WORD*)(ptr + 2 + len);
 	if(w != 0xffff) {
-	    TRACE_(typelib)("\twith %s\n", debugstr_an(ptr + 6 + len, w));
+	    TRACE_(typelib)("\twith %s\n", debugstr_an(ptr + 4 + len, w));
 	    len += w;
 	    pOtherTypeInfoBlks[i].other_name = malloc(w + 1);
-	    memcpy(pOtherTypeInfoBlks[i].other_name, ptr + 6 + len, w);
+	    memcpy(pOtherTypeInfoBlks[i].other_name, ptr + 4 + len, w);
 	    pOtherTypeInfoBlks[i].other_name[w] = '\0';
 	}
-	pOtherTypeInfoBlks[i].res1a = *(WORD*)(ptr + len + 6);
+	pOtherTypeInfoBlks[i].res1a = *(WORD*)(ptr + len + 4);
 	pOtherTypeInfoBlks[i].name_offs = *(WORD*)(ptr + len + 8);
-	extra = pOtherTypeInfoBlks[i].more_bytes = *(WORD*)(ptr + 10 + len);
+	extra = pOtherTypeInfoBlks[i].more_bytes = *(WORD*)(ptr + 8 + len);
 	if(extra) {
 	    pOtherTypeInfoBlks[i].extra = malloc(extra);
-	    memcpy(pOtherTypeInfoBlks[i].extra, ptr + 12, extra);
+	    memcpy(pOtherTypeInfoBlks[i].extra, ptr + 10, extra);
 	    len += extra;
 	}
-	pOtherTypeInfoBlks[i].res20 = *(WORD*)(ptr + 12 + len);
-	pOtherTypeInfoBlks[i].helpcontext = *(DWORD*)(ptr + 14 + len);
-	pOtherTypeInfoBlks[i].res26 = *(WORD*)(ptr + 18 + len);
-	memcpy(&pOtherTypeInfoBlks[i].uuid, ptr + 20 + len, sizeof(GUID));
+	pOtherTypeInfoBlks[i].res20 = *(WORD*)(ptr + 10 + len);
+	pOtherTypeInfoBlks[i].helpcontext = *(DWORD*)(ptr + 12 + len);
+	pOtherTypeInfoBlks[i].res26 = *(WORD*)(ptr + 16 + len);
+	memcpy(&pOtherTypeInfoBlks[i].uuid, ptr + 18 + len, sizeof(GUID));
+	pOtherTypeInfoBlks[i].typekind = *(WORD*)(ptr + 18 + len + sizeof(GUID));
 	len += sizeof(SLTG_OtherTypeInfo);
 	ptr += len;
     }
 
-    pAfterOTIBlks = ptr;
-
-    /* Skip this WORD and get the next DWORD */
-    len = *(DWORD*)(pAfterOTIBlks + 2);
+    /* Get the next DWORD */
+    len = *(DWORD*)ptr;
 
     /* Now add this to pLibBLk look at what we're pointing at and
        possibly add 0x20, then add 0x216, sprinkle a bit a magic
