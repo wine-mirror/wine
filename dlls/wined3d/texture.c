@@ -53,7 +53,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         if ((desc->format == WINED3DFMT_DXT1 || desc->format == WINED3DFMT_DXT2 || desc->format == WINED3DFMT_DXT3
                 || desc->format == WINED3DFMT_DXT4 || desc->format == WINED3DFMT_DXT5)
                 && !(format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_TEXTURE)
-                && desc->resource_type != WINED3D_RTYPE_VOLUME_TEXTURE && !once++)
+                && desc->resource_type != WINED3D_RTYPE_TEXTURE_3D && !once++)
             ERR_(winediag)("The application tried to create a DXTn texture, but the driver does not support them.\n");
 
         WARN("Failed to initialize resource, returning %#x\n", hr);
@@ -610,9 +610,9 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    if (texture->resource.type == WINED3D_RTYPE_VOLUME_TEXTURE)
+    if (texture->resource.type == WINED3D_RTYPE_TEXTURE_3D)
     {
-        WARN("Not supported on volume textures.\n");
+        WARN("Not supported on 3D textures.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -1457,7 +1457,7 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
                 hr = texture_init(object, desc, level_count, surface_flags, device, parent, parent_ops);
             break;
 
-        case WINED3D_RTYPE_VOLUME_TEXTURE:
+        case WINED3D_RTYPE_TEXTURE_3D:
             hr = volumetexture_init(object, desc, level_count, device, parent, parent_ops);
             break;
 

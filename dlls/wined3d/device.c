@@ -3676,7 +3676,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
             break;
         }
 
-        case WINED3D_RTYPE_VOLUME_TEXTURE:
+        case WINED3D_RTYPE_TEXTURE_3D:
         {
             for (i = 0; i < level_count; ++i)
             {
@@ -4971,7 +4971,7 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
             break;
 
         case WINED3D_RTYPE_TEXTURE_2D:
-        case WINED3D_RTYPE_VOLUME_TEXTURE:
+        case WINED3D_RTYPE_TEXTURE_3D:
             for (i = 0; i < MAX_COMBINED_SAMPLERS; ++i)
             {
                 struct wined3d_texture *texture = wined3d_texture_from_resource(resource);

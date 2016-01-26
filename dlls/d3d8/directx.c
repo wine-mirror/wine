@@ -254,7 +254,7 @@ static HRESULT WINAPI d3d8_CheckDeviceFormat(IDirect3D8 *iface, UINT adapter, D3
             break;
 
         case D3DRTYPE_VOLUMETEXTURE:
-            wined3d_rtype = WINED3D_RTYPE_VOLUME_TEXTURE;
+            wined3d_rtype = WINED3D_RTYPE_TEXTURE_3D;
             break;
 
         case D3DRTYPE_CUBETEXTURE:

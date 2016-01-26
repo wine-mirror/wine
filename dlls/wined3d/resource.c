@@ -93,12 +93,12 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     }
     resource_types[] =
     {
-        {WINED3D_RTYPE_BUFFER,          0,                              WINED3D_GL_RES_TYPE_BUFFER},
-        {WINED3D_RTYPE_TEXTURE_2D,      0,                              WINED3D_GL_RES_TYPE_TEX_2D},
-        {WINED3D_RTYPE_TEXTURE_2D,      0,                              WINED3D_GL_RES_TYPE_TEX_RECT},
-        {WINED3D_RTYPE_TEXTURE_2D,      0,                              WINED3D_GL_RES_TYPE_RB},
-        {WINED3D_RTYPE_TEXTURE_2D,      WINED3DUSAGE_LEGACY_CUBEMAP,    WINED3D_GL_RES_TYPE_TEX_CUBE},
-        {WINED3D_RTYPE_VOLUME_TEXTURE,  0,                              WINED3D_GL_RES_TYPE_TEX_3D},
+        {WINED3D_RTYPE_BUFFER,      0,                              WINED3D_GL_RES_TYPE_BUFFER},
+        {WINED3D_RTYPE_TEXTURE_2D,  0,                              WINED3D_GL_RES_TYPE_TEX_2D},
+        {WINED3D_RTYPE_TEXTURE_2D,  0,                              WINED3D_GL_RES_TYPE_TEX_RECT},
+        {WINED3D_RTYPE_TEXTURE_2D,  0,                              WINED3D_GL_RES_TYPE_RB},
+        {WINED3D_RTYPE_TEXTURE_2D,  WINED3DUSAGE_LEGACY_CUBEMAP,    WINED3D_GL_RES_TYPE_TEX_CUBE},
+        {WINED3D_RTYPE_TEXTURE_3D,  0,                              WINED3D_GL_RES_TYPE_TEX_3D},
     };
 
     resource_check_usage(usage);

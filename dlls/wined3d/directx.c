@@ -4662,7 +4662,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             }
             break;
 
-        case WINED3D_RTYPE_VOLUME_TEXTURE:
+        case WINED3D_RTYPE_TEXTURE_3D:
         case WINED3D_RTYPE_VOLUME:
             format_flags |= WINED3DFMT_FLAG_TEXTURE;
             allowed_usage = WINED3DUSAGE_DYNAMIC

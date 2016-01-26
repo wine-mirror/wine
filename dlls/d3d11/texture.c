@@ -914,7 +914,7 @@ static HRESULT d3d_texture3d_init(struct d3d_texture3d *texture, struct d3d_devi
     wined3d_private_store_init(&texture->private_store);
     texture->desc = *desc;
 
-    wined3d_desc.resource_type = WINED3D_RTYPE_VOLUME_TEXTURE;
+    wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE_3D;
     wined3d_desc.format = wined3dformat_from_dxgi_format(desc->Format);
     wined3d_desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     wined3d_desc.multisample_quality = 0;

@@ -657,9 +657,9 @@ enum wined3d_resource_type
 {
     WINED3D_RTYPE_SURFACE                   = 1,
     WINED3D_RTYPE_VOLUME                    = 2,
-    WINED3D_RTYPE_VOLUME_TEXTURE            = 3,
-    WINED3D_RTYPE_BUFFER                    = 4,
-    WINED3D_RTYPE_TEXTURE_2D                = 5,
+    WINED3D_RTYPE_BUFFER                    = 3,
+    WINED3D_RTYPE_TEXTURE_2D                = 4,
+    WINED3D_RTYPE_TEXTURE_3D                = 5,
 };
 
 enum wined3d_pool

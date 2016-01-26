@@ -1386,7 +1386,7 @@ HRESULT volumetexture_init(struct d3d9_texture *texture, struct d3d9_device *dev
     d3d9_resource_init(&texture->resource);
     list_init(&texture->rtv_list);
 
-    desc.resource_type = WINED3D_RTYPE_VOLUME_TEXTURE;
+    desc.resource_type = WINED3D_RTYPE_TEXTURE_3D;
     desc.format = wined3dformat_from_d3dformat(format);
     desc.multisample_type = WINED3D_MULTISAMPLE_NONE;
     desc.multisample_quality = 0;
