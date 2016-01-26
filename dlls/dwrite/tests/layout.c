@@ -1907,6 +1907,7 @@ todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 2, "got %u\n", count);
     ok(metrics[0].isWhitespace == 0, "got %d\n", metrics[0].isWhitespace);
+    ok(metrics[0].canWrapLineAfter == 0, "got %d\n", metrics[0].canWrapLineAfter);
     ok(metrics[1].isWhitespace == 1, "got %d\n", metrics[1].isWhitespace);
     ok(metrics[1].canWrapLineAfter == 1, "got %d\n", metrics[1].canWrapLineAfter);
     IDWriteTextLayout_Release(layout);
@@ -1990,6 +1991,10 @@ todo_wine {
     for (i = 0; i < count; i++) {
         ok(metrics[i].length == 1, "%d: got %d\n", i, metrics[i].length);
         ok(metrics[i].isSoftHyphen == (i == count - 1), "%d: got %d\n", i, metrics[i].isSoftHyphen);
+        if (metrics[i].isNewline) {
+            ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
+            ok(metrics[i].canWrapLineAfter == 1, "%u: got %d\n", i, metrics[i].canWrapLineAfter);
+        }
     }
 
     IDWriteTextLayout_Release(layout);

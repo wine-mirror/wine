@@ -603,10 +603,10 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
 
     position = run->descr.textPosition + stop_position;
     if (stop_glyph == run->glyphcount)
-        breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionAfter;
+        breakcondition = get_effective_breakpoint(layout, position).breakConditionAfter;
     else {
-        breakcondition = get_effective_breakpoint(layout, stop_position).breakConditionBefore;
-        if (stop_position) position = stop_position - 1;
+        breakcondition = get_effective_breakpoint(layout, position).breakConditionBefore;
+        if (stop_position) position -= 1;
     }
 
     metrics->canWrapLineAfter = breakcondition == DWRITE_BREAK_CONDITION_CAN_BREAK ||
