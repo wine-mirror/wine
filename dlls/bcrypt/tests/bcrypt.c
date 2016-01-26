@@ -68,15 +68,15 @@ static void test_BCryptGetFipsAlgorithmMode(void)
     ok(ret == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got 0x%x\n", ret);
 }
 
-static const char *format_hash(const UCHAR *bytes, ULONG size, char *buf)
+static void format_hash(const UCHAR *bytes, ULONG size, char *buf)
 {
     ULONG i;
+    buf[0] = '\0';
     for (i = 0; i < size; i++)
     {
-        buf += sprintf(buf, "%02x", bytes[i]);
+        sprintf(buf + i * 2, "%02x", bytes[i]);
     }
-    buf[i * 2] = 0;
-    return buf;
+    return;
 }
 
 static void test_sha1(void)
