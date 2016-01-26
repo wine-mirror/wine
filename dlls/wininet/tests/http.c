@@ -5809,15 +5809,33 @@ static void init_status_tests(void)
 
 static void WINAPI header_cb( HINTERNET handle, DWORD_PTR ctx, DWORD status, LPVOID info, DWORD len )
 {
-    if (status == INTERNET_STATUS_REQUEST_COMPLETE) SetEvent( (HANDLE)ctx );
+    BOOL ret;
+    DWORD index, size;
+    char buf[256];
+
+    if (status == INTERNET_STATUS_SENDING_REQUEST)
+    {
+        ret = HttpAddRequestHeadersA( handle, "winetest: winetest", ~0u, HTTP_ADDREQ_FLAG_ADD );
+        ok( ret, "HttpAddRequestHeadersA failed %u\n", GetLastError() );
+        SetEvent( (HANDLE)ctx );
+    }
+    else if (status == INTERNET_STATUS_REQUEST_SENT)
+    {
+        index = 0;
+        size = sizeof(buf);
+        ret = HttpQueryInfoA( handle, HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
+                              buf, &size, &index );
+        ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
+        ok( strstr( buf, "winetest: winetest" ) != NULL, "header missing\n" );
+        SetEvent( (HANDLE)ctx );
+    }
 }
 
 static void test_concurrent_header_access(void)
 {
     HINTERNET ses, con, req;
-    DWORD index, len, err;
+    DWORD err;
     BOOL ret;
-    char buf[128];
     HANDLE wait = CreateEventW( NULL, FALSE, FALSE, NULL );
 
     ses = InternetOpenA( "winetest", 0, NULL, NULL, INTERNET_FLAG_ASYNC );
@@ -5838,16 +5856,7 @@ static void test_concurrent_header_access(void)
     ok( !ret, "HttpSendRequestA succeeded\n" );
     ok( err == ERROR_IO_PENDING, "got %u\n", ERROR_IO_PENDING );
 
-    ret = HttpAddRequestHeadersA( req, "winetest: winetest", ~0u, HTTP_ADDREQ_FLAG_ADD );
-    ok( ret, "HttpAddRequestHeadersA failed %u\n", GetLastError() );
-
-    index = 0;
-    len = sizeof(buf);
-    ret = HttpQueryInfoA( req, HTTP_QUERY_RAW_HEADERS_CRLF|HTTP_QUERY_FLAG_REQUEST_HEADERS,
-                          buf, &len, &index );
-    ok( ret, "HttpQueryInfoA failed %u\n", GetLastError() );
-    ok( strstr( buf, "winetest: winetest" ) != NULL, "header missing\n" );
-
+    WaitForSingleObject( wait, 5000 );
     WaitForSingleObject( wait, 5000 );
 
     InternetCloseHandle( req );
