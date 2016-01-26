@@ -348,7 +348,7 @@ static HRESULT analyze_linebreaks(const WCHAR *text, UINT32 count, DWRITE_LINE_B
         breakpoints[i].breakConditionBefore = DWRITE_BREAK_CONDITION_CAN_BREAK;
         breakpoints[i].breakConditionAfter  = DWRITE_BREAK_CONDITION_CAN_BREAK;
         breakpoints[i].isWhitespace = !!isspaceW(text[i]);
-        breakpoints[i].isSoftHyphen = FALSE;
+        breakpoints[i].isSoftHyphen = text[i] == 0x00ad /* Unicode Soft Hyphen */;
         breakpoints[i].padding = 0;
 
         /* LB1 - resolve some classes. TODO: use external algorithms for these classes. */

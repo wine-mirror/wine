@@ -1666,13 +1666,13 @@ static void test_GetClusterMetrics(void)
         /* SP - SPACE  */ 0x20
     };
     static const WCHAR str5W[] = {'a','\r','b','\n','c','\n','\r','d','\r','\n','e',0xb,'f',0xc,
-        'g',0x0085,'h',0x2028,'i',0x2029,0};
+        'g',0x0085,'h',0x2028,'i',0x2029,0xad,0};
     static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     static const WCHAR str4W[] = {'a',' ',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
-    DWRITE_CLUSTER_METRICS metrics[20];
+    DWRITE_CLUSTER_METRICS metrics[21];
     IDWriteTextLayout1 *layout1;
     IDWriteInlineObject *trimm;
     IDWriteTextFormat *format;
@@ -1955,14 +1955,14 @@ todo_wine
     IDWriteTextLayout_Release(layout);
 
     /* isNewline tests */
-    hr = IDWriteFactory_CreateTextLayout(factory, str5W, 20, format, 100.0, 200.0, &layout);
+    hr = IDWriteFactory_CreateTextLayout(factory, str5W, lstrlenW(str5W), format, 100.0f, 200.0f, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     count = 0;
     memset(metrics, 0, sizeof(metrics));
-    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, 20, &count);
+    hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count == 20, "got %u\n", count);
+    ok(count == 21, "got %u\n", count);
 
 todo_wine {
     ok(metrics[1].isNewline == 1, "got %d\n", metrics[1].isNewline);
@@ -1987,8 +1987,10 @@ todo_wine {
     ok(metrics[16].isNewline == 0, "got %d\n", metrics[16].isNewline);
     ok(metrics[18].isNewline == 0, "got %d\n", metrics[18].isNewline);
 
-    for (i = 0; i < count; i++)
+    for (i = 0; i < count; i++) {
         ok(metrics[i].length == 1, "%d: got %d\n", i, metrics[i].length);
+        ok(metrics[i].isSoftHyphen == (i == count - 1), "%d: got %d\n", i, metrics[i].isSoftHyphen);
+    }
 
     IDWriteTextLayout_Release(layout);
 
