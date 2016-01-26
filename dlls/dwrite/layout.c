@@ -612,10 +612,7 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
     metrics->canWrapLineAfter = breakcondition == DWRITE_BREAK_CONDITION_CAN_BREAK ||
                                 breakcondition == DWRITE_BREAK_CONDITION_MUST_BREAK;
     if (metrics->length == 1) {
-        WORD type = 0;
-
-        GetStringTypeW(CT_CTYPE1, &layout->str[position], 1, &type);
-        metrics->isWhitespace = !!(type & C1_SPACE);
+        metrics->isWhitespace = get_effective_breakpoint(layout, position).isWhitespace;
         metrics->isNewline = FALSE /* FIXME */;
         metrics->isSoftHyphen = layout->str[position] == 0x00ad /* Unicode Soft Hyphen */;
     }
