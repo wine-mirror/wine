@@ -2981,6 +2981,7 @@ static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
             case WINED3DSIH_IGE: op = "greaterThanEqual"; break;
             case WINED3DSIH_UGE: op = "greaterThanEqual"; break;
             case WINED3DSIH_LT:  op = "lessThan"; break;
+            case WINED3DSIH_ILT: op = "lessThan"; break;
             case WINED3DSIH_NE:  op = "notEqual"; break;
             default:
                 op = "<unhandled operator>";
@@ -3001,6 +3002,7 @@ static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
             case WINED3DSIH_IGE: op = ">="; break;
             case WINED3DSIH_UGE: op = ">="; break;
             case WINED3DSIH_LT:  op = "<"; break;
+            case WINED3DSIH_ILT: op = "<"; break;
             case WINED3DSIH_NE:  op = "!="; break;
             default:
                 op = "<unhandled operator>";
@@ -8007,7 +8009,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IF                    */ shader_glsl_if,
     /* WINED3DSIH_IFC                   */ shader_glsl_ifc,
     /* WINED3DSIH_IGE                   */ shader_glsl_relop,
-    /* WINED3DSIH_ILT                   */ NULL,
+    /* WINED3DSIH_ILT                   */ shader_glsl_relop,
     /* WINED3DSIH_IMAD                  */ shader_glsl_mad,
     /* WINED3DSIH_IMAX                  */ shader_glsl_map2gl,
     /* WINED3DSIH_IMIN                  */ shader_glsl_map2gl,
