@@ -3015,14 +3015,26 @@ static void shader_glsl_relop(const struct wined3d_shader_instruction *ins)
     }
 }
 
-static void shader_glsl_ineg(const struct wined3d_shader_instruction *ins)
+static void shader_glsl_unary_op(const struct wined3d_shader_instruction *ins)
 {
     struct glsl_src_param src_param;
     DWORD write_mask;
+    const char *op;
+
+    switch (ins->handler_idx)
+    {
+        case WINED3DSIH_INEG: op = "-"; break;
+        case WINED3DSIH_NOT:  op = "~"; break;
+        default:
+            op = "<unhandled operator>";
+            ERR("Unhandled opcode %s.\n",
+                    debug_d3dshaderinstructionhandler(ins->handler_idx));
+            break;
+    }
 
     write_mask = shader_glsl_append_dst(ins->ctx->buffer, ins);
     shader_glsl_add_src_param(ins, &ins->src[0], write_mask, &src_param);
-    shader_addline(ins->ctx->buffer, "-%s);\n", src_param.param_str);
+    shader_addline(ins->ctx->buffer, "%s%s);\n", op, src_param.param_str);
 }
 
 static void shader_glsl_imul(const struct wined3d_shader_instruction *ins)
@@ -8025,7 +8037,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_IMIN                  */ shader_glsl_map2gl,
     /* WINED3DSIH_IMUL                  */ shader_glsl_imul,
     /* WINED3DSIH_INE                   */ NULL,
-    /* WINED3DSIH_INEG                  */ shader_glsl_ineg,
+    /* WINED3DSIH_INEG                  */ shader_glsl_unary_op,
     /* WINED3DSIH_ISHL                  */ shader_glsl_binop,
     /* WINED3DSIH_ITOF                  */ shader_glsl_to_float,
     /* WINED3DSIH_LABEL                 */ shader_glsl_label,
@@ -8050,7 +8062,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_MUL                   */ shader_glsl_binop,
     /* WINED3DSIH_NE                    */ shader_glsl_relop,
     /* WINED3DSIH_NOP                   */ shader_glsl_nop,
-    /* WINED3DSIH_NOT                   */ NULL,
+    /* WINED3DSIH_NOT                   */ shader_glsl_unary_op,
     /* WINED3DSIH_NRM                   */ shader_glsl_nrm,
     /* WINED3DSIH_OR                    */ shader_glsl_binop,
     /* WINED3DSIH_PHASE                 */ shader_glsl_nop,
