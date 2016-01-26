@@ -884,9 +884,12 @@ static void test_query_object(void)
     char buffer[1024];
     NTSTATUS status;
     ULONG len, expected_len;
-    UNICODE_STRING *str;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING path, *str;
     char dir[MAX_PATH], tmp_path[MAX_PATH], file1[MAX_PATH + 16];
     LARGE_INTEGER size;
+
+    InitializeObjectAttributes( &attr, &path, 0, 0, 0 );
 
     handle = CreateEventA( NULL, FALSE, FALSE, "test_event" );
 
@@ -917,9 +920,12 @@ static void test_query_object(void)
     str = (UNICODE_STRING *)buffer;
     ok( sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR) == len, "unexpected len %u\n", len );
     ok( str->Length >= sizeof(name), "unexpected len %u\n", str->Length );
+    ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_event") * sizeof(WCHAR),
+        "name too short %s\n", wine_dbgstr_w(str->Buffer) );
     /* there can be a \\Sessions prefix in the name */
     ok( !memcmp( str->Buffer + (str->Length - sizeof(name)) / sizeof(WCHAR), name, sizeof(name) ),
         "wrong name %s\n", wine_dbgstr_w(str->Buffer) );
+    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
 
     len -= sizeof(WCHAR);
     status = pNtQueryObject( handle, ObjectNameInformation, buffer, len, &len );
@@ -1052,6 +1058,64 @@ static void test_query_object(void)
     ok( len >= expected_len, "unexpected len %u\n", len );
     ok( str->Buffer && !memcmp( str->Buffer, type_section, sizeof(type_section) ),
                   "wrong/bad type name %s (%p)\n", wine_dbgstr_w(str->Buffer), str->Buffer );
+    pNtClose( handle );
+
+    handle = CreateMailslotA( "\\\\.\\mailslot\\test_mailslot", 100, 1000, NULL );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateMailslot failed err %u\n", GetLastError() );
+    len = 0;
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS , "NtQueryObject returned %x\n", status );
+    str = (UNICODE_STRING *)buffer;
+    ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
+    ok( len == expected_len || broken(len == expected_len - sizeof(WCHAR)), /* NT4 */
+        "unexpected len %u\n", len );
+    todo_wine
+    ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_mailslot") * sizeof(WCHAR),
+        "name too short %s\n", wine_dbgstr_w(str->Buffer) );
+    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
+    pNtClose( handle );
+
+    handle = CreateNamedPipeA( "\\\\.\\pipe\\test_pipe", PIPE_ACCESS_DUPLEX, PIPE_READMODE_BYTE,
+                               1, 1000, 1000, 1000, NULL );
+    ok( handle != INVALID_HANDLE_VALUE, "CreateNamedPipe failed err %u\n", GetLastError() );
+    len = 0;
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS , "NtQueryObject returned %x\n", status );
+    str = (UNICODE_STRING *)buffer;
+    todo_wine
+    ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
+    todo_wine
+    ok( len == expected_len || broken(len == expected_len - sizeof(WCHAR)), /* NT4 */
+        "unexpected len %u\n", len );
+    todo_wine
+    ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_pipe") * sizeof(WCHAR),
+        "name too short %s\n", wine_dbgstr_w(str->Buffer) );
+    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
+    pNtClose( handle );
+
+    pRtlCreateUnicodeStringFromAsciiz( &path, "\\REGISTRY\\Machine\\Software\\Classes" );
+    status = pNtCreateKey( &handle, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
+    ok( handle != 0, "NtCreateKey failed status %x\n", status );
+    pRtlFreeUnicodeString( &path );
+    len = 0;
+    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
+    ok( status == STATUS_SUCCESS , "NtQueryObject returned %x\n", status );
+    str = (UNICODE_STRING *)buffer;
+    todo_wine
+    ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
+    str = (UNICODE_STRING *)buffer;
+    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
+    todo_wine
+    ok( len == expected_len || broken(len == expected_len - sizeof(WCHAR)), /* NT4 */
+        "unexpected len %u\n", len );
+    todo_wine
+    ok( len > sizeof(UNICODE_STRING) + sizeof("\\Classes") * sizeof(WCHAR),
+        "name too short %s\n", wine_dbgstr_w(str->Buffer) );
+    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
     pNtClose( handle );
 }
 
