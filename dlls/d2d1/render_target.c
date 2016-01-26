@@ -32,6 +32,17 @@ struct d2d_draw_text_layout_ctx
     D2D1_DRAW_TEXT_OPTIONS options;
 };
 
+static ID2D1Brush *d2d_draw_get_text_brush(struct d2d_draw_text_layout_ctx *context, IUnknown *effect)
+{
+    ID2D1Brush *brush = NULL;
+
+    if (effect && SUCCEEDED(IUnknown_QueryInterface(effect, &IID_ID2D1Brush, (void**)&brush)))
+        return brush;
+
+    ID2D1Brush_AddRef(context->brush);
+    return context->brush;
+}
+
 static void d2d_point_set(D2D1_POINT_2F *dst, float x, float y)
 {
     dst->x = x;
@@ -1638,6 +1649,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
     struct d2d_d3d_render_target *render_target = impl_from_IDWriteTextRenderer(iface);
     D2D1_POINT_2F baseline_origin = {baseline_origin_x, baseline_origin_y};
     struct d2d_draw_text_layout_ctx *context = ctx;
+    ID2D1Brush *brush;
 
     TRACE("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, "
             "measuring_mode %#x, glyph_run %p, desc %p, effect %p.\n",
@@ -1646,14 +1658,16 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawGlyphRun(IDWriteTextRende
 
     if (desc)
         WARN("Ignoring glyph run description %p.\n", desc);
-    if (effect)
-        FIXME("Ignoring effect %p.\n", effect);
     if (context->options & ~D2D1_DRAW_TEXT_OPTIONS_NO_SNAP)
         FIXME("Ignoring options %#x.\n", context->options);
 
+    brush = d2d_draw_get_text_brush(context, effect);
+
     TRACE("%s\n", debugstr_wn(desc->string, desc->stringLength));
     ID2D1RenderTarget_DrawGlyphRun(&render_target->ID2D1RenderTarget_iface,
-            baseline_origin, glyph_run, context->brush, measuring_mode);
+            baseline_origin, glyph_run, brush, measuring_mode);
+
+    ID2D1Brush_Release(brush);
 
     return S_OK;
 }
