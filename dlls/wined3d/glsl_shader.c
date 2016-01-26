@@ -8050,6 +8050,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_MUL                   */ shader_glsl_binop,
     /* WINED3DSIH_NE                    */ shader_glsl_relop,
     /* WINED3DSIH_NOP                   */ shader_glsl_nop,
+    /* WINED3DSIH_NOT                   */ NULL,
     /* WINED3DSIH_NRM                   */ shader_glsl_nrm,
     /* WINED3DSIH_OR                    */ shader_glsl_binop,
     /* WINED3DSIH_PHASE                 */ shader_glsl_nop,
