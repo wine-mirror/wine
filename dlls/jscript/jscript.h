@@ -117,7 +117,8 @@ typedef enum {
     JSCLASS_REGEXP,
     JSCLASS_STRING,
     JSCLASS_ARGUMENTS,
-    JSCLASS_VBARRAY
+    JSCLASS_VBARRAY,
+    JSCLASS_JSON
 } jsclass_t;
 
 jsdisp_t *iface_to_jsdisp(IUnknown*) DECLSPEC_HIDDEN;
@@ -317,6 +318,7 @@ HRESULT create_string(script_ctx_t*,jsstr_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_bool(script_ctx_t*,BOOL,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_number(script_ctx_t*,double,jsdisp_t**) DECLSPEC_HIDDEN;
 HRESULT create_vbarray(script_ctx_t*,SAFEARRAY*,jsdisp_t**) DECLSPEC_HIDDEN;
+HRESULT create_json(script_ctx_t*,jsdisp_t**) DECLSPEC_HIDDEN;
 
 typedef enum {
     NO_HINT,

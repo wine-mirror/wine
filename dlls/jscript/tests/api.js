@@ -2717,6 +2717,14 @@ testFunctions(VBArray.prototype, [
         ["lbound", 0],
         ["toArray", 0],
         ["ubound", 0]
+]);
+
+if(invokeVersion < 2)
+    ok(typeof(JSON) === "undefined", "JSON is not undefined");
+else
+    testFunctions(JSON, [
+        ["parse", 2],
+        ["stringify", 3]
     ]);
 
 ok(ActiveXObject.length == 1, "ActiveXObject.length = " + ActiveXObject.length);
