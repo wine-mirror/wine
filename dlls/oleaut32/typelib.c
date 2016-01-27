@@ -9280,7 +9280,7 @@ static DWORD WMSFT_compile_custdata(struct list *custdata_list, WMSFT_TLBFile *f
 {
     WMSFT_SegContents *cdguids_seg = &file->cdguids_seg;
     DWORD ret = cdguids_seg->len, offs;
-    MSFT_CDGuid *cdguid = cdguids_seg->data;
+    MSFT_CDGuid *cdguid;
     TLBCustData *cd;
 
     if(list_empty(custdata_list))
@@ -9289,8 +9289,10 @@ static DWORD WMSFT_compile_custdata(struct list *custdata_list, WMSFT_TLBFile *f
     cdguids_seg->len += sizeof(MSFT_CDGuid) * list_count(custdata_list);
     if(!cdguids_seg->data){
         cdguid = cdguids_seg->data = heap_alloc(cdguids_seg->len);
-    }else
+    }else {
         cdguids_seg->data = heap_realloc(cdguids_seg->data, cdguids_seg->len);
+        cdguid = (MSFT_CDGuid*)((char*)cdguids_seg->data + ret);
+    }
 
     offs = ret + sizeof(MSFT_CDGuid);
     LIST_FOR_EACH_ENTRY(cd, custdata_list, TLBCustData, entry){
