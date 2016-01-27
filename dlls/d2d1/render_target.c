@@ -1679,6 +1679,7 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRend
     const D2D1_MATRIX_3X2_F *m = &render_target->drawing_state.transform;
     struct d2d_draw_text_layout_ctx *context = ctx;
     float min_thickness;
+    ID2D1Brush *brush;
     D2D1_RECT_F rect;
 
     TRACE("iface %p, ctx %p, baseline_origin_x %.8e, baseline_origin_y %.8e, underline %p, effect %p\n",
@@ -1692,7 +1693,12 @@ static HRESULT STDMETHODCALLTYPE d2d_text_renderer_DrawUnderline(IDWriteTextRend
     rect.right  = baseline_origin_x + underline->width;
     rect.bottom = baseline_origin_y + underline->offset + max(underline->thickness, min_thickness);
 
-    ID2D1RenderTarget_FillRectangle(&render_target->ID2D1RenderTarget_iface, &rect, context->brush);
+    brush = d2d_draw_get_text_brush(context, effect);
+
+    ID2D1RenderTarget_FillRectangle(&render_target->ID2D1RenderTarget_iface, &rect, brush);
+
+    ID2D1Brush_Release(brush);
+
     return S_OK;
 }
 
