@@ -2755,6 +2755,12 @@ static HRESULT WINAPI d3d_device3_SetRenderState(IDirect3DDevice3 *iface,
 
     TRACE("iface %p, state %#x, value %#x.\n", iface, state, value);
 
+    if (state >= D3DSTATE_OVERRIDE_BIAS)
+    {
+        WARN("Unhandled state %#x.\n", state);
+        return DDERR_INVALIDPARAMS;
+    }
+
     wined3d_mutex_lock();
 
     switch (state)
