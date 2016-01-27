@@ -2606,7 +2606,23 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
 
     memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
     SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(NULL, TRUE, &cfi);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
+    ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
+
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
     ret = GetCurrentConsoleFont(GetStdHandle(STD_INPUT_HANDLE), FALSE, &cfi);
+    ok(!ret, "got %d, expected 0\n", ret);
+    ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
+    ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
+    ok(!cfi.dwFontSize.Y, "got %d, expected 0\n", cfi.dwFontSize.Y);
+
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(GetStdHandle(STD_INPUT_HANDLE), TRUE, &cfi);
     ok(!ret, "got %d, expected 0\n", ret);
     ok(GetLastError() == ERROR_INVALID_HANDLE, "got %u, expected 6\n", GetLastError());
     ok(!cfi.dwFontSize.X, "got %d, expected 0\n", cfi.dwFontSize.X);
@@ -2625,6 +2641,16 @@ static void test_GetCurrentConsoleFont(HANDLE std_output)
         "got %d, expected %d\n", cfi.dwFontSize.X, width);
     ok(cfi.dwFontSize.Y == height || cfi.dwFontSize.Y == c.Y /* Vista and higher */,
         "got %d, expected %d\n", cfi.dwFontSize.Y, height);
+
+    memset(&cfi, 0, sizeof(CONSOLE_FONT_INFO));
+    SetLastError(0xdeadbeef);
+    ret = GetCurrentConsoleFont(std_output, TRUE, &cfi);
+    ok(ret, "got %d, expected non-zero\n", ret);
+    ok(GetLastError() == 0xdeadbeef, "got %u, expected 0xdeadbeef\n", GetLastError());
+    ok(cfi.dwFontSize.X == csbi.dwMaximumWindowSize.X,
+       "got %d, expected %d\n", cfi.dwFontSize.X, csbi.dwMaximumWindowSize.X);
+    ok(cfi.dwFontSize.Y == csbi.dwMaximumWindowSize.Y,
+       "got %d, expected %d\n", cfi.dwFontSize.Y, csbi.dwMaximumWindowSize.Y);
 }
 
 static void test_GetConsoleFontSize(HANDLE std_output)
