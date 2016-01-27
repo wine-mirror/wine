@@ -132,6 +132,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_ROUND_Z               */ "round_z",
     /* WINED3DSIH_RSQ                   */ "rsq",
     /* WINED3DSIH_SAMPLE                */ "sample",
+    /* WINED3DSIH_SAMPLE_B              */ "sample_b",
     /* WINED3DSIH_SAMPLE_C_LZ           */ "sample_c_lz",
     /* WINED3DSIH_SAMPLE_GRAD           */ "sample_d",
     /* WINED3DSIH_SAMPLE_LOD            */ "sample_l",
@@ -1073,6 +1074,7 @@ static HRESULT shader_get_registers_used(struct wined3d_shader *shader, const st
                 --cur_loop_depth;
             }
             else if (ins.handler_idx == WINED3DSIH_SAMPLE
+                    || ins.handler_idx == WINED3DSIH_SAMPLE_B
                     || ins.handler_idx == WINED3DSIH_SAMPLE_C_LZ
                     || ins.handler_idx == WINED3DSIH_SAMPLE_GRAD
                     || ins.handler_idx == WINED3DSIH_SAMPLE_LOD)
