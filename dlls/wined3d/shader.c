@@ -128,6 +128,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_RESINFO               */ "resinfo",
     /* WINED3DSIH_RET                   */ "ret",
     /* WINED3DSIH_ROUND_NI              */ "round_ni",
+    /* WINED3DSIH_ROUND_PI              */ "round_pi",
     /* WINED3DSIH_RSQ                   */ "rsq",
     /* WINED3DSIH_SAMPLE                */ "sample",
     /* WINED3DSIH_SAMPLE_GRAD           */ "sample_d",
