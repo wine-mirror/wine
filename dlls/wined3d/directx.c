@@ -4408,36 +4408,39 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
         enum wined3d_device_type device_type, enum wined3d_format_id surface_format_id, BOOL windowed,
         enum wined3d_multisample_type multisample_type, DWORD *quality_levels)
 {
-    const struct wined3d_gl_info *gl_info;
+    const struct wined3d_gl_info *gl_info = &wined3d->adapters[adapter_idx].gl_info;
+    const struct wined3d_format *format = wined3d_get_format(gl_info, surface_format_id);
+    HRESULT hr = WINED3D_OK;
 
-    TRACE("wined3d %p, adapter_idx %u, device_type %s, surface_format %s,\n"
+    TRACE("wined3d %p, adapter_idx %u, device_type %s, surface_format %s, "
             "windowed %#x, multisample_type %#x, quality_levels %p.\n",
             wined3d, adapter_idx, debug_d3ddevicetype(device_type), debug_d3dformat(surface_format_id),
             windowed, multisample_type, quality_levels);
 
     if (adapter_idx >= wined3d->adapter_count)
         return WINED3DERR_INVALIDCALL;
+    if (surface_format_id == WINED3DFMT_UNKNOWN)
+        return WINED3DERR_INVALIDCALL;
+    if (multisample_type < WINED3D_MULTISAMPLE_NONE || multisample_type > WINED3D_MULTISAMPLE_16_SAMPLES)
+        return WINED3DERR_INVALIDCALL;
 
-    gl_info = &wined3d->adapters[adapter_idx].gl_info;
+    if (multisample_type && !(format->multisample_types & 1u << (multisample_type - 1)))
+        hr = WINED3DERR_NOTAVAILABLE;
 
-    if (multisample_type > gl_info->limits.samples)
+    if (SUCCEEDED(hr) || (multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE && format->multisample_types))
     {
-        TRACE("Returning not supported.\n");
         if (quality_levels)
-            *quality_levels = 0;
-
-        return WINED3DERR_NOTAVAILABLE;
+        {
+            if (multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
+                *quality_levels = wined3d_popcount(format->multisample_types);
+            else
+                *quality_levels = 1;
+        }
+        return WINED3D_OK;
     }
 
-    if (quality_levels)
-    {
-        if (multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE)
-            *quality_levels = wined3d_log2i(gl_info->limits.samples);
-        else
-            *quality_levels = 1;
-    }
-
-    return WINED3D_OK;
+    TRACE("Returning not supported.\n");
+    return hr;
 }
 
 /* Check if the given DisplayFormat + DepthStencilFormat combination is valid for the Adapter */

@@ -2162,10 +2162,11 @@ static void init_format_fbo_compat_info(struct wined3d_caps_gl_ctx *ctx)
 
 static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct wined3d_gl_info *gl_info)
 {
+    GLint count, multisample_types[MAX_MULTISAMPLE_TYPES];
     struct fragment_caps fragment_caps;
     struct shader_caps shader_caps;
     BOOL srgb_write;
-    unsigned int i;
+    unsigned int i, j, max_log2;
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
     adapter->shader_backend->shader_get_caps(gl_info, &shader_caps);
@@ -2281,6 +2282,34 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
                 format->flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
                 format->flags[WINED3D_GL_RES_TYPE_TEX_CUBE] &= ~WINED3DFMT_FLAG_TEXTURE;
                 format->flags[WINED3D_GL_RES_TYPE_TEX_RECT] &= ~WINED3DFMT_FLAG_TEXTURE;
+            }
+        }
+
+        if (format->glInternal && format->flags[WINED3D_GL_RES_TYPE_RB]
+                & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+        {
+            if (gl_info->supported[ARB_INTERNALFORMAT_QUERY])
+            {
+                GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
+                        GL_NUM_SAMPLE_COUNTS, 1, &count));
+                checkGLcall("glGetInternalformativ(GL_NUM_SAMPLE_COUNTS)");
+                count = min(count, MAX_MULTISAMPLE_TYPES);
+                GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
+                        GL_SAMPLES, count, multisample_types));
+                checkGLcall("glGetInternalformativ(GL_SAMPLES)");
+                for (j = 0; j < count; ++j)
+                {
+                    if (multisample_types[j] > sizeof(format->multisample_types) * 8)
+                        continue;
+                    format->multisample_types |= 1u << (multisample_types[j] - 1);
+                }
+            }
+            else
+            {
+                max_log2 = wined3d_log2i(min(gl_info->limits.samples,
+                        sizeof(format->multisample_types) * 8));
+                for (j = 1; j <= max_log2; ++j)
+                    format->multisample_types |= 1u << ((1u << j) - 1);
             }
         }
 

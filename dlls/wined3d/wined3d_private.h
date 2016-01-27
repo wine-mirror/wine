@@ -185,6 +185,7 @@ void wined3d_rb_free(void *ptr) DECLSPEC_HIDDEN;
 #define MAX_SAMPLER_OBJECTS         16
 #define MAX_SHADER_RESOURCE_VIEWS   128
 #define MAX_VERTEX_BLENDS           4
+#define MAX_MULTISAMPLE_TYPES       8
 
 struct min_lookup
 {
@@ -3271,6 +3272,7 @@ struct wined3d_format
     GLint glFormat;
     GLint glType;
     UINT  conv_byte_count;
+    DWORD multisample_types;
     unsigned int flags[WINED3D_GL_RES_TYPE_COUNT];
     struct wined3d_rational height_scale;
     struct color_fixup_desc color_fixup;
