@@ -1404,19 +1404,6 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
     HRESULT hr = DD_OK;
     UINT i;
 
-    if (!dst_surface->clipper)
-    {
-        if (src_surface && src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-            hr = ddraw_surface_update_frontbuffer(src_surface, src_rect_in, TRUE);
-        if (SUCCEEDED(hr))
-            hr = wined3d_surface_blt(dst_surface->wined3d_surface, dst_rect_in,
-                    wined3d_src_surface, src_rect_in, flags, fx, filter);
-        if (SUCCEEDED(hr) && (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
-            hr = ddraw_surface_update_frontbuffer(dst_surface, dst_rect_in, FALSE);
-
-        return hr;
-    }
-
     if (!dst_rect_in)
     {
         dst_rect.left = 0;
@@ -1452,6 +1439,19 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
     else
     {
         SetRect(&src_rect, 0, 0, 0, 0);
+    }
+
+    if (!dst_surface->clipper)
+    {
+        if (src_surface && src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+            hr = ddraw_surface_update_frontbuffer(src_surface, &src_rect, TRUE);
+        if (SUCCEEDED(hr))
+            hr = wined3d_surface_blt(dst_surface->wined3d_surface, &dst_rect,
+                    wined3d_src_surface, &src_rect, flags, fx, filter);
+        if (SUCCEEDED(hr) && (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
+            hr = ddraw_surface_update_frontbuffer(dst_surface, &dst_rect, FALSE);
+
+        return hr;
     }
 
     scale_x = (float)(src_rect.right - src_rect.left) / (float)(dst_rect.right - dst_rect.left);
