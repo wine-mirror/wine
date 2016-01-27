@@ -845,6 +845,65 @@ cleanup:
     DestroyWindow(window);
 }
 
+static void test_invalid_multisample(void)
+{
+    IDirect3DDevice8 *device;
+    IDirect3DSurface8 *rt;
+    IDirect3D8 *d3d;
+    BOOL available;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("d3d8_test_wc", "d3d8_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, NULL, NULL, NULL, NULL);
+    ok(!!window, "Failed to create a window.\n");
+    d3d = Direct3DCreate8(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (!(device = create_device(d3d, window, NULL)))
+    {
+        skip("Failed to create a 3D device, skipping test.\n");
+        goto cleanup;
+    }
+
+    available = SUCCEEDED(IDirect3D8_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, TRUE, D3DMULTISAMPLE_2_SAMPLES));
+
+    hr = IDirect3DDevice8_CreateRenderTarget(device, 128, 128,
+            D3DFMT_X8R8G8B8, D3DMULTISAMPLE_2_SAMPLES, FALSE, &rt);
+    if (available)
+    {
+        ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+        IDirect3DSurface8_Release(rt);
+    }
+    else
+    {
+        ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+    }
+
+    /* We assume D3DMULTISAMPLE_15_SAMPLES is never supported in practice. */
+    available = SUCCEEDED(IDirect3D8_CheckDeviceMultiSampleType(d3d, D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, TRUE, D3DMULTISAMPLE_15_SAMPLES));
+    hr = IDirect3DDevice8_CreateRenderTarget(device, 128, 128,
+            D3DFMT_X8R8G8B8, D3DMULTISAMPLE_15_SAMPLES, FALSE, &rt);
+    if (available)
+    {
+        ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+        IDirect3DSurface8_Release(rt);
+    }
+    else
+    {
+        ok(hr == D3DERR_NOTAVAILABLE, "Got unexpected hr %#x.\n", hr);
+    }
+
+    refcount = IDirect3DDevice8_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+cleanup:
+    IDirect3D8_Release(d3d);
+    DestroyWindow(window);
+}
+
 static void test_cursor(void)
 {
     HMODULE user32_handle = GetModuleHandleA("user32.dll");
@@ -7842,6 +7901,7 @@ START_TEST(device)
     test_refcount();
     test_mipmap_levels();
     test_checkdevicemultisampletype();
+    test_invalid_multisample();
     test_cursor();
     test_cursor_pos();
     test_states();
