@@ -64,7 +64,11 @@ extern "C" {
 #   error You need to define __stdcall for your compiler
 #  endif
 # elif defined(__x86_64__) && defined (__GNUC__)
-#  define __stdcall __attribute__((ms_abi))
+#  if (__GNUC__ > 5) || ((__GNUC__ == 5) && (__GNUC_MINOR__ >= 3))
+#   define __stdcall __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
+#  else
+#   define __stdcall __attribute__((ms_abi))
+#  endif
 # else  /* __i386__ */
 #  define __stdcall
 # endif  /* __i386__ */
@@ -78,7 +82,11 @@ extern "C" {
 #   define __cdecl __attribute__((__cdecl__))
 #  endif
 # elif defined(__x86_64__) && defined (__GNUC__)
-#  define __cdecl __attribute__((ms_abi))
+#  if (__GNUC__ > 5) || ((__GNUC__ == 5) && (__GNUC_MINOR__ >= 3))
+#   define __cdecl __attribute__((ms_abi)) __attribute__((__force_align_arg_pointer__))
+#  else
+#   define __cdecl __attribute__((ms_abi))
+#  endif
 # elif !defined(_MSC_VER)
 #  define __cdecl
 # endif
