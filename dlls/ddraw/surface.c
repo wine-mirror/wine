@@ -46,21 +46,18 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RE
     int x, y, w, h;
     HRESULT hr;
     BOOL ret;
+    RECT r;
 
     if (!rect)
     {
-        x = 0;
-        y = 0;
-        w = surface->surface_desc.dwWidth;
-        h = surface->surface_desc.dwHeight;
+        SetRect(&r, 0, 0, surface->surface_desc.dwWidth, surface->surface_desc.dwHeight);
+        rect = &r;
     }
-    else
-    {
-        x = rect->left;
-        y = rect->top;
-        w = rect->right - rect->left;
-        h = rect->bottom - rect->top;
-    }
+
+    x = rect->left;
+    y = rect->top;
+    w = rect->right - rect->left;
+    h = rect->bottom - rect->top;
 
     if (w <= 0 || h <= 0)
         return DD_OK;
