@@ -3267,20 +3267,21 @@ BOOL WINAPI GetCurrentConsoleFont(HANDLE hConsole, BOOL maxwindow, LPCONSOLE_FON
 
     memset(fontinfo, 0, sizeof(CONSOLE_FONT_INFO));
 
-    if (maxwindow)
-    {
-        FIXME(": (%p, %d, %p) stub!\n", hConsole, maxwindow, fontinfo);
-        SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-        return FALSE;
-    }
-
     SERVER_START_REQ(get_console_output_info)
     {
         req->handle = console_handle_unmap(hConsole);
         if ((ret = !wine_server_call_err(req)))
         {
-            fontinfo->dwFontSize.X = reply->win_right - reply->win_left + 1;
-            fontinfo->dwFontSize.Y = reply->win_bottom - reply->win_top + 1;
+            if (maxwindow)
+            {
+                fontinfo->dwFontSize.X = min(reply->width, reply->max_width);
+                fontinfo->dwFontSize.Y = min(reply->height, reply->max_height);
+            }
+            else
+            {
+                fontinfo->dwFontSize.X = reply->win_right - reply->win_left + 1;
+                fontinfo->dwFontSize.Y = reply->win_bottom - reply->win_top + 1;
+            }
         }
     }
     SERVER_END_REQ;
