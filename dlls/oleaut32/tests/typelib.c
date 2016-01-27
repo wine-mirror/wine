@@ -1667,6 +1667,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     static OLECHAR *names1[] = {func1W, param1W, param2W};
     static OLECHAR *names2[] = {func2W, param1W, param2W};
     static OLECHAR *propname[] = {prop1W, param1W};
+    static const GUID tlcustguid = {0xbf611abe,0x5b38,0x11df,{0x91,0x5c,0x08,0x02,0x79,0x79,0x94,0x69}};
     static const GUID custguid = {0xbf611abe,0x5b38,0x11df,{0x91,0x5c,0x08,0x02,0x79,0x79,0x94,0x70}};
     static const GUID bogusguid = {0xbf611abe,0x5b38,0x11df,{0x91,0x5c,0x08,0x02,0x79,0x79,0x94,0x71}};
     static const GUID interfaceguid = {0x3b9ff02f,0x9675,0x4861,{0xb7,0x81,0xce,0xae,0xa4,0x78,0x2a,0xcc}};
@@ -1678,6 +1679,7 @@ static void test_CreateTypeLib(SYSKIND sys) {
     ICreateTypeInfo *createti;
     ICreateTypeInfo2 *createti2;
     ITypeLib *tl, *stdole;
+    ITypeLib2 *tl2;
     ITypeInfo *interface1, *interface2, *dual, *unknown, *dispatch, *ti;
     ITypeInfo *tinfos[2];
     ITypeInfo2 *ti2;
@@ -1795,6 +1797,23 @@ static void test_CreateTypeLib(SYSKIND sys) {
 
     SysFreeString(name);
     SysFreeString(helpfile);
+
+    V_VT(&cust_data) = VT_I4;
+    V_I4(&cust_data) = 1;
+    hres = ICreateTypeLib2_SetCustData(createtl, &tlcustguid, &cust_data);
+    ok(hres == S_OK, "got %08x\n", hres);
+
+    hres = ITypeLib_QueryInterface(tl, &IID_ITypeLib2, (void**)&tl2);
+    ok(hres == S_OK, "no ITypeLib2 interface (%x)\n", hres);
+
+    V_VT(&cust_data) = VT_EMPTY;
+    V_I4(&cust_data) = 0;
+    hres = ITypeLib2_GetCustData(tl2, &tlcustguid, &cust_data);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(V_VT(&cust_data) == VT_I4, "V_VT(&cust_data) = %d\n", V_VT(&cust_data));
+    ok(V_I4(&cust_data) == 1, "V_I4(&cust_data) = %d\n", V_I4(&cust_data));
+
+    ITypeLib2_Release(tl2);
 
     /* invalid parameters */
     hres = ICreateTypeLib2_CreateTypeInfo(createtl, NULL, TKIND_INTERFACE, &createti);
@@ -2859,6 +2878,16 @@ static void test_CreateTypeLib(SYSKIND sys) {
             "got wrong helpfile: %s\n", wine_dbgstr_w(helpfile));
     SysFreeString(name);
     SysFreeString(helpfile);
+
+    hres = ITypeLib_QueryInterface(tl, &IID_ITypeLib2, (void**)&tl2);
+    ok(hres == S_OK, "no ITypeLib2 interface (%x)\n", hres);
+    V_VT(&cust_data) = VT_EMPTY;
+    V_I4(&cust_data) = 0;
+    hres = ITypeLib2_GetCustData(tl2, &tlcustguid, &cust_data);
+    ok(hres == S_OK, "got %08x\n", hres);
+    ok(V_VT(&cust_data) == VT_I4, "V_VT(&cust_data) = %d\n", V_VT(&cust_data));
+    ok(V_I4(&cust_data) == 1, "V_I4(&cust_data) = %d\n", V_I4(&cust_data));
+    ITypeLib2_Release(tl2);
 
     hres = ITypeLib_GetTypeInfo(tl, 0, &ti);
     ok(hres == S_OK, "got %08x\n", hres);
