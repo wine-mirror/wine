@@ -4093,44 +4093,38 @@ static HRESULT WINAPI ddraw_surface7_GetLOD(IDirectDrawSurface7 *iface, DWORD *M
  *  For more details, see IWineD3DSurface::BltFast
  *
  *****************************************************************************/
-static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_BltFast(IDirectDrawSurface7 *iface, DWORD dstx, DWORD dsty,
-        IDirectDrawSurface7 *Source, RECT *rsrc, DWORD trans)
+static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_BltFast(IDirectDrawSurface7 *iface,
+        DWORD dst_x, DWORD dst_y, IDirectDrawSurface7 *src_surface, RECT *src_rect, DWORD trans)
 {
-    struct ddraw_surface *This = impl_from_IDirectDrawSurface7(iface);
-    struct ddraw_surface *src = unsafe_impl_from_IDirectDrawSurface7(Source);
+    struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface7(iface);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src_surface);
     DWORD src_w, src_h, dst_w, dst_h;
     HRESULT hr = DD_OK;
+    RECT dst_rect, s;
     DWORD flags = 0;
-    RECT dst_rect;
 
     TRACE("iface %p, dst_x %u, dst_y %u, src_surface %p, src_rect %s, flags %#x.\n",
-            iface, dstx, dsty, Source, wine_dbgstr_rect(rsrc), trans);
+            iface, dst_x, dst_y, src_surface, wine_dbgstr_rect(src_rect), trans);
 
-    dst_w = This->surface_desc.dwWidth;
-    dst_h = This->surface_desc.dwHeight;
+    dst_w = dst_impl->surface_desc.dwWidth;
+    dst_h = dst_impl->surface_desc.dwHeight;
 
-    /* Source must be != NULL, This is not checked by windows. Windows happily throws a 0xc0000005
-     * in that case
-     */
-    if(rsrc)
+    if (!src_rect)
     {
-        src_w = rsrc->right - rsrc->left;
-        src_h = rsrc->bottom - rsrc->top;
-    }
-    else
-    {
-        src_w = src->surface_desc.dwWidth;
-        src_h = src->surface_desc.dwHeight;
+        SetRect(&s, 0, 0, src_impl->surface_desc.dwWidth, src_impl->surface_desc.dwHeight);
+        src_rect = &s;
     }
 
-    if (src_w > dst_w || dstx > dst_w - src_w
-            || src_h > dst_h || dsty > dst_h - src_h)
+    src_w = src_rect->right - src_rect->left;
+    src_h = src_rect->bottom - src_rect->top;
+    if (src_w > dst_w || dst_x > dst_w - src_w
+            || src_h > dst_h || dst_y > dst_h - src_h)
     {
         WARN("Destination area out of bounds, returning DDERR_INVALIDRECT.\n");
         return DDERR_INVALIDRECT;
     }
 
-    SetRect(&dst_rect, dstx, dsty, dstx + src_w, dsty + src_h);
+    SetRect(&dst_rect, dst_x, dst_y, dst_x + src_w, dst_y + src_h);
     if (trans & DDBLTFAST_SRCCOLORKEY)
         flags |= WINEDDBLT_KEYSRC;
     if (trans & DDBLTFAST_DESTCOLORKEY)
@@ -4141,20 +4135,20 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_BltFast(IDirectDrawSurfac
         flags |= WINEDDBLT_DONOTWAIT;
 
     wined3d_mutex_lock();
-    if (This->clipper)
+    if (dst_impl->clipper)
     {
         wined3d_mutex_unlock();
         WARN("Destination surface has a clipper set, returning DDERR_BLTFASTCANTCLIP.\n");
         return DDERR_BLTFASTCANTCLIP;
     }
 
-    if (src->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-        hr = ddraw_surface_update_frontbuffer(src, rsrc, TRUE);
+    if (src_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+        hr = ddraw_surface_update_frontbuffer(src_impl, src_rect, TRUE);
     if (SUCCEEDED(hr))
-        hr = wined3d_surface_blt(This->wined3d_surface, &dst_rect,
-                src->wined3d_surface, rsrc, flags, NULL, WINED3D_TEXF_POINT);
-    if (SUCCEEDED(hr) && (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
-        hr = ddraw_surface_update_frontbuffer(This, &dst_rect, FALSE);
+        hr = wined3d_surface_blt(dst_impl->wined3d_surface, &dst_rect,
+                src_impl->wined3d_surface, src_rect, flags, NULL, WINED3D_TEXF_POINT);
+    if (SUCCEEDED(hr) && (dst_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
+        hr = ddraw_surface_update_frontbuffer(dst_impl, &dst_rect, FALSE);
     wined3d_mutex_unlock();
 
     switch(hr)
