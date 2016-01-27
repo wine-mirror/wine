@@ -13278,7 +13278,9 @@ msgid "Configuration error"
 msgstr ""
 
 #: wineconsole.rc:42
-msgid "Screen buffer size must be greater or equal to the window's one"
+msgid ""
+"The size of the screen buffer must be greater than or equal to the size of "
+"the window."
 msgstr ""
 
 #: wineconsole.rc:37

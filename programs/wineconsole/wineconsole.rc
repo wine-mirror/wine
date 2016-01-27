@@ -38,7 +38,7 @@ IDS_FNT_PREVIEW,	"This is a test"
 IDS_DLG_TIT_DEFAULT,    "Setup - Default settings"
 IDS_DLG_TIT_CURRENT,    "Setup - Current settings"
 IDS_DLG_TIT_ERROR,	"Configuration error"
-IDS_DLG_ERR_SBWINSIZE,	"Screen buffer size must be greater or equal to the window's one"
+IDS_DLG_ERR_SBWINSIZE,  "The size of the screen buffer must be greater than or equal to the size of the window."
 
 IDS_CMD_INVALID_EVENT_ID   "wineconsole: Couldn't parse event id\n"
 IDS_CMD_INVALID_BACKEND    "wineconsole: Invalid backend\n"

@@ -13854,7 +13854,11 @@ msgid "Configuration error"
 msgstr "Error de configuració"
 
 #: wineconsole.rc:42
-msgid "Screen buffer size must be greater or equal to the window's one"
+#, fuzzy
+#| msgid "Screen buffer size must be greater or equal to the window's one"
+msgid ""
+"The size of the screen buffer must be greater than or equal to the size of "
+"the window."
 msgstr ""
 "La mida de la memòria intermèdia de pantalla ha de ser major o igual al de "
 "la finestra"
