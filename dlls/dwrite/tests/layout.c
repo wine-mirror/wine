@@ -3157,18 +3157,34 @@ static IDWriteFontFace *get_fontface_from_format(IDWriteTextFormat *format)
     return fontface;
 }
 
+static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT32 size)
+{
+    UINT32 index;
+    BOOL exists = FALSE;
+    HRESULT hr;
+
+    hr = IDWriteLocalizedStrings_FindLocaleName(strings, enusW, &index, &exists);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(exists, "got %d\n", exists);
+
+    hr = IDWriteLocalizedStrings_GetString(strings, index, buff, size);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+}
+
 static void test_GetLineMetrics(void)
 {
     static const WCHAR str3W[] = {'a','\r','b','\n','c','\n','\r','d','\r','\n',0};
     static const WCHAR strW[] = {'a','b','c','d',' ',0};
     static const WCHAR str2W[] = {'a','b','\r','c','d',0};
+    IDWriteFontCollection *syscollection;
     DWRITE_FONT_METRICS fontmetrics;
     DWRITE_LINE_METRICS metrics[6];
+    UINT32 count, i, familycount;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
-    UINT32 count;
+    WCHAR nameW[256];
     HRESULT hr;
 
     factory = create_factory();
@@ -3194,16 +3210,83 @@ static void test_GetLineMetrics(void)
     ok(metrics[0].newlineLength == 0, "got %u\n", metrics[0].newlineLength);
     ok(metrics[0].isTrimmed == FALSE, "got %d\n", metrics[0].isTrimmed);
 
-    /* Tahoma doesn't provide BASE table, so baseline is calculated from font metrics */
+    IDWriteTextLayout_Release(layout);
+
+    /* Test line height and baseline calculation */
+    hr = IDWriteFactory_GetSystemFontCollection(factory, &syscollection, FALSE);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    familycount = IDWriteFontCollection_GetFontFamilyCount(syscollection);
+
+    for (i = 0; i < familycount; i++) {
+        static const WCHAR mvboliW[] = {'M','V',' ','B','o','l','i',0};
+        IDWriteLocalizedStrings *names;
+        IDWriteFontFamily *family;
+        IDWriteFont *font;
+
+        format = NULL;
+        layout = NULL;
+
+        hr = IDWriteFontCollection_GetFontFamily(syscollection, i, &family);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFirstMatchingFont(family, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STRETCH_NORMAL,
+            DWRITE_FONT_STYLE_NORMAL, &font);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFont_CreateFontFace(font, &fontface);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+
+        IDWriteLocalizedStrings_Release(names);
+        IDWriteFont_Release(font);
+
+        /* This will effectively skip on Vista/2008 only, newer systems work just fine with this font. */
+        if (!lstrcmpW(nameW, mvboliW)) {
+            skip("Skipping line metrics test for %s, gives inconsistent results\n", wine_dbgstr_w(nameW));
+            goto cleanup;
+        }
+
+        IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
+        hr = IDWriteFactory_CreateTextFormat(factory, nameW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, fontmetrics.designUnitsPerEm, enusW, &format);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFactory_CreateTextLayout(factory, strW, 5, format, 30000.0f, 100.0f, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        memset(metrics, 0, sizeof(metrics));
+        count = 0;
+        hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 2, &count);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(count == 1, "got %u\n", count);
+
+        ok(metrics[0].baseline == fontmetrics.ascent + fontmetrics.lineGap, "%s: got %.2f, expected %d, "
+            "linegap %d\n", wine_dbgstr_w(nameW), metrics[0].baseline, fontmetrics.ascent + fontmetrics.lineGap,
+            fontmetrics.lineGap);
+        ok(metrics[0].height == fontmetrics.ascent + fontmetrics.descent + fontmetrics.lineGap,
+            "%s: got %.2f, expected %d, linegap %d\n", wine_dbgstr_w(nameW), metrics[0].height,
+            fontmetrics.ascent + fontmetrics.descent + fontmetrics.lineGap, fontmetrics.lineGap);
+
+    cleanup:
+        if (layout)
+            IDWriteTextLayout_Release(layout);
+        if (format)
+            IDWriteTextFormat_Release(format);
+        IDWriteFontFace_Release(fontface);
+        IDWriteFontFamily_Release(family);
+    }
+    IDWriteFontCollection_Release(syscollection);
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 2048.0f, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
     fontface = get_fontface_from_format(format);
     ok(fontface != NULL, "got %p\n", fontface);
-    IDWriteFontFace_GetMetrics(fontface, &fontmetrics);
-
-    ok(metrics[0].baseline == fontmetrics.ascent, "got %.2f, expected %d\n", metrics[0].baseline,
-        fontmetrics.ascent);
-    ok(metrics[0].height == fontmetrics.ascent + fontmetrics.descent, "got %.2f, expected %d\n",
-        metrics[0].height, fontmetrics.ascent + fontmetrics.descent);
-    IDWriteTextLayout_Release(layout);
 
     /* force 2 lines */
     hr = IDWriteFactory_CreateTextLayout(factory, str2W, 5, format, 10000.0, 1000.0, &layout);

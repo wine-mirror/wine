@@ -892,8 +892,8 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         else
             IDWriteFontFace_GetMetrics(run->run.fontFace, &fontmetrics);
 
-        r->baseline = SCALE_FONT_METRIC(fontmetrics.ascent, run->run.fontEmSize, &fontmetrics);
-        r->height = SCALE_FONT_METRIC(fontmetrics.ascent + fontmetrics.descent, run->run.fontEmSize, &fontmetrics);
+        r->baseline = SCALE_FONT_METRIC(fontmetrics.ascent + fontmetrics.lineGap, run->run.fontEmSize, &fontmetrics);
+        r->height = SCALE_FONT_METRIC(fontmetrics.ascent + fontmetrics.descent + fontmetrics.lineGap, run->run.fontEmSize, &fontmetrics);
 
         layout_set_cluster_metrics(layout, r, &cluster);
 
