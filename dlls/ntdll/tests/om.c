@@ -1099,24 +1099,28 @@ static void test_query_object(void)
 
     pRtlCreateUnicodeStringFromAsciiz( &path, "\\REGISTRY\\Machine\\Software\\Classes" );
     status = pNtCreateKey( &handle, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( handle != 0, "NtCreateKey failed status %x\n", status );
+    ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
+        "NtCreateKey failed status %x\n", status );
     pRtlFreeUnicodeString( &path );
-    len = 0;
-    status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
-    ok( status == STATUS_SUCCESS , "NtQueryObject returned %x\n", status );
-    str = (UNICODE_STRING *)buffer;
-    todo_wine
-    ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
-    str = (UNICODE_STRING *)buffer;
-    expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
-    todo_wine
-    ok( len == expected_len || broken(len == expected_len - sizeof(WCHAR)), /* NT4 */
-        "unexpected len %u\n", len );
-    todo_wine
-    ok( len > sizeof(UNICODE_STRING) + sizeof("\\Classes") * sizeof(WCHAR),
-        "name too short %s\n", wine_dbgstr_w(str->Buffer) );
-    trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
-    pNtClose( handle );
+    if (status == STATUS_SUCCESS)
+    {
+        len = 0;
+        status = pNtQueryObject( handle, ObjectNameInformation, buffer, sizeof(buffer), &len );
+        ok( status == STATUS_SUCCESS , "NtQueryObject returned %x\n", status );
+        str = (UNICODE_STRING *)buffer;
+        todo_wine
+        ok( len > sizeof(UNICODE_STRING), "unexpected len %u\n", len );
+        str = (UNICODE_STRING *)buffer;
+        expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
+        todo_wine
+        ok( len == expected_len || broken(len == expected_len - sizeof(WCHAR)), /* NT4 */
+            "unexpected len %u\n", len );
+        todo_wine
+        ok( len > sizeof(UNICODE_STRING) + sizeof("\\Classes") * sizeof(WCHAR),
+            "name too short %s\n", wine_dbgstr_w(str->Buffer) );
+        trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );
+        pNtClose( handle );
+    }
 }
 
 static void test_type_mismatch(void)
