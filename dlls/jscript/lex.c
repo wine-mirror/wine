@@ -109,7 +109,7 @@ static int lex_error(parser_ctx_t *ctx, HRESULT hres)
 }
 
 /* ECMA-262 3rd Edition    7.6 */
-static BOOL is_identifier_char(WCHAR c)
+BOOL is_identifier_char(WCHAR c)
 {
     return isalnumW(c) || c == '$' || c == '_' || c == '\\';
 }
@@ -249,7 +249,7 @@ static BOOL skip_spaces(parser_ctx_t *ctx)
     return ctx->ptr != ctx->end;
 }
 
-static BOOL unescape(WCHAR *str)
+BOOL unescape(WCHAR *str)
 {
     WCHAR *pd, *p, c;
     int i;
@@ -406,7 +406,7 @@ literal_t *new_boolean_literal(parser_ctx_t *ctx, BOOL bval)
     return ret;
 }
 
-static HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
+HRESULT parse_decimal(const WCHAR **iter, const WCHAR *end, double *ret)
 {
     const WCHAR *ptr = *iter;
     LONGLONG d = 0, hlp;
