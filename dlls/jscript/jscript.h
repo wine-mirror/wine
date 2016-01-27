@@ -461,6 +461,9 @@ HRESULT regexp_match_next(script_ctx_t*,jsdisp_t*,DWORD,jsstr_t*,struct match_st
 HRESULT parse_regexp_flags(const WCHAR*,DWORD,DWORD*) DECLSPEC_HIDDEN;
 HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,jsstr_t*,jsval_t*) DECLSPEC_HIDDEN;
 
+BOOL bool_obj_value(jsdisp_t*) DECLSPEC_HIDDEN;
+unsigned array_get_length(jsdisp_t*) DECLSPEC_HIDDEN;
+
 static inline BOOL is_class(jsdisp_t *jsdisp, jsclass_t class)
 {
     return jsdisp->builtin_info->class == class;
