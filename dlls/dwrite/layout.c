@@ -3264,7 +3264,7 @@ static HRESULT WINAPI dwritetextlayout_DetermineMinWidth(IDWriteTextLayout2 *ifa
 
         /* Ignore trailing whitespace clusters, in case of single space range will
            be reduced to empty range, or [start,start+1). */
-        while ((end - 1) >= start && This->clustermetrics[end-1].isWhitespace)
+        while (end > start && This->clustermetrics[end-1].isWhitespace)
             end--;
 
         /* check if cluster range exceeds last minimal width */
