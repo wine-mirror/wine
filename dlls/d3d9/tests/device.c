@@ -10163,7 +10163,7 @@ static void test_mipmap_lock(void)
     hr = IDirect3DDevice9_UpdateSurface(device, surface, NULL, surface_dst, NULL);
     ok(SUCCEEDED(hr), "Failed to update surface, hr %#x.\n", hr);
     hr = IDirect3DDevice9_UpdateSurface(device, surface2, NULL, surface_dst2, NULL);
-    todo_wine ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == D3DERR_INVALIDCALL, "Got unexpected hr %#x.\n", hr);
 
     /* Apparently there's no validation on the container. */
     hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)texture,

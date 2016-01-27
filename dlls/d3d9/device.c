@@ -1227,15 +1227,31 @@ static HRESULT WINAPI d3d9_device_UpdateSurface(IDirect3DDevice9Ex *iface,
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_surface *src = unsafe_impl_from_IDirect3DSurface9(src_surface);
     struct d3d9_surface *dst = unsafe_impl_from_IDirect3DSurface9(dst_surface);
+    struct wined3d_box src_box;
     HRESULT hr;
 
     TRACE("iface %p, src_surface %p, src_rect %p, dst_surface %p, dst_point %p.\n",
             iface, src_surface, src_rect, dst_surface, dst_point);
 
+    if (src_rect)
+    {
+        src_box.left = src_rect->left;
+        src_box.top = src_rect->top;
+        src_box.right = src_rect->right;
+        src_box.bottom = src_rect->bottom;
+        src_box.front = 0;
+        src_box.back = 1;
+    }
+
     wined3d_mutex_lock();
-    hr = wined3d_device_update_surface(device->wined3d_device, src->wined3d_surface, src_rect,
-            dst->wined3d_surface, dst_point);
+    hr = wined3d_device_copy_sub_resource_region(device->wined3d_device,
+            wined3d_texture_get_resource(dst->wined3d_texture), dst->sub_resource_idx, dst_point ? dst_point->x : 0,
+            dst_point ? dst_point->y : 0, 0, wined3d_texture_get_resource(src->wined3d_texture),
+            src->sub_resource_idx, src_rect ? &src_box : NULL);
     wined3d_mutex_unlock();
+
+    if (FAILED(hr))
+        return D3DERR_INVALIDCALL;
 
     return hr;
 }

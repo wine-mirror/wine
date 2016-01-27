@@ -4027,7 +4027,7 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
     dst_rect.bottom = dst_y + (src_rect.bottom - src_rect.top);
 
     if (FAILED(hr = wined3d_surface_blt(dst_surface, &dst_rect, src_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
-        ERR("Failed to blit, hr %#x.\n", hr);
+        WARN("Failed to blit, hr %#x.\n", hr);
 
     return hr;
 }
