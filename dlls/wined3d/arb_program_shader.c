@@ -5301,6 +5301,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_RET                   */ shader_hw_ret,
     /* WINED3DSIH_ROUND_NI              */ NULL,
     /* WINED3DSIH_ROUND_PI              */ NULL,
+    /* WINED3DSIH_ROUND_Z               */ NULL,
     /* WINED3DSIH_RSQ                   */ shader_hw_scalar_op,
     /* WINED3DSIH_SAMPLE                */ NULL,
     /* WINED3DSIH_SAMPLE_GRAD           */ NULL,
