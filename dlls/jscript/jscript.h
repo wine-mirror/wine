@@ -339,6 +339,7 @@ HRESULT variant_change_type(script_ctx_t*,VARIANT*,VARIANT*,VARTYPE) DECLSPEC_HI
 HRESULT decode_source(WCHAR*) DECLSPEC_HIDDEN;
 
 HRESULT double_to_string(double,jsstr_t**) DECLSPEC_HIDDEN;
+BOOL is_finite(double) DECLSPEC_HIDDEN;
 
 typedef struct named_item_t {
     IDispatch *disp;

@@ -16,9 +16,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include "wine/port.h"
-
 #include <math.h>
 #include <assert.h>
 
@@ -257,7 +254,7 @@ static HRESULT Number_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
 
     val = number->value;
 
-    if(radix==10 || isnan(val) || isinf(val)) {
+    if(radix==10 || !is_finite(val)) {
         hres = to_string(ctx, jsval_number(val), &str);
         if(FAILED(hres))
             return hres;
@@ -383,7 +380,7 @@ static HRESULT Number_toFixed(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     }
 
     val = number->value;
-    if(isinf(val) || isnan(val)) {
+    if(!is_finite(val)) {
         hres = to_string(ctx, jsval_number(val), &str);
         if(FAILED(hres))
             return hres;
@@ -424,7 +421,7 @@ static HRESULT Number_toExponential(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     }
 
     val = number->value;
-    if(isinf(val) || isnan(val)) {
+    if(!is_finite(val)) {
         hres = to_string(ctx, jsval_number(val), &str);
         if(FAILED(hres))
             return hres;
@@ -465,7 +462,7 @@ static HRESULT Number_toPrecision(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
     }
 
     val = number->value;
-    if(isinf(val) || isnan(val) || !prec) {
+    if(!is_finite(val) || !prec) {
         hres = to_string(ctx, jsval_number(val), &str);
         if(FAILED(hres))
             return hres;
