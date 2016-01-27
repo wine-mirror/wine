@@ -1982,10 +1982,17 @@ static void resolve_depth_buffer(struct wined3d_state *state)
 void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
         enum wined3d_render_state state, DWORD value)
 {
-    DWORD old_value = device->state.render_states[state];
+    DWORD old_value;
 
     TRACE("device %p, state %s (%#x), value %#x.\n", device, debug_d3drenderstate(state), state, value);
 
+    if (state > WINEHIGHEST_RENDER_STATE)
+    {
+        WARN("Unhandled render state %#x.\n", state);
+        return;
+    }
+
+    old_value = device->state.render_states[state];
     device->update_state->render_states[state] = value;
 
     /* Handle recording of state blocks. */
