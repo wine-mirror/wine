@@ -1456,7 +1456,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     unsigned int s;
     int swap_interval;
     DWORD state;
-    HDC hdc;
+    HDC hdc = 0;
     BOOL hdc_is_private = FALSE;
 
     TRACE("swapchain %p, target %p, window %p.\n", swapchain, target, swapchain->win_handle);
@@ -1837,6 +1837,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     return ret;
 
 out:
+    if (hdc) wined3d_release_dc(swapchain->win_handle, hdc);
     device->shader_backend->shader_free_context_data(ret);
     device->adapter->fragment_pipe->free_context_data(ret);
     HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
