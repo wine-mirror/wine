@@ -1568,7 +1568,7 @@ static void test_argify(void)
     rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params, NULL, NULL);
     okShell(rc > 32, "failed: rc=%lu\n", rc);
     okChildInt("argcA", 4);
-    okChildString("argvA3", fileA);
+    okChildPath("argvA3", fileA);
 }
 
 static void test_filename(void)
@@ -2083,7 +2083,7 @@ static void test_lnks(void)
     okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
     okChildInt("argcA", 5);
     okChildString("argvA3", "Open");
-    okChildString("argvA4", filename);
+    okChildPath("argvA4", filename);
 
     if (dllver.dwMajorVersion>=6)
     {
