@@ -2196,6 +2196,20 @@ static void test_exes(void)
     sprintf(filename, "\"%s\" shlexec \"%s\" Exec", argv0, child_file);
     rc = shell_execute(NULL, filename, NULL, NULL);
     okShell(rc == SE_ERR_FNF, "returned %lu\n", rc);
+
+    /* A verb, even if invalid, overrides the normal handling of executables */
+    todo_wait rc = shell_execute_ex(SEE_MASK_FLAG_NO_UI,
+                                    "notaverb", argv0, NULL, NULL, NULL);
+    todo_wine okShell(rc == SE_ERR_NOASSOC, "returned %lu\n", rc);
+
+    /* A class overrides the normal handling of executables too */
+    /* FIXME SEE_MASK_FLAG_NO_UI is only needed due to Wine's bug */
+    rc = shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI,
+                          NULL, argv0, NULL, NULL, ".shlexec");
+    todo_wine okShell(rc > 32, "returned %lu\n", rc);
+    okChildInt("argcA", 5);
+    todo_wine okChildString("argvA3", "Open");
+    todo_wine okChildPath("argvA4", argv0);
 }
 
 typedef struct
