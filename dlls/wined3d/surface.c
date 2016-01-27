@@ -2879,12 +2879,6 @@ static void surface_prepare_rb(struct wined3d_surface *surface, const struct win
                         break;
                 }
             }
-            if (i == sizeof(format->multisample_types) * 8)
-            {
-                WARN("Unsupported quality level %u requested for WINED3D_MULTISAMPLE_NON_MASKABLE.\n",
-                        surface->resource.multisample_quality);
-                i = 1;
-            }
             samples = i + 1;
         }
         else

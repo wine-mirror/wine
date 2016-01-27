@@ -1458,6 +1458,27 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
         return WINED3DERR_INVALIDCALL;
     }
 
+    if (desc->multisample_type != WINED3D_MULTISAMPLE_NONE)
+    {
+        const struct wined3d_format *format = wined3d_get_format(&device->adapter->gl_info, desc->format);
+
+        if (desc->multisample_type == WINED3D_MULTISAMPLE_NON_MASKABLE
+                && desc->multisample_quality >= wined3d_popcount(format->multisample_types))
+        {
+            WARN("Unsupported quality level %u requested for WINED3D_MULTISAMPLE_NON_MASKABLE.\n",
+                    desc->multisample_quality);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+        if (desc->multisample_type != WINED3D_MULTISAMPLE_NON_MASKABLE
+                && (!(format->multisample_types & 1u << (desc->multisample_type - 1))
+                || desc->multisample_quality))
+        {
+            WARN("Unsupported multisample type %u quality %u requested.\n", desc->multisample_type,
+                    desc->multisample_quality);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+    }
+
     if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
         return E_OUTOFMEMORY;
 

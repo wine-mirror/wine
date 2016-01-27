@@ -1137,6 +1137,8 @@ static HRESULT d3d9_device_create_surface(struct d3d9_device *device, UINT width
     {
         wined3d_mutex_unlock();
         WARN("Failed to create texture, hr %#x.\n", hr);
+        if (hr == WINED3DERR_NOTAVAILABLE)
+            hr = D3DERR_INVALIDCALL;
         return hr;
     }
 

@@ -482,6 +482,8 @@ static HRESULT d3d_texture2d_init(struct d3d_texture2d *texture, struct d3d_devi
         WARN("Failed to create wined3d texture, hr %#x.\n", hr);
         wined3d_private_store_cleanup(&texture->private_store);
         wined3d_mutex_unlock();
+        if (hr == WINED3DERR_NOTAVAILABLE)
+            hr = E_INVALIDARG;
         return hr;
     }
     texture->desc.MipLevels = levels;
