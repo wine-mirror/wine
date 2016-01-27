@@ -976,6 +976,8 @@ static filename_tests_t filename_tests[]=
     {"QuotedLowerL", "%s\\test file.shlexec",   0x0, 33},
     {"QuotedUpperL", "%s\\test file.shlexec",   0x0, 33},
 
+    {"notaverb",     "%s\\test file.shlexec",   0x10, SE_ERR_NOASSOC},
+
     /* Test file masked due to space */
     {NULL,           "%s\\masked file.shlexec",   0x0, 33},
     /* Test if quoting prevents the masking */
