@@ -1405,28 +1405,41 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx, const RECT *dst_rect_in,
-        struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx, const RECT *src_rect_in, DWORD flags,
-        const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
+HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
+        const RECT *dst_rect, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
+        const RECT *src_rect, DWORD flags, const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_resource *dst_resource, *src_resource = NULL;
+    RECT d, s;
 
-    TRACE("dst_texture %p, dst_sub_resource_idx %u, src_texture %p, src_sub_resource_idx %u.\n",
-            dst_texture, dst_sub_resource_idx, src_texture, src_sub_resource_idx);
+    TRACE("dst_texture %p, dst_sub_resource_idx %u, dst_rect %s, src_texture %p, "
+            "src_sub_resource_idx %u, src_rect %s, flags %#x, fx %p, filter %s.\n",
+            dst_texture, dst_sub_resource_idx, wine_dbgstr_rect(dst_rect), src_texture,
+            src_sub_resource_idx, wine_dbgstr_rect(src_rect), flags, fx, debug_d3dtexturefiltertype(filter));
 
     if (!(dst_resource = wined3d_texture_get_sub_resource(dst_texture, dst_sub_resource_idx))
             || dst_resource->type != WINED3D_RTYPE_SURFACE)
         return WINED3DERR_INVALIDCALL;
+    if (!dst_rect)
+    {
+        SetRect(&d, 0, 0, dst_resource->width, dst_resource->height);
+        dst_rect = &d;
+    }
 
     if (src_texture)
     {
         if (!(src_resource = wined3d_texture_get_sub_resource(src_texture, src_sub_resource_idx))
                 || src_resource->type != WINED3D_RTYPE_SURFACE)
             return WINED3DERR_INVALIDCALL;
+        if (!src_rect)
+        {
+            SetRect(&s, 0, 0, src_resource->width, src_resource->height);
+            src_rect = &s;
+        }
     }
 
-    return wined3d_surface_blt(surface_from_resource(dst_resource), dst_rect_in,
-        src_resource ? surface_from_resource(src_resource) : NULL, src_rect_in, flags, fx, filter);
+    return wined3d_surface_blt(surface_from_resource(dst_resource), dst_rect,
+            src_resource ? surface_from_resource(src_resource) : NULL, src_rect, flags, fx, filter);
 }
 
 HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
