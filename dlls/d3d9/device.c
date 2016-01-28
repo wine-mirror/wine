@@ -1331,6 +1331,7 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
     HRESULT hr = D3DERR_INVALIDCALL;
     struct wined3d_resource_desc src_desc, dst_desc;
     struct wined3d_resource *sub_resource;
+    RECT d, s;
 
     TRACE("iface %p, src_surface %p, src_rect %p, dst_surface %p, dst_rect %p, filter %#x.\n",
             iface, src_surface, src_rect, dst_surface, dst_rect, filter);
@@ -1338,9 +1339,25 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
     wined3d_mutex_lock();
     sub_resource = wined3d_texture_get_sub_resource(dst->wined3d_texture, dst->sub_resource_idx);
     wined3d_resource_get_desc(sub_resource, &dst_desc);
+    if (!dst_rect)
+    {
+        d.left = 0;
+        d.top = 0;
+        d.right = dst_desc.width;
+        d.bottom = dst_desc.height;
+        dst_rect = &d;
+    }
 
     sub_resource = wined3d_texture_get_sub_resource(src->wined3d_texture, src->sub_resource_idx);
     wined3d_resource_get_desc(sub_resource, &src_desc);
+    if (!src_rect)
+    {
+        s.left = 0;
+        s.top = 0;
+        s.right = src_desc.width;
+        s.bottom = src_desc.height;
+        src_rect = &s;
+    }
 
     if (src_desc.usage & WINED3DUSAGE_DEPTHSTENCIL)
     {
@@ -1350,26 +1367,22 @@ static HRESULT WINAPI d3d9_device_StretchRect(IDirect3DDevice9Ex *iface, IDirect
             goto done;
         }
 
-        if (src_rect)
+        if (src_rect->left || src_rect->top || src_rect->right != src_desc.width
+                || src_rect->bottom != src_desc.height)
         {
-            if (src_rect->left || src_rect->top || src_rect->right != src_desc.width
-                    || src_rect->bottom != src_desc.height)
-            {
-                WARN("Rejecting depth / stencil blit with invalid source rect %s.\n",
-                        wine_dbgstr_rect(src_rect));
-                goto done;
-            }
+            WARN("Rejecting depth / stencil blit with invalid source rect %s.\n",
+                    wine_dbgstr_rect(src_rect));
+            goto done;
         }
-        if (dst_rect)
+
+        if (dst_rect->left || dst_rect->top || dst_rect->right != dst_desc.width
+                || dst_rect->bottom != dst_desc.height)
         {
-            if (dst_rect->left || dst_rect->top || dst_rect->right != dst_desc.width
-                    || dst_rect->bottom != dst_desc.height)
-            {
-                WARN("Rejecting depth / stencil blit with invalid destination rect %s.\n",
-                        wine_dbgstr_rect(dst_rect));
-                goto done;
-            }
+            WARN("Rejecting depth / stencil blit with invalid destination rect %s.\n",
+                    wine_dbgstr_rect(dst_rect));
+            goto done;
         }
+
         if (src_desc.width != dst_desc.width || src_desc.height != dst_desc.height)
         {
             WARN("Rejecting depth / stencil blit with mismatched surface sizes.\n");
