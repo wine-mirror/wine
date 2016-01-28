@@ -2254,6 +2254,8 @@ static dde_tests_t dde_tests[] =
 
 static DWORD WINAPI hooked_WaitForInputIdle(HANDLE process, DWORD timeout)
 {
+    if (winetest_debug > 1)
+        trace("WaitForInputIdle() waiting for dde event\n");
     return WaitForSingleObject(dde_ready_event, timeout);
 }
 
@@ -2272,6 +2274,7 @@ static void hook_WaitForInputIdle(DWORD (WINAPI *new_func)(HANDLE, DWORD))
     PIMAGE_NT_HEADERS nt_headers;
     DWORD import_directory_rva;
     PIMAGE_IMPORT_DESCRIPTOR import_descriptor;
+    int hook_count = 0;
 
     base = (char *) GetModuleHandleA("shell32.dll");
     nt_headers = (PIMAGE_NT_HEADERS)(base + ((PIMAGE_DOS_HEADER) base)->e_lfanew);
@@ -2309,6 +2312,9 @@ static void hook_WaitForInputIdle(DWORD (WINAPI *new_func)(HANDLE, DWORD))
                         VirtualProtect(&iat_entry->u1.Function, sizeof(ULONG_PTR), PAGE_READWRITE, &old_prot);
                         iat_entry->u1.Function = (ULONG_PTR) new_func;
                         VirtualProtect(&iat_entry->u1.Function, sizeof(ULONG_PTR), old_prot, &old_prot);
+                        if (winetest_debug > 1)
+                            trace("Hooked %s.WaitForInputIdle\n", import_module_name);
+                        hook_count++;
                         break;
                     }
                 }
@@ -2320,6 +2326,7 @@ static void hook_WaitForInputIdle(DWORD (WINAPI *new_func)(HANDLE, DWORD))
 
         import_descriptor++;
     }
+    ok(hook_count, "Could not hook WaitForInputIdle()\n");
 }
 
 static void test_dde(void)
