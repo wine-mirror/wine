@@ -3637,6 +3637,17 @@ struct handle_info
 @END
 
 
+/* Open a job object */
+@REQ(open_job)
+    unsigned int access;          /* wanted access rights */
+    unsigned int attributes;      /* object attributes */
+    obj_handle_t rootdir;         /* root directory */
+    VARARG(name,unicode_str);     /* object name */
+@REPLY
+    obj_handle_t handle;          /* handle to the job */
+@END
+
+
 /* Assign a job object to a process */
 @REQ(assign_job)
     obj_handle_t job;             /* handle to the job */

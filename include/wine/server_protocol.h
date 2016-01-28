@@ -5268,6 +5268,23 @@ struct create_job_reply
 
 
 
+struct open_job_request
+{
+    struct request_header __header;
+    unsigned int access;
+    unsigned int attributes;
+    obj_handle_t rootdir;
+    /* VARARG(name,unicode_str); */
+};
+struct open_job_reply
+{
+    struct reply_header __header;
+    obj_handle_t handle;
+    char __pad_12[4];
+};
+
+
+
 struct assign_job_request
 {
     struct request_header __header;
@@ -5605,6 +5622,7 @@ enum request
     REQ_get_suspend_context,
     REQ_set_suspend_context,
     REQ_create_job,
+    REQ_open_job,
     REQ_assign_job,
     REQ_process_in_job,
     REQ_set_job_limits,
@@ -5882,6 +5900,7 @@ union generic_request
     struct get_suspend_context_request get_suspend_context_request;
     struct set_suspend_context_request set_suspend_context_request;
     struct create_job_request create_job_request;
+    struct open_job_request open_job_request;
     struct assign_job_request assign_job_request;
     struct process_in_job_request process_in_job_request;
     struct set_job_limits_request set_job_limits_request;
@@ -6157,6 +6176,7 @@ union generic_reply
     struct get_suspend_context_reply get_suspend_context_reply;
     struct set_suspend_context_reply set_suspend_context_reply;
     struct create_job_reply create_job_reply;
+    struct open_job_reply open_job_reply;
     struct assign_job_reply assign_job_reply;
     struct process_in_job_reply process_in_job_reply;
     struct set_job_limits_reply set_job_limits_reply;
@@ -6164,6 +6184,6 @@ union generic_reply
     struct terminate_job_reply terminate_job_reply;
 };
 
-#define SERVER_PROTOCOL_VERSION 501
+#define SERVER_PROTOCOL_VERSION 502
 
 #endif /* __WINE_WINE_SERVER_PROTOCOL_H */

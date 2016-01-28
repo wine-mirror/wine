@@ -468,7 +468,6 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "%u: NtCreateJobObject failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenJobObject failed %x\n", str.Length, status );
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr3 );
     todo_wine
@@ -603,7 +602,6 @@ static void test_name_limits(void)
     status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr );
     ok( status == STATUS_SUCCESS, "%u: NtCreateJobObject failed %x\n", str.Length, status );
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtOpenJobObject failed %x\n", str.Length, status );
     pNtClose( ret2 );
     pNtClose( ret );
@@ -752,7 +750,6 @@ static void test_name_limits(void)
     todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenJobObject failed %x\n", status );
     status = pNtOpenJobObject( &ret, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenJobObject failed %x\n", status );
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateDirectoryObject failed %x\n", status );

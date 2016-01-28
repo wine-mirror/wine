@@ -552,8 +552,20 @@ NTSTATUS WINAPI NtCreateJobObject( PHANDLE handle, ACCESS_MASK access, const OBJ
  */
 NTSTATUS WINAPI NtOpenJobObject( PHANDLE handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    FIXME( "stub: %p %x %s\n", handle, access, attr ? debugstr_us(attr->ObjectName) : "" );
-    return STATUS_NOT_IMPLEMENTED;
+    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
+    NTSTATUS ret;
+
+    SERVER_START_REQ( open_job )
+    {
+        req->access  = access;
+        req->attributes = attr ? attr->Attributes : 0;
+        req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
+        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 /******************************************************************************

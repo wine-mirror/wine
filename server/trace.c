@@ -4255,6 +4255,19 @@ static void dump_create_job_reply( const struct create_job_reply *req )
     fprintf( stderr, " handle=%04x", req->handle );
 }
 
+static void dump_open_job_request( const struct open_job_request *req )
+{
+    fprintf( stderr, " access=%08x", req->access );
+    fprintf( stderr, ", attributes=%08x", req->attributes );
+    fprintf( stderr, ", rootdir=%04x", req->rootdir );
+    dump_varargs_unicode_str( ", name=", cur_size );
+}
+
+static void dump_open_job_reply( const struct open_job_reply *req )
+{
+    fprintf( stderr, " handle=%04x", req->handle );
+}
+
 static void dump_assign_job_request( const struct assign_job_request *req )
 {
     fprintf( stderr, " job=%04x", req->job );
@@ -4552,6 +4565,7 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_suspend_context_request,
     (dump_func)dump_set_suspend_context_request,
     (dump_func)dump_create_job_request,
+    (dump_func)dump_open_job_request,
     (dump_func)dump_assign_job_request,
     (dump_func)dump_process_in_job_request,
     (dump_func)dump_set_job_limits_request,
@@ -4825,6 +4839,7 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_get_suspend_context_reply,
     NULL,
     (dump_func)dump_create_job_reply,
+    (dump_func)dump_open_job_reply,
     NULL,
     NULL,
     NULL,
@@ -5098,6 +5113,7 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "get_suspend_context",
     "set_suspend_context",
     "create_job",
+    "open_job",
     "assign_job",
     "process_in_job",
     "set_job_limits",
@@ -5136,7 +5152,6 @@ static const struct
     { "DIRECTORY_NOT_EMPTY",         STATUS_DIRECTORY_NOT_EMPTY },
     { "DISK_FULL",                   STATUS_DISK_FULL },
     { "DLL_NOT_FOUND",               STATUS_DLL_NOT_FOUND },
-    { "ERROR_NO_MORE_USER_HANDLES",  0xc0010000 | ERROR_NO_MORE_USER_HANDLES },
     { "ERROR_CLASS_ALREADY_EXISTS",  0xc0010000 | ERROR_CLASS_ALREADY_EXISTS },
     { "ERROR_CLASS_DOES_NOT_EXIST",  0xc0010000 | ERROR_CLASS_DOES_NOT_EXIST },
     { "ERROR_CLASS_HAS_WINDOWS",     0xc0010000 | ERROR_CLASS_HAS_WINDOWS },
@@ -5146,6 +5161,7 @@ static const struct
     { "ERROR_INVALID_CURSOR_HANDLE", 0xc0010000 | ERROR_INVALID_CURSOR_HANDLE },
     { "ERROR_INVALID_INDEX",         0xc0010000 | ERROR_INVALID_INDEX },
     { "ERROR_INVALID_WINDOW_HANDLE", 0xc0010000 | ERROR_INVALID_WINDOW_HANDLE },
+    { "ERROR_NO_MORE_USER_HANDLES",  0xc0010000 | ERROR_NO_MORE_USER_HANDLES },
     { "ERROR_WINDOW_OF_OTHER_THREAD", 0xc0010000 | ERROR_WINDOW_OF_OTHER_THREAD },
     { "FILE_DELETED",                STATUS_FILE_DELETED },
     { "FILE_IS_A_DIRECTORY",         STATUS_FILE_IS_A_DIRECTORY },
