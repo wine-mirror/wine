@@ -388,6 +388,14 @@ static void test_EnumObjects(IShellFolder *iFolder)
         SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
         SFGAO_CAPABILITYMASK | SFGAO_FILESYSTEM,
     };
+    static const ULONG full_attrs[5] =
+    {
+        SFGAO_CAPABILITYMASK | SFGAO_STORAGE | SFGAO_STORAGEANCESTOR | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_CAPABILITYMASK | SFGAO_STORAGE | SFGAO_STORAGEANCESTOR | SFGAO_FILESYSTEM | SFGAO_FOLDER | SFGAO_FILESYSANCESTOR,
+        SFGAO_CAPABILITYMASK | SFGAO_STREAM | SFGAO_FILESYSTEM,
+        SFGAO_CAPABILITYMASK | SFGAO_STREAM | SFGAO_FILESYSTEM,
+        SFGAO_CAPABILITYMASK | SFGAO_STREAM | SFGAO_FILESYSTEM,
+    };
 
     hr = IShellFolder_EnumObjects(iFolder, NULL, SHCONTF_FOLDERS | SHCONTF_NONFOLDERS | SHCONTF_INCLUDEHIDDEN, &iEnumList);
     ok(hr == S_OK, "EnumObjects failed %08x\n", hr);
@@ -440,6 +448,11 @@ static void test_EnumObjects(IShellFolder *iFolder)
         ok(flags == attrs[i] ||
            flags == (attrs[i] & ~SFGAO_FILESYSANCESTOR), /* Win9x, NT4 */
            "GetAttributesOf[%i] got %08x, expected %08x\n", i, flags, attrs[i]);
+
+        flags = ~0u;
+        hr = IShellFolder_GetAttributesOf(iFolder, 1, (LPCITEMIDLIST*)(idlArr + i), &flags);
+        ok(hr == S_OK, "GetAttributesOf returns %08x\n", hr);
+        ok((flags & ~SFGAO_HASSUBFOLDER) == full_attrs[i], "%d: got %08x expected %08x\n", i, flags, full_attrs[i]);
     }
 
     for (i=0;i<5;i++)

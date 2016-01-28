@@ -1154,7 +1154,10 @@ static HRESULT WINAPI ShellFolder2_GetAttributesOf(IShellFolder2* iface, UINT ci
                     HeapFree( GetProcessHeap(), 0, dos_name );
             }
             if (_ILIsFolder(apidl[i])) 
-                *attrs |= SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR;
+                *attrs |= SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR |
+                    SFGAO_STORAGEANCESTOR | SFGAO_STORAGE;
+            else
+                *attrs |= SFGAO_STREAM;
         }
     }
 
