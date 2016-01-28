@@ -1093,12 +1093,20 @@ static void surface_remove_pbo(struct wined3d_surface *surface, const struct win
 
 static ULONG surface_resource_incref(struct wined3d_resource *resource)
 {
-    return wined3d_surface_incref(surface_from_resource(resource));
+    struct wined3d_surface *surface = surface_from_resource(resource);
+
+    TRACE("surface %p, container %p.\n", surface, surface->container);
+
+    return wined3d_texture_incref(surface->container);
 }
 
 static ULONG surface_resource_decref(struct wined3d_resource *resource)
 {
-    return wined3d_surface_decref(surface_from_resource(resource));
+    struct wined3d_surface *surface = surface_from_resource(resource);
+
+    TRACE("surface %p, container %p.\n", surface, surface->container);
+
+    return wined3d_texture_decref(surface->container);
 }
 
 static void surface_unload(struct wined3d_resource *resource)
@@ -1857,20 +1865,6 @@ static inline unsigned short float_32_to_16(const float *in)
 
     ret |= ((*in < 0.0f ? 1 : 0) << 15); /* Add the sign */
     return ret;
-}
-
-ULONG CDECL wined3d_surface_incref(struct wined3d_surface *surface)
-{
-    TRACE("surface %p, container %p.\n", surface, surface->container);
-
-    return wined3d_texture_incref(surface->container);
-}
-
-ULONG CDECL wined3d_surface_decref(struct wined3d_surface *surface)
-{
-    TRACE("surface %p, container %p.\n", surface, surface->container);
-
-    return wined3d_texture_decref(surface->container);
 }
 
 void CDECL wined3d_surface_preload(struct wined3d_surface *surface)
