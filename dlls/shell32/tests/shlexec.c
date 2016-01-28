@@ -225,7 +225,7 @@ static void doChild(int argc, char** argv)
         return;
 
     /* Arguments */
-    childPrintf(hFile, "[Arguments]\r\n");
+    childPrintf(hFile, "[Child]\r\n");
     if (winetest_debug > 2)
     {
         trace("cmdlineA='%s'\n", GetCommandLineA());
@@ -287,6 +287,7 @@ static void doChild(int argc, char** argv)
         childPrintf(hFile, "ddeExec=%s\r\n", encodeA(ddeExec));
     }
 
+    childPrintf(hFile, "Failures=%d\r\n", winetest_get_failures());
     CloseHandle(hFile);
 
     init_event(filename);
@@ -302,16 +303,19 @@ static void dump_child_(const char* file, int line)
         char* str;
         int i, c;
 
-        str=getChildString("Arguments", "cmdlineA");
+        str=getChildString("Child", "cmdlineA");
         trace_(file, line)("cmdlineA='%s'\n", str);
-        c=GetPrivateProfileIntA("Arguments", "argcA", -1, child_file);
+        c=GetPrivateProfileIntA("Child", "argcA", -1, child_file);
         trace_(file, line)("argcA=%d\n",c);
         for (i=0;i<c;i++)
         {
             sprintf(key, "argvA%d", i);
-            str=getChildString("Arguments", key);
+            str=getChildString("Child", key);
             trace_(file, line)("%s='%s'\n", key, str);
         }
+
+        c=GetPrivateProfileIntA("Child", "Failures", -1, child_file);
+        trace_(file, line)("Failures=%d\n", c);
     }
 }
 
@@ -355,7 +359,7 @@ void reset_association_description(void)
 static void okChildString_(const char* file, int line, const char* key, const char* expected, const char* bad)
 {
     char* result;
-    result=getChildString("Arguments", key);
+    result=getChildString("Child", key);
     if (!result)
     {
         okShell_(file, line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
@@ -408,7 +412,7 @@ static int StrCmpPath(const char* s1, const char* s2)
 static void okChildPath_(const char* file, int line, const char* key, const char* expected)
 {
     char* result;
-    result=getChildString("Arguments", key);
+    result=getChildString("Child", key);
     if (!result)
     {
         okShell_(file,line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
@@ -422,7 +426,7 @@ static void okChildPath_(const char* file, int line, const char* key, const char
 static void okChildInt_(const char* file, int line, const char* key, int expected)
 {
     INT result;
-    result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
+    result=GetPrivateProfileIntA("Child", key, expected, child_file);
     okShell_(file,line)(result == expected,
                         "%s expected %d, but got %d\n", key, expected, result);
 }
@@ -431,7 +435,7 @@ static void okChildInt_(const char* file, int line, const char* key, int expecte
 static void okChildIntBroken_(const char* file, int line, const char* key, int expected)
 {
     INT result;
-    result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
+    result=GetPrivateProfileIntA("Child", key, expected, child_file);
     okShell_(file,line)(result == expected || broken(result != expected),
                         "%s expected %d, but got %d\n", key, expected, result);
 }
@@ -521,8 +525,13 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
      * functions know about it
      */
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
-    if (rc > 32)
+    if (GetFileAttributesA(child_file) != INVALID_FILE_ATTRIBUTES)
+    {
+        int c = GetPrivateProfileIntA("Child", "Failures", -1, child_file);
+        if (c > 0)
+            winetest_add_failures(c);
         dump_child_(file, line);
+    }
 
     if(!verb)
     {
@@ -626,8 +635,13 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
      * functions know about it
      */
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
-    if (rc > 32)
+    if (GetFileAttributesA(child_file) != INVALID_FILE_ATTRIBUTES)
+    {
+        int c = GetPrivateProfileIntA("Child", "Failures", -1, child_file);
+        if (c > 0)
+            winetest_add_failures(c);
         dump_child_(file, line);
+    }
 
     return rc;
 }
@@ -1551,7 +1565,7 @@ static void test_argify(void)
         else todo_wine
             okChildInt("argcA", 4 + count - 1);
 
-        cmd = getChildString("Arguments", "cmdlineA");
+        cmd = getChildString("Child", "cmdlineA");
         /* Our commands are such that the verb immediately precedes the
          * part we are interested in.
          */
@@ -2810,7 +2824,8 @@ START_TEST(shlexec)
     if (myARGC >= 3)
     {
         doChild(myARGC, myARGV);
-        exit(0);
+        /* Skip the tests/failures trace for child processes */
+        ExitProcess(winetest_get_failures());
     }
 
     init_test();
