@@ -613,7 +613,7 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
     if (metrics->length == 1) {
         DWRITE_LINE_BREAKPOINT bp = get_effective_breakpoint(layout, position);
         metrics->isWhitespace = bp.isWhitespace;
-        metrics->isNewline = FALSE /* FIXME */;
+        metrics->isNewline = metrics->canWrapLineAfter && lb_is_newline_char(layout->str[position]);
         metrics->isSoftHyphen = bp.isSoftHyphen;
     }
     else {

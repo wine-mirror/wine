@@ -1700,13 +1700,13 @@ static void test_GetClusterMetrics(void)
         /* SP - SPACE  */ 0x20
     };
     static const WCHAR str5W[] = {'a','\r','b','\n','c','\n','\r','d','\r','\n','e',0xb,'f',0xc,
-        'g',0x0085,'h',0x2028,'i',0x2029,0xad,0};
+        'g',0x0085,'h',0x2028,'i',0x2029,0xad,0xa,0};
     static const WCHAR str3W[] = {0x2066,')',')',0x661,'(',0x627,')',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a',0};
     static const WCHAR strW[] = {'a','b','c','d',0};
     static const WCHAR str4W[] = {'a',' ',0};
     DWRITE_INLINE_OBJECT_METRICS inline_metrics;
-    DWRITE_CLUSTER_METRICS metrics[21];
+    DWRITE_CLUSTER_METRICS metrics[22];
     IDWriteTextLayout1 *layout1;
     IDWriteInlineObject *trimm;
     IDWriteTextFormat *format;
@@ -1997,9 +1997,8 @@ todo_wine
     memset(metrics, 0, sizeof(metrics));
     hr = IDWriteTextLayout_GetClusterMetrics(layout, metrics, sizeof(metrics)/sizeof(metrics[0]), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count == 21, "got %u\n", count);
+    ok(count == 22, "got %u\n", count);
 
-todo_wine {
     ok(metrics[1].isNewline == 1, "got %d\n", metrics[1].isNewline);
     ok(metrics[3].isNewline == 1, "got %d\n", metrics[3].isNewline);
     ok(metrics[5].isNewline == 1, "got %d\n", metrics[5].isNewline);
@@ -2010,7 +2009,8 @@ todo_wine {
     ok(metrics[15].isNewline == 1, "got %d\n", metrics[15].isNewline);
     ok(metrics[17].isNewline == 1, "got %d\n", metrics[17].isNewline);
     ok(metrics[19].isNewline == 1, "got %d\n", metrics[19].isNewline);
-}
+    ok(metrics[21].isNewline == 1, "got %d\n", metrics[21].isNewline);
+
     ok(metrics[0].isNewline == 0, "got %d\n", metrics[0].isNewline);
     ok(metrics[2].isNewline == 0, "got %d\n", metrics[2].isNewline);
     ok(metrics[4].isNewline == 0, "got %d\n", metrics[4].isNewline);
@@ -2021,12 +2021,16 @@ todo_wine {
     ok(metrics[14].isNewline == 0, "got %d\n", metrics[14].isNewline);
     ok(metrics[16].isNewline == 0, "got %d\n", metrics[16].isNewline);
     ok(metrics[18].isNewline == 0, "got %d\n", metrics[18].isNewline);
+    ok(metrics[20].isNewline == 0, "got %d\n", metrics[20].isNewline);
 
     for (i = 0; i < count; i++) {
         ok(metrics[i].length == 1, "%d: got %d\n", i, metrics[i].length);
-        ok(metrics[i].isSoftHyphen == (i == count - 1), "%d: got %d\n", i, metrics[i].isSoftHyphen);
+        ok(metrics[i].isSoftHyphen == (i == count - 2), "%d: got %d\n", i, metrics[i].isSoftHyphen);
         if (metrics[i].isNewline) {
-            ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
+            if (i == 17 || i == 19)
+                todo_wine ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
+            else
+                ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
             ok(metrics[i].canWrapLineAfter == 1, "%u: got %d\n", i, metrics[i].canWrapLineAfter);
         }
     }
@@ -3341,12 +3345,11 @@ static void test_GetLineMetrics(void)
     count = 2;
     hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 2, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine {
     ok(count == 2, "got %u\n", count);
     /* baseline is relative to a line, and is not accumulated */
     ok(metrics[0].baseline == metrics[1].baseline, "got %.2f, %.2f\n", metrics[0].baseline,
         metrics[1].baseline);
-}
+
     IDWriteTextLayout_Release(layout);
     IDWriteTextFormat_Release(format);
 
@@ -3364,20 +3367,19 @@ todo_wine {
 todo_wine
     ok(count == 6, "got %u\n", count);
 
-todo_wine {
     ok(metrics[0].length == 2, "got %u\n", metrics[0].length);
     ok(metrics[1].length == 2, "got %u\n", metrics[1].length);
     ok(metrics[2].length == 2, "got %u\n", metrics[2].length);
     ok(metrics[3].length == 1, "got %u\n", metrics[3].length);
     ok(metrics[4].length == 3, "got %u\n", metrics[4].length);
+todo_wine
     ok(metrics[5].length == 0, "got %u\n", metrics[5].length);
-}
 
-todo_wine {
     ok(metrics[0].newlineLength == 1, "got %u\n", metrics[0].newlineLength);
     ok(metrics[1].newlineLength == 1, "got %u\n", metrics[1].newlineLength);
     ok(metrics[2].newlineLength == 1, "got %u\n", metrics[2].newlineLength);
     ok(metrics[3].newlineLength == 1, "got %u\n", metrics[3].newlineLength);
+todo_wine {
     ok(metrics[4].newlineLength == 2, "got %u\n", metrics[4].newlineLength);
     ok(metrics[5].newlineLength == 0, "got %u\n", metrics[5].newlineLength);
 }
@@ -4008,7 +4010,6 @@ static void test_SetWordWrapping(void)
     count = 0;
     hr = IDWriteTextLayout_GetLineMetrics(layout, NULL, 0, &count);
     ok(hr == E_NOT_SUFFICIENT_BUFFER, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 2, "got %u\n", count);
 
     hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_WRAP);

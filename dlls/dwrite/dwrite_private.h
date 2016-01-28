@@ -139,6 +139,7 @@ extern BOOL    is_face_type_supported(DWRITE_FONT_FACE_TYPE) DECLSPEC_HIDDEN;
 extern HRESULT get_family_names_from_stream(IDWriteFontFileStream*,UINT32,DWRITE_FONT_FACE_TYPE,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern HRESULT create_colorglyphenum(FLOAT,FLOAT,const DWRITE_GLYPH_RUN*,const DWRITE_GLYPH_RUN_DESCRIPTION*,DWRITE_MEASURING_MODE,
     const DWRITE_MATRIX*,UINT32,IDWriteColorGlyphRunEnumerator**) DECLSPEC_HIDDEN;
+extern BOOL lb_is_newline_char(WCHAR) DECLSPEC_HIDDEN;
 
 /* Opentype font table functions */
 struct dwrite_font_props {
