@@ -617,9 +617,9 @@ static inline void init_cluster_metrics(const struct dwrite_textlayout *layout, 
         metrics->isSoftHyphen = bp.isSoftHyphen;
     }
     else {
-        metrics->isWhitespace = FALSE;
-        metrics->isNewline = FALSE;
-        metrics->isSoftHyphen = FALSE;
+        metrics->isWhitespace = 0;
+        metrics->isNewline = 0;
+        metrics->isSoftHyphen = 0;
     }
     metrics->isRightToLeft = run->run.bidiLevel & 1;
     metrics->padding = 0;
