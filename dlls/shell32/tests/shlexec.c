@@ -117,7 +117,7 @@ static char* decodeA(const char* str)
     return ptr;
 }
 
-static void     childPrintf(HANDLE h, const char* fmt, ...)
+static void WINETEST_PRINTF_ATTR(2,3) childPrintf(HANDLE h, const char* fmt, ...)
 {
     va_list     valist;
     char        buffer[1024];
