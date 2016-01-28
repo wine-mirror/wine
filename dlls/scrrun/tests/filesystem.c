@@ -1790,6 +1790,83 @@ todo_wine
     SysFreeString(nameW);
 }
 
+struct driveexists_test {
+    const WCHAR drivespec[10];
+    const INT drivetype;
+    const VARIANT_BOOL expected_ret;
+};
+
+/* If 'drivetype' != -1, the first character of 'drivespec' will be replaced
+ * with the drive letter of a drive of this type. If such a drive does not exist,
+ * the test will be skipped. */
+static const struct driveexists_test driveexiststestdata[] = {
+    { {'N',':','\\',0}, DRIVE_NO_ROOT_DIR, VARIANT_FALSE },
+    { {'R',':','\\',0}, DRIVE_REMOVABLE, VARIANT_TRUE },
+    { {'F',':','\\',0}, DRIVE_FIXED, VARIANT_TRUE },
+    { {'F',':',0}, DRIVE_FIXED, VARIANT_TRUE },
+    { {'F','?',0}, DRIVE_FIXED, VARIANT_FALSE },
+    { {'F',0}, DRIVE_FIXED, VARIANT_TRUE },
+    { {'?',0}, -1, VARIANT_FALSE },
+    { { 0 } }
+};
+
+static void test_DriveExists(void)
+{
+    const struct driveexists_test *ptr = driveexiststestdata;
+    HRESULT hr;
+    VARIANT_BOOL ret;
+    BSTR drivespec;
+    WCHAR root[] = {'?',':','\\',0};
+
+    hr = IFileSystem3_DriveExists(fs3, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+
+    ret = VARIANT_TRUE;
+    hr = IFileSystem3_DriveExists(fs3, NULL, &ret);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(ret == VARIANT_FALSE, "got %x\n", ret);
+
+    drivespec = SysAllocString(root);
+    hr = IFileSystem3_DriveExists(fs3, drivespec, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    SysFreeString(drivespec);
+
+    for (; *ptr->drivespec; ptr++) {
+        drivespec = SysAllocString(ptr->drivespec);
+        if (ptr->drivetype != -1) {
+            for (root[0] = 'A'; root[0] <= 'Z'; root[0]++)
+                if (GetDriveTypeW(root) == ptr->drivetype)
+                    break;
+            if (root[0] > 'Z') {
+                skip("No drive with type 0x%x found, skipping test %s.\n",
+                        ptr->drivetype, wine_dbgstr_w(ptr->drivespec));
+                SysFreeString(drivespec);
+                continue;
+            }
+
+            /* Test both upper and lower case drive letters. */
+            drivespec[0] = root[0];
+            ret = ptr->expected_ret == VARIANT_TRUE ? VARIANT_FALSE : VARIANT_TRUE;
+            hr = IFileSystem3_DriveExists(fs3, drivespec, &ret);
+            ok(hr == S_OK, "got 0x%08x for drive spec %s (%s)\n",
+                    hr, wine_dbgstr_w(drivespec), wine_dbgstr_w(ptr->drivespec));
+            ok(ret == ptr->expected_ret, "got %d, expected %d for drive spec %s (%s)\n",
+                    ret, ptr->expected_ret, wine_dbgstr_w(drivespec), wine_dbgstr_w(ptr->drivespec));
+
+            drivespec[0] = tolower(root[0]);
+        }
+
+        ret = ptr->expected_ret == VARIANT_TRUE ? VARIANT_FALSE : VARIANT_TRUE;
+        hr = IFileSystem3_DriveExists(fs3, drivespec, &ret);
+        ok(hr == S_OK, "got 0x%08x for drive spec %s (%s)\n",
+                hr, wine_dbgstr_w(drivespec), wine_dbgstr_w(ptr->drivespec));
+        ok(ret == ptr->expected_ret, "got %d, expected %d for drive spec %s (%s)\n",
+                ret, ptr->expected_ret, wine_dbgstr_w(drivespec), wine_dbgstr_w(ptr->drivespec));
+
+        SysFreeString(drivespec);
+    }
+}
+
 struct getdrivename_test {
     const WCHAR path[10];
     const WCHAR drive[5];
@@ -2019,6 +2096,7 @@ START_TEST(filesystem)
     test_WriteLine();
     test_ReadAll();
     test_Read();
+    test_DriveExists();
     test_GetDriveName();
     test_SerialNumber();
     test_GetExtensionName();

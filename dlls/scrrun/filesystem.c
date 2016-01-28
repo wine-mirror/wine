@@ -3221,9 +3221,27 @@ static HRESULT WINAPI filesys_GetTempName(IFileSystem3 *iface, BSTR *pbstrResult
 static HRESULT WINAPI filesys_DriveExists(IFileSystem3 *iface, BSTR DriveSpec,
                                             VARIANT_BOOL *pfExists)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(DriveSpec), pfExists);
+    UINT len;
+    WCHAR driveletter;
+    TRACE("%p %s %p\n", iface, debugstr_w(DriveSpec), pfExists);
 
-    return E_NOTIMPL;
+    if (!pfExists) return E_POINTER;
+
+    *pfExists = VARIANT_FALSE;
+    len = SysStringLen(DriveSpec);
+
+    if (len >= 1) {
+        driveletter = toupperW(DriveSpec[0]);
+        if (driveletter >= 'A' && driveletter <= 'Z'
+                && (len < 2 || DriveSpec[1] == ':')
+                && (len < 3 || DriveSpec[2] == '\\')) {
+            const WCHAR root[] = {driveletter, ':', '\\', 0};
+            UINT drivetype = GetDriveTypeW(root);
+            *pfExists = drivetype != DRIVE_NO_ROOT_DIR && drivetype != DRIVE_UNKNOWN ? VARIANT_TRUE : VARIANT_FALSE;
+        }
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI filesys_FileExists(IFileSystem3 *iface, BSTR path, VARIANT_BOOL *ret)
