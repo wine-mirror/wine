@@ -2412,6 +2412,16 @@ static void test_DetermineMinWidth(void)
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     IDWriteTextLayout_Release(layout);
 
+    /* empty string */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 100.0f, 100.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    minwidth = 1.0f;
+    hr = IDWriteTextLayout_DetermineMinWidth(layout, &minwidth);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(minwidth == 0.0f, "got %f\n", minwidth);
+    IDWriteTextLayout_Release(layout);
+
     for (i = 0; i < sizeof(minwidth_tests)/sizeof(minwidth_tests[0]); i++) {
         FLOAT width = 0.0f;
 
@@ -3218,6 +3228,7 @@ static void test_GetLineMetrics(void)
     IDWriteTextLayout *layout;
     IDWriteFontFace *fontface;
     IDWriteFactory *factory;
+    DWRITE_TEXT_RANGE range;
     WCHAR nameW[256];
     HRESULT hr;
 
@@ -3371,6 +3382,61 @@ todo_wine {
     ok(metrics[5].newlineLength == 0, "got %u\n", metrics[5].newlineLength);
 }
     IDWriteTextLayout_Release(layout);
+
+    /* empty text layout */
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 100.0f, 300.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 1, "got %u\n", count);
+    ok(metrics[0].length == 0, "got %u\n", metrics[0].length);
+    ok(metrics[0].trailingWhitespaceLength == 0, "got %u\n", metrics[0].trailingWhitespaceLength);
+    ok(metrics[0].newlineLength == 0, "got %u\n", metrics[0].newlineLength);
+todo_wine {
+    ok(metrics[0].height > 0.0f, "got %f\n", metrics[0].height);
+    ok(metrics[0].baseline > 0.0f, "got %f\n", metrics[0].baseline);
+}
+    ok(!metrics[0].isTrimmed, "got %d\n", metrics[0].isTrimmed);
+
+    /* change font size at first position, see if metrics changed */
+    range.startPosition = 0;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetFontSize(layout, 80.0f, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics + 1, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 1, "got %u\n", count);
+todo_wine {
+    ok(metrics[1].height > metrics[0].height, "got %f\n", metrics[1].height);
+    ok(metrics[1].baseline > metrics[0].baseline, "got %f\n", metrics[1].baseline);
+}
+    /* revert font size back to format value, set different size for position 1 */
+    hr = IDWriteTextLayout_SetFontSize(layout, 12.0f, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    range.startPosition = 1;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetFontSize(layout, 80.0f, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    memset(metrics + 1, 0, sizeof(*metrics));
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics + 1, 1, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
+    ok(count == 1, "got %u\n", count);
+    ok(metrics[1].height == metrics[0].height, "got %f\n", metrics[1].height);
+    ok(metrics[1].baseline == metrics[0].baseline, "got %f\n", metrics[1].baseline);
+
+    IDWriteTextLayout_Release(layout);
+
     IDWriteTextFormat_Release(format);
     IDWriteFontFace_Release(fontface);
     IDWriteFactory_Release(factory);
@@ -3378,16 +3444,21 @@ todo_wine {
 
 static void test_SetTextAlignment(void)
 {
-    static const WCHAR str2W[] = {'a','a','a','a','a',0};
     static const WCHAR strW[] = {'a',0};
-    DWRITE_CLUSTER_METRICS clusters[1];
+
+    static const WCHAR stringsW[][10] = {
+        {'a',0},
+        {0}
+    };
+
+    DWRITE_CLUSTER_METRICS clusters[10];
     DWRITE_TEXT_METRICS metrics;
     IDWriteTextFormat1 *format1;
     IDWriteTextFormat *format;
     IDWriteTextLayout *layout;
     IDWriteFactory *factory;
     DWRITE_TEXT_ALIGNMENT v;
-    UINT32 count;
+    UINT32 count, i;
     HRESULT hr;
 
     factory = create_factory();
@@ -3436,79 +3507,118 @@ static void test_SetTextAlignment(void)
     else
         win_skip("IDWriteTextFormat1 is not supported\n");
 
-    count = 0;
-    hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, 1, &count);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(count == 1, "got %u\n", count);
+    for (i = 0; i < sizeof(stringsW)/sizeof(stringsW[0]); i++) {
+        BOOL todo = lstrlenW(stringsW[i]) == 0;
+        FLOAT text_width;
 
-    /* maxwidth is 500, leading alignment */
-    hr = IDWriteTextLayout_SetTextAlignment(layout, DWRITE_TEXT_ALIGNMENT_LEADING);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_LEADING);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteFactory_CreateTextLayout(factory, stringsW[i], lstrlenW(stringsW[i]), format, 500.0f, 100.0f, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ok(metrics.left == 0.0, "got %.2f\n", metrics.left);
-    ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);
-    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
-    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+        hr = IDWriteTextLayout_SetWordWrapping(layout, DWRITE_WORD_WRAPPING_NO_WRAP);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    /* maxwidth is 500, trailing alignment */
-    hr = IDWriteTextLayout_SetTextAlignment(layout, DWRITE_TEXT_ALIGNMENT_TRAILING);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        count = 0;
+        hr = IDWriteTextLayout_GetClusterMetrics(layout, clusters, sizeof(clusters)/sizeof(*clusters), &count);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        if (lstrlenW(stringsW[i]))
+            ok(count > 0, "got %u\n", count);
+        else
+            ok(count == 0, "got %u\n", count);
 
-    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        text_width = 0.0f;
+        while (count)
+            text_width += clusters[--count].width;
 
-    ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
-    ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);
-    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
-    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
-    IDWriteTextLayout_Release(layout);
+        /* maxwidth is 500, leading alignment */
+        hr = IDWriteTextLayout_SetTextAlignment(layout, DWRITE_TEXT_ALIGNMENT_LEADING);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    /* initially created with trailing alignment */
-    hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_TRAILING);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(metrics.left == 0.0f, "got %.2f\n", metrics.left);
+        ok(metrics.width == text_width, "got %.2f\n", metrics.width);
+        ok(metrics.layoutWidth == 500.0f, "got %.2f\n", metrics.layoutWidth);
+    if (todo)
+        todo_wine
+        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+    else
+        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
 
-    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        /* maxwidth is 500, trailing alignment */
+        hr = IDWriteTextLayout_SetTextAlignment(layout, DWRITE_TEXT_ALIGNMENT_TRAILING);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
-    ok(metrics.width == clusters[0].width, "got %.2f\n", metrics.width);
-    ok(metrics.layoutWidth == 500.0, "got %.2f\n", metrics.layoutWidth);
-    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
-    IDWriteTextLayout_Release(layout);
+        hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    /* max width less than total run width, trailing alignment */
-    hr = IDWriteTextFormat_SetWordWrapping(format, DWRITE_WORD_WRAPPING_NO_WRAP);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
+        ok(metrics.width == text_width, "got %.2f\n", metrics.width);
+        ok(metrics.layoutWidth == 500.0f, "got %.2f\n", metrics.layoutWidth);
+    if (todo)
+        todo_wine
+        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+    else
+        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+        IDWriteTextLayout_Release(layout);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 5, format, 2*clusters[0].width, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
-    ok(metrics.width == 5*clusters[0].width, "got %.2f\n", metrics.width);
-    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
-    IDWriteTextLayout_Release(layout);
+        /* initially created with trailing alignment */
+        hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_TRAILING);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    /* maxwidth is 500, centered */
-    hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_CENTER);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteFactory_CreateTextLayout(factory, stringsW[i], lstrlenW(stringsW[i]), format, 500.0f, 100.0f, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteFactory_CreateTextLayout(factory, str2W, 5, format, 500.0, 100.0, &layout);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+        hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
 
-    hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(metrics.left == (metrics.layoutWidth - metrics.width) / 2.0, "got %.2f\n", metrics.left);
-    ok(metrics.width == 5*clusters[0].width, "got %.2f\n", metrics.width);
-    ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+        ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
+        ok(metrics.width == text_width, "got %.2f\n", metrics.width);
+        ok(metrics.layoutWidth == 500.0f, "got %.2f\n", metrics.layoutWidth);
+    if (todo)
+        todo_wine
+        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+    else
+        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+        IDWriteTextLayout_Release(layout);
 
-    IDWriteTextLayout_Release(layout);
+        if (lstrlenW(stringsW[i]) > 0) {
+            /* max width less than total run width, trailing alignment */
+            hr = IDWriteTextFormat_SetWordWrapping(format, DWRITE_WORD_WRAPPING_NO_WRAP);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            hr = IDWriteFactory_CreateTextLayout(factory, stringsW[i], lstrlenW(stringsW[i]), format, clusters[0].width, 100.0f, &layout);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
+            ok(metrics.width == text_width, "got %.2f\n", metrics.width);
+            ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+            IDWriteTextLayout_Release(layout);
+        }
+
+        /* maxwidth is 500, centered */
+        hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_CENTER);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteFactory_CreateTextLayout(factory, stringsW[i], lstrlenW(stringsW[i]), format, 500.0f, 100.0f, &layout);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteTextLayout_GetMetrics(layout, &metrics);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        ok(metrics.left == (metrics.layoutWidth - metrics.width) / 2.0f, "got %.2f\n", metrics.left);
+        ok(metrics.width == text_width, "got %.2f\n", metrics.width);
+    if (todo)
+        todo_wine
+        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+    else
+        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
+
+        IDWriteTextLayout_Release(layout);
+    }
 
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
