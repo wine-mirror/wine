@@ -3272,9 +3272,40 @@ static HRESULT WINAPI filesys_FolderExists(IFileSystem3 *iface, BSTR path, VARIA
 static HRESULT WINAPI filesys_GetDrive(IFileSystem3 *iface, BSTR DriveSpec,
                                             IDrive **ppdrive)
 {
-    FIXME("%p %s %p\n", iface, debugstr_w(DriveSpec), ppdrive);
+    UINT len;
+    HRESULT hr;
+    WCHAR driveletter;
+    VARIANT_BOOL drive_exists;
 
-    return E_NOTIMPL;
+    TRACE("%p %s %p\n", iface, debugstr_w(DriveSpec), ppdrive);
+
+    if (!ppdrive)
+        return E_POINTER;
+
+    *ppdrive = NULL;
+
+    /* DriveSpec may be one of: 'x', 'x:', 'x:\', '\\computer\share' */
+    len = SysStringLen(DriveSpec);
+    if (!len)
+        return E_INVALIDARG;
+    else if (len <= 3) {
+        driveletter = toupperW(DriveSpec[0]);
+        if (driveletter < 'A' || driveletter > 'Z'
+                || (len >= 2 && DriveSpec[1] != ':')
+                || (len == 3 && DriveSpec[2] != '\\'))
+            return E_INVALIDARG;
+        hr = IFileSystem3_DriveExists(iface, DriveSpec, &drive_exists);
+        if (FAILED(hr))
+            return hr;
+        if (drive_exists == VARIANT_FALSE)
+            return CTL_E_DEVICEUNAVAILABLE;
+        return create_drive(driveletter, ppdrive);
+    } else {
+        if (DriveSpec[0] != '\\' || DriveSpec[1] != '\\')
+            return E_INVALIDARG;
+        FIXME("%s not implemented yet\n", debugstr_w(DriveSpec));
+        return E_NOTIMPL;
+    }
 }
 
 static HRESULT WINAPI filesys_GetFile(IFileSystem3 *iface, BSTR FilePath,

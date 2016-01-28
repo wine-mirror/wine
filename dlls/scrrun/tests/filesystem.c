@@ -1953,6 +1953,94 @@ static void test_GetDriveName(void)
     }
 }
 
+struct getdrive_test {
+    const WCHAR drivespec[12];
+    HRESULT res;
+    const WCHAR driveletter[2];
+};
+
+static void test_GetDrive(void)
+{
+    HRESULT hr;
+    IDrive *drive_fixed, *drive;
+    BSTR dl_fixed, drivespec;
+    WCHAR root[] = {'?',':','\\',0};
+
+    drive = (void*)0xdeadbeef;
+    hr = IFileSystem3_GetDrive(fs3, NULL, NULL);
+    ok(hr == E_POINTER, "got 0x%08x\n", hr);
+    ok(drive == (void*)0xdeadbeef, "got %p\n", drive);
+
+    for (root[0] = 'A'; root[0] <= 'Z'; root[0]++)
+        if (GetDriveTypeW(root) == DRIVE_NO_ROOT_DIR)
+            break;
+
+    if (root[0] > 'Z')
+        skip("All drive letters are occupied, skipping test for nonexisting drive.\n");
+    else {
+        drivespec = SysAllocString(root);
+        drive = (void*)0xdeadbeef;
+        hr = IFileSystem3_GetDrive(fs3, drivespec, &drive);
+        ok(hr == CTL_E_DEVICEUNAVAILABLE, "got 0x%08x\n", hr);
+        ok(drive == NULL, "got %p\n", drive);
+        SysFreeString(drivespec);
+    }
+
+    drive_fixed = get_fixed_drive();
+    if (!drive_fixed) {
+        skip("No fixed drive found, skipping test.\n");
+        return;
+    }
+
+    hr = IDrive_get_DriveLetter(drive_fixed, &dl_fixed);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    if (FAILED(hr))
+        skip("Could not retrieve drive letter of fixed drive, skipping test.\n");
+    else {
+        WCHAR dl_upper = toupper(dl_fixed[0]);
+        WCHAR dl_lower = tolower(dl_fixed[0]);
+        struct getdrive_test testdata[] = {
+            { {dl_upper,0}, S_OK, {dl_upper,0} },
+            { {dl_upper,':',0}, S_OK, {dl_upper,0} },
+            { {dl_upper,':','\\',0}, S_OK, {dl_upper,0} },
+            { {dl_lower,':','\\',0}, S_OK, {dl_upper,0} },
+            { {dl_upper,'\\',0}, E_INVALIDARG, { 0 } },
+            { {dl_lower,'\\',0}, E_INVALIDARG, { 0 } },
+            { {'$',':','\\',0}, E_INVALIDARG, { 0 } },
+            { {'\\','h','o','s','t','\\','s','h','a','r','e',0}, E_INVALIDARG, { 0 } },
+            { {'h','o','s','t','\\','s','h','a','r','e',0}, E_INVALIDARG, { 0 } },
+            { { 0 } },
+        };
+        struct getdrive_test *ptr = &testdata[0];
+
+        for (; *ptr->drivespec; ptr++) {
+            drivespec = SysAllocString(ptr->drivespec);
+            drive = (void*)0xdeadbeef;
+            hr = IFileSystem3_GetDrive(fs3, drivespec, &drive);
+            ok(hr == ptr->res, "got 0x%08x, expected 0x%08x for drive spec %s\n",
+                    hr, ptr->res, wine_dbgstr_w(ptr->drivespec));
+            ok(!lstrcmpW(ptr->drivespec, drivespec), "GetDrive modified its DriveSpec argument\n");
+            SysFreeString(drivespec);
+
+            if (*ptr->driveletter) {
+                BSTR driveletter;
+                hr = IDrive_get_DriveLetter(drive, &driveletter);
+                ok(hr == S_OK, "got 0x%08x for drive spec %s\n", hr, wine_dbgstr_w(ptr->drivespec));
+                if (SUCCEEDED(hr)) {
+                    ok(!lstrcmpW(ptr->driveletter, driveletter), "got %s, expected %s for drive spec %s\n",
+                            wine_dbgstr_w(driveletter), wine_dbgstr_w(ptr->driveletter),
+                            wine_dbgstr_w(ptr->drivespec));
+                    SysFreeString(driveletter);
+                }
+                IDrive_Release(drive);
+            } else
+                ok(drive == NULL, "got %p for drive spec %s\n", drive, wine_dbgstr_w(ptr->drivespec));
+        }
+        SysFreeString(dl_fixed);
+    }
+}
+
 static void test_SerialNumber(void)
 {
     IDrive *drive;
@@ -2111,6 +2199,7 @@ START_TEST(filesystem)
     test_Read();
     test_DriveExists();
     test_GetDriveName();
+    test_GetDrive();
     test_SerialNumber();
     test_GetExtensionName();
     test_GetSpecialFolder();
