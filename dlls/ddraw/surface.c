@@ -323,10 +323,7 @@ static void ddraw_surface_add_iface(struct ddraw_surface *surface)
         wined3d_mutex_lock();
         if (surface->wined3d_rtv)
             wined3d_rendertarget_view_incref(surface->wined3d_rtv);
-        if (surface->wined3d_surface)
-            wined3d_surface_incref(surface->wined3d_surface);
-        if (surface->wined3d_texture)
-            wined3d_texture_incref(surface->wined3d_texture);
+        wined3d_texture_incref(surface->wined3d_texture);
         wined3d_mutex_unlock();
     }
 }
@@ -529,10 +526,7 @@ static void ddraw_surface_cleanup(struct ddraw_surface *surface)
 
     if (surface->wined3d_rtv)
         wined3d_rendertarget_view_decref(surface->wined3d_rtv);
-    if (surface->wined3d_texture)
-        wined3d_texture_decref(surface->wined3d_texture);
-    if (surface->wined3d_surface)
-        wined3d_surface_decref(surface->wined3d_surface);
+    wined3d_texture_decref(surface->wined3d_texture);
 }
 
 ULONG ddraw_surface_release_iface(struct ddraw_surface *This)
@@ -4027,13 +4021,6 @@ static HRESULT WINAPI ddraw_surface7_SetLOD(IDirectDrawSurface7 *iface, DWORD Ma
         return DDERR_INVALIDOBJECT;
     }
 
-    if (!surface->wined3d_texture)
-    {
-        ERR("The ddraw surface has no wined3d texture.\n");
-        wined3d_mutex_unlock();
-        return DDERR_INVALIDOBJECT;
-    }
-
     hr = wined3d_texture_set_lod(surface->wined3d_texture, MaxLOD);
     wined3d_mutex_unlock();
 
@@ -4697,7 +4684,7 @@ static HRESULT ddraw_surface_set_color_key(struct ddraw_surface *surface, DWORD 
         }
     }
 
-    if (surface->wined3d_texture)
+    if (surface->is_complex_root)
         hr = wined3d_texture_set_color_key(surface->wined3d_texture, flags,
                 color_key ? (struct wined3d_color_key *)&fixed_color_key : NULL);
 
@@ -6076,7 +6063,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
     resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
     root = wined3d_resource_get_parent(resource);
-    root->wined3d_texture = wined3d_texture;
+    wined3d_texture_decref(wined3d_texture);
     root->is_complex_root = TRUE;
     texture->root = root;
 
@@ -6189,7 +6176,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
             resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
             last = wined3d_resource_get_parent(resource);
-            last->wined3d_texture = wined3d_texture;
+            wined3d_texture_decref(wined3d_texture);
             texture->root = last;
 
             if (desc->dwFlags & DDSD_CKDESTOVERLAY)
@@ -6228,9 +6215,10 @@ fail:
     return hr;
 }
 
-void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, struct ddraw_texture *texture,
+void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, struct wined3d_texture *wined3d_texture,
         struct wined3d_surface *wined3d_surface, const struct wined3d_parent_ops **parent_ops)
 {
+    struct ddraw_texture *texture = wined3d_texture_get_parent(wined3d_texture);
     DDSURFACEDESC2 *desc = &surface->surface_desc;
     struct wined3d_resource_desc wined3d_desc;
     unsigned int version = texture->version;
@@ -6287,8 +6275,8 @@ void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, stru
     }
     desc->lpSurface = NULL;
 
-    wined3d_surface_incref(wined3d_surface);
     surface->wined3d_surface = wined3d_surface;
+    wined3d_texture_incref(surface->wined3d_texture = wined3d_texture);
     *parent_ops = &ddraw_surface_wined3d_parent_ops;
 
     wined3d_private_store_init(&surface->private_store);
