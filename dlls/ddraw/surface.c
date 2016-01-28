@@ -4132,8 +4132,8 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_BltFast(IDirectDrawSurfac
     if (src_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         hr = ddraw_surface_update_frontbuffer(src_impl, src_rect, TRUE);
     if (SUCCEEDED(hr))
-        hr = wined3d_surface_blt(dst_impl->wined3d_surface, &dst_rect,
-                src_impl->wined3d_surface, src_rect, flags, NULL, WINED3D_TEXF_POINT);
+        hr = wined3d_texture_blt(dst_impl->wined3d_texture, dst_impl->sub_resource_idx, &dst_rect,
+                src_impl->wined3d_texture, src_impl->sub_resource_idx, src_rect, flags, NULL, WINED3D_TEXF_POINT);
     if (SUCCEEDED(hr) && (dst_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
         hr = ddraw_surface_update_frontbuffer(dst_impl, &dst_rect, FALSE);
     wined3d_mutex_unlock();
@@ -6215,7 +6215,8 @@ fail:
     return hr;
 }
 
-void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, struct wined3d_texture *wined3d_texture,
+void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
+        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
         struct wined3d_surface *wined3d_surface, const struct wined3d_parent_ops **parent_ops)
 {
     struct ddraw_texture *texture = wined3d_texture_get_parent(wined3d_texture);
@@ -6277,6 +6278,7 @@ void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw, stru
 
     surface->wined3d_surface = wined3d_surface;
     wined3d_texture_incref(surface->wined3d_texture = wined3d_texture);
+    surface->sub_resource_idx = sub_resource_idx;
     *parent_ops = &ddraw_surface_wined3d_parent_ops;
 
     wined3d_private_store_init(&surface->private_store);

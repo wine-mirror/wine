@@ -4765,7 +4765,7 @@ static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent 
         return DDERR_OUTOFVIDEOMEMORY;
     }
 
-    ddraw_surface_init(ddraw_surface, ddraw, wined3d_texture, surface, parent_ops);
+    ddraw_surface_init(ddraw_surface, ddraw, wined3d_texture, sub_resource_idx, surface, parent_ops);
     *parent = ddraw_surface;
 
     ddraw_update_lost_surfaces(ddraw);
