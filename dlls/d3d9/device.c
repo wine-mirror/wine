@@ -1285,20 +1285,32 @@ static HRESULT WINAPI d3d9_device_GetRenderTargetData(IDirect3DDevice9Ex *iface,
     struct d3d9_surface *dst_impl = unsafe_impl_from_IDirect3DSurface9(dst_surface);
     struct wined3d_resource_desc wined3d_desc;
     struct wined3d_resource *sub_resource;
+    RECT dst_rect, src_rect;
     HRESULT hr;
 
     TRACE("iface %p, render_target %p, dst_surface %p.\n", iface, render_target, dst_surface);
 
     wined3d_mutex_lock();
+    sub_resource = wined3d_texture_get_sub_resource(dst_impl->wined3d_texture, dst_impl->sub_resource_idx);
+    wined3d_resource_get_desc(sub_resource, &wined3d_desc);
+    dst_rect.left = 0;
+    dst_rect.top = 0;
+    dst_rect.right = wined3d_desc.width;
+    dst_rect.bottom = wined3d_desc.height;
+
     sub_resource = wined3d_texture_get_sub_resource(rt_impl->wined3d_texture, rt_impl->sub_resource_idx);
     wined3d_resource_get_desc(sub_resource, &wined3d_desc);
+    src_rect.left = 0;
+    src_rect.top = 0;
+    src_rect.right = wined3d_desc.width;
+    src_rect.bottom = wined3d_desc.height;
 
     /* TODO: Check surface sizes, pools, etc. */
     if (wined3d_desc.multisample_type)
         hr = D3DERR_INVALIDCALL;
     else
-        hr = wined3d_texture_blt(dst_impl->wined3d_texture, dst_impl->sub_resource_idx, NULL,
-                rt_impl->wined3d_texture, rt_impl->sub_resource_idx, NULL, 0, NULL, WINED3D_TEXF_POINT);
+        hr = wined3d_texture_blt(dst_impl->wined3d_texture, dst_impl->sub_resource_idx, &dst_rect,
+                rt_impl->wined3d_texture, rt_impl->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
     wined3d_mutex_unlock();
 
     return hr;
