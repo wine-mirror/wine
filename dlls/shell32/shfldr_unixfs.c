@@ -1123,24 +1123,24 @@ static HRESULT WINAPI ShellFolder2_CreateViewObject(IShellFolder2* iface, HWND h
 }
 
 static HRESULT WINAPI ShellFolder2_GetAttributesOf(IShellFolder2* iface, UINT cidl,
-    LPCITEMIDLIST* apidl, SFGAOF* rgfInOut)
+    LPCITEMIDLIST* apidl, SFGAOF* attrs)
 {
     UnixFolder *This = impl_from_IShellFolder2(iface);
     HRESULT hr = S_OK;
         
-    TRACE("(%p)->(%u %p %p)\n", This, cidl, apidl, rgfInOut);
+    TRACE("(%p)->(%u %p %p)\n", This, cidl, apidl, attrs);
  
-    if (!rgfInOut || (cidl && !apidl)) 
+    if (!attrs || (cidl && !apidl))
         return E_INVALIDARG;
     
     if (cidl == 0) {
-        *rgfInOut &= This->m_dwAttributes;
+        *attrs &= This->m_dwAttributes;
     } else {
         char szAbsolutePath[FILENAME_MAX], *pszRelativePath;
         UINT i;
 
-        *rgfInOut = SFGAO_CANCOPY|SFGAO_CANMOVE|SFGAO_CANLINK|SFGAO_CANRENAME|SFGAO_CANDELETE|
-                    SFGAO_HASPROPSHEET|SFGAO_DROPTARGET|SFGAO_FILESYSTEM;
+        *attrs = SFGAO_CANCOPY | SFGAO_CANMOVE | SFGAO_CANLINK | SFGAO_CANRENAME | SFGAO_CANDELETE |
+            SFGAO_HASPROPSHEET | SFGAO_DROPTARGET | SFGAO_FILESYSTEM;
         lstrcpyA(szAbsolutePath, This->m_pszPath);
         pszRelativePath = szAbsolutePath + lstrlenA(szAbsolutePath);
         for (i=0; i<cidl; i++) {
@@ -1149,12 +1149,12 @@ static HRESULT WINAPI ShellFolder2_GetAttributesOf(IShellFolder2* iface, UINT ci
                 if (!UNIXFS_filename_from_shitemid(apidl[i], pszRelativePath)) 
                     return E_INVALIDARG;
                 if (!(dos_name = wine_get_dos_file_name( szAbsolutePath )))
-                    *rgfInOut &= ~SFGAO_FILESYSTEM;
+                    *attrs &= ~SFGAO_FILESYSTEM;
                 else
                     HeapFree( GetProcessHeap(), 0, dos_name );
             }
             if (_ILIsFolder(apidl[i])) 
-                *rgfInOut |= SFGAO_FOLDER|SFGAO_HASSUBFOLDER|SFGAO_FILESYSANCESTOR;
+                *attrs |= SFGAO_FOLDER | SFGAO_HASSUBFOLDER | SFGAO_FILESYSANCESTOR;
         }
     }
 
