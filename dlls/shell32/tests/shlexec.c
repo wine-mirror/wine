@@ -212,12 +212,7 @@ static void doChild(int argc, char** argv)
     char *filename, buffer[MAX_PATH];
     HANDLE hFile, map;
     int i;
-    int rc;
-    HSZ hszApplication;
     UINT_PTR timer;
-    HANDLE dde_ready;
-    MSG msg;
-    char *shared_block;
 
     filename=argv[2];
     hFile=CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
@@ -252,19 +247,28 @@ static void doChild(int argc, char** argv)
     map = OpenFileMappingA(FILE_MAP_READ, FALSE, "winetest_shlexec_dde_map");
     if (map != NULL)
     {
-        shared_block = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 4096);
+        HANDLE dde_ready;
+        char *shared_block = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 4096);
         CloseHandle(map);
         if (shared_block[0] != '\0' || shared_block[1] != '\0')
         {
+            HDDEDATA hdde;
+            HSZ hszApplication;
+            MSG msg;
+            UINT rc;
+
             post_quit_on_execute = TRUE;
             ddeInst = 0;
             rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
                                 CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0);
-            ok(rc == DMLERR_NO_ERROR, "got %d\n", rc);
+            ok(rc == DMLERR_NO_ERROR, "DdeInitializeA() returned %d\n", rc);
             hszApplication = DdeCreateStringHandleA(ddeInst, shared_block, CP_WINANSI);
-            hszTopic = DdeCreateStringHandleA(ddeInst, shared_block + strlen(shared_block) + 1, CP_WINANSI);
-            assert(hszApplication && hszTopic);
-            assert(DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER | DNS_FILTEROFF));
+            ok(hszApplication != NULL, "DdeCreateStringHandleA(%s) = NULL\n", shared_block);
+            shared_block += strlen(shared_block) + 1;
+            hszTopic = DdeCreateStringHandleA(ddeInst, shared_block, CP_WINANSI);
+            ok(hszTopic != NULL, "DdeCreateStringHandleA(%s) = NULL\n", shared_block);
+            hdde = DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER | DNS_FILTEROFF);
+            ok(hdde != NULL, "DdeNameService() failed le=%u\n", GetLastError());
 
             timer = SetTimer(NULL, 0, 2500, childTimeout);
 
@@ -273,14 +277,19 @@ static void doChild(int argc, char** argv)
             CloseHandle(dde_ready);
 
             while (GetMessageA(&msg, NULL, 0, 0))
+            {
+                if (winetest_debug > 2)
+                    trace("msg %d lParam=%ld wParam=%lu\n", msg.message, msg.lParam, msg.wParam);
                 DispatchMessageA(&msg);
+            }
 
             Sleep(500);
             KillTimer(NULL, timer);
-            assert(DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER));
-            assert(DdeFreeStringHandle(ddeInst, hszTopic));
-            assert(DdeFreeStringHandle(ddeInst, hszApplication));
-            assert(DdeUninitialize(ddeInst));
+            hdde = DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER);
+            ok(hdde != NULL, "DdeNameService() failed le=%u\n", GetLastError());
+            ok(DdeFreeStringHandle(ddeInst, hszTopic), "DdeFreeStringHandle(topic)\n");
+            ok(DdeFreeStringHandle(ddeInst, hszApplication), "DdeFreeStringHandle(application)\n");
+            ok(DdeUninitialize(ddeInst), "DdeUninitialize() failed\n");
         }
         else
         {
