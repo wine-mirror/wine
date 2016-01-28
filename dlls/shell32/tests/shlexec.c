@@ -209,7 +209,7 @@ static void CALLBACK childTimeout(HWND wnd, UINT msg, UINT_PTR timer, DWORD time
 
 static void doChild(int argc, char** argv)
 {
-    char *filename, longpath[MAX_PATH] = "";
+    char *filename, buffer[MAX_PATH];
     HANDLE hFile, map;
     int i;
     int rc;
@@ -239,8 +239,15 @@ static void doChild(int argc, char** argv)
             trace("argvA%d='%s'\n", i, argv[i]);
         childPrintf(hFile, "argvA%d=%s\r\n", i, encodeA(argv[i]));
     }
-    GetModuleFileNameA(GetModuleHandleA(NULL), longpath, MAX_PATH);
-    childPrintf(hFile, "longPath=%s\r\n", encodeA(longpath));
+    GetModuleFileNameA(GetModuleHandleA(NULL), buffer, sizeof(buffer));
+    childPrintf(hFile, "longPath=%s\r\n", encodeA(buffer));
+
+    /* Check environment variable inheritance */
+    *buffer = '\0';
+    SetLastError(0);
+    GetEnvironmentVariableA("ShlexecVar", buffer, sizeof(buffer));
+    childPrintf(hFile, "ShlexecVarLE=%d\r\n", GetLastError());
+    childPrintf(hFile, "ShlexecVar=%s\r\n", encodeA(buffer));
 
     map = OpenFileMappingA(FILE_MAP_READ, FALSE, "winetest_shlexec_dde_map");
     if (map != NULL)
@@ -313,6 +320,11 @@ static void dump_child_(const char* file, int line)
             str=getChildString("Child", key);
             trace_(file, line)("%s='%s'\n", key, str);
         }
+
+        c=GetPrivateProfileIntA("Child", "ShlexecVarLE", -1, child_file);
+        trace_(file, line)("ShlexecVarLE=%d\n", c);
+        str=getChildString("Child", "ShlexecVar");
+        trace_(file, line)("ShlexecVar='%s'\n", str);
 
         c=GetPrivateProfileIntA("Child", "Failures", -1, child_file);
         trace_(file, line)("Failures=%d\n", c);
@@ -527,10 +539,13 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
     if (GetFileAttributesA(child_file) != INVALID_FILE_ATTRIBUTES)
     {
-        int c = GetPrivateProfileIntA("Child", "Failures", -1, child_file);
+        int c;
+        dump_child_(file, line);
+        c = GetPrivateProfileIntA("Child", "Failures", -1, child_file);
         if (c > 0)
             winetest_add_failures(c);
-        dump_child_(file, line);
+        okChildInt_(file, line, "ShlexecVarLE", 0);
+        okChildString_(file, line, "ShlexecVar", "Present", "Present");
     }
 
     if(!verb)
@@ -637,10 +652,13 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     WritePrivateProfileStringA(NULL, NULL, NULL, child_file);
     if (GetFileAttributesA(child_file) != INVALID_FILE_ATTRIBUTES)
     {
-        int c = GetPrivateProfileIntA("Child", "Failures", -1, child_file);
+        int c;
+        dump_child_(file, line);
+        c = GetPrivateProfileIntA("Child", "Failures", -1, child_file);
         if (c > 0)
             winetest_add_failures(c);
-        dump_child_(file, line);
+        okChildInt_(file, line, "ShlexecVarLE", 0);
+        okChildString_(file, line, "ShlexecVar", "Present", "Present");
     }
 
     return rc;
@@ -2736,6 +2754,9 @@ static void init_test(void)
     create_test_verb(".shlexec", "QuotedLowerL", 0, "QuotedLowerL \"%l\"");
     create_test_verb(".shlexec", "UpperL", 0, "UpperL %L");
     create_test_verb(".shlexec", "QuotedUpperL", 0, "QuotedUpperL \"%L\"");
+
+    /* Set an environment variable to see if it is inherited */
+    SetEnvironmentVariableA("ShlexecVar", "Present");
 }
 
 static void cleanup_test(void)
