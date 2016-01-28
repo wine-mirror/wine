@@ -728,24 +728,43 @@ static void test_CreateTextLayout(void)
 
     factory = create_factory();
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateTextLayout(factory, NULL, 0, NULL, 0.0, 0.0, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 0.0, 0.0, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 1.0, 0.0, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 0.0, 1.0, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, NULL, 1000.0, 1000.0, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    layout = (void*)0xdeadbeef;
+    hr = IDWriteFactory_CreateTextLayout(factory, NULL, 0, format, 100.0f, 100.0f, &layout);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 0, format, 0.0f, 0.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    IDWriteTextLayout_Release(layout);
 
     EXPECT_REF(format, 1);
     hr = IDWriteFactory_CreateTextLayout(factory, strW, 6, format, 1000.0, 1000.0, &layout);
@@ -823,26 +842,41 @@ static void test_CreateGdiCompatibleTextLayout(void)
 
     factory = create_factory();
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, NULL, 0, NULL, 0.0, 0.0, 0.0, NULL, FALSE, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, NULL, 0.0, 0.0, 0.0, NULL, FALSE, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, NULL, 1.0, 0.0, 0.0, NULL, FALSE, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, NULL, 1.0, 0.0, 1.0, NULL, FALSE, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
+    layout = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, NULL, 1000.0, 1000.0, 1.0, NULL, FALSE, &layout);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
     /* create with text format */
     hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
         DWRITE_FONT_STRETCH_NORMAL, 10.0, enusW, &format);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     EXPECT_REF(format, 1);
+
+    layout = (void*)0xdeadbeef;
+    hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, NULL, 0, format, 100.0f, 100.0f, 1.0f, NULL, FALSE, &layout);
+    ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(layout == NULL, "got %p\n", layout);
 
     hr = IDWriteFactory_CreateGdiCompatibleTextLayout(factory, strW, 6, format, 100.0, 100.0, 1.0, NULL, FALSE, &layout);
     ok(hr == S_OK, "got 0x%08x\n", hr);

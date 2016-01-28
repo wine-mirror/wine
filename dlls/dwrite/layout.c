@@ -4282,6 +4282,9 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
 
     *ret = NULL;
 
+    if (!format || !str)
+        return E_INVALIDARG;
+
     layout = heap_alloc(sizeof(struct dwrite_textlayout));
     if (!layout) return E_OUTOFMEMORY;
 
@@ -4299,6 +4302,9 @@ HRESULT create_gdicompat_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFor
     HRESULT hr;
 
     *ret = NULL;
+
+    if (!format || !str)
+        return E_INVALIDARG;
 
     layout = heap_alloc(sizeof(struct dwrite_textlayout));
     if (!layout) return E_OUTOFMEMORY;

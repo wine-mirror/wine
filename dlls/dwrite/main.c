@@ -1045,9 +1045,9 @@ static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory2 *iface, WCH
     UINT32 len, IDWriteTextFormat *format, FLOAT max_width, FLOAT max_height, IDWriteTextLayout **layout)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
+
     TRACE("(%p)->(%s:%u %p %f %f %p)\n", This, debugstr_wn(string, len), len, format, max_width, max_height, layout);
 
-    if (!format) return E_INVALIDARG;
     return create_textlayout(string, len, format, max_width, max_height, layout);
 }
 
@@ -1060,7 +1060,6 @@ static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory
     TRACE("(%p)->(%s:%u %p %f %f %f %p %d %p)\n", This, debugstr_wn(string, len), len, format, layout_width, layout_height,
         pixels_per_dip, transform, use_gdi_natural, layout);
 
-    if (!format) return E_INVALIDARG;
     return create_gdicompat_textlayout(string, len, format, layout_width, layout_height, pixels_per_dip, transform,
         use_gdi_natural, layout);
 }
