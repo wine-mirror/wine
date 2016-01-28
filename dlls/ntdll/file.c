@@ -218,11 +218,12 @@ static NTSTATUS FILE_CreateFile( PHANDLE handle, ACCESS_MASK access, POBJECT_ATT
 
     if (io->u.Status == STATUS_SUCCESS)
     {
+        static UNICODE_STRING empty_string;
         OBJECT_ATTRIBUTES unix_attr = *attr;
         data_size_t len;
         struct object_attributes *objattr;
 
-        unix_attr.ObjectName = NULL;  /* we send the unix name instead */
+        unix_attr.ObjectName = &empty_string;  /* we send the unix name instead */
         if ((io->u.Status = alloc_object_attributes( &unix_attr, &objattr, &len )))
         {
             RtlFreeAnsiString( &unix_name );

@@ -110,6 +110,7 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
         if (attr->ObjectName->Length & (sizeof(WCHAR) - 1)) return STATUS_OBJECT_NAME_INVALID;
         len += attr->ObjectName->Length;
     }
+    else if (attr->RootDirectory) return STATUS_OBJECT_NAME_INVALID;
 
     *ret = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY, len );
     if (!*ret) return STATUS_NO_MEMORY;
@@ -196,8 +197,6 @@ NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
 {
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
-
-    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( open_semaphore )
     {
@@ -306,8 +305,6 @@ NTSTATUS WINAPI NtOpenEvent(
 {
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
-
-    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( open_event )
     {
@@ -473,8 +470,6 @@ NTSTATUS WINAPI NtOpenMutant(OUT HANDLE* MutantHandle,
 {
     NTSTATUS    status;
     DWORD       len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
-
-    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( open_mutex )
     {
@@ -779,8 +774,6 @@ NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
 {
     DWORD       len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
     NTSTATUS    status;
-
-    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( open_timer )
     {
@@ -1089,8 +1082,6 @@ NTSTATUS WINAPI NtOpenKeyedEvent( HANDLE *handle, ACCESS_MASK access, const OBJE
 {
     DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
-
-    if (len >= MAX_PATH * sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
 
     SERVER_START_REQ( open_keyed_event )
     {
