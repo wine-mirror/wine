@@ -196,15 +196,15 @@ struct layout_effective_run {
 
 struct layout_effective_inline {
     struct list entry;
-    IDWriteInlineObject *object;
-    IUnknown *effect;
-    FLOAT origin_x;
-    FLOAT origin_y;
-    FLOAT align_dx;
-    FLOAT width;
-    BOOL  is_sideways;
-    BOOL  is_rtl;
-    UINT32 line;
+    const struct layout_run *run; /* nominal run this one is based on */
+    IUnknown *effect;             /* original reference is kept only at range level */
+    FLOAT origin_x;               /* left X position */
+    FLOAT origin_y;               /* left top corner Y position */
+    FLOAT align_dx;               /* adjustment from text alignment */
+    FLOAT width;                  /* object width as it's reported it */
+    BOOL  is_sideways;            /* vertical flow direction flag passed to Draw */
+    BOOL  is_rtl;                 /* bidi flag passed to Draw */
+    UINT32 line;                  /* 0-based line index in line metrics array */
 };
 
 struct layout_underline {
@@ -1089,7 +1089,7 @@ static HRESULT layout_add_effective_run(struct dwrite_textlayout *layout, const 
         if (!inlineobject)
             return E_OUTOFMEMORY;
 
-        inlineobject->object = r->u.object.object;
+        inlineobject->run = r;
         inlineobject->width = get_cluster_range_width(layout, first_cluster, first_cluster + cluster_count);
         inlineobject->origin_x = is_rtl ? origin_x - inlineobject->width : origin_x;
         inlineobject->origin_y = 0.0f; /* set after line is built */
@@ -1471,7 +1471,7 @@ static void layout_apply_par_alignment(struct dwrite_textlayout *layout)
         }
 
         while (inrun && inrun->line == line) {
-            inrun->origin_y = origin_y;
+            inrun->origin_y = origin_y - inrun->run->baseline;
             inrun = layout_get_next_inline_run(layout, inrun);
         }
     }
@@ -1773,7 +1773,7 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 
         /* Same for inline runs */
         while (inrun && inrun->line == line) {
-            inrun->origin_y = origin_y;
+            inrun->origin_y = origin_y - inrun->run->baseline;
             inrun = layout_get_next_inline_run(layout, inrun);
         }
 
@@ -3178,7 +3178,7 @@ static HRESULT WINAPI dwritetextlayout_Draw(IDWriteTextLayout2 *iface,
             context,
             inlineobject->origin_x + inlineobject->align_dx + origin_x,
             SNAP_COORD(inlineobject->origin_y + origin_y),
-            inlineobject->object,
+            inlineobject->run->u.object.object,
             inlineobject->is_sideways,
             inlineobject->is_rtl,
             inlineobject->effect);
