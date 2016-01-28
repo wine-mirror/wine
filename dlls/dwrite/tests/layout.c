@@ -3391,15 +3391,12 @@ todo_wine {
     memset(metrics, 0, sizeof(metrics));
     hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 1, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 1, "got %u\n", count);
     ok(metrics[0].length == 0, "got %u\n", metrics[0].length);
     ok(metrics[0].trailingWhitespaceLength == 0, "got %u\n", metrics[0].trailingWhitespaceLength);
     ok(metrics[0].newlineLength == 0, "got %u\n", metrics[0].newlineLength);
-todo_wine {
     ok(metrics[0].height > 0.0f, "got %f\n", metrics[0].height);
     ok(metrics[0].baseline > 0.0f, "got %f\n", metrics[0].baseline);
-}
     ok(!metrics[0].isTrimmed, "got %d\n", metrics[0].isTrimmed);
 
     /* change font size at first position, see if metrics changed */
@@ -3411,12 +3408,10 @@ todo_wine {
     count = 0;
     hr = IDWriteTextLayout_GetLineMetrics(layout, metrics + 1, 1, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 1, "got %u\n", count);
-todo_wine {
     ok(metrics[1].height > metrics[0].height, "got %f\n", metrics[1].height);
     ok(metrics[1].baseline > metrics[0].baseline, "got %f\n", metrics[1].baseline);
-}
+
     /* revert font size back to format value, set different size for position 1 */
     hr = IDWriteTextLayout_SetFontSize(layout, 12.0f, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -3430,7 +3425,6 @@ todo_wine {
     count = 0;
     hr = IDWriteTextLayout_GetLineMetrics(layout, metrics + 1, 1, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 1, "got %u\n", count);
     ok(metrics[1].height == metrics[0].height, "got %f\n", metrics[1].height);
     ok(metrics[1].baseline == metrics[0].baseline, "got %f\n", metrics[1].baseline);
@@ -3508,7 +3502,6 @@ static void test_SetTextAlignment(void)
         win_skip("IDWriteTextFormat1 is not supported\n");
 
     for (i = 0; i < sizeof(stringsW)/sizeof(stringsW[0]); i++) {
-        BOOL todo = lstrlenW(stringsW[i]) == 0;
         FLOAT text_width;
 
         hr = IDWriteTextFormat_SetTextAlignment(format, DWRITE_TEXT_ALIGNMENT_LEADING);
@@ -3542,10 +3535,6 @@ static void test_SetTextAlignment(void)
         ok(metrics.left == 0.0f, "got %.2f\n", metrics.left);
         ok(metrics.width == text_width, "got %.2f\n", metrics.width);
         ok(metrics.layoutWidth == 500.0f, "got %.2f\n", metrics.layoutWidth);
-    if (todo)
-        todo_wine
-        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
-    else
         ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
 
         /* maxwidth is 500, trailing alignment */
@@ -3558,10 +3547,6 @@ static void test_SetTextAlignment(void)
         ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
         ok(metrics.width == text_width, "got %.2f\n", metrics.width);
         ok(metrics.layoutWidth == 500.0f, "got %.2f\n", metrics.layoutWidth);
-    if (todo)
-        todo_wine
-        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
-    else
         ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
         IDWriteTextLayout_Release(layout);
 
@@ -3578,10 +3563,6 @@ static void test_SetTextAlignment(void)
         ok(metrics.left == metrics.layoutWidth - metrics.width, "got %.2f\n", metrics.left);
         ok(metrics.width == text_width, "got %.2f\n", metrics.width);
         ok(metrics.layoutWidth == 500.0f, "got %.2f\n", metrics.layoutWidth);
-    if (todo)
-        todo_wine
-        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
-    else
         ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
         IDWriteTextLayout_Release(layout);
 
@@ -3611,10 +3592,6 @@ static void test_SetTextAlignment(void)
         ok(hr == S_OK, "got 0x%08x\n", hr);
         ok(metrics.left == (metrics.layoutWidth - metrics.width) / 2.0f, "got %.2f\n", metrics.left);
         ok(metrics.width == text_width, "got %.2f\n", metrics.width);
-    if (todo)
-        todo_wine
-        ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
-    else
         ok(metrics.lineCount == 1, "got %d\n", metrics.lineCount);
 
         IDWriteTextLayout_Release(layout);

@@ -350,10 +350,9 @@ static inline struct dwrite_typography *impl_from_IDWriteTypography(IDWriteTypog
     return CONTAINING_RECORD(iface, struct dwrite_typography, IDWriteTypography_iface);
 }
 
-static inline const char *debugstr_run(const struct regular_layout_run *run)
+static inline const char *debugstr_rundescr(const DWRITE_GLYPH_RUN_DESCRIPTION *descr)
 {
-    return wine_dbg_sprintf("[%u,%u)", run->descr.textPosition, run->descr.textPosition +
-        run->descr.stringLength);
+    return wine_dbg_sprintf("[%u,%u)", descr->textPosition, descr->textPosition + descr->stringLength);
 }
 
 static inline BOOL is_layout_gdi_compatible(struct dwrite_textlayout *layout)
@@ -670,6 +669,57 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
 
 #define SCALE_FONT_METRIC(metric, emSize, metrics) ((FLOAT)(metric) * (emSize) / (FLOAT)(metrics)->designUnitsPerEm)
 
+static HRESULT create_fontface_by_pos(struct dwrite_textlayout *layout, struct layout_range *range, IDWriteFontFace **fontface)
+{
+    static DWRITE_GLYPH_RUN_DESCRIPTION descr = { 0 };
+    IDWriteFontFamily *family;
+    BOOL exists = FALSE;
+    IDWriteFont *font;
+    UINT32 index;
+    HRESULT hr;
+
+    *fontface = NULL;
+
+    hr = IDWriteFontCollection_FindFamilyName(range->collection, range->fontfamily, &index, &exists);
+    if (FAILED(hr) || !exists) {
+        WARN("%s: family %s not found in collection %p\n", debugstr_rundescr(&descr), debugstr_w(range->fontfamily), range->collection);
+        return hr;
+    }
+
+    hr = IDWriteFontCollection_GetFontFamily(range->collection, index, &family);
+    if (FAILED(hr))
+        return hr;
+
+    hr = IDWriteFontFamily_GetFirstMatchingFont(family, range->weight, range->stretch, range->style, &font);
+    IDWriteFontFamily_Release(family);
+    if (FAILED(hr)) {
+        WARN("%s: failed to get a matching font\n", debugstr_rundescr(&descr));
+        return hr;
+    }
+
+    hr = IDWriteFont_CreateFontFace(font, fontface);
+    IDWriteFont_Release(font);
+    return hr;
+}
+
+static void layout_get_font_metrics(struct dwrite_textlayout *layout, IDWriteFontFace *fontface, FLOAT emsize,
+    DWRITE_FONT_METRICS *fontmetrics)
+{
+    if (is_layout_gdi_compatible(layout)) {
+        HRESULT hr = IDWriteFontFace_GetGdiCompatibleMetrics(fontface, emsize, layout->ppdip, &layout->transform, fontmetrics);
+        if (FAILED(hr))
+            WARN("failed to get compat metrics, 0x%08x\n", hr);
+    }
+    else
+        IDWriteFontFace_GetMetrics(fontface, fontmetrics);
+}
+
+static void layout_get_font_height(FLOAT emsize, DWRITE_FONT_METRICS *fontmetrics, FLOAT *baseline, FLOAT *height)
+{
+    *baseline = SCALE_FONT_METRIC(fontmetrics->ascent + fontmetrics->lineGap, emsize, fontmetrics);
+    *height = SCALE_FONT_METRIC(fontmetrics->ascent + fontmetrics->descent + fontmetrics->lineGap, emsize, fontmetrics);
+}
+
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
     IDWriteTextAnalyzer *analyzer;
@@ -737,10 +787,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         DWRITE_SHAPING_TEXT_PROPERTIES *text_props = NULL;
         struct regular_layout_run *run = &r->u.regular;
         DWRITE_FONT_METRICS fontmetrics = { 0 };
-        IDWriteFontFamily *family;
-        UINT32 index, max_count;
-        IDWriteFont *font;
-        BOOL exists = TRUE;
+        UINT32 max_count;
 
         /* we need to do very little in case of inline objects */
         if (r->kind == LAYOUT_RUN_INLINE) {
@@ -776,26 +823,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         }
 
         range = get_layout_range_by_pos(layout, run->descr.textPosition);
-
-        hr = IDWriteFontCollection_FindFamilyName(range->collection, range->fontfamily, &index, &exists);
-        if (FAILED(hr) || !exists) {
-            WARN("%s: family %s not found in collection %p\n", debugstr_run(run), debugstr_w(range->fontfamily), range->collection);
-            continue;
-        }
-
-        hr = IDWriteFontCollection_GetFontFamily(range->collection, index, &family);
-        if (FAILED(hr))
-            continue;
-
-        hr = IDWriteFontFamily_GetFirstMatchingFont(family, range->weight, range->stretch, range->style, &font);
-        IDWriteFontFamily_Release(family);
-        if (FAILED(hr)) {
-            WARN("%s: failed to get a matching font\n", debugstr_run(run));
-            continue;
-        }
-
-        hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
-        IDWriteFont_Release(font);
+        hr = create_fontface_by_pos(layout, range, &run->run.fontFace);
         if (FAILED(hr))
             continue;
 
@@ -838,7 +866,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         if (FAILED(hr)) {
             heap_free(text_props);
             heap_free(glyph_props);
-            WARN("%s: shaping failed 0x%08x\n", debugstr_run(run), hr);
+            WARN("%s: shaping failed 0x%08x\n", debugstr_rundescr(&run->descr), hr);
             continue;
         }
 
@@ -866,7 +894,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         heap_free(text_props);
         heap_free(glyph_props);
         if (FAILED(hr))
-            WARN("%s: failed to get glyph placement info, 0x%08x\n", debugstr_run(run), hr);
+            WARN("%s: failed to get glyph placement info, 0x%08x\n", debugstr_rundescr(&run->descr), hr);
 
         run->run.glyphAdvances = run->advances;
         run->run.glyphOffsets = run->offsets;
@@ -880,23 +908,10 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             run->run.glyphCount = run->glyphcount;
 
         /* baseline derived from font metrics */
-        if (is_layout_gdi_compatible(layout)) {
-            hr = IDWriteFontFace_GetGdiCompatibleMetrics(run->run.fontFace,
-                run->run.fontEmSize,
-                layout->ppdip,
-                &layout->transform,
-                &fontmetrics);
-            if (FAILED(hr))
-                WARN("failed to get compat metrics, 0x%08x\n", hr);
-        }
-        else
-            IDWriteFontFace_GetMetrics(run->run.fontFace, &fontmetrics);
-
-        r->baseline = SCALE_FONT_METRIC(fontmetrics.ascent + fontmetrics.lineGap, run->run.fontEmSize, &fontmetrics);
-        r->height = SCALE_FONT_METRIC(fontmetrics.ascent + fontmetrics.descent + fontmetrics.lineGap, run->run.fontEmSize, &fontmetrics);
+        layout_get_font_metrics(layout, run->run.fontFace, run->run.fontEmSize, &fontmetrics);
+        layout_get_font_height(run->run.fontEmSize, &fontmetrics, &r->baseline, &r->height);
 
         layout_set_cluster_metrics(layout, r, &cluster);
-
         continue;
 
     memerr:
@@ -1702,7 +1717,32 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         textpos += layout->clustermetrics[i].length;
     }
 
-    layout->metrics.left = is_rtl ? layout->metrics.layoutWidth - layout->metrics.width : 0;
+    /* Add dummy line when there's no text. Metrics come from first range. */
+    if (layout->len == 0) {
+        DWRITE_FONT_METRICS fontmetrics;
+        struct layout_range *range;
+        IDWriteFontFace *fontface;
+
+        range = get_layout_range_by_pos(layout, 0);
+        hr = create_fontface_by_pos(layout, range, &fontface);
+        if (FAILED(hr))
+            return hr;
+
+        layout_get_font_metrics(layout, fontface, range->fontsize, &fontmetrics);
+        layout_get_font_height(range->fontsize, &fontmetrics, &metrics.baseline, &metrics.height);
+        IDWriteFontFace_Release(fontface);
+
+        line = 0;
+        metrics.length = 0;
+        metrics.trailingWhitespaceLength = 0;
+        metrics.newlineLength = 0;
+        metrics.isTrimmed = FALSE;
+        hr = layout_set_line_metrics(layout, &metrics, &line);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    layout->metrics.left = is_rtl ? layout->metrics.layoutWidth - layout->metrics.width : 0.0f;
     layout->metrics.top = 0.0f;
     layout->metrics.maxBidiReorderingDepth = 1; /* FIXME */
     layout->metrics.height = 0.0f;
