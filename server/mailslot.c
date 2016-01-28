@@ -403,7 +403,11 @@ static struct mailslot *create_mailslot( struct directory *root,
     struct mailslot *mailslot;
     int fds[2];
 
-    if (!name || !name->len) return alloc_object( &mailslot_ops );
+    if (!name || !name->len)
+    {
+        mailslot = alloc_object( &mailslot_ops );
+        goto init;
+    }
 
     if (!(obj = find_object_dir( root, name, attr, &new_name )))
     {
@@ -435,6 +439,7 @@ static struct mailslot *create_mailslot( struct directory *root,
     mailslot = create_object( dev->mailslots, &mailslot_ops, &new_name, NULL );
     release_object( dev );
 
+init:
     if (!mailslot) return NULL;
 
     mailslot->fd = NULL;
