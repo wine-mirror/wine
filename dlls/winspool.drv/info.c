@@ -781,13 +781,15 @@ static void *cupshandle;
     DO_FUNC(cupsPrintFile)
 #define CUPS_OPT_FUNCS \
     DO_FUNC(cupsGetNamedDest); \
-    DO_FUNC(cupsGetPPD3)
+    DO_FUNC(cupsGetPPD3); \
+    DO_FUNC(cupsLastErrorString)
 
 #define DO_FUNC(f) static typeof(f) *p##f
 CUPS_FUNCS;
 #undef DO_FUNC
 static cups_dest_t * (*pcupsGetNamedDest)(http_t *, const char *, const char *);
 static http_status_t (*pcupsGetPPD3)(http_t *, const char *, time_t *, char *, size_t);
+static const char *  (*pcupsLastErrorString)(void);
 
 static http_status_t cupsGetPPD3_wrapper( http_t *http, const char *name,
                                           time_t *modtime, char *buffer,
@@ -8237,6 +8239,8 @@ static BOOL schedule_cups(LPCWSTR printer_name, LPCWSTR filename, LPCWSTR docume
             TRACE( "\t%d: %s = %s\n", i, options[i].name, options[i].value );
 
         ret = pcupsPrintFile( queue, unixname, unix_doc_title, num_options, options );
+        if (ret == 0 && pcupsLastErrorString)
+            WARN("cupsPrintFile failed with error %s\n", debugstr_a(pcupsLastErrorString()));
 
         pcupsFreeOptions( num_options, options );
 
