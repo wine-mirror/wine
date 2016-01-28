@@ -666,8 +666,10 @@ if (0)
     /* null out parameter crashes this call */
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, NULL, NULL);
 
+    font = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFromLOGFONT(interop, NULL, &font);
     EXPECT_HR(hr, E_INVALIDARG);
+    ok(font == NULL, "got %p\n", font);
 
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;
@@ -1356,15 +1358,22 @@ if (0) /* crashes on native */
 todo_wine
     ok(hr == DWRITE_E_UNSUPPORTEDOPERATION || broken(hr == E_INVALIDARG) /* older versions */, "got 0x%08x\n", hr);
 
+    fontface = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_TYPE1, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(fontface == NULL, "got %p\n", fontface);
 
+    fontface = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_VECTOR, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(fontface == NULL, "got %p\n", fontface);
 
+    fontface = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_BITMAP, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(fontface == NULL, "got %p\n", fontface);
 
+    fontface = NULL;
     hr = IDWriteFactory_CreateFontFace(factory, DWRITE_FONT_FACE_TYPE_UNKNOWN, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &fontface);
 todo_wine
     ok(hr == S_OK || broken(hr == E_INVALIDARG) /* < win10 */, "got 0x%08x\n", hr);
@@ -1867,8 +1876,10 @@ static void test_CustomFontCollection(void)
     hr = IDWriteFactory_RegisterFontCollectionLoader(factory, &resource_collection.IDWriteFontFileCollectionLoader_iface);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    font_collection = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateCustomFontCollection(factory, &collection3, "Billy", 6, &font_collection);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(font_collection == NULL, "got %p\n", font_collection);
 
     hr = IDWriteFactory_CreateCustomFontCollection(factory, &collection, "Billy", 6, &font_collection);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -1878,8 +1889,10 @@ static void test_CustomFontCollection(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IDWriteFontCollection_Release(font_collection);
 
+    font_collection = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateCustomFontCollection(factory, (IDWriteFontCollectionLoader*)0xdeadbeef, "Billy", 6, &font_collection);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(font_collection == NULL, "got %p\n", font_collection);
 
     font = FindResourceA(GetModuleHandleA(NULL), (LPCSTR)MAKEINTRESOURCE(1), (LPCSTR)RT_RCDATA);
     ok(font != NULL, "Failed to find font resource\n");
@@ -2058,11 +2071,15 @@ if (0) { /* crashes on win10 */
     ok(hr == S_OK, "got 0x%08x\n", hr);
     IDWriteFontFile_Release(file);
 
+    file = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader3, &file);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(file == NULL, "got %p\n", file);
 
+    file = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, NULL, &file);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(file == NULL, "got %p\n", file);
 
     file = NULL;
     hr = IDWriteFactory_CreateCustomFontFileReference(factory, "test", 4, &floader, &file);
@@ -2101,8 +2118,10 @@ if (0) { /* crashes on win10 */
     ok(count == 1, "got %i\n", count);
 
     /* invalid index */
+    face = (void*)0xdeadbeef;
     hr = IDWriteFactory_CreateFontFace(factory, face_type, 1, &file, 1, DWRITE_FONT_SIMULATIONS_NONE, &face);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(face == NULL, "got %p\n", face);
 
     hr = IDWriteFactory_CreateFontFace(factory, face_type, 1, &file, 0, DWRITE_FONT_SIMULATIONS_NONE, &face);
     ok(hr == S_OK, "got 0x%08x\n", hr);
@@ -2540,8 +2559,10 @@ static void test_CreateFontFaceFromHdc(void)
     hr = IDWriteFactory_GetGdiInterop(factory, &interop);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
+    fontface = (void*)0xdeadbeef;
     hr = IDWriteGdiInterop_CreateFontFaceFromHdc(interop, NULL, &fontface);
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
+    ok(fontface == NULL, "got %p\n", fontface);
 
     memset(&logfont, 0, sizeof(logfont));
     logfont.lfHeight = 12;

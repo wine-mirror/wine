@@ -779,6 +779,8 @@ static HRESULT WINAPI dwritefactory_CreateCustomFontFileReference(IDWriteFactory
 
     TRACE("(%p)->(%p %u %p %p)\n", This, reference_key, key_size, loader, font_file);
 
+    *font_file = NULL;
+
     if (!loader || !factory_get_file_loader(This, loader))
         return E_INVALIDARG;
 
