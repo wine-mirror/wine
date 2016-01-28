@@ -40,6 +40,10 @@
 #include "ntdll_misc.h"
 #include "wine/server.h"
 
+#ifdef HAVE_MACH_MACH_H
+#include <mach/mach.h>
+#endif
+
 WINE_DEFAULT_DEBUG_CHANNEL(ntdll);
 
 static ULONG execute_flags = MEM_EXECUTE_OPTION_DISABLE;
@@ -109,6 +113,32 @@ ULONG_PTR get_system_affinity_mask(void)
     if (num_cpus >= sizeof(ULONG_PTR) * 8) return ~(ULONG_PTR)0;
     return ((ULONG_PTR)1 << num_cpus) - 1;
 }
+
+#if defined(HAVE_MACH_MACH_H)
+
+static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+{
+#if defined(MACH_TASK_BASIC_INFO)
+    struct mach_task_basic_info info;
+    mach_msg_type_number_t infoCount = MACH_TASK_BASIC_INFO_COUNT;
+    if(task_info(mach_task_self(), MACH_TASK_BASIC_INFO, (task_info_t)&info, &infoCount) == KERN_SUCCESS)
+    {
+        pvmi->VirtualSize = info.resident_size + info.virtual_size;
+        pvmi->PagefileUsage = info.virtual_size;
+        pvmi->WorkingSetSize = info.resident_size;
+        pvmi->PeakWorkingSetSize = info.resident_size_max;
+    }
+#endif
+}
+
+#else
+
+static void fill_VM_COUNTERS(VM_COUNTERS* pvmi)
+{
+    /* FIXME : real data */
+}
+
+#endif
 
 /******************************************************************************
 *  NtQueryInformationProcess		[NTDLL.@]
@@ -240,8 +270,8 @@ NTSTATUS WINAPI NtQueryInformationProcess(
                     ret = STATUS_INVALID_HANDLE;
                 else
                 {
-                    /* FIXME : real data */
                     memset(&pvmi, 0 , sizeof(VM_COUNTERS));
+                    fill_VM_COUNTERS(&pvmi);
 
                     len = ProcessInformationLength;
                     if (len != FIELD_OFFSET(VM_COUNTERS,PrivatePageCount)) len = sizeof(VM_COUNTERS);
