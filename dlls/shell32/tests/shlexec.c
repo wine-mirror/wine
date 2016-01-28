@@ -26,8 +26,6 @@
  * - ShellExecute("foo.shlexec") with no path should work if foo.shlexec is
  *   in the PATH
  * - test associations that use %l, %L or "%1" instead of %1
- * - we may want to test ShellExecuteEx() instead of ShellExecute()
- *   and then we could also check its return value
  * - ShellExecuteEx() also calls SetLastError() with meaningful values which
  *   we could check
  */
@@ -597,13 +595,20 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
 
     if (rc > 32)
     {
-        int wait_rc;
+        DWORD wait_rc, rc;
         if (sei.hProcess!=NULL)
         {
             wait_rc=WaitForSingleObject(sei.hProcess, 5000);
             okShell_(file, line)(wait_rc==WAIT_OBJECT_0,
                                  "WaitForSingleObject(hProcess) returned %d\n",
                                  wait_rc);
+            wait_rc = GetExitCodeProcess(sei.hProcess, &rc);
+            okShell_(file, line)(wait_rc, "GetExitCodeProcess() failed le=%u\n", GetLastError());
+            if (!_todo_wait)
+                okShell_(file, line)(rc == 0, "child returned %u\n", rc);
+            else todo_wine
+                okShell_(file, line)(rc == 0, "child returned %u\n", rc);
+            CloseHandle(sei.hProcess);
         }
         wait_rc=WaitForSingleObject(hEvent, 5000);
         if (!_todo_wait)
