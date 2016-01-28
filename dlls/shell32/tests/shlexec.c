@@ -1,7 +1,7 @@
 /*
  * Unit test of the ShellExecute function.
  *
- * Copyright 2005 Francois Gouget for CodeWeavers
+ * Copyright 2005, 2016 Francois Gouget for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,10 +64,131 @@ static HANDLE dde_ready_event;
 
 /***
  *
- * ShellExecute wrappers
+ * Helpers to read from / write to the child process results file.
+ * (borrowed from dlls/kernel32/tests/process.c)
  *
  ***/
-static void dump_child_(const char* file, int line);
+
+static const char* encodeA(const char* str)
+{
+    static char encoded[2*1024+1];
+    char*       ptr;
+    size_t      len,i;
+
+    if (!str) return "";
+    len = strlen(str) + 1;
+    if (len >= sizeof(encoded)/2)
+    {
+        fprintf(stderr, "string is too long!\n");
+        assert(0);
+    }
+    ptr = encoded;
+    for (i = 0; i < len; i++)
+        sprintf(&ptr[i * 2], "%02x", (unsigned char)str[i]);
+    ptr[2 * len] = '\0';
+    return ptr;
+}
+
+static unsigned decode_char(char c)
+{
+    if (c >= '0' && c <= '9') return c - '0';
+    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+    assert(c >= 'A' && c <= 'F');
+    return c - 'A' + 10;
+}
+
+static char* decodeA(const char* str)
+{
+    static char decoded[1024];
+    char*       ptr;
+    size_t      len,i;
+
+    len = strlen(str) / 2;
+    if (!len--) return NULL;
+    if (len >= sizeof(decoded))
+    {
+        fprintf(stderr, "string is too long!\n");
+        assert(0);
+    }
+    ptr = decoded;
+    for (i = 0; i < len; i++)
+        ptr[i] = (decode_char(str[2 * i]) << 4) | decode_char(str[2 * i + 1]);
+    ptr[len] = '\0';
+    return ptr;
+}
+
+static void     childPrintf(HANDLE h, const char* fmt, ...)
+{
+    va_list     valist;
+    char        buffer[1024];
+    DWORD       w;
+
+    va_start(valist, fmt);
+    vsprintf(buffer, fmt, valist);
+    va_end(valist);
+    WriteFile(h, buffer, strlen(buffer), &w, NULL);
+}
+
+static char* getChildString(const char* sect, const char* key)
+{
+    char        buf[1024];
+    char*       ret;
+
+    GetPrivateProfileStringA(sect, key, "-", buf, sizeof(buf), child_file);
+    if (buf[0] == '\0' || (buf[0] == '-' && buf[1] == '\0')) return NULL;
+    assert(!(strlen(buf) & 1));
+    ret = decodeA(buf);
+    return ret;
+}
+
+
+/***
+ *
+ * Child code
+ *
+ ***/
+
+static DWORD ddeInst;
+static HSZ hszTopic;
+static char ddeExec[MAX_PATH], ddeApplication[MAX_PATH];
+static BOOL post_quit_on_execute;
+
+/* Handle DDE for doChild() and test_dde_default_app() */
+static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
+                               HSZ hsz1, HSZ hsz2, HDDEDATA hData,
+                               ULONG_PTR dwData1, ULONG_PTR dwData2)
+{
+    DWORD size = 0;
+
+    if (winetest_debug > 2)
+        trace("dde_cb: %04x, %04x, %p, %p, %p, %p, %08lx, %08lx\n",
+              uType, uFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2);
+
+    switch (uType)
+    {
+        case XTYP_CONNECT:
+            if (!DdeCmpStringHandles(hsz1, hszTopic))
+            {
+                size = DdeQueryStringA(ddeInst, hsz2, ddeApplication, MAX_PATH, CP_WINANSI);
+                ok(size < MAX_PATH, "got size %d\n", size);
+                assert(size < MAX_PATH);
+                return (HDDEDATA)TRUE;
+            }
+            return (HDDEDATA)FALSE;
+
+        case XTYP_EXECUTE:
+            size = DdeGetData(hData, (LPBYTE)ddeExec, MAX_PATH, 0);
+            ok(size < MAX_PATH, "got size %d\n", size);
+            assert(size < MAX_PATH);
+            DdeFreeDataHandle(hData);
+            if (post_quit_on_execute)
+                PostQuitMessage(0);
+            return (HDDEDATA)DDE_FACK;
+
+        default:
+            return NULL;
+    }
+}
 
 static HANDLE hEvent;
 static void init_event(const char* child_file)
@@ -77,21 +198,131 @@ static void init_event(const char* child_file)
     hEvent=CreateEventA(NULL, FALSE, FALSE, event_name);
 }
 
-static void strcat_param(char* str, const char* name, const char* param)
+/*
+ * This is just to make sure the child won't run forever stuck in a
+ * GetMessage() loop when DDE fails for some reason.
+ */
+static void CALLBACK childTimeout(HWND wnd, UINT msg, UINT_PTR timer, DWORD time)
 {
-    if (param)
+    trace("childTimeout called\n");
+
+    PostQuitMessage(0);
+}
+
+static void doChild(int argc, char** argv)
+{
+    char *filename, longpath[MAX_PATH] = "";
+    HANDLE hFile, map;
+    int i;
+    int rc;
+    HSZ hszApplication;
+    UINT_PTR timer;
+    HANDLE dde_ready;
+    MSG msg;
+    char *shared_block;
+
+    filename=argv[2];
+    hFile=CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    if (hFile == INVALID_HANDLE_VALUE)
+        return;
+
+    /* Arguments */
+    childPrintf(hFile, "[Arguments]\r\n");
+    if (winetest_debug > 2)
     {
-        if (str[strlen(str)-1] == '"')
-            strcat(str, ", ");
-        strcat(str, name);
-        strcat(str, "=\"");
-        strcat(str, param);
-        strcat(str, "\"");
+        trace("cmdlineA='%s'\n", GetCommandLineA());
+        trace("argcA=%d\n", argc);
+    }
+    childPrintf(hFile, "cmdlineA=%s\r\n", encodeA(GetCommandLineA()));
+    childPrintf(hFile, "argcA=%d\r\n", argc);
+    for (i = 0; i < argc; i++)
+    {
+        if (winetest_debug > 2)
+            trace("argvA%d='%s'\n", i, argv[i]);
+        childPrintf(hFile, "argvA%d=%s\r\n", i, encodeA(argv[i]));
+    }
+    GetModuleFileNameA(GetModuleHandleA(NULL), longpath, MAX_PATH);
+    childPrintf(hFile, "longPath=%s\r\n", encodeA(longpath));
+
+    map = OpenFileMappingA(FILE_MAP_READ, FALSE, "winetest_shlexec_dde_map");
+    if (map != NULL)
+    {
+        shared_block = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 4096);
+        CloseHandle(map);
+        if (shared_block[0] != '\0' || shared_block[1] != '\0')
+        {
+            post_quit_on_execute = TRUE;
+            ddeInst = 0;
+            rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
+                                CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0);
+            ok(rc == DMLERR_NO_ERROR, "got %d\n", rc);
+            hszApplication = DdeCreateStringHandleA(ddeInst, shared_block, CP_WINANSI);
+            hszTopic = DdeCreateStringHandleA(ddeInst, shared_block + strlen(shared_block) + 1, CP_WINANSI);
+            assert(hszApplication && hszTopic);
+            assert(DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER | DNS_FILTEROFF));
+
+            timer = SetTimer(NULL, 0, 2500, childTimeout);
+
+            dde_ready = OpenEventA(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
+            SetEvent(dde_ready);
+            CloseHandle(dde_ready);
+
+            while (GetMessageA(&msg, NULL, 0, 0))
+                DispatchMessageA(&msg);
+
+            Sleep(500);
+            KillTimer(NULL, timer);
+            assert(DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER));
+            assert(DdeFreeStringHandle(ddeInst, hszTopic));
+            assert(DdeFreeStringHandle(ddeInst, hszApplication));
+            assert(DdeUninitialize(ddeInst));
+        }
+        else
+        {
+            dde_ready = OpenEventA(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
+            SetEvent(dde_ready);
+            CloseHandle(dde_ready);
+        }
+
+        UnmapViewOfFile(shared_block);
+
+        childPrintf(hFile, "ddeExec=%s\r\n", encodeA(ddeExec));
+    }
+
+    CloseHandle(hFile);
+
+    init_event(filename);
+    SetEvent(hEvent);
+    CloseHandle(hEvent);
+}
+
+static void dump_child_(const char* file, int line)
+{
+    if (winetest_debug > 1)
+    {
+        char key[18];
+        char* str;
+        int i, c;
+
+        str=getChildString("Arguments", "cmdlineA");
+        trace_(file, line)("cmdlineA='%s'\n", str);
+        c=GetPrivateProfileIntA("Arguments", "argcA", -1, child_file);
+        trace_(file, line)("argcA=%d\n",c);
+        for (i=0;i<c;i++)
+        {
+            sprintf(key, "argvA%d", i);
+            str=getChildString("Arguments", key);
+            trace_(file, line)("%s='%s'\n", key, str);
+        }
     }
 }
 
-static int _todo_wait = 0;
-#define todo_wait for (_todo_wait = 1; _todo_wait; _todo_wait = 0)
+
+/***
+ *
+ * Helpers to check the ShellExecute() / child process results.
+ *
+ ***/
 
 static char shell_call[2048];
 static char assoc_desc[2048];
@@ -123,7 +354,116 @@ void reset_association_description(void)
     *assoc_desc = '\0';
 }
 
+static void okChildString_(const char* file, int line, const char* key, const char* expected, const char* bad)
+{
+    char* result;
+    result=getChildString("Arguments", key);
+    if (!result)
+    {
+        okShell_(file, line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
+        return;
+    }
+    okShell_(file, line)(lstrcmpiA(result, expected) == 0 ||
+                         broken(lstrcmpiA(result, bad) == 0),
+                         "%s expected '%s', got '%s'\n", key, expected, result);
+}
+#define okChildString(key, expected) okChildString_(__FILE__, __LINE__, (key), (expected), (expected))
+#define okChildStringBroken(key, expected, broken) okChildString_(__FILE__, __LINE__, (key), (expected), (broken))
+
+static int StrCmpPath(const char* s1, const char* s2)
+{
+    if (!s1 && !s2) return 0;
+    if (!s2) return 1;
+    if (!s1) return -1;
+    while (*s1)
+    {
+        if (!*s2)
+        {
+            if (*s1=='.')
+                s1++;
+            return (*s1-*s2);
+        }
+        if ((*s1=='/' || *s1=='\\') && (*s2=='/' || *s2=='\\'))
+        {
+            while (*s1=='/' || *s1=='\\')
+                s1++;
+            while (*s2=='/' || *s2=='\\')
+                s2++;
+        }
+        else if (toupper(*s1)==toupper(*s2))
+        {
+            s1++;
+            s2++;
+        }
+        else
+        {
+            return (*s1-*s2);
+        }
+    }
+    if (*s2=='.')
+        s2++;
+    if (*s2)
+        return -1;
+    return 0;
+}
+
+static void okChildPath_(const char* file, int line, const char* key, const char* expected)
+{
+    char* result;
+    result=getChildString("Arguments", key);
+    if (!result)
+    {
+        okShell_(file,line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
+        return;
+    }
+    okShell_(file,line)(StrCmpPath(result, expected) == 0,
+                        "%s expected '%s', got '%s'\n", key, expected, result);
+}
+#define okChildPath(key, expected) okChildPath_(__FILE__, __LINE__, (key), (expected))
+
+static void okChildInt_(const char* file, int line, const char* key, int expected)
+{
+    INT result;
+    result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
+    okShell_(file,line)(result == expected,
+                        "%s expected %d, but got %d\n", key, expected, result);
+}
+#define okChildInt(key, expected) okChildInt_(__FILE__, __LINE__, (key), (expected))
+
+static void okChildIntBroken_(const char* file, int line, const char* key, int expected)
+{
+    INT result;
+    result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
+    okShell_(file,line)(result == expected || broken(result != expected),
+                        "%s expected %d, but got %d\n", key, expected, result);
+}
+#define okChildIntBroken(key, expected) okChildIntBroken_(__FILE__, __LINE__, (key), (expected))
+
+
+/***
+ *
+ * ShellExecute wrappers
+ *
+ ***/
+
+static void strcat_param(char* str, const char* name, const char* param)
+{
+    if (param)
+    {
+        if (str[strlen(str)-1] == '"')
+            strcat(str, ", ");
+        strcat(str, name);
+        strcat(str, "=\"");
+        strcat(str, param);
+        strcat(str, "\"");
+    }
+}
+
+static int _todo_wait = 0;
+#define todo_wait for (_todo_wait = 1; _todo_wait; _todo_wait = 0)
+
 static int bad_shellexecute = 0;
+
 static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR filename, LPCSTR parameters, LPCSTR directory)
 {
     INT_PTR rc, rcEmpty = 0;
@@ -513,330 +853,6 @@ static void create_test_verb(const char* extension, const char* verb,
     reset_association_description();
 }
 
-/***
- *
- * Functions to check that the child process was started just right
- * (borrowed from dlls/kernel32/tests/process.c)
- *
- ***/
-
-static const char* encodeA(const char* str)
-{
-    static char encoded[2*1024+1];
-    char*       ptr;
-    size_t      len,i;
-
-    if (!str) return "";
-    len = strlen(str) + 1;
-    if (len >= sizeof(encoded)/2)
-    {
-        fprintf(stderr, "string is too long!\n");
-        assert(0);
-    }
-    ptr = encoded;
-    for (i = 0; i < len; i++)
-        sprintf(&ptr[i * 2], "%02x", (unsigned char)str[i]);
-    ptr[2 * len] = '\0';
-    return ptr;
-}
-
-static unsigned decode_char(char c)
-{
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    assert(c >= 'A' && c <= 'F');
-    return c - 'A' + 10;
-}
-
-static char* decodeA(const char* str)
-{
-    static char decoded[1024];
-    char*       ptr;
-    size_t      len,i;
-
-    len = strlen(str) / 2;
-    if (!len--) return NULL;
-    if (len >= sizeof(decoded))
-    {
-        fprintf(stderr, "string is too long!\n");
-        assert(0);
-    }
-    ptr = decoded;
-    for (i = 0; i < len; i++)
-        ptr[i] = (decode_char(str[2 * i]) << 4) | decode_char(str[2 * i + 1]);
-    ptr[len] = '\0';
-    return ptr;
-}
-
-static void     childPrintf(HANDLE h, const char* fmt, ...)
-{
-    va_list     valist;
-    char        buffer[1024];
-    DWORD       w;
-
-    va_start(valist, fmt);
-    vsprintf(buffer, fmt, valist);
-    va_end(valist);
-    WriteFile(h, buffer, strlen(buffer), &w, NULL);
-}
-
-static DWORD ddeInst;
-static HSZ hszTopic;
-static char ddeExec[MAX_PATH], ddeApplication[MAX_PATH];
-static BOOL post_quit_on_execute;
-
-static HDDEDATA CALLBACK ddeCb(UINT uType, UINT uFmt, HCONV hConv,
-                               HSZ hsz1, HSZ hsz2, HDDEDATA hData,
-                               ULONG_PTR dwData1, ULONG_PTR dwData2)
-{
-    DWORD size = 0;
-
-    if (winetest_debug > 2)
-        trace("dde_cb: %04x, %04x, %p, %p, %p, %p, %08lx, %08lx\n",
-              uType, uFmt, hConv, hsz1, hsz2, hData, dwData1, dwData2);
-
-    switch (uType)
-    {
-        case XTYP_CONNECT:
-            if (!DdeCmpStringHandles(hsz1, hszTopic))
-            {
-                size = DdeQueryStringA(ddeInst, hsz2, ddeApplication, MAX_PATH, CP_WINANSI);
-                ok(size < MAX_PATH, "got size %d\n", size);
-                assert(size < MAX_PATH);
-                return (HDDEDATA)TRUE;
-            }
-            return (HDDEDATA)FALSE;
-
-        case XTYP_EXECUTE:
-            size = DdeGetData(hData, (LPBYTE)ddeExec, MAX_PATH, 0);
-            ok(size < MAX_PATH, "got size %d\n", size);
-            assert(size < MAX_PATH);
-            DdeFreeDataHandle(hData);
-            if (post_quit_on_execute)
-                PostQuitMessage(0);
-            return (HDDEDATA)DDE_FACK;
-
-        default:
-            return NULL;
-    }
-}
-
-/*
- * This is just to make sure the child won't run forever stuck in a GetMessage()
- * loop when DDE fails for some reason.
- */
-static void CALLBACK childTimeout(HWND wnd, UINT msg, UINT_PTR timer, DWORD time)
-{
-    trace("childTimeout called\n");
-
-    PostQuitMessage(0);
-}
-
-static void doChild(int argc, char** argv)
-{
-    char *filename, longpath[MAX_PATH] = "";
-    HANDLE hFile, map;
-    int i;
-    int rc;
-    HSZ hszApplication;
-    UINT_PTR timer;
-    HANDLE dde_ready;
-    MSG msg;
-    char *shared_block;
-
-    filename=argv[2];
-    hFile=CreateFileA(filename, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
-    if (hFile == INVALID_HANDLE_VALUE)
-        return;
-
-    /* Arguments */
-    childPrintf(hFile, "[Arguments]\r\n");
-    if (winetest_debug > 2)
-    {
-        trace("cmdlineA='%s'\n", GetCommandLineA());
-        trace("argcA=%d\n", argc);
-    }
-    childPrintf(hFile, "cmdlineA=%s\r\n", encodeA(GetCommandLineA()));
-    childPrintf(hFile, "argcA=%d\r\n", argc);
-    for (i = 0; i < argc; i++)
-    {
-        if (winetest_debug > 2)
-            trace("argvA%d='%s'\n", i, argv[i]);
-        childPrintf(hFile, "argvA%d=%s\r\n", i, encodeA(argv[i]));
-    }
-    GetModuleFileNameA(GetModuleHandleA(NULL), longpath, MAX_PATH);
-    childPrintf(hFile, "longPath=%s\r\n", encodeA(longpath));
-
-    map = OpenFileMappingA(FILE_MAP_READ, FALSE, "winetest_shlexec_dde_map");
-    if (map != NULL)
-    {
-        shared_block = MapViewOfFile(map, FILE_MAP_READ, 0, 0, 4096);
-        CloseHandle(map);
-        if (shared_block[0] != '\0' || shared_block[1] != '\0')
-        {
-            post_quit_on_execute = TRUE;
-            ddeInst = 0;
-            rc = DdeInitializeA(&ddeInst, ddeCb, CBF_SKIP_ALLNOTIFICATIONS | CBF_FAIL_ADVISES |
-                                CBF_FAIL_POKES | CBF_FAIL_REQUESTS, 0);
-            ok(rc == DMLERR_NO_ERROR, "got %d\n", rc);
-            hszApplication = DdeCreateStringHandleA(ddeInst, shared_block, CP_WINANSI);
-            hszTopic = DdeCreateStringHandleA(ddeInst, shared_block + strlen(shared_block) + 1, CP_WINANSI);
-            assert(hszApplication && hszTopic);
-            assert(DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER | DNS_FILTEROFF));
-
-            timer = SetTimer(NULL, 0, 2500, childTimeout);
-
-            dde_ready = OpenEventA(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
-            SetEvent(dde_ready);
-            CloseHandle(dde_ready);
-
-            while (GetMessageA(&msg, NULL, 0, 0))
-                DispatchMessageA(&msg);
-
-            Sleep(500);
-            KillTimer(NULL, timer);
-            assert(DdeNameService(ddeInst, hszApplication, 0, DNS_UNREGISTER));
-            assert(DdeFreeStringHandle(ddeInst, hszTopic));
-            assert(DdeFreeStringHandle(ddeInst, hszApplication));
-            assert(DdeUninitialize(ddeInst));
-        }
-        else
-        {
-            dde_ready = OpenEventA(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
-            SetEvent(dde_ready);
-            CloseHandle(dde_ready);
-        }
-
-        UnmapViewOfFile(shared_block);
-
-        childPrintf(hFile, "ddeExec=%s\r\n", encodeA(ddeExec));
-    }
-
-    CloseHandle(hFile);
-
-    init_event(filename);
-    SetEvent(hEvent);
-    CloseHandle(hEvent);
-}
-
-static char* getChildString(const char* sect, const char* key)
-{
-    char        buf[1024];
-    char*       ret;
-
-    GetPrivateProfileStringA(sect, key, "-", buf, sizeof(buf), child_file);
-    if (buf[0] == '\0' || (buf[0] == '-' && buf[1] == '\0')) return NULL;
-    assert(!(strlen(buf) & 1));
-    ret = decodeA(buf);
-    return ret;
-}
-
-static void dump_child_(const char* file, int line)
-{
-    if (winetest_debug > 1)
-    {
-        char key[18];
-        char* str;
-        int i, c;
-
-        str=getChildString("Arguments", "cmdlineA");
-        trace_(file, line)("cmdlineA='%s'\n", str);
-        c=GetPrivateProfileIntA("Arguments", "argcA", -1, child_file);
-        trace_(file, line)("argcA=%d\n",c);
-        for (i=0;i<c;i++)
-        {
-            sprintf(key, "argvA%d", i);
-            str=getChildString("Arguments", key);
-            trace_(file, line)("%s='%s'\n", key, str);
-        }
-    }
-}
-
-static int StrCmpPath(const char* s1, const char* s2)
-{
-    if (!s1 && !s2) return 0;
-    if (!s2) return 1;
-    if (!s1) return -1;
-    while (*s1)
-    {
-        if (!*s2)
-        {
-            if (*s1=='.')
-                s1++;
-            return (*s1-*s2);
-        }
-        if ((*s1=='/' || *s1=='\\') && (*s2=='/' || *s2=='\\'))
-        {
-            while (*s1=='/' || *s1=='\\')
-                s1++;
-            while (*s2=='/' || *s2=='\\')
-                s2++;
-        }
-        else if (toupper(*s1)==toupper(*s2))
-        {
-            s1++;
-            s2++;
-        }
-        else
-        {
-            return (*s1-*s2);
-        }
-    }
-    if (*s2=='.')
-        s2++;
-    if (*s2)
-        return -1;
-    return 0;
-}
-
-static void _okChildString(const char* file, int line, const char* key, const char* expected, const char* bad)
-{
-    char* result;
-    result=getChildString("Arguments", key);
-    if (!result)
-    {
-        okShell_(file, line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
-        return;
-    }
-    okShell_(file, line)(lstrcmpiA(result, expected) == 0 ||
-                         broken(lstrcmpiA(result, bad) == 0),
-                         "%s expected '%s', got '%s'\n", key, expected, result);
-}
-
-static void _okChildPath(const char* file, int line, const char* key, const char* expected)
-{
-    char* result;
-    result=getChildString("Arguments", key);
-    if (!result)
-    {
-        okShell_(file,line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
-        return;
-    }
-    okShell_(file,line)(StrCmpPath(result, expected) == 0,
-                        "%s expected '%s', got '%s'\n", key, expected, result);
-}
-
-static void _okChildInt(const char* file, int line, const char* key, int expected)
-{
-    INT result;
-    result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
-    okShell_(file,line)(result == expected,
-                        "%s expected %d, but got %d\n", key, expected, result);
-}
-
-static void _okChildIntBroken(const char* file, int line, const char* key, int expected)
-{
-    INT result;
-    result=GetPrivateProfileIntA("Arguments", key, expected, child_file);
-    okShell_(file,line)(result == expected || broken(result != expected),
-                        "%s expected %d, but got %d\n", key, expected, result);
-}
-
-#define okChildString(key, expected) _okChildString(__FILE__, __LINE__, (key), (expected), (expected))
-#define okChildStringBroken(key, expected, broken) _okChildString(__FILE__, __LINE__, (key), (expected), (broken))
-#define okChildPath(key, expected) _okChildPath(__FILE__, __LINE__, (key), (expected))
-#define okChildInt(key, expected) _okChildInt(__FILE__, __LINE__, (key), (expected))
-#define okChildIntBroken(key, expected) _okChildIntBroken(__FILE__, __LINE__, (key), (expected))
 
 /***
  *
@@ -911,6 +927,7 @@ static DWORD get_long_path_name(const char* shortpath, char* longpath, DWORD lon
 
     return tmplen;
 }
+
 
 /***
  *
