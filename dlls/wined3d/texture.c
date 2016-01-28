@@ -1410,7 +1410,6 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
         const RECT *src_rect, DWORD flags, const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_resource *dst_resource, *src_resource = NULL;
-    RECT d, s;
 
     TRACE("dst_texture %p, dst_sub_resource_idx %u, dst_rect %s, src_texture %p, "
             "src_sub_resource_idx %u, src_rect %s, flags %#x, fx %p, filter %s.\n",
@@ -1420,22 +1419,12 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
     if (!(dst_resource = wined3d_texture_get_sub_resource(dst_texture, dst_sub_resource_idx))
             || dst_resource->type != WINED3D_RTYPE_SURFACE)
         return WINED3DERR_INVALIDCALL;
-    if (!dst_rect)
-    {
-        SetRect(&d, 0, 0, dst_resource->width, dst_resource->height);
-        dst_rect = &d;
-    }
 
     if (src_texture)
     {
         if (!(src_resource = wined3d_texture_get_sub_resource(src_texture, src_sub_resource_idx))
                 || src_resource->type != WINED3D_RTYPE_SURFACE)
             return WINED3DERR_INVALIDCALL;
-        if (!src_rect)
-        {
-            SetRect(&s, 0, 0, src_resource->width, src_resource->height);
-            src_rect = &s;
-        }
     }
 
     return wined3d_surface_blt(surface_from_resource(dst_resource), dst_rect,
