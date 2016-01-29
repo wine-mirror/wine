@@ -1707,6 +1707,104 @@ static void test_WsMoveReader(void)
     WsFreeHeap( heap );
 }
 
+static void prepare_struct_type_test( WS_XML_READER *reader, const char *data )
+{
+    HRESULT hr;
+    ULONG size = strlen( data );
+
+    hr = set_input( reader, data, size );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, size, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+}
+
+static void test_simple_struct_type(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    HRESULT hr;
+    WS_XML_READER *reader;
+    WS_HEAP *heap;
+    WS_STRUCT_DESCRIPTION s;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    WS_XML_STRING ns = {0, NULL}, localname = {3, (BYTE *)"str"};
+    WS_XML_STRING localname2 = {4, (BYTE *)"test"};
+    const WS_XML_NODE *node;
+    struct test { WCHAR *str; } *test;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    prepare_struct_type_test( reader, "<str>test</str>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, NULL,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_BOF, "got %u\n", node->nodeType );
+
+    /* element field mapping */
+    memset( &f, 0, sizeof(f) );
+    f.mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f.localName = &localname;
+    f.ns        = &ns;
+    f.type      = WS_WSZ_TYPE;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(struct test);
+    s.alignment     = TYPE_ALIGNMENT(struct test);
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &localname2;
+    s.typeNs        = &ns;
+
+    test = NULL;
+    prepare_struct_type_test( reader, "<?xml version=\"1.0\" encoding=\"utf-8\"?><str>test</str><str>test2</str>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    test = NULL;
+    prepare_struct_type_test( reader, "<?xml version=\"1.0\" encoding=\"utf-8\"?><str>test</str>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    if (test)
+    {
+        ok( test->str != NULL, "str not set\n" );
+        if (test->str) ok( !lstrcmpW( test->str, testW ), "wrong data\n" );
+    }
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    test = NULL;
+    prepare_struct_type_test( reader, "<str>test</str>" );
+    hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( test != NULL, "test not set\n" );
+    if (test)
+    {
+        ok( test->str != NULL, "str not set\n" );
+        if (test->str) ok( !lstrcmpW( test->str, testW ), "wrong data\n" );
+    }
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( node->nodeType == WS_XML_NODE_TYPE_EOF, "got %u\n", node->nodeType );
+
+    WsFreeReader( reader );
+    WsFreeHeap( heap );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -1724,4 +1822,5 @@ START_TEST(reader)
     test_WsXmlStringEquals();
     test_WsAlloc();
     test_WsMoveReader();
+    test_simple_struct_type();
 }
