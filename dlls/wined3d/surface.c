@@ -1867,19 +1867,6 @@ static inline unsigned short float_32_to_16(const float *in)
     return ret;
 }
 
-void CDECL wined3d_surface_preload(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    if (!surface->resource.device->d3d_initialized)
-    {
-        ERR("D3D not initialized.\n");
-        return;
-    }
-
-    wined3d_texture_preload(surface->container);
-}
-
 void * CDECL wined3d_surface_get_parent(const struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
