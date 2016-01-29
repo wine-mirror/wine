@@ -743,17 +743,21 @@ static void test_query_logicalprocex(void)
 
         status = pNtQuerySystemInformationEx(SystemLogicalProcessorInformationEx, &relationship, sizeof(relationship), infoex, len, &len);
         ok(status == STATUS_SUCCESS, "got 0x%08x\n", status);
-        ok(infoex->Size > 0, "got %u\n", infoex->Size);
 
         ret = pGetLogicalProcessorInformationEx(RelationAll, infoex2, &len2);
         ok(ret, "got %d, error %d\n", ret, GetLastError());
         ok(!memcmp(infoex, infoex2, len), "returned info data mismatch\n");
 
-        for(i = 0; i < len; ){
+        for(i = 0; status == STATUS_SUCCESS && i < len; ){
             SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *ex = (void*)(((char *)infoex) + i);
 
             ok(ex->Relationship >= RelationProcessorCore && ex->Relationship <= RelationGroup,
                     "Got invalid relationship value: 0x%x\n", ex->Relationship);
+            if (!ex->Size)
+            {
+                ok(0, "got infoex[%u].Size=0\n", i);
+                break;
+            }
 
             trace("infoex[%u].Size: %u\n", i, ex->Size);
             switch(ex->Relationship){
