@@ -182,11 +182,12 @@ enum alg_id
 
 static const struct {
     ULONG hash_length;
+    const WCHAR *alg_name;
 } alg_props[] = {
-    /* ALG_ID_SHA1   */ { 20 },
-    /* ALG_ID_SHA256 */ { 32 },
-    /* ALG_ID_SHA384 */ { 48 },
-    /* ALG_ID_SHA512 */ { 64 }
+    /* ALG_ID_SHA1   */ { 20, BCRYPT_SHA1_ALGORITHM },
+    /* ALG_ID_SHA256 */ { 32, BCRYPT_SHA256_ALGORITHM },
+    /* ALG_ID_SHA384 */ { 48, BCRYPT_SHA384_ALGORITHM },
+    /* ALG_ID_SHA512 */ { 64, BCRYPT_SHA512_ALGORITHM }
 };
 
 struct algorithm
@@ -439,6 +440,16 @@ static NTSTATUS generic_alg_property( enum alg_id id, const WCHAR *prop, UCHAR *
             return STATUS_BUFFER_TOO_SMALL;
         if(buf)
             *(ULONG*)buf = alg_props[id].hash_length;
+        return STATUS_SUCCESS;
+    }
+
+    if (!strcmpW( prop, BCRYPT_ALGORITHM_NAME ))
+    {
+        *ret_size = (strlenW(alg_props[id].alg_name)+1)*sizeof(WCHAR);
+        if (size < *ret_size)
+            return STATUS_BUFFER_TOO_SMALL;
+        if(buf)
+            memcpy(buf, alg_props[id].alg_name, *ret_size);
         return STATUS_SUCCESS;
     }
 

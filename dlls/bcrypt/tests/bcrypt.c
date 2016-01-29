@@ -79,6 +79,13 @@ static void format_hash(const UCHAR *bytes, ULONG size, char *buf)
     return;
 }
 
+static int strcmp_wa(const WCHAR *strw, const char *stra)
+{
+    WCHAR buf[512];
+    MultiByteToWideChar(CP_ACP, 0, stra, -1, buf, sizeof(buf)/sizeof(buf[0]));
+    return lstrcmpW(strw, buf);
+}
+
 #define test_hash_length(a,b) _test_hash_length(__LINE__,a,b)
 static void _test_hash_length(unsigned line, void *handle, ULONG exlen)
 {
@@ -89,6 +96,20 @@ static void _test_hash_length(unsigned line, void *handle, ULONG exlen)
     ok_(__FILE__,line)(status == STATUS_SUCCESS, "BCryptGetProperty failed: %08x\n", status);
     ok_(__FILE__,line)(size == sizeof(len), "got %u\n", size);
     ok_(__FILE__,line)(len == exlen, "len = %u, expected %u\n", len, exlen);
+}
+
+#define test_alg_name(a,b) _test_alg_name(__LINE__,a,b)
+static void _test_alg_name(unsigned line, void *handle, const char *exname)
+{
+    ULONG size = 0xdeadbeef;
+    UCHAR buf[256];
+    const WCHAR *name = (const WCHAR*)buf;
+    NTSTATUS status;
+
+    status = BCryptGetProperty(handle, BCRYPT_ALGORITHM_NAME, buf, sizeof(buf), &size, 0);
+    ok_(__FILE__,line)(status == STATUS_SUCCESS, "BCryptGetProperty failed: %08x\n", status);
+    ok_(__FILE__,line)(size == (strlen(exname)+1)*sizeof(WCHAR), "got %u\n", size);
+    ok_(__FILE__,line)(!strcmp_wa(name, exname), "alg name = %s, expected %s\n", wine_dbgstr_w(name), exname);
 }
 
 static void test_sha1(void)
@@ -136,6 +157,7 @@ static void test_sha1(void)
     ok(size == sizeof(len), "got %u\n", size);
 
     test_hash_length(alg, 20);
+    test_alg_name(alg, "SHA1");
 
     hash = NULL;
     len = sizeof(buf);
@@ -147,6 +169,7 @@ static void test_sha1(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     test_hash_length(hash, 20);
+    test_alg_name(hash, "SHA1");
 
     memset(sha1, 0, sizeof(sha1));
     ret = BCryptFinishHash(hash, sha1, sizeof(sha1), 0);
@@ -207,6 +230,7 @@ static void test_sha256(void)
     ok(size == sizeof(len), "got %u\n", size);
 
     test_hash_length(alg, 32);
+    test_alg_name(alg, "SHA256");
 
     hash = NULL;
     len = sizeof(buf);
@@ -218,6 +242,7 @@ static void test_sha256(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     test_hash_length(hash, 32);
+    test_alg_name(hash, "SHA256");
 
     memset(sha256, 0, sizeof(sha256));
     ret = BCryptFinishHash(hash, sha256, sizeof(sha256), 0);
@@ -278,6 +303,7 @@ static void test_sha384(void)
     ok(size == sizeof(len), "got %u\n", size);
 
     test_hash_length(alg, 48);
+    test_alg_name(alg, "SHA384");
 
     hash = NULL;
     len = sizeof(buf);
@@ -289,6 +315,7 @@ static void test_sha384(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     test_hash_length(hash, 48);
+    test_alg_name(hash, "SHA384");
 
     memset(sha384, 0, sizeof(sha384));
     ret = BCryptFinishHash(hash, sha384, sizeof(sha384), 0);
@@ -350,6 +377,7 @@ static void test_sha512(void)
     ok(size == sizeof(len), "got %u\n", size);
 
     test_hash_length(alg, 64);
+    test_alg_name(alg, "SHA512");
 
     hash = NULL;
     len = sizeof(buf);
@@ -361,6 +389,7 @@ static void test_sha512(void)
     ok(ret == STATUS_SUCCESS, "got %08x\n", ret);
 
     test_hash_length(hash, 64);
+    test_alg_name(hash, "SHA512");
 
     memset(sha512, 0, sizeof(sha512));
     ret = BCryptFinishHash(hash, sha512, sizeof(sha512), 0);
