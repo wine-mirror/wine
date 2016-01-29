@@ -88,6 +88,8 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
 
     if (!attr) return STATUS_SUCCESS;
 
+    if (attr->Length != sizeof(*attr)) return STATUS_INVALID_PARAMETER;
+
     if ((sd = attr->SecurityDescriptor))
     {
         len += sizeof(struct security_descriptor);
@@ -153,7 +155,7 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
 
 NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
 {
-    if (!attr) return STATUS_INVALID_PARAMETER;
+    if (!attr || attr->Length != sizeof(*attr)) return STATUS_INVALID_PARAMETER;
 
     if (attr->ObjectName)
     {

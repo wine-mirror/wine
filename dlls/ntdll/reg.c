@@ -129,7 +129,6 @@ NTSTATUS WINAPI NtOpenKeyEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
     NTSTATUS ret;
 
     if (!retkey || !attr || !attr->ObjectName) return STATUS_ACCESS_VIOLATION;
-    if (attr->Length > sizeof(OBJECT_ATTRIBUTES)) return STATUS_INVALID_PARAMETER;
     if ((ret = validate_open_object_attributes( attr ))) return ret;
 
     TRACE( "(%p,%s,%x,%p)\n", attr->RootDirectory,

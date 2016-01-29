@@ -587,6 +587,16 @@ static void test_name_limits(void)
     str.Length = 67;
     test_all_kernel_objects( __LINE__, &attr2, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_INVALID );
 
+    str.Length = 128;
+    for (attr.Length = 0; attr.Length <= 2 * sizeof(attr); attr.Length++)
+    {
+        if (attr.Length == sizeof(attr))
+            test_all_kernel_objects( __LINE__, &attr, STATUS_SUCCESS, STATUS_SUCCESS );
+        else
+            test_all_kernel_objects( __LINE__, &attr, STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER );
+    }
+    attr.Length = sizeof(attr);
+
     str.Length = 65532;
     test_all_kernel_objects( __LINE__, &attr, STATUS_SUCCESS, STATUS_SUCCESS );
 
@@ -719,6 +729,20 @@ static void test_name_limits(void)
     status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr2, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateNamedPipeFile failed %x\n", str.Length, status );
+    str.Length = 128;
+    for (attr.Length = 0; attr.Length <= 2 * sizeof(attr); attr.Length++)
+    {
+        status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
+        if (attr.Length == sizeof(attr))
+        {
+            ok( status == STATUS_SUCCESS, "%u: NtCreateNamedPipeFile failed %x\n", str.Length, status );
+            pNtClose( ret );
+        }
+        else ok( status == STATUS_INVALID_PARAMETER,
+                 "%u: NtCreateNamedPipeFile failed %x\n", str.Length, status );
+    }
+    attr.Length = sizeof(attr);
     str.Length = 65532;
     status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
@@ -754,6 +778,19 @@ static void test_name_limits(void)
     str.Length = 67;
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr2, &iosb, 0, 0, 0, NULL );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
+    str.Length = 128;
+    for (attr.Length = 0; attr.Length <= 2 * sizeof(attr); attr.Length++)
+    {
+        status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
+        if (attr.Length == sizeof(attr))
+        {
+            ok( status == STATUS_SUCCESS, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
+            pNtClose( ret );
+        }
+        else ok( status == STATUS_INVALID_PARAMETER,
+                 "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
+    }
+    attr.Length = sizeof(attr);
     str.Length = 65532;
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
     ok( status == STATUS_SUCCESS, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
@@ -810,6 +847,29 @@ static void test_name_limits(void)
         pNtClose( ret2 );
         pNtDeleteKey( ret );
         pNtClose( ret );
+
+        str.Length = sizeof(registryW) + 256 * sizeof(WCHAR);
+        for (attr.Length = 0; attr.Length <= 2 * sizeof(attr); attr.Length++)
+        {
+            if (attr.Length == sizeof(attr))
+            {
+                status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+                ok( status == STATUS_SUCCESS, "%u: NtCreateKey failed %x\n", str.Length, status );
+                status = pNtOpenKey( &ret2, KEY_READ, &attr );
+                ok( status == STATUS_SUCCESS, "%u: NtOpenKey failed %x\n", str.Length, status );
+                pNtClose( ret2 );
+                pNtDeleteKey( ret );
+                pNtClose( ret );
+            }
+            else
+            {
+                status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
+                ok( status == STATUS_INVALID_PARAMETER, "%u: NtCreateKey failed %x\n", str.Length, status );
+                status = pNtOpenKey( &ret2, KEY_READ, &attr );
+                ok( status == STATUS_INVALID_PARAMETER, "%u: NtOpenKey failed %x\n", str.Length, status );
+            }
+        }
+        attr.Length = sizeof(attr);
     }
     str.Length = sizeof(registryW) + 256 * sizeof(WCHAR) + 1;
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr, 0, NULL, 0, NULL );
