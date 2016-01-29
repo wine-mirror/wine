@@ -96,7 +96,7 @@ typedef struct tagTREEVIEW_INFO
   HTREEITEM	focusedItem;    /* item that was under the cursor when WM_LBUTTONDOWN was received */
   HTREEITEM     editItem;       /* item being edited with builtin edit box */
 
-  HTREEITEM     firstVisible;   /* handle to first visible item */
+  HTREEITEM     firstVisible;   /* handle to item whose top edge is at y = 0 */
   LONG          maxVisibleOrder;
   HTREEITEM     dropItem;       /* handle to item selected by drag cursor */
   HTREEITEM     insertMarkItem; /* item after which insertion mark is placed */
@@ -162,7 +162,10 @@ typedef struct _TREEITEM    /* HTREEITEM is a _TREEINFO *. */
   LONG      imageOffset;
   LONG      textOffset;
   LONG      textWidth;      /* horizontal text extent for pszText */
-  LONG      visibleOrder;   /* visible ordering, 0 is first visible item */
+  LONG      visibleOrder;   /* Depth-first numbering of the items whose ancestors are all expanded,
+                               corresponding to a top-to-bottom ordering in the tree view.
+                               Each item takes up "item.iIntegral" spots in the visible order.
+                               0 is the root's first child. */
   const TREEVIEW_INFO *infoPtr; /* tree data this item belongs to */
 } TREEVIEW_ITEM;
 
