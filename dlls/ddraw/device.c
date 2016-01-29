@@ -5950,10 +5950,10 @@ static BOOL is_mip_level_subset(struct ddraw_surface *dest, struct ddraw_surface
     return !dest_level && levelFound;
 }
 
-static void copy_mipmap_chain(struct d3d_device *device, struct ddraw_surface *dest,
+static void copy_mipmap_chain(struct d3d_device *device, struct ddraw_surface *dst,
         struct ddraw_surface *src, const POINT *DestPoint, const RECT *SrcRect)
 {
-    struct ddraw_surface *src_level, *dest_level;
+    struct ddraw_surface *dst_level, *src_level;
     IDirectDrawSurface7 *temp;
     DDSURFACEDESC2 ddsd;
     POINT point;
@@ -5965,7 +5965,7 @@ static void copy_mipmap_chain(struct d3d_device *device, struct ddraw_surface *d
 
     /* Copy palette, if possible. */
     IDirectDrawSurface7_GetPalette(&src->IDirectDrawSurface7_iface, &pal_src);
-    IDirectDrawSurface7_GetPalette(&dest->IDirectDrawSurface7_iface, &pal);
+    IDirectDrawSurface7_GetPalette(&dst->IDirectDrawSurface7_iface, &pal);
 
     if (pal_src != NULL && pal != NULL)
     {
@@ -5985,36 +5985,37 @@ static void copy_mipmap_chain(struct d3d_device *device, struct ddraw_surface *d
 
         if (SUCCEEDED(hr))
         {
-            IDirectDrawSurface7_SetColorKey(&dest->IDirectDrawSurface7_iface, ckeyflag, &ddckey);
+            IDirectDrawSurface7_SetColorKey(&dst->IDirectDrawSurface7_iface, ckeyflag, &ddckey);
         }
     }
 
     src_level = src;
-    dest_level = dest;
+    dst_level = dst;
 
     point = *DestPoint;
     src_rect = *SrcRect;
 
-    for (;src_level && dest_level;)
+    for (;src_level && dst_level;)
     {
-        if (src_level->surface_desc.dwWidth == dest_level->surface_desc.dwWidth &&
-            src_level->surface_desc.dwHeight == dest_level->surface_desc.dwHeight)
+        if (src_level->surface_desc.dwWidth == dst_level->surface_desc.dwWidth
+                && src_level->surface_desc.dwHeight == dst_level->surface_desc.dwHeight)
         {
             UINT src_w = src_rect.right - src_rect.left;
             UINT src_h = src_rect.bottom - src_rect.top;
             RECT dst_rect = {point.x, point.y, point.x + src_w, point.y + src_h};
 
-            if (FAILED(hr = wined3d_surface_blt(dest_level->wined3d_surface, &dst_rect,
-                    src_level->wined3d_surface, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
+            if (FAILED(hr = wined3d_texture_blt(dst_level->wined3d_texture, dst_level->sub_resource_idx, &dst_rect,
+                    src_level->wined3d_texture, src_level->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT)))
                 ERR("Blit failed, hr %#x.\n", hr);
 
             ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
             ddsd.ddsCaps.dwCaps2 = DDSCAPS2_MIPMAPSUBLEVEL;
-            IDirectDrawSurface7_GetAttachedSurface(&dest_level->IDirectDrawSurface7_iface, &ddsd.ddsCaps, &temp);
+            IDirectDrawSurface7_GetAttachedSurface(&dst_level->IDirectDrawSurface7_iface, &ddsd.ddsCaps, &temp);
 
-            if (dest_level != dest) IDirectDrawSurface7_Release(&dest_level->IDirectDrawSurface7_iface);
+            if (dst_level != dst)
+                IDirectDrawSurface7_Release(&dst_level->IDirectDrawSurface7_iface);
 
-            dest_level = unsafe_impl_from_IDirectDrawSurface7(temp);
+            dst_level = unsafe_impl_from_IDirectDrawSurface7(temp);
         }
 
         ddsd.ddsCaps.dwCaps = DDSCAPS_TEXTURE;
@@ -6034,8 +6035,10 @@ static void copy_mipmap_chain(struct d3d_device *device, struct ddraw_surface *d
         src_rect.bottom = (src_rect.bottom + 1) / 2;
     }
 
-    if (src_level && src_level != src) IDirectDrawSurface7_Release(&src_level->IDirectDrawSurface7_iface);
-    if (dest_level && dest_level != dest) IDirectDrawSurface7_Release(&dest_level->IDirectDrawSurface7_iface);
+    if (src_level && src_level != src)
+        IDirectDrawSurface7_Release(&src_level->IDirectDrawSurface7_iface);
+    if (dst_level && dst_level != dst)
+        IDirectDrawSurface7_Release(&dst_level->IDirectDrawSurface7_iface);
 }
 
 /*****************************************************************************
