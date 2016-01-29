@@ -1113,12 +1113,138 @@ static HRESULT write_type_wsz( struct writer *writer, WS_TYPE_MAPPING mapping,
     return hr;
 }
 
+static HRESULT write_type_struct( struct writer *, WS_TYPE_MAPPING, const WS_STRUCT_DESCRIPTION *,
+                                  const void * );
+
+static HRESULT write_type_struct_field( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                        const WS_FIELD_DESCRIPTION *desc, const void *value )
+{
+    HRESULT hr;
+
+    if (desc->options && desc->options != WS_FIELD_POINTER &&
+        desc->options != WS_FIELD_OPTIONAL &&
+        desc->options != (WS_FIELD_POINTER | WS_FIELD_OPTIONAL))
+    {
+        FIXME( "options 0x%x not supported\n", desc->options );
+        return E_NOTIMPL;
+    }
+
+    switch (desc->type)
+    {
+    case WS_STRUCT_TYPE:
+    {
+        const void * const *ptr = value;
+        if ((hr = write_type_struct( writer, mapping, desc->typeDescription, *ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_BOOL_TYPE:
+    {
+        const BOOL *ptr = value;
+        if ((hr = write_type_bool( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_INT8_TYPE:
+    {
+        const INT8 *ptr = value;
+        if ((hr = write_type_int8( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_INT16_TYPE:
+    {
+        const INT16 *ptr = value;
+        if ((hr = write_type_int16( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_INT32_TYPE:
+    {
+        const INT32 *ptr = value;
+        if ((hr = write_type_int32( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_INT64_TYPE:
+    {
+        const INT64 *ptr = value;
+        if ((hr = write_type_int64( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_UINT8_TYPE:
+    {
+        const UINT8 *ptr = value;
+        if ((hr = write_type_uint8( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_UINT16_TYPE:
+    {
+        const UINT16 *ptr = value;
+        if ((hr = write_type_uint16( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_UINT32_TYPE:
+    {
+        const UINT32 *ptr = value;
+        if ((hr = write_type_uint32( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_UINT64_TYPE:
+    {
+        const UINT64 *ptr = value;
+        if ((hr = write_type_uint64( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+        break;
+    }
+    case WS_WSZ_TYPE:
+    {
+        const WCHAR * const *ptr = value;
+        if ((hr = write_type_wsz( writer, mapping, desc->typeDescription, *ptr )) != S_OK) return hr;
+        break;
+    }
+    default:
+        FIXME( "type %u not implemented\n", desc->type );
+        return E_NOTIMPL;
+    }
+
+    return S_OK;
+}
+
+static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping,
+                                  const WS_STRUCT_DESCRIPTION *desc, const void *value )
+{
+    ULONG i;
+    HRESULT hr;
+    const char *ptr;
+
+    if (!desc) return E_INVALIDARG;
+
+    if (desc->structOptions)
+    {
+        FIXME( "struct options 0x%x not supported\n", desc->structOptions );
+        return E_NOTIMPL;
+    }
+
+    for (i = 0; i < desc->fieldCount; i++)
+    {
+        ptr = (const char *)value + desc->fields[i]->offset;
+        if ((hr = write_type_struct_field( writer, mapping, desc->fields[i], ptr )) != S_OK)
+            return hr;
+    }
+
+    return S_OK;
+}
+
 static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TYPE type,
                            const void *desc, WS_WRITE_OPTION option, const void *value,
                            ULONG size )
 {
     switch (type)
     {
+    case WS_STRUCT_TYPE:
+    {
+        const void * const *ptr = value;
+
+        if (!desc || option != WS_WRITE_REQUIRED_POINTER || size != sizeof(*ptr))
+            return E_INVALIDARG;
+
+        return write_type_struct( writer, mapping, desc, *ptr );
+    }
     case WS_BOOL_TYPE:
     {
         const BOOL *ptr = value;
