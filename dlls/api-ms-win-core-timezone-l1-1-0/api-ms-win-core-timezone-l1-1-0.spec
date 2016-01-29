@@ -3,7 +3,7 @@
 @ stdcall GetDynamicTimeZoneInformation(ptr) kernel32.GetDynamicTimeZoneInformation
 @ stub GetDynamicTimeZoneInformationEffectiveYears
 @ stdcall GetTimeZoneInformation(ptr) kernel32.GetTimeZoneInformation
-@ stub GetTimeZoneInformationForYear
+@ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernel32.GetTimeZoneInformationForYear
 @ stub SetDynamicTimeZoneInformation
 @ stdcall SetTimeZoneInformation(ptr) kernel32.SetTimeZoneInformation
 @ stdcall SystemTimeToFileTime(ptr ptr) kernel32.SystemTimeToFileTime

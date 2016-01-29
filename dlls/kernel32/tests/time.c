@@ -921,7 +921,7 @@ static void test_GetTimeZoneInformationForYear(void)
 
     if (!pGetTimeZoneInformationForYear || !pGetDynamicTimeZoneInformation)
     {
-        todo_wine win_skip("GetTimeZoneInformationForYear not available\n");
+        win_skip("GetTimeZoneInformationForYear not available\n");
         return;
     }
 

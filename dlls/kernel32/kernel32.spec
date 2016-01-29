@@ -860,7 +860,7 @@
 @ stdcall GetTimeFormatEx(wstr long ptr wstr ptr long)
 @ stdcall GetTimeFormatW(long long ptr wstr ptr long)
 @ stdcall GetTimeZoneInformation(ptr)
-# @ stub GetTimeZoneInformationForYear
+@ stdcall GetTimeZoneInformationForYear(long ptr ptr)
 @ stdcall GetThreadUILanguage()
 # @ stub GetUILanguageInfo
 # @ stub -arch=x86_64 GetUmsCompletionListEvent

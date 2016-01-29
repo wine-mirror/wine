@@ -15,7 +15,7 @@
 @ stdcall -ret64 GetTickCount64() kernel32.GetTickCount64
 @ stdcall GetTickCount() kernel32.GetTickCount
 @ stdcall GetTimeZoneInformation(ptr) kernel32.GetTimeZoneInformation
-@ stub GetTimeZoneInformationForYear
+@ stdcall GetTimeZoneInformationForYear(long ptr ptr) kernel32.GetTimeZoneInformationForYear
 @ stdcall GetVersion() kernel32.GetVersion
 @ stdcall GetVersionExA(ptr) kernel32.GetVersionExA
 @ stdcall GetVersionExW(ptr) kernel32.GetVersionExW

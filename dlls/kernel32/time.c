@@ -282,6 +282,179 @@ static BOOL TIME_GetTimezoneBias( const TIME_ZONE_INFORMATION *pTZinfo,
     return TRUE;
 }
 
+/***********************************************************************
+ *  TIME_GetSpecificTimeZoneKey
+ *
+ *  Opens the registry key for the time zone with the given name.
+ *
+ * PARAMS
+ *  key_name   [in]  The time zone name.
+ *  result     [out] The open registry key handle.
+ *
+ * RETURNS
+ *  TRUE if successful.
+ */
+static BOOL TIME_GetSpecificTimeZoneKey( const WCHAR *key_name, HANDLE *result )
+{
+    static const WCHAR Time_ZonesW[] = { '\\','R','E','G','I','S','T','R','Y','\\',
+        'M','a','c','h','i','n','e','\\',
+        'S','o','f','t','w','a','r','e','\\',
+        'M','i','c','r','o','s','o','f','t','\\',
+        'W','i','n','d','o','w','s',' ','N','T','\\',
+        'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
+        'T','i','m','e',' ','Z','o','n','e','s',0 };
+    HANDLE time_zones_key;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    NTSTATUS status;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+    RtlInitUnicodeString( &nameW, Time_ZonesW );
+    status = NtOpenKey( &time_zones_key, KEY_READ, &attr );
+    if (status)
+    {
+        WARN("Unable to open the time zones key\n");
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    attr.RootDirectory = time_zones_key;
+    RtlInitUnicodeString( &nameW, key_name );
+    status = NtOpenKey( result, KEY_READ, &attr );
+
+    NtClose( time_zones_key );
+
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL reg_query_value(HKEY hkey, LPCWSTR name, DWORD type, void *data, DWORD count)
+{
+    UNICODE_STRING nameW;
+    char buf[256];
+    KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buf;
+    NTSTATUS status;
+
+    if (count > sizeof(buf) - sizeof(KEY_VALUE_PARTIAL_INFORMATION))
+        return FALSE;
+
+    RtlInitUnicodeString(&nameW, name);
+
+    if ((status = NtQueryValueKey(hkey, &nameW, KeyValuePartialInformation,
+                                  buf, sizeof(buf), &count)))
+    {
+        SetLastError( RtlNtStatusToDosError(status) );
+        return FALSE;
+    }
+
+    if (info->Type != type)
+    {
+        SetLastError( ERROR_DATATYPE_MISMATCH );
+        return FALSE;
+    }
+
+    memcpy(data, info->Data, info->DataLength);
+    return TRUE;
+}
+
+/***********************************************************************
+ *  TIME_GetSpecificTimeZoneInfo
+ *
+ *  Returns time zone information for the given time zone and year.
+ *
+ * PARAMS
+ *  key_name   [in]  The time zone name.
+ *  year       [in]  The year, if Dynamic DST is used.
+ *  dynamic    [in]  Whether to use Dynamic DST.
+ *  result     [out] The time zone information.
+ *
+ * RETURNS
+ *  TRUE if successful.
+ */
+static BOOL TIME_GetSpecificTimeZoneInfo( const WCHAR *key_name, WORD year,
+    BOOL dynamic, DYNAMIC_TIME_ZONE_INFORMATION *tzinfo )
+{
+    static const WCHAR Dynamic_DstW[] = { 'D','y','n','a','m','i','c',' ','D','S','T',0 };
+    static const WCHAR fmtW[] = { '%','d',0 };
+    static const WCHAR stdW[] = { 'S','t','d',0 };
+    static const WCHAR dltW[] = { 'D','l','t',0 };
+    static const WCHAR tziW[] = { 'T','Z','I',0 };
+    HANDLE time_zone_key, dynamic_dst_key;
+    OBJECT_ATTRIBUTES attr;
+    UNICODE_STRING nameW;
+    WCHAR yearW[16];
+    BOOL got_reg_data = FALSE;
+    struct tz_reg_data
+    {
+        LONG bias;
+        LONG std_bias;
+        LONG dlt_bias;
+        SYSTEMTIME std_date;
+        SYSTEMTIME dlt_date;
+    } tz_data;
+
+    if (!TIME_GetSpecificTimeZoneKey( key_name, &time_zone_key ))
+        return FALSE;
+
+    if (!reg_query_value( time_zone_key, stdW, REG_SZ, tzinfo->StandardName, sizeof(tzinfo->StandardName)) ||
+        !reg_query_value( time_zone_key, dltW, REG_SZ, tzinfo->DaylightName, sizeof(tzinfo->DaylightName)))
+    {
+        NtClose( time_zone_key );
+        return FALSE;
+    }
+
+    lstrcpyW(tzinfo->TimeZoneKeyName, key_name);
+
+    if (dynamic)
+    {
+        attr.Length = sizeof(attr);
+        attr.RootDirectory = time_zone_key;
+        attr.ObjectName = &nameW;
+        attr.Attributes = 0;
+        attr.SecurityDescriptor = NULL;
+        attr.SecurityQualityOfService = NULL;
+        RtlInitUnicodeString( &nameW, Dynamic_DstW );
+        if (!NtOpenKey( &dynamic_dst_key, KEY_READ, &attr ))
+        {
+            sprintfW( yearW, fmtW, year );
+            got_reg_data = reg_query_value( dynamic_dst_key, yearW, REG_BINARY, &tz_data, sizeof(tz_data) );
+
+            NtClose( dynamic_dst_key );
+        }
+    }
+
+    if (!got_reg_data)
+    {
+        if (!reg_query_value( time_zone_key, tziW, REG_BINARY, &tz_data, sizeof(tz_data) ))
+        {
+            NtClose( time_zone_key );
+            return FALSE;
+        }
+    }
+
+    tzinfo->Bias = tz_data.bias;
+    tzinfo->StandardBias = tz_data.std_bias;
+    tzinfo->DaylightBias = tz_data.dlt_bias;
+    tzinfo->StandardDate = tz_data.std_date;
+    tzinfo->DaylightDate = tz_data.dlt_date;
+
+    tzinfo->DynamicDaylightTimeDisabled = !dynamic;
+
+    NtClose( time_zone_key );
+
+    return TRUE;
+}
+
 
 /***********************************************************************
  *              SetLocalTime            (KERNEL32.@)
@@ -415,6 +588,30 @@ DWORD WINAPI GetTimeZoneInformation( LPTIME_ZONE_INFORMATION tzinfo )
         return TIME_ZONE_ID_INVALID;
     }
     return TIME_ZoneID( tzinfo );
+}
+
+/***********************************************************************
+ *              GetTimeZoneInformationForYear  (KERNEL32.@)
+ */
+BOOL WINAPI GetTimeZoneInformationForYear( USHORT wYear,
+    PDYNAMIC_TIME_ZONE_INFORMATION pdtzi, LPTIME_ZONE_INFORMATION ptzi )
+{
+    DYNAMIC_TIME_ZONE_INFORMATION local_dtzi, result;
+
+    if (!pdtzi)
+    {
+        if (GetDynamicTimeZoneInformation(&local_dtzi) == TIME_ZONE_ID_INVALID)
+            return FALSE;
+        pdtzi = &local_dtzi;
+    }
+
+    if (!TIME_GetSpecificTimeZoneInfo(pdtzi->TimeZoneKeyName, wYear,
+            !pdtzi->DynamicDaylightTimeDisabled, &result))
+        return FALSE;
+
+    memcpy(ptzi, &result, sizeof(*ptzi));
+
+    return TRUE;
 }
 
 /***********************************************************************
