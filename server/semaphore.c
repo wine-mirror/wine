@@ -201,9 +201,8 @@ DECL_HANDLER(create_semaphore)
 /* open a handle to a semaphore */
 DECL_HANDLER(open_semaphore)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &semaphore_ops, &name, req->attributes );
 }

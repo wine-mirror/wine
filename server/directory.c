@@ -522,9 +522,8 @@ DECL_HANDLER(create_directory)
 /* open a directory object */
 DECL_HANDLER(open_directory)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &directory_ops, &name, req->attributes );
 }

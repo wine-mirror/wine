@@ -687,9 +687,8 @@ DECL_HANDLER(create_mapping)
 /* open a handle to a mapping */
 DECL_HANDLER(open_mapping)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &mapping_ops, &name, req->attributes );
 }

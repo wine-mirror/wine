@@ -150,10 +150,9 @@ client_ptr_t get_class_client_ptr( struct window_class *class )
 DECL_HANDLER(create_class)
 {
     struct window_class *class;
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
     atom_t atom;
 
-    get_req_unicode_str( &name );
     if (name.len)
     {
         atom = add_global_atom( NULL, &name );
@@ -197,10 +196,9 @@ DECL_HANDLER(create_class)
 DECL_HANDLER(destroy_class)
 {
     struct window_class *class;
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
     atom_t atom = req->atom;
 
-    get_req_unicode_str( &name );
     if (name.len) atom = find_global_atom( NULL, &name );
 
     if (!(class = find_class( current->process, atom, req->instance )))

@@ -251,9 +251,8 @@ DECL_HANDLER(create_timer)
 /* open a handle to a timer */
 DECL_HANDLER(open_timer)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &timer_ops, &name, req->attributes );
 }

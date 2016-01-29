@@ -189,9 +189,8 @@ DECL_HANDLER(create_symlink)
 /* open a symbolic link object */
 DECL_HANDLER(open_symlink)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &symlink_ops, &name, req->attributes | OBJ_OPENLINK );
 }

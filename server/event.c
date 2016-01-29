@@ -306,9 +306,8 @@ DECL_HANDLER(create_event)
 /* open a handle to an event */
 DECL_HANDLER(open_event)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &event_ops, &name, req->attributes );
 }
@@ -378,9 +377,8 @@ DECL_HANDLER(create_keyed_event)
 /* open a handle to a keyed event */
 DECL_HANDLER(open_keyed_event)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &keyed_event_ops, &name, req->attributes );
 }

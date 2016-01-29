@@ -382,12 +382,11 @@ void release_global_atom( struct winstation *winstation, atom_t atom )
 /* add a global atom */
 DECL_HANDLER(add_atom)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
     struct atom_table *table = get_table( req->table, 1 );
 
     if (table)
     {
-        get_req_unicode_str( &name );
         reply->atom = add_atom( table, &name );
         release_object( table );
     }
@@ -407,12 +406,11 @@ DECL_HANDLER(delete_atom)
 /* find a global atom */
 DECL_HANDLER(find_atom)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
     struct atom_table *table = get_table( req->table, 0 );
 
     if (table)
     {
-        get_req_unicode_str( &name );
         reply->atom = find_atom( table, &name );
         release_object( table );
     }

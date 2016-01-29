@@ -196,9 +196,8 @@ DECL_HANDLER(create_completion)
 /* open a completion */
 DECL_HANDLER(open_completion)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &completion_ops, &name, req->attributes );
 }

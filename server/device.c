@@ -708,7 +708,7 @@ DECL_HANDLER(create_device_manager)
 DECL_HANDLER(create_device)
 {
     struct device *device;
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
     struct device_manager *manager;
     struct directory *root = NULL;
 
@@ -716,7 +716,6 @@ DECL_HANDLER(create_device)
                                                              0, &device_manager_ops )))
         return;
 
-    get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
     {
         release_object( manager );

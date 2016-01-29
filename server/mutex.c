@@ -233,9 +233,8 @@ DECL_HANDLER(create_mutex)
 /* open a handle to a mutex */
 DECL_HANDLER(open_mutex)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &mutex_ops, &name, req->attributes );
 }

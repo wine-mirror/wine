@@ -2384,11 +2384,10 @@ DECL_HANDLER(flush)
 /* open a file object */
 DECL_HANDLER(open_file_object)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
     struct directory *root = NULL;
     struct object *obj, *result;
 
-    get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
     {
         if (get_error() != STATUS_OBJECT_TYPE_MISMATCH) return;

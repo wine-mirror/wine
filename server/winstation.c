@@ -401,11 +401,10 @@ void close_thread_desktop( struct thread *thread )
 DECL_HANDLER(create_winstation)
 {
     struct winstation *winstation;
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
     struct directory *root = NULL;
 
     reply->handle = 0;
-    get_req_unicode_str( &name );
     if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 ))) return;
 
     if ((winstation = create_winstation( root, &name, req->attributes, req->flags )))
@@ -419,9 +418,8 @@ DECL_HANDLER(create_winstation)
 /* open a handle to a window station */
 DECL_HANDLER(open_winstation)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &winstation_ops, &name, req->attributes );
 }
@@ -467,10 +465,9 @@ DECL_HANDLER(create_desktop)
 {
     struct desktop *desktop;
     struct winstation *winstation;
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
     reply->handle = 0;
-    get_req_unicode_str( &name );
     if ((winstation = get_process_winstation( current->process, WINSTA_CREATEDESKTOP )))
     {
         if ((desktop = create_desktop( &name, req->attributes, req->flags, winstation )))
@@ -487,9 +484,7 @@ DECL_HANDLER(open_desktop)
 {
     struct winstation *winstation;
     struct object *obj;
-    struct unicode_str name;
-
-    get_req_unicode_str( &name );
+    struct unicode_str name = get_req_unicode_str();
 
     /* FIXME: check access rights */
     if (!req->winsta)

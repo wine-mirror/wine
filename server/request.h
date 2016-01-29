@@ -77,10 +77,12 @@ static inline data_size_t get_req_data_size(void)
 }
 
 /* get the request vararg as unicode string */
-static inline void get_req_unicode_str( struct unicode_str *str )
+static inline struct unicode_str get_req_unicode_str(void)
 {
-    str->str = get_req_data();
-    str->len = (get_req_data_size() / sizeof(WCHAR)) * sizeof(WCHAR);
+    struct unicode_str ret;
+    ret.str = get_req_data();
+    ret.len = (get_req_data_size() / sizeof(WCHAR)) * sizeof(WCHAR);
+    return ret;
 }
 
 /* get the reply maximum vararg size */

@@ -1561,9 +1561,8 @@ DECL_HANDLER(create_job)
 /* open a job object */
 DECL_HANDLER(open_job)
 {
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
-    get_req_unicode_str( &name );
     reply->handle = open_object( current->process, req->rootdir, req->access,
                                  &job_ops, &name, req->attributes );
 }

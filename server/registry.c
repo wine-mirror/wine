@@ -2142,12 +2142,11 @@ DECL_HANDLER(set_key_value)
 DECL_HANDLER(get_key_value)
 {
     struct key *key;
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
     reply->total = 0;
     if ((key = get_hkey_obj( req->hkey, KEY_QUERY_VALUE )))
     {
-        get_req_unicode_str( &name );
         get_value( key, &name, &reply->type, &reply->total );
         release_object( key );
     }
@@ -2169,11 +2168,10 @@ DECL_HANDLER(enum_key_value)
 DECL_HANDLER(delete_key_value)
 {
     struct key *key;
-    struct unicode_str name;
+    struct unicode_str name = get_req_unicode_str();
 
     if ((key = get_hkey_obj( req->hkey, KEY_SET_VALUE )))
     {
-        get_req_unicode_str( &name );
         delete_value( key, &name );
         release_object( key );
     }
