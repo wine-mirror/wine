@@ -1414,6 +1414,63 @@ HRESULT WINAPI WsWriteType( WS_XML_WRITER *handle, WS_TYPE_MAPPING mapping, WS_T
     return hr;
 }
 
+static WS_TYPE map_value_type( WS_VALUE_TYPE type )
+{
+    switch (type)
+    {
+    case WS_BOOL_VALUE_TYPE:     return WS_BOOL_TYPE;
+    case WS_INT8_VALUE_TYPE:     return WS_INT8_TYPE;
+    case WS_INT16_VALUE_TYPE:    return WS_INT16_TYPE;
+    case WS_INT32_VALUE_TYPE:    return WS_INT32_TYPE;
+    case WS_INT64_VALUE_TYPE:    return WS_INT64_TYPE;
+    case WS_UINT8_VALUE_TYPE:    return WS_UINT8_TYPE;
+    case WS_UINT16_VALUE_TYPE:   return WS_UINT16_TYPE;
+    case WS_UINT32_VALUE_TYPE:   return WS_UINT32_TYPE;
+    case WS_UINT64_VALUE_TYPE:   return WS_UINT64_TYPE;
+    case WS_FLOAT_VALUE_TYPE:    return WS_FLOAT_TYPE;
+    case WS_DOUBLE_VALUE_TYPE:   return WS_DOUBLE_TYPE;
+    case WS_DECIMAL_VALUE_TYPE:  return WS_DECIMAL_TYPE;
+    case WS_DATETIME_VALUE_TYPE: return WS_DATETIME_TYPE;
+    case WS_TIMESPAN_VALUE_TYPE: return WS_TIMESPAN_TYPE;
+    case WS_GUID_VALUE_TYPE:     return WS_GUID_TYPE;
+    default:
+        FIXME( "unhandled type %u\n", type );
+        return ~0u;
+    }
+}
+
+/**************************************************************************
+ *          WsWriteValue		[webservices.@]
+ */
+HRESULT WINAPI WsWriteValue( WS_XML_WRITER *handle, WS_VALUE_TYPE value_type, const void *value,
+                             ULONG size, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    WS_TYPE_MAPPING mapping;
+    WS_TYPE type;
+
+    TRACE( "%p %u %p %u %p\n", handle, value_type, value, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !value || (type = map_value_type( value_type )) == ~0u) return E_INVALIDARG;
+
+    switch (writer->state)
+    {
+    case WRITER_STATE_STARTATTRIBUTE:
+        mapping = WS_ATTRIBUTE_TYPE_MAPPING;
+        break;
+
+    case WRITER_STATE_STARTELEMENT:
+        mapping = WS_ELEMENT_TYPE_MAPPING;
+        break;
+
+    default:
+        return WS_E_INVALID_FORMAT;
+    }
+
+    return write_type( writer, mapping, type, NULL, WS_WRITE_REQUIRED_VALUE, value, size );
+}
+
 /**************************************************************************
  *          WsWriteXmlBuffer		[webservices.@]
  */
