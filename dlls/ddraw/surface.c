@@ -69,8 +69,8 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RE
         if (read)
             return DD_OK;
 
-        return wined3d_surface_blt(surface->ddraw->wined3d_frontbuffer, rect,
-                surface->wined3d_surface, rect, 0, NULL, WINED3D_TEXF_POINT);
+        return wined3d_texture_blt(surface->ddraw->wined3d_frontbuffer, 0, rect,
+                surface->wined3d_texture, surface->sub_resource_idx, rect, 0, NULL, WINED3D_TEXF_POINT);
     }
 
     if (FAILED(hr = wined3d_surface_getdc(surface->wined3d_surface, &surface_dc)))

@@ -4822,7 +4822,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
         return hr;
     }
 
-    ddraw->wined3d_frontbuffer = wined3d_surface_from_resource(wined3d_texture_get_sub_resource(*texture, 0));
+    ddraw->wined3d_frontbuffer = *texture;
 
     return hr;
 }

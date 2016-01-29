@@ -2431,11 +2431,6 @@ do { \
     return WINED3D_OK;
 }
 
-struct wined3d_surface * CDECL wined3d_surface_from_resource(struct wined3d_resource *resource)
-{
-    return surface_from_resource(resource);
-}
-
 HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
