@@ -170,7 +170,7 @@
 @ stub WsWriteBytes
 @ stub WsWriteChars
 @ stub WsWriteCharsUtf8
-@ stub WsWriteElement
+@ stdcall WsWriteElement(ptr ptr long ptr long ptr)
 @ stdcall WsWriteEndAttribute(ptr ptr)
 @ stub WsWriteEndCData
 @ stdcall WsWriteEndElement(ptr ptr)
