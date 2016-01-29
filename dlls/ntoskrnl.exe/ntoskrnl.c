@@ -1040,9 +1040,44 @@ PDEVICE_OBJECT WINAPI IoGetAttachedDevice( PDEVICE_OBJECT device )
 NTSTATUS WINAPI IoGetDeviceProperty( DEVICE_OBJECT *device, DEVICE_REGISTRY_PROPERTY device_property,
                                      ULONG buffer_length, PVOID property_buffer, PULONG result_length )
 {
-    FIXME( "%p %d %u %p %p: stub\n", device, device_property, buffer_length,
+    NTSTATUS status = STATUS_NOT_IMPLEMENTED;
+    TRACE( "%p %d %u %p %p\n", device, device_property, buffer_length,
            property_buffer, result_length );
-    return STATUS_NOT_IMPLEMENTED;
+    switch (device_property)
+    {
+        case DevicePropertyPhysicalDeviceObjectName:
+        {
+            ULONG used_len, len = buffer_length + sizeof(OBJECT_NAME_INFORMATION);
+            OBJECT_NAME_INFORMATION *name = HeapAlloc(GetProcessHeap(), 0, len);
+
+            status = NtQueryObject(device->Reserved, ObjectNameInformation, name, len, &used_len);
+            if (status == STATUS_SUCCESS)
+            {
+                /* Ensure room for NULL termination */
+                if (buffer_length >= name->Name.MaximumLength)
+                    memcpy(property_buffer, name->Name.Buffer, name->Name.MaximumLength);
+                else
+                    status = STATUS_BUFFER_TOO_SMALL;
+                *result_length = name->Name.MaximumLength;
+            }
+            else
+            {
+                if (status == STATUS_INFO_LENGTH_MISMATCH ||
+                    status == STATUS_BUFFER_OVERFLOW)
+                {
+                    status = STATUS_BUFFER_TOO_SMALL;
+                    *result_length = used_len - sizeof(OBJECT_NAME_INFORMATION);
+                }
+                else
+                    *result_length = 0;
+            }
+            HeapFree(GetProcessHeap(), 0, name);
+            break;
+        }
+        default:
+            FIXME("unhandled property %d\n", device_property);
+    }
+    return status;
 }
 
 
