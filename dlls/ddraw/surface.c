@@ -1389,7 +1389,8 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
         struct ddraw_surface *src_surface, const RECT *src_rect_in, DWORD flags,
         const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
 {
-    struct wined3d_surface *wined3d_src_surface = src_surface ? src_surface->wined3d_surface : NULL;
+    struct wined3d_texture *wined3d_src_texture;
+    unsigned int src_sub_resource_idx;
     RECT src_rect, dst_rect;
     float scale_x, scale_y;
     const RECT *clip_rect;
@@ -1429,10 +1430,15 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
 
         if (IsRectEmpty(&src_rect))
             return DDERR_INVALIDRECT;
+
+        wined3d_src_texture = src_surface->wined3d_texture;
+        src_sub_resource_idx = src_surface->sub_resource_idx;
     }
     else
     {
         SetRect(&src_rect, 0, 0, 0, 0);
+        wined3d_src_texture = NULL;
+        src_sub_resource_idx = 0;
     }
 
     if (!dst_surface->clipper)
@@ -1440,8 +1446,8 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
         if (src_surface && src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
             hr = ddraw_surface_update_frontbuffer(src_surface, &src_rect, TRUE);
         if (SUCCEEDED(hr))
-            hr = wined3d_surface_blt(dst_surface->wined3d_surface, &dst_rect,
-                    wined3d_src_surface, &src_rect, flags, fx, filter);
+            hr = wined3d_texture_blt(dst_surface->wined3d_texture, dst_surface->sub_resource_idx, &dst_rect,
+                    wined3d_src_texture, src_sub_resource_idx, &src_rect, flags, fx, filter);
         if (SUCCEEDED(hr) && (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
             hr = ddraw_surface_update_frontbuffer(dst_surface, &dst_rect, FALSE);
 
@@ -1491,8 +1497,8 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
             }
         }
 
-        if (FAILED(hr = wined3d_surface_blt(dst_surface->wined3d_surface, &clip_rect[i],
-                wined3d_src_surface, &src_rect_clipped, flags, fx, filter)))
+        if (FAILED(hr = wined3d_texture_blt(dst_surface->wined3d_texture, dst_surface->sub_resource_idx,
+                &clip_rect[i], wined3d_src_texture, src_sub_resource_idx, &src_rect_clipped, flags, fx, filter)))
             break;
 
         if (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
