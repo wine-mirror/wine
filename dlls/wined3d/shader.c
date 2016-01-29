@@ -1459,6 +1459,10 @@ static void shader_dump_register(const struct wined3d_shader_register *reg,
             TRACE("cb");
             break;
 
+        case WINED3DSPR_IMMCONSTBUFFER:
+            TRACE("icb");
+            break;
+
         case WINED3DSPR_PRIMID:
             TRACE("primID");
             break;

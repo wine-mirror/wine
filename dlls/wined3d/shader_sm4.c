@@ -155,16 +155,17 @@ enum wined3d_sm4_opcode
 
 enum wined3d_sm4_register_type
 {
-    WINED3D_SM4_RT_TEMP         = 0x0,
-    WINED3D_SM4_RT_INPUT        = 0x1,
-    WINED3D_SM4_RT_OUTPUT       = 0x2,
-    WINED3D_SM4_RT_IMMCONST     = 0x4,
-    WINED3D_SM4_RT_SAMPLER      = 0x6,
-    WINED3D_SM4_RT_RESOURCE     = 0x7,
-    WINED3D_SM4_RT_CONSTBUFFER  = 0x8,
-    WINED3D_SM4_RT_PRIMID       = 0xb,
-    WINED3D_SM4_RT_DEPTHOUT     = 0xc,
-    WINED3D_SM4_RT_NULL         = 0xd,
+    WINED3D_SM4_RT_TEMP           = 0x0,
+    WINED3D_SM4_RT_INPUT          = 0x1,
+    WINED3D_SM4_RT_OUTPUT         = 0x2,
+    WINED3D_SM4_RT_IMMCONST       = 0x4,
+    WINED3D_SM4_RT_SAMPLER        = 0x6,
+    WINED3D_SM4_RT_RESOURCE       = 0x7,
+    WINED3D_SM4_RT_CONSTBUFFER    = 0x8,
+    WINED3D_SM4_RT_IMMCONSTBUFFER = 0x9,
+    WINED3D_SM4_RT_PRIMID         = 0xb,
+    WINED3D_SM4_RT_DEPTHOUT       = 0xc,
+    WINED3D_SM4_RT_NULL           = 0xd,
 };
 
 enum wined3d_sm4_output_primitive_type
@@ -350,7 +351,7 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* WINED3D_SM4_RT_SAMPLER */        WINED3DSPR_SAMPLER,
     /* WINED3D_SM4_RT_RESOURCE */       WINED3DSPR_RESOURCE,
     /* WINED3D_SM4_RT_CONSTBUFFER */    WINED3DSPR_CONSTBUFFER,
-    /* UNKNOWN */                       0,
+    /* WINED3D_SM4_RT_IMMCONSTBUFFER */ WINED3DSPR_IMMCONSTBUFFER,
     /* UNKNOWN */                       0,
     /* WINED3D_SM4_RT_PRIMID */         WINED3DSPR_PRIMID,
     /* WINED3D_SM4_RT_DEPTHOUT */       WINED3DSPR_DEPTHOUT,

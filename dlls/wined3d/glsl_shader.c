@@ -2406,6 +2406,13 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 sprintf(register_name, "%s_cb%u[%u]", prefix, reg->idx[0].offset, reg->idx[1].offset);
             break;
 
+        case WINED3DSPR_IMMCONSTBUFFER:
+            if (reg->idx[0].rel_addr)
+                sprintf(register_name, "%s_icb[%s + %u]", prefix, rel_param0.param_str, reg->idx[0].offset);
+            else
+                sprintf(register_name, "%s_icb[%u]", prefix, reg->idx[0].offset);
+            break;
+
         case WINED3DSPR_PRIMID:
             sprintf(register_name, "uint(gl_PrimitiveIDIn)");
             break;
