@@ -44,7 +44,7 @@ static struct _msg_spy {
     HWND         hwnd;
     HHOOK        get_msg_hook;
     HHOOK        call_wnd_proc_hook;
-    imm_msgs     msgs[32];
+    imm_msgs     msgs[64];
     unsigned int i_msg;
 } msg_spy;
 
@@ -58,6 +58,12 @@ typedef struct
         HARDWAREINPUT   hi;
     } u;
 } TEST_INPUT;
+
+typedef struct _tagTRANSMSG {
+    UINT message;
+    WPARAM wParam;
+    LPARAM lParam;
+} TRANSMSG, *LPTRANSMSG;
 
 static UINT (WINAPI *pSendInput) (UINT, INPUT*, size_t);
 
@@ -1015,6 +1021,9 @@ static void test_ImmMessages(void)
     HIMC imc;
     UINT idx = 0;
 
+    LPINPUTCONTEXT lpIMC;
+    LPTRANSMSG lpTransMsg;
+
     HWND hwnd = CreateWindowExA(WS_EX_CLIENTEDGE, "EDIT", "Wine imm32.dll test",
                                 WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT,
                                 240, 120, NULL, NULL, GetModuleHandleA(NULL), NULL);
@@ -1032,6 +1041,64 @@ static void test_ImmMessages(void)
         if (msg) ok(!msg->post, "Message should not be posted\n");
     } while (msg);
     msg_spy_flush_msgs();
+
+    lpIMC = ImmLockIMC(imc);
+    lpIMC->hMsgBuf = ImmReSizeIMCC(lpIMC->hMsgBuf, (lpIMC->dwNumMsgBuf + 1) * sizeof(TRANSMSG));
+    lpTransMsg = ImmLockIMCC(lpIMC->hMsgBuf);
+    lpTransMsg += lpIMC->dwNumMsgBuf;
+    lpTransMsg->message = WM_IME_STARTCOMPOSITION;
+    lpTransMsg->wParam = 0;
+    lpTransMsg->lParam = 0;
+    ImmUnlockIMCC(lpIMC->hMsgBuf);
+    lpIMC->dwNumMsgBuf++;
+    ImmUnlockIMC(imc);
+    ImmGenerateMessage(imc);
+    idx = 0;
+    do
+    {
+        msg = msg_spy_find_next_msg(WM_IME_STARTCOMPOSITION, &idx);
+        if (msg) ok(!msg->post, "Message should not be posted\n");
+    } while (msg);
+    msg_spy_flush_msgs();
+
+    lpIMC = ImmLockIMC(imc);
+    lpIMC->hMsgBuf = ImmReSizeIMCC(lpIMC->hMsgBuf, (lpIMC->dwNumMsgBuf + 1) * sizeof(TRANSMSG));
+    lpTransMsg = ImmLockIMCC(lpIMC->hMsgBuf);
+    lpTransMsg += lpIMC->dwNumMsgBuf;
+    lpTransMsg->message = WM_IME_COMPOSITION;
+    lpTransMsg->wParam = 0;
+    lpTransMsg->lParam = 0;
+    ImmUnlockIMCC(lpIMC->hMsgBuf);
+    lpIMC->dwNumMsgBuf++;
+    ImmUnlockIMC(imc);
+    ImmGenerateMessage(imc);
+    idx = 0;
+    do
+    {
+        msg = msg_spy_find_next_msg(WM_IME_COMPOSITION, &idx);
+        if (msg) ok(!msg->post, "Message should not be posted\n");
+    } while (msg);
+    msg_spy_flush_msgs();
+
+    lpIMC = ImmLockIMC(imc);
+    lpIMC->hMsgBuf = ImmReSizeIMCC(lpIMC->hMsgBuf, (lpIMC->dwNumMsgBuf + 1) * sizeof(TRANSMSG));
+    lpTransMsg = ImmLockIMCC(lpIMC->hMsgBuf);
+    lpTransMsg += lpIMC->dwNumMsgBuf;
+    lpTransMsg->message = WM_IME_ENDCOMPOSITION;
+    lpTransMsg->wParam = 0;
+    lpTransMsg->lParam = 0;
+    ImmUnlockIMCC(lpIMC->hMsgBuf);
+    lpIMC->dwNumMsgBuf++;
+    ImmUnlockIMC(imc);
+    ImmGenerateMessage(imc);
+    idx = 0;
+    do
+    {
+        msg = msg_spy_find_next_msg(WM_IME_ENDCOMPOSITION, &idx);
+        if (msg) ok(!msg->post, "Message should not be posted\n");
+    } while (msg);
+    msg_spy_flush_msgs();
+
     ImmSetOpenStatus(imc, FALSE);
     ImmReleaseContext(hwnd, imc);
     DestroyWindow(hwnd);

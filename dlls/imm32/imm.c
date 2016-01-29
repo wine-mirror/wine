@@ -439,6 +439,16 @@ static void ImmInternalPostIMEMessage(InputContextData *data, UINT msg, WPARAM w
        PostMessageW(target, msg, wParam, lParam);
 }
 
+/* for sending messages as the IME */
+static void ImmInternalSendIMEMessage(InputContextData *data, UINT msg, WPARAM wParam, LPARAM lParam)
+{
+    HWND target = GetFocus();
+    if (!target)
+       SendMessageW(data->IMC.hWnd,msg,wParam,lParam);
+    else
+       SendMessageW(target, msg, wParam, lParam);
+}
+
 static LRESULT ImmInternalSendIMENotify(InputContextData *data, WPARAM notify, LPARAM lParam)
 {
     HWND target;
@@ -2887,7 +2897,7 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
 
         lpTransMsg = ImmLockIMCC(data->IMC.hMsgBuf);
         for (i = 0; i < data->IMC.dwNumMsgBuf; i++)
-            ImmInternalPostIMEMessage(data, lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
+            ImmInternalSendIMEMessage(data, lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
 
         ImmUnlockIMCC(data->IMC.hMsgBuf);
 
