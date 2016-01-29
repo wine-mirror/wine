@@ -165,7 +165,7 @@
 @ stub WsTrimXmlWhitespace
 @ stub WsVerifyXmlNCName
 @ stub WsWriteArray
-@ stub WsWriteAttribute
+@ stdcall WsWriteAttribute(ptr ptr long ptr long ptr)
 @ stub WsWriteBody
 @ stub WsWriteBytes
 @ stub WsWriteChars

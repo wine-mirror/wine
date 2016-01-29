@@ -906,6 +906,71 @@ static void test_WsWriteValue(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsWriteAttribute(void)
+{
+    static const WCHAR testW[] = {'t','e','s','t',0};
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_STRUCT_DESCRIPTION s;
+    WS_FIELD_DESCRIPTION f, *fields[1];
+    WS_ATTRIBUTE_DESCRIPTION desc;
+    WS_XML_STRING localname = {3, (BYTE *)"str"}, ns = {0, NULL};
+    struct test { const WCHAR *str; } *test;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    /* text field mapping */
+    memset( &f, 0, sizeof(f) );
+    f.mapping = WS_TEXT_FIELD_MAPPING;
+    f.type    = WS_WSZ_TYPE;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size       = sizeof(struct test);
+    s.alignment  = TYPE_ALIGNMENT(struct test);
+    s.fields     = fields;
+    s.fieldCount = 1;
+
+    desc.attributeLocalName = &localname;
+    desc.attributeNs        = &ns;
+    desc.type               = WS_STRUCT_TYPE;
+    desc.typeDescription    = &s;
+
+    test = HeapAlloc( GetProcessHeap(), 0, sizeof(*test) );
+    test->str = testW;
+    hr = WsWriteAttribute( NULL, &desc, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsWriteAttribute( writer, NULL, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsWriteAttribute( writer, &desc, WS_WRITE_REQUIRED_POINTER, NULL, 0, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsWriteAttribute( writer, &desc, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteAttribute( writer, &desc, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<str str=\"test\"/>", __LINE__ );
+
+    HeapFree( GetProcessHeap(), 0, test );
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -917,6 +982,7 @@ START_TEST(writer)
     test_WsWriteType();
     test_WsWriteElement();
     test_WsWriteValue();
+    test_WsWriteAttribute();
     test_basic_type();
     test_simple_struct_type();
 }

@@ -1349,6 +1349,34 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
 }
 
 /**************************************************************************
+ *          WsWriteAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsWriteAttribute( WS_XML_WRITER *handle, const WS_ATTRIBUTE_DESCRIPTION *desc,
+                                 WS_WRITE_OPTION option, const void *value, ULONG size,
+                                 WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p %u %p %u %p\n", handle, desc, option, value, size, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !desc || !desc->attributeLocalName || !desc->attributeNs || !value)
+        return E_INVALIDARG;
+
+    if (writer->state != WRITER_STATE_STARTELEMENT) return WS_E_INVALID_OPERATION;
+
+    if ((hr = write_add_attribute( writer, NULL, desc->attributeLocalName, desc->attributeNs,
+                                   FALSE )) != S_OK) return hr;
+
+    if ((hr = write_type( writer, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->typeDescription,
+                          option, value, size )) != S_OK) return hr;
+
+    writer->state = WRITER_STATE_STARTELEMENT;
+    return S_OK;
+}
+
+/**************************************************************************
  *          WsWriteElement		[webservices.@]
  */
 HRESULT WINAPI WsWriteElement( WS_XML_WRITER *handle, const WS_ELEMENT_DESCRIPTION *desc,
