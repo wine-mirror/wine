@@ -5942,7 +5942,7 @@ static const struct message WMSetFocusComboBoxSeq[] =
     { WM_SETFOCUS, sent },
     { WM_KILLFOCUS, sent|parent },
     { WM_SETFOCUS, sent },
-    { WM_COMMAND, sent|defwinproc },
+    { WM_COMMAND, sent|defwinproc|wparam, MAKEWPARAM(1001, EN_SETFOCUS) },
     { EM_SETSEL, sent|defwinproc|wparam|lparam, 0, INT_MAX },
     { WM_CTLCOLOREDIT, sent|defwinproc|optional },/* Not sent on W2000, XP or Server 2003 */
     { WM_CTLCOLOREDIT, sent|parent|optional },/* Not sent on W2000, XP or Server 2003 */
@@ -5971,7 +5971,7 @@ static const struct message SetFocusComboBoxSeq[] =
     { WM_SETFOCUS, sent },
     { WM_KILLFOCUS, sent|defwinproc },
     { WM_SETFOCUS, sent },
-    { WM_COMMAND, sent|defwinproc },
+    { WM_COMMAND, sent|defwinproc|wparam, MAKEWPARAM(1001, EN_SETFOCUS) },
     { EM_SETSEL, sent|defwinproc|wparam|lparam, 0, INT_MAX },
     { WM_CTLCOLOREDIT, sent|defwinproc|optional },/* Not sent on W2000, XP or Server 2003 */
     { WM_CTLCOLOREDIT, sent|parent|optional },/* Not sent on W2000, XP or Server 2003 */
