@@ -1780,7 +1780,6 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         [[NaN], "null"],
         [[Infinity], "null"],
         [[-Infinity], "null"],
-        [[undefined], undefined],
         [[{prop1: true, prop2: "string"}], "{\"prop1\":true,\"prop2\":\"string\"}"],
         [[{prop1: true, prop2: testObj, prop3: undefined}], "{\"prop1\":true}"],
         [[{prop1: true, prop2: {prop: "string"}},undefined,"  "],
@@ -1795,11 +1794,16 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
     for(i=0; i < stringify_tests.length; i++) {
         s = JSON.stringify.apply(null, stringify_tests[i][0]);
         ok(s === stringify_tests[i][1],
-           "stringify(" + stringify_tests[i][0] + ") returned " + s + " expected " + stringify_tests[i][1]);
+           "["+i+"] stringify(" + stringify_tests[i][0] + ") returned " + s + " expected " + stringify_tests[i][1]);
     }
 
     s = JSON.stringify(testObj);
-    ok(s === undefined, "stringify(testObj) returned " + s);
+    ok(s === undefined || s === "undefined" /* broken on some old versions */,
+       "stringify(testObj) returned " + s + " expected undfined");
+
+    s = JSON.stringify(undefined);
+    ok(s === undefined || s === "undefined" /* broken on some old versions */,
+       "stringify(undefined) returned " + s + " expected undfined");
 
     var parse_tests = [
         ["true", true],
