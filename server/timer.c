@@ -252,20 +252,10 @@ DECL_HANDLER(create_timer)
 DECL_HANDLER(open_timer)
 {
     struct unicode_str name;
-    struct directory *root = NULL;
-    struct timer *timer;
 
     get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    if ((timer = open_object_dir( root, &name, req->attributes, &timer_ops )))
-    {
-        reply->handle = alloc_handle( current->process, &timer->obj, req->access, req->attributes );
-        release_object( timer );
-    }
-
-    if (root) release_object( root );
+    reply->handle = open_object( current->process, req->rootdir, req->access,
+                                 &timer_ops, &name, req->attributes );
 }
 
 /* set a waitable timer */

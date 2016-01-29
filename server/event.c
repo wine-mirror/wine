@@ -307,20 +307,10 @@ DECL_HANDLER(create_event)
 DECL_HANDLER(open_event)
 {
     struct unicode_str name;
-    struct directory *root = NULL;
-    struct event *event;
 
     get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    if ((event = open_object_dir( root, &name, req->attributes, &event_ops )))
-    {
-        reply->handle = alloc_handle( current->process, &event->obj, req->access, req->attributes );
-        release_object( event );
-    }
-
-    if (root) release_object( root );
+    reply->handle = open_object( current->process, req->rootdir, req->access,
+                                 &event_ops, &name, req->attributes );
 }
 
 /* do an event operation */
@@ -389,16 +379,8 @@ DECL_HANDLER(create_keyed_event)
 DECL_HANDLER(open_keyed_event)
 {
     struct unicode_str name;
-    struct directory *root = NULL;
-    struct keyed_event *event;
 
     get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 ))) return;
-
-    if ((event = open_object_dir( root, &name, req->attributes, &keyed_event_ops )))
-    {
-        reply->handle = alloc_handle( current->process, &event->obj, req->access, req->attributes );
-        release_object( event );
-    }
-    if (root) release_object( root );
+    reply->handle = open_object( current->process, req->rootdir, req->access,
+                                 &keyed_event_ops, &name, req->attributes );
 }

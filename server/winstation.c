@@ -419,19 +419,11 @@ DECL_HANDLER(create_winstation)
 /* open a handle to a window station */
 DECL_HANDLER(open_winstation)
 {
-    struct winstation *winstation;
     struct unicode_str name;
-    struct directory *root = NULL;
 
     get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 ))) return;
-
-    if ((winstation = open_object_dir( root, &name, req->attributes, &winstation_ops )))
-    {
-        reply->handle = alloc_handle( current->process, &winstation->obj, req->access, req->attributes );
-        release_object( winstation );
-    }
-    if (root) release_object( root );
+    reply->handle = open_object( current->process, req->rootdir, req->access,
+                                 &winstation_ops, &name, req->attributes );
 }
 
 
@@ -494,6 +486,7 @@ DECL_HANDLER(create_desktop)
 DECL_HANDLER(open_desktop)
 {
     struct winstation *winstation;
+    struct object *obj;
     struct unicode_str name;
 
     get_req_unicode_str( &name );
@@ -504,12 +497,17 @@ DECL_HANDLER(open_desktop)
     else
         winstation = (struct winstation *)get_handle_obj( current->process, req->winsta, 0, &winstation_ops );
 
-    if (winstation)
+    if (!winstation) return;
+
+    if ((obj = find_object( winstation->desktop_names, &name, req->attributes )))
     {
-        reply->handle = open_object( winstation->desktop_names, &name, &desktop_ops,
-                                     req->access, req->attributes );
-        release_object( winstation );
+        assert( obj->ops == &desktop_ops );
+        reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
+        release_object( obj );
     }
+    else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+
+    release_object( winstation );
 }
 
 /* open a handle to current input desktop */

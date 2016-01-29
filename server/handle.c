@@ -571,21 +571,22 @@ obj_handle_t duplicate_handle( struct process *src, obj_handle_t src_handle, str
 }
 
 /* open a new handle to an existing object */
-obj_handle_t open_object( const struct namespace *namespace, const struct unicode_str *name,
-                          const struct object_ops *ops, unsigned int access, unsigned int attr )
+obj_handle_t open_object( struct process *process, obj_handle_t parent, unsigned int access,
+                          const struct object_ops *ops, const struct unicode_str *name,
+                          unsigned int attributes )
 {
     obj_handle_t handle = 0;
-    struct object *obj = find_object( namespace, name, attr );
-    if (obj)
+    struct directory *root = NULL;
+    struct object *obj;
+
+    if (parent && !(root = get_directory_obj( current->process, parent, 0 ))) return 0;
+
+    if ((obj = open_object_dir( root, name, attributes, ops )))
     {
-        if (ops && obj->ops != ops)
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-        else
-            handle = alloc_handle( current->process, obj, access, attr );
+        handle = alloc_handle( current->process, obj, access, attributes );
         release_object( obj );
     }
-    else
-        set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+    if (root) release_object( root );
     return handle;
 }
 

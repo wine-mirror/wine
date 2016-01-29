@@ -523,19 +523,10 @@ DECL_HANDLER(create_directory)
 DECL_HANDLER(open_directory)
 {
     struct unicode_str name;
-    struct directory *dir, *root = NULL;
 
     get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    if ((dir = open_object_dir( root, &name, req->attributes, &directory_ops )))
-    {
-        reply->handle = alloc_handle( current->process, &dir->obj, req->access, req->attributes );
-        release_object( dir );
-    }
-
-    if (root) release_object( root );
+    reply->handle = open_object( current->process, req->rootdir, req->access,
+                                 &directory_ops, &name, req->attributes );
 }
 
 /* get a directory entry by index */

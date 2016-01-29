@@ -196,23 +196,11 @@ DECL_HANDLER(create_completion)
 /* open a completion */
 DECL_HANDLER(open_completion)
 {
-    struct completion *completion;
     struct unicode_str name;
-    struct directory *root = NULL;
-
-    reply->handle = 0;
 
     get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    if ( (completion = open_object_dir( root, &name, req->attributes, &completion_ops )) != NULL )
-    {
-        reply->handle = alloc_handle( current->process, completion, req->access, req->attributes );
-        release_object( completion );
-    }
-
-    if (root) release_object( root );
+    reply->handle = open_object( current->process, req->rootdir, req->access,
+                                 &completion_ops, &name, req->attributes );
 }
 
 

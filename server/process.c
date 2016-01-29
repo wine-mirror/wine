@@ -1561,19 +1561,11 @@ DECL_HANDLER(create_job)
 /* open a job object */
 DECL_HANDLER(open_job)
 {
-    struct job *job;
     struct unicode_str name;
-    struct directory *root = NULL;
 
     get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 ))) return;
-
-    if ((job = open_object_dir( root, &name, req->attributes, &job_ops )))
-    {
-        reply->handle = alloc_handle( current->process, &job->obj, req->access, req->attributes );
-        release_object( job );
-    }
-    if (root) release_object( root );
+    reply->handle = open_object( current->process, req->rootdir, req->access,
+                                 &job_ops, &name, req->attributes );
 }
 
 /* assign a job object to a process */

@@ -688,20 +688,10 @@ DECL_HANDLER(create_mapping)
 DECL_HANDLER(open_mapping)
 {
     struct unicode_str name;
-    struct directory *root = NULL;
-    struct mapping *mapping;
 
     get_req_unicode_str( &name );
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-        return;
-
-    if ((mapping = open_object_dir( root, &name, req->attributes, &mapping_ops )))
-    {
-        reply->handle = alloc_handle( current->process, &mapping->obj, req->access, req->attributes );
-        release_object( mapping );
-    }
-
-    if (root) release_object( root );
+    reply->handle = open_object( current->process, req->rootdir, req->access,
+                                 &mapping_ops, &name, req->attributes );
 }
 
 /* get a mapping information */
