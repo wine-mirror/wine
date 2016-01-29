@@ -104,6 +104,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_B10G10R10A2_UNORM,         10, 10, 10,  2,  20, 10,  0, 30,    4,   0,     0},
     {WINED3DFMT_R16G16B16A16_UNORM,        16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
     {WINED3DFMT_R8G8_UNORM,                 8,  8,  0,  0,   0,  8,  0,  0,    2,   0,     0},
+    {WINED3DFMT_R16_UNORM,                 16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     /* Luminance */
     {WINED3DFMT_L8_UNORM,                   0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
     {WINED3DFMT_L8A8_UNORM,                 0,  0,  0,  8,   0,  0,  0,  8,    2,   0,     0},
@@ -1128,6 +1129,11 @@ static const struct wined3d_format_texture_info format_texture_info[] =
     {WINED3DFMT_R8G8_UNORM,             GL_RG8,                           GL_RG8,                                 0,
             GL_RG,                      GL_UNSIGNED_BYTE,                 0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING,
+            ARB_TEXTURE_RG,             NULL},
+    {WINED3DFMT_R16_UNORM,              GL_R16,                           GL_R16,                                 0,
+            WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
+            | WINED3DFMT_FLAG_RENDERTARGET,
+            GL_RED,                     GL_UNSIGNED_SHORT,                0,
             ARB_TEXTURE_RG,             NULL},
     /* Luminance */
     {WINED3DFMT_L8_UNORM,               GL_LUMINANCE8,                    GL_SLUMINANCE8_EXT,                     0,
