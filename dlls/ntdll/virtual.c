@@ -2498,17 +2498,18 @@ NTSTATUS WINAPI NtCreateSection( HANDLE *handle, ACCESS_MASK access, const OBJEC
 NTSTATUS WINAPI NtOpenSection( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     NTSTATUS ret;
-    DWORD len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
 
-    if (len > MAX_PATH*sizeof(WCHAR)) return STATUS_NAME_TOO_LONG;
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
 
     SERVER_START_REQ( open_mapping )
     {
-        req->access  = access;
+        req->access     = access;
         req->attributes = attr->Attributes;
-        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
-        wine_server_add_data( req, attr->ObjectName->Buffer, len );
-        if (!(ret = wine_server_call( req ))) *handle = wine_server_ptr_handle( reply->handle );
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        ret = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;

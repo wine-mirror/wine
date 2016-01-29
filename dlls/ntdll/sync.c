@@ -151,6 +151,19 @@ NTSTATUS alloc_object_attributes( const OBJECT_ATTRIBUTES *attr, struct object_a
     return STATUS_SUCCESS;
 }
 
+NTSTATUS validate_open_object_attributes( const OBJECT_ATTRIBUTES *attr )
+{
+    if (!attr) return STATUS_INVALID_PARAMETER;
+
+    if (attr->ObjectName)
+    {
+        if (attr->ObjectName->Length & (sizeof(WCHAR) - 1)) return STATUS_OBJECT_NAME_INVALID;
+    }
+    else if (attr->RootDirectory) return STATUS_OBJECT_NAME_INVALID;
+
+    return STATUS_SUCCESS;
+}
+
 /*
  *	Semaphores
  */
@@ -191,21 +204,21 @@ NTSTATUS WINAPI NtCreateSemaphore( OUT PHANDLE SemaphoreHandle,
 /******************************************************************************
  *  NtOpenSemaphore (NTDLL.@)
  */
-NTSTATUS WINAPI NtOpenSemaphore( OUT PHANDLE SemaphoreHandle,
-                                 IN ACCESS_MASK access,
-                                 IN const OBJECT_ATTRIBUTES *attr )
+NTSTATUS WINAPI NtOpenSemaphore( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
 
     SERVER_START_REQ( open_semaphore )
     {
-        req->access  = access;
-        req->attributes = (attr) ? attr->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
-        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         ret = wine_server_call( req );
-        *SemaphoreHandle = wine_server_ptr_handle( reply->handle );
+        *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -298,22 +311,21 @@ NTSTATUS WINAPI NtCreateEvent( PHANDLE EventHandle, ACCESS_MASK DesiredAccess,
  *  NtOpenEvent (NTDLL.@)
  *  ZwOpenEvent (NTDLL.@)
  */
-NTSTATUS WINAPI NtOpenEvent(
-	OUT PHANDLE EventHandle,
-	IN ACCESS_MASK DesiredAccess,
-	IN const OBJECT_ATTRIBUTES *attr )
+NTSTATUS WINAPI NtOpenEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
 
     SERVER_START_REQ( open_event )
     {
-        req->access  = DesiredAccess;
-        req->attributes = (attr) ? attr->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
-        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         ret = wine_server_call( req );
-        *EventHandle = wine_server_ptr_handle( reply->handle );
+        *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
@@ -464,21 +476,21 @@ NTSTATUS WINAPI NtCreateMutant(OUT HANDLE* MutantHandle,
  *		NtOpenMutant				[NTDLL.@]
  *		ZwOpenMutant				[NTDLL.@]
  */
-NTSTATUS WINAPI NtOpenMutant(OUT HANDLE* MutantHandle, 
-                             IN ACCESS_MASK access, 
-                             IN const OBJECT_ATTRIBUTES* attr )
+NTSTATUS WINAPI NtOpenMutant( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     NTSTATUS    status;
-    DWORD       len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
+
+    if ((status = validate_open_object_attributes( attr ))) return status;
 
     SERVER_START_REQ( open_mutex )
     {
         req->access  = access;
-        req->attributes = (attr) ? attr->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
-        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        req->attributes = attr->Attributes;
+        req->rootdir = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         status = wine_server_call( req );
-        *MutantHandle = wine_server_ptr_handle( reply->handle );
+        *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return status;
@@ -550,17 +562,19 @@ NTSTATUS WINAPI NtCreateJobObject( PHANDLE handle, ACCESS_MASK access, const OBJ
  *              NtOpenJobObject   [NTDLL.@]
  *              ZwOpenJobObject   [NTDLL.@]
  */
-NTSTATUS WINAPI NtOpenJobObject( PHANDLE handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
+NTSTATUS WINAPI NtOpenJobObject( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
 
     SERVER_START_REQ( open_job )
     {
-        req->access  = access;
-        req->attributes = attr ? attr->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
-        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         ret = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );
     }
@@ -780,19 +794,19 @@ NTSTATUS WINAPI NtCreateTimer(OUT HANDLE *handle,
  *		NtOpenTimer				[NTDLL.@]
  *		ZwOpenTimer				[NTDLL.@]
  */
-NTSTATUS WINAPI NtOpenTimer(OUT PHANDLE handle,
-                            IN ACCESS_MASK access,
-                            IN const OBJECT_ATTRIBUTES* attr )
+NTSTATUS WINAPI NtOpenTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    DWORD       len = (attr && attr->ObjectName) ? attr->ObjectName->Length : 0;
-    NTSTATUS    status;
+    NTSTATUS status;
+
+    if ((status = validate_open_object_attributes( attr ))) return status;
 
     SERVER_START_REQ( open_timer )
     {
-        req->access  = access;
-        req->attributes = (attr) ? attr->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
-        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         status = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );
     }
@@ -1092,15 +1106,17 @@ NTSTATUS WINAPI NtCreateKeyedEvent( HANDLE *handle, ACCESS_MASK access,
  */
 NTSTATUS WINAPI NtOpenKeyedEvent( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    DWORD len = attr && attr->ObjectName ? attr->ObjectName->Length : 0;
     NTSTATUS ret;
+
+    if ((ret = validate_open_object_attributes( attr ))) return ret;
 
     SERVER_START_REQ( open_keyed_event )
     {
-        req->access  = access;
-        req->attributes = attr ? attr->Attributes : 0;
-        req->rootdir = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
-        if (len) wine_server_add_data( req, attr->ObjectName->Buffer, len );
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         ret = wine_server_call( req );
         *handle = wine_server_ptr_handle( reply->handle );
     }
@@ -1275,24 +1291,22 @@ NTSTATUS WINAPI NtRemoveIoCompletion( HANDLE CompletionPort, PULONG_PTR Completi
  *      ObjectAttributes   [I] completion object name
  *
  */
-NTSTATUS WINAPI NtOpenIoCompletion( PHANDLE CompletionPort, ACCESS_MASK DesiredAccess,
-                                    POBJECT_ATTRIBUTES ObjectAttributes )
+NTSTATUS WINAPI NtOpenIoCompletion( HANDLE *handle, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
     NTSTATUS status;
 
-    TRACE("(%p, 0x%x, %p)\n", CompletionPort, DesiredAccess, ObjectAttributes);
-
-    if (!CompletionPort || !ObjectAttributes || !ObjectAttributes->ObjectName)
-        return STATUS_INVALID_PARAMETER;
+    if (!handle) return STATUS_INVALID_PARAMETER;
+    if ((status = validate_open_object_attributes( attr ))) return status;
 
     SERVER_START_REQ( open_completion )
     {
-        req->access     = DesiredAccess;
-        req->rootdir    = wine_server_obj_handle( ObjectAttributes->RootDirectory );
-        wine_server_add_data( req, ObjectAttributes->ObjectName->Buffer,
-                                   ObjectAttributes->ObjectName->Length );
-        if (!(status = wine_server_call( req )))
-            *CompletionPort = wine_server_ptr_handle( reply->handle );
+        req->access     = access;
+        req->attributes = attr->Attributes;
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
+        if (attr->ObjectName)
+            wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
+        status = wine_server_call( req );
+        *handle = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return status;

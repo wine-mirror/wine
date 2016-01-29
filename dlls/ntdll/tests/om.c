@@ -514,52 +514,42 @@ static void test_name_limits(void)
     status = pNtCreateMutant( &ret, GENERIC_ALL, &attr2, FALSE );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateMutant failed %x\n", str.Length, status );
     status = pNtOpenMutant( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenMutant failed %x\n", str.Length, status );
     status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr2, 1, 2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSemaphore failed %x\n", str.Length, status );
     status = pNtOpenSemaphore( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenSemaphore failed %x\n", str.Length, status );
     status = pNtCreateEvent( &ret, GENERIC_ALL, &attr2, 1, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateEvent failed %x\n", str.Length, status );
     status = pNtOpenEvent( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenEvent failed %x\n", str.Length, status );
     status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr2, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateKeyedEvent failed %x\n", str.Length, status );
     status = pNtOpenKeyedEvent( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenKeyedEvent failed %x\n", str.Length, status );
     status = pNtCreateTimer( &ret, GENERIC_ALL, &attr2, NotificationTimer );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateTimer failed %x\n", str.Length, status );
     status = pNtOpenTimer( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenTimer failed %x\n", str.Length, status );
     status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr2, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateCompletion failed %x\n", str.Length, status );
     status = pNtOpenIoCompletion( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenCompletion failed %x\n", str.Length, status );
     status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateJobObject failed %x\n", str.Length, status );
     status = pNtOpenJobObject( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenJobObject failed %x\n", str.Length, status );
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateDirectoryObject failed %x\n", str.Length, status );
     status = pNtOpenDirectoryObject( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenDirectoryObject failed %x\n", str.Length, status );
     status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, &attr2, &target );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSymbolicLinkObject failed %x\n", str.Length, status );
     status = pNtOpenSymbolicLinkObject( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenSymbolicLinkObject failed %x\n", str.Length, status );
     status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr2, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSection failed %x\n", str.Length, status );
     status = pNtOpenSection( &ret, SECTION_MAP_WRITE, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenSection failed %x\n", str.Length, status );
 
     str.Length = 65532;
@@ -620,7 +610,6 @@ static void test_name_limits(void)
     status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
     ok( status == STATUS_SUCCESS, "%u: NtCreateSection failed %x\n", str.Length, status );
     status = pNtOpenSection( &ret2, SECTION_MAP_WRITE, &attr );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtOpenSection failed %x\n", str.Length, status );
     pNtClose( ret2 );
     pNtClose( ret );
@@ -686,7 +675,6 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "NULL: NtCreateMutant failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenMutant( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenMutant failed %x\n", status );
     status = pNtOpenMutant( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenMutant failed %x\n", status );
@@ -696,7 +684,6 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "NULL: NtCreateSemaphore failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenSemaphore( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenSemaphore failed %x\n", status );
     status = pNtOpenSemaphore( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenSemaphore failed %x\n", status );
@@ -706,7 +693,6 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "NULL: NtCreateEvent failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenEvent( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenEvent failed %x\n", status );
     status = pNtOpenEvent( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenEvent failed %x\n", status );
@@ -716,7 +702,6 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "NULL: NtCreateKeyedEvent failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenKeyedEvent( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenKeyedEvent failed %x\n", status );
     status = pNtOpenKeyedEvent( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenKeyedEvent failed %x\n", status );
@@ -726,7 +711,6 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "NULL: NtCreateTimer failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenTimer( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenTimer failed %x\n", status );
     status = pNtOpenTimer( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenTimer failed %x\n", status );
@@ -736,10 +720,8 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "NULL: NtCreateCompletion failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenIoCompletion( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenCompletion failed %x\n", status );
     status = pNtOpenIoCompletion( &ret, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenCompletion failed %x\n", status );
     status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateJobObject failed %x\n", status );
@@ -747,7 +729,6 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "NULL: NtCreateJobObject failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenJobObject( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenJobObject failed %x\n", status );
     status = pNtOpenJobObject( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenJobObject failed %x\n", status );
@@ -775,7 +756,6 @@ static void test_name_limits(void)
     ok( status == STATUS_SUCCESS, "NULL: NtCreateSection failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenSection( &ret, SECTION_MAP_WRITE, &attr2 );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenSection failed %x\n", status );
     status = pNtOpenSection( &ret, SECTION_MAP_WRITE, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenSection failed %x\n", status );
@@ -898,7 +878,6 @@ static void test_name_limits(void)
         pNtClose( ret );
     }
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID ||
         status == STATUS_INVALID_PARAMETER ||
         broken( status == STATUS_OBJECT_NAME_NOT_FOUND ), /* wow64 */
