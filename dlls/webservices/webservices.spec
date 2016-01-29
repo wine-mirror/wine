@@ -118,7 +118,7 @@
 @ stub WsReadMetadata
 @ stdcall WsReadNode(ptr ptr)
 @ stub WsReadQualifiedName
-@ stub WsReadStartAttribute
+@ stdcall WsReadStartAttribute(ptr long ptr)
 @ stdcall WsReadStartElement(ptr ptr)
 @ stdcall WsReadToStartElement(ptr ptr ptr ptr ptr)
 @ stdcall WsReadType(ptr long long ptr long ptr ptr long ptr)

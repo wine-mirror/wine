@@ -378,6 +378,7 @@ enum reader_state
     READER_STATE_INITIAL,
     READER_STATE_BOF,
     READER_STATE_STARTELEMENT,
+    READER_STATE_STARTATTRIBUTE,
     READER_STATE_STARTENDELEMENT,
     READER_STATE_TEXT,
     READER_STATE_ENDELEMENT,
@@ -393,6 +394,7 @@ struct reader
     enum reader_state        state;
     struct node             *root;
     struct node             *current;
+    ULONG                    current_attr;
     WS_XML_READER_INPUT_TYPE input_type;
     const unsigned char     *input_data;
     ULONG                    input_size;
@@ -1339,6 +1341,28 @@ HRESULT WINAPI WsMoveReader( WS_XML_READER *handle, WS_MOVE_TO move, BOOL *found
     if (!reader->input_type) return WS_E_INVALID_OPERATION;
 
     return read_move_to( reader, move, found );
+}
+
+/**************************************************************************
+ *          WsReadStartAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsReadStartAttribute( WS_XML_READER *handle, ULONG index, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+    WS_XML_ELEMENT_NODE *elem;
+
+    TRACE( "%p %u %p\n", handle, index, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+
+    elem = &reader->current->hdr;
+    if (reader->state != READER_STATE_STARTELEMENT || index >= elem->attributeCount)
+        return WS_E_INVALID_FORMAT;
+
+    reader->current_attr = index;
+    reader->state = READER_STATE_STARTATTRIBUTE;
+    return S_OK;
 }
 
 static WCHAR *xmltext_to_widechar( WS_HEAP *heap, const WS_XML_TEXT *text )
