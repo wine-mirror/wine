@@ -623,7 +623,7 @@ NTSTATUS WINAPI NtCreateSymbolicLinkObject(OUT PHANDLE SymbolicLinkHandle,IN ACC
     data_size_t len;
     struct object_attributes *objattr;
 
-    if (!SymbolicLinkHandle || !TargetName) return STATUS_ACCESS_VIOLATION;
+    if (!SymbolicLinkHandle || !attr || !TargetName) return STATUS_ACCESS_VIOLATION;
     if (!TargetName->Buffer) return STATUS_INVALID_PARAMETER;
 
     TRACE("(%p,0x%08x,%s -> %s)\n", SymbolicLinkHandle, DesiredAccess,

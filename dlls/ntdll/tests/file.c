@@ -1158,20 +1158,6 @@ static void nt_mailslot_test(void)
     if  (rc == STATUS_SUCCESS) pNtClose(hslot);
 
     /*
-     * Test handling of a NULL unicode string in ObjectName
-     */
-    InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);
-    attr.ObjectName = NULL;
-    rc = pNtCreateMailslotFile(&hslot, DesiredAccess,
-         &attr, &IoStatusBlock, CreateOptions, MailslotQuota, MaxMessageSize,
-         &TimeOut);
-    ok( rc == STATUS_OBJECT_PATH_SYNTAX_BAD ||
-        rc == STATUS_INVALID_PARAMETER,
-        "rc = %x not STATUS_OBJECT_PATH_SYNTAX_BAD or STATUS_INVALID_PARAMETER\n", rc);
-
-    if  (rc == STATUS_SUCCESS) pNtClose(hslot);
-
-    /*
      * Test a valid call
      */
     InitializeObjectAttributes(&attr, &str, OBJ_CASE_INSENSITIVE, 0, NULL);

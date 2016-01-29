@@ -666,7 +666,7 @@ static void test_name_limits(void)
     todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenSection failed %x\n", str.Length, status );
 
-    /* null ObjectName, with or without RootDirectory */
+    /* null attributes or ObjectName, with or without RootDirectory */
     attr3.RootDirectory = 0;
     attr2.ObjectName = attr3.ObjectName = NULL;
     status = pNtCreateMutant( &ret, GENERIC_ALL, &attr2, FALSE );
@@ -674,91 +674,142 @@ static void test_name_limits(void)
     status = pNtCreateMutant( &ret, GENERIC_ALL, &attr3, FALSE );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateMutant failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateMutant( &ret, GENERIC_ALL, NULL, FALSE );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateMutant failed %x\n", status );
+    pNtClose( ret );
     status = pNtOpenMutant( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenMutant failed %x\n", status );
     status = pNtOpenMutant( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenMutant failed %x\n", status );
+    status = pNtOpenMutant( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenMutant failed %x\n", status );
     status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr2, 1, 2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateSemaphore failed %x\n", status );
     status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr3, 1, 2 );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateSemaphore failed %x\n", status );
+    pNtClose( ret );
+    status = pNtCreateSemaphore( &ret, GENERIC_ALL, NULL, 1, 2 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateSemaphore failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenSemaphore( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenSemaphore failed %x\n", status );
     status = pNtOpenSemaphore( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenSemaphore failed %x\n", status );
+    status = pNtOpenSemaphore( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenSemaphore failed %x\n", status );
     status = pNtCreateEvent( &ret, GENERIC_ALL, &attr2, 1, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateEvent failed %x\n", status );
     status = pNtCreateEvent( &ret, GENERIC_ALL, &attr3, 1, 0 );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateEvent failed %x\n", status );
+    pNtClose( ret );
+    status = pNtCreateEvent( &ret, GENERIC_ALL, NULL, 1, 0 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateEvent failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenEvent( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenEvent failed %x\n", status );
     status = pNtOpenEvent( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenEvent failed %x\n", status );
+    status = pNtOpenEvent( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenEvent failed %x\n", status );
     status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr2, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateKeyedEvent failed %x\n", status );
     status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr3, 0 );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateKeyedEvent failed %x\n", status );
+    pNtClose( ret );
+    status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, NULL, 0 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateKeyedEvent failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenKeyedEvent( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenKeyedEvent failed %x\n", status );
     status = pNtOpenKeyedEvent( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenKeyedEvent failed %x\n", status );
+    status = pNtOpenKeyedEvent( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenKeyedEvent failed %x\n", status );
     status = pNtCreateTimer( &ret, GENERIC_ALL, &attr2, NotificationTimer );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateTimer failed %x\n", status );
     status = pNtCreateTimer( &ret, GENERIC_ALL, &attr3, NotificationTimer );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateTimer failed %x\n", status );
+    pNtClose( ret );
+    status = pNtCreateTimer( &ret, GENERIC_ALL, NULL, NotificationTimer );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateTimer failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenTimer( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenTimer failed %x\n", status );
     status = pNtOpenTimer( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenTimer failed %x\n", status );
+    status = pNtOpenTimer( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenTimer failed %x\n", status );
     status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr2, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateCompletion failed %x\n", status );
     status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr3, 0 );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateCompletion failed %x\n", status );
+    pNtClose( ret );
+    status = pNtCreateIoCompletion( &ret, GENERIC_ALL, NULL, 0 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateCompletion failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenIoCompletion( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenCompletion failed %x\n", status );
     status = pNtOpenIoCompletion( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenCompletion failed %x\n", status );
+    status = pNtOpenIoCompletion( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenCompletion failed %x\n", status );
     status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateJobObject failed %x\n", status );
     status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr3 );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateJobObject failed %x\n", status );
+    pNtClose( ret );
+    status = pNtCreateJobObject( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateJobObject failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenJobObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenJobObject failed %x\n", status );
     status = pNtOpenJobObject( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenJobObject failed %x\n", status );
+    status = pNtOpenJobObject( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenJobObject failed %x\n", status );
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateDirectoryObject failed %x\n", status );
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr3 );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateDirectoryObject failed %x\n", status );
+    pNtClose( ret );
+    status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateDirectoryObject failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenDirectoryObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenDirectoryObject failed %x\n", status );
     status = pNtOpenDirectoryObject( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenDirectoryObject failed %x\n", status );
+    status = pNtOpenDirectoryObject( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenDirectoryObject failed %x\n", status );
     status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, &attr2, &target );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateSymbolicLinkObject failed %x\n", status );
     status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, &attr3, &target );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateSymbolicLinkObject failed %x\n", status );
     pNtClose( ret );
+    status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, NULL, &target );
+    ok( status == STATUS_ACCESS_VIOLATION || broken( status == STATUS_SUCCESS), /* winxp */
+        "NULL: NtCreateSymbolicLinkObject failed %x\n", status );
+    if (!status) pNtClose( ret );
     status = pNtOpenSymbolicLinkObject( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenSymbolicLinkObject failed %x\n", status );
     status = pNtOpenSymbolicLinkObject( &ret, GENERIC_ALL, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenSymbolicLinkObject failed %x\n", status );
+    status = pNtOpenSymbolicLinkObject( &ret, GENERIC_ALL, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenSymbolicLinkObject failed %x\n", status );
     status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr2, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateSection failed %x\n", status );
     status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr3, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
+    ok( status == STATUS_SUCCESS, "NULL: NtCreateSection failed %x\n", status );
+    pNtClose( ret );
+    status = pNtCreateSection( &ret, SECTION_MAP_WRITE, NULL, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateSection failed %x\n", status );
     pNtClose( ret );
     status = pNtOpenSection( &ret, SECTION_MAP_WRITE, &attr2 );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtOpenSection failed %x\n", status );
     status = pNtOpenSection( &ret, SECTION_MAP_WRITE, &attr3 );
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtOpenSection failed %x\n", status );
+    status = pNtOpenSection( &ret, SECTION_MAP_WRITE, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtOpenSection failed %x\n", status );
     attr2.ObjectName = attr3.ObjectName = &str;
 
     /* named pipes */
@@ -797,6 +848,9 @@ static void test_name_limits(void)
                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
     todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtCreateNamedPipeFile failed %x\n", status );
+    status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, NULL, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
+                                     FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtCreateNamedPipeFile failed %x\n", status );
     attr2.ObjectName = attr3.ObjectName = &str;
 
     /* mailslots */
@@ -821,10 +875,12 @@ static void test_name_limits(void)
     attr3.RootDirectory = 0;
     attr2.ObjectName = attr3.ObjectName = NULL;
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr2, &iosb, 0, 0, 0, NULL );
-    todo_wine
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateMailslotFile failed %x\n", status );
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr3, &iosb, 0, 0, 0, NULL );
+    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtCreateMailslotFile failed %x\n", status );
+    status = pNtCreateMailslotFile( &ret, GENERIC_ALL, NULL, &iosb, 0, 0, 0, NULL );
+    ok( status == STATUS_INVALID_PARAMETER, "NULL: NtCreateMailslotFile failed %x\n", status );
     attr2.ObjectName = attr3.ObjectName = &str;
 
     /* registry keys */
@@ -928,10 +984,14 @@ static void test_name_limits(void)
     status = pNtCreateKey( &ret, GENERIC_ALL, &attr3, 0, NULL, 0, NULL );
     todo_wine
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %x\n", status );
+    status = pNtCreateKey( &ret, GENERIC_ALL, NULL, 0, NULL, 0, NULL );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtCreateKey failed %x\n", status );
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr2 );
     ok( status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_HANDLE,
         "NULL: NtOpenKey failed %x\n", status );
     status = pNtOpenKey( &ret, GENERIC_ALL, &attr3 );
+    ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenKey failed %x\n", status );
+    status = pNtOpenKey( &ret, GENERIC_ALL, NULL );
     ok( status == STATUS_ACCESS_VIOLATION, "NULL: NtOpenKey failed %x\n", status );
     attr2.ObjectName = attr3.ObjectName = &str;
 
