@@ -1174,7 +1174,7 @@ static HWND DIALOG_IdToHwnd( HWND hwndDlg, INT id )
  */
 BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
 {
-    INT dlgCode = 0;
+    INT dlgCode;
 
     if (CallMsgFilterW( msg, MSGF_DIALOGBOX )) return TRUE;
 
