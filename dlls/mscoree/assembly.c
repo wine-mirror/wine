@@ -314,3 +314,17 @@ HRESULT assembly_get_vtable_fixups(ASSEMBLY *assembly, VTableFixup **fixups, DWO
 
     return S_OK;
 }
+
+HRESULT assembly_get_native_entrypoint(ASSEMBLY *assembly, NativeEntryPointFunc *func)
+{
+    if (assembly->corhdr->Flags & COMIMAGE_FLAGS_NATIVE_ENTRYPOINT)
+    {
+        *func = assembly_rva_to_va(assembly, assembly->corhdr->EntryPointRVA);
+        return S_OK;
+    }
+    else
+    {
+        *func = NULL;
+        return S_FALSE;
+    }
+}

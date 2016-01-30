@@ -1254,18 +1254,31 @@ __int32 WINAPI _CorExeMain(void)
 
 BOOL WINAPI _CorDllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 {
+    ASSEMBLY *assembly=NULL;
+    HRESULT hr;
+
     TRACE("(%p, %d, %p)\n", hinstDLL, fdwReason, lpvReserved);
 
-    switch (fdwReason)
+    hr = assembly_from_hmodule(&assembly, hinstDLL);
+    if (SUCCEEDED(hr))
     {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls(hinstDLL);
-        FixupVTable(hinstDLL);
-        break;
-    case DLL_PROCESS_DETACH:
-        /* FIXME: clean up the vtables */
-        break;
+        NativeEntryPointFunc NativeEntryPoint=NULL;
+
+        assembly_get_native_entrypoint(assembly, &NativeEntryPoint);
+        if (fdwReason == DLL_PROCESS_ATTACH)
+        {
+            if (!NativeEntryPoint)
+                DisableThreadLibraryCalls(hinstDLL);
+            FixupVTable_Assembly(hinstDLL,assembly);
+        }
+        assembly_release(assembly);
+        /* FIXME: clean up the vtables on DLL_PROCESS_DETACH */
+        if (NativeEntryPoint)
+            return NativeEntryPoint(hinstDLL, fdwReason, lpvReserved);
     }
+    else
+        ERR("failed to read CLR headers, hr=%x\n", hr);
+
     return TRUE;
 }
 
