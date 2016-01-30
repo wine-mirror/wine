@@ -1135,23 +1135,28 @@ static void FixupVTableEntry(HMODULE hmodule, VTableFixup *vtable_fixup)
     list_add_tail(&dll_fixups, &fixup->entry);
 }
 
+static void FixupVTable_Assembly(HMODULE hmodule, ASSEMBLY *assembly)
+{
+    VTableFixup *vtable_fixups;
+    ULONG vtable_fixup_count, i;
+
+    assembly_get_vtable_fixups(assembly, &vtable_fixups, &vtable_fixup_count);
+    if (CAN_FIXUP_VTABLE)
+        for (i=0; i<vtable_fixup_count; i++)
+            FixupVTableEntry(hmodule, &vtable_fixups[i]);
+    else if (vtable_fixup_count)
+        FIXME("cannot fixup vtable; expect a crash\n");
+}
+
 static void FixupVTable(HMODULE hmodule)
 {
     ASSEMBLY *assembly;
     HRESULT hr;
-    VTableFixup *vtable_fixups;
-    ULONG vtable_fixup_count, i;
 
     hr = assembly_from_hmodule(&assembly, hmodule);
     if (SUCCEEDED(hr))
     {
-        hr = assembly_get_vtable_fixups(assembly, &vtable_fixups, &vtable_fixup_count);
-        if (CAN_FIXUP_VTABLE)
-            for (i=0; i<vtable_fixup_count; i++)
-                FixupVTableEntry(hmodule, &vtable_fixups[i]);
-        else if (vtable_fixup_count)
-            FIXME("cannot fixup vtable; expect a crash\n");
-
+        FixupVTable_Assembly(hmodule, assembly);
         assembly_release(assembly);
     }
     else
