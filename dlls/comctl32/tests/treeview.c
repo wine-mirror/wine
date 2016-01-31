@@ -1878,7 +1878,12 @@ static void test_delete_items(void)
 {
     const struct message *msg;
     HWND hTree;
+    HTREEITEM hItem1, hItem2;
+    TVINSERTSTRUCTA ins;
     INT ret;
+
+    static CHAR item1[] = "Item 1";
+    static CHAR item2[] = "Item 2";
 
     hTree = create_treeview_control(0);
     fill_tree(hTree);
@@ -1898,6 +1903,34 @@ static void test_delete_items(void)
     }
 
     ret = SendMessageA(hTree, TVM_GETCOUNT, 0, 0);
+    ok(ret == 0, "got %d\n", ret);
+
+    DestroyWindow(hTree);
+
+    /* Regression test for a crash when deleting the first visible item while bRedraw == false. */
+    hTree = create_treeview_control(0);
+
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = TVI_ROOT;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = item1;
+    hItem1 = TreeView_InsertItemA(hTree, &ins);
+    ok(hItem1 != NULL, "InsertItem failed\n");
+
+    ins.hParent = TVI_ROOT;
+    ins.hInsertAfter = hItem1;
+    U(ins).item.mask = TVIF_TEXT;
+    U(ins).item.pszText = item2;
+    hItem2 = TreeView_InsertItemA(hTree, &ins);
+    ok(hItem2 != NULL, "InsertItem failed\n");
+
+    ret = SendMessageA(hTree, WM_SETREDRAW, FALSE, 0);
+    ok(ret == 0, "got %d\n", ret);
+
+    ret = SendMessageA(hTree, TVM_DELETEITEM, 0, (LPARAM)hItem1);
+    ok(ret == TRUE, "got %d\n", ret);
+
+    ret = SendMessageA(hTree, WM_SETREDRAW, TRUE, 0);
     ok(ret == 0, "got %d\n", ret);
 
     DestroyWindow(hTree);
