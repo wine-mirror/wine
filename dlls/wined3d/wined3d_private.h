@@ -460,6 +460,8 @@ enum wined3d_shader_rel_op
  * Shader model 3 according to msdn (and for software shaders) */
 #define MAX_LABELS 16
 
+#define MAX_IMMEDIATE_CONSTANT_BUFFER_SIZE 4096
+
 struct wined3d_string_buffer
 {
     struct list entry;
@@ -485,6 +487,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_CUT,
     WINED3DSIH_DCL,
     WINED3DSIH_DCL_CONSTANT_BUFFER,
+    WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER,
     WINED3DSIH_DCL_INPUT_PRIMITIVE,
     WINED3DSIH_DCL_OUTPUT_TOPOLOGY,
     WINED3DSIH_DCL_TEMPS,
@@ -640,6 +643,12 @@ struct wined3d_shader_sampler_map
     size_t count;
 };
 
+struct wined3d_shader_immediate_constant_buffer
+{
+    UINT element_count;
+    DWORD data[MAX_IMMEDIATE_CONSTANT_BUFFER_SIZE];
+};
+
 #define WINED3D_SHADER_VERSION(major, minor) (((major) << 8) | (minor))
 
 struct wined3d_shader_reg_maps
@@ -650,6 +659,7 @@ struct wined3d_shader_reg_maps
     WORD labels;                                    /* MAX_LABELS, 16 */
     DWORD temporary;                                /* MAX_REG_TEMP, 32 */
     DWORD *constf;                                  /* pixel, vertex */
+    struct wined3d_shader_immediate_constant_buffer *icb;
     union
     {
         DWORD texcoord_mask[MAX_REG_TEXCRD];        /* vertex < 3.0 */
@@ -772,6 +782,7 @@ struct wined3d_shader_instruction
         enum wined3d_primitive_type primitive_type;
         struct wined3d_shader_src_param src;
         UINT count;
+        struct wined3d_shader_immediate_constant_buffer *icb;
     } declaration;
 };
 
