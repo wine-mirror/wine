@@ -380,7 +380,7 @@ static void test_transform(void)
     expect(Ok, status);
 
     status = GdipGetPenTransform(pen, matrix);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
 
     status = GdipGetMatrixElements(matrix, values);
     expect(Ok, status);
@@ -398,7 +398,7 @@ static void test_transform(void)
     GdipDeleteMatrix(matrix2);
 
     status = GdipGetPenTransform(pen, matrix);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     status = GdipGetMatrixElements(matrix, values);
     expect(Ok, status);
 todo_wine {
@@ -413,7 +413,7 @@ todo_wine {
     todo_wine expect(Ok, status);
 
     status = GdipGetPenTransform(pen, matrix);
-    todo_wine expect(Ok, status);
+    expect(Ok, status);
     status = GdipGetMatrixElements(matrix, values);
     expect(Ok, status);
 
