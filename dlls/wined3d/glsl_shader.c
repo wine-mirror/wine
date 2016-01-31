@@ -3325,6 +3325,8 @@ static void shader_glsl_nrm(const struct wined3d_shader_instruction *ins)
 
 static void shader_glsl_scalar_op(const struct wined3d_shader_instruction *ins)
 {
+    DWORD shader_version = WINED3D_SHADER_VERSION(ins->ctx->reg_maps->shader_version.major,
+            ins->ctx->reg_maps->shader_version.minor);
     struct wined3d_string_buffer *buffer = ins->ctx->buffer;
     struct glsl_src_param src0_param;
     const char *prefix, *suffix;
@@ -3334,7 +3336,10 @@ static void shader_glsl_scalar_op(const struct wined3d_shader_instruction *ins)
     dst_write_mask = shader_glsl_append_dst(buffer, ins);
     dst_size = shader_glsl_get_write_mask_size(dst_write_mask);
 
-    shader_glsl_add_src_param(ins, &ins->src[0], WINED3DSP_WRITEMASK_3, &src0_param);
+    if (shader_version < WINED3D_SHADER_VERSION(4, 0))
+        dst_write_mask = WINED3DSP_WRITEMASK_3;
+
+    shader_glsl_add_src_param(ins, &ins->src[0], dst_write_mask, &src0_param);
 
     switch (ins->handler_idx)
     {
@@ -3367,7 +3372,7 @@ static void shader_glsl_scalar_op(const struct wined3d_shader_instruction *ins)
             break;
     }
 
-    if (dst_size > 1)
+    if (dst_size > 1 && shader_version < WINED3D_SHADER_VERSION(4, 0))
         shader_addline(buffer, "vec%u(%s%s%s));\n", dst_size, prefix, src0_param.param_str, suffix);
     else
         shader_addline(buffer, "%s%s%s);\n", prefix, src0_param.param_str, suffix);
