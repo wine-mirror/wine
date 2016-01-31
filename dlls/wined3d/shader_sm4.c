@@ -41,6 +41,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_INDEX_TYPE_SHIFT            11
 #define WINED3D_SM4_INDEX_TYPE_MASK             (0x1u << WINED3D_SM4_INDEX_TYPE_SHIFT)
 
+#define WINED3D_SM4_SAMPLER_MODE_SHIFT          11
+#define WINED3D_SM4_SAMPLER_MODE_MASK           (0xfu << WINED3D_SM4_SAMPLER_MODE_SHIFT)
+
 #define WINED3D_SM4_SHADER_DATA_TYPE_SHIFT      11
 #define WINED3D_SM4_SHADER_DATA_TYPE_MASK       (0xfu << WINED3D_SM4_SHADER_DATA_TYPE_SHIFT)
 
@@ -151,6 +154,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_XOR                  = 0x57,
     WINED3D_SM4_OP_DCL_RESOURCE         = 0x58,
     WINED3D_SM4_OP_DCL_CONSTANT_BUFFER  = 0x59,
+    WINED3D_SM4_OP_DCL_SAMPLER          = 0x5a,
     WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY  = 0x5c,
     WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE  = 0x5d,
     WINED3D_SM4_OP_DCL_VERTICES_OUT     = 0x5e,
@@ -222,6 +226,12 @@ enum wined3d_sm4_data_type
     WINED3D_SM4_DATA_INT    = 0x3,
     WINED3D_SM4_DATA_UINT   = 0x4,
     WINED3D_SM4_DATA_FLOAT  = 0x5,
+};
+
+enum wined3d_sm4_sampler_mode
+{
+    WINED3D_SM4_SAMPLER_DEFAULT    = 0x0,
+    WINED3D_SM4_SAMPLER_COMPARISON = 0x1,
 };
 
 enum wined3d_sm4_shader_data_type
@@ -347,6 +357,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_XOR,                    WINED3DSIH_XOR,                           "U",    "UU"},
     {WINED3D_SM4_OP_DCL_RESOURCE,           WINED3DSIH_DCL,                           "R",    ""},
     {WINED3D_SM4_OP_DCL_CONSTANT_BUFFER,    WINED3DSIH_DCL_CONSTANT_BUFFER,           "",     ""},
+    {WINED3D_SM4_OP_DCL_SAMPLER,            WINED3DSIH_DCL_SAMPLER,                   "",     ""},
     {WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY,    WINED3DSIH_DCL_OUTPUT_TOPOLOGY,           "",     ""},
     {WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE,    WINED3DSIH_DCL_INPUT_PRIMITIVE,           "",     ""},
     {WINED3D_SM4_OP_DCL_VERTICES_OUT,       WINED3DSIH_DCL_VERTICES_OUT,              "",     ""},
@@ -924,6 +935,13 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         shader_sm4_read_src_param(priv, &p, WINED3D_DATA_FLOAT, &ins->declaration.src);
         if (opcode_token & WINED3D_SM4_INDEX_TYPE_MASK)
             ins->flags |= WINED3DSI_INDEXED_DYNAMIC;
+    }
+    else if (opcode == WINED3D_SM4_OP_DCL_SAMPLER)
+    {
+        ins->flags = (opcode_token & WINED3D_SM4_SAMPLER_MODE_MASK) >> WINED3D_SM4_SAMPLER_MODE_SHIFT;
+        if (ins->flags & ~WINED3D_SM4_SAMPLER_COMPARISON)
+            FIXME("Unhandled sampler mode %#x.\n", ins->flags);
+        shader_sm4_read_dst_param(priv, &p, WINED3D_DATA_SAMPLER, &ins->declaration.dst);
     }
     else if (opcode == WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY)
     {
