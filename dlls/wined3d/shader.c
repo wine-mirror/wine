@@ -57,6 +57,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_CONSTANT_BUFFER           */ "dcl_constantBuffer",
     /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER */ "dcl_immediateConstantBuffer",
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE           */ "dcl_inputPrimitive",
+    /* WINED3DSIH_DCL_OUTPUT                    */ "dcl_output",
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY           */ "dcl_outputTopology",
     /* WINED3DSIH_DCL_TEMPS                     */ "dcl_temps",
     /* WINED3DSIH_DCL_VERTICES_OUT              */ "dcl_maxOutputVertexCount",
@@ -1841,6 +1842,11 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                         ins.declaration.icb->data[4 * i + 3]);
             }
             TRACE("}");
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_OUTPUT)
+        {
+            TRACE("%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_dst_param(&ins.declaration.dst, &shader_version);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PRIMITIVE
                 || ins.handler_idx == WINED3DSIH_DCL_OUTPUT_TOPOLOGY)

@@ -489,6 +489,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_CONSTANT_BUFFER,
     WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER,
     WINED3DSIH_DCL_INPUT_PRIMITIVE,
+    WINED3DSIH_DCL_OUTPUT,
     WINED3DSIH_DCL_OUTPUT_TOPOLOGY,
     WINED3DSIH_DCL_TEMPS,
     WINED3DSIH_DCL_VERTICES_OUT,
@@ -780,6 +781,7 @@ struct wined3d_shader_instruction
     {
         struct wined3d_shader_semantic semantic;
         enum wined3d_primitive_type primitive_type;
+        struct wined3d_shader_dst_param dst;
         struct wined3d_shader_src_param src;
         UINT count;
         struct wined3d_shader_immediate_constant_buffer *icb;
