@@ -2629,7 +2629,7 @@ HRESULT wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
+HRESULT wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
 {
     TRACE("surface %p, dc %p.\n", surface, dc);
 

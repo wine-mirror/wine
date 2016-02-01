@@ -2211,7 +2211,7 @@ static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC h
     TRACE("iface %p, dc %p.\n", iface, hdc);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_releasedc(surface->wined3d_surface, hdc);
+    hr = wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, hdc);
     if (SUCCEEDED(hr) && (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
         hr = ddraw_surface_update_frontbuffer(surface, NULL, FALSE);
     wined3d_mutex_unlock();
