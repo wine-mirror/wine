@@ -5062,6 +5062,7 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
 {
     struct ddraw_surface *dst_surface = impl_from_IDirect3DTexture2(iface);
     struct ddraw_surface *src_surface = unsafe_impl_from_IDirect3DTexture2(src_texture);
+    struct wined3d_resource *dst_resource, *src_resource;
     HRESULT hr;
 
     TRACE("iface %p, src_texture %p.\n", iface, src_texture);
@@ -5073,6 +5074,9 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
     }
 
     wined3d_mutex_lock();
+
+    dst_resource = wined3d_texture_get_resource(dst_surface->wined3d_texture);
+    src_resource = wined3d_texture_get_resource(src_surface->wined3d_texture);
 
     if (((src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
             != (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP))
@@ -5131,22 +5135,19 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
                         DDCKEY_SRCBLT, &src_desc->ddckCKSrcBlt);
             }
 
-            /* Copy the main memory texture into the surface that corresponds
-             * to the OpenGL texture object. */
-
-            hr = wined3d_surface_map(src_surface->wined3d_surface, &src_map_desc, NULL, 0);
-            if (FAILED(hr))
+            if (FAILED(hr = wined3d_resource_map(src_resource,
+                    src_surface->sub_resource_idx, &src_map_desc, NULL, 0)))
             {
                 ERR("Failed to lock source surface, hr %#x.\n", hr);
                 wined3d_mutex_unlock();
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
 
-            hr = wined3d_surface_map(dst_surface->wined3d_surface, &dst_map_desc, NULL, 0);
-            if (FAILED(hr))
+            if (FAILED(hr = wined3d_resource_map(dst_resource,
+                    dst_surface->sub_resource_idx, &dst_map_desc, NULL, 0)))
             {
                 ERR("Failed to lock destination surface, hr %#x.\n", hr);
-                wined3d_surface_unmap(src_surface->wined3d_surface);
+                wined3d_resource_unmap(src_resource, src_surface->sub_resource_idx);
                 wined3d_mutex_unlock();
                 return D3DERR_TEXTURE_LOAD_FAILED;
             }
@@ -5156,8 +5157,8 @@ static HRESULT WINAPI d3d_texture2_Load(IDirect3DTexture2 *iface, IDirect3DTextu
             else
                 memcpy(dst_map_desc.data, src_map_desc.data, src_map_desc.row_pitch * src_desc->dwHeight);
 
-            wined3d_surface_unmap(src_surface->wined3d_surface);
-            wined3d_surface_unmap(dst_surface->wined3d_surface);
+            wined3d_resource_unmap(dst_resource, dst_surface->sub_resource_idx);
+            wined3d_resource_unmap(src_resource, src_surface->sub_resource_idx);
         }
 
         if (src_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_MIPMAP)
