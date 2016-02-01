@@ -1028,6 +1028,9 @@ static void compare_breakpoints(const struct linebreaks_test *test, DWRITE_LINE_
                 conditions[test->bp[i].breakConditionAfter],
                 test->bp[i].isWhitespace ? "WS"  : "0",
                 test->bp[i].isSoftHyphen ? "SHY" : "0");
+            if (g_actual_bp[i].isSoftHyphen)
+                ok(!g_actual_bp[i].isWhitespace, "%s: soft hyphen marked as a whitespace\n",
+                    wine_dbgstr_wn(&test->text[i], 1));
             text++;
             i++;
         }

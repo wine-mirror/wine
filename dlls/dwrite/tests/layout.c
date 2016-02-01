@@ -2025,6 +2025,8 @@ todo_wine
     for (i = 0; i < count; i++) {
         ok(metrics[i].length == 1, "%d: got %d\n", i, metrics[i].length);
         ok(metrics[i].isSoftHyphen == (i == count - 2), "%d: got %d\n", i, metrics[i].isSoftHyphen);
+        if (metrics[i].isSoftHyphen)
+            ok(!metrics[i].isWhitespace, "%u: got %d\n", i, metrics[i].isWhitespace);
         if (metrics[i].isNewline) {
             if (i == 17 || i == 19)
                 todo_wine ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
