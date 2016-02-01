@@ -599,7 +599,6 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
 {
     struct wined3d_color_key color_key;
     struct wined3d_resource_desc desc;
-    struct wined3d_surface *surface;
     HBITMAP hbm;
     BITMAP bm;
     HRESULT hr;
@@ -639,14 +638,13 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
         ERR("Wine logo requested, but failed to create texture, hr %#x.\n", hr);
         goto out;
     }
-    surface = surface_from_resource(wined3d_texture_get_sub_resource(device->logo_texture, 0));
 
     if (dcb)
     {
-        if (FAILED(hr = wined3d_surface_getdc(surface, &dcs)))
+        if (FAILED(hr = wined3d_texture_get_dc(device->logo_texture, 0, &dcs)))
             goto out;
         BitBlt(dcs, 0, 0, bm.bmWidth, bm.bmHeight, dcb, 0, 0, SRCCOPY);
-        wined3d_surface_releasedc(surface, dcs);
+        wined3d_texture_release_dc(device->logo_texture, 0, dcs);
 
         color_key.color_space_low_value = 0;
         color_key.color_space_high_value = 0;
@@ -654,10 +652,12 @@ static void device_load_logo(struct wined3d_device *device, const char *filename
     }
     else
     {
-        const RECT rect = {0, 0, surface->resource.width, surface->resource.height};
         const struct wined3d_color c = {1.0f, 1.0f, 1.0f, 1.0f};
+        const RECT rect = {0, 0, desc.width, desc.height};
+        struct wined3d_surface *surface;
 
         /* Fill the surface with a white color to show that wined3d is there */
+        surface = surface_from_resource(wined3d_texture_get_sub_resource(device->logo_texture, 0));
         surface_color_fill(surface, &rect, &c);
     }
 

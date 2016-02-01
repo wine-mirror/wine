@@ -356,7 +356,7 @@ static void get_color_masks(const struct wined3d_format *format, DWORD *masks)
     masks[2] = ((1u << format->blue_size) - 1) << format->blue_offset;
 }
 
-static HRESULT surface_create_dib_section(struct wined3d_surface *surface)
+HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 {
     const struct wined3d_format *format = surface->resource.format;
     unsigned int format_flags = surface->container->resource.format_flags;
@@ -2576,98 +2576,6 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
 
     TRACE("Locked rect %s.\n", wine_dbgstr_rect(&surface->lockedRect));
     TRACE("Returning memory %p, pitch %u.\n", map_desc->data, map_desc->row_pitch);
-
-    return WINED3D_OK;
-}
-
-HRESULT wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
-{
-    HRESULT hr;
-    struct wined3d_device *device = surface->resource.device;
-    struct wined3d_context *context = NULL;
-
-    TRACE("surface %p, dc %p.\n", surface, dc);
-
-    /* Give more detailed info for ddraw. */
-    if (surface->flags & SFLAG_DCINUSE)
-        return WINEDDERR_DCALREADYCREATED;
-
-    /* Can't GetDC if the surface is locked. */
-    if (surface->resource.map_count)
-        return WINED3DERR_INVALIDCALL;
-
-    if (device->d3d_initialized)
-        context = context_acquire(surface->resource.device, NULL);
-
-    /* Create a DIB section if there isn't a dc yet. */
-    if (!surface->hDC)
-    {
-        if (FAILED(hr = surface_create_dib_section(surface)))
-        {
-            if (context)
-                context_release(context);
-             return WINED3DERR_INVALIDCALL;
-        }
-        if (!(surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
-                || surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM
-                || surface->pbo))
-            surface->resource.map_binding = WINED3D_LOCATION_DIB;
-    }
-
-    surface_load_location(surface, context, WINED3D_LOCATION_DIB);
-    surface_invalidate_location(surface, ~WINED3D_LOCATION_DIB);
-
-    if (context)
-        context_release(context);
-
-    surface->flags |= SFLAG_DCINUSE;
-    surface->resource.map_count++;
-
-    *dc = surface->hDC;
-    TRACE("Returning dc %p.\n", *dc);
-
-    return WINED3D_OK;
-}
-
-HRESULT wined3d_surface_releasedc(struct wined3d_surface *surface, HDC dc)
-{
-    TRACE("surface %p, dc %p.\n", surface, dc);
-
-    if (!(surface->flags & SFLAG_DCINUSE))
-        return WINEDDERR_NODC;
-
-    if (surface->hDC != dc)
-    {
-        WARN("Application tries to release invalid DC %p, surface DC is %p.\n",
-                dc, surface->hDC);
-        return WINEDDERR_NODC;
-    }
-
-    surface->resource.map_count--;
-    surface->flags &= ~SFLAG_DCINUSE;
-
-    if (surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
-            || (surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM
-            && surface->resource.map_binding != WINED3D_LOCATION_DIB))
-    {
-        /* The game Salammbo modifies the surface contents without mapping the surface between
-         * a GetDC/ReleaseDC operation and flipping the surface. If the DIB remains the active
-         * copy and is copied to the screen, this update, which draws the mouse pointer, is lost.
-         * Do not only copy the DIB to the map location, but also make sure the map location is
-         * copied back to the DIB in the next getdc call.
-         *
-         * The same consideration applies to user memory surfaces. */
-        struct wined3d_device *device = surface->resource.device;
-        struct wined3d_context *context = NULL;
-
-        if (device->d3d_initialized)
-            context = context_acquire(device, NULL);
-
-        surface_load_location(surface, context, surface->resource.map_binding);
-        surface_invalidate_location(surface, WINED3D_LOCATION_DIB);
-        if (context)
-            context_release(context);
-    }
 
     return WINED3D_OK;
 }
@@ -5411,7 +5319,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
 
     /* Similar to lockable rendertargets above, creating the DIB section
      * during surface initialization prevents the sysmem pointer from changing
-     * after a wined3d_surface_getdc() call. */
+     * after a wined3d_texture_get_dc() call. */
     if ((desc->usage & WINED3DUSAGE_OWNDC) && !surface->hDC
             && SUCCEEDED(surface_create_dib_section(surface)))
         surface->resource.map_binding = WINED3D_LOCATION_DIB;
