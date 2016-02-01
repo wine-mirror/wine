@@ -15125,6 +15125,33 @@ else
     flush_sequence();
 }
 
+static const struct message DoubleSetCaptureSeq[] =
+{
+    { WM_CAPTURECHANGED, sent },
+    { 0 }
+};
+
+static void test_DoubleSetCapture(void)
+{
+    HWND hwnd;
+
+    hwnd = CreateWindowExA(0, "TestWindowClass", "Test DoubleSetCapture",
+                           WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                           100, 100, 200, 200, 0, 0, 0, NULL);
+    ok (hwnd != 0, "Failed to create overlapped window\n");
+
+    ShowWindow( hwnd, SW_SHOW );
+    UpdateWindow( hwnd );
+    flush_events();
+    flush_sequence();
+
+    SetCapture( hwnd );
+    SetCapture( hwnd );
+    ok_sequence(DoubleSetCaptureSeq, "SetCapture( hwnd ) twice", FALSE);
+
+    DestroyWindow(hwnd);
+}
+
 static void init_funcs(void)
 {
     HMODULE hKernel32 = GetModuleHandleA("kernel32.dll");
@@ -15265,6 +15292,7 @@ START_TEST(msg)
     test_layered_window();
     test_TrackPopupMenu();
     test_TrackPopupMenuEmpty();
+    test_DoubleSetCapture();
     /* keep it the last test, under Windows it tends to break the tests
      * which rely on active/foreground windows being correct.
      */
