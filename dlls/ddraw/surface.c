@@ -2123,7 +2123,7 @@ static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *hdc)
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         hr = ddraw_surface_update_frontbuffer(surface, NULL, TRUE);
     if (SUCCEEDED(hr))
-        hr = wined3d_surface_getdc(surface->wined3d_surface, hdc);
+        hr = wined3d_texture_get_dc(surface->wined3d_texture, surface->sub_resource_idx, hdc);
 
     if (SUCCEEDED(hr) && format_is_paletteindexed(&surface->surface_desc.u4.ddpfPixelFormat))
     {

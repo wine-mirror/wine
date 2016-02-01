@@ -2580,7 +2580,7 @@ HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
+HRESULT wined3d_surface_getdc(struct wined3d_surface *surface, HDC *dc)
 {
     HRESULT hr;
     struct wined3d_device *device = surface->resource.device;
