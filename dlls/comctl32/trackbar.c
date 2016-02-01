@@ -1979,6 +1979,7 @@ TRACKBAR_WindowProc (HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
     case WM_CAPTURECHANGED:
+        if (hwnd == (HWND)lParam) return 0;
         return TRACKBAR_CaptureChanged (infoPtr);
 
     case WM_CREATE:
