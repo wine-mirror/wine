@@ -1654,19 +1654,22 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
             trailingspacewidth = 0.0f;
             while (strlength) {
                 DWRITE_CLUSTER_METRICS *cluster = &layout->clustermetrics[index];
+                struct layout_cluster *lc = &layout->clusters[index];
+                WCHAR ch;
 
-                if (!cluster->isNewline && !cluster->isWhitespace)
+                /* This also filters out clusters added from inline objects, those are never
+                   treated as a white space. */
+                if (!cluster->isWhitespace)
                     break;
 
-                if (cluster->isNewline) {
-                    metrics.trailingWhitespaceLength += cluster->length;
+                /* Every isNewline cluster is also isWhitespace, but not every
+                   newline character cluster has isNewline set, so go back to original string. */
+                ch = lc->run->u.regular.descr.string[lc->position];
+                if (cluster->length == 1 && lb_is_newline_char(ch))
                     metrics.newlineLength += cluster->length;
-                }
 
-                if (cluster->isWhitespace) {
-                    metrics.trailingWhitespaceLength += cluster->length;
-                    trailingspacewidth += cluster->width;
-                }
+                metrics.trailingWhitespaceLength += cluster->length;
+                trailingspacewidth += cluster->width;
 
                 strlength -= cluster->length;
                 index--;

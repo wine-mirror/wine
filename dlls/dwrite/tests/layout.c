@@ -2030,6 +2030,7 @@ todo_wine
                 todo_wine ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
             else
                 ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
+            ok(metrics[i].isWhitespace == 1, "%u: got %d\n", i, metrics[i].isWhitespace);
             ok(metrics[i].canWrapLineAfter == 1, "%u: got %d\n", i, metrics[i].canWrapLineAfter);
         }
     }
@@ -3341,8 +3342,8 @@ static void test_GetLineMetrics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     memset(metrics, 0, sizeof(metrics));
-    count = 2;
-    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 2, &count);
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(*metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 2, "got %u\n", count);
     /* baseline is relative to a line, and is not accumulated */
@@ -3361,7 +3362,8 @@ static void test_GetLineMetrics(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
 
     memset(metrics, 0xcc, sizeof(metrics));
-    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, 6, &count);
+    count = 0;
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(*metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
 todo_wine
     ok(count == 6, "got %u\n", count);
@@ -3378,10 +3380,18 @@ todo_wine
     ok(metrics[1].newlineLength == 1, "got %u\n", metrics[1].newlineLength);
     ok(metrics[2].newlineLength == 1, "got %u\n", metrics[2].newlineLength);
     ok(metrics[3].newlineLength == 1, "got %u\n", metrics[3].newlineLength);
-todo_wine {
     ok(metrics[4].newlineLength == 2, "got %u\n", metrics[4].newlineLength);
+todo_wine
     ok(metrics[5].newlineLength == 0, "got %u\n", metrics[5].newlineLength);
-}
+
+    ok(metrics[0].trailingWhitespaceLength == 1, "got %u\n", metrics[0].newlineLength);
+    ok(metrics[1].trailingWhitespaceLength == 1, "got %u\n", metrics[1].newlineLength);
+    ok(metrics[2].trailingWhitespaceLength == 1, "got %u\n", metrics[2].newlineLength);
+    ok(metrics[3].trailingWhitespaceLength == 1, "got %u\n", metrics[3].newlineLength);
+    ok(metrics[4].trailingWhitespaceLength == 2, "got %u\n", metrics[4].newlineLength);
+todo_wine
+    ok(metrics[5].trailingWhitespaceLength == 0, "got %u\n", metrics[5].newlineLength);
+
     IDWriteTextLayout_Release(layout);
 
     /* empty text layout */
