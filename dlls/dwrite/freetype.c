@@ -32,7 +32,6 @@
 #endif /* HAVE_FT2BUILD_H */
 
 #include "windef.h"
-#include "dwrite_2.h"
 #include "wine/library.h"
 #include "wine/debug.h"
 
