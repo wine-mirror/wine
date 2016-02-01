@@ -4143,8 +4143,29 @@ static DWRITE_READING_DIRECTION WINAPI dwritetextlayout_source_GetParagraphReadi
 static HRESULT WINAPI dwritetextlayout_source_GetLocaleName(IDWriteTextAnalysisSource1 *iface,
     UINT32 position, UINT32* text_len, WCHAR const** locale)
 {
-    FIXME("%u %p %p: stub\n", position, text_len, locale);
-    return E_NOTIMPL;
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource1(iface);
+    struct layout_range *range = get_layout_range_by_pos(layout, position);
+
+    if (position < layout->len) {
+        struct layout_range *next;
+
+        *locale = range->locale;
+        *text_len = range->h.range.length - position;
+
+        next = LIST_ENTRY(list_next(&layout->ranges, &range->h.entry), struct layout_range, h.entry);
+        while (next && next->h.range.startPosition < layout->len && !strcmpW(range->locale, next->locale)) {
+            *text_len += next->h.range.length;
+            next = LIST_ENTRY(list_next(&layout->ranges, &next->h.entry), struct layout_range, h.entry);
+        }
+
+        *text_len = min(*text_len, layout->len - position);
+    }
+    else {
+        *locale = NULL;
+        *text_len = 0;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout_source_GetNumberSubstitution(IDWriteTextAnalysisSource1 *iface,
