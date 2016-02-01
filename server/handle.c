@@ -579,11 +579,17 @@ obj_handle_t open_object( struct process *process, obj_handle_t parent, unsigned
     struct directory *root = NULL;
     struct object *obj;
 
-    if (parent && !(root = get_directory_obj( current->process, parent, 0 ))) return 0;
+    if (name->len >= 65534)
+    {
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return 0;
+    }
+
+    if (parent && !(root = get_directory_obj( process, parent, 0 ))) return 0;
 
     if ((obj = open_object_dir( root, name, attributes, ops )))
     {
-        handle = alloc_handle( current->process, obj, access, attributes );
+        handle = alloc_handle( process, obj, access, attributes );
         release_object( obj );
     }
     if (root) release_object( root );

@@ -688,7 +688,7 @@ DECL_HANDLER(create_file)
     struct fd *root_fd = NULL;
     struct unicode_str unicode_name;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &unicode_name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &unicode_name, NULL );
     const char *name;
     data_size_t name_len;
 

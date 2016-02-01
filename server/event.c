@@ -280,14 +280,11 @@ DECL_HANDLER(create_event)
 {
     struct event *event;
     struct unicode_str name;
-    struct directory *root = NULL;
+    struct directory *root;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
-
-    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
-        return;
 
     if ((event = create_event( root, &name, objattr->attributes,
                                req->manual_reset, req->initial_state, sd )))
@@ -354,13 +351,11 @@ DECL_HANDLER(create_keyed_event)
 {
     struct keyed_event *event;
     struct unicode_str name;
-    struct directory *root = NULL;
+    struct directory *root;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
-
-    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
     if ((event = create_keyed_event( root, &name, objattr->attributes, sd )))
     {

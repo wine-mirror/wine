@@ -166,16 +166,14 @@ DECL_HANDLER(create_symlink)
 {
     struct symlink *symlink;
     struct unicode_str name, target;
-    struct directory *root = NULL;
+    struct directory *root;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
 
     target.str = get_req_data_after_objattr( objattr, &target.len );
     target.len = (target.len / sizeof(WCHAR)) * sizeof(WCHAR);
-
-    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
     if ((symlink = create_symlink( root, &name, objattr->attributes, &target, sd )))
     {

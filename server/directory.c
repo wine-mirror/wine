@@ -503,12 +503,11 @@ void init_directories(void)
 DECL_HANDLER(create_directory)
 {
     struct unicode_str name;
-    struct directory *dir, *root = NULL;
+    struct directory *dir, *root;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
-    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
 
     if ((dir = create_directory( root, &name, objattr->attributes, HASH_SIZE, sd )))
     {

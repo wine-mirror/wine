@@ -2026,7 +2026,7 @@ DECL_HANDLER(create_key)
     struct unicode_str name, class;
     unsigned int access = req->access;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
 
     if (!objattr) return;
 
@@ -2183,7 +2183,7 @@ DECL_HANDLER(load_registry)
     struct key *key, *parent;
     struct unicode_str name;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, NULL );
 
     if (!objattr) return;
 

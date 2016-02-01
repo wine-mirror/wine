@@ -472,84 +472,69 @@ static void test_name_limits(void)
 
     str.Length = 0;
     status = pNtCreateMutant( &ret, GENERIC_ALL, &attr2, FALSE );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateMutant failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenMutant( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenMutant failed %x\n", str.Length, status );
     status = pNtOpenMutant( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE,
         "%u: NtOpenMutant failed %x\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr2, 1, 2 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateSemaphore failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenSemaphore( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSemaphore failed %x\n", str.Length, status );
     status = pNtOpenSemaphore( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE,
         "%u: NtOpenSemaphore failed %x\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateEvent( &ret, GENERIC_ALL, &attr2, 1, 0 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateEvent failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenEvent( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenEvent failed %x\n", str.Length, status );
     status = pNtOpenEvent( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE,
         "%u: NtOpenEvent failed %x\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr2, 0 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateKeyedEvent failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenKeyedEvent( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenKeyedEvent failed %x\n", str.Length, status );
     status = pNtOpenKeyedEvent( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE,
         "%u: NtOpenKeyedEvent failed %x\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateTimer( &ret, GENERIC_ALL, &attr2, NotificationTimer );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateTimer failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenTimer( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenTimer failed %x\n", str.Length, status );
     status = pNtOpenTimer( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE,
         "%u: NtOpenTimer failed %x\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr2, 0 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateCompletion failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenIoCompletion( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenCompletion failed %x\n", str.Length, status );
     status = pNtOpenIoCompletion( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE,
         "%u: NtOpenCompletion failed %x\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateJobObject failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenJobObject failed %x\n", str.Length, status );
     status = pNtOpenJobObject( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE,
         "%u: NtOpenJobObject failed %x\n", str.Length, status );
     pNtClose( ret );
     status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr2 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateDirectoryObject failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenDirectoryObject( &ret2, GENERIC_ALL, &attr );
@@ -557,12 +542,10 @@ static void test_name_limits(void)
         "%u: NtOpenDirectoryObject failed %x\n", str.Length, status );
     if (!status) pNtClose( ret2 );
     status = pNtOpenDirectoryObject( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtOpenDirectoryObject failed %x\n", str.Length, status );
     pNtClose( ret2 );
     pNtClose( ret );
     status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, &attr2, &target );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateSymbolicLinkObject failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenSymbolicLinkObject( &ret2, GENERIC_ALL, &attr );
@@ -573,19 +556,23 @@ static void test_name_limits(void)
     pNtClose( ret2 );
     pNtClose( ret );
     status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr2, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtCreateSection failed %x\n", str.Length, status );
     attr3.RootDirectory = ret;
     status = pNtOpenSection( &ret2, SECTION_MAP_WRITE, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSection failed %x\n", str.Length, status );
     status = pNtOpenSection( &ret2, SECTION_MAP_WRITE, &attr3 );
-    todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH || status == STATUS_INVALID_HANDLE,
         "%u: NtOpenSection failed %x\n", str.Length, status );
     pNtClose( ret );
 
     str.Length = 67;
     test_all_kernel_objects( __LINE__, &attr2, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_INVALID );
+
+    str.Length = 65532;
+    test_all_kernel_objects( __LINE__, &attr, STATUS_SUCCESS, STATUS_SUCCESS );
+
+    str.Length = 65534;
+    test_all_kernel_objects( __LINE__, &attr, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_INVALID );
 
     str.Length = 128;
     for (attr.Length = 0; attr.Length <= 2 * sizeof(attr); attr.Length++)
@@ -596,61 +583,6 @@ static void test_name_limits(void)
             test_all_kernel_objects( __LINE__, &attr, STATUS_INVALID_PARAMETER, STATUS_INVALID_PARAMETER );
     }
     attr.Length = sizeof(attr);
-
-    str.Length = 65532;
-    test_all_kernel_objects( __LINE__, &attr, STATUS_SUCCESS, STATUS_SUCCESS );
-
-    str.Length = 65534;
-    status = pNtCreateMutant( &ret, GENERIC_ALL, &attr, FALSE );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateMutant failed %x\n", str.Length, status );
-    status = pNtOpenMutant( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenMutant failed %x\n", str.Length, status );
-    status = pNtCreateSemaphore( &ret, GENERIC_ALL, &attr, 1, 2 );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSemaphore failed %x\n", str.Length, status );
-    status = pNtOpenSemaphore( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenSemaphore failed %x\n", str.Length, status );
-    status = pNtCreateEvent( &ret, GENERIC_ALL, &attr, 1, 0 );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateEvent failed %x\n", str.Length, status );
-    status = pNtOpenEvent( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenEvent failed %x\n", str.Length, status );
-    status = pNtCreateKeyedEvent( &ret, GENERIC_ALL, &attr, 0 );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateKeyedEvent failed %x\n", str.Length, status );
-    status = pNtOpenKeyedEvent( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenKeyedEvent failed %x\n", str.Length, status );
-    status = pNtCreateTimer( &ret, GENERIC_ALL, &attr, NotificationTimer );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateTimer failed %x\n", str.Length, status );
-    status = pNtOpenTimer( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenTimer failed %x\n", str.Length, status );
-    status = pNtCreateIoCompletion( &ret, GENERIC_ALL, &attr, 0 );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateCompletion failed %x\n", str.Length, status );
-    status = pNtOpenIoCompletion( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenCompletion failed %x\n", str.Length, status );
-    status = pNtCreateJobObject( &ret, GENERIC_ALL, &attr );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateJobObject failed %x\n", str.Length, status );
-    status = pNtOpenJobObject( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenJobObject failed %x\n", str.Length, status );
-    status = pNtCreateDirectoryObject( &ret, GENERIC_ALL, &attr );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateDirectoryObject failed %x\n", str.Length, status );
-    status = pNtOpenDirectoryObject( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenDirectoryObject failed %x\n", str.Length, status );
-    status = pNtCreateSymbolicLinkObject( &ret, GENERIC_ALL, &attr, &target );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSymbolicLinkObject failed %x\n", str.Length, status );
-    status = pNtOpenSymbolicLinkObject( &ret, GENERIC_ALL, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenSymbolicLinkObject failed %x\n", str.Length, status );
-    status = pNtCreateSection( &ret, SECTION_MAP_WRITE, &attr, &size, PAGE_READWRITE, SEC_COMMIT, 0 );
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtCreateSection failed %x\n", str.Length, status );
-    status = pNtOpenSection( &ret, SECTION_MAP_WRITE, &attr );
-    todo_wine
-    ok( status == STATUS_OBJECT_NAME_INVALID, "%u: NtOpenSection failed %x\n", str.Length, status );
 
     /* null attributes or ObjectName, with or without RootDirectory */
     attr3.RootDirectory = 0;
@@ -720,7 +652,6 @@ static void test_name_limits(void)
     timeout.QuadPart = -10000;
     status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "%u: NtCreateNamedPipeFile failed %x\n", str.Length, status );
     status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr2, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
@@ -759,7 +690,6 @@ static void test_name_limits(void)
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateNamedPipeFile failed %x\n", status );
     status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, &attr3, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtCreateNamedPipeFile failed %x\n", status );
     status = pNtCreateNamedPipeFile( &ret, GENERIC_ALL, NULL, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE,
                                      FILE_CREATE, FILE_PIPE_FULL_DUPLEX, 0, 0, 0, 1, 256, 256, &timeout );
@@ -771,7 +701,6 @@ static void test_name_limits(void)
     for (i = 0; i < 65536 / sizeof(WCHAR); i++) str.Buffer[i + sizeof(mailslotW)/sizeof(WCHAR)] = 'a';
     str.Length = 0;
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr, &iosb, 0, 0, 0, NULL );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr2, &iosb, 0, 0, 0, NULL );
     ok( status == STATUS_INVALID_HANDLE, "%u: NtCreateMailslotFile failed %x\n", str.Length, status );
@@ -803,7 +732,6 @@ static void test_name_limits(void)
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr2, &iosb, 0, 0, 0, NULL );
     ok( status == STATUS_OBJECT_NAME_INVALID, "NULL: NtCreateMailslotFile failed %x\n", status );
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, &attr3, &iosb, 0, 0, 0, NULL );
-    todo_wine
     ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NULL: NtCreateMailslotFile failed %x\n", status );
     status = pNtCreateMailslotFile( &ret, GENERIC_ALL, NULL, &iosb, 0, 0, 0, NULL );
     ok( status == STATUS_INVALID_PARAMETER, "NULL: NtCreateMailslotFile failed %x\n", status );

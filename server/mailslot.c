@@ -514,12 +514,21 @@ DECL_HANDLER(create_mailslot)
 {
     struct mailslot *mailslot;
     struct unicode_str name;
-    struct directory *root = NULL;
+    struct directory *root;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
-    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
+
+    if (!name.len)  /* mailslots need a root directory even without a name */
+    {
+        if (!objattr->rootdir)
+        {
+            set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+            return;
+        }
+        else if (!(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
+    }
 
     if ((mailslot = create_mailslot( root, &name, objattr->attributes, req->max_msgsize,
                                      req->read_timeout, sd )))

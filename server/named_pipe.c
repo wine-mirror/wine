@@ -917,9 +917,9 @@ DECL_HANDLER(create_named_pipe)
     struct named_pipe *pipe;
     struct pipe_server *server;
     struct unicode_str name;
-    struct directory *root = NULL;
+    struct directory *root;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
 
@@ -930,8 +930,15 @@ DECL_HANDLER(create_named_pipe)
         return;
     }
 
-    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
-        return;
+    if (!name.len)  /* pipes need a root directory even without a name */
+    {
+        if (!objattr->rootdir)
+        {
+            set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+            return;
+        }
+        else if (!(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
+    }
 
     pipe = create_named_pipe( root, &name, objattr->attributes | OBJ_OPENIF, sd );
 

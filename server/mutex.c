@@ -208,14 +208,11 @@ DECL_HANDLER(create_mutex)
 {
     struct mutex *mutex;
     struct unicode_str name;
-    struct directory *root = NULL;
+    struct directory *root;
     const struct security_descriptor *sd;
-    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name );
+    const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
     if (!objattr) return;
-
-    if (objattr->rootdir && !(root = get_directory_obj( current->process, objattr->rootdir, 0 )))
-        return;
 
     if ((mutex = create_mutex( root, &name, objattr->attributes, req->owned, sd )))
     {
