@@ -99,6 +99,8 @@ static inline const char *debugstr_matrix(const DWRITE_MATRIX *m)
         m->dx, m->dy);
 }
 
+const char *debugstr_sa_script(UINT16) DECLSPEC_HIDDEN;
+
 static inline unsigned short get_table_entry(const unsigned short *table, WCHAR ch)
 {
     return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];

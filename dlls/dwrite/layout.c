@@ -3977,7 +3977,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysi
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
     struct layout_run *run;
 
-    TRACE("%u %u script=%d\n", position, length, sa->script);
+    TRACE("[%u,%u) script=%u:%s\n", position, position + length, sa->script, debugstr_sa_script(sa->script));
 
     run = alloc_layout_run(LAYOUT_RUN_REGULAR);
     if (!run)
@@ -4009,7 +4009,7 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
     struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
     struct layout_run *cur_run;
 
-    TRACE("%u %u %u %u\n", position, length, explicitLevel, resolvedLevel);
+    TRACE("[%u,%u) %u %u\n", position, position + length, explicitLevel, resolvedLevel);
 
     LIST_FOR_EACH_ENTRY(cur_run, &layout->runs, struct layout_run, entry) {
         struct regular_layout_run *cur = &cur_run->u.regular;

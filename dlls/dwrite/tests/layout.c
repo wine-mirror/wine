@@ -1410,7 +1410,7 @@ static const struct drawcall_entry draw_seq2[] = {
 };
 
 static const struct drawcall_entry draw_seq3[] = {
-    { DRAW_GLYPHRUN },
+    { DRAW_GLYPHRUN, {0x202a,0x202c,0} },
     { DRAW_GLYPHRUN, {'a','b',0} },
     { DRAW_LAST_KIND }
 };

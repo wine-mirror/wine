@@ -177,6 +177,11 @@ static const struct dwritescript_properties dwritescripts_properties[Script_Last
 };
 #undef _OT
 
+const char *debugstr_sa_script(UINT16 script)
+{
+    return script < Script_LastId ? debugstr_an((char*)&dwritescripts_properties[script].props.isoScriptCode, 4): "not defined";
+}
+
 struct dwrite_numbersubstitution {
     IDWriteNumberSubstitution IDWriteNumberSubstitution_iface;
     LONG ref;
