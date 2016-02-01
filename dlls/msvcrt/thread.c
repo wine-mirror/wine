@@ -55,6 +55,38 @@ thread_data_t *msvcrt_get_thread_data(void)
     return ptr;
 }
 
+/*********************************************************************
+ *		_endthread (MSVCRT.@)
+ */
+void CDECL _endthread(void)
+{
+  thread_data_t *tls;
+
+  TRACE("(void)\n");
+
+  tls = TlsGetValue(msvcrt_tls_index);
+  if (tls && tls->handle != INVALID_HANDLE_VALUE)
+  {
+      CloseHandle(tls->handle);
+      tls->handle = INVALID_HANDLE_VALUE;
+  } else
+      WARN("tls=%p tls->handle=%p\n", tls, tls ? tls->handle : INVALID_HANDLE_VALUE);
+
+  /* FIXME */
+  ExitThread(0);
+}
+
+/*********************************************************************
+ *		_endthreadex (MSVCRT.@)
+ */
+void CDECL _endthreadex(
+  unsigned int retval) /* [in] Thread exit code */
+{
+  TRACE("(%d)\n", retval);
+
+  /* FIXME */
+  ExitThread(retval);
+}
 
 /*********************************************************************
  *		_beginthread_trampoline
@@ -69,6 +101,7 @@ static DWORD CALLBACK _beginthread_trampoline(LPVOID arg)
     MSVCRT_free(arg);
 
     local_trampoline.start_address(local_trampoline.arglist);
+    _endthread();
     return 0;
 }
 
@@ -129,29 +162,6 @@ MSVCRT_uintptr_t CDECL _beginthreadex(
   return (MSVCRT_uintptr_t)CreateThread(security, stack_size,
 				     start_address, arglist,
 				     initflag, thrdaddr);
-}
-
-/*********************************************************************
- *		_endthread (MSVCRT.@)
- */
-void CDECL _endthread(void)
-{
-  TRACE("(void)\n");
-
-  /* FIXME */
-  ExitThread(0);
-}
-
-/*********************************************************************
- *		_endthreadex (MSVCRT.@)
- */
-void CDECL _endthreadex(
-  unsigned int retval) /* [in] Thread exit code */
-{
-  TRACE("(%d)\n", retval);
-
-  /* FIXME */
-  ExitThread(retval);
 }
 
 /*********************************************************************

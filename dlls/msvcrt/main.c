@@ -67,7 +67,6 @@ static inline void msvcrt_free_tls_mem(void)
 
   if (tls)
   {
-    CloseHandle(tls->handle);
     MSVCRT_free(tls->efcvt_buffer);
     MSVCRT_free(tls->asctime_buffer);
     MSVCRT_free(tls->wasctime_buffer);
