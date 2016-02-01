@@ -568,8 +568,8 @@ static HRESULT layout_update_breakpoints_range(struct dwrite_textlayout *layout,
             layout->actual_breakpoints[i].breakConditionAfter = DWRITE_BREAK_CONDITION_MAY_NOT_BREAK;
         }
 
-        layout->actual_breakpoints[i].isWhitespace = FALSE;
-        layout->actual_breakpoints[i].isSoftHyphen = FALSE;
+        layout->actual_breakpoints[i].isWhitespace = 0;
+        layout->actual_breakpoints[i].isSoftHyphen = 0;
     }
 
     return S_OK;
@@ -797,11 +797,11 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 
             metrics->width = 0.0f;
             metrics->length = r->u.object.length;
-            metrics->canWrapLineAfter = FALSE;
-            metrics->isWhitespace = FALSE;
-            metrics->isNewline = FALSE;
-            metrics->isSoftHyphen = FALSE;
-            metrics->isRightToLeft = FALSE;
+            metrics->canWrapLineAfter = 0;
+            metrics->isWhitespace = 0;
+            metrics->isNewline = 0;
+            metrics->isSoftHyphen = 0;
+            metrics->isRightToLeft = 0;
             metrics->padding = 0;
             c->run = r;
             c->position = 0; /* there's always one cluster per inline object, so 0 is valid value */
@@ -931,7 +931,7 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
     if (hr == S_OK) {
         layout->cluster_count = cluster;
         if (cluster)
-            layout->clustermetrics[cluster-1].canWrapLineAfter = TRUE;
+            layout->clustermetrics[cluster-1].canWrapLineAfter = 1;
     }
 
     IDWriteTextAnalyzer_Release(analyzer);

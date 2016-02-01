@@ -1927,11 +1927,11 @@ static HRESULT fontfamily_add_font(struct dwrite_fontfamily_data *family_data, s
     family_data->fonts[family_data->font_count] = font_data;
     family_data->font_count++;
     if (font_data->style == DWRITE_FONT_STYLE_NORMAL)
-        family_data->has_normal_face = TRUE;
+        family_data->has_normal_face = 1;
     else if (font_data->style == DWRITE_FONT_STYLE_OBLIQUE)
-        family_data->has_oblique_face = TRUE;
+        family_data->has_oblique_face = 1;
     else
-        family_data->has_italic_face = TRUE;
+        family_data->has_italic_face = 1;
     return S_OK;
 }
 
@@ -2733,8 +2733,8 @@ static HRESULT init_font_data(IDWriteFactory2 *factory, IDWriteFontFile *file, D
     data->face_index = face_index;
     data->face_type = face_type;
     data->simulations = DWRITE_FONT_SIMULATIONS_NONE;
-    data->bold_sim_tested = FALSE;
-    data->oblique_sim_tested = FALSE;
+    data->bold_sim_tested = 0;
+    data->oblique_sim_tested = 0;
     IDWriteFontFile_AddRef(file);
     IDWriteFactory2_AddRef(factory);
 
@@ -2811,9 +2811,9 @@ static HRESULT init_fontfamily_data(IDWriteLocalizedStrings *familyname, struct 
     data->ref = 1;
     data->font_count = 0;
     data->font_alloc = 2;
-    data->has_normal_face = FALSE;
-    data->has_oblique_face = FALSE;
-    data->has_italic_face = FALSE;
+    data->has_normal_face = 0;
+    data->has_oblique_face = 0;
+    data->has_italic_face = 0;
 
     data->fonts = heap_alloc(sizeof(*data->fonts)*data->font_alloc);
     if (!data->fonts) {
@@ -2839,7 +2839,7 @@ static void fontfamily_add_bold_simulated_face(struct dwrite_fontfamily_data *fa
         if (family->fonts[i]->bold_sim_tested)
             continue;
 
-        family->fonts[i]->bold_sim_tested = TRUE;
+        family->fonts[i]->bold_sim_tested = 1;
         for (j = i; j < family->font_count; j++) {
             if (family->fonts[j]->bold_sim_tested)
                 continue;
@@ -2850,7 +2850,7 @@ static void fontfamily_add_bold_simulated_face(struct dwrite_fontfamily_data *fa
                     weight = family->fonts[j]->weight;
                     heaviest = j;
                 }
-                family->fonts[j]->bold_sim_tested = TRUE;
+                family->fonts[j]->bold_sim_tested = 1;
             }
         }
 
@@ -2892,7 +2892,7 @@ static void fontfamily_add_bold_simulated_face(struct dwrite_fontfamily_data *fa
             strcatW(facenameW, boldW);
 
             if (init_font_data_from_font(family->fonts[heaviest], DWRITE_FONT_SIMULATIONS_BOLD, facenameW, &boldface) == S_OK) {
-                boldface->bold_sim_tested = TRUE;
+                boldface->bold_sim_tested = 1;
                 fontfamily_add_font(family, boldface);
             }
         }
@@ -2911,7 +2911,7 @@ static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data 
         if (family->fonts[i]->oblique_sim_tested)
             continue;
 
-        family->fonts[i]->oblique_sim_tested = TRUE;
+        family->fonts[i]->oblique_sim_tested = 1;
         if (family->fonts[i]->style == DWRITE_FONT_STYLE_NORMAL)
             regular = i;
         else if (family->fonts[i]->style == DWRITE_FONT_STYLE_OBLIQUE)
@@ -2925,7 +2925,7 @@ static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data 
             if ((family->fonts[i]->weight == family->fonts[j]->weight) &&
                 (family->fonts[i]->stretch == family->fonts[j]->stretch)) {
 
-                family->fonts[j]->oblique_sim_tested = TRUE;
+                family->fonts[j]->oblique_sim_tested = 1;
                 if (regular == ~0 && family->fonts[j]->style == DWRITE_FONT_STYLE_NORMAL)
                     regular = j;
 
@@ -2956,7 +2956,7 @@ static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data 
         strcatW(facenameW, obliqueW);
 
         if (init_font_data_from_font(family->fonts[regular], DWRITE_FONT_SIMULATIONS_OBLIQUE, facenameW, &obliqueface) == S_OK) {
-            obliqueface->oblique_sim_tested = TRUE;
+            obliqueface->oblique_sim_tested = 1;
             fontfamily_add_font(family, obliqueface);
         }
     }
