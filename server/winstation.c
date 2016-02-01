@@ -191,7 +191,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
 
     if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
     {
-        set_error( STATUS_INVALID_PARAMETER );
+        set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
         return NULL;
     }
 
@@ -213,6 +213,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
             list_add_tail( &winstation->desktops, &desktop->entry );
             list_init( &desktop->hotkeys );
         }
+        else clear_error();
     }
     return desktop;
 }

@@ -205,6 +205,35 @@ static void test_handles(void)
     else if (le == ERROR_ACCESS_DENIED)
         win_skip( "Not enough privileges for CreateWindowStation\n" );
 
+    SetLastError( 0xdeadbeef );
+    w2 = OpenWindowStationA( "", TRUE, WINSTA_ALL_ACCESS );
+    ok( !w2, "open station succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_FILE_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    w2 = CreateWindowStationA( "", 0, WINSTA_ALL_ACCESS, NULL );
+    ok( w2 != 0, "create station failed err %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    w3 = OpenWindowStationA( "", TRUE, WINSTA_ALL_ACCESS );
+    todo_wine
+    ok( w3 != 0, "open station failed err %u\n", GetLastError() );
+    CloseWindowStation( w3 );
+    CloseWindowStation( w2 );
+
+    SetLastError( 0xdeadbeef );
+    w2 = CreateWindowStationA( "foo\\bar", 0, WINSTA_ALL_ACCESS, NULL );
+    ok( !w2, "create station succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_PATH_NOT_FOUND || GetLastError() == ERROR_ACCESS_DENIED,
+        "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    w2 = OpenWindowStationA( "foo\\bar", TRUE, WINSTA_ALL_ACCESS );
+    ok( !w2, "create station succeeded\n" );
+    ok( GetLastError() == ERROR_PATH_NOT_FOUND, "wrong error %u\n", GetLastError() );
+
     /* desktops */
     d1 = GetThreadDesktop(GetCurrentThreadId());
     initial_desktop = d1;
@@ -238,6 +267,30 @@ static void test_handles(void)
 
     d2 = OpenDesktopA( "dummy name", 0, TRUE, DESKTOP_ALL_ACCESS );
     ok( !d2, "open dummy desktop succeeded\n" );
+
+    SetLastError( 0xdeadbeef );
+    d2 = CreateDesktopA( "", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    todo_wine
+    ok( !d2, "create empty desktop succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    d2 = OpenDesktopA( "", 0, TRUE, DESKTOP_ALL_ACCESS );
+    ok( !d2, "open mepty desktop succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    d2 = CreateDesktopA( "foo\\bar", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
+    ok( !d2, "create desktop succeeded\n" );
+    ok( GetLastError() == ERROR_BAD_PATHNAME, "wrong error %u\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    d2 = OpenDesktopA( "foo\\bar", 0, TRUE, DESKTOP_ALL_ACCESS );
+    ok( !d2, "open desktop succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_BAD_PATHNAME, "wrong error %u\n", GetLastError() );
 
     d2 = CreateDesktopA( "foobar", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );
     ok( d2 != 0, "create foobar desktop failed\n" );

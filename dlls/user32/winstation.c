@@ -118,8 +118,7 @@ HWINSTA WINAPI CreateWindowStationW( LPCWSTR name, DWORD reserved, ACCESS_MASK a
                           ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
         req->rootdir    = wine_server_obj_handle( get_winstations_dir_handle() );
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        /* it doesn't seem to set last error */
-        wine_server_call( req );
+        wine_server_call_err( req );
         ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
@@ -316,8 +315,7 @@ HDESK WINAPI CreateDesktopW( LPCWSTR name, LPCWSTR device, LPDEVMODEW devmode,
         req->attributes = OBJ_CASE_INSENSITIVE | OBJ_OPENIF |
                           ((sa && sa->bInheritHandle) ? OBJ_INHERIT : 0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        /* it doesn't seem to set last error */
-        wine_server_call( req );
+        wine_server_call_err( req );
         ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
@@ -359,7 +357,7 @@ HDESK open_winstation_desktop( HWINSTA hwinsta, LPCWSTR name, DWORD flags, BOOL 
         req->access     = access;
         req->attributes = OBJ_CASE_INSENSITIVE | (inherit ? OBJ_INHERIT : 0);
         wine_server_add_data( req, name, len * sizeof(WCHAR) );
-        if (!wine_server_call( req )) ret = wine_server_ptr_handle( reply->handle );
+        if (!wine_server_call_err( req )) ret = wine_server_ptr_handle( reply->handle );
     }
     SERVER_END_REQ;
     return ret;
