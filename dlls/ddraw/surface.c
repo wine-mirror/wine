@@ -73,7 +73,7 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RE
                 surface->wined3d_texture, surface->sub_resource_idx, rect, 0, NULL, WINED3D_TEXF_POINT);
     }
 
-    if (FAILED(hr = wined3d_surface_getdc(surface->wined3d_surface, &surface_dc)))
+    if (FAILED(hr = wined3d_texture_get_dc(surface->wined3d_texture, surface->sub_resource_idx, &surface_dc)))
     {
         ERR("Failed to get surface DC, hr %#x.\n", hr);
         return hr;
@@ -83,7 +83,7 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RE
 
     if (!(screen_dc = GetDC(NULL)))
     {
-        wined3d_surface_releasedc(surface->wined3d_surface, surface_dc);
+        wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, surface_dc);
         ERR("Failed to get screen DC.\n");
         return E_FAIL;
     }
@@ -96,7 +96,7 @@ HRESULT ddraw_surface_update_frontbuffer(struct ddraw_surface *surface, const RE
                 surface_dc, x, y, SRCCOPY);
 
     ReleaseDC(NULL, screen_dc);
-    wined3d_surface_releasedc(surface->wined3d_surface, surface_dc);
+    wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, surface_dc);
 
     if (!ret)
     {
