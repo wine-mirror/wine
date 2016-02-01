@@ -364,6 +364,7 @@ LRESULT ButtonWndProc_common(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam,
 
     case WM_CAPTURECHANGED:
         TRACE("WM_CAPTURECHANGED %p\n", hWnd);
+        if (hWnd == (HWND)lParam) break;
         state = get_button_state( hWnd );
         if (state & BUTTON_BTNPRESSED)
         {
