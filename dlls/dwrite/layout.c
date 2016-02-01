@@ -4467,11 +4467,14 @@ static HRESULT WINAPI dwritetrimmingsign_Draw(IDWriteInlineObject *iface, void *
 {
     struct dwrite_trimmingsign *This = impl_from_IDWriteInlineObject(iface);
     DWRITE_TEXT_RANGE range = { 0, ~0u };
+    HRESULT hr;
 
     TRACE("(%p)->(%p %p %.2f %.2f %d %d %p)\n", This, context, renderer, originX, originY, is_sideways, is_rtl, effect);
 
     IDWriteTextLayout_SetDrawingEffect(This->layout, effect, range);
-    return IDWriteTextLayout_Draw(This->layout, context, renderer, originX, originY);
+    hr = IDWriteTextLayout_Draw(This->layout, context, renderer, originX, originY);
+    IDWriteTextLayout_SetDrawingEffect(This->layout, NULL, range);
+    return hr;
 }
 
 static HRESULT WINAPI dwritetrimmingsign_GetMetrics(IDWriteInlineObject *iface, DWRITE_INLINE_OBJECT_METRICS *ret)
