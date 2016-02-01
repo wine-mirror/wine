@@ -234,8 +234,8 @@ enum layout_recompute_mask {
 struct dwrite_textlayout {
     IDWriteTextLayout2 IDWriteTextLayout2_iface;
     IDWriteTextFormat1 IDWriteTextFormat1_iface;
-    IDWriteTextAnalysisSink IDWriteTextAnalysisSink_iface;
-    IDWriteTextAnalysisSource IDWriteTextAnalysisSource_iface;
+    IDWriteTextAnalysisSink1 IDWriteTextAnalysisSink1_iface;
+    IDWriteTextAnalysisSource1 IDWriteTextAnalysisSource1_iface;
     LONG ref;
 
     WCHAR *str;
@@ -323,14 +323,14 @@ static inline struct dwrite_textlayout *impl_layout_form_IDWriteTextFormat1(IDWr
     return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextFormat1_iface);
 }
 
-static inline struct dwrite_textlayout *impl_from_IDWriteTextAnalysisSink(IDWriteTextAnalysisSink *iface)
+static inline struct dwrite_textlayout *impl_from_IDWriteTextAnalysisSink1(IDWriteTextAnalysisSink1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextAnalysisSink_iface);
+    return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextAnalysisSink1_iface);
 }
 
-static inline struct dwrite_textlayout *impl_from_IDWriteTextAnalysisSource(IDWriteTextAnalysisSource *iface)
+static inline struct dwrite_textlayout *impl_from_IDWriteTextAnalysisSource1(IDWriteTextAnalysisSource1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextAnalysisSource_iface);
+    return CONTAINING_RECORD(iface, struct dwrite_textlayout, IDWriteTextAnalysisSource1_iface);
 }
 
 static inline struct dwrite_textformat *impl_from_IDWriteTextFormat1(IDWriteTextFormat1 *iface)
@@ -769,14 +769,14 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         }
 
         /* initial splitting by script */
-        hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            range->h.range.startPosition, get_clipped_range_length(layout, range), &layout->IDWriteTextAnalysisSink_iface);
+        hr = IDWriteTextAnalyzer_AnalyzeScript(analyzer, (IDWriteTextAnalysisSource*)&layout->IDWriteTextAnalysisSource1_iface,
+            range->h.range.startPosition, get_clipped_range_length(layout, range), (IDWriteTextAnalysisSink*)&layout->IDWriteTextAnalysisSink1_iface);
         if (FAILED(hr))
             break;
 
         /* this splits it further */
-        hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            range->h.range.startPosition, get_clipped_range_length(layout, range), &layout->IDWriteTextAnalysisSink_iface);
+        hr = IDWriteTextAnalyzer_AnalyzeBidi(analyzer, (IDWriteTextAnalysisSource*)&layout->IDWriteTextAnalysisSource1_iface,
+            range->h.range.startPosition, get_clipped_range_length(layout, range), (IDWriteTextAnalysisSink*)&layout->IDWriteTextAnalysisSink1_iface);
         if (FAILED(hr))
             break;
     }
@@ -958,8 +958,8 @@ static HRESULT layout_compute(struct dwrite_textlayout *layout)
         if (FAILED(hr))
             return hr;
 
-        hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, &layout->IDWriteTextAnalysisSource_iface,
-            0, layout->len, &layout->IDWriteTextAnalysisSink_iface);
+        hr = IDWriteTextAnalyzer_AnalyzeLineBreakpoints(analyzer, (IDWriteTextAnalysisSource*)&layout->IDWriteTextAnalysisSource1_iface,
+            0, layout->len, (IDWriteTextAnalysisSink*)&layout->IDWriteTextAnalysisSink1_iface);
         IDWriteTextAnalyzer_Release(analyzer);
     }
     if (layout->actual_breakpoints) {
@@ -3940,12 +3940,15 @@ static const IDWriteTextFormat1Vtbl dwritetextformat1_layout_vtbl = {
     dwritetextformat1_layout_GetFontFallback
 };
 
-static HRESULT WINAPI dwritetextlayout_sink_QueryInterface(IDWriteTextAnalysisSink *iface,
+static HRESULT WINAPI dwritetextlayout_sink_QueryInterface(IDWriteTextAnalysisSink1 *iface,
     REFIID riid, void **obj)
 {
-    if (IsEqualIID(riid, &IID_IDWriteTextAnalysisSink) || IsEqualIID(riid, &IID_IUnknown)) {
+    if (IsEqualIID(riid, &IID_IDWriteTextAnalysisSink1) ||
+        IsEqualIID(riid, &IID_IDWriteTextAnalysisSink) ||
+        IsEqualIID(riid, &IID_IUnknown))
+    {
         *obj = iface;
-        IDWriteTextAnalysisSink_AddRef(iface);
+        IDWriteTextAnalysisSink1_AddRef(iface);
         return S_OK;
     }
 
@@ -3953,20 +3956,20 @@ static HRESULT WINAPI dwritetextlayout_sink_QueryInterface(IDWriteTextAnalysisSi
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI dwritetextlayout_sink_AddRef(IDWriteTextAnalysisSink *iface)
+static ULONG WINAPI dwritetextlayout_sink_AddRef(IDWriteTextAnalysisSink1 *iface)
 {
     return 2;
 }
 
-static ULONG WINAPI dwritetextlayout_sink_Release(IDWriteTextAnalysisSink *iface)
+static ULONG WINAPI dwritetextlayout_sink_Release(IDWriteTextAnalysisSink1 *iface)
 {
     return 1;
 }
 
-static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysisSink *iface,
+static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysisSink1 *iface,
     UINT32 position, UINT32 length, DWRITE_SCRIPT_ANALYSIS const* sa)
 {
-    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink(iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
     struct layout_run *run;
 
     TRACE("%u %u script=%d\n", position, length, sa->script);
@@ -3983,10 +3986,10 @@ static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysi
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextlayout_sink_SetLineBreakpoints(IDWriteTextAnalysisSink *iface,
+static HRESULT WINAPI dwritetextlayout_sink_SetLineBreakpoints(IDWriteTextAnalysisSink1 *iface,
     UINT32 position, UINT32 length, DWRITE_LINE_BREAKPOINT const* breakpoints)
 {
-    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink(iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
 
     if (position + length > layout->len)
         return E_FAIL;
@@ -3995,10 +3998,10 @@ static HRESULT WINAPI dwritetextlayout_sink_SetLineBreakpoints(IDWriteTextAnalys
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink *iface, UINT32 position,
+static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink1 *iface, UINT32 position,
     UINT32 length, UINT8 explicitLevel, UINT8 resolvedLevel)
 {
-    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink(iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
     struct layout_run *cur_run;
 
     TRACE("%u %u %u %u\n", position, length, explicitLevel, resolvedLevel);
@@ -4051,30 +4054,39 @@ static HRESULT WINAPI dwritetextlayout_sink_SetBidiLevel(IDWriteTextAnalysisSink
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextlayout_sink_SetNumberSubstitution(IDWriteTextAnalysisSink *iface,
+static HRESULT WINAPI dwritetextlayout_sink_SetNumberSubstitution(IDWriteTextAnalysisSink1 *iface,
     UINT32 position, UINT32 length, IDWriteNumberSubstitution* substitution)
 {
     return E_NOTIMPL;
 }
 
-static const IDWriteTextAnalysisSinkVtbl dwritetextlayoutsinkvtbl = {
+static HRESULT WINAPI dwritetextlayout_sink_SetGlyphOrientation(IDWriteTextAnalysisSink1 *iface,
+    UINT32 position, UINT32 length, DWRITE_GLYPH_ORIENTATION_ANGLE angle, UINT8 adjusted_bidi_level,
+    BOOL is_sideways, BOOL is_rtl)
+{
+    return E_NOTIMPL;
+}
+
+static const IDWriteTextAnalysisSink1Vtbl dwritetextlayoutsinkvtbl = {
     dwritetextlayout_sink_QueryInterface,
     dwritetextlayout_sink_AddRef,
     dwritetextlayout_sink_Release,
     dwritetextlayout_sink_SetScriptAnalysis,
     dwritetextlayout_sink_SetLineBreakpoints,
     dwritetextlayout_sink_SetBidiLevel,
-    dwritetextlayout_sink_SetNumberSubstitution
+    dwritetextlayout_sink_SetNumberSubstitution,
+    dwritetextlayout_sink_SetGlyphOrientation
 };
 
-static HRESULT WINAPI dwritetextlayout_source_QueryInterface(IDWriteTextAnalysisSource *iface,
+static HRESULT WINAPI dwritetextlayout_source_QueryInterface(IDWriteTextAnalysisSource1 *iface,
     REFIID riid, void **obj)
 {
-    if (IsEqualIID(riid, &IID_IDWriteTextAnalysisSource) ||
+    if (IsEqualIID(riid, &IID_IDWriteTextAnalysisSource1) ||
+        IsEqualIID(riid, &IID_IDWriteTextAnalysisSource) ||
         IsEqualIID(riid, &IID_IUnknown))
     {
         *obj = iface;
-        IDWriteTextAnalysisSource_AddRef(iface);
+        IDWriteTextAnalysisSource1_AddRef(iface);
         return S_OK;
     }
 
@@ -4082,20 +4094,20 @@ static HRESULT WINAPI dwritetextlayout_source_QueryInterface(IDWriteTextAnalysis
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI dwritetextlayout_source_AddRef(IDWriteTextAnalysisSource *iface)
+static ULONG WINAPI dwritetextlayout_source_AddRef(IDWriteTextAnalysisSource1 *iface)
 {
     return 2;
 }
 
-static ULONG WINAPI dwritetextlayout_source_Release(IDWriteTextAnalysisSource *iface)
+static ULONG WINAPI dwritetextlayout_source_Release(IDWriteTextAnalysisSource1 *iface)
 {
     return 1;
 }
 
-static HRESULT WINAPI dwritetextlayout_source_GetTextAtPosition(IDWriteTextAnalysisSource *iface,
+static HRESULT WINAPI dwritetextlayout_source_GetTextAtPosition(IDWriteTextAnalysisSource1 *iface,
     UINT32 position, WCHAR const** text, UINT32* text_len)
 {
-    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource(iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource1(iface);
 
     TRACE("(%p)->(%u %p %p)\n", layout, position, text, text_len);
 
@@ -4111,34 +4123,41 @@ static HRESULT WINAPI dwritetextlayout_source_GetTextAtPosition(IDWriteTextAnaly
     return S_OK;
 }
 
-static HRESULT WINAPI dwritetextlayout_source_GetTextBeforePosition(IDWriteTextAnalysisSource *iface,
+static HRESULT WINAPI dwritetextlayout_source_GetTextBeforePosition(IDWriteTextAnalysisSource1 *iface,
     UINT32 position, WCHAR const** text, UINT32* text_len)
 {
     FIXME("%u %p %p: stub\n", position, text, text_len);
     return E_NOTIMPL;
 }
 
-static DWRITE_READING_DIRECTION WINAPI dwritetextlayout_source_GetParagraphReadingDirection(IDWriteTextAnalysisSource *iface)
+static DWRITE_READING_DIRECTION WINAPI dwritetextlayout_source_GetParagraphReadingDirection(IDWriteTextAnalysisSource1 *iface)
 {
-    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource(iface);
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource1(iface);
     return IDWriteTextLayout2_GetReadingDirection(&layout->IDWriteTextLayout2_iface);
 }
 
-static HRESULT WINAPI dwritetextlayout_source_GetLocaleName(IDWriteTextAnalysisSource *iface,
+static HRESULT WINAPI dwritetextlayout_source_GetLocaleName(IDWriteTextAnalysisSource1 *iface,
     UINT32 position, UINT32* text_len, WCHAR const** locale)
 {
     FIXME("%u %p %p: stub\n", position, text_len, locale);
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritetextlayout_source_GetNumberSubstitution(IDWriteTextAnalysisSource *iface,
+static HRESULT WINAPI dwritetextlayout_source_GetNumberSubstitution(IDWriteTextAnalysisSource1 *iface,
     UINT32 position, UINT32* text_len, IDWriteNumberSubstitution **substitution)
 {
     FIXME("%u %p %p: stub\n", position, text_len, substitution);
     return E_NOTIMPL;
 }
 
-static const IDWriteTextAnalysisSourceVtbl dwritetextlayoutsourcevtbl = {
+static HRESULT WINAPI dwritetextlayout_source_GetVerticalGlyphOrientation(IDWriteTextAnalysisSource1 *iface,
+    UINT32 position, UINT32 *length, DWRITE_VERTICAL_GLYPH_ORIENTATION *orientation, UINT8 *bidi_level)
+{
+    FIXME("%u %p %p %p: stub\n", position, length, orientation, bidi_level);
+    return E_NOTIMPL;
+}
+
+static const IDWriteTextAnalysisSource1Vtbl dwritetextlayoutsourcevtbl = {
     dwritetextlayout_source_QueryInterface,
     dwritetextlayout_source_AddRef,
     dwritetextlayout_source_Release,
@@ -4146,7 +4165,8 @@ static const IDWriteTextAnalysisSourceVtbl dwritetextlayoutsourcevtbl = {
     dwritetextlayout_source_GetTextBeforePosition,
     dwritetextlayout_source_GetParagraphReadingDirection,
     dwritetextlayout_source_GetLocaleName,
-    dwritetextlayout_source_GetNumberSubstitution
+    dwritetextlayout_source_GetNumberSubstitution,
+    dwritetextlayout_source_GetVerticalGlyphOrientation
 };
 
 static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, IDWriteTextFormat *format)
@@ -4242,8 +4262,8 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
 
     layout->IDWriteTextLayout2_iface.lpVtbl = &dwritetextlayoutvtbl;
     layout->IDWriteTextFormat1_iface.lpVtbl = &dwritetextformat1_layout_vtbl;
-    layout->IDWriteTextAnalysisSink_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
-    layout->IDWriteTextAnalysisSource_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
+    layout->IDWriteTextAnalysisSink1_iface.lpVtbl = &dwritetextlayoutsinkvtbl;
+    layout->IDWriteTextAnalysisSource1_iface.lpVtbl = &dwritetextlayoutsourcevtbl;
     layout->ref = 1;
     layout->len = len;
     layout->recompute = RECOMPUTE_EVERYTHING;
