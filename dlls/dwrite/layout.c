@@ -3958,12 +3958,14 @@ static HRESULT WINAPI dwritetextlayout_sink_QueryInterface(IDWriteTextAnalysisSi
 
 static ULONG WINAPI dwritetextlayout_sink_AddRef(IDWriteTextAnalysisSink1 *iface)
 {
-    return 2;
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
+    return IDWriteTextLayout2_AddRef(&layout->IDWriteTextLayout2_iface);
 }
 
 static ULONG WINAPI dwritetextlayout_sink_Release(IDWriteTextAnalysisSink1 *iface)
 {
-    return 1;
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSink1(iface);
+    return IDWriteTextLayout2_Release(&layout->IDWriteTextLayout2_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout_sink_SetScriptAnalysis(IDWriteTextAnalysisSink1 *iface,
@@ -4096,12 +4098,14 @@ static HRESULT WINAPI dwritetextlayout_source_QueryInterface(IDWriteTextAnalysis
 
 static ULONG WINAPI dwritetextlayout_source_AddRef(IDWriteTextAnalysisSource1 *iface)
 {
-    return 2;
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource1(iface);
+    return IDWriteTextLayout2_AddRef(&layout->IDWriteTextLayout2_iface);
 }
 
 static ULONG WINAPI dwritetextlayout_source_Release(IDWriteTextAnalysisSource1 *iface)
 {
-    return 1;
+    struct dwrite_textlayout *layout = impl_from_IDWriteTextAnalysisSource1(iface);
+    return IDWriteTextLayout2_Release(&layout->IDWriteTextLayout2_iface);
 }
 
 static HRESULT WINAPI dwritetextlayout_source_GetTextAtPosition(IDWriteTextAnalysisSource1 *iface,
