@@ -410,6 +410,21 @@ static inline HRESULT format_set_flowdirection(struct dwrite_textformat_data *fo
     return S_OK;
 }
 
+static inline HRESULT format_set_linespacing(struct dwrite_textformat_data *format,
+    DWRITE_LINE_SPACING_METHOD method, FLOAT spacing, FLOAT baseline, BOOL *changed)
+{
+    if (spacing < 0.0f || (UINT32)method > DWRITE_LINE_SPACING_METHOD_UNIFORM)
+        return E_INVALIDARG;
+
+    if (changed) *changed = format->spacingmethod != method ||
+        format->spacing != spacing || format->baseline != baseline;
+
+    format->spacingmethod = method;
+    format->spacing = spacing;
+    format->baseline = baseline;
+    return S_OK;
+}
+
 static HRESULT get_fontfallback_from_format(const struct dwrite_textformat_data *format, IDWriteFontFallback **fallback)
 {
     *fallback = format->fallback;
@@ -3725,12 +3740,23 @@ static HRESULT WINAPI dwritetextformat1_layout_SetTrimming(IDWriteTextFormat1 *i
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI dwritetextformat1_layout_SetLineSpacing(IDWriteTextFormat1 *iface, DWRITE_LINE_SPACING_METHOD spacing,
-    FLOAT line_spacing, FLOAT baseline)
+static HRESULT WINAPI dwritetextformat1_layout_SetLineSpacing(IDWriteTextFormat1 *iface, DWRITE_LINE_SPACING_METHOD method,
+    FLOAT spacing, FLOAT baseline)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d %f %f): stub\n", This, spacing, line_spacing, baseline);
-    return E_NOTIMPL;
+    BOOL changed;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d %f %f)\n", This, method, spacing, baseline);
+
+    hr = format_set_linespacing(&This->format, method, spacing, baseline, &changed);
+    if (FAILED(hr))
+        return hr;
+
+    if (changed)
+        This->recompute = RECOMPUTE_EVERYTHING;
+
+    return S_OK;
 }
 
 static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextformat1_layout_GetTextAlignment(IDWriteTextFormat1 *iface)
@@ -4726,16 +4752,8 @@ static HRESULT WINAPI dwritetextformat_SetLineSpacing(IDWriteTextFormat1 *iface,
     FLOAT spacing, FLOAT baseline)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-
     TRACE("(%p)->(%d %f %f)\n", This, method, spacing, baseline);
-
-    if (spacing < 0.0f || (UINT32)method > DWRITE_LINE_SPACING_METHOD_UNIFORM)
-        return E_INVALIDARG;
-
-    This->format.spacingmethod = method;
-    This->format.spacing = spacing;
-    This->format.baseline = baseline;
-    return S_OK;
+    return format_set_linespacing(&This->format, method, spacing, baseline, NULL);
 }
 
 static DWRITE_TEXT_ALIGNMENT WINAPI dwritetextformat_GetTextAlignment(IDWriteTextFormat1 *iface)
