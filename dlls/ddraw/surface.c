@@ -941,17 +941,17 @@ static HRESULT WINAPI ddraw_surface1_GetAttachedSurface(IDirectDrawSurface *ifac
  *  For more details, see IWineD3DSurface::LockRect
  *
  *****************************************************************************/
-static HRESULT surface_lock(struct ddraw_surface *This,
-        RECT *Rect, DDSURFACEDESC2 *DDSD, DWORD Flags, HANDLE h)
+static HRESULT surface_lock(struct ddraw_surface *surface,
+        RECT *rect, DDSURFACEDESC2 *surface_desc, DWORD flags, HANDLE h)
 {
     struct wined3d_box box;
     struct wined3d_map_desc map_desc;
     HRESULT hr = DD_OK;
 
-    TRACE("This %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
-            This, wine_dbgstr_rect(Rect), DDSD, Flags, h);
+    TRACE("surface %p, rect %s, surface_desc %p, flags %#x, h %p.\n",
+            surface, wine_dbgstr_rect(rect), surface_desc, flags, h);
 
-    /* This->surface_desc.dwWidth and dwHeight are changeable, thus lock */
+    /* surface->surface_desc.dwWidth and dwHeight are changeable, thus lock */
     wined3d_mutex_lock();
 
     /* Should I check for the handle to be NULL?
@@ -961,33 +961,31 @@ static HRESULT surface_lock(struct ddraw_surface *This,
      */
 
     /* Windows zeroes this if the rect is invalid */
-    DDSD->lpSurface = 0;
+    surface_desc->lpSurface = NULL;
 
-    if (Rect)
+    if (rect)
     {
-        if ((Rect->left < 0)
-                || (Rect->top < 0)
-                || (Rect->left > Rect->right)
-                || (Rect->top > Rect->bottom)
-                || (Rect->right > This->surface_desc.dwWidth)
-                || (Rect->bottom > This->surface_desc.dwHeight))
+        if ((rect->left < 0) || (rect->top < 0)
+                || (rect->left > rect->right) || (rect->right > surface->surface_desc.dwWidth)
+                || (rect->top > rect->bottom) || (rect->bottom > surface->surface_desc.dwHeight))
         {
             WARN("Trying to lock an invalid rectangle, returning DDERR_INVALIDPARAMS\n");
             wined3d_mutex_unlock();
             return DDERR_INVALIDPARAMS;
         }
-        box.left = Rect->left;
-        box.top = Rect->top;
-        box.right = Rect->right;
-        box.bottom = Rect->bottom;
+        box.left = rect->left;
+        box.top = rect->top;
+        box.right = rect->right;
+        box.bottom = rect->bottom;
         box.front = 0;
         box.back = 1;
     }
 
-    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
-        hr = ddraw_surface_update_frontbuffer(This, Rect, TRUE);
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+        hr = ddraw_surface_update_frontbuffer(surface, rect, TRUE);
     if (SUCCEEDED(hr))
-        hr = wined3d_surface_map(This->wined3d_surface, &map_desc, Rect ? &box : NULL, Flags);
+        hr = wined3d_resource_map(wined3d_texture_get_resource(surface->wined3d_texture),
+                surface->sub_resource_idx, &map_desc, rect ? &box : NULL, flags);
     if (FAILED(hr))
     {
         wined3d_mutex_unlock();
@@ -1004,22 +1002,23 @@ static HRESULT surface_lock(struct ddraw_surface *This,
         }
     }
 
-    if (This->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+    if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
     {
-        if (Flags & DDLOCK_READONLY)
-            memset(&This->ddraw->primary_lock, 0, sizeof(This->ddraw->primary_lock));
-        else if (Rect)
-            This->ddraw->primary_lock = *Rect;
+        if (flags & DDLOCK_READONLY)
+            memset(&surface->ddraw->primary_lock, 0, sizeof(surface->ddraw->primary_lock));
+        else if (rect)
+            surface->ddraw->primary_lock = *rect;
         else
-            SetRect(&This->ddraw->primary_lock, 0, 0, This->surface_desc.dwWidth, This->surface_desc.dwHeight);
+            SetRect(&surface->ddraw->primary_lock, 0, 0, surface->surface_desc.dwWidth, surface->surface_desc.dwHeight);
     }
 
     /* Windows does not set DDSD_LPSURFACE on locked surfaces. */
-    DD_STRUCT_COPY_BYSIZE(DDSD,&(This->surface_desc));
-    DDSD->lpSurface = map_desc.data;
+    DD_STRUCT_COPY_BYSIZE(surface_desc, &surface->surface_desc);
+    surface_desc->lpSurface = map_desc.data;
 
     TRACE("locked surface returning description :\n");
-    if (TRACE_ON(ddraw)) DDRAW_dump_surface_desc(DDSD);
+    if (TRACE_ON(ddraw))
+        DDRAW_dump_surface_desc(surface_desc);
 
     wined3d_mutex_unlock();
 

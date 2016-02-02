@@ -2434,8 +2434,8 @@ HRESULT CDECL wined3d_surface_unmap(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_map(struct wined3d_surface *surface,
-        struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
+HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_desc *map_desc,
+        const struct wined3d_box *box, DWORD flags)
 {
     const struct wined3d_format *format = surface->resource.format;
     unsigned int fmt_flags = surface->container->resource.format_flags;
