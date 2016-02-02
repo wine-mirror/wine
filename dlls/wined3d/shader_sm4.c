@@ -50,6 +50,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_INTERPOLATION_MODE_SHIFT    11
 #define WINED3D_SM4_INTERPOLATION_MODE_MASK     (0xfu << WINED3D_SM4_INTERPOLATION_MODE_SHIFT)
 
+#define WINED3D_SM4_GLOBAL_FLAGS_SHIFT          11
+#define WINED3D_SM4_GLOBAL_FLAGS_MASK           (0xffu << WINED3D_SM4_GLOBAL_FLAGS_SHIFT)
+
 #define WINED3D_SM4_OPCODE_MASK                 0xff
 
 #define WINED3D_SM4_REGISTER_MODIFIER           (0x1u << 31)
@@ -170,6 +173,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_DCL_OUTPUT           = 0x65,
     WINED3D_SM4_OP_DCL_OUTPUT_SIV       = 0x67,
     WINED3D_SM4_OP_DCL_TEMPS            = 0x68,
+    WINED3D_SM4_OP_DCL_GLOBAL_FLAGS     = 0x6a,
 };
 
 enum wined3d_sm4_register_type
@@ -380,6 +384,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_DCL_OUTPUT,             WINED3DSIH_DCL_OUTPUT,                    "",     ""},
     {WINED3D_SM4_OP_DCL_OUTPUT_SIV,         WINED3DSIH_DCL_OUTPUT_SIV,                "",     ""},
     {WINED3D_SM4_OP_DCL_TEMPS,              WINED3DSIH_DCL_TEMPS,                     "",     ""},
+    {WINED3D_SM4_OP_DCL_GLOBAL_FLAGS,       WINED3DSIH_DCL_GLOBAL_FLAGS,              "",     ""},
 };
 
 static const enum wined3d_shader_register_type register_type_table[] =
@@ -1018,6 +1023,10 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
             || opcode == WINED3D_SM4_OP_DCL_TEMPS)
     {
         ins->declaration.count = *p++;
+    }
+    else if (opcode == WINED3D_SM4_OP_DCL_GLOBAL_FLAGS)
+    {
+        ins->flags = (opcode_token & WINED3D_SM4_GLOBAL_FLAGS_MASK) >> WINED3D_SM4_GLOBAL_FLAGS_SHIFT;
     }
     else
     {

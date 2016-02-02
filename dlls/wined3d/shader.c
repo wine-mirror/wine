@@ -55,6 +55,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_CUT                           */ "cut",
     /* WINED3DSIH_DCL                           */ "dcl",
     /* WINED3DSIH_DCL_CONSTANT_BUFFER           */ "dcl_constantBuffer",
+    /* WINED3DSIH_DCL_GLOBAL_FLAGS              */ "dcl_globalFlags",
     /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER */ "dcl_immediateConstantBuffer",
     /* WINED3DSIH_DCL_INPUT                     */ "dcl_input",
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE           */ "dcl_inputPrimitive",
@@ -1229,6 +1230,26 @@ unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_map
     return wined3d_log2i(map);
 }
 
+static void shader_dump_global_flags(DWORD global_flags)
+{
+    if (global_flags & WINED3DSGF_REFACTORING_ALLOWED)
+    {
+        TRACE("refactoringAllowed");
+        global_flags &= ~WINED3DSGF_REFACTORING_ALLOWED;
+        if (global_flags)
+            TRACE(" | ");
+    }
+
+    if (global_flags & WINED3DSGF_ENABLE_RAW_AND_STRUCTURED_BUFFERS)
+    {
+        TRACE("enableRawAndStructuredBuffers");
+        global_flags &= ~WINED3DSGF_ENABLE_RAW_AND_STRUCTURED_BUFFERS;
+    }
+
+    if (global_flags)
+        TRACE("unknown_flags(%#x)", global_flags);
+}
+
 static void shader_dump_sysval_semantic(enum wined3d_sysval_semantic semantic)
 {
     unsigned int i;
@@ -1898,6 +1919,11 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             TRACE("%s ", shader_opcode_names[ins.handler_idx]);
             shader_dump_src_param(&ins.declaration.src, &shader_version);
             TRACE(", %s", ins.flags & WINED3DSI_INDEXED_DYNAMIC ? "dynamicIndexed" : "immediateIndexed");
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_GLOBAL_FLAGS)
+        {
+            TRACE("%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_global_flags(ins.flags);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER)
         {

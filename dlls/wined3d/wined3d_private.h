@@ -427,6 +427,12 @@ enum wined3d_shader_interpolation_mode
     WINED3DSIM_LINEAR_NOPERSPECTIVE_SAMPLE = 7,
 };
 
+enum wined3d_shader_global_flags
+{
+    WINED3DSGF_REFACTORING_ALLOWED               = 0x1,
+    WINED3DSGF_ENABLE_RAW_AND_STRUCTURED_BUFFERS = 0x8,
+};
+
 /* Undocumented opcode control to identify projective texture lookups in ps 2.0 and later */
 #define WINED3DSI_TEXLD_PROJECT     0x1
 #define WINED3DSI_TEXLD_BIAS        0x2
@@ -499,6 +505,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_CUT,
     WINED3DSIH_DCL,
     WINED3DSIH_DCL_CONSTANT_BUFFER,
+    WINED3DSIH_DCL_GLOBAL_FLAGS,
     WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER,
     WINED3DSIH_DCL_INPUT,
     WINED3DSIH_DCL_INPUT_PRIMITIVE,
