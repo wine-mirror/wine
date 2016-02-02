@@ -1159,7 +1159,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Unlock(IDirectDrawSurface
     TRACE("iface %p, rect %s.\n", iface, wine_dbgstr_rect(pRect));
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_unmap(surface->wined3d_surface);
+    hr = wined3d_resource_unmap(wined3d_texture_get_resource(surface->wined3d_texture), surface->sub_resource_idx);
     if (SUCCEEDED(hr) && surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         hr = ddraw_surface_update_frontbuffer(surface, &surface->ddraw->primary_lock, FALSE);
     wined3d_mutex_unlock();
