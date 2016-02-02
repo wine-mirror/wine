@@ -2363,6 +2363,7 @@ static HRESULT set_layout_range_attr(struct dwrite_textlayout *layout, enum layo
         list_add_after(&outer->entry, &cur->entry);
         list_add_after(&cur->entry, &right->entry);
 
+        layout->recompute = RECOMPUTE_EVERYTHING;
         return S_OK;
     }
 

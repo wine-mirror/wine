@@ -3467,10 +3467,9 @@ static void test_GetLineMetrics(void)
     hr = IDWriteTextLayout_GetLineMetrics(layout, metrics + 2, 2, &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(count == 2, "got %u\n", count);
-todo_wine {
     ok(metrics[3].height > metrics[1].height, "got %f, old %f\n", metrics[3].height, metrics[1].height);
     ok(metrics[3].baseline > metrics[1].baseline, "got %f, old %f\n", metrics[3].baseline, metrics[1].baseline);
-}
+
     /* revert to original format */
     hr = IDWriteTextLayout_SetFontSize(layout, 12.0f, range);
     ok(hr == S_OK, "got 0x%08x\n", hr);
