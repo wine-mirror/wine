@@ -61,6 +61,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_INPUT_PS                  */ "dcl_input_ps",
     /* WINED3DSIH_DCL_INPUT_PS_SGV              */ "dcl_input_ps_sgv",
     /* WINED3DSIH_DCL_INPUT_PS_SIV              */ "dcl_input_ps_siv",
+    /* WINED3DSIH_DCL_INPUT_SGV                 */ "dcl_input_sgv",
     /* WINED3DSIH_DCL_OUTPUT                    */ "dcl_output",
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY           */ "dcl_outputTopology",
     /* WINED3DSIH_DCL_SAMPLER                   */ "dcl_sampler",
@@ -1916,7 +1917,8 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             TRACE(" ");
             shader_dump_dst_param(&ins.declaration.dst, &shader_version);
         }
-        else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PS_SGV)
+        else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PS_SGV
+                || ins.handler_idx == WINED3DSIH_DCL_INPUT_SGV)
         {
             TRACE("%s ", shader_opcode_names[ins.handler_idx]);
             shader_dump_dst_param(&ins.declaration.register_semantic.reg, &shader_version);
