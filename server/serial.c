@@ -62,11 +62,14 @@ static void serial_destroy(struct object *obj);
 
 static enum server_fd_type serial_get_fd_type( struct fd *fd );
 static void serial_queue_async( struct fd *fd, const async_data_t *data, int type, int count );
+static void serial_reselect_async( struct fd *fd, struct async_queue *queue );
 
 struct serial
 {
     struct object       obj;
     struct fd          *fd;
+
+    struct timeout_user *read_timer;
 
     /* timeout values */
     unsigned int        readinterval;
@@ -115,7 +118,7 @@ static const struct fd_ops serial_fd_ops =
     no_fd_flush,                  /* flush */
     default_fd_ioctl,             /* ioctl */
     serial_queue_async,           /* queue_async */
-    default_fd_reselect_async,    /* reselect_async */
+    serial_reselect_async,        /* reselect_async */
     default_fd_cancel_async       /* cancel_async */
 };
 
@@ -134,6 +137,7 @@ struct object *create_serial( struct fd *fd )
 
     if (!(serial = alloc_object( &serial_ops ))) return NULL;
 
+    serial->read_timer   = NULL;
     serial->readinterval = 0;
     serial->readmult     = 0;
     serial->readconst    = 0;
@@ -157,6 +161,7 @@ static struct fd *serial_get_fd( struct object *obj )
 static void serial_destroy( struct object *obj)
 {
     struct serial *serial = (struct serial *)obj;
+    if (serial->read_timer) remove_timeout_user( serial->read_timer );
     release_object( serial->fd );
 }
 
@@ -201,6 +206,34 @@ static void serial_queue_async( struct fd *fd, const async_data_t *data, int typ
         release_object( async );
         set_error( STATUS_PENDING );
     }
+}
+
+static void serial_read_timeout( void *arg )
+{
+    struct serial *serial = arg;
+
+    serial->read_timer = NULL;
+    fd_async_wake_up( serial->fd, ASYNC_TYPE_READ, STATUS_TIMEOUT );
+}
+
+static void serial_reselect_async( struct fd *fd, struct async_queue *queue )
+{
+    struct serial *serial = get_fd_user( fd );
+
+    if (serial->read_timer)
+    {
+        if (!(default_fd_get_poll_events( fd ) & POLLIN))
+        {
+            remove_timeout_user( serial->read_timer );
+            serial->read_timer = NULL;
+        }
+    }
+    else if (serial->readinterval && (default_fd_get_poll_events( fd ) & POLLIN))
+    {
+        serial->read_timer = add_timeout_user( (timeout_t)serial->readinterval * -10000,
+                                               serial_read_timeout, serial );
+    }
+    default_fd_reselect_async( fd, queue );
 }
 
 DECL_HANDLER(get_serial_info)
