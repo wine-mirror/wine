@@ -5235,6 +5235,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_DCL_INPUT_PS_SIV              */ NULL,
     /* WINED3DSIH_DCL_INPUT_SGV                 */ NULL,
     /* WINED3DSIH_DCL_OUTPUT                    */ NULL,
+    /* WINED3DSIH_DCL_OUTPUT_SIV                */ NULL,
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY           */ shader_hw_nop,
     /* WINED3DSIH_DCL_SAMPLER                   */ NULL,
     /* WINED3DSIH_DCL_TEMPS                     */ NULL,

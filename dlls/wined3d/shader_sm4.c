@@ -167,6 +167,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_DCL_INPUT_PS_SGV     = 0x63,
     WINED3D_SM4_OP_DCL_INPUT_PS_SIV     = 0x64,
     WINED3D_SM4_OP_DCL_OUTPUT           = 0x65,
+    WINED3D_SM4_OP_DCL_OUTPUT_SIV       = 0x67,
     WINED3D_SM4_OP_DCL_TEMPS            = 0x68,
 };
 
@@ -375,6 +376,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_DCL_INPUT_PS_SGV,       WINED3DSIH_DCL_INPUT_PS_SGV,              "",     ""},
     {WINED3D_SM4_OP_DCL_INPUT_PS_SIV,       WINED3DSIH_DCL_INPUT_PS_SIV,              "",     ""},
     {WINED3D_SM4_OP_DCL_OUTPUT,             WINED3DSIH_DCL_OUTPUT,                    "",     ""},
+    {WINED3D_SM4_OP_DCL_OUTPUT_SIV,         WINED3DSIH_DCL_OUTPUT_SIV,                "",     ""},
     {WINED3D_SM4_OP_DCL_TEMPS,              WINED3DSIH_DCL_TEMPS,                     "",     ""},
 };
 
@@ -992,7 +994,8 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         shader_sm4_read_dst_param(priv, &p, WINED3D_DATA_FLOAT, &ins->declaration.dst);
     }
     else if (opcode == WINED3D_SM4_OP_DCL_INPUT_PS_SGV
-            || opcode == WINED3D_SM4_OP_DCL_INPUT_SGV)
+            || opcode == WINED3D_SM4_OP_DCL_INPUT_SGV
+            || opcode == WINED3D_SM4_OP_DCL_OUTPUT_SIV)
     {
         shader_sm4_read_dst_param(priv, &p, WINED3D_DATA_FLOAT, &ins->declaration.register_semantic.reg);
         ins->declaration.register_semantic.sysval_semantic = *p++;
