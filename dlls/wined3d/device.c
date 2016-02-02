@@ -995,12 +995,20 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
         goto err_out;
     }
 
-    if (swapchain_desc->backbuffer_count && FAILED(hr = wined3d_rendertarget_view_create_from_surface(
-            surface_from_resource(wined3d_texture_get_sub_resource(swapchain->back_buffers[0], 0)),
-            NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
+    if (swapchain_desc->backbuffer_count)
     {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-        goto err_out;
+        struct wined3d_rendertarget_view_desc view_desc;
+
+        view_desc.format_id = swapchain_desc->backbuffer_format;
+        view_desc.u.texture.level_idx = 0;
+        view_desc.u.texture.layer_idx = 0;
+        view_desc.u.texture.layer_count = 1;
+        if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc, &swapchain->back_buffers[0]->resource,
+                NULL, &wined3d_null_parent_ops, &device->back_buffer_view)))
+        {
+            ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+            goto err_out;
+        }
     }
 
     device->swapchain_count = 1;
