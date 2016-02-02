@@ -57,6 +57,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_CONSTANT_BUFFER           */ "dcl_constantBuffer",
     /* WINED3DSIH_DCL_IMMEDIATE_CONSTANT_BUFFER */ "dcl_immediateConstantBuffer",
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE           */ "dcl_inputPrimitive",
+    /* WINED3DSIH_DCL_INPUT_PS                  */ "dcl_input_ps",
     /* WINED3DSIH_DCL_OUTPUT                    */ "dcl_output",
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY           */ "dcl_outputTopology",
     /* WINED3DSIH_DCL_SAMPLER                   */ "dcl_sampler",
@@ -1774,6 +1775,37 @@ static void shader_dump_primitive_type(enum wined3d_primitive_type primitive_typ
     }
 }
 
+static void shader_dump_interpolation_mode(enum wined3d_shader_interpolation_mode interpolation_mode)
+{
+    switch (interpolation_mode)
+    {
+        case WINED3DSIM_CONSTANT:
+            TRACE("constant");
+            break;
+        case WINED3DSIM_LINEAR:
+            TRACE("linear");
+            break;
+        case WINED3DSIM_LINEAR_CENTROID:
+            TRACE("linear centroid");
+            break;
+        case WINED3DSIM_LINEAR_NOPERSPECTIVE:
+            TRACE("linear noperspective");
+            break;
+        case WINED3DSIM_LINEAR_SAMPLE:
+            TRACE("linear sample");
+            break;
+        case WINED3DSIM_LINEAR_NOPERSPECTIVE_CENTROID:
+            TRACE("linear noperspective centroid");
+            break;
+        case WINED3DSIM_LINEAR_NOPERSPECTIVE_SAMPLE:
+            TRACE("linear noperspective sample");
+            break;
+        default:
+            TRACE("<unrecognized_interpolation_mode %#x>", interpolation_mode);
+            break;
+    }
+}
+
 static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe_data, const DWORD *byte_code)
 {
     struct wined3d_shader_version shader_version;
@@ -1843,6 +1875,13 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
                         ins.declaration.icb->data[4 * i + 3]);
             }
             TRACE("}");
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PS)
+        {
+            TRACE("%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_interpolation_mode(ins.flags);
+            TRACE(" ");
+            shader_dump_dst_param(&ins.declaration.dst, &shader_version);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_OUTPUT)
         {

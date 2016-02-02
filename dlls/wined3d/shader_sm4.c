@@ -47,6 +47,9 @@ WINE_DECLARE_DEBUG_CHANNEL(d3d_bytecode);
 #define WINED3D_SM4_SHADER_DATA_TYPE_SHIFT      11
 #define WINED3D_SM4_SHADER_DATA_TYPE_MASK       (0xfu << WINED3D_SM4_SHADER_DATA_TYPE_SHIFT)
 
+#define WINED3D_SM4_INTERPOLATION_MODE_SHIFT    11
+#define WINED3D_SM4_INTERPOLATION_MODE_MASK     (0xfu << WINED3D_SM4_INTERPOLATION_MODE_SHIFT)
+
 #define WINED3D_SM4_OPCODE_MASK                 0xff
 
 #define WINED3D_SM4_REGISTER_MODIFIER           (0x1u << 31)
@@ -158,6 +161,7 @@ enum wined3d_sm4_opcode
     WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY  = 0x5c,
     WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE  = 0x5d,
     WINED3D_SM4_OP_DCL_VERTICES_OUT     = 0x5e,
+    WINED3D_SM4_OP_DCL_INPUT_PS         = 0x62,
     WINED3D_SM4_OP_DCL_OUTPUT           = 0x65,
     WINED3D_SM4_OP_DCL_TEMPS            = 0x68,
 };
@@ -361,6 +365,7 @@ static const struct wined3d_sm4_opcode_info opcode_table[] =
     {WINED3D_SM4_OP_DCL_OUTPUT_TOPOLOGY,    WINED3DSIH_DCL_OUTPUT_TOPOLOGY,           "",     ""},
     {WINED3D_SM4_OP_DCL_INPUT_PRIMITIVE,    WINED3DSIH_DCL_INPUT_PRIMITIVE,           "",     ""},
     {WINED3D_SM4_OP_DCL_VERTICES_OUT,       WINED3DSIH_DCL_VERTICES_OUT,              "",     ""},
+    {WINED3D_SM4_OP_DCL_INPUT_PS,           WINED3DSIH_DCL_INPUT_PS,                  "",     ""},
     {WINED3D_SM4_OP_DCL_OUTPUT,             WINED3DSIH_DCL_OUTPUT,                    "",     ""},
     {WINED3D_SM4_OP_DCL_TEMPS,              WINED3DSIH_DCL_TEMPS,                     "",     ""},
 };
@@ -972,6 +977,11 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
         {
             ins->declaration.primitive_type = input_primitive_type_table[primitive_type];
         }
+    }
+    else if (opcode == WINED3D_SM4_OP_DCL_INPUT_PS)
+    {
+        ins->flags = (opcode_token & WINED3D_SM4_INTERPOLATION_MODE_MASK) >> WINED3D_SM4_INTERPOLATION_MODE_SHIFT;
+        shader_sm4_read_dst_param(priv, &p, WINED3D_DATA_FLOAT, &ins->declaration.dst);
     }
     else if (opcode == WINED3D_SM4_OP_DCL_OUTPUT)
     {
