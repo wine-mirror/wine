@@ -3226,6 +3226,7 @@ static void test_GetLineMetrics(void)
     static const WCHAR str3W[] = {'a','\r','b','\n','c','\n','\r','d','\r','\n',0};
     static const WCHAR strW[] = {'a','b','c','d',' ',0};
     static const WCHAR str2W[] = {'a','b','\r','c','d',0};
+    static const WCHAR str4W[] = {'a','\r',0};
     IDWriteFontCollection *syscollection;
     DWRITE_FONT_METRICS fontmetrics;
     DWRITE_LINE_METRICS metrics[6];
@@ -3367,7 +3368,6 @@ static void test_GetLineMetrics(void)
     count = 0;
     hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(*metrics), &count);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-todo_wine
     ok(count == 6, "got %u\n", count);
 
     ok(metrics[0].length == 2, "got %u\n", metrics[0].length);
@@ -3375,7 +3375,6 @@ todo_wine
     ok(metrics[2].length == 2, "got %u\n", metrics[2].length);
     ok(metrics[3].length == 1, "got %u\n", metrics[3].length);
     ok(metrics[4].length == 3, "got %u\n", metrics[4].length);
-todo_wine
     ok(metrics[5].length == 0, "got %u\n", metrics[5].length);
 
     ok(metrics[0].newlineLength == 1, "got %u\n", metrics[0].newlineLength);
@@ -3383,7 +3382,6 @@ todo_wine
     ok(metrics[2].newlineLength == 1, "got %u\n", metrics[2].newlineLength);
     ok(metrics[3].newlineLength == 1, "got %u\n", metrics[3].newlineLength);
     ok(metrics[4].newlineLength == 2, "got %u\n", metrics[4].newlineLength);
-todo_wine
     ok(metrics[5].newlineLength == 0, "got %u\n", metrics[5].newlineLength);
 
     ok(metrics[0].trailingWhitespaceLength == 1, "got %u\n", metrics[0].newlineLength);
@@ -3391,7 +3389,6 @@ todo_wine
     ok(metrics[2].trailingWhitespaceLength == 1, "got %u\n", metrics[2].newlineLength);
     ok(metrics[3].trailingWhitespaceLength == 1, "got %u\n", metrics[3].newlineLength);
     ok(metrics[4].trailingWhitespaceLength == 2, "got %u\n", metrics[4].newlineLength);
-todo_wine
     ok(metrics[5].trailingWhitespaceLength == 0, "got %u\n", metrics[5].newlineLength);
 
     IDWriteTextLayout_Release(layout);
@@ -3441,6 +3438,47 @@ todo_wine
     ok(count == 1, "got %u\n", count);
     ok(metrics[1].height == metrics[0].height, "got %f\n", metrics[1].height);
     ok(metrics[1].baseline == metrics[0].baseline, "got %f\n", metrics[1].baseline);
+
+    IDWriteTextLayout_Release(layout);
+
+    /* text is "a\r" */
+    hr = IDWriteFactory_CreateTextLayout(factory, str4W, 2, format, 100.0f, 300.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    count = 0;
+    memset(metrics, 0, sizeof(metrics));
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics, sizeof(metrics)/sizeof(*metrics), &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 2, "got %u\n", count);
+    ok(metrics[0].length == 2, "got %u\n", metrics[0].length);
+    ok(metrics[0].newlineLength == 1, "got %u\n", metrics[0].newlineLength);
+    ok(metrics[0].height > 0.0f, "got %f\n", metrics[0].height);
+    ok(metrics[0].baseline > 0.0f, "got %f\n", metrics[0].baseline);
+    ok(metrics[1].length == 0, "got %u\n", metrics[1].length);
+    ok(metrics[1].newlineLength == 0, "got %u\n", metrics[1].newlineLength);
+    ok(metrics[1].height > 0.0f, "got %f\n", metrics[1].height);
+    ok(metrics[1].baseline > 0.0f, "got %f\n", metrics[1].baseline);
+
+    range.startPosition = 1;
+    range.length = 1;
+    hr = IDWriteTextLayout_SetFontSize(layout, 80.0f, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics + 2, 2, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 2, "got %u\n", count);
+todo_wine {
+    ok(metrics[3].height > metrics[1].height, "got %f, old %f\n", metrics[3].height, metrics[1].height);
+    ok(metrics[3].baseline > metrics[1].baseline, "got %f, old %f\n", metrics[3].baseline, metrics[1].baseline);
+}
+    /* revert to original format */
+    hr = IDWriteTextLayout_SetFontSize(layout, 12.0f, range);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    hr = IDWriteTextLayout_GetLineMetrics(layout, metrics + 2, 2, &count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(count == 2, "got %u\n", count);
+    ok(metrics[3].height == metrics[1].height, "got %f, old %f\n", metrics[3].height, metrics[1].height);
+    ok(metrics[3].baseline == metrics[1].baseline, "got %f, old %f\n", metrics[3].baseline, metrics[1].baseline);
 
     IDWriteTextLayout_Release(layout);
 

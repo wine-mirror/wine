@@ -1572,6 +1572,31 @@ static HRESULT layout_add_underline(struct dwrite_textlayout *layout, struct lay
     return S_OK;
 }
 
+/* Adds zero width line, metrics are derived from font at specified text position. */
+static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout, UINT32 pos, UINT32 *line)
+{
+    DWRITE_FONT_METRICS fontmetrics;
+    DWRITE_LINE_METRICS metrics;
+    struct layout_range *range;
+    IDWriteFontFace *fontface;
+    HRESULT hr;
+
+    range = get_layout_range_by_pos(layout, pos);
+    hr = create_fontface_by_pos(layout, range, &fontface);
+    if (FAILED(hr))
+        return hr;
+
+    layout_get_font_metrics(layout, fontface, range->fontsize, &fontmetrics);
+    layout_get_font_height(range->fontsize, &fontmetrics, &metrics.baseline, &metrics.height);
+    IDWriteFontFace_Release(fontface);
+
+    metrics.length = 0;
+    metrics.trailingWhitespaceLength = 0;
+    metrics.newlineLength = 0;
+    metrics.isTrimmed = FALSE;
+    return layout_set_line_metrics(layout, &metrics, line);
+}
+
 static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
 {
     BOOL is_rtl = layout->format.readingdir == DWRITE_READING_DIRECTION_RIGHT_TO_LEFT;
@@ -1720,30 +1745,16 @@ static HRESULT layout_compute_effective_runs(struct dwrite_textlayout *layout)
         textpos += layout->clustermetrics[i].length;
     }
 
-    /* Add dummy line when there's no text. Metrics come from first range. */
-    if (layout->len == 0) {
-        DWRITE_FONT_METRICS fontmetrics;
-        struct layout_range *range;
-        IDWriteFontFace *fontface;
-
-        range = get_layout_range_by_pos(layout, 0);
-        hr = create_fontface_by_pos(layout, range, &fontface);
-        if (FAILED(hr))
-            return hr;
-
-        layout_get_font_metrics(layout, fontface, range->fontsize, &fontmetrics);
-        layout_get_font_height(range->fontsize, &fontmetrics, &metrics.baseline, &metrics.height);
-        IDWriteFontFace_Release(fontface);
-
-        line = 0;
-        metrics.length = 0;
-        metrics.trailingWhitespaceLength = 0;
-        metrics.newlineLength = 0;
-        metrics.isTrimmed = FALSE;
-        hr = layout_set_line_metrics(layout, &metrics, &line);
-        if (FAILED(hr))
-            return hr;
-    }
+    /* Add dummy line if:
+       - there's no text, metrics come from first range in this case;
+       - last ended with a mandatory break, metrics come from last text position.
+    */
+    if (layout->len == 0)
+        hr = layout_set_dummy_line_metrics(layout, 0, &line);
+    else if (layout->clustermetrics[layout->cluster_count-1].isNewline)
+        hr = layout_set_dummy_line_metrics(layout, layout->len-1, &line);
+    if (FAILED(hr))
+        return hr;
 
     layout->metrics.left = is_rtl ? layout->metrics.layoutWidth - layout->metrics.width : 0.0f;
     layout->metrics.top = 0.0f;
