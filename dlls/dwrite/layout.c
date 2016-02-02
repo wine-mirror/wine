@@ -400,6 +400,16 @@ static inline HRESULT format_set_wordwrapping(struct dwrite_textformat_data *for
     return S_OK;
 }
 
+static inline HRESULT format_set_flowdirection(struct dwrite_textformat_data *format,
+    DWRITE_FLOW_DIRECTION direction, BOOL *changed)
+{
+    if ((UINT32)direction > DWRITE_FLOW_DIRECTION_RIGHT_TO_LEFT)
+        return E_INVALIDARG;
+    if (changed) *changed = format->flow != direction;
+    format->flow = direction;
+    return S_OK;
+}
+
 static HRESULT get_fontfallback_from_format(const struct dwrite_textformat_data *format, IDWriteFontFallback **fallback)
 {
     *fallback = format->fallback;
@@ -3685,8 +3695,19 @@ static HRESULT WINAPI dwritetextformat1_layout_SetReadingDirection(IDWriteTextFo
 static HRESULT WINAPI dwritetextformat1_layout_SetFlowDirection(IDWriteTextFormat1 *iface, DWRITE_FLOW_DIRECTION direction)
 {
     struct dwrite_textlayout *This = impl_layout_form_IDWriteTextFormat1(iface);
-    FIXME("(%p)->(%d): stub\n", This, direction);
-    return E_NOTIMPL;
+    BOOL changed;
+    HRESULT hr;
+
+    TRACE("(%p)->(%d)\n", This, direction);
+
+    hr = format_set_flowdirection(&This->format, direction, &changed);
+    if (FAILED(hr))
+        return hr;
+
+    if (changed)
+        This->recompute = RECOMPUTE_EVERYTHING;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextformat1_layout_SetIncrementalTabStop(IDWriteTextFormat1 *iface, FLOAT tabstop)
@@ -4675,14 +4696,8 @@ static HRESULT WINAPI dwritetextformat_SetReadingDirection(IDWriteTextFormat1 *i
 static HRESULT WINAPI dwritetextformat_SetFlowDirection(IDWriteTextFormat1 *iface, DWRITE_FLOW_DIRECTION direction)
 {
     struct dwrite_textformat *This = impl_from_IDWriteTextFormat1(iface);
-
     TRACE("(%p)->(%d)\n", This, direction);
-
-    if ((UINT32)direction > DWRITE_FLOW_DIRECTION_RIGHT_TO_LEFT)
-        return E_INVALIDARG;
-
-    This->format.flow = direction;
-    return S_OK;
+    return format_set_flowdirection(&This->format, direction, NULL);
 }
 
 static HRESULT WINAPI dwritetextformat_SetIncrementalTabStop(IDWriteTextFormat1 *iface, FLOAT tabstop)
