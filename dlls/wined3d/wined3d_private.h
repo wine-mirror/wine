@@ -503,6 +503,7 @@ enum WINED3D_SHADER_INSTRUCTION_HANDLER
     WINED3DSIH_DCL_INPUT,
     WINED3DSIH_DCL_INPUT_PRIMITIVE,
     WINED3DSIH_DCL_INPUT_PS,
+    WINED3DSIH_DCL_INPUT_PS_SGV,
     WINED3DSIH_DCL_OUTPUT,
     WINED3DSIH_DCL_OUTPUT_TOPOLOGY,
     WINED3DSIH_DCL_SAMPLER,
@@ -781,6 +782,12 @@ struct wined3d_shader_semantic
     struct wined3d_shader_dst_param reg;
 };
 
+struct wined3d_shader_register_semantic
+{
+    struct wined3d_shader_dst_param reg;
+    enum wined3d_sysval_semantic sysval_semantic;
+};
+
 struct wined3d_shader_instruction
 {
     const struct wined3d_shader_context *ctx;
@@ -795,6 +802,7 @@ struct wined3d_shader_instruction
     union
     {
         struct wined3d_shader_semantic semantic;
+        struct wined3d_shader_register_semantic register_semantic;
         enum wined3d_primitive_type primitive_type;
         struct wined3d_shader_dst_param dst;
         struct wined3d_shader_src_param src;

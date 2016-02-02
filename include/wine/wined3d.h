@@ -741,7 +741,10 @@ enum wined3d_decl_usage
 enum wined3d_sysval_semantic
 {
     WINED3D_SV_POSITION = 1,
+    WINED3D_SV_PRIMITIVEID = 7,
     WINED3D_SV_INSTANCEID = 8,
+    WINED3D_SV_ISFRONTFACE = 9,
+    WINED3D_SV_SAMPLEINDEX = 10,
 
     WINED3D_SV_DEPTH = 0xffffffff,
     WINED3D_SV_TARGET0 = 0,

@@ -59,6 +59,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_DCL_INPUT                     */ "dcl_input",
     /* WINED3DSIH_DCL_INPUT_PRIMITIVE           */ "dcl_inputPrimitive",
     /* WINED3DSIH_DCL_INPUT_PS                  */ "dcl_input_ps",
+    /* WINED3DSIH_DCL_INPUT_PS_SGV              */ "dcl_input_ps_sgv",
     /* WINED3DSIH_DCL_OUTPUT                    */ "dcl_output",
     /* WINED3DSIH_DCL_OUTPUT_TOPOLOGY           */ "dcl_outputTopology",
     /* WINED3DSIH_DCL_SAMPLER                   */ "dcl_sampler",
@@ -193,6 +194,20 @@ static const char * const semantic_names[] =
     /* WINED3D_DECL_USAGE_FOG           */ "FOG",
     /* WINED3D_DECL_USAGE_DEPTH         */ "DEPTH",
     /* WINED3D_DECL_USAGE_SAMPLE        */ "SAMPLE",
+};
+
+static const struct
+{
+    enum wined3d_sysval_semantic sysval_semantic;
+    const char *sysval_name;
+}
+sysval_semantic_names[] =
+{
+    {WINED3D_SV_POSITION,    "SV_Position"},
+    {WINED3D_SV_INSTANCEID,  "SV_InstanceID"},
+    {WINED3D_SV_PRIMITIVEID, "SV_PrimitiveID"},
+    {WINED3D_SV_ISFRONTFACE, "SV_IsFrontFace"},
+    {WINED3D_SV_SAMPLEINDEX, "SV_SampleIndex"},
 };
 
 const char *debug_d3dshaderinstructionhandler(enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx)
@@ -1210,6 +1225,22 @@ unsigned int shader_find_free_input_register(const struct wined3d_shader_reg_map
     return wined3d_log2i(map);
 }
 
+static void shader_dump_sysval_semantic(enum wined3d_sysval_semantic semantic)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(sysval_semantic_names); ++i)
+    {
+        if (sysval_semantic_names[i].sysval_semantic == semantic)
+        {
+            TRACE("%s", sysval_semantic_names[i].sysval_name);
+            return;
+        }
+    }
+
+    TRACE("unknown_sysval_semantic(%#x)", semantic);
+}
+
 static void shader_dump_decl_usage(const struct wined3d_shader_semantic *semantic,
         const struct wined3d_shader_version *shader_version)
 {
@@ -1883,6 +1914,13 @@ static void shader_trace_init(const struct wined3d_shader_frontend *fe, void *fe
             shader_dump_interpolation_mode(ins.flags);
             TRACE(" ");
             shader_dump_dst_param(&ins.declaration.dst, &shader_version);
+        }
+        else if (ins.handler_idx == WINED3DSIH_DCL_INPUT_PS_SGV)
+        {
+            TRACE("%s ", shader_opcode_names[ins.handler_idx]);
+            shader_dump_dst_param(&ins.declaration.register_semantic.reg, &shader_version);
+            TRACE(", ");
+            shader_dump_sysval_semantic(ins.declaration.register_semantic.sysval_semantic);
         }
         else if (ins.handler_idx == WINED3DSIH_DCL_INPUT
                 || ins.handler_idx == WINED3DSIH_DCL_OUTPUT)
