@@ -125,6 +125,7 @@ static struct winstation *create_winstation( struct directory *root, const struc
                 return NULL;
             }
         }
+        else clear_error();
     }
     return winstation;
 }
