@@ -108,7 +108,7 @@
 @ stub WsReadChars
 @ stub WsReadCharsUtf8
 @ stub WsReadElement
-@ stub WsReadEndAttribute
+@ stdcall WsReadEndAttribute(ptr ptr)
 @ stdcall WsReadEndElement(ptr ptr)
 @ stub WsReadEndpointAddressExtension
 @ stub WsReadEnvelopeEnd

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Hans Leidekker for CodeWeavers
+ * Copyright 2015, 2016 Hans Leidekker for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1368,6 +1368,25 @@ HRESULT WINAPI WsReadStartAttribute( WS_XML_READER *handle, ULONG index, WS_ERRO
 
     reader->current_attr = index;
     reader->state = READER_STATE_STARTATTRIBUTE;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsReadEndAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsReadEndAttribute( WS_XML_READER *handle, WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader) return E_INVALIDARG;
+
+    if (reader->state != READER_STATE_STARTATTRIBUTE)
+        return WS_E_INVALID_FORMAT;
+
+    reader->state = READER_STATE_STARTELEMENT;
     return S_OK;
 }
 
