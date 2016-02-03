@@ -172,7 +172,7 @@
 @ stub WsWriteCharsUtf8
 @ stdcall WsWriteElement(ptr ptr long ptr long ptr)
 @ stdcall WsWriteEndAttribute(ptr ptr)
-@ stub WsWriteEndCData
+@ stdcall WsWriteEndCData(ptr ptr)
 @ stdcall WsWriteEndElement(ptr ptr)
 @ stdcall WsWriteEndStartElement(ptr ptr)
 @ stub WsWriteEnvelopeEnd
@@ -182,7 +182,7 @@
 @ stub WsWriteNode
 @ stub WsWriteQualifiedName
 @ stdcall WsWriteStartAttribute(ptr ptr ptr ptr long ptr)
-@ stub WsWriteStartCData
+@ stdcall WsWriteStartCData(ptr ptr)
 @ stdcall WsWriteStartElement(ptr ptr ptr ptr ptr)
 @ stdcall WsWriteText(ptr ptr ptr)
 @ stdcall WsWriteType(ptr long long ptr long ptr long ptr)

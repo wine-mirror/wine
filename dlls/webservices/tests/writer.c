@@ -971,6 +971,54 @@ static void test_WsWriteAttribute(void)
     WsFreeWriter( writer );
 }
 
+static void test_WsWriteStartCData(void)
+{
+    HRESULT hr;
+    WS_XML_WRITER *writer;
+    WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
+    WS_XML_UTF8_TEXT text;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndCData( writer, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, NULL, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "", __LINE__ );
+
+    hr = WsWriteStartCData( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t><![CDATA[", __LINE__ );
+
+    text.text.textType = WS_XML_TEXT_TYPE_UTF8;
+    text.value.bytes = (BYTE *)"<data>";
+    text.value.length = 6;
+    hr = WsWriteText( writer, &text.text, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t><![CDATA[<data>", __LINE__ );
+
+    hr = WsWriteEndCData( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t><![CDATA[<data>]]>", __LINE__ );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output( writer, "<t><![CDATA[<data>]]></t>", __LINE__ );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -980,9 +1028,10 @@ START_TEST(writer)
     test_WsWriteStartElement();
     test_WsWriteStartAttribute();
     test_WsWriteType();
+    test_basic_type();
+    test_simple_struct_type();
     test_WsWriteElement();
     test_WsWriteValue();
     test_WsWriteAttribute();
-    test_basic_type();
-    test_simple_struct_type();
+    test_WsWriteStartCData();
 }

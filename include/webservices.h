@@ -590,10 +590,12 @@ HRESULT WINAPI WsWriteAttribute(WS_XML_WRITER*, const WS_ATTRIBUTE_DESCRIPTION*,
 HRESULT WINAPI WsWriteElement(WS_XML_WRITER*, const WS_ELEMENT_DESCRIPTION*, WS_WRITE_OPTION,
                               const void*, ULONG, WS_ERROR*);
 HRESULT WINAPI WsWriteEndAttribute(WS_XML_WRITER*, WS_ERROR*);
+HRESULT WINAPI WsWriteEndCData(WS_XML_WRITER*, WS_ERROR*);
 HRESULT WINAPI WsWriteEndElement(WS_XML_WRITER*, WS_ERROR*);
 HRESULT WINAPI WsWriteEndStartElement(WS_XML_WRITER*, WS_ERROR*);
 HRESULT WINAPI WsWriteStartAttribute(WS_XML_WRITER*, const WS_XML_STRING*, const WS_XML_STRING*,
                                      const WS_XML_STRING*, BOOL, WS_ERROR*);
+HRESULT WINAPI WsWriteStartCData(WS_XML_WRITER*, WS_ERROR*);
 HRESULT WINAPI WsWriteStartElement(WS_XML_WRITER*, const WS_XML_STRING*, const WS_XML_STRING*,
                                    const WS_XML_STRING*, WS_ERROR*);
 HRESULT WINAPI WsWriteText(WS_XML_WRITER*, const WS_XML_TEXT*, WS_ERROR*);

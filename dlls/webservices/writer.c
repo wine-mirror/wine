@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Hans Leidekker for CodeWeavers
+ * Copyright 2015, 2016 Hans Leidekker for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -64,9 +64,11 @@ enum writer_state
     WRITER_STATE_STARTELEMENT,
     WRITER_STATE_STARTENDELEMENT,
     WRITER_STATE_STARTATTRIBUTE,
+    WRITER_STATE_STARTCDATA,
     WRITER_STATE_ENDSTARTELEMENT,
     WRITER_STATE_TEXT,
-    WRITER_STATE_ENDELEMENT
+    WRITER_STATE_ENDELEMENT,
+    WRITER_STATE_ENDCDATA
 };
 
 struct writer
@@ -725,6 +727,49 @@ HRESULT WINAPI WsWriteStartAttribute( WS_XML_WRITER *handle, const WS_XML_STRING
     if (writer->state != WRITER_STATE_STARTELEMENT) return WS_E_INVALID_OPERATION;
 
     return write_add_attribute( writer, prefix, localname, ns, single );
+}
+
+/**************************************************************************
+ *          WsWriteStartCData		[webservices.@]
+ */
+HRESULT WINAPI WsWriteStartCData( WS_XML_WRITER *handle, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+
+    /* flush current start element if necessary */
+    if (writer->state == WRITER_STATE_STARTELEMENT && ((hr = write_endstartelement( writer )) != S_OK))
+        return hr;
+
+    if ((hr = write_grow_buffer( writer, 9 )) != S_OK) return hr;
+    write_bytes( writer, (const BYTE *)"<![CDATA[", 9 );
+    writer->state = WRITER_STATE_STARTCDATA;
+    return S_OK;
+}
+
+/**************************************************************************
+ *          WsWriteEndCData		[webservices.@]
+ */
+HRESULT WINAPI WsWriteEndCData( WS_XML_WRITER *handle, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    HRESULT hr;
+
+    TRACE( "%p %p\n", handle, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer) return E_INVALIDARG;
+    if (writer->state != WRITER_STATE_STARTCDATA) return WS_E_INVALID_OPERATION;
+
+    if ((hr = write_grow_buffer( writer, 3 )) != S_OK) return hr;
+    write_bytes( writer, (const BYTE *)"]]>", 3 );
+    writer->state = WRITER_STATE_ENDCDATA;
+    return S_OK;
 }
 
 static HRESULT write_add_element_node( struct writer *writer, const WS_XML_STRING *prefix,
