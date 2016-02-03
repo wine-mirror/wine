@@ -517,8 +517,8 @@ HRESULT wined3d_volume_map(struct wined3d_volume *volume,
     const struct wined3d_format *format = volume->resource.format;
     const unsigned int fmt_flags = volume->container->resource.format_flags;
 
-    TRACE("volume %p, map_desc %p, box %p, flags %#x.\n",
-            volume, map_desc, box, flags);
+    TRACE("volume %p, map_desc %p, box %s, flags %#x.\n",
+            volume, map_desc, debug_box(box), flags);
 
     map_desc->data = NULL;
     if (!(volume->resource.access_flags & WINED3D_RESOURCE_ACCESS_CPU))
@@ -538,8 +538,8 @@ HRESULT wined3d_volume_map(struct wined3d_volume *volume,
     }
     if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && !volume_check_block_align(volume, box))
     {
-        WARN("Map box is misaligned for %ux%u blocks.\n",
-                format->block_width, format->block_height);
+        WARN("Map box %s is misaligned for %ux%u blocks.\n",
+                debug_box(box), format->block_width, format->block_height);
         return WINED3DERR_INVALIDCALL;
     }
 
@@ -612,14 +612,10 @@ HRESULT wined3d_volume_map(struct wined3d_volume *volume,
 
     if (!box)
     {
-        TRACE("No box supplied - all is ok\n");
         map_desc->data = base_memory;
     }
     else
     {
-        TRACE("Lock Box (%p) = l %u, t %u, r %u, b %u, fr %u, ba %u\n",
-                box, box->left, box->top, box->right, box->bottom, box->front, box->back);
-
         if ((fmt_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
         {
             /* Compressed textures are block based, so calculate the offset of

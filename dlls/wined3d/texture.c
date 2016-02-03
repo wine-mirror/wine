@@ -712,7 +712,7 @@ HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
 {
     struct wined3d_resource *sub_resource;
 
-    TRACE("texture %p, layer %u, dirty_region %p.\n", texture, layer, dirty_region);
+    TRACE("texture %p, layer %u, dirty_region %s.\n", texture, layer, debug_box(dirty_region));
 
     if (!(sub_resource = wined3d_texture_get_sub_resource(texture, layer * texture->level_count)))
     {

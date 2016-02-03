@@ -2460,8 +2460,8 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
     const struct wined3d_gl_info *gl_info;
     BYTE *base_memory;
 
-    TRACE("surface %p, map_desc %p, box %p, flags %#x.\n",
-            surface, map_desc, box, flags);
+    TRACE("surface %p, map_desc %p, box %s, flags %#x.\n",
+            surface, map_desc, debug_box(box), flags);
 
     if (surface->resource.map_count)
     {
@@ -2472,8 +2472,8 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
     if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && box
             && !surface_check_block_align(surface, box))
     {
-        WARN("Map rect %p is misaligned for %ux%u blocks.\n",
-                box, format->block_width, format->block_height);
+        WARN("Map box %s is misaligned for %ux%u blocks.\n",
+                debug_box(box), format->block_width, format->block_height);
 
         if (surface->resource.pool == WINED3D_POOL_DEFAULT)
             return WINED3DERR_INVALIDCALL;

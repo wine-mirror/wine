@@ -3965,9 +3965,9 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
     HRESULT hr;
 
     TRACE("device %p, dst_resource %p, dst_sub_resource_idx %u, dst_x %u, dst_y %u, dst_z %u, "
-            "src_resource %p, src_sub_resource_idx %u, src_box %p.\n",
+            "src_resource %p, src_sub_resource_idx %u, src_box %s.\n",
             device, dst_resource, dst_sub_resource_idx, dst_x, dst_y, dst_z,
-            src_resource, src_sub_resource_idx, src_box);
+            src_resource, src_sub_resource_idx, debug_box(src_box));
 
     if (src_resource == dst_resource && src_sub_resource_idx == dst_sub_resource_idx)
     {
@@ -4017,9 +4017,7 @@ HRESULT CDECL wined3d_device_copy_sub_resource_region(struct wined3d_device *dev
     {
         if (src_box->front >= src_box->back)
         {
-            WARN("Invalid box (%u, %u, %u)->(%u, %u, %u) specified.\n",
-                    src_box->left, src_box->top, src_box->front,
-                    src_box->right, src_box->bottom, src_box->back);
+            WARN("Invalid box %s specified.\n", debug_box(src_box));
             return WINED3DERR_INVALIDCALL;
         }
 
@@ -4060,8 +4058,8 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
     POINT dst_point;
     RECT src_rect;
 
-    TRACE("device %p, resource %p, sub_resource_idx %u, box %p, data %p, row_pitch %u, depth_pitch %u.\n",
-            device, resource, sub_resource_idx, box, data, row_pitch, depth_pitch);
+    TRACE("device %p, resource %p, sub_resource_idx %u, box %s, data %p, row_pitch %u, depth_pitch %u.\n",
+            device, resource, sub_resource_idx, debug_box(box), data, row_pitch, depth_pitch);
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
     {
@@ -4102,8 +4100,7 @@ void CDECL wined3d_device_update_sub_resource(struct wined3d_device *device, str
                 || box->top >= box->bottom || box->bottom > sub_resource->height
                 || box->front >= box->back)
         {
-            WARN("Invalid box (%u, %u, %u)->(%u, %u, %u) specified.\n",
-                    box->left, box->top, box->front, box->right, box->bottom, box->back);
+            WARN("Invalid box %s specified.\n", debug_box(box));
             return;
         }
 

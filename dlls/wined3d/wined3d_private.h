@@ -2936,6 +2936,7 @@ void swapchain_update_draw_bindings(struct wined3d_swapchain *swapchain) DECLSPE
  */
 
 /* Trace routines */
+const char *debug_box(const struct wined3d_box *box) DECLSPEC_HIDDEN;
 const char *debug_d3dshaderinstructionhandler(enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx) DECLSPEC_HIDDEN;
 const char *debug_d3dformat(enum wined3d_format_id format_id) DECLSPEC_HIDDEN;
 const char *debug_d3ddevicetype(enum wined3d_device_type device_type) DECLSPEC_HIDDEN;

@@ -2958,6 +2958,15 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
 /*****************************************************************************
  * Trace formatting of useful values
  */
+const char *debug_box(const struct wined3d_box *box)
+{
+    if (!box)
+        return "(null)";
+    return wine_dbg_sprintf("(%u, %u, %u)-(%u, %u, %u)",
+            box->left, box->top, box->front,
+            box->right, box->bottom, box->back);
+}
+
 const char *debug_d3dformat(enum wined3d_format_id format_id)
 {
     switch (format_id)
