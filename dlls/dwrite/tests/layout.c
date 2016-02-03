@@ -3207,7 +3207,7 @@ static IDWriteFontFace *get_fontface_from_format(IDWriteTextFormat *format)
     return fontface;
 }
 
-static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT32 size)
+static BOOL get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT32 size)
 {
     UINT32 index;
     BOOL exists = FALSE;
@@ -3217,8 +3217,14 @@ static void get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT3
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(exists, "got %d\n", exists);
 
-    hr = IDWriteLocalizedStrings_GetString(strings, index, buff, size);
-    ok(hr == S_OK, "got 0x%08x\n", hr);
+    if (exists) {
+        hr = IDWriteLocalizedStrings_GetString(strings, index, buff, size);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+    }
+    else
+        *buff = 0;
+
+    return exists;
 }
 
 static void test_GetLineMetrics(void)
@@ -3274,6 +3280,7 @@ static void test_GetLineMetrics(void)
         IDWriteLocalizedStrings *names;
         IDWriteFontFamily *family;
         IDWriteFont *font;
+        BOOL exists;
 
         format = NULL;
         layout = NULL;
@@ -3291,10 +3298,42 @@ static void test_GetLineMetrics(void)
         hr = IDWriteFontFamily_GetFamilyNames(family, &names);
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
-        get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0]));
+        if (!(exists = get_enus_string(names, nameW, sizeof(nameW)/sizeof(nameW[0])))) {
+            IDWriteLocalFontFileLoader *localloader;
+            IDWriteFontFileLoader *loader;
+            IDWriteFontFile *file;
+            const void *key;
+            UINT32 keysize;
+            UINT32 count;
+
+            count = 1;
+            hr = IDWriteFontFace_GetFiles(fontface, &count, &file);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            hr = IDWriteFontFile_GetLoader(file, &loader);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            hr = IDWriteFontFileLoader_QueryInterface(loader, &IID_IDWriteLocalFontFileLoader, (void**)&localloader);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+            IDWriteFontFileLoader_Release(loader);
+
+            hr = IDWriteFontFile_GetReferenceKey(file, &key, &keysize);
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            hr = IDWriteLocalFontFileLoader_GetFilePathFromKey(localloader, key, keysize, nameW, sizeof(nameW)/sizeof(*nameW));
+            ok(hr == S_OK, "got 0x%08x\n", hr);
+
+            skip("Failed to get English family name, font file %s\n", wine_dbgstr_w(nameW));
+
+            IDWriteLocalFontFileLoader_Release(localloader);
+            IDWriteFontFile_Release(file);
+        }
 
         IDWriteLocalizedStrings_Release(names);
         IDWriteFont_Release(font);
+
+        if (!exists)
+            goto cleanup;
 
         /* This will effectively skip on Vista/2008 only, newer systems work just fine with this font. */
         if (!lstrcmpW(nameW, mvboliW)) {
