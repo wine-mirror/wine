@@ -3415,6 +3415,35 @@ static void test_texture(void)
         0x3b088889, 0x00000000, 0x00000000, 0x09000045, 0x001020f2, 0x00000000, 0x00100046, 0x00000000,
         0x00107e46, 0x00000000, 0x00106000, 0x00000000, 0x0100003e,
     };
+    static const DWORD ps_sample_b_code[] =
+    {
+#if 0
+        Texture2D t;
+        SamplerState s;
+
+        float bias;
+
+        float4 main(float4 position : SV_POSITION) : SV_Target
+        {
+            float2 p;
+
+            p.x = position.x / 640.0f;
+            p.y = position.y / 480.0f;
+            return t.SampleBias(s, p, bias);
+        }
+#endif
+        0x43425844, 0xc39b0686, 0x8244a7fc, 0x14c0b97a, 0x2900b3b7, 0x00000001, 0x00000150, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x5449534f, 0x004e4f49,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000b4, 0x00000040,
+        0x0000002d, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x0300005a, 0x00106000, 0x00000000,
+        0x04001858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000, 0x00000001,
+        0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0a000038, 0x00100032, 0x00000000,
+        0x00101046, 0x00000000, 0x00004002, 0x3acccccd, 0x3b088889, 0x00000000, 0x00000000, 0x0c00004a,
+        0x001020f2, 0x00000000, 0x00100046, 0x00000000, 0x00107e46, 0x00000000, 0x00106000, 0x00000000,
+        0x0020800a, 0x00000000, 0x00000000, 0x0100003e,
+    };
     static const DWORD ps_sample_l_code[] =
     {
 #if 0
@@ -3448,6 +3477,7 @@ static void test_texture(void)
     static const struct shader ps_ld_sint8 = {ps_ld_sint8_code, sizeof(ps_ld_sint8_code)};
     static const struct shader ps_ld_uint8 = {ps_ld_uint8_code, sizeof(ps_ld_uint8_code)};
     static const struct shader ps_sample = {ps_sample_code, sizeof(ps_sample_code)};
+    static const struct shader ps_sample_b = {ps_sample_b_code, sizeof(ps_sample_b_code)};
     static const struct shader ps_sample_l = {ps_sample_l_code, sizeof(ps_sample_l_code)};
     static const struct
     {
@@ -3581,6 +3611,18 @@ static void test_texture(void)
         {&ps_sample,   &bc3_texture,   D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, bc_colors},
         {&ps_sample,   &rgba_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  0.0f, rgba_level_0},
         {&ps_sample,   &rgba_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D10_FLOAT32_MAX,  0.0f, rgba_level_0},
+        {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        2.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
+        {&ps_sample,   &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        8.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, level_1_colors},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, rgba_level_0},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        8.0f, 0.0f, D3D11_FLOAT32_MAX,  0.0f, level_1_colors},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  8.0f, level_1_colors},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  8.4f, level_1_colors},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  8.5f, level_2_colors},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D11_FLOAT32_MAX,  9.0f, level_2_colors},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              2.0f,  1.0f, rgba_level_0},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              2.0f,  9.0f, level_2_colors},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              1.0f,  9.0f, level_1_colors},
+        {&ps_sample_b, &rgba_texture,  D3D11_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f,              0.0f,  9.0f, rgba_level_0},
         {&ps_sample_l, &rgba_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D10_FLOAT32_MAX, -1.0f, rgba_level_0},
         {&ps_sample_l, &rgba_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D10_FLOAT32_MAX,  0.0f, rgba_level_0},
         {&ps_sample_l, &rgba_texture,  D3D10_FILTER_MIN_MAG_MIP_POINT,        0.0f, 0.0f, D3D10_FLOAT32_MAX,  0.4f, rgba_level_0},
