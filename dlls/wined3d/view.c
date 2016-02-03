@@ -145,21 +145,6 @@ HRESULT CDECL wined3d_rendertarget_view_create(const struct wined3d_rendertarget
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_rendertarget_view_create_from_surface(struct wined3d_surface *surface,
-        void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_rendertarget_view **view)
-{
-    struct wined3d_rendertarget_view_desc desc;
-
-    TRACE("surface %p, parent %p, parent_ops %p, view %p.\n", surface, parent, parent_ops, view);
-
-    desc.format_id = surface->resource.format->id;
-    desc.u.texture.level_idx = surface->texture_level;
-    desc.u.texture.layer_idx = surface->texture_layer;
-    desc.u.texture.layer_count = 1;
-
-    return wined3d_rendertarget_view_create(&desc, &surface->container->resource, parent, parent_ops, view);
-}
-
 HRESULT CDECL wined3d_rendertarget_view_create_from_sub_resource(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, void *parent, const struct wined3d_parent_ops *parent_ops,
         struct wined3d_rendertarget_view **view)

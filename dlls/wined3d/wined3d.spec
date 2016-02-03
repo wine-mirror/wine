@@ -188,7 +188,6 @@
 @ cdecl wined3d_resource_unmap(ptr long)
 
 @ cdecl wined3d_rendertarget_view_create(ptr ptr ptr ptr ptr)
-@ cdecl wined3d_rendertarget_view_create_from_surface(ptr ptr ptr ptr)
 @ cdecl wined3d_rendertarget_view_create_from_sub_resource(ptr long ptr ptr ptr)
 @ cdecl wined3d_rendertarget_view_decref(ptr)
 @ cdecl wined3d_rendertarget_view_get_parent(ptr)
