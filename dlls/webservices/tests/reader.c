@@ -1805,6 +1805,72 @@ static void test_simple_struct_type(void)
     WsFreeHeap( heap );
 }
 
+static void test_cdata(void)
+{
+    static const char test[] = "<t><![CDATA[<data>]]></t>";
+    HRESULT hr;
+    WS_XML_READER *reader;
+    const WS_XML_NODE *node;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, test, sizeof(test) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFillReader( reader, sizeof(test) - 1, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", node->nodeType );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_CDATA, "got %u\n", node->nodeType );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node)
+    {
+        WS_XML_TEXT_NODE *text = (WS_XML_TEXT_NODE *)node;
+        ok( node->nodeType == WS_XML_NODE_TYPE_TEXT, "got %u\n", node->nodeType );
+        ok( text->text != NULL, "text not set\n" );
+        if (text->text)
+        {
+            WS_XML_UTF8_TEXT *utf8 = (WS_XML_UTF8_TEXT *)text->text;
+            ok( utf8->text.textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", utf8->text.textType );
+            ok( utf8->value.length == 6, "got %u\n", utf8->value.length );
+            ok( !memcmp( utf8->value.bytes, "<data>", 6 ), "wrong data\n" );
+        }
+    }
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_END_CDATA, "got %u\n", node->nodeType );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node) ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
+
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -1823,4 +1889,5 @@ START_TEST(reader)
     test_WsAlloc();
     test_WsMoveReader();
     test_simple_struct_type();
+    test_cdata();
 }
