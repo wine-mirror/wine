@@ -794,27 +794,32 @@ static inline void write_set_attribute_value( struct writer *writer, WS_XML_TEXT
 HRESULT WINAPI WsWriteText( WS_XML_WRITER *handle, const WS_XML_TEXT *text, WS_ERROR *error )
 {
     struct writer *writer = (struct writer *)handle;
-    WS_XML_UTF8_TEXT *src, *dst;
+    WS_XML_UTF8_TEXT *dst, *src = (WS_XML_UTF8_TEXT *)text;
+    HRESULT hr;
 
     TRACE( "%p %p %p\n", handle, text, error );
 
     if (!writer || !text) return E_INVALIDARG;
 
-    if (writer->state != WRITER_STATE_STARTATTRIBUTE)
-    {
-        FIXME( "can't handle writer state %u\n", writer->state );
-        return E_NOTIMPL;
-    }
     if (text->textType != WS_XML_TEXT_TYPE_UTF8)
     {
         FIXME( "text type %u not supported\n", text->textType );
         return E_NOTIMPL;
     }
-    src = (WS_XML_UTF8_TEXT *)text;
-    if (!(dst = alloc_utf8_text( src->value.bytes, src->value.length )))
-        return E_OUTOFMEMORY;
 
-    write_set_attribute_value( writer, &dst->text );
+    if (writer->state == WRITER_STATE_STARTATTRIBUTE)
+    {
+        if (!(dst = alloc_utf8_text( src->value.bytes, src->value.length )))
+            return E_OUTOFMEMORY;
+
+        write_set_attribute_value( writer, &dst->text );
+    }
+    else
+    {
+        if ((hr = write_grow_buffer( writer, src->value.length )) != S_OK) return hr;
+        write_bytes( writer, src->value.bytes, src->value.length );
+    }
+
     return S_OK;
 }
 
