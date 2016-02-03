@@ -1307,9 +1307,15 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
         else if (is_indic(scripts[i]))
             last_indic = base_indic(scripts[i]);
 
-        /* Some unicode points (Zero Width Space U+200B -
-           Right-to-Left Mark U+200F) will force us into bidi mode */
-        if (!forceLevels && pwcInChars[i] >= 0x200B && pwcInChars[i] <= 0x200F)
+        /* Some unicode points :
+           (Zero Width Space U+200B - Right-to-Left Mark U+200F)
+           (Left Right Embed U+202A - Left Right Override U+202D)
+           (Left Right Isolate U+2066 - Pop Directional Isolate U+2069)
+           will force us into bidi mode */
+        if (!forceLevels && ((pwcInChars[i] >= 0x200B && pwcInChars[i] <= 0x200F) ||
+            (pwcInChars[i] >= 0x202A && pwcInChars[i] <= 0x202E) ||
+            (pwcInChars[i] >= 0x2066 && pwcInChars[i] <= 0x2069)))
+
             forceLevels = TRUE;
 
         /* Diacritical marks merge with other scripts */
