@@ -7922,8 +7922,8 @@ static void arbfp_blit_surface(struct wined3d_device *device, enum wined3d_blit_
     surface_invalidate_location(dst_surface, ~dst_surface->container->resource.draw_binding);
 }
 
-static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
-        const RECT *dst_rect, const struct wined3d_color *color)
+static HRESULT arbfp_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
+        const RECT *rect, const struct wined3d_color *color)
 {
     FIXME("Color filling not implemented by arbfp_blit\n");
     return WINED3DERR_INVALIDCALL;

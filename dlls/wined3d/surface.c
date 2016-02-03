@@ -3282,18 +3282,35 @@ static void surface_blt_to_drawable(const struct wined3d_device *device,
 
 HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const struct wined3d_color *color)
 {
-    struct wined3d_device *device = s->resource.device;
+    struct wined3d_resource *resource = &s->container->resource;
+    struct wined3d_device *device = resource->device;
+    struct wined3d_rendertarget_view_desc view_desc;
+    struct wined3d_rendertarget_view *view;
     const struct blit_shader *blitter;
+    HRESULT hr;
 
-    blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info, WINED3D_BLIT_OP_COLOR_FILL,
-            NULL, 0, 0, NULL, rect, s->resource.usage, s->resource.pool, s->resource.format);
-    if (!blitter)
+    if (!(blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info,
+            WINED3D_BLIT_OP_COLOR_FILL, NULL, 0, 0, NULL, rect, resource->usage, resource->pool, resource->format)))
     {
         FIXME("No blitter is capable of performing the requested color fill operation.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    return blitter->color_fill(device, s, rect, color);
+    view_desc.format_id = resource->format->id;
+    view_desc.u.texture.level_idx = s->texture_level;
+    view_desc.u.texture.layer_idx = s->texture_layer;
+    view_desc.u.texture.layer_count = 1;
+    if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc,
+            resource, NULL, &wined3d_null_parent_ops, &view)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = blitter->color_fill(device, view, rect, color);
+    wined3d_rendertarget_view_decref(view);
+
+    return hr;
 }
 
 static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RECT *dst_rect,
@@ -4158,23 +4175,13 @@ static BOOL ffp_blit_supported(const struct wined3d_gl_info *gl_info,
     }
 }
 
-static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
-        const RECT *dst_rect, const struct wined3d_color *color)
+static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
+        const RECT *rect, const struct wined3d_color *color)
 {
-    const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
-    struct wined3d_rendertarget_view *view;
+    const RECT draw_rect = {0, 0, view->width, view->height};
     struct wined3d_fb_state fb = {&view, NULL};
-    HRESULT hr;
 
-    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(dst_surface,
-            NULL, &wined3d_null_parent_ops, &view)))
-    {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-        return hr;
-    }
-
-    device_clear_render_targets(device, 1, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
-    wined3d_rendertarget_view_decref(view);
+    device_clear_render_targets(device, 1, &fb, 1, rect, &draw_rect, WINED3DCLEAR_TARGET, color, 0.0f, 0);
 
     return WINED3D_OK;
 }
@@ -4868,16 +4875,17 @@ release:
     return hr;
 }
 
-static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
-        const RECT *dst_rect, const struct wined3d_color *color)
+static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
+        const RECT *rect, const struct wined3d_color *color)
 {
+    struct wined3d_surface *surface = wined3d_rendertarget_view_get_surface(view);
     static const RECT src_rect;
     WINEDDBLTFX BltFx;
 
     memset(&BltFx, 0, sizeof(BltFx));
     BltFx.dwSize = sizeof(BltFx);
-    BltFx.u5.dwFillColor = wined3d_format_convert_from_float(dst_surface, color);
-    return surface_cpu_blt(dst_surface, dst_rect, NULL, &src_rect,
+    BltFx.u5.dwFillColor = wined3d_format_convert_from_float(surface, color);
+    return surface_cpu_blt(surface, rect, NULL, &src_rect,
             WINEDDBLT_COLORFILL, &BltFx, WINED3D_TEXF_POINT);
 }
 
