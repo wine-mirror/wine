@@ -1391,8 +1391,8 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
         }
         else
         {
-            BOOL inNumber = FALSE;
             static const WCHAR math_punc[] = {'#','$','%','+',',','-','.','/',':',0x2212, 0x2044, 0x00a0,0};
+            static const WCHAR repeatable_math_punc[] = {'#','$','%','+','-','/',0x2212, 0x2044,0};
 
             strength = heap_alloc_zero(cInChars * sizeof(WORD));
             if (!strength)
@@ -1407,21 +1407,48 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                     strength[i] = BIDI_STRONG;
                 }
 
+            /* Math punctuation bordered on both sides by numbers can be
+               merged into the number */
             for (i = 0; i < cInChars; i++)
             {
-                /* Script_Numeric and select puncuation at level 0 get bumped to level 2 */
-                if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && inNumber && strchrW(math_punc,pwcInChars[i]))
+                if (i > 0 && i < cInChars-1 &&
+                    scripts[i-1] == Script_Numeric &&
+                    strchrW(math_punc, pwcInChars[i]))
                 {
-                    scripts[i] = Script_Numeric;
+                    if (scripts[i+1] == Script_Numeric)
+                    {
+                        scripts[i] = Script_Numeric;
+                        levels[i] = levels[i-1];
+                        strength[i] = strength[i-1];
+                        i++;
+                    }
+                    else if (strchrW(repeatable_math_punc, pwcInChars[i]))
+                    {
+                        int j;
+                        for (j = i+1; j < cInChars; j++)
+                        {
+                            if (scripts[j] == Script_Numeric)
+                            {
+                                for(;i<j; i++)
+                                {
+                                    scripts[i] = Script_Numeric;
+                                    levels[i] = levels[i-1];
+                                    strength[i] = strength[i-1];
+                                }
+                            }
+                            else if (pwcInChars[i] != pwcInChars[j]) break;
+                        }
+                    }
+                }
+            }
+
+            for (i = 0; i < cInChars; i++)
+            {
+                /* Script_Numeric at level 0 get bumped to level 2 */
+                if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && scripts[i] == Script_Numeric)
+                {
                     levels[i] = 2;
                 }
-                else if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && scripts[i] == Script_Numeric)
-                {
-                    levels[i] = 2;
-                    inNumber = TRUE;
-                }
-                else
-                    inNumber = FALSE;
 
                 /* Joiners get merged preferencially right */
                 if (i > 0 && (pwcInChars[i] == ZWJ || pwcInChars[i] == ZWNJ))

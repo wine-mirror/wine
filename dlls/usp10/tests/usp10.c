@@ -456,6 +456,38 @@ static void test_ScriptItemize( void )
     static const itemTest t471[2] = {{{0,0,0,0,0},0,0,0,0,math_tag,TRUE,{-1,-1,-1,-1,0x0}},{{0,0,0,0,0},26,0,0,0,-1,FALSE}};
     static const itemTest t472[2] = {{{0,0,0,0,0},0,0,0,2,math_tag,TRUE,{-1,1,1,1,0x0}},{{0,0,0,0,0},26,0,0,0,-1,FALSE}};
 
+    /* Mathematical and Numeric combinations */
+    /* These have a leading hebrew character to force complicated itemization */
+    static const WCHAR test48[] = {0x05e9,' ','1','2','3','.'};
+    static const itemTest t481[4] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},
+        {{0,0,0,0,0},2,0,1,2,0,FALSE},{{0,0,0,0,0},5,0,0,0,0,FALSE},
+        {{0,0,0,0,0},6,0,0,0,-1,FALSE}};
+    static const WCHAR test49[] = {0x05e9,' ','1','2','.','1','2'};
+    static const itemTest t491[3] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},
+        {{0,0,0,0,0},2,0,1,2,0,FALSE},{{0,0,0,0,0},7,0,0,0,-1,FALSE}};
+    static const WCHAR test50[] = {0x05e9,' ','.','1','2','3'};
+    static const itemTest t501[4] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},
+        {{0,0,0,0,0},2,1,1,1,0,FALSE},{{0,0,0,0,0},3,0,1,2,0,FALSE},
+        {{0,0,0,0,0},6,0,0,0,-1,FALSE}};
+    static const WCHAR test51[] = {0x05e9,' ','a','b','.','1','2'};
+    static const itemTest t511[5] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},
+        {{0,0,0,0,0},1,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},4,0,0,0,0,FALSE},
+        {{0,0,0,0,0},5,0,0,2,0,FALSE},{{0,0,0,0,0},7,0,0,0,-1,FALSE}};
+    static const WCHAR test52[] = {0x05e9,' ','1','2','.','a','b'};
+    static const itemTest t521[5] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},
+        {{0,0,0,0,0},2,0,1,2,0,FALSE},{{0,0,0,0,0},4,0,0,0,0,FALSE},
+        {{0,0,0,0,0},5,0,0,0,latn_tag,FALSE},{{0,0,0,0,0},7,0,0,0,-1,FALSE}};
+    static const WCHAR test53[] = {0x05e9,' ','1','2','.','.','1','2'};
+    static const itemTest t531[5] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},
+        {{0,0,0,0,0},2,0,1,2,0,FALSE},{{0,0,0,0,0},4,1,1,1,0,FALSE},
+        {{0,0,0,0,0},6,0,1,2,0,FALSE},{{0,0,0,0,0},8,0,0,0,-1,FALSE}};
+    static const WCHAR test54[] = {0x05e9,' ','1','2','+','1','2'};
+    static const itemTest t541[3] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},
+        {{0,0,0,0,0},2,0,1,2,0,FALSE},{{0,0,0,0,0},7,0,0,0,-1,FALSE}};
+    static const WCHAR test55[] = {0x05e9,' ','1','2','+','+','1','2'};
+    static const itemTest t551[3] = {{{0,0,0,0,0},0,1,1,1,hebr_tag,FALSE},
+        {{0,0,0,0,0},2,0,1,2,0,FALSE},{{0,0,0,0,0},8,0,0,0,-1,FALSE}};
+
     SCRIPT_ITEM items[15];
     SCRIPT_CONTROL  Control;
     SCRIPT_STATE    State;
@@ -590,6 +622,14 @@ static void test_ScriptItemize( void )
     test_items_ok(test45,24,&Control,&State,1,t451,FALSE,0);
     test_items_ok(test46,16,&Control,&State,1,t461,FALSE,0);
     test_items_ok(test47,26,&Control,&State,1,t471,FALSE,0);
+    test_items_ok(test48,6,&Control,&State,3,t481,FALSE,0);
+    test_items_ok(test49,7,&Control,&State,2,t491,FALSE,0);
+    test_items_ok(test50,6,&Control,&State,3,t501,FALSE,0);
+    test_items_ok(test51,7,&Control,&State,4,t511,FALSE,0);
+    test_items_ok(test52,7,&Control,&State,4,t521,FALSE,0);
+    test_items_ok(test53,8,&Control,&State,4,t531,FALSE,0);
+    test_items_ok(test54,7,&Control,&State,2,t541,FALSE,0);
+    test_items_ok(test55,8,&Control,&State,2,t551,FALSE,0);
 
     State.uBidiLevel = 1;
     test_items_ok(test1,4,&Control,&State,1,t12,FALSE,0);
