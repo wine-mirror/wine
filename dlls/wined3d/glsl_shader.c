@@ -4408,6 +4408,10 @@ static void shader_glsl_sample(const struct wined3d_shader_instruction *ins)
     {
         case WINED3DSIH_SAMPLE:
             break;
+        case WINED3DSIH_SAMPLE_B:
+            shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &lod_param);
+            lod_param_str = lod_param.param_str;
+            break;
         case WINED3DSIH_SAMPLE_LOD:
             flags |= WINED3D_GLSL_SAMPLE_LOD;
             shader_glsl_add_src_param(ins, &ins->src[3], WINED3DSP_WRITEMASK_0, &lod_param);
@@ -8104,7 +8108,7 @@ static const SHADER_HANDLER shader_glsl_instruction_handler_table[WINED3DSIH_TAB
     /* WINED3DSIH_ROUND_Z                       */ shader_glsl_map2gl,
     /* WINED3DSIH_RSQ                           */ shader_glsl_scalar_op,
     /* WINED3DSIH_SAMPLE                        */ shader_glsl_sample,
-    /* WINED3DSIH_SAMPLE_B                      */ NULL,
+    /* WINED3DSIH_SAMPLE_B                      */ shader_glsl_sample,
     /* WINED3DSIH_SAMPLE_C                      */ NULL,
     /* WINED3DSIH_SAMPLE_C_LZ                   */ NULL,
     /* WINED3DSIH_SAMPLE_GRAD                   */ NULL,
