@@ -1101,16 +1101,6 @@ static HRESULT read_endelement( struct reader *reader )
     WS_XML_STRING *prefix, *localname;
     HRESULT hr;
 
-    switch (reader->state)
-    {
-    case READER_STATE_TEXT:
-    case READER_STATE_STARTELEMENT:
-    case READER_STATE_STARTENDELEMENT:
-        break;
-    default:
-        return WS_E_INVALID_FORMAT;
-    }
-
     if (read_cmp( reader, "</", 2 )) return WS_E_INVALID_FORMAT;
     read_skip( reader, 2 );
 

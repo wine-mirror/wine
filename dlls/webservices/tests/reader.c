@@ -885,7 +885,7 @@ static void test_WsReadStartElement(void)
     if (node) ok( node->nodeType == WS_XML_NODE_TYPE_END_ELEMENT, "got %u\n", node->nodeType );
 
     hr = WsReadEndElement( reader, NULL );
-    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     hr = WsGetReaderNode( reader, &node, NULL );
     ok( hr == S_OK, "got %08x\n", hr );
