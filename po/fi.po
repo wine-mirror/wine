@@ -13010,8 +13010,6 @@ msgstr ""
 "järjestelmän laajuiset ja sovelluskohtaiset asetukset."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
 msgstr "&Lisää sovellus..."
 
@@ -13075,7 +13073,7 @@ msgstr "&Uusi ohitus kirjastolle:"
 
 #: winecfg.rc:196
 msgid "A&dd"
-msgstr ""
+msgstr "&Lisää"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13102,14 +13100,12 @@ msgid "&Native (Windows)"
 msgstr "&Natiivi (Windows)"
 
 #: winecfg.rc:211
-#, fuzzy
-#| msgid "Bui&ltin then Native"
 msgid "Buil&tin then Native"
 msgstr "S&isäinen, sitten natiivi"
 
 #: winecfg.rc:212
 msgid "Nati&ve then Builtin"
-msgstr "Natiivi, sitten sisäinen"
+msgstr "Na&tiivi, sitten sisäinen"
 
 #: winecfg.rc:220
 msgid "Select Drive Letter"
@@ -13126,30 +13122,24 @@ msgid ""
 msgstr "Levyasemien hallintaan ei saatu yhteyttä. Asemia ei voi muokata."
 
 #: winecfg.rc:236
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
 msgstr "&Lisää..."
 
 #: winecfg.rc:238
-#, fuzzy
-#| msgid "Autodetect"
 msgid "Aut&odetect"
-msgstr "Hae automaattisesti"
+msgstr "&Hae automaattisesti"
 
 #: winecfg.rc:241
 msgid "&Path:"
-msgstr "&Polku:"
+msgstr "P&olku:"
 
 #: winecfg.rc:248 winecfg.rc:38
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
-msgstr "Nä&ytä lisäasetukset"
+msgstr "Näytä lisä&asetukset"
 
 #: winecfg.rc:249
 msgid "De&vice:"
-msgstr "Lai&te:"
+msgstr "La&ite:"
 
 #: winecfg.rc:251
 msgid "Bro&wse..."
@@ -13161,13 +13151,11 @@ msgstr "&Nimi:"
 
 #: winecfg.rc:255
 msgid "S&erial:"
-msgstr "&Sarjanumero:"
+msgstr "Sarjanumer&o:"
 
 #: winecfg.rc:258
-#, fuzzy
-#| msgid "Show &dot files"
 msgid "&Show dot files"
-msgstr "Näytä p&istetiedostot"
+msgstr "N&äytä pistetiedostot"
 
 #: winecfg.rc:265
 msgid "Driver diagnostics"
@@ -13246,10 +13234,8 @@ msgid "Select the Unix target directory, please."
 msgstr "Valitse unix-kohdekansio."
 
 #: winecfg.rc:37
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
-msgstr "&Piilota lisäasetukset"
+msgstr "Piilota lisä&asetukset"
 
 #: winecfg.rc:39
 msgid "(No Theme)"
@@ -13709,12 +13695,10 @@ msgid "Configuration error"
 msgstr "Virhe asetuksissa"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "Näytön puskurin on oltava suurempi tai yhtä suuri kuin ikkunan"
+msgstr "Näyttöpuskurin on oltava vähintään ikkunan kokoinen"
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
