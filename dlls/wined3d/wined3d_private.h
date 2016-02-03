@@ -1465,7 +1465,7 @@ struct blit_shader
     HRESULT (*color_fill)(struct wined3d_device *device, struct wined3d_rendertarget_view *view,
             const RECT *rect, const struct wined3d_color *color);
     HRESULT (*depth_fill)(struct wined3d_device *device,
-            struct wined3d_surface *surface, const RECT *rect, float depth);
+            struct wined3d_rendertarget_view *view, const RECT *rect, float depth);
     void (*blit_surface)(struct wined3d_device *device, enum wined3d_blit_op op, DWORD filter,
             struct wined3d_surface *src_surface, const RECT *src_rect,
             struct wined3d_surface *dst_surface, const RECT *dst_rect,

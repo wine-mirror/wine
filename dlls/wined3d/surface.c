@@ -1048,19 +1048,35 @@ static BOOL surface_convert_depth_to_float(const struct wined3d_surface *surface
 
 static HRESULT wined3d_surface_depth_fill(struct wined3d_surface *surface, const RECT *rect, float depth)
 {
-    const struct wined3d_resource *resource = &surface->container->resource;
+    struct wined3d_resource *resource = &surface->container->resource;
     struct wined3d_device *device = resource->device;
+    struct wined3d_rendertarget_view_desc view_desc;
+    struct wined3d_rendertarget_view *view;
     const struct blit_shader *blitter;
+    HRESULT hr;
 
-    blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info, WINED3D_BLIT_OP_DEPTH_FILL,
-            NULL, 0, 0, NULL, rect, resource->usage, resource->pool, resource->format);
-    if (!blitter)
+    if (!(blitter = wined3d_select_blitter(&device->adapter->gl_info, &device->adapter->d3d_info,
+            WINED3D_BLIT_OP_DEPTH_FILL, NULL, 0, 0, NULL, rect, resource->usage, resource->pool, resource->format)))
     {
         FIXME("No blitter is capable of performing the requested depth fill operation.\n");
         return WINED3DERR_INVALIDCALL;
     }
 
-    return blitter->depth_fill(device, surface, rect, depth);
+    view_desc.format_id = resource->format->id;
+    view_desc.u.texture.level_idx = surface->texture_level;
+    view_desc.u.texture.layer_idx = surface->texture_layer;
+    view_desc.u.texture.layer_count = 1;
+    if (FAILED(hr = wined3d_rendertarget_view_create(&view_desc,
+            resource, NULL, &wined3d_null_parent_ops, &view)))
+    {
+        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
+        return hr;
+    }
+
+    hr = blitter->depth_fill(device, view, rect, depth);
+    wined3d_rendertarget_view_decref(view);
+
+    return hr;
 }
 
 static HRESULT wined3d_surface_depth_blt(struct wined3d_surface *src_surface, DWORD src_location, const RECT *src_rect,
@@ -4186,22 +4202,13 @@ static HRESULT ffp_blit_color_fill(struct wined3d_device *device, struct wined3d
     return WINED3D_OK;
 }
 
-static HRESULT ffp_blit_depth_fill(struct wined3d_device *device, struct wined3d_surface *dst_surface,
-        const RECT *dst_rect, float depth)
+static HRESULT ffp_blit_depth_fill(struct wined3d_device *device,
+        struct wined3d_rendertarget_view *view, const RECT *rect, float depth)
 {
-    const RECT draw_rect = {0, 0, dst_surface->resource.width, dst_surface->resource.height};
-    struct wined3d_fb_state fb = {NULL, NULL};
-    HRESULT hr;
+    const RECT draw_rect = {0, 0, view->width, view->height};
+    struct wined3d_fb_state fb = {NULL, view};
 
-    if (FAILED(hr = wined3d_rendertarget_view_create_from_surface(dst_surface,
-            NULL, &wined3d_null_parent_ops, &fb.depth_stencil)))
-    {
-        ERR("Failed to create rendertarget view, hr %#x.\n", hr);
-        return hr;
-    }
-
-    device_clear_render_targets(device, 0, &fb, 1, dst_rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
-    wined3d_rendertarget_view_decref(fb.depth_stencil);
+    device_clear_render_targets(device, 0, &fb, 1, rect, &draw_rect, WINED3DCLEAR_ZBUFFER, 0, depth, 0);
 
     return WINED3D_OK;
 }
@@ -4890,7 +4897,7 @@ static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d
 }
 
 static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
-        struct wined3d_surface *surface, const RECT *rect, float depth)
+        struct wined3d_rendertarget_view *view, const RECT *rect, float depth)
 {
     FIXME("Depth filling not implemented by cpu_blit.\n");
     return WINED3DERR_INVALIDCALL;
