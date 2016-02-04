@@ -385,6 +385,17 @@ typedef struct
     ULONG_PTR dwExtraInfo;
 } MOUSEHOOKSTRUCT, *PMOUSEHOOKSTRUCT, *LPMOUSEHOOKSTRUCT;
 
+typedef struct
+{
+    struct { /* MOUSEHOOKSTRUCT */
+        POINT pt;
+        HWND  hwnd;
+        UINT  wHitTestCode;
+        ULONG_PTR dwExtraInfo;
+    } DUMMYSTRUCTNAME;
+    DWORD mouseData;
+} MOUSEHOOKSTRUCTEX, *PMOUSEHOOKSTRUCTEX, *LPMOUSEHOOKSTRUCTEX;
+
 
     /* Hardware hook structure */
 
