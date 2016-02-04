@@ -131,6 +131,8 @@ static const struct object_ops named_pipe_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
     named_pipe_open_file,         /* open_file */
     no_close_handle,              /* close_handle */
     named_pipe_destroy            /* destroy */
@@ -160,6 +162,8 @@ static const struct object_ops pipe_server_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
     pipe_server_destroy           /* destroy */
@@ -202,6 +206,8 @@ static const struct object_ops pipe_client_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
     pipe_client_destroy           /* destroy */
@@ -248,6 +254,8 @@ static const struct object_ops named_pipe_device_ops =
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     named_pipe_device_lookup_name,    /* lookup_name */
+    no_link_name,                     /* link_name */
+    NULL,                             /* unlink_name */
     named_pipe_device_open_file,      /* open_file */
     fd_close_handle,                  /* close_handle */
     named_pipe_device_destroy         /* destroy */

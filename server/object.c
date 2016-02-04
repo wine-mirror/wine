@@ -551,6 +551,12 @@ struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
     return NULL;
 }
 
+int no_link_name( struct object *obj, struct object_name *name, struct object *parent )
+{
+    set_error( STATUS_OBJECT_TYPE_MISMATCH );
+    return 0;
+}
+
 struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
                              unsigned int options )
 {

@@ -91,6 +91,8 @@ static const struct object_ops file_ops =
     file_get_sd,                  /* get_sd */
     file_set_sd,                  /* set_sd */
     no_lookup_name,               /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
     file_open_file,               /* open_file */
     fd_close_handle,              /* close_handle */
     file_destroy                  /* destroy */

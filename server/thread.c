@@ -117,6 +117,8 @@ static const struct object_ops thread_apc_ops =
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
     no_lookup_name,             /* lookup_name */
+    no_link_name,               /* link_name */
+    NULL,                       /* unlink_name */
     no_open_file,               /* open_file */
     no_close_handle,            /* close_handle */
     thread_apc_destroy          /* destroy */
@@ -146,6 +148,8 @@ static const struct object_ops thread_ops =
     default_get_sd,             /* get_sd */
     default_set_sd,             /* set_sd */
     no_lookup_name,             /* lookup_name */
+    no_link_name,               /* link_name */
+    NULL,                       /* unlink_name */
     no_open_file,               /* open_file */
     no_close_handle,            /* close_handle */
     destroy_thread              /* destroy */

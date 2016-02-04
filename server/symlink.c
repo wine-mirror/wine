@@ -67,6 +67,8 @@ static const struct object_ops symlink_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     symlink_lookup_name,          /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
     symlink_destroy               /* destroy */

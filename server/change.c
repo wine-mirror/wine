@@ -166,6 +166,8 @@ static const struct object_ops dir_ops =
     dir_get_sd,               /* get_sd */
     dir_set_sd,               /* set_sd */
     no_lookup_name,           /* lookup_name */
+    no_link_name,             /* link_name */
+    NULL,                     /* unlink_name */
     no_open_file,             /* open_file */
     fd_close_handle,          /* close_handle */
     dir_destroy               /* destroy */

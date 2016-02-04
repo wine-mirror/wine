@@ -83,6 +83,10 @@ struct object_ops
     int (*set_sd)( struct object *, const struct security_descriptor *, unsigned int );
     /* lookup a name if an object has a namespace */
     struct object *(*lookup_name)(struct object *, struct unicode_str *,unsigned int);
+    /* link an object's name into a parent object */
+    int (*link_name)(struct object *, struct object_name *, struct object *);
+    /* unlink an object's name from its parent */
+    void (*unlink_name)(struct object *, struct object_name *);
     /* open a file object to access this object */
     struct object *(*open_file)(struct object *, unsigned int access, unsigned int sharing,
                                 unsigned int options);
@@ -143,6 +147,7 @@ extern int default_set_sd( struct object *obj, const struct security_descriptor 
 extern int set_sd_defaults_from_token( struct object *obj, const struct security_descriptor *sd,
                                        unsigned int set_info, struct token *token );
 extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attributes );
+extern int no_link_name( struct object *obj, struct object_name *name, struct object *parent );
 extern struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
                                     unsigned int options );
 extern int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle );

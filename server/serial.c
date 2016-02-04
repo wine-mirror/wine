@@ -103,6 +103,8 @@ static const struct object_ops serial_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     fd_close_handle,              /* close_handle */
     serial_destroy                /* destroy */

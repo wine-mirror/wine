@@ -64,6 +64,8 @@ static const struct object_ops object_type_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
     no_destroy                    /* destroy */
@@ -97,6 +99,8 @@ static const struct object_ops directory_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     directory_lookup_name,        /* lookup_name */
+    no_link_name,                 /* link_name */
+    NULL,                         /* unlink_name */
     no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
     directory_destroy             /* destroy */
