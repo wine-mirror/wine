@@ -917,9 +917,9 @@ static void shader_sm4_read_instruction(void *data, const DWORD **ptr, struct wi
             return;
         }
 
+        priv->icb.element_count = len;
+        memcpy(priv->icb.data, p, sizeof(*p) * icb_size);
         ins->declaration.icb = &priv->icb;
-        ins->declaration.icb->element_count = len;
-        memcpy(ins->declaration.icb->data, p, sizeof(*p) * icb_size);
     }
     else if (opcode == WINED3D_SM4_OP_DCL_RESOURCE)
     {

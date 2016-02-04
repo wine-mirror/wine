@@ -819,7 +819,7 @@ struct wined3d_shader_instruction
         struct wined3d_shader_dst_param dst;
         struct wined3d_shader_src_param src;
         UINT count;
-        struct wined3d_shader_immediate_constant_buffer *icb;
+        const struct wined3d_shader_immediate_constant_buffer *icb;
     } declaration;
 };
 
