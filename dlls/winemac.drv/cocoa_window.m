@@ -649,7 +649,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         query->ime_char_rect.data = [window imeData];
         query->ime_char_rect.range = CFRangeMake(aRange.location, aRange.length);
 
-        if ([window.queue query:query timeout:1])
+        if ([window.queue query:query timeout:0.3 flags:WineQueryNoPreemptWait])
         {
             aRange = NSMakeRange(query->ime_char_rect.range.location, query->ime_char_rect.range.length);
             ret = NSRectFromCGRect(query->ime_char_rect.rect);

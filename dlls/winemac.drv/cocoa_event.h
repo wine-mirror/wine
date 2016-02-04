@@ -24,6 +24,7 @@
 
 enum {
     WineQueryProcessEvents = 1 << 0,
+    WineQueryNoPreemptWait = 1 << 1,
 };
 
 

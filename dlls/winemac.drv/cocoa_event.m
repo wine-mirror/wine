@@ -296,11 +296,13 @@ static const OSType WineHotKeySignature = 'Wine';
 
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout flags:(NSUInteger)flags
     {
+        int type;
         macdrv_event* event;
         NSDate* timeoutDate = [NSDate dateWithTimeIntervalSinceNow:timeout];
         BOOL timedout;
 
-        event = macdrv_create_event(QUERY_EVENT, (WineWindow*)query->window);
+        type = (flags & WineQueryNoPreemptWait) ? QUERY_EVENT_NO_PREEMPT_WAIT : QUERY_EVENT;
+        event = macdrv_create_event(type, (WineWindow*)query->window);
         event->query_event.query = macdrv_retain_query(query);
         query->done = FALSE;
 
@@ -654,6 +656,7 @@ void macdrv_release_event(macdrv_event *event)
                 CFRelease(event->keyboard_changed.input_source);
                 break;
             case QUERY_EVENT:
+            case QUERY_EVENT_NO_PREEMPT_WAIT:
                 macdrv_release_query(event->query_event.query);
                 break;
             case WINDOW_GOT_FOCUS:
