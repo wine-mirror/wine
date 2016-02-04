@@ -174,8 +174,8 @@ static const struct object_ops job_ops =
     default_get_sd,                /* get_sd */
     default_set_sd,                /* set_sd */
     no_lookup_name,                /* lookup_name */
-    no_link_name,                  /* link_name */
-    NULL,                          /* unlink_name */
+    directory_link_name,           /* link_name */
+    default_unlink_name,           /* unlink_name */
     no_open_file,                  /* open_file */
     job_close_handle,              /* close_handle */
     job_destroy                    /* destroy */

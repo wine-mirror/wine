@@ -109,6 +109,15 @@ struct object
 #endif
 };
 
+struct object_name
+{
+    struct list         entry;           /* entry in the hash list */
+    struct object      *obj;             /* object owning this name */
+    struct object      *parent;          /* parent object */
+    data_size_t         len;             /* name length in bytes */
+    WCHAR               name[1];
+};
+
 struct wait_queue_entry
 {
     struct list         entry;
@@ -119,12 +128,13 @@ struct wait_queue_entry
 extern void *mem_alloc( size_t size );  /* malloc wrapper */
 extern void *memdup( const void *data, size_t len );
 extern void *alloc_object( const struct object_ops *ops );
+extern void namespace_add( struct namespace *namespace, struct object_name *ptr );
 extern const WCHAR *get_object_name( struct object *obj, data_size_t *len );
 extern WCHAR *get_object_full_name( struct object *obj, data_size_t *ret_len );
 extern void dump_object_name( struct object *obj );
-extern void *create_object( struct namespace *namespace, const struct object_ops *ops,
-                            const struct unicode_str *name, struct object *parent );
-extern void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
+extern void *create_object( struct object *parent, const struct object_ops *ops,
+                            const struct unicode_str *name );
+extern void *create_named_object( struct object *parent, struct namespace *namespace, const struct object_ops *ops,
                                   const struct unicode_str *name, unsigned int attributes );
 extern void unlink_named_object( struct object *obj );
 extern void make_object_static( struct object *obj );
@@ -148,6 +158,7 @@ extern int set_sd_defaults_from_token( struct object *obj, const struct security
                                        unsigned int set_info, struct token *token );
 extern struct object *no_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attributes );
 extern int no_link_name( struct object *obj, struct object_name *name, struct object *parent );
+extern void default_unlink_name( struct object *obj, struct object_name *name );
 extern struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
                                     unsigned int options );
 extern int no_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
@@ -222,6 +233,7 @@ extern void *create_named_object_dir( struct directory *root, const struct unico
 extern void *open_object_dir( struct directory *root, const struct unicode_str *name,
                               unsigned int attr, const struct object_ops *ops );
 extern struct object_type *get_object_type( const struct unicode_str *name );
+extern int directory_link_name( struct object *obj, struct object_name *name, struct object *parent );
 extern void init_directories(void);
 
 /* symbolic link functions */

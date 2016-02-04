@@ -112,6 +112,7 @@ struct named_pipe_device
 
 static void named_pipe_dump( struct object *obj, int verbose );
 static unsigned int named_pipe_map_access( struct object *obj, unsigned int access );
+static int named_pipe_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static struct object *named_pipe_open_file( struct object *obj, unsigned int access,
                                             unsigned int sharing, unsigned int options );
 static void named_pipe_destroy( struct object *obj );
@@ -131,8 +132,8 @@ static const struct object_ops named_pipe_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
-    no_link_name,                 /* link_name */
-    NULL,                         /* unlink_name */
+    named_pipe_link_name,         /* link_name */
+    default_unlink_name,          /* unlink_name */
     named_pipe_open_file,         /* open_file */
     no_close_handle,              /* close_handle */
     named_pipe_destroy            /* destroy */
@@ -254,8 +255,8 @@ static const struct object_ops named_pipe_device_ops =
     default_get_sd,                   /* get_sd */
     default_set_sd,                   /* set_sd */
     named_pipe_device_lookup_name,    /* lookup_name */
-    no_link_name,                     /* link_name */
-    NULL,                             /* unlink_name */
+    directory_link_name,              /* link_name */
+    default_unlink_name,              /* unlink_name */
     named_pipe_device_open_file,      /* open_file */
     fd_close_handle,                  /* close_handle */
     named_pipe_device_destroy         /* destroy */
@@ -701,14 +702,8 @@ static struct named_pipe *create_named_pipe( struct directory *root, const struc
         return (struct named_pipe *)obj;
     }
 
-    if (obj->ops != &named_pipe_device_ops)
-        set_error( STATUS_OBJECT_NAME_INVALID );
-    else
-    {
-        struct named_pipe_device *dev = (struct named_pipe_device *)obj;
-        if ((pipe = create_object( dev->pipes, &named_pipe_ops, &new_name, NULL )))
-            clear_error();
-    }
+    if ((pipe = create_object( obj, &named_pipe_ops, &new_name )))
+        clear_error();
 
     release_object( obj );
     return pipe;
@@ -784,6 +779,20 @@ static struct pipe_server *find_available_server( struct named_pipe *pipe )
     }
 
     return NULL;
+}
+
+static int named_pipe_link_name( struct object *obj, struct object_name *name, struct object *parent )
+{
+    struct named_pipe_device *dev = (struct named_pipe_device *)parent;
+
+    if (parent->ops != &named_pipe_device_ops)
+    {
+        set_error( STATUS_OBJECT_NAME_INVALID );
+        return 0;
+    }
+    namespace_add( dev->pipes, name );
+    name->parent = grab_object( parent );
+    return 1;
 }
 
 static struct object *named_pipe_open_file( struct object *obj, unsigned int access,

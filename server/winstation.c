@@ -50,6 +50,7 @@ static void winstation_destroy( struct object *obj );
 static unsigned int winstation_map_access( struct object *obj, unsigned int access );
 static void desktop_dump( struct object *obj, int verbose );
 static struct object_type *desktop_get_type( struct object *obj );
+static int desktop_link_name( struct object *obj, struct object_name *name, struct object *parent );
 static int desktop_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
 static void desktop_destroy( struct object *obj );
 static unsigned int desktop_map_access( struct object *obj, unsigned int access );
@@ -69,8 +70,8 @@ static const struct object_ops winstation_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
-    no_link_name,                 /* link_name */
-    NULL,                         /* unlink_name */
+    directory_link_name,          /* link_name */
+    default_unlink_name,          /* unlink_name */
     no_open_file,                 /* open_file */
     winstation_close_handle,      /* close_handle */
     winstation_destroy            /* destroy */
@@ -92,8 +93,8 @@ static const struct object_ops desktop_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
-    no_link_name,                 /* link_name */
-    NULL,                         /* unlink_name */
+    desktop_link_name,            /* link_name */
+    default_unlink_name,          /* unlink_name */
     no_open_file,                 /* open_file */
     desktop_close_handle,         /* close_handle */
     desktop_destroy               /* destroy */
@@ -194,13 +195,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
 {
     struct desktop *desktop;
 
-    if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
-    {
-        set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
-        return NULL;
-    }
-
-    if ((desktop = create_named_object( winstation->desktop_names, &desktop_ops, name, attr )))
+    if ((desktop = create_named_object( &winstation->obj, winstation->desktop_names, &desktop_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -238,6 +233,24 @@ static struct object_type *desktop_get_type( struct object *obj )
     return get_object_type( &str );
 }
 
+static int desktop_link_name( struct object *obj, struct object_name *name, struct object *parent )
+{
+    struct winstation *winstation = (struct winstation *)parent;
+
+    if (parent->ops != &winstation_ops)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return 0;
+    }
+    if (memchrW( name->name, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
+    {
+        set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+        return 0;
+    }
+    namespace_add( winstation->desktop_names, name );
+    return 1;
+}
+
 static int desktop_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     struct thread *thread;
@@ -259,7 +272,6 @@ static void desktop_destroy( struct object *obj )
     if (desktop->global_hooks) release_object( desktop->global_hooks );
     if (desktop->close_timeout) remove_timeout_user( desktop->close_timeout );
     list_remove( &desktop->entry );
-    unlink_named_object( obj );
     release_object( desktop->winstation );
 }
 

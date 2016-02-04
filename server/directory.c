@@ -64,8 +64,8 @@ static const struct object_ops object_type_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     no_lookup_name,               /* lookup_name */
-    no_link_name,                 /* link_name */
-    NULL,                         /* unlink_name */
+    directory_link_name,          /* link_name */
+    default_unlink_name,          /* unlink_name */
     no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
     no_destroy                    /* destroy */
@@ -99,8 +99,8 @@ static const struct object_ops directory_ops =
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
     directory_lookup_name,        /* lookup_name */
-    no_link_name,                 /* link_name */
-    NULL,                         /* unlink_name */
+    directory_link_name,          /* link_name */
+    default_unlink_name,          /* unlink_name */
     no_open_file,                 /* open_file */
     no_close_handle,              /* close_handle */
     directory_destroy             /* destroy */
@@ -175,6 +175,20 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
             clear_error();
     }
     return NULL;
+}
+
+int directory_link_name( struct object *obj, struct object_name *name, struct object *parent )
+{
+    struct directory *dir = (struct directory *)parent;
+
+    if (parent->ops != &directory_ops)
+    {
+        set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        return 0;
+    }
+    namespace_add( dir->entries, name );
+    name->parent = grab_object( parent );
+    return 1;
 }
 
 static void directory_destroy( struct object *obj )
@@ -309,15 +323,7 @@ void *create_named_object_dir( struct directory *root, const struct unicode_str 
         return obj;
     }
 
-    /* ATM we can't insert objects into anything else but directories */
-    if (obj->ops != &directory_ops)
-        set_error( STATUS_OBJECT_TYPE_MISMATCH );
-    else
-    {
-        struct directory *dir = (struct directory *)obj;
-        if ((new_obj = create_object( dir->entries, ops, &new_name, &dir->obj )))
-            clear_error();
-    }
+    if ((new_obj = create_object( obj, ops, &new_name ))) clear_error();
 
     release_object( obj );
     return new_obj;

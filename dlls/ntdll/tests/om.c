@@ -1389,7 +1389,6 @@ static void test_query_object(void)
     expected_len = sizeof(UNICODE_STRING) + str->Length + sizeof(WCHAR);
     ok( len == expected_len || broken(len == expected_len - sizeof(WCHAR)), /* NT4 */
         "unexpected len %u\n", len );
-    todo_wine
     ok( len > sizeof(UNICODE_STRING) + sizeof("\\test_mailslot") * sizeof(WCHAR),
         "name too short %s\n", wine_dbgstr_w(str->Buffer) );
     trace( "got %s len %u\n", wine_dbgstr_w(str->Buffer), len );

@@ -40,15 +40,6 @@
 #include "security.h"
 
 
-struct object_name
-{
-    struct list         entry;           /* entry in the hash list */
-    struct object      *obj;             /* object owning this name */
-    struct object      *parent;          /* parent object */
-    data_size_t         len;             /* name length in bytes */
-    WCHAR               name[1];
-};
-
 struct namespace
 {
     unsigned int        hash_size;       /* size of hash table */
@@ -130,6 +121,13 @@ static int get_name_hash( const struct namespace *namespace, const WCHAR *name, 
     return hash % namespace->hash_size;
 }
 
+void namespace_add( struct namespace *namespace, struct object_name *ptr )
+{
+    int hash = get_name_hash( namespace, ptr->name, ptr->len );
+
+    list_add_head( &namespace->names[hash], &ptr->entry );
+}
+
 /* allocate a name for an object */
 static struct object_name *alloc_name( const struct unicode_str *name )
 {
@@ -142,26 +140,6 @@ static struct object_name *alloc_name( const struct unicode_str *name )
         memcpy( ptr->name, name->str, name->len );
     }
     return ptr;
-}
-
-/* free the name of an object */
-static void free_name( struct object *obj )
-{
-    struct object_name *ptr = obj->name;
-    list_remove( &ptr->entry );
-    if (ptr->parent) release_object( ptr->parent );
-    free( ptr );
-}
-
-/* set the name of an existing object */
-static void set_object_name( struct namespace *namespace,
-                             struct object *obj, struct object_name *ptr )
-{
-    int hash = get_name_hash( namespace, ptr->name, ptr->len );
-
-    list_add_head( &namespace->names[hash], &ptr->entry );
-    ptr->obj = obj;
-    obj->name = ptr;
 }
 
 /* get the name of an existing object */
@@ -222,8 +200,18 @@ void *alloc_object( const struct object_ops *ops )
     return NULL;
 }
 
-void *create_object( struct namespace *namespace, const struct object_ops *ops,
-                     const struct unicode_str *name, struct object *parent )
+/* free an object once it has been destroyed */
+void free_object( struct object *obj )
+{
+    free( obj->sd );
+#ifdef DEBUG_OBJECTS
+    list_remove( &obj->obj_list );
+    memset( obj, 0xaa, obj->ops->size );
+#endif
+    free( obj );
+}
+
+void *create_object( struct object *parent, const struct object_ops *ops, const struct unicode_str *name )
 {
     struct object *obj;
     struct object_name *name_ptr;
@@ -231,15 +219,20 @@ void *create_object( struct namespace *namespace, const struct object_ops *ops,
     if (!(name_ptr = alloc_name( name ))) return NULL;
     if ((obj = alloc_object( ops )))
     {
-        set_object_name( namespace, obj, name_ptr );
-        if (parent) name_ptr->parent = grab_object( parent );
+        if (!obj->ops->link_name( obj, name_ptr, parent ))
+        {
+            free_object( obj );
+            return NULL;
+        }
+        name_ptr->obj = obj;
+        obj->name = name_ptr;
     }
     else
         free( name_ptr );
     return obj;
 }
 
-void *create_named_object( struct namespace *namespace, const struct object_ops *ops,
+void *create_named_object( struct object *parent, struct namespace *namespace, const struct object_ops *ops,
                            const struct unicode_str *name, unsigned int attributes )
 {
     struct object *obj;
@@ -265,7 +258,7 @@ void *create_named_object( struct namespace *namespace, const struct object_ops 
         }
         return obj;
     }
-    if ((obj = create_object( namespace, ops, name, NULL ))) clear_error();
+    if ((obj = create_object( parent, ops, name ))) clear_error();
     return obj;
 }
 
@@ -292,8 +285,13 @@ void dump_object_name( struct object *obj )
 /* unlink a named object from its namespace, without freeing the object itself */
 void unlink_named_object( struct object *obj )
 {
-    if (obj->name) free_name( obj );
+    struct object_name *name_ptr = obj->name;
+
+    if (!name_ptr) return;
     obj->name = NULL;
+    obj->ops->unlink_name( obj, name_ptr );
+    if (name_ptr->parent) release_object( name_ptr->parent );
+    free( name_ptr );
 }
 
 /* mark an object as being stored statically, i.e. only released at shutdown */
@@ -324,14 +322,9 @@ void release_object( void *ptr )
         assert( !obj->handle_count );
         /* if the refcount is 0, nobody can be in the wait queue */
         assert( list_empty( &obj->wait_queue ));
+        unlink_named_object( obj );
         obj->ops->destroy( obj );
-        if (obj->name) free_name( obj );
-        free( obj->sd );
-#ifdef DEBUG_OBJECTS
-        list_remove( &obj->obj_list );
-        memset( obj, 0xaa, obj->ops->size );
-#endif
-        free( obj );
+        free_object( obj );
     }
 }
 
@@ -555,6 +548,11 @@ int no_link_name( struct object *obj, struct object_name *name, struct object *p
 {
     set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return 0;
+}
+
+void default_unlink_name( struct object *obj, struct object_name *name )
+{
+    list_remove( &name->entry );
 }
 
 struct object *no_open_file( struct object *obj, unsigned int access, unsigned int sharing,
