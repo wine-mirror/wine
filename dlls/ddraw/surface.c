@@ -1268,7 +1268,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
             wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, src_rtv, FALSE);
         wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
         dst_impl->wined3d_rtv = src_rtv;
-        wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
+        wined3d_resource_set_parent(wined3d_texture_get_sub_resource(src_impl->wined3d_texture, 0), dst_impl);
         dst_impl->wined3d_surface = src_impl->wined3d_surface;
         prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
         wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), ddraw_texture);
@@ -1300,7 +1300,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
                 wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, src_rtv, FALSE);
             wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
             dst_impl->wined3d_rtv = src_rtv;
-            wined3d_resource_set_parent(wined3d_surface_get_resource(src_impl->wined3d_surface), dst_impl);
+            wined3d_resource_set_parent(wined3d_texture_get_sub_resource(src_impl->wined3d_texture, 0), dst_impl);
             dst_impl->wined3d_surface = src_impl->wined3d_surface;
             prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
             wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), ddraw_texture);
@@ -1318,7 +1318,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
         wined3d_device_set_rendertarget_view(dst_impl->ddraw->wined3d_device, 0, tmp_rtv, FALSE);
     wined3d_rendertarget_view_set_parent(tmp_rtv, src_impl);
     src_impl->wined3d_rtv = tmp_rtv;
-    wined3d_resource_set_parent(wined3d_surface_get_resource(tmp), src_impl);
+    wined3d_resource_set_parent(wined3d_texture_get_sub_resource(texture, 0), src_impl);
     src_impl->wined3d_surface = tmp;
     wined3d_resource_set_parent(wined3d_texture_get_resource(texture), ddraw_texture);
     src_impl->wined3d_texture = texture;

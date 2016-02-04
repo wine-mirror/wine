@@ -1890,13 +1890,6 @@ void * CDECL wined3d_surface_get_parent(const struct wined3d_surface *surface)
     return surface->resource.parent;
 }
 
-struct wined3d_resource * CDECL wined3d_surface_get_resource(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    return &surface->resource;
-}
-
 DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 {
     unsigned int alignment;

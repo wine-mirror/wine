@@ -2476,7 +2476,6 @@ ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 HRESULT __cdecl wined3d_surface_get_overlay_position(const struct wined3d_surface *surface, LONG *x, LONG *y);
 void * __cdecl wined3d_surface_get_parent(const struct wined3d_surface *surface);
 DWORD __cdecl wined3d_surface_get_pitch(const struct wined3d_surface *surface);
-struct wined3d_resource * __cdecl wined3d_surface_get_resource(struct wined3d_surface *surface);
 HRESULT __cdecl wined3d_surface_set_overlay_position(struct wined3d_surface *surface, LONG x, LONG y);
 HRESULT __cdecl wined3d_surface_update_overlay(struct wined3d_surface *surface, const RECT *src_rect,
         struct wined3d_surface *dst_surface, const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx);
