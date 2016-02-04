@@ -201,6 +201,7 @@ enum {
     QUERY_EVENT,
     REASSERT_WINDOW_POSITION,
     RELEASE_CAPTURE,
+    SENT_TEXT_INPUT,
     STATUS_ITEM_MOUSE_BUTTON,
     STATUS_ITEM_MOUSE_MOVE,
     WINDOW_BROUGHT_FORWARD,
@@ -285,6 +286,10 @@ typedef struct macdrv_event {
         struct {
             struct macdrv_query *query;
         }                                           query_event;
+        struct {
+            int handled;
+            int *done;
+        }                                           sent_text_input;
         struct {
             macdrv_status_item  item;
             int                 button;
@@ -438,8 +443,8 @@ extern void macdrv_set_view_window_and_frame(macdrv_view v, macdrv_window w, CGR
 extern void macdrv_add_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
 extern void macdrv_remove_view_opengl_context(macdrv_view v, macdrv_opengl_context c) DECLSPEC_HIDDEN;
 extern uint32_t macdrv_window_background_color(void) DECLSPEC_HIDDEN;
-extern int macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc,
-                                        void* data) DECLSPEC_HIDDEN;
+extern void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc,
+                                         void* data, int* done) DECLSPEC_HIDDEN;
 
 
 /* keyboard */

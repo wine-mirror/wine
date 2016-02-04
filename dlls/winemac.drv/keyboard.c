@@ -1117,12 +1117,11 @@ void macdrv_hotkey_press(const macdrv_event *event)
 /***********************************************************************
  *              macdrv_process_text_input
  */
-BOOL macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *key_state, void *himc)
+void macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *key_state, void *himc, int* done)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
     unsigned int flags;
     int keyc;
-    BOOL ret = FALSE;
 
     TRACE("vkey 0x%04x scan 0x%04x repeat %u himc %p\n", vkey, scan, repeat, himc);
 
@@ -1149,15 +1148,11 @@ BOOL macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *ke
         if (thread_data->keyc2vkey[keyc] == vkey) break;
 
     if (keyc >= sizeof(thread_data->keyc2vkey)/sizeof(thread_data->keyc2vkey[0]))
-        goto done;
+        return;
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
 
-    ret = macdrv_send_text_input_event(((scan & 0x8000) == 0), flags, repeat, keyc, himc);
-
-done:
-    TRACE(" -> %s\n", ret ? "TRUE" : "FALSE");
-    return ret;
+    macdrv_send_text_input_event(((scan & 0x8000) == 0), flags, repeat, keyc, himc, done);
 }
 
 

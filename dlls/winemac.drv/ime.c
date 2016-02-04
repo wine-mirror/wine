@@ -690,7 +690,7 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     LPIMEPRIVATE myPrivate;
     HWND hwndDefault;
     UINT repeat;
-    INT rc;
+    int done = 0;
 
     TRACE("uVKey 0x%04x uScanCode 0x%04x fuState %u hIMC %p\n", uVKey, uScanCode, fuState, hIMC);
 
@@ -717,9 +717,12 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     UnlockRealIMC(hIMC);
 
     TRACE("Processing Mac 0x%04x\n", vkey);
-    rc = macdrv_process_text_input(uVKey, uScanCode, repeat, lpbKeyState, hIMC);
+    macdrv_process_text_input(uVKey, uScanCode, repeat, lpbKeyState, hIMC, &done);
 
-    if (!rc)
+    while (!done)
+        MsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);
+
+    if (done < 0)
     {
         UINT msgs = 0;
         UINT msg = (uScanCode & 0x8000) ? WM_KEYUP : WM_KEYDOWN;
@@ -1480,6 +1483,15 @@ void macdrv_im_set_text(const macdrv_event *event)
 
     if (event->im_set_text.complete)
         IME_NotifyComplete(himc);
+}
+
+/***********************************************************************
+ *              macdrv_sent_text_input
+ */
+void macdrv_sent_text_input(const macdrv_event *event)
+{
+    TRACE("handled: %s\n", event->sent_text_input.handled ? "TRUE" : "FALSE");
+    *event->sent_text_input.done = event->sent_text_input.handled ? 1 : -1;
 }
 
 

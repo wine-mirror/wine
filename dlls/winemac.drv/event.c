@@ -47,6 +47,7 @@ static const char *dbgstr_event(int type)
         "QUERY_EVENT",
         "REASSERT_WINDOW_POSITION",
         "RELEASE_CAPTURE",
+        "SENT_TEXT_INPUT",
         "STATUS_ITEM_MOUSE_BUTTON",
         "STATUS_ITEM_MOUSE_MOVE",
         "WINDOW_BROUGHT_FORWARD",
@@ -118,6 +119,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
         event_mask |= event_mask_for_type(QUERY_EVENT);
         event_mask |= event_mask_for_type(REASSERT_WINDOW_POSITION);
         event_mask |= event_mask_for_type(RELEASE_CAPTURE);
+        event_mask |= event_mask_for_type(SENT_TEXT_INPUT);
         event_mask |= event_mask_for_type(WINDOW_BROUGHT_FORWARD);
         event_mask |= event_mask_for_type(WINDOW_CLOSE_REQUESTED);
         event_mask |= event_mask_for_type(WINDOW_DRAG_BEGIN);
@@ -244,6 +246,9 @@ void macdrv_handle_event(const macdrv_event *event)
         break;
     case RELEASE_CAPTURE:
         macdrv_release_capture(hwnd, event);
+        break;
+    case SENT_TEXT_INPUT:
+        macdrv_sent_text_input(event);
         break;
     case STATUS_ITEM_MOUSE_BUTTON:
         macdrv_status_item_mouse_button(event);

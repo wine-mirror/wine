@@ -3230,11 +3230,11 @@ uint32_t macdrv_window_background_color(void)
 /***********************************************************************
  *              macdrv_send_text_input_event
  */
-int macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc, void* data)
+void macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, int keyc, void* data, int* done)
 {
-    __block BOOL ret;
-
-    OnMainThread(^{
+    OnMainThreadAsync(^{
+        BOOL ret;
+        macdrv_event* event;
         WineWindow* window = (WineWindow*)[NSApp keyWindow];
         if (![window isKindOfClass:[WineWindow class]])
         {
@@ -3266,7 +3266,11 @@ int macdrv_send_text_input_event(int pressed, unsigned int flags, int repeat, in
         }
         else
             ret = FALSE;
-    });
 
-    return ret;
+        event = macdrv_create_event(SENT_TEXT_INPUT, window);
+        event->sent_text_input.handled = ret;
+        event->sent_text_input.done = done;
+        [[window queue] postEvent:event];
+        macdrv_release_event(event);
+    });
 }
