@@ -2657,7 +2657,7 @@ static CVReturn WineDisplayLinkCallback(CVDisplayLinkRef displayLink, const CVTi
         query->drag_drop.op = [sender draggingSourceOperationMask];
         query->drag_drop.pasteboard = (CFTypeRef)[pb retain];
 
-        [self.queue query:query timeout:3 * 60 processEvents:YES];
+        [self.queue query:query timeout:3 * 60 flags:WineQueryProcessEvents];
         ret = query->status;
         macdrv_release_query(query);
 

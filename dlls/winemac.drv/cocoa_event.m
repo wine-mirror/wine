@@ -294,7 +294,7 @@ static const OSType WineHotKeySignature = 'Wine';
         }];
     }
 
-    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout processEvents:(BOOL)processEvents
+    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout flags:(NSUInteger)flags
     {
         macdrv_event* event;
         NSDate* timeoutDate = [NSDate dateWithTimeIntervalSinceNow:timeout];
@@ -308,13 +308,13 @@ static const OSType WineHotKeySignature = 'Wine';
         macdrv_release_event(event);
         timedout = ![[WineApplicationController sharedController] waitUntilQueryDone:&query->done
                                                                              timeout:timeoutDate
-                                                                       processEvents:processEvents];
+                                                                       processEvents:(flags & WineQueryProcessEvents) != 0];
         return !timedout && query->status;
     }
 
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout
     {
-        return [self query:query timeout:timeout processEvents:FALSE];
+        return [self query:query timeout:timeout flags:0];
     }
 
     - (void) resetMouseEventPositions:(CGPoint)pos

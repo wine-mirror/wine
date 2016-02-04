@@ -22,6 +22,11 @@
 #include "macdrv_cocoa.h"
 
 
+enum {
+    WineQueryProcessEvents = 1 << 0,
+};
+
+
 @class WineWindow;
 
 
@@ -42,7 +47,7 @@
     - (void) postEvent:(macdrv_event*)inEvent;
     - (void) discardEventsMatchingMask:(macdrv_event_mask)mask forWindow:(NSWindow*)window;
 
-    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout processEvents:(BOOL)processEvents;
+    - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout flags:(NSUInteger)flags;
     - (BOOL) query:(macdrv_query*)query timeout:(NSTimeInterval)timeout;
 
     - (void) resetMouseEventPositions:(CGPoint)pos;
