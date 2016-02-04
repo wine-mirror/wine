@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-12-26 15:07+0100\n"
+"PO-Revision-Date: 2016-04-02 12:50+0100\n"
 "Last-Translator: Frédéric Delanoy <frederic.delanoy@gmail.com>\n"
 "Language-Team: French\n"
 "Language: fr\n"
@@ -1045,7 +1045,7 @@ msgstr "Sélectionnez un dossier"
 
 #: comdlg32.rc:148
 msgid "Font size has to be a number."
-msgstr ""
+msgstr "La taille de police doit être un nombre."
 
 #: comdlg32.rc:83 oleview.rc:98
 msgid "Ready"
@@ -13196,10 +13196,8 @@ msgstr ""
 "onglets."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
-msgstr "&Ajouter une application..."
+msgstr "Ajouter une appli&cation..."
 
 #: winecfg.rc:160
 msgid "&Remove application"
@@ -13262,7 +13260,7 @@ msgstr "&Nouveau remplacement pour :"
 
 #: winecfg.rc:196
 msgid "A&dd"
-msgstr ""
+msgstr "Ajou&ter"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13289,8 +13287,6 @@ msgid "&Native (Windows)"
 msgstr "&native (Windows)"
 
 #: winecfg.rc:211
-#, fuzzy
-#| msgid "Bui&ltin then Native"
 msgid "Buil&tin then Native"
 msgstr "i&ntégrée puis native"
 
@@ -13315,30 +13311,24 @@ msgstr ""
 "n'a pu être éditée."
 
 #: winecfg.rc:236
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
-msgstr "&Ajouter..."
+msgstr "Ajo&uter..."
 
 #: winecfg.rc:238
-#, fuzzy
-#| msgid "Autodetect"
 msgid "Aut&odetect"
-msgstr "Auto-détection"
+msgstr "Aut&o-détection"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Chemin :"
 
 #: winecfg.rc:248 winecfg.rc:38
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
-msgstr "Afficher les dé&tails"
+msgstr "Afficher les &détails"
 
 #: winecfg.rc:249
 msgid "De&vice:"
-msgstr "&Périphérique :"
+msgstr "Périp&hérique :"
 
 #: winecfg.rc:251
 msgid "Bro&wse..."
@@ -13346,17 +13336,15 @@ msgstr "&Parcourir..."
 
 #: winecfg.rc:253
 msgid "&Label:"
-msgstr "É&tiquette :"
+msgstr "Ét&iquette :"
 
 #: winecfg.rc:255
 msgid "S&erial:"
-msgstr "N° de &série :"
+msgstr "N° de sé&rie :"
 
 #: winecfg.rc:258
-#, fuzzy
-#| msgid "Show &dot files"
 msgid "&Show dot files"
-msgstr "Montrer les fichiers cachés"
+msgstr "&Montrer les fichiers cachés"
 
 #: winecfg.rc:265
 msgid "Driver diagnostics"
@@ -13435,10 +13423,8 @@ msgid "Select the Unix target directory, please."
 msgstr "Veuillez sélectionner le répertoire Unix cible."
 
 #: winecfg.rc:37
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
-msgstr "Cacher les dé&tails"
+msgstr "Cacher les &détails"
 
 #: winecfg.rc:39
 msgid "(No Theme)"
