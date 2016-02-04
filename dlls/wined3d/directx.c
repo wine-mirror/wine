@@ -4421,8 +4421,13 @@ HRESULT CDECL wined3d_check_device_multisample_type(const struct wined3d *wined3
         return WINED3DERR_INVALIDCALL;
     if (surface_format_id == WINED3DFMT_UNKNOWN)
         return WINED3DERR_INVALIDCALL;
-    if (multisample_type < WINED3D_MULTISAMPLE_NONE || multisample_type > WINED3D_MULTISAMPLE_16_SAMPLES)
+    if (multisample_type < WINED3D_MULTISAMPLE_NONE)
         return WINED3DERR_INVALIDCALL;
+    if (multisample_type > WINED3D_MULTISAMPLE_16_SAMPLES)
+    {
+        FIXME("multisample_type %u not handled yet.\n", multisample_type);
+        return WINED3DERR_NOTAVAILABLE;
+    }
 
     if (multisample_type && !(format->multisample_types & 1u << (multisample_type - 1)))
         hr = WINED3DERR_NOTAVAILABLE;

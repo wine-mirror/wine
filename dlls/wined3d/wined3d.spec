@@ -99,6 +99,7 @@
 @ cdecl wined3d_device_get_vs_consts_i(ptr long ptr long)
 @ cdecl wined3d_device_get_vs_resource_view(ptr long)
 @ cdecl wined3d_device_get_vs_sampler(ptr long)
+@ cdecl wined3d_device_get_wined3d(ptr)
 @ cdecl wined3d_device_incref(ptr)
 @ cdecl wined3d_device_init_3d(ptr ptr)
 @ cdecl wined3d_device_init_gdi(ptr ptr)

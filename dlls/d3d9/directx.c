@@ -305,6 +305,9 @@ static HRESULT WINAPI d3d9_CheckDeviceMultiSampleType(IDirect3D9Ex *iface, UINT 
     TRACE("iface %p, adapter %u, device_type %#x, format %#x, windowed %#x, multisample_type %#x, levels %p.\n",
             iface, adapter, device_type, format, windowed, multisample_type, levels);
 
+    if (multisample_type > D3DMULTISAMPLE_16_SAMPLES)
+        return D3DERR_INVALIDCALL;
+
     wined3d_mutex_lock();
     hr = wined3d_check_device_multisample_type(d3d9->wined3d, adapter, device_type,
             wined3dformat_from_d3dformat(format), windowed, multisample_type, levels);

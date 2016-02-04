@@ -2423,10 +2423,41 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device *i
 static HRESULT STDMETHODCALLTYPE d3d11_device_CheckMultisampleQualityLevels(ID3D11Device *iface,
         DXGI_FORMAT format, UINT sample_count, UINT *quality_level_count)
 {
-    FIXME("iface %p, format %u, sample_count %u, quality_level_count %p stub!\n",
-            iface, format, sample_count, quality_level_count);
+    struct d3d_device *device = impl_from_ID3D11Device(iface);
+    struct wined3d_device_creation_parameters params;
+    struct wined3d *wined3d;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, format %s, sample_count %u, quality_level_count %p.\n",
+            iface, debug_dxgi_format(format), sample_count, quality_level_count);
+
+    if (!quality_level_count)
+        return E_INVALIDARG;
+
+    *quality_level_count = 0;
+
+    if (!sample_count)
+        return E_FAIL;
+    if (sample_count == 1)
+    {
+        *quality_level_count = 1;
+        return S_OK;
+    }
+    if (sample_count > D3D11_MAX_MULTISAMPLE_SAMPLE_COUNT)
+        return E_FAIL;
+
+    wined3d_mutex_lock();
+    wined3d = wined3d_device_get_wined3d(device->wined3d_device);
+    wined3d_device_get_creation_parameters(device->wined3d_device, &params);
+    hr = wined3d_check_device_multisample_type(wined3d, params.adapter_idx, params.device_type,
+            wined3dformat_from_dxgi_format(format), TRUE, sample_count, quality_level_count);
+    wined3d_mutex_unlock();
+
+    if (hr == WINED3DERR_INVALIDCALL)
+        return E_INVALIDARG;
+    if (hr == WINED3DERR_NOTAVAILABLE)
+        return S_OK;
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d3d11_device_CheckCounterInfo(ID3D11Device *iface, D3D11_COUNTER_INFO *info)
