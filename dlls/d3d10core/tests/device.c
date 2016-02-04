@@ -5044,7 +5044,7 @@ static void test_multisample_init(void)
     }
 
     hr = ID3D10Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &count);
-    todo_wine ok(SUCCEEDED(hr), "Failed to get quality levels, hr %#x.\n", hr);
+    ok(SUCCEEDED(hr), "Failed to get quality levels, hr %#x.\n", hr);
     if (!count)
     {
         skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM, skipping tests.\n");
@@ -5074,7 +5074,6 @@ static void test_multisample_init(void)
     hr = ID3D10Device_CreateTexture2D(device, &desc, NULL, &multi);
     ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
 
-    ok(SUCCEEDED(hr), "Failed to create texture, hr %#x.\n", hr);
     ID3D10Device_ResolveSubresource(device, (ID3D10Resource *)backbuffer, 0,
             (ID3D10Resource *)multi, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
@@ -5094,7 +5093,7 @@ static void test_multisample_init(void)
             break;
     }
     release_texture_readback(&rb);
-    ok(all_zero, "Got unexpected color 0x%08x, position %ux%u.\n", color, x, y);
+    todo_wine ok(all_zero, "Got unexpected color 0x%08x, position %ux%u.\n", color, x, y);
 
     ID3D10RenderTargetView_Release(rtview);
     ID3D10Texture2D_Release(backbuffer);

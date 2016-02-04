@@ -4503,10 +4503,13 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CheckFormatSupport(ID3D10Device1 *
 static HRESULT STDMETHODCALLTYPE d3d10_device_CheckMultisampleQualityLevels(ID3D10Device1 *iface,
         DXGI_FORMAT format, UINT sample_count, UINT *quality_level_count)
 {
-    FIXME("iface %p, format %s, sample_count %u, quality_level_count %p stub!\n",
+    struct d3d_device *device = impl_from_ID3D10Device(iface);
+
+    TRACE("iface %p, format %s, sample_count %u, quality_level_count %p.\n",
             iface, debug_dxgi_format(format), sample_count, quality_level_count);
 
-    return E_NOTIMPL;
+    return d3d11_device_CheckMultisampleQualityLevels(&device->ID3D11Device_iface, format,
+            sample_count, quality_level_count);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_CheckCounterInfo(ID3D10Device1 *iface, D3D10_COUNTER_INFO *counter_info)
