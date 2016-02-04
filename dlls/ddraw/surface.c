@@ -5643,8 +5643,8 @@ static HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource
 HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
         struct ddraw_surface **surface, IUnknown *outer_unknown, unsigned int version)
 {
+    struct wined3d_resource_desc wined3d_desc, wined3d_mip_desc;
     struct ddraw_surface *root, *mip, **attach;
-    struct wined3d_resource_desc wined3d_desc;
     struct wined3d_texture *wined3d_texture;
     struct wined3d_resource *resource;
     struct wined3d_display_mode mode;
@@ -6103,9 +6103,17 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
             mip_desc = &mip->surface_desc;
 
             if (j)
+            {
+                wined3d_resource_get_desc(resource, &wined3d_mip_desc);
+                mip_desc->dwWidth = wined3d_mip_desc.width;
+                mip_desc->dwHeight = wined3d_mip_desc.height;
+
                 mip_desc->ddsCaps.dwCaps2 |= DDSCAPS2_MIPMAPSUBLEVEL;
+            }
             else
+            {
                 mip_desc->ddsCaps.dwCaps2 &= ~DDSCAPS2_MIPMAPSUBLEVEL;
+            }
 
             if (mip_desc->ddsCaps.dwCaps2 & DDSCAPS2_CUBEMAP)
             {
@@ -6233,7 +6241,6 @@ void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
 {
     struct ddraw_texture *texture = wined3d_texture_get_parent(wined3d_texture);
     DDSURFACEDESC2 *desc = &surface->surface_desc;
-    struct wined3d_resource_desc wined3d_desc;
     unsigned int version = texture->version;
 
     surface->IDirectDrawSurface7_iface.lpVtbl = &ddraw_surface7_vtbl;
@@ -6265,9 +6272,6 @@ void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
     }
 
     *desc = texture->surface_desc;
-    wined3d_resource_get_desc(wined3d_surface_get_resource(wined3d_surface), &wined3d_desc);
-    desc->dwWidth = wined3d_desc.width;
-    desc->dwHeight = wined3d_desc.height;
     surface->first_attached = surface;
 
     if (format_is_compressed(&desc->u4.ddpfPixelFormat))
