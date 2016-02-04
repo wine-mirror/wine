@@ -508,6 +508,7 @@ static void test_create_texture2d(void)
     ID3D11Device *device, *tmp;
     D3D11_TEXTURE2D_DESC desc;
     ID3D11Texture2D *texture;
+    UINT quality_level_count;
     IDXGISurface *surface;
     HRESULT hr;
 
@@ -589,6 +590,25 @@ static void test_create_texture2d(void)
     hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
     ok(FAILED(hr), "Texture should not implement IDXGISurface.\n");
     ID3D11Texture2D_Release(texture);
+
+    ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_level_count);
+    desc.ArraySize = 1;
+    desc.SampleDesc.Count = 2;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    if (quality_level_count)
+    {
+        ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+        ID3D11Texture2D_Release(texture);
+        desc.SampleDesc.Quality = quality_level_count;
+        hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    }
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    /* We assume 15 samples multisampling is never supported in practice. */
+    desc.SampleDesc.Count = 15;
+    desc.SampleDesc.Quality = 0;
+    hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
