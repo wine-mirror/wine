@@ -4902,6 +4902,81 @@ done:
     ok(!refcount, "Device has %u references left.\n", refcount);
 }
 
+static void test_check_multisample_quality_levels(void)
+{
+    ID3D11Device *device;
+    UINT quality_levels;
+    ULONG refcount;
+    HRESULT hr;
+
+    if (!(device = create_device(NULL)))
+    {
+        skip("Failed to create device.\n");
+        return;
+    }
+
+    ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_levels);
+    if (!quality_levels)
+    {
+        skip("Multisampling not supported for DXGI_FORMAT_R8G8B8A8_UNORM, skipping test.\n");
+        goto done;
+    }
+
+    quality_levels = 0xdeadbeef;
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_UNKNOWN, 2, &quality_levels);
+    todo_wine ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
+    quality_levels = 0xdeadbeef;
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, 65536, 2, &quality_levels);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    todo_wine ok(quality_levels == 0xdeadbeef, "Got unexpected quality_levels %u.\n", quality_levels);
+
+    quality_levels = 0xdeadbeef;
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 0, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 0, &quality_levels);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
+
+    quality_levels = 0xdeadbeef;
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 1, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 1, &quality_levels);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(quality_levels == 1, "Got unexpected quality_levels %u.\n", quality_levels);
+
+    quality_levels = 0xdeadbeef;
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 2, &quality_levels);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
+
+    /* We assume 15 samples multisampling is never supported in practice. */
+    quality_levels = 0xdeadbeef;
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 15, &quality_levels);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 32, &quality_levels);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    quality_levels = 0xdeadbeef;
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 33, &quality_levels);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
+    quality_levels = 0xdeadbeef;
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_R8G8B8A8_UNORM, 64, &quality_levels);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
+
+    hr = ID3D11Device_CheckMultisampleQualityLevels(device, DXGI_FORMAT_BC3_UNORM, 2, &quality_levels);
+    ok(SUCCEEDED(hr), "Got unexpected hr %#x.\n", hr);
+    ok(!quality_levels, "Got unexpected quality_levels %u.\n", quality_levels);
+
+done:
+    refcount = ID3D11Device_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d11)
 {
     test_create_device();
@@ -4933,4 +5008,5 @@ START_TEST(d3d11)
     test_copy_subresource_region();
     test_resource_map();
     test_multisample_init();
+    test_check_multisample_quality_levels();
 }
