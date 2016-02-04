@@ -688,7 +688,7 @@ struct wined3d_shader_reg_maps
     WORD labels;                                    /* MAX_LABELS, 16 */
     DWORD temporary;                                /* MAX_REG_TEMP, 32 */
     DWORD *constf;                                  /* pixel, vertex */
-    struct wined3d_shader_immediate_constant_buffer *icb;
+    const struct wined3d_shader_immediate_constant_buffer *icb;
     union
     {
         DWORD texcoord_mask[MAX_REG_TEXCRD];        /* vertex < 3.0 */
