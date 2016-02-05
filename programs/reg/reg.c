@@ -263,12 +263,8 @@ static BOOL sane_path(const WCHAR *key)
 static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     WCHAR *type, WCHAR separator, WCHAR *data, BOOL force)
 {
-    static const WCHAR stubW[] = {'A','D','D',' ','-',' ','%','s',
-        ' ','%','s',' ','%','d',' ','%','s',' ','%','s',' ','%','d','\n',0};
     LPWSTR p;
     HKEY root,subkey;
-
-    reg_printfW(stubW, key_name, value_name, value_empty, type, data, force);
 
     if (!sane_path(key_name))
         return 1;
@@ -334,11 +330,6 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 {
     LPWSTR p;
     HKEY root,subkey;
-
-    static const WCHAR stubW[] = {'D','E','L','E','T','E',
-        ' ','-',' ','%','s',' ','%','s',' ','%','d',' ','%','d',' ','%','d','\n'
-        ,0};
-    reg_printfW(stubW, key_name, value_name, value_empty, value_all, force);
 
     if (!sane_path(key_name))
         return 1;
