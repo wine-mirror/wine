@@ -3625,15 +3625,16 @@ static HRESULT WINAPI ddraw_surface1_Restore(IDirectDrawSurface *iface)
  * Returns:
  *   DDERR_NOTAOVERLAYSURFACE, because we don't support overlays right now
  *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_SetOverlayPosition(IDirectDrawSurface7 *iface, LONG X, LONG Y)
+static HRESULT WINAPI ddraw_surface7_SetOverlayPosition(IDirectDrawSurface7 *iface, LONG x, LONG y)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
     HRESULT hr;
 
-    TRACE("iface %p, x %d, y %d.\n", iface, X, Y);
+    TRACE("iface %p, x %d, y %d.\n", iface, x, y);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_set_overlay_position(surface->wined3d_surface, X, Y);
+    hr = wined3d_texture_set_overlay_position(surface->wined3d_texture,
+            surface->sub_resource_idx, x, y);
     wined3d_mutex_unlock();
 
     return hr;
