@@ -9,6 +9,5 @@ C_SRCS = \
 	ddraw7.c \
 	ddrawmodes.c \
 	dsurface.c \
-	overlay.c \
 	refcount.c \
 	visual.c

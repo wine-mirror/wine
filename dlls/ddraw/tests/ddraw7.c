@@ -10971,6 +10971,99 @@ done:
     DestroyWindow(window);
 }
 
+static void test_overlay_rect(void)
+{
+    IDirectDrawSurface7 *overlay, *primary;
+    DDSURFACEDESC2 surface_desc;
+    RECT rect = {0, 0, 64, 64};
+    IDirectDraw7 *ddraw;
+    LONG pos_x, pos_y;
+    HRESULT hr, hr2;
+    HWND window;
+    HDC dc;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    if (!(overlay = create_overlay(ddraw, 64, 64, MAKEFOURCC('U','Y','V','Y'))))
+    {
+        skip("Failed to create a UYVY overlay, skipping test.\n");
+        goto done;
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+
+    /* On Windows 7, and probably Vista, UpdateOverlay() will return
+     * DDERR_OUTOFCAPS if the dwm is active. Calling GetDC() on the primary
+     * surface prevents this by disabling the dwm. */
+    hr = IDirectDrawSurface7_GetDC(primary, &dc);
+    ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_ReleaseDC(primary, dc);
+    ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+
+    /* The dx sdk sort of implies that rect must be set when DDOVER_SHOW is
+     * used. This is not true in Windows Vista and earlier, but changed in
+     * Windows 7. */
+    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, &rect, DDOVER_SHOW, NULL);
+    ok(SUCCEEDED(hr), "Failed to update overlay, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, NULL, DDOVER_HIDE, NULL);
+    ok(SUCCEEDED(hr), "Failed to update overlay, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, NULL, DDOVER_SHOW, NULL);
+    ok(hr == DD_OK || hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Show that the overlay position is the (top, left) coordinate of the
+     * destination rectangle. */
+    OffsetRect(&rect, 32, 16);
+    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, &rect, DDOVER_SHOW, NULL);
+    ok(SUCCEEDED(hr), "Failed to update overlay, hr %#x.\n", hr);
+    pos_x = -1; pos_y = -1;
+    hr = IDirectDrawSurface7_GetOverlayPosition(overlay, &pos_x, &pos_y);
+    ok(SUCCEEDED(hr), "Failed to get overlay position, hr %#x.\n", hr);
+    ok(pos_x == rect.left, "Got unexpected pos_x %d, expected %d.\n", pos_x, rect.left);
+    ok(pos_y == rect.top, "Got unexpected pos_y %d, expected %d.\n", pos_y, rect.top);
+
+    /* Passing a NULL dest rect sets the position to 0/0. Visually it can be
+     * seen that the overlay overlays the whole primary(==screen). */
+    hr2 = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, NULL, 0, NULL);
+    ok(hr2 == DD_OK || hr2 == DDERR_INVALIDPARAMS || hr2 == DDERR_OUTOFCAPS, "Got unexpected hr %#x.\n", hr2);
+    hr = IDirectDrawSurface7_GetOverlayPosition(overlay, &pos_x, &pos_y);
+    ok(SUCCEEDED(hr), "Failed to get overlay position, hr %#x.\n", hr);
+    if (SUCCEEDED(hr2))
+    {
+        ok(!pos_x, "Got unexpected pos_x %d.\n", pos_x);
+        ok(!pos_y, "Got unexpected pos_y %d.\n", pos_y);
+    }
+    else
+    {
+        ok(pos_x == 32, "Got unexpected pos_x %d.\n", pos_x);
+        ok(pos_y == 16, "Got unexpected pos_y %d.\n", pos_y);
+    }
+
+    /* The position cannot be retrieved when the overlay is not shown. */
+    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, primary, &rect, DDOVER_HIDE, NULL);
+    ok(SUCCEEDED(hr), "Failed to update overlay, hr %#x.\n", hr);
+    pos_x = -1; pos_y = -1;
+    hr = IDirectDrawSurface7_GetOverlayPosition(overlay, &pos_x, &pos_y);
+    ok(hr == DDERR_OVERLAYNOTVISIBLE, "Got unexpected hr %#x.\n", hr);
+    ok(!pos_x, "Got unexpected pos_x %d.\n", pos_x);
+    ok(!pos_y, "Got unexpected pos_y %d.\n", pos_y);
+
+    IDirectDrawSurface7_Release(primary);
+    IDirectDrawSurface7_Release(overlay);
+done:
+    IDirectDraw7_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -11071,4 +11164,5 @@ START_TEST(ddraw7)
     test_lockrect_invalid();
     test_yv12_overlay();
     test_offscreen_overlay();
+    test_overlay_rect();
 }
