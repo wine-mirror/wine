@@ -222,7 +222,6 @@
 @ cdecl wined3d_stateblock_decref(ptr)
 @ cdecl wined3d_stateblock_incref(ptr)
 
-@ cdecl wined3d_surface_get_overlay_position(ptr ptr ptr)
 @ cdecl wined3d_surface_get_parent(ptr)
 @ cdecl wined3d_surface_get_pitch(ptr)
 @ cdecl wined3d_surface_set_overlay_position(ptr long long)
@@ -255,6 +254,7 @@
 @ cdecl wined3d_texture_get_dc(ptr long ptr)
 @ cdecl wined3d_texture_get_level_count(ptr)
 @ cdecl wined3d_texture_get_lod(ptr)
+@ cdecl wined3d_texture_get_overlay_position(ptr long ptr ptr)
 @ cdecl wined3d_texture_get_parent(ptr)
 @ cdecl wined3d_texture_get_resource(ptr)
 @ cdecl wined3d_texture_get_sub_resource(ptr long)

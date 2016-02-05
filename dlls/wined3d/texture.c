@@ -1344,6 +1344,38 @@ HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned 
             src_resource ? surface_from_resource(src_resource) : NULL, src_rect, flags, fx, filter);
 }
 
+HRESULT CDECL wined3d_texture_get_overlay_position(const struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, LONG *x, LONG *y)
+{
+    struct wined3d_resource *sub_resource;
+    struct wined3d_surface *surface;
+
+    TRACE("texture %p, sub_resource_idx %u, x %p, y %p.\n", texture, sub_resource_idx, x, y);
+
+    if (!(texture->resource.usage & WINED3DUSAGE_OVERLAY) || texture->resource.type != WINED3D_RTYPE_TEXTURE_2D
+            || !(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
+    {
+        WARN("Invalid sub-resource specified.\n");
+        return WINEDDERR_NOTAOVERLAYSURFACE;
+    }
+
+    surface = surface_from_resource(sub_resource);
+    if (!surface->overlay_dest)
+    {
+        TRACE("Overlay not visible.\n");
+        *x = 0;
+        *y = 0;
+        return WINEDDERR_OVERLAYNOTVISIBLE;
+    }
+
+    *x = surface->overlay_destrect.left;
+    *y = surface->overlay_destrect.top;
+
+    TRACE("Returning position %d, %d.\n", *x, *y);
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
         UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)

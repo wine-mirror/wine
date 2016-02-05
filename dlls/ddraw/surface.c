@@ -3194,15 +3194,16 @@ static HRESULT WINAPI ddraw_surface1_GetFlipStatus(IDirectDrawSurface *iface, DW
  * Returns:
  *  DDERR_NOTAOVERLAYSURFACE, because it's a stub
  *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_GetOverlayPosition(IDirectDrawSurface7 *iface, LONG *X, LONG *Y)
+static HRESULT WINAPI ddraw_surface7_GetOverlayPosition(IDirectDrawSurface7 *iface, LONG *x, LONG *y)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
     HRESULT hr;
 
-    TRACE("iface %p, x %p, y %p.\n", iface, X, Y);
+    TRACE("iface %p, x %p, y %p.\n", iface, x, y);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_get_overlay_position(surface->wined3d_surface, X, Y);
+    hr = wined3d_texture_get_overlay_position(surface->wined3d_texture,
+            surface->sub_resource_idx, x, y);
     wined3d_mutex_unlock();
 
     return hr;

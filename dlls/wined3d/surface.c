@@ -1931,32 +1931,6 @@ HRESULT CDECL wined3d_surface_set_overlay_position(struct wined3d_surface *surfa
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_get_overlay_position(const struct wined3d_surface *surface, LONG *x, LONG *y)
-{
-    TRACE("surface %p, x %p, y %p.\n", surface, x, y);
-
-    if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
-    {
-        TRACE("Not an overlay surface.\n");
-        return WINEDDERR_NOTAOVERLAYSURFACE;
-    }
-
-    if (!surface->overlay_dest)
-    {
-        TRACE("Overlay not visible.\n");
-        *x = 0;
-        *y = 0;
-        return WINEDDERR_OVERLAYNOTVISIBLE;
-    }
-
-    *x = surface->overlay_destrect.left;
-    *y = surface->overlay_destrect.top;
-
-    TRACE("Returning position %d, %d.\n", *x, *y);
-
-    return WINED3D_OK;
-}
-
 HRESULT CDECL wined3d_surface_update_overlay_z_order(struct wined3d_surface *surface,
         DWORD flags, struct wined3d_surface *ref)
 {
