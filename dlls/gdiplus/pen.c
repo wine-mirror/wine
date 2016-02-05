@@ -419,17 +419,14 @@ GpStatus WINGDIPAPI GdipGetPenWidth(GpPen *pen, REAL *width)
 
 GpStatus WINGDIPAPI GdipResetPenTransform(GpPen *pen)
 {
-    static int calls;
-
     TRACE("(%p)\n", pen);
 
     if(!pen)
         return InvalidParameter;
 
-    if(!(calls++))
-        FIXME("(%p) stub\n", pen);
+    GdipSetMatrixElements(&pen->transform, 1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
 
-    return NotImplemented;
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipSetPenTransform(GpPen *pen, GpMatrix *matrix)
