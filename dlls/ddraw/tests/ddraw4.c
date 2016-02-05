@@ -1,7 +1,7 @@
 /*
  * Copyright 2005 Antoine Chavasse (a.chavasse@gmail.com)
+ * Copyright 2008, 2011, 2012-2014 Stefan Dösinger for CodeWeavers
  * Copyright 2011-2014 Henri Verbeet for CodeWeavers
- * Copyright 2012-2014 Stefan Dösinger for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -84,6 +84,27 @@ static BOOL compare_color(D3DCOLOR c1, D3DCOLOR c2, BYTE max_diff)
     c1 >>= 8; c2 >>= 8;
     if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff) return FALSE;
     return TRUE;
+}
+
+static IDirectDrawSurface4 *create_overlay(IDirectDraw4 *ddraw,
+        unsigned int width, unsigned int height, DWORD format)
+{
+    IDirectDrawSurface4 *surface;
+    DDSURFACEDESC2 desc;
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    desc.dwWidth = width;
+    desc.dwHeight = height;
+    desc.ddsCaps.dwCaps = DDSCAPS_OVERLAY;
+    U4(desc).ddpfPixelFormat.dwSize = sizeof(U4(desc).ddpfPixelFormat);
+    U4(desc).ddpfPixelFormat.dwFlags = DDPF_FOURCC;
+    U4(desc).ddpfPixelFormat.dwFourCC = format;
+
+    if (FAILED(IDirectDraw4_CreateSurface(ddraw, &desc, &surface, NULL)))
+        return NULL;
+    return surface;
 }
 
 static DWORD WINAPI create_window_thread_proc(void *param)
@@ -10482,6 +10503,118 @@ done:
     DestroyWindow(window);
 }
 
+static void test_yv12_overlay(void)
+{
+    IDirectDrawSurface4 *src_surface, *dst_surface;
+    RECT rect = {13, 17, 14, 18};
+    unsigned int offset, y;
+    DDSURFACEDESC2 desc;
+    unsigned char *base;
+    IDirectDraw4 *ddraw;
+    HWND window;
+    HRESULT hr;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw4_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    if (!(src_surface = create_overlay(ddraw, 256, 256, MAKEFOURCC('Y','V','1','2'))))
+    {
+        skip("Failed to create a YV12 overlay, skipping test.\n");
+        goto done;
+    }
+
+    memset(&desc, 0, sizeof(desc));
+    desc.dwSize = sizeof(desc);
+    hr = IDirectDrawSurface4_Lock(src_surface, NULL, &desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+
+    ok(desc.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS | DDSD_PITCH),
+            "Got unexpected flags %#x.\n", desc.dwFlags);
+    ok(desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM | DDSCAPS_HWCODEC)
+            || desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM),
+            "Got unexpected caps %#x.\n", desc.ddsCaps.dwCaps);
+    ok(desc.dwWidth == 256, "Got unexpected width %u.\n", desc.dwWidth);
+    ok(desc.dwHeight == 256, "Got unexpected height %u.\n", desc.dwHeight);
+    /* The overlay pitch seems to have 256 byte alignment. */
+    ok(!(U1(desc).lPitch & 0xff), "Got unexpected pitch %u.\n", U1(desc).lPitch);
+
+    /* Fill the surface with some data for the blit test. */
+    base = desc.lpSurface;
+    /* Luminance */
+    for (y = 0; y < desc.dwHeight; ++y)
+    {
+        memset(base + U1(desc).lPitch * y, 0x10, desc.dwWidth);
+    }
+    /* V */
+    for (; y < desc.dwHeight + desc.dwHeight / 4; ++y)
+    {
+        memset(base + U1(desc).lPitch * y, 0x20, desc.dwWidth);
+    }
+    /* U */
+    for (; y < desc.dwHeight + desc.dwHeight / 2; ++y)
+    {
+        memset(base + U1(desc).lPitch * y, 0x30, desc.dwWidth);
+    }
+
+    hr = IDirectDrawSurface4_Unlock(src_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    /* YV12 uses 2x2 blocks with 6 bytes per block (4*Y, 1*U, 1*V). Unlike
+     * other block-based formats like DXT the entire Y channel is stored in
+     * one big chunk of memory, followed by the chroma channels. So partial
+     * locks do not really make sense. Show that they are allowed nevertheless
+     * and the offset points into the luminance data. */
+    hr = IDirectDrawSurface4_Lock(src_surface, &rect, &desc, DDLOCK_WAIT, NULL);
+    ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+    offset = ((const unsigned char *)desc.lpSurface - base);
+    ok(offset == rect.top * U1(desc).lPitch + rect.left, "Got unexpected offset %u, expected %u.\n",
+            offset, rect.top * U1(desc).lPitch + rect.left);
+    hr = IDirectDrawSurface4_Unlock(src_surface, NULL);
+    ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+
+    if (!(dst_surface = create_overlay(ddraw, 256, 256, MAKEFOURCC('Y','V','1','2'))))
+    {
+        /* Windows XP with a Radeon X1600 GPU refuses to create a second
+         * overlay surface, DDERR_NOOVERLAYHW, making the blit tests moot. */
+        skip("Failed to create a second YV12 surface, skipping blit test.\n");
+        IDirectDrawSurface4_Release(src_surface);
+        goto done;
+    }
+
+    hr = IDirectDrawSurface4_Blt(dst_surface, NULL, src_surface, NULL, DDBLT_WAIT, NULL);
+    /* VMware rejects YV12 blits. This behavior has not been seen on real
+     * hardware yet, so mark it broken. */
+    ok(SUCCEEDED(hr) || broken(hr == E_NOTIMPL), "Failed to blit, hr %#x.\n", hr);
+
+    if (SUCCEEDED(hr))
+    {
+        memset(&desc, 0, sizeof(desc));
+        desc.dwSize = sizeof(desc);
+        hr = IDirectDrawSurface4_Lock(dst_surface, NULL, &desc, DDLOCK_WAIT, NULL);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x.\n", hr);
+
+        base = desc.lpSurface;
+        ok(base[0] == 0x10, "Got unexpected Y data 0x%02x.\n", base[0]);
+        base += desc.dwHeight * U1(desc).lPitch;
+        todo_wine ok(base[0] == 0x20, "Got unexpected V data 0x%02x.\n", base[0]);
+        base += desc.dwHeight / 4 * U1(desc).lPitch;
+        todo_wine ok(base[0] == 0x30, "Got unexpected U data 0x%02x.\n", base[0]);
+
+        hr = IDirectDrawSurface4_Unlock(dst_surface, NULL);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
+    }
+
+    IDirectDrawSurface4_Release(dst_surface);
+    IDirectDrawSurface4_Release(src_surface);
+done:
+    IDirectDraw4_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw4)
 {
     IDirectDraw4 *ddraw;
@@ -10569,4 +10702,5 @@ START_TEST(ddraw4)
     test_range_colorkey();
     test_shademode();
     test_lockrect_invalid();
+    test_yv12_overlay();
 }

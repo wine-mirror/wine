@@ -191,106 +191,6 @@ static void offscreen_test(void) {
     IDirectDrawSurface7_Release(overlay);
 }
 
-static void yv12_test(void)
-{
-    HRESULT hr;
-    DDSURFACEDESC2 desc;
-    IDirectDrawSurface7 *surface, *dst;
-    char *base;
-    RECT rect = {13, 17, 14, 18};
-    unsigned int offset, y;
-
-    surface = create_overlay(256, 256, MAKEFOURCC('Y','V','1','2'));
-    if(!surface) {
-        skip("YV12 surfaces not available\n");
-        return;
-    }
-
-    memset(&desc, 0, sizeof(desc));
-    desc.dwSize = sizeof(desc);
-    hr = IDirectDrawSurface7_Lock(surface, NULL, &desc, 0, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned 0x%08x, expected DD_OK\n", hr);
-
-    ok(desc.dwFlags == (DDSD_WIDTH | DDSD_HEIGHT | DDSD_PIXELFORMAT | DDSD_CAPS | DDSD_PITCH),
-       "Unexpected desc.dwFlags 0x%08x\n", desc.dwFlags);
-    ok(desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM) ||
-       desc.ddsCaps.dwCaps == (DDSCAPS_OVERLAY | DDSCAPS_VIDEOMEMORY | DDSCAPS_LOCALVIDMEM | DDSCAPS_HWCODEC),
-       "Unexpected desc.ddsCaps.dwCaps 0x%08x\n", desc.ddsCaps.dwCaps);
-    ok(desc.dwWidth == 256 && desc.dwHeight == 256, "Expected size 256x256, got %ux%u\n",
-       desc.dwWidth, desc.dwHeight);
-    /* The overlay pitch seems to have 256 byte alignment */
-    ok((U1(desc).lPitch & 0xff) == 0, "Expected 256 byte aligned pitch, got %u\n", U1(desc).lPitch);
-
-    /* Fill the surface with some data for the blit test */
-    base = desc.lpSurface;
-    /* Luminance */
-    for (y = 0; y < desc.dwHeight; y++)
-    {
-        memset(base + U1(desc).lPitch * y, 0x10, desc.dwWidth);
-    }
-    /* V */
-    for (; y < desc.dwHeight + desc.dwHeight / 4; y++)
-    {
-        memset(base + U1(desc).lPitch * y, 0x20, desc.dwWidth);
-    }
-    /* U */
-    for (; y < desc.dwHeight + desc.dwHeight / 2; y++)
-    {
-        memset(base + U1(desc).lPitch * y, 0x30, desc.dwWidth);
-    }
-
-    hr = IDirectDrawSurface7_Unlock(surface, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
-
-    /* YV12 uses 2x2 blocks with 6 bytes per block(4*Y, 1*U, 1*V). Unlike other block-based formats like DXT
-     * the entire Y channel is stored in one big chunk of memory, followed by the chroma channels. So
-     * partial locks do not really make sense. Show that they are allowed nevertheless and the offset points
-     * into the luminance data */
-    hr = IDirectDrawSurface7_Lock(surface, &rect, &desc, 0, NULL);
-    ok(hr == DD_OK, "Partial lock of a YV12 surface returned 0x%08x, expected DD_OK\n", hr);
-    offset = ((const char *) desc.lpSurface - base);
-    ok(offset == rect.top * U1(desc).lPitch + rect.left, "Expected %u byte offset from partial lock, got %u\n",
-            rect.top * U1(desc).lPitch + rect.left, offset);
-    hr = IDirectDrawSurface7_Unlock(surface, NULL);
-    ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
-
-    dst = create_overlay(256, 256, MAKEFOURCC('Y','V','1','2'));
-    if (!dst)
-    {
-        /* Windows XP with a Radeon X1600 GPU refuses to create a second overlay surface,
-         * DDERR_NOOVERLAYHW, making the blit tests moot */
-        skip("Could not create a second YV12 surface, skipping blit test\n");
-        goto cleanup;
-    }
-
-    hr = IDirectDrawSurface7_Blt(dst, NULL, surface, NULL, 0, NULL);
-    /* VMware rejects YV12 blits. This behavior has not been seen on real hardware yet, so mark it broken */
-    ok(hr == DD_OK || broken(hr == E_NOTIMPL),
-            "IDirectDrawSurface7_Blt returned 0x%08x, expected DD_OK\n", hr);
-
-    if (SUCCEEDED(hr))
-    {
-        memset(&desc, 0, sizeof(desc));
-        desc.dwSize = sizeof(desc);
-        hr = IDirectDrawSurface7_Lock(dst, NULL, &desc, 0, NULL);
-        ok(hr == DD_OK, "IDirectDrawSurface7_Lock returned 0x%08x, expected DD_OK\n", hr);
-
-        base = desc.lpSurface;
-        ok(base[0] == 0x10, "Y data is 0x%02x, expected 0x10\n", base[0]);
-        base += desc.dwHeight * U1(desc).lPitch;
-        todo_wine ok(base[0] == 0x20, "V data is 0x%02x, expected 0x20\n", base[0]);
-        base += desc.dwHeight / 4 * U1(desc).lPitch;
-        todo_wine ok(base[0] == 0x30, "U data is 0x%02x, expected 0x30\n", base[0]);
-
-        hr = IDirectDrawSurface7_Unlock(dst, NULL);
-        ok(hr == DD_OK, "IDirectDrawSurface7_Unlock returned 0x%08x, expected DD_OK\n", hr);
-    }
-
-    IDirectDrawSurface7_Release(dst);
-cleanup:
-    IDirectDrawSurface7_Release(surface);
-}
-
 START_TEST(overlay)
 {
     if(CreateDirectDraw() == FALSE) {
@@ -300,7 +200,6 @@ START_TEST(overlay)
 
     rectangle_settings();
     offscreen_test();
-    yv12_test();
 
     if(primary) IDirectDrawSurface7_Release(primary);
     if(ddraw) IDirectDraw7_Release(ddraw);
