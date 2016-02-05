@@ -1268,9 +1268,12 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
     int   New_Script = -1;
     int   i;
     WORD  *levels = NULL;
+    WORD  *layout_levels = NULL;
+    WORD  *overrides = NULL;
     WORD  *strength = NULL;
     WORD  *scripts = NULL;
     WORD  baselevel = 0;
+    WORD  baselayout = 0;
     BOOL  new_run;
     WORD  last_indic = -1;
     WORD layoutRTL = 0;
@@ -1379,15 +1382,51 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
         if (!levels)
             goto nomemory;
 
-        BIDI_DetermineLevels(pwcInChars, cInChars, psState, psControl, levels);
+        overrides = heap_alloc_zero(cInChars * sizeof(WORD));
+        if (!overrides)
+            goto nomemory;
+
+        layout_levels = heap_alloc_zero(cInChars * sizeof(WORD));
+        if (!layout_levels)
+            goto nomemory;
+
+        if (psState->fOverrideDirection)
+        {
+            if (!forceLevels)
+            {
+                SCRIPT_STATE s = *psState;
+                s.fOverrideDirection = FALSE;
+                BIDI_DetermineLevels(pwcInChars, cInChars, &s, psControl, layout_levels, overrides);
+                if (odd(layout_levels[0]))
+                    forceLevels = TRUE;
+                else for (i = 0; i < cInChars; i++)
+                    if (layout_levels[i]!=layout_levels[0])
+                    {
+                        forceLevels = TRUE;
+                        break;
+                    }
+            }
+
+            BIDI_DetermineLevels(pwcInChars, cInChars, psState, psControl, levels, overrides);
+        }
+        else
+        {
+            BIDI_DetermineLevels(pwcInChars, cInChars, psState, psControl, levels, overrides);
+            memcpy(layout_levels, levels, cInChars * sizeof(WORD));
+        }
         baselevel = levels[0];
+        baselayout = layout_levels[0];
         for (i = 0; i < cInChars; i++)
             if (levels[i]!=levels[0])
                 break;
         if (i >= cInChars && !odd(baselevel) && !odd(psState->uBidiLevel) && !forceLevels)
         {
             heap_free(levels);
+            heap_free(overrides);
+            heap_free(layout_levels);
+            overrides = NULL;
             levels = NULL;
+            layout_levels = NULL;
         }
         else
         {
@@ -1445,7 +1484,7 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
             for (i = 0; i < cInChars; i++)
             {
                 /* Script_Numeric at level 0 get bumped to level 2 */
-                if ((levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && scripts[i] == Script_Numeric)
+                if (!overrides[i] && (levels[i] == 0 || (odd(psState->uBidiLevel) && levels[i] == psState->uBidiLevel+1)) && scripts[i] == Script_Numeric)
                 {
                     levels[i] = 2;
                 }
@@ -1531,19 +1570,31 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
     if (levels)
     {
         if (strength[cnt] == BIDI_STRONG)
-            layoutRTL = (odd(levels[cnt]))?1:0;
+            layoutRTL = odd(layout_levels[cnt]);
         else
-            layoutRTL = (psState->uBidiLevel || odd(levels[cnt]))?1:0;
+            layoutRTL = (psState->uBidiLevel || odd(layout_levels[cnt]));
+        if (overrides)
+            pItems[index].a.s.fOverrideDirection = (overrides[cnt] != 0);
         pItems[index].a.fRTL = odd(levels[cnt]);
-        pItems[index].a.fLayoutRTL = layoutRTL;
+        if (pItems[index].a.eScript == Script_Numeric ||
+            pItems[index].a.eScript == Script_Numeric2)
+            pItems[index].a.fLayoutRTL = layoutRTL;
+        else
+            pItems[index].a.fLayoutRTL = pItems[index].a.fRTL;
         pItems[index].a.s.uBidiLevel = levels[cnt];
     }
-    else if (!pItems[index].a.s.uBidiLevel)
+    else if (!pItems[index].a.s.uBidiLevel || (overrides && overrides[cnt]))
     {
-        layoutRTL = (odd(baselevel))?1:0;
+        if (pItems[index].a.s.uBidiLevel != baselevel)
+            pItems[index].a.s.fOverrideDirection = TRUE;
+        layoutRTL = odd(baselayout);
         pItems[index].a.s.uBidiLevel = baselevel;
-        pItems[index].a.fLayoutRTL = odd(baselevel);
         pItems[index].a.fRTL = odd(baselevel);
+        if (pItems[index].a.eScript == Script_Numeric ||
+            pItems[index].a.eScript == Script_Numeric2)
+            pItems[index].a.fLayoutRTL = odd(baselayout);
+        else
+            pItems[index].a.fLayoutRTL = pItems[index].a.fRTL;
     }
 
     TRACE("New_Level=%i New_Strength=%i New_Script=%d, eScript=%d index=%d cnt=%d iCharPos=%d\n",
@@ -1594,8 +1645,10 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
 
         if (!new_run && strength && str == BIDI_STRONG)
         {
-            layoutRTL = odd(levels[cnt])?1:0;
-            pItems[index].a.fLayoutRTL = layoutRTL;
+            layoutRTL = odd(layout_levels[cnt]);
+            if (pItems[index].a.eScript == Script_Numeric ||
+                pItems[index].a.eScript == Script_Numeric2)
+                pItems[index].a.fLayoutRTL = layoutRTL;
         }
 
         if (new_run)
@@ -1617,19 +1670,31 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
                 pScriptTags[index] = scriptInformation[New_Script].scriptTag;
             if (levels)
             {
-                if (levels[cnt] == 0)
+                if (overrides)
+                    pItems[index].a.s.fOverrideDirection = (overrides[cnt] != 0);
+                if (layout_levels[cnt] == 0)
                     layoutRTL = 0;
                 else
-                    layoutRTL = (layoutRTL || odd(levels[cnt]))?1:0;
+                    layoutRTL = (layoutRTL || odd(layout_levels[cnt]));
                 pItems[index].a.fRTL = odd(levels[cnt]);
-                pItems[index].a.fLayoutRTL = layoutRTL;
+                if (pItems[index].a.eScript == Script_Numeric ||
+                    pItems[index].a.eScript == Script_Numeric2)
+                    pItems[index].a.fLayoutRTL = layoutRTL;
+                else
+                    pItems[index].a.fLayoutRTL = pItems[index].a.fRTL;
                 pItems[index].a.s.uBidiLevel = levels[cnt];
             }
-            else if (!pItems[index].a.s.uBidiLevel)
+            else if (!pItems[index].a.s.uBidiLevel || (overrides && overrides[cnt]))
             {
+                if (pItems[index].a.s.uBidiLevel != baselevel)
+                    pItems[index].a.s.fOverrideDirection = TRUE;
                 pItems[index].a.s.uBidiLevel = baselevel;
-                pItems[index].a.fLayoutRTL = layoutRTL;
                 pItems[index].a.fRTL = odd(baselevel);
+                if (pItems[index].a.eScript == Script_Numeric||
+                    pItems[index].a.eScript == Script_Numeric2)
+                    pItems[index].a.fLayoutRTL = layoutRTL;
+                else
+                    pItems[index].a.fLayoutRTL = pItems[index].a.fRTL;
             }
 
             TRACE("index=%d cnt=%d iCharPos=%d\n", index, cnt, pItems[index].iCharPos);
@@ -1653,6 +1718,8 @@ static HRESULT _ItemizeInternal(const WCHAR *pwcInChars, int cInChars,
     res = S_OK;
 nomemory:
     heap_free(levels);
+    heap_free(overrides);
+    heap_free(layout_levels);
     heap_free(strength);
     heap_free(scripts);
     return res;
