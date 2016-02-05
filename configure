@@ -12697,6 +12697,8 @@ fi
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
+                 ac_glib2_broken=yes
+                 as_fn_append wine_notices "|glib-2.0 pkgconfig configuration is for the wrong architecture, winegstreamer won't be built."
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -12707,7 +12709,7 @@ test -z "$GSTREAMER_CFLAGS" || GSTREAMER_CFLAGS=`echo " $GSTREAMER_CFLAGS" | sed
 test -z "$GSTREAMER_LIBS" || GSTREAMER_LIBS=`echo " $GSTREAMER_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
 
 fi
-if test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes; then :
+if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" != xyes -a "x$ac_cv_header_QuickTime_ImageCompression_h" != xyes ; then :
   case "x$with_gstreamer" in
   x)   as_fn_append wine_notices "|gstreamer-1.0 base plugins ${notice_platform}development files not found, gstreamer support disabled" ;;
   xno) ;;
