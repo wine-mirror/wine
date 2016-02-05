@@ -442,9 +442,11 @@ GpStatus WINGDIPAPI GdipSetPenTransform(GpPen *pen, GpMatrix *matrix)
         return InvalidParameter;
 
     if(!(calls++))
-        FIXME("not implemented\n");
+        FIXME("(%p,%p) Semi-stub\n", pen, matrix);
 
-    return NotImplemented;
+    pen->transform = *matrix;
+
+    return Ok;
 }
 
 GpStatus WINGDIPAPI GdipGetPenTransform(GpPen *pen, GpMatrix *matrix)
