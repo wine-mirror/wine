@@ -715,50 +715,107 @@ BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
            (type == DWRITE_FONT_FACE_TYPE_RAW_CFF);
 }
 
-HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
+typedef HRESULT (*dwrite_fontfile_analyzer)(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
+    DWRITE_FONT_FACE_TYPE *face_type);
+
+static HRESULT opentype_ttc_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
+    DWRITE_FONT_FACE_TYPE *face_type)
 {
-    /* TODO: Do font validation */
-    DWRITE_FONT_FACE_TYPE face;
-    const void *font_data;
-    const char* tag;
+    static const DWORD ttctag = MS_TTCF_TAG;
+    const TTC_Header_V1 *header;
     void *context;
     HRESULT hr;
 
-    hr = IDWriteFontFileStream_ReadFileFragment(stream, &font_data, 0, sizeof(TTC_Header_V1), &context);
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&header, 0, sizeof(header), &context);
     if (FAILED(hr))
         return hr;
 
-    tag = font_data;
-    *file_type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
-    face = DWRITE_FONT_FACE_TYPE_UNKNOWN;
-    *font_count = 0;
-
-    if (DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]) == MS_TTCF_TAG)
-    {
-        const TTC_Header_V1 *header = font_data;
+    if (!memcmp(header->TTCTag, &ttctag, sizeof(ttctag))) {
         *font_count = GET_BE_DWORD(header->numFonts);
         *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE_COLLECTION;
-        face = DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION;
+        *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE_COLLECTION;
     }
-    else if (GET_BE_DWORD(*(DWORD*)font_data) == 0x10000)
-    {
-        *font_count = 1;
-        *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE;
-        face = DWRITE_FONT_FACE_TYPE_TRUETYPE;
-    }
-    else if (DWRITE_MAKE_OPENTYPE_TAG(tag[0], tag[1], tag[2], tag[3]) == MS_OTTO_TAG)
-    {
-        *font_count = 1;
-        *file_type = DWRITE_FONT_FILE_TYPE_CFF;
-        face = DWRITE_FONT_FACE_TYPE_CFF;
-    }
-
-    if (face_type)
-        *face_type = face;
-
-    *supported = is_face_type_supported(face);
 
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+
+    return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
+}
+
+static HRESULT opentype_ttf_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
+    DWRITE_FONT_FACE_TYPE *face_type)
+{
+    const DWORD *header;
+    void *context;
+    HRESULT hr;
+
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&header, 0, sizeof(*header), &context);
+    if (FAILED(hr))
+        return hr;
+
+    if (GET_BE_DWORD(*header) == 0x10000) {
+        *font_count = 1;
+        *file_type = DWRITE_FONT_FILE_TYPE_TRUETYPE;
+        *face_type = DWRITE_FONT_FACE_TYPE_TRUETYPE;
+    }
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+
+    return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
+}
+
+static HRESULT opentype_otf_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
+    DWRITE_FONT_FACE_TYPE *face_type)
+{
+    const DWORD *header;
+    void *context;
+    HRESULT hr;
+
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&header, 0, sizeof(*header), &context);
+    if (FAILED(hr))
+        return hr;
+
+    if (GET_BE_DWORD(*header) == MS_OTTO_TAG) {
+        *font_count = 1;
+        *file_type = DWRITE_FONT_FILE_TYPE_CFF;
+        *face_type = DWRITE_FONT_FACE_TYPE_CFF;
+    }
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+
+    return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
+}
+
+HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
+{
+    static dwrite_fontfile_analyzer fontfile_analyzers[] = {
+        opentype_ttf_analyzer,
+        opentype_otf_analyzer,
+        opentype_ttc_analyzer,
+        NULL
+    };
+    dwrite_fontfile_analyzer *analyzer = fontfile_analyzers;
+    DWRITE_FONT_FACE_TYPE face;
+    HRESULT hr;
+
+    if (!face_type)
+        face_type = &face;
+
+    *file_type = DWRITE_FONT_FILE_TYPE_UNKNOWN;
+    *face_type = DWRITE_FONT_FACE_TYPE_UNKNOWN;
+    *font_count = 0;
+
+    while (*analyzer) {
+        hr = (*analyzer)(stream, font_count, file_type, face_type);
+        if (FAILED(hr))
+            return hr;
+
+        if (hr == S_OK)
+            break;
+
+        analyzer++;
+    }
+
+    *supported = is_face_type_supported(*face_type);
     return S_OK;
 }
 
