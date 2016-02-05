@@ -3215,7 +3215,6 @@ static BOOL get_enus_string(IDWriteLocalizedStrings *strings, WCHAR *buff, UINT3
 
     hr = IDWriteLocalizedStrings_FindLocaleName(strings, enusW, &index, &exists);
     ok(hr == S_OK, "got 0x%08x\n", hr);
-    ok(exists, "got %d\n", exists);
 
     if (exists) {
         hr = IDWriteLocalizedStrings_GetString(strings, index, buff, size);
