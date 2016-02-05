@@ -785,12 +785,42 @@ static HRESULT opentype_otf_analyzer(IDWriteFontFileStream *stream, UINT32 *font
     return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
 }
 
+static HRESULT opentype_type1_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
+    DWRITE_FONT_FACE_TYPE *face_type)
+{
+    struct type1_header {
+        WORD tag;
+        char data[14];
+    };
+    const struct type1_header *header;
+    void *context;
+    HRESULT hr;
+
+    hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&header, 0, sizeof(*header), &context);
+    if (FAILED(hr))
+        return hr;
+
+    /* tag is followed by plain text section */
+    if (header->tag == 0x8001 &&
+        (!memcmp(header->data, "%!PS-AdobeFont", 14) ||
+         !memcmp(header->data, "%!FontType", 10))) {
+        *font_count = 1;
+        *file_type = DWRITE_FONT_FILE_TYPE_TYPE1_PFB;
+        *face_type = DWRITE_FONT_FACE_TYPE_TYPE1;
+    }
+
+    IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+
+    return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
+}
+
 HRESULT opentype_analyze_font(IDWriteFontFileStream *stream, UINT32* font_count, DWRITE_FONT_FILE_TYPE *file_type, DWRITE_FONT_FACE_TYPE *face_type, BOOL *supported)
 {
     static dwrite_fontfile_analyzer fontfile_analyzers[] = {
         opentype_ttf_analyzer,
         opentype_otf_analyzer,
         opentype_ttc_analyzer,
+        opentype_type1_analyzer,
         NULL
     };
     dwrite_fontfile_analyzer *analyzer = fontfile_analyzers;
