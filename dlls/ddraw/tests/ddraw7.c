@@ -10894,6 +10894,83 @@ done:
     DestroyWindow(window);
 }
 
+static void test_offscreen_overlay(void)
+{
+    IDirectDrawSurface7 *overlay, *offscreen, *primary;
+    DDSURFACEDESC2 surface_desc;
+    IDirectDraw7 *ddraw;
+    HWND window;
+    HRESULT hr;
+    HDC dc;
+
+    window = CreateWindowA("static", "ddraw_test", WS_OVERLAPPEDWINDOW,
+            0, 0, 640, 480, 0, 0, 0, 0);
+    ddraw = create_ddraw();
+    ok(!!ddraw, "Failed to create a ddraw object.\n");
+    hr = IDirectDraw7_SetCooperativeLevel(ddraw, window, DDSCL_NORMAL);
+    ok(SUCCEEDED(hr), "Failed to set cooperative level, hr %#x.\n", hr);
+
+    if (!(overlay = create_overlay(ddraw, 64, 64, MAKEFOURCC('U','Y','V','Y'))))
+    {
+        skip("Failed to create a UYVY overlay, skipping test.\n");
+        goto done;
+    }
+
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &primary, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+
+    /* On Windows 7, and probably Vista, UpdateOverlay() will return
+     * DDERR_OUTOFCAPS if the dwm is active. Calling GetDC() on the primary
+     * surface prevents this by disabling the dwm. */
+    hr = IDirectDrawSurface7_GetDC(primary, &dc);
+    ok(SUCCEEDED(hr), "Failed to get DC, hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_ReleaseDC(primary, dc);
+    ok(SUCCEEDED(hr), "Failed to release DC, hr %#x.\n", hr);
+
+    /* Try to overlay a NULL surface. */
+    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, NULL, NULL, DDOVER_SHOW, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, NULL, NULL, DDOVER_HIDE, NULL);
+    ok(hr == DDERR_INVALIDPARAMS, "Got unexpected hr %#x.\n", hr);
+
+    /* Try to overlay an offscreen surface. */
+    memset(&surface_desc, 0, sizeof(surface_desc));
+    surface_desc.dwSize = sizeof(surface_desc);
+    surface_desc.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
+    surface_desc.dwWidth = 64;
+    surface_desc.dwHeight = 64;
+    surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
+    U4(surface_desc).ddpfPixelFormat.dwSize = sizeof(U4(surface_desc).ddpfPixelFormat);
+    U4(surface_desc).ddpfPixelFormat.dwFlags = DDPF_RGB;
+    U4(surface_desc).ddpfPixelFormat.dwFourCC = 0;
+    U1(U4(surface_desc).ddpfPixelFormat).dwRGBBitCount = 16;
+    U2(U4(surface_desc).ddpfPixelFormat).dwRBitMask = 0xf800;
+    U3(U4(surface_desc).ddpfPixelFormat).dwGBitMask = 0x07e0;
+    U4(U4(surface_desc).ddpfPixelFormat).dwBBitMask = 0x001f;
+    hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &offscreen, NULL);
+    ok(SUCCEEDED(hr), "Failed to create surface, hr %#x.\n",hr);
+
+    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, offscreen, NULL, DDOVER_SHOW, NULL);
+    ok(SUCCEEDED(hr), "Failed to update overlay, hr %#x.\n", hr);
+
+    /* Try to overlay the primary with a non-overlay surface. */
+    hr = IDirectDrawSurface7_UpdateOverlay(offscreen, NULL, primary, NULL, DDOVER_SHOW, NULL);
+    ok(hr == DDERR_NOTAOVERLAYSURFACE, "Got unexpected hr %#x.\n", hr);
+    hr = IDirectDrawSurface7_UpdateOverlay(offscreen, NULL, primary, NULL, DDOVER_HIDE, NULL);
+    ok(hr == DDERR_NOTAOVERLAYSURFACE, "Got unexpected hr %#x.\n", hr);
+
+    IDirectDrawSurface7_Release(offscreen);
+    IDirectDrawSurface7_Release(primary);
+    IDirectDrawSurface7_Release(overlay);
+done:
+    IDirectDraw7_Release(ddraw);
+    DestroyWindow(window);
+}
+
 START_TEST(ddraw7)
 {
     HMODULE module = GetModuleHandleA("ddraw.dll");
@@ -10993,4 +11070,5 @@ START_TEST(ddraw7)
     test_shademode();
     test_lockrect_invalid();
     test_yv12_overlay();
+    test_offscreen_overlay();
 }

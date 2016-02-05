@@ -151,46 +151,6 @@ static void rectangle_settings(void) {
     IDirectDrawSurface7_Release(overlay);
 }
 
-static void offscreen_test(void) {
-    IDirectDrawSurface7 *overlay = create_overlay(64, 64, MAKEFOURCC('U','Y','V','Y')), *offscreen = NULL;
-    HRESULT hr;
-    DDSURFACEDESC2 ddsd;
-
-    /* Try to overlay a NULL surface */
-    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, NULL, NULL, DDOVER_SHOW, NULL);
-    ok(hr == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
-    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, NULL, NULL, DDOVER_HIDE, NULL);
-    ok(hr == DDERR_INVALIDPARAMS, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
-
-    /* Try to overlay an offscreen surface */
-    memset(&ddsd, 0, sizeof(ddsd));
-    ddsd.dwSize = sizeof(ddsd);
-    ddsd.dwFlags = DDSD_CAPS | DDSD_HEIGHT | DDSD_WIDTH | DDSD_PIXELFORMAT;
-    ddsd.dwWidth = 64;
-    ddsd.dwHeight = 64;
-    U4(ddsd).ddpfPixelFormat.dwSize = sizeof(U4(ddsd).ddpfPixelFormat);
-    U4(ddsd).ddpfPixelFormat.dwFlags = DDPF_RGB;
-    U4(ddsd).ddpfPixelFormat.dwFourCC = 0;
-    U1(U4(ddsd).ddpfPixelFormat).dwRGBBitCount = 16;
-    U2(U4(ddsd).ddpfPixelFormat).dwRBitMask = 0xF800;
-    U3(U4(ddsd).ddpfPixelFormat).dwGBitMask = 0x07e0;
-    U4(U4(ddsd).ddpfPixelFormat).dwBBitMask = 0x001F;
-    ddsd.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN;
-    hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &offscreen, NULL);
-    ok(hr == DD_OK, "IDirectDraw7_CreateSurface failed with hr=0x%08x\n", hr);
-
-    hr = IDirectDrawSurface7_UpdateOverlay(overlay, NULL, offscreen, NULL, DDOVER_SHOW, NULL);
-    ok(hr == DD_OK || broken(hr == E_NOTIMPL),
-       "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
-
-    /* Try to overlay the primary with a non-overlay surface */
-    hr = IDirectDrawSurface7_UpdateOverlay(offscreen, NULL, primary, NULL, DDOVER_SHOW, NULL);
-    ok(hr == DDERR_NOTAOVERLAYSURFACE, "IDirectDrawSurface7_UpdateOverlay failed with hr=0x%08x\n", hr);
-
-    IDirectDrawSurface7_Release(offscreen);
-    IDirectDrawSurface7_Release(overlay);
-}
-
 START_TEST(overlay)
 {
     if(CreateDirectDraw() == FALSE) {
@@ -199,7 +159,6 @@ START_TEST(overlay)
     }
 
     rectangle_settings();
-    offscreen_test();
 
     if(primary) IDirectDrawSurface7_Release(primary);
     if(ddraw) IDirectDraw7_Release(ddraw);
