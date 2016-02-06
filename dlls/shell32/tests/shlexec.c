@@ -348,30 +348,22 @@ static void dump_child_(const char* file, int line)
  ***/
 
 static char shell_call[2048];
-static char assoc_desc[2048];
-static int shell_call_traced;
 static void WINETEST_PRINTF_ATTR(2,3) _okShell(int condition, const char *msg, ...)
 {
     va_list valist;
+    char buffer[2048];
 
-    /* Note: if winetest_debug > 1 the ShellExecute() command has already been
-     * traced.
-     */
-    if (!condition && winetest_debug <= 1 && !shell_call_traced)
-    {
-        printf("Called %s\n", shell_call);
-        if (*assoc_desc)
-            printf("%s\n", assoc_desc);
-        shell_call_traced=1;
-    }
-
+    strcpy(buffer, shell_call);
+    strcat(buffer, " ");
     va_start(valist, msg);
-    winetest_vok(condition, msg, valist);
+    vsprintf(buffer+strlen(buffer), msg, valist);
     va_end(valist);
+    winetest_ok(condition, "%s", buffer);
 }
 #define okShell_(file, line) (winetest_set_location(file, line), 0) ? (void)0 : _okShell
 #define okShell okShell_(__FILE__, __LINE__)
 
+static char assoc_desc[2048];
 void reset_association_description(void)
 {
     *assoc_desc = '\0';
@@ -494,20 +486,15 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
     if(!verb)
         rcEmpty = shell_execute_(file, line, "", filename, parameters, directory);
 
-    shell_call_traced=0;
     strcpy(shell_call, "ShellExecute(");
     strcat_param(shell_call, "verb", verb);
     strcat_param(shell_call, "file", filename);
     strcat_param(shell_call, "params", parameters);
     strcat_param(shell_call, "dir", directory);
     strcat(shell_call, ")");
+    strcat(shell_call, assoc_desc);
     if (winetest_debug > 1)
-    {
         trace_(file, line)("Called %s\n", shell_call);
-        if (*assoc_desc)
-            trace_(file, line)("%s\n", assoc_desc);
-        shell_call_traced=1;
-    }
 
     DeleteFileA(child_file);
     SetLastError(0xcafebabe);
@@ -584,7 +571,6 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     /* Add some flags so we can wait for the child process */
     mask |= SEE_MASK_NOCLOSEPROCESS | SEE_MASK_NO_CONSOLE;
 
-    shell_call_traced=0;
     strcpy(shell_call, "ShellExecuteEx(");
     sprintf(smask, "0x%x", mask);
     strcat_param(shell_call, "mask", smask);
@@ -594,13 +580,9 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
     strcat_param(shell_call, "dir", directory);
     strcat_param(shell_call, "class", class);
     strcat(shell_call, ")");
+    strcat(shell_call, assoc_desc);
     if (winetest_debug > 1)
-    {
         trace_(file, line)("Called %s\n", shell_call);
-        if (*assoc_desc)
-            trace_(file, line)("%s\n", assoc_desc);
-        shell_call_traced=1;
-    }
 
     sei.cbSize=sizeof(sei);
     sei.fMask=mask;
@@ -800,7 +782,7 @@ static void create_test_verb_dde(const char* extension, const char* verb,
     char* cmd;
     LONG rc;
 
-    strcpy(assoc_desc, "Assoc ");
+    strcpy(assoc_desc, " Assoc ");
     strcat_param(assoc_desc, "ext", extension);
     strcat_param(assoc_desc, "verb", verb);
     sprintf(shell, "%d", rawcmd);
