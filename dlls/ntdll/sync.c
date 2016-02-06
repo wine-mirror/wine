@@ -806,7 +806,7 @@ NTSTATUS WINAPI NtOpenTimer( HANDLE *handle, ACCESS_MASK access, const OBJECT_AT
     {
         req->access     = access;
         req->attributes = attr->Attributes;
-        req->rootdir    = wine_server_obj_handle( attr ? attr->RootDirectory : 0 );
+        req->rootdir    = wine_server_obj_handle( attr->RootDirectory );
         if (attr->ObjectName)
             wine_server_add_data( req, attr->ObjectName->Buffer, attr->ObjectName->Length );
         status = wine_server_call( req );
