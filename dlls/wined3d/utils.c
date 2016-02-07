@@ -2170,13 +2170,110 @@ static void init_format_fbo_compat_info(struct wined3d_caps_gl_ctx *ctx)
         gl_info->fbo_ops.glDeleteFramebuffers(1, &fbo);
 }
 
-static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct wined3d_gl_info *gl_info)
+static void query_internal_format(struct wined3d_adapter *adapter,
+        struct wined3d_format *format, const struct wined3d_format_texture_info *texture_info,
+        struct wined3d_gl_info *gl_info, BOOL srgb_write_supported)
 {
     GLint count, multisample_types[MAX_MULTISAMPLE_TYPES];
+    unsigned int i, max_log2;
+
+    if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
+    {
+        query_format_flag(gl_info, format, format->glInternal, GL_VERTEX_TEXTURE,
+                WINED3DFMT_FLAG_VTF, "vertex texture usage");
+        query_format_flag(gl_info, format, format->glInternal, GL_FILTER,
+                WINED3DFMT_FLAG_FILTERING, "filtering");
+
+        if (format->glGammaInternal != format->glInternal)
+        {
+            query_format_flag(gl_info, format, format->glGammaInternal, GL_SRGB_READ,
+                    WINED3DFMT_FLAG_SRGB_READ, "sRGB read");
+
+            if (srgb_write_supported)
+                query_format_flag(gl_info, format, format->glGammaInternal, GL_SRGB_WRITE,
+                        WINED3DFMT_FLAG_SRGB_WRITE, "sRGB write");
+            else
+                format_clear_flag(format, WINED3DFMT_FLAG_SRGB_WRITE);
+
+            if (!(format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE)))
+                format->glGammaInternal = format->glInternal;
+            else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+                format->glInternal = format->glGammaInternal;
+        }
+    }
+    else
+    {
+        if (!gl_info->limits.vertex_samplers)
+            format_clear_flag(format, WINED3DFMT_FLAG_VTF);
+
+        if (!(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
+            format_set_flag(format, WINED3DFMT_FLAG_FILTERING);
+        else if (format->id != WINED3DFMT_R32G32B32A32_FLOAT && format->id != WINED3DFMT_R32_FLOAT)
+            format_clear_flag(format, WINED3DFMT_FLAG_VTF);
+
+        if (format->glGammaInternal != format->glInternal)
+        {
+            /* Filter sRGB capabilities if EXT_texture_sRGB is not supported. */
+            if (!gl_info->supported[EXT_TEXTURE_SRGB])
+            {
+                format->glGammaInternal = format->glInternal;
+                format_clear_flag(format, WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
+            }
+            else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+            {
+                format->glInternal = format->glGammaInternal;
+            }
+        }
+
+        if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_SRGB_WRITE) && !srgb_write_supported)
+            format_clear_flag(format, WINED3DFMT_FLAG_SRGB_WRITE);
+
+        if (!gl_info->supported[ARB_DEPTH_TEXTURE]
+                && texture_info->flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+        {
+            format->flags[WINED3D_GL_RES_TYPE_TEX_1D] &= ~WINED3DFMT_FLAG_TEXTURE;
+            format->flags[WINED3D_GL_RES_TYPE_TEX_2D] &= ~WINED3DFMT_FLAG_TEXTURE;
+            format->flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
+            format->flags[WINED3D_GL_RES_TYPE_TEX_CUBE] &= ~WINED3DFMT_FLAG_TEXTURE;
+            format->flags[WINED3D_GL_RES_TYPE_TEX_RECT] &= ~WINED3DFMT_FLAG_TEXTURE;
+        }
+    }
+
+    if (format->glInternal && format->flags[WINED3D_GL_RES_TYPE_RB]
+            & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+    {
+        if (gl_info->supported[ARB_INTERNALFORMAT_QUERY])
+        {
+            GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
+                    GL_NUM_SAMPLE_COUNTS, 1, &count));
+            checkGLcall("glGetInternalformativ(GL_NUM_SAMPLE_COUNTS)");
+            count = min(count, MAX_MULTISAMPLE_TYPES);
+            GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
+                    GL_SAMPLES, count, multisample_types));
+            checkGLcall("glGetInternalformativ(GL_SAMPLES)");
+            for (i = 0; i < count; ++i)
+            {
+                if (multisample_types[i] > sizeof(format->multisample_types) * 8)
+                    continue;
+                format->multisample_types |= 1u << (multisample_types[i] - 1);
+            }
+        }
+        else
+        {
+            max_log2 = wined3d_log2i(min(gl_info->limits.samples,
+                    sizeof(format->multisample_types) * 8));
+            for (i = 1; i <= max_log2; ++i)
+                format->multisample_types |= 1u << ((1u << i) - 1);
+        }
+    }
+}
+
+static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct wined3d_gl_info *gl_info)
+{
     struct fragment_caps fragment_caps;
     struct shader_caps shader_caps;
     BOOL srgb_write;
-    unsigned int i, j, max_log2;
+    unsigned int i;
 
     adapter->fragment_pipe->get_caps(gl_info, &fragment_caps);
     adapter->shader_backend->shader_get_caps(gl_info, &shader_caps);
@@ -2233,95 +2330,7 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
         format->flags[WINED3D_GL_RES_TYPE_RB] |= format_texture_info[i].flags;
         format->flags[WINED3D_GL_RES_TYPE_RB] &= ~WINED3DFMT_FLAG_TEXTURE;
 
-        if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
-        {
-            query_format_flag(gl_info, format, format->glInternal, GL_VERTEX_TEXTURE,
-                    WINED3DFMT_FLAG_VTF, "vertex texture usage");
-            query_format_flag(gl_info, format, format->glInternal, GL_FILTER,
-                    WINED3DFMT_FLAG_FILTERING, "filtering");
-
-            if (format->glGammaInternal != format->glInternal)
-            {
-                query_format_flag(gl_info, format, format->glGammaInternal, GL_SRGB_READ,
-                        WINED3DFMT_FLAG_SRGB_READ, "sRGB read");
-
-                if (srgb_write)
-                    query_format_flag(gl_info, format, format->glGammaInternal, GL_SRGB_WRITE,
-                            WINED3DFMT_FLAG_SRGB_WRITE, "sRGB write");
-                else
-                    format_clear_flag(format, WINED3DFMT_FLAG_SRGB_WRITE);
-
-                if (!(format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE)))
-                    format->glGammaInternal = format->glInternal;
-                else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-                    format->glInternal = format->glGammaInternal;
-            }
-        }
-        else
-        {
-            if (!gl_info->limits.vertex_samplers)
-                format_clear_flag(format, WINED3DFMT_FLAG_VTF);
-
-            if (!(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
-                format_set_flag(format, WINED3DFMT_FLAG_FILTERING);
-            else if (format->id != WINED3DFMT_R32G32B32A32_FLOAT && format->id != WINED3DFMT_R32_FLOAT)
-                format_clear_flag(format, WINED3DFMT_FLAG_VTF);
-
-            if (format->glGammaInternal != format->glInternal)
-            {
-                /* Filter sRGB capabilities if EXT_texture_sRGB is not supported. */
-                if (!gl_info->supported[EXT_TEXTURE_SRGB])
-                {
-                    format->glGammaInternal = format->glInternal;
-                    format_clear_flag(format, WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE);
-                }
-                else if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
-                {
-                    format->glInternal = format->glGammaInternal;
-                }
-            }
-
-            if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_SRGB_WRITE) && !srgb_write)
-                format_clear_flag(format, WINED3DFMT_FLAG_SRGB_WRITE);
-
-            if (!gl_info->supported[ARB_DEPTH_TEXTURE]
-                    && format_texture_info[i].flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-            {
-                format->flags[WINED3D_GL_RES_TYPE_TEX_1D] &= ~WINED3DFMT_FLAG_TEXTURE;
-                format->flags[WINED3D_GL_RES_TYPE_TEX_2D] &= ~WINED3DFMT_FLAG_TEXTURE;
-                format->flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-                format->flags[WINED3D_GL_RES_TYPE_TEX_CUBE] &= ~WINED3DFMT_FLAG_TEXTURE;
-                format->flags[WINED3D_GL_RES_TYPE_TEX_RECT] &= ~WINED3DFMT_FLAG_TEXTURE;
-            }
-        }
-
-        if (format->glInternal && format->flags[WINED3D_GL_RES_TYPE_RB]
-                & (WINED3DFMT_FLAG_RENDERTARGET | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-        {
-            if (gl_info->supported[ARB_INTERNALFORMAT_QUERY])
-            {
-                GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
-                        GL_NUM_SAMPLE_COUNTS, 1, &count));
-                checkGLcall("glGetInternalformativ(GL_NUM_SAMPLE_COUNTS)");
-                count = min(count, MAX_MULTISAMPLE_TYPES);
-                GL_EXTCALL(glGetInternalformativ(GL_RENDERBUFFER, format->glInternal,
-                        GL_SAMPLES, count, multisample_types));
-                checkGLcall("glGetInternalformativ(GL_SAMPLES)");
-                for (j = 0; j < count; ++j)
-                {
-                    if (multisample_types[j] > sizeof(format->multisample_types) * 8)
-                        continue;
-                    format->multisample_types |= 1u << (multisample_types[j] - 1);
-                }
-            }
-            else
-            {
-                max_log2 = wined3d_log2i(min(gl_info->limits.samples,
-                        sizeof(format->multisample_types) * 8));
-                for (j = 1; j <= max_log2; ++j)
-                    format->multisample_types |= 1u << ((1u << j) - 1);
-            }
-        }
+        query_internal_format(adapter, format, &format_texture_info[i], gl_info, srgb_write);
 
         /* Texture conversion stuff */
         format->convert = format_texture_info[i].convert;
