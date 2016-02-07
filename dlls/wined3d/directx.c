@@ -4651,6 +4651,8 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d, UINT ad
             allowed_usage = WINED3DUSAGE_DEPTHSTENCIL
                     | WINED3DUSAGE_RENDERTARGET
                     | WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING;
+            if (usage & WINED3DUSAGE_RENDERTARGET)
+                allowed_usage |= WINED3DUSAGE_QUERY_SRGBWRITE;
             gl_type = WINED3D_GL_RES_TYPE_RB;
             break;
 
