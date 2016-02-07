@@ -10743,6 +10743,32 @@ static void test_swapchain_parameters(void)
     DestroyWindow(window);
 }
 
+static void test_check_device_format(void)
+{
+    IDirect3D9 *d3d;
+    HRESULT hr;
+
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+
+    if (IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+            D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_SRGBWRITE, D3DRTYPE_TEXTURE, D3DFMT_A8R8G8B8) != D3D_OK)
+    {
+        skip("D3DFMT_A8R8G8B8 textures with SRGBWRITE not supported.\n");
+    }
+    else
+    {
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_RENDERTARGET | D3DUSAGE_QUERY_SRGBWRITE, D3DRTYPE_SURFACE, D3DFMT_A8R8G8B8);
+        ok(hr == D3D_OK, "Got unexpected hr %#x.\n", hr);
+        hr = IDirect3D9_CheckDeviceFormat(d3d, 0, D3DDEVTYPE_HAL,
+                D3DFMT_X8R8G8B8, D3DUSAGE_QUERY_SRGBWRITE, D3DRTYPE_SURFACE, D3DFMT_A8R8G8B8);
+        ok(FAILED(hr), "Got unexpected hr %#x.\n", hr);
+    }
+
+    IDirect3D9_Release(d3d);
+}
+
 START_TEST(device)
 {
     WNDCLASSA wc = {0};
@@ -10856,6 +10882,7 @@ START_TEST(device)
     test_lost_device();
     test_resource_priority();
     test_swapchain_parameters();
+    test_check_device_format();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
