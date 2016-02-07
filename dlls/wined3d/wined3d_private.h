@@ -1875,6 +1875,7 @@ struct wined3d_d3d_info
     BOOL vs_clipping;
     BOOL shader_color_key;
     DWORD valid_rt_mask;
+    DWORD wined3d_creation_flags;
 };
 
 /* The adapter structure */
@@ -2526,10 +2527,16 @@ static inline struct wined3d_surface *surface_from_resource(struct wined3d_resou
     return CONTAINING_RECORD(resource, struct wined3d_surface, resource);
 }
 
-static inline GLuint surface_get_texture_name(const struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, BOOL srgb)
+static inline BOOL needs_separate_srgb_gl_texture(const struct wined3d_context *context)
 {
-    return srgb && !gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
+    return !context->gl_info->supported[EXT_TEXTURE_SRGB_DECODE]
+            && context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL;
+}
+
+static inline GLuint surface_get_texture_name(const struct wined3d_surface *surface,
+        const struct wined3d_context *context, BOOL srgb)
+{
+    return srgb && needs_separate_srgb_gl_texture(context)
             ? surface->container->texture_srgb.name : surface->container->texture_rgb.name;
 }
 
@@ -3369,6 +3376,14 @@ static inline void context_apply_state(struct wined3d_context *context,
     const struct StateEntry *state_table = context->state_table;
     DWORD rep = state_table[state_id].representative;
     state_table[rep].apply(context, state, rep);
+}
+
+static inline BOOL needs_srgb_write(const struct wined3d_context *context,
+        const struct wined3d_state *state, const struct wined3d_fb_state *fb)
+{
+    return (!(context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
+            || state->render_states[WINED3D_RS_SRGBWRITEENABLE])
+            && fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
 }
 
 /* The WNDCLASS-Name for the fake window which we use to retrieve the GL capabilities */

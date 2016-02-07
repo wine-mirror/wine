@@ -2615,18 +2615,14 @@ void find_ps_compile_args(const struct wined3d_state *state, const struct wined3
     UINT i;
 
     memset(args, 0, sizeof(*args)); /* FIXME: Make sure all bits are set. */
-    if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && state->render_states[WINED3D_RS_SRGBWRITEENABLE])
+    if (!gl_info->supported[ARB_FRAMEBUFFER_SRGB] && needs_srgb_write(context, state, state->fb))
     {
-        unsigned int rt_fmt_flags = state->fb->render_targets[0]->format_flags;
-        if (rt_fmt_flags & WINED3DFMT_FLAG_SRGB_WRITE)
-        {
-            static unsigned int warned = 0;
+        static unsigned int warned = 0;
 
-            args->srgb_correction = 1;
-            if (state->render_states[WINED3D_RS_ALPHABLENDENABLE] && !warned++)
-                WARN("Blending into a sRGB render target with no GL_ARB_framebuffer_sRGB "
-                        "support, expect rendering artifacts.\n");
-        }
+        args->srgb_correction = 1;
+        if (state->render_states[WINED3D_RS_ALPHABLENDENABLE] && !warned++)
+            WARN("Blending into a sRGB render target with no GL_ARB_framebuffer_sRGB "
+                    "support, expect rendering artifacts.\n");
     }
 
     if (shader->reg_maps.shader_version.major == 1

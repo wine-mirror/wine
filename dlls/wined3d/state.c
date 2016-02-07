@@ -3477,7 +3477,7 @@ static enum wined3d_texture_address wined3d_texture_address_mode(const struct wi
 }
 
 static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc *desc,
-        const struct wined3d_gl_info *gl_info, const DWORD *sampler_states, const struct wined3d_texture *texture)
+        const struct wined3d_context *context, const DWORD *sampler_states, const struct wined3d_texture *texture)
 {
     union
     {
@@ -3513,7 +3513,8 @@ static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc
         desc->max_anisotropy = 1;
     desc->compare = texture->resource.format_flags & WINED3DFMT_FLAG_SHADOW;
     desc->comparison_func = WINED3D_CMP_LESSEQUAL;
-    desc->srgb_decode = sampler_states[WINED3D_SAMP_SRGB_TEXTURE];
+    desc->srgb_decode = !(context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
+            || sampler_states[WINED3D_SAMP_SRGB_TEXTURE];
 
     if (!(texture->resource.format_flags & WINED3DFMT_FLAG_FILTERING))
     {
@@ -3525,7 +3526,7 @@ static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc
     if (texture->flags & WINED3D_TEXTURE_COND_NP2)
     {
         desc->mip_filter = WINED3D_TEXF_NONE;
-        if (gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+        if (context->gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
             desc->min_filter = WINED3D_TEXF_POINT;
     }
 }
@@ -3563,7 +3564,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         struct gl_texture *gl_tex;
         unsigned int base_level;
 
-        wined3d_sampler_desc_from_sampler_states(&desc, gl_info, sampler_states, texture);
+        wined3d_sampler_desc_from_sampler_states(&desc, context, sampler_states, texture);
 
         wined3d_texture_bind(texture, context, srgb);
         if (!gl_info->supported[ARB_SAMPLER_OBJECTS])
@@ -4785,12 +4786,11 @@ static void psorigin(struct wined3d_context *context, const struct wined3d_state
 
 void state_srgbwrite(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    unsigned int rt_fmt_flags = state->fb->render_targets[0]->format_flags;
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
     TRACE("context %p, state %p, state_id %#x.\n", context, state, state_id);
 
-    if (state->render_states[WINED3D_RS_SRGBWRITEENABLE] && rt_fmt_flags & WINED3DFMT_FLAG_SRGB_WRITE)
+    if (needs_srgb_write(context, state, state->fb))
         gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
     else
         gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);

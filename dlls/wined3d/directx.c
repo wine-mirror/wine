@@ -3365,7 +3365,7 @@ static void wined3d_adapter_init_limits(struct wined3d_gl_info *gl_info)
 }
 
 /* Context activation is done by the caller. */
-static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
+static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter, DWORD wined3d_creation_flags)
 {
     static const struct
     {
@@ -3739,6 +3739,7 @@ static BOOL wined3d_adapter_init_gl_caps(struct wined3d_adapter *adapter)
     adapter->d3d_info.limits.ffp_blend_stages = fragment_caps.MaxTextureBlendStages;
     adapter->d3d_info.limits.ffp_textures = fragment_caps.MaxSimultaneousTextures;
     adapter->d3d_info.shader_color_key = fragment_caps.wined3d_caps & WINED3D_FRAGMENT_CAP_COLOR_KEY;
+    adapter->d3d_info.wined3d_creation_flags = wined3d_creation_flags;
     TRACE("Max texture stages: %u.\n", adapter->d3d_info.limits.ffp_blend_stages);
 
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
@@ -5827,7 +5828,7 @@ static void wined3d_adapter_init_fb_cfgs(struct wined3d_adapter *adapter, HDC dc
     }
 }
 
-static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
+static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal, DWORD wined3d_creation_flags)
 {
     static const DWORD supported_gl_versions[] =
     {
@@ -5904,7 +5905,7 @@ static BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, UINT ordinal)
                 supported_gl_versions[i] >> 16, supported_gl_versions[i] & 0xffff);
     }
 
-    if (!wined3d_adapter_init_gl_caps(adapter))
+    if (!wined3d_adapter_init_gl_caps(adapter, wined3d_creation_flags))
     {
         ERR("Failed to initialize GL caps for adapter %p.\n", adapter);
         wined3d_caps_gl_ctx_destroy(&caps_gl_ctx);
@@ -5998,7 +5999,7 @@ HRESULT wined3d_init(struct wined3d *wined3d, DWORD flags)
         return WINED3D_OK;
     }
 
-    if (!wined3d_adapter_init(&wined3d->adapters[0], 0))
+    if (!wined3d_adapter_init(&wined3d->adapters[0], 0, flags))
     {
         WARN("Failed to initialize adapter.\n");
         return E_FAIL;

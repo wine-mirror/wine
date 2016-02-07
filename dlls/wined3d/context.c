@@ -214,7 +214,7 @@ static void context_attach_surface_fbo(struct wined3d_context *context,
             case WINED3D_LOCATION_TEXTURE_SRGB:
                 srgb = location == WINED3D_LOCATION_TEXTURE_SRGB;
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
-                        surface->texture_target, surface_get_texture_name(surface, gl_info, srgb),
+                        surface->texture_target, surface_get_texture_name(surface, context, srgb),
                         surface->texture_level);
                 checkGLcall("glFramebufferTexture2D()");
                 break;
@@ -2470,7 +2470,8 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
     gl_info->gl_ops.gl.p_glEnable(GL_SCISSOR_TEST);
     if (gl_info->supported[ARB_FRAMEBUFFER_SRGB])
     {
-        if (device->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
+        if (!(context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
+                || device->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
             gl_info->gl_ops.gl.p_glEnable(GL_FRAMEBUFFER_SRGB);
         else
             gl_info->gl_ops.gl.p_glDisable(GL_FRAMEBUFFER_SRGB);

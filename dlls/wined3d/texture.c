@@ -153,7 +153,7 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
 
     TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
-    if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+    if (!needs_separate_srgb_gl_texture(context))
         srgb = FALSE;
 
     /* sRGB mode cache for preload() calls outside drawprim. */
@@ -439,14 +439,13 @@ void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
     const struct wined3d_d3d_info *d3d_info = context->d3d_info;
     DWORD flag;
     UINT i;
 
     TRACE("texture %p, context %p, srgb %#x.\n", texture, context, srgb);
 
-    if (gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
+    if (!needs_separate_srgb_gl_texture(context))
         srgb = FALSE;
 
     if (srgb)

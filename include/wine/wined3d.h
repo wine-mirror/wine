@@ -1230,6 +1230,7 @@ enum wined3d_display_rotation
 #define WINED3D_HANDLE_RESTORE                                  0x00000040
 #define WINED3D_PIXEL_CENTER_INTEGER                            0x00000080
 #define WINED3D_LEGACY_FFP_LIGHTING                             0x00000100
+#define WINED3D_SRGB_READ_WRITE_CONTROL                         0x00000200
 
 #define WINED3D_RESZ_CODE                                       0x7fa05000
 
