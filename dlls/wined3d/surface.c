@@ -1923,53 +1923,6 @@ HRESULT CDECL wined3d_surface_update_overlay_z_order(struct wined3d_surface *sur
     return WINED3D_OK;
 }
 
-HRESULT CDECL wined3d_surface_update_overlay(struct wined3d_surface *surface, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx)
-{
-    TRACE("surface %p, src_rect %s, dst_surface %p, dst_rect %s, flags %#x, fx %p.\n",
-            surface, wine_dbgstr_rect(src_rect), dst_surface, wine_dbgstr_rect(dst_rect), flags, fx);
-
-    if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
-    {
-        WARN("Not an overlay surface.\n");
-        return WINEDDERR_NOTAOVERLAYSURFACE;
-    }
-    else if (!dst_surface)
-    {
-        WARN("Dest surface is NULL.\n");
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    surface_get_rect(surface, src_rect, &surface->overlay_srcrect);
-    surface_get_rect(dst_surface, dst_rect, &surface->overlay_destrect);
-
-    if (surface->overlay_dest && (surface->overlay_dest != dst_surface || flags & WINEDDOVER_HIDE))
-    {
-        surface->overlay_dest = NULL;
-        list_remove(&surface->overlay_entry);
-    }
-
-    if (flags & WINEDDOVER_SHOW)
-    {
-        if (surface->overlay_dest != dst_surface)
-        {
-            surface->overlay_dest = dst_surface;
-            list_add_tail(&dst_surface->overlays, &surface->overlay_entry);
-        }
-    }
-    else if (flags & WINEDDOVER_HIDE)
-    {
-        /* tests show that the rectangles are erased on hide */
-        surface->overlay_srcrect.left = 0; surface->overlay_srcrect.top = 0;
-        surface->overlay_srcrect.right = 0; surface->overlay_srcrect.bottom = 0;
-        surface->overlay_destrect.left = 0; surface->overlay_destrect.top = 0;
-        surface->overlay_destrect.right = 0; surface->overlay_destrect.bottom = 0;
-        surface->overlay_dest = NULL;
-    }
-
-    return WINED3D_OK;
-}
-
 HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, void *mem, unsigned int pitch)
 {

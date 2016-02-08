@@ -3691,22 +3691,30 @@ static HRESULT WINAPI ddraw_surface1_SetOverlayPosition(IDirectDrawSurface *ifac
  *  DDERR_UNSUPPORTED, because we don't support overlays
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_UpdateOverlay(IDirectDrawSurface7 *iface, RECT *SrcRect,
-        IDirectDrawSurface7 *DstSurface, RECT *DstRect, DWORD Flags, DDOVERLAYFX *FX)
+static HRESULT WINAPI ddraw_surface7_UpdateOverlay(IDirectDrawSurface7 *iface, RECT *src_rect,
+        IDirectDrawSurface7 *dst_surface, RECT *dst_rect, DWORD flags, DDOVERLAYFX *fx)
 {
     struct ddraw_surface *src_impl = impl_from_IDirectDrawSurface7(iface);
-    struct ddraw_surface *dst_impl = unsafe_impl_from_IDirectDrawSurface7(DstSurface);
+    struct ddraw_surface *dst_impl = unsafe_impl_from_IDirectDrawSurface7(dst_surface);
+    struct wined3d_texture *dst_wined3d_texture = NULL;
+    unsigned int dst_sub_resource_idx = 0;
     HRESULT hr;
 
     TRACE("iface %p, src_rect %s, dst_surface %p, dst_rect %s, flags %#x, fx %p.\n",
-            iface, wine_dbgstr_rect(SrcRect), DstSurface, wine_dbgstr_rect(DstRect), Flags, FX);
+            iface, wine_dbgstr_rect(src_rect), dst_surface, wine_dbgstr_rect(dst_rect), flags, fx);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_update_overlay(src_impl->wined3d_surface, SrcRect,
-            dst_impl ? dst_impl->wined3d_surface : NULL, DstRect, Flags, (WINEDDOVERLAYFX *)FX);
+    if (dst_impl)
+    {
+        dst_wined3d_texture = dst_impl->wined3d_texture;
+        dst_sub_resource_idx = dst_impl->sub_resource_idx;
+    }
+    hr = wined3d_texture_update_overlay(src_impl->wined3d_texture, src_impl->sub_resource_idx, src_rect,
+            dst_wined3d_texture, dst_sub_resource_idx, dst_rect, flags, (WINEDDOVERLAYFX *)fx);
     wined3d_mutex_unlock();
 
-    switch(hr) {
+    switch (hr)
+    {
         case WINED3DERR_INVALIDCALL:        return DDERR_INVALIDPARAMS;
         case WINEDDERR_NOTAOVERLAYSURFACE:  return DDERR_NOTAOVERLAYSURFACE;
         case WINEDDERR_OVERLAYNOTVISIBLE:   return DDERR_OVERLAYNOTVISIBLE;
