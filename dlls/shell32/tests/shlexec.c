@@ -1844,7 +1844,8 @@ static void test_fileurls(void)
         return;
     }
 
-    rc = (INT_PTR)ShellExecuteA(NULL, NULL, "file:///nosuchfile.shlexec", NULL, NULL, SW_SHOWNORMAL);
+    rc = shell_execute_ex(SEE_MASK_FLAG_NO_UI, NULL,
+                          "file:///nosuchfile.shlexec", NULL, NULL, NULL);
     if (rc > 32)
     {
         win_skip("shell32 is too old (likely < 4.72). Skipping the file URL tests\n");
