@@ -2124,12 +2124,15 @@ static void test_lnks(void)
     okChildInt("argcA", 4);
     okChildString("argvA3", "Lnk");
 
-    /* An explicit class overrides lnk's ContextMenuHandler */
-    rc=shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, "shlexec.shlexec");
-    okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
-    okChildInt("argcA", 5);
-    okChildString("argvA3", "Open");
-    okChildPath("argvA4", filename);
+    if (!skip_shlexec_tests)
+    {
+        /* An explicit class overrides lnk's ContextMenuHandler */
+        rc=shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_NOZONECHECKS, NULL, filename, NULL, NULL, "shlexec.shlexec");
+        okShell(rc > 32, "failed: rc=%lu err=%u\n", rc, GetLastError());
+        okChildInt("argcA", 5);
+        okChildString("argvA3", "Open");
+        okChildPath("argvA4", filename);
+    }
 
     if (dllver.dwMajorVersion>=6)
     {
@@ -2241,14 +2244,17 @@ static void test_exes(void)
                                     "notaverb", argv0, NULL, NULL, NULL);
     todo_wine okShell(rc == SE_ERR_NOASSOC, "returned %lu\n", rc);
 
-    /* A class overrides the normal handling of executables too */
-    /* FIXME SEE_MASK_FLAG_NO_UI is only needed due to Wine's bug */
-    rc = shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI,
-                          NULL, argv0, NULL, NULL, ".shlexec");
-    todo_wine okShell(rc > 32, "returned %lu\n", rc);
-    okChildInt("argcA", 5);
-    todo_wine okChildString("argvA3", "Open");
-    todo_wine okChildPath("argvA4", argv0);
+    if (!skip_shlexec_tests)
+    {
+        /* A class overrides the normal handling of executables too */
+        /* FIXME SEE_MASK_FLAG_NO_UI is only needed due to Wine's bug */
+        rc = shell_execute_ex(SEE_MASK_CLASSNAME | SEE_MASK_FLAG_NO_UI,
+                              NULL, argv0, NULL, NULL, ".shlexec");
+        todo_wine okShell(rc > 32, "returned %lu\n", rc);
+        okChildInt("argcA", 5);
+        todo_wine okChildString("argvA3", "Open");
+        todo_wine okChildPath("argvA4", argv0);
+    }
 }
 
 typedef struct
