@@ -648,8 +648,19 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
         c = GetPrivateProfileIntA("Child", "Failures", -1, child_file);
         if (c > 0)
             winetest_add_failures(c);
-        okChildInt_(file, line, "ShlexecVarLE", 0);
-        okChildString_(file, line, "ShlexecVar", "Present", "Present");
+        /* When NOZONECHECKS is specified the environment variables are not
+         * inherited if the process does not have elevated privileges.
+         */
+        if ((mask & SEE_MASK_NOZONECHECKS) && skip_shlexec_tests)
+        {
+            okChildInt_(file, line, "ShlexecVarLE", 203);
+            okChildString_(file, line, "ShlexecVar", "", "");
+        }
+        else
+        {
+            okChildInt_(file, line, "ShlexecVarLE", 0);
+            okChildString_(file, line, "ShlexecVar", "Present", "Present");
+        }
     }
 
     return rc;
