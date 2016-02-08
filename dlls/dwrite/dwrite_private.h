@@ -165,6 +165,19 @@ extern UINT32 opentype_get_cpal_palettecount(const void*) DECLSPEC_HIDDEN;
 extern UINT32 opentype_get_cpal_paletteentrycount(const void*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_cpal_entries(const void*,UINT32,UINT32,UINT32,DWRITE_COLOR_F*) DECLSPEC_HIDDEN;
 
+struct dwrite_colorglyph {
+    USHORT layer; /* [0, num_layers) index indicating current layer */
+    /* base glyph record data, set once on initialization */
+    USHORT first_layer;
+    USHORT num_layers;
+    /* current layer record data, updated every time glyph is switched to next layer */
+    UINT16 glyph;
+    UINT16 palette_index;
+};
+
+extern HRESULT opentype_get_colr_glyph(const void*,UINT16,struct dwrite_colorglyph*) DECLSPEC_HIDDEN;
+extern void opentype_colr_next_glyph(const void*,struct dwrite_colorglyph*) DECLSPEC_HIDDEN;
+
 enum gasp_flags {
     GASP_GRIDFIT             = 0x0001,
     GASP_DOGRAY              = 0x0002,

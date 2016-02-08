@@ -707,6 +707,29 @@ struct CPAL_ColorRecord
     BYTE alpha;
 };
 
+/* COLR table */
+struct COLR_Header
+{
+    USHORT version;
+    USHORT numBaseGlyphRecords;
+    ULONG  offsetBaseGlyphRecord;
+    ULONG  offsetLayerRecord;
+    USHORT numLayerRecords;
+};
+
+struct COLR_BaseGlyphRecord
+{
+    USHORT GID;
+    USHORT firstLayerIndex;
+    USHORT numLayers;
+};
+
+struct COLR_LayerRecord
+{
+    USHORT GID;
+    USHORT paletteIndex;
+};
+
 BOOL is_face_type_supported(DWRITE_FONT_FACE_TYPE type)
 {
     return (type == DWRITE_FONT_FACE_TYPE_CFF) ||
@@ -1691,4 +1714,65 @@ HRESULT opentype_get_cpal_entries(const void *cpal, UINT32 palette, UINT32 first
     }
 
     return S_OK;
+}
+
+static int colr_compare_gid(const void *g, const void *r)
+{
+    const struct COLR_BaseGlyphRecord *record = r;
+    UINT16 glyph = *(UINT16*)g, GID = GET_BE_WORD(record->GID);
+    int ret = 0;
+
+    if (glyph > GID)
+        ret = 1;
+    else if (glyph < GID)
+        ret = -1;
+
+    return ret;
+}
+
+HRESULT opentype_get_colr_glyph(const void *colr, UINT16 glyph, struct dwrite_colorglyph *ret)
+{
+    const struct COLR_BaseGlyphRecord *record;
+    const struct COLR_Header *header = colr;
+    const struct COLR_LayerRecord *layer;
+    DWORD layerrecordoffset = GET_BE_DWORD(header->offsetLayerRecord);
+    DWORD baserecordoffset = GET_BE_DWORD(header->offsetBaseGlyphRecord);
+    WORD numbaserecords = GET_BE_WORD(header->numBaseGlyphRecords);
+
+    record = bsearch(&glyph, (BYTE*)colr + baserecordoffset, numbaserecords, sizeof(struct COLR_BaseGlyphRecord),
+        colr_compare_gid);
+    if (!record) {
+        ret->layer = 0;
+        ret->first_layer = 0;
+        ret->num_layers = 0;
+        ret->glyph = glyph;
+        ret->palette_index = 0xffff;
+        return S_FALSE;
+    }
+
+    ret->layer = 0;
+    ret->first_layer = GET_BE_WORD(record->firstLayerIndex);
+    ret->num_layers = GET_BE_WORD(record->numLayers);
+
+    layer = (struct COLR_LayerRecord*)((BYTE*)colr + layerrecordoffset) + ret->first_layer + ret->layer;
+    ret->glyph = GET_BE_WORD(layer->GID);
+    ret->palette_index = GET_BE_WORD(layer->paletteIndex);
+
+    return S_OK;
+}
+
+void opentype_colr_next_glyph(const void *colr, struct dwrite_colorglyph *glyph)
+{
+    const struct COLR_Header *header = colr;
+    const struct COLR_LayerRecord *layer;
+    DWORD layerrecordoffset = GET_BE_DWORD(header->offsetLayerRecord);
+
+    /* iterated all the way through */
+    if (glyph->layer == glyph->num_layers)
+        return;
+
+    glyph->layer++;
+    layer = (struct COLR_LayerRecord*)((BYTE*)colr + layerrecordoffset) + glyph->first_layer + glyph->layer;
+    glyph->glyph = GET_BE_WORD(layer->GID);
+    glyph->palette_index = GET_BE_WORD(layer->paletteIndex);
 }

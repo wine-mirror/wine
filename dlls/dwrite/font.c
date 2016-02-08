@@ -181,6 +181,22 @@ struct dwrite_glyphrunanalysis {
 struct dwrite_colorglyphenum {
     IDWriteColorGlyphRunEnumerator IDWriteColorGlyphRunEnumerator_iface;
     LONG ref;
+
+    FLOAT origin_x;                   /* original run origin */
+    FLOAT origin_y;
+
+    IDWriteFontFace2 *fontface;       /* for convenience */
+    DWRITE_COLOR_GLYPH_RUN colorrun;  /* returned with GetCurrentRun() */
+    DWRITE_GLYPH_RUN run;             /* base run */
+    UINT32 palette;                   /* palette index to get layer color from */
+    FLOAT *advances;                  /* original or measured advances for base glyphs */
+    FLOAT *color_advances;            /* returned color run points to this */
+    UINT16 *glyphindices;             /* returned color run points to this */
+    struct dwrite_colorglyph *glyphs; /* current glyph color info */
+    BOOL has_regular_glyphs;          /* TRUE if there's any glyph without a color */
+    UINT16 current_layer;             /* enumerator position, updated with MoveNext */
+    UINT16 max_layer_num;             /* max number of layers for this run */
+    struct dwrite_fonttable colr;     /* used to access layers */
 };
 
 #define GLYPH_BLOCK_SHIFT 8
@@ -4610,24 +4626,147 @@ static ULONG WINAPI colorglyphenum_Release(IDWriteColorGlyphRunEnumerator *iface
 
     TRACE("(%p)->(%u)\n", This, ref);
 
-    if (!ref)
+    if (!ref) {
+        heap_free(This->advances);
+        heap_free(This->color_advances);
+        heap_free(This->glyphindices);
+        heap_free(This->glyphs);
+        if (This->colr.context)
+            IDWriteFontFace2_ReleaseFontTable(This->fontface, This->colr.context);
+        IDWriteFontFace2_Release(This->fontface);
         heap_free(This);
+    }
 
     return ref;
+}
+
+static FLOAT get_glyph_origin(const struct dwrite_colorglyphenum *glyphenum, UINT32 g)
+{
+    BOOL is_rtl = glyphenum->run.bidiLevel & 1;
+    FLOAT origin = 0.0f;
+
+    if (g == 0)
+        return 0.0f;
+
+    while (g--)
+        origin += is_rtl ? -glyphenum->advances[g] : glyphenum->advances[g];
+    return origin;
+}
+
+static BOOL colorglyphenum_build_color_run(struct dwrite_colorglyphenum *glyphenum)
+{
+    DWRITE_COLOR_GLYPH_RUN *colorrun = &glyphenum->colorrun;
+    FLOAT advance_adj = 0.0f;
+    BOOL got_palette_index;
+    UINT32 g;
+
+    /* start with regular glyphs */
+    if (glyphenum->current_layer == 0 && glyphenum->has_regular_glyphs) {
+        UINT32 first_glyph = 0;
+
+        for (g = 0; g < glyphenum->run.glyphCount; g++) {
+            if (glyphenum->glyphs[g].num_layers == 0) {
+                glyphenum->glyphindices[g] = glyphenum->glyphs[g].glyph;
+                first_glyph = min(first_glyph, g);
+            }
+            else
+                glyphenum->glyphindices[g] = 1;
+            glyphenum->color_advances[g] = glyphenum->advances[g];
+        }
+
+        colorrun->baselineOriginX = glyphenum->origin_x + get_glyph_origin(glyphenum, first_glyph);
+        colorrun->baselineOriginY = glyphenum->origin_y;
+        colorrun->glyphRun.glyphCount = glyphenum->run.glyphCount;
+        colorrun->paletteIndex = 0xffff;
+        memset(&colorrun->runColor, 0, sizeof(colorrun->runColor));
+        glyphenum->has_regular_glyphs = FALSE;
+        return TRUE;
+    }
+    else {
+        colorrun->glyphRun.glyphCount = 0;
+        got_palette_index = FALSE;
+    }
+
+    advance_adj = 0.0f;
+    for (g = 0; g < glyphenum->run.glyphCount; g++) {
+
+        glyphenum->glyphindices[g] = 1;
+
+        /* all glyph layers were returned */
+        if (glyphenum->glyphs[g].layer == glyphenum->glyphs[g].num_layers) {
+            advance_adj += glyphenum->advances[g];
+            continue;
+        }
+
+        if (glyphenum->current_layer == glyphenum->glyphs[g].layer && (!got_palette_index || colorrun->paletteIndex == glyphenum->glyphs[g].palette_index)) {
+            UINT32 index = colorrun->glyphRun.glyphCount;
+            if (!got_palette_index) {
+                colorrun->paletteIndex = glyphenum->glyphs[g].palette_index;
+                /* use foreground color or request one from the font */
+                if (colorrun->paletteIndex == 0xffff)
+                    memset(&colorrun->runColor, 0, sizeof(colorrun->runColor));
+                else
+                    IDWriteFontFace2_GetPaletteEntries(glyphenum->fontface, glyphenum->palette, colorrun->paletteIndex,
+                        1, &colorrun->runColor);
+                /* found a glyph position new color run starts from, origin is "original origin + distance to this glyph" */
+                colorrun->baselineOriginX = glyphenum->origin_x + get_glyph_origin(glyphenum, g);
+                colorrun->baselineOriginY = glyphenum->origin_y;
+                glyphenum->color_advances[index] = glyphenum->advances[g];
+                got_palette_index = TRUE;
+            }
+
+            glyphenum->glyphindices[index] = glyphenum->glyphs[g].glyph;
+            opentype_colr_next_glyph(glyphenum->colr.data, glyphenum->glyphs + g);
+            if (index)
+                glyphenum->color_advances[index-1] += advance_adj;
+            colorrun->glyphRun.glyphCount++;
+            advance_adj = 0.0f;
+        }
+        else
+            advance_adj += glyphenum->advances[g];
+    }
+
+    /* reset last advance */
+    if (colorrun->glyphRun.glyphCount)
+        glyphenum->color_advances[colorrun->glyphRun.glyphCount-1] = 0.0f;
+
+    return colorrun->glyphRun.glyphCount > 0;
 }
 
 static HRESULT WINAPI colorglyphenum_MoveNext(IDWriteColorGlyphRunEnumerator *iface, BOOL *has_run)
 {
     struct dwrite_colorglyphenum *This = impl_from_IDWriteColorGlyphRunEnumerator(iface);
-    FIXME("(%p)->(%p): stub\n", This, has_run);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, has_run);
+
+    *has_run = FALSE;
+
+    This->colorrun.glyphRun.glyphCount = 0;
+    while (This->current_layer < This->max_layer_num) {
+        if (colorglyphenum_build_color_run(This))
+            break;
+        else
+            This->current_layer++;
+    }
+
+    *has_run = This->colorrun.glyphRun.glyphCount > 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI colorglyphenum_GetCurrentRun(IDWriteColorGlyphRunEnumerator *iface, DWRITE_COLOR_GLYPH_RUN const **run)
 {
     struct dwrite_colorglyphenum *This = impl_from_IDWriteColorGlyphRunEnumerator(iface);
-    FIXME("(%p)->(%p): stub\n", This, run);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, run);
+
+    if (This->colorrun.glyphRun.glyphCount == 0) {
+        *run = NULL;
+        return E_NOT_VALID_STATE;
+    }
+
+    *run = &This->colorrun;
+    return S_OK;
 }
 
 static const IDWriteColorGlyphRunEnumeratorVtbl colorglyphenumvtbl = {
@@ -4639,12 +4778,13 @@ static const IDWriteColorGlyphRunEnumeratorVtbl colorglyphenumvtbl = {
 };
 
 HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_RUN *run, const DWRITE_GLYPH_RUN_DESCRIPTION *rundescr,
-    DWRITE_MEASURING_MODE mode, const DWRITE_MATRIX *transform, UINT32 palette, IDWriteColorGlyphRunEnumerator **ret)
+    DWRITE_MEASURING_MODE measuring_mode, const DWRITE_MATRIX *transform, UINT32 palette, IDWriteColorGlyphRunEnumerator **ret)
 {
     struct dwrite_colorglyphenum *colorglyphenum;
+    BOOL colorfont, has_colored_glyph;
     IDWriteFontFace2 *fontface2;
-    BOOL colorfont;
     HRESULT hr;
+    UINT32 i;
 
     *ret = NULL;
 
@@ -4655,17 +4795,100 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
     }
 
     colorfont = IDWriteFontFace2_IsColorFont(fontface2) && IDWriteFontFace2_GetColorPaletteCount(fontface2) > palette;
-    IDWriteFontFace2_Release(fontface2);
-    if (!colorfont)
-        return DWRITE_E_NOCOLOR;
+    if (!colorfont) {
+        hr = DWRITE_E_NOCOLOR;
+        goto failed;
+    }
 
-    colorglyphenum = heap_alloc(sizeof(*colorglyphenum));
-    if (!colorglyphenum)
-        return E_OUTOFMEMORY;
+    colorglyphenum = heap_alloc_zero(sizeof(*colorglyphenum));
+    if (!colorglyphenum) {
+        hr = E_OUTOFMEMORY;
+        goto failed;
+    }
 
     colorglyphenum->IDWriteColorGlyphRunEnumerator_iface.lpVtbl = &colorglyphenumvtbl;
     colorglyphenum->ref = 1;
+    colorglyphenum->origin_x = originX;
+    colorglyphenum->origin_y = originY;
+    colorglyphenum->fontface = fontface2;
+    colorglyphenum->glyphs = NULL;
+    colorglyphenum->run = *run;
+    colorglyphenum->run.glyphIndices = NULL;
+    colorglyphenum->run.glyphAdvances = NULL;
+    colorglyphenum->run.glyphOffsets = NULL;
+    colorglyphenum->palette = palette;
+    memset(&colorglyphenum->colr, 0, sizeof(colorglyphenum->colr));
+    colorglyphenum->colr.exists = TRUE;
+    get_fontface_table(fontface2, MS_COLR_TAG, &colorglyphenum->colr);
+    colorglyphenum->current_layer = 0;
+    colorglyphenum->max_layer_num = 0;
+
+    colorglyphenum->glyphs = heap_alloc_zero(run->glyphCount * sizeof(*colorglyphenum->glyphs));
+
+    has_colored_glyph = FALSE;
+    colorglyphenum->has_regular_glyphs = FALSE;
+    for (i = 0; i < run->glyphCount; i++) {
+        if (opentype_get_colr_glyph(colorglyphenum->colr.data, run->glyphIndices[i], colorglyphenum->glyphs + i) == S_OK) {
+            colorglyphenum->max_layer_num = max(colorglyphenum->max_layer_num, colorglyphenum->glyphs[i].num_layers);
+            has_colored_glyph = TRUE;
+        }
+        if (colorglyphenum->glyphs[i].num_layers == 0)
+            colorglyphenum->has_regular_glyphs = TRUE;
+    }
+
+    /* It's acceptable to have a subset of glyphs mapped to color layers, for regular runs client
+       is supposed to proceed normally, like if font had no color info at all. */
+    if (!has_colored_glyph) {
+        IDWriteColorGlyphRunEnumerator_Release(&colorglyphenum->IDWriteColorGlyphRunEnumerator_iface);
+        return DWRITE_E_NOCOLOR;
+    }
+
+    colorglyphenum->advances = heap_alloc(run->glyphCount * sizeof(FLOAT));
+    colorglyphenum->color_advances = heap_alloc(run->glyphCount * sizeof(FLOAT));
+    colorglyphenum->glyphindices = heap_alloc(run->glyphCount * sizeof(UINT16));
+
+    colorglyphenum->colorrun.glyphRun.glyphIndices = colorglyphenum->glyphindices;
+    colorglyphenum->colorrun.glyphRun.glyphAdvances = colorglyphenum->color_advances;
+    colorglyphenum->colorrun.glyphRun.glyphOffsets = NULL; /* FIXME */
+    colorglyphenum->colorrun.glyphRunDescription = NULL; /* FIXME */
+
+    if (run->glyphAdvances)
+        memcpy(colorglyphenum->advances, run->glyphAdvances, run->glyphCount * sizeof(FLOAT));
+    else {
+        DWRITE_FONT_METRICS metrics;
+
+        IDWriteFontFace_GetMetrics(run->fontFace, &metrics);
+        for (i = 0; i < run->glyphCount; i++) {
+            HRESULT hr;
+            INT32 a;
+
+            switch (measuring_mode)
+            {
+            case DWRITE_MEASURING_MODE_NATURAL:
+                hr = IDWriteFontFace2_GetDesignGlyphAdvances(fontface2, 1, run->glyphIndices + i, &a, run->isSideways);
+                if (FAILED(hr))
+                    a = 0;
+                colorglyphenum->advances[i] = get_scaled_advance_width(a, run->fontEmSize, &metrics);
+                break;
+            case DWRITE_MEASURING_MODE_GDI_CLASSIC:
+            case DWRITE_MEASURING_MODE_GDI_NATURAL:
+                hr = IDWriteFontFace2_GetGdiCompatibleGlyphAdvances(fontface2, run->fontEmSize, 1.0f, transform,
+                    measuring_mode == DWRITE_MEASURING_MODE_GDI_NATURAL, run->isSideways, 1, run->glyphIndices + i, &a);
+                if (FAILED(hr))
+                    colorglyphenum->advances[i] = 0.0f;
+                else
+                    colorglyphenum->advances[i] = floorf(a * run->fontEmSize / metrics.designUnitsPerEm + 0.5f);
+                break;
+            default:
+                ;
+            }
+        }
+    }
 
     *ret = &colorglyphenum->IDWriteColorGlyphRunEnumerator_iface;
     return S_OK;
+
+failed:
+    IDWriteFontFace2_Release(fontface2);
+    return hr;
 }

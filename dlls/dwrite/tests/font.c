@@ -5207,7 +5207,6 @@ static void test_TranslateColorGlyphRun(void)
     while (1) {
         hasrun = FALSE;
         hr = IDWriteColorGlyphRunEnumerator_MoveNext(layers, &hasrun);
-    todo_wine
         ok(hr == S_OK, "got 0x%08x\n", hr);
 
         if (!hasrun)
@@ -5216,7 +5215,6 @@ static void test_TranslateColorGlyphRun(void)
 
     /* iterated all way through */
     hr = IDWriteColorGlyphRunEnumerator_GetCurrentRun(layers, &colorrun);
-todo_wine
     ok(hr == E_NOT_VALID_STATE, "got 0x%08x\n", hr);
 
     IDWriteColorGlyphRunEnumerator_Release(layers);
@@ -5247,10 +5245,9 @@ todo_wine
     layers = (void*)0xdeadbeef;
     hr = IDWriteFactory2_TranslateColorGlyphRun(factory2, 0.0, 0.0, &run, NULL,
         DWRITE_MEASURING_MODE_NATURAL, NULL, 0, &layers);
-todo_wine {
     ok(hr == DWRITE_E_NOCOLOR, "got 0x%08x\n", hr);
     ok(layers == NULL, "got %p\n", layers);
-}
+
     /* one glyph with, one without */
     codepoints[0] = 'A';
     codepoints[1] = 0x26c4;
