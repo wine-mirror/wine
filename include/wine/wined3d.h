@@ -2319,8 +2319,6 @@ HRESULT __cdecl wined3d_device_uninit_gdi(struct wined3d_device *device);
 void __cdecl wined3d_device_update_sub_resource(struct wined3d_device *device, struct wined3d_resource *resource,
         unsigned int sub_resource_idx, const struct wined3d_box *box, const void *data, unsigned int row_pitch,
         unsigned int depth_pitch);
-HRESULT __cdecl wined3d_device_update_surface(struct wined3d_device *device, struct wined3d_surface *src_surface,
-        const RECT *src_rect, struct wined3d_surface *dst_surface, const POINT *dst_point);
 HRESULT __cdecl wined3d_device_update_texture(struct wined3d_device *device,
         struct wined3d_texture *src_texture, struct wined3d_texture *dst_texture);
 HRESULT __cdecl wined3d_device_validate_device(const struct wined3d_device *device, DWORD *num_passes);

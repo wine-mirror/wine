@@ -3676,7 +3676,7 @@ HRESULT CDECL wined3d_device_update_texture(struct wined3d_device *device,
                             i * src_levels + j + src_skip_levels));
                     dst_surface = surface_from_resource(wined3d_texture_get_sub_resource(dst_texture,
                             i * dst_levels + j));
-                    if (FAILED(hr = wined3d_device_update_surface(device, src_surface, NULL, dst_surface, NULL)))
+                    if (FAILED(hr = surface_upload_from_surface(dst_surface, NULL, src_surface, NULL)))
                     {
                         WARN("Failed to update surface, hr %#x.\n", hr);
                         return hr;
@@ -3848,26 +3848,6 @@ float CDECL wined3d_device_get_npatch_mode(const struct wined3d_device *device)
     }
 
     return 0.0f;
-}
-
-/* FIXME: Callers should probably use wined3d_device_update_sub_resource()
- * instead. */
-HRESULT CDECL wined3d_device_update_surface(struct wined3d_device *device,
-        struct wined3d_surface *src_surface, const RECT *src_rect,
-        struct wined3d_surface *dst_surface, const POINT *dst_point)
-{
-    TRACE("device %p, src_surface %p, src_rect %s, dst_surface %p, dst_point %s.\n",
-            device, src_surface, wine_dbgstr_rect(src_rect),
-            dst_surface, wine_dbgstr_point(dst_point));
-
-    if (src_surface->resource.pool != WINED3D_POOL_SYSTEM_MEM || dst_surface->resource.pool != WINED3D_POOL_DEFAULT)
-    {
-        WARN("source %p must be SYSTEMMEM and dest %p must be DEFAULT, returning WINED3DERR_INVALIDCALL\n",
-                src_surface, dst_surface);
-        return WINED3DERR_INVALIDCALL;
-    }
-
-    return surface_upload_from_surface(dst_surface, dst_point, src_surface, src_rect);
 }
 
 void CDECL wined3d_device_copy_resource(struct wined3d_device *device,
