@@ -488,7 +488,7 @@ static void surface_get_memory(const struct wined3d_surface *surface, struct win
     }
     if (location & WINED3D_LOCATION_USER_MEMORY)
     {
-        data->addr = surface->user_memory;
+        data->addr = surface->container->user_memory;
         data->buffer_object = 0;
         return;
     }
@@ -567,7 +567,7 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
             break;
 
         case WINED3D_LOCATION_USER_MEMORY:
-            if (!surface->user_memory)
+            if (!surface->container->user_memory)
                 ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->user_memory is NULL.\n");
             break;
 
@@ -1910,7 +1910,7 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 }
 
 HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, void *mem, unsigned int pitch)
+        const struct wined3d_gl_info *gl_info, unsigned int pitch)
 {
     struct wined3d_resource *texture_resource = &surface->container->resource;
     unsigned int width, height;
@@ -1954,7 +1954,7 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
     else
         surface->flags &= ~SFLAG_NONPOW2;
 
-    if ((surface->user_memory = mem))
+    if (surface->container->user_memory)
     {
         surface->resource.map_binding = WINED3D_LOCATION_USER_MEMORY;
         valid_location = WINED3D_LOCATION_USER_MEMORY;
@@ -2414,7 +2414,7 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
             break;
 
         case WINED3D_LOCATION_USER_MEMORY:
-            base_memory = surface->user_memory;
+            base_memory = surface->container->user_memory;
             break;
 
         case WINED3D_LOCATION_DIB:
