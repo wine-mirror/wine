@@ -2469,7 +2469,7 @@ static void test_dde(void)
     hook_WaitForInputIdle((void *) WaitForInputIdle);
 }
 
-#define DDE_DEFAULT_APP_VARIANTS 2
+#define DDE_DEFAULT_APP_VARIANTS 3
 typedef struct
 {
     const char* command;
@@ -2480,42 +2480,44 @@ typedef struct
 
 static dde_default_app_tests_t dde_default_app_tests[] =
 {
-    /* Windows XP and 98 handle default DDE app names in different ways.
-     * The application name we see in the first test determines the pattern
-     * of application names and return codes we will look for. */
+    /* There are three possible sets of results: Windows <= 2000, XP SP1 and
+     * >= XP SP2. Use the first two tests to determine which results to expect.
+     */
 
     /* Test unquoted existing filename with a space */
-    {"%s\\test file.exe", {"test file", "test"}, 0x0, {33, 33}},
-    {"%s\\test file.exe param", {"test file", "test"}, 0x0, {33, 33}},
+    {"%s\\test file.exe", {"test file", "test file", "test"}, 0x0, {33, 33, 33}},
+    {"%s\\test2 file.exe", {"test2", "", "test2"}, 0x0, {33, 5, 33}},
+
+    /* Test unquoted existing filename with a space */
+    {"%s\\test file.exe param", {"test file", "test file", "test"}, 0x0, {33, 33, 33}},
 
     /* Test quoted existing filename with a space */
-    {"\"%s\\test file.exe\"", {"test file", "test file"}, 0x0, {33, 33}},
-    {"\"%s\\test file.exe\" param", {"test file", "test file"}, 0x0, {33, 33}},
+    {"\"%s\\test file.exe\"", {"test file", "test file", "test file"}, 0x0, {33, 33, 33}},
+    {"\"%s\\test file.exe\" param", {"test file", "test file", "test file"}, 0x0, {33, 33, 33}},
 
     /* Test unquoted filename with a space that doesn't exist, but
      * test2.exe does */
-    {"%s\\test2 file.exe", {"test2", "test2"}, 0x0, {33, 33}},
-    {"%s\\test2 file.exe param", {"test2", "test2"}, 0x0, {33, 33}},
+    {"%s\\test2 file.exe param", {"test2", "", "test2"}, 0x0, {33, 5, 33}},
 
     /* Test quoted filename with a space that does not exist */
-    {"\"%s\\test2 file.exe\"", {"", "test2 file"}, 0x0, {5, 33}},
-    {"\"%s\\test2 file.exe\" param", {"", "test2 file"}, 0x0, {5, 33}},
+    {"\"%s\\test2 file.exe\"", {"", "", "test2 file"}, 0x0, {5, 2, 33}},
+    {"\"%s\\test2 file.exe\" param", {"", "", "test2 file"}, 0x0, {5, 2, 33}},
 
     /* Test filename supplied without the extension */
-    {"%s\\test2", {"test2", "test2"}, 0x0, {33, 33}},
-    {"%s\\test2 param", {"test2", "test2"}, 0x0, {33, 33}},
+    {"%s\\test2", {"test2", "", "test2"}, 0x0, {33, 5, 33}},
+    {"%s\\test2 param", {"test2", "", "test2"}, 0x0, {33, 5, 33}},
 
     /* Test an unquoted nonexistent filename */
-    {"%s\\notexist.exe", {"", "notexist"}, 0x0, {5, 33}},
-    {"%s\\notexist.exe param", {"", "notexist"}, 0x0, {5, 33}},
+    {"%s\\notexist.exe", {"", "", "notexist"}, 0x0, {5, 2, 33}},
+    {"%s\\notexist.exe param", {"", "", "notexist"}, 0x0, {5, 2, 33}},
 
     /* Test an application that will be found on the path */
-    {"cmd", {"cmd", "cmd"}, 0x0, {33, 33}},
-    {"cmd param", {"cmd", "cmd"}, 0x0, {33, 33}},
+    {"cmd", {"cmd", "cmd", "cmd"}, 0x0, {33, 33, 33}},
+    {"cmd param", {"cmd", "cmd", "cmd"}, 0x0, {33, 33, 33}},
 
     /* Test an application that will not be found on the path */
-    {"xyzwxyzwxyz", {"", "xyzwxyzwxyz"}, 0x0, {5, 33}},
-    {"xyzwxyzwxyz param", {"", "xyzwxyzwxyz"}, 0x0, {5, 33}},
+    {"xyzwxyzwxyz", {"", "", "xyzwxyzwxyz"}, 0x0, {5, 2, 33}},
+    {"xyzwxyzwxyz param", {"", "", "xyzwxyzwxyz"}, 0x0, {5, 2, 33}},
 
     {NULL, {NULL}, 0, {0}}
 };
@@ -2592,20 +2594,23 @@ static void test_dde_default_app(void)
         while (GetMessageA(&msg, NULL, 0, 0)) DispatchMessageA(&msg);
         rc = msg.wParam > 32 ? 33 : msg.wParam;
 
-        /* First test, find which set of test data we expect to see */
-        if (test == dde_default_app_tests)
+        /* The first two tests determine which set of results to expect.
+         * First check the platform as only the first set of results is
+         * acceptable for Wine.
+         */
+        if (strcmp(winetest_platform, "wine"))
         {
-            int i;
-            for (i=0; i<DDE_DEFAULT_APP_VARIANTS; i++)
+            if (test == dde_default_app_tests)
             {
-                if (!strcmp(ddeApplication, test->expectedDdeApplication[i]))
-                {
-                    which = i;
-                    break;
-                }
+                if (strcmp(ddeApplication, test->expectedDdeApplication[0]))
+                    which = 2;
             }
-            if (i == DDE_DEFAULT_APP_VARIANTS)
-                skip("Default DDE application test does not match any available results, using first expected data set.\n");
+            else if (test == dde_default_app_tests + 1)
+            {
+                if (which == 0 && rc == test->rc[1])
+                    which = 1;
+                trace("DDE result variant %d\n", which);
+            }
         }
 
         if ((test->todo & 0x1)==0)
