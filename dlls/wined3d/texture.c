@@ -645,8 +645,9 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     texture->resource.height = height;
 
     texture->user_memory = mem;
+    texture->row_pitch = pitch;
 
-    return wined3d_surface_update_desc(surface, gl_info, pitch);
+    return wined3d_surface_update_desc(surface, gl_info);
 }
 
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)

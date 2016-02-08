@@ -1897,8 +1897,8 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (surface->pitch)
-        return surface->pitch;
+    if (surface->container->row_pitch)
+        return surface->container->row_pitch;
 
     alignment = surface->resource.device->surface_alignment;
     pitch = wined3d_format_calculate_pitch(surface->resource.format, surface->resource.width);
@@ -1909,8 +1909,7 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
     return pitch;
 }
 
-HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, unsigned int pitch)
+HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_resource *texture_resource = &surface->container->resource;
     unsigned int width, height;
@@ -1959,20 +1958,19 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
         surface->resource.map_binding = WINED3D_LOCATION_USER_MEMORY;
         valid_location = WINED3D_LOCATION_USER_MEMORY;
     }
-    surface->pitch = pitch;
     surface->resource.format = texture_resource->format;
     surface->resource.multisample_type = texture_resource->multisample_type;
     surface->resource.multisample_quality = texture_resource->multisample_quality;
-    if (surface->pitch)
+    if (surface->container->row_pitch)
     {
-        surface->resource.size = height * surface->pitch;
+        surface->resource.size = height * surface->container->row_pitch;
     }
     else
     {
         /* User memory surfaces don't have the regular surface alignment. */
         surface->resource.size = wined3d_format_calculate_size(texture_resource->format,
                 1, width, height, 1);
-        surface->pitch = wined3d_format_calculate_pitch(texture_resource->format, width);
+        surface->container->row_pitch = wined3d_format_calculate_pitch(texture_resource->format, width);
     }
 
     /* The format might be changed to a format that needs conversion.

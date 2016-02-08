@@ -2365,6 +2365,7 @@ struct wined3d_texture
     GLenum target;
 
     void *user_memory;
+    unsigned int row_pitch;
 
     /* May only be accessed from the command stream worker thread. */
     struct wined3d_texture_async
@@ -2492,7 +2493,6 @@ struct wined3d_surface
 
     DWORD flags;
 
-    UINT pitch;
     UINT pow2Width;
     UINT pow2Height;
 
@@ -2570,7 +2570,7 @@ void surface_set_texture_target(struct wined3d_surface *surface, GLenum target, 
 void surface_translate_drawable_coords(const struct wined3d_surface *surface, HWND window, RECT *rect) DECLSPEC_HIDDEN;
 HRESULT wined3d_surface_unmap(struct wined3d_surface *surface) DECLSPEC_HIDDEN;
 HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
-        const struct wined3d_gl_info *gl_info, unsigned int pitch) DECLSPEC_HIDDEN;
+        const struct wined3d_gl_info *gl_info) DECLSPEC_HIDDEN;
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect) DECLSPEC_HIDDEN;
 void surface_validate_location(struct wined3d_surface *surface, DWORD location) DECLSPEC_HIDDEN;
