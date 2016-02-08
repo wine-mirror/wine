@@ -425,13 +425,29 @@ static int StrCmpPath(const char* s1, const char* s2)
 static void okChildPath_(const char* file, int line, const char* key, const char* expected)
 {
     char* result;
+    int equal, shortequal;
     result=getChildString("Child", key);
     if (!result)
     {
         okShell_(file,line)(FALSE, "%s expected '%s', but key not found or empty\n", key, expected);
         return;
     }
-    okShell_(file,line)(StrCmpPath(result, expected) == 0,
+    shortequal = FALSE;
+    equal = (StrCmpPath(result, expected) == 0);
+    if (!equal)
+    {
+        char altpath[MAX_PATH];
+        DWORD rc = GetLongPathNameA(expected, altpath, sizeof(altpath));
+        if (0 < rc && rc < sizeof(altpath))
+            equal = (StrCmpPath(result, altpath) == 0);
+        if (!equal)
+        {
+            rc = GetShortPathNameA(expected, altpath, sizeof(altpath));
+            if (0 < rc && rc < sizeof(altpath))
+                shortequal = (StrCmpPath(result, altpath) == 0);
+        }
+    }
+    okShell_(file,line)(equal || broken(shortequal) /* XP SP1 */,
                         "%s expected '%s', got '%s'\n", key, expected, result);
 }
 #define okChildPath(key, expected) okChildPath_(__FILE__, __LINE__, (key), (expected))
