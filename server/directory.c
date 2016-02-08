@@ -218,6 +218,11 @@ static struct directory *create_directory( struct directory *root, const struct 
     return dir;
 }
 
+struct object *get_root_directory(void)
+{
+    return grab_object( root_directory );
+}
+
 struct directory *get_directory_obj( struct process *process, obj_handle_t handle, unsigned int access )
 {
     return (struct directory *)get_handle_obj( process, handle, access, &directory_ops );
@@ -242,55 +247,7 @@ struct directory *get_directory_obj( struct process *process, obj_handle_t handl
 struct object *find_object_dir( struct directory *root, const struct unicode_str *name,
                                 unsigned int attr, struct unicode_str *name_left )
 {
-    struct object *obj, *parent;
-    struct unicode_str name_tmp;
-
-    if (name) name_tmp = *name;
-    else name_tmp.len = 0;
-
-    /* Arguments check:
-     * - Either rootdir or name have to be specified
-     * - If root is specified path shouldn't start with backslash */
-    if (root)
-    {
-        if (name_tmp.len && name_tmp.str[0] == '\\')
-        {
-            set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
-            return NULL;
-        }
-        parent = grab_object( root );
-    }
-    else
-    {
-        if (!name_tmp.len || name_tmp.str[0] != '\\')
-        {
-            set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
-            return NULL;
-        }
-        parent = grab_object( &root_directory->obj );
-        /* skip leading backslash */
-        name_tmp.str++;
-        name_tmp.len -= sizeof(WCHAR);
-    }
-
-    /* Special case for opening RootDirectory */
-    if (!name_tmp.len) goto done;
-
-    while ((obj = parent->ops->lookup_name( parent, &name_tmp, attr )))
-    {
-        /* move to the next element */
-        release_object ( parent );
-        parent = obj;
-    }
-    if (get_error())
-    {
-        release_object( parent );
-        return NULL;
-    }
-
-    done:
-    if (name_left) *name_left = name_tmp;
-    return parent;
+    return lookup_named_object( &root->obj, name, attr, name_left );
 }
 
 /* create a named (if name is present) or unnamed object. */

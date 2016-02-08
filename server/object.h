@@ -132,6 +132,8 @@ extern void namespace_add( struct namespace *namespace, struct object_name *ptr 
 extern const WCHAR *get_object_name( struct object *obj, data_size_t *len );
 extern WCHAR *get_object_full_name( struct object *obj, data_size_t *ret_len );
 extern void dump_object_name( struct object *obj );
+extern struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
+                                           unsigned int attr, struct unicode_str *name_left );
 extern void *create_object( struct object *parent, const struct object_ops *ops,
                             const struct unicode_str *name );
 extern void *create_named_object( struct object *parent, struct namespace *namespace, const struct object_ops *ops,
@@ -225,6 +227,7 @@ extern void release_global_atom( struct winstation *winstation, atom_t atom );
 
 /* directory functions */
 
+extern struct object *get_root_directory(void);
 extern struct directory *get_directory_obj( struct process *process, obj_handle_t handle, unsigned int access );
 extern struct object *find_object_dir( struct directory *root, const struct unicode_str *name,
                                        unsigned int attr, struct unicode_str *name_left );

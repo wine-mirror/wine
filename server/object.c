@@ -211,6 +211,56 @@ void free_object( struct object *obj )
     free( obj );
 }
 
+/* find an object by name starting from the specified root */
+/* if it doesn't exist, its parent is returned, and name_left contains the remaining name */
+struct object *lookup_named_object( struct object *root, const struct unicode_str *name,
+                                    unsigned int attr, struct unicode_str *name_left )
+{
+    struct object *obj, *parent;
+    struct unicode_str name_tmp = *name;
+
+    if (root)
+    {
+        /* if root is specified path shouldn't start with backslash */
+        if (name_tmp.len && name_tmp.str[0] == '\\')
+        {
+            set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+            return NULL;
+        }
+        parent = grab_object( root );
+    }
+    else
+    {
+        if (!name_tmp.len || name_tmp.str[0] != '\\')
+        {
+            set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+            return NULL;
+        }
+        /* skip leading backslash */
+        name_tmp.str++;
+        name_tmp.len -= sizeof(WCHAR);
+        parent = get_root_directory();
+    }
+
+    if (!name_tmp.len) goto done;
+
+    while ((obj = parent->ops->lookup_name( parent, &name_tmp, attr )))
+    {
+        /* move to the next element */
+        release_object ( parent );
+        parent = obj;
+    }
+    if (get_error())
+    {
+        release_object( parent );
+        return NULL;
+    }
+
+    done:
+    if (name_left) *name_left = name_tmp;
+    return parent;
+}
+
 void *create_object( struct object *parent, const struct object_ops *ops, const struct unicode_str *name )
 {
     struct object *obj;
