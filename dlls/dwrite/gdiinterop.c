@@ -711,11 +711,11 @@ static HRESULT WINAPI gdiinterop_ConvertFontToLOGFONT(IDWriteGdiInterop *iface,
     if (FAILED(hr) || !exists)
         return hr;
 
-    IDWriteLocalizedStrings_FindLocaleName(name, enusW, &index, &exists);
-    IDWriteLocalizedStrings_GetString(name, index, logfont->lfFaceName, sizeof(logfont->lfFaceName)/sizeof(WCHAR));
+    hr = IDWriteLocalizedStrings_FindLocaleName(name, enusW, &index, &exists);
+    if (hr == S_OK)
+        hr = IDWriteLocalizedStrings_GetString(name, index, logfont->lfFaceName, sizeof(logfont->lfFaceName)/sizeof(WCHAR));
     IDWriteLocalizedStrings_Release(name);
-
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI gdiinterop_ConvertFontFaceToLOGFONT(IDWriteGdiInterop *iface,
