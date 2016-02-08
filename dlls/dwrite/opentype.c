@@ -1281,9 +1281,58 @@ static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT la
             strcpyW(locale, enusW);
         }
         break;
+    case OPENTYPE_PLATFORM_UNICODE:
+        strcpyW(locale, enusW);
+        break;
     default:
         FIXME("unknown platform %d\n", platform);
     }
+}
+
+static BOOL opentype_decode_namerecord(const TT_NAME_V0 *header, BYTE *storage_area, USHORT recid, IDWriteLocalizedStrings *strings)
+{
+    const TT_NameRecord *record = &header->nameRecord[recid];
+    USHORT lang_id, length, offset, encoding, platform;
+    BOOL ret = FALSE;
+
+    platform = GET_BE_WORD(record->platformID);
+    lang_id = GET_BE_WORD(record->languageID);
+    length = GET_BE_WORD(record->length);
+    offset = GET_BE_WORD(record->offset);
+    encoding = GET_BE_WORD(record->encodingID);
+
+    if (lang_id < 0x8000) {
+        WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+        WCHAR *name_string;
+        UINT codepage;
+
+        codepage = get_name_record_codepage(platform, encoding);
+        get_name_record_locale(platform, lang_id, locale, sizeof(locale)/sizeof(WCHAR));
+
+        if (codepage) {
+            DWORD len = MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, NULL, 0);
+            name_string = heap_alloc(sizeof(WCHAR) * (len+1));
+            MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, name_string, len);
+            name_string[len] = 0;
+        }
+        else {
+            int i;
+
+            length /= sizeof(WCHAR);
+            name_string = heap_strdupnW((LPWSTR)(storage_area + offset), length);
+            for (i = 0; i < length; i++)
+                name_string[i] = GET_BE_WORD(name_string[i]);
+        }
+
+        TRACE("string %s for locale %s found\n", debugstr_w(name_string), debugstr_w(locale));
+        add_localizedstring(strings, locale, name_string);
+        heap_free(name_string);
+        ret = TRUE;
+    }
+    else
+        FIXME("handle NAME format 1\n");
+
+    return ret;
 }
 
 static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OPENTYPE_STRING_ID id, IDWriteLocalizedStrings **strings)
@@ -1291,10 +1340,10 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
     const TT_NAME_V0 *header;
     BYTE *storage_area = 0;
     USHORT count = 0;
+    int i, candidate;
     WORD format;
     BOOL exists;
     HRESULT hr;
-    int i;
 
     if (!table_data)
         return E_FAIL;
@@ -1313,19 +1362,17 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
         FIXME("unsupported NAME format %d\n", format);
     }
 
-
     storage_area = (LPBYTE)table_data + GET_BE_WORD(header->stringOffset);
     count = GET_BE_WORD(header->count);
 
     exists = FALSE;
+    candidate = -1;
     for (i = 0; i < count; i++) {
         const TT_NameRecord *record = &header->nameRecord[i];
-        USHORT lang_id, length, offset, encoding, platform;
+        USHORT platform;
 
         if (GET_BE_WORD(record->nameID) != id)
             continue;
-
-        exists = TRUE;
 
         /* Right now only accept unicode and windows encoded fonts */
         platform = GET_BE_WORD(record->platformID);
@@ -1337,53 +1384,25 @@ static HRESULT opentype_get_font_strings_from_id(const void *table_data, enum OP
             continue;
         }
 
-        /* Skip such entries for now, as it's not clear which locale is implied when
-           unicode platform is used. Also fonts tend to duplicate those strings as
-           WIN platform entries. */
-        if (platform == OPENTYPE_PLATFORM_UNICODE)
-            continue;
-
-        lang_id = GET_BE_WORD(record->languageID);
-        length = GET_BE_WORD(record->length);
-        offset = GET_BE_WORD(record->offset);
-        encoding = GET_BE_WORD(record->encodingID);
-
-        if (lang_id < 0x8000) {
-            WCHAR locale[LOCALE_NAME_MAX_LENGTH];
-            WCHAR *name_string;
-            UINT codepage;
-
-            codepage = get_name_record_codepage(platform, encoding);
-            get_name_record_locale(platform, lang_id, locale, sizeof(locale)/sizeof(WCHAR));
-
-            if (codepage) {
-                DWORD len = MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, NULL, 0);
-                name_string = heap_alloc(sizeof(WCHAR) * (len+1));
-                MultiByteToWideChar(codepage, 0, (LPSTR)(storage_area + offset), length, name_string, len);
-                name_string[len] = 0;
-            }
-            else {
-                int i;
-
-                length /= sizeof(WCHAR);
-                name_string = heap_strdupnW((LPWSTR)(storage_area + offset), length);
-                for (i = 0; i < length; i++)
-                    name_string[i] = GET_BE_WORD(name_string[i]);
-            }
-
-            TRACE("string %s for locale %s found\n", debugstr_w(name_string), debugstr_w(locale));
-            add_localizedstring(*strings, locale, name_string);
-            heap_free(name_string);
-        }
-        else {
-            FIXME("handle NAME format 1\n");
+        /* Skip such entries for now, fonts tend to duplicate those strings as
+           WIN platform entries. If font does not have WIN or MAC entry for this id, we will
+           use this Unicode platform entry while assuming en-US locale. */
+        if (platform == OPENTYPE_PLATFORM_UNICODE) {
+            candidate = i;
             continue;
         }
+
+        if (!(exists = opentype_decode_namerecord(header, storage_area, i, *strings)))
+            continue;
     }
 
     if (!exists) {
-        IDWriteLocalizedStrings_Release(*strings);
-        *strings = NULL;
+        if (candidate != -1)
+            exists = opentype_decode_namerecord(header, storage_area, candidate, *strings);
+        else {
+            IDWriteLocalizedStrings_Release(*strings);
+            *strings = NULL;
+        }
     }
 
     return exists ? S_OK : E_FAIL;
