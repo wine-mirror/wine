@@ -4643,7 +4643,7 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
         return hr;
     }
 
-    colorfont = IDWriteFontFace2_IsColorFont(fontface2);
+    colorfont = IDWriteFontFace2_IsColorFont(fontface2) && IDWriteFontFace2_GetColorPaletteCount(fontface2) > palette;
     IDWriteFontFace2_Release(fontface2);
     if (!colorfont)
         return DWRITE_E_NOCOLOR;
