@@ -2297,10 +2297,13 @@ static dde_tests_t dde_tests[] =
     {NULL}
 };
 
+static int waitforinputidle_count;
 static DWORD WINAPI hooked_WaitForInputIdle(HANDLE process, DWORD timeout)
 {
+    waitforinputidle_count++;
     if (winetest_debug > 1)
-        trace("WaitForInputIdle() waiting for dde event\n");
+        trace("WaitForInputIdle() waiting for dde event timeout=min(%u,5s)\n", timeout);
+    timeout = timeout < 5000 ? timeout : 5000;
     return WaitForSingleObject(dde_ready_event, timeout);
 }
 
@@ -2382,6 +2385,7 @@ static void test_dde(void)
     INT_PTR rc;
     HANDLE map;
     char *shared_block;
+    DWORD ddeflags;
 
     hook_WaitForInputIdle(hooked_WaitForInputIdle);
 
@@ -2395,6 +2399,7 @@ static void test_dde(void)
                              4096, "winetest_shlexec_dde_map");
     shared_block = MapViewOfFile(map, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 4096);
 
+    ddeflags = SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI;
     test = dde_tests;
     while (test->command)
     {
@@ -2418,10 +2423,28 @@ static void test_dde(void)
         }
         ddeExec[0] = 0;
 
-        dde_ready_event = CreateEventA(NULL, FALSE, FALSE, "winetest_shlexec_dde_ready");
-        rc = shell_execute_ex(SEE_MASK_FLAG_DDEWAIT | SEE_MASK_FLAG_NO_UI, NULL, filename, NULL, NULL, NULL);
+        waitforinputidle_count = 0;
+        dde_ready_event = CreateEventA(NULL, TRUE, FALSE, "winetest_shlexec_dde_ready");
+        rc = shell_execute_ex(ddeflags, NULL, filename, NULL, NULL, NULL);
         CloseHandle(dde_ready_event);
+        if (!(ddeflags & SEE_MASK_WAITFORINPUTIDLE) && rc == SE_ERR_DDEFAIL &&
+            GetLastError() == ERROR_FILE_NOT_FOUND &&
+            strcmp(winetest_platform, "windows") == 0)
+        {
+            /* Windows 10 does not call WaitForInputIdle() for DDE, which
+             * breaks the tests. So force the call by adding
+             * SEE_MASK_WAITFORINPUTIDLE.
+             */
+            trace("Adding SEE_MASK_WAITFORINPUTIDLE for Windows 10\n");
+            ddeflags |= SEE_MASK_WAITFORINPUTIDLE;
+            delete_test_association(".sde");
+            continue;
+        }
         okShell(32 < rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
+        if (test->ddeexec)
+            ok(waitforinputidle_count == 1, "WaitForInputIdle() was called %u times\n", waitforinputidle_count);
+        else
+            ok(waitforinputidle_count == 0, "WaitForInputIdle() was called %u times for a non-DDE case\n", waitforinputidle_count);
 
         if (32 < rc)
         {
