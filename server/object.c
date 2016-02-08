@@ -272,6 +272,7 @@ void *create_object( struct object *parent, const struct object_ops *ops, const 
         if (!obj->ops->link_name( obj, name_ptr, parent ))
         {
             free_object( obj );
+            free( name_ptr );
             return NULL;
         }
         name_ptr->obj = obj;
