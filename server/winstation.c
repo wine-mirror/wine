@@ -217,7 +217,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
 {
     struct desktop *desktop;
 
-    if ((desktop = create_named_object( &winstation->obj, winstation->desktop_names, &desktop_ops, name, attr )))
+    if ((desktop = create_named_object( &winstation->obj, &desktop_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {

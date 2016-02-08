@@ -254,36 +254,7 @@ struct object *find_object_dir( struct directory *root, const struct unicode_str
 void *create_named_object_dir( struct directory *root, const struct unicode_str *name,
                                unsigned int attributes, const struct object_ops *ops )
 {
-    struct object *obj, *new_obj = NULL;
-    struct unicode_str new_name;
-
-    if (!name || !name->len)
-    {
-        if ((new_obj = alloc_object( ops ))) clear_error();
-        return new_obj;
-    }
-
-    if (!(obj = find_object_dir( root, name, attributes, &new_name ))) return NULL;
-    if (!new_name.len)
-    {
-        if (attributes & OBJ_OPENIF && obj->ops == ops)
-            set_error( STATUS_OBJECT_NAME_EXISTS );
-        else
-        {
-            release_object( obj );
-            obj = NULL;
-            if (attributes & OBJ_OPENIF)
-                set_error( STATUS_OBJECT_TYPE_MISMATCH );
-            else
-                set_error( STATUS_OBJECT_NAME_COLLISION );
-        }
-        return obj;
-    }
-
-    if ((new_obj = create_object( obj, ops, &new_name ))) clear_error();
-
-    release_object( obj );
-    return new_obj;
+    return create_named_object( &root->obj, ops, name, attributes );
 }
 
 /* open a new handle to an existing object */

@@ -282,18 +282,20 @@ void *create_object( struct object *parent, const struct object_ops *ops, const 
     return obj;
 }
 
-void *create_named_object( struct object *parent, struct namespace *namespace, const struct object_ops *ops,
+/* create an object as named child under the specified parent */
+void *create_named_object( struct object *parent, const struct object_ops *ops,
                            const struct unicode_str *name, unsigned int attributes )
 {
-    struct object *obj;
+    struct object *obj, *new_obj;
+    struct unicode_str new_name;
 
-    if (!name || !name->len)
-    {
-        if ((obj = alloc_object( ops ))) clear_error();
-        return obj;
-    }
+    clear_error();
 
-    if ((obj = find_object( namespace, name, attributes )))
+    if (!name || !name->len) return alloc_object( ops );
+
+    if (!(obj = lookup_named_object( parent, name, attributes, &new_name ))) return NULL;
+
+    if (!new_name.len)
     {
         if (attributes & OBJ_OPENIF && obj->ops == ops)
             set_error( STATUS_OBJECT_NAME_EXISTS );
@@ -308,8 +310,10 @@ void *create_named_object( struct object *parent, struct namespace *namespace, c
         }
         return obj;
     }
-    if ((obj = create_object( parent, ops, name ))) clear_error();
-    return obj;
+
+    new_obj = create_object( obj, ops, &new_name );
+    release_object( obj );
+    return new_obj;
 }
 
 /* recursive helper for dump_object_name */

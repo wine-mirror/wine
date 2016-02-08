@@ -136,7 +136,7 @@ extern struct object *lookup_named_object( struct object *root, const struct uni
                                            unsigned int attr, struct unicode_str *name_left );
 extern void *create_object( struct object *parent, const struct object_ops *ops,
                             const struct unicode_str *name );
-extern void *create_named_object( struct object *parent, struct namespace *namespace, const struct object_ops *ops,
+extern void *create_named_object( struct object *parent, const struct object_ops *ops,
                                   const struct unicode_str *name, unsigned int attributes );
 extern void unlink_named_object( struct object *obj );
 extern void make_object_static( struct object *obj );
