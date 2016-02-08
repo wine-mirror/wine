@@ -46,6 +46,8 @@ static struct list winstation_list = LIST_INIT(winstation_list);
 static void winstation_dump( struct object *obj, int verbose );
 static struct object_type *winstation_get_type( struct object *obj );
 static int winstation_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
+static struct object *winstation_lookup_name( struct object *obj, struct unicode_str *name,
+                                              unsigned int attr );
 static void winstation_destroy( struct object *obj );
 static unsigned int winstation_map_access( struct object *obj, unsigned int access );
 static void desktop_dump( struct object *obj, int verbose );
@@ -69,7 +71,7 @@ static const struct object_ops winstation_ops =
     winstation_map_access,        /* map_access */
     default_get_sd,               /* get_sd */
     default_set_sd,               /* set_sd */
-    no_lookup_name,               /* lookup_name */
+    winstation_lookup_name,       /* lookup_name */
     directory_link_name,          /* link_name */
     default_unlink_name,          /* unlink_name */
     no_open_file,                 /* open_file */
@@ -153,6 +155,26 @@ static struct object_type *winstation_get_type( struct object *obj )
 static int winstation_close_handle( struct object *obj, struct process *process, obj_handle_t handle )
 {
     return (process->winstation != handle);
+}
+
+static struct object *winstation_lookup_name( struct object *obj, struct unicode_str *name,
+                                              unsigned int attr )
+{
+    struct winstation *winstation = (struct winstation *)obj;
+    struct object *found;
+
+    assert( obj->ops == &winstation_ops );
+
+    if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
+    {
+        set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
+        return NULL;
+    }
+
+    if ((found = find_object( winstation->desktop_names, name, attr )))
+        name->len = 0;
+
+    return found;
 }
 
 static void winstation_destroy( struct object *obj )
