@@ -1446,6 +1446,7 @@ enable_extrac32
 enable_findstr
 enable_hh
 enable_hostname
+enable_icacls
 enable_icinfo
 enable_iexplore
 enable_ipconfig
@@ -18109,6 +18110,7 @@ wine_fn_config_program extrac32 enable_extrac32 install
 wine_fn_config_program findstr enable_findstr install
 wine_fn_config_program hh enable_hh install
 wine_fn_config_program hostname enable_hostname install,po
+wine_fn_config_program icacls enable_icacls install
 wine_fn_config_program icinfo enable_icinfo install
 wine_fn_config_program iexplore enable_iexplore install
 wine_fn_config_program ipconfig enable_ipconfig install,po
