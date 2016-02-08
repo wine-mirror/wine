@@ -278,7 +278,6 @@ static void test_handles(void)
     SetLastError( 0xdeadbeef );
     d2 = OpenDesktopA( "", 0, TRUE, DESKTOP_ALL_ACCESS );
     ok( !d2, "open mepty desktop succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "wrong error %u\n", GetLastError() );
 
     SetLastError( 0xdeadbeef );
@@ -289,7 +288,6 @@ static void test_handles(void)
     SetLastError( 0xdeadbeef );
     d2 = OpenDesktopA( "foo\\bar", 0, TRUE, DESKTOP_ALL_ACCESS );
     ok( !d2, "open desktop succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_BAD_PATHNAME, "wrong error %u\n", GetLastError() );
 
     d2 = CreateDesktopA( "foobar", NULL, NULL, 0, DESKTOP_ALL_ACCESS, NULL );

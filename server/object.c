@@ -316,6 +316,27 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
     return new_obj;
 }
 
+/* open a object by name under the specified parent */
+void *open_named_object( struct object *parent, const struct object_ops *ops,
+                         const struct unicode_str *name, unsigned int attributes )
+{
+    struct unicode_str name_left;
+    struct object *obj;
+
+    if ((obj = lookup_named_object( parent, name, attributes, &name_left )))
+    {
+        if (name_left.len) /* not fully parsed */
+            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
+        else if (ops && obj->ops != ops)
+            set_error( STATUS_OBJECT_TYPE_MISMATCH );
+        else
+            return obj;
+
+        release_object( obj );
+    }
+    return NULL;
+}
+
 /* recursive helper for dump_object_name */
 static void dump_name( struct object *obj )
 {

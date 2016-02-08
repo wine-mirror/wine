@@ -138,6 +138,8 @@ extern void *create_object( struct object *parent, const struct object_ops *ops,
                             const struct unicode_str *name );
 extern void *create_named_object( struct object *parent, const struct object_ops *ops,
                                   const struct unicode_str *name, unsigned int attributes );
+extern void *open_named_object( struct object *parent, const struct object_ops *ops,
+                                const struct unicode_str *name, unsigned int attributes );
 extern void unlink_named_object( struct object *obj );
 extern void make_object_static( struct object *obj );
 extern struct namespace *create_namespace( unsigned int hash_size );

@@ -261,21 +261,7 @@ void *create_named_object_dir( struct directory *root, const struct unicode_str 
 void *open_object_dir( struct directory *root, const struct unicode_str *name,
                        unsigned int attr, const struct object_ops *ops )
 {
-    struct unicode_str name_left;
-    struct object *obj;
-
-    if ((obj = find_object_dir( root, name, attr, &name_left )))
-    {
-        if (name_left.len) /* not fully parsed */
-            set_error( STATUS_OBJECT_NAME_NOT_FOUND );
-        else if (ops && obj->ops != ops)
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-        else
-            return obj;
-
-        release_object( obj );
-    }
-    return NULL;
+    return open_named_object( &root->obj, ops, name, attr );
 }
 
 /* retrieve an object type, creating it if needed */

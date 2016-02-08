@@ -534,13 +534,11 @@ DECL_HANDLER(open_desktop)
 
     if (!winstation) return;
 
-    if ((obj = find_object( winstation->desktop_names, &name, req->attributes )))
+    if ((obj = open_named_object( &winstation->obj, &desktop_ops, &name, req->attributes )))
     {
-        assert( obj->ops == &desktop_ops );
         reply->handle = alloc_handle( current->process, obj, req->access, req->attributes );
         release_object( obj );
     }
-    else set_error( STATUS_OBJECT_NAME_NOT_FOUND );
 
     release_object( winstation );
 }
