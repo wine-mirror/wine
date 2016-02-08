@@ -1216,7 +1216,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
     DDSCAPS2 caps = {DDSCAPS_FLIP, 0, 0, {0}};
     struct wined3d_texture *texture;
     IDirectDrawSurface7 *current;
-    struct wined3d_surface *tmp;
     HRESULT hr;
 
     TRACE("iface %p, src %p, flags %#x.\n", iface, src, flags);
@@ -1237,7 +1236,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
     }
 
     tmp_rtv = ddraw_surface_get_rendertarget_view(dst_impl);
-    tmp = dst_impl->wined3d_surface;
     if (dst_impl->sub_resource_idx)
         ERR("Invalid sub-resource index %u on surface %p.\n", dst_impl->sub_resource_idx, dst_impl);
     texture = dst_impl->wined3d_texture;
@@ -1269,7 +1267,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
         wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
         dst_impl->wined3d_rtv = src_rtv;
         wined3d_resource_set_parent(wined3d_texture_get_sub_resource(src_impl->wined3d_texture, 0), dst_impl);
-        dst_impl->wined3d_surface = src_impl->wined3d_surface;
         prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
         wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), ddraw_texture);
         if (src_impl->sub_resource_idx)
@@ -1301,7 +1298,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
             wined3d_rendertarget_view_set_parent(src_rtv, dst_impl);
             dst_impl->wined3d_rtv = src_rtv;
             wined3d_resource_set_parent(wined3d_texture_get_sub_resource(src_impl->wined3d_texture, 0), dst_impl);
-            dst_impl->wined3d_surface = src_impl->wined3d_surface;
             prev_ddraw_texture = wined3d_texture_get_parent(src_impl->wined3d_texture);
             wined3d_resource_set_parent(wined3d_texture_get_resource(src_impl->wined3d_texture), ddraw_texture);
             ddraw_texture = prev_ddraw_texture;
@@ -1319,7 +1315,6 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Flip(IDirectDrawSurface7 
     wined3d_rendertarget_view_set_parent(tmp_rtv, src_impl);
     src_impl->wined3d_rtv = tmp_rtv;
     wined3d_resource_set_parent(wined3d_texture_get_sub_resource(texture, 0), src_impl);
-    src_impl->wined3d_surface = tmp;
     wined3d_resource_set_parent(wined3d_texture_get_resource(texture), ddraw_texture);
     src_impl->wined3d_texture = texture;
 
@@ -3843,20 +3838,22 @@ static HRESULT WINAPI ddraw_surface1_UpdateOverlayDisplay(IDirectDrawSurface *if
  *
  *****************************************************************************/
 static HRESULT WINAPI ddraw_surface7_UpdateOverlayZOrder(IDirectDrawSurface7 *iface,
-        DWORD Flags, IDirectDrawSurface7 *DDSRef)
+        DWORD flags, IDirectDrawSurface7 *reference)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
-    struct ddraw_surface *reference_impl = unsafe_impl_from_IDirectDrawSurface7(DDSRef);
-    HRESULT hr;
 
-    TRACE("iface %p, flags %#x, reference %p.\n", iface, Flags, DDSRef);
+    FIXME("iface %p, flags %#x, reference %p stub!\n", iface, flags, reference);
 
     wined3d_mutex_lock();
-    hr = wined3d_surface_update_overlay_z_order(surface->wined3d_surface,
-            Flags, reference_impl ? reference_impl->wined3d_surface : NULL);
+    if (!(surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_OVERLAY))
+    {
+        WARN("Not an overlay surface.\n");
+        wined3d_mutex_unlock();
+        return DDERR_NOTAOVERLAYSURFACE;
+    }
     wined3d_mutex_unlock();
 
-    return hr;
+    return DD_OK;
 }
 
 static HRESULT WINAPI ddraw_surface4_UpdateOverlayZOrder(IDirectDrawSurface4 *iface,
@@ -6302,7 +6299,6 @@ void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
     }
     desc->lpSurface = NULL;
 
-    surface->wined3d_surface = wined3d_surface;
     wined3d_texture_incref(surface->wined3d_texture = wined3d_texture);
     surface->sub_resource_idx = sub_resource_idx;
     *parent_ops = &ddraw_surface_wined3d_parent_ops;

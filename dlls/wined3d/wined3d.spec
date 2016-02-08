@@ -224,7 +224,6 @@
 
 @ cdecl wined3d_surface_get_parent(ptr)
 @ cdecl wined3d_surface_get_pitch(ptr)
-@ cdecl wined3d_surface_update_overlay_z_order(ptr long ptr)
 
 @ cdecl wined3d_swapchain_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_swapchain_decref(ptr)

@@ -162,7 +162,6 @@ struct ddraw_surface
 
     /* Connections to other Objects */
     struct ddraw *ddraw;
-    struct wined3d_surface *wined3d_surface;
     struct wined3d_texture *wined3d_texture;
     unsigned int sub_resource_idx;
     struct wined3d_rendertarget_view *wined3d_rtv;

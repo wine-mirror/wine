@@ -1909,20 +1909,6 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
     return pitch;
 }
 
-HRESULT CDECL wined3d_surface_update_overlay_z_order(struct wined3d_surface *surface,
-        DWORD flags, struct wined3d_surface *ref)
-{
-    FIXME("surface %p, flags %#x, ref %p stub!\n", surface, flags, ref);
-
-    if (!(surface->resource.usage & WINED3DUSAGE_OVERLAY))
-    {
-        TRACE("Not an overlay surface.\n");
-        return WINEDDERR_NOTAOVERLAYSURFACE;
-    }
-
-    return WINED3D_OK;
-}
-
 HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface,
         const struct wined3d_gl_info *gl_info, void *mem, unsigned int pitch)
 {

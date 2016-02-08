@@ -2477,8 +2477,6 @@ ULONG __cdecl wined3d_stateblock_incref(struct wined3d_stateblock *stateblock);
 
 void * __cdecl wined3d_surface_get_parent(const struct wined3d_surface *surface);
 DWORD __cdecl wined3d_surface_get_pitch(const struct wined3d_surface *surface);
-HRESULT __cdecl wined3d_surface_update_overlay_z_order(struct wined3d_surface *surface,
-        DWORD flags, struct wined3d_surface *ref);
 
 HRESULT __cdecl wined3d_swapchain_create(struct wined3d_device *device, struct wined3d_swapchain_desc *desc,
         void *parent, const struct wined3d_parent_ops *parent_ops, struct wined3d_swapchain **swapchain);
