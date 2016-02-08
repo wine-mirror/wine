@@ -1538,6 +1538,18 @@ static void test_argify(void)
     const char* cmd;
     unsigned i, count;
 
+    /* Test with a long parameter */
+    for (rc = 0; rc < MAX_PATH; rc++)
+        fileA[rc] = 'a' + rc % 26;
+    fileA[MAX_PATH-1] = '\0';
+    sprintf(params, "shlexec \"%s\" %s", child_file, fileA);
+
+    /* We need NOZONECHECKS on Win2003 to block a dialog */
+    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params, NULL, NULL);
+    okShell(rc > 32, "failed: rc=%lu\n", rc);
+    okChildInt("argcA", 4);
+    okChildPath("argvA3", fileA);
+
     if (skip_shlexec_tests)
     {
         skip("No argify tests due to lack of .shlexec association\n");
@@ -1602,18 +1614,6 @@ static void test_argify(void)
             has_cl2a = test_one_cmdline(&(test->cmd));
         test++;
     }
-
-    /* Test with a long parameter */
-    for (rc = 0; rc < MAX_PATH; rc++)
-        fileA[rc] = 'a' + rc % 26;
-    fileA[MAX_PATH-1] = '\0';
-    sprintf(params, "shlexec \"%s\" %s", child_file, fileA);
-
-    /* We need NOZONECHECKS on Win2003 to block a dialog */
-    rc=shell_execute_ex(SEE_MASK_NOZONECHECKS, NULL, argv0, params, NULL, NULL);
-    okShell(rc > 32, "failed: rc=%lu\n", rc);
-    okChildInt("argcA", 4);
-    okChildPath("argvA3", fileA);
 }
 
 static void test_filename(void)
