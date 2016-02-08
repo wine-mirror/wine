@@ -2103,48 +2103,53 @@ static HRESULT WINAPI ddraw_surface1_AddOverlayDirtyRect(IDirectDrawSurface *ifa
  *  For details, see IWineD3DSurface::GetDC
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *hdc)
+static HRESULT WINAPI ddraw_surface7_GetDC(IDirectDrawSurface7 *iface, HDC *dc)
 {
     struct ddraw_surface *surface = impl_from_IDirectDrawSurface7(iface);
     HRESULT hr = DD_OK;
 
-    TRACE("iface %p, dc %p.\n", iface, hdc);
+    TRACE("iface %p, dc %p.\n", iface, dc);
 
-    if(!hdc)
+    if (!dc)
         return DDERR_INVALIDPARAMS;
 
     wined3d_mutex_lock();
     if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
         hr = ddraw_surface_update_frontbuffer(surface, NULL, TRUE);
     if (SUCCEEDED(hr))
-        hr = wined3d_texture_get_dc(surface->wined3d_texture, surface->sub_resource_idx, hdc);
+        hr = wined3d_texture_get_dc(surface->wined3d_texture, surface->sub_resource_idx, dc);
 
-    if (SUCCEEDED(hr) && format_is_paletteindexed(&surface->surface_desc.u4.ddpfPixelFormat))
+    if (SUCCEEDED(hr))
     {
-        const struct ddraw_palette *palette;
+        surface->dc = *dc;
 
-        if (surface->palette)
-            palette = surface->palette;
-        else if (surface->ddraw->primary)
-            palette = surface->ddraw->primary->palette;
-        else
-            palette = NULL;
+        if (format_is_paletteindexed(&surface->surface_desc.u4.ddpfPixelFormat))
+        {
+            const struct ddraw_palette *palette;
 
-        if (palette)
-            wined3d_palette_apply_to_dc(palette->wineD3DPalette, *hdc);
+            if (surface->palette)
+                palette = surface->palette;
+            else if (surface->ddraw->primary)
+                palette = surface->ddraw->primary->palette;
+            else
+                palette = NULL;
+
+            if (palette)
+                wined3d_palette_apply_to_dc(palette->wineD3DPalette, *dc);
+        }
     }
 
     wined3d_mutex_unlock();
-    switch(hr)
+    switch (hr)
     {
-        /* Some, but not all errors set *hdc to NULL. E.g. DCALREADYCREATED does not
-         * touch *hdc
-         */
+        /* Some, but not all errors set *dc to NULL. E.g. DCALREADYCREATED
+         * does not touch *dc. */
         case WINED3DERR_INVALIDCALL:
-            if(hdc) *hdc = NULL;
+            *dc = NULL;
             return DDERR_INVALIDPARAMS;
 
-        default: return hr;
+        default:
+            return hr;
     }
 }
 
@@ -2205,10 +2210,14 @@ static HRESULT WINAPI ddraw_surface7_ReleaseDC(IDirectDrawSurface7 *iface, HDC h
     TRACE("iface %p, dc %p.\n", iface, hdc);
 
     wined3d_mutex_lock();
-    hr = wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, hdc);
-    if (SUCCEEDED(hr) && (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE))
-        hr = ddraw_surface_update_frontbuffer(surface, NULL, FALSE);
+    if (SUCCEEDED(hr = wined3d_texture_release_dc(surface->wined3d_texture, surface->sub_resource_idx, hdc)))
+    {
+        surface->dc = NULL;
+        if (surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_PRIMARYSURFACE)
+            hr = ddraw_surface_update_frontbuffer(surface, NULL, FALSE);
+    }
     wined3d_mutex_unlock();
+
 
     return hr;
 }

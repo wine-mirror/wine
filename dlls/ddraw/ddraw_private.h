@@ -197,6 +197,7 @@ struct ddraw_surface
     struct list             surface_list_entry;
 
     DWORD                   Handle;
+    HDC dc;
 };
 
 struct ddraw_texture

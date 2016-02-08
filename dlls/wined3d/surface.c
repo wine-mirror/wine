@@ -1883,13 +1883,6 @@ static inline unsigned short float_32_to_16(const float *in)
     return ret;
 }
 
-void * CDECL wined3d_surface_get_parent(const struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    return surface->resource.parent;
-}
-
 DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 {
     unsigned int alignment;

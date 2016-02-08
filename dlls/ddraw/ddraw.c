@@ -2621,29 +2621,38 @@ static HRESULT WINAPI ddraw4_GetDeviceIdentifier(IDirectDraw4 *iface,
  *  Always returns DD_OK because it's a stub
  *
  *****************************************************************************/
-static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface, HDC hdc,
-        IDirectDrawSurface7 **Surface)
+static HRESULT WINAPI ddraw7_GetSurfaceFromDC(IDirectDraw7 *iface,
+        HDC dc, IDirectDrawSurface7 **surface)
 {
     struct ddraw *ddraw = impl_from_IDirectDraw7(iface);
-    struct wined3d_surface *wined3d_surface;
     struct ddraw_surface *surface_impl;
 
-    TRACE("iface %p, dc %p, surface %p.\n", iface, hdc, Surface);
+    TRACE("iface %p, dc %p, surface %p.\n", iface, dc, surface);
 
-    if (!Surface) return E_INVALIDARG;
+    if (!surface)
+        return E_INVALIDARG;
 
-    if (!(wined3d_surface = wined3d_device_get_surface_from_dc(ddraw->wined3d_device, hdc)))
+    if (!dc)
+        goto done;
+
+    wined3d_mutex_lock();
+    LIST_FOR_EACH_ENTRY(surface_impl, &ddraw->surface_list, struct ddraw_surface, surface_list_entry)
     {
-        TRACE("No surface found for dc %p.\n", hdc);
-        *Surface = NULL;
-        return DDERR_NOTFOUND;
-    }
+        if (surface_impl->dc != dc)
+            continue;
 
-    surface_impl = wined3d_surface_get_parent(wined3d_surface);
-    *Surface = &surface_impl->IDirectDrawSurface7_iface;
-    IDirectDrawSurface7_AddRef(*Surface);
-    TRACE("Returning surface %p.\n", Surface);
-    return DD_OK;
+        TRACE("Found surface %p for dc %p.\n", surface_impl, dc);
+        *surface = &surface_impl->IDirectDrawSurface7_iface;
+        IDirectDrawSurface7_AddRef(*surface);
+        wined3d_mutex_unlock();
+        return DD_OK;
+    }
+    wined3d_mutex_unlock();
+
+done:
+    TRACE("No surface found for dc %p.\n", dc);
+    *surface = NULL;
+    return DDERR_NOTFOUND;
 }
 
 static HRESULT WINAPI ddraw4_GetSurfaceFromDC(IDirectDraw4 *iface, HDC dc,

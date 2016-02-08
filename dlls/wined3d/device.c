@@ -5040,32 +5040,6 @@ void device_resource_released(struct wined3d_device *device, struct wined3d_reso
     TRACE("Resource released.\n");
 }
 
-struct wined3d_surface * CDECL wined3d_device_get_surface_from_dc(const struct wined3d_device *device, HDC dc)
-{
-    struct wined3d_resource *resource;
-
-    TRACE("device %p, dc %p.\n", device, dc);
-
-    if (!dc)
-        return NULL;
-
-    LIST_FOR_EACH_ENTRY(resource, &device->resources, struct wined3d_resource, resource_list_entry)
-    {
-        if (resource->type == WINED3D_RTYPE_SURFACE)
-        {
-            struct wined3d_surface *s = surface_from_resource(resource);
-
-            if (s->hDC == dc)
-            {
-                TRACE("Found surface %p for dc %p.\n", s, dc);
-                return s;
-            }
-        }
-    }
-
-    return NULL;
-}
-
 static int wined3d_sampler_compare(const void *key, const struct wine_rb_entry *entry)
 {
     const struct wined3d_sampler *sampler = WINE_RB_ENTRY_VALUE(entry, struct wined3d_sampler, entry);
