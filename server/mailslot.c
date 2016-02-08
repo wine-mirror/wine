@@ -418,41 +418,10 @@ static struct mailslot *create_mailslot( struct directory *root,
                                          int max_msgsize, timeout_t read_timeout,
                                          const struct security_descriptor *sd )
 {
-    struct object *obj;
-    struct unicode_str new_name;
     struct mailslot *mailslot;
     int fds[2];
 
-    if (!name || !name->len)
-    {
-        mailslot = alloc_object( &mailslot_ops );
-        goto init;
-    }
-
-    if (!(obj = find_object_dir( root, name, attr, &new_name )))
-    {
-        set_error( STATUS_OBJECT_NAME_INVALID );
-        return NULL;
-    }
-
-    if (!new_name.len)
-    {
-        if (attr & OBJ_OPENIF && obj->ops == &mailslot_ops)
-            /* it already exists - there can only be one mailslot to read from */
-            set_error( STATUS_OBJECT_NAME_EXISTS );
-        else if (attr & OBJ_OPENIF)
-            set_error( STATUS_OBJECT_TYPE_MISMATCH );
-        else
-            set_error( STATUS_OBJECT_NAME_COLLISION );
-        release_object( obj );
-        return NULL;
-    }
-
-    mailslot = create_object( obj, &mailslot_ops, &new_name );
-    release_object( obj );
-
-init:
-    if (!mailslot) return NULL;
+    if (!(mailslot = create_named_object_dir( root, name, attr, &mailslot_ops ))) return NULL;
 
     mailslot->fd = NULL;
     mailslot->write_fd = -1;
