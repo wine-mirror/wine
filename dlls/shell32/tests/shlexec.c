@@ -2189,14 +2189,7 @@ static void test_lnks(void)
                 okChildString("argvA3", "Lnk");
             }
             sprintf(params, test->basename, tmpdir);
-            if ((test->todo & 0x8)==0)
-            {
-                okChildPath("argvA4", params);
-            }
-            else
-            {
-                okChildPath("argvA4", params);
-            }
+            okChildPath("argvA4", params);
         }
         test++;
     }
