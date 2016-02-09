@@ -228,40 +228,11 @@ struct directory *get_directory_obj( struct process *process, obj_handle_t handl
     return (struct directory *)get_handle_obj( process, handle, access, &directory_ops );
 }
 
-/******************************************************************************
- * Find an object by its name in a given root object
- *
- * PARAMS
- *  root      [I] directory to start search from or NULL to start from \\
- *  name      [I] object name to search for
- *  attr      [I] OBJECT_ATTRIBUTES.Attributes
- *  name_left [O] [optional] leftover name if object is not found
- *
- * RETURNS
- *  NULL:      If params are invalid
- *  Found:     If object with exact name is found returns that object
- *             (name_left->len == 0). Object's refcount is incremented
- *  Not found: The last matched parent. (name_left->len > 0)
- *             Parent's refcount is incremented.
- */
-struct object *find_object_dir( struct directory *root, const struct unicode_str *name,
-                                unsigned int attr, struct unicode_str *name_left )
-{
-    return lookup_named_object( &root->obj, name, attr, name_left );
-}
-
 /* create a named (if name is present) or unnamed object. */
 void *create_named_object_dir( struct directory *root, const struct unicode_str *name,
                                unsigned int attributes, const struct object_ops *ops )
 {
     return create_named_object( &root->obj, ops, name, attributes );
-}
-
-/* open a new handle to an existing object */
-void *open_object_dir( struct directory *root, const struct unicode_str *name,
-                       unsigned int attr, const struct object_ops *ops )
-{
-    return open_named_object( &root->obj, ops, name, attr );
 }
 
 /* retrieve an object type, creating it if needed */

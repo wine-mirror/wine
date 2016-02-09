@@ -231,12 +231,8 @@ extern void release_global_atom( struct winstation *winstation, atom_t atom );
 
 extern struct object *get_root_directory(void);
 extern struct directory *get_directory_obj( struct process *process, obj_handle_t handle, unsigned int access );
-extern struct object *find_object_dir( struct directory *root, const struct unicode_str *name,
-                                       unsigned int attr, struct unicode_str *name_left );
 extern void *create_named_object_dir( struct directory *root, const struct unicode_str *name,
                                       unsigned int attr, const struct object_ops *ops );
-extern void *open_object_dir( struct directory *root, const struct unicode_str *name,
-                              unsigned int attr, const struct object_ops *ops );
 extern struct object_type *get_object_type( const struct unicode_str *name );
 extern int directory_link_name( struct object *obj, struct object_name *name, struct object *parent );
 extern void init_directories(void);
