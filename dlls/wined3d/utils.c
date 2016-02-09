@@ -153,16 +153,59 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_R16,                       16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
     {WINED3DFMT_AL16,                       0,  0,  0, 16,   0,  0,  0, 16,    4,   0,     0},
     /* Typeless */
-    {WINED3DFMT_R8_TYPELESS,                8,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
-    {WINED3DFMT_R8G8_TYPELESS,              8,  8,  0,  0,   0,  8,  0,  0,    2,   0,     0},
-    {WINED3DFMT_R8G8B8A8_TYPELESS,          8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
-    {WINED3DFMT_R16_TYPELESS,              16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
-    {WINED3DFMT_R16G16_TYPELESS,           16, 16,  0,  0,   0, 16,  0,  0,    4,   0,     0},
-    {WINED3DFMT_R16G16B16A16_TYPELESS,     16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
-    {WINED3DFMT_R32_TYPELESS,              32,  0,  0,  0,   0,  0,  0,  0,    4,   0,     0},
-    {WINED3DFMT_R32G32_TYPELESS,           32, 32,  0,  0,   0, 32,  0,  0,    8,   0,     0},
-    {WINED3DFMT_R32G32B32_TYPELESS,        32, 32, 32,  0,   0, 32, 64,  0,   12,   0,     0},
     {WINED3DFMT_R32G32B32A32_TYPELESS,     32, 32, 32, 32,   0, 32, 64, 96,   16,   0,     0},
+    {WINED3DFMT_R32G32B32_TYPELESS,        32, 32, 32,  0,   0, 32, 64,  0,   12,   0,     0},
+    {WINED3DFMT_R16G16B16A16_TYPELESS,     16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
+    {WINED3DFMT_R32G32_TYPELESS,           32, 32,  0,  0,   0, 32,  0,  0,    8,   0,     0},
+    {WINED3DFMT_R32G8X24_TYPELESS,          0,  0,  0,  0,   0,  0,  0,  0,    8,  32,     8},
+    {WINED3DFMT_R10G10B10A2_TYPELESS,      10, 10, 10,  2,   0, 10, 20, 30,    4,   0,     0},
+    {WINED3DFMT_R8G8B8A8_TYPELESS,          8,  8,  8,  8,   0,  8, 16, 24,    4,   0,     0},
+    {WINED3DFMT_R16G16_TYPELESS,           16, 16,  0,  0,   0, 16,  0,  0,    4,   0,     0},
+    {WINED3DFMT_R32_TYPELESS,              32,  0,  0,  0,   0,  0,  0,  0,    4,   0,     0},
+    {WINED3DFMT_R24G8_TYPELESS,             0,  0,  0,  0,   0,  0,  0,  0,    4,  24,     8},
+    {WINED3DFMT_R8G8_TYPELESS,              8,  8,  0,  0,   0,  8,  0,  0,    2,   0,     0},
+    {WINED3DFMT_R16_TYPELESS,              16,  0,  0,  0,   0,  0,  0,  0,    2,   0,     0},
+    {WINED3DFMT_R8_TYPELESS,                8,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
+    {WINED3DFMT_BC1_TYPELESS,               0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
+    {WINED3DFMT_BC2_TYPELESS,               0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
+    {WINED3DFMT_BC3_TYPELESS,               0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
+    {WINED3DFMT_BC5_TYPELESS,               0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
+};
+
+struct wined3d_format_class_info
+{
+    enum wined3d_format_id id;
+    enum wined3d_format_id typeless_id;
+};
+
+/**
+ * The last entry for a given typeless format defines its internal format.
+ */
+static const struct wined3d_format_class_info format_class_info[] =
+{
+    {WINED3DFMT_R32G32B32A32_UINT,      WINED3DFMT_R32G32B32A32_TYPELESS},
+    {WINED3DFMT_R32G32B32A32_SINT,      WINED3DFMT_R32G32B32A32_TYPELESS},
+    {WINED3DFMT_R32G32B32A32_FLOAT,     WINED3DFMT_R32G32B32A32_TYPELESS},
+    {WINED3DFMT_R32G32B32_FLOAT,        WINED3DFMT_R32G32B32_TYPELESS},
+    {WINED3DFMT_R16G16B16A16_UNORM,     WINED3DFMT_R16G16B16A16_TYPELESS},
+    {WINED3DFMT_R16G16B16A16_FLOAT,     WINED3DFMT_R16G16B16A16_TYPELESS},
+    {WINED3DFMT_R32G32_FLOAT,           WINED3DFMT_R32G32_TYPELESS},
+    {WINED3DFMT_R10G10B10A2_UNORM,      WINED3DFMT_R10G10B10A2_TYPELESS},
+    {WINED3DFMT_R8G8B8A8_UNORM_SRGB,    WINED3DFMT_R8G8B8A8_TYPELESS},
+    {WINED3DFMT_R8G8B8A8_UNORM,         WINED3DFMT_R8G8B8A8_TYPELESS},
+    {WINED3DFMT_R16G16_UNORM,           WINED3DFMT_R16G16_TYPELESS},
+    {WINED3DFMT_R16G16_FLOAT,           WINED3DFMT_R16G16_TYPELESS},
+    {WINED3DFMT_R32_FLOAT,              WINED3DFMT_R32_TYPELESS},
+    {WINED3DFMT_D24_UNORM_S8_UINT,      WINED3DFMT_R24G8_TYPELESS},
+    {WINED3DFMT_R8G8_UNORM,             WINED3DFMT_R8G8_TYPELESS},
+    {WINED3DFMT_R16_FLOAT,              WINED3DFMT_R16_TYPELESS},
+    {WINED3DFMT_R8_UNORM,               WINED3DFMT_R8_TYPELESS},
+    {WINED3DFMT_BC1_UNORM_SRGB,         WINED3DFMT_BC1_TYPELESS},
+    {WINED3DFMT_BC1_UNORM,              WINED3DFMT_BC1_TYPELESS},
+    {WINED3DFMT_BC2_UNORM_SRGB,         WINED3DFMT_BC2_TYPELESS},
+    {WINED3DFMT_BC2_UNORM,              WINED3DFMT_BC2_TYPELESS},
+    {WINED3DFMT_BC3_UNORM_SRGB,         WINED3DFMT_BC3_TYPELESS},
+    {WINED3DFMT_BC3_UNORM,              WINED3DFMT_BC3_TYPELESS},
 };
 
 struct wined3d_format_base_flags
@@ -2853,6 +2896,45 @@ static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)
     return TRUE;
 }
 
+static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
+{
+    unsigned int flags[WINED3D_GL_RES_TYPE_COUNT];
+    unsigned int i, j;
+
+    for (i = 0; i < ARRAY_SIZE(format_class_info); ++i)
+    {
+        struct wined3d_format *format, *typeless_format;
+        int fmt_idx = getFmtIdx(format_class_info[i].id);
+        int typeless_fmt_idx = getFmtIdx(format_class_info[i].typeless_id);
+
+        if (fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(format_class_info[i].id),
+                    format_class_info[i].id);
+            return FALSE;
+        }
+        if (typeless_fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(format_class_info[i].typeless_id),
+                    format_class_info[i].typeless_id);
+            return FALSE;
+        }
+
+        format = &gl_info->formats[fmt_idx];
+        typeless_format = &gl_info->formats[typeless_fmt_idx];
+
+        memcpy(flags, typeless_format->flags, sizeof(flags));
+        *typeless_format = *format;
+        typeless_format->id = format_class_info[i].typeless_id;
+        for (j = 0; j < ARRAY_SIZE(typeless_format->flags); ++j)
+            typeless_format->flags[j] |= flags[j];
+    }
+
+    return TRUE;
+}
+
 BOOL initPixelFormatsNoGL(struct wined3d_gl_info *gl_info)
 {
     if (!init_format_base_info(gl_info)) return FALSE;
@@ -2881,6 +2963,7 @@ BOOL wined3d_adapter_init_format_info(struct wined3d_adapter *adapter, struct wi
     apply_format_fixups(adapter, gl_info);
     init_format_fbo_compat_info(ctx);
     init_format_filter_info(gl_info, adapter->driver_info.vendor);
+    if (!init_typeless_formats(gl_info)) goto fail;
 
     return TRUE;
 
