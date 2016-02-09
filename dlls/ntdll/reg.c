@@ -659,7 +659,7 @@ NTSTATUS WINAPI NtLoadKey( const OBJECT_ATTRIBUTES *attr, OBJECT_ATTRIBUTES *fil
 
     TRACE("(%p,%p)\n", attr, file);
 
-    ret = NtCreateFile(&hive, GENERIC_READ, file, &io, NULL, FILE_ATTRIBUTE_NORMAL, 0,
+    ret = NtCreateFile(&hive, GENERIC_READ | SYNCHRONIZE, file, &io, NULL, FILE_ATTRIBUTE_NORMAL, 0,
                        FILE_OPEN, 0, NULL, 0);
     if (ret) return ret;
 
