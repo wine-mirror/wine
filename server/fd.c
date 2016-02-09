@@ -2393,27 +2393,13 @@ DECL_HANDLER(flush)
 DECL_HANDLER(open_file_object)
 {
     struct unicode_str name = get_req_unicode_str();
-    struct directory *root = NULL;
-    struct object *obj, *result;
+    struct object *obj, *result, *root = NULL;
 
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
-    {
-        if (get_error() != STATUS_OBJECT_TYPE_MISMATCH) return;
-        if (!(obj = (struct object *)get_file_obj( current->process, req->rootdir, 0 ))) return;
-        if (name.len)
-        {
-            release_object( obj );
-            set_error( STATUS_OBJECT_PATH_NOT_FOUND );
-            return;
-        }
-        clear_error();
-    }
-    else
-    {
-        obj = open_object_dir( root, &name, req->attributes, NULL );
-        if (root) release_object( root );
-        if (!obj) return;
-    }
+    if (req->rootdir && !(root = get_handle_obj( current->process, req->rootdir, 0, NULL ))) return;
+
+    obj = open_named_object( root, NULL, &name, req->attributes );
+    if (root) release_object( root );
+    if (!obj) return;
 
     if ((result = obj->ops->open_file( obj, req->access, req->sharing, req->options )))
     {

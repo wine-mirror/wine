@@ -68,6 +68,7 @@ static struct object_type *file_get_type( struct object *obj );
 static struct fd *file_get_fd( struct object *obj );
 static struct security_descriptor *file_get_sd( struct object *obj );
 static int file_set_sd( struct object *obj, const struct security_descriptor *sd, unsigned int set_info );
+static struct object *file_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr );
 static struct object *file_open_file( struct object *obj, unsigned int access,
                                       unsigned int sharing, unsigned int options );
 static void file_destroy( struct object *obj );
@@ -90,7 +91,7 @@ static const struct object_ops file_ops =
     default_fd_map_access,        /* map_access */
     file_get_sd,                  /* get_sd */
     file_set_sd,                  /* set_sd */
-    no_lookup_name,               /* lookup_name */
+    file_lookup_name,             /* lookup_name */
     no_link_name,                 /* link_name */
     NULL,                         /* unlink_name */
     file_open_file,               /* open_file */
@@ -607,6 +608,14 @@ static int file_set_sd( struct object *obj, const struct security_descriptor *sd
         }
     }
     return 1;
+}
+
+static struct object *file_lookup_name( struct object *obj, struct unicode_str *name, unsigned int attr )
+{
+    if (!name || !name->len) return NULL;  /* open the file itself */
+
+    set_error( STATUS_OBJECT_PATH_NOT_FOUND );
+    return NULL;
 }
 
 static struct object *file_open_file( struct object *obj, unsigned int access,
