@@ -469,7 +469,8 @@ static int subtract_overlapping( struct region *pReg,
                 rect->bottom = bottom;
             }
             r1++;
-            left = r1->left;
+            if (r1 != r1End)
+                left = r1->left;
         }
     }
 
