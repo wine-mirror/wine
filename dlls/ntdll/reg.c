@@ -120,11 +120,7 @@ NTSTATUS WINAPI RtlpNtCreateKey( PHANDLE retkey, ACCESS_MASK access, const OBJEC
     return NtCreateKey(retkey, access, attr, 0, NULL, 0, dispos);
 }
 
-/******************************************************************************
- * NtOpenKeyEx [NTDLL.@]
- * ZwOpenKeyEx [NTDLL.@]
- */
-NTSTATUS WINAPI NtOpenKeyEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, ULONG options )
+static NTSTATUS open_key( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, ULONG options )
 {
     NTSTATUS ret;
 
@@ -151,6 +147,15 @@ NTSTATUS WINAPI NtOpenKeyEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
 }
 
 /******************************************************************************
+ * NtOpenKeyEx [NTDLL.@]
+ * ZwOpenKeyEx [NTDLL.@]
+ */
+NTSTATUS WINAPI NtOpenKeyEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr, ULONG options )
+{
+    return open_key( retkey, access, attr, options );
+}
+
+/******************************************************************************
  * NtOpenKey [NTDLL.@]
  * ZwOpenKey [NTDLL.@]
  *
@@ -160,7 +165,7 @@ NTSTATUS WINAPI NtOpenKeyEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_AT
  */
 NTSTATUS WINAPI NtOpenKey( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr )
 {
-    return NtOpenKeyEx( retkey, access, attr, 0 );
+    return open_key( retkey, access, attr, 0 );
 }
 
 NTSTATUS WINAPI NtOpenKeyTransactedEx( PHANDLE retkey, ACCESS_MASK access, const OBJECT_ATTRIBUTES *attr,
