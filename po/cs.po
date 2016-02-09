@@ -11516,6 +11516,18 @@ msgstr "Chyba: Systém nemohl najít specifikovaný klíč registru nebo hodnotu
 msgid "Error: Unsupported type\n"
 msgstr "Nepodporovaný typ.\n"
 
+#: reg.rc:40
+msgid "reg: The option [/d] must be followed by a valid integer\n"
+msgstr ""
+
+#: reg.rc:41
+msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgstr ""
+
+#: reg.rc:42
+msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registr"

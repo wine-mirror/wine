@@ -118,13 +118,19 @@ static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
     LocalFree(str);
 }
 
-static void reg_message(int msg)
+static void __cdecl output_message(unsigned int id, ...)
 {
-    WCHAR msg_buffer[8192];
+    WCHAR fmt[1024];
+    __ms_va_list va_args;
 
-    LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
-        sizeof(msg_buffer)/sizeof(WCHAR));
-    output_writeconsole(msg_buffer, strlenW(msg_buffer));
+    if (!LoadStringW(GetModuleHandleW(NULL), id, fmt, ARRAY_SIZE(fmt)))
+    {
+        WINE_FIXME("LoadString failed with %d\n", GetLastError());
+        return;
+    }
+    __ms_va_start(va_args, id);
+    output_formatstring(fmt, va_args);
+    __ms_va_end(va_args);
 }
 
 static void __cdecl output_string(const WCHAR *fmt, ...)
@@ -207,8 +213,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             DWORD val;
             val = strtolW(data, &rest, 0);
             if (rest == data) {
-                static const WCHAR nonnumber[] = {'E','r','r','o','r',':',' ','/','d',' ','r','e','q','u','i','r','e','s',' ','n','u','m','b','e','r','.','\n',0};
-                output_string(nonnumber);
+                output_message(STRING_MISSING_INTEGER);
                 break;
             }
             *reg_count = sizeof(DWORD);
@@ -218,7 +223,6 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
         }
         case REG_BINARY:
         {
-            static const WCHAR nohex[] = {'E','r','r','o','r',':',' ','/','d',' ','r','e','q','u','i','r','e','s',' ','h','e','x',' ','d','a','t','a','.','\n',0};
             BYTE hex0, hex1;
             int i = 0, destByteIndex = 0, datalen = lstrlenW(data);
             *reg_count = ((datalen + datalen % 2) / 2) * sizeof(BYTE);
@@ -242,15 +246,12 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             no_hex_data:
             /* cleanup, print error */
             HeapFree(GetProcessHeap(), 0, out_data);
-            output_string(nohex);
+            output_message(STRING_MISSING_HEXDATA);
             out_data = NULL;
             break;
         }
         default:
-        {
-            static const WCHAR unhandled[] = {'U','n','h','a','n','d','l','e','d',' ','T','y','p','e',' ','0','x','%','1','!','x','!',' ',' ','d','a','t','a',' ','%','2','\n',0};
-            output_string(unhandled, reg_type, data);
-        }
+            output_message(STRING_UNHANDLED_TYPE, reg_type, data);
     }
 
     return out_data;
@@ -262,13 +263,13 @@ static BOOL sane_path(const WCHAR *key)
 
     if (i < 3 || (key[i - 1] == '\\' && key[i - 2] == '\\'))
     {
-        reg_message(STRING_INVALID_KEY);
+        output_message(STRING_INVALID_KEY);
         return FALSE;
     }
 
     if (key[0] == '\\' && key[1] == '\\' && key[2] != '\\')
     {
-        reg_message(STRING_NO_REMOTE);
+        output_message(STRING_NO_REMOTE);
         return FALSE;
     }
 
@@ -287,7 +288,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     p = strchrW(key_name,'\\');
     if (!p)
     {
-        reg_message(STRING_INVALID_KEY);
+        output_message(STRING_INVALID_KEY);
         return 1;
     }
     p++;
@@ -295,13 +296,13 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     root = path_get_rootkey(key_name);
     if (!root)
     {
-        reg_message(STRING_INVALID_KEY);
+        output_message(STRING_INVALID_KEY);
         return 1;
     }
 
     if(RegCreateKeyW(root,p,&subkey)!=ERROR_SUCCESS)
     {
-        reg_message(STRING_INVALID_KEY);
+        output_message(STRING_INVALID_KEY);
         return 1;
     }
 
@@ -323,7 +324,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         if (reg_type == ~0u)
         {
             RegCloseKey(subkey);
-            reg_message(STRING_UNSUPPORTED_TYPE);
+            output_message(STRING_UNSUPPORTED_TYPE);
             return 1;
         }
 
@@ -335,7 +336,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     }
 
     RegCloseKey(subkey);
-    reg_message(STRING_SUCCESS);
+    output_message(STRING_SUCCESS);
 
     return 0;
 }
@@ -352,7 +353,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     p = strchrW(key_name,'\\');
     if (!p)
     {
-        reg_message(STRING_INVALID_KEY);
+        output_message(STRING_INVALID_KEY);
         return 1;
     }
     p++;
@@ -360,19 +361,19 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     root = path_get_rootkey(key_name);
     if (!root)
     {
-        reg_message(STRING_INVALID_KEY);
+        output_message(STRING_INVALID_KEY);
         return 1;
     }
 
     if (value_name && value_empty)
     {
-        reg_message(STRING_INVALID_CMDLINE);
+        output_message(STRING_INVALID_CMDLINE);
         return 1;
     }
 
     if (value_empty && value_all)
     {
-        reg_message(STRING_INVALID_CMDLINE);
+        output_message(STRING_INVALID_CMDLINE);
         return 1;
     }
 
@@ -386,16 +387,16 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     {
         if (RegDeleteTreeW(root,p)!=ERROR_SUCCESS)
         {
-            reg_message(STRING_CANNOT_FIND);
+            output_message(STRING_CANNOT_FIND);
             return 1;
         }
-        reg_message(STRING_SUCCESS);
+        output_message(STRING_SUCCESS);
         return 0;
     }
 
     if(RegOpenKeyW(root,p,&subkey)!=ERROR_SUCCESS)
     {
-        reg_message(STRING_CANNOT_FIND);
+        output_message(STRING_CANNOT_FIND);
         return 1;
     }
 
@@ -439,7 +440,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         if (RegDeleteValueW(subkey,value_name) != ERROR_SUCCESS)
         {
             RegCloseKey(subkey);
-            reg_message(STRING_CANNOT_FIND);
+            output_message(STRING_CANNOT_FIND);
             return 1;
         }
     }
@@ -449,7 +450,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     }
 
     RegCloseKey(subkey);
-    reg_message(STRING_SUCCESS);
+    output_message(STRING_SUCCESS);
     return 0;
 }
 
@@ -483,7 +484,7 @@ int wmain(int argc, WCHAR *argvW[])
     if (argc < 2 || !lstrcmpW(argvW[1], slashHelpW)
                  || !lstrcmpiW(argvW[1], slashHW))
     {
-        reg_message(STRING_USAGE);
+        output_message(STRING_USAGE);
         return 0;
     }
 
@@ -494,13 +495,13 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            reg_message(STRING_INVALID_CMDLINE);
+            output_message(STRING_INVALID_CMDLINE);
             return 1;
         }
         else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||
                                !lstrcmpiW(argvW[2], slashHW)))
         {
-            reg_message(STRING_ADD_USAGE);
+            output_message(STRING_ADD_USAGE);
             return 0;
         }
 
@@ -530,13 +531,13 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            reg_message(STRING_INVALID_CMDLINE);
+            output_message(STRING_INVALID_CMDLINE);
             return 1;
         }
         else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||
                                !lstrcmpiW(argvW[2], slashHW)))
         {
-            reg_message(STRING_DELETE_USAGE);
+            output_message(STRING_DELETE_USAGE);
             return 0;
         }
 
@@ -561,13 +562,13 @@ int wmain(int argc, WCHAR *argvW[])
 
         if (argc < 3)
         {
-            reg_message(STRING_INVALID_CMDLINE);
+            output_message(STRING_INVALID_CMDLINE);
             return 1;
         }
         else if (argc == 3 && (!lstrcmpW(argvW[2], slashHelpW) ||
                                !lstrcmpiW(argvW[2], slashHW)))
         {
-            reg_message(STRING_QUERY_USAGE);
+            output_message(STRING_QUERY_USAGE);
             return 0;
         }
 
@@ -585,7 +586,7 @@ int wmain(int argc, WCHAR *argvW[])
     }
     else
     {
-        reg_message(STRING_INVALID_CMDLINE);
+        output_message(STRING_INVALID_CMDLINE);
         return 1;
     }
 }

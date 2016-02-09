@@ -11648,6 +11648,26 @@ msgstr "Błąd: System nie mógł znaleźć podanej wartości lub klucza rejestr
 msgid "Error: Unsupported type\n"
 msgstr "Błąd: Niewspierany typ\n"
 
+#: reg.rc:40
+#, fuzzy
+#| msgid ""
+#| "uninstaller: The option '--remove' must be followed by an application "
+#| "GUID\n"
+msgid "reg: The option [/d] must be followed by a valid integer\n"
+msgstr "usuwanie programów: Po opcji '--remove' należy podać GUID aplikacji\n"
+
+#: reg.rc:41
+#, fuzzy
+#| msgid ""
+#| "uninstaller: The option '--remove' must be followed by an application "
+#| "GUID\n"
+msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
+msgstr "usuwanie programów: Po opcji '--remove' należy podać GUID aplikacji\n"
+
+#: reg.rc:42
+msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"
