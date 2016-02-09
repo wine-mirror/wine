@@ -1185,11 +1185,11 @@ static void test_dbcs_to_widechar(void)
         }
         else
         {
-            todo_wine ok(count == 2, "%04x: returned %d (expected 2)\n", flags[i], count);
-            todo_wine ok(count2 == 2, "%04x: returned %d (expected 2)\n", flags[i], count2);
+            ok(count == 2, "%04x: returned %d (expected 2)\n", flags[i], count);
+            ok(count2 == 2, "%04x: returned %d (expected 2)\n", flags[i], count2);
             ok(wbuf[0] == 0x770b, "%04x: returned %04x (expected 770b)\n", flags[i], wbuf[0]);
-            todo_wine ok(wbuf[1] == 0x003f || broken(wbuf[1] == 0)/*windows xp*/,
-                    "%04x: wrong wide char: %04x\n", flags[i], wbuf[1]);
+            ok(wbuf[1] == 0x003f || broken(wbuf[1] == 0), /*windows xp*/
+               "%04x: wrong wide char: %04x\n", flags[i], wbuf[1]);
         }
     }
 }

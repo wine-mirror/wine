@@ -687,8 +687,7 @@ sub READ_JIS0208_FILE($)
     # lead bytes
     foreach my $i (0x8e, 0x8f, 0xa1 .. 0xfe)
     {
-        push @lead_bytes,$i;
-        $cp2uni[$i] = 0;
+        add_lead_byte($i);
     }
 
     # undefined chars
@@ -1084,6 +1083,7 @@ sub dump_dbcs_table($$$$@)
     my @lblist = ();
     LBLOOP: for (my $y = 0; $y <= $#lead_bytes; $y++)
     {
+        $cp2uni[$lead_bytes[$y]] = $defw;
         my $base = $lead_bytes[$y] << 8;
         for (my $x = 0; $x < 256; $x++)
         {
