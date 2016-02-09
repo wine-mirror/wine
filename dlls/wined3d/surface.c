@@ -1887,11 +1887,7 @@ DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 
     TRACE("surface %p.\n", surface);
 
-    if (surface->container->row_pitch)
-        return surface->container->row_pitch;
-
-    wined3d_format_calculate_pitch(surface->resource.format, surface->resource.device->surface_alignment,
-            surface->resource.width, surface->resource.height, &row_pitch, &slice_pitch);
+    wined3d_texture_get_pitch(surface->container, surface->texture_level, &row_pitch, &slice_pitch);
 
     TRACE("Returning %u.\n", row_pitch);
 
@@ -1950,16 +1946,7 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface, const struc
     surface->resource.format = texture_resource->format;
     surface->resource.multisample_type = texture_resource->multisample_type;
     surface->resource.multisample_quality = texture_resource->multisample_quality;
-    if (surface->container->row_pitch)
-    {
-        surface->resource.size = height * surface->container->row_pitch;
-    }
-    else
-    {
-        /* User memory surfaces don't have the regular surface alignment. */
-        wined3d_format_calculate_pitch(texture_resource->format, 1, width, height,
-                &surface->container->row_pitch, &surface->resource.size);
-    }
+    surface->resource.size = surface->container->slice_pitch;
 
     /* The format might be changed to a format that needs conversion.
      * If the surface didn't use PBOs previously but could now, don't

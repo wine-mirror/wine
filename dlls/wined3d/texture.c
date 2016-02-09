@@ -499,6 +499,24 @@ void * CDECL wined3d_texture_get_parent(const struct wined3d_texture *texture)
     return texture->resource.parent;
 }
 
+void wined3d_texture_get_pitch(const struct wined3d_texture *texture,
+        unsigned int level, unsigned int *row_pitch, unsigned int *slice_pitch)
+{
+    const struct wined3d_resource *resource = &texture->resource;
+    unsigned int width = max(1, texture->resource.width >> level);
+    unsigned int height = max(1, texture->resource.height >> level);
+
+    if (texture->row_pitch)
+    {
+        *row_pitch = texture->row_pitch;
+        *slice_pitch = texture->slice_pitch;
+        return;
+    }
+
+    wined3d_format_calculate_pitch(resource->format, resource->device->surface_alignment,
+            width, height, row_pitch, slice_pitch);
+}
+
 DWORD CDECL wined3d_texture_set_lod(struct wined3d_texture *texture, DWORD lod)
 {
     DWORD old = texture->lod;
@@ -645,7 +663,12 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     texture->resource.height = height;
 
     texture->user_memory = mem;
-    texture->row_pitch = pitch;
+    if ((texture->row_pitch = pitch))
+        texture->slice_pitch = height * pitch;
+    else
+        /* User memory surfaces don't have the regular surface alignment. */
+        wined3d_format_calculate_pitch(format, 1, width, height,
+                &texture->row_pitch, &texture->slice_pitch);
 
     return wined3d_surface_update_desc(surface, gl_info);
 }

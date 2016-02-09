@@ -42,8 +42,7 @@ BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
 
 void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pitch, UINT *slice_pitch)
 {
-    wined3d_format_calculate_pitch(volume->resource.format, volume->resource.device->surface_alignment,
-            volume->resource.width, volume->resource.height, row_pitch, slice_pitch);
+    wined3d_texture_get_pitch(volume->container, volume->texture_level, row_pitch, slice_pitch);
 }
 
 /* This call just uploads data, the caller is responsible for binding the
