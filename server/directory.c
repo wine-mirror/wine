@@ -269,13 +269,13 @@ struct object_type *get_object_type( const struct unicode_str *name )
 {
     struct object_type *type;
 
-    if ((type = open_object_dir( dir_objtype, name, 0, &object_type_ops )))
-        return type;
-
-    if ((type = create_named_object_dir( dir_objtype, name, 0, &object_type_ops )))
+    if ((type = create_named_object_dir( dir_objtype, name, OBJ_OPENIF, &object_type_ops )))
     {
-        grab_object( type );
-        make_object_static( &type->obj );
+        if (get_error() != STATUS_OBJECT_NAME_EXISTS)
+        {
+            grab_object( type );
+            make_object_static( &type->obj );
+        }
         clear_error();
     }
     return type;
