@@ -74,19 +74,11 @@ type_rels[] =
     {REG_MULTI_SZ, type_multi_sz},
 };
 
-static int reg_printfW(const WCHAR *msg, ...)
+static void output_writeconsole(const WCHAR *str, int wlen)
 {
-    va_list va_args;
-    int wlen;
     DWORD count, ret;
-    WCHAR msg_buffer[8192];
 
-    va_start(va_args, msg);
-    vsnprintfW(msg_buffer, 8192, msg, va_args);
-    va_end(va_args);
-
-    wlen = lstrlenW(msg_buffer);
-    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), msg_buffer, wlen, &count, NULL);
+    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, wlen, &count, NULL);
     if (!ret)
     {
         DWORD len;
@@ -96,29 +88,41 @@ static int reg_printfW(const WCHAR *msg, ...)
          * back to WriteFile(), assuming the console encoding is still the right
          * one in that case.
          */
-        len = WideCharToMultiByte(GetConsoleOutputCP(), 0, msg_buffer, wlen,
-            NULL, 0, NULL, NULL);
+        len = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, NULL, 0, NULL, NULL);
         msgA = HeapAlloc(GetProcessHeap(), 0, len * sizeof(char));
-        if (!msgA)
-            return 0;
+        if (!msgA) return;
 
-        WideCharToMultiByte(GetConsoleOutputCP(), 0, msg_buffer, wlen, msgA, len,
-            NULL, NULL);
+        WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, msgA, len, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
         HeapFree(GetProcessHeap(), 0, msgA);
     }
-
-    return count;
 }
 
-static int reg_message(int msg)
+static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
 {
-    static const WCHAR formatW[] = {'%','s',0};
+    WCHAR msg_buffer[8192];
+    int len;
+
+    len = vsnprintfW(msg_buffer, sizeof(msg_buffer)/sizeof(WCHAR), fmt, va_args);
+    output_writeconsole(msg_buffer, len);
+}
+
+static void reg_message(int msg)
+{
     WCHAR msg_buffer[8192];
 
     LoadStringW(GetModuleHandleW(NULL), msg, msg_buffer,
         sizeof(msg_buffer)/sizeof(WCHAR));
-    return reg_printfW(formatW, msg_buffer);
+    output_writeconsole(msg_buffer, strlenW(msg_buffer));
+}
+
+static void __cdecl output_string(const WCHAR *fmt, ...)
+{
+    __ms_va_list va_args;
+
+    __ms_va_start(va_args, fmt);
+    output_formatstring(fmt, va_args);
+    __ms_va_end(va_args);
 }
 
 static inline BOOL path_rootname_cmp(const WCHAR *input_path, const WCHAR *rootkey_name)
@@ -193,7 +197,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             val = strtolW(data, &rest, 0);
             if (rest == data) {
                 static const WCHAR nonnumber[] = {'E','r','r','o','r',':',' ','/','d',' ','r','e','q','u','i','r','e','s',' ','n','u','m','b','e','r','.','\n',0};
-                reg_printfW(nonnumber);
+                output_string(nonnumber);
                 break;
             }
             *reg_count = sizeof(DWORD);
@@ -227,14 +231,14 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             no_hex_data:
             /* cleanup, print error */
             HeapFree(GetProcessHeap(), 0, out_data);
-            reg_printfW(nohex);
+            output_string(nohex);
             out_data = NULL;
             break;
         }
         default:
         {
             static const WCHAR unhandled[] = {'U','n','h','a','n','d','l','e','d',' ','T','y','p','e',' ','0','x','%','x',' ',' ','d','a','t','a',' ','%','s','\n',0};
-            reg_printfW(unhandled, reg_type,data);
+            output_string(unhandled, reg_type, data);
         }
     }
 
@@ -443,7 +447,7 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 {
     static const WCHAR stubW[] = {'S','T','U','B',' ','Q','U','E','R','Y',' ',
         '-',' ','%','s',' ','%','s',' ','%','d',' ','%','d','\n',0};
-    reg_printfW(stubW, key_name, value_name, value_empty, subkey);
+    output_string(stubW, key_name, value_name, value_empty, subkey);
 
     return 1;
 }
