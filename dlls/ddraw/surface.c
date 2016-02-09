@@ -6292,10 +6292,15 @@ void ddraw_surface_init(struct ddraw_surface *surface, struct ddraw *ddraw,
 
     if (format_is_compressed(&desc->u4.ddpfPixelFormat))
     {
+        unsigned int texture_level, row_pitch;
+
+        texture_level = desc->ddsCaps.dwCaps & DDSCAPS_MIPMAP ? sub_resource_idx % desc->u2.dwMipMapCount : 0;
+        row_pitch = wined3d_surface_get_pitch(wined3d_surface);
+
         if (desc->dwFlags & DDSD_LPSURFACE)
             desc->u1.dwLinearSize = ~0u;
         else
-            desc->u1.dwLinearSize = wined3d_surface_get_pitch(wined3d_surface) * ((desc->dwHeight + 3) / 4);
+            desc->u1.dwLinearSize = row_pitch * ((max(1, desc->dwHeight >> texture_level) + 3) / 4);
         desc->dwFlags |= DDSD_LINEARSIZE;
         desc->dwFlags &= ~(DDSD_LPSURFACE | DDSD_PITCH);
     }
