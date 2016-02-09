@@ -191,6 +191,8 @@ struct dwrite_colorglyphenum {
     UINT32 palette;                   /* palette index to get layer color from */
     FLOAT *advances;                  /* original or measured advances for base glyphs */
     FLOAT *color_advances;            /* returned color run points to this */
+    DWRITE_GLYPH_OFFSET *offsets;     /* original offsets, or NULL */
+    DWRITE_GLYPH_OFFSET *color_offsets; /* returned color run offsets, or NULL */
     UINT16 *glyphindices;             /* returned color run points to this */
     struct dwrite_colorglyph *glyphs; /* current glyph color info */
     BOOL has_regular_glyphs;          /* TRUE if there's any glyph without a color */
@@ -4629,6 +4631,8 @@ static ULONG WINAPI colorglyphenum_Release(IDWriteColorGlyphRunEnumerator *iface
     if (!ref) {
         heap_free(This->advances);
         heap_free(This->color_advances);
+        heap_free(This->offsets);
+        heap_free(This->color_offsets);
         heap_free(This->glyphindices);
         heap_free(This->glyphs);
         if (This->colr.context)
@@ -4672,6 +4676,8 @@ static BOOL colorglyphenum_build_color_run(struct dwrite_colorglyphenum *glyphen
             else
                 glyphenum->glyphindices[g] = 1;
             glyphenum->color_advances[g] = glyphenum->advances[g];
+            if (glyphenum->color_offsets)
+                glyphenum->color_offsets[g] = glyphenum->offsets[g];
         }
 
         colorrun->baselineOriginX = glyphenum->origin_x + get_glyph_origin(glyphenum, first_glyph);
@@ -4716,6 +4722,9 @@ static BOOL colorglyphenum_build_color_run(struct dwrite_colorglyphenum *glyphen
             }
 
             glyphenum->glyphindices[index] = glyphenum->glyphs[g].glyph;
+            /* offsets are relative to glyph origin, nothing to fix up */
+            if (glyphenum->color_offsets)
+                glyphenum->color_offsets[index] = glyphenum->offsets[g];
             opentype_colr_next_glyph(glyphenum->colr.data, glyphenum->glyphs + g);
             if (index)
                 glyphenum->color_advances[index-1] += advance_adj;
@@ -4846,10 +4855,15 @@ HRESULT create_colorglyphenum(FLOAT originX, FLOAT originY, const DWRITE_GLYPH_R
     colorglyphenum->advances = heap_alloc(run->glyphCount * sizeof(FLOAT));
     colorglyphenum->color_advances = heap_alloc(run->glyphCount * sizeof(FLOAT));
     colorglyphenum->glyphindices = heap_alloc(run->glyphCount * sizeof(UINT16));
+    if (run->glyphOffsets) {
+        colorglyphenum->offsets = heap_alloc(run->glyphCount * sizeof(*colorglyphenum->offsets));
+        colorglyphenum->color_offsets = heap_alloc(run->glyphCount * sizeof(*colorglyphenum->color_offsets));
+        memcpy(colorglyphenum->offsets, run->glyphOffsets, run->glyphCount * sizeof(*run->glyphOffsets));
+    }
 
     colorglyphenum->colorrun.glyphRun.glyphIndices = colorglyphenum->glyphindices;
     colorglyphenum->colorrun.glyphRun.glyphAdvances = colorglyphenum->color_advances;
-    colorglyphenum->colorrun.glyphRun.glyphOffsets = NULL; /* FIXME */
+    colorglyphenum->colorrun.glyphRun.glyphOffsets = colorglyphenum->color_offsets;
     colorglyphenum->colorrun.glyphRunDescription = NULL; /* FIXME */
 
     if (run->glyphAdvances)
