@@ -1439,8 +1439,18 @@ static const struct drawcall_entry draw_single_run_seq[] = {
     { DRAW_LAST_KIND }
 };
 
+static const struct drawcall_entry draw_reordered_run_seq[] = {
+    { DRAW_GLYPHRUN, {'1','2','3','-','5','2',0} },
+    { DRAW_GLYPHRUN, {0x64a,0x64f,0x633,0x627,0x648,0x650,0x64a,0} },
+    { DRAW_GLYPHRUN, {'7','1',0} },
+    { DRAW_GLYPHRUN, {'.',0} },
+    { DRAW_LAST_KIND }
+};
+
 static void test_Draw(void)
 {
+    static const WCHAR str3W[] = {'1','2','3','-','5','2',0x64a,0x64f,0x633,0x627,0x648,0x650,
+        0x64a,'7','1','.',0};
     static const WCHAR strW[] = {'s','t','r','i','n','g',0};
     static const WCHAR str2W[] = {0x202a,0x202c,'a','b',0};
     static const WCHAR ruW[] = {'r','u',0};
@@ -1623,6 +1633,22 @@ static void test_Draw(void)
     IDWriteTextLayout_Release(layout);
 
     IDWriteInlineObject_Release(inlineobj);
+
+    /* text that triggers bidi run reordering */
+    hr = IDWriteFactory_CreateTextLayout(factory, str3W, lstrlenW(str3W), format, 1000.0f, 100.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    ctxt.gdicompat = FALSE;
+    ctxt.use_gdi_natural = FALSE;
+    ctxt.snapping_disabled = TRUE;
+
+    flush_sequence(sequences, RENDERER_ID);
+    hr = IDWriteTextLayout_Draw(layout, &ctxt, &testrenderer, 0.0f, 0.0f);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok_sequence(sequences, RENDERER_ID, draw_reordered_run_seq, "draw test 11", FALSE);
+
+    IDWriteTextLayout_Release(layout);
+
     IDWriteTextFormat_Release(format);
     IDWriteFactory_Release(factory);
 }
