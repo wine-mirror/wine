@@ -551,7 +551,6 @@ static void test_name_limits(void)
     status = pNtOpenSymbolicLinkObject( &ret2, GENERIC_ALL, &attr );
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "%u: NtOpenSymbolicLinkObject failed %x\n", str.Length, status );
     status = pNtOpenSymbolicLinkObject( &ret2, GENERIC_ALL, &attr3 );
-    todo_wine
     ok( status == STATUS_SUCCESS, "%u: NtOpenSymbolicLinkObject failed %x\n", str.Length, status );
     pNtClose( ret2 );
     pNtClose( ret );
