@@ -1,11 +1,11 @@
 # Lithuanian translations for Wine
-# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013, 2014, 2015.
+# Aurimas Fišeras <aurimas@members.fsf.org>, 2011, 2012, 2013, 2014, 2015, 2016.
 msgid ""
 msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: http://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2015-12-23 17:35+0300\n"
+"PO-Revision-Date: 2016-02-09 21:07+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -11578,68 +11578,45 @@ msgid "The operation completed successfully\n"
 msgstr "Operacija sėkmingai įvykdyta\n"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "Klaida: Netinkamas rakto vardas\n"
+msgstr "reg: Netinkamas rakto vardas\n"
 
 #: reg.rc:36
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "Klaida: Netinkami komandos eilutės parametrai\n"
+msgstr "reg: Netinkami komandos eilutės parametrai\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "Klaida: Nepavyko prieiti prie nuotolinio kompiuterio\n"
+msgstr "reg: Nepavyko prieiti prie nuotolinio kompiuterio\n"
 
 #: reg.rc:38
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
-msgstr "Klaida: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
+msgstr "reg: Sistemai nepavyko rasti nurodyto registro rakto ar reikšmės\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Klaida: Nepalaikomas tipas\n"
+msgstr "reg: Nepalaikomas registro duomenų tipas [%1]\n"
 
 #: reg.rc:40
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr ""
-"šalinimo programa: Už parametro „--remove“ privalo būti programos GUID\n"
+msgstr "reg: Už parametro [/d] privalo būti tinkamas sveikasis skaičius\n"
 
 #: reg.rc:41
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr ""
-"šalinimo programa: Už parametro „--remove“ privalo būti programos GUID\n"
+msgstr "reg: Už parametro [/d] privalo būti tinkama šešioliktainė reikšmė\n"
 
 #: reg.rc:42
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "reg: Neapdorojamas registro duomenų tipas [/t 0x%1!x!, /d %2]\n"
 
 #: reg.rc:43
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Nurodytas failas jau egzistuoja. Ar norite jį perrašyti?"
+msgstr "Registro reikšmė „%1“ jau egzistuoja. Ar norite ją perrašyti?"
 
 #: reg.rc:47
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "Registro operacija buvo nutraukta\n"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -13093,8 +13070,6 @@ msgstr ""
 "atskirai."
 
 #: winecfg.rc:159
-#, fuzzy
-#| msgid "&Add application..."
 msgid "Add appli&cation..."
 msgstr "&Pridėti programą..."
 
@@ -13157,7 +13132,7 @@ msgstr "&Naujas nustelbimas bibliotekai:"
 
 #: winecfg.rc:196
 msgid "A&dd"
-msgstr ""
+msgstr "&Pridėti"
 
 #: winecfg.rc:197
 msgid "Existing &overrides:"
@@ -13184,8 +13159,6 @@ msgid "&Native (Windows)"
 msgstr "&Sava („Windows“)"
 
 #: winecfg.rc:211
-#, fuzzy
-#| msgid "Bui&ltin then Native"
 msgid "Buil&tin then Native"
 msgstr "Į&taisyta, po to sava"
 
@@ -13210,26 +13183,20 @@ msgstr ""
 "redaguojama."
 
 #: winecfg.rc:236
-#, fuzzy
-#| msgid "&Add..."
 msgid "A&dd..."
-msgstr "&Pridėti..."
+msgstr "Pri&dėti..."
 
 #: winecfg.rc:238
-#, fuzzy
-#| msgid "Autodetect"
 msgid "Aut&odetect"
-msgstr "Automatiškai aptikti"
+msgstr "&Automatiškai aptikti"
 
 #: winecfg.rc:241
 msgid "&Path:"
 msgstr "&Kelias:"
 
 #: winecfg.rc:248 winecfg.rc:38
-#, fuzzy
-#| msgid "Show &Advanced"
 msgid "Show Advan&ced"
-msgstr "Rodyti papil&domas"
+msgstr "Rodyti papild&omas"
 
 #: winecfg.rc:249
 msgid "De&vice:"
@@ -13248,8 +13215,6 @@ msgid "S&erial:"
 msgstr "N&umeris:"
 
 #: winecfg.rc:258
-#, fuzzy
-#| msgid "Show &dot files"
 msgid "&Show dot files"
 msgstr "Rodyti &failus su tašku"
 
@@ -13330,10 +13295,8 @@ msgid "Select the Unix target directory, please."
 msgstr "Išrinkite Unix paskirties aplanką."
 
 #: winecfg.rc:37
-#, fuzzy
-#| msgid "Hide &Advanced"
 msgid "Hide Advan&ced"
-msgstr "Slėpti papil&domas"
+msgstr "Slėpti papild&omas"
 
 #: winecfg.rc:39
 msgid "(No Theme)"
@@ -13794,12 +13757,10 @@ msgid "Configuration error"
 msgstr "Konfigūracijos klaida"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "Ekrano buferio dydis turi būti didesnis arba lygus lango buferiui"
+msgstr "Ekrano buferio dydis turi būti didesnis arba lygus lango dydžiui."
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
