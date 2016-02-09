@@ -11572,7 +11572,9 @@ msgid ""
 msgstr "エラー: システムは指定されたキーまたは値を見つけられませんでした\n"
 
 #: reg.rc:39
-msgid "Error: Unsupported type\n"
+#, fuzzy
+#| msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "エラー: サポートされていない種類です\n"
 
 #: reg.rc:40

@@ -11848,7 +11848,7 @@ msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾�
 #: reg.rc:39
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "지원하지 않는 형식.\n"
 
 #: reg.rc:40

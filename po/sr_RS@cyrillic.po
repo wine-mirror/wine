@@ -11697,7 +11697,7 @@ msgstr ""
 #: reg.rc:39
 #, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
-msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr ""
 "Грешка: унесени су непознати или неисправни параметри наредбене линије\n"
 

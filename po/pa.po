@@ -11044,7 +11044,7 @@ msgid ""
 msgstr ""
 
 #: reg.rc:39
-msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr ""
 
 #: reg.rc:40

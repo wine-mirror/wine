@@ -11802,7 +11802,7 @@ msgstr "Napaka: sistem ni našel navedenega ključa ali vrednosti registra\n"
 #: reg.rc:39
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "Nepodprta vrsta.\n"
 
 #: reg.rc:40

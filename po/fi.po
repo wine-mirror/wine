@@ -11567,7 +11567,9 @@ msgid ""
 msgstr "Virhe: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
 
 #: reg.rc:39
-msgid "Error: Unsupported type\n"
+#, fuzzy
+#| msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "Virhe: Tyyppiä ei tueta\n"
 
 #: reg.rc:40

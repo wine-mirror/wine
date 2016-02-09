@@ -11513,7 +11513,7 @@ msgstr "Chyba: Systém nemohl najít specifikovaný klíč registru nebo hodnotu
 #: reg.rc:39
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "Nepodporovaný typ.\n"
 
 #: reg.rc:40

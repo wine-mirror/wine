@@ -11869,7 +11869,7 @@ msgstr ""
 #: reg.rc:39
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
-msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "Eroare: Linie de comandă nesuportată\n"
 
 #: reg.rc:40

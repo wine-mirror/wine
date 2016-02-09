@@ -11673,7 +11673,9 @@ msgid ""
 msgstr "Помилка: не вдалось знайти вказаний ключ реєстру чи значення\n"
 
 #: reg.rc:39
-msgid "Error: Unsupported type\n"
+#, fuzzy
+#| msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "Помилка: Непідтримуваний тип\n"
 
 #: reg.rc:40

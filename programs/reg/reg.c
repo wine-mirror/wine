@@ -324,7 +324,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         if (reg_type == ~0u)
         {
             RegCloseKey(subkey);
-            output_message(STRING_UNSUPPORTED_TYPE);
+            output_message(STRING_UNSUPPORTED_TYPE, type);
             return 1;
         }
 

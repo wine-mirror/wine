@@ -11117,7 +11117,9 @@ msgid ""
 msgstr "错误：系统无法找到指定的注册表键或值\n"
 
 #: reg.rc:39
-msgid "Error: Unsupported type\n"
+#, fuzzy
+#| msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "错误：不支持的格式\n"
 
 #: reg.rc:40

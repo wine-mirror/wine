@@ -11238,7 +11238,7 @@ msgstr ""
 
 #: reg.rc:39
 #, fuzzy
-msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "Επιλογές.\n"
 
 #: reg.rc:40

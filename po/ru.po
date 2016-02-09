@@ -11590,7 +11590,9 @@ msgid ""
 msgstr "Ошибка: не удалось найти указанный раздел реестра или значение\n"
 
 #: reg.rc:39
-msgid "Error: Unsupported type\n"
+#, fuzzy
+#| msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "Ошибка: тип не поддерживается\n"
 
 #: reg.rc:40

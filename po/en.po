@@ -11588,8 +11588,8 @@ msgstr ""
 "Error: The system was unable to find the specified registry key or value\n"
 
 #: reg.rc:39
-msgid "Error: Unsupported type\n"
-msgstr "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
+msgstr "Error: Unsupported registry data type [%1]\n"
 
 #: reg.rc:40
 msgid "reg: The option [/d] must be followed by a valid integer\n"

@@ -11664,7 +11664,9 @@ msgstr ""
 "Fehler: Der angegebene Schlüssel oder Wert konnte nicht gefunden werden\n"
 
 #: reg.rc:39
-msgid "Error: Unsupported type\n"
+#, fuzzy
+#| msgid "Error: Unsupported type\n"
+msgid "Error: Unsupported registry data type [%1]\n"
 msgstr "Fehler: Nicht unterstützter Typ\n"
 
 #: reg.rc:40
