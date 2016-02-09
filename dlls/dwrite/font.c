@@ -576,7 +576,6 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace2 *iface, UI
     UINT32 count, UINT16 *glyph_indices)
 {
     struct dwrite_fontface *This = impl_from_IDWriteFontFace2(iface);
-    UINT32 i;
 
     TRACE("(%p)->(%p %u %p)\n", This, codepoints, count, glyph_indices);
 
@@ -588,9 +587,7 @@ static HRESULT WINAPI dwritefontface_GetGlyphIndices(IDWriteFontFace2 *iface, UI
         return E_INVALIDARG;
     }
 
-    for (i = 0; i < count; i++)
-        glyph_indices[i] = freetype_get_glyphindex(iface, codepoints[i], This->charmap);
-
+    freetype_get_glyphs(iface, This->charmap, codepoints, count, glyph_indices);
     return S_OK;
 }
 

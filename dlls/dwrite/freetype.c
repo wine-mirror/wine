@@ -493,23 +493,25 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
     return count;
 }
 
-UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint, INT charmap)
+void freetype_get_glyphs(IDWriteFontFace2 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
+    UINT16 *glyphs)
 {
-    UINT16 glyph;
+    UINT32 i;
 
     EnterCriticalSection(&freetype_cs);
-    if (charmap == -1)
-        glyph = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint);
-    else {
-        /* special handling for symbol fonts */
-        if (codepoint < 0x100) codepoint += 0xf000;
-        glyph = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint);
-        if (!glyph)
-            glyph = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint - 0xf000);
+    for (i = 0; i < count; i++) {
+        if (charmap == -1)
+            glyphs[i] = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoints[i]);
+        else {
+            UINT32 codepoint = codepoints[i];
+            /* special handling for symbol fonts */
+            if (codepoint < 0x100) codepoint += 0xf000;
+            glyphs[i] = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint);
+            if (!glyphs[i])
+                glyphs[i] = pFTC_CMapCache_Lookup(cmap_cache, fontface, charmap, codepoint - 0xf000);
+        }
     }
     LeaveCriticalSection(&freetype_cs);
-
-    return glyph;
 }
 
 BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
@@ -836,9 +838,10 @@ UINT16 freetype_get_glyphcount(IDWriteFontFace2 *fontface)
     return 0;
 }
 
-UINT16 freetype_get_glyphindex(IDWriteFontFace2 *fontface, UINT32 codepoint, INT charmap)
+void freetype_get_glyphs(IDWriteFontFace2 *fontface, INT charmap, UINT32 const *codepoints, UINT32 count,
+    UINT16 *glyphs)
 {
-    return 0;
+    memset(glyphs, 0, count * sizeof(*glyphs));
 }
 
 BOOL freetype_has_kerning_pairs(IDWriteFontFace2 *fontface)
