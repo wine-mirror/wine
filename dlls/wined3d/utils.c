@@ -137,6 +137,7 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_R32G32_UINT,               32, 32,  0,  0,   0, 32,  0,  0,    8,   0,     0},
     {WINED3DFMT_R32G32B32_UINT,            32, 32, 32,  0,   0, 32, 64,  0,   12,   0,     0},
     {WINED3DFMT_R32G32B32A32_UINT,         32, 32, 32, 32,   0, 32, 64, 96,   16,   0,     0},
+    {WINED3DFMT_R32G32B32A32_SINT,         32, 32, 32, 32,   0, 32, 64, 96,   16,   0,     0},
     {WINED3DFMT_R16G16B16A16_SNORM,        16, 16, 16, 16,   0, 16, 32, 48,    8,   0,     0},
     /* Vendor-specific formats */
     {WINED3DFMT_ATI1N,                      0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
@@ -201,6 +202,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_R8G8B8A8_SINT,      WINED3DFMT_FLAG_INTEGER},
     {WINED3DFMT_R16_UINT,           WINED3DFMT_FLAG_INTEGER},
     {WINED3DFMT_R32G32B32A32_UINT,  WINED3DFMT_FLAG_INTEGER},
+    {WINED3DFMT_R32G32B32A32_SINT,  WINED3DFMT_FLAG_INTEGER},
 };
 
 struct wined3d_format_block_info
@@ -1318,6 +1320,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             ARB_DEPTH_BUFFER_FLOAT,     convert_s8_uint_d24_float},
     {WINED3DFMT_R32G32B32A32_UINT,      GL_RGBA32UI,                      GL_RGBA32UI,                            0,
             GL_RGBA_INTEGER,            GL_UNSIGNED_INT,                  0,
+            WINED3DFMT_FLAG_TEXTURE,
+            EXT_TEXTURE_INTEGER,        NULL},
+    {WINED3DFMT_R32G32B32A32_SINT,      GL_RGBA32I,                       GL_RGBA32I,                             0,
+            GL_RGBA_INTEGER,            GL_INT,                           0,
             WINED3DFMT_FLAG_TEXTURE,
             EXT_TEXTURE_INTEGER,        NULL},
     /* Vendor-specific formats */
