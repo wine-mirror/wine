@@ -76,7 +76,7 @@ void wined3d_volume_upload_data(struct wined3d_volume *volume, const struct wine
         dst_row_pitch = width * format->conv_byte_count;
         dst_slice_pitch = dst_row_pitch * height;
 
-        wined3d_volume_get_pitch(volume, &src_row_pitch, &src_slice_pitch);
+        wined3d_texture_get_pitch(volume->container, volume->texture_level, &src_row_pitch, &src_slice_pitch);
 
         converted_mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch * depth);
         format->convert(data->addr, converted_mem, src_row_pitch, src_slice_pitch,
