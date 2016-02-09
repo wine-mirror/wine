@@ -42,26 +42,8 @@ BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
 
 void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pitch, UINT *slice_pitch)
 {
-    const struct wined3d_format *format = volume->resource.format;
-
-    if (volume->container->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
-    {
-        /* Since compressed formats are block based, pitch means the amount of
-         * bytes to the next row of block rather than the next row of pixels. */
-        UINT row_block_count = (volume->resource.width + format->block_width - 1) / format->block_width;
-        UINT slice_block_count = (volume->resource.height + format->block_height - 1) / format->block_height;
-        *row_pitch = row_block_count * format->block_byte_count;
-        *slice_pitch = *row_pitch * slice_block_count;
-    }
-    else
-    {
-        unsigned char alignment = volume->resource.device->surface_alignment;
-        *row_pitch = format->byte_count * volume->resource.width;  /* Bytes / row */
-        *row_pitch = (*row_pitch + alignment - 1) & ~(alignment - 1);
-        *slice_pitch = *row_pitch * volume->resource.height;
-    }
-
-    TRACE("Returning row pitch %u, slice pitch %u.\n", *row_pitch, *slice_pitch);
+    wined3d_format_calculate_pitch(volume->resource.format, volume->resource.device->surface_alignment,
+            volume->resource.width, volume->resource.height, row_pitch, slice_pitch);
 }
 
 /* This call just uploads data, the caller is responsible for binding the

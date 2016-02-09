@@ -1885,21 +1885,19 @@ static inline unsigned short float_32_to_16(const float *in)
 
 DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
 {
-    unsigned int alignment;
-    DWORD pitch;
+    unsigned int row_pitch, slice_pitch;
 
     TRACE("surface %p.\n", surface);
 
     if (surface->container->row_pitch)
         return surface->container->row_pitch;
 
-    alignment = surface->resource.device->surface_alignment;
-    pitch = wined3d_format_calculate_pitch(surface->resource.format, surface->resource.width);
-    pitch = (pitch + alignment - 1) & ~(alignment - 1);
+    wined3d_format_calculate_pitch(surface->resource.format, surface->resource.device->surface_alignment,
+            surface->resource.width, surface->resource.height, &row_pitch, &slice_pitch);
 
-    TRACE("Returning %u.\n", pitch);
+    TRACE("Returning %u.\n", row_pitch);
 
-    return pitch;
+    return row_pitch;
 }
 
 HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
@@ -1961,9 +1959,8 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface, const struc
     else
     {
         /* User memory surfaces don't have the regular surface alignment. */
-        surface->resource.size = wined3d_format_calculate_size(texture_resource->format,
-                1, width, height, 1);
-        surface->container->row_pitch = wined3d_format_calculate_pitch(texture_resource->format, width);
+        wined3d_format_calculate_pitch(texture_resource->format, 1, width, height,
+                &surface->container->row_pitch, &surface->resource.size);
     }
 
     /* The format might be changed to a format that needs conversion.
@@ -3694,10 +3691,10 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
+    unsigned int width, src_pitch, dst_row_pitch, dst_slice_pitch;
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_color_key_conversion *conversion;
     struct wined3d_texture *texture = surface->container;
-    UINT width, src_pitch, dst_pitch;
     struct wined3d_bo_address data;
     struct wined3d_format format;
     POINT dst_point = {0, 0};
@@ -3812,17 +3809,17 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         UINT height = surface->resource.height;
 
         format.byte_count = format.conv_byte_count;
-        dst_pitch = wined3d_format_calculate_pitch(&format, width);
+        wined3d_format_calculate_pitch(&format, 1, width, height, &dst_row_pitch, &dst_slice_pitch);
 
-        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
+        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch)))
         {
-            ERR("Out of memory (%u).\n", dst_pitch * height);
+            ERR("Out of memory (%u).\n", dst_slice_pitch);
             context_release(context);
             return E_OUTOFMEMORY;
         }
         format.convert(data.addr, mem, src_pitch, src_pitch * height,
-                dst_pitch, dst_pitch * height, width, height, 1);
-        src_pitch = dst_pitch;
+                dst_row_pitch, dst_slice_pitch, width, height, 1);
+        src_pitch = dst_row_pitch;
         data.addr = mem;
     }
     else if (conversion)
@@ -3831,20 +3828,20 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         struct wined3d_palette *palette = NULL;
         UINT height = surface->resource.height;
 
-        dst_pitch = wined3d_format_calculate_pitch(&format, width);
-        dst_pitch = (dst_pitch + device->surface_alignment - 1) & ~(device->surface_alignment - 1);
+        wined3d_format_calculate_pitch(&format, device->surface_alignment,
+                width, height, &dst_row_pitch, &dst_slice_pitch);
 
-        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_pitch * height)))
+        if (!(mem = HeapAlloc(GetProcessHeap(), 0, dst_slice_pitch)))
         {
-            ERR("Out of memory (%u).\n", dst_pitch * height);
+            ERR("Out of memory (%u).\n", dst_slice_pitch);
             context_release(context);
             return E_OUTOFMEMORY;
         }
         if (texture->swapchain && texture->swapchain->palette)
             palette = texture->swapchain->palette;
-        conversion->convert(data.addr, src_pitch, mem, dst_pitch,
+        conversion->convert(data.addr, src_pitch, mem, dst_row_pitch,
                 width, height, palette, &texture->async.gl_color_key);
-        src_pitch = dst_pitch;
+        src_pitch = dst_row_pitch;
         data.addr = mem;
     }
 

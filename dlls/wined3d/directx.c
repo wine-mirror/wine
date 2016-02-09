@@ -4756,6 +4756,7 @@ UINT CDECL wined3d_calculate_format_pitch(const struct wined3d *wined3d, UINT ad
         enum wined3d_format_id format_id, UINT width)
 {
     const struct wined3d_gl_info *gl_info;
+    unsigned int row_pitch, slice_pitch;
 
     TRACE("wined3d %p, adapter_idx %u, format_id %s, width %u.\n",
             wined3d, adapter_idx, debug_d3dformat(format_id), width);
@@ -4764,7 +4765,10 @@ UINT CDECL wined3d_calculate_format_pitch(const struct wined3d *wined3d, UINT ad
         return ~0u;
 
     gl_info = &wined3d->adapters[adapter_idx].gl_info;
-    return wined3d_format_calculate_pitch(wined3d_get_format(gl_info, format_id), width);
+    wined3d_format_calculate_pitch(wined3d_get_format(gl_info, format_id),
+            1, width, 1, &row_pitch, &slice_pitch);
+
+    return row_pitch;
 }
 
 HRESULT CDECL wined3d_check_device_format_conversion(const struct wined3d *wined3d, UINT adapter_idx,
