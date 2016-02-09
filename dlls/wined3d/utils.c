@@ -200,6 +200,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_R8G8B8A8_UINT,      WINED3DFMT_FLAG_INTEGER},
     {WINED3DFMT_R8G8B8A8_SINT,      WINED3DFMT_FLAG_INTEGER},
     {WINED3DFMT_R16_UINT,           WINED3DFMT_FLAG_INTEGER},
+    {WINED3DFMT_R32G32B32A32_UINT,  WINED3DFMT_FLAG_INTEGER},
 };
 
 struct wined3d_format_block_info
@@ -1315,6 +1316,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_DEPTH_STENCIL,           GL_FLOAT_32_UNSIGNED_INT_24_8_REV, 8,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL | WINED3DFMT_FLAG_SHADOW,
             ARB_DEPTH_BUFFER_FLOAT,     convert_s8_uint_d24_float},
+    {WINED3DFMT_R32G32B32A32_UINT,      GL_RGBA32UI,                      GL_RGBA32UI,                            0,
+            GL_RGBA_INTEGER,            GL_UNSIGNED_INT,                  0,
+            WINED3DFMT_FLAG_TEXTURE,
+            EXT_TEXTURE_INTEGER,        NULL},
     /* Vendor-specific formats */
     {WINED3DFMT_ATI1N,                  GL_COMPRESSED_RED_RGTC1,          GL_COMPRESSED_RED_RGTC1,                0,
             GL_RED,                     GL_UNSIGNED_BYTE,                 0,
