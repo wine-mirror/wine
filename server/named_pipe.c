@@ -473,6 +473,8 @@ static struct object *named_pipe_device_lookup_name( struct object *obj, struct 
     assert( obj->ops == &named_pipe_device_ops );
     assert( device->pipes );
 
+    if (!name) return NULL;  /* open the device itself */
+
     if ((found = find_object( device->pipes, name, attr | OBJ_CASE_INSENSITIVE )))
         name->len = 0;
 

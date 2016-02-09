@@ -110,12 +110,6 @@ static struct winstation *create_winstation( struct directory *root, const struc
 {
     struct winstation *winstation;
 
-    if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
-    {
-        set_error( STATUS_INVALID_PARAMETER );
-        return NULL;
-    }
-
     if ((winstation = create_named_object_dir( root, name, attr, &winstation_ops )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
@@ -164,6 +158,8 @@ static struct object *winstation_lookup_name( struct object *obj, struct unicode
     struct object *found;
 
     assert( obj->ops == &winstation_ops );
+
+    if (!name) return NULL;  /* open the winstation itself */
 
     if (memchrW( name->str, '\\', name->len / sizeof(WCHAR) ))  /* no backslash allowed in name */
     {

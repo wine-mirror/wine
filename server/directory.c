@@ -144,6 +144,8 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
 
     assert( obj->ops == &directory_ops );
 
+    if (!name) return NULL;  /* open the directory itself */
+
     if (!(p = memchrW( name->str, '\\', name->len / sizeof(WCHAR) )))
         /* Last element in the path name */
         tmp.len = name->len;
@@ -165,14 +167,12 @@ static struct object *directory_lookup_name( struct object *obj, struct unicode_
         return found;
     }
 
-    if (name->str)
+    if (name->str)  /* not the last element */
     {
         if (tmp.len == 0) /* Double backslash */
             set_error( STATUS_OBJECT_NAME_INVALID );
         else if (p)  /* Path still has backslashes */
             set_error( STATUS_OBJECT_PATH_NOT_FOUND );
-        else
-            clear_error();
     }
     return NULL;
 }

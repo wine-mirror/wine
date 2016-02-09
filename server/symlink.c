@@ -99,11 +99,13 @@ static struct object *symlink_lookup_name( struct object *obj, struct unicode_st
     struct object *target;
 
     assert( obj->ops == &symlink_ops );
+
+    if (!name) return NULL;
     if (!name->len && (attr & OBJ_OPENLINK)) return NULL;
 
     target_str.str = symlink->target;
     target_str.len = symlink->len;
-    if ((target = find_object_dir( NULL, &target_str, attr, &name_left )))
+    if ((target = lookup_named_object( NULL, &target_str, attr, &name_left )))
     {
         if (name_left.len)
         {

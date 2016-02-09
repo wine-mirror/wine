@@ -217,7 +217,7 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
                                     unsigned int attr, struct unicode_str *name_left )
 {
     struct object *obj, *parent;
-    struct unicode_str name_tmp = *name;
+    struct unicode_str name_tmp = *name, *ptr = &name_tmp;
 
     if (root)
     {
@@ -242,9 +242,11 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
         parent = get_root_directory();
     }
 
-    if (!name_tmp.len) goto done;
+    if (!name_tmp.len) ptr = NULL;  /* special case for empty path */
 
-    while ((obj = parent->ops->lookup_name( parent, &name_tmp, attr )))
+    clear_error();
+
+    while ((obj = parent->ops->lookup_name( parent, ptr, attr )))
     {
         /* move to the next element */
         release_object ( parent );
@@ -256,7 +258,6 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
         return NULL;
     }
 
-    done:
     if (name_left) *name_left = name_tmp;
     return parent;
 }
@@ -617,6 +618,7 @@ int default_set_sd( struct object *obj, const struct security_descriptor *sd,
 struct object *no_lookup_name( struct object *obj, struct unicode_str *name,
                                unsigned int attr )
 {
+    if (!name) set_error( STATUS_OBJECT_TYPE_MISMATCH );
     return NULL;
 }
 

@@ -370,6 +370,8 @@ static struct object *mailslot_device_lookup_name( struct object *obj, struct un
 
     assert( obj->ops == &mailslot_device_ops );
 
+    if (!name) return NULL;  /* open the device itself */
+
     if ((found = find_object( device->mailslots, name, attr | OBJ_CASE_INSENSITIVE )))
         name->len = 0;
 

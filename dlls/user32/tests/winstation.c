@@ -225,7 +225,6 @@ static void test_handles(void)
     SetLastError( 0xdeadbeef );
     w2 = CreateWindowStationA( "foo\\bar", 0, WINSTA_ALL_ACCESS, NULL );
     ok( !w2, "create station succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_PATH_NOT_FOUND || GetLastError() == ERROR_ACCESS_DENIED,
         "wrong error %u\n", GetLastError() );
 
