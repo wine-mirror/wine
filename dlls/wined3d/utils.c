@@ -199,6 +199,7 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_S8_UINT_D24_FLOAT,  WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_R8G8B8A8_UINT,      WINED3DFMT_FLAG_INTEGER},
     {WINED3DFMT_R8G8B8A8_SINT,      WINED3DFMT_FLAG_INTEGER},
+    {WINED3DFMT_R16_UINT,           WINED3DFMT_FLAG_INTEGER},
 };
 
 struct wined3d_format_block_info
@@ -1137,6 +1138,10 @@ static const struct wined3d_format_texture_info format_texture_info[] =
             GL_RED,                     GL_UNSIGNED_SHORT,                0,
             WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING | WINED3DFMT_FLAG_FILTERING
             | WINED3DFMT_FLAG_RENDERTARGET,
+            ARB_TEXTURE_RG,             NULL},
+    {WINED3DFMT_R16_UINT,               GL_R16UI,                         GL_R16UI,                               0,
+            GL_RED_INTEGER,             GL_UNSIGNED_SHORT,                0,
+            WINED3DFMT_FLAG_TEXTURE,
             ARB_TEXTURE_RG,             NULL},
     /* Luminance */
     {WINED3DFMT_L8_UNORM,               GL_LUMINANCE8,                    GL_SLUMINANCE8_EXT,                     0,
@@ -2317,6 +2322,11 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
          * ARB_texture_float is also supported. */
         if (!gl_info->supported[ARB_TEXTURE_FLOAT]
                 && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT))
+            continue;
+
+        /* ARB_texture_rg defines integer formats if ARB_texture_integer is also supported. */
+        if (!gl_info->supported[EXT_TEXTURE_INTEGER]
+                && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_INTEGER))
             continue;
 
         format->glInternal = format_texture_info[i].gl_internal;
