@@ -11667,20 +11667,29 @@ msgid "The operation completed successfully\n"
 msgstr "L'operació s'ha acabat amb èxit\n"
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid key name\n"
 msgstr "Error: Nom de clau invàlid\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
 msgstr "Error: Paràmetres de línia d'ordres invàlids\n"
 
 #: reg.rc:37
-msgid "Error: Unable to access remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr "Error: No es pot accedir a la màquina remota\n"
 
 #: reg.rc:38
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
 "Error: El sistema no ha pogut trobar la clau especificada o el valor de "
 "registre especificat\n"
@@ -11688,7 +11697,7 @@ msgstr ""
 #: reg.rc:39
 #, fuzzy
 #| msgid "Error: Unsupported type\n"
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "Error: Tipus incompatible\n"
 
 #: reg.rc:40

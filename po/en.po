@@ -11570,26 +11570,26 @@ msgid "The operation completed successfully\n"
 msgstr "The operation completed successfully\n"
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
-msgstr "Error: Invalid key name\n"
+msgid "reg: Invalid key name\n"
+msgstr "reg: Invalid key name\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
-msgstr "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
+msgstr "reg: Invalid command line parameters\n"
 
 #: reg.rc:37
-msgid "Error: Unable to access remote machine\n"
-msgstr "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
+msgstr "reg: Unable to access remote machine\n"
 
 #: reg.rc:38
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 
 #: reg.rc:39
-msgid "Error: Unsupported registry data type [%1]\n"
-msgstr "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
+msgstr "reg: Unsupported registry data type [%1]\n"
 
 #: reg.rc:40
 msgid "reg: The option [/d] must be followed by a valid integer\n"

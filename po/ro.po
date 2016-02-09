@@ -11847,29 +11847,36 @@ msgid "The operation completed successfully\n"
 msgstr "Operațiunea a fost finalizată cu succes\n"
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid key name\n"
 msgstr "Eroare: Nume de cheie nevalid\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
 msgstr "Eroare: Parametri nevalizi pentru linia de comandă\n"
 
 #: reg.rc:37
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
-msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr "Eroare: Nu se pot adăuga chei pe calculatorul de la distanță\n"
 
 #: reg.rc:38
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
 "Eroare: Sistemul nu a putut găsi cheia sau valoarea de registru specificată\n"
 
 #: reg.rc:39
 #, fuzzy
 #| msgid "Error: Command line not supported\n"
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "Eroare: Linie de comandă nesuportată\n"
 
 #: reg.rc:40

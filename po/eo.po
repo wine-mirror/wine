@@ -11118,24 +11118,28 @@ msgid "The operation completed successfully\n"
 msgstr ""
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
-msgstr ""
+#, fuzzy
+#| msgid "Invalid share name.\n"
+msgid "reg: Invalid key name\n"
+msgstr "Nevalida nomo de kunuzata aparato.\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
-msgstr ""
+#, fuzzy
+#| msgid "Invalid command line.\n"
+msgid "reg: Invalid command line parameters\n"
+msgstr "Nevalida komandlinio.\n"
 
 #: reg.rc:37
-msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr ""
 
 #: reg.rc:38
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
 
 #: reg.rc:39
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr ""
 
 #: reg.rc:40

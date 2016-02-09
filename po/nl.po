@@ -11802,22 +11802,29 @@ msgid "The operation completed successfully\n"
 msgstr "De bewerking is succesvol voltooid\n"
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid key name\n"
 msgstr "Fout: Foutieve sleutelnaam\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
 msgstr "Fout: Foutieve commandoregel-parameters\n"
 
 #: reg.rc:37
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
-msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr "Fout: Sleutels konden niet toegevoegd worden aan de remote machine\n"
 
 #: reg.rc:38
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
 "Fout: Het systeem kon de gespecificeerde registersleutel of waarde niet "
 "vinden\n"
@@ -11825,7 +11832,7 @@ msgstr ""
 #: reg.rc:39
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "Niet-ondersteund type.\n"
 
 #: reg.rc:40

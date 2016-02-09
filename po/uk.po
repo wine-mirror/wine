@@ -11656,26 +11656,35 @@ msgid "The operation completed successfully\n"
 msgstr "Операція успішно завершена\n"
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid key name\n"
 msgstr "Помилка: неправильне ім'я ключа\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
 msgstr "Помилка: неправильні параметри командного рядка\n"
 
 #: reg.rc:37
-msgid "Error: Unable to access remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr "Помилка: неможливо отримати доступ до віддаленої машини\n"
 
 #: reg.rc:38
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr "Помилка: не вдалось знайти вказаний ключ реєстру чи значення\n"
 
 #: reg.rc:39
 #, fuzzy
 #| msgid "Error: Unsupported type\n"
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "Помилка: Непідтримуваний тип\n"
 
 #: reg.rc:40

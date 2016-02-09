@@ -11827,28 +11827,35 @@ msgid "The operation completed successfully\n"
 msgstr "작업이 성공적으로 끝났습니다\n"
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid key name\n"
 msgstr "오류: 올바르지 않은 키 이름\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
 msgstr "오류:올바르지 않은 명령라인 매개변수\n"
 
 #: reg.rc:37
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
-msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr "오류: 원격 머신에  키를 더하는 것은 가능하지 않습니다\n"
 
 #: reg.rc:38
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr "오류: 이 시스템에서 지정된 레지스트리 키나 값을 찾을수 없습니다\n"
 
 #: reg.rc:39
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "지원하지 않는 형식.\n"
 
 #: reg.rc:40

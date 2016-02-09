@@ -11756,22 +11756,29 @@ msgid "The operation completed successfully\n"
 msgstr "Operationen blev afsluttet med succes\n"
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid key name\n"
 msgstr "Fejl: Ugyldigt nøgle navn\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
 msgstr "Fejl: Ugyldige kommando linje parametre\n"
 
 #: reg.rc:37
 #, fuzzy
 #| msgid "Error: Unable to add keys to remote machine\n"
-msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr "Fejl: Kunne ikke tilføje nøgler til fjern maskinen\n"
 
 #: reg.rc:38
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
 "Fejl: Systemet kunne ikke finde, den angivet registrerings nøgle eller "
 "værdi\n"
@@ -11779,7 +11786,7 @@ msgstr ""
 #: reg.rc:39
 #, fuzzy
 #| msgid "Unsupported type.\n"
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "Ikke-understøttet type.\n"
 
 #: reg.rc:40

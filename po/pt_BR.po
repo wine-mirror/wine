@@ -11645,20 +11645,29 @@ msgid "The operation completed successfully\n"
 msgstr "A operação foi completada com sucesso\n"
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
+#, fuzzy
+#| msgid "Error: Invalid key name\n"
+msgid "reg: Invalid key name\n"
 msgstr "Erro: Nome de chave inválido\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
 msgstr "Erro: Parâmetros da linha de comandos inválidos\n"
 
 #: reg.rc:37
-msgid "Error: Unable to access remote machine\n"
+#, fuzzy
+#| msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr "Erro: Não foi possível acessar a máquina remota\n"
 
 #: reg.rc:38
+#, fuzzy
+#| msgid ""
+#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
 "Erro: O sistema foi incapaz de encontrar a chave de registo ou valor "
 "especificado\n"
@@ -11666,7 +11675,7 @@ msgstr ""
 #: reg.rc:39
 #, fuzzy
 #| msgid "Error: Unsupported type\n"
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr "Erro: Tipo não suportado.\n"
 
 #: reg.rc:40

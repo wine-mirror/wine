@@ -11812,27 +11812,30 @@ msgid "The operation completed successfully\n"
 msgstr ""
 
 #: reg.rc:35
-msgid "Error: Invalid key name\n"
-msgstr ""
+#, fuzzy
+msgid "reg: Invalid key name\n"
+msgstr "Neispravna sintaksa.\n"
 
 #: reg.rc:36
-msgid "Error: Invalid command line parameters\n"
+#, fuzzy
+#| msgid "Error: Invalid command line parameters\n"
+msgid "reg: Invalid command line parameters\n"
 msgstr ""
 "Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
 
 #: reg.rc:37
-msgid "Error: Unable to access remote machine\n"
+msgid "reg: Unable to access remote machine\n"
 msgstr ""
 
 #: reg.rc:38
 msgid ""
-"Error: The system was unable to find the specified registry key or value\n"
+"reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
 
 #: reg.rc:39
 #, fuzzy
 #| msgid "Error: Invalid command line parameters\n"
-msgid "Error: Unsupported registry data type [%1]\n"
+msgid "reg: Unsupported registry data type [%1]\n"
 msgstr ""
 "Greška: uneseni su nepoznati ili neispravni parametri naredbene linije\n"
 
