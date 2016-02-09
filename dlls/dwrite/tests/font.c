@@ -707,8 +707,7 @@ if (0)
 
     style = IDWriteFont_GetStyle(font);
     ok(style == DWRITE_FONT_STYLE_OBLIQUE, "got %d\n", style);
-todo_wine
-    ok(otm.otmfsSelection == 1, "got 0x%08x\n", otm.otmfsSelection);
+    ok(otm.otmfsSelection & 1, "got 0x%08x\n", otm.otmfsSelection);
 
     ret = IDWriteFont_IsSymbolFont(font);
     ok(!ret, "got %d\n", ret);

@@ -2106,6 +2106,34 @@ static void test_height_selection(void)
     DeleteDC(hdc);
 }
 
+static UINT get_font_fsselection(LOGFONTA *lf)
+{
+    OUTLINETEXTMETRICA *otm;
+    HFONT hfont, hfont_old;
+    DWORD ret, otm_size;
+    UINT fsSelection;
+    HDC hdc;
+
+    hdc = GetDC(0);
+    hfont = CreateFontIndirectA(lf);
+    ok(hfont != NULL, "failed to create a font\n");
+
+    hfont_old = SelectObject(hdc, hfont);
+
+    otm_size = GetOutlineTextMetricsA(hdc, 0, NULL);
+    otm = HeapAlloc(GetProcessHeap(), 0, otm_size);
+    otm->otmSize = sizeof(*otm);
+    ret = GetOutlineTextMetricsA(hdc, otm->otmSize, otm);
+    ok(ret == otm->otmSize, "expected %u, got %u, error %d\n", otm->otmSize, ret, GetLastError());
+    fsSelection = otm->otmfsSelection;
+    HeapFree(GetProcessHeap(), 0, otm);
+    SelectObject(hdc, hfont_old);
+    DeleteObject(hfont);
+    ReleaseDC(0, hdc);
+
+    return fsSelection;
+}
+
 static void test_GetOutlineTextMetrics(void)
 {
     OUTLINETEXTMETRICA *otm;
@@ -2114,6 +2142,25 @@ static void test_GetOutlineTextMetrics(void)
     HDC hdc;
     DWORD ret, otm_size;
     LPSTR unset_ptr;
+    UINT fsSelection;
+
+    /* check fsSelection field with oblique simulation */
+    memset(&lf, 0, sizeof(lf));
+
+    strcpy(lf.lfFaceName, "Tahoma");
+    lf.lfHeight = -13;
+    lf.lfWeight = FW_NORMAL;
+    lf.lfPitchAndFamily = DEFAULT_PITCH;
+    lf.lfQuality = PROOF_QUALITY;
+
+    /* regular face */
+    fsSelection = get_font_fsselection(&lf);
+    ok((fsSelection & 1) == 0, "got 0x%x\n", fsSelection);
+
+    lf.lfItalic = 1;
+    /* face with oblique simulation */
+    fsSelection = get_font_fsselection(&lf);
+    ok((fsSelection & 1) == 1, "got 0x%x\n", fsSelection);
 
     if (!is_font_installed("Arial"))
     {
@@ -2130,7 +2177,7 @@ static void test_GetOutlineTextMetrics(void)
     lf.lfPitchAndFamily = DEFAULT_PITCH;
     lf.lfQuality = PROOF_QUALITY;
     hfont = CreateFontIndirectA(&lf);
-    assert(hfont != 0);
+    ok(hfont != NULL, "failed to create a font\n");
 
     hfont_old = SelectObject(hdc, hfont);
     otm_size = GetOutlineTextMetricsA(hdc, 0, NULL);
