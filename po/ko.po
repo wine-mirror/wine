@@ -10483,12 +10483,12 @@ msgstr ""
 msgid "Are you sure?"
 msgstr "당신은 확신합니까?"
 
-#: cmd.rc:354 xcopy.rc:43
+#: cmd.rc:354 reg.rc:45 xcopy.rc:43
 msgctxt "Yes key"
 msgid "Y"
 msgstr "예"
 
-#: cmd.rc:355 xcopy.rc:44
+#: cmd.rc:355 reg.rc:46 xcopy.rc:44
 msgctxt "No key"
 msgid "N"
 msgstr "아니오"
@@ -10626,7 +10626,7 @@ msgstr "드라이브 %1!c!의 볼륨은 %2임\n"
 msgid "Volume in drive %1!c! has no label.\n"
 msgstr "드라이브 %1!c!는 라벨을 가지고 있지 않습니다.\n"
 
-#: cmd.rc:390
+#: cmd.rc:390 reg.rc:44
 msgid " (Yes|No)"
 msgstr "(예(Y)|아니오(N))"
 
@@ -11868,6 +11868,16 @@ msgstr ""
 
 #: reg.rc:42
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
+msgstr ""
+
+#: reg.rc:43
+#, fuzzy
+#| msgid "The specified file already exists. Do you want to replace it?"
+msgid "The registry value '%1' already exists. Do you want to overwrite it?"
+msgstr "지정된 파일은 이미 존재합니다.덮어 쓰시겠습니까?"
+
+#: reg.rc:47
+msgid "The registry operation was cancelled\n"
 msgstr ""
 
 #: regedit.rc:34

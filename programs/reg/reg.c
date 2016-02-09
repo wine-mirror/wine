@@ -142,6 +142,32 @@ static void __cdecl output_string(const WCHAR *fmt, ...)
     __ms_va_end(va_args);
 }
 
+/* ask_confirm() adapted from programs/cmd/builtins.c */
+static BOOL ask_confirm(unsigned int msgid, WCHAR *reg_info)
+{
+    HMODULE hmod;
+    WCHAR Ybuffer[4];
+    WCHAR Nbuffer[4];
+    WCHAR answer[MAX_PATH];
+    DWORD count;
+
+    hmod = GetModuleHandleW(NULL);
+    LoadStringW(hmod, STRING_YES, Ybuffer, ARRAY_SIZE(Ybuffer));
+    LoadStringW(hmod, STRING_NO,  Nbuffer, ARRAY_SIZE(Nbuffer));
+
+    while (1)
+    {
+        output_message(msgid, reg_info);
+        output_message(STRING_YESNO);
+        ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE), answer, ARRAY_SIZE(answer), &count, NULL);
+        answer[0] = toupperW(answer[0]);
+        if (answer[0] == Ybuffer[0])
+            return TRUE;
+        if (answer[0] == Nbuffer[0])
+            return FALSE;
+    }
+}
+
 static inline BOOL path_rootname_cmp(const WCHAR *input_path, const WCHAR *rootkey_name)
 {
     DWORD length = strlenW(rootkey_name);
@@ -314,9 +340,13 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 
         if (!force)
         {
-            if (RegQueryValueW(subkey,value_name,NULL,NULL)==ERROR_SUCCESS)
+            if (RegQueryValueExW(subkey, value_name, NULL, NULL, NULL, NULL) == ERROR_SUCCESS)
             {
-                /* FIXME:  Prompt for overwrite */
+                if (!ask_confirm(STRING_OVERWRITE_VALUE, value_name))
+                {
+                    output_message(STRING_CANCELLED);
+                    return 0;
+                }
             }
         }
 
