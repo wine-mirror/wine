@@ -34,6 +34,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xaudio2);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static ALCdevice *(ALC_APIENTRY *palcLoopbackOpenDeviceSOFT)(const ALCchar*);
 static void (ALC_APIENTRY *palcRenderSamplesSOFT)(ALCdevice*, ALCvoid*, ALCsizei);
@@ -1399,11 +1400,21 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
 
     hr = XA2SRC_SetOutputVoices(&src->IXAudio2SourceVoice_iface, pSendList);
     if(FAILED(hr)){
+        HeapFree(GetProcessHeap(), 0, src->fmt);
         src->in_use = FALSE;
         return hr;
     }
 
     alGenSources(1, &src->al_src);
+    if(!src->al_src){
+        static int once = 0;
+        if(!once++)
+            ERR_(winediag)("OpenAL ran out of sources, consider increasing its source limit.\n");
+        HeapFree(GetProcessHeap(), 0, src->fmt);
+        src->in_use = FALSE;
+        return E_OUTOFMEMORY;
+    }
+
     alGenBuffers(XAUDIO2_MAX_QUEUED_BUFFERS, src->al_bufs);
 
     alSourcePlay(src->al_src);
