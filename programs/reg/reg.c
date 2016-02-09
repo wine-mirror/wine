@@ -18,9 +18,12 @@
 
 #include <windows.h>
 #include <wine/unicode.h>
+#include <wine/debug.h>
 #include "reg.h"
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
+
+WINE_DEFAULT_DEBUG_CHANNEL(reg);
 
 static const WCHAR short_hklm[] = {'H','K','L','M',0};
 static const WCHAR short_hkcu[] = {'H','K','C','U',0};
@@ -74,7 +77,7 @@ type_rels[] =
     {REG_MULTI_SZ, type_multi_sz},
 };
 
-static void output_writeconsole(const WCHAR *str, int wlen)
+static void output_writeconsole(const WCHAR *str, DWORD wlen)
 {
     DWORD count, ret;
 
@@ -100,11 +103,19 @@ static void output_writeconsole(const WCHAR *str, int wlen)
 
 static void output_formatstring(const WCHAR *fmt, __ms_va_list va_args)
 {
-    WCHAR msg_buffer[8192];
-    int len;
+    WCHAR *str;
+    DWORD len;
 
-    len = vsnprintfW(msg_buffer, sizeof(msg_buffer)/sizeof(WCHAR), fmt, va_args);
-    output_writeconsole(msg_buffer, len);
+    SetLastError(NO_ERROR);
+    len = FormatMessageW(FORMAT_MESSAGE_FROM_STRING|FORMAT_MESSAGE_ALLOCATE_BUFFER,
+                         fmt, 0, 0, (WCHAR *)&str, 0, &va_args);
+    if (len == 0 && GetLastError() != NO_ERROR)
+    {
+        WINE_FIXME("Could not format string: le=%u, fmt=%s\n", GetLastError(), wine_dbgstr_w(fmt));
+        return;
+    }
+    output_writeconsole(str, len);
+    LocalFree(str);
 }
 
 static void reg_message(int msg)
@@ -237,7 +248,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
         }
         default:
         {
-            static const WCHAR unhandled[] = {'U','n','h','a','n','d','l','e','d',' ','T','y','p','e',' ','0','x','%','x',' ',' ','d','a','t','a',' ','%','s','\n',0};
+            static const WCHAR unhandled[] = {'U','n','h','a','n','d','l','e','d',' ','T','y','p','e',' ','0','x','%','1','!','x','!',' ',' ','d','a','t','a',' ','%','2','\n',0};
             output_string(unhandled, reg_type, data);
         }
     }
@@ -446,7 +457,7 @@ static int reg_query(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
     BOOL subkey)
 {
     static const WCHAR stubW[] = {'S','T','U','B',' ','Q','U','E','R','Y',' ',
-        '-',' ','%','s',' ','%','s',' ','%','d',' ','%','d','\n',0};
+        '-',' ','%','1',' ','%','2',' ','%','3','!','d','!',' ','%','4','!','d','!','\n',0};
     output_string(stubW, key_name, value_name, value_empty, subkey);
 
     return 1;
