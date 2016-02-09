@@ -2144,9 +2144,22 @@ static void test_GetOutlineTextMetrics(void)
     LPSTR unset_ptr;
     UINT fsSelection;
 
+    /* check fsSelection field with bold simulation */
+    memset(&lf, 0, sizeof(lf));
+    strcpy(lf.lfFaceName, "Wingdings");
+    lf.lfCharSet = SYMBOL_CHARSET;
+
+    /* regular face */
+    fsSelection = get_font_fsselection(&lf);
+    ok((fsSelection & (1 << 5)) == 0, "got 0x%x\n", fsSelection);
+
+    /* face with bold simulation */
+    lf.lfWeight = FW_BOLD;
+    fsSelection = get_font_fsselection(&lf);
+    ok((fsSelection & (1 << 5)) != 0, "got 0x%x\n", fsSelection);
+
     /* check fsSelection field with oblique simulation */
     memset(&lf, 0, sizeof(lf));
-
     strcpy(lf.lfFaceName, "Tahoma");
     lf.lfHeight = -13;
     lf.lfWeight = FW_NORMAL;

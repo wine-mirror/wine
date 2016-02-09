@@ -7850,6 +7850,8 @@ static BOOL get_outline_text_metrics(GdiFont *font)
     font->potm->otmfsSelection = pOS2->fsSelection;
     if (font->fake_italic)
         font->potm->otmfsSelection |= 1;
+    if (font->fake_bold)
+        font->potm->otmfsSelection |= 1 << 5;
     font->potm->otmfsType = pOS2->fsType;
     font->potm->otmsCharSlopeRise = pHori->caret_Slope_Rise;
     font->potm->otmsCharSlopeRun = pHori->caret_Slope_Run;
