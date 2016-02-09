@@ -146,6 +146,7 @@ struct file_load_info
 
 
 static void key_dump( struct object *obj, int verbose );
+static struct object_type *key_get_type( struct object *obj );
 static unsigned int key_map_access( struct object *obj, unsigned int access );
 static struct security_descriptor *key_get_sd( struct object *obj );
 static int key_close_handle( struct object *obj, struct process *process, obj_handle_t handle );
@@ -155,7 +156,7 @@ static const struct object_ops key_ops =
 {
     sizeof(struct key),      /* size */
     key_dump,                /* dump */
-    no_get_type,             /* get_type */
+    key_get_type,            /* get_type */
     no_add_queue,            /* add_queue */
     NULL,                    /* remove_queue */
     NULL,                    /* signaled */
@@ -300,6 +301,13 @@ static void key_dump( struct object *obj, int verbose )
     fprintf( stderr, "Key flags=%x ", key->flags );
     dump_path( key, NULL, stderr );
     fprintf( stderr, "\n" );
+}
+
+static struct object_type *key_get_type( struct object *obj )
+{
+    static const WCHAR name[] = {'K','e','y'};
+    static const struct unicode_str str = { name, sizeof(name) };
+    return get_object_type( &str );
 }
 
 /* notify waiter and maybe delete the notification */
