@@ -1198,7 +1198,7 @@ sub dump_indic($)
         {
             my $type = $3;
             die "unknown indic $type" unless defined $indic_types{$type};
-            if (hex $1 < 65536 and hex $2 < 6536)
+            if (hex $1 < 65536 and hex $2 < 65536)
             {
                 foreach my $i (hex $1 .. hex $2)
                 {
