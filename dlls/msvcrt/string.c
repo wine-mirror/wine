@@ -1018,6 +1018,22 @@ int CDECL MSVCRT_atoi(const char *str)
 #endif
 
 /******************************************************************
+ *      _atoll_l (MSVCR120.@)
+ */
+MSVCRT_longlong CDECL MSVCRT__atoll_l(const char* str, MSVCRT__locale_t locale)
+{
+    return MSVCRT_strtoi64_l(str, NULL, 10, locale);
+}
+
+/******************************************************************
+ *      atoll (MSVCR120.@)
+ */
+MSVCRT_longlong CDECL MSVCRT_atoll(const char* str)
+{
+    return MSVCRT__atoll_l(str, NULL);
+}
+
+/******************************************************************
  *		_strtol_l (MSVCRT.@)
  */
 MSVCRT_long CDECL MSVCRT__strtol_l(const char* nptr,

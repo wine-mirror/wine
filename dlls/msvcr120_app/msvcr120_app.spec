@@ -1011,7 +1011,7 @@
 @ stub _atol_l
 @ cdecl _atoldbl(ptr str) msvcr120._atoldbl
 @ stub _atoldbl_l
-@ stub _atoll_l
+@ cdecl -ret64 _atoll_l(str ptr) msvcr120._atoll_l
 @ cdecl _byteswap_uint64(int64) msvcr120._byteswap_uint64
 @ cdecl _byteswap_ulong(long) msvcr120._byteswap_ulong
 @ cdecl _byteswap_ushort(long) msvcr120._byteswap_ushort
@@ -1665,8 +1665,8 @@
 @ cdecl _wtoi_l(wstr ptr) msvcr120._wtoi_l
 @ cdecl _wtol(wstr) msvcr120._wtol
 @ cdecl _wtol_l(wstr ptr) msvcr120._wtol_l
-@ stub _wtoll
-@ stub _wtoll_l
+@ cdecl -ret64 _wtoll(wstr) msvcr120._wtoll
+@ cdecl -ret64 _wtoll_l(wstr ptr) msvcr120._wtoll_l
 @ cdecl _wunlink(wstr) msvcr120._wunlink
 @ cdecl _wutime32(wstr ptr) msvcr120._wutime32
 @ cdecl _wutime64(wstr ptr) msvcr120._wutime64
@@ -1698,7 +1698,7 @@
 @ cdecl atof(str) msvcr120.atof
 @ cdecl atoi(str) msvcr120.atoi
 @ cdecl atol(str) msvcr120.atol
-@ stub atoll
+@ cdecl -ret64 atoll(str) msvcr120.atoll
 @ cdecl bsearch(ptr ptr long long ptr) msvcr120.bsearch
 @ cdecl bsearch_s(ptr ptr long long ptr ptr) msvcr120.bsearch_s
 @ cdecl btowc(long) msvcr120.btowc

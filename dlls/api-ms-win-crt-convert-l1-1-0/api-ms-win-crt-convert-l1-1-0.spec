@@ -10,7 +10,7 @@
 @ stub _atol_l
 @ cdecl _atoldbl(ptr str) ucrtbase._atoldbl
 @ stub _atoldbl_l
-@ stub _atoll_l
+@ cdecl -ret64 _atoll_l(str ptr) ucrtbase._atoll_l
 @ cdecl _ecvt(double long ptr ptr) ucrtbase._ecvt
 @ cdecl _ecvt_s(str long double long ptr ptr) ucrtbase._ecvt_s
 @ cdecl _fcvt(double long ptr ptr) ucrtbase._fcvt
@@ -75,12 +75,12 @@
 @ cdecl _wtoi_l(wstr ptr) ucrtbase._wtoi_l
 @ cdecl _wtol(wstr) ucrtbase._wtol
 @ cdecl _wtol_l(wstr ptr) ucrtbase._wtol_l
-@ stub _wtoll
-@ stub _wtoll_l
+@ cdecl -ret64 _wtoll(wstr) ucrtbase._wtoll
+@ cdecl -ret64 _wtoll_l(wstr ptr) ucrtbase._wtoll_l
 @ cdecl atof(str) ucrtbase.atof
 @ cdecl atoi(str) ucrtbase.atoi
 @ cdecl atol(str) ucrtbase.atol
-@ stub atoll
+@ cdecl -ret64 atoll(str) ucrtbase.atoll
 @ cdecl btowc(long) ucrtbase.btowc
 @ stub c16rtomb
 @ stub c32rtomb

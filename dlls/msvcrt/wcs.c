@@ -2083,6 +2083,22 @@ MSVCRT_long __cdecl MSVCRT__wtol(const MSVCRT_wchar_t *str)
 }
 
 /*********************************************************************
+ *  _wtoll_l (MSVCR120.@)
+ */
+MSVCRT_longlong __cdecl MSVCRT__wtoll_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
+{
+    return MSVCRT__wcstoi64_l(str, NULL, 10, locale);
+}
+
+/*********************************************************************
+ *  _wtoll (MSVCR120.@)
+ */
+MSVCRT_longlong __cdecl MSVCRT__wtoll(const MSVCRT_wchar_t *str)
+{
+    return MSVCRT__wtoll_l(str, NULL);
+}
+
+/*********************************************************************
  *  _wcstoui64_l (MSVCRT.@)
  *
  * FIXME: locale parameter is ignored
