@@ -926,7 +926,7 @@ static void test_bitmap_font_metrics(void)
     trace("ACP %d -> charset %d\n", GetACP(), expected_cs);
 
     hdc = CreateCompatibleDC(0);
-    assert(hdc);
+    ok(hdc != NULL, "failed to create hdc\n");
 
     trace("logpixelsX %d, logpixelsY %d\n", GetDeviceCaps(hdc, LOGPIXELSX),
           GetDeviceCaps(hdc, LOGPIXELSY));
@@ -1746,7 +1746,7 @@ static void test_GetKerningPairs(void)
         strcpy(lf.lfFaceName, kd[i].face_name);
         lf.lfHeight = kd[i].height;
         hfont = CreateFontIndirectA(&lf);
-        assert(hfont != 0);
+        ok(hfont != NULL, "failed to create a font, name %s\n", kd[i].face_name);
 
         hfont_old = SelectObject(hdc, hfont);
 
@@ -1872,7 +1872,7 @@ static void test_height( HDC hdc, const struct font_data *fd )
         strcpy(lf.lfFaceName, fd[i].face_name);
 
         hfont = CreateFontIndirectA(&lf);
-        assert(hfont);
+        ok(hfont != NULL, "failed to create a font, name %s\n", fd[i].face_name);
 
         old_hfont = SelectObject(hdc, hfont);
         ret = GetTextMetricsA(hdc, &tm);
@@ -2098,7 +2098,7 @@ static void test_height_selection(void)
         {"", 0, 0, 0, 0, 0, 0, 0, 0, 0 }
     };
     HDC hdc = CreateCompatibleDC(0);
-    assert(hdc);
+    ok(hdc != NULL, "failed to create hdc\n");
 
     test_height( hdc, tahoma );
     test_height_selection_vdmx( hdc );
