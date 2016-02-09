@@ -984,7 +984,7 @@ NTSTATUS WINAPI RtlSetCurrentDirectory_U(const UNICODE_STRING* dir)
     attr.SecurityDescriptor = NULL;
     attr.SecurityQualityOfService = NULL;
 
-    nts = NtOpenFile( &handle, 0, &attr, &io, 0, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
+    nts = NtOpenFile( &handle, SYNCHRONIZE, &attr, &io, 0, FILE_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT );
     if (nts != STATUS_SUCCESS) goto out;
 
     /* don't keep the directory handle open on removable media */

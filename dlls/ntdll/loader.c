@@ -2149,7 +2149,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
             attr.ObjectName = &nt_name;
             attr.SecurityDescriptor = NULL;
             attr.SecurityQualityOfService = NULL;
-            if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE )) *handle = 0;
+            if (NtOpenFile( handle, GENERIC_READ|SYNCHRONIZE, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE )) *handle = 0;
             goto found;
         }
 
@@ -2184,7 +2184,7 @@ static NTSTATUS find_dll_file( const WCHAR *load_path, const WCHAR *libname,
         attr.ObjectName = &nt_name;
         attr.SecurityDescriptor = NULL;
         attr.SecurityQualityOfService = NULL;
-        if (NtOpenFile( handle, GENERIC_READ, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE )) *handle = 0;
+        if (NtOpenFile( handle, GENERIC_READ|SYNCHRONIZE, &attr, &io, FILE_SHARE_READ|FILE_SHARE_DELETE, FILE_SYNCHRONOUS_IO_NONALERT|FILE_NON_DIRECTORY_FILE )) *handle = 0;
     }
 found:
     RtlFreeUnicodeString( &nt_name );
