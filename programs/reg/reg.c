@@ -326,6 +326,12 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         return 1;
     }
 
+    if (value_name && value_empty)
+    {
+        output_message(STRING_INVALID_CMDLINE);
+        return 1;
+    }
+
     if(RegCreateKeyW(root,p,&subkey)!=ERROR_SUCCESS)
     {
         output_message(STRING_INVALID_KEY);
