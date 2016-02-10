@@ -2378,7 +2378,7 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
                 && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT))
             continue;
 
-        /* ARB_texture_rg defines integer formats if ARB_texture_integer is also supported. */
+        /* ARB_texture_rg defines integer formats if EXT_texture_integer is also supported. */
         if (!gl_info->supported[EXT_TEXTURE_INTEGER]
                 && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_INTEGER))
             continue;
