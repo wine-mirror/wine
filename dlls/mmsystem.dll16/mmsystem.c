@@ -1943,7 +1943,7 @@ LRESULT	WINAPI mmThreadCreate16(FARPROC16 fpThreadAddr, LPHANDLE16 lpHndl, DWORD
 
     TRACE("(%p, %p, %08x, %08x)!\n", fpThreadAddr, lpHndl, dwPmt, dwFlags);
 
-    hndl = GlobalAlloc16(sizeof(WINE_MMTHREAD), GMEM_SHARE|GMEM_ZEROINIT);
+    hndl = GlobalAlloc16(GMEM_SHARE|GMEM_ZEROINIT, sizeof(WINE_MMTHREAD));
 
     if (hndl == 0) {
 	ret = 2;
