@@ -85,7 +85,9 @@ static const struct wined3d_format_channels formats[] =
     /* Standard ARGB formats. */
     {WINED3DFMT_B8G8R8_UNORM,               8,  8,  8,  0,  16,  8,  0,  0,    3,   0,     0},
     {WINED3DFMT_B8G8R8A8_UNORM,             8,  8,  8,  8,  16,  8,  0, 24,    4,   0,     0},
+    {WINED3DFMT_B8G8R8A8_UNORM_SRGB,        8,  8,  8,  8,  16,  8,  0, 24,    4,   0,     0},
     {WINED3DFMT_B8G8R8X8_UNORM,             8,  8,  8,  0,  16,  8,  0,  0,    4,   0,     0},
+    {WINED3DFMT_B8G8R8X8_UNORM_SRGB,        8,  8,  8,  0,  16,  8,  0,  0,    4,   0,     0},
     {WINED3DFMT_B5G6R5_UNORM,               5,  6,  5,  0,  11,  5,  0,  0,    2,   0,     0},
     {WINED3DFMT_B5G5R5X1_UNORM,             5,  5,  5,  0,  10,  5,  0,  0,    2,   0,     0},
     {WINED3DFMT_B5G5R5A1_UNORM,             5,  5,  5,  1,  10,  5,  0, 15,    2,   0,     0},
@@ -1414,10 +1416,13 @@ struct wined3d_format_srgb_info
 
 static const struct wined3d_format_srgb_info format_srgb_info[] =
 {
+    {WINED3DFMT_R8G8B8A8_UNORM_SRGB, WINED3DFMT_R8G8B8A8_UNORM},
     {WINED3DFMT_BC1_UNORM_SRGB,      WINED3DFMT_BC1_UNORM},
     {WINED3DFMT_BC2_UNORM_SRGB,      WINED3DFMT_BC2_UNORM},
     {WINED3DFMT_BC3_UNORM_SRGB,      WINED3DFMT_BC3_UNORM},
-    {WINED3DFMT_R8G8B8A8_UNORM_SRGB, WINED3DFMT_R8G8B8A8_UNORM},
+    {WINED3DFMT_B8G8R8A8_UNORM_SRGB, WINED3DFMT_B8G8R8A8_UNORM},
+    {WINED3DFMT_B8G8R8X8_UNORM_SRGB, WINED3DFMT_B8G8R8X8_UNORM},
+    {WINED3DFMT_BC7_UNORM_SRGB,      WINED3DFMT_BC7_UNORM},
 };
 
 static inline int getFmtIdx(enum wined3d_format_id format_id)
@@ -3276,6 +3281,13 @@ const char *debug_d3dformat(enum wined3d_format_id format_id)
         FMT_TO_STR(WINED3DFMT_B5G5R5A1_UNORM);
         FMT_TO_STR(WINED3DFMT_B8G8R8A8_UNORM);
         FMT_TO_STR(WINED3DFMT_B8G8R8X8_UNORM);
+        FMT_TO_STR(WINED3DFMT_B8G8R8A8_TYPELESS);
+        FMT_TO_STR(WINED3DFMT_B8G8R8A8_UNORM_SRGB);
+        FMT_TO_STR(WINED3DFMT_B8G8R8X8_TYPELESS);
+        FMT_TO_STR(WINED3DFMT_B8G8R8X8_UNORM_SRGB);
+        FMT_TO_STR(WINED3DFMT_BC7_TYPELESS);
+        FMT_TO_STR(WINED3DFMT_BC7_UNORM);
+        FMT_TO_STR(WINED3DFMT_BC7_UNORM_SRGB);
         FMT_TO_STR(WINED3DFMT_INTZ);
         FMT_TO_STR(WINED3DFMT_RESZ);
         FMT_TO_STR(WINED3DFMT_NULL);
