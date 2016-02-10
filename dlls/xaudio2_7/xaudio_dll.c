@@ -1467,8 +1467,10 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
     EnterCriticalSection(&This->lock);
 
     LIST_FOR_EACH_ENTRY(sub, &This->submix_voices, XA2SubmixImpl, entry){
+        EnterCriticalSection(&sub->lock);
         if(!sub->in_use)
             break;
+        LeaveCriticalSection(&sub->lock);
     }
 
     if(&sub->entry == &This->submix_voices){
@@ -1486,11 +1488,14 @@ static HRESULT WINAPI IXAudio2Impl_CreateSubmixVoice(IXAudio2 *iface,
 
         InitializeCriticalSection(&sub->lock);
         sub->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": XA2SubmixImpl.lock");
+
+        EnterCriticalSection(&sub->lock);
     }
 
     sub->in_use = TRUE;
 
     LeaveCriticalSection(&This->lock);
+    LeaveCriticalSection(&sub->lock);
 
 #if XAUDIO2_VER == 0
     *ppSubmixVoice = (IXAudio2SubmixVoice*)&sub->IXAudio20SubmixVoice_iface;
