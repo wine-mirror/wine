@@ -2307,7 +2307,7 @@ NTSTATUS WINAPI NtQuerySystemInformation(
 NTSTATUS WINAPI NtQuerySystemInformationEx(SYSTEM_INFORMATION_CLASS SystemInformationClass,
     void *Query, ULONG QueryLength, void *SystemInformation, ULONG Length, ULONG *ResultLength)
 {
-    ULONG len;
+    ULONG len = 0;
     NTSTATUS ret = STATUS_NOT_IMPLEMENTED;
 
     TRACE("(0x%08x,%p,%u,%p,%u,%p) stub\n", SystemInformationClass, Query, QueryLength, SystemInformation,
