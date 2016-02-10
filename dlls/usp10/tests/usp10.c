@@ -1747,6 +1747,19 @@ static void test_ScriptPlace(HDC hdc)
     ok(hr == S_OK, "ScriptPlace should return S_OK not %08x\n", hr);
     ok(items[0].a.fNoGlyphIndex == FALSE, "fNoGlyphIndex TRUE\n");
 
+    if (widths[0] != 0)
+    {
+        int old_width = widths[0];
+        attrs[0].fZeroWidth = 1;
+
+        hr = ScriptPlace(hdc, &sc, glyphs, 4, attrs, &items[0].a, widths, offset, NULL);
+        ok(hr == S_OK, "ScriptPlace should return S_OK not %08x\n", hr);
+        ok(widths[0] == 0, "got width %d\n", widths[0]);
+        widths[0] = old_width;
+    }
+    else
+        skip("Glyph already has zero-width - skipping fZeroWidth test\n");
+
     ret = ExtTextOutW(hdc, 1, 1, 0, NULL, glyphs, 4, widths);
     ok(ret, "ExtTextOutW should return TRUE\n");
 

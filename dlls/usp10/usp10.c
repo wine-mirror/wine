@@ -3316,7 +3316,11 @@ HRESULT WINAPI ScriptPlaceOpenType( HDC hdc, SCRIPT_CACHE *psc, SCRIPT_ANALYSIS 
     for (i = 0; i < cGlyphs; i++)
     {
         ABC abc;
-        if (!get_cache_glyph_widths(psc, pwGlyphs[i], &abc))
+        if (pGlyphProps[i].sva.fZeroWidth)
+        {
+            abc.abcA = abc.abcB = abc.abcC = 0;
+        }
+        else if (!get_cache_glyph_widths(psc, pwGlyphs[i], &abc))
         {
             if (!hdc) return E_PENDING;
             if ((get_cache_pitch_family(psc) & TMPF_TRUETYPE) && !psa->fNoGlyphIndex)
