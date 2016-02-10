@@ -42,6 +42,8 @@ static HRESULT (WINAPI *pWindowsPromoteStringBuffer)(HSTRING_BUFFER, HSTRING *);
 static HRESULT (WINAPI *pWindowsStringHasEmbeddedNull)(HSTRING, BOOL *);
 static HRESULT (WINAPI *pWindowsSubstring)(HSTRING, UINT32, HSTRING *);
 static HRESULT (WINAPI *pWindowsSubstringWithSpecifiedLength)(HSTRING, UINT32, UINT32, HSTRING *);
+static HRESULT (WINAPI *pWindowsTrimStringEnd)(HSTRING, HSTRING, HSTRING *);
+static HRESULT (WINAPI *pWindowsTrimStringStart)(HSTRING, HSTRING, HSTRING *);
 
 #define SET(x) p##x = (void*)GetProcAddress(hmod, #x)
 
@@ -68,6 +70,8 @@ static BOOL init_functions(void)
     SET(WindowsStringHasEmbeddedNull);
     SET(WindowsSubstring);
     SET(WindowsSubstringWithSpecifiedLength);
+    SET(WindowsTrimStringEnd);
+    SET(WindowsTrimStringStart);
     return TRUE;
 }
 
@@ -456,6 +460,78 @@ static void test_compare(void)
     ok(res == 0, "Expected 0, got %d\n", res);
 }
 
+static void test_trim(void)
+{
+    HSTRING str1, str2, trimmed;
+    HSTRING_HEADER header1, header2;
+
+    /* Test trimming of string buffers */
+    ok(pWindowsCreateString(input_string, 6, &str1) == S_OK, "Failed to create string\n");
+    ok(pWindowsCreateString(input_string1, 3, &str2) == S_OK, "Failed to create string\n");
+
+    ok(pWindowsTrimStringStart(str1, str2, &trimmed) == S_OK, "Failed to trim string\n");
+    check_string(trimmed, input_string2, 3, FALSE);
+    ok(pWindowsDeleteString(trimmed) == S_OK, "Failed to delete string\n");
+    ok(pWindowsTrimStringEnd(str1, str2, &trimmed) == S_OK, "Failed to trim string\n");
+    ok(trimmed == str1, "Trimmed string created new string\n");
+    check_string(trimmed, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(trimmed) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsDeleteString(str2) == S_OK, "Failed to delete string\n");
+    ok(pWindowsCreateString(input_string2, 3, &str2) == S_OK, "Failed to create string\n");
+
+    ok(pWindowsTrimStringStart(str1, str2, &trimmed) == S_OK, "Failed to trim string\n");
+    ok(trimmed == str1, "Trimmed string created new string\n");
+    check_string(trimmed, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(trimmed) == S_OK, "Failed to delete string\n");
+    ok(pWindowsTrimStringEnd(str1, str2, &trimmed) == S_OK, "Failed to trim string\n");
+    check_string(trimmed, input_string1, 3, FALSE);
+    ok(pWindowsDeleteString(trimmed) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsDeleteString(str2) == S_OK, "Failed to delete string\n");
+    ok(pWindowsDeleteString(str1) == S_OK, "Failed to delete string\n");
+
+    /* Test trimming of string references */
+    ok(pWindowsCreateStringReference(input_string, 6, &header1, &str1) == S_OK, "Failed to create string ref\n");
+    ok(pWindowsCreateStringReference(input_string1, 3, &header2, &str2) == S_OK, "Failed to create string ref\n");
+
+    ok(pWindowsTrimStringStart(str1, str2, &trimmed) == S_OK, "Failed to trim string\n");
+    check_string(trimmed, input_string2, 3, FALSE);
+    ok(pWindowsDeleteString(trimmed) == S_OK, "Failed to delete string\n");
+    ok(pWindowsTrimStringEnd(str1, str2, &trimmed) == S_OK, "Failed to trim string\n");
+    ok(trimmed != str1, "Trimmed string ref didn't create new string\n");
+    check_string(trimmed, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(trimmed) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsDeleteString(str2) == S_OK, "Failed to delete string ref\n");
+    ok(pWindowsCreateStringReference(input_string2, 3, &header2, &str2) == S_OK, "Failed to create string ref\n");
+
+    ok(pWindowsTrimStringStart(str1, str2, &trimmed) == S_OK, "Failed to trim string\n");
+    ok(trimmed != str1, "Trimmed string ref didn't create new string\n");
+    check_string(trimmed, input_string, 6, FALSE);
+    ok(pWindowsDeleteString(trimmed) == S_OK, "Failed to delete string\n");
+    ok(pWindowsTrimStringEnd(str1, str2, &trimmed) == S_OK, "Failed to trim string\n");
+    check_string(trimmed, input_string1, 3, FALSE);
+    ok(pWindowsDeleteString(trimmed) == S_OK, "Failed to delete string\n");
+
+    ok(pWindowsDeleteString(str2) == S_OK, "Failed to delete string ref\n");
+    ok(pWindowsDeleteString(str1) == S_OK, "Failed to delete string ref\n");
+
+    /* Test handling of NULL strings */
+    ok(pWindowsCreateString(input_string, 6, &str1) == S_OK, "Failed to create string\n");
+    ok(pWindowsTrimStringStart(NULL, NULL, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsTrimStringStart(NULL, str1, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsTrimStringStart(NULL, NULL, &trimmed) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsTrimStringStart(NULL, str1, &trimmed) == S_OK, "Failed to trim empty string\n");
+    ok(trimmed == NULL, "Trimming created new string\n");
+    ok(pWindowsTrimStringEnd(NULL, NULL, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsTrimStringEnd(NULL, str1, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsTrimStringEnd(NULL, NULL, &trimmed) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsTrimStringEnd(NULL, str1, &trimmed) == S_OK, "Failed to trim empty string\n");
+    ok(trimmed == NULL, "Trimming created new string\n");
+    ok(pWindowsDeleteString(str1) == S_OK, "Failed to delete string\n");
+}
+
 START_TEST(string)
 {
     if (!init_functions())
@@ -467,4 +543,5 @@ START_TEST(string)
     test_substring();
     test_concat();
     test_compare();
+    test_trim();
 }
