@@ -405,6 +405,12 @@ static inline struct object *get_magic_handle( obj_handle_t handle )
 {
     switch(handle)
     {
+        case 0xfffffffa:  /* current thread impersonation token pseudo-handle */
+            return (struct object *)thread_get_impersonation_token( current );
+        case 0xfffffffb:  /* current thread token pseudo-handle */
+            return (struct object *)current->token;
+        case 0xfffffffc:  /* current process token pseudo-handle */
+            return (struct object *)current->process->token;
         case 0xfffffffe:  /* current thread pseudo-handle */
             return &current->obj;
         case 0x7fffffff:  /* current process pseudo-handle */
