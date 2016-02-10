@@ -27,6 +27,7 @@
 
 #include "wine/test.h"
 
+static HRESULT (WINAPI *pWindowsCompareStringOrdinal)(HSTRING, HSTRING, INT32 *);
 static HRESULT (WINAPI *pWindowsConcatString)(HSTRING, HSTRING, HSTRING *);
 static HRESULT (WINAPI *pWindowsCreateString)(LPCWSTR, UINT32, HSTRING *);
 static HRESULT (WINAPI *pWindowsCreateStringReference)(LPCWSTR, UINT32, HSTRING_HEADER *, HSTRING *);
@@ -52,6 +53,7 @@ static BOOL init_functions(void)
         win_skip("Failed to load combase.dll, skipping tests\n");
         return FALSE;
     }
+    SET(WindowsCompareStringOrdinal);
     SET(WindowsConcatString);
     SET(WindowsCreateString);
     SET(WindowsCreateStringReference);
@@ -394,6 +396,66 @@ static void test_concat(void)
     ok(concat == NULL, "Concatenate created new string\n");
 }
 
+static void test_compare(void)
+{
+    HSTRING str1, str2;
+    HSTRING_HEADER header1, header2;
+    INT32 res;
+
+    /* Test comparison of string buffers */
+    ok(pWindowsCreateString(input_string1, 3, &str1) == S_OK, "Failed to create string\n");
+    ok(pWindowsCreateString(input_string2, 3, &str2) == S_OK, "Failed to create string\n");
+
+    ok(pWindowsCompareStringOrdinal(str1, str1, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 0, "Expected 0, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str1, str2, &res) == S_OK, "Failed to compare string\n");
+    ok(res == -1, "Expected -1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str2, str1, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 1, "Expected 1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str2, str2, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 0, "Expected 0, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str1, NULL, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 1, "Expected 1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(NULL, str1, &res) == S_OK, "Failed to compare string\n");
+    ok(res == -1, "Expected -1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str2, NULL, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 1, "Expected 1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(NULL, str2, &res) == S_OK, "Failed to compare string\n");
+    ok(res == -1, "Expected -1, got %d\n", res);
+
+    ok(pWindowsDeleteString(str2) == S_OK, "Failed to delete string\n");
+    ok(pWindowsDeleteString(str1) == S_OK, "Failed to delete string\n");
+
+    /* Test comparison of string references */
+    ok(pWindowsCreateStringReference(input_string1, 3, &header1, &str1) == S_OK, "Failed to create string ref\n");
+    ok(pWindowsCreateStringReference(input_string2, 3, &header2, &str2) == S_OK, "Failed to create string ref\n");
+
+    ok(pWindowsCompareStringOrdinal(str1, str1, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 0, "Expected 0, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str1, str2, &res) == S_OK, "Failed to compare string\n");
+    ok(res == -1, "Expected -1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str2, str1, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 1, "Expected 1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str2, str2, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 0, "Expected 0, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str1, NULL, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 1, "Expected 1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(NULL, str1, &res) == S_OK, "Failed to compare string\n");
+    ok(res == -1, "Expected -1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(str2, NULL, &res) == S_OK, "Failed to compare string\n");
+    ok(res == 1, "Expected 1, got %d\n", res);
+    ok(pWindowsCompareStringOrdinal(NULL, str2, &res) == S_OK, "Failed to compare string\n");
+    ok(res == -1, "Expected -1, got %d\n", res);
+
+    ok(pWindowsDeleteString(str2) == S_OK, "Failed to delete string ref\n");
+    ok(pWindowsDeleteString(str1) == S_OK, "Failed to delete string ref\n");
+
+    /* Test comparison of two empty strings */
+    ok(pWindowsCompareStringOrdinal(NULL, NULL, NULL) == E_INVALIDARG, "Incorrect error handling\n");
+    ok(pWindowsCompareStringOrdinal(NULL, NULL, &res) == S_OK, "Failed to compare NULL string\n");
+    ok(res == 0, "Expected 0, got %d\n", res);
+}
+
 START_TEST(string)
 {
     if (!init_functions())
@@ -404,4 +466,5 @@ START_TEST(string)
     test_string_buffer();
     test_substring();
     test_concat();
+    test_compare();
 }
