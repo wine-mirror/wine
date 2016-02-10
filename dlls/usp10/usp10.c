@@ -3645,7 +3645,6 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
     if (!indexs)
         return E_OUTOFMEMORY;
 
-
     if (vistolog)
     {
         for( ich = 0; ich < runs; ich++)
@@ -3654,10 +3653,8 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
         ich = 0;
         while (ich < runs)
             ich += BIDI_ReorderV2lLevel(0, indexs+ich, level+ich, runs - ich, FALSE);
-        for (ich = 0; ich < runs; ich++)
-            vistolog[ich] = indexs[ich];
+        memcpy(vistolog, indexs, runs * sizeof(*vistolog));
     }
-
 
     if (logtovis)
     {
@@ -3667,8 +3664,7 @@ HRESULT WINAPI ScriptLayout(int runs, const BYTE *level, int *vistolog, int *log
         ich = 0;
         while (ich < runs)
             ich += BIDI_ReorderL2vLevel(0, indexs+ich, level+ich, runs - ich, FALSE);
-        for (ich = 0; ich < runs; ich++)
-            logtovis[ich] = indexs[ich];
+        memcpy(logtovis, indexs, runs * sizeof(*logtovis));
     }
     heap_free(indexs);
 
