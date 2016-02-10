@@ -1055,6 +1055,62 @@ static void test_flatten(void)
     GdipDeletePath(path);
 }
 
+static path_test_t widenline_path[] = {
+    {5.0, 5.0,   PathPointTypeStart, 0, 0}, /*0*/
+    {50.0, 5.0,  PathPointTypeLine,  0, 0}, /*1*/
+    {50.0, 15.0, PathPointTypeLine,  0, 0}, /*2*/
+    {5.0, 15.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0} /*3*/
+    };
+
+static void test_widen(void)
+{
+    GpStatus status;
+    GpPath *path;
+    GpPen *pen;
+    GpMatrix *m;
+
+    status = GdipCreatePath(FillModeAlternate, &path);
+    expect(Ok, status);
+    status = GdipCreatePen1(0xffffffff, 10.0, UnitPixel, &pen);
+    expect(Ok, status);
+    status = GdipCreateMatrix(&m);
+    expect(Ok, status);
+
+    /* NULL arguments */
+    status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
+    expect(Ok, status);
+    status = GdipWidenPath(NULL, NULL, NULL, 0.0);
+    expect(InvalidParameter, status);
+    status = GdipWidenPath(path, pen, m, 0.0);
+    expect(Ok, status);
+    status = GdipWidenPath(path, pen, NULL, 1.0);
+    expect(Ok, status);
+    status = GdipWidenPath(path, NULL, m, 1.0);
+    expect(InvalidParameter, status);
+    status = GdipWidenPath(NULL, pen, m, 1.0);
+    expect(InvalidParameter, status);
+
+    /* widen empty path */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(OutOfMemory, status);
+
+    /* horizontal line */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_path, sizeof(widenline_path)/sizeof(path_test_t), FALSE);
+
+    GdipDeleteMatrix(m);
+    GdipDeletePen(pen);
+    GdipDeletePath(path);
+}
+
 static void test_isvisible(void)
 {
     GpPath *path;
@@ -1163,6 +1219,7 @@ START_TEST(graphicspath)
     test_reverse();
     test_addpie();
     test_flatten();
+    test_widen();
     test_isvisible();
     test_empty_rect();
 
