@@ -1131,7 +1131,7 @@ static void test_Toolhelp(void)
     okChildInt("Toolhelp", "th32DefaultHeapID", 0);
     okChildInt("Toolhelp", "th32ModuleID", 0);
     okChildInt("Toolhelp", "th32ParentProcessID", GetCurrentProcessId());
-    todo_wine okChildInt("Toolhelp", "pcPriClassBase", 8);
+    /* pcPriClassBase differs between Windows versions (either 6 or 8) */
     okChildInt("Toolhelp", "dwFlags", 0);
 
     release_memory();
@@ -1202,7 +1202,7 @@ static void test_Toolhelp(void)
     okChildInt("Toolhelp", "th32DefaultHeapID", 0);
     okChildInt("Toolhelp", "th32ModuleID", 0);
     okChildInt("Toolhelp", "th32ParentProcessID", info.dwProcessId);
-    todo_wine okChildInt("Toolhelp", "pcPriClassBase", 8);
+    /* pcPriClassBase differs between Windows versions (either 6 or 8) */
     okChildInt("Toolhelp", "dwFlags", 0);
 
     release_memory();
