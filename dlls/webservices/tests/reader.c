@@ -1871,6 +1871,94 @@ static void test_cdata(void)
     WsFreeReader( reader );
 }
 
+static void test_WsFindAttribute(void)
+{
+    static const char test[] = "<t attr='value' attr2='value2'></t>";
+    WS_XML_STRING ns = {0, NULL}, localname = {4, (BYTE *)"attr"};
+    WS_XML_STRING localname2 = {5, (BYTE *)"attr2"}, localname3 = {5, (BYTE *)"attr3"};
+    WS_XML_READER *reader;
+    ULONG index;
+    HRESULT hr;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_input( reader, test, sizeof(test) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFindAttribute( reader, &localname, &ns, TRUE, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_input( reader, test, sizeof(test) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFindAttribute( reader, &localname, NULL, TRUE, &index, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_input( reader, test, sizeof(test) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsFindAttribute( reader, NULL, &ns, TRUE, &index, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_input( reader, test, sizeof(test) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    index = 0xdeadbeef;
+    hr = WsFindAttribute( reader, &localname, &ns, TRUE, &index, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( !index, "got %u\n", index );
+
+    index = 0xdeadbeef;
+    hr = WsFindAttribute( reader, &localname2, &ns, TRUE, &index, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( index == 1, "got %u\n", index );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    index = 0xdeadbeef;
+    hr = WsFindAttribute( reader, &localname, &ns, TRUE, &index, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( index == 0xdeadbeef, "got %u\n", index );
+
+    hr = set_input( reader, test, sizeof(test) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    index = 0xdeadbeef;
+    hr = WsFindAttribute( reader, &localname3, &ns, TRUE, &index, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    ok( index == 0xdeadbeef, "got %u\n", index );
+
+    hr = set_input( reader, test, sizeof(test) - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadNode( reader, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    index = 0xdeadbeef;
+    hr = WsFindAttribute( reader, &localname3, &ns, FALSE, &index, NULL );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+    ok( index == ~0u, "got %u\n", index );
+
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -1890,4 +1978,5 @@ START_TEST(reader)
     test_WsMoveReader();
     test_simple_struct_type();
     test_cdata();
+    test_WsFindAttribute();
 }

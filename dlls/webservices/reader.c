@@ -1068,12 +1068,12 @@ static HRESULT read_to_startelement( struct reader *reader, BOOL *found )
     return hr;
 }
 
-static BOOL cmp_localname( const unsigned char *name1, ULONG len1, const unsigned char *name2, ULONG len2 )
+static int cmp_name( const unsigned char *name1, ULONG len1, const unsigned char *name2, ULONG len2 )
 {
     ULONG i;
-    if (len1 != len2) return FALSE;
-    for (i = 0; i < len1; i++) { if (toupper( name1[i] ) != toupper( name2[i] )) return FALSE; }
-    return TRUE;
+    if (len1 != len2) return 1;
+    for (i = 0; i < len1; i++) { if (toupper( name1[i] ) != toupper( name2[i] )) return 1; }
+    return 0;
 }
 
 struct node *find_parent_element( struct node *node, const WS_XML_STRING *prefix,
@@ -1088,10 +1088,10 @@ struct node *find_parent_element( struct node *node, const WS_XML_STRING *prefix
         if (!localname) return parent;
 
         str = parent->hdr.prefix;
-        if (!cmp_localname( str->bytes, str->length, prefix->bytes, prefix->length )) continue;
+        if (cmp_name( str->bytes, str->length, prefix->bytes, prefix->length )) continue;
 
         str = parent->hdr.localName;
-        if (!cmp_localname( str->bytes, str->length, localname->bytes, localname->length )) continue;
+        if (cmp_name( str->bytes, str->length, localname->bytes, localname->length )) continue;
 
         return parent;
     }
@@ -1576,6 +1576,59 @@ static HRESULT read_get_attribute_text( struct reader *reader, WS_XML_UTF8_TEXT 
     }
     *ret = (WS_XML_UTF8_TEXT *)attr->value;
     reader->current_attr++;
+    return S_OK;
+}
+
+static BOOL find_attribute( struct reader *reader, const WS_XML_STRING *localname,
+                            const WS_XML_STRING *ns, ULONG *index )
+{
+    ULONG i;
+    WS_XML_ELEMENT_NODE *elem = &reader->current->hdr;
+
+    if (!localname)
+    {
+        *index = reader->current_attr;
+        return TRUE;
+    }
+    for (i = 0; i < elem->attributeCount; i++)
+    {
+        const WS_XML_STRING *localname2 = elem->attributes[i]->localName;
+        const WS_XML_STRING *ns2 = elem->attributes[i]->ns;
+
+        if (!cmp_name( localname->bytes, localname->length, localname2->bytes, localname2->length ) &&
+            !cmp_name( ns->bytes, ns->length, ns2->bytes, ns2->length ))
+        {
+            *index = i;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+/**************************************************************************
+ *          WsFindAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsFindAttribute( WS_XML_READER *handle, const WS_XML_STRING *localname,
+                                const WS_XML_STRING *ns, BOOL required, ULONG *index,
+                                WS_ERROR *error )
+{
+    struct reader *reader = (struct reader *)handle;
+
+    TRACE( "%p %s %s %d %p %p\n", handle, debugstr_xmlstr(localname), debugstr_xmlstr(ns),
+           required, index, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !localname || !ns || !index) return E_INVALIDARG;
+
+    if (reader->current->hdr.node.nodeType != WS_XML_NODE_TYPE_ELEMENT)
+        return WS_E_INVALID_OPERATION;
+
+    if (!find_attribute( reader, localname, ns, index ))
+    {
+        if (required) return WS_E_INVALID_FORMAT;
+        *index = ~0u;
+        return S_FALSE;
+    }
     return S_OK;
 }
 

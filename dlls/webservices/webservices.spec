@@ -45,7 +45,7 @@
 @ stub WsFileTimeToDateTime
 @ stub WsFillBody
 @ stdcall WsFillReader(ptr long ptr ptr)
-@ stub WsFindAttribute
+@ stdcall WsFindAttribute(ptr ptr ptr long ptr ptr)
 @ stub WsFlushBody
 @ stub WsFlushWriter
 @ stub WsFreeChannel
