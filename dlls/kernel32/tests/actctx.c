@@ -776,12 +776,7 @@ static void test_create_and_fail(const char *manifest, const char *depmanifest, 
 
     create_manifest_file("bad.manifest", manifest, -1, "testdep.manifest", depmanifest);
     handle = pCreateActCtxW(&actctx);
-    if (todo) todo_wine
-    {
-        ok(handle == INVALID_HANDLE_VALUE, "handle != INVALID_HANDLE_VALUE\n");
-        ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "GetLastError == %u\n", GetLastError());
-    }
-    else
+    todo_wine_if(todo)
     {
         ok(handle == INVALID_HANDLE_VALUE, "handle != INVALID_HANDLE_VALUE\n");
         ok(GetLastError() == ERROR_SXS_CANT_GEN_ACTCTX, "GetLastError == %u\n", GetLastError());
@@ -2089,13 +2084,9 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
     err = GetLastError();
     ok_(__FILE__, line)(ret == should_find,
         "FindActCtxSectionStringA: expected ret = %u, got %u\n", should_find, ret);
-    if (todo)
-        todo_wine
-        ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
-            "FindActCtxSectionStringA: unexpected error %u\n", err);
-    else
-        ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
-            "FindActCtxSectionStringA: unexpected error %u\n", err);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
+        "FindActCtxSectionStringA: unexpected error %u\n", err);
 
     memset(&data, 0xfe, sizeof(data));
     data.cbSize = sizeof(data);
@@ -2105,13 +2096,9 @@ static void kernel32_find(ULONG section, const char *string_to_find, BOOL should
     err = GetLastError();
     ok_(__FILE__, line)(ret == should_find,
         "FindActCtxSectionStringW: expected ret = %u, got %u\n", should_find, ret);
-    if (todo)
-        todo_wine
-        ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
-            "FindActCtxSectionStringW: unexpected error %u\n", err);
-    else
-        ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
-            "FindActCtxSectionStringW: unexpected error %u\n", err);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(err == (should_find ? ERROR_SUCCESS : ERROR_SXS_KEY_NOT_FOUND),
+        "FindActCtxSectionStringW: unexpected error %u\n", err);
 
     SetLastError(0);
     ret = pFindActCtxSectionStringA(0, NULL, section, string_to_find, NULL);
@@ -2144,22 +2131,14 @@ static void ntdll_find(ULONG section, const char *string_to_find, BOOL should_fi
     data.cbSize = sizeof(data);
 
     ret = pRtlFindActivationContextSectionString(0, NULL, section, &string_to_findW, &data);
-    if (todo)
-        todo_wine
-        ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
-            "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
-    else
-        ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
-            "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
+        "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
 
     ret = pRtlFindActivationContextSectionString(0, NULL, section, &string_to_findW, NULL);
-    if (todo)
-        todo_wine
-        ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
-            "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
-    else
-        ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
-            "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(ret == (should_find ? STATUS_SUCCESS : STATUS_SXS_KEY_NOT_FOUND),
+        "RtlFindActivationContextSectionString: unexpected status 0x%x\n", ret);
 
     pRtlFreeUnicodeString(&string_to_findW);
 }
