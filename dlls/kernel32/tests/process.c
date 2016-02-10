@@ -582,18 +582,16 @@ static void ok_child_stringWA( int line, const char *sect, const char *key,
     HeapFree(GetProcessHeap(),0,resultA);
 }
 
+static void ok_child_int( int line, const char *sect, const char *key, UINT expect )
+{
+    UINT result = GetPrivateProfileIntA( sect, key, !expect, resfile );
+    ok_(__FILE__, line)( result == expect, "%s:%s expected %u, but got %u\n", sect, key, expect, result );
+}
+
 #define okChildString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 1 )
 #define okChildIString(sect, key, expect) ok_child_string(__LINE__, (sect), (key), (expect), 0 )
 #define okChildStringWA(sect, key, expect) ok_child_stringWA(__LINE__, (sect), (key), (expect), 1 )
-
-/* using !expect ensures that the test will fail if the sect/key isn't present
- * in result file
- */
-#define okChildInt(sect, key, expect) \
-    do { \
-        UINT result = GetPrivateProfileIntA((sect), (key), !(expect), resfile); \
-        ok(result == expect, "%s:%s expected %u, but got %u\n", (sect), (key), (UINT)(expect), result); \
-   } while (0)
+#define okChildInt(sect, key, expect) ok_child_int(__LINE__, (sect), (key), (expect))
 
 static void test_Startup(void)
 {
