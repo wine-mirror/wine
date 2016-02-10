@@ -962,6 +962,7 @@ static HRESULT read_element( struct reader *reader )
     hr = E_OUTOFMEMORY;
     if (!(elem->ns = alloc_xml_string( NULL, 0 ))) goto error;
 
+    reader->current_attr = 0;
     for (;;)
     {
         read_skip_whitespace( reader );
@@ -972,6 +973,7 @@ static HRESULT read_element( struct reader *reader )
             free_attribute( attr );
             goto error;
         }
+        reader->current_attr++;
     }
 
     read_skip_whitespace( reader );
