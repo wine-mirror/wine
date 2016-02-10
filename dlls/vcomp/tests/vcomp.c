@@ -2,7 +2,7 @@
  * Unit test suite for vcomp
  *
  * Copyright 2012 Dan Kegel
- * Copyright 2015 Sebastian Lackner
+ * Copyright 2015-2016 Sebastian Lackner
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -19,6 +19,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include <stdio.h>
 #include "wine/test.h"
 
 static char         vcomp_manifest_file[MAX_PATH];
@@ -35,24 +36,35 @@ typedef CRITICAL_SECTION *omp_lock_t;
 typedef CRITICAL_SECTION *omp_nest_lock_t;
 
 static void  (CDECL   *p_vcomp_atomic_add_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_add_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_add_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_add_r8)(double *dest, double val);
 static void  (CDECL   *p_vcomp_atomic_and_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_and_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_div_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_div_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_div_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_div_r8)(double *dest, double val);
 static void  (CDECL   *p_vcomp_atomic_div_ui4)(unsigned int *dest, unsigned int val);
+static void  (CDECL   *p_vcomp_atomic_div_ui8)(ULONG64 *dest, ULONG64 val);
 static void  (CDECL   *p_vcomp_atomic_mul_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_mul_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_mul_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_mul_r8)(double *dest, double val);
 static void  (CDECL   *p_vcomp_atomic_or_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_or_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_shl_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_shl_i8)(LONG64 *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_shr_i8)(LONG64 *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_shr_ui4)(unsigned int *dest, unsigned int val);
+static void  (CDECL   *p_vcomp_atomic_shr_ui8)(ULONG64 *dest, unsigned int val);
 static void  (CDECL   *p_vcomp_atomic_sub_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_sub_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_atomic_sub_r4)(float *dest, float val);
 static void  (CDECL   *p_vcomp_atomic_sub_r8)(double *dest, double val);
 static void  (CDECL   *p_vcomp_atomic_xor_i4)(int *dest, int val);
+static void  (CDECL   *p_vcomp_atomic_xor_i8)(LONG64 *dest, LONG64 val);
 static void  (CDECL   *p_vcomp_barrier)(void);
 static void  (CDECL   *p_vcomp_enter_critsect)(CRITICAL_SECTION **critsect);
 static void  (CDECL   *p_vcomp_flush)(void);
@@ -133,6 +145,16 @@ static const char vcomp_manifest[] =
     "</assembly>\n";
 
 #undef ARCH
+
+static const char *debugstr_longlong(ULONGLONG ll)
+{
+    static char str[17];
+    if (sizeof(ll) > sizeof(unsigned long) && ll >> 32)
+        sprintf(str, "%lx%08lx", (unsigned long)(ll >> 32), (unsigned long)ll);
+    else
+        sprintf(str, "%lx", (unsigned long)ll);
+    return str;
+}
 
 static void create_vcomp_manifest(void)
 {
@@ -228,24 +250,35 @@ static BOOL init_vcomp(void)
     }
 
     VCOMP_GET_PROC(_vcomp_atomic_add_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_add_i8);
     VCOMP_GET_PROC(_vcomp_atomic_add_r4);
     VCOMP_GET_PROC(_vcomp_atomic_add_r8);
     VCOMP_GET_PROC(_vcomp_atomic_and_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_and_i8);
     VCOMP_GET_PROC(_vcomp_atomic_div_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_div_i8);
     VCOMP_GET_PROC(_vcomp_atomic_div_r4);
     VCOMP_GET_PROC(_vcomp_atomic_div_r8);
     VCOMP_GET_PROC(_vcomp_atomic_div_ui4);
+    VCOMP_GET_PROC(_vcomp_atomic_div_ui8);
     VCOMP_GET_PROC(_vcomp_atomic_mul_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_mul_i8);
     VCOMP_GET_PROC(_vcomp_atomic_mul_r4);
     VCOMP_GET_PROC(_vcomp_atomic_mul_r8);
     VCOMP_GET_PROC(_vcomp_atomic_or_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_or_i8);
     VCOMP_GET_PROC(_vcomp_atomic_shl_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_shl_i8);
     VCOMP_GET_PROC(_vcomp_atomic_shr_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_shr_i8);
     VCOMP_GET_PROC(_vcomp_atomic_shr_ui4);
+    VCOMP_GET_PROC(_vcomp_atomic_shr_ui8);
     VCOMP_GET_PROC(_vcomp_atomic_sub_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_sub_i8);
     VCOMP_GET_PROC(_vcomp_atomic_sub_r4);
     VCOMP_GET_PROC(_vcomp_atomic_sub_r8);
     VCOMP_GET_PROC(_vcomp_atomic_xor_i4);
+    VCOMP_GET_PROC(_vcomp_atomic_xor_i8);
     VCOMP_GET_PROC(_vcomp_barrier);
     VCOMP_GET_PROC(_vcomp_enter_critsect);
     VCOMP_GET_PROC(_vcomp_flush);
@@ -1447,6 +1480,114 @@ static void test_atomic_integer32(void)
     }
 }
 
+static void test_atomic_integer64(void)
+{
+    struct
+    {
+        void (CDECL *func)(LONG64 *, LONG64);
+        LONG64 v1, v2, expected;
+    }
+    tests1[] =
+    {
+        { p_vcomp_atomic_add_i8,  0x1122334455667788,  0x7766554433221100, -0x7777777777777778 },
+        { p_vcomp_atomic_and_i8,  0x1122334455667788,  0x7766554433221100,  0x1122114411221100 },
+        { p_vcomp_atomic_div_i8,  0x7766554433221100,  0x1122334455667788,                   6 },
+        { p_vcomp_atomic_div_i8,  0x7766554433221100, -0x1122334455667788,                  -6 },
+        { p_vcomp_atomic_mul_i8,  0x1122334455667788,  0x7766554433221100,  0x3e963337c6000800 },
+        { p_vcomp_atomic_mul_i8,  0x1122334455667788, -0x7766554433221100,  0xc169ccc839fff800 },
+        { p_vcomp_atomic_or_i8,   0x1122334455667788,  0x7766554433221100,  0x7766774477667788 },
+        { p_vcomp_atomic_sub_i8,  0x1122334455667788,  0x7766554433221100, -0x664421ffddbb9978 },
+        { p_vcomp_atomic_xor_i8,  0x1122334455667788,  0x7766554433221100,  0x6644660066446688 },
+    };
+    struct
+    {
+        void (CDECL *func)(LONG64 *, unsigned int);
+        LONG64 v1;
+        unsigned int v2;
+        LONG64 expected;
+        BOOL todo;
+    }
+    tests2[] =
+    {
+        { p_vcomp_atomic_shl_i8,  0x1122334455667788,  3, -0x76ee65dd54cc43c0 },
+        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 60,  0x8000000000000000 },
+        { p_vcomp_atomic_shl_i8, -0x1122334455667788,  3,  0x76ee65dd54cc43c0 },
+        { p_vcomp_atomic_shr_i8,  0x1122334455667788,  3,   0x22446688aaccef1 },
+        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 60,                   1 },
+        { p_vcomp_atomic_shr_i8, -0x1122334455667788,  3,  -0x22446688aaccef1 },
+#if defined(__i386__)
+        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 64,                   0, TRUE },
+        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 67,                   0, TRUE },
+        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 64,                   0, TRUE },
+        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 67,                   0, TRUE },
+#elif defined(__x86_64__)
+        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 64,  0x1122334455667788 },
+        { p_vcomp_atomic_shl_i8,  0x1122334455667788, 67, -0x76ee65dd54cc43c0 },
+        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 64,  0x1122334455667788 },
+        { p_vcomp_atomic_shr_i8,  0x1122334455667788, 67,   0x22446688aaccef1 },
+#endif
+    };
+    struct
+    {
+        void (CDECL *func)(ULONG64 *, ULONG64);
+        ULONG64 v1, v2, expected;
+    }
+    tests3[] =
+    {
+        { p_vcomp_atomic_div_ui8, 0x7766554455667788, 0x1122334433221100, 6 },
+        { p_vcomp_atomic_div_ui8, 0x7766554455667788, 0xeeddccbbaa998878, 0 },
+    };
+    struct
+    {
+        void (CDECL *func)(ULONG64 *, unsigned int);
+        ULONG64 v1;
+        unsigned int v2;
+        ULONG64 expected;
+        BOOL todo;
+    }
+    tests4[] =
+    {
+        { p_vcomp_atomic_shr_ui8, 0x1122334455667788,  3,  0x22446688aaccef1 },
+        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 60,                  1 },
+        { p_vcomp_atomic_shr_ui8, 0xeeddccbbaa998878,  3, 0x1ddbb9977553310f },
+#if defined(__i386__)
+        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 64,                  0, TRUE },
+        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 67,                  0, TRUE },
+#elif defined(__x86_64__)
+        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 64, 0x1122334455667788 },
+        { p_vcomp_atomic_shr_ui8, 0x1122334455667788, 67,  0x22446688aaccef1 },
+#endif
+    };
+    int i;
+
+    for (i = 0; i < sizeof(tests1)/sizeof(tests1[0]); i++)
+    {
+        LONG64 val = tests1[i].v1;
+        tests1[i].func(&val, tests1[i].v2);
+        ok(val == tests1[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+    }
+    for (i = 0; i < sizeof(tests2)/sizeof(tests2[0]); i++)
+    {
+        LONG64 val = tests2[i].v1;
+        tests2[i].func(&val, tests2[i].v2);
+        todo_wine_if(tests2[i].todo)
+        ok(val == tests2[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+    }
+    for (i = 0; i < sizeof(tests3)/sizeof(tests3[0]); i++)
+    {
+        ULONG64 val = tests3[i].v1;
+        tests3[i].func(&val, tests3[i].v2);
+        ok(val == tests3[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+    }
+    for (i = 0; i < sizeof(tests4)/sizeof(tests4[0]); i++)
+    {
+        ULONG64 val = tests4[i].v1;
+        tests4[i].func(&val, tests4[i].v2);
+        todo_wine_if(tests4[i].todo)
+        ok(val == tests4[i].expected, "test %d: unexpectedly got %s\n", i, debugstr_longlong(val));
+    }
+}
+
 static void test_atomic_float(void)
 {
     struct
@@ -1516,6 +1657,7 @@ START_TEST(vcomp)
     test_omp_init_lock();
     test_omp_init_nest_lock();
     test_atomic_integer32();
+    test_atomic_integer64();
     test_atomic_float();
     test_atomic_double();
 
