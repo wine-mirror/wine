@@ -759,16 +759,18 @@ static void bidi_resolve_neutrals(IsolatedRun *run)
 
     /* Translate isolates into NI */
     for (i = 0; i < run->length; i++) {
-        if (bidi_is_isolate(*run->item[i].class))
-            *run->item[i].class = NI;
-
         switch (*run->item[i].class) {
             case B:
             case S:
-            case WS: *run->item[i].class = NI;
+            case WS:
+            case FSI:
+            case LRI:
+            case RLI:
+            case PDI: *run->item[i].class = NI;
         }
 
-        ASSERT(*run->item[i].class < 5 || *run->item[i].class == BN); /* "Only NI, L, R,  AN, EN and BN are allowed" */
+        /* "Only NI, L, R, AN, EN and BN are allowed" */
+        ASSERT(*run->item[i].class <= EN || *run->item[i].class == BN);
     }
 
     /* N0: Skipping bracketed pairs for now */
@@ -900,8 +902,8 @@ static void bidi_resolve_implicit(const UINT8 *classes, UINT8 *levels, int sos, 
         if (classes[i] == BN)
             continue;
 
-        ASSERT(classes[i] > 0); /* "No Neutrals allowed to survive here." */
-        ASSERT(classes[i] < 5); /* "Out of range." */
+        ASSERT(classes[i] != ON); /* "No Neutrals allowed to survive here." */
+        ASSERT(classes[i] <= EN); /* "Out of range." */
 
         if (odd(levels[i]) && (classes[i] == L || classes[i] == EN || classes[i] == AN))
             levels[i]++;
