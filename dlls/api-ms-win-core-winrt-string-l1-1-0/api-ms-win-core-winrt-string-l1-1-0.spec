@@ -6,7 +6,7 @@
 @ stub HSTRING_UserSize64
 @ stub HSTRING_UserUnmarshal
 @ stub HSTRING_UserUnmarshal64
-@ stub WindowsCompareStringOrdinal
+@ stdcall WindowsCompareStringOrdinal(ptr ptr ptr) combase.WindowsCompareStringOrdinal
 @ stdcall WindowsConcatString(ptr ptr ptr) combase.WindowsConcatString
 @ stdcall WindowsCreateString(wstr long ptr) combase.WindowsCreateString
 @ stdcall WindowsCreateStringReference(wstr long ptr ptr) combase.WindowsCreateStringReference

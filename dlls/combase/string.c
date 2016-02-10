@@ -372,3 +372,36 @@ BOOL WINAPI WindowsIsStringEmpty(HSTRING str)
         return TRUE;
     return priv->length == 0;
 }
+
+/***********************************************************************
+ *      WindowsCompareStringOrdinal (combase.@)
+ */
+HRESULT WINAPI WindowsCompareStringOrdinal(HSTRING str1, HSTRING str2, INT32 *res)
+{
+    struct hstring_private *priv1 = impl_from_HSTRING(str1);
+    struct hstring_private *priv2 = impl_from_HSTRING(str2);
+    const WCHAR *buf1 = empty, *buf2 = empty;
+    UINT32 len1 = 0, len2 = 0;
+
+    TRACE("(%p, %p, %p)\n", str1, str2, res);
+
+    if (res == NULL)
+        return E_INVALIDARG;
+    if (str1 == str2)
+    {
+        *res = 0;
+        return S_OK;
+    }
+    if (str1)
+    {
+        buf1 = priv1->buffer;
+        len1 = priv1->length;
+    }
+    if (str2)
+    {
+        buf2 = priv2->buffer;
+        len2 = priv2->length;
+    }
+    *res = CompareStringOrdinal(buf1, len1, buf2, len2, FALSE) - CSTR_EQUAL;
+    return S_OK;
+}
