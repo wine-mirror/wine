@@ -1590,6 +1590,7 @@ static BOOL surface_check_block_align_rect(struct wined3d_surface *surface, cons
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
         struct wined3d_surface *src_surface, const RECT *src_rect)
 {
+    unsigned int src_row_pitch, src_slice_pitch;
     const struct wined3d_format *src_format;
     const struct wined3d_format *dst_format;
     unsigned int src_fmt_flags, dst_fmt_flags;
@@ -1599,7 +1600,6 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     UINT update_w, update_h;
     UINT dst_w, dst_h;
     RECT r, dst_rect;
-    UINT src_pitch;
     POINT p;
 
     TRACE("dst_surface %p, dst_point %s, src_surface %p, src_rect %s.\n",
@@ -1687,10 +1687,10 @@ HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const P
     wined3d_texture_bind_and_dirtify(dst_surface->container, context, FALSE);
 
     surface_get_memory(src_surface, &data, src_surface->locations);
-    src_pitch = wined3d_surface_get_pitch(src_surface);
+    wined3d_texture_get_pitch(src_surface->container, src_surface->texture_level, &src_row_pitch, &src_slice_pitch);
 
     wined3d_surface_upload_data(dst_surface, gl_info, src_format, src_rect,
-            src_pitch, dst_point, FALSE, wined3d_const_bo_address(&data));
+            src_row_pitch, dst_point, FALSE, wined3d_const_bo_address(&data));
 
     context_release(context);
 
