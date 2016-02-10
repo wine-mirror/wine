@@ -360,6 +360,7 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 {
     const struct wined3d_format *format = surface->resource.format;
     unsigned int format_flags = surface->container->resource.format_flags;
+    unsigned int row_pitch, slice_pitch;
     SYSTEM_INFO sysInfo;
     BITMAPINFO *b_info;
     int extraline = 0;
@@ -409,10 +410,10 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
 
     b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
-    b_info->bmiHeader.biWidth = wined3d_surface_get_pitch(surface) / format->byte_count;
+    wined3d_texture_get_pitch(surface->container, surface->texture_level, &row_pitch, &slice_pitch);
+    b_info->bmiHeader.biWidth = row_pitch / format->byte_count;
     b_info->bmiHeader.biHeight = 0 - surface->resource.height - extraline;
-    b_info->bmiHeader.biSizeImage = (surface->resource.height + extraline)
-            * wined3d_surface_get_pitch(surface);
+    b_info->bmiHeader.biSizeImage = (surface->resource.height + extraline) * row_pitch;
     b_info->bmiHeader.biPlanes = 1;
     b_info->bmiHeader.biBitCount = format->byte_count * 8;
 
