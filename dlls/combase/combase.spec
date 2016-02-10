@@ -305,4 +305,4 @@
 @ stdcall WindowsSubstring(ptr long ptr)
 @ stdcall WindowsSubstringWithSpecifiedLength(ptr long long ptr)
 @ stub WindowsTrimStringEnd
-@ stub WindowsTrimStringStart
+@ stdcall WindowsTrimStringStart(ptr ptr ptr)

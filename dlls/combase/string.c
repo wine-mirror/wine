@@ -21,6 +21,7 @@
 #include "windows.h"
 #include "winerror.h"
 #include "hstring.h"
+#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(winstring);
@@ -404,4 +405,31 @@ HRESULT WINAPI WindowsCompareStringOrdinal(HSTRING str1, HSTRING str2, INT32 *re
     }
     *res = CompareStringOrdinal(buf1, len1, buf2, len2, FALSE) - CSTR_EQUAL;
     return S_OK;
+}
+
+/***********************************************************************
+ *      WindowsTrimStringStart (combase.@)
+ */
+HRESULT WINAPI WindowsTrimStringStart(HSTRING str1, HSTRING str2, HSTRING *out)
+{
+    struct hstring_private *priv1 = impl_from_HSTRING(str1);
+    struct hstring_private *priv2 = impl_from_HSTRING(str2);
+    UINT32 start;
+
+    TRACE("(%p, %p, %p)\n", str1, str2, out);
+
+    if (!out || !str2 || !priv2->length)
+        return E_INVALIDARG;
+    if (!str1)
+    {
+        *out = NULL;
+        return S_OK;
+    }
+    for (start = 0; start < priv1->length; start++)
+    {
+        if (!memchrW(priv2->buffer, priv1->buffer[start], priv2->length))
+            break;
+    }
+    return start ? WindowsCreateString(&priv1->buffer[start], priv1->length - start, out) :
+                   WindowsDuplicateString(str1, out);
 }

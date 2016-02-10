@@ -24,4 +24,4 @@
 @ stdcall WindowsSubstring(ptr long ptr) combase.WindowsSubstring
 @ stdcall WindowsSubstringWithSpecifiedLength(ptr long long ptr) combase.WindowsSubstringWithSpecifiedLength
 @ stub WindowsTrimStringEnd
-@ stub WindowsTrimStringStart
+@ stdcall WindowsTrimStringStart(ptr ptr ptr) combase.WindowsTrimStringStart
