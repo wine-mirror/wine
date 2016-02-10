@@ -790,16 +790,7 @@ static void test_lvm_hittest_(HWND hwnd, INT x, INT y, INT item, UINT flags, UIN
 
     ret = SendMessageA(hwnd, LVM_HITTEST, 0, (LPARAM)&lpht);
 
-    if (todo_item)
-    {
-        todo_wine
-        {
-            ok_(__FILE__, line)(ret == item, "Expected %d retval, got %d\n", item, ret);
-            ok_(__FILE__, line)(lpht.iItem == item, "Expected %d item, got %d\n", item, lpht.iItem);
-            ok_(__FILE__, line)(lpht.iSubItem == 10, "Expected subitem not overwrited\n");
-        }
-    }
-    else
+    todo_wine_if(todo_item)
     {
         ok_(__FILE__, line)(ret == item, "Expected %d retval, got %d\n", item, ret);
         ok_(__FILE__, line)(lpht.iItem == item, "Expected %d item, got %d\n", item, lpht.iItem);
@@ -832,34 +823,16 @@ static void test_lvm_subitemhittest_(HWND hwnd, INT x, INT y, INT item, INT subi
 
     ret = SendMessageA(hwnd, LVM_SUBITEMHITTEST, 0, (LPARAM)&lpht);
 
-    if (todo_item)
-    {
-        todo_wine
-        {
-            ok_(__FILE__, line)(ret == item, "Expected %d retval, got %d\n", item, ret);
-            ok_(__FILE__, line)(lpht.iItem == item, "Expected %d item, got %d\n", item, lpht.iItem);
-        }
-    }
-    else
+    todo_wine_if(todo_item)
     {
         ok_(__FILE__, line)(ret == item, "Expected %d retval, got %d\n", item, ret);
         ok_(__FILE__, line)(lpht.iItem == item, "Expected %d item, got %d\n", item, lpht.iItem);
     }
 
-    if (todo_subitem)
-    {
-        todo_wine
-            ok_(__FILE__, line)(lpht.iSubItem == subitem, "Expected subitem %d, got %d\n", subitem, lpht.iSubItem);
-    }
-    else
+    todo_wine_if(todo_subitem)
         ok_(__FILE__, line)(lpht.iSubItem == subitem, "Expected subitem %d, got %d\n", subitem, lpht.iSubItem);
 
-    if (todo_flags)
-    {
-        todo_wine
-            ok_(__FILE__, line)(lpht.flags == flags, "Expected flags 0x%x, got 0x%x\n", flags, lpht.flags);
-    }
-    else
+    todo_wine_if(todo_flags)
         ok_(__FILE__, line)(lpht.flags == flags, "Expected flags 0x%x, got 0x%x\n", flags, lpht.flags);
 }
 
