@@ -11769,6 +11769,24 @@ msgstr ""
 msgid "(Default)"
 msgstr "(預設)"
 
+#: reg.rc:49
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "您確認要刪除這些數值嗎？"
+
+#: reg.rc:50
+#, fuzzy
+#| msgid "Are you sure you want to delete value '%s'?"
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "您確認要刪除這個數值 %s 嗎？"
+
+#: reg.rc:51
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "確定要刪除 %1？"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

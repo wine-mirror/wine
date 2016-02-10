@@ -11372,6 +11372,24 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Podrazumijevano)"
 
+#: reg.rc:49
+#, fuzzy
+#| msgid "Are you sure you want to delete these %1 items?"
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "Sigurno želite izbrisati ovih %1 stavki?"
+
+#: reg.rc:50
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "Sigurno želite izbrisati '%1'?"
+
+#: reg.rc:51
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "Sigurno želite izbrisati '%1'?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registar"

@@ -11210,6 +11210,18 @@ msgstr ""
 msgid "(Default)"
 msgstr ""
 
+#: reg.rc:49
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr ""
+
+#: reg.rc:50
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr ""
+
+#: reg.rc:51
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

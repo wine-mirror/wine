@@ -11639,6 +11639,24 @@ msgstr ""
 msgid "(Default)"
 msgstr "(בררת המחדל)"
 
+#: reg.rc:49
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "האם ברצונך למחוק ערכים אלו?"
+
+#: reg.rc:50
+#, fuzzy
+#| msgid "Are you sure you want to delete value '%s'?"
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "האם ברצונך למחוק את הערך '%s'?"
+
+#: reg.rc:51
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "האם אכן ברצונך למחוק את '%1'?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&רישום המערכת"

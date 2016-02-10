@@ -40,3 +40,6 @@
 #define STRING_NO               117
 #define STRING_CANCELLED        118
 #define STRING_DEFAULT_VALUE    119
+#define STRING_DELETE_VALUE     120
+#define STRING_DELETE_VALUEALL  121
+#define STRING_DELETE_SUBKEY    122

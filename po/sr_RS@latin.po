@@ -11871,6 +11871,22 @@ msgstr ""
 "#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
 "Osnovno"
 
+#: reg.rc:49
+#, fuzzy
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "Želite li da izbrišete ovih %1 stavki?"
+
+#: reg.rc:50
+#, fuzzy
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "Želite li da izbrišete „%1“?"
+
+#: reg.rc:51
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "Želite li da izbrišete „%1“?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""

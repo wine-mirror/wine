@@ -11895,6 +11895,24 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Predefinito)"
 
+#: reg.rc:49
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "Sei sicuro di volere eliminare questi valori?"
+
+#: reg.rc:50
+#, fuzzy
+#| msgid "Are you sure you want to delete value '%s'?"
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "Sei sicuro di volere eliminare il valore '%s'?"
+
+#: reg.rc:51
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "Sei sicuro di voler cancellare '%1'?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"

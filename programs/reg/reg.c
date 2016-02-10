@@ -411,7 +411,20 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
 
     if (!force)
     {
-        /* FIXME:  Prompt for delete */
+        BOOL ret;
+
+        if (value_name || value_empty)
+            ret = ask_confirm(STRING_DELETE_VALUE, value_name);
+        else if (value_all)
+            ret = ask_confirm(STRING_DELETE_VALUEALL, key_name);
+        else
+            ret = ask_confirm(STRING_DELETE_SUBKEY, key_name);
+
+        if (!ret)
+        {
+            output_message(STRING_CANCELLED);
+            return 0;
+        }
     }
 
     /* Delete subtree only if no /v* option is given */

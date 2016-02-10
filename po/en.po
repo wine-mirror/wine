@@ -11615,6 +11615,18 @@ msgstr "The registry operation was cancelled\n"
 msgid "(Default)"
 msgstr "(Default)"
 
+#: reg.rc:49
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "Are you sure you want to delete the registry value '%1'?"
+
+#: reg.rc:50
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "Are you sure you want to delete all registry values in '%1'?"
+
+#: reg.rc:51
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "Are you sure you want to delete the registry key '%1'?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"

@@ -11809,6 +11809,24 @@ msgstr ""
 msgid "(Default)"
 msgstr "(Alapérték)"
 
+#: reg.rc:49
+#, fuzzy
+#| msgid "Are you sure you want to delete these values?"
+msgid "Are you sure you want to delete the registry value '%1'?"
+msgstr "Biztosan törölni szeretné ezeket az értékeket?"
+
+#: reg.rc:50
+#, fuzzy
+#| msgid "Are you sure you want to delete value '%s'?"
+msgid "Are you sure you want to delete all registry values in '%1'?"
+msgstr "Biztos hogy törölni szeretné a(z) '%s' kulcsot?"
+
+#: reg.rc:51
+#, fuzzy
+#| msgid "Are you sure you want to delete '%1'?"
+msgid "Are you sure you want to delete the registry key '%1'?"
+msgstr "Biztos hogy törölni szeretné ezt: '%1'?"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Fájl"
