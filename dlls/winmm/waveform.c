@@ -4287,6 +4287,8 @@ UINT WINAPI mixerGetLineInfoW(HMIXEROBJ hmix, LPMIXERLINEW lpmliW, DWORD fdwInfo
     if(!mmdevice)
         return MMSYSERR_INVALHANDLE;
 
+    lpmliW->dwUser = 0;
+
     switch(fdwInfo & MIXER_GETLINEINFOF_QUERYMASK){
     case MIXER_GETLINEINFOF_DESTINATION:
         return WINMM_GetDestinationLineInfo(mmdevice, mmdev_index, lpmliW,
