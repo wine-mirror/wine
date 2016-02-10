@@ -4623,10 +4623,8 @@ static void test_GetSystemPreferredUILanguages(void)
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(0, &count, NULL, &size);
-    todo_wine
     ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
     ok(count, "Expected count > 0\n");
-    todo_wine
     ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
 
     count = 0xdeadbeef;
@@ -4657,20 +4655,16 @@ static void test_GetSystemPreferredUILanguages(void)
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID | MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
-    todo_wine
     ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
     ok(count, "Expected count > 0\n");
-    todo_wine
     ok(size % 5 == 1, "Expected size (%d) %% 5 == 1\n", size);
 
     count = 0xdeadbeef;
     size = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME | MUI_MACHINE_LANGUAGE_SETTINGS, &count, NULL, &size);
-    todo_wine
     ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
     ok(count, "Expected count > 0\n");
-    todo_wine
     ok(size % 6 == 1, "Expected size (%d) %% 6 == 1\n", size);
 
     /* second parameter
@@ -4696,20 +4690,16 @@ static void test_GetSystemPreferredUILanguages(void)
     size_id = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_ID, &count, NULL, &size_id);
-    todo_wine
     ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
     ok(count, "Expected count > 0\n");
-    todo_wine
     ok(size_id  % 5 == 1, "Expected size (%d) %% 5 == 1\n", size_id);
 
     count = 0xdeadbeef;
     size_name = 0;
     SetLastError(0xdeadbeef);
     ret = pGetSystemPreferredUILanguages(MUI_LANGUAGE_NAME, &count, NULL, &size_name);
-    todo_wine
     ok(ret, "Expected GetSystemPreferredUILanguages to succeed\n");
     ok(count, "Expected count > 0\n");
-    todo_wine
     ok(size_name % 6 == 1, "Expected size (%d) %% 6 == 1\n", size_name);
 
     size_buffer = max(size_id, size_name);
