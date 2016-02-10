@@ -387,7 +387,6 @@ enum reader_state
     READER_STATE_BOF,
     READER_STATE_STARTELEMENT,
     READER_STATE_STARTATTRIBUTE,
-    READER_STATE_STARTENDELEMENT,
     READER_STATE_STARTCDATA,
     READER_STATE_CDATA,
     READER_STATE_TEXT,
@@ -987,8 +986,9 @@ static HRESULT read_element( struct reader *reader )
     if (!read_cmp( reader, "/>", 2 ))
     {
         read_skip( reader, 2 );
-        reader->current = reader->current->parent;
-        reader->state   = READER_STATE_STARTENDELEMENT;
+        if (!(node = alloc_node( WS_XML_NODE_TYPE_END_ELEMENT ))) return E_OUTOFMEMORY;
+        read_insert_node( reader, reader->current, node );
+        reader->state = READER_STATE_ENDELEMENT;
     }
     else
     {
