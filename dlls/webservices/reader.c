@@ -1405,6 +1405,25 @@ static BOOL move_to_child_element( struct reader *reader )
     return FALSE;
 }
 
+static BOOL move_to_end_element( struct reader *reader )
+{
+    struct list *ptr;
+    struct node *node = reader->current;
+
+    if (node->hdr.node.nodeType != WS_XML_NODE_TYPE_ELEMENT) return FALSE;
+
+    if ((ptr = list_tail( &node->children )))
+    {
+        struct node *tail = LIST_ENTRY( ptr, struct node, entry );
+        if (tail->hdr.node.nodeType == WS_XML_NODE_TYPE_END_ELEMENT)
+        {
+            reader->current = tail;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 static HRESULT read_move_to( struct reader *reader, WS_MOVE_TO move, BOOL *found )
 {
     struct list *ptr;
@@ -1432,6 +1451,10 @@ static HRESULT read_move_to( struct reader *reader, WS_MOVE_TO move, BOOL *found
 
     case WS_MOVE_TO_CHILD_ELEMENT:
         success = move_to_child_element( reader );
+        break;
+
+    case WS_MOVE_TO_END_ELEMENT:
+        success = move_to_end_element( reader );
         break;
 
     case WS_MOVE_TO_FIRST_NODE:
