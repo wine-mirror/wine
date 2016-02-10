@@ -1800,13 +1800,10 @@ static void test_outputdebugstring(DWORD numexc, BOOL todo)
 
     outputdebugstring_exceptions = 0;
     OutputDebugStringA("Hello World");
-    if (todo)
-        todo_wine
-        ok(outputdebugstring_exceptions == numexc, "OutputDebugStringA generated %d exceptions, expected %d\n",
-           outputdebugstring_exceptions, numexc);
-    else
-        ok(outputdebugstring_exceptions == numexc, "OutputDebugStringA generated %d exceptions, expected %d\n",
-           outputdebugstring_exceptions, numexc);
+
+    todo_wine_if(todo)
+    ok(outputdebugstring_exceptions == numexc, "OutputDebugStringA generated %d exceptions, expected %d\n",
+       outputdebugstring_exceptions, numexc);
 
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
