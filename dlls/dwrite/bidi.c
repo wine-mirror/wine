@@ -543,6 +543,11 @@ static inline void iso_dump_types(const char* header, IsolatedRun *run)
     Note: On input only these directional classes are expected
           AL, HL, R, L,  ON, BN, NSM, AN, EN, ES, ET, CS,
 ------------------------------------------------------------------------*/
+static BOOL bidi_is_isolate(UINT8 class)
+{
+    return class == LRI || class == RLI || class == FSI || class == PDI;
+}
+
 static void bidi_resolve_weak(IsolatedRun *iso_run)
 {
     int i;
@@ -553,7 +558,7 @@ static void bidi_resolve_weak(IsolatedRun *iso_run)
             int j = get_prev_valid_char_from_run(iso_run, i);
             if (j == -1)
                 *iso_run->item[i].class = iso_run->sos;
-            else if (*iso_run->item[j].class >= LRI)
+            else if (bidi_is_isolate(*iso_run->item[j].class))
                 *iso_run->item[i].class = ON;
             else
                 *iso_run->item[i].class = *iso_run->item[j].class;
@@ -754,7 +759,7 @@ static void bidi_resolve_neutrals(IsolatedRun *run)
 
     /* Translate isolates into NI */
     for (i = 0; i < run->length; i++) {
-        if (*run->item[i].class >= LRI)
+        if (bidi_is_isolate(*run->item[i].class))
             *run->item[i].class = NI;
 
         switch (*run->item[i].class) {
