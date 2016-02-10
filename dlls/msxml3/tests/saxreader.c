@@ -2867,9 +2867,7 @@ static void test_saxreader_encoding(void)
         CloseHandle(file);
 
         hr = ISAXXMLReader_parseURL(reader, testXmlW);
-        if (entry->todo)
-            todo_wine ok(hr == entry->hr, "Expected 0x%08x, got 0x%08x. CLSID %s\n", entry->hr, hr, entry->clsid);
-        else
+        todo_wine_if(entry->todo)
             ok(hr == entry->hr, "Expected 0x%08x, got 0x%08x. CLSID %s\n", entry->hr, hr, entry->clsid);
 
         DeleteFileA(testXmlA);

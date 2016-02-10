@@ -1322,10 +1322,7 @@ static void test_XDR_datatypes(void)
         hr = IXMLDOMNode_get_nodeTypedValue(node, &v);
         EXPECT_HR(hr, S_OK);
 
-        if (ptr->todo)
-        todo_wine
-            ok(V_VT(&v) == ptr->type_schema, "%s: got variant type %i\n", ptr->query, V_VT(&v));
-        else
+        todo_wine_if(ptr->todo)
             ok(V_VT(&v) == ptr->type_schema, "%s: got variant type %i\n", ptr->query, V_VT(&v));
 
         switch (ptr->type_schema)
