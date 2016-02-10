@@ -6103,6 +6103,57 @@ static void test_GetSidIdentifierAuthority(void)
     ok(GetLastError() == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %u\n", GetLastError());
 }
 
+static void test_pseudo_tokens(void)
+{
+    TOKEN_STATISTICS statistics1, statistics2;
+    HANDLE token;
+    DWORD retlen;
+    BOOL ret;
+
+    ret = OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token);
+    ok(ret, "OpenProcessToken failed with error %u\n", GetLastError());
+    memset(&statistics1, 0x11, sizeof(statistics1));
+    ret = GetTokenInformation(token, TokenStatistics, &statistics1, sizeof(statistics1), &retlen);
+    ok(ret, "GetTokenInformation failed with %u\n", GetLastError());
+    CloseHandle(token);
+
+    /* test GetCurrentProcessToken() */
+    SetLastError(0xdeadbeef);
+    memset(&statistics2, 0x22, sizeof(statistics2));
+    ret = GetTokenInformation(GetCurrentProcessToken(), TokenStatistics,
+                              &statistics2, sizeof(statistics2), &retlen);
+    ok(ret || broken(GetLastError() == ERROR_INVALID_HANDLE),
+       "GetTokenInformation failed with %u\n", GetLastError());
+    if (ret)
+        ok(!memcmp(&statistics1, &statistics2, sizeof(statistics1)), "Token statistics do not match\n");
+    else
+        win_skip("CurrentProcessToken not supported, skipping test\n");
+
+    /* test GetCurrentThreadEffectiveToken() */
+    SetLastError(0xdeadbeef);
+    memset(&statistics2, 0x22, sizeof(statistics2));
+    ret = GetTokenInformation(GetCurrentThreadEffectiveToken(), TokenStatistics,
+                              &statistics2, sizeof(statistics2), &retlen);
+    ok(ret || broken(GetLastError() == ERROR_INVALID_HANDLE),
+       "GetTokenInformation failed with %u\n", GetLastError());
+    if (ret)
+        ok(!memcmp(&statistics1, &statistics2, sizeof(statistics1)), "Token statistics do not match\n");
+    else
+        win_skip("CurrentThreadEffectiveToken not supported, skipping test\n");
+
+    SetLastError(0xdeadbeef);
+    ret = OpenThreadToken(GetCurrentThread(), TOKEN_QUERY, TRUE, &token);
+    ok(!ret, "OpenThreadToken should have failed\n");
+    ok(GetLastError() == ERROR_NO_TOKEN, "Expected ERROR_NO_TOKEN, got %u\n", GetLastError());
+
+    /* test GetCurrentThreadToken() */
+    SetLastError(0xdeadbeef);
+    ret = GetTokenInformation(GetCurrentThreadToken(), TokenStatistics,
+                              &statistics2, sizeof(statistics2), &retlen);
+    todo_wine ok(GetLastError() == ERROR_NO_TOKEN || broken(GetLastError() == ERROR_INVALID_HANDLE),
+                 "Expected ERROR_NO_TOKEN, got %u\n", GetLastError());
+}
+
 START_TEST(security)
 {
     init();
@@ -6148,4 +6199,5 @@ START_TEST(security)
     test_AddAce();
     test_system_security_access();
     test_GetSidIdentifierAuthority();
+    test_pseudo_tokens();
 }
