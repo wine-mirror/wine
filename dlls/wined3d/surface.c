@@ -2414,10 +2414,15 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
     }
 
     if (fmt_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
+    {
         map_desc->row_pitch = surface->resource.width * format->byte_count;
+        map_desc->slice_pitch = surface->resource.height * map_desc->row_pitch;
+    }
     else
-        map_desc->row_pitch = wined3d_surface_get_pitch(surface);
-    map_desc->slice_pitch = surface->resource.height * map_desc->row_pitch;
+    {
+        wined3d_texture_get_pitch(surface->container, surface->texture_level,
+                &map_desc->row_pitch, &map_desc->slice_pitch);
+    }
 
     if (!box)
     {
