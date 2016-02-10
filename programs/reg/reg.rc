@@ -44,4 +44,5 @@ STRINGTABLE
     STRING_YES, "#msgctxt#Yes key#Y"
     STRING_NO, "#msgctxt#No key#N"
     STRING_CANCELLED, "The registry operation was cancelled\n"
+    STRING_DEFAULT_VALUE, "(Default)"
 }

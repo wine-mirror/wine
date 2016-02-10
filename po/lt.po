@@ -11618,6 +11618,10 @@ msgstr "Registro reikšmė „%1“ jau egzistuoja. Ar norite ją perrašyti?"
 msgid "The registry operation was cancelled\n"
 msgstr "Registro operacija buvo nutraukta\n"
 
+#: reg.rc:48 regedit.rc:204
+msgid "(Default)"
+msgstr "(numatytoji)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"
@@ -11819,10 +11823,6 @@ msgstr "Registro failai (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 registro failai (REGEDIT4)"
-
-#: regedit.rc:204
-msgid "(Default)"
-msgstr "(numatytoji)"
 
 #: regedit.rc:205
 msgid "(value not set)"

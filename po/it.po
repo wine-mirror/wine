@@ -11891,6 +11891,10 @@ msgstr "Il file specificato esiste già. Vuoi sostituirlo?"
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
+#: reg.rc:48 regedit.rc:204
+msgid "(Default)"
+msgstr "(Predefinito)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registro"
@@ -12093,10 +12097,6 @@ msgstr "File di registro (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "File di registro Win9x/NT4 (REGEDIT4)"
-
-#: regedit.rc:204
-msgid "(Default)"
-msgstr "(Predefinito)"
 
 #: regedit.rc:205
 msgid "(value not set)"

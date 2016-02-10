@@ -148,16 +148,18 @@ static BOOL ask_confirm(unsigned int msgid, WCHAR *reg_info)
     HMODULE hmod;
     WCHAR Ybuffer[4];
     WCHAR Nbuffer[4];
+    WCHAR defval[32];
     WCHAR answer[MAX_PATH];
     DWORD count;
 
     hmod = GetModuleHandleW(NULL);
     LoadStringW(hmod, STRING_YES, Ybuffer, ARRAY_SIZE(Ybuffer));
     LoadStringW(hmod, STRING_NO,  Nbuffer, ARRAY_SIZE(Nbuffer));
+    LoadStringW(hmod, STRING_DEFAULT_VALUE, defval, ARRAY_SIZE(defval));
 
     while (1)
     {
-        output_message(msgid, reg_info);
+        output_message(msgid, reg_info ? reg_info : defval);
         output_message(STRING_YESNO);
         ReadConsoleW(GetStdHandle(STD_INPUT_HANDLE), answer, ARRAY_SIZE(answer), &count, NULL);
         answer[0] = toupperW(answer[0]);

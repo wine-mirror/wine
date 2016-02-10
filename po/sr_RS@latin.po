@@ -11862,6 +11862,15 @@ msgstr ""
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
+#: reg.rc:48 regedit.rc:204
+#, fuzzy
+msgid "(Default)"
+msgstr ""
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"Podrazumevano\n"
+"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
+"Osnovno"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr ""
@@ -12088,15 +12097,6 @@ msgstr "Tekstualne datoteke (*.txt)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr ""
-
-#: regedit.rc:204
-#, fuzzy
-msgid "(Default)"
-msgstr ""
-"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
-"Podrazumevano\n"
-"#-#-#-#-#  sr_RS@latin.po (Wine)  #-#-#-#-#\n"
-"Osnovno"
 
 #: regedit.rc:205
 msgid "(value not set)"

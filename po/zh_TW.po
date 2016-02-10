@@ -11765,6 +11765,10 @@ msgstr "檔案已經存在。您要取代嗎？"
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
+#: reg.rc:48 regedit.rc:204
+msgid "(Default)"
+msgstr "(預設)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"
@@ -11965,10 +11969,6 @@ msgstr "註冊表檔案 (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 註冊表檔案 (REGEDIT4)"
-
-#: regedit.rc:204
-msgid "(Default)"
-msgstr "(預設)"
 
 #: regedit.rc:205
 msgid "(value not set)"

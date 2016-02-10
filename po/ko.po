@@ -11880,6 +11880,10 @@ msgstr "지정된 파일은 이미 존재합니다.덮어 쓰시겠습니까?"
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
+#: reg.rc:48 regedit.rc:204
+msgid "(Default)"
+msgstr "(기본)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "레지스트리(&R)"
@@ -12080,10 +12084,6 @@ msgstr "레지스트리 파일 (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 레지스트리 파일 (REGEDIT4)"
-
-#: regedit.rc:204
-msgid "(Default)"
-msgstr "(기본)"
 
 #: regedit.rc:205
 msgid "(value not set)"

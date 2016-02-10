@@ -39,3 +39,4 @@
 #define STRING_YES              116
 #define STRING_NO               117
 #define STRING_CANCELLED        118
+#define STRING_DEFAULT_VALUE    119

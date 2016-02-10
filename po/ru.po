@@ -11614,6 +11614,10 @@ msgstr "Значение «%1» уже существует. Вы хотите �
 msgid "The registry operation was cancelled\n"
 msgstr "Операция с реестром была отменена\n"
 
+#: reg.rc:48 regedit.rc:204
+msgid "(Default)"
+msgstr "(По умолчанию)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"
@@ -11815,10 +11819,6 @@ msgstr "Файлы реестра (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Файлы реестра Win9x/NT4 (REGEDIT4)"
-
-#: regedit.rc:204
-msgid "(Default)"
-msgstr "(По умолчанию)"
 
 #: regedit.rc:205
 msgid "(value not set)"

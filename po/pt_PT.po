@@ -11682,6 +11682,10 @@ msgstr "O ficheiro especificado já existe. Deseja substituí-lo?"
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
+#: reg.rc:48 regedit.rc:204
+msgid "(Default)"
+msgstr "(Omissão)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registo"
@@ -11888,10 +11892,6 @@ msgstr "Ficheiros de Registo (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Ficheiros de Registo Win9x/NT4 (REGEDIT4)"
-
-#: regedit.rc:204
-msgid "(Default)"
-msgstr "(Omissão)"
 
 #: regedit.rc:205
 msgid "(value not set)"

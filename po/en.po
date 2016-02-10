@@ -11611,6 +11611,10 @@ msgstr "The registry value '%1' already exists. Do you want to overwrite it?"
 msgid "The registry operation was cancelled\n"
 msgstr "The registry operation was cancelled\n"
 
+#: reg.rc:48 regedit.rc:204
+msgid "(Default)"
+msgstr "(Default)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registry"
@@ -11812,10 +11816,6 @@ msgstr "Registry files (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Win9x/NT4 Registry files (REGEDIT4)"
-
-#: regedit.rc:204
-msgid "(Default)"
-msgstr "(Default)"
 
 #: regedit.rc:205
 msgid "(value not set)"

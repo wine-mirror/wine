@@ -11164,6 +11164,10 @@ msgstr "Dosiero estas jam ekzistanta. Ĉu vi volas anstataŭi ĝin?"
 msgid "The registry operation was cancelled\n"
 msgstr ""
 
+#: reg.rc:48 regedit.rc:204
+msgid "(Default)"
+msgstr "(Defaŭlta)"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registrejo"
@@ -11365,10 +11369,6 @@ msgstr "Registrejaj dosieroj (*.reg)"
 #: regedit.rc:197
 msgid "Win9x/NT4 Registry files (REGEDIT4)"
 msgstr "Arkaikaj registreja dosieroj (REGEDIT4)"
-
-#: regedit.rc:204
-msgid "(Default)"
-msgstr "(Defaŭlta)"
 
 #: regedit.rc:205
 msgid "(value not set)"
