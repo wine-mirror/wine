@@ -4,7 +4,7 @@
  *
  * Copyright 2011 Austin English
  * Copyright 2012 Dan Kegel
- * Copyright 2015 Sebastian Lackner
+ * Copyright 2015-2016 Sebastian Lackner
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -354,6 +354,72 @@ void CDECL _vcomp_atomic_xor_i4(int *dest, int val)
 {
     int old;
     do old = *dest; while (interlocked_cmpxchg(dest, old ^ val, old) != old);
+}
+
+void CDECL _vcomp_atomic_add_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old + val, old) != old);
+}
+
+void CDECL _vcomp_atomic_and_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old & val, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old / val, old) != old);
+}
+
+void CDECL _vcomp_atomic_div_ui8(ULONG64 *dest, ULONG64 val)
+{
+    ULONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64((LONG64 *)dest, old / val, old) != old);
+}
+
+void CDECL _vcomp_atomic_mul_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old * val, old) != old);
+}
+
+void CDECL _vcomp_atomic_or_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old | val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shl_i8(LONG64 *dest, unsigned int val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old << val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shr_i8(LONG64 *dest, unsigned int val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old >> val, old) != old);
+}
+
+void CDECL _vcomp_atomic_shr_ui8(ULONG64 *dest, unsigned int val)
+{
+    ULONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64((LONG64 *)dest, old >> val, old) != old);
+}
+
+void CDECL _vcomp_atomic_sub_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old - val, old) != old);
+}
+
+void CDECL _vcomp_atomic_xor_i8(LONG64 *dest, LONG64 val)
+{
+    LONG64 old;
+    do old = *dest; while (interlocked_cmpxchg64(dest, old ^ val, old) != old);
 }
 
 void CDECL _vcomp_atomic_add_r4(float *dest, float val)
