@@ -433,3 +433,30 @@ HRESULT WINAPI WindowsTrimStringStart(HSTRING str1, HSTRING str2, HSTRING *out)
     return start ? WindowsCreateString(&priv1->buffer[start], priv1->length - start, out) :
                    WindowsDuplicateString(str1, out);
 }
+
+/***********************************************************************
+ *      WindowsTrimStringEnd (combase.@)
+ */
+HRESULT WINAPI WindowsTrimStringEnd(HSTRING str1, HSTRING str2, HSTRING *out)
+{
+    struct hstring_private *priv1 = impl_from_HSTRING(str1);
+    struct hstring_private *priv2 = impl_from_HSTRING(str2);
+    UINT32 len;
+
+    TRACE("(%p, %p, %p)\n", str1, str2, out);
+
+    if (!out || !str2 || !priv2->length)
+        return E_INVALIDARG;
+    if (!str1)
+    {
+        *out = NULL;
+        return S_OK;
+    }
+    for (len = priv1->length; len > 0; len--)
+    {
+        if (!memchrW(priv2->buffer, priv1->buffer[len - 1], priv2->length))
+            break;
+    }
+    return (len < priv1->length) ? WindowsCreateString(priv1->buffer, len, out) :
+                                   WindowsDuplicateString(str1, out);
+}

@@ -304,5 +304,5 @@
 @ stdcall WindowsStringHasEmbeddedNull(ptr ptr)
 @ stdcall WindowsSubstring(ptr long ptr)
 @ stdcall WindowsSubstringWithSpecifiedLength(ptr long long ptr)
-@ stub WindowsTrimStringEnd
+@ stdcall WindowsTrimStringEnd(ptr ptr ptr)
 @ stdcall WindowsTrimStringStart(ptr ptr ptr)

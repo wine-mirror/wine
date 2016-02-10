@@ -23,5 +23,5 @@
 @ stdcall WindowsStringHasEmbeddedNull(ptr ptr) combase.WindowsStringHasEmbeddedNull
 @ stdcall WindowsSubstring(ptr long ptr) combase.WindowsSubstring
 @ stdcall WindowsSubstringWithSpecifiedLength(ptr long long ptr) combase.WindowsSubstringWithSpecifiedLength
-@ stub WindowsTrimStringEnd
+@ stdcall WindowsTrimStringEnd(ptr ptr ptr) combase.WindowsTrimStringEnd
 @ stdcall WindowsTrimStringStart(ptr ptr ptr) combase.WindowsTrimStringStart
