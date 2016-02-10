@@ -1364,8 +1364,10 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
     EnterCriticalSection(&This->lock);
 
     LIST_FOR_EACH_ENTRY(src, &This->source_voices, XA2SourceImpl, entry){
+        EnterCriticalSection(&src->lock);
         if(!src->in_use)
             break;
+        LeaveCriticalSection(&src->lock);
     }
 
     if(&src->entry == &This->source_voices){
@@ -1386,6 +1388,8 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
         src->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": XA2SourceImpl.lock");
 
         src->xa2 = This;
+
+        EnterCriticalSection(&src->lock);
     }
 
     src->in_use = TRUE;
@@ -1398,6 +1402,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
     src->al_fmt = get_al_format(pSourceFormat);
     if(!src->al_fmt){
         src->in_use = FALSE;
+        LeaveCriticalSection(&src->lock);
         WARN("OpenAL can't convert this format!\n");
         return AUDCLNT_E_UNSUPPORTED_FORMAT;
     }
@@ -1410,6 +1415,7 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
     if(FAILED(hr)){
         HeapFree(GetProcessHeap(), 0, src->fmt);
         src->in_use = FALSE;
+        LeaveCriticalSection(&src->lock);
         return hr;
     }
 
@@ -1420,12 +1426,15 @@ static HRESULT WINAPI IXAudio2Impl_CreateSourceVoice(IXAudio2 *iface,
             ERR_(winediag)("OpenAL ran out of sources, consider increasing its source limit.\n");
         HeapFree(GetProcessHeap(), 0, src->fmt);
         src->in_use = FALSE;
+        LeaveCriticalSection(&src->lock);
         return E_OUTOFMEMORY;
     }
 
     alGenBuffers(XAUDIO2_MAX_QUEUED_BUFFERS, src->al_bufs);
 
     alSourcePlay(src->al_src);
+
+    LeaveCriticalSection(&src->lock);
 
 #if XAUDIO2_VER == 0
     *ppSourceVoice = (IXAudio2SourceVoice*)&src->IXAudio20SourceVoice_iface;
