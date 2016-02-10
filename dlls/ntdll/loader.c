@@ -564,7 +564,7 @@ static FARPROC find_named_export( HMODULE module, const IMAGE_EXPORT_DIRECTORY *
  * Import the dll specified by the given import descriptor.
  * The loader_section must be locked while calling this function.
  */
-static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LPCWSTR load_path )
+static BOOL import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *descr, LPCWSTR load_path, WINE_MODREF **pwm )
 {
     NTSTATUS status;
     WINE_MODREF *wmImp;
@@ -586,6 +586,13 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
     else
         import_list = thunk_list;
 
+    if (!import_list->u1.Ordinal)
+    {
+        WARN( "Skipping unused import %s\n", name );
+        *pwm = NULL;
+        return TRUE;
+    }
+
     while (len && name[len-1] == ' ') len--;  /* remove trailing spaces */
 
     if (len * sizeof(WCHAR) < sizeof(buffer))
@@ -597,7 +604,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
     else  /* need to allocate a larger buffer */
     {
         WCHAR *ptr = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) );
-        if (!ptr) return NULL;
+        if (!ptr) return FALSE;
         ascii_to_unicode( ptr, name, len );
         ptr[len] = 0;
         status = load_dll( load_path, ptr, 0, &wmImp );
@@ -612,7 +619,7 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
         else
             ERR("Loading library %s (which is needed by %s) failed (error %x).\n",
                 name, debugstr_w(current_modref->ldr.FullDllName.Buffer), status);
-        return NULL;
+        return FALSE;
     }
 
     /* unprotect the import address table since it can be located in
@@ -693,7 +700,8 @@ static WINE_MODREF *import_dll( HMODULE module, const IMAGE_IMPORT_DESCRIPTOR *d
 done:
     /* restore old protection of the import address table */
     NtProtectVirtualMemory( NtCurrentProcess(), &protect_base, &protect_size, protect_old, &protect_old );
-    return wmImp;
+    *pwm = wmImp;
+    return TRUE;
 }
 
 
@@ -901,8 +909,11 @@ static NTSTATUS fixup_imports( WINE_MODREF *wm, LPCWSTR load_path )
     status = STATUS_SUCCESS;
     for (i = 0; i < nb_imports; i++)
     {
-        if (!(wm->deps[i] = import_dll( wm->ldr.BaseAddress, &imports[i], load_path )))
+        if (!import_dll( wm->ldr.BaseAddress, &imports[i], load_path, &wm->deps[i] ))
+        {
+            wm->deps[i] = NULL;
             status = STATUS_DLL_NOT_FOUND;
+        }
     }
     current_modref = prev;
     if (wm->ldr.ActivationContext) RtlDeactivateActivationContext( 0, cookie );
