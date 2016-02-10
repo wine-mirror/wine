@@ -411,6 +411,23 @@ static void test_query(void)
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 }
 
+static void test_v_flags(void)
+{
+    DWORD r;
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v Wine /ve", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg delete HKCU\\" KEY_BASE " /v Wine /ve", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg delete HKCU\\" KEY_BASE " /v Wine /va", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
+    run_reg_exe("reg delete HKCU\\" KEY_BASE " /ve /va", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+}
+
 START_TEST(reg)
 {
     DWORD r;
@@ -422,4 +439,5 @@ START_TEST(reg)
     test_add();
     test_delete();
     test_query();
+    test_v_flags();
 }
