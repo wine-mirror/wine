@@ -395,13 +395,7 @@ static int reg_delete(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
         return 1;
     }
 
-    if (value_name && value_empty)
-    {
-        output_message(STRING_INVALID_CMDLINE);
-        return 1;
-    }
-
-    if (value_empty && value_all)
+    if ((value_name && value_empty) || (value_name && value_all) || (value_empty && value_all))
     {
         output_message(STRING_INVALID_CMDLINE);
         return 1;
