@@ -1344,6 +1344,24 @@ static BOOL move_to_root_element( struct reader *reader )
     return FALSE;
 }
 
+static BOOL move_to_next_element( struct reader *reader )
+{
+    struct list *ptr;
+    struct node *node = reader->current;
+
+    while ((ptr = list_next( &node->parent->children, &node->entry )))
+    {
+        struct node *next = LIST_ENTRY( ptr, struct node, entry );
+        if (next->hdr.node.nodeType == WS_XML_NODE_TYPE_ELEMENT)
+        {
+            reader->current = next;
+            return TRUE;
+        }
+        node = next;
+    }
+    return FALSE;
+}
+
 static HRESULT read_move_to( struct reader *reader, WS_MOVE_TO move, BOOL *found )
 {
     struct list *ptr;
@@ -1359,6 +1377,10 @@ static HRESULT read_move_to( struct reader *reader, WS_MOVE_TO move, BOOL *found
     {
     case WS_MOVE_TO_ROOT_ELEMENT:
         success = move_to_root_element( reader );
+        break;
+
+    case WS_MOVE_TO_NEXT_ELEMENT:
+        success = move_to_next_element( reader );
         break;
 
     case WS_MOVE_TO_FIRST_NODE:
