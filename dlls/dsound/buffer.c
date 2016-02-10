@@ -1205,9 +1205,9 @@ HRESULT IDirectSoundBufferImpl_Duplicate(
         HeapFree(GetProcessHeap(),0,dsb->pwfx);
         HeapFree(GetProcessHeap(),0,dsb);
         dsb = NULL;
-    }
+    }else
+        IDirectSoundBuffer8_AddRef(&dsb->IDirectSoundBuffer8_iface);
 
-    IDirectSoundBuffer8_AddRef(&dsb->IDirectSoundBuffer8_iface);
     *ppdsb = dsb;
     return hres;
 }
