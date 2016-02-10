@@ -170,11 +170,6 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 	
 	switch (dsb->ds3db_ds3db.dwMode)
 	{
-		case DS3DMODE_DISABLE:
-			TRACE("3D processing disabled\n");
-			/* this one is here only to eliminate annoying warning message */
-			DSOUND_RecalcVolPan (&dsb->volpan);
-			return;
 		case DS3DMODE_NORMAL:
 			TRACE("Normal 3D processing mode\n");
 			/* we need to calculate distance between buffer and listener*/
@@ -187,6 +182,11 @@ void DSOUND_Calc3DBuffer(IDirectSoundBufferImpl *dsb)
 			vDistance = dsb->ds3db_ds3db.vPosition;
 			flDistance = VectorMagnitude (&vDistance);
 			break;
+		default:
+			TRACE("3D processing disabled\n");
+			/* this one is here only to eliminate annoying warning message */
+			DSOUND_RecalcVolPan (&dsb->volpan);
+			return;
 	}
 	
 	if (flDistance > dsb->ds3db_ds3db.flMaxDistance)
