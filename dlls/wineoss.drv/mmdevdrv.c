@@ -1203,7 +1203,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
 
     /* pretend we process audio in Period chunks, so max latency includes
      * the period time.  Some native machines add .6666ms in shared mode. */
-    *latency = This->period_us * 10 + 6666;
+    *latency = (REFERENCE_TIME)This->period_us * 10 + 6666;
 
     LeaveCriticalSection(&This->lock);
 
