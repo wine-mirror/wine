@@ -40,11 +40,6 @@ BOOL volume_prepare_system_memory(struct wined3d_volume *volume)
     return TRUE;
 }
 
-void wined3d_volume_get_pitch(const struct wined3d_volume *volume, UINT *row_pitch, UINT *slice_pitch)
-{
-    wined3d_texture_get_pitch(volume->container, volume->texture_level, row_pitch, slice_pitch);
-}
-
 /* This call just uploads data, the caller is responsible for binding the
  * correct texture. */
 /* Context activation is done by the caller. */
@@ -588,7 +583,8 @@ HRESULT wined3d_volume_map(struct wined3d_volume *volume,
     }
     else
     {
-        wined3d_volume_get_pitch(volume, &map_desc->row_pitch, &map_desc->slice_pitch);
+        wined3d_texture_get_pitch(volume->container, volume->texture_level,
+                &map_desc->row_pitch, &map_desc->slice_pitch);
     }
 
     if (!box)
