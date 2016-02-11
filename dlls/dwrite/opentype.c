@@ -811,6 +811,16 @@ static HRESULT opentype_otf_analyzer(IDWriteFontFileStream *stream, UINT32 *font
 static HRESULT opentype_type1_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
     DWRITE_FONT_FACE_TYPE *face_type)
 {
+#include "pshpack1.h"
+    /* Specified in Adobe TechNote #5178 */
+    struct pfm_header {
+        WORD  dfVersion;
+        DWORD dfSize;
+        char  data0[95];
+        DWORD dfDevice;
+        char  data1[12];
+    };
+#include "poppack.h"
     struct type1_header {
         WORD tag;
         char data[14];
@@ -833,6 +843,44 @@ static HRESULT opentype_type1_analyzer(IDWriteFontFileStream *stream, UINT32 *fo
     }
 
     IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+
+    /* let's see if it's a .pfm metrics file */
+    if (*file_type == DWRITE_FONT_FILE_TYPE_UNKNOWN) {
+        const struct pfm_header *pfm_header;
+        UINT64 filesize;
+        DWORD offset;
+        BOOL header_checked;
+
+        hr = IDWriteFontFileStream_GetFileSize(stream, &filesize);
+        if (FAILED(hr))
+            return hr;
+
+        hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&pfm_header, 0, sizeof(*pfm_header), &context);
+        if (FAILED(hr))
+            return hr;
+
+        offset = pfm_header->dfDevice;
+        header_checked = pfm_header->dfVersion == 0x100 && pfm_header->dfSize == filesize;
+        IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+
+        /* as a last test check static string in PostScript information section */
+        if (header_checked) {
+            static const char postscript[] = "PostScript";
+            char *devtype_name;
+
+            hr = IDWriteFontFileStream_ReadFileFragment(stream, (const void**)&devtype_name, offset, sizeof(postscript), &context);
+            if (FAILED(hr))
+                return hr;
+
+            if (!memcmp(devtype_name, postscript, sizeof(postscript))) {
+                *font_count = 1;
+                *file_type = DWRITE_FONT_FILE_TYPE_TYPE1_PFM;
+                *face_type = DWRITE_FONT_FACE_TYPE_TYPE1;
+            }
+
+            IDWriteFontFileStream_ReleaseFileFragment(stream, context);
+        }
+    }
 
     return *file_type != DWRITE_FONT_FILE_TYPE_UNKNOWN ? S_OK : S_FALSE;
 }
