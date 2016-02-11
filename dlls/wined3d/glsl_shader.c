@@ -2164,10 +2164,12 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             break;
 
         case WINED3DSPR_INPUT:
-            /* vertex shaders */
             if (version->type == WINED3D_SHADER_TYPE_VERTEX)
             {
                 struct shader_glsl_ctx_priv *priv = ins->ctx->backend_data;
+
+                if (reg->idx[0].rel_addr)
+                    FIXME("VS3+ input registers relative addressing.\n");
                 if (priv->cur_vs_args->swizzle_map & (1u << reg->idx[0].offset))
                     *is_color = TRUE;
                 sprintf(register_name, "%s_in%u", prefix, reg->idx[0].offset);
@@ -2318,6 +2320,8 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
 
         case WINED3DSPR_TEXCRDOUT:
             /* Vertex shaders >= 3.0: WINED3DSPR_OUTPUT */
+            if (reg->idx[0].rel_addr)
+                FIXME("VS3 output registers relative addressing.\n");
             sprintf(register_name, "%s_out[%u]", prefix, reg->idx[0].offset);
             break;
 
