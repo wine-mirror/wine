@@ -149,14 +149,14 @@ static void init_thiscall_thunk(void)
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
-#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)a)
-#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)a,(const void*)b)
-#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(const void*)a,\
-        (const void*)b,(const void*)c)
-#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)a,\
-        (const void*)b,(const void*)c,(const void*)d)
-#define call_func6(func,_this,a,b,c,d,e) call_thiscall_func6(func,_this,(const void*)a,\
-        (const void*)b,(const void*)c,(const void*)d,(const void*)e)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+#define call_func3(func,_this,a,b) call_thiscall_func3(func,_this,(const void*)(a),(const void*)(b))
+#define call_func4(func,_this,a,b,c) call_thiscall_func4(func,_this,(const void*)(a),\
+        (const void*)(b),(const void*)(c))
+#define call_func5(func,_this,a,b,c,d) call_thiscall_func5(func,_this,(const void*)(a),\
+        (const void*)(b),(const void*)(c),(const void*)(d))
+#define call_func6(func,_this,a,b,c,d,e) call_thiscall_func6(func,_this,(const void*)(a),\
+        (const void*)(b),(const void*)(c),(const void*)(d),(const void*)(e))
 
 #else
 
