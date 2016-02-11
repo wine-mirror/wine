@@ -1437,7 +1437,7 @@ static const struct wined3d_format_srgb_info format_srgb_info[] =
     {WINED3DFMT_BC7_UNORM_SRGB,      WINED3DFMT_BC7_UNORM},
 };
 
-static inline int getFmtIdx(enum wined3d_format_id format_id)
+static inline int get_format_idx(enum wined3d_format_id format_id)
 {
     /* First check if the format is at the position of its value.
      * This will catch the argb formats before the loop is entered. */
@@ -1536,7 +1536,7 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
         DWORD flags = 0;
         int fmt_idx;
 
-        fmt_idx = getFmtIdx(typed_formats[i].id);
+        fmt_idx = get_format_idx(typed_formats[i].id);
         if (fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
@@ -1560,7 +1560,7 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 
     for (i = 0; i < ARRAY_SIZE(format_base_flags); ++i)
     {
-        int fmt_idx = getFmtIdx(format_base_flags[i].id);
+        int fmt_idx = get_format_idx(format_base_flags[i].id);
 
         if (fmt_idx == -1)
         {
@@ -1583,7 +1583,7 @@ static BOOL init_format_block_info(struct wined3d_gl_info *gl_info)
     for (i = 0; i < (sizeof(format_block_info) / sizeof(*format_block_info)); ++i)
     {
         struct wined3d_format *format;
-        int fmt_idx = getFmtIdx(format_block_info[i].id);
+        int fmt_idx = get_format_idx(format_block_info[i].id);
 
         if (fmt_idx == -1)
         {
@@ -2427,7 +2427,7 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
 
     for (i = 0; i < sizeof(format_texture_info) / sizeof(*format_texture_info); ++i)
     {
-        int srgb_fmt_idx = -1, fmt_idx = getFmtIdx(format_texture_info[i].id);
+        int srgb_fmt_idx = -1, fmt_idx = get_format_idx(format_texture_info[i].id);
         struct wined3d_format *format, *srgb_format;
 
         if (fmt_idx == -1)
@@ -2497,7 +2497,7 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
         {
             if (format_srgb_info[j].base_format_id == format->id)
             {
-                srgb_fmt_idx = getFmtIdx(format_srgb_info[j].srgb_format_id);
+                srgb_fmt_idx = get_format_idx(format_srgb_info[j].srgb_format_id);
                 if (srgb_fmt_idx == -1)
                 {
                     ERR("Format %s (%#x) not found.\n",
@@ -2681,7 +2681,7 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
         {
             for(i = 0; i < (sizeof(fmts16) / sizeof(*fmts16)); i++)
             {
-                fmt_idx = getFmtIdx(fmts16[i]);
+                fmt_idx = get_format_idx(fmts16[i]);
                 format_set_flag(&gl_info->formats[fmt_idx], WINED3DFMT_FLAG_FILTERING);
             }
         }
@@ -2690,7 +2690,7 @@ static void init_format_filter_info(struct wined3d_gl_info *gl_info, enum wined3
 
     for(i = 0; i < (sizeof(fmts16) / sizeof(*fmts16)); i++)
     {
-        fmt_idx = getFmtIdx(fmts16[i]);
+        fmt_idx = get_format_idx(fmts16[i]);
         format = &gl_info->formats[fmt_idx];
         if (!format->glInternal) continue; /* Not supported by GL */
 
@@ -2712,23 +2712,23 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     unsigned int i;
     int idx;
 
-    idx = getFmtIdx(WINED3DFMT_R16_FLOAT);
+    idx = get_format_idx(WINED3DFMT_R16_FLOAT);
     gl_info->formats[idx].color_fixup = create_color_fixup_desc(
             0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
 
-    idx = getFmtIdx(WINED3DFMT_R32_FLOAT);
+    idx = get_format_idx(WINED3DFMT_R32_FLOAT);
     gl_info->formats[idx].color_fixup = create_color_fixup_desc(
             0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
 
-    idx = getFmtIdx(WINED3DFMT_R16G16_UNORM);
+    idx = get_format_idx(WINED3DFMT_R16G16_UNORM);
     gl_info->formats[idx].color_fixup = create_color_fixup_desc(
             0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
 
-    idx = getFmtIdx(WINED3DFMT_R16G16_FLOAT);
+    idx = get_format_idx(WINED3DFMT_R16G16_FLOAT);
     gl_info->formats[idx].color_fixup = create_color_fixup_desc(
             0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
 
-    idx = getFmtIdx(WINED3DFMT_R32G32_FLOAT);
+    idx = get_format_idx(WINED3DFMT_R32G32_FLOAT);
     gl_info->formats[idx].color_fixup = create_color_fixup_desc(
             0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_W);
 
@@ -2739,10 +2739,10 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         /* R8G8_SNORM and R16G16_SNORM need a fixup of the undefined blue channel. OpenGL
          * returns 0.0 when sampling from it, DirectX 1.0. So we always have in-shader
          * conversion for this format. */
-        idx = getFmtIdx(WINED3DFMT_R8G8_SNORM);
+        idx = get_format_idx(WINED3DFMT_R8G8_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-        idx = getFmtIdx(WINED3DFMT_R16G16_SNORM);
+        idx = get_format_idx(WINED3DFMT_R16G16_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
@@ -2750,60 +2750,60 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     {
         /* Emulate using unsigned formats. This requires load-time conversion in addition to the
          * fixups here. */
-        idx = getFmtIdx(WINED3DFMT_R8G8_SNORM);
+        idx = get_format_idx(WINED3DFMT_R8G8_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-        idx = getFmtIdx(WINED3DFMT_R16G16_SNORM);
+        idx = get_format_idx(WINED3DFMT_R16G16_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
-        idx = getFmtIdx(WINED3DFMT_R8G8B8A8_SNORM);
+        idx = get_format_idx(WINED3DFMT_R8G8B8A8_SNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 1, CHANNEL_SOURCE_Z, 1, CHANNEL_SOURCE_W);
-        idx = getFmtIdx(WINED3DFMT_R5G5_SNORM_L6_UNORM);
+        idx = get_format_idx(WINED3DFMT_R5G5_SNORM_L6_UNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_ONE);
     }
 
     if (!gl_info->supported[NV_TEXTURE_SHADER])
     {
-        idx = getFmtIdx(WINED3DFMT_R8G8_SNORM_L8X8_UNORM);
+        idx = get_format_idx(WINED3DFMT_R8G8_SNORM_L8X8_UNORM);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 1, CHANNEL_SOURCE_X, 1, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_Z, 0, CHANNEL_SOURCE_W);
     }
 
     if (gl_info->supported[ARB_TEXTURE_COMPRESSION_RGTC] || gl_info->supported[EXT_TEXTURE_COMPRESSION_RGTC])
     {
-        idx = getFmtIdx(WINED3DFMT_ATI1N);
+        idx = get_format_idx(WINED3DFMT_ATI1N);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X);
 
-        idx = getFmtIdx(WINED3DFMT_ATI2N);
+        idx = get_format_idx(WINED3DFMT_ATI2N);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_Y, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
     else if (gl_info->supported[ATI_TEXTURE_COMPRESSION_3DC])
     {
-        idx = getFmtIdx(WINED3DFMT_ATI2N);
+        idx = get_format_idx(WINED3DFMT_ATI2N);
         gl_info->formats[idx].color_fixup= create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_W, 0, CHANNEL_SOURCE_ONE, 0, CHANNEL_SOURCE_ONE);
     }
 
     if (!gl_info->supported[APPLE_YCBCR_422])
     {
-        idx = getFmtIdx(WINED3DFMT_YUY2);
+        idx = get_format_idx(WINED3DFMT_YUY2);
         gl_info->formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YUY2);
 
-        idx = getFmtIdx(WINED3DFMT_UYVY);
+        idx = get_format_idx(WINED3DFMT_UYVY);
         gl_info->formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_UYVY);
     }
 
-    idx = getFmtIdx(WINED3DFMT_YV12);
+    idx = get_format_idx(WINED3DFMT_YV12);
     format_set_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_HEIGHT_SCALE);
     gl_info->formats[idx].height_scale.numerator = 3;
     gl_info->formats[idx].height_scale.denominator = 2;
     gl_info->formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YV12);
 
-    idx = getFmtIdx(WINED3DFMT_NV12);
+    idx = get_format_idx(WINED3DFMT_NV12);
     format_set_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_HEIGHT_SCALE);
     gl_info->formats[idx].height_scale.numerator = 3;
     gl_info->formats[idx].height_scale.denominator = 2;
@@ -2811,20 +2811,20 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
 
     if (!gl_info->supported[WINED3D_GL_LEGACY_CONTEXT])
     {
-        idx = getFmtIdx(WINED3DFMT_INTZ);
+        idx = get_format_idx(WINED3DFMT_INTZ);
         gl_info->formats[idx].color_fixup = create_color_fixup_desc(
                 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X, 0, CHANNEL_SOURCE_X);
     }
 
     if (gl_info->supported[ARB_FRAGMENT_PROGRAM])
     {
-        idx = getFmtIdx(WINED3DFMT_P8_UINT);
+        idx = get_format_idx(WINED3DFMT_P8_UINT);
         gl_info->formats[idx].color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_P8);
     }
 
     if (gl_info->supported[ARB_VERTEX_ARRAY_BGRA])
     {
-        idx = getFmtIdx(WINED3DFMT_B8G8R8A8_UNORM);
+        idx = get_format_idx(WINED3DFMT_B8G8R8A8_UNORM);
         gl_info->formats[idx].gl_vtx_format = GL_BGRA;
     }
 
@@ -2832,28 +2832,28 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     {
         /* Do not change the size of the type, it is CPU side. We have to change the GPU-side information though.
          * It is the job of the vertex buffer code to make sure that the vbos have the right format */
-        idx = getFmtIdx(WINED3DFMT_R16G16_FLOAT);
+        idx = get_format_idx(WINED3DFMT_R16G16_FLOAT);
         gl_info->formats[idx].gl_vtx_type = GL_HALF_FLOAT; /* == GL_HALF_FLOAT_NV */
 
-        idx = getFmtIdx(WINED3DFMT_R16G16B16A16_FLOAT);
+        idx = get_format_idx(WINED3DFMT_R16G16B16A16_FLOAT);
         gl_info->formats[idx].gl_vtx_type = GL_HALF_FLOAT;
     }
 
     if (!gl_info->supported[ARB_HALF_FLOAT_PIXEL])
     {
-        idx = getFmtIdx(WINED3DFMT_R16_FLOAT);
+        idx = get_format_idx(WINED3DFMT_R16_FLOAT);
         format_clear_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE);
 
-        idx = getFmtIdx(WINED3DFMT_R16G16_FLOAT);
+        idx = get_format_idx(WINED3DFMT_R16G16_FLOAT);
         format_clear_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE);
 
-        idx = getFmtIdx(WINED3DFMT_R16G16B16A16_FLOAT);
+        idx = get_format_idx(WINED3DFMT_R16G16B16A16_FLOAT);
         format_clear_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE);
     }
 
     if (gl_info->quirks & WINED3D_QUIRK_BROKEN_RGBA16)
     {
-        idx = getFmtIdx(WINED3DFMT_R16G16B16A16_UNORM);
+        idx = get_format_idx(WINED3DFMT_R16G16B16A16_UNORM);
         format_clear_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE);
     }
 
@@ -2872,7 +2872,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
     /* FIXME: This should just check the shader backend caps. */
     if (gl_info->supported[ARB_VERTEX_PROGRAM] || gl_info->supported[ARB_VERTEX_SHADER])
     {
-        idx = getFmtIdx(WINED3DFMT_INST);
+        idx = get_format_idx(WINED3DFMT_INST);
         format_set_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE);
     }
 
@@ -2884,7 +2884,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
      * value. */
     if (gl_info->supported[EXT_DEPTH_BOUNDS_TEST])
     {
-        idx = getFmtIdx(WINED3DFMT_NVDB);
+        idx = get_format_idx(WINED3DFMT_NVDB);
         format_set_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE);
     }
 
@@ -2893,7 +2893,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
      * RENDERTARGET usage. */
     if (gl_info->supported[ARB_FRAMEBUFFER_OBJECT])
     {
-        idx = getFmtIdx(WINED3DFMT_RESZ);
+        idx = get_format_idx(WINED3DFMT_RESZ);
         format_set_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET);
     }
 
@@ -2914,26 +2914,26 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
      *
      * Note that GL_NV_texture_compression_vtc adds this functionality to OpenGL, but the
      * block layout is not compatible with the one used by d3d. See volume_dxt5_test. */
-    idx = getFmtIdx(WINED3DFMT_DXT1);
+    idx = get_format_idx(WINED3DFMT_DXT1);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-    idx = getFmtIdx(WINED3DFMT_DXT2);
+    idx = get_format_idx(WINED3DFMT_DXT2);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-    idx = getFmtIdx(WINED3DFMT_DXT3);
+    idx = get_format_idx(WINED3DFMT_DXT3);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-    idx = getFmtIdx(WINED3DFMT_DXT4);
+    idx = get_format_idx(WINED3DFMT_DXT4);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-    idx = getFmtIdx(WINED3DFMT_DXT5);
+    idx = get_format_idx(WINED3DFMT_DXT5);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-    idx = getFmtIdx(WINED3DFMT_BC1_UNORM);
+    idx = get_format_idx(WINED3DFMT_BC1_UNORM);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-    idx = getFmtIdx(WINED3DFMT_BC2_UNORM);
+    idx = get_format_idx(WINED3DFMT_BC2_UNORM);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-    idx = getFmtIdx(WINED3DFMT_BC3_UNORM);
+    idx = get_format_idx(WINED3DFMT_BC3_UNORM);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
     /* Similarly with ATI1N / ATI2N and GL_ARB_texture_compression_rgtc. */
-    idx = getFmtIdx(WINED3DFMT_ATI1N);
+    idx = get_format_idx(WINED3DFMT_ATI1N);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
-    idx = getFmtIdx(WINED3DFMT_ATI2N);
+    idx = get_format_idx(WINED3DFMT_ATI2N);
     gl_info->formats[idx].flags[WINED3D_GL_RES_TYPE_TEX_3D] &= ~WINED3DFMT_FLAG_TEXTURE;
 }
 
@@ -2944,7 +2944,7 @@ static BOOL init_format_vertex_info(struct wined3d_gl_info *gl_info)
     for (i = 0; i < (sizeof(format_vertex_info) / sizeof(*format_vertex_info)); ++i)
     {
         struct wined3d_format *format;
-        int fmt_idx = getFmtIdx(format_vertex_info[i].id);
+        int fmt_idx = get_format_idx(format_vertex_info[i].id);
 
         if (fmt_idx == -1)
         {
@@ -2973,8 +2973,8 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
     for (i = 0; i < ARRAY_SIZE(typed_formats); ++i)
     {
         struct wined3d_format *format, *typeless_format;
-        int fmt_idx = getFmtIdx(typed_formats[i].id);
-        int typeless_fmt_idx = getFmtIdx(typed_formats[i].typeless_id);
+        int fmt_idx = get_format_idx(typed_formats[i].id);
+        int typeless_fmt_idx = get_format_idx(typed_formats[i].typeless_id);
 
         if (fmt_idx == -1)
         {
@@ -3139,14 +3139,14 @@ float wined3d_adapter_find_polyoffset_scale(struct wined3d_caps_gl_ctx *ctx, GLe
 const struct wined3d_format *wined3d_get_format(const struct wined3d_gl_info *gl_info,
         enum wined3d_format_id format_id)
 {
-    int idx = getFmtIdx(format_id);
+    int idx = get_format_idx(format_id);
 
     if (idx == -1)
     {
         FIXME("Can't find format %s (%#x) in the format lookup table\n",
                 debug_d3dformat(format_id), format_id);
         /* Get the caller a valid pointer */
-        idx = getFmtIdx(WINED3DFMT_UNKNOWN);
+        idx = get_format_idx(WINED3DFMT_UNKNOWN);
     }
 
     return &gl_info->formats[idx];
