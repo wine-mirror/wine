@@ -184,7 +184,7 @@ static LRESULT WINAPI wndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam)
             return TRUE;
     }
 
-    return DefWindowProcA(hwnd,msg,wParam,lParam);
+    return DefWindowProcA(hWnd,msg,wParam,lParam);
 }
 
 static BOOL init(void) {
