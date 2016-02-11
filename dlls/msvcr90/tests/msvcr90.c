@@ -283,7 +283,7 @@ static void* do_call_func2(void *func, void *_this, const void* arg)
 #endif
 
 #define call_func1(func,_this)   do_call_func1(func,_this)
-#define call_func2(func,_this,a) do_call_func2(func,_this,(const void*)a)
+#define call_func2(func,_this,a) do_call_func2(func,_this,(const void*)(a))
 
 #else
 
