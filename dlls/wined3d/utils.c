@@ -33,6 +33,42 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 
+#define WINED3D_FORMAT_FOURCC_BASE (WINED3DFMT_BC7_UNORM_SRGB + 1)
+
+static const struct
+{
+    enum wined3d_format_id id;
+    unsigned int idx;
+}
+format_index_remap[] =
+{
+    {WINED3DFMT_UYVY,         WINED3D_FORMAT_FOURCC_BASE},
+    {WINED3DFMT_YUY2,         WINED3D_FORMAT_FOURCC_BASE + 1},
+    {WINED3DFMT_YV12,         WINED3D_FORMAT_FOURCC_BASE + 2},
+    {WINED3DFMT_DXT1,         WINED3D_FORMAT_FOURCC_BASE + 3},
+    {WINED3DFMT_DXT2,         WINED3D_FORMAT_FOURCC_BASE + 4},
+    {WINED3DFMT_DXT3,         WINED3D_FORMAT_FOURCC_BASE + 5},
+    {WINED3DFMT_DXT4,         WINED3D_FORMAT_FOURCC_BASE + 6},
+    {WINED3DFMT_DXT5,         WINED3D_FORMAT_FOURCC_BASE + 7},
+    {WINED3DFMT_MULTI2_ARGB8, WINED3D_FORMAT_FOURCC_BASE + 8},
+    {WINED3DFMT_G8R8_G8B8,    WINED3D_FORMAT_FOURCC_BASE + 9},
+    {WINED3DFMT_R8G8_B8G8,    WINED3D_FORMAT_FOURCC_BASE + 10},
+    {WINED3DFMT_ATI1N,        WINED3D_FORMAT_FOURCC_BASE + 11},
+    {WINED3DFMT_ATI2N,        WINED3D_FORMAT_FOURCC_BASE + 12},
+    {WINED3DFMT_INST,         WINED3D_FORMAT_FOURCC_BASE + 13},
+    {WINED3DFMT_NVDB,         WINED3D_FORMAT_FOURCC_BASE + 14},
+    {WINED3DFMT_NVHU,         WINED3D_FORMAT_FOURCC_BASE + 15},
+    {WINED3DFMT_NVHS,         WINED3D_FORMAT_FOURCC_BASE + 16},
+    {WINED3DFMT_INTZ,         WINED3D_FORMAT_FOURCC_BASE + 17},
+    {WINED3DFMT_RESZ,         WINED3D_FORMAT_FOURCC_BASE + 18},
+    {WINED3DFMT_NULL,         WINED3D_FORMAT_FOURCC_BASE + 19},
+    {WINED3DFMT_R16,          WINED3D_FORMAT_FOURCC_BASE + 20},
+    {WINED3DFMT_AL16,         WINED3D_FORMAT_FOURCC_BASE + 21},
+    {WINED3DFMT_NV12,         WINED3D_FORMAT_FOURCC_BASE + 22},
+};
+
+#define WINED3D_FORMAT_COUNT (WINED3D_FORMAT_FOURCC_BASE + ARRAY_SIZE(format_index_remap))
+
 struct wined3d_format_channels
 {
     enum wined3d_format_id id;
@@ -1439,22 +1475,17 @@ static const struct wined3d_format_srgb_info format_srgb_info[] =
 
 static inline int get_format_idx(enum wined3d_format_id format_id)
 {
-    /* First check if the format is at the position of its value.
-     * This will catch the argb formats before the loop is entered. */
-    if (format_id < (sizeof(formats) / sizeof(*formats))
-            && formats[format_id].id == format_id)
-    {
-        return format_id;
-    }
-    else
-    {
-        unsigned int i;
+    unsigned int i;
 
-        for (i = 0; i < (sizeof(formats) / sizeof(*formats)); ++i)
-        {
-            if (formats[i].id == format_id) return i;
-        }
+    if (format_id < WINED3D_FORMAT_FOURCC_BASE)
+        return format_id;
+
+    for (i = 0; i < ARRAY_SIZE(format_index_remap); ++i)
+    {
+        if (format_index_remap[i].id == format_id)
+            return format_index_remap[i].idx;
     }
+
     return -1;
 }
 
@@ -1500,19 +1531,30 @@ static enum wined3d_channel_type map_channel_type(char t)
 
 static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 {
-    UINT format_count = sizeof(formats) / sizeof(*formats);
     unsigned int i, j;
 
-    gl_info->formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, format_count * sizeof(*gl_info->formats));
-    if (!gl_info->formats)
+    gl_info->format_count = WINED3D_FORMAT_COUNT;
+    if (!(gl_info->formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            gl_info->format_count * sizeof(*gl_info->formats))))
     {
         ERR("Failed to allocate memory.\n");
         return FALSE;
     }
 
-    for (i = 0; i < format_count; ++i)
+    for (i = 0; i < ARRAY_SIZE(formats); ++i)
     {
-        struct wined3d_format *format = &gl_info->formats[i];
+        struct wined3d_format *format;
+        int fmt_idx;
+
+        fmt_idx = get_format_idx(formats[i].id);
+        if (fmt_idx == -1)
+        {
+            ERR("Could not allocate index for format %s %#x.\n",
+                    debug_d3dformat(formats[i].id), formats[i].id);
+            goto fail;
+        }
+        format = &gl_info->formats[fmt_idx];
+
         format->id = formats[i].id;
         format->red_size = formats[i].red_size;
         format->green_size = formats[i].green_size;
@@ -1539,10 +1581,9 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
         fmt_idx = get_format_idx(typed_formats[i].id);
         if (fmt_idx == -1)
         {
-            ERR("Format %s (%#x) not found.\n",
+            ERR("Could not allocate index for format %s %#x.\n",
                     debug_d3dformat(typed_formats[i].id), typed_formats[i].id);
-            HeapFree(GetProcessHeap(), 0, gl_info->formats);
-            return FALSE;
+            goto fail;
         }
         format = &gl_info->formats[fmt_idx];
 
@@ -1566,14 +1607,17 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
         {
             ERR("Format %s (%#x) not found.\n",
                     debug_d3dformat(format_base_flags[i].id), format_base_flags[i].id);
-            HeapFree(GetProcessHeap(), 0, gl_info->formats);
-            return FALSE;
+            goto fail;
         }
 
         format_set_flag(&gl_info->formats[fmt_idx], format_base_flags[i].flags);
     }
 
     return TRUE;
+
+fail:
+    HeapFree(GetProcessHeap(), 0, gl_info->formats);
+    return FALSE;
 }
 
 static BOOL init_format_block_info(struct wined3d_gl_info *gl_info)
@@ -2176,7 +2220,7 @@ static void init_format_fbo_compat_info(struct wined3d_caps_gl_ctx *ctx)
 
     if (gl_info->supported[ARB_INTERNALFORMAT_QUERY2])
     {
-        for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+        for (i = 0; i < gl_info->format_count; ++i)
         {
             GLint value;
             struct wined3d_format *format = &gl_info->formats[i];
@@ -2287,7 +2331,7 @@ static void init_format_fbo_compat_info(struct wined3d_caps_gl_ctx *ctx)
         gl_info->gl_ops.gl.p_glReadBuffer(GL_COLOR_ATTACHMENT0);
     }
 
-    for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+    for (i = 0; i < gl_info->format_count; ++i)
     {
         struct wined3d_format *format = &gl_info->formats[i];
 
@@ -2897,7 +2941,7 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
         format_set_flag(&gl_info->formats[idx], WINED3DFMT_FLAG_TEXTURE | WINED3DFMT_FLAG_RENDERTARGET);
     }
 
-    for (i = 0; i < sizeof(formats) / sizeof(*formats); ++i)
+    for (i = 0; i < gl_info->format_count; ++i)
     {
         struct wined3d_format *format = &gl_info->formats[i];
 

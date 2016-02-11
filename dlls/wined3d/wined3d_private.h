@@ -1828,6 +1828,7 @@ struct wined3d_gl_info
     struct wined3d_fbo_ops fbo_ops;
 
     struct wined3d_format *formats;
+    unsigned int format_count;
 };
 
 struct wined3d_driver_info
