@@ -83,7 +83,7 @@ static void init_thiscall_thunk(void)
 }
 
 #define call_func1(func,_this) call_thiscall_func1(func,_this)
-#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)a)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
 
 #else
 
