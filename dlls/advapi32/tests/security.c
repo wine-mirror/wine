@@ -3159,12 +3159,7 @@ static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD 
     bret = pGetAclInformation(dacl, &acl_size, sizeof(acl_size), AclSizeInformation);
     ok_(__FILE__, line)(bret, "GetAclInformation failed\n");
 
-    if (todo_count)
-        todo_wine
-        ok_(__FILE__, line)(acl_size.AceCount == 2,
-            "GetAclInformation returned unexpected entry count (%d != 2)\n",
-            acl_size.AceCount);
-    else
+    todo_wine_if (todo_count)
         ok_(__FILE__, line)(acl_size.AceCount == 2,
             "GetAclInformation returned unexpected entry count (%d != 2)\n",
             acl_size.AceCount);
@@ -3175,18 +3170,10 @@ static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD 
         ok_(__FILE__, line)(bret, "Failed to get Current User ACE\n");
 
         bret = EqualSid(&ace->SidStart, user_sid);
-        if (todo_sid)
-            todo_wine
-                ok_(__FILE__, line)(bret, "Current User ACE (%s) != Current User SID (%s)\n", debugstr_sid(&ace->SidStart), debugstr_sid(user_sid));
-        else
+        todo_wine_if (todo_sid)
             ok_(__FILE__, line)(bret, "Current User ACE (%s) != Current User SID (%s)\n", debugstr_sid(&ace->SidStart), debugstr_sid(user_sid));
 
-        if (todo_flags)
-            todo_wine
-            ok_(__FILE__, line)(((ACE_HEADER *)ace)->AceFlags == flags,
-                "Current User ACE has unexpected flags (0x%x != 0x%x)\n",
-                ((ACE_HEADER *)ace)->AceFlags, flags);
-        else
+        todo_wine_if (todo_flags)
             ok_(__FILE__, line)(((ACE_HEADER *)ace)->AceFlags == flags,
                 "Current User ACE has unexpected flags (0x%x != 0x%x)\n",
                 ((ACE_HEADER *)ace)->AceFlags, flags);
@@ -3201,18 +3188,10 @@ static void test_inherited_dacl(PACL dacl, PSID admin_sid, PSID user_sid, DWORD 
         ok_(__FILE__, line)(bret, "Failed to get Administators Group ACE\n");
 
         bret = EqualSid(&ace->SidStart, admin_sid);
-        if (todo_sid)
-            todo_wine
-            ok_(__FILE__, line)(bret, "Administators Group ACE (%s) != Administators Group SID (%s)\n", debugstr_sid(&ace->SidStart), debugstr_sid(admin_sid));
-        else
+        todo_wine_if (todo_sid)
             ok_(__FILE__, line)(bret, "Administators Group ACE (%s) != Administators Group SID (%s)\n", debugstr_sid(&ace->SidStart), debugstr_sid(admin_sid));
 
-        if (todo_flags)
-            todo_wine
-            ok_(__FILE__, line)(((ACE_HEADER *)ace)->AceFlags == flags,
-                "Administators Group ACE has unexpected flags (0x%x != 0x%x)\n",
-                ((ACE_HEADER *)ace)->AceFlags, flags);
-        else
+        todo_wine_if (todo_flags)
             ok_(__FILE__, line)(((ACE_HEADER *)ace)->AceFlags == flags,
                 "Administators Group ACE has unexpected flags (0x%x != 0x%x)\n",
                 ((ACE_HEADER *)ace)->AceFlags, flags);
