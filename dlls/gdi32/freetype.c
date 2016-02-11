@@ -2387,7 +2387,7 @@ static void LoadReplaceList(void)
                         replace += strlenW(replace) + 1;
                     }
                 }
-                else
+                else if (type == REG_SZ)
                     map_font_family(value, data);
             }
             else
