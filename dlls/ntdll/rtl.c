@@ -58,6 +58,16 @@ static RTL_CRITICAL_SECTION_DEBUG critsect_debug =
 };
 static RTL_CRITICAL_SECTION peb_lock = { &critsect_debug, -1, 0, 0, 0, 0 };
 
+#ifdef __i386__
+#define DEFINE_FASTCALL4_ENTRYPOINT( name ) \
+    __ASM_STDCALL_FUNC( name, 16, \
+                       "popl %eax\n\t" \
+                       "pushl %edx\n\t" \
+                       "pushl %ecx\n\t" \
+                       "pushl %eax\n\t" \
+                       "jmp " __ASM_NAME("__regs_") #name __ASM_STDCALL(16))
+#endif
+
 /* CRC polynomial 0xedb88320 */
 static const DWORD CRC_table[256] =
 {
@@ -1191,10 +1201,10 @@ PSLIST_ENTRY WINAPI RtlInterlockedPopEntrySList(PSLIST_HEADER list)
 }
 
 /*************************************************************************
- * RtlInterlockedPushListSList   [NTDLL.@]
+ * RtlInterlockedPushListSListEx   [NTDLL.@]
  */
-PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
-                                                PSLIST_ENTRY last, ULONG count)
+PSLIST_ENTRY WINAPI RtlInterlockedPushListSListEx(PSLIST_HEADER list, PSLIST_ENTRY first,
+                                                  PSLIST_ENTRY last, ULONG count)
 {
     SLIST_HEADER old, new;
 
@@ -1220,6 +1230,21 @@ PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY
                                    old.Alignment) != old.Alignment);
     return old.s.Next.Next;
 #endif
+}
+
+/*************************************************************************
+ * RtlInterlockedPushListSList   [NTDLL.@]
+ */
+#ifdef DEFINE_FASTCALL4_ENTRYPOINT
+DEFINE_FASTCALL4_ENTRYPOINT(RtlInterlockedPushListSList)
+PSLIST_ENTRY WINAPI __regs_RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
+                                                       PSLIST_ENTRY last, ULONG count)
+#else
+PSLIST_ENTRY WINAPI RtlInterlockedPushListSList(PSLIST_HEADER list, PSLIST_ENTRY first,
+                                                PSLIST_ENTRY last, ULONG count)
+#endif
+{
+    return RtlInterlockedPushListSListEx(list, first, last, count);
 }
 
 /******************************************************************************
