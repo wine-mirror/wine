@@ -913,7 +913,7 @@ static void test_GetTimeZoneInformationForYear(void)
 {
     BOOL ret;
     SYSTEMTIME systemtime;
-    TIME_ZONE_INFORMATION local_tzinfo, tzinfo;
+    TIME_ZONE_INFORMATION local_tzinfo, tzinfo, tzinfo2;
     DYNAMIC_TIME_ZONE_INFORMATION dyn_tzinfo;
     static const WCHAR std_tzname[] = {'G','r','e','e','n','l','a','n','d',' ','S','t','a','n','d','a','r','d',' ','T','i','m','e',0};
     static const WCHAR dlt_tzname[] = {'G','r','e','e','n','l','a','n','d',' ','D','a','y','l','i','g','h','t',' ','T','i','m','e',0};
@@ -962,20 +962,23 @@ static void test_GetTimeZoneInformationForYear(void)
     ret = pGetTimeZoneInformationForYear(2015, &dyn_tzinfo, &tzinfo);
     ok(ret == TRUE, "GetTimeZoneInformationForYear failed, err %u\n", GetLastError());
     ok(tzinfo.Bias == 180, "Expected Bias 180, got %d\n", tzinfo.Bias);
-    ok(!lstrcmpW(tzinfo.StandardName, std_tzname) || broken(!tzinfo.StandardName[0]) /* vista,7 */,
-        "Expected StandardName %s, got %s\n",
-        wine_dbgstr_w(std_tzname), wine_dbgstr_w(tzinfo.StandardName));
     ok(tzinfo.StandardDate.wMonth == 10, "Expected standard month 10, got %d\n", tzinfo.StandardDate.wMonth);
     std_day = day_of_month(&tzinfo.StandardDate, 2015);
     ok(std_day == 24, "Expected standard day 24, got %d\n", std_day);
     ok(tzinfo.StandardBias == 0, "Expected StandardBias 0, got %d\n", tzinfo.StandardBias);
-    ok(!lstrcmpW(tzinfo.DaylightName, dlt_tzname) || broken(!tzinfo.DaylightName[0]) /* vista,7 */,
-        "Expected DaylightName %s, got %s\n",
-        wine_dbgstr_w(dlt_tzname), wine_dbgstr_w(tzinfo.DaylightName));
     ok(tzinfo.DaylightDate.wMonth == 3, "Expected daylight month 3, got %d\n", tzinfo.DaylightDate.wMonth);
     dlt_day = day_of_month(&tzinfo.DaylightDate, 2015);
     ok(dlt_day == 28, "Expected daylight day 28, got %d\n", dlt_day);
     ok(tzinfo.DaylightBias == -60, "Expected DaylightBias -60, got %d\n", tzinfo.DaylightBias);
+
+    ret = pGetTimeZoneInformationForYear(2016, &dyn_tzinfo, &tzinfo2);
+    ok(ret == TRUE, "GetTimeZoneInformationForYear failed, err %u\n", GetLastError());
+    ok(!lstrcmpW(tzinfo.StandardName, tzinfo2.StandardName),
+        "Got differing StandardName values %s and %s\n",
+        wine_dbgstr_w(tzinfo.StandardName), wine_dbgstr_w(tzinfo2.StandardName));
+    ok(!lstrcmpW(tzinfo.DaylightName, tzinfo2.DaylightName),
+        "Got differing DaylightName values %s and %s\n",
+        wine_dbgstr_w(tzinfo.DaylightName), wine_dbgstr_w(tzinfo2.DaylightName));
 
     memset(&dyn_tzinfo, 0xaa, sizeof(dyn_tzinfo));
     lstrcpyW(dyn_tzinfo.TimeZoneKeyName, dlt_tzname);
