@@ -2986,6 +2986,88 @@ static void fontfamily_add_oblique_simulated_face(struct dwrite_fontfamily_data 
     }
 }
 
+static BOOL fontcollection_add_replacement(struct dwrite_fontcollection *collection, const WCHAR *target_name,
+    const WCHAR *replacement_name)
+{
+    UINT32 i = collection_find_family(collection, replacement_name);
+    struct dwrite_fontfamily_data *target;
+    IDWriteLocalizedStrings *strings;
+    HRESULT hr;
+
+    /* replacement does not exist */
+    if (i == ~0u)
+        return FALSE;
+
+    hr = create_localizedstrings(&strings);
+    if (FAILED(hr))
+        return FALSE;
+
+    /* add a new family with target name, reuse font data from replacement */
+    add_localizedstring(strings, enusW, target_name);
+    hr = init_fontfamily_data(strings, &target);
+    if (hr == S_OK) {
+        struct dwrite_fontfamily_data *replacement = collection->family_data[i];
+        WCHAR nameW[255];
+
+        for (i = 0; i < replacement->font_count; i++)
+            fontfamily_add_font(target, replacement->fonts[i]);
+
+        fontcollection_add_family(collection, target);
+        fontstrings_get_en_string(replacement->familyname, nameW, sizeof(nameW)/sizeof(WCHAR));
+        TRACE("replacement %s -> %s\n", debugstr_w(target_name), debugstr_w(nameW));
+    }
+    IDWriteLocalizedStrings_Release(strings);
+    return TRUE;
+}
+
+/* Add family mappings from HKCU\Software\Wine\Fonts\Replacements. This only affects
+   system font collections. */
+static void fontcollection_add_replacements(struct dwrite_fontcollection *collection)
+{
+    DWORD max_namelen, max_datalen, i = 0, type, datalen, namelen;
+    WCHAR *name;
+    void *data;
+    HKEY hkey;
+
+    if (RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Fonts\\Replacements", &hkey))
+        return;
+
+    if (RegQueryInfoKeyW(hkey, NULL, NULL, NULL, NULL, NULL, NULL, NULL, &max_namelen, &max_datalen, NULL, NULL)) {
+        RegCloseKey(hkey);
+        return;
+    }
+
+    max_namelen++; /* returned value doesn't include room for '\0' */
+    name = heap_alloc(max_namelen * sizeof(WCHAR));
+    data = heap_alloc(max_datalen);
+
+    datalen = max_datalen;
+    namelen = max_namelen;
+    while (RegEnumValueW(hkey, i++, name, &namelen, NULL, &type, data, &datalen) == ERROR_SUCCESS) {
+        if (collection_find_family(collection, name) == ~0u) {
+            if (type == REG_MULTI_SZ) {
+                WCHAR *replacement = data;
+                while (*replacement) {
+                    if (fontcollection_add_replacement(collection, name, replacement))
+                        break;
+                    replacement += strlenW(replacement) + 1;
+                }
+            }
+            else if (type == REG_SZ)
+                fontcollection_add_replacement(collection, name, data);
+        }
+        else
+	    TRACE("%s is available, won't be replaced.\n", debugstr_w(name));
+
+        datalen = max_datalen;
+        namelen = max_namelen;
+    }
+
+    heap_free(data);
+    heap_free(name);
+    RegCloseKey(hkey);
+}
+
 HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerator *enumerator, BOOL is_system, IDWriteFontCollection **ret)
 {
     struct fontfile_enum {
@@ -3105,6 +3187,9 @@ HRESULT create_font_collection(IDWriteFactory2* factory, IDWriteFontFileEnumerat
         fontfamily_add_bold_simulated_face(collection->family_data[i]);
         fontfamily_add_oblique_simulated_face(collection->family_data[i]);
     }
+
+    if (is_system)
+        fontcollection_add_replacements(collection);
 
     return hr;
 }
