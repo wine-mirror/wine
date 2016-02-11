@@ -705,7 +705,8 @@
 @ stdcall RtlInterlockedFlushSList(ptr)
 @ stdcall RtlInterlockedPopEntrySList(ptr)
 @ stdcall RtlInterlockedPushEntrySList(ptr ptr)
-@ stdcall RtlInterlockedPushListSList(ptr ptr ptr long)
+@ stdcall -norelay RtlInterlockedPushListSList(ptr ptr ptr long)
+@ stdcall RtlInterlockedPushListSListEx(ptr ptr ptr long)
 # @ stub RtlInvertRangeList
 @ stdcall RtlIpv4AddressToStringA(ptr ptr)
 @ stdcall RtlIpv4AddressToStringExA(ptr long ptr ptr)
