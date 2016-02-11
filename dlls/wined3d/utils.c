@@ -174,40 +174,64 @@ static const struct wined3d_format_channels formats[] =
     {WINED3DFMT_BC5_TYPELESS,               0,  0,  0,  0,   0,  0,  0,  0,    1,   0,     0},
 };
 
-struct wined3d_format_class_info
+enum wined3d_channel_type
+{
+    WINED3D_CHANNEL_TYPE_NONE,
+    WINED3D_CHANNEL_TYPE_UNORM,
+    WINED3D_CHANNEL_TYPE_SNORM,
+    WINED3D_CHANNEL_TYPE_UINT,
+    WINED3D_CHANNEL_TYPE_SINT,
+    WINED3D_CHANNEL_TYPE_FLOAT,
+    WINED3D_CHANNEL_TYPE_DEPTH,
+    WINED3D_CHANNEL_TYPE_STENCIL,
+};
+
+struct wined3d_typed_format_info
 {
     enum wined3d_format_id id;
     enum wined3d_format_id typeless_id;
+    const char *channels;
 };
 
 /**
  * The last entry for a given typeless format defines its internal format.
+ *
+ * u - WINED3D_CHANNEL_TYPE_UNORM
+ * i - WINED3D_CHANNEL_TYPE_SNORM
+ * U - WINED3D_CHANNEL_TYPE_UINT
+ * I - WINED3D_CHANNEL_TYPE_SINT
+ * F - WINED3D_CHANNEL_TYPE_FLOAT
+ * D - WINED3D_CHANNEL_TYPE_DEPTH
+ * S - WINED3D_CHANNEL_TYPE_STENCIL
  */
-static const struct wined3d_format_class_info format_class_info[] =
+static const struct wined3d_typed_format_info typed_formats[] =
 {
-    {WINED3DFMT_R32G32B32A32_UINT,      WINED3DFMT_R32G32B32A32_TYPELESS},
-    {WINED3DFMT_R32G32B32A32_SINT,      WINED3DFMT_R32G32B32A32_TYPELESS},
-    {WINED3DFMT_R32G32B32A32_FLOAT,     WINED3DFMT_R32G32B32A32_TYPELESS},
-    {WINED3DFMT_R32G32B32_FLOAT,        WINED3DFMT_R32G32B32_TYPELESS},
-    {WINED3DFMT_R16G16B16A16_UNORM,     WINED3DFMT_R16G16B16A16_TYPELESS},
-    {WINED3DFMT_R16G16B16A16_FLOAT,     WINED3DFMT_R16G16B16A16_TYPELESS},
-    {WINED3DFMT_R32G32_FLOAT,           WINED3DFMT_R32G32_TYPELESS},
-    {WINED3DFMT_R10G10B10A2_UNORM,      WINED3DFMT_R10G10B10A2_TYPELESS},
-    {WINED3DFMT_R8G8B8A8_UNORM_SRGB,    WINED3DFMT_R8G8B8A8_TYPELESS},
-    {WINED3DFMT_R8G8B8A8_UNORM,         WINED3DFMT_R8G8B8A8_TYPELESS},
-    {WINED3DFMT_R16G16_UNORM,           WINED3DFMT_R16G16_TYPELESS},
-    {WINED3DFMT_R16G16_FLOAT,           WINED3DFMT_R16G16_TYPELESS},
-    {WINED3DFMT_R32_FLOAT,              WINED3DFMT_R32_TYPELESS},
-    {WINED3DFMT_D24_UNORM_S8_UINT,      WINED3DFMT_R24G8_TYPELESS},
-    {WINED3DFMT_R8G8_UNORM,             WINED3DFMT_R8G8_TYPELESS},
-    {WINED3DFMT_R16_FLOAT,              WINED3DFMT_R16_TYPELESS},
-    {WINED3DFMT_R8_UNORM,               WINED3DFMT_R8_TYPELESS},
-    {WINED3DFMT_BC1_UNORM_SRGB,         WINED3DFMT_BC1_TYPELESS},
-    {WINED3DFMT_BC1_UNORM,              WINED3DFMT_BC1_TYPELESS},
-    {WINED3DFMT_BC2_UNORM_SRGB,         WINED3DFMT_BC2_TYPELESS},
-    {WINED3DFMT_BC2_UNORM,              WINED3DFMT_BC2_TYPELESS},
-    {WINED3DFMT_BC3_UNORM_SRGB,         WINED3DFMT_BC3_TYPELESS},
-    {WINED3DFMT_BC3_UNORM,              WINED3DFMT_BC3_TYPELESS},
+    {WINED3DFMT_R32G32B32A32_UINT,      WINED3DFMT_R32G32B32A32_TYPELESS, "UUUU"},
+    {WINED3DFMT_R32G32B32A32_SINT,      WINED3DFMT_R32G32B32A32_TYPELESS, "IIII"},
+    {WINED3DFMT_R32G32B32A32_FLOAT,     WINED3DFMT_R32G32B32A32_TYPELESS, "FFFF"},
+    {WINED3DFMT_R32G32B32_FLOAT,        WINED3DFMT_R32G32B32_TYPELESS,    "FFF"},
+    {WINED3DFMT_R16G16B16A16_UNORM,     WINED3DFMT_R16G16B16A16_TYPELESS, "uuuu"},
+    {WINED3DFMT_R16G16B16A16_FLOAT,     WINED3DFMT_R16G16B16A16_TYPELESS, "FFFF"},
+    {WINED3DFMT_R32G32_FLOAT,           WINED3DFMT_R32G32_TYPELESS,       "FF"},
+    {WINED3DFMT_R10G10B10A2_UNORM,      WINED3DFMT_R10G10B10A2_TYPELESS,  "uuuu"},
+    {WINED3DFMT_R8G8B8A8_UINT,          WINED3DFMT_R8G8B8A8_TYPELESS,     "UUUU"},
+    {WINED3DFMT_R8G8B8A8_SINT,          WINED3DFMT_R8G8B8A8_TYPELESS,     "IIII"},
+    {WINED3DFMT_R8G8B8A8_UNORM_SRGB,    WINED3DFMT_R8G8B8A8_TYPELESS,     "uuuu"},
+    {WINED3DFMT_R8G8B8A8_UNORM,         WINED3DFMT_R8G8B8A8_TYPELESS,     "uuuu"},
+    {WINED3DFMT_R16G16_UNORM,           WINED3DFMT_R16G16_TYPELESS,       "uu"},
+    {WINED3DFMT_R16G16_FLOAT,           WINED3DFMT_R16G16_TYPELESS,       "FF"},
+    {WINED3DFMT_R32_FLOAT,              WINED3DFMT_R32_TYPELESS,          "F"},
+    {WINED3DFMT_D24_UNORM_S8_UINT,      WINED3DFMT_R24G8_TYPELESS,        "DS"},
+    {WINED3DFMT_R8G8_UNORM,             WINED3DFMT_R8G8_TYPELESS,         "uu"},
+    {WINED3DFMT_R16_UINT,               WINED3DFMT_R16_TYPELESS,          "U"},
+    {WINED3DFMT_R16_FLOAT,              WINED3DFMT_R16_TYPELESS,          "F"},
+    {WINED3DFMT_R8_UNORM,               WINED3DFMT_R8_TYPELESS,           "u"},
+    {WINED3DFMT_BC1_UNORM_SRGB,         WINED3DFMT_BC1_TYPELESS,          ""},
+    {WINED3DFMT_BC1_UNORM,              WINED3DFMT_BC1_TYPELESS,          ""},
+    {WINED3DFMT_BC2_UNORM_SRGB,         WINED3DFMT_BC2_TYPELESS,          ""},
+    {WINED3DFMT_BC2_UNORM,              WINED3DFMT_BC2_TYPELESS,          ""},
+    {WINED3DFMT_BC3_UNORM_SRGB,         WINED3DFMT_BC3_TYPELESS,          ""},
+    {WINED3DFMT_BC3_UNORM,              WINED3DFMT_BC3_TYPELESS,          ""},
 };
 
 struct wined3d_format_base_flags
@@ -234,20 +258,8 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_R8G8B8X8_UNORM,     WINED3DFMT_FLAG_GETDC},
     {WINED3DFMT_ATI1N,              WINED3DFMT_FLAG_BROKEN_PITCH},
     {WINED3DFMT_ATI2N,              WINED3DFMT_FLAG_BROKEN_PITCH},
-    {WINED3DFMT_R32_FLOAT,          WINED3DFMT_FLAG_FLOAT},
-    {WINED3DFMT_R32G32_FLOAT,       WINED3DFMT_FLAG_FLOAT},
-    {WINED3DFMT_R32G32B32_FLOAT,    WINED3DFMT_FLAG_FLOAT},
-    {WINED3DFMT_R32G32B32A32_FLOAT, WINED3DFMT_FLAG_FLOAT},
-    {WINED3DFMT_R16_FLOAT,          WINED3DFMT_FLAG_FLOAT},
-    {WINED3DFMT_R16G16_FLOAT,       WINED3DFMT_FLAG_FLOAT},
-    {WINED3DFMT_R16G16B16A16_FLOAT, WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_D32_FLOAT,          WINED3DFMT_FLAG_FLOAT},
     {WINED3DFMT_S8_UINT_D24_FLOAT,  WINED3DFMT_FLAG_FLOAT},
-    {WINED3DFMT_R8G8B8A8_UINT,      WINED3DFMT_FLAG_INTEGER},
-    {WINED3DFMT_R8G8B8A8_SINT,      WINED3DFMT_FLAG_INTEGER},
-    {WINED3DFMT_R16_UINT,           WINED3DFMT_FLAG_INTEGER},
-    {WINED3DFMT_R32G32B32A32_UINT,  WINED3DFMT_FLAG_INTEGER},
-    {WINED3DFMT_R32G32B32A32_SINT,  WINED3DFMT_FLAG_INTEGER},
 };
 
 struct wined3d_format_block_info
@@ -1462,10 +1474,34 @@ static void format_clear_flag(struct wined3d_format *format, unsigned int flag)
         format->flags[i] &= ~flag;
 }
 
+static enum wined3d_channel_type map_channel_type(char t)
+{
+    switch (t)
+    {
+        case 'u':
+            return WINED3D_CHANNEL_TYPE_UNORM;
+        case 'i':
+            return WINED3D_CHANNEL_TYPE_SNORM;
+        case 'U':
+            return WINED3D_CHANNEL_TYPE_UINT;
+        case 'I':
+            return WINED3D_CHANNEL_TYPE_SINT;
+        case 'F':
+            return WINED3D_CHANNEL_TYPE_FLOAT;
+        case 'D':
+            return WINED3D_CHANNEL_TYPE_DEPTH;
+        case 'S':
+            return WINED3D_CHANNEL_TYPE_STENCIL;
+        default:
+            ERR("Invalid channel type '%c'.\n", t);
+            return WINED3D_CHANNEL_TYPE_NONE;
+    }
+}
+
 static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
 {
     UINT format_count = sizeof(formats) / sizeof(*formats);
-    UINT i;
+    unsigned int i, j;
 
     gl_info->formats = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, format_count * sizeof(*gl_info->formats));
     if (!gl_info->formats)
@@ -1494,7 +1530,35 @@ static BOOL init_format_base_info(struct wined3d_gl_info *gl_info)
         format->block_byte_count = formats[i].bpp;
     }
 
-    for (i = 0; i < (sizeof(format_base_flags) / sizeof(*format_base_flags)); ++i)
+    for (i = 0; i < ARRAY_SIZE(typed_formats); ++i)
+    {
+        struct wined3d_format *format;
+        DWORD flags = 0;
+        int fmt_idx;
+
+        fmt_idx = getFmtIdx(typed_formats[i].id);
+        if (fmt_idx == -1)
+        {
+            ERR("Format %s (%#x) not found.\n",
+                    debug_d3dformat(typed_formats[i].id), typed_formats[i].id);
+            HeapFree(GetProcessHeap(), 0, gl_info->formats);
+            return FALSE;
+        }
+        format = &gl_info->formats[fmt_idx];
+
+        for (j = 0; j < strlen(typed_formats[i].channels); ++j)
+        {
+            enum wined3d_channel_type channel_type = map_channel_type(typed_formats[i].channels[j]);
+            if (channel_type == WINED3D_CHANNEL_TYPE_UINT || channel_type == WINED3D_CHANNEL_TYPE_SINT)
+                flags |= WINED3DFMT_FLAG_INTEGER;
+            if (channel_type == WINED3D_CHANNEL_TYPE_FLOAT)
+                flags |= WINED3DFMT_FLAG_FLOAT;
+        }
+
+        format_set_flag(format, flags);
+    }
+
+    for (i = 0; i < ARRAY_SIZE(format_base_flags); ++i)
     {
         int fmt_idx = getFmtIdx(format_base_flags[i].id);
 
@@ -2906,24 +2970,24 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
     unsigned int flags[WINED3D_GL_RES_TYPE_COUNT];
     unsigned int i, j;
 
-    for (i = 0; i < ARRAY_SIZE(format_class_info); ++i)
+    for (i = 0; i < ARRAY_SIZE(typed_formats); ++i)
     {
         struct wined3d_format *format, *typeless_format;
-        int fmt_idx = getFmtIdx(format_class_info[i].id);
-        int typeless_fmt_idx = getFmtIdx(format_class_info[i].typeless_id);
+        int fmt_idx = getFmtIdx(typed_formats[i].id);
+        int typeless_fmt_idx = getFmtIdx(typed_formats[i].typeless_id);
 
         if (fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_class_info[i].id),
-                    format_class_info[i].id);
+                    debug_d3dformat(typed_formats[i].id),
+                    typed_formats[i].id);
             return FALSE;
         }
         if (typeless_fmt_idx == -1)
         {
             ERR("Format %s (%#x) not found.\n",
-                    debug_d3dformat(format_class_info[i].typeless_id),
-                    format_class_info[i].typeless_id);
+                    debug_d3dformat(typed_formats[i].typeless_id),
+                    typed_formats[i].typeless_id);
             return FALSE;
         }
 
@@ -2932,7 +2996,7 @@ static BOOL init_typeless_formats(struct wined3d_gl_info *gl_info)
 
         memcpy(flags, typeless_format->flags, sizeof(flags));
         *typeless_format = *format;
-        typeless_format->id = format_class_info[i].typeless_id;
+        typeless_format->id = typed_formats[i].typeless_id;
         for (j = 0; j < ARRAY_SIZE(typeless_format->flags); ++j)
             typeless_format->flags[j] |= flags[j];
     }
