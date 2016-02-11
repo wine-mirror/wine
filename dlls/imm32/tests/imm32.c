@@ -639,7 +639,7 @@ static void test_ImmThreads(void)
     ImmReleaseContext(threadinfo.hwnd,otherHimc);
     ImmReleaseContext(hwnd,himc);
 
-    DestroyWindow(threadinfo.hwnd);
+    SendMessageA(threadinfo.hwnd, WM_CLOSE, 0, 0);
     TerminateThread(hThread, 1);
 
     himc = ImmGetContext(GetDesktopWindow());
