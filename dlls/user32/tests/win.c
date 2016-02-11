@@ -7702,9 +7702,7 @@ static void test_child_window_from_point(void)
         ok(hwnd != 0, "RealChildWindowFromPoint failed\n");
         ret = window_to_index(hwnd, window, sizeof(window)/sizeof(window[0]));
         /* FIXME: remove once Wine is fixed */
-        if (ret != real_child_pos[i])
-            todo_wine ok(ret == real_child_pos[i] || broken(ret == real_child_pos_nt4[i]), "expected %d, got %d\n", real_child_pos[i], ret);
-        else
+        todo_wine_if (ret != real_child_pos[i])
             ok(ret == real_child_pos[i] || broken(ret == real_child_pos_nt4[i]), "expected %d, got %d\n", real_child_pos[i], ret);
 
         get_window_attributes(hwnd, &attrs);

@@ -2495,9 +2495,7 @@ static void test_WM_DISPLAYCHANGE(void)
             continue;
         }
 
-        if(start_bpp != test_bpps[i]) {
-            todo_wine ok(last_bpp == test_bpps[i], "Set bpp %d, but WM_DISPLAYCHANGE reported bpp %d\n", test_bpps[i], last_bpp);
-        } else {
+        todo_wine_if(start_bpp != test_bpps[i]) {
             ok(last_bpp == test_bpps[i], "Set bpp %d, but WM_DISPLAYCHANGE reported bpp %d\n", test_bpps[i], last_bpp);
         }
         last_set_bpp = test_bpps[i];

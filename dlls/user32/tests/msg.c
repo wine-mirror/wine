@@ -11805,13 +11805,7 @@ static void test_ShowWindow(void)
        "expected -1,-1 got %d,%d\n", wp.ptMinPosition.x, wp.ptMinPosition.y);
     ok(wp.ptMaxPosition.x == -1 && wp.ptMaxPosition.y == -1,
        "expected -1,-1 got %d,%d\n", wp.ptMaxPosition.x, wp.ptMaxPosition.y);
-    if (work_rc.left || work_rc.top) todo_wine /* FIXME: remove once Wine is fixed */
-    ok(EqualRect(&win_rc, &wp.rcNormalPosition),
-       "expected %d,%d-%d,%d got %d,%d-%d,%d\n",
-        win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
-        wp.rcNormalPosition.left, wp.rcNormalPosition.top,
-        wp.rcNormalPosition.right, wp.rcNormalPosition.bottom);
-    else
+    todo_wine_if (work_rc.left || work_rc.top) /* FIXME: remove once Wine is fixed */
     ok(EqualRect(&win_rc, &wp.rcNormalPosition),
        "expected %d,%d-%d,%d got %d,%d-%d,%d\n",
         win_rc.left, win_rc.top, win_rc.right, win_rc.bottom,
@@ -15106,9 +15100,7 @@ static void test_SendMessage_other_thread(int thread_n)
 
     ret = GetQueueStatus(QS_SENDMESSAGE|QS_POSTMESSAGE);
     /* FIXME: remove once Wine is fixed */
-if (thread_n == 2) todo_wine
-    ok(ret == 0, "wrong status %08x\n", ret);
-else
+todo_wine_if (thread_n == 2)
     ok(ret == 0, "wrong status %08x\n", ret);
 
     trace("main: call PeekMessage\n");

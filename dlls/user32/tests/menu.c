@@ -2382,13 +2382,7 @@ static DWORD WINAPI test_menu_input_thread(LPVOID lpParameter)
             return 0;
         }
 
-        if (menu_tests[i]._todo_wine)
-        {
-            todo_wine {
-                ok(menu_tests[i].bMenuVisible == bMenuVisible, "test %d\n", i);
-            }
-        }
-        else
+        todo_wine_if (menu_tests[i]._todo_wine)
             ok(menu_tests[i].bMenuVisible == bMenuVisible, "test %d\n", i);
     }
     return 0;
@@ -2450,11 +2444,7 @@ static LRESULT CALLBACK WndProc(HWND hWnd, UINT msg, WPARAM wParam,
         if (pGetMenuInfo) /* Skip on NT */
         {
             /* Native returns handle to destroyed window */
-            if (msg==WM_UNINITMENUPOPUP && popmenu==1)
-                todo_wine ok(!mbi.hwndMenu == !popmenu,
-                        "msg %x: GetMenuBarInfo.hwndMenu wrong: %p expected %sNULL\n",
-                        msg, mbi.hwndMenu, popmenu ? "not " : "");
-            else
+            todo_wine_if (msg==WM_UNINITMENUPOPUP && popmenu==1)
                 ok(!mbi.hwndMenu == !popmenu,
                         "msg %x: GetMenuBarInfo.hwndMenu wrong: %p expected %sNULL\n",
                         msg, mbi.hwndMenu, popmenu ? "not " : "");

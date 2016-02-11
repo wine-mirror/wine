@@ -394,17 +394,8 @@ static void test_GetNextDlgItem(void)
     {
         HWND a;
         a = (p->tab ? GetNextDlgTabItem : GetNextDlgGroupItem) (hwnd[p->dlg], hwnd[p->ctl], p->prev);
-        if (p->isok)
-        {
+        todo_wine_if (!p->isok)
             ok (a == hwnd[p->res], "Test %d: %s %s item of %d in %d was %d instead of %d\n", p->test, p->prev ? "Prev" : "Next", p->tab ? "Tab" : "Group", p->ctl, p->dlg, id(a), p->res);
-        }
-        else
-        {
-            todo_wine
-            {
-                ok (a == hwnd[p->res], "Test %d: %s %s item of %d in %d was actually  %d matching expected %d\n", p->test, p->prev ? "Prev" : "Next", p->tab ? "Tab" : "Group", p->ctl, p->dlg, id(a), p->res);
-            }
-        }
         p++;
     }
 }
