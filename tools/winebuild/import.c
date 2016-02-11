@@ -1329,6 +1329,7 @@ void output_import_lib( DLLSPEC *spec, char **argv )
 {
     struct strarray *args;
     char *def_file;
+    const char *as_flags, *m_flag;
 
     if (target_platform != PLATFORM_WINDOWS)
         fatal_error( "Unix-style import libraries not supported yet\n" );
@@ -1342,7 +1343,23 @@ void output_import_lib( DLLSPEC *spec, char **argv )
     output_file = NULL;
 
     args = find_tool( "dlltool", NULL );
+    switch (target_cpu)
+    {
+        case CPU_x86:
+            m_flag = "i386";
+            as_flags = "--as-flags=--32";
+            break;
+        case CPU_x86_64:
+            m_flag = "i386:x86-64";
+            as_flags = "--as-flags=--64";
+            break;
+        default:
+            m_flag = NULL;
+            break;
+    }
     strarray_add( args, "-k", "-l", output_file_name, "-d", def_file, NULL );
+    if (m_flag)
+        strarray_add( args, "-m", m_flag, as_flags, NULL );
     spawn( args );
     strarray_free( args );
 
