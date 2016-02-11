@@ -258,7 +258,7 @@ static void test_add(void)
     todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword1 /t REG_DWORD /f", &r);
     todo_wine ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS /* WinXP */),
-       "got exit code %d, expected 0\n", r);
+       "got exit code %d, expected 1\n", r);
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword2 /t REG_DWORD /d zzz /f", &r);
     todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword3 /t REG_DWORD /d deadbeef /f", &r);
