@@ -214,6 +214,7 @@ my @dll_groups =
   "user32",
   "api-ms-win-core-libraryloader-l1-1-0",
   "api-ms-win-core-libraryloader-l1-1-1",
+  "api-ms-win-core-libraryloader-l1-2-0",
  ],
  [
   "kernel32",

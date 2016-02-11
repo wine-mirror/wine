@@ -1,0 +1,29 @@
+@ stub AddDllDirectory
+@ stdcall DisableThreadLibraryCalls(long) kernel32.DisableThreadLibraryCalls
+@ stdcall EnumResourceLanguagesExA(long str str ptr long long long) kernel32.EnumResourceLanguagesExA
+@ stdcall EnumResourceLanguagesExW(long wstr wstr ptr long long long) kernel32.EnumResourceLanguagesExW
+@ stub EnumResourceNamesExA
+@ stub EnumResourceNamesExW
+@ stub EnumResourceTypesExA
+@ stub EnumResourceTypesExW
+@ stdcall FindResourceExW(long wstr wstr long) kernel32.FindResourceExW
+@ stub FindStringOrdinal
+@ stdcall FreeLibrary(long) kernel32.FreeLibrary
+@ stdcall FreeLibraryAndExitThread(long long) kernel32.FreeLibraryAndExitThread
+@ stdcall FreeResource(long) kernel32.FreeResource
+@ stdcall GetModuleFileNameA(long ptr long) kernel32.GetModuleFileNameA
+@ stdcall GetModuleFileNameW(long ptr long) kernel32.GetModuleFileNameW
+@ stdcall GetModuleHandleA(str) kernel32.GetModuleHandleA
+@ stdcall GetModuleHandleExA(long ptr ptr) kernel32.GetModuleHandleExA
+@ stdcall GetModuleHandleExW(long ptr ptr) kernel32.GetModuleHandleExW
+@ stdcall GetModuleHandleW(wstr) kernel32.GetModuleHandleW
+@ stdcall GetProcAddress(long str) kernel32.GetProcAddress
+@ stdcall LoadLibraryExA( str long long) kernel32.LoadLibraryExA
+@ stdcall LoadLibraryExW(wstr long long) kernel32.LoadLibraryExW
+@ stdcall LoadResource(long long) kernel32.LoadResource
+@ stdcall LoadStringA(long long ptr long) user32.LoadStringA
+@ stdcall LoadStringW(long long ptr long) user32.LoadStringW
+@ stdcall LockResource(long) kernel32.LockResource
+@ stub RemoveDllDirectory
+@ stub SetDefaultDllDirectories
+@ stdcall SizeofResource(long long) kernel32.SizeofResource
