@@ -177,6 +177,16 @@ static void test_namespace_pipe(void)
        status == STATUS_OBJECT_NAME_INVALID, /* vista */
         "NtOpenFile should have failed with STATUS_OBJECT_NAME_NOT_FOUND got(%08x)\n", status);
 
+    str.Length -= 4 * sizeof(WCHAR);
+    status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, 0);
+    ok(status == STATUS_SUCCESS, "NtOpenFile should have succeeded got %08x\n", status);
+    pNtClose( h );
+
+    str.Length -= sizeof(WCHAR);
+    status = pNtOpenFile(&h, GENERIC_READ, &attr, &iosb, FILE_SHARE_READ|FILE_SHARE_WRITE, 0);
+    ok(status == STATUS_SUCCESS, "NtOpenFile should have succeeded got %08x\n", status);
+    pNtClose( h );
+
     pNtClose(pipe);
 }
 
@@ -437,13 +447,14 @@ static void test_all_kernel_objects( UINT line, OBJECT_ATTRIBUTES *attr,
 
 static void test_name_limits(void)
 {
+    static const WCHAR localW[]    = {'\\','B','a','s','e','N','a','m','e','d','O','b','j','e','c','t','s','\\','L','o','c','a','l',0};
     static const WCHAR pipeW[]     = {'\\','D','e','v','i','c','e','\\','N','a','m','e','d','P','i','p','e','\\'};
     static const WCHAR mailslotW[] = {'\\','D','e','v','i','c','e','\\','M','a','i','l','S','l','o','t','\\'};
     static const WCHAR registryW[] = {'\\','R','E','G','I','S','T','R','Y','\\','M','a','c','h','i','n','e','\\','S','O','F','T','W','A','R','E','\\','M','i','c','r','o','s','o','f','t','\\'};
     OBJECT_ATTRIBUTES attr, attr2, attr3;
     IO_STATUS_BLOCK iosb;
     LARGE_INTEGER size, timeout;
-    UNICODE_STRING str, target;
+    UNICODE_STRING str, str2, target;
     NTSTATUS status;
     HANDLE ret, ret2;
     DWORD i;
@@ -581,6 +592,15 @@ static void test_name_limits(void)
     attr2.ObjectName = attr3.ObjectName = NULL;
     test_all_kernel_objects( __LINE__, &attr2, STATUS_OBJECT_NAME_INVALID, STATUS_OBJECT_NAME_INVALID );
     test_all_kernel_objects( __LINE__, &attr3, STATUS_SUCCESS, STATUS_OBJECT_PATH_SYNTAX_BAD );
+
+    attr3.ObjectName = &str2;
+    pRtlInitUnicodeString( &str2, localW );
+    status = pNtOpenSymbolicLinkObject( &ret, SYMBOLIC_LINK_QUERY, &attr3 );
+    ok( status == STATUS_SUCCESS, "can't open BaseNamedObjects\\Local %x\n", status );
+    attr3.ObjectName = &str;
+    attr3.RootDirectory = ret;
+    test_all_kernel_objects( __LINE__, &attr3, STATUS_OBJECT_TYPE_MISMATCH, STATUS_OBJECT_TYPE_MISMATCH );
+    pNtClose( attr3.RootDirectory );
 
     status = pNtCreateMutant( &ret, GENERIC_ALL, NULL, FALSE );
     ok( status == STATUS_SUCCESS, "NULL: NtCreateMutant failed %x\n", status );
@@ -873,7 +893,7 @@ static void test_directory(void)
     NTSTATUS status;
     UNICODE_STRING str;
     OBJECT_ATTRIBUTES attr;
-    HANDLE dir, dir1, h;
+    HANDLE dir, dir1, h, h2;
     BOOL is_nt4;
 
     /* No name and/or no attributes */
@@ -944,6 +964,39 @@ static void test_directory(void)
         status = pNtCreateDirectoryObject( &h, DIRECTORY_QUERY, &attr );
         ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtCreateDirectoryObject got %08x\n", status );
         pRtlFreeUnicodeString(&str);
+
+        pRtlCreateUnicodeStringFromAsciiz( &str, "\\BaseNamedObjects\\Local\\om.c-test" );
+        InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
+        status = pNtCreateDirectoryObject( &dir1, DIRECTORY_QUERY, &attr );
+        ok( status == STATUS_SUCCESS, "Failed to create directory %08x\n", status );
+        pRtlFreeUnicodeString( &str );
+        pRtlCreateUnicodeStringFromAsciiz( &str, "om.c-test" );
+        InitializeObjectAttributes( &attr, &str, 0, dir, NULL );
+        status = pNtOpenDirectoryObject( &h, DIRECTORY_QUERY, &attr );
+        ok( status == STATUS_OBJECT_TYPE_MISMATCH, "Failed to open directory %08x\n", status );
+        if (!status) pNtClose(h);
+        pRtlFreeUnicodeString( &str );
+
+        pRtlCreateUnicodeStringFromAsciiz( &str, "om.c-event" );
+        InitializeObjectAttributes( &attr, &str, 0, dir1, NULL );
+        status = pNtCreateEvent( &h, GENERIC_ALL, &attr, 1, 0 );
+        ok( status == STATUS_SUCCESS, "NtCreateEvent failed %x\n", status );
+        status = pNtOpenEvent( &h2, GENERIC_ALL, &attr );
+        ok( status == STATUS_SUCCESS, "NtOpenEvent failed %x\n", status );
+        pNtClose( h2 );
+        pRtlFreeUnicodeString( &str );
+        pRtlCreateUnicodeStringFromAsciiz( &str, "om.c-test\\om.c-event" );
+        InitializeObjectAttributes( &attr, &str, 0, dir, NULL );
+        status = pNtOpenEvent( &h2, GENERIC_ALL, &attr );
+        ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtOpenEvent failed %x\n", status );
+        pRtlFreeUnicodeString( &str );
+        pRtlCreateUnicodeStringFromAsciiz( &str, "\\BasedNamedObjects\\Local\\om.c-test\\om.c-event" );
+        InitializeObjectAttributes( &attr, &str, 0, 0, NULL );
+        status = pNtOpenEvent( &h2, GENERIC_ALL, &attr );
+        ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtOpenEvent failed %x\n", status );
+        pRtlFreeUnicodeString( &str );
+        pNtClose( h );
+        pNtClose( dir1 );
 
         str.Buffer = buffer;
         str.MaximumLength = sizeof(buffer);
