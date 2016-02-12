@@ -159,7 +159,7 @@ DWORD WINAPI VMM_VxDCall( DWORD service, CONTEXT *context )
         if ( page == PR_PRIVATE || page == PR_SHARED ) page = 0;
         /* FIXME: Handle flags in some way */
         address = (LPVOID )(page * page_size);
-        ret = VirtualAlloc ( address, npages * page_size, MEM_RESERVE, 0 );
+        ret = VirtualAlloc ( address, npages * page_size, MEM_RESERVE, PAGE_EXECUTE_READWRITE );
         TRACE("PageReserve: returning: %p\n", ret );
         if ( ret == NULL )
           return -1;
