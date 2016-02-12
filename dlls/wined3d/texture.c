@@ -289,13 +289,14 @@ void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
 /* Context activation is done by the caller (state handler). */
 /* This function relies on the correct texture being bound and loaded. */
 void wined3d_texture_apply_sampler_desc(struct wined3d_texture *texture,
-        const struct wined3d_sampler_desc *sampler_desc, const struct wined3d_gl_info *gl_info)
+        const struct wined3d_sampler_desc *sampler_desc, const struct wined3d_context *context)
 {
+    const struct wined3d_gl_info *gl_info = context->gl_info;
     GLenum target = texture->target;
     struct gl_texture *gl_tex;
     DWORD state;
 
-    TRACE("texture %p, sampler_desc %p, gl_info %p.\n", texture, sampler_desc, gl_info);
+    TRACE("texture %p, sampler_desc %p, context %p.\n", texture, sampler_desc, context);
 
     gl_tex = wined3d_texture_get_gl_texture(texture, texture->flags & WINED3D_TEXTURE_IS_SRGB);
 
@@ -357,8 +358,9 @@ void wined3d_texture_apply_sampler_desc(struct wined3d_texture *texture,
         gl_tex->sampler_desc.max_anisotropy = state;
     }
 
-    /* These should always be the same unless EXT_texture_sRGB_decode is supported. */
-    if (!sampler_desc->srgb_decode != !gl_tex->sampler_desc.srgb_decode)
+    if (!sampler_desc->srgb_decode != !gl_tex->sampler_desc.srgb_decode
+            && (context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
+            && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
     {
         gl_info->gl_ops.gl.p_glTexParameteri(target, GL_TEXTURE_SRGB_DECODE_EXT,
                 sampler_desc->srgb_decode ? GL_DECODE_EXT : GL_SKIP_DECODE_EXT);

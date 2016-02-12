@@ -3513,8 +3513,7 @@ static void wined3d_sampler_desc_from_sampler_states(struct wined3d_sampler_desc
         desc->max_anisotropy = 1;
     desc->compare = texture->resource.format_flags & WINED3DFMT_FLAG_SHADOW;
     desc->comparison_func = WINED3D_CMP_LESSEQUAL;
-    desc->srgb_decode = !(context->d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
-            || sampler_states[WINED3D_SAMP_SRGB_TEXTURE];
+    desc->srgb_decode = sampler_states[WINED3D_SAMP_SRGB_TEXTURE];
 
     if (!(texture->resource.format_flags & WINED3DFMT_FLAG_FILTERING))
     {
@@ -3569,7 +3568,7 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
         wined3d_texture_bind(texture, context, srgb);
         if (!gl_info->supported[ARB_SAMPLER_OBJECTS])
         {
-            wined3d_texture_apply_sampler_desc(texture, &desc, gl_info);
+            wined3d_texture_apply_sampler_desc(texture, &desc, context);
         }
         else
         {
