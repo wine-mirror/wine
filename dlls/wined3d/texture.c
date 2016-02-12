@@ -499,7 +499,7 @@ void * CDECL wined3d_texture_get_parent(const struct wined3d_texture *texture)
     return texture->resource.parent;
 }
 
-void wined3d_texture_get_pitch(const struct wined3d_texture *texture,
+void CDECL wined3d_texture_get_pitch(const struct wined3d_texture *texture,
         unsigned int level, unsigned int *row_pitch, unsigned int *slice_pitch)
 {
     const struct wined3d_resource *resource = &texture->resource;

@@ -1883,19 +1883,6 @@ static inline unsigned short float_32_to_16(const float *in)
     return ret;
 }
 
-DWORD CDECL wined3d_surface_get_pitch(const struct wined3d_surface *surface)
-{
-    unsigned int row_pitch, slice_pitch;
-
-    TRACE("surface %p.\n", surface);
-
-    wined3d_texture_get_pitch(surface->container, surface->texture_level, &row_pitch, &slice_pitch);
-
-    TRACE("Returning %u.\n", row_pitch);
-
-    return row_pitch;
-}
-
 HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface, const struct wined3d_gl_info *gl_info)
 {
     struct wined3d_resource *texture_resource = &surface->container->resource;

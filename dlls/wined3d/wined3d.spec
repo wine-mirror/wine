@@ -220,8 +220,6 @@
 @ cdecl wined3d_stateblock_decref(ptr)
 @ cdecl wined3d_stateblock_incref(ptr)
 
-@ cdecl wined3d_surface_get_pitch(ptr)
-
 @ cdecl wined3d_swapchain_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_swapchain_decref(ptr)
 @ cdecl wined3d_swapchain_get_back_buffer(ptr long)
@@ -250,6 +248,7 @@
 @ cdecl wined3d_texture_get_lod(ptr)
 @ cdecl wined3d_texture_get_overlay_position(ptr long ptr ptr)
 @ cdecl wined3d_texture_get_parent(ptr)
+@ cdecl wined3d_texture_get_pitch(ptr long ptr ptr)
 @ cdecl wined3d_texture_get_resource(ptr)
 @ cdecl wined3d_texture_get_sub_resource(ptr long)
 @ cdecl wined3d_texture_incref(ptr)

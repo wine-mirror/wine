@@ -2402,8 +2402,6 @@ void wined3d_texture_bind(struct wined3d_texture *texture,
 void wined3d_texture_bind_and_dirtify(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_force_reload(struct wined3d_texture *texture) DECLSPEC_HIDDEN;
-void wined3d_texture_get_pitch(const struct wined3d_texture *texture,
-        unsigned int level, unsigned int *row_pitch, unsigned int *slice_pitch) DECLSPEC_HIDDEN;
 void wined3d_texture_load(struct wined3d_texture *texture,
         struct wined3d_context *context, BOOL srgb) DECLSPEC_HIDDEN;
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture,
