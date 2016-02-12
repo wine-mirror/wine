@@ -4819,24 +4819,11 @@ static void CDECL device_parent_activate(struct wined3d_device_parent *device_pa
     TRACE("device_parent %p, activate %#x.\n", device_parent, activate);
 }
 
-static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,
-        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx, struct wined3d_surface *surface, void **parent,
-        const struct wined3d_parent_ops **parent_ops)
-{
-    TRACE("device_parent %p, wined3d_texture %p, sub_resource_idx %u, surface %p, parent %p, parent_ops %p.\n",
-            device_parent, wined3d_texture, sub_resource_idx, surface, parent, parent_ops);
-
-    *parent = NULL;
-    *parent_ops = &d3d_null_wined3d_parent_ops;
-
-    return S_OK;
-}
-
-static HRESULT CDECL device_parent_volume_created(struct wined3d_device_parent *device_parent,
+static HRESULT CDECL device_parent_sub_resource_created(struct wined3d_device_parent *device_parent,
         struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx, void **parent,
         const struct wined3d_parent_ops **parent_ops)
 {
-    TRACE("device_parent %p, texture %p, sub_resource_idx %u, parent %p, parent_ops %p.\n",
+    TRACE("device_parent %p, wined3d_texture %p, sub_resource_idx %u, parent %p, parent_ops %p.\n",
             device_parent, wined3d_texture, sub_resource_idx, parent, parent_ops);
 
     *parent = NULL;
@@ -4920,8 +4907,8 @@ static const struct wined3d_device_parent_ops d3d_wined3d_device_parent_ops =
     device_parent_wined3d_device_created,
     device_parent_mode_changed,
     device_parent_activate,
-    device_parent_surface_created,
-    device_parent_volume_created,
+    device_parent_sub_resource_created,
+    device_parent_sub_resource_created,
     device_parent_create_swapchain_texture,
     device_parent_create_swapchain,
 };

@@ -4750,14 +4750,14 @@ void ddraw_update_lost_surfaces(struct ddraw *ddraw)
 }
 
 static HRESULT CDECL device_parent_surface_created(struct wined3d_device_parent *device_parent,
-        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx, struct wined3d_surface *surface,
+        struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
         void **parent, const struct wined3d_parent_ops **parent_ops)
 {
     struct ddraw *ddraw = ddraw_from_device_parent(device_parent);
     struct ddraw_surface *ddraw_surface;
 
-    TRACE("device_parent %p, wined3d_texture %p, sub_resource_idx %u, surface %p, parent %p, parent_ops %p.\n",
-            device_parent, wined3d_texture, sub_resource_idx, surface, parent, parent_ops);
+    TRACE("device_parent %p, wined3d_texture %p, sub_resource_idx %u, parent %p, parent_ops %p.\n",
+            device_parent, wined3d_texture, sub_resource_idx, parent, parent_ops);
 
     /* We have a swapchain or wined3d internal texture. */
     if (!wined3d_texture_get_parent(wined3d_texture) || wined3d_texture_get_parent(wined3d_texture) == ddraw)

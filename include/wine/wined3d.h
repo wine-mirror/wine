@@ -2020,7 +2020,6 @@ struct wined3d_sampler;
 struct wined3d_shader;
 struct wined3d_shader_resource_view;
 struct wined3d_stateblock;
-struct wined3d_surface;
 struct wined3d_swapchain;
 struct wined3d_texture;
 struct wined3d_vertex_declaration;
@@ -2037,7 +2036,7 @@ struct wined3d_device_parent_ops
     void (__cdecl *activate)(struct wined3d_device_parent *device_parent, BOOL activate);
     HRESULT (__cdecl *surface_created)(struct wined3d_device_parent *device_parent,
             struct wined3d_texture *texture, unsigned int sub_resource_idx,
-            struct wined3d_surface *surface, void **parent, const struct wined3d_parent_ops **parent_ops);
+            void **parent, const struct wined3d_parent_ops **parent_ops);
     HRESULT (__cdecl *volume_created)(struct wined3d_device_parent *device_parent,
             struct wined3d_texture *wined3d_texture, unsigned int sub_resource_idx,
             void **parent, const struct wined3d_parent_ops **parent_ops);
