@@ -42,6 +42,8 @@ static HRESULT shdr_handler(const char *data, DWORD data_size, DWORD tag, void *
             break;
 
         case TAG_SHDR:
+        case TAG_SHEX:
+            if (shader_info->shader_code) FIXME("Multiple SHDR/SHEX chunks.\n");
             shader_info->shader_code = (const DWORD *)data;
             break;
 

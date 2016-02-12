@@ -44,6 +44,7 @@
 #define TAG_ISGN MAKE_TAG('I', 'S', 'G', 'N')
 #define TAG_OSGN MAKE_TAG('O', 'S', 'G', 'N')
 #define TAG_SHDR MAKE_TAG('S', 'H', 'D', 'R')
+#define TAG_SHEX MAKE_TAG('S', 'H', 'E', 'X')
 
 struct d3d_device;
 
