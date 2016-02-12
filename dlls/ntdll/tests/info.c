@@ -1984,6 +1984,19 @@ static void test_thread_start_address(void)
     CloseHandle(thread);
 }
 
+static void test_query_data_alignment(void)
+{
+    ULONG ReturnLength;
+    NTSTATUS status;
+    DWORD value;
+
+    value = 0xdeadbeef;
+    status = pNtQuerySystemInformation(SystemRecommendedSharedDataAlignment, &value, sizeof(value), &ReturnLength);
+    ok(status == STATUS_SUCCESS, "Expected STATUS_SUCCESS, got %08x\n", status);
+    ok(sizeof(value) == ReturnLength, "Inconsistent length %u\n", ReturnLength);
+    ok(value == 64, "Expected 64, got %u\n", value);
+}
+
 START_TEST(info)
 {
     char **argv;
@@ -2116,4 +2129,7 @@ START_TEST(info)
 
     trace("Starting test_thread_start_address()\n");
     test_thread_start_address();
+
+    trace("Starting test_query_data_alignment()\n");
+    test_query_data_alignment();
 }

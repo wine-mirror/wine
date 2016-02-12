@@ -826,7 +826,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
     Unknown55,
     Unknown56,
     Unknown57,
-    Unknown58,
+    SystemRecommendedSharedDataAlignment = 58,
     Unknown59,
     Unknown60,
     Unknown61,
