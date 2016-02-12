@@ -110,7 +110,7 @@ static struct winstation *create_winstation( struct object *root, const struct u
 {
     struct winstation *winstation;
 
-    if ((winstation = create_named_object( root, &winstation_ops, name, attr )))
+    if ((winstation = create_named_object( root, &winstation_ops, name, attr, NULL )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -213,7 +213,7 @@ static struct desktop *create_desktop( const struct unicode_str *name, unsigned 
 {
     struct desktop *desktop;
 
-    if ((desktop = create_named_object( &winstation->obj, &desktop_ops, name, attr )))
+    if ((desktop = create_named_object( &winstation->obj, &desktop_ops, name, attr, NULL )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {

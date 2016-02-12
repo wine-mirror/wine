@@ -262,38 +262,50 @@ struct object *lookup_named_object( struct object *root, const struct unicode_st
     return parent;
 }
 
-void *create_object( struct object *parent, const struct object_ops *ops, const struct unicode_str *name )
+static struct object *create_object( struct object *parent, const struct object_ops *ops,
+                                     const struct unicode_str *name, const struct security_descriptor *sd )
 {
     struct object *obj;
     struct object_name *name_ptr;
 
     if (!(name_ptr = alloc_name( name ))) return NULL;
-    if ((obj = alloc_object( ops )))
-    {
-        if (!obj->ops->link_name( obj, name_ptr, parent ))
-        {
-            free_object( obj );
-            free( name_ptr );
-            return NULL;
-        }
-        name_ptr->obj = obj;
-        obj->name = name_ptr;
-    }
-    else
-        free( name_ptr );
+    if (!(obj = alloc_object( ops ))) goto failed;
+    if (sd && !default_set_sd( obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                               DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
+        goto failed;
+    if (!obj->ops->link_name( obj, name_ptr, parent )) goto failed;
+
+    name_ptr->obj = obj;
+    obj->name = name_ptr;
     return obj;
+
+failed:
+    if (obj) free_object( obj );
+    free( name_ptr );
+    return NULL;
 }
 
 /* create an object as named child under the specified parent */
 void *create_named_object( struct object *parent, const struct object_ops *ops,
-                           const struct unicode_str *name, unsigned int attributes )
+                           const struct unicode_str *name, unsigned int attributes,
+                           const struct security_descriptor *sd )
 {
     struct object *obj, *new_obj;
     struct unicode_str new_name;
 
     clear_error();
 
-    if (!name || !name->len) return alloc_object( ops );
+    if (!name || !name->len)
+    {
+        if (!(new_obj = alloc_object( ops ))) return NULL;
+        if (sd && !default_set_sd( new_obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
+                                   DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION ))
+        {
+            free_object( new_obj );
+            return NULL;
+        }
+        return new_obj;
+    }
 
     if (!(obj = lookup_named_object( parent, name, attributes, &new_name ))) return NULL;
 
@@ -313,7 +325,7 @@ void *create_named_object( struct object *parent, const struct object_ops *ops,
         return obj;
     }
 
-    new_obj = create_object( obj, ops, &new_name );
+    new_obj = create_object( obj, ops, &new_name, sd );
     release_object( obj );
     return new_obj;
 }

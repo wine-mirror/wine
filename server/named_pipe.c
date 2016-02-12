@@ -504,7 +504,7 @@ void create_named_pipe_device( struct object *root, const struct unicode_str *na
 {
     struct named_pipe_device *dev;
 
-    if ((dev = create_named_object( root, &named_pipe_device_ops, name, 0 )) &&
+    if ((dev = create_named_object( root, &named_pipe_device_ops, name, 0, NULL )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         dev->pipes = NULL;
@@ -915,7 +915,7 @@ DECL_HANDLER(create_named_pipe)
         if (!(root = get_directory_obj( current->process, objattr->rootdir ))) return;
     }
 
-    pipe = create_named_object( root, &named_pipe_ops, &name, objattr->attributes | OBJ_OPENIF );
+    pipe = create_named_object( root, &named_pipe_ops, &name, objattr->attributes | OBJ_OPENIF, NULL );
 
     if (root) release_object( root );
     if (!pipe) return;

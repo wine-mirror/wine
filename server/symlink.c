@@ -144,16 +144,12 @@ struct symlink *create_symlink( struct object *root, const struct unicode_str *n
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((symlink = create_named_object( root, &symlink_ops, name, attr )) &&
+    if ((symlink = create_named_object( root, &symlink_ops, name, attr, sd )) &&
         (get_error() != STATUS_OBJECT_NAME_EXISTS))
     {
         if ((symlink->target = memdup( target->str, target->len )))
         {
             symlink->len = target->len;
-            if (sd)
-                default_set_sd( &symlink->obj, sd,
-                                OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                                DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
         }
         else
         {

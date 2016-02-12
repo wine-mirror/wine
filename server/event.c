@@ -112,17 +112,13 @@ struct event *create_event( struct object *root, const struct unicode_str *name,
 {
     struct event *event;
 
-    if ((event = create_named_object( root, &event_ops, name, attr )))
+    if ((event = create_named_object( root, &event_ops, name, attr, sd )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             event->manual_reset = manual_reset;
             event->signaled     = initial_state;
-            if (sd) default_set_sd( &event->obj, sd, OWNER_SECURITY_INFORMATION|
-                                                     GROUP_SECURITY_INFORMATION|
-                                                     DACL_SECURITY_INFORMATION|
-                                                     SACL_SECURITY_INFORMATION );
         }
     }
     return event;
@@ -211,15 +207,11 @@ struct keyed_event *create_keyed_event( struct object *root, const struct unicod
 {
     struct keyed_event *event;
 
-    if ((event = create_named_object( root, &keyed_event_ops, name, attr )))
+    if ((event = create_named_object( root, &keyed_event_ops, name, attr, sd )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
-            if (sd) default_set_sd( &event->obj, sd, OWNER_SECURITY_INFORMATION|
-                                                     GROUP_SECURITY_INFORMATION|
-                                                     DACL_SECURITY_INFORMATION|
-                                                     SACL_SECURITY_INFORMATION );
         }
     }
     return event;

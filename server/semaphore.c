@@ -84,17 +84,13 @@ static struct semaphore *create_semaphore( struct object *root, const struct uni
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((sem = create_named_object( root, &semaphore_ops, name, attr )))
+    if ((sem = create_named_object( root, &semaphore_ops, name, attr, sd )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
             sem->count = initial;
             sem->max   = max;
-            if (sd) default_set_sd( &sem->obj, sd, OWNER_SECURITY_INFORMATION|
-                                                   GROUP_SECURITY_INFORMATION|
-                                                   DACL_SECURITY_INFORMATION|
-                                                   SACL_SECURITY_INFORMATION );
         }
     }
     return sem;

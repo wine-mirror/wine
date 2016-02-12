@@ -483,15 +483,11 @@ static struct object *create_mapping( struct object *root, const struct unicode_
 
     if (!page_mask) page_mask = sysconf( _SC_PAGESIZE ) - 1;
 
-    if (!(mapping = create_named_object( root, &mapping_ops, name, attr )))
+    if (!(mapping = create_named_object( root, &mapping_ops, name, attr, sd )))
         return NULL;
     if (get_error() == STATUS_OBJECT_NAME_EXISTS)
         return &mapping->obj;  /* Nothing else to do */
 
-    if (sd) default_set_sd( &mapping->obj, sd, OWNER_SECURITY_INFORMATION|
-                                               GROUP_SECURITY_INFORMATION|
-                                               DACL_SECURITY_INFORMATION|
-                                               SACL_SECURITY_INFORMATION );
     mapping->header_size = 0;
     mapping->base        = 0;
     mapping->fd          = NULL;

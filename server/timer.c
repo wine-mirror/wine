@@ -86,7 +86,7 @@ static struct timer *create_timer( struct object *root, const struct unicode_str
 {
     struct timer *timer;
 
-    if ((timer = create_named_object( root, &timer_ops, name, attr )))
+    if ((timer = create_named_object( root, &timer_ops, name, attr, sd )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -97,9 +97,6 @@ static struct timer *create_timer( struct object *root, const struct unicode_str
             timer->period   = 0;
             timer->timeout  = NULL;
             timer->thread   = NULL;
-            if (sd) default_set_sd( &timer->obj, sd,
-                                    OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                                    DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
         }
     }
     return timer;

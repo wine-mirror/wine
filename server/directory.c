@@ -204,7 +204,7 @@ static struct directory *create_directory( struct object *root, const struct uni
 {
     struct directory *dir;
 
-    if ((dir = create_named_object( root, &directory_ops, name, attr )) &&
+    if ((dir = create_named_object( root, &directory_ops, name, attr, sd )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         if (!(dir->entries = create_namespace( hash_size )))
@@ -212,8 +212,6 @@ static struct directory *create_directory( struct object *root, const struct uni
             release_object( dir );
             return NULL;
         }
-        if (sd) default_set_sd( &dir->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                                DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
     }
     return dir;
 }
@@ -234,7 +232,7 @@ struct object_type *get_object_type( const struct unicode_str *name )
 {
     struct object_type *type;
 
-    if ((type = create_named_object( &dir_objtype->obj, &object_type_ops, name, OBJ_OPENIF )))
+    if ((type = create_named_object( &dir_objtype->obj, &object_type_ops, name, OBJ_OPENIF, NULL )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {

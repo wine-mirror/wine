@@ -604,7 +604,7 @@ static struct device *create_device( struct object *root, const struct unicode_s
 {
     struct device *device;
 
-    if ((device = create_named_object( root, &device_ops, name, attr )))
+    if ((device = create_named_object( root, &device_ops, name, attr, NULL )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -623,7 +623,7 @@ struct device *create_unix_device( struct object *root, const struct unicode_str
 {
     struct device *device;
 
-    if ((device = create_named_object( root, &device_ops, name, 0 )))
+    if ((device = create_named_object( root, &device_ops, name, 0, NULL )))
     {
         device->unix_path = strdup( unix_path );
         device->manager = NULL;  /* no manager, requests go straight to the Unix device */

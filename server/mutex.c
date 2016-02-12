@@ -104,7 +104,7 @@ static struct mutex *create_mutex( struct object *root, const struct unicode_str
 {
     struct mutex *mutex;
 
-    if ((mutex = create_named_object( root, &mutex_ops, name, attr )))
+    if ((mutex = create_named_object( root, &mutex_ops, name, attr, sd )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -113,10 +113,6 @@ static struct mutex *create_mutex( struct object *root, const struct unicode_str
             mutex->owner = NULL;
             mutex->abandoned = 0;
             if (owned) do_grab( mutex, current );
-            if (sd) default_set_sd( &mutex->obj, sd, OWNER_SECURITY_INFORMATION|
-                                                     GROUP_SECURITY_INFORMATION|
-                                                     DACL_SECURITY_INFORMATION|
-                                                     SACL_SECURITY_INFORMATION );
         }
     }
     return mutex;

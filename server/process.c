@@ -186,15 +186,11 @@ static struct job *create_job_object( struct object *root, const struct unicode_
 {
     struct job *job;
 
-    if ((job = create_named_object( root, &job_ops, name, attr )))
+    if ((job = create_named_object( root, &job_ops, name, attr, sd )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             /* initialize it if it didn't already exist */
-            if (sd) default_set_sd( &job->obj, sd, OWNER_SECURITY_INFORMATION |
-                                                   GROUP_SECURITY_INFORMATION |
-                                                   DACL_SECURITY_INFORMATION |
-                                                   SACL_SECURITY_INFORMATION );
             list_init( &job->process_list );
             job->num_processes = 0;
             job->limit_flags = 0;

@@ -136,15 +136,12 @@ static struct completion *create_completion( struct object *root, const struct u
 {
     struct completion *completion;
 
-    if ((completion = create_named_object( root, &completion_ops, name, attr )))
+    if ((completion = create_named_object( root, &completion_ops, name, attr, sd )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
             list_init( &completion->queue );
             completion->depth = 0;
-            if (sd) default_set_sd( &completion->obj, sd,
-                                    OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                                    DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
         }
     }
 

@@ -401,7 +401,7 @@ void create_mailslot_device( struct object *root, const struct unicode_str *name
 {
     struct mailslot_device *dev;
 
-    if ((dev = create_named_object( root, &mailslot_device_ops, name, 0 )) &&
+    if ((dev = create_named_object( root, &mailslot_device_ops, name, 0, NULL )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         dev->mailslots = NULL;
@@ -423,15 +423,13 @@ static struct mailslot *create_mailslot( struct object *root,
     struct mailslot *mailslot;
     int fds[2];
 
-    if (!(mailslot = create_named_object( root, &mailslot_ops, name, attr ))) return NULL;
+    if (!(mailslot = create_named_object( root, &mailslot_ops, name, attr, sd ))) return NULL;
 
     mailslot->fd = NULL;
     mailslot->write_fd = -1;
     mailslot->max_msgsize = max_msgsize;
     mailslot->read_timeout = read_timeout;
     list_init( &mailslot->writers );
-    if (sd) default_set_sd( &mailslot->obj, sd, OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION |
-                            DACL_SECURITY_INFORMATION | SACL_SECURITY_INFORMATION );
 
     if (!socketpair( PF_UNIX, SOCK_DGRAM, 0, fds ))
     {
