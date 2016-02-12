@@ -206,12 +206,14 @@ void WINMM_DeleteWaveform(void)
             WINMM_Device *device = mmdevice->devices[j];
             if(device->handle)
                 CloseHandle(device->handle);
+            device->lock.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection(&device->lock);
         }
 
         if(mmdevice->volume)
             ISimpleAudioVolume_Release(mmdevice->volume);
         CoTaskMemFree(mmdevice->dev_id);
+        mmdevice->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&mmdevice->lock);
     }
 
@@ -222,12 +224,14 @@ void WINMM_DeleteWaveform(void)
             WINMM_Device *device = mmdevice->devices[j];
             if(device->handle)
                 CloseHandle(device->handle);
+            device->lock.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection(&device->lock);
         }
 
         if(mmdevice->volume)
             ISimpleAudioVolume_Release(mmdevice->volume);
         CoTaskMemFree(mmdevice->dev_id);
+        mmdevice->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&mmdevice->lock);
     }
 
