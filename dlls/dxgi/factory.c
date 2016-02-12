@@ -165,7 +165,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_factory_MakeWindowAssociation(IDXGIFactory
 {
     FIXME("iface %p, window %p, flags %#x stub!\n", iface, window, flags);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_factory_GetWindowAssociation(IDXGIFactory1 *iface, HWND *window)
