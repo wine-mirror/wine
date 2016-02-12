@@ -1513,3 +1513,33 @@ HRESULT CALLBACK IChapteredRowset_ReleaseChapter_Proxy(IChapteredRowset* This, H
     FIXME("(%p)->(%lx %p): stub\n", This, chapter, refcount);
     return E_NOTIMPL;
 }
+
+HRESULT CALLBACK IColumnsInfo_GetColumnInfo_Proxy(IColumnsInfo* This, DBORDINAL *columns,
+        DBCOLUMNINFO **colinfo, OLECHAR **stringsbuffer)
+{
+    FIXME("(%p)->(%p %p %p): stub\n", This, columns, colinfo, stringsbuffer);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IColumnsInfo_GetColumnInfo_Stub(IColumnsInfo* This, DBORDINAL *columns, DBCOLUMNINFO **col_info,
+    DBBYTEOFFSET **name_offsets, DBBYTEOFFSET **columnid_offsets, DBLENGTH *string_len, OLECHAR **stringsbuffer,
+    IErrorInfo **error)
+{
+    FIXME("(%p)->(%p %p %p %p %p %p %p): stub\n", This, columns, col_info, name_offsets, columnid_offsets,
+            string_len, stringsbuffer, error);
+    return E_NOTIMPL;
+}
+
+HRESULT CALLBACK IColumnsInfo_MapColumnIDs_Proxy(IColumnsInfo* This, DBORDINAL column_ids, const DBID *dbids,
+    DBORDINAL *columns)
+{
+    FIXME("(%p)->(%lu %p %p): stub\n", This, column_ids, dbids, columns);
+    return E_NOTIMPL;
+}
+
+HRESULT __RPC_STUB IColumnsInfo_MapColumnIDs_Stub(IColumnsInfo* This, DBORDINAL column_ids, const DBID *dbids,
+    DBORDINAL *columns, IErrorInfo **error)
+{
+    FIXME("(%p)->(%lu %p %p %p): stub\n", This, column_ids, dbids, columns, error);
+    return E_NOTIMPL;
+}

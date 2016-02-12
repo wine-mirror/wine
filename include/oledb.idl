@@ -50,6 +50,7 @@ typedef DWORD_PTR DBHASHVALUE;
 #include "chprst.idl"
 #include "cmdbas.idl"
 #include "cmdtxt.idl"
+#include "colinf.idl"
 #include "dbccmd.idl"
 #include "dbcses.idl"
 #include "srcrst.idl"
