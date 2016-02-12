@@ -1249,12 +1249,14 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
         LIST_FOR_EACH_ENTRY_SAFE(src, src2, &This->source_voices, XA2SourceImpl, entry){
             HeapFree(GetProcessHeap(), 0, src->sends);
             IXAudio2SourceVoice_DestroyVoice(&src->IXAudio2SourceVoice_iface);
+            src->lock.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection(&src->lock);
             HeapFree(GetProcessHeap(), 0, src);
         }
 
         LIST_FOR_EACH_ENTRY_SAFE(sub, sub2, &This->submix_voices, XA2SubmixImpl, entry){
             IXAudio2SubmixVoice_DestroyVoice(&sub->IXAudio2SubmixVoice_iface);
+            sub->lock.DebugInfo->Spare[0] = 0;
             DeleteCriticalSection(&sub->lock);
             HeapFree(GetProcessHeap(), 0, sub);
         }
@@ -1270,6 +1272,7 @@ static ULONG WINAPI IXAudio2Impl_Release(IXAudio2 *iface)
 
         CloseHandle(This->mmevt);
 
+        This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
 
         HeapFree(GetProcessHeap(), 0, This);
