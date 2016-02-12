@@ -3682,9 +3682,9 @@ static HRESULT surface_load_drawable(struct wined3d_surface *surface,
 static HRESULT surface_load_texture(struct wined3d_surface *surface,
         struct wined3d_context *context, BOOL srgb)
 {
+    unsigned int width, src_row_pitch, src_slice_pitch, dst_row_pitch, dst_slice_pitch;
+    const RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
     const struct wined3d_gl_info *gl_info = context->gl_info;
-    RECT src_rect = {0, 0, surface->resource.width, surface->resource.height};
-    unsigned int width, src_pitch, dst_row_pitch, dst_slice_pitch;
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_color_key_conversion *conversion;
     struct wined3d_texture *texture = surface->container;
@@ -3770,9 +3770,9 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
 
     wined3d_texture_prepare_texture(texture, context, srgb);
     wined3d_texture_bind_and_dirtify(texture, context, srgb);
+    wined3d_texture_get_pitch(texture, surface->texture_level, &src_row_pitch, &src_slice_pitch);
 
     width = surface->resource.width;
-    src_pitch = wined3d_surface_get_pitch(surface);
 
     format = *texture->resource.format;
     if ((conversion = wined3d_format_get_color_key_conversion(texture, TRUE)))
@@ -3810,9 +3810,9 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
             context_release(context);
             return E_OUTOFMEMORY;
         }
-        format.convert(data.addr, mem, src_pitch, src_pitch * height,
+        format.convert(data.addr, mem, src_row_pitch, src_slice_pitch,
                 dst_row_pitch, dst_slice_pitch, width, height, 1);
-        src_pitch = dst_row_pitch;
+        src_row_pitch = dst_row_pitch;
         data.addr = mem;
     }
     else if (conversion)
@@ -3832,14 +3832,14 @@ static HRESULT surface_load_texture(struct wined3d_surface *surface,
         }
         if (texture->swapchain && texture->swapchain->palette)
             palette = texture->swapchain->palette;
-        conversion->convert(data.addr, src_pitch, mem, dst_row_pitch,
+        conversion->convert(data.addr, src_row_pitch, mem, dst_row_pitch,
                 width, height, palette, &texture->async.gl_color_key);
-        src_pitch = dst_row_pitch;
+        src_row_pitch = dst_row_pitch;
         data.addr = mem;
     }
 
     wined3d_surface_upload_data(surface, gl_info, &format, &src_rect,
-            src_pitch, &dst_point, srgb, wined3d_const_bo_address(&data));
+            src_row_pitch, &dst_point, srgb, wined3d_const_bo_address(&data));
 
     HeapFree(GetProcessHeap(), 0, mem);
 
