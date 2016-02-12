@@ -541,6 +541,8 @@ static void test_CloseThemeData(void)
 
     hRes = pCloseThemeData(NULL);
     ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
+    hRes = pCloseThemeData(INVALID_HANDLE_VALUE);
+    ok( hRes == E_HANDLE, "Expected E_HANDLE, got 0x%08x\n", hRes);
 }
 
 START_TEST(system)
