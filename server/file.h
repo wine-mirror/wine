@@ -141,9 +141,9 @@ extern int get_page_size(void);
 
 /* device functions */
 
-extern void create_named_pipe_device( struct directory *root, const struct unicode_str *name );
-extern void create_mailslot_device( struct directory *root, const struct unicode_str *name );
-extern struct device *create_unix_device( struct directory *root, const struct unicode_str *name,
+extern void create_named_pipe_device( struct object *root, const struct unicode_str *name );
+extern void create_mailslot_device( struct object *root, const struct unicode_str *name );
+extern struct device *create_unix_device( struct object *root, const struct unicode_str *name,
                                           const char *unix_path );
 
 /* change notification functions */

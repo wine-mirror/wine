@@ -73,7 +73,7 @@ static const struct object_ops semaphore_ops =
 };
 
 
-static struct semaphore *create_semaphore( struct directory *root, const struct unicode_str *name,
+static struct semaphore *create_semaphore( struct object *root, const struct unicode_str *name,
                                            unsigned int attr, unsigned int initial, unsigned int max,
                                            const struct security_descriptor *sd )
 {
@@ -84,7 +84,7 @@ static struct semaphore *create_semaphore( struct directory *root, const struct 
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((sem = create_named_object_dir( root, name, attr, &semaphore_ops )))
+    if ((sem = create_named_object( root, &semaphore_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -178,7 +178,7 @@ DECL_HANDLER(create_semaphore)
 {
     struct semaphore *sem;
     struct unicode_str name;
-    struct directory *root;
+    struct object *root;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 

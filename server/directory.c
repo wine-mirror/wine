@@ -198,13 +198,13 @@ static void directory_destroy( struct object *obj )
     free( dir->entries );
 }
 
-static struct directory *create_directory( struct directory *root, const struct unicode_str *name,
+static struct directory *create_directory( struct object *root, const struct unicode_str *name,
                                            unsigned int attr, unsigned int hash_size,
                                            const struct security_descriptor *sd )
 {
     struct directory *dir;
 
-    if ((dir = create_named_object_dir( root, name, attr, &directory_ops )) &&
+    if ((dir = create_named_object( root, &directory_ops, name, attr )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         if (!(dir->entries = create_namespace( hash_size )))
@@ -223,16 +223,10 @@ struct object *get_root_directory(void)
     return grab_object( root_directory );
 }
 
-struct directory *get_directory_obj( struct process *process, obj_handle_t handle, unsigned int access )
+/* return a directory object for creating/opening some object; no access rights are required */
+struct object *get_directory_obj( struct process *process, obj_handle_t handle )
 {
-    return (struct directory *)get_handle_obj( process, handle, access, &directory_ops );
-}
-
-/* create a named (if name is present) or unnamed object. */
-void *create_named_object_dir( struct directory *root, const struct unicode_str *name,
-                               unsigned int attributes, const struct object_ops *ops )
-{
-    return create_named_object( &root->obj, ops, name, attributes );
+    return get_handle_obj( process, handle, 0, &directory_ops );
 }
 
 /* retrieve an object type, creating it if needed */
@@ -240,7 +234,7 @@ struct object_type *get_object_type( const struct unicode_str *name )
 {
     struct object_type *type;
 
-    if ((type = create_named_object_dir( dir_objtype, name, OBJ_OPENIF, &object_type_ops )))
+    if ((type = create_named_object( &dir_objtype->obj, &object_type_ops, name, OBJ_OPENIF )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -335,13 +329,13 @@ void init_directories(void)
     unsigned int i;
 
     root_directory = create_directory( NULL, NULL, 0, HASH_SIZE, NULL );
-    dir_driver     = create_directory( root_directory, &dir_driver_str, 0, HASH_SIZE, NULL );
-    dir_device     = create_directory( root_directory, &dir_device_str, 0, HASH_SIZE, NULL );
-    dir_objtype    = create_directory( root_directory, &dir_objtype_str, 0, HASH_SIZE, NULL );
-    dir_sessions   = create_directory( root_directory, &dir_sessions_str, 0, HASH_SIZE, NULL );
-    dir_kernel     = create_directory( root_directory, &dir_kernel_str, 0, HASH_SIZE, NULL );
-    dir_windows    = create_directory( root_directory, &dir_windows_str, 0, HASH_SIZE, NULL );
-    dir_winstation = create_directory( dir_windows, &dir_winstations_str, 0, HASH_SIZE, NULL );
+    dir_driver     = create_directory( &root_directory->obj, &dir_driver_str, 0, HASH_SIZE, NULL );
+    dir_device     = create_directory( &root_directory->obj, &dir_device_str, 0, HASH_SIZE, NULL );
+    dir_objtype    = create_directory( &root_directory->obj, &dir_objtype_str, 0, HASH_SIZE, NULL );
+    dir_sessions   = create_directory( &root_directory->obj, &dir_sessions_str, 0, HASH_SIZE, NULL );
+    dir_kernel     = create_directory( &root_directory->obj, &dir_kernel_str, 0, HASH_SIZE, NULL );
+    dir_windows    = create_directory( &root_directory->obj, &dir_windows_str, 0, HASH_SIZE, NULL );
+    dir_winstation = create_directory( &dir_windows->obj, &dir_winstations_str, 0, HASH_SIZE, NULL );
     make_object_static( &root_directory->obj );
     make_object_static( &dir_driver->obj );
     make_object_static( &dir_objtype->obj );
@@ -352,20 +346,20 @@ void init_directories(void)
     dir_basenamed  = create_directory( NULL, &dir_basenamed_str, 0, 37, NULL );
 
     /* devices */
-    create_named_pipe_device( dir_device, &named_pipe_str );
-    create_mailslot_device( dir_device, &mailslot_str );
-    create_unix_device( dir_device, &null_str, "/dev/null" );
+    create_named_pipe_device( &dir_device->obj, &named_pipe_str );
+    create_mailslot_device( &dir_device->obj, &mailslot_str );
+    create_unix_device( &dir_device->obj, &null_str, "/dev/null" );
 
     /* symlinks */
-    link_dosdev    = create_symlink( root_directory, &link_dosdev_str, 0, &dir_global_str, NULL );
-    link_global1   = create_symlink( dir_global, &link_global_str, 0, &dir_global_str, NULL );
-    link_global2   = create_symlink( dir_basenamed, &link_global_str, 0, &dir_basenamed_str, NULL );
-    link_local     = create_symlink( dir_basenamed, &link_local_str, 0, &dir_basenamed_str, NULL );
-    link_nul       = create_symlink( dir_global, &link_nul_str, 0, &dir_null_str, NULL );
-    link_pipe      = create_symlink( dir_global, &link_pipe_str, 0, &dir_named_pipe_str, NULL );
-    link_mailslot  = create_symlink( dir_global, &link_mailslot_str, 0, &dir_mailslot_str, NULL );
-    link_0         = create_symlink( dir_sessions, &link_0_str, 0, &dir_basenamed_str, NULL );
-    link_session   = create_symlink( dir_basenamed, &link_session_str, 0, &link_sessions_str, NULL );
+    link_dosdev    = create_symlink( &root_directory->obj, &link_dosdev_str, 0, &dir_global_str, NULL );
+    link_global1   = create_symlink( &dir_global->obj, &link_global_str, 0, &dir_global_str, NULL );
+    link_global2   = create_symlink( &dir_basenamed->obj, &link_global_str, 0, &dir_basenamed_str, NULL );
+    link_local     = create_symlink( &dir_basenamed->obj, &link_local_str, 0, &dir_basenamed_str, NULL );
+    link_nul       = create_symlink( &dir_global->obj, &link_nul_str, 0, &dir_null_str, NULL );
+    link_pipe      = create_symlink( &dir_global->obj, &link_pipe_str, 0, &dir_named_pipe_str, NULL );
+    link_mailslot  = create_symlink( &dir_global->obj, &link_mailslot_str, 0, &dir_mailslot_str, NULL );
+    link_0         = create_symlink( &dir_sessions->obj, &link_0_str, 0, &dir_basenamed_str, NULL );
+    link_session   = create_symlink( &dir_basenamed->obj, &link_session_str, 0, &link_sessions_str, NULL );
     make_object_static( (struct object *)link_dosdev );
     make_object_static( (struct object *)link_global1 );
     make_object_static( (struct object *)link_global2 );
@@ -379,10 +373,10 @@ void init_directories(void)
     /* events */
     for (i = 0; i < sizeof(kernel_events)/sizeof(kernel_events[0]); i++)
     {
-        struct event *event = create_event( dir_kernel, &kernel_events[i], 0, 1, 0, NULL );
+        struct event *event = create_event( &dir_kernel->obj, &kernel_events[i], 0, 1, 0, NULL );
         make_object_static( (struct object *)event );
     }
-    keyed_event = create_keyed_event( dir_kernel, &keyed_event_crit_sect_str, 0, NULL );
+    keyed_event = create_keyed_event( &dir_kernel->obj, &keyed_event_crit_sect_str, 0, NULL );
     make_object_static( (struct object *)keyed_event );
 
     /* the objects hold references so we can release these directories */
@@ -398,7 +392,8 @@ void init_directories(void)
 DECL_HANDLER(create_directory)
 {
     struct unicode_str name;
-    struct directory *dir, *root;
+    struct object *root;
+    struct directory *dir;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
@@ -425,7 +420,8 @@ DECL_HANDLER(open_directory)
 /* get a directory entry by index */
 DECL_HANDLER(get_directory_entry)
 {
-    struct directory *dir = get_directory_obj( current->process, req->handle, DIRECTORY_QUERY );
+    struct directory *dir = (struct directory *)get_handle_obj( current->process, req->handle,
+                                                                DIRECTORY_QUERY, &directory_ops );
     if (dir)
     {
         struct object *obj = find_object_index( dir->entries, req->index );

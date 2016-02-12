@@ -500,11 +500,11 @@ static enum server_fd_type named_pipe_device_get_fd_type( struct fd *fd )
     return FD_TYPE_DEVICE;
 }
 
-void create_named_pipe_device( struct directory *root, const struct unicode_str *name )
+void create_named_pipe_device( struct object *root, const struct unicode_str *name )
 {
     struct named_pipe_device *dev;
 
-    if ((dev = create_named_object_dir( root, name, 0, &named_pipe_device_ops )) &&
+    if ((dev = create_named_object( root, &named_pipe_device_ops, name, 0 )) &&
         get_error() != STATUS_OBJECT_NAME_EXISTS)
     {
         dev->pipes = NULL;
@@ -892,7 +892,7 @@ DECL_HANDLER(create_named_pipe)
     struct named_pipe *pipe;
     struct pipe_server *server;
     struct unicode_str name;
-    struct directory *root;
+    struct object *root;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
@@ -912,10 +912,10 @@ DECL_HANDLER(create_named_pipe)
             set_error( STATUS_OBJECT_PATH_SYNTAX_BAD );
             return;
         }
-        else if (!(root = get_directory_obj( current->process, objattr->rootdir, 0 ))) return;
+        if (!(root = get_directory_obj( current->process, objattr->rootdir ))) return;
     }
 
-    pipe = create_named_object_dir( root, &name, objattr->attributes | OBJ_OPENIF, &named_pipe_ops );
+    pipe = create_named_object( root, &named_pipe_ops, &name, objattr->attributes | OBJ_OPENIF );
 
     if (root) release_object( root );
     if (!pipe) return;

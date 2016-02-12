@@ -105,12 +105,12 @@ static const struct object_ops desktop_ops =
 #define DESKTOP_ALL_ACCESS 0x01ff
 
 /* create a winstation object */
-static struct winstation *create_winstation( struct directory *root, const struct unicode_str *name,
+static struct winstation *create_winstation( struct object *root, const struct unicode_str *name,
                                              unsigned int attr, unsigned int flags )
 {
     struct winstation *winstation;
 
-    if ((winstation = create_named_object_dir( root, name, attr, &winstation_ops )))
+    if ((winstation = create_named_object( root, &winstation_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -438,10 +438,10 @@ DECL_HANDLER(create_winstation)
 {
     struct winstation *winstation;
     struct unicode_str name = get_req_unicode_str();
-    struct directory *root = NULL;
+    struct object *root = NULL;
 
     reply->handle = 0;
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 ))) return;
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir ))) return;
 
     if ((winstation = create_winstation( root, &name, req->attributes, req->flags )))
     {

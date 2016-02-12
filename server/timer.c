@@ -81,12 +81,12 @@ static const struct object_ops timer_ops =
 
 
 /* create a timer object */
-static struct timer *create_timer( struct directory *root, const struct unicode_str *name,
+static struct timer *create_timer( struct object *root, const struct unicode_str *name,
                                    unsigned int attr, int manual, const struct security_descriptor *sd )
 {
     struct timer *timer;
 
-    if ((timer = create_named_object_dir( root, name, attr, &timer_ops )))
+    if ((timer = create_named_object( root, &timer_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -234,7 +234,7 @@ DECL_HANDLER(create_timer)
 {
     struct timer *timer;
     struct unicode_str name;
-    struct directory *root;
+    struct object *root;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 

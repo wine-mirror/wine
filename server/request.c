@@ -170,7 +170,7 @@ void *set_reply_data_size( data_size_t size )
 /* return object attributes from the current request */
 const struct object_attributes *get_req_object_attributes( const struct security_descriptor **sd,
                                                            struct unicode_str *name,
-                                                           struct directory **root )
+                                                           struct object **root )
 {
     static const struct object_attributes empty_attributes;
     const struct object_attributes *attr = get_req_data();
@@ -203,7 +203,7 @@ const struct object_attributes *get_req_object_attributes( const struct security
     }
     if (root && attr->rootdir && attr->name_len)
     {
-        if (!(*root = get_directory_obj( current->process, attr->rootdir, 0 ))) return NULL;
+        if (!(*root = get_directory_obj( current->process, attr->rootdir ))) return NULL;
     }
     *sd = attr->sd_len ? (const struct security_descriptor *)(attr + 1) : NULL;
     name->len = attr->name_len;

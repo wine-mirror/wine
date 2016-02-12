@@ -133,7 +133,7 @@ static void symlink_destroy( struct object *obj )
     free( symlink->target );
 }
 
-struct symlink *create_symlink( struct directory *root, const struct unicode_str *name,
+struct symlink *create_symlink( struct object *root, const struct unicode_str *name,
                                 unsigned int attr, const struct unicode_str *target,
                                 const struct security_descriptor *sd )
 {
@@ -144,7 +144,7 @@ struct symlink *create_symlink( struct directory *root, const struct unicode_str
         set_error( STATUS_INVALID_PARAMETER );
         return NULL;
     }
-    if ((symlink = create_named_object_dir( root, name, attr, &symlink_ops )) &&
+    if ((symlink = create_named_object( root, &symlink_ops, name, attr )) &&
         (get_error() != STATUS_OBJECT_NAME_EXISTS))
     {
         if ((symlink->target = memdup( target->str, target->len )))
@@ -170,7 +170,7 @@ DECL_HANDLER(create_symlink)
 {
     struct symlink *symlink;
     struct unicode_str name, target;
-    struct directory *root;
+    struct object *root;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 

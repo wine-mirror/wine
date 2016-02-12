@@ -99,12 +99,12 @@ static void do_release( struct mutex *mutex )
     wake_up( &mutex->obj, 0 );
 }
 
-static struct mutex *create_mutex( struct directory *root, const struct unicode_str *name,
+static struct mutex *create_mutex( struct object *root, const struct unicode_str *name,
                                    unsigned int attr, int owned, const struct security_descriptor *sd )
 {
     struct mutex *mutex;
 
-    if ((mutex = create_named_object_dir( root, name, attr, &mutex_ops )))
+    if ((mutex = create_named_object( root, &mutex_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -210,7 +210,7 @@ DECL_HANDLER(create_mutex)
 {
     struct mutex *mutex;
     struct unicode_str name;
-    struct directory *root;
+    struct object *root;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 

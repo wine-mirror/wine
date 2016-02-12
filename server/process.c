@@ -181,12 +181,12 @@ static const struct object_ops job_ops =
     job_destroy                    /* destroy */
 };
 
-static struct job *create_job_object( struct directory *root, const struct unicode_str *name,
+static struct job *create_job_object( struct object *root, const struct unicode_str *name,
                                       unsigned int attr, const struct security_descriptor *sd )
 {
     struct job *job;
 
-    if ((job = create_named_object_dir( root, name, attr, &job_ops )))
+    if ((job = create_named_object( root, &job_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -1544,7 +1544,7 @@ DECL_HANDLER(create_job)
 {
     struct job *job;
     struct unicode_str name;
-    struct directory *root;
+    struct object *root;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 

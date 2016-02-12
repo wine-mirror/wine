@@ -599,12 +599,12 @@ static obj_handle_t device_file_ioctl( struct fd *fd, ioctl_code_t code, const a
     return handle;
 }
 
-static struct device *create_device( struct directory *root, const struct unicode_str *name,
+static struct device *create_device( struct object *root, const struct unicode_str *name,
                                      struct device_manager *manager, unsigned int attr )
 {
     struct device *device;
 
-    if ((device = create_named_object_dir( root, name, attr, &device_ops )))
+    if ((device = create_named_object( root, &device_ops, name, attr )))
     {
         if (get_error() != STATUS_OBJECT_NAME_EXISTS)
         {
@@ -618,12 +618,12 @@ static struct device *create_device( struct directory *root, const struct unicod
     return device;
 }
 
-struct device *create_unix_device( struct directory *root, const struct unicode_str *name,
+struct device *create_unix_device( struct object *root, const struct unicode_str *name,
                                    const char *unix_path )
 {
     struct device *device;
 
-    if ((device = create_named_object_dir( root, name, 0, &device_ops )))
+    if ((device = create_named_object( root, &device_ops, name, 0 )))
     {
         device->unix_path = strdup( unix_path );
         device->manager = NULL;  /* no manager, requests go straight to the Unix device */
@@ -718,13 +718,13 @@ DECL_HANDLER(create_device)
     struct device *device;
     struct unicode_str name = get_req_unicode_str();
     struct device_manager *manager;
-    struct directory *root = NULL;
+    struct object *root = NULL;
 
     if (!(manager = (struct device_manager *)get_handle_obj( current->process, req->manager,
                                                              0, &device_manager_ops )))
         return;
 
-    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir, 0 )))
+    if (req->rootdir && !(root = get_directory_obj( current->process, req->rootdir )))
     {
         release_object( manager );
         return;

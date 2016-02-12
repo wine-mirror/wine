@@ -470,7 +470,7 @@ static unsigned int get_image_params( struct mapping *mapping, int unix_fd, int 
     return STATUS_INVALID_FILE_FOR_SECTION;
 }
 
-static struct object *create_mapping( struct directory *root, const struct unicode_str *name,
+static struct object *create_mapping( struct object *root, const struct unicode_str *name,
                                       unsigned int attr, mem_size_t size, int protect,
                                       obj_handle_t handle, const struct security_descriptor *sd )
 {
@@ -483,7 +483,7 @@ static struct object *create_mapping( struct directory *root, const struct unico
 
     if (!page_mask) page_mask = sysconf( _SC_PAGESIZE ) - 1;
 
-    if (!(mapping = create_named_object_dir( root, name, attr, &mapping_ops )))
+    if (!(mapping = create_named_object( root, &mapping_ops, name, attr )))
         return NULL;
     if (get_error() == STATUS_OBJECT_NAME_EXISTS)
         return &mapping->obj;  /* Nothing else to do */
@@ -661,9 +661,8 @@ int get_page_size(void)
 /* create a file mapping */
 DECL_HANDLER(create_mapping)
 {
-    struct object *obj;
+    struct object *root, *obj;
     struct unicode_str name;
-    struct directory *root;
     const struct security_descriptor *sd;
     const struct object_attributes *objattr = get_req_object_attributes( &sd, &name, &root );
 
