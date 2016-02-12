@@ -379,17 +379,17 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
         case 2:
         case 4:
             /* Allocate extra space to store the RGB bit masks. */
-            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER) + 3 * sizeof(DWORD));
+            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(BITMAPINFO, bmiColors[3]));
             break;
 
         case 3:
-            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(BITMAPINFOHEADER));
+            b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, FIELD_OFFSET(BITMAPINFO, bmiColors[0]));
             break;
 
         default:
             /* Allocate extra space for a palette. */
             b_info = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                    sizeof(BITMAPINFOHEADER) + sizeof(RGBQUAD) * (1u << (format->byte_count * 8)));
+                    FIELD_OFFSET(BITMAPINFO, bmiColors[1u << (format->byte_count * 8)]));
             break;
     }
 
