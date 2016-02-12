@@ -2893,15 +2893,23 @@ BOOL WINAPI ImmGenerateMessage(HIMC hIMC)
     if (data->IMC.dwNumMsgBuf > 0)
     {
         LPTRANSMSG lpTransMsg;
-        DWORD i;
+        HIMCC hMsgBuf;
+        DWORD i, dwNumMsgBuf;
 
-        lpTransMsg = ImmLockIMCC(data->IMC.hMsgBuf);
-        for (i = 0; i < data->IMC.dwNumMsgBuf; i++)
+        /* We are going to detach our hMsgBuff so that if processing messages
+           generates new messages they go into a new buffer */
+        hMsgBuf = data->IMC.hMsgBuf;
+        dwNumMsgBuf = data->IMC.dwNumMsgBuf;
+
+        data->IMC.hMsgBuf = ImmCreateIMCC(0);
+        data->IMC.dwNumMsgBuf = 0;
+
+        lpTransMsg = ImmLockIMCC(hMsgBuf);
+        for (i = 0; i < dwNumMsgBuf; i++)
             ImmInternalSendIMEMessage(data, lpTransMsg[i].message, lpTransMsg[i].wParam, lpTransMsg[i].lParam);
 
-        ImmUnlockIMCC(data->IMC.hMsgBuf);
-
-        data->IMC.dwNumMsgBuf = 0;
+        ImmUnlockIMCC(hMsgBuf);
+        ImmDestroyIMCC(hMsgBuf);
     }
 
     return TRUE;
