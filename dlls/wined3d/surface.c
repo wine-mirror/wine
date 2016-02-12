@@ -2467,6 +2467,7 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context = old_ctx;
     struct wined3d_surface *restore_rt = NULL;
+    unsigned int row_pitch, slice_pitch;
     BYTE *mem;
     BYTE *row, *top, *bottom;
     int i;
@@ -2512,9 +2513,10 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
         checkGLcall("glBindBuffer");
     }
 
+    wined3d_texture_get_pitch(surface->container, surface->texture_level, &row_pitch, &slice_pitch);
+
     /* Setup pixel store pack state -- to glReadPixels into the correct place */
-    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH,
-            wined3d_surface_get_pitch(surface) / surface->resource.format->byte_count);
+    gl_info->gl_ops.gl.p_glPixelStorei(GL_PACK_ROW_LENGTH, row_pitch / surface->resource.format->byte_count);
     checkGLcall("glPixelStorei");
 
     gl_info->gl_ops.gl.p_glReadPixels(0, 0,
@@ -2529,11 +2531,10 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
 
     if (!srcIsUpsideDown)
     {
-        /* glReadPixels returns the image upside down, and there is no way to prevent this.
-         * Flip the lines in software. */
-        UINT pitch = wined3d_surface_get_pitch(surface);
+        /* glReadPixels returns the image upside down, and there is no way to
+         * prevent this. Flip the lines in software. */
 
-        if (!(row = HeapAlloc(GetProcessHeap(), 0, pitch)))
+        if (!(row = HeapAlloc(GetProcessHeap(), 0, row_pitch)))
             goto error;
 
         if (data.buffer_object)
@@ -2545,14 +2546,14 @@ static void read_from_framebuffer(struct wined3d_surface *surface,
             mem = data.addr;
 
         top = mem;
-        bottom = mem + pitch * (surface->resource.height - 1);
+        bottom = mem + row_pitch * (surface->resource.height - 1);
         for (i = 0; i < surface->resource.height / 2; i++)
         {
-            memcpy(row, top, pitch);
-            memcpy(top, bottom, pitch);
-            memcpy(bottom, row, pitch);
-            top += pitch;
-            bottom -= pitch;
+            memcpy(row, top, row_pitch);
+            memcpy(top, bottom, row_pitch);
+            memcpy(bottom, row, row_pitch);
+            top += row_pitch;
+            bottom -= row_pitch;
         }
         HeapFree(GetProcessHeap(), 0, row);
 
