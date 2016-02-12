@@ -162,6 +162,7 @@ static DWORD MCIQTZ_drvClose(DWORD dwDevID)
         CloseHandle(wma->task.notify);
         CloseHandle(wma->task.done);
         CloseHandle(wma->task.thread);
+        wma->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&wma->cs);
         mciSetDriverData(dwDevID, 0);
         CloseHandle(wma->stop_event);
