@@ -1582,17 +1582,79 @@ DWORD WINAPI WNetUseConnectionA( HWND hwndOwner, LPNETRESOURCEA lpNetResource,
 /*****************************************************************
  *  WNetUseConnectionW [MPR.@]
  */
-DWORD WINAPI WNetUseConnectionW( HWND hwndOwner, LPNETRESOURCEW lpNetResource,
-                                 LPCWSTR lpPassword, LPCWSTR lpUserID, DWORD dwFlags,
-                                 LPWSTR lpAccessName, LPDWORD lpBufferSize,
-                                 LPDWORD lpResult )
+DWORD WINAPI WNetUseConnectionW( HWND hwndOwner, NETRESOURCEW *resource, LPCWSTR password,
+    LPCWSTR userid, DWORD flags, LPWSTR accessname, DWORD *buffer_size, DWORD *result )
 {
-    FIXME( "(%p, %p, %p, %s, 0x%08X, %s, %p, %p), stub\n",
-           hwndOwner, lpNetResource, lpPassword, debugstr_w(lpUserID), dwFlags,
-           debugstr_w(lpAccessName), lpBufferSize, lpResult );
+    WNetProvider *provider;
+    DWORD index, ret, caps;
 
-    SetLastError(WN_NO_NETWORK);
-    return WN_NO_NETWORK;
+    TRACE( "(%p, %p, %p, %s, 0x%08X, %p, %p, %p)\n",
+           hwndOwner, resource, password, debugstr_w(userid), flags,
+           accessname, buffer_size, result );
+
+    if (!providerTable || providerTable->numProviders == 0)
+        return WN_NO_NETWORK;
+
+    if (!resource)
+        return ERROR_INVALID_PARAMETER;
+
+    if (!resource->lpProvider)
+    {
+        FIXME("Networking provider selection is not implemented.\n");
+        return WN_NO_NETWORK;
+    }
+
+    if (!resource->lpLocalName && (flags & CONNECT_REDIRECT))
+    {
+        FIXME("Locale device selection is not implemented.\n");
+        return WN_NO_NETWORK;
+    }
+
+    if (flags & CONNECT_INTERACTIVE)
+        return ERROR_BAD_NET_NAME;
+
+    index = _findProviderIndexW(resource->lpProvider);
+    if (index == BAD_PROVIDER_INDEX)
+        return ERROR_BAD_PROVIDER;
+
+    provider = &providerTable->table[index];
+    caps = provider->getCaps(WNNC_CONNECTION);
+    if (!(caps & (WNNC_CON_ADDCONNECTION | WNNC_CON_ADDCONNECTION3)))
+        return ERROR_BAD_PROVIDER;
+
+    if (accessname && buffer_size && *buffer_size)
+    {
+        DWORD len;
+
+        if (resource->lpLocalName)
+            len = strlenW(resource->lpLocalName);
+        else
+            len = strlenW(resource->lpRemoteName);
+
+        if (++len > *buffer_size)
+        {
+            *buffer_size = len;
+            return ERROR_MORE_DATA;
+        }
+    }
+    else
+        accessname = NULL;
+
+    ret = WN_ACCESS_DENIED;
+    if ((caps & WNNC_CON_ADDCONNECTION3) && provider->addConnection3)
+        ret = provider->addConnection3(hwndOwner, resource, (LPWSTR)password, (LPWSTR)userid, flags);
+    else if ((caps & WNNC_CON_ADDCONNECTION) && provider->addConnection)
+        ret = provider->addConnection(resource, (LPWSTR)password, (LPWSTR)userid);
+
+    if (ret == WN_SUCCESS && accessname)
+    {
+        if (resource->lpLocalName)
+            strcpyW(accessname, resource->lpLocalName);
+        else
+            strcpyW(accessname, resource->lpRemoteName);
+    }
+
+    return ret;
 }
 
 /*********************************************************************
