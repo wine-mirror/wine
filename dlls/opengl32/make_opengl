@@ -692,12 +692,14 @@ sub parse_file($$)
     }
 
     # generate extension functions from norm functions, if they are newer than the category
-    while (my ($k, $v) = each(%{$data->{feature}})) {
+    my %features = %{$data->{feature}};
+    foreach (sort keys %features) {
+        my ($k, $v) = %features{$_};
         if (!$norm_categories{$k} && $v->{api} =~ /^gl(\||$)/)
         {
             for my $req (@{$v->{require}}) {
                 for (keys %{$req->{command}}) {
-                    if (!$norm_functions{$_}) {
+                    if (!$ext_functions{$_} && !$norm_functions{$_}) {
                         $ext_functions{$_} = [ $functions{$_}[0], $functions{$_}[1], [ $k ] ];
                     }
                 }
