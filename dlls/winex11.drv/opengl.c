@@ -2738,7 +2738,7 @@ static BOOL X11DRV_wglGetPixelFormatAttribivARB( HDC hdc, int iPixelFormat, int 
             case WGL_SWAP_METHOD_ARB:
                 if (has_swap_method)
                 {
-                    hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_DRAWABLE_TYPE, &tmp);
+                    hTest = pglXGetFBConfigAttrib(gdi_display, fmt->fbconfig, GLX_SWAP_METHOD_OML, &tmp);
                     if (hTest) goto get_error;
                     switch (tmp)
                     {
