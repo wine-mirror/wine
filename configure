@@ -636,6 +636,8 @@ UNWINDFLAGS
 EXCESS_PRECISION_CFLAGS
 BUILTINFLAG
 EXTRACFLAGS
+NETAPI_LIBS
+NETAPI_CFLAGS
 PROCSTAT_LIBS
 KSTAT_LIBS
 MPG123_LIBS
@@ -1567,7 +1569,9 @@ PNG_LIBS
 TIFF_CFLAGS
 TIFF_LIBS
 MPG123_CFLAGS
-MPG123_LIBS'
+MPG123_LIBS
+NETAPI_CFLAGS
+NETAPI_LIBS'
 
 
 # Initialize some variables set by options.
@@ -2322,6 +2326,9 @@ Some influential environment variables:
   MPG123_CFLAGS
               C compiler flags for libmpg123, overriding pkg-config
   MPG123_LIBS Linker flags for libmpg123, overriding pkg-config
+  NETAPI_CFLAGS
+              C compiler flags for netapi, overriding pkg-config
+  NETAPI_LIBS Linker flags for netapi, overriding pkg-config
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -13884,13 +13891,30 @@ fi
 
 if test "x$with_netapi" != "xno"
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lnetapi" >&5
+    if ${NETAPI_CFLAGS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  NETAPI_CFLAGS=`$PKG_CONFIG --cflags netapi 2>/dev/null`
+fi
+fi
+
+if ${NETAPI_LIBS:+false} :; then :
+  if ${PKG_CONFIG+:} false; then :
+  NETAPI_LIBS=`$PKG_CONFIG --libs netapi 2>/dev/null`
+fi
+fi
+
+
+$as_echo "$as_me:${as_lineno-$LINENO}: netapi cflags: $NETAPI_CFLAGS" >&5
+$as_echo "$as_me:${as_lineno-$LINENO}: netapi libs: $NETAPI_LIBS" >&5
+ac_save_CPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS $NETAPI_CFLAGS"
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for -lnetapi" >&5
 $as_echo_n "checking for -lnetapi... " >&6; }
 if ${ac_cv_lib_soname_netapi+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_soname_save_LIBS=$LIBS
-LIBS="-lnetapi  $LIBS"
+LIBS="-lnetapi $NETAPI_LIBS $LIBS"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -13940,6 +13964,10 @@ _ACEOF
 
 
 fi
+CPPFLAGS=$ac_save_CPPFLAGS
+test -z "$NETAPI_CFLAGS" || NETAPI_CFLAGS=`echo " $NETAPI_CFLAGS" | sed 's/ -I\([^/]\)/ -I\$(top_builddir)\/\1/g'`
+test -z "$NETAPI_LIBS" || NETAPI_LIBS=`echo " $NETAPI_LIBS" | sed 's/ -L\([^/]\)/ -L\$(top_builddir)\/\1/g'`
+
 fi
 
 if test "x$enable_winealsa_drv$enable_winecoreaudio_drv$enable_winepulse_drv$enable_wineoss_drv" = xnononono -a \
@@ -17240,6 +17268,8 @@ MPG123_CFLAGS = $MPG123_CFLAGS
 MPG123_LIBS = $MPG123_LIBS
 KSTAT_LIBS = $KSTAT_LIBS
 PROCSTAT_LIBS = $PROCSTAT_LIBS
+NETAPI_CFLAGS = $NETAPI_CFLAGS
+NETAPI_LIBS = $NETAPI_LIBS
 EXCESS_PRECISION_CFLAGS = $EXCESS_PRECISION_CFLAGS
 DL_LIBS = $DL_LIBS
 POLL_LIBS = $POLL_LIBS

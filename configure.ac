@@ -1710,7 +1710,8 @@ WINE_CHECK_SONAME(odbc,SQLConnect,,[AC_DEFINE_UNQUOTED(SONAME_LIBODBC,["libodbc.
 dnl **** Check for libnetapi ****
 if test "x$with_netapi" != "xno"
 then
-    WINE_CHECK_SONAME(netapi,libnetapi_init,,[AC_DEFINE_UNQUOTED(SONAME_LIBNETAPI,["libnetapi.$LIBEXT"])])
+    WINE_PACKAGE_FLAGS(NETAPI,[netapi],,,,
+      [WINE_CHECK_SONAME(netapi,libnetapi_init,,[AC_DEFINE_UNQUOTED(SONAME_LIBNETAPI,["libnetapi.$LIBEXT"])],[$NETAPI_LIBS])])
 fi
 
 dnl **** Check for any sound system ****
