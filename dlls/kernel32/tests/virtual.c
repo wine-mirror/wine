@@ -383,9 +383,13 @@ static void test_VirtualAlloc(void)
 
     ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
 
-    addr1 = VirtualAlloc(0, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    /* memory returned by VirtualAlloc should be aligned to 64k */
+    addr1 = VirtualAlloc(0, 0x2000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
     ok(addr1 != NULL, "VirtualAlloc failed\n");
     ok(!((ULONG_PTR)addr1 & 0xffff), "returned memory %p is not aligned to 64k\n", addr1);
+    ok(VirtualFree(addr1, 0, MEM_RELEASE), "VirtualFree failed\n");
+    addr2 = VirtualAlloc(addr1, 0x1000, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    ok(addr2 == addr1, "VirtualAlloc returned %p, expected %p\n", addr2, addr1);
 
     /* allocation conflicts because of 64k align */
     size = 0x1000;
