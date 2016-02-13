@@ -1985,13 +1985,6 @@ VOID WINAPI MmUnmapIoSpace( PVOID BaseAddress, SIZE_T NumberOfBytes )
     FIXME( "stub: %p, %lu\n", BaseAddress, NumberOfBytes );
 }
 
-/***********************************************************************
- *           ObfReferenceObject   (NTOSKRNL.EXE.@)
- */
-VOID WINAPI ObfReferenceObject(PVOID Object)
-{
-    FIXME("(%p): stub\n", Object);
-}
 
  /***********************************************************************
  *           ObReferenceObjectByHandle    (NTOSKRNL.EXE.@)
@@ -2021,17 +2014,32 @@ NTSTATUS WINAPI ObReferenceObjectByName( UNICODE_STRING *ObjectName,
     return STATUS_NOT_IMPLEMENTED;
 }
 
+
+/***********************************************************************
+ *           ObfReferenceObject   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL1_ENTRYPOINT
+DEFINE_FASTCALL1_ENTRYPOINT( ObfReferenceObject )
+void WINAPI __regs_ObfReferenceObject( void *obj )
+#else
+void WINAPI ObfReferenceObject( void *obj )
+#endif
+{
+    FIXME( "(%p): stub\n", obj );
+}
+
+
 /***********************************************************************
  *           ObfDereferenceObject   (NTOSKRNL.EXE.@)
  */
 #ifdef DEFINE_FASTCALL1_ENTRYPOINT
 DEFINE_FASTCALL1_ENTRYPOINT( ObfDereferenceObject )
-void WINAPI __regs_ObfDereferenceObject( VOID *obj )
+void WINAPI __regs_ObfDereferenceObject( void *obj )
 #else
-void WINAPI ObfDereferenceObject( VOID *obj )
+void WINAPI ObfDereferenceObject( void *obj )
 #endif
 {
-    FIXME( "stub: %p\n", obj );
+    FIXME( "(%p): stub\n", obj );
 }
 
 
