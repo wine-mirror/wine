@@ -1430,6 +1430,20 @@ PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
 
 
 /***********************************************************************
+ *           InterlockedPushEntrySList   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL2_ENTRYPOINT
+DEFINE_FASTCALL2_ENTRYPOINT( NTOSKRNL_InterlockedPushEntrySList )
+PSLIST_ENTRY WINAPI __regs_NTOSKRNL_InterlockedPushEntrySList( PSLIST_HEADER list, PSLIST_ENTRY entry )
+#else
+PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPushEntrySList( PSLIST_HEADER list, PSLIST_ENTRY entry )
+#endif
+{
+    return InterlockedPushEntrySList( list, entry );
+}
+
+
+/***********************************************************************
  *           ExAllocatePool   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI ExAllocatePool( POOL_TYPE type, SIZE_T size )

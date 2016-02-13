@@ -34,7 +34,7 @@
 @ stdcall -norelay InterlockedExchangeAdd(ptr long) NTOSKRNL_InterlockedExchangeAdd
 @ stdcall -norelay InterlockedIncrement(ptr) NTOSKRNL_InterlockedIncrement
 @ stdcall -norelay InterlockedPopEntrySList(ptr) NTOSKRNL_InterlockedPopEntrySList
-@ stdcall InterlockedPushEntrySList(ptr ptr) kernel32.InterlockedPushEntrySList
+@ stdcall -norelay InterlockedPushEntrySList(ptr ptr) NTOSKRNL_InterlockedPushEntrySList
 @ stub IoAssignDriveLetters
 @ stub IoReadPartitionTable
 @ stub IoSetPartitionInformation
