@@ -117,6 +117,7 @@ my %debug_conv =
      "GLhandleARB" => "%d",
      "GLcharARB" => "%c",
      "GLuint64" => "%s,wine_dbgstr_longlong(%s)",
+     "GLint64" => "%s,wine_dbgstr_longlong(%s)",
      "GLuint64EXT" => "%s,wine_dbgstr_longlong(%s)",
      "GLint64EXT" => "%s,wine_dbgstr_longlong(%s)",
      "GLvoid" => "(void)",

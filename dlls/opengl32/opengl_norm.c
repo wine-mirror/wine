@@ -3373,6 +3373,7 @@ static void null_glAlphaFragmentOp1ATI( GLenum op, GLuint dst, GLuint dstMod, GL
 static void null_glAlphaFragmentOp2ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod ) { }
 static void null_glAlphaFragmentOp3ATI( GLenum op, GLuint dst, GLuint dstMod, GLuint arg1, GLuint arg1Rep, GLuint arg1Mod, GLuint arg2, GLuint arg2Rep, GLuint arg2Mod, GLuint arg3, GLuint arg3Rep, GLuint arg3Mod ) { }
 static void null_glAlphaFuncxOES( GLenum func, GLfixed ref ) { }
+static void null_glApplyFramebufferAttachmentCMAAINTEL( void ) { }
 static void null_glApplyTextureEXT( GLenum mode ) { }
 static GLboolean null_glAreProgramsResidentNV( GLsizei n, const GLuint* programs, GLboolean* residences ) { return 0; }
 static GLboolean null_glAreTexturesResidentEXT( GLsizei n, const GLuint* textures, GLboolean* residences ) { return 0; }
@@ -3518,7 +3519,7 @@ static void null_glClearNamedBufferData( GLuint buffer, GLenum internalformat, G
 static void null_glClearNamedBufferDataEXT( GLuint buffer, GLenum internalformat, GLenum format, GLenum type, const void* data ) { }
 static void null_glClearNamedBufferSubData( GLuint buffer, GLenum internalformat, GLintptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data ) { }
 static void null_glClearNamedBufferSubDataEXT( GLuint buffer, GLenum internalformat, GLsizeiptr offset, GLsizeiptr size, GLenum format, GLenum type, const void* data ) { }
-static void null_glClearNamedFramebufferfi( GLuint framebuffer, GLenum buffer, const GLfloat depth, GLint stencil ) { }
+static void null_glClearNamedFramebufferfi( GLuint framebuffer, GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil ) { }
 static void null_glClearNamedFramebufferfv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLfloat* value ) { }
 static void null_glClearNamedFramebufferiv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLint* value ) { }
 static void null_glClearNamedFramebufferuiv( GLuint framebuffer, GLenum buffer, GLint drawbuffer, const GLuint* value ) { }
@@ -3609,6 +3610,7 @@ static void null_glCompressedTextureSubImage2D( GLuint texture, GLint level, GLi
 static void null_glCompressedTextureSubImage2DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLsizei width, GLsizei height, GLenum format, GLsizei imageSize, const void* bits ) { }
 static void null_glCompressedTextureSubImage3D( GLuint texture, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* data ) { }
 static void null_glCompressedTextureSubImage3DEXT( GLuint texture, GLenum target, GLint level, GLint xoffset, GLint yoffset, GLint zoffset, GLsizei width, GLsizei height, GLsizei depth, GLenum format, GLsizei imageSize, const void* bits ) { }
+static void null_glConservativeRasterParameterfNV( GLenum pname, GLfloat value ) { }
 static void null_glConvolutionFilter1D( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void* image ) { }
 static void null_glConvolutionFilter1DEXT( GLenum target, GLenum internalformat, GLsizei width, GLenum format, GLenum type, const void* image ) { }
 static void null_glConvolutionFilter2D( GLenum target, GLenum internalformat, GLsizei width, GLsizei height, GLenum format, GLenum type, const void* image ) { }
@@ -3828,6 +3830,7 @@ static void null_glEvalCoord1xvOES( const GLfixed* coords ) { }
 static void null_glEvalCoord2xOES( GLfixed u, GLfixed v ) { }
 static void null_glEvalCoord2xvOES( const GLfixed* coords ) { }
 static void null_glEvalMapsNV( GLenum target, GLenum mode ) { }
+static void null_glEvaluateDepthValuesARB( void ) { }
 static void null_glExecuteProgramNV( GLenum target, GLuint id, const GLfloat* params ) { }
 static void null_glExtractComponentEXT( GLuint res, GLuint src, GLuint num ) { }
 static void null_glFeedbackBufferxOES( GLsizei n, GLenum type, const GLfixed* buffer ) { }
@@ -3886,6 +3889,7 @@ static void null_glFramebufferParameteri( GLenum target, GLenum pname, GLint par
 static void null_glFramebufferReadBufferEXT( GLuint framebuffer, GLenum mode ) { }
 static void null_glFramebufferRenderbuffer( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
 static void null_glFramebufferRenderbufferEXT( GLenum target, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
+static void null_glFramebufferSampleLocationsfvARB( GLenum target, GLuint start, GLsizei count, const GLfloat* v ) { }
 static void null_glFramebufferSampleLocationsfvNV( GLenum target, GLuint start, GLsizei count, const GLfloat* v ) { }
 static void null_glFramebufferTexture( GLenum target, GLenum attachment, GLuint texture, GLint level ) { }
 static void null_glFramebufferTexture1D( GLenum target, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
@@ -3901,6 +3905,7 @@ static void null_glFramebufferTextureFaceEXT( GLenum target, GLenum attachment, 
 static void null_glFramebufferTextureLayer( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer ) { }
 static void null_glFramebufferTextureLayerARB( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer ) { }
 static void null_glFramebufferTextureLayerEXT( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer ) { }
+static void null_glFramebufferTextureMultiviewOVR( GLenum target, GLenum attachment, GLuint texture, GLint level, GLint baseViewIndex, GLsizei numViews ) { }
 static void null_glFreeObjectBufferATI( GLuint buffer ) { }
 static void null_glFrustumfOES( GLfloat l, GLfloat r, GLfloat b, GLfloat t, GLfloat n, GLfloat f ) { }
 static void null_glFrustumxOES( GLfixed l, GLfixed r, GLfixed b, GLfixed t, GLfixed n, GLfixed f ) { }
@@ -4260,9 +4265,11 @@ static void null_glGetUniformSubroutineuiv( GLenum shadertype, GLint location, G
 static void null_glGetUniformdv( GLuint program, GLint location, GLdouble* params ) { }
 static void null_glGetUniformfv( GLuint program, GLint location, GLfloat* params ) { }
 static void null_glGetUniformfvARB( GLhandleARB programObj, GLint location, GLfloat* params ) { }
+static void null_glGetUniformi64vARB( GLuint program, GLint location, GLint64* params ) { }
 static void null_glGetUniformi64vNV( GLuint program, GLint location, GLint64EXT* params ) { }
 static void null_glGetUniformiv( GLuint program, GLint location, GLint* params ) { }
 static void null_glGetUniformivARB( GLhandleARB programObj, GLint location, GLint* params ) { }
+static void null_glGetUniformui64vARB( GLuint program, GLint location, GLuint64* params ) { }
 static void null_glGetUniformui64vNV( GLuint program, GLint location, GLuint64EXT* params ) { }
 static void null_glGetUniformuiv( GLuint program, GLint location, GLuint* params ) { }
 static void null_glGetUniformuivEXT( GLuint program, GLint location, GLuint* params ) { }
@@ -4343,8 +4350,10 @@ static void null_glGetnUniformdv( GLuint program, GLint location, GLsizei bufSiz
 static void null_glGetnUniformdvARB( GLuint program, GLint location, GLsizei bufSize, GLdouble* params ) { }
 static void null_glGetnUniformfv( GLuint program, GLint location, GLsizei bufSize, GLfloat* params ) { }
 static void null_glGetnUniformfvARB( GLuint program, GLint location, GLsizei bufSize, GLfloat* params ) { }
+static void null_glGetnUniformi64vARB( GLuint program, GLint location, GLsizei bufSize, GLint64* params ) { }
 static void null_glGetnUniformiv( GLuint program, GLint location, GLsizei bufSize, GLint* params ) { }
 static void null_glGetnUniformivARB( GLuint program, GLint location, GLsizei bufSize, GLint* params ) { }
+static void null_glGetnUniformui64vARB( GLuint program, GLint location, GLsizei bufSize, GLuint64* params ) { }
 static void null_glGetnUniformuiv( GLuint program, GLint location, GLsizei bufSize, GLuint* params ) { }
 static void null_glGetnUniformuivARB( GLuint program, GLint location, GLsizei bufSize, GLuint* params ) { }
 static void null_glGlobalAlphaFactorbSUN( GLbyte factor ) { }
@@ -4513,6 +4522,7 @@ static void null_glMatrixScaledEXT( GLenum mode, GLdouble x, GLdouble y, GLdoubl
 static void null_glMatrixScalefEXT( GLenum mode, GLfloat x, GLfloat y, GLfloat z ) { }
 static void null_glMatrixTranslatedEXT( GLenum mode, GLdouble x, GLdouble y, GLdouble z ) { }
 static void null_glMatrixTranslatefEXT( GLenum mode, GLfloat x, GLfloat y, GLfloat z ) { }
+static void null_glMaxShaderCompilerThreadsARB( GLuint count ) { }
 static void null_glMemoryBarrier( GLbitfield barriers ) { }
 static void null_glMemoryBarrierByRegion( GLbitfield barriers ) { }
 static void null_glMemoryBarrierEXT( GLbitfield barriers ) { }
@@ -4715,6 +4725,7 @@ static void null_glNamedFramebufferParameteriEXT( GLuint framebuffer, GLenum pna
 static void null_glNamedFramebufferReadBuffer( GLuint framebuffer, GLenum src ) { }
 static void null_glNamedFramebufferRenderbuffer( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
 static void null_glNamedFramebufferRenderbufferEXT( GLuint framebuffer, GLenum attachment, GLenum renderbuffertarget, GLuint renderbuffer ) { }
+static void null_glNamedFramebufferSampleLocationsfvARB( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat* v ) { }
 static void null_glNamedFramebufferSampleLocationsfvNV( GLuint framebuffer, GLuint start, GLsizei count, const GLfloat* v ) { }
 static void null_glNamedFramebufferTexture( GLuint framebuffer, GLenum attachment, GLuint texture, GLint level ) { }
 static void null_glNamedFramebufferTexture1DEXT( GLuint framebuffer, GLenum attachment, GLenum textarget, GLuint texture, GLint level ) { }
@@ -4839,6 +4850,7 @@ static void null_glPopDebugGroup( void ) { }
 static void null_glPopGroupMarkerEXT( void ) { }
 static void null_glPresentFrameDualFillNV( GLuint video_slot, GLuint64EXT minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLenum target1, GLuint fill1, GLenum target2, GLuint fill2, GLenum target3, GLuint fill3 ) { }
 static void null_glPresentFrameKeyedNV( GLuint video_slot, GLuint64EXT minPresentTime, GLuint beginPresentTimeId, GLuint presentDurationId, GLenum type, GLenum target0, GLuint fill0, GLuint key0, GLenum target1, GLuint fill1, GLuint key1 ) { }
+static void null_glPrimitiveBoundingBoxARB( GLfloat minX, GLfloat minY, GLfloat minZ, GLfloat minW, GLfloat maxX, GLfloat maxY, GLfloat maxZ, GLfloat maxW ) { }
 static void null_glPrimitiveRestartIndex( GLuint index ) { }
 static void null_glPrimitiveRestartIndexNV( GLuint index ) { }
 static void null_glPrimitiveRestartNV( void ) { }
@@ -4895,13 +4907,17 @@ static void null_glProgramUniform1fEXT( GLuint program, GLint location, GLfloat 
 static void null_glProgramUniform1fv( GLuint program, GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glProgramUniform1fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glProgramUniform1i( GLuint program, GLint location, GLint v0 ) { }
+static void null_glProgramUniform1i64ARB( GLuint program, GLint location, GLint64 x ) { }
 static void null_glProgramUniform1i64NV( GLuint program, GLint location, GLint64EXT x ) { }
+static void null_glProgramUniform1i64vARB( GLuint program, GLint location, GLsizei count, const GLint64* value ) { }
 static void null_glProgramUniform1i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT* value ) { }
 static void null_glProgramUniform1iEXT( GLuint program, GLint location, GLint v0 ) { }
 static void null_glProgramUniform1iv( GLuint program, GLint location, GLsizei count, const GLint* value ) { }
 static void null_glProgramUniform1ivEXT( GLuint program, GLint location, GLsizei count, const GLint* value ) { }
 static void null_glProgramUniform1ui( GLuint program, GLint location, GLuint v0 ) { }
+static void null_glProgramUniform1ui64ARB( GLuint program, GLint location, GLuint64 x ) { }
 static void null_glProgramUniform1ui64NV( GLuint program, GLint location, GLuint64EXT x ) { }
+static void null_glProgramUniform1ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64* value ) { }
 static void null_glProgramUniform1ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) { }
 static void null_glProgramUniform1uiEXT( GLuint program, GLint location, GLuint v0 ) { }
 static void null_glProgramUniform1uiv( GLuint program, GLint location, GLsizei count, const GLuint* value ) { }
@@ -4915,13 +4931,17 @@ static void null_glProgramUniform2fEXT( GLuint program, GLint location, GLfloat 
 static void null_glProgramUniform2fv( GLuint program, GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glProgramUniform2fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glProgramUniform2i( GLuint program, GLint location, GLint v0, GLint v1 ) { }
+static void null_glProgramUniform2i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y ) { }
 static void null_glProgramUniform2i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y ) { }
+static void null_glProgramUniform2i64vARB( GLuint program, GLint location, GLsizei count, const GLint64* value ) { }
 static void null_glProgramUniform2i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT* value ) { }
 static void null_glProgramUniform2iEXT( GLuint program, GLint location, GLint v0, GLint v1 ) { }
 static void null_glProgramUniform2iv( GLuint program, GLint location, GLsizei count, const GLint* value ) { }
 static void null_glProgramUniform2ivEXT( GLuint program, GLint location, GLsizei count, const GLint* value ) { }
 static void null_glProgramUniform2ui( GLuint program, GLint location, GLuint v0, GLuint v1 ) { }
+static void null_glProgramUniform2ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y ) { }
 static void null_glProgramUniform2ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y ) { }
+static void null_glProgramUniform2ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64* value ) { }
 static void null_glProgramUniform2ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) { }
 static void null_glProgramUniform2uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1 ) { }
 static void null_glProgramUniform2uiv( GLuint program, GLint location, GLsizei count, const GLuint* value ) { }
@@ -4935,13 +4955,17 @@ static void null_glProgramUniform3fEXT( GLuint program, GLint location, GLfloat 
 static void null_glProgramUniform3fv( GLuint program, GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glProgramUniform3fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glProgramUniform3i( GLuint program, GLint location, GLint v0, GLint v1, GLint v2 ) { }
+static void null_glProgramUniform3i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y, GLint64 z ) { }
 static void null_glProgramUniform3i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z ) { }
+static void null_glProgramUniform3i64vARB( GLuint program, GLint location, GLsizei count, const GLint64* value ) { }
 static void null_glProgramUniform3i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT* value ) { }
 static void null_glProgramUniform3iEXT( GLuint program, GLint location, GLint v0, GLint v1, GLint v2 ) { }
 static void null_glProgramUniform3iv( GLuint program, GLint location, GLsizei count, const GLint* value ) { }
 static void null_glProgramUniform3ivEXT( GLuint program, GLint location, GLsizei count, const GLint* value ) { }
 static void null_glProgramUniform3ui( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2 ) { }
+static void null_glProgramUniform3ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y, GLuint64 z ) { }
 static void null_glProgramUniform3ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z ) { }
+static void null_glProgramUniform3ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64* value ) { }
 static void null_glProgramUniform3ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) { }
 static void null_glProgramUniform3uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2 ) { }
 static void null_glProgramUniform3uiv( GLuint program, GLint location, GLsizei count, const GLuint* value ) { }
@@ -4955,13 +4979,17 @@ static void null_glProgramUniform4fEXT( GLuint program, GLint location, GLfloat 
 static void null_glProgramUniform4fv( GLuint program, GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glProgramUniform4fvEXT( GLuint program, GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glProgramUniform4i( GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLint v3 ) { }
+static void null_glProgramUniform4i64ARB( GLuint program, GLint location, GLint64 x, GLint64 y, GLint64 z, GLint64 w ) { }
 static void null_glProgramUniform4i64NV( GLuint program, GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w ) { }
+static void null_glProgramUniform4i64vARB( GLuint program, GLint location, GLsizei count, const GLint64* value ) { }
 static void null_glProgramUniform4i64vNV( GLuint program, GLint location, GLsizei count, const GLint64EXT* value ) { }
 static void null_glProgramUniform4iEXT( GLuint program, GLint location, GLint v0, GLint v1, GLint v2, GLint v3 ) { }
 static void null_glProgramUniform4iv( GLuint program, GLint location, GLsizei count, const GLint* value ) { }
 static void null_glProgramUniform4ivEXT( GLuint program, GLint location, GLsizei count, const GLint* value ) { }
 static void null_glProgramUniform4ui( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 ) { }
+static void null_glProgramUniform4ui64ARB( GLuint program, GLint location, GLuint64 x, GLuint64 y, GLuint64 z, GLuint64 w ) { }
 static void null_glProgramUniform4ui64NV( GLuint program, GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w ) { }
+static void null_glProgramUniform4ui64vARB( GLuint program, GLint location, GLsizei count, const GLuint64* value ) { }
 static void null_glProgramUniform4ui64vNV( GLuint program, GLint location, GLsizei count, const GLuint64EXT* value ) { }
 static void null_glProgramUniform4uiEXT( GLuint program, GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 ) { }
 static void null_glProgramUniform4uiv( GLuint program, GLint location, GLsizei count, const GLuint* value ) { }
@@ -5072,7 +5100,6 @@ static void null_glResumeTransformFeedbackNV( void ) { }
 static void null_glRotatexOES( GLfixed angle, GLfixed x, GLfixed y, GLfixed z ) { }
 static void null_glSampleCoverage( GLfloat value, GLboolean invert ) { }
 static void null_glSampleCoverageARB( GLfloat value, GLboolean invert ) { }
-static void null_glSampleCoverageOES( GLfixed value, GLboolean invert ) { }
 static void null_glSampleMapATI( GLuint dst, GLuint interp, GLenum swizzle ) { }
 static void null_glSampleMaskEXT( GLclampf value, GLboolean invert ) { }
 static void null_glSampleMaskIndexedNV( GLuint index, GLbitfield mask ) { }
@@ -5347,13 +5374,17 @@ static void null_glUniform1fARB( GLint location, GLfloat v0 ) { }
 static void null_glUniform1fv( GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glUniform1fvARB( GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glUniform1i( GLint location, GLint v0 ) { }
+static void null_glUniform1i64ARB( GLint location, GLint64 x ) { }
 static void null_glUniform1i64NV( GLint location, GLint64EXT x ) { }
+static void null_glUniform1i64vARB( GLint location, GLsizei count, const GLint64* value ) { }
 static void null_glUniform1i64vNV( GLint location, GLsizei count, const GLint64EXT* value ) { }
 static void null_glUniform1iARB( GLint location, GLint v0 ) { }
 static void null_glUniform1iv( GLint location, GLsizei count, const GLint* value ) { }
 static void null_glUniform1ivARB( GLint location, GLsizei count, const GLint* value ) { }
 static void null_glUniform1ui( GLint location, GLuint v0 ) { }
+static void null_glUniform1ui64ARB( GLint location, GLuint64 x ) { }
 static void null_glUniform1ui64NV( GLint location, GLuint64EXT x ) { }
+static void null_glUniform1ui64vARB( GLint location, GLsizei count, const GLuint64* value ) { }
 static void null_glUniform1ui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) { }
 static void null_glUniform1uiEXT( GLint location, GLuint v0 ) { }
 static void null_glUniform1uiv( GLint location, GLsizei count, const GLuint* value ) { }
@@ -5365,13 +5396,17 @@ static void null_glUniform2fARB( GLint location, GLfloat v0, GLfloat v1 ) { }
 static void null_glUniform2fv( GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glUniform2fvARB( GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glUniform2i( GLint location, GLint v0, GLint v1 ) { }
+static void null_glUniform2i64ARB( GLint location, GLint64 x, GLint64 y ) { }
 static void null_glUniform2i64NV( GLint location, GLint64EXT x, GLint64EXT y ) { }
+static void null_glUniform2i64vARB( GLint location, GLsizei count, const GLint64* value ) { }
 static void null_glUniform2i64vNV( GLint location, GLsizei count, const GLint64EXT* value ) { }
 static void null_glUniform2iARB( GLint location, GLint v0, GLint v1 ) { }
 static void null_glUniform2iv( GLint location, GLsizei count, const GLint* value ) { }
 static void null_glUniform2ivARB( GLint location, GLsizei count, const GLint* value ) { }
 static void null_glUniform2ui( GLint location, GLuint v0, GLuint v1 ) { }
+static void null_glUniform2ui64ARB( GLint location, GLuint64 x, GLuint64 y ) { }
 static void null_glUniform2ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y ) { }
+static void null_glUniform2ui64vARB( GLint location, GLsizei count, const GLuint64* value ) { }
 static void null_glUniform2ui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) { }
 static void null_glUniform2uiEXT( GLint location, GLuint v0, GLuint v1 ) { }
 static void null_glUniform2uiv( GLint location, GLsizei count, const GLuint* value ) { }
@@ -5383,13 +5418,17 @@ static void null_glUniform3fARB( GLint location, GLfloat v0, GLfloat v1, GLfloat
 static void null_glUniform3fv( GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glUniform3fvARB( GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glUniform3i( GLint location, GLint v0, GLint v1, GLint v2 ) { }
+static void null_glUniform3i64ARB( GLint location, GLint64 x, GLint64 y, GLint64 z ) { }
 static void null_glUniform3i64NV( GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z ) { }
+static void null_glUniform3i64vARB( GLint location, GLsizei count, const GLint64* value ) { }
 static void null_glUniform3i64vNV( GLint location, GLsizei count, const GLint64EXT* value ) { }
 static void null_glUniform3iARB( GLint location, GLint v0, GLint v1, GLint v2 ) { }
 static void null_glUniform3iv( GLint location, GLsizei count, const GLint* value ) { }
 static void null_glUniform3ivARB( GLint location, GLsizei count, const GLint* value ) { }
 static void null_glUniform3ui( GLint location, GLuint v0, GLuint v1, GLuint v2 ) { }
+static void null_glUniform3ui64ARB( GLint location, GLuint64 x, GLuint64 y, GLuint64 z ) { }
 static void null_glUniform3ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z ) { }
+static void null_glUniform3ui64vARB( GLint location, GLsizei count, const GLuint64* value ) { }
 static void null_glUniform3ui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) { }
 static void null_glUniform3uiEXT( GLint location, GLuint v0, GLuint v1, GLuint v2 ) { }
 static void null_glUniform3uiv( GLint location, GLsizei count, const GLuint* value ) { }
@@ -5401,13 +5440,17 @@ static void null_glUniform4fARB( GLint location, GLfloat v0, GLfloat v1, GLfloat
 static void null_glUniform4fv( GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glUniform4fvARB( GLint location, GLsizei count, const GLfloat* value ) { }
 static void null_glUniform4i( GLint location, GLint v0, GLint v1, GLint v2, GLint v3 ) { }
+static void null_glUniform4i64ARB( GLint location, GLint64 x, GLint64 y, GLint64 z, GLint64 w ) { }
 static void null_glUniform4i64NV( GLint location, GLint64EXT x, GLint64EXT y, GLint64EXT z, GLint64EXT w ) { }
+static void null_glUniform4i64vARB( GLint location, GLsizei count, const GLint64* value ) { }
 static void null_glUniform4i64vNV( GLint location, GLsizei count, const GLint64EXT* value ) { }
 static void null_glUniform4iARB( GLint location, GLint v0, GLint v1, GLint v2, GLint v3 ) { }
 static void null_glUniform4iv( GLint location, GLsizei count, const GLint* value ) { }
 static void null_glUniform4ivARB( GLint location, GLsizei count, const GLint* value ) { }
 static void null_glUniform4ui( GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 ) { }
+static void null_glUniform4ui64ARB( GLint location, GLuint64 x, GLuint64 y, GLuint64 z, GLuint64 w ) { }
 static void null_glUniform4ui64NV( GLint location, GLuint64EXT x, GLuint64EXT y, GLuint64EXT z, GLuint64EXT w ) { }
+static void null_glUniform4ui64vARB( GLint location, GLsizei count, const GLuint64* value ) { }
 static void null_glUniform4ui64vNV( GLint location, GLsizei count, const GLuint64EXT* value ) { }
 static void null_glUniform4uiEXT( GLint location, GLuint v0, GLuint v1, GLuint v2, GLuint v3 ) { }
 static void null_glUniform4uiv( GLint location, GLsizei count, const GLuint* value ) { }
@@ -6260,6 +6303,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glAlphaFragmentOp2ATI,
         null_glAlphaFragmentOp3ATI,
         null_glAlphaFuncxOES,
+        null_glApplyFramebufferAttachmentCMAAINTEL,
         null_glApplyTextureEXT,
         null_glAreProgramsResidentNV,
         null_glAreTexturesResidentEXT,
@@ -6496,6 +6540,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glCompressedTextureSubImage2DEXT,
         null_glCompressedTextureSubImage3D,
         null_glCompressedTextureSubImage3DEXT,
+        null_glConservativeRasterParameterfNV,
         null_glConvolutionFilter1D,
         null_glConvolutionFilter1DEXT,
         null_glConvolutionFilter2D,
@@ -6715,6 +6760,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glEvalCoord2xOES,
         null_glEvalCoord2xvOES,
         null_glEvalMapsNV,
+        null_glEvaluateDepthValuesARB,
         null_glExecuteProgramNV,
         null_glExtractComponentEXT,
         null_glFeedbackBufferxOES,
@@ -6773,6 +6819,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glFramebufferReadBufferEXT,
         null_glFramebufferRenderbuffer,
         null_glFramebufferRenderbufferEXT,
+        null_glFramebufferSampleLocationsfvARB,
         null_glFramebufferSampleLocationsfvNV,
         null_glFramebufferTexture,
         null_glFramebufferTexture1D,
@@ -6788,6 +6835,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glFramebufferTextureLayer,
         null_glFramebufferTextureLayerARB,
         null_glFramebufferTextureLayerEXT,
+        null_glFramebufferTextureMultiviewOVR,
         null_glFreeObjectBufferATI,
         null_glFrustumfOES,
         null_glFrustumxOES,
@@ -7147,9 +7195,11 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetUniformdv,
         null_glGetUniformfv,
         null_glGetUniformfvARB,
+        null_glGetUniformi64vARB,
         null_glGetUniformi64vNV,
         null_glGetUniformiv,
         null_glGetUniformivARB,
+        null_glGetUniformui64vARB,
         null_glGetUniformui64vNV,
         null_glGetUniformuiv,
         null_glGetUniformuivEXT,
@@ -7230,8 +7280,10 @@ struct opengl_funcs null_opengl_funcs =
         null_glGetnUniformdvARB,
         null_glGetnUniformfv,
         null_glGetnUniformfvARB,
+        null_glGetnUniformi64vARB,
         null_glGetnUniformiv,
         null_glGetnUniformivARB,
+        null_glGetnUniformui64vARB,
         null_glGetnUniformuiv,
         null_glGetnUniformuivARB,
         null_glGlobalAlphaFactorbSUN,
@@ -7400,6 +7452,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glMatrixScalefEXT,
         null_glMatrixTranslatedEXT,
         null_glMatrixTranslatefEXT,
+        null_glMaxShaderCompilerThreadsARB,
         null_glMemoryBarrier,
         null_glMemoryBarrierByRegion,
         null_glMemoryBarrierEXT,
@@ -7602,6 +7655,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glNamedFramebufferReadBuffer,
         null_glNamedFramebufferRenderbuffer,
         null_glNamedFramebufferRenderbufferEXT,
+        null_glNamedFramebufferSampleLocationsfvARB,
         null_glNamedFramebufferSampleLocationsfvNV,
         null_glNamedFramebufferTexture,
         null_glNamedFramebufferTexture1DEXT,
@@ -7726,6 +7780,7 @@ struct opengl_funcs null_opengl_funcs =
         null_glPopGroupMarkerEXT,
         null_glPresentFrameDualFillNV,
         null_glPresentFrameKeyedNV,
+        null_glPrimitiveBoundingBoxARB,
         null_glPrimitiveRestartIndex,
         null_glPrimitiveRestartIndexNV,
         null_glPrimitiveRestartNV,
@@ -7782,13 +7837,17 @@ struct opengl_funcs null_opengl_funcs =
         null_glProgramUniform1fv,
         null_glProgramUniform1fvEXT,
         null_glProgramUniform1i,
+        null_glProgramUniform1i64ARB,
         null_glProgramUniform1i64NV,
+        null_glProgramUniform1i64vARB,
         null_glProgramUniform1i64vNV,
         null_glProgramUniform1iEXT,
         null_glProgramUniform1iv,
         null_glProgramUniform1ivEXT,
         null_glProgramUniform1ui,
+        null_glProgramUniform1ui64ARB,
         null_glProgramUniform1ui64NV,
+        null_glProgramUniform1ui64vARB,
         null_glProgramUniform1ui64vNV,
         null_glProgramUniform1uiEXT,
         null_glProgramUniform1uiv,
@@ -7802,13 +7861,17 @@ struct opengl_funcs null_opengl_funcs =
         null_glProgramUniform2fv,
         null_glProgramUniform2fvEXT,
         null_glProgramUniform2i,
+        null_glProgramUniform2i64ARB,
         null_glProgramUniform2i64NV,
+        null_glProgramUniform2i64vARB,
         null_glProgramUniform2i64vNV,
         null_glProgramUniform2iEXT,
         null_glProgramUniform2iv,
         null_glProgramUniform2ivEXT,
         null_glProgramUniform2ui,
+        null_glProgramUniform2ui64ARB,
         null_glProgramUniform2ui64NV,
+        null_glProgramUniform2ui64vARB,
         null_glProgramUniform2ui64vNV,
         null_glProgramUniform2uiEXT,
         null_glProgramUniform2uiv,
@@ -7822,13 +7885,17 @@ struct opengl_funcs null_opengl_funcs =
         null_glProgramUniform3fv,
         null_glProgramUniform3fvEXT,
         null_glProgramUniform3i,
+        null_glProgramUniform3i64ARB,
         null_glProgramUniform3i64NV,
+        null_glProgramUniform3i64vARB,
         null_glProgramUniform3i64vNV,
         null_glProgramUniform3iEXT,
         null_glProgramUniform3iv,
         null_glProgramUniform3ivEXT,
         null_glProgramUniform3ui,
+        null_glProgramUniform3ui64ARB,
         null_glProgramUniform3ui64NV,
+        null_glProgramUniform3ui64vARB,
         null_glProgramUniform3ui64vNV,
         null_glProgramUniform3uiEXT,
         null_glProgramUniform3uiv,
@@ -7842,13 +7909,17 @@ struct opengl_funcs null_opengl_funcs =
         null_glProgramUniform4fv,
         null_glProgramUniform4fvEXT,
         null_glProgramUniform4i,
+        null_glProgramUniform4i64ARB,
         null_glProgramUniform4i64NV,
+        null_glProgramUniform4i64vARB,
         null_glProgramUniform4i64vNV,
         null_glProgramUniform4iEXT,
         null_glProgramUniform4iv,
         null_glProgramUniform4ivEXT,
         null_glProgramUniform4ui,
+        null_glProgramUniform4ui64ARB,
         null_glProgramUniform4ui64NV,
+        null_glProgramUniform4ui64vARB,
         null_glProgramUniform4ui64vNV,
         null_glProgramUniform4uiEXT,
         null_glProgramUniform4uiv,
@@ -7959,7 +8030,6 @@ struct opengl_funcs null_opengl_funcs =
         null_glRotatexOES,
         null_glSampleCoverage,
         null_glSampleCoverageARB,
-        null_glSampleCoverageOES,
         null_glSampleMapATI,
         null_glSampleMaskEXT,
         null_glSampleMaskIndexedNV,
@@ -8234,13 +8304,17 @@ struct opengl_funcs null_opengl_funcs =
         null_glUniform1fv,
         null_glUniform1fvARB,
         null_glUniform1i,
+        null_glUniform1i64ARB,
         null_glUniform1i64NV,
+        null_glUniform1i64vARB,
         null_glUniform1i64vNV,
         null_glUniform1iARB,
         null_glUniform1iv,
         null_glUniform1ivARB,
         null_glUniform1ui,
+        null_glUniform1ui64ARB,
         null_glUniform1ui64NV,
+        null_glUniform1ui64vARB,
         null_glUniform1ui64vNV,
         null_glUniform1uiEXT,
         null_glUniform1uiv,
@@ -8252,13 +8326,17 @@ struct opengl_funcs null_opengl_funcs =
         null_glUniform2fv,
         null_glUniform2fvARB,
         null_glUniform2i,
+        null_glUniform2i64ARB,
         null_glUniform2i64NV,
+        null_glUniform2i64vARB,
         null_glUniform2i64vNV,
         null_glUniform2iARB,
         null_glUniform2iv,
         null_glUniform2ivARB,
         null_glUniform2ui,
+        null_glUniform2ui64ARB,
         null_glUniform2ui64NV,
+        null_glUniform2ui64vARB,
         null_glUniform2ui64vNV,
         null_glUniform2uiEXT,
         null_glUniform2uiv,
@@ -8270,13 +8348,17 @@ struct opengl_funcs null_opengl_funcs =
         null_glUniform3fv,
         null_glUniform3fvARB,
         null_glUniform3i,
+        null_glUniform3i64ARB,
         null_glUniform3i64NV,
+        null_glUniform3i64vARB,
         null_glUniform3i64vNV,
         null_glUniform3iARB,
         null_glUniform3iv,
         null_glUniform3ivARB,
         null_glUniform3ui,
+        null_glUniform3ui64ARB,
         null_glUniform3ui64NV,
+        null_glUniform3ui64vARB,
         null_glUniform3ui64vNV,
         null_glUniform3uiEXT,
         null_glUniform3uiv,
@@ -8288,13 +8370,17 @@ struct opengl_funcs null_opengl_funcs =
         null_glUniform4fv,
         null_glUniform4fvARB,
         null_glUniform4i,
+        null_glUniform4i64ARB,
         null_glUniform4i64NV,
+        null_glUniform4i64vARB,
         null_glUniform4i64vNV,
         null_glUniform4iARB,
         null_glUniform4iv,
         null_glUniform4ivARB,
         null_glUniform4ui,
+        null_glUniform4ui64ARB,
         null_glUniform4ui64NV,
+        null_glUniform4ui64vARB,
         null_glUniform4ui64vNV,
         null_glUniform4uiEXT,
         null_glUniform4uiv,
