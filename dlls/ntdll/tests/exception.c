@@ -2020,5 +2020,5 @@ START_TEST(exception)
 
 #endif
 
-    VirtualFree(code_mem, 0, MEM_FREE);
+    VirtualFree(code_mem, 0, MEM_RELEASE);
 }
