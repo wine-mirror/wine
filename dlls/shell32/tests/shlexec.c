@@ -2469,9 +2469,9 @@ static void test_dde(void)
         }
         okShell(32 < rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
         if (test->ddeexec)
-            ok(waitforinputidle_count == 1, "WaitForInputIdle() was called %u times\n", waitforinputidle_count);
+            okShell(waitforinputidle_count == 1, "WaitForInputIdle() was called %u times\n", waitforinputidle_count);
         else
-            ok(waitforinputidle_count == 0, "WaitForInputIdle() was called %u times for a non-DDE case\n", waitforinputidle_count);
+            okShell(waitforinputidle_count == 0, "WaitForInputIdle() was called %u times for a non-DDE case\n", waitforinputidle_count);
 
         if (32 < rc)
         {
