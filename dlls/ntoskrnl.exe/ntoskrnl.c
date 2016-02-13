@@ -1416,6 +1416,20 @@ LONG WINAPI NTOSKRNL_InterlockedIncrement( LONG volatile *dest )
 
 
 /***********************************************************************
+ *           InterlockedPopEntrySList   (NTOSKRNL.EXE.@)
+ */
+#ifdef DEFINE_FASTCALL1_ENTRYPOINT
+DEFINE_FASTCALL1_ENTRYPOINT( NTOSKRNL_InterlockedPopEntrySList )
+PSLIST_ENTRY WINAPI __regs_NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
+#else
+PSLIST_ENTRY WINAPI NTOSKRNL_InterlockedPopEntrySList( PSLIST_HEADER list )
+#endif
+{
+    return InterlockedPopEntrySList( list );
+}
+
+
+/***********************************************************************
  *           ExAllocatePool   (NTOSKRNL.EXE.@)
  */
 PVOID WINAPI ExAllocatePool( POOL_TYPE type, SIZE_T size )
