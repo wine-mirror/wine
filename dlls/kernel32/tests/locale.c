@@ -1782,6 +1782,36 @@ static void test_CompareStringA(void)
         "ret %d, error %d, expected value %d\n", ret, GetLastError(), CSTR_EQUAL);
 }
 
+static void test_CompareStringW(void)
+{
+    WCHAR *str1, *str2;
+    SYSTEM_INFO si;
+    DWORD old_prot;
+    BOOL success;
+    char *buf;
+    int ret;
+
+    GetSystemInfo(&si);
+    buf = VirtualAlloc(NULL, si.dwPageSize * 4, MEM_COMMIT, PAGE_READWRITE);
+    ok(buf != NULL, "VirtualAlloc failed with %u\n", GetLastError());
+    success = VirtualProtect(buf + si.dwPageSize, si.dwPageSize, PAGE_NOACCESS, &old_prot);
+    ok(success, "VirtualProtect failed with %u\n", GetLastError());
+    success = VirtualProtect(buf + 3 * si.dwPageSize, si.dwPageSize, PAGE_NOACCESS, &old_prot);
+    ok(success, "VirtualProtect failed with %u\n", GetLastError());
+
+    str1 = (WCHAR *)(buf + si.dwPageSize - sizeof(WCHAR));
+    str2 = (WCHAR *)(buf + 3 * si.dwPageSize - sizeof(WCHAR));
+    *str1 = 'A';
+    *str2 = 'B';
+
+    /* CompareStringW should abort on the first non-matching character */
+    ret = CompareStringW(CP_ACP, 0, str1, 100, str2, 100);
+    ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
+
+    success = VirtualFree(buf, 0, MEM_RELEASE);
+    ok(success, "VirtualFree failed with %u\n", GetLastError());
+}
+
 struct comparestringex_test {
     const char *locale;
     DWORD flags;
@@ -4577,6 +4607,7 @@ START_TEST(locale)
   test_GetCurrencyFormatA(); /* Also tests the W version */
   test_GetNumberFormatA();   /* Also tests the W version */
   test_CompareStringA();
+  test_CompareStringW();
   test_CompareStringEx();
   test_LCMapStringA();
   test_LCMapStringW();
