@@ -3104,7 +3104,7 @@ static void test_read_write(void)
         "wrong error %u\n", GetLastError() );
     ok( bytes == 0, "read %x bytes\n", bytes );
 
-    VirtualFree( mem, 0, MEM_FREE );
+    VirtualFree( mem, 0, MEM_RELEASE );
 
     ret = CloseHandle(hFile);
     ok( ret, "CloseHandle: error %d\n", GetLastError());

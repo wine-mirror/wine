@@ -147,8 +147,8 @@ static void test_VirtualAllocEx(void)
     b = pVirtualFreeEx(hProcess, addr1, 0, MEM_RELEASE);
     ok(b != 0, "VirtualFreeEx, error %u\n", GetLastError());
 
-    VirtualFree( src, 0, MEM_FREE );
-    VirtualFree( dst, 0, MEM_FREE );
+    VirtualFree( src, 0, MEM_RELEASE );
+    VirtualFree( dst, 0, MEM_RELEASE );
 
     /*
      * The following tests parallel those in test_VirtualAlloc()
@@ -1755,11 +1755,11 @@ static void test_write_watch(void)
         ok( !ret, "ResetWriteWatch failed %u\n", ret );
     }
 
-    VirtualFree( base, 0, MEM_FREE );
+    VirtualFree( base, 0, MEM_RELEASE );
 
     base = VirtualAlloc( 0, size, MEM_RESERVE | MEM_WRITE_WATCH, PAGE_READWRITE );
     ok( base != NULL, "VirtualAlloc failed %u\n", GetLastError() );
-    VirtualFree( base, 0, MEM_FREE );
+    VirtualFree( base, 0, MEM_RELEASE );
 
     base = VirtualAlloc( 0, size, MEM_WRITE_WATCH, PAGE_READWRITE );
     ok( !base, "VirtualAlloc succeeded\n" );
@@ -1803,7 +1803,7 @@ static void test_write_watch(void)
         "wrong count %lu\n", count );
     if (count) ok( results[0] == base + 5*pagesize, "wrong result %p\n", results[0] );
 
-    VirtualFree( base, 0, MEM_FREE );
+    VirtualFree( base, 0, MEM_RELEASE );
 }
 
 #ifdef __i386__
@@ -1948,7 +1948,7 @@ static void test_guard_page(void)
         ok( success, "VirtualUnlock failed %u\n", GetLastError() );
     }
 
-    VirtualFree( base, 0, MEM_FREE );
+    VirtualFree( base, 0, MEM_RELEASE );
 
     /* combined guard page / write watch tests */
     if (!pGetWriteWatch || !pResetWriteWatch)
@@ -2054,7 +2054,7 @@ static void test_guard_page(void)
     todo_wine
     ok( results[0] == base || broken(results[0] == (void *)0xdeadbeef) /* Windows 8 */, "wrong result %p\n", results[0] );
 
-    VirtualFree( base, 0, MEM_FREE );
+    VirtualFree( base, 0, MEM_RELEASE );
 }
 
 static DWORD WINAPI stack_commit_func( void *arg )
@@ -2128,8 +2128,8 @@ static void test_stack_commit(void)
     pNtCurrentTeb()->Tib.StackBase      = old_stack_base;
     pNtCurrentTeb()->Tib.StackLimit     = old_stack_limit;
 
-    VirtualFree( new_stack, 0, MEM_FREE );
-    VirtualFree( call_on_stack, 0, MEM_FREE );
+    VirtualFree( new_stack, 0, MEM_RELEASE );
+    VirtualFree( call_on_stack, 0, MEM_RELEASE );
 }
 
 DWORD num_execute_fault_calls;
@@ -2564,7 +2564,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     success = UnregisterClassA( cls_name, GetModuleHandleA(0) );
     ok( success, "UnregisterClass failed %u\n", GetLastError() );
 
-    VirtualFree( base, 0, MEM_FREE );
+    VirtualFree( base, 0, MEM_RELEASE );
 
     /* Repeat the tests from above with MEM_WRITE_WATCH protected memory. */
 
@@ -2753,7 +2753,7 @@ static void test_atl_thunk_emulation( ULONG dep_flags )
     success = UnregisterClassA( cls_name, GetModuleHandleA(0) );
     ok( success, "UnregisterClass failed %u\n", GetLastError() );
 
-    VirtualFree( base, 0, MEM_FREE );
+    VirtualFree( base, 0, MEM_RELEASE );
 
 out:
     if (restore_flags)
@@ -2943,7 +2943,7 @@ static void test_VirtualProtect(void)
         exec_prot = 1 << (i + 4);
     }
 
-    VirtualFree(base, 0, MEM_FREE);
+    VirtualFree(base, 0, MEM_RELEASE);
 }
 
 static BOOL is_mem_writable(DWORD prot)
@@ -3044,7 +3044,7 @@ static void test_VirtualAlloc_protection(void)
             ptr = VirtualAlloc(base, si.dwPageSize, MEM_COMMIT, td[i].prot);
             ok(ptr == base, "%d: VirtualAlloc failed %d\n", i, GetLastError());
 
-            VirtualFree(base, 0, MEM_FREE);
+            VirtualFree(base, 0, MEM_RELEASE);
         }
         else
         {
