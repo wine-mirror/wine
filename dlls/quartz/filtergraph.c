@@ -2632,6 +2632,11 @@ static HRESULT WINAPI MediaSeeking_GetRate(IMediaSeeking *iface, double *pdRate)
 
     FIXME("(%p/%p)->(%p): stub !!!\n", This, iface, pdRate);
 
+    if (!pdRate)
+        return E_POINTER;
+
+    *pdRate = 1.0;
+
     return S_OK;
 }
 
