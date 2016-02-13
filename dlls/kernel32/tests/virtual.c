@@ -369,6 +369,11 @@ static void test_VirtualAlloc(void)
     ok(GetLastError() == ERROR_INVALID_PARAMETER,
         "got %d, expected ERROR_INVALID_PARAMETER\n", GetLastError());
 
+    SetLastError(0xdeadbeef);
+    ok(!VirtualFree(addr1, 0, MEM_FREE), "VirtualFree should fail with type MEM_FREE\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER,
+        "got %d, expected ERROR_INVALID_PARAMETER\n", GetLastError());
+
     ok(VirtualFree(addr1, 0x10000, MEM_DECOMMIT), "VirtualFree failed\n");
 
     /* if the type is MEM_RELEASE, size must be 0 */
