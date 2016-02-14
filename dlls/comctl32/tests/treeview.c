@@ -1910,6 +1910,9 @@ static void test_delete_items(void)
     /* Regression test for a crash when deleting the first visible item while bRedraw == false. */
     hTree = create_treeview_control(0);
 
+    ret = SendMessageA(hTree, WM_SETREDRAW, FALSE, 0);
+    ok(ret == 0, "got %d\n", ret);
+
     ins.hParent = TVI_ROOT;
     ins.hInsertAfter = TVI_ROOT;
     U(ins).item.mask = TVIF_TEXT;
@@ -1923,9 +1926,6 @@ static void test_delete_items(void)
     U(ins).item.pszText = item2;
     hItem2 = TreeView_InsertItemA(hTree, &ins);
     ok(hItem2 != NULL, "InsertItem failed\n");
-
-    ret = SendMessageA(hTree, WM_SETREDRAW, FALSE, 0);
-    ok(ret == 0, "got %d\n", ret);
 
     ret = SendMessageA(hTree, TVM_DELETEITEM, 0, (LPARAM)hItem1);
     ok(ret == TRUE, "got %d\n", ret);

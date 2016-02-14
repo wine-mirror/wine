@@ -1545,6 +1545,7 @@ TREEVIEW_DeleteItem(TREEVIEW_INFO *infoPtr, HTREEITEM item)
 
 	if (infoPtr->firstVisible == item)
 	{
+	    visible = TRUE;
 	    if (item->nextSibling)
 	       newFirstVisible = item->nextSibling;
 	    else if (item->prevSibling)
