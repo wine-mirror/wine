@@ -4253,12 +4253,11 @@ static void test_MapCharacters(void)
     font = (void*)0xdeadbeef;
     hr = IDWriteFontFallback_MapCharacters(fallback, NULL, 0, 0, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
-todo_wine {
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(mappedlength == 0, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font == NULL, "got %p\n", font);
-}
+
     /* zero length source */
     g_source = strW;
     mappedlength = 1;
@@ -4266,12 +4265,11 @@ todo_wine {
     font = (void*)0xdeadbeef;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 0, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 0, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font == NULL, "got %p\n", font);
-}
+
     g_source = strW;
     mappedlength = 0;
     scale = 0.0f;
@@ -4281,9 +4279,10 @@ todo_wine {
 todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
-    ok(scale == 1.0f, "got %f\n", scale);
-    ok(font != NULL, "got %p\n", font);
 }
+    ok(scale == 1.0f, "got %f\n", scale);
+todo_wine
+    ok(font != NULL, "got %p\n", font);
 if (font)
     IDWriteFont_Release(font);
 
@@ -4297,9 +4296,10 @@ if (font)
 todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 3, "got %u\n", mappedlength);
-    ok(scale == 1.0f, "got %f\n", scale);
-    ok(font != NULL, "got %p\n", font);
 }
+    ok(scale == 1.0f, "got %f\n", scale);
+todo_wine
+    ok(font != NULL, "got %p\n", font);
 if (font)
     IDWriteFont_Release(font);
 
@@ -4313,9 +4313,10 @@ if (font)
 todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
-    ok(scale == 1.0f, "got %f\n", scale);
-    ok(font != NULL, "got %p\n", font);
 }
+    ok(scale == 1.0f, "got %f\n", scale);
+todo_wine
+    ok(font != NULL, "got %p\n", font);
 if (font)
     IDWriteFont_Release(font);
 
@@ -4328,9 +4329,10 @@ if (font)
 todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
-    ok(scale == 1.0f, "got %f\n", scale);
-    ok(font != NULL, "got %p\n", font);
 }
+    ok(scale == 1.0f, "got %f\n", scale);
+todo_wine
+    ok(font != NULL, "got %p\n", font);
 if (font) {
     /* font returned for Hiragana character, check if it supports Latin too */
     exists = FALSE;
@@ -4348,14 +4350,11 @@ if (font) {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, &fallbackcollection, g_blahfontW, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
-}
 
-if (font) {
     exists = FALSE;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
     ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
@@ -4363,9 +4362,8 @@ if (font) {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(!lstrcmpW(buffW, tahomaW), "%s\n", wine_dbgstr_w(buffW));
     IDWriteLocalizedStrings_Release(strings);
-
     IDWriteFont_Release(font);
-}
+
     /* 2. Hiragana character, force Tahoma font does not support Japanese */
     g_source = str2W;
     mappedlength = 0;
@@ -4373,24 +4371,21 @@ if (font) {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 1, 1, &fallbackcollection, g_blahfontW, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
-todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
-}
 
-if (font) {
     exists = FALSE;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
     ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
     hr = IDWriteLocalizedStrings_GetString(strings, 0, buffW, sizeof(buffW)/sizeof(WCHAR));
     ok(hr == S_OK, "got 0x%08x\n", hr);
+todo_wine
     ok(lstrcmpW(buffW, tahomaW), "%s\n", wine_dbgstr_w(buffW));
     IDWriteLocalizedStrings_Release(strings);
-
     IDWriteFont_Release(font);
-}
+
     IDWriteFontFallback_Release(fallback);
     IDWriteFactory2_Release(factory2);
 }
