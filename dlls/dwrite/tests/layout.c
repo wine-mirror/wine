@@ -2383,9 +2383,7 @@ if (0) /* crashes on native */
 
     fallback = NULL;
     hr = IDWriteFactory2_GetSystemFontFallback(factory2, &fallback);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
     ok(fallback != NULL, "got %p\n", fallback);
 
     hr = IDWriteTextFormat1_SetFontFallback(format1, fallback);
@@ -2405,7 +2403,6 @@ if (hr == S_OK) {
     ok(fallback2 == NULL, "got %p\n", fallback2);
 
     IDWriteFontFallback_Release(fallback);
-}
     IDWriteTextFormat1_Release(format1);
     IDWriteTextLayout2_Release(layout2);
     IDWriteFactory_Release(factory);
@@ -4248,9 +4245,7 @@ static void test_MapCharacters(void)
 
     fallback = NULL;
     hr = IDWriteFactory2_GetSystemFontFallback(factory2, &fallback);
-todo_wine
     ok(hr == S_OK, "got 0x%08x\n", hr);
-if (hr == S_OK) {
     ok(fallback != NULL, "got %p\n", fallback);
 
     mappedlength = 1;
@@ -4258,11 +4253,12 @@ if (hr == S_OK) {
     font = (void*)0xdeadbeef;
     hr = IDWriteFontFallback_MapCharacters(fallback, NULL, 0, 0, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == E_INVALIDARG, "got 0x%08x\n", hr);
     ok(mappedlength == 0, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font == NULL, "got %p\n", font);
-
+}
     /* zero length source */
     g_source = strW;
     mappedlength = 1;
@@ -4270,21 +4266,25 @@ if (hr == S_OK) {
     font = (void*)0xdeadbeef;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 0, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 0, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font == NULL, "got %p\n", font);
-
+}
     g_source = strW;
     mappedlength = 0;
     scale = 0.0f;
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
+}
+if (font)
     IDWriteFont_Release(font);
 
     /* same latin text, full length */
@@ -4294,10 +4294,13 @@ if (hr == S_OK) {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 3, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
+}
+if (font)
     IDWriteFont_Release(font);
 
     /* string 'a\x3058b' */
@@ -4307,10 +4310,13 @@ if (hr == S_OK) {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
+}
+if (font)
     IDWriteFont_Release(font);
 
     g_source = str2W;
@@ -4319,11 +4325,13 @@ if (hr == S_OK) {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 1, 2, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
-
+}
+if (font) {
     /* font returned for Hiragana character, check if it supports Latin too */
     exists = FALSE;
     hr = IDWriteFont_HasCharacter(font, 'b', &exists);
@@ -4331,7 +4339,7 @@ if (hr == S_OK) {
     ok(exists, "got %d\n", exists);
 
     IDWriteFont_Release(font);
-
+}
     /* Try with explicit collection, Tahoma will be forced. */
     /* 1. Latin part */
     g_source = str2W;
@@ -4340,11 +4348,14 @@ if (hr == S_OK) {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 3, &fallbackcollection, g_blahfontW, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
+}
 
+if (font) {
     exists = FALSE;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
     ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
@@ -4354,7 +4365,7 @@ if (hr == S_OK) {
     IDWriteLocalizedStrings_Release(strings);
 
     IDWriteFont_Release(font);
-
+}
     /* 2. Hiragana character, force Tahoma font does not support Japanese */
     g_source = str2W;
     mappedlength = 0;
@@ -4362,11 +4373,14 @@ if (hr == S_OK) {
     font = NULL;
     hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 1, 1, &fallbackcollection, g_blahfontW, DWRITE_FONT_WEIGHT_NORMAL,
         DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &mappedlength, &font, &scale);
+todo_wine {
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(mappedlength == 1, "got %u\n", mappedlength);
     ok(scale == 1.0f, "got %f\n", scale);
     ok(font != NULL, "got %p\n", font);
+}
 
+if (font) {
     exists = FALSE;
     hr = IDWriteFont_GetInformationalStrings(font, DWRITE_INFORMATIONAL_STRING_WIN32_FAMILY_NAMES, &strings, &exists);
     ok(hr == S_OK && exists, "got 0x%08x, exists %d\n", hr, exists);
@@ -4376,8 +4390,8 @@ if (hr == S_OK) {
     IDWriteLocalizedStrings_Release(strings);
 
     IDWriteFont_Release(font);
-    IDWriteFontFallback_Release(fallback);
 }
+    IDWriteFontFallback_Release(fallback);
     IDWriteFactory2_Release(factory2);
 }
 

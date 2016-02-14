@@ -512,6 +512,7 @@ struct dwritefactory {
     IDWriteFontCollection *system_collection;
     IDWriteFontCollection *eudc_collection;
     IDWriteGdiInterop *gdiinterop;
+    IDWriteFontFallback *fallback;
 
     IDWriteLocalFontFileLoader* localfontfileloader;
     struct list localfontfaces;
@@ -523,6 +524,12 @@ struct dwritefactory {
 static inline struct dwritefactory *impl_from_IDWriteFactory2(IDWriteFactory2 *iface)
 {
     return CONTAINING_RECORD(iface, struct dwritefactory, IDWriteFactory2_iface);
+}
+
+void notify_factory_fallback_removed(IDWriteFactory2 *iface)
+{
+    struct dwritefactory *factory = impl_from_IDWriteFactory2(iface);
+    factory->fallback = NULL;
 }
 
 static void release_fontface_cache(struct list *fontfaces)
@@ -567,6 +574,8 @@ static void release_dwritefactory(struct dwritefactory *factory)
         IDWriteFontCollection_Release(factory->eudc_collection);
     if (factory->gdiinterop)
         release_gdiinterop(factory->gdiinterop);
+    if (factory->fallback)
+        release_system_fontfallback(factory->fallback);
     heap_free(factory);
 }
 
@@ -1148,8 +1157,20 @@ static HRESULT WINAPI dwritefactory1_CreateCustomRenderingParams(IDWriteFactory2
 static HRESULT WINAPI dwritefactory2_GetSystemFontFallback(IDWriteFactory2 *iface, IDWriteFontFallback **fallback)
 {
     struct dwritefactory *This = impl_from_IDWriteFactory2(iface);
-    FIXME("(%p)->(%p): stub\n", This, fallback);
-    return E_NOTIMPL;
+
+    TRACE("(%p)->(%p)\n", This, fallback);
+
+    *fallback = NULL;
+
+    if (!This->fallback) {
+        HRESULT hr = create_system_fontfallback(iface, &This->fallback);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    *fallback = This->fallback;
+    IDWriteFontFallback_AddRef(*fallback);
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefactory2_CreateFontFallbackBuilder(IDWriteFactory2 *iface, IDWriteFontFallbackBuilder **fallbackbuilder)
@@ -1282,6 +1303,7 @@ static void init_dwritefactory(struct dwritefactory *factory, DWRITE_FACTORY_TYP
     factory->system_collection = NULL;
     factory->eudc_collection = NULL;
     factory->gdiinterop = NULL;
+    factory->fallback = NULL;
 
     list_init(&factory->collection_loaders);
     list_init(&factory->file_loaders);
