@@ -1367,7 +1367,7 @@ static void get_name_record_locale(enum OPENTYPE_PLATFORM_ID platform, USHORT la
         const char *locale_name = NULL;
 
         if (lang_id > TT_NAME_MAC_LANGID_AZER_ROMAN)
-            ERR("invalid mac lang id %d\n", lang_id);
+            WARN("invalid mac lang id %d\n", lang_id);
         else if (!name_mac_langid_to_locale[lang_id][0])
             FIXME("failed to map mac lang id %d to locale name\n", lang_id);
         else
