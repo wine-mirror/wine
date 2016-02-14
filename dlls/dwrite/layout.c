@@ -696,39 +696,6 @@ static void layout_set_cluster_metrics(struct dwrite_textlayout *layout, const s
 
 #define SCALE_FONT_METRIC(metric, emSize, metrics) ((FLOAT)(metric) * (emSize) / (FLOAT)(metrics)->designUnitsPerEm)
 
-static HRESULT create_fontface_by_pos(struct dwrite_textlayout *layout, struct layout_range *range, IDWriteFontFace **fontface)
-{
-    static DWRITE_GLYPH_RUN_DESCRIPTION descr = { 0 };
-    IDWriteFontFamily *family;
-    BOOL exists = FALSE;
-    IDWriteFont *font;
-    UINT32 index;
-    HRESULT hr;
-
-    *fontface = NULL;
-
-    hr = IDWriteFontCollection_FindFamilyName(range->collection, range->fontfamily, &index, &exists);
-    if (FAILED(hr) || !exists) {
-        WARN("%s: family %s not found in collection %p\n", debugstr_rundescr(&descr), debugstr_w(range->fontfamily), range->collection);
-        return hr;
-    }
-
-    hr = IDWriteFontCollection_GetFontFamily(range->collection, index, &family);
-    if (FAILED(hr))
-        return hr;
-
-    hr = IDWriteFontFamily_GetFirstMatchingFont(family, range->weight, range->stretch, range->style, &font);
-    IDWriteFontFamily_Release(family);
-    if (FAILED(hr)) {
-        WARN("%s: failed to get a matching font\n", debugstr_rundescr(&descr));
-        return hr;
-    }
-
-    hr = IDWriteFont_CreateFontFace(font, fontface);
-    IDWriteFont_Release(font);
-    return hr;
-}
-
 static void layout_get_font_metrics(struct dwrite_textlayout *layout, IDWriteFontFace *fontface, FLOAT emsize,
     DWRITE_FONT_METRICS *fontmetrics)
 {
@@ -749,6 +716,7 @@ static void layout_get_font_height(FLOAT emsize, DWRITE_FONT_METRICS *fontmetric
 
 static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
 {
+    IDWriteFontFallback *fallback;
     IDWriteTextAnalyzer *analyzer;
     struct layout_range *range;
     struct layout_run *r;
@@ -808,6 +776,82 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
             break;
     }
 
+    if (layout->format.fallback) {
+        fallback = layout->format.fallback;
+        IDWriteFontFallback_AddRef(fallback);
+    }
+    else {
+        hr = IDWriteFactory2_GetSystemFontFallback(layout->factory, &fallback);
+        if (FAILED(hr))
+            return hr;
+    }
+
+    /* resolve run fonts */
+    LIST_FOR_EACH_ENTRY(r, &layout->runs, struct layout_run, entry) {
+        struct regular_layout_run *run = &r->u.regular;
+        UINT32 length;
+
+        if (r->kind == LAYOUT_RUN_INLINE)
+            continue;
+
+        range = get_layout_range_by_pos(layout, run->descr.textPosition);
+        length = run->descr.stringLength;
+
+        while (length) {
+            UINT32 mapped_length;
+            IDWriteFont *font;
+            FLOAT scale;
+
+            run = &r->u.regular;
+
+            hr = IDWriteFontFallback_MapCharacters(fallback,
+                (IDWriteTextAnalysisSource*)&layout->IDWriteTextAnalysisSource1_iface,
+                run->descr.textPosition,
+                run->descr.stringLength,
+                range->collection,
+                range->fontfamily,
+                range->weight,
+                range->style,
+                range->stretch,
+                &mapped_length,
+                &font,
+                &scale);
+            if (FAILED(hr)) {
+                WARN("%s: failed to map family %s, collection %p\n", debugstr_rundescr(&run->descr), debugstr_w(range->fontfamily), range->collection);
+                return hr;
+            }
+
+            hr = IDWriteFont_CreateFontFace(font, &run->run.fontFace);
+            IDWriteFont_Release(font);
+            if (FAILED(hr))
+                return hr;
+            run->run.fontEmSize = range->fontsize * scale;
+
+            if (mapped_length < length) {
+                struct regular_layout_run *nextrun = &r->u.regular;
+                struct layout_run *nextr;
+
+                /* keep mapped part for current run, add another run for the rest */
+                nextr = alloc_layout_run(LAYOUT_RUN_REGULAR);
+                if (!nextr)
+                    return E_OUTOFMEMORY;
+
+                *nextr = *r;
+                nextrun = &nextr->u.regular;
+                nextrun->descr.textPosition = run->descr.textPosition + mapped_length;
+                nextrun->descr.stringLength = run->descr.stringLength - mapped_length;
+                nextrun->descr.string = &layout->str[nextrun->descr.textPosition];
+                run->descr.stringLength = mapped_length;
+                list_add_after(&r->entry, &nextr->entry);
+                r = nextr;
+            }
+
+            length -= mapped_length;
+        }
+    }
+
+    IDWriteFontFallback_Release(fallback);
+
     /* fill run info */
     LIST_FOR_EACH_ENTRY(r, &layout->runs, struct layout_run, entry) {
         DWRITE_SHAPING_GLYPH_PROPERTIES *glyph_props = NULL;
@@ -850,11 +894,6 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         }
 
         range = get_layout_range_by_pos(layout, run->descr.textPosition);
-        hr = create_fontface_by_pos(layout, range, &run->run.fontFace);
-        if (FAILED(hr))
-            continue;
-
-        run->run.fontEmSize = range->fontsize;
         run->descr.localeName = range->locale;
         run->clustermap = heap_alloc(run->descr.stringLength*sizeof(UINT16));
 
@@ -1606,10 +1645,20 @@ static HRESULT layout_set_dummy_line_metrics(struct dwrite_textlayout *layout, U
     DWRITE_LINE_METRICS metrics;
     struct layout_range *range;
     IDWriteFontFace *fontface;
+    IDWriteFont *font;
     HRESULT hr;
 
     range = get_layout_range_by_pos(layout, pos);
-    hr = create_fontface_by_pos(layout, range, &fontface);
+    hr = create_matching_font(range->collection,
+        range->fontfamily,
+        range->weight,
+        range->style,
+        range->stretch,
+        &font);
+    if (FAILED(hr))
+        return hr;
+    hr = IDWriteFont_CreateFontFace(font, &fontface);
+    IDWriteFont_Release(font);
     if (FAILED(hr))
         return hr;
 

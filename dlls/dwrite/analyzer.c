@@ -1745,7 +1745,7 @@ static const struct fallback_mapping *find_fallback_mapping(struct dwrite_fontfa
     return NULL;
 }
 
-static HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *name,
+HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *name,
     DWRITE_FONT_WEIGHT weight, DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, IDWriteFont **font)
 {
     IDWriteFontFamily *family;
