@@ -238,6 +238,8 @@ struct dwrite_textlayout {
     IDWriteTextAnalysisSource1 IDWriteTextAnalysisSource1_iface;
     LONG ref;
 
+    IDWriteFactory2 *factory;
+
     WCHAR *str;
     UINT32 len;
     struct dwrite_textformat_data format;
@@ -2548,6 +2550,7 @@ static ULONG WINAPI dwritetextlayout_Release(IDWriteTextLayout2 *iface)
     TRACE("(%p)->(%d)\n", This, ref);
 
     if (!ref) {
+        IDWriteFactory2_Release(This->factory);
         free_layout_ranges_list(This);
         free_layout_eruns(This);
         free_layout_runs(This);
@@ -4353,7 +4356,8 @@ static HRESULT layout_format_from_textformat(struct dwrite_textlayout *layout, I
     return IDWriteTextFormat_GetFontCollection(format, &layout->format.collection);
 }
 
-static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
+static HRESULT init_textlayout(IDWriteFactory2 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
+    FLOAT maxwidth, FLOAT maxheight, struct dwrite_textlayout *layout)
 {
     struct layout_range_header *range, *strike, *underline, *effect, *spacing, *typography;
     static const DWRITE_TEXT_RANGE r = { 0, ~0u };
@@ -4421,6 +4425,8 @@ static HRESULT init_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *
         goto fail;
     }
 
+    layout->factory = factory;
+    IDWriteFactory2_AddRef(layout->factory);
     list_add_head(&layout->ranges, &range->entry);
     list_add_head(&layout->strike_ranges, &strike->entry);
     list_add_head(&layout->underline_ranges, &underline->entry);
@@ -4434,7 +4440,8 @@ fail:
     return hr;
 }
 
-HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **ret)
+HRESULT create_textlayout(IDWriteFactory2 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
+    FLOAT maxwidth, FLOAT maxheight, IDWriteTextLayout **ret)
 {
     struct dwrite_textlayout *layout;
     HRESULT hr;
@@ -4447,15 +4454,15 @@ HRESULT create_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *forma
     layout = heap_alloc(sizeof(struct dwrite_textlayout));
     if (!layout) return E_OUTOFMEMORY;
 
-    hr = init_textlayout(str, len, format, maxwidth, maxheight, layout);
+    hr = init_textlayout(factory, str, len, format, maxwidth, maxheight, layout);
     if (hr == S_OK)
         *ret = (IDWriteTextLayout*)&layout->IDWriteTextLayout2_iface;
 
     return hr;
 }
 
-HRESULT create_gdicompat_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFormat *format, FLOAT maxwidth, FLOAT maxheight,
-    FLOAT ppdip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural, IDWriteTextLayout **ret)
+HRESULT create_gdicompat_textlayout(IDWriteFactory2 *factory, const WCHAR *str, UINT32 len, IDWriteTextFormat *format,
+    FLOAT maxwidth, FLOAT maxheight, FLOAT ppdip, const DWRITE_MATRIX *transform, BOOL use_gdi_natural, IDWriteTextLayout **ret)
 {
     struct dwrite_textlayout *layout;
     HRESULT hr;
@@ -4468,7 +4475,7 @@ HRESULT create_gdicompat_textlayout(const WCHAR *str, UINT32 len, IDWriteTextFor
     layout = heap_alloc(sizeof(struct dwrite_textlayout));
     if (!layout) return E_OUTOFMEMORY;
 
-    hr = init_textlayout(str, len, format, maxwidth, maxheight, layout);
+    hr = init_textlayout(factory, str, len, format, maxwidth, maxheight, layout);
     if (hr == S_OK) {
         layout->measuringmode = use_gdi_natural ? DWRITE_MEASURING_MODE_GDI_NATURAL : DWRITE_MEASURING_MODE_GDI_CLASSIC;
 

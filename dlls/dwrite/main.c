@@ -1059,7 +1059,7 @@ static HRESULT WINAPI dwritefactory_CreateTextLayout(IDWriteFactory2 *iface, WCH
 
     TRACE("(%p)->(%s:%u %p %f %f %p)\n", This, debugstr_wn(string, len), len, format, max_width, max_height, layout);
 
-    return create_textlayout(string, len, format, max_width, max_height, layout);
+    return create_textlayout(iface, string, len, format, max_width, max_height, layout);
 }
 
 static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory2 *iface, WCHAR const* string,
@@ -1071,7 +1071,7 @@ static HRESULT WINAPI dwritefactory_CreateGdiCompatibleTextLayout(IDWriteFactory
     TRACE("(%p)->(%s:%u %p %f %f %f %p %d %p)\n", This, debugstr_wn(string, len), len, format, layout_width, layout_height,
         pixels_per_dip, transform, use_gdi_natural, layout);
 
-    return create_gdicompat_textlayout(string, len, format, layout_width, layout_height, pixels_per_dip, transform,
+    return create_gdicompat_textlayout(iface, string, len, format, layout_width, layout_height, pixels_per_dip, transform,
         use_gdi_natural, layout);
 }
 

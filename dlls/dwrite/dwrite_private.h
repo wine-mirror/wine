@@ -115,8 +115,9 @@ extern HRESULT convert_fontface_to_logfont(IDWriteFontFace*, LOGFONTW*) DECLSPEC
 extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const WCHAR *locale,BOOL,IDWriteNumberSubstitution**) DECLSPEC_HIDDEN;
 extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
                                  FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
-extern HRESULT create_textlayout(const WCHAR*,UINT32,IDWriteTextFormat*,FLOAT,FLOAT,IDWriteTextLayout**) DECLSPEC_HIDDEN;
-extern HRESULT create_gdicompat_textlayout(const WCHAR*,UINT32,IDWriteTextFormat*,FLOAT,FLOAT,FLOAT,const DWRITE_MATRIX*,BOOL,IDWriteTextLayout**) DECLSPEC_HIDDEN;
+extern HRESULT create_textlayout(IDWriteFactory2*,const WCHAR*,UINT32,IDWriteTextFormat*,FLOAT,FLOAT,IDWriteTextLayout**) DECLSPEC_HIDDEN;
+extern HRESULT create_gdicompat_textlayout(IDWriteFactory2*,const WCHAR*,UINT32,IDWriteTextFormat*,FLOAT,FLOAT,FLOAT,
+    const DWRITE_MATRIX*,BOOL,IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_trimmingsign(IDWriteFactory2*,IDWriteTextFormat*,IDWriteInlineObject**) DECLSPEC_HIDDEN;
 extern HRESULT create_typography(IDWriteTypography**) DECLSPEC_HIDDEN;
 extern HRESULT create_gdiinterop(IDWriteFactory2*,IDWriteGdiInterop**) DECLSPEC_HIDDEN;
