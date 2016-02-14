@@ -27,6 +27,7 @@
 #include "dwrite_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
+WINE_DECLARE_DEBUG_CHANNEL(dwrite_file);
 
 #define MS_HEAD_TAG DWRITE_MAKE_OPENTYPE_TAG('h','e','a','d')
 #define MS_OS2_TAG  DWRITE_MAKE_OPENTYPE_TAG('O','S','/','2')
@@ -3793,7 +3794,7 @@ static inline struct dwrite_localfontfilestream *impl_from_IDWriteFontFileStream
 static HRESULT WINAPI localfontfilestream_QueryInterface(IDWriteFontFileStream *iface, REFIID riid, void **obj)
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
-    TRACE("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
+    TRACE_(dwrite_file)("(%p)->(%s %p)\n", This, debugstr_guid(riid), obj);
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDWriteFontFileStream))
     {
         *obj = iface;
@@ -3809,7 +3810,7 @@ static ULONG WINAPI localfontfilestream_AddRef(IDWriteFontFileStream *iface)
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE_(dwrite_file)("(%p)->(%d)\n", This, ref);
     return ref;
 }
 
@@ -3825,7 +3826,7 @@ static ULONG WINAPI localfontfilestream_Release(IDWriteFontFileStream *iface)
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
     ULONG ref = InterlockedDecrement(&This->ref);
 
-    TRACE("(%p)->(%d)\n", This, ref);
+    TRACE_(dwrite_file)("(%p)->(%d)\n", This, ref);
 
     if (!ref) {
         UnmapViewOfFile(This->file_ptr);
@@ -3840,7 +3841,7 @@ static HRESULT WINAPI localfontfilestream_ReadFileFragment(IDWriteFontFileStream
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
 
-    TRACE("(%p)->(%p, %s, %s, %p)\n",This, fragment_start,
+    TRACE_(dwrite_file)("(%p)->(%p, %s, %s, %p)\n",This, fragment_start,
           wine_dbgstr_longlong(offset), wine_dbgstr_longlong(fragment_size), fragment_context);
 
     *fragment_context = NULL;
@@ -3857,13 +3858,13 @@ static HRESULT WINAPI localfontfilestream_ReadFileFragment(IDWriteFontFileStream
 static void WINAPI localfontfilestream_ReleaseFileFragment(IDWriteFontFileStream *iface, void *fragment_context)
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
-    TRACE("(%p)->(%p)\n", This, fragment_context);
+    TRACE_(dwrite_file)("(%p)->(%p)\n", This, fragment_context);
 }
 
 static HRESULT WINAPI localfontfilestream_GetFileSize(IDWriteFontFileStream *iface, UINT64 *size)
 {
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
-    TRACE("(%p)->(%p)\n", This, size);
+    TRACE_(dwrite_file)("(%p)->(%p)\n", This, size);
     *size = This->size;
     return S_OK;
 }
@@ -3873,7 +3874,7 @@ static HRESULT WINAPI localfontfilestream_GetLastWriteTime(IDWriteFontFileStream
     struct dwrite_localfontfilestream *This = impl_from_IDWriteFontFileStream(iface);
     ULARGE_INTEGER li;
 
-    TRACE("(%p)->(%p)\n", This, last_writetime);
+    TRACE_(dwrite_file)("(%p)->(%p)\n", This, last_writetime);
 
     li.u.LowPart = This->entry->key->writetime.dwLowDateTime;
     li.u.HighPart = This->entry->key->writetime.dwHighDateTime;
