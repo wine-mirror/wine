@@ -361,9 +361,7 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     const struct wined3d_format *format = surface->resource.format;
     unsigned int format_flags = surface->container->resource.format_flags;
     unsigned int row_pitch, slice_pitch;
-    SYSTEM_INFO sysInfo;
     BITMAPINFO *b_info;
-    int extraline = 0;
     DWORD *masks;
 
     TRACE("surface %p.\n", surface);
@@ -396,24 +394,11 @@ HRESULT surface_create_dib_section(struct wined3d_surface *surface)
     if (!b_info)
         return E_OUTOFMEMORY;
 
-    /* Some applications access the surface in via DWORDs, and do not take
-     * the necessary care at the end of the surface. So we need at least
-     * 4 extra bytes at the end of the surface. Check against the page size,
-     * if the last page used for the surface has at least 4 spare bytes we're
-     * safe, otherwise add an extra line to the DIB section. */
-    GetSystemInfo(&sysInfo);
-    if( ((surface->resource.size + 3) % sysInfo.dwPageSize) < 4)
-    {
-        extraline = 1;
-        TRACE("Adding an extra line to the DIB section.\n");
-    }
-
     b_info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
-    /* TODO: Is there a nicer way to force a specific alignment? (8 byte for ddraw) */
     wined3d_texture_get_pitch(surface->container, surface->texture_level, &row_pitch, &slice_pitch);
     b_info->bmiHeader.biWidth = row_pitch / format->byte_count;
-    b_info->bmiHeader.biHeight = 0 - surface->resource.height - extraline;
-    b_info->bmiHeader.biSizeImage = (surface->resource.height + extraline) * row_pitch;
+    b_info->bmiHeader.biHeight = 0 - surface->resource.height;
+    b_info->bmiHeader.biSizeImage = slice_pitch;
     b_info->bmiHeader.biPlanes = 1;
     b_info->bmiHeader.biBitCount = format->byte_count * 8;
 
