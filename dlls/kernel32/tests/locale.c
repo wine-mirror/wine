@@ -329,24 +329,13 @@ static void test_GetLocaleInfoW(void)
 
           val = 0;
           GetLocaleInfoW(lcid, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
-          if (ptr->todo & 0x1)
-          {
-          todo_wine
-              ok(val == ptr->lcid || (val && broken(val == ptr->lcid_broken)), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
-                  wine_dbgstr_w(ptr->name), val, ptr->lcid);
-          }
-          else
+          todo_wine_if (ptr->todo & 0x1)
               ok(val == ptr->lcid || (val && broken(val == ptr->lcid_broken)), "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
                   wine_dbgstr_w(ptr->name), val, ptr->lcid);
 
           /* now check LOCALE_SNAME */
           GetLocaleInfoW(lcid, LOCALE_SNAME, bufferW, COUNTOF(bufferW));
-          if (ptr->todo & 0x2)
-          todo_wine
-              ok(!lstrcmpW(bufferW, ptr->sname) ||
-                 (*ptr->sname_broken && broken(!lstrcmpW(bufferW, ptr->sname_broken))),
-                  "%s: got %s\n", wine_dbgstr_w(ptr->name), wine_dbgstr_w(bufferW));
-          else
+          todo_wine_if (ptr->todo & 0x2)
               ok(!lstrcmpW(bufferW, ptr->sname) ||
                  (*ptr->sname_broken && broken(!lstrcmpW(bufferW, ptr->sname_broken))),
                   "%s: got %s\n", wine_dbgstr_w(ptr->name), wine_dbgstr_w(bufferW));
@@ -2010,16 +1999,9 @@ static void test_CompareStringEx(void)
 
         MultiByteToWideChar(CP_ACP, 0, e->locale, -1, locale, sizeof(locale)/sizeof(WCHAR));
         ret = pCompareStringEx(locale, e->flags, e->first, -1, e->second, -1, NULL, NULL, 0);
-        if (e->todo)
-        {
-            todo_wine ok(ret == e->ret || broken(ret == e->broken),
-                         "%d: got %s, expected %s\n", i, op[ret], op[e->ret]);
-        }
-        else
-        {
+        todo_wine_if (e->todo)
             ok(ret == e->ret || broken(ret == e->broken),
                "%d: got %s, expected %s\n", i, op[ret], op[e->ret]);
-        }
     }
 
 }
@@ -2486,11 +2468,7 @@ static void test_LocaleNameToLCID(void)
         while (*ptr->name)
         {
             lcid = pLocaleNameToLCID(ptr->name, 0);
-            if (ptr->todo)
-            todo_wine
-                ok(lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
-                    wine_dbgstr_w(ptr->name), lcid, ptr->lcid);
-            else
+            todo_wine_if (ptr->todo)
                 ok(lcid == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n",
                     wine_dbgstr_w(ptr->name), lcid, ptr->lcid);
 
@@ -3934,16 +3912,10 @@ static void test_IdnToNameprepUnicode(void)
                 test_data[i].in_len, buf, sizeof(buf)/sizeof(WCHAR));
         err = GetLastError();
 
-        if (!test_data[i].todo)
-        {
+        todo_wine_if (test_data[i].todo)
             ok(ret == test_data[i].ret ||
                     broken(ret == test_data[i].broken_ret), "%d) ret = %d\n", i, ret);
-        }
-        else
-        {
-            todo_wine ok(ret == test_data[i].ret ||
-                    broken(ret == test_data[i].broken_ret), "%d) ret = %d\n", i, ret);
-        }
+
         if(ret != test_data[i].ret)
             continue;
 
@@ -4165,10 +4137,7 @@ static void test_GetLocaleInfoEx(void)
         {
             val = 0;
             pGetLocaleInfoEx(ptr->name, LOCALE_ILANGUAGE|LOCALE_RETURN_NUMBER, (WCHAR*)&val, sizeof(val)/sizeof(WCHAR));
-            if (ptr->todo)
-            todo_wine
-                ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
-            else
+            todo_wine_if (ptr->todo)
                 ok(val == ptr->lcid, "%s: got wrong lcid 0x%04x, expected 0x%04x\n", wine_dbgstr_w(ptr->name), val, ptr->lcid);
             bufferW[0] = 0;
             ret = pGetLocaleInfoEx(ptr->name, LOCALE_SNAME, bufferW, sizeof(bufferW)/sizeof(WCHAR));
