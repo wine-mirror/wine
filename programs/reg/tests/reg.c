@@ -72,17 +72,11 @@ static void verify_reg_(unsigned line, HKEY hkey, const char* value,
     if (err != ERROR_SUCCESS)
         return;
 
-    if (todo & TODO_REG_TYPE)
-        todo_wine lok(type == exp_type, "got wrong type %d, expected %d\n", type, exp_type);
-    else
+    todo_wine_if (todo & TODO_REG_TYPE)
         lok(type == exp_type, "got wrong type %d, expected %d\n", type, exp_type);
-    if (todo & TODO_REG_SIZE)
-        todo_wine lok(size == exp_size, "got wrong size %d, expected %d\n", size, exp_size);
-    else
+    todo_wine_if (todo & TODO_REG_SIZE)
         lok(size == exp_size, "got wrong size %d, expected %d\n", size, exp_size);
-    if (todo & TODO_REG_DATA)
-        todo_wine lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
-    else
+    todo_wine_if (todo & TODO_REG_DATA)
         lok(memcmp(data, exp_data, size) == 0, "got wrong data\n");
 }
 
