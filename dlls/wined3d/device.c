@@ -2013,20 +2013,26 @@ void CDECL wined3d_device_get_viewport(const struct wined3d_device *device, stru
 
 static void resolve_depth_buffer(struct wined3d_state *state)
 {
-    struct wined3d_texture *texture = state->textures[0];
-    struct wined3d_surface *depth_stencil, *surface;
+    struct wined3d_texture *dst_texture = state->textures[0];
+    struct wined3d_rendertarget_view *src_view;
     RECT src_rect, dst_rect;
 
-    if (!texture || texture->resource.type != WINED3D_RTYPE_TEXTURE_2D
-            || !(texture->resource.format_flags & WINED3DFMT_FLAG_DEPTH))
-        return;
-    surface = surface_from_resource(texture->sub_resources[0]);
-    if (!(depth_stencil = wined3d_rendertarget_view_get_surface(state->fb->depth_stencil)))
+    if (!dst_texture || dst_texture->resource.type != WINED3D_RTYPE_TEXTURE_2D
+            || !(dst_texture->resource.format_flags & WINED3DFMT_FLAG_DEPTH))
         return;
 
-    SetRect(&dst_rect, 0, 0, surface->resource.width, surface->resource.height);
-    SetRect(&src_rect, 0, 0, depth_stencil->resource.width, depth_stencil->resource.height);
-    wined3d_surface_blt(surface, &dst_rect, depth_stencil, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
+    if (!(src_view = state->fb->depth_stencil))
+        return;
+    if (src_view->resource->type == WINED3D_RTYPE_BUFFER)
+    {
+        FIXME("Not supported on buffer resources.\n");
+        return;
+    }
+
+    SetRect(&dst_rect, 0, 0, dst_texture->resource.width, dst_texture->resource.height);
+    SetRect(&src_rect, 0, 0, src_view->width, src_view->height);
+    wined3d_texture_blt(dst_texture, 0, &dst_rect, wined3d_texture_from_resource(src_view->resource),
+            src_view->sub_resource_idx, &src_rect, 0, NULL, WINED3D_TEXF_POINT);
 }
 
 void CDECL wined3d_device_set_render_state(struct wined3d_device *device,
