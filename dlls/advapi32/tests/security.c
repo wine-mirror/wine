@@ -5210,11 +5210,8 @@ static void test_named_pipe_security(HANDLE token)
             ok(ret, "DuplicateHandle error %d\n", GetLastError());
 
             access = get_obj_access(dup);
-            if (map[i].todo)
-todo_wine
-            ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
-            else
-            ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
+            todo_wine_if (map[i].todo)
+                ok(access == map[i].mapped, "%d: expected %#x, got %#x\n", i, map[i].mapped, access);
 
             CloseHandle(dup);
         }
