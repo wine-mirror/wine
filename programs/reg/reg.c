@@ -379,8 +379,11 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
              return 1;
         }
 
-        if (data)
-            reg_data = get_regdata(data,reg_type,separator,&reg_count);
+        if (data && !(reg_data = get_regdata(data, reg_type, separator, &reg_count)))
+        {
+            RegCloseKey(subkey);
+            return 1;
+        }
 
         RegSetValueExW(subkey,value_name,0,reg_type,reg_data,reg_count);
         HeapFree(GetProcessHeap(),0,reg_data);
