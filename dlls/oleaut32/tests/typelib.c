@@ -210,7 +210,8 @@ static void ref_count_test(LPCWSTR type_lib)
 
     hRes = ITypeLib_GetTypeInfo(iface, 1, &iti1);
     ok(hRes == S_OK, "ITypeLib_GetTypeInfo failed on index = 1\n");
-    ok(ref_count=ITypeLib_Release(iface) > 0, "ITypeLib destroyed while ITypeInfo has back pointer\n");
+    ref_count = ITypeLib_Release(iface);
+    ok(ref_count > 0, "ITypeLib destroyed while ITypeInfo has back pointer\n");
     if(!ref_count)
         return;
 
