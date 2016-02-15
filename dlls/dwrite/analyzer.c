@@ -191,6 +191,8 @@ struct fallback_mapping {
 };
 
 static const struct fallback_mapping fontfallback_neutral_data[] = {
+    { { 0x3000, 0x30ff }, meiryoW }, /* CJK Symbols and Punctuation, Hiragana, Katakana */
+    { { 0x31f0, 0x31ff }, meiryoW }, /* Katakana Phonetic Extensions */
     { { 0x4e00, 0x9fff }, meiryoW }, /* CJK Unified Ideographs */
 };
 
@@ -1736,16 +1738,23 @@ static ULONG WINAPI fontfallback_Release(IDWriteFontFallback *iface)
     return IDWriteFactory2_Release(fallback->factory);
 }
 
+static int compare_fallback_mapping(const void *a, const void *b)
+{
+    UINT32 ch = *(UINT32*)a;
+    struct fallback_mapping *mapping = (struct fallback_mapping*)b;
+
+    if (ch > mapping->range.last)
+        return 1;
+    else if (ch < mapping->range.first)
+        return -1;
+    else
+        return 0;
+}
+
 static const struct fallback_mapping *find_fallback_mapping(struct dwrite_fontfallback *fallback, UINT32 ch)
 {
-    UINT32 i;
-
-    for (i = 0; i < fallback->count; i++) {
-        if (fallback->mappings[i].range.first <= ch && fallback->mappings[i].range.last >= ch)
-            return &fallback->mappings[i];
-    }
-
-    return NULL;
+    return bsearch(&ch, fallback->mappings, fallback->count, sizeof(*fallback->mappings),
+        compare_fallback_mapping);
 }
 
 HRESULT create_matching_font(IDWriteFontCollection *collection, const WCHAR *name,

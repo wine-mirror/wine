@@ -4200,6 +4200,7 @@ static HRESULT WINAPI fontcollection_FindFamilyName(IDWriteFontCollection *iface
         *exists = TRUE;
         return S_OK;
     }
+todo_wine
     ok(0, "unexpected call, name %s\n", wine_dbgstr_w(name));
     return E_NOTIMPL;
 }
