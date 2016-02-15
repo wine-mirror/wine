@@ -3182,16 +3182,16 @@ HRESULT surface_color_fill(struct wined3d_surface *s, const RECT *rect, const st
 }
 
 static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RECT *dst_rect,
-        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags, const WINEDDBLTFX *DDBltFx,
-        enum wined3d_texture_filter_type filter)
+        struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
+        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_device *device = dst_surface->resource.device;
     const struct wined3d_surface *rt = wined3d_rendertarget_view_get_surface(device->fb.render_targets[0]);
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
 
-    TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, blt_fx %p, filter %s.\n",
+    TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
-            flags, DDBltFx, debug_d3dtexturefiltertype(filter));
+            flags, fx, debug_d3dtexturefiltertype(filter));
 
     /* Get the swapchain. One of the surfaces has to be a primary surface */
     if (dst_surface->resource.pool == WINED3D_POOL_SYSTEM_MEM)
@@ -4149,7 +4149,7 @@ static BOOL cpu_blit_supported(const struct wined3d_gl_info *gl_info,
 
 static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
         UINT src_pitch, UINT dst_pitch, UINT update_w, UINT update_h,
-        const struct wined3d_format *format, DWORD flags, const WINEDDBLTFX *fx)
+        const struct wined3d_format *format, DWORD flags, const struct wined3d_blt_fx *fx)
 {
     UINT row_block_count;
     const BYTE *src_row;
@@ -4173,7 +4173,7 @@ static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
         return WINED3D_OK;
     }
 
-    if (flags == WINED3D_BLT_FX && fx->dwDDFX == WINEDDBLTFX_MIRRORUPDOWN)
+    if (flags == WINED3D_BLT_FX && fx->fx == WINEDDBLTFX_MIRRORUPDOWN)
     {
         src_row += (((update_h / format->block_height) - 1) * src_pitch);
 
@@ -4245,14 +4245,14 @@ static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
     }
 
     FIXME("Unsupported blit on compressed surface (format %s, flags %#x, DDFX %#x).\n",
-            debug_d3dformat(format->id), flags, flags & WINED3D_BLT_FX ? fx->dwDDFX : 0);
+            debug_d3dformat(format->id), flags, flags & WINED3D_BLT_FX ? fx->fx : 0);
 
     return E_NOTIMPL;
 }
 
 static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
-        const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
+        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
     const struct wined3d_box dst_box = {dst_rect->left, dst_rect->top, dst_rect->right, dst_rect->bottom, 0, 1};
     int bpp, srcheight, srcwidth, dstheight, dstwidth, width;
@@ -4367,7 +4367,7 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     /* First, all the 'source-less' blits */
     if (flags & WINED3D_BLT_COLOR_FILL)
     {
-        hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, fx->u5.dwFillColor);
+        hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, fx->fill_color);
         flags &= ~WINED3D_BLT_COLOR_FILL;
     }
 
@@ -4529,8 +4529,8 @@ do { \
                 }
                 else if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
                 {
-                    keylow = fx->ddckSrcColorkey.color_space_low_value;
-                    keyhigh = fx->ddckSrcColorkey.color_space_high_value;
+                    keylow = fx->src_color_key.color_space_low_value;
+                    keyhigh = fx->src_color_key.color_space_high_value;
                 }
 
                 if (flags & WINED3D_BLT_DST_CKEY)
@@ -4541,8 +4541,8 @@ do { \
                 }
                 else if (flags & WINED3D_BLT_DST_CKEY_OVERRIDE)
                 {
-                    destkeylow = fx->ddckDestColorkey.color_space_low_value;
-                    destkeyhigh = fx->ddckDestColorkey.color_space_high_value;
+                    destkeylow = fx->dst_color_key.color_space_low_value;
+                    destkeyhigh = fx->dst_color_key.color_space_high_value;
                 }
 
                 if (bpp == 1)
@@ -4570,12 +4570,12 @@ do { \
                 dBottomLeft  = dTopLeft + ((dstheight - 1) * dst_map.row_pitch);
                 dBottomRight = dBottomLeft + ((dstwidth - 1) * bpp);
 
-                if (fx->dwDDFX & WINEDDBLTFX_ARITHSTRETCHY)
+                if (fx->fx & WINEDDBLTFX_ARITHSTRETCHY)
                 {
                     /* I don't think we need to do anything about this flag */
                     WARN("Nothing done for WINEDDBLTFX_ARITHSTRETCHY.\n");
                 }
-                if (fx->dwDDFX & WINEDDBLTFX_MIRRORLEFTRIGHT)
+                if (fx->fx & WINEDDBLTFX_MIRRORLEFTRIGHT)
                 {
                     tmp          = dTopRight;
                     dTopRight    = dTopLeft;
@@ -4585,7 +4585,7 @@ do { \
                     dBottomLeft  = tmp;
                     dstxinc = dstxinc * -1;
                 }
-                if (fx->dwDDFX & WINEDDBLTFX_MIRRORUPDOWN)
+                if (fx->fx & WINEDDBLTFX_MIRRORUPDOWN)
                 {
                     tmp          = dTopLeft;
                     dTopLeft     = dBottomLeft;
@@ -4595,12 +4595,12 @@ do { \
                     dBottomRight = tmp;
                     dstyinc = dstyinc * -1;
                 }
-                if (fx->dwDDFX & WINEDDBLTFX_NOTEARING)
+                if (fx->fx & WINEDDBLTFX_NOTEARING)
                 {
                     /* I don't think we need to do anything about this flag */
                     WARN("Nothing done for WINEDDBLTFX_NOTEARING.\n");
                 }
-                if (fx->dwDDFX & WINEDDBLTFX_ROTATE180)
+                if (fx->fx & WINEDDBLTFX_ROTATE180)
                 {
                     tmp          = dBottomRight;
                     dBottomRight = dTopLeft;
@@ -4611,7 +4611,7 @@ do { \
                     dstxinc = dstxinc * -1;
                     dstyinc = dstyinc * -1;
                 }
-                if (fx->dwDDFX & WINEDDBLTFX_ROTATE270)
+                if (fx->fx & WINEDDBLTFX_ROTATE270)
                 {
                     tmp          = dTopLeft;
                     dTopLeft     = dBottomLeft;
@@ -4623,7 +4623,7 @@ do { \
                     dstyinc = tmpxy;
                     dstxinc = dstxinc * -1;
                 }
-                if (fx->dwDDFX & WINEDDBLTFX_ROTATE90)
+                if (fx->fx & WINEDDBLTFX_ROTATE90)
                 {
                     tmp          = dTopLeft;
                     dTopLeft     = dTopRight;
@@ -4635,7 +4635,7 @@ do { \
                     dstyinc = tmpxy;
                     dstyinc = dstyinc * -1;
                 }
-                if (fx->dwDDFX & WINEDDBLTFX_ZBUFFERBASEDEST)
+                if (fx->fx & WINEDDBLTFX_ZBUFFERBASEDEST)
                 {
                     /* I don't think we need to do anything about this flag */
                     WARN("Nothing done for WINEDDBLTFX_ZBUFFERBASEDEST.\n");
@@ -4736,13 +4736,11 @@ static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d
 {
     struct wined3d_surface *surface = wined3d_rendertarget_view_get_surface(view);
     static const RECT src_rect;
-    WINEDDBLTFX BltFx;
+    struct wined3d_blt_fx fx;
 
-    memset(&BltFx, 0, sizeof(BltFx));
-    BltFx.dwSize = sizeof(BltFx);
-    BltFx.u5.dwFillColor = wined3d_format_convert_from_float(surface, color);
+    fx.fill_color = wined3d_format_convert_from_float(surface, color);
     return surface_cpu_blt(surface, rect, NULL, &src_rect,
-            WINED3D_BLT_COLOR_FILL, &BltFx, WINED3D_TEXF_POINT);
+            WINED3D_BLT_COLOR_FILL, &fx, WINED3D_TEXF_POINT);
 }
 
 static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
@@ -4774,7 +4772,7 @@ const struct blit_shader cpu_blit =  {
 
 HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst_rect,
         struct wined3d_surface *src_surface, const RECT *src_rect, DWORD flags,
-        const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
+        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_swapchain *src_swapchain, *dst_swapchain;
     struct wined3d_device *device = dst_surface->resource.device;
@@ -4797,33 +4795,14 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
     if (fx)
     {
-        TRACE("dwSize %#x.\n", fx->dwSize);
-        TRACE("dwDDFX %#x.\n", fx->dwDDFX);
-        TRACE("dwROP %#x.\n", fx->dwROP);
-        TRACE("dwDDROP %#x.\n", fx->dwDDROP);
-        TRACE("dwRotationAngle %#x.\n", fx->dwRotationAngle);
-        TRACE("dwZBufferOpCode %#x.\n", fx->dwZBufferOpCode);
-        TRACE("dwZBufferLow %#x.\n", fx->dwZBufferLow);
-        TRACE("dwZBufferHigh %#x.\n", fx->dwZBufferHigh);
-        TRACE("dwZBufferBaseDest %#x.\n", fx->dwZBufferBaseDest);
-        TRACE("dwZDestConstBitDepth %#x.\n", fx->dwZDestConstBitDepth);
-        TRACE("lpDDSZBufferDest %p.\n", fx->u1.lpDDSZBufferDest);
-        TRACE("dwZSrcConstBitDepth %#x.\n", fx->dwZSrcConstBitDepth);
-        TRACE("lpDDSZBufferSrc %p.\n", fx->u2.lpDDSZBufferSrc);
-        TRACE("dwAlphaEdgeBlendBitDepth %#x.\n", fx->dwAlphaEdgeBlendBitDepth);
-        TRACE("dwAlphaEdgeBlend %#x.\n", fx->dwAlphaEdgeBlend);
-        TRACE("dwReserved %#x.\n", fx->dwReserved);
-        TRACE("dwAlphaDestConstBitDepth %#x.\n", fx->dwAlphaDestConstBitDepth);
-        TRACE("lpDDSAlphaDest %p.\n", fx->u3.lpDDSAlphaDest);
-        TRACE("dwAlphaSrcConstBitDepth %#x.\n", fx->dwAlphaSrcConstBitDepth);
-        TRACE("lpDDSAlphaSrc %p.\n", fx->u4.lpDDSAlphaSrc);
-        TRACE("lpDDSPattern %p.\n", fx->u5.lpDDSPattern);
-        TRACE("ddckDestColorkey {%#x, %#x}.\n",
-                fx->ddckDestColorkey.color_space_low_value,
-                fx->ddckDestColorkey.color_space_high_value);
-        TRACE("ddckSrcColorkey {%#x, %#x}.\n",
-                fx->ddckSrcColorkey.color_space_low_value,
-                fx->ddckSrcColorkey.color_space_high_value);
+        TRACE("fx %#x.\n", fx->fx);
+        TRACE("fill_color 0x%08x.\n", fx->fill_color);
+        TRACE("dst_color_key {0x%08x, 0x%08x}.\n",
+                fx->dst_color_key.color_space_low_value,
+                fx->dst_color_key.color_space_high_value);
+        TRACE("src_color_key {0x%08x, 0x%08x}.\n",
+                fx->src_color_key.color_space_low_value,
+                fx->src_color_key.color_space_high_value);
     }
 
     if (dst_surface->resource.map_count || (src_surface && src_surface->resource.map_count))
@@ -4855,7 +4834,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
         }
     }
 
-    if (!fx || !(fx->dwDDFX))
+    if (!fx || !(fx->fx))
         flags &= ~WINED3D_BLT_FX;
 
     if (flags & WINED3D_BLT_WAIT)
@@ -4942,7 +4921,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
             TRACE("Depth fill.\n");
 
-            if (!surface_convert_depth_to_float(dst_surface, fx->u5.dwFillDepth, &depth))
+            if (!surface_convert_depth_to_float(dst_surface, fx->fill_color, &depth))
                 return WINED3DERR_INVALIDCALL;
 
             if (SUCCEEDED(wined3d_surface_depth_fill(dst_surface, dst_rect, depth)))
@@ -4986,7 +4965,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             TRACE("Color fill.\n");
 
             if (!wined3d_format_convert_color_to_float(dst_surface->resource.format,
-                    palette, fx->u5.dwFillColor, &color))
+                    palette, fx->fill_color, &color))
                 goto fallback;
 
             if (SUCCEEDED(surface_color_fill(dst_surface, dst_rect, &color)))
@@ -5000,7 +4979,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             TRACE("Color blit.\n");
             if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
             {
-                color_key = &fx->ddckSrcColorkey;
+                color_key = &fx->src_color_key;
                 blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
             }
             else if (flags & WINED3D_BLT_SRC_CKEY)

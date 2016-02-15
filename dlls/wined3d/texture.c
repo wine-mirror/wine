@@ -1347,7 +1347,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
 
 HRESULT CDECL wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const RECT *dst_rect, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
-        const RECT *src_rect, DWORD flags, const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
+        const RECT *src_rect, DWORD flags, const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_resource *dst_resource, *src_resource = NULL;
 

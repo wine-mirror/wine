@@ -1835,54 +1835,13 @@ struct wined3d_color_key
                                      * to be treated as Color Key, inclusive */
 };
 
-typedef struct _WINEDDBLTFX
+struct wined3d_blt_fx
 {
-    DWORD dwSize;                                   /* size of structure */
-    DWORD dwDDFX;                                   /* FX operations */
-    DWORD dwROP;                                    /* Win32 raster operations */
-    DWORD dwDDROP;                                  /* Raster operations new for DirectDraw */
-    DWORD dwRotationAngle;                          /* Rotation angle for blt */
-    DWORD dwZBufferOpCode;                          /* ZBuffer compares */
-    DWORD dwZBufferLow;                             /* Low limit of Z buffer */
-    DWORD dwZBufferHigh;                            /* High limit of Z buffer */
-    DWORD dwZBufferBaseDest;                        /* Destination base value */
-    DWORD dwZDestConstBitDepth;                     /* Bit depth used to specify Z constant for destination */
-    union
-    {
-        DWORD dwZDestConst;                         /* Constant to use as Z buffer for dest */
-        struct wined3d_surface *lpDDSZBufferDest;   /* Surface to use as Z buffer for dest */
-    } DUMMYUNIONNAME1;
-    DWORD dwZSrcConstBitDepth;                      /* Bit depth used to specify Z constant for source */
-    union
-    {
-        DWORD dwZSrcConst;                          /* Constant to use as Z buffer for src */
-        struct wined3d_surface *lpDDSZBufferSrc;    /* Surface to use as Z buffer for src */
-    } DUMMYUNIONNAME2;
-    DWORD dwAlphaEdgeBlendBitDepth;                 /* Bit depth used to specify constant for alpha edge blend */
-    DWORD dwAlphaEdgeBlend;                         /* Alpha for edge blending */
-    DWORD dwReserved;
-    DWORD dwAlphaDestConstBitDepth;                 /* Bit depth used to specify alpha constant for destination */
-    union
-    {
-        DWORD dwAlphaDestConst;                     /* Constant to use as Alpha Channel */
-        struct wined3d_surface *lpDDSAlphaDest;     /* Surface to use as Alpha Channel */
-    } DUMMYUNIONNAME3;
-    DWORD dwAlphaSrcConstBitDepth;                  /* Bit depth used to specify alpha constant for source */
-    union
-    {
-        DWORD dwAlphaSrcConst;                      /* Constant to use as Alpha Channel */
-        struct wined3d_surface *lpDDSAlphaSrc;      /* Surface to use as Alpha Channel */
-    } DUMMYUNIONNAME4;
-    union
-    {
-        DWORD dwFillColor;                          /* color in RGB or Palettized */
-        DWORD dwFillDepth;                          /* depth value for z-buffer */
-        DWORD dwFillPixel;                          /* pixel val for RGBA or RGBZ */
-        struct wined3d_surface *lpDDSPattern;       /* Surface to use as pattern */
-    } DUMMYUNIONNAME5;
-    struct wined3d_color_key ddckDestColorkey;      /* DestColorkey override */
-    struct wined3d_color_key ddckSrcColorkey;       /* SrcColorkey override */
-} WINEDDBLTFX,*LPWINEDDBLTFX;
+    DWORD fx;
+    DWORD fill_color;
+    struct wined3d_color_key dst_color_key;
+    struct wined3d_color_key src_color_key;
+};
 
 struct wined3d_buffer_desc
 {
@@ -2470,7 +2429,7 @@ HRESULT __cdecl wined3d_texture_add_dirty_region(struct wined3d_texture *texture
         UINT layer, const struct wined3d_box *dirty_region);
 HRESULT __cdecl wined3d_texture_blt(struct wined3d_texture *dst_texture, unsigned int dst_idx, const RECT *dst_rect_in,
         struct wined3d_texture *src_texture, unsigned int src_idx, const RECT *src_rect_in, DWORD flags,
-        const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter);
+        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter);
 HRESULT __cdecl wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
         UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture);

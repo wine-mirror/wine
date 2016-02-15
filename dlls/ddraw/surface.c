@@ -1387,7 +1387,7 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface1_Flip(IDirectDrawSurface *
 
 static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, const RECT *dst_rect_in,
         struct ddraw_surface *src_surface, const RECT *src_rect_in, DWORD flags,
-        const WINEDDBLTFX *fx, enum wined3d_texture_filter_type filter)
+        const struct wined3d_blt_fx *fx, enum wined3d_texture_filter_type filter)
 {
     struct wined3d_texture *wined3d_src_texture;
     unsigned int src_sub_resource_idx;
@@ -1529,71 +1529,74 @@ static HRESULT ddraw_surface_blt_clipped(struct ddraw_surface *dst_surface, cons
  *  See IWineD3DSurface::Blt for more details
  *
  *****************************************************************************/
-static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *DestRect,
-        IDirectDrawSurface7 *SrcSurface, RECT *SrcRect, DWORD Flags, DDBLTFX *DDBltFx)
+static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Blt(IDirectDrawSurface7 *iface, RECT *dst_rect,
+        IDirectDrawSurface7 *src_surface, RECT *src_rect, DWORD flags, DDBLTFX *fx)
 {
-    struct ddraw_surface *dst_surface = impl_from_IDirectDrawSurface7(iface);
-    struct ddraw_surface *src_surface = unsafe_impl_from_IDirectDrawSurface7(SrcSurface);
+    struct ddraw_surface *dst_impl = impl_from_IDirectDrawSurface7(iface);
+    struct ddraw_surface *src_impl = unsafe_impl_from_IDirectDrawSurface7(src_surface);
+    struct wined3d_blt_fx wined3d_fx;
     HRESULT hr = DD_OK;
     DDBLTFX rop_fx;
 
     TRACE("iface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p.\n",
-            iface, wine_dbgstr_rect(DestRect), SrcSurface, wine_dbgstr_rect(SrcRect), Flags, DDBltFx);
+            iface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect), flags, fx);
 
     /* Check for validity of the flags here. WineD3D Has the software-opengl selection path and would have
      * to check at 2 places, and sometimes do double checks. This also saves the call to wined3d :-)
      */
-    if((Flags & DDBLT_KEYSRCOVERRIDE) && (!DDBltFx || Flags & DDBLT_KEYSRC)) {
+    if ((flags & DDBLT_KEYSRCOVERRIDE) && (!fx || flags & DDBLT_KEYSRC))
+    {
         WARN("Invalid source color key parameters, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
     }
 
-    if((Flags & DDBLT_KEYDESTOVERRIDE) && (!DDBltFx || Flags & DDBLT_KEYDEST)) {
+    if ((flags & DDBLT_KEYDESTOVERRIDE) && (!fx || flags & DDBLT_KEYDEST))
+    {
         WARN("Invalid destination color key parameters, returning DDERR_INVALIDPARAMS\n");
         return DDERR_INVALIDPARAMS;
     }
 
-    if (Flags & DDBLT_DDROPS)
+    if (flags & DDBLT_DDROPS)
     {
         FIXME("DDBLT_DDROPS not implemented.\n");
-        if (DDBltFx)
-            FIXME("    rop %#x, pattern %p.\n", DDBltFx->dwDDROP, DDBltFx->u5.lpDDSPattern);
+        if (fx)
+            FIXME("    rop %#x, pattern %p.\n", fx->dwDDROP, fx->u5.lpDDSPattern);
         return DDERR_NORASTEROPHW;
     }
 
     wined3d_mutex_lock();
 
-    if (Flags & (DDBLT_COLORFILL | DDBLT_DEPTHFILL))
+    if (flags & (DDBLT_COLORFILL | DDBLT_DEPTHFILL))
     {
-        if (Flags & DDBLT_ROP)
+        if (flags & DDBLT_ROP)
         {
             wined3d_mutex_unlock();
             WARN("DDBLT_ROP used with DDBLT_COLORFILL or DDBLT_DEPTHFILL, returning DDERR_INVALIDPARAMS.\n");
             return DDERR_INVALIDPARAMS;
         }
-        if (src_surface)
+        if (src_impl)
         {
             wined3d_mutex_unlock();
             WARN("Depth or colorfill is not compatible with source surfaces, returning DDERR_INVALIDPARAMS\n");
             return DDERR_INVALIDPARAMS;
         }
-        if (!DDBltFx)
+        if (!fx)
         {
             wined3d_mutex_unlock();
-            WARN("Depth or colorfill used with DDBltFx = NULL, returning DDERR_INVALIDPARAMS.\n");
+            WARN("Depth or colorfill used with NULL fx, returning DDERR_INVALIDPARAMS.\n");
             return DDERR_INVALIDPARAMS;
         }
 
-        if ((Flags & (DDBLT_COLORFILL | DDBLT_DEPTHFILL)) == (DDBLT_COLORFILL | DDBLT_DEPTHFILL))
-            Flags &= ~DDBLT_DEPTHFILL;
+        if ((flags & (DDBLT_COLORFILL | DDBLT_DEPTHFILL)) == (DDBLT_COLORFILL | DDBLT_DEPTHFILL))
+            flags &= ~DDBLT_DEPTHFILL;
 
-        if ((dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) && (Flags & DDBLT_COLORFILL))
+        if ((dst_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) && (flags & DDBLT_COLORFILL))
         {
             wined3d_mutex_unlock();
             WARN("DDBLT_COLORFILL used on a depth buffer, returning DDERR_INVALIDPARAMS.\n");
             return DDERR_INVALIDPARAMS;
         }
-        if (!(dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) && (Flags & DDBLT_DEPTHFILL))
+        if (!(dst_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER) && (flags & DDBLT_DEPTHFILL))
         {
             wined3d_mutex_unlock();
             WARN("DDBLT_DEPTHFILL used on a color buffer, returning DDERR_INVALIDPARAMS.\n");
@@ -1601,65 +1604,71 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Blt(IDirectDrawSurface7 *
         }
     }
 
-    if (Flags & DDBLT_ROP)
+    if (flags & DDBLT_ROP)
     {
-        if (!DDBltFx)
+        if (!fx)
         {
             wined3d_mutex_unlock();
-            WARN("DDBLT_ROP used with DDBltFx = NULL, returning DDERR_INVALIDPARAMS.\n");
+            WARN("DDBLT_ROP used with NULL fx, returning DDERR_INVALIDPARAMS.\n");
             return DDERR_INVALIDPARAMS;
         }
 
-        Flags &= ~DDBLT_ROP;
-        switch (DDBltFx->dwROP)
+        flags &= ~DDBLT_ROP;
+        switch (fx->dwROP)
         {
             case SRCCOPY:
                 break;
 
             case WHITENESS:
             case BLACKNESS:
-                rop_fx = *DDBltFx;
+                rop_fx = *fx;
 
-                if (DDBltFx->dwROP == WHITENESS)
+                if (fx->dwROP == WHITENESS)
                     rop_fx.u5.dwFillColor = 0xffffffff;
                 else
                     rop_fx.u5.dwFillColor = 0;
 
-                if (dst_surface->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
-                    Flags |= DDBLT_DEPTHFILL;
+                if (dst_impl->surface_desc.ddsCaps.dwCaps & DDSCAPS_ZBUFFER)
+                    flags |= DDBLT_DEPTHFILL;
                 else
-                    Flags |= DDBLT_COLORFILL;
+                    flags |= DDBLT_COLORFILL;
 
-                DDBltFx = &rop_fx;
+                fx = &rop_fx;
                 break;
 
             default:
                 wined3d_mutex_unlock();
-                WARN("Unsupported ROP %#x used, returning DDERR_NORASTEROPHW.\n", DDBltFx->dwROP);
+                WARN("Unsupported ROP %#x used, returning DDERR_NORASTEROPHW.\n", fx->dwROP);
                 return DDERR_NORASTEROPHW;
         }
     }
 
-    if (Flags & DDBLT_KEYSRC && (!src_surface || !(src_surface->surface_desc.dwFlags & DDSD_CKSRCBLT)))
+    if (flags & DDBLT_KEYSRC && (!src_impl || !(src_impl->surface_desc.dwFlags & DDSD_CKSRCBLT)))
     {
         WARN("DDBLT_KEYDEST blit without color key in surface, returning DDERR_INVALIDPARAMS\n");
         wined3d_mutex_unlock();
         return DDERR_INVALIDPARAMS;
     }
 
-    if (Flags & ~WINED3D_BLT_MASK)
+    if (flags & ~WINED3D_BLT_MASK)
     {
         wined3d_mutex_unlock();
-        FIXME("Unhandled flags %#x.\n", Flags);
+        FIXME("Unhandled flags %#x.\n", flags);
         return E_NOTIMPL;
     }
 
-    /* TODO: Check if the DDBltFx contains any ddraw surface pointers. If it
-     * does, copy the struct, and replace the ddraw surfaces with the wined3d
-     * surfaces. So far no blitting operations using surfaces in the bltfx
-     * struct are supported anyway. */
-    hr = ddraw_surface_blt_clipped(dst_surface, DestRect, src_surface, SrcRect,
-            Flags, (WINEDDBLTFX *)DDBltFx, WINED3D_TEXF_LINEAR);
+    if (fx)
+    {
+        wined3d_fx.fx = fx->dwDDFX;
+        wined3d_fx.fill_color = fx->u5.dwFillColor;
+        wined3d_fx.dst_color_key.color_space_low_value = fx->ddckDestColorkey.dwColorSpaceLowValue;
+        wined3d_fx.dst_color_key.color_space_high_value = fx->ddckDestColorkey.dwColorSpaceHighValue;
+        wined3d_fx.src_color_key.color_space_low_value = fx->ddckSrcColorkey.dwColorSpaceLowValue;
+        wined3d_fx.src_color_key.color_space_high_value = fx->ddckSrcColorkey.dwColorSpaceHighValue;
+    }
+
+    hr = ddraw_surface_blt_clipped(dst_impl, dst_rect, src_impl,
+            src_rect, flags, fx ? &wined3d_fx : NULL, WINED3D_TEXF_LINEAR);
 
     wined3d_mutex_unlock();
     switch(hr)
