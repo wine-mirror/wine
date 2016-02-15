@@ -238,6 +238,8 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             break;
         }
         case REG_DWORD:
+     /* case REG_DWORD_LITTLE_ENDIAN: */
+        case REG_DWORD_BIG_ENDIAN: /* Yes, this is correct! */
         {
             LPWSTR rest;
             DWORD val;
