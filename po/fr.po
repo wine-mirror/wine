@@ -11707,94 +11707,64 @@ msgid "The operation completed successfully\n"
 msgstr "L'opération s'est terminée avec succès\n"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "Erreur : nom de clé invalide\n"
+msgstr "reg : nom de clé invalide\n"
 
 #: reg.rc:36
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "Erreur : paramètre de ligne de commande invalide\n"
+msgstr "reg : paramètres de ligne de commande invalide\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "Erreur : impossible d'accéder à une machine distante\n"
+msgstr "reg : impossible d'accéder à une machine distante\n"
 
 #: reg.rc:38
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
 msgstr ""
-"Erreur : le système n'a pas pu trouver la clé ou la valeur de registre "
-"spécifiée\n"
+"reg : le système n'a pas pu trouver la clé ou valeur de registre spécifiée\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Erreur : type non pris en charge\n"
+msgstr "reg : type non pris en charge [%1]\n"
 
 #: reg.rc:40
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr ""
-"uninstaller : l'option « --remove » doit être suivie d'un GUID "
-"d'application\n"
+msgstr "reg : l'option [/d] doit être suivie d'un entier valide\n"
 
 #: reg.rc:41
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
 msgstr ""
-"uninstaller : l'option « --remove » doit être suivie d'un GUID "
-"d'application\n"
+"reg : l'option [/d] doit être suivie d'une valeur hexadécimale valide\n"
 
 #: reg.rc:42
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "reg : type de donnée non géré [/t 0x%1!x!, /d %2]\n"
 
 #: reg.rc:43
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Le fichier spécifié existe déjà. Voulez-vous le remplacer ?"
+msgstr "La valeur de registre « %1 » existe déjà. Voulez-vous la remplacer ?"
 
 #: reg.rc:47
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "L'operation sur le registre a été annulée\n"
 
 #: reg.rc:48 regedit.rc:204
 msgid "(Default)"
 msgstr "(par défaut)"
 
 #: reg.rc:49
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Voulez-vous réellement supprimer ces valeurs ?"
+msgstr "Voulez-vous réellement supprimer la valeur de registre « %1 » ?"
 
 #: reg.rc:50
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Voulez-vous réellement supprimer la valeur « %s » ?"
+msgstr ""
+"Voulez-vous réellement supprimer toutes les valeurs de registre dans « %1 » ?"
 
 #: reg.rc:51
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Voulez-vous réellement supprimer « %1 » ?"
+msgstr "Voulez-vous réellement supprimer la clé de registre « %1 » ?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -13950,8 +13920,6 @@ msgid "Configuration error"
 msgstr "Erreur de configuration"
 
 #: wineconsole.rc:42
-#, fuzzy
-#| msgid "Screen buffer size must be greater or equal to the window's one"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
