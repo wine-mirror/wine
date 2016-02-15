@@ -1393,6 +1393,18 @@ if (0) {
     ok(advances[0] == advances2[0], "got %.2f, expected %.2f\n", advances[0], advances2[0]);
     ok(advances[1] == advances2[1], "got %.2f, expected %.2f\n", advances[1], advances2[1]);
 
+    /* DWRITE_SCRIPT_SHAPES_NO_VISUAL run */
+    maxglyphcount = 10;
+    actual_count = 0;
+    sa.script = 0;
+    sa.shapes = DWRITE_SCRIPT_SHAPES_NO_VISUAL;
+    hr = IDWriteTextAnalyzer_GetGlyphs(analyzer, test1W, lstrlenW(test1W), fontface, FALSE, FALSE, &sa, NULL,
+        NULL, NULL, NULL, 0, maxglyphcount, clustermap, props, glyphs1, shapingprops, &actual_count);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(actual_count == 4, "got %d\n", actual_count);
+    ok(sa.script == 0, "got %u\n", sa.script);
+    ok(!shapingprops[0].isZeroWidthSpace, "got %d\n", shapingprops[0].isZeroWidthSpace);
+
     IDWriteTextAnalyzer_Release(analyzer);
     IDWriteFontFace_Release(fontface);
 }
@@ -1580,6 +1592,33 @@ static void test_GetGlyphPlacements(void)
     ok(hr == S_OK, "got 0x%08x\n", hr);
     ok(advances[0] == -5.0, "got %.2f\n", advances[0]);
     ok(offsets[0].advanceOffset == 0.0 && offsets[0].ascenderOffset == 0.0, "got %.2f,%.2f\n",
+        offsets[0].advanceOffset, offsets[0].ascenderOffset);
+
+    /* DWRITE_SCRIPT_SHAPES_NO_VISUAL has no effect on placement */
+    sa.shapes = DWRITE_SCRIPT_SHAPES_NO_VISUAL;
+    advances[0] = advances[1] = 1.0f;
+    memset(offsets, 0xcc, sizeof(offsets));
+    hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
+        len, glyphs, glyphprops, len, fontface, 2048.0f, FALSE, FALSE, &sa, NULL, NULL,
+        NULL, 0, advances, offsets);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(advances[0] == 1000.0f, "got %.2f\n", advances[0]);
+    ok(advances[1] == 1000.0f, "got %.2f\n", advances[1]);
+    ok(offsets[0].advanceOffset == 0.0f && offsets[0].ascenderOffset == 0.0f, "got %.2f,%.2f\n",
+        offsets[0].advanceOffset, offsets[0].ascenderOffset);
+
+    /* isZeroWidthSpace */
+    sa.shapes = DWRITE_SCRIPT_SHAPES_DEFAULT;
+    advances[0] = advances[1] = 1.0f;
+    memset(offsets, 0xcc, sizeof(offsets));
+    glyphprops[0].isZeroWidthSpace = 1;
+    hr = IDWriteTextAnalyzer_GetGlyphPlacements(analyzer, aW, clustermap, textprops,
+        len, glyphs, glyphprops, len, fontface, 2048.0f, FALSE, FALSE, &sa, NULL, NULL,
+        NULL, 0, advances, offsets);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+    ok(advances[0] == 0.0f, "got %.2f\n", advances[0]);
+    ok(advances[1] == 1000.0f, "got %.2f\n", advances[1]);
+    ok(offsets[0].advanceOffset == 0.0f && offsets[0].ascenderOffset == 0.0f, "got %.2f,%.2f\n",
         offsets[0].advanceOffset, offsets[0].ascenderOffset);
 
     IDWriteTextAnalyzer_Release(analyzer);

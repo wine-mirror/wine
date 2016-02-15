@@ -1089,13 +1089,16 @@ static HRESULT WINAPI dwritetextanalyzer_GetGlyphPlacements(IDWriteTextAnalyzer2
 
     IDWriteFontFace_GetMetrics(fontface, &metrics);
     for (i = 0; i < glyph_count; i++) {
-        INT32 a;
+        if (glyph_props[i].isZeroWidthSpace)
+            advances[i] = 0.0f;
+        else {
+            INT32 a;
 
-        hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, &glyphs[i], &a, is_sideways);
-        if (FAILED(hr))
-            a = 0;
-
-        advances[i] = get_scaled_advance_width(a, emSize, &metrics);
+            hr = IDWriteFontFace1_GetDesignGlyphAdvances(fontface1, 1, &glyphs[i], &a, is_sideways);
+            if (FAILED(hr))
+                a = 0;
+            advances[i] = get_scaled_advance_width(a, emSize, &metrics);
+        }
         offsets[i].advanceOffset = 0.0f;
         offsets[i].ascenderOffset = 0.0f;
     }
