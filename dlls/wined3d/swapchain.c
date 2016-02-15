@@ -257,7 +257,7 @@ HRESULT CDECL wined3d_swapchain_set_gamma_ramp(const struct wined3d_swapchain *s
     if (flags)
         FIXME("Ignoring flags %#x.\n", flags);
 
-    dc = GetDC(swapchain->device_window);
+    dc = GetDCEx(swapchain->device_window, 0, DCX_USESTYLE | DCX_CACHE);
     SetDeviceGammaRamp(dc, (void *)ramp);
     ReleaseDC(swapchain->device_window, dc);
 
@@ -277,7 +277,7 @@ HRESULT CDECL wined3d_swapchain_get_gamma_ramp(const struct wined3d_swapchain *s
 
     TRACE("swapchain %p, ramp %p.\n", swapchain, ramp);
 
-    dc = GetDC(swapchain->device_window);
+    dc = GetDCEx(swapchain->device_window, 0, DCX_USESTYLE | DCX_CACHE);
     GetDeviceGammaRamp(dc, ramp);
     ReleaseDC(swapchain->device_window, dc);
 

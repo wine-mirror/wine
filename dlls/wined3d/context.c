@@ -790,7 +790,7 @@ static BOOL context_restore_pixel_format(struct wined3d_context *ctx)
     {
         if (ctx->gl_info->supported[WGL_WINE_PIXEL_FORMAT_PASSTHROUGH])
         {
-            HDC dc = GetDC(ctx->restore_pf_win);
+            HDC dc = GetDCEx(ctx->restore_pf_win, 0, DCX_USESTYLE | DCX_CACHE);
             if (dc)
             {
                 if (!(ret = GL_EXTCALL(wglSetPixelFormatWINE(dc, ctx->restore_pf))))
@@ -966,7 +966,7 @@ static void context_update_window(struct wined3d_context *context)
     context->needs_set = 1;
     context->valid = 1;
 
-    if (!(context->hdc = GetDC(context->win_handle)))
+    if (!(context->hdc = GetDCEx(context->win_handle, 0, DCX_USESTYLE | DCX_CACHE)))
     {
         ERR("Failed to get a device context for window %p.\n", context->win_handle);
         context->valid = 0;
@@ -1526,7 +1526,7 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
         }
     }
 
-    if (!(hdc = GetDC(swapchain->win_handle)))
+    if (!(hdc = GetDCEx(swapchain->win_handle, 0, DCX_USESTYLE | DCX_CACHE)))
     {
         WARN("Failed to retrieve device context, trying swapchain backup.\n");
 
