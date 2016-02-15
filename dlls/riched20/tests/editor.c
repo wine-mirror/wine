@@ -4578,13 +4578,9 @@ static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id
 
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 
-    if (setsel->todo) {
-        todo_wine {
-            ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
-        }
-    } else {
-        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
-    }
+    todo_wine_if (setsel->todo)
+        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n",
+            id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
 }
 
 static void test_EM_EXSETSEL(void)
@@ -4636,13 +4632,9 @@ static void check_EM_SETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) 
 
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 
-    if (setsel->todo) {
-        todo_wine {
-            ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
-        }
-    } else {
-        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
-    }
+    todo_wine_if (setsel->todo)
+        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n",
+            id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
 }
 
 static void test_EM_SETSEL(void)
@@ -7826,15 +7818,10 @@ static void test_EM_FINDWORDBREAK_W(void)
         wbuf[1] = 0;
         SendMessageW(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)wbuf);
         result = SendMessageW(hwndRichEdit, EM_FINDWORDBREAK, WB_ISDELIMITER,0);
-        if (wbuf[0] == 0x20 || wbuf[0] == 0xf020)
-            todo_wine
-                ok(result == delimiter_tests[i].isdelimiter,
-                   "wanted ISDELIMITER_W(0x%x) %d, got %d\n",
-                   delimiter_tests[i].c, delimiter_tests[i].isdelimiter,result);
-        else
+        todo_wine_if (wbuf[0] == 0x20 || wbuf[0] == 0xf020)
             ok(result == delimiter_tests[i].isdelimiter,
-               "wanted ISDELIMITER_W(0x%x) %d, got %d\n",
-               delimiter_tests[i].c, delimiter_tests[i].isdelimiter, result);
+                "wanted ISDELIMITER_W(0x%x) %d, got %d\n",
+                delimiter_tests[i].c, delimiter_tests[i].isdelimiter, result);
     }
     DestroyWindow(hwndRichEdit);
 }
@@ -7864,12 +7851,7 @@ static void test_EM_FINDWORDBREAK_A(void)
         buf[1] = 0;
         SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)buf);
         result = SendMessageA(hwndRichEdit, EM_FINDWORDBREAK, WB_ISDELIMITER, 0);
-        if (buf[0] == 0x20)
-            todo_wine
-                ok(result == delimiter_tests[i].isdelimiter,
-                   "wanted ISDELIMITER_A(0x%x) %d, got %d\n",
-                   delimiter_tests[i].c, delimiter_tests[i].isdelimiter,result);
-        else
+        todo_wine_if (buf[0] == 0x20)
             ok(result == delimiter_tests[i].isdelimiter,
                "wanted ISDELIMITER_A(0x%x) %d, got %d\n",
                delimiter_tests[i].c, delimiter_tests[i].isdelimiter, result);
