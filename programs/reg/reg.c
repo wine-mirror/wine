@@ -366,6 +366,12 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
             output_message(STRING_UNSUPPORTED_TYPE, type);
             return 1;
         }
+        if (reg_type == REG_DWORD && !data)
+        {
+             RegCloseKey(subkey);
+             output_message(STRING_INVALID_CMDLINE);
+             return 1;
+        }
 
         if (data)
             reg_data = get_regdata(data,reg_type,separator,&reg_count);
