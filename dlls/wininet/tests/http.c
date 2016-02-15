@@ -207,9 +207,7 @@ static void _test_status_code(unsigned line, HINTERNET req, DWORD excode, BOOL i
     size = sizeof(code);
     res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, NULL);
     ok_(__FILE__,line)(res, "[1] HttpQueryInfoA(HTTP_QUERY_STATUS_CODE|number) failed: %u\n", GetLastError());
-    if (is_todo)
-        todo_wine ok_(__FILE__,line)(code == excode, "code = %d, expected %d\n", code, excode);
-    else
+    todo_wine_if (is_todo)
         ok_(__FILE__,line)(code == excode, "code = %d, expected %d\n", code, excode);
     ok_(__FILE__,line)(size == sizeof(code), "size = %u\n", size);
 
@@ -218,10 +216,8 @@ static void _test_status_code(unsigned line, HINTERNET req, DWORD excode, BOOL i
     size = sizeof(code);
     res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
     ok_(__FILE__,line)(res, "[2] HttpQueryInfoA(HTTP_QUERY_STATUS_CODE|number index) failed: %u\n", GetLastError());
-    if (is_todo)
-        todo_wine ok_(__FILE__,line)(code == excode, "code = %d, expected %d\n", code, excode);
-    else
-        ok_(__FILE__,line)(!index, "index = %d, expected 0\n", code);
+    todo_wine_if (is_todo)
+        ok_(__FILE__,line)(!index, "index = %d, expected 0\n", index);
     ok_(__FILE__,line)(size == sizeof(code), "size = %u\n", size);
 
     sprintf(exbuf, "%u", excode);
@@ -229,9 +225,7 @@ static void _test_status_code(unsigned line, HINTERNET req, DWORD excode, BOOL i
     size = sizeof(bufa);
     res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE, bufa, &size, NULL);
     ok_(__FILE__,line)(res, "[3] HttpQueryInfoA(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
-    if (is_todo)
-        todo_wine ok_(__FILE__,line)(!strcmp(bufa, exbuf), "unexpected status code %s, expected %s\n", bufa, exbuf);
-    else
+    todo_wine_if (is_todo)
         ok_(__FILE__,line)(!strcmp(bufa, exbuf), "unexpected status code %s, expected %s\n", bufa, exbuf);
     ok_(__FILE__,line)(size == strlen(exbuf), "unexpected size %d for \"%s\"\n", size, exbuf);
 
@@ -244,9 +238,7 @@ static void _test_status_code(unsigned line, HINTERNET req, DWORD excode, BOOL i
     size = sizeof(bufw);
     res = HttpQueryInfoW(req, HTTP_QUERY_STATUS_CODE, bufw, &size, NULL);
     ok_(__FILE__,line)(res, "[5] HttpQueryInfoW(HTTP_QUERY_STATUS_CODE) failed: %u\n", GetLastError());
-    if (is_todo)
-        todo_wine ok_(__FILE__,line)(!strcmp_wa(bufw, exbuf), "unexpected status code %s, expected %s\n", bufa, exbuf);
-    else
+    todo_wine_if (is_todo)
         ok_(__FILE__,line)(!strcmp_wa(bufw, exbuf), "unexpected status code %s, expected %s\n", bufa, exbuf);
     ok_(__FILE__,line)(size == strlen(exbuf)*sizeof(WCHAR), "unexpected size %d for \"%s\"\n", size, exbuf);
 
@@ -291,10 +283,8 @@ static void _test_request_flags(unsigned line, HINTERNET req, DWORD exflags, BOO
 
     /* FIXME: Remove once we have INTERNET_REQFLAG_CACHE_WRITE_DISABLED implementation */
     flags &= ~INTERNET_REQFLAG_CACHE_WRITE_DISABLED;
-    if(!is_todo)
+    todo_wine_if (is_todo)
         ok_(__FILE__,line)(flags == exflags, "flags = %x, expected %x\n", flags, exflags);
-    else
-        todo_wine ok_(__FILE__,line)(flags == exflags, "flags = %x, expected %x\n", flags, exflags);
 }
 
 #define test_http_version(a) _test_http_version(__LINE__,a)
