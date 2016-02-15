@@ -282,6 +282,8 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             out_data = NULL;
             break;
         }
+        case REG_MULTI_SZ:
+            /* FIXME: Needs handling */
         default:
             output_message(STRING_UNHANDLED_TYPE, reg_type, data);
     }
