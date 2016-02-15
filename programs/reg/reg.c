@@ -230,6 +230,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
     {
         case REG_NONE:
         case REG_SZ:
+        case REG_EXPAND_SZ:
         {
             *reg_count = (lstrlenW(data) + 1) * sizeof(WCHAR);
             out_data = HeapAlloc(GetProcessHeap(),0,*reg_count);
