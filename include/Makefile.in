@@ -58,6 +58,7 @@ IDL_SRCS = \
 	dwrite.idl \
 	dwrite_1.idl \
 	dwrite_2.idl \
+	dwrite_3.idl \
 	dxgi.idl \
 	dxgi1_2.idl \
 	dxva2api.idl \

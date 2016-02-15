@@ -1,0 +1,215 @@
+/*
+ * Copyright 2016 Nikolay Sivov for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "dwrite_2.idl";
+
+interface IDWriteFontFaceReference;
+interface IDWriteFontFace3;
+interface IDWriteFont3;
+interface IDWriteFontSet;
+
+typedef enum DWRITE_LOCALITY
+{
+    DWRITE_LOCALITY_REMOTE,
+    DWRITE_LOCALITY_PARTIAL,
+    DWRITE_LOCALITY_LOCAL
+} DWRITE_LOCALITY;
+
+typedef enum DWRITE_RENDERING_MODE1
+{
+    DWRITE_RENDERING_MODE1_DEFAULT,
+    DWRITE_RENDERING_MODE1_ALIASED,
+    DWRITE_RENDERING_MODE1_GDI_CLASSIC,
+    DWRITE_RENDERING_MODE1_GDI_NATURAL,
+    DWRITE_RENDERING_MODE1_NATURAL,
+    DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC,
+    DWRITE_RENDERING_MODE1_OUTLINE,
+    DWRITE_RENDERING_MODE1_NATURAL_SYMMETRIC_DOWNSAMPLED
+} DWRITE_RENDERING_MODE1;
+
+[
+    local,
+    object,
+    uuid(b7924baa-391b-412a-8c5c-e44cc2d867dc)
+]
+interface IDWriteRenderingParams3 : IDWriteRenderingParams2
+{
+    DWRITE_RENDERING_MODE1 GetRenderingMode1();
+}
+
+[
+    local,
+    object,
+    uuid(da20d8ef-812a-4c43-9802-62ec4abd7adf)
+]
+interface IDWriteFontFamily1 : IDWriteFontFamily
+{
+    DWRITE_LOCALITY GetFontLocality(UINT32 index);
+    HRESULT GetFont(UINT32 index, IDWriteFont3 **font);
+    HRESULT GetFontFaceReference(UINT32 index, IDWriteFontFaceReference **reference);
+}
+
+[
+    local,
+    object,
+    uuid(53585141-d9f8-4095-8321-d73cf6bd116c)
+]
+interface IDWriteFontCollection1 : IDWriteFontCollection
+{
+    HRESULT GetFontSet(IDWriteFontSet **fontset);
+    HRESULT GetFontFamily(UINT32 index, IDWriteFontFamily1 **family);
+}
+
+[
+    local,
+    object,
+    uuid(5e7fa7ca-dde3-424c-89f0-9fcd6fed58cd)
+]
+interface IDWriteFontFaceReference : IUnknown
+{
+    HRESULT CreateFontFace(IDWriteFontFace3 **fontface);
+    HRESULT CreateFontFaceWithSimulations(DWRITE_FONT_SIMULATIONS simulations,
+        IDWriteFontFace3 **fontface);
+    BOOL Equals(IDWriteFontFaceReference *reference);
+    UINT32 GetFontFaceIndex();
+    DWRITE_FONT_SIMULATIONS GetSimulations();
+    HRESULT GetFontFile(IDWriteFontFile **fontfile);
+    UINT64 GetLocalFileSize();
+    UINT64 GetFileSize();
+    HRESULT GetFileTime(FILETIME *writetime);
+    DWRITE_LOCALITY GetLocality();
+    HRESULT EnqueueFontDownloadRequest();
+    HRESULT EnqueueCharacterDownloadRequest(WCHAR const *chars, UINT32 count);
+    HRESULT EnqueueGlyphDownloadRequest(UINT16 const *glyphs, UINT32 count);
+    HRESULT EnqueueFileFragmentDownloadRequest(UINT64 offset, UINT64 size);
+}
+
+[
+    local,
+    object,
+    uuid(da20d8ef-812a-4c43-9802-62ec4abd7ade)
+]
+interface IDWriteFontList1 : IDWriteFontList
+{
+    DWRITE_LOCALITY GetFontLocality(UINT32 index);
+    HRESULT GetFont(UINT32 index, IDWriteFont3 **font);
+    HRESULT GetFontFaceReference(UINT32 index, IDWriteFontFaceReference **reference);
+}
+
+[
+    local,
+    object,
+    uuid(d37d7598-09be-4222-a236-2081341cc1f2)
+]
+interface IDWriteFontFace3 : IDWriteFontFace2
+{
+    HRESULT GetFontFaceReference(IDWriteFontFaceReference **reference);
+    void GetPanose(DWRITE_PANOSE *panose);
+    DWRITE_FONT_WEIGHT GetWeight();
+    DWRITE_FONT_STRETCH GetStretch();
+    DWRITE_FONT_STYLE GetStyle();
+    HRESULT GetFamilyNames(IDWriteLocalizedStrings **names);
+    HRESULT GetFaceNames(IDWriteLocalizedStrings **names);
+    HRESULT GetInformationalStrings(DWRITE_INFORMATIONAL_STRING_ID stringid,
+        IDWriteLocalizedStrings **strings,
+        BOOL *exists);
+    BOOL HasCharacter(UINT32 character);
+    HRESULT GetRecommendedRenderingMode(
+        FLOAT emsize,
+        FLOAT dpi_x,
+        FLOAT dpi_y,
+        DWRITE_MATRIX const *transform,
+        BOOL is_sideways,
+        DWRITE_OUTLINE_THRESHOLD threshold,
+        DWRITE_MEASURING_MODE measuring_mode,
+        IDWriteRenderingParams *params,
+        DWRITE_RENDERING_MODE1 *rendering_mode,
+        DWRITE_GRID_FIT_MODE *gridfit_mode);
+    BOOL IsCharacterLocal(UINT32 character);
+    BOOL IsGlyphLocal(UINT16 glyph);
+    HRESULT AreCharactersLocal(WCHAR const *characters,
+        UINT32 count, BOOL enqueue_if_not, BOOL *are_local);
+    HRESULT AreGlyphsLocal(UINT16 *const glyphs, UINT32 count,
+        BOOL enqueue_if_not, BOOL *are_local);
+}
+
+[
+    local,
+    object,
+    uuid(cfee3140-1257-47ca-8b85-31bfcf3f2d0e)
+]
+interface IDWriteStringList : IUnknown
+{
+    UINT32 GetCount();
+    HRESULT GetLocaleNameLength(UINT32 index, UINT32 *length);
+    HRESULT GetLocaleName(UINT32 index, WCHAR *name, UINT32 size);
+    HRESULT GetStringLength(UINT32 index, UINT32 *length);
+    HRESULT GetString(UINT32 index, WCHAR *string, UINT32 size);
+}
+
+typedef struct DWRITE_LINE_METRICS1
+{
+    UINT32 length;
+    UINT32 trailingWhitespaceLength;
+    UINT32 newlineLength;
+    FLOAT height;
+    FLOAT baseline;
+    BOOL isTrimmed;
+    FLOAT leadingBefore;
+    FLOAT leadingAfter;
+} DWRITE_LINE_METRICS1;
+
+typedef enum DWRITE_FONT_LINE_GAP_USAGE
+{
+    DWRITE_FONT_LINE_GAP_USAGE_DEFAULT,
+    DWRITE_FONT_LINE_GAP_USAGE_DISABLED,
+    DWRITE_FONT_LINE_GAP_USAGE_ENABLED
+} DWRITE_FONT_LINE_GAP_USAGE;
+
+typedef struct DWRITE_LINE_SPACING
+{
+    DWRITE_LINE_SPACING_METHOD method;
+    FLOAT height;
+    FLOAT baseline;
+    FLOAT leadingBefore;
+    DWRITE_FONT_LINE_GAP_USAGE fontLineGapUsage;
+} DWRITE_LINE_SPACING;
+
+[
+    local,
+    object,
+    uuid(f67e0edd-9e3d-4ecc-8c32-4183253dfe70)
+]
+interface IDWriteTextFormat2 : IDWriteTextFormat1
+{
+    HRESULT SetLineSpacing(DWRITE_LINE_SPACING const *spacing);
+    HRESULT GetLineSpacing(DWRITE_LINE_SPACING *spacing);
+}
+
+[
+    local,
+    object,
+    uuid(07ddcd52-020e-4de8-ac33-6c953d83f92d)
+]
+interface IDWriteTextLayout3 : IDWriteTextLayout2
+{
+    HRESULT InvalidateLayout();
+    HRESULT SetLineSpacing(DWRITE_LINE_SPACING const *spacing);
+    HRESULT GetLineSpacing(DWRITE_LINE_SPACING *spacing);
+    HRESULT GetLineMetrics(DWRITE_LINE_METRICS1 *metrics, UINT32 max_count, UINT32 *count);
+}
