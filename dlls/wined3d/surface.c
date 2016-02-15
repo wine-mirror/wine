@@ -4375,10 +4375,6 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     {
         FIXME("DDBLT_DEPTHFILL needs to be implemented!\n");
     }
-    if (flags & WINEDDBLT_DDROPS)
-    {
-        FIXME("\tDdraw Raster Ops: %08x Pattern: %p\n", fx->dwDDROP, fx->u5.lpDDSPattern);
-    }
     /* Now the 'with source' blits. */
     if (src_surface)
     {

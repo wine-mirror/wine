@@ -1553,6 +1553,14 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Blt(IDirectDrawSurface7 *
         return DDERR_INVALIDPARAMS;
     }
 
+    if (Flags & DDBLT_DDROPS)
+    {
+        FIXME("DDBLT_DDROPS not implemented.\n");
+        if (DDBltFx)
+            FIXME("    rop %#x, pattern %p.\n", DDBltFx->dwDDROP, DDBltFx->u5.lpDDSPattern);
+        return DDERR_NORASTEROPHW;
+    }
+
     wined3d_mutex_lock();
 
     if (Flags & (DDBLT_COLORFILL | DDBLT_DEPTHFILL))

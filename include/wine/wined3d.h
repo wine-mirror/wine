@@ -1279,7 +1279,6 @@ enum wined3d_display_rotation
 #define WINEDDBLT_ASYNC                                         0x00000200
 #define WINEDDBLT_COLORFILL                                     0x00000400
 #define WINEDDBLT_DDFX                                          0x00000800
-#define WINEDDBLT_DDROPS                                        0x00001000
 #define WINEDDBLT_KEYDEST                                       0x00002000
 #define WINEDDBLT_KEYDESTOVERRIDE                               0x00004000
 #define WINEDDBLT_KEYSRC                                        0x00008000
