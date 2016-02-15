@@ -33,7 +33,6 @@ static const WCHAR tahomaW[] = {'T','a','h','o','m','a',0};
 static const WCHAR enusW[] = {'e','n','-','u','s',0};
 
 static DWRITE_SCRIPT_ANALYSIS g_sa;
-static DWRITE_SCRIPT_ANALYSIS g_control_sa;
 
 /* test IDWriteTextAnalysisSink */
 static HRESULT WINAPI analysissink_QueryInterface(IDWriteTextAnalysisSink *iface, REFIID riid, void **obj)
@@ -513,7 +512,9 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
 
     /* see what's reported for control codes runs */
     get_script_analysis(descr->string, descr->stringLength, &sa);
-    if (sa.script == g_control_sa.script) {
+    if (sa.shapes == DWRITE_SCRIPT_SHAPES_NO_VISUAL) {
+        UINT32 i;
+
         /* glyphs are not reported at all for control code runs */
         ok(run->glyphCount == 0, "got %u\n", run->glyphCount);
         ok(run->glyphAdvances != NULL, "advances array %p\n", run->glyphAdvances);
@@ -523,6 +524,8 @@ static HRESULT WINAPI testrenderer_DrawGlyphRun(IDWriteTextRenderer *iface,
         ok(descr->string != NULL, "got string %p\n", descr->string);
         ok(descr->stringLength > 0, "got string length %u\n", descr->stringLength);
         ok(descr->clusterMap != NULL, "clustermap %p\n", descr->clusterMap);
+        for (i = 0; i < descr->stringLength; i++)
+            ok(descr->clusterMap[i] == i, "got %u\n", descr->clusterMap[i]);
     }
 
     entry.kind = DRAW_GLYPHRUN;
@@ -4852,16 +4855,12 @@ todo_wine
 
 START_TEST(layout)
 {
-    static const WCHAR ctrlstrW[] = {0x202a,0};
     IDWriteFactory *factory;
 
     if (!(factory = create_factory())) {
         win_skip("failed to create factory\n");
         return;
     }
-
-    /* actual script ids are not fixed */
-    get_script_analysis(ctrlstrW, 1, &g_control_sa);
 
     init_call_sequences(sequences, NUM_CALL_SEQUENCES);
     init_call_sequences(expected_seq, 1);

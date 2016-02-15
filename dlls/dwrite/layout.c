@@ -965,10 +965,9 @@ static HRESULT layout_compute_runs(struct dwrite_textlayout *layout)
         run->run.glyphAdvances = run->advances;
         run->run.glyphOffsets = run->offsets;
 
-        /* Special treatment of control script, shaping code adds normal glyphs for it,
-           with non-zero advances, and layout code exposes those as zero width clusters,
-           so we have to do it manually. */
-        if (run->sa.script == Script_Common)
+        /* Special treatment for runs that don't produce visual output, shaping code adds normal glyphs for them,
+           with valid cluster map and potentially with non-zero advances; layout code exposes those as zero width clusters. */
+        if (run->sa.shapes == DWRITE_SCRIPT_SHAPES_NO_VISUAL)
             run->run.glyphCount = 0;
         else
             run->run.glyphCount = run->glyphcount;
