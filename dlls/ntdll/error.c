@@ -40,7 +40,7 @@ struct error_table
     const DWORD *table;
 };
 
-static const struct error_table error_table[20];
+static const struct error_table error_table[29];
 
 /**************************************************************************
  *           RtlNtStatusToDosErrorNoTeb (NTDLL.@)
@@ -175,54 +175,87 @@ void WINAPI RtlSetLastWin32ErrorAndNtStatusFromNtStatus( NTSTATUS status )
 
 /* conversion tables */
 
-static const DWORD table_00000102[32] =
+static const DWORD table_00000001[3] =
 {
+   ERROR_WAIT_1,                           /* 00000001 (STATUS_WAIT_1) */
+   ERROR_WAIT_2,                           /* 00000002 (STATUS_WAIT_2) */
+   ERROR_WAIT_3                            /* 00000003 (STATUS_WAIT_3) */
+};
+
+static const DWORD table_0000003f[1] =
+{
+   ERROR_WAIT_63                           /* 0000003f (STATUS_WAIT_63) */
+};
+
+static const DWORD table_00000080[1] =
+{
+   ERROR_WAIT_NO_CHILDREN                  /* 00000080 (STATUS_ABANDONED_WAIT_0) */
+};
+
+static const DWORD table_000000bf[2] =
+{
+   ERROR_ABANDONED_WAIT_63,                /* 000000bf (STATUS_ABANDONED_WAIT_63) */
+   ERROR_USER_APC                          /* 000000c0 (STATUS_USER_APC) */
+};
+
+static const DWORD table_00000100[34] =
+{
+   ERROR_KERNEL_APC,                       /* 00000100 (STATUS_KERNEL_APC) */
+   ERROR_ALERTED,                          /* 00000101 (STATUS_ALERTED) */
    ERROR_TIMEOUT,                          /* 00000102 (STATUS_TIMEOUT) */
    ERROR_IO_PENDING,                       /* 00000103 (STATUS_PENDING) */
-   0,                                      /* 00000104 (STATUS_REPARSE) */
+   ERROR_REPARSE,                          /* 00000104 (STATUS_REPARSE) */
    ERROR_MORE_DATA,                        /* 00000105 (STATUS_MORE_ENTRIES) */
    ERROR_NOT_ALL_ASSIGNED,                 /* 00000106 (STATUS_NOT_ALL_ASSIGNED) */
    ERROR_SOME_NOT_MAPPED,                  /* 00000107 (STATUS_SOME_NOT_MAPPED) */
-   0,                                      /* 00000108 (STATUS_OPLOCK_BREAK_IN_PROGRESS) */
-   0,                                      /* 00000109 (STATUS_VOLUME_MOUNTED) */
-   0,                                      /* 0000010a (STATUS_RXACT_COMMITTED) */
-   0,                                      /* 0000010b (STATUS_NOTIFY_CLEANUP) */
+   ERROR_OPLOCK_BREAK_IN_PROGRESS,         /* 00000108 (STATUS_OPLOCK_BREAK_IN_PROGRESS) */
+   ERROR_VOLUME_MOUNTED,                   /* 00000109 (STATUS_VOLUME_MOUNTED) */
+   ERROR_RXACT_COMMITTED,                  /* 0000010a (STATUS_RXACT_COMMITTED) */
+   ERROR_NOTIFY_CLEANUP,                   /* 0000010b (STATUS_NOTIFY_CLEANUP) */
    ERROR_NOTIFY_ENUM_DIR,                  /* 0000010c (STATUS_NOTIFY_ENUM_DIR) */
    ERROR_NO_QUOTAS_FOR_ACCOUNT,            /* 0000010d (STATUS_NO_QUOTAS_FOR_ACCOUNT) */
-   0,                                      /* 0000010e (STATUS_PRIMARY_TRANSPORT_CONNECT_FAILED) */
+   ERROR_PRIMARY_TRANSPORT_CONNECT_FAILED, /* 0000010e (STATUS_PRIMARY_TRANSPORT_CONNECT_FAILED) */
    0,                                      /* 0000010f */
-   0,                                      /* 00000110 (STATUS_PAGE_FAULT_TRANSITION) */
-   0,                                      /* 00000111 (STATUS_PAGE_FAULT_DEMAND_ZERO) */
-   0,                                      /* 00000112 (STATUS_PAGE_FAULT_COPY_ON_WRITE) */
-   0,                                      /* 00000113 (STATUS_PAGE_FAULT_GUARD_PAGE) */
-   0,                                      /* 00000114 (STATUS_PAGE_FAULT_PAGING_FILE) */
-   0,                                      /* 00000115 (STATUS_CACHE_PAGE_LOCKED) */
-   0,                                      /* 00000116 (STATUS_CRASH_DUMP) */
-   0,                                      /* 00000117 (STATUS_BUFFER_ALL_ZEROS) */
-   0,                                      /* 00000118 (STATUS_REPARSE_OBJECT) */
-   0,                                      /* 00000119 (STATUS_RESOURCE_REQUIREMENTS_CHANGED) */
+   ERROR_PAGE_FAULT_TRANSITION,            /* 00000110 (STATUS_PAGE_FAULT_TRANSITION) */
+   ERROR_PAGE_FAULT_DEMAND_ZERO,           /* 00000111 (STATUS_PAGE_FAULT_DEMAND_ZERO) */
+   ERROR_PAGE_FAULT_COPY_ON_WRITE,         /* 00000112 (STATUS_PAGE_FAULT_COPY_ON_WRITE) */
+   ERROR_PAGE_FAULT_GUARD_PAGE,            /* 00000113 (STATUS_PAGE_FAULT_GUARD_PAGE) */
+   ERROR_PAGE_FAULT_PAGING_FILE,           /* 00000114 (STATUS_PAGE_FAULT_PAGING_FILE) */
+   ERROR_CACHE_PAGE_LOCKED,                /* 00000115 (STATUS_CACHE_PAGE_LOCKED) */
+   ERROR_CRASH_DUMP,                       /* 00000116 (STATUS_CRASH_DUMP) */
+   ERROR_BUFFER_ALL_ZEROS,                 /* 00000117 (STATUS_BUFFER_ALL_ZEROS) */
+   ERROR_REPARSE_OBJECT,                   /* 00000118 (STATUS_REPARSE_OBJECT) */
+   ERROR_RESOURCE_REQUIREMENTS_CHANGED,    /* 00000119 (STATUS_RESOURCE_REQUIREMENTS_CHANGED) */
    0,                                      /* 0000011a */
    0,                                      /* 0000011b */
    0,                                      /* 0000011c */
    0,                                      /* 0000011d */
    0,                                      /* 0000011e */
    0,                                      /* 0000011f */
-   0,                                      /* 00000120 (STATUS_TRANSLATION_COMPLETE) */
+   ERROR_TRANSLATION_COMPLETE,             /* 00000120 (STATUS_TRANSLATION_COMPLETE) */
    ERROR_DS_MEMBERSHIP_EVALUATED_LOCALLY   /* 00000121 (STATUS_DS_MEMBERSHIP_EVALUATED_LOCALLY) */
 };
 
-static const DWORD table_40000002[36] =
+static const DWORD table_00010001[2] =
 {
+    ERROR_DBG_EXCEPTION_HANDLED,           /* 00010001 (DBG_EXCEPTION_HANDLED) */
+    ERROR_DBG_CONTINUE                     /* 00010002 (DBG_CONTINUE) */
+};
+
+static const DWORD table_40000000[45] =
+{
+   ERROR_OBJECT_NAME_EXISTS,               /* 40000000 (STATUS_OBJECT_NAME_EXISTS) */
+   ERROR_THREAD_WAS_SUSPENDED,             /* 40000001 (STATUS_THREAD_WAS_SUSPENDED) */
    ERROR_INVALID_PARAMETER,                /* 40000002 (STATUS_WORKING_SET_LIMIT_RANGE) */
    ERROR_IMAGE_NOT_AT_BASE,                /* 40000003 (STATUS_IMAGE_NOT_AT_BASE) */
-   0,                                      /* 40000004 (STATUS_RXACT_STATE_CREATED) */
-   0,                                      /* 40000005 (STATUS_SEGMENT_NOTIFICATION) */
+   ERROR_RXACT_STATE_CREATED,              /* 40000004 (STATUS_RXACT_STATE_CREATED) */
+   ERROR_SEGMENT_NOTIFICATION,             /* 40000005 (STATUS_SEGMENT_NOTIFICATION) */
    ERROR_LOCAL_USER_SESSION_KEY,           /* 40000006 (STATUS_LOCAL_USER_SESSION_KEY) */
-   0,                                      /* 40000007 (STATUS_BAD_CURRENT_DIRECTORY) */
+   ERROR_BAD_CURRENT_DIRECTORY,            /* 40000007 (STATUS_BAD_CURRENT_DIRECTORY) */
    ERROR_MORE_WRITES,                      /* 40000008 (STATUS_SERIAL_MORE_WRITES) */
    ERROR_REGISTRY_RECOVERED,               /* 40000009 (STATUS_REGISTRY_RECOVERED) */
-   0,                                      /* 4000000a (STATUS_FT_READ_RECOVERY_FROM_BACKUP) */
-   0,                                      /* 4000000b (STATUS_FT_WRITE_RECOVERY) */
+   ERROR_FT_READ_RECOVERY_FROM_BACKUP,     /* 4000000a (STATUS_FT_READ_RECOVERY_FROM_BACKUP) */
+   ERROR_FT_WRITE_RECOVERY,                /* 4000000b (STATUS_FT_WRITE_RECOVERY) */
    ERROR_COUNTER_TIMEOUT,                  /* 4000000c (STATUS_SERIAL_COUNTER_TIMEOUT) */
    ERROR_NULL_LM_PASSWORD,                 /* 4000000d (STATUS_NULL_LM_PASSWORD) */
    ERROR_IMAGE_MACHINE_TYPE_MISMATCH,      /* 4000000e (STATUS_IMAGE_MACHINE_TYPE_MISMATCH) */
@@ -248,12 +281,35 @@ static const DWORD table_40000002[36] =
    0,                                      /* 40000022 (STATUS_WX86_EXCEPTION_CHAIN) */
    ERROR_IMAGE_MACHINE_TYPE_MISMATCH_EXE,  /* 40000023 (STATUS_IMAGE_MACHINE_TYPE_MISMATCH_EXE) */
    ERROR_NO_YIELD_PERFORMED,               /* 40000024 (STATUS_NO_YIELD_PERFORMED) */
-   ERROR_TIMER_RESUME_IGNORED              /* 40000025 (STATUS_TIMER_RESUME_IGNORED) */
+   ERROR_TIMER_RESUME_IGNORED,             /* 40000025 (STATUS_TIMER_RESUME_IGNORED) */
+   ERROR_ARBITRATION_UNHANDLED,            /* 40000026 (STATUS_ARBITRATION_UNHANDLED) */
+   ERROR_CARDBUS_NOT_SUPPORTED,            /* 40000027 (STATUS_CARDBUS_NOT_SUPPORTED) */
+   0,                                      /* 40000028 (STATUS_WX86_CREATEWX86TIB) */
+   ERROR_MP_PROCESSOR_MISMATCH,            /* 40000029 (STATUS_MP_PROCESSOR_MISMATCH) */
+   ERROR_HIBERNATED,                       /* 4000002a (STATUS_HIBERNATED) */
+   ERROR_RESUME_HIBERNATION,               /* 4000002b (STATUS_RESUME_HIBERNATION) */
+   ERROR_FIRMWARE_UPDATED                  /* 4000002c (STATUS_FIRMWARE_UPDATED) */
+};
+
+static const DWORD table_40000294[1] =
+{
+    ERROR_WAKE_SYSTEM                      /* 40000294 (STATUS_WAKE_SYSTEM) */
 };
 
 static const DWORD table_40000370[1] =
 {
    ERROR_DS_SHUTTING_DOWN                  /* 40000370 (STATUS_DS_SHUTTING_DOWN) */
+};
+
+static const DWORD table_40010003[7] =
+{
+    ERROR_DBG_TERMINATE_THREAD,            /* 40010003 (DBG_TERMINATE_THREAD) */
+    ERROR_DBG_TERMINATE_PROCESS,           /* 40010004 (DBG_TERMINATE_PROCESS) */
+    ERROR_DBG_CONTROL_C,                   /* 40010005 (DBG_CONTROL_C) */
+    ERROR_DBG_PRINTEXCEPTION_C,            /* 40010006 (DBG_PRINTEXCEPTION_C) */
+    ERROR_DBG_RIPEXCEPTION,                /* 40010007 (DBG_RIPEXCEPTION) */
+    ERROR_DBG_CONTROL_BREAK,               /* 40010008 (DBG_CONTROL_BREAK) */
+    ERROR_DBG_COMMAND_EXCEPTION            /* 40010009 (DBG_COMMAND_EXCEPTION) */
 };
 
 static const DWORD table_40020056[1] =
@@ -266,7 +322,7 @@ static const DWORD table_400200af[1] =
    RPC_S_SEND_INCOMPLETE                   /* 400200af (RPC_NT_SEND_INCOMPLETE) */
 };
 
-static const DWORD table_80000001[39] =
+static const DWORD table_80000001[44] =
 {
    STATUS_GUARD_PAGE_VIOLATION,            /* 80000001 (STATUS_GUARD_PAGE_VIOLATION) */
    ERROR_NOACCESS,                         /* 80000002 (STATUS_DATATYPE_MISALIGNMENT) */
@@ -274,12 +330,12 @@ static const DWORD table_80000001[39] =
    STATUS_SINGLE_STEP,                     /* 80000004 (STATUS_SINGLE_STEP) */
    ERROR_MORE_DATA,                        /* 80000005 (STATUS_BUFFER_OVERFLOW) */
    ERROR_NO_MORE_FILES,                    /* 80000006 (STATUS_NO_MORE_FILES) */
-   0,                                      /* 80000007 (STATUS_WAKE_SYSTEM_DEBUGGER) */
+   ERROR_WAKE_SYSTEM_DEBUGGER,             /* 80000007 (STATUS_WAKE_SYSTEM_DEBUGGER) */
    0,                                      /* 80000008 */
    0,                                      /* 80000009 */
    ERROR_HANDLES_CLOSED,                   /* 8000000a (STATUS_HANDLES_CLOSED) */
    ERROR_NO_INHERITANCE,                   /* 8000000b (STATUS_NO_INHERITANCE) */
-   0,                                      /* 8000000c (STATUS_GUID_SUBSTITUTION_MADE) */
+   ERROR_GUID_SUBSTITUTION_MADE,           /* 8000000c (STATUS_GUID_SUBSTITUTION_MADE) */
    ERROR_PARTIAL_COPY,                     /* 8000000d (STATUS_PARTIAL_COPY) */
    ERROR_OUT_OF_PAPER,                     /* 8000000e (STATUS_DEVICE_PAPER_EMPTY) */
    ERROR_NOT_READY,                        /* 8000000f (STATUS_DEVICE_POWERED_OFF) */
@@ -290,8 +346,8 @@ static const DWORD table_80000001[39] =
    ERROR_EA_LIST_INCONSISTENT,             /* 80000014 (STATUS_EA_LIST_INCONSISTENT) */
    ERROR_EA_LIST_INCONSISTENT,             /* 80000015 (STATUS_INVALID_EA_FLAG) */
    ERROR_MEDIA_CHANGED,                    /* 80000016 (STATUS_VERIFY_REQUIRED) */
-   0,                                      /* 80000017 (STATUS_EXTRANEOUS_INFORMATION) */
-   0,                                      /* 80000018 (STATUS_RXACT_COMMIT_NECESSARY) */
+   ERROR_EXTRANEOUS_INFORMATION,           /* 80000017 (STATUS_EXTRANEOUS_INFORMATION) */
+   ERROR_RXACT_COMMIT_NECESSARY,           /* 80000018 (STATUS_RXACT_COMMIT_NECESSARY) */
    0,                                      /* 80000019 */
    ERROR_NO_MORE_ITEMS,                    /* 8000001a (STATUS_NO_MORE_ENTRIES) */
    ERROR_FILEMARK_DETECTED,                /* 8000001b (STATUS_FILEMARK_DETECTED) */
@@ -299,20 +355,30 @@ static const DWORD table_80000001[39] =
    ERROR_BUS_RESET,                        /* 8000001d (STATUS_BUS_RESET) */
    ERROR_END_OF_MEDIA,                     /* 8000001e (STATUS_END_OF_MEDIA) */
    ERROR_BEGINNING_OF_MEDIA,               /* 8000001f (STATUS_BEGINNING_OF_MEDIA) */
-   0,                                      /* 80000020 (STATUS_MEDIA_CHECK) */
+   ERROR_MEDIA_CHECK,                      /* 80000020 (STATUS_MEDIA_CHECK) */
    ERROR_SETMARK_DETECTED,                 /* 80000021 (STATUS_SETMARK_DETECTED) */
    ERROR_NO_DATA_DETECTED,                 /* 80000022 (STATUS_NO_DATA_DETECTED) */
-   0,                                      /* 80000023 (STATUS_REDIRECTOR_HAS_OPEN_HANDLES) */
-   0,                                      /* 80000024 (STATUS_SERVER_HAS_OPEN_HANDLES) */
+   ERROR_REDIRECTOR_HAS_OPEN_HANDLES,      /* 80000023 (STATUS_REDIRECTOR_HAS_OPEN_HANDLES) */
+   ERROR_SERVER_HAS_OPEN_HANDLES,          /* 80000024 (STATUS_SERVER_HAS_OPEN_HANDLES) */
    ERROR_ACTIVE_CONNECTIONS,               /* 80000025 (STATUS_ALREADY_DISCONNECTED) */
-   0,                                      /* 80000026 (STATUS_LONGJUMP) */
-   ERROR_CLEANER_CARTRIDGE_INSTALLED       /* 80000027 (STATUS_CLEANER_CARTRIDGE_INSTALLED) */
+   ERROR_LONGJUMP,                         /* 80000026 (STATUS_LONGJUMP) */
+   ERROR_CLEANER_CARTRIDGE_INSTALLED,      /* 80000027 (STATUS_CLEANER_CARTRIDGE_INSTALLED) */
+   ERROR_PLUGPLAY_QUERY_VETOED,            /* 80000028 (STATUS_PLUGPLAY_QUERY_VETOED) */
+   ERROR_UNWIND_CONSOLIDATE,               /* 80000029 (STATUS_UNWIND_CONSOLIDATE) */
+   ERROR_REGISTRY_HIVE_RECOVERED,          /* 8000002a (STATUS_REGISTRY_HIVE_RECOVERED) */
+   ERROR_DLL_MIGHT_BE_INSECURE,            /* 8000002b (STATUS_DLL_MIGHT_BE_INSECURE) */
+   ERROR_DLL_MIGHT_BE_INCOMPATIBLE         /* 8000002c (STATUS_DLL_MIGHT_BE_INCOMPATIBLE) */
 };
 
 static const DWORD table_80000288[2] =
 {
    ERROR_DEVICE_REQUIRES_CLEANING,         /* 80000288 (STATUS_DEVICE_REQUIRES_CLEANING) */
    ERROR_DEVICE_DOOR_OPEN                  /* 80000289 (STATUS_DEVICE_DOOR_OPEN) */
+};
+
+static const DWORD table_80010001[1] =
+{
+    ERROR_DBG_EXCEPTION_NOT_HANDLED        /* 80010001 (DBG_EXCEPTION_NOT_HANDLED) */
 };
 
 static const DWORD table_80090300[72] =
@@ -413,7 +479,7 @@ static const DWORD table_80130001[5] =
     ERROR_CLUSTER_NODE_ALREADY_MEMBER      /* 80130005 (STATUS_CLUSTER_NODE_ALREADY_MEMBER) */
 };
 
-static const DWORD table_c0000001[411] =
+static const DWORD table_c0000001[412] =
 {
    ERROR_GEN_FAILURE,                      /* c0000001 (STATUS_UNSUCCESSFUL) */
    ERROR_INVALID_FUNCTION,                 /* c0000002 (STATUS_NOT_IMPLEMENTED) */
@@ -711,18 +777,18 @@ static const DWORD table_c0000001[411] =
    ERROR_SPECIAL_USER,                     /* c0000126 (STATUS_SPECIAL_USER) */
    ERROR_MEMBERS_PRIMARY_GROUP,            /* c0000127 (STATUS_MEMBERS_PRIMARY_GROUP) */
    ERROR_INVALID_HANDLE,                   /* c0000128 (STATUS_FILE_CLOSED) */
-   0,                                      /* c0000129 (STATUS_TOO_MANY_THREADS) */
-   0,                                      /* c000012a (STATUS_THREAD_NOT_IN_PROCESS) */
+   ERROR_TOO_MANY_THREADS,                 /* c0000129 (STATUS_TOO_MANY_THREADS) */
+   ERROR_THREAD_NOT_IN_PROCESS,            /* c000012a (STATUS_THREAD_NOT_IN_PROCESS) */
    ERROR_TOKEN_ALREADY_IN_USE,             /* c000012b (STATUS_TOKEN_ALREADY_IN_USE) */
-   0,                                      /* c000012c (STATUS_PAGEFILE_QUOTA_EXCEEDED) */
+   ERROR_PAGEFILE_QUOTA_EXCEEDED,          /* c000012c (STATUS_PAGEFILE_QUOTA_EXCEEDED) */
    ERROR_COMMITMENT_LIMIT,                 /* c000012d (STATUS_COMMITMENT_LIMIT) */
    ERROR_BAD_EXE_FORMAT,                   /* c000012e (STATUS_INVALID_IMAGE_LE_FORMAT) */
    ERROR_BAD_EXE_FORMAT,                   /* c000012f (STATUS_INVALID_IMAGE_NOT_MZ) */
    ERROR_BAD_EXE_FORMAT,                   /* c0000130 (STATUS_INVALID_IMAGE_PROTECT) */
    ERROR_BAD_EXE_FORMAT,                   /* c0000131 (STATUS_INVALID_IMAGE_WIN_16) */
-   0,                                      /* c0000132 (STATUS_LOGON_SERVER_CONFLICT) */
+   ERROR_LOGON_SERVER_CONFLICT,            /* c0000132 (STATUS_LOGON_SERVER_CONFLICT) */
    ERROR_TIME_SKEW,                        /* c0000133 (STATUS_TIME_DIFFERENCE_AT_DC) */
-   0,                                      /* c0000134 (STATUS_SYNCHRONIZATION_REQUIRED) */
+   ERROR_SYNCHRONIZATION_REQUIRED,         /* c0000134 (STATUS_SYNCHRONIZATION_REQUIRED) */
    ERROR_MOD_NOT_FOUND,                    /* c0000135 (STATUS_DLL_NOT_FOUND) */
    ERROR_NET_OPEN_FAILED,                  /* c0000136 (STATUS_OPEN_FAILED) */
    ERROR_IO_PRIVILEGE_FAILED,              /* c0000137 (STATUS_IO_PRIVILEGE_FAILED) */
@@ -767,10 +833,10 @@ static const DWORD table_c0000001[411] =
    ERROR_DOMAIN_CTRLR_CONFIG_ERROR,        /* c000015e (STATUS_DOMAIN_CTRLR_CONFIG_ERROR) */
    ERROR_IO_DEVICE,                        /* c000015f (STATUS_FT_MISSING_MEMBER) */
    0,                                      /* c0000160 (STATUS_ILL_FORMED_SERVICE_ENTRY) */
-   0,                                      /* c0000161 (STATUS_ILLEGAL_CHARACTER) */
+   ERROR_ILLEGAL_CHARACTER,                /* c0000161 (STATUS_ILLEGAL_CHARACTER) */
    ERROR_NO_UNICODE_TRANSLATION,           /* c0000162 (STATUS_UNMAPPABLE_CHARACTER) */
-   0,                                      /* c0000163 (STATUS_UNDEFINED_CHARACTER) */
-   0,                                      /* c0000164 (STATUS_FLOPPY_VOLUME) */
+   ERROR_UNDEFINED_CHARACTER,              /* c0000163 (STATUS_UNDEFINED_CHARACTER) */
+   ERROR_FLOPPY_VOLUME,                    /* c0000164 (STATUS_FLOPPY_VOLUME) */
    ERROR_FLOPPY_ID_MARK_NOT_FOUND,         /* c0000165 (STATUS_FLOPPY_ID_MARK_NOT_FOUND) */
    ERROR_FLOPPY_WRONG_CYLINDER,            /* c0000166 (STATUS_FLOPPY_WRONG_CYLINDER) */
    ERROR_FLOPPY_UNKNOWN_ERROR,             /* c0000167 (STATUS_FLOPPY_UNKNOWN_ERROR) */
@@ -780,7 +846,7 @@ static const DWORD table_c0000001[411] =
    ERROR_DISK_RESET_FAILED,                /* c000016b (STATUS_DISK_RESET_FAILED) */
    ERROR_IRQ_BUSY,                         /* c000016c (STATUS_SHARED_IRQ_BUSY) */
    ERROR_IO_DEVICE,                        /* c000016d (STATUS_FT_ORPHANING) */
-   0,                                      /* c000016e (STATUS_BIOS_FAILED_TO_CONNECT_INTERRUPT) */
+   ERROR_BIOS_FAILED_TO_CONNECT_INTERRUPT, /* c000016e (STATUS_BIOS_FAILED_TO_CONNECT_INTERRUPT) */
    0,                                      /* c000016f */
    0,                                      /* c0000170 */
    0,                                      /* c0000171 */
@@ -805,7 +871,7 @@ static const DWORD table_c0000001[411] =
    ERROR_BAD_COMMAND,                      /* c0000184 (STATUS_INVALID_DEVICE_STATE) */
    ERROR_IO_DEVICE,                        /* c0000185 (STATUS_IO_DEVICE_ERROR) */
    ERROR_IO_DEVICE,                        /* c0000186 (STATUS_DEVICE_PROTOCOL_ERROR) */
-   0,                                      /* c0000187 (STATUS_BACKUP_CONTROLLER) */
+   ERROR_BACKUP_CONTROLLER,                /* c0000187 (STATUS_BACKUP_CONTROLLER) */
    ERROR_LOG_FILE_FULL,                    /* c0000188 (STATUS_LOG_FILE_FULL) */
    ERROR_WRITE_PROTECT,                    /* c0000189 (STATUS_TOO_LATE) */
    ERROR_NO_TRUST_LSA_SECRET,              /* c000018a (STATUS_NO_TRUST_LSA_SECRET) */
@@ -815,7 +881,7 @@ static const DWORD table_c0000001[411] =
    ERROR_EVENTLOG_FILE_CORRUPT,            /* c000018e (STATUS_EVENTLOG_FILE_CORRUPT) */
    ERROR_EVENTLOG_CANT_START,              /* c000018f (STATUS_EVENTLOG_CANT_START) */
    ERROR_TRUST_FAILURE,                    /* c0000190 (STATUS_TRUST_FAILURE) */
-   0,                                      /* c0000191 (STATUS_MUTANT_LIMIT_EXCEEDED) */
+   ERROR_MUTANT_LIMIT_EXCEEDED,            /* c0000191 (STATUS_MUTANT_LIMIT_EXCEEDED) */
    ERROR_NETLOGON_NOT_STARTED,             /* c0000192 (STATUS_NETLOGON_NOT_STARTED) */
    ERROR_ACCOUNT_EXPIRED,                  /* c0000193 (STATUS_ACCOUNT_EXPIRED) */
    ERROR_POSSIBLE_DEADLOCK,                /* c0000194 (STATUS_POSSIBLE_DEADLOCK) */
@@ -825,7 +891,8 @@ static const DWORD table_c0000001[411] =
    ERROR_NOLOGON_INTERDOMAIN_TRUST_ACCOUNT,/* c0000198 (STATUS_NOLOGON_INTERDOMAIN_TRUST_ACCOUNT) */
    ERROR_NOLOGON_WORKSTATION_TRUST_ACCOUNT,/* c0000199 (STATUS_NOLOGON_WORKSTATION_TRUST_ACCOUNT) */
    ERROR_NOLOGON_SERVER_TRUST_ACCOUNT,     /* c000019a (STATUS_NOLOGON_SERVER_TRUST_ACCOUNT) */
-   ERROR_DOMAIN_TRUST_INCONSISTENT         /* c000019b (STATUS_DOMAIN_TRUST_INCONSISTENT) */
+   ERROR_DOMAIN_TRUST_INCONSISTENT,        /* c000019b (STATUS_DOMAIN_TRUST_INCONSISTENT) */
+   ERROR_FS_DRIVER_REQUIRED                /* c000019c (STATUS_FS_DRIVER_REQUIRED) */
 };
 
 static const DWORD table_c0000202[396] =
@@ -852,33 +919,33 @@ static const DWORD table_c0000202[396] =
    ERROR_UNEXP_NET_ERR,                    /* c0000215 (STATUS_TRANSACTION_INVALID_TYPE) */
    ERROR_NOT_SUPPORTED,                    /* c0000216 (STATUS_NOT_SERVER_SESSION) */
    ERROR_NOT_SUPPORTED,                    /* c0000217 (STATUS_NOT_CLIENT_SESSION) */
-   0,                                      /* c0000218 (STATUS_CANNOT_LOAD_REGISTRY_FILE) */
-   0,                                      /* c0000219 (STATUS_DEBUG_ATTACH_FAILED) */
-   0,                                      /* c000021a (STATUS_SYSTEM_PROCESS_TERMINATED) */
-   0,                                      /* c000021b (STATUS_DATA_NOT_ACCEPTED) */
+   ERROR_CANNOT_LOAD_REGISTRY_FILE,        /* c0000218 (STATUS_CANNOT_LOAD_REGISTRY_FILE) */
+   ERROR_DEBUG_ATTACH_FAILED,              /* c0000219 (STATUS_DEBUG_ATTACH_FAILED) */
+   ERROR_SYSTEM_PROCESS_TERMINATED,        /* c000021a (STATUS_SYSTEM_PROCESS_TERMINATED) */
+   ERROR_DATA_NOT_ACCEPTED,                /* c000021b (STATUS_DATA_NOT_ACCEPTED) */
    ERROR_NO_BROWSER_SERVERS_FOUND,         /* c000021c (STATUS_NO_BROWSER_SERVERS_FOUND) */
-   0,                                      /* c000021d (STATUS_VDM_HARD_ERROR) */
-   0,                                      /* c000021e (STATUS_DRIVER_CANCEL_TIMEOUT) */
-   0,                                      /* c000021f (STATUS_REPLY_MESSAGE_MISMATCH) */
+   ERROR_VDM_HARD_ERROR,                   /* c000021d (STATUS_VDM_HARD_ERROR) */
+   ERROR_DRIVER_CANCEL_TIMEOUT,            /* c000021e (STATUS_DRIVER_CANCEL_TIMEOUT) */
+   ERROR_REPLY_MESSAGE_MISMATCH,           /* c000021f (STATUS_REPLY_MESSAGE_MISMATCH) */
    ERROR_MAPPED_ALIGNMENT,                 /* c0000220 (STATUS_MAPPED_ALIGNMENT) */
    ERROR_BAD_EXE_FORMAT,                   /* c0000221 (STATUS_IMAGE_CHECKSUM_MISMATCH) */
-   0,                                      /* c0000222 (STATUS_LOST_WRITEBEHIND_DATA) */
-   0,                                      /* c0000223 (STATUS_CLIENT_SERVER_PARAMETERS_INVALID) */
+   ERROR_LOST_WRITEBEHIND_DATA,            /* c0000222 (STATUS_LOST_WRITEBEHIND_DATA) */
+   ERROR_CLIENT_SERVER_PARAMETERS_INVALID, /* c0000223 (STATUS_CLIENT_SERVER_PARAMETERS_INVALID) */
    ERROR_PASSWORD_MUST_CHANGE,             /* c0000224 (STATUS_PASSWORD_MUST_CHANGE) */
    ERROR_NOT_FOUND,                        /* c0000225 (STATUS_NOT_FOUND) */
-   0,                                      /* c0000226 (STATUS_NOT_TINY_STREAM) */
+   ERROR_NOT_TINY_STREAM,                  /* c0000226 (STATUS_NOT_TINY_STREAM) */
    0,                                      /* c0000227 (STATUS_RECOVERY_FAILURE) */
-   0,                                      /* c0000228 (STATUS_STACK_OVERFLOW_READ) */
+   ERROR_STACK_OVERFLOW_READ,              /* c0000228 (STATUS_STACK_OVERFLOW_READ) */
    ERROR_INVALID_PARAMETER,                /* c0000229 (STATUS_FAIL_CHECK) */
    ERROR_OBJECT_ALREADY_EXISTS,            /* c000022a (STATUS_DUPLICATE_OBJECTID) */
    ERROR_OBJECT_ALREADY_EXISTS,            /* c000022b (STATUS_OBJECTID_EXISTS) */
-   0,                                      /* c000022c (STATUS_CONVERT_TO_LARGE) */
+   ERROR_CONVERT_TO_LARGE,                 /* c000022c (STATUS_CONVERT_TO_LARGE) */
    ERROR_RETRY,                            /* c000022d (STATUS_RETRY) */
-   0,                                      /* c000022e (STATUS_FOUND_OUT_OF_SCOPE) */
-   0,                                      /* c000022f (STATUS_ALLOCATE_BUCKET) */
+   ERROR_FOUND_OUT_OF_SCOPE,               /* c000022e (STATUS_FOUND_OUT_OF_SCOPE) */
+   ERROR_ALLOCATE_BUCKET,                  /* c000022f (STATUS_ALLOCATE_BUCKET) */
    ERROR_SET_NOT_FOUND,                    /* c0000230 (STATUS_PROPSET_NOT_FOUND) */
-   0,                                      /* c0000231 (STATUS_MARSHALL_OVERFLOW) */
-   0,                                      /* c0000232 (STATUS_INVALID_VARIANT) */
+   ERROR_MARSHALL_OVERFLOW,                /* c0000231 (STATUS_MARSHALL_OVERFLOW) */
+   ERROR_INVALID_VARIANT,                  /* c0000232 (STATUS_INVALID_VARIANT) */
    ERROR_DOMAIN_CONTROLLER_NOT_FOUND,      /* c0000233 (STATUS_DOMAIN_CONTROLLER_NOT_FOUND) */
    ERROR_ACCOUNT_LOCKED_OUT,               /* c0000234 (STATUS_ACCOUNT_LOCKED_OUT) */
    ERROR_INVALID_HANDLE,                   /* c0000235 (STATUS_HANDLE_NOT_CLOSABLE) */
@@ -894,10 +961,10 @@ static const DWORD table_c0000202[396] =
    ERROR_PORT_UNREACHABLE,                 /* c000023f (STATUS_PORT_UNREACHABLE) */
    ERROR_REQUEST_ABORTED,                  /* c0000240 (STATUS_REQUEST_ABORTED) */
    ERROR_CONNECTION_ABORTED,               /* c0000241 (STATUS_CONNECTION_ABORTED) */
-   0,                                      /* c0000242 (STATUS_BAD_COMPRESSION_BUFFER) */
+   ERROR_BAD_COMPRESSION_BUFFER,           /* c0000242 (STATUS_BAD_COMPRESSION_BUFFER) */
    ERROR_USER_MAPPED_FILE,                 /* c0000243 (STATUS_USER_MAPPED_FILE) */
-   0,                                      /* c0000244 (STATUS_AUDIT_FAILED) */
-   0,                                      /* c0000245 (STATUS_TIMER_RESOLUTION_NOT_SET) */
+   ERROR_AUDIT_FAILED,                     /* c0000244 (STATUS_AUDIT_FAILED) */
+   ERROR_TIMER_RESOLUTION_NOT_SET,         /* c0000245 (STATUS_TIMER_RESOLUTION_NOT_SET) */
    ERROR_CONNECTION_COUNT_LIMIT,           /* c0000246 (STATUS_CONNECTION_COUNT_LIMIT) */
    ERROR_LOGIN_TIME_RESTRICTION,           /* c0000247 (STATUS_LOGIN_TIME_RESTRICTION) */
    ERROR_LOGIN_WKSTA_RESTRICTION,          /* c0000248 (STATUS_LOGIN_WKSTA_RESTRICTION) */
@@ -908,42 +975,42 @@ static const DWORD table_c0000202[396] =
    0,                                      /* c000024d */
    0,                                      /* c000024e */
    0,                                      /* c000024f */
-   0,                                      /* c0000250 (STATUS_INSUFFICIENT_LOGON_INFO) */
-   0,                                      /* c0000251 (STATUS_BAD_DLL_ENTRYPOINT) */
-   0,                                      /* c0000252 (STATUS_BAD_SERVICE_ENTRYPOINT) */
+   ERROR_INSUFFICIENT_LOGON_INFO,          /* c0000250 (STATUS_INSUFFICIENT_LOGON_INFO) */
+   ERROR_BAD_DLL_ENTRYPOINT,               /* c0000251 (STATUS_BAD_DLL_ENTRYPOINT) */
+   ERROR_BAD_SERVICE_ENTRYPOINT,           /* c0000252 (STATUS_BAD_SERVICE_ENTRYPOINT) */
    ERROR_CONNECTION_ABORTED,               /* c0000253 (STATUS_LPC_REPLY_LOST) */
-   0,                                      /* c0000254 (STATUS_IP_ADDRESS_CONFLICT1) */
-   0,                                      /* c0000255 (STATUS_IP_ADDRESS_CONFLICT2) */
-   0,                                      /* c0000256 (STATUS_REGISTRY_QUOTA_LIMIT) */
+   ERROR_IP_ADDRESS_CONFLICT1,             /* c0000254 (STATUS_IP_ADDRESS_CONFLICT1) */
+   ERROR_IP_ADDRESS_CONFLICT2,             /* c0000255 (STATUS_IP_ADDRESS_CONFLICT2) */
+   ERROR_REGISTRY_QUOTA_LIMIT,             /* c0000256 (STATUS_REGISTRY_QUOTA_LIMIT) */
    ERROR_HOST_UNREACHABLE,                 /* c0000257 (STATUS_PATH_NOT_COVERED) */
-   0,                                      /* c0000258 (STATUS_NO_CALLBACK_ACTIVE) */
+   ERROR_NO_CALLBACK_ACTIVE,               /* c0000258 (STATUS_NO_CALLBACK_ACTIVE) */
    ERROR_LICENSE_QUOTA_EXCEEDED,           /* c0000259 (STATUS_LICENSE_QUOTA_EXCEEDED) */
-   0,                                      /* c000025a (STATUS_PWD_TOO_SHORT) */
-   0,                                      /* c000025b (STATUS_PWD_TOO_RECENT) */
-   0,                                      /* c000025c (STATUS_PWD_HISTORY_CONFLICT) */
+   ERROR_PWD_TOO_SHORT,                    /* c000025a (STATUS_PWD_TOO_SHORT) */
+   ERROR_PWD_TOO_RECENT,                   /* c000025b (STATUS_PWD_TOO_RECENT) */
+   ERROR_PWD_HISTORY_CONFLICT,             /* c000025c (STATUS_PWD_HISTORY_CONFLICT) */
    0,                                      /* c000025d */
    ERROR_SERVICE_DISABLED,                 /* c000025e (STATUS_PLUGPLAY_NO_DEVICE) */
-   0,                                      /* c000025f (STATUS_UNSUPPORTED_COMPRESSION) */
-   0,                                      /* c0000260 (STATUS_INVALID_HW_PROFILE) */
-   0,                                      /* c0000261 (STATUS_INVALID_PLUGPLAY_DEVICE_PATH) */
+   ERROR_UNSUPPORTED_COMPRESSION,          /* c000025f (STATUS_UNSUPPORTED_COMPRESSION) */
+   ERROR_INVALID_HW_PROFILE,               /* c0000260 (STATUS_INVALID_HW_PROFILE) */
+   ERROR_INVALID_PLUGPLAY_DEVICE_PATH,     /* c0000261 (STATUS_INVALID_PLUGPLAY_DEVICE_PATH) */
    ERROR_INVALID_ORDINAL,                  /* c0000262 (STATUS_DRIVER_ORDINAL_NOT_FOUND) */
    ERROR_PROC_NOT_FOUND,                   /* c0000263 (STATUS_DRIVER_ENTRYPOINT_NOT_FOUND) */
    ERROR_NOT_OWNER,                        /* c0000264 (STATUS_RESOURCE_NOT_OWNED) */
    ERROR_TOO_MANY_LINKS,                   /* c0000265 (STATUS_TOO_MANY_LINKS) */
-   0,                                      /* c0000266 (STATUS_QUOTA_LIST_INCONSISTENT) */
+   ERROR_QUOTA_LIST_INCONSISTENT,          /* c0000266 (STATUS_QUOTA_LIST_INCONSISTENT) */
    ERROR_FILE_OFFLINE,                     /* c0000267 (STATUS_FILE_IS_OFFLINE) */
-   0,                                      /* c0000268 (STATUS_EVALUATION_EXPIRATION) */
-   0,                                      /* c0000269 (STATUS_ILLEGAL_DLL_RELOCATION) */
+   ERROR_EVALUATION_EXPIRATION,            /* c0000268 (STATUS_EVALUATION_EXPIRATION) */
+   ERROR_ILLEGAL_DLL_RELOCATION,           /* c0000269 (STATUS_ILLEGAL_DLL_RELOCATION) */
    ERROR_CTX_LICENSE_NOT_AVAILABLE,        /* c000026a (STATUS_LICENSE_VIOLATION) */
-   0,                                      /* c000026b (STATUS_DLL_INIT_FAILED_LOGOFF) */
+   ERROR_DLL_INIT_FAILED_LOGOFF,           /* c000026b (STATUS_DLL_INIT_FAILED_LOGOFF) */
    ERROR_BAD_DRIVER,                       /* c000026c (STATUS_DRIVER_UNABLE_TO_LOAD) */
    ERROR_CONNECTION_UNAVAIL,               /* c000026d (STATUS_DFS_UNAVAILABLE) */
    ERROR_NOT_READY,                        /* c000026e (STATUS_VOLUME_DISMOUNTED) */
    0,                                      /* c000026f (STATUS_WX86_INTERNAL_ERROR) */
    0,                                      /* c0000270 (STATUS_WX86_FLOAT_STACK_CHECK) */
-   0,                                      /* c0000271 (STATUS_VALIDATE_CONTINUE) */
+   ERROR_VALIDATE_CONTINUE,                /* c0000271 (STATUS_VALIDATE_CONTINUE) */
    ERROR_NO_MATCH,                         /* c0000272 (STATUS_NO_MATCH) */
-   0,                                      /* c0000273 (STATUS_NO_MORE_MATCHES) */
+   ERROR_NO_MORE_MATCHES,                  /* c0000273 (STATUS_NO_MORE_MATCHES) */
    0,                                      /* c0000274 */
    ERROR_NOT_A_REPARSE_POINT,              /* c0000275 (STATUS_NOT_A_REPARSE_POINT) */
    ERROR_REPARSE_TAG_INVALID,              /* c0000276 (STATUS_IO_REPARSE_TAG_INVALID) */
@@ -958,7 +1025,7 @@ static const DWORD table_c0000202[396] =
    0,                                      /* c000027f */
    ERROR_CANT_RESOLVE_FILENAME,            /* c0000280 (STATUS_REPARSE_POINT_NOT_RESOLVED) */
    ERROR_BAD_PATHNAME,                     /* c0000281 (STATUS_DIRECTORY_IS_A_REPARSE_POINT) */
-   0,                                      /* c0000282 (STATUS_RANGE_LIST_CONFLICT) */
+   ERROR_RANGE_LIST_CONFLICT,              /* c0000282 (STATUS_RANGE_LIST_CONFLICT) */
    ERROR_SOURCE_ELEMENT_EMPTY,             /* c0000283 (STATUS_SOURCE_ELEMENT_EMPTY) */
    ERROR_DESTINATION_ELEMENT_FULL,         /* c0000284 (STATUS_DESTINATION_ELEMENT_FULL) */
    ERROR_ILLEGAL_ELEMENT_ADDRESS,          /* c0000285 (STATUS_ILLEGAL_ELEMENT_ADDRESS) */
@@ -968,7 +1035,7 @@ static const DWORD table_c0000202[396] =
    0,                                      /* c0000289 */
    ERROR_ACCESS_DENIED,                    /* c000028a (STATUS_ENCRYPTION_FAILED) */
    ERROR_ACCESS_DENIED,                    /* c000028b (STATUS_DECRYPTION_FAILED) */
-   0,                                      /* c000028c (STATUS_RANGE_NOT_FOUND) */
+   ERROR_RANGE_NOT_FOUND,                  /* c000028c (STATUS_RANGE_NOT_FOUND) */
    ERROR_ACCESS_DENIED,                    /* c000028d (STATUS_NO_RECOVERY_POLICY) */
    ERROR_ACCESS_DENIED,                    /* c000028e (STATUS_NO_EFS) */
    ERROR_ACCESS_DENIED,                    /* c000028f (STATUS_WRONG_EFS) */
@@ -988,7 +1055,7 @@ static const DWORD table_c0000202[396] =
    ERROR_REMOTE_STORAGE_NOT_ACTIVE,        /* c000029d (STATUS_REMOTE_STORAGE_NOT_ACTIVE) */
    ERROR_REMOTE_STORAGE_MEDIA_ERROR,       /* c000029e (STATUS_REMOTE_STORAGE_MEDIA_ERROR) */
    ERROR_NO_TRACKING_SERVICE,              /* c000029f (STATUS_NO_TRACKING_SERVICE) */
-   0,                                      /* c00002a0 (STATUS_SERVER_SID_MISMATCH) */
+   ERROR_SERVER_SID_MISMATCH,              /* c00002a0 (STATUS_SERVER_SID_MISMATCH) */
    ERROR_DS_NO_ATTRIBUTE_OR_VALUE,         /* c00002a1 (STATUS_DS_NO_ATTRIBUTE_OR_VALUE) */
    ERROR_DS_INVALID_ATTRIBUTE_SYNTAX,      /* c00002a2 (STATUS_DS_INVALID_ATTRIBUTE_SYNTAX) */
    ERROR_DS_ATTRIBUTE_TYPE_UNDEFINED,      /* c00002a3 (STATUS_DS_ATTRIBUTE_TYPE_UNDEFINED) */
@@ -1007,13 +1074,13 @@ static const DWORD table_c0000202[396] =
    ERROR_DS_GC_NOT_AVAILABLE,              /* c00002b0 (STATUS_DS_GC_NOT_AVAILABLE) */
    ERROR_DS_DS_REQUIRED,                   /* c00002b1 (STATUS_DIRECTORY_SERVICE_REQUIRED) */
    ERROR_REPARSE_ATTRIBUTE_CONFLICT,       /* c00002b2 (STATUS_REPARSE_ATTRIBUTE_CONFLICT) */
-   0,                                      /* c00002b3 (STATUS_CANT_ENABLE_DENY_ONLY) */
-   0,                                      /* c00002b4 (STATUS_FLOAT_MULTIPLE_FAULTS) */
-   0,                                      /* c00002b5 (STATUS_FLOAT_MULTIPLE_TRAPS) */
+   ERROR_CANT_ENABLE_DENY_ONLY,            /* c00002b3 (STATUS_CANT_ENABLE_DENY_ONLY) */
+   ERROR_FLOAT_MULTIPLE_FAULTS,            /* c00002b4 (STATUS_FLOAT_MULTIPLE_FAULTS) */
+   ERROR_FLOAT_MULTIPLE_TRAPS,             /* c00002b5 (STATUS_FLOAT_MULTIPLE_TRAPS) */
    ERROR_DEVICE_REMOVED,                   /* c00002b6 (STATUS_DEVICE_REMOVED) */
    ERROR_JOURNAL_DELETE_IN_PROGRESS,       /* c00002b7 (STATUS_JOURNAL_DELETE_IN_PROGRESS) */
    ERROR_JOURNAL_NOT_ACTIVE,               /* c00002b8 (STATUS_JOURNAL_NOT_ACTIVE) */
-   0,                                      /* c00002b9 (STATUS_NOINTERFACE) */
+   ERROR_NOINTERFACE,                      /* c00002b9 (STATUS_NOINTERFACE) */
    0,                                      /* c00002ba */
    0,                                      /* c00002bb */
    0,                                      /* c00002bc */
@@ -1022,23 +1089,23 @@ static const DWORD table_c0000202[396] =
    0,                                      /* c00002bf */
    0,                                      /* c00002c0 */
    ERROR_DS_ADMIN_LIMIT_EXCEEDED,          /* c00002c1 (STATUS_DS_ADMIN_LIMIT_EXCEEDED) */
-   0,                                      /* c00002c2 (STATUS_DRIVER_FAILED_SLEEP) */
+   ERROR_DRIVER_FAILED_SLEEP,              /* c00002c2 (STATUS_DRIVER_FAILED_SLEEP) */
    ERROR_MUTUAL_AUTH_FAILED,               /* c00002c3 (STATUS_MUTUAL_AUTHENTICATION_FAILED) */
-   0,                                      /* c00002c4 (STATUS_CORRUPT_SYSTEM_FILE) */
+   ERROR_CORRUPT_SYSTEM_FILE,              /* c00002c4 (STATUS_CORRUPT_SYSTEM_FILE) */
    ERROR_NOACCESS,                         /* c00002c5 (STATUS_DATATYPE_MISALIGNMENT_ERROR) */
    ERROR_WMI_READ_ONLY,                    /* c00002c6 (STATUS_WMI_READ_ONLY) */
    ERROR_WMI_SET_FAILURE,                  /* c00002c7 (STATUS_WMI_SET_FAILURE) */
-   0,                                      /* c00002c8 (STATUS_COMMITMENT_MINIMUM) */
+   ERROR_COMMITMENT_MINIMUM,               /* c00002c8 (STATUS_COMMITMENT_MINIMUM) */
    ERROR_REG_NAT_CONSUMPTION,              /* c00002c9 (STATUS_REG_NAT_CONSUMPTION) */
    ERROR_TRANSPORT_FULL,                   /* c00002ca (STATUS_TRANSPORT_FULL) */
    ERROR_DS_SAM_INIT_FAILURE,              /* c00002cb (STATUS_DS_SAM_INIT_FAILURE) */
    ERROR_ONLY_IF_CONNECTED,                /* c00002cc (STATUS_ONLY_IF_CONNECTED) */
    ERROR_DS_SENSITIVE_GROUP_VIOLATION,     /* c00002cd (STATUS_DS_SENSITIVE_GROUP_VIOLATION) */
-   0,                                      /* c00002ce (STATUS_PNP_RESTART_ENUMERATION) */
+   ERROR_PNP_RESTART_ENUMERATION,          /* c00002ce (STATUS_PNP_RESTART_ENUMERATION) */
    ERROR_JOURNAL_ENTRY_DELETED,            /* c00002cf (STATUS_JOURNAL_ENTRY_DELETED) */
    ERROR_DS_CANT_MOD_PRIMARYGROUPID,       /* c00002d0 (STATUS_DS_CANT_MOD_PRIMARYGROUPID) */
-   0,                                      /* c00002d1 (STATUS_SYSTEM_IMAGE_BAD_SIGNATURE) */
-   0,                                      /* c00002d2 (STATUS_PNP_REBOOT_REQUIRED) */
+   ERROR_SYSTEM_IMAGE_BAD_SIGNATURE,       /* c00002d1 (STATUS_SYSTEM_IMAGE_BAD_SIGNATURE) */
+   ERROR_PNP_REBOOT_REQUIRED,              /* c00002d2 (STATUS_PNP_REBOOT_REQUIRED) */
    0,                                      /* c00002d3 (STATUS_POWER_STATE_INVALID) */
    ERROR_DS_INVALID_GROUP_TYPE,            /* c00002d4 (STATUS_DS_INVALID_GROUP_TYPE) */
    ERROR_DS_NO_NEST_GLOBALGROUP_IN_MIXEDDOMAIN, /* c00002d5 (STATUS_DS_NO_NEST_GLOBALGROUP_IN_MIXEDDOMAIN) */
@@ -1050,7 +1117,7 @@ static const DWORD table_c0000202[396] =
    ERROR_DS_LOCAL_CANT_HAVE_CROSSDOMAIN_LOCAL_MEMBER,   /* c00002db (STATUS_DS_LOCAL_CANT_HAVE_CROSSDOMAIN_LOCAL_MEMBER) */
    ERROR_DS_HAVE_PRIMARY_MEMBERS,               /* c00002dc (STATUS_DS_HAVE_PRIMARY_MEMBERS) */
    ERROR_NOT_SUPPORTED,                    /* c00002dd (STATUS_WMI_NOT_SUPPORTED) */
-   0,                                      /* c00002de (STATUS_INSUFFICIENT_POWER) */
+   ERROR_INSUFFICIENT_POWER,               /* c00002de (STATUS_INSUFFICIENT_POWER) */
    ERROR_DS_SAM_NEED_BOOTKEY_PASSWORD,     /* c00002df (STATUS_SAM_NEED_BOOTKEY_PASSWORD) */
    ERROR_DS_SAM_NEED_BOOTKEY_FLOPPY,       /* c00002e0 (STATUS_SAM_NEED_BOOTKEY_FLOPPY) */
    ERROR_DS_CANT_START,                    /* c00002e1 (STATUS_DS_CANT_START) */
@@ -1060,10 +1127,10 @@ static const DWORD table_c0000202[396] =
    ERROR_DS_LOCAL_MEMBER_OF_LOCAL_ONLY,    /* c00002e5 (STATUS_DS_LOCAL_MEMBER_OF_LOCAL_ONLY) */
    ERROR_DS_NO_FPO_IN_UNIVERSAL_GROUPS,    /* c00002e6 (STATUS_DS_NO_FPO_IN_UNIVERSAL_GROUPS) */
    ERROR_DS_MACHINE_ACCOUNT_QUOTA_EXCEEDED,     /* c00002e7 (STATUS_DS_MACHINE_ACCOUNT_QUOTA_EXCEEDED) */
-   0,                                      /* c00002e8 (STATUS_MULTIPLE_FAULT_VIOLATION) */
+   ERROR_MULTIPLE_FAULT_VIOLATION,         /* c00002e8 (STATUS_MULTIPLE_FAULT_VIOLATION) */
    ERROR_CURRENT_DOMAIN_NOT_ALLOWED,       /* c00002e9 (STATUS_CURRENT_DOMAIN_NOT_ALLOWED) */
    ERROR_CANNOT_MAKE,                      /* c00002ea (STATUS_CANNOT_MAKE) */
-   0,                                      /* c00002eb (STATUS_SYSTEM_SHUTDOWN) */
+   ERROR_SYSTEM_SHUTDOWN,                  /* c00002eb (STATUS_SYSTEM_SHUTDOWN) */
    ERROR_DS_INIT_FAILURE_CONSOLE,          /* c00002ec (STATUS_DS_INIT_FAILURE_CONSOLE) */
    ERROR_DS_SAM_INIT_FAILURE_CONSOLE,      /* c00002ed (STATUS_DS_SAM_INIT_FAILURE_CONSOLE) */
    SEC_E_UNFINISHED_CONTEXT_DELETED,       /* c00002ee (STATUS_UNFINISHED_CONTEXT_DELETED) */
@@ -1167,9 +1234,9 @@ static const DWORD table_c0000202[396] =
    ERROR_HOST_DOWN,                        /* c0000350 (STATUS_HOST_DOWN) */
    SEC_E_UNSUPPORTED_PREAUTH,              /* c0000351 (STATUS_UNSUPPORTED_PREAUTH) */
    ERROR_EFS_ALG_BLOB_TOO_BIG,             /* c0000352 (STATUS_EFS_ALG_BLOB_TOO_BIG) */
-   0,                                      /* c0000353 (STATUS_PORT_NOT_SET) */
+   ERROR_PORT_NOT_SET,                     /* c0000353 (STATUS_PORT_NOT_SET) */
    0,                                      /* c0000354 (STATUS_DEBUGGER_INACTIVE) */
-   0,                                      /* c0000355 (STATUS_DS_VERSION_CHECK_FAILURE) */
+   ERROR_DS_VERSION_CHECK_FAILURE,         /* c0000355 (STATUS_DS_VERSION_CHECK_FAILURE) */
    ERROR_AUDITING_DISABLED,                /* c0000356 (STATUS_AUDITING_DISABLED) */
    ERROR_DS_MACHINE_ACCOUNT_CREATED_PRENT4,/* c0000357 (STATUS_PRENT4_MACHINE_ACCOUNT) */
    ERROR_DS_AG_CANT_HAVE_UNIVERSAL_MEMBER, /* c0000358 (STATUS_DS_AG_CANT_HAVE_UNIVERSAL_MEMBER) */
@@ -1178,23 +1245,23 @@ static const DWORD table_c0000202[396] =
    SEC_E_BAD_BINDINGS,                     /* c000035b (STATUS_BAD_BINDINGS) */
    ERROR_NO_USER_SESSION_KEY,              /* c000035c (STATUS_NETWORK_SESSION_EXPIRED) */
    0,                                      /* c000035d (STATUS_APPHELP_BLOCK) */
-   0,                                      /* c000035e (STATUS_ALL_SIDS_FILTERED) */
-   0,                                      /* c000035f (STATUS_NOT_SAFE_MODE_DRIVER) */
+   ERROR_ALL_SIDS_FILTERED,                /* c000035e (STATUS_ALL_SIDS_FILTERED) */
+   ERROR_NOT_SAFE_MODE_DRIVER,             /* c000035f (STATUS_NOT_SAFE_MODE_DRIVER) */
    0,                                      /* c0000360 */
    ERROR_ACCESS_DISABLED_BY_POLICY,        /* c0000361 (STATUS_ACCESS_DISABLED_BY_POLICY_DEFAULT) */
    ERROR_ACCESS_DISABLED_BY_POLICY,        /* c0000362 (STATUS_ACCESS_DISABLED_BY_POLICY_PATH) */
    ERROR_ACCESS_DISABLED_BY_POLICY,        /* c0000363 (STATUS_ACCESS_DISABLED_BY_POLICY_PUBLISHER) */
    ERROR_ACCESS_DISABLED_BY_POLICY,        /* c0000364 (STATUS_ACCESS_DISABLED_BY_POLICY_OTHER) */
-   0,                                      /* c0000365 (STATUS_FAILED_DRIVER_ENTRY) */
-   0,                                      /* c0000366 (STATUS_DEVICE_ENUMERATION_ERROR) */
+   ERROR_FAILED_DRIVER_ENTRY,              /* c0000365 (STATUS_FAILED_DRIVER_ENTRY) */
+   ERROR_DEVICE_ENUMERATION_ERROR,         /* c0000366 (STATUS_DEVICE_ENUMERATION_ERROR) */
    0,                                      /* c0000367 */
-   0,                                      /* c0000368 (STATUS_MOUNT_POINT_NOT_RESOLVED) */
-   0,                                      /* c0000369 (STATUS_INVALID_DEVICE_OBJECT_PARAMETER) */
-   0,                                      /* c000036a (STATUS_MCA_OCCURED) */
+   ERROR_MOUNT_POINT_NOT_RESOLVED,         /* c0000368 (STATUS_MOUNT_POINT_NOT_RESOLVED) */
+   ERROR_INVALID_DEVICE_OBJECT_PARAMETER,  /* c0000369 (STATUS_INVALID_DEVICE_OBJECT_PARAMETER) */
+   ERROR_MCA_OCCURED,                      /* c000036a (STATUS_MCA_OCCURED) */
    ERROR_DRIVER_BLOCKED,                   /* c000036b (STATUS_DRIVER_BLOCKED_CRITICAL) */
    ERROR_DRIVER_BLOCKED,                   /* c000036c (STATUS_DRIVER_BLOCKED) */
-   0,                                      /* c000036d (STATUS_DRIVER_DATABASE_ERROR) */
-   0,                                      /* c000036e (STATUS_SYSTEM_HIVE_TOO_LARGE) */
+   ERROR_DRIVER_DATABASE_ERROR,            /* c000036d (STATUS_DRIVER_DATABASE_ERROR) */
+   ERROR_SYSTEM_HIVE_TOO_LARGE,            /* c000036e (STATUS_SYSTEM_HIVE_TOO_LARGE) */
    ERROR_INVALID_IMPORT_OF_NON_DLL,        /* c000036f (STATUS_INVALID_IMPORT_OF_NON_DLL) */
    0,                                      /* c0000370 */
    0,                                      /* c0000371 */
@@ -1226,6 +1293,11 @@ static const DWORD table_c0000202[396] =
    SEC_E_REVOCATION_OFFLINE_C,             /* c000038b (STATUS_REVOCATION_OFFLINE_C) */
    SEC_E_PKINIT_CLIENT_FAILURE,            /* c000038c (STATUS_PKINIT_CLIENT_FAILURE) */
    SEC_E_SMARTCARD_CERT_EXPIRED            /* c000038d (STATUS_SMARTCARD_CERT_EXPIRED) */
+};
+
+static const DWORD table_c000042c[1] =
+{
+   ERROR_ELEVATION_REQUIRED                /* c000042c (STATUS_ELEVATION_REQUIRED) */
 };
 
 static const DWORD table_c0020001[99] =
@@ -1489,19 +1561,28 @@ static const DWORD table_c0150001[39] =
 
 static const struct error_table error_table[] =
 {
-    { 0x00000102, 0x00000122, table_00000102 },
-    { 0x40000002, 0x40000026, table_40000002 },
+    { 0x00000001, 0x00000004, table_00000001 },
+    { 0x0000003f, 0x00000040, table_0000003f },
+    { 0x00000080, 0x00000081, table_00000080 },
+    { 0x000000bf, 0x000000c1, table_000000bf },
+    { 0x00000100, 0x00000122, table_00000100 },
+    { 0x00010001, 0x00010003, table_00010001 },
+    { 0x40000000, 0x4000002d, table_40000000 },
+    { 0x40000294, 0x40000295, table_40000294 },
     { 0x40000370, 0x40000371, table_40000370 },
+    { 0x40010003, 0x4001000a, table_40010003 },
     { 0x40020056, 0x40020057, table_40020056 },
     { 0x400200af, 0x400200b0, table_400200af },
-    { 0x80000001, 0x80000028, table_80000001 },
+    { 0x80000001, 0x8000002d, table_80000001 },
     { 0x80000288, 0x8000028a, table_80000288 },
+    { 0x80010001, 0x80010002, table_80010001 },
     { 0x80090300, 0x80090348, table_80090300 },
     { 0x80092010, 0x80092014, table_80092010 },
     { 0x80096004, 0x80096005, table_80096004 },
     { 0x80130001, 0x80130006, table_80130001 },
-    { 0xc0000001, 0xc000019c, table_c0000001 },
+    { 0xc0000001, 0xc000019d, table_c0000001 },
     { 0xc0000202, 0xc000038e, table_c0000202 },
+    { 0xc000042c, 0xc000042d, table_c000042c },
     { 0xc0020001, 0xc0020064, table_c0020001 },
     { 0xc0030001, 0xc003000d, table_c0030001 },
     { 0xc0030059, 0xc0030062, table_c0030059 },
