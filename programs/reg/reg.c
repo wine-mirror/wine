@@ -352,6 +352,7 @@ static int reg_add(WCHAR *key_name, WCHAR *value_name, BOOL value_empty,
             {
                 if (!ask_confirm(STRING_OVERWRITE_VALUE, value_name))
                 {
+                    RegCloseKey(subkey);
                     output_message(STRING_CANCELLED);
                     return 0;
                 }
