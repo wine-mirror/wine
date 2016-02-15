@@ -228,6 +228,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
 
     switch (reg_type)
     {
+        case REG_NONE:
         case REG_SZ:
         {
             *reg_count = (lstrlenW(data) + 1) * sizeof(WCHAR);
