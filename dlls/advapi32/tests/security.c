@@ -1411,6 +1411,59 @@ static void test_AccessCheck(void)
         GetLastError());
     trace("AccessCheck with MAXIMUM_ALLOWED got Access 0x%08x\n", Access);
 
+    /* Null PrivSet with null PrivSetLen pointer */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      NULL, NULL, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(!ret && err == ERROR_NOACCESS, "AccessCheck should have "
+       "failed with ERROR_NOACCESS, instead of %d\n", err);
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
+    /* Null PrivSet with zero PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = 0;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      0, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+todo_wine
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
+       "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
+todo_wine
+    ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
+    /* Valid PrivSet with zero PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = 0;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+todo_wine
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
+       "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
+todo_wine
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
+    PrivSetLen = FIELD_OFFSET(PRIVILEGE_SET, Privilege[16]);
+
+    /* Null PrivSet with valid PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      0, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(!ret && err == ERROR_NOACCESS, "AccessCheck should have "
+       "failed with ERROR_NOACCESS, instead of %d\n", err);
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
     /* Access denied by SD */
     SetLastError(0xdeadbeef);
     Access = AccessStatus = 0x1abe11ed;
