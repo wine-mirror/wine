@@ -1553,6 +1553,31 @@ static inline DWORD is_privileged_instr( CONTEXT *context )
     }
 }
 
+
+/***********************************************************************
+ *           handle_interrupt
+ *
+ * Handle an interrupt.
+ */
+static inline BOOL handle_interrupt( unsigned int interrupt, EXCEPTION_RECORD *rec, CONTEXT *context )
+{
+    switch(interrupt)
+    {
+    case 0x2d:
+        context->Eip += 3;
+        rec->ExceptionCode = EXCEPTION_BREAKPOINT;
+        rec->ExceptionAddress = (void *)context->Eip;
+        rec->NumberParameters = is_wow64 ? 1 : 3;
+        rec->ExceptionInformation[0] = context->Eax;
+        rec->ExceptionInformation[1] = context->Ecx;
+        rec->ExceptionInformation[2] = context->Edx;
+        return TRUE;
+    default:
+        return FALSE;
+    }
+}
+
+
 /***********************************************************************
  *           check_invalid_gs
  *
@@ -2072,8 +2097,10 @@ static void segv_handler( int signal, siginfo_t *siginfo, void *sigcontext )
     case TRAP_x86_PROTFLT:   /* General protection fault */
     case TRAP_x86_UNKNOWN:   /* Unknown fault code */
         {
+            CONTEXT *win_context = get_exception_context( rec );
             WORD err = get_error_code(context);
-            if (!err && (rec->ExceptionCode = is_privileged_instr( get_exception_context(rec) ))) break;
+            if (!err && (rec->ExceptionCode = is_privileged_instr( win_context ))) break;
+            if ((err & 7) == 2 && handle_interrupt( err >> 3, rec, win_context )) break;
             rec->ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
             rec->NumberParameters = 2;
             rec->ExceptionInformation[0] = 0;
