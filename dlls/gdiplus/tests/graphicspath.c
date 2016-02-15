@@ -87,10 +87,7 @@ static void ok_path(GpPath* path, const path_test_t *expected, INT expected_size
         return;
     }
 
-    if(todo_size) todo_wine
-        ok(size == expected_size, "Path size %d does not match expected size %d\n",
-            size, expected_size);
-    else
+    todo_wine_if (todo_size)
         ok(size == expected_size, "Path size %d does not match expected size %d\n",
             size, expected_size);
 
@@ -113,11 +110,7 @@ static void ok_path(GpPath* path, const path_test_t *expected, INT expected_size
         stringify_point_type(expected[eidx].type, ename);
         stringify_point_type(types[idx], name);
 
-        if (expected[eidx].todo || numskip) todo_wine
-            ok(match, "Expected #%d: %s (%.1f,%.1f) but got %s (%.1f,%.1f)\n", eidx,
-               ename, expected[eidx].X, expected[eidx].Y,
-               name, points[idx].X, points[idx].Y);
-        else
+        todo_wine_if (expected[eidx].todo || numskip)
             ok(match, "Expected #%d: %s (%.1f,%.1f) but got %s (%.1f,%.1f)\n", eidx,
                ename, expected[eidx].X, expected[eidx].Y,
                name, points[idx].X, points[idx].Y);
