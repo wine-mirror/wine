@@ -1286,13 +1286,15 @@ static void test_viewgetcolumninfo(void)
     r = run_query( hdb, 0,
             "CREATE TABLE `Properties` "
             "( `Property` CHAR(255), "
-	    "  `Value` CHAR(1), "
-	    "  `Intvalue` INT, "
-	    "  `Integervalue` INTEGER, "
-	    "  `Shortvalue` SHORT, "
-	    "  `Longvalue` LONG, "
-	    "  `Longcharvalue` LONGCHAR "
-	    "  PRIMARY KEY `Property`)" );
+            "  `Value` CHAR(1), "
+            "  `Intvalue` INT, "
+            "  `Integervalue` INTEGER, "
+            "  `Shortvalue` SHORT, "
+            "  `Longvalue` LONG, "
+            "  `Longcharvalue` LONGCHAR, "
+            "  `Charvalue` CHAR, "
+            "  `Localizablevalue` CHAR LOCALIZABLE "
+            "  PRIMARY KEY `Property`)" );
     ok( r == ERROR_SUCCESS , "Failed to create table\n" );
 
     /* check the column types */
@@ -1306,6 +1308,8 @@ static void test_viewgetcolumninfo(void)
     ok( check_record( rec, 5, "I2"), "wrong record type\n");
     ok( check_record( rec, 6, "I4"), "wrong record type\n");
     ok( check_record( rec, 7, "S0"), "wrong record type\n");
+    ok( check_record( rec, 8, "S0"), "wrong record type\n");
+    ok( check_record( rec, 9, "L0"), "wrong record type\n");
 
     MsiCloseHandle( rec );
 
@@ -1317,6 +1321,8 @@ static void test_viewgetcolumninfo(void)
     ok( 0x1502 == get_columns_table_type(hdb, "Properties", 5 ), "_columns table wrong\n");
     ok( 0x1104 == get_columns_table_type(hdb, "Properties", 6 ), "_columns table wrong\n");
     ok( 0x1d00 == get_columns_table_type(hdb, "Properties", 7 ), "_columns table wrong\n");
+    ok( 0x1d00 == get_columns_table_type(hdb, "Properties", 8 ), "_columns table wrong\n");
+    ok( 0x1f00 == get_columns_table_type(hdb, "Properties", 9 ), "_columns table wrong\n");
 
     /* now try the names */
     rec = get_column_info( hdb, "select * from `Properties`", MSICOLINFO_NAMES );
@@ -1329,6 +1335,8 @@ static void test_viewgetcolumninfo(void)
     ok( check_record( rec, 5, "Shortvalue"), "wrong record type\n");
     ok( check_record( rec, 6, "Longvalue"), "wrong record type\n");
     ok( check_record( rec, 7, "Longcharvalue"), "wrong record type\n");
+    ok( check_record( rec, 8, "Charvalue"), "wrong record type\n");
+    ok( check_record( rec, 9, "Localizablevalue"), "wrong record type\n");
 
     MsiCloseHandle( rec );
 
