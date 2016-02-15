@@ -1901,30 +1901,6 @@ typedef struct _WINEDDBLTFX
     struct wined3d_color_key ddckSrcColorkey;       /* SrcColorkey override */
 } WINEDDBLTFX,*LPWINEDDBLTFX;
 
-typedef struct _WINEDDOVERLAYFX
-{
-    DWORD dwSize;                                   /* size of structure */
-    DWORD dwAlphaEdgeBlendBitDepth;                 /* Bit depth used to specify constant for alpha edge blend */
-    DWORD dwAlphaEdgeBlend;                         /* Constant to use as alpha for edge blend */
-    DWORD dwReserved;
-    DWORD dwAlphaDestConstBitDepth;                 /* Bit depth used to specify alpha constant for destination */
-    union
-    {
-        DWORD dwAlphaDestConst;                     /* Constant to use as alpha channel for dest */
-        struct wined3d_surface *lpDDSAlphaDest;     /* Surface to use as alpha channel for dest */
-    } DUMMYUNIONNAME1;
-    DWORD dwAlphaSrcConstBitDepth;                  /* Bit depth used to specify alpha constant for source */
-    union
-    {
-        DWORD dwAlphaSrcConst;                      /* Constant to use as alpha channel for src */
-        struct wined3d_surface *lpDDSAlphaSrc;      /* Surface to use as alpha channel for src */
-    } DUMMYUNIONNAME2;
-    struct wined3d_color_key dckDestColorkey;       /* DestColorkey override */
-    struct wined3d_color_key dckSrcColorkey;        /* SrcColorkey override */
-    DWORD dwDDFX;                                   /* Overlay FX */
-    DWORD dwFlags;                                  /* flags */
-} WINEDDOVERLAYFX;
-
 struct wined3d_buffer_desc
 {
     UINT byte_width;
@@ -2545,7 +2521,7 @@ HRESULT __cdecl wined3d_texture_update_desc(struct wined3d_texture *texture,
         void *mem, UINT pitch);
 HRESULT __cdecl wined3d_texture_update_overlay(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const RECT *src_rect, struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
-        const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx);
+        const RECT *dst_rect, DWORD flags);
 
 HRESULT __cdecl wined3d_vertex_declaration_create(struct wined3d_device *device,
         const struct wined3d_vertex_element *elements, UINT element_count, void *parent,

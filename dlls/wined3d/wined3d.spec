@@ -259,7 +259,7 @@
 @ cdecl wined3d_texture_set_lod(ptr long)
 @ cdecl wined3d_texture_set_overlay_position(ptr long long long)
 @ cdecl wined3d_texture_update_desc(ptr long long long long long ptr long)
-@ cdecl wined3d_texture_update_overlay(ptr long ptr ptr long ptr long ptr)
+@ cdecl wined3d_texture_update_overlay(ptr long ptr ptr long ptr long)
 
 @ cdecl wined3d_vertex_declaration_create(ptr ptr long ptr ptr ptr)
 @ cdecl wined3d_vertex_declaration_create_from_fvf(ptr long ptr ptr ptr)

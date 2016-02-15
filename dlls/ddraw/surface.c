@@ -3707,14 +3707,17 @@ static HRESULT WINAPI ddraw_surface7_UpdateOverlay(IDirectDrawSurface7 *iface, R
     TRACE("iface %p, src_rect %s, dst_surface %p, dst_rect %s, flags %#x, fx %p.\n",
             iface, wine_dbgstr_rect(src_rect), dst_surface, wine_dbgstr_rect(dst_rect), flags, fx);
 
+    if (fx)
+        FIXME("Ignoring fx %p.\n", fx);
+
     wined3d_mutex_lock();
     if (dst_impl)
     {
         dst_wined3d_texture = dst_impl->wined3d_texture;
         dst_sub_resource_idx = dst_impl->sub_resource_idx;
     }
-    hr = wined3d_texture_update_overlay(src_impl->wined3d_texture, src_impl->sub_resource_idx, src_rect,
-            dst_wined3d_texture, dst_sub_resource_idx, dst_rect, flags, (WINEDDOVERLAYFX *)fx);
+    hr = wined3d_texture_update_overlay(src_impl->wined3d_texture, src_impl->sub_resource_idx,
+            src_rect, dst_wined3d_texture, dst_sub_resource_idx, dst_rect, flags);
     wined3d_mutex_unlock();
 
     switch (hr)

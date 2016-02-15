@@ -1432,15 +1432,15 @@ HRESULT CDECL wined3d_texture_set_overlay_position(struct wined3d_texture *textu
 
 HRESULT CDECL wined3d_texture_update_overlay(struct wined3d_texture *texture, unsigned int sub_resource_idx,
         const RECT *src_rect, struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
-        const RECT *dst_rect, DWORD flags, const WINEDDOVERLAYFX *fx)
+        const RECT *dst_rect, DWORD flags)
 {
     struct wined3d_resource *sub_resource, *dst_sub_resource;
     struct wined3d_surface *surface, *dst_surface;
 
     TRACE("texture %p, sub_resource_idx %u, src_rect %s, dst_texture %p, "
-            "dst_sub_resource_idx %u, dst_rect %s, flags %#x, fx %p.\n",
+            "dst_sub_resource_idx %u, dst_rect %s, flags %#x.\n",
             texture, sub_resource_idx, wine_dbgstr_rect(src_rect), dst_texture,
-            dst_sub_resource_idx, wine_dbgstr_rect(dst_rect), flags, fx);
+            dst_sub_resource_idx, wine_dbgstr_rect(dst_rect), flags);
 
     if (!(texture->resource.usage & WINED3DUSAGE_OVERLAY) || texture->resource.type != WINED3D_RTYPE_TEXTURE_2D
             || !(sub_resource = wined3d_texture_get_sub_resource(texture, sub_resource_idx)))
