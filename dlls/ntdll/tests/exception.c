@@ -219,6 +219,11 @@ static const struct exception
 
     { { 0xf1, 0x90, 0xc3 },  /* icebp; nop; ret */
       1, 1, FALSE, STATUS_SINGLE_STEP, 0 },
+    { { 0xb8, 0xb8, 0xb8, 0xb8, 0xb8,          /* mov $0xb8b8b8b8, %eax */
+        0xb9, 0xb9, 0xb9, 0xb9, 0xb9,          /* mov $0xb9b9b9b9, %ecx */
+        0xba, 0xba, 0xba, 0xba, 0xba,          /* mov $0xbabababa, %edx */
+        0xcd, 0x2d, 0xc3 },                    /* int $0x2d; ret */
+      17, 0, FALSE, STATUS_BREAKPOINT, 3, { 0xb8b8b8b8, 0xb9b9b9b9, 0xbabababa } },
 };
 
 static int got_exception;
@@ -473,7 +478,7 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
                       CONTEXT *context, EXCEPTION_REGISTRATION_RECORD **dispatcher )
 {
     const struct exception *except = *(const struct exception **)(frame + 1);
-    unsigned int i, entry = except - exceptions;
+    unsigned int i, parameter_count, entry = except - exceptions;
 
     got_exception++;
     trace( "exception %u: %x flags:%x addr:%p\n",
@@ -482,20 +487,23 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
     ok( rec->ExceptionCode == except->status ||
         (except->alt_status != 0 && rec->ExceptionCode == except->alt_status),
         "%u: Wrong exception code %x/%x\n", entry, rec->ExceptionCode, except->status );
-    ok( rec->ExceptionAddress == (char*)code_mem + except->offset,
-        "%u: Wrong exception address %p/%p\n", entry,
-        rec->ExceptionAddress, (char*)code_mem + except->offset );
+    ok( context->Eip == (DWORD_PTR)code_mem + except->offset,
+        "%u: Unexpected eip %#x/%#lx\n", entry,
+        context->Eip, (DWORD_PTR)code_mem + except->offset );
+    ok( rec->ExceptionAddress == (char*)context->Eip ||
+        (rec->ExceptionCode == STATUS_BREAKPOINT && rec->ExceptionAddress == (char*)context->Eip + 1),
+        "%u: Unexpected exception address %p/%p\n", entry,
+        rec->ExceptionAddress, (char*)context->Eip );
 
-    if (except->alt_status == 0 || rec->ExceptionCode != except->alt_status)
-    {
-        ok( rec->NumberParameters == except->nb_params,
-            "%u: Wrong number of parameters %u/%u\n", entry, rec->NumberParameters, except->nb_params );
-    }
+    if (except->status == STATUS_BREAKPOINT && is_wow64)
+        parameter_count = 1;
+    else if (except->alt_status == 0 || rec->ExceptionCode != except->alt_status)
+        parameter_count = except->nb_params;
     else
-    {
-        ok( rec->NumberParameters == except->alt_nb_params,
-            "%u: Wrong number of parameters %u/%u\n", entry, rec->NumberParameters, except->nb_params );
-    }
+        parameter_count = except->alt_nb_params;
+
+    ok( rec->NumberParameters == parameter_count,
+        "%u: Unexpected parameter count %u/%u\n", entry, rec->NumberParameters, parameter_count );
 
     /* Most CPUs (except Intel Core apparently) report a segment limit violation */
     /* instead of page faults for accesses beyond 0xffffffff */
@@ -530,7 +538,7 @@ static DWORD handler( EXCEPTION_RECORD *rec, EXCEPTION_REGISTRATION_RECORD *fram
 
 skip_params:
     /* don't handle exception if it's not the address we expected */
-    if (rec->ExceptionAddress != (char*)code_mem + except->offset) return ExceptionContinueSearch;
+    if (context->Eip != (DWORD_PTR)code_mem + except->offset) return ExceptionContinueSearch;
 
     context->Eip += except->length;
     return ExceptionContinueExecution;
