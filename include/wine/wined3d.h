@@ -1266,34 +1266,18 @@ enum wined3d_display_rotation
 /* add dwZBufferBaseDest to every source z value before compare */
 #define WINEDDBLTFX_ZBUFFERBASEDEST                             0x00000100
 
-/* dwFlags for Blt* */
-#define WINEDDBLT_ALPHADEST                                     0x00000001
-#define WINEDDBLT_ALPHADESTCONSTOVERRIDE                        0x00000002
-#define WINEDDBLT_ALPHADESTNEG                                  0x00000004
-#define WINEDDBLT_ALPHADESTSURFACEOVERRIDE                      0x00000008
-#define WINEDDBLT_ALPHAEDGEBLEND                                0x00000010
-#define WINEDDBLT_ALPHASRC                                      0x00000020
-#define WINEDDBLT_ALPHASRCCONSTOVERRIDE                         0x00000040
-#define WINEDDBLT_ALPHASRCNEG                                   0x00000080
-#define WINEDDBLT_ALPHASRCSURFACEOVERRIDE                       0x00000100
-#define WINEDDBLT_ASYNC                                         0x00000200
-#define WINEDDBLT_COLORFILL                                     0x00000400
-#define WINEDDBLT_DDFX                                          0x00000800
-#define WINEDDBLT_KEYDEST                                       0x00002000
-#define WINEDDBLT_KEYDESTOVERRIDE                               0x00004000
-#define WINEDDBLT_KEYSRC                                        0x00008000
-#define WINEDDBLT_KEYSRCOVERRIDE                                0x00010000
-#define WINEDDBLT_ROP                                           0x00020000
-#define WINEDDBLT_ROTATIONANGLE                                 0x00040000
-#define WINEDDBLT_ZBUFFER                                       0x00080000
-#define WINEDDBLT_ZBUFFERDESTCONSTOVERRIDE                      0x00100000
-#define WINEDDBLT_ZBUFFERDESTOVERRIDE                           0x00200000
-#define WINEDDBLT_ZBUFFERSRCCONSTOVERRIDE                       0x00400000
-#define WINEDDBLT_ZBUFFERSRCOVERRIDE                            0x00800000
-#define WINEDDBLT_WAIT                                          0x01000000
-#define WINEDDBLT_DEPTHFILL                                     0x02000000
-#define WINEDDBLT_DONOTWAIT                                     0x08000000
-#define WINEDDBLT_ALPHATEST                                     0x80000000
+#define WINED3D_BLT_ASYNC                                       0x00000200
+#define WINED3D_BLT_COLOR_FILL                                  0x00000400
+#define WINED3D_BLT_FX                                          0x00000800
+#define WINED3D_BLT_DST_CKEY                                    0x00002000
+#define WINED3D_BLT_DST_CKEY_OVERRIDE                           0x00004000
+#define WINED3D_BLT_SRC_CKEY                                    0x00008000
+#define WINED3D_BLT_SRC_CKEY_OVERRIDE                           0x00010000
+#define WINED3D_BLT_WAIT                                        0x01000000
+#define WINED3D_BLT_DEPTH_FILL                                  0x02000000
+#define WINED3D_BLT_DO_NOT_WAIT                                 0x08000000
+#define WINED3D_BLT_ALPHA_TEST                                  0x80000000
+#define WINED3D_BLT_MASK                                        0x8b01ee00
 
 /* dwFlags for GetBltStatus */
 #define WINEDDGBS_CANBLT                                        0x00000001

@@ -1647,6 +1647,13 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_Blt(IDirectDrawSurface7 *
         return DDERR_INVALIDPARAMS;
     }
 
+    if (Flags & ~WINED3D_BLT_MASK)
+    {
+        wined3d_mutex_unlock();
+        FIXME("Unhandled flags %#x.\n", Flags);
+        return E_NOTIMPL;
+    }
+
     /* TODO: Check if the DDBltFx contains any ddraw surface pointers. If it
      * does, copy the struct, and replace the ddraw surfaces with the wined3d
      * surfaces. So far no blitting operations using surfaces in the bltfx
@@ -4151,13 +4158,13 @@ static HRESULT WINAPI DECLSPEC_HOTPATCH ddraw_surface7_BltFast(IDirectDrawSurfac
 
     SetRect(&dst_rect, dst_x, dst_y, dst_x + src_w, dst_y + src_h);
     if (trans & DDBLTFAST_SRCCOLORKEY)
-        flags |= WINEDDBLT_KEYSRC;
+        flags |= WINED3D_BLT_SRC_CKEY;
     if (trans & DDBLTFAST_DESTCOLORKEY)
-        flags |= WINEDDBLT_KEYDEST;
+        flags |= WINED3D_BLT_DST_CKEY;
     if (trans & DDBLTFAST_WAIT)
-        flags |= WINEDDBLT_WAIT;
+        flags |= WINED3D_BLT_WAIT;
     if (trans & DDBLTFAST_DONOTWAIT)
-        flags |= WINEDDBLT_DONOTWAIT;
+        flags |= WINED3D_BLT_DO_NOT_WAIT;
 
     wined3d_mutex_lock();
     if (dst_impl->clipper)

@@ -3225,7 +3225,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
     }
 
     /* No destination color keying supported */
-    if (flags & (WINEDDBLT_KEYDEST | WINEDDBLT_KEYDESTOVERRIDE))
+    if (flags & (WINED3D_BLT_DST_CKEY | WINED3D_BLT_DST_CKEY_OVERRIDE))
     {
         /* Can we support that with glBlendFunc if blitting to the frame buffer? */
         TRACE("Destination color key not supported in accelerated Blit, falling back to software\n");
@@ -3269,7 +3269,7 @@ static HRESULT surface_blt_special(struct wined3d_surface *dst_surface, const RE
             return WINED3DERR_INVALIDCALL;
         }
 
-        if (flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYSRCOVERRIDE))
+        if (flags & (WINED3D_BLT_SRC_CKEY | WINED3D_BLT_SRC_CKEY_OVERRIDE))
         {
             TRACE("Color keying not supported by frame buffer to texture blit\n");
             return WINED3DERR_INVALIDCALL;
@@ -4173,7 +4173,7 @@ static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
         return WINED3D_OK;
     }
 
-    if (flags == WINEDDBLT_DDFX && fx->dwDDFX == WINEDDBLTFX_MIRRORUPDOWN)
+    if (flags == WINED3D_BLT_FX && fx->dwDDFX == WINEDDBLTFX_MIRRORUPDOWN)
     {
         src_row += (((update_h / format->block_height) - 1) * src_pitch);
 
@@ -4245,7 +4245,7 @@ static HRESULT surface_cpu_blt_compressed(const BYTE *src_data, BYTE *dst_data,
     }
 
     FIXME("Unsupported blit on compressed surface (format %s, flags %#x, DDFX %#x).\n",
-            debug_d3dformat(format->id), flags, flags & WINEDDBLT_DDFX ? fx->dwDDFX : 0);
+            debug_d3dformat(format->id), flags, flags & WINED3D_BLT_FX ? fx->dwDDFX : 0);
 
     return E_NOTIMPL;
 }
@@ -4365,16 +4365,15 @@ static HRESULT surface_cpu_blt(struct wined3d_surface *dst_surface, const RECT *
     }
 
     /* First, all the 'source-less' blits */
-    if (flags & WINEDDBLT_COLORFILL)
+    if (flags & WINED3D_BLT_COLOR_FILL)
     {
         hr = _Blt_ColorFill(dbuf, dstwidth, dstheight, bpp, dst_map.row_pitch, fx->u5.dwFillColor);
-        flags &= ~WINEDDBLT_COLORFILL;
+        flags &= ~WINED3D_BLT_COLOR_FILL;
     }
 
-    if (flags & WINEDDBLT_DEPTHFILL)
-    {
-        FIXME("DDBLT_DEPTHFILL needs to be implemented!\n");
-    }
+    if (flags & WINED3D_BLT_DEPTH_FILL)
+        FIXME("WINED3D_BLT_DEPTH_FILL needs to be implemented!\n");
+
     /* Now the 'with source' blits. */
     if (src_surface)
     {
@@ -4519,27 +4518,28 @@ do { \
             LONG dstyinc = dst_map.row_pitch, dstxinc = bpp;
             DWORD keylow = 0xffffffff, keyhigh = 0, keymask = 0xffffffff;
             DWORD destkeylow = 0x0, destkeyhigh = 0xffffffff, destkeymask = 0xffffffff;
-            if (flags & (WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE))
+            if (flags & (WINED3D_BLT_SRC_CKEY | WINED3D_BLT_DST_CKEY
+                    | WINED3D_BLT_SRC_CKEY_OVERRIDE | WINED3D_BLT_DST_CKEY_OVERRIDE))
             {
                 /* The color keying flags are checked for correctness in ddraw */
-                if (flags & WINEDDBLT_KEYSRC)
+                if (flags & WINED3D_BLT_SRC_CKEY)
                 {
                     keylow  = src_surface->container->async.src_blt_color_key.color_space_low_value;
                     keyhigh = src_surface->container->async.src_blt_color_key.color_space_high_value;
                 }
-                else if (flags & WINEDDBLT_KEYSRCOVERRIDE)
+                else if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
                 {
                     keylow = fx->ddckSrcColorkey.color_space_low_value;
                     keyhigh = fx->ddckSrcColorkey.color_space_high_value;
                 }
 
-                if (flags & WINEDDBLT_KEYDEST)
+                if (flags & WINED3D_BLT_DST_CKEY)
                 {
                     /* Destination color keys are taken from the source surface! */
                     destkeylow = src_surface->container->async.dst_blt_color_key.color_space_low_value;
                     destkeyhigh = src_surface->container->async.dst_blt_color_key.color_space_high_value;
                 }
-                else if (flags & WINEDDBLT_KEYDESTOVERRIDE)
+                else if (flags & WINED3D_BLT_DST_CKEY_OVERRIDE)
                 {
                     destkeylow = fx->ddckDestColorkey.color_space_low_value;
                     destkeyhigh = fx->ddckDestColorkey.color_space_high_value;
@@ -4557,10 +4557,11 @@ do { \
                             | masks[1]
                             | masks[2];
                 }
-                flags &= ~(WINEDDBLT_KEYSRC | WINEDDBLT_KEYDEST | WINEDDBLT_KEYSRCOVERRIDE | WINEDDBLT_KEYDESTOVERRIDE);
+                flags &= ~(WINED3D_BLT_SRC_CKEY | WINED3D_BLT_DST_CKEY
+                        | WINED3D_BLT_SRC_CKEY_OVERRIDE | WINED3D_BLT_DST_CKEY_OVERRIDE);
             }
 
-            if (flags & WINEDDBLT_DDFX)
+            if (flags & WINED3D_BLT_FX)
             {
                 BYTE *dTopLeft, *dTopRight, *dBottomLeft, *dBottomRight, *tmp;
                 LONG tmpxy;
@@ -4572,7 +4573,7 @@ do { \
                 if (fx->dwDDFX & WINEDDBLTFX_ARITHSTRETCHY)
                 {
                     /* I don't think we need to do anything about this flag */
-                    WARN("flags=DDBLT_DDFX nothing done for WINEDDBLTFX_ARITHSTRETCHY\n");
+                    WARN("Nothing done for WINEDDBLTFX_ARITHSTRETCHY.\n");
                 }
                 if (fx->dwDDFX & WINEDDBLTFX_MIRRORLEFTRIGHT)
                 {
@@ -4597,7 +4598,7 @@ do { \
                 if (fx->dwDDFX & WINEDDBLTFX_NOTEARING)
                 {
                     /* I don't think we need to do anything about this flag */
-                    WARN("flags=DDBLT_DDFX nothing done for WINEDDBLTFX_NOTEARING\n");
+                    WARN("Nothing done for WINEDDBLTFX_NOTEARING.\n");
                 }
                 if (fx->dwDDFX & WINEDDBLTFX_ROTATE180)
                 {
@@ -4637,10 +4638,10 @@ do { \
                 if (fx->dwDDFX & WINEDDBLTFX_ZBUFFERBASEDEST)
                 {
                     /* I don't think we need to do anything about this flag */
-                    WARN("flags=WINEDDBLT_DDFX nothing done for WINEDDBLTFX_ZBUFFERBASEDEST\n");
+                    WARN("Nothing done for WINEDDBLTFX_ZBUFFERBASEDEST.\n");
                 }
                 dbuf = dTopLeft;
-                flags &= ~(WINEDDBLT_DDFX);
+                flags &= ~(WINED3D_BLT_FX);
             }
 
 #define COPY_COLORKEY_FX(type) \
@@ -4705,7 +4706,7 @@ do { \
                 }
                 default:
                     FIXME("%s color-keyed blit not implemented for bpp %u!\n",
-                          (flags & WINEDDBLT_KEYSRC) ? "Source" : "Destination", bpp * 8);
+                          (flags & WINED3D_BLT_SRC_CKEY) ? "Source" : "Destination", bpp * 8);
                     hr = WINED3DERR_NOTAVAILABLE;
                     goto error;
 #undef COPY_COLORKEY_FX
@@ -4741,7 +4742,7 @@ static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d
     BltFx.dwSize = sizeof(BltFx);
     BltFx.u5.dwFillColor = wined3d_format_convert_from_float(surface, color);
     return surface_cpu_blt(surface, rect, NULL, &src_rect,
-            WINEDDBLT_COLORFILL, &BltFx, WINED3D_TEXF_POINT);
+            WINED3D_BLT_COLOR_FILL, &BltFx, WINED3D_TEXF_POINT);
 }
 
 static HRESULT cpu_blit_depth_fill(struct wined3d_device *device,
@@ -4780,14 +4781,14 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     DWORD src_ds_flags, dst_ds_flags;
     BOOL scale, convert;
 
-    static const DWORD simple_blit = WINEDDBLT_ASYNC
-            | WINEDDBLT_COLORFILL
-            | WINEDDBLT_KEYSRC
-            | WINEDDBLT_KEYSRCOVERRIDE
-            | WINEDDBLT_WAIT
-            | WINEDDBLT_DEPTHFILL
-            | WINEDDBLT_DONOTWAIT
-            | WINEDDBLT_ALPHATEST;
+    static const DWORD simple_blit = WINED3D_BLT_ASYNC
+            | WINED3D_BLT_COLOR_FILL
+            | WINED3D_BLT_SRC_CKEY
+            | WINED3D_BLT_SRC_CKEY_OVERRIDE
+            | WINED3D_BLT_WAIT
+            | WINED3D_BLT_DEPTH_FILL
+            | WINED3D_BLT_DO_NOT_WAIT
+            | WINED3D_BLT_ALPHA_TEST;
 
     TRACE("dst_surface %p, dst_rect %s, src_surface %p, src_rect %s, flags %#x, fx %p, filter %s.\n",
             dst_surface, wine_dbgstr_rect(dst_rect), src_surface, wine_dbgstr_rect(src_rect),
@@ -4855,28 +4856,28 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
     }
 
     if (!fx || !(fx->dwDDFX))
-        flags &= ~WINEDDBLT_DDFX;
+        flags &= ~WINED3D_BLT_FX;
 
-    if (flags & WINEDDBLT_WAIT)
-        flags &= ~WINEDDBLT_WAIT;
+    if (flags & WINED3D_BLT_WAIT)
+        flags &= ~WINED3D_BLT_WAIT;
 
-    if (flags & WINEDDBLT_ASYNC)
+    if (flags & WINED3D_BLT_ASYNC)
     {
         static unsigned int once;
 
         if (!once++)
-            FIXME("Can't handle WINEDDBLT_ASYNC flag.\n");
-        flags &= ~WINEDDBLT_ASYNC;
+            FIXME("Can't handle WINED3D_BLT_ASYNC flag.\n");
+        flags &= ~WINED3D_BLT_ASYNC;
     }
 
-    /* WINEDDBLT_DONOTWAIT appeared in DX7. */
-    if (flags & WINEDDBLT_DONOTWAIT)
+    /* WINED3D_BLT_DO_NOT_WAIT appeared in DX7. */
+    if (flags & WINED3D_BLT_DO_NOT_WAIT)
     {
         static unsigned int once;
 
         if (!once++)
-            FIXME("Can't handle WINEDDBLT_DONOTWAIT flag.\n");
-        flags &= ~WINEDDBLT_DONOTWAIT;
+            FIXME("Can't handle WINED3D_BLT_DO_NOT_WAIT flag.\n");
+        flags &= ~WINED3D_BLT_DO_NOT_WAIT;
     }
 
     if (!device->d3d_initialized)
@@ -4935,7 +4936,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
 
     if (src_ds_flags || dst_ds_flags)
     {
-        if (flags & WINEDDBLT_DEPTHFILL)
+        if (flags & WINED3D_BLT_DEPTH_FILL)
         {
             float depth;
 
@@ -4977,7 +4978,7 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
                 goto cpu;
         }
 
-        if (flags & WINEDDBLT_COLORFILL)
+        if (flags & WINED3D_BLT_COLOR_FILL)
         {
             struct wined3d_color color;
             const struct wined3d_palette *palette = dst_swapchain ? dst_swapchain->palette : NULL;
@@ -4997,17 +4998,17 @@ HRESULT wined3d_surface_blt(struct wined3d_surface *dst_surface, const RECT *dst
             const struct wined3d_color_key *color_key = NULL;
 
             TRACE("Color blit.\n");
-            if (flags & WINEDDBLT_KEYSRCOVERRIDE)
+            if (flags & WINED3D_BLT_SRC_CKEY_OVERRIDE)
             {
                 color_key = &fx->ddckSrcColorkey;
                 blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
             }
-            else if (flags & WINEDDBLT_KEYSRC)
+            else if (flags & WINED3D_BLT_SRC_CKEY)
             {
                 color_key = &src_surface->container->async.src_blt_color_key;
                 blit_op = WINED3D_BLIT_OP_COLOR_BLIT_CKEY;
             }
-            else if (flags & WINEDDBLT_ALPHATEST)
+            else if (flags & WINED3D_BLT_ALPHA_TEST)
             {
                 blit_op = WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST;
             }

@@ -451,8 +451,8 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
         RECT rect = {0, 0, src_surface->resource.width, src_surface->resource.height};
 
         /* Blit the logo into the upper left corner of the drawable. */
-        wined3d_surface_blt(back_buffer, &rect, src_surface, &rect, WINEDDBLT_ALPHATEST,
-                NULL, WINED3D_TEXF_POINT);
+        wined3d_surface_blt(back_buffer, &rect, src_surface, &rect,
+                WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
     }
 
     if (swapchain->device->bCursorVisible && swapchain->device->cursor_texture
@@ -480,8 +480,8 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
         if (swapchain->desc.windowed)
             MapWindowPoints(NULL, swapchain->win_handle, (POINT *)&destRect, 2);
         if (wined3d_clip_blit(&clip_rect, &destRect, &src_rect))
-            wined3d_surface_blt(back_buffer, &destRect, cursor, &src_rect, WINEDDBLT_ALPHATEST,
-                    NULL, WINED3D_TEXF_POINT);
+            wined3d_surface_blt(back_buffer, &destRect, cursor, &src_rect,
+                    WINED3D_BLT_ALPHA_TEST, NULL, WINED3D_TEXF_POINT);
     }
 
     TRACE("Presenting HDC %p.\n", context->hdc);
