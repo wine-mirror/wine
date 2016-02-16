@@ -173,6 +173,7 @@ struct makefile
     const char     *testdll;
     const char     *sharedlib;
     const char     *staticlib;
+    const char     *staticimplib;
     const char     *importlib;
     int             use_msvcrt;
     int             is_win16;
@@ -1800,6 +1801,11 @@ static void add_generated_sources( struct makefile *make )
             source->files_count = source->files_size = 0;
             source->files = NULL;
         }
+        if (source->file->flags & FLAG_C_IMPLIB)
+        {
+            if (!make->staticimplib && make->importlib && *dll_ext)
+                make->staticimplib = strmake( "lib%s.def.a", make->importlib );
+        }
     }
     if (make->testdll)
     {
@@ -1882,6 +1888,51 @@ static struct strarray get_local_dependencies( const struct makefile *make, cons
             deps.str[i] = src_dir_path( make, deps.str[i] );
     }
     return deps;
+}
+
+
+/*******************************************************************
+ *         add_import_libs
+ */
+static struct strarray add_import_libs( const struct makefile *make, struct strarray *deps,
+                                        struct strarray imports, int cross )
+{
+    struct strarray ret = empty_strarray;
+    unsigned int i, j;
+
+    for (i = 0; i < imports.count; i++)
+    {
+        const char *name = imports.str[i];
+
+        for (j = 0; j < top_makefile->subdirs.count; j++)
+        {
+            const struct makefile *submake = top_makefile->submakes[j];
+
+            if (submake->importlib && !strcmp( submake->importlib, name ))
+            {
+                const char *dir = top_obj_dir_path( make, submake->base_dir );
+                const char *ext = cross ? "cross.a" : *dll_ext ? "def" : "a";
+
+                strarray_add( deps, strmake( "%s/lib%s.%s", dir, name, ext ));
+                if (!cross && submake->staticimplib)
+                    strarray_add( deps, strmake( "%s/%s", dir, submake->staticimplib ));
+                break;
+            }
+
+            if (submake->staticlib &&
+                !strncmp( submake->staticlib, "lib", 3 ) &&
+                !strncmp( submake->staticlib + 3, name, strlen(name) ) &&
+                !strcmp( submake->staticlib + 3 + strlen(name), ".a" ))
+            {
+                const char *dir = top_obj_dir_path( make, submake->base_dir );
+
+                strarray_add( deps, strmake( "%s/lib%s.a", dir, name ));
+                break;
+            }
+        }
+        strarray_add( &ret, strmake( "-l%s", name ));
+    }
+    return ret;
 }
 
 
@@ -2417,15 +2468,14 @@ static struct strarray output_sources( const struct makefile *make )
     if (make->module && !make->staticlib)
     {
         struct strarray all_libs = empty_strarray;
+        struct strarray dep_libs = empty_strarray;
         char *module_path = obj_dir_path( make, make->module );
         char *spec_file = NULL;
 
         if (!make->appmode.count)
             spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
-        for (i = 0; i < make->delayimports.count; i++)
-            strarray_add( &all_libs, strmake( "-l%s", make->delayimports.str[i] ));
-        for (i = 0; i < make->imports.count; i++)
-            strarray_add( &all_libs, strmake( "-l%s", make->imports.str[i] ));
+        strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, 0 ));
+        strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->imports, 0 ));
         for (i = 0; i < make->delayimports.count; i++)
             strarray_add( &all_libs, strmake( "-Wb,-d%s", make->delayimports.str[i] ));
         strarray_add( &all_libs, "-lwine" );
@@ -2453,6 +2503,7 @@ static struct strarray output_sources( const struct makefile *make )
         if (spec_file) output_filename( spec_file );
         output_filenames_obj_dir( make, object_files );
         output_filenames_obj_dir( make, res_files );
+        output_filenames( dep_libs );
         output( "\n" );
         output( "\t%s -o $@", tools_path( make, "winegcc" ));
         output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
@@ -2655,12 +2706,10 @@ static struct strarray output_sources( const struct makefile *make )
         char *testmodule = replace_extension( make->testdll, ".dll", "_test.exe" );
         char *stripped = replace_extension( make->testdll, ".dll", "_test-stripped.exe" );
         char *testres = replace_extension( make->testdll, ".dll", "_test.res" );
-        struct strarray all_libs = empty_strarray;
+        struct strarray dep_libs = empty_strarray;
+        struct strarray all_libs = add_import_libs( make, &dep_libs, make->imports, 0 );
 
-        for (i = 0; i < make->imports.count; i++)
-            strarray_add( &all_libs, strmake( "-l%s", make->imports.str[i] ));
         strarray_addall( &all_libs, libs );
-
         strarray_add( &all_targets, strmake( "%s%s", testmodule, dll_ext ));
         strarray_add( &clean_files, strmake( "%s%s", stripped, dll_ext ));
         output( "%s%s:\n", obj_dir_path( make, testmodule ), dll_ext );
@@ -2692,6 +2741,7 @@ static struct strarray output_sources( const struct makefile *make )
                 obj_dir_path( make, stripped ), dll_ext );
         output_filenames_obj_dir( make, object_files );
         output_filenames_obj_dir( make, res_files );
+        output_filenames( dep_libs );
         output( "\n" );
 
         output( "all: %s/%s\n", top_obj_dir_path( make, "programs/winetest" ), testres );
@@ -2704,11 +2754,15 @@ static struct strarray output_sources( const struct makefile *make )
         {
             char *crosstest = replace_extension( make->testdll, ".dll", "_crosstest.exe" );
 
+            dep_libs = empty_strarray;
+            all_libs = add_import_libs( make, &dep_libs, make->imports, 1 );
+            strarray_addall( &all_libs, libs );
             strarray_add( &clean_files, crosstest );
             output( "%s: %s\n", obj_dir_path( make, "crosstest" ), obj_dir_path( make, crosstest ));
             output( "%s:", obj_dir_path( make, crosstest ));
             output_filenames_obj_dir( make, crossobj_files );
             output_filenames_obj_dir( make, res_files );
+            output_filenames( dep_libs );
             output( "\n" );
             output( "\t%s -o $@ -b %s", tools_path( make, "winegcc" ), crosstarget );
             output_filename( strmake( "-B%s", tools_dir_path( make, "winebuild" )));
