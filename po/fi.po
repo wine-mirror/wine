@@ -11550,88 +11550,61 @@ msgid "The operation completed successfully\n"
 msgstr "Toiminnon suorittaminen onnistui\n"
 
 #: reg.rc:35
-#, fuzzy
-#| msgid "Error: Invalid key name\n"
 msgid "reg: Invalid key name\n"
-msgstr "Virhe: Viallinen avaimen nimi\n"
+msgstr "reg: Avaimen nimi ei kelpaa\n"
 
 #: reg.rc:36
-#, fuzzy
-#| msgid "Error: Invalid command line parameters\n"
 msgid "reg: Invalid command line parameters\n"
-msgstr "Virhe: Viallisia komentoriviparametreja\n"
+msgstr "reg: Komentoriviparametrit eivät kelpaa\n"
 
 #: reg.rc:37
-#, fuzzy
-#| msgid "Error: Unable to access remote machine\n"
 msgid "reg: Unable to access remote machine\n"
-msgstr "Virhe: Ei pääsyä etäkoneelle\n"
+msgstr "reg: Ei pääsyä etäkoneelle\n"
 
 #: reg.rc:38
-#, fuzzy
-#| msgid ""
-#| "Error: The system was unable to find the specified registry key or value\n"
 msgid ""
 "reg: The system was unable to find the specified registry key or value\n"
-msgstr "Virhe: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
+msgstr "reg: Järjestelmä ei löytänyt annettua rekisteriavainta tai -arvoa\n"
 
 #: reg.rc:39
-#, fuzzy
-#| msgid "Error: Unsupported type\n"
 msgid "reg: Unsupported registry data type [%1]\n"
-msgstr "Virhe: Tyyppiä ei tueta\n"
+msgstr "reg: Rekisterin tietotyypille [%1] ei ole tukea\n"
 
 #: reg.rc:40
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid integer\n"
-msgstr "uninstaller: Valitsinta '--remove' täytyy seurata ohjelman GUID\n"
+msgstr "reg: Valitsinta [/d] täytyy seurata kelpo kokonaisluku\n"
 
 #: reg.rc:41
-#, fuzzy
-#| msgid ""
-#| "uninstaller: The option '--remove' must be followed by an application "
-#| "GUID\n"
 msgid "reg: The option [/d] must be followed by a valid hexadecimal value\n"
-msgstr "uninstaller: Valitsinta '--remove' täytyy seurata ohjelman GUID\n"
+msgstr "reg: Valitsinta [/d] täytyy seurata kelpo heksadesimaaliarvo\n"
 
 #: reg.rc:42
 msgid "reg: Unhandled registry data type [/t 0x%1!x!, /d %2]\n"
-msgstr ""
+msgstr "reg: Käsittelemätön rekisterin tietotyyppi [/t 0x%1!x!, /d %2]\n"
 
 #: reg.rc:43
-#, fuzzy
-#| msgid "The specified file already exists. Do you want to replace it?"
 msgid "The registry value '%1' already exists. Do you want to overwrite it?"
-msgstr "Tiedosto on jo olemassa. Haluatko korvata sen?"
+msgstr "Rekisterin arvo '%1' on jo olemassa. Haluatko korvata sen?"
 
 #: reg.rc:47
 msgid "The registry operation was cancelled\n"
-msgstr ""
+msgstr "Rekisterin toimenpide peruttiin\n"
 
 #: reg.rc:48 regedit.rc:204
 msgid "(Default)"
 msgstr "(Oletus)"
 
 #: reg.rc:49
-#, fuzzy
-#| msgid "Are you sure you want to delete these values?"
 msgid "Are you sure you want to delete the registry value '%1'?"
-msgstr "Haluatko varmasti tuhota nämä arvot?"
+msgstr "Haluatko varmasti tuhota rekisteristä arvon '%1'?"
 
 #: reg.rc:50
-#, fuzzy
-#| msgid "Are you sure you want to delete value '%s'?"
 msgid "Are you sure you want to delete all registry values in '%1'?"
-msgstr "Haluatko varmasti tuhota arvon '%s'?"
+msgstr "Haluatko varmasti tuhota kaikki rekisterin arvot kohteesta '%1'?"
 
 #: reg.rc:51
-#, fuzzy
-#| msgid "Are you sure you want to delete '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
-msgstr "Haluatko varmasti tuhota kohteen '%1'?"
+msgstr "Haluatko varmasti tuhota rekisteriavaimen '%1'?"
 
 #: regedit.rc:34
 msgid "&Registry"
@@ -13757,7 +13730,7 @@ msgstr "Virhe asetuksissa"
 msgid ""
 "The size of the screen buffer must be greater than or equal to the size of "
 "the window."
-msgstr "Näyttöpuskurin on oltava vähintään ikkunan kokoinen"
+msgstr "Näyttöpuskurin on oltava vähintään ikkunan kokoinen."
 
 #: wineconsole.rc:37
 msgid "Each character is %1!u! pixels wide and %2!u! pixels high"
