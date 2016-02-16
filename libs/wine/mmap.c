@@ -292,6 +292,7 @@ static inline void reserve_area( void *addr, void *end )
 }
 
 
+#ifdef __i386__
 /***********************************************************************
  *           reserve_malloc_space
  *
@@ -336,6 +337,7 @@ static inline void reserve_dos_area(void)
     wine_anon_mmap( NULL, first_page, PROT_NONE, MAP_NORESERVE|MAP_FIXED );
     wine_mmap_add_reserved_area( NULL, dos_area_size );
 }
+#endif
 
 
 /***********************************************************************
