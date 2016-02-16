@@ -820,7 +820,7 @@ msgstr ""
 
 #: comdlg32.rc:36
 msgid "Invalid character(s) in path"
-msgstr "Polku sisältää epäkelpoja merkkejä"
+msgstr "Polun sisältämät merkit eivät kelpaa"
 
 #: comdlg32.rc:37
 msgid ""
@@ -3686,7 +3686,7 @@ msgstr "Onnistui.\n"
 
 #: winerror.mc:31
 msgid "Invalid function.\n"
-msgstr "Virheellinen funktio.\n"
+msgstr "Funktio ei kelpaa.\n"
 
 #: winerror.mc:36
 msgid "File not found.\n"
@@ -3706,7 +3706,7 @@ msgstr "Pääsy estetty.\n"
 
 #: winerror.mc:56
 msgid "Invalid handle.\n"
-msgstr "Virheellinen kahva.\n"
+msgstr "Kahva ei kelpaa.\n"
 
 #: winerror.mc:61
 msgid "Memory trashed.\n"
@@ -3718,23 +3718,23 @@ msgstr "Muisti loppu.\n"
 
 #: winerror.mc:71
 msgid "Invalid block.\n"
-msgstr "Virheellinen lohko.\n"
+msgstr "Lohko ei kelpaa.\n"
 
 #: winerror.mc:76
 msgid "Bad environment.\n"
-msgstr "Viallinen ympäristö.\n"
+msgstr "Ympäristö ei kelpaa.\n"
 
 #: winerror.mc:81
 msgid "Bad format.\n"
-msgstr "Viallinen muoto.\n"
+msgstr "Muoto ei kelpaa.\n"
 
 #: winerror.mc:86
 msgid "Invalid access.\n"
-msgstr "Virheellinen käsittely.\n"
+msgstr "Käsittely ei kelpaa.\n"
 
 #: winerror.mc:91
 msgid "Invalid data.\n"
-msgstr "Virheellinen data.\n"
+msgstr "Data ei kelpaa.\n"
 
 #: winerror.mc:96
 msgid "Out of memory.\n"
@@ -3742,7 +3742,7 @@ msgstr "Muisti loppu.\n"
 
 #: winerror.mc:101
 msgid "Invalid drive.\n"
-msgstr "Virheellinen asema.\n"
+msgstr "Asema ei kelpaa.\n"
 
 #: winerror.mc:106
 msgid "Can't delete current directory.\n"
@@ -3762,7 +3762,7 @@ msgstr "Kirjoitussuojattu.\n"
 
 #: winerror.mc:126
 msgid "Bad unit.\n"
-msgstr "Virheellinen yksikkö.\n"
+msgstr "Yksikkö ei kelpaa.\n"
 
 #: winerror.mc:131
 msgid "Not ready.\n"
@@ -3770,7 +3770,7 @@ msgstr "Ei valmis.\n"
 
 #: winerror.mc:136
 msgid "Bad command.\n"
-msgstr "Virheellinen komento.\n"
+msgstr "Komento ei kelpaa.\n"
 
 #: winerror.mc:141
 msgid "CRC error.\n"
@@ -3778,7 +3778,7 @@ msgstr "CRC-virhe.\n"
 
 #: winerror.mc:146
 msgid "Bad length.\n"
-msgstr "Virheellinen pituus.\n"
+msgstr "Pituus ei kelpaa.\n"
 
 #: winerror.mc:151 winerror.mc:526
 msgid "Seek error.\n"
@@ -3846,7 +3846,7 @@ msgstr "Verkkonimi on jo käytössä.\n"
 
 #: winerror.mc:231
 msgid "Bad network path.\n"
-msgstr "Virheellinen verkkopolku.\n"
+msgstr "Verkkopolku ei kelpaa.\n"
 
 #: winerror.mc:236
 msgid "Network busy.\n"
@@ -3866,7 +3866,7 @@ msgstr "Verkkosovittimessa tapahtui virhe.\n"
 
 #: winerror.mc:256
 msgid "Bad network response.\n"
-msgstr "Virheellinen verkon vastaus.\n"
+msgstr "Verkon vastaus ei kelpaa.\n"
 
 #: winerror.mc:261
 msgid "Unexpected network error.\n"
@@ -3898,11 +3898,11 @@ msgstr "Verkkoon pääsy estetty.\n"
 
 #: winerror.mc:296
 msgid "Bad device type.\n"
-msgstr "Virheellinen laitetyyppi.\n"
+msgstr "Laitetyyppi ei kelpaa.\n"
 
 #: winerror.mc:301
 msgid "Bad network name.\n"
-msgstr "Virheellinen verkkonimi.\n"
+msgstr "Verkkonimi ei kelpaa.\n"
 
 #: winerror.mc:306
 msgid "Too many network names.\n"
@@ -3946,11 +3946,11 @@ msgstr "Tehtävä on jo annettu.\n"
 
 #: winerror.mc:356 winerror.mc:1711
 msgid "Invalid password.\n"
-msgstr "Virheellinen salasana.\n"
+msgstr "Salasana ei kelpaa.\n"
 
 #: winerror.mc:361
 msgid "Invalid parameter.\n"
-msgstr "Virheellinen parametri.\n"
+msgstr "Parametri ei kelpaa.\n"
 
 #: winerror.mc:366
 msgid "Net write fault.\n"
@@ -3978,7 +3978,7 @@ msgstr "Liian monta semaforipyyntöä.\n"
 
 #: winerror.mc:396
 msgid "Invalid at interrupt time.\n"
-msgstr "Keskeytysaikana viallinen.\n"
+msgstr "Keskeytysaikana virheellinen.\n"
 
 #: winerror.mc:401
 msgid "Semaphore owner died.\n"
@@ -4014,19 +4014,19 @@ msgstr "Hakukahvat loppuivat.\n"
 
 #: winerror.mc:446
 msgid "Invalid target handle.\n"
-msgstr "Virheellinen kohteen kahva.\n"
+msgstr "Kohteen kahva ei kelpaa.\n"
 
 #: winerror.mc:451
 msgid "Invalid IOCTL.\n"
-msgstr "Virheellinen IOCTL.\n"
+msgstr "IOCTL ei kelpaa.\n"
 
 #: winerror.mc:456
 msgid "Invalid verify switch.\n"
-msgstr "Virheellinen verify-lippu.\n"
+msgstr "Verify-lippu ei kelpaa.\n"
 
 #: winerror.mc:461
 msgid "Bad driver level.\n"
-msgstr "Virheellinen ajurin taso.\n"
+msgstr "Ajurin taso ei kelpaa.\n"
 
 #: winerror.mc:466
 msgid "Call not implemented.\n"
@@ -4042,11 +4042,11 @@ msgstr "Riittämätön puskuri.\n"
 
 #: winerror.mc:481
 msgid "Invalid name.\n"
-msgstr "Virheellinen nimi.\n"
+msgstr "Nimi ei kelpaa.\n"
 
 #: winerror.mc:486
 msgid "Invalid level.\n"
-msgstr "Virheellinen taso.\n"
+msgstr "Taso ei kelpaa.\n"
 
 #: winerror.mc:491
 msgid "No volume label.\n"
@@ -4070,7 +4070,7 @@ msgstr "Lapsiprosessi ei ole valmis.\n"
 
 #: winerror.mc:516
 msgid "Invalid use of direct access handle.\n"
-msgstr "Virheellinen suoran kahvan käyttö.\n"
+msgstr "Suoran kahvan käyttö ei kelpaa.\n"
 
 #: winerror.mc:521
 msgid "Negative seek.\n"
@@ -4150,7 +4150,7 @@ msgstr "Järjestelmän jäljitys määrittelemättä tai estetty.\n"
 
 #: winerror.mc:621
 msgid "Event count for DosMuxSemWait incorrect.\n"
-msgstr "Funktiolle DosMuxSemWait annettiin virheellinen tapahtumien määrä.\n"
+msgstr "Funktiolle DosMuxSemWait annettu tapahtumien määrä ei kelpaa.\n"
 
 #: winerror.mc:626
 msgid "Too many waiters for DosMuxSemWait.\n"
@@ -4158,7 +4158,7 @@ msgstr "Funktiota DosMuxSemWait ei suoritettu, koska odottajia on jo liikaa.\n"
 
 #: winerror.mc:631
 msgid "DosSemMuxWait list invalid.\n"
-msgstr "Funktiolle DosMuxSemWait annettu lista on viallinen.\n"
+msgstr "Funktiolle DosMuxSemWait annettu lista ei kelpaa.\n"
 
 #: winerror.mc:636
 msgid "Volume label too long.\n"
@@ -4182,11 +4182,11 @@ msgstr "Segmenttiä ei lukittu.\n"
 
 #: winerror.mc:661
 msgid "Bad thread ID address.\n"
-msgstr "Virheellinen säikeen ID:n osoite.\n"
+msgstr "Säikeen ID:n osoite ei kelpaa.\n"
 
 #: winerror.mc:666
 msgid "Bad arguments to DosExecPgm.\n"
-msgstr "Virheellisiä argumentteja DosExecPgm:lle.\n"
+msgstr "Argumentit DosExecPgm:lle eivät kelpaa.\n"
 
 #: winerror.mc:671
 msgid "Path is invalid.\n"
@@ -4218,11 +4218,11 @@ msgstr "Atomisia lukituksia ei tueta.\n"
 
 #: winerror.mc:706
 msgid "Invalid segment number.\n"
-msgstr "Virheellinen segmentin numero.\n"
+msgstr "Segmentin numero ei kelpaa.\n"
 
 #: winerror.mc:711
 msgid "Invalid ordinal for %1.\n"
-msgstr "Virheellinen järjestysluku %1:lle.\n"
+msgstr "%1:n järjestysluku ei kelpaa.\n"
 
 #: winerror.mc:716
 msgid "File already exists.\n"
@@ -4230,7 +4230,7 @@ msgstr "Tiedosto on jo olemassa.\n"
 
 #: winerror.mc:721
 msgid "Invalid flag number.\n"
-msgstr "Virheellinen valitsimen numero.\n"
+msgstr "Valitsimen numero ei kelpaa.\n"
 
 #: winerror.mc:726
 msgid "Semaphore name not found.\n"
@@ -4238,19 +4238,19 @@ msgstr "Semaforin nimeä ei löydy.\n"
 
 #: winerror.mc:731
 msgid "Invalid starting code segment for %1.\n"
-msgstr "Virheellinen aloituskoodisegmentti %1:lle.\n"
+msgstr "%1:n aloituskoodisegmentti ei kelpaa.\n"
 
 #: winerror.mc:736
 msgid "Invalid starting stack segment for %1.\n"
-msgstr "Virheellinen aloituspinosegmentti %1:lle.\n"
+msgstr "%1:n aloituspinosegmentti ei kelpaa.\n"
 
 #: winerror.mc:741
 msgid "Invalid module type for %1.\n"
-msgstr "Virheellinen moduulin tyyppi %1:lle.\n"
+msgstr "%1:n moduulin tyyppi ei kelpaa.\n"
 
 #: winerror.mc:746
 msgid "Invalid EXE signature in %1.\n"
-msgstr "Virheellinen EXE-allekirjoitus tiedostossa %1.\n"
+msgstr "Tiedoston %1 EXE-allekirjoitus ei kelpaa.\n"
 
 #: winerror.mc:751
 msgid "EXE %1 is marked invalid.\n"
@@ -4258,7 +4258,7 @@ msgstr "EXE %1 on merkitty vialliseksi.\n"
 
 #: winerror.mc:756
 msgid "Bad EXE format for %1.\n"
-msgstr "Viallinen EXE-formaatti tiedostossa %1.\n"
+msgstr "Tiedoston %1 EXE-formaatti ei kelpaa.\n"
 
 #: winerror.mc:761
 msgid "Iterated data exceeds 64k in %1.\n"
@@ -4266,7 +4266,7 @@ msgstr "Iteroitu data ylittää 64 k %1:ssa.\n"
 
 #: winerror.mc:766
 msgid "Invalid MinAllocSize in %1.\n"
-msgstr "Virheellinen MinAllocSize %1:ssa.\n"
+msgstr "%1:n MinAllocSize ei kelpaa.\n"
 
 #: winerror.mc:771
 msgid "Dynlink from invalid ring.\n"
@@ -4278,7 +4278,7 @@ msgstr "IOPL ei ole käytössä.\n"
 
 #: winerror.mc:781
 msgid "Invalid SEGDPL in %1.\n"
-msgstr "Virheellinen SEGDPL %1:ssa.\n"
+msgstr "%1:n SEGDPL ei kelpaa.\n"
 
 #: winerror.mc:786
 msgid "Auto data segment exceeds 64k.\n"
@@ -4318,7 +4318,7 @@ msgstr "Virhe tiedostonimen jokerimerkkien käytössä.\n"
 
 #: winerror.mc:831
 msgid "Invalid signal number.\n"
-msgstr "Virheellinen signaalin numero.\n"
+msgstr "Signaalin numero ei kelpaa.\n"
 
 #: winerror.mc:836
 msgid "Error setting signal handler.\n"
@@ -4342,7 +4342,7 @@ msgstr "Koneen tyyppi ei täsmää.\n"
 
 #: winerror.mc:861
 msgid "Bad pipe.\n"
-msgstr "Virheellinen putki.\n"
+msgstr "Putki ei kelpaa.\n"
 
 #: winerror.mc:866
 msgid "Pipe busy.\n"
@@ -4366,7 +4366,7 @@ msgstr "Istunto peruttu.\n"
 
 #: winerror.mc:891
 msgid "Invalid extended attribute name.\n"
-msgstr "Virheellinen lisämääritteen nimi.\n"
+msgstr "Lisämääritteen nimi ei kelpaa.\n"
 
 #: winerror.mc:896
 msgid "Extended attribute list inconsistent.\n"
@@ -4382,7 +4382,7 @@ msgstr "Kopiointirajapintaa ei voida käyttää.\n"
 
 #: winerror.mc:911
 msgid "Directory name invalid.\n"
-msgstr "Hakemiston nimi virheellinen.\n"
+msgstr "Hakemiston nimi ei kelpaa.\n"
 
 #: winerror.mc:916
 msgid "Extended attributes didn't fit.\n"
@@ -4398,7 +4398,7 @@ msgstr "Lisämääritetaulu on täynnä.\n"
 
 #: winerror.mc:931
 msgid "Invalid extended attribute handle.\n"
-msgstr "Virheellinen lisämääritteen kahva.\n"
+msgstr "Lisämääritteen kahva ei kelpaa.\n"
 
 #: winerror.mc:936
 msgid "Extended attributes not supported.\n"
@@ -4430,7 +4430,7 @@ msgstr "Viestiä 0x%1 ei löytynyt tiedostosta %2.\n"
 
 #: winerror.mc:971
 msgid "Invalid address.\n"
-msgstr "Virheellinen osoite.\n"
+msgstr "Osoite ei kelpaa.\n"
 
 #: winerror.mc:976
 msgid "Arithmetic overflow.\n"
@@ -4474,7 +4474,7 @@ msgstr "Pinon ylivuoto.\n"
 
 #: winerror.mc:1026
 msgid "Invalid message.\n"
-msgstr "Virheellinen viesti.\n"
+msgstr "Viesti ei kelpaa.\n"
 
 #: winerror.mc:1031
 msgid "Cannot complete.\n"
@@ -4482,7 +4482,7 @@ msgstr "Ei voida suorittaa loppuun.\n"
 
 #: winerror.mc:1036
 msgid "Invalid flags.\n"
-msgstr "Vialliset liput.\n"
+msgstr "Valitsimet eivät kelpaa.\n"
 
 #: winerror.mc:1041
 msgid "Unrecognized volume.\n"
@@ -4506,7 +4506,7 @@ msgstr "Rekisteri vioittunut.\n"
 
 #: winerror.mc:1066
 msgid "Invalid key.\n"
-msgstr "Virheellinen avain.\n"
+msgstr "Avain ei kelpaa.\n"
 
 #: winerror.mc:1071
 msgid "Can't open registry key.\n"
@@ -4562,7 +4562,7 @@ msgstr "Riippuvaisia palveluita on käynnissä.\n"
 
 #: winerror.mc:1136
 msgid "Invalid service control.\n"
-msgstr "Virheellinen palvelukontrolli.\n"
+msgstr "Palvelukontrolli ei kelpaa.\n"
 
 #: winerror.mc:1141
 msgid "Service request timeout.\n"
@@ -4582,7 +4582,7 @@ msgstr "Palvelu on jo käynnissä.\n"
 
 #: winerror.mc:1161
 msgid "Invalid service account.\n"
-msgstr "Viallinen palvelutili.\n"
+msgstr "Palvelutili ei kelpaa.\n"
 
 #: winerror.mc:1166
 msgid "Service is disabled.\n"
@@ -4638,7 +4638,7 @@ msgstr "Palvelu jumittui käynnistyessään.\n"
 
 #: winerror.mc:1231
 msgid "Invalid service lock.\n"
-msgstr "Virheellinen palvelun lukko.\n"
+msgstr "Palvelun lukko ei kelpaa.\n"
 
 #: winerror.mc:1236
 msgid "Service marked for delete.\n"
@@ -4714,7 +4714,7 @@ msgstr "Virhe osioinnissa.\n"
 
 #: winerror.mc:1326
 msgid "Invalid block length.\n"
-msgstr "Virheellinen lohkon pituus.\n"
+msgstr "Lohkon pituus ei kelpaa.\n"
 
 #: winerror.mc:1331
 msgid "Device not partitioned.\n"
@@ -4818,7 +4818,7 @@ msgstr "Mahdollinen lukkiutuminen.\n"
 
 #: winerror.mc:1456
 msgid "Incorrect alignment.\n"
-msgstr "Virheellinen tasaus.\n"
+msgstr "Tasaus ei kelpaa.\n"
 
 #: winerror.mc:1461
 msgid "Set-power-state vetoed.\n"
@@ -4850,7 +4850,7 @@ msgstr "Reaalitilan sovellus.\n"
 
 #: winerror.mc:1496
 msgid "Invalid DLL.\n"
-msgstr "Virheellinen DLL.\n"
+msgstr "DLL ei kelpaa.\n"
 
 #: winerror.mc:1501
 msgid "No associated application.\n"
@@ -4958,7 +4958,7 @@ msgstr "Lokimerkintä on poistettu.\n"
 
 #: winerror.mc:1631
 msgid "Invalid device name.\n"
-msgstr "Virheellinen laitteen nimi.\n"
+msgstr "Laitteen nimi ei kelpaa.\n"
 
 #: winerror.mc:1636
 msgid "Connection unavailable.\n"
@@ -4974,7 +4974,7 @@ msgstr "Ei verkkoa tai viallinen polku.\n"
 
 #: winerror.mc:1651
 msgid "Invalid network provider name.\n"
-msgstr "Virheellinen verkontarjoajan nimi.\n"
+msgstr "Verkontarjoajan nimi ei kelpaa.\n"
 
 #: winerror.mc:1656
 msgid "Cannot open network connection profile.\n"
@@ -4994,39 +4994,39 @@ msgstr "Laajennettu virhe.\n"
 
 #: winerror.mc:1676
 msgid "Invalid group name.\n"
-msgstr "Virheellinen ryhmän nimi.\n"
+msgstr "Ryhmän nimi ei kelpaa.\n"
 
 #: winerror.mc:1681
 msgid "Invalid computer name.\n"
-msgstr "Virheellinen tietokoneen nimi.\n"
+msgstr "Tietokoneen nimi ei kelpaa.\n"
 
 #: winerror.mc:1686
 msgid "Invalid event name.\n"
-msgstr "Virheellinen tapahtuman nimi.\n"
+msgstr "Tapahtuman nimi ei kelpaa.\n"
 
 #: winerror.mc:1691
 msgid "Invalid domain name.\n"
-msgstr "Virheellinen toimialueen nimi.\n"
+msgstr "Toimialueen nimi ei kelpaa.\n"
 
 #: winerror.mc:1696
 msgid "Invalid service name.\n"
-msgstr "Virheellinen palvelun nimi.\n"
+msgstr "Palvelun nimi ei kelpaa.\n"
 
 #: winerror.mc:1701
 msgid "Invalid network name.\n"
-msgstr "Virheellinen verkon nimi.\n"
+msgstr "Verkon nimi ei kelpaa.\n"
 
 #: winerror.mc:1706
 msgid "Invalid share name.\n"
-msgstr "Virheellinen jaon nimi.\n"
+msgstr "Jaon nimi ei kelpaa.\n"
 
 #: winerror.mc:1716
 msgid "Invalid message name.\n"
-msgstr "Epäkelpo viestin nimi.\n"
+msgstr "Viestin nimi ei kelpaa.\n"
 
 #: winerror.mc:1721
 msgid "Invalid message destination.\n"
-msgstr "Epäkelpo viestin kohde.\n"
+msgstr "Viestin kohde ei kelpaa.\n"
 
 #: winerror.mc:1726
 msgid "Session credential conflict.\n"
@@ -5118,7 +5118,7 @@ msgstr "Kirjautumisen työasemarajoitus.\n"
 
 #: winerror.mc:1836
 msgid "Incorrect network address.\n"
-msgstr "Virheellinen verkko-osoite.\n"
+msgstr "Verkko-osoite ei kelpaa.\n"
 
 #: winerror.mc:1841
 msgid "Service already registered.\n"
@@ -5198,11 +5198,11 @@ msgstr "Tuntematon revisio.\n"
 
 #: winerror.mc:1936
 msgid "Incompatible revision levels.\n"
-msgstr "Yhteensopimattomat revisiotasot.\n"
+msgstr "Revisiotasot eivät sovi yhteen.\n"
 
 #: winerror.mc:1941
 msgid "Invalid owner.\n"
-msgstr "Virheellinen omistaja.\n"
+msgstr "Omistaja ei kelpaa.\n"
 
 #: winerror.mc:1946
 msgid "Invalid primary group.\n"
@@ -5210,7 +5210,7 @@ msgstr "Virheellinen ensisijainen ryhmä.\n"
 
 #: winerror.mc:1951
 msgid "No impersonation token.\n"
-msgstr "Ei ole tekeytymislipuke.\n"
+msgstr "Ei tekeytymislipuketta.\n"
 
 #: winerror.mc:1956
 msgid "Can't disable mandatory group.\n"
@@ -5234,7 +5234,7 @@ msgstr "Asiakkaalla ei ole tarvittavaa oikeutta.\n"
 
 #: winerror.mc:1981
 msgid "Invalid account name.\n"
-msgstr "Virheellinen tunnuksen nimi.\n"
+msgstr "Tilin nimi ei kelpaa.\n"
 
 #: winerror.mc:1986
 msgid "User already exists.\n"
@@ -5286,11 +5286,11 @@ msgstr "Tunnuksen rajoitus.\n"
 
 #: winerror.mc:2046
 msgid "Invalid logon hours.\n"
-msgstr "Virheelliset kirjautumisajat.\n"
+msgstr "Kirjautumisajat eivät kelpaa.\n"
 
 #: winerror.mc:2051
 msgid "Invalid workstation.\n"
-msgstr "Virheellinen työasema.\n"
+msgstr "Työasema ei kelpaa.\n"
 
 #: winerror.mc:2056
 msgid "Password expired.\n"
@@ -5318,11 +5318,11 @@ msgstr "SID:n aliauktoriteetti ei kelpaa.\n"
 
 #: winerror.mc:2086
 msgid "Invalid ACL.\n"
-msgstr "Viallinen ACL.\n"
+msgstr "ACL ei kelpaa.\n"
 
 #: winerror.mc:2091
 msgid "Invalid SID.\n"
-msgstr "Viallinen SID.\n"
+msgstr "SID ei kelpaa.\n"
 
 #: winerror.mc:2096
 msgid "Invalid security descriptor.\n"
@@ -5330,7 +5330,7 @@ msgstr "Suojauskuvaus ei kelpaa.\n"
 
 #: winerror.mc:2101
 msgid "Bad inherited ACL.\n"
-msgstr "Vikaa perityssä ACL:ssä.\n"
+msgstr "Peritty ACL ei kelpaa.\n"
 
 #: winerror.mc:2106
 msgid "Server disabled.\n"
@@ -5342,7 +5342,7 @@ msgstr "Palvelin käytössä.\n"
 
 #: winerror.mc:2116
 msgid "Invalid ID authority.\n"
-msgstr "Virheellinen ID-auktoriteetti.\n"
+msgstr "ID-auktoriteetti ei kelpaa.\n"
 
 #: winerror.mc:2121
 msgid "Allotted space exceeded.\n"
@@ -5350,7 +5350,7 @@ msgstr "Myönnetty tila ylitetty.\n"
 
 #: winerror.mc:2126
 msgid "Invalid group attributes.\n"
-msgstr "Virheelliset ryhmäominaisuudet.\n"
+msgstr "Ryhmäominaisuudet eivät kelpaa.\n"
 
 #: winerror.mc:2131
 msgid "Bad impersonation level.\n"
@@ -5378,15 +5378,15 @@ msgstr "Ei pääsyä palvelimen tietoihin.\n"
 
 #: winerror.mc:2161
 msgid "Invalid server state.\n"
-msgstr "Virheellinen palvelimen tila.\n"
+msgstr "Palvelimen tila ei kelpaa.\n"
 
 #: winerror.mc:2166
 msgid "Invalid domain state.\n"
-msgstr "Virheellinen toimialueen tila.\n"
+msgstr "Toimialueen tila ei kelpaa.\n"
 
 #: winerror.mc:2171
 msgid "Invalid domain role.\n"
-msgstr "Virheellinen toimialueen rooli.\n"
+msgstr "Toimialueen rooli ei kelpaa.\n"
 
 #: winerror.mc:2176
 msgid "No such domain.\n"
@@ -5430,7 +5430,7 @@ msgstr "Tuntematon tunnistautumispaketti.\n"
 
 #: winerror.mc:2226
 msgid "Bad logon session state.\n"
-msgstr "Virheellinen kirjautumisistunnon tila.\n"
+msgstr "Kirjautumisistunnon tila ei kelpaa.\n"
 
 #: winerror.mc:2231
 msgid "Logon session ID collision.\n"
@@ -5438,7 +5438,7 @@ msgstr "Kirjautumisistunnon ID on jo käytössä.\n"
 
 #: winerror.mc:2236
 msgid "Invalid logon type.\n"
-msgstr "Virheellinen kirjautumistyyppi.\n"
+msgstr "Kirjautumistyyppi ei kelpaa.\n"
 
 #: winerror.mc:2241
 msgid "Cannot impersonate.\n"
@@ -5446,7 +5446,7 @@ msgstr "Ei voida tekeytyä.\n"
 
 #: winerror.mc:2246
 msgid "Invalid transaction state.\n"
-msgstr "Virheellinen tapahtuman tila.\n"
+msgstr "Tapahtuman tila ei kelpaa.\n"
 
 #: winerror.mc:2251
 msgid "Security DB commit failure.\n"
@@ -5518,7 +5518,7 @@ msgstr "Jäsentä ei ole.\n"
 
 #: winerror.mc:2341
 msgid "Invalid member.\n"
-msgstr "Viallinen jäsen.\n"
+msgstr "Jäsen ei kelpaa.\n"
 
 #: winerror.mc:2346
 msgid "Too many SIDs.\n"
@@ -5562,27 +5562,27 @@ msgstr "Aikavääristymä asiakkaan ja palvelimen välillä.\n"
 
 #: winerror.mc:2396
 msgid "Invalid window handle.\n"
-msgstr "Viallinen ikkunan kahva.\n"
+msgstr "Ikkunan kahva ei kelpaa.\n"
 
 #: winerror.mc:2401
 msgid "Invalid menu handle.\n"
-msgstr "Viallinen valikon kahva.\n"
+msgstr "Valikon kahva ei kelpaa.\n"
 
 #: winerror.mc:2406
 msgid "Invalid cursor handle.\n"
-msgstr "Viallinen kursorin kahva.\n"
+msgstr "Kursorin kahva ei kelpaa.\n"
 
 #: winerror.mc:2411
 msgid "Invalid accelerator table handle.\n"
-msgstr "Viallinen pikanäppäintaulun kahva.\n"
+msgstr "Pikanäppäintaulun kahva ei kelpaa.\n"
 
 #: winerror.mc:2416
 msgid "Invalid hook handle.\n"
-msgstr "Viallinen koukun kahva.\n"
+msgstr "Koukun kahva ei kelpaa.\n"
 
 #: winerror.mc:2421
 msgid "Invalid DWP handle.\n"
-msgstr "Viallinen DWP-kahva.\n"
+msgstr "DWP-kahva ei kelpaa.\n"
 
 #: winerror.mc:2426
 msgid "Can't create top-level child window.\n"
@@ -5614,11 +5614,11 @@ msgstr "Luokassa on uusia ikkunoita.\n"
 
 #: winerror.mc:2461
 msgid "Invalid index.\n"
-msgstr "Viallinen indeksi.\n"
+msgstr "Indeksi ei kelpaa.\n"
 
 #: winerror.mc:2466
 msgid "Invalid icon handle.\n"
-msgstr "Viallinen kuvakkeen kahva.\n"
+msgstr "Kuvakkeen kahva ei kelpaa.\n"
 
 #: winerror.mc:2471
 msgid "Private dialog index.\n"
@@ -5666,11 +5666,11 @@ msgstr "DC:tä ei löydy.\n"
 
 #: winerror.mc:2526
 msgid "Invalid hook filter.\n"
-msgstr "Viallinen koukun suodatin.\n"
+msgstr "Koukun suodatin ei kelpaa.\n"
 
 #: winerror.mc:2531
 msgid "Invalid filter procedure.\n"
-msgstr "Viallinen suodatinproseduuri.\n"
+msgstr "Suodatinproseduuri ei kelpaa.\n"
 
 #: winerror.mc:2536
 msgid "Hook procedure needs module handle.\n"
@@ -5694,7 +5694,7 @@ msgstr "Virheellinen viesti listalle.\n"
 
 #: winerror.mc:2561
 msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr "LB_SETCOUNT on virheellinen viesti tälle listalle.\n"
+msgstr "Lähetetty LB_SETCOUNT ei kelpaa.\n"
 
 #: winerror.mc:2566
 msgid "No tab stops on this list box.\n"
@@ -5714,11 +5714,11 @@ msgstr "Ikkunalla ei ole järjestelmävalikkoa.\n"
 
 #: winerror.mc:2586
 msgid "Invalid message box style.\n"
-msgstr "Viallinen viestilaatikon tyyli.\n"
+msgstr "Viestilaatikon tyyli ei kelpaa.\n"
 
 #: winerror.mc:2591
 msgid "Invalid SPI parameter.\n"
-msgstr "Viallinen SPI-parametri.\n"
+msgstr "SPI-parametri ei kelpaa.\n"
 
 #: winerror.mc:2596
 msgid "Screen already locked.\n"
@@ -5734,11 +5734,11 @@ msgstr "Ei ole lapsi-ikkuna.\n"
 
 #: winerror.mc:2611
 msgid "Invalid GW command.\n"
-msgstr "Viallinen GW-komento.\n"
+msgstr "GW-komento ei kelpaa.\n"
 
 #: winerror.mc:2616
 msgid "Invalid thread ID.\n"
-msgstr "Viallinen säikeen ID.\n"
+msgstr "Säikeen ID ei kelpaa.\n"
 
 #: winerror.mc:2621
 msgid "Not an MDI child window.\n"
@@ -5754,11 +5754,11 @@ msgstr "Ei vierityspalkkeja.\n"
 
 #: winerror.mc:2636
 msgid "Invalid scrollbar range.\n"
-msgstr "Viallinen vierityspalkkien väli.\n"
+msgstr "Vierityspalkin väli ei kelpaa.\n"
 
 #: winerror.mc:2641
 msgid "Invalid ShowWin command.\n"
-msgstr "Viallinen ShowWin-komento.\n"
+msgstr "ShowWin-komento ei kelpaa.\n"
 
 #: winerror.mc:2646
 msgid "No system resources.\n"
@@ -5790,7 +5790,7 @@ msgstr "Valikon kohtaa ei löydy.\n"
 
 #: winerror.mc:2681
 msgid "Invalid keyboard handle.\n"
-msgstr "Viallinen näppäimistökahva.\n"
+msgstr "Näppäimistökahva ei kelpaa.\n"
 
 #: winerror.mc:2686
 msgid "Hook type not allowed.\n"
@@ -5806,7 +5806,7 @@ msgstr "Aikakatkaisu.\n"
 
 #: winerror.mc:2701
 msgid "Invalid monitor handle.\n"
-msgstr "Viallinen näytön kahva.\n"
+msgstr "Näytön kahva ei kelpaa.\n"
 
 #: winerror.mc:2706
 msgid "Event log file corrupt.\n"
@@ -5858,11 +5858,11 @@ msgstr "Tuntematon ominaisuus.\n"
 
 #: winerror.mc:2766
 msgid "Invalid handle state.\n"
-msgstr "Viallinen kahvan tila.\n"
+msgstr "Kahvan tila ei kelpaa.\n"
 
 #: winerror.mc:2771
 msgid "Bad configuration.\n"
-msgstr "Vialliset asetukset.\n"
+msgstr "Konfiguraatio ei kelpaa.\n"
 
 #: winerror.mc:2776
 msgid "Index is missing.\n"
@@ -5882,11 +5882,11 @@ msgstr "Tuotteen asennus poistettu.\n"
 
 #: winerror.mc:2796
 msgid "Invalid query syntax.\n"
-msgstr "Viallinen kyselysyntaksi.\n"
+msgstr "Kyselyn syntaksi ei kelpaa.\n"
 
 #: winerror.mc:2801
 msgid "Invalid field.\n"
-msgstr "Viallinen kenttä.\n"
+msgstr "Kenttä ei kelpaa.\n"
 
 #: winerror.mc:2806
 msgid "Device removed.\n"
@@ -5934,7 +5934,7 @@ msgstr "Funktio epäonnistui.\n"
 
 #: winerror.mc:2861
 msgid "Invalid table.\n"
-msgstr "Virheellinen taulu.\n"
+msgstr "Taulu ei kelpaa.\n"
 
 #: winerror.mc:2866
 msgid "Data type mismatch.\n"
@@ -5966,7 +5966,7 @@ msgstr "Korjauspaketin avaaminen epäonnistui.\n"
 
 #: winerror.mc:2901
 msgid "Invalid patch package.\n"
-msgstr "Korjauspaketti viallinen.\n"
+msgstr "Korjauspaketti ei kelpaa.\n"
 
 #: winerror.mc:2906
 msgid "Unsupported patch package.\n"
@@ -5978,7 +5978,7 @@ msgstr "Eri versio on asennettu.\n"
 
 #: winerror.mc:2916
 msgid "Invalid command line.\n"
-msgstr "Viallinen käskyrivi.\n"
+msgstr "Komentorivi ei kelpaa.\n"
 
 #: winerror.mc:2921
 msgid "Remote installation not allowed.\n"
@@ -5990,7 +5990,7 @@ msgstr "Käynnistetään uudelleen asennuksen onnistuttua.\n"
 
 #: winerror.mc:2931
 msgid "Invalid string binding.\n"
-msgstr "Viallinen tekstiliitos.\n"
+msgstr "Tekstiliitos ei kelpaa.\n"
 
 #: winerror.mc:2936
 msgid "Wrong kind of binding.\n"
@@ -5998,7 +5998,7 @@ msgstr "Vääränlainen liitos.\n"
 
 #: winerror.mc:2941
 msgid "Invalid binding.\n"
-msgstr "Viallinen liitos.\n"
+msgstr "Liitos ei kelpaa.\n"
 
 #: winerror.mc:2946
 msgid "RPC protocol sequence not supported.\n"
@@ -6006,19 +6006,19 @@ msgstr "RPC-protokollasekvenssiä ei tueta.\n"
 
 #: winerror.mc:2951
 msgid "Invalid RPC protocol sequence.\n"
-msgstr "Virheellinen RPC-protokollasekvenssi.\n"
+msgstr "RPC-protokollasekvenssi ei kelpaa.\n"
 
 #: winerror.mc:2956
 msgid "Invalid string UUID.\n"
-msgstr "Virheellinen UUID.\n"
+msgstr "UUID ei kelpaa.\n"
 
 #: winerror.mc:2961
 msgid "Invalid endpoint format.\n"
-msgstr "Virheellinen päätepisteen muoto.\n"
+msgstr "Päätepisteen muoto ei kelpaa.\n"
 
 #: winerror.mc:2966
 msgid "Invalid network address.\n"
-msgstr "Viallinen verkko-osoite.\n"
+msgstr "Verkko-osoite ei kelpaa.\n"
 
 #: winerror.mc:2971
 msgid "No endpoint found.\n"
@@ -6026,7 +6026,7 @@ msgstr "Päätepistettä ei löydy.\n"
 
 #: winerror.mc:2976
 msgid "Invalid timeout value.\n"
-msgstr "Virheellinen aikakatkaisun arvo.\n"
+msgstr "Aikakatkaisun arvo ei kelpaa.\n"
 
 #: winerror.mc:2981
 msgid "Object UUID not found.\n"
@@ -6086,7 +6086,7 @@ msgstr "RPC-palvelin on liian kiireinen.\n"
 
 #: winerror.mc:3051
 msgid "Invalid network options.\n"
-msgstr "Vialliset verkkovalinnat.\n"
+msgstr "Verkkovalinnat eivät kelpaa.\n"
 
 #: winerror.mc:3056
 msgid "No RPC call active.\n"
@@ -6110,11 +6110,11 @@ msgstr "Siirtosyntaksia ei tueta.\n"
 
 #: winerror.mc:3086
 msgid "Invalid tag.\n"
-msgstr "Virheellinen tagi.\n"
+msgstr "Tagi ei kelpaa.\n"
 
 #: winerror.mc:3091
 msgid "Invalid array bounds.\n"
-msgstr "Virheelliset taulukon rajat.\n"
+msgstr "Taulukon rajat eivät kelpaa.\n"
 
 #: winerror.mc:3096
 msgid "No entry name.\n"
@@ -6122,7 +6122,7 @@ msgstr "Merkinnän nimi puuttuu.\n"
 
 #: winerror.mc:3101
 msgid "Invalid name syntax.\n"
-msgstr "Virheellinen nimen muoto.\n"
+msgstr "Nimen muoto ei kelpaa.\n"
 
 #: winerror.mc:3106
 msgid "Unsupported name syntax.\n"
@@ -6178,7 +6178,7 @@ msgstr "Tuntematon valtuutuspalvelu.\n"
 
 #: winerror.mc:3171
 msgid "Invalid entry.\n"
-msgstr "Viallinen merkintä.\n"
+msgstr "Merkintä ei kelpaa.\n"
 
 #: winerror.mc:3176
 msgid "Can't perform operation.\n"
@@ -6198,7 +6198,7 @@ msgstr "Epätäydellinen nimi.\n"
 
 #: winerror.mc:3196
 msgid "Invalid version option.\n"
-msgstr "Viallinen versiovalinta.\n"
+msgstr "Versiovalinta ei kelpaa.\n"
 
 #: winerror.mc:3201
 msgid "No more members.\n"
@@ -6226,7 +6226,7 @@ msgstr "Nimipalvelu ei käytettävissä.\n"
 
 #: winerror.mc:3231
 msgid "Invalid network address family.\n"
-msgstr "Virheellinen verkko-osoiteperhe.\n"
+msgstr "Verkko-osoiteperhe ei kelpaa.\n"
 
 #: winerror.mc:3236
 msgid "Operation not supported.\n"
@@ -6302,7 +6302,7 @@ msgstr "Tavumäärä on liian pieni.\n"
 
 #: winerror.mc:3326
 msgid "Bad stub data.\n"
-msgstr "Tyngälle annettiin viallista dataa.\n"
+msgstr "Tyngän data ei kelpaa.\n"
 
 #: winerror.mc:3331
 msgid "Invalid user buffer.\n"
@@ -6370,11 +6370,11 @@ msgstr "Erotintiedosto ei kelpaa.\n"
 
 #: winerror.mc:3411
 msgid "Invalid priority.\n"
-msgstr "Virheellinen prioriteetti.\n"
+msgstr "Prioriteetti ei kelpaa.\n"
 
 #: winerror.mc:3416
 msgid "Invalid printer name.\n"
-msgstr "Viallinen tulostimen nimi.\n"
+msgstr "Tulostimen nimi ei kelpaa.\n"
 
 #: winerror.mc:3421
 msgid "Printer already exists.\n"
@@ -6382,15 +6382,15 @@ msgstr "Tulostin on jo olemassa.\n"
 
 #: winerror.mc:3426
 msgid "Invalid printer command.\n"
-msgstr "Viallinen tulostinkäsky.\n"
+msgstr "Tulostinkäsky ei kelpaa.\n"
 
 #: winerror.mc:3431
 msgid "Invalid data type.\n"
-msgstr "Viallinen tietotyyppi.\n"
+msgstr "Tietotyyppi ei kelpaa.\n"
 
 #: winerror.mc:3436
 msgid "Invalid environment.\n"
-msgstr "Viallinen ympäristö.\n"
+msgstr "Ympäristö ei kelpaa.\n"
 
 #: winerror.mc:3441
 msgid "No more bindings.\n"
@@ -6478,7 +6478,7 @@ msgstr "Säiettä ei peruutettu.\n"
 
 #: winerror.mc:3546
 msgid "Invalid handle operation.\n"
-msgstr "Virheellinen kahvaoperaatio.\n"
+msgstr "Kahvaoperaatio ei kelpaa.\n"
 
 #: winerror.mc:3551
 msgid "Wrong serializing package version.\n"
@@ -6490,7 +6490,7 @@ msgstr "Väärä tyngän versio.\n"
 
 #: winerror.mc:3561
 msgid "Invalid pipe object.\n"
-msgstr "Viallinen putkiobjekti.\n"
+msgstr "Putkiobjekti ei kelpaa.\n"
 
 #: winerror.mc:3566
 msgid "Wrong pipe order.\n"
@@ -6510,19 +6510,19 @@ msgstr "Päätepisteiden kuvaustietokantaa ei voida luoda.\n"
 
 #: winerror.mc:3586
 msgid "Invalid object.\n"
-msgstr "Viallinen objekti.\n"
+msgstr "Objekti ei kelpaa.\n"
 
 #: winerror.mc:3591
 msgid "Invalid time.\n"
-msgstr "Viallinen aika.\n"
+msgstr "Aika ei kelpaa.\n"
 
 #: winerror.mc:3596
 msgid "Invalid form name.\n"
-msgstr "Viallinen lomakkeen nimi.\n"
+msgstr "Lomakkeen nimi ei kelpaa.\n"
 
 #: winerror.mc:3601
 msgid "Invalid form size.\n"
-msgstr "Viallinen lomakkeen koko.\n"
+msgstr "Lomakkeen koko ei kelpaa.\n"
 
 #: winerror.mc:3606
 msgid "Already awaiting printer handle.\n"
@@ -6534,7 +6534,7 @@ msgstr "Tulostin poistettu.\n"
 
 #: winerror.mc:3616
 msgid "Invalid printer state.\n"
-msgstr "Viallinen tulostimen tila.\n"
+msgstr "Tulostimen tila ei kelpaa.\n"
 
 #: winerror.mc:3621
 msgid "User must change password.\n"
@@ -6550,11 +6550,11 @@ msgstr "Tilin käyttö on estetty.\n"
 
 #: winerror.mc:3636
 msgid "Invalid pixel format.\n"
-msgstr "Viallinen pikselimuoto.\n"
+msgstr "Pikselimuoto ei kelpaa.\n"
 
 #: winerror.mc:3641
 msgid "Invalid driver.\n"
-msgstr "Viallinen ajuri.\n"
+msgstr "Ajuri ei kelpaa.\n"
 
 #: winerror.mc:3646
 msgid "Invalid object resolver set.\n"
@@ -6566,11 +6566,11 @@ msgstr "Vajavainen RPC-lähetys.\n"
 
 #: winerror.mc:3656
 msgid "Invalid asynchronous RPC handle.\n"
-msgstr "Viallinen asynkroninen RPC-kahva.\n"
+msgstr "Asynkronisen RPC:n kahva ei kelpaa.\n"
 
 #: winerror.mc:3661
 msgid "Invalid asynchronous RPC call.\n"
-msgstr "Viallinen asynkroninen RPC-kutsu.\n"
+msgstr "Asynkroninen RPC-kutsu ei kelpaa.\n"
 
 #: winerror.mc:3666
 msgid "RPC pipe closed.\n"
@@ -9342,7 +9342,7 @@ msgstr "Attribuutti tai arvo on jo olemassa"
 
 #: wldap32.rc:51
 msgid "Invalid Syntax"
-msgstr "Viallinen syntaksi"
+msgstr "Syntaksi ei kelpaa"
 
 #: wldap32.rc:62
 msgid "No Such Object"
@@ -9350,11 +9350,11 @@ msgstr "Objektia ei ole"
 
 #: wldap32.rc:63
 msgid "Alias Problem"
-msgstr "Virheellinen alias"
+msgstr "Ongelma aliaksessa"
 
 #: wldap32.rc:64
 msgid "Invalid DN Syntax"
-msgstr "Viallinen DN-syntaksi"
+msgstr "DN-syntaksi ei kelpaa"
 
 #: wldap32.rc:65
 msgid "Is Leaf"
@@ -9370,7 +9370,7 @@ msgstr "Sopimaton tunnistautuminen"
 
 #: wldap32.rc:79
 msgid "Invalid Credentials"
-msgstr "Virheelliset valtuustiedot"
+msgstr "Valtuustiedot eivät kelpaa"
 
 #: wldap32.rc:80
 msgid "Insufficient Rights"
@@ -10381,7 +10381,7 @@ msgid ""
 "Badly formed number - must be one of decimal (12),\n"
 " hexadecimal (0x34) or octal (056).\n"
 msgstr ""
-"Luvun muoto on virheellinen – täytyy olla desimaaliluku (12),\n"
+"Luvun muoto ei kelpaa – täytyy olla desimaaliluku (12),\n"
 " heksadesimaaliluku (0x34) tai oktaaliluku (056).\n"
 
 #: dxdiag.rc:30
@@ -10410,7 +10410,7 @@ msgstr "Käyttö: hostname\n"
 
 #: hostname.rc:31
 msgid "Error: Invalid option '%c'.\n"
-msgstr "Virhe: Viallinen vaihtoehto '%c'.\n"
+msgstr "Virhe: Virheellinen valinta '%c'.\n"
 
 #: hostname.rc:32
 msgid ""
@@ -12904,7 +12904,7 @@ msgstr "Prosessilla täytyy olla affiniteetti vähintään yhteen suorittimeen"
 
 #: taskmgr.rc:316
 msgid "Invalid Option"
-msgstr "Viallinen valinta"
+msgstr "Virheellinen valinta"
 
 #: taskmgr.rc:317
 msgid "Unable to Access or Set Process Affinity"
@@ -14309,7 +14309,7 @@ msgstr "Virhe: Aliasta ei löydy\n"
 
 #: wmic.rc:30
 msgid "Error: Invalid query\n"
-msgstr "Virhe: Viallinen kysely\n"
+msgstr "Virhe: Virheellinen kysely\n"
 
 #: wordpad.rc:31
 msgid "&New...\tCtrl+N"
@@ -14643,7 +14643,7 @@ msgstr ""
 
 #: wordpad.rc:190
 msgid "Invalid number format."
-msgstr "Viallinen luvun muoto."
+msgstr "Luvun muoto ei kelpaa."
 
 #: wordpad.rc:191
 msgid "OLE storage documents are not supported."
@@ -14679,11 +14679,11 @@ msgstr "Wordpadin käynnistys epäonnistui"
 
 #: xcopy.rc:30
 msgid "Invalid number of parameters - Use xcopy /? for help\n"
-msgstr "Virheellinen määrä parametreja - Komennolla xcopy /? saat apua\n"
+msgstr "Parametrien määrä ei kelpaa - Komennolla xcopy /? saat apua\n"
 
 #: xcopy.rc:31
 msgid "Invalid parameter '%1' - Use xcopy /? for help\n"
-msgstr "Viallinen parametri '%1' - Komennolla xcopy /? saat apua\n"
+msgstr "Virheellinen parametri '%1' - Komennolla xcopy /? saat apua\n"
 
 #: xcopy.rc:32
 msgid "Press <Enter> to begin copying\n"
