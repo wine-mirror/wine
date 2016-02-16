@@ -6116,8 +6116,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
         return hr_ddraw_from_wined3d(hr);
     }
 
-    resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
-    root = wined3d_resource_get_parent(resource);
+    root = wined3d_texture_get_sub_resource_parent(wined3d_texture, 0);
     wined3d_texture_decref(wined3d_texture);
     root->is_complex_root = TRUE;
     texture->root = root;
@@ -6141,12 +6140,12 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
         for (j = 0; j < levels; ++j)
         {
-            resource = wined3d_texture_get_sub_resource(wined3d_texture, i * levels + j);
-            mip = wined3d_resource_get_parent(resource);
+            mip = wined3d_texture_get_sub_resource_parent(wined3d_texture, i * levels + j);
             mip_desc = &mip->surface_desc;
 
             if (j)
             {
+                resource = wined3d_texture_get_sub_resource(wined3d_texture, i * levels + j);
                 wined3d_resource_get_desc(resource, &wined3d_mip_desc);
                 mip_desc->dwWidth = wined3d_mip_desc.width;
                 mip_desc->dwHeight = wined3d_mip_desc.height;
@@ -6237,8 +6236,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
                 goto fail;
             }
 
-            resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
-            last = wined3d_resource_get_parent(resource);
+            last = wined3d_texture_get_sub_resource_parent(wined3d_texture, 0);
             wined3d_texture_decref(wined3d_texture);
             texture->root = last;
 
