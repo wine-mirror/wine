@@ -527,12 +527,9 @@ static void test_EM_LINELENGTH(void)
     SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)text1);
     for (i = 0; i < sizeof(offset_test1)/sizeof(offset_test1[0]); i++) {
       result = SendMessageA(hwndRichEdit, EM_LINELENGTH, offset_test1[i][0], 0);
-      if (offset_test1[i][2])
-        todo_wine ok(result == offset_test1[i][1], "Length of line at offset %d is %ld, expected %d\n",
-                     offset_test1[i][0], result, offset_test1[i][1]);
-      else
-        ok(result == offset_test1[i][1], "Length of line at offset %d is %ld, expected %d\n",
-           offset_test1[i][0], result, offset_test1[i][1]);
+      todo_wine_if (offset_test1[i][2])
+          ok(result == offset_test1[i][1], "Length of line at offset %d is %ld, expected %d\n",
+             offset_test1[i][0], result, offset_test1[i][1]);
     }
   }
 
@@ -1309,20 +1306,15 @@ static void check_EM_EXSETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id
     cr.cpMax = setsel->max;
     result = SendMessageA(hwnd, EM_EXSETSEL, 0, (LPARAM)&cr);
 
-    if (setsel->result_todo)
-        todo_wine ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
-    else
+    todo_wine_if (setsel->result_todo)
         ok(result == setsel->expected_retval, "EM_EXSETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
 
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 
-    if (setsel->sel_todo) {
-        todo_wine {
-            ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
-        }
-    } else {
-        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
-    }
+    todo_wine_if (setsel->sel_todo)
+        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end,
+           "EM_EXSETSEL(%d): expected (%d,%d) actual:(%d,%d)\n",
+           id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
 }
 
 static void test_EM_EXSETSEL(void)
@@ -1370,20 +1362,15 @@ static void check_EM_SETSEL(HWND hwnd, const struct exsetsel_s *setsel, int id) 
 
     result = SendMessageA(hwnd, EM_SETSEL, setsel->min, setsel->max);
 
-    if (setsel->result_todo)
-        todo_wine ok(result == setsel->expected_retval, "EM_SETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
-    else
+    todo_wine_if (setsel->result_todo)
         ok(result == setsel->expected_retval, "EM_SETSEL(%d): expected: %ld actual: %ld\n", id, setsel->expected_retval, result);
 
     SendMessageA(hwnd, EM_GETSEL, (WPARAM)&start, (LPARAM)&end);
 
-    if (setsel->sel_todo) {
-        todo_wine {
-            ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
-        }
-    } else {
-        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end, "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n", id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
-    }
+    todo_wine_if (setsel->sel_todo)
+        ok(start == setsel->expected_getsel_start && end == setsel->expected_getsel_end,
+           "EM_SETSEL(%d): expected (%d,%d) actual:(%d,%d)\n",
+           id, setsel->expected_getsel_start, setsel->expected_getsel_end, start, end);
 }
 
 static void test_EM_SETSEL(void)
