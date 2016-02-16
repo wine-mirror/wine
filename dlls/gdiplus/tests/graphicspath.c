@@ -1055,6 +1055,13 @@ static path_test_t widenline_path[] = {
     {5.0, 15.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 0} /*3*/
     };
 
+static path_test_t widenline_wide_path[] = {
+    {5.0, 0.0,   PathPointTypeStart, 0, 1}, /*0*/
+    {50.0, 0.0,  PathPointTypeLine,  0, 1}, /*1*/
+    {50.0, 20.0, PathPointTypeLine,  0, 1}, /*2*/
+    {5.0, 20.0,  PathPointTypeLine|PathPointTypeCloseSubpath,  0, 1} /*3*/
+    };
+
 static void test_widen(void)
 {
     GpStatus status;
@@ -1090,6 +1097,92 @@ static void test_widen(void)
     expect(OutOfMemory, status);
 
     /* horizontal line */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_path, sizeof(widenline_path)/sizeof(path_test_t), FALSE);
+
+    /* horizontal 2x stretch */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 2.5, 10.0, 25.0, 10.0);
+    expect(Ok, status);
+
+    status = GdipScaleMatrix(m, 2.0, 1.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_path, sizeof(widenline_path)/sizeof(path_test_t), FALSE);
+
+    /* vertical 2x stretch */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 5.0, 50.0, 5.0);
+    expect(Ok, status);
+
+    status = GdipScaleMatrix(m, 0.5, 2.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_path, sizeof(widenline_path)/sizeof(path_test_t), FALSE);
+
+    status = GdipScaleMatrix(m, 1.0, 0.5, MatrixOrderAppend);
+    expect(Ok, status);
+
+    /* pen width in UnitWorld */
+    GdipDeletePen(pen);
+    status = GdipCreatePen1(0xffffffff, 10.0, UnitWorld, &pen);
+    expect(Ok, status);
+
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_path, sizeof(widenline_path)/sizeof(path_test_t), FALSE);
+
+    /* horizontal 2x stretch */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 2.5, 10.0, 25.0, 10.0);
+    expect(Ok, status);
+
+    status = GdipScaleMatrix(m, 2.0, 1.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_path, sizeof(widenline_path)/sizeof(path_test_t), FALSE);
+
+    /* vertical 2x stretch */
+    status = GdipResetPath(path);
+    expect(Ok, status);
+    status = GdipAddPathLine(path, 5.0, 5.0, 50.0, 5.0);
+    expect(Ok, status);
+
+    status = GdipScaleMatrix(m, 0.5, 2.0, MatrixOrderAppend);
+    expect(Ok, status);
+
+    status = GdipWidenPath(path, pen, m, 1.0);
+    expect(Ok, status);
+    ok_path(path, widenline_wide_path, sizeof(widenline_wide_path)/sizeof(path_test_t), FALSE);
+
+    status = GdipScaleMatrix(m, 1.0, 0.5, MatrixOrderAppend);
+    expect(Ok, status);
+
+    /* pen width in UnitInch */
+    GdipDeletePen(pen);
+    status = GdipCreatePen1(0xffffffff, 10.0, UnitWorld, &pen);
+    expect(Ok, status);
+
     status = GdipResetPath(path);
     expect(Ok, status);
     status = GdipAddPathLine(path, 5.0, 10.0, 50.0, 10.0);
