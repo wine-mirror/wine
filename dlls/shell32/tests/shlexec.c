@@ -146,6 +146,7 @@ static char* getChildString(const char* sect, const char* key)
  *
  ***/
 
+#define CHILD_DDE_TIMEOUT 2500
 static DWORD ddeInst;
 static HSZ hszTopic;
 static char ddeExec[MAX_PATH], ddeApplication[MAX_PATH];
@@ -270,7 +271,7 @@ static void doChild(int argc, char** argv)
             hdde = DdeNameService(ddeInst, hszApplication, 0, DNS_REGISTER | DNS_FILTEROFF);
             ok(hdde != NULL, "DdeNameService() failed le=%u\n", GetLastError());
 
-            timer = SetTimer(NULL, 0, 2500, childTimeout);
+            timer = SetTimer(NULL, 0, CHILD_DDE_TIMEOUT, childTimeout);
 
             dde_ready = OpenEventA(EVENT_MODIFY_STATE, FALSE, "winetest_shlexec_dde_ready");
             SetEvent(dde_ready);
@@ -2350,18 +2351,23 @@ static void test_dde(void)
             GetLastError() == ERROR_FILE_NOT_FOUND &&
             strcmp(winetest_platform, "windows") == 0)
         {
-            /* Windows 10 does not call WaitForInputIdle() for DDE, which
-             * breaks the tests. So force the call by adding
-             * SEE_MASK_WAITFORINPUTIDLE.
+            /* Windows 10 does not call WaitForInputIdle() for DDE which creates
+             * a race condition as the DDE server may not have time to start up.
+             * When that happens the test fails with the above results and we
+             * compensate by forcing the WaitForInputIdle() call.
              */
             trace("Adding SEE_MASK_WAITFORINPUTIDLE for Windows 10\n");
             ddeflags |= SEE_MASK_WAITFORINPUTIDLE;
             delete_test_association(".sde");
+            Sleep(CHILD_DDE_TIMEOUT);
             continue;
         }
         okShell(32 < rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
         if (test->ddeexec)
-            okShell(waitforinputidle_count == 1, "WaitForInputIdle() was called %u times\n", waitforinputidle_count);
+            okShell(waitforinputidle_count == 1 ||
+                    broken(waitforinputidle_count == 0) /* Win10 race */,
+                    "WaitForInputIdle() was called %u times\n",
+                    waitforinputidle_count);
         else
             okShell(waitforinputidle_count == 0, "WaitForInputIdle() was called %u times for a non-DDE case\n", waitforinputidle_count);
 
