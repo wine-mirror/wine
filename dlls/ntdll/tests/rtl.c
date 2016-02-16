@@ -98,6 +98,7 @@ static NTSTATUS  (WINAPI *pRtlDecompressFragment)(USHORT, PUCHAR, ULONG, const U
 static NTSTATUS  (WINAPI *pRtlCompressBuffer)(USHORT, const UCHAR*, ULONG, PUCHAR, ULONG, ULONG, PULONG, PVOID);
 static BOOL      (WINAPI *pRtlIsCriticalSectionLocked)(CRITICAL_SECTION *);
 static BOOL      (WINAPI *pRtlIsCriticalSectionLockedByThread)(CRITICAL_SECTION *);
+static NTSTATUS  (WINAPI *pRtlInitializeCriticalSectionEx)(CRITICAL_SECTION *, ULONG, ULONG);
 
 static HMODULE hkernel32 = 0;
 static BOOL      (WINAPI *pIsWow64Process)(HANDLE, PBOOL);
@@ -151,6 +152,7 @@ static void InitFunctionPtrs(void)
         pRtlCompressBuffer = (void *)GetProcAddress(hntdll, "RtlCompressBuffer");
         pRtlIsCriticalSectionLocked = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLocked");
         pRtlIsCriticalSectionLockedByThread = (void *)GetProcAddress(hntdll, "RtlIsCriticalSectionLockedByThread");
+        pRtlInitializeCriticalSectionEx = (void *)GetProcAddress(hntdll, "RtlInitializeCriticalSectionEx");
     }
     hkernel32 = LoadLibraryA("kernel32.dll");
     ok(hkernel32 != 0, "LoadLibrary failed\n");
@@ -2056,6 +2058,39 @@ static void test_RtlIsCriticalSectionLocked(void)
     DeleteCriticalSection(&info.crit);
 }
 
+static void test_RtlInitializeCriticalSectionEx(void)
+{
+    static const CRITICAL_SECTION_DEBUG *no_debug = (void *)~(ULONG_PTR)0;
+    CRITICAL_SECTION cs;
+
+    if (!pRtlInitializeCriticalSectionEx)
+    {
+        win_skip("RtlInitializeCriticalSectionEx is not available\n");
+        return;
+    }
+
+    memset(&cs, 0x11, sizeof(cs));
+    pRtlInitializeCriticalSectionEx(&cs, 0, 0);
+    ok((cs.DebugInfo != NULL && cs.DebugInfo != no_debug) || broken(cs.DebugInfo == no_debug) /* >= Win 8 */,
+       "expected DebugInfo != NULL and DebugInfo != ~0, got %p\n", cs.DebugInfo);
+    ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
+    ok(cs.RecursionCount == 0, "expected RecursionCount == 0, got %d\n", cs.RecursionCount);
+    ok(cs.LockSemaphore == 0, "expected LockSemaphore == 0, got %p\n", cs.LockSemaphore);
+    ok(cs.SpinCount == 0, "expected SpinCount == 0, got %ld\n", cs.SpinCount);
+    RtlDeleteCriticalSection(&cs);
+
+    memset(&cs, 0x11, sizeof(cs));
+    pRtlInitializeCriticalSectionEx(&cs, 0, RTL_CRITICAL_SECTION_FLAG_NO_DEBUG_INFO);
+    todo_wine
+    ok(cs.DebugInfo == no_debug, "expected DebugInfo == ~0, got %p\n", cs.DebugInfo);
+    ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
+    ok(cs.RecursionCount == 0, "expected RecursionCount == 0, got %d\n", cs.RecursionCount);
+    ok(cs.LockSemaphore == 0, "expected LockSemaphore == 0, got %p\n", cs.LockSemaphore);
+    ok(cs.SpinCount == 0 || broken(cs.SpinCount != 0) /* >= Win 8 */,
+       "expected SpinCount == 0, got %ld\n", cs.SpinCount);
+    RtlDeleteCriticalSection(&cs);
+}
+
 START_TEST(rtl)
 {
     InitFunctionPtrs();
@@ -2086,4 +2121,5 @@ START_TEST(rtl)
     test_RtlGetCompressionWorkSpaceSize();
     test_RtlDecompressBuffer();
     test_RtlIsCriticalSectionLocked();
+    test_RtlInitializeCriticalSectionEx();
 }
