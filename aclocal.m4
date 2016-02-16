@@ -430,7 +430,7 @@ $ac_dir/uninstall::
     then
         wine_fn_append_rule \
 "__builddeps__: $ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT
-$ac_file.$IMPLIBEXT $ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
+$ac_file.$STATIC_IMPLIBEXT $ac_file.cross.a: $ac_deps
 $ac_file.def: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
 	\$(WINEBUILD) \$(TARGETFLAGS)$ac_implibflags -w --def -o \$[@] --export $srcdir/$ac_dir/$ac_name.spec
 $ac_file.$STATIC_IMPLIBEXT: dummy
