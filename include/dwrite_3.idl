@@ -20,8 +20,8 @@ import "dwrite_2.idl";
 
 interface IDWriteFontFaceReference;
 interface IDWriteFontFace3;
-interface IDWriteFont3;
 interface IDWriteFontSet;
+interface IDWriteFontDownloadQueue;
 
 typedef enum DWRITE_LOCALITY
 {
@@ -45,11 +45,50 @@ typedef enum DWRITE_RENDERING_MODE1
 [
     local,
     object,
+    uuid(b06fe5b9-43ec-4393-881b-dbe4dc72fda7)
+]
+interface IDWriteFontDownloadListener : IUnknown
+{
+    void DownloadCompleted(IDWriteFontDownloadQueue *queue, IUnknown *context, HRESULT result);
+}
+
+[
+    local,
+    object,
+    uuid(b71e6052-5aea-4fa3-832e-f60d431f7e91)
+]
+interface IDWriteFontDownloadQueue : IUnknown
+{
+    HRESULT AddListener(IDWriteFontDownloadListener *listener, UINT32 *token);
+    HRESULT RemoveListener(UINT32 token);
+    BOOL IsEmpty();
+    HRESULT BeginDownload(IUnknown *context);
+    HRESULT CancelDownload();
+    UINT64 GetGenerationCount();
+}
+
+[
+    local,
+    object,
     uuid(b7924baa-391b-412a-8c5c-e44cc2d867dc)
 ]
 interface IDWriteRenderingParams3 : IDWriteRenderingParams2
 {
     DWRITE_RENDERING_MODE1 GetRenderingMode1();
+}
+
+[
+    local,
+    object,
+    uuid(29748ed6-8c9c-4a6a-be0b-d912e8538944)
+]
+interface IDWriteFont3 : IDWriteFont2
+{
+    HRESULT CreateFontFace(IDWriteFontFace3 **fontface);
+    BOOL Equals(IDWriteFont *font);
+    HRESULT GetFontFaceReference(IDWriteFontFaceReference **reference);
+    BOOL HasCharacter(UINT32 character);
+    DWRITE_LOCALITY GetLocality();
 }
 
 [
