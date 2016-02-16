@@ -4996,11 +4996,7 @@ static void test_block_formats_creation(void)
                         expect_hr = D3D_OK;
 
                     hr = IDirectDraw7_CreateSurface(ddraw, &ddsd, &surface, NULL);
-                    if (todo)
-                        todo_wine ok(hr == expect_hr,
-                                "Got unexpected hr %#x for format %s, resource type %s, size %ux%u, expected %#x.\n",
-                                hr, formats[i].name, types[j].name, w, h, expect_hr);
-                    else
+                    todo_wine_if (todo)
                         ok(hr == expect_hr,
                                 "Got unexpected hr %#x for format %s, resource type %s, size %ux%u, expected %#x.\n",
                                 hr, formats[i].name, types[j].name, w, h, expect_hr);
@@ -8862,10 +8858,7 @@ static void test_fog_interpolation(void)
         color = get_surface_color(rt, 0, 240);
         ok(compare_color(color, 0x000000ff, 2), "Got unexpected color 0x%08x, case %u.\n", color, i);
         color = get_surface_color(rt, 320, 240);
-        if (tests[i].todo)
-            todo_wine ok(compare_color(color, tests[i].middle_color, 2),
-                    "Got unexpected color 0x%08x, case %u.\n", color, i);
-        else
+        todo_wine_if (tests[i].todo)
             ok(compare_color(color, tests[i].middle_color, 2),
                     "Got unexpected color 0x%08x, case %u.\n", color, i);
         color = get_surface_color(rt, 639, 240);
@@ -9618,18 +9611,12 @@ static void test_color_fill(void)
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, surface %s.\n", hr, tests[i].name);
 
         hr = IDirectDrawSurface7_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        if (tests[i].format.dwFourCC)
-            todo_wine ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
-                    hr, tests[i].colorfill_hr, tests[i].name);
-        else
+        todo_wine_if (tests[i].format.dwFourCC)
             ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
                     hr, tests[i].colorfill_hr, tests[i].name);
 
         hr = IDirectDrawSurface7_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        if (tests[i].format.dwFourCC)
-            todo_wine ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
-                    hr, tests[i].colorfill_hr, tests[i].name);
-        else
+        todo_wine_if (tests[i].format.dwFourCC)
             ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
                     hr, tests[i].colorfill_hr, tests[i].name);
 
@@ -10737,10 +10724,7 @@ static void test_lockrect_invalid(void)
             locked_desc.dwSize = sizeof(locked_desc);
 
             hr = IDirectDrawSurface7_Lock(surface, rect, &locked_desc, DDLOCK_WAIT, NULL);
-            if (SUCCEEDED(resources[r].hr))
-                todo_wine ok(hr == resources[r].hr, "Lock returned %#x for rect [%d, %d]->[%d, %d], type %s.\n",
-                        hr, rect->left, rect->top, rect->right, rect->bottom, resources[r].name);
-            else
+            todo_wine_if (SUCCEEDED(resources[r].hr))
                 ok(hr == resources[r].hr, "Lock returned %#x for rect [%d, %d]->[%d, %d], type %s.\n",
                         hr, rect->left, rect->top, rect->right, rect->bottom, resources[r].name);
             if (SUCCEEDED(hr))

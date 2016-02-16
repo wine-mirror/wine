@@ -7240,18 +7240,12 @@ static void test_color_fill(void)
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, surface %s.\n", hr, tests[i].name);
 
         hr = IDirectDrawSurface_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        if (tests[i].format.dwFourCC)
-            todo_wine ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
-                    hr, tests[i].colorfill_hr, tests[i].name);
-        else
+        todo_wine_if (tests[i].format.dwFourCC)
             ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
                     hr, tests[i].colorfill_hr, tests[i].name);
 
         hr = IDirectDrawSurface_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        if (tests[i].format.dwFourCC)
-            todo_wine ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
-                    hr, tests[i].colorfill_hr, tests[i].name);
-        else
+        todo_wine_if (tests[i].format.dwFourCC)
             ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
                     hr, tests[i].colorfill_hr, tests[i].name);
 

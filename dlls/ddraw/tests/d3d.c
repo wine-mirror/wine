@@ -3312,17 +3312,9 @@ static void FindDevice(void)
 
         hr = IDirect3D_FindDevice(Direct3D1, &search, &result);
 
-        if (deviceGUIDs[i].todo)
-        {
-            todo_wine
+        todo_wine_if (deviceGUIDs[i].todo)
             ok(hr == D3D_OK,
                "[%d] Expected IDirect3D1::FindDevice to return D3D_OK, got 0x%08x\n", i, hr);
-        }
-        else
-        {
-            ok(hr == D3D_OK,
-               "[%d] Expected IDirect3D1::FindDevice to return D3D_OK, got 0x%08x\n", i, hr);
-        }
     }
 
     /* Curiously the color model criteria seem to be ignored. */

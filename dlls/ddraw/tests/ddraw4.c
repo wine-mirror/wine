@@ -5201,11 +5201,7 @@ static void test_block_formats_creation(void)
                         expect_hr = D3D_OK;
 
                     hr = IDirectDraw4_CreateSurface(ddraw, &ddsd, &surface, NULL);
-                    if (todo)
-                        todo_wine ok(hr == expect_hr,
-                                "Got unexpected hr %#x for format %s, resource type %s, size %ux%u, expected %#x.\n",
-                                hr, formats[i].name, types[j].name, w, h, expect_hr);
-                    else
+                    todo_wine_if (todo)
                         ok(hr == expect_hr,
                                 "Got unexpected hr %#x for format %s, resource type %s, size %ux%u, expected %#x.\n",
                                 hr, formats[i].name, types[j].name, w, h, expect_hr);
@@ -9348,18 +9344,12 @@ static void test_color_fill(void)
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, surface %s.\n", hr, tests[i].name);
 
         hr = IDirectDrawSurface4_Blt(surface, NULL, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        if (tests[i].format.dwFourCC)
-            todo_wine ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
-                    hr, tests[i].colorfill_hr, tests[i].name);
-        else
+        todo_wine_if (tests[i].format.dwFourCC)
             ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
                     hr, tests[i].colorfill_hr, tests[i].name);
 
         hr = IDirectDrawSurface4_Blt(surface, &rect, NULL, NULL, DDBLT_COLORFILL | DDBLT_WAIT, &fx);
-        if (tests[i].format.dwFourCC)
-            todo_wine ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
-                    hr, tests[i].colorfill_hr, tests[i].name);
-        else
+        todo_wine_if (tests[i].format.dwFourCC)
             ok(hr == tests[i].colorfill_hr, "Blt returned %#x, expected %#x, surface %s.\n",
                     hr, tests[i].colorfill_hr, tests[i].name);
 
