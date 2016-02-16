@@ -538,10 +538,7 @@ static INT_PTR shell_execute_(const char* file, int line, LPCSTR verb, LPCSTR fi
                 rc = SE_ERR_NOASSOC;
             }
         }
-        if (!_todo_wait)
-            okShell_(file, line)(wait_rc==WAIT_OBJECT_0 || rc <= 32,
-                                 "WaitForSingleObject returned %d\n", wait_rc);
-        else todo_wine
+        todo_wine_if(_todo_wait)
             okShell_(file, line)(wait_rc==WAIT_OBJECT_0 || rc <= 32,
                                  "WaitForSingleObject returned %d\n", wait_rc);
     }
@@ -635,17 +632,12 @@ static INT_PTR shell_execute_ex_(const char* file, int line,
                                  wait_rc);
             wait_rc = GetExitCodeProcess(sei.hProcess, &rc);
             okShell_(file, line)(wait_rc, "GetExitCodeProcess() failed le=%u\n", GetLastError());
-            if (!_todo_wait)
-                okShell_(file, line)(rc == 0, "child returned %u\n", rc);
-            else todo_wine
+            todo_wine_if(_todo_wait)
                 okShell_(file, line)(rc == 0, "child returned %u\n", rc);
             CloseHandle(sei.hProcess);
         }
         wait_rc=WaitForSingleObject(hEvent, 5000);
-        if (!_todo_wait)
-            okShell_(file, line)(wait_rc==WAIT_OBJECT_0,
-                                 "WaitForSingleObject returned %d\n", wait_rc);
-        else todo_wine
+        todo_wine_if(_todo_wait)
             okShell_(file, line)(wait_rc==WAIT_OBJECT_0,
                                  "WaitForSingleObject returned %d\n", wait_rc);
     }
@@ -1318,9 +1310,7 @@ static BOOL test_one_cmdline(const cmdline_tests_t* test)
     count = 0;
     while (test->args[count])
         count++;
-    if ((test->todo & 0x1) == 0)
-        ok(cl2a_count == count, "%s: expected %d arguments, but got %d\n", test->cmd, count, cl2a_count);
-    else todo_wine
+    todo_wine_if(test->todo & 0x1)
         ok(cl2a_count == count, "%s: expected %d arguments, but got %d\n", test->cmd, count, cl2a_count);
 
     for (i = 0; i < cl2a_count; i++)
@@ -1328,14 +1318,10 @@ static BOOL test_one_cmdline(const cmdline_tests_t* test)
         if (i < count)
         {
             MultiByteToWideChar(CP_ACP, 0, test->args[i], -1, argW, sizeof(argW)/sizeof(*argW));
-            if ((test->todo & (1 << (i+4))) == 0)
-                ok(!lstrcmpW(*argsW, argW), "%s: arg[%d] expected %s but got %s\n", test->cmd, i, wine_dbgstr_w(argW), wine_dbgstr_w(*argsW));
-            else todo_wine
+            todo_wine_if(test->todo & (1 << (i+4)))
                 ok(!lstrcmpW(*argsW, argW), "%s: arg[%d] expected %s but got %s\n", test->cmd, i, wine_dbgstr_w(argW), wine_dbgstr_w(*argsW));
         }
-        else if ((test->todo & 0x1) == 0)
-            ok(0, "%s: got extra arg[%d]=%s\n", test->cmd, i, wine_dbgstr_w(*argsW));
-        else todo_wine
+        else todo_wine_if(test->todo & 0x1)
             ok(0, "%s: got extra arg[%d]=%s\n", test->cmd, i, wine_dbgstr_w(*argsW));
         argsW++;
     }
@@ -1605,12 +1591,10 @@ static void test_argify(void)
         count = 0;
         while (test->cmd.args[count])
             count++;
-        if ((test->todo & 0x1) == 0)
-            /* +4 for the shlexec arguments, -1 because of the added ""
-             * argument for the CommandLineToArgvW() tests.
-             */
-            okChildInt("argcA", 4 + count - 1);
-        else todo_wine
+        /* +4 for the shlexec arguments, -1 because of the added ""
+         * argument for the CommandLineToArgvW() tests.
+         */
+        todo_wine_if(test->todo & 0x1)
             okChildInt("argcA", 4 + count - 1);
 
         cmd = getChildString("Child", "cmdlineA");
@@ -1620,10 +1604,7 @@ static void test_argify(void)
         if (cmd) cmd = strstr(cmd, test->verb);
         if (cmd) cmd += strlen(test->verb);
         if (!cmd) cmd = "(null)";
-        if ((test->todo & 0x2) == 0)
-            okShell(!strcmp(cmd, test->cmd.cmd) || broken(!strcmp(cmd, bad->cmd)),
-                    "the cmdline is '%s' instead of '%s'\n", cmd, test->cmd.cmd);
-        else todo_wine
+        todo_wine_if(test->todo & 0x2)
             okShell(!strcmp(cmd, test->cmd.cmd) || broken(!strcmp(cmd, bad->cmd)),
                     "the cmdline is '%s' instead of '%s'\n", cmd, test->cmd.cmd);
 
@@ -1631,9 +1612,7 @@ static void test_argify(void)
         {
             char argname[18];
             sprintf(argname, "argvA%d", 4 + i);
-            if ((test->todo & (1 << (i+4))) == 0)
-                okChildStringBroken(argname, test->cmd.args[i+1], bad->args[i+1]);
-            else todo_wine
+            todo_wine_if(test->todo & (1 << (i+4)))
                 okChildStringBroken(argname, test->cmd.args[i+1], bad->args[i+1]);
         }
 
@@ -1699,31 +1678,13 @@ static void test_filename(void)
         if (rc == 33)
         {
             const char* verb;
-            if ((test->todo & 0x2)==0)
-            {
+            todo_wine_if(test->todo & 0x2)
                 okChildInt("argcA", 5);
-            }
-            else todo_wine
-            {
-                okChildInt("argcA", 5);
-            }
             verb=(test->verb ? test->verb : "Open");
-            if ((test->todo & 0x4)==0)
-            {
+            todo_wine_if(test->todo & 0x4)
                 okChildString("argvA3", verb);
-            }
-            else todo_wine
-            {
-                okChildString("argvA3", verb);
-            }
-            if ((test->todo & 0x8)==0)
-            {
+            todo_wine_if(test->todo & 0x8)
                 okChildPath("argvA4", filename);
-            }
-            else todo_wine
-            {
-                okChildPath("argvA4", filename);
-            }
         }
         test++;
     }
@@ -1735,14 +1696,8 @@ static void test_filename(void)
         rc=shell_execute(test->verb, filename, NULL, NULL);
         if (rc > 32)
             rc=33;
-        if ((test->todo & 0x1)==0)
-        {
+        todo_wine_if(test->todo & 0x1)
             okShell(rc==test->rc, "failed: rc=%ld err=%u\n", rc, GetLastError());
-        }
-        else todo_wine
-        {
-            okShell(rc==test->rc, "failed: rc=%ld err=%u\n", rc, GetLastError());
-        }
         if (rc==0)
         {
             int count;
@@ -1750,14 +1705,8 @@ static void test_filename(void)
             char* str;
 
             verb=(test->verb ? test->verb : "Open");
-            if ((test->todo & 0x4)==0)
-            {
+            todo_wine_if(test->todo & 0x4)
                 okChildString("argvA3", verb);
-            }
-            else todo_wine
-            {
-                okChildString("argvA3", verb);
-            }
 
             count=4;
             str=filename;
@@ -1769,27 +1718,15 @@ static void test_filename(void)
                 if (space)
                     *space='\0';
                 sprintf(attrib, "argvA%d", count);
-                if ((test->todo & 0x8)==0)
-                {
+                todo_wine_if(test->todo & 0x8)
                     okChildPath(attrib, str);
-                }
-                else todo_wine
-                {
-                    okChildPath(attrib, str);
-                }
                 count++;
                 if (!space)
                     break;
                 str=space+1;
             }
-            if ((test->todo & 0x2)==0)
-            {
+            todo_wine_if(test->todo & 0x2)
                 okChildInt("argcA", count);
-            }
-            else todo_wine
-            {
-                okChildInt("argcA", count);
-            }
         }
         test++;
     }
@@ -1915,37 +1852,23 @@ static void test_fileurls(void)
         }
         if (test->flags & URL_SUCCESS)
         {
-            if ((test->todo & 0x1) == 0)
-                okShell(rc > 32, "failed: bad rc=%lu\n", rc);
-            else todo_wine
+            todo_wine_if(test->todo & 0x1)
                 okShell(rc > 32, "failed: bad rc=%lu\n", rc);
         }
         else
         {
-            if ((test->todo & 0x1) == 0)
-                okShell(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
-                   broken(rc == SE_ERR_ACCESSDENIED) /* win2000 */,
-                   "failed: bad rc=%lu\n", rc);
-            else todo_wine
+            todo_wine_if(test->todo & 0x1)
                 okShell(rc == SE_ERR_FNF || rc == SE_ERR_PNF ||
                         broken(rc == SE_ERR_ACCESSDENIED) /* win2000 */,
                         "failed: bad rc=%lu\n", rc);
         }
         if (rc == 33)
         {
-            if ((test->todo & 0x2) == 0)
+            todo_wine_if(test->todo & 0x2)
                 okChildInt("argcA", 5);
-            else todo_wine
-                okChildInt("argcA", 5);
-
-            if ((test->todo & 0x4) == 0)
+            todo_wine_if(test->todo & 0x4)
                 okChildString("argvA3", "Open");
-            else todo_wine
-                okChildString("argvA3", "Open");
-
-            if ((test->todo & 0x8) == 0)
-                okChildPath("argvA4", filename);
-            else todo_wine
+            todo_wine_if(test->todo & 0x8)
                 okChildPath("argvA4", filename);
         }
         test++;
@@ -2068,30 +1991,17 @@ static void test_find_executable(void)
         rc=(INT_PTR)FindExecutableA(filename, NULL, command);
         if (rc > 32)
             rc=33;
-        if ((test->todo & 0x10)==0)
-        {
+        todo_wine_if(test->todo & 0x10)
             ok(rc==test->rc, "FindExecutable(%s) failed: rc=%ld\n", filename, rc);
-        }
-        else todo_wine
-        {
-            ok(rc==test->rc, "FindExecutable(%s) failed: rc=%ld\n", filename, rc);
-        }
         if (rc > 32)
         {
             BOOL equal;
             equal=strcmp(command, argv0) == 0 ||
                 /* NT4 returns an extra 0x8 character! */
                 (strlen(command) == strlen(argv0)+1 && strncmp(command, argv0, strlen(argv0)) == 0);
-            if ((test->todo & 0x20)==0)
-            {
+            todo_wine_if(test->todo & 0x20)
                 ok(equal, "FindExecutable(%s) returned command='%s' instead of '%s'\n",
                    filename, command, argv0);
-            }
-            else todo_wine
-            {
-                ok(equal, "FindExecutable(%s) returned command='%s' instead of '%s'\n",
-                   filename, command, argv0);
-            }
         }
         test++;
     }
@@ -2192,32 +2102,14 @@ static void test_lnks(void)
                             NULL, NULL);
         if (rc > 32)
             rc=33;
-        if ((test->todo & 0x1)==0)
-        {
+        todo_wine_if(test->todo & 0x1)
             okShell(rc==test->rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
-        }
-        else todo_wine
-        {
-            okShell(rc==test->rc, "failed: rc=%lu err=%u\n", rc, GetLastError());
-        }
         if (rc==0)
         {
-            if ((test->todo & 0x2)==0)
-            {
+            todo_wine_if(test->todo & 0x2)
                 okChildInt("argcA", 5);
-            }
-            else
-            {
-                okChildInt("argcA", 5);
-            }
-            if ((test->todo & 0x4)==0)
-            {
+            todo_wine_if(test->todo & 0x4)
                 okChildString("argvA3", "Lnk");
-            }
-            else todo_wine
-            {
-                okChildString("argvA3", "Lnk");
-            }
             sprintf(params, test->basename, tmpdir);
             okChildPath("argvA4", params);
         }
@@ -2640,30 +2532,15 @@ static void test_dde_default_app(void)
             }
         }
 
-        if ((test->todo & 0x1)==0)
-        {
+        todo_wine_if(test->todo & 0x1)
             okShell(rc==test->rc[which], "failed: rc=%lu err=%u\n",
                     rc, GetLastError());
-        }
-        else todo_wine
-        {
-            okShell(rc==test->rc[which], "failed: rc=%lu err=%u\n",
-                    rc, GetLastError());
-        }
         if (rc == 33)
         {
-            if ((test->todo & 0x2)==0)
-            {
+            todo_wine_if(test->todo & 0x2)
                 ok(!strcmp(ddeApplication, test->expectedDdeApplication[which]),
                    "Expected application '%s', got '%s'\n",
                    test->expectedDdeApplication[which], ddeApplication);
-            }
-            else todo_wine
-            {
-                ok(!strcmp(ddeApplication, test->expectedDdeApplication[which]),
-                   "Expected application '%s', got '%s'\n",
-                   test->expectedDdeApplication[which], ddeApplication);
-            }
         }
         reset_association_description();
 
