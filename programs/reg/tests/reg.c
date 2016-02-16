@@ -292,6 +292,15 @@ static void test_add(void)
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword8 /t REG_dword /d 0x01ffffffff /f", &r);
     todo_wine ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS /* WinXP */), "got exit code %d\n", r);
 
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword12 /t REG_DWORD /d 0xffffffff /f", &r);
+    ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
+    dword = ~0u;
+    verify_reg(hkey, "dword12", REG_DWORD, &dword, sizeof(dword),
+               (sizeof(long) > sizeof(DWORD)) ? 0 : TODO_REG_DATA);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword13 /t REG_DWORD /d 00x123 /f", &r);
+    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
+
     /* REG_DWORD_LITTLE_ENDIAN */
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v DWORD_LE /t REG_DWORD_LITTLE_ENDIAN /d 456 /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
