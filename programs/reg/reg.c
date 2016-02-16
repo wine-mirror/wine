@@ -243,7 +243,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
         {
             LPWSTR rest;
             DWORD val;
-            val = strtoulW(data, &rest, 0);
+            val = strtoulW(data, &rest, (data[1] == 'x') ? 16 : 10);
             if (*rest || data[0] == '-') {
                 output_message(STRING_MISSING_INTEGER);
                 break;

@@ -272,8 +272,7 @@ static void test_add(void)
     ok(err == ERROR_SUCCESS, "RegQueryValueEx failed: got %d\n", err);
     ok(type == REG_DWORD, "got wrong type %d, expected %d\n", type, REG_DWORD);
     ok(size == sizeof(DWORD), "got wrong size %d, expected %d\n", size, (int)sizeof(DWORD));
-    todo_wine ok(dword == 123 || broken(dword == 0123 /* WinXP */),
-                 "got wrong data %d, expected %d\n", dword, 123);
+    ok(dword == 123 || broken(dword == 0123 /* WinXP */), "got wrong data %d, expected 123\n", dword);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword7 /t reg_dword /d 0xabcdefg /f", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
