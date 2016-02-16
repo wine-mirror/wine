@@ -2712,10 +2712,8 @@ static void test_wndproc(void)
      * But sometimes focus-follows-mouse WMs also temporarily drop window focus, which makes
      * mark the device lost, then not reset, causing the test to succeed for the wrong reason. */
     hr = IDirect3DDevice8_TestCooperativeLevel(device);
-    if (hr == D3DERR_DEVICENOTRESET)
+    todo_wine_if (hr != D3DERR_DEVICENOTRESET)
         ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
-    else
-        todo_wine ok(hr == D3DERR_DEVICENOTRESET, "Got unexpected hr %#x.\n", hr);
 
     expect_messages = focus_loss_messages;
     /* SetForegroundWindow is a poor replacement for the user pressing alt-tab or
@@ -2736,9 +2734,7 @@ static void test_wndproc(void)
     ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
     hr = IDirect3DDevice8_TestCooperativeLevel(device);
     /* Focus-follows-mouse WMs prematurely reactivate our window. */
-    if (hr == D3DERR_DEVICENOTRESET)
-        todo_wine ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
-    else
+    todo_wine_if (hr == D3DERR_DEVICENOTRESET)
         ok(hr == D3DERR_DEVICELOST, "Got unexpected hr %#x.\n", hr);
 
     ret = EnumDisplaySettingsW(NULL, ENUM_CURRENT_SETTINGS, &devmode);
@@ -6313,9 +6309,7 @@ static void test_update_volumetexture(void)
         ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#x, case %u.\n", hr, i);
 
         hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)src, (IDirect3DBaseTexture8 *)dst);
-        if (FAILED(hr))
-            todo_wine ok(SUCCEEDED(hr), "Failed to update texture, hr %#x, case %u.\n", hr, i);
-        else
+        todo_wine_if (FAILED(hr))
             ok(SUCCEEDED(hr), "Failed to update texture, hr %#x, case %u.\n", hr, i);
 
         IDirect3DVolumeTexture8_Release(src);
@@ -7837,9 +7831,7 @@ static void test_swapchain_parameters(void)
             for (j = 0; j < bb_count; ++j)
             {
                 hr = IDirect3DDevice8_GetBackBuffer(device, j, D3DBACKBUFFER_TYPE_MONO, &backbuffer);
-                if (j)
-                    todo_wine ok(SUCCEEDED(hr), "Failed to get backbuffer %u, hr %#x, test %u.\n", j, hr, i);
-                else
+                todo_wine_if (j)
                     ok(SUCCEEDED(hr), "Failed to get backbuffer %u, hr %#x, test %u.\n", j, hr, i);
                 if (SUCCEEDED(hr))
                     IDirect3DSurface8_Release(backbuffer);

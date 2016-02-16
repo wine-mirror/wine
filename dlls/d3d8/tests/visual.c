@@ -5829,10 +5829,7 @@ static void test_fog_interpolation(void)
         color = getPixelColor(device, 0, 240);
         ok(color_match(color, 0x000000ff, 2), "Got unexpected color 0x%08x, case %u.\n", color, i);
         color = getPixelColor(device, 320, 240);
-        if (tests[i].todo)
-            todo_wine ok(color_match(color, tests[i].middle_color, 2),
-                    "Got unexpected color 0x%08x, case %u.\n", color, i);
-        else
+        todo_wine_if (tests[i].todo)
             ok(color_match(color, tests[i].middle_color, 2),
                     "Got unexpected color 0x%08x, case %u.\n", color, i);
         color = getPixelColor(device, 639, 240);
