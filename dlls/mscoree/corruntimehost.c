@@ -206,28 +206,28 @@ static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
     assembly = mono_domain_assembly_open(domain, assemblyname);
     if (!assembly)
     {
-        ERR("Cannot load assembly\n");
+        ERR("Cannot load assembly %s\n", assemblyname);
         return E_FAIL;
     }
 
     image = mono_assembly_get_image(assembly);
     if (!image)
     {
-        ERR("Couldn't get assembly image\n");
+        ERR("Couldn't get assembly image for %s\n", assemblyname);
         return E_FAIL;
     }
 
     klass = mono_class_from_name(image, namespace, typename);
     if (!klass)
     {
-        ERR("Couldn't get class from image\n");
+        ERR("Couldn't get class %s.%s from image\n", namespace, typename);
         return E_FAIL;
     }
 
     method = mono_class_get_method_from_name(klass, methodname, arg_count);
     if (!method)
     {
-        ERR("Couldn't get method from class\n");
+        ERR("Couldn't get method %s from class %s.%s\n", methodname, namespace, typename);
         return E_FAIL;
     }
 
@@ -249,7 +249,7 @@ static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
         }
         else
             hr = E_FAIL;
-        ERR("Method %s.%s raised an exception, hr=%x\n", namespace, typename, hr);
+        ERR("Method %s.%s:%s raised an exception, hr=%x\n", namespace, typename, methodname, hr);
         *result = NULL;
         return hr;
     }
