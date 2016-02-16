@@ -2074,7 +2074,7 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     status = GdipClonePath(path, &flat_path);
 
     if (status == Ok)
-        status = GdipFlattenPath(flat_path, matrix, flatness);
+        status = GdipFlattenPath(flat_path, pen->unit == UnitPixel ? matrix : NULL, flatness);
 
     if (status == Ok && !init_path_list(&points, 314.0, 22.0))
         status = OutOfMemory;
@@ -2146,6 +2146,9 @@ GpStatus WINGDIPAPI GdipWidenPath(GpPath *path, GpPen *pen, GpMatrix *matrix,
     free_path_list(points);
 
     GdipDeletePath(flat_path);
+
+    if (status == Ok && pen->unit != UnitPixel)
+        status = GdipTransformPath(path, matrix);
 
     return status;
 }
