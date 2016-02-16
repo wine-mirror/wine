@@ -707,7 +707,11 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
                 focus = GetNextDlgTabItem( hwnd, 0, FALSE );
                 if (!focus) focus = GetNextDlgGroupItem( hwnd, 0, FALSE );
                 if (focus)
+                {
+                    if (SendMessageW( focus, WM_GETDLGCODE, 0, 0 ) & DLGC_HASSETSEL)
+                        SendMessageW( focus, EM_SETSEL, 0, MAXLONG );
                     SetFocus( focus );
+                }
             }
         }
 

@@ -786,7 +786,8 @@ static INT_PTR CALLBACK focusDlgWinProc (HWND hDlg, UINT uiMsg, WPARAM wParam,
     switch (uiMsg)
     {
     case WM_INITDIALOG:
-       return TRUE;
+        SetWindowTextA(GetDlgItem(hDlg, 200), "new caption");
+        return TRUE;
 
     case WM_COMMAND:
        if (LOWORD(wParam) == 200)
@@ -955,6 +956,34 @@ static void test_focus(void)
         SetFocus(NULL);
         SendMessageA(hDlg, WM_SETFOCUS, 0, 0);
         ok(GetFocus() == hLabel, "Focus not set to label on WM_SETFOCUS, focus=%p dialog=%p label=%p\n", GetFocus(), hDlg, hLabel);
+
+        DestroyWindow(hDlg);
+    }
+
+    /* Test 5:
+     * Select textbox's text on creation */
+    {
+        HWND hDlg;
+        HRSRC hResource;
+        HANDLE hTemplate;
+        DLGTEMPLATE* pTemplate;
+        HWND edit;
+        DWORD selectionStart = 0xdead, selectionEnd = 0xbeef;
+
+        hResource = FindResourceA(g_hinst,"FOCUS_TEST_DIALOG_3", (LPCSTR)RT_DIALOG);
+        hTemplate = LoadResource(g_hinst, hResource);
+        pTemplate = LockResource(hTemplate);
+
+        hDlg = CreateDialogIndirectParamA(g_hinst, pTemplate, NULL, focusDlgWinProc, 0);
+        ok(hDlg != 0, "Failed to create test dialog.\n");
+        edit = GetDlgItem(hDlg, 200);
+
+        ok(GetFocus() == edit, "Focus not set to edit, focus=%p, dialog=%p, edit=%p\n",
+                GetFocus(), hDlg, edit);
+        SendMessageA(edit, EM_GETSEL, (WPARAM)&selectionStart, (LPARAM)&selectionEnd);
+        ok(selectionStart == 0 && selectionEnd == 11,
+                "Text selection after WM_SETFOCUS is [%i, %i) expected [0, 11)\n",
+                selectionStart, selectionEnd);
 
         DestroyWindow(hDlg);
     }
