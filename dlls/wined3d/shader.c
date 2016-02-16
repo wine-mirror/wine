@@ -487,12 +487,14 @@ static void shader_set_limits(struct wined3d_shader *shader)
          * shaders to 256. */
         {WINED3D_SHADER_VERSION(3, 0), WINED3D_SHADER_VERSION(3, 0), { 4, 16, 256, 16, 12,  0}},
         {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(4, 0), {16,  0,   0,  0, 16,  0}},
+        {WINED3D_SHADER_VERSION(5, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0, 32,  0}},
         {0}
     },
     gs_limits[] =
     {
         /* min_version, max_version, sampler, constant_int, constant_float, constant_bool, packed_output, packed_input */
         {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(4, 0), {16,  0,   0,  0, 32, 16}},
+        {WINED3D_SHADER_VERSION(5, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0, 32, 32}},
         {0}
     },
     ps_limits[] =
@@ -503,7 +505,7 @@ static void shader_set_limits(struct wined3d_shader *shader)
         {WINED3D_SHADER_VERSION(2, 0), WINED3D_SHADER_VERSION(2, 0), {16,  0,  32,  0,  0,  0}},
         {WINED3D_SHADER_VERSION(2, 1), WINED3D_SHADER_VERSION(2, 1), {16, 16,  32, 16,  0,  0}},
         {WINED3D_SHADER_VERSION(3, 0), WINED3D_SHADER_VERSION(3, 0), {16, 16, 224, 16,  0, 12}},
-        {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(4, 0), {16,  0,   0,  0,  0, 32}},
+        {WINED3D_SHADER_VERSION(4, 0), WINED3D_SHADER_VERSION(5, 0), {16,  0,   0,  0,  0, 32}},
         {0}
     };
     const struct limits_entry *limits_array;
