@@ -85,38 +85,28 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
         winetest_win_skip("This test broken on this platform\n");
         return;
     }
-    if (nItemsToDo)
-        todo_wine winetest_ok(outnItems == nItems, "Wrong number of items\n");
-    else
+    todo_wine_if (nItemsToDo)
         winetest_ok(outnItems == nItems, "Wrong number of items\n");
     for (x = 0; x <= outnItems; x++)
     {
         if (items[x].isBroken && broken(outpItems[x].iCharPos == items[x].broken_value[0]))
             winetest_win_skip("This test broken on this platform\n");
-        else if (items[x].todo_flag[0])
-            todo_wine winetest_ok(outpItems[x].iCharPos == items[x].iCharPos, "%i:Wrong CharPos\n",x);
-        else
+        else todo_wine_if (items[x].todo_flag[0])
             winetest_ok(outpItems[x].iCharPos == items[x].iCharPos, "%i:Wrong CharPos (%i)\n",x,outpItems[x].iCharPos);
 
         if (items[x].isBroken && broken(outpItems[x].a.fRTL== items[x].broken_value[1]))
             winetest_win_skip("This test broken on this platform\n");
-        else if (items[x].todo_flag[1])
-            todo_wine winetest_ok(outpItems[x].a.fRTL == items[x].fRTL, "%i:Wrong fRTL\n",x);
-        else
+        else todo_wine_if (items[x].todo_flag[1])
             winetest_ok(outpItems[x].a.fRTL == items[x].fRTL, "%i:Wrong fRTL(%i)\n",x,outpItems[x].a.fRTL);
 
         if (items[x].isBroken && broken(outpItems[x].a.fLayoutRTL == items[x].broken_value[2]))
             winetest_win_skip("This test broken on this platform\n");
-        else if (items[x].todo_flag[2])
-            todo_wine winetest_ok(outpItems[x].a.fLayoutRTL == items[x].fLayoutRTL, "%i:Wrong fLayoutRTL\n",x);
-        else
+        else todo_wine_if (items[x].todo_flag[2])
             winetest_ok(outpItems[x].a.fLayoutRTL == items[x].fLayoutRTL, "%i:Wrong fLayoutRTL(%i)\n",x,outpItems[x].a.fLayoutRTL);
 
         if (items[x].isBroken && broken(outpItems[x].a.s.uBidiLevel == items[x].broken_value[3]))
             winetest_win_skip("This test broken on this platform\n");
-        else if (items[x].todo_flag[3])
-            todo_wine winetest_ok(outpItems[x].a.s.uBidiLevel == items[x].uBidiLevel, "%i:Wrong BidiLevel\n",x);
-        else
+        else todo_wine_if (items[x].todo_flag[3])
             winetest_ok(outpItems[x].a.s.uBidiLevel == items[x].uBidiLevel, "%i:Wrong BidiLevel(%i)\n",x,outpItems[x].a.s.uBidiLevel);
         if (x != outnItems)
             winetest_ok(outpItems[x].a.eScript != SCRIPT_UNDEFINED, "%i: Undefined script\n",x);
@@ -124,17 +114,13 @@ static inline void _test_items_ok(LPCWSTR string, DWORD cchString,
         {
             if (items[x].isBroken && broken(tags[x] == items[x].broken_value[4]))
                 winetest_win_skip("This test broken on this platform\n");
-            else if (items[x].todo_flag[4])
-                todo_wine winetest_ok(tags[x] == items[x].scriptTag,"%i:Incorrect Script Tag %x != %x\n",x,tags[x],items[x].scriptTag);
-            else
+            else todo_wine_if (items[x].todo_flag[4])
                 winetest_ok(tags[x] == items[x].scriptTag,"%i:Incorrect Script Tag %x != %x\n",x,tags[x],items[x].scriptTag);
         }
 
         if (items[x].isBroken && broken(outpItems[x].a.s.fOverrideDirection == items[x].broken_value[5]))
             winetest_win_skip("This test broken on this platform\n");
-        else if (items[x].todo_flag[5])
-            todo_wine winetest_ok(outpItems[x].a.s.fOverrideDirection == items[x].fOverrideDirection, "%i:Wrong fOverrideDirection\n",x);
-        else
+        else todo_wine_if (items[x].todo_flag[5])
             winetest_ok(outpItems[x].a.s.fOverrideDirection == items[x].fOverrideDirection, "%i:Wrong fOverrideDirection(%i)\n",x,outpItems[x].a.s.fOverrideDirection);
     }
 }
