@@ -631,7 +631,8 @@ static DWORD get_service_binary_path(const struct service_entry *service_entry, 
 
     ExpandEnvironmentStringsW(service_entry->config.lpBinaryPathName, *path, size);
 
-    if (service_entry->config.dwServiceType == SERVICE_KERNEL_DRIVER)
+    if (service_entry->config.dwServiceType == SERVICE_KERNEL_DRIVER ||
+        service_entry->config.dwServiceType == SERVICE_FILE_SYSTEM_DRIVER)
     {
         static const WCHAR winedeviceW[] = {'\\','w','i','n','e','d','e','v','i','c','e','.','e','x','e',' ',0};
         WCHAR system_dir[MAX_PATH];
