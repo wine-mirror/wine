@@ -286,9 +286,11 @@ void Gstreamer_transform_pad_added_wrapper(GstElement *filter, GstPad *pad, gpoi
 
 gboolean query_sink_wrapper(GstPad *pad, GstObject *parent, GstQuery *query)
 {
-    struct cb_data cbdata = { QUERY_SINK,
-        { .query_sink_data = {pad, parent, query} }
-    };
+    struct cb_data cbdata = { QUERY_SINK };
+
+    cbdata.u.query_sink_data.pad = pad;
+    cbdata.u.query_sink_data.parent = parent;
+    cbdata.u.query_sink_data.query = query;
 
     call_cb(&cbdata);
 
