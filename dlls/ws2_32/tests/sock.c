@@ -1591,17 +1591,10 @@ todo_wine
            "SO_PROTOCOL_INFO[A/W] comparison failed\n");
 
         /* Remove IF when WSAEnumProtocols support IPV6 data */
-        if (prottest[i].family == AF_INET6)
-        {
-            todo_wine
+        todo_wine_if (prottest[i].family == AF_INET6)
             ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
                prottest[i].family, infoA.iAddressFamily);
-        }
-        else
-        {
-            ok(infoA.iAddressFamily == prottest[i].family, "socket family invalid, expected %d received %d\n",
-               prottest[i].family, infoA.iAddressFamily);
-        }        ok(infoA.iSocketType == prottest[i].type, "socket type invalid, expected %d received %d\n",
+        ok(infoA.iSocketType == prottest[i].type, "socket type invalid, expected %d received %d\n",
            prottest[i].type, infoA.iSocketType);
         ok(infoA.iProtocol == prottest[i].proto, "socket protocol invalid, expected %d received %d\n",
            prottest[i].proto, infoA.iProtocol);
@@ -2798,27 +2791,15 @@ static void test_WSAEnumNetworkEvents(void)
                     "Test[%d]: WSAEnumNetworkEvents failed\n", i);
                 if (i >= 1 && j == 0) /* FD_WRITE is SET on first try for UDP and connected TCP */
                 {
-                    if (i == 0) /* Remove when fixed */
-                    {
-                        todo_wine
+                    todo_wine_if (i == 0) /* Remove when fixed */
                         ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
                             i, net_events.lNetworkEvents);
-                    }
-                    else
-                    ok (net_events.lNetworkEvents == FD_WRITE, "Test[%d]: expected 2, got %d\n",
-                        i, net_events.lNetworkEvents);
                 }
                 else
                 {
-                    if (i != 0) /* Remove when fixed */
-                    {
-                        todo_wine
+                    todo_wine_if (i != 0) /* Remove when fixed */
                         ok (net_events.lNetworkEvents == 0, "Test[%d]: expected 0, got %d\n",
                             i, net_events.lNetworkEvents);
-                    }
-                    else
-                    ok (net_events.lNetworkEvents == 0, "Test[%d]: expected 0, got %d\n",
-                        i, net_events.lNetworkEvents);
                 }
                 for (k = 0; k < FD_MAX_EVENTS; k++)
                 {
