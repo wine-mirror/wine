@@ -723,7 +723,6 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
 {
     struct d3d8_device *device = impl_from_IDirect3DDevice8(iface);
     struct wined3d_swapchain *wined3d_swapchain;
-    struct wined3d_resource *wined3d_resource;
     struct wined3d_texture *wined3d_texture;
     struct d3d8_surface *surface_impl;
 
@@ -743,8 +742,7 @@ static HRESULT WINAPI d3d8_device_GetBackBuffer(IDirect3DDevice8 *iface,
         return D3DERR_INVALIDCALL;
     }
 
-    wined3d_resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
-    surface_impl = wined3d_resource_get_parent(wined3d_resource);
+    surface_impl = wined3d_texture_get_sub_resource_parent(wined3d_texture, 0);
     *backbuffer = &surface_impl->IDirect3DSurface8_iface;
     IDirect3DSurface8_AddRef(*backbuffer);
 
