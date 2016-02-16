@@ -134,7 +134,8 @@ static inline BOOL is_special_env_var( const char *var )
             !strncmp( var, "PWD=", sizeof("PWD=")-1 ) ||
             !strncmp( var, "HOME=", sizeof("HOME=")-1 ) ||
             !strncmp( var, "TEMP=", sizeof("TEMP=")-1 ) ||
-            !strncmp( var, "TMP=", sizeof("TMP=")-1 ));
+            !strncmp( var, "TMP=", sizeof("TMP=")-1 ) ||
+            !strncmp( var, "QT_", sizeof("QT_")-1 ));
 }
 
 
