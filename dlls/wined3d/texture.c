@@ -62,14 +62,6 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     wined3d_resource_update_draw_binding(&texture->resource);
 
     texture->texture_ops = texture_ops;
-    texture->sub_resources = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-            level_count * layer_count * sizeof(*texture->sub_resources));
-    if (!texture->sub_resources)
-    {
-        ERR("Failed to allocate sub-resource array.\n");
-        resource_cleanup(&texture->resource);
-        return E_OUTOFMEMORY;
-    }
 
     texture->layer_count = layer_count;
     texture->level_count = level_count;
@@ -128,7 +120,6 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
     }
 
     wined3d_texture_unload_gl_texture(texture);
-    HeapFree(GetProcessHeap(), 0, texture->sub_resources);
     resource_cleanup(&texture->resource);
 }
 
@@ -977,10 +968,9 @@ static const struct wined3d_resource_ops texture2d_resource_ops =
 };
 
 static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3d_resource_desc *desc,
-        UINT level_count, DWORD flags, struct wined3d_device *device, void *parent,
-        const struct wined3d_parent_ops *parent_ops)
+        unsigned int layer_count, unsigned int level_count, DWORD flags, struct wined3d_device *device,
+        void *parent, const struct wined3d_parent_ops *parent_ops)
 {
-    unsigned int layer_count = desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP ? 6 : 1;
     const struct wined3d_gl_info *gl_info = &device->adapter->gl_info;
     struct wined3d_resource_desc surface_desc;
     UINT pow2_width, pow2_height;
@@ -1499,6 +1489,7 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
         UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
 {
+    unsigned int layer_count = desc->usage & WINED3DUSAGE_LEGACY_CUBEMAP ? 6 : 1;
     struct wined3d_texture *object;
     HRESULT hr;
 
@@ -1532,13 +1523,14 @@ HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct
         }
     }
 
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
+    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            FIELD_OFFSET(struct wined3d_texture, sub_resources[level_count * layer_count]))))
         return E_OUTOFMEMORY;
 
     switch (desc->resource_type)
     {
         case WINED3D_RTYPE_TEXTURE_2D:
-            hr = texture_init(object, desc, level_count, flags, device, parent, parent_ops);
+            hr = texture_init(object, desc, layer_count, level_count, flags, device, parent, parent_ops);
             break;
 
         case WINED3D_RTYPE_TEXTURE_3D:

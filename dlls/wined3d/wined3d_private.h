@@ -2354,7 +2354,6 @@ struct wined3d_texture
     struct wined3d_resource resource;
     const struct wined3d_texture_ops *texture_ops;
     struct gl_texture texture_rgb, texture_srgb;
-    struct wined3d_resource **sub_resources;
     struct wined3d_swapchain *swapchain;
     UINT layer_count;
     UINT level_count;
@@ -2382,6 +2381,8 @@ struct wined3d_texture
         struct wined3d_color_key gl_color_key;
         DWORD color_key_flags;
     } async;
+
+    struct wined3d_resource *sub_resources[1];
 };
 
 static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined3d_resource *resource)
