@@ -3586,8 +3586,11 @@ static HRESULT WINAPI dwritetextlayout2_GetFontFallback(IDWriteTextLayout3 *ifac
 static HRESULT WINAPI dwritetextlayout3_InvalidateLayout(IDWriteTextLayout3 *iface)
 {
     struct dwrite_textlayout *This = impl_from_IDWriteTextLayout3(iface);
-    FIXME("(%p): stub\n", This);
-    return E_NOTIMPL;
+
+    TRACE("(%p)\n", This);
+
+    This->recompute = RECOMPUTE_EVERYTHING;
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritetextlayout3_SetLineSpacing(IDWriteTextLayout3 *iface, DWRITE_LINE_SPACING const *spacing)

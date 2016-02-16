@@ -27,7 +27,7 @@
 
 #include "initguid.h"
 #include "windows.h"
-#include "dwrite_2.h"
+#include "dwrite_3.h"
 
 #include "wine/test.h"
 

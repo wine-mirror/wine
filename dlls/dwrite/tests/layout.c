@@ -25,7 +25,7 @@
 #include <limits.h>
 
 #include "windows.h"
-#include "dwrite_2.h"
+#include "dwrite_3.h"
 
 #include "wine/test.h"
 
@@ -4853,6 +4853,38 @@ todo_wine
     IDWriteFactory_Release(factory);
 }
 
+static void test_InvalidateLayout(void)
+{
+    static const WCHAR strW[] = {'a',0};
+    IDWriteTextLayout3 *layout3;
+    IDWriteTextLayout *layout;
+    IDWriteTextFormat *format;
+    IDWriteFactory *factory;
+    HRESULT hr;
+
+    factory = create_factory();
+
+    hr = IDWriteFactory_CreateTextFormat(factory, tahomaW, NULL, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+        DWRITE_FONT_STRETCH_NORMAL, 10.0f, enusW, &format);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteFactory_CreateTextLayout(factory, strW, 1, format, 1000.0f, 1000.0f, &layout);
+    ok(hr == S_OK, "got 0x%08x\n", hr);
+
+    hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout3, (void**)&layout3);
+    if (hr == S_OK) {
+        hr = IDWriteTextLayout3_InvalidateLayout(layout3);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteTextLayout3_Release(layout3);
+    }
+    else
+        win_skip("IDWriteTextLayout3::InvalidateLayout() is not supported.\n");
+
+    IDWriteTextLayout_Release(layout);
+    IDWriteTextFormat_Release(format);
+    IDWriteFactory_Release(factory);
+}
+
 START_TEST(layout)
 {
     IDWriteFactory *factory;
@@ -4900,6 +4932,7 @@ START_TEST(layout)
     test_SetLastLineWrapping();
     test_SetOpticalAlignment();
     test_SetUnderline();
+    test_InvalidateLayout();
 
     IDWriteFactory_Release(factory);
 }
