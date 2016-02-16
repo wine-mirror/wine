@@ -864,9 +864,7 @@ static void test_xapo_creation_legacy(const char *module, unsigned int version)
     if(pCreateFX){
         for(i = 0; i < sizeof(const_clsids) / sizeof(*const_clsids); ++i){
             hr = pCreateFX(const_clsids[i].clsid, &fx_unk);
-            if(const_clsids[i].todo)
-                todo_wine ok(hr == S_OK, "%s: CreateFX(%s) failed: %08x\n", module, wine_dbgstr_guid(const_clsids[i].clsid), hr);
-            else
+            todo_wine_if(const_clsids[i].todo)
                 ok(hr == S_OK, "%s: CreateFX(%s) failed: %08x\n", module, wine_dbgstr_guid(const_clsids[i].clsid), hr);
             if(SUCCEEDED(hr)){
                 IXAPO *xapo;
@@ -952,9 +950,7 @@ static void test_xapo_creation_modern(const char *module)
     if(pCreateFX){
         for(i = 0; i < sizeof(const_clsids) / sizeof(*const_clsids); ++i){
             hr = pCreateFX(const_clsids[i].clsid, &fx_unk, NULL, 0);
-            if(const_clsids[i].todo)
-                todo_wine ok(hr == S_OK, "%s: CreateFX(%s) failed: %08x\n", module, wine_dbgstr_guid(const_clsids[i].clsid), hr);
-            else
+            todo_wine_if(const_clsids[i].todo)
                 ok(hr == S_OK, "%s: CreateFX(%s) failed: %08x\n", module, wine_dbgstr_guid(const_clsids[i].clsid), hr);
             if(SUCCEEDED(hr)){
                 IXAPO *xapo;
