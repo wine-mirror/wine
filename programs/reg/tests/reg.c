@@ -281,8 +281,7 @@ static void test_add(void)
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword8 /t REG_dword /d 0xdeadbeef /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     dword = 0xdeadbeef;
-    verify_reg(hkey, "dword8", REG_DWORD, &dword, sizeof(dword),
-               (sizeof(long) > sizeof(DWORD)) ? 0 : TODO_REG_DATA);
+    verify_reg(hkey, "dword8", REG_DWORD, &dword, sizeof(dword), 0);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_DWORD /v dword9 /f /d -1", &r);
     todo_wine ok(r == REG_EXIT_FAILURE || broken(r == REG_EXIT_SUCCESS /* WinXP */), "got exit code %u\n", r);
@@ -295,8 +294,7 @@ static void test_add(void)
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword12 /t REG_DWORD /d 0xffffffff /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %d, expected 0\n", r);
     dword = ~0u;
-    verify_reg(hkey, "dword12", REG_DWORD, &dword, sizeof(dword),
-               (sizeof(long) > sizeof(DWORD)) ? 0 : TODO_REG_DATA);
+    verify_reg(hkey, "dword12", REG_DWORD, &dword, sizeof(dword), 0);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v dword13 /t REG_DWORD /d 00x123 /f", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
