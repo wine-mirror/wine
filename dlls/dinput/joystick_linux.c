@@ -65,9 +65,9 @@
 #include "device_private.h"
 #include "joystick_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dinput);
-
 #ifdef HAVE_LINUX_22_JOYSTICK_API
+
+WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 #define JOYDEV_NEW "/dev/input/js"
 #define JOYDEV_OLD "/dev/js"

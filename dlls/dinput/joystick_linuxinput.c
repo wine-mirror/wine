@@ -63,9 +63,9 @@
 #include "device_private.h"
 #include "joystick_private.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(dinput);
-
 #ifdef HAS_PROPER_HEADER
+
+WINE_DEFAULT_DEBUG_CHANNEL(dinput);
 
 #define EVDEVPREFIX "/dev/input/event"
 #define EVDEVDRIVER " (event)"
