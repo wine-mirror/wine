@@ -113,7 +113,7 @@ static void wined3d_texture_cleanup(struct wined3d_texture *texture)
 
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_resource *sub_resource = texture->sub_resources[i];
+        struct wined3d_resource *sub_resource = texture->sub_resources[i].resource;
 
         if (sub_resource)
             texture->texture_ops->texture_sub_resource_cleanup(sub_resource);
@@ -457,7 +457,7 @@ void wined3d_texture_load(struct wined3d_texture *texture,
 
         TRACE("Reloading because of color key value change.\n");
         for (i = 0; i < sub_count; i++)
-            texture->texture_ops->texture_sub_resource_add_dirty_region(texture->sub_resources[i], NULL);
+            texture->texture_ops->texture_sub_resource_add_dirty_region(texture->sub_resources[i].resource, NULL);
         wined3d_texture_set_dirty(texture);
 
         texture->async.gl_color_key = texture->async.src_blt_color_key;
@@ -472,7 +472,7 @@ void wined3d_texture_load(struct wined3d_texture *texture,
     /* Reload the surfaces if the texture is marked dirty. */
     for (i = 0; i < sub_count; ++i)
     {
-        texture->texture_ops->texture_sub_resource_load(texture->sub_resources[i], context, srgb);
+        texture->texture_ops->texture_sub_resource_load(texture->sub_resources[i].resource, context, srgb);
     }
     texture->flags |= flag;
 }
@@ -639,7 +639,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         return WINED3DERR_INVALIDCALL;
     }
 
-    surface = surface_from_resource(texture->sub_resources[0]);
+    surface = surface_from_resource(texture->sub_resources[0].resource);
     if (surface->resource.map_count || (surface->flags & SFLAG_DCINUSE))
     {
         WARN("Surface is mapped or the DC is in use.\n");
@@ -698,7 +698,7 @@ void wined3d_texture_force_reload(struct wined3d_texture *texture)
     texture->async.flags &= ~WINED3D_TEXTURE_ASYNC_COLOR_KEY;
     for (i = 0; i < sub_count; ++i)
     {
-        texture->texture_ops->texture_sub_resource_invalidate_location(texture->sub_resources[i],
+        texture->texture_ops->texture_sub_resource_invalidate_location(texture->sub_resources[i].resource,
                 WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB);
     }
 }
@@ -722,7 +722,7 @@ struct wined3d_resource * CDECL wined3d_texture_get_sub_resource(const struct wi
         return NULL;
     }
 
-    return texture->sub_resources[sub_resource_idx];
+    return texture->sub_resources[sub_resource_idx].resource;
 }
 
 HRESULT CDECL wined3d_texture_add_dirty_region(struct wined3d_texture *texture,
@@ -766,7 +766,7 @@ static HRESULT wined3d_texture_upload_data(struct wined3d_texture *texture,
 
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_resource *sub_resource = texture->sub_resources[i];
+        struct wined3d_resource *sub_resource = texture->sub_resources[i].resource;
 
         texture->texture_ops->texture_sub_resource_upload_data(sub_resource, context, &data[i]);
         texture->texture_ops->texture_sub_resource_validate_location(sub_resource, WINED3D_LOCATION_TEXTURE_RGB);
@@ -878,7 +878,7 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i]);
+        struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i].resource);
         GLsizei height = surface->pow2Height;
         GLsizei width = surface->pow2Width;
 
@@ -928,7 +928,7 @@ static void wined3d_texture_unload(struct wined3d_resource *resource)
 
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_resource *sub_resource = texture->sub_resources[i];
+        struct wined3d_resource *sub_resource = texture->sub_resources[i].resource;
 
         sub_resource->resource_ops->resource_unload(sub_resource);
     }
@@ -1108,7 +1108,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
                 return hr;
             }
 
-            texture->sub_resources[idx] = &surface->resource;
+            texture->sub_resources[idx].resource = &surface->resource;
             TRACE("Created surface level %u @ %p.\n", i, surface);
         }
         /* Calculate the next mipmap level. */
@@ -1180,7 +1180,7 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
 
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i]);
+        struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i].resource);
 
         GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, volume->texture_level,
                 srgb ? format->glGammaInternal : format->glInternal,
@@ -1324,7 +1324,7 @@ static HRESULT volumetexture_init(struct wined3d_texture *texture, const struct 
             return hr;
         }
 
-        texture->sub_resources[i] = &volume->resource;
+        texture->sub_resources[i].resource = &volume->resource;
 
         /* Calculate the next mipmap level. */
         volume_desc.width = max(1, volume_desc.width >> 1);

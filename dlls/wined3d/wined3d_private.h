@@ -2382,7 +2382,10 @@ struct wined3d_texture
         DWORD color_key_flags;
     } async;
 
-    struct wined3d_resource *sub_resources[1];
+    struct
+    {
+        struct wined3d_resource *resource;
+    } sub_resources[1];
 };
 
 static inline struct wined3d_texture *wined3d_texture_from_resource(struct wined3d_resource *resource)
