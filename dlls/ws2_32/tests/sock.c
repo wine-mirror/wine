@@ -1328,6 +1328,7 @@ static void test_set_getsockopt(void)
     WSAPROTOCOL_INFOA infoA;
     WSAPROTOCOL_INFOW infoW;
     char providername[WSAPROTOCOL_LEN + 1];
+    DWORD value;
     struct _prottest
     {
         int family, type, proto;
@@ -1371,6 +1372,27 @@ static void test_set_getsockopt(void)
         err = getsockopt(s, SOL_SOCKET, SO_SNDTIMEO, (char *) &timeout, &size); 
     ok( !err, "get/setsockopt(SO_SNDTIMEO) failed error: %d\n", WSAGetLastError());
     ok( timeout == SOCKTIMEOUT2, "getsockopt(SO_SNDTIMEO) returned wrong value %d\n", timeout);
+
+    /* SO_SNDBUF */
+    value = 4096;
+    size = sizeof(value);
+    err = setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&value, size);
+    ok( !err, "setsockopt(SO_SNDBUF) failed error: %u\n", WSAGetLastError() );
+    value = 0xdeadbeef;
+    err = getsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&value, &size);
+    ok( !err, "getsockopt(SO_SNDBUF) failed error: %u\n", WSAGetLastError() );
+    todo_wine ok( value == 4096, "expected 4096, got %u\n", value );
+
+    /* SO_RCVBUF */
+    value = 4096;
+    size = sizeof(value);
+    err = setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&value, size);
+    ok( !err, "setsockopt(SO_RCVBUF) failed error: %u\n", WSAGetLastError() );
+    value = 0xdeadbeef;
+    err = getsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&value, &size);
+    ok( !err, "getsockopt(SO_RCVBUF) failed error: %u\n", WSAGetLastError() );
+    todo_wine ok( value == 4096, "expected 4096, got %u\n", value );
+
     /* SO_LINGER */
     for( i = 0; i < sizeof(linger_testvals)/sizeof(LINGER);i++) {
         size =  sizeof(lingval);
