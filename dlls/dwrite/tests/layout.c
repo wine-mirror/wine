@@ -4873,6 +4873,26 @@ static void test_InvalidateLayout(void)
 
     hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextLayout3, (void**)&layout3);
     if (hr == S_OK) {
+        IDWriteTextFormat1 *format1;
+        IDWriteTextFormat2 *format2;
+
+        hr = IDWriteTextFormat_QueryInterface(format, &IID_IDWriteTextFormat2, (void**)&format2);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+        IDWriteTextFormat2_Release(format2);
+
+        hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat2, (void**)&format2);
+        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
+        hr = IDWriteTextLayout_QueryInterface(layout, &IID_IDWriteTextFormat1, (void**)&format1);
+        ok(hr == S_OK, "got 0x%08x\n", hr);
+
+        hr = IDWriteTextFormat1_QueryInterface(format1, &IID_IDWriteTextFormat2, (void**)&format2);
+        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+        IDWriteTextFormat1_Release(format1);
+
+        hr = IDWriteTextLayout3_QueryInterface(layout3, &IID_IDWriteTextFormat2, (void**)&format2);
+        ok(hr == E_NOINTERFACE, "got 0x%08x\n", hr);
+
         hr = IDWriteTextLayout3_InvalidateLayout(layout3);
         ok(hr == S_OK, "got 0x%08x\n", hr);
         IDWriteTextLayout3_Release(layout3);
