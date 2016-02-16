@@ -1450,15 +1450,11 @@ static void color_fill_test(void)
         ok(SUCCEEDED(hr), "Failed to create surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
 
         hr = IDirect3DDevice9_ColorFill(device, surface, NULL, 0xdeadbeef);
-        if (formats[i].flags & TODO_FILL_RETURN)
-            todo_wine ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
-        else
+        todo_wine_if (formats[i].flags & TODO_FILL_RETURN)
             ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
 
         hr = IDirect3DDevice9_ColorFill(device, surface, &rect, 0xdeadbeef);
-        if (formats[i].flags & TODO_FILL_RETURN)
-            todo_wine ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
-        else
+        todo_wine_if (formats[i].flags & TODO_FILL_RETURN)
             ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
 
         if (SUCCEEDED(hr))
@@ -8472,14 +8468,7 @@ static void test_shademode(void)
          * functionality being available. */
         /* PHONG should be the same as GOURAUD, since no hardware implements
          * this. */
-        if (tests[i].todo)
-        {
-            todo_wine ok(color_match(color0, tests[i].color0, 1), "Test %u shading has color0 %08x, expected %08x.\n",
-                    i, color0, tests[i].color0);
-            todo_wine ok(color_match(color1, tests[i].color1, 1), "Test %u shading has color1 %08x, expected %08x.\n",
-                    i, color1, tests[i].color1);
-        }
-        else
+        todo_wine_if (tests[i].todo)
         {
             ok(color_match(color0, tests[i].color0, 1), "Test %u shading has color0 %08x, expected %08x.\n",
                     i, color0, tests[i].color0);
@@ -18123,10 +18112,7 @@ static void test_fog_interpolation(void)
         color = getPixelColor(device, 0, 240);
         ok(color_match(color, 0x000000ff, 2), "Got unexpected color 0x%08x, case %u.\n", color, i);
         color = getPixelColor(device, 320, 240);
-        if (tests[i].todo)
-            todo_wine ok(color_match(color, tests[i].middle_color, 2),
-                    "Got unexpected color 0x%08x, case %u.\n", color, i);
-        else
+        todo_wine_if (tests[i].todo)
             ok(color_match(color, tests[i].middle_color, 2),
                     "Got unexpected color 0x%08x, case %u.\n", color, i);
         color = getPixelColor(device, 639, 240);
