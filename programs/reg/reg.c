@@ -244,7 +244,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             LPWSTR rest;
             DWORD val;
             val = strtoulW(data, &rest, 0);
-            if (*rest) {
+            if (*rest || data[0] == '-') {
                 output_message(STRING_MISSING_INTEGER);
                 break;
             }
