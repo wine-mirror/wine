@@ -16,7 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "dwrite_2.h"
+#include "dwrite_3.h"
 #include "d2d1.h"
 
 #include "wine/debug.h"
