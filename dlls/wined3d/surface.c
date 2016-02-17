@@ -1538,38 +1538,11 @@ void wined3d_surface_upload_data(struct wined3d_surface *surface, const struct w
     }
 }
 
-static BOOL surface_check_block_align(struct wined3d_surface *surface, const struct wined3d_box *box)
-{
-    UINT width_mask, height_mask;
-
-    if (!box->left && !box->top
-            && box->right == surface->resource.width
-            && box->bottom == surface->resource.height)
-        return TRUE;
-
-    if ((box->left >= box->right)
-            || (box->top >= box->bottom)
-            || (box->right > surface->resource.width)
-            || (box->bottom > surface->resource.height))
-        return FALSE;
-
-    /* This assumes power of two block sizes, but NPOT block sizes would be
-     * silly anyway. */
-    width_mask = surface->resource.format->block_width - 1;
-    height_mask = surface->resource.format->block_height - 1;
-
-    if (!(box->left & width_mask) && !(box->top & height_mask)
-            && !(box->right & width_mask) && !(box->bottom & height_mask))
-        return TRUE;
-
-    return FALSE;
-}
-
 static BOOL surface_check_block_align_rect(struct wined3d_surface *surface, const RECT *rect)
 {
     struct wined3d_box box = {rect->left, rect->top, rect->right, rect->bottom, 0, 1};
 
-    return surface_check_block_align(surface, &box);
+    return wined3d_texture_check_block_align(surface->container, surface->texture_level, &box);
 }
 
 HRESULT surface_upload_from_surface(struct wined3d_surface *dst_surface, const POINT *dst_point,
@@ -2301,7 +2274,7 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
     }
 
     if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && box
-            && !surface_check_block_align(surface, box))
+            && !wined3d_texture_check_block_align(surface->container, surface->texture_level, box))
     {
         WARN("Map box %s is misaligned for %ux%u blocks.\n",
                 debug_box(box), format->block_width, format->block_height);

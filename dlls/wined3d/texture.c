@@ -1201,6 +1201,35 @@ static const struct wined3d_texture_ops texture3d_ops =
     texture3d_prepare_texture,
 };
 
+BOOL wined3d_texture_check_block_align(const struct wined3d_texture *texture,
+        unsigned int level, const struct wined3d_box *box)
+{
+    const struct wined3d_format *format = texture->resource.format;
+    unsigned int height = max(1, texture->resource.height >> level);
+    unsigned int width = max(1, texture->resource.width >> level);
+    unsigned int width_mask, height_mask;
+
+    if ((box->left >= box->right)
+            || (box->top >= box->bottom)
+            || (box->right > width)
+            || (box->bottom > height))
+        return FALSE;
+
+    /* This assumes power of two block sizes, but NPOT block sizes would be
+     * silly anyway.
+     *
+     * This also assumes that the format's block depth is 1. */
+    width_mask = format->block_width - 1;
+    height_mask = format->block_height - 1;
+
+    if ((box->left & width_mask) || (box->top & height_mask)
+            || (box->right & width_mask && box->right != width)
+            || (box->bottom & height_mask && box->bottom != height))
+        return FALSE;
+
+    return TRUE;
+}
+
 static HRESULT texture3d_resource_sub_resource_map(struct wined3d_resource *resource, unsigned int sub_resource_idx,
         struct wined3d_map_desc *map_desc, const struct wined3d_box *box, DWORD flags)
 {
