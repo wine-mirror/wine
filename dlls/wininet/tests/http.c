@@ -216,8 +216,7 @@ static void _test_status_code(unsigned line, HINTERNET req, DWORD excode, BOOL i
     size = sizeof(code);
     res = HttpQueryInfoA(req, HTTP_QUERY_STATUS_CODE|HTTP_QUERY_FLAG_NUMBER, &code, &size, &index);
     ok_(__FILE__,line)(res, "[2] HttpQueryInfoA(HTTP_QUERY_STATUS_CODE|number index) failed: %u\n", GetLastError());
-    todo_wine_if (is_todo)
-        ok_(__FILE__,line)(!index, "index = %d, expected 0\n", index);
+    ok_(__FILE__,line)(!index, "index = %d, expected 0\n", index);
     ok_(__FILE__,line)(size == sizeof(code), "size = %u\n", size);
 
     sprintf(exbuf, "%u", excode);
