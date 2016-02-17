@@ -239,7 +239,7 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
                                            PCREDENTIALW credential, char *buffer,
                                            DWORD *len)
 {
-    OSStatus status;
+    int status;
     UInt32 i, cred_blob_len;
     void *cred_blob;
     WCHAR *user = NULL;
@@ -260,7 +260,7 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
     }
     if (status != noErr)
     {
-        WARN("SecKeychainItemCopyAttributesAndData returned status %ld\n", status);
+        WARN("SecKeychainItemCopyAttributesAndData returned status %d\n", status);
         return ERROR_NOT_FOUND;
     }
 
@@ -371,7 +371,7 @@ static DWORD mac_read_credential_from_item(SecKeychainItemRef item, BOOL require
                 }
                 break;
             default:
-                FIXME("unhandled attribute %lu\n", attr_list->attr[i].tag);
+                FIXME("unhandled attribute %u\n", (unsigned)attr_list->attr[i].tag);
                 break;
         }
     }
@@ -496,7 +496,7 @@ static DWORD registry_write_credential(HKEY hkey, const CREDENTIALW *credential,
 #ifdef __APPLE__
 static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_blob)
 {
-    OSStatus status;
+    int status;
     SecKeychainItemRef keychain_item;
     char *username, *password, *servername;
     UInt32 userlen, pwlen, serverlen;
@@ -529,13 +529,13 @@ static DWORD mac_write_credential(const CREDENTIALW *credential, BOOL preserve_b
     status = SecKeychainAddGenericPassword(NULL, strlen(servername), servername, strlen(username),
                                            username, strlen(password), password, &keychain_item);
     if (status != noErr)
-        ERR("SecKeychainAddGenericPassword returned %ld\n", status);
+        ERR("SecKeychainAddGenericPassword returned %d\n", status);
     if (status == errSecDuplicateItem)
     {
         status = SecKeychainFindGenericPassword(NULL, strlen(servername), servername, strlen(username),
                                                 username, NULL, NULL, &keychain_item);
         if (status != noErr)
-            ERR("SecKeychainFindGenericPassword returned %ld\n", status);
+            ERR("SecKeychainFindGenericPassword returned %d\n", status);
     }
     heap_free(username);
     heap_free(servername);
@@ -774,7 +774,7 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
 {
     SecKeychainSearchRef search;
     SecKeychainItemRef item;
-    OSStatus status;
+    int status;
     Boolean saved_user_interaction_allowed;
     DWORD ret;
 
@@ -797,7 +797,7 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
             status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, NULL, NULL);
             if (status != noErr)
             {
-                WARN("SecKeychainItemCopyAttributesAndData returned status %ld\n", status);
+                WARN("SecKeychainItemCopyAttributesAndData returned status %d\n", status);
                 continue;
             }
             if (buffer)
@@ -830,14 +830,14 @@ static DWORD mac_enumerate_credentials(LPCWSTR filter, PCREDENTIALW *credentials
         CFRelease(search);
     }
     else
-        ERR("SecKeychainSearchCreateFromAttributes returned status %ld\n", status);
+        ERR("SecKeychainSearchCreateFromAttributes returned status %d\n", status);
     SecKeychainSetUserInteractionAllowed(saved_user_interaction_allowed);
     return ERROR_SUCCESS;
 }
 
 static DWORD mac_delete_credential(LPCWSTR TargetName)
 {
-    OSStatus status;
+    int status;
     SecKeychainSearchRef search;
     status = SecKeychainSearchCreateFromAttributes(NULL, kSecGenericPasswordItemClass, NULL, &search);
     if (status == noErr)
@@ -856,7 +856,7 @@ static DWORD mac_delete_credential(LPCWSTR TargetName)
             status = SecKeychainItemCopyAttributesAndData(item, &info, NULL, &attr_list, NULL, NULL);
             if (status != noErr)
             {
-                WARN("SecKeychainItemCopyAttributesAndData returned status %ld\n", status);
+                WARN("SecKeychainItemCopyAttributesAndData returned status %d\n", status);
                 continue;
             }
             if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
@@ -1425,7 +1425,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
 #ifdef __APPLE__
     if (Type == CRED_TYPE_DOMAIN_PASSWORD)
     {
-        OSStatus status;
+        int status;
         SecKeychainSearchRef search;
         status = SecKeychainSearchCreateFromAttributes(NULL, kSecGenericPasswordItemClass, NULL, &search);
         if (status == noErr)
@@ -1445,7 +1445,7 @@ BOOL WINAPI CredReadW(LPCWSTR TargetName, DWORD Type, DWORD Flags, PCREDENTIALW 
                 len = sizeof(**Credential);
                 if (status != noErr)
                 {
-                    WARN("SecKeychainItemCopyAttributesAndData returned status %ld\n", status);
+                    WARN("SecKeychainItemCopyAttributesAndData returned status %d\n", status);
                     continue;
                 }
                 if (attr_list->count != 1 || attr_list->attr[0].tag != kSecServiceItemAttr)
