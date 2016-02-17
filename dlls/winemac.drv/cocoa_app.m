@@ -2295,6 +2295,7 @@ static void PerformRequest(void *info)
 
     for (;;)
     {
+        NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
         __block dispatch_block_t block;
 
         dispatch_sync(controller->requestsManipQueue, ^{
@@ -2308,10 +2309,14 @@ static void PerformRequest(void *info)
         });
 
         if (!block)
+        {
+            [pool release];
             break;
+        }
 
         block();
         [block release];
+        [pool release];
     }
 }
 
