@@ -317,20 +317,16 @@ static HRESULT WINAPI d3d8_texture_2d_LockRect(IDirect3DTexture8 *iface, UINT le
 static HRESULT WINAPI d3d8_texture_2d_UnlockRect(IDirect3DTexture8 *iface, UINT level)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
-    struct wined3d_resource *sub_resource;
     struct d3d8_surface *surface_impl;
     HRESULT hr;
 
     TRACE("iface %p, level %u.\n", iface, level);
 
     wined3d_mutex_lock();
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
+    if (!(surface_impl = wined3d_texture_get_sub_resource_parent(texture->wined3d_texture, level)))
         hr = D3DERR_INVALIDCALL;
     else
-    {
-        surface_impl = wined3d_resource_get_parent(sub_resource);
         hr = IDirect3DSurface8_UnlockRect(&surface_impl->IDirect3DSurface8_iface);
-    }
     wined3d_mutex_unlock();
 
     return hr;
