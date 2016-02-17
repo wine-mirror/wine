@@ -579,7 +579,7 @@ int wmain(int argc, WCHAR *argvW[])
             {
                 WCHAR *ptr = argvW[++i];
 
-                if (!ptr)
+                if (!ptr || strlenW(ptr) != 1)
                 {
                     output_message(STRING_INVALID_CMDLINE);
                     return 1;
