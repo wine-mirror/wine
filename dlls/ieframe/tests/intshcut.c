@@ -147,10 +147,7 @@ static void _check_string_transform(unsigned line, IUniformResourceLocatorA *url
     output = (void*)0xdeadbeef;
     hr = urlA->lpVtbl->GetURL(urlA, &output);
     if(expectedOutput) {
-        if(is_todo) {
-            todo_wine
-            ok_(__FILE__,line)(hr == S_OK, "GetUrl failed, hr=0x%x\n", hr);
-        }else {
+        todo_wine_if(is_todo) {
             ok_(__FILE__,line)(hr == S_OK, "GetUrl failed, hr=0x%x\n", hr);
         }
         todo_wine

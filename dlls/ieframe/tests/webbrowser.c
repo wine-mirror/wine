@@ -2806,10 +2806,7 @@ static void test_QueryStatusWB(IWebBrowser2 *webbrowser, BOOL has_document)
     if (use_container_olecmd) SET_EXPECT(QueryStatus_STOP);
     hres = IWebBrowser2_QueryStatusWB(webbrowser, OLECMDID_STOP, &status);
     ok(hres == success_state, "QueryStatusWB failed: %08x %08x\n", hres, success_state);
-    if (!use_container_olecmd && has_document)
-        todo_wine ok((has_document && status == success_flags) || (!has_document && status == 0xdeadbeef),
-                     "OLECMDID_STOP not enabled/supported: %08x %08x\n", status, success_flags);
-    else
+    todo_wine_if (!use_container_olecmd && has_document)
         ok((has_document && status == success_flags) || (!has_document && status == 0xdeadbeef),
            "OLECMDID_STOP not enabled/supported: %08x %08x\n", status, success_flags);
     status = 0xdeadbeef;
@@ -3312,9 +3309,7 @@ static void test_UIActivate(IWebBrowser2 *unk, BOOL activate)
         }
 
         hres = IOleDocumentView_UIActivate(docview, activate);
-        if(activate)
-            todo_wine ok(hres == S_OK, "Got 0x%08x\n", hres);
-        else
+        todo_wine_if(activate)
             ok(hres == S_OK, "Got 0x%08x\n", hres);
 
         if(activate) {
