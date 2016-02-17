@@ -576,7 +576,16 @@ int wmain(int argc, WCHAR *argvW[])
             else if (!lstrcmpiW(argvW[i], slashTW))
                 type = argvW[++i];
             else if (!lstrcmpiW(argvW[i], slashSW))
-                separator = argvW[++i][0];
+            {
+                WCHAR *ptr = argvW[++i];
+
+                if (!ptr)
+                {
+                    output_message(STRING_INVALID_CMDLINE);
+                    return 1;
+                }
+                separator = ptr[0];
+            }
             else if (!lstrcmpiW(argvW[i], slashDW))
             {
                 if (!(data = argvW[++i]))
