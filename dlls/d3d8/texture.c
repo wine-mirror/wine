@@ -274,19 +274,17 @@ static HRESULT WINAPI d3d8_texture_2d_GetSurfaceLevel(IDirect3DTexture8 *iface,
         UINT level, IDirect3DSurface8 **surface)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DTexture8(iface);
-    struct wined3d_resource *sub_resource;
     struct d3d8_surface *surface_impl;
 
     TRACE("iface %p, level %u, surface %p.\n", iface, level, surface);
 
     wined3d_mutex_lock();
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
+    if (!(surface_impl = wined3d_texture_get_sub_resource_parent(texture->wined3d_texture, level)))
     {
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
 
-    surface_impl = wined3d_resource_get_parent(sub_resource);
     *surface = &surface_impl->IDirect3DSurface8_iface;
     IDirect3DSurface8_AddRef(*surface);
     wined3d_mutex_unlock();
