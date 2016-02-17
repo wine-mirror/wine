@@ -2057,9 +2057,7 @@ todo_wine
         if (metrics[i].isSoftHyphen)
             ok(!metrics[i].isWhitespace, "%u: got %d\n", i, metrics[i].isWhitespace);
         if (metrics[i].isNewline) {
-            if (i == 17 || i == 19)
-                todo_wine ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
-            else
+            todo_wine_if (i == 17 || i == 19)
                 ok(metrics[i].width == 0.0f, "%u: got width %f\n", i, metrics[i].width);
             ok(metrics[i].isWhitespace == 1, "%u: got %d\n", i, metrics[i].isWhitespace);
             ok(metrics[i].canWrapLineAfter == 1, "%u: got %d\n", i, metrics[i].canWrapLineAfter);
