@@ -68,7 +68,7 @@ struct dll_fixup
     void *tokens; /* pointer into process heap */
 };
 
-static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, MonoDomain **result)
+static HRESULT RuntimeHost_AddDefaultDomain(RuntimeHost *This, MonoDomain **result)
 {
     struct DomainEntry *entry;
     HRESULT res=S_OK;
@@ -115,7 +115,7 @@ static HRESULT RuntimeHost_GetDefaultDomain(RuntimeHost *This, const WCHAR *conf
 
     if (This->default_domain) goto end;
 
-    res = RuntimeHost_AddDomain(This, &This->default_domain);
+    res = RuntimeHost_AddDefaultDomain(This, &This->default_domain);
 
     if (!config_path)
     {
@@ -188,48 +188,54 @@ static void RuntimeHost_DeleteDomain(RuntimeHost *This, MonoDomain *domain)
     LeaveCriticalSection(&This->lock);
 }
 
-static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
-    const char *assemblyname, const char *namespace, const char *typename, const char *methodname,
-    MonoObject *obj, void **args, int arg_count, MonoObject **result)
+static BOOL RuntimeHost_GetMethod(MonoDomain *domain, const char *assemblyname,
+    const char *namespace, const char *typename, const char *methodname, int arg_count,
+    MonoMethod **method)
 {
     MonoAssembly *assembly;
     MonoImage *image;
     MonoClass *klass;
-    MonoMethod *method;
-    MonoObject *exc;
-    static const char *get_hresult = "get_HResult";
-
-    *result = NULL;
-
-    mono_thread_attach(domain);
 
     assembly = mono_domain_assembly_open(domain, assemblyname);
     if (!assembly)
     {
         ERR("Cannot load assembly %s\n", assemblyname);
-        return E_FAIL;
+        return FALSE;
     }
 
     image = mono_assembly_get_image(assembly);
     if (!image)
     {
         ERR("Couldn't get assembly image for %s\n", assemblyname);
-        return E_FAIL;
+        return FALSE;
     }
 
     klass = mono_class_from_name(image, namespace, typename);
     if (!klass)
     {
         ERR("Couldn't get class %s.%s from image\n", namespace, typename);
-        return E_FAIL;
+        return FALSE;
     }
 
-    method = mono_class_get_method_from_name(klass, methodname, arg_count);
-    if (!method)
+    *method = mono_class_get_method_from_name(klass, methodname, arg_count);
+    if (!*method)
     {
         ERR("Couldn't get method %s from class %s.%s\n", methodname, namespace, typename);
-        return E_FAIL;
+        return FALSE;
     }
+
+    return TRUE;
+}
+
+static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
+    const char *assemblyname, const char *namespace, const char *typename, const char *methodname,
+    MonoObject *obj, void **args, int arg_count, MonoObject **result);
+
+static HRESULT RuntimeHost_DoInvoke(RuntimeHost *This, MonoDomain *domain,
+    const char *methodname, MonoMethod *method, MonoObject *obj, void **args, MonoObject **result)
+{
+    MonoObject *exc;
+    static const char *get_hresult = "get_HResult";
 
     *result = mono_runtime_invoke(method, obj, args, &exc);
     if (exc)
@@ -249,10 +255,176 @@ static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
         }
         else
             hr = E_FAIL;
-        ERR("Method %s.%s:%s raised an exception, hr=%x\n", namespace, typename, methodname, hr);
         *result = NULL;
         return hr;
     }
+
+    return S_OK;
+}
+
+static HRESULT RuntimeHost_Invoke(RuntimeHost *This, MonoDomain *domain,
+    const char *assemblyname, const char *namespace, const char *typename, const char *methodname,
+    MonoObject *obj, void **args, int arg_count, MonoObject **result)
+{
+    MonoMethod *method;
+    HRESULT hr;
+
+    *result = NULL;
+
+    mono_thread_attach(domain);
+
+    if (!RuntimeHost_GetMethod(domain, assemblyname, namespace, typename, methodname,
+            arg_count, &method))
+    {
+        return E_FAIL;
+    }
+
+    hr = RuntimeHost_DoInvoke(This, domain, methodname, method, obj, args, result);
+    if (FAILED(hr))
+    {
+        ERR("Method %s.%s:%s raised an exception, hr=%x\n", namespace, typename, methodname, hr);
+    }
+
+    return hr;
+}
+
+static HRESULT RuntimeHost_VirtualInvoke(RuntimeHost *This, MonoDomain *domain,
+    const char *assemblyname, const char *namespace, const char *typename, const char *methodname,
+    MonoObject *obj, void **args, int arg_count, MonoObject **result)
+{
+    MonoMethod *method;
+    HRESULT hr;
+
+    *result = NULL;
+
+    if (!obj)
+    {
+        ERR("\"this\" object cannot be null\n");
+        return E_POINTER;
+    }
+
+    mono_thread_attach(domain);
+
+    if (!RuntimeHost_GetMethod(domain, assemblyname, namespace, typename, methodname,
+            arg_count, &method))
+    {
+        return E_FAIL;
+    }
+
+    method = mono_object_get_virtual_method(obj, method);
+    if (!method)
+    {
+        ERR("Object %p does not support method %s.%s:%s\n", obj, namespace, typename, methodname);
+        return E_FAIL;
+    }
+
+    hr = RuntimeHost_DoInvoke(This, domain, methodname, method, obj, args, result);
+    if (FAILED(hr))
+    {
+        ERR("Method %s.%s:%s raised an exception, hr=%x\n", namespace, typename, methodname, hr);
+    }
+
+    return hr;
+}
+
+static HRESULT RuntimeHost_GetObjectForIUnknown(RuntimeHost *This, MonoDomain *domain,
+    IUnknown *unk, MonoObject **obj)
+{
+    HRESULT hr;
+    void *args[1];
+    MonoObject *result;
+
+    args[0] = &unk;
+    hr = RuntimeHost_Invoke(This, domain, "mscorlib", "System.Runtime.InteropServices", "Marshal", "GetObjectForIUnknown",
+        NULL, args, 1, &result);
+
+    if (SUCCEEDED(hr))
+    {
+        *obj = result;
+    }
+    return hr;
+}
+
+static HRESULT RuntimeHost_AddDomain(RuntimeHost *This, const WCHAR *name, IUnknown *setup,
+    IUnknown *evidence, MonoDomain **result)
+{
+    HRESULT res;
+    char *nameA;
+    MonoDomain *domain;
+    void *args[3];
+    MonoObject *new_domain, *id;
+
+    res = RuntimeHost_GetDefaultDomain(This, NULL, &domain);
+    if (FAILED(res))
+    {
+        return res;
+    }
+
+    nameA = WtoA(name);
+    if (!nameA)
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    args[0] = mono_string_new(domain, nameA);
+    HeapFree(GetProcessHeap(), 0, nameA);
+
+    if (!args[0])
+    {
+        return E_OUTOFMEMORY;
+    }
+
+    if (evidence)
+    {
+        res = RuntimeHost_GetObjectForIUnknown(This, domain, evidence, (MonoObject **)&args[1]);
+        if (FAILED(res))
+        {
+            return res;
+        }
+    }
+    else
+    {
+        args[1] = NULL;
+    }
+
+    if (setup)
+    {
+        res = RuntimeHost_GetObjectForIUnknown(This, domain, setup, (MonoObject **)&args[2]);
+        if (FAILED(res))
+        {
+            return res;
+        }
+    }
+    else
+    {
+        args[2] = NULL;
+    }
+
+    res = RuntimeHost_Invoke(This, domain, "mscorlib", "System", "AppDomain", "CreateDomain",
+        NULL, args, 3, &new_domain);
+
+    if (FAILED(res))
+    {
+        return res;
+    }
+
+    /* new_domain is not the AppDomain itself, but a transparent proxy.
+     * So, we'll retrieve its ID, and use that to get the real domain object.
+     * We can't do a regular invoke, because that will bypass the proxy.
+     * Instead, do a vcall.
+     */
+
+    res = RuntimeHost_VirtualInvoke(This, domain, "mscorlib", "System", "AppDomain", "get_Id",
+        new_domain, NULL, 0, &id);
+
+    if (FAILED(res))
+    {
+        return res;
+    }
+
+    TRACE("returning domain id %d\n", *(int *)mono_object_unbox(id));
+
+    *result = mono_domain_get_by_id(*(int *)mono_object_unbox(id));
 
     return S_OK;
 }
@@ -432,8 +604,7 @@ static HRESULT WINAPI corruntimehost_CreateDomain(
     IUnknown *identityArray,
     IUnknown **appDomain)
 {
-    FIXME("stub %p\n", iface);
-    return E_NOTIMPL;
+    return ICorRuntimeHost_CreateDomainEx(iface, friendlyName, NULL, NULL, appDomain);
 }
 
 static HRESULT WINAPI corruntimehost_GetDefaultDomain(
@@ -488,8 +659,29 @@ static HRESULT WINAPI corruntimehost_CreateDomainEx(
     IUnknown *evidence,
     IUnknown **appDomain)
 {
-    FIXME("stub %p\n", iface);
-    return E_NOTIMPL;
+    RuntimeHost *This = impl_from_ICorRuntimeHost( iface );
+    HRESULT hr;
+    MonoDomain *domain;
+
+    if (!friendlyName || !appDomain)
+    {
+        return E_POINTER;
+    }
+    if (!is_mono_started)
+    {
+        return E_FAIL;
+    }
+
+    TRACE("(%p)\n", iface);
+
+    hr = RuntimeHost_AddDomain(This, friendlyName, setup, evidence, &domain);
+
+    if (SUCCEEDED(hr))
+    {
+        hr = RuntimeHost_GetIUnknownForDomain(This, domain, appDomain);
+    }
+
+    return hr;
 }
 
 static HRESULT WINAPI corruntimehost_CreateDomainSetup(

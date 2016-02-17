@@ -79,6 +79,7 @@ MonoClass* (CDECL *mono_class_from_name)(MonoImage *image, const char* name_spac
 MonoMethod* (CDECL *mono_class_get_method_from_name)(MonoClass *klass, const char *name, int param_count);
 static void (CDECL *mono_config_parse)(const char *filename);
 MonoAssembly* (CDECL *mono_domain_assembly_open)(MonoDomain *domain, const char *name);
+MonoDomain* (CDECL *mono_domain_get_by_id)(int id);
 void (CDECL *mono_domain_set_config)(MonoDomain *domain,const char *base_dir,const char *config_file_name);
 static void (CDECL *mono_free)(void *);
 static MonoImage* (CDECL *mono_image_open)(const char *fname, MonoImageOpenStatus *status);
@@ -89,6 +90,7 @@ MonoDomain* (CDECL *mono_jit_init_version)(const char *domain_name, const char *
 static int (CDECL *mono_jit_set_trace_options)(const char* options);
 void* (CDECL *mono_marshal_get_vtfixup_ftnptr)(MonoImage *image, DWORD token, WORD type);
 MonoDomain* (CDECL *mono_object_get_domain)(MonoObject *obj);
+MonoMethod* (CDECL *mono_object_get_virtual_method)(MonoObject *obj, MonoMethod *method);
 MonoObject* (CDECL *mono_object_new)(MonoDomain *domain, MonoClass *klass);
 void* (CDECL *mono_object_unbox)(MonoObject *obj);
 static void (CDECL *mono_profiler_install)(MonoProfiler *prof, MonoProfileFunc shutdown_callback);
@@ -175,6 +177,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_class_from_name);
         LOAD_MONO_FUNCTION(mono_class_get_method_from_name);
         LOAD_MONO_FUNCTION(mono_domain_assembly_open);
+        LOAD_MONO_FUNCTION(mono_domain_get_by_id);
         LOAD_MONO_FUNCTION(mono_domain_set_config);
         LOAD_MONO_FUNCTION(mono_free);
         LOAD_MONO_FUNCTION(mono_image_open);
@@ -184,6 +187,7 @@ static HRESULT load_mono(LPCWSTR mono_path)
         LOAD_MONO_FUNCTION(mono_jit_set_trace_options);
         LOAD_MONO_FUNCTION(mono_marshal_get_vtfixup_ftnptr);
         LOAD_MONO_FUNCTION(mono_object_get_domain);
+        LOAD_MONO_FUNCTION(mono_object_get_virtual_method);
         LOAD_MONO_FUNCTION(mono_object_new);
         LOAD_MONO_FUNCTION(mono_object_unbox);
         LOAD_MONO_FUNCTION(mono_profiler_install);
