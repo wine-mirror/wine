@@ -195,7 +195,7 @@ HPEN WINAPI ExtCreatePen( DWORD style, DWORD width,
     if (logbrush.lbStyle == BS_DIBPATTERN) logbrush.lbStyle = BS_DIBPATTERNPT;
 
     penPtr->logpen.elpPenStyle = style;
-    penPtr->logpen.elpWidth = abs(width);
+    penPtr->logpen.elpWidth = abs((int)width);
     penPtr->logpen.elpBrushStyle = logbrush.lbStyle;
     penPtr->logpen.elpColor = logbrush.lbColor;
     penPtr->logpen.elpHatch = brush->lbHatch;
