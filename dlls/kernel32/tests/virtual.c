@@ -3172,11 +3172,8 @@ static void test_CreateFileMapping_protection(void)
             ptr = VirtualAlloc(base, si.dwPageSize, MEM_COMMIT, td[i].prot);
             ok(!ptr, "%d: VirtualAlloc(%02x) should fail\n", i, td[i].prot);
             /* FIXME: remove once Wine is fixed */
-            if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
-todo_wine
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
-            else
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
+            todo_wine_if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
+                ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
 
             SetLastError(0xdeadbeef);
             ret = VirtualProtect(base, si.dwPageSize, td[i].prot, &old_prot);
@@ -3267,9 +3264,7 @@ todo_wine
             ok(info.BaseAddress == base, "%d: got %p != expected %p\n", i, info.BaseAddress, base);
             ok(info.RegionSize == si.dwPageSize, "%d: got %#lx != expected %#x\n", i, info.RegionSize, si.dwPageSize);
             /* FIXME: remove the condition below once Wine is fixed */
-            if (td[i].prot == PAGE_EXECUTE_WRITECOPY)
-                todo_wine ok(info.Protect == prot, "%d: got %#x != expected %#x\n", i, info.Protect, prot);
-            else
+            todo_wine_if (td[i].prot == PAGE_EXECUTE_WRITECOPY)
                 ok(info.Protect == prot, "%d: got %#x != expected %#x\n", i, info.Protect, prot);
             ok(info.AllocationBase == base, "%d: %p != %p\n", i, info.AllocationBase, base);
             ok(info.AllocationProtect == alloc_prot, "%d: %#x != %#x\n", i, info.AllocationProtect, alloc_prot);
@@ -3284,9 +3279,7 @@ todo_wine
                 ret = VirtualQuery(base, &info, sizeof(info));
                 ok(ret, "VirtualQuery failed %d\n", GetLastError());
                 /* FIXME: remove the condition below once Wine is fixed */
-                if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
-                    todo_wine ok(info.Protect == td[i].prot_after_write, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot_after_write);
-                else
+                todo_wine_if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
                     ok(info.Protect == td[i].prot_after_write, "%d: got %#x != expected %#x\n", i, info.Protect, td[i].prot_after_write);
             }
         }
@@ -3302,9 +3295,7 @@ todo_wine
         ret = VirtualProtect(base, si.dwPageSize, PAGE_NOACCESS, &old_prot);
         ok(ret, "%d: VirtualProtect error %d\n", i, GetLastError());
         /* FIXME: remove the condition below once Wine is fixed */
-        if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
-            todo_wine ok(old_prot == td[i].prot_after_write, "%d: got %#x != expected %#x\n", i, old_prot, td[i].prot_after_write);
-        else
+        todo_wine_if (td[i].prot == PAGE_WRITECOPY || td[i].prot == PAGE_EXECUTE_WRITECOPY)
             ok(old_prot == td[i].prot_after_write, "%d: got %#x != expected %#x\n", i, old_prot, td[i].prot_after_write);
     }
 
@@ -3675,11 +3666,8 @@ static void test_mapping(void)
                 ptr = VirtualAlloc(base, si.dwPageSize, MEM_COMMIT, page_prot[k]);
                 ok(!ptr, "VirtualAlloc(%02x) should fail\n", page_prot[k]);
                 /* FIXME: remove once Wine is fixed */
-                if (page_prot[k] == PAGE_WRITECOPY || page_prot[k] == PAGE_EXECUTE_WRITECOPY)
-todo_wine
-                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
-                else
-                ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
+                todo_wine_if (page_prot[k] == PAGE_WRITECOPY || page_prot[k] == PAGE_EXECUTE_WRITECOPY)
+                    ok(GetLastError() == ERROR_ACCESS_DENIED, "expected ERROR_ACCESS_DENIED, got %d\n", GetLastError());
             }
 
             UnmapViewOfFile(base);
