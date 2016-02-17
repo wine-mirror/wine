@@ -3042,7 +3042,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
         return hr;
     }
 
-    d3d_surface = wined3d_resource_get_parent(wined3d_texture_get_sub_resource(*texture, 0));
+    d3d_surface = wined3d_texture_get_sub_resource_parent(*texture, 0);
     d3d_surface->parent_device = &device->IDirect3DDevice8_iface;
 
     return hr;
