@@ -1545,7 +1545,7 @@ INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
     INT ret = 0;
     int keyc;
     BOOL is_menu = (flags & 0x1);
-    OSStatus status;
+    int status;
     const UCKeyboardLayout *uchr;
     UInt16 keyAction;
     UInt32 modifierKeyState;
@@ -1664,7 +1664,7 @@ INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
         &len, bufW);
     if (status != noErr)
     {
-        ERR_(key)("Couldn't translate keycode 0x%04x, status %ld\n", keyc, status);
+        ERR_(key)("Couldn't translate keycode 0x%04x, status %d\n", keyc, status);
         goto done;
     }
     if (!is_menu)
@@ -1687,7 +1687,7 @@ INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState
             &savedDeadKeyState, bufW_size, &len, bufW);
         if (status != noErr)
         {
-            ERR_(key)("Couldn't translate keycode 0x%04x, status %ld\n", keyc, status);
+            ERR_(key)("Couldn't translate keycode 0x%04x, status %d\n", keyc, status);
             goto done;
         }
 
