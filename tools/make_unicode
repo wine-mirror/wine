@@ -1331,7 +1331,7 @@ sub dump_scripts($)
         }
 
         # ignore some scripts
-        if ($type eq "" || $type eq "Common" || $type eq "Inherited")
+        if ($type eq "Common" || $type eq "Inherited")
         {
             next;
         }
@@ -1339,10 +1339,16 @@ sub dump_scripts($)
         $scripts{$type} = -1;
     }
 
+    # assign script indices, starting from index 2
     $script_index = 1;
     foreach my $script (sort keys %scripts) {
         $scripts{$script} = ++$script_index;
     }
+    # indices change when new scripts are added to the standard,
+    # keep Unknown/Common at fixed positions, Inherited is treated as Unknown
+    $scripts{"Unknown"} = 0;
+    $scripts{"Inherited"} = 0;
+    $scripts{"Common"} = 1;
 
     # now fill a table
     seek $INPUT, 0, 0;
@@ -1385,11 +1391,10 @@ sub dump_scripts($)
     print OUTPUT "/* generated from $UNIDATA/Scripts.txt */\n";
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
 
-    # reserve Unknown and Common ids
+    # Inherited was consumed by Unknown, we don't need it as a separate enum memeber
+    delete $scripts{"Inherited"};
     print OUTPUT "enum unicode_script_id {\n";
-    print OUTPUT "    Script_Unknown = 0,\n";
-    print OUTPUT "    Script_Common = 1,\n";
-    foreach my $script (sort keys %scripts)
+    foreach my $script (sort { $scripts{$a} <=> $scripts{$b} } keys %scripts)
     {
         print OUTPUT "    Script_$script = $scripts{$script},\n";
     }

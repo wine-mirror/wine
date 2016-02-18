@@ -235,13 +235,17 @@ static inline UINT32 decode_surrogate_pair(const WCHAR *str, UINT32 index, UINT3
 
 static inline UINT16 get_char_script(WCHAR c)
 {
-    UINT16 script = get_table_entry(wine_scripts_table, c);
-    if (script == Script_Unknown) {
-        WORD type;
-        if (GetStringTypeW(CT_CTYPE1, &c, 1, &type) && (type & C1_CNTRL))
-            script = Script_Common;
-    }
-    return script;
+    return get_table_entry(wine_scripts_table, c);
+}
+
+static DWRITE_SCRIPT_ANALYSIS get_char_sa(WCHAR c)
+{
+    DWRITE_SCRIPT_ANALYSIS sa;
+
+    sa.script = get_char_script(c);
+    sa.shapes = iscntrlW(c) || c == 0x2028 /* LINE SEPARATOR */ || c == 0x2029 /* PARAGRAPH SEPARATOR */ ?
+        DWRITE_SCRIPT_SHAPES_NO_VISUAL : DWRITE_SCRIPT_SHAPES_DEFAULT;
+    return sa;
 }
 
 static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 length, IDWriteTextAnalysisSink *sink)
@@ -251,36 +255,46 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 length,
 
     if (!length) return S_OK;
 
-    sa.script = get_char_script(*text);
+    sa = get_char_sa(*text);
 
     pos = position;
     seq_length = 1;
 
     for (i = 1; i < length; i++)
     {
-        UINT16 script = get_char_script(text[i]);
+        DWRITE_SCRIPT_ANALYSIS cur_sa = get_char_sa(text[i]);
 
         /* Unknown type is ignored when preceded or followed by another script */
-        if (sa.script == Script_Unknown) sa.script = script;
-        if (script == Script_Unknown && sa.script != Script_Common) script = sa.script;
-        /* this is a length of a sequence to be reported next */
-        if (sa.script == script) seq_length++;
+        switch (sa.script) {
+        case Script_Unknown:
+            sa.script = cur_sa.script;
+            break;
+        case Script_Common:
+            if (cur_sa.script == Script_Unknown)
+                cur_sa.script = sa.script;
+            else if (cur_sa.script != Script_Common)
+                sa.script = cur_sa.script;
+            break;
+        default:
+            if (cur_sa.script == Script_Unknown || cur_sa.script == Script_Common)
+                cur_sa.script = sa.script;
+        }
 
-        if (sa.script != script)
-        {
+        /* this is a length of a sequence to be reported next */
+        if (sa.script == cur_sa.script && sa.shapes == cur_sa.shapes)
+            seq_length++;
+        else {
             HRESULT hr;
 
-            sa.shapes = sa.script != Script_Common ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
             hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, seq_length, &sa);
             if (FAILED(hr)) return hr;
             pos = position + i;
             seq_length = 1;
-            sa.script = script;
+            sa = cur_sa;
         }
     }
 
     /* one char length case or normal completion call */
-    sa.shapes = sa.script != Script_Common ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
     return IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, seq_length, &sa);
 }
 
