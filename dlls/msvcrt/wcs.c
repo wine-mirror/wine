@@ -374,7 +374,7 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
     } else  if(*p == '+')
         p++;
 
-    while(isdigitW(*p)) {
+    while(*p>='0' && *p<='9') {
         found_digit = TRUE;
         hlp = d*10+*(p++)-'0';
         if(d>MSVCRT_UI64_MAX/10 || hlp<d) {
@@ -383,14 +383,14 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         } else
             d = hlp;
     }
-    while(isdigitW(*p)) {
+    while(*p>='0' && *p<='9') {
         exp++;
         p++;
     }
     if(*p == *locinfo->lconv->decimal_point)
         p++;
 
-    while(isdigitW(*p)) {
+    while(*p>='0' && *p<='9') {
         found_digit = TRUE;
         hlp = d*10+*(p++)-'0';
         if(d>MSVCRT_UI64_MAX/10 || hlp<d)
@@ -399,7 +399,7 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         d = hlp;
         exp--;
     }
-    while(isdigitW(*p))
+    while(*p>='0' && *p<='9')
         p++;
 
     if(!found_digit) {
@@ -418,8 +418,8 @@ double CDECL MSVCRT__wcstod_l(const MSVCRT_wchar_t* str, MSVCRT_wchar_t** end,
         } else if(*p == '+')
             p++;
 
-        if(isdigitW(*p)) {
-            while(isdigitW(*p)) {
+        if(*p>='0' && *p<='9') {
+            while(*p>='0' && *p<='9') {
                 if(e>INT_MAX/10 || (e=e*10+*p-'0')<0)
                     e = INT_MAX;
                 p++;
@@ -1974,7 +1974,7 @@ __int64 CDECL MSVCRT__wcstoi64_l(const MSVCRT_wchar_t *nptr,
         MSVCRT_wchar_t cur = tolowerW(*nptr);
         int v;
 
-        if(isdigitW(cur)) {
+        if(cur>='0' && cur<='9') {
             if(cur >= '0'+base)
                 break;
             v = cur-'0';
@@ -2139,7 +2139,7 @@ unsigned __int64 CDECL MSVCRT__wcstoui64_l(const MSVCRT_wchar_t *nptr,
         MSVCRT_wchar_t cur = tolowerW(*nptr);
         int v;
 
-        if(isdigitW(cur)) {
+        if(cur>='0' && cur<='9') {
             if(cur >= '0'+base)
                 break;
             v = *nptr-'0';
