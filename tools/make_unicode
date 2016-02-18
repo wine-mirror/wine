@@ -2184,7 +2184,7 @@ sub output_codepage_file($$$$)
 {
     my ($codepage, $filename, $comment, $has_glyphs) = @_;
 
-    my $output = sprintf "libs/wine/c_%03d.c", $codepage;
+    my $output = sprintf "libs/port/c_%03d.c", $codepage;
     open OUTPUT,">$output.new" or die "Cannot create $output";
 
     printf "Building %s from %s (%s)\n", $output, $filename || "hardcoded data", $comment;
@@ -2427,7 +2427,7 @@ dump_nameprep( "dlls/kernel32/nameprep.c" );
 
 foreach my $file (@allfiles) { HANDLE_FILE( @{$file} ); }
 
-output_cptable("libs/wine/cptable.c");
+output_cptable("libs/port/cptable.c");
 
 exit 0;
 

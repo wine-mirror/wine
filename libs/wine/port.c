@@ -31,6 +31,8 @@
 /* functions from libwine_port that are also exported from libwine for backwards compatibility */
 const void *libwine_port_functions[] =
 {
+    wine_cp_enum_table,
+    wine_cp_get_table,
     wine_fold_string
 };
 
