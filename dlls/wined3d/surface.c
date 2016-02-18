@@ -594,7 +594,7 @@ static BOOL surface_use_pbo(const struct wined3d_surface *surface)
                 && gl_info->supported[ARB_PIXEL_BUFFER_OBJECT]
                 && !texture->resource.format->convert
                 && !(texture->flags & WINED3D_TEXTURE_PIN_SYSMEM)
-                && !(surface->flags & SFLAG_NONPOW2);
+                && !(texture->flags & WINED3D_TEXTURE_COND_NP2_EMULATED);
 }
 
 static HRESULT surface_private_setup(struct wined3d_surface *surface)
@@ -633,12 +633,6 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
                   surface, surface->resource.width, surface->resource.height);
             return WINED3DERR_NOTAVAILABLE;
         }
-    }
-
-    if (pow2Width != surface->resource.width
-            || pow2Height != surface->resource.height)
-    {
-        surface->flags |= SFLAG_NONPOW2;
     }
 
     if ((surface->pow2Width > gl_info->limits.texture_size || surface->pow2Height > gl_info->limits.texture_size)
@@ -1321,7 +1315,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
         GLenum gl_type = format->glType;
         void *mem;
 
-        if (surface->flags & SFLAG_NONPOW2)
+        if (surface->container->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
         {
             wined3d_texture_get_pitch(surface->container, surface->texture_level, &dst_row_pitch, &dst_slice_pitch);
             wined3d_format_calculate_pitch(format, surface->resource.device->surface_alignment,
@@ -1355,7 +1349,7 @@ static void surface_download_data(struct wined3d_surface *surface, const struct 
             checkGLcall("glGetTexImage");
         }
 
-        if (surface->flags & SFLAG_NONPOW2)
+        if (surface->container->flags & WINED3D_TEXTURE_COND_NP2_EMULATED)
         {
             const BYTE *src_data;
             BYTE *dst_data;
@@ -1879,11 +1873,6 @@ HRESULT wined3d_surface_update_desc(struct wined3d_surface *surface, const struc
         while (surface->pow2Height < height)
             surface->pow2Height <<= 1;
     }
-
-    if (surface->pow2Width != width || surface->pow2Height != height)
-        surface->flags |= SFLAG_NONPOW2;
-    else
-        surface->flags &= ~SFLAG_NONPOW2;
 
     if (surface->container->user_memory)
     {

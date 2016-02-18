@@ -2336,16 +2336,17 @@ struct wined3d_texture_ops
 };
 
 #define WINED3D_TEXTURE_COND_NP2            0x00000001
-#define WINED3D_TEXTURE_POW2_MAT_IDENT      0x00000002
-#define WINED3D_TEXTURE_IS_SRGB             0x00000004
-#define WINED3D_TEXTURE_RGB_ALLOCATED       0x00000008
-#define WINED3D_TEXTURE_RGB_VALID           0x00000010
-#define WINED3D_TEXTURE_SRGB_ALLOCATED      0x00000020
-#define WINED3D_TEXTURE_SRGB_VALID          0x00000040
-#define WINED3D_TEXTURE_CONVERTED           0x00000080
-#define WINED3D_TEXTURE_PIN_SYSMEM          0x00000100
-#define WINED3D_TEXTURE_DYNAMIC_MAP         0x00000200
-#define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000400
+#define WINED3D_TEXTURE_COND_NP2_EMULATED   0x00000002
+#define WINED3D_TEXTURE_POW2_MAT_IDENT      0x00000004
+#define WINED3D_TEXTURE_IS_SRGB             0x00000008
+#define WINED3D_TEXTURE_RGB_ALLOCATED       0x00000010
+#define WINED3D_TEXTURE_RGB_VALID           0x00000020
+#define WINED3D_TEXTURE_SRGB_ALLOCATED      0x00000040
+#define WINED3D_TEXTURE_SRGB_VALID          0x00000080
+#define WINED3D_TEXTURE_CONVERTED           0x00000100
+#define WINED3D_TEXTURE_PIN_SYSMEM          0x00000200
+#define WINED3D_TEXTURE_DYNAMIC_MAP         0x00000400
+#define WINED3D_TEXTURE_NORMALIZED_COORDS   0x00000800
 
 #define WINED3D_TEXTURE_ASYNC_COLOR_KEY     0x00000001
 
@@ -2596,7 +2597,6 @@ void draw_textured_quad(const struct wined3d_surface *src_surface, struct wined3
 /* Surface flags: */
 #define SFLAG_DIBSECTION        0x00000001 /* Has a DIB section attached for GetDC. */
 #define SFLAG_DISCARD           0x00000002 /* ??? */
-#define SFLAG_NONPOW2           0x00000004 /* Surface sizes are not a power of 2 */
 #define SFLAG_DCINUSE           0x00000020 /* Set between GetDC and ReleaseDC calls. */
 
 struct wined3d_sampler

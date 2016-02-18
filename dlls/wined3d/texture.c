@@ -663,6 +663,11 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
         wined3d_format_calculate_pitch(format, 1, width, height,
                 &texture->row_pitch, &texture->slice_pitch);
 
+    texture->flags &= ~WINED3D_TEXTURE_COND_NP2_EMULATED;
+    if (((width & (width - 1)) || (height & (height - 1))) && !gl_info->supported[ARB_TEXTURE_NON_POWER_OF_TWO]
+            && !gl_info->supported[ARB_TEXTURE_RECTANGLE] && !gl_info->supported[WINED3D_GL_NORMALIZED_TEXRECT])
+        texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
+
     return wined3d_surface_update_desc(surface, gl_info);
 }
 
@@ -1074,6 +1079,7 @@ static HRESULT texture_init(struct wined3d_texture *texture, const struct wined3
             texture->pow2_matrix[0] = (((float)desc->width) / ((float)pow2_width));
             texture->pow2_matrix[5] = (((float)desc->height) / ((float)pow2_height));
             texture->flags &= ~WINED3D_TEXTURE_POW2_MAT_IDENT;
+            texture->flags |= WINED3D_TEXTURE_COND_NP2_EMULATED;
         }
         texture->pow2_matrix[10] = 1.0f;
         texture->pow2_matrix[15] = 1.0f;
