@@ -148,11 +148,11 @@ todo_wine
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
     {
+        trace("Chinese_China.936=%s\n", ret);
 todo_wine
-        ok(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936")
-        || !strcmp(ret, "Chinese (Simplified)_China.936")
+        ok(!strcmp(ret, "Chinese (Simplified)_People's Republic of China.936") /* Vista - Win7 */
+        || !strcmp(ret, "Chinese (Simplified)_China.936") /* Win8 - Win10 */
         || broken(!strcmp(ret, "Chinese_People's Republic of China.936")), "ret = %s\n", ret);
-        trace("ret is %s\n", ret);
     }
 
     ret = setlocale(LC_ALL, "csy");
@@ -450,33 +450,39 @@ todo_wine
     ret = setlocale(LC_ALL, "non");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp( ret, "Norwegian-Nynorsk_Norway.1252")
+        ok(!strcmp( ret, "Norwegian-Nynorsk_Norway.1252") /* XP - Win10 */
         || !strcmp(ret, "Norwegian (Nynorsk)_Norway.1252")
         || broken(!strcmp(ret, "Norwegian (Bokm\xe5l)_Norway.1252"))
-        || broken(!strcmp(ret, "Norwegian_Norway.1252")), "ret = %s\n", ret);
+        || broken(!strcmp(ret, "Norwegian_Norway.1252")), /* WinME */
+           "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "nor");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp(ret, "Norwegian (Bokm\xe5l)_Norway.1252")
+        ok(!strcmp(ret, "Norwegian (Bokm\xe5l)_Norway.1252") /* XP - Win8 */
+        || !strcmp(ret, "Norwegian Bokm\xe5l_Norway.1252") /* Win10 */
         || !strcmp(ret, "Norwegian (Bokmal)_Norway.1252")
-        || broken(!strcmp(ret, "Norwegian_Norway.1252")), "ret = %s\n", ret);
+        || broken(!strcmp(ret, "Norwegian_Norway.1252")), /* WinME */
+           "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "norwegian-bokmal");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp(ret, "Norwegian (Bokm\xe5l)_Norway.1252")
+        ok(!strcmp(ret, "Norwegian (Bokm\xe5l)_Norway.1252") /* XP - Win8 */
+        || !strcmp(ret, "Norwegian Bokm\xe5l_Norway.1252") /* Win10 */
         || !strcmp(ret, "Norwegian (Bokmal)_Norway.1252")
-        || broken(!strcmp(ret, "Norwegian_Norway.1252")), "ret = %s\n", ret);
+        || broken(!strcmp(ret, "Norwegian_Norway.1252")), /* WinME */
+           "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "norwegian-nynorsk");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
     if(ret)
-        ok(!strcmp(ret, "Norwegian-Nynorsk_Norway.1252")
+        ok(!strcmp(ret, "Norwegian-Nynorsk_Norway.1252") /* Vista - Win10 */
         || !strcmp(ret, "Norwegian (Nynorsk)_Norway.1252")
-        || broken(!strcmp(ret, "Norwegian_Norway.1252"))
+        || broken(!strcmp(ret, "Norwegian_Norway.1252")) /* WinME */
         || broken(!strcmp(ret, "Norwegian (Bokmal)_Norway.1252"))
-        || broken(!strcmp(ret, "Norwegian (Bokm\xe5l)_Norway.1252")), "ret = %s\n", ret);
+        || broken(!strcmp(ret, "Norwegian (Bokm\xe5l)_Norway.1252")) /* XP & 2003 */,
+           "ret = %s\n", ret);
 
     ret = setlocale(LC_ALL, "plk");
     ok(ret != NULL || broken (ret == NULL), "ret == NULL\n");
