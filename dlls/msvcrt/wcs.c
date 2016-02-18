@@ -647,6 +647,22 @@ double CDECL MSVCRT__wtof_l(const MSVCRT_wchar_t *str, MSVCRT__locale_t locale)
 }
 
 /*********************************************************************
+ *              _wcstof_l  (MSVCR120.@)
+ */
+float CDECL MSVCRT__wcstof_l( const MSVCRT_wchar_t *str, MSVCRT_wchar_t **end, MSVCRT__locale_t locale )
+{
+    return MSVCRT__wcstod_l(str, end, locale);
+}
+
+/*********************************************************************
+ *              wcstof  (MSVCR120.@)
+ */
+float CDECL MSVCRT_wcstof( const MSVCRT_wchar_t *str, MSVCRT_wchar_t **end )
+{
+    return MSVCRT__wcstof_l(str, end, NULL);
+}
+
+/*********************************************************************
  * arg_clbk_valist (INTERNAL)
  */
 printf_arg arg_clbk_valist(void *ctx, int arg_pos, int type, __ms_va_list *valist)

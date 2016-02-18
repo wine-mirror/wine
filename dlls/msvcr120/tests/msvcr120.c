@@ -87,6 +87,7 @@ static void* (CDECL *p__W_Gettnames)(void);
 static void (CDECL *p_free)(void*);
 static float (CDECL *p_strtof)(const char *, char **);
 static int (CDECL *p__finite)(double);
+static float (CDECL *p_wcstof)(const wchar_t*, wchar_t**);
 
 static BOOL init(void)
 {
@@ -111,6 +112,7 @@ static BOOL init(void)
     p_free = (void*)GetProcAddress(module, "free");
     p_strtof = (void*)GetProcAddress(module, "strtof");
     p__finite = (void*)GetProcAddress(module, "_finite");
+    p_wcstof = (void*)GetProcAddress(module, "wcstof");
     return TRUE;
 }
 
@@ -334,6 +336,9 @@ static void test__strtof(void)
     const char float3[] = "-3.402823466e+38";
     const char float4[] = "1.7976931348623158e+308";  /* DBL_MAX */
 
+    const WCHAR twelve[] = {'1','2','.','0',0};
+    const WCHAR arabic23[] = { 0x662, 0x663, 0};
+
     char *end;
     float f;
 
@@ -367,11 +372,31 @@ static void test__strtof(void)
 
     f = p_strtof("0x12", NULL);
     ok(f == 0, "f = %lf\n", f);
+
+    f = p_wcstof(twelve, NULL);
+    ok(f == 12.0, "f = %lf\n", f);
+
+    f = p_wcstof(arabic23, NULL);
+    ok(f == 0, "f = %lf\n", f);
+
+    if(!p_setlocale(LC_ALL, "Arabic")) {
+        win_skip("Arabic locale not available\n");
+        return;
+    }
+
+    f = p_wcstof(twelve, NULL);
+    ok(f == 12.0, "f = %lf\n", f);
+
+    f = p_wcstof(arabic23, NULL);
+    ok(f == 0, "f = %lf\n", f);
+
+    p_setlocale(LC_ALL, "C");
 }
 
 START_TEST(msvcr120)
 {
     if (!init()) return;
+    test__strtof();
     test_lconv();
     test__dsign();
     test__dpcomp();
