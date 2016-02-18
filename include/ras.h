@@ -426,6 +426,24 @@ typedef struct tagRASAUTODIALENTRYW
     WCHAR szEntry[ RAS_MaxEntryName + 1 ];
 } RASAUTODIALENTRYW, *LPRASAUTODIALENTRYW;
 
+typedef struct _RAS_STATS
+{
+    DWORD dwSize;
+    DWORD dwBytesXmited;
+    DWORD dwBytesRcved;
+    DWORD dwFramesXmited;
+    DWORD dwFramesRcved;
+    DWORD dwCrcErr;
+    DWORD dwTimeoutErr;
+    DWORD dwAlignmentErr;
+    DWORD dwHardwareOverrunErr;
+    DWORD dwFramingErr;
+    DWORD dwBufferOverrunErr;
+    DWORD dwCompressionRatioIn;
+    DWORD dwCompressionRatioOut;
+    DWORD dwBps;
+    DWORD dwConnectDuration;
+} RAS_STATS, *PRAS_STATS;
 
 DWORD WINAPI RasConnectionNotificationA(HRASCONN,HANDLE,DWORD);
 DWORD WINAPI RasConnectionNotificationW(HRASCONN,HANDLE,DWORD);

@@ -539,3 +539,9 @@ DWORD WINAPI RasSetSubEntryPropertiesW(LPCWSTR lpszPhonebook, LPCWSTR lpszEntry,
           dwcbDeviceConfig);
     return 0;
 }
+
+DWORD WINAPI RasGetLinkStatistics(HRASCONN connection, DWORD entry, RAS_STATS *statistics)
+{
+    FIXME("(%p,%u,%p), stub!\n", connection, entry, statistics);
+    return 0;
+}

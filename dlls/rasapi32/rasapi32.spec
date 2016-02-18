@@ -45,6 +45,7 @@
 @ stdcall RasGetErrorStringW(long ptr long)
 @ stub RasGetErrorStringWow
 @ stub RasGetHport
+@ stdcall RasGetLinkStatistics(ptr long ptr)
 @ stdcall RasGetProjectionInfoA(ptr ptr ptr ptr)
 @ stdcall RasGetProjectionInfoW(ptr ptr ptr ptr)
 @ stub RasGetSubEntryHandleA
