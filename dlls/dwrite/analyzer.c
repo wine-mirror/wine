@@ -244,19 +244,19 @@ static inline UINT16 get_char_script(WCHAR c)
     return script;
 }
 
-static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 len, IDWriteTextAnalysisSink *sink)
+static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 length, IDWriteTextAnalysisSink *sink)
 {
     DWRITE_SCRIPT_ANALYSIS sa;
-    UINT32 pos, i, length;
+    UINT32 pos, i, seq_length;
 
-    if (!len) return S_OK;
+    if (!length) return S_OK;
 
     sa.script = get_char_script(*text);
 
     pos = position;
-    length = 1;
+    seq_length = 1;
 
-    for (i = 1; i < len; i++)
+    for (i = 1; i < length; i++)
     {
         UINT16 script = get_char_script(text[i]);
 
@@ -264,24 +264,24 @@ static HRESULT analyze_script(const WCHAR *text, UINT32 position, UINT32 len, ID
         if (sa.script == Script_Unknown) sa.script = script;
         if (script == Script_Unknown && sa.script != Script_Common) script = sa.script;
         /* this is a length of a sequence to be reported next */
-        if (sa.script == script) length++;
+        if (sa.script == script) seq_length++;
 
         if (sa.script != script)
         {
             HRESULT hr;
 
             sa.shapes = sa.script != Script_Common ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
-            hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
+            hr = IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, seq_length, &sa);
             if (FAILED(hr)) return hr;
             pos = position + i;
-            length = 1;
+            seq_length = 1;
             sa.script = script;
         }
     }
 
-    /* 1 length case or normal completion call */
+    /* one char length case or normal completion call */
     sa.shapes = sa.script != Script_Common ? DWRITE_SCRIPT_SHAPES_DEFAULT : DWRITE_SCRIPT_SHAPES_NO_VISUAL;
-    return IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, length, &sa);
+    return IDWriteTextAnalysisSink_SetScriptAnalysis(sink, pos, seq_length, &sa);
 }
 
 struct linebreaking_state {
@@ -793,14 +793,14 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface
 {
     UINT8 *levels = NULL, *explicit = NULL;
     UINT8 baselevel, level, explicit_level;
+    UINT32 pos, i, seq_length;
     WCHAR *buff = NULL;
     const WCHAR *text;
-    UINT32 pos, i;
     HRESULT hr;
 
     TRACE("(%p %u %u %p)\n", source, position, length, sink);
 
-    if (length == 0)
+    if (!length)
         return S_OK;
 
     hr = get_text_source_ptr(source, position, length, &text, &buff);
@@ -822,20 +822,25 @@ static HRESULT WINAPI dwritetextanalyzer_AnalyzeBidi(IDWriteTextAnalyzer2 *iface
 
     level = levels[0];
     explicit_level = explicit[0];
-    pos = 0;
+    pos = position;
+    seq_length = 1;
+
     for (i = 1; i < length; i++) {
-        if (levels[i] != level || explicit[i] != explicit_level) {
-            hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, i - pos, explicit_level, level);
+        if (levels[i] == level && explicit[i] == explicit_level)
+            seq_length++;
+        else {
+            hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, seq_length, explicit_level, level);
             if (FAILED(hr))
-                break;
+                goto done;
+
+            pos += seq_length;
+            seq_length = 1;
             level = levels[i];
             explicit_level = explicit[i];
-            pos = i;
         }
-
-        if (i == length - 1)
-            hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, length - pos, explicit_level, level);
     }
+    /* one char length case or normal completion call */
+    hr = IDWriteTextAnalysisSink_SetBidiLevel(sink, pos, seq_length, explicit_level, level);
 
 done:
     heap_free(explicit);
