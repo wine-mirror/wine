@@ -3,6 +3,7 @@ STATICLIB = libwine_port.a
 C_SRCS = \
 	digitmap.c \
 	ffs.c \
+	fold.c \
 	fstatvfs.c \
 	getopt.c \
 	getopt1.c \

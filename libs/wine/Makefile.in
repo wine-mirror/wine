@@ -81,7 +81,6 @@ C_SRCS = \
 	config.c \
 	cptable.c \
 	debug.c \
-	fold.c \
 	ldt.c \
 	loader.c \
 	mbtowc.c \
