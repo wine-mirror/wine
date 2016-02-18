@@ -1583,20 +1583,40 @@ sub dump_vertical($)
 }
 
 ################################################################
+# dump the digit folding tables
+sub dump_digit_folding($)
+{
+    my $filename = shift;
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode digit folding mappings */\n";
+    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
+
+    DUMP_CASE_TABLE( "wine_digitmap",  @digitmap_table );
+    print OUTPUT "\n";
+    DUMP_CASE_TABLE( "wine_compatmap", @compatmap_table );
+    close OUTPUT;
+    save_file($filename);
+}
+
+
+################################################################
 # dump the case mapping tables
 sub DUMP_CASE_MAPPINGS($)
 {
     my $filename = shift;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    printf "Building $filename\n";
-    printf OUTPUT "/* Unicode case mappings */\n";
-    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
-    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode case mappings */\n";
+    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
     DUMP_CASE_TABLE( "wine_casemap_lower", @tolower_table );
+    print OUTPUT "\n";
     DUMP_CASE_TABLE( "wine_casemap_upper", @toupper_table );
-    DUMP_CASE_TABLE( "wine_digitmap",  @digitmap_table );
-    DUMP_CASE_TABLE( "wine_compatmap", @compatmap_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -2390,6 +2410,7 @@ DUMP_CASE_MAPPINGS( "libs/wine/casemap.c" );
 DUMP_SORTKEYS( "libs/wine/collation.c", READ_SORTKEYS_FILE() );
 DUMP_COMPOSE_TABLES( "libs/wine/compose.c" );
 DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
+dump_digit_folding( "libs/port/digitmap.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );
 dump_bracket( "dlls/usp10/bracket.c" );
