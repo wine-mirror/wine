@@ -945,6 +945,13 @@ static void test_debugger(void)
                         /* here we handle exception */
                     }
                 }
+                else if (stage == 7 || stage == 8)
+                {
+                    ok(de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT,
+                       "expected EXCEPTION_BREAKPOINT, got %08x\n", de.u.Exception.ExceptionRecord.ExceptionCode);
+
+                    if (stage == 8) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+                }
                 else
                     ok(FALSE, "unexpected stage %x\n", stage);
 
@@ -1338,6 +1345,8 @@ static void test_dpe_exceptions(void)
 }
 
 #elif defined(__x86_64__)
+
+#define is_wow64 0
 
 #define UNW_FLAG_NHANDLER  0
 #define UNW_FLAG_EHANDLER  1
@@ -1865,6 +1874,181 @@ static void test_ripevent(DWORD numexc)
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
 
+static DWORD debug_service_exceptions;
+
+static LONG CALLBACK debug_service_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    EXCEPTION_RECORD *rec = ExceptionInfo->ExceptionRecord;
+    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
+
+    ok(rec->ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode is %08x instead of %08x\n",
+       rec->ExceptionCode, EXCEPTION_BREAKPOINT);
+
+#ifdef __i386__
+    ok(rec->NumberParameters == (is_wow64 ? 1 : 3),
+       "ExceptionParameters is %d instead of %d\n", rec->NumberParameters, is_wow64 ? 1 : 3);
+    ok(rec->ExceptionInformation[0] == ExceptionInfo->ContextRecord->Eax,
+       "expected ExceptionInformation[0] = %x, got %lx\n",
+       ExceptionInfo->ContextRecord->Eax, rec->ExceptionInformation[0]);
+    if (!is_wow64)
+    {
+        ok(rec->ExceptionInformation[1] == 0x11111111,
+           "got ExceptionInformation[1] = %lx\n", rec->ExceptionInformation[1]);
+        ok(rec->ExceptionInformation[2] == 0x22222222,
+           "got ExceptionInformation[2] = %lx\n", rec->ExceptionInformation[2]);
+    }
+#else
+    ok(rec->NumberParameters == 1,
+       "ExceptionParameters is %d instead of 1\n", rec->NumberParameters);
+    ok(rec->ExceptionInformation[0] == ExceptionInfo->ContextRecord->Rax,
+       "expected ExceptionInformation[0] = %lx, got %lx\n",
+       ExceptionInfo->ContextRecord->Rax, rec->ExceptionInformation[0]);
+#endif
+
+    debug_service_exceptions++;
+    return (rec->ExceptionCode == EXCEPTION_BREAKPOINT) ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH;
+}
+
+#ifdef __i386__
+
+static const BYTE call_debug_service_code[] = {
+    0x53,                         /* pushl %ebx */
+    0x57,                         /* pushl %edi */
+    0x8b, 0x44, 0x24, 0x0c,       /* movl 12(%esp),%eax */
+    0xb9, 0x11, 0x11, 0x11, 0x11, /* movl $0x11111111,%ecx */
+    0xba, 0x22, 0x22, 0x22, 0x22, /* movl $0x22222222,%edx */
+    0xbb, 0x33, 0x33, 0x33, 0x33, /* movl $0x33333333,%ebx */
+    0xbf, 0x44, 0x44, 0x44, 0x44, /* movl $0x44444444,%edi */
+    0xcd, 0x2d,                   /* int $0x2d */
+    0xeb,                         /* jmp $+17 */
+    0x0f, 0x1f, 0x00,             /* nop */
+    0x31, 0xc0,                   /* xorl %eax,%eax */
+    0xeb, 0x0c,                   /* jmp $+14 */
+    0x90, 0x90, 0x90, 0x90,       /* nop */
+    0x90, 0x90, 0x90, 0x90,
+    0x90,
+    0x31, 0xc0,                   /* xorl %eax,%eax */
+    0x40,                         /* incl %eax */
+    0x5f,                         /* popl %edi */
+    0x5b,                         /* popl %ebx */
+    0xc3,                         /* ret */
+};
+
+#else
+
+static const BYTE call_debug_service_code[] = {
+    0x53,                         /* push %rbx */
+    0x57,                         /* push %rdi */
+    0x48, 0x89, 0xc8,             /* movl %rcx,%rax */
+    0x48, 0xb9, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, /* movabs $0x1111111111111111,%rcx */
+    0x48, 0xba, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, /* movabs $0x2222222222222222,%rdx */
+    0x48, 0xbb, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, /* movabs $0x3333333333333333,%rbx */
+    0x48, 0xbf, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, 0x44, /* movabs $0x4444444444444444,%rdi */
+    0xcd, 0x2d,                   /* int $0x2d */
+    0xeb,                         /* jmp $+17 */
+    0x0f, 0x1f, 0x00,             /* nop */
+    0x48, 0x31, 0xc0,             /* xor %rax,%rax */
+    0xeb, 0x0e,                   /* jmp $+16 */
+    0x90, 0x90, 0x90, 0x90,       /* nop */
+    0x90, 0x90, 0x90, 0x90,
+    0x48, 0x31, 0xc0,             /* xor %rax,%rax */
+    0x48, 0xff, 0xc0,             /* inc %rax */
+    0x5f,                         /* pop %rdi */
+    0x5b,                         /* pop %rbx */
+    0xc3,                         /* ret */
+};
+
+#endif
+
+static void test_debug_service(DWORD numexc)
+{
+    const BOOL is_win64 = (sizeof(void *) > sizeof(int));
+    DWORD (CDECL *func)(DWORD_PTR) = code_mem;
+    DWORD expected_exc, expected_ret;
+    void *vectored_handler;
+    DWORD ret;
+
+    /* code will return 0 if execution resumes immediately after "int $0x2d", otherwise 1 */
+    memcpy(code_mem, call_debug_service_code, sizeof(call_debug_service_code));
+
+    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &debug_service_handler);
+    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+
+    expected_exc = numexc;
+    expected_ret = (numexc != 0);
+
+    /* BREAKPOINT_BREAK */
+    debug_service_exceptions = 0;
+    ret = func(0);
+    ok(debug_service_exceptions == expected_exc,
+       "BREAKPOINT_BREAK generated %u exceptions, expected %u\n",
+       debug_service_exceptions, expected_exc);
+    todo_wine_if(is_win64)
+    ok(ret == expected_ret,
+       "BREAKPOINT_BREAK returned %u, expected %u\n", ret, expected_ret);
+
+    /* BREAKPOINT_PROMPT */
+    debug_service_exceptions = 0;
+    ret = func(2);
+    ok(debug_service_exceptions == expected_exc,
+       "BREAKPOINT_PROMPT generated %u exceptions, expected %u\n",
+       debug_service_exceptions, expected_exc);
+    todo_wine_if(is_win64)
+    ok(ret == expected_ret,
+       "BREAKPOINT_PROMPT returned %u, expected %u\n", ret, expected_ret);
+
+    /* invalid debug service */
+    debug_service_exceptions = 0;
+    ret = func(6);
+    ok(debug_service_exceptions == expected_exc,
+       "invalid debug service generated %u exceptions, expected %u\n",
+       debug_service_exceptions, expected_exc);
+    todo_wine_if(is_win64)
+    ok(ret == expected_ret,
+      "invalid debug service returned %u, expected %u\n", ret, expected_ret);
+
+    expected_exc = (is_wow64 ? numexc : 0);
+    expected_ret = (is_wow64 && numexc);
+
+    /* BREAKPOINT_PRINT */
+    debug_service_exceptions = 0;
+    ret = func(1);
+    ok(debug_service_exceptions == expected_exc,
+       "BREAKPOINT_PRINT generated %u exceptions, expected %u\n",
+       debug_service_exceptions, expected_exc);
+    ok(ret == expected_ret,
+       "BREAKPOINT_PRINT returned %u, expected %u\n", ret, expected_ret);
+
+    /* BREAKPOINT_LOAD_SYMBOLS */
+    debug_service_exceptions = 0;
+    ret = func(3);
+    ok(debug_service_exceptions == expected_exc,
+       "BREAKPOINT_LOAD_SYMBOLS generated %u exceptions, expected %u\n",
+       debug_service_exceptions, expected_exc);
+    ok(ret == expected_ret,
+       "BREAKPOINT_LOAD_SYMBOLS returned %u, expected %u\n", ret, expected_ret);
+
+    /* BREAKPOINT_UNLOAD_SYMBOLS */
+    debug_service_exceptions = 0;
+    ret = func(4);
+    ok(debug_service_exceptions == expected_exc,
+       "BREAKPOINT_UNLOAD_SYMBOLS generated %u exceptions, expected %u\n",
+       debug_service_exceptions, expected_exc);
+    ok(ret == expected_ret,
+       "BREAKPOINT_UNLOAD_SYMBOLS returned %u, expected %u\n", ret, expected_ret);
+
+    /* BREAKPOINT_COMMAND_STRING */
+    debug_service_exceptions = 0;
+    ret = func(5);
+    ok(debug_service_exceptions == expected_exc || broken(debug_service_exceptions == numexc),
+       "BREAKPOINT_COMMAND_STRING generated %u exceptions, expected %u\n",
+       debug_service_exceptions, expected_exc);
+    ok(ret == expected_ret || broken(ret == (numexc != 0)),
+       "BREAKPOINT_COMMAND_STRING returned %u, expected %u\n", ret, expected_ret);
+
+    pRtlRemoveVectoredExceptionHandler(vectored_handler);
+}
+
 static void test_vectored_continue_handler(void)
 {
     PVOID handler1, handler2;
@@ -1984,6 +2168,10 @@ START_TEST(exception)
             test_ripevent(0);
             test_stage = 6;
             test_ripevent(1);
+            test_stage = 7;
+            test_debug_service(0);
+            test_stage = 8;
+            test_debug_service(1);
         }
         else
             skip( "RtlRaiseException not found\n" );
@@ -1998,6 +2186,7 @@ START_TEST(exception)
     test_debug_registers();
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
+    test_debug_service(1);
     test_vectored_continue_handler();
     test_debugger();
     test_simd_exceptions();
@@ -2018,6 +2207,7 @@ START_TEST(exception)
     test_debug_registers();
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
+    test_debug_service(1);
     test_vectored_continue_handler();
     test_virtual_unwind();
 
