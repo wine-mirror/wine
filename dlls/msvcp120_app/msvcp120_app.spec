@@ -1732,8 +1732,8 @@
 @ cdecl -arch=arm ?_Swap_all@_Container_base12@std@@QAAXAAU12@@Z(ptr ptr) msvcp120.?_Swap_all@_Container_base12@std@@QAAXAAU12@@Z
 @ thiscall -arch=i386 ?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z(ptr ptr) msvcp120.?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z
 @ cdecl -arch=win64 ?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z(ptr ptr) msvcp120.?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z
-@ stub -arch=win32 ?_Symlink@sys@tr2@std@@YAHPBD0@Z
-@ stub -arch=win64 ?_Symlink@sys@tr2@std@@YAHPEBD0@Z
+@ cdecl -arch=win32 ?_Symlink@sys@tr2@std@@YAHPBD0@Z(str str) msvcp120.?_Symlink@sys@tr2@std@@YAHPBD0@Z
+@ cdecl -arch=win64 ?_Symlink@sys@tr2@std@@YAHPEBD0@Z(str str) msvcp120.?_Symlink@sys@tr2@std@@YAHPEBD0@Z
 @ stub -arch=win32 ?_Symlink@sys@tr2@std@@YAHPB_W0@Z
 @ stub -arch=win64 ?_Symlink@sys@tr2@std@@YAHPEB_W0@Z
 @ extern ?_Sync@ios_base@std@@0_NA msvcp120.?_Sync@ios_base@std@@0_NA

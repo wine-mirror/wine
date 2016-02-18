@@ -1771,8 +1771,8 @@
 @ cdecl -arch=arm ?_Swap_all@_Container_base12@std@@QAAXAAU12@@Z(ptr ptr) _Container_base12__Swap_all
 @ thiscall -arch=i386 ?_Swap_all@_Container_base12@std@@QAEXAAU12@@Z(ptr ptr) _Container_base12__Swap_all
 @ cdecl -arch=win64 ?_Swap_all@_Container_base12@std@@QEAAXAEAU12@@Z(ptr ptr) _Container_base12__Swap_all
-@ stub -arch=win32 ?_Symlink@sys@tr2@std@@YAHPBD0@Z
-@ stub -arch=win64 ?_Symlink@sys@tr2@std@@YAHPEBD0@Z
+@ cdecl -arch=win32 ?_Symlink@sys@tr2@std@@YAHPBD0@Z(str str) tr2_sys__Symlink
+@ cdecl -arch=win64 ?_Symlink@sys@tr2@std@@YAHPEBD0@Z(str str) tr2_sys__Symlink
 @ stub -arch=win32 ?_Symlink@sys@tr2@std@@YAHPB_W0@Z
 @ stub -arch=win64 ?_Symlink@sys@tr2@std@@YAHPEB_W0@Z
 @ extern ?_Sync@ios_base@std@@0_NA ios_base_Sync

@@ -14769,6 +14769,19 @@ int __cdecl tr2_sys__Link(char const* existing_path, char const* new_path)
     return GetLastError();
 }
 
+/* ?_Symlink@sys@tr2@std@@YAHPBD0@Z */
+/* ?_Symlink@sys@tr2@std@@YAHPEBD0@Z */
+int __cdecl tr2_sys__Symlink(char const* existing_file_name, char const* file_name)
+{
+    TRACE("(%s %s)\n", debugstr_a(existing_file_name), debugstr_a(file_name));
+    if(!existing_file_name || !file_name)
+        return ERROR_INVALID_PARAMETER;
+
+    if(CreateSymbolicLinkA(file_name, existing_file_name, 0))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64
