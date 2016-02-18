@@ -362,14 +362,14 @@ static const struct cipher_suite* get_cipher_suite(SSLCipherSuite cipher_suite)
 static DWORD schan_get_session_protocol(struct mac_session* s)
 {
     SSLProtocol protocol;
-    OSStatus status;
+    int status;
 
     TRACE("(%p/%p)\n", s, s->context);
 
     status = SSLGetNegotiatedProtocolVersion(s->context, &protocol);
     if (status != noErr)
     {
-        ERR("Failed to get session protocol: %ld\n", status);
+        ERR("Failed to get session protocol: %d\n", status);
         return 0;
     }
 
@@ -652,7 +652,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
 {
     struct mac_session *s;
     unsigned i;
-    OSStatus status;
+    int status;
 
     TRACE("(%p)\n", session);
 
@@ -663,21 +663,21 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
     status = SSLNewContext(cred->credential_use == SECPKG_CRED_INBOUND, &s->context);
     if (status != noErr)
     {
-        ERR("Failed to create session context: %ld\n", (long)status);
+        ERR("Failed to create session context: %d\n", status);
         goto fail;
     }
 
     status = SSLSetConnection(s->context, s);
     if (status != noErr)
     {
-        ERR("Failed to set session connection: %ld\n", (long)status);
+        ERR("Failed to set session connection: %d\n", status);
         goto fail;
     }
 
     status = SSLSetEnableCertVerify(s->context, FALSE);
     if (status != noErr)
     {
-        ERR("Failed to disable certificate verification: %ld\n", (long)status);
+        ERR("Failed to disable certificate verification: %d\n", status);
         goto fail;
     }
 
@@ -689,7 +689,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
                 (cred->enabled_protocols & protocol_priority_flags[i].enable_flag) != 0);
         if (status != noErr)
         {
-            ERR("Failed to set SSL version %d: %ld\n", protocol_priority_flags[i].mac_version, (long)status);
+            ERR("Failed to set SSL version %d: %d\n", protocol_priority_flags[i].mac_version, status);
             goto fail;
         }
     }
@@ -697,7 +697,7 @@ BOOL schan_imp_create_session(schan_imp_session *session, schan_credentials *cre
     status = SSLSetIOFuncs(s->context, schan_pull_adapter, schan_push_adapter);
     if (status != noErr)
     {
-        ERR("Failed to set session I/O funcs: %ld\n", (long)status);
+        ERR("Failed to set session I/O funcs: %d\n", status);
         goto fail;
     }
 
@@ -714,13 +714,13 @@ fail:
 void schan_imp_dispose_session(schan_imp_session session)
 {
     struct mac_session *s = (struct mac_session*)session;
-    OSStatus status;
+    int status;
 
     TRACE("(%p/%p)\n", s, s->context);
 
     status = SSLDisposeContext(s->context);
     if (status != noErr)
-        ERR("Failed to dispose of session context: %ld\n", status);
+        ERR("Failed to dispose of session context: %d\n", status);
     HeapFree(GetProcessHeap(), 0, s);
 }
 
@@ -746,7 +746,7 @@ void schan_imp_set_session_target(schan_imp_session session, const char *target)
 SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
 {
     struct mac_session *s = (struct mac_session*)session;
-    OSStatus status;
+    int status;
 
     TRACE("(%p/%p)\n", s, s->context);
 
@@ -768,7 +768,7 @@ SECURITY_STATUS schan_imp_handshake(schan_imp_session session)
     }
     else
     {
-        ERR("Handshake failed: %ld\n", (long)status);
+        ERR("Handshake failed: %d\n", status);
         cssmPerror("SSLHandshake", status);
         return SEC_E_INTERNAL_ERROR;
     }
@@ -782,14 +782,14 @@ unsigned int schan_imp_get_session_cipher_block_size(schan_imp_session session)
     struct mac_session* s = (struct mac_session*)session;
     SSLCipherSuite cipherSuite;
     const struct cipher_suite* c;
-    OSStatus status;
+    int status;
 
     TRACE("(%p/%p)\n", s, s->context);
 
     status = SSLGetNegotiatedCipher(s->context, &cipherSuite);
     if (status != noErr)
     {
-        ERR("Failed to get session cipher suite: %ld\n", status);
+        ERR("Failed to get session cipher suite: %d\n", status);
         return 0;
     }
 
@@ -838,14 +838,14 @@ SECURITY_STATUS schan_imp_get_connection_info(schan_imp_session session,
     struct mac_session* s = (struct mac_session*)session;
     SSLCipherSuite cipherSuite;
     const struct cipher_suite* c;
-    OSStatus status;
+    int status;
 
     TRACE("(%p/%p, %p)\n", s, s->context, info);
 
     status = SSLGetNegotiatedCipher(s->context, &cipherSuite);
     if (status != noErr)
     {
-        ERR("Failed to get session cipher suite: %ld\n", status);
+        ERR("Failed to get session cipher suite: %d\n", status);
         return SEC_E_INTERNAL_ERROR;
     }
 
@@ -883,7 +883,7 @@ SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session
     PCCERT_CONTEXT cert = NULL;
     SecCertificateRef mac_cert;
     CFArrayRef cert_array;
-    OSStatus status;
+    int status;
     CFIndex cnt, i;
     CFDataRef data;
     BOOL res;
@@ -897,7 +897,7 @@ SECURITY_STATUS schan_imp_get_session_peer_certificate(schan_imp_session session
 #endif
     if (status != noErr || !cert_array)
     {
-        WARN("SSLCopyPeerCertificates failed: %ld\n", (long)status);
+        WARN("SSLCopyPeerCertificates failed: %d\n", status);
         return SEC_E_INTERNAL_ERROR;
     }
 
@@ -942,7 +942,7 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
                                SIZE_T *length)
 {
     struct mac_session* s = (struct mac_session*)session;
-    OSStatus status;
+    int status;
 
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
@@ -961,7 +961,7 @@ SECURITY_STATUS schan_imp_send(schan_imp_session session, const void *buffer,
     }
     else
     {
-        WARN("SSLWrite failed: %ld\n", (long)status);
+        WARN("SSLWrite failed: %d\n", status);
         return SEC_E_INTERNAL_ERROR;
     }
 
@@ -972,7 +972,7 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
                                SIZE_T *length)
 {
     struct mac_session* s = (struct mac_session*)session;
-    OSStatus status;
+    int status;
 
     TRACE("(%p/%p, %p, %p/%lu)\n", s, s->context, buffer, length, *length);
 
@@ -991,7 +991,7 @@ SECURITY_STATUS schan_imp_recv(schan_imp_session session, void *buffer,
     }
     else
     {
-        WARN("SSLRead failed: %ld\n", (long)status);
+        WARN("SSLRead failed: %d\n", status);
         return SEC_E_INTERNAL_ERROR;
     }
 
