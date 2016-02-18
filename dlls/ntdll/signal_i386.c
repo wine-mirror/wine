@@ -1940,6 +1940,21 @@ static void WINAPI raise_segv_exception( EXCEPTION_RECORD *rec, CONTEXT *context
             goto done;
         }
         break;
+    case EXCEPTION_BREAKPOINT:
+        if (!is_wow64)
+        {
+            /* On Wow64, the upper DWORD of Rax contains garbage, and the debug
+             * service is usually not recognized when called from usermode. */
+            switch (rec->ExceptionInformation[0])
+            {
+                case 1: /* BREAKPOINT_PRINT */
+                case 3: /* BREAKPOINT_LOAD_SYMBOLS */
+                case 4: /* BREAKPOINT_UNLOAD_SYMBOLS */
+                case 5: /* BREAKPOINT_COMMAND_STRING (>= Win2003) */
+                    goto done;
+            }
+        }
+        break;
     }
     status = NtRaiseException( rec, context, TRUE );
     raise_status( status, rec );
