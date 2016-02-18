@@ -1437,6 +1437,45 @@ todo_wine
     ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
        "Access and/or AccessStatus were changed!\n");
 
+    /* Null PrivSet with insufficient PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = 1;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      0, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(!ret && err == ERROR_NOACCESS, "AccessCheck should have "
+       "failed with ERROR_NOACCESS, instead of %d\n", err);
+    ok(PrivSetLen == 1, "PrivSetLen returns %d\n", PrivSetLen);
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
+    /* Null PrivSet with insufficient PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = sizeof(PRIVILEGE_SET) - 1;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      0, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(!ret && err == ERROR_NOACCESS, "AccessCheck should have "
+       "failed with ERROR_NOACCESS, instead of %d\n", err);
+    ok(PrivSetLen == sizeof(PRIVILEGE_SET) - 1, "PrivSetLen returns %d\n", PrivSetLen);
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
+    /* Null PrivSet with minimal sufficient PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = sizeof(PRIVILEGE_SET);
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      0, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(!ret && err == ERROR_NOACCESS, "AccessCheck should have "
+       "failed with ERROR_NOACCESS, instead of %d\n", err);
+    ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
     /* Valid PrivSet with zero PrivSetLen */
     SetLastError(0xdeadbeef);
     Access = AccessStatus = 0x1abe11ed;
@@ -1448,8 +1487,74 @@ todo_wine
     ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
        "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
 todo_wine
+    ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
+todo_wine
     ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
        "Access and/or AccessStatus were changed!\n");
+
+    /* Valid PrivSet with insufficient PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = 1;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+todo_wine
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
+       "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
+todo_wine
+    ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
+todo_wine
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
+    /* Valid PrivSet with insufficient PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = sizeof(PRIVILEGE_SET) - 1;
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+todo_wine
+    ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
+       "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
+todo_wine
+    ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
+todo_wine
+    ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+       "Access and/or AccessStatus were changed!\n");
+
+    /* Valid PrivSet with minimal sufficient PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = sizeof(PRIVILEGE_SET);
+    memset(PrivSet, 0xcc, PrivSetLen);
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
+todo_wine
+    ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
+    ok(AccessStatus && (Access == KEY_READ),
+        "AccessCheck failed to grant access with error %d\n", GetLastError());
+    ok(PrivSet->PrivilegeCount == 0, "PrivilegeCount returns %d, expects 0\n",
+        PrivSet->PrivilegeCount);
+
+    /* Valid PrivSet with sufficient PrivSetLen */
+    SetLastError(0xdeadbeef);
+    Access = AccessStatus = 0x1abe11ed;
+    PrivSetLen = sizeof(PRIVILEGE_SET) + 1;
+    memset(PrivSet, 0xcc, PrivSetLen);
+    ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                      PrivSet, &PrivSetLen, &Access, &AccessStatus);
+    err = GetLastError();
+    ok(ret, "AccessCheck failed with error %d\n", GetLastError());
+todo_wine
+    ok(PrivSetLen == sizeof(PRIVILEGE_SET) + 1, "PrivSetLen returns %d\n", PrivSetLen);
+    ok(AccessStatus && (Access == KEY_READ),
+        "AccessCheck failed to grant access with error %d\n", GetLastError());
+    ok(PrivSet->PrivilegeCount == 0, "PrivilegeCount returns %d, expects 0\n",
+        PrivSet->PrivilegeCount);
 
     PrivSetLen = FIELD_OFFSET(PRIVILEGE_SET, Privilege[16]);
 
@@ -1475,7 +1580,7 @@ todo_wine
        "with ERROR_ACCESS_DENIED, instead of %d\n", err);
     ok(!Access, "Should have failed to grant any access, got 0x%08x\n", Access);
 
-    SetLastError(0);
+    SetLastError(0xdeadbeef);
     PrivSet->PrivilegeCount = 16;
     ret = AccessCheck(SecurityDescriptor, Token, ACCESS_SYSTEM_SECURITY, &Mapping,
                       PrivSet, &PrivSetLen, &Access, &AccessStatus);
@@ -1488,16 +1593,69 @@ todo_wine
     ret = pRtlAdjustPrivilege(SE_SECURITY_PRIVILEGE, TRUE, TRUE, &Enabled);
     if (!ret)
     {
-        SetLastError(0);
-        PrivSet->PrivilegeCount = 16;
+        /* Valid PrivSet with zero PrivSetLen */
+        SetLastError(0xdeadbeef);
+        Access = AccessStatus = 0x1abe11ed;
+        PrivSetLen = 0;
+        ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                          PrivSet, &PrivSetLen, &Access, &AccessStatus);
+        err = GetLastError();
+    todo_wine
+        ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
+           "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
+    todo_wine
+        ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
+    todo_wine
+        ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+           "Access and/or AccessStatus were changed!\n");
+
+        /* Valid PrivSet with insufficient PrivSetLen */
+        SetLastError(0xdeadbeef);
+        Access = AccessStatus = 0x1abe11ed;
+        PrivSetLen = sizeof(PRIVILEGE_SET) - 1;
+        ret = AccessCheck(SecurityDescriptor, Token, KEY_READ, &Mapping,
+                          PrivSet, &PrivSetLen, &Access, &AccessStatus);
+        err = GetLastError();
+    todo_wine
+        ok(!ret && err == ERROR_INSUFFICIENT_BUFFER, "AccessCheck should have "
+           "failed with ERROR_INSUFFICIENT_BUFFER, instead of %d\n", err);
+    todo_wine
+        ok(PrivSetLen == sizeof(PRIVILEGE_SET), "PrivSetLen returns %d\n", PrivSetLen);
+    todo_wine
+        ok(Access == 0x1abe11ed && AccessStatus == 0x1abe11ed,
+           "Access and/or AccessStatus were changed!\n");
+
+        /* Valid PrivSet with minimal sufficient PrivSetLen */
+        SetLastError(0xdeadbeef);
+        Access = AccessStatus = 0x1abe11ed;
+        PrivSetLen = sizeof(PRIVILEGE_SET);
+        memset(PrivSet, 0xcc, PrivSetLen);
         ret = AccessCheck(SecurityDescriptor, Token, ACCESS_SYSTEM_SECURITY, &Mapping,
                           PrivSet, &PrivSetLen, &Access, &AccessStatus);
-        ok(ret && AccessStatus && GetLastError() == 0,
+        ok(ret && AccessStatus && GetLastError() == 0xdeadbeef,
             "AccessCheck should have succeeded, error %d\n",
             GetLastError());
         ok(Access == ACCESS_SYSTEM_SECURITY,
             "Access should be equal to ACCESS_SYSTEM_SECURITY instead of 0x%08x\n",
             Access);
+        ok(PrivSet->PrivilegeCount == 1, "PrivilegeCount returns %d, expects 1\n",
+            PrivSet->PrivilegeCount);
+
+        /* Valid PrivSet with large PrivSetLen */
+        SetLastError(0xdeadbeef);
+        Access = AccessStatus = 0x1abe11ed;
+        PrivSetLen = FIELD_OFFSET(PRIVILEGE_SET, Privilege[16]);
+        memset(PrivSet, 0xcc, PrivSetLen);
+        ret = AccessCheck(SecurityDescriptor, Token, ACCESS_SYSTEM_SECURITY, &Mapping,
+                          PrivSet, &PrivSetLen, &Access, &AccessStatus);
+        ok(ret && AccessStatus && GetLastError() == 0xdeadbeef,
+            "AccessCheck should have succeeded, error %d\n",
+            GetLastError());
+        ok(Access == ACCESS_SYSTEM_SECURITY,
+            "Access should be equal to ACCESS_SYSTEM_SECURITY instead of 0x%08x\n",
+            Access);
+        ok(PrivSet->PrivilegeCount == 1, "PrivilegeCount returns %d, expects 1\n",
+            PrivSet->PrivilegeCount);
     }
     else
         trace("Couldn't get SE_SECURITY_PRIVILEGE (0x%08x), skipping ACCESS_SYSTEM_SECURITY test\n",
