@@ -1949,7 +1949,7 @@
 @ cdecl _strtime(ptr) MSVCRT__strtime
 @ cdecl _strtime_s(ptr long)
 @ cdecl _strtod_l(str ptr ptr) MSVCRT_strtod_l
-@ stub _strtof_l
+@ cdecl _strtof_l(str ptr ptr) MSVCRT__strtof_l
 @ cdecl -ret64 _strtoi64(str ptr long) MSVCRT_strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) MSVCRT_strtoi64_l
 @ stub _strtoimax_l
@@ -2516,7 +2516,7 @@
 @ cdecl strspn(str str) ntdll.strspn
 @ cdecl strstr(str str) MSVCRT_strstr
 @ cdecl strtod(str ptr) MSVCRT_strtod
-@ stub strtof
+@ cdecl strtof(str ptr) MSVCRT_strtof
 @ stub strtoimax
 @ cdecl strtok(str str) MSVCRT_strtok
 @ cdecl strtok_s(ptr str ptr) MSVCRT_strtok_s

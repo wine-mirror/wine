@@ -30,7 +30,7 @@
 @ cdecl _ltow(long ptr long) ucrtbase._ltow
 @ cdecl _ltow_s(long ptr long long) ucrtbase._ltow_s
 @ cdecl _strtod_l(str ptr ptr) ucrtbase._strtod_l
-@ stub _strtof_l
+@ cdecl _strtof_l(str ptr ptr) ucrtbase._strtof_l
 @ cdecl -ret64 _strtoi64(str ptr long) ucrtbase._strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) ucrtbase._strtoi64_l
 @ stub _strtoimax_l
@@ -93,7 +93,7 @@
 @ cdecl mbstowcs_s(ptr ptr long str long) ucrtbase.mbstowcs_s
 @ cdecl mbtowc(ptr str long) ucrtbase.mbtowc
 @ cdecl strtod(str ptr) ucrtbase.strtod
-@ stub strtof
+@ cdecl strtof(str ptr) ucrtbase.strtof
 @ stub strtoimax
 @ cdecl strtol(str ptr long) ucrtbase.strtol
 @ stub strtold

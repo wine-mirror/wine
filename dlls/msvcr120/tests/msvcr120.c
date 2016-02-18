@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <wchar.h>
 #include <stdio.h>
+#include <float.h>
+#include <limits.h>
 
 #include <windef.h>
 #include <winbase.h>
@@ -68,6 +70,8 @@ static wchar_t** (CDECL *p____lc_locale_name_func)(void);
 static unsigned int (CDECL *p__GetConcurrency)(void);
 static void* (CDECL *p__W_Gettnames)(void);
 static void (CDECL *p_free)(void*);
+static float (CDECL *p_strtof)(const char *, char **);
+static int (CDECL *p__finite)(double);
 
 static BOOL init(void)
 {
@@ -89,6 +93,8 @@ static BOOL init(void)
     p__GetConcurrency = (void*)GetProcAddress(module,"?_GetConcurrency@details@Concurrency@@YAIXZ");
     p__W_Gettnames = (void*)GetProcAddress(module, "_W_Gettnames");
     p_free = (void*)GetProcAddress(module, "free");
+    p_strtof = (void*)GetProcAddress(module, "strtof");
+    p__finite = (void*)GetProcAddress(module, "_finite");
     return TRUE;
 }
 
@@ -285,6 +291,48 @@ static void test__W_Gettnames(void)
     p_setlocale(LC_ALL, "C");
 }
 
+static void test__strtof(void)
+{
+    const char float1[] = "12.0";
+    const char float2[] = "3.402823466e+38";          /* FLT_MAX */
+    const char float3[] = "-3.402823466e+38";
+    const char float4[] = "1.7976931348623158e+308";  /* DBL_MAX */
+
+    char *end;
+    float f;
+
+    f = p_strtof(float1, &end);
+    ok(f == 12.0, "f = %lf\n", f);
+    ok(end == float1+4, "incorrect end (%d)\n", (int)(end-float1));
+
+    f = p_strtof(float2, &end);
+    ok(f == FLT_MAX, "f = %lf\n", f);
+    ok(end == float2+15, "incorrect end (%d)\n", (int)(end-float2));
+
+    f = p_strtof(float3, &end);
+    ok(f == -FLT_MAX, "f = %lf\n", f);
+    ok(end == float3+16, "incorrect end (%d)\n", (int)(end-float3));
+
+    f = p_strtof(float4, &end);
+    ok(!p__finite(f), "f = %lf\n", f);
+    ok(end == float4+23, "incorrect end (%d)\n", (int)(end-float4));
+
+    f = p_strtof("inf", NULL);
+    ok(f == 0, "f = %lf\n", f);
+
+    f = p_strtof("INF", NULL);
+    ok(f == 0, "f = %lf\n", f);
+
+    f = p_strtof("1.#inf", NULL);
+    ok(f == 1, "f = %lf\n", f);
+
+    f = p_strtof("INFINITY", NULL);
+    ok(f == 0, "f = %lf\n", f);
+
+    f = p_strtof("0x12", NULL);
+    ok(f == 0, "f = %lf\n", f);
+}
+
 START_TEST(msvcr120)
 {
     if (!init()) return;
@@ -293,4 +341,5 @@ START_TEST(msvcr120)
     test____lc_locale_name_func();
     test__GetConcurrency();
     test__W_Gettnames();
+    test__strtof();
 }
