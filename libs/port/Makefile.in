@@ -73,6 +73,7 @@ C_SRCS = \
 	c_936.c \
 	c_949.c \
 	c_950.c \
+	cpsymbol.c \
 	cptable.c \
 	digitmap.c \
 	ffs.c \

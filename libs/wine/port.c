@@ -33,6 +33,8 @@ const void *libwine_port_functions[] =
 {
     wine_cp_enum_table,
     wine_cp_get_table,
+    wine_cpsymbol_mbstowcs,
+    wine_cpsymbol_wcstombs,
     wine_fold_string
 };
 
