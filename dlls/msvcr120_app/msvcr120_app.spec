@@ -1442,7 +1442,7 @@
 @ cdecl _strtime(ptr) msvcr120._strtime
 @ cdecl _strtime_s(ptr long) msvcr120._strtime_s
 @ cdecl _strtod_l(str ptr ptr) msvcr120._strtod_l
-@ stub _strtof_l
+@ cdecl _strtof_l(str ptr ptr) msvcr120._strtof_l
 @ cdecl -ret64 _strtoi64(str ptr long) msvcr120._strtoi64
 @ cdecl -ret64 _strtoi64_l(str ptr long ptr) msvcr120._strtoi64_l
 @ stub _strtoimax_l
@@ -2049,7 +2049,7 @@
 @ cdecl strspn(str str) msvcr120.strspn
 @ cdecl strstr(str str) msvcr120.strstr
 @ cdecl strtod(str ptr) msvcr120.strtod
-@ stub strtof
+@ cdecl strtof(str ptr) msvcr120.strtof
 @ stub strtoimax
 @ cdecl strtok(str str) msvcr120.strtok
 @ cdecl strtok_s(ptr str ptr) msvcr120.strtok_s
