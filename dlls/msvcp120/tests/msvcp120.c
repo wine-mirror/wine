@@ -966,14 +966,9 @@ static void test_tr2_sys__Copy_file(void)
     for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
         errno = 0xdeadbeef;
         ret = p_tr2_sys__Copy_file(tests[i].source, tests[i].dest, tests[i].fail_if_exists);
-        if(tests[i].is_todo)
-            todo_wine ok(ret == tests[i].last_error || ret == tests[i].last_error2,
-                    "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n",
-                    i+1, tests[i].last_error, ret);
-        else
+        todo_wine_if(tests[i].is_todo)
             ok(ret == tests[i].last_error || ret == tests[i].last_error2,
-                    "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n",
-                    i+1, tests[i].last_error, ret);
+                    "test_tr2_sys__Copy_file(): test %d expect: %d, got %d\n", i+1, tests[i].last_error, ret);
         ok(errno == 0xdeadbeef, "test_tr2_sys__Copy_file(): test %d errno expect 0xdeadbeef, got %d\n", i+1, errno);
         if(ret == ERROR_SUCCESS)
             ok(p_tr2_sys__File_size(tests[i].source) == p_tr2_sys__File_size(tests[i].dest),
@@ -1166,10 +1161,7 @@ static void test_tr2_sys__Stat(void)
     for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
         err_code = 0xdeadbeef;
         val = p_tr2_sys__Stat(tests[i].path, &err_code);
-        if(tests[i].is_todo)
-            todo_wine ok(tests[i].ret == val, "tr2_sys__Stat(): test %d expect: %d, got %d\n",
-                    i+1, tests[i].ret, val);
-        else
+        todo_wine_if(tests[i].is_todo)
             ok(tests[i].ret == val, "tr2_sys__Stat(): test %d expect: %d, got %d\n", i+1, tests[i].ret, val);
         ok(tests[i].err_code == err_code, "tr2_sys__Stat(): test %d err_code expect: %d, got %d\n",
                 i+1, tests[i].err_code, err_code);
@@ -1177,12 +1169,8 @@ static void test_tr2_sys__Stat(void)
         /* test tr2_sys__Lstat */
         err_code = 0xdeadbeef;
         val = p_tr2_sys__Lstat(tests[i].path, &err_code);
-        if(tests[i].is_todo)
-            todo_wine ok(tests[i].ret == val, "tr2_sys__Lstat(): test %d expect: %d, got %d\n",
-                    i+1, tests[i].ret, val);
-        else
+        todo_wine_if(tests[i].is_todo)
             ok(tests[i].ret == val, "tr2_sys__Lstat(): test %d expect: %d, got %d\n", i+1, tests[i].ret, val);
-
         ok(tests[i].err_code == err_code, "tr2_sys__Lstat(): test %d err_code expect: %d, got %d\n",
                 i+1, tests[i].err_code, err_code);
     }
