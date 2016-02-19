@@ -257,7 +257,7 @@
 @ stub NdisSetTimer
 @ stub NdisSetTimerEx
 @ stub NdisSetupDmaTransfer
-@ stub NdisSystemProcessorCount
+@ stdcall NdisSystemProcessorCount()
 @ stub NdisTerminateWrapper
 @ stub NdisTransferData
 @ stub NdisUnchainBufferAtBack
