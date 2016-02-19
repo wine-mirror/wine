@@ -949,6 +949,8 @@ static void test_debugger(void)
                 {
                     ok(de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT,
                        "expected EXCEPTION_BREAKPOINT, got %08x\n", de.u.Exception.ExceptionRecord.ExceptionCode);
+                    ok((char *)ctx.Eip == (char *)code_mem_address + 0x1d,
+                       "expected Eip = %p, got 0x%x\n", (char *)code_mem_address + 0x1d, ctx.Eip);
 
                     if (stage == 8) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
                 }
@@ -1885,6 +1887,8 @@ static LONG CALLBACK debug_service_handler(EXCEPTION_POINTERS *ExceptionInfo)
        rec->ExceptionCode, EXCEPTION_BREAKPOINT);
 
 #ifdef __i386__
+    ok(ExceptionInfo->ContextRecord->Eip == (DWORD)code_mem + 0x1c,
+       "expected Eip = %x, got %x\n", (DWORD)code_mem + 0x1c, ExceptionInfo->ContextRecord->Eip);
     ok(rec->NumberParameters == (is_wow64 ? 1 : 3),
        "ExceptionParameters is %d instead of %d\n", rec->NumberParameters, is_wow64 ? 1 : 3);
     ok(rec->ExceptionInformation[0] == ExceptionInfo->ContextRecord->Eax,
@@ -1898,6 +1902,9 @@ static LONG CALLBACK debug_service_handler(EXCEPTION_POINTERS *ExceptionInfo)
            "got ExceptionInformation[2] = %lx\n", rec->ExceptionInformation[2]);
     }
 #else
+    todo_wine
+    ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 0x2f,
+       "expected Rip = %lx, got %lx\n", (DWORD_PTR)code_mem + 0x2f, ExceptionInfo->ContextRecord->Rip);
     ok(rec->NumberParameters == 1,
        "ExceptionParameters is %d instead of 1\n", rec->NumberParameters);
     ok(rec->ExceptionInformation[0] == ExceptionInfo->ContextRecord->Rax,
