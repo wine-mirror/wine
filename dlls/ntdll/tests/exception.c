@@ -1911,7 +1911,6 @@ static LONG CALLBACK debug_service_handler(EXCEPTION_POINTERS *ExceptionInfo)
            "got ExceptionInformation[2] = %lx\n", rec->ExceptionInformation[2]);
     }
 #else
-    todo_wine
     ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 0x2f,
        "expected Rip = %lx, got %lx\n", (DWORD_PTR)code_mem + 0x2f, ExceptionInfo->ContextRecord->Rip);
     ok(rec->NumberParameters == 1,
@@ -1978,7 +1977,6 @@ static const BYTE call_debug_service_code[] = {
 
 static void test_debug_service(DWORD numexc)
 {
-    const BOOL is_win64 = (sizeof(void *) > sizeof(int));
     DWORD (CDECL *func)(DWORD_PTR) = code_mem;
     DWORD expected_exc, expected_ret;
     void *vectored_handler;
@@ -1999,7 +1997,6 @@ static void test_debug_service(DWORD numexc)
     ok(debug_service_exceptions == expected_exc,
        "BREAKPOINT_BREAK generated %u exceptions, expected %u\n",
        debug_service_exceptions, expected_exc);
-    todo_wine_if(is_win64)
     ok(ret == expected_ret,
        "BREAKPOINT_BREAK returned %u, expected %u\n", ret, expected_ret);
 
@@ -2009,7 +2006,6 @@ static void test_debug_service(DWORD numexc)
     ok(debug_service_exceptions == expected_exc,
        "BREAKPOINT_PROMPT generated %u exceptions, expected %u\n",
        debug_service_exceptions, expected_exc);
-    todo_wine_if(is_win64)
     ok(ret == expected_ret,
        "BREAKPOINT_PROMPT returned %u, expected %u\n", ret, expected_ret);
 
@@ -2019,7 +2015,6 @@ static void test_debug_service(DWORD numexc)
     ok(debug_service_exceptions == expected_exc,
        "invalid debug service generated %u exceptions, expected %u\n",
        debug_service_exceptions, expected_exc);
-    todo_wine_if(is_win64)
     ok(ret == expected_ret,
       "invalid debug service returned %u, expected %u\n", ret, expected_ret);
 
@@ -2086,7 +2081,6 @@ static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
        "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
     ExceptionInfo->ContextRecord->Eip = (DWORD)code_mem + 2;
 #else
-    todo_wine
     ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 1,
        "expected Rip = %lx, got %lx\n", (DWORD_PTR)code_mem + 1, ExceptionInfo->ContextRecord->Rip);
     todo_wine
