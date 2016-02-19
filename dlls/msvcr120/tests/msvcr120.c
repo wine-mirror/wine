@@ -253,13 +253,9 @@ static void test____lc_locale_name_func(void)
 
         lc_names = p____lc_locale_name_func();
         ok(lc_names[0] == NULL, "%d - lc_names[0] = %s\n", i, wine_dbgstr_w(lc_names[0]));
-        if(tests[i].todo) {
-            todo_wine ok(!lstrcmpW(lc_names[1], tests[i].name) || broken(!lstrcmpW(lc_names[1], tests[i].broken_name)),
-                    "%d - lc_names[1] = %s\n", i, wine_dbgstr_w(lc_names[1]));
-        } else {
+        todo_wine_if(tests[i].todo)
             ok(!lstrcmpW(lc_names[1], tests[i].name) || broken(!lstrcmpW(lc_names[1], tests[i].broken_name)),
                     "%d - lc_names[1] = %s\n", i, wine_dbgstr_w(lc_names[1]));
-        }
 
         for(j=LC_MIN+2; j<=LC_MAX; j++) {
             ok(!lstrcmpW(lc_names[1], lc_names[j]), "%d - lc_names[%d] = %s, expected %s\n",
