@@ -3354,7 +3354,7 @@ void wined3d_format_calculate_pitch(const struct wined3d_format *format, unsigne
         unsigned int width, unsigned int height, unsigned int *row_pitch, unsigned int *slice_pitch) DECLSPEC_HIDDEN;
 UINT wined3d_format_calculate_size(const struct wined3d_format *format,
         UINT alignment, UINT width, UINT height, UINT depth) DECLSPEC_HIDDEN;
-DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface,
+DWORD wined3d_format_convert_from_float(const struct wined3d_format *format,
         const struct wined3d_color *color) DECLSPEC_HIDDEN;
 BOOL wined3d_format_convert_color_to_float(const struct wined3d_format *format,
         const struct wined3d_palette *palette, DWORD color, struct wined3d_color *float_color) DECLSPEC_HIDDEN;

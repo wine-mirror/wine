@@ -4685,7 +4685,7 @@ static HRESULT cpu_blit_color_fill(struct wined3d_device *device, struct wined3d
     static const RECT src_rect;
     struct wined3d_blt_fx fx;
 
-    fx.fill_color = wined3d_format_convert_from_float(surface, color);
+    fx.fill_color = wined3d_format_convert_from_float(view->format, color);
     return surface_cpu_blt(surface, rect, NULL, &src_rect,
             WINED3D_BLT_COLOR_FILL, &fx, WINED3D_TEXF_POINT);
 }

@@ -4393,7 +4393,7 @@ void get_fog_start_end(const struct wined3d_context *context, const struct wined
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
  * in the range 0.0f -> 1.0f. */
-DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, const struct wined3d_color *color)
+DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, const struct wined3d_color *color)
 {
     static const struct
     {
@@ -4426,7 +4426,6 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_surface *surface, c
         {WINED3DFMT_R10G10B10A2_UNORM, 1023.0f, 1023.0f, 1023.0f,    3.0f,  0, 10, 20, 30},
         {WINED3DFMT_P8_UINT,              0.0f,    0.0f,    0.0f,  255.0f,  0,  0,  0,  0},
     };
-    const struct wined3d_format *format = surface->resource.format;
     unsigned int i;
 
     TRACE("Converting color {%.8e %.8e %.8e %.8e} to format %s.\n",
