@@ -117,9 +117,7 @@ static inline void _sink_fire_ok(INT *sink, const CHAR* name)
             *sink = (*sink & ~SINK_EXPECTED_COUNT_MASK) + (count << 16);
             return;
         default:
-            if (todo)
-                todo_wine winetest_ok(0, "Unexpected %s sink\n",name);
-            else
+            todo_wine_if (todo)
                 winetest_ok(0, "Unexpected %s sink\n",name);
     }
     *sink = SINK_FIRED;
@@ -147,9 +145,7 @@ static inline void _sink_check_ok(INT *sink, const CHAR* name)
                 winetest_trace("optional sink %s not fired\n",name);
             break;
         default:
-            if (todo)
-                todo_wine winetest_ok(0, "%s not fired as expected, in state %x\n",name,*sink);
-            else
+            todo_wine_if (todo)
                 winetest_ok(0, "%s not fired as expected, in state %x\n",name,*sink);
     }
     *sink = SINK_UNEXPECTED;
