@@ -33,5 +33,6 @@ typedef struct _NDIS_SPIN_LOCK
 
 NDIS_STATUS WINAPI NdisAllocateMemoryWithTag(void **, UINT, ULONG);
 void WINAPI NdisAllocateSpinLock(NDIS_SPIN_LOCK *);
+CCHAR WINAPI NdisSystemProcessorCount(void);
 
 #endif /* _NDIS_ */

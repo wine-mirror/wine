@@ -48,3 +48,13 @@ void WINAPI NdisAllocateSpinLock(NDIS_SPIN_LOCK *lock)
 {
     FIXME("(%p): stub\n", lock);
 }
+
+CCHAR WINAPI NdisSystemProcessorCount(void)
+{
+    SYSTEM_INFO si;
+
+    TRACE("()\n");
+    GetSystemInfo(&si);
+
+    return si.dwNumberOfProcessors;
+}
