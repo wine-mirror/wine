@@ -2817,6 +2817,15 @@ LONG WINAPI ChangeDisplaySettingsExW( LPCWSTR devname, LPDEVMODEW devmode, HWND 
 
 
 /***********************************************************************
+ *              DisplayConfigGetDeviceInfo (USER32.@)
+ */
+LONG WINAPI DisplayConfigGetDeviceInfo(DISPLAYCONFIG_DEVICE_INFO_HEADER *packet)
+{
+    FIXME("stub: %p\n", packet);
+    return ERROR_NOT_SUPPORTED;
+}
+
+/***********************************************************************
  *		EnumDisplaySettingsW (USER32.@)
  *
  * RETURNS

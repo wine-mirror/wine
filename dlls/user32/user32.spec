@@ -168,6 +168,7 @@
 @ stdcall DisableProcessWindowsGhosting()
 @ stdcall DispatchMessageA(ptr)
 @ stdcall DispatchMessageW(ptr)
+@ stdcall DisplayConfigGetDeviceInfo(ptr)
 # @ stub DisplayExitWindowsWarnings
 @ stdcall DlgDirListA(long str long long long)
 @ stdcall DlgDirListComboBoxA(long ptr long long long)
