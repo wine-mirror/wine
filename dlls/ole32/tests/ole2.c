@@ -156,12 +156,7 @@ typedef struct PresentationDataHeader
             while (expected_method_list->flags & TEST_OPTIONAL && \
                    strcmp(expected_method_list->method, method_name) != 0) \
                 expected_method_list++; \
-            if (expected_method_list->flags & TEST_TODO) \
-                todo_wine \
-                    ok(!strcmp(expected_method_list->method, method_name), \
-                       "Expected %s to be called instead of %s\n", \
-                       expected_method_list->method, method_name); \
-            else \
+            todo_wine_if (expected_method_list->flags & TEST_TODO) \
                 ok(!strcmp(expected_method_list->method, method_name), \
                    "Expected %s to be called instead of %s\n", \
                    expected_method_list->method, method_name); \
