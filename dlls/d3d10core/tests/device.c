@@ -71,16 +71,16 @@ static BOOL compare_float(float f, float g, unsigned int ulps)
 
 static BOOL compare_color(DWORD c1, DWORD c2, BYTE max_diff)
 {
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff)
         return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff)
         return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff)
         return FALSE;
     c1 >>= 8; c2 >>= 8;
-    if (abs((c1 & 0xff) - (c2 & 0xff)) > max_diff)
+    if (abs((int)(c1 & 0xff) - (int)(c2 & 0xff)) > max_diff)
         return FALSE;
     return TRUE;
 }
