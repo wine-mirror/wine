@@ -4,7 +4,7 @@
 
 #include "wine/unicode.h"
 
-const WCHAR unicode_decompose_table[4704] =
+static const WCHAR table[4704] =
 {
     /* index */
     0x0110, 0x0120, 0x0130, 0x0140, 0x0150, 0x0100, 0x0160, 0x0100,
@@ -746,3 +746,16 @@ const WCHAR unicode_decompose_table[4704] =
     0x05e8, 0x05bc, 0x05e9, 0x05bc, 0x05ea, 0x05bc, 0x05d5, 0x05b9,
     0x05d1, 0x05bf, 0x05db, 0x05bf, 0x05e4, 0x05bf, 0x0000, 0x0000
 };
+
+unsigned int wine_decompose( WCHAR ch, WCHAR *dst, unsigned int dstlen )
+{
+    const WCHAR *ptr = table + table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + 2 * (ch & 0xf);
+    unsigned int res;
+
+    *dst = ch;
+    if (!*ptr) return 1;
+    if (dstlen <= 1) return 0;
+    /* apply the decomposition recursively to the first char */
+    if ((res = wine_decompose( *ptr, dst, dstlen-1 ))) dst[res++] = ptr[1];
+    return res;
+}

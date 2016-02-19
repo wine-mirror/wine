@@ -19,7 +19,7 @@
  */
 #include "wine/unicode.h"
 
-extern int get_decomposition(WCHAR src, WCHAR *dst, unsigned int dstlen);
+extern unsigned int wine_decompose( WCHAR ch, WCHAR *dst, unsigned int dstlen );
 extern const unsigned int collation_table[];
 
 /*
@@ -38,11 +38,10 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
     key_len[0] = key_len[1] = key_len[2] = key_len[3] = 0;
     for (; srclen; srclen--, src++)
     {
-        int decomposed_len = 1;/*get_decomposition(*src, dummy, 4);*/
+        unsigned int i, decomposed_len = 1;/*wine_decompose(*src, dummy, 4);*/
         dummy[0] = *src;
         if (decomposed_len)
         {
-            int i;
             for (i = 0; i < decomposed_len; i++)
             {
                 WCHAR wch = dummy[i];
@@ -96,11 +95,10 @@ int wine_get_sortkey(int flags, const WCHAR *src, int srclen, char *dst, int dst
 
     for (; srclen; srclen--, src++)
     {
-        int decomposed_len = 1;/*get_decomposition(*src, dummy, 4);*/
+        unsigned int i, decomposed_len = 1;/*wine_decompose(*src, dummy, 4);*/
         dummy[0] = *src;
         if (decomposed_len)
         {
-            int i;
             for (i = 0; i < decomposed_len; i++)
             {
                 WCHAR wch = dummy[i];

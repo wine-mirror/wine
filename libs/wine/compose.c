@@ -4,7 +4,7 @@
 
 #include "wine/unicode.h"
 
-const WCHAR unicode_compose_table[0x85e] =
+static const WCHAR table[0x85e] =
 {
     /* second chars + offsets */
     0x0300, 0x0047, 0x0301, 0x009b, 0x0302, 0x0111, 0x0303, 0x0131,
@@ -380,4 +380,26 @@ const WCHAR unicode_compose_table[0x85e] =
     0x30d8, 0x30da, 0x30db, 0x30dd
 };
 
-const unsigned int unicode_compose_table_size = 70;
+static inline int binary_search( WCHAR ch, int low, int high )
+{
+    while (low <= high)
+    {
+        int pos = (low + high) / 2;
+        if (table[2 * pos] < ch) low = pos + 1;
+        else if (table[2 * pos] > ch) high = pos - 1;
+        else return pos;
+    }
+    return -1;
+}
+
+WCHAR wine_compose( const WCHAR *str )
+{
+    int pos, idx = 1, start = 0, count = 70;
+    for (;;)
+    {
+        if ((pos = binary_search( str[idx], start, count - 1 )) == -1) return 0;
+        if (!idx--) return table[2 * pos + 1];
+        start = table[2 * pos + 1];
+        count = table[2 * pos + 3];
+    }
+}
