@@ -1436,9 +1436,10 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient *iface,
         return hr;
     }
     attr = pa_stream_get_buffer_attr(This->stream);
-    if (This->dataflow == eRender)
+    if (This->dataflow == eRender){
         lat = attr->minreq / pa_frame_size(&This->ss);
-    else
+        lat += pulse_def_period[0];
+    }else
         lat = attr->fragsize / pa_frame_size(&This->ss);
     *latency = 10000000;
     *latency *= lat;
