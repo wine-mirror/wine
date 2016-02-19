@@ -75,6 +75,7 @@ C_SRCS = \
 	c_950.c \
 	cpsymbol.c \
 	cptable.c \
+	decompose.c \
 	digitmap.c \
 	ffs.c \
 	fold.c \
@@ -86,6 +87,7 @@ C_SRCS = \
 	isinf.c \
 	isnan.c \
 	lstat.c \
+	mbtowc.c \
 	memcpy_unaligned.c \
 	memmove.c \
 	mkstemps.c \
