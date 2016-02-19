@@ -721,10 +721,8 @@ static void test_recordWAVE(HWND hwnd)
     /* A few ME machines pass all tests except set format tag pcm! */
     err = mciSendStringA("record x to 2000 wait", NULL, 0, hwnd);
     ok(err || !ok_pcm,"can record yet set wave format pcm returned %s\n", dbg_mcierr(ok_pcm));
-    if(!ndevs) todo_wine /* with sound disabled */
-    ok(ndevs>0 ? !err : err==MCIERR_WAVE_INPUTSUNSUITABLE,"mci record to 2000 returned %s\n", dbg_mcierr(err));
-    else
-    ok(ndevs>0 ? !err : err==MCIERR_WAVE_INPUTSUNSUITABLE,"mci record to 2000 returned %s\n", dbg_mcierr(err));
+    todo_wine_if (!ndevs) /* with sound disabled */
+        ok(ndevs > 0 ? !err : err == MCIERR_WAVE_INPUTSUNSUITABLE, "mci record to 2000 returned %s\n", dbg_mcierr(err));
     if(err) {
         if (err==MCIERR_WAVE_INPUTSUNSUITABLE)
              skip("Please install audio driver. Everything is skipped.\n");
@@ -1165,10 +1163,8 @@ static void test_AutoOpenWAVE(HWND hwnd)
     test_notification(hwnd, "-prior to auto-open-", 0);
 
     err = mciSendStringA("play tempfile.wav notify", buf, sizeof(buf), hwnd);
-    if(ok_saved==MCIERR_FILE_NOT_FOUND) todo_wine /* same as above */
-    ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned %s\n", dbg_mcierr(err));
-    else
-    ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned %s\n", dbg_mcierr(err));
+    todo_wine_if (ok_saved == MCIERR_FILE_NOT_FOUND) /* same as above */
+        ok(err==MCIERR_NOTIFY_ON_AUTO_OPEN,"mci auto-open play notify returned %s\n", dbg_mcierr(err));
 
     if(err) /* FIXME: don't open twice yet, it confuses Wine. */
     err = mciSendStringA("play tempfile.wav", buf, sizeof(buf), hwnd);
