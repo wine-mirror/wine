@@ -1021,6 +1021,14 @@ int CDECL MSVCRT__close(int fd)
   TRACE(":fd (%d) handle (%p)\n", fd, info->handle);
   if (!(info->wxflag & WX_OPEN)) {
     ret = -1;
+  } else if (fd == MSVCRT_STDOUT_FILENO &&
+          info->handle == get_ioinfo_nolock(MSVCRT_STDERR_FILENO)->handle) {
+    msvcrt_free_fd(fd);
+    ret = 0;
+  } else if (fd == MSVCRT_STDERR_FILENO &&
+          info->handle == get_ioinfo_nolock(MSVCRT_STDOUT_FILENO)->handle) {
+    msvcrt_free_fd(fd);
+    ret = 0;
   } else {
     ret = CloseHandle(info->handle) ? 0 : -1;
     msvcrt_free_fd(fd);
