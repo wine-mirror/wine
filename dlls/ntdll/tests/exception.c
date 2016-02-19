@@ -954,6 +954,15 @@ static void test_debugger(void)
 
                     if (stage == 8) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
                 }
+                else if (stage == 9 || stage == 10)
+                {
+                    ok(de.u.Exception.ExceptionRecord.ExceptionCode == EXCEPTION_BREAKPOINT,
+                       "expected EXCEPTION_BREAKPOINT, got %08x\n", de.u.Exception.ExceptionRecord.ExceptionCode);
+                    ok((char *)ctx.Eip == (char *)code_mem_address + 2,
+                       "expected Eip = %p, got 0x%x\n", (char *)code_mem_address + 2, ctx.Eip);
+
+                    if (stage == 10) continuestatus = DBG_EXCEPTION_NOT_HANDLED;
+                }
                 else
                     ok(FALSE, "unexpected stage %x\n", stage);
 
@@ -2015,6 +2024,66 @@ static void test_debug_service(DWORD numexc)
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
 
+static DWORD breakpoint_exceptions;
+
+static LONG CALLBACK breakpoint_handler(EXCEPTION_POINTERS *ExceptionInfo)
+{
+    EXCEPTION_RECORD *rec = ExceptionInfo->ExceptionRecord;
+    trace("vect. handler %08x addr:%p\n", rec->ExceptionCode, rec->ExceptionAddress);
+
+    ok(rec->ExceptionCode == EXCEPTION_BREAKPOINT, "ExceptionCode is %08x instead of %08x\n",
+       rec->ExceptionCode, EXCEPTION_BREAKPOINT);
+
+#ifdef __i386__
+    ok(ExceptionInfo->ContextRecord->Eip == (DWORD)code_mem + 1,
+       "expected Eip = %x, got %x\n", (DWORD)code_mem + 1, ExceptionInfo->ContextRecord->Eip);
+    todo_wine
+    ok(rec->NumberParameters == (is_wow64 ? 1 : 3),
+       "ExceptionParameters is %d instead of %d\n", rec->NumberParameters, is_wow64 ? 1 : 3);
+    todo_wine
+    ok(rec->ExceptionInformation[0] == 0,
+       "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
+    ExceptionInfo->ContextRecord->Eip = (DWORD)code_mem + 2;
+#else
+    todo_wine
+    ok(ExceptionInfo->ContextRecord->Rip == (DWORD_PTR)code_mem + 1,
+       "expected Rip = %lx, got %lx\n", (DWORD_PTR)code_mem + 1, ExceptionInfo->ContextRecord->Rip);
+    todo_wine
+    ok(rec->NumberParameters == 1,
+       "ExceptionParameters is %d instead of 1\n", rec->NumberParameters);
+    todo_wine
+    ok(rec->ExceptionInformation[0] == 0,
+       "got ExceptionInformation[0] = %lx\n", rec->ExceptionInformation[0]);
+    ExceptionInfo->ContextRecord->Rip = (DWORD_PTR)code_mem + 2;
+#endif
+
+    breakpoint_exceptions++;
+    return (rec->ExceptionCode == EXCEPTION_BREAKPOINT) ? EXCEPTION_CONTINUE_EXECUTION : EXCEPTION_CONTINUE_SEARCH;
+}
+
+static const BYTE breakpoint_code[] = {
+    0xcd, 0x03,                   /* int $0x3 */
+    0xc3,                         /* ret */
+};
+
+static void test_breakpoint(DWORD numexc)
+{
+    DWORD (CDECL *func)(void) = code_mem;
+    void *vectored_handler;
+
+    memcpy(code_mem, breakpoint_code, sizeof(breakpoint_code));
+
+    vectored_handler = pRtlAddVectoredExceptionHandler(TRUE, &breakpoint_handler);
+    ok(vectored_handler != 0, "RtlAddVectoredExceptionHandler failed\n");
+
+    breakpoint_exceptions = 0;
+    func();
+    ok(breakpoint_exceptions == numexc, "int $0x3 generated %u exceptions, expected %u\n",
+       breakpoint_exceptions, numexc);
+
+    pRtlRemoveVectoredExceptionHandler(vectored_handler);
+}
+
 static void test_vectored_continue_handler(void)
 {
     PVOID handler1, handler2;
@@ -2138,6 +2207,10 @@ START_TEST(exception)
             test_debug_service(0);
             test_stage = 8;
             test_debug_service(1);
+            test_stage = 9;
+            test_breakpoint(0);
+            test_stage = 10;
+            test_breakpoint(1);
         }
         else
             skip( "RtlRaiseException not found\n" );
@@ -2152,6 +2225,7 @@ START_TEST(exception)
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
     test_debug_service(1);
+    test_breakpoint(1);
     test_vectored_continue_handler();
     test_debugger();
     test_simd_exceptions();
@@ -2172,6 +2246,7 @@ START_TEST(exception)
     test_outputdebugstring(1, FALSE);
     test_ripevent(1);
     test_debug_service(1);
+    test_breakpoint(1);
     test_vectored_continue_handler();
     test_virtual_unwind();
 
