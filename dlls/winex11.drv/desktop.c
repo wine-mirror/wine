@@ -180,7 +180,6 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
 
 struct desktop_resize_data
 {
-    RECT  old_screen_rect;
     RECT  old_virtual_rect;
     RECT  new_virtual_rect;
 };
@@ -259,7 +258,6 @@ void X11DRV_resize_desktop( unsigned int width, unsigned int height )
     HWND hwnd = GetDesktopWindow();
     struct desktop_resize_data resize_data;
 
-    resize_data.old_screen_rect = get_primary_monitor_rect();
     resize_data.old_virtual_rect = get_virtual_screen_rect();
 
     xinerama_init( width, height );
