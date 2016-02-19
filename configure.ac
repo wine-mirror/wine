@@ -2026,6 +2026,7 @@ AC_CHECK_FUNCS(\
 	sched_yield \
 	select \
 	setproctitle \
+	setprogname \
 	setrlimit \
 	settimeofday \
 	sigaltstack \

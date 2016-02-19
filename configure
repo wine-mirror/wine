@@ -15047,6 +15047,7 @@ for ac_func in \
 	sched_yield \
 	select \
 	setproctitle \
+	setprogname \
 	setrlimit \
 	settimeofday \
 	sigaltstack \
