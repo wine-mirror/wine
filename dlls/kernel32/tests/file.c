@@ -3754,17 +3754,13 @@ static void test_CreateFile(void)
         if (i == 0 || i == 5)
         {
 /* FIXME: remove once Wine is fixed */
-if (i == 5) todo_wine
-            ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
-else
+todo_wine_if (i == 5)
             ok(GetLastError() == ERROR_INVALID_PARAMETER, "%d: expected ERROR_INVALID_PARAMETER, got %d\n", i, GetLastError());
         }
         else
         {
 /* FIXME: remove once Wine is fixed */
-if (i == 1) todo_wine
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
-else
+todo_wine_if (i == 1)
             ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
         }
 
@@ -3776,9 +3772,7 @@ else
         else
         {
 /* FIXME: remove once Wine is fixed */
-if (i == 1) todo_wine
-            ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
-else
+todo_wine_if (i == 1)
             ok(GetLastError() == ERROR_ACCESS_DENIED, "%d: expected ERROR_ACCESS_DENIED, got %d\n", i, GetLastError());
         }
     }
