@@ -838,12 +838,15 @@ static HRESULT WINAPI Gstreamer_AudioConvert_SetMediaType(TransformFilter *tf, P
         inisfloat = IsEqualGUID(&inwfx->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT);
         if (inwfx->Samples.wValidBitsPerSample)
             indepth = inwfx->Samples.wValidBitsPerSample;
-    }
+    } else if (inwfe->wFormatTag == WAVE_FORMAT_IEEE_FLOAT)
+        inisfloat = TRUE;
 
-    format = inisfloat ? (inwfe->wBitsPerSample == 64 ? GST_AUDIO_FORMAT_F64LE : GST_AUDIO_FORMAT_F32LE)
-                 : gst_audio_format_build_integer(inwfe->wBitsPerSample == 8 ? FALSE : TRUE,
-                                                  inwfe->wBitsPerSample,
-                                                  indepth, G_LITTLE_ENDIAN);
+    if (inisfloat)
+        format = inwfe->wBitsPerSample == 64 ? GST_AUDIO_FORMAT_F64LE : GST_AUDIO_FORMAT_F32LE;
+    else
+        format = gst_audio_format_build_integer(inwfe->wBitsPerSample == 8 ? FALSE : TRUE,
+                G_LITTLE_ENDIAN, inwfe->wBitsPerSample, indepth);
+
     capsin = gst_caps_new_simple("audio/x-raw",
                                  "format", G_TYPE_STRING, gst_audio_format_to_string(format),
                                  "channels", G_TYPE_INT, inwfe->nChannels,
