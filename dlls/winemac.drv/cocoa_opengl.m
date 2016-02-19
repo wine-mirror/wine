@@ -235,7 +235,10 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
         }
 
         if (context)
+        {
             [context removeFromViews:YES];
+            [context makeCurrentContext];
+        }
     }
 
     [pool release];

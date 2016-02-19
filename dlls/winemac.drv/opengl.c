@@ -3057,7 +3057,13 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
         return TRUE;
     }
 
-    if ((hwnd = WindowFromDC(draw_hdc)))
+    if (!draw_hdc && !read_hdc)
+    {
+        context->draw_hwnd = NULL;
+        context->draw_view = NULL;
+        context->draw_pbuffer = NULL;
+    }
+    else if ((hwnd = WindowFromDC(draw_hdc)))
     {
         if (!(data = get_win_data(hwnd)))
         {
