@@ -486,13 +486,7 @@ static void test_WsSetInput(void)
         charset = 0xdeadbeef;
         size = sizeof(charset);
         hr = WsGetReaderProperty( reader, WS_XML_READER_PROPERTY_CHARSET, &charset, size, NULL );
-        if (tests[i].todo)
-        {
-            todo_wine ok( hr == tests[i].hr, "%u: got %08x expected %08x\n", i, hr, tests[i].hr );
-            if (hr == S_OK)
-                todo_wine ok( charset == tests[i].charset, "%u: got %u expected %u\n", i, charset, tests[i].charset );
-        }
-        else
+        todo_wine_if (tests[i].todo)
         {
             ok( hr == tests[i].hr, "%u: got %08x expected %08x\n", i, hr, tests[i].hr );
             if (hr == S_OK)
@@ -1082,9 +1076,7 @@ static void test_WsReadNode(void)
         ok( hr == S_OK, "%u: got %08x\n", i, hr );
 
         hr = WsReadNode( reader, NULL );
-        if (tests[i].todo)
-            todo_wine ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
-        else
+        todo_wine_if (tests[i].todo)
             ok( hr == tests[i].hr, "%u: got %08x\n", i, hr );
         if (hr == S_OK)
         {
@@ -1094,10 +1086,7 @@ static void test_WsReadNode(void)
             ok( node != NULL, "%u: node not set\n", i );
             if (node)
             {
-                if (tests[i].todo)
-                    todo_wine
-                    ok( node->nodeType == tests[i].type, "%u: got %u\n", i, node->nodeType );
-                else
+                todo_wine_if (tests[i].todo)
                     ok( node->nodeType == tests[i].type, "%u: got %u\n", i, node->nodeType );
             }
         }
