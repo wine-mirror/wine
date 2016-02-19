@@ -584,6 +584,29 @@ static DWORD MCIQTZ_mciPause(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpP
 }
 
 /***************************************************************************
+ *                              MCIQTZ_mciResume                 [internal]
+ */
+static DWORD MCIQTZ_mciResume(UINT wDevID, DWORD dwFlags, LPMCI_GENERIC_PARMS lpParms)
+{
+    WINE_MCIQTZ* wma;
+    HRESULT hr;
+
+    TRACE("(%04x, %08X, %p)\n", wDevID, dwFlags, lpParms);
+
+    wma = MCIQTZ_mciGetOpenDev(wDevID);
+    if (!wma)
+        return MCIERR_INVALID_DEVICE_ID;
+
+    hr = IMediaControl_Run(wma->pmctrl);
+    if (FAILED(hr)) {
+        TRACE("Cannot run filtergraph (hr = %x)\n", hr);
+        return MCIERR_INTERNAL;
+    }
+
+    return 0;
+}
+
+/***************************************************************************
  *                              MCIQTZ_mciGetDevCaps            [internal]
  */
 static DWORD MCIQTZ_mciGetDevCaps(UINT wDevID, DWORD dwFlags, LPMCI_GETDEVCAPS_PARMS lpParms)
@@ -1126,6 +1149,9 @@ static DWORD CALLBACK MCIQTZ_taskThread(LPVOID arg)
         case MCI_PAUSE:
             task->res = MCIQTZ_mciPause(task->devid, task->flags, (LPMCI_GENERIC_PARMS)task->parms);
             break;
+        case MCI_RESUME:
+            task->res = MCIQTZ_mciResume(task->devid, task->flags, (LPMCI_GENERIC_PARMS)task->parms);
+            break;
         case MCI_GETDEVCAPS:
             task->res = MCIQTZ_mciGetDevCaps(task->devid, task->flags, (LPMCI_GETDEVCAPS_PARMS)task->parms);
             break;
@@ -1209,6 +1235,7 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
         case MCI_CLOSE_DRIVER:
         case MCI_STOP:
         case MCI_PAUSE:
+        case MCI_RESUME:
             return MCIQTZ_relayTaskMessage(dwDevID, wMsg, dwParam1, dwParam2);
         /* Digital Video specific */
         case MCI_SETAUDIO:
@@ -1218,7 +1245,6 @@ LRESULT CALLBACK MCIQTZ_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
             if (!dwParam2) return MCIERR_NULL_PARAMETER_BLOCK;
             return MCIQTZ_relayTaskMessage(dwDevID, wMsg, dwParam1, dwParam2);
         case MCI_RECORD:
-        case MCI_RESUME:
         case MCI_INFO:
         case MCI_LOAD:
         case MCI_SAVE:
