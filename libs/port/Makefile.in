@@ -73,6 +73,7 @@ C_SRCS = \
 	c_936.c \
 	c_949.c \
 	c_950.c \
+	compose.c \
 	cpsymbol.c \
 	cptable.c \
 	decompose.c \
@@ -101,4 +102,6 @@ C_SRCS = \
 	strerror.c \
 	strncasecmp.c \
 	symlink.c \
-	usleep.c
+	usleep.c \
+	utf8.c \
+	wctomb.c

@@ -2465,7 +2465,7 @@ chdir ".." if -f "./make_unicode";
 READ_DEFAULTS( $DEFAULTS );
 DUMP_CASE_MAPPINGS( "libs/wine/casemap.c" );
 DUMP_SORTKEYS( "libs/wine/collation.c", READ_SORTKEYS_FILE() );
-dump_compose_table( "libs/wine/compose.c" );
+dump_compose_table( "libs/port/compose.c" );
 dump_decompose_table( "libs/port/decompose.c" );
 DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
 dump_digit_folding( "libs/port/digitmap.c" );

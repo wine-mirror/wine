@@ -5,7 +5,6 @@ STATICLIB = libwine_static.a
 C_SRCS = \
 	casemap.c \
 	collation.c \
-	compose.c \
 	config.c \
 	debug.c \
 	ldt.c \
@@ -14,8 +13,6 @@ C_SRCS = \
 	port.c \
 	sortkey.c \
 	string.c \
-	utf8.c \
-	wctomb.c \
 	wctype.c
 
 EXTRA_OBJS = version.o
