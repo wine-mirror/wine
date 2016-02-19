@@ -2170,6 +2170,10 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         /* fall through */
     default:
         rec->ExceptionCode = EXCEPTION_BREAKPOINT;
+        rec->NumberParameters = is_wow64 ? 1 : 3;
+        rec->ExceptionInformation[0] = 0;
+        rec->ExceptionInformation[1] = 0; /* FIXME */
+        rec->ExceptionInformation[2] = 0; /* FIXME */
         break;
     }
 }

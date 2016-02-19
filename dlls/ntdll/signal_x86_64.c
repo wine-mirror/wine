@@ -2658,6 +2658,8 @@ static void trap_handler( int signal, siginfo_t *siginfo, void *sigcontext )
         /* fall through */
     default:
         rec->ExceptionCode = EXCEPTION_BREAKPOINT;
+        rec->NumberParameters = 1;
+        rec->ExceptionInformation[0] = 0;
         break;
     }
 }
