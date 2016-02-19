@@ -14782,6 +14782,17 @@ int __cdecl tr2_sys__Symlink(char const* existing_file_name, char const* file_na
     return GetLastError();
 }
 
+/* ?_Unlink@sys@tr2@std@@YAHPBD@Z */
+/* ?_Unlink@sys@tr2@std@@YAHPEBD@Z */
+int __cdecl tr2_sys__Unlink(char const* path)
+{
+    TRACE("(%s)\n", debugstr_a(path));
+
+    if(DeleteFileA(path))
+        return ERROR_SUCCESS;
+    return GetLastError();
+}
+
 /* ??0strstream@std@@QAE@PADHH@Z */
 /* ??0strstream@std@@QEAA@PEAD_JH@Z */
 #if STREAMSIZE_BITS == 64

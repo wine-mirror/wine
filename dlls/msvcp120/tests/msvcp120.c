@@ -134,6 +134,7 @@ static char* (__cdecl *p_tr2_sys__Read_dir)(char*, void*, enum file_type*);
 static void (__cdecl *p_tr2_sys__Close_dir)(void*);
 static int (__cdecl *p_tr2_sys__Link)(char const*, char const*);
 static int (__cdecl *p_tr2_sys__Symlink)(char const*, char const*);
+static int (__cdecl *p_tr2_sys__Unlink)(char const*);
 
 /* thrd */
 typedef struct
@@ -271,6 +272,8 @@ static BOOL init(void)
                 "?_Link@sys@tr2@std@@YAHPEBD0@Z");
         SET(p_tr2_sys__Symlink,
                 "?_Symlink@sys@tr2@std@@YAHPEBD0@Z");
+        SET(p_tr2_sys__Unlink,
+                "?_Unlink@sys@tr2@std@@YAHPEBD@Z");
         SET(p__Thrd_current,
                 "_Thrd_current");
     } else {
@@ -328,6 +331,8 @@ static BOOL init(void)
                 "?_Link@sys@tr2@std@@YAHPBD0@Z");
         SET(p_tr2_sys__Symlink,
                 "?_Symlink@sys@tr2@std@@YAHPBD0@Z");
+        SET(p_tr2_sys__Unlink,
+                "?_Unlink@sys@tr2@std@@YAHPBD@Z");
 #ifdef __i386__
         SET(p_i386_Thrd_current,
                 "_Thrd_current");
@@ -1460,6 +1465,60 @@ static void test_tr2_sys__Symlink(void)
     ok(ret == 1, "tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
 }
 
+static void test_tr2_sys__Unlink(void)
+{
+    int ret, i;
+    HANDLE file;
+    LARGE_INTEGER file_size;
+    struct {
+        char const *path;
+        int last_error;
+        MSVCP_bool is_todo;
+    } tests[] = {
+        { "tr2_test_dir\\f1_symlink", ERROR_SUCCESS, TRUE },
+        { "tr2_test_dir\\f1_link", ERROR_SUCCESS, FALSE },
+        { "tr2_test_dir\\f1", ERROR_SUCCESS, FALSE },
+        { "tr2_test_dir", ERROR_ACCESS_DENIED, FALSE },
+        { "not_exist", ERROR_FILE_NOT_FOUND, FALSE },
+        { "not_exist_dir\\not_exist_file", ERROR_PATH_NOT_FOUND, FALSE },
+        { NULL, ERROR_PATH_NOT_FOUND, FALSE }
+    };
+
+    ret = p_tr2_sys__Make_dir("tr2_test_dir");
+    ok(ret == 1, "tr2_sys__Make_dir(): expect 1 got %d\n", ret);
+    file = CreateFileA("tr2_test_dir/f1", GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, NULL);
+    ok(file != INVALID_HANDLE_VALUE, "create file failed: INVALID_HANDLE_VALUE\n");
+    file_size.QuadPart = 7;
+    ok(SetFilePointerEx(file, file_size, NULL, FILE_BEGIN), "SetFilePointerEx failed\n");
+    ok(SetEndOfFile(file), "SetEndOfFile failed\n");
+    CloseHandle(file);
+
+    ret = p_tr2_sys__Symlink("tr2_test_dir/f1", "tr2_test_dir/f1_symlink");
+    if(ret==ERROR_PRIVILEGE_NOT_HELD || ret==ERROR_INVALID_FUNCTION) {
+        tests[0].last_error = ERROR_FILE_NOT_FOUND;
+        win_skip("Privilege not held or symbolic link not supported, skipping symbolic link tests.\n");
+    }else {
+        ok(ret == ERROR_SUCCESS, "tr2_sys__Symlink(): expect: ERROR_SUCCESS, got %d\n", ret);
+    }
+    ret = p_tr2_sys__Link("tr2_test_dir/f1", "tr2_test_dir/f1_link");
+    ok(ret == ERROR_SUCCESS, "tr2_sys__Link(): expect: ERROR_SUCCESS, got %d\n", ret);
+
+    for(i=0; i<sizeof(tests)/sizeof(tests[0]); i++) {
+        errno = 0xdeadbeef;
+        ret = p_tr2_sys__Unlink(tests[i].path);
+        todo_wine_if(tests[i].is_todo)
+            ok(ret == tests[i].last_error, "tr2_sys__Unlink(): test %d expect: %d, got %d\n",
+                    i+1, tests[i].last_error, ret);
+        ok(errno == 0xdeadbeef, "tr2_sys__Unlink(): test %d errno expect: 0xdeadbeef, got %d\n", i+1, ret);
+    }
+
+    ok(!DeleteFileA("tr2_test_dir/f1"), "expect tr2_test_dir/f1 not to exist\n");
+    ok(!DeleteFileA("tr2_test_dir/f1_link"), "expect tr2_test_dir/f1_link not to exist\n");
+    ok(!DeleteFileA("tr2_test_dir/f1_symlink"), "expect tr2_test_dir/f1_symlink not to exist\n");
+    ret = p_tr2_sys__Remove_dir("tr2_test_dir");
+    ok(ret == 1, "tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
+}
+
 static int __cdecl thrd_thread(void *arg)
 {
     _Thrd_t *thr = arg;
@@ -1751,6 +1810,7 @@ START_TEST(msvcp120)
     test_tr2_sys__dir_operation();
     test_tr2_sys__Link();
     test_tr2_sys__Symlink();
+    test_tr2_sys__Unlink();
 
     test_thrd();
     test_cnd();
