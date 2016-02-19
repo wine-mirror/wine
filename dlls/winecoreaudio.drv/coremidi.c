@@ -29,10 +29,10 @@
 
 MIDIClientRef CoreMIDI_CreateClient(CFStringRef name)
 {
-    MIDIClientRef client = NULL;
+    MIDIClientRef client = 0;
 
     if (MIDIClientCreate(name, NULL /* FIXME use notify proc */, NULL, &client) != noErr)
-        return NULL;
+        return 0;
 
     return client;
 }
