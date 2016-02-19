@@ -412,13 +412,17 @@ static void pulse_probe_settings(int render, WAVEFORMATEXTENSIBLE *fmt) {
             {}
         }
     }
+
     if (stream)
         pa_stream_unref(stream);
+
     if (length)
         pulse_def_period[!render] = pulse_min_period[!render] = pa_bytes_to_usec(10 * length, &ss);
-    else
+
+    if (pulse_min_period[!render] < MinimumPeriod)
         pulse_min_period[!render] = MinimumPeriod;
-    if (pulse_def_period[!render] <= DefaultPeriod)
+
+    if (pulse_def_period[!render] < DefaultPeriod)
         pulse_def_period[!render] = DefaultPeriod;
 
     wfx->wFormatTag = WAVE_FORMAT_EXTENSIBLE;
