@@ -126,7 +126,9 @@ static int (__cdecl *p_tr2_sys__Rename_wchar)(WCHAR const*, WCHAR const*);
 static struct space_info* (__cdecl *p_tr2_sys__Statvfs)(struct space_info*, char const*);
 static struct space_info* (__cdecl *p_tr2_sys__Statvfs_wchar)(struct space_info*, WCHAR const*);
 static enum file_type (__cdecl *p_tr2_sys__Stat)(char const*, int *);
+static enum file_type (__cdecl *p_tr2_sys__Stat_wchar)(WCHAR const*, int *);
 static enum file_type (__cdecl *p_tr2_sys__Lstat)(char const*, int *);
+static enum file_type (__cdecl *p_tr2_sys__Lstat_wchar)(WCHAR const*, int *);
 static __int64 (__cdecl *p_tr2_sys__Last_write_time)(char const*);
 static void (__cdecl *p_tr2_sys__Last_write_time_set)(char const*, __int64);
 static void* (__cdecl *p_tr2_sys__Open_dir)(char*, char const*, int *, enum file_type*);
@@ -256,8 +258,12 @@ static BOOL init(void)
                 "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEB_W@Z");
         SET(p_tr2_sys__Stat,
                 "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z");
+        SET(p_tr2_sys__Stat_wchar,
+                "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z");
         SET(p_tr2_sys__Lstat,
                 "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z");
+        SET(p_tr2_sys__Lstat_wchar,
+                "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z");
         SET(p_tr2_sys__Last_write_time,
                 "?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z");
         SET(p_tr2_sys__Last_write_time_set,
@@ -315,8 +321,12 @@ static BOOL init(void)
                 "?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PB_W@Z");
         SET(p_tr2_sys__Stat,
                 "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z");
+        SET(p_tr2_sys__Stat_wchar,
+                "?_Stat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z");
         SET(p_tr2_sys__Lstat,
                 "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z");
+        SET(p_tr2_sys__Lstat_wchar,
+                "?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z");
         SET(p_tr2_sys__Last_write_time,
                 "?_Last_write_time@sys@tr2@std@@YA_JPBD@Z");
         SET(p_tr2_sys__Last_write_time_set,
@@ -1130,6 +1140,8 @@ static void test_tr2_sys__Stat(void)
         { "tr2_test_dir\\f1_link" ,   regular_file, ERROR_SUCCESS, TRUE },
         { "tr2_test_dir\\dir_link", directory_file, ERROR_SUCCESS, TRUE },
     };
+    WCHAR testW[] = {'t','r','2','_','t','e','s','t','_','d','i','r',0};
+    WCHAR testW2[] = {'t','r','2','_','t','e','s','t','_','d','i','r','/','f','1',0};
 
     CreateDirectoryA("tr2_test_dir", NULL);
     file = CreateFileA("tr2_test_dir/f1", 0, 0, NULL, CREATE_ALWAYS, 0, NULL);
@@ -1184,6 +1196,15 @@ static void test_tr2_sys__Stat(void)
         ok(tests[i].err_code == err_code, "tr2_sys__Lstat(): test %d err_code expect: %d, got %d\n",
                 i+1, tests[i].err_code, err_code);
     }
+
+    err_code = 0xdeadbeef;
+    val = p_tr2_sys__Stat_wchar(testW, &err_code);
+    ok(directory_file == val, "tr2_sys__Stat_wchar() expect directory_file, got %d\n", val);
+    ok(ERROR_SUCCESS == err_code, "tr2_sys__Stat_wchar(): err_code expect ERROR_SUCCESS, got %d\n", err_code);
+    err_code = 0xdeadbeef;
+    val = p_tr2_sys__Lstat_wchar(testW2, &err_code);
+    ok(regular_file == val, "tr2_sys__Lstat_wchar() expect regular_file, got %d\n", val);
+    ok(ERROR_SUCCESS == err_code, "tr2_sys__Lstat_wchar(): err_code expect ERROR_SUCCESS, got %d\n", err_code);
 
     if(ret) {
         todo_wine ok(DeleteFileA("tr2_test_dir/f1_link"), "expect tr2_test_dir/f1_link to exist\n");

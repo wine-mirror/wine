@@ -1568,8 +1568,8 @@
 @ cdecl ?_Lockit_dtor@_Lockit@std@@SAXH@Z(long) msvcp120.?_Lockit_dtor@_Lockit@std@@SAXH@Z
 @ cdecl -arch=win32 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z(str ptr) msvcp120.?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z
 @ cdecl -arch=win64 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z(str ptr) msvcp120.?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z
-@ stub -arch=win32 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z
-@ stub -arch=win64 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z
+@ cdecl -arch=win32 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z(wstr ptr) msvcp120.?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z
+@ cdecl -arch=win64 ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z(wstr ptr) msvcp120.?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z
 @ stub -arch=win32 ?_MP_Add@std@@YAXQA_K_K@Z
 @ stub -arch=win64 ?_MP_Add@std@@YAXQEA_K_K@Z
 @ stub -arch=win32 ?_MP_Get@std@@YA_KQA_K@Z
@@ -1720,8 +1720,8 @@
 @ stub -arch=win64 ?_Src@?3??_Getffld@?$num_get@_WV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@AEBAHPEADAEAV?$istreambuf_iterator@_WU?$char_traits@_W@std@@@3@1AEAVios_base@3@PEAH@Z@4QBDB
 @ cdecl -arch=win32 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z(str ptr) msvcp120.?_Stat@sys@tr2@std@@YA?AW4file_type@123@PBDAAH@Z
 @ cdecl -arch=win64 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z(str ptr) msvcp120.?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEBDAEAH@Z
-@ stub -arch=win32 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z
-@ stub -arch=win64 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z
+@ cdecl -arch=win32 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z(wstr ptr) msvcp120.?_Stat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z
+@ cdecl -arch=win64 ?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z(wstr ptr) msvcp120.?_Stat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z
 @ cdecl -arch=win32 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PBD@Z(ptr str) msvcp120.?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PBD@Z
 @ cdecl -arch=win64 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEBD@Z(ptr str) msvcp120.?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PEBD@Z
 @ cdecl -arch=win32 ?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PB_W@Z(ptr wstr) msvcp120.?_Statvfs@sys@tr2@std@@YA?AUspace_info@123@PB_W@Z
