@@ -238,7 +238,7 @@
 @ stub NdisReadNetworkAddress
 @ stub NdisReadPciSlotInformation
 @ stub NdisReadPcmciaAttributeMemory
-@ stub NdisRegisterProtocol
+@ stdcall NdisRegisterProtocol(ptr ptr ptr long)
 @ stub NdisRegisterTdiCallBack
 @ stub NdisReleaseReadWriteLock
 @ stub NdisReleaseSpinLock

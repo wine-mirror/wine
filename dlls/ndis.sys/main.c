@@ -2,6 +2,7 @@
  * ndis.sys
  *
  * Copyright 2014 Austin English
+ * Copyright 2016 André Hentschel
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -47,6 +48,13 @@ NDIS_STATUS WINAPI NdisAllocateMemoryWithTag(void **address, UINT length, ULONG 
 void WINAPI NdisAllocateSpinLock(NDIS_SPIN_LOCK *lock)
 {
     FIXME("(%p): stub\n", lock);
+}
+
+void WINAPI NdisRegisterProtocol(NDIS_STATUS *status, NDIS_HANDLE *handle,
+                                 NDIS_PROTOCOL_CHARACTERISTICS *prot, UINT len)
+{
+    FIXME("(%p, %p, %p, %u): stub\n", status, handle, prot, len);
+    *status = NDIS_STATUS_FAILURE;
 }
 
 CCHAR WINAPI NdisSystemProcessorCount(void)
