@@ -8,6 +8,7 @@ C_SRCS = \
 	compose.c \
 	config.c \
 	debug.c \
+	decompose.c \
 	ldt.c \
 	loader.c \
 	mbtowc.c \

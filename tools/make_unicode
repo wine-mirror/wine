@@ -2043,18 +2043,17 @@ sub DUMP_CTYPE_TABLES($)
 
 
 ################################################################
-# dump the char composition tables
-sub DUMP_COMPOSE_TABLES($)
+# dump the char composition table
+sub dump_compose_table($)
 {
     my $filename = shift;
 
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    printf "Building $filename\n";
-    printf OUTPUT "/* Unicode char composition */\n";
-    printf OUTPUT "/* Automatically generated; DO NOT EDIT!! */\n\n";
-    printf OUTPUT "#include \"wine/unicode.h\"\n\n";
-
-    ######### composition table
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode char composition */\n";
+    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
     my @filled = ();
     foreach my $i (@compose_table)
@@ -2100,14 +2099,28 @@ sub DUMP_COMPOSE_TABLES($)
         }
         printf OUTPUT ",\n    /* 0x%04x */\n%s", $i, DUMP_ARRAY( "0x%04x", 0, @table );
     }
-    printf OUTPUT "\n};\n\nconst unsigned int unicode_compose_table_size = %d;\n\n", $count;
+    printf OUTPUT "\n};\n\nconst unsigned int unicode_compose_table_size = %d;\n", $count;
+    close OUTPUT;
+    save_file($filename);
+}
 
-    ######### decomposition table
+################################################################
+# dump the char decomposition table
+sub dump_decompose_table($)
+{
+    my $filename = shift;
+
+    open OUTPUT,">$filename.new" or die "Cannot create $filename";
+    print "Building $filename\n";
+    print OUTPUT "/* Unicode char composition */\n";
+    print OUTPUT "/* generated from $UNIDATA/UnicodeData.txt */\n";
+    print OUTPUT "/* DO NOT EDIT!! */\n\n";
+    print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
     # first determine all the 16-char subsets that contain something
 
-    @filled = (0) x 4096;
-    $pos = 16*2;  # for the null subset
+    my @filled = (0) x 4096;
+    my $pos = 16*2;  # for the null subset
     for (my $i = 0; $i < 65536; $i++)
     {
         next unless defined $decomp_table[$i];
@@ -2413,7 +2426,8 @@ chdir ".." if -f "./make_unicode";
 READ_DEFAULTS( $DEFAULTS );
 DUMP_CASE_MAPPINGS( "libs/wine/casemap.c" );
 DUMP_SORTKEYS( "libs/wine/collation.c", READ_SORTKEYS_FILE() );
-DUMP_COMPOSE_TABLES( "libs/wine/compose.c" );
+dump_compose_table( "libs/wine/compose.c" );
+dump_decompose_table( "libs/wine/decompose.c" );
 DUMP_CTYPE_TABLES( "libs/wine/wctype.c" );
 dump_digit_folding( "libs/port/digitmap.c" );
 dump_mirroring( "dlls/usp10/mirror.c" );
