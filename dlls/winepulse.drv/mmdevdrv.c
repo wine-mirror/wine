@@ -57,7 +57,6 @@
 #include "audiopolicy.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(pulse);
-WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 #define NULL_PTR_ERR MAKE_HRESULT(SEVERITY_ERROR, FACILITY_WIN32, RPC_X_NULL_REF_POINTER)
 
@@ -172,12 +171,16 @@ struct ACImpl {
     AUDCLNT_SHAREMODE share;
     HANDLE event;
 
-    UINT32 bufsize_frames, bufsize_bytes, locked, capture_period, pad, started, peek_ofs;
-    void *locked_ptr, *tmp_buffer;
+    INT32 locked;
+    UINT32 bufsize_frames, bufsize_bytes, capture_period, pad, started, peek_ofs, wri_offs_bytes, lcl_offs_bytes;
+    UINT32 tmp_buffer_bytes, held_bytes;
+    BYTE *local_buffer, *tmp_buffer;
+    void *locked_ptr;
 
     pa_stream *stream;
     pa_sample_spec ss;
     pa_channel_map map;
+    pa_buffer_attr attr;
 
     INT64 clock_lastpos, clock_written;
 
@@ -635,23 +638,73 @@ static void pulse_attr_update(pa_stream *s, void *user) {
     dump_attr(attr);
 }
 
+/* Here's the buffer setup:
+ *
+ *  vvvvvvvv sent to HW already
+ *          vvvvvvvv in Pulse buffer but rewindable
+ * [dddddddddddddddd] Pulse buffer
+ *         [dddddddddddddddd--------] mmdevapi buffer
+ *          ^^^^^^^^^^^^^^^^ pad
+ *                  ^ lcl_offs_bytes
+ *                  ^^^^^^^^^ held_bytes
+ *                          ^ wri_offs_bytes
+ *
+ * GetCurrentPadding is pad
+ *
+ * During pulse_wr_callback, we decrement pad, fill Pulse buffer, and move
+ *   lcl_offs forward
+ *
+ * During Stop, we flush the Pulse buffer
+ */
 static void pulse_wr_callback(pa_stream *s, size_t bytes, void *userdata)
 {
     ACImpl *This = userdata;
     UINT32 oldpad = This->pad;
 
-    if (bytes < This->bufsize_bytes)
-        This->pad = This->bufsize_bytes - bytes;
-    else
-        This->pad = 0;
+    if(This->local_buffer){
+        size_t to_write;
+        BYTE *buf = This->local_buffer + This->lcl_offs_bytes;
 
-    if (oldpad == This->pad)
-        return;
+        if(This->pad > bytes){
+            This->clock_written += bytes;
+            This->pad -= bytes;
+        }else{
+            This->clock_written += This->pad;
+            This->pad = 0;
+        }
 
-    assert(oldpad > This->pad);
+        bytes = min(bytes, This->held_bytes);
 
-    This->clock_written += oldpad - This->pad;
-    TRACE("New pad: %zu (-%zu)\n", This->pad / pa_frame_size(&This->ss), (oldpad - This->pad) / pa_frame_size(&This->ss));
+        if(This->lcl_offs_bytes + bytes > This->bufsize_bytes){
+            to_write = This->bufsize_bytes - This->lcl_offs_bytes;
+            TRACE("writing small chunk of %u bytes\n", to_write);
+            pa_stream_write(This->stream, buf, to_write, NULL, 0, PA_SEEK_RELATIVE);
+            This->held_bytes -= to_write;
+            to_write = bytes - to_write;
+            This->lcl_offs_bytes = 0;
+            buf = This->local_buffer;
+        }else
+            to_write = bytes;
+
+        TRACE("writing main chunk of %u bytes\n", to_write);
+        pa_stream_write(This->stream, buf, to_write, NULL, 0, PA_SEEK_RELATIVE);
+        This->lcl_offs_bytes += to_write;
+        This->lcl_offs_bytes %= This->bufsize_bytes;
+        This->held_bytes -= to_write;
+    }else{
+        if (bytes < This->bufsize_bytes)
+            This->pad = This->bufsize_bytes - bytes;
+        else
+            This->pad = 0;
+
+        if (oldpad == This->pad)
+            return;
+
+        assert(oldpad > This->pad);
+
+        This->clock_written += oldpad - This->pad;
+        TRACE("New pad: %zu (-%zu)\n", This->pad / pa_frame_size(&This->ss), (oldpad - This->pad) / pa_frame_size(&This->ss));
+    }
 
     if (This->event)
         SetEvent(This->event);
@@ -980,6 +1033,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient *iface)
         IUnknown_Release(This->marshal);
         IMMDevice_Release(This->parent);
         HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
+        HeapFree(GetProcessHeap(), 0, This->local_buffer);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -1339,42 +1393,44 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
     if (SUCCEEDED(hr)) {
         UINT32 unalign;
         const pa_buffer_attr *attr = pa_stream_get_buffer_attr(This->stream);
+        This->attr = *attr;
         /* Update frames according to new size */
         dump_attr(attr);
         if (This->dataflow == eRender) {
             if (attr->tlength < This->bufsize_bytes) {
-                const char *latenv = getenv("PULSE_LATENCY_MSEC");
-                if (latenv && *latenv)
-                    ERR_(winediag)("PulseAudio buffer too small (%u < %u) - PULSE_LATENCY_MSEC is %s\n", attr->tlength, This->bufsize_bytes, latenv);
-                else
-                    ERR_(winediag)("PulseAudio buffer too small (%u < %u)\n", attr->tlength, This->bufsize_bytes);
+                TRACE("PulseAudio buffer too small (%u < %u), using tmp buffer\n", attr->tlength, This->bufsize_bytes);
+
+                This->local_buffer = HeapAlloc(GetProcessHeap(), 0, This->bufsize_bytes);
+                if(!This->local_buffer)
+                    hr = E_OUTOFMEMORY;
             }
-            This->bufsize_bytes = attr->tlength;
         } else {
+            UINT32 i, capture_packets;
+
             This->capture_period = period_bytes = attr->fragsize;
             if ((unalign = This->bufsize_bytes % period_bytes))
                 This->bufsize_bytes += period_bytes - unalign;
-        }
-        This->bufsize_frames = This->bufsize_bytes / pa_frame_size(&This->ss);
-    }
-    if (SUCCEEDED(hr)) {
-        UINT32 i, capture_packets = This->capture_period ? This->bufsize_bytes / This->capture_period : 0;
-        This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, This->bufsize_bytes + capture_packets * sizeof(ACPacket));
-        if (!This->tmp_buffer)
-            hr = E_OUTOFMEMORY;
-        else {
-            ACPacket *cur_packet = (ACPacket*)((char*)This->tmp_buffer + This->bufsize_bytes);
-            BYTE *data = This->tmp_buffer;
-            silence_buffer(This->ss.format, This->tmp_buffer, This->bufsize_bytes);
-            list_init(&This->packet_free_head);
-            list_init(&This->packet_filled_head);
-            for (i = 0; i < capture_packets; ++i, ++cur_packet) {
-                list_add_tail(&This->packet_free_head, &cur_packet->entry);
-                cur_packet->data = data;
-                data += This->capture_period;
+            This->bufsize_frames = This->bufsize_bytes / pa_frame_size(&This->ss);
+
+            capture_packets = This->bufsize_bytes / This->capture_period;
+
+            This->local_buffer = HeapAlloc(GetProcessHeap(), 0, This->bufsize_bytes + capture_packets * sizeof(ACPacket));
+            if (!This->local_buffer)
+                hr = E_OUTOFMEMORY;
+            else {
+                ACPacket *cur_packet = (ACPacket*)((char*)This->local_buffer + This->bufsize_bytes);
+                BYTE *data = This->local_buffer;
+                silence_buffer(This->ss.format, This->local_buffer, This->bufsize_bytes);
+                list_init(&This->packet_free_head);
+                list_init(&This->packet_filled_head);
+                for (i = 0; i < capture_packets; ++i, ++cur_packet) {
+                    list_add_tail(&This->packet_free_head, &cur_packet->entry);
+                    cur_packet->data = data;
+                    data += This->capture_period;
+                }
+                assert(!This->capture_period || This->bufsize_bytes == This->capture_period * capture_packets);
+                assert(!capture_packets || data - This->bufsize_bytes == This->local_buffer);
             }
-            assert(!This->capture_period || This->bufsize_bytes == This->capture_period * capture_packets);
-            assert(!capture_packets || data - This->bufsize_bytes == This->tmp_buffer);
         }
     }
     if (SUCCEEDED(hr))
@@ -1384,8 +1440,9 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient *iface,
 
 exit:
     if (FAILED(hr)) {
-        HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
-        This->tmp_buffer = NULL;
+        if(This->local_buffer)
+            HeapFree(GetProcessHeap(), 0, This->local_buffer);
+        This->local_buffer = NULL;
         if (This->stream) {
             pa_stream_disconnect(This->stream);
             pa_stream_unref(This->stream);
@@ -1720,6 +1777,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient *iface)
         if (!success)
             hr = E_FAIL;
     }
+
     if (SUCCEEDED(hr)) {
         This->started = TRUE;
         if (This->dataflow == eRender && This->event)
@@ -1803,8 +1861,10 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient *iface)
                 pa_operation_unref(o);
             }
         }
-        if (success || !This->pad)
+        if (success || !This->pad){
             This->clock_lastpos = This->clock_written = This->pad = 0;
+            This->wri_offs_bytes = This->lcl_offs_bytes = This->held_bytes = 0;
+        }
     } else {
         ACPacket *p;
         This->clock_written += This->pad;
@@ -1960,6 +2020,16 @@ static ULONG WINAPI AudioRenderClient_Release(IAudioRenderClient *iface)
     return AudioClient_Release(&This->IAudioClient_iface);
 }
 
+static void alloc_tmp_buffer(ACImpl *This, UINT32 bytes)
+{
+    if(This->tmp_buffer_bytes >= bytes)
+        return;
+
+    HeapFree(GetProcessHeap(), 0, This->tmp_buffer);
+    This->tmp_buffer = HeapAlloc(GetProcessHeap(), 0, bytes);
+    This->tmp_buffer_bytes = bytes;
+}
+
 static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         UINT32 frames, BYTE **data)
 {
@@ -1994,19 +2064,49 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         return AUDCLNT_E_BUFFER_TOO_LARGE;
     }
 
-    This->locked = frames;
-    req = bytes;
-    ret = pa_stream_begin_write(This->stream, &This->locked_ptr, &req);
-    if (ret < 0 || req < bytes) {
-        FIXME("%p Not using pulse locked data: %i %zu/%u %u/%u\n", This, ret, req/pa_frame_size(&This->ss), frames, pad, This->bufsize_frames);
-        if (ret >= 0)
-            pa_stream_cancel_write(This->stream);
-        *data = This->tmp_buffer;
-        This->locked_ptr = NULL;
-    } else
-        *data = This->locked_ptr;
+    if(This->local_buffer){
+        if(This->wri_offs_bytes + bytes > This->bufsize_bytes){
+            alloc_tmp_buffer(This, bytes);
+            *data = This->tmp_buffer;
+            This->locked = -frames;
+        }else{
+            *data = This->local_buffer + This->wri_offs_bytes;
+            This->locked = frames;
+        }
+    }else{
+        req = bytes;
+        ret = pa_stream_begin_write(This->stream, &This->locked_ptr, &req);
+        if (ret < 0 || req < bytes) {
+            FIXME("%p Not using pulse locked data: %i %zu/%u %u/%u\n", This, ret, req/pa_frame_size(&This->ss), frames, pad, This->bufsize_frames);
+            if (ret >= 0)
+                pa_stream_cancel_write(This->stream);
+            alloc_tmp_buffer(This, bytes);
+            *data = This->tmp_buffer;
+            This->locked_ptr = NULL;
+        } else
+            *data = This->locked_ptr;
+
+        This->locked = frames;
+    }
+
+    silence_buffer(This->ss.format, *data, bytes);
+
     pthread_mutex_unlock(&pulse_lock);
+
     return hr;
+}
+
+static void pulse_wrap_buffer(ACImpl *This, BYTE *buffer, UINT32 written_bytes)
+{
+    UINT32 chunk_bytes = This->bufsize_bytes - This->wri_offs_bytes;
+
+    if(written_bytes <= chunk_bytes){
+        memcpy(This->local_buffer + This->wri_offs_bytes, buffer, written_bytes);
+    }else{
+        memcpy(This->local_buffer + This->wri_offs_bytes, buffer, chunk_bytes);
+        memcpy(This->local_buffer, buffer + chunk_bytes,
+                written_bytes - chunk_bytes);
+    }
 }
 
 static void pulse_free_noop(void *buf)
@@ -2036,18 +2136,68 @@ static HRESULT WINAPI AudioRenderClient_ReleaseBuffer(
         return AUDCLNT_E_INVALID_SIZE;
     }
 
-    This->locked = 0;
-    if (This->locked_ptr) {
-        if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-            silence_buffer(This->ss.format, This->locked_ptr, written_bytes);
-        pa_stream_write(This->stream, This->locked_ptr, written_bytes, NULL, 0, PA_SEEK_RELATIVE);
-    } else {
-        if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
-            silence_buffer(This->ss.format, This->tmp_buffer, written_bytes);
-        pa_stream_write(This->stream, This->tmp_buffer, written_bytes, pulse_free_noop, 0, PA_SEEK_RELATIVE);
+    if(This->local_buffer){
+        BYTE *buffer;
+
+        if(This->locked >= 0)
+            buffer = This->local_buffer + This->wri_offs_bytes;
+        else
+            buffer = This->tmp_buffer;
+
+        if(flags & AUDCLNT_BUFFERFLAGS_SILENT)
+            silence_buffer(This->ss.format, buffer, written_bytes);
+
+        if(This->locked < 0)
+            pulse_wrap_buffer(This, buffer, written_bytes);
+
+        This->wri_offs_bytes += written_bytes;
+        This->wri_offs_bytes %= This->bufsize_bytes;
+
+        This->pad += written_bytes;
+        This->held_bytes += written_bytes;
+
+        if(This->held_bytes == This->pad){
+            int e;
+            UINT32 to_write = min(This->attr.tlength, written_bytes);
+
+            /* nothing in PA, so send data immediately */
+
+            TRACE("pre-writing %u bytes\n", to_write);
+
+            e = pa_stream_write(This->stream, buffer, to_write, NULL, 0, PA_SEEK_RELATIVE);
+            if(e)
+                ERR("pa_stream_write failed: 0x%x\n", e);
+
+            This->lcl_offs_bytes += to_write;
+            This->lcl_offs_bytes %= This->bufsize_bytes;
+            This->held_bytes -= to_write;
+        }
+
+    }else{
+        if (This->locked_ptr) {
+            if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+                silence_buffer(This->ss.format, This->locked_ptr, written_bytes);
+            pa_stream_write(This->stream, This->locked_ptr, written_bytes, NULL, 0, PA_SEEK_RELATIVE);
+        } else {
+            if (flags & AUDCLNT_BUFFERFLAGS_SILENT)
+                silence_buffer(This->ss.format, This->tmp_buffer, written_bytes);
+            pa_stream_write(This->stream, This->tmp_buffer, written_bytes, pulse_free_noop, 0, PA_SEEK_RELATIVE);
+        }
+        This->pad += written_bytes;
     }
 
-    This->pad += written_bytes;
+    if (!pa_stream_is_corked(This->stream)) {
+        int success;
+        pa_operation *o;
+        o = pa_stream_trigger(This->stream, pulse_op_cb, &success);
+        if (o) {
+            while(pa_operation_get_state(o) == PA_OPERATION_RUNNING)
+                pthread_cond_wait(&pulse_cond, &pulse_lock);
+            pa_operation_unref(o);
+        }
+    }
+
+    This->locked = 0;
     This->locked_ptr = NULL;
     TRACE("Released %u, pad %zu\n", written_frames, This->pad / pa_frame_size(&This->ss));
     assert(This->pad <= This->bufsize_bytes);
