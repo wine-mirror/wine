@@ -2638,19 +2638,14 @@ static void test_feature_states( UINT line, MSIHANDLE package, const char *featu
     {
         ok( state == expected_state, "%u: expected state %d got %d\n",
             line, expected_state, state );
-        if (todo) todo_wine
-            ok( action == expected_action, "%u: expected action %d got %d\n",
-                line, expected_action, action );
-        else
+        todo_wine_if (todo)
             ok( action == expected_action, "%u: expected action %d got %d\n",
                 line, expected_action, action );
     }
     else
     {
         ok( state == 0xdeadbee, "%u: expected state 0xdeadbee got %d\n", line, state );
-        if (todo) todo_wine
-            ok( action == 0xdeadbee, "%u: expected action 0xdeadbee got %d\n", line, action );
-        else
+        todo_wine_if (todo)
             ok( action == 0xdeadbee, "%u: expected action 0xdeadbee got %d\n", line, action );
 
     }
@@ -2669,10 +2664,7 @@ static void test_component_states( UINT line, MSIHANDLE package, const char *com
     {
         ok( state == expected_state, "%u: expected state %d got %d\n",
             line, expected_state, state );
-        if (todo) todo_wine
-            ok( action == expected_action, "%u: expected action %d got %d\n",
-                line, expected_action, action );
-        else
+        todo_wine_if (todo)
             ok( action == expected_action, "%u: expected action %d got %d\n",
                 line, expected_action, action );
     }
@@ -2680,10 +2672,7 @@ static void test_component_states( UINT line, MSIHANDLE package, const char *com
     {
         ok( state == 0xdeadbee, "%u: expected state 0xdeadbee got %d\n",
             line, state );
-        if (todo) todo_wine
-            ok( action == 0xdeadbee, "%u: expected action 0xdeadbee got %d\n",
-                line, action );
-        else
+        todo_wine_if (todo)
             ok( action == 0xdeadbee, "%u: expected action 0xdeadbee got %d\n",
                 line, action );
     }
