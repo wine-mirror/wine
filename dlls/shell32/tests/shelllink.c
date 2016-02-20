@@ -351,12 +351,8 @@ static void test_get_set(void)
  */
 
 #define lok                   ok_(__FILE__, line)
-#define lok_todo_4(todo_flag,a,b,c,d) \
-    if ((todo & todo_flag) == 0) lok((a), (b), (c), (d)); \
-    else todo_wine lok((a), (b), (c), (d));
-#define lok_todo_2(todo_flag,a,b) \
-    if ((todo & todo_flag) == 0) lok((a), (b)); \
-    else todo_wine lok((a), (b));
+#define lok_todo_4(todo_flag,a,b,c,d) todo_wine_if ((todo & todo_flag) != 0) lok((a), (b), (c), (d));
+#define lok_todo_2(todo_flag,a,b) todo_wine_if ((todo & todo_flag) != 0) lok((a), (b));
 #define check_lnk(a,b,c)        check_lnk_(__LINE__, (a), (b), (c))
 
 void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
@@ -433,16 +429,8 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc, int save_fails)
         lok(str == NULL, "got %p\n", str);
 
         r = IPersistFile_Save(pf, path, TRUE);
-        if (save_fails)
-        {
-            todo_wine {
+        todo_wine_if (save_fails)
             lok(r == S_OK, "save failed (0x%08x)\n", r);
-            }
-        }
-        else
-        {
-            lok(r == S_OK, "save failed (0x%08x)\n", r);
-        }
 
         /* test GetCurFile after ::Save */
         r = IPersistFile_GetCurFile(pf, &str);
