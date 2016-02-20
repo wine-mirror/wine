@@ -152,14 +152,7 @@ static void test_invalid_files(void)
         if (invalid_files[i].error)  /* should fail */
         {
             ok( hinf == INVALID_HANDLE_VALUE, "file %u: Open succeeded\n", i );
-            if (invalid_files[i].todo) todo_wine
-            {
-                ok( err == invalid_files[i].error, "file %u: Bad error %u/%u\n",
-                    i, err, invalid_files[i].error );
-                ok( err_line == invalid_files[i].err_line, "file %u: Bad error line %d/%d\n",
-                    i, err_line, invalid_files[i].err_line );
-            }
-            else
+            todo_wine_if (invalid_files[i].todo)
             {
                 ok( err == invalid_files[i].error, "file %u: Bad error %u/%u\n",
                     i, err, invalid_files[i].error );
