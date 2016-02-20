@@ -125,8 +125,10 @@ static void testCreateCertChainEngine(void)
     CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, selfSignedCert,
      sizeof(selfSignedCert), CERT_STORE_ADD_ALWAYS, NULL);
     ret = pCertCreateCertificateChainEngine(pConfig, &engine);
-    ok(!ret && GetLastError() == CRYPT_E_NOT_FOUND,
-     "Expected CRYPT_E_NOT_FOUND, got %08x\n", GetLastError());
+    /* ERROR_FILE_NOT_FOUND used in Windows 10 */
+    ok(!ret && ((GetLastError() == CRYPT_E_NOT_FOUND) ||
+                (GetLastError() == ERROR_FILE_NOT_FOUND)),
+        "Expected CRYPT_E_NOT_FOUND or ERROR_FILE_NOT_FOUND, got %08x\n", GetLastError());
 
     CertCloseStore(store, 0);
 }
