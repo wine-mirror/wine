@@ -4792,11 +4792,14 @@ static BOOL colorglyphenum_build_color_run(struct dwrite_colorglyphenum *glyphen
             if (!got_palette_index) {
                 colorrun->paletteIndex = glyphenum->glyphs[g].palette_index;
                 /* use foreground color or request one from the font */
-                if (colorrun->paletteIndex == 0xffff)
-                    memset(&colorrun->runColor, 0, sizeof(colorrun->runColor));
-                else
-                    IDWriteFontFace2_GetPaletteEntries(glyphenum->fontface, glyphenum->palette, colorrun->paletteIndex,
+                memset(&colorrun->runColor, 0, sizeof(colorrun->runColor));
+                if (colorrun->paletteIndex != 0xffff) {
+                    HRESULT hr = IDWriteFontFace2_GetPaletteEntries(glyphenum->fontface, glyphenum->palette, colorrun->paletteIndex,
                         1, &colorrun->runColor);
+                    if (FAILED(hr))
+                        WARN("failed to get palette entry, fontface %p, palette %u, index %u, 0x%08x\n", glyphenum->fontface,
+                            glyphenum->palette, colorrun->paletteIndex, hr);
+                }
                 /* found a glyph position new color run starts from, origin is "original origin + distance to this glyph" */
                 colorrun->baselineOriginX = glyphenum->origin_x + get_glyph_origin(glyphenum, g);
                 colorrun->baselineOriginY = glyphenum->origin_y;
