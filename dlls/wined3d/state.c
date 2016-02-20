@@ -3627,6 +3627,11 @@ static void sampler(struct wined3d_context *context, const struct wined3d_state 
     else
     {
         context_bind_texture(context, GL_NONE, 0);
+        if (gl_info->supported[ARB_SAMPLER_OBJECTS])
+        {
+            GL_EXTCALL(glBindSampler(mapped_stage, 0));
+            checkGLcall("glBindSampler");
+        }
     }
 }
 
