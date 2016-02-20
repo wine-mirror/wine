@@ -219,6 +219,31 @@ char *xstrdup(const char *str)
 	return strcpy(s, str);
 }
 
+int compare_striA( const char *str1, const char *str2 )
+{
+    for (;;)
+    {
+        /* only the A-Z range is case-insensitive */
+        char ch1 = (*str1 >= 'a' && *str1 <= 'z') ? *str1 + 'A' - 'a' : *str1;
+        char ch2 = (*str2 >= 'a' && *str2 <= 'z') ? *str2 + 'A' - 'a' : *str2;
+        if (!ch1 || ch1 != ch2) return ch1 - ch2;
+        str1++;
+        str2++;
+    }
+}
+
+int compare_striW( const WCHAR *str1, const WCHAR *str2 )
+{
+    for (;;)
+    {
+        /* only the A-Z range is case-insensitive */
+        WCHAR ch1 = (*str1 >= 'a' && *str1 <= 'z') ? *str1 + 'A' - 'a' : *str1;
+        WCHAR ch2 = (*str2 >= 'a' && *str2 <= 'z') ? *str2 + 'A' - 'a' : *str2;
+        if (!ch1 || ch1 != ch2) return ch1 - ch2;
+        str1++;
+        str2++;
+    }
+}
 
 /*
  *****************************************************************************
@@ -241,12 +266,12 @@ int compare_name_id(const name_id_t *n1, const name_id_t *n2)
 		if(n1->name.s_name->type == str_char
 		&& n2->name.s_name->type == str_char)
 		{
-			return strcasecmp(n1->name.s_name->str.cstr, n2->name.s_name->str.cstr);
+			return compare_striA(n1->name.s_name->str.cstr, n2->name.s_name->str.cstr);
 		}
 		else if(n1->name.s_name->type == str_unicode
 		&& n2->name.s_name->type == str_unicode)
 		{
-			return strcmpiW(n1->name.s_name->str.wstr, n2->name.s_name->str.wstr);
+			return compare_striW(n1->name.s_name->str.wstr, n2->name.s_name->str.wstr);
 		}
 		else
 		{

@@ -263,11 +263,13 @@ static void string_to_upper(string_t *str)
 
     if(str->type == str_char)
     {
-        for (i = 0; i < str->size; i++) str->str.cstr[i] = toupper((unsigned char)str->str.cstr[i]);
+        for (i = 0; i < str->size; i++)
+            if (str->str.cstr[i] >= 'a' && str->str.cstr[i] <= 'z') str->str.cstr[i] -= 32;
     }
     else if(str->type == str_unicode)
     {
-        for (i = 0; i < str->size; i++) str->str.wstr[i] = toupperW(str->str.wstr[i]);
+        for (i = 0; i < str->size; i++)
+            if (str->str.wstr[i] >= 'a' && str->str.wstr[i] <= 'z') str->str.wstr[i] -= 32;
     }
     else
     {

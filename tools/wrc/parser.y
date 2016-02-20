@@ -2072,37 +2072,23 @@ static int get_class_idW(const WCHAR *cc)
         static const WCHAR szSTATIC[]    = {'S','T','A','T','I','C',0};
         static const WCHAR szSCROLLBAR[] = {'S','C','R','O','L','L','B','A','R',0};
 
-        if(!strcmpiW(szBUTTON, cc))
-                return CT_BUTTON;
-        if(!strcmpiW(szCOMBOBOX, cc))
-                return CT_COMBOBOX;
-        if(!strcmpiW(szLISTBOX, cc))
-                return CT_LISTBOX;
-        if(!strcmpiW(szEDIT, cc))
-                return CT_EDIT;
-        if(!strcmpiW(szSTATIC, cc))
-                return CT_STATIC;
-        if(!strcmpiW(szSCROLLBAR, cc))
-                return CT_SCROLLBAR;
-
+        if(!compare_striW(szBUTTON, cc)) return CT_BUTTON;
+        if(!compare_striW(szCOMBOBOX, cc)) return CT_COMBOBOX;
+        if(!compare_striW(szLISTBOX, cc)) return CT_LISTBOX;
+        if(!compare_striW(szEDIT, cc)) return CT_EDIT;
+        if(!compare_striW(szSTATIC, cc)) return CT_STATIC;
+        if(!compare_striW(szSCROLLBAR, cc)) return CT_SCROLLBAR;
         return -1;
 }
 
 static int get_class_idA(const char *cc)
 {
-        if(!strcasecmp("BUTTON", cc))
-                return CT_BUTTON;
-        if(!strcasecmp("COMBOBOX", cc))
-                return CT_COMBOBOX;
-        if(!strcasecmp("LISTBOX", cc))
-                return CT_LISTBOX;
-        if(!strcasecmp("EDIT", cc))
-                return CT_EDIT;
-        if(!strcasecmp("STATIC", cc))
-                return CT_STATIC;
-        if(!strcasecmp("SCROLLBAR", cc))
-                return CT_SCROLLBAR;
-
+        if(!compare_striA("BUTTON", cc)) return CT_BUTTON;
+        if(!compare_striA("COMBOBOX", cc)) return CT_COMBOBOX;
+        if(!compare_striA("LISTBOX", cc)) return CT_LISTBOX;
+        if(!compare_striA("EDIT", cc)) return CT_EDIT;
+        if(!compare_striA("STATIC", cc)) return CT_STATIC;
+        if(!compare_striA("SCROLLBAR", cc)) return CT_SCROLLBAR;
         return -1;
 }
 

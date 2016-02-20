@@ -33,6 +33,8 @@ char *xstrdup(const char *str);
 #define __attribute__(X)
 #endif
 
+int compare_striA( const char *str1, const char *str2 );
+int compare_striW( const WCHAR *str1, const WCHAR *str2 );
 char *strmake(const char* fmt, ...) __attribute__((__format__ (__printf__, 1, 2 )));
 int parser_error(const char *s, ...) __attribute__((format (printf, 1, 2)));
 int parser_warning(const char *s, ...) __attribute__((format (printf, 1, 2)));
