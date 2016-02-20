@@ -297,8 +297,11 @@ static int parse_accel_string( const string_t *key, int flags )
 	}
 	else if(key->str.cstr[0] == '^')
 	{
-            keycode = toupper((unsigned char)key->str.cstr[1]) - '@';
-            if(keycode >= ' ')
+            if (key->str.cstr[1] >= 'a' && key->str.cstr[1] <= 'z')
+                keycode = key->str.cstr[1] - 'a' + 1;
+            else if (key->str.cstr[1] >= 'A' && key->str.cstr[1] <= 'Z')
+                keycode = key->str.cstr[1] - 'A' + 1;
+            else
             {
                 print_location( &key->loc );
                 error("Control-code out of range\n");
@@ -324,8 +327,11 @@ static int parse_accel_string( const string_t *key, int flags )
 	}
 	else if(key->str.wstr[0] == '^')
 	{
-            keycode = toupperW(key->str.wstr[1]) - '@';
-            if(keycode >= ' ')
+            if (key->str.wstr[1] >= 'a' && key->str.wstr[1] <= 'z')
+                keycode = key->str.wstr[1] - 'a' + 1;
+            else if (key->str.wstr[1] >= 'A' && key->str.wstr[1] <= 'Z')
+                keycode = key->str.wstr[1] - 'A' + 1;
+            else
             {
                 print_location( &key->loc );
                 error("Control-code out of range\n");
