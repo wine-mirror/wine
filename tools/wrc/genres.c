@@ -657,11 +657,11 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 		put_word(res, dlg->width);
 		put_word(res, dlg->height);
 		if(dlg->menu)
-			put_name_id(res, dlg->menu, TRUE, dlg->lvc.language);
+			put_name_id(res, dlg->menu, FALSE, dlg->lvc.language);
 		else
 			put_word(res, 0);
 		if(dlg->dlgclass)
-			put_name_id(res, dlg->dlgclass, TRUE, dlg->lvc.language);
+			put_name_id(res, dlg->dlgclass, FALSE, dlg->lvc.language);
 		else
 			put_word(res, 0);
 		if(dlg->title)
@@ -709,7 +709,7 @@ static res_t *dialog2res(name_id_t *name, dialog_t *dlg)
 			else
 				put_word(res, ctrl->id);
 			if(ctrl->ctlclass)
-				put_name_id(res, ctrl->ctlclass, TRUE, dlg->lvc.language);
+				put_name_id(res, ctrl->ctlclass, FALSE, dlg->lvc.language);
 			else
 				internal_error(__FILE__, __LINE__, "Control has no control-class\n");
 			if(ctrl->title)
