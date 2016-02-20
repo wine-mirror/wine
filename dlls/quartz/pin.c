@@ -29,8 +29,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
-static const IPinVtbl PullPin_Vtbl;
-
 #define ALIGNDOWN(value,boundary) ((value)/(boundary)*(boundary))
 #define ALIGNUP(value,boundary) (ALIGNDOWN((value)+(boundary)-1, (boundary)))
 
