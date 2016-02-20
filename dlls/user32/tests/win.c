@@ -4179,10 +4179,8 @@ static void check_window_style(DWORD dwStyleIn, DWORD dwExStyleIn, DWORD dwStyle
         dwExStyleOut = dwExStyleIn & ~WS_EX_WINDOWEDGE;
     ok(dwActualStyle == dwStyleOut, "expected style %#x, got %#x\n", dwStyleOut, dwActualStyle);
     /* FIXME: Remove the condition below once Wine is fixed */
-    if (dwActualExStyle != dwExStyleOut)
-    todo_wine ok(dwActualExStyle == dwExStyleOut, "expected ex_style %#x, got %#x\n", dwExStyleOut, dwActualExStyle);
-    else
-    ok(dwActualExStyle == dwExStyleOut, "expected ex_style %#x, got %#x\n", dwExStyleOut, dwActualExStyle);
+    todo_wine_if (dwActualExStyle != dwExStyleOut)
+        ok(dwActualExStyle == dwExStyleOut, "expected ex_style %#x, got %#x\n", dwExStyleOut, dwActualExStyle);
 
     DestroyWindow(hwnd);
     if (hwndParent) DestroyWindow(hwndParent);
@@ -4309,10 +4307,8 @@ static void check_dialog_style(DWORD style_in, DWORD ex_style_in, DWORD style_ou
     else
         ex_style_out = ex_style_in & ~WS_EX_WINDOWEDGE;
     /* FIXME: Remove the condition below once Wine is fixed */
-    if (ex_style != ex_style_out)
-    todo_wine ok(ex_style == ex_style_out, "expected ex_style %#x, got %#x\n", ex_style_out, ex_style);
-    else
-    ok(ex_style == ex_style_out, "expected ex_style %#x, got %#x\n", ex_style_out, ex_style);
+    todo_wine_if (ex_style != ex_style_out)
+        ok(ex_style == ex_style_out, "expected ex_style %#x, got %#x\n", ex_style_out, ex_style);
 
     DestroyWindow(hwnd);
     DestroyWindow(parent);
@@ -5001,8 +4997,8 @@ static void zero_parentdc_test(struct parentdc_test *t)
       t.w.r.f, got.w.r.f)
 
 #define parentdc_todo_field_ok(t, w, r, f, got) \
-  if (t.w##_todo.r.f) todo_wine { parentdc_field_ok(t, w, r, f, got); } \
-  else parentdc_field_ok(t, w, r, f, got)
+  todo_wine_if (t.w##_todo.r.f) \
+      parentdc_field_ok(t, w, r, f, got);
 
 #define parentdc_rect_ok(t, w, r, got) \
   parentdc_todo_field_ok(t, w, r, left, got); \
@@ -6423,9 +6419,7 @@ static void run_NCRedrawLoop(UINT flags)
         DispatchMessageA(&msg);
         MsgWaitForMultipleObjects(0, NULL, FALSE, 100, QS_ALLINPUT);
     }
-    if (flags == (RDW_INVALIDATE | RDW_FRAME))
-        todo_wine ok(loopcount < 100, "Detected infinite WM_PAINT loop (%x).\n", flags);
-    else
+    todo_wine_if (flags == (RDW_INVALIDATE | RDW_FRAME))
         ok(loopcount < 100, "Detected infinite WM_PAINT loop (%x).\n", flags);
     DestroyWindow(hwnd);
 }

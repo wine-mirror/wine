@@ -13985,12 +13985,7 @@ static void test_WaitForInputIdle( char *argv0 )
                         broken(ret == wait_idle_expect[i].broken),
                         "%u: WaitForInputIdle error %08x expected %08x\n",
                         i, ret, wait_idle_expect[i].exp );
-                else if (wait_idle_expect[i].todo)
-                    todo_wine
-                    ok( ret == wait_idle_expect[i].exp || broken(ret == wait_idle_expect[i].broken),
-                        "%u: WaitForInputIdle error %08x expected %08x\n",
-                        i, ret, wait_idle_expect[i].exp );
-                else
+                else todo_wine_if (wait_idle_expect[i].todo)
                     ok( ret == wait_idle_expect[i].exp || broken(ret == wait_idle_expect[i].broken),
                         "%u: WaitForInputIdle error %08x expected %08x\n",
                         i, ret, wait_idle_expect[i].exp );
