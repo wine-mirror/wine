@@ -3948,6 +3948,35 @@ const char *debug_d3dpool(enum wined3d_pool pool)
     }
 }
 
+const char *debug_fboattachment(GLenum attachment)
+{
+    switch(attachment)
+    {
+#define WINED3D_TO_STR(x) case x: return #x
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT0);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT1);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT2);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT3);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT4);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT5);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT6);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT7);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT8);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT9);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT10);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT11);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT12);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT13);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT14);
+        WINED3D_TO_STR(GL_COLOR_ATTACHMENT15);
+        WINED3D_TO_STR(GL_DEPTH_ATTACHMENT);
+        WINED3D_TO_STR(GL_STENCIL_ATTACHMENT);
+#undef WINED3D_TO_STR
+        default:
+            return wine_dbg_sprintf("Unknown FBO attachment %#x", attachment);
+    }
+}
+
 const char *debug_fbostatus(GLenum status) {
     switch(status) {
 #define FBOSTATUS_TO_STR(u) case u: return #u

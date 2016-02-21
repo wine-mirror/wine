@@ -243,6 +243,95 @@ static void context_attach_surface_fbo(struct wined3d_context *context,
     }
 }
 
+static void context_dump_fbo_attachment(const struct wined3d_gl_info *gl_info, GLenum target,
+        GLenum attachment)
+{
+    GLint type, name, samples, width, height, old_texture, level, face, fmt, tex_target;
+
+    gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv(target, attachment,
+            GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME, &name);
+    gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv(target, attachment,
+            GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &type);
+
+    if (type == GL_RENDERBUFFER)
+    {
+        gl_info->fbo_ops.glBindRenderbuffer(GL_RENDERBUFFER, name);
+        gl_info->fbo_ops.glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &width);
+        gl_info->fbo_ops.glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &height);
+        if (gl_info->limits.samples > 1)
+            gl_info->fbo_ops.glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_SAMPLES, &samples);
+        else
+            samples = 1;
+        gl_info->fbo_ops.glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_INTERNAL_FORMAT, &fmt);
+        FIXME("    %s: renderbuffer %d, %dx%d, %d samples, format %#x.\n",
+                debug_fboattachment(attachment), name, width, height, samples, fmt);
+    }
+    else if (type == GL_TEXTURE)
+    {
+        const char *tex_type_str;
+
+        gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv(target, attachment,
+                GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL, &level);
+        gl_info->fbo_ops.glGetFramebufferAttachmentParameteriv(target, attachment,
+                GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_CUBE_MAP_FACE, &face);
+
+        if (face)
+        {
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_CUBE_MAP, &old_texture);
+
+            glBindTexture(GL_TEXTURE_CUBE_MAP, name);
+            glGetTexLevelParameteriv(face, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
+            glGetTexLevelParameteriv(face, level, GL_TEXTURE_WIDTH, &width);
+            glGetTexLevelParameteriv(face, level, GL_TEXTURE_HEIGHT, &height);
+
+            tex_target = GL_TEXTURE_CUBE_MAP;
+            tex_type_str = "cube";
+        }
+        else
+        {
+            gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_2D, &old_texture);
+            while (gl_info->gl_ops.gl.p_glGetError());
+
+            glBindTexture(GL_TEXTURE_2D, name);
+            if (!gl_info->gl_ops.gl.p_glGetError())
+            {
+                tex_target = GL_TEXTURE_2D;
+                tex_type_str = "2d";
+            }
+            else
+            {
+                glBindTexture(GL_TEXTURE_2D, old_texture);
+                gl_info->gl_ops.gl.p_glGetIntegerv(GL_TEXTURE_BINDING_RECTANGLE_ARB, &old_texture);
+
+                glBindTexture(GL_TEXTURE_RECTANGLE_ARB, name);
+                if (gl_info->gl_ops.gl.p_glGetError())
+                {
+                    glBindTexture(GL_TEXTURE_RECTANGLE_ARB, old_texture);
+                    FIXME("Cannot find type of texture %d.\n", name);
+                    return;
+                }
+                tex_target = GL_TEXTURE_RECTANGLE_ARB;
+                tex_type_str = "rectangle";
+            }
+
+            glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_INTERNAL_FORMAT, &fmt);
+            glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_WIDTH, &width);
+            glGetTexLevelParameteriv(tex_target, level, GL_TEXTURE_HEIGHT, &height);
+        }
+
+        FIXME("    %s: %s texture %d, %dx%d, format %#x.\n", debug_fboattachment(attachment),
+                tex_type_str, name, width, height, fmt);
+
+        glBindTexture(tex_target, old_texture);
+    }
+    else if (type == GL_NONE)
+    {
+        FIXME("\t%s: NONE.\n", debug_fboattachment(attachment));
+    }
+    else
+        ERR("\t%s: Unknown attachment %#x.\n", debug_fboattachment(attachment), type);
+}
+
 /* Context activation is done by the caller. */
 void context_check_fbo_status(const struct wined3d_context *context, GLenum target)
 {
@@ -258,7 +347,6 @@ void context_check_fbo_status(const struct wined3d_context *context, GLenum targ
     }
     else
     {
-        const struct wined3d_surface *attachment;
         unsigned int i;
 
         FIXME("FBO status %s (%#x)\n", debug_fbostatus(status), status);
@@ -269,29 +357,12 @@ void context_check_fbo_status(const struct wined3d_context *context, GLenum targ
             return;
         }
 
-        FIXME("\tColor Location %s (%#x).\n", wined3d_debug_location(context->current_fbo->color_location),
-                context->current_fbo->color_location);
-        FIXME("\tDepth Stencil Location %s (%#x).\n", wined3d_debug_location(context->current_fbo->ds_location),
-                context->current_fbo->ds_location);
+        context_dump_fbo_attachment(gl_info, target, GL_DEPTH_ATTACHMENT);
+        context_dump_fbo_attachment(gl_info, target, GL_STENCIL_ATTACHMENT);
 
-        /* Dump the FBO attachments */
         for (i = 0; i < gl_info->limits.buffers; ++i)
-        {
-            attachment = context->current_fbo->render_targets[i];
-            if (attachment)
-            {
-                FIXME("\tColor attachment %d: (%p) %s %ux%u %u samples.\n",
-                        i, attachment, debug_d3dformat(attachment->resource.format->id),
-                        attachment->pow2Width, attachment->pow2Height, attachment->resource.multisample_type);
-            }
-        }
-        attachment = context->current_fbo->depth_stencil;
-        if (attachment)
-        {
-            FIXME("\tDepth attachment: (%p) %s %ux%u %u samples.\n",
-                    attachment, debug_d3dformat(attachment->resource.format->id),
-                    attachment->pow2Width, attachment->pow2Height, attachment->resource.multisample_type);
-        }
+            context_dump_fbo_attachment(gl_info, target, GL_COLOR_ATTACHMENT0 + i);
+        checkGLcall("Dump FBO attachments");
     }
 }
 
