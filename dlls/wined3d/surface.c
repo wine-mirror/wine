@@ -52,8 +52,9 @@ static void surface_cleanup(struct wined3d_surface *surface)
         struct wined3d_renderbuffer_entry *entry, *entry2;
         const struct wined3d_gl_info *gl_info;
         struct wined3d_context *context;
+        struct wined3d_device *device = surface->resource.device;
 
-        context = context_acquire(surface->resource.device, NULL);
+        context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
         if (surface->pbo)
@@ -65,18 +66,21 @@ static void surface_cleanup(struct wined3d_surface *surface)
         if (surface->rb_multisample)
         {
             TRACE("Deleting multisample renderbuffer %u.\n", surface->rb_multisample);
+            context_gl_resource_released(device, surface->rb_multisample, TRUE);
             gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_multisample);
         }
 
         if (surface->rb_resolved)
         {
             TRACE("Deleting resolved renderbuffer %u.\n", surface->rb_resolved);
+            context_gl_resource_released(device, surface->rb_resolved, TRUE);
             gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_resolved);
         }
 
         LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
         {
             TRACE("Deleting renderbuffer %u.\n", entry->id);
+            context_gl_resource_released(device, entry->id, TRUE);
             gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
             HeapFree(GetProcessHeap(), 0, entry);
         }
@@ -1159,6 +1163,7 @@ static void surface_unload(struct wined3d_resource *resource)
      */
     LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &surface->renderbuffers, struct wined3d_renderbuffer_entry, entry)
     {
+        context_gl_resource_released(device, entry->id, TRUE);
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &entry->id);
         list_remove(&entry->entry);
         HeapFree(GetProcessHeap(), 0, entry);
@@ -1168,11 +1173,13 @@ static void surface_unload(struct wined3d_resource *resource)
 
     if (surface->rb_multisample)
     {
+        context_gl_resource_released(device, surface->rb_multisample, TRUE);
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_multisample);
         surface->rb_multisample = 0;
     }
     if (surface->rb_resolved)
     {
+        context_gl_resource_released(device, surface->rb_resolved, TRUE);
         gl_info->fbo_ops.glDeleteRenderbuffers(1, &surface->rb_resolved);
         surface->rb_resolved = 0;
     }

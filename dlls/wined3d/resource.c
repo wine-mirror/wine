@@ -254,9 +254,6 @@ void resource_unload(struct wined3d_resource *resource)
 {
     if (resource->map_count)
         ERR("Resource %p is being unloaded while mapped.\n", resource);
-
-    context_resource_unloaded(resource->device,
-            resource, resource->type);
 }
 
 DWORD CDECL wined3d_resource_set_priority(struct wined3d_resource *resource, DWORD priority)

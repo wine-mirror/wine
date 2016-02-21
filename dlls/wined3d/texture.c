@@ -75,8 +75,10 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
 }
 
 /* A GL context is provided by the caller */
-static void gltexture_delete(const struct wined3d_gl_info *gl_info, struct gl_texture *tex)
+static void gltexture_delete(struct wined3d_device *device, const struct wined3d_gl_info *gl_info,
+        struct gl_texture *tex)
 {
+    context_gl_resource_released(device, tex->name, FALSE);
     gl_info->gl_ops.gl.p_glDeleteTextures(1, &tex->name);
     tex->name = 0;
 }
@@ -92,10 +94,10 @@ static void wined3d_texture_unload_gl_texture(struct wined3d_texture *texture)
     }
 
     if (texture->texture_rgb.name)
-        gltexture_delete(context->gl_info, &texture->texture_rgb);
+        gltexture_delete(device, context->gl_info, &texture->texture_rgb);
 
     if (texture->texture_srgb.name)
-        gltexture_delete(context->gl_info, &texture->texture_srgb);
+        gltexture_delete(device, context->gl_info, &texture->texture_srgb);
 
     if (context) context_release(context);
 

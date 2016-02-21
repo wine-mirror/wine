@@ -812,8 +812,8 @@ void context_free_timestamp_query(struct wined3d_timestamp_query *query)
 
 typedef void (context_fbo_entry_func_t)(struct wined3d_context *context, struct fbo_entry *entry);
 
-static void context_enum_surface_fbo_entries(const struct wined3d_device *device,
-        const struct wined3d_surface *surface, context_fbo_entry_func_t *callback)
+static void context_enum_fbo_entries(const struct wined3d_device *device,
+        GLuint name, BOOL rb_namespace, context_fbo_entry_func_t *callback)
 {
     UINT i;
 
@@ -823,21 +823,14 @@ static void context_enum_surface_fbo_entries(const struct wined3d_device *device
         const struct wined3d_gl_info *gl_info = context->gl_info;
         struct fbo_entry *entry, *entry2;
 
-        if (context->current_rt == surface) context->current_rt = NULL;
-
         LIST_FOR_EACH_ENTRY_SAFE(entry, entry2, &context->fbo_list, struct fbo_entry, entry)
         {
             UINT j;
 
-            if (entry->d3d_depth_stencil == surface)
+            for (j = 0; j < gl_info->limits.buffers + 1; ++j)
             {
-                callback(context, entry);
-                continue;
-            }
-
-            for (j = 0; j < gl_info->limits.buffers; ++j)
-            {
-                if (entry->d3d_render_targets[j] == surface)
+                if (entry->key.objects[j].object == name
+                        && !(entry->key.rb_namespace & (1 << j)) == !rb_namespace)
                 {
                     callback(context, entry);
                     break;
@@ -856,13 +849,23 @@ static void context_queue_fbo_entry_destruction(struct wined3d_context *context,
 void context_resource_released(const struct wined3d_device *device,
         struct wined3d_resource *resource, enum wined3d_resource_type type)
 {
-    if (!device->d3d_initialized) return;
+    UINT i;
+    struct wined3d_surface *surface;
+
+    if (!device->d3d_initialized)
+        return;
 
     switch (type)
     {
         case WINED3D_RTYPE_SURFACE:
-            context_enum_surface_fbo_entries(device, surface_from_resource(resource),
-                    context_queue_fbo_entry_destruction);
+            surface = surface_from_resource(resource);
+
+            for (i = 0; i < device->context_count; ++i)
+            {
+                struct wined3d_context *context = device->contexts[i];
+                if (context->current_rt == surface)
+                    context->current_rt = NULL;
+            }
             break;
 
         default:
@@ -870,24 +873,10 @@ void context_resource_released(const struct wined3d_device *device,
     }
 }
 
-static void context_detach_fbo_entry(struct wined3d_context *context, struct fbo_entry *entry)
+void context_gl_resource_released(struct wined3d_device *device,
+        GLuint name, BOOL rb_namespace)
 {
-    entry->attached = FALSE;
-}
-
-void context_resource_unloaded(const struct wined3d_device *device,
-        struct wined3d_resource *resource, enum wined3d_resource_type type)
-{
-    switch (type)
-    {
-        case WINED3D_RTYPE_SURFACE:
-            context_enum_surface_fbo_entries(device, surface_from_resource(resource),
-                    context_detach_fbo_entry);
-            break;
-
-        default:
-            break;
-    }
+    context_enum_fbo_entries(device, name, rb_namespace, context_queue_fbo_entry_destruction);
 }
 
 void context_surface_update(struct wined3d_context *context, const struct wined3d_surface *surface)
