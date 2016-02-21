@@ -103,15 +103,15 @@ static void context_destroy_fbo(struct wined3d_context *context, GLuint fbo)
 }
 
 static void context_attach_depth_stencil_rb(const struct wined3d_gl_info *gl_info,
-        GLenum fbo_target, DWORD format_flags, GLuint rb)
+        GLenum fbo_target, DWORD flags, GLuint rb)
 {
-    if (format_flags & WINED3DFMT_FLAG_DEPTH)
+    if (flags & WINED3D_FBO_ENTRY_FLAG_DEPTH)
     {
         gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, rb);
         checkGLcall("glFramebufferRenderbuffer()");
     }
 
-    if (format_flags & WINED3DFMT_FLAG_STENCIL)
+    if (flags & WINED3D_FBO_ENTRY_FLAG_STENCIL)
     {
         gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rb);
         checkGLcall("glFramebufferRenderbuffer()");
@@ -121,7 +121,7 @@ static void context_attach_depth_stencil_rb(const struct wined3d_gl_info *gl_inf
 /* Context activation is done by the caller. */
 static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, const struct wined3d_fbo_resource *resource, BOOL rb_namespace,
-        DWORD format_flags)
+        DWORD flags)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -132,18 +132,18 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         if (rb_namespace)
         {
             context_attach_depth_stencil_rb(gl_info, fbo_target,
-                    format_flags, resource->object);
+                    flags, resource->object);
         }
         else
         {
-            if (format_flags & WINED3DFMT_FLAG_DEPTH)
+            if (flags & WINED3D_FBO_ENTRY_FLAG_DEPTH)
             {
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_DEPTH_ATTACHMENT,
                         resource->target, resource->object, resource->level);
                 checkGLcall("glFramebufferTexture2D()");
             }
 
-            if (format_flags & WINED3DFMT_FLAG_STENCIL)
+            if (flags & WINED3D_FBO_ENTRY_FLAG_STENCIL)
             {
                 gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_STENCIL_ATTACHMENT,
                         resource->target, resource->object, resource->level);
@@ -151,13 +151,13 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
             }
         }
 
-        if (!(format_flags & WINED3DFMT_FLAG_DEPTH))
+        if (!(flags & WINED3D_FBO_ENTRY_FLAG_DEPTH))
         {
             gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
             checkGLcall("glFramebufferTexture2D()");
         }
 
-        if (!(format_flags & WINED3DFMT_FLAG_STENCIL))
+        if (!(flags & WINED3D_FBO_ENTRY_FLAG_STENCIL))
         {
             gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_STENCIL_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
             checkGLcall("glFramebufferTexture2D()");
@@ -412,9 +412,15 @@ static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *
             FIELD_OFFSET(struct fbo_entry, key.objects[object_count]));
     memset(&entry->key, 0, FIELD_OFFSET(struct wined3d_fbo_entry_key, objects[object_count]));
     context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
-    entry->d3d_depth_stencil = depth_stencil;
+    entry->flags = 0;
+    if (depth_stencil)
+    {
+        if (depth_stencil->container->resource.format_flags & WINED3DFMT_FLAG_DEPTH)
+            entry->flags |= WINED3D_FBO_ENTRY_FLAG_DEPTH;
+        if (depth_stencil->container->resource.format_flags & WINED3DFMT_FLAG_STENCIL)
+            entry->flags |= WINED3D_FBO_ENTRY_FLAG_STENCIL;
+    }
     entry->rt_mask = context_generate_rt_mask(GL_COLOR_ATTACHMENT0);
-    entry->attached = FALSE;
     gl_info->fbo_ops.glGenFramebuffers(1, &entry->id);
     checkGLcall("glGenFramebuffers()");
     TRACE("Created FBO %u.\n", entry->id);
@@ -433,8 +439,14 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum targ
     context_clean_fbo_attachments(gl_info, target);
 
     context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
-    entry->d3d_depth_stencil = depth_stencil;
-    entry->attached = FALSE;
+    entry->flags = 0;
+    if (depth_stencil)
+    {
+        if (depth_stencil->container->resource.format_flags & WINED3DFMT_FLAG_DEPTH)
+            entry->flags |= WINED3D_FBO_ENTRY_FLAG_DEPTH;
+        if (depth_stencil->container->resource.format_flags & WINED3DFMT_FLAG_STENCIL)
+            entry->flags |= WINED3D_FBO_ENTRY_FLAG_STENCIL;
+    }
 }
 
 /* Context activation is done by the caller. */
@@ -544,9 +556,8 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i;
     GLuint read_binding, draw_binding;
-    struct wined3d_surface *depth_stencil = entry->d3d_depth_stencil;
 
-    if (entry->attached)
+    if (entry->flags & WINED3D_FBO_ENTRY_FLAG_ATTACHED)
     {
         context_bind_fbo(context, target, entry->id);
         return;
@@ -563,17 +574,8 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
                 entry->key.rb_namespace & (1 << (i + 1)));
     }
 
-    if (depth_stencil)
-    {
-        DWORD format_flags = depth_stencil->container->resource.format_flags;
-        context_attach_depth_stencil_fbo(context, target, &entry->key.objects[0],
-                entry->key.rb_namespace & 0x1, format_flags);
-    }
-    else
-    {
-        static const struct wined3d_fbo_resource resource = {0};
-        context_attach_depth_stencil_fbo(context, target, &resource, FALSE, 0);
-    }
+    context_attach_depth_stencil_fbo(context, target, &entry->key.objects[0],
+            entry->key.rb_namespace & 0x1, entry->flags);
 
     /* Set valid read and draw buffer bindings to satisfy pedantic pre-ES2_compatibility
      * GL contexts requirements. */
@@ -587,7 +589,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
             context_bind_fbo(context, GL_READ_FRAMEBUFFER, read_binding);
     }
 
-    entry->attached = TRUE;
+    entry->flags |= WINED3D_FBO_ENTRY_FLAG_ATTACHED;
 }
 
 /* Context activation is done by the caller. */

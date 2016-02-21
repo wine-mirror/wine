@@ -2482,12 +2482,15 @@ struct wined3d_fbo_resource
     GLuint level, target;
 };
 
+#define WINED3D_FBO_ENTRY_FLAG_ATTACHED      0x1
+#define WINED3D_FBO_ENTRY_FLAG_DEPTH         0x2
+#define WINED3D_FBO_ENTRY_FLAG_STENCIL       0x4
+
 struct fbo_entry
 {
     struct list entry;
-    struct wined3d_surface *d3d_depth_stencil;
+    DWORD flags;
     DWORD rt_mask;
-    BOOL attached;
     GLuint id;
     struct wined3d_fbo_entry_key
     {
