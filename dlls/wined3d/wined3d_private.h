@@ -1311,6 +1311,7 @@ struct wined3d_context
     GLuint                  fbo_read_binding;
     GLuint                  fbo_draw_binding;
     struct wined3d_surface **blit_targets;
+    struct wined3d_fbo_entry_key *fbo_key;
     GLenum *draw_buffers;
     DWORD draw_buffers_mask; /* Enabled draw buffers, 31 max. */
 
@@ -2475,15 +2476,25 @@ struct wined3d_renderbuffer_entry
     UINT height;
 };
 
+struct wined3d_fbo_resource
+{
+    GLuint object;
+    GLuint level, target;
+};
+
 struct fbo_entry
 {
     struct list entry;
-    struct wined3d_surface **render_targets;
-    struct wined3d_surface *depth_stencil;
-    DWORD color_location, ds_location;
+    struct wined3d_surface **d3d_render_targets;
+    struct wined3d_surface *d3d_depth_stencil;
     DWORD rt_mask;
     BOOL attached;
     GLuint id;
+    struct wined3d_fbo_entry_key
+    {
+        DWORD rb_namespace;
+        struct wined3d_fbo_resource objects[1];
+    } key;
 };
 
 struct wined3d_surface_ops

@@ -120,57 +120,39 @@ static void context_attach_depth_stencil_rb(const struct wined3d_gl_info *gl_inf
 
 /* Context activation is done by the caller. */
 static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
-        GLenum fbo_target, struct wined3d_surface *depth_stencil, DWORD location)
+        GLenum fbo_target, const struct wined3d_fbo_resource *resource, BOOL rb_namespace,
+        DWORD format_flags, GLuint rb_override)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    TRACE("Attach depth stencil %p\n", depth_stencil);
-
-    if (depth_stencil)
+    if (resource->object)
     {
-        DWORD format_flags = depth_stencil->container->resource.format_flags;
+        TRACE("Attach depth stencil %u.\n", resource->object);
 
-        if (depth_stencil->current_renderbuffer)
+        if (rb_override)
         {
             context_attach_depth_stencil_rb(gl_info, fbo_target,
-                    format_flags, depth_stencil->current_renderbuffer->id);
+                    format_flags, rb_override);
+        }
+        else if (rb_namespace)
+        {
+            context_attach_depth_stencil_rb(gl_info, fbo_target,
+                    format_flags, resource->object);
         }
         else
         {
-            switch (location)
+            if (format_flags & WINED3DFMT_FLAG_DEPTH)
             {
-                case WINED3D_LOCATION_TEXTURE_RGB:
-                case WINED3D_LOCATION_TEXTURE_SRGB:
-                    if (format_flags & WINED3DFMT_FLAG_DEPTH)
-                    {
-                        gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_DEPTH_ATTACHMENT,
-                                depth_stencil->texture_target, depth_stencil->container->texture_rgb.name,
-                                depth_stencil->texture_level);
-                        checkGLcall("glFramebufferTexture2D()");
-                    }
+                gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_DEPTH_ATTACHMENT,
+                        resource->target, resource->object, resource->level);
+                checkGLcall("glFramebufferTexture2D()");
+            }
 
-                    if (format_flags & WINED3DFMT_FLAG_STENCIL)
-                    {
-                        gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_STENCIL_ATTACHMENT,
-                                depth_stencil->texture_target, depth_stencil->container->texture_rgb.name,
-                                depth_stencil->texture_level);
-                        checkGLcall("glFramebufferTexture2D()");
-                    }
-                    break;
-
-                case WINED3D_LOCATION_RB_MULTISAMPLE:
-                    context_attach_depth_stencil_rb(gl_info, fbo_target,
-                            format_flags, depth_stencil->rb_multisample);
-                    break;
-
-                case WINED3D_LOCATION_RB_RESOLVED:
-                    context_attach_depth_stencil_rb(gl_info, fbo_target,
-                            format_flags, depth_stencil->rb_resolved);
-                    break;
-
-                default:
-                    ERR("Unsupported location %s (%#x).\n", wined3d_debug_location(location), location);
-                    break;
+            if (format_flags & WINED3DFMT_FLAG_STENCIL)
+            {
+                gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_STENCIL_ATTACHMENT,
+                        resource->target, resource->object, resource->level);
+                checkGLcall("glFramebufferTexture2D()");
             }
         }
 
@@ -188,6 +170,8 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
     }
     else
     {
+        TRACE("Attach depth stencil 0.\n");
+
         gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, 0, 0);
         checkGLcall("glFramebufferTexture2D()");
 
@@ -198,42 +182,26 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
 
 /* Context activation is done by the caller. */
 static void context_attach_surface_fbo(struct wined3d_context *context,
-        GLenum fbo_target, DWORD idx, struct wined3d_surface *surface, DWORD location)
+        GLenum fbo_target, DWORD idx, const struct wined3d_fbo_resource *resource, BOOL rb_namespace)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
-    TRACE("Attach surface %p to %u\n", surface, idx);
+    TRACE("Attach GL object %u to %u.\n", resource->object, idx);
 
-    if (surface && surface->resource.format->id != WINED3DFMT_NULL)
+    if (resource->object)
     {
-        BOOL srgb;
 
-        switch (location)
+        if (rb_namespace)
         {
-            case WINED3D_LOCATION_TEXTURE_RGB:
-            case WINED3D_LOCATION_TEXTURE_SRGB:
-                srgb = location == WINED3D_LOCATION_TEXTURE_SRGB;
-                gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
-                        surface->texture_target, surface_get_texture_name(surface, context, srgb),
-                        surface->texture_level);
-                checkGLcall("glFramebufferTexture2D()");
-                break;
-
-            case WINED3D_LOCATION_RB_MULTISAMPLE:
-                gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
-                        GL_RENDERBUFFER, surface->rb_multisample);
-                checkGLcall("glFramebufferRenderbuffer()");
-                break;
-
-            case WINED3D_LOCATION_RB_RESOLVED:
-                gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
-                        GL_RENDERBUFFER, surface->rb_resolved);
-                checkGLcall("glFramebufferRenderbuffer()");
-                break;
-
-            default:
-                ERR("Unsupported location %s (%#x).\n", wined3d_debug_location(location), location);
-                break;
+            gl_info->fbo_ops.glFramebufferRenderbuffer(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
+                    GL_RENDERBUFFER, resource->object);
+            checkGLcall("glFramebufferRenderbuffer()");
+        }
+        else
+        {
+            gl_info->fbo_ops.glFramebufferTexture2D(fbo_target, GL_COLOR_ATTACHMENT0 + idx,
+                    resource->target, resource->object, resource->level);
+            checkGLcall("glFramebufferTexture2D()");
         }
     }
     else
@@ -377,19 +345,76 @@ static inline DWORD context_generate_rt_mask_from_surface(const struct wined3d_s
     return (1u << 31) | surface_get_gl_buffer(target);
 }
 
+static inline void context_set_fbo_key_for_surface(const struct wined3d_context *context,
+        struct wined3d_fbo_entry_key *key, UINT idx, struct wined3d_surface *surface,
+        DWORD location)
+{
+    if (!surface)
+    {
+        key->objects[idx].object = 0;
+        key->objects[idx].level = key->objects[idx].target = 0;
+    }
+    else
+    {
+        switch (location)
+        {
+            case WINED3D_LOCATION_TEXTURE_RGB:
+                key->objects[idx].object = surface_get_texture_name(surface, context, FALSE);
+                key->objects[idx].level = surface->texture_level;
+                key->objects[idx].target = surface->texture_target;
+                break;
+
+            case WINED3D_LOCATION_TEXTURE_SRGB:
+                key->objects[idx].object = surface_get_texture_name(surface, context, TRUE);
+                key->objects[idx].level = surface->texture_level;
+                key->objects[idx].target = surface->texture_target;
+                break;
+
+            case WINED3D_LOCATION_RB_MULTISAMPLE:
+                key->objects[idx].object = surface->rb_multisample;
+                key->objects[idx].level = key->objects[idx].target = 0;
+                key->rb_namespace |= 1 << idx;
+                break;
+
+            case WINED3D_LOCATION_RB_RESOLVED:
+                key->objects[idx].object = surface->rb_resolved;
+                key->objects[idx].level = key->objects[idx].target = 0;
+                key->rb_namespace |= 1 << idx;
+                break;
+        }
+    }
+}
+
+static void context_generate_fbo_key(const struct wined3d_context *context,
+        struct wined3d_fbo_entry_key *key, struct wined3d_surface **render_targets,
+        struct wined3d_surface *depth_stencil, DWORD color_location,
+        DWORD ds_location)
+{
+    UINT i;
+
+    key->rb_namespace = 0;
+    context_set_fbo_key_for_surface(context, key, 0, depth_stencil, ds_location);
+
+    for (i = 0; i < context->gl_info->limits.buffers; ++i)
+        context_set_fbo_key_for_surface(context, key, i + 1, render_targets[i], color_location);
+}
+
 static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *context,
         struct wined3d_surface **render_targets, struct wined3d_surface *depth_stencil,
         DWORD color_location, DWORD ds_location)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
+    UINT object_count = gl_info->limits.buffers + 1;
 
-    entry = HeapAlloc(GetProcessHeap(), 0, sizeof(*entry));
-    entry->render_targets = HeapAlloc(GetProcessHeap(), 0, gl_info->limits.buffers * sizeof(*entry->render_targets));
-    memcpy(entry->render_targets, render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
-    entry->depth_stencil = depth_stencil;
-    entry->color_location = color_location;
-    entry->ds_location = ds_location;
+    entry = HeapAlloc(GetProcessHeap(), 0,
+            FIELD_OFFSET(struct fbo_entry, key.objects[object_count]));
+    entry->d3d_render_targets = HeapAlloc(GetProcessHeap(), 0,
+            gl_info->limits.buffers * sizeof(*entry->d3d_render_targets));
+    memset(&entry->key, 0, FIELD_OFFSET(struct wined3d_fbo_entry_key, objects[object_count]));
+    context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
+    memcpy(entry->d3d_render_targets, render_targets, sizeof(*entry->d3d_render_targets) * gl_info->limits.buffers);
+    entry->d3d_depth_stencil = depth_stencil;
     entry->rt_mask = context_generate_rt_mask(GL_COLOR_ATTACHMENT0);
     entry->attached = FALSE;
     gl_info->fbo_ops.glGenFramebuffers(1, &entry->id);
@@ -409,10 +434,9 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum targ
     context_bind_fbo(context, target, entry->id);
     context_clean_fbo_attachments(gl_info, target);
 
-    memcpy(entry->render_targets, render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets));
-    entry->depth_stencil = depth_stencil;
-    entry->color_location = color_location;
-    entry->ds_location = ds_location;
+    context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
+    memcpy(entry->d3d_render_targets, render_targets, sizeof(*entry->d3d_render_targets) * gl_info->limits.buffers);
+    entry->d3d_depth_stencil = depth_stencil;
     entry->attached = FALSE;
 }
 
@@ -426,7 +450,7 @@ static void context_destroy_fbo_entry(struct wined3d_context *context, struct fb
     }
     --context->fbo_entry_count;
     list_remove(&entry->entry);
-    HeapFree(GetProcessHeap(), 0, entry->render_targets);
+    HeapFree(GetProcessHeap(), 0, entry->d3d_render_targets);
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
@@ -437,6 +461,8 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
     struct fbo_entry *entry;
+    UINT object_count = gl_info->limits.buffers + 1;
+    unsigned int i;
 
     if (depth_stencil && render_targets && render_targets[0])
     {
@@ -448,17 +474,42 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
         }
     }
 
+    context_generate_fbo_key(context, context->fbo_key, render_targets, depth_stencil, color_location,
+            ds_location);
+
+    if (TRACE_ON(d3d))
+    {
+        TRACE("Dumping FBO attachments:\n");
+        for (i = 0; i < gl_info->limits.buffers; ++i)
+        {
+            if (render_targets[i])
+            {
+                TRACE("\tColor attachment %u: (%p) %s gl obj %u(%s) %ux%u %u samples.\n",
+                        i, render_targets[i], debug_d3dformat(render_targets[i]->resource.format->id),
+                        context->fbo_key->objects[i + 1].object,
+                        context->fbo_key->rb_namespace & (1 << (i + 1)) ? "rb" : "texure",
+                        render_targets[i]->pow2Width, render_targets[i]->pow2Height,
+                        render_targets[i]->resource.multisample_type);
+            }
+        }
+        if (depth_stencil)
+        {
+            TRACE("\tDepth attachment: (%p) %s gl obj %u(%s) %ux%u %u samples.\n",
+                    depth_stencil, debug_d3dformat(depth_stencil->resource.format->id),
+                    context->fbo_key->objects[0].object,
+                    context->fbo_key->rb_namespace & (1 << 0) ? "rb" : "texure",
+                    depth_stencil->pow2Width, depth_stencil->pow2Height, depth_stencil->resource.multisample_type);
+        }
+    }
+
     LIST_FOR_EACH_ENTRY(entry, &context->fbo_list, struct fbo_entry, entry)
     {
-        if (!memcmp(entry->render_targets,
-                render_targets, gl_info->limits.buffers * sizeof(*entry->render_targets))
-                && entry->depth_stencil == depth_stencil && entry->color_location == color_location
-                && entry->ds_location == ds_location)
-        {
-            list_remove(&entry->entry);
-            list_add_head(&context->fbo_list, &entry->entry);
-            return entry;
-        }
+        if (memcmp(context->fbo_key, &entry->key, FIELD_OFFSET(struct wined3d_fbo_entry_key, objects[object_count])))
+            continue;
+
+        list_remove(&entry->entry);
+        list_add_head(&context->fbo_list, &entry->entry);
+        return entry;
     }
 
     if (context->fbo_entry_count < WINED3D_MAX_FBO_ENTRIES)
@@ -484,7 +535,7 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     const struct wined3d_gl_info *gl_info = context->gl_info;
     unsigned int i;
     GLuint read_binding, draw_binding;
-    struct wined3d_surface *depth_stencil = entry->depth_stencil;
+    struct wined3d_surface *depth_stencil = entry->d3d_depth_stencil;
 
     if (entry->attached)
     {
@@ -499,25 +550,36 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     /* Apply render targets */
     for (i = 0; i < gl_info->limits.buffers; ++i)
     {
-        context_attach_surface_fbo(context, target, i, entry->render_targets[i], entry->color_location);
+        context_attach_surface_fbo(context, target, i, &entry->key.objects[i + 1],
+                entry->key.rb_namespace & (1 << (i + 1)));
     }
 
-    if (depth_stencil && entry->render_targets[0]
+    if (depth_stencil && entry->d3d_render_targets[0]
             && (depth_stencil->resource.multisample_type
-            != entry->render_targets[0]->resource.multisample_type
+            != entry->d3d_render_targets[0]->resource.multisample_type
             || depth_stencil->resource.multisample_quality
-            != entry->render_targets[0]->resource.multisample_quality))
+            != entry->d3d_render_targets[0]->resource.multisample_quality))
     {
         WARN("Color multisample type %u and quality %u, depth stencil has %u and %u, disabling ds buffer.\n",
-                entry->render_targets[0]->resource.multisample_quality,
-                entry->render_targets[0]->resource.multisample_type,
+                entry->d3d_render_targets[0]->resource.multisample_quality,
+                entry->d3d_render_targets[0]->resource.multisample_type,
                 depth_stencil->resource.multisample_quality, depth_stencil->resource.multisample_type);
         depth_stencil = NULL;
     }
 
     if (depth_stencil)
-        surface_set_compatible_renderbuffer(depth_stencil, entry->render_targets[0]);
-    context_attach_depth_stencil_fbo(context, target, depth_stencil, entry->ds_location);
+    {
+        DWORD format_flags = depth_stencil->container->resource.format_flags;
+        surface_set_compatible_renderbuffer(depth_stencil, entry->d3d_render_targets[0]);
+        context_attach_depth_stencil_fbo(context, target, &entry->key.objects[0],
+                entry->key.rb_namespace & 0x1, format_flags,
+                depth_stencil->current_renderbuffer ? depth_stencil->current_renderbuffer->id : 0);
+    }
+    else
+    {
+        static const struct wined3d_fbo_resource resource = {0};
+        context_attach_depth_stencil_fbo(context, target, &resource, FALSE, 0, 0);
+    }
 
     /* Set valid read and draw buffer bindings to satisfy pedantic pre-ES2_compatibility
      * GL contexts requirements. */
@@ -766,7 +828,7 @@ static void context_enum_surface_fbo_entries(const struct wined3d_device *device
         {
             UINT j;
 
-            if (entry->depth_stencil == surface)
+            if (entry->d3d_depth_stencil == surface)
             {
                 callback(context, entry);
                 continue;
@@ -774,7 +836,7 @@ static void context_enum_surface_fbo_entries(const struct wined3d_device *device
 
             for (j = 0; j < gl_info->limits.buffers; ++j)
             {
-                if (entry->render_targets[j] == surface)
+                if (entry->d3d_render_targets[j] == surface)
                 {
                     callback(context, entry);
                     break;
@@ -835,20 +897,15 @@ void context_surface_update(struct wined3d_context *context, const struct wined3
 
     if (!entry || context->rebind_fbo) return;
 
-    for (i = 0; i < gl_info->limits.buffers; ++i)
+    for (i = 0; i < gl_info->limits.buffers + 1; ++i)
     {
-        if (surface == entry->render_targets[i])
+        if (surface->container->texture_rgb.name == entry->key.objects[i].object
+                || surface->container->texture_srgb.name == entry->key.objects[i].object)
         {
-            TRACE("Updated surface %p is bound as color attachment %u to the current FBO.\n", surface, i);
+            TRACE("Updated surface %p is bound as attachment %u to the current FBO.\n", surface, i);
             context->rebind_fbo = TRUE;
             return;
         }
-    }
-
-    if (surface == entry->depth_stencil)
-    {
-        TRACE("Updated surface %p is bound as depth attachment to the current FBO.\n", surface);
-        context->rebind_fbo = TRUE;
     }
 }
 
@@ -1546,6 +1603,11 @@ struct wined3d_context *context_create(struct wined3d_swapchain *swapchain,
     if (!ret->draw_buffers)
         goto out;
 
+    ret->fbo_key = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
+            FIELD_OFFSET(struct wined3d_fbo_entry_key, objects[gl_info->limits.buffers + 1]));
+    if (!ret->fbo_key)
+        goto out;
+
     ret->free_timestamp_query_size = 4;
     ret->free_timestamp_queries = HeapAlloc(GetProcessHeap(), 0,
             ret->free_timestamp_query_size * sizeof(*ret->free_timestamp_queries));
@@ -1914,6 +1976,7 @@ out:
     HeapFree(GetProcessHeap(), 0, ret->free_event_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_occlusion_queries);
     HeapFree(GetProcessHeap(), 0, ret->free_timestamp_queries);
+    HeapFree(GetProcessHeap(), 0, ret->fbo_key);
     HeapFree(GetProcessHeap(), 0, ret->draw_buffers);
     HeapFree(GetProcessHeap(), 0, ret->blit_targets);
     HeapFree(GetProcessHeap(), 0, ret);
@@ -1945,6 +2008,7 @@ void context_destroy(struct wined3d_device *device, struct wined3d_context *cont
 
     device->shader_backend->shader_free_context_data(context);
     device->adapter->fragment_pipe->free_context_data(context);
+    HeapFree(GetProcessHeap(), 0, context->fbo_key);
     HeapFree(GetProcessHeap(), 0, context->draw_buffers);
     HeapFree(GetProcessHeap(), 0, context->blit_targets);
     device_context_remove(device, context);
