@@ -2485,7 +2485,6 @@ struct wined3d_fbo_resource
 struct fbo_entry
 {
     struct list entry;
-    struct wined3d_surface **d3d_render_targets;
     struct wined3d_surface *d3d_depth_stencil;
     DWORD rt_mask;
     BOOL attached;

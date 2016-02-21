@@ -410,11 +410,8 @@ static struct fbo_entry *context_create_fbo_entry(const struct wined3d_context *
 
     entry = HeapAlloc(GetProcessHeap(), 0,
             FIELD_OFFSET(struct fbo_entry, key.objects[object_count]));
-    entry->d3d_render_targets = HeapAlloc(GetProcessHeap(), 0,
-            gl_info->limits.buffers * sizeof(*entry->d3d_render_targets));
     memset(&entry->key, 0, FIELD_OFFSET(struct wined3d_fbo_entry_key, objects[object_count]));
     context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
-    memcpy(entry->d3d_render_targets, render_targets, sizeof(*entry->d3d_render_targets) * gl_info->limits.buffers);
     entry->d3d_depth_stencil = depth_stencil;
     entry->rt_mask = context_generate_rt_mask(GL_COLOR_ATTACHMENT0);
     entry->attached = FALSE;
@@ -436,7 +433,6 @@ static void context_reuse_fbo_entry(struct wined3d_context *context, GLenum targ
     context_clean_fbo_attachments(gl_info, target);
 
     context_generate_fbo_key(context, &entry->key, render_targets, depth_stencil, color_location, ds_location);
-    memcpy(entry->d3d_render_targets, render_targets, sizeof(*entry->d3d_render_targets) * gl_info->limits.buffers);
     entry->d3d_depth_stencil = depth_stencil;
     entry->attached = FALSE;
 }
@@ -451,7 +447,6 @@ static void context_destroy_fbo_entry(struct wined3d_context *context, struct fb
     }
     --context->fbo_entry_count;
     list_remove(&entry->entry);
-    HeapFree(GetProcessHeap(), 0, entry->d3d_render_targets);
     HeapFree(GetProcessHeap(), 0, entry);
 }
 
@@ -471,6 +466,17 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
             depth_stencil->resource.height < render_targets[0]->resource.height)
         {
             WARN("Depth stencil is smaller than the primary color buffer, disabling\n");
+            depth_stencil = NULL;
+        }
+        else if (depth_stencil->resource.multisample_type
+                != render_targets[0]->resource.multisample_type
+                || depth_stencil->resource.multisample_quality
+                != render_targets[0]->resource.multisample_quality)
+        {
+            WARN("Color multisample type %u and quality %u, depth stencil has %u and %u, disabling ds buffer.\n",
+                    render_targets[0]->resource.multisample_quality,
+                    render_targets[0]->resource.multisample_type,
+                    depth_stencil->resource.multisample_quality, depth_stencil->resource.multisample_type);
             depth_stencil = NULL;
         }
         else
@@ -555,19 +561,6 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     {
         context_attach_surface_fbo(context, target, i, &entry->key.objects[i + 1],
                 entry->key.rb_namespace & (1 << (i + 1)));
-    }
-
-    if (depth_stencil && entry->d3d_render_targets[0]
-            && (depth_stencil->resource.multisample_type
-            != entry->d3d_render_targets[0]->resource.multisample_type
-            || depth_stencil->resource.multisample_quality
-            != entry->d3d_render_targets[0]->resource.multisample_quality))
-    {
-        WARN("Color multisample type %u and quality %u, depth stencil has %u and %u, disabling ds buffer.\n",
-                entry->d3d_render_targets[0]->resource.multisample_quality,
-                entry->d3d_render_targets[0]->resource.multisample_type,
-                depth_stencil->resource.multisample_quality, depth_stencil->resource.multisample_type);
-        depth_stencil = NULL;
     }
 
     if (depth_stencil)
