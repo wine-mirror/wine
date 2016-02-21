@@ -121,7 +121,7 @@ static void context_attach_depth_stencil_rb(const struct wined3d_gl_info *gl_inf
 /* Context activation is done by the caller. */
 static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
         GLenum fbo_target, const struct wined3d_fbo_resource *resource, BOOL rb_namespace,
-        DWORD format_flags, GLuint rb_override)
+        DWORD format_flags)
 {
     const struct wined3d_gl_info *gl_info = context->gl_info;
 
@@ -129,12 +129,7 @@ static void context_attach_depth_stencil_fbo(struct wined3d_context *context,
     {
         TRACE("Attach depth stencil %u.\n", resource->object);
 
-        if (rb_override)
-        {
-            context_attach_depth_stencil_rb(gl_info, fbo_target,
-                    format_flags, rb_override);
-        }
-        else if (rb_namespace)
+        if (rb_namespace)
         {
             context_attach_depth_stencil_rb(gl_info, fbo_target,
                     format_flags, resource->object);
@@ -354,6 +349,12 @@ static inline void context_set_fbo_key_for_surface(const struct wined3d_context 
         key->objects[idx].object = 0;
         key->objects[idx].level = key->objects[idx].target = 0;
     }
+    else if (surface->current_renderbuffer)
+    {
+        key->objects[idx].object = surface->current_renderbuffer->id;
+        key->objects[idx].level = key->objects[idx].target = 0;
+        key->rb_namespace |= 1 << idx;
+    }
     else
     {
         switch (location)
@@ -472,6 +473,8 @@ static struct fbo_entry *context_find_fbo_entry(struct wined3d_context *context,
             WARN("Depth stencil is smaller than the primary color buffer, disabling\n");
             depth_stencil = NULL;
         }
+        else
+            surface_set_compatible_renderbuffer(depth_stencil, render_targets[0]);
     }
 
     context_generate_fbo_key(context, context->fbo_key, render_targets, depth_stencil, color_location,
@@ -570,15 +573,13 @@ static void context_apply_fbo_entry(struct wined3d_context *context, GLenum targ
     if (depth_stencil)
     {
         DWORD format_flags = depth_stencil->container->resource.format_flags;
-        surface_set_compatible_renderbuffer(depth_stencil, entry->d3d_render_targets[0]);
         context_attach_depth_stencil_fbo(context, target, &entry->key.objects[0],
-                entry->key.rb_namespace & 0x1, format_flags,
-                depth_stencil->current_renderbuffer ? depth_stencil->current_renderbuffer->id : 0);
+                entry->key.rb_namespace & 0x1, format_flags);
     }
     else
     {
         static const struct wined3d_fbo_resource resource = {0};
-        context_attach_depth_stencil_fbo(context, target, &resource, FALSE, 0, 0);
+        context_attach_depth_stencil_fbo(context, target, &resource, FALSE, 0);
     }
 
     /* Set valid read and draw buffer bindings to satisfy pedantic pre-ES2_compatibility
