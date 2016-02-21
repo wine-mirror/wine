@@ -445,7 +445,7 @@ static void test_createdomain(void)
 
     if (!pCLRCreateInstance)
     {
-        win_skip("Function CLRCreateInstance not found.");
+        win_skip("Function CLRCreateInstance not found.\n");
         return;
     }
 
