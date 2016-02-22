@@ -19,6 +19,7 @@
 #include <windows.h>
 #include <wine/unicode.h>
 #include <wine/debug.h>
+#include <errno.h>
 #include "reg.h"
 
 #define ARRAY_SIZE(A) (sizeof(A)/sizeof(*A))
@@ -244,7 +245,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             LPWSTR rest;
             DWORD val;
             val = strtoulW(data, &rest, (tolowerW(data[1]) == 'x') ? 16 : 10);
-            if (*rest || data[0] == '-') {
+            if (*rest || data[0] == '-' || (val == ~0u && errno == ERANGE)) {
                 output_message(STRING_MISSING_INTEGER);
                 break;
             }
