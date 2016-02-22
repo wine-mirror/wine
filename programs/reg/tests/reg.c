@@ -363,6 +363,16 @@ static void test_add(void)
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi13 /t REG_MULTI_SZ /f /s", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi14 /t REG_MULTI_SZ /d \"\\0a\" /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi15 /t REG_MULTI_SZ /d \"a\\0\" /f", &r);
+    todo_wine ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
+    todo_wine verify_reg(hkey, "multi15", REG_MULTI_SZ, buffer, 3, TODO_REG_SIZE);
+
+    run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_MULTI_SZ /v multi16 /d \"two\\0\\0strings\" /f", &r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
+
     RegCloseKey(hkey);
 
     err = RegDeleteKeyA(HKEY_CURRENT_USER, KEY_BASE);
