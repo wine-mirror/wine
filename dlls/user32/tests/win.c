@@ -652,6 +652,31 @@ static void test_parent_owner(void)
     DestroyWindow( child );
     DestroyWindow( test );
     DestroyWindow( owner );
+
+    /* Test that owner window takes into account WS_CHILD flag even if parent is set by SetParent. */
+    owner = create_tool_window( WS_VISIBLE | WS_OVERLAPPEDWINDOW, desktop );
+    SetParent(owner, hwndMain);
+    check_parents( owner, hwndMain, hwndMain, NULL, NULL, hwndMain, owner );
+    test = create_tool_window( WS_VISIBLE | WS_OVERLAPPEDWINDOW, owner );
+    check_parents( test, desktop, owner, NULL, owner, test, test );
+    DestroyWindow( owner );
+    DestroyWindow( test );
+
+    owner = create_tool_window( WS_VISIBLE | WS_CHILD, desktop );
+    SetParent(owner, hwndMain);
+    check_parents( owner, hwndMain, hwndMain, hwndMain, NULL, hwndMain, hwndMain );
+    test = create_tool_window( WS_VISIBLE | WS_OVERLAPPEDWINDOW, owner );
+    check_parents( test, desktop, hwndMain, NULL, hwndMain, test, test );
+    DestroyWindow( owner );
+    DestroyWindow( test );
+
+    owner = create_tool_window( WS_VISIBLE | WS_POPUP | WS_CHILD, desktop );
+    SetParent(owner, hwndMain);
+    check_parents( owner, hwndMain, hwndMain, NULL, NULL, hwndMain, owner );
+    test = create_tool_window( WS_VISIBLE | WS_OVERLAPPEDWINDOW, owner );
+    check_parents( test, desktop, owner, NULL, owner, test, test );
+    DestroyWindow( owner );
+    DestroyWindow( test );
 }
 
 static BOOL CALLBACK enum_proc( HWND hwnd, LPARAM lParam)

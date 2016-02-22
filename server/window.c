@@ -1901,7 +1901,8 @@ DECL_HANDLER(create_window)
             return;
         }
         else /* owner must be a top-level window */
-            while (!is_desktop_window(owner->parent)) owner = owner->parent;
+            while ((owner->style & (WS_POPUP|WS_CHILD)) == WS_CHILD && !is_desktop_window(owner->parent))
+                owner = owner->parent;
     }
 
     atom = cls_name.len ? find_global_atom( NULL, &cls_name ) : req->atom;
