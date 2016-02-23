@@ -892,8 +892,14 @@ extern const vtable_ptr MSVCP__Pad_vtable;
 DEFINE_THISCALL_WRAPPER(_Pad_ctor, 4)
 _Pad* __thiscall _Pad_ctor(_Pad *this)
 {
-    FIXME("(%p) stub\n", this);
-    return NULL;
+    TRACE("(%p)\n", this);
+
+    this->vtable = &MSVCP__Pad_vtable;
+    _Cnd_init(&this->cnd);
+    _Mtx_init(&this->mtx, 0);
+    this->launched = FALSE;
+    _Mtx_lock(&this->mtx);
+    return this;
 }
 
 /* ??4_Pad@std@@QAEAAV01@ABV01@@Z */
@@ -901,8 +907,12 @@ _Pad* __thiscall _Pad_ctor(_Pad *this)
 DEFINE_THISCALL_WRAPPER(_Pad_op_assign, 8)
 _Pad* __thiscall _Pad_op_assign(_Pad *this, const _Pad *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
-    return NULL;
+    TRACE("(%p %p)\n", this, copy);
+
+    this->cnd = copy->cnd;
+    this->mtx = copy->mtx;
+    this->launched = copy->launched;
+    return this;
 }
 
 /* ??0_Pad@std@@QAE@ABV01@@Z */
@@ -910,8 +920,10 @@ _Pad* __thiscall _Pad_op_assign(_Pad *this, const _Pad *copy)
 DEFINE_THISCALL_WRAPPER(_Pad_copy_ctor, 8)
 _Pad* __thiscall _Pad_copy_ctor(_Pad *this, const _Pad *copy)
 {
-    FIXME("(%p %p) stub\n", this, copy);
-    return NULL;
+    TRACE("(%p %p)\n", this, copy);
+
+    this->vtable = &MSVCP__Pad_vtable;
+    return _Pad_op_assign(this, copy);
 }
 
 /* ??1_Pad@std@@QAE@XZ */
@@ -919,7 +931,25 @@ _Pad* __thiscall _Pad_copy_ctor(_Pad *this, const _Pad *copy)
 DEFINE_THISCALL_WRAPPER(_Pad_dtor, 4)
 void __thiscall _Pad_dtor(_Pad *this)
 {
-    FIXME("(%p) stub\n", this);
+    TRACE("(%p)\n", this);
+
+    _Mtx_unlock(&this->mtx);
+    _Mtx_destroy(&this->mtx);
+    _Cnd_destroy(&this->cnd);
+}
+
+DEFINE_THISCALL_WRAPPER(_Pad__Go, 4)
+#define call__Pad__Go(this) CALL_VTBL_FUNC(this, 0, unsigned int, (_Pad*), (this))
+unsigned int __thiscall _Pad__Go(_Pad *this)
+{
+    ERR("(%p) should not be called\n", this);
+    return 0;
+}
+
+static DWORD WINAPI launch_thread_proc(void *arg)
+{
+    _Pad *this = arg;
+    return call__Pad__Go(this);
 }
 
 /* ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z */
@@ -927,7 +957,10 @@ void __thiscall _Pad_dtor(_Pad *this)
 DEFINE_THISCALL_WRAPPER(_Pad__Launch, 8)
 void __thiscall _Pad__Launch(_Pad *this, _Thrd_t *thr)
 {
-    FIXME("(%p %p) stub\n", this, thr);
+    TRACE("(%p %p)\n", this, thr);
+
+    _Thrd_start(thr, launch_thread_proc, this);
+    _Cnd_wait(&this->cnd, &this->mtx);
 }
 
 /* ?_Release@_Pad@std@@QAEXXZ */
@@ -935,14 +968,12 @@ void __thiscall _Pad__Launch(_Pad *this, _Thrd_t *thr)
 DEFINE_THISCALL_WRAPPER(_Pad__Release, 4)
 void __thiscall _Pad__Release(_Pad *this)
 {
-    FIXME("(%p) stub\n", this);
-}
+    TRACE("(%p)\n", this);
 
-DEFINE_THISCALL_WRAPPER(_Pad__Go, 4)
-unsigned int __thiscall _Pad__Go(_Pad *this)
-{
-    ERR("(%p) should not be called\n", this);
-    return 0;
+    _Mtx_lock(&this->mtx);
+    this->launched = TRUE;
+    _Cnd_signal(&this->cnd);
+    _Mtx_unlock(&this->mtx);
 }
 #endif
 
