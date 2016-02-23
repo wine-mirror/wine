@@ -485,7 +485,6 @@ static HRESULT write_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
     if (text) write_bytes( writer, text->value.bytes, text->value.length );
     write_char( writer, quote );
 
-    /* FIXME: ignoring namespace */
     return S_OK;
 }
 
@@ -503,21 +502,42 @@ static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING
     return S_OK;
 }
 
+static HRESULT write_namespace_attribute( struct writer *writer, WS_XML_ATTRIBUTE *attr )
+{
+    unsigned char quote = attr->singleQuote ? '\'' : '"';
+    ULONG size;
+    HRESULT hr;
+
+    /* ' xmlns:prefix="namespace"' */
+
+    size = attr->ns->length + 9 /* ' xmlns=""' */;
+    if (attr->prefix) size += attr->prefix->length + 1 /* ':' */;
+    if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
+
+    write_bytes( writer, (const BYTE *)" xmlns", 6 );
+    if (attr->prefix)
+    {
+        write_char( writer, ':' );
+        write_bytes( writer, attr->prefix->bytes, attr->prefix->length );
+    }
+    write_char( writer, '=' );
+    write_char( writer, quote );
+    write_bytes( writer, attr->ns->bytes, attr->ns->length );
+    write_char( writer, quote );
+
+    return S_OK;
+}
+
 static HRESULT write_startelement( struct writer *writer )
 {
     WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
     ULONG size, i;
     HRESULT hr;
 
-    /* '<prefix:localname prefix:attr="value"... xmlns:prefix="ns"' */
+    /* '<prefix:localname prefix:attr="value"... xmlns:prefix="ns"'... */
 
     size = elem->localName->length + 1 /* '<' */;
     if (elem->prefix) size += elem->prefix->length + 1 /* ':' */;
-    if (elem->ns->length && !is_current_namespace( writer, elem->ns ))
-    {
-        size += strlen(" xmlns") + elem->ns->length + 3 /* '=""' */;
-        if (elem->prefix) size += elem->prefix->length + 1 /* ':' */;
-    }
     if ((hr = write_grow_buffer( writer, size )) != S_OK) return hr;
 
     write_char( writer, '<' );
@@ -529,23 +549,20 @@ static HRESULT write_startelement( struct writer *writer )
     write_bytes( writer, elem->localName->bytes, elem->localName->length );
     for (i = 0; i < elem->attributeCount; i++)
     {
+        if (elem->attributes[i]->isXmlNs) continue;
         if ((hr = write_attribute( writer, elem->attributes[i] )) != S_OK) return hr;
     }
-    if (elem->ns->length && !is_current_namespace( writer, elem->ns ))
+    for (i = 0; i < elem->attributeCount; i++)
     {
-        if ((hr = set_current_namespace( writer, elem->ns )) != S_OK) return hr;
-
-        write_bytes( writer, (const BYTE *)" xmlns", 6 );
-        if (elem->prefix)
-        {
-            write_char( writer, ':' );
-            write_bytes( writer, elem->prefix->bytes, elem->prefix->length );
-        }
-        write_char( writer, '=' );
-        write_char( writer, '"' );
-        write_bytes( writer, elem->ns->bytes, elem->ns->length );
-        write_char( writer, '"' );
+        if (!elem->attributes[i]->isXmlNs || !elem->attributes[i]->prefix) continue;
+        if ((hr = write_namespace_attribute( writer, elem->attributes[i] )) != S_OK) return hr;
     }
+    for (i = 0; i < elem->attributeCount; i++)
+    {
+        if (!elem->attributes[i]->isXmlNs || elem->attributes[i]->prefix) continue;
+        if ((hr = write_namespace_attribute( writer, elem->attributes[i] )) != S_OK) return hr;
+    }
+
     return S_OK;
 }
 
@@ -576,9 +593,70 @@ static HRESULT write_endelement( struct writer *writer )
     return S_OK;
 }
 
+static HRESULT write_add_namespace_attribute( struct writer *writer, const WS_XML_STRING *prefix,
+                                              const WS_XML_STRING *ns, BOOL single )
+{
+    WS_XML_ATTRIBUTE *attr;
+    WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
+    HRESULT hr;
+
+    if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
+
+    attr->singleQuote = !!single;
+    attr->isXmlNs = 1;
+    if (prefix && !(attr->prefix = alloc_xml_string( prefix->bytes, prefix->length )))
+    {
+        free_attribute( attr );
+        return E_OUTOFMEMORY;
+    }
+    if (!(attr->ns = alloc_xml_string( ns->bytes, ns->length )))
+    {
+        free_attribute( attr );
+        return E_OUTOFMEMORY;
+    }
+    if ((hr = append_attribute( elem, attr )) != S_OK)
+    {
+        free_attribute( attr );
+        return hr;
+    }
+    return S_OK;
+}
+
+static const WS_XML_ATTRIBUTE *find_namespace_attribute( const WS_XML_ELEMENT_NODE *elem,
+                                                         const WS_XML_STRING *prefix,
+                                                         const WS_XML_STRING *ns )
+{
+    ULONG i;
+    for (i = 0; i < elem->attributeCount; i++)
+    {
+        if (!elem->attributes[i]->isXmlNs) continue;
+        if (WsXmlStringEquals( elem->attributes[i]->prefix, prefix, NULL ) == S_OK &&
+            WsXmlStringEquals( elem->attributes[i]->ns, ns, NULL ) == S_OK)
+        {
+            return elem->attributes[i];
+        }
+    }
+    return NULL;
+}
+
+static HRESULT write_set_element_namespace( struct writer *writer )
+{
+    WS_XML_ELEMENT_NODE *elem = &writer->current->hdr;
+    HRESULT hr;
+
+    if (!elem->ns->length || is_current_namespace( writer, elem->ns ) ||
+        find_namespace_attribute( elem, elem->prefix, elem->ns )) return S_OK;
+
+    if ((hr = write_add_namespace_attribute( writer, elem->prefix, elem->ns, FALSE )) != S_OK)
+        return hr;
+
+    return set_current_namespace( writer, elem->ns );
+}
+
 static HRESULT write_endstartelement( struct writer *writer )
 {
     HRESULT hr;
+    if ((hr = write_set_element_namespace( writer )) != S_OK) return hr;
     if ((hr = write_startelement( writer )) != S_OK) return hr;
     if ((hr = write_grow_buffer( writer, 1 )) != S_OK) return hr;
     write_char( writer, '>' );
@@ -609,6 +687,7 @@ static HRESULT write_close_element( struct writer *writer )
     if (writer->state == WRITER_STATE_STARTELEMENT)
     {
         /* '/>' */
+        if ((hr = write_set_element_namespace( writer )) != S_OK) return hr;
         if ((hr = write_startelement( writer )) != S_OK) return hr;
         if ((hr = write_grow_buffer( writer, 2 )) != S_OK) return hr;
         write_char( writer, '/' );
