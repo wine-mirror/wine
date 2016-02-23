@@ -2661,6 +2661,62 @@ static void test_mf_clipping(void)
     DestroyWindow(hwnd);
 }
 
+static const unsigned char MF_PATH_BITS[] =
+{
+    0x01, 0x00, 0x09, 0x00, 0x00, 0x03, 0x2c, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x07, 0x00, 0x00, 0x00,
+    0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x14, 0x02,
+    0x32, 0x00, 0x32, 0x00, 0x05, 0x00, 0x00, 0x00,
+    0x13, 0x02, 0x96, 0x00, 0x32, 0x00, 0x05, 0x00,
+    0x00, 0x00, 0x13, 0x02, 0x96, 0x00, 0x96, 0x00,
+    0x05, 0x00, 0x00, 0x00, 0x13, 0x02, 0x32, 0x00,
+    0x96, 0x00, 0x05, 0x00, 0x00, 0x00, 0x13, 0x02,
+    0x32, 0x00, 0x32, 0x00, 0x07, 0x00, 0x00, 0x00,
+    0x1b, 0x04, 0x14, 0x00, 0x14, 0x00, 0x0a, 0x00,
+    0x0a, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+static void test_mf_GetPath(void)
+{
+    HDC hdc;
+    HMETAFILE hmf;
+    BOOL ret;
+    int size;
+
+    SetLastError(0xdeadbeef);
+    hdc = CreateMetaFileA(NULL);
+    ok(hdc != 0, "CreateMetaFileA error %d\n", GetLastError());
+
+    BeginPath(hdc);
+    ret = MoveToEx(hdc, 50, 50, NULL);
+    ok( ret, "MoveToEx error %d.\n", GetLastError());
+    ret = LineTo(hdc, 50, 150);
+    ok( ret, "LineTo error %d.\n", GetLastError());
+    ret = LineTo(hdc, 150, 150);
+    ok( ret, "LineTo error %d.\n", GetLastError());
+    ret = LineTo(hdc, 150, 50);
+    ok( ret, "LineTo error %d.\n", GetLastError());
+    ret = LineTo(hdc, 50, 50);
+    ok( ret, "LineTo error %d.\n", GetLastError());
+    Rectangle(hdc, 10, 10, 20, 20);
+    EndPath(hdc);
+
+    size = GetPath(hdc, NULL, NULL, 0);
+    ok( size == -1, "GetPath returned %d.\n", size);
+
+    hmf = CloseMetaFile(hdc);
+    ok(hmf != 0, "CloseMetaFile error %d\n", GetLastError());
+
+    if (compare_mf_bits (hmf, MF_PATH_BITS, sizeof(MF_PATH_BITS), "mf_GetPath") != 0)
+    {
+        dump_mf_bits(hmf, "mf_GetPath");
+        EnumMetaFile(0, hmf, mf_enum_proc, 0);
+    }
+
+    ret = DeleteMetaFile(hmf);
+    ok( ret, "DeleteMetaFile error %d\n", GetLastError());
+}
+
 static INT CALLBACK EmfEnumProc(HDC hdc, HANDLETABLE *lpHTable, const ENHMETARECORD *lpEMFR, INT nObj, LPARAM lpData)
 {
     LPMETAFILEPICT lpMFP = (LPMETAFILEPICT)lpData;
@@ -3461,6 +3517,7 @@ START_TEST(metafile)
     test_SetMetaFileBits();
     test_mf_ExtTextOut_on_path();
     test_mf_clipping();
+    test_mf_GetPath();
 
     /* For metafile conversions */
     test_mf_conversions();
