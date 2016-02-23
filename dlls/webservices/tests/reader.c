@@ -2005,6 +2005,184 @@ static void test_WsFindAttribute(void)
     WsFreeReader( reader );
 }
 
+static void prepare_namespace_test( WS_XML_READER *reader, const char *data )
+{
+    HRESULT hr;
+    ULONG size = strlen( data );
+
+    hr = set_input( reader, data, size );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+}
+
+static void test_WsGetNamespaceFromPrefix(void)
+{
+    WS_XML_STRING prefix = {0, NULL};
+    const WS_XML_STRING *ns;
+    const WS_XML_NODE *node;
+    WS_XML_READER *reader;
+    HRESULT hr;
+
+    hr = WsCreateReader( NULL, 0, &reader, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetNamespaceFromPrefix( NULL, NULL, FALSE, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsGetNamespaceFromPrefix( NULL, NULL, FALSE, &ns, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsGetNamespaceFromPrefix( NULL, &prefix, FALSE, &ns, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    ns = (const WS_XML_STRING *)0xdeadbeef;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    ok( ns == (const WS_XML_STRING *)0xdeadbeef, "ns set\n" );
+
+    hr = set_input( reader, "<prefix:t xmlns:prefix2='ns'/>", sizeof("<prefix:t xmlns:prefix2='ns'/>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadStartElement( reader, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    prepare_namespace_test( reader, "<t></t>" );
+    ns = NULL;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( ns != NULL, "ns not set\n" );
+    if (ns) ok( !ns->length, "got %u\n", ns->length );
+
+    prepare_namespace_test( reader, "<t xmls='ns'></t>" );
+    ns = NULL;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( ns != NULL, "ns not set\n" );
+    if (ns) ok( !ns->length, "got %u\n", ns->length );
+
+    prepare_namespace_test( reader, "<prefix:t xmlns:prefix='ns'></t>" );
+    ns = NULL;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( ns != NULL, "ns not set\n" );
+    if (ns) ok( !ns->length, "got %u\n", ns->length );
+
+    prepare_namespace_test( reader, "<prefix:t xmlns:prefix='ns'></t>" );
+    prefix.bytes = (BYTE *)"prefix";
+    prefix.length = 6;
+    ns = NULL;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( ns != NULL, "ns not set\n" );
+    if (ns)
+    {
+        ok( ns->length == 2, "got %u\n", ns->length );
+        ok( !memcmp( ns->bytes, "ns", 2 ), "wrong data\n" );
+    }
+
+    prepare_namespace_test( reader, "<t xmlns:prefix='ns'>>/t>" );
+    ns = NULL;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( ns != NULL, "ns not set\n" );
+    if (ns)
+    {
+        ok( ns->length == 2, "got %u\n", ns->length );
+        ok( !memcmp( ns->bytes, "ns", 2 ), "wrong data\n" );
+    }
+
+    hr = set_input( reader, "<t xmlns:prefix='ns'></t>", sizeof("<t xmlns:prefix='ns'></t>") - 1 );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadToStartElement( reader, NULL, NULL, NULL, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetReaderNode( reader, &node, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    if (node)
+    {
+        WS_XML_ELEMENT_NODE *elem = (WS_XML_ELEMENT_NODE *)node;
+        WS_XML_ATTRIBUTE *attr;
+        WS_XML_UTF8_TEXT *text;
+
+        ok( elem->node.nodeType == WS_XML_NODE_TYPE_ELEMENT, "got %u\n", elem->node.nodeType );
+        ok( elem->attributeCount == 1, "got %u\n", elem->attributeCount );
+        ok( elem->attributes != NULL, "attributes not set\n" );
+
+        attr = elem->attributes[0];
+        ok( attr->singleQuote, "singleQuote not set\n" );
+        ok( attr->isXmlNs, "isXmlNs not set\n" );
+        ok( attr->prefix != NULL, "prefix not set\n" );
+        ok( attr->prefix->length == 6, "got %u\n", attr->prefix->length );
+        ok( attr->prefix->bytes != NULL, "bytes not set\n" );
+        ok( !memcmp( attr->prefix->bytes, "prefix", 6 ), "wrong data\n" );
+        ok( attr->localName != NULL, "localName not set\n" );
+        ok( attr->localName->length == 6, "got %u\n", attr->localName->length );
+        ok( !memcmp( attr->localName->bytes, "prefix", 6 ), "wrong data\n" );
+        ok( attr->ns != NULL, "ns not set\n" );
+        ok( attr->ns->length == 2, "got %u\n", attr->ns->length );
+        ok( attr->ns->bytes != NULL, "bytes set\n" );
+        ok( !memcmp( attr->ns->bytes, "ns", 2 ), "wrong data\n" );
+        ok( attr->value != NULL, "value not set\n" );
+
+        text = (WS_XML_UTF8_TEXT *)attr->value;
+        ok( attr->value->textType == WS_XML_TEXT_TYPE_UTF8, "got %u\n", attr->value->textType );
+        ok( !text->value.length, "got %u\n", text->value.length );
+        ok( text->value.bytes == NULL, "bytes set\n" );
+    }
+
+    prepare_namespace_test( reader, "<t xmlns:prefix='ns'></t>" );
+    hr = WsReadStartElement( reader, NULL );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsReadEndElement( reader, NULL );
+    todo_wine ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    prepare_namespace_test( reader, "<t></t>" );
+    ns = NULL;
+    prefix.bytes = (BYTE *)"xml";
+    prefix.length = 3;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( ns != NULL, "ns not set\n" );
+    if (ns)
+    {
+        ok( ns->length == 36, "got %u\n", ns->length );
+        ok( !memcmp( ns->bytes, "http://www.w3.org/XML/1998/namespace", 36 ), "wrong data\n" );
+    }
+
+    prepare_namespace_test( reader, "<t></t>" );
+    ns = NULL;
+    prefix.bytes = (BYTE *)"xmlns";
+    prefix.length = 5;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( ns != NULL, "ns not set\n" );
+    if (ns)
+    {
+        ok( ns->length == 29, "got %u\n", ns->length );
+        ok( !memcmp( ns->bytes, "http://www.w3.org/2000/xmlns/", 29 ), "wrong data\n" );
+    }
+
+    prepare_namespace_test( reader, "<t></t>" );
+    ns = (WS_XML_STRING *)0xdeadbeef;
+    prefix.bytes = (BYTE *)"prefix2";
+    prefix.length = 7;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, TRUE, &ns, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    ok( ns == (WS_XML_STRING *)0xdeadbeef, "ns set\n" );
+
+    prepare_namespace_test( reader, "<t></t>" );
+    ns = (WS_XML_STRING *)0xdeadbeef;
+    prefix.bytes = (BYTE *)"prefix2";
+    prefix.length = 7;
+    hr = WsGetNamespaceFromPrefix( reader, &prefix, FALSE, &ns, NULL );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+    ok( ns == NULL, "ns not set\n" );
+
+    WsFreeReader( reader );
+}
+
 START_TEST(reader)
 {
     test_WsCreateError();
@@ -2025,4 +2203,5 @@ START_TEST(reader)
     test_simple_struct_type();
     test_cdata();
     test_WsFindAttribute();
+    test_WsGetNamespaceFromPrefix();
 }

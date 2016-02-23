@@ -556,6 +556,8 @@ void WINAPI WsFreeWriter(WS_XML_WRITER*);
 HRESULT WINAPI WsGetErrorProperty(WS_ERROR*, WS_ERROR_PROPERTY_ID, void*, ULONG);
 HRESULT WINAPI WsGetErrorString(WS_ERROR*, ULONG, WS_STRING*);
 HRESULT WINAPI WsGetHeapProperty(WS_HEAP*, WS_HEAP_PROPERTY_ID, void*, ULONG, WS_ERROR*);
+HRESULT WINAPI WsGetNamespaceFromPrefix(WS_XML_READER*, const WS_XML_STRING*, BOOL,
+                                        const WS_XML_STRING**, WS_ERROR*);
 HRESULT WINAPI WsGetPrefixFromNamespace(WS_XML_WRITER*, const WS_XML_STRING*, BOOL,
                                         const WS_XML_STRING**, WS_ERROR*);
 HRESULT WINAPI WsGetReaderNode(WS_XML_READER*, const WS_XML_NODE**, WS_ERROR*);

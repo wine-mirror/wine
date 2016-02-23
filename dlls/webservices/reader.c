@@ -607,6 +607,67 @@ HRESULT WINAPI WsGetHeapProperty( WS_HEAP *handle, WS_HEAP_PROPERTY_ID id, void 
 }
 
 /**************************************************************************
+ *          WsGetNamespaceFromPrefix		[webservices.@]
+ */
+HRESULT WINAPI WsGetNamespaceFromPrefix( WS_XML_READER *handle, const WS_XML_STRING *prefix,
+                                         BOOL required, const WS_XML_STRING **ns, WS_ERROR *error )
+{
+    static const WS_XML_STRING xml = {3, (BYTE *)"xml"};
+    static const WS_XML_STRING xmlns = {5, (BYTE *)"xmlns"};
+    static const WS_XML_STRING empty_ns = {0, NULL};
+    static const WS_XML_STRING xml_ns = {36, (BYTE *)"http://www.w3.org/XML/1998/namespace"};
+    static const WS_XML_STRING xmlns_ns = {29, (BYTE *)"http://www.w3.org/2000/xmlns/"};
+    struct reader *reader = (struct reader *)handle;
+    BOOL found = FALSE;
+
+    TRACE( "%p %s %d %p %p\n", handle, debugstr_xmlstr(prefix), required, ns, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!reader || !prefix || !ns) return E_INVALIDARG;
+    if (reader->state != READER_STATE_STARTELEMENT) return WS_E_INVALID_OPERATION;
+
+    if (!prefix->length)
+    {
+        *ns = &empty_ns;
+        found = TRUE;
+    }
+    else if (WsXmlStringEquals( prefix, &xml, NULL ) == S_OK)
+    {
+        *ns = &xml_ns;
+        found = TRUE;
+    }
+    else if (WsXmlStringEquals( prefix, &xmlns, NULL ) == S_OK)
+    {
+        *ns = &xmlns_ns;
+        found = TRUE;
+    }
+    else
+    {
+        WS_XML_ELEMENT_NODE *elem = &reader->current->hdr;
+        ULONG i;
+
+        for (i = 0; i < elem->attributeCount; i++)
+        {
+            if (!elem->attributes[i]->isXmlNs) continue;
+            if (WsXmlStringEquals( prefix, elem->attributes[i]->prefix, NULL ) == S_OK)
+            {
+                *ns = elem->attributes[i]->ns;
+                found = TRUE;
+                break;
+            }
+        }
+    }
+
+    if (!found)
+    {
+        if (required) return WS_E_INVALID_FORMAT;
+        *ns = NULL;
+        return S_FALSE;
+    }
+    return S_OK;
+}
+
+/**************************************************************************
  *          WsGetReaderNode		[webservices.@]
  */
 HRESULT WINAPI WsGetReaderNode( WS_XML_READER *handle, const WS_XML_NODE **node,

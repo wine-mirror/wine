@@ -75,7 +75,7 @@
 @ stub WsGetMetadataEndpoints
 @ stub WsGetMetadataProperty
 @ stub WsGetMissingMetadataDocumentAddress
-@ stub WsGetNamespaceFromPrefix
+@ stdcall WsGetNamespaceFromPrefix(ptr ptr long ptr ptr)
 @ stub WsGetOperationContextProperty
 @ stub WsGetPolicyAlternativeCount
 @ stub WsGetPolicyProperty
