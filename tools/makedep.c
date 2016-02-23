@@ -1988,6 +1988,23 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
 
 
 /*******************************************************************
+ *         get_default_imports
+ */
+static struct strarray get_default_imports( const struct makefile *make )
+{
+    struct strarray ret = empty_strarray;
+
+    if (strarray_exists( &make->extradllflags, "-nodefaultlibs" )) return ret;
+    if (strarray_exists( &make->appmode, "-mno-cygwin" )) strarray_add( &ret, "msvcrt" );
+    if (make->is_win16) strarray_add( &ret, "kernel" );
+    strarray_add( &ret, "kernel32" );
+    strarray_add( &ret, "ntdll" );
+    strarray_add( &ret, "winecrt0" );
+    return ret;
+}
+
+
+/*******************************************************************
  *         add_install_rule
  */
 static void add_install_rule( const struct makefile *make, struct strarray *install_rules,
@@ -2527,6 +2544,7 @@ static struct strarray output_sources( const struct makefile *make )
             spec_file = src_dir_path( make, replace_extension( make->module, ".dll", ".spec" ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, 0 ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->imports, 0 ));
+        add_import_libs( make, &dep_libs, get_default_imports( make ), 0 );  /* dependencies only */
         for (i = 0; i < make->delayimports.count; i++)
             strarray_add( &all_libs, strmake( "-Wb,-d%s", make->delayimports.str[i] ));
         strarray_add( &all_libs, "-lwine" );
@@ -2758,6 +2776,7 @@ static struct strarray output_sources( const struct makefile *make )
         struct strarray dep_libs = empty_strarray;
         struct strarray all_libs = add_import_libs( make, &dep_libs, make->imports, 0 );
 
+        add_import_libs( make, &dep_libs, get_default_imports( make ), 0 );  /* dependencies only */
         strarray_addall( &all_libs, libs );
         strarray_add( &all_targets, strmake( "%s%s", testmodule, dll_ext ));
         strarray_add( &clean_files, strmake( "%s%s", stripped, dll_ext ));
@@ -2805,6 +2824,7 @@ static struct strarray output_sources( const struct makefile *make )
 
             dep_libs = empty_strarray;
             all_libs = add_import_libs( make, &dep_libs, make->imports, 1 );
+            add_import_libs( make, &dep_libs, get_default_imports( make ), 1 );  /* dependencies only */
             strarray_addall( &all_libs, libs );
             strarray_add( &clean_files, crosstest );
             output( "%s: %s\n", obj_dir_path( make, "crosstest" ), obj_dir_path( make, crosstest ));
