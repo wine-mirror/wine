@@ -310,12 +310,12 @@
 @ cdecl -arch=arm ??0_Lockit@std@@QAA@XZ(ptr) msvcp120.??0_Lockit@std@@QAA@XZ
 @ thiscall -arch=i386 ??0_Lockit@std@@QAE@XZ(ptr) msvcp120.??0_Lockit@std@@QAE@XZ
 @ cdecl -arch=win64 ??0_Lockit@std@@QEAA@XZ(ptr) msvcp120.??0_Lockit@std@@QEAA@XZ
-@ stub -arch=arm ??0_Pad@std@@QAA@ABV01@@Z
-@ stub -arch=i386 ??0_Pad@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0_Pad@std@@QEAA@AEBV01@@Z
-@ stub -arch=arm ??0_Pad@std@@QAA@XZ
-@ stub -arch=i386 ??0_Pad@std@@QAE@XZ
-@ stub -arch=win64 ??0_Pad@std@@QEAA@XZ
+@ cdecl -arch=arm ??0_Pad@std@@QAA@ABV01@@Z(ptr ptr) msvcp120.??0_Pad@std@@QAA@ABV01@@Z
+@ thiscall -arch=i386 ??0_Pad@std@@QAE@ABV01@@Z(ptr ptr) msvcp120.??0_Pad@std@@QAE@ABV01@@Z
+@ cdecl -arch=win64 ??0_Pad@std@@QEAA@AEBV01@@Z(ptr ptr) msvcp120.??0_Pad@std@@QEAA@AEBV01@@Z
+@ cdecl -arch=arm ??0_Pad@std@@QAA@XZ(ptr) msvcp120.??0_Pad@std@@QAA@XZ
+@ thiscall -arch=i386 ??0_Pad@std@@QAE@XZ(ptr) msvcp120.??0_Pad@std@@QAE@XZ
+@ cdecl -arch=win64 ??0_Pad@std@@QEAA@XZ(ptr) msvcp120.??0_Pad@std@@QEAA@XZ
 @ stub -arch=arm ??0_Runtime_object@details@Concurrency@@QAA@H@Z
 @ stub -arch=i386 ??0_Runtime_object@details@Concurrency@@QAE@H@Z
 @ stub -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@H@Z
@@ -496,9 +496,9 @@
 @ cdecl -arch=arm ??1_Lockit@std@@QAA@XZ(ptr) msvcp120.??1_Lockit@std@@QAA@XZ
 @ thiscall -arch=i386 ??1_Lockit@std@@QAE@XZ(ptr) msvcp120.??1_Lockit@std@@QAE@XZ
 @ cdecl -arch=win64 ??1_Lockit@std@@QEAA@XZ(ptr) msvcp120.??1_Lockit@std@@QEAA@XZ
-@ stub -arch=arm ??1_Pad@std@@QAA@XZ
-@ stub -arch=i386 ??1_Pad@std@@QAE@XZ
-@ stub -arch=win64 ??1_Pad@std@@QEAA@XZ
+@ cdecl -arch=arm ??1_Pad@std@@QAA@XZ(ptr) msvcp120.??1_Pad@std@@QAA@XZ
+@ thiscall -arch=i386 ??1_Pad@std@@QAE@XZ(ptr) msvcp120.??1_Pad@std@@QAE@XZ
+@ cdecl -arch=win64 ??1_Pad@std@@QEAA@XZ(ptr) msvcp120.??1_Pad@std@@QEAA@XZ
 @ cdecl -arch=arm ??1_Timevec@std@@QAA@XZ(ptr) msvcp120.??1_Timevec@std@@QAA@XZ
 @ thiscall -arch=i386 ??1_Timevec@std@@QAE@XZ(ptr) msvcp120.??1_Timevec@std@@QAE@XZ
 @ cdecl -arch=win64 ??1_Timevec@std@@QEAA@XZ(ptr) msvcp120.??1_Timevec@std@@QEAA@XZ
@@ -589,9 +589,9 @@
 @ stub -arch=arm ??4_Init_locks@std@@QAAAAV01@ABV01@@Z
 @ stub -arch=i386 ??4_Init_locks@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_Init_locks@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=arm ??4_Pad@std@@QAAAAV01@ABV01@@Z
-@ stub -arch=i386 ??4_Pad@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4_Pad@std@@QEAAAEAV01@AEBV01@@Z
+@ cdecl -arch=arm ??4_Pad@std@@QAAAAV01@ABV01@@Z(ptr ptr) msvcp120.??4_Pad@std@@QAAAAV01@ABV01@@Z
+@ thiscall -arch=i386 ??4_Pad@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp120.??4_Pad@std@@QAEAAV01@ABV01@@Z
+@ cdecl -arch=win64 ??4_Pad@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp120.??4_Pad@std@@QEAAAEAV01@AEBV01@@Z
 @ cdecl -arch=arm ??4_Timevec@std@@QAAAAV01@ABV01@@Z(ptr ptr) msvcp120.??4_Timevec@std@@QAAAAV01@ABV01@@Z
 @ thiscall -arch=i386 ??4_Timevec@std@@QAEAAV01@ABV01@@Z(ptr ptr) msvcp120.??4_Timevec@std@@QAEAAV01@ABV01@@Z
 @ cdecl -arch=win64 ??4_Timevec@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) msvcp120.??4_Timevec@std@@QEAAAEAV01@AEBV01@@Z
@@ -951,7 +951,7 @@
 @ extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ msvcp120.??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@
 @ stub ??_7_Facet_base@std@@6B@
 @ extern ??_7_Locimp@locale@std@@6B@ msvcp120.??_7_Locimp@locale@std@@6B@
-@ stub ??_7_Pad@std@@6B@
+@ extern ??_7_Pad@std@@6B@ msvcp120.??_7_Pad@std@@6B@
 @ extern ??_7codecvt_base@std@@6B@ msvcp120.??_7codecvt_base@std@@6B@
 @ extern ??_7ctype_base@std@@6B@ msvcp120.??_7ctype_base@std@@6B@
 @ extern ??_7facet@locale@std@@6B@ msvcp120.??_7facet@locale@std@@6B@
@@ -1528,9 +1528,9 @@
 @ cdecl -ret64 -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z(str) msvcp120.?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z
 @ stub -arch=win32 ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z
 @ stub -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z
-@ stub -arch=arm ?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z
-@ stub -arch=i386 ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z
-@ stub -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z
+@ cdecl -arch=arm ?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z(ptr ptr) msvcp120.?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z
+@ thiscall -arch=i386 ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z(ptr ptr) msvcp120.?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z
+@ cdecl -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z(ptr ptr) msvcp120.?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z
 @ cdecl -arch=win32 ?_Link@sys@tr2@std@@YAHPBD0@Z(str str) msvcp120.?_Link@sys@tr2@std@@YAHPBD0@Z
 @ cdecl -arch=win64 ?_Link@sys@tr2@std@@YAHPEBD0@Z(str str) msvcp120.?_Link@sys@tr2@std@@YAHPEBD0@Z
 @ stub -arch=win32 ?_Link@sys@tr2@std@@YAHPB_W0@Z
@@ -1676,9 +1676,9 @@
 @ cdecl -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z(ptr ptr ptr) msvcp120.?_Read_dir@sys@tr2@std@@YAPEADAEAY0BAE@DPEAXAEAW4file_type@123@@Z
 @ stub -arch=win32 ?_Read_dir@sys@tr2@std@@YAPA_WAAY0BAE@_WPAXAAW4file_type@123@@Z
 @ stub -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEA_WAEAY0BAE@_WPEAXAEAW4file_type@123@@Z
-@ stub -arch=arm ?_Release@_Pad@std@@QAAXXZ
-@ stub -arch=i386 ?_Release@_Pad@std@@QAEXXZ
-@ stub -arch=win64 ?_Release@_Pad@std@@QEAAXXZ
+@ cdecl -arch=arm ?_Release@_Pad@std@@QAAXXZ(ptr) msvcp120.?_Release@_Pad@std@@QAAXXZ
+@ thiscall -arch=i386 ?_Release@_Pad@std@@QAEXXZ(ptr) msvcp120.?_Release@_Pad@std@@QAEXXZ
+@ cdecl -arch=win64 ?_Release@_Pad@std@@QEAAXXZ(ptr) msvcp120.?_Release@_Pad@std@@QEAAXXZ
 @ cdecl -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPBD@Z(str) msvcp120.?_Remove_dir@sys@tr2@std@@YA_NPBD@Z
 @ cdecl -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z(str) msvcp120.?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z
 @ cdecl -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z(wstr) msvcp120.?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z

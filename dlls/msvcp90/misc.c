@@ -710,20 +710,6 @@ const error_category* __cdecl std_iostream_category(void)
     TRACE("()\n");
     return &iostream_category.base;
 }
-
-#ifndef __GNUC__
-void __asm_dummy_vtables(void) {
-#endif
-    __ASM_VTABLE(iostream_category,
-            VTABLE_ADD_FUNC(custom_category_vector_dtor)
-            VTABLE_ADD_FUNC(custom_category_name)
-            VTABLE_ADD_FUNC(custom_category_message)
-            VTABLE_ADD_FUNC(custom_category_default_error_condition)
-            VTABLE_ADD_FUNC(custom_category_equivalent)
-            VTABLE_ADD_FUNC(custom_category_equivalent_code));
-#ifndef __GNUC__
-}
-#endif
 #endif
 
 #if _MSVCP_VER >= 110
@@ -765,28 +751,6 @@ void __cdecl _Do_call(void *this)
     CALL_VTBL_FUNC(this, 0, void, (void*), (this));
 }
 #endif
-
-void init_misc(void *base)
-{
-#ifdef __x86_64__
-#if _MSVCP_VER == 100
-    init_error_category_rtti(base);
-    init_iostream_category_rtti(base);
-#endif
-#endif
-
-#if _MSVCP_VER == 100
-    iostream_category_ctor(&iostream_category);
-#endif
-}
-
-void free_misc(void)
-{
-#if _MSVCP_VER >= 110
-    if(keyed_event)
-        NtClose(keyed_event);
-#endif
-}
 
 #if _MSVCP_VER >= 110
 typedef struct
@@ -909,4 +873,120 @@ int __cdecl _Thrd_create(_Thrd_t *thr, _Thrd_start_t proc, void *arg)
     if(ret) free(wrapped_arg);
     return ret;
 }
+
+typedef struct
+{
+    const vtable_ptr *vtable;
+    _Cnd_t cnd;
+    _Mtx_t mtx;
+    MSVCP_bool launched;
+} _Pad;
+
+DEFINE_RTTI_DATA0(_Pad, 0, ".?AV_Pad@std@@")
+
+/* ??_7_Pad@std@@6B@ */
+extern const vtable_ptr MSVCP__Pad_vtable;
+
+/* ??0_Pad@std@@QAE@XZ */
+/* ??0_Pad@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Pad_ctor, 4)
+_Pad* __thiscall _Pad_ctor(_Pad *this)
+{
+    FIXME("(%p) stub\n", this);
+    return NULL;
+}
+
+/* ??4_Pad@std@@QAEAAV01@ABV01@@Z */
+/* ??4_Pad@std@@QEAAAEAV01@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(_Pad_op_assign, 8)
+_Pad* __thiscall _Pad_op_assign(_Pad *this, const _Pad *copy)
+{
+    FIXME("(%p %p) stub\n", this, copy);
+    return NULL;
+}
+
+/* ??0_Pad@std@@QAE@ABV01@@Z */
+/* ??0_Pad@std@@QEAA@AEBV01@@Z */
+DEFINE_THISCALL_WRAPPER(_Pad_copy_ctor, 8)
+_Pad* __thiscall _Pad_copy_ctor(_Pad *this, const _Pad *copy)
+{
+    FIXME("(%p %p) stub\n", this, copy);
+    return NULL;
+}
+
+/* ??1_Pad@std@@QAE@XZ */
+/* ??1_Pad@std@@QEAA@XZ */
+DEFINE_THISCALL_WRAPPER(_Pad_dtor, 4)
+void __thiscall _Pad_dtor(_Pad *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+/* ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z */
+/* ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z */
+DEFINE_THISCALL_WRAPPER(_Pad__Launch, 8)
+void __thiscall _Pad__Launch(_Pad *this, _Thrd_t *thr)
+{
+    FIXME("(%p %p) stub\n", this, thr);
+}
+
+/* ?_Release@_Pad@std@@QAEXXZ */
+/* ?_Release@_Pad@std@@QEAAXXZ */
+DEFINE_THISCALL_WRAPPER(_Pad__Release, 4)
+void __thiscall _Pad__Release(_Pad *this)
+{
+    FIXME("(%p) stub\n", this);
+}
+
+DEFINE_THISCALL_WRAPPER(_Pad__Go, 4)
+unsigned int __thiscall _Pad__Go(_Pad *this)
+{
+    ERR("(%p) should not be called\n", this);
+    return 0;
+}
 #endif
+
+#ifndef __GNUC__
+void __asm_dummy_vtables(void) {
+#endif
+#if _MSVCP_VER == 100
+    __ASM_VTABLE(iostream_category,
+            VTABLE_ADD_FUNC(custom_category_vector_dtor)
+            VTABLE_ADD_FUNC(custom_category_name)
+            VTABLE_ADD_FUNC(custom_category_message)
+            VTABLE_ADD_FUNC(custom_category_default_error_condition)
+            VTABLE_ADD_FUNC(custom_category_equivalent)
+            VTABLE_ADD_FUNC(custom_category_equivalent_code));
+#endif
+#if _MSVCP_VER >= 110
+    __ASM_VTABLE(_Pad,
+            VTABLE_ADD_FUNC(_Pad__Go));
+#endif
+#ifndef __GNUC__
+}
+#endif
+
+void init_misc(void *base)
+{
+#ifdef __x86_64__
+#if _MSVCP_VER == 100
+    init_error_category_rtti(base);
+    init_iostream_category_rtti(base);
+#endif
+#if _MSVCP_VER >= 110
+    init__Pad_rtti(base);
+#endif
+#endif
+
+#if _MSVCP_VER == 100
+    iostream_category_ctor(&iostream_category);
+#endif
+}
+
+void free_misc(void)
+{
+#if _MSVCP_VER >= 110
+    if(keyed_event)
+        NtClose(keyed_event);
+#endif
+}

@@ -310,12 +310,12 @@
 @ cdecl -arch=arm ??0_Lockit@std@@QAA@XZ(ptr) _Lockit_ctor
 @ thiscall -arch=i386 ??0_Lockit@std@@QAE@XZ(ptr) _Lockit_ctor
 @ cdecl -arch=win64 ??0_Lockit@std@@QEAA@XZ(ptr) _Lockit_ctor
-@ stub -arch=arm ??0_Pad@std@@QAA@ABV01@@Z
-@ stub -arch=i386 ??0_Pad@std@@QAE@ABV01@@Z
-@ stub -arch=win64 ??0_Pad@std@@QEAA@AEBV01@@Z
-@ stub -arch=arm ??0_Pad@std@@QAA@XZ
-@ stub -arch=i386 ??0_Pad@std@@QAE@XZ
-@ stub -arch=win64 ??0_Pad@std@@QEAA@XZ
+@ cdecl -arch=arm ??0_Pad@std@@QAA@ABV01@@Z(ptr ptr) _Pad_copy_ctor
+@ thiscall -arch=i386 ??0_Pad@std@@QAE@ABV01@@Z(ptr ptr) _Pad_copy_ctor
+@ cdecl -arch=win64 ??0_Pad@std@@QEAA@AEBV01@@Z(ptr ptr) _Pad_copy_ctor
+@ cdecl -arch=arm ??0_Pad@std@@QAA@XZ(ptr) _Pad_ctor
+@ thiscall -arch=i386 ??0_Pad@std@@QAE@XZ(ptr) _Pad_ctor
+@ cdecl -arch=win64 ??0_Pad@std@@QEAA@XZ(ptr) _Pad_ctor
 @ stub -arch=arm ??0_Runtime_object@details@Concurrency@@QAA@H@Z
 @ stub -arch=i386 ??0_Runtime_object@details@Concurrency@@QAE@H@Z
 @ stub -arch=win64 ??0_Runtime_object@details@Concurrency@@QEAA@H@Z
@@ -496,9 +496,9 @@
 @ cdecl -arch=arm ??1_Lockit@std@@QAA@XZ(ptr) _Lockit_dtor
 @ thiscall -arch=i386 ??1_Lockit@std@@QAE@XZ(ptr) _Lockit_dtor
 @ cdecl -arch=win64 ??1_Lockit@std@@QEAA@XZ(ptr) _Lockit_dtor
-@ stub -arch=arm ??1_Pad@std@@QAA@XZ
-@ stub -arch=i386 ??1_Pad@std@@QAE@XZ
-@ stub -arch=win64 ??1_Pad@std@@QEAA@XZ
+@ cdecl -arch=arm ??1_Pad@std@@QAA@XZ(ptr) _Pad_dtor
+@ thiscall -arch=i386 ??1_Pad@std@@QAE@XZ(ptr) _Pad_dtor
+@ cdecl -arch=win64 ??1_Pad@std@@QEAA@XZ(ptr) _Pad_dtor
 @ cdecl -arch=arm ??1_Timevec@std@@QAA@XZ(ptr) _Timevec_dtor
 @ thiscall -arch=i386 ??1_Timevec@std@@QAE@XZ(ptr) _Timevec_dtor
 @ cdecl -arch=win64 ??1_Timevec@std@@QEAA@XZ(ptr) _Timevec_dtor
@@ -589,9 +589,9 @@
 @ stub -arch=arm ??4_Init_locks@std@@QAAAAV01@ABV01@@Z
 @ stub -arch=i386 ??4_Init_locks@std@@QAEAAV01@ABV01@@Z
 @ stub -arch=win64 ??4_Init_locks@std@@QEAAAEAV01@AEBV01@@Z
-@ stub -arch=arm ??4_Pad@std@@QAAAAV01@ABV01@@Z
-@ stub -arch=i386 ??4_Pad@std@@QAEAAV01@ABV01@@Z
-@ stub -arch=win64 ??4_Pad@std@@QEAAAEAV01@AEBV01@@Z
+@ cdecl -arch=arm ??4_Pad@std@@QAAAAV01@ABV01@@Z(ptr ptr) _Pad_op_assign
+@ thiscall -arch=i386 ??4_Pad@std@@QAEAAV01@ABV01@@Z(ptr ptr) _Pad_op_assign
+@ cdecl -arch=win64 ??4_Pad@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) _Pad_op_assign
 @ cdecl -arch=arm ??4_Timevec@std@@QAAAAV01@ABV01@@Z(ptr ptr) _Timevec_op_assign
 @ thiscall -arch=i386 ??4_Timevec@std@@QAEAAV01@ABV01@@Z(ptr ptr) _Timevec_op_assign
 @ cdecl -arch=win64 ??4_Timevec@std@@QEAAAEAV01@AEBV01@@Z(ptr ptr) _Timevec_op_assign
@@ -951,7 +951,7 @@
 @ extern ??_7?$time_put@_WV?$ostreambuf_iterator@_WU?$char_traits@_W@std@@@std@@@std@@6B@ MSVCP_time_put_wchar_vtable
 @ stub ??_7_Facet_base@std@@6B@
 @ extern ??_7_Locimp@locale@std@@6B@ MSVCP_locale__Locimp_vtable
-@ stub ??_7_Pad@std@@6B@
+@ extern ??_7_Pad@std@@6B@ MSVCP__Pad_vtable
 @ extern ??_7codecvt_base@std@@6B@ MSVCP_codecvt_base_vtable
 @ extern ??_7ctype_base@std@@6B@ MSVCP_ctype_base_vtable
 @ extern ??_7facet@locale@std@@6B@ MSVCP_locale_facet_vtable
@@ -1567,9 +1567,9 @@
 @ cdecl -ret64 -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEBD@Z(str) tr2_sys__Last_write_time
 @ stub -arch=win32 ?_Last_write_time@sys@tr2@std@@YA_JPB_W@Z
 @ stub -arch=win64 ?_Last_write_time@sys@tr2@std@@YA_JPEB_W@Z
-@ stub -arch=arm ?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z
-@ stub -arch=i386 ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z
-@ stub -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z
+@ cdecl -arch=arm ?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z(ptr ptr) _Pad__Launch
+@ thiscall -arch=i386 ?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z(ptr ptr) _Pad__Launch
+@ cdecl -arch=win64 ?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z(ptr ptr) _Pad__Launch
 @ cdecl -arch=win32 ?_Link@sys@tr2@std@@YAHPBD0@Z(str str) tr2_sys__Link
 @ cdecl -arch=win64 ?_Link@sys@tr2@std@@YAHPEBD0@Z(str str) tr2_sys__Link
 @ stub -arch=win32 ?_Link@sys@tr2@std@@YAHPB_W0@Z
@@ -1715,9 +1715,9 @@
 @ cdecl -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEADPEADPEAXAEAW4file_type@123@@Z(ptr ptr ptr) tr2_sys__Read_dir
 @ stub -arch=win32 ?_Read_dir@sys@tr2@std@@YAPA_WPA_WPAXAAW4file_type@123@@Z
 @ stub -arch=win64 ?_Read_dir@sys@tr2@std@@YAPEA_WPEA_WPEAXAEAW4file_type@123@@Z
-@ stub -arch=arm ?_Release@_Pad@std@@QAAXXZ
-@ stub -arch=i386 ?_Release@_Pad@std@@QAEXXZ
-@ stub -arch=win64 ?_Release@_Pad@std@@QEAAXXZ
+@ cdecl -arch=arm ?_Release@_Pad@std@@QAAXXZ(ptr) _Pad__Release
+@ thiscall -arch=i386 ?_Release@_Pad@std@@QAEXXZ(ptr) _Pad__Release
+@ cdecl -arch=win64 ?_Release@_Pad@std@@QEAAXXZ(ptr) _Pad__Release
 @ cdecl -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPBD@Z(str) tr2_sys__Remove_dir
 @ cdecl -arch=win64 ?_Remove_dir@sys@tr2@std@@YA_NPEBD@Z(str) tr2_sys__Remove_dir
 @ cdecl -arch=win32 ?_Remove_dir@sys@tr2@std@@YA_NPB_W@Z(wstr) tr2_sys__Remove_dir_wchar
