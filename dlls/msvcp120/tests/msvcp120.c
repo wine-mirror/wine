@@ -1614,6 +1614,7 @@ static void test_tr2_sys__Symlink(void)
 
 static void test_tr2_sys__Unlink(void)
 {
+    char temp_path[MAX_PATH], current_path[MAX_PATH];
     int ret, i;
     HANDLE file;
     LARGE_INTEGER file_size;
@@ -1630,6 +1631,10 @@ static void test_tr2_sys__Unlink(void)
         { "not_exist_dir\\not_exist_file", ERROR_PATH_NOT_FOUND, FALSE },
         { NULL, ERROR_PATH_NOT_FOUND, FALSE }
     };
+
+    GetCurrentDirectoryA(MAX_PATH, current_path);
+    GetTempPathA(MAX_PATH, temp_path);
+    ok(SetCurrentDirectoryA(temp_path), "SetCurrentDirectoryA to temp_path failed\n");
 
     ret = p_tr2_sys__Make_dir("tr2_test_dir");
     ok(ret == 1, "tr2_sys__Make_dir(): expect 1 got %d\n", ret);
@@ -1664,6 +1669,8 @@ static void test_tr2_sys__Unlink(void)
     ok(!DeleteFileA("tr2_test_dir/f1_symlink"), "expect tr2_test_dir/f1_symlink not to exist\n");
     ret = p_tr2_sys__Remove_dir("tr2_test_dir");
     ok(ret == 1, "tr2_sys__Remove_dir(): expect 1 got %d\n", ret);
+
+    ok(SetCurrentDirectoryA(current_path), "SetCurrentDirectoryA failed\n");
 }
 
 static int __cdecl thrd_thread(void *arg)
