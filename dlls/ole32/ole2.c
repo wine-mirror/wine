@@ -46,6 +46,7 @@
 
 #include "wine/unicode.h"
 #include "compobj_private.h"
+#include "olestd.h"
 #include "wine/list.h"
 
 #include "wine/debug.h"
@@ -2181,6 +2182,35 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
   return DefWindowProcW (hwnd, uMsg, wParam, lParam);
 }
 
+static HRESULT give_feedback( TrackerWindowInfo *info )
+{
+    HRESULT hr;
+    int res;
+    HCURSOR cur;
+
+    if (info->curDragTarget == NULL)
+        *info->pdwEffect = DROPEFFECT_NONE;
+
+    hr = IDropSource_GiveFeedback( info->dropSource, *info->pdwEffect );
+
+    if (hr == DRAGDROP_S_USEDEFAULTCURSORS)
+    {
+        if (*info->pdwEffect & DROPEFFECT_MOVE)
+            res = CURSOR_MOVE;
+        else if (*info->pdwEffect & DROPEFFECT_COPY)
+            res = CURSOR_COPY;
+        else if (*info->pdwEffect & DROPEFFECT_LINK)
+            res = CURSOR_LINK;
+        else
+            res = CURSOR_NODROP;
+
+        cur = LoadCursorW( hProxyDll, MAKEINTRESOURCEW( res ) );
+        SetCursor( cur );
+    }
+
+    return hr;
+}
+
 /***
  * OLEDD_TrackStateChange()
  *
@@ -2288,48 +2318,7 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
     }
   }
 
-  /*
-   * Now that we have done that, we have to tell the source to give
-   * us feedback on the work being done by the target.  If we don't
-   * have a target, simulate no effect.
-   */
-  if (trackerInfo->curDragTarget==0)
-  {
-    *trackerInfo->pdwEffect = DROPEFFECT_NONE;
-  }
-
-  hr = IDropSource_GiveFeedback(trackerInfo->dropSource,
-  				*trackerInfo->pdwEffect);
-
-  /*
-   * When we ask for feedback from the drop source, sometimes it will
-   * do all the necessary work and sometimes it will not handle it
-   * when that's the case, we must display the standard drag and drop
-   * cursors.
-   */
-  if (hr == DRAGDROP_S_USEDEFAULTCURSORS)
-  {
-    HCURSOR hCur;
-
-    if (*trackerInfo->pdwEffect & DROPEFFECT_MOVE)
-    {
-      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(2));
-    }
-    else if (*trackerInfo->pdwEffect & DROPEFFECT_COPY)
-    {
-      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(3));
-    }
-    else if (*trackerInfo->pdwEffect & DROPEFFECT_LINK)
-    {
-      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(4));
-    }
-    else
-    {
-      hCur = LoadCursorW(hProxyDll, MAKEINTRESOURCEW(1));
-    }
-
-    SetCursor(hCur);
-  }
+  give_feedback( trackerInfo );
 
   /*
    * All the return valued will stop the operation except the S_OK
