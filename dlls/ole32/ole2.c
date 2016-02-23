@@ -68,7 +68,6 @@ typedef struct tagTrackerWindowInfo
 
   BOOL       escPressed;
   HWND       curTargetHWND;	/* window the mouse is hovering over */
-  HWND       curDragTargetHWND; /* might be an ancestor of curTargetHWND */
   IDropTarget* curDragTarget;
   POINTL     curMousePos;       /* current position of the mouse in screen coordinates */
   DWORD      dwKeyState;        /* current state of the shift and ctrl keys and the mouse buttons */
@@ -770,7 +769,6 @@ HRESULT WINAPI DoDragDrop (
   trackerInfo.pdwEffect         = pdwEffect;
   trackerInfo.trackingDone      = FALSE;
   trackerInfo.escPressed        = FALSE;
-  trackerInfo.curDragTargetHWND = 0;
   trackerInfo.curTargetHWND     = 0;
   trackerInfo.curDragTarget     = 0;
 
@@ -2255,7 +2253,6 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
 
       if (next_target_wnd) hwndNewTarget = next_target_wnd;
 
-      trackerInfo->curDragTargetHWND = hwndNewTarget;
       if(trackerInfo->curDragTarget) IDropTarget_Release(trackerInfo->curDragTarget);
       trackerInfo->curDragTarget     = get_droptarget_pointer(hwndNewTarget);
 
@@ -2274,7 +2271,6 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
         /* failed DragEnter() means invalid target */
         if (hr != S_OK)
         {
-          trackerInfo->curDragTargetHWND = 0;
           trackerInfo->curTargetHWND     = 0;
           IDropTarget_Release(trackerInfo->curDragTarget);
           trackerInfo->curDragTarget     = 0;
@@ -2286,7 +2282,6 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
       /*
        * The mouse is not over a window so we don't track anything.
        */
-      trackerInfo->curDragTargetHWND = 0;
       trackerInfo->curTargetHWND     = 0;
       if(trackerInfo->curDragTarget) IDropTarget_Release(trackerInfo->curDragTarget);
       trackerInfo->curDragTarget     = 0;
