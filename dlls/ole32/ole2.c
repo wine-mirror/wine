@@ -2211,6 +2211,38 @@ static void drag_enter( TrackerWindowInfo *info, HWND new_target )
     }
 }
 
+static void drag_end( TrackerWindowInfo *info )
+{
+    HRESULT hr;
+
+    info->trackingDone = TRUE;
+    ReleaseCapture();
+
+    if (info->curDragTarget)
+    {
+        if (info->returnValue == DRAGDROP_S_DROP &&
+            *info->pdwEffect != DROPEFFECT_NONE)
+        {
+            *info->pdwEffect = info->dwOKEffect;
+            hr = IDropTarget_Drop( info->curDragTarget, info->dataObject, info->dwKeyState,
+                                   info->curMousePos, info->pdwEffect );
+            *info->pdwEffect &= info->dwOKEffect;
+
+            if (FAILED( hr ))
+                info->returnValue = hr;
+        }
+        else
+        {
+            IDropTarget_DragLeave( info->curDragTarget );
+            *info->pdwEffect = DROPEFFECT_NONE;
+        }
+        IDropTarget_Release( info->curDragTarget );
+        info->curDragTarget = NULL;
+    }
+    else
+        *info->pdwEffect = DROPEFFECT_NONE;
+}
+
 static HRESULT give_feedback( TrackerWindowInfo *info )
 {
     HRESULT hr;
@@ -2253,7 +2285,6 @@ static HRESULT give_feedback( TrackerWindowInfo *info )
 static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
 {
   HWND   hwndNewTarget = 0;
-  HRESULT  hr = S_OK;
   POINT pt;
 
   /*
@@ -2304,56 +2335,8 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
    * All the return valued will stop the operation except the S_OK
    * return value.
    */
-  if (trackerInfo->returnValue!=S_OK)
-  {
-    /*
-     * Make sure the message loop in DoDragDrop stops
-     */
-    trackerInfo->trackingDone = TRUE;
-
-    /*
-     * Release the mouse in case the drop target decides to show a popup
-     * or a menu or something.
-     */
-    ReleaseCapture();
-
-    /*
-     * If we end-up over a target, drop the object in the target or
-     * inform the target that the operation was cancelled.
-     */
-    if (trackerInfo->curDragTarget)
-    {
-      switch (trackerInfo->returnValue)
-      {
-	/*
-	 * If the source wants us to complete the operation, we tell
-	 * the drop target that we just dropped the object in it.
-	 */
-        case DRAGDROP_S_DROP:
-          if (*trackerInfo->pdwEffect != DROPEFFECT_NONE)
-          {
-            hr = IDropTarget_Drop(trackerInfo->curDragTarget, trackerInfo->dataObject,
-                    trackerInfo->dwKeyState, trackerInfo->curMousePos, trackerInfo->pdwEffect);
-            if (FAILED(hr))
-              trackerInfo->returnValue = hr;
-          }
-          else
-            IDropTarget_DragLeave(trackerInfo->curDragTarget);
-          break;
-
-	/*
-	 * If the source told us that we should cancel, fool the drop
-         * target by telling it that the mouse left its window.
-	 * Also set the drop effect to "NONE" in case the application
-	 * ignores the result of DoDragDrop.
-	 */
-        case DRAGDROP_S_CANCEL:
-	  IDropTarget_DragLeave(trackerInfo->curDragTarget);
-	  *trackerInfo->pdwEffect = DROPEFFECT_NONE;
-	  break;
-      }
-    }
-  }
+  if (trackerInfo->returnValue != S_OK)
+    drag_end( trackerInfo );
 }
 
 /***
