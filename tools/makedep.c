@@ -1646,15 +1646,15 @@ static struct strarray get_expanded_make_var_array( const struct makefile *make,
 
 
 /*******************************************************************
- *         file_local_var
+ *         get_expanded_file_local_var
  */
-static char *file_local_var( const char *file, const char *name )
+static struct strarray get_expanded_file_local_var( const struct makefile *make, const char *file,
+                                                    const char *name )
 {
-    char *p, *var;
+    char *p, *var = strmake( "%s_%s", file, name );
 
-    var = strmake( "%s_%s", file, name );
     for (p = var; *p; p++) if (!isalnum( *p )) *p = '_';
-    return var;
+    return get_expanded_make_var_array( make, var );
 }
 
 
@@ -1878,7 +1878,7 @@ static struct strarray get_local_dependencies( const struct makefile *make, cons
                                                struct strarray targets )
 {
     unsigned int i;
-    struct strarray deps = get_expanded_make_var_array( make, file_local_var( name, "DEPS" ));
+    struct strarray deps = get_expanded_file_local_var( make, name, "DEPS" );
 
     for (i = 0; i < deps.count; i++)
     {
@@ -2184,7 +2184,7 @@ static struct strarray output_sources( const struct makefile *make )
             strarray_add_uniq( &subdirs, subdir );
         }
 
-        extradefs = get_expanded_make_var_array( make, file_local_var( obj, "EXTRADEFS" ));
+        extradefs = get_expanded_file_local_var( make, obj, "EXTRADEFS" );
         get_dependencies( &dependencies, source, source );
 
         if (!strcmp( ext, "y" ))  /* yacc file */
@@ -2339,7 +2339,7 @@ static struct strarray output_sources( const struct makefile *make )
                 else dir = strmake( "$(mandir)/man%s", section );
                 add_install_rule( make, install_rules, dest, xstrdup(obj),
                                   strmake( "d%s/%s.%s", dir, dest, section ));
-                symlinks = get_expanded_make_var_array( make, file_local_var( dest, "SYMLINKS" ));
+                symlinks = get_expanded_file_local_var( make, dest, "SYMLINKS" );
                 for (i = 0; i < symlinks.count; i++)
                     add_install_rule( make, install_rules, symlinks.str[i],
                                       strmake( "%s.%s", dest, section ),
@@ -2714,8 +2714,7 @@ static struct strarray output_sources( const struct makefile *make )
         if ((p = strchr( basename, '.' ))) *p = 0;
 
         strarray_addall( &dep_libs, get_local_dependencies( make, basename, in_files ));
-        strarray_addall( &all_libs, get_expanded_make_var_array( make,
-                                                                 file_local_var( basename, "LDFLAGS" )));
+        strarray_addall( &all_libs, get_expanded_file_local_var( make, basename, "LDFLAGS" ));
         strarray_addall( &all_libs, add_default_libraries( make, &dep_libs ));
 
         output( "%s:", obj_dir_path( make, make->sharedlib ));
@@ -2847,12 +2846,9 @@ static struct strarray output_sources( const struct makefile *make )
         char *program_installed = NULL;
         char *program = strmake( "%s%s", make->programs.str[i], exe_ext );
         struct strarray deps = get_local_dependencies( make, make->programs.str[i], in_files );
-        struct strarray all_libs = get_expanded_make_var_array( make,
-                                                 file_local_var( make->programs.str[i], "LDFLAGS" ));
-        struct strarray objs = get_expanded_make_var_array( make,
-                                                 file_local_var( make->programs.str[i], "OBJS" ));
-        struct strarray symlinks = get_expanded_make_var_array( make,
-                                                 file_local_var( make->programs.str[i], "SYMLINKS" ));
+        struct strarray all_libs = get_expanded_file_local_var( make, make->programs.str[i], "LDFLAGS" );
+        struct strarray objs     = get_expanded_file_local_var( make, make->programs.str[i], "OBJS" );
+        struct strarray symlinks = get_expanded_file_local_var( make, make->programs.str[i], "SYMLINKS" );
 
         if (!objs.count) objs = object_files;
         strarray_addall( &all_libs, add_default_libraries( make, &deps ));
