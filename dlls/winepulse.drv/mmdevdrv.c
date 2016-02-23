@@ -662,7 +662,7 @@ static void pulse_wr_callback(pa_stream *s, size_t bytes, void *userdata)
     UINT32 oldpad = This->pad;
 
     if(This->local_buffer){
-        size_t to_write;
+        UINT32 to_write;
         BYTE *buf = This->local_buffer + This->lcl_offs_bytes;
 
         if(This->pad > bytes){
