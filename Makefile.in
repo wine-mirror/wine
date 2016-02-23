@@ -77,8 +77,6 @@ RUNTESTFLAGS    = -q -P wine
 MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
 WINEBUILD       = $(TOOLSDIR)/tools/winebuild/winebuild$(TOOLSEXT)
 WRC             = $(TOOLSDIR)/tools/wrc/wrc$(TOOLSEXT)
-LIBPORT         = $(top_builddir)/libs/port/libwine_port.a
-LIBWPP          = $(top_builddir)/libs/wpp/libwpp.a
 PACKAGE_VERSION = @PACKAGE_VERSION@
 SED_CMD         = LC_ALL=C sed -e 's,@bindir\@,$(bindir),g' -e 's,@dlldir\@,$(dlldir),g' -e 's,@PACKAGE_STRING\@,@PACKAGE_STRING@,g' -e 's,@PACKAGE_VERSION\@,@PACKAGE_VERSION@,g'
 LDRPATH_INSTALL = @LDRPATH_INSTALL@

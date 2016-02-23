@@ -1892,6 +1892,60 @@ static struct strarray get_local_dependencies( const struct makefile *make, cons
 
 
 /*******************************************************************
+ *         has_static_lib
+ *
+ * Check if makefile builds the named static library.
+ */
+static int has_static_lib( const struct makefile *make, const char *name )
+{
+    if (!make->staticlib) return 0;
+    if (strncmp( make->staticlib, "lib", 3 )) return 0;
+    if (strncmp( make->staticlib + 3, name, strlen(name) )) return 0;
+    return !strcmp( make->staticlib + 3 + strlen(name), ".a" );
+}
+
+
+/*******************************************************************
+ *         add_default_libraries
+ */
+static struct strarray add_default_libraries( const struct makefile *make, struct strarray *deps )
+{
+    struct strarray ret = empty_strarray;
+    struct strarray all_libs = empty_strarray;
+    unsigned int i, j;
+
+    strarray_add( &all_libs, "-lwine_port" );
+    strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
+    strarray_addall( &all_libs, libs );
+
+    for (i = 0; i < all_libs.count; i++)
+    {
+        int found = 0;
+        if (!strncmp( all_libs.str[i], "-l", 2 ))
+        {
+            const char *name = all_libs.str[i] + 2;
+
+            for (j = 0; j < top_makefile->subdirs.count; j++)
+            {
+                const struct makefile *submake = top_makefile->submakes[j];
+
+                if ((found = has_static_lib( submake, name )))
+                {
+                    const char *lib = strmake( "%s/lib%s.a",
+                                               top_obj_dir_path( make, submake->base_dir ), name );
+                    strarray_add( deps, lib );
+                    strarray_add( &ret, lib );
+                    break;
+                }
+            }
+        }
+        if (!found) strarray_add( &ret, all_libs.str[i] );
+    }
+    return ret;
+}
+
+
+/*******************************************************************
  *         add_import_libs
  */
 static struct strarray add_import_libs( const struct makefile *make, struct strarray *deps,
@@ -1919,10 +1973,7 @@ static struct strarray add_import_libs( const struct makefile *make, struct stra
                 break;
             }
 
-            if (submake->staticlib &&
-                !strncmp( submake->staticlib, "lib", 3 ) &&
-                !strncmp( submake->staticlib + 3, name, strlen(name) ) &&
-                !strcmp( submake->staticlib + 3 + strlen(name), ".a" ))
+            if (has_static_lib( submake, name ))
             {
                 const char *dir = top_obj_dir_path( make, submake->base_dir );
 
@@ -2479,9 +2530,7 @@ static struct strarray output_sources( const struct makefile *make )
         for (i = 0; i < make->delayimports.count; i++)
             strarray_add( &all_libs, strmake( "-Wb,-d%s", make->delayimports.str[i] ));
         strarray_add( &all_libs, "-lwine" );
-        strarray_add( &all_libs, top_obj_dir_path( make, "libs/port/libwine_port.a" ));
-        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
-        strarray_addall( &all_libs, libs );
+        strarray_addall( &all_libs, add_default_libraries( make, &dep_libs ));
 
         if (*dll_ext)
         {
@@ -2659,18 +2708,19 @@ static struct strarray output_sources( const struct makefile *make )
         char *basename, *p;
         struct strarray names = get_shared_lib_names( make->sharedlib );
         struct strarray all_libs = empty_strarray;
+        struct strarray dep_libs = empty_strarray;
 
         basename = xstrdup( make->sharedlib );
         if ((p = strchr( basename, '.' ))) *p = 0;
 
+        strarray_addall( &dep_libs, get_local_dependencies( make, basename, in_files ));
         strarray_addall( &all_libs, get_expanded_make_var_array( make,
                                                                  file_local_var( basename, "LDFLAGS" )));
-        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
-        strarray_addall( &all_libs, libs );
+        strarray_addall( &all_libs, add_default_libraries( make, &dep_libs ));
 
         output( "%s:", obj_dir_path( make, make->sharedlib ));
         output_filenames_obj_dir( make, object_files );
-        output_filenames( get_local_dependencies( make, basename, in_files ));
+        output_filenames( dep_libs );
         output( "\n" );
         output( "\t$(CC) -o $@" );
         output_filenames_obj_dir( make, object_files );
@@ -2796,25 +2846,23 @@ static struct strarray output_sources( const struct makefile *make )
     {
         char *program_installed = NULL;
         char *program = strmake( "%s%s", make->programs.str[i], exe_ext );
-        struct strarray all_libs = empty_strarray;
         struct strarray deps = get_local_dependencies( make, make->programs.str[i], in_files );
+        struct strarray all_libs = get_expanded_make_var_array( make,
+                                                 file_local_var( make->programs.str[i], "LDFLAGS" ));
         struct strarray objs = get_expanded_make_var_array( make,
                                                  file_local_var( make->programs.str[i], "OBJS" ));
         struct strarray symlinks = get_expanded_make_var_array( make,
                                                  file_local_var( make->programs.str[i], "SYMLINKS" ));
 
         if (!objs.count) objs = object_files;
+        strarray_addall( &all_libs, add_default_libraries( make, &deps ));
+
         output( "%s:", obj_dir_path( make, program ) );
         output_filenames_obj_dir( make, objs );
         output_filenames( deps );
         output( "\n" );
         output( "\t$(CC) -o $@" );
         output_filenames_obj_dir( make, objs );
-        strarray_add( &all_libs, top_obj_dir_path( make, "libs/port/libwine_port.a" ));
-        strarray_addall( &all_libs, get_expanded_make_var_array( make, "EXTRALIBS" ));
-        strarray_addall( &all_libs, libs );
-        strarray_addall( &all_libs, get_expanded_make_var_array( make,
-                                                      file_local_var( make->programs.str[i], "LDFLAGS" )));
 
         if (strarray_exists( &all_libs, "-lwine" ))
         {
