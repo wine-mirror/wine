@@ -2297,26 +2297,11 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
   trackerInfo->returnValue = IDropSource_QueryContinueDrag(trackerInfo->dropSource,
                                                            trackerInfo->escPressed,
                                                            trackerInfo->dwKeyState);
-  /*
-   * If we are hovering over the same target as before, send the
-   * DragOver notification
-   */
-  if ( (trackerInfo->curDragTarget != 0) &&
-       (trackerInfo->curTargetHWND == hwndNewTarget) )
+
+  if (trackerInfo->curTargetHWND != hwndNewTarget &&
+      (trackerInfo->returnValue == S_OK ||
+       trackerInfo->returnValue == DRAGDROP_S_DROP))
   {
-    *trackerInfo->pdwEffect = trackerInfo->dwOKEffect;
-    IDropTarget_DragOver(trackerInfo->curDragTarget,
-                         trackerInfo->dwKeyState,
-                         trackerInfo->curMousePos,
-                         trackerInfo->pdwEffect);
-    *trackerInfo->pdwEffect &= trackerInfo->dwOKEffect;
-  }
-  else
-  {
-    /*
-     * If we changed window, we have to notify our old target and check for
-     * the new one.
-     */
     if (trackerInfo->curDragTarget)
     {
       IDropTarget_DragLeave(trackerInfo->curDragTarget);
@@ -2327,15 +2312,25 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
 
     if (hwndNewTarget)
       drag_enter( trackerInfo, hwndNewTarget );
+
+    give_feedback( trackerInfo );
+
   }
 
-  give_feedback( trackerInfo );
-
-  /*
-   * All the return valued will stop the operation except the S_OK
-   * return value.
-   */
-  if (trackerInfo->returnValue != S_OK)
+  if (trackerInfo->returnValue == S_OK)
+  {
+    if (trackerInfo->curDragTarget)
+    {
+      *trackerInfo->pdwEffect = trackerInfo->dwOKEffect;
+      IDropTarget_DragOver(trackerInfo->curDragTarget,
+                           trackerInfo->dwKeyState,
+                           trackerInfo->curMousePos,
+                           trackerInfo->pdwEffect);
+      *trackerInfo->pdwEffect &= trackerInfo->dwOKEffect;
+    }
+    give_feedback( trackerInfo );
+  }
+  else
     drag_end( trackerInfo );
 }
 
