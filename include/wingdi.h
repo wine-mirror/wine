@@ -193,7 +193,7 @@ typedef struct tagLOGCOLORSPACEA
   CHAR lcsFilename[MAX_PATH];
 } LOGCOLORSPACEA, *LPLOGCOLORSPACEA;
 
- typedef struct tagLOGCOLORSPACEW
+typedef struct tagLOGCOLORSPACEW
 {
   DWORD lcsSignature;
   DWORD lcsVersion;
