@@ -3864,7 +3864,7 @@
 @ cdecl _Thrd_join(ptr long)
 @ cdecl _Thrd_lt(ptr ptr)
 @ cdecl _Thrd_sleep(ptr)
-@ stub _Thrd_start
+@ cdecl _Thrd_start(ptr ptr ptr)
 @ cdecl _Thrd_yield()
 @ cdecl _Tolower(long ptr)
 @ cdecl _Toupper(long ptr)

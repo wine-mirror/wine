@@ -872,10 +872,41 @@ int __cdecl _Thrd_join(_Thrd_t thr, int *code)
     return 0;
 }
 
-int __cdecl _Thrd_create(_Thrd_t *thr, _Thrd_start_t proc, void *arg)
+int __cdecl _Thrd_start(_Thrd_t *thr, LPTHREAD_START_ROUTINE proc, void *arg)
 {
     TRACE("(%p %p %p)\n", thr, proc, arg);
-    thr->hnd = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)proc, arg, 0, &thr->id);
-    return !thr->hnd;
+    thr->hnd = CreateThread(NULL, 0, proc, arg, 0, &thr->id);
+    return thr->hnd ? 0 : _THRD_ERROR;
+}
+
+typedef struct
+{
+    _Thrd_start_t proc;
+    void *arg;
+} thread_proc_arg;
+
+static DWORD WINAPI thread_proc_wrapper(void *arg)
+{
+    thread_proc_arg wrapped_arg = *((thread_proc_arg*)arg);
+    free(arg);
+    return wrapped_arg.proc(wrapped_arg.arg);
+}
+
+int __cdecl _Thrd_create(_Thrd_t *thr, _Thrd_start_t proc, void *arg)
+{
+    thread_proc_arg *wrapped_arg;
+    int ret;
+
+    TRACE("(%p %p %p)\n", thr, proc, arg);
+
+    wrapped_arg = malloc(sizeof(*wrapped_arg));
+    if(!wrapped_arg)
+        return _THRD_ERROR; /* TODO: probably different error should be returned here */
+
+    wrapped_arg->proc = proc;
+    wrapped_arg->arg = arg;
+    ret = _Thrd_start(thr, thread_proc_wrapper, wrapped_arg);
+    if(ret) free(wrapped_arg);
+    return ret;
 }
 #endif

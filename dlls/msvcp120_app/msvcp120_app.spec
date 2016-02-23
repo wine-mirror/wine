@@ -3811,7 +3811,7 @@
 @ cdecl _Thrd_join(ptr long) msvcp120._Thrd_join
 @ cdecl _Thrd_lt(ptr ptr) msvcp120._Thrd_lt
 @ cdecl _Thrd_sleep(ptr) msvcp120._Thrd_sleep
-@ stub _Thrd_start
+@ cdecl _Thrd_start(ptr ptr ptr) msvcp120._Thrd_start
 @ cdecl _Thrd_yield() msvcp120._Thrd_yield
 @ cdecl _Tolower(long ptr) msvcp120._Tolower
 @ cdecl _Toupper(long ptr) msvcp120._Toupper
