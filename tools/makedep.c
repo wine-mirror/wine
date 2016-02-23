@@ -2386,7 +2386,7 @@ static struct strarray output_sources( const struct makefile *make )
             output_filenames( includes );
             output_filenames( make->define_args );
             output_filenames( extradefs );
-            if (make->module || make->staticlib || make->testdll)
+            if (make->module || make->staticlib || make->sharedlib || make->testdll)
             {
                 output_filenames( dll_flags );
                 if (make->use_msvcrt) output_filenames( msvcrt_flags );
