@@ -1211,6 +1211,98 @@ static void test_WsWriteXmlnsAttribute(void)
     WsFreeWriter( writer );
 }
 
+static void prepare_prefix_test( WS_XML_WRITER *writer )
+{
+    const WS_XML_STRING p = {1, (BYTE *)"p"}, localname = {1, (BYTE *)"t"}, ns = {2, (BYTE *)"ns"};
+    HRESULT hr;
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, &p, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndStartElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+}
+
+static void test_WsGetPrefixFromNamespace(void)
+{
+    const WS_XML_STRING p = {1, (BYTE *)"p"}, localname = {1, (BYTE *)"t"}, *prefix;
+    const WS_XML_STRING ns = {2, (BYTE *)"ns"}, ns2 = {3, (BYTE *)"ns2"};
+    WS_XML_WRITER *writer;
+    HRESULT hr;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, &p, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsGetPrefixFromNamespace( NULL, NULL, FALSE, NULL, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsGetPrefixFromNamespace( NULL, NULL, FALSE, &prefix, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsGetPrefixFromNamespace( writer, NULL, FALSE, &prefix, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    /* element must be committed */
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, &p, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetPrefixFromNamespace( writer, &ns, TRUE, &prefix, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    /* but writer can't be positioned on end element node */
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartElement( writer, &p, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsGetPrefixFromNamespace( writer, &ns, TRUE, &prefix, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+
+    /* required = TRUE */
+    prefix = NULL;
+    prepare_prefix_test( writer );
+    hr = WsGetPrefixFromNamespace( writer, &ns, TRUE, &prefix, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( prefix != NULL, "prefix not set\n" );
+    if (prefix)
+    {
+        ok( prefix->length == 1, "got %u\n", prefix->length );
+        ok( !memcmp( prefix->bytes, "p", 1 ), "wrong prefix\n" );
+    }
+
+    prefix = (const WS_XML_STRING *)0xdeadbeef;
+    hr = WsGetPrefixFromNamespace( writer, &ns2, TRUE, &prefix, NULL );
+    ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    ok( prefix == (const WS_XML_STRING *)0xdeadbeef, "prefix set\n" );
+
+    /* required = FALSE */
+    prefix = NULL;
+    prepare_prefix_test( writer );
+    hr = WsGetPrefixFromNamespace( writer, &ns, FALSE, &prefix, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    ok( prefix != NULL, "prefix not set\n" );
+    if (prefix)
+    {
+        ok( prefix->length == 1, "got %u\n", prefix->length );
+        ok( !memcmp( prefix->bytes, "p", 1 ), "wrong prefix\n" );
+    }
+
+    prefix = (const WS_XML_STRING *)0xdeadbeef;
+    hr = WsGetPrefixFromNamespace( writer, &ns2, FALSE, &prefix, NULL );
+    ok( hr == S_FALSE, "got %08x\n", hr );
+    ok( prefix == NULL, "prefix not set\n" );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1227,4 +1319,5 @@ START_TEST(writer)
     test_WsWriteAttribute();
     test_WsWriteStartCData();
     test_WsWriteXmlnsAttribute();
+    test_WsGetPrefixFromNamespace();
 }

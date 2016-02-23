@@ -493,6 +493,37 @@ static inline BOOL is_current_namespace( struct writer *writer, const WS_XML_STR
     return (WsXmlStringEquals( writer->current_ns, ns, NULL ) == S_OK);
 }
 
+/**************************************************************************
+ *          WsGetPrefixFromNamespace		[webservices.@]
+ */
+HRESULT WINAPI WsGetPrefixFromNamespace( WS_XML_WRITER *handle, const WS_XML_STRING *ns,
+                                         BOOL required, const WS_XML_STRING **prefix,
+                                         WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+    WS_XML_ELEMENT_NODE *elem;
+    BOOL found = FALSE;
+
+    TRACE( "%p %s %d %p %p\n", handle, debugstr_xmlstr(ns), required, prefix, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !ns || !prefix) return E_INVALIDARG;
+
+    elem = &writer->current->hdr;
+    if (elem->prefix && is_current_namespace( writer, ns ))
+    {
+        *prefix = elem->prefix;
+        found = TRUE;
+    }
+    if (!found)
+    {
+        if (required) return WS_E_INVALID_FORMAT;
+        *prefix = NULL;
+        return S_FALSE;
+    }
+    return S_OK;
+}
+
 static HRESULT set_current_namespace( struct writer *writer, const WS_XML_STRING *ns )
 {
     WS_XML_STRING *str;

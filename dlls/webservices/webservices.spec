@@ -79,7 +79,7 @@
 @ stub WsGetOperationContextProperty
 @ stub WsGetPolicyAlternativeCount
 @ stub WsGetPolicyProperty
-@ stub WsGetPrefixFromNamespace
+@ stdcall WsGetPrefixFromNamespace(ptr ptr long ptr ptr)
 @ stdcall WsGetReaderNode(ptr ptr ptr)
 @ stub WsGetReaderPosition
 @ stdcall WsGetReaderProperty(ptr long ptr long ptr)
