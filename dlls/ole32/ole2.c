@@ -2264,7 +2264,12 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
      * the new one.
      */
     if (trackerInfo->curDragTarget)
+    {
       IDropTarget_DragLeave(trackerInfo->curDragTarget);
+      IDropTarget_Release(trackerInfo->curDragTarget);
+      trackerInfo->curDragTarget = NULL;
+      trackerInfo->curTargetHWND = NULL;
+    }
 
     /*
      * Make sure we're hovering over a window.
@@ -2283,7 +2288,6 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
 
       if (next_target_wnd) hwndNewTarget = next_target_wnd;
 
-      if(trackerInfo->curDragTarget) IDropTarget_Release(trackerInfo->curDragTarget);
       trackerInfo->curDragTarget     = get_droptarget_pointer(hwndNewTarget);
 
       /*
@@ -2306,15 +2310,6 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
           trackerInfo->curDragTarget     = 0;
         }
       }
-    }
-    else
-    {
-      /*
-       * The mouse is not over a window so we don't track anything.
-       */
-      trackerInfo->curTargetHWND     = 0;
-      if(trackerInfo->curDragTarget) IDropTarget_Release(trackerInfo->curDragTarget);
-      trackerInfo->curDragTarget     = 0;
     }
   }
 
