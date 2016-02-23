@@ -862,10 +862,12 @@ static HRESULT parse_name( const unsigned char *str, unsigned int len,
 
 static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
 {
+    static const WS_XML_STRING xmlns = {5, (BYTE *)"xmlns"};
     WS_XML_ATTRIBUTE *attr;
     WS_XML_UTF8_TEXT *text;
     unsigned int len = 0, ch, skip, quote;
     const unsigned char *start;
+    WS_XML_STRING *prefix, *localname;
     HRESULT hr = WS_E_INVALID_FORMAT;
 
     if (!(attr = heap_alloc_zero( sizeof(*attr) ))) return E_OUTOFMEMORY;
@@ -880,9 +882,19 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     }
     if (!len) goto error;
 
-    if ((hr = parse_name( start, len, &attr->prefix, &attr->localName )) != S_OK) goto error;
+    if ((hr = parse_name( start, len, &prefix, &localname )) != S_OK) goto error;
     hr = E_OUTOFMEMORY;
-    if (!(attr->ns = alloc_xml_string( NULL, 0 ))) goto error;
+    if (WsXmlStringEquals( prefix, &xmlns, NULL ) == S_OK)
+    {
+        attr->isXmlNs   = 1;
+        if (!(attr->prefix = alloc_xml_string( localname->bytes, localname->length ))) goto error;
+        attr->localName = localname;
+    }
+    else
+    {
+        attr->prefix    = prefix;
+        attr->localName = localname;
+    }
 
     hr = WS_E_INVALID_FORMAT;
     read_skip_whitespace( reader );
@@ -906,8 +918,18 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     read_skip( reader, 1 );
 
     hr = E_OUTOFMEMORY;
-    if (!(text = alloc_utf8_text( start, len ))) goto error;
-    attr->value = &text->text;
+    if (attr->isXmlNs)
+    {
+        if (!(attr->ns = alloc_xml_string( start, len ))) goto error;
+        if (!(text = alloc_utf8_text( NULL, 0 ))) goto error;
+        attr->value = &text->text;
+    }
+    else
+    {
+        if (!(attr->ns = alloc_xml_string( NULL, 0 ))) goto error;
+        if (!(text = alloc_utf8_text( start, len ))) goto error;
+        attr->value = &text->text;
+    }
     attr->singleQuote = (quote == '\'');
 
     *ret = attr;
