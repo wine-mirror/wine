@@ -2182,6 +2182,35 @@ static LRESULT WINAPI OLEDD_DragTrackerWindowProc(
   return DefWindowProcW (hwnd, uMsg, wParam, lParam);
 }
 
+static void drag_enter( TrackerWindowInfo *info, HWND new_target )
+{
+    HRESULT hr;
+
+    info->curTargetHWND = new_target;
+
+    while (new_target && !is_droptarget( new_target ))
+        new_target = GetParent( new_target );
+
+    info->curDragTarget = get_droptarget_pointer( new_target );
+
+    if (info->curDragTarget)
+    {
+        *info->pdwEffect = info->dwOKEffect;
+        hr = IDropTarget_DragEnter( info->curDragTarget, info->dataObject,
+                                    info->dwKeyState, info->curMousePos,
+                                    info->pdwEffect );
+        *info->pdwEffect &= info->dwOKEffect;
+
+        /* failed DragEnter() means invalid target */
+        if (hr != S_OK)
+        {
+            IDropTarget_Release( info->curDragTarget );
+            info->curDragTarget = NULL;
+            info->curTargetHWND = NULL;
+        }
+    }
+}
+
 static HRESULT give_feedback( TrackerWindowInfo *info )
 {
     HRESULT hr;
@@ -2237,13 +2266,6 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
   trackerInfo->returnValue = IDropSource_QueryContinueDrag(trackerInfo->dropSource,
                                                            trackerInfo->escPressed,
                                                            trackerInfo->dwKeyState);
-
-  /*
-   * Every time, we re-initialize the effects passed to the
-   * IDropTarget to the effects allowed by the source.
-   */
-  *trackerInfo->pdwEffect = trackerInfo->dwOKEffect;
-
   /*
    * If we are hovering over the same target as before, send the
    * DragOver notification
@@ -2251,6 +2273,7 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
   if ( (trackerInfo->curDragTarget != 0) &&
        (trackerInfo->curTargetHWND == hwndNewTarget) )
   {
+    *trackerInfo->pdwEffect = trackerInfo->dwOKEffect;
     IDropTarget_DragOver(trackerInfo->curDragTarget,
                          trackerInfo->dwKeyState,
                          trackerInfo->curMousePos,
@@ -2271,46 +2294,8 @@ static void OLEDD_TrackStateChange(TrackerWindowInfo* trackerInfo)
       trackerInfo->curTargetHWND = NULL;
     }
 
-    /*
-     * Make sure we're hovering over a window.
-     */
     if (hwndNewTarget)
-    {
-      /*
-       * Find-out if there is a drag target under the mouse
-       */
-      HWND next_target_wnd = hwndNewTarget;
-
-      trackerInfo->curTargetHWND = hwndNewTarget;
-
-      while (next_target_wnd && !is_droptarget(next_target_wnd))
-          next_target_wnd = GetParent(next_target_wnd);
-
-      if (next_target_wnd) hwndNewTarget = next_target_wnd;
-
-      trackerInfo->curDragTarget     = get_droptarget_pointer(hwndNewTarget);
-
-      /*
-       * If there is, notify it that we just dragged-in
-       */
-      if (trackerInfo->curDragTarget)
-      {
-        hr = IDropTarget_DragEnter(trackerInfo->curDragTarget,
-                                   trackerInfo->dataObject,
-                                   trackerInfo->dwKeyState,
-                                   trackerInfo->curMousePos,
-                                   trackerInfo->pdwEffect);
-        *trackerInfo->pdwEffect &= trackerInfo->dwOKEffect;
-
-        /* failed DragEnter() means invalid target */
-        if (hr != S_OK)
-        {
-          trackerInfo->curTargetHWND     = 0;
-          IDropTarget_Release(trackerInfo->curDragTarget);
-          trackerInfo->curDragTarget     = 0;
-        }
-      }
-    }
+      drag_enter( trackerInfo, hwndNewTarget );
   }
 
   give_feedback( trackerInfo );
