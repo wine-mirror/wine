@@ -665,7 +665,7 @@ WS_XML_STRING *alloc_xml_string( const unsigned char *data, ULONG len )
 
     if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
     ret->length     = len;
-    ret->bytes      = (BYTE *)(ret + 1);
+    ret->bytes      = len ? (BYTE *)(ret + 1) : NULL;
     ret->dictionary = NULL;
     ret->id         = 0;
     if (data) memcpy( ret->bytes, data, len );
@@ -679,7 +679,7 @@ WS_XML_UTF8_TEXT *alloc_utf8_text( const unsigned char *data, ULONG len )
     if (!(ret = heap_alloc( sizeof(*ret) + len ))) return NULL;
     ret->text.textType    = WS_XML_TEXT_TYPE_UTF8;
     ret->value.length     = len;
-    ret->value.bytes      = (BYTE *)(ret + 1);
+    ret->value.bytes      = len ? (BYTE *)(ret + 1) : NULL;
     ret->value.dictionary = NULL;
     ret->value.id         = 0;
     if (data) memcpy( ret->value.bytes, data, len );
@@ -881,10 +881,8 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     if (!len) goto error;
 
     if ((hr = parse_name( start, len, &attr->prefix, &attr->localName )) != S_OK) goto error;
-    if (!attr->prefix->length) attr->prefix->bytes = NULL;
     hr = E_OUTOFMEMORY;
     if (!(attr->ns = alloc_xml_string( NULL, 0 ))) goto error;
-    attr->ns->bytes = NULL;
 
     hr = WS_E_INVALID_FORMAT;
     read_skip_whitespace( reader );
@@ -907,11 +905,8 @@ static HRESULT read_attribute( struct reader *reader, WS_XML_ATTRIBUTE **ret )
     }
     read_skip( reader, 1 );
 
-    if (!(text = alloc_utf8_text( start, len )))
-    {
-        free_attribute( attr );
-        return E_OUTOFMEMORY;
-    }
+    hr = E_OUTOFMEMORY;
+    if (!(text = alloc_utf8_text( start, len ))) goto error;
     attr->value = &text->text;
     attr->singleQuote = (quote == '\'');
 
@@ -957,9 +952,9 @@ static HRESULT read_element( struct reader *reader )
     if (!len) goto error;
 
     if ((hr = parse_name( start, len, &elem->prefix, &elem->localName )) != S_OK) goto error;
-    if (!elem->prefix->length) elem->prefix->bytes = NULL;
     hr = E_OUTOFMEMORY;
     if (!(elem->ns = alloc_xml_string( NULL, 0 ))) goto error;
+    elem->ns->bytes = (BYTE *)(elem->ns + 1);
 
     reader->current_attr = 0;
     for (;;)
