@@ -24,6 +24,54 @@
 #include "wine/test.h"
 #include "winbase.h"
 
+#undef __thiscall
+#ifdef __i386__
+#define __thiscall __stdcall
+#else
+#define __thiscall __cdecl
+#endif
+
+/* Emulate a __thiscall */
+#ifdef __i386__
+
+#include "pshpack1.h"
+struct thiscall_thunk
+{
+    BYTE pop_eax;    /* popl  %eax (ret addr) */
+    BYTE pop_edx;    /* popl  %edx (func) */
+    BYTE pop_ecx;    /* popl  %ecx (this) */
+    BYTE push_eax;   /* pushl %eax */
+    WORD jmp_edx;    /* jmp  *%edx */
+};
+#include "poppack.h"
+
+static void * (WINAPI *call_thiscall_func1)( void *func, void *this );
+static void * (WINAPI *call_thiscall_func2)( void *func, void *this, const void *a );
+
+static void init_thiscall_thunk(void)
+{
+    struct thiscall_thunk *thunk = VirtualAlloc( NULL, sizeof(*thunk),
+            MEM_COMMIT, PAGE_EXECUTE_READWRITE );
+    thunk->pop_eax  = 0x58;   /* popl  %eax */
+    thunk->pop_edx  = 0x5a;   /* popl  %edx */
+    thunk->pop_ecx  = 0x59;   /* popl  %ecx */
+    thunk->push_eax = 0x50;   /* pushl %eax */
+    thunk->jmp_edx  = 0xe2ff; /* jmp  *%edx */
+    call_thiscall_func1 = (void *)thunk;
+    call_thiscall_func2 = (void *)thunk;
+}
+
+#define call_func1(func,_this) call_thiscall_func1(func,_this)
+#define call_func2(func,_this,a) call_thiscall_func2(func,_this,(const void*)(a))
+
+#else
+
+#define init_thiscall_thunk()
+#define call_func1(func,_this) func(_this)
+#define call_func2(func,_this,a) func(_this,a)
+
+#endif /* __i386__ */
+
 static inline float __port_infinity(void)
 {
     static const unsigned __inf_bytes = 0x7f800000;
@@ -170,7 +218,30 @@ static _Thrd_t __cdecl i386_Thrd_current(void)
 #endif
 
 /* mtx */
-typedef void *_Mtx_t;
+typedef struct cs_queue
+{
+    struct cs_queue *next;
+    BOOL free;
+    int unknown;
+} cs_queue;
+
+typedef struct
+{
+    ULONG_PTR unk_thread_id;
+    cs_queue unk_active;
+    void *unknown[2];
+    cs_queue *head;
+    void *tail;
+} critical_section;
+
+typedef struct
+{
+    DWORD flags;
+    critical_section cs;
+    DWORD thread_id;
+    DWORD count;
+} *_Mtx_t;
+
 static int (__cdecl *p__Mtx_init)(_Mtx_t*, int);
 static void (__cdecl *p__Mtx_destroy)(_Mtx_t*);
 static int (__cdecl *p__Mtx_lock)(_Mtx_t*);
@@ -186,6 +257,23 @@ static int (__cdecl *p__Cnd_timedwait)(_Cnd_t*, _Mtx_t*, const xtime*);
 static int (__cdecl *p__Cnd_broadcast)(_Cnd_t*);
 static int (__cdecl *p__Cnd_signal)(_Cnd_t*);
 
+/* _Pad */
+typedef void (*vtable_ptr)(void);
+
+typedef struct
+{
+    const vtable_ptr *vtable;
+    _Cnd_t cnd;
+    _Mtx_t mtx;
+    MSVCP_bool launched;
+} _Pad;
+
+static _Pad* (__thiscall *p__Pad_ctor)(_Pad*);
+static _Pad* (__thiscall *p__Pad_copy_ctor)(_Pad*, const _Pad*);
+static void (__thiscall *p__Pad_dtor)(_Pad*);
+static _Pad* (__thiscall *p__Pad_op_assign)(_Pad*, const _Pad*);
+static void (__thiscall *p__Pad__Launch)(_Pad*, _Thrd_t*);
+static void (__thiscall *p__Pad__Release)(_Pad*);
 
 static HMODULE msvcp;
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
@@ -282,6 +370,18 @@ static BOOL init(void)
                 "?_Unlink@sys@tr2@std@@YAHPEBD@Z");
         SET(p__Thrd_current,
                 "_Thrd_current");
+        SET(p__Pad_ctor,
+                "??0_Pad@std@@QEAA@XZ");
+        SET(p__Pad_copy_ctor,
+                "??0_Pad@std@@QEAA@AEBV01@@Z");
+        SET(p__Pad_dtor,
+                "??1_Pad@std@@QEAA@XZ");
+        SET(p__Pad_op_assign,
+                "??4_Pad@std@@QEAAAEAV01@AEBV01@@Z");
+        SET(p__Pad__Launch,
+                "?_Launch@_Pad@std@@QEAAXPEAU_Thrd_imp_t@@@Z");
+        SET(p__Pad__Release,
+                "?_Release@_Pad@std@@QEAAXXZ");
     } else {
         SET(p_tr2_sys__File_size,
                 "?_File_size@sys@tr2@std@@YA_KPBD@Z");
@@ -347,9 +447,33 @@ static BOOL init(void)
         SET(p_i386_Thrd_current,
                 "_Thrd_current");
         p__Thrd_current = i386_Thrd_current;
+        SET(p__Pad_ctor,
+                "??0_Pad@std@@QAE@XZ");
+        SET(p__Pad_copy_ctor,
+                "??0_Pad@std@@QAE@ABV01@@Z");
+        SET(p__Pad_dtor,
+                "??1_Pad@std@@QAE@XZ");
+        SET(p__Pad_op_assign,
+                "??4_Pad@std@@QAEAAV01@ABV01@@Z");
+        SET(p__Pad__Launch,
+                "?_Launch@_Pad@std@@QAEXPAU_Thrd_imp_t@@@Z");
+        SET(p__Pad__Release,
+                "?_Release@_Pad@std@@QAEXXZ");
 #else
         SET(p__Thrd_current,
                 "_Thrd_current");
+        SET(p__Pad_ctor,
+                "??0_Pad@std@@QAA@XZ");
+        SET(p__Pad_copy_ctor,
+                "??0_Pad@std@@QAA@ABV01@@Z");
+        SET(p__Pad_dtor,
+                "??1_Pad@std@@QAA@XZ");
+        SET(p__Pad_op_assign,
+                "??4_Pad@std@@QAAAAV01@ABV01@@Z");
+        SET(p__Pad__Launch,
+                "?_Launch@_Pad@std@@QAAXPAU_Thrd_imp_t@@@Z");
+        SET(p__Pad__Release,
+                "?_Release@_Pad@std@@QAAXXZ");
 #endif
     }
     SET(p__Thrd_equal,
@@ -389,6 +513,8 @@ static BOOL init(void)
     p_setlocale = (void*)GetProcAddress(msvcr, "setlocale");
     p__setmbcp = (void*)GetProcAddress(msvcr, "_setmbcp");
     p_isleadbyte = (void*)GetProcAddress(msvcr, "isleadbyte");
+
+    init_thiscall_thunk();
     return TRUE;
 }
 
@@ -1805,6 +1931,82 @@ static void test_vbtable_size_exports(void)
     }
 }
 
+HANDLE _Pad__Launch_returned;
+_Pad pad;
+#ifdef __i386__
+/* TODO: this should be a __thiscall function */
+static unsigned int __stdcall vtbl_func__Go(void)
+#else
+static unsigned int __cdecl vtbl_func__Go(_Pad *this)
+#endif
+{
+    DWORD ret;
+
+    ret = WaitForSingleObject(_Pad__Launch_returned, 100);
+    ok(ret == WAIT_TIMEOUT, "WiatForSingleObject returned %x\n", ret);
+    ok(!pad.mtx->count, "pad.mtx.count = %d\n", pad.mtx->count);
+    ok(!pad.launched, "pad.launched = %x\n", pad.launched);
+    call_func1(p__Pad__Release, &pad);
+    ok(pad.launched, "pad.launched = %x\n", pad.launched);
+    ret = WaitForSingleObject(_Pad__Launch_returned, 100);
+    ok(ret == WAIT_OBJECT_0, "WiatForSingleObject returned %x\n", ret);
+    ok(pad.mtx->count == 1, "pad.mtx.count = %d\n", pad.mtx->count);
+    return 0;
+}
+
+static void test__Pad(void)
+{
+    _Pad pad_copy;
+    _Thrd_t thrd;
+    vtable_ptr pfunc = (vtable_ptr)&vtbl_func__Go;
+
+    _Pad__Launch_returned = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    pad.vtable = (void*)1;
+    pad.cnd = (void*)2;
+    pad.mtx = (void*)3;
+    pad.launched = TRUE;
+    memset(&pad_copy, 0, sizeof(pad_copy));
+    call_func2(p__Pad_copy_ctor, &pad_copy, &pad);
+    ok(pad_copy.vtable != (void*)1, "pad_copy.vtable was not set\n");
+    ok(pad_copy.cnd == (void*)2, "pad_copy.cnd = %p\n", pad_copy.cnd);
+    ok(pad_copy.mtx == (void*)3, "pad_copy.mtx = %p\n", pad_copy.mtx);
+    ok(pad_copy.launched, "pad_copy.launched = %x\n", pad_copy.launched);
+
+    memset(&pad_copy, 0xde, sizeof(pad_copy));
+    pad_copy.vtable = (void*)4;
+    pad_copy.cnd = (void*)5;
+    pad_copy.mtx = (void*)6;
+    pad_copy.launched = FALSE;
+    call_func2(p__Pad_op_assign, &pad_copy, &pad);
+    ok(pad_copy.vtable == (void*)4, "pad_copy.vtable was set\n");
+    ok(pad_copy.cnd == (void*)2, "pad_copy.cnd = %p\n", pad_copy.cnd);
+    ok(pad_copy.mtx == (void*)3, "pad_copy.mtx = %p\n", pad_copy.mtx);
+    ok(pad_copy.launched, "pad_copy.launched = %x\n", pad_copy.launched);
+
+    call_func1(p__Pad_ctor, &pad);
+    call_func2(p__Pad_copy_ctor, &pad_copy, &pad);
+    ok(pad.vtable == pad_copy.vtable, "pad.vtable = %p, pad_copy.vtable = %p\n", pad.vtable, pad_copy.vtable);
+    ok(pad.cnd == pad_copy.cnd, "pad.cnd = %p, pad_copy.cnd = %p\n", pad.cnd, pad_copy.cnd);
+    ok(pad.mtx == pad_copy.mtx, "pad.mtx = %p, pad_copy.mtx = %p\n", pad.mtx, pad_copy.mtx);
+    ok(pad.launched == pad_copy.launched, "pad.launched = %x, pad_copy.launched = %x\n", pad.launched, pad_copy.launched);
+    call_func1(p__Pad_dtor, &pad);
+    /* call_func1(p__Pad_dtor, &pad_copy);  - copy constructor is broken, this causes a crash */
+
+    memset(&pad, 0xfe, sizeof(pad));
+    call_func1(p__Pad_ctor, &pad);
+    ok(!pad.launched, "pad.launched = %x\n", pad.launched);
+    ok(pad.mtx->count == 1, "pad.mtx.count = %d\n", pad.mtx->count);
+
+    pad.vtable = &pfunc;
+    call_func2(p__Pad__Launch, &pad, &thrd);
+    SetEvent(_Pad__Launch_returned);
+    ok(!p__Thrd_join(thrd, NULL), "_Thrd_join failed\n");
+
+    call_func1(p__Pad_dtor, &pad);
+    CloseHandle(_Pad__Launch_returned);
+}
+
 START_TEST(msvcp120)
 {
     if(!init()) return;
@@ -1835,6 +2037,7 @@ START_TEST(msvcp120)
 
     test_thrd();
     test_cnd();
+    test__Pad();
 
     test_vbtable_size_exports();
 
