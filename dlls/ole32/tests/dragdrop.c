@@ -140,7 +140,123 @@ struct method_call call_lists[][30] =
         { DoDragDrop_ret, DRAGDROP_S_DROP, 0, 0, 0 },
         { DoDragDrop_effect_out, 0, 0, 0, 0 },
         { end_seq, 0, 0, 0, 0 }
-    }
+    },
+    { /* Multiple initial effects */
+        { DoDragDrop_effect_in, 0, 0, DROPEFFECT_COPY | DROPEFFECT_MOVE, 0 },
+        { DO_EnumFormatEtc, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { EnumFMT_Reset, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { DO_QueryGetData, 0, S_OK, 0, 1 },
+
+        { DS_QueryContinueDrag, 0, DRAGDROP_S_DROP, 0, 0 },
+        { DT_DragEnter, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+        { DT_Drop, DROPEFFECT_COPY | DROPEFFECT_MOVE, 0, 0, 0 },
+
+        { DoDragDrop_ret, DRAGDROP_S_DROP, 0, 0, 0 },
+        { DoDragDrop_effect_out, 0, 0, 0, 0 },
+        { end_seq, 0, 0, 0, 0 }
+    },
+    { /* First couple of QueryContinueDrag return S_OK followed by a drop */
+        { DoDragDrop_effect_in, 0, 0, DROPEFFECT_COPY | DROPEFFECT_MOVE, 0 },
+        { DO_EnumFormatEtc, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { EnumFMT_Reset, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { DO_QueryGetData, 0, S_OK, 0, 1 },
+
+        { DS_QueryContinueDrag, 0, S_OK, 0, 0 },
+        { DT_DragEnter, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+        { DT_DragOver, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+
+        { DS_QueryContinueDrag, 0, S_OK, 0, 0 },
+        { DT_DragOver, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+
+        { DS_QueryContinueDrag, 0, DRAGDROP_S_DROP, 0, 0 },
+        { DT_Drop, DROPEFFECT_COPY | DROPEFFECT_MOVE, 0, 0, 0 },
+
+        { DoDragDrop_ret, DRAGDROP_S_DROP, 0, 0, 0 },
+        { DoDragDrop_effect_out, 0, 0, 0, 0 },
+        { end_seq, 0, 0, 0, 0 }
+    },
+    { /* First QueryContinueDrag cancels */
+        { DoDragDrop_effect_in, 0, 0, DROPEFFECT_COPY | DROPEFFECT_MOVE, 0 },
+        { DO_EnumFormatEtc, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { EnumFMT_Reset, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { DO_QueryGetData, 0, S_OK, 0, 1 },
+
+        { DS_QueryContinueDrag, 0, DRAGDROP_S_CANCEL, 0, 0 },
+
+        { DoDragDrop_ret, DRAGDROP_S_CANCEL, 0, 0, 0 },
+        { DoDragDrop_effect_out, 0, 0, 0, 0 },
+        { end_seq, 0, 0, 0, 0 }
+    },
+    { /* First couple of QueryContinueDrag return S_OK followed by a cancel */
+        { DoDragDrop_effect_in, 0, 0, DROPEFFECT_COPY | DROPEFFECT_MOVE, 0 },
+        { DO_EnumFormatEtc, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { EnumFMT_Reset, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { DO_QueryGetData, 0, S_OK, 0, 1 },
+
+        { DS_QueryContinueDrag, 0, S_OK, 0, 0 },
+        { DT_DragEnter, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+        { DT_DragOver, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+
+        { DS_QueryContinueDrag, 0, S_OK, 0, 0 },
+        { DT_DragOver, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+
+        { DS_QueryContinueDrag, 0, DRAGDROP_S_CANCEL, 0, 0 },
+        { DT_DragLeave, 0, 0, 0, 0 },
+
+        { DoDragDrop_ret, DRAGDROP_S_CANCEL, 0, 0, 0 },
+        { DoDragDrop_effect_out, 0, 0, 0, 0 },
+        { end_seq, 0, 0, 0, 0 }
+    },
+    { /* First couple of QueryContinueDrag return S_OK followed by a E_FAIL */
+        { DoDragDrop_effect_in, 0, 0, DROPEFFECT_COPY | DROPEFFECT_MOVE, 0 },
+        { DO_EnumFormatEtc, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { EnumFMT_Reset, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_OK, 0, 1 },
+        { EnumFMT_Next, 0, S_FALSE, 0, 1 },
+        { DO_QueryGetData, 0, S_OK, 0, 1 },
+
+        { DS_QueryContinueDrag, 0, S_OK, 0, 0 },
+        { DT_DragEnter, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+        { DT_DragOver, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+
+        { DS_QueryContinueDrag, 0, S_OK, 0, 0 },
+        { DT_DragOver, DROPEFFECT_COPY | DROPEFFECT_MOVE, S_OK, DROPEFFECT_COPY, 0 },
+        { DS_GiveFeedback, DROPEFFECT_COPY, DRAGDROP_S_USEDEFAULTCURSORS, 0, 0 },
+
+        { DS_QueryContinueDrag, 0, E_FAIL, 0, 0 },
+        { DT_DragLeave, 0, 0, 0, 0 },
+
+        { DoDragDrop_ret, E_FAIL, 0, 0, 0 },
+        { DoDragDrop_effect_out, 0, 0, 0, 0 },
+        { end_seq, 0, 0, 0, 0 }
+    },
 };
 
 static int droptarget_refs;
