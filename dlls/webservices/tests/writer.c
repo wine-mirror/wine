@@ -1019,6 +1019,198 @@ static void test_WsWriteStartCData(void)
     WsFreeWriter( writer );
 }
 
+static void check_output_buffer( WS_XML_BUFFER *buffer, const char *expected, unsigned int line )
+{
+    WS_XML_WRITER *writer;
+    WS_BYTES bytes;
+    ULONG size = sizeof(bytes);
+    int len = strlen(expected);
+    HRESULT hr;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteXmlBuffer( writer, buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &bytes, 0, sizeof(bytes) );
+    hr = WsGetWriterProperty( writer, WS_XML_WRITER_PROPERTY_BYTES, &bytes, size, NULL );
+    ok( hr == S_OK, "%u: got %08x\n", line, hr );
+    ok( bytes.length == len, "%u: got %u expected %u\n", line, bytes.length, len );
+    if (bytes.length != len) return;
+    ok( !memcmp( bytes.bytes, expected, len ), "%u: got %s expected %s\n", line, bytes.bytes, expected );
+
+    WsFreeWriter( writer );
+}
+
+static void prepare_xmlns_test( WS_XML_WRITER *writer, WS_HEAP **heap, WS_XML_BUFFER **buffer )
+{
+    WS_XML_STRING prefix = {6, (BYTE *)"prefix"}, localname = {1, (BYTE *)"t"}, ns = {2, (BYTE *)"ns"};
+    HRESULT hr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( *heap, NULL, 0, buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, *buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, &prefix, &localname, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+}
+
+static void test_WsWriteXmlnsAttribute(void)
+{
+    WS_XML_STRING ns = {2, (BYTE *)"ns"}, ns2 = {3, (BYTE *)"ns2"};
+    WS_XML_STRING prefix = {6, (BYTE *)"prefix"}, prefix2 = {7, (BYTE *)"prefix2"};
+    WS_XML_STRING xmlns = {6, (BYTE *)"xmlns"}, attr = {4, (BYTE *)"attr"};
+    WS_HEAP *heap;
+    WS_XML_BUFFER *buffer;
+    WS_XML_WRITER *writer;
+    HRESULT hr;
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteXmlnsAttribute( NULL, NULL, NULL, FALSE, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    WsFreeHeap( heap );
+
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, NULL, NULL, FALSE, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+    WsFreeHeap( heap );
+
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, NULL, FALSE, NULL );
+    ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteXmlnsAttribute( writer, NULL, &ns, FALSE, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %08x\n", hr );
+    WsFreeHeap( heap );
+
+    /* no prefix */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, NULL, &ns2, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t xmlns:prefix=\"ns\" xmlns=\"ns2\"/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    /* prefix */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns2, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t xmlns:prefix2=\"ns2\" xmlns:prefix=\"ns\"/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    /* implicitly set element prefix namespace */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t xmlns:prefix=\"ns\"/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    /* explicitly set element prefix namespace */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix, &ns, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t xmlns:prefix='ns'/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    /* repeated calls, same namespace */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t xmlns:prefix2=\"ns\" xmlns:prefix=\"ns\"/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    /* repeated calls, different namespace */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns2, FALSE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    WsFreeHeap( heap );
+
+    /* single quotes */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t xmlns:prefix2='ns' xmlns:prefix=\"ns\"/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    /* different namespace, different prefix */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns2, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t xmlns:prefix2='ns2' xmlns:prefix=\"ns\"/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    /* different namespace, same prefix */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix, &ns2, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    WsFreeHeap( heap );
+
+    /* regular attribute */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteStartAttribute( writer, &xmlns, &prefix2, &ns2, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndAttribute( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    todo_wine ok( hr == WS_E_INVALID_FORMAT, "got %08x\n", hr );
+    WsFreeHeap( heap );
+
+    /* attribute order */
+    prepare_xmlns_test( writer, &heap, &buffer );
+    hr = WsWriteXmlnsAttribute( writer, &prefix, &ns, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteStartAttribute( writer, &prefix, &attr, &ns, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndAttribute( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteXmlnsAttribute( writer, &prefix2, &ns2, TRUE, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, "<prefix:t prefix:attr='' xmlns:prefix='ns' xmlns:prefix2='ns2'/>", __LINE__ );
+    WsFreeHeap( heap );
+
+    WsFreeWriter( writer );
+}
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1034,4 +1226,5 @@ START_TEST(writer)
     test_WsWriteValue();
     test_WsWriteAttribute();
     test_WsWriteStartCData();
+    test_WsWriteXmlnsAttribute();
 }

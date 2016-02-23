@@ -1684,3 +1684,22 @@ HRESULT WINAPI WsWriteXmlBufferToBytes( WS_XML_WRITER *handle, WS_XML_BUFFER *bu
     *bytes = buf;
     return S_OK;
 }
+
+/**************************************************************************
+ *          WsWriteXmlnsAttribute		[webservices.@]
+ */
+HRESULT WINAPI WsWriteXmlnsAttribute( WS_XML_WRITER *handle, const WS_XML_STRING *prefix,
+                                      const WS_XML_STRING *ns, BOOL single, WS_ERROR *error )
+{
+    struct writer *writer = (struct writer *)handle;
+
+    TRACE( "%p %s %s %d %p\n", handle, debugstr_xmlstr(prefix), debugstr_xmlstr(ns),
+           single, error );
+    if (error) FIXME( "ignoring error parameter\n" );
+
+    if (!writer || !ns) return E_INVALIDARG;
+    if (writer->state != WRITER_STATE_STARTELEMENT) return WS_E_INVALID_OPERATION;
+
+    if (find_namespace_attribute( &writer->current->hdr, prefix, ns )) return S_OK;
+    return write_add_namespace_attribute( writer, prefix, ns, single );
+}

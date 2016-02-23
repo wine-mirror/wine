@@ -606,6 +606,8 @@ HRESULT WINAPI WsWriteXmlBuffer(WS_XML_WRITER*, WS_XML_BUFFER*, WS_ERROR*);
 HRESULT WINAPI WsWriteXmlBufferToBytes(WS_XML_WRITER*, WS_XML_BUFFER*, const WS_XML_WRITER_ENCODING*,
                                        const WS_XML_WRITER_PROPERTY*, ULONG, WS_HEAP*, void**,
                                        ULONG*, WS_ERROR*);
+HRESULT WINAPI WsWriteXmlnsAttribute(WS_XML_WRITER*, const WS_XML_STRING*, const WS_XML_STRING*,
+                                     BOOL, WS_ERROR*);
 HRESULT WINAPI WsXmlStringEquals(const WS_XML_STRING*, const WS_XML_STRING*, WS_ERROR*);
 
 #define WS_S_ASYNC                          0x003d0000
