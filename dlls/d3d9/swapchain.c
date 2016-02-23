@@ -152,7 +152,6 @@ static HRESULT WINAPI d3d9_swapchain_GetBackBuffer(IDirect3DSwapChain9Ex *iface,
         UINT backbuffer_idx, D3DBACKBUFFER_TYPE backbuffer_type, IDirect3DSurface9 **backbuffer)
 {
     struct d3d9_swapchain *swapchain = impl_from_IDirect3DSwapChain9Ex(iface);
-    struct wined3d_resource *wined3d_resource;
     struct wined3d_texture *wined3d_texture;
     struct d3d9_surface *surface_impl;
     HRESULT hr = D3D_OK;
@@ -171,8 +170,7 @@ static HRESULT WINAPI d3d9_swapchain_GetBackBuffer(IDirect3DSwapChain9Ex *iface,
     wined3d_mutex_lock();
     if ((wined3d_texture = wined3d_swapchain_get_back_buffer(swapchain->wined3d_swapchain, backbuffer_idx)))
     {
-        wined3d_resource = wined3d_texture_get_sub_resource(wined3d_texture, 0);
-        surface_impl = wined3d_resource_get_parent(wined3d_resource);
+        surface_impl = wined3d_texture_get_sub_resource_parent(wined3d_texture, 0);
         *backbuffer = &surface_impl->IDirect3DSurface9_iface;
         IDirect3DSurface9_AddRef(*backbuffer);
     }
