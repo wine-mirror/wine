@@ -2075,8 +2075,9 @@ static void test_RtlInitializeCriticalSectionEx(void)
        "expected DebugInfo != NULL and DebugInfo != ~0, got %p\n", cs.DebugInfo);
     ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
     ok(cs.RecursionCount == 0, "expected RecursionCount == 0, got %d\n", cs.RecursionCount);
-    ok(cs.LockSemaphore == 0, "expected LockSemaphore == 0, got %p\n", cs.LockSemaphore);
-    ok(cs.SpinCount == 0, "expected SpinCount == 0, got %ld\n", cs.SpinCount);
+    ok(cs.LockSemaphore == NULL, "expected LockSemaphore == NULL, got %p\n", cs.LockSemaphore);
+    ok(cs.SpinCount == 0 || broken(cs.SpinCount != 0) /* >= Win 8 */,
+       "expected SpinCount == 0, got %ld\n", cs.SpinCount);
     RtlDeleteCriticalSection(&cs);
 
     memset(&cs, 0x11, sizeof(cs));
@@ -2085,7 +2086,7 @@ static void test_RtlInitializeCriticalSectionEx(void)
     ok(cs.DebugInfo == no_debug, "expected DebugInfo == ~0, got %p\n", cs.DebugInfo);
     ok(cs.LockCount == -1, "expected LockCount == -1, got %d\n", cs.LockCount);
     ok(cs.RecursionCount == 0, "expected RecursionCount == 0, got %d\n", cs.RecursionCount);
-    ok(cs.LockSemaphore == 0, "expected LockSemaphore == 0, got %p\n", cs.LockSemaphore);
+    ok(cs.LockSemaphore == NULL, "expected LockSemaphore == NULL, got %p\n", cs.LockSemaphore);
     ok(cs.SpinCount == 0 || broken(cs.SpinCount != 0) /* >= Win 8 */,
        "expected SpinCount == 0, got %ld\n", cs.SpinCount);
     RtlDeleteCriticalSection(&cs);
