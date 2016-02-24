@@ -3,7 +3,9 @@
 /*       and from http://www.unicode.org/Public/8.0.0/ucd/IndicPositionalCategory.txt */
 /* DO NOT EDIT!! */
 
-const unsigned short indic_syllabic_table[3264] =
+#include "wine/unicode.h"
+
+const unsigned short DECLSPEC_HIDDEN indic_syllabic_table[3264] =
 {
     /* level 1 offsets */
     0x0100, 0x0110, 0x0110, 0x0110, 0x0110, 0x0110, 0x0110, 0x0110,

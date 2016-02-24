@@ -52,7 +52,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 
-extern const unsigned short bidi_bracket_table[];
+extern const unsigned short bidi_bracket_table[] DECLSPEC_HIDDEN;
 
 #define ASSERT(x) do { if (!(x)) FIXME("assert failed: %s\n", #x); } while(0)
 #define MAX_DEPTH 125
@@ -199,7 +199,7 @@ static void bidi_classify(const WCHAR *string, UINT8 *chartype, UINT32 count)
 
 WCHAR bidi_get_mirrored_char(WCHAR ch)
 {
-    extern const WCHAR wine_mirror_map[];
+    extern const WCHAR wine_mirror_map[] DECLSPEC_HIDDEN;
     return ch + wine_mirror_map[wine_mirror_map[ch >> 8] + (ch & 0xff)];
 }
 

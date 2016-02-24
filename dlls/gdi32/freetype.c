@@ -6439,7 +6439,7 @@ static inline BYTE get_max_level( UINT format )
     return 255;
 }
 
-extern const unsigned short vertical_orientation_table[];
+extern const unsigned short vertical_orientation_table[] DECLSPEC_HIDDEN;
 
 static BOOL check_unicode_tategaki(WCHAR uchar)
 {

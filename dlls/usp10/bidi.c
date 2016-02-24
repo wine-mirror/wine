@@ -56,7 +56,7 @@
 
 #include "usp10_internal.h"
 
-extern const unsigned short bidi_bracket_table[];
+extern const unsigned short bidi_bracket_table[] DECLSPEC_HIDDEN;
 
 WINE_DEFAULT_DEBUG_CHANNEL(bidi);
 

@@ -40,7 +40,7 @@ static BOOL PSDRV_Text(PHYSDEV dev, INT x, INT y, UINT flags,
 		       LPCWSTR str, UINT count,
 		       BOOL bDrawBackground, const INT *lpDx);
 
-extern const unsigned short vertical_orientation_table[];
+extern const unsigned short vertical_orientation_table[] DECLSPEC_HIDDEN;
 
 static BOOL check_unicode_tategaki(WCHAR uchar)
 {

@@ -2,7 +2,9 @@
 /* generated from http://www.unicode.org/Public/vertical/revision-15/VerticalOrientation-15.txt */
 /* DO NOT EDIT!! */
 
-const unsigned short vertical_orientation_table[1600] =
+#include "wine/unicode.h"
+
+const unsigned short DECLSPEC_HIDDEN vertical_orientation_table[1600] =
 {
     /* level 1 offsets */
     0x0100, 0x0110, 0x0120, 0x0110, 0x0110, 0x0110, 0x0110, 0x0110,

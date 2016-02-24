@@ -28,8 +28,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 
-extern const unsigned short wine_linebreak_table[];
-extern const unsigned short wine_scripts_table[];
+extern const unsigned short wine_linebreak_table[] DECLSPEC_HIDDEN;
+extern const unsigned short wine_scripts_table[] DECLSPEC_HIDDEN;
 
 struct dwritescript_properties {
     DWRITE_SCRIPT_PROPERTIES props;

@@ -4,7 +4,7 @@
 
 #include "wine/unicode.h"
 
-const WCHAR wine_mirror_map[3292] =
+const WCHAR DECLSPEC_HIDDEN wine_mirror_map[3292] =
 {
     /* index */
     0x01d8, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100,

@@ -873,7 +873,7 @@ static HRESULT init_script_cache(const HDC hdc, SCRIPT_CACHE *psc)
 
 static WCHAR mirror_char( WCHAR ch )
 {
-    extern const WCHAR wine_mirror_map[];
+    extern const WCHAR wine_mirror_map[] DECLSPEC_HIDDEN;
     return ch + wine_mirror_map[wine_mirror_map[ch >> 8] + (ch & 0xff)];
 }
 
