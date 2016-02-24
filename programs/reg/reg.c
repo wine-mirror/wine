@@ -284,7 +284,28 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
             break;
         }
         case REG_MULTI_SZ:
-            /* FIXME: Needs handling */
+        {
+            int i, destindex, len = strlenW(data);
+            WCHAR *buffer = HeapAlloc(GetProcessHeap(), 0, (len + 2) * sizeof(WCHAR));
+
+            for (i = 0, destindex = 0; i < len; i++, destindex++)
+            {
+                if (data[i] == '\\' && data[i + 1] == '0')
+                {
+                    buffer[destindex] = 0;
+                    i++;
+                }
+                else if (data[i] == separator)
+                    buffer[destindex] = 0;
+                else
+                    buffer[destindex] = data[i];
+            }
+            buffer[destindex] = 0;
+            if (destindex && buffer[destindex - 1])
+                buffer[++destindex] = 0;
+            *reg_count = (destindex + 1) * sizeof(WCHAR);
+            return (BYTE *)buffer;
+        }
         default:
             output_message(STRING_UNHANDLED_TYPE, reg_type, data);
     }
