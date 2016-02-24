@@ -1061,7 +1061,7 @@ sub dump_sbcs_table($$$$$)
 
     # output the code page descriptor
 
-    printf OUTPUT "const struct sbcs_table cptable_%03d =\n{\n", $codepage;
+    printf OUTPUT "const struct sbcs_table DECLSPEC_HIDDEN cptable_%03d =\n{\n", $codepage;
     printf OUTPUT "    { %d, 1, 0x%04x, 0x%04x, \"%s\" },\n",
                   $codepage, $def, $defw, $name;
     printf OUTPUT "    cp2uni,\n";
@@ -1135,7 +1135,7 @@ sub dump_dbcs_table($$$$@)
 
     # output the code page descriptor
 
-    printf OUTPUT "const struct dbcs_table cptable_%03d =\n{\n", $codepage;
+    printf OUTPUT "const struct dbcs_table DECLSPEC_HIDDEN cptable_%03d =\n{\n", $codepage;
     printf OUTPUT "    { %d, 2, 0x%04x, 0x%04x, \"%s\" },\n",
                   $codepage, $def, $defw, $name;
     printf OUTPUT "    cp2uni,\n";
