@@ -661,8 +661,8 @@
 @ stdcall RegisterServiceCtrlHandlerExA(str ptr ptr)
 @ stdcall RegisterServiceCtrlHandlerExW(wstr ptr ptr)
 @ stdcall RegisterServiceCtrlHandlerW(wstr ptr)
-@ stdcall RegisterTraceGuidsA(ptr ptr ptr long ptr str str ptr)
-@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr)
+@ stdcall RegisterTraceGuidsA(ptr ptr ptr long ptr str str ptr) ntdll.EtwRegisterTraceGuidsA
+@ stdcall RegisterTraceGuidsW(ptr ptr ptr long ptr wstr wstr ptr) ntdll.EtwRegisterTraceGuidsW
 # @ stub RemoveTraceCallback
 # @ stub RemoveUsersFromEncryptedFile
 @ stdcall ReportEventA(long long long long ptr long long ptr ptr)
