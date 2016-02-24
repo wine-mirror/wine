@@ -4,7 +4,7 @@
 
 #include "wine/unicode.h"
 
-const WCHAR wine_digitmap[5933] =
+const WCHAR DECLSPEC_HIDDEN wine_digitmap[5933] =
 {
     /* index */
     0x01d0, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x028a, 0x0384,
@@ -786,7 +786,7 @@ const WCHAR wine_digitmap[5933] =
     0x0000, 0x0000
 };
 
-const WCHAR wine_compatmap[1497] =
+const WCHAR DECLSPEC_HIDDEN wine_compatmap[1497] =
 {
     /* index */
     0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100, 0x0100,

@@ -1599,9 +1599,9 @@ sub dump_digit_folding($)
     print OUTPUT "/* DO NOT EDIT!! */\n\n";
     print OUTPUT "#include \"wine/unicode.h\"\n\n";
 
-    DUMP_CASE_TABLE( "wine_digitmap",  @digitmap_table );
+    DUMP_CASE_TABLE( "DECLSPEC_HIDDEN wine_digitmap",  @digitmap_table );
     print OUTPUT "\n";
-    DUMP_CASE_TABLE( "wine_compatmap", @compatmap_table );
+    DUMP_CASE_TABLE( "DECLSPEC_HIDDEN wine_compatmap", @compatmap_table );
     close OUTPUT;
     save_file($filename);
 }
@@ -2113,7 +2113,7 @@ static inline int binary_search( WCHAR ch, int low, int high )
     return -1;
 }
 
-WCHAR wine_compose( const WCHAR *str )
+WCHAR DECLSPEC_HIDDEN wine_compose( const WCHAR *str )
 {
     int pos, idx = 1, start = 0, count = $count;
     for (;;)
@@ -2218,7 +2218,7 @@ sub dump_decompose_table($)
 
     printf OUTPUT "\n};\n\n";
     print OUTPUT <<"EOF";
-unsigned int wine_decompose( WCHAR ch, WCHAR *dst, unsigned int dstlen )
+unsigned int DECLSPEC_HIDDEN wine_decompose( WCHAR ch, WCHAR *dst, unsigned int dstlen )
 {
     const WCHAR *ptr = table + table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + 2 * (ch & 0xf);
     unsigned int res;

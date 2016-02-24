@@ -392,7 +392,7 @@ static inline int binary_search( WCHAR ch, int low, int high )
     return -1;
 }
 
-WCHAR wine_compose( const WCHAR *str )
+WCHAR DECLSPEC_HIDDEN wine_compose( const WCHAR *str )
 {
     int pos, idx = 1, start = 0, count = 70;
     for (;;)
