@@ -1411,7 +1411,6 @@ static void test_MDI_create(HWND parent, HWND mdi_client, INT_PTR first_id)
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == first_id, "wrong child id %ld\n", id);
     hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-todo_wine
     ok(!hwnd, "WM_MDIGETACTIVE should return 0, got %p\n", hwnd);
     SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
     ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
@@ -1428,7 +1427,6 @@ todo_wine
         id = GetWindowLongPtrA(mdi_child, GWLP_ID);
         ok(id == first_id, "wrong child id %ld\n", id);
         hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-todo_wine
         ok(!hwnd, "WM_MDIGETACTIVE should return 0, got %p\n", hwnd);
         SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
         ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
@@ -1484,7 +1482,6 @@ todo_wine
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == first_id, "wrong child id %ld\n", id);
     hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-todo_wine
     ok(!hwnd, "WM_MDIGETACTIVE should return 0, got %p\n", hwnd);
     SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
     ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
@@ -1505,7 +1502,6 @@ todo_wine
         id = GetWindowLongPtrA(mdi_child, GWLP_ID);
         ok(id == first_id, "wrong child id %ld\n", id);
         hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-todo_wine
         ok(!hwnd, "WM_MDIGETACTIVE should return 0, got %p\n", hwnd);
         SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
         ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
@@ -1562,7 +1558,6 @@ todo_wine
     id = GetWindowLongPtrA(mdi_child, GWLP_ID);
     ok(id == first_id, "wrong child id %ld\n", id);
     hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-todo_wine
     ok(!hwnd, "WM_MDIGETACTIVE should return 0, got %p\n", hwnd);
     SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
     ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
@@ -1583,7 +1578,6 @@ todo_wine
         id = GetWindowLongPtrA(mdi_child, GWLP_ID);
         ok(id == first_id, "wrong child id %ld\n", id);
         hwnd = (HWND)SendMessageA(mdi_client, WM_MDIGETACTIVE, 0, 0);
-todo_wine
         ok(!hwnd, "WM_MDIGETACTIVE should return 0, got %p\n", hwnd);
         SendMessageA(mdi_client, WM_MDIDESTROY, (WPARAM)mdi_child, 0);
         ok(!IsWindow(mdi_child), "WM_MDIDESTROY failed\n");
