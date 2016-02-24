@@ -1200,16 +1200,15 @@ HRESULT WINAPI UrlEscapeW(
                     if ((cur >= 0xd800 && cur <= 0xdfff) &&
                         (src[1] >= 0xdc00 && src[1] <= 0xdfff))
                     {
-                        WCHAR sur[2];
-
-                        sur[0] = cur;
-                        sur[1] = *++src;
-                        len = wine_utf8_wcstombs(WC_ERR_INVALID_CHARS, sur, 2, utf, sizeof(utf));
+                        len = WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, src, 2,
+                                                   utf, sizeof(utf), NULL, NULL );
+                        src++;
                     }
                     else
-                        len = wine_utf8_wcstombs(WC_ERR_INVALID_CHARS, &cur, 1, utf, sizeof(utf));
+                        len = WideCharToMultiByte( CP_UTF8, WC_ERR_INVALID_CHARS, &cur, 1,
+                                                   utf, sizeof(utf), NULL, NULL );
 
-                    if(len < 0) {
+                    if (!len) {
                         utf[0] = 0xef;
                         utf[1] = 0xbf;
                         utf[2] = 0xbd;
