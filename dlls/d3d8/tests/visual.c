@@ -8044,9 +8044,9 @@ static void test_flip(void)
 
     /* Contents were changed. */
     color = get_surface_color(back_buffers[0], 1, 1);
-    todo_wine ok(color == 0xff00ff00, "Got unexpected color 0x%08x.\n", color);
+    ok(color == 0xff00ff00, "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(back_buffers[1], 1, 1);
-    todo_wine ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
+    ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice8_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xff808080, 0.0f, 0);
     ok(SUCCEEDED(hr), "Failed to clear, hr %#x\n", hr);
@@ -8055,15 +8055,15 @@ static void test_flip(void)
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
     color = get_surface_color(back_buffers[0], 1, 1);
-    todo_wine ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
+    ok(color == 0xff0000ff, "Got unexpected color 0x%08x.\n", color);
     color = get_surface_color(back_buffers[1], 1, 1);
-    todo_wine ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
+    ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
 
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
     color = get_surface_color(back_buffers[0], 1, 1);
-    todo_wine ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
+    ok(color == 0xff808080, "Got unexpected color 0x%08x.\n", color);
 
     for (i = 0; i < sizeof(back_buffers) / sizeof(*back_buffers); ++i)
         IDirect3DSurface8_Release(back_buffers[i]);
