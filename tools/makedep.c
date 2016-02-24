@@ -2545,13 +2545,12 @@ static struct strarray output_sources( const struct makefile *make )
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->delayimports, 0 ));
         strarray_addall( &all_libs, add_import_libs( make, &dep_libs, make->imports, 0 ));
         add_import_libs( make, &dep_libs, get_default_imports( make ), 0 );  /* dependencies only */
-        for (i = 0; i < make->delayimports.count; i++)
-            strarray_add( &all_libs, strmake( "-Wb,-d%s", make->delayimports.str[i] ));
-        strarray_add( &all_libs, "-lwine" );
         strarray_addall( &all_libs, add_default_libraries( make, &dep_libs ));
 
         if (*dll_ext)
         {
+            for (i = 0; i < make->delayimports.count; i++)
+                strarray_add( &all_libs, strmake( "-Wb,-d%s", make->delayimports.str[i] ));
             strarray_add( &all_targets, strmake( "%s%s", make->module, dll_ext ));
             strarray_add( &all_targets, strmake( "%s.fake", make->module ));
             add_install_rule( make, install_rules, make->module, strmake( "%s%s", make->module, dll_ext ),
@@ -2562,6 +2561,7 @@ static struct strarray output_sources( const struct makefile *make )
         }
         else
         {
+            strarray_add( &all_libs, "-lwine" );
             strarray_add( &all_targets, make->module );
             add_install_rule( make, install_rules, make->module, make->module,
                               strmake( "p$(%s)/%s", spec_file ? "dlldir" : "bindir", make->module ));
