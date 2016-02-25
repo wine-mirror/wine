@@ -2672,6 +2672,24 @@ BOOL WINAPI AddAuditAccessAceEx(
 }
 
 /******************************************************************************
+ *  AddAuditAccessObjectAce [ADVAPI32.@]
+ */
+BOOL WINAPI AddAuditAccessObjectAce(
+    IN OUT PACL pAcl,
+    IN DWORD dwAceRevision,
+    IN DWORD dwAceFlags,
+    IN DWORD dwAccessMask,
+    IN GUID* pObjectTypeGuid,
+    IN GUID* pInheritedObjectTypeGuid,
+    IN PSID pSid,
+    IN BOOL bAuditSuccess,
+    IN BOOL bAuditFailure)
+{
+    return set_ntstatus( RtlAddAuditAccessObjectAce(pAcl, dwAceRevision, dwAceFlags, dwAccessMask,
+           pObjectTypeGuid, pInheritedObjectTypeGuid, pSid, bAuditSuccess, bAuditFailure) );
+}
+
+/******************************************************************************
  * LookupAccountNameA [ADVAPI32.@]
  */
 BOOL WINAPI
