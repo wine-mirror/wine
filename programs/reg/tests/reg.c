@@ -391,15 +391,15 @@ static void test_add(void)
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi19 /t REG_MULTI_SZ /s \"#\" /d \"two\\0#strings\" /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
-    verify_reg(hkey, "multi19", REG_MULTI_SZ, "two\\0\0strings\0", 15, TODO_REG_SIZE|TODO_REG_DATA);
+    verify_reg(hkey, "multi19", REG_MULTI_SZ, "two\\0\0strings\0", 15, 0);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi20 /t REG_MULTI_SZ /s \"#\" /d \"two#\\0strings\" /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
-    verify_reg(hkey, "multi20", REG_MULTI_SZ, "two\0\\0strings\0", 15, TODO_REG_SIZE|TODO_REG_DATA);
+    verify_reg(hkey, "multi20", REG_MULTI_SZ, "two\0\\0strings\0", 15, 0);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi21 /t REG_MULTI_SZ /s \"#\" /d \"two\\0\\0strings\" /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
-    verify_reg(hkey, "multi21", REG_MULTI_SZ, "two\\0\\0strings\0", 16, TODO_REG_SIZE|TODO_REG_DATA);
+    verify_reg(hkey, "multi21", REG_MULTI_SZ, "two\\0\\0strings\0", 16, 0);
 
     RegCloseKey(hkey);
 

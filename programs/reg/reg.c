@@ -290,7 +290,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
 
             for (i = 0, destindex = 0; i < len; i++, destindex++)
             {
-                if (data[i] == '\\' && data[i + 1] == '0')
+                if (!separator && data[i] == '\\' && data[i + 1] == '0')
                 {
                     buffer[destindex] = 0;
                     i++;
