@@ -203,6 +203,7 @@ static void (__cdecl *p__Thrd_sleep)(const xtime*);
 static _Thrd_t (__cdecl *p__Thrd_current)(void);
 static int (__cdecl *p__Thrd_create)(_Thrd_t*, _Thrd_start_t, void*);
 static int (__cdecl *p__Thrd_join)(_Thrd_t, int*);
+static int (__cdecl *p__Thrd_detach)(_Thrd_t);
 
 #ifdef __i386__
 static ULONGLONG (__cdecl *p_i386_Thrd_current)(void);
@@ -486,6 +487,8 @@ static BOOL init(void)
             "_Thrd_create");
     SET(p__Thrd_join,
             "_Thrd_join");
+    SET(p__Thrd_detach,
+            "_Thrd_detach");
 
     SET(p__Mtx_init,
             "_Mtx_init");
@@ -1677,7 +1680,8 @@ static int __cdecl thrd_thread(void *arg)
 {
     _Thrd_t *thr = arg;
 
-    *thr = p__Thrd_current();
+    if(thr)
+        *thr = p__Thrd_current();
     return 0x42;
 }
 
@@ -1759,7 +1763,14 @@ static void test_thrd(void)
     ok(ta.id == tb.id, "expected %d, got %d\n", ta.id, tb.id);
     ok(ta.hnd != tb.hnd, "same handles, got %p\n", ta.hnd);
     ok(r == 0x42, "expected 0x42, got %d\n", r);
-    ok(!CloseHandle(ta.hnd), "handle %p not closed\n", ta.hnd);
+    ret = p__Thrd_detach(ta);
+    ok(ret == 4, "_Thrd_detach should have failed with error 4, got %d\n", ret);
+
+    ret = p__Thrd_create(&ta, thrd_thread, NULL);
+    ok(!ret, "failed to create thread, got %d\n", ret);
+    ret = p__Thrd_detach(ta);
+    ok(!ret, "_Thrd_detach failed, got %d\n", ret);
+
 }
 
 #define NUM_THREADS 10

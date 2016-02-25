@@ -3858,7 +3858,7 @@
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr)
 @ cdecl _Thrd_current()
-@ stub _Thrd_detach
+@ cdecl _Thrd_detach(ptr)
 @ cdecl _Thrd_equal(ptr ptr)
 @ stub _Thrd_exit
 @ cdecl _Thrd_join(ptr long)

@@ -3805,7 +3805,7 @@
 @ stub _Thrd_abort
 @ cdecl _Thrd_create(ptr ptr ptr) msvcp120._Thrd_create
 @ cdecl _Thrd_current() msvcp120._Thrd_current
-@ stub _Thrd_detach
+@ cdecl _Thrd_detach(ptr) msvcp120._Thrd_detach
 @ cdecl _Thrd_equal(ptr ptr) msvcp120._Thrd_equal
 @ stub _Thrd_exit
 @ cdecl _Thrd_join(ptr long) msvcp120._Thrd_join

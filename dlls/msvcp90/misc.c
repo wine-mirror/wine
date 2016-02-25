@@ -874,6 +874,11 @@ int __cdecl _Thrd_create(_Thrd_t *thr, _Thrd_start_t proc, void *arg)
     return ret;
 }
 
+int __cdecl _Thrd_detach(_Thrd_t thr)
+{
+    return CloseHandle(thr.hnd) ? 0 : _THRD_ERROR;
+}
+
 typedef struct
 {
     const vtable_ptr *vtable;
