@@ -137,8 +137,8 @@ install-manpages:: manpages
 # Dependencies between directories
 
 # dependencies needed to build any dll or program
-__tooldeps__: libs/port libs/wine libs/wpp
-__builddeps__: __tooldeps__ include
+__tooldeps__: libs/port libs/wpp
+__builddeps__: __tooldeps__ libs/wine include
 .PHONY: depend dummy check test testclean crosstest __tooldeps__ __builddeps__
 
 dummy:
@@ -147,8 +147,7 @@ server: libs/port libs/wine tools include
 fonts: tools/sfnt2fon
 include: tools tools/widl
 libs/wine tools: libs/port
-tools/wmc tools/wrc: tools
-tools/sfnt2fon tools/wmc tools/wrc: libs/wine
+tools/sfnt2fon tools/wmc tools/wrc: tools
 tools/widl tools/wmc tools/wrc: libs/wpp
 libs/port libs/wine libs/wpp: include/config.h
 
