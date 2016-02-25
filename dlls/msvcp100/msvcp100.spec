@@ -2731,8 +2731,8 @@
 @ thiscall -arch=win32 ?sync@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MAEHXZ(ptr) basic_streambuf_wchar_sync
 @ cdecl -arch=win64 ?sync@?$basic_streambuf@_WU?$char_traits@_W@std@@@std@@MEAAHXZ(ptr) basic_streambuf_wchar_sync
 @ cdecl ?sync_with_stdio@ios_base@std@@SA_N_N@Z(long) ios_base_sync_with_stdio
-@ stub -arch=win32 ?system_category@std@@YAABVerror_category@1@XZ
-@ stub -arch=win64 ?system_category@std@@YAAEBVerror_category@1@XZ
+@ cdecl -arch=win32 ?system_category@std@@YAABVerror_category@1@XZ() std_system_category
+@ cdecl -arch=win64 ?system_category@std@@YAAEBVerror_category@1@XZ() std_system_category
 @ stub -arch=win32 ?table@?$ctype@D@std@@QBEPBFXZ
 @ stub -arch=win64 ?table@?$ctype@D@std@@QEBAPEBFXZ
 @ extern -arch=win32 ?table_size@?$ctype@D@std@@2IB ctype_char_table_size
