@@ -36,6 +36,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(inetcpl);
 
 static const WCHAR about_blank[] = {'a','b','o','u','t',':','b','l','a','n','k',0};
 static const WCHAR start_page[] = {'S','t','a','r','t',' ','P','a','g','e',0};
+static const WCHAR default_page[] = {'D','e','f','a','u','l','t','_','P','a','g','e','_','U','R','L',0};
 static const WCHAR reg_ie_main[] = {'S','o','f','t','w','a','r','e','\\',
                                     'M','i','c','r','o','s','o','f','t','\\',
                                     'I','n','t','e','r','n','e','t',' ','E','x','p','l','o','r','e','r','\\',
@@ -43,7 +44,6 @@ static const WCHAR reg_ie_main[] = {'S','o','f','t','w','a','r','e','\\',
 
 /* list of unimplemented buttons */
 static DWORD disabled_general_buttons[] = {IDC_HOME_CURRENT,
-                                           IDC_HOME_DEFAULT,
                                            IDC_HISTORY_SETTINGS,
                                            0};
 static DWORD disabled_delhist_buttons[] = {IDC_DELETE_FORM_DATA,
@@ -175,6 +175,10 @@ static DWORD parse_url_from_outside(LPCWSTR url, LPWSTR out, DWORD maxlen)
  */
 static INT_PTR general_on_command(HWND hwnd, WPARAM wparam)
 {
+    WCHAR buffer[INTERNET_MAX_URL_LENGTH];
+    DWORD len;
+    DWORD type;
+    LONG res;
 
     switch (wparam)
     {
@@ -185,6 +189,13 @@ static INT_PTR general_on_command(HWND hwnd, WPARAM wparam)
 
         case MAKEWPARAM(IDC_HOME_BLANK, BN_CLICKED):
             SetDlgItemTextW(hwnd, IDC_HOME_EDIT, about_blank);
+            break;
+
+        case MAKEWPARAM(IDC_HOME_DEFAULT, BN_CLICKED):
+            len = sizeof(buffer);
+            type = REG_SZ;
+            res = SHRegGetUSValueW(reg_ie_main, default_page, &type, buffer, &len, FALSE, (LPBYTE) about_blank, sizeof(about_blank));
+            if (!res && (type == REG_SZ)) SetDlgItemTextW(hwnd, IDC_HOME_EDIT, buffer);
             break;
 
         case MAKEWPARAM(IDC_HISTORY_DELETE, BN_CLICKED):
