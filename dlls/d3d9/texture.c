@@ -1160,20 +1160,16 @@ static HRESULT WINAPI d3d9_texture_3d_LockBox(IDirect3DVolumeTexture9 *iface,
 static HRESULT WINAPI d3d9_texture_3d_UnlockBox(IDirect3DVolumeTexture9 *iface, UINT level)
 {
     struct d3d9_texture *texture = impl_from_IDirect3DVolumeTexture9(iface);
-    struct wined3d_resource *sub_resource;
     struct d3d9_volume *volume_impl;
     HRESULT hr;
 
     TRACE("iface %p, level %u.\n", iface, level);
 
     wined3d_mutex_lock();
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
+    if (!(volume_impl = wined3d_texture_get_sub_resource_parent(texture->wined3d_texture, level)))
         hr = D3DERR_INVALIDCALL;
     else
-    {
-        volume_impl = wined3d_resource_get_parent(sub_resource);
         hr = IDirect3DVolume9_UnlockBox(&volume_impl->IDirect3DVolume9_iface);
-    }
     wined3d_mutex_unlock();
 
     return hr;
