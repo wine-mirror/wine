@@ -18,7 +18,6 @@
 # sgmlpages:       compile sgml source for the Wine API Guide
 # xmlpages:        compile xml source for the Wine API Guide
 
-# Start of common header
 # The following variable definitions are copied into all makefiles
 
 prefix          = @prefix@
@@ -99,8 +98,6 @@ LIBWINE_DEPENDS     = @LIBWINE_DEPENDS@
 ALL_TEST_RESOURCES  = @ALL_TEST_RESOURCES@
 @ALL_VARS_RULES@
 @SET_MAKE@
-
-# End of common header
 
 all: wine
 	@echo "Wine build complete."

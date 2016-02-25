@@ -182,6 +182,7 @@ struct makefile
 
 static struct makefile *top_makefile;
 
+static const char separator[] = "### Dependencies";
 static const char *output_makefile_name = "Makefile";
 static const char *input_file_name;
 static const char *output_file_name;
@@ -1685,7 +1686,7 @@ static int set_make_variable( struct strarray *array, const char *assignment )
 /*******************************************************************
  *         parse_makefile
  */
-static struct makefile *parse_makefile( const char *path, const char *separator )
+static struct makefile *parse_makefile( const char *path )
 {
     char *buffer;
     FILE *file;
@@ -1702,7 +1703,7 @@ static struct makefile *parse_makefile( const char *path, const char *separator 
     file = open_input_makefile( make );
     while ((buffer = get_line( file )))
     {
-        if (separator && !strncmp( buffer, separator, strlen(separator) )) break;
+        if (!strncmp( buffer, separator, strlen(separator) )) break;
         if (*buffer == '\t') continue;  /* command */
         while (isspace( *buffer )) buffer++;
         if (*buffer == '#') continue;  /* comment */
@@ -3211,7 +3212,6 @@ static void output_top_variables( const struct makefile *make )
  */
 static void output_dependencies( const struct makefile *make )
 {
-    static const char separator[] = "### Dependencies";
     struct strarray targets, ignore_files = empty_strarray;
     char buffer[1024];
     FILE *src_file;
@@ -3449,7 +3449,7 @@ int main( int argc, char *argv[] )
 
     for (i = 0; i < HASH_SIZE; i++) list_init( &files[i] );
 
-    top_makefile = parse_makefile( NULL, "# End of common header" );
+    top_makefile = parse_makefile( NULL );
 
     linguas      = get_expanded_make_var_array( top_makefile, "LINGUAS" );
     target_flags = get_expanded_make_var_array( top_makefile, "TARGETFLAGS" );
@@ -3485,7 +3485,7 @@ int main( int argc, char *argv[] )
         top_makefile->submakes = xmalloc( top_makefile->subdirs.count * sizeof(*top_makefile->submakes) );
 
         for (i = 0; i < top_makefile->subdirs.count; i++)
-            top_makefile->submakes[i] = parse_makefile( top_makefile->subdirs.str[i], NULL );
+            top_makefile->submakes[i] = parse_makefile( top_makefile->subdirs.str[i] );
 
         load_sources( top_makefile );
         for (i = 0; i < top_makefile->subdirs.count; i++)
@@ -3500,7 +3500,7 @@ int main( int argc, char *argv[] )
 
     for (i = 1; i < argc; i++)
     {
-        struct makefile *make = parse_makefile( argv[i], NULL );
+        struct makefile *make = parse_makefile( argv[i] );
         load_sources( make );
         output_dependencies( make );
     }
