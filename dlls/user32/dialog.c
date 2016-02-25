@@ -921,7 +921,6 @@ INT_PTR WINAPI DialogBoxIndirectParamW(HINSTANCE hInstance, LPCDLGTEMPLATEW temp
  */
 BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
 {
-    BOOL wasEnabled;
     DIALOGINFO * dlgInfo;
     HWND owner;
 
@@ -934,10 +933,9 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     }
     dlgInfo->idResult = retval;
     dlgInfo->flags |= DF_END;
-    wasEnabled = (dlgInfo->flags & DF_OWNERENABLED);
 
     owner = GetWindow( hwnd, GW_OWNER );
-    if (wasEnabled && owner)
+    if (owner)
         DIALOG_EnableOwner( owner );
 
     /* Windows sets the focus to the dialog itself in EndDialog */
@@ -953,9 +951,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
 
     if (hwnd == GetActiveWindow())
     {
-        /* If this dialog was given an owner then set the focus to that owner
-           even when the owner is disabled (normally when a window closes any
-           disabled windows cannot receive the focus). */
+        /* If this dialog was given an owner then set the focus to that owner. */
         if (owner)
             SetForegroundWindow( owner );
         else

@@ -12226,7 +12226,7 @@ static void test_EndDialog(void)
 
     hother = CreateWindowExA(0, "TestParentClass", "Test parent 2",
                               WS_OVERLAPPEDWINDOW | WS_VISIBLE,
-                              100, 100, 200, 200, 0, 0, 0, NULL);
+                              200, 100, 200, 200, 0, 0, 0, NULL);
     ok (hother != 0, "Failed to create parent window\n");
 
     ok(GetClassInfoA(0, "#32770", &cls), "GetClassInfo failed\n");
@@ -12240,17 +12240,37 @@ static void test_EndDialog(void)
     hactive = GetForegroundWindow();
     ok(hother == hactive, "Wrong window has focus (%p != %p)\n", hother, hactive);
 
-    /* create a dialog where the parent is disabled, this parent should still
-       receive the focus when the dialog exits (even though "normally" a
-       disabled window should not receive the focus) */
+    /* create a dialog where the parent is disabled, this parent should be
+     * enabled and receive focus when dialog exits */
     hdlg = CreateDialogParamA(0, "CLASS_TEST_DIALOG_2", hparent, test_dlg_proc, 0);
     ok(IsWindow(hdlg), "CreateDialogParam failed\n");
     SetForegroundWindow(hdlg);
     hactive = GetForegroundWindow();
     ok(hdlg == hactive, "Wrong window has focus (%p != %p)\n", hdlg, hactive);
     EndDialog(hdlg, 0);
+    ok(IsWindowEnabled(hparent), "parent is not enabled\n");
     hactive = GetForegroundWindow();
     ok(hparent == hactive, "Wrong window has focus (parent != active) (active: %p, parent: %p, dlg: %p, other: %p)\n", hactive, hparent, hdlg, hother);
+    DestroyWindow(hdlg);
+    flush_sequence();
+
+    /* create a dialog where the parent is disabled and set active window to other window before calling EndDialog */
+    EnableWindow(hparent, FALSE);
+    hdlg = CreateWindowExA(0, "TestDialogClass", NULL,
+                          WS_VISIBLE|WS_CAPTION|WS_SYSMENU|WS_DLGFRAME,
+                          0, 0, 100, 100, hparent, 0, 0, NULL);
+    ok(IsWindow(hdlg), "CreateDialogParam failed\n");
+    flush_sequence();
+    SetForegroundWindow(hother);
+    flush_sequence();
+    hactive = GetForegroundWindow();
+    ok(hactive == hother, "Wrong foreground (%p != %p)\n", hactive, hother);
+    hactive = GetActiveWindow();
+    ok(hactive == hother, "Wrong active window (%p != %p)\n", hactive, hother);
+    EndDialog(hdlg, 0);
+    ok(IsWindowEnabled(hparent), "parent is not enabled\n");
+    hactive = GetForegroundWindow();
+    ok(hother == hactive, "Wrong window has focus (other != active) (active: %p, parent: %p, dlg: %p, other: %p)\n", hactive, hparent, hdlg, hother);
     DestroyWindow(hdlg);
     flush_sequence();
 
