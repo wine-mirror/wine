@@ -891,6 +891,11 @@ NTSTATUS WINAPI NtReadFile(HANDLE hFile, HANDLE hEvent,
                     status = length ? STATUS_END_OF_FILE : STATUS_SUCCESS;
                     goto done;
                 case FD_TYPE_SERIAL:
+                    if (!length)
+                    {
+                        status = STATUS_SUCCESS;
+                        goto done;
+                    }
                     break;
                 default:
                     status = STATUS_PIPE_BROKEN;
