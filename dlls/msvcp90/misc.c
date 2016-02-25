@@ -736,6 +736,25 @@ const error_category* __cdecl std_system_category(void)
     TRACE("()\n");
     return &system_category.base;
 }
+
+static custom_category generic_category;
+DEFINE_RTTI_DATA1(generic_category, 0, &error_category_rtti_base_descriptor, ".?AV_Generic_error_category@std@@")
+
+extern const vtable_ptr MSVCP_generic_category_vtable;
+
+static void generic_category_ctor(custom_category *this)
+{
+    this->base.vtable = &MSVCP_generic_category_vtable;
+    this->type = "generic";
+}
+
+/* ?generic_category@std@@YAABVerror_category@1@XZ */
+/* ?generic_category@std@@YAAEBVerror_category@1@XZ */
+const error_category* __cdecl std_generic_category(void)
+{
+    TRACE("()\n");
+    return &generic_category.base;
+}
 #endif
 
 #if _MSVCP_VER >= 110
@@ -1026,6 +1045,13 @@ void __asm_dummy_vtables(void) {
             VTABLE_ADD_FUNC(custom_category_default_error_condition)
             VTABLE_ADD_FUNC(custom_category_equivalent)
             VTABLE_ADD_FUNC(custom_category_equivalent_code));
+    __ASM_VTABLE(generic_category,
+            VTABLE_ADD_FUNC(custom_category_vector_dtor)
+            VTABLE_ADD_FUNC(custom_category_name)
+            VTABLE_ADD_FUNC(custom_category_message)
+            VTABLE_ADD_FUNC(custom_category_default_error_condition)
+            VTABLE_ADD_FUNC(custom_category_equivalent)
+            VTABLE_ADD_FUNC(custom_category_equivalent_code));
 #endif
 #if _MSVCP_VER >= 110
     __ASM_VTABLE(_Pad,
@@ -1042,6 +1068,7 @@ void init_misc(void *base)
     init_error_category_rtti(base);
     init_iostream_category_rtti(base);
     init_system_category_rtti(base);
+    init_generic_category_rtti(base);
 #endif
 #if _MSVCP_VER >= 110
     init__Pad_rtti(base);
@@ -1051,6 +1078,7 @@ void init_misc(void *base)
 #if _MSVCP_VER == 100
     iostream_category_ctor(&iostream_category);
     system_category_ctor(&system_category);
+    generic_category_ctor(&generic_category);
 #endif
 }
 
