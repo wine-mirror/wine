@@ -1839,6 +1839,29 @@ static void create_dir( const char *dir )
 
 
 /*******************************************************************
+ *         create_file_directories
+ *
+ * Create the base directories of all the files.
+ */
+static void create_file_directories( const struct makefile *make, struct strarray files )
+{
+    struct strarray subdirs = empty_strarray;
+    unsigned int i;
+    char *dir;
+
+    for (i = 0; i < files.count; i++)
+    {
+        if (!strchr( files.str[i], '/' )) continue;
+        dir = base_dir_path( make, files.str[i] );
+        *strrchr( dir, '/' ) = 0;
+        strarray_add_uniq( &subdirs, dir );
+    }
+
+    for (i = 0; i < subdirs.count; i++) create_dir( subdirs.str[i] );
+}
+
+
+/*******************************************************************
  *         output_filenames_obj_dir
  */
 static void output_filenames_obj_dir( const struct makefile *make, struct strarray array )
@@ -2213,7 +2236,6 @@ static struct strarray output_sources( const struct makefile *make )
     struct strarray c2man_files = empty_strarray;
     struct strarray implib_objs = empty_strarray;
     struct strarray includes = empty_strarray;
-    struct strarray subdirs = empty_strarray;
     struct strarray phony_targets = empty_strarray;
     struct strarray all_targets = empty_strarray;
     struct strarray install_rules[NB_INSTALL_RULES];
@@ -2244,13 +2266,6 @@ static struct strarray output_sources( const struct makefile *make )
 
         if (!ext) fatal_error( "unsupported file type %s\n", source->name );
         *ext++ = 0;
-
-        if (make->src_dir && strchr( obj, '/' ))
-        {
-            char *subdir = base_dir_path( make, obj );
-            *strrchr( subdir, '/' ) = 0;
-            strarray_add_uniq( &subdirs, subdir );
-        }
 
         extradefs = get_expanded_file_local_var( make, obj, "EXTRADEFS" );
         get_dependencies( &dependencies, source, source );
@@ -3046,8 +3061,6 @@ static struct strarray output_sources( const struct makefile *make )
         output( "\n" );
     }
 
-    for (i = 0; i < subdirs.count; i++) create_dir( subdirs.str[i] );
-
     return clean_files;
 }
 
@@ -3231,6 +3244,8 @@ static void output_dependencies( const struct makefile *make )
     FILE *src_file;
     int found = 0;
 
+    if (make->base_dir) create_dir( make->base_dir );
+
     output_file_name = base_dir_path( make, output_makefile_name );
     output_file = create_temp_file( output_file_name );
     output_top_variables( make );
@@ -3262,6 +3277,8 @@ static void output_dependencies( const struct makefile *make )
     strarray_addall( &ignore_files, targets );
     if (!make->src_dir && make->base_dir)
         output_gitignore( base_dir_path( make, ".gitignore" ), ignore_files );
+
+    create_file_directories( make, targets );
 
     output_file_name = NULL;
 }
@@ -3344,9 +3361,6 @@ static void load_sources( struct makefile *make )
 
     list_init( &make->sources );
     list_init( &make->includes );
-
-    /* FIXME: target dir has to exist to allow locating srcdir-relative include files */
-    if (make->base_dir) create_dir( make->base_dir );
 
     for (var = source_vars; *var; var++)
     {
