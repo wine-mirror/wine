@@ -3650,25 +3650,12 @@ include/stamp-h.in: configure.ac aclocal.m4
 	@echo timestamp > \$[@]])
 fi
 
-if test "$MSGFMT" != false
-then
-    WINE_APPEND_RULE(
-[__builddeps__: \$(LINGUAS:%=po/%.mo)
-clean::
-	\$(RM) \$(LINGUAS:%=po/%.mo)])
+test "$MSGFMT" != false || LINGUAS=
 
-    posrc="po"
-    test "$srcdir" = . || posrc="$srcdir/po"
-    for i in $LINGUAS
-    do
-        WINE_IGNORE_FILE("po/$i.mo")
-        WINE_APPEND_RULE(
-[po/$i.mo: $posrc/$i.po
-	\$(MSGFMT) -o \$@ $posrc/$i.po])
-    done
-else
-    LINGUAS=
-fi
+for i in $LINGUAS
+do
+    WINE_IGNORE_FILE("po/$i.mo")
+done
 
 if test "x$enable_tools" != xno
 then

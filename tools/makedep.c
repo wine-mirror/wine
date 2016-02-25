@@ -146,6 +146,7 @@ static const char *convert;
 static const char *rsvg;
 static const char *icotool;
 static const char *dlltool;
+static const char *msgfmt;
 
 struct makefile
 {
@@ -2988,16 +2989,6 @@ static struct strarray output_sources( const struct makefile *make )
     strarray_addall( &clean_files, all_targets );
     strarray_addall( &clean_files, get_expanded_make_var_array( make, "EXTRA_TARGETS" ));
 
-    if (clean_files.count)
-    {
-        output( "%s::\n", obj_dir_path( make, "clean" ));
-        output( "\trm -f" );
-        output_filenames_obj_dir( make, clean_files );
-        output( "\n" );
-        if (make->obj_dir) output( "__clean__: %s\n", obj_dir_path( make, "clean" ));
-        strarray_add( &phony_targets, obj_dir_path( make, "clean" ));
-    }
-
     if (make->subdirs.count)
     {
         struct strarray makefile_deps = empty_strarray;
@@ -3022,7 +3013,30 @@ static struct strarray output_sources( const struct makefile *make )
         output( "\n" );
         strarray_add( &phony_targets, "distclean" );
 
+        if (msgfmt && strcmp( msgfmt, "false" ))
+        {
+            strarray_addall( &clean_files, mo_files );
+            output( "__builddeps__:" );
+            output_filenames( mo_files );
+            output( "\n" );
+            for (i = 0; i < linguas.count; i++)
+            {
+                output( "%s/%s.mo:", obj_dir_path( make, "po" ), linguas.str[i] );
+                output( " %s/%s.po\n", src_dir_path( make, "po" ), linguas.str[i] );
+                output( "\t%s -o $@ %s/%s.po\n", msgfmt, src_dir_path( make, "po" ), linguas.str[i] );
+            }
+        }
         if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
+    }
+
+    if (clean_files.count)
+    {
+        output( "%s::\n", obj_dir_path( make, "clean" ));
+        output( "\trm -f" );
+        output_filenames_obj_dir( make, clean_files );
+        output( "\n" );
+        if (make->obj_dir) output( "__clean__: %s\n", obj_dir_path( make, "clean" ));
+        strarray_add( &phony_targets, obj_dir_path( make, "clean" ));
     }
 
     if (phony_targets.count)
@@ -3472,6 +3486,7 @@ int main( int argc, char *argv[] )
     rsvg         = get_expanded_make_variable( top_makefile, "RSVG" );
     icotool      = get_expanded_make_variable( top_makefile, "ICOTOOL" );
     dlltool      = get_expanded_make_variable( top_makefile, "DLLTOOL" );
+    msgfmt       = get_expanded_make_variable( top_makefile, "MSGFMT" );
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
