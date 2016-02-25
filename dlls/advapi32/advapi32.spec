@@ -23,7 +23,7 @@
 @ stdcall AddAce(ptr long long ptr long)
 @ stdcall AddAuditAccessAce(ptr long long ptr long long)
 @ stdcall AddAuditAccessAceEx(ptr long long long ptr long long)
-# @ stub AddAuditAccessObjectAce
+@ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long)
 # @ stub AddConditionalAce
 @ stdcall AddMandatoryAce(ptr long long long ptr)
 # @ stub AddUsersToEncryptedFileEx

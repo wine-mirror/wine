@@ -14,7 +14,7 @@
 @ stdcall AddAce(ptr long long ptr long) advapi32.AddAce
 @ stdcall AddAuditAccessAce(ptr long long ptr long long) advapi32.AddAuditAccessAce
 @ stdcall AddAuditAccessAceEx(ptr long long long ptr long long) advapi32.AddAuditAccessAceEx
-@ stub AddAuditAccessObjectAce
+@ stdcall AddAuditAccessObjectAce(ptr long long long ptr ptr ptr long long) advapi32.AddAuditAccessObjectAce
 @ stdcall AddMandatoryAce(ptr long long long ptr) advapi32.AddMandatoryAce
 @ stub AddResourceAttributeAce
 @ stub AddScopedPolicyIDAce

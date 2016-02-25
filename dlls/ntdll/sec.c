@@ -1325,7 +1325,26 @@ NTSTATUS WINAPI RtlAddAuditAccessAce(
 {
     return RtlAddAuditAccessAceEx(pAcl, dwAceRevision, 0, dwAccessMask, pSid, bAuditSuccess, bAuditFailure);
 }
- 
+
+/******************************************************************************
+ *  RtlAddAuditAccessObjectAce [NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAddAuditAccessObjectAce(
+    IN OUT PACL pAcl,
+    IN DWORD dwAceRevision,
+    IN DWORD dwAceFlags,
+    IN DWORD dwAccessMask,
+    IN GUID* pObjectTypeGuid,
+    IN GUID* pInheritedObjectTypeGuid,
+    IN PSID pSid,
+    IN BOOL bAuditSuccess,
+    IN BOOL bAuditFailure)
+{
+    FIXME("%p %x %x %x %p %p %p %d %d - stub\n", pAcl, dwAceRevision, dwAceFlags, dwAccessMask,
+          pObjectTypeGuid, pInheritedObjectTypeGuid, pSid, bAuditSuccess, bAuditFailure);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 /******************************************************************************
  *  RtlValidAcl		[NTDLL.@]
  */
