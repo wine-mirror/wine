@@ -1652,10 +1652,14 @@ void WINAPI D3DXQuaternionToAxisAngle(const D3DXQUATERNION *pq, D3DXVECTOR3 *pax
 {
     TRACE("pq %p, paxis %p, pangle %p\n", pq, paxis, pangle);
 
-    paxis->x = pq->x;
-    paxis->y = pq->y;
-    paxis->z = pq->z;
-    *pangle = 2.0f * acosf(pq->w);
+    if (paxis)
+    {
+        paxis->x = pq->x;
+        paxis->y = pq->y;
+        paxis->z = pq->z;
+    }
+    if (pangle)
+        *pangle = 2.0f * acosf(pq->w);
 }
 
 /*_________________D3DXVec2_____________________*/

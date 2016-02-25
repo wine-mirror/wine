@@ -1019,9 +1019,14 @@ static void D3DXQuaternionTest(void)
     /* Test the null quaternion */
     expectedvec.x = 0.0f; expectedvec.y = 0.0f; expectedvec.z = 0.0f;
     expected = 3.141593f;
-    D3DXQuaternionToAxisAngle(&nul,&axis,&angle);
-    expect_vec3(expectedvec,axis);
-    ok(relative_error(angle, expected ) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+    D3DXQuaternionToAxisAngle(&nul, &axis, &angle);
+    expect_vec3(expectedvec, axis);
+    ok(relative_error(angle, expected) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
+
+    D3DXQuaternionToAxisAngle(&nul, &axis, NULL);
+    D3DXQuaternionToAxisAngle(&nul, NULL, &angle);
+    expect_vec3(expectedvec, axis);
+    ok(relative_error(angle, expected) < admitted_error, "Expected: %f, Got: %f\n", expected, angle);
 }
 
 static void D3DXVector2Test(void)
