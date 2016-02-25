@@ -926,7 +926,7 @@ void signal_init_thread( TEB *teb )
         init_done = TRUE;
     }
 
-#ifdef __ARM_ARCH_7A__
+#if defined(__ARM_ARCH_7A__) || defined(__ARM_ARCH_8A__)
     /* Win32/ARM applications expect the TEB pointer to be in the TPIDRURW register. */
     __asm__ __volatile__( "mcr p15, 0, %0, c13, c0, 2" : : "r" (teb) );
 #endif
