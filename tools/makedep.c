@@ -2142,6 +2142,57 @@ static struct strarray output_install_rules( const struct makefile *make, struct
 
 
 /*******************************************************************
+ *         output_po_files
+ */
+static void output_po_files( const struct makefile *make )
+{
+    const char *po_dir = src_dir_path( make, "po" );
+    struct strarray pot_files = empty_strarray;
+    struct incl_file *source;
+    unsigned int i;
+
+    for (i = 0; i < make->subdirs.count; i++)
+    {
+        struct makefile *submake = make->submakes[i];
+
+        LIST_FOR_EACH_ENTRY( source, &submake->sources, struct incl_file, entry )
+        {
+            if (strendswith( source->name, ".rc" ) && (source->file->flags & FLAG_RC_PO))
+            {
+                char *pot_file = replace_extension( source->name, ".rc", ".pot" );
+                char *pot_path = base_dir_path( submake, pot_file );
+                output( "%s: tools/wrc include dummy\n", pot_path );
+                output( "\t@cd %s && $(MAKE) %s\n", base_dir_path( submake, "" ), pot_file );
+                strarray_add( &pot_files, pot_path );
+            }
+            else if (strendswith( source->name, ".mc" ))
+            {
+                char *pot_file = replace_extension( source->name, ".mc", ".pot" );
+                char *pot_path = base_dir_path( submake, pot_file );
+                output( "%s: tools/wmc include dummy\n", pot_path );
+                output( "\t@cd %s && $(MAKE) %s\n", base_dir_path( submake, "" ), pot_file );
+                strarray_add( &pot_files, pot_path );
+            }
+        }
+    }
+    if (linguas.count)
+    {
+        for (i = 0; i < linguas.count; i++)
+            output_filename( strmake( "%s/%s.po", po_dir, linguas.str[i] ));
+        output( ": %s/wine.pot\n", po_dir );
+        output( "\tmsgmerge --previous -q $@ %s/wine.pot | msgattrib --no-obsolete -o $@.new && mv $@.new $@\n",
+                po_dir );
+    }
+    output( "%s/wine.pot:", po_dir );
+    output_filenames( pot_files );
+    output( "\n" );
+    output( "\tmsgcat -o $@" );
+    output_filenames( pot_files );
+    output( "\n" );
+}
+
+
+/*******************************************************************
  *         output_sources
  */
 static struct strarray output_sources( const struct makefile *make )
@@ -2153,9 +2204,7 @@ static struct strarray output_sources( const struct makefile *make )
     struct strarray res_files = empty_strarray;
     struct strarray clean_files = empty_strarray;
     struct strarray uninstall_files = empty_strarray;
-    struct strarray po_files = empty_strarray;
     struct strarray mo_files = empty_strarray;
-    struct strarray mc_files = empty_strarray;
     struct strarray ok_files = empty_strarray;
     struct strarray in_files = empty_strarray;
     struct strarray dlldata_files = empty_strarray;
@@ -2246,8 +2295,7 @@ static struct strarray output_sources( const struct makefile *make )
         else if (!strcmp( ext, "rc" ))  /* resource file */
         {
             strarray_add( &res_files, strmake( "%s.res", obj ));
-            output( "%s.res: %s %s\n", obj_dir_path( make, obj ),
-                    tools_path( make, "wrc" ), source->filename );
+            output( "%s.res: %s\n", obj_dir_path( make, obj ), source->filename );
             output( "\t%s -o $@", tools_path( make, "wrc" ) );
             if (make->is_win16) output_filename( "-m16" );
             else output_filenames( target_flags );
@@ -2257,42 +2305,57 @@ static struct strarray output_sources( const struct makefile *make )
             output_filenames( extradefs );
             if (mo_files.count && (source->file->flags & FLAG_RC_PO))
             {
-                strarray_add( &po_files, source->filename );
                 output_filename( strmake( "--po-dir=%s", top_obj_dir_path( make, "po" )));
                 output_filename( source->filename );
                 output( "\n" );
                 output( "%s.res:", obj_dir_path( make, obj ));
                 output_filenames( mo_files );
                 output( "\n" );
-                output( "%s ", obj_dir_path( make, "rsrc.pot" ));
             }
             else
             {
                 output_filename( source->filename );
                 output( "\n" );
             }
+            if (source->file->flags & FLAG_RC_PO)
+            {
+                strarray_add( &clean_files, strmake( "%s.pot", obj ));
+                output( "%s.pot: %s\n", obj_dir_path( make, obj ), source->filename );
+                output( "\t%s -O pot -o $@", tools_path( make, "wrc" ) );
+                if (make->is_win16) output_filename( "-m16" );
+                else output_filenames( target_flags );
+                output_filename( "--nostdinc" );
+                output_filenames( includes );
+                output_filenames( make->define_args );
+                output_filenames( extradefs );
+                output_filename( source->filename );
+                output( "\n" );
+                output( "%s.pot ", obj_dir_path( make, obj ));
+            }
             output( "%s.res:", obj_dir_path( make, obj ));
+            output_filename( tools_path( make, "wrc" ));
             output_filenames( dependencies );
             output( "\n" );
         }
         else if (!strcmp( ext, "mc" ))  /* message file */
         {
             strarray_add( &res_files, strmake( "%s.res", obj ));
-            output( "%s.res: %s %s\n", obj_dir_path( make, obj ),
-                    tools_path( make, "wmc" ), source->filename );
+            strarray_add( &clean_files, strmake( "%s.pot", obj ));
+            output( "%s.res: %s\n", obj_dir_path( make, obj ), source->filename );
             output( "\t%s -U -O res -o $@ %s", tools_path( make, "wmc" ), source->filename );
             if (mo_files.count)
             {
-                strarray_add( &mc_files, source->filename );
                 output_filename( strmake( "--po-dir=%s", top_obj_dir_path( make, "po" )));
                 output( "\n" );
                 output( "%s.res:", obj_dir_path( make, obj ));
                 output_filenames( mo_files );
-                output( "\n" );
-                output( "%s ", obj_dir_path( make, "msg.pot" ));
             }
-            else output( "\n" );
-            output( "%s.res:", obj_dir_path( make, obj ));
+            output( "\n" );
+            output( "%s.pot: %s\n", obj_dir_path( make, obj ), source->filename );
+            output( "\t%s -O pot -o $@ %s", tools_path( make, "wmc" ), source->filename );
+            output( "\n" );
+            output( "%s.pot %s.res:", obj_dir_path( make, obj ), obj_dir_path( make, obj ));
+            output_filename( tools_path( make, "wmc" ));
             output_filenames( dependencies );
             output( "\n" );
         }
@@ -2496,33 +2559,6 @@ static struct strarray output_sources( const struct makefile *make )
     }
 
     /* rules for files that depend on multiple sources */
-
-    if (po_files.count)
-    {
-        output( "%s: %s", obj_dir_path( make, "rsrc.pot" ), tools_path( make, "wrc" ) );
-        output_filenames( po_files );
-        output( "\n" );
-        output( "\t%s -O pot -o $@", tools_path( make, "wrc" ));
-        if (make->is_win16) output_filename( "-m16" );
-        else output_filenames( target_flags );
-        output_filename( "--nostdinc" );
-        output_filenames( includes );
-        output_filenames( make->define_args );
-        output_filenames( po_files );
-        output( "\n" );
-        strarray_add( &clean_files, "rsrc.pot" );
-    }
-
-    if (mc_files.count)
-    {
-        output( "%s: %s", obj_dir_path( make, "msg.pot" ), tools_path( make, "wmc" ));
-        output_filenames( mc_files );
-        output( "\n" );
-        output( "\t%s -O pot -o $@", tools_path( make, "wmc" ));
-        output_filenames( mc_files );
-        output( "\n" );
-        strarray_add( &clean_files, "msg.pot" );
-    }
 
     if (dlldata_files.count)
     {
@@ -2984,6 +3020,8 @@ static struct strarray output_sources( const struct makefile *make )
         output_filenames( distclean_files );
         output( "\n" );
         strarray_add( &phony_targets, "distclean" );
+
+        if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
     }
 
     if (phony_targets.count)

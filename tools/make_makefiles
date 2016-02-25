@@ -380,13 +380,13 @@ sub assign_sources_to_makefiles(@)
         }
         elsif ($name =~ /\.rc$/)
         {
-            ${${$make}{"=flags"}}{"po"} = 1 if defined $flags{"po"};
+            ${${$make}{"=flags"}}{"clean"} = 1 if defined $flags{"po"};
             push @{${$make}{"=RC_SRCS"}}, $name;
         }
         elsif ($name =~ /\.mc$/)
         {
             push @{${$make}{"=MC_SRCS"}}, $name;
-            ${${$make}{"=flags"}}{"mc"} = 1;
+            ${${$make}{"=flags"}}{"clean"} = 1;
         }
         elsif ($name =~ /\.idl$/)
         {
