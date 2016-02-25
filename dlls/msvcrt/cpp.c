@@ -1152,6 +1152,7 @@ void* CDECL MSVCRT___RTCastToVoid(void *cppobj)
 /*********************************************************************
  *		_CxxThrowException (MSVCRT.@)
  */
+#ifndef __x86_64__
 void WINAPI _CxxThrowException( exception *object, const cxx_exception_type *type )
 {
     ULONG_PTR args[3];
@@ -1161,6 +1162,18 @@ void WINAPI _CxxThrowException( exception *object, const cxx_exception_type *typ
     args[2] = (ULONG_PTR)type;
     RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 3, args );
 }
+#else
+void WINAPI _CxxThrowException( exception *object, const cxx_exception_type *type )
+{
+    ULONG_PTR args[4];
+
+    args[0] = CXX_FRAME_MAGIC_VC6;
+    args[1] = (ULONG_PTR)object;
+    args[2] = (ULONG_PTR)type;
+    RtlPcToFileHeader( (void*)type, (void**)&args[3]);
+    RaiseException( CXX_EXCEPTION, EH_NONCONTINUABLE, 4, args );
+}
+#endif
 
 /*********************************************************************
  * ?_is_exception_typeof@@YAHABVtype_info@@PAU_EXCEPTION_POINTERS@@@Z
