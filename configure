@@ -12416,7 +12416,7 @@ This is an error since --with-zlib was requested." "$LINENO" 5 ;;
 esac
 fi
 
-if test "x$enable_tools" != xno
+if test "x$enable_tools" != xno -a "x$with_gettextpo" = xyes
 then
     if test "$ac_cv_header_gettext_po_h" = "yes"
     then
@@ -12465,9 +12465,7 @@ $as_echo "#define HAVE_LIBGETTEXTPO 1" >>confdefs.h
 fi
 
     fi
-    if test "x$with_gettextpo" = xyes
-    then
-        if test "x$GETTEXTPO_LIBS" = "x"; then :
+    if test "x$GETTEXTPO_LIBS" = "x"; then :
   case "x$with_gettextpo" in
   x)   as_fn_append wine_notices "|GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt." ;;
   xno) ;;
@@ -12475,7 +12473,7 @@ fi
 This is an error since --with-gettextpo was requested." "$LINENO" 5 ;;
 esac
 fi
-        if test "$srcdir" != .; then :
+    if test "$srcdir" != .; then :
   case "x$with_gettextpo" in
   x)   as_fn_append wine_notices "|Rebuilding po files is not supported for out of tree builds." ;;
   xno) ;;
@@ -12483,7 +12481,6 @@ fi
 This is an error since --with-gettextpo was requested." "$LINENO" 5 ;;
 esac
 fi
-    fi
 fi
 
 if test "x$with_pulse" != "xno";

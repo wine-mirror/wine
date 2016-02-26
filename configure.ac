@@ -1435,7 +1435,7 @@ fi
 WINE_NOTICE_WITH(zlib,[test "x$Z_LIBS" = "x"],[libz ${notice_platform}development files not found, data compression won't be supported.])
 
 dnl **** Check for gettextpo ****
-if test "x$enable_tools" != xno
+if test "x$enable_tools" != xno -a "x$with_gettextpo" = xyes
 then
     if test "$ac_cv_header_gettext_po_h" = "yes"
     then
@@ -1443,13 +1443,10 @@ then
                      [AC_DEFINE(HAVE_LIBGETTEXTPO,1,[Define to 1 if you have the `gettextpo' library (-lgettextpo).])
                       AC_SUBST(GETTEXTPO_LIBS,"-lgettextpo")])
     fi
-    if test "x$with_gettextpo" = xyes
-    then
-        WINE_NOTICE_WITH(gettextpo,[test "x$GETTEXTPO_LIBS" = "x"],
-          [GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt.])
-        WINE_NOTICE_WITH(gettextpo,[test "$srcdir" != .],
-          [Rebuilding po files is not supported for out of tree builds.])
-    fi
+    WINE_NOTICE_WITH(gettextpo,[test "x$GETTEXTPO_LIBS" = "x"],
+      [GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt.])
+    WINE_NOTICE_WITH(gettextpo,[test "$srcdir" != .],
+      [Rebuilding po files is not supported for out of tree builds.])
 fi
 
 dnl **** Check for PulseAudio ****
