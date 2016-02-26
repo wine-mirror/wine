@@ -3104,6 +3104,101 @@ LSTATUS WINAPI RegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
     return ret;
 }
 
+
+/******************************************************************************
+ * RegCopyTreeW [ADVAPI32.@]
+ *
+ */
+LONG WINAPI RegCopyTreeW( HKEY hsrc, const WCHAR *subkey, HKEY hdst )
+{
+    DWORD name_size, max_name;
+    DWORD value_size, max_value;
+    DWORD max_subkey, i, type;
+    WCHAR *name_buf = NULL;
+    BYTE *value_buf = NULL;
+    HKEY hkey;
+    LONG ret;
+
+    TRACE( "(%p, %s, %p)\n", hsrc, debugstr_w(subkey), hdst );
+
+    if (subkey)
+    {
+        ret = RegOpenKeyExW( hsrc, subkey, 0, KEY_READ, &hsrc );
+        if (ret) return ret;
+    }
+
+    ret = RegQueryInfoKeyW( hsrc, NULL, NULL, NULL, NULL, &max_subkey,
+                            NULL, NULL, &max_name, &max_value, NULL, NULL );
+    if (ret)
+        goto cleanup;
+
+    max_name = max( max_subkey, max_name ) + 1;
+    if (!(name_buf = heap_alloc( max_name * sizeof(WCHAR) )))
+    {
+        ret = ERROR_NOT_ENOUGH_MEMORY;
+        goto cleanup;
+    }
+
+    if (!(value_buf = heap_alloc( max_value )))
+    {
+        ret = ERROR_NOT_ENOUGH_MEMORY;
+        goto cleanup;
+    }
+
+    /* Copy values */
+    for (i = 0;; i++)
+    {
+        name_size = max_name;
+        value_size = max_value;
+        ret = RegEnumValueW( hsrc, i, name_buf, &name_size, NULL, &type, value_buf, &value_size );
+        if (ret == ERROR_NO_MORE_ITEMS) break;
+        if (ret) goto cleanup;
+        ret = RegSetValueExW( hdst, name_buf, 0, type, value_buf, value_size );
+        if (ret) goto cleanup;
+    }
+
+    /* Recursively copy subkeys */
+    for (i = 0;; i++)
+    {
+        name_size = max_name;
+        ret = RegEnumKeyExW( hsrc, i, name_buf, &name_size, NULL, NULL, NULL, NULL );
+        if (ret == ERROR_NO_MORE_ITEMS) break;
+        if (ret) goto cleanup;
+        ret = RegCreateKeyExW( hdst, name_buf, 0, NULL, 0, KEY_WRITE, NULL, &hkey, NULL );
+        if (ret) goto cleanup;
+        ret = RegCopyTreeW( hsrc, name_buf, hkey );
+        RegCloseKey( hkey );
+        if (ret) goto cleanup;
+    }
+
+    ret = ERROR_SUCCESS;
+
+cleanup:
+    heap_free( name_buf );
+    heap_free( value_buf );
+    if (subkey)
+        RegCloseKey( hsrc );
+    return ret;
+}
+
+
+/******************************************************************************
+ * RegCopyTreeA [ADVAPI32.@]
+ *
+ */
+LONG WINAPI RegCopyTreeA( HKEY hsrc, const char *subkey, HKEY hdst )
+{
+    UNICODE_STRING subkeyW;
+    LONG ret;
+
+    if (subkey) RtlCreateUnicodeStringFromAsciiz( &subkeyW, subkey );
+    else subkeyW.Buffer = NULL;
+    ret = RegCopyTreeW( hsrc, subkeyW.Buffer, hdst );
+    RtlFreeUnicodeString( &subkeyW );
+    return ret;
+}
+
+
 /******************************************************************************
  * RegDisableReflectionKey [ADVAPI32.@]
  *

@@ -1,5 +1,5 @@
 @ stdcall RegCloseKey(long) advapi32.RegCloseKey
-@ stub RegCopyTreeW
+@ stdcall RegCopyTreeW(long wstr long) advapi32.RegCopyTreeW
 @ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExA
 @ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr) advapi32.RegCreateKeyExW
 @ stdcall RegDeleteKeyExA(long str long long) advapi32.RegDeleteKeyExA

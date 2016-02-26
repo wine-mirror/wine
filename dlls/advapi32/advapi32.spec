@@ -575,8 +575,8 @@
 @ stdcall RegConnectRegistryW(wstr long ptr)
 # @ stub RegConnectRegistryExA
 # @ stub RegConnectRegistryExW
-# @ stub RegCopyTreeA
-# @ stub RegCopyTreeW
+@ stdcall RegCopyTreeA(long str long)
+@ stdcall RegCopyTreeW(long wstr long)
 @ stdcall RegCreateKeyA(long str ptr)
 @ stdcall RegCreateKeyExA(long str long ptr long long ptr ptr ptr)
 @ stdcall RegCreateKeyExW(long wstr long ptr long long ptr ptr ptr)

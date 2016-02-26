@@ -2090,7 +2090,7 @@ static void test_reg_copy_tree(void)
 
     if (!pRegCopyTreeA)
     {
-        skip("Skipping RegCopyTreeA tests, function not present\n");
+        win_skip("Skipping RegCopyTreeA tests, function not present\n");
         return;
     }
 
