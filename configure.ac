@@ -2616,11 +2616,6 @@ Makefile: $srcdir/Makefile.in config.status \$(MAKEDEP)
 depend: \$(MAKEDEP) dummy
 	\$(MAKEDEP)])
 
-test "$srcdir" = . && WINE_APPEND_RULE(
-[all: .gitignore
-.gitignore: config.status
-	@./config.status .gitignore])
-
 test -n "$CROSSTARGET" || WINE_APPEND_RULE(
 [crosstest:
 	@echo \"crosstest is not supported (mingw not installed?)\" && false])
@@ -3602,15 +3597,11 @@ dnl End of auto-generated output commands
 
 dnl Main ignore file
 
-WINE_IGNORE_FILE(".gitignore")
-WINE_IGNORE_FILE("Makefile")
 WINE_IGNORE_FILE("TAGS")
 WINE_IGNORE_FILE("tags")
 WINE_IGNORE_FILE("autom4te.cache")
-WINE_IGNORE_FILE("config.cache")
 WINE_IGNORE_FILE("config.log")
 WINE_IGNORE_FILE("config.status")
-WINE_IGNORE_FILE("configure.lineno")
 WINE_IGNORE_FILE("include/config.h")
 WINE_IGNORE_FILE("include/stamp-h")
 test "$wine_binary" = wine || WINE_IGNORE_FILE("loader/wine")
@@ -3652,19 +3643,12 @@ fi
 
 test "$MSGFMT" != false || LINGUAS=
 
-for i in $LINGUAS
-do
-    WINE_IGNORE_FILE("po/$i.mo")
-done
-
 if test "x$enable_tools" != xno
 then
     WINE_APPEND_RULE(
 [tools/makedep$ac_exeext: $srcdir/tools/makedep.c include/config.h config.status
 	@./config.status tools/makedep
-Makefile: tools/makedep$ac_exeext
-distclean:: clean
-	\$(RM) tools/makedep$ac_exeext])
+Makefile: tools/makedep$ac_exeext])
 else
     WINE_APPEND_RULE(
 [\$(MAKEDEP):
@@ -3698,18 +3682,6 @@ uninstall::
 uninstall::
 	\$(RM) \$(DESTDIR)\$(datadir)/applications/wine.desktop]) ;;
     esac
-fi
-
-if test "$srcdir" = .
-then
-    AC_CONFIG_COMMANDS([.gitignore], [wine_fn_output_gitignore .gitignore],
-[wine_fn_output_gitignore ()
-{
-    sort <<\_WINE_EOF >\$tmp/gitignore && mv -f \$tmp/gitignore \$[]1 && return
-$GITIGNORE
-_WINE_EOF
-    AS_ERROR([could not create .gitignore])
-}])
 fi
 
 AS_ECHO(" done") >&AS_MESSAGE_FD

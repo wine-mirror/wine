@@ -96,6 +96,7 @@ LIBWINE_INSTALL_DEV = @LIBWINE_INSTALL_DEV@
 LIBWINE_LDFLAGS     = @LIBWINE_LDFLAGS@
 LIBWINE_DEPENDS     = @LIBWINE_DEPENDS@
 ALL_TEST_RESOURCES  = @ALL_TEST_RESOURCES@
+CONFIGURE_TARGETS   = @CONFIGURE_TARGETS@
 @ALL_VARS_RULES@
 @SET_MAKE@
 
@@ -117,7 +118,6 @@ include/stamp-h: $(srcdir)/include/config.h.in config.status
 
 clean:: __clean__
 distclean:: clean
-	$(RM) config.* configure.lineno TAGS tags include/config.h include/stamp-h Makefile Make.tmp .gitignore
 	$(RM) -r autom4te.cache documentation/html documentation/api-guide documentation/api-guide-xml documentation/man$(api_manext)
 
 # Rules for uninstalling

@@ -3044,8 +3044,10 @@ static struct strarray output_sources( const struct makefile *make )
     {
         struct strarray build_deps = empty_strarray;
         struct strarray makefile_deps = empty_strarray;
-        struct strarray distclean_files = empty_strarray;
+        struct strarray distclean_files = get_expanded_make_var_array( make, "CONFIGURE_TARGETS" );
 
+        strarray_add( &distclean_files, obj_dir_path( make, output_makefile_name ));
+        if (!make->src_dir) strarray_add( &distclean_files, obj_dir_path( make, ".gitignore" ));
         for (i = 0; i < make->subdirs.count; i++)
         {
             const struct makefile *submake = make->submakes[i];
@@ -3103,6 +3105,8 @@ static struct strarray output_sources( const struct makefile *make )
         output( "\n" );
     }
 
+    if (!make->base_dir)
+        strarray_addall( &clean_files, get_expanded_make_var_array( make, "CONFIGURE_TARGETS" ));
     return clean_files;
 }
 
@@ -3317,8 +3321,7 @@ static void output_dependencies( const struct makefile *make )
         strarray_add( &ignore_files, "testlist.c" );
     }
     strarray_addall( &ignore_files, targets );
-    if (!make->src_dir && make->base_dir)
-        output_gitignore( base_dir_path( make, ".gitignore" ), ignore_files );
+    if (!make->src_dir) output_gitignore( base_dir_path( make, ".gitignore" ), ignore_files );
 
     create_file_directories( make, targets );
 
