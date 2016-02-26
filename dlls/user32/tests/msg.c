@@ -3380,6 +3380,7 @@ static void test_mdi_messages(void)
     BOOL zoomed;
     RECT rc;
     HMENU hMenu = CreateMenu();
+    LONG val;
 
     if (!mdi_RegisterWindowClasses()) assert(0);
 
@@ -3408,8 +3409,9 @@ static void test_mdi_messages(void)
                                  rc.left, rc.top, rc.right - rc.left, rc.bottom - rc.top,
                                  mdi_frame, 0, GetModuleHandleA(0), &client_cs);
     assert(mdi_client);
-    ok_sequence(WmCreateMDIclientSeq, "Create visible MDI client window", FALSE);
+    SetWindowLongA(mdi_client, 0, 0xdeadbeef);
 
+    ok_sequence(WmCreateMDIclientSeq, "Create visible MDI client window", FALSE);
     ok(GetActiveWindow() == mdi_frame, "wrong active window %p\n", GetActiveWindow());
     ok(GetFocus() == mdi_frame, "input focus should be on MDI frame not on %p\n", GetFocus());
 
@@ -3867,6 +3869,8 @@ static void test_mdi_messages(void)
     SetFocus(0);
     flush_sequence();
 
+    val = GetWindowLongA(mdi_client, 0);
+    ok(val == 0xdeadbeef || broken(val == 0) /* >= Win Vista */, "Expected 0xdeadbeef, got 0x%x\n", val);
     DestroyWindow(mdi_client);
     ok_sequence(WmDestroyMDIclientSeq, "Destroy MDI client window", FALSE);
 
