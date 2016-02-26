@@ -574,8 +574,8 @@ static inline void set_fd_epoll_events( struct fd *fd, int user, int events )
 
     if (kqueue_fd == -1) return;
 
-    EV_SET( &ev[0], fd->unix_fd, EVFILT_READ, 0, NOTE_LOWAT, 1, (void *)user );
-    EV_SET( &ev[1], fd->unix_fd, EVFILT_WRITE, 0, NOTE_LOWAT, 1, (void *)user );
+    EV_SET( &ev[0], fd->unix_fd, EVFILT_READ, 0, NOTE_LOWAT, 1, (void *)(long)user );
+    EV_SET( &ev[1], fd->unix_fd, EVFILT_WRITE, 0, NOTE_LOWAT, 1, (void *)(long)user );
 
     if (events == -1)  /* stop waiting on this fd completely */
     {
