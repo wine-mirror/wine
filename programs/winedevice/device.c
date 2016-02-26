@@ -50,15 +50,18 @@ static DRIVER_EXTENSION driver_extension;
 /* find the LDR_MODULE corresponding to the driver module */
 static LDR_MODULE *find_ldr_module( HMODULE module )
 {
-    LIST_ENTRY *entry, *list = &NtCurrentTeb()->Peb->LdrData->InMemoryOrderModuleList;
+    LDR_MODULE *ldr;
+    ULONG_PTR magic;
 
-    for (entry = list->Flink; entry != list; entry = entry->Flink)
+    LdrLockLoaderLock( 0, NULL, &magic );
+    if (LdrFindEntryForAddress( module, &ldr ))
     {
-        LDR_MODULE *ldr = CONTAINING_RECORD(entry, LDR_MODULE, InMemoryOrderModuleList);
-        if (ldr->BaseAddress == module) return ldr;
-        if (ldr->BaseAddress > (void *)module) break;
+        WARN( "module not found for %p\n", module );
+        ldr = NULL;
     }
-    return NULL;
+    LdrUnlockLoaderLock( 0, magic );
+
+    return ldr;
 }
 
 /* load the driver module file */
