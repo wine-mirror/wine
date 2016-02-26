@@ -41,7 +41,7 @@ static const char * sTestpath2 = "%FOO%\\subdir1";
 static const DWORD ptr_size = 8 * sizeof(void*);
 
 static DWORD (WINAPI *pRegGetValueA)(HKEY,LPCSTR,LPCSTR,DWORD,LPDWORD,PVOID,LPDWORD);
-static DWORD (WINAPI *pRegDeleteTreeA)(HKEY,LPCSTR);
+static LONG (WINAPI *pRegDeleteTreeA)(HKEY,const char *);
 static DWORD (WINAPI *pRegDeleteKeyExA)(HKEY,LPCSTR,REGSAM,DWORD);
 static BOOL (WINAPI *pIsWow64Process)(HANDLE,PBOOL);
 static NTSTATUS (WINAPI * pNtDeleteKey)(HANDLE);
@@ -2083,6 +2083,7 @@ static void test_reg_delete_tree(void)
 {
     CHAR buffer[MAX_PATH];
     HKEY subkey, subkey2;
+    DWORD dwsize, type;
     LONG size, ret;
 
     if(!pRegDeleteTreeA) {
@@ -2128,7 +2129,9 @@ static void test_reg_delete_tree(void)
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
     ret = RegCloseKey(subkey2);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
-    ret = RegSetValueA(subkey, "value", REG_SZ, "data2", 5);
+    ret = RegSetValueA(subkey, NULL, REG_SZ, "data", 4);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ret = RegSetValueExA(subkey, "value", 0, REG_SZ, (const BYTE *)"data2", 5);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
     ret = pRegDeleteTreeA(subkey, NULL);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
@@ -2143,8 +2146,8 @@ static void test_reg_delete_tree(void)
     ok(ret == ERROR_SUCCESS,
         "Default value of subkey is not present\n");
     ok(!buffer[0], "Expected length 0 got length %u(%s)\n", lstrlenA(buffer), buffer);
-    size = MAX_PATH;
-    ok(RegQueryValueA(subkey, "value", buffer, &size),
+    dwsize = MAX_PATH;
+    ok(RegQueryValueExA(subkey, "value", NULL, &type, (BYTE *)buffer, &dwsize),
         "Value is still present\n");
 
     ret = pRegDeleteTreeA(hkey_main, "not-here");
