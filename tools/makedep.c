@@ -147,6 +147,7 @@ static const char *rsvg;
 static const char *icotool;
 static const char *dlltool;
 static const char *msgfmt;
+static const char *ln_s;
 
 struct makefile
 {
@@ -2150,7 +2151,7 @@ static struct strarray output_install_rules( const struct makefile *make, struct
                     install_sh, src_dir_path( make, file ), dest + 1 );
             break;
         case 'y':  /* symlink */
-            output( "\trm -f $(DESTDIR)%s && $(LN_S) %s $(DESTDIR)%s\n", dest + 1, file, dest + 1 );
+            output( "\trm -f $(DESTDIR)%s && %s %s $(DESTDIR)%s\n", dest + 1, ln_s, file, dest + 1 );
             break;
         default:
             assert(0);
@@ -2187,14 +2188,14 @@ static struct strarray output_importlib_symlinks( const struct makefile *parent,
     dir = obj_dir_path( parent, "dlls" );
     lib = strmake( "lib%s.%s", make->importlib, *dll_ext ? "def" : "a" );
     output( "%s/%s: %s\n", dir, lib, base_dir_path( make, lib ));
-    output( "\trm -f $@ && $(LN_S) %s/%s $@\n", make->base_dir + strlen("dlls/"), lib );
+    output( "\trm -f $@ && %s %s/%s $@\n", ln_s, make->base_dir + strlen("dlls/"), lib );
     strarray_add( &ret, strmake( "%s/%s", dir, lib ));
 
     if (crosstarget && !make->is_win16)
     {
         lib = strmake( "lib%s.cross.a", make->importlib );
         output( "%s/%s: %s\n", dir, lib, base_dir_path( make, lib ));
-        output( "\trm -f $@ && $(LN_S) %s/%s $@\n", make->base_dir + strlen("dlls/"), lib );
+        output( "\trm -f $@ && %s %s/%s $@\n", ln_s, make->base_dir + strlen("dlls/"), lib );
         strarray_add( &ret, strmake( "%s/%s", dir, lib ));
     }
     return ret;
@@ -2837,7 +2838,7 @@ static struct strarray output_sources( const struct makefile *make )
         for (i = 1; i < names.count; i++)
         {
             output( "%s: %s\n", obj_dir_path( make, names.str[i] ), obj_dir_path( make, names.str[i-1] ));
-            output( "\trm -f $@ && $(LN_S) %s $@\n", names.str[i-1] );
+            output( "\trm -f $@ && %s %s $@\n", ln_s, names.str[i-1] );
             add_install_rule( make, install_rules, names.str[i], names.str[i-1],
                               strmake( "y$(libdir)/%s", names.str[i] ));
         }
@@ -2998,7 +2999,7 @@ static struct strarray output_sources( const struct makefile *make )
         {
             output_filenames_obj_dir( make, symlinks );
             output( ": %s\n", obj_dir_path( make, program ));
-            output( "\trm -f $@ && $(LN_S) %s $@\n", obj_dir_path( make, program ));
+            output( "\trm -f $@ && %s %s $@\n", ln_s, obj_dir_path( make, program ));
             strarray_addall( &all_targets, symlinks );
         }
 
@@ -3542,6 +3543,7 @@ int main( int argc, char *argv[] )
     icotool      = get_expanded_make_variable( top_makefile, "ICOTOOL" );
     dlltool      = get_expanded_make_variable( top_makefile, "DLLTOOL" );
     msgfmt       = get_expanded_make_variable( top_makefile, "MSGFMT" );
+    ln_s         = get_expanded_make_variable( top_makefile, "LN_S" );
 
     if (root_src_dir && !strcmp( root_src_dir, "." )) root_src_dir = NULL;
     if (tools_dir && !strcmp( tools_dir, "." )) tools_dir = NULL;
