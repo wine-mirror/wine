@@ -155,9 +155,6 @@ static BOOL runtime_is_usable(void)
 
     if (!ret || exitcode != 0)
     {
-#ifndef __i386__
-        todo_wine
-#endif
         win_skip(".NET 4.0 runtime is not usable\n");
         return FALSE;
     }
