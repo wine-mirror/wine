@@ -611,7 +611,7 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
 
     TRACE("texture %p, width %u, height %u, format %s, multisample_type %#x, multisample_quality %u, "
             "mem %p, pitch %u.\n",
-            texture, width, height, debug_d3dformat(format_id), multisample_type, multisample_type, mem, pitch);
+            texture, width, height, debug_d3dformat(format_id), multisample_type, multisample_quality, mem, pitch);
 
     if (!resource_size)
         return WINED3DERR_INVALIDCALL;
