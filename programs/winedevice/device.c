@@ -42,7 +42,6 @@ extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 
 static WCHAR *driver_name;
 static SERVICE_STATUS_HANDLE service_handle;
-static HKEY driver_hkey;
 static HANDLE stop_event;
 static DRIVER_OBJECT driver_obj;
 static DRIVER_EXTENSION driver_extension;
@@ -203,6 +202,7 @@ static HMODULE load_driver(void)
                                       '\\','S','e','r','v','i','c','e','s','\\',0};
 
     UNICODE_STRING keypath;
+    HKEY driver_hkey;
     HMODULE module;
     LPWSTR path = NULL, str;
     DWORD type, size;
@@ -215,7 +215,7 @@ static HMODULE load_driver(void)
     {
         WINE_ERR( "cannot open key %s, err=%u\n", wine_dbgstr_w(str), GetLastError() );
         HeapFree( GetProcessHeap(), 0, str);
-        return FALSE;
+        return NULL;
     }
     RtlInitUnicodeString( &keypath, str );
 
@@ -231,7 +231,12 @@ static HMODULE load_driver(void)
             ExpandEnvironmentStringsW(str,path,size);
         }
         HeapFree( GetProcessHeap(), 0, str );
-        if (!path) return FALSE;
+        if (!path)
+        {
+            RtlFreeUnicodeString( &keypath );
+            RegCloseKey( driver_hkey );
+            return NULL;
+        }
 
         if (!strncmpiW( path, systemrootW, 12 ))
         {
@@ -265,12 +270,17 @@ static HMODULE load_driver(void)
         lstrcatW(path, postfixW);
         str = path;
     }
+    RegCloseKey( driver_hkey );
 
     WINE_TRACE( "loading driver %s\n", wine_dbgstr_w(str) );
 
     module = load_driver_module( str );
     HeapFree( GetProcessHeap(), 0, path );
-    if (!module) return NULL;
+    if (!module)
+    {
+        RtlFreeUnicodeString( &keypath );
+        return NULL;
+    }
 
     init_driver( module, &keypath );
     return module;
