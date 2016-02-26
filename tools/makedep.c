@@ -2167,6 +2167,41 @@ static struct strarray output_install_rules( const struct makefile *make, struct
 
 
 /*******************************************************************
+ *         output_importlib_symlinks
+ */
+static struct strarray output_importlib_symlinks( const struct makefile *parent,
+                                                  const struct makefile *make )
+{
+    struct strarray ret = empty_strarray;
+    const char *dir, *lib;
+
+    if (!make->module) return ret;
+    if (!make->importlib) return ret;
+    if (strncmp( make->base_dir, "dlls/", 5 )) return ret;
+    if (!strcmp( make->module, make->importlib )) return ret;
+    if (!strchr( make->importlib, '.' ) &&
+        !strncmp( make->module, make->importlib, strlen( make->importlib )) &&
+        !strcmp( make->module + strlen( make->importlib ), ".dll" ))
+        return ret;
+
+    dir = obj_dir_path( parent, "dlls" );
+    lib = strmake( "lib%s.%s", make->importlib, *dll_ext ? "def" : "a" );
+    output( "%s/%s: %s\n", dir, lib, base_dir_path( make, lib ));
+    output( "\trm -f $@ && $(LN_S) %s/%s $@\n", make->base_dir + strlen("dlls/"), lib );
+    strarray_add( &ret, strmake( "%s/%s", dir, lib ));
+
+    if (crosstarget && !make->is_win16)
+    {
+        lib = strmake( "lib%s.cross.a", make->importlib );
+        output( "%s/%s: %s\n", dir, lib, base_dir_path( make, lib ));
+        output( "\trm -f $@ && $(LN_S) %s/%s $@\n", make->base_dir + strlen("dlls/"), lib );
+        strarray_add( &ret, strmake( "%s/%s", dir, lib ));
+    }
+    return ret;
+}
+
+
+/*******************************************************************
  *         output_po_files
  */
 static void output_po_files( const struct makefile *make )
@@ -3006,18 +3041,20 @@ static struct strarray output_sources( const struct makefile *make )
 
     if (make->subdirs.count)
     {
+        struct strarray build_deps = empty_strarray;
         struct strarray makefile_deps = empty_strarray;
         struct strarray distclean_files = empty_strarray;
 
         for (i = 0; i < make->subdirs.count; i++)
         {
-            strarray_add( &makefile_deps, top_dir_path( make, base_dir_path( make->submakes[i],
+            const struct makefile *submake = make->submakes[i];
+
+            strarray_add( &makefile_deps, top_dir_path( make, base_dir_path( submake,
                                                          strmake ( "%s.in", output_makefile_name ))));
-            strarray_add( &distclean_files, base_dir_path( make->submakes[i], output_makefile_name ));
-            if (!make->src_dir)
-                strarray_add( &distclean_files, base_dir_path( make->submakes[i], ".gitignore" ));
-            if (make->submakes[i]->testdll)
-                strarray_add( &distclean_files, base_dir_path( make->submakes[i], "testlist.c" ));
+            strarray_add( &distclean_files, base_dir_path( submake, output_makefile_name ));
+            if (!make->src_dir) strarray_add( &distclean_files, base_dir_path( submake, ".gitignore" ));
+            if (submake->testdll) strarray_add( &distclean_files, base_dir_path( submake, "testlist.c" ));
+            strarray_addall( &build_deps, output_importlib_symlinks( make, submake ));
         }
         output( "Makefile:" );
         output_filenames( makefile_deps );
@@ -3030,16 +3067,20 @@ static struct strarray output_sources( const struct makefile *make )
 
         if (msgfmt && strcmp( msgfmt, "false" ))
         {
-            strarray_addall( &clean_files, mo_files );
-            output( "__builddeps__:" );
-            output_filenames( mo_files );
-            output( "\n" );
+            strarray_addall( &build_deps, mo_files );
             for (i = 0; i < linguas.count; i++)
             {
                 output( "%s/%s.mo:", obj_dir_path( make, "po" ), linguas.str[i] );
                 output( " %s/%s.po\n", src_dir_path( make, "po" ), linguas.str[i] );
                 output( "\t%s -o $@ %s/%s.po\n", msgfmt, src_dir_path( make, "po" ), linguas.str[i] );
             }
+        }
+        if (build_deps.count)
+        {
+            output( "__builddeps__:" );
+            output_filenames( build_deps );
+            output( "\n" );
+            strarray_addall( &clean_files, build_deps );
         }
         if (get_expanded_make_variable( make, "GETTEXTPO_LIBS" )) output_po_files( make );
     }

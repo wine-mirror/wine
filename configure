@@ -7684,21 +7684,9 @@ $ac_file.cross.a: $srcdir/$ac_dir/$ac_name.spec \$(WINEBUILD)
 
         if test "$ac_name" != "$ac_implib"
         then
-            wine_fn_append_rule \
-"__builddeps__: dlls/lib$ac_implib.$IMPLIBEXT
-dlls/lib$ac_implib.$IMPLIBEXT: $ac_file.$IMPLIBEXT
-	\$(RM) \$@ && \$(LN_S) $ac_name/lib$ac_implib.$IMPLIBEXT \$@
-clean::
-	\$(RM) dlls/lib$ac_implib.$IMPLIBEXT"
             wine_fn_ignore_file "dlls/lib$ac_implib.$IMPLIBEXT"
             if test -n "$CROSSTARGET" -a -z "$ac_implibflags"
             then
-                wine_fn_append_rule \
-"__builddeps__: dlls/lib$ac_implib.cross.a
-dlls/lib$ac_implib.cross.a: $ac_file.cross.a
-	\$(RM) \$@ && \$(LN_S) $ac_name/lib$ac_implib.cross.a \$@
-clean::
-	\$(RM) dlls/lib$ac_implib.cross.a"
                 wine_fn_ignore_file "dlls/lib$ac_implib.cross.a"
             fi
         fi
