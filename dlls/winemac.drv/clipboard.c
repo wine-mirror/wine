@@ -73,6 +73,7 @@ typedef struct _WINE_CLIPFORMAT
 static HANDLE import_clipboard_data(CFDataRef data);
 static HANDLE import_bmp_to_bitmap(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
+static HANDLE import_dib_to_bitmap(CFDataRef data);
 static HANDLE import_enhmetafile(CFDataRef data);
 static HANDLE import_enhmetafile_to_metafilepict(CFDataRef data);
 static HANDLE import_metafilepict(CFDataRef data);
@@ -93,6 +94,7 @@ static HANDLE import_utf16_to_unicodetext(CFDataRef data);
 
 static CFDataRef export_clipboard_data(HANDLE data);
 static CFDataRef export_bitmap_to_bmp(HANDLE data);
+static CFDataRef export_bitmap_to_dib(HANDLE data);
 static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_enhmetafile(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
@@ -158,7 +160,6 @@ static const struct
     BOOL          synthesized;
 } builtin_format_ids[] =
 {
-    { CF_DIBV5,             CFSTR("org.winehq.builtin.dibv5"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_DIF,               CFSTR("org.winehq.builtin.dif"),                import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_DSPBITMAP,         CFSTR("org.winehq.builtin.dspbitmap"),          import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_DSPENHMETAFILE,    CFSTR("org.winehq.builtin.dspenhmetafile"),     import_clipboard_data,          export_clipboard_data,      FALSE },
@@ -193,11 +194,21 @@ static const struct
     { CF_OEMTEXT,           CFSTR("public.utf16-plain-text"),                import_utf16_to_oemtext,       export_oemtext_to_utf16,    TRUE },
     { CF_UNICODETEXT,       CFSTR("public.utf16-plain-text"),                import_utf16_to_unicodetext,   export_unicodetext_to_utf16,TRUE },
 
-    { CF_DIB,               CFSTR("org.winehq.builtin.dib"),                import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_DIB,               CFSTR("com.microsoft.bmp"),                     import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
-
     { CF_BITMAP,            CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_bitmap,           export_bitmap_to_bmp,       FALSE },
+    { CF_DIB,               CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
+    { CF_DIBV5,             CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
+
+    { CF_DIB,               CFSTR("org.winehq.builtin.dib"),                import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_BITMAP,            CFSTR("org.winehq.builtin.dib"),                import_dib_to_bitmap,           export_bitmap_to_dib,       TRUE },
+    { CF_DIBV5,             CFSTR("org.winehq.builtin.dib"),                import_clipboard_data,          export_clipboard_data,      TRUE },
+
+    { CF_DIBV5,             CFSTR("org.winehq.builtin.dibv5"),              import_clipboard_data,          export_clipboard_data,      FALSE },
+    { CF_BITMAP,            CFSTR("org.winehq.builtin.dibv5"),              import_dib_to_bitmap,           export_bitmap_to_dib,       TRUE },
+    { CF_DIB,               CFSTR("org.winehq.builtin.dibv5"),              import_clipboard_data,          export_clipboard_data,      TRUE },
+
     { CF_BITMAP,            CFSTR("com.microsoft.bmp"),                     import_bmp_to_bitmap,           export_bitmap_to_bmp,       TRUE },
+    { CF_DIB,               CFSTR("com.microsoft.bmp"),                     import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
+    { CF_DIBV5,             CFSTR("com.microsoft.bmp"),                     import_bmp_to_dib,              export_dib_to_bmp,          TRUE },
 
     { CF_HDROP,             CFSTR("org.winehq.builtin.hdrop"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_HDROP,             CFSTR("NSFilenamesPboardType"),                 import_nsfilenames_to_hdrop,    export_hdrop_to_filenames,  TRUE },
@@ -640,14 +651,13 @@ static HANDLE import_clipboard_data(CFDataRef data)
 
 
 /**************************************************************************
- *              import_bmp_to_bitmap
+ *              create_bitmap_from_dib
  *
- *  Import BMP data, converting to CF_BITMAP format.
+ *  Given a packed DIB, creates a bitmap object from it.
  */
-static HANDLE import_bmp_to_bitmap(CFDataRef data)
+static HANDLE create_bitmap_from_dib(HANDLE dib)
 {
     HANDLE ret = 0;
-    HANDLE dib = import_bmp_to_dib(data);
     BITMAPINFO *bmi;
 
     if (dib && (bmi = GlobalLock(dib)))
@@ -666,6 +676,22 @@ static HANDLE import_bmp_to_bitmap(CFDataRef data)
         ReleaseDC(NULL, hdc);
     }
 
+    return ret;
+}
+
+
+/**************************************************************************
+ *              import_bmp_to_bitmap
+ *
+ *  Import BMP data, converting to CF_BITMAP format.
+ */
+static HANDLE import_bmp_to_bitmap(CFDataRef data)
+{
+    HANDLE ret;
+    HANDLE dib = import_bmp_to_dib(data);
+
+    ret = create_bitmap_from_dib(dib);
+
     GlobalFree(dib);
     return ret;
 }
@@ -674,8 +700,8 @@ static HANDLE import_bmp_to_bitmap(CFDataRef data)
 /**************************************************************************
  *              import_bmp_to_dib
  *
- *  Import BMP data, converting to CF_DIB format.  This just entails
- *  stripping the BMP file format header.
+ *  Import BMP data, converting to CF_DIB or CF_DIBV5 format.  This just
+ *  entails stripping the BMP file format header.
  */
 static HANDLE import_bmp_to_dib(CFDataRef data)
 {
@@ -700,6 +726,24 @@ static HANDLE import_bmp_to_dib(CFDataRef data)
         memcpy(p, bmi, len);
         GlobalUnlock(ret);
     }
+
+    return ret;
+}
+
+
+/**************************************************************************
+ *              import_dib_to_bitmap
+ *
+ *  Import device-independent bitmap data, converting to CF_BITMAP format.
+ */
+static HANDLE import_dib_to_bitmap(CFDataRef data)
+{
+    HANDLE ret;
+    HANDLE dib = import_clipboard_data(data);
+
+    ret = create_bitmap_from_dib(dib);
+
+    GlobalFree(dib);
 
     return ret;
 }
@@ -1198,6 +1242,27 @@ static CFDataRef export_bitmap_to_bmp(HANDLE data)
 
 
 /**************************************************************************
+ *              export_bitmap_to_dib
+ *
+ *  Export CF_BITMAP to a raw packed device-independent bitmap.
+ */
+static CFDataRef export_bitmap_to_dib(HANDLE data)
+{
+    CFDataRef ret = NULL;
+    HGLOBAL dib;
+
+    dib = create_dib_from_bitmap(data);
+    if (dib)
+    {
+        ret = export_clipboard_data(dib);
+        GlobalFree(dib);
+    }
+
+    return ret;
+}
+
+
+/**************************************************************************
  *              export_codepage_to_utf8
  *
  *  Export string data in a specified codepage to UTF-8.
@@ -1248,8 +1313,8 @@ static CFDataRef export_codepage_to_utf16(HANDLE data, UINT cp)
 /**************************************************************************
  *              export_dib_to_bmp
  *
- *  Export CF_DIB to BMP file format.  This just entails prepending a BMP
- *  file format header to the data.
+ *  Export CF_DIB or CF_DIBV5 to BMP file format.  This just entails
+ *  prepending a BMP file format header to the data.
  */
 static CFDataRef export_dib_to_bmp(HANDLE data)
 {
