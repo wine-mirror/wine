@@ -1497,10 +1497,8 @@ static void test_D3DXCreateTextureFromFileInMemory(IDirect3DDevice9 *device)
 
     /* Check that D3DXCreateTextureFromFileInMemory accepts cube texture dds file (only first face texture is loaded) */
     hr = D3DXCreateTextureFromFileInMemory(device, dds_cube_map, sizeof(dds_cube_map), &texture);
-    if (has_2d_dxt5)
+    todo_wine_if (!has_2d_dxt5)
         ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemory returned %#x, expected %#x.\n", hr, D3D_OK);
-    else
-        todo_wine ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemory returned %#x, expected %#x.\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
     {
         type = IDirect3DTexture9_GetType(texture);
@@ -1525,10 +1523,8 @@ static void test_D3DXCreateTextureFromFileInMemory(IDirect3DDevice9 *device)
 
     /* Volume textures work too. */
     hr = D3DXCreateTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), &texture);
-    if (has_2d_dxt3)
+    todo_wine_if (!has_2d_dxt3)
         ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemory returned %#x, expected %#x.\n", hr, D3D_OK);
-    else
-        todo_wine ok(hr == D3D_OK, "D3DXCreateTextureFromFileInMemory returned %#x, expected %#x.\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
     {
         type = IDirect3DTexture9_GetType(texture);
@@ -1754,10 +1750,8 @@ static void test_D3DXCreateCubeTextureFromFileInMemoryEx(IDirect3DDevice9 *devic
 
     hr = D3DXCreateCubeTextureFromFileInMemoryEx(device, dds_cube_map, sizeof(dds_cube_map), D3DX_DEFAULT, D3DX_DEFAULT,
         D3DUSAGE_DYNAMIC | D3DUSAGE_AUTOGENMIPMAP, D3DFMT_UNKNOWN, D3DPOOL_DEFAULT, D3DX_DEFAULT, D3DX_DEFAULT, 0, NULL, NULL, &cube_texture);
-    if (has_cube_dxt5)
+    todo_wine_if (!has_cube_dxt5)
         ok(hr == D3D_OK, "D3DXCreateCubeTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
-    else
-        todo_wine ok(hr == D3D_OK, "D3DXCreateCubeTextureFromFileInMemoryEx returned %#x, expected %#x.\n", hr, D3D_OK);
     if (SUCCEEDED(hr)) IDirect3DCubeTexture9_Release(cube_texture);
 }
 
@@ -1782,10 +1776,8 @@ static void test_D3DXCreateVolumeTextureFromFileInMemory(IDirect3DDevice9 *devic
     ok(hr == D3DERR_INVALIDCALL, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3DERR_INVALIDCALL);
 
     hr = D3DXCreateVolumeTextureFromFileInMemory(device, dds_volume_map, sizeof(dds_volume_map), &volume_texture);
-    if (has_3d_dxt3)
+    todo_wine_if (!has_3d_dxt3)
         ok(hr == D3D_OK, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
-    else
-        todo_wine ok(hr == D3D_OK, "D3DXCreateVolumeTextureFromFileInMemory returned %#x, expected %#x\n", hr, D3D_OK);
     if (SUCCEEDED(hr))
     {
         levelcount = IDirect3DVolumeTexture9_GetLevelCount(volume_texture);
