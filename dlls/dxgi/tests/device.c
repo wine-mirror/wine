@@ -478,19 +478,13 @@ static void test_createswapchain(void)
         hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
         ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
 
-        if (refresh_list[i].numerator_should_pass)
+        todo_wine_if (!refresh_list[i].numerator_should_pass)
             ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
                 "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
-        else
-            todo_wine ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
-                "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
 
-        if (refresh_list[i].denominator_should_pass)
+        todo_wine_if (!refresh_list[i].denominator_should_pass)
             ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
                     "Denominator %u is %u.\n", i ,result_desc.BufferDesc.RefreshRate.Denominator);
-        else
-            todo_wine ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
-                    "Denominator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Denominator);
 
         IDXGISwapChain_Release(swapchain);
     }
@@ -508,19 +502,13 @@ static void test_createswapchain(void)
         hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
         ok(SUCCEEDED(hr), "GetDesc failed, hr %#x.\n", hr);
 
-        if (refresh_list[i].numerator_should_pass)
+        todo_wine_if (!refresh_list[i].numerator_should_pass)
             ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
                     "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
-        else
-            todo_wine ok(result_desc.BufferDesc.RefreshRate.Numerator == refresh_list[i].numerator,
-                    "Numerator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Numerator);
 
-        if (refresh_list[i].denominator_should_pass)
+        todo_wine_if (!refresh_list[i].denominator_should_pass)
             ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
                     "Denominator %u is %u.\n", i ,result_desc.BufferDesc.RefreshRate.Denominator);
-        else
-            todo_wine ok(result_desc.BufferDesc.RefreshRate.Denominator == refresh_list[i].denominator,
-                    "Denominator %u is %u.\n", i, result_desc.BufferDesc.RefreshRate.Denominator);
 
         hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
         todo_wine ok(SUCCEEDED(hr), "SetFullscreenState failed, hr %#x.\n", hr);
