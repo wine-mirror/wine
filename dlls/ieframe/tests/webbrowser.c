@@ -1654,9 +1654,7 @@ static HRESULT WINAPI DocHostUIHandler_GetExternal(IDocHostUIHandler2 *iface, ID
 static HRESULT WINAPI DocHostUIHandler_TranslateUrl(IDocHostUIHandler2 *iface, DWORD dwTranslate,
         OLECHAR *pchURLIn, OLECHAR **ppchURLOut)
 {
-    if(is_downloading && !(dwl_flags & DWL_EXPECT_BEFORE_NAVIGATE))
-        todo_wine CHECK_EXPECT(TranslateUrl);
-    else
+    todo_wine_if(is_downloading && !(dwl_flags & DWL_EXPECT_BEFORE_NAVIGATE))
         CHECK_EXPECT(TranslateUrl);
     return E_NOTIMPL;
 }
