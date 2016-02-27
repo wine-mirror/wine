@@ -1117,6 +1117,7 @@ static void test_GetTempPath(void)
     char save_TMP[MAX_PATH];
     char windir[MAX_PATH];
     char buf[MAX_PATH];
+    WCHAR curdir[MAX_PATH];
 
     if (!GetEnvironmentVariableA("TMP", save_TMP, sizeof(save_TMP))) save_TMP[0] = 0;
 
@@ -1149,6 +1150,7 @@ static void test_GetTempPath(void)
     test_GetTempPathA(windir);
     test_GetTempPathW(windir);
 
+    GetCurrentDirectoryW(MAX_PATH, curdir);
     /* TMP=C: i.e. use current working directory of the specified drive */
     GetWindowsDirectoryA(windir, sizeof(windir));
     SetCurrentDirectoryA(windir);
@@ -1162,6 +1164,7 @@ static void test_GetTempPath(void)
     test_GetTempPathW(windir);
 
     SetEnvironmentVariableA("TMP", save_TMP);
+    SetCurrentDirectoryW(curdir);
 }
 
 static void test_GetLongPathNameA(void)
@@ -2116,9 +2119,11 @@ static void test_relative_path(void)
     char path[MAX_PATH], buf[MAX_PATH];
     HANDLE file;
     int ret;
+    WCHAR curdir[MAX_PATH];
 
     if (!pGetLongPathNameA) return;
 
+    GetCurrentDirectoryW(MAX_PATH, curdir);
     GetTempPathA(MAX_PATH, path);
     ret = SetCurrentDirectoryA(path);
     ok(ret, "SetCurrentDirectory error %d\n", GetLastError());
@@ -2176,6 +2181,7 @@ static void test_relative_path(void)
     DeleteFileA("foo\\file");
     RemoveDirectoryA("foo");
     RemoveDirectoryA("bar");
+    SetCurrentDirectoryW(curdir);
 }
 
 static void test_CheckNameLegalDOS8Dot3(void)
