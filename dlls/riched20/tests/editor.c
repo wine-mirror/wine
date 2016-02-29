@@ -8278,6 +8278,31 @@ static void test_WM_GETTEXTLENGTH(void)
     DestroyWindow(hwndRichEdit);
 }
 
+static void test_rtf_specials(void)
+{
+    const char *specials = "{\\rtf1\\emspace\\enspace\\bullet\\lquote"
+        "\\rquote\\ldblquote\\rdblquote\\ltrmark\\rtlmark\\zwj\\zwnj}";
+    const WCHAR expect_specials[] = {' ',' ',0x2022,0x2018,0x2019,0x201c,
+                                     0x201d,0x200e,0x200f,0x200d,0x200c};
+    HWND edit = new_richeditW( NULL );
+    EDITSTREAM es;
+    WCHAR buf[80];
+    LRESULT result;
+
+    es.dwCookie = (DWORD_PTR)&specials;
+    es.dwError = 0;
+    es.pfnCallback = test_EM_STREAMIN_esCallback;
+    result = SendMessageA( edit, EM_STREAMIN, SF_RTF, (LPARAM)&es );
+    ok( result == 11, "got %ld\n", result );
+
+    result = SendMessageW( edit, WM_GETTEXT, sizeof(buf)/sizeof(buf[0]), (LPARAM)buf );
+    ok( result == sizeof(expect_specials)/sizeof(expect_specials[0]), "got %ld\n", result );
+    ok( !memcmp( buf, expect_specials, sizeof(expect_specials) ), "got %s\n", wine_dbgstr_w(buf) );
+
+    DestroyWindow( edit );
+}
+
+
 START_TEST( editor )
 {
   BOOL ret;
@@ -8347,6 +8372,7 @@ START_TEST( editor )
   test_EM_SETREADONLY();
   test_EM_SETFONTSIZE();
   test_alignment_style();
+  test_rtf_specials();
 
   /* Set the environment variable WINETEST_RICHED20 to keep windows
    * responsive and open for 30 seconds. This is useful for debugging.

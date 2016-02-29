@@ -2544,6 +2544,12 @@ static void SpecialChar (RTF_Info *info)
 	case rtfEnDash:
 		RTFPutUnicodeChar (info, 0x2013);
 		break;
+        case rtfEmSpace:
+                RTFPutUnicodeChar (info, ' ');
+                break;
+        case rtfEnSpace:
+                RTFPutUnicodeChar (info, ' ');
+                break;
 	case rtfLQuote:
 		RTFPutUnicodeChar (info, 0x2018);
 		break;
@@ -2556,6 +2562,18 @@ static void SpecialChar (RTF_Info *info)
 	case rtfRDblQuote:
 		RTFPutUnicodeChar (info, 0x201D);
 		break;
+        case rtfLTRMark:
+                RTFPutUnicodeChar (info, 0x200E);
+                break;
+        case rtfRTLMark:
+                RTFPutUnicodeChar (info, 0x200F);
+                break;
+        case rtfNoWidthJoiner:
+                RTFPutUnicodeChar (info, 0x200D);
+                break;
+        case rtfNoWidthNonJoiner:
+                RTFPutUnicodeChar (info, 0x200C);
+                break;
 	}
 }
 
