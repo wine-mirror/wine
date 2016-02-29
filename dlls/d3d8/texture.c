@@ -945,21 +945,16 @@ static DWORD WINAPI d3d8_texture_3d_GetLevelCount(IDirect3DVolumeTexture8 *iface
 static HRESULT WINAPI d3d8_texture_3d_GetLevelDesc(IDirect3DVolumeTexture8 *iface, UINT level, D3DVOLUME_DESC *desc)
 {
     struct d3d8_texture *texture = impl_from_IDirect3DVolumeTexture8(iface);
-    struct wined3d_resource *sub_resource;
-    HRESULT hr = D3D_OK;
+    struct wined3d_sub_resource_desc wined3d_desc;
+    HRESULT hr;
 
     TRACE("iface %p, level %u, desc %p.\n", iface, level, desc);
 
     wined3d_mutex_lock();
-    if (!(sub_resource = wined3d_texture_get_sub_resource(texture->wined3d_texture, level)))
-        hr = D3DERR_INVALIDCALL;
-    else
+    if (SUCCEEDED(hr = wined3d_texture_get_sub_resource_desc(texture->wined3d_texture, level, &wined3d_desc)))
     {
-        struct wined3d_resource_desc wined3d_desc;
-
-        wined3d_resource_get_desc(sub_resource, &wined3d_desc);
         desc->Format = d3dformat_from_wined3dformat(wined3d_desc.format);
-        desc->Type = wined3d_desc.resource_type;
+        desc->Type = D3DRTYPE_VOLUME;
         desc->Usage = wined3d_desc.usage & WINED3DUSAGE_MASK;
         desc->Pool = wined3d_desc.pool;
         desc->Size = wined3d_desc.size;
