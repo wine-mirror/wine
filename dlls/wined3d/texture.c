@@ -1537,6 +1537,22 @@ void * CDECL wined3d_texture_get_sub_resource_parent(struct wined3d_texture *tex
     return texture->sub_resources[sub_resource_idx].resource->parent;
 }
 
+void CDECL wined3d_texture_set_sub_resource_parent(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, void *parent)
+{
+    unsigned int sub_count = texture->level_count * texture->layer_count;
+
+    TRACE("texture %p, sub_resource_idx %u, parent %p.\n", texture, sub_resource_idx, parent);
+
+    if (sub_resource_idx >= sub_count)
+    {
+        WARN("sub_resource_idx %u >= sub_count %u.\n", sub_resource_idx, sub_count);
+        return;
+    }
+
+    texture->sub_resources[sub_resource_idx].resource->parent = parent;
+}
+
 HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
         UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
