@@ -5686,10 +5686,10 @@ static HRESULT CDECL ddraw_reset_enum_callback(struct wined3d_resource *resource
 HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_desc,
         struct ddraw_surface **surface, IUnknown *outer_unknown, unsigned int version)
 {
-    struct wined3d_resource_desc wined3d_desc, wined3d_mip_desc;
+    struct wined3d_sub_resource_desc wined3d_mip_desc;
     struct ddraw_surface *root, *mip, **attach;
+    struct wined3d_resource_desc wined3d_desc;
     struct wined3d_texture *wined3d_texture;
-    struct wined3d_resource *resource;
     struct wined3d_display_mode mode;
     DDSURFACEDESC2 *desc, *mip_desc;
     struct ddraw_texture *texture;
@@ -6145,8 +6145,7 @@ HRESULT ddraw_surface_create(struct ddraw *ddraw, const DDSURFACEDESC2 *surface_
 
             if (j)
             {
-                resource = wined3d_texture_get_sub_resource(wined3d_texture, i * levels + j);
-                wined3d_resource_get_desc(resource, &wined3d_mip_desc);
+                wined3d_texture_get_sub_resource_desc(wined3d_texture, i * levels + j, &wined3d_mip_desc);
                 mip_desc->dwWidth = wined3d_mip_desc.width;
                 mip_desc->dwHeight = wined3d_mip_desc.height;
 
