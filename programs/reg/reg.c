@@ -300,7 +300,7 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
                 else
                     buffer[destindex] = data[i];
 
-                if (destindex && !buffer[destindex - 1] && !buffer[destindex])
+                if (destindex && !buffer[destindex - 1] && (!buffer[destindex] || destindex == 1))
                 {
                     HeapFree(GetProcessHeap(), 0, buffer);
                     output_message(STRING_INVALID_STRING);

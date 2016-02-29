@@ -357,7 +357,7 @@ static void test_add(void)
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_MULTI_SZ /v multi9 /s \"#\" /d \"two##strings\" /f", &r);
     ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_MULTI_SZ /v multi10 /s \"#\" /d \"#a\" /f", &r);
-    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /t REG_MULTI_SZ /v multi11 /s \"#\" /d \"a#\" /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
@@ -371,7 +371,7 @@ static void test_add(void)
     ok(r == REG_EXIT_FAILURE, "got exit code %d, expected 1\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi14 /t REG_MULTI_SZ /d \"\\0a\" /f", &r);
-    todo_wine ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
+    ok(r == REG_EXIT_FAILURE, "got exit code %u, expected 1\n", r);
 
     run_reg_exe("reg add HKCU\\" KEY_BASE " /v multi15 /t REG_MULTI_SZ /d \"a\\0\" /f", &r);
     ok(r == REG_EXIT_SUCCESS, "got exit code %u, expected 0\n", r);
