@@ -362,6 +362,13 @@ static void test_NtOpenKey(void)
     status = pNtOpenKey(&key, am, &attr);
     ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
 
+    /* Zero accessmask */
+    attr.Length = sizeof(attr);
+    status = pNtOpenKey(&key, 0, &attr);
+todo_wine
+    ok(status == STATUS_ACCESS_DENIED, "Expected STATUS_ACCESS_DENIED, got: 0x%08x\n", status);
+    if (status == STATUS_SUCCESS) NtClose(key);
+
     /* Calling without parent key requres full registry path. */
     pRtlCreateUnicodeStringFromAsciiz( &str, "Machine" );
     InitializeObjectAttributes(&attr, &str, 0, 0, 0);
