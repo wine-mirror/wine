@@ -2797,17 +2797,13 @@ static HRESULT WINAPI d3d_device3_SetRenderState(IDirect3DDevice3 *iface,
 
                     if ((tex = wined3d_device_get_texture(device->wined3d_device, 0)))
                     {
-                        struct wined3d_resource *sub_resource;
+                        struct wined3d_resource_desc desc;
 
-                        if ((sub_resource = wined3d_texture_get_sub_resource(tex, 0)))
-                        {
-                            struct wined3d_resource_desc desc;
-
-                            wined3d_resource_get_desc(sub_resource, &desc);
-                            ddfmt.dwSize = sizeof(ddfmt);
-                            ddrawformat_from_wined3dformat(&ddfmt, desc.format);
-                            if (ddfmt.u5.dwRGBAlphaBitMask) tex_alpha = TRUE;
-                        }
+                        wined3d_resource_get_desc(wined3d_texture_get_resource(tex), &desc);
+                        ddfmt.dwSize = sizeof(ddfmt);
+                        ddrawformat_from_wined3dformat(&ddfmt, desc.format);
+                        if (ddfmt.u5.dwRGBAlphaBitMask)
+                            tex_alpha = TRUE;
                     }
 
                     if (tex_alpha)
