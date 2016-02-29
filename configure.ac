@@ -127,23 +127,15 @@ AC_CHECK_TOOL(LD,ld)
 
 case $host in
   *-darwin*)
-    if test "x$enable_win64" = "xyes"
-    then
-      CC="$CC -m64"
-      CXX="$CXX -m64"
-      host_cpu="x86_64"
-      notice_platform="64-bit "
-      AC_SUBST(TARGETFLAGS,"-m64")
-    else
-      CC="$CC -m32"
-      CXX="$CXX -m32"
-      host_cpu="i386"
-      notice_platform="32-bit "
-      AC_SUBST(TARGETFLAGS,"-m32")
-      enable_win16=${enable_win16:-yes}
-    fi
     with_fontconfig=${with_fontconfig:-no}
     ;;
+  *-mingw32*|*-cygwin*)
+    enable_win16=${enable_win16:-no}
+    CFLAGS="$CFLAGS -D_WIN32"
+    ;;
+esac
+
+case $host in
   x86_64*|amd64*)
     if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
     then
@@ -164,9 +156,12 @@ case $host in
         AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <stdarg.h>]], [[void func(__builtin_ms_va_list *args);]])],
                           [AC_MSG_RESULT([yes])],
                           [AC_MSG_RESULT([no])
-                           AC_MSG_ERROR([You need gcc >= 4.4 to build Wine as 64-bit.])])
+                           AC_MSG_ERROR([You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit.])])
       fi
+      CC="$CC -m64"
+      CXX="$CXX -m64"
       host_cpu="x86_64"
+      notice_platform="64-bit "
       AC_SUBST(TARGETFLAGS,"-m64")
     fi
     ;;
@@ -178,10 +173,6 @@ case $host in
                        AC_MSG_ERROR([You need a target with Thumb support to build Wine for ARM.])])
     CFLAGS="$CFLAGS -marm"
     AC_SUBST(TARGETFLAGS,"-marm")
-    ;;
-  *-mingw32*|*-cygwin*)
-    enable_win16=${enable_win16:-no}
-    CFLAGS="$CFLAGS -D_WIN32"
     ;;
   i[[3456789]]86*)
     enable_win16=${enable_win16:-yes}

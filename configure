@@ -4965,25 +4965,15 @@ fi
 
 case $host in
   *-darwin*)
-    if test "x$enable_win64" = "xyes"
-    then
-      CC="$CC -m64"
-      CXX="$CXX -m64"
-      host_cpu="x86_64"
-      notice_platform="64-bit "
-      TARGETFLAGS="-m64"
-
-    else
-      CC="$CC -m32"
-      CXX="$CXX -m32"
-      host_cpu="i386"
-      notice_platform="32-bit "
-      TARGETFLAGS="-m32"
-
-      enable_win16=${enable_win16:-yes}
-    fi
     with_fontconfig=${with_fontconfig:-no}
     ;;
+  *-mingw32*|*-cygwin*)
+    enable_win16=${enable_win16:-no}
+    CFLAGS="$CFLAGS -D_WIN32"
+    ;;
+esac
+
+case $host in
   x86_64*|amd64*)
     if test "x$enable_win64" != "xyes" -a "$cross_compiling" != "yes"
     then
@@ -5040,11 +5030,14 @@ $as_echo "yes" >&6; }
 else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
-                           as_fn_error $? "You need gcc >= 4.4 to build Wine as 64-bit." "$LINENO" 5
+                           as_fn_error $? "You need gcc >= 4.4 or clang >= 3.8 to build Wine as 64-bit." "$LINENO" 5
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
       fi
+      CC="$CC -m64"
+      CXX="$CXX -m64"
       host_cpu="x86_64"
+      notice_platform="64-bit "
       TARGETFLAGS="-m64"
 
     fi
@@ -5076,10 +5069,6 @@ rm -f core conftest.err conftest.$ac_objext \
     CFLAGS="$CFLAGS -marm"
     TARGETFLAGS="-marm"
 
-    ;;
-  *-mingw32*|*-cygwin*)
-    enable_win16=${enable_win16:-no}
-    CFLAGS="$CFLAGS -D_WIN32"
     ;;
   i[3456789]86*)
     enable_win16=${enable_win16:-yes}
