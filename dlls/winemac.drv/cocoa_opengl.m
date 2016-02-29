@@ -227,18 +227,15 @@ void macdrv_make_context_current(macdrv_opengl_context c, macdrv_view v)
     {
         WineOpenGLContext* currentContext = (WineOpenGLContext*)[WineOpenGLContext currentContext];
 
-        [context removeFromViews:YES];
-
-        if (currentContext != context)
+        if ([currentContext isKindOfClass:[WineOpenGLContext class]])
         {
-            if (context)
-                [context makeCurrentContext];
-            else
-                [WineOpenGLContext clearCurrentContext];
-
-            if ([currentContext isKindOfClass:[WineOpenGLContext class]])
+            [WineOpenGLContext clearCurrentContext];
+            if (currentContext != context)
                 [currentContext removeFromViews:YES];
         }
+
+        if (context)
+            [context removeFromViews:YES];
     }
 
     [pool release];
