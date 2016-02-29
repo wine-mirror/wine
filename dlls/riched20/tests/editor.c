@@ -8220,7 +8220,7 @@ static void test_alignment_style(void)
     pf.cbSize = sizeof(PARAFORMAT2);
     pf.dwMask = -1;
     SendMessageW(richedit, EM_GETPARAFORMAT, SCF_SELECTION, (LPARAM)&pf);
-    ok(pf.wAlignment == ES_CENTER, "got %d expected ES_CENTER\n", pf.wAlignment);
+    ok(pf.wAlignment == PFA_LEFT, "got %d expected PFA_LEFT\n", pf.wAlignment);
     DestroyWindow(richedit);
 }
 
