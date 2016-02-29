@@ -89,6 +89,7 @@ struct texture_readback
 {
     ID3D10Texture2D *texture;
     D3D10_MAPPED_TEXTURE2D mapped_texture;
+    unsigned int width, height;
 };
 
 static void get_texture_readback(ID3D10Texture2D *texture, struct texture_readback *rb)
@@ -112,6 +113,9 @@ static void get_texture_readback(ID3D10Texture2D *texture, struct texture_readba
         ID3D10Device_Release(device);
         return;
     }
+
+    rb->width = texture_desc.Width;
+    rb->height = texture_desc.Height;
 
     ID3D10Device_CopyResource(device, (ID3D10Resource *)rb->texture, (ID3D10Resource *)texture);
     if (FAILED(hr = ID3D10Texture2D_Map(rb->texture, 0, D3D10_MAP_READ, 0, &rb->mapped_texture)))
@@ -149,6 +153,35 @@ static DWORD get_texture_color(ID3D10Texture2D *texture, unsigned int x, unsigne
     release_texture_readback(&rb);
 
     return color;
+}
+
+#define check_texture_color(t, c, d) check_texture_color_(__LINE__, t, c, d)
+static void check_texture_color_(unsigned int line, ID3D10Texture2D *texture,
+        DWORD expected_color, BYTE max_diff)
+{
+    struct texture_readback rb;
+    unsigned int x = 0, y = 0;
+    BOOL all_match = TRUE;
+    DWORD color = 0;
+
+    get_texture_readback(texture, &rb);
+    for (y = 0; y < rb.height; ++y)
+    {
+        for (x = 0; x < rb.width; ++x)
+        {
+            color = get_readback_color(&rb, x, y);
+            if (!compare_color(color, expected_color, max_diff))
+            {
+                all_match = FALSE;
+                break;
+            }
+        }
+        if (!all_match)
+            break;
+    }
+    release_texture_readback(&rb);
+    ok_(__FILE__, line)(all_match,
+            "Got unexpected color 0x%08x at (%u, %u).\n", color, x, y);
 }
 
 static ID3D10Device *create_device(void)
@@ -2103,8 +2136,7 @@ static void test_scissor(void)
     ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
 
     ID3D10Device_ClearRenderTargetView(device, rtv, red);
-    color = get_texture_color(backbuffer, 320, 240);
-    ok(compare_color(color, 0xff0000ff, 1), "Got unexpected color 0x%08x.\n", color);
+    check_texture_color(backbuffer, 0xff0000ff, 1);
 
     ID3D10Device_Draw(device, 4, 0);
     color = get_texture_color(backbuffer, 320, 60);
@@ -4743,19 +4775,10 @@ static void test_update_subresource(void)
     ID3D10Device_RSSetViewports(device, 1, &vp);
 
     ID3D10Device_ClearRenderTargetView(device, backbuffer_rtv, red);
+    check_texture_color(backbuffer, 0x7f0000ff, 1);
 
     ID3D10Device_Draw(device, 4, 0);
-    get_texture_readback(backbuffer, &rb);
-    for (i = 0; i < 4; ++i)
-    {
-        for (j = 0; j < 4; ++j)
-        {
-            color = get_readback_color(&rb, 80 + j * 160, 60 + i * 120);
-            ok(compare_color(color, 0x00000000, 0),
-                    "Got unexpected color 0x%08x at (%u, %u).\n", color, j, i);
-        }
-    }
-    release_texture_readback(&rb);
+    check_texture_color(backbuffer, 0x00000000, 0);
 
     set_box(&box, 1, 1, 0, 3, 3, 1);
     ID3D10Device_UpdateSubresource(device, (ID3D10Resource *)texture, 0, &box,
@@ -5090,11 +5113,7 @@ static void test_multisample_init(void)
     ID3D10Texture2D *backbuffer, *multi;
     ID3D10Device *device;
     ULONG refcount;
-    DWORD color;
     HRESULT hr;
-    unsigned int x, y;
-    struct texture_readback rb;
-    BOOL all_zero = TRUE;
     UINT count = 0;
     HWND window;
     IDXGISwapChain *swapchain;
@@ -5141,23 +5160,7 @@ static void test_multisample_init(void)
     ID3D10Device_ResolveSubresource(device, (ID3D10Resource *)backbuffer, 0,
             (ID3D10Resource *)multi, 0, DXGI_FORMAT_R8G8B8A8_UNORM);
 
-    get_texture_readback(backbuffer, &rb);
-    for (y = 0; y < 480; ++y)
-    {
-        for (x = 0; x < 640; ++x)
-        {
-            color = get_readback_color(&rb, x, y);
-            if (!compare_color(color, 0x00000000, 0))
-            {
-                all_zero = FALSE;
-                break;
-            }
-        }
-        if (!all_zero)
-            break;
-    }
-    release_texture_readback(&rb);
-    todo_wine ok(all_zero, "Got unexpected color 0x%08x, position %ux%u.\n", color, x, y);
+    todo_wine check_texture_color(backbuffer, 0x00000000, 0);
 
     ID3D10RenderTargetView_Release(rtview);
     ID3D10Texture2D_Release(backbuffer);
