@@ -1021,27 +1021,6 @@ HRESULT CDECL wined3d_device_init_3d(struct wined3d_device *device,
 
     device->contexts[0]->last_was_rhw = 0;
 
-    switch (wined3d_settings.offscreen_rendering_mode)
-    {
-        case ORM_FBO:
-            device->offscreenBuffer = GL_COLOR_ATTACHMENT0;
-            break;
-
-        case ORM_BACKBUFFER:
-        {
-            if (context_get_current()->aux_buffers > 0)
-            {
-                TRACE("Using auxiliary buffer for offscreen rendering\n");
-                device->offscreenBuffer = GL_AUX0;
-            }
-            else
-            {
-                TRACE("Using back buffer for offscreen rendering\n");
-                device->offscreenBuffer = GL_BACK;
-            }
-        }
-    }
-
     TRACE("All defaults now set up, leaving 3D init.\n");
 
     context_release(context);

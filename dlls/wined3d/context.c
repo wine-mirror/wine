@@ -2419,14 +2419,30 @@ static void context_validate_onscreen_formats(struct wined3d_context *context,
     context_set_render_offscreen(context, TRUE);
 }
 
-static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_device *device, const struct wined3d_surface *rt)
+GLenum context_get_offscreen_gl_buffer(const struct wined3d_context *context)
+{
+    switch (wined3d_settings.offscreen_rendering_mode)
+    {
+        case ORM_FBO:
+            return GL_COLOR_ATTACHMENT0;
+
+        case ORM_BACKBUFFER:
+            return context->aux_buffers > 0 ? GL_AUX0 : GL_BACK;
+
+        default:
+            FIXME("Unhandled offscreen rendering mode %#x.\n", wined3d_settings.offscreen_rendering_mode);
+            return GL_BACK;
+    }
+}
+
+static DWORD context_generate_rt_mask_no_fbo(const struct wined3d_context *context, const struct wined3d_surface *rt)
 {
     if (!rt || rt->resource.format->id == WINED3DFMT_NULL)
         return 0;
     else if (rt->container->swapchain)
         return context_generate_rt_mask_from_surface(rt);
     else
-        return context_generate_rt_mask(device->offscreenBuffer);
+        return context_generate_rt_mask(context_get_offscreen_gl_buffer(context));
 }
 
 /* Context activation is done by the caller. */
@@ -2458,7 +2474,7 @@ void context_apply_blit_state(struct wined3d_context *context, const struct wine
     }
     else
     {
-        rt_mask = context_generate_rt_mask_no_fbo(device, rt);
+        rt_mask = context_generate_rt_mask_no_fbo(context, rt);
     }
 
     cur_mask = context->current_fbo ? &context->current_fbo->rt_mask : &context->draw_buffers_mask;
@@ -2547,7 +2563,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
         }
         else
         {
-            rt_mask = context_generate_rt_mask_no_fbo(device,
+            rt_mask = context_generate_rt_mask_no_fbo(context,
                     rt_count ? wined3d_rendertarget_view_get_surface(rts[0]) : NULL);
         }
     }
@@ -2562,7 +2578,7 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
     }
     else
     {
-        rt_mask = context_generate_rt_mask_no_fbo(device,
+        rt_mask = context_generate_rt_mask_no_fbo(context,
                 rt_count ? wined3d_rendertarget_view_get_surface(rts[0]) : NULL);
     }
 
@@ -2606,16 +2622,15 @@ BOOL context_apply_clear_state(struct wined3d_context *context, const struct win
     return TRUE;
 }
 
-static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const struct wined3d_device *device)
+static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const struct wined3d_state *state)
 {
-    const struct wined3d_state *state = &device->state;
     struct wined3d_rendertarget_view **rts = state->fb->render_targets;
     struct wined3d_shader *ps = state->shader[WINED3D_SHADER_TYPE_PIXEL];
     DWORD rt_mask, rt_mask_bits;
     unsigned int i;
 
     if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
-        return context_generate_rt_mask_no_fbo(device, wined3d_rendertarget_view_get_surface(rts[0]));
+        return context_generate_rt_mask_no_fbo(context, wined3d_rendertarget_view_get_surface(rts[0]));
     else if (!context->render_offscreen)
         return context_generate_rt_mask_from_surface(wined3d_rendertarget_view_get_surface(rts[0]));
 
@@ -2638,9 +2653,8 @@ static DWORD find_draw_buffers_mask(const struct wined3d_context *context, const
 /* Context activation is done by the caller. */
 void context_state_fb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->swapchain->device;
+    DWORD rt_mask = find_draw_buffers_mask(context, state);
     const struct wined3d_fb_state *fb = state->fb;
-    DWORD rt_mask = find_draw_buffers_mask(context, device);
     DWORD *cur_mask;
 
     if (wined3d_settings.offscreen_rendering_mode == ORM_FBO)
@@ -2917,13 +2931,12 @@ static void context_update_tex_unit_map(struct wined3d_context *context, const s
 /* Context activation is done by the caller. */
 void context_state_drawbuf(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
-    const struct wined3d_device *device = context->swapchain->device;
     DWORD rt_mask, *cur_mask;
 
     if (isStateDirty(context, STATE_FRAMEBUFFER)) return;
 
     cur_mask = context->current_fbo ? &context->current_fbo->rt_mask : &context->draw_buffers_mask;
-    rt_mask = find_draw_buffers_mask(context, device);
+    rt_mask = find_draw_buffers_mask(context, state);
     if (rt_mask != *cur_mask)
     {
         context_apply_draw_buffers(context, rt_mask);
