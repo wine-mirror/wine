@@ -299,6 +299,13 @@ static LPBYTE get_regdata(LPWSTR data, DWORD reg_type, WCHAR separator, DWORD *r
                     buffer[destindex] = 0;
                 else
                     buffer[destindex] = data[i];
+
+                if (destindex && !buffer[destindex - 1] && !buffer[destindex])
+                {
+                    HeapFree(GetProcessHeap(), 0, buffer);
+                    output_message(STRING_INVALID_STRING);
+                    return NULL;
+                }
             }
             buffer[destindex] = 0;
             if (destindex && buffer[destindex - 1])

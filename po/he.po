@@ -11657,6 +11657,10 @@ msgstr "האם ברצונך למחוק את הערך '%s'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "האם אכן ברצונך למחוק את '%1'?"
 
+#: reg.rc:52
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&רישום המערכת"

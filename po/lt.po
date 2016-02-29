@@ -11634,6 +11634,12 @@ msgstr "Ar tikrai norite pašalinti visas registro „%1“ reikšmes?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Ar tikrai norite pašalinti registro raktą „%1“?"
 
+#: reg.rc:52
+#, fuzzy
+#| msgid "reg: The option [/d] must be followed by a valid integer\n"
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr "reg: Už parametro [/d] privalo būti tinkamas sveikasis skaičius\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "R&egistras"

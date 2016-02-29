@@ -11711,6 +11711,14 @@ msgstr "Jesteś pewien, że chcesz usunąć daną '%s'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Czy jesteś pewien, że chcesz usunąć '%1'?"
 
+#: reg.rc:52
+#, fuzzy
+#| msgid ""
+#| "uninstaller: The option '--remove' must be followed by an application "
+#| "GUID\n"
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr "usuwanie programów: Po opcji '--remove' należy podać GUID aplikacji\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rejestr"

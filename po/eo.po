@@ -11186,6 +11186,10 @@ msgstr "Ĉu vi certas pri forigo de '%s'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Ĉu vi estas certa pri forigo de '%1'?"
 
+#: reg.rc:52
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registrejo"

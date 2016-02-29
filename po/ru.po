@@ -11630,6 +11630,12 @@ msgstr "Вы точно хотите удалить все параметры р
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Вы точно хотите удалить ключ реестра «%1»?"
 
+#: reg.rc:52
+#, fuzzy
+#| msgid "reg: The option [/d] must be followed by a valid integer\n"
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr "reg: за опцией [/d] должно следовать целое число\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Реестр"

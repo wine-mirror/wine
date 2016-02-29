@@ -11827,6 +11827,10 @@ msgstr "Biztos hogy törölni szeretné a(z) '%s' kulcsot?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Biztos hogy törölni szeretné ezt: '%1'?"
 
+#: reg.rc:52
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Fájl"

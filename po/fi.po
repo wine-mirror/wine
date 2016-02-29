@@ -11606,6 +11606,12 @@ msgstr "Haluatko varmasti tuhota kaikki rekisterin arvot kohteesta '%1'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Haluatko varmasti tuhota rekisteriavaimen '%1'?"
 
+#: reg.rc:52
+#, fuzzy
+#| msgid "reg: The option [/d] must be followed by a valid integer\n"
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr "reg: Valitsinta [/d] täytyy seurata kelpo kokonaisluku\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Rekisteri"

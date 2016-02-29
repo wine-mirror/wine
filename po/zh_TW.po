@@ -11787,6 +11787,10 @@ msgstr "您確認要刪除這個數值 %s 嗎？"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "確定要刪除 %1？"
 
+#: reg.rc:52
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "註冊表(&R)"

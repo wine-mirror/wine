@@ -11754,6 +11754,15 @@ msgstr "Esteu segur que voleu suprimir el valor '%s'?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Esteu segur que voleu suprimir '%1'?"
 
+#: reg.rc:52
+#, fuzzy
+#| msgid ""
+#| "uninstaller: The option '--remove' must be followed by an application "
+#| "GUID\n"
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr ""
+"desinstal·lador: Una GUID d'aplicació ha de seguir l'opció '--remove'\n"
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registre"

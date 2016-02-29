@@ -11879,6 +11879,10 @@ msgstr "Weet u zeker dat u de waarde '%s' wilt verwijderen?"
 msgid "Are you sure you want to delete the registry key '%1'?"
 msgstr "Weet u zeker dat u '%1' wilt verwijderen?"
 
+#: reg.rc:52
+msgid "reg: The option [/d] must be followed by a valid string\n"
+msgstr ""
+
 #: regedit.rc:34
 msgid "&Registry"
 msgstr "&Registerbestand"
