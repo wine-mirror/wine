@@ -251,6 +251,7 @@
 @ cdecl wined3d_texture_get_pitch(ptr long ptr ptr)
 @ cdecl wined3d_texture_get_resource(ptr)
 @ cdecl wined3d_texture_get_sub_resource(ptr long)
+@ cdecl wined3d_texture_get_sub_resource_desc(ptr long ptr)
 @ cdecl wined3d_texture_get_sub_resource_parent(ptr long)
 @ cdecl wined3d_texture_incref(ptr)
 @ cdecl wined3d_texture_preload(ptr)

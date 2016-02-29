@@ -1635,6 +1635,19 @@ struct wined3d_resource_desc
     UINT size;
 };
 
+struct wined3d_sub_resource_desc
+{
+    enum wined3d_format_id format;
+    enum wined3d_multisample_type multisample_type;
+    UINT multisample_quality;
+    DWORD usage;
+    enum wined3d_pool pool;
+    UINT width;
+    UINT height;
+    UINT depth;
+    UINT size;
+};
+
 struct wined3d_clip_status
 {
    DWORD clip_union;
@@ -2447,6 +2460,8 @@ void __cdecl wined3d_texture_get_pitch(const struct wined3d_texture *texture,
 struct wined3d_resource * __cdecl wined3d_texture_get_resource(struct wined3d_texture *texture);
 struct wined3d_resource * __cdecl wined3d_texture_get_sub_resource(const struct wined3d_texture *texture,
         UINT sub_resource_idx);
+HRESULT __cdecl wined3d_texture_get_sub_resource_desc(const struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc);
 void * __cdecl wined3d_texture_get_sub_resource_parent(struct wined3d_texture *texture, unsigned int sub_resource_idx);
 ULONG __cdecl wined3d_texture_incref(struct wined3d_texture *texture);
 void __cdecl wined3d_texture_preload(struct wined3d_texture *texture);

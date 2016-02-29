@@ -1553,6 +1553,37 @@ void CDECL wined3d_texture_set_sub_resource_parent(struct wined3d_texture *textu
     texture->sub_resources[sub_resource_idx].resource->parent = parent;
 }
 
+HRESULT CDECL wined3d_texture_get_sub_resource_desc(const struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, struct wined3d_sub_resource_desc *desc)
+{
+    unsigned int sub_count = texture->level_count * texture->layer_count;
+    const struct wined3d_resource *resource;
+    unsigned int level_idx;
+
+    TRACE("texture %p, sub_resource_idx %u, desc %p.\n", texture, sub_resource_idx, desc);
+
+    if (sub_resource_idx >= sub_count)
+    {
+        WARN("sub_resource_idx %u >= sub_count %u.\n", sub_resource_idx, sub_count);
+        return WINED3DERR_INVALIDCALL;
+    }
+
+    resource = &texture->resource;
+    desc->format = resource->format->id;
+    desc->multisample_type = resource->multisample_type;
+    desc->multisample_quality = resource->multisample_quality;
+    desc->usage = resource->usage;
+    desc->pool = resource->pool;
+
+    level_idx = sub_resource_idx % texture->level_count;
+    desc->width = max(1, resource->width >> level_idx);
+    desc->height = max(1, resource->height >> level_idx);
+    desc->depth = max(1, resource->depth >> level_idx);
+    desc->size = texture->sub_resources[sub_resource_idx].resource->size;
+
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_texture_create(struct wined3d_device *device, const struct wined3d_resource_desc *desc,
         UINT level_count, DWORD flags, const struct wined3d_sub_resource_data *data, void *parent,
         const struct wined3d_parent_ops *parent_ops, struct wined3d_texture **texture)
