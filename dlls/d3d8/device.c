@@ -1173,9 +1173,8 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
 
     if (ds_impl)
     {
+        struct wined3d_sub_resource_desc ds_desc, rt_desc;
         struct wined3d_rendertarget_view *original_rtv;
-        struct wined3d_resource_desc ds_desc, rt_desc;
-        struct wined3d_resource *wined3d_resource;
         struct d3d8_surface *original_surface;
 
         /* If no render target is passed in check the size against the current RT */
@@ -1188,14 +1187,14 @@ static HRESULT WINAPI d3d8_device_SetRenderTarget(IDirect3DDevice8 *iface,
                 return D3DERR_NOTFOUND;
             }
             original_surface = wined3d_rendertarget_view_get_sub_resource_parent(original_rtv);
-            wined3d_resource = wined3d_texture_get_sub_resource(original_surface->wined3d_texture, original_surface->sub_resource_idx);
+            wined3d_texture_get_sub_resource_desc(original_surface->wined3d_texture,
+                    original_surface->sub_resource_idx, &rt_desc);
         }
         else
-            wined3d_resource = wined3d_texture_get_sub_resource(rt_impl->wined3d_texture, rt_impl->sub_resource_idx);
-        wined3d_resource_get_desc(wined3d_resource, &rt_desc);
+            wined3d_texture_get_sub_resource_desc(rt_impl->wined3d_texture,
+                    rt_impl->sub_resource_idx, &rt_desc);
 
-        wined3d_resource = wined3d_texture_get_sub_resource(ds_impl->wined3d_texture, ds_impl->sub_resource_idx);
-        wined3d_resource_get_desc(wined3d_resource, &ds_desc);
+        wined3d_texture_get_sub_resource_desc(ds_impl->wined3d_texture, ds_impl->sub_resource_idx, &ds_desc);
 
         if (ds_desc.width < rt_desc.width || ds_desc.height < rt_desc.height)
         {
