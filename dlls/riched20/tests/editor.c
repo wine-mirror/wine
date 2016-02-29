@@ -3281,11 +3281,12 @@ static void test_EM_SETUNDOLIMIT(void)
   
   SendMessageA(hwndRichEdit, WM_SETTEXT, 0, (LPARAM)"x");
   cr.cpMin = 0;
-  cr.cpMax = 1;
+  cr.cpMax = -1;
+  SendMessageA(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr);
+
   SendMessageA(hwndRichEdit, WM_COPY, 0, 0);
     /*Load "x" into the clipboard. Paste is an easy, undo'able operation.
       also, multiple pastes don't combine like WM_CHAR would */
-  SendMessageA(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&cr);
 
   /* first case - check the default */
   SendMessageA(hwndRichEdit,EM_EMPTYUNDOBUFFER, 0,0);
