@@ -134,6 +134,7 @@ static struct strarray cpp_flags;
 static struct strarray unwind_flags;
 static struct strarray libs;
 static struct strarray cmdline_vars;
+static struct strarray disabled_dirs;
 static const char *root_src_dir;
 static const char *tools_dir;
 static const char *tools_ext;
@@ -177,6 +178,7 @@ struct makefile
     const char     *staticlib;
     const char     *staticimplib;
     const char     *importlib;
+    int             disabled;
     int             use_msvcrt;
     int             is_win16;
     struct makefile **submakes;
@@ -2178,6 +2180,7 @@ static struct strarray output_importlib_symlinks( const struct makefile *parent,
 
     if (!make->module) return ret;
     if (!make->importlib) return ret;
+    if (make->is_win16 && make->disabled) return ret;
     if (strncmp( make->base_dir, "dlls/", 5 )) return ret;
     if (!strcmp( make->module, make->importlib )) return ret;
     if (!strchr( make->importlib, '.' ) &&
@@ -2901,7 +2904,8 @@ static struct strarray output_sources( const struct makefile *make )
         output_filenames( dep_libs );
         output( "\n" );
 
-        output( "all: %s/%s\n", top_obj_dir_path( make, "programs/winetest" ), testres );
+        if (!make->disabled)
+            output( "all: %s/%s\n", top_obj_dir_path( make, "programs/winetest" ), testres );
         output( "%s/%s: %s%s\n", top_obj_dir_path( make, "programs/winetest" ), testres,
                 obj_dir_path( make, stripped ), dll_ext );
         output( "\techo \"%s TESTRES \\\"%s%s\\\"\" | %s -o $@\n",
@@ -2916,7 +2920,6 @@ static struct strarray output_sources( const struct makefile *make )
             add_import_libs( make, &dep_libs, get_default_imports( make ), 1 );  /* dependencies only */
             strarray_addall( &all_libs, libs );
             strarray_add( &clean_files, crosstest );
-            output( "%s: %s\n", obj_dir_path( make, "crosstest" ), obj_dir_path( make, crosstest ));
             output( "%s:", obj_dir_path( make, crosstest ));
             output_filenames_obj_dir( make, crossobj_files );
             output_filenames_obj_dir( make, res_files );
@@ -2931,22 +2934,29 @@ static struct strarray output_sources( const struct makefile *make )
             output_filenames( all_libs );
             output_filename( "$(LDFLAGS)" );
             output( "\n" );
-            strarray_add( &phony_targets, obj_dir_path( make, "crosstest" ));
-            if (make->obj_dir) output( "crosstest: %s\n", obj_dir_path( make, "crosstest" ));
+            if (!make->disabled)
+            {
+                output( "%s: %s\n", obj_dir_path( make, "crosstest" ), obj_dir_path( make, crosstest ));
+                strarray_add( &phony_targets, obj_dir_path( make, "crosstest" ));
+                if (make->obj_dir) output( "crosstest: %s\n", obj_dir_path( make, "crosstest" ));
+            }
         }
 
         output_filenames_obj_dir( make, ok_files );
         output( ": %s%s ../%s%s\n", testmodule, dll_ext, make->testdll, dll_ext );
-        output( "check test:" );
-        output_filenames_obj_dir( make, ok_files );
-        output( "\n" );
+        if (!make->disabled)
+        {
+            output( "check test:" );
+            output_filenames_obj_dir( make, ok_files );
+            output( "\n" );
+            strarray_add( &phony_targets, "check" );
+            strarray_add( &phony_targets, "test" );
+        }
         output( "testclean::\n" );
         output( "\trm -f" );
         output_filenames_obj_dir( make, ok_files );
         output( "\n" );
         strarray_addall( &clean_files, ok_files );
-        strarray_add( &phony_targets, "check" );
-        strarray_add( &phony_targets, "test" );
         strarray_add( &phony_targets, "testclean" );
     }
 
@@ -3014,24 +3024,26 @@ static struct strarray output_sources( const struct makefile *make )
         add_install_rule( make, install_rules, make->scripts.str[i], make->scripts.str[i],
                           strmake( "S$(bindir)/%s", make->scripts.str[i] ));
 
-    if (all_targets.count)
+    if (!make->disabled)
     {
-        output( "all:" );
-        output_filenames_obj_dir( make, all_targets );
-        output( "\n" );
-    }
-
-    strarray_addall( &uninstall_files, output_install_rules( make, install_rules[INSTALL_LIB],
-                                                             "install-lib", &phony_targets ));
-    strarray_addall( &uninstall_files, output_install_rules( make, install_rules[INSTALL_DEV],
-                                                             "install-dev", &phony_targets ));
-    if (uninstall_files.count)
-    {
-        output( "uninstall::\n" );
-        output( "\trm -f" );
-        output_filenames( uninstall_files );
-        output( "\n" );
-        strarray_add_uniq( &phony_targets, "uninstall" );
+        if (all_targets.count)
+        {
+            output( "all:" );
+            output_filenames_obj_dir( make, all_targets );
+            output( "\n" );
+        }
+        strarray_addall( &uninstall_files, output_install_rules( make, install_rules[INSTALL_LIB],
+                                                                 "install-lib", &phony_targets ));
+        strarray_addall( &uninstall_files, output_install_rules( make, install_rules[INSTALL_DEV],
+                                                                 "install-dev", &phony_targets ));
+        if (uninstall_files.count)
+        {
+            output( "uninstall::\n" );
+            output( "\trm -f" );
+            output_filenames( uninstall_files );
+            output( "\n" );
+            strarray_add_uniq( &phony_targets, "uninstall" );
+        }
     }
 
     strarray_addall( &clean_files, object_files );
@@ -3383,6 +3395,7 @@ static void load_sources( struct makefile *make )
 
     if (make->module && strendswith( make->module, ".a" )) make->staticlib = make->module;
 
+    make->disabled   = make->base_dir && strarray_exists( &disabled_dirs, make->base_dir );
     make->is_win16   = strarray_exists( &make->extradllflags, "-m16" );
     make->use_msvcrt = strarray_exists( &make->appmode, "-mno-cygwin" );
 
@@ -3556,6 +3569,7 @@ int main( int argc, char *argv[] )
 
     if (argc == 1)
     {
+        disabled_dirs = get_expanded_make_var_array( top_makefile, "DISABLED_SUBDIRS" );
         top_makefile->subdirs = get_expanded_make_var_array( top_makefile, "SUBDIRS" );
         top_makefile->submakes = xmalloc( top_makefile->subdirs.count * sizeof(*top_makefile->submakes) );
 

@@ -200,6 +200,7 @@ AC_DEFUN([WINE_CONFIG_HELPERS],
 [wine_rules_file=conf$$rules.make
 rm -f $wine_rules_file
 AC_SUBST(SUBDIRS,"")
+AC_SUBST(DISABLED_SUBDIRS,"")
 AC_SUBST(CONFIGURE_TARGETS,"")
 AC_SUBST(ALL_TEST_RESOURCES,"")
 
@@ -218,14 +219,9 @@ wine_fn_has_flag ()
     expr ",$ac_flags," : ".*,$[1],.*" >/dev/null
 }
 
-wine_fn_depend_rules ()
-{
-    wine_fn_append_file SUBDIRS $ac_dir
-}
-
 wine_fn_all_rules ()
 {
-    wine_fn_depend_rules
+    wine_fn_append_file SUBDIRS $ac_dir
     wine_fn_append_rule \
 "all: $ac_dir
 .PHONY: $ac_dir
@@ -288,6 +284,8 @@ wine_fn_disabled_rules ()
 {
     ac_clean=$[@]
 
+    wine_fn_append_file SUBDIRS $ac_dir
+    wine_fn_append_file DISABLED_SUBDIRS $ac_dir
     wine_fn_append_rule \
 "__clean__: $ac_dir/clean
 .PHONY: $ac_dir/clean
@@ -357,8 +355,9 @@ wine_fn_config_dll ()
               dnl enable_win16 is special in that it disables import libs too
               [if test "$ac_enable" != enable_win16
                then
-                   wine_fn_depend_rules
                    wine_fn_clean_rules $ac_clean
+                   wine_fn_append_file SUBDIRS $ac_dir
+                   wine_fn_append_file DISABLED_SUBDIRS $ac_dir
                else
                    wine_fn_disabled_rules $ac_clean
                    return
@@ -552,7 +551,7 @@ wine_fn_config_tool ()
 {
     ac_dir=$[1]
     ac_flags=$[2]
-    AS_VAR_IF([enable_tools],[no],[return])
+    AS_VAR_IF([enable_tools],[no],[wine_fn_append_file DISABLED_SUBDIRS $ac_dir; return])
 
     wine_fn_all_rules
     wine_fn_install_rules

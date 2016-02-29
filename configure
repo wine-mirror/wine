@@ -717,6 +717,7 @@ DLLTOOL
 WINELOADER_PROGRAMS
 ALL_TEST_RESOURCES
 CONFIGURE_TARGETS
+DISABLED_SUBDIRS
 SUBDIRS
 READELF
 OTOOL
@@ -7417,6 +7418,8 @@ wine_rules_file=conf$$rules.make
 rm -f $wine_rules_file
 SUBDIRS=""
 
+DISABLED_SUBDIRS=""
+
 CONFIGURE_TARGETS=""
 
 ALL_TEST_RESOURCES=""
@@ -7437,14 +7440,9 @@ wine_fn_has_flag ()
     expr ",$ac_flags," : ".*,$1,.*" >/dev/null
 }
 
-wine_fn_depend_rules ()
-{
-    wine_fn_append_file SUBDIRS $ac_dir
-}
-
 wine_fn_all_rules ()
 {
-    wine_fn_depend_rules
+    wine_fn_append_file SUBDIRS $ac_dir
     wine_fn_append_rule \
 "all: $ac_dir
 .PHONY: $ac_dir
@@ -7507,6 +7505,8 @@ wine_fn_disabled_rules ()
 {
     ac_clean=$@
 
+    wine_fn_append_file SUBDIRS $ac_dir
+    wine_fn_append_file DISABLED_SUBDIRS $ac_dir
     wine_fn_append_rule \
 "__clean__: $ac_dir/clean
 .PHONY: $ac_dir/clean
@@ -7585,8 +7585,9 @@ fi
     if eval test \"x\$"$ac_enable"\" = x"no"; then :
                 if test "$ac_enable" != enable_win16
                then
-                   wine_fn_depend_rules
                    wine_fn_clean_rules $ac_clean
+                   wine_fn_append_file SUBDIRS $ac_dir
+                   wine_fn_append_file DISABLED_SUBDIRS $ac_dir
                else
                    wine_fn_disabled_rules $ac_clean
                    return
@@ -7786,7 +7787,7 @@ wine_fn_config_tool ()
     ac_dir=$1
     ac_flags=$2
     if test "x$enable_tools" = xno; then :
-  return
+  wine_fn_append_file DISABLED_SUBDIRS $ac_dir; return
 fi
 
     wine_fn_all_rules
