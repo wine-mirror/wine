@@ -5404,9 +5404,10 @@ static void test_EM_STREAMIN(void)
   EDITSTREAM es;
   char buffer[1024] = {0}, tmp[16];
   CHARRANGE range;
+  PARAFORMAT2 fmt;
 
-  const char * streamText0 = "{\\rtf1 TestSomeText}";
-  const char * streamText0a = "{\\rtf1 TestSomeText\\par}";
+  const char * streamText0 = "{\\rtf1\\fi100\\li200\\rtlpar\\qr TestSomeText}";
+  const char * streamText0a = "{\\rtf1\\fi100\\li200\\rtlpar\\qr TestSomeText\\par}";
   const char * streamText0b = "{\\rtf1 TestSomeText\\par\\par}";
   const char * ptr;
 
@@ -5463,6 +5464,17 @@ static void test_EM_STREAMIN(void)
   ok (result  == 0,
       "EM_STREAMIN: Test 0 set wrong text: Result: %s\n",buffer);
   ok(es.dwError == 0, "EM_STREAMIN: Test 0 set error %d, expected %d\n", es.dwError, 0);
+  /* Show that para fmts are ignored */
+  range.cpMin = 2;
+  range.cpMax = 2;
+  result = SendMessageA(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&range);
+  memset(&fmt, 0xcc, sizeof(fmt));
+  fmt.cbSize = sizeof(fmt);
+  result = SendMessageA(hwndRichEdit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt);
+  ok(fmt.dxStartIndent == 0, "got %d\n", fmt.dxStartIndent);
+  ok(fmt.dxOffset == 0, "got %d\n", fmt.dxOffset);
+  ok(fmt.wAlignment == PFA_LEFT, "got %d\n", fmt.wAlignment);
+  ok((fmt.wEffects & PFE_RTLPARA) == 0, "got %x\n", fmt.wEffects);
 
   /* Native richedit 2.0 ignores last \par */
   ptr = streamText0a;
@@ -5479,6 +5491,17 @@ static void test_EM_STREAMIN(void)
   ok (result  == 0,
       "EM_STREAMIN: Test 0-a set wrong text: Result: %s\n",buffer);
   ok(es.dwError == 0, "EM_STREAMIN: Test 0-a set error %d, expected %d\n", es.dwError, 0);
+  /* This time para fmts are processed */
+  range.cpMin = 2;
+  range.cpMax = 2;
+  result = SendMessageA(hwndRichEdit, EM_EXSETSEL, 0, (LPARAM)&range);
+  memset(&fmt, 0xcc, sizeof(fmt));
+  fmt.cbSize = sizeof(fmt);
+  result = SendMessageA(hwndRichEdit, EM_GETPARAFORMAT, 0, (LPARAM)&fmt);
+  ok(fmt.dxStartIndent == 300, "got %d\n", fmt.dxStartIndent);
+  ok(fmt.dxOffset == -100, "got %d\n", fmt.dxOffset);
+  ok(fmt.wAlignment == PFA_RIGHT, "got %d\n", fmt.wAlignment);
+  ok((fmt.wEffects & PFE_RTLPARA) == PFE_RTLPARA, "got %x\n", fmt.wEffects);
 
   /* Native richedit 2.0 ignores last \par, next-to-last \par appears */
   es.dwCookie = (DWORD_PTR)&streamText0b;

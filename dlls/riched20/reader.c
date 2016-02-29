@@ -269,6 +269,9 @@ void RTFInit(RTF_Info *info)
         info->nestingLevel = 0;
         info->canInheritInTbl = FALSE;
         info->borderType = 0;
+
+        memset(&info->fmt, 0, sizeof(info->fmt));
+        info->fmt.cbSize = sizeof(info->fmt);
 }
 
 /*
@@ -2516,6 +2519,10 @@ static void SpecialChar (RTF_Info *info)
 	case rtfPage:
 	case rtfSect:
 	case rtfPar:
+                RTFFlushOutputBuffer(info);
+                ME_SetSelectionParaFormat(info->editor, &info->fmt);
+                memset(&info->fmt, 0, sizeof(info->fmt));
+                info->fmt.cbSize = sizeof(info->fmt);
 		RTFPutUnicodeChar (info, '\r');
 		if (info->editor->bEmulateVersion10) RTFPutUnicodeChar (info, '\n');
 		break;
