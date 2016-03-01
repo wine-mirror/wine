@@ -1416,20 +1416,19 @@ static HRESULT WINAPI d3d9_device_ColorFill(IDirect3DDevice9Ex *iface,
     };
     struct d3d9_device *device = impl_from_IDirect3DDevice9Ex(iface);
     struct d3d9_surface *surface_impl = unsafe_impl_from_IDirect3DSurface9(surface);
-    struct wined3d_resource *wined3d_resource;
-    struct wined3d_resource_desc desc;
+    struct wined3d_sub_resource_desc desc;
     HRESULT hr;
 
     TRACE("iface %p, surface %p, rect %p, color 0x%08x.\n", iface, surface, rect, color);
 
     wined3d_mutex_lock();
 
-    if (!(wined3d_resource = wined3d_texture_get_sub_resource(surface_impl->wined3d_texture, surface_impl->sub_resource_idx)))
+    if (FAILED(wined3d_texture_get_sub_resource_desc(surface_impl->wined3d_texture,
+            surface_impl->sub_resource_idx, &desc)))
     {
         wined3d_mutex_unlock();
         return D3DERR_INVALIDCALL;
     }
-    wined3d_resource_get_desc(wined3d_resource, &desc);
 
     if (desc.pool != WINED3D_POOL_DEFAULT)
     {
