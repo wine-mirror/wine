@@ -729,7 +729,7 @@ static char *get_line( FILE *file )
 static unsigned int hash_filename( const char *name )
 {
     /* FNV-1 hash */
-    unsigned int ret = 2166136261;
+    unsigned int ret = 2166136261u;
     while (*name) ret = (ret * 16777619) ^ *name++;
     return ret % HASH_SIZE;
 }
