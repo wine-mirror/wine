@@ -2522,8 +2522,6 @@ struct wined3d_surface
     GLenum texture_target;
     unsigned int texture_level;
     unsigned int texture_layer;
-
-    RECT                      lockedRect;
     int                       lockCount;
 
     /* For GetDC */
@@ -2936,6 +2934,7 @@ struct wined3d_swapchain
     BOOL render_to_fbo, reapply_mode;
     const struct wined3d_format *ds_format;
     struct wined3d_palette *palette;
+    RECT front_buffer_update;
 
     LONG prev_time, frames;   /* Performance tracking */
 

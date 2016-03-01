@@ -677,10 +677,9 @@ static void surface_unmap(struct wined3d_surface *surface)
     struct wined3d_device *device = surface->resource.device;
     const struct wined3d_gl_info *gl_info;
     struct wined3d_context *context;
+    struct wined3d_texture *texture;
 
     TRACE("surface %p.\n", surface);
-
-    memset(&surface->lockedRect, 0, sizeof(surface->lockedRect));
 
     switch (surface->resource.map_binding)
     {
@@ -710,13 +709,15 @@ static void surface_unmap(struct wined3d_surface *surface)
         return;
     }
 
-    if (surface->container->swapchain && surface->container->swapchain->front_buffer == surface->container)
+    texture = surface->container;
+    if (texture->swapchain && texture->swapchain->front_buffer == texture)
     {
         context = context_acquire(device, surface);
-        surface_load_location(surface, context, surface->container->resource.draw_binding);
+        surface_load_location(surface, context, texture->resource.draw_binding);
         context_release(context);
+        memset(&texture->swapchain->front_buffer_update, 0, sizeof(texture->swapchain->front_buffer_update));
     }
-    else if (surface->container->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+    else if (texture->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
         FIXME("Depth / stencil buffer locking is not implemented.\n");
 }
 
@@ -1260,13 +1261,15 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
 
 static void gdi_surface_unmap(struct wined3d_surface *surface)
 {
+    struct wined3d_texture *texture = surface->container;
+
     TRACE("surface %p.\n", surface);
 
     /* Tell the swapchain to update the screen. */
-    if (surface->container->swapchain && surface->container == surface->container->swapchain->front_buffer)
-        x11_copy_to_screen(surface->container->swapchain, &surface->lockedRect);
+    if (texture->swapchain && texture == texture->swapchain->front_buffer)
+        x11_copy_to_screen(texture->swapchain, &texture->swapchain->front_buffer_update);
 
-    memset(&surface->lockedRect, 0, sizeof(RECT));
+    memset(&texture->swapchain->front_buffer_update, 0, sizeof(texture->swapchain->front_buffer_update));
 }
 
 static const struct wined3d_surface_ops gdi_surface_ops =
@@ -2253,9 +2256,10 @@ HRESULT wined3d_surface_unmap(struct wined3d_surface *surface)
 HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_desc *map_desc,
         const struct wined3d_box *box, DWORD flags)
 {
-    const struct wined3d_format *format = surface->resource.format;
-    unsigned int fmt_flags = surface->container->resource.format_flags;
-    struct wined3d_device *device = surface->resource.device;
+    struct wined3d_texture *texture = surface->container;
+    const struct wined3d_format *format = texture->resource.format;
+    struct wined3d_device *device = texture->resource.device;
+    unsigned int fmt_flags = texture->resource.format_flags;
     struct wined3d_context *context;
     const struct wined3d_gl_info *gl_info;
     BYTE *base_memory;
@@ -2270,7 +2274,7 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
     }
 
     if ((fmt_flags & WINED3DFMT_FLAG_BLOCKS) && box
-            && !wined3d_texture_check_block_align(surface->container, surface->texture_level, box))
+            && !wined3d_texture_check_block_align(texture, surface->texture_level, box))
     {
         WARN("Map box %s is misaligned for %ux%u blocks.\n",
                 debug_box(box), format->block_width, format->block_height);
@@ -2289,13 +2293,13 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
      * the need to download the surface from OpenGL all the time. The surface
      * is still downloaded if the OpenGL texture is changed. Note that this
      * only really makes sense for managed textures.*/
-    if (!(surface->container->flags & WINED3D_TEXTURE_DYNAMIC_MAP)
+    if (!(texture->flags & WINED3D_TEXTURE_DYNAMIC_MAP)
             && surface->resource.map_binding == WINED3D_LOCATION_SYSMEM)
     {
         if (++surface->lockCount > MAXLOCKCOUNT)
         {
             TRACE("Surface is mapped regularly, not freeing the system memory copy any more.\n");
-            surface->container->flags |= WINED3D_TEXTURE_DYNAMIC_MAP;
+            texture->flags |= WINED3D_TEXTURE_DYNAMIC_MAP;
         }
     }
 
@@ -2330,7 +2334,7 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
             break;
 
         case WINED3D_LOCATION_USER_MEMORY:
-            base_memory = surface->container->user_memory;
+            base_memory = texture->user_memory;
             break;
 
         case WINED3D_LOCATION_DIB:
@@ -2361,17 +2365,13 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
     }
     else
     {
-        wined3d_texture_get_pitch(surface->container, surface->texture_level,
+        wined3d_texture_get_pitch(texture, surface->texture_level,
                 &map_desc->row_pitch, &map_desc->slice_pitch);
     }
 
     if (!box)
     {
         map_desc->data = base_memory;
-        surface->lockedRect.left = 0;
-        surface->lockedRect.top = 0;
-        surface->lockedRect.right = surface->resource.width;
-        surface->lockedRect.bottom = surface->resource.height;
     }
     else
     {
@@ -2389,13 +2389,19 @@ HRESULT wined3d_surface_map(struct wined3d_surface *surface, struct wined3d_map_
                     + (map_desc->row_pitch * box->top)
                     + (box->left * format->byte_count);
         }
-        surface->lockedRect.left = box->left;
-        surface->lockedRect.top = box->top;
-        surface->lockedRect.right = box->right;
-        surface->lockedRect.bottom = box->bottom;
     }
 
-    TRACE("Locked rect %s.\n", wine_dbgstr_rect(&surface->lockedRect));
+    if (texture->swapchain && texture->swapchain->front_buffer == texture)
+    {
+        RECT *r = &texture->swapchain->front_buffer_update;
+
+        if (!box)
+            SetRect(r, 0, 0, texture->resource.width, texture->resource.height);
+        else
+            SetRect(r, box->left, box->top, box->right, box->bottom);
+        TRACE("Mapped front buffer %s.\n", wine_dbgstr_rect(r));
+    }
+
     TRACE("Returning memory %p, pitch %u.\n", map_desc->data, map_desc->row_pitch);
 
     return WINED3D_OK;
