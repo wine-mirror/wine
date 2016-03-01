@@ -625,7 +625,6 @@ ac_includes_default="\
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 WINELOADER_INSTALL
-LINGUAS
 ALL_VARS_RULES
 LDAP_LIBS
 RT_LIBS
@@ -1439,6 +1438,7 @@ enable_libs_port
 enable_libs_wine
 enable_libs_wpp
 enable_loader
+enable_po
 enable_arp
 enable_aspnet_regiis
 enable_attrib
@@ -6116,6 +6116,7 @@ if test "$MSGFMT" = false; then :
 This is an error since --with-gettext was requested." "$LINENO" 5 ;;
 esac
 fi
+test "$MSGFMT" = false && enable_po=${enable_po:-no}
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for i386_set_ldt in -li386" >&5
@@ -18070,6 +18071,7 @@ wine_fn_config_makefile libs/port enable_libs_port
 wine_fn_config_makefile libs/wine enable_libs_wine clean,implib,install-dev,install-lib
 wine_fn_config_makefile libs/wpp enable_libs_wpp
 wine_fn_config_makefile loader enable_loader clean,install-lib
+wine_fn_config_makefile po enable_po clean
 wine_fn_config_program arp enable_arp install
 wine_fn_config_program aspnet_regiis enable_aspnet_regiis install
 wine_fn_config_program attrib enable_attrib clean,install
@@ -18174,55 +18176,6 @@ wine_fn_config_tool tools/winemaker clean,install-dev
 wine_fn_config_tool tools/wmc clean,install-dev
 wine_fn_config_tool tools/wrc clean,install-dev
 
-LINGUAS="\
-ar \
-bg \
-ca \
-cs \
-da \
-de \
-el \
-en \
-en_US \
-eo \
-es \
-fa \
-fi \
-fr \
-he \
-hi \
-hr \
-hu \
-it \
-ja \
-ko \
-lt \
-ml \
-nb_NO \
-nl \
-or \
-pa \
-pl \
-pt_BR \
-pt_PT \
-rm \
-ro \
-ru \
-sk \
-sl \
-sr_RS@cyrillic \
-sr_RS@latin \
-sv \
-te \
-th \
-tr \
-uk \
-wa \
-zh_CN \
-zh_TW"
-
-
-
 
 wine_fn_append_file CONFIGURE_TARGETS "TAGS"
 wine_fn_append_file CONFIGURE_TARGETS "tags"
@@ -18256,8 +18209,6 @@ include/stamp-h.in: configure.ac aclocal.m4
 	autoheader --warnings=all
 	@echo timestamp > \$@"
 fi
-
-test "$MSGFMT" != false || LINGUAS=
 
 if test "x$enable_tools" != xno
 then

@@ -1811,6 +1811,11 @@ static void add_generated_sources( struct makefile *make )
             if (!make->staticimplib && make->importlib && *dll_ext)
                 make->staticimplib = strmake( "lib%s.def.a", make->importlib );
         }
+        if (strendswith( source->name, ".po" ))
+        {
+            if (!make->disabled)
+                strarray_add_uniq( &linguas, replace_extension( source->name, ".po", "" ));
+        }
     }
     if (make->testdll)
     {
@@ -2536,6 +2541,12 @@ static struct strarray output_sources( const struct makefile *make )
                         top_dir_path( make, "tools/buildimage" ), source->filename );
             }
         }
+        else if (!strcmp( ext, "po" ))  /* po file */
+        {
+            output( "%s.mo: %s\n", obj_dir_path( make, obj ), source->filename );
+            output( "\t%s -o $@ %s\n", msgfmt, source->filename );
+            strarray_add( &all_targets, strmake( "%s.mo", obj ));
+        }
         else if (!strcmp( ext, "res" ))
         {
             strarray_add( &res_files, source->name );
@@ -3080,16 +3091,6 @@ static struct strarray output_sources( const struct makefile *make )
         output( "\n" );
         strarray_add( &phony_targets, "distclean" );
 
-        if (msgfmt && strcmp( msgfmt, "false" ))
-        {
-            strarray_addall( &build_deps, mo_files );
-            for (i = 0; i < linguas.count; i++)
-            {
-                output( "%s/%s.mo:", obj_dir_path( make, "po" ), linguas.str[i] );
-                output( " %s/%s.po\n", src_dir_path( make, "po" ), linguas.str[i] );
-                output( "\t%s -o $@ %s/%s.po\n", msgfmt, src_dir_path( make, "po" ), linguas.str[i] );
-            }
-        }
         if (build_deps.count)
         {
             output( "__builddeps__:" );
@@ -3360,6 +3361,7 @@ static void load_sources( struct makefile *make )
         "SVG_SRCS",
         "FONT_SRCS",
         "IN_SRCS",
+        "PO_SRCS",
         "MANPAGES",
         NULL
     };
@@ -3537,7 +3539,6 @@ int main( int argc, char *argv[] )
 
     top_makefile = parse_makefile( NULL );
 
-    linguas      = get_expanded_make_var_array( top_makefile, "LINGUAS" );
     target_flags = get_expanded_make_var_array( top_makefile, "TARGETFLAGS" );
     msvcrt_flags = get_expanded_make_var_array( top_makefile, "MSVCRTFLAGS" );
     dll_flags    = get_expanded_make_var_array( top_makefile, "DLLFLAGS" );

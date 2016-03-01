@@ -211,7 +211,7 @@ sub parse_makefile($)
             ${$make{"=flags"}}{"implib"} = 1 if $var eq "IMPORTLIB";
             next;
         }
-        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES|EXTRA_OBJS|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
+        if (/^\s*(BISON_SRCS|LEX_SRCS|IDL_SRCS|C_SRCS|OBJC_SRCS|MC_SRCS|RC_SRCS|SVG_SRCS|FONT_SRCS|IN_SRCS|PO_SRCS|PROGRAMS|EXTRA_TARGETS|MANPAGES|EXTRA_OBJS|INSTALL_LIB|INSTALL_DEV)\s*=\s*(.*)/)
         {
             my $var = $1;
             my @list = split(/\s+/, $2);
@@ -388,6 +388,11 @@ sub assign_sources_to_makefiles(@)
             push @{${$make}{"=MC_SRCS"}}, $name;
             ${${$make}{"=flags"}}{"clean"} = 1;
         }
+        elsif ($name =~ /\.po$/)
+        {
+            push @{${$make}{"=PO_SRCS"}}, $name;
+            ${${$make}{"=flags"}}{"clean"} = 1;
+        }
         elsif ($name =~ /\.idl$/)
         {
             die "no makedep flags specified in $file" unless %flags || $dir eq "include";
@@ -502,8 +507,6 @@ sub update_makefiles(@)
         }
     }
 
-    push @lines, "\nAC_SUBST([LINGUAS],[\"\\\n", join( " \\\n", sort @linguas ), "\"])\n\n";
-
     # update the source variables in all the makefiles
 
     foreach my $file (sort @_)
@@ -519,6 +522,7 @@ sub update_makefiles(@)
         replace_makefile_variable( $file, "IDL_SRCS" );
         replace_makefile_variable( $file, "HEADER_SRCS" );
         replace_makefile_variable( $file, "XTEMPLATE_SRCS" );
+        replace_makefile_variable( $file, "PO_SRCS" );
         replace_makefile_variable( $file, "IN_SRCS" );
         replace_makefile_variable( $file, "MANPAGES" );
     }

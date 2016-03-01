@@ -362,6 +362,7 @@ EOF
 fi
 WINE_WARNING_WITH(gettext,[test "$MSGFMT" = false],
                   [gettext tools not found (or too old), translations won't be built.])
+test "$MSGFMT" = false && enable_po=${enable_po:-no}
 
 dnl **** Check for some libraries ****
 
@@ -3430,6 +3431,7 @@ WINE_CONFIG_MAKEFILE([libs/port])
 WINE_CONFIG_MAKEFILE([libs/wine],,[clean,implib,install-dev,install-lib])
 WINE_CONFIG_MAKEFILE([libs/wpp])
 WINE_CONFIG_MAKEFILE([loader],,[clean,install-lib])
+WINE_CONFIG_MAKEFILE([po],,[clean])
 WINE_CONFIG_PROGRAM(arp,,[install])
 WINE_CONFIG_PROGRAM(aspnet_regiis,,[install])
 WINE_CONFIG_PROGRAM(attrib,,[clean,install])
@@ -3533,54 +3535,6 @@ WINE_CONFIG_TOOL(tools/winegcc,[clean,install-dev])
 WINE_CONFIG_TOOL(tools/winemaker,[clean,install-dev])
 WINE_CONFIG_TOOL(tools/wmc,[clean,install-dev])
 WINE_CONFIG_TOOL(tools/wrc,[clean,install-dev])
-
-AC_SUBST([LINGUAS],["\
-ar \
-bg \
-ca \
-cs \
-da \
-de \
-el \
-en \
-en_US \
-eo \
-es \
-fa \
-fi \
-fr \
-he \
-hi \
-hr \
-hu \
-it \
-ja \
-ko \
-lt \
-ml \
-nb_NO \
-nl \
-or \
-pa \
-pl \
-pt_BR \
-pt_PT \
-rm \
-ro \
-ru \
-sk \
-sl \
-sr_RS@cyrillic \
-sr_RS@latin \
-sv \
-te \
-th \
-tr \
-uk \
-wa \
-zh_CN \
-zh_TW"])
-
 dnl End of auto-generated output commands
 
 dnl Main ignore file
@@ -3628,8 +3582,6 @@ include/stamp-h.in: configure.ac aclocal.m4
 	autoheader --warnings=all
 	@echo timestamp > \$[@]])
 fi
-
-test "$MSGFMT" != false || LINGUAS=
 
 if test "x$enable_tools" != xno
 then

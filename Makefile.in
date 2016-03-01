@@ -70,7 +70,6 @@ CONVERT         = @CONVERT@
 ICOTOOL         = @ICOTOOL@
 MSGFMT          = @MSGFMT@
 CROSSTARGET     = @CROSSTARGET@
-LINGUAS         = @LINGUAS@
 SUBDIRS         = @SUBDIRS@
 RUNTESTFLAGS    = -q -P wine
 MAKEDEP         = $(TOOLSDIR)/tools/makedep$(TOOLSEXT)
@@ -139,7 +138,7 @@ install-manpages:: manpages
 
 # dependencies needed to build any dll or program
 __tooldeps__: libs/port libs/wpp
-__builddeps__: __tooldeps__ libs/wine include
+__builddeps__: __tooldeps__ libs/wine include po
 .PHONY: depend dummy check test testclean crosstest __tooldeps__ __builddeps__
 
 dummy:
