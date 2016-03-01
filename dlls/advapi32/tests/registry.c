@@ -2205,7 +2205,7 @@ static void test_reg_delete_tree(void)
         "subkey2 was not deleted\n");
     size = MAX_PATH;
     ok(!RegQueryValueA(subkey, NULL, buffer, &size),
-        "Default value of subkey not longer present\n");
+        "Default value of subkey no longer present\n");
 
     ret = RegCreateKeyA(subkey, "subkey2", &subkey2);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
@@ -2216,7 +2216,7 @@ static void test_reg_delete_tree(void)
     ok(RegOpenKeyA(subkey, "subkey2", &subkey2),
         "subkey2 was not deleted\n");
     ok(!RegQueryValueA(subkey, NULL, buffer, &size),
-        "Default value of subkey not longer present\n");
+        "Default value of subkey no longer present\n");
 
     ret = RegCreateKeyA(subkey, "subkey2", &subkey2);
     ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
