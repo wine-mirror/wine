@@ -266,11 +266,7 @@ struct wined3d_sm4_data
     struct wined3d_shader_version shader_version;
     const DWORD *end;
 
-    struct
-    {
-        enum wined3d_shader_register_type register_type;
-        UINT register_idx;
-    } output_map[MAX_REG_OUTPUT];
+    unsigned int output_map[MAX_REG_OUTPUT];
 
     struct wined3d_shader_src_param src_param[5];
     struct wined3d_shader_dst_param dst_param[2];
@@ -285,13 +281,6 @@ struct wined3d_sm4_opcode_info
     enum WINED3D_SHADER_INSTRUCTION_HANDLER handler_idx;
     const char *dst_info;
     const char *src_info;
-};
-
-struct sysval_map
-{
-    enum wined3d_sysval_semantic sysval;
-    enum wined3d_shader_register_type register_type;
-    UINT register_idx;
 };
 
 /*
@@ -429,19 +418,6 @@ static const enum wined3d_primitive_type input_primitive_type_table[] =
     /* WINED3D_SM4_INPUT_PT_TRIANGLEADJ */      WINED3D_PT_TRIANGLELIST_ADJ,
 };
 
-static const struct sysval_map sysval_map[] =
-{
-    {WINED3D_SV_DEPTH,      WINED3DSPR_DEPTHOUT,    0},
-    {WINED3D_SV_TARGET0,    WINED3DSPR_COLOROUT,    0},
-    {WINED3D_SV_TARGET1,    WINED3DSPR_COLOROUT,    1},
-    {WINED3D_SV_TARGET2,    WINED3DSPR_COLOROUT,    2},
-    {WINED3D_SV_TARGET3,    WINED3DSPR_COLOROUT,    3},
-    {WINED3D_SV_TARGET4,    WINED3DSPR_COLOROUT,    4},
-    {WINED3D_SV_TARGET5,    WINED3DSPR_COLOROUT,    5},
-    {WINED3D_SV_TARGET6,    WINED3DSPR_COLOROUT,    6},
-    {WINED3D_SV_TARGET7,    WINED3DSPR_COLOROUT,    7},
-};
-
 static const enum wined3d_shader_resource_type resource_type_table[] =
 {
     /* 0 */                                         WINED3D_SHADER_RESOURCE_NONE,
@@ -496,8 +472,8 @@ static void map_register(const struct wined3d_sm4_data *priv, struct wined3d_sha
                     break;
                 }
 
-                reg->type = priv->output_map[reg_idx].register_type;
-                reg->idx[0].offset = priv->output_map[reg_idx].register_idx;
+                reg->type = WINED3DSPR_COLOROUT;
+                reg->idx[0].offset = priv->output_map[reg_idx];
             }
             break;
 
@@ -529,7 +505,7 @@ static enum wined3d_data_type map_data_type(char t)
 static void *shader_sm4_init(const DWORD *byte_code, const struct wined3d_shader_signature *output_signature)
 {
     struct wined3d_sm4_data *priv;
-    unsigned int i, j;
+    unsigned int i;
 
     if (!(priv = HeapAlloc(GetProcessHeap(), 0, sizeof(*priv))))
     {
@@ -548,15 +524,7 @@ static void *shader_sm4_init(const DWORD *byte_code, const struct wined3d_shader
             continue;
         }
 
-        for (j = 0; j < ARRAY_SIZE(sysval_map); ++j)
-        {
-            if (e->sysval_semantic == sysval_map[j].sysval)
-            {
-                priv->output_map[e->register_idx].register_type = sysval_map[j].register_type;
-                priv->output_map[e->register_idx].register_idx = sysval_map[j].register_idx;
-                break;
-            }
-        }
+        priv->output_map[e->register_idx] = e->semantic_idx;
     }
 
     list_init(&priv->src_free);

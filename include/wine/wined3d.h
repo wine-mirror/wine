@@ -752,16 +752,6 @@ enum wined3d_sysval_semantic
     WINED3D_SV_INSTANCEID = 8,
     WINED3D_SV_ISFRONTFACE = 9,
     WINED3D_SV_SAMPLEINDEX = 10,
-
-    WINED3D_SV_DEPTH = 0xffffffff,
-    WINED3D_SV_TARGET0 = 0,
-    WINED3D_SV_TARGET1 = 1,
-    WINED3D_SV_TARGET2 = 2,
-    WINED3D_SV_TARGET3 = 3,
-    WINED3D_SV_TARGET4 = 4,
-    WINED3D_SV_TARGET5 = 5,
-    WINED3D_SV_TARGET6 = 6,
-    WINED3D_SV_TARGET7 = 7,
 };
 
 enum wined3d_scanline_ordering
