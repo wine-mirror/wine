@@ -3326,6 +3326,19 @@ static void test_delete_value(void)
     res = RegDeleteValueA( hkey_main, longname );
     ok(res == ERROR_FILE_NOT_FOUND || broken(res == ERROR_MORE_DATA), /* nt4, win2k */
        "expect ERROR_FILE_NOT_FOUND, got %i\n", res);
+
+    /* Default registry value */
+    res = RegSetValueExA(hkey_main, "", 0, REG_SZ, (const BYTE *)"value", 6);
+    ok(res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegQueryValueExA(hkey_main, "", NULL, NULL, NULL, NULL);
+    ok(res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegDeleteValueA(hkey_main, "" );
+    ok(res == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", res);
+
+    res = RegQueryValueExA(hkey_main, "", NULL, NULL, NULL, NULL);
+    ok(res == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", res);
 }
 
 static void test_delete_key_value(void)
@@ -3373,6 +3386,19 @@ static void test_delete_key_value(void)
 
     ret = RegQueryValueExA(subkey, "test", NULL, NULL, NULL, NULL);
     ok(ret == ERROR_FILE_NOT_FOUND, "got %d\n", ret);
+
+    /* Default registry value */
+    ret = RegSetValueExA(subkey, "", 0, REG_SZ, (const BYTE *)"value", 6);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    ret = RegQueryValueExA(subkey, "", NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    ret = pRegDeleteKeyValueA(hkey_main, "Subkey1", "" );
+    ok(ret == ERROR_SUCCESS, "expected ERROR_SUCCESS, got %d\n", ret);
+
+    ret = RegQueryValueExA(subkey, "", NULL, NULL, NULL, NULL);
+    ok(ret == ERROR_FILE_NOT_FOUND, "expected ERROR_FILE_NOT_FOUND, got %d\n", ret);
 
     RegDeleteKeyA(subkey, "");
     RegCloseKey(subkey);
