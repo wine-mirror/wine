@@ -17246,8 +17246,6 @@ test "$srcdir" = "." || wine_fn_config_symlink fonts/marlett.ttf fonts/symbol.tt
 fi
 ac_config_links="$ac_config_links loader/l_intl.nls:loader/l_intl.nls"
 test "$srcdir" = "." || wine_fn_config_symlink loader/l_intl.nls
-ac_config_links="$ac_config_links po/LINGUAS:po/LINGUAS"
-test "$srcdir" = "." || wine_fn_config_symlink po/LINGUAS
 ac_config_links="$ac_config_links wine:tools/winewrapper"
 wine_fn_config_symlink wine
 if test "x$enable_win64" != xno; then
@@ -18970,7 +18968,6 @@ do
     "fonts/tahomabd.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/tahomabd.ttf:fonts/tahomabd.ttf" ;;
     "fonts/wingding.ttf") CONFIG_LINKS="$CONFIG_LINKS fonts/wingding.ttf:fonts/wingding.ttf" ;;
     "loader/l_intl.nls") CONFIG_LINKS="$CONFIG_LINKS loader/l_intl.nls:loader/l_intl.nls" ;;
-    "po/LINGUAS") CONFIG_LINKS="$CONFIG_LINKS po/LINGUAS:po/LINGUAS" ;;
     "wine") CONFIG_LINKS="$CONFIG_LINKS wine:tools/winewrapper" ;;
     "wine64") CONFIG_LINKS="$CONFIG_LINKS wine64:tools/winewrapper" ;;
     "tools/makedep") CONFIG_COMMANDS="$CONFIG_COMMANDS tools/makedep" ;;

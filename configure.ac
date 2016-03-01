@@ -2611,7 +2611,6 @@ test -n "$CROSSTARGET" || WINE_APPEND_RULE(
 
 WINE_CONFIG_SYMLINK(fonts,fonts,[marlett.ttf,symbol.ttf,tahoma.ttf,tahomabd.ttf,wingding.ttf],enable_fonts)
 WINE_CONFIG_SYMLINK(loader,loader,[l_intl.nls])
-WINE_CONFIG_SYMLINK(po,po,[LINGUAS])
 WINE_CONFIG_SYMLINK(,tools,[wine],,winewrapper)
 WINE_CONFIG_SYMLINK(,tools,[wine64],enable_win64,winewrapper)
 

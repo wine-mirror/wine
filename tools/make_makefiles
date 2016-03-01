@@ -55,7 +55,7 @@ my %ignored_source_files = (
     "tools/makedep.c" => 1,
 );
 
-my (@linguas, @makefiles, %makefiles);
+my (@makefiles, %makefiles);
 
 sub dirname($)
 {
@@ -532,20 +532,10 @@ sub update_makefiles(@)
 }
 
 
-################################################################
-# update the LINGUAS file
-
-sub update_linguas(@)
-{
-    replace_in_file( "po/LINGUAS", undef, undef, join("\n", sort @_), "\n" );
-}
-
-
 my $git_dir = $ENV{GIT_DIR} || ".git";
 die "needs to be run from a git checkout" unless -d $git_dir;
 
 my @all_files = split /\0/, `git ls-files -c -z`;
-@linguas = map { (my $ret = $_) =~ s/^po\/(.*)\.po/$1/; $ret; } grep /^po\/.*\.po$/, @all_files;
 @makefiles = map { (my $ret = $_) =~ s/\.in$//; $ret; } grep /Makefile.in$/, @all_files;
 
 foreach my $file (sort @makefiles)
@@ -555,5 +545,4 @@ foreach my $file (sort @makefiles)
 }
 
 assign_sources_to_makefiles( @all_files );
-update_linguas( @linguas );
 update_makefiles( @makefiles );
