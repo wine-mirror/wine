@@ -23,6 +23,8 @@
 #include "winbase.h"
 #include "wine/debug.h"
 
+#include "authz.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(authz);
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
@@ -46,13 +48,13 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
 /***********************************************************************
  *              AuthzInitializeResourceManager (AUTHZ.@)
  */
-BOOL WINAPI AuthzInitializeResourceManager(DWORD flags, LPVOID pfnAccessChecker,
-    LPVOID pfnComputeDynGroups, LPVOID pfnFreeDynGroups,
-    LPCWSTR managerName, LPVOID lpManagerHandle )
+BOOL WINAPI AuthzInitializeResourceManager(DWORD flags, PFN_AUTHZ_DYNAMIC_ACCESS_CHECK access_checker,
+        PFN_AUTHZ_COMPUTE_DYNAMIC_GROUPS compute_dyn_groups, PFN_AUTHZ_FREE_DYNAMIC_GROUPS free_dyn_groups,
+        const WCHAR *managername, AUTHZ_RESOURCE_MANAGER_HANDLE *handle )
 {
-    FIXME("(0x%X,%p,%p,%p,%s,%p): stub\n", flags, pfnAccessChecker,
-        pfnComputeDynGroups, pfnFreeDynGroups,
-        debugstr_w(managerName), lpManagerHandle);
+    FIXME("(0x%x,%p,%p,%p,%s,%p): stub\n", flags, access_checker,
+        compute_dyn_groups, free_dyn_groups,
+        debugstr_w(managername), handle);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -61,9 +63,65 @@ BOOL WINAPI AuthzInitializeResourceManager(DWORD flags, LPVOID pfnAccessChecker,
 /***********************************************************************
  *              AuthzInstallSecurityEventSource (AUTHZ.@)
  */
-BOOL WINAPI AuthzInstallSecurityEventSource(DWORD dwFlags, LPVOID pRegistration)
+BOOL WINAPI AuthzInstallSecurityEventSource(DWORD flags, AUTHZ_SOURCE_SCHEMA_REGISTRATION *registration)
 {
-    FIXME("(0x%X,%p): stub\n", dwFlags, pRegistration);
+    FIXME("(0x%x,%p): stub\n", flags, registration);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *              AuthzAccessCheck (AUTHZ.@)
+ */
+BOOL WINAPI AuthzAccessCheck(DWORD flags, AUTHZ_CLIENT_CONTEXT_HANDLE client_context,
+        AUTHZ_ACCESS_REQUEST *request, AUTHZ_AUDIT_EVENT_HANDLE audit_event,
+        PSECURITY_DESCRIPTOR security, PSECURITY_DESCRIPTOR *optional_security,
+        DWORD optional_security_count, AUTHZ_ACCESS_REPLY *reply,
+        AUTHZ_ACCESS_CHECK_RESULTS_HANDLE *access_check_result)
+{
+    FIXME("(0x%x,%p,%p,%p,%p,%p,0x%x,%p,%p): stub\n", flags, client_context,
+            request, audit_event, security, optional_security,
+            optional_security_count, reply, access_check_result);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *              AuthzFreeContext (AUTHZ.@)
+ */
+BOOL WINAPI AuthzFreeContext(AUTHZ_CLIENT_CONTEXT_HANDLE client_context)
+{
+    FIXME("(%p): stub\n", client_context);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *              AuthzInitializeContextFromSid (AUTHZ.@)
+ */
+BOOL WINAPI AuthzInitializeContextFromSid(DWORD flags, PSID sid,
+        AUTHZ_RESOURCE_MANAGER_HANDLE resource_manager, LARGE_INTEGER *expire_time,
+        LUID id, void *dynamic_group, AUTHZ_CLIENT_CONTEXT_HANDLE *client_context)
+{
+    FIXME("(0x%x,%p,%p,%p,%08x:%08x,%p,%p): stub\n", flags, sid, resource_manager,
+            expire_time, id.HighPart, id.LowPart, dynamic_group, client_context);
+    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *              AuthzInitializeContextFromToken (AUTHZ.@)
+ */
+BOOL WINAPI AuthzInitializeContextFromToken(DWORD flags, HANDLE token_handle,
+        AUTHZ_RESOURCE_MANAGER_HANDLE resource_manager, LARGE_INTEGER *expire_time,
+        LUID id, void *dynamic_group, AUTHZ_CLIENT_CONTEXT_HANDLE *client_context)
+{
+    FIXME("(0x%x,%p,%p,%p,%08x:%08x,%p,%p): stub\n", flags, token_handle, resource_manager,
+            expire_time, id.HighPart, id.LowPart, dynamic_group, client_context);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }

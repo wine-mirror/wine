@@ -1,16 +1,16 @@
-@ stub AuthzAccessCheck
+@ stdcall AuthzAccessCheck(long long ptr long ptr ptr long ptr ptr)
 @ stub AuthzAddSidsToContext
 @ stub AuthzCachedAccessCheck
 @ stub AuthzEnumerateSecurityEventSources
 @ stub AuthzEvaluateSacl
 @ stub AuthzFreeAuditEvent
-@ stub AuthzFreeContext
+@ stdcall AuthzFreeContext(long)
 @ stub AuthzFreeHandle
 @ stub AuthzFreeResourceManager
 @ stub AuthzGetInformationFromContext
 @ stub AuthzInitializeContextFromAuthzContext
-@ stub AuthzInitializeContextFromSid
-@ stub AuthzInitializeContextFromToken
+@ stdcall AuthzInitializeContextFromSid(long ptr long ptr int64 ptr ptr)
+@ stdcall AuthzInitializeContextFromToken(long long long ptr int64 ptr ptr)
 @ stub AuthzInitializeObjectAccessAuditEvent
 @ stub AuthzInitializeObjectAccessAuditEvent2
 @ stdcall AuthzInitializeResourceManager(long ptr ptr ptr wstr ptr)
