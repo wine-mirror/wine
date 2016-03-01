@@ -7,7 +7,7 @@
 @ stub AccessCheckByTypeResultListandAuditAlarmW
 @ stdcall AddAccessAllowedAce(ptr long long ptr) advapi32.AddAccessAllowedAce
 @ stdcall AddAccessAllowedAceEx(ptr long long long ptr) advapi32.AddAccessAllowedAceEx
-@ stub AddAccessAllowedObjectAce
+@ stdcall AddAccessAllowedObjectAce(ptr long long long ptr ptr ptr) advapi32.AddAccessAllowedObjectAce
 @ stdcall AddAccessDeniedAce(ptr long long ptr) advapi32.AddAccessDeniedAce
 @ stdcall AddAccessDeniedAceEx(ptr long long long ptr) advapi32.AddAccessDeniedAceEx
 @ stub AddAccessDeniedObjectAce

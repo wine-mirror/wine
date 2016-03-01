@@ -1260,6 +1260,23 @@ NTSTATUS WINAPI RtlAddAccessAllowedAceEx(
 }
 
 /******************************************************************************
+ *  RtlAddAccessAllowedObjectAce		[NTDLL.@]
+ */
+NTSTATUS WINAPI RtlAddAccessAllowedObjectAce(
+    IN OUT PACL pAcl,
+    IN DWORD dwAceRevision,
+    IN DWORD dwAceFlags,
+    IN DWORD dwAccessMask,
+    IN GUID* pObjectTypeGuid,
+    IN GUID* pInheritedObjectTypeGuid,
+    IN PSID pSid)
+{
+    FIXME("%p %x %x %x %p %p %p - stub\n", pAcl, dwAceRevision, dwAceFlags, dwAccessMask,
+          pObjectTypeGuid, pInheritedObjectTypeGuid, pSid);
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+/******************************************************************************
  *  RtlAddAccessDeniedAce		[NTDLL.@]
  */
 NTSTATUS WINAPI RtlAddAccessDeniedAce(
