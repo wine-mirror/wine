@@ -263,8 +263,8 @@ symboliczene dowiązanie w formie $WINEPREFIX/dosdevices/com1 -> /dev/ttyS0.
 Napędy DOS również są określone przez dowiązania symboliczne; Dla przykładu jeżeli napęd D:
 odpowiadałby napędowi CDROM zamontowanemu w /mnt/cdrom, miałbyś dowiązanie symboliczne
 $WINEPREFIX/dosdevices/d: -> /mnt/cdrom. Urządzenia Uniksowe odpowiadające
-napędom DOS mogą być określone w ten sam sposób, z użyciem '::' zamiast
-':'. Tak więc dla poprzedniego przykładu, jeżeli urządzenie CDROM byłoby zamontowane
+napędom DOS mogą być określone w ten sam sposób, z użyciem '::' zamiast ':'.
+Tak więc dla poprzedniego przykładu, jeżeli urządzenie CDROM byłoby zamontowane
 z /dev/hdc, to odpowiadające dowiązanie symboliczne wyglądałoby następująco
 $WINEPREFIX/dosdevices/d:: -> /dev/hdc.
 .SH AUTORZY
