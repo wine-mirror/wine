@@ -109,7 +109,7 @@ static const struct
     { FLAG_IDL_HEADER,     ".h" }
 };
 
-#define HASH_SIZE 137
+#define HASH_SIZE 997
 
 static struct list files[HASH_SIZE];
 
@@ -728,8 +728,9 @@ static char *get_line( FILE *file )
  */
 static unsigned int hash_filename( const char *name )
 {
-    unsigned int ret = 0;
-    while (*name) ret = (ret << 7) + (ret << 3) + *name++;
+    /* FNV-1 hash */
+    unsigned int ret = 2166136261;
+    while (*name) ret = (ret * 16777619) ^ *name++;
     return ret % HASH_SIZE;
 }
 
@@ -742,7 +743,6 @@ static struct file *add_file( const char *name )
     struct file *file = xmalloc( sizeof(*file) );
     memset( file, 0, sizeof(*file) );
     file->name = xstrdup( name );
-    list_add_tail( &files[hash_filename( name )], &file->entry );
     return file;
 }
 
@@ -1198,6 +1198,7 @@ static struct file *load_file( const char *name )
     if (!(f = fopen( name, "r" ))) return NULL;
 
     file = add_file( name );
+    list_add_tail( &files[hash], &file->entry );
     input_file_name = file->name;
     input_line = 0;
 
