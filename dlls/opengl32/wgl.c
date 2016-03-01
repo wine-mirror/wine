@@ -1769,6 +1769,9 @@ static GLubyte *filter_extensions_list(const char *extensions, const char *disab
     p = str = HeapAlloc(GetProcessHeap(), 0, strlen(extensions) + 2);
     if (!str)
         return NULL;
+
+    TRACE( "GL_EXTENSIONS:\n" );
+
     for (;;)
     {
         while (*extensions == ' ')
@@ -1817,6 +1820,9 @@ static GLuint *filter_extensions_index(const char *disabled)
     disabled_exts = HeapAlloc(GetProcessHeap(), 0, disabled_size * sizeof(*disabled_exts));
     if (!disabled_exts)
         return NULL;
+
+    TRACE( "GL_EXTENSIONS:\n" );
+
     for (j = 0; j < extensions_count; ++j)
     {
         gl_ext = (const char *)funcs->ext.p_glGetStringi(GL_EXTENSIONS, j);
@@ -1862,8 +1868,6 @@ static GLuint *filter_extensions_index(const char *disabled)
 static BOOL filter_extensions(const char *extensions, GLubyte **exts_list, GLuint **disabled_exts)
 {
     static const char *disabled;
-
-    TRACE( "GL_EXTENSIONS:\n" );
 
     if (!disabled)
     {
