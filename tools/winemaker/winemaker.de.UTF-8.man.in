@@ -58,7 +58,7 @@ im Includepfad suchen und die entsprechende Zeile, falls nötig, mit der korrekt
 Groß-/Kleinschreibweise austauschen.
 .PP
 - Winemaker wird ebenso andere, exotischere Probleme wie die Benutzung von
-'#pragma pack', 'afxres.h' in nicht-MFC-Projekten und mehr untersuchen.
+\&'#pragma pack', 'afxres.h' in nicht-MFC-Projekten und mehr untersuchen.
 Sollte etwas ungwöhnliches vorkommen, wird Winemaker Sie warnen.
 .PP
 - Winemaker kann eine ganze Verzeichnisstruktur auf einmal durchsuchen,
@@ -198,9 +198,9 @@ $ winemaker --lower-uppercase -DSTRICT .
 Damit scannt Winemaker das aktuelle Verzeichnis und die Unterverzeichnisse nach
 Quellcodedateien. Jede Datei und jedes Verzeichnis, das ganz in Großbuchstaben
 geschrieben ist, wird in Kleinbuchstaben umbenannt. Danach werden alle Quellcodedateien
-an die Kompilierung mit Winelib angepasst und Makefiles erzeugt.
-'-DSTRICT' gibt an, dass das STRICT-Makro gesetzt sein muss, um diesen Quellcode
-zu kompilieren. Letztendlich wird Winemaker die globale Makefile erzeugen.
+an die Kompilierung mit Winelib angepasst und Makefiles erzeugt. '-DSTRICT' gibt
+an, dass das STRICT-Makro gesetzt sein muss, um diesen Quellcode zu kompilieren.
+Letztendlich wird Winemaker die globale Makefile erzeugen.
 .PP
 Der nächste Schritt wäre dann:
 .PP
