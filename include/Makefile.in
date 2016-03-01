@@ -200,6 +200,7 @@ HEADER_SRCS = \
 	atlwin.h \
 	audevcod.h \
 	audiosessiontypes.h \
+	authz.h \
 	aviriff.h \
 	avrt.h \
 	basetsd.h \
