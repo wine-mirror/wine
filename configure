@@ -6115,8 +6115,8 @@ if test "$MSGFMT" = false; then :
   *)   as_fn_error $? "gettext tools not found (or too old), translations won't be built.
 This is an error since --with-gettext was requested." "$LINENO" 5 ;;
 esac
+enable_po=${enable_po:-no}
 fi
-test "$MSGFMT" = false && enable_po=${enable_po:-no}
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for i386_set_ldt in -li386" >&5
@@ -8857,6 +8857,7 @@ if test "x$ac_cv_func_pthread_create" != xyes -a "x$PTHREAD_LIBS" = x; then :
 Wine cannot support threads without libpthread.
 Use the --without-pthread option if you really want this." "$LINENO" 5 ;;
 esac
+
 fi
 
 
@@ -9799,6 +9800,7 @@ fi
   *)   as_fn_error $? "libxcursor ${notice_platform}development files not found, the Xcursor extension won't be supported.
 This is an error since --with-xcursor was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 if test "$ac_cv_header_X11_extensions_XInput_h" = "yes"
@@ -9864,6 +9866,7 @@ fi
   *)   as_fn_error $? "libxi ${notice_platform}development files not found, the Xinput extension won't be supported.
 This is an error since --with-xinput was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 if test "x$ac_cv_lib_soname_Xi" != x
@@ -9875,6 +9878,7 @@ fi
   *)   as_fn_error $? "XInput2 headers not found, the XInput 2 extension won't be supported.
 This is an error since --with-xinput2 was requested." "$LINENO" 5 ;;
 esac
+
 fi
         fi
 
@@ -9930,6 +9934,7 @@ fi
   *)   as_fn_error $? "XShm ${notice_platform}development files not found, X Shared Memory won't be supported.
 This is an error since --with-xshm was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 if test "$ac_cv_header_X11_extensions_shape_h" = "yes"
@@ -9984,6 +9989,7 @@ fi
   *)   as_fn_error $? "XShape ${notice_platform}development files not found, XShape won't be supported.
 This is an error since --with-xshape was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 if test "$ac_cv_header_X11_extensions_xf86vmode_h" = "yes" -o "$ac_cv_header_X11_extensions_xf86vmproto_h" = "yes"
@@ -10049,6 +10055,7 @@ fi
   *)   as_fn_error $? "libXxf86vm ${notice_platform}development files not found, XFree86 Vidmode won't be supported.
 This is an error since --with-xxf86vm was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 if test "$ac_cv_header_X11_extensions_Xrender_h" = "yes" -a "x$ac_cv_lib_soname_X11" != "x"
@@ -10198,6 +10205,7 @@ fi
   *)   as_fn_error $? "libxrender ${notice_platform}development files not found, XRender won't be supported.
 This is an error since --with-xrender was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 if test "$ac_cv_header_X11_extensions_Xrandr_h" = "yes" -a "x$ac_cv_lib_soname_Xrender" != "x"
@@ -10295,6 +10303,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   *)   as_fn_error $? "libxrandr ${notice_platform}development files not found, XRandr won't be supported.
 This is an error since --with-xrandr was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 if test "$ac_cv_header_X11_extensions_Xinerama_h" = "yes"
@@ -10375,6 +10384,7 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
   *)   as_fn_error $? "libxinerama ${notice_platform}development files not found, multi-monitor setups won't be supported.
 This is an error since --with-xinerama was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 if test "$ac_cv_header_X11_extensions_Xcomposite_h" = "yes"
@@ -10440,6 +10450,7 @@ fi
   *)   as_fn_error $? "libxcomposite ${notice_platform}development files not found, Xcomposite won't be supported.
 This is an error since --with-xcomposite was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
                 ac_fn_c_check_member "$LINENO" "XICCallback" "callback" "ac_cv_member_XICCallback_callback" "#ifdef HAVE_X11_XLIB_H
@@ -10632,6 +10643,7 @@ fi
   *)   as_fn_error $? "libGLU ${notice_platform}development files not found, GLU won't be supported.
 This is an error since --with-glu was requested." "$LINENO" 5 ;;
 esac
+
 fi
         fi
 
@@ -10697,6 +10709,7 @@ fi
   *)   as_fn_error $? "libOSMesa ${notice_platform}development files not found (or too old), OpenGL rendering in bitmaps won't be supported.
 This is an error since --with-osmesa was requested." "$LINENO" 5 ;;
 esac
+
 fi
         fi
     fi
@@ -10709,13 +10722,13 @@ OpenGL and Direct3D won't be supported." ;;
 OpenGL and Direct3D won't be supported.
 This is an error since --with-opengl was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
     CPPFLAGS="$ac_save_CPPFLAGS"
 else
     X_CFLAGS=""
     X_LIBS=""
-    enable_winex11_drv=${enable_winex11_drv:-no}
 fi
 if test "x$X_LIBS" = "x"; then :
   case "x$with_x" in
@@ -10725,6 +10738,7 @@ without X support, which probably isn't what you want. You will need
 to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.
 Use the --without-x option if you really want this." "$LINENO" 5 ;;
 esac
+enable_winex11_drv=${enable_winex11_drv:-no}
 fi
 
 test "x$ac_cv_lib_GLU_gluLookAt" != xyes && enable_glu32=${enable_glu32:-no}
@@ -10780,8 +10794,8 @@ if test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes; then :
   *)   as_fn_error $? "OpenCL ${notice_platform}development files not found, OpenCL won't be supported.
 This is an error since --with-opencl was requested." "$LINENO" 5 ;;
 esac
+enable_opencl=${enable_opencl:-no}
 fi
-test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes && enable_opencl=${enable_opencl:-no}
 
 if test "$ac_cv_header_pcap_pcap_h" = "yes"
 then
@@ -10834,8 +10848,8 @@ if test "x$ac_cv_lib_pcap_pcap_create" != xyes; then :
   *)   as_fn_error $? "pcap ${notice_platform}development files not found, wpcap won't be supported.
 This is an error since --with-pcap was requested." "$LINENO" 5 ;;
 esac
+enable_wpcap=${enable_wpcap:-no}
 fi
-test "x$ac_cv_lib_pcap_pcap_create" != xyes && enable_wpcap=${enable_wpcap:-no}
 
 
 if test "x$with_xml" != "xno"
@@ -11150,6 +11164,7 @@ if test "$ac_cv_lib_xml2_xmlParseMemory" != "yes"; then :
   *)   as_fn_error $? "libxml2 ${notice_platform}development files not found (or too old), XML won't be supported.
 This is an error since --with-xml was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_xslt" != "xno"
@@ -11257,6 +11272,7 @@ if test "x$ac_cv_lib_soname_xslt" = "x"; then :
   *)   as_fn_error $? "libxslt ${notice_platform}development files not found, xslt won't be supported.
 This is an error since --with-xslt was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_dbus" != "xno"
@@ -11351,6 +11367,7 @@ if test "x$ac_cv_lib_soname_dbus_1" = "x" -a \
   *)   as_fn_error $? "libdbus ${notice_platform}development files not found, no dynamic device support.
 This is an error since --with-dbus was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_hal" != "xno" -a "x$ac_cv_lib_soname_dbus_1" != x
@@ -11444,6 +11461,7 @@ test -z "$HAL_LIBS" || HAL_LIBS=`echo " $HAL_LIBS" | sed 's/ -L\([^/]\)/ -L\$(to
   *)   as_fn_error $? "libhal ${notice_platform}development files not found, no legacy dynamic device support.
 This is an error since --with-hal was requested." "$LINENO" 5 ;;
 esac
+
 fi
 fi
 
@@ -11569,6 +11587,7 @@ if test "x$ac_cv_lib_soname_gnutls" = "x"; then :
   *)   as_fn_error $? "libgnutls ${notice_platform}development files not found, no schannel support.
 This is an error since --with-gnutls was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 CURSES_LIBS=""
@@ -11704,6 +11723,7 @@ if test "x$ac_cv_lib_soname_curses$ac_cv_lib_soname_ncurses" = "x"; then :
   *)   as_fn_error $? "lib(n)curses ${notice_platform}development files not found, curses won't be supported.
 This is an error since --with-curses was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_sane" != "xno"
@@ -11797,6 +11817,7 @@ if test "x$ac_cv_lib_soname_sane" = "x"; then :
   *)   as_fn_error $? "libsane ${notice_platform}development files not found, scanners won't be supported.
 This is an error since --with-sane was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_v4l" != "xno"
@@ -11862,6 +11883,7 @@ if test "x$ac_cv_lib_soname_v4l1" = "x"; then :
   *)   as_fn_error $? "libv4l ${notice_platform}development files not found.
 This is an error since --with-v4l was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_gphoto" != "xno"
@@ -12018,6 +12040,7 @@ if test "$ac_cv_lib_gphoto2_gp_camera_new" != "yes"; then :
   *)   as_fn_error $? "libgphoto2 ${notice_platform}development files not found, digital cameras won't be supported.
 This is an error since --with-gphoto was requested." "$LINENO" 5 ;;
 esac
+
 fi
 if test "$ac_cv_lib_gphoto2_port_gp_port_info_list_new" != "yes"; then :
   case "x$with_gphoto" in
@@ -12026,6 +12049,7 @@ if test "$ac_cv_lib_gphoto2_port_gp_port_info_list_new" != "yes"; then :
   *)   as_fn_error $? "libgphoto2_port ${notice_platform}development files not found, digital cameras won't be auto-detected.
 This is an error since --with-gphoto was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 
@@ -12175,6 +12199,7 @@ if test "$ac_cv_lib_lcms2_cmsOpenProfileFromFile" != "yes"; then :
   *)   as_fn_error $? "liblcms2 ${notice_platform}development files not found, Color Management won't be supported.
 This is an error since --with-cms was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_freetype" != "xno"
@@ -12292,8 +12317,8 @@ if test "x$ac_cv_lib_soname_freetype" = x; then :
   *)   as_fn_error $? "FreeType ${notice_platform}development files not found. Fonts will not be built.
 Use the --without-freetype option if you really want this." "$LINENO" 5 ;;
 esac
+enable_fonts=${enable_fonts:-no}
 fi
-test "x$ac_cv_lib_soname_freetype" = x && enable_fonts=${enable_fonts:-no}
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for parport header/ppdev.h" >&5
 $as_echo_n "checking for parport header/ppdev.h... " >&6; }
@@ -12405,6 +12430,7 @@ if test "x$Z_LIBS" = "x"; then :
   *)   as_fn_error $? "libz ${notice_platform}development files not found, data compression won't be supported.
 This is an error since --with-zlib was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$enable_tools" != xno -a "x$with_gettextpo" = xyes
@@ -12463,6 +12489,7 @@ fi
   *)   as_fn_error $? "GetText ${notice_platform}development files not found (or too old), po files can't be rebuilt.
 This is an error since --with-gettextpo was requested." "$LINENO" 5 ;;
 esac
+
 fi
     if test "$srcdir" != .; then :
   case "x$with_gettextpo" in
@@ -12471,6 +12498,7 @@ fi
   *)   as_fn_error $? "Rebuilding po files is not supported for out of tree builds.
 This is an error since --with-gettextpo was requested." "$LINENO" 5 ;;
 esac
+
 fi
 fi
 
@@ -12560,8 +12588,8 @@ if test -z "$PULSE_LIBS"; then :
   *)   as_fn_error $? "libpulse ${notice_platform}development files not found or too old, Pulse won't be supported.
 This is an error since --with-pulse was requested." "$LINENO" 5 ;;
 esac
+enable_winepulse_drv=${enable_winepulse_drv:-no}
 fi
-test -n "$PULSE_LIBS" || enable_winepulse_drv=${enable_winepulse_drv:-no}
 
 if test "x$with_gstreamer" != "xno"
 then
@@ -12671,6 +12699,7 @@ if test "x$ac_glib2_broken" != xyes -a "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" !
   *)   as_fn_error $? "gstreamer-1.0 base plugins ${notice_platform}development files not found, gstreamer support disabled
 This is an error since --with-gstreamer was requested." "$LINENO" 5 ;;
 esac
+
 fi
 test "x$ac_cv_lib_gstreamer_1_0_gst_pad_new" = xyes || enable_winegstreamer=${enable_winegstreamer:-no}
 
@@ -12766,12 +12795,16 @@ fi
 
 
     CPPFLAGS="$ac_save_CPPFLAGS"
-    if test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes
-    then
-        as_fn_append wine_notices "|OSS sound system found but too old (OSSv4 needed), OSS won't be supported."
-    fi
 fi
-test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
+if test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes; then :
+  case "x$with_oss" in
+  x)   as_fn_append wine_notices "|OSS sound system found but too old (OSSv4 needed), OSS won't be supported." ;;
+  xno) ;;
+  *)   as_fn_error $? "OSS sound system found but too old (OSSv4 needed), OSS won't be supported.
+This is an error since --with-oss was requested." "$LINENO" 5 ;;
+esac
+enable_wineoss_drv=${enable_wineoss_drv:-no}
+fi
 
 if test "x$with_capi" != "xno"
 then
@@ -12874,6 +12907,7 @@ if test "x$ac_cv_lib_soname_capi20" = "x"; then :
   *)   as_fn_error $? "libcapi20 ${notice_platform}development files not found, ISDN won't be supported.
 This is an error since --with-capi was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 CUPS_CFLAGS=""
@@ -12957,6 +12991,7 @@ if test "x$ac_cv_lib_soname_cups" = "x"; then :
   *)   as_fn_error $? "libcups ${notice_platform}development files not found, CUPS won't be supported.
 This is an error since --with-cups was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_fontconfig" != "xno"
@@ -13060,6 +13095,7 @@ if test "x$ac_cv_lib_soname_fontconfig" = "x"; then :
   *)   as_fn_error $? "fontconfig ${notice_platform}development files not found, fontconfig won't be supported.
 This is an error since --with-fontconfig was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "$ac_cv_header_gsm_h" = "yes" -o "$ac_cv_header_gsm_gsm_h" = "yes"
@@ -13125,6 +13161,7 @@ if test "x$ac_cv_lib_soname_gsm" = "x"; then :
   *)   as_fn_error $? "libgsm ${notice_platform}development files not found, gsm 06.10 codec won't be supported.
 This is an error since --with-gsm was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_jpeg" != "xno"
@@ -13228,6 +13265,7 @@ if test "x$ac_cv_lib_soname_jpeg" = "x"; then :
   *)   as_fn_error $? "libjpeg ${notice_platform}development files not found, JPEG won't be supported.
 This is an error since --with-jpeg was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_png" != "xno"
@@ -13347,6 +13385,7 @@ if test "x$ac_cv_lib_soname_png" = "x"; then :
   *)   as_fn_error $? "libpng ${notice_platform}development files not found, PNG won't be supported.
 This is an error since --with-png was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_tiff" != "xno"
@@ -13448,6 +13487,7 @@ if test "x$ac_cv_lib_soname_tiff" = "x"; then :
   *)   as_fn_error $? "libtiff ${notice_platform}development files not found, TIFF won't be supported.
 This is an error since --with-tiff was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 if test "x$with_mpg123" != "xno"
@@ -13541,8 +13581,8 @@ if test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_Co
   *)   as_fn_error $? "libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.
 This is an error since --with-mpg123 was requested." "$LINENO" 5 ;;
 esac
+enable_winemp3_acm=${enable_winemp3_acm:-no}
 fi
-test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes -o "x$ac_cv_header_AudioToolbox_AudioConverter_h" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
 
 if test "$ac_cv_header_AL_al_h" = "yes"
 then
@@ -13614,8 +13654,8 @@ if test "x$ac_cv_lib_openal" != xyes; then :
   *)   as_fn_error $? "libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported
 This is an error since --with-openal was requested." "$LINENO" 5 ;;
 esac
+enable_openal32=${enable_openal32:-no}
 fi
-test "x$ac_cv_lib_openal" = xyes || enable_openal32=${enable_openal32:-no}
 
 if test "x$ac_cv_lib_openal" = xyes
 then
@@ -15508,6 +15548,7 @@ if test "x$LDAP_LIBS" = "x"; then :
   *)   as_fn_error $? "libldap (OpenLDAP) ${notice_platform}development files not found, LDAP won't be supported.
 This is an error since --with-ldap was requested." "$LINENO" 5 ;;
 esac
+
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether mkdir takes only one argument" >&5

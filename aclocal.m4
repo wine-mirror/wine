@@ -676,9 +676,10 @@ m4_ifval([$2],[test "x$[$2]" = xno || ])wine_fn_append_file CONFIGURE_TARGETS $1
 dnl **** Add a message to the list displayed at the end ****
 dnl
 dnl Usage: WINE_NOTICE(notice)
-dnl Usage: WINE_NOTICE_WITH(with_flag, test, notice)
 dnl Usage: WINE_WARNING(warning)
-dnl Usage: WINE_WARNING_WITH(with_flag, test, warning)
+dnl Usage: WINE_NOTICE_WITH(with_flag, test, notice, enable)
+dnl Usage: WINE_WARNING_WITH(with_flag, test, warning, enable)
+dnl Usage: WINE_ERROR_WITH(with_flag, test, error, enable)
 dnl Usage: WINE_PRINT_MESSAGES
 dnl
 AC_DEFUN([WINE_NOTICE],[AS_VAR_APPEND([wine_notices],["|$1"])])
@@ -689,20 +690,23 @@ AC_DEFUN([WINE_NOTICE_WITH],[AS_IF([$2],[case "x$with_$1" in
   xno) ;;
   *)   AC_MSG_ERROR([$3
 This is an error since --with-$1 was requested.]) ;;
-esac])])
+esac
+m4_ifval([$4],[$4=${$4:-no}])])])
 
 AC_DEFUN([WINE_WARNING_WITH],[AS_IF([$2],[case "x$with_$1" in
   x)   WINE_WARNING([$3]) ;;
   xno) ;;
   *)   AC_MSG_ERROR([$3
 This is an error since --with-$1 was requested.]) ;;
-esac])])
+esac
+m4_ifval([$4],[$4=${$4:-no}])])])
 
 AC_DEFUN([WINE_ERROR_WITH],[AS_IF([$2],[case "x$with_$1" in
   xno) ;;
   *)   AC_MSG_ERROR([$3
 Use the --without-$1 option if you really want this.]) ;;
-esac])])
+esac
+m4_ifval([$4],[$4=${$4:-no}])])])
 
 AC_DEFUN([WINE_PRINT_MESSAGES],[ac_save_IFS="$IFS"
 if test "x$wine_notices" != x; then

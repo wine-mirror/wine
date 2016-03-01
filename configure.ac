@@ -361,8 +361,8 @@ EOF
   fi
 fi
 WINE_WARNING_WITH(gettext,[test "$MSGFMT" = false],
-                  [gettext tools not found (or too old), translations won't be built.])
-test "$MSGFMT" = false && enable_po=${enable_po:-no}
+                  [gettext tools not found (or too old), translations won't be built.],
+                  [enable_po])
 
 dnl **** Check for some libraries ****
 
@@ -1154,11 +1154,11 @@ OpenGL and Direct3D won't be supported.])
 else
     X_CFLAGS=""
     X_LIBS=""
-    enable_winex11_drv=${enable_winex11_drv:-no}
 fi
 WINE_ERROR_WITH(x,[test "x$X_LIBS" = "x"],[X ${notice_platform}development files not found. Wine will be built
 without X support, which probably isn't what you want. You will need
-to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.])
+to install ${notice_platform}development packages of Xlib/Xfree86 at the very least.],
+[enable_winex11_drv])
 
 test "x$ac_cv_lib_GLU_gluLookAt" != xyes && enable_glu32=${enable_glu32:-no}
 
@@ -1168,8 +1168,8 @@ then
     AC_CHECK_LIB(OpenCL,clGetPlatformInfo,[AC_SUBST(OPENCL_LIBS,["-lOpenCL"])])
 fi
 WINE_NOTICE_WITH(opencl,[test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes],
-                 [OpenCL ${notice_platform}development files not found, OpenCL won't be supported.])
-test "x$ac_cv_lib_OpenCL_clGetPlatformInfo" != xyes && enable_opencl=${enable_opencl:-no}
+                 [OpenCL ${notice_platform}development files not found, OpenCL won't be supported.],
+                 [enable_opencl])
 
 dnl **** Check for libpcap ****
 if test "$ac_cv_header_pcap_pcap_h" = "yes"
@@ -1177,8 +1177,8 @@ then
     AC_CHECK_LIB(pcap,pcap_create,[AC_SUBST(PCAP_LIBS,["-lpcap"])])
 fi
 WINE_NOTICE_WITH(pcap,[test "x$ac_cv_lib_pcap_pcap_create" != xyes],
-                 [pcap ${notice_platform}development files not found, wpcap won't be supported.])
-test "x$ac_cv_lib_pcap_pcap_create" != xyes && enable_wpcap=${enable_wpcap:-no}
+                 [pcap ${notice_platform}development files not found, wpcap won't be supported.],
+                 [enable_wpcap])
 
 dnl **** Check for libxml2 ****
 
@@ -1394,8 +1394,8 @@ then
         fi])
 fi
 WINE_ERROR_WITH(freetype,[test "x$ac_cv_lib_soname_freetype" = x],
-                [FreeType ${notice_platform}development files not found. Fonts will not be built.])
-test "x$ac_cv_lib_soname_freetype" = x && enable_fonts=${enable_fonts:-no}
+                [FreeType ${notice_platform}development files not found. Fonts will not be built.],
+                [enable_fonts])
 
 dnl **** Check for parport (currently Linux only) ****
 AC_CACHE_CHECK([for parport header/ppdev.h], ac_cv_c_ppdev,
@@ -1450,8 +1450,8 @@ then
             [PULSE_LIBS=""])])
 fi
 WINE_NOTICE_WITH(pulse, [test -z "$PULSE_LIBS"],
-        [libpulse ${notice_platform}development files not found or too old, Pulse won't be supported.])
-test -n "$PULSE_LIBS" || enable_winepulse_drv=${enable_winepulse_drv:-no}
+        [libpulse ${notice_platform}development files not found or too old, Pulse won't be supported.],
+        [enable_winepulse_drv])
 
 dnl **** Check for gstreamer ****
 if test "x$with_gstreamer" != "xno"
@@ -1509,12 +1509,10 @@ then
                           [AC_SUBST(OSS4_CFLAGS,"$ac_oss_incl")],,
                           [#include <sys/soundcard.h>])])
     CPPFLAGS="$ac_save_CPPFLAGS"
-    if test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes
-    then
-        WINE_NOTICE([OSS sound system found but too old (OSSv4 needed), OSS won't be supported.])
-    fi
 fi
-test "x$ac_cv_member_oss_sysinfo_numaudioengines" = xyes || enable_wineoss_drv=${enable_wineoss_drv:-no}
+WINE_NOTICE_WITH(oss,[test "x$ac_cv_member_oss_sysinfo_numaudioengines" != xyes],
+                 [OSS sound system found but too old (OSSv4 needed), OSS won't be supported.],
+                 [enable_wineoss_drv])
 
 dnl **** Check for capi4linux ****
 if test "x$with_capi" != "xno"
@@ -1630,8 +1628,8 @@ then
         fi])
 fi
 WINE_NOTICE_WITH(mpg123,[test "x$ac_cv_lib_mpg123_mpg123_feed" != xyes -a x"$ac_cv_header_CoreAudio_CoreAudio_h" != xyes],
-                 [libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.])
-test "x$ac_cv_lib_mpg123_mpg123_feed" = xyes -o "x$ac_cv_header_AudioToolbox_AudioConverter_h" = xyes || enable_winemp3_acm=${enable_winemp3_acm:-no}
+                 [libmpg123 ${notice_platform}development files not found (or too old), mp3 codec won't be supported.],
+                 [enable_winemp3_acm])
 
 dnl **** Check for OpenAL 1.1 ****
 if test "$ac_cv_header_AL_al_h" = "yes"
@@ -1641,8 +1639,8 @@ then
                       AC_DEFINE_UNQUOTED(HAVE_OPENAL,1,[Define to 1 if OpenAL is available])],,)
 fi
 WINE_NOTICE_WITH(openal,[test "x$ac_cv_lib_openal" != xyes],
-                 [libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported])
-test "x$ac_cv_lib_openal" = xyes || enable_openal32=${enable_openal32:-no}
+                 [libopenal ${notice_platform}development files not found (or too old), OpenAL won't be supported],
+                 [enable_openal32])
 
 dnl **** Check for openal-soft ****
 if test "x$ac_cv_lib_openal" = xyes
