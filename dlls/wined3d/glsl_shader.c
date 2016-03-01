@@ -2257,7 +2257,12 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
                 /* Relative addressing */
                 if (reg->idx[0].rel_addr)
                 {
-                    if (reg->idx[0].offset)
+                    if (wined3d_settings.check_float_constants)
+                        sprintf(register_name, "(%s + %u >= 0 && %s + %u < %u ? %s_c[%s + %u] : vec4(0.0))",
+                                rel_param0.param_str, reg->idx[0].offset,
+                                rel_param0.param_str, reg->idx[0].offset, shader->limits->constant_float,
+                                prefix, rel_param0.param_str, reg->idx[0].offset);
+                    else if (reg->idx[0].offset)
                         sprintf(register_name, "%s_c[%s + %u]", prefix, rel_param0.param_str, reg->idx[0].offset);
                     else
                         sprintf(register_name, "%s_c[%s]", prefix, rel_param0.param_str);
