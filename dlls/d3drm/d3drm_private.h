@@ -25,6 +25,11 @@
 #include "dxfile.h"
 
 struct d3drm_device;
+struct d3drm_object
+{
+    LONG ref;
+    DWORD appdata;
+};
 
 HRESULT d3drm_device_create(struct d3drm_device **out) DECLSPEC_HIDDEN;
 IDirect3DRMDevice *IDirect3DRMDevice_from_impl(struct d3drm_device *device) DECLSPEC_HIDDEN;

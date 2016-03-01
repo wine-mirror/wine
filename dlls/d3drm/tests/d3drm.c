@@ -1220,10 +1220,11 @@ static void test_Viewport(void)
     IDirect3DRMDevice *device;
     IDirect3DRMFrame *frame;
     IDirect3DRMViewport *viewport;
+    IDirect3DRMViewport2 *viewport2;
     GUID driver;
     HWND window;
     RECT rc;
-    DWORD size;
+    DWORD size, data;
     CHAR cname[64] = {0};
 
     window = CreateWindowA("static", "d3drm_test", WS_OVERLAPPEDWINDOW, 0, 0, 300, 200, 0, 0, 0, 0);
@@ -1260,6 +1261,26 @@ static void test_Viewport(void)
     ok(hr == D3DRM_OK, "Cannot get classname (hr = %x)\n", hr);
     ok(size == sizeof("Viewport"), "wrong size: %u\n", size);
     ok(!strcmp(cname, "Viewport"), "Expected cname to be \"Viewport\", but got \"%s\"\n", cname);
+
+    /* AppData */
+    hr = IDirect3DRMViewport_SetAppData(viewport, 0);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+
+    hr = IDirect3DRMViewport_SetAppData(viewport, 0);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+
+    hr = IDirect3DRMViewport_SetAppData(viewport, 1);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+
+    hr = IDirect3DRMViewport_SetAppData(viewport, 1);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+
+    hr = IDirect3DRMViewport_QueryInterface(viewport, &IID_IDirect3DRMViewport2, (void**)&viewport2);
+    ok(hr == D3DRM_OK, "expected D3DRM_OK (hr = %x)\n", hr);
+
+    data = IDirect3DRMViewport2_GetAppData(viewport2);
+    ok(data == 1, "got %x\n", data);
+    IDirect3DRMViewport2_Release(viewport2);
 
     IDirect3DRMViewport_Release(viewport);
     IDirect3DRMFrame_Release(frame);
