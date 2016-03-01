@@ -647,13 +647,25 @@ static void swapchain_gl_present(struct wined3d_swapchain *swapchain, const RECT
     context_release(context);
 }
 
+static void swapchain_gl_frontbuffer_updated(struct wined3d_swapchain *swapchain)
+{
+    struct wined3d_surface *surface;
+    struct wined3d_context *context;
+
+    surface = surface_from_resource(swapchain->front_buffer->sub_resources[0].resource);
+    context = context_acquire(swapchain->device, surface);
+    surface_load_location(surface, context, surface->container->resource.draw_binding);
+    context_release(context);
+    SetRectEmpty(&swapchain->front_buffer_update);
+}
+
 static const struct wined3d_swapchain_ops swapchain_gl_ops =
 {
     swapchain_gl_present,
+    swapchain_gl_frontbuffer_updated,
 };
 
-/* Helper function that blits the front buffer contents to the target window. */
-void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *rect)
+static void swapchain_gdi_frontbuffer_updated(struct wined3d_swapchain *swapchain)
 {
     struct wined3d_surface *front;
     POINT offset = {0, 0};
@@ -661,7 +673,7 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
     RECT draw_rect;
     HWND window;
 
-    TRACE("swapchain %p, rect %s.\n", swapchain, wine_dbgstr_rect(rect));
+    TRACE("swapchain %p.\n", swapchain);
 
     front = surface_from_resource(wined3d_texture_get_sub_resource(swapchain->front_buffer, 0));
     if (swapchain->palette)
@@ -689,14 +701,14 @@ void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *r
     draw_rect.right = front->resource.width;
     draw_rect.top = 0;
     draw_rect.bottom = front->resource.height;
-
-    if (rect)
-        IntersectRect(&draw_rect, &draw_rect, rect);
+    IntersectRect(&draw_rect, &draw_rect, &swapchain->front_buffer_update);
 
     BitBlt(dst_dc, draw_rect.left - offset.x, draw_rect.top - offset.y,
             draw_rect.right - draw_rect.left, draw_rect.bottom - draw_rect.top,
             src_dc, draw_rect.left, draw_rect.top, SRCCOPY);
     ReleaseDC(window, dst_dc);
+
+    SetRectEmpty(&swapchain->front_buffer_update);
 }
 
 static void swapchain_gdi_present(struct wined3d_swapchain *swapchain, const RECT *src_rect_in,
@@ -755,12 +767,16 @@ static void swapchain_gdi_present(struct wined3d_swapchain *swapchain, const REC
         }
     }
 
-    x11_copy_to_screen(swapchain, NULL);
+    SetRect(&swapchain->front_buffer_update, 0, 0,
+            swapchain->front_buffer->resource.width,
+            swapchain->front_buffer->resource.height);
+    swapchain_gdi_frontbuffer_updated(swapchain);
 }
 
 static const struct wined3d_swapchain_ops swapchain_gdi_ops =
 {
     swapchain_gdi_present,
+    swapchain_gdi_frontbuffer_updated,
 };
 
 static void swapchain_update_render_to_fbo(struct wined3d_swapchain *swapchain)

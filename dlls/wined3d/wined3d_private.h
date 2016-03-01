@@ -2500,7 +2500,6 @@ struct fbo_entry
 struct wined3d_surface_ops
 {
     HRESULT (*surface_private_setup)(struct wined3d_surface *surface);
-    void (*surface_unmap)(struct wined3d_surface *surface);
 };
 
 struct wined3d_surface
@@ -2916,6 +2915,7 @@ struct wined3d_swapchain_ops
 {
     void (*swapchain_present)(struct wined3d_swapchain *swapchain, const RECT *src_rect,
             const RECT *dst_rect, const RGNDATA *dirty_region, DWORD flags);
+    void (*swapchain_frontbuffer_updated)(struct wined3d_swapchain *swaphchain);
 };
 
 struct wined3d_swapchain
@@ -2947,8 +2947,6 @@ struct wined3d_swapchain
     HDC backup_dc;
     HWND backup_wnd;
 };
-
-void x11_copy_to_screen(const struct wined3d_swapchain *swapchain, const RECT *rect) DECLSPEC_HIDDEN;
 
 void wined3d_swapchain_activate(struct wined3d_swapchain *swapchain, BOOL activate) DECLSPEC_HIDDEN;
 struct wined3d_context *swapchain_get_context(struct wined3d_swapchain *swapchain) DECLSPEC_HIDDEN;

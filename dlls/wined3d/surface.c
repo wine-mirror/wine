@@ -672,55 +672,6 @@ static HRESULT surface_private_setup(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-static void surface_unmap(struct wined3d_surface *surface)
-{
-    struct wined3d_device *device = surface->resource.device;
-    const struct wined3d_gl_info *gl_info;
-    struct wined3d_context *context;
-    struct wined3d_texture *texture;
-
-    TRACE("surface %p.\n", surface);
-
-    switch (surface->resource.map_binding)
-    {
-        case WINED3D_LOCATION_SYSMEM:
-        case WINED3D_LOCATION_USER_MEMORY:
-        case WINED3D_LOCATION_DIB:
-            break;
-
-        case WINED3D_LOCATION_BUFFER:
-            context = context_acquire(device, NULL);
-            gl_info = context->gl_info;
-
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->pbo));
-            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
-            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-            checkGLcall("glUnmapBuffer");
-            context_release(context);
-            break;
-
-        default:
-            ERR("Unexpected map binding %s.\n", wined3d_debug_location(surface->resource.map_binding));
-    }
-
-    if (surface->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB))
-    {
-        TRACE("Not dirtified, nothing to do.\n");
-        return;
-    }
-
-    texture = surface->container;
-    if (texture->swapchain && texture->swapchain->front_buffer == texture)
-    {
-        context = context_acquire(device, surface);
-        surface_load_location(surface, context, texture->resource.draw_binding);
-        context_release(context);
-        memset(&texture->swapchain->front_buffer_update, 0, sizeof(texture->swapchain->front_buffer_update));
-    }
-    else if (texture->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
-        FIXME("Depth / stencil buffer locking is not implemented.\n");
-}
-
 static BOOL surface_is_full_rect(const struct wined3d_surface *surface, const RECT *r)
 {
     if ((r->left && r->right) || abs(r->right - r->left) != surface->resource.width)
@@ -1215,7 +1166,6 @@ static const struct wined3d_resource_ops surface_resource_ops =
 static const struct wined3d_surface_ops surface_ops =
 {
     surface_private_setup,
-    surface_unmap,
 };
 
 /*****************************************************************************
@@ -1259,23 +1209,9 @@ static HRESULT gdi_surface_private_setup(struct wined3d_surface *surface)
     return WINED3D_OK;
 }
 
-static void gdi_surface_unmap(struct wined3d_surface *surface)
-{
-    struct wined3d_texture *texture = surface->container;
-
-    TRACE("surface %p.\n", surface);
-
-    /* Tell the swapchain to update the screen. */
-    if (texture->swapchain && texture == texture->swapchain->front_buffer)
-        x11_copy_to_screen(texture->swapchain, &texture->swapchain->front_buffer_update);
-
-    memset(&texture->swapchain->front_buffer_update, 0, sizeof(texture->swapchain->front_buffer_update));
-}
-
 static const struct wined3d_surface_ops gdi_surface_ops =
 {
     gdi_surface_private_setup,
-    gdi_surface_unmap,
 };
 
 /* This call just downloads data, the caller is responsible for binding the
@@ -2239,6 +2175,11 @@ do { \
 
 HRESULT wined3d_surface_unmap(struct wined3d_surface *surface)
 {
+    struct wined3d_device *device = surface->resource.device;
+    const struct wined3d_gl_info *gl_info;
+    struct wined3d_context *context;
+    struct wined3d_texture *texture;
+
     TRACE("surface %p.\n", surface);
 
     if (!surface->resource.map_count)
@@ -2248,7 +2189,37 @@ HRESULT wined3d_surface_unmap(struct wined3d_surface *surface)
     }
     --surface->resource.map_count;
 
-    surface->surface_ops->surface_unmap(surface);
+    switch (surface->resource.map_binding)
+    {
+        case WINED3D_LOCATION_SYSMEM:
+        case WINED3D_LOCATION_USER_MEMORY:
+        case WINED3D_LOCATION_DIB:
+            break;
+
+        case WINED3D_LOCATION_BUFFER:
+            context = context_acquire(device, NULL);
+            gl_info = context->gl_info;
+
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, surface->pbo));
+            GL_EXTCALL(glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER));
+            GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+            checkGLcall("glUnmapBuffer");
+            context_release(context);
+            break;
+
+        default:
+            ERR("Unexpected map binding %s.\n", wined3d_debug_location(surface->resource.map_binding));
+            break;
+    }
+
+    if (!(surface->locations & (WINED3D_LOCATION_DRAWABLE | WINED3D_LOCATION_TEXTURE_RGB)))
+    {
+        texture = surface->container;
+        if (texture->swapchain && texture->swapchain->front_buffer == texture)
+            texture->swapchain->swapchain_ops->swapchain_frontbuffer_updated(texture->swapchain);
+        else if (texture->resource.format_flags & (WINED3DFMT_FLAG_DEPTH | WINED3DFMT_FLAG_STENCIL))
+            FIXME("Depth / stencil buffer locking is not implemented.\n");
+    }
 
     return WINED3D_OK;
 }
