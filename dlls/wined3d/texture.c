@@ -716,7 +716,7 @@ void CDECL wined3d_texture_generate_mipmaps(struct wined3d_texture *texture)
     FIXME("texture %p stub!\n", texture);
 }
 
-struct wined3d_resource * CDECL wined3d_texture_get_sub_resource(const struct wined3d_texture *texture,
+struct wined3d_resource *wined3d_texture_get_sub_resource(const struct wined3d_texture *texture,
         UINT sub_resource_idx)
 {
     UINT sub_count = texture->level_count * texture->layer_count;
