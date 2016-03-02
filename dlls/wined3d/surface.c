@@ -489,40 +489,6 @@ static void surface_get_memory(const struct wined3d_surface *surface, struct win
     data->buffer_object = 0;
 }
 
-static void surface_prepare_buffer(struct wined3d_surface *surface)
-{
-    struct wined3d_context *context;
-    GLuint *buffer_object;
-    GLenum error;
-    const struct wined3d_gl_info *gl_info;
-
-    buffer_object = &surface->container->sub_resources[surface_get_sub_resource_idx(surface)].buffer_object;
-    if (*buffer_object)
-        return;
-
-    context = context_acquire(surface->resource.device, NULL);
-    gl_info = context->gl_info;
-
-    GL_EXTCALL(glGenBuffers(1, buffer_object));
-    error = gl_info->gl_ops.gl.p_glGetError();
-    if (!*buffer_object || error != GL_NO_ERROR)
-        ERR("Failed to create a PBO with error %s (%#x).\n", debug_glerror(error), error);
-
-    TRACE("Binding PBO %u.\n", *buffer_object);
-
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, *buffer_object));
-    checkGLcall("glBindBuffer");
-
-    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, surface->resource.size + 4,
-            NULL, GL_STREAM_DRAW));
-    checkGLcall("glBufferData");
-
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-    checkGLcall("glBindBuffer");
-
-    context_release(context);
-}
-
 static void surface_prepare_system_memory(struct wined3d_surface *surface)
 {
     TRACE("surface %p.\n", surface);
@@ -541,6 +507,9 @@ static void surface_prepare_system_memory(struct wined3d_surface *surface)
 
 void surface_prepare_map_memory(struct wined3d_surface *surface)
 {
+    struct wined3d_texture *texture = surface->container;
+    struct wined3d_context *context;
+
     switch (surface->resource.map_binding)
     {
         case WINED3D_LOCATION_SYSMEM:
@@ -548,7 +517,7 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
             break;
 
         case WINED3D_LOCATION_USER_MEMORY:
-            if (!surface->container->user_memory)
+            if (!texture->user_memory)
                 ERR("Map binding is set to WINED3D_LOCATION_USER_MEMORY but surface->user_memory is NULL.\n");
             break;
 
@@ -558,7 +527,10 @@ void surface_prepare_map_memory(struct wined3d_surface *surface)
             break;
 
         case WINED3D_LOCATION_BUFFER:
-            surface_prepare_buffer(surface);
+            context = context_acquire(texture->resource.device, NULL);
+            wined3d_texture_prepare_buffer_object(texture,
+                    surface_get_sub_resource_idx(surface), context->gl_info);
+            context_release(context);
             break;
 
         default:

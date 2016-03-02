@@ -690,6 +690,27 @@ HRESULT CDECL wined3d_texture_update_desc(struct wined3d_texture *texture, UINT 
     return wined3d_surface_update_desc(surface, gl_info);
 }
 
+/* Context activation is done by the caller. */
+void wined3d_texture_prepare_buffer_object(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, const struct wined3d_gl_info *gl_info)
+{
+    GLuint *buffer_object;
+
+    buffer_object = &texture->sub_resources[sub_resource_idx].buffer_object;
+    if (*buffer_object)
+        return;
+
+    GL_EXTCALL(glGenBuffers(1, buffer_object));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, *buffer_object));
+    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER,
+            texture->sub_resources[sub_resource_idx].resource->size, NULL, GL_STREAM_DRAW));
+    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
+    checkGLcall("Create buffer object");
+
+    TRACE("Created buffer object %u for texture %p, sub-resource %u.\n",
+            *buffer_object, texture, sub_resource_idx);
+}
+
 void wined3d_texture_prepare_texture(struct wined3d_texture *texture, struct wined3d_context *context, BOOL srgb)
 {
     DWORD alloc_flag = srgb ? WINED3D_TEXTURE_SRGB_ALLOCATED : WINED3D_TEXTURE_RGB_ALLOCATED;

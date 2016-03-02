@@ -362,24 +362,6 @@ void wined3d_volume_load(struct wined3d_volume *volume, struct wined3d_context *
             srgb_mode ? WINED3D_LOCATION_TEXTURE_SRGB : WINED3D_LOCATION_TEXTURE_RGB);
 }
 
-/* Context activation is done by the caller. */
-static void wined3d_volume_prepare_pbo(struct wined3d_volume *volume, struct wined3d_context *context)
-{
-    GLuint *buffer_object = &volume->container->sub_resources[volume->texture_level].buffer_object;
-    const struct wined3d_gl_info *gl_info = context->gl_info;
-
-    if (*buffer_object)
-        return;
-
-    GL_EXTCALL(glGenBuffers(1, buffer_object));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, *buffer_object));
-    GL_EXTCALL(glBufferData(GL_PIXEL_UNPACK_BUFFER, volume->resource.size, NULL, GL_STREAM_DRAW));
-    GL_EXTCALL(glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0));
-    checkGLcall("Create PBO");
-
-    TRACE("Created PBO %u for volume %p.\n", *buffer_object, volume);
-}
-
 static void wined3d_volume_free_pbo(struct wined3d_volume *volume)
 {
     GLuint *buffer_object = &volume->container->sub_resources[volume->texture_level].buffer_object;
@@ -506,7 +488,7 @@ HRESULT wined3d_volume_map(struct wined3d_volume *volume,
         context = context_acquire(device, NULL);
         gl_info = context->gl_info;
 
-        wined3d_volume_prepare_pbo(volume, context);
+        wined3d_texture_prepare_buffer_object(texture, volume->texture_level, gl_info);
         if (flags & WINED3D_MAP_DISCARD)
             wined3d_volume_validate_location(volume, WINED3D_LOCATION_BUFFER);
         else
