@@ -1207,7 +1207,7 @@ static void texture3d_prepare_texture(struct wined3d_texture *texture, struct wi
 
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_volume *volume = volume_from_resource(texture->sub_resources[i].resource);
+        struct wined3d_volume *volume = texture->sub_resources[i].u.volume;
 
         GL_EXTCALL(glTexImage3D(GL_TEXTURE_3D, volume->texture_level,
                 srgb ? format->glGammaInternal : format->glInternal,
