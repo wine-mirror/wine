@@ -1194,6 +1194,16 @@ static HRESULT read_endelement( struct reader *reader )
     WS_XML_STRING *prefix, *localname;
     HRESULT hr;
 
+    if (reader->state == READER_STATE_EOF) return WS_E_INVALID_FORMAT;
+
+    if (read_end_of_data( reader ))
+    {
+        struct list *eof = list_tail( &reader->root->children );
+        reader->current = LIST_ENTRY( eof, struct node, entry );
+        reader->state   = READER_STATE_EOF;
+        return S_OK;
+    }
+
     if (read_cmp( reader, "</", 2 )) return WS_E_INVALID_FORMAT;
     read_skip( reader, 2 );
 
