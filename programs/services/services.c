@@ -834,7 +834,7 @@ static BOOL service_send_start_message(struct service_entry *service, HANDLE pro
     }
     *p=0;
 
-    r = service_send_command( service, service->control_pipe, ssi, ssi->total_size, &result );
+    r = service_send_command( service, ssi, ssi->total_size, &result );
     if (r && result)
     {
         SetLastError(result);

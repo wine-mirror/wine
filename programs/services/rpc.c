@@ -992,15 +992,14 @@ static BOOL service_accepts_control(const struct service_entry *service, DWORD d
 /******************************************************************************
  * service_send_command
  */
-BOOL service_send_command( struct service_entry *service, HANDLE pipe,
-                           const void *data, DWORD size, DWORD *result )
+BOOL service_send_command( struct service_entry *service, const void *data, DWORD size, DWORD *result )
 {
     OVERLAPPED overlapped;
     DWORD count, ret;
     BOOL r;
 
     overlapped.hEvent = service->overlapped_event;
-    r = WriteFile(pipe, data, size, &count, &overlapped);
+    r = WriteFile(service->control_pipe, data, size, &count, &overlapped);
     if (!r && GetLastError() == ERROR_IO_PENDING)
     {
         ret = WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
@@ -1010,7 +1009,7 @@ BOOL service_send_command( struct service_entry *service, HANDLE pipe,
             *result = ERROR_SERVICE_REQUEST_TIMEOUT;
             return FALSE;
         }
-        r = GetOverlappedResult( pipe, &overlapped, &count, FALSE );
+        r = GetOverlappedResult(service->control_pipe, &overlapped, &count, FALSE);
     }
     if (!r || count != size)
     {
@@ -1018,7 +1017,7 @@ BOOL service_send_command( struct service_entry *service, HANDLE pipe,
         *result  = (!r ? GetLastError() : ERROR_WRITE_FAULT);
         return FALSE;
     }
-    r = ReadFile(pipe, result, sizeof *result, &count, &overlapped);
+    r = ReadFile(service->control_pipe, result, sizeof *result, &count, &overlapped);
     if (!r && GetLastError() == ERROR_IO_PENDING)
     {
         ret = WaitForSingleObject( service->overlapped_event, service_pipe_timeout );
@@ -1028,7 +1027,7 @@ BOOL service_send_command( struct service_entry *service, HANDLE pipe,
             *result = ERROR_SERVICE_REQUEST_TIMEOUT;
             return FALSE;
         }
-        r = GetOverlappedResult( pipe, &overlapped, &count, FALSE );
+        r = GetOverlappedResult(service->control_pipe, &overlapped, &count, FALSE);
     }
     if (!r || count != sizeof *result)
     {
@@ -1045,7 +1044,7 @@ BOOL service_send_command( struct service_entry *service, HANDLE pipe,
 /******************************************************************************
  * service_send_control
  */
-static BOOL service_send_control(struct service_entry *service, HANDLE pipe, DWORD dwControl, DWORD *result)
+static BOOL service_send_control(struct service_entry *service, DWORD dwControl, DWORD *result)
 {
     service_start_info *ssi;
     DWORD len;
@@ -1061,7 +1060,7 @@ static BOOL service_send_control(struct service_entry *service, HANDLE pipe, DWO
     ssi->name_size = strlenW(service->name) + 1;
     strcpyW( ssi->data, service->name );
 
-    r = service_send_command( service, pipe, ssi, ssi->total_size, result );
+    r = service_send_command( service, ssi, ssi->total_size, result );
     HeapFree( GetProcessHeap(), 0, ssi );
     return r;
 }
@@ -1182,8 +1181,7 @@ DWORD __cdecl svcctl_ControlService(
     ret = WaitForSingleObject(control_mutex, 30000);
     if (ret == WAIT_OBJECT_0)
     {
-        service_send_control(service->service_entry, service->service_entry->control_pipe,
-                dwControl, &result);
+        service_send_control(service->service_entry, dwControl, &result);
 
         if (lpServiceStatus)
         {
