@@ -267,14 +267,14 @@ DWORD __cdecl svcctl_GetServiceDisplayNameW(
     if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
         return err;
 
-    scmdatabase_lock_shared(manager->db);
+    scmdatabase_lock(manager->db);
 
     entry = scmdatabase_find_service(manager->db, lpServiceName);
     if (entry != NULL)
     {
         LPCWSTR name;
         int len;
-        service_lock_shared(entry);
+        service_lock(entry);
         name = get_display_name(entry);
         len = strlenW(name);
         if (len <= *cchBufSize)
@@ -313,13 +313,13 @@ DWORD __cdecl svcctl_GetServiceKeyNameW(
     if ((err = validate_scm_handle(hSCManager, 0, &manager)) != ERROR_SUCCESS)
         return err;
 
-    scmdatabase_lock_shared(manager->db);
+    scmdatabase_lock(manager->db);
 
     entry = scmdatabase_find_service_by_displayname(manager->db, lpServiceDisplayName);
     if (entry != NULL)
     {
         int len;
-        service_lock_shared(entry);
+        service_lock(entry);
         len = strlenW(entry->name);
         if (len <= *cchBufSize)
         {
@@ -381,7 +381,7 @@ DWORD __cdecl svcctl_OpenServiceW(
     if (!validate_service_name(lpServiceName))
         return ERROR_INVALID_NAME;
 
-    scmdatabase_lock_shared(manager->db);
+    scmdatabase_lock(manager->db);
     entry = scmdatabase_find_service(manager->db, lpServiceName);
     if (entry != NULL)
         InterlockedIncrement(&entry->ref_count);
@@ -535,11 +535,11 @@ static DWORD create_serviceW(
         return ERROR_INVALID_PARAMETER;
     }
 
-    scmdatabase_lock_exclusive(manager->db);
+    scmdatabase_lock(manager->db);
 
     if ((found = scmdatabase_find_service(manager->db, lpServiceName)))
     {
-        service_lock_exclusive(found);
+        service_lock(found);
         err = is_marked_for_delete(found) ? ERROR_SERVICE_MARKED_FOR_DELETE : ERROR_SERVICE_EXISTS;
         service_unlock(found);
         scmdatabase_unlock(manager->db);
@@ -599,7 +599,7 @@ DWORD __cdecl svcctl_DeleteService(
     if ((err = validate_service_handle(hService, DELETE, &service)) != ERROR_SUCCESS)
         return err;
 
-    service_lock_exclusive(service->service_entry);
+    service_lock(service->service_entry);
 
     if (!is_marked_for_delete(service->service_entry))
         err = mark_for_delete(service->service_entry);
@@ -625,7 +625,7 @@ DWORD __cdecl svcctl_QueryServiceConfigW(
     if ((err = validate_service_handle(hService, SERVICE_QUERY_CONFIG, &service)) != 0)
         return err;
 
-    service_lock_shared(service->service_entry);
+    service_lock(service->service_entry);
     config->dwServiceType = service->service_entry->config.dwServiceType;
     config->dwStartType = service->service_entry->config.dwStartType;
     config->dwErrorControl = service->service_entry->config.dwErrorControl;
@@ -668,7 +668,7 @@ DWORD __cdecl svcctl_ChangeServiceConfigW(
         return ERROR_INVALID_PARAMETER;
 
     /* first check if the new configuration is correct */
-    service_lock_exclusive(service->service_entry);
+    service_lock(service->service_entry);
 
     if (is_marked_for_delete(service->service_entry))
     {
@@ -765,7 +765,7 @@ DWORD __cdecl svcctl_SetServiceStatus(
     if ((err = validate_service_handle(hServiceStatus, SERVICE_SET_STATUS, &service)) != 0)
         return err;
 
-    service_lock_exclusive(service->service_entry);
+    service_lock(service->service_entry);
     /* FIXME: be a bit more discriminant about what parts of the status we set
      * and check that fields are valid */
     service->service_entry->status.dwServiceType = lpServiceStatus->dwServiceType;
@@ -806,7 +806,7 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, SC_RPC_CONFI
             }
 
             WINE_TRACE( "changing service %p descr to %s\n", service, wine_dbgstr_w(descr) );
-            service_lock_exclusive( service->service_entry );
+            service_lock( service->service_entry );
             HeapFree( GetProcessHeap(), 0, service->service_entry->description );
             service->service_entry->description = descr;
             save_service_config( service->service_entry );
@@ -822,7 +822,7 @@ DWORD __cdecl svcctl_ChangeServiceConfig2W( SC_RPC_HANDLE hService, SC_RPC_CONFI
     case SERVICE_CONFIG_PRESHUTDOWN_INFO:
         WINE_TRACE( "changing service %p preshutdown timeout to %d\n",
                 service, config.u.preshutdown->dwPreshutdownTimeout );
-        service_lock_exclusive( service->service_entry );
+        service_lock( service->service_entry );
         service->service_entry->preshutdown_timeout = config.u.preshutdown->dwPreshutdownTimeout;
         save_service_config( service->service_entry );
         service_unlock( service->service_entry );
@@ -852,7 +852,7 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
         {
             SERVICE_DESCRIPTIONW *descr = (SERVICE_DESCRIPTIONW *)buffer;
 
-            service_lock_shared(service->service_entry);
+            service_lock(service->service_entry);
             *needed = sizeof(*descr);
             if (service->service_entry->description)
                 *needed += (strlenW(service->service_entry->description) + 1) * sizeof(WCHAR);
@@ -872,7 +872,7 @@ DWORD __cdecl svcctl_QueryServiceConfig2W( SC_RPC_HANDLE hService, DWORD level,
         break;
 
     case SERVICE_CONFIG_PRESHUTDOWN_INFO:
-        service_lock_shared(service->service_entry);
+        service_lock(service->service_entry);
 
         *needed = sizeof(SERVICE_PRESHUTDOWN_INFO);
         if (size >= *needed)
@@ -922,7 +922,7 @@ DWORD __cdecl svcctl_QueryServiceStatusEx(
         return ERROR_INSUFFICIENT_BUFFER;
     }
 
-    service_lock_shared(service->service_entry);
+    service_lock(service->service_entry);
 
     pSvcStatusData->dwServiceType = service->service_entry->status.dwServiceType;
     pSvcStatusData->dwCurrentState = service->service_entry->status.dwCurrentState;
@@ -1126,7 +1126,7 @@ DWORD __cdecl svcctl_ControlService(
     if ((result = validate_service_handle(hService, access_required, &service)) != 0)
         return result;
 
-    service_lock_exclusive(service->service_entry);
+    service_lock(service->service_entry);
 
     result = ERROR_SUCCESS;
     switch (service->service_entry->status.dwCurrentState)
@@ -1185,7 +1185,7 @@ DWORD __cdecl svcctl_ControlService(
 
         if (lpServiceStatus)
         {
-            service_lock_shared(service->service_entry);
+            service_lock(service->service_entry);
             lpServiceStatus->dwServiceType = service->service_entry->status.dwServiceType;
             lpServiceStatus->dwCurrentState = service->service_entry->status.dwCurrentState;
             lpServiceStatus->dwControlsAccepted = service->service_entry->status.dwControlsAccepted;
@@ -1324,7 +1324,7 @@ DWORD __cdecl svcctl_EnumServicesStatusW(
     if (resume)
         WINE_FIXME("resume index not supported\n");
 
-    scmdatabase_lock_exclusive(manager->db);
+    scmdatabase_lock(manager->db);
 
     total_size = num_services = 0;
     LIST_FOR_EACH_ENTRY(service, &manager->db->services, struct service_entry, entry)
@@ -1441,7 +1441,7 @@ DWORD __cdecl svcctl_EnumServicesStatusExW(
     if ((err = validate_scm_handle(hmngr, SC_MANAGER_ENUMERATE_SERVICE, &manager)) != ERROR_SUCCESS)
         return err;
 
-    scmdatabase_lock_exclusive(manager->db);
+    scmdatabase_lock(manager->db);
 
     if (group && !find_service_by_group(manager->db, group))
     {

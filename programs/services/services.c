@@ -281,7 +281,7 @@ static void scmdatabase_autostart_services(struct scmdatabase *db)
     if (!services_list)
         return;
 
-    scmdatabase_lock_shared(db);
+    scmdatabase_lock(db);
 
     LIST_FOR_EACH_ENTRY(service, &db->services, struct service_entry, entry)
     {
@@ -326,7 +326,7 @@ static void scmdatabase_wait_terminate(struct scmdatabase *db)
     struct service_entry *service;
     BOOL run = TRUE;
 
-    scmdatabase_lock_shared(db);
+    scmdatabase_lock(db);
     while(run)
     {
         run = FALSE;
@@ -336,7 +336,7 @@ static void scmdatabase_wait_terminate(struct scmdatabase *db)
             {
                 scmdatabase_unlock(db);
                 WaitForSingleObject(service->process, INFINITE);
-                scmdatabase_lock_shared(db);
+                scmdatabase_lock(db);
                 CloseHandle(service->process);
                 service->process = NULL;
                 run = TRUE;
@@ -434,8 +434,8 @@ void release_service(struct service_entry *service)
 {
     if (InterlockedDecrement(&service->ref_count) == 0 && is_marked_for_delete(service))
     {
-        scmdatabase_lock_exclusive(service->db);
-        service_lock_exclusive(service);
+        scmdatabase_lock(service->db);
+        service_lock(service);
         scmdatabase_remove_service(service->db, service);
         service_unlock(service);
         scmdatabase_unlock(service->db);
@@ -549,12 +549,7 @@ void scmdatabase_unlock_startup(struct scmdatabase *db)
     InterlockedCompareExchange(&db->service_start_lock, FALSE, TRUE);
 }
 
-void scmdatabase_lock_shared(struct scmdatabase *db)
-{
-    EnterCriticalSection(&db->cs);
-}
-
-void scmdatabase_lock_exclusive(struct scmdatabase *db)
+void scmdatabase_lock(struct scmdatabase *db)
 {
     EnterCriticalSection(&db->cs);
 }
@@ -564,12 +559,7 @@ void scmdatabase_unlock(struct scmdatabase *db)
     LeaveCriticalSection(&db->cs);
 }
 
-void service_lock_shared(struct service_entry *service)
-{
-    EnterCriticalSection(&service->db->cs);
-}
-
-void service_lock_exclusive(struct service_entry *service)
+void service_lock(struct service_entry *service)
 {
     EnterCriticalSection(&service->db->cs);
 }
@@ -699,7 +689,7 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
     DWORD err;
     BOOL r;
 
-    service_lock_exclusive(service_entry);
+    service_lock(service_entry);
 
     if (!env)
     {
@@ -734,7 +724,7 @@ static DWORD service_start_process(struct service_entry *service_entry, HANDLE *
     HeapFree(GetProcessHeap(),0,path);
     if (!r)
     {
-        service_lock_exclusive(service_entry);
+        service_lock(service_entry);
         service_entry->status.dwCurrentState = SERVICE_STOPPED;
         service_unlock(service_entry);
         return GetLastError();
@@ -758,7 +748,7 @@ static DWORD service_wait_for_startup(struct service_entry *service_entry, HANDL
     ret = WaitForMultipleObjects( 2, handles, FALSE, service_pipe_timeout );
     if (ret != WAIT_OBJECT_0)
         return ERROR_SERVICE_REQUEST_TIMEOUT;
-    service_lock_shared(service_entry);
+    service_lock(service_entry);
     state = service_entry->status.dwCurrentState;
     service_unlock(service_entry);
     if (state == SERVICE_START_PENDING)
@@ -906,7 +896,7 @@ DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *
 
 void service_terminate(struct service_entry *service)
 {
-    service_lock_exclusive(service);
+    service_lock(service);
     TerminateProcess(service->process, 0);
     CloseHandle(service->process);
     service->process = NULL;

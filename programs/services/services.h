@@ -63,8 +63,7 @@ DWORD scmdatabase_add_service(struct scmdatabase *db, struct service_entry *entr
 DWORD scmdatabase_lock_startup(struct scmdatabase *db);
 void scmdatabase_unlock_startup(struct scmdatabase *db);
 
-void scmdatabase_lock_shared(struct scmdatabase *db);
-void scmdatabase_lock_exclusive(struct scmdatabase *db);
+void scmdatabase_lock(struct scmdatabase *db);
 void scmdatabase_unlock(struct scmdatabase *db);
 
 /* Service functions */
@@ -75,8 +74,7 @@ BOOL validate_service_config(struct service_entry *entry);
 DWORD save_service_config(struct service_entry *entry);
 void free_service_entry(struct service_entry *entry);
 void release_service(struct service_entry *service);
-void service_lock_shared(struct service_entry *service);
-void service_lock_exclusive(struct service_entry *service);
+void service_lock(struct service_entry *service);
 void service_unlock(struct service_entry *service);
 DWORD service_start(struct service_entry *service, DWORD service_argc, LPCWSTR *service_argv);
 void service_terminate(struct service_entry *service);
