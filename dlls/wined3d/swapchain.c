@@ -652,7 +652,7 @@ static void swapchain_gl_frontbuffer_updated(struct wined3d_swapchain *swapchain
     struct wined3d_surface *surface;
     struct wined3d_context *context;
 
-    surface = surface_from_resource(swapchain->front_buffer->sub_resources[0].resource);
+    surface = swapchain->front_buffer->sub_resources[0].u.surface;
     context = context_acquire(swapchain->device, surface);
     surface_load_location(surface, context, surface->container->resource.draw_binding);
     context_release(context);
