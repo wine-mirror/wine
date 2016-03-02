@@ -1306,6 +1306,101 @@ static void test_WsGetPrefixFromNamespace(void)
     WsFreeWriter( writer );
 }
 
+static void test_complex_struct_type(void)
+{
+    static const char expected[] =
+        "<o:OfficeConfig xmlns:o=\"urn:schemas-microsoft-com:office:office\">"
+        "<o:services o:GenerationTime=\"2015-09-03T18:47:54\"/>"
+        "</o:OfficeConfig>";
+    static const WCHAR timestampW[] =
+        {'2','0','1','5','-','0','9','-','0','3','T','1','8',':','4','7',':','5','4',0};
+    WS_XML_STRING str_officeconfig = {12, (BYTE *)"OfficeConfig"};
+    WS_XML_STRING str_services = {8, (BYTE *)"services"};
+    WS_XML_STRING str_generationtime = {14, (BYTE *)"GenerationTime"};
+    WS_XML_STRING ns = {39, (BYTE *)"urn:schemas-microsoft-com:office:office"};
+    WS_XML_STRING prefix = {1, (BYTE *)"o"};
+    DWORD size;
+    HRESULT hr;
+    WS_HEAP *heap;
+    WS_XML_BUFFER *buffer;
+    WS_XML_WRITER *writer;
+    WS_STRUCT_DESCRIPTION s, s2;
+    WS_FIELD_DESCRIPTION f, f2, *fields[1], *fields2[1];
+    struct services
+    {
+        const WCHAR *generationtime;
+    };
+    struct officeconfig
+    {
+        struct services *services;
+    } *test;
+
+    hr = WsCreateWriter( NULL, 0, &writer, NULL ) ;
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateHeap( 1 << 16, 0, NULL, 0, &heap, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsCreateXmlBuffer( heap, NULL, 0, &buffer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsSetOutputToBuffer( writer, buffer, NULL, 0, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteStartElement( writer, &prefix, &str_officeconfig, &ns, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    memset( &f2, 0, sizeof(f2) );
+    f2.mapping         = WS_ATTRIBUTE_FIELD_MAPPING;
+    f2.localName       = &str_generationtime;
+    f2.ns              = &ns;
+    f2.type            = WS_WSZ_TYPE;
+    f2.options         = WS_FIELD_OPTIONAL;
+    fields2[0] = &f2;
+
+    memset( &s2, 0, sizeof(s2) );
+    s2.size          = sizeof(*test->services);
+    s2.alignment     = 4;
+    s2.fields        = fields2;
+    s2.fieldCount    = 1;
+    s2.typeLocalName = &str_services;
+    s2.typeNs        = &ns;
+
+    memset( &f, 0, sizeof(f) );
+    f.mapping         = WS_ELEMENT_FIELD_MAPPING;
+    f.localName       = &str_services;
+    f.ns              = &ns;
+    f.type            = WS_STRUCT_TYPE;
+    f.typeDescription = &s2;
+    f.options         = WS_FIELD_POINTER;
+    fields[0] = &f;
+
+    memset( &s, 0, sizeof(s) );
+    s.size          = sizeof(*test);
+    s.alignment     = 4;
+    s.fields        = fields;
+    s.fieldCount    = 1;
+    s.typeLocalName = &str_officeconfig;
+    s.typeNs        = &ns;
+
+    size = sizeof(struct officeconfig) + sizeof(struct services);
+    test = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, size );
+    test->services = (struct services *)(test + 1);
+    test->services->generationtime = timestampW;
+    hr = WsWriteType( writer, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                      WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+
+    hr = WsWriteEndElement( writer, NULL );
+    ok( hr == S_OK, "got %08x\n", hr );
+    check_output_buffer( buffer, expected, __LINE__ );
+
+    HeapFree( GetProcessHeap(), 0, test );
+    WsFreeWriter( writer );
+    WsFreeHeap( heap );
+}
+
+
 START_TEST(writer)
 {
     test_WsCreateWriter();
@@ -1323,4 +1418,5 @@ START_TEST(writer)
     test_WsWriteStartCData();
     test_WsWriteXmlnsAttribute();
     test_WsGetPrefixFromNamespace();
+    test_complex_struct_type();
 }

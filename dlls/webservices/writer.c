@@ -714,7 +714,6 @@ HRESULT WINAPI WsWriteEndAttribute( WS_XML_WRITER *handle, WS_ERROR *error )
     if (error) FIXME( "ignoring error parameter\n" );
 
     if (!writer) return E_INVALIDARG;
-    if (writer->state != WRITER_STATE_STARTATTRIBUTE) return WS_E_INVALID_OPERATION;
 
     writer->state = WRITER_STATE_STARTELEMENT;
     return S_OK;
@@ -1115,7 +1114,6 @@ static HRESULT write_type_text( struct writer *writer, WS_TYPE_MAPPING mapping,
         {
         case WRITER_STATE_STARTATTRIBUTE:
             write_set_attribute_value( writer, text );
-            writer->state = WRITER_STATE_STARTELEMENT;
             return S_OK;
 
         case WRITER_STATE_STARTELEMENT:
@@ -1304,17 +1302,19 @@ static HRESULT write_type_wsz( struct writer *writer, WS_TYPE_MAPPING mapping,
     return hr;
 }
 
-static HRESULT write_type_struct( struct writer *, WS_TYPE_MAPPING, const WS_STRUCT_DESCRIPTION *,
-                                  const void * );
+static HRESULT write_type( struct writer *, WS_TYPE_MAPPING, WS_TYPE, const void *, WS_WRITE_OPTION,
+                           const void *, ULONG );
 
-static HRESULT write_type_struct_field( struct writer *writer, WS_TYPE_MAPPING mapping,
-                                        const WS_FIELD_DESCRIPTION *desc, const void *value )
+static HRESULT write_type_struct_field( struct writer *writer, const WS_FIELD_DESCRIPTION *desc,
+                                        const void *value, ULONG size )
 {
     HRESULT hr;
+    WS_TYPE_MAPPING mapping;
+    WS_WRITE_OPTION option;
 
-    if (desc->options && desc->options != WS_FIELD_POINTER &&
-        desc->options != WS_FIELD_OPTIONAL &&
-        desc->options != (WS_FIELD_POINTER | WS_FIELD_OPTIONAL))
+    if (!desc->options || desc->options == WS_FIELD_OPTIONAL) option = 0;
+    else if (desc->options == WS_FIELD_POINTER) option = WS_WRITE_REQUIRED_POINTER;
+    else
     {
         FIXME( "options 0x%x not supported\n", desc->options );
         return E_NOTIMPL;
@@ -1326,9 +1326,32 @@ static HRESULT write_type_struct_field( struct writer *writer, WS_TYPE_MAPPING m
         if (!desc->localName || !desc->ns) return E_INVALIDARG;
         if ((hr = write_add_attribute( writer, NULL, desc->localName, desc->ns, FALSE )) != S_OK)
             return hr;
+
+        mapping = WS_ATTRIBUTE_TYPE_MAPPING;
+        break;
+
+    case WS_ELEMENT_FIELD_MAPPING:
+        if ((hr = write_add_element_node( writer, NULL, desc->localName, desc->ns )) != S_OK)
+            return hr;
+
+        mapping = WS_ELEMENT_TYPE_MAPPING;
         break;
 
     case WS_TEXT_FIELD_MAPPING:
+        switch (writer->state)
+        {
+        case WRITER_STATE_STARTELEMENT:
+            mapping = WS_ELEMENT_CONTENT_TYPE_MAPPING;
+            break;
+
+        case WRITER_STATE_STARTATTRIBUTE:
+            mapping = WS_ATTRIBUTE_TYPE_MAPPING;
+            break;
+
+        default:
+            FIXME( "unhandled writer state %u\n", writer->state );
+            return E_NOTIMPL;
+        }
         break;
 
     default:
@@ -1336,86 +1359,35 @@ static HRESULT write_type_struct_field( struct writer *writer, WS_TYPE_MAPPING m
         return E_NOTIMPL;
     }
 
-    switch (desc->type)
+    if ((hr = write_type( writer, mapping, desc->type, desc->typeDescription, option, value, size )) != S_OK)
+        return hr;
+
+    switch (mapping)
     {
-    case WS_STRUCT_TYPE:
-    {
-        const void * const *ptr = value;
-        if ((hr = write_type_struct( writer, mapping, desc->typeDescription, *ptr )) != S_OK) return hr;
+    case WS_ATTRIBUTE_TYPE_MAPPING:
+        writer->state = WRITER_STATE_STARTELEMENT;
         break;
-    }
-    case WS_BOOL_TYPE:
-    {
-        const BOOL *ptr = value;
-        if ((hr = write_type_bool( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
+
+    case WS_ELEMENT_TYPE_MAPPING:
+        if ((hr = write_close_element( writer )) != S_OK) return hr;
         break;
-    }
-    case WS_INT8_TYPE:
-    {
-        const INT8 *ptr = value;
-        if ((hr = write_type_int8( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
-        break;
-    }
-    case WS_INT16_TYPE:
-    {
-        const INT16 *ptr = value;
-        if ((hr = write_type_int16( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
-        break;
-    }
-    case WS_INT32_TYPE:
-    {
-        const INT32 *ptr = value;
-        if ((hr = write_type_int32( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
-        break;
-    }
-    case WS_INT64_TYPE:
-    {
-        const INT64 *ptr = value;
-        if ((hr = write_type_int64( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
-        break;
-    }
-    case WS_UINT8_TYPE:
-    {
-        const UINT8 *ptr = value;
-        if ((hr = write_type_uint8( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
-        break;
-    }
-    case WS_UINT16_TYPE:
-    {
-        const UINT16 *ptr = value;
-        if ((hr = write_type_uint16( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
-        break;
-    }
-    case WS_UINT32_TYPE:
-    {
-        const UINT32 *ptr = value;
-        if ((hr = write_type_uint32( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
-        break;
-    }
-    case WS_UINT64_TYPE:
-    {
-        const UINT64 *ptr = value;
-        if ((hr = write_type_uint64( writer, mapping, desc->typeDescription, ptr )) != S_OK) return hr;
-        break;
-    }
-    case WS_WSZ_TYPE:
-    {
-        const WCHAR * const *ptr = value;
-        if ((hr = write_type_wsz( writer, mapping, desc->typeDescription, *ptr )) != S_OK) return hr;
-        break;
-    }
-    default:
-        FIXME( "type %u not implemented\n", desc->type );
-        return E_NOTIMPL;
+
+    default: break;
     }
 
     return S_OK;
 }
 
+static ULONG get_field_size( const WS_STRUCT_DESCRIPTION *desc, ULONG index )
+{
+    if (index < desc->fieldCount - 1) return desc->fields[index + 1]->offset - desc->fields[index]->offset;
+    return desc->size - desc->fields[index]->offset;
+}
+
 static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping,
                                   const WS_STRUCT_DESCRIPTION *desc, const void *value )
 {
-    ULONG i;
+    ULONG i, size;
     HRESULT hr;
     const char *ptr;
 
@@ -1430,7 +1402,8 @@ static HRESULT write_type_struct( struct writer *writer, WS_TYPE_MAPPING mapping
     for (i = 0; i < desc->fieldCount; i++)
     {
         ptr = (const char *)value + desc->fields[i]->offset;
-        if ((hr = write_type_struct_field( writer, mapping, desc->fields[i], ptr )) != S_OK)
+        size = get_field_size( desc, i );
+        if ((hr = write_type_struct_field( writer, desc->fields[i], ptr, size )) != S_OK)
             return hr;
     }
 
@@ -1447,7 +1420,7 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
     {
         const void * const *ptr = value;
 
-        if (!desc || option != WS_WRITE_REQUIRED_POINTER || size != sizeof(*ptr))
+        if (!desc || (option && option != WS_WRITE_REQUIRED_POINTER) || size != sizeof(*ptr))
             return E_INVALIDARG;
 
         return write_type_struct( writer, mapping, desc, *ptr );
@@ -1509,7 +1482,7 @@ static HRESULT write_type( struct writer *writer, WS_TYPE_MAPPING mapping, WS_TY
     case WS_WSZ_TYPE:
     {
         const WCHAR * const *ptr = value;
-        if (option != WS_WRITE_REQUIRED_POINTER || size != sizeof(*ptr)) return E_INVALIDARG;
+        if ((option && option != WS_WRITE_REQUIRED_POINTER) || size != sizeof(*ptr)) return E_INVALIDARG;
         return write_type_wsz( writer, mapping, desc, *ptr );
     }
     default:
@@ -1539,11 +1512,8 @@ HRESULT WINAPI WsWriteAttribute( WS_XML_WRITER *handle, const WS_ATTRIBUTE_DESCR
     if ((hr = write_add_attribute( writer, NULL, desc->attributeLocalName, desc->attributeNs,
                                    FALSE )) != S_OK) return hr;
 
-    if ((hr = write_type( writer, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->typeDescription,
-                          option, value, size )) != S_OK) return hr;
-
-    writer->state = WRITER_STATE_STARTELEMENT;
-    return S_OK;
+    return write_type( writer, WS_ATTRIBUTE_TYPE_MAPPING, desc->type, desc->typeDescription,
+                       option, value, size );
 }
 
 /**************************************************************************
