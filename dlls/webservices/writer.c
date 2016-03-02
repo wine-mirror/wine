@@ -1323,6 +1323,7 @@ static HRESULT write_type_struct_field( struct writer *writer, WS_TYPE_MAPPING m
     switch (desc->mapping)
     {
     case WS_ATTRIBUTE_FIELD_MAPPING:
+        if (!desc->localName || !desc->ns) return E_INVALIDARG;
         if ((hr = write_add_attribute( writer, NULL, desc->localName, desc->ns, FALSE )) != S_OK)
             return hr;
         break;

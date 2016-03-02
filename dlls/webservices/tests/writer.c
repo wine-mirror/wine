@@ -787,8 +787,11 @@ static void test_WsWriteElement(void)
     f.mapping = WS_ATTRIBUTE_FIELD_MAPPING;
 
     /* requires localName and ns to be set */
-    hr = WsWriteElement( writer, &desc, WS_WRITE_REQUIRED_POINTER, NULL, 0, NULL );
+    hr = WsWriteElement( writer, &desc, WS_WRITE_REQUIRED_POINTER, &test, sizeof(test), NULL );
     ok( hr == E_INVALIDARG, "got %08x\n", hr );
+
+    hr = set_output( writer );
+    ok( hr == S_OK, "got %08x\n", hr );
 
     f.localName = &localname;
     f.ns        = &ns;
