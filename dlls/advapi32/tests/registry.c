@@ -2246,6 +2246,20 @@ static void test_reg_delete_tree(void)
     dwsize = MAX_PATH;
     ok(RegQueryValueExA(subkey, "value", NULL, &type, (BYTE *)buffer, &dwsize),
         "Value is still present\n");
+    ret = RegCloseKey(subkey);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+
+    ret = RegOpenKeyA(hkey_main, "subkey", &subkey);
+    ok(ret == ERROR_SUCCESS, "subkey was deleted\n");
+    ret = pRegDeleteTreeA(subkey, "");
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+    ret = RegCloseKey(subkey);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
+
+    ret = RegOpenKeyA(hkey_main, "subkey", &subkey);
+    ok(ret == ERROR_SUCCESS, "subkey was deleted\n");
+    ret = RegCloseKey(subkey);
+    ok(ret == ERROR_SUCCESS, "Expected ERROR_SUCCESS, got %d\n", ret);
 
     ret = pRegDeleteTreeA(hkey_main, "not-here");
     ok(ret == ERROR_FILE_NOT_FOUND,

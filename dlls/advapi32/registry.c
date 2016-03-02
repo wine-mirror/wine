@@ -3030,7 +3030,7 @@ LSTATUS WINAPI RegDeleteTreeW( HKEY hkey, const WCHAR *subkey )
 
     TRACE( "(%p, %s)\n", hkey, debugstr_w(subkey) );
 
-    if (subkey)
+    if (subkey && *subkey)
     {
         ret = RegOpenKeyExW( hkey, subkey, 0, KEY_READ, &hkey );
         if (ret) return ret;
@@ -3060,7 +3060,7 @@ LSTATUS WINAPI RegDeleteTreeW( HKEY hkey, const WCHAR *subkey )
     }
 
     /* Delete the key itself */
-    if (subkey)
+    if (subkey && *subkey)
     {
         ret = RegDeleteKeyW( hkey, emptyW );
         goto cleanup;
@@ -3081,7 +3081,7 @@ LSTATUS WINAPI RegDeleteTreeW( HKEY hkey, const WCHAR *subkey )
 
 cleanup:
     heap_free( name_buf );
-    if (subkey)
+    if (subkey && *subkey)
         RegCloseKey( hkey );
     return ret;
 }
