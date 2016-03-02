@@ -382,7 +382,7 @@ static void wined3d_volume_free_pbo(struct wined3d_volume *volume)
     context_release(context);
 }
 
-void wined3d_volume_destroy(struct wined3d_volume *volume)
+void wined3d_volume_cleanup(struct wined3d_volume *volume)
 {
     TRACE("volume %p.\n", volume);
 
@@ -390,8 +390,6 @@ void wined3d_volume_destroy(struct wined3d_volume *volume)
         wined3d_volume_free_pbo(volume);
 
     resource_cleanup(&volume->resource);
-    volume->resource.parent_ops->wined3d_object_destroyed(volume->resource.parent);
-    HeapFree(GetProcessHeap(), 0, volume);
 }
 
 static void volume_unload(struct wined3d_resource *resource)
@@ -665,7 +663,7 @@ static const struct wined3d_resource_ops volume_resource_ops =
     volume_resource_sub_resource_unmap,
 };
 
-static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture *container,
+HRESULT wined3d_volume_init(struct wined3d_volume *volume, struct wined3d_texture *container,
         const struct wined3d_resource_desc *desc, UINT level)
 {
     struct wined3d_device *device = container->resource.device;
@@ -705,47 +703,6 @@ static HRESULT volume_init(struct wined3d_volume *volume, struct wined3d_texture
     }
 
     volume->container = container;
-
-    return WINED3D_OK;
-}
-
-HRESULT wined3d_volume_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
-        unsigned int level, struct wined3d_volume **volume)
-{
-    struct wined3d_device_parent *device_parent = container->resource.device->device_parent;
-    const struct wined3d_parent_ops *parent_ops;
-    struct wined3d_volume *object;
-    void *parent;
-    HRESULT hr;
-
-    TRACE("container %p, width %u, height %u, depth %u, level %u, format %s, "
-            "usage %#x, pool %s, volume %p.\n",
-            container, desc->width, desc->height, desc->depth, level, debug_d3dformat(desc->format),
-            desc->usage, debug_d3dpool(desc->pool), volume);
-
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = volume_init(object, container, desc, level)))
-    {
-        WARN("Failed to initialize volume, returning %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    if (FAILED(hr = device_parent->ops->volume_created(device_parent,
-            container, level, &parent, &parent_ops)))
-    {
-        WARN("Failed to create volume parent, hr %#x.\n", hr);
-        wined3d_volume_destroy(object);
-        return hr;
-    }
-
-    TRACE("Created volume %p, parent %p, parent_ops %p.\n", object, parent, parent_ops);
-
-    object->resource.parent = parent;
-    object->resource.parent_ops = parent_ops;
-    *volume = object;
 
     return WINED3D_OK;
 }

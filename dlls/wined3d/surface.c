@@ -40,7 +40,7 @@ static const DWORD surface_simple_locations =
         WINED3D_LOCATION_SYSMEM | WINED3D_LOCATION_USER_MEMORY
         | WINED3D_LOCATION_DIB | WINED3D_LOCATION_BUFFER;
 
-static void surface_cleanup(struct wined3d_surface *surface)
+void wined3d_surface_cleanup(struct wined3d_surface *surface)
 {
     struct wined3d_surface *overlay, *cur;
 
@@ -105,15 +105,6 @@ static void surface_cleanup(struct wined3d_surface *surface)
     }
 
     resource_cleanup(&surface->resource);
-}
-
-void wined3d_surface_destroy(struct wined3d_surface *surface)
-{
-    TRACE("surface %p.\n", surface);
-
-    surface_cleanup(surface);
-    surface->resource.parent_ops->wined3d_object_destroyed(surface->resource.parent);
-    HeapFree(GetProcessHeap(), 0, surface);
 }
 
 void surface_get_drawable_size(const struct wined3d_surface *surface, const struct wined3d_context *context,
@@ -5012,7 +5003,7 @@ cpu:
     return surface_cpu_blt(dst_surface, dst_rect, src_surface, src_rect, flags, fx, filter);
 }
 
-static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,
+HRESULT wined3d_surface_init(struct wined3d_surface *surface, struct wined3d_texture *container,
         const struct wined3d_resource_desc *desc, GLenum target, unsigned int level, unsigned int layer, DWORD flags)
 {
     struct wined3d_device *device = container->resource.device;
@@ -5090,7 +5081,7 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
     if (FAILED(hr = surface->surface_ops->surface_private_setup(surface)))
     {
         ERR("Private setup failed, hr %#x.\n", hr);
-        surface_cleanup(surface);
+        wined3d_surface_cleanup(surface);
         return hr;
     }
 
@@ -5107,48 +5098,6 @@ static HRESULT surface_init(struct wined3d_surface *surface, struct wined3d_text
         surface_validate_location(surface, WINED3D_LOCATION_DIB);
         surface_invalidate_location(surface, WINED3D_LOCATION_SYSMEM);
     }
-
-    return hr;
-}
-
-HRESULT wined3d_surface_create(struct wined3d_texture *container, const struct wined3d_resource_desc *desc,
-        GLenum target, unsigned int level, unsigned int layer, DWORD flags, struct wined3d_surface **surface)
-{
-    struct wined3d_device_parent *device_parent = container->resource.device->device_parent;
-    const struct wined3d_parent_ops *parent_ops;
-    struct wined3d_surface *object;
-    void *parent;
-    HRESULT hr;
-
-    TRACE("container %p, width %u, height %u, format %s, usage %s (%#x), pool %s, "
-            "multisample_type %#x, multisample_quality %u, target %#x, level %u, layer %u, flags %#x, surface %p.\n",
-            container, desc->width, desc->height, debug_d3dformat(desc->format),
-            debug_d3dusage(desc->usage), desc->usage, debug_d3dpool(desc->pool),
-            desc->multisample_type, desc->multisample_quality, target, level, layer, flags, surface);
-
-    if (!(object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object))))
-        return E_OUTOFMEMORY;
-
-    if (FAILED(hr = surface_init(object, container, desc, target, level, layer, flags)))
-    {
-        WARN("Failed to initialize surface, returning %#x.\n", hr);
-        HeapFree(GetProcessHeap(), 0, object);
-        return hr;
-    }
-
-    if (FAILED(hr = device_parent->ops->surface_created(device_parent,
-            container, layer * container->level_count + level, &parent, &parent_ops)))
-    {
-        WARN("Failed to create surface parent, hr %#x.\n", hr);
-        wined3d_surface_destroy(object);
-        return hr;
-    }
-
-    TRACE("Created surface %p, parent %p, parent_ops %p.\n", object, parent, parent_ops);
-
-    object->resource.parent = parent;
-    object->resource.parent_ops = parent_ops;
-    *surface = object;
 
     return hr;
 }
