@@ -868,7 +868,7 @@ static void texture2d_prepare_texture(struct wined3d_texture *texture, struct wi
 
     for (i = 0; i < sub_count; ++i)
     {
-        struct wined3d_surface *surface = surface_from_resource(texture->sub_resources[i].resource);
+        struct wined3d_surface *surface = texture->sub_resources[i].u.surface;
         GLsizei height = surface->pow2Height;
         GLsizei width = surface->pow2Width;
 
