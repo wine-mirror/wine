@@ -1489,6 +1489,7 @@ enable_sdbinst
 enable_secedit
 enable_servicemodelreg
 enable_services
+enable_shutdown
 enable_spoolsv
 enable_start
 enable_svchost
@@ -18166,6 +18167,7 @@ wine_fn_config_program secedit enable_secedit install
 wine_fn_config_program servicemodelreg enable_servicemodelreg install
 wine_fn_config_program services enable_services clean,install
 wine_fn_config_test programs/services/tests services.exe_test
+wine_fn_config_program shutdown enable_shutdown install
 wine_fn_config_program spoolsv enable_spoolsv install
 wine_fn_config_program start enable_start clean,install
 wine_fn_config_program svchost enable_svchost install
