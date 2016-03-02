@@ -1770,8 +1770,8 @@ HRESULT CDECL wined3d_texture_get_dc(struct wined3d_texture *texture, unsigned i
              return WINED3DERR_INVALIDCALL;
         }
         if (!(surface->resource.map_binding == WINED3D_LOCATION_USER_MEMORY
-                || surface->container->flags & WINED3D_TEXTURE_PIN_SYSMEM
-                || surface->pbo))
+                || texture->flags & WINED3D_TEXTURE_PIN_SYSMEM
+                || texture->sub_resources[sub_resource_idx].buffer_object))
             surface->resource.map_binding = WINED3D_LOCATION_DIB;
     }
 
